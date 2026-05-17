@@ -66,6 +66,7 @@ export default function VitrineJourneePage() {
     avancerJour,
     enregistrerSession,
     gagnerXP,
+    marquerVuTemplate,
   } = useGame();
 
   // Modifiers issus des compétences (calculés à la première occurrence où state est dispo)
@@ -250,6 +251,9 @@ export default function VitrineJourneePage() {
               )
             : null;
           if (ev) {
+            for (const p of ev.panier) {
+              marquerVuTemplate(p.objet.templateId);
+            }
             if (ev.fancy) setFancyClientApparu(true);
             setClientActuel(ev);
             setRevelationFaite(false);
