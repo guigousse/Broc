@@ -1,0 +1,250 @@
+import type { CategorieObjet, ObjetEnVitrine, Tendance } from "@/types/game";
+import type { ClientPersonnage } from "@/data/clients";
+import { modificateurTendance } from "@/lib/tendances";
+
+export interface VitrineModifiers {
+  /** Bonus d'appétit catégoriel (Passion 1/2/3 cumulé via valeurs max), par catégorie. */
+  bonusPassionParCategorie: Map<CategorieObjet, number>;
+  /** Bonus catégoriel au seuil de colère (Œil aiguisé 1/2/3), par catégorie. */
+  bonusSeuilColereParCategorie: Map<CategorieObjet, number>;
+  /** Seuil de colère général (étendu par Verbe haut / Verbe d'or). */
+  seuilColere: number;
+  /** Multiplicateur de l'intervalle entre clients (Présentation soignée → 0.75). */
+  intervalleMultiplier: number;
+  /** Lecteur d'âmes : afficher nom + ambiance du persona. */
+  revelePersona: boolean;
+  /** Estimateur de bourse : afficher la classe de richesse. */
+  releveBourse: boolean;
+  /** Œil aiguisé général : exposer prixMax dans le ClientEvent. */
+  oeilAiguise: boolean;
+  /** Diplomate : pas de colère, le client révèle son prix max et donne une dernière chance. */
+  diplomate: boolean;
+  /** Stand renommé : un client à grosse bourse (appétit ×1,3) garanti par journée. */
+  clientGarantiFancy: boolean;
+  /** Bonne réputation : +10 % d'appétit moyen sur tous les clients. */
+  bonneReputation: boolean;
+}
+
+export const DEFAULT_MODIFIERS: VitrineModifiers = {
+  bonusPassionParCategorie: new Map(),
+  bonusSeuilColereParCategorie: new Map(),
+  seuilColere: 1.2,
+  intervalleMultiplier: 1,
+  revelePersona: false,
+  releveBourse: false,
+  oeilAiguise: false,
+  diplomate: false,
+  clientGarantiFancy: false,
+  bonneReputation: false,
+};
+
+const BONUS_BONNE_REPUTATION = 0.1;
+
+export interface ClientEvent {
+  id: string;
+  persona: ClientPersonnage;
+  /** Objets que le client veut acheter (1 le plus souvent, parfois 2). */
+  panier: ObjetEnVitrine[];
+  /** Prix maximum total qu'il est prêt à payer pour l'ensemble. */
+  prixMax: number;
+  /** Prix total demandé par le joueur (somme des prix de vente). */
+  prixDemande: number;
+  /** Offre initiale du client (utilisée si négociation). */
+  offreInitiale: number;
+  /** Mode d'approche du client : achat direct ou négociation. */
+  mode: "achat-direct" | "negociation";
+  /** Vrai si le client a été boosté (Stand renommé). */
+  fancy?: boolean;
+}
+
+export type ClasseBourse = "petite" | "moyenne" | "grosse";
+
+export function classeBourse(persona: ClientPersonnage): ClasseBourse {
+  if (persona.appetitMax <= 0.8) return "petite";
+  if (persona.appetitMax <= 1.2) return "moyenne";
+  return "grosse";
+}
+
+const CHANCE_MULTI = 0.2;
+/** Remise que le client attend implicitement sur un panier multi-objets (vs achat séparé). */
+const REMISE_BUNDLE_ATTENDUE = 0.05;
+/** Seuil sous lequel un client achète sans rechigner. */
+const SEUIL_ACHAT_DIRECT = 1.0;
+/** Quand le prix demandé dépasse le seuil de colère, plancher de l'offre initiale (× prixMax). */
+const OFFRE_TROP_CHER = 0.8;
+
+function calculerPrixMax(
+  panier: ObjetEnVitrine[],
+  persona: ClientPersonnage,
+  tendances: readonly Tendance[],
+  modifiers: VitrineModifiers,
+): number {
+  let facteur =
+    persona.appetitMin +
+    Math.random() * (persona.appetitMax - persona.appetitMin);
+  if (modifiers.bonneReputation) facteur *= 1 + BONUS_BONNE_REPUTATION;
+
+  const brut = panier.reduce((s, x) => {
+    const modTend = modificateurTendance(x.objet.categorie, tendances);
+    const bonusPassion =
+      modifiers.bonusPassionParCategorie.get(x.objet.categorie) ?? 0;
+    const modSpec = 1 + bonusPassion;
+    let modPref = 1;
+    if (persona.categoriesPreferees.includes(x.objet.categorie)) {
+      modPref = 1 + persona.bonusPreference;
+    } else if (persona.categoriesEvitees.includes(x.objet.categorie)) {
+      modPref = Math.max(0.1, 1 - persona.malusEvitement);
+    }
+    return s + x.objet.prixReferenceReel * facteur * modTend * modSpec * modPref;
+  }, 0);
+  const remise = panier.length > 1 ? 1 - REMISE_BUNDLE_ATTENDUE : 1;
+  return Math.max(1, Math.round(brut * remise));
+}
+
+/** Calcule le seuil de colère effectif pour ce panier (général + max bonus catégoriel). */
+function seuilColereEffectif(
+  panier: ObjetEnVitrine[],
+  modifiers: VitrineModifiers,
+): number {
+  let bonusCat = 0;
+  for (const it of panier) {
+    const b = modifiers.bonusSeuilColereParCategorie.get(it.objet.categorie) ?? 0;
+    if (b > bonusCat) bonusCat = b;
+  }
+  return modifiers.seuilColere + bonusCat;
+}
+
+/**
+ * Génère un événement client basé sur ce qu'il y a sur le stand.
+ * Retourne null si le stand est vide.
+ */
+const BOOST_FANCY = 1.3;
+
+export function genererClientEvent(
+  personnage: ClientPersonnage,
+  vitrine: ObjetEnVitrine[],
+  tendances: readonly Tendance[] = [],
+  modifiers: VitrineModifiers = DEFAULT_MODIFIERS,
+  options: { fancy?: boolean } = {},
+): ClientEvent | null {
+  if (vitrine.length === 0) return null;
+
+  // Boost l'appétit si client "fancy" (Stand renommé garanti)
+  const persona: ClientPersonnage = options.fancy
+    ? {
+        ...personnage,
+        appetitMin: personnage.appetitMin * BOOST_FANCY,
+        appetitMax: personnage.appetitMax * BOOST_FANCY,
+      }
+    : personnage;
+
+  // Multi-objets : la probabilité dépend du persona
+  const veutDeux = vitrine.length >= 2 && Math.random() < persona.chanceMulti;
+  const panier: ObjetEnVitrine[] = [];
+
+  const pool = [...vitrine];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  panier.push(pool[0]);
+  if (veutDeux) panier.push(pool[1]);
+
+  const prixDemande = panier.reduce((s, x) => s + x.prixVente, 0);
+  const prixMax = calculerPrixMax(panier, persona, tendances, modifiers);
+
+  let mode: ClientEvent["mode"];
+  let offreInitiale: number;
+
+  if (prixDemande <= prixMax * SEUIL_ACHAT_DIRECT) {
+    mode = "achat-direct";
+    offreInitiale = prixDemande;
+  } else if (prixDemande <= prixMax * seuilColereEffectif(panier, modifiers)) {
+    mode = "negociation";
+    // Dureté : 0 = offre généreuse (jusqu'à 100% du max), 1 = offre serrée (jusqu'à 70%)
+    const haut = 1 - persona.durete * 0.30; // 1.0 → 0.70
+    const bas = haut - 0.15;
+    const offre = prixMax * (bas + Math.random() * (haut - bas));
+    offreInitiale = Math.max(1, Math.round(offre));
+  } else {
+    mode = "negociation";
+    // Lowball persona-dépendant : généreux 0.85, lowball 0.65
+    const ratio = OFFRE_TROP_CHER - persona.durete * 0.15;
+    offreInitiale = Math.max(1, Math.round(prixMax * ratio));
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    persona,
+    panier,
+    prixMax,
+    prixDemande,
+    offreInitiale,
+    mode,
+    fancy: options.fancy,
+  };
+}
+
+export interface ResultatContreOffre {
+  accepte: boolean;
+  fache: boolean;
+  /** Diplomate : au lieu de partir fâché, le client révèle son prix max et offre une dernière chance. */
+  revelation: boolean;
+  message: string;
+  prixFinal: number;
+}
+
+export function reagirContreOffre(
+  contreOffre: number,
+  event: ClientEvent,
+  modifiers: VitrineModifiers = DEFAULT_MODIFIERS,
+  options: { revelationDejaFaite?: boolean } = {},
+): ResultatContreOffre {
+  const seuil = seuilColereEffectif(event.panier, modifiers);
+  if (contreOffre <= event.prixMax) {
+    return {
+      accepte: true,
+      fache: false,
+      revelation: false,
+      prixFinal: contreOffre,
+      message: `Vendu. ${event.persona.nom} sort sa bourse.`,
+    };
+  }
+  if (contreOffre > event.prixMax * seuil) {
+    // Diplomate : révèle son prix max au lieu de partir — sauf si la révélation a déjà été faite (et donc épuisée).
+    if (modifiers.diplomate && !options.revelationDejaFaite) {
+      return {
+        accepte: false,
+        fache: false,
+        revelation: true,
+        prixFinal: 0,
+        message: `« Mon plafond, c'est ${event.prixMax} €. Une dernière fois, je vous écoute. »`,
+      };
+    }
+    return {
+      accepte: false,
+      fache: true,
+      revelation: false,
+      prixFinal: 0,
+      message: `« Vous vous moquez de moi ! » ${event.persona.nom} tourne les talons.`,
+    };
+  }
+  return {
+    accepte: false,
+    fache: false,
+    revelation: false,
+    prixFinal: 0,
+    message: `${event.persona.nom} fronce les sourcils — c'est encore trop cher.`,
+  };
+}
+
+export const JOURNEE_DUREE_SECONDES = 90;
+export const CLIENT_INTERVALLE_MIN_SEC = 8;
+export const CLIENT_INTERVALLE_MAX_SEC = 14;
+
+export function prochainIntervalleClient(
+  intervalleMultiplier: number = 1,
+): number {
+  const span = CLIENT_INTERVALLE_MAX_SEC - CLIENT_INTERVALLE_MIN_SEC;
+  return (CLIENT_INTERVALLE_MIN_SEC + Math.random() * span) * intervalleMultiplier;
+}

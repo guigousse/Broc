@@ -1,0 +1,265 @@
+"use client";
+
+import { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { InventoryGrid } from "@/components/InventoryGrid";
+import { MarketTrendsPanel } from "@/components/MarketTrendsPanel";
+import { StatusBar } from "@/components/StatusBar";
+import { Button } from "@/components/ui/Button";
+import { Panel } from "@/components/ui/Panel";
+import { useGame } from "@/context/GameContext";
+import { CATEGORIES } from "@/data/categories";
+import {
+  aConnaisseurTendance,
+  aConnaisseurVitrine,
+  aGenVeilleActive,
+  aGenVeilleDiscrete,
+} from "@/lib/competences";
+import type { CategorieObjet } from "@/types/game";
+
+export default function QgPage() {
+  const router = useRouter();
+  const { state, isHydrated, ajusterBudget } = useGame();
+
+  useEffect(() => {
+    if (isHydrated && !state) router.replace("/");
+  }, [isHydrated, state, router]);
+
+  const categoriesConnuesTendance = useMemo(() => {
+    const s = new Set<CategorieObjet>();
+    if (!state) return s;
+    for (const c of CATEGORIES) if (aConnaisseurTendance(state, c)) s.add(c);
+    return s;
+  }, [state]);
+
+  const categoriesConnuesVitrine = useMemo(() => {
+    const s = new Set<CategorieObjet>();
+    if (!state) return s;
+    for (const c of CATEGORIES) if (aConnaisseurVitrine(state, c)) s.add(c);
+    return s;
+  }, [state]);
+
+  if (!isHydrated || !state) {
+    return (
+      <main
+        style={{
+          display: "grid",
+          placeItems: "center",
+          minHeight: "100dvh",
+          fontFamily: "var(--font-mono)",
+          color: "var(--ink-500)",
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          fontSize: 12,
+        }}
+      >
+        — ouverture du QG…
+      </main>
+    );
+  }
+
+  return (
+    <div
+      className="bg-paper-grain"
+      style={{ minHeight: "100dvh", padding: "20px 28px 32px" }}
+    >
+      <StatusBar jour={state.jourActuel} budget={state.budget} />
+
+      {/* Dev cheat — à retirer avant prod */}
+      <div
+        style={{
+          position: "fixed",
+          right: 16,
+          bottom: 16,
+          zIndex: 40,
+        }}
+      >
+        <button
+          onClick={() => ajusterBudget(100)}
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            background: "var(--vermillion-600)",
+            color: "var(--paper-100)",
+            border: "1px solid var(--velvet-700)",
+            padding: "8px 12px",
+            cursor: "pointer",
+            boxShadow:
+              "inset 0 0 0 2px var(--vermillion-600), inset 0 0 0 3px var(--velvet-700)",
+          }}
+          title="Ajoute 100 € à la caisse"
+        >
+          dev · +100 €
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(280px, 1fr) minmax(0, 2.3fr) minmax(300px, 1fr)",
+          gap: 20,
+          marginTop: 22,
+          alignItems: "start",
+        }}
+      >
+        {/* LEFT */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <Panel eyebrow="— les terrains de chine —" title="Sortir">
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontStyle: "italic",
+                color: "var(--ink-500)",
+                fontSize: 14,
+                marginTop: 0,
+                marginBottom: 14,
+                lineHeight: 1.45,
+              }}
+            >
+              Le jour est jeune. Les meilleures pièces partent avant midi.
+            </p>
+            <Button variant="primary" size="md" onClick={() => router.push("/chiner")}>
+              Partir Chiner
+            </Button>
+          </Panel>
+
+          <Panel eyebrow="— votre vitrine —" title="Tenir l'étal" dark>
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontStyle: "italic",
+                color: "var(--paper-300)",
+                fontSize: 14,
+                marginTop: 0,
+                marginBottom: 14,
+                lineHeight: 1.45,
+                textAlign: "center",
+              }}
+            >
+              {state.vitrine.length === 0
+                ? "Sélectionnez les pièces à exposer, fixez vos prix."
+                : `${state.vitrine.length} pièce${state.vitrine.length > 1 ? "s" : ""} en attente sur l'étal.`}
+            </p>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => router.push("/vitrine")}
+                style={{
+                  background: "transparent",
+                  color: "var(--brass-300)",
+                  borderColor: "var(--brass-500)",
+                  boxShadow:
+                    "inset 0 0 0 3px transparent, inset 0 0 0 4px var(--brass-500)",
+                }}
+              >
+                {state.vitrine.length === 0 ? "Préparer la vitrine" : "Reprendre la vitrine"}
+              </Button>
+            </div>
+          </Panel>
+        </div>
+
+        {/* CENTER */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <Panel
+            eyebrow="— vitrine du QG —"
+            title={`Inventaire · ${state.inventaireJoueur.length} objet${
+              state.inventaireJoueur.length > 1 ? "s" : ""
+            }`}
+          >
+            <InventoryGrid
+              objets={state.inventaireJoueur}
+              categoriesConnues={categoriesConnuesVitrine}
+            />
+          </Panel>
+        </div>
+
+        {/* RIGHT */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <MarketTrendsPanel
+            tendances={state.tendances}
+            prochainesTendances={state.prochainesTendances}
+            jourActuel={state.jourActuel}
+            prochainRafraichissement={state.prochainRafraichissementTendances}
+            categoriesConnues={categoriesConnuesTendance}
+            niveauVision={
+              aGenVeilleActive(state) ? 2 : aGenVeilleDiscrete(state) ? 1 : 0
+            }
+          />
+
+          {(() => {
+            const totalPoints = Object.values(state.competenceTrees).reduce(
+              (s, t) => s + t.pointsDisponibles,
+              0,
+            );
+            return (
+          <Panel eyebrow="— grimoire du chineur —" title={`Compétences · ${totalPoints} pt${totalPoints > 1 ? "s" : ""}`}>
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontStyle: "italic",
+                color: "var(--ink-500)",
+                fontSize: 14,
+                margin: "0 0 12px",
+                textAlign: "center",
+              }}
+            >
+              {state.competencesDebloquees.length === 0
+                ? "Aucune compétence acquise pour l'instant."
+                : `${state.competencesDebloquees.length} compétence${state.competencesDebloquees.length > 1 ? "s" : ""} acquise${state.competencesDebloquees.length > 1 ? "s" : ""}.`}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => router.push("/competences")}
+              >
+                Ouvrir le grimoire
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => router.push("/atelier")}
+              >
+                Entrer dans l'atelier
+              </Button>
+            </div>
+          </Panel>
+            );
+          })()}
+
+          <Panel
+            eyebrow="— carnet de comptes —"
+            title={`Historique · ${state.historique.length}`}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontStyle: "italic",
+                color: "var(--ink-500)",
+                fontSize: 14,
+                margin: "0 0 12px",
+                textAlign: "center",
+              }}
+            >
+              {state.historique.length === 0
+                ? "Aucune session consignée."
+                : `${state.historique.length} session${state.historique.length > 1 ? "s" : ""} dans le registre.`}
+            </p>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => router.push("/historique")}
+              >
+                Ouvrir le carnet
+              </Button>
+            </div>
+          </Panel>
+        </div>
+      </div>
+    </div>
+  );
+}

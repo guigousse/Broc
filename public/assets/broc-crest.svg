@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D9C07A"></stop>
+      <stop offset="1" stop-color="#8A6A26"></stop>
+    </linearGradient>
+  </defs>
+
+  
+  <g fill="none" stroke="url(#g1)" stroke-width="2">
+    <path d="M 30 12 L 170 12 L 188 30 L 188 170 L 170 188 L 30 188 L 12 170 L 12 30 Z"></path>
+  </g>
+  <g fill="none" stroke="#C5A059" stroke-width="0.75">
+    <path d="M 36 18 L 164 18 L 182 36 L 182 164 L 164 182 L 36 182 L 18 164 L 18 36 Z"></path>
+  </g>
+
+  
+  <g transform="translate(100 70)" fill="#C5A059">
+    <g stroke="#8A6A26" stroke-width="0.5">
+      <rect x="-1" y="-30" width="2" height="20"></rect>
+      <g transform="rotate(25)"><rect x="-1" y="-30" width="2" height="16"></rect></g>
+      <g transform="rotate(-25)"><rect x="-1" y="-30" width="2" height="16"></rect></g>
+      <g transform="rotate(50)"><rect x="-1" y="-30" width="2" height="12"></rect></g>
+      <g transform="rotate(-50)"><rect x="-1" y="-30" width="2" height="12"></rect></g>
+      <g transform="rotate(75)"><rect x="-1" y="-30" width="2" height="8"></rect></g>
+      <g transform="rotate(-75)"><rect x="-1" y="-30" width="2" height="8"></rect></g>
+    </g>
+    <circle r="3" fill="#8A6A26"></circle>
+  </g>
+
+  
+  <g font-family="Cinzel, serif" font-weight="700" font-size="64" text-anchor="middle" fill="#1A3326" letter-spacing="2">
+    <text x="100" y="148">B</text>
+  </g>
+</svg>

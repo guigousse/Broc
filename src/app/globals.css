@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+
+@import "tailwindcss";
+
+/* ============================================================
+   BROC — NÉO-ART DÉCO VINTAGE DESIGN TOKENS
+   ============================================================ */
+:root {
+  /* Parchment */
+  --paper-100: #FBF7EE;
+  --paper-200: #F4EFE6;
+  --paper-300: #EAE0CB;
+  --paper-400: #D9CBA7;
+  --paper-500: #B8A77F;
+
+  /* Forest */
+  --forest-900: #0F1F18;
+  --forest-800: #1A3326;
+  --forest-700: #284A38;
+  --forest-600: #3B6A52;
+
+  /* Midnight */
+  --midnight-900: #14181C;
+  --midnight-800: #1E252B;
+  --midnight-700: #2B343C;
+  --midnight-600: #4A5560;
+
+  /* Brass */
+  --brass-100: #F1E3BF;
+  --brass-300: #D9C07A;
+  --brass-500: #C5A059;
+  --brass-600: #B08838;
+  --brass-700: #8A6A26;
+  --brass-900: #4F3D14;
+
+  /* Ink */
+  --ink-900: #1B1812;
+  --ink-700: #2A2620;
+  --ink-500: #4D4538;
+  --ink-300: #7A6F5C;
+
+  /* Accents */
+  --vermillion-600: #A33B2A;
+  --vermillion-500: #B85240;
+  --velvet-700: #5C2B3E;
+  --patina-500: #6B7F6E;
+
+  /* Semantic */
+  --bg:                var(--paper-200);
+  --bg-elevated:       var(--paper-100);
+  --bg-sunken:         var(--paper-300);
+  --bg-dark:           var(--forest-800);
+  --fg:                var(--ink-700);
+  --fg-strong:         var(--ink-900);
+  --fg-muted:          var(--ink-500);
+  --fg-subtle:         var(--ink-300);
+  --fg-on-dark:        var(--paper-200);
+  --accent:            var(--brass-500);
+  --accent-strong:     var(--brass-700);
+  --danger:            var(--vermillion-600);
+
+  /* Typography */
+  --font-display: 'Cinzel', 'Trajan Pro', 'Cormorant Garamond', Georgia, serif;
+  --font-serif:   'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+  --font-mono:    'DM Mono', 'Courier Prime', 'Courier New', monospace;
+  --font-tag:     'Courier Prime', 'DM Mono', 'Courier New', monospace;
+}
+
+/* Tailwind v4 theme bridge — exposes tokens as Tailwind utilities */
+@theme inline {
+  --color-paper-100: var(--paper-100);
+  --color-paper-200: var(--paper-200);
+  --color-paper-300: var(--paper-300);
+  --color-paper-400: var(--paper-400);
+  --color-paper-500: var(--paper-500);
+  --color-forest-900: var(--forest-900);
+  --color-forest-800: var(--forest-800);
+  --color-forest-700: var(--forest-700);
+  --color-forest-600: var(--forest-600);
+  --color-brass-100: var(--brass-100);
+  --color-brass-300: var(--brass-300);
+  --color-brass-500: var(--brass-500);
+  --color-brass-600: var(--brass-600);
+  --color-brass-700: var(--brass-700);
+  --color-ink-900: var(--ink-900);
+  --color-ink-700: var(--ink-700);
+  --color-ink-500: var(--ink-500);
+  --color-ink-300: var(--ink-300);
+  --color-vermillion-600: var(--vermillion-600);
+  --color-velvet-700: var(--velvet-700);
+  --color-patina-500: var(--patina-500);
+
+  --font-display: var(--font-display);
+  --font-serif:   var(--font-serif);
+  --font-mono:    var(--font-mono);
+}
+
+/* Base */
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-serif);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--brass-300); color: var(--ink-900); }
+
+.font-display { font-family: var(--font-display); }
+.font-serif   { font-family: var(--font-serif); }
+.font-mono    { font-family: var(--font-mono); }
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: var(--brass-700);
+  font-weight: 600;
+}
+
+.h-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: var(--forest-800);
+}
+
+/* Paper texture utility */
+.bg-paper-grain {
+  background-color: var(--paper-200);
+  background-image: url('/assets/paper-grain.svg');
+  background-size: 320px 320px;
+}
+.bg-paper-card {
+  background-color: var(--paper-100);
+  background-image: url('/assets/paper-grain.svg');
+  background-size: 320px 320px;
+}
+.bg-velvet-grain {
+  background-color: var(--forest-800);
+  background-image: url('/assets/grain-overlay.svg');
+  background-size: 320px 320px;
+}

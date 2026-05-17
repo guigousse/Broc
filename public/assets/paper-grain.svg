@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320">
+  <defs>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7"></feTurbulence>
+      <feColorMatrix values="0 0 0 0 0.18&#xA;                              0 0 0 0 0.14&#xA;                              0 0 0 0 0.07&#xA;                              0 0 0 0.18 0"></feColorMatrix>
+    </filter>
+    <filter id="fibers">
+      <feTurbulence type="turbulence" baseFrequency="0.012 0.4" numOctaves="2" seed="3"></feTurbulence>
+      <feColorMatrix values="0 0 0 0 0.40&#xA;                              0 0 0 0 0.32&#xA;                              0 0 0 0 0.18&#xA;                              0 0 0 0.10 0"></feColorMatrix>
+    </filter>
+  </defs>
+  <rect width="320" height="320" fill="#F4EFE6"></rect>
+  <rect width="320" height="320" filter="url(#grain)"></rect>
+  <rect width="320" height="320" filter="url(#fibers)" opacity="0.6"></rect>
+</svg>
