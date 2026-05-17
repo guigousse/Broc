@@ -8,12 +8,16 @@ export type CategorieObjet =
 
 export type EtatObjet = "Mauvais" | "Bon" | "Très bon" | "Pristin état";
 
+export type Rarete = "commun" | "rare" | "legendaire";
+
 export interface Objet {
   id: string;
+  templateId: string;
   nom: string;
   categorie: CategorieObjet;
   prixReferenceReel: number;
   etat: EtatObjet;
+  rarete: Rarete;
   prixAchat?: number;
   /** Présent si l'objet est en cours de restauration à l'atelier. */
   enRestauration?: {
@@ -21,6 +25,19 @@ export interface Objet {
     /** Jour à partir duquel la restauration sera terminée (>=). */
     jourFin: number;
   };
+}
+
+export interface CatalogueEntree {
+  templateId: string;
+  /** Nom complet de l'objet (snapshot pour l'affichage). */
+  nom: string;
+  categorie: CategorieObjet;
+  rarete: Rarete;
+  /** Vrai si croisé chez un vendeur ou un client (sans nécessairement l'acquérir). */
+  vu: boolean;
+  /** Nombre de fois possédé (0 = jamais). */
+  possede: number;
+  unique?: boolean;
 }
 
 export interface ObjetEnVitrine {
@@ -47,6 +64,7 @@ export interface GameState {
   prochainRafraichissementTendances: number;
   competenceTrees: Record<CompetenceTreeId, CompetenceTreeState>;
   competencesDebloquees: CompetenceId[];
+  catalogue: Record<CategorieObjet, CatalogueEntree[]>;
 }
 
 export type CompetenceId = string;
