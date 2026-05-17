@@ -32,6 +32,8 @@ export default function SessionChinePage() {
     avancerJour,
     enregistrerSession,
     gagnerXP,
+    marquerVuTemplate,
+    marquerPossedeTemplate,
   } = useGame();
 
   const brocante = useMemo(
@@ -67,7 +69,11 @@ export default function SessionChinePage() {
     // le joueur ne peut plus être expulsé (par exemple si son solde redescend).
     if (items === null) {
       if (!estDebloquee(brocante, state)) return router.replace("/chiner");
-      setItems(genererSession(brocante.taillePool, state.tendances));
+      const session = genererSession(brocante.taillePool, state.tendances);
+      setItems(session);
+      for (const it of session) {
+        marquerVuTemplate(it.objet.templateId);
+      }
     }
   }, [isHydrated, state, brocante, router, items]);
 
@@ -159,6 +165,7 @@ export default function SessionChinePage() {
     }
     ajusterBudget(-it.prixVendeur);
     ajouterObjet({ ...it.objet, prixAchat: it.prixVendeur });
+    marquerPossedeTemplate(it.objet.templateId);
     gagnerXPLocal(catTreeId(it.objet.categorie), XP_ACHAT_OBJET);
     setItem(id, { statut: "achete" });
     setAchats((prev) => [
