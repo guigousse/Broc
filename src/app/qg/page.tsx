@@ -15,6 +15,7 @@ import {
   aGenVeilleActive,
   aGenVeilleDiscrete,
 } from "@/lib/competences";
+import { progressionGlobale } from "@/lib/catalogue";
 import type { CategorieObjet } from "@/types/game";
 
 export default function QgPage() {
@@ -227,6 +228,42 @@ export default function QgPage() {
               </Button>
             </div>
           </Panel>
+            );
+          })()}
+
+          {(() => {
+            const cat = progressionGlobale(state.catalogue);
+            return (
+              <Panel
+                eyebrow="— catalogue des trésors —"
+                title={`Catalogue · ${cat.possedees} / ${cat.total}`}
+              >
+                <p
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontStyle: "italic",
+                    color: "var(--ink-500)",
+                    fontSize: 14,
+                    margin: "0 0 12px",
+                    textAlign: "center",
+                  }}
+                >
+                  {cat.possedees === 0
+                    ? "Vous n'avez encore rien collectionné."
+                    : cat.possedees === cat.total
+                      ? "Toutes les pièces sont entre vos mains."
+                      : `${cat.vues} pièce${cat.vues > 1 ? "s" : ""} aperçue${cat.vues > 1 ? "s" : ""}, ${cat.possedees} acquise${cat.possedees > 1 ? "s" : ""}.`}
+                </p>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={() => router.push("/catalogue")}
+                  >
+                    Ouvrir le catalogue
+                  </Button>
+                </div>
+              </Panel>
             );
           })()}
 
