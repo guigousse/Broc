@@ -49,6 +49,11 @@ function migrerEtat(etat: string): EtatObjet {
 }
 import { appliquerGainXP } from "@/lib/xp";
 import { aGenDevin, peutRestaurerCategorie } from "@/lib/competences";
+import {
+  initCatalogue,
+  marquerPossedeTemplate as marquerPossedeFn,
+  marquerVuTemplate as marquerVuFn,
+} from "@/lib/catalogue";
 
 interface GameContextValue {
   state: GameState | null;
@@ -72,6 +77,8 @@ interface GameContextValue {
     options?: { dureeJours?: number },
   ) => { ok: boolean; raison?: string };
   gagnerXP: (treeId: CompetenceTreeId, montant: number) => void;
+  marquerVuTemplate: (templateId: string) => void;
+  marquerPossedeTemplate: (templateId: string) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -91,6 +98,8 @@ function migrerSauvegarde(loaded: GameState): GameState {
     ...o,
     categorie: migrerCategorie(o.categorie),
     etat: migrerEtat(o.etat),
+    templateId: o.templateId ?? `legacy.${(o.nom ?? "objet").toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
+    rarete: o.rarete ?? "commun",
   }));
 
   const vitrine = (loaded.vitrine ?? []).map((v) => ({
@@ -99,6 +108,10 @@ function migrerSauvegarde(loaded: GameState): GameState {
       ...v.objet,
       categorie: migrerCategorie(v.objet.categorie),
       etat: migrerEtat(v.objet.etat),
+      templateId:
+        v.objet.templateId ??
+        `legacy.${(v.objet.nom ?? "objet").toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
+      rarete: v.objet.rarete ?? "commun",
     },
   }));
 
@@ -141,6 +154,20 @@ function migrerSauvegarde(loaded: GameState): GameState {
 
   const competencesDebloquees = resetTrees ? [] : competencesValides;
 
+  // Catalogue : initialise + reconstitue les possessions à partir de l'inventaire migré
+  let catalogue =
+    loaded.catalogue && Object.keys(loaded.catalogue).length > 0
+      ? loaded.catalogue
+      : initCatalogue();
+  if (!loaded.catalogue) {
+    for (const o of inventaire) {
+      catalogue = marquerPossedeFn(catalogue, o.templateId);
+    }
+    for (const v of vitrine) {
+      catalogue = marquerPossedeFn(catalogue, v.objet.templateId);
+    }
+  }
+
   return {
     ...loaded,
     inventaireJoueur: inventaire,
@@ -161,6 +188,7 @@ function migrerSauvegarde(loaded: GameState): GameState {
       (loaded.jourActuel ?? INITIAL_JOUR) + PERIODE_TENDANCES_JOURS,
     competenceTrees: trees,
     competencesDebloquees,
+    catalogue,
   };
 }
 
@@ -204,6 +232,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       prochainRafraichissementTendances: INITIAL_JOUR + PERIODE_TENDANCES_JOURS,
       competenceTrees: emptyAllTrees(),
       competencesDebloquees: [],
+      catalogue: initCatalogue(),
     });
     router.push("/qg");
   }, [router]);
@@ -453,6 +482,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const marquerVuTemplate = useCallback((templateId: string) => {
+    setState((prev) =>
+      prev
+        ? { ...prev, catalogue: marquerVuFn(prev.catalogue, templateId) }
+        : prev,
+    );
+  }, []);
+
+  const marquerPossedeTemplate = useCallback((templateId: string) => {
+    setState((prev) =>
+      prev
+        ? { ...prev, catalogue: marquerPossedeFn(prev.catalogue, templateId) }
+        : prev,
+    );
+  }, []);
+
   const value = useMemo<GameContextValue>(
     () => ({
       state,
@@ -472,6 +517,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       debloquerCompetence,
       restaurerObjet,
       gagnerXP,
+      marquerVuTemplate,
+      marquerPossedeTemplate,
     }),
     [
       state,
@@ -491,6 +538,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       debloquerCompetence,
       restaurerObjet,
       gagnerXP,
+      marquerVuTemplate,
+      marquerPossedeTemplate,
     ],
   );
 
