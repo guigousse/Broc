@@ -58,3 +58,8 @@ export const OBJET_TEMPLATES: ObjetTemplate[] = [
   { templateId: "br.etabli_pliant_ancien", nom: "Établi pliant ancien", categorie: "Bricolage", rarete: "commun", prixRefBase: 55 },
   { templateId: "br.pince_etirer_cuivre", nom: "Pince à étirer en cuivre", categorie: "Bricolage", rarete: "commun", prixRefBase: 12 },
 ];
+
+import { LEGENDAIRES } from "@/data/legendaires";
+
+/** Pool complet utilisé par le tirage (communs + rares + légendaires). */
+export const POOL_COMPLET: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES];
