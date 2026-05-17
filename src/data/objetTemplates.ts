@@ -61,5 +61,7 @@ export const OBJET_TEMPLATES: ObjetTemplate[] = [
 
 import { LEGENDAIRES } from "@/data/legendaires";
 
+export { LEGENDAIRES };
+
 /** Pool complet utilisé par le tirage (communs + rares + légendaires). */
 export const POOL_COMPLET: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES];

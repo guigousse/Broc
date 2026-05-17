@@ -1,5 +1,8 @@
-import type { EtatObjet, ObjetEnVente, Tendance } from "@/types/game";
-import { OBJET_TEMPLATES, type ObjetTemplate } from "@/data/objetTemplates";
+import type { EtatObjet, ObjetEnVente, Rarete, Tendance } from "@/types/game";
+import {
+  POOL_COMPLET,
+  type ObjetTemplate,
+} from "@/data/objetTemplates";
 import { modificateurTendance } from "@/lib/tendances";
 
 // Pristin état est rare en chinage — il faut le créer en atelier.
@@ -39,26 +42,25 @@ function instancier(
     1,
     Math.round(template.prixRefBase * FACTEUR_ETAT[etat]),
   );
-  // Plage centrée autour de 1.0 : du vendeur naïf (0.6) à l'opportuniste (1.4).
   const facteurVendeur = 0.6 + Math.random() * 0.8;
   const modTend = modificateurTendance(template.categorie, tendances);
   const prixVendeur = Math.max(
     1,
     Math.round(prixReferenceReel * facteurVendeur * modTend),
   );
-  // Tolérance fixe par objet : un vendeur souple acceptera plus bas qu'un raide.
-  const tolerance =
-    TOLERANCE_MIN + Math.random() * (TOLERANCE_MAX - TOLERANCE_MIN);
+  const tolerance = TOLERANCE_MIN + Math.random() * (TOLERANCE_MAX - TOLERANCE_MIN);
   const prixMinAccept = Math.max(1, Math.round(prixVendeur * tolerance));
 
   return {
     id: crypto.randomUUID(),
     objet: {
       id: crypto.randomUUID(),
+      templateId: template.templateId,
       nom: template.nom,
       categorie: template.categorie,
       etat,
       prixReferenceReel,
+      rarete: template.rarete,
     },
     prixVendeur,
     prixAffiche: Math.random() > 0.4,
@@ -68,13 +70,41 @@ function instancier(
   };
 }
 
+const POIDS_RARETE: Record<Rarete, number> = {
+  commun: 88,
+  rare: 10,
+  legendaire: 2,
+};
+
+function tirerTemplatePondere(pool: readonly ObjetTemplate[]): ObjetTemplate {
+  // Somme des poids
+  const total = pool.reduce((s, t) => s + POIDS_RARETE[t.rarete], 0);
+  let r = Math.random() * total;
+  for (const t of pool) {
+    r -= POIDS_RARETE[t.rarete];
+    if (r <= 0) return t;
+  }
+  return pool[pool.length - 1];
+}
+
 export function genererSession(
   taille: number,
   tendances: readonly Tendance[] = [],
 ): ObjetEnVente[] {
-  return shuffle(OBJET_TEMPLATES)
-    .slice(0, Math.min(taille, OBJET_TEMPLATES.length))
-    .map((t) => instancier(t, tendances));
+  // Pour la Phase 1, on tire `taille` objets indépendamment du pool complet,
+  // pondérés par rareté. Les doublons sont possibles dans une même session
+  // pour les communs uniquement.
+  const items: ObjetEnVente[] = [];
+  const dejaTires = new Set<string>();
+  let attempts = 0;
+  while (items.length < taille && attempts < taille * 5) {
+    attempts += 1;
+    const t = tirerTemplatePondere(POOL_COMPLET);
+    if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
+    dejaTires.add(t.templateId);
+    items.push(instancier(t, tendances));
+  }
+  return items;
 }
 
 export interface ResultatNegociation {
