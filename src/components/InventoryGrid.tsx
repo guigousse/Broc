@@ -2,6 +2,7 @@ import type { CategorieObjet, Objet } from "@/types/game";
 import { EtatBadge } from "@/components/ui/EtatBadge";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { CategorieAccordion } from "@/components/ui/CategorieAccordion";
+import { RareteBadge } from "@/components/ui/RareteBadge";
 import { CATEGORIES } from "@/data/categories";
 
 interface InventoryGridProps {
@@ -92,6 +93,18 @@ function ObjetCard({
         opacity: enChantier ? 0.75 : 1,
       }}
     >
+      {objet.rarete !== "commun" && (
+        <div
+          style={{
+            position: "absolute",
+            top: 6,
+            left: 6,
+            zIndex: 1,
+          }}
+        >
+          <RareteBadge rarete={objet.rarete} />
+        </div>
+      )}
       {enChantier && (
         <div
           style={{
