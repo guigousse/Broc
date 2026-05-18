@@ -229,38 +229,71 @@ export default function QgPage() {
               0,
             );
             return (
-          <Panel eyebrow="— grimoire du chineur —" title={`Compétences · ${totalPoints} pt${totalPoints > 1 ? "s" : ""}`}>
-            <p
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontStyle: "italic",
-                color: "var(--ink-500)",
-                fontSize: 14,
-                margin: "0 0 12px",
-                textAlign: "center",
-              }}
-            >
-              {state.competencesDebloquees.length === 0
-                ? "Aucune compétence acquise pour l'instant."
-                : `${state.competencesDebloquees.length} compétence${state.competencesDebloquees.length > 1 ? "s" : ""} acquise${state.competencesDebloquees.length > 1 ? "s" : ""}.`}
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => router.push("/competences")}
+              <Panel
+                eyebrow="— grimoire du chineur —"
+                title={`Compétences · ${totalPoints} pt${totalPoints > 1 ? "s" : ""}`}
               >
-                Ouvrir le grimoire
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => router.push("/atelier")}
+                <p
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontStyle: "italic",
+                    color: "var(--ink-500)",
+                    fontSize: 14,
+                    margin: "0 0 12px",
+                    textAlign: "center",
+                  }}
+                >
+                  {state.competencesDebloquees.length === 0
+                    ? "Aucune compétence acquise pour l'instant."
+                    : `${state.competencesDebloquees.length} compétence${state.competencesDebloquees.length > 1 ? "s" : ""} acquise${state.competencesDebloquees.length > 1 ? "s" : ""}.`}
+                </p>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => router.push("/competences")}
+                >
+                  Ouvrir le grimoire
+                </Button>
+              </Panel>
+            );
+          })()}
+
+          {(() => {
+            const enChantier = state.inventaireJoueur.filter(
+              (o) => o.enRestauration,
+            );
+            const prets = enChantier.filter(
+              (o) => (o.enRestauration?.jourFin ?? Infinity) <= state.jourActuel,
+            );
+            return (
+              <Panel
+                eyebrow="— atelier —"
+                title={`Atelier · ${enChantier.length} en chantier`}
               >
-                Entrer dans l'atelier
-              </Button>
-            </div>
-          </Panel>
+                <p
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontStyle: "italic",
+                    color: "var(--ink-500)",
+                    fontSize: 14,
+                    margin: "0 0 12px",
+                    textAlign: "center",
+                  }}
+                >
+                  {enChantier.length === 0
+                    ? "L'établi est libre. Restaurez un objet pour en améliorer l'état."
+                    : prets.length > 0
+                      ? `${prets.length} objet${prets.length > 1 ? "s" : ""} prêt${prets.length > 1 ? "s" : ""} à récupérer.`
+                      : `${enChantier.length} objet${enChantier.length > 1 ? "s" : ""} en cours de restauration.`}
+                </p>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => router.push("/atelier")}
+                >
+                  Entrer dans l'atelier
+                </Button>
+              </Panel>
             );
           })()}
 
@@ -287,29 +320,16 @@ export default function QgPage() {
                       ? "Collection complète — bravo !"
                       : `${col.donnees} pièce${col.donnees > 1 ? "s" : ""} donnée${col.donnees > 1 ? "s" : ""}, valeur ${col.valeur.toLocaleString("fr-FR")} €.`}
                 </p>
-                <p
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 10.5,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    color: "var(--brass-700)",
-                    margin: "0 0 12px",
-                    textAlign: "center",
-                  }}
-                >
-                  Brocantes : {totalBrocantesDebloquees} / 16 débloquées
-                </p>
                 <div
                   style={{
                     display: "flex",
                     flexDirection: "column",
                     gap: 8,
-                    alignItems: "center",
+                    alignItems: "stretch",
                   }}
                 >
                   <Button
-                    variant="secondary"
+                    variant="primary"
                     size="md"
                     onClick={() => router.push("/collection")}
                   >
