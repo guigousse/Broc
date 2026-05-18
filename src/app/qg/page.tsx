@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
+import { getBrocanteById } from "@/data/brocantes";
 import {
   aConnaisseurTendance,
   aConnaisseurVitrine,
@@ -139,9 +140,12 @@ export default function QgPage() {
                 textAlign: "center",
               }}
             >
-              {state.vitrine.length === 0
-                ? "Sélectionnez les pièces à exposer, fixez vos prix."
-                : `${state.vitrine.length} pièce${state.vitrine.length > 1 ? "s" : ""} en attente sur l'étal.`}
+              {(() => {
+                if (!state.vitrine) return "Choisissez une brocante pour exposer.";
+                const b = getBrocanteById(state.vitrine.brocanteId);
+                const n = state.vitrine.objets.length;
+                return `${b?.nom ?? "Brocante"} · ${n} pièce${n > 1 ? "s" : ""} sur l'étal.`;
+              })()}
             </p>
             <div style={{ display: "flex", justifyContent: "center" }}>
               <Button
@@ -156,7 +160,7 @@ export default function QgPage() {
                     "inset 0 0 0 3px transparent, inset 0 0 0 4px var(--brass-500)",
                 }}
               >
-                {state.vitrine.length === 0 ? "Préparer la vitrine" : "Reprendre la vitrine"}
+                {state.vitrine ? "Reprendre la vitrine" : "Préparer la vitrine"}
               </Button>
             </div>
           </Panel>
