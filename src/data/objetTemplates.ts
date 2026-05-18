@@ -63,5 +63,17 @@ import { LEGENDAIRES } from "@/data/legendaires";
 
 export { LEGENDAIRES };
 
-/** Pool complet utilisé par le tirage (communs + rares + légendaires). */
-export const POOL_COMPLET: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES];
+/**
+ * Pool générique utilisé par le tirage chinage : tous les communs et rares,
+ * tirables dans n'importe quelle brocante.
+ * Les LÉGENDAIRES n'y sont PAS — ils n'apparaissent que via les `poolExclusif`
+ * des brocantes 3⭐.
+ */
+export const POOL_COMMUN_GENERIQUE: ObjetTemplate[] = OBJET_TEMPLATES;
+
+const ALL_TEMPLATES: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES];
+
+/** Résout un templateId vers son template (incluant les légendaires). */
+export function getTemplate(templateId: string): ObjetTemplate | undefined {
+  return ALL_TEMPLATES.find((t) => t.templateId === templateId);
+}

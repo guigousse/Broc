@@ -4,7 +4,7 @@ import type {
   GameState,
 } from "@/types/game";
 import { CATEGORIES } from "@/data/categories";
-import { POOL_COMPLET } from "@/data/objetTemplates";
+import { OBJET_TEMPLATES, LEGENDAIRES } from "@/data/objetTemplates";
 
 /**
  * Construit un catalogue initial (toutes entrées non vues, possede=0) à partir
@@ -12,6 +12,7 @@ import { POOL_COMPLET } from "@/data/objetTemplates";
  * par rareté puis par nom.
  */
 export function initCatalogue(): Record<CategorieObjet, CatalogueEntree[]> {
+  const POOL_COMPLET = [...OBJET_TEMPLATES, ...LEGENDAIRES];
   const ordre = { commun: 0, rare: 1, legendaire: 2 } as const;
   const cat: Record<CategorieObjet, CatalogueEntree[]> = {} as Record<
     CategorieObjet,
