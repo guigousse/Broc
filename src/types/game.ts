@@ -27,16 +27,18 @@ export interface Objet {
   };
 }
 
-export interface CatalogueEntree {
+export interface CollectionSlot {
   templateId: string;
   /** Nom complet de l'objet (snapshot pour l'affichage). */
   nom: string;
   categorie: CategorieObjet;
   rarete: Rarete;
-  /** Vrai si croisé chez un vendeur ou un client (sans nécessairement l'acquérir). */
+  /** Vrai si croisé chez un vendeur ou un client. */
   vu: boolean;
-  /** Nombre de fois possédé (0 = jamais). */
-  possede: number;
+  /** Vrai si possédé au moins une fois (achat, restauration). */
+  dejaPossede: boolean;
+  /** Donation présente dans le slot (état + valeur préservés). null = slot vide. */
+  donation: { etat: EtatObjet; valeur: number } | null;
   unique?: boolean;
 }
 
@@ -70,7 +72,7 @@ export interface GameState {
   prochainRafraichissementTendances: number;
   competenceTrees: Record<CompetenceTreeId, CompetenceTreeState>;
   competencesDebloquees: CompetenceId[];
-  catalogue: Record<CategorieObjet, CatalogueEntree[]>;
+  collection: Record<CategorieObjet, CollectionSlot[]>;
   /** Vrai si la modale d'annonce du déblocage du boss a déjà été montrée. */
   bossDebloqueSeen: boolean;
 }
@@ -183,6 +185,8 @@ export type ConditionDeblocage =
   | { type: "budget"; montant: number }
   | { type: "ventesCategorie"; categorie: CategorieObjet; nombre: number }
   | { type: "brocantesDebloquees"; tier: 1 | 2 | 3; nombre: number }
+  | { type: "valeurCollection"; montant: number }
+  | { type: "valeurCollectionCategorie"; categorie: CategorieObjet; montant: number }
   | { type: "ET"; conditions: ConditionDeblocage[] };
 
 export type BrocanteTier = 1 | 2 | 3 | 4;
