@@ -1,8 +1,10 @@
 import type { EtatObjet, ObjetEnVente, Rarete, Tendance } from "@/types/game";
 import {
-  POOL_COMPLET,
+  POOL_COMMUN_GENERIQUE,
+  getTemplate,
   type ObjetTemplate,
 } from "@/data/objetTemplates";
+import type { Brocante } from "@/types/game";
 import { modificateurTendance } from "@/lib/tendances";
 
 // Pristin état est rare en chinage — il faut le créer en atelier.
@@ -87,19 +89,31 @@ function tirerTemplatePondere(pool: readonly ObjetTemplate[]): ObjetTemplate {
   return pool[pool.length - 1];
 }
 
+/** Probabilité par item de tenter un tirage dans le poolExclusif de la brocante. */
+const CHANCE_EXCLUSIF = 0.18;
+
 export function genererSession(
   taille: number,
   tendances: readonly Tendance[] = [],
+  brocante?: Brocante,
 ): ObjetEnVente[] {
-  // Pour la Phase 1, on tire `taille` objets indépendamment du pool complet,
-  // pondérés par rareté. Les doublons sont possibles dans une même session
-  // pour les communs uniquement.
   const items: ObjetEnVente[] = [];
   const dejaTires = new Set<string>();
   let attempts = 0;
-  while (items.length < taille && attempts < taille * 5) {
+  const maxAttempts = taille * 6;
+
+  // Résout les templates exclusifs de la brocante (en évinçant les ids inconnus)
+  const exclusifs: ObjetTemplate[] = (brocante?.poolExclusif ?? [])
+    .map((id) => getTemplate(id))
+    .filter((t): t is ObjetTemplate => t !== undefined);
+
+  while (items.length < taille && attempts < maxAttempts) {
     attempts += 1;
-    const t = tirerTemplatePondere(POOL_COMPLET);
+    const tenterExclusif =
+      exclusifs.length > 0 && Math.random() < CHANCE_EXCLUSIF;
+    const pool = tenterExclusif ? exclusifs : POOL_COMMUN_GENERIQUE;
+    const t = tirerTemplatePondere(pool);
+    // Pas de doublon pour rares et légendaires
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
     dejaTires.add(t.templateId);
     items.push(instancier(t, tendances));
