@@ -25,7 +25,7 @@ import {
 } from "@/types/game";
 import { createStarterInventory } from "@/data/starterInventory";
 import { localGameRepository } from "@/lib/storage/localGameRepository";
-import { PERIODE_TENDANCES_JOURS, genererTendances } from "@/lib/tendances";
+import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
 import {
   COMPETENCES,
   catTreeId,
@@ -86,6 +86,7 @@ interface GameContextValue {
   marquerDejaPossedeTemplate: (templateId: string) => void;
   donnerACollection: (objetId: string) => { ok: boolean; raison?: string };
   retirerDeCollection: (templateId: string) => { ok: boolean; raison?: string };
+  acheterGazette: () => { ok: boolean; raison?: string };
   marquerBossDebloqueVu: () => void;
 }
 
@@ -227,6 +228,7 @@ function migrerSauvegarde(loaded: GameState): GameState {
     competenceTrees: trees,
     competencesDebloquees,
     collection,
+    gazetteAchetee: loaded.gazetteAchetee ?? false,
     bossDebloqueSeen: loaded.bossDebloqueSeen ?? false,
   };
 }
@@ -272,6 +274,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       competenceTrees: emptyAllTrees(),
       competencesDebloquees: [],
       collection: initCollection(),
+      gazetteAchetee: false,
       bossDebloqueSeen: false,
     });
     router.push("/qg");
@@ -338,6 +341,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         prochainRafraichissementTendances: refresh
           ? nouveauJour + PERIODE_TENDANCES_JOURS
           : prev.prochainRafraichissementTendances,
+        // Reset l'achat de la Gazette à chaque nouvelle édition.
+        gazetteAchetee: refresh ? false : prev.gazetteAchetee,
       };
     });
   }, []);
@@ -664,6 +669,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const acheterGazette = useCallback((): { ok: boolean; raison?: string } => {
+    const current = stateRef.current;
+    if (!current) return { ok: false, raison: "Pas de partie." };
+    if (current.gazetteAchetee)
+      return { ok: false, raison: "Édition déjà achetée." };
+    if (current.budget < PRIX_GAZETTE)
+      return {
+        ok: false,
+        raison: `Budget insuffisant (${PRIX_GAZETTE} € requis).`,
+      };
+    setState((prev) =>
+      prev
+        ? {
+            ...prev,
+            budget: prev.budget - PRIX_GAZETTE,
+            gazetteAchetee: true,
+          }
+        : prev,
+    );
+    return { ok: true };
+  }, []);
+
   const value = useMemo<GameContextValue>(
     () => ({
       state,
@@ -688,6 +715,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerDejaPossedeTemplate,
       donnerACollection,
       retirerDeCollection,
+      acheterGazette,
       marquerBossDebloqueVu,
     }),
     [
@@ -713,6 +741,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerDejaPossedeTemplate,
       donnerACollection,
       retirerDeCollection,
+      acheterGazette,
       marquerBossDebloqueVu,
     ],
   );

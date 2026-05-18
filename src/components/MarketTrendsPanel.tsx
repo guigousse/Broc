@@ -1,5 +1,6 @@
 import type { CategorieObjet, Tendance } from "@/types/game";
-import { numeroEdition } from "@/lib/tendances";
+import { PRIX_GAZETTE, numeroEdition } from "@/lib/tendances";
+import { Button } from "@/components/ui/Button";
 
 interface MarketTrendsPanelProps {
   tendances: readonly Tendance[];
@@ -11,6 +12,12 @@ interface MarketTrendsPanelProps {
   categoriesConnues: ReadonlySet<CategorieObjet>;
   /** Niveau Vision général : 0 rien, 1 = voir 1 cat de la prochaine, 2 = voir toutes. */
   niveauVision?: 0 | 1 | 2;
+  /** Édition courante achetée par le joueur ? */
+  achetee: boolean;
+  /** Budget courant (pour griser le bouton si insuffisant). */
+  budget: number;
+  /** Tentative d'achat de l'édition courante. */
+  onAcheter: () => void;
 }
 
 export function MarketTrendsPanel({
@@ -20,6 +27,9 @@ export function MarketTrendsPanel({
   prochainRafraichissement,
   categoriesConnues,
   niveauVision = 0,
+  achetee,
+  budget,
+  onAcheter,
 }: MarketTrendsPanelProps) {
   const safe = tendances ?? [];
   const visibles = safe.filter((t) => categoriesConnues.has(t.categorie));
@@ -115,7 +125,43 @@ export function MarketTrendsPanel({
         </div>
       </div>
 
-      {tries.length === 0 ? (
+      {!achetee ? (
+        <div
+          style={{
+            margin: "10px 0 0",
+            padding: "12px 10px",
+            background: "var(--paper-300)",
+            border: "1px dashed var(--brass-700)",
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontStyle: "italic",
+              fontSize: 13,
+              color: "var(--ink-500)",
+              margin: "0 0 10px",
+            }}
+          >
+            Cette édition n'est pas encore acquise. Procurez-vous la Gazette
+            pour lire les tendances du marché.
+          </p>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={onAcheter}
+            disabled={budget < PRIX_GAZETTE}
+            title={
+              budget < PRIX_GAZETTE
+                ? `Budget insuffisant (${PRIX_GAZETTE} € requis)`
+                : "Acheter l'édition en cours"
+            }
+          >
+            Acheter la Gazette · {PRIX_GAZETTE} €
+          </Button>
+        </div>
+      ) : tries.length === 0 ? (
         <p
           style={{
             fontFamily: "var(--font-serif)",
@@ -165,7 +211,7 @@ export function MarketTrendsPanel({
         </ul>
       )}
 
-      {masquees > 0 && (
+      {achetee && masquees > 0 && (
         <div
           style={{
             marginTop: 8,
@@ -181,7 +227,7 @@ export function MarketTrendsPanel({
         </div>
       )}
 
-      {apercu.length > 0 && (
+      {achetee && apercu.length > 0 && (
         <div
           style={{
             marginTop: 12,

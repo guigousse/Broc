@@ -70,6 +70,8 @@ export interface GameState {
   prochainesTendances: Tendance[];
   /** Jour à partir duquel les tendances seront rafraîchies. */
   prochainRafraichissementTendances: number;
+  /** Édition courante de la Gazette achetée ? Reset à false à chaque refresh. */
+  gazetteAchetee: boolean;
   competenceTrees: Record<CompetenceTreeId, CompetenceTreeState>;
   competencesDebloquees: CompetenceId[];
   collection: Record<CategorieObjet, CollectionSlot[]>;

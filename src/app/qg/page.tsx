@@ -23,7 +23,13 @@ import type { CategorieObjet } from "@/types/game";
 
 export default function QgPage() {
   const router = useRouter();
-  const { state, isHydrated, ajusterBudget, marquerBossDebloqueVu } = useGame();
+  const {
+    state,
+    isHydrated,
+    ajusterBudget,
+    acheterGazette,
+    marquerBossDebloqueVu,
+  } = useGame();
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -221,6 +227,9 @@ export default function QgPage() {
             niveauVision={
               aGenVeilleActive(state) ? 2 : aGenVeilleDiscrete(state) ? 1 : 0
             }
+            achetee={state.gazetteAchetee}
+            budget={state.budget}
+            onAcheter={() => acheterGazette()}
           />
 
           {(() => {
