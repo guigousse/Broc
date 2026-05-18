@@ -39,7 +39,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Livres & Papeterie",
     taillePool: 7,
     poolExclusif: [],
-    conditionDeblocage: { type: "budget", montant: 200 },
+    conditionDeblocage: { type: "budget", montant: 150 },
   },
   {
     id: "vide-dressing-centre",
@@ -52,7 +52,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Mode",
     taillePool: 7,
     poolExclusif: [],
-    conditionDeblocage: { type: "budget", montant: 250 },
+    conditionDeblocage: { type: "budget", montant: 200 },
   },
   {
     id: "brocante-club-jeux",
@@ -65,7 +65,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Jeux & Loisirs",
     taillePool: 7,
     poolExclusif: [],
-    conditionDeblocage: { type: "budget", montant: 300 },
+    conditionDeblocage: { type: "budget", montant: 250 },
   },
 
   // ============================================================
@@ -84,7 +84,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 1000 },
+        { type: "budget", montant: 800 },
         { type: "brocantesDebloquees", tier: 1, nombre: 3 },
       ],
     },
@@ -102,8 +102,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 1500 },
-        { type: "ventesCategorie", categorie: "Maison", nombre: 5 },
+        { type: "budget", montant: 1200 },
+        { type: "ventesCategorie", categorie: "Maison", nombre: 4 },
       ],
     },
   },
@@ -121,7 +121,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 1200 },
+        { type: "budget", montant: 1000 },
         { type: "ventesCategorie", categorie: "Musique", nombre: 3 },
       ],
     },
@@ -140,7 +140,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 1000 },
+        { type: "budget", montant: 900 },
         { type: "ventesCategorie", categorie: "Bricolage", nombre: 3 },
       ],
     },
@@ -159,8 +159,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 1400 },
-        { type: "ventesCategorie", categorie: "Maison", nombre: 5 },
+        { type: "budget", montant: 1200 },
+        { type: "ventesCategorie", categorie: "Maison", nombre: 4 },
       ],
     },
   },
@@ -186,7 +186,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 3000 },
+        { type: "budget", montant: 2500 },
         { type: "brocantesDebloquees", tier: 2, nombre: 5 },
       ],
     },
@@ -205,7 +205,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 4500 },
+        { type: "budget", montant: 4000 },
         { type: "brocantesDebloquees", tier: 2, nombre: 5 },
       ],
     },
@@ -224,8 +224,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 3500 },
-        { type: "ventesCategorie", categorie: "Mode", nombre: 10 },
+        { type: "budget", montant: 3000 },
+        { type: "ventesCategorie", categorie: "Mode", nombre: 8 },
       ],
     },
   },
@@ -243,8 +243,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 4000 },
-        { type: "ventesCategorie", categorie: "Musique", nombre: 10 },
+        { type: "budget", montant: 3500 },
+        { type: "ventesCategorie", categorie: "Musique", nombre: 8 },
       ],
     },
   },
@@ -262,8 +262,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 5000 },
-        { type: "ventesCategorie", categorie: "Maison", nombre: 15 },
+        { type: "budget", montant: 4500 },
+        { type: "ventesCategorie", categorie: "Maison", nombre: 12 },
       ],
     },
   },
@@ -292,7 +292,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "budget", montant: 10000 },
+        { type: "budget", montant: 8000 },
         { type: "brocantesDebloquees", tier: 3, nombre: 5 },
       ],
     },
