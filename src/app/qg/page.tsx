@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
-import { getBrocanteById } from "@/data/brocantes";
+import { getBrocanteById, brocantesParTier } from "@/data/brocantes";
+import { estDebloquee } from "@/lib/deblocage";
 import {
   aConnaisseurTendance,
   aConnaisseurVitrine,
@@ -258,7 +259,14 @@ export default function QgPage() {
                       ? "Toutes les pièces sont entre vos mains."
                       : `${cat.vues} pièce${cat.vues > 1 ? "s" : ""} aperçue${cat.vues > 1 ? "s" : ""}, ${cat.possedees} acquise${cat.possedees > 1 ? "s" : ""}.`}
                 </p>
-                <div style={{ display: "flex", justifyContent: "center" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    alignItems: "center",
+                  }}
+                >
                   <Button
                     variant="secondary"
                     size="md"
@@ -266,6 +274,37 @@ export default function QgPage() {
                   >
                     Ouvrir le catalogue
                   </Button>
+                  {(() => {
+                    const dejaParTier = new Map<1 | 2 | 3 | 4, Set<string>>([
+                      [1, new Set<string>()],
+                      [2, new Set<string>()],
+                      [3, new Set<string>()],
+                      [4, new Set<string>()],
+                    ]);
+                    for (const tier of [1, 2, 3, 4] as const) {
+                      for (const b of brocantesParTier(tier)) {
+                        if (estDebloquee(b, state, dejaParTier)) {
+                          dejaParTier.get(tier)!.add(b.id);
+                        }
+                      }
+                    }
+                    const aUneTrois = dejaParTier.get(3)!.size > 0;
+                    return (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={!aUneTrois}
+                        onClick={() => router.push("/trophees")}
+                        title={
+                          aUneTrois
+                            ? "Voir la salle des trophées"
+                            : "Débloquez une brocante 3⭐ pour ouvrir la salle"
+                        }
+                      >
+                        Salle des trophées
+                      </Button>
+                    );
+                  })()}
                 </div>
               </Panel>
             );
