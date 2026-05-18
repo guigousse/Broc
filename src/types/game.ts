@@ -172,7 +172,12 @@ export const INITIAL_JOUR = 1;
 export type ConditionDeblocage =
   | { type: "depart" }
   | { type: "jour"; jour: number }
-  | { type: "budget"; montant: number };
+  | { type: "budget"; montant: number }
+  | { type: "ventesCategorie"; categorie: CategorieObjet; nombre: number }
+  | { type: "brocantesDebloquees"; tier: 1 | 2 | 3; nombre: number }
+  | { type: "ET"; conditions: ConditionDeblocage[] };
+
+export type BrocanteTier = 1 | 2 | 3;
 
 export interface Brocante {
   id: string;
@@ -180,6 +185,13 @@ export interface Brocante {
   description: string;
   ambiance: string;
   taillePool: number;
+  tier: BrocanteTier;
+  /** Nombre d'étoiles (équivalent au tier — gardé séparé pour lisibilité UI). */
+  etoiles: 1 | 2 | 3;
+  /** Si présent, la brocante est spécialisée dans cette catégorie. */
+  specialisation?: CategorieObjet;
+  /** Pool d'objets exclusifs à cette brocante (rares et légendaires propres). */
+  poolExclusif: string[]; // liste de templateId
   conditionDeblocage: ConditionDeblocage;
 }
 
