@@ -50,7 +50,12 @@ export function InventoryGrid({ objets, categoriesConnues }: InventoryGridProps)
       {Array.from(parCategorie.entries())
         .filter(([, list]) => list.length > 0)
         .map(([cat, list]) => (
-          <CategorieAccordion key={cat} categorie={cat} compte={list.length}>
+          <CategorieAccordion
+            key={cat}
+            categorie={cat}
+            compte={list.length}
+            defaultOpen={false}
+          >
             <div
               style={{
                 display: "grid",
