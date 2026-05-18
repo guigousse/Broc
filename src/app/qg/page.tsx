@@ -18,7 +18,7 @@ import {
   aGenVeilleActive,
   aGenVeilleDiscrete,
 } from "@/lib/competences";
-import { progressionGlobale } from "@/lib/catalogue";
+import { progressionGlobale } from "@/lib/collection";
 import type { CategorieObjet } from "@/types/game";
 
 export default function QgPage() {
@@ -265,11 +265,11 @@ export default function QgPage() {
           })()}
 
           {(() => {
-            const cat = progressionGlobale(state.catalogue);
+            const col = progressionGlobale(state.collection);
             return (
               <Panel
-                eyebrow="— catalogue des trésors —"
-                title={`Catalogue · ${cat.possedees} / ${cat.total}`}
+                eyebrow="— collection personnelle —"
+                title={`Collection · ${col.donnees} / ${col.total}`}
               >
                 <p
                   style={{
@@ -281,11 +281,11 @@ export default function QgPage() {
                     textAlign: "center",
                   }}
                 >
-                  {cat.possedees === 0
-                    ? "Vous n'avez encore rien collectionné."
-                    : cat.possedees === cat.total
-                      ? "Toutes les pièces sont entre vos mains."
-                      : `${cat.vues} pièce${cat.vues > 1 ? "s" : ""} aperçue${cat.vues > 1 ? "s" : ""}, ${cat.possedees} acquise${cat.possedees > 1 ? "s" : ""}.`}
+                  {col.donnees === 0
+                    ? "Aucun objet dans votre collection. Donnez vos premières pièces depuis l'inventaire."
+                    : col.donnees === col.total
+                      ? "Collection complète — bravo !"
+                      : `${col.donnees} pièce${col.donnees > 1 ? "s" : ""} donnée${col.donnees > 1 ? "s" : ""}, valeur ${col.valeur.toLocaleString("fr-FR")} €.`}
                 </p>
                 <p
                   style={{
@@ -311,9 +311,9 @@ export default function QgPage() {
                   <Button
                     variant="secondary"
                     size="md"
-                    onClick={() => router.push("/catalogue")}
+                    onClick={() => router.push("/collection")}
                   >
-                    Ouvrir le catalogue
+                    Ouvrir la collection
                   </Button>
                   {(() => {
                     const aUneTrois = dejaParTier.get(3)!.size > 0;

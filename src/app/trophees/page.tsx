@@ -15,10 +15,10 @@ import { CATEGORIES } from "@/data/categories";
 import { BROCANTES, brocantesParTier } from "@/data/brocantes";
 import { estDebloquee } from "@/lib/deblocage";
 import {
-  catalogueComplete,
+  collectionComplete,
   progressionCategorie,
   progressionGlobale,
-} from "@/lib/catalogue";
+} from "@/lib/collection";
 
 export default function TropheesPage() {
   const router = useRouter();
@@ -67,12 +67,12 @@ export default function TropheesPage() {
     debloqueesParTier.get(3)!.size +
     debloqueesParTier.get(4)!.size;
 
-  // Légendaires possédés (rarete legendaire avec possede > 0)
+  // Légendaires possédés (rarete legendaire avec donation active)
   const legendairesPossedees: { templateId: string; nom: string; categorie: typeof CATEGORIES[number] }[] =
     [];
   for (const cat of CATEGORIES) {
-    for (const e of state.catalogue[cat] ?? []) {
-      if (e.rarete === "legendaire" && e.possede > 0) {
+    for (const e of state.collection[cat] ?? []) {
+      if (e.rarete === "legendaire" && e.donation !== null) {
         legendairesPossedees.push({
           templateId: e.templateId,
           nom: e.nom,
@@ -83,8 +83,8 @@ export default function TropheesPage() {
   }
 
   // Progression globale
-  const global = progressionGlobale(state.catalogue);
-  const complete = catalogueComplete(state.catalogue);
+  const global = progressionGlobale(state.collection);
+  const complete = collectionComplete(state.collection);
 
   return (
     <div
@@ -191,7 +191,7 @@ export default function TropheesPage() {
                     margin: 0,
                   }}
                 >
-                  {global.possedees} / {global.total} · catalogue complet
+                  {global.donnees} / {global.total} · catalogue complet
                 </p>
               </>
             ) : (
@@ -228,7 +228,7 @@ export default function TropheesPage() {
                     margin: 0,
                   }}
                 >
-                  Progression actuelle : {global.possedees} / {global.total}
+                  Progression actuelle : {global.donnees} / {global.total}
                 </p>
               </>
             )}
@@ -403,12 +403,12 @@ export default function TropheesPage() {
         {/* PROGRESSION PAR CATÉGORIE */}
         <Panel
           eyebrow="— catalogue —"
-          title={`Progression par catégorie · ${global.possedees} / ${global.total}`}
+          title={`Progression par catégorie · ${global.donnees} / ${global.total}`}
         >
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {CATEGORIES.map((cat, i) => {
-              const p = progressionCategorie(state.catalogue, cat);
-              const pct = p.total > 0 ? (p.possedees / p.total) * 100 : 0;
+              const p = progressionCategorie(state.collection, cat);
+              const pct = p.total > 0 ? (p.donnees / p.total) * 100 : 0;
               return (
                 <li
                   key={cat}
@@ -451,7 +451,7 @@ export default function TropheesPage() {
                         color: "var(--brass-700)",
                       }}
                     >
-                      {p.possedees} / {p.total}
+                      {p.donnees} / {p.total}
                     </span>
                   </div>
                   <div
