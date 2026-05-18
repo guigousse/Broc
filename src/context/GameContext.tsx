@@ -81,6 +81,7 @@ interface GameContextValue {
   gagnerXP: (treeId: CompetenceTreeId, montant: number) => void;
   marquerVuTemplate: (templateId: string) => void;
   marquerPossedeTemplate: (templateId: string) => void;
+  marquerBossDebloqueVu: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -213,6 +214,7 @@ function migrerSauvegarde(loaded: GameState): GameState {
     competenceTrees: trees,
     competencesDebloquees,
     catalogue,
+    bossDebloqueSeen: loaded.bossDebloqueSeen ?? false,
   };
 }
 
@@ -257,6 +259,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       competenceTrees: emptyAllTrees(),
       competencesDebloquees: [],
       catalogue: initCatalogue(),
+      bossDebloqueSeen: false,
     });
     router.push("/qg");
   }, [router]);
@@ -556,6 +559,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const marquerBossDebloqueVu = useCallback(() => {
+    setState((prev) =>
+      prev && !prev.bossDebloqueSeen
+        ? { ...prev, bossDebloqueSeen: true }
+        : prev,
+    );
+  }, []);
+
   const value = useMemo<GameContextValue>(
     () => ({
       state,
@@ -578,6 +589,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       gagnerXP,
       marquerVuTemplate,
       marquerPossedeTemplate,
+      marquerBossDebloqueVu,
     }),
     [
       state,
@@ -600,6 +612,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       gagnerXP,
       marquerVuTemplate,
       marquerPossedeTemplate,
+      marquerBossDebloqueVu,
     ],
   );
 

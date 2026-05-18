@@ -71,6 +71,8 @@ export interface GameState {
   competenceTrees: Record<CompetenceTreeId, CompetenceTreeState>;
   competencesDebloquees: CompetenceId[];
   catalogue: Record<CategorieObjet, CatalogueEntree[]>;
+  /** Vrai si la modale d'annonce du déblocage du boss a déjà été montrée. */
+  bossDebloqueSeen: boolean;
 }
 
 export type CompetenceId = string;

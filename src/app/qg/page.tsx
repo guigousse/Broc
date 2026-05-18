@@ -7,6 +7,7 @@ import { MarketTrendsPanel } from "@/components/MarketTrendsPanel";
 import { StatusBar } from "@/components/StatusBar";
 import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
+import { BossUnlockModal } from "@/components/BossUnlockModal";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import { getBrocanteById, brocantesParTier } from "@/data/brocantes";
@@ -22,7 +23,7 @@ import type { CategorieObjet } from "@/types/game";
 
 export default function QgPage() {
   const router = useRouter();
-  const { state, isHydrated, ajusterBudget } = useGame();
+  const { state, isHydrated, ajusterBudget, marquerBossDebloqueVu } = useGame();
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -65,6 +66,9 @@ export default function QgPage() {
     dejaParTier.get(2)!.size +
     dejaParTier.get(3)!.size +
     dejaParTier.get(4)!.size;
+
+  const bossEstDebloque = dejaParTier.get(4)!.size > 0;
+  const montrerModale = bossEstDebloque && state !== null && !state.bossDebloqueSeen;
 
   if (!isHydrated || !state) {
     return (
@@ -364,6 +368,9 @@ export default function QgPage() {
           </Panel>
         </div>
       </div>
+      {montrerModale && (
+        <BossUnlockModal onClose={marquerBossDebloqueVu} />
+      )}
     </div>
   );
 }
