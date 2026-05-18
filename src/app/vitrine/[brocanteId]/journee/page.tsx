@@ -174,11 +174,14 @@ export default function VitrineJourneePage() {
       router.replace("/vitrine");
       return;
     }
+    // Une fois la journée terminée, on reste sur la page pour afficher le résumé.
+    // viderVitrine() a remis state.vitrine à null et ne doit pas déclencher de redirect.
+    if (journeeFinie) return;
     if (!state.vitrine || state.vitrine.brocanteId !== brocante.id) {
       router.replace(`/vitrine/${brocante.id}`);
       return;
     }
-    if (state.vitrine.objets.length === 0 && !journeeFinie) {
+    if (state.vitrine.objets.length === 0) {
       router.replace(`/vitrine/${brocante.id}`);
     }
   }, [isHydrated, state, router, journeeFinie, brocante]);
