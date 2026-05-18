@@ -267,12 +267,42 @@ export const BROCANTES: Brocante[] = [
       ],
     },
   },
+
+  // ============================================================
+  // BOSS — Salon des Antiquaires (tier 4)
+  // Toutes les pièces UNIQUES du catalogue y résident.
+  // ============================================================
+  {
+    id: "salon-antiquaires-drouot",
+    nom: "Salon des Antiquaires de Drouot",
+    description:
+      "Le saint des saints. Les plus grands collectionneurs s'y croisent, les pièces uniques y trouvent leur dernier passage.",
+    ambiance: "Mythique",
+    tier: 4,
+    etoiles: 4,
+    taillePool: 12,
+    poolExclusif: [
+      "uniq.mus.violon_paganini",
+      "uniq.jx.console_pong_1972",
+      "uniq.lv.manuscrit_voltaire",
+      "uniq.mo.bijou_marie_antoinette",
+      "uniq.ma.vase_ming_dynasty",
+      "uniq.br.coffre_outils_louis_xiv",
+    ],
+    conditionDeblocage: {
+      type: "ET",
+      conditions: [
+        { type: "budget", montant: 10000 },
+        { type: "brocantesDebloquees", tier: 3, nombre: 5 },
+      ],
+    },
+  },
 ];
 
 export function getBrocanteById(id: string): Brocante | undefined {
   return BROCANTES.find((b) => b.id === id);
 }
 
-export function brocantesParTier(tier: 1 | 2 | 3): Brocante[] {
+export function brocantesParTier(tier: 1 | 2 | 3 | 4): Brocante[] {
   return BROCANTES.filter((b) => b.tier === tier);
 }
