@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CatalogueGrid } from "@/components/CatalogueGrid";
+import { CollectionGrid } from "@/components/CollectionGrid";
 import { StatusBar } from "@/components/StatusBar";
 import { Button } from "@/components/ui/Button";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
@@ -14,21 +14,31 @@ import { CATEGORIES } from "@/data/categories";
 import {
   progressionCategorie,
   progressionGlobale,
-} from "@/lib/catalogue";
+} from "@/lib/collection";
 import type { CategorieObjet } from "@/types/game";
 
-export default function CataloguePage() {
+export default function CollectionPage() {
   const router = useRouter();
-  const { state, isHydrated } = useGame();
+  const { state, isHydrated, donnerACollection, retirerDeCollection } = useGame();
   const [catSelectionnee, setCatSelectionnee] = useState<CategorieObjet>(
     CATEGORIES[0],
   );
+  const [flash, setFlash] = useState<string | null>(null);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
   }, [isHydrated, state, router]);
 
-  if (!isHydrated || !state) {
+  const global = useMemo(
+    () => (state ? progressionGlobale(state.collection) : null),
+    [state],
+  );
+  const courante = useMemo(
+    () => (state ? progressionCategorie(state.collection, catSelectionnee) : null),
+    [state, catSelectionnee],
+  );
+
+  if (!isHydrated || !state || !global || !courante) {
     return (
       <main
         style={{
@@ -42,14 +52,21 @@ export default function CataloguePage() {
           fontSize: 12,
         }}
       >
-        — ouverture du catalogue…
+        — ouverture de la collection…
       </main>
     );
   }
 
-  const global = progressionGlobale(state.catalogue);
-  const courante = progressionCategorie(state.catalogue, catSelectionnee);
-  const entrees = state.catalogue[catSelectionnee] ?? [];
+  const slots = state.collection[catSelectionnee] ?? [];
+
+  const handleDonner = (objetId: string) => {
+    const res = donnerACollection(objetId);
+    setFlash(res.ok ? "Donation enregistrée." : res.raison ?? "Erreur.");
+  };
+  const handleRetirer = (templateId: string) => {
+    const res = retirerDeCollection(templateId);
+    setFlash(res.ok ? "Objet retiré et remis en inventaire." : res.raison ?? "Erreur.");
+  };
 
   return (
     <div
@@ -77,7 +94,7 @@ export default function CataloguePage() {
           }}
         >
           <div>
-            <div className="eyebrow">— catalogue des trésors —</div>
+            <div className="eyebrow">— collection personnelle —</div>
             <h1
               style={{
                 fontFamily: "var(--font-display)",
@@ -90,7 +107,7 @@ export default function CataloguePage() {
                 lineHeight: 1.1,
               }}
             >
-              Catalogue
+              Collection
             </h1>
             <p
               style={{
@@ -102,8 +119,8 @@ export default function CataloguePage() {
                 maxWidth: 540,
               }}
             >
-              Chaque pièce croisée chez un vendeur ou un client apparaît grisée.
-              Posséder l'objet (au moins une fois) la révèle en couleur.
+              Donnez des objets de votre inventaire pour garnir vos slots. La valeur
+              totale (état pondéré) débloque les brocantes prestigieuses.
             </p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
@@ -116,7 +133,13 @@ export default function CataloguePage() {
                 color: "var(--brass-700)",
               }}
             >
-              Progression : <span style={{ color: "var(--forest-800)" }}>{global.possedees} / {global.total}</span>
+              Valeur totale :{" "}
+              <span style={{ color: "var(--forest-800)" }}>
+                {global.valeur.toLocaleString("fr-FR")} €
+              </span>
+              {" · "}
+              {global.donnees} / {global.total} slot
+              {global.total > 1 ? "s" : ""}
             </div>
             <Link href="/qg">
               <Button variant="ghost" size="sm">
@@ -128,15 +151,32 @@ export default function CataloguePage() {
 
         <DecoDivider />
 
+        {flash && (
+          <div
+            style={{
+              padding: "10px 14px",
+              background: "var(--paper-100)",
+              border: "1px solid var(--brass-500)",
+              fontFamily: "var(--font-serif)",
+              fontStyle: "italic",
+              fontSize: 14,
+              color: "var(--ink-700)",
+              textAlign: "center",
+            }}
+          >
+            {flash}
+          </div>
+        )}
+
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))",
             gap: 10,
           }}
         >
           {CATEGORIES.map((c) => {
-            const p = progressionCategorie(state.catalogue, c);
+            const p = progressionCategorie(state.collection, c);
             const selected = c === catSelectionnee;
             return (
               <button
@@ -186,7 +226,7 @@ export default function CataloguePage() {
                       color: selected ? "var(--brass-300)" : "var(--brass-700)",
                     }}
                   >
-                    {p.possedees} / {p.total}
+                    {p.donnees} / {p.total} · {p.valeur} €
                   </div>
                 </div>
               </button>
@@ -196,9 +236,14 @@ export default function CataloguePage() {
 
         <Panel
           eyebrow={`— ${catSelectionnee} —`}
-          title={`Trésors · ${courante.possedees} / ${courante.total}`}
+          title={`${courante.donnees} / ${courante.total} · ${courante.valeur.toLocaleString("fr-FR")} €`}
         >
-          <CatalogueGrid entrees={entrees} />
+          <CollectionGrid
+            slots={slots}
+            inventaire={state.inventaireJoueur}
+            onDonner={handleDonner}
+            onRetirer={handleRetirer}
+          />
         </Panel>
       </div>
     </div>
