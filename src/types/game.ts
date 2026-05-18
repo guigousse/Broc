@@ -183,7 +183,7 @@ export type ConditionDeblocage =
   | { type: "brocantesDebloquees"; tier: 1 | 2 | 3; nombre: number }
   | { type: "ET"; conditions: ConditionDeblocage[] };
 
-export type BrocanteTier = 1 | 2 | 3;
+export type BrocanteTier = 1 | 2 | 3 | 4;
 
 export interface Brocante {
   id: string;
@@ -193,7 +193,7 @@ export interface Brocante {
   taillePool: number;
   tier: BrocanteTier;
   /** Nombre d'étoiles (équivalent au tier — gardé séparé pour lisibilité UI). */
-  etoiles: 1 | 2 | 3;
+  etoiles: 1 | 2 | 3 | 4;
   /** Si présent, la brocante est spécialisée dans cette catégorie. */
   specialisation?: CategorieObjet;
   /** Pool d'objets exclusifs à cette brocante (rares et légendaires propres). */

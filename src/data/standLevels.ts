@@ -32,6 +32,7 @@ export const COUTS_STAND: Record<BrocanteTier, Record<StandLevel, number>> = {
   1: { 1: 20, 2: 50, 3: 120 },
   2: { 1: 70, 2: 180, 3: 420 },
   3: { 1: 220, 2: 550, 3: 1300 },
+  4: { 1: 800, 2: 2000, 3: 5000 },
 };
 
 export function niveauRequis(nbObjets: number): StandConfig | null {

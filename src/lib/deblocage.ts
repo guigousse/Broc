@@ -46,7 +46,7 @@ function compterVentesCategorie(
 export function estDebloquee(
   brocante: Brocante,
   state: Pick<GameState, "jourActuel" | "budget" | "historique">,
-  brocantesDebloqueesParTier?: Map<1 | 2 | 3, Set<string>>,
+  brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): boolean {
   return evaluerCondition(
     brocante.conditionDeblocage,
@@ -58,7 +58,7 @@ export function estDebloquee(
 function evaluerCondition(
   c: ConditionDeblocage,
   state: Pick<GameState, "jourActuel" | "budget" | "historique">,
-  brocantesDebloqueesParTier?: Map<1 | 2 | 3, Set<string>>,
+  brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): boolean {
   switch (c.type) {
     case "depart":

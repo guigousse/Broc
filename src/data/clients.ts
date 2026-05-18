@@ -335,7 +335,7 @@ export const ALL_PERSONNAGES: ClientPersonnage[] = [
 ];
 
 /** Sélectionne N personnages au hasard, filtrés par tierMin <= tier. */
-export function genererPoolClients(taille: number, tier: 1 | 2 | 3 = 3): ClientPersonnage[] {
+export function genererPoolClients(taille: number, tier: 1 | 2 | 3 | 4 = 4): ClientPersonnage[] {
   const filtres = ALL_PERSONNAGES.filter((p) => p.tierMin <= tier);
   const copy = [...filtres];
   for (let i = copy.length - 1; i > 0; i--) {
