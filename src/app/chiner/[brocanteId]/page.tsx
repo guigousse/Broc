@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { DecoDivider } from "@/components/ui/DecoDivider";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { EtatBadge } from "@/components/ui/EtatBadge";
+import { RareteBadge } from "@/components/ui/RareteBadge";
 import { SessionSummary } from "@/components/SessionSummary";
 import { useGame } from "@/context/GameContext";
 import { getBrocanteById } from "@/data/brocantes";
@@ -423,6 +424,18 @@ function ObjetEnVenteCard({
 
       <div
         style={{
+          display: "flex",
+          gap: 6,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <EtatBadge etat={objet.etat} />
+        {objet.rarete !== "commun" && <RareteBadge rarete={objet.rarete} />}
+      </div>
+
+      <div
+        style={{
           fontFamily: "var(--font-mono)",
           fontSize: 9.5,
           color: "var(--brass-700)",
@@ -445,60 +458,63 @@ function ObjetEnVenteCard({
         {objet.nom}
       </div>
 
-      {oeilExerce && (
+      <div
+        style={{
+          paddingTop: 8,
+          borderTop: "1px dotted var(--paper-500)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          fontFamily: "var(--font-mono)",
+          fontSize: 10,
+          letterSpacing: "0.08em",
+        }}
+      >
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            letterSpacing: "0.1em",
-            color: "var(--brass-700)",
+            alignItems: "baseline",
           }}
-          title="Compétence Œil exercé"
         >
-          <span>RÉF.</span>
-          <span style={{ color: "var(--forest-700)" }}>
-            {objet.prixReferenceReel} €
-          </span>
+          <span style={{ color: "var(--brass-700)" }}>PRIX</span>
+          {prixAffiche ? (
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 700,
+                fontSize: 18,
+                color: "var(--forest-800)",
+              }}
+            >
+              {prixVendeur}
+              <span style={{ fontSize: 10, color: "var(--brass-700)" }}>€</span>
+            </span>
+          ) : (
+            <span
+              style={{
+                color: "var(--ink-500)",
+                fontStyle: "italic",
+              }}
+            >
+              sans étiquette
+            </span>
+          )}
         </div>
-      )}
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          paddingTop: 8,
-          borderTop: "1px dotted var(--paper-500)",
-        }}
-      >
-        <EtatBadge etat={objet.etat} />
-        {prixAffiche ? (
-          <span
+        {oeilExerce && (
+          <div
             style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: 20,
-              color: "var(--forest-800)",
+              display: "flex",
+              justifyContent: "space-between",
+              color: "var(--brass-700)",
             }}
+            title="Valeur de référence (Œil exercé)"
           >
-            {prixVendeur}
-            <span style={{ fontSize: 11, color: "var(--brass-700)" }}>€</span>
-          </span>
-        ) : (
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "var(--ink-500)",
-              fontStyle: "italic",
-            }}
-          >
-            sans étiquette
-          </span>
+            <span>VALEUR</span>
+            <span style={{ color: "var(--forest-700)" }}>
+              {objet.prixReferenceReel} €
+            </span>
+          </div>
         )}
       </div>
 

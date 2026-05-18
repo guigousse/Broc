@@ -98,18 +98,6 @@ function ObjetCard({
         opacity: enChantier ? 0.75 : 1,
       }}
     >
-      {objet.rarete !== "commun" && (
-        <div
-          style={{
-            position: "absolute",
-            top: 6,
-            left: 6,
-            zIndex: 1,
-          }}
-        >
-          <RareteBadge rarete={objet.rarete} />
-        </div>
-      )}
       {enChantier && (
         <div
           style={{
@@ -147,7 +135,7 @@ function ObjetCard({
           background:
             "linear-gradient(135deg, var(--paper-500) 0%, var(--brass-700) 100%)",
           border: "1px solid var(--brass-700)",
-          marginBottom: 10,
+          marginBottom: 8,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -155,6 +143,19 @@ function ObjetCard({
         }}
       >
         <CategorieIcon categorie={objet.categorie} size={42} strokeWidth={1.25} />
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          alignItems: "center",
+          flexWrap: "wrap",
+          marginBottom: 6,
+        }}
+      >
+        <EtatBadge etat={objet.etat} />
+        {objet.rarete !== "commun" && <RareteBadge rarete={objet.rarete} />}
       </div>
 
       <div
@@ -189,19 +190,13 @@ function ObjetCard({
           borderTop: "1px dotted var(--paper-500)",
           display: "flex",
           flexDirection: "column",
-          gap: 6,
+          gap: 4,
+          fontFamily: "var(--font-mono)",
+          fontSize: 10,
+          letterSpacing: "0.08em",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            letterSpacing: "0.08em",
-            color: "var(--ink-500)",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span style={{ color: "var(--brass-700)" }}>ACHAT</span>
           <span style={{ color: "var(--forest-800)" }}>
             {objet.prixAchat !== undefined ? `${objet.prixAchat} €` : "—"}
@@ -211,36 +206,32 @@ function ObjetCard({
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "flex-end",
+            alignItems: "baseline",
           }}
         >
-          <EtatBadge etat={objet.etat} />
+          <span style={{ color: "var(--brass-700)" }}>VALEUR</span>
           {montrerPrixRef ? (
             <span
               style={{
                 fontFamily: "var(--font-display)",
                 fontWeight: 700,
-                fontSize: 18,
+                fontSize: 16,
                 color: "var(--forest-800)",
               }}
               title="Valeur de référence du marché"
             >
               {objet.prixReferenceReel}
-              <span style={{ fontSize: 11, color: "var(--brass-700)" }}>€</span>
+              <span style={{ fontSize: 10, color: "var(--brass-700)" }}>€</span>
             </span>
           ) : (
             <span
               style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
                 color: "var(--ink-300)",
                 fontStyle: "italic",
               }}
               title="Marchand averti requis pour cette catégorie"
             >
-              valeur ?
+              ?
             </span>
           )}
         </div>

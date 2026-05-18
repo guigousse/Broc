@@ -149,6 +149,34 @@ function SlotCard({
 
       <div
         style={{
+          display: "flex",
+          gap: 6,
+          alignItems: "center",
+          flexWrap: "wrap",
+          minHeight: 22,
+          marginBottom: 6,
+        }}
+      >
+        {donne && slot.donation && <EtatBadge etat={slot.donation.etat} />}
+        {(decouvert || possedeUnJour) && slot.rarete !== "commun" && (
+          <RareteBadge rarete={slot.rarete} />
+        )}
+        {!decouvert && !possedeUnJour && (
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.16em",
+              color: "var(--ink-300)",
+            }}
+          >
+            · ? ·
+          </span>
+        )}
+      </div>
+
+      <div
+        style={{
           fontFamily: "var(--font-display)",
           fontWeight: 600,
           fontSize: 12,
@@ -172,52 +200,40 @@ function SlotCard({
           gap: 6,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          {decouvert || possedeUnJour ? (
-            <RareteBadge rarete={slot.rarete} />
-          ) : (
-            <span
+        {donne && slot.donation && (
+          <>
+            <div
               style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
                 fontFamily: "var(--font-mono)",
                 fontSize: 10,
-                letterSpacing: "0.16em",
-                color: "var(--ink-300)",
+                letterSpacing: "0.08em",
               }}
             >
-              · ? ·
-            </span>
-          )}
-          {donne && slot.donation && (
-            <span
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 14,
-                fontWeight: 700,
-                color: "var(--forest-700)",
-              }}
-              title={`Valeur de la donation (état ${slot.donation.etat})`}
-            >
-              {slot.donation.valeur}
-              <span style={{ fontSize: 10, color: "var(--brass-700)" }}>€</span>
-            </span>
-          )}
-        </div>
-
-        {donne && slot.donation && (
-          <div
-            style={{ display: "flex", justifyContent: "space-between", gap: 6 }}
-          >
-            <EtatBadge etat={slot.donation.etat} />
-            <Button size="sm" variant="ghost" onClick={onRetirer}>
-              Retirer
-            </Button>
-          </div>
+              <span style={{ color: "var(--brass-700)" }}>VALEUR</span>
+              <span
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "var(--forest-700)",
+                }}
+                title={`Valeur de la donation (état ${slot.donation.etat})`}
+              >
+                {slot.donation.valeur}
+                <span style={{ fontSize: 10, color: "var(--brass-700)" }}>
+                  €
+                </span>
+              </span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button size="sm" variant="ghost" onClick={onRetirer}>
+                Retirer
+              </Button>
+            </div>
+          </>
         )}
 
         {!donne && (decouvert || possedeUnJour) && (
