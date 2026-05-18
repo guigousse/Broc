@@ -51,10 +51,13 @@ function migrerEtat(etat: string): EtatObjet {
 import { appliquerGainXP } from "@/lib/xp";
 import { aGenDevin, peutRestaurerCategorie } from "@/lib/competences";
 import {
-  initCatalogue,
-  marquerPossedeTemplate as marquerPossedeFn,
-  marquerVuTemplate as marquerVuFn,
-} from "@/lib/catalogue";
+  initCollection,
+  marquerDejaPossede as marquerDejaPossedeFn,
+  marquerVu as marquerVuFn,
+  donnerObjet as donnerObjetFn,
+  retirerDonation as retirerDonationFn,
+} from "@/lib/collection";
+import { getTemplate } from "@/data/objetTemplates";
 
 interface GameContextValue {
   state: GameState | null;
@@ -80,7 +83,9 @@ interface GameContextValue {
   ) => { ok: boolean; raison?: string };
   gagnerXP: (treeId: CompetenceTreeId, montant: number) => void;
   marquerVuTemplate: (templateId: string) => void;
-  marquerPossedeTemplate: (templateId: string) => void;
+  marquerDejaPossedeTemplate: (templateId: string) => void;
+  donnerACollection: (objetId: string) => { ok: boolean; raison?: string };
+  retirerDeCollection: (templateId: string) => { ok: boolean; raison?: string };
   marquerBossDebloqueVu: () => void;
 }
 
@@ -177,18 +182,26 @@ function migrerSauvegarde(loaded: GameState): GameState {
 
   const competencesDebloquees = resetTrees ? [] : competencesValides;
 
-  // Catalogue : initialise + reconstitue les possessions à partir de l'inventaire migré
-  let catalogue =
-    loaded.catalogue && Object.keys(loaded.catalogue).length > 0
-      ? loaded.catalogue
-      : initCatalogue();
-  if (!loaded.catalogue) {
+  // Collection : init vide, puis migration depuis l'ancien `catalogue` (si présent)
+  // ou marquage dejaPossede depuis l'inventaire courant.
+  let collection = initCollection();
+  const ancienCatalogue = (loaded as unknown as { catalogue?: Record<string, Array<{ templateId: string; vu?: boolean; possede?: number }>> }).catalogue;
+  if (ancienCatalogue) {
+    for (const cat of Object.keys(ancienCatalogue)) {
+      const entrees = ancienCatalogue[cat] ?? [];
+      for (const e of entrees) {
+        if (e.vu) collection = marquerVuFn(collection, e.templateId);
+        if ((e.possede ?? 0) > 0)
+          collection = marquerDejaPossedeFn(collection, e.templateId);
+      }
+    }
+  } else {
     for (const o of inventaire) {
-      catalogue = marquerPossedeFn(catalogue, o.templateId);
+      collection = marquerDejaPossedeFn(collection, o.templateId);
     }
     if (vitrineActuelle) {
       for (const v of vitrineActuelle.objets) {
-        catalogue = marquerPossedeFn(catalogue, v.objet.templateId);
+        collection = marquerDejaPossedeFn(collection, v.objet.templateId);
       }
     }
   }
@@ -213,7 +226,7 @@ function migrerSauvegarde(loaded: GameState): GameState {
       (loaded.jourActuel ?? INITIAL_JOUR) + PERIODE_TENDANCES_JOURS,
     competenceTrees: trees,
     competencesDebloquees,
-    catalogue,
+    collection,
     bossDebloqueSeen: loaded.bossDebloqueSeen ?? false,
   };
 }
@@ -258,7 +271,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       prochainRafraichissementTendances: INITIAL_JOUR + PERIODE_TENDANCES_JOURS,
       competenceTrees: emptyAllTrees(),
       competencesDebloquees: [],
-      catalogue: initCatalogue(),
+      collection: initCollection(),
       bossDebloqueSeen: false,
     });
     router.push("/qg");
@@ -546,18 +559,102 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const marquerVuTemplate = useCallback((templateId: string) => {
     setState((prev) =>
       prev
-        ? { ...prev, catalogue: marquerVuFn(prev.catalogue, templateId) }
+        ? { ...prev, collection: marquerVuFn(prev.collection, templateId) }
         : prev,
     );
   }, []);
 
-  const marquerPossedeTemplate = useCallback((templateId: string) => {
+  const marquerDejaPossedeTemplate = useCallback((templateId: string) => {
     setState((prev) =>
       prev
-        ? { ...prev, catalogue: marquerPossedeFn(prev.catalogue, templateId) }
+        ? { ...prev, collection: marquerDejaPossedeFn(prev.collection, templateId) }
         : prev,
     );
   }, []);
+
+  const donnerACollection = useCallback(
+    (objetId: string): { ok: boolean; raison?: string } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: "Pas de partie." };
+      const objet = current.inventaireJoueur.find((o) => o.id === objetId);
+      if (!objet)
+        return { ok: false, raison: "Objet introuvable dans l'inventaire." };
+      if (objet.enRestauration)
+        return { ok: false, raison: "Objet en cours de restauration." };
+
+      setState((prev) => {
+        if (!prev) return prev;
+        const objetCourant = prev.inventaireJoueur.find((o) => o.id === objetId);
+        if (!objetCourant) return prev;
+        const { collection: nouvelleCollection, ancienne } = donnerObjetFn(
+          prev.collection,
+          objetCourant.templateId,
+          objetCourant.etat,
+          objetCourant.prixReferenceReel,
+        );
+        const nouvelInventaire = prev.inventaireJoueur.filter(
+          (o) => o.id !== objetId,
+        );
+        if (ancienne) {
+          const tpl = getTemplate(objetCourant.templateId);
+          if (tpl) {
+            nouvelInventaire.push({
+              id: crypto.randomUUID(),
+              templateId: objetCourant.templateId,
+              nom: tpl.nom,
+              categorie: tpl.categorie,
+              etat: ancienne.etat,
+              prixReferenceReel: ancienne.valeur,
+              rarete: tpl.rarete,
+            });
+          }
+        }
+        return {
+          ...prev,
+          inventaireJoueur: nouvelInventaire,
+          collection: nouvelleCollection,
+        };
+      });
+      return { ok: true };
+    },
+    [],
+  );
+
+  const retirerDeCollection = useCallback(
+    (templateId: string): { ok: boolean; raison?: string } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: "Pas de partie." };
+      const tpl = getTemplate(templateId);
+      if (!tpl) return { ok: false, raison: "Template inconnu." };
+
+      setState((prev) => {
+        if (!prev) return prev;
+        const { collection: nouvelleCollection, ancienne } = retirerDonationFn(
+          prev.collection,
+          templateId,
+        );
+        if (!ancienne) return prev;
+        return {
+          ...prev,
+          collection: nouvelleCollection,
+          inventaireJoueur: [
+            ...prev.inventaireJoueur,
+            {
+              id: crypto.randomUUID(),
+              templateId,
+              nom: tpl.nom,
+              categorie: tpl.categorie,
+              etat: ancienne.etat,
+              prixReferenceReel: ancienne.valeur,
+              rarete: tpl.rarete,
+            },
+          ],
+        };
+      });
+      return { ok: true };
+    },
+    [],
+  );
 
   const marquerBossDebloqueVu = useCallback(() => {
     setState((prev) =>
@@ -588,7 +685,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       restaurerObjet,
       gagnerXP,
       marquerVuTemplate,
-      marquerPossedeTemplate,
+      marquerDejaPossedeTemplate,
+      donnerACollection,
+      retirerDeCollection,
       marquerBossDebloqueVu,
     }),
     [
@@ -611,7 +710,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       restaurerObjet,
       gagnerXP,
       marquerVuTemplate,
-      marquerPossedeTemplate,
+      marquerDejaPossedeTemplate,
+      donnerACollection,
+      retirerDeCollection,
       marquerBossDebloqueVu,
     ],
   );
