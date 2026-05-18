@@ -29,15 +29,23 @@ function shuffle<T>(arr: readonly T[]): T[] {
   return copy;
 }
 
-/** Plage du prix min accepté par le vendeur, en % de son prix affiché. */
-const TOLERANCE_MIN = 0.7;
-const TOLERANCE_MAX = 0.9;
+/**
+ * Plages du prix min accepté par le vendeur, en % de son prix affiché.
+ * Plus la brocante est prestigieuse, plus les vendeurs sont rigides.
+ */
+const TOLERANCE_PAR_TIER: Record<1 | 2 | 3 | 4, { min: number; max: number }> = {
+  1: { min: 0.70, max: 0.90 },
+  2: { min: 0.78, max: 0.92 },
+  3: { min: 0.85, max: 0.95 },
+  4: { min: 0.90, max: 0.97 },
+};
 /** Seuil sous lequel l'offre est jugée insultante (vendeur se fâche). */
 export const SEUIL_COLERE_VENDEUR = 0.5;
 
 function instancier(
   template: ObjetTemplate,
   tendances: readonly Tendance[],
+  tier: 1 | 2 | 3 | 4 = 1,
 ): ObjetEnVente {
   const etat = pickRandom(ETATS);
   const prixReferenceReel = Math.max(
@@ -50,7 +58,8 @@ function instancier(
     1,
     Math.round(prixReferenceReel * facteurVendeur * modTend),
   );
-  const tolerance = TOLERANCE_MIN + Math.random() * (TOLERANCE_MAX - TOLERANCE_MIN);
+  const { min: tolMin, max: tolMax } = TOLERANCE_PAR_TIER[tier];
+  const tolerance = tolMin + Math.random() * (tolMax - tolMin);
   const prixMinAccept = Math.max(1, Math.round(prixVendeur * tolerance));
 
   return {
@@ -89,8 +98,16 @@ function tirerTemplatePondere(pool: readonly ObjetTemplate[]): ObjetTemplate {
   return pool[pool.length - 1];
 }
 
-/** Probabilité par item de tenter un tirage dans le poolExclusif de la brocante. */
-const CHANCE_EXCLUSIF = 0.18;
+/**
+ * Probabilité par item de tenter un tirage dans le poolExclusif de la brocante.
+ * Plus la brocante est prestigieuse, plus l'exclusif est représenté.
+ */
+const CHANCE_EXCLUSIF_PAR_TIER: Record<1 | 2 | 3 | 4, number> = {
+  1: 0.12,
+  2: 0.18,
+  3: 0.25,
+  4: 0.40,
+};
 
 export function genererSession(
   taille: number,
@@ -109,14 +126,15 @@ export function genererSession(
 
   while (items.length < taille && attempts < maxAttempts) {
     attempts += 1;
+    const chanceExclusif = CHANCE_EXCLUSIF_PAR_TIER[brocante?.tier ?? 1];
     const tenterExclusif =
-      exclusifs.length > 0 && Math.random() < CHANCE_EXCLUSIF;
+      exclusifs.length > 0 && Math.random() < chanceExclusif;
     const pool = tenterExclusif ? exclusifs : POOL_COMMUN_GENERIQUE;
     const t = tirerTemplatePondere(pool);
     // Pas de doublon pour rares et légendaires
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
     dejaTires.add(t.templateId);
-    items.push(instancier(t, tendances));
+    items.push(instancier(t, tendances, brocante?.tier ?? 1));
   }
   return items;
 }
