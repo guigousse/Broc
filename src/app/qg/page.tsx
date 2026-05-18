@@ -42,6 +42,30 @@ export default function QgPage() {
     return s;
   }, [state]);
 
+  const dejaParTier = useMemo(() => {
+    const map = new Map<1 | 2 | 3 | 4, Set<string>>([
+      [1, new Set<string>()],
+      [2, new Set<string>()],
+      [3, new Set<string>()],
+      [4, new Set<string>()],
+    ]);
+    if (!state) return map;
+    for (const tier of [1, 2, 3, 4] as const) {
+      for (const b of brocantesParTier(tier)) {
+        if (estDebloquee(b, state, map)) {
+          map.get(tier)!.add(b.id);
+        }
+      }
+    }
+    return map;
+  }, [state]);
+
+  const totalBrocantesDebloquees =
+    dejaParTier.get(1)!.size +
+    dejaParTier.get(2)!.size +
+    dejaParTier.get(3)!.size +
+    dejaParTier.get(4)!.size;
+
   if (!isHydrated || !state) {
     return (
       <main
@@ -259,6 +283,19 @@ export default function QgPage() {
                       ? "Toutes les pièces sont entre vos mains."
                       : `${cat.vues} pièce${cat.vues > 1 ? "s" : ""} aperçue${cat.vues > 1 ? "s" : ""}, ${cat.possedees} acquise${cat.possedees > 1 ? "s" : ""}.`}
                 </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 10.5,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "var(--brass-700)",
+                    margin: "0 0 12px",
+                    textAlign: "center",
+                  }}
+                >
+                  Brocantes : {totalBrocantesDebloquees} / 16 débloquées
+                </p>
                 <div
                   style={{
                     display: "flex",
@@ -275,19 +312,6 @@ export default function QgPage() {
                     Ouvrir le catalogue
                   </Button>
                   {(() => {
-                    const dejaParTier = new Map<1 | 2 | 3 | 4, Set<string>>([
-                      [1, new Set<string>()],
-                      [2, new Set<string>()],
-                      [3, new Set<string>()],
-                      [4, new Set<string>()],
-                    ]);
-                    for (const tier of [1, 2, 3, 4] as const) {
-                      for (const b of brocantesParTier(tier)) {
-                        if (estDebloquee(b, state, dejaParTier)) {
-                          dejaParTier.get(tier)!.add(b.id);
-                        }
-                      }
-                    }
                     const aUneTrois = dejaParTier.get(3)!.size > 0;
                     return (
                       <Button
