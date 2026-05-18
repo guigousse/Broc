@@ -264,7 +264,7 @@ export default function VitrineJourneePage() {
                 vitrineRef.current,
                 tendancesRef.current,
                 mods,
-                { fancy: forceFancy },
+                { fancy: forceFancy, brocante },
               )
             : null;
           if (ev) {

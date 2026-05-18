@@ -1,6 +1,17 @@
-import type { CategorieObjet, ObjetEnVitrine, Tendance } from "@/types/game";
+import type {
+  Brocante,
+  CategorieObjet,
+  ObjetEnVitrine,
+  Tendance,
+} from "@/types/game";
 import type { ClientPersonnage } from "@/data/clients";
 import { modificateurTendance } from "@/lib/tendances";
+
+/**
+ * Bonus appliqué quand l'objet correspond à la spécialisation de la brocante
+ * (clients amateurs prêts à payer plus pour leur thème).
+ */
+export const BONUS_SPECIALISATION_CLIENT = 1.1;
 
 export interface VitrineModifiers {
   /** Bonus d'appétit catégoriel (Passion 1/2/3 cumulé via valeurs max), par catégorie. */
@@ -78,6 +89,7 @@ function calculerPrixMax(
   persona: ClientPersonnage,
   tendances: readonly Tendance[],
   modifiers: VitrineModifiers,
+  brocante?: Brocante,
 ): number {
   let facteur =
     persona.appetitMin +
@@ -89,13 +101,25 @@ function calculerPrixMax(
     const bonusPassion =
       modifiers.bonusPassionParCategorie.get(x.objet.categorie) ?? 0;
     const modSpec = 1 + bonusPassion;
+    const modBrocanteSpec =
+      brocante?.specialisation === x.objet.categorie
+        ? BONUS_SPECIALISATION_CLIENT
+        : 1;
     let modPref = 1;
     if (persona.categoriesPreferees.includes(x.objet.categorie)) {
       modPref = 1 + persona.bonusPreference;
     } else if (persona.categoriesEvitees.includes(x.objet.categorie)) {
       modPref = Math.max(0.1, 1 - persona.malusEvitement);
     }
-    return s + x.objet.prixReferenceReel * facteur * modTend * modSpec * modPref;
+    return (
+      s +
+      x.objet.prixReferenceReel *
+        facteur *
+        modTend *
+        modSpec *
+        modBrocanteSpec *
+        modPref
+    );
   }, 0);
   const remise = panier.length > 1 ? 1 - REMISE_BUNDLE_ATTENDUE : 1;
   return Math.max(1, Math.round(brut * remise));
@@ -125,7 +149,7 @@ export function genererClientEvent(
   vitrine: ObjetEnVitrine[],
   tendances: readonly Tendance[] = [],
   modifiers: VitrineModifiers = DEFAULT_MODIFIERS,
-  options: { fancy?: boolean } = {},
+  options: { fancy?: boolean; brocante?: Brocante } = {},
 ): ClientEvent | null {
   if (vitrine.length === 0) return null;
 
@@ -151,7 +175,13 @@ export function genererClientEvent(
   if (veutDeux) panier.push(pool[1]);
 
   const prixDemande = panier.reduce((s, x) => s + x.prixVente, 0);
-  const prixMax = calculerPrixMax(panier, persona, tendances, modifiers);
+  const prixMax = calculerPrixMax(
+    panier,
+    persona,
+    tendances,
+    modifiers,
+    options.brocante,
+  );
 
   let mode: ClientEvent["mode"];
   let offreInitiale: number;

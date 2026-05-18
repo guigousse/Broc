@@ -42,10 +42,17 @@ const TOLERANCE_PAR_TIER: Record<1 | 2 | 3 | 4, { min: number; max: number }> = 
 /** Seuil sous lequel l'offre est jugée insultante (vendeur se fâche). */
 export const SEUIL_COLERE_VENDEUR = 0.5;
 
+/**
+ * Bonus de prix appliqué aux objets dont la catégorie correspond à la
+ * spécialisation de la brocante (le vendeur connaît la valeur de son thème).
+ */
+export const BONUS_SPECIALISATION = 1.1;
+
 function instancier(
   template: ObjetTemplate,
   tendances: readonly Tendance[],
   tier: 1 | 2 | 3 | 4 = 1,
+  brocante?: Brocante,
 ): ObjetEnVente {
   const etat = pickRandom(ETATS);
   const prixReferenceReel = Math.max(
@@ -54,9 +61,11 @@ function instancier(
   );
   const facteurVendeur = 0.6 + Math.random() * 0.8;
   const modTend = modificateurTendance(template.categorie, tendances);
+  const modSpec =
+    brocante?.specialisation === template.categorie ? BONUS_SPECIALISATION : 1;
   const prixVendeur = Math.max(
     1,
-    Math.round(prixReferenceReel * facteurVendeur * modTend),
+    Math.round(prixReferenceReel * facteurVendeur * modTend * modSpec),
   );
   const { min: tolMin, max: tolMax } = TOLERANCE_PAR_TIER[tier];
   const tolerance = tolMin + Math.random() * (tolMax - tolMin);
@@ -164,7 +173,7 @@ export function genererSession(
     // Pas de doublon pour rares et légendaires
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
     dejaTires.add(t.templateId);
-    items.push(instancier(t, tendances, brocante?.tier ?? 1));
+    items.push(instancier(t, tendances, brocante?.tier ?? 1, brocante));
   }
   return items;
 }
