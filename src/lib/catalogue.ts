@@ -62,7 +62,7 @@ export function marquerVuTemplate(
 }
 
 /** Incrémente le compteur di possessions (et marque vu). */
-export function marquerPossedeTemplate(
+export function marquerDejaPossedeTemplate(
   catalogue: Record<CategorieObjet, CatalogueEntree[]>,
   templateId: string,
 ): Record<CategorieObjet, CatalogueEntree[]> {

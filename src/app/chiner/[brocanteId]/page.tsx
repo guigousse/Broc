@@ -33,7 +33,7 @@ export default function SessionChinePage() {
     enregistrerSession,
     gagnerXP,
     marquerVuTemplate,
-    marquerPossedeTemplate,
+    marquerDejaPossedeTemplate,
   } = useGame();
 
   const brocante = useMemo(
@@ -165,7 +165,7 @@ export default function SessionChinePage() {
     }
     ajusterBudget(-it.prixVendeur);
     ajouterObjet({ ...it.objet, prixAchat: it.prixVendeur });
-    marquerPossedeTemplate(it.objet.templateId);
+    marquerDejaPossedeTemplate(it.objet.templateId);
     gagnerXPLocal(catTreeId(it.objet.categorie), XP_ACHAT_OBJET);
     setItem(id, { statut: "achete" });
     setAchats((prev) => [
