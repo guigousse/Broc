@@ -69,7 +69,7 @@ export default function SessionChinePage() {
     // le joueur ne peut plus être expulsé (par exemple si son solde redescend).
     if (items === null) {
       if (!estDebloquee(brocante, state)) return router.replace("/chiner");
-      const session = genererSession(brocante.taillePool, state.tendances);
+      const session = genererSession(brocante.taillePool, state.tendances, brocante);
       setItems(session);
       for (const it of session) {
         marquerVuTemplate(it.objet.templateId);
