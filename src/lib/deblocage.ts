@@ -4,6 +4,7 @@ import type {
   ConditionDeblocage,
   GameState,
 } from "@/types/game";
+import { valeurTotale, valeurParCategorie } from "@/lib/collection";
 
 export function descriptionCondition(c: ConditionDeblocage): string {
   switch (c.type) {
@@ -17,6 +18,10 @@ export function descriptionCondition(c: ConditionDeblocage): string {
       return `Débloqué après ${c.nombre} vente${c.nombre > 1 ? "s" : ""} de ${c.categorie}`;
     case "brocantesDebloquees":
       return `Débloqué après ${c.nombre} brocante${c.nombre > 1 ? "s" : ""} ${"⭐".repeat(c.tier)} débloquée${c.nombre > 1 ? "s" : ""}`;
+    case "valeurCollection":
+      return `Débloqué quand votre collection atteint ${c.montant} €`;
+    case "valeurCollectionCategorie":
+      return `Débloqué quand votre collection « ${c.categorie} » atteint ${c.montant} €`;
     case "ET":
       return c.conditions.map(descriptionCondition).join(" + ");
   }
@@ -37,15 +42,9 @@ function compterVentesCategorie(
   return n;
 }
 
-/**
- * Évalue si une brocante est débloquée.
- * - Pour les conditions `brocantesDebloquees`, on a besoin de connaître les brocantes
- *   déjà débloquées d'un tier inférieur (set d'IDs).
- * - Les brocantes sont évaluées par tier croissant : tier 1 d'abord, puis tier 2, etc.
- */
 export function estDebloquee(
   brocante: Brocante,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique">,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
   brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): boolean {
   return evaluerCondition(
@@ -57,7 +56,7 @@ export function estDebloquee(
 
 function evaluerCondition(
   c: ConditionDeblocage,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique">,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
   brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): boolean {
   switch (c.type) {
@@ -73,6 +72,10 @@ function evaluerCondition(
       const set = brocantesDebloqueesParTier?.get(c.tier);
       return (set?.size ?? 0) >= c.nombre;
     }
+    case "valeurCollection":
+      return valeurTotale(state.collection) >= c.montant;
+    case "valeurCollectionCategorie":
+      return valeurParCategorie(state.collection, c.categorie) >= c.montant;
     case "ET":
       return c.conditions.every((cc) =>
         evaluerCondition(cc, state, brocantesDebloqueesParTier),
