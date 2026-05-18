@@ -45,6 +45,11 @@ export interface ObjetEnVitrine {
   prixVente: number;
 }
 
+export interface VitrineActive {
+  brocanteId: string;
+  objets: ObjetEnVitrine[];
+}
+
 export interface Tendance {
   categorie: CategorieObjet;
   /** Variation en % appliquée au prix max des clients pour cette catégorie. */
@@ -55,7 +60,8 @@ export interface GameState {
   budget: number;
   jourActuel: number;
   inventaireJoueur: Objet[];
-  vitrine: ObjetEnVitrine[];
+  /** Vitrine active : objets exposés dans une brocante donnée. null = aucune vitrine ouverte. */
+  vitrine: VitrineActive | null;
   historique: Session[];
   tendances: Tendance[];
   /** Tendances pré-générées pour la prochaine édition (révélées par Veille). */
