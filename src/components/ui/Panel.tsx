@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { BrassCorners } from "./BrassCorners";
 import { DecoDivider } from "./DecoDivider";
 
@@ -10,6 +10,11 @@ interface PanelProps {
   padding?: number;
   style?: CSSProperties;
   className?: string;
+  /** Si défini, le panneau devient cliquable (sert de gros bouton). */
+  onClick?: () => void;
+  disabled?: boolean;
+  /** Titre d'aide affiché au survol (utile quand disabled). */
+  title2?: string;
 }
 
 export function Panel({
@@ -20,13 +25,31 @@ export function Panel({
   padding = 22,
   style,
   className,
+  onClick,
+  disabled = false,
+  title2,
 }: PanelProps) {
   const bg = dark ? "var(--forest-800)" : "var(--paper-100)";
   const fg = dark ? "var(--paper-200)" : "var(--ink-700)";
+  const clickable = !!onClick && !disabled;
+
+  const handleKey = (e: ReactKeyboardEvent<HTMLElement>) => {
+    if (!clickable) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick?.();
+    }
+  };
 
   return (
     <section
       className={className}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      aria-disabled={disabled || undefined}
+      title={title2}
+      onClick={clickable ? onClick : undefined}
+      onKeyDown={clickable ? handleKey : undefined}
       style={{
         position: "relative",
         background: bg,
@@ -40,7 +63,18 @@ export function Panel({
           : "inset 0 0 0 4px var(--paper-100), inset 0 0 0 5px var(--brass-500), 0 2px 0 var(--paper-400), 0 6px 14px rgba(40,25,5,0.10)",
         color: fg,
         padding,
+        cursor: clickable ? "pointer" : disabled && onClick ? "not-allowed" : "default",
+        opacity: disabled ? 0.55 : 1,
+        transition: "transform 140ms ease, box-shadow 140ms ease",
         ...style,
+      }}
+      onMouseEnter={(e) => {
+        if (!clickable) return;
+        e.currentTarget.style.transform = "translateY(-2px)";
+      }}
+      onMouseLeave={(e) => {
+        if (!clickable) return;
+        e.currentTarget.style.transform = "translateY(0)";
       }}
     >
       <BrassCorners color={dark ? "var(--brass-500)" : "var(--brass-600)"} />

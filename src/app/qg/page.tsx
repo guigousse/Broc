@@ -232,6 +232,7 @@ export default function QgPage() {
               <Panel
                 eyebrow="— grimoire du chineur —"
                 title={`Compétences · ${totalPoints} pt${totalPoints > 1 ? "s" : ""}`}
+                onClick={() => router.push("/competences")}
               >
                 <p
                   style={{
@@ -239,7 +240,7 @@ export default function QgPage() {
                     fontStyle: "italic",
                     color: "var(--ink-500)",
                     fontSize: 14,
-                    margin: "0 0 12px",
+                    margin: 0,
                     textAlign: "center",
                   }}
                 >
@@ -247,13 +248,6 @@ export default function QgPage() {
                     ? "Aucune compétence acquise pour l'instant."
                     : `${state.competencesDebloquees.length} compétence${state.competencesDebloquees.length > 1 ? "s" : ""} acquise${state.competencesDebloquees.length > 1 ? "s" : ""}.`}
                 </p>
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={() => router.push("/competences")}
-                >
-                  Ouvrir le grimoire
-                </Button>
               </Panel>
             );
           })()}
@@ -269,6 +263,7 @@ export default function QgPage() {
               <Panel
                 eyebrow="— atelier —"
                 title={`Atelier · ${enChantier.length} en chantier`}
+                onClick={() => router.push("/atelier")}
               >
                 <p
                   style={{
@@ -276,7 +271,7 @@ export default function QgPage() {
                     fontStyle: "italic",
                     color: "var(--ink-500)",
                     fontSize: 14,
-                    margin: "0 0 12px",
+                    margin: 0,
                     textAlign: "center",
                   }}
                 >
@@ -286,13 +281,6 @@ export default function QgPage() {
                       ? `${prets.length} objet${prets.length > 1 ? "s" : ""} prêt${prets.length > 1 ? "s" : ""} à récupérer.`
                       : `${enChantier.length} objet${enChantier.length > 1 ? "s" : ""} en cours de restauration.`}
                 </p>
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={() => router.push("/atelier")}
-                >
-                  Entrer dans l'atelier
-                </Button>
               </Panel>
             );
           })()}
@@ -303,6 +291,7 @@ export default function QgPage() {
               <Panel
                 eyebrow="— collection personnelle —"
                 title={`Collection · ${col.donnees} / ${col.total}`}
+                onClick={() => router.push("/collection")}
               >
                 <p
                   style={{
@@ -310,7 +299,7 @@ export default function QgPage() {
                     fontStyle: "italic",
                     color: "var(--ink-500)",
                     fontSize: 14,
-                    margin: "0 0 12px",
+                    margin: 0,
                     textAlign: "center",
                   }}
                 >
@@ -320,40 +309,38 @@ export default function QgPage() {
                       ? "Collection complète — bravo !"
                       : `${col.donnees} pièce${col.donnees > 1 ? "s" : ""} donnée${col.donnees > 1 ? "s" : ""}, valeur ${col.valeur.toLocaleString("fr-FR")} €.`}
                 </p>
-                <div
+              </Panel>
+            );
+          })()}
+
+          {(() => {
+            const aUneTrois = dejaParTier.get(3)!.size > 0;
+            return (
+              <Panel
+                eyebrow="— salle des trophées —"
+                title="Trophées"
+                onClick={() => router.push("/trophees")}
+                disabled={!aUneTrois}
+                title2={
+                  aUneTrois
+                    ? "Voir la salle des trophées"
+                    : "Débloquez une brocante 3⭐ pour ouvrir la salle"
+                }
+              >
+                <p
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8,
-                    alignItems: "stretch",
+                    fontFamily: "var(--font-serif)",
+                    fontStyle: "italic",
+                    color: "var(--ink-500)",
+                    fontSize: 14,
+                    margin: 0,
+                    textAlign: "center",
                   }}
                 >
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={() => router.push("/collection")}
-                  >
-                    Ouvrir la collection
-                  </Button>
-                  {(() => {
-                    const aUneTrois = dejaParTier.get(3)!.size > 0;
-                    return (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={!aUneTrois}
-                        onClick={() => router.push("/trophees")}
-                        title={
-                          aUneTrois
-                            ? "Voir la salle des trophées"
-                            : "Débloquez une brocante 3⭐ pour ouvrir la salle"
-                        }
-                      >
-                        Salle des trophées
-                      </Button>
-                    );
-                  })()}
-                </div>
+                  {aUneTrois
+                    ? "Admirez vos pièces les plus prestigieuses."
+                    : "Débloquez une brocante 3⭐ pour ouvrir la salle."}
+                </p>
               </Panel>
             );
           })()}
