@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { StatusBar } from "@/components/StatusBar";
 import { Button } from "@/components/ui/Button";
 import { DecoDivider } from "@/components/ui/DecoDivider";
@@ -20,7 +20,8 @@ import {
   type VitrineModifiers,
 } from "@/lib/vitrine";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
-import { niveauRequis } from "@/data/standLevels";
+import { getBrocanteById } from "@/data/brocantes";
+import { coutStand, niveauRequis } from "@/data/standLevels";
 import {
   TREE_GENERAL,
   XP_NEGOCIATION_REUSSIE_GENERAL,
@@ -58,6 +59,11 @@ interface EntreeJournal {
 
 export default function VitrineJourneePage() {
   const router = useRouter();
+  const params = useParams<{ brocanteId: string }>();
+  const brocante = useMemo(
+    () => getBrocanteById(params.brocanteId),
+    [params.brocanteId],
+  );
   const {
     state,
     isHydrated,
@@ -129,28 +135,28 @@ export default function VitrineJourneePage() {
   /** Pool de personnages pré-tirés pour la session, consommé séquentiellement. */
   const poolRef = useRef<ClientPersonnage[]>([]);
   const poolIndexRef = useRef(0);
-  if (poolRef.current.length === 0) {
-    poolRef.current = genererPoolClients(20);
+  if (poolRef.current.length === 0 && brocante) {
+    poolRef.current = genererPoolClients(20, brocante.tier);
   }
 
   // Snapshot du stand au montage (avant que la vitrine soit modifiée par les ventes)
   const standSnapshot = useRef<{ niveau: StandLevel; loyer: number; tailleInitiale: number } | null>(null);
   useEffect(() => {
     if (standSnapshot.current !== null) return;
-    if (!state || state.vitrine.length === 0) return;
-    const conf = niveauRequis(state.vitrine.length);
+    if (!state || !state.vitrine || state.vitrine.objets.length === 0 || !brocante) return;
+    const conf = niveauRequis(state.vitrine.objets.length);
     if (conf) {
       standSnapshot.current = {
         niveau: conf.niveau,
-        loyer: conf.loyer,
-        tailleInitiale: state.vitrine.length,
+        loyer: coutStand(brocante.tier, conf.niveau),
+        tailleInitiale: state.vitrine.objets.length,
       };
     }
-  }, [state]);
+  }, [state, brocante]);
 
   // Refs pour éviter les closures stale dans l'intervalle
-  const vitrineRef = useRef(state?.vitrine ?? []);
-  vitrineRef.current = state?.vitrine ?? [];
+  const vitrineRef = useRef(state?.vitrine?.objets ?? []);
+  vitrineRef.current = state?.vitrine?.objets ?? [];
 
   const tendancesRef = useRef(state?.tendances ?? []);
   tendancesRef.current = state?.tendances ?? [];
@@ -164,10 +170,18 @@ export default function VitrineJourneePage() {
       router.replace("/");
       return;
     }
-    if (state.vitrine.length === 0 && !journeeFinie) {
+    if (!brocante) {
       router.replace("/vitrine");
+      return;
     }
-  }, [isHydrated, state, router, journeeFinie]);
+    if (!state.vitrine || state.vitrine.brocanteId !== brocante.id) {
+      router.replace(`/vitrine/${brocante.id}`);
+      return;
+    }
+    if (state.vitrine.objets.length === 0 && !journeeFinie) {
+      router.replace(`/vitrine/${brocante.id}`);
+    }
+  }, [isHydrated, state, router, journeeFinie, brocante]);
 
   const ajouterJournal = useCallback((entree: Omit<EntreeJournal, "id">) => {
     setJournal((prev) => [
@@ -191,7 +205,7 @@ export default function VitrineJourneePage() {
 
     // Enregistre la session avant de vider la vitrine
     if (standSnapshot.current) {
-      const tailleInvendus = state?.vitrine.length ?? 0;
+      const tailleInvendus = state?.vitrine?.objets.length ?? 0;
       enregistrerSession({
         id: crypto.randomUUID(),
         type: "vente",
@@ -274,7 +288,7 @@ export default function VitrineJourneePage() {
       !journeeFinie &&
       isHydrated &&
       state &&
-      state.vitrine.length === 0 &&
+      (state.vitrine?.objets.length ?? 0) === 0 &&
       tempsRestant < JOURNEE_DUREE_SECONDES
     ) {
       setBravoTout(true);
@@ -481,7 +495,7 @@ export default function VitrineJourneePage() {
               />
             )}
 
-            {state.vitrine.length === 0 && !journeeFinie ? (
+            {(state.vitrine?.objets.length ?? 0) === 0 && !journeeFinie ? (
               <p
                 style={{
                   textAlign: "center",
@@ -502,7 +516,7 @@ export default function VitrineJourneePage() {
                   marginTop: 16,
                 }}
               >
-                {state.vitrine.map((e) => (
+                {(state.vitrine?.objets ?? []).map((e) => (
                   <ArticleSurEtal
                     key={e.objet.id}
                     nom={e.objet.nom}
