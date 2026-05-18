@@ -109,6 +109,9 @@ const CHANCE_EXCLUSIF_PAR_TIER: Record<1 | 2 | 3 | 4, number> = {
   4: 0.40,
 };
 
+/** Part minimale d'items de la catégorie de spécialisation (brocantes spécialisées). */
+const QUOTA_SPECIALISATION = 0.5;
+
 export function genererSession(
   taille: number,
   tendances: readonly Tendance[] = [],
@@ -124,12 +127,39 @@ export function genererSession(
     .map((id) => getTemplate(id))
     .filter((t): t is ObjetTemplate => t !== undefined);
 
+  // Brocantes spécialisées : force au moins QUOTA_SPECIALISATION d'items du thème.
+  const spe = brocante?.specialisation;
+  const quotaSpe = spe ? Math.ceil(taille * QUOTA_SPECIALISATION) : 0;
+  const poolCommunSpe = spe
+    ? POOL_COMMUN_GENERIQUE.filter((t) => t.categorie === spe)
+    : [];
+  const poolExclusifSpe = spe
+    ? exclusifs.filter((t) => t.categorie === spe)
+    : [];
+
   while (items.length < taille && attempts < maxAttempts) {
     attempts += 1;
     const chanceExclusif = CHANCE_EXCLUSIF_PAR_TIER[brocante?.tier ?? 1];
-    const tenterExclusif =
-      exclusifs.length > 0 && Math.random() < chanceExclusif;
-    const pool = tenterExclusif ? exclusifs : POOL_COMMUN_GENERIQUE;
+
+    const compteSpe = spe
+      ? items.filter((it) => it.objet.categorie === spe).length
+      : 0;
+    const restant = taille - items.length;
+    const manqueSpe = Math.max(0, quotaSpe - compteSpe);
+    const forcerSpe = spe !== undefined && manqueSpe >= restant;
+
+    let pool: readonly ObjetTemplate[];
+    if (forcerSpe) {
+      const tenterExclusif =
+        poolExclusifSpe.length > 0 && Math.random() < chanceExclusif;
+      pool = tenterExclusif ? poolExclusifSpe : poolCommunSpe;
+    } else {
+      const tenterExclusif =
+        exclusifs.length > 0 && Math.random() < chanceExclusif;
+      pool = tenterExclusif ? exclusifs : POOL_COMMUN_GENERIQUE;
+    }
+    if (pool.length === 0) continue;
+
     const t = tirerTemplatePondere(pool);
     // Pas de doublon pour rares et légendaires
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
