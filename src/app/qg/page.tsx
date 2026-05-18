@@ -348,6 +348,7 @@ export default function QgPage() {
           <Panel
             eyebrow="— carnet de comptes —"
             title={`Historique · ${state.historique.length}`}
+            onClick={() => router.push("/historique")}
           >
             <p
               style={{
@@ -355,7 +356,7 @@ export default function QgPage() {
                 fontStyle: "italic",
                 color: "var(--ink-500)",
                 fontSize: 14,
-                margin: "0 0 12px",
+                margin: 0,
                 textAlign: "center",
               }}
             >
@@ -363,15 +364,6 @@ export default function QgPage() {
                 ? "Aucune session consignée."
                 : `${state.historique.length} session${state.historique.length > 1 ? "s" : ""} dans le registre.`}
             </p>
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={() => router.push("/historique")}
-              >
-                Ouvrir le carnet
-              </Button>
-            </div>
           </Panel>
         </div>
       </div>

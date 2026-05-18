@@ -33,6 +33,13 @@ export function Panel({
   const fg = dark ? "var(--paper-200)" : "var(--ink-700)";
   const clickable = !!onClick && !disabled;
 
+  const shadowRest = dark
+    ? "0 8px 28px rgba(15,30,22,0.35), inset 0 0 0 4px var(--forest-800), inset 0 0 0 5px var(--brass-700)"
+    : "inset 0 0 0 4px var(--paper-100), inset 0 0 0 5px var(--brass-500), 0 2px 0 var(--paper-400), 0 6px 14px rgba(40,25,5,0.10)";
+  const shadowHover = dark
+    ? "0 14px 38px rgba(15,30,22,0.55), 0 0 0 1px var(--brass-500), inset 0 0 0 4px var(--forest-800), inset 0 0 0 5px var(--brass-500)"
+    : "inset 0 0 0 4px var(--paper-100), inset 0 0 0 5px var(--brass-700), 0 4px 0 var(--brass-700), 0 14px 28px rgba(40,25,5,0.22)";
+
   const handleKey = (e: ReactKeyboardEvent<HTMLElement>) => {
     if (!clickable) return;
     if (e.key === "Enter" || e.key === " ") {
@@ -58,23 +65,31 @@ export function Panel({
           : "url(/assets/paper-grain.svg)",
         backgroundSize: "320px 320px",
         border: "1px solid var(--brass-500)",
-        boxShadow: dark
-          ? "0 8px 28px rgba(15,30,22,0.35), inset 0 0 0 4px var(--forest-800), inset 0 0 0 5px var(--brass-700)"
-          : "inset 0 0 0 4px var(--paper-100), inset 0 0 0 5px var(--brass-500), 0 2px 0 var(--paper-400), 0 6px 14px rgba(40,25,5,0.10)",
+        boxShadow: shadowRest,
         color: fg,
         padding,
         cursor: clickable ? "pointer" : disabled && onClick ? "not-allowed" : "default",
         opacity: disabled ? 0.55 : 1,
-        transition: "transform 140ms ease, box-shadow 140ms ease",
+        transition: "transform 160ms ease, box-shadow 160ms ease",
         ...style,
       }}
       onMouseEnter={(e) => {
         if (!clickable) return;
-        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.transform = "translateY(-3px)";
+        e.currentTarget.style.boxShadow = shadowHover;
       }}
       onMouseLeave={(e) => {
         if (!clickable) return;
         e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = shadowRest;
+      }}
+      onFocus={(e) => {
+        if (!clickable) return;
+        e.currentTarget.style.boxShadow = shadowHover;
+      }}
+      onBlur={(e) => {
+        if (!clickable) return;
+        e.currentTarget.style.boxShadow = shadowRest;
       }}
     >
       <BrassCorners color={dark ? "var(--brass-500)" : "var(--brass-600)"} />
