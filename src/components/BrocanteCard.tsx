@@ -29,9 +29,11 @@ function Etoiles({ nombre }: { nombre: number }) {
 interface BrocanteCardProps {
   brocante: Brocante;
   debloquee: boolean;
+  /** URL cible quand la carte est cliquée (défaut : /chiner/[id]). */
+  hrefBase?: string;
 }
 
-export function BrocanteCard({ brocante, debloquee }: BrocanteCardProps) {
+export function BrocanteCard({ brocante, debloquee, hrefBase = "/chiner" }: BrocanteCardProps) {
   const [hover, setHover] = useState(false);
 
   const content = (
@@ -168,7 +170,7 @@ export function BrocanteCard({ brocante, debloquee }: BrocanteCardProps) {
 
   return (
     <Link
-      href={`/chiner/${brocante.id}`}
+      href={`${hrefBase}/${brocante.id}`}
       style={{ display: "block", textDecoration: "none", color: "inherit", height: "100%" }}
     >
       {content}
