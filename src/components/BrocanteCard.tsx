@@ -2,8 +2,29 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Star } from "lucide-react";
 import type { Brocante } from "@/types/game";
 import { descriptionCondition } from "@/lib/deblocage";
+import { CategorieIcon } from "@/components/ui/CategorieIcon";
+
+function Etoiles({ nombre }: { nombre: number }) {
+  return (
+    <span
+      style={{ display: "inline-flex", gap: 2, alignItems: "center" }}
+      aria-label={`${nombre} étoile${nombre > 1 ? "s" : ""}`}
+    >
+      {Array.from({ length: nombre }).map((_, i) => (
+        <Star
+          key={i}
+          size={12}
+          fill="var(--brass-500)"
+          color="var(--brass-700)"
+          strokeWidth={1}
+        />
+      ))}
+    </span>
+  );
+}
 
 interface BrocanteCardProps {
   brocante: Brocante;
@@ -40,37 +61,62 @@ export function BrocanteCard({ brocante, debloquee }: BrocanteCardProps) {
       <header
         style={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          gap: 12,
+          flexDirection: "column",
+          gap: 6,
         }}
       >
-        <h3
+        <div
           style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 15,
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "var(--forest-800)",
-            lineHeight: 1.2,
-            margin: 0,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 8,
           }}
         >
-          {brocante.nom}
-        </h3>
-        <span
+          <Etoiles nombre={brocante.etoiles} />
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 9,
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "var(--brass-700)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {brocante.ambiance}
+          </span>
+        </div>
+        <div
           style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 9,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "var(--brass-700)",
-            whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
           }}
         >
-          {brocante.ambiance}
-        </span>
+          {brocante.specialisation && (
+            <CategorieIcon
+              categorie={brocante.specialisation}
+              size={16}
+              color="var(--brass-700)"
+            />
+          )}
+          <h3
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--forest-800)",
+              lineHeight: 1.2,
+              margin: 0,
+              flex: 1,
+            }}
+          >
+            {brocante.nom}
+          </h3>
+        </div>
       </header>
 
       <p
