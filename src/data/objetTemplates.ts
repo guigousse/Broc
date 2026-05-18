@@ -60,6 +60,7 @@ export const OBJET_TEMPLATES: ObjetTemplate[] = [
 ];
 
 import { LEGENDAIRES } from "@/data/legendaires";
+import { UNIQUES } from "@/data/uniques";
 
 export { LEGENDAIRES };
 
@@ -71,7 +72,7 @@ export { LEGENDAIRES };
  */
 export const POOL_COMMUN_GENERIQUE: ObjetTemplate[] = OBJET_TEMPLATES;
 
-const ALL_TEMPLATES: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES];
+const ALL_TEMPLATES: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES, ...UNIQUES];
 
 /** Résout un templateId vers son template (incluant les légendaires). */
 export function getTemplate(templateId: string): ObjetTemplate | undefined {
