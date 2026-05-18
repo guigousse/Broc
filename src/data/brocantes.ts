@@ -1,4 +1,19 @@
-import type { Brocante } from "@/types/game";
+import type { Brocante, BrocanteTier } from "@/types/game";
+
+/**
+ * Droit d'entrée payé à chaque session de chinage, par tier.
+ * Évite de spam les brocantes en quête de tendances favorables ou de légendaires.
+ */
+export const COUT_ENTREE_PAR_TIER: Record<BrocanteTier, number> = {
+  1: 5,
+  2: 20,
+  3: 60,
+  4: 150,
+};
+
+export function coutEntree(brocante: Brocante): number {
+  return COUT_ENTREE_PAR_TIER[brocante.tier];
+}
 
 export const BROCANTES: Brocante[] = [
   // ============================================================

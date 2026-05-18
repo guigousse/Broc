@@ -10,7 +10,7 @@ import { EtatBadge } from "@/components/ui/EtatBadge";
 import { RareteBadge } from "@/components/ui/RareteBadge";
 import { SessionSummary } from "@/components/SessionSummary";
 import { useGame } from "@/context/GameContext";
-import { getBrocanteById } from "@/data/brocantes";
+import { coutEntree, getBrocanteById } from "@/data/brocantes";
 import { estDebloquee } from "@/lib/deblocage";
 import { genererSession, reagirNegociation } from "@/lib/chine";
 import { aConnaisseurChinage } from "@/lib/competences";
@@ -47,6 +47,8 @@ export default function SessionChinePage() {
   const [achats, setAchats] = useState<AchatHistorique[]>([]);
   /** Garde synchrone — empêche un double-enregistrement de la session. */
   const sessionEnregistreeRef = useRef(false);
+  /** Garde synchrone — empêche le double-paiement du droit d'entrée (StrictMode). */
+  const entreePayeeRef = useRef(false);
   /** Négociation en cours par objet : id → offre saisie. */
   const [negoEnCours, setNegoEnCours] = useState<Record<string, number>>({});
   /** Affiche le résumé de session avant retour au QG. */
@@ -68,15 +70,22 @@ export default function SessionChinePage() {
     if (!brocante) return router.replace("/chiner");
     // La condition de déblocage n'est vérifiée qu'à l'entrée — une fois sur place
     // le joueur ne peut plus être expulsé (par exemple si son solde redescend).
-    if (items === null) {
+    if (items === null && !entreePayeeRef.current) {
       if (!estDebloquee(brocante, state)) return router.replace("/chiner");
+      const frais = coutEntree(brocante);
+      if (state.budget < frais) {
+        return router.replace(`/chiner?raison=budget&id=${brocante.id}`);
+      }
+      entreePayeeRef.current = true;
+      ajusterBudget(-frais);
       const session = genererSession(brocante.taillePool, state.tendances, brocante);
       setItems(session);
+      setFlash(`Droit d'entrée payé : ${frais} €.`);
       for (const it of session) {
         marquerVuTemplate(it.objet.templateId);
       }
     }
-  }, [isHydrated, state, brocante, router, items]);
+  }, [isHydrated, state, brocante, router, items, ajusterBudget]);
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (

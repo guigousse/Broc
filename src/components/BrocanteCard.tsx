@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Star } from "lucide-react";
 import type { Brocante } from "@/types/game";
 import { descriptionCondition } from "@/lib/deblocage";
+import { coutEntree } from "@/data/brocantes";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 
 function Etoiles({ nombre }: { nombre: number }) {
@@ -148,7 +149,7 @@ export function BrocanteCard({ brocante, debloquee, hrefBase = "/chiner" }: Broc
         }}
       >
         <span style={{ color: "var(--ink-500)" }}>
-          ~{brocante.taillePool} obj.
+          ~{brocante.taillePool} obj. · entrée {coutEntree(brocante)} €
         </span>
         <span
           style={{
