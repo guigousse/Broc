@@ -21,6 +21,7 @@ import {
   type Objet,
   type ObjetEnVitrine,
   type Session,
+  type VitrineActive,
 } from "@/types/game";
 import { createStarterInventory } from "@/data/starterInventory";
 import { localGameRepository } from "@/lib/storage/localGameRepository";
@@ -64,6 +65,7 @@ interface GameContextValue {
   ajusterBudget: (delta: number) => void;
   avancerJour: (nbJours?: number) => void;
   reset: () => void;
+  ouvrirVitrine: (brocanteId: string) => void;
   mettreEnVitrine: (objetId: string, prixVente: number) => void;
   retirerDeVitrine: (objetId: string) => void;
   ajusterPrixVitrine: (objetId: string, prixVente: number) => void;
@@ -89,9 +91,12 @@ const GameContext = createContext<GameContextValue | null>(null);
  */
 function migrerSauvegarde(loaded: GameState): GameState {
   const VALID_CATS = new Set<string>(CATEGORIES);
+  const vitrineArray = Array.isArray(loaded.vitrine)
+    ? (loaded.vitrine as ObjetEnVitrine[])
+    : loaded.vitrine?.objets ?? [];
   const categoriesObsolètes =
     loaded.inventaireJoueur?.some((o) => !VALID_CATS.has(o.categorie)) ||
-    loaded.vitrine?.some((v) => !VALID_CATS.has(v.objet.categorie)) ||
+    vitrineArray?.some((v: ObjetEnVitrine) => !VALID_CATS.has(v.objet.categorie)) ||
     loaded.tendances?.some((t) => !VALID_CATS.has(t.categorie));
 
   const inventaire = (loaded.inventaireJoueur ?? []).map((o) => ({
@@ -102,18 +107,35 @@ function migrerSauvegarde(loaded: GameState): GameState {
     rarete: o.rarete ?? "commun",
   }));
 
-  const vitrine = (loaded.vitrine ?? []).map((v) => ({
-    ...v,
-    objet: {
-      ...v.objet,
-      categorie: migrerCategorie(v.objet.categorie),
-      etat: migrerEtat(v.objet.etat),
-      templateId:
-        v.objet.templateId ??
-        `legacy.${(v.objet.nom ?? "objet").toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
-      rarete: v.objet.rarete ?? "commun",
-    },
-  }));
+  // Détecte le format ancien (tableau) et migre vers le nouveau (VitrineActive | null).
+  // Les objets éventuellement présents dans l'ancienne vitrine sont retournés en stock.
+  const ancienneVitrine: ObjetEnVitrine[] = Array.isArray(loaded.vitrine)
+    ? (loaded.vitrine as ObjetEnVitrine[]).map((v) => ({
+        ...v,
+        objet: {
+          ...v.objet,
+          categorie: migrerCategorie(v.objet.categorie),
+          etat: migrerEtat(v.objet.etat),
+          templateId:
+            v.objet.templateId ??
+            `legacy.${(v.objet.nom ?? "objet").toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
+          rarete: v.objet.rarete ?? "commun",
+        },
+      }))
+    : [];
+
+  // Migration : si l'ancienne vitrine contenait des objets, on les remet dans l'inventaire.
+  for (const v of ancienneVitrine) {
+    inventaire.push(v.objet);
+  }
+
+  // Vitrine au nouveau format : conservée si déjà migrée, sinon null.
+  const vitrineActuelle =
+    loaded.vitrine &&
+    !Array.isArray(loaded.vitrine) &&
+    (loaded.vitrine as { brocanteId?: string }).brocanteId
+      ? (loaded.vitrine as VitrineActive)
+      : null;
 
   const historique = (loaded.historique ?? []).map((s) => {
     if (s.type === "chinage") {
@@ -163,15 +185,17 @@ function migrerSauvegarde(loaded: GameState): GameState {
     for (const o of inventaire) {
       catalogue = marquerPossedeFn(catalogue, o.templateId);
     }
-    for (const v of vitrine) {
-      catalogue = marquerPossedeFn(catalogue, v.objet.templateId);
+    if (vitrineActuelle) {
+      for (const v of vitrineActuelle.objets) {
+        catalogue = marquerPossedeFn(catalogue, v.objet.templateId);
+      }
     }
   }
 
   return {
     ...loaded,
     inventaireJoueur: inventaire,
-    vitrine,
+    vitrine: vitrineActuelle,
     historique,
     tendances:
       loaded.tendances && loaded.tendances.length > 0 && !categoriesObsolètes
@@ -225,7 +249,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       budget: INITIAL_BUDGET,
       jourActuel: INITIAL_JOUR,
       inventaireJoueur: createStarterInventory(),
-      vitrine: [],
+      vitrine: null,
       historique: [],
       tendances: genererTendances(),
       prochainesTendances: genererTendances(),
@@ -307,28 +331,55 @@ export function GameProvider({ children }: { children: ReactNode }) {
     localGameRepository.clear();
   }, []);
 
-  const mettreEnVitrine = useCallback((objetId: string, prixVente: number) => {
+  const ouvrirVitrine = useCallback((brocanteId: string) => {
     setState((prev) => {
       if (!prev) return prev;
+      // Si une autre vitrine est déjà ouverte avec des objets, on remet ses objets en stock.
+      if (prev.vitrine && prev.vitrine.brocanteId !== brocanteId) {
+        return {
+          ...prev,
+          inventaireJoueur: [
+            ...prev.inventaireJoueur,
+            ...prev.vitrine.objets.map((e) => e.objet),
+          ],
+          vitrine: { brocanteId, objets: [] },
+        };
+      }
+      // Vitrine déjà ouverte sur la bonne brocante : no-op.
+      if (prev.vitrine?.brocanteId === brocanteId) return prev;
+      // Aucune vitrine : on ouvre.
+      return { ...prev, vitrine: { brocanteId, objets: [] } };
+    });
+  }, []);
+
+  const mettreEnVitrine = useCallback((objetId: string, prixVente: number) => {
+    setState((prev) => {
+      if (!prev || !prev.vitrine) return prev;
       const objet = prev.inventaireJoueur.find((o) => o.id === objetId);
       if (!objet) return prev;
       const nouvelEntree: ObjetEnVitrine = { objet, prixVente };
       return {
         ...prev,
         inventaireJoueur: prev.inventaireJoueur.filter((o) => o.id !== objetId),
-        vitrine: [...prev.vitrine, nouvelEntree],
+        vitrine: {
+          ...prev.vitrine,
+          objets: [...prev.vitrine.objets, nouvelEntree],
+        },
       };
     });
   }, []);
 
   const retirerDeVitrine = useCallback((objetId: string) => {
     setState((prev) => {
-      if (!prev) return prev;
-      const entree = prev.vitrine.find((e) => e.objet.id === objetId);
+      if (!prev || !prev.vitrine) return prev;
+      const entree = prev.vitrine.objets.find((e) => e.objet.id === objetId);
       if (!entree) return prev;
       return {
         ...prev,
-        vitrine: prev.vitrine.filter((e) => e.objet.id !== objetId),
+        vitrine: {
+          ...prev.vitrine,
+          objets: prev.vitrine.objets.filter((e) => e.objet.id !== objetId),
+        },
         inventaireJoueur: [...prev.inventaireJoueur, entree.objet],
       };
     });
@@ -337,12 +388,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const ajusterPrixVitrine = useCallback(
     (objetId: string, prixVente: number) => {
       setState((prev) =>
-        prev
+        prev && prev.vitrine
           ? {
               ...prev,
-              vitrine: prev.vitrine.map((e) =>
-                e.objet.id === objetId ? { ...e, prixVente } : e,
-              ),
+              vitrine: {
+                ...prev.vitrine,
+                objets: prev.vitrine.objets.map((e) =>
+                  e.objet.id === objetId ? { ...e, prixVente } : e,
+                ),
+              },
             }
           : prev,
       );
@@ -353,13 +407,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const viderVitrine = useCallback(() => {
     setState((prev) => {
       if (!prev) return prev;
+      if (!prev.vitrine) return prev;
       return {
         ...prev,
         inventaireJoueur: [
           ...prev.inventaireJoueur,
-          ...prev.vitrine.map((e) => e.objet),
+          ...prev.vitrine.objets.map((e) => e.objet),
         ],
-        vitrine: [],
+        vitrine: null,
       };
     });
   }, []);
@@ -367,11 +422,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const vendreDeVitrine = useCallback(
     (objetIds: string[], prixTotal: number) => {
       setState((prev) => {
-        if (!prev) return prev;
+        if (!prev || !prev.vitrine) return prev;
         const ids = new Set(objetIds);
         return {
           ...prev,
-          vitrine: prev.vitrine.filter((e) => !ids.has(e.objet.id)),
+          vitrine: {
+            ...prev.vitrine,
+            objets: prev.vitrine.objets.filter((e) => !ids.has(e.objet.id)),
+          },
           budget: prev.budget + prixTotal,
         };
       });
@@ -508,6 +566,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ajusterBudget,
       avancerJour,
       reset,
+      ouvrirVitrine,
       mettreEnVitrine,
       retirerDeVitrine,
       ajusterPrixVitrine,
@@ -529,6 +588,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ajusterBudget,
       avancerJour,
       reset,
+      ouvrirVitrine,
       mettreEnVitrine,
       retirerDeVitrine,
       ajusterPrixVitrine,
