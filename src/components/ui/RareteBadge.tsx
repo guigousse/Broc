@@ -1,23 +1,20 @@
 import type { Rarete } from "@/types/game";
 
-const STYLES: Record<Rarete, { label: string; bg: string; fg: string; bd: string }> = {
+const STYLES: Record<Rarete, { label: string; fg: string; bd: string }> = {
   commun: {
-    label: "· Commun",
-    bg: "var(--paper-300)",
+    label: "Commun",
     fg: "var(--ink-500)",
-    bd: "var(--paper-500)",
+    bd: "var(--ink-300)",
   },
   rare: {
-    label: "◆ Rare",
-    bg: "var(--brass-300)",
-    fg: "var(--forest-800)",
+    label: "Rare",
+    fg: "var(--brass-700)",
     bd: "var(--brass-700)",
   },
   legendaire: {
-    label: "★★★ Légendaire",
-    bg: "var(--vermillion-600)",
-    fg: "var(--brass-100)",
-    bd: "var(--brass-500)",
+    label: "Légendaire",
+    fg: "var(--vermillion-600)",
+    bd: "var(--vermillion-600)",
   },
 };
 
@@ -26,18 +23,20 @@ export function RareteBadge({ rarete, size = "sm" }: { rarete: Rarete; size?: "s
   const fontSize = size === "md" ? 10 : 8;
   return (
     <span
+      title={`Rareté : ${s.label}`}
       style={{
-        fontFamily: "var(--font-display)",
+        fontFamily: "var(--font-serif)",
+        fontStyle: "italic",
         fontSize,
-        letterSpacing: "0.14em",
-        textTransform: "uppercase",
-        fontWeight: 600,
-        padding: "3px 7px",
+        letterSpacing: "0.05em",
+        fontWeight: 500,
+        padding: "2px 9px",
         border: `1px solid ${s.bd}`,
-        background: s.bg,
+        borderRadius: 999,
+        background: "transparent",
         color: s.fg,
         display: "inline-block",
-        lineHeight: 1.1,
+        lineHeight: 1.2,
       }}
     >
       {s.label}
