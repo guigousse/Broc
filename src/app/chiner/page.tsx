@@ -38,13 +38,14 @@ export default function ChinerListePage() {
     );
   }
 
-  // Résolution des conditions par tier croissant : tier 1 d'abord, puis 2, puis 3
-  const debloqueesParTier = new Map<1 | 2 | 3, Set<string>>([
+  // Résolution des conditions par tier croissant : tier 1 d'abord, puis 2, puis 3, puis 4
+  const debloqueesParTier = new Map<1 | 2 | 3 | 4, Set<string>>([
     [1, new Set<string>()],
     [2, new Set<string>()],
     [3, new Set<string>()],
+    [4, new Set<string>()],
   ]);
-  for (const tier of [1, 2, 3] as const) {
+  for (const tier of [1, 2, 3, 4] as const) {
     for (const b of brocantesParTier(tier)) {
       if (estDebloquee(b, state, debloqueesParTier)) {
         debloqueesParTier.get(tier)!.add(b.id);
@@ -116,7 +117,7 @@ export default function ChinerListePage() {
 
         <DecoDivider />
 
-        {([1, 2, 3] as const).map((tier) => {
+        {([1, 2, 3, 4] as const).map((tier) => {
           const brocantesTier = brocantesParTier(tier);
           return (
             <section
@@ -147,7 +148,9 @@ export default function ChinerListePage() {
                     ? "Brocantes de quartier"
                     : tier === 2
                       ? "Marchés réputés"
-                      : "Salons et galeries"}
+                      : tier === 3
+                        ? "Salons et galeries"
+                        : "Le Salon ultime"}
                 </span>
                 <span
                   style={{
