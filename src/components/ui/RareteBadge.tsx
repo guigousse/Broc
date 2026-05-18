@@ -23,20 +23,21 @@ const STYLES: Record<Rarete, { label: string; bg: string; fg: string; bd: string
 
 export function RareteBadge({ rarete, size = "sm" }: { rarete: Rarete; size?: "sm" | "md" }) {
   const s = STYLES[rarete];
-  const fontSize = size === "md" ? 11 : 9.5;
+  const fontSize = size === "md" ? 10 : 8;
   return (
     <span
       style={{
         fontFamily: "var(--font-display)",
         fontSize,
-        letterSpacing: "0.18em",
+        letterSpacing: "0.14em",
         textTransform: "uppercase",
         fontWeight: 600,
-        padding: "3px 8px",
+        padding: "3px 7px",
         border: `1px solid ${s.bd}`,
         background: s.bg,
         color: s.fg,
         display: "inline-block",
+        lineHeight: 1.1,
       }}
     >
       {s.label}
