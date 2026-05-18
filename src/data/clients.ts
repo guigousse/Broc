@@ -20,6 +20,8 @@ export interface ClientArchetype {
   bonusPreference?: number;
   /** Malus prixMax pour les catégories évitées (défaut 0,2 = −20 %). */
   malusEvitement?: number;
+  /** Tier minimum de brocante où cet archétype peut apparaître. */
+  tierMin: 1 | 2 | 3;
 }
 
 /** Personnage concret instancié à partir d'un archétype. */
@@ -37,6 +39,7 @@ export interface ClientPersonnage {
   categoriesEvitees: CategorieObjet[];
   bonusPreference: number;
   malusEvitement: number;
+  tierMin: 1 | 2 | 3;
 }
 
 // ======================================================================
@@ -53,6 +56,7 @@ const ARCHETYPES: ClientArchetype[] = [
     durete: 0.7,
     chanceMulti: 0.1,
     categoriesPreferees: [],
+    tierMin: 1,
   },
   {
     id: "passionnee_artdeco",
@@ -64,6 +68,7 @@ const ARCHETYPES: ClientArchetype[] = [
     chanceMulti: 0.2,
     categoriesPreferees: ["Maison", "Mode"],
     bonusPreference: 0.35,
+    tierMin: 3,
   },
   {
     id: "brocanteur_concurrent",
@@ -74,6 +79,7 @@ const ARCHETYPES: ClientArchetype[] = [
     durete: 0.9,
     chanceMulti: 0.05,
     categoriesPreferees: [],
+    tierMin: 2,
   },
   {
     id: "collectionneur_musique",
@@ -85,6 +91,7 @@ const ARCHETYPES: ClientArchetype[] = [
     chanceMulti: 0.35,
     categoriesPreferees: ["Musique"],
     bonusPreference: 0.5,
+    tierMin: 3,
   },
   {
     id: "gamer_nostalgique",
@@ -96,6 +103,7 @@ const ARCHETYPES: ClientArchetype[] = [
     chanceMulti: 0.3,
     categoriesPreferees: ["Jeux & Loisirs"],
     bonusPreference: 0.5,
+    tierMin: 2,
   },
   {
     id: "bibliophile",
@@ -107,6 +115,7 @@ const ARCHETYPES: ClientArchetype[] = [
     chanceMulti: 0.3,
     categoriesPreferees: ["Livres & Papeterie"],
     bonusPreference: 0.4,
+    tierMin: 2,
   },
   {
     id: "bricoleur_dimanche",
@@ -118,6 +127,7 @@ const ARCHETYPES: ClientArchetype[] = [
     chanceMulti: 0.4,
     categoriesPreferees: ["Bricolage"],
     bonusPreference: 0.3,
+    tierMin: 2,
   },
   {
     id: "etudiant_fauche",
@@ -128,6 +138,7 @@ const ARCHETYPES: ClientArchetype[] = [
     durete: 0.6,
     chanceMulti: 0.15,
     categoriesPreferees: [],
+    tierMin: 1,
   },
   {
     id: "snob_bourgeois",
@@ -141,6 +152,7 @@ const ARCHETYPES: ClientArchetype[] = [
     categoriesEvitees: ["Bricolage"],
     bonusPreference: 0.25,
     malusEvitement: 0.4,
+    tierMin: 3,
   },
   {
     id: "touriste_perdu",
@@ -151,6 +163,7 @@ const ARCHETYPES: ClientArchetype[] = [
     durete: 0.1,
     chanceMulti: 0.5,
     categoriesPreferees: [],
+    tierMin: 1,
   },
   {
     id: "famille_dimanche",
@@ -162,6 +175,7 @@ const ARCHETYPES: ClientArchetype[] = [
     chanceMulti: 0.55,
     categoriesPreferees: ["Jeux & Loisirs"],
     bonusPreference: 0.25,
+    tierMin: 1,
   },
   {
     id: "decorateur",
@@ -173,6 +187,7 @@ const ARCHETYPES: ClientArchetype[] = [
     chanceMulti: 0.25,
     categoriesPreferees: ["Maison"],
     bonusPreference: 0.5,
+    tierMin: 3,
   },
   {
     id: "amateur_vintage",
@@ -184,6 +199,7 @@ const ARCHETYPES: ClientArchetype[] = [
     chanceMulti: 0.3,
     categoriesPreferees: ["Mode", "Musique"],
     bonusPreference: 0.4,
+    tierMin: 2,
   },
   {
     id: "notable_curieux",
@@ -194,6 +210,7 @@ const ARCHETYPES: ClientArchetype[] = [
     durete: 0.2,
     chanceMulti: 0.25,
     categoriesPreferees: [],
+    tierMin: 3,
   },
   {
     id: "opportuniste",
@@ -204,6 +221,7 @@ const ARCHETYPES: ClientArchetype[] = [
     durete: 0.8,
     chanceMulti: 0.3,
     categoriesPreferees: [],
+    tierMin: 1,
   },
 ];
 
@@ -234,6 +252,7 @@ function makePersonnages(
     categoriesEvitees: arch.categoriesEvitees ?? [],
     bonusPreference: arch.bonusPreference ?? 0.3,
     malusEvitement: arch.malusEvitement ?? 0.2,
+    tierMin: arch.tierMin,
   }));
 }
 
@@ -315,9 +334,10 @@ export const ALL_PERSONNAGES: ClientPersonnage[] = [
   ]),
 ];
 
-/** Sélectionne N personnages au hasard, sans répétition. */
-export function genererPoolClients(taille: number): ClientPersonnage[] {
-  const copy = [...ALL_PERSONNAGES];
+/** Sélectionne N personnages au hasard, filtrés par tierMin <= tier. */
+export function genererPoolClients(taille: number, tier: 1 | 2 | 3 = 3): ClientPersonnage[] {
+  const filtres = ALL_PERSONNAGES.filter((p) => p.tierMin <= tier);
+  const copy = [...filtres];
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
