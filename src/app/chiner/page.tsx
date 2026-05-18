@@ -8,7 +8,7 @@ import { StatusBar } from "@/components/StatusBar";
 import { Button } from "@/components/ui/Button";
 import { DecoDivider } from "@/components/ui/DecoDivider";
 import { useGame } from "@/context/GameContext";
-import { BROCANTES } from "@/data/brocantes";
+import { BROCANTES, brocantesParTier } from "@/data/brocantes";
 import { estDebloquee } from "@/lib/deblocage";
 
 export default function ChinerListePage() {
@@ -36,6 +36,20 @@ export default function ChinerListePage() {
         — préparation des halles…
       </main>
     );
+  }
+
+  // Résolution des conditions par tier croissant : tier 1 d'abord, puis 2, puis 3
+  const debloqueesParTier = new Map<1 | 2 | 3, Set<string>>([
+    [1, new Set<string>()],
+    [2, new Set<string>()],
+    [3, new Set<string>()],
+  ]);
+  for (const tier of [1, 2, 3] as const) {
+    for (const b of brocantesParTier(tier)) {
+      if (estDebloquee(b, state, debloqueesParTier)) {
+        debloqueesParTier.get(tier)!.add(b.id);
+      }
+    }
   }
 
   return (
@@ -102,21 +116,69 @@ export default function ChinerListePage() {
 
         <DecoDivider />
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: 18,
-          }}
-        >
-          {BROCANTES.map((b) => (
-            <BrocanteCard
-              key={b.id}
-              brocante={b}
-              debloquee={estDebloquee(b, state)}
-            />
-          ))}
-        </div>
+        {([1, 2, 3] as const).map((tier) => {
+          const brocantesTier = brocantesParTier(tier);
+          return (
+            <section
+              key={tier}
+              style={{ display: "flex", flexDirection: "column", gap: 12 }}
+            >
+              <h2
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontFamily: "var(--font-display)",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: "0.22em",
+                  textTransform: "uppercase",
+                  color: "var(--forest-800)",
+                  margin: 0,
+                  paddingBottom: 6,
+                  borderBottom: "1px solid var(--brass-700)",
+                }}
+              >
+                <span style={{ color: "var(--brass-500)" }}>
+                  {"★".repeat(tier)}
+                </span>
+                <span>
+                  {tier === 1
+                    ? "Brocantes de quartier"
+                    : tier === 2
+                      ? "Marchés réputés"
+                      : "Salons et galeries"}
+                </span>
+                <span
+                  style={{
+                    marginLeft: "auto",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 10,
+                    letterSpacing: "0.16em",
+                    color: "var(--brass-700)",
+                  }}
+                >
+                  {debloqueesParTier.get(tier)!.size} / {brocantesTier.length} débloquées
+                </span>
+              </h2>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                  gap: 18,
+                }}
+              >
+                {brocantesTier.map((b) => (
+                  <BrocanteCard
+                    key={b.id}
+                    brocante={b}
+                    debloquee={debloqueesParTier.get(tier)!.has(b.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </div>
   );
