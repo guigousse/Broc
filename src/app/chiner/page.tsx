@@ -10,6 +10,8 @@ import { DecoDivider } from "@/components/ui/DecoDivider";
 import { useGame } from "@/context/GameContext";
 import { BROCANTES, brocantesParTier } from "@/data/brocantes";
 import { estDebloquee } from "@/lib/deblocage";
+import { aGenCarnetMondain } from "@/lib/competences";
+import { JOURS_SEMAINE } from "@/lib/meteo";
 
 export default function ChinerListePage() {
   const router = useRouter();
@@ -169,6 +171,7 @@ export default function ChinerListePage() {
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
                   gap: 18,
+                  alignItems: "start",
                 }}
               >
                 {brocantesTier.map((b) => (
@@ -176,6 +179,18 @@ export default function ChinerListePage() {
                     key={b.id}
                     brocante={b}
                     debloquee={debloqueesParTier.get(tier)!.has(b.id)}
+                    celebriteIci={
+                      aGenCarnetMondain(state) &&
+                      state.celebriteActuelle?.brocanteId === b.id
+                        ? {
+                            nom: state.celebriteActuelle.nom,
+                            jourLabel:
+                              JOURS_SEMAINE[
+                                state.celebriteActuelle.jourSemaine
+                              ].toUpperCase(),
+                          }
+                        : null
+                    }
                   />
                 ))}
               </div>

@@ -49,7 +49,10 @@ function migrerEtat(etat: string): EtatObjet {
   return "Bon";
 }
 import { appliquerGainXP } from "@/lib/xp";
-import { aGenDevin, peutRestaurerCategorie } from "@/lib/competences";
+import { aGenInfluence, peutRestaurerCategorie } from "@/lib/competences";
+import { tirerMeteo, tirerMeteoSemaine, indexJourSemaine } from "@/lib/meteo";
+import { tirerCelebrite } from "@/lib/celebrite";
+import { getStockageTier } from "@/data/stockage";
 import {
   initCollection,
   marquerDejaPossede as marquerDejaPossedeFn,
@@ -88,6 +91,10 @@ interface GameContextValue {
   retirerDeCollection: (templateId: string) => { ok: boolean; raison?: string };
   acheterGazette: () => { ok: boolean; raison?: string };
   marquerBossDebloqueVu: () => void;
+  /** Influence (compétence Vision 3) : retire la météo du jour. */
+  rerollMeteo: () => { ok: boolean; raison?: string };
+  /** Influence (compétence Vision 3) : retire la brocante de la célébrité courante. */
+  rerollCelebrite: () => { ok: boolean; raison?: string };
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -177,17 +184,55 @@ function migrerSauvegarde(loaded: GameState): GameState {
   const resetTrees = categoriesObsolètes || idsObsoletes;
   const trees = resetTrees
     ? emptyAllTrees()
-    : loaded.competenceTrees && Object.keys(loaded.competenceTrees).length > 0
-    ? loaded.competenceTrees
-    : emptyAllTrees();
+    : { ...emptyAllTrees(), ...(loaded.competenceTrees ?? {}) };
 
   const competencesDebloquees = resetTrees ? [] : competencesValides;
 
-  // Collection : init vide, puis migration depuis l'ancien `catalogue` (si présent)
-  // ou marquage dejaPossede depuis l'inventaire courant.
+  // Collection : on repart de la structure courante (peut contenir de nouveaux
+  // templates ajoutés depuis le dernier save), puis on rapatrie l'état persisté
+  // (vu, dejaPossede, donation) en faisant un join par templateId.
   let collection = initCollection();
+  const loadedCollection = (loaded as { collection?: unknown }).collection;
   const ancienCatalogue = (loaded as unknown as { catalogue?: Record<string, Array<{ templateId: string; vu?: boolean; possede?: number }>> }).catalogue;
-  if (ancienCatalogue) {
+  if (loadedCollection && typeof loadedCollection === "object") {
+    const indexParId = new Map<
+      string,
+      { vu?: boolean; dejaPossede?: boolean; donation?: { etat: string; valeur: number } | null }
+    >();
+    for (const cat of Object.keys(loadedCollection as Record<string, unknown>)) {
+      const slots = (loadedCollection as Record<string, unknown>)[cat];
+      if (!Array.isArray(slots)) continue;
+      for (const s of slots) {
+        if (s && typeof s === "object" && typeof (s as { templateId?: unknown }).templateId === "string") {
+          indexParId.set(
+            (s as { templateId: string }).templateId,
+            s as { vu?: boolean; dejaPossede?: boolean; donation?: { etat: string; valeur: number } | null },
+          );
+        }
+      }
+    }
+    const fusion: Record<string, typeof collection[keyof typeof collection]> = {};
+    for (const cat of Object.keys(collection) as Array<keyof typeof collection>) {
+      fusion[cat] = collection[cat].map((slot) => {
+        const persiste = indexParId.get(slot.templateId);
+        if (!persiste) return slot;
+        return {
+          ...slot,
+          vu: !!persiste.vu || slot.vu,
+          dejaPossede: !!persiste.dejaPossede || slot.dejaPossede,
+          donation:
+            persiste.donation && persiste.donation.etat
+              ? {
+                  etat: migrerEtat(persiste.donation.etat) as typeof slot.donation extends { etat: infer T } ? T : never,
+                  valeur: persiste.donation.valeur,
+                }
+              : slot.donation,
+        };
+      });
+    }
+    collection = fusion as typeof collection;
+  } else if (ancienCatalogue) {
+    // Très vieux save (avant la refonte Collection) : on rapatrie ce qu'on peut.
     for (const cat of Object.keys(ancienCatalogue)) {
       const entrees = ancienCatalogue[cat] ?? [];
       for (const e of entrees) {
@@ -196,14 +241,17 @@ function migrerSauvegarde(loaded: GameState): GameState {
           collection = marquerDejaPossedeFn(collection, e.templateId);
       }
     }
-  } else {
-    for (const o of inventaire) {
-      collection = marquerDejaPossedeFn(collection, o.templateId);
-    }
-    if (vitrineActuelle) {
-      for (const v of vitrineActuelle.objets) {
-        collection = marquerDejaPossedeFn(collection, v.objet.templateId);
-      }
+  }
+
+  // Filet de sécurité : tout objet actuellement en stock ou en vitrine
+  // doit apparaître comme `dejaPossede` dans la collection. Couvre le cas
+  // où le save d'origine (avant fix de persistance) avait perdu la marque.
+  for (const o of inventaire) {
+    collection = marquerDejaPossedeFn(collection, o.templateId);
+  }
+  if (vitrineActuelle) {
+    for (const v of vitrineActuelle.objets) {
+      collection = marquerDejaPossedeFn(collection, v.objet.templateId);
     }
   }
 
@@ -230,6 +278,17 @@ function migrerSauvegarde(loaded: GameState): GameState {
     collection,
     gazetteAchetee: loaded.gazetteAchetee ?? false,
     bossDebloqueSeen: loaded.bossDebloqueSeen ?? false,
+    meteoSemaine:
+      Array.isArray(loaded.meteoSemaine) && loaded.meteoSemaine.length === 7
+        ? loaded.meteoSemaine
+        : tirerMeteoSemaine(),
+    celebriteActuelle:
+      loaded.celebriteActuelle &&
+      typeof (loaded.celebriteActuelle as { jourSemaine?: number }).jourSemaine === "number"
+        ? loaded.celebriteActuelle
+        : tirerCelebrite(),
+    influenceUtilisee: loaded.influenceUtilisee ?? false,
+    dernierLoyer: loaded.dernierLoyer ?? null,
   };
 }
 
@@ -276,6 +335,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       collection: initCollection(),
       gazetteAchetee: false,
       bossDebloqueSeen: false,
+      meteoSemaine: tirerMeteoSemaine(),
+      celebriteActuelle: tirerCelebrite(),
+      influenceUtilisee: false,
+      dernierLoyer: null,
     });
     router.push("/qg");
   }, [router]);
@@ -322,20 +385,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
         return o;
       });
-      const devin = aGenDevin(prev);
       // Au refresh, les prochaines deviennent les courantes et on régénère un nouveau futur.
       const tendances = refresh
         ? (prev.prochainesTendances && prev.prochainesTendances.length > 0
             ? prev.prochainesTendances
-            : genererTendances({ garantirPositifFort: devin }))
+            : genererTendances())
         : prev.tendances;
       const prochainesTendances = refresh
-        ? genererTendances({ garantirPositifFort: devin })
+        ? genererTendances()
         : prev.prochainesTendances;
+      // Loyer hebdomadaire : prélevé à la fin de chaque semaine (refresh Gazette).
+      const tierStockage = refresh ? getStockageTier(inv.length) : null;
+      const nouveauBudget = tierStockage
+        ? prev.budget - tierStockage.loyerHebdo
+        : prev.budget;
+      const dernierLoyer = tierStockage
+        ? {
+            jour: nouveauJour,
+            montant: tierStockage.loyerHebdo,
+            tierNom: tierStockage.nom,
+          }
+        : prev.dernierLoyer;
       return {
         ...prev,
         jourActuel: nouveauJour,
         inventaireJoueur: inv,
+        budget: nouveauBudget,
         tendances,
         prochainesTendances,
         prochainRafraichissementTendances: refresh
@@ -343,8 +418,47 @@ export function GameProvider({ children }: { children: ReactNode }) {
           : prev.prochainRafraichissementTendances,
         // Reset l'achat de la Gazette à chaque nouvelle édition.
         gazetteAchetee: refresh ? false : prev.gazetteAchetee,
+        // Météo : la semaine entière est pré-tirée à chaque refresh hebdo.
+        meteoSemaine: refresh ? tirerMeteoSemaine() : prev.meteoSemaine,
+        // Célébrité : nouvelle à chaque édition de la Gazette.
+        celebriteActuelle: refresh ? tirerCelebrite() : prev.celebriteActuelle,
+        // Reset le jeton d'influence à chaque édition.
+        influenceUtilisee: refresh ? false : prev.influenceUtilisee,
+        dernierLoyer,
       };
     });
+  }, []);
+
+  const rerollMeteo = useCallback((): { ok: boolean; raison?: string } => {
+    const current = stateRef.current;
+    if (!current) return { ok: false, raison: "Pas de partie." };
+    if (!aGenInfluence(current))
+      return { ok: false, raison: "Compétence Influence requise." };
+    if (current.influenceUtilisee)
+      return { ok: false, raison: "Influence déjà utilisée cette édition." };
+    setState((prev) => {
+      if (!prev) return prev;
+      const idx = indexJourSemaine(prev.jourActuel);
+      const nouvelle = [...prev.meteoSemaine];
+      nouvelle[idx] = tirerMeteo();
+      return { ...prev, meteoSemaine: nouvelle, influenceUtilisee: true };
+    });
+    return { ok: true };
+  }, []);
+
+  const rerollCelebrite = useCallback((): { ok: boolean; raison?: string } => {
+    const current = stateRef.current;
+    if (!current) return { ok: false, raison: "Pas de partie." };
+    if (!aGenInfluence(current))
+      return { ok: false, raison: "Compétence Influence requise." };
+    if (current.influenceUtilisee)
+      return { ok: false, raison: "Influence déjà utilisée cette édition." };
+    setState((prev) =>
+      prev
+        ? { ...prev, celebriteActuelle: tirerCelebrite(), influenceUtilisee: true }
+        : prev,
+    );
+    return { ok: true };
   }, []);
 
   const reset = useCallback(() => {
@@ -717,6 +831,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       retirerDeCollection,
       acheterGazette,
       marquerBossDebloqueVu,
+      rerollMeteo,
+      rerollCelebrite,
     }),
     [
       state,
@@ -743,6 +859,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       retirerDeCollection,
       acheterGazette,
       marquerBossDebloqueVu,
+      rerollMeteo,
+      rerollCelebrite,
     ],
   );
 

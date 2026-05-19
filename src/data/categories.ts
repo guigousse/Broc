@@ -7,6 +7,7 @@ export const CATEGORIES: CategorieObjet[] = [
   "Livres & Papeterie",
   "Mode",
   "Maison",
+  "Objets d'art",
   "Bricolage",
 ];
 

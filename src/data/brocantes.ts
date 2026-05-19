@@ -196,7 +196,11 @@ export const BROCANTES: Brocante[] = [
     // Légendaires des catégories non couvertes par les spé 3⭐ : Jeux + Livres
     poolExclusif: [
       "leg.jx.cartouche_stadium_events",
+      "leg.jx.babyfoot_bonzini_itsf",
+      "leg.jx.cartouche_nwc_1990",
       "leg.lv.miserables_originale",
+      "leg.lv.gutenberg_feuillet",
+      "leg.lv.manuscrit_enlumine_xve",
     ],
     conditionDeblocage: {
       type: "ET",
@@ -216,7 +220,11 @@ export const BROCANTES: Brocante[] = [
     etoiles: 3,
     taillePool: 9,
     // Légendaire Bricolage (le 6e, non couvert par spé 3⭐)
-    poolExclusif: ["leg.br.scie_japonaise_edo"],
+    poolExclusif: [
+      "leg.br.scie_japonaise_edo",
+      "leg.br.coffret_compagnon_signe",
+      "leg.br.tour_holtzapffel_xixe",
+    ],
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -235,7 +243,11 @@ export const BROCANTES: Brocante[] = [
     etoiles: 3,
     specialisation: "Mode",
     taillePool: 8,
-    poolExclusif: ["leg.mo.robe_chanel_1925"],
+    poolExclusif: [
+      "leg.mo.robe_chanel_1925",
+      "leg.mo.dior_new_look_1955",
+      "leg.mo.birkin_himalaya",
+    ],
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -254,7 +266,11 @@ export const BROCANTES: Brocante[] = [
     etoiles: 3,
     specialisation: "Musique",
     taillePool: 7,
-    poolExclusif: ["leg.mus.stradivarius"],
+    poolExclusif: [
+      "leg.mus.stradivarius",
+      "leg.mus.piano_pleyel_concert",
+      "leg.mus.guitare_hendrix_provenance",
+    ],
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -273,12 +289,39 @@ export const BROCANTES: Brocante[] = [
     etoiles: 3,
     specialisation: "Maison",
     taillePool: 8,
-    poolExclusif: ["leg.ma.oeuf_faberge"],
+    poolExclusif: [
+      "leg.ma.oeuf_faberge",
+      "leg.ma.tapis_savonnerie_xviie",
+      "leg.ma.pendule_louis_xiv_boulle",
+    ],
     conditionDeblocage: {
       type: "ET",
       conditions: [
         { type: "valeurCollection", montant: 1600 },
         { type: "valeurCollectionCategorie", categorie: "Maison", montant: 600 },
+      ],
+    },
+  },
+  {
+    id: "galerie-tableaux-sculptures",
+    nom: "Galerie Drouot — Tableaux & Sculptures",
+    description:
+      "Cadres dorés au mur, sculptures sur socles. On y entre comme à l'opéra, on en sort plus pauvre, parfois plus riche.",
+    ambiance: "Galerie",
+    tier: 3,
+    etoiles: 3,
+    specialisation: "Objets d'art",
+    taillePool: 8,
+    poolExclusif: [
+      "leg.art.dessin_picasso_etude",
+      "leg.art.dessin_matisse_etude",
+      "leg.art.toile_chagall_attribuee",
+    ],
+    conditionDeblocage: {
+      type: "ET",
+      conditions: [
+        { type: "valeurCollection", montant: 1400 },
+        { type: "valeurCollectionCategorie", categorie: "Objets d'art", montant: 350 },
       ],
     },
   },
@@ -302,6 +345,7 @@ export const BROCANTES: Brocante[] = [
       "uniq.lv.manuscrit_voltaire",
       "uniq.mo.bijou_marie_antoinette",
       "uniq.ma.vase_ming_dynasty",
+      "uniq.art.toile_monet_inedite",
       "uniq.br.coffre_outils_louis_xiv",
     ],
     conditionDeblocage: {

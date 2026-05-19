@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { GameProvider } from "@/context/GameContext";
+import { NavigationDock } from "@/components/NavigationDock";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,8 +22,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body style={{ minHeight: "100dvh" }}>
-        <GameProvider>{children}</GameProvider>
+      <body style={{ minHeight: "100dvh", paddingBottom: 80 }}>
+        <GameProvider>
+          {children}
+          <NavigationDock />
+        </GameProvider>
       </body>
     </html>
   );

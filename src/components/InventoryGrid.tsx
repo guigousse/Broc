@@ -24,7 +24,7 @@ export function InventoryGrid({ objets, categoriesConnues }: InventoryGridProps)
             marginBottom: 12,
           }}
         >
-          La vitrine est vide.
+          Le stockage est vide.
         </div>
         <div
           style={{
@@ -35,7 +35,7 @@ export function InventoryGrid({ objets, categoriesConnues }: InventoryGridProps)
             color: "var(--brass-700)",
           }}
         >
-          Partez chiner pour la garnir.
+          Partez chiner pour le garnir.
         </div>
       </div>
     );

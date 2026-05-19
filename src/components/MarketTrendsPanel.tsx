@@ -1,35 +1,63 @@
-import type { CategorieObjet, Tendance } from "@/types/game";
+import type {
+  CategorieObjet,
+  CelebriteEvenement,
+  Meteo,
+  Tendance,
+} from "@/types/game";
 import { PRIX_GAZETTE, numeroEdition } from "@/lib/tendances";
 import { Button } from "@/components/ui/Button";
+import {
+  METEO_ICON,
+  METEO_LABEL,
+  descriptionEffetMeteo,
+} from "@/data/meteos";
+import { getBrocanteById } from "@/data/brocantes";
+import { JOURS_SEMAINE } from "@/lib/meteo";
 
 interface MarketTrendsPanelProps {
   tendances: readonly Tendance[];
-  /** Tendances pré-générées de la prochaine édition. */
-  prochainesTendances?: readonly Tendance[];
   jourActuel: number;
   prochainRafraichissement: number;
   /** Catégories pour lesquelles le joueur peut lire la tendance (skill Veilleur). */
   categoriesConnues: ReadonlySet<CategorieObjet>;
-  /** Niveau Vision général : 0 rien, 1 = voir 1 cat de la prochaine, 2 = voir toutes. */
-  niveauVision?: 0 | 1 | 2;
   /** Édition courante achetée par le joueur ? */
   achetee: boolean;
   /** Budget courant (pour griser le bouton si insuffisant). */
   budget: number;
   /** Tentative d'achat de l'édition courante. */
   onAcheter: () => void;
+  /** Météo du jour (toujours stockée — affichée seulement si `revelerMeteo`). */
+  meteo: Meteo;
+  /** Vrai si le joueur a la compétence Bulletin météo. */
+  revelerMeteo: boolean;
+  /** Célébrité visitant une brocante cette édition (null si pas encore tirée). */
+  celebrite: CelebriteEvenement | null;
+  /** Vrai si le joueur a la compétence Carnet mondain. */
+  revelerCelebrite: boolean;
+  /** Vrai si le joueur a la compétence Influence (affiche les boutons reroll). */
+  peutInfluencer: boolean;
+  /** Vrai si l'influence a déjà été utilisée cette édition. */
+  influenceUtilisee: boolean;
+  onRerollMeteo: () => void;
+  onRerollCelebrite: () => void;
 }
 
 export function MarketTrendsPanel({
   tendances,
-  prochainesTendances = [],
   jourActuel,
   prochainRafraichissement,
   categoriesConnues,
-  niveauVision = 0,
   achetee,
   budget,
   onAcheter,
+  meteo,
+  revelerMeteo,
+  celebrite,
+  revelerCelebrite,
+  peutInfluencer,
+  influenceUtilisee,
+  onRerollMeteo,
+  onRerollCelebrite,
 }: MarketTrendsPanelProps) {
   const safe = tendances ?? [];
   const visibles = safe.filter((t) => categoriesConnues.has(t.categorie));
@@ -37,18 +65,8 @@ export function MarketTrendsPanel({
   const masquees = safe.length - visibles.length;
   const joursAvantRefresh = Math.max(0, prochainRafraichissement - jourActuel);
 
-  // Prévisualisation de la prochaine édition selon le niveau de Vision
-  let apercu: Tendance[] = [];
-  if (niveauVision >= 2) {
-    apercu = [...prochainesTendances].sort(
-      (a, b) => Math.abs(b.delta) - Math.abs(a.delta),
-    );
-  } else if (niveauVision === 1 && prochainesTendances.length > 0) {
-    const sorted = [...prochainesTendances].sort(
-      (a, b) => Math.abs(b.delta) - Math.abs(a.delta),
-    );
-    apercu = sorted.slice(0, 1);
-  }
+  const brocanteCelebrite =
+    celebrite ? getBrocanteById(celebrite.brocanteId) : null;
 
   return (
     <div
@@ -227,7 +245,7 @@ export function MarketTrendsPanel({
         </div>
       )}
 
-      {achetee && apercu.length > 0 && (
+      {revelerMeteo && (
         <div
           style={{
             marginTop: 12,
@@ -246,44 +264,145 @@ export function MarketTrendsPanel({
               marginBottom: 6,
             }}
           >
-            — aperçu prochaine édition —
+            — bulletin météo —
           </div>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {apercu.map((t, i) => (
-              <li
-                key={t.categorie}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 10,
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              color: "var(--ink-700)",
+            }}
+          >
+            {(() => {
+              const Icon = METEO_ICON[meteo];
+              return (
+                <Icon
+                  size={28}
+                  strokeWidth={1.5}
+                  color="var(--forest-800)"
+                  aria-hidden
+                />
+              );
+            })()}
+            <span style={{ flex: 1 }}>
+              <strong>{METEO_LABEL[meteo]}</strong> ·{" "}
+              <span style={{ fontStyle: "italic", color: "var(--ink-500)" }}>
+                {descriptionEffetMeteo(meteo)}
+              </span>
+            </span>
+            {peutInfluencer && (
+              <button
+                type="button"
+                onClick={onRerollMeteo}
+                disabled={influenceUtilisee}
+                title={
+                  influenceUtilisee
+                    ? "Influence déjà utilisée cette édition"
+                    : "Reroll météo (consomme l'influence du cycle)"
+                }
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
-                  padding: "3px 0",
                   fontFamily: "var(--font-mono)",
-                  fontSize: 10.5,
-                  color: "var(--ink-500)",
-                  borderBottom:
-                    i < apercu.length - 1
-                      ? "1px dotted var(--paper-500)"
-                      : "none",
+                  fontSize: 9,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  padding: "3px 6px",
+                  border: "1px solid var(--brass-700)",
+                  background: influenceUtilisee
+                    ? "var(--paper-300)"
+                    : "var(--paper-100)",
+                  color: influenceUtilisee
+                    ? "var(--ink-300)"
+                    : "var(--forest-800)",
+                  cursor: influenceUtilisee ? "not-allowed" : "pointer",
                 }}
               >
-                <span style={{ flex: 1, paddingRight: 8, fontStyle: "italic" }}>
-                  {t.categorie}
-                </span>
-                <span
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color:
-                      t.delta >= 0 ? "var(--forest-700)" : "var(--vermillion-600)",
-                  }}
-                >
-                  {t.delta >= 0 ? "↑" : "↓"} {t.delta > 0 ? "+" : ""}
-                  {t.delta}%
-                </span>
-              </li>
-            ))}
-          </ul>
+                ↻
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {revelerCelebrite && celebrite && (
+        <div
+          style={{
+            marginTop: 12,
+            paddingTop: 10,
+            borderTop: "1px dashed var(--brass-700)",
+          }}
+        >
+          <div
+            style={{
+              textAlign: "center",
+              fontFamily: "var(--font-display)",
+              fontSize: 10,
+              letterSpacing: "0.24em",
+              textTransform: "uppercase",
+              color: "var(--brass-700)",
+              marginBottom: 6,
+            }}
+          >
+            — carnet mondain —
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 8,
+              fontFamily: "var(--font-serif)",
+              fontSize: 12.5,
+              color: "var(--ink-700)",
+              fontStyle: "italic",
+            }}
+          >
+            <span style={{ flex: 1, lineHeight: 1.35 }}>
+              <strong style={{ fontStyle: "normal" }}>{celebrite.nom}</strong>{" "}
+              est annoncé(e) à{" "}
+              <strong style={{ fontStyle: "normal" }}>
+                {brocanteCelebrite?.nom ?? "une brocante"}
+              </strong>{" "}
+              le{" "}
+              <strong style={{ fontStyle: "normal", textTransform: "uppercase" }}>
+                {JOURS_SEMAINE[celebrite.jourSemaine]}
+              </strong>
+              . Ce jour-là, les meilleurs marchands s'y bousculent — un regain
+              de rares et de légendaires y est attendu.
+            </span>
+            {peutInfluencer && (
+              <button
+                type="button"
+                onClick={onRerollCelebrite}
+                disabled={influenceUtilisee}
+                title={
+                  influenceUtilisee
+                    ? "Influence déjà utilisée cette édition"
+                    : "Faire passer la célébrité dans une autre brocante"
+                }
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 9,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  padding: "3px 6px",
+                  border: "1px solid var(--brass-700)",
+                  background: influenceUtilisee
+                    ? "var(--paper-300)"
+                    : "var(--paper-100)",
+                  color: influenceUtilisee
+                    ? "var(--ink-300)"
+                    : "var(--forest-800)",
+                  cursor: influenceUtilisee ? "not-allowed" : "pointer",
+                }}
+              >
+                ↻
+              </button>
+            )}
+          </div>
         </div>
       )}
 

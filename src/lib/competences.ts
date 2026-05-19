@@ -160,18 +160,18 @@ export function aGenBonneReputation(state: GameState): boolean {
   return aCompetence(`${TREE_GENERAL}.charisme.2`, state.competencesDebloquees);
 }
 
-/** Général · Vision palier 1 : voir 1 catégorie de la prochaine édition. */
-export function aGenVeilleDiscrete(state: GameState): boolean {
+/** Général · Vision palier 1 : Bulletin météo — météo du jour révélée. */
+export function aGenBulletinMeteo(state: GameState): boolean {
   return aCompetence(`${TREE_GENERAL}.vision.1`, state.competencesDebloquees);
 }
 
-/** Général · Vision palier 2 : voir toutes les catégories de la prochaine édition. */
-export function aGenVeilleActive(state: GameState): boolean {
+/** Général · Vision palier 2 : Carnet mondain — célébrité de l'édition révélée. */
+export function aGenCarnetMondain(state: GameState): boolean {
   return aCompetence(`${TREE_GENERAL}.vision.2`, state.competencesDebloquees);
 }
 
-/** Général · Vision palier 3 : la prochaine édition garantit ≥1 cat à +15 %. */
-export function aGenDevin(state: GameState): boolean {
+/** Général · Vision palier 3 : Influence — 1 reroll météo ou célébrité par édition. */
+export function aGenInfluence(state: GameState): boolean {
   return aCompetence(`${TREE_GENERAL}.vision.3`, state.competencesDebloquees);
 }
 

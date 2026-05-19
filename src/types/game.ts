@@ -4,6 +4,7 @@ export type CategorieObjet =
   | "Livres & Papeterie"
   | "Mode"
   | "Maison"
+  | "Objets d'art"
   | "Bricolage";
 
 export type EtatObjet = "Mauvais" | "Bon" | "Très bon" | "Pristin état";
@@ -58,6 +59,16 @@ export interface Tendance {
   delta: number;
 }
 
+export type Meteo = "ensoleille" | "nuageux" | "pluvieux" | "orageux";
+
+/** Célébrité visitant une brocante un jour précis de la semaine en cours. */
+export interface CelebriteEvenement {
+  brocanteId: string;
+  nom: string;
+  /** Index du jour dans la semaine (0 = lundi, 6 = dimanche). */
+  jourSemaine: number;
+}
+
 export interface GameState {
   budget: number;
   jourActuel: number;
@@ -77,6 +88,14 @@ export interface GameState {
   collection: Record<CategorieObjet, CollectionSlot[]>;
   /** Vrai si la modale d'annonce du déblocage du boss a déjà été montrée. */
   bossDebloqueSeen: boolean;
+  /** Météo de chaque jour de la semaine en cours (longueur 7, lundi → dimanche). Régénérée à chaque édition. */
+  meteoSemaine: Meteo[];
+  /** Célébrité attendue cette édition de la Gazette. null = aucune (avant la 1ʳᵉ édition). */
+  celebriteActuelle: CelebriteEvenement | null;
+  /** Vrai si le joueur a utilisé son reroll (météo ou célébrité) sur l'édition courante. */
+  influenceUtilisee: boolean;
+  /** Dernier loyer prélevé (utile pour l'UI). null = pas encore prélevé. */
+  dernierLoyer: { jour: number; montant: number; tierNom: string } | null;
 }
 
 export type CompetenceId = string;

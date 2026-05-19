@@ -77,12 +77,26 @@ export function classeBourse(persona: ClientPersonnage): ClasseBourse {
 }
 
 const CHANCE_MULTI = 0.2;
-/** Remise que le client attend implicitement sur un panier multi-objets (vs achat séparé). */
-const REMISE_BUNDLE_ATTENDUE = 0.05;
+/**
+ * Modificateur appliqué au `prixMax` quand le client prend ≥ 2 objets : il veut
+ * vraiment l'ensemble, donc on remonte un peu son plafond (au lieu de l'amputer
+ * d'une remise implicite). Vise à éviter les offres dérisoires sur les paniers.
+ */
+const BONUS_BUNDLE = 0.10;
 /** Seuil sous lequel un client achète sans rechigner. */
 const SEUIL_ACHAT_DIRECT = 1.0;
-/** Quand le prix demandé dépasse le seuil de colère, plancher de l'offre initiale (× prixMax). */
-const OFFRE_TROP_CHER = 0.8;
+/**
+ * Quand le prix demandé dépasse le seuil de colère, l'offre est calée
+ * près du vrai plafond du client (offre honnête, pas un lowball gratuit).
+ * Valeur en % de `prixMax` ; modulée par `durete`.
+ */
+const OFFRE_TROP_CHER = 0.95;
+/**
+ * Tolérance d'accessibilité : pour qu'un client envisage un objet, son prix
+ * affiché doit être ≤ (prixRef × appetitMax × tolérance). Au-delà, il passe
+ * son chemin. Volontairement permissif pour éviter les journées silencieuses.
+ */
+const SEUIL_INTERET_ACHETEUR = 1.6;
 
 function calculerPrixMax(
   panier: ObjetEnVitrine[],
@@ -121,8 +135,8 @@ function calculerPrixMax(
         modPref
     );
   }, 0);
-  const remise = panier.length > 1 ? 1 - REMISE_BUNDLE_ATTENDUE : 1;
-  return Math.max(1, Math.round(brut * remise));
+  const modBundle = panier.length > 1 ? 1 + BONUS_BUNDLE : 1;
+  return Math.max(1, Math.round(brut * modBundle));
 }
 
 /** Calcule le seuil de colère effectif pour ce panier (général + max bonus catégoriel). */
@@ -162,11 +176,21 @@ export function genererClientEvent(
       }
     : personnage;
 
+  // Pré-filtre : le client n'envisage que les objets dont le prix affiché reste
+  // dans une fourchette plausible pour sa bourse. Au-delà, il passe son chemin.
+  const accessibles = vitrine.filter((it) => {
+    const plafondClient =
+      it.objet.prixReferenceReel * persona.appetitMax * SEUIL_INTERET_ACHETEUR;
+    return it.prixVente <= plafondClient;
+  });
+  if (accessibles.length === 0) return null;
+
   // Multi-objets : la probabilité dépend du persona
-  const veutDeux = vitrine.length >= 2 && Math.random() < persona.chanceMulti;
+  const veutDeux =
+    accessibles.length >= 2 && Math.random() < persona.chanceMulti;
   const panier: ObjetEnVitrine[] = [];
 
-  const pool = [...vitrine];
+  const pool = [...accessibles];
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -191,15 +215,18 @@ export function genererClientEvent(
     offreInitiale = prixDemande;
   } else if (prixDemande <= prixMax * seuilColereEffectif(panier, modifiers)) {
     mode = "negociation";
-    // Dureté : 0 = offre généreuse (jusqu'à 100% du max), 1 = offre serrée (jusqu'à 70%)
-    const haut = 1 - persona.durete * 0.30; // 1.0 → 0.70
-    const bas = haut - 0.15;
+    // Dureté : 0 = offre généreuse (jusqu'à 100 % du max), 1 = offre serrée (jusqu'à ~80 %).
+    // Range resserrée pour éviter les offres trop basses : haut 0.80→1.00, bas 0.70→0.90.
+    const haut = 1 - persona.durete * 0.20;
+    const bas = haut - 0.10;
     const offre = prixMax * (bas + Math.random() * (haut - bas));
     offreInitiale = Math.max(1, Math.round(offre));
   } else {
     mode = "negociation";
-    // Lowball persona-dépendant : généreux 0.85, lowball 0.65
-    const ratio = OFFRE_TROP_CHER - persona.durete * 0.15;
+    // Branche "trop cher" : le client offre près de son vrai plafond.
+    // Plus dur → un peu en dessous, plus mou → quasi à `prixMax`.
+    // Range : 0.85 (durete 1) → 0.95 (durete 0).
+    const ratio = OFFRE_TROP_CHER - persona.durete * 0.10;
     offreInitiale = Math.max(1, Math.round(prixMax * ratio));
   }
 

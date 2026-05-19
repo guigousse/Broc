@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D9C07A"/>
+      <stop offset="1" stop-color="#8A6A26"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EFE6D2"/>
+      <stop offset="1" stop-color="#C9BC95"/>
+    </linearGradient>
+    <radialGradient id="paperRound" cx="0.5" cy="0.4" r="0.7">
+      <stop offset="0" stop-color="#F6EFDD"/>
+      <stop offset="1" stop-color="#C9BC95"/>
+    </radialGradient>
+    <radialGradient id="vinyl" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3A2E1A"/>
+      <stop offset="0.95" stop-color="#0E0905"/>
+    </radialGradient>
+    <radialGradient id="vase" cx="0.5" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#E2C883"/>
+      <stop offset="1" stop-color="#8A6A26"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Fond rond extérieur (vert forêt) avec bord biseauté en laiton -->
+  <rect x="32" y="32" width="960" height="960" rx="184" ry="184" fill="#1A3326"/>
+  <rect x="32" y="32" width="960" height="960" rx="184" ry="184" fill="none" stroke="url(#brass)" stroke-width="10"/>
+  <rect x="64" y="64" width="896" height="896" rx="160" ry="160" fill="none" stroke="#C5A059" stroke-width="3"/>
+  <rect x="84" y="84" width="856" height="856" rx="144" ry="144" fill="none" stroke="#8A6A26" stroke-width="1.5" stroke-dasharray="4 6"/>
+
+  <!-- Coins art déco -->
+  <g fill="#C5A059">
+    <path d="M 120 120 L 200 120 L 200 132 L 132 132 L 132 200 L 120 200 Z"/>
+    <path d="M 904 120 L 824 120 L 824 132 L 892 132 L 892 200 L 904 200 Z"/>
+    <path d="M 120 904 L 200 904 L 200 892 L 132 892 L 132 824 L 120 824 Z"/>
+    <path d="M 904 904 L 824 904 L 824 892 L 892 892 L 892 824 L 904 824 Z"/>
+    <circle cx="138" cy="138" r="4"/>
+    <circle cx="886" cy="138" r="4"/>
+    <circle cx="138" cy="886" r="4"/>
+    <circle cx="886" cy="886" r="4"/>
+  </g>
+
+  <!-- Symboles monétaires aux 4 cardinaux, en laiton, font display -->
+  <g font-family="Georgia, 'Cinzel', serif" font-weight="700" fill="url(#brass)" text-anchor="middle">
+    <!-- € en haut -->
+    <text x="512" y="232" font-size="112" font-style="italic">€</text>
+    <!-- $ à droite -->
+    <text x="868" y="552" font-size="112" font-style="italic">$</text>
+    <!-- £ à gauche -->
+    <text x="156" y="552" font-size="112" font-style="italic">£</text>
+  </g>
+
+  <!-- Petits ornements entre les symboles -->
+  <g fill="#8A6A26" opacity="0.8">
+    <circle cx="350" cy="200" r="3"/>
+    <circle cx="674" cy="200" r="3"/>
+    <circle cx="220" cy="380" r="3"/>
+    <circle cx="804" cy="380" r="3"/>
+    <circle cx="220" cy="720" r="3"/>
+    <circle cx="804" cy="720" r="3"/>
+  </g>
+
+  <!-- ========= Pile d'objets centrale ========= -->
+  <!-- Vue isométrique légère, objets posés/superposés -->
+
+  <!-- 1) Cadre / tableau en arrière-plan (penché) -->
+  <g transform="translate(512 600) rotate(-8)">
+    <rect x="-200" y="-200" width="380" height="380" rx="6" fill="#3D2C13" stroke="#8A6A26" stroke-width="6"/>
+    <rect x="-178" y="-178" width="336" height="336" fill="url(#paperRound)"/>
+    <!-- silhouette d'un paysage stylisé dans le cadre -->
+    <g opacity="0.6" fill="#3D2C13">
+      <path d="M -160 100 L -100 40 L -40 80 L 30 20 L 110 70 L 158 40 L 158 158 L -160 158 Z"/>
+      <circle cx="80" cy="-40" r="22" fill="#C5A059"/>
+    </g>
+    <!-- Coins du cadre -->
+    <g fill="url(#brass)">
+      <rect x="-200" y="-200" width="40" height="40"/>
+      <rect x="140" y="-200" width="40" height="40"/>
+      <rect x="-200" y="140" width="40" height="40"/>
+      <rect x="140" y="140" width="40" height="40"/>
+    </g>
+  </g>
+
+  <!-- 2) Vinyle au centre (sort de derrière le cadre) -->
+  <g transform="translate(420 540)">
+    <circle r="195" fill="url(#vinyl)"/>
+    <g fill="none" stroke="#1A1108" stroke-width="1">
+      <circle r="60"/>
+      <circle r="85"/>
+      <circle r="110"/>
+      <circle r="135"/>
+      <circle r="160"/>
+      <circle r="180"/>
+    </g>
+    <!-- Étiquette centrale -->
+    <circle r="58" fill="#A03A2A"/>
+    <circle r="58" fill="none" stroke="#5C1F15" stroke-width="2"/>
+    <circle r="6" fill="#0E0905"/>
+    <!-- Texte stylisé sur l'étiquette -->
+    <text x="0" y="-28" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="14" fill="#EFE6D2" letter-spacing="3">BROC</text>
+    <text x="0" y="36" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="11" fill="#EFE6D2">— 33 ⅓ —</text>
+  </g>
+
+  <!-- 3) Vase / amphore en façade -->
+  <g transform="translate(640 620)">
+    <!-- Corps du vase -->
+    <path d="M -60 -150
+             C -80 -150, -85 -135, -75 -120
+             C -70 -110, -68 -100, -68 -90
+             C -70 -50, -100 -20, -100 40
+             C -100 100, -70 130, 0 130
+             C 70 130, 100 100, 100 40
+             C 100 -20, 70 -50, 68 -90
+             C 68 -100, 70 -110, 75 -120
+             C 85 -135, 80 -150, 60 -150
+             Z"
+          fill="url(#vase)" stroke="#5C4416" stroke-width="3"/>
+    <!-- Col -->
+    <ellipse cx="0" cy="-148" rx="60" ry="8" fill="#8A6A26" stroke="#5C4416" stroke-width="2"/>
+    <ellipse cx="0" cy="-148" rx="48" ry="5" fill="#3D2C13"/>
+    <!-- Décor : bande peinte sur le ventre -->
+    <path d="M -90 30 Q 0 50 90 30 L 90 60 Q 0 80 -90 60 Z"
+          fill="#3D2C13" opacity="0.85"/>
+    <!-- Motif grec stylisé -->
+    <g fill="#D9C07A" font-family="Georgia, serif" font-weight="700">
+      <rect x="-70" y="40" width="6" height="6"/>
+      <rect x="-50" y="40" width="6" height="6"/>
+      <rect x="-30" y="40" width="6" height="6"/>
+      <rect x="-10" y="40" width="6" height="6"/>
+      <rect x="10" y="40" width="6" height="6"/>
+      <rect x="30" y="40" width="6" height="6"/>
+      <rect x="50" y="40" width="6" height="6"/>
+    </g>
+    <!-- Brillance -->
+    <ellipse cx="-40" cy="20" rx="14" ry="55" fill="#EFE6D2" opacity="0.18"/>
+  </g>
+
+  <!-- Lettre 'B' subtile en filigrane en haut, petite mais lisible -->
+  <text x="512" y="450" text-anchor="middle"
+        font-family="Georgia, 'Cinzel', serif" font-weight="700" font-size="92"
+        fill="#1A3326" stroke="url(#brass)" stroke-width="2" opacity="0.0">B</text>
+
+  <!-- Filet décoratif autour du tableau central -->
+  <g stroke="url(#brass)" fill="none" stroke-width="1.5" opacity="0.4">
+    <path d="M 200 800 Q 512 870 824 800"/>
+  </g>
+</svg>

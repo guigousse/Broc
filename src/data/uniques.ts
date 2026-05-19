@@ -47,6 +47,14 @@ export const UNIQUES: ObjetTemplate[] = [
     unique: true,
   },
   {
+    templateId: "uniq.art.toile_monet_inedite",
+    nom: "Toile inédite de Claude Monet",
+    categorie: "Objets d'art",
+    rarete: "legendaire",
+    prixRefBase: 12000,
+    unique: true,
+  },
+  {
     templateId: "uniq.br.coffre_outils_louis_xiv",
     nom: "Coffre d'outils d'ébéniste de Louis XIV",
     categorie: "Bricolage",

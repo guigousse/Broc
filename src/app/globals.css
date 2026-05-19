@@ -133,6 +133,51 @@ html, body {
   background-image: url('/assets/paper-grain.svg');
   background-size: 320px 320px;
 }
+
+/* ============================================================
+   Responsive : téléphone paysage + petits écrans
+   ============================================================ */
+@media (max-width: 950px),
+       (orientation: landscape) and (max-height: 500px) {
+  /* Body : moins de marge pour le dock plus petit */
+  body { padding-bottom: 56px !important; }
+
+  /* Padding général des pages */
+  .bg-paper-grain { padding: 8px 12px 12px !important; }
+
+  /* Dock plus compact */
+  .nav-dock {
+    bottom: 6px !important;
+    gap: 4px !important;
+    padding: 4px !important;
+  }
+  .nav-dock > button {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  /* QG : la grille 2-col se plie en 1-col */
+  .qg-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    margin-top: 12px !important;
+  }
+
+  /* Réduit les paddings des Panels */
+  .panel-compact {
+    padding: 10px !important;
+  }
+}
+
+/* Téléphone paysage spécifiquement (très bas en hauteur) */
+@media (orientation: landscape) and (max-height: 450px) {
+  body { padding-bottom: 50px !important; }
+  .nav-dock { bottom: 4px !important; }
+  .nav-dock > button {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
 .bg-paper-card {
   background-color: var(--paper-100);
   background-image: url('/assets/paper-grain.svg');

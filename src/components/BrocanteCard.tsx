@@ -32,9 +32,16 @@ interface BrocanteCardProps {
   debloquee: boolean;
   /** URL cible quand la carte est cliquée (défaut : /chiner/[id]). */
   hrefBase?: string;
+  /** Célébrité annoncée ici (skill Carnet mondain). null = aucune. */
+  celebriteIci?: { nom: string; jourLabel: string } | null;
 }
 
-export function BrocanteCard({ brocante, debloquee, hrefBase = "/chiner" }: BrocanteCardProps) {
+export function BrocanteCard({
+  brocante,
+  debloquee,
+  hrefBase = "/chiner",
+  celebriteIci,
+}: BrocanteCardProps) {
   const [hover, setHover] = useState(false);
 
   const content = (
@@ -55,7 +62,6 @@ export function BrocanteCard({ brocante, debloquee, hrefBase = "/chiner" }: Broc
         transition: "all 220ms cubic-bezier(0.85, 0, 0.15, 1)",
         opacity: debloquee ? 1 : 0.55,
         cursor: debloquee ? "pointer" : "not-allowed",
-        height: "100%",
         display: "flex",
         flexDirection: "column",
         gap: 10,
@@ -136,6 +142,25 @@ export function BrocanteCard({ brocante, debloquee, hrefBase = "/chiner" }: Broc
         {brocante.description}
       </p>
 
+      {celebriteIci && (
+        <div
+          style={{
+            padding: "6px 8px",
+            background: "var(--brass-100)",
+            border: "1px dashed var(--brass-700)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: "0.08em",
+            color: "var(--forest-800)",
+            lineHeight: 1.35,
+          }}
+          title="Célébrité présente ce jour-là : pool agrandi, rares & légendaires boostés."
+        >
+          ✦ <strong style={{ fontFamily: "var(--font-display)" }}>{celebriteIci.nom}</strong> attendu(e) ici{" "}
+          <strong style={{ fontFamily: "var(--font-display)" }}>{celebriteIci.jourLabel}</strong>
+        </div>
+      )}
+
       <div
         style={{
           display: "flex",
@@ -172,7 +197,7 @@ export function BrocanteCard({ brocante, debloquee, hrefBase = "/chiner" }: Broc
   return (
     <Link
       href={`${hrefBase}/${brocante.id}`}
-      style={{ display: "block", textDecoration: "none", color: "inherit", height: "100%" }}
+      style={{ display: "block", textDecoration: "none", color: "inherit" }}
     >
       {content}
     </Link>

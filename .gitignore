@@ -6,3 +6,6 @@ out
 !.env.example
 *.tsbuildinfo
 next-env.d.ts
+# Tauri build artefacts
+src-tauri/target
+src-tauri/gen

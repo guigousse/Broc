@@ -129,19 +129,22 @@ const TREE_GENERAL_DEF: CompetenceTreeDef = {
     {
       id: "vision",
       nom: "Vision du marché",
-      description: "Vous anticipez les tendances de la Gazette.",
+      description: "Vous lisez la météo des affaires et les bruits de salon.",
       paliers: definirPaliers([
         {
-          nom: "Veille discrète",
-          description: "Une catégorie (la plus extrême) de la prochaine édition de la Gazette vous est révélée.",
+          nom: "Bulletin météo",
+          description:
+            "La météo du jour s'affiche dans la Gazette, avec son effet sur l'affluence du stand.",
         },
         {
-          nom: "Veille active",
-          description: "Toutes les catégories de la prochaine édition sont visibles à l'avance.",
+          nom: "Carnet mondain",
+          description:
+            "Le nom de la célébrité annoncée cette édition et la brocante qui l'accueille vous sont révélés (grand boost rares & légendaires en chinage).",
         },
         {
-          nom: "Devin du marché",
-          description: "La prochaine édition aura toujours au moins une catégorie en hausse de +15 % ou plus.",
+          nom: "Influence",
+          description:
+            "Une fois par édition de la Gazette, vous pouvez retirer (reroll) la météo du jour ou la brocante mondaine.",
         },
       ]),
     },

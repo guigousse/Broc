@@ -3,6 +3,7 @@ import {
   Dice5,
   Disc3,
   Lamp,
+  Palette,
   Shirt,
   Wrench,
   type LucideIcon,
@@ -15,6 +16,7 @@ const ICONS: Record<CategorieObjet, LucideIcon> = {
   "Livres & Papeterie": BookOpen,
   Mode: Shirt,
   Maison: Lamp,
+  "Objets d'art": Palette,
   Bricolage: Wrench,
 };
 

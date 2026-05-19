@@ -256,21 +256,43 @@ function TreeTab({
 }) {
   const meta = getTreeMeta(treeId);
   const points = tree?.pointsDisponibles ?? 0;
+  const [hover, setHover] = useState(false);
+
+  // Ombrages calqués sur ceux du composant <Panel> au QG.
+  const shadowLightRest =
+    "inset 0 0 0 4px var(--paper-100), inset 0 0 0 5px var(--brass-500), 0 2px 0 var(--paper-400), 0 6px 14px rgba(40,25,5,0.10)";
+  const shadowLightHover =
+    "inset 0 0 0 4px var(--paper-100), inset 0 0 0 5px var(--brass-700), 0 4px 0 var(--brass-700), 0 14px 28px rgba(40,25,5,0.22)";
+  const shadowDarkRest =
+    "0 8px 28px rgba(15,30,22,0.35), inset 0 0 0 4px var(--forest-800), inset 0 0 0 5px var(--brass-700)";
+  const shadowDarkHover =
+    "0 14px 38px rgba(15,30,22,0.55), 0 0 0 1px var(--brass-500), inset 0 0 0 4px var(--forest-800), inset 0 0 0 5px var(--brass-500)";
+
+  const boxShadow = selected
+    ? hover ? shadowDarkHover : shadowDarkRest
+    : hover ? shadowLightHover : shadowLightRest;
+
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
         position: "relative",
-        padding: "10px 12px",
+        padding: "12px 14px",
         background: selected ? "var(--forest-800)" : "var(--paper-100)",
-        border: `1px solid ${selected ? "var(--brass-500)" : "var(--brass-700)"}`,
-        boxShadow: selected
-          ? "inset 0 0 0 3px var(--forest-800), inset 0 0 0 4px var(--brass-500)"
-          : "0 2px 0 var(--paper-400)",
+        backgroundImage: selected
+          ? "url(/assets/grain-overlay.svg)"
+          : "url(/assets/paper-grain.svg)",
+        backgroundSize: "320px 320px",
+        border: `1px solid var(--brass-500)`,
+        boxShadow,
         color: selected ? "var(--paper-200)" : "var(--ink-700)",
         cursor: "pointer",
         textAlign: "left",
         fontFamily: "inherit",
+        transform: hover ? "translateY(-3px)" : "translateY(0)",
+        transition: "transform 160ms ease, box-shadow 160ms ease",
       }}
     >
       <div

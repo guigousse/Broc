@@ -1,11 +1,19 @@
 import type { EtatObjet, ObjetEnVente, Rarete, Tendance } from "@/types/game";
 import {
-  POOL_COMMUN_GENERIQUE,
   getTemplate,
+  poolPourTier,
   type ObjetTemplate,
 } from "@/data/objetTemplates";
-import type { Brocante } from "@/types/game";
+import type { Brocante, CelebriteEvenement } from "@/types/game";
 import { modificateurTendance } from "@/lib/tendances";
+
+/**
+ * Quand une célébrité visite la brocante : multiplicateur appliqué aux poids
+ * `rare` et `legendaire` (les bonnes pièces sortent). Multiplicateur sur
+ * `taillePool` pour augmenter l'affluence de marchands.
+ */
+const CELEBRITE_BOOST_RARES = 2.0;
+const CELEBRITE_BOOST_TAILLE = 1.5;
 
 // Pristin état est rare en chinage — il faut le créer en atelier.
 const ETATS: readonly EtatObjet[] = ["Mauvais", "Bon", "Très bon"];
@@ -96,12 +104,19 @@ const POIDS_RARETE: Record<Rarete, number> = {
   legendaire: 2,
 };
 
-function tirerTemplatePondere(pool: readonly ObjetTemplate[]): ObjetTemplate {
-  // Somme des poids
-  const total = pool.reduce((s, t) => s + POIDS_RARETE[t.rarete], 0);
+function poidsRarete(rarete: Rarete, boost: boolean): number {
+  const base = POIDS_RARETE[rarete];
+  return boost && rarete !== "commun" ? base * CELEBRITE_BOOST_RARES : base;
+}
+
+function tirerTemplatePondere(
+  pool: readonly ObjetTemplate[],
+  boostRares: boolean,
+): ObjetTemplate {
+  const total = pool.reduce((s, t) => s + poidsRarete(t.rarete, boostRares), 0);
   let r = Math.random() * total;
   for (const t of pool) {
-    r -= POIDS_RARETE[t.rarete];
+    r -= poidsRarete(t.rarete, boostRares);
     if (r <= 0) return t;
   }
   return pool[pool.length - 1];
@@ -125,35 +140,44 @@ export function genererSession(
   taille: number,
   tendances: readonly Tendance[] = [],
   brocante?: Brocante,
+  celebrite?: CelebriteEvenement | null,
 ): ObjetEnVente[] {
+  const celebritePresente =
+    !!brocante && !!celebrite && celebrite.brocanteId === brocante.id;
+  const tailleEffective = celebritePresente
+    ? Math.round(taille * CELEBRITE_BOOST_TAILLE)
+    : taille;
   const items: ObjetEnVente[] = [];
   const dejaTires = new Set<string>();
   let attempts = 0;
-  const maxAttempts = taille * 6;
+  const maxAttempts = tailleEffective * 6;
 
   // Résout les templates exclusifs de la brocante (en évinçant les ids inconnus)
   const exclusifs: ObjetTemplate[] = (brocante?.poolExclusif ?? [])
     .map((id) => getTemplate(id))
     .filter((t): t is ObjetTemplate => t !== undefined);
 
+  // Pool générique filtré par tier (1⭐ → 1/3, 2⭐ → 2/3, 3⭐+ → tout).
+  const poolGenerique = poolPourTier(brocante?.tier ?? 1);
+
   // Brocantes spécialisées : force au moins QUOTA_SPECIALISATION d'items du thème.
   const spe = brocante?.specialisation;
   const quotaSpe = spe ? Math.ceil(taille * QUOTA_SPECIALISATION) : 0;
   const poolCommunSpe = spe
-    ? POOL_COMMUN_GENERIQUE.filter((t) => t.categorie === spe)
+    ? poolGenerique.filter((t) => t.categorie === spe)
     : [];
   const poolExclusifSpe = spe
     ? exclusifs.filter((t) => t.categorie === spe)
     : [];
 
-  while (items.length < taille && attempts < maxAttempts) {
+  while (items.length < tailleEffective && attempts < maxAttempts) {
     attempts += 1;
     const chanceExclusif = CHANCE_EXCLUSIF_PAR_TIER[brocante?.tier ?? 1];
 
     const compteSpe = spe
       ? items.filter((it) => it.objet.categorie === spe).length
       : 0;
-    const restant = taille - items.length;
+    const restant = tailleEffective - items.length;
     const manqueSpe = Math.max(0, quotaSpe - compteSpe);
     const forcerSpe = spe !== undefined && manqueSpe >= restant;
 
@@ -165,11 +189,11 @@ export function genererSession(
     } else {
       const tenterExclusif =
         exclusifs.length > 0 && Math.random() < chanceExclusif;
-      pool = tenterExclusif ? exclusifs : POOL_COMMUN_GENERIQUE;
+      pool = tenterExclusif ? exclusifs : poolGenerique;
     }
     if (pool.length === 0) continue;
 
-    const t = tirerTemplatePondere(pool);
+    const t = tirerTemplatePondere(pool, celebritePresente);
     // Pas de doublon pour rares et légendaires
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
     dejaTires.add(t.templateId);
