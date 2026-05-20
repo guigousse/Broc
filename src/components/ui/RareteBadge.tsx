@@ -1,20 +1,23 @@
 import type { Rarete } from "@/types/game";
 
-const STYLES: Record<Rarete, { label: string; fg: string; bd: string }> = {
+const STYLES: Record<Rarete, { label: string; fg: string; bd: string; bg: string }> = {
   commun: {
     label: "Commun",
     fg: "var(--ink-500)",
     bd: "var(--ink-300)",
+    bg: "var(--paper-100)",
   },
   rare: {
     label: "Rare",
     fg: "var(--brass-700)",
     bd: "var(--brass-700)",
+    bg: "var(--brass-100)",
   },
   legendaire: {
     label: "Légendaire",
-    fg: "var(--vermillion-600)",
+    fg: "var(--paper-100)",
     bd: "var(--vermillion-600)",
+    bg: "var(--vermillion-600)",
   },
 };
 
@@ -33,7 +36,7 @@ export function RareteBadge({ rarete, size = "sm" }: { rarete: Rarete; size?: "s
         padding: "2px 9px",
         border: `1px solid ${s.bd}`,
         borderRadius: 999,
-        background: "transparent",
+        background: s.bg,
         color: s.fg,
         display: "inline-block",
         lineHeight: 1.2,
