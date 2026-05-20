@@ -76,6 +76,14 @@ export default function VitrineBrocantePage() {
   const vitrineActive = state?.vitrine;
   const objetsEnVitrine: ObjetEnVitrine[] = vitrineActive?.objets ?? [];
 
+  const stockDisponible = useMemo(() => {
+    if (!state) return [];
+    const enVitrineIds = new Set(objetsEnVitrine.map((ov) => ov.objet.id));
+    return state.inventaireJoueur.filter(
+      (o) => !enVitrineIds.has(o.id) && !o.enRestauration,
+    );
+  }, [state, objetsEnVitrine]);
+
   const standActuel = useMemo(
     () => niveauRequis(Math.max(1, objetsEnVitrine.length)),
     [objetsEnVitrine.length],
@@ -314,25 +322,88 @@ export default function VitrineBrocantePage() {
           })}
         </section>
 
-        <h2 style={sectTitle}>— Ajouter depuis le stock —</h2>
-        <button
-          type="button"
-          onClick={() => router.push("/stockage")}
-          style={{
-            width: "100%",
-            padding: "10px 8px",
-            background: "var(--paper-100)",
-            color: "var(--forest-800)",
-            border: "1px solid var(--brass-500)",
-            fontFamily: "var(--font-display)",
-            fontSize: 11,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            cursor: "pointer",
-          }}
-        >
-          Parcourir le stock
-        </button>
+        <h2 style={sectTitle}>— Disponibles dans le stock —</h2>
+        {stockDisponible.length === 0 ? (
+          <section style={cardStyle}>
+            <p style={emptyStyle}>Aucun objet disponible. Allez chiner !</p>
+          </section>
+        ) : (
+          <section style={cardStyle}>
+            {stockDisponible.map((o, i) => (
+              <div
+                key={o.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "36px 1fr auto",
+                  gap: 8,
+                  alignItems: "center",
+                  padding: "8px 0",
+                  borderBottom:
+                    i === stockDisponible.length - 1
+                      ? "none"
+                      : "1px dotted var(--paper-500)",
+                }}
+              >
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
+                    border: "1px solid var(--brass-700)",
+                    display: "grid",
+                    placeItems: "center",
+                    color: "var(--brass-100)",
+                  }}
+                >
+                  <CategorieIcon categorie={o.categorie} size={18} strokeWidth={1.5} color="var(--brass-100)" />
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: 10.5,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "var(--forest-800)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {o.nom}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9,
+                      color: "var(--ink-500)",
+                    }}
+                  >
+                    {o.etat} · {o.rarete} · ref. {Math.round(o.prixReferenceReel)} €
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const prix = suggererPrix(o.prixReferenceReel);
+                    mettreEnVitrine(o.id, prix);
+                  }}
+                  style={{
+                    padding: "6px 10px",
+                    fontFamily: "var(--font-display)",
+                    fontSize: 9.5,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    border: "1px solid var(--brass-500)",
+                    background: "var(--forest-800)",
+                    color: "var(--brass-300)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Ajouter
+                </button>
+              </div>
+            ))}
+          </section>
+        )}
 
         {surcharge && (
           <p
