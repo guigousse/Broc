@@ -7,6 +7,7 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
 import { CategorieChips } from "@/components/mobile/CategorieChips";
 import { CollectionGrid } from "@/components/CollectionGrid";
+import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import { progressionGlobale } from "@/lib/collection";
@@ -14,8 +15,9 @@ import type { CategorieObjet, CollectionSlot } from "@/types/game";
 
 export default function CollectionPage() {
   const router = useRouter();
-  const { state, isHydrated } = useGame();
+  const { state, isHydrated, donnerACollection, retirerDeCollection } = useGame();
   const [filtre, setFiltre] = useState<CategorieObjet | null>(null);
+  const [slotActif, setSlotActif] = useState<CollectionSlot | null>(null);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -34,6 +36,11 @@ export default function CollectionPage() {
       acc[c] = (state.collection[c] ?? []).filter((s) => s.donation !== null).length;
     return acc;
   }, [state]);
+
+  const candidats = useMemo(() => {
+    if (!state || !slotActif) return [];
+    return state.inventaireJoueur.filter((o) => o.templateId === slotActif.templateId);
+  }, [state, slotActif]);
 
   if (!isHydrated || !state) {
     return (
@@ -73,6 +80,7 @@ export default function CollectionPage() {
     .join(" · ");
 
   return (
+  <>
     <MobileLayout
       header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
       stickyTop={
@@ -131,7 +139,26 @@ export default function CollectionPage() {
         </StickyTop>
       }
     >
-      <CollectionGrid slots={slotsFiltres} />
+      <CollectionGrid slots={slotsFiltres} onTap={setSlotActif} />
     </MobileLayout>
+    <DonationPickerSheet
+      open={slotActif !== null}
+      onClose={() => setSlotActif(null)}
+      slot={slotActif}
+      candidats={candidats}
+      onDonner={(objetId) => {
+        const res = donnerACollection(objetId);
+        if (res.ok) setSlotActif(null);
+      }}
+      onRetirer={
+        slotActif?.donation
+          ? () => {
+              const res = retirerDeCollection(slotActif.templateId);
+              if (res.ok) setSlotActif(null);
+            }
+          : undefined
+      }
+    />
+  </>
   );
 }
