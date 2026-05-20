@@ -384,6 +384,7 @@ function ObjetCardMobile({
     >
       <div
         style={{
+          position: "relative",
           aspectRatio: "4/3",
           background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
           display: "flex",
@@ -405,27 +406,68 @@ function ObjetCardMobile({
         >
           {objet.categorie}
         </span>
+
+        {/* Badges overlay bottom of image */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 3,
+            left: 3,
+            right: 3,
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 4,
+          }}
+        >
+          <EtatBadge etat={objet.etat} />
+          <RareteBadge rarete={objet.rarete} />
+        </div>
+      </div>
+      <div
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          color: "var(--forest-800)",
+          lineHeight: 1.15,
+          minHeight: "2.3em",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+          textAlign: "center",
+          padding: "0 2px",
+        }}
+      >
+        {objet.nom}
       </div>
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          gap: 4,
+          alignItems: "baseline",
+          fontFamily: "var(--font-mono)",
+          fontSize: 10,
+          letterSpacing: "0.06em",
+          color: "var(--ink-500)",
+          padding: "2px 4px",
         }}
       >
-        <EtatBadge etat={objet.etat} />
-        <RareteBadge rarete={objet.rarete} />
-      </div>
-      <div
-        style={{
-          textAlign: "center",
-          fontFamily: "var(--font-display)",
-          fontSize: 14,
-          color: tropCher ? "var(--vermillion-600)" : "var(--forest-800)",
-          fontWeight: 700,
-        }}
-      >
-        {prixVendeur} €
+        <span>
+          {item.negociationsTentees > 0 ? "Prix négocié :" : "Prix demandé :"}
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 14,
+            fontWeight: 700,
+            color: tropCher ? "var(--vermillion-600)" : "var(--forest-800)",
+          }}
+        >
+          {prixVendeur} €
+        </span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
         <button
@@ -439,7 +481,21 @@ function ObjetCardMobile({
           type="button"
           onClick={onAcheter}
           disabled={tropCher}
-          style={{ ...miniBtn(true), opacity: tropCher ? 0.45 : 1, cursor: tropCher ? "not-allowed" : "pointer" }}
+          style={{
+            ...miniBtn(true),
+            opacity: tropCher ? 0.45 : 1,
+            cursor: tropCher ? "not-allowed" : "pointer",
+            // surbrillance après négociation
+            ...(item.negociationsTentees > 0 && !tropCher
+              ? {
+                  background: "var(--brass-700)",
+                  color: "var(--paper-100)",
+                  boxShadow:
+                    "inset 0 0 0 1px var(--brass-700), 0 0 0 2px var(--brass-300), 0 2px 6px rgba(176,136,56,0.45)",
+                  animation: "broc-pulse 1.6s ease-in-out infinite",
+                }
+              : {}),
+          }}
         >
           Acheter
         </button>
