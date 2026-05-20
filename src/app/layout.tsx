@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { GameProvider } from "@/context/GameContext";
-import { NavigationDock } from "@/components/NavigationDock";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,6 +12,10 @@ export const viewport: Viewport = {
   themeColor: "#1A3326",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
@@ -22,10 +25,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body style={{ minHeight: "100dvh", paddingBottom: 80 }}>
+      <body style={{ minHeight: "100dvh", overflowX: "hidden" }}>
         <GameProvider>
           {children}
-          <NavigationDock />
         </GameProvider>
       </body>
     </html>
