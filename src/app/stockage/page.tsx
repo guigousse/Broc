@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MobileLayout } from "@/components/mobile/MobileLayout";
+import { MobileHeader } from "@/components/mobile/MobileHeader";
+import { StickyTop } from "@/components/mobile/StickyTop";
+import { CategorieChips } from "@/components/mobile/CategorieChips";
 import { InventoryGrid } from "@/components/InventoryGrid";
-import { StatusBar } from "@/components/StatusBar";
-import { Panel } from "@/components/ui/Panel";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import { getStockageTier } from "@/data/stockage";
@@ -14,6 +16,7 @@ import type { CategorieObjet } from "@/types/game";
 export default function StockagePage() {
   const router = useRouter();
   const { state, isHydrated } = useGame();
+  const [filtre, setFiltre] = useState<CategorieObjet | null>(null);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -26,6 +29,22 @@ export default function StockagePage() {
     return s;
   }, [state]);
 
+  const objetsFiltres = useMemo(() => {
+    if (!state) return [];
+    return filtre
+      ? state.inventaireJoueur.filter((o) => o.categorie === filtre)
+      : state.inventaireJoueur;
+  }, [state, filtre]);
+
+  const comptes = useMemo(() => {
+    const acc: Partial<Record<CategorieObjet, number>> = {};
+    if (!state) return acc;
+    for (const o of state.inventaireJoueur) {
+      acc[o.categorie] = (acc[o.categorie] ?? 0) + 1;
+    }
+    return acc;
+  }, [state]);
+
   if (!isHydrated || !state) {
     return (
       <main
@@ -35,76 +54,96 @@ export default function StockagePage() {
           minHeight: "100dvh",
           fontFamily: "var(--font-mono)",
           color: "var(--ink-500)",
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
           fontSize: 12,
         }}
       >
-        — inventaire du stock…
+        — ouverture du stockage…
       </main>
     );
   }
 
   const tier = getStockageTier(state.inventaireJoueur.length);
-  const joursAvantLoyer = Math.max(
-    0,
-    state.prochainRafraichissementTendances - state.jourActuel,
-  );
+  const ratio = state.inventaireJoueur.length / tier.capaciteMax;
 
   return (
-    <div
-      className="bg-paper-grain"
-      style={{ minHeight: "100dvh", padding: "20px 28px 32px" }}
-    >
-      <StatusBar jour={state.jourActuel} budget={state.budget} />
-
-      <div style={{ marginTop: 22 }}>
-        <Panel
-          eyebrow="— stockage —"
-          title={`${tier.nom} · ${state.inventaireJoueur.length} objet${
-            state.inventaireJoueur.length > 1 ? "s" : ""
-          }`}
-        >
+    <MobileLayout
+      header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
+      stickyTop={
+        <StickyTop>
+          <div
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 9,
+              letterSpacing: "0.24em",
+              textTransform: "uppercase",
+              color: "var(--brass-700)",
+              textAlign: "center",
+              marginBottom: 6,
+            }}
+          >
+            — Stockage · {tier.nom} —
+          </div>
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "baseline",
-              flexWrap: "wrap",
-              gap: 8,
-              padding: "8px 10px",
-              marginBottom: 12,
-              background: "var(--paper-300)",
-              border: "1px dashed var(--brass-700)",
-              fontFamily: "var(--font-mono)",
-              fontSize: 10.5,
-              letterSpacing: "0.06em",
-              color: "var(--ink-500)",
             }}
           >
-            <span>
-              Loyer hebdo{" "}
-              <strong style={{ color: "var(--forest-800)" }}>
-                {tier.loyerHebdo} €
-              </strong>{" "}
-              · prélèvement{" "}
-              {joursAvantLoyer === 0
-                ? "demain"
-                : `dans ${joursAvantLoyer} jour${joursAvantLoyer > 1 ? "s" : ""}`}
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 17,
+                color: "var(--forest-800)",
+              }}
+            >
+              {state.inventaireJoueur.length} / {tier.capaciteMax} obj.
             </span>
-            {state.dernierLoyer && (
-              <span style={{ color: "var(--vermillion-600)" }}>
-                dernier loyer −{state.dernierLoyer.montant} € (
-                {state.dernierLoyer.tierNom})
-              </span>
-            )}
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 9,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "var(--brass-700)",
+              }}
+            >
+              Loyer {tier.loyerHebdo} €/sem.
+            </span>
           </div>
-          <InventoryGrid
-            objets={state.inventaireJoueur}
-            categoriesConnues={categoriesConnuesVitrine}
+          <div
+            style={{
+              height: 6,
+              background: "var(--paper-300)",
+              border: "1px solid var(--brass-500)",
+              margin: "6px 0 8px",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                background:
+                  ratio >= 1
+                    ? "var(--vermillion-600)"
+                    : "var(--forest-800)",
+                width: `${Math.min(100, Math.round(ratio * 100))}%`,
+              }}
+            />
+          </div>
+          <CategorieChips
+            categories={CATEGORIES}
+            selection={filtre}
+            onChange={setFiltre}
+            comptesParCat={comptes}
+            total={state.inventaireJoueur.length}
           />
-        </Panel>
-      </div>
-    </div>
+        </StickyTop>
+      }
+    >
+      <InventoryGrid
+        objets={objetsFiltres}
+        categoriesConnues={categoriesConnuesVitrine}
+      />
+    </MobileLayout>
   );
 }
