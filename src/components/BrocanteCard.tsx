@@ -1,205 +1,129 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
-import { Star } from "lucide-react";
-import type { Brocante } from "@/types/game";
-import { descriptionCondition } from "@/lib/deblocage";
+import { useRouter } from "next/navigation";
+import type { CSSProperties } from "react";
+import type { Brocante, GameState } from "@/types/game";
 import { coutEntree } from "@/data/brocantes";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
-
-function Etoiles({ nombre }: { nombre: number }) {
-  return (
-    <span
-      style={{ display: "inline-flex", gap: 2, alignItems: "center" }}
-      aria-label={`${nombre} étoile${nombre > 1 ? "s" : ""}`}
-    >
-      {Array.from({ length: nombre }).map((_, i) => (
-        <Star
-          key={i}
-          size={12}
-          fill="var(--brass-500)"
-          color="var(--brass-700)"
-          strokeWidth={1}
-        />
-      ))}
-    </span>
-  );
-}
 
 interface BrocanteCardProps {
   brocante: Brocante;
+  state: GameState;
   debloquee: boolean;
-  /** URL cible quand la carte est cliquée (défaut : /chiner/[id]). */
-  hrefBase?: string;
-  /** Célébrité annoncée ici (skill Carnet mondain). null = aucune. */
-  celebriteIci?: { nom: string; jourLabel: string } | null;
+  raisonVerrou?: string;
+  destination: "chiner" | "vitrine";
 }
+
+const cardStyle: CSSProperties = {
+  border: "1px solid var(--brass-500)",
+  background: "var(--paper-100)",
+  padding: "10px 12px",
+  boxShadow:
+    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+};
 
 export function BrocanteCard({
   brocante,
+  state,
   debloquee,
-  hrefBase = "/chiner",
-  celebriteIci,
+  raisonVerrou,
+  destination,
 }: BrocanteCardProps) {
-  const [hover, setHover] = useState(false);
-
-  const content = (
-    <article
-      onMouseEnter={() => debloquee && setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        position: "relative",
-        background: "var(--paper-100)",
-        backgroundImage: "url(/assets/paper-grain.svg)",
-        backgroundSize: "320px 320px",
-        border: "1px solid var(--brass-500)",
-        padding: 20,
-        boxShadow: hover
-          ? "0 4px 0 var(--paper-400), 0 10px 20px rgba(40,25,5,0.18), inset 0 0 0 4px var(--paper-100), inset 0 0 0 5px var(--brass-500)"
-          : "0 2px 0 var(--paper-400), 0 6px 14px rgba(40,25,5,0.10), inset 0 0 0 4px var(--paper-100), inset 0 0 0 5px var(--brass-500)",
-        transform: hover ? "translateY(-2px)" : "translateY(0)",
-        transition: "all 220ms cubic-bezier(0.85, 0, 0.15, 1)",
-        opacity: debloquee ? 1 : 0.55,
-        cursor: debloquee ? "pointer" : "not-allowed",
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-      }}
-    >
-      <header
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <Etoiles nombre={brocante.etoiles} />
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 9,
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: "var(--brass-700)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {brocante.ambiance}
-          </span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          {brocante.specialisation && (
-            <CategorieIcon
-              categorie={brocante.specialisation}
-              size={16}
-              color="var(--brass-700)"
-            />
-          )}
-          <h3
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 15,
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "var(--forest-800)",
-              lineHeight: 1.2,
-              margin: 0,
-              flex: 1,
-            }}
-          >
-            {brocante.nom}
-          </h3>
-        </div>
-      </header>
-
-      <p
-        style={{
-          fontFamily: "var(--font-serif)",
-          fontStyle: "italic",
-          fontSize: 14,
-          color: "var(--ink-500)",
-          lineHeight: 1.45,
-          margin: 0,
-          flex: 1,
-        }}
-      >
-        {brocante.description}
-      </p>
-
-      {celebriteIci && (
-        <div
-          style={{
-            padding: "6px 8px",
-            background: "var(--brass-100)",
-            border: "1px dashed var(--brass-700)",
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            letterSpacing: "0.08em",
-            color: "var(--forest-800)",
-            lineHeight: 1.35,
-          }}
-          title="Célébrité présente ce jour-là : pool agrandi, rares & légendaires boostés."
-        >
-          ✦ <strong style={{ fontFamily: "var(--font-display)" }}>{celebriteIci.nom}</strong> attendu(e) ici{" "}
-          <strong style={{ fontFamily: "var(--font-display)" }}>{celebriteIci.jourLabel}</strong>
-        </div>
-      )}
-
+  const router = useRouter();
+  const entree = coutEntree(brocante);
+  return (
+    <article style={{ ...cardStyle, opacity: debloquee ? 1 : 0.55 }}>
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "baseline",
-          paddingTop: 10,
-          borderTop: "1px dotted var(--paper-500)",
-          fontFamily: "var(--font-mono)",
-          fontSize: 10.5,
-          letterSpacing: "0.06em",
         }}
       >
-        <span style={{ color: "var(--ink-500)" }}>
-          ~{brocante.taillePool} obj. · entrée {coutEntree(brocante)} €
+        <span
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 12,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "var(--forest-800)",
+            fontWeight: 700,
+          }}
+        >
+          {brocante.nom}
         </span>
         <span
           style={{
-            color: debloquee ? "var(--forest-700)" : "var(--brass-700)",
-            fontStyle: debloquee ? "normal" : "italic",
-            textTransform: "uppercase",
-            letterSpacing: "0.14em",
+            fontFamily: "var(--font-display)",
+            fontSize: 11,
+            color: "var(--brass-600)",
+            letterSpacing: "0.06em",
           }}
         >
-          {debloquee
-            ? "— ouvert —"
-            : descriptionCondition(brocante.conditionDeblocage)}
+          {"★".repeat(brocante.tier)}
         </span>
       </div>
+      <p
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontStyle: "italic",
+          fontSize: 12.5,
+          color: "var(--ink-500)",
+          margin: "4px 0 6px",
+          lineHeight: 1.3,
+        }}
+      >
+        {brocante.description}
+      </p>
+      {!debloquee && raisonVerrou && (
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 9.5,
+            color: "var(--vermillion-600)",
+            marginBottom: 6,
+            letterSpacing: "0.06em",
+          }}
+        >
+          ⊘ {raisonVerrou}
+        </div>
+      )}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            color: "var(--brass-700)",
+            letterSpacing: "0.06em",
+          }}
+        >
+          Entrée {entree} € · {brocante.taillePool} items
+        </span>
+        <button
+          type="button"
+          disabled={!debloquee || state.budget < entree}
+          onClick={() => router.push(`/${destination}/${brocante.id}`)}
+          style={{
+            padding: "7px 12px",
+            fontFamily: "var(--font-display)",
+            fontSize: 10,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            border: "1px solid var(--brass-500)",
+            background: debloquee ? "var(--forest-800)" : "var(--paper-300)",
+            color: debloquee ? "var(--brass-300)" : "var(--ink-500)",
+            cursor: debloquee ? "pointer" : "not-allowed",
+            opacity: !debloquee || state.budget < entree ? 0.6 : 1,
+          }}
+        >
+          {debloquee ? "Entrer" : "Fermé"}
+        </button>
+      </div>
     </article>
-  );
-
-  if (!debloquee) return <div aria-disabled>{content}</div>;
-
-  return (
-    <Link
-      href={`${hrefBase}/${brocante.id}`}
-      style={{ display: "block", textDecoration: "none", color: "inherit" }}
-    >
-      {content}
-    </Link>
   );
 }

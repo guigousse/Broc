@@ -232,8 +232,9 @@ export default function VitrineSelectionPage() {
                   <BrocanteCard
                     key={b.id}
                     brocante={b}
+                    state={state}
                     debloquee={debloqueesParTier.get(tier)!.has(b.id)}
-                    hrefBase="/vitrine"
+                    destination="vitrine"
                   />
                 ))}
               </div>
