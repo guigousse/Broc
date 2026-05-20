@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { StatusBar } from "@/components/StatusBar";
-import { Button } from "@/components/ui/Button";
-import { DecoDivider } from "@/components/ui/DecoDivider";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { EtatBadge } from "@/components/ui/EtatBadge";
 import { RareteBadge } from "@/components/ui/RareteBadge";
 import { SessionSummary } from "@/components/SessionSummary";
+import { ContextualHeader } from "@/components/mobile/ContextualHeader";
+import { ActionFab } from "@/components/mobile/ActionFab";
+import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import { useGame } from "@/context/GameContext";
 import { coutEntree, getBrocanteById } from "@/data/brocantes";
 import { estDebloquee } from "@/lib/deblocage";
 import { genererSession, reagirNegociation } from "@/lib/chine";
-import { aConnaisseurChinage } from "@/lib/competences";
 import { indexJourSemaine } from "@/lib/meteo";
 import {
   TREE_GENERAL,
@@ -56,6 +55,8 @@ export default function SessionChinePage() {
   const [resumeOuvert, setResumeOuvert] = useState(false);
   /** XP gagnée localement durant la session, par arbre. */
   const [xpSession, setXpSession] = useState<Record<string, number>>({});
+  /** ID de l'objet dont la négociation est ouverte dans le BottomSheet. */
+  const [negoOuverte, setNegoOuverte] = useState<string | null>(null);
 
   const gagnerXPLocal = (treeId: string, montant: number) => {
     gagnerXP(treeId, montant);
@@ -124,18 +125,6 @@ export default function SessionChinePage() {
       prev ? prev.map((it) => (it.id === id ? { ...it, ...patch } : it)) : prev,
     );
 
-  const handleDemanderPrix = (id: string) => setItem(id, { prixAffiche: true });
-
-  const handleOuvrirNego = (id: string) => {
-    const it = items.find((x) => x.id === id);
-    if (!it) return;
-    setNegoEnCours((prev) => ({
-      ...prev,
-      [id]: prev[id] ?? Math.max(1, Math.round(it.prixVendeur * 0.75)),
-    }));
-    if (!it.prixAffiche) setItem(id, { prixAffiche: true });
-  };
-
   const handleFermerNego = (id: string) => {
     setNegoEnCours((prev) => {
       const { [id]: _, ...rest } = prev;
@@ -143,15 +132,13 @@ export default function SessionChinePage() {
     });
   };
 
-  const handleChangerOffre = (id: string, valeur: number) => {
-    setNegoEnCours((prev) => ({ ...prev, [id]: Math.max(1, valeur) }));
-  };
-
-  const handleProposer = (id: string) => {
+  /**
+   * Propose une offre directement (offre passée en argument, pas lue depuis negoEnCours).
+   * Utilisé par NegociationSheet pour éviter le problème de batching React.
+   */
+  const handleProposerOffre = (id: string, offre: number) => {
     const it = items.find((x) => x.id === id);
     if (!it) return;
-    const offre = negoEnCours[id];
-    if (!offre) return;
     const res = reagirNegociation(
       offre,
       { prixVendeur: it.prixVendeur, prixMinAccept: it.prixMinAccept },
@@ -173,7 +160,7 @@ export default function SessionChinePage() {
       });
       handleFermerNego(id);
     } else {
-      // Refus poli : on garde la nego ouverte pour retenter
+      // Refus poli
       setItem(id, { negociationsTentees: it.negociationsTentees + 1 });
     }
     setFlash(res.message);
@@ -248,448 +235,228 @@ export default function SessionChinePage() {
 
   return (
     <div
-      className="bg-paper-grain"
-      style={{ minHeight: "100dvh", padding: "20px 28px 32px" }}
+      style={{
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        background: "var(--paper-100)",
+      }}
     >
-      <StatusBar jour={state.jourActuel} budget={state.budget} />
-
-      <div
+      <ContextualHeader
+        titre={brocante.nom}
+        sousTitre={`${achats.length}${items ? ` / ${items.length}` : ""} acquis · ${achats.reduce((s, a) => s + a.prixPaye, 0)} €`}
+        budget={state.budget}
+        onBack={handleRentrer}
+        backIcon="close"
+      />
+      <main
         style={{
-          maxWidth: 1280,
-          margin: "32px auto 0",
-          display: "flex",
-          flexDirection: "column",
-          gap: 24,
+          flex: 1,
+          padding: `12px 12px calc(80px + var(--safe-bottom))`,
+          overflowY: "auto",
         }}
       >
-        <header
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            gap: 16,
-          }}
-        >
-          <div>
-            <div className="eyebrow">— {brocante.ambiance} —</div>
-            <h1
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 36,
-                fontWeight: 700,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--forest-800)",
-                margin: "4px 0 8px",
-                lineHeight: 1.1,
-              }}
-            >
-              {brocante.nom}
-            </h1>
-            <p
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontStyle: "italic",
-                color: "var(--ink-500)",
-                fontSize: 16,
-                margin: 0,
-                maxWidth: 540,
-              }}
-            >
-              {brocante.description}
-            </p>
-          </div>
-          <Button variant="secondary" size="md" onClick={handleRentrer}>
-            Rentrer · Fin de journée
-          </Button>
-        </header>
-
         {flash && (
           <div
             style={{
-              padding: "12px 16px",
-              background: "var(--paper-100)",
-              border: "1px solid var(--brass-500)",
-              boxShadow:
-                "inset 0 0 0 3px var(--paper-100), inset 0 0 0 4px var(--brass-700)",
+              padding: "10px 12px",
+              background: "var(--brass-100)",
+              border: "1px solid var(--brass-700)",
               fontFamily: "var(--font-serif)",
               fontStyle: "italic",
-              fontSize: 15,
+              fontSize: 13,
               color: "var(--ink-700)",
+              marginBottom: 10,
             }}
           >
             « {flash} »
           </div>
         )}
-
-        <DecoDivider />
-
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: 14,
+            gridTemplateColumns: "1fr 1fr",
+            gap: 8,
           }}
         >
-          {items.map((it) => (
-            <ObjetEnVenteCard
+          {(items ?? []).map((it) => (
+            <ObjetCardMobile
               key={it.id}
               item={it}
               budget={state.budget}
-              oeilExerce={aConnaisseurChinage(state, it.objet.categorie)}
-              negoOffre={negoEnCours[it.id]}
-              onDemanderPrix={() => handleDemanderPrix(it.id)}
-              onOuvrirNego={() => handleOuvrirNego(it.id)}
-              onAnnulerNego={() => handleFermerNego(it.id)}
-              onChangerOffre={(v) => handleChangerOffre(it.id, v)}
-              onProposer={() => handleProposer(it.id)}
+              onNegocier={() => setNegoOuverte(it.id)}
               onAcheter={() => handleAcheter(it.id)}
             />
           ))}
         </div>
-      </div>
+      </main>
+
+      <ActionFab
+        buttons={[
+          {
+            label: "Rentrer · fin de journée",
+            variant: "secondary",
+            onClick: handleRentrer,
+          },
+        ]}
+      />
+
+      {negoOuverte && (() => {
+        const it = (items ?? []).find((i) => i.id === negoOuverte);
+        if (!it) return null;
+        return (
+          <NegociationSheet
+            open
+            onClose={() => setNegoOuverte(null)}
+            prixAffiche={it.prixVendeur}
+            offreInitiale={Math.round(it.prixVendeur * 0.8)}
+            onProposer={(offre) => {
+              handleProposerOffre(it.id, offre);
+              setNegoOuverte(null);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
 
-interface ObjetEnVenteCardProps {
-  item: ObjetEnVente;
-  budget: number;
-  oeilExerce: boolean;
-  negoOffre: number | undefined;
-  onDemanderPrix: () => void;
-  onOuvrirNego: () => void;
-  onAnnulerNego: () => void;
-  onChangerOffre: (v: number) => void;
-  onProposer: () => void;
-  onAcheter: () => void;
-}
-
-function ObjetEnVenteCard({
+function ObjetCardMobile({
   item,
   budget,
-  oeilExerce,
-  negoOffre,
-  onDemanderPrix,
-  onOuvrirNego,
-  onAnnulerNego,
-  onChangerOffre,
-  onProposer,
+  onNegocier,
   onAcheter,
-}: ObjetEnVenteCardProps) {
-  const { objet, prixAffiche, prixVendeur, statut, negociationsTentees } = item;
+}: {
+  item: ObjetEnVente;
+  budget: number;
+  onNegocier: () => void;
+  onAcheter: () => void;
+}) {
+  const { objet, prixVendeur, statut } = item;
   const tropCher = budget < prixVendeur;
-  const ref = `N°${item.id.slice(0, 6).toUpperCase()}`;
-  const negoOuverte = negoOffre !== undefined;
-
+  if (statut === "achete") {
+    return (
+      <article
+        style={{
+          border: "1px solid var(--brass-500)",
+          background: "var(--paper-300)",
+          padding: 6,
+          opacity: 0.4,
+          display: "flex",
+          flexDirection: "column",
+          gap: 5,
+        }}
+      >
+        <div
+          style={{
+            aspectRatio: "4/3",
+            background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
+            display: "grid",
+            placeItems: "center",
+            color: "var(--brass-100)",
+          }}
+        >
+          <CategorieIcon categorie={objet.categorie} size={28} strokeWidth={1.5} color="var(--brass-100)" />
+        </div>
+        <div
+          style={{
+            textAlign: "center",
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            color: "var(--ink-500)",
+          }}
+        >
+          — Acquis —
+        </div>
+      </article>
+    );
+  }
   return (
     <article
       style={{
-        position: "relative",
+        border: `1px solid ${statut === "refuse" ? "var(--vermillion-600)" : "var(--brass-500)"}`,
         background: "var(--paper-300)",
-        border: `1px solid ${
-          statut === "refuse" ? "var(--vermillion-600)" : "var(--brass-500)"
-        }`,
-        padding: 14,
-        boxShadow:
-          statut === "achete"
-            ? "inset 0 0 0 1px var(--forest-800)"
-            : "0 2px 0 var(--paper-400), 0 4px 10px rgba(40,25,5,0.08)",
-        opacity: statut === "achete" ? 0.6 : 1,
+        padding: 6,
         display: "flex",
         flexDirection: "column",
-        gap: 8,
+        gap: 5,
       }}
     >
-      <span
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 3,
-          border: "1px solid rgba(138,106,38,0.4)",
-          pointerEvents: "none",
-        }}
-      />
-
       <div
         style={{
           aspectRatio: "4/3",
-          background:
-            "linear-gradient(135deg, var(--paper-500) 0%, var(--brass-700) 100%)",
-          border: "1px solid var(--brass-700)",
+          background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 6,
+          gap: 3,
           color: "var(--brass-100)",
         }}
       >
-        <CategorieIcon
-          categorie={objet.categorie}
-          size={36}
-          strokeWidth={1.25}
-          color="var(--brass-100)"
-        />
+        <CategorieIcon categorie={objet.categorie} size={24} strokeWidth={1.5} color="var(--brass-100)" />
         <span
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: 9,
-            letterSpacing: "0.22em",
+            fontSize: 8,
+            letterSpacing: "0.18em",
             textTransform: "uppercase",
           }}
         >
           {objet.categorie}
         </span>
       </div>
-
       <div
         style={{
           display: "flex",
-          gap: 6,
-          alignItems: "center",
-          flexWrap: "wrap",
+          justifyContent: "space-between",
+          gap: 4,
         }}
       >
         <EtatBadge etat={objet.etat} />
-        {objet.rarete !== "commun" && <RareteBadge rarete={objet.rarete} />}
-      </div>
-
-      <div
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 9.5,
-          color: "var(--brass-700)",
-          letterSpacing: "0.08em",
-        }}
-      >
-        {ref}
+        <RareteBadge rarete={objet.rarete} />
       </div>
       <div
         style={{
+          textAlign: "center",
           fontFamily: "var(--font-display)",
-          fontWeight: 600,
-          fontSize: 13,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "var(--forest-800)",
-          lineHeight: 1.2,
+          fontSize: 14,
+          color: tropCher ? "var(--vermillion-600)" : "var(--forest-800)",
+          fontWeight: 700,
         }}
       >
-        {objet.nom}
+        {prixVendeur} €
       </div>
-
-      <div
-        style={{
-          paddingTop: 8,
-          borderTop: "1px dotted var(--paper-500)",
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-          fontFamily: "var(--font-mono)",
-          fontSize: 10,
-          letterSpacing: "0.08em",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline",
-          }}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+        <button
+          type="button"
+          onClick={onNegocier}
+          style={miniBtn(false)}
         >
-          <span style={{ color: "var(--brass-700)" }}>PRIX</span>
-          {prixAffiche ? (
-            <span
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 18,
-                color: "var(--forest-800)",
-              }}
-            >
-              {prixVendeur}
-              <span style={{ fontSize: 10, color: "var(--brass-700)" }}>€</span>
-            </span>
-          ) : (
-            <span
-              style={{
-                color: "var(--ink-500)",
-                fontStyle: "italic",
-              }}
-            >
-              sans étiquette
-            </span>
-          )}
-        </div>
-        {oeilExerce && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              color: "var(--brass-700)",
-            }}
-            title="Valeur de référence (Œil exercé)"
-          >
-            <span>VALEUR</span>
-            <span style={{ color: "var(--forest-700)" }}>
-              {objet.prixReferenceReel} €
-            </span>
-          </div>
-        )}
+          Négo
+        </button>
+        <button
+          type="button"
+          onClick={onAcheter}
+          disabled={tropCher}
+          style={{ ...miniBtn(true), opacity: tropCher ? 0.45 : 1, cursor: tropCher ? "not-allowed" : "pointer" }}
+        >
+          Acheter
+        </button>
       </div>
-
-      {negoOuverte && statut === "disponible" && (
-        <div
-          style={{
-            marginTop: 4,
-            padding: 8,
-            background: "var(--paper-100)",
-            border: "1px solid var(--brass-700)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 9,
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                color: "var(--brass-700)",
-                flex: 1,
-              }}
-            >
-              Votre offre
-            </span>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                background: "var(--paper-300)",
-                border: "1px solid var(--brass-700)",
-                padding: "2px 6px",
-              }}
-            >
-              <input
-                type="number"
-                min={1}
-                value={negoOffre}
-                onChange={(e) =>
-                  onChangerOffre(Math.max(1, Number(e.target.value) || 1))
-                }
-                style={{
-                  width: 60,
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  color: "var(--forest-800)",
-                  textAlign: "right",
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 11,
-                  color: "var(--brass-700)",
-                  marginLeft: 3,
-                }}
-              >
-                €
-              </span>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            <Button size="sm" onClick={onProposer}>
-              Proposer
-            </Button>
-            <Button size="sm" variant="ghost" onClick={onAnnulerNego}>
-              Annuler
-            </Button>
-          </div>
-          {negociationsTentees > 0 && (
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 9,
-                letterSpacing: "0.14em",
-                color: "var(--ink-500)",
-                fontStyle: "italic",
-              }}
-            >
-              {negociationsTentees} tentative
-              {negociationsTentees > 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
-      )}
-
-      {!negoOuverte && (
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 6,
-            marginTop: 4,
-          }}
-        >
-          {statut === "achete" && (
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--forest-700)",
-              }}
-            >
-              ✦ acquis
-            </span>
-          )}
-          {statut === "refuse" && (
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--vermillion-600)",
-                fontStyle: "italic",
-              }}
-            >
-              vendeur fâché
-            </span>
-          )}
-
-          {statut === "disponible" && !prixAffiche && (
-            <Button size="sm" variant="secondary" onClick={onDemanderPrix}>
-              Demander le prix
-            </Button>
-          )}
-          {statut === "disponible" && prixAffiche && (
-            <>
-              <Button size="sm" onClick={onAcheter} disabled={tropCher}>
-                Acquérir · {prixVendeur} €
-              </Button>
-              <Button size="sm" variant="secondary" onClick={onOuvrirNego}>
-                Négocier
-              </Button>
-            </>
-          )}
-        </div>
-      )}
     </article>
   );
 }
+
+const miniBtn = (primary: boolean): CSSProperties => ({
+  padding: "6px 0",
+  textAlign: "center",
+  fontFamily: "var(--font-display)",
+  fontSize: 8.5,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  border: "1px solid var(--brass-500)",
+  background: primary ? "var(--forest-800)" : "var(--paper-100)",
+  color: primary ? "var(--brass-300)" : "var(--forest-800)",
+  cursor: "pointer",
+});

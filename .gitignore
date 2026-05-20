@@ -9,3 +9,6 @@ next-env.d.ts
 # Tauri build artefacts
 src-tauri/target
 src-tauri/gen
+
+# Superpowers brainstorm/mockup workspace
+.superpowers/

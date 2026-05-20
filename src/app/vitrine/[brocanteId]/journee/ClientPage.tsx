@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { StatusBar } from "@/components/StatusBar";
+import { ContextualHeader } from "@/components/mobile/ContextualHeader";
+import { ActionFab } from "@/components/mobile/ActionFab";
 import { Button } from "@/components/ui/Button";
 import { DecoDivider } from "@/components/ui/DecoDivider";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { EtatBadge } from "@/components/ui/EtatBadge";
 import { SessionSummary } from "@/components/SessionSummary";
-import { Panel } from "@/components/ui/Panel";
 import { useGame } from "@/context/GameContext";
 import {
   JOURNEE_DUREE_SECONDES,
@@ -502,94 +502,117 @@ export default function VitrineJourneePage() {
 
   return (
     <div
-      className="bg-paper-grain"
-      style={{ minHeight: "100dvh", padding: "20px 28px 32px" }}
+      style={{
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        background: "var(--paper-100)",
+      }}
     >
-      <StatusBar jour={state.jourActuel} budget={state.budget} />
+      <ContextualHeader
+        titre="Journée de vente"
+        sousTitre={brocante ? brocante.nom : ""}
+        budget={state.budget}
+      />
 
-      <div
+      <main
         style={{
-          maxWidth: 1280,
-          margin: "32px auto 0",
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 2fr) minmax(280px, 1fr)",
-          gap: 20,
-          alignItems: "start",
+          flex: 1,
+          overflowY: "auto",
+          padding: "12px 12px calc(80px + var(--safe-bottom))",
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
         }}
       >
-        {/* Colonne principale : le stand */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <Panel
-            eyebrow="— ouverture des halles —"
-            title={journeeFinie ? "Journée terminée" : `Vitrine · ${heureCourante()}`}
+        {/* Horloge */}
+        <section
+          style={{
+            border: "1px solid var(--brass-500)",
+            background: "var(--paper-100)",
+            padding: "10px 12px",
+            boxShadow:
+              "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 9,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--brass-700)",
+              marginBottom: 4,
+            }}
           >
-            {!journeeFinie && (
-              <Horloge
-                tempsRestant={tempsRestant}
-                progress={progress}
+            {`Vitrine · ${heureCourante()}`}
+          </div>
+          <Horloge tempsRestant={tempsRestant} progress={progress} />
+        </section>
+
+        {/* Articles sur l'étal */}
+        {(state.vitrine?.objets.length ?? 0) === 0 ? (
+          <p
+            style={{
+              textAlign: "center",
+              fontFamily: "var(--font-serif)",
+              fontStyle: "italic",
+              color: "var(--ink-500)",
+              padding: "16px 0",
+            }}
+          >
+            Votre étal est vide. Les badauds passent leur chemin.
+          </p>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+              gap: 10,
+            }}
+          >
+            {(state.vitrine?.objets ?? []).map((e) => (
+              <ArticleSurEtal
+                key={e.objet.id}
+                nom={e.objet.nom}
+                categorie={e.objet.categorie}
+                prix={e.prixVente}
               />
-            )}
+            ))}
+          </div>
+        )}
 
-            {(state.vitrine?.objets.length ?? 0) === 0 && !journeeFinie ? (
-              <p
-                style={{
-                  textAlign: "center",
-                  fontFamily: "var(--font-serif)",
-                  fontStyle: "italic",
-                  color: "var(--ink-500)",
-                  marginTop: 24,
-                }}
-              >
-                Votre étal est vide. Les badauds passent leur chemin.
-              </p>
-            ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-                  gap: 12,
-                  marginTop: 16,
-                }}
-              >
-                {(state.vitrine?.objets ?? []).map((e) => (
-                  <ArticleSurEtal
-                    key={e.objet.id}
-                    nom={e.objet.nom}
-                    categorie={e.objet.categorie}
-                    prix={e.prixVente}
-                  />
-                ))}
-              </div>
-            )}
-
-            {!journeeFinie && (
-              <div style={{ marginTop: 18, display: "flex", justifyContent: "center" }}>
-                <Button variant="secondary" size="sm" onClick={handleFermerEnAvance}>
-                  Baisser le rideau
-                </Button>
-              </div>
-            )}
-
-            {journeeFinie && (
-              <FinDeJournee
-                ventes={totalVentes}
-                onRetour={handleRetourQg}
-              />
-            )}
-          </Panel>
-        </div>
-
-        {/* Colonne journal */}
-        <Panel eyebrow="— carnet du chineur —" title="Journal de bord">
+        {/* Journal */}
+        <section
+          style={{
+            border: "1px solid var(--brass-500)",
+            background: "var(--paper-100)",
+            padding: "10px 12px",
+            boxShadow:
+              "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 10,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--forest-800)",
+              marginBottom: 8,
+            }}
+          >
+            — Journal de bord —
+          </div>
           {journal.length === 0 ? (
             <p
               style={{
                 fontFamily: "var(--font-serif)",
                 fontStyle: "italic",
                 color: "var(--ink-500)",
-                fontSize: 14,
+                fontSize: 13,
                 textAlign: "center",
-                margin: "20px 0",
+                margin: "10px 0",
               }}
             >
               Rien n'est encore arrivé.
@@ -600,25 +623,25 @@ export default function VitrineJourneePage() {
                 <li
                   key={j.id}
                   style={{
-                    padding: "8px 0",
+                    padding: "7px 0",
                     borderBottom:
                       i < arr.length - 1
                         ? "1px dotted var(--paper-500)"
                         : "none",
                     display: "flex",
-                    gap: 10,
+                    gap: 8,
                     alignItems: "baseline",
                   }}
                 >
                   <span
                     style={{
                       fontFamily: "var(--font-mono)",
-                      fontSize: 10,
+                      fontSize: 9,
                       letterSpacing: "0.1em",
                       color: "var(--brass-700)",
                       textTransform: "uppercase",
                       flexShrink: 0,
-                      width: 48,
+                      width: 44,
                     }}
                   >
                     {j.heure}
@@ -627,7 +650,7 @@ export default function VitrineJourneePage() {
                     style={{
                       fontFamily: "var(--font-serif)",
                       fontStyle: j.ton === "info" ? "italic" : "normal",
-                      fontSize: 13.5,
+                      fontSize: 13,
                       lineHeight: 1.4,
                       color:
                         j.ton === "vente"
@@ -643,8 +666,18 @@ export default function VitrineJourneePage() {
               ))}
             </ul>
           )}
-        </Panel>
-      </div>
+        </section>
+      </main>
+
+      <ActionFab
+        buttons={[
+          {
+            label: "Baisser le rideau",
+            variant: "secondary",
+            onClick: handleFermerEnAvance,
+          },
+        ]}
+      />
 
       {clientActuel && !journeeFinie && (
         <ClientModal

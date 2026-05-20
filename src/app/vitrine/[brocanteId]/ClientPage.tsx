@@ -1,17 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { StatusBar } from "@/components/StatusBar";
-import { Button } from "@/components/ui/Button";
-import { CategorieAccordion } from "@/components/ui/CategorieAccordion";
+import { ContextualHeader } from "@/components/mobile/ContextualHeader";
+import { ActionFab } from "@/components/mobile/ActionFab";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
-import { DecoDivider } from "@/components/ui/DecoDivider";
-import { EtatBadge } from "@/components/ui/EtatBadge";
-import { Panel } from "@/components/ui/Panel";
 import { useGame } from "@/context/GameContext";
-import { CATEGORIES } from "@/data/categories";
 import { getBrocanteById } from "@/data/brocantes";
 import {
   CAPACITE_MAX_GLOBALE,
@@ -19,15 +13,14 @@ import {
   coutStand,
   niveauRequis,
 } from "@/data/standLevels";
-import { aConnaisseurVitrine } from "@/lib/competences";
 import { estDebloquee } from "@/lib/deblocage";
 import { brocantesParTier } from "@/data/brocantes";
-import type { CategorieObjet, Objet, ObjetEnVitrine } from "@/types/game";
+import type { ObjetEnVitrine } from "@/types/game";
 
 const SUGGESTION_FACTEUR = 1.4;
 
-function suggererPrix(objet: Objet): number {
-  return Math.max(1, Math.round(objet.prixReferenceReel * SUGGESTION_FACTEUR));
+function suggererPrix(prixRef: number): number {
+  return Math.max(1, Math.round(prixRef * SUGGESTION_FACTEUR));
 }
 
 export default function VitrineBrocantePage() {
@@ -81,7 +74,7 @@ export default function VitrineBrocantePage() {
   }, [isHydrated, state, brocante, router, ouvrirVitrine]);
 
   const vitrineActive = state?.vitrine;
-  const objetsEnVitrine = vitrineActive?.objets ?? [];
+  const objetsEnVitrine: ObjetEnVitrine[] = vitrineActive?.objets ?? [];
 
   const standActuel = useMemo(
     () => niveauRequis(Math.max(1, objetsEnVitrine.length)),
@@ -118,103 +111,166 @@ export default function VitrineBrocantePage() {
     state.budget >= coutActuel &&
     !surcharge;
 
-  const handleAjouter = (objet: Objet) => {
-    const prix = prixInput[objet.id] ?? suggererPrix(objet);
-    mettreEnVitrine(objet.id, prix);
-    setPrixInput((prev) => {
-      const { [objet.id]: _, ...rest } = prev;
-      return rest;
-    });
-  };
-
-  const handleOuvrirJournee = () => {
-    if (!standActuel || !peutOuvrir) return;
-    ajusterBudget(-coutActuel);
-    router.push(`/vitrine/${brocante.id}/journee`);
-  };
-
-  const handleAnnuler = () => {
-    viderVitrine();
-    router.push("/vitrine");
-  };
-
   return (
     <div
-      className="bg-paper-grain"
-      style={{ minHeight: "100dvh", padding: "20px 28px 32px" }}
+      style={{
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        background: "var(--paper-100)",
+      }}
     >
-      <StatusBar jour={state.jourActuel} budget={state.budget} />
-
-      <div
+      <ContextualHeader
+        titre="Vitrine"
+        sousTitre={`${brocante.nom} · ${"★".repeat(brocante.tier)}`}
+        budget={state.budget}
+        onBack={() => router.push("/vitrine")}
+      />
+      <main
         style={{
-          maxWidth: 1280,
-          margin: "32px auto 0",
-          display: "flex",
-          flexDirection: "column",
-          gap: 24,
+          flex: 1,
+          padding: "12px 12px calc(80px + var(--safe-bottom))",
+          overflowY: "auto",
         }}
       >
-        <header
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            gap: 16,
-          }}
-        >
-          <div>
-            <div
-              className="eyebrow"
-              style={{ display: "flex", alignItems: "center", gap: 6 }}
-            >
-              <span style={{ color: "var(--brass-500)" }}>
-                {"★".repeat(brocante.etoiles)}
-              </span>
-              <span>· préparation</span>
-            </div>
-            <h1
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 36,
-                fontWeight: 700,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--forest-800)",
-                margin: "4px 0 8px",
-                lineHeight: 1.1,
-              }}
-            >
-              {brocante.nom}
-            </h1>
-            <p
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontStyle: "italic",
-                color: "var(--ink-500)",
-                fontSize: 16,
-                margin: 0,
-                maxWidth: 540,
-              }}
-            >
-              Choisissez les pièces à présenter, fixez leur prix. Le coût du
-              stand dépend du tier de la brocante et de la taille de votre étal.
-            </p>
+        <section style={cardStyle}>
+          <div style={rowStyle}>
+            <span style={lblStyle}>Stand niveau</span>
+            <span style={valStyle}>
+              {standActuel ? `${standActuel.niveau} — ${standActuel.nom}` : "—"}
+            </span>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleAnnuler}>
-            ← Changer de brocante
-          </Button>
-        </header>
+          <div
+            style={{
+              height: 6,
+              background: "var(--paper-300)",
+              border: "1px solid var(--brass-500)",
+              margin: "6px 0",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                background: surcharge
+                  ? "var(--vermillion-600)"
+                  : "var(--forest-800)",
+                width: `${Math.min(100, (objetsEnVitrine.length / CAPACITE_MAX_GLOBALE) * 100)}%`,
+              }}
+            />
+          </div>
+          <div style={rowStyle}>
+            <span style={lblStyle}>Capacité</span>
+            <span style={{ ...valStyle, fontSize: 11 }}>
+              {objetsEnVitrine.length} / {CAPACITE_MAX_GLOBALE} · loc. {coutActuel} €
+            </span>
+          </div>
+        </section>
 
-        <DecoDivider />
+        <h2 style={sectTitle}>— Objets exposés —</h2>
+        {objetsEnVitrine.length === 0 ? (
+          <section style={cardStyle}>
+            <p style={emptyStyle}>Aucun objet exposé. Ajoutez-en depuis le stock.</p>
+          </section>
+        ) : (
+          <section style={cardStyle}>
+            {objetsEnVitrine.map((ov, i) => (
+              <div
+                key={ov.objet.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "36px 1fr auto auto",
+                  gap: 8,
+                  alignItems: "center",
+                  padding: "8px 0",
+                  borderBottom:
+                    i === objetsEnVitrine.length - 1
+                      ? "none"
+                      : "1px dotted var(--paper-500)",
+                }}
+              >
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    background:
+                      "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
+                    border: "1px solid var(--brass-700)",
+                    display: "grid",
+                    placeItems: "center",
+                    color: "var(--brass-100)",
+                  }}
+                >
+                  <CategorieIcon categorie={ov.objet.categorie} size={18} strokeWidth={1.5} color="var(--brass-100)" />
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: 10.5,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "var(--forest-800)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {ov.objet.nom}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9,
+                      color: "var(--ink-500)",
+                    }}
+                  >
+                    {ov.objet.etat} · {ov.objet.rarete}
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <input
+                    type="number"
+                    min={1}
+                    value={prixInput[ov.objet.id] ?? ov.prixVente}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setPrixInput({ ...prixInput, [ov.objet.id]: v });
+                      ajusterPrixVitrine(ov.objet.id, v);
+                    }}
+                    style={{
+                      width: 56,
+                      padding: "4px 6px",
+                      border: "1px solid var(--brass-700)",
+                      background: "var(--paper-100)",
+                      color: "var(--forest-800)",
+                      fontFamily: "var(--font-display)",
+                      fontSize: 12,
+                      textAlign: "right",
+                    }}
+                  />
+                  <span style={{ fontFamily: "var(--font-display)", color: "var(--brass-700)" }}>€</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => retirerDeVitrine(ov.objet.id)}
+                  aria-label="Retirer"
+                  style={{
+                    padding: "4px 6px",
+                    fontFamily: "var(--font-display)",
+                    fontSize: 12,
+                    color: "var(--vermillion-600)",
+                    background: "transparent",
+                    border: "1px solid var(--brass-500)",
+                    cursor: "pointer",
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </section>
+        )}
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: 14,
-          }}
-        >
+        <h2 style={sectTitle}>— Niveaux de stand —</h2>
+        <section style={{ ...cardStyle, display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
           {STAND_LEVELS.map((s) => {
             const actif = standActuel?.niveau === s.niveau;
             const cout = coutStand(brocante.tier, s.niveau);
@@ -222,433 +278,158 @@ export default function VitrineBrocantePage() {
               <div
                 key={s.niveau}
                 style={{
-                  padding: "14px 16px",
-                  background: actif ? "var(--forest-800)" : "var(--paper-100)",
-                  border: `1px solid ${
-                    actif ? "var(--brass-500)" : "var(--brass-700)"
-                  }`,
-                  boxShadow: actif
-                    ? "inset 0 0 0 3px var(--forest-800), inset 0 0 0 4px var(--brass-500)"
-                    : "0 2px 0 var(--paper-400)",
-                  color: actif ? "var(--paper-200)" : "var(--ink-700)",
+                  padding: "8px 10px",
+                  background: actif ? "var(--forest-800)" : "transparent",
+                  border: actif ? "1px solid var(--brass-500)" : "1px solid transparent",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "baseline",
+                  gap: 8,
                 }}
               >
-                <div
+                <span
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: actif ? "var(--brass-300)" : "var(--forest-800)",
+                  }}
+                >
+                  Niv. {s.niveau} — {s.nom}
+                </span>
+                <span
                   style={{
                     fontFamily: "var(--font-mono)",
                     fontSize: 9,
-                    letterSpacing: "0.22em",
-                    textTransform: "uppercase",
-                    color: actif ? "var(--brass-300)" : "var(--brass-700)",
-                  }}
-                >
-                  Niveau {s.niveau}
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 700,
-                    fontSize: 16,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    marginTop: 4,
-                  }}
-                >
-                  {s.nom}
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 11,
-                    marginTop: 6,
                     color: actif ? "var(--paper-300)" : "var(--ink-500)",
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  {s.capaciteMin}–{s.capaciteMax} obj. · loyer {cout} €
-                </div>
+                  {s.capaciteMin}–{s.capaciteMax} obj. · {cout} €
+                </span>
               </div>
             );
           })}
-        </div>
+        </section>
 
-        <div
+        <h2 style={sectTitle}>— Ajouter depuis le stock —</h2>
+        <button
+          type="button"
+          onClick={() => router.push("/stockage")}
           style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-            gap: 18,
-            alignItems: "start",
+            width: "100%",
+            padding: "10px 8px",
+            background: "var(--paper-100)",
+            color: "var(--forest-800)",
+            border: "1px solid var(--brass-500)",
+            fontFamily: "var(--font-display)",
+            fontSize: 11,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            cursor: "pointer",
           }}
         >
-          <Panel
-            eyebrow="— stock —"
-            title={`Inventaire · ${state.inventaireJoueur.filter((o) => !o.enRestauration).length} obj.`}
-          >
-            {state.inventaireJoueur.filter((o) => !o.enRestauration).length === 0 ? (
-              <EmptyState
-                title="Plus rien à exposer."
-                hint="Partez chiner pour reconstituer votre stock."
-              />
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {groupByCategorie(
-                  state.inventaireJoueur.filter((o) => !o.enRestauration),
-                  (o) => o.categorie,
-                ).map(([cat, list]) => (
-                  <CategorieAccordion key={cat} categorie={cat} compte={list.length}>
-                    <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                      {list.map((o) => {
-                        const prixSuggere = suggererPrix(o);
-                        const prixCourant = prixInput[o.id] ?? prixSuggere;
-                        const voitRef = aConnaisseurVitrine(state, o.categorie);
-                        return (
-                          <StockRow
-                            key={o.id}
-                            objet={o}
-                            voitRef={voitRef}
-                            prixCourant={prixCourant}
-                            onChangerPrix={(v) =>
-                              setPrixInput((prev) => ({ ...prev, [o.id]: v }))
-                            }
-                            onExposer={() => handleAjouter(o)}
-                          />
-                        );
-                      })}
-                    </ul>
-                  </CategorieAccordion>
-                ))}
-              </div>
-            )}
-          </Panel>
+          Parcourir le stock
+        </button>
 
-          <Panel
-            eyebrow="— sur l'étal —"
-            title={`Vitrine · ${objetsEnVitrine.length} obj.`}
-          >
-            {objetsEnVitrine.length === 0 ? (
-              <EmptyState
-                title="L'étal est nu."
-                hint="Ajoutez des objets depuis votre stock."
-              />
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {groupByCategorie(objetsEnVitrine, (e) => e.objet.categorie).map(
-                  ([cat, list]) => (
-                    <CategorieAccordion key={cat} categorie={cat} compte={list.length}>
-                      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                        {list.map((e) => (
-                          <VitrineRow
-                            key={e.objet.id}
-                            entree={e}
-                            voitRef={aConnaisseurVitrine(state, e.objet.categorie)}
-                            onPrix={(v) => ajusterPrixVitrine(e.objet.id, v)}
-                            onRetirer={() => retirerDeVitrine(e.objet.id)}
-                          />
-                        ))}
-                      </ul>
-                    </CategorieAccordion>
-                  ),
-                )}
-              </div>
-            )}
-
-            {standActuel && (
-              <footer
-                style={{
-                  marginTop: 18,
-                  paddingTop: 14,
-                  borderTop: "1px solid rgba(138,106,38,0.35)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 12,
-                    color: "var(--ink-500)",
-                  }}
-                >
-                  <span>Stand requis</span>
-                  <span style={{ color: "var(--forest-800)" }}>
-                    {standActuel.nom} · {coutActuel} € de loyer
-                  </span>
-                </div>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={handleOuvrirJournee}
-                  disabled={!peutOuvrir}
-                >
-                  Ouvrir la journée · {coutActuel} €
-                </Button>
-                {state.budget < coutActuel && (
-                  <p
-                    style={{
-                      fontFamily: "var(--font-serif)",
-                      fontStyle: "italic",
-                      fontSize: 13,
-                      color: "var(--vermillion-600)",
-                      margin: 0,
-                    }}
-                  >
-                    La caisse n'a pas de quoi payer le loyer.
-                  </p>
-                )}
-              </footer>
-            )}
-            {surcharge && (
-              <p
-                style={{
-                  fontFamily: "var(--font-serif)",
-                  fontStyle: "italic",
-                  fontSize: 13,
-                  color: "var(--vermillion-600)",
-                  marginTop: 12,
-                }}
-              >
-                Trop d'objets — aucun stand ne peut tous les contenir.
-              </p>
-            )}
-          </Panel>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function groupByCategorie<T>(
-  items: T[],
-  getCat: (item: T) => CategorieObjet,
-): [CategorieObjet, T[]][] {
-  const map = new Map<CategorieObjet, T[]>();
-  for (const cat of CATEGORIES) map.set(cat, []);
-  for (const item of items) map.get(getCat(item))?.push(item);
-  return Array.from(map.entries()).filter(([, list]) => list.length > 0);
-}
-
-function StockRow({
-  objet,
-  voitRef,
-  prixCourant,
-  onChangerPrix,
-  onExposer,
-}: {
-  objet: Objet;
-  voitRef: boolean;
-  prixCourant: number;
-  onChangerPrix: (v: number) => void;
-  onExposer: () => void;
-}) {
-  return (
-    <li
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "10px 0",
-        borderBottom: "1px dotted var(--paper-500)",
-      }}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <CategorieIcon
-            categorie={objet.categorie}
-            size={16}
-            color="var(--brass-700)"
-          />
-          <span
+        {surcharge && (
+          <p
             style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--forest-800)",
-              lineHeight: 1.2,
+              fontFamily: "var(--font-serif)",
+              fontStyle: "italic",
+              fontSize: 12.5,
+              color: "var(--vermillion-600)",
+              marginTop: 10,
+              textAlign: "center",
             }}
           >
-            {objet.nom}
-          </span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            alignItems: "center",
-            marginTop: 4,
-            fontFamily: "var(--font-mono)",
-            fontSize: 10.5,
-            color: "var(--ink-500)",
-          }}
-        >
-          <EtatBadge etat={objet.etat} />
-          <span>
-            {voitRef ? `réf. ${objet.prixReferenceReel} €` : "réf. ?"}
-          </span>
-          {typeof objet.prixAchat === "number" && (
-            <span style={{ color: "var(--brass-700)" }}>
-              achat {objet.prixAchat} €
-            </span>
-          )}
-        </div>
-      </div>
-      <PrixInput value={prixCourant} onChange={onChangerPrix} />
-      <Button variant="primary" size="sm" onClick={onExposer}>
-        Exposer
-      </Button>
-    </li>
-  );
-}
+            Trop d'objets — aucun stand ne peut tous les contenir.
+          </p>
+        )}
+        {!surcharge && state.budget < coutActuel && objetsEnVitrine.length > 0 && (
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontStyle: "italic",
+              fontSize: 12.5,
+              color: "var(--vermillion-600)",
+              marginTop: 10,
+              textAlign: "center",
+            }}
+          >
+            La caisse n'a pas de quoi payer le loyer.
+          </p>
+        )}
+      </main>
 
-function PrixInput({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        background: "var(--paper-300)",
-        border: "1px solid var(--brass-700)",
-        padding: "4px 8px",
-      }}
-    >
-      <input
-        type="number"
-        min={1}
-        value={value}
-        onChange={(e) => onChange(Math.max(1, Number(e.target.value) || 1))}
-        style={{
-          width: 64,
-          background: "transparent",
-          border: "none",
-          outline: "none",
-          fontFamily: "var(--font-display)",
-          fontWeight: 700,
-          fontSize: 16,
-          color: "var(--forest-800)",
-          textAlign: "right",
-          padding: 0,
-        }}
+      <ActionFab
+        buttons={[
+          {
+            label: "Annuler",
+            variant: "secondary",
+            onClick: () => {
+              viderVitrine();
+              router.push("/qg");
+            },
+          },
+          {
+            label: `Ouvrir l'étal · ${coutActuel} €`,
+            onClick: () => {
+              if (peutOuvrir) {
+                ajusterBudget(-coutActuel);
+                router.push(`/vitrine/${brocante.id}/journee`);
+              }
+            },
+            disabled: !peutOuvrir,
+          },
+        ]}
       />
-      <span
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: 12,
-          color: "var(--brass-700)",
-          marginLeft: 4,
-        }}
-      >
-        €
-      </span>
     </div>
   );
 }
 
-function VitrineRow({
-  entree,
-  voitRef,
-  onPrix,
-  onRetirer,
-}: {
-  entree: ObjetEnVitrine;
-  voitRef: boolean;
-  onPrix: (v: number) => void;
-  onRetirer: () => void;
-}) {
-  return (
-    <li
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "10px 0",
-        borderBottom: "1px dotted var(--paper-500)",
-      }}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <CategorieIcon
-            categorie={entree.objet.categorie}
-            size={16}
-            color="var(--brass-700)"
-          />
-          <span
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--forest-800)",
-              lineHeight: 1.2,
-            }}
-          >
-            {entree.objet.nom}
-          </span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            alignItems: "center",
-            marginTop: 4,
-            fontFamily: "var(--font-mono)",
-            fontSize: 10.5,
-            color: "var(--ink-500)",
-          }}
-        >
-          <EtatBadge etat={entree.objet.etat} />
-          <span>
-            {voitRef ? `réf. ${entree.objet.prixReferenceReel} €` : "réf. ?"}
-          </span>
-          {typeof entree.objet.prixAchat === "number" && (
-            <span style={{ color: "var(--brass-700)" }}>
-              achat {entree.objet.prixAchat} €
-            </span>
-          )}
-        </div>
-      </div>
-      <PrixInput value={entree.prixVente} onChange={onPrix} />
-      <Button variant="ghost" size="sm" onClick={onRetirer}>
-        Retirer
-      </Button>
-    </li>
-  );
-}
-
-function EmptyState({ title, hint }: { title: string; hint: string }) {
-  return (
-    <div style={{ textAlign: "center", padding: "32px 12px" }}>
-      <div
-        style={{
-          fontFamily: "var(--font-serif)",
-          fontStyle: "italic",
-          fontSize: 16,
-          color: "var(--ink-500)",
-          marginBottom: 10,
-        }}
-      >
-        {title}
-      </div>
-      <div
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 11,
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: "var(--brass-700)",
-        }}
-      >
-        {hint}
-      </div>
-    </div>
-  );
-}
+const cardStyle: React.CSSProperties = {
+  border: "1px solid var(--brass-500)",
+  background: "var(--paper-100)",
+  padding: "10px 12px",
+  marginBottom: 10,
+  boxShadow:
+    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+};
+const rowStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "baseline",
+  gap: 6,
+};
+const lblStyle: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 9,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: "var(--brass-700)",
+};
+const valStyle: React.CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 14,
+  color: "var(--forest-800)",
+  letterSpacing: "0.08em",
+};
+const sectTitle: React.CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 11,
+  letterSpacing: "0.18em",
+  textTransform: "uppercase",
+  color: "var(--forest-800)",
+  margin: "10px 2px 6px",
+};
+const emptyStyle: React.CSSProperties = {
+  fontFamily: "var(--font-serif)",
+  fontStyle: "italic",
+  fontSize: 12.5,
+  color: "var(--ink-500)",
+  textAlign: "center",
+  padding: "12px 0",
+};

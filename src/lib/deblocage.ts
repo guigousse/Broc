@@ -42,6 +42,11 @@ function compterVentesCategorie(
   return n;
 }
 
+/** Retourne une courte description de la condition de déblocage d'une brocante. */
+export function decrireConditions(brocante: Brocante, _state: GameState): string {
+  return descriptionCondition(brocante.conditionDeblocage);
+}
+
 export function estDebloquee(
   brocante: Brocante,
   state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
