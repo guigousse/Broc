@@ -228,3 +228,7 @@ html, body {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+@keyframes broc-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}

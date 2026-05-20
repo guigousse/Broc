@@ -14,6 +14,7 @@ import {
   niveauRequis,
 } from "@/data/standLevels";
 import { estDebloquee } from "@/lib/deblocage";
+import { aConnaisseurVitrine } from "@/lib/competences";
 import { brocantesParTier } from "@/data/brocantes";
 import type { ObjetEnVitrine } from "@/types/game";
 
@@ -377,7 +378,12 @@ export default function VitrineBrocantePage() {
                       color: "var(--ink-500)",
                     }}
                   >
-                    {o.etat} · {o.rarete} · ref. {Math.round(o.prixReferenceReel)} €
+                    {o.etat} · {o.rarete}
+                    {aConnaisseurVitrine(state, o.categorie)
+                      ? ` · ref. ${Math.round(o.prixReferenceReel)} €`
+                      : o.prixAchat != null
+                        ? ` · achat ${o.prixAchat} €`
+                        : ""}
                   </div>
                 </div>
                 <button
