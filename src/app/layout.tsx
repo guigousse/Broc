@@ -7,6 +7,16 @@ export const metadata: Metadata = {
   title: "Broc — Une simulation de brocante",
   description:
     "Chinez, restaurez, négociez. Faites parler les objets de leur siècle.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Broc",
+  },
+  applicationName: "Broc",
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {
