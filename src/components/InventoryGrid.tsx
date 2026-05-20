@@ -5,6 +5,7 @@ import { CategorieIcon } from "@/components/ui/CategorieIcon";
 interface InventoryGridProps {
   objets: Objet[];
   categoriesConnues: ReadonlySet<CategorieObjet>;
+  onAjouterVitrine?: (objet: Objet) => void;
 }
 
 const item: CSSProperties = {
@@ -35,7 +36,11 @@ const card: CSSProperties = {
     "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
 };
 
-export function InventoryGrid({ objets, categoriesConnues }: InventoryGridProps) {
+export function InventoryGrid({
+  objets,
+  categoriesConnues,
+  onAjouterVitrine,
+}: InventoryGridProps) {
   if (objets.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: "40px 20px" }}>
@@ -112,26 +117,54 @@ export function InventoryGrid({ objets, categoriesConnues }: InventoryGridProps)
                 {o.etat} · {o.rarete} · {o.categorie}
               </div>
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 13,
-                  color: "var(--forest-800)",
-                }}
-              >
-                {valeurConnue ? `${Math.round(o.prixReferenceReel)} €` : "?"}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: 4,
+              }}
+            >
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: 13,
+                    color: "var(--forest-800)",
+                  }}
+                >
+                  {valeurConnue ? `${Math.round(o.prixReferenceReel)} €` : "?"}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 9,
+                    color: "var(--brass-700)",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  ref.
+                </div>
               </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 9,
-                  color: "var(--brass-700)",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                ref.
-              </div>
+              {onAjouterVitrine && !o.enRestauration && (
+                <button
+                  type="button"
+                  onClick={() => onAjouterVitrine(o)}
+                  style={{
+                    padding: "4px 8px",
+                    fontFamily: "var(--font-display)",
+                    fontSize: 9,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    border: "1px solid var(--brass-500)",
+                    background: "var(--forest-800)",
+                    color: "var(--brass-300)",
+                    cursor: "pointer",
+                  }}
+                >
+                  → Étal
+                </button>
+              )}
             </div>
           </div>
         );

@@ -11,11 +11,11 @@ import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import { getStockageTier } from "@/data/stockage";
 import { aConnaisseurVitrine } from "@/lib/competences";
-import type { CategorieObjet } from "@/types/game";
+import type { CategorieObjet, Objet } from "@/types/game";
 
 export default function StockagePage() {
   const router = useRouter();
-  const { state, isHydrated } = useGame();
+  const { state, isHydrated, mettreEnVitrine } = useGame();
   const [filtre, setFiltre] = useState<CategorieObjet | null>(null);
 
   useEffect(() => {
@@ -64,6 +64,13 @@ export default function StockagePage() {
 
   const tier = getStockageTier(state.inventaireJoueur.length);
   const ratio = state.inventaireJoueur.length / tier.capaciteMax;
+
+  const ajouterAVitrine = state.vitrine
+    ? (o: Objet) => {
+        const prix = Math.max(1, Math.round(o.prixReferenceReel * 1.4));
+        mettreEnVitrine(o.id, prix);
+      }
+    : undefined;
 
   return (
     <MobileLayout
@@ -140,9 +147,28 @@ export default function StockagePage() {
         </StickyTop>
       }
     >
+      {state.vitrine && (
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 9.5,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "var(--brass-700)",
+            textAlign: "center",
+            padding: "6px 12px",
+            marginBottom: 8,
+            border: "1px solid var(--brass-500)",
+            background: "var(--paper-100)",
+          }}
+        >
+          Vitrine ouverte · tap → Étal pour exposer
+        </div>
+      )}
       <InventoryGrid
         objets={objetsFiltres}
         categoriesConnues={categoriesConnuesVitrine}
+        onAjouterVitrine={ajouterAVitrine}
       />
     </MobileLayout>
   );
