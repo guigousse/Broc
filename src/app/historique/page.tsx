@@ -20,7 +20,7 @@ function resumer(s: Session): { kind: string; lbl: string; pl: number } {
   if (s.type === "vente") {
     const recettes = s.ventes.reduce((sum, v) => sum + v.prixVente, 0);
     const cogs = s.ventes.reduce((sum, v) => sum + (v.prixAchat ?? 0), 0);
-    const net = recettes - cogs - s.loyer;
+    const net = recettes - cogs;
     return {
       kind: "Vente",
       lbl: `${s.ventes.length} vente${s.ventes.length > 1 ? "s" : ""} · stand ${s.niveauStand}`,
@@ -212,7 +212,7 @@ function DetailsChinage({ s }: { s: SessionChinage }) {
 function DetailsVente({ s }: { s: SessionVente }) {
   const recettes = s.ventes.reduce((sum, v) => sum + v.prixVente, 0);
   const cogs = s.ventes.reduce((sum, v) => sum + (v.prixAchat ?? 0), 0);
-  const net = recettes - cogs - s.loyer;
+  const net = recettes - cogs;
   return (
     <>
       <div style={detailHeader}>— Ventes —</div>
@@ -265,10 +265,6 @@ function DetailsVente({ s }: { s: SessionVente }) {
         <div style={detailSummaryRow}>
           <span>Coût d&apos;achat</span>
           <span style={{ color: "var(--vermillion-600)" }}>−{cogs} €</span>
-        </div>
-        <div style={detailSummaryRow}>
-          <span>Loyer stand {s.niveauStand}</span>
-          <span style={{ color: "var(--vermillion-600)" }}>−{s.loyer} €</span>
         </div>
         <div
           style={{

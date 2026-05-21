@@ -28,7 +28,7 @@ function resumer(s: Session): { kind: string; lbl: string; pl: number } {
   if (s.type === "vente") {
     const recettes = s.ventes.reduce((sum, v) => sum + v.prixVente, 0);
     const cogs = s.ventes.reduce((sum, v) => sum + (v.prixAchat ?? 0), 0);
-    const net = recettes - cogs - s.loyer;
+    const net = recettes - cogs;
     return {
       kind: "Vente",
       lbl: `${s.ventes.length} vente${s.ventes.length > 1 ? "s" : ""} · stand ${s.niveauStand}`,
