@@ -60,172 +60,177 @@ export function GazetteTeaser(props: GazetteTeaserProps) {
   )[0];
 
   return (
-    <button
-      type="button"
-      onClick={achetee ? onOuvrir : undefined}
-      disabled={!achetee}
-      style={{
-        ...cardStyle,
-        textAlign: "left",
-        width: "100%",
-        cursor: achetee ? "pointer" : "default",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          borderBottom: "1px solid var(--forest-800)",
-          paddingBottom: 4,
-        }}
-      >
-        <span
+    <article style={{ ...cardStyle, position: "relative" }}>
+      {achetee && (
+        <button
+          type="button"
+          onClick={onOuvrir}
+          aria-label="Lire la Gazette"
           style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: 700,
-            fontSize: 11,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "var(--forest-800)",
+            position: "absolute",
+            inset: 0,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            zIndex: 1,
+          }}
+        />
+      )}
+      <div style={{ position: "relative", zIndex: 2, pointerEvents: achetee ? "none" : "auto" }}>
+        {/* header : titre + N° édition */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            borderBottom: "1px solid var(--forest-800)",
+            paddingBottom: 4,
           }}
         >
-          La Gazette des Chineurs
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 9,
-            color: "var(--ink-500)",
-            letterSpacing: "0.1em",
-          }}
-        >
-          N°{numeroEdition(jourActuel)}
-        </span>
-      </div>
-
-      {!achetee ? (
-        <div style={{ marginTop: 10 }}>
-          <p
+          <span
             style={{
-              fontFamily: "var(--font-serif)",
-              fontStyle: "italic",
-              fontSize: 12.5,
-              color: "var(--ink-500)",
-              margin: "0 0 8px",
-            }}
-          >
-            Édition non acquise.
-          </p>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAcheter();
-            }}
-            disabled={budget < prixGazette}
-            style={{
-              width: "100%",
-              padding: "8px 10px",
-              background: "var(--forest-800)",
-              color: "var(--brass-300)",
-              border: "1px solid var(--brass-500)",
               fontFamily: "var(--font-display)",
+              fontWeight: 700,
               fontSize: 11,
-              letterSpacing: "0.16em",
+              letterSpacing: "0.2em",
               textTransform: "uppercase",
-              cursor: budget < prixGazette ? "not-allowed" : "pointer",
-              opacity: budget < prixGazette ? 0.45 : 1,
+              color: "var(--forest-800)",
             }}
           >
-            Acheter · {prixGazette} €
-          </button>
+            La Gazette des Chineurs
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 9,
+              color: "var(--ink-500)",
+              letterSpacing: "0.1em",
+            }}
+          >
+            N°{numeroEdition(jourActuel)}
+          </span>
         </div>
-      ) : (
-        <>
-          {dominante && (
+
+        {!achetee ? (
+          <div style={{ marginTop: 10 }}>
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontStyle: "italic",
+                fontSize: 12.5,
+                color: "var(--ink-500)",
+                margin: "0 0 8px",
+              }}
+            >
+              Édition non acquise.
+            </p>
+            <button
+              type="button"
+              onClick={onAcheter}
+              disabled={budget < prixGazette}
+              style={{
+                width: "100%",
+                padding: "8px 10px",
+                background: "var(--forest-800)",
+                color: "var(--brass-300)",
+                border: "1px solid var(--brass-500)",
+                fontFamily: "var(--font-display)",
+                fontSize: 11,
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                cursor: budget < prixGazette ? "not-allowed" : "pointer",
+                opacity: budget < prixGazette ? 0.45 : 1,
+              }}
+            >
+              Acheter · {prixGazette} €
+            </button>
+          </div>
+        ) : (
+          <>
+            {dominante && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "baseline",
+                  marginTop: 6,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    color: "var(--ink-700)",
+                  }}
+                >
+                  {dominante.categorie}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: 13,
+                    color:
+                      dominante.delta >= 0
+                        ? "var(--forest-700)"
+                        : "var(--vermillion-600)",
+                  }}
+                >
+                  {dominante.delta >= 0 ? "↑" : "↓"} {dominante.delta > 0 ? "+" : ""}
+                  {dominante.delta}%
+                </span>
+              </div>
+            )}
+            {revelerMeteo && (
+              <div
+                style={{
+                  marginTop: 4,
+                  fontFamily: "var(--font-serif)",
+                  fontStyle: "italic",
+                  fontSize: 12,
+                  color: "var(--ink-500)",
+                  display: "flex",
+                  gap: 6,
+                  alignItems: "center",
+                }}
+              >
+                {(() => {
+                  const Icon = METEO_ICON[meteo];
+                  return (
+                    <Icon size={14} color="var(--forest-800)" strokeWidth={1.5} />
+                  );
+                })()}
+                {METEO_LABEL[meteo]}
+              </div>
+            )}
+            {revelerCelebrite && celebrite && (
+              <div
+                style={{
+                  marginTop: 4,
+                  fontFamily: "var(--font-serif)",
+                  fontStyle: "italic",
+                  fontSize: 12,
+                  color: "var(--ink-500)",
+                }}
+              >
+                ✦ {celebrite.nom} · {JOURS_SEMAINE[celebrite.jourSemaine]}
+              </div>
+            )}
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
+                textAlign: "right",
+                fontFamily: "var(--font-mono)",
+                fontSize: 9,
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                color: "var(--brass-700)",
                 marginTop: 6,
               }}
             >
-              <span
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 11,
-                  color: "var(--ink-700)",
-                }}
-              >
-                {dominante.categorie}
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 13,
-                  color:
-                    dominante.delta >= 0
-                      ? "var(--forest-700)"
-                      : "var(--vermillion-600)",
-                }}
-              >
-                {dominante.delta >= 0 ? "↑" : "↓"} {dominante.delta > 0 ? "+" : ""}
-                {dominante.delta}%
-              </span>
+              Lire la Gazette ›
             </div>
-          )}
-          {revelerMeteo && (
-            <div
-              style={{
-                marginTop: 4,
-                fontFamily: "var(--font-serif)",
-                fontStyle: "italic",
-                fontSize: 12,
-                color: "var(--ink-500)",
-                display: "flex",
-                gap: 6,
-                alignItems: "center",
-              }}
-            >
-              {(() => {
-                const Icon = METEO_ICON[meteo];
-                return (
-                  <Icon size={14} color="var(--forest-800)" strokeWidth={1.5} />
-                );
-              })()}
-              {METEO_LABEL[meteo]}
-            </div>
-          )}
-          {revelerCelebrite && celebrite && (
-            <div
-              style={{
-                marginTop: 4,
-                fontFamily: "var(--font-serif)",
-                fontStyle: "italic",
-                fontSize: 12,
-                color: "var(--ink-500)",
-              }}
-            >
-              ✦ {celebrite.nom} · {JOURS_SEMAINE[celebrite.jourSemaine]}
-            </div>
-          )}
-          <div
-            style={{
-              textAlign: "right",
-              fontFamily: "var(--font-mono)",
-              fontSize: 9,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "var(--brass-700)",
-              marginTop: 6,
-            }}
-          >
-            Lire la Gazette ›
-          </div>
-        </>
-      )}
-    </button>
+          </>
+        )}
+      </div>
+    </article>
   );
 }
