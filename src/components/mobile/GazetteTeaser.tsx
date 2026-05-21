@@ -59,6 +59,9 @@ export function GazetteTeaser(props: GazetteTeaserProps) {
     (a, b) => Math.abs(b.delta) - Math.abs(a.delta),
   )[0];
 
+  const peutAcheter =
+    categoriesConnues.size > 0 || revelerMeteo || revelerCelebrite;
+
   return (
     <article style={{ ...cardStyle, position: "relative" }}>
       {achetee && (
@@ -111,7 +114,23 @@ export function GazetteTeaser(props: GazetteTeaserProps) {
           </span>
         </div>
 
-        {!achetee ? (
+        {!peutAcheter ? (
+          <div style={{ marginTop: 10 }}>
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontStyle: "italic",
+                fontSize: 12.5,
+                color: "var(--ink-500)",
+                margin: 0,
+                lineHeight: 1.35,
+              }}
+            >
+              Verrouillée. Apprenez « Veilleur », « Bulletin météo » ou
+              « Carnet mondain » pour pouvoir l&apos;acquérir.
+            </p>
+          </div>
+        ) : !achetee ? (
           <div style={{ marginTop: 10 }}>
             <p
               style={{
