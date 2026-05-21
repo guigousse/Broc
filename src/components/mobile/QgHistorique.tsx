@@ -21,16 +21,18 @@ function resumer(s: Session): { kind: string; lbl: string; pl: number } {
     const total = s.achats.reduce((sum, a) => sum + a.prixPaye, 0);
     return {
       kind: "Chinage",
-      lbl: `${s.brocanteNom} · ${s.achats.length} acquis${s.achats.length > 1 ? "" : ""}`,
+      lbl: `${s.brocanteNom} · ${s.achats.length} acquis`,
       pl: -total,
     };
   }
   if (s.type === "vente") {
-    const total = s.ventes.reduce((sum, v) => sum + v.prixVente, 0);
+    const recettes = s.ventes.reduce((sum, v) => sum + v.prixVente, 0);
+    const cogs = s.ventes.reduce((sum, v) => sum + (v.prixAchat ?? 0), 0);
+    const net = recettes - cogs - s.loyer;
     return {
       kind: "Vente",
-      lbl: `${s.ventes.length} vente${s.ventes.length > 1 ? "s" : ""}`,
-      pl: total,
+      lbl: `${s.ventes.length} vente${s.ventes.length > 1 ? "s" : ""} · stand ${s.niveauStand}`,
+      pl: net,
     };
   }
   return { kind: (s as { type: string }).type, lbl: "", pl: 0 };
