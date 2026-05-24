@@ -134,7 +134,6 @@ export default function CollectionPage() {
             selection={filtre}
             onChange={setFiltre}
             comptesParCat={comptes}
-            total={global.donnees}
           />
         </StickyTop>
       }

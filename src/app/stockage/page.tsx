@@ -142,7 +142,6 @@ export default function StockagePage() {
             selection={filtre}
             onChange={setFiltre}
             comptesParCat={comptes}
-            total={state.inventaireJoueur.length}
           />
         </StickyTop>
       }
