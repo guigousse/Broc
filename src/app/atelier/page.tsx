@@ -9,7 +9,7 @@ import { useGame } from "@/context/GameContext";
 import {
   dureeRestauration,
   peutRestaurerBonVersTresBon,
-  peutRestaurerCategorie,
+  peutRestaurerMauvaisVersBon,
   peutRestaurerTresBonVersPristin,
 } from "@/lib/competences";
 import { recalculerPrixReference } from "@/lib/etat";
@@ -57,8 +57,10 @@ export default function AtelierPage() {
     return state.inventaireJoueur.filter(
       (o) =>
         !o.enRestauration &&
-        peutRestaurerCategorie(state, o.categorie) &&
-        ((o.etat === "Bon" && peutRestaurerBonVersTresBon(state, o.categorie)) ||
+        ((o.etat === "Mauvais" &&
+          peutRestaurerMauvaisVersBon(state, o.categorie)) ||
+          (o.etat === "Bon" &&
+            peutRestaurerBonVersTresBon(state, o.categorie)) ||
           (o.etat === "Très bon" &&
             peutRestaurerTresBonVersPristin(state, o.categorie))),
     );
@@ -254,7 +256,11 @@ export default function AtelierPage() {
         <div style={cardWrap}>
           {restaurables.map((o, i) => {
             const cible: EtatObjet =
-              o.etat === "Bon" ? "Très bon" : "Pristin état";
+              o.etat === "Mauvais"
+                ? "Bon"
+                : o.etat === "Bon"
+                  ? "Très bon"
+                  : "Pristin état";
             const duree = dureeRestauration(state, o.categorie);
             const prixApres = recalculerPrixReference(
               o.prixReferenceReel,
