@@ -69,6 +69,20 @@ export interface CelebriteEvenement {
   jourSemaine: number;
 }
 
+export interface SaisieHuissier {
+  type: "inventaire" | "collection";
+  nom: string;
+  valeur: number;
+  montantRecupere: number;
+}
+
+export interface HuissierEvent {
+  jour: number;
+  detteAvantSaisie: number;
+  saisies: SaisieHuissier[];
+  budgetApres: number;
+}
+
 export interface GameState {
   budget: number;
   jourActuel: number;
@@ -96,6 +110,8 @@ export interface GameState {
   influenceUtilisee: boolean;
   /** Dernier loyer prélevé (utile pour l'UI). null = pas encore prélevé. */
   dernierLoyer: { jour: number; montant: number; tierNom: string } | null;
+  /** Dernier événement huissier (liquidation forcée). null = aucun. */
+  dernierHuissier?: HuissierEvent | null;
 }
 
 export type CompetenceId = string;

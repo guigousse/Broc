@@ -14,12 +14,16 @@ import { useRouter } from "next/navigation";
 import {
   INITIAL_BUDGET,
   INITIAL_JOUR,
+  type CategorieObjet,
+  type CollectionSlot,
   type CompetenceId,
   type CompetenceTreeId,
   type EtatObjet,
   type GameState,
+  type HuissierEvent,
   type Objet,
   type ObjetEnVitrine,
+  type SaisieHuissier,
   type Session,
   type VitrineActive,
 } from "@/types/game";
@@ -95,6 +99,8 @@ interface GameContextValue {
   rerollMeteo: () => { ok: boolean; raison?: string };
   /** Influence (compétence Vision 3) : retire la brocante de la célébrité courante. */
   rerollCelebrite: () => { ok: boolean; raison?: string };
+  /** Acquitte l'événement huissier (réinitialise dernierHuissier). */
+  marquerHuissierVu: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -289,6 +295,7 @@ function migrerSauvegarde(loaded: GameState): GameState {
         : tirerCelebrite(),
     influenceUtilisee: loaded.influenceUtilisee ?? false,
     dernierLoyer: loaded.dernierLoyer ?? null,
+    dernierHuissier: loaded.dernierHuissier ?? null,
   };
 }
 
@@ -339,6 +346,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       celebriteActuelle: tirerCelebrite(),
       influenceUtilisee: false,
       dernierLoyer: null,
+      dernierHuissier: null,
     });
     router.push("/qg");
   }, [router]);
@@ -396,7 +404,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         : prev.prochainesTendances;
       // Loyer hebdomadaire : prélevé à la fin de chaque semaine (refresh Gazette).
       const tierStockage = refresh ? getStockageTier(inv.length) : null;
-      const nouveauBudget = tierStockage
+      const budgetApresLoyer = tierStockage
         ? prev.budget - tierStockage.loyerHebdo
         : prev.budget;
       const dernierLoyer = tierStockage
@@ -406,10 +414,90 @@ export function GameProvider({ children }: { children: ReactNode }) {
             tierNom: tierStockage.nom,
           }
         : prev.dernierLoyer;
+
+      // Huissier : si le budget est négatif après loyer, liquidation forcée.
+      let nouveauBudget = budgetApresLoyer;
+      let invApresHuissier = inv;
+      let collectionApresHuissier = prev.collection;
+      let dernierHuissier: HuissierEvent | null = prev.dernierHuissier ?? null;
+
+      if (tierStockage && budgetApresLoyer < 0) {
+        const detteInitiale = budgetApresLoyer;
+        const saisies: SaisieHuissier[] = [];
+
+        // 1) inventaire (hors restauration), tri par prix réf croissant
+        const liquidables = invApresHuissier
+          .filter((o) => !o.enRestauration)
+          .sort((a, b) => a.prixReferenceReel - b.prixReferenceReel);
+        const idsLiquides = new Set<string>();
+        for (const o of liquidables) {
+          if (nouveauBudget >= 0) break;
+          const mt = Math.max(1, Math.round(o.prixReferenceReel / 2));
+          nouveauBudget += mt;
+          saisies.push({
+            type: "inventaire",
+            nom: o.nom,
+            valeur: o.prixReferenceReel,
+            montantRecupere: mt,
+          });
+          idsLiquides.add(o.id);
+        }
+        if (idsLiquides.size > 0) {
+          invApresHuissier = invApresHuissier.filter((o) => !idsLiquides.has(o.id));
+        }
+
+        // 2) si toujours négatif, prendre dans la collection (slots avec donation)
+        if (nouveauBudget < 0) {
+          const donations: Array<{ cat: CategorieObjet; idx: number; slot: CollectionSlot }> = [];
+          for (const cat of Object.keys(collectionApresHuissier) as CategorieObjet[]) {
+            const slots = collectionApresHuissier[cat] ?? [];
+            for (let i = 0; i < slots.length; i++) {
+              if (slots[i].donation !== null) {
+                donations.push({ cat, idx: i, slot: slots[i] });
+              }
+            }
+          }
+          donations.sort(
+            (a, b) => (a.slot.donation!.valeur) - (b.slot.donation!.valeur),
+          );
+
+          const newCollection: typeof collectionApresHuissier = { ...collectionApresHuissier };
+          const dirtyCats = new Set<CategorieObjet>();
+
+          for (const d of donations) {
+            if (nouveauBudget >= 0) break;
+            const valeur = d.slot.donation!.valeur;
+            const mt = Math.max(1, Math.round(valeur / 2));
+            nouveauBudget += mt;
+            saisies.push({
+              type: "collection",
+              nom: d.slot.nom,
+              valeur,
+              montantRecupere: mt,
+            });
+            dirtyCats.add(d.cat);
+            newCollection[d.cat] = newCollection[d.cat].map((s, i) =>
+              i === d.idx ? { ...s, donation: null } : s,
+            );
+          }
+          if (dirtyCats.size > 0) collectionApresHuissier = newCollection;
+        }
+
+        if (saisies.length > 0) {
+          dernierHuissier = {
+            jour: nouveauJour,
+            detteAvantSaisie: detteInitiale,
+            saisies,
+            budgetApres: nouveauBudget,
+          };
+        }
+      }
+
       return {
         ...prev,
         jourActuel: nouveauJour,
-        inventaireJoueur: inv,
+        inventaireJoueur: invApresHuissier,
+        collection: collectionApresHuissier,
         budget: nouveauBudget,
         tendances,
         prochainesTendances,
@@ -425,6 +513,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         // Reset le jeton d'influence à chaque édition.
         influenceUtilisee: refresh ? false : prev.influenceUtilisee,
         dernierLoyer,
+        dernierHuissier,
       };
     });
   }, []);
@@ -783,6 +872,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const marquerHuissierVu = useCallback(() => {
+    setState((prev) => (prev ? { ...prev, dernierHuissier: null } : prev));
+  }, []);
+
   const acheterGazette = useCallback((): { ok: boolean; raison?: string } => {
     const current = stateRef.current;
     if (!current) return { ok: false, raison: "Pas de partie." };
@@ -833,6 +926,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerBossDebloqueVu,
       rerollMeteo,
       rerollCelebrite,
+      marquerHuissierVu,
     }),
     [
       state,
@@ -861,6 +955,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerBossDebloqueVu,
       rerollMeteo,
       rerollCelebrite,
+      marquerHuissierVu,
     ],
   );
 

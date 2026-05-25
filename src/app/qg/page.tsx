@@ -49,6 +49,7 @@ export default function QgPage() {
     acheterGazette,
     rerollMeteo,
     rerollCelebrite,
+    marquerHuissierVu,
   } = useGame();
   const [gazetteOuverte, setGazetteOuverte] = useState(false);
 
@@ -146,6 +147,60 @@ export default function QgPage() {
         }
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {state.dernierHuissier && (
+            <div
+              role="status"
+              style={{
+                padding: "10px 12px",
+                background: "var(--vermillion-600)",
+                color: "var(--paper-100)",
+                border: "1px solid var(--velvet-700)",
+                fontFamily: "var(--font-serif)",
+                fontStyle: "italic",
+                fontSize: 13,
+                lineHeight: 1.4,
+                marginBottom: 10,
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <strong style={{ fontFamily: "var(--font-display)", fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", fontStyle: "normal" }}>
+                — Visite de l&apos;huissier —
+              </strong>
+              <span>
+                Dette de {Math.abs(state.dernierHuissier.detteAvantSaisie)} € après loyer.
+                {" "}
+                {state.dernierHuissier.saisies.length} bien{state.dernierHuissier.saisies.length > 1 ? "s" : ""} saisi{state.dernierHuissier.saisies.length > 1 ? "s" : ""} pour {state.dernierHuissier.saisies.reduce((s, x) => s + x.montantRecupere, 0)} €.
+              </span>
+              <details style={{ fontFamily: "var(--font-mono)", fontSize: 10 }}>
+                <summary style={{ cursor: "pointer" }}>Voir le détail</summary>
+                <ul style={{ margin: "6px 0 0 12px", padding: 0 }}>
+                  {state.dernierHuissier.saisies.map((s, i) => (
+                    <li key={i}>{s.nom} ({s.type === "inventaire" ? "stock" : "collection"}) — {s.montantRecupere} € (valeur {s.valeur} €)</li>
+                  ))}
+                </ul>
+              </details>
+              <button
+                type="button"
+                onClick={() => marquerHuissierVu()}
+                style={{
+                  alignSelf: "flex-end",
+                  padding: "4px 10px",
+                  background: "transparent",
+                  border: "1px solid var(--paper-100)",
+                  color: "var(--paper-100)",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 10,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                Compris ✕
+              </button>
+            </div>
+          )}
           <GazetteTeaser
             achetee={state.gazetteAchetee}
             jourActuel={state.jourActuel}
