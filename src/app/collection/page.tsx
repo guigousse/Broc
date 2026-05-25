@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
-import { CategorieChips } from "@/components/mobile/CategorieChips";
+import { CategoriePicker } from "@/components/mobile/CategoriePicker";
 import { CollectionGrid } from "@/components/CollectionGrid";
 import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
 import { useGame } from "@/context/GameContext";
@@ -129,8 +129,7 @@ export default function CollectionPage() {
               </div>
             )}
           </div>
-          <CategorieChips
-            categories={CATEGORIES}
+          <CategoriePicker
             selection={filtre}
             onChange={setFiltre}
             comptesParCat={comptes}

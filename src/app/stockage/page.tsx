@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
-import { CategorieChips } from "@/components/mobile/CategorieChips";
+import { CategoriePicker } from "@/components/mobile/CategoriePicker";
 import { InventoryGrid } from "@/components/InventoryGrid";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
@@ -137,8 +137,7 @@ export default function StockagePage() {
               }}
             />
           </div>
-          <CategorieChips
-            categories={CATEGORIES}
+          <CategoriePicker
             selection={filtre}
             onChange={setFiltre}
             comptesParCat={comptes}

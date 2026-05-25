@@ -13,7 +13,7 @@ export interface StockageTier {
  * qu'il accumule. Tenir un Hangar coûte cher : il faut vendre régulièrement.
  */
 export const STOCKAGE_TIERS: readonly StockageTier[] = [
-  { niveau: 1, nom: "Garage", capaciteMax: 10, loyerHebdo: 30 },
+  { niveau: 1, nom: "Garage", capaciteMax: 10, loyerHebdo: 10 },
   { niveau: 2, nom: "Cave aménagée", capaciteMax: 25, loyerHebdo: 70 },
   { niveau: 3, nom: "Hangar", capaciteMax: 50, loyerHebdo: 150 },
   { niveau: 4, nom: "Entrepôt", capaciteMax: Number.POSITIVE_INFINITY, loyerHebdo: 320 },
