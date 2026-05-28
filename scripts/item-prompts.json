@@ -1,18 +1,27 @@
 [
   {
     "templateId": "mus.diapason_acier",
+    "rarete": "commun",
     "description": "an orchestral steel tuning fork (A440), polished metal finish, vertical side view, with a small wooden handle, simple geometric form"
   },
   {
     "templateId": "mus.flute_traversiere_yamaha",
+    "rarete": "commun",
     "description": "a silver Yamaha transverse flute, full length side view, keys visible, elegant proportions, slight diagonal composition"
   },
   {
     "templateId": "jx.monopoly_80s",
+    "rarete": "commun",
     "description": "a 1980s Monopoly board game box, top-down three-quarter view, vintage cardboard with worn corners, classic red and white branding visible on lid, square box shape"
   },
   {
     "templateId": "ma.tabouret_bois_patine",
+    "rarete": "commun",
     "description": "a small patinated wooden stool, four turned legs, weathered natural wood finish with subtle nicks and faded paint traces, simple farmhouse design, three-quarter view"
+  },
+  {
+    "templateId": "mus.saxophone_selmer_mark_vi",
+    "rarete": "rare",
+    "description": "a vintage Selmer Mark VI alto saxophone, lacquered brass finish with subtle patina, complete with mother-of-pearl key inlays and neck strap ring, side view at a slight three-quarter angle, elegant curved silhouette"
   }
 ]

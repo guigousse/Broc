@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Star } from "lucide-react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { getRarityColors } from "@/lib/rarityColors";
@@ -18,14 +18,15 @@ interface FrameItemProps {
 }
 
 const W = 240;
-const H = 320;
+const H = 280;
 const TITRE_STRIP = 44;
 const MEDAL_R = 26;
 const MEDAL_CY = H - 14;
-const IMG_TOP = TITRE_STRIP + 8;
-const IMG_BOTTOM = H - 20;
-const IMG_LEFT = 14;
-const IMG_RIGHT = W - 14;
+// Zone image = pile à l'intérieur du filet fin, juste sous le bandeau titre.
+const IMG_TOP = TITRE_STRIP + 3;
+const IMG_BOTTOM = H - 8;
+const IMG_LEFT = 8;
+const IMG_RIGHT = W - 8;
 
 function etoileCount(etat: EtatObjet): number {
   switch (etat) {
@@ -40,6 +41,15 @@ function etoileCount(etat: EtatObjet): number {
   }
 }
 
+const overlaySvgStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  pointerEvents: "none",
+  overflow: "visible",
+};
+
 export function FrameItem({
   categorie,
   titre,
@@ -51,9 +61,6 @@ export function FrameItem({
 }: FrameItemProps) {
   const colors = getRarityColors(rarete, unique);
   const filledStars = etat ? etoileCount(etat) : 0;
-
-  // Sunburst rays positions for prestige >= 2
-  const sunburstDegrees = [0, 30, 60, 120, 150, 180, 210, 240, 300, 330];
 
   return (
     <div
@@ -67,13 +74,14 @@ export function FrameItem({
             : `drop-shadow(0 14px 22px ${colors.shadow}) drop-shadow(0 4px 6px rgba(0,0,0,0.25))`,
       }}
     >
+      {/* ─── SVG arrière-plan : fond papier sous l'image ─── */}
       <svg
         viewBox={`0 0 ${W} ${H}`}
         width="100%"
         height="100%"
         style={{ display: "block", overflow: "visible" }}
       >
-        {/* Halo extérieur pour Unique (prestige 3) */}
+        {/* Halo extérieur pour Unique */}
         {colors.prestige >= 3 && (
           <rect
             x="-3"
@@ -87,10 +95,11 @@ export function FrameItem({
           />
         )}
 
-        {/* Fond papier */}
+        {/* Fond papier (visible derrière l'image si transparente, et dans le bandeau titre) */}
         <rect x="0" y="0" width={W} height={H} fill="var(--paper-100)" />
 
-        {/* Lavis radial coloré subtil (légendaire et unique) */}
+        {/* Lavis radial subtil (Légendaire / Unique) — dans le bandeau titre uniquement
+            puisque l'image couvre tout le reste */}
         {colors.prestige >= 2 && (
           <>
             <defs>
@@ -100,20 +109,65 @@ export function FrameItem({
                 cy="50%"
                 r="60%"
               >
-                <stop offset="0%" stopColor={colors.accent} stopOpacity="0.18" />
-                <stop offset="100%" stopColor={colors.accent} stopOpacity="0" />
+                <stop
+                  offset="0%"
+                  stopColor={colors.accent}
+                  stopOpacity="0.22"
+                />
+                <stop
+                  offset="100%"
+                  stopColor={colors.accent}
+                  stopOpacity="0"
+                />
               </radialGradient>
             </defs>
             <rect
               x="0"
               y="0"
               width={W}
-              height={H}
+              height={TITRE_STRIP}
               fill={`url(#bgWash-${colors.label})`}
             />
           </>
         )}
+      </svg>
 
+      {/* ─── Slot image (HTML, entre les deux SVG) ─── */}
+      <div
+        style={{
+          position: "absolute",
+          left: `${(IMG_LEFT / W) * 100}%`,
+          top: `${(IMG_TOP / H) * 100}%`,
+          width: `${((IMG_RIGHT - IMG_LEFT) / W) * 100}%`,
+          height: `${((IMG_BOTTOM - IMG_TOP) / H) * 100}%`,
+          display: "grid",
+          placeItems: "center",
+          overflow: "hidden",
+        }}
+      >
+        {children ?? (
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 8,
+              letterSpacing: "0.28em",
+              textTransform: "uppercase",
+              color: colors.outer,
+              opacity: 0.45,
+            }}
+          >
+            — image —
+          </span>
+        )}
+      </div>
+
+      {/* ─── SVG avant-plan : bordures, ornements, médaillon (au-dessus de l'image) ─── */}
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height="100%"
+        style={overlaySvgStyle}
+      >
         {/* Bordure extérieure */}
         <rect
           x="2"
@@ -175,20 +229,13 @@ export function FrameItem({
           fill="none"
           strokeLinecap="square"
         >
-          <path d={`M 18 ${TITRE_STRIP / 2 - 4} L 22 ${TITRE_STRIP / 2} L 18 ${TITRE_STRIP / 2 + 4}`} />
-          <path d={`M ${W - 18} ${TITRE_STRIP / 2 - 4} L ${W - 22} ${TITRE_STRIP / 2} L ${W - 18} ${TITRE_STRIP / 2 + 4}`} />
+          <path
+            d={`M 18 ${TITRE_STRIP / 2 - 4} L 22 ${TITRE_STRIP / 2} L 18 ${TITRE_STRIP / 2 + 4}`}
+          />
+          <path
+            d={`M ${W - 18} ${TITRE_STRIP / 2 - 4} L ${W - 22} ${TITRE_STRIP / 2} L ${W - 18} ${TITRE_STRIP / 2 + 4}`}
+          />
         </g>
-
-        {/* Zone image */}
-        <rect
-          x={IMG_LEFT}
-          y={IMG_TOP}
-          width={IMG_RIGHT - IMG_LEFT}
-          height={IMG_BOTTOM - IMG_TOP}
-          fill="var(--paper-100)"
-          stroke={colors.inner}
-          strokeWidth="0.5"
-        />
 
         {/* Ornements coins haut */}
         <g
@@ -209,7 +256,7 @@ export function FrameItem({
           <path d="M 14 26 L 14 14 L 26 14" />
         </g>
 
-        {/* Ornements coins bas — prestige >= 1 (rare et +) */}
+        {/* Ornements coins bas — prestige >= 1 */}
         {colors.prestige >= 1 && (
           <>
             <g
@@ -245,30 +292,7 @@ export function FrameItem({
           </g>
         )}
 
-        {/* Sunburst derrière médaillon — prestige >= 2 */}
-        {colors.prestige >= 2 && (
-          <g
-            stroke={colors.accent}
-            strokeWidth="0.7"
-            opacity="0.85"
-            transform={`translate(${W / 2} ${MEDAL_CY})`}
-          >
-            {sunburstDegrees.map((deg) => {
-              const rad = (deg * Math.PI) / 180;
-              return (
-                <line
-                  key={deg}
-                  x1={Math.cos(rad) * (MEDAL_R + 7)}
-                  y1={Math.sin(rad) * (MEDAL_R + 7)}
-                  x2={Math.cos(rad) * (MEDAL_R + 16)}
-                  y2={Math.sin(rad) * (MEDAL_R + 16)}
-                />
-              );
-            })}
-          </g>
-        )}
-
-        {/* Médaillon */}
+        {/* Médaillon (à plat sur l'image) */}
         <circle
           cx={W / 2}
           cy={MEDAL_CY}
@@ -297,7 +321,7 @@ export function FrameItem({
         )}
       </svg>
 
-      {/* Titre (bandeau haut) — centré entre filet fin (y=8) et barre lourde (y=TITRE_STRIP) */}
+      {/* ─── Titre (bandeau haut) ─── */}
       <div
         style={{
           position: "absolute",
@@ -316,41 +340,13 @@ export function FrameItem({
           padding: "0 32px",
           lineHeight: 1.15,
           overflow: "hidden",
+          pointerEvents: "none",
         }}
       >
         {titre}
       </div>
 
-      {/* Slot image */}
-      <div
-        style={{
-          position: "absolute",
-          left: `${(IMG_LEFT / W) * 100}%`,
-          top: `${(IMG_TOP / H) * 100}%`,
-          width: `${((IMG_RIGHT - IMG_LEFT) / W) * 100}%`,
-          height: `${((IMG_BOTTOM - IMG_TOP) / H) * 100}%`,
-          display: "grid",
-          placeItems: "center",
-          overflow: "hidden",
-        }}
-      >
-        {children ?? (
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 8,
-              letterSpacing: "0.28em",
-              textTransform: "uppercase",
-              color: colors.outer,
-              opacity: 0.45,
-            }}
-          >
-            — image —
-          </span>
-        )}
-      </div>
-
-      {/* Icône catégorie dans médaillon */}
+      {/* ─── Icône catégorie dans médaillon ─── */}
       <div
         style={{
           position: "absolute",
@@ -361,6 +357,7 @@ export function FrameItem({
           placeItems: "center",
           width: MEDAL_R * 1.6,
           height: MEDAL_R * 1.6,
+          pointerEvents: "none",
         }}
       >
         <CategorieIcon
@@ -371,35 +368,35 @@ export function FrameItem({
         />
       </div>
 
-      {/* Étoiles d'état — plaque blanche bordée, centrée sur l'arête basse */}
+      {/* ─── Étoiles d'état (plaque blanche bordée) ─── */}
       {etat && (
-      <div
-        style={{
-          position: "absolute",
-          // Centre horizontal entre x=0 et x=(W/2 - MEDAL_R - 4), soit x = (W/2 - MEDAL_R - 4)/2
-          left: `${(((W / 2 - MEDAL_R - 4) / 2) / W) * 100}%`,
-          top: "100%",
-          transform: "translate(-50%, -50%)",
-          display: "flex",
-          gap: 3,
-          padding: "5px 7px",
-          background: "var(--paper-100)",
-          border: `1.5px solid ${colors.outer}`,
-          boxShadow:
-            "0 6px 10px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.22)",
-        }}
-        aria-label={`État : ${etat}`}
-      >
-        {[0, 1, 2].map((i) => (
-          <Star
-            key={i}
-            size={22}
-            strokeWidth={1.8}
-            fill={i < filledStars ? colors.outer : "var(--paper-100)"}
-            color={colors.outer}
-          />
-        ))}
-      </div>
+        <div
+          style={{
+            position: "absolute",
+            left: `${(((W / 2 - MEDAL_R - 4) / 2) / W) * 100}%`,
+            top: "100%",
+            transform: "translate(-50%, -50%)",
+            display: "flex",
+            gap: 3,
+            padding: "5px 7px",
+            background: "var(--paper-100)",
+            border: `1.5px solid ${colors.outer}`,
+            boxShadow:
+              "0 6px 10px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.22)",
+            pointerEvents: "none",
+          }}
+          aria-label={`État : ${etat}`}
+        >
+          {[0, 1, 2].map((i) => (
+            <Star
+              key={i}
+              size={22}
+              strokeWidth={1.8}
+              fill={i < filledStars ? colors.outer : "var(--paper-100)"}
+              color={colors.outer}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

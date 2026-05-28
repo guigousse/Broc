@@ -115,7 +115,7 @@ export function CollectionDetailOverlay({
             <ItemImage
               templateId={slot.templateId}
               categorie={slot.categorie}
-              fit="contain"
+              fit="cover"
               fallbackIconSize={100}
               fallbackIconColor="var(--brass-500)"
               alt={slot.nom}

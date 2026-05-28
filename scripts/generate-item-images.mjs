@@ -66,14 +66,33 @@ const MODEL_IDS = {
   flash: "gemini-2.5-flash-image",
 };
 
-const STYLE_BRIEF = [
-  "Vintage Art Déco product illustration in a museum catalog style.",
-  "Elegant ink line-art with subtle sepia and forest green color wash.",
-  "Centered single object, isolated on a cream parchment background with subtle paper grain texture.",
-  "Soft directional lighting, no harsh shadows, no text, no captions, no watermark.",
-  "Clean geometric composition.",
-  "Style of 1920s-1930s French decorative arts.",
-].join(" ");
+// Fond papier coloré en fonction de la rareté de l'item.
+// La couleur reste subtile pour que le sujet reste lisible.
+function backgroundPhrase(rarete) {
+  switch (rarete) {
+    case "rare":
+      return "soft light blueish-gray paper with a cool steel tint";
+    case "legendaire":
+      return "warm ivory paper with a subtle gold tint";
+    case "unique":
+      return "pale icy blue paper with a soft frost tint";
+    case "commun":
+    default:
+      return "cream parchment";
+  }
+}
+
+function buildStyleBrief(rarete) {
+  return [
+    "Vintage Art Déco product illustration in a museum catalog style.",
+    "Elegant ink line-art with subtle sepia and forest green color wash.",
+    `Centered single object, isolated on a ${backgroundPhrase(rarete)} background with subtle paper grain texture.`,
+    "Soft directional lighting, no harsh shadows, no text, no captions, no watermark.",
+    "Clean geometric composition.",
+    "Strict square 1:1 aspect ratio composition.",
+    "Style of 1920s-1930s French decorative arts.",
+  ].join(" ");
+}
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 if (!apiKey) {
@@ -143,7 +162,9 @@ async function main() {
       }
     }
 
-    const prompt = `${STYLE_BRIEF}\n\nSubject: ${item.description}.`;
+    const rarete = item.rarete ?? "commun";
+    const styleBrief = buildStyleBrief(rarete);
+    const prompt = `${styleBrief}\n\nSubject: ${item.description}.`;
     if (verbose) console.log(`  prompt → ${prompt}`);
     console.log(`🎨  ${item.templateId} — génération en cours (${model})…`);
 

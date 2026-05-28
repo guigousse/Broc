@@ -160,7 +160,7 @@ export function ObjetDetailOverlay({
             <ItemImage
               templateId={objet.templateId}
               categorie={objet.categorie}
-              fit="contain"
+              fit="cover"
               fallbackIconSize={100}
               fallbackIconColor="var(--brass-500)"
               alt={objet.nom}
