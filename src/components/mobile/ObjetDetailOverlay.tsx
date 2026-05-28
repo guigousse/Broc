@@ -181,7 +181,10 @@ export function ObjetDetailOverlay({
       aria-label="Détail de l'objet"
       style={backdrop}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) {
+          commitPrix();
+          onClose();
+        }
       }}
     >
       <div style={card}>

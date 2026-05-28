@@ -96,7 +96,7 @@ export function StockageItemRow({
     movedRef.current = false;
     axisLockedRef.current = null;
     setDragging(true);
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   };
 
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
