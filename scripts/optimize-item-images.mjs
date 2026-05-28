@@ -14,19 +14,27 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ITEMS_DIR = path.resolve(__dirname, "..", "public", "items");
+const PROJECT_ROOT = path.resolve(__dirname, "..");
+const DIRS = [
+  path.join(PROJECT_ROOT, "public", "items"),
+  path.join(PROJECT_ROOT, "public", "brocantes"),
+];
 const MAX_SIDE = 1024;
 const ALREADY_OPTIMIZED_KB = 400;
 
-async function main() {
-  const files = (await fs.readdir(ITEMS_DIR)).filter((f) => f.endsWith(".png"));
-  if (files.length === 0) {
-    console.log("Aucun PNG dans public/items/");
+async function processDir(dir) {
+  let files;
+  try {
+    files = (await fs.readdir(dir)).filter((f) => f.endsWith(".png"));
+  } catch {
     return;
   }
+  if (files.length === 0) return;
+  const rel = path.relative(PROJECT_ROOT, dir);
+  console.log(`\n📁 ${rel}`);
 
   for (const file of files) {
-    const src = path.join(ITEMS_DIR, file);
+    const src = path.join(dir, file);
     const stat = await fs.stat(src);
     const beforeKB = Math.round(stat.size / 1024);
     if (beforeKB < ALREADY_OPTIMIZED_KB) {
@@ -48,6 +56,10 @@ async function main() {
       `✅  ${file} : ${beforeKB} kB → ${afterKB} kB (−${Math.round((1 - afterKB / beforeKB) * 100)}%)`,
     );
   }
+}
+
+async function main() {
+  for (const dir of DIRS) await processDir(dir);
 }
 
 main().catch((err) => {
