@@ -61,9 +61,11 @@ function CornerL({ position, color }: CornerLProps) {
 
 const centerLayer: CSSProperties = {
   position: "absolute",
-  inset: 0,
+  // Pile dans le filet intérieur (boxShadow inset 3px) — l'image touche le filet
+  inset: 4,
   display: "grid",
-  placeItems: "center",
+  placeItems: "stretch",
+  overflow: "hidden",
   pointerEvents: "none",
 };
 
@@ -132,6 +134,8 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
           cursor: isInteractable ? "pointer" : "default",
           padding: 0,
           overflow: "hidden",
+          // Pour les items vus (non donnés), grisaille l'image qui remplit la cellule
+          filter: isVu ? "grayscale(1) brightness(0.92)" : undefined,
         };
 
         return (
@@ -166,16 +170,14 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
                   ?
                 </span>
               ) : (
-                <div style={{ width: "70%", height: "70%" }}>
-                  <ItemImage
-                    templateId={s.templateId}
-                    categorie={s.categorie}
-                    fit="contain"
-                    fallbackIconSize={36}
-                    fallbackIconColor={iconColor}
-                    alt={s.nom}
-                  />
-                </div>
+                <ItemImage
+                  templateId={s.templateId}
+                  categorie={s.categorie}
+                  fit="cover"
+                  fallbackIconSize={36}
+                  fallbackIconColor={iconColor}
+                  alt={s.nom}
+                />
               )}
             </div>
 
