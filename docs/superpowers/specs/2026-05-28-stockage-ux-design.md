@@ -335,15 +335,32 @@ function collectionStatus(o: Objet): { disponible: boolean; necessiteConfirmatio
 
 `prochaineEtatCible`, `peutRestaurerTransition`, `trouverSlot` : helpers locaux ou dans `src/lib/atelier.ts` / `src/lib/collection.ts` selon emplacement.
 
-### Confirmation remplacement
+### Confirmation remplacement — modale custom
 
-Au clic Collection sur un objet avec `necessiteConfirmation === true`, afficher `window.confirm`:
+Nouveau composant `src/components/mobile/ConfirmReplaceModal.tsx` :
 
+```ts
+interface ConfirmReplaceModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  nouvelObjet: { nom: string; etat: EtatObjet; valeur: number };
+  ancienneDonation: { etat: EtatObjet; valeur: number };
+}
 ```
-"Cet objet est déjà dans votre collection en état [autreEtat] (valeur X €). Le remplacer par le nouveau ?"
-```
 
-Si confirmé, appel `donnerACollection(objet.id)` (la fonction existante remplace déjà, et l'ancienne donation revient en inventaire).
+Esthétique : modale centrée façon `<dialog>`, fond `rgba(15,31,24,0.78)`, contenu carte parchemin (`--paper-100` + frame laiton). Contenu :
+
+- Titre : `— REMPLACER LA DONATION ? —` (font-display, brass-700).
+- Corps (font-serif) :  
+  *« {nom} est déjà dans votre collection en {ancien.etat} (valeur {ancien.valeur} €).  
+  Le remplacer par votre nouvel exemplaire en {nouvel.etat} ({nouvel.valeur} €) ?  
+  L'ancien reviendra dans votre inventaire. »*
+- Deux boutons sur une rangée :
+  - "Annuler" (style ghost, paper-200).
+  - "Remplacer" (style primary forest-800, brass-300).
+
+État local dans `src/app/stockage/page.tsx` : `const [askReplace, setAskReplace] = useState<Objet | null>(null)`. Sur clic Collection avec `necessiteConfirmation`, ouvrir la modale. Sur confirm, appel `donnerACollection(objet.id)` et fermer.
 
 ## 13. Stockage : statuts injectés dans `InventoryGrid`
 
@@ -357,7 +374,6 @@ Pour MVP, `prixMarche = objet.prixReferenceReel`. Une seconde itération pourra 
 
 - Affichage du loyer atelier (pas de loyer, juste un cout d'upgrade).
 - Animation visuelle des actions du swipe (juste le translate suffit).
-- Confirmation remplacement via modale custom (window.confirm OK pour MVP).
 - Drag-to-dismiss sur l'overlay (close par ✕ + clic backdrop).
 - Recalcul du prix marché en fonction des tendances catégorie (MVP utilise `prixReferenceReel`).
 - Sons de swipe / d'ouverture overlay.
@@ -367,6 +383,7 @@ Pour MVP, `prixMarche = objet.prixReferenceReel`. Une seconde itération pourra 
 **Création :**
 - `src/components/mobile/StockageItemRow.tsx`
 - `src/components/mobile/ObjetDetailOverlay.tsx`
+- `src/components/mobile/ConfirmReplaceModal.tsx`
 - `src/data/atelier.ts`
 - `src/lib/atelier.ts` (helpers `prochaineEtatCible`, `peutRestaurerTransition`, `trouverSlotCollection`, `getCapaciteAtelier`)
 
