@@ -11,7 +11,11 @@ import { ObjetDetailOverlay } from "@/components/mobile/ObjetDetailOverlay";
 import { ConfirmReplaceModal } from "@/components/mobile/ConfirmReplaceModal";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
-import { getStockageTier } from "@/data/stockage";
+import {
+  getProchaineUpgradeStockage,
+  getStockageTierParNiveau,
+} from "@/data/stockage";
+import { getCapaciteStockage, totalEnStock } from "@/lib/stockage";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import {
   atelierStatusPourObjet,
@@ -30,6 +34,7 @@ export default function StockagePage() {
     restaurerObjet,
     donnerACollection,
     definirPrixVenteSouhaite,
+    ameliorerStockage,
   } = useGame();
   const [filtre, setFiltre] = useState<CategorieObjet | null>(null);
   const [objetOuvert, setObjetOuvert] = useState<Objet | null>(null);
@@ -83,8 +88,10 @@ export default function StockagePage() {
     );
   }
 
-  const tier = getStockageTier(state.inventaireJoueur.length);
-  const ratio = state.inventaireJoueur.length / tier.capaciteMax;
+  const tier = getStockageTierParNiveau(state.niveauStockage);
+  const totalStock = totalEnStock(state);
+  const capacite = getCapaciteStockage(state);
+  const ratio = capacite > 0 ? totalStock / capacite : 0;
 
   const atelierStatus = (o: Objet) => atelierStatusPourObjet(state, o);
   const collectionStatus = (o: Objet) => collectionStatusPourObjet(state, o);
@@ -160,7 +167,7 @@ export default function StockagePage() {
                   color: "var(--forest-800)",
                 }}
               >
-                {state.inventaireJoueur.length} / {tier.capaciteMax} obj.
+                {totalStock} / {capacite} obj.
               </span>
               <span
                 style={{
@@ -202,6 +209,89 @@ export default function StockagePage() {
           </StickyTop>
         }
       >
+          <div
+            style={{
+              border: "1px solid var(--brass-500)",
+              background: "var(--paper-100)",
+              padding: "10px 14px",
+              boxShadow:
+                "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+              marginBottom: 10,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 11,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "var(--forest-800)",
+                }}
+              >
+                Stockage LVL {state.niveauStockage}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 9.5,
+                  color: "var(--ink-500)",
+                  marginTop: 1,
+                }}
+              >
+                {capacite} obj. · loyer {tier.loyerHebdo} €/sem
+              </div>
+            </div>
+            {(() => {
+              const up = getProchaineUpgradeStockage(state.niveauStockage);
+              if (!up) {
+                return (
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9.5,
+                      color: "var(--brass-700)",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Maximum
+                  </span>
+                );
+              }
+              const peut = state.budget >= up.cout;
+              return (
+                <button
+                  type="button"
+                  disabled={!peut}
+                  onClick={() => {
+                    const res = ameliorerStockage();
+                    if (!res.ok) setFlash(res.raison ?? "Impossible");
+                    else setFlash(`Stockage amélioré au LVL ${up.niveauCible}.`);
+                    setTimeout(() => setFlash(null), 2500);
+                  }}
+                  style={{
+                    padding: "8px 12px",
+                    fontFamily: "var(--font-display)",
+                    fontSize: 10.5,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    border: "1px solid var(--brass-500)",
+                    background: peut ? "var(--forest-800)" : "var(--paper-200)",
+                    color: peut ? "var(--brass-300)" : "var(--ink-500)",
+                    cursor: peut ? "pointer" : "not-allowed",
+                    opacity: peut ? 1 : 0.6,
+                  }}
+                >
+                  LVL {up.niveauCible} · {up.cout} €
+                </button>
+              );
+            })()}
+          </div>
         {flash && (
           <div
             role="status"

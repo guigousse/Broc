@@ -14,6 +14,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { coutEntree, getBrocanteById } from "@/data/brocantes";
 import { estDebloquee } from "@/lib/deblocage";
 import { genererSession, reagirNegociation } from "@/lib/chine";
+import { stockageEstPlein } from "@/lib/stockage";
 import { indexJourSemaine } from "@/lib/meteo";
 import {
   TREE_GENERAL,
@@ -125,6 +126,8 @@ export default function SessionChinePage() {
       </main>
     );
   }
+
+  const plein = stockageEstPlein(state);
 
   const setItem = (id: string, patch: Partial<ObjetEnVente>) =>
     setItems((prev) =>
@@ -290,6 +293,7 @@ export default function SessionChinePage() {
               key={it.id}
               item={it}
               budget={state.budget}
+              plein={plein}
               onNegocier={() => setNegoOuverte(it.id)}
               onAcheter={() => handleAcheter(it.id)}
             />
@@ -297,6 +301,25 @@ export default function SessionChinePage() {
         </div>
       </main>
 
+      {plein && (
+        <div
+          role="status"
+          style={{
+            padding: "8px 12px",
+            background: "var(--vermillion-600)",
+            color: "var(--paper-100)",
+            border: "1px solid var(--velvet-700)",
+            fontFamily: "var(--font-display)",
+            fontSize: 11,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            textAlign: "center",
+            marginBottom: 8,
+          }}
+        >
+          Stockage plein
+        </div>
+      )}
       <ActionFab
         buttons={[
           {
@@ -330,11 +353,13 @@ export default function SessionChinePage() {
 function ObjetCardMobile({
   item,
   budget,
+  plein,
   onNegocier,
   onAcheter,
 }: {
   item: ObjetEnVente;
   budget: number;
+  plein: boolean;
   onNegocier: () => void;
   onAcheter: () => void;
 }) {
@@ -479,20 +504,25 @@ function ObjetCardMobile({
         <button
           type="button"
           onClick={onNegocier}
-          style={miniBtn(false)}
+          disabled={plein}
+          style={{
+            ...miniBtn(false),
+            opacity: plein ? 0.45 : 1,
+            cursor: plein ? "not-allowed" : "pointer",
+          }}
         >
           Négo
         </button>
         <button
           type="button"
           onClick={onAcheter}
-          disabled={tropCher}
+          disabled={tropCher || plein}
           style={{
             ...miniBtn(true),
-            opacity: tropCher ? 0.45 : 1,
-            cursor: tropCher ? "not-allowed" : "pointer",
+            opacity: tropCher || plein ? 0.45 : 1,
+            cursor: tropCher || plein ? "not-allowed" : "pointer",
             // surbrillance après négociation
-            ...(item.negociationsTentees > 0 && !tropCher
+            ...(item.negociationsTentees > 0 && !tropCher && !plein
               ? {
                   background: "var(--brass-700)",
                   color: "var(--paper-100)",

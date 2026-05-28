@@ -56,7 +56,12 @@ import { appliquerGainXP } from "@/lib/xp";
 import { aGenInfluence, peutRestaurerCategorie } from "@/lib/competences";
 import { tirerMeteo, tirerMeteoSemaine, indexJourSemaine } from "@/lib/meteo";
 import { tirerCelebrite } from "@/lib/celebrite";
-import { getStockageTier } from "@/data/stockage";
+import {
+  getProchaineUpgradeStockage,
+  getStockageTier,
+  getStockageTierParNiveau,
+} from "@/data/stockage";
+import { stockageEstPlein } from "@/lib/stockage";
 import {
   initCollection,
   marquerDejaPossede as marquerDejaPossedeFn,
@@ -91,6 +96,7 @@ interface GameContextValue {
     options?: { dureeJours?: number },
   ) => { ok: boolean; raison?: string };
   ameliorerAtelier: () => { ok: boolean; raison?: string };
+  ameliorerStockage: () => { ok: boolean; raison?: string };
   definirPrixVenteSouhaite: (objetId: string, prix: number) => void;
   gagnerXP: (treeId: CompetenceTreeId, montant: number) => void;
   marquerVuTemplate: (templateId: string) => void;
@@ -304,6 +310,16 @@ function migrerSauvegarde(loaded: GameState): GameState {
       (loaded as Partial<GameState>).niveauAtelier === 2 || (loaded as Partial<GameState>).niveauAtelier === 3
         ? (loaded as Partial<GameState>).niveauAtelier!
         : 1,
+    niveauStockage: (() => {
+      const v = (loaded as Partial<GameState>).niveauStockage;
+      if (v === 2 || v === 3 || v === 4) return v;
+      const inv = loaded.inventaireJoueur ?? [];
+      const vit = loaded.vitrine?.objets ?? [];
+      const total = inv.length + vit.length;
+      const fallbackTier: 1 | 2 | 3 | 4 =
+        total <= 10 ? 1 : total <= 25 ? 2 : total <= 50 ? 3 : 4;
+      return fallbackTier;
+    })(),
   };
 }
 
@@ -356,14 +372,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dernierLoyer: null,
       dernierHuissier: null,
       niveauAtelier: 1,
+      niveauStockage: 1,
     });
     router.push("/qg");
   }, [router]);
 
   const ajouterObjet = useCallback((objet: Objet) => {
-    setState((prev) =>
-      prev ? { ...prev, inventaireJoueur: [...prev.inventaireJoueur, objet] } : prev,
-    );
+    setState((prev) => {
+      if (!prev) return prev;
+      if (stockageEstPlein(prev)) return prev;
+      return { ...prev, inventaireJoueur: [...prev.inventaireJoueur, objet] };
+    });
   }, []);
 
   const retirerObjet = useCallback((id: string) => {
@@ -412,7 +431,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ? genererTendances()
         : prev.prochainesTendances;
       // Loyer hebdomadaire : prélevé à la fin de chaque semaine (refresh Gazette).
-      const tierStockage = refresh ? getStockageTier(inv.length) : null;
+      const tierStockage = refresh ? getStockageTierParNiveau(prev.niveauStockage) : null;
       const budgetApresLoyer = tierStockage
         ? prev.budget - tierStockage.loyerHebdo
         : prev.budget;
@@ -575,6 +594,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ...prev,
             budget: prev.budget - upgrade.cout,
             niveauAtelier: upgrade.niveauCible,
+          }
+        : prev,
+    );
+    return { ok: true };
+  }, []);
+
+  const ameliorerStockage = useCallback((): { ok: boolean; raison?: string } => {
+    const current = stateRef.current;
+    if (!current) return { ok: false, raison: "Pas de partie." };
+    const upgrade = getProchaineUpgradeStockage(current.niveauStockage);
+    if (!upgrade) return { ok: false, raison: "Stockage déjà au maximum." };
+    if (current.budget < upgrade.cout)
+      return {
+        ok: false,
+        raison: `Il manque ${upgrade.cout - current.budget} €.`,
+      };
+    setState((prev) =>
+      prev
+        ? {
+            ...prev,
+            budget: prev.budget - upgrade.cout,
+            niveauStockage: upgrade.niveauCible,
           }
         : prev,
     );
@@ -894,6 +935,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!current) return { ok: false, raison: "Pas de partie." };
       const tpl = getTemplate(templateId);
       if (!tpl) return { ok: false, raison: "Template inconnu." };
+      if (stockageEstPlein(current))
+        return { ok: false, raison: "Stockage plein." };
 
       setState((prev) => {
         if (!prev) return prev;
@@ -978,6 +1021,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       debloquerCompetence,
       restaurerObjet,
       ameliorerAtelier,
+      ameliorerStockage,
       definirPrixVenteSouhaite,
       gagnerXP,
       marquerVuTemplate,
@@ -1009,6 +1053,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       debloquerCompetence,
       restaurerObjet,
       ameliorerAtelier,
+      ameliorerStockage,
       definirPrixVenteSouhaite,
       gagnerXP,
       marquerVuTemplate,
