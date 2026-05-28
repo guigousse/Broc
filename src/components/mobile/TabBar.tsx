@@ -5,6 +5,7 @@ import { Album, Anvil, BookOpen, Home, Warehouse, type LucideIcon } from "lucide
 import type { CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
 import { useGame } from "@/context/GameContext";
+import { useSettings } from "@/context/SettingsContext";
 import type { GameState } from "@/types/game";
 
 interface TabDef {
@@ -89,6 +90,7 @@ export function TabBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { state, isHydrated } = useGame();
+  const { playClick } = useSettings();
 
   if (!isHydrated || !state) return null;
   if (HIDDEN_EXACT.has(pathname)) return null;
@@ -107,7 +109,10 @@ export function TabBar() {
           <button
             key={t.path}
             type="button"
-            onClick={() => router.push(t.path)}
+            onClick={() => {
+              playClick();
+              router.push(t.path);
+            }}
             style={{
               ...tabBtn,
               color: active ? "var(--brass-700)" : "var(--ink-500)",
