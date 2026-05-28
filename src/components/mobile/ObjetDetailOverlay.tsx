@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { Store, X } from "lucide-react";
 import { FrameItem } from "@/components/ui/FrameItem";
+import { getTemplate } from "@/data/objetTemplates";
 import type { Objet } from "@/types/game";
 
 interface ObjetDetailOverlayProps {
@@ -46,16 +47,6 @@ const topBar: CSSProperties = {
   marginBottom: 12,
 };
 
-const titleStyle: CSSProperties = {
-  fontFamily: "var(--font-display)",
-  fontSize: 12,
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-  color: "var(--forest-800)",
-  fontWeight: 700,
-  flex: 1,
-};
-
 const closeBtn: CSSProperties = {
   background: "transparent",
   border: "1px solid var(--brass-500)",
@@ -69,16 +60,19 @@ const closeBtn: CSSProperties = {
 const previewWrap: CSSProperties = {
   display: "grid",
   placeItems: "center",
-  margin: "8px auto 14px",
+  margin: "4px auto -56px",
+  position: "relative",
+  zIndex: 2,
 };
 
-const meta: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  letterSpacing: "0.12em",
-  color: "var(--ink-500)",
-  textAlign: "center",
-  marginBottom: 16,
+const infoBox: CSSProperties = {
+  position: "relative",
+  background: "var(--paper-300)",
+  border: "1px solid var(--brass-500)",
+  boxShadow:
+    "inset 0 0 0 2px var(--paper-300), inset 0 0 0 3px var(--brass-700)",
+  padding: "72px 16px 16px",
+  marginTop: 0,
 };
 
 const priceGrid: CSSProperties = {
@@ -201,84 +195,85 @@ export function ObjetDetailOverlay({
           <FrameItem
             categorie={objet.categorie}
             titre={objet.nom}
+            rarete={objet.rarete}
+            unique={!!getTemplate(objet.templateId)?.unique}
+            etat={objet.etat}
             size={240}
           />
         </div>
 
-        <div style={meta}>
-          {objet.etat} · {objet.rarete} · {objet.categorie}
-        </div>
+        <div style={infoBox}>
+          {enRestauration && (
+            <div
+              style={{
+                padding: "8px 10px",
+                background: "var(--paper-200)",
+                border: "1px dotted var(--brass-700)",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.12em",
+                color: "var(--brass-700)",
+                textAlign: "center",
+                marginBottom: 12,
+              }}
+            >
+              En restauration jusqu&apos;au jour {objet.enRestauration?.jourFin}
+            </div>
+          )}
 
-        {enRestauration && (
-          <div
-            style={{
-              padding: "8px 10px",
-              background: "var(--paper-300)",
-              border: "1px dotted var(--brass-700)",
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              letterSpacing: "0.12em",
-              color: "var(--brass-700)",
-              textAlign: "center",
-              marginBottom: 12,
-            }}
-          >
-            En restauration jusqu&apos;au jour {objet.enRestauration?.jourFin}
-          </div>
-        )}
-
-        <div style={priceGrid}>
-          <div style={priceBox}>
-            <div style={priceLabel}>Prix d&apos;achat</div>
-            <div style={priceValue}>
-              {objet.prixAchat !== undefined ? `${objet.prixAchat} €` : "—"}
+          <div style={priceGrid}>
+            <div style={priceBox}>
+              <div style={priceLabel}>Prix d&apos;achat</div>
+              <div style={priceValue}>
+                {objet.prixAchat !== undefined ? `${objet.prixAchat} €` : "—"}
+              </div>
+            </div>
+            <div style={priceBox}>
+              <div style={priceLabel}>Prix du marché</div>
+              <div style={priceValue}>
+                {prixMarcheConnu ? `${Math.round(prixMarche)} €` : "?"}
+              </div>
             </div>
           </div>
-          <div style={priceBox}>
-            <div style={priceLabel}>Prix du marché</div>
-            <div style={priceValue}>
-              {prixMarcheConnu ? `${Math.round(prixMarche)} €` : "?"}
-            </div>
+
+          <div style={priceLabel}>Prix de vente</div>
+          <div style={venteRow}>
+            <input
+              type="number"
+              min={0}
+              value={prixLocal}
+              onChange={(e) => setPrixLocal(Number(e.target.value) || 0)}
+              onBlur={commitPrix}
+              style={venteInput}
+              disabled={enRestauration}
+            />
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 14,
+                color: "var(--brass-700)",
+              }}
+            >
+              €
+            </span>
           </div>
-        </div>
 
-        <div style={priceLabel}>Prix de vente</div>
-        <div style={venteRow}>
-          <input
-            type="number"
-            min={0}
-            value={prixLocal}
-            onChange={(e) => setPrixLocal(Number(e.target.value) || 0)}
-            onBlur={commitPrix}
-            style={venteInput}
-            disabled={enRestauration}
-          />
-          <span
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 14,
-              color: "var(--brass-700)",
-            }}
-          >
-            €
-          </span>
+          {onAjouterEtal && !enRestauration && (
+            <button
+              type="button"
+              onClick={() => {
+                commitPrix();
+                onAjouterEtal(objet, prixLocal);
+                onClose();
+              }}
+              style={etalBtn}
+            >
+              <Store size={16} strokeWidth={1.5} />
+              Mettre à l&apos;étal
+              {brocanteOuverteNom ? ` · ${brocanteOuverteNom}` : ""}
+            </button>
+          )}
         </div>
-
-        {onAjouterEtal && !enRestauration && (
-          <button
-            type="button"
-            onClick={() => {
-              commitPrix();
-              onAjouterEtal(objet, prixLocal);
-              onClose();
-            }}
-            style={etalBtn}
-          >
-            <Store size={16} strokeWidth={1.5} />
-            Mettre à l&apos;étal
-            {brocanteOuverteNom ? ` · ${brocanteOuverteNom}` : ""}
-          </button>
-        )}
       </div>
     </div>
   );
