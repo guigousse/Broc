@@ -16,6 +16,8 @@
 export const ITEMS_WITH_IMAGE: ReadonlySet<string> = new Set<string>([
   "mus.diapason_acier",
   "mus.flute_traversiere_yamaha",
+  "jx.monopoly_80s",
+  "ma.tabouret_bois_patine",
 ]);
 
 export function getItemImageUrl(templateId: string): string | null {

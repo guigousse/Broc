@@ -6,5 +6,13 @@
   {
     "templateId": "mus.flute_traversiere_yamaha",
     "description": "a silver Yamaha transverse flute, full length side view, keys visible, elegant proportions, slight diagonal composition"
+  },
+  {
+    "templateId": "jx.monopoly_80s",
+    "description": "a 1980s Monopoly board game box, top-down three-quarter view, vintage cardboard with worn corners, classic red and white branding visible on lid, square box shape"
+  },
+  {
+    "templateId": "ma.tabouret_bois_patine",
+    "description": "a small patinated wooden stool, four turned legs, weathered natural wood finish with subtle nicks and faded paint traces, simple farmhouse design, three-quarter view"
   }
 ]

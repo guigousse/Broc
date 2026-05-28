@@ -10,7 +10,8 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "gen:images": "node scripts/generate-item-images.mjs"
+    "gen:images": "node scripts/generate-item-images.mjs",
+    "opt:images": "node scripts/optimize-item-images.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.16.0",
