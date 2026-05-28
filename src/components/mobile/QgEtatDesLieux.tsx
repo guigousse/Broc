@@ -68,10 +68,17 @@ export function QgEtatDesLieux({ state }: QgEtatDesLieuxProps) {
     {
       icon: Warehouse,
       titre: "Stockage",
-      meta:
-        stockTier.capaciteMax === Number.POSITIVE_INFINITY
-          ? `${stockTier.nom} · ${totalStock} obj. · loyer ${stockTier.loyerHebdo} €/sem`
-          : `${stockTier.nom} · ${totalStock}/${stockTier.capaciteMax} · loyer ${stockTier.loyerHebdo} €/sem`,
+      meta: (() => {
+        const cap =
+          stockTier.capaciteMax === Number.POSITIVE_INFINITY
+            ? `${totalStock} obj.`
+            : `${totalStock}/${stockTier.capaciteMax}`;
+        const loyer =
+          stockTier.loyerHebdo > 0
+            ? ` · loyer ${stockTier.loyerHebdo} €/sem`
+            : "";
+        return `${stockTier.nom} · ${cap}${loyer}`;
+      })(),
       path: "/stockage",
     },
     {

@@ -12,6 +12,7 @@ export const COUT_ENTREE_PAR_TIER: Record<BrocanteTier, number> = {
 };
 
 export function coutEntree(brocante: Brocante): number {
+  if (brocante.id === "vide-grenier-quartier") return 0;
   return COUT_ENTREE_PAR_TIER[brocante.tier];
 }
 

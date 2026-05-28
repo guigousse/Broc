@@ -178,7 +178,7 @@ export default function StockagePage() {
                   color: "var(--brass-700)",
                 }}
               >
-                Loyer {tier.loyerHebdo} €/sem.
+                {tier.loyerHebdo > 0 ? `Loyer ${tier.loyerHebdo} €/sem.` : ""}
               </span>
             </div>
             <div
@@ -243,7 +243,7 @@ export default function StockagePage() {
                   marginTop: 1,
                 }}
               >
-                {capacite} obj. · loyer {tier.loyerHebdo} €/sem
+                {capacite} obj.{tier.loyerHebdo > 0 ? ` · loyer ${tier.loyerHebdo} €/sem` : ""}
               </div>
             </div>
             {(() => {
