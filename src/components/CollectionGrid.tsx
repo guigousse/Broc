@@ -110,9 +110,10 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
         const colors = getRarityColors(s.rarete, !!s.unique);
         const filledStars = isDonne ? etoileCount(s.donation?.etat) : 0;
 
-        // Donné : pleines couleurs rareté. Vu ou silhouette : fond gris papier.
-        const outerColor = isDonne ? colors.outer : GRAY_OUTER;
-        const innerColor = isDonne ? colors.inner : GRAY_INNER;
+        // Fond gris pour vu/silhouette ; bordure rareté pour donné et vu (la
+        // rareté reste visible) ; bordure grise seulement pour silhouette.
+        const outerColor = isSilhouette ? GRAY_OUTER : colors.outer;
+        const innerColor = isSilhouette ? GRAY_INNER : colors.inner;
         const bg = isDonne ? colors.thumbBg : GRAY_BG;
         const iconColor = isDonne ? colors.thumbIcon : GRAY_OUTER;
         const isInteractable = !isSilhouette;
