@@ -20,6 +20,8 @@ export interface Objet {
   etat: EtatObjet;
   rarete: Rarete;
   prixAchat?: number;
+  /** Prix de vente fixé par le joueur dans l'overlay. Utilisé par défaut à la mise à l'étal. */
+  prixVenteSouhaite?: number;
   /** Présent si l'objet est en cours de restauration à l'atelier. */
   enRestauration?: {
     etatCible: EtatObjet;
@@ -112,6 +114,8 @@ export interface GameState {
   dernierLoyer: { jour: number; montant: number; tierNom: string } | null;
   /** Dernier événement huissier (liquidation forcée). null = aucun. */
   dernierHuissier?: HuissierEvent | null;
+  /** Niveau de l'atelier (1, 2 ou 3). Nombre de slots = niveau. Par défaut 1. */
+  niveauAtelier: 1 | 2 | 3;
 }
 
 export type CompetenceId = string;
