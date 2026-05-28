@@ -3,6 +3,7 @@ import type {
   CompetenceDef,
   CompetenceId,
   CompetenceTreeState,
+  EtatObjet,
   GameState,
 } from "@/types/game";
 import { TREE_GENERAL, catTreeId, getCompetence } from "@/data/competences";
@@ -98,12 +99,20 @@ export function aMaitreReparer(
   return aCompetence(`${catTreeId(cat)}.reparer.3`, state.competencesDebloquees);
 }
 
-/** Renvoie la durée (en jours) d'une restauration pour cette catégorie. */
+/** Renvoie la durée (en jours) de la restauration pour atteindre l'état cible. */
 export function dureeRestauration(
   state: GameState,
   cat: CategorieObjet,
+  etatCible: EtatObjet,
 ): number {
-  return aMaitreReparer(state, cat) ? 3 : 7;
+  const baseParCible: Partial<Record<EtatObjet, number>> = {
+    Bon: 7,
+    "Très bon": 14,
+    "Pristin état": 28,
+  };
+  const base = baseParCible[etatCible] ?? 7;
+  if (aMaitreReparer(state, cat)) return Math.ceil(base / 2);
+  return base;
 }
 
 /**

@@ -13,6 +13,7 @@ import {
   peutRestaurerTresBonVersPristin,
 } from "@/lib/competences";
 import { recalculerPrixReference } from "@/lib/etat";
+import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import type { EtatObjet, Objet } from "@/types/game";
 
 const sectTitle: React.CSSProperties = {
@@ -34,7 +35,7 @@ const cardWrap: React.CSSProperties = {
 
 export default function AtelierPage() {
   const router = useRouter();
-  const { state, isHydrated, restaurerObjet } = useGame();
+  const { state, isHydrated, restaurerObjet, ameliorerAtelier } = useGame();
   const [flash, setFlash] = useState<string | null>(null);
 
   useEffect(() => {
@@ -83,8 +84,10 @@ export default function AtelierPage() {
     );
   }
 
+  const pleine = enCours.length >= ATELIER_SLOTS[state.niveauAtelier];
+
   const handleRestaurer = (objet: Objet, cible: EtatObjet) => {
-    const duree = dureeRestauration(state, objet.categorie);
+    const duree = dureeRestauration(state, objet.categorie, cible);
     const res = restaurerObjet(objet.id, cible, { dureeJours: duree });
     if (res.ok)
       setFlash(`${objet.nom} en restauration · ${cible} dans ${duree} j.`);
@@ -124,7 +127,7 @@ export default function AtelierPage() {
                 color: "var(--forest-800)",
               }}
             >
-              {enCours.length} en chantier
+              {enCours.length} / {ATELIER_SLOTS[state.niveauAtelier]} en chantier
             </span>
             <span
               style={{
@@ -144,6 +147,91 @@ export default function AtelierPage() {
         </StickyTop>
       }
     >
+          <div
+            style={{
+              border: "1px solid var(--brass-500)",
+              background: "var(--paper-100)",
+              padding: "10px 14px",
+              boxShadow:
+                "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+              marginBottom: 10,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 11,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "var(--forest-800)",
+                }}
+              >
+                Atelier LVL {state.niveauAtelier}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 9.5,
+                  color: "var(--ink-500)",
+                  marginTop: 1,
+                }}
+              >
+                {ATELIER_SLOTS[state.niveauAtelier]} slot
+                {ATELIER_SLOTS[state.niveauAtelier] > 1 ? "s" : ""}
+              </div>
+            </div>
+            {(() => {
+              const up = getProchaineUpgrade(state.niveauAtelier);
+              if (!up) {
+                return (
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9.5,
+                      color: "var(--brass-700)",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Maximum
+                  </span>
+                );
+              }
+              const peut = state.budget >= up.cout;
+              return (
+                <button
+                  type="button"
+                  disabled={!peut}
+                  onClick={() => {
+                    const res = ameliorerAtelier();
+                    if (!res.ok) setFlash(res.raison ?? "Impossible");
+                    else setFlash(`Atelier amélioré au LVL ${up.niveauCible}.`);
+                    setTimeout(() => setFlash(null), 2500);
+                  }}
+                  style={{
+                    padding: "8px 12px",
+                    fontFamily: "var(--font-display)",
+                    fontSize: 10.5,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    border: "1px solid var(--brass-500)",
+                    background: peut ? "var(--forest-800)" : "var(--paper-200)",
+                    color: peut ? "var(--brass-300)" : "var(--ink-500)",
+                    cursor: peut ? "pointer" : "not-allowed",
+                    opacity: peut ? 1 : 0.6,
+                  }}
+                >
+                  LVL {up.niveauCible} · {up.cout} €
+                </button>
+              );
+            })()}
+          </div>
+
       {flash && (
         <div
           style={{
@@ -261,7 +349,7 @@ export default function AtelierPage() {
                 : o.etat === "Bon"
                   ? "Très bon"
                   : "Pristin état";
-            const duree = dureeRestauration(state, o.categorie);
+            const duree = dureeRestauration(state, o.categorie, cible);
             const prixApres = recalculerPrixReference(
               o.prixReferenceReel,
               o.etat,
@@ -312,6 +400,7 @@ export default function AtelierPage() {
                 </div>
                 <button
                   type="button"
+                  disabled={pleine}
                   onClick={() => handleRestaurer(o, cible)}
                   style={{
                     padding: "6px 10px",
@@ -320,9 +409,10 @@ export default function AtelierPage() {
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
                     border: "1px solid var(--brass-500)",
-                    background: "var(--forest-800)",
-                    color: "var(--brass-300)",
-                    cursor: "pointer",
+                    background: pleine ? "var(--paper-200)" : "var(--forest-800)",
+                    color: pleine ? "var(--ink-500)" : "var(--brass-300)",
+                    cursor: pleine ? "not-allowed" : "pointer",
+                    opacity: pleine ? 0.6 : 1,
                   }}
                 >
                   Lancer
