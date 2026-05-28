@@ -1,12 +1,36 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { BrassCorners } from "@/components/ui/BrassCorners";
+import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { useGame } from "@/context/GameContext";
+import { useSettings } from "@/context/SettingsContext";
 
 export default function TitleScreen() {
   const { nouvellePartie, state, isHydrated } = useGame();
+  const { playClick } = useSettings();
+  const [reglagesOuverts, setReglagesOuverts] = useState(false);
   const aSauvegarde = isHydrated && state !== null;
+
+  const onNouvellePartie = () => {
+    playClick();
+    if (aSauvegarde) {
+      if (!window.confirm("Cela écrasera la partie en cours. Continuer ?"))
+        return;
+    }
+    nouvellePartie();
+  };
+
+  const onContinuer = () => {
+    playClick();
+    if (aSauvegarde) window.location.href = "/qg";
+  };
+
+  const onReglages = () => {
+    playClick();
+    setReglagesOuverts(true);
+  };
 
   return (
     <main
@@ -25,7 +49,6 @@ export default function TitleScreen() {
         padding: "40px 24px",
       }}
     >
-      {/* Sunburst rays */}
       <div
         aria-hidden
         style={{
@@ -39,19 +62,17 @@ export default function TitleScreen() {
           pointerEvents: "none",
         }}
       />
-
-      {/* Brass frame outer */}
       <div
         aria-hidden
         style={{
           position: "absolute",
           inset: 24,
           border: "1px solid var(--brass-700)",
-          boxShadow: "inset 0 0 0 5px transparent, inset 0 0 0 6px var(--brass-700)",
+          boxShadow:
+            "inset 0 0 0 5px transparent, inset 0 0 0 6px var(--brass-700)",
           pointerEvents: "none",
         }}
       />
-      {/* Brass frame inner */}
       <div
         aria-hidden
         style={{
@@ -72,10 +93,10 @@ export default function TitleScreen() {
         }}
       >
         <img
-          src="/assets/broc-crest-light.svg"
-          width={120}
-          height={120}
-          alt=""
+          src="/assets/broc-logo.png"
+          width={180}
+          height={180}
+          alt="Broc"
           style={{
             display: "block",
             margin: "0 auto 24px",
@@ -134,14 +155,16 @@ export default function TitleScreen() {
             alignItems: "center",
           }}
         >
-          <Button variant="primary" size="lg" onClick={nouvellePartie}>
-            Nouvelle Partie
+          <Button variant="primary" size="lg" onClick={onNouvellePartie}>
+            {aSauvegarde
+              ? "Recommencer une nouvelle partie"
+              : "Nouvelle Partie"}
           </Button>
           <Button
             variant="secondary"
             size="md"
             disabled={!aSauvegarde}
-            onClick={() => aSauvegarde && (window.location.href = "/qg")}
+            onClick={onContinuer}
             style={{
               background: "transparent",
               color: "var(--brass-300)",
@@ -155,7 +178,7 @@ export default function TitleScreen() {
           <Button
             variant="ghost"
             size="sm"
-            disabled
+            onClick={onReglages}
             style={{ color: "var(--brass-300)" }}
           >
             Réglages · Crédits
@@ -175,6 +198,11 @@ export default function TitleScreen() {
           ver. 0.1 · saison de printemps · 1924
         </div>
       </div>
+
+      <ReglagesModal
+        open={reglagesOuverts}
+        onClose={() => setReglagesOuverts(false)}
+      />
     </main>
   );
 }
