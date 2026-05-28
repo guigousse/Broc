@@ -9,7 +9,6 @@ import { useGame } from "@/context/GameContext";
 import { getBrocanteById } from "@/data/brocantes";
 import {
   CAPACITE_MAX_GLOBALE,
-  STAND_LEVELS,
   coutStand,
   niveauRequis,
 } from "@/data/standLevels";
@@ -163,14 +162,14 @@ export default function VitrineBrocantePage() {
                 background: surcharge
                   ? "var(--vermillion-600)"
                   : "var(--forest-800)",
-                width: `${Math.min(100, (objetsEnVitrine.length / CAPACITE_MAX_GLOBALE) * 100)}%`,
+                width: `${Math.min(100, (objetsEnVitrine.length / (standActuel?.capaciteMax ?? CAPACITE_MAX_GLOBALE)) * 100)}%`,
               }}
             />
           </div>
           <div style={rowStyle}>
             <span style={lblStyle}>Capacité</span>
             <span style={{ ...valStyle, fontSize: 11 }}>
-              {objetsEnVitrine.length} / {CAPACITE_MAX_GLOBALE} · loc. {coutActuel} €
+              {objetsEnVitrine.length} / {standActuel?.capaciteMax ?? CAPACITE_MAX_GLOBALE} · loc. {coutActuel} €
             </span>
           </div>
         </section>
@@ -277,51 +276,6 @@ export default function VitrineBrocantePage() {
             ))}
           </section>
         )}
-
-        <h2 style={sectTitle}>— Niveaux de stand —</h2>
-        <section style={{ ...cardStyle, display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
-          {STAND_LEVELS.map((s) => {
-            const actif = standActuel?.niveau === s.niveau;
-            const cout = coutStand(brocante.tier, s.niveau);
-            return (
-              <div
-                key={s.niveau}
-                style={{
-                  padding: "8px 10px",
-                  background: actif ? "var(--forest-800)" : "transparent",
-                  border: actif ? "1px solid var(--brass-500)" : "1px solid transparent",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
-                  gap: 8,
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: actif ? "var(--brass-300)" : "var(--forest-800)",
-                  }}
-                >
-                  Niv. {s.niveau} — {s.nom}
-                </span>
-                <span
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 9,
-                    color: actif ? "var(--paper-300)" : "var(--ink-500)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {s.capaciteMin}–{s.capaciteMax} obj. · {cout} €
-                </span>
-              </div>
-            );
-          })}
-        </section>
 
         <h2 style={sectTitle}>— Disponibles dans le stock —</h2>
         {stockDisponible.length === 0 ? (

@@ -136,7 +136,11 @@ export default function QgPage() {
                 type="button"
                 onClick={() => {
                   playClick();
-                  router.push("/vitrine");
+                  router.push(
+                    state.vitrine
+                      ? `/vitrine/${state.vitrine.brocanteId}`
+                      : "/vitrine",
+                  );
                 }}
                 style={{
                   padding: "12px 8px",
