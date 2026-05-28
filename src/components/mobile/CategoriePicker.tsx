@@ -34,7 +34,9 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 const cellBase: CSSProperties = {
-  aspectRatio: "1 / 1",
+  // hauteur fixe (évite un bug iOS où aspect-ratio ne se recalcule pas après rotation)
+  height: 48,
+  minWidth: 0,
   border: "1px solid var(--brass-500)",
   background: "var(--paper-100)",
   display: "flex",

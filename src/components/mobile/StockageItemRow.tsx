@@ -119,9 +119,15 @@ export function StockageItemRow({
       return;
     }
     const finalDelta = dragX;
+    const wasVerticalScroll = axisLockedRef.current === "v";
     setDragging(false);
     setDragX(0);
     startRef.current = null;
+    // Si l'utilisateur a scrollé verticalement, ne pas déclencher le tap
+    if (wasVerticalScroll) {
+      axisLockedRef.current = null;
+      return;
+    }
     if (!movedRef.current || axisLockedRef.current !== "h") {
       if (Math.abs(finalDelta) < TAP_THRESHOLD) {
         onTap(objet);
