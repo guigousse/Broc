@@ -296,14 +296,14 @@ export function FrameItem({
         )}
       </svg>
 
-      {/* Titre (bandeau haut) */}
+      {/* Titre (bandeau haut) — centré entre filet fin (y=8) et barre lourde (y=TITRE_STRIP) */}
       <div
         style={{
           position: "absolute",
           left: 0,
           right: 0,
-          top: 0,
-          height: `${(TITRE_STRIP / H) * 100}%`,
+          top: `${(8 / H) * 100}%`,
+          height: `${((TITRE_STRIP - 8) / H) * 100}%`,
           display: "grid",
           placeItems: "center",
           fontFamily: "var(--font-display)",
@@ -370,13 +370,14 @@ export function FrameItem({
         />
       </div>
 
-      {/* Étoiles d'état — superposées en bas-gauche */}
+      {/* Étoiles d'état — centrées sur l'arête basse, à mi-distance entre bord gauche et médaillon */}
       <div
         style={{
           position: "absolute",
-          left: -8,
-          top: `${(MEDAL_CY / H) * 100}%`,
-          transform: "translateY(-50%)",
+          // Centre horizontal entre x=0 et x=(W/2 - MEDAL_R - 4), soit x = (W/2 - MEDAL_R - 4)/2
+          left: `${(((W / 2 - MEDAL_R - 4) / 2) / W) * 100}%`,
+          top: "100%",
+          transform: "translate(-50%, -50%)",
           display: "flex",
           gap: 2,
           filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.35))",
@@ -388,7 +389,7 @@ export function FrameItem({
             key={i}
             size={20}
             strokeWidth={1.6}
-            fill={i < filledStars ? colors.outer : "transparent"}
+            fill={i < filledStars ? colors.outer : "var(--paper-100)"}
             color={colors.outer}
           />
         ))}

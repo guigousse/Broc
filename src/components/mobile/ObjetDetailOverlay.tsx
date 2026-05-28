@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { X } from "lucide-react";
 import { FrameItem } from "@/components/ui/FrameItem";
 import { getTemplate } from "@/data/objetTemplates";
 import type { Objet } from "@/types/game";
@@ -28,36 +27,20 @@ const backdrop: CSSProperties = {
   padding: "20px",
 };
 
+const CARD_WIDTH = 290;
+
 const card: CSSProperties = {
-  maxWidth: 320,
-  width: "100%",
+  width: CARD_WIDTH,
+  maxWidth: "100%",
   position: "relative",
   background: "transparent",
-};
-
-const closeBtnFloating: CSSProperties = {
-  position: "absolute",
-  top: -4,
-  right: -4,
-  width: 32,
-  height: 32,
-  background: "var(--paper-100)",
-  border: "1px solid var(--brass-500)",
-  color: "var(--brass-700)",
-  cursor: "pointer",
-  display: "grid",
-  placeItems: "center",
-  zIndex: 10,
-  borderRadius: "50%",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
 };
 
 const previewWrap: CSSProperties = {
   display: "grid",
   placeItems: "center",
-  marginBottom: -52,
+  marginBottom: 18,
   position: "relative",
-  zIndex: 2,
 };
 
 const prixCard: CSSProperties = {
@@ -65,8 +48,8 @@ const prixCard: CSSProperties = {
   background: "var(--paper-100)",
   border: "1px solid var(--brass-500)",
   boxShadow:
-    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-700), 0 8px 16px rgba(0,0,0,0.25)",
-  padding: "68px 22px 22px",
+    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-700), 0 10px 20px rgba(0,0,0,0.3)",
+  padding: "20px 22px",
 };
 
 const prixRow: CSSProperties = {
@@ -164,18 +147,6 @@ export function ObjetDetailOverlay({
       }}
     >
       <div style={card}>
-        <button
-          type="button"
-          onClick={() => {
-            commitPrix();
-            onClose();
-          }}
-          aria-label="Fermer"
-          style={closeBtnFloating}
-        >
-          <X size={16} strokeWidth={1.5} />
-        </button>
-
         <div style={previewWrap}>
           <FrameItem
             categorie={objet.categorie}
@@ -183,7 +154,7 @@ export function ObjetDetailOverlay({
             rarete={objet.rarete}
             unique={isUnique}
             etat={objet.etat}
-            size={240}
+            size={CARD_WIDTH}
           />
         </div>
 
