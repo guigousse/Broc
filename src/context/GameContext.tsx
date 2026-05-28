@@ -65,6 +65,7 @@ import {
   retirerDonation as retirerDonationFn,
 } from "@/lib/collection";
 import { getTemplate } from "@/data/objetTemplates";
+import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import { audioManager } from "@/lib/audio/audioManager";
 
 interface GameContextValue {
@@ -89,6 +90,8 @@ interface GameContextValue {
     etatCible: EtatObjet,
     options?: { dureeJours?: number },
   ) => { ok: boolean; raison?: string };
+  ameliorerAtelier: () => { ok: boolean; raison?: string };
+  definirPrixVenteSouhaite: (objetId: string, prix: number) => void;
   gagnerXP: (treeId: CompetenceTreeId, montant: number) => void;
   marquerVuTemplate: (templateId: string) => void;
   marquerDejaPossedeTemplate: (templateId: string) => void;
@@ -297,6 +300,10 @@ function migrerSauvegarde(loaded: GameState): GameState {
     influenceUtilisee: loaded.influenceUtilisee ?? false,
     dernierLoyer: loaded.dernierLoyer ?? null,
     dernierHuissier: loaded.dernierHuissier ?? null,
+    niveauAtelier:
+      (loaded as Partial<GameState>).niveauAtelier === 2 || (loaded as Partial<GameState>).niveauAtelier === 3
+        ? (loaded as Partial<GameState>).niveauAtelier!
+        : 1,
   };
 }
 
@@ -348,6 +355,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       influenceUtilisee: false,
       dernierLoyer: null,
       dernierHuissier: null,
+      niveauAtelier: 1,
     });
     router.push("/qg");
   }, [router]);
@@ -551,6 +559,49 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  const ameliorerAtelier = useCallback((): { ok: boolean; raison?: string } => {
+    const current = stateRef.current;
+    if (!current) return { ok: false, raison: "Pas de partie." };
+    const upgrade = getProchaineUpgrade(current.niveauAtelier);
+    if (!upgrade) return { ok: false, raison: "Atelier déjà au maximum." };
+    if (current.budget < upgrade.cout)
+      return {
+        ok: false,
+        raison: `Il manque ${upgrade.cout - current.budget} €.`,
+      };
+    setState((prev) =>
+      prev
+        ? {
+            ...prev,
+            budget: prev.budget - upgrade.cout,
+            niveauAtelier: upgrade.niveauCible,
+          }
+        : prev,
+    );
+    return { ok: true };
+  }, []);
+
+  const definirPrixVenteSouhaite = useCallback(
+    (objetId: string, prix: number) => {
+      setState((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          inventaireJoueur: prev.inventaireJoueur.map((o) => {
+            if (o.id !== objetId) return o;
+            if (prix <= 0) {
+              const { prixVenteSouhaite, ...rest } = o;
+              void prixVenteSouhaite;
+              return rest;
+            }
+            return { ...o, prixVenteSouhaite: prix };
+          }),
+        };
+      });
+    },
+    [],
+  );
+
   const reset = useCallback(() => {
     setState(null);
     localGameRepository.clear();
@@ -725,6 +776,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return { ok: false, raison: "Objet introuvable dans l'inventaire." };
       if (objet.enRestauration)
         return { ok: false, raison: "Cet objet est déjà en restauration." };
+      const nbEnCours = current.inventaireJoueur.filter((o) => o.enRestauration).length;
+      const capacite = ATELIER_SLOTS[current.niveauAtelier];
+      if (nbEnCours >= capacite)
+        return {
+          ok: false,
+          raison: `Atelier plein (${nbEnCours}/${capacite} slot${capacite > 1 ? "s" : ""}).`,
+        };
       if (!peutRestaurerCategorie(current, objet.categorie))
         return {
           ok: false,
@@ -919,6 +977,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       enregistrerSession,
       debloquerCompetence,
       restaurerObjet,
+      ameliorerAtelier,
+      definirPrixVenteSouhaite,
       gagnerXP,
       marquerVuTemplate,
       marquerDejaPossedeTemplate,
@@ -948,6 +1008,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       enregistrerSession,
       debloquerCompetence,
       restaurerObjet,
+      ameliorerAtelier,
+      definirPrixVenteSouhaite,
       gagnerXP,
       marquerVuTemplate,
       marquerDejaPossedeTemplate,
