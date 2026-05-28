@@ -43,6 +43,12 @@ export interface CollectionSlot {
   /** Donation présente dans le slot (état + valeur préservés). null = slot vide. */
   donation: { etat: EtatObjet; valeur: number } | null;
   unique?: boolean;
+  /**
+   * Vrai si le joueur a consulté ce slot dans la page Collection depuis sa découverte.
+   * Passé à `false` quand `vu` devient vrai (nouvelle découverte), repassé à `true` au tap.
+   * Pilote l'affichage du badge "nouveau" (astérisque) sur la grille.
+   */
+  vuDansCollection?: boolean;
 }
 
 export interface ObjetEnVitrine {

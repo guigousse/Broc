@@ -30,6 +30,7 @@ export function initCollection(): Record<CategorieObjet, CollectionSlot[]> {
       dejaPossede: false,
       donation: null,
       unique: t.unique,
+      vuDansCollection: true,
     });
   }
   for (const c of CATEGORIES) {
@@ -61,13 +62,13 @@ function modifierSlot(
   return collection;
 }
 
-/** Marque un slot comme vu (croisé). */
+/** Marque un slot comme vu (croisé). Réinitialise le badge "nouveau" (vuDansCollection=false). */
 export function marquerVu(
   collection: Record<CategorieObjet, CollectionSlot[]>,
   templateId: string,
 ): Record<CategorieObjet, CollectionSlot[]> {
   return modifierSlot(collection, templateId, (s) =>
-    s.vu ? s : { ...s, vu: true },
+    s.vu ? s : { ...s, vu: true, vuDansCollection: false },
   );
 }
 
@@ -76,8 +77,25 @@ export function marquerDejaPossede(
   collection: Record<CategorieObjet, CollectionSlot[]>,
   templateId: string,
 ): Record<CategorieObjet, CollectionSlot[]> {
+  return modifierSlot(collection, templateId, (s) => {
+    const transitionVu = !s.vu;
+    if (s.dejaPossede && s.vu) return s;
+    return {
+      ...s,
+      vu: true,
+      dejaPossede: true,
+      vuDansCollection: transitionVu ? false : s.vuDansCollection,
+    };
+  });
+}
+
+/** Marque un slot comme consulté dans la page collection (efface le badge "nouveau"). */
+export function marquerVuDansCollection(
+  collection: Record<CategorieObjet, CollectionSlot[]>,
+  templateId: string,
+): Record<CategorieObjet, CollectionSlot[]> {
   return modifierSlot(collection, templateId, (s) =>
-    s.dejaPossede && s.vu ? s : { ...s, vu: true, dejaPossede: true },
+    s.vuDansCollection ? s : { ...s, vuDansCollection: true },
   );
 }
 

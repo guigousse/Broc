@@ -66,6 +66,7 @@ import {
   initCollection,
   marquerDejaPossede as marquerDejaPossedeFn,
   marquerVu as marquerVuFn,
+  marquerVuDansCollection as marquerVuDansCollectionFn,
   donnerObjet as donnerObjetFn,
   retirerDonation as retirerDonationFn,
 } from "@/lib/collection";
@@ -100,6 +101,7 @@ interface GameContextValue {
   definirPrixVenteSouhaite: (objetId: string, prix: number) => void;
   gagnerXP: (treeId: CompetenceTreeId, montant: number) => void;
   marquerVuTemplate: (templateId: string) => void;
+  marquerVuDansCollection: (templateId: string) => void;
   marquerDejaPossedeTemplate: (templateId: string) => void;
   donnerACollection: (objetId: string) => { ok: boolean; raison?: string };
   retirerDeCollection: (templateId: string) => { ok: boolean; raison?: string };
@@ -873,6 +875,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const marquerVuDansCollection = useCallback((templateId: string) => {
+    setState((prev) =>
+      prev
+        ? {
+            ...prev,
+            collection: marquerVuDansCollectionFn(prev.collection, templateId),
+          }
+        : prev,
+    );
+  }, []);
+
   const marquerDejaPossedeTemplate = useCallback((templateId: string) => {
     setState((prev) =>
       prev
@@ -1025,6 +1038,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       definirPrixVenteSouhaite,
       gagnerXP,
       marquerVuTemplate,
+      marquerVuDansCollection,
       marquerDejaPossedeTemplate,
       donnerACollection,
       retirerDeCollection,
@@ -1057,6 +1071,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       definirPrixVenteSouhaite,
       gagnerXP,
       marquerVuTemplate,
+      marquerVuDansCollection,
       marquerDejaPossedeTemplate,
       donnerACollection,
       retirerDeCollection,

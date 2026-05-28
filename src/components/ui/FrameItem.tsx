@@ -11,7 +11,8 @@ interface FrameItemProps {
   titre: string;
   rarete: Rarete;
   unique?: boolean;
-  etat: EtatObjet;
+  /** État affiché en étoiles. Si omis, aucune étoile n'est rendue. */
+  etat?: EtatObjet;
   size?: number;
   children?: ReactNode;
 }
@@ -49,7 +50,7 @@ export function FrameItem({
   children,
 }: FrameItemProps) {
   const colors = getRarityColors(rarete, unique);
-  const filledStars = etoileCount(etat);
+  const filledStars = etat ? etoileCount(etat) : 0;
 
   // Sunburst rays positions for prestige >= 2
   const sunburstDegrees = [0, 30, 60, 120, 150, 180, 210, 240, 300, 330];
@@ -371,6 +372,7 @@ export function FrameItem({
       </div>
 
       {/* Étoiles d'état — plaque blanche bordée, centrée sur l'arête basse */}
+      {etat && (
       <div
         style={{
           position: "absolute",
@@ -398,6 +400,7 @@ export function FrameItem({
           />
         ))}
       </div>
+      )}
     </div>
   );
 }
