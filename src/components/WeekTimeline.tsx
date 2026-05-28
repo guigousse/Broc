@@ -2,9 +2,13 @@
 
 import type { CSSProperties } from "react";
 import { indexJourSemaine, JOURS_SEMAINE } from "@/lib/meteo";
+import { METEO_ICON } from "@/data/meteos";
+import type { Meteo } from "@/types/game";
 
 interface WeekTimelineProps {
   jourActuel: number;
+  /** Si fournie, affiche l'icône météo correspondante sous chaque jour. */
+  meteoSemaine?: Meteo[];
 }
 
 const labels = ["L", "M", "M", "J", "V", "S", "D"];
@@ -19,7 +23,7 @@ const cellBase: CSSProperties = {
   color: "var(--ink-500)",
 };
 
-export function WeekTimeline({ jourActuel }: WeekTimelineProps) {
+export function WeekTimeline({ jourActuel, meteoSemaine }: WeekTimelineProps) {
   const idx = indexJourSemaine(jourActuel);
   return (
     <div
@@ -30,6 +34,13 @@ export function WeekTimeline({ jourActuel }: WeekTimelineProps) {
       {labels.map((l, i) => {
         const isToday = i === idx;
         const isWeekend = i >= 5;
+        const meteo = meteoSemaine?.[i];
+        const Icon = meteo ? METEO_ICON[meteo] : null;
+        const baseColor = isToday
+          ? "var(--brass-300)"
+          : isWeekend
+            ? "var(--ink-700)"
+            : "var(--ink-500)";
         const style: CSSProperties = isToday
           ? {
               ...cellBase,
@@ -41,8 +52,22 @@ export function WeekTimeline({ jourActuel }: WeekTimelineProps) {
             ? { ...cellBase, background: "var(--paper-200)" }
             : cellBase;
         return (
-          <div key={i} role="listitem" style={style} title={JOURS_SEMAINE[i]}>
-            {l}
+          <div
+            key={i}
+            role="listitem"
+            style={{
+              ...style,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+            title={JOURS_SEMAINE[i]}
+          >
+            <span>{l}</span>
+            {Icon ? (
+              <Icon size={12} strokeWidth={1.5} color={baseColor} aria-hidden />
+            ) : null}
           </div>
         );
       })}
