@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { Store, X } from "lucide-react";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { FrameItem } from "@/components/ui/FrameItem";
 import type { Objet } from "@/types/game";
 
 interface ObjetDetailOverlayProps {
@@ -67,14 +67,9 @@ const closeBtn: CSSProperties = {
 };
 
 const previewWrap: CSSProperties = {
-  width: 120,
-  height: 120,
-  margin: "8px auto 12px",
-  background:
-    "linear-gradient(135deg, var(--paper-500) 0%, var(--brass-700) 100%)",
-  border: "1px solid var(--brass-700)",
   display: "grid",
   placeItems: "center",
+  margin: "8px auto 14px",
 };
 
 const meta: CSSProperties = {
@@ -204,16 +199,17 @@ export function ObjetDetailOverlay({
         </div>
 
         <div style={previewWrap}>
-          <CategorieIcon
+          <FrameItem
             categorie={objet.categorie}
-            size={56}
-            strokeWidth={1.2}
-            color="var(--brass-100)"
+            titre={objet.nom}
+            prix={prixMarcheConnu ? Math.round(prixMarche) : null}
+            etat={objet.etat}
+            size={240}
           />
         </div>
 
         <div style={meta}>
-          {objet.etat} · {objet.rarete} · {objet.categorie}
+          {objet.rarete} · {objet.categorie}
         </div>
 
         {enRestauration && (
