@@ -2,9 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
-import { EtatBadge } from "@/components/ui/EtatBadge";
-import { RareteBadge } from "@/components/ui/RareteBadge";
+import { ItemCard } from "@/components/ui/ItemCard";
 import { SessionSummary } from "@/components/SessionSummary";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
@@ -365,178 +363,115 @@ function ObjetCardMobile({
 }) {
   const { objet, prixVendeur, statut } = item;
   const tropCher = budget < prixVendeur;
+
   if (statut === "achete") {
     return (
-      <article
-        style={{
-          border: "1px solid var(--brass-500)",
-          background: "var(--paper-300)",
-          padding: 6,
-          opacity: 0.4,
-          display: "flex",
-          flexDirection: "column",
-          gap: 5,
-        }}
-      >
-        <div
-          style={{
-            aspectRatio: "4/3",
-            background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
-            display: "grid",
-            placeItems: "center",
-            color: "var(--brass-100)",
-          }}
-        >
-          <CategorieIcon categorie={objet.categorie} size={28} strokeWidth={1.5} color="var(--brass-100)" />
-        </div>
-        <div
-          style={{
-            textAlign: "center",
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            color: "var(--ink-500)",
-          }}
-        >
-          — Acquis —
-        </div>
-      </article>
+      <ItemCard
+        templateId={objet.templateId}
+        categorie={objet.categorie}
+        etat={objet.etat}
+        rarete={objet.rarete}
+        nom={objet.nom}
+        dimmed
+        footer={
+          <div
+            style={{
+              textAlign: "center",
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "var(--ink-500)",
+              padding: "4px 0",
+            }}
+          >
+            — Acquis —
+          </div>
+        }
+      />
     );
   }
-  return (
-    <article
-      style={{
-        border: `1px solid ${statut === "refuse" ? "var(--vermillion-600)" : "var(--brass-500)"}`,
-        background: "var(--paper-300)",
-        padding: 6,
-        display: "flex",
-        flexDirection: "column",
-        gap: 5,
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          aspectRatio: "4/3",
-          background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 3,
-          color: "var(--brass-100)",
-        }}
-      >
-        <CategorieIcon categorie={objet.categorie} size={24} strokeWidth={1.5} color="var(--brass-100)" />
-        <span
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 8,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-          }}
-        >
-          {objet.categorie}
-        </span>
 
-        {/* Badges overlay bottom of image */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 3,
-            left: 3,
-            right: 3,
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 4,
-          }}
-        >
-          <EtatBadge etat={objet.etat} />
-          <RareteBadge rarete={objet.rarete} />
-        </div>
-      </div>
-      <div
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          color: "var(--forest-800)",
-          lineHeight: 1.15,
-          minHeight: "2.3em",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-          textAlign: "center",
-          padding: "0 2px",
-        }}
-      >
-        {objet.nom}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          fontFamily: "var(--font-mono)",
-          fontSize: 10,
-          letterSpacing: "0.06em",
-          color: "var(--ink-500)",
-          padding: "2px 4px",
-        }}
-      >
-        <span>
-          {item.negociationsTentees > 0 ? "Prix négocié :" : "Prix demandé :"}
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 14,
-            fontWeight: 700,
-            color: tropCher ? "var(--vermillion-600)" : "var(--forest-800)",
-          }}
-        >
-          {prixVendeur} €
-        </span>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-        <button
-          type="button"
-          onClick={onNegocier}
-          disabled={plein}
-          style={{
-            ...miniBtn(false),
-            opacity: plein ? 0.45 : 1,
-            cursor: plein ? "not-allowed" : "pointer",
-          }}
-        >
-          Négo
-        </button>
-        <button
-          type="button"
-          onClick={onAcheter}
-          disabled={tropCher || plein}
-          style={{
-            ...miniBtn(true),
-            opacity: tropCher || plein ? 0.45 : 1,
-            cursor: tropCher || plein ? "not-allowed" : "pointer",
-            // surbrillance après négociation
-            ...(item.negociationsTentees > 0 && !tropCher && !plein
-              ? {
-                  background: "var(--brass-700)",
-                  color: "var(--paper-100)",
-                  boxShadow:
-                    "inset 0 0 0 1px var(--brass-700), 0 0 0 2px var(--brass-300), 0 2px 6px rgba(176,136,56,0.45)",
-                  animation: "broc-pulse 1.6s ease-in-out infinite",
-                }
-              : {}),
-          }}
-        >
-          Acheter
-        </button>
-      </div>
-    </article>
+  return (
+    <ItemCard
+      templateId={objet.templateId}
+      categorie={objet.categorie}
+      etat={objet.etat}
+      rarete={objet.rarete}
+      nom={objet.nom}
+      style={
+        statut === "refuse"
+          ? { borderColor: "var(--vermillion-600)" }
+          : undefined
+      }
+      footer={
+        <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.06em",
+              color: "var(--ink-500)",
+              padding: "2px 4px",
+            }}
+          >
+            <span>
+              {item.negociationsTentees > 0
+                ? "Prix négocié :"
+                : "Prix demandé :"}
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 14,
+                fontWeight: 700,
+                color: tropCher ? "var(--vermillion-600)" : "var(--forest-800)",
+              }}
+            >
+              {prixVendeur} €
+            </span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+            <button
+              type="button"
+              onClick={onNegocier}
+              disabled={plein}
+              style={{
+                ...miniBtn(false),
+                opacity: plein ? 0.45 : 1,
+                cursor: plein ? "not-allowed" : "pointer",
+              }}
+            >
+              Négo
+            </button>
+            <button
+              type="button"
+              onClick={onAcheter}
+              disabled={tropCher || plein}
+              style={{
+                ...miniBtn(true),
+                opacity: tropCher || plein ? 0.45 : 1,
+                cursor: tropCher || plein ? "not-allowed" : "pointer",
+                ...(item.negociationsTentees > 0 && !tropCher && !plein
+                  ? {
+                      background: "var(--brass-700)",
+                      color: "var(--paper-100)",
+                      boxShadow:
+                        "inset 0 0 0 1px var(--brass-700), 0 0 0 2px var(--brass-300), 0 2px 6px rgba(176,136,56,0.45)",
+                      animation: "broc-pulse 1.6s ease-in-out infinite",
+                    }
+                  : {}),
+              }}
+            >
+              Acheter
+            </button>
+          </div>
+        </>
+      }
+    />
   );
 }
 

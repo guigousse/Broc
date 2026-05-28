@@ -2,9 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
-import { ItemImage } from "@/components/ui/ItemImage";
-import { getRarityColors } from "@/lib/rarityColors";
-import { getTemplate } from "@/data/objetTemplates";
+import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import type { CollectionSlot, Objet } from "@/types/game";
 
 interface DonationPickerSheetProps {
@@ -14,8 +12,6 @@ interface DonationPickerSheetProps {
   candidats: Objet[];
   onDonner: (objetId: string) => void;
   onRetirer?: () => void;
-  /** Si true, bouton "Retirer" grisé avec libellé "Stockage plein". */
-  retirerDisabled?: boolean;
 }
 
 const itemStyle: CSSProperties = {
@@ -27,10 +23,15 @@ const itemStyle: CSSProperties = {
   borderBottom: "1px dotted var(--paper-500)",
 };
 
-const thumbBase: CSSProperties = {
+const thumbStyle: CSSProperties = {
   width: 44,
   height: 44,
-  overflow: "hidden",
+  background:
+    "linear-gradient(135deg, var(--paper-500) 0%, var(--brass-700) 100%)",
+  border: "1px solid var(--brass-700)",
+  display: "grid",
+  placeItems: "center",
+  color: "var(--brass-100)",
 };
 
 export function DonationPickerSheet({
@@ -40,7 +41,6 @@ export function DonationPickerSheet({
   candidats,
   onDonner,
   onRetirer,
-  retirerDisabled = false,
 }: DonationPickerSheetProps) {
   return (
     <BottomSheet
@@ -73,8 +73,7 @@ export function DonationPickerSheet({
           {onRetirer && (
             <button
               type="button"
-              onClick={retirerDisabled ? undefined : onRetirer}
-              disabled={retirerDisabled}
+              onClick={onRetirer}
               style={{
                 padding: "6px 10px",
                 fontFamily: "var(--font-display)",
@@ -84,11 +83,10 @@ export function DonationPickerSheet({
                 border: "1px solid var(--vermillion-600)",
                 background: "var(--paper-100)",
                 color: "var(--vermillion-600)",
-                cursor: retirerDisabled ? "not-allowed" : "pointer",
-                opacity: retirerDisabled ? 0.45 : 1,
+                cursor: "pointer",
               }}
             >
-              {retirerDisabled ? "Stockage plein" : "Retirer"}
+              Retirer
             </button>
           )}
         </div>
@@ -107,27 +105,14 @@ export function DonationPickerSheet({
           Aucun objet éligible dans le stock pour cet emplacement.
         </p>
       ) : (
-        candidats.map((o) => {
-          const c = getRarityColors(
-            o.rarete,
-            !!getTemplate(o.templateId)?.unique,
-          );
-          return (
+        candidats.map((o) => (
           <div key={o.id} style={itemStyle}>
-            <div
-              style={{
-                ...thumbBase,
-                background: c.thumbBg,
-                border: `1px solid ${c.outer}`,
-              }}
-            >
-              <ItemImage
-                templateId={o.templateId}
+            <div style={thumbStyle}>
+              <CategorieIcon
                 categorie={o.categorie}
-                fit="cover"
-                fallbackIconSize={20}
-                fallbackIconColor={c.thumbIcon}
-                alt={o.nom}
+                size={20}
+                strokeWidth={1.5}
+                color="var(--brass-100)"
               />
             </div>
             <div>
@@ -171,8 +156,7 @@ export function DonationPickerSheet({
               Donner
             </button>
           </div>
-          );
-        })
+        ))
       )}
     </BottomSheet>
   );

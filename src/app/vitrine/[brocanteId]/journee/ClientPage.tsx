@@ -6,9 +6,8 @@ import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
 import { Button } from "@/components/ui/Button";
 import { DecoDivider } from "@/components/ui/DecoDivider";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { EtatBadge } from "@/components/ui/EtatBadge";
-import { RareteBadge } from "@/components/ui/RareteBadge";
+import { ItemCard } from "@/components/ui/ItemCard";
 import { SessionSummary } from "@/components/SessionSummary";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -583,6 +582,7 @@ export default function VitrineJourneePage() {
             {(state.vitrine?.objets ?? []).map((e) => (
               <ArticleSurEtal
                 key={e.objet.id}
+                templateId={e.objet.templateId}
                 nom={e.objet.nom}
                 categorie={e.objet.categorie}
                 etat={e.objet.etat}
@@ -766,12 +766,14 @@ function Horloge({
 }
 
 function ArticleSurEtal({
+  templateId,
   nom,
   categorie,
   etat,
   rarete,
   prix,
 }: {
+  templateId: string;
   nom: string;
   categorie: CategorieObjet;
   etat: EtatObjet;
@@ -779,96 +781,30 @@ function ArticleSurEtal({
   prix: number;
 }) {
   return (
-    <article
-      style={{
-        background: "var(--paper-300)",
-        border: "1px solid var(--brass-500)",
-        padding: 6,
-        boxShadow: "0 2px 0 var(--paper-400)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 5,
-      }}
-    >
-      {/* Image block with gradient + icon + category label + badges overlay */}
-      <div
-        style={{
-          position: "relative",
-          aspectRatio: "4/3",
-          background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 3,
-          color: "var(--brass-100)",
-        }}
-      >
-        <CategorieIcon categorie={categorie} size={24} strokeWidth={1.5} color="var(--brass-100)" />
-        <span
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 8,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-          }}
-        >
-          {categorie}
-        </span>
-        {/* Badges overlay */}
+    <ItemCard
+      templateId={templateId}
+      categorie={categorie}
+      etat={etat}
+      rarete={rarete}
+      nom={nom}
+      footer={
         <div
           style={{
-            position: "absolute",
-            bottom: 3,
-            left: 3,
-            right: 3,
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 4,
+            paddingTop: 4,
+            borderTop: "1px dotted var(--paper-500)",
+            fontFamily: "var(--font-display)",
+            fontWeight: 700,
+            fontSize: 18,
+            color: "var(--forest-800)",
+            textAlign: "right",
+            padding: "4px 4px 0",
           }}
         >
-          <EtatBadge etat={etat} />
-          <RareteBadge rarete={rarete} />
+          {prix}
+          <span style={{ fontSize: 11, color: "var(--brass-700)" }}>€</span>
         </div>
-      </div>
-      {/* Object name */}
-      <div
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          color: "var(--forest-800)",
-          lineHeight: 1.15,
-          minHeight: "2.3em",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-          textAlign: "center",
-          padding: "0 2px",
-        }}
-      >
-        {nom}
-      </div>
-      {/* Price */}
-      <div
-        style={{
-          paddingTop: 4,
-          borderTop: "1px dotted var(--paper-500)",
-          fontFamily: "var(--font-display)",
-          fontWeight: 700,
-          fontSize: 18,
-          color: "var(--forest-800)",
-          textAlign: "right",
-          padding: "4px 4px 0",
-        }}
-      >
-        {prix}
-        <span style={{ fontSize: 11, color: "var(--brass-700)" }}>€</span>
-      </div>
-    </article>
+      }
+    />
   );
 }
 
