@@ -50,6 +50,7 @@ export default function QgPage() {
     rerollMeteo,
     rerollCelebrite,
     marquerHuissierVu,
+    avancerJour,
   } = useGame();
   const [gazetteOuverte, setGazetteOuverte] = useState(false);
 
@@ -103,7 +104,7 @@ export default function QgPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.4fr 1fr",
+                gridTemplateColumns: "1.2fr 1fr 0.8fr",
                 gap: 10,
               }}
             >
@@ -144,6 +145,25 @@ export default function QgPage() {
                 }}
               >
                 {state.vitrine ? "Reprendre l'étal" : "Exposer"}
+              </button>
+              <button
+                type="button"
+                onClick={() => avancerJour(1)}
+                style={{
+                  padding: "12px 8px",
+                  background: "var(--paper-200)",
+                  color: "var(--ink-700)",
+                  border: "1px solid var(--brass-500)",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 12,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  boxShadow:
+                    "inset 0 0 0 2px var(--paper-200), inset 0 0 0 3px var(--brass-500)",
+                  cursor: "pointer",
+                }}
+              >
+                Passer
               </button>
             </div>
           </StickyTop>
