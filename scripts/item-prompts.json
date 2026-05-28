@@ -1,27 +1,64 @@
 [
-  {
-    "templateId": "mus.diapason_acier",
-    "rarete": "commun",
-    "description": "an orchestral steel tuning fork (A440), polished metal finish, vertical side view, with a small wooden handle, simple geometric form"
-  },
-  {
-    "templateId": "mus.flute_traversiere_yamaha",
-    "rarete": "commun",
-    "description": "a silver Yamaha transverse flute, full length side view, keys visible, elegant proportions, slight diagonal composition"
-  },
-  {
-    "templateId": "jx.monopoly_80s",
-    "rarete": "commun",
-    "description": "a 1980s Monopoly board game box, top-down three-quarter view, vintage cardboard with worn corners, classic red and white branding visible on lid, square box shape"
-  },
-  {
-    "templateId": "ma.tabouret_bois_patine",
-    "rarete": "commun",
-    "description": "a small patinated wooden stool, four turned legs, weathered natural wood finish with subtle nicks and faded paint traces, simple farmhouse design, three-quarter view"
-  },
-  {
-    "templateId": "mus.saxophone_selmer_mark_vi",
-    "rarete": "rare",
-    "description": "a vintage Selmer Mark VI alto saxophone, lacquered brass finish with subtle patina, complete with mother-of-pearl key inlays and neck strap ring, side view at a slight three-quarter angle, elegant curved silhouette"
-  }
+  { "templateId": "jx.monopoly_80s", "rarete": "commun", "description": "a 1980s Monopoly board game box, top-down three-quarter view, vintage cardboard with worn corners, classic red and white branding visible on lid, square box shape" },
+  { "templateId": "ma.tabouret_bois_patine", "rarete": "commun", "description": "a small patinated wooden stool, four turned legs, weathered natural wood finish with subtle nicks and faded paint traces, simple farmhouse design, three-quarter view" },
+
+  { "templateId": "mus.vinyle_pink_floyd_wall", "rarete": "commun", "description": "a vintage vinyl LP record sleeve featuring Pink Floyd 'The Wall' iconic white wall and red letters cover art, slight three-quarter angle" },
+  { "templateId": "mus.vinyle_telephone_dure_limite", "rarete": "commun", "description": "a vintage vinyl LP record sleeve featuring the French rock band Téléphone, 'Dure Limite' style 1982 cover art" },
+  { "templateId": "mus.33tours_jazz_inconnu", "rarete": "commun", "description": "a vintage anonymous jazz LP vinyl record sleeve, generic 1960s jazz illustration on the cover, slight wear" },
+  { "templateId": "mus.cd_nirvana_in_utero", "rarete": "commun", "description": "a vintage Nirvana 'In Utero' CD box set, white background with anatomical angel illustration, three-quarter view" },
+  { "templateId": "mus.harmonica_hohner", "rarete": "commun", "description": "a vintage Hohner chromatic harmonica, polished metal body with comb, side view" },
+  { "templateId": "mus.vinyle_brel_amsterdam", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Jacques Brel 'Amsterdam', sober black and white portrait cover, slight three-quarter angle" },
+  { "templateId": "mus.vinyle_brassens_jeanne", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Georges Brassens 'La Jeanne', portrait of Brassens with his pipe and guitar, slight three-quarter angle" },
+  { "templateId": "mus.vinyle_aznavour_emmenez", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Charles Aznavour 'Emmenez-moi', 1967 French chanson cover art" },
+  { "templateId": "mus.vinyle_piaf_non", "rarete": "commun", "description": "a vintage 1960s French chanson vinyl LP record sleeve with classy typography reading 'NON, JE NE REGRETTE RIEN', soft warm tones, slight wear" },
+  { "templateId": "mus.vinyle_beatles_abbey_road", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of The Beatles 'Abbey Road', famous zebra crossing cover" },
+  { "templateId": "mus.vinyle_stones_let_bleed", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of The Rolling Stones 'Let It Bleed', stacked cake cover" },
+  { "templateId": "mus.vinyle_bowie_ziggy", "rarete": "commun", "description": "a vintage 1970s glam rock vinyl LP record sleeve with neon spaceship lettering, stylized typography, sepia urban background" },
+  { "templateId": "mus.vinyle_zeppelin_iv", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Led Zeppelin IV, hermit illustration cover" },
+  { "templateId": "mus.vinyle_dylan_blonde", "rarete": "commun", "description": "a vintage 1960s folk rock double vinyl LP gatefold sleeve with soft blurred sepia tones, no visible faces, minimalist serif title" },
+  { "templateId": "mus.vinyle_indochine_aventurier", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Indochine 'L'Aventurier', 1982 French new wave cover" },
+  { "templateId": "mus.vinyle_mylene_farmer_ainsi", "rarete": "commun", "description": "a vintage 1988 French dark pop vinyl LP record sleeve with gothic typography reading 'AINSI SOIT JE...', muted deep red and black tones, no visible faces" },
+  { "templateId": "mus.vinyle_renaud_morgane", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Renaud 'Morgane de toi', illustrated portrait cover" },
+  { "templateId": "mus.vinyle_hallyday_rock_memphis", "rarete": "commun", "description": "a vintage 1970s French rockabilly vinyl LP record sleeve with bold red and white retro typography reading 'ROCK A MEMPHIS', no visible faces" },
+  { "templateId": "mus.vinyle_sardou_lacs", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Michel Sardou 'Les Lacs du Connemara', Irish landscape cover" },
+  { "templateId": "mus.vinyle_goldman_envole", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Jean-Jacques Goldman 'Envole-moi', 1980s pop cover" },
+  { "templateId": "mus.vinyle_cabrel_hors_saison", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Francis Cabrel 'Hors-saison', autumnal countryside cover" },
+  { "templateId": "mus.vinyle_gainsbourg_melody", "rarete": "commun", "description": "a vintage 1971 French concept album vinyl LP record sleeve showing a small stuffed monkey toy on a blue background, with delicate handwritten title 'HISTOIRE DE MELODY NELSON'" },
+  { "templateId": "mus.vinyle_higelin_alertez", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Jacques Higelin 'Alertez les bébés!', stylized French rock cover" },
+  { "templateId": "mus.vinyle_balavoine_aziza", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Daniel Balavoine 'Aziza', mid-1980s pop cover" },
+  { "templateId": "mus.vinyle_souchon_foule", "rarete": "commun", "description": "a vintage vinyl LP record sleeve of Alain Souchon 'Foule sentimentale', muted poetic cover" },
+  { "templateId": "mus.cd_daft_punk_homework", "rarete": "commun", "description": "a Daft Punk 'Homework' CD jewel case with the helmet duo cover art" },
+  { "templateId": "mus.cd_radiohead_ok", "rarete": "commun", "description": "a Radiohead 'OK Computer' CD jewel case with abstract highway artwork" },
+  { "templateId": "mus.cd_noir_desir_666", "rarete": "commun", "description": "a Noir Désir '666.667 Club' CD jewel case, French rock cover" },
+  { "templateId": "mus.cd_iam_ecole", "rarete": "commun", "description": "an IAM 'L'École du micro d'argent' CD jewel case, French hip-hop cover" },
+  { "templateId": "mus.k7_audio_mixtape_90s", "rarete": "commun", "description": "a vintage compact audio cassette tape with a handwritten 90s mixtape paper label, slight three-quarter view" },
+  { "templateId": "mus.walkman_sony_wm", "rarete": "commun", "description": "a vintage Sony Walkman WM-A1 portable cassette player with headphones cable, slight three-quarter view" },
+  { "templateId": "mus.radio_cassette_sanyo", "rarete": "commun", "description": "a vintage 1980s Sanyo radio-cassette boombox, dual cassette decks and large speakers, three-quarter view" },
+  { "templateId": "mus.tourne_disque_thorens", "rarete": "commun", "description": "a vintage Thorens TD-150 turntable with tonearm, wooden plinth, three-quarter view" },
+  { "templateId": "mus.partition_chopin", "rarete": "commun", "description": "a stack of vintage Chopin piano sheet music books, hardbound with worn covers" },
+  { "templateId": "mus.partition_satie", "rarete": "commun", "description": "a small stack of vintage Erik Satie piano sheet music, slim hardbound editions" },
+  { "templateId": "mus.metronome_wittner", "rarete": "commun", "description": "a vintage mechanical Wittner pendulum metronome, pyramidal wooden case, side view" },
+  { "templateId": "mus.diapason_acier", "rarete": "commun", "description": "an orchestral steel tuning fork (A440), polished metal finish, vertical side view, with a small wooden handle, simple geometric form" },
+  { "templateId": "mus.flute_traversiere_yamaha", "rarete": "commun", "description": "a silver Yamaha transverse flute, full length side view, keys visible, elegant proportions, slight diagonal composition" },
+  { "templateId": "mus.clarinette_buffet", "rarete": "commun", "description": "a Buffet Crampon clarinet in five parts, polished blackwood with silver keys, side view" },
+  { "templateId": "mus.ukulele_soprano", "rarete": "commun", "description": "a soprano ukulele crafted in koa wood, four strings, slight three-quarter view" },
+
+  { "templateId": "mus.guitare_classique_ancienne", "rarete": "rare", "description": "an old classical acoustic guitar with nylon strings, varnished spruce top and worn wood, three-quarter view" },
+  { "templateId": "mus.vinyle_beatles_dedicace", "rarete": "rare", "description": "a Beatles solo album vinyl LP sleeve with a handwritten ink signature in the lower corner" },
+  { "templateId": "mus.vinyle_stones_test_pressing", "rarete": "rare", "description": "a Rolling Stones white-label test pressing vinyl LP, blank cover, vinyl partially visible" },
+  { "templateId": "mus.guitare_gibson_les_paul", "rarete": "rare", "description": "a 1980s Gibson Les Paul electric guitar, sunburst finish, three-quarter view, full length" },
+  { "templateId": "mus.guitare_fender_strato_70s", "rarete": "rare", "description": "a 1970s Fender Stratocaster electric guitar, sunburst body, three-quarter view, full length" },
+  { "templateId": "mus.accordeon_paolo_soprani", "rarete": "rare", "description": "an Italian Paolo Soprani accordion with bellows half-open and a faint handwritten signature on the front, three-quarter view" },
+  { "templateId": "mus.banjo_gibson_5cordes", "rarete": "rare", "description": "an antique Gibson 5-string banjo with metal resonator and engraved details, slight three-quarter view" },
+  { "templateId": "mus.violon_atelier_mirecourt", "rarete": "rare", "description": "a handmade 19th-century Mirecourt workshop violin with bow, varnished maple and spruce, side view" },
+  { "templateId": "mus.theremine_moog", "rarete": "rare", "description": "a Moog Etherwave theremin with two vertical and horizontal antennas, wooden cabinet, three-quarter view" },
+  { "templateId": "mus.synthe_moog_minimoog", "rarete": "rare", "description": "a 1970s Moog Minimoog analog synthesizer with wooden side panels and patch knobs, three-quarter view" },
+  { "templateId": "mus.boite_musique_mecanique", "rarete": "rare", "description": "an antique mechanical cylinder music box in an inlaid wooden case, open lid showing the brass cylinder mechanism, three-quarter view" },
+  { "templateId": "mus.saxophone_selmer_mark_vi", "rarete": "rare", "description": "a vintage Selmer Mark VI alto saxophone, lacquered brass finish with subtle patina, mother-of-pearl key inlays, slight three-quarter angle" },
+
+  { "templateId": "leg.mus.stradivarius", "rarete": "legendaire", "description": "an ornate antique Stradivarius violin from 1715 with rich reddish-orange varnish, scrolled headstock, set on a black velvet cushion, side view" },
+  { "templateId": "leg.mus.piano_pleyel_concert", "rarete": "legendaire", "description": "a Pleyel grand concert piano from circa 1900, polished ebony finish, closed lid, three-quarter view, refined Belle Époque craftsmanship" },
+  { "templateId": "leg.mus.guitare_hendrix_provenance", "rarete": "legendaire", "description": "a worn vintage 1960s white electric guitar in Stratocaster style with psychedelic painted patterns, displayed with a small framed certificate of provenance, three-quarter view, no person visible" },
+
+  { "templateId": "uniq.mus.violon_paganini", "rarete": "legendaire", "description": "the legendary 'Il Cannone' Paganini violin (Guarneri del Gesù 1743), deep reddish-brown varnish, highly detailed scroll and f-holes, museum display piece, side view" }
 ]
