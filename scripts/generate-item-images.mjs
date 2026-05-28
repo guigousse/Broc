@@ -6,12 +6,16 @@
  *   - `pro`  → gemini-3-pro-image-preview  (Nano Banana Pro, défaut, meilleure qualité)
  *   - `flash`→ gemini-2.5-flash-image      (Nano Banana, plus rapide / économique)
  *
+ * La clé API peut être passée en variable d'env (GEMINI_API_KEY) ou écrite
+ * dans un fichier `.env` à la racine du projet (gitignoré). Voir `.env.example`.
+ *
  * Usage :
- *   GEMINI_API_KEY=xxx npm run gen:images                                     # par défaut Nano Banana Pro
- *   GEMINI_API_KEY=xxx npm run gen:images -- --model=flash                    # bascule sur Nano Banana
- *   GEMINI_API_KEY=xxx npm run gen:images -- --force                          # regénère tous
- *   GEMINI_API_KEY=xxx npm run gen:images -- mus.diapason_acier               # un seul item
- *   GEMINI_API_KEY=xxx npm run gen:images -- --resolution=2K --aspect=1:1     # surcharge format (Pro uniquement)
+ *   npm run gen:images                                     # par défaut Nano Banana Pro, tous les items
+ *   npm run gen:images -- --model=flash                    # bascule sur Nano Banana (rapide / éco)
+ *   npm run gen:images -- --force                          # regénère même si fichier déjà présent
+ *   npm run gen:images -- mus.diapason_acier               # un ou plusieurs items précis
+ *   npm run gen:images -- --prefix=mus.                    # tous les items dont l'ID commence par "mus."
+ *   npm run gen:images -- --resolution=2K --aspect=1:1     # surcharge format (Pro uniquement)
  *
  * Le config est lu depuis scripts/item-prompts.json
  * Les PNG sont écrits dans public/items/{templateId}.png
@@ -29,6 +33,33 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const OUTPUT_DIR = path.join(PROJECT_ROOT, "public", "items");
 const CONFIG_PATH = path.join(__dirname, "item-prompts.json");
+const ENV_PATH = path.join(PROJECT_ROOT, ".env");
+
+// Charge les variables d'un fichier .env (KEY=VALUE par ligne) si présent.
+// Les variables déjà définies dans process.env ne sont pas écrasées.
+async function loadDotEnv() {
+  try {
+    const content = await fs.readFile(ENV_PATH, "utf8");
+    for (const rawLine of content.split("\n")) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith("#")) continue;
+      const eq = line.indexOf("=");
+      if (eq < 0) continue;
+      const key = line.slice(0, eq).trim();
+      let value = line.slice(eq + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      if (!(key in process.env)) process.env[key] = value;
+    }
+  } catch {
+    // pas de .env, on continue avec les variables d'environnement existantes
+  }
+}
+await loadDotEnv();
 
 const MODEL_IDS = {
   pro: "gemini-3-pro-image-preview",
@@ -70,6 +101,7 @@ if (!model) {
 }
 const aspectRatio = flagValue("aspect", "1:1");
 const imageSize = flagValue("resolution", "2K");
+const prefix = flagValue("prefix", null);
 const onlyIds = args.filter((a) => !a.startsWith("--"));
 
 async function main() {
@@ -77,14 +109,18 @@ async function main() {
 
   const raw = await fs.readFile(CONFIG_PATH, "utf8");
   const config = JSON.parse(raw);
-  const todo = onlyIds.length
-    ? config.filter((c) => onlyIds.includes(c.templateId))
-    : config;
+  let todo = config;
+  if (onlyIds.length) {
+    todo = config.filter((c) => onlyIds.includes(c.templateId));
+  } else if (prefix) {
+    todo = config.filter((c) => c.templateId.startsWith(prefix));
+  }
 
   if (todo.length === 0) {
-    console.error("Aucun item à générer.");
+    console.error("Aucun item à générer (filtres trop restrictifs ?).");
     process.exit(1);
   }
+  console.log(`📋  ${todo.length} item(s) à traiter\n`);
 
   const ai = new GoogleGenAI({ apiKey });
 
