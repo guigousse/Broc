@@ -66,7 +66,10 @@ export function QgEtatDesLieux({ state }: QgEtatDesLieuxProps) {
     {
       icon: Warehouse,
       titre: "Stockage",
-      meta: `${stockTier.nom} · ${state.inventaireJoueur.length} obj.`,
+      meta:
+        stockTier.capaciteMax === Number.POSITIVE_INFINITY
+          ? `${stockTier.nom} · ${state.inventaireJoueur.length} obj. · loyer ${stockTier.loyerHebdo} €/sem`
+          : `${stockTier.nom} · ${state.inventaireJoueur.length}/${stockTier.capaciteMax} · loyer ${stockTier.loyerHebdo} €/sem`,
       path: "/stockage",
     },
     {
