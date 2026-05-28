@@ -3,6 +3,8 @@
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { BookOpen, Wrench } from "lucide-react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { getRarityColors } from "@/lib/rarityColors";
+import { getTemplate } from "@/data/objetTemplates";
 import type { Objet } from "@/types/game";
 
 interface StockageItemRowProps {
@@ -61,12 +63,9 @@ const item: CSSProperties = {
   touchAction: "pan-y",
 };
 
-const thumb: CSSProperties = {
+const thumbBase: CSSProperties = {
   width: 44,
   height: 44,
-  background:
-    "linear-gradient(135deg, var(--paper-500) 0%, var(--brass-700) 100%)",
-  border: "1px solid var(--brass-700)",
   display: "grid",
   placeItems: "center",
 };
@@ -134,6 +133,14 @@ export function StockageItemRow({
     else setSnapped("closed");
   };
 
+  const isUnique = !!getTemplate(objet.templateId)?.unique;
+  const rarityColors = getRarityColors(objet.rarete, isUnique);
+  const thumbStyle: CSSProperties = {
+    ...thumbBase,
+    background: rarityColors.thumbBg,
+    border: `1px solid ${rarityColors.outer}`,
+  };
+
   const handleAtelier = () => {
     if (!atelier.disponible) return;
     onEnvoyerAtelier(objet);
@@ -184,12 +191,12 @@ export function StockageItemRow({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <div style={thumb}>
+        <div style={thumbStyle}>
           <CategorieIcon
             categorie={objet.categorie}
             size={20}
             strokeWidth={1.5}
-            color="var(--brass-100)"
+            color={rarityColors.thumbIcon}
           />
         </div>
         <div>

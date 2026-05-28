@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Star } from "lucide-react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { getRarityColors } from "@/lib/rarityColors";
 import type { CategorieObjet, EtatObjet, Rarete } from "@/types/game";
 
 interface FrameItemProps {
@@ -24,43 +25,6 @@ const IMG_TOP = TITRE_STRIP + 8;
 const IMG_BOTTOM = H - 20;
 const IMG_LEFT = 14;
 const IMG_RIGHT = W - 14;
-
-interface FrameColors {
-  outer: string;
-  inner: string;
-  shadow: string;
-}
-
-function getFrameColors(rarete: Rarete, unique: boolean): FrameColors {
-  if (unique) {
-    return {
-      outer: "#4B8CB0",
-      inner: "#7BBAD3",
-      shadow: "rgba(75,140,176,0.42)",
-    };
-  }
-  switch (rarete) {
-    case "legendaire":
-      return {
-        outer: "#C99A1F",
-        inner: "#E2B33D",
-        shadow: "rgba(201,154,31,0.38)",
-      };
-    case "rare":
-      return {
-        outer: "#A07832",
-        inner: "#C5A059",
-        shadow: "rgba(160,120,50,0.32)",
-      };
-    case "commun":
-    default:
-      return {
-        outer: "#7A5226",
-        inner: "#A07346",
-        shadow: "rgba(122,82,38,0.28)",
-      };
-  }
-}
 
 function etoileCount(etat: EtatObjet): number {
   switch (etat) {
@@ -84,8 +48,11 @@ export function FrameItem({
   size = 240,
   children,
 }: FrameItemProps) {
-  const colors = getFrameColors(rarete, unique);
+  const colors = getRarityColors(rarete, unique);
   const filledStars = etoileCount(etat);
+
+  // Sunburst rays positions for prestige >= 2
+  const sunburstDegrees = [0, 30, 60, 120, 150, 180, 210, 240, 300, 330];
 
   return (
     <div
@@ -93,7 +60,10 @@ export function FrameItem({
         position: "relative",
         width: size,
         aspectRatio: `${W} / ${H}`,
-        filter: `drop-shadow(0 14px 22px ${colors.shadow}) drop-shadow(0 4px 6px rgba(15,31,24,0.22))`,
+        filter:
+          colors.prestige >= 3
+            ? `drop-shadow(0 0 18px ${colors.shadow}) drop-shadow(0 14px 22px rgba(0,0,0,0.35))`
+            : `drop-shadow(0 14px 22px ${colors.shadow}) drop-shadow(0 4px 6px rgba(0,0,0,0.25))`,
       }}
     >
       <svg
@@ -102,10 +72,48 @@ export function FrameItem({
         height="100%"
         style={{ display: "block", overflow: "visible" }}
       >
-        {/* Paper fill */}
-        <rect x="0" y="0" width={W} height={H} fill="var(--paper-200)" />
+        {/* Halo extérieur pour Unique (prestige 3) */}
+        {colors.prestige >= 3 && (
+          <rect
+            x="-3"
+            y="-3"
+            width={W + 6}
+            height={H + 6}
+            fill="none"
+            stroke={colors.accent}
+            strokeWidth="0.8"
+            opacity="0.6"
+          />
+        )}
 
-        {/* Outer border */}
+        {/* Fond papier */}
+        <rect x="0" y="0" width={W} height={H} fill="var(--paper-100)" />
+
+        {/* Lavis radial coloré subtil (légendaire et unique) */}
+        {colors.prestige >= 2 && (
+          <>
+            <defs>
+              <radialGradient
+                id={`bgWash-${colors.label}`}
+                cx="50%"
+                cy="50%"
+                r="60%"
+              >
+                <stop offset="0%" stopColor={colors.accent} stopOpacity="0.18" />
+                <stop offset="100%" stopColor={colors.accent} stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <rect
+              x="0"
+              y="0"
+              width={W}
+              height={H}
+              fill={`url(#bgWash-${colors.label})`}
+            />
+          </>
+        )}
+
+        {/* Bordure extérieure */}
         <rect
           x="2"
           y="2"
@@ -113,10 +121,10 @@ export function FrameItem({
           height={H - 4}
           fill="none"
           stroke={colors.outer}
-          strokeWidth="2"
+          strokeWidth={colors.prestige >= 2 ? 2.4 : 2}
         />
 
-        {/* Inner thin rule */}
+        {/* Filet intérieur */}
         <rect
           x="8"
           y="8"
@@ -127,7 +135,21 @@ export function FrameItem({
           strokeWidth="0.7"
         />
 
-        {/* Title strip separator */}
+        {/* Filet supplémentaire pour prestige >= 2 */}
+        {colors.prestige >= 2 && (
+          <rect
+            x="11"
+            y="11"
+            width={W - 22}
+            height={H - 22}
+            fill="none"
+            stroke={colors.accent}
+            strokeWidth="0.4"
+            opacity="0.85"
+          />
+        )}
+
+        {/* Bandeau titre : double trait */}
         <line
           x1="12"
           y1={TITRE_STRIP}
@@ -142,10 +164,10 @@ export function FrameItem({
           x2={W - 12}
           y2={TITRE_STRIP + 3}
           stroke={colors.inner}
-          strokeWidth="0.4"
+          strokeWidth="0.5"
         />
 
-        {/* Chevron flourishes on title strip ends */}
+        {/* Chevrons bandeau titre */}
         <g
           stroke={colors.outer}
           strokeWidth="0.9"
@@ -156,7 +178,7 @@ export function FrameItem({
           <path d={`M ${W - 18} ${TITRE_STRIP / 2 - 4} L ${W - 22} ${TITRE_STRIP / 2} L ${W - 18} ${TITRE_STRIP / 2 + 4}`} />
         </g>
 
-        {/* Image area background */}
+        {/* Zone image */}
         <rect
           x={IMG_LEFT}
           y={IMG_TOP}
@@ -167,7 +189,7 @@ export function FrameItem({
           strokeWidth="0.5"
         />
 
-        {/* Top corner ornaments */}
+        {/* Ornements coins haut */}
         <g
           stroke={colors.inner}
           strokeWidth="1"
@@ -186,14 +208,73 @@ export function FrameItem({
           <path d="M 14 26 L 14 14 L 26 14" />
         </g>
 
-        {/* Medallion */}
+        {/* Ornements coins bas — prestige >= 1 (rare et +) */}
+        {colors.prestige >= 1 && (
+          <>
+            <g
+              stroke={colors.inner}
+              strokeWidth="1"
+              fill="none"
+              strokeLinecap="square"
+              transform={`translate(0 ${H}) scale(1 -1)`}
+            >
+              <path d="M 14 26 L 14 14 L 26 14" />
+            </g>
+            <g
+              stroke={colors.inner}
+              strokeWidth="1"
+              fill="none"
+              strokeLinecap="square"
+              transform={`translate(${W} ${H}) scale(-1 -1)`}
+            >
+              <path d="M 14 26 L 14 14 L 26 14" />
+            </g>
+          </>
+        )}
+
+        {/* Losanges décoratifs sur les milieux des côtés — prestige >= 2 */}
+        {colors.prestige >= 2 && (
+          <g fill={colors.outer}>
+            <polygon
+              points={`8,${H / 2 - 5} 13,${H / 2} 8,${H / 2 + 5} 3,${H / 2}`}
+            />
+            <polygon
+              points={`${W - 8},${H / 2 - 5} ${W - 3},${H / 2} ${W - 8},${H / 2 + 5} ${W - 13},${H / 2}`}
+            />
+          </g>
+        )}
+
+        {/* Sunburst derrière médaillon — prestige >= 2 */}
+        {colors.prestige >= 2 && (
+          <g
+            stroke={colors.accent}
+            strokeWidth="0.7"
+            opacity="0.85"
+            transform={`translate(${W / 2} ${MEDAL_CY})`}
+          >
+            {sunburstDegrees.map((deg) => {
+              const rad = (deg * Math.PI) / 180;
+              return (
+                <line
+                  key={deg}
+                  x1={Math.cos(rad) * (MEDAL_R + 7)}
+                  y1={Math.sin(rad) * (MEDAL_R + 7)}
+                  x2={Math.cos(rad) * (MEDAL_R + 16)}
+                  y2={Math.sin(rad) * (MEDAL_R + 16)}
+                />
+              );
+            })}
+          </g>
+        )}
+
+        {/* Médaillon */}
         <circle
           cx={W / 2}
           cy={MEDAL_CY}
           r={MEDAL_R + 4}
-          fill="var(--paper-200)"
+          fill="var(--paper-100)"
           stroke={colors.outer}
-          strokeWidth="1.6"
+          strokeWidth={colors.prestige >= 2 ? 1.8 : 1.5}
         />
         <circle
           cx={W / 2}
@@ -201,11 +282,21 @@ export function FrameItem({
           r={MEDAL_R}
           fill="var(--paper-100)"
           stroke={colors.inner}
-          strokeWidth="0.6"
+          strokeWidth="0.7"
         />
+        {colors.prestige >= 2 && (
+          <circle
+            cx={W / 2}
+            cy={MEDAL_CY}
+            r={MEDAL_R - 3}
+            fill="none"
+            stroke={colors.accent}
+            strokeWidth="0.4"
+          />
+        )}
       </svg>
 
-      {/* Titre (top strip) */}
+      {/* Titre (bandeau haut) */}
       <div
         style={{
           position: "absolute",
@@ -229,7 +320,7 @@ export function FrameItem({
         {titre}
       </div>
 
-      {/* Image slot */}
+      {/* Slot image */}
       <div
         style={{
           position: "absolute",
@@ -258,7 +349,7 @@ export function FrameItem({
         )}
       </div>
 
-      {/* Medallion icon overlay */}
+      {/* Icône catégorie dans médaillon */}
       <div
         style={{
           position: "absolute",
@@ -279,26 +370,24 @@ export function FrameItem({
         />
       </div>
 
-      {/* État stars — overlapping the cadre at bottom-left */}
+      {/* Étoiles d'état — superposées en bas-gauche */}
       <div
         style={{
           position: "absolute",
-          left: -6,
-          bottom: 24,
+          left: -8,
+          top: `${(MEDAL_CY / H) * 100}%`,
+          transform: "translateY(-50%)",
           display: "flex",
           gap: 2,
-          padding: "3px 6px",
-          background: "var(--paper-100)",
-          border: `1px solid ${colors.outer}`,
-          boxShadow: "0 2px 4px rgba(15,31,24,0.2)",
+          filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.35))",
         }}
         aria-label={`État : ${etat}`}
       >
         {[0, 1, 2].map((i) => (
           <Star
             key={i}
-            size={11}
-            strokeWidth={1.5}
+            size={20}
+            strokeWidth={1.6}
             fill={i < filledStars ? colors.outer : "transparent"}
             color={colors.outer}
           />
