@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
-import { getStockageTier } from "@/data/stockage";
+import { getStockageTierParNiveau } from "@/data/stockage";
+import { totalEnStock } from "@/lib/stockage";
 import { progressionGlobale } from "@/lib/collection";
 import type { GameState } from "@/types/game";
 
@@ -50,7 +51,8 @@ const rowBtn: CSSProperties = {
 
 export function QgEtatDesLieux({ state }: QgEtatDesLieuxProps) {
   const router = useRouter();
-  const stockTier = getStockageTier(state.inventaireJoueur.length);
+  const stockTier = getStockageTierParNiveau(state.niveauStockage);
+  const totalStock = totalEnStock(state);
   const totalPoints = Object.values(state.competenceTrees).reduce(
     (s, t) => s + t.pointsDisponibles,
     0,
@@ -68,8 +70,8 @@ export function QgEtatDesLieux({ state }: QgEtatDesLieuxProps) {
       titre: "Stockage",
       meta:
         stockTier.capaciteMax === Number.POSITIVE_INFINITY
-          ? `${stockTier.nom} · ${state.inventaireJoueur.length} obj. · loyer ${stockTier.loyerHebdo} €/sem`
-          : `${stockTier.nom} · ${state.inventaireJoueur.length}/${stockTier.capaciteMax} · loyer ${stockTier.loyerHebdo} €/sem`,
+          ? `${stockTier.nom} · ${totalStock} obj. · loyer ${stockTier.loyerHebdo} €/sem`
+          : `${stockTier.nom} · ${totalStock}/${stockTier.capaciteMax} · loyer ${stockTier.loyerHebdo} €/sem`,
       path: "/stockage",
     },
     {
