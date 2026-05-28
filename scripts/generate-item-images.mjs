@@ -67,18 +67,18 @@ const MODEL_IDS = {
 };
 
 // Fond papier coloré en fonction de la rareté de l'item.
-// La couleur reste subtile pour que le sujet reste lisible.
+// Restera très clair pour ne pas alourdir la composition.
 function backgroundPhrase(rarete) {
   switch (rarete) {
     case "rare":
-      return "soft light blueish-gray paper with a cool steel tint";
+      return "very pale dove gray-blue paper, near white with only a faint cool tint";
     case "legendaire":
-      return "warm ivory paper with a subtle gold tint";
+      return "very pale ivory paper, near white with only a hint of warm gold";
     case "unique":
-      return "pale icy blue paper with a soft frost tint";
+      return "very pale frost-blue paper, near white with only a subtle icy tint";
     case "commun":
     default:
-      return "cream parchment";
+      return "cream parchment, light and neutral";
   }
 }
 
@@ -88,7 +88,7 @@ function buildStyleBrief(rarete) {
     "Elegant ink line-art with subtle sepia and forest green color wash.",
     `Centered single object, isolated on a ${backgroundPhrase(rarete)} background with subtle paper grain texture.`,
     "Soft directional lighting, no harsh shadows, no text, no captions, no watermark.",
-    "Clean geometric composition.",
+    "Composition: subject positioned slightly above center, occupying the upper two-thirds of the frame ; the bottom third must be empty background (a circular medallion will be placed there at display time).",
     "Strict square 1:1 aspect ratio composition.",
     "Style of 1920s-1930s French decorative arts.",
   ].join(" ");

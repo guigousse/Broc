@@ -204,57 +204,48 @@ export function FrameItem({
           />
         )}
 
-        {/* Bandeau titre : double trait */}
+        {/* Bandeau titre : double trait continu (s'étend bord à bord) */}
         <line
-          x1="12"
+          x1="2"
           y1={TITRE_STRIP}
-          x2={W - 12}
+          x2={W - 2}
           y2={TITRE_STRIP}
           stroke={colors.outer}
           strokeWidth="1"
         />
         <line
-          x1="12"
+          x1="8"
           y1={TITRE_STRIP + 3}
-          x2={W - 12}
+          x2={W - 8}
           y2={TITRE_STRIP + 3}
           stroke={colors.inner}
           strokeWidth="0.5"
         />
 
-        {/* Chevrons bandeau titre */}
+        {/* Boucles Art Déco — coins supérieurs (quarts d'arc concentriques + point central) */}
         <g
-          stroke={colors.outer}
+          stroke={colors.inner}
           strokeWidth="0.9"
           fill="none"
-          strokeLinecap="square"
+          strokeLinecap="round"
         >
-          <path
-            d={`M 18 ${TITRE_STRIP / 2 - 4} L 22 ${TITRE_STRIP / 2} L 18 ${TITRE_STRIP / 2 + 4}`}
-          />
-          <path
-            d={`M ${W - 18} ${TITRE_STRIP / 2 - 4} L ${W - 22} ${TITRE_STRIP / 2} L ${W - 18} ${TITRE_STRIP / 2 + 4}`}
-          />
+          {/* Haut-gauche */}
+          <path d="M 12 30 A 18 18 0 0 1 30 12" />
+          <path d="M 16 22 A 6 6 0 0 1 22 16" />
         </g>
-
-        {/* Ornements coins haut */}
+        <circle cx="19" cy="19" r="1.4" fill={colors.inner} />
         <g
           stroke={colors.inner}
-          strokeWidth="1"
+          strokeWidth="0.9"
           fill="none"
-          strokeLinecap="square"
-        >
-          <path d="M 14 26 L 14 14 L 26 14" />
-        </g>
-        <g
-          stroke={colors.inner}
-          strokeWidth="1"
-          fill="none"
-          strokeLinecap="square"
+          strokeLinecap="round"
           transform={`translate(${W} 0) scale(-1 1)`}
         >
-          <path d="M 14 26 L 14 14 L 26 14" />
+          {/* Haut-droit (miroir) */}
+          <path d="M 12 30 A 18 18 0 0 1 30 12" />
+          <path d="M 16 22 A 6 6 0 0 1 22 16" />
         </g>
+        <circle cx={W - 19} cy="19" r="1.4" fill={colors.inner} />
 
         {/* Ornements coins bas — prestige >= 1 */}
         {colors.prestige >= 1 && (
