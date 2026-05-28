@@ -9,7 +9,8 @@
     "lint": "next lint",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "gen:images": "node scripts/generate-item-images.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.16.0",
@@ -18,6 +19,7 @@
     "react-dom": "19.0.0"
   },
   "devDependencies": {
+    "@google/genai": "^2.6.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@tauri-apps/cli": "^2.11.2",
     "@types/node": "^22",
