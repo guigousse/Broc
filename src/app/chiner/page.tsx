@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
-import { BrocanteCard } from "@/components/BrocanteCard";
+import { BrocanteCarousel } from "@/components/mobile/BrocanteCarousel";
 import { useGame } from "@/context/GameContext";
 import { brocantesParTier } from "@/data/brocantes";
 import { estDebloquee, decrireConditions } from "@/lib/deblocage";
@@ -95,22 +95,13 @@ export default function ChinerListePage() {
         </StickyTop>
       }
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {liste.map((b) => {
-          const debloquee = debloqueesParTier.get(tier)!.has(b.id);
-          const raison = debloquee ? undefined : decrireConditions(b, state);
-          return (
-            <BrocanteCard
-              key={b.id}
-              brocante={b}
-              state={state}
-              debloquee={debloquee}
-              raisonVerrou={raison}
-              destination="chiner"
-            />
-          );
-        })}
-      </div>
+      <BrocanteCarousel
+        brocantes={liste}
+        state={state}
+        debloqueesIds={debloqueesParTier.get(tier)!}
+        decrireConditions={(b) => decrireConditions(b, state)}
+        destination="chiner"
+      />
     </MobileLayout>
   );
 }
