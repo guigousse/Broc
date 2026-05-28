@@ -134,8 +134,11 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
           cursor: isInteractable ? "pointer" : "default",
           padding: 0,
           overflow: "hidden",
-          // Pour les items vus (non donnés), grisaille l'image qui remplit la cellule
-          filter: isVu ? "grayscale(1) brightness(0.92)" : undefined,
+          // Pour les items vus (non donnés), grisaille + éclaircit + opacité réduite
+          // pour rendre l'image clairement estompée par rapport aux items collectés.
+          filter: isVu
+            ? "grayscale(1) brightness(1.35) contrast(0.7) opacity(0.55)"
+            : undefined,
         };
 
         return (
