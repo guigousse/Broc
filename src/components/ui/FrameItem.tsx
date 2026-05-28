@@ -1,80 +1,32 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { CategorieObjet, EtatObjet } from "@/types/game";
+import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import type { CategorieObjet } from "@/types/game";
 
 interface FrameItemProps {
   categorie: CategorieObjet;
   titre: string;
-  prix?: number | null;
-  etat: EtatObjet;
   size?: number;
   children?: ReactNode;
 }
 
 const W = 240;
-const H = 280;
-const R = 38;
-const INSET = 8;
-const STRIP_TOP = H - 64;
-const IMG_TOP = 20;
-const IMG_LEFT = 20;
-const IMG_RIGHT = W - 20;
-const IMG_BOTTOM = STRIP_TOP - 4;
-
-const outerPath = [
-  `M 3 3`,
-  `L ${W - 3} 3`,
-  `L ${W - 3} ${H - 3 - R}`,
-  `A ${R} ${R} 0 0 1 ${W - 3 - R} ${H - 3}`,
-  `L ${R + 3} ${H - 3}`,
-  `A ${R} ${R} 0 0 1 3 ${H - 3 - R}`,
-  `Z`,
-].join(" ");
-
-const innerR = R - 4;
-const innerPath = [
-  `M ${INSET} ${INSET}`,
-  `L ${W - INSET} ${INSET}`,
-  `L ${W - INSET} ${H - INSET - innerR}`,
-  `A ${innerR} ${innerR} 0 0 1 ${W - INSET - innerR} ${H - INSET}`,
-  `L ${INSET + innerR} ${H - INSET}`,
-  `A ${innerR} ${innerR} 0 0 1 ${INSET} ${H - INSET - innerR}`,
-  `Z`,
-].join(" ");
-
-function CategorieGlyph({ categorie }: { categorie: CategorieObjet }) {
-  const stroke = "var(--brass-700)";
-  switch (categorie) {
-    case "Musique":
-      return (
-        <g fill="none" stroke={stroke} strokeWidth="1" strokeLinecap="square">
-          <circle cx="0" cy="0" r="9" />
-          <circle cx="0" cy="0" r="5.5" />
-          <circle cx="0" cy="0" r="1.8" fill={stroke} />
-        </g>
-      );
-    default:
-      return (
-        <g fill="none" stroke={stroke} strokeWidth="1">
-          <polygon points="0,-9 9,0 0,9 -9,0" />
-          <polygon points="0,-4 4,0 0,4 -4,0" />
-        </g>
-      );
-  }
-}
+const H = 320;
+const TITRE_STRIP = 44;
+const MEDAL_R = 26;
+const MEDAL_CY = H - 14;
+const IMG_TOP = TITRE_STRIP + 8;
+const IMG_BOTTOM = H - 20;
+const IMG_LEFT = 14;
+const IMG_RIGHT = W - 14;
 
 export function FrameItem({
   categorie,
   titre,
-  prix,
-  etat,
   size = 240,
   children,
 }: FrameItemProps) {
-  const stripCenterLeft = (R + INSET + 4) / W;
-  const stripCenterRight = (R + INSET + 4) / W;
-
   return (
     <div
       style={{
@@ -90,24 +42,64 @@ export function FrameItem({
         style={{ display: "block", overflow: "visible" }}
       >
         {/* Paper fill */}
-        <path d={outerPath} fill="var(--paper-200)" />
+        <rect
+          x="0"
+          y="0"
+          width={W}
+          height={H}
+          fill="var(--paper-200)"
+        />
 
         {/* Outer brass border */}
-        <path
-          d={outerPath}
+        <rect
+          x="2"
+          y="2"
+          width={W - 4}
+          height={H - 4}
           fill="none"
           stroke="var(--brass-700)"
           strokeWidth="1.6"
-          strokeLinejoin="miter"
         />
 
         {/* Inner thin brass rule */}
-        <path
-          d={innerPath}
+        <rect
+          x="8"
+          y="8"
+          width={W - 16}
+          height={H - 16}
           fill="none"
           stroke="var(--brass-500)"
           strokeWidth="0.6"
         />
+
+        {/* Titre strip separator */}
+        <line
+          x1="12"
+          y1={TITRE_STRIP}
+          x2={W - 12}
+          y2={TITRE_STRIP}
+          stroke="var(--brass-700)"
+          strokeWidth="1"
+        />
+        <line
+          x1="12"
+          y1={TITRE_STRIP + 3}
+          x2={W - 12}
+          y2={TITRE_STRIP + 3}
+          stroke="var(--brass-500)"
+          strokeWidth="0.4"
+        />
+
+        {/* Small chevron flourishes on title strip ends */}
+        <g
+          stroke="var(--brass-700)"
+          strokeWidth="0.8"
+          fill="none"
+          strokeLinecap="square"
+        >
+          <path d={`M 18 ${TITRE_STRIP / 2 - 4} L 22 ${TITRE_STRIP / 2} L 18 ${TITRE_STRIP / 2 + 4}`} />
+          <path d={`M ${W - 18} ${TITRE_STRIP / 2 - 4} L ${W - 22} ${TITRE_STRIP / 2} L ${W - 18} ${TITRE_STRIP / 2 + 4}`} />
+        </g>
 
         {/* Image area background */}
         <rect
@@ -117,49 +109,12 @@ export function FrameItem({
           height={IMG_BOTTOM - IMG_TOP}
           fill="var(--paper-100)"
           stroke="var(--brass-500)"
-          strokeWidth="0.6"
-        />
-
-        {/* Horizontal rule above title strip */}
-        <line
-          x1={INSET + 4}
-          y1={STRIP_TOP}
-          x2={W - INSET - 4}
-          y2={STRIP_TOP}
-          stroke="var(--brass-700)"
-          strokeWidth="0.9"
-        />
-        <line
-          x1={INSET + 4}
-          y1={STRIP_TOP + 3}
-          x2={W - INSET - 4}
-          y2={STRIP_TOP + 3}
-          stroke="var(--brass-500)"
-          strokeWidth="0.4"
-        />
-
-        {/* Vertical separators framing the title */}
-        <line
-          x1={R + INSET + 4}
-          y1={STRIP_TOP + 6}
-          x2={R + INSET + 4}
-          y2={H - INSET - 6}
-          stroke="var(--brass-500)"
-          strokeWidth="0.5"
-        />
-        <line
-          x1={W - R - INSET - 4}
-          y1={STRIP_TOP + 6}
-          x2={W - R - INSET - 4}
-          y2={H - INSET - 6}
-          stroke="var(--brass-500)"
           strokeWidth="0.5"
         />
 
-        {/* Top corner ornaments (left + right) */}
+        {/* Top corner ornaments (above title strip) */}
         <g stroke="var(--brass-500)" strokeWidth="0.9" fill="none" strokeLinecap="square">
-          <path d="M 14 28 L 14 14 L 28 14" />
-          <path d="M 19 23 L 19 19 L 23 19" />
+          <path d="M 14 26 L 14 14 L 26 14" />
         </g>
         <g
           stroke="var(--brass-500)"
@@ -168,47 +123,53 @@ export function FrameItem({
           strokeLinecap="square"
           transform={`translate(${W} 0) scale(-1 1)`}
         >
-          <path d="M 14 28 L 14 14 L 28 14" />
-          <path d="M 19 23 L 19 19 L 23 19" />
+          <path d="M 14 26 L 14 14 L 26 14" />
         </g>
 
-        {/* Category motif — small Art Déco emblem under top border */}
-        <g transform={`translate(${W / 2} ${IMG_TOP - 6})`}>
-          <line
-            x1="-30"
-            y1="0"
-            x2="-14"
-            y2="0"
-            stroke="var(--brass-500)"
-            strokeWidth="0.5"
-          />
-          <line
-            x1="14"
-            y1="0"
-            x2="30"
-            y2="0"
-            stroke="var(--brass-500)"
-            strokeWidth="0.5"
-          />
-          <CategorieGlyph categorie={categorie} />
-        </g>
-
-        {/* Subtle arc accents inside the rounded badges */}
-        <path
-          d={`M ${INSET + 6} ${H - INSET - innerR + 2} A ${innerR - 4} ${innerR - 4} 0 0 0 ${INSET + innerR - 2} ${H - INSET - 6}`}
-          fill="none"
-          stroke="var(--brass-500)"
-          strokeWidth="0.5"
+        {/* Medallion outer ring — straddling bottom border */}
+        <circle
+          cx={W / 2}
+          cy={MEDAL_CY}
+          r={MEDAL_R + 4}
+          fill="var(--paper-200)"
+          stroke="var(--brass-700)"
+          strokeWidth="1.4"
         />
-        <path
-          d={`M ${W - INSET - innerR + 2} ${H - INSET - 6} A ${innerR - 4} ${innerR - 4} 0 0 0 ${W - INSET - 6} ${H - INSET - innerR + 2}`}
-          fill="none"
+        <circle
+          cx={W / 2}
+          cy={MEDAL_CY}
+          r={MEDAL_R}
+          fill="var(--paper-100)"
           stroke="var(--brass-500)"
-          strokeWidth="0.5"
+          strokeWidth="0.6"
         />
       </svg>
 
-      {/* Image slot (children == future <img>) */}
+      {/* Titre (top strip) */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 0,
+          height: `${(TITRE_STRIP / H) * 100}%`,
+          display: "grid",
+          placeItems: "center",
+          fontFamily: "var(--font-display)",
+          fontSize: 11,
+          letterSpacing: "0.16em",
+          textTransform: "uppercase",
+          color: "var(--forest-800)",
+          textAlign: "center",
+          padding: "0 32px",
+          lineHeight: 1.15,
+          overflow: "hidden",
+        }}
+      >
+        {titre}
+      </div>
+
+      {/* Image slot */}
       <div
         style={{
           position: "absolute",
@@ -237,73 +198,25 @@ export function FrameItem({
         )}
       </div>
 
-      {/* État (bottom-left arc area) */}
+      {/* Medallion icon overlay */}
       <div
         style={{
           position: "absolute",
-          left: 0,
-          top: `${(STRIP_TOP / H) * 100}%`,
-          width: `${stripCenterLeft * 100}%`,
-          bottom: 0,
+          left: "50%",
+          top: `${(MEDAL_CY / H) * 100}%`,
+          transform: "translate(-50%, -50%)",
           display: "grid",
           placeItems: "center",
-          fontFamily: "var(--font-mono)",
-          fontSize: 7.5,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          color: "var(--forest-800)",
-          textAlign: "center",
-          padding: "0 6px 6px",
-          lineHeight: 1.05,
+          width: MEDAL_R * 1.6,
+          height: MEDAL_R * 1.6,
         }}
       >
-        {etat}
-      </div>
-
-      {/* Titre (bottom-center) */}
-      <div
-        style={{
-          position: "absolute",
-          left: `${stripCenterLeft * 100}%`,
-          right: `${stripCenterRight * 100}%`,
-          top: `${(STRIP_TOP / H) * 100}%`,
-          bottom: 0,
-          display: "grid",
-          placeItems: "center",
-          fontFamily: "var(--font-display)",
-          fontSize: 10.5,
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: "var(--forest-800)",
-          textAlign: "center",
-          padding: "0 8px",
-          lineHeight: 1.15,
-          overflow: "hidden",
-        }}
-      >
-        {titre}
-      </div>
-
-      {/* Prix (bottom-right arc area) */}
-      <div
-        style={{
-          position: "absolute",
-          right: 0,
-          top: `${(STRIP_TOP / H) * 100}%`,
-          width: `${stripCenterRight * 100}%`,
-          bottom: 0,
-          display: "grid",
-          placeItems: "center",
-          fontFamily: "var(--font-display)",
-          fontSize: 12,
-          letterSpacing: "0.04em",
-          color: "var(--vermillion-600)",
-          textAlign: "center",
-          padding: "0 6px 6px",
-          fontWeight: 600,
-        }}
-      >
-        {prix != null ? `${prix}€` : "—"}
+        <CategorieIcon
+          categorie={categorie}
+          size={26}
+          strokeWidth={1.2}
+          color="var(--forest-800)"
+        />
       </div>
     </div>
   );

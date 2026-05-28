@@ -186,8 +186,7 @@ export function ObjetDetailOverlay({
       }}
     >
       <div style={card}>
-        <div style={topBar}>
-          <div style={titleStyle}>{objet.nom}</div>
+        <div style={{ ...topBar, justifyContent: "flex-end" }}>
           <button
             type="button"
             onClick={onClose}
@@ -202,14 +201,12 @@ export function ObjetDetailOverlay({
           <FrameItem
             categorie={objet.categorie}
             titre={objet.nom}
-            prix={prixMarcheConnu ? Math.round(prixMarche) : null}
-            etat={objet.etat}
             size={240}
           />
         </div>
 
         <div style={meta}>
-          {objet.rarete} · {objet.categorie}
+          {objet.etat} · {objet.rarete} · {objet.categorie}
         </div>
 
         {enRestauration && (
