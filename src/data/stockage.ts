@@ -1,27 +1,45 @@
 export interface StockageTier {
   niveau: 1 | 2 | 3 | 4;
   nom: string;
-  /** Borne haute incluse — quand `nbObjets <= capaciteMax`, on est dans ce tier. */
   capaciteMax: number;
-  /** Loyer prélevé chaque fin de semaine. */
   loyerHebdo: number;
 }
 
-/**
- * Tiers de stockage, déterminés automatiquement par la taille de l'inventaire.
- * Le joueur ne choisit pas son tier — il subit le coût correspondant au volume
- * qu'il accumule. Tenir un Hangar coûte cher : il faut vendre régulièrement.
- */
 export const STOCKAGE_TIERS: readonly StockageTier[] = [
   { niveau: 1, nom: "Garage", capaciteMax: 10, loyerHebdo: 10 },
-  { niveau: 2, nom: "Cave aménagée", capaciteMax: 25, loyerHebdo: 70 },
-  { niveau: 3, nom: "Hangar", capaciteMax: 50, loyerHebdo: 150 },
-  { niveau: 4, nom: "Entrepôt", capaciteMax: Number.POSITIVE_INFINITY, loyerHebdo: 320 },
+  { niveau: 2, nom: "Cave aménagée", capaciteMax: 25, loyerHebdo: 25 },
+  { niveau: 3, nom: "Hangar", capaciteMax: 50, loyerHebdo: 50 },
+  { niveau: 4, nom: "Entrepôt", capaciteMax: 100, loyerHebdo: 100 },
 ];
+
+export interface StockageUpgrade {
+  niveauActuel: 1 | 2 | 3;
+  niveauCible: 2 | 3 | 4;
+  cout: number;
+}
+
+export const STOCKAGE_UPGRADES: readonly StockageUpgrade[] = [
+  { niveauActuel: 1, niveauCible: 2, cout: 100 },
+  { niveauActuel: 2, niveauCible: 3, cout: 250 },
+  { niveauActuel: 3, niveauCible: 4, cout: 500 },
+] as const;
 
 export function getStockageTier(nbObjets: number): StockageTier {
   for (const tier of STOCKAGE_TIERS) {
     if (nbObjets <= tier.capaciteMax) return tier;
   }
   return STOCKAGE_TIERS[STOCKAGE_TIERS.length - 1];
+}
+
+export function getStockageTierParNiveau(niveau: 1 | 2 | 3 | 4): StockageTier {
+  return STOCKAGE_TIERS[niveau - 1];
+}
+
+export function getProchaineUpgradeStockage(
+  niveau: 1 | 2 | 3 | 4,
+): StockageUpgrade | null {
+  if (niveau === 1) return STOCKAGE_UPGRADES[0];
+  if (niveau === 2) return STOCKAGE_UPGRADES[1];
+  if (niveau === 3) return STOCKAGE_UPGRADES[2];
+  return null;
 }
