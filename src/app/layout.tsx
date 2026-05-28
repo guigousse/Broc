@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { GameProvider } from "@/context/GameContext";
+import { SettingsProvider } from "@/context/SettingsContext";
 import { TabBar } from "@/components/mobile/TabBar";
 import "./globals.css";
 
@@ -37,10 +38,12 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body style={{ minHeight: "100dvh", overflowX: "hidden" }}>
-        <GameProvider>
-          {children}
-          <TabBar />
-        </GameProvider>
+        <SettingsProvider>
+          <GameProvider>
+            {children}
+            <TabBar />
+          </GameProvider>
+        </SettingsProvider>
       </body>
     </html>
   );
