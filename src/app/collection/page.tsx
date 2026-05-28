@@ -11,6 +11,7 @@ import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import { progressionGlobale } from "@/lib/collection";
+import { stockageEstPlein } from "@/lib/stockage";
 import type { CategorieObjet, CollectionSlot } from "@/types/game";
 
 export default function CollectionPage() {
@@ -78,6 +79,8 @@ export default function CollectionPage() {
     .slice(0, 3)
     .map((c) => `${c} ${Math.round(valeurs[c] ?? 0)} €`)
     .join(" · ");
+
+  const plein = stockageEstPlein(state);
 
   return (
   <>
@@ -157,6 +160,7 @@ export default function CollectionPage() {
             }
           : undefined
       }
+      retirerDisabled={plein}
     />
   </>
   );

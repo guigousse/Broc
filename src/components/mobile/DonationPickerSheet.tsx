@@ -12,6 +12,8 @@ interface DonationPickerSheetProps {
   candidats: Objet[];
   onDonner: (objetId: string) => void;
   onRetirer?: () => void;
+  /** Si true, bouton "Retirer" grisé avec libellé "Stockage plein". */
+  retirerDisabled?: boolean;
 }
 
 const itemStyle: CSSProperties = {
@@ -41,6 +43,7 @@ export function DonationPickerSheet({
   candidats,
   onDonner,
   onRetirer,
+  retirerDisabled = false,
 }: DonationPickerSheetProps) {
   return (
     <BottomSheet
@@ -73,7 +76,8 @@ export function DonationPickerSheet({
           {onRetirer && (
             <button
               type="button"
-              onClick={onRetirer}
+              onClick={retirerDisabled ? undefined : onRetirer}
+              disabled={retirerDisabled}
               style={{
                 padding: "6px 10px",
                 fontFamily: "var(--font-display)",
@@ -83,10 +87,11 @@ export function DonationPickerSheet({
                 border: "1px solid var(--vermillion-600)",
                 background: "var(--paper-100)",
                 color: "var(--vermillion-600)",
-                cursor: "pointer",
+                cursor: retirerDisabled ? "not-allowed" : "pointer",
+                opacity: retirerDisabled ? 0.45 : 1,
               }}
             >
-              Retirer
+              {retirerDisabled ? "Stockage plein" : "Retirer"}
             </button>
           )}
         </div>
