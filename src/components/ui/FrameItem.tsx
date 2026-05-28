@@ -370,7 +370,7 @@ export function FrameItem({
         />
       </div>
 
-      {/* Étoiles d'état — centrées sur l'arête basse, à mi-distance entre bord gauche et médaillon */}
+      {/* Étoiles d'état — plaque blanche bordée, centrée sur l'arête basse */}
       <div
         style={{
           position: "absolute",
@@ -379,16 +379,20 @@ export function FrameItem({
           top: "100%",
           transform: "translate(-50%, -50%)",
           display: "flex",
-          gap: 2,
-          filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.35))",
+          gap: 3,
+          padding: "5px 7px",
+          background: "var(--paper-100)",
+          border: `1.5px solid ${colors.outer}`,
+          boxShadow:
+            "0 6px 10px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.22)",
         }}
         aria-label={`État : ${etat}`}
       >
         {[0, 1, 2].map((i) => (
           <Star
             key={i}
-            size={20}
-            strokeWidth={1.6}
+            size={22}
+            strokeWidth={1.8}
             fill={i < filledStars ? colors.outer : "var(--paper-100)"}
             color={colors.outer}
           />

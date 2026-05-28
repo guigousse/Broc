@@ -39,7 +39,7 @@ const card: CSSProperties = {
 const previewWrap: CSSProperties = {
   display: "grid",
   placeItems: "center",
-  marginBottom: 18,
+  marginBottom: 40,
   position: "relative",
 };
 
