@@ -65,6 +65,7 @@ import {
   retirerDonation as retirerDonationFn,
 } from "@/lib/collection";
 import { getTemplate } from "@/data/objetTemplates";
+import { audioManager } from "@/lib/audio/audioManager";
 
 interface GameContextValue {
   state: GameState | null;
@@ -645,6 +646,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const vendreDeVitrine = useCallback(
     (objetIds: string[], prixTotal: number) => {
+      void audioManager.playCash();
       setState((prev) => {
         if (!prev || !prev.vitrine) return prev;
         const ids = new Set(objetIds);
