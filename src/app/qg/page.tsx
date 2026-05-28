@@ -11,6 +11,7 @@ import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { QgEtatDesLieux } from "@/components/mobile/QgEtatDesLieux";
 import { QgHistorique } from "@/components/mobile/QgHistorique";
 import { useGame } from "@/context/GameContext";
+import { useSettings } from "@/context/SettingsContext";
 import { CATEGORIES } from "@/data/categories";
 import { meteoDuJour } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
@@ -52,6 +53,7 @@ export default function QgPage() {
     marquerHuissierVu,
     avancerJour,
   } = useGame();
+  const { playClick } = useSettings();
   const [gazetteOuverte, setGazetteOuverte] = useState(false);
 
   useEffect(() => {
@@ -110,7 +112,10 @@ export default function QgPage() {
             >
               <button
                 type="button"
-                onClick={() => router.push("/chiner")}
+                onClick={() => {
+                  playClick();
+                  router.push("/chiner");
+                }}
                 style={{
                   padding: "12px 8px",
                   background: "var(--forest-800)",
@@ -129,7 +134,10 @@ export default function QgPage() {
               </button>
               <button
                 type="button"
-                onClick={() => router.push("/vitrine")}
+                onClick={() => {
+                  playClick();
+                  router.push("/vitrine");
+                }}
                 style={{
                   padding: "12px 8px",
                   background: "var(--paper-100)",
@@ -148,7 +156,10 @@ export default function QgPage() {
               </button>
               <button
                 type="button"
-                onClick={() => avancerJour(1)}
+                onClick={() => {
+                  playClick();
+                  avancerJour(1);
+                }}
                 style={{
                   padding: "12px 8px",
                   background: "var(--paper-200)",

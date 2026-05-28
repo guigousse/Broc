@@ -93,9 +93,15 @@
   --font-display: var(--font-display);
   --font-serif:   var(--font-serif);
   --font-mono:    var(--font-mono);
+
+  /* User-adjustable font scale (Réglages) */
+  --font-scale: 1;
 }
 
 /* Base */
+html {
+  font-size: calc(16px * var(--font-scale));
+}
 html, body {
   background: var(--bg);
   color: var(--fg);

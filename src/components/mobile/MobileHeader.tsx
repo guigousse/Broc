@@ -32,7 +32,7 @@ export function MobileHeader({ jour, budget }: MobileHeaderProps) {
     <header style={wrapStyle}>
       <div style={innerStyle}>
         <Link
-          href="/qg"
+          href="/"
           style={{
             fontFamily: "var(--font-display)",
             fontWeight: 700,
