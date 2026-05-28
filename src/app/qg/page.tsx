@@ -95,7 +95,10 @@ export default function QgPage() {
               — Quartier Général · Semaine {Math.ceil(state.jourActuel / 7)} —
             </div>
             <div style={{ marginBottom: 10 }}>
-              <WeekTimeline jourActuel={state.jourActuel} />
+              <WeekTimeline
+                jourActuel={state.jourActuel}
+                meteoSemaine={aGenBulletinMeteo(state) ? state.meteoSemaine : undefined}
+              />
             </div>
             <div
               style={{
@@ -201,6 +204,9 @@ export default function QgPage() {
               </button>
             </div>
           )}
+          <h2 style={sectTitle}>— État des lieux —</h2>
+          <QgEtatDesLieux state={state} />
+
           <GazetteTeaser
             achetee={state.gazetteAchetee}
             jourActuel={state.jourActuel}
@@ -215,9 +221,6 @@ export default function QgPage() {
             budget={state.budget}
             prixGazette={PRIX_GAZETTE}
           />
-
-          <h2 style={sectTitle}>— État des lieux —</h2>
-          <QgEtatDesLieux state={state} />
 
           <h2 style={sectTitle}>— Dernières sessions —</h2>
           <QgHistorique state={state} />
