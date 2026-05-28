@@ -2,7 +2,7 @@
 
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { BookOpen, Wrench } from "lucide-react";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { ItemImage } from "@/components/ui/ItemImage";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
 import type { Objet } from "@/types/game";
@@ -198,11 +198,13 @@ export function StockageItemRow({
         onPointerCancel={onPointerUp}
       >
         <div style={thumbStyle}>
-          <CategorieIcon
+          <ItemImage
+            templateId={objet.templateId}
             categorie={objet.categorie}
-            size={20}
-            strokeWidth={1.5}
-            color={rarityColors.thumbIcon}
+            fit="cover"
+            fallbackIconSize={20}
+            fallbackIconColor={rarityColors.thumbIcon}
+            alt={objet.nom}
           />
         </div>
         <div>

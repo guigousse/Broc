@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { FrameItem } from "@/components/ui/FrameItem";
+import { ItemImage } from "@/components/ui/ItemImage";
 import { getTemplate } from "@/data/objetTemplates";
 import type { Objet } from "@/types/game";
 
@@ -155,7 +156,16 @@ export function ObjetDetailOverlay({
             unique={isUnique}
             etat={objet.etat}
             size={CARD_WIDTH}
-          />
+          >
+            <ItemImage
+              templateId={objet.templateId}
+              categorie={objet.categorie}
+              fit="contain"
+              fallbackIconSize={100}
+              fallbackIconColor="var(--brass-500)"
+              alt={objet.nom}
+            />
+          </FrameItem>
         </div>
 
         <div style={prixCard}>

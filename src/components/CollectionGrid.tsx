@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { Star } from "lucide-react";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { ItemImage } from "@/components/ui/ItemImage";
 import { getRarityColors } from "@/lib/rarityColors";
 import type { CollectionSlot, EtatObjet } from "@/types/game";
 
@@ -153,7 +153,7 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
               </>
             )}
 
-            {/* Centre — emplacement image (placeholder icône catégorie pour l'instant) */}
+            {/* Centre — image de l'item (fallback icône catégorie) */}
             <div style={centerLayer}>
               {isSilhouette ? (
                 <span
@@ -166,12 +166,16 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
                   ?
                 </span>
               ) : (
-                <CategorieIcon
-                  categorie={s.categorie}
-                  size={36}
-                  strokeWidth={1.2}
-                  color={iconColor}
-                />
+                <div style={{ width: "70%", height: "70%" }}>
+                  <ItemImage
+                    templateId={s.templateId}
+                    categorie={s.categorie}
+                    fit="contain"
+                    fallbackIconSize={36}
+                    fallbackIconColor={iconColor}
+                    alt={s.nom}
+                  />
+                </div>
               )}
             </div>
 

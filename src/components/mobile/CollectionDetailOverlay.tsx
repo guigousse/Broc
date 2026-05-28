@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { BookOpen, Plus, Trash2 } from "lucide-react";
 import { FrameItem } from "@/components/ui/FrameItem";
+import { ItemImage } from "@/components/ui/ItemImage";
 import type { CollectionSlot } from "@/types/game";
 
 interface CollectionDetailOverlayProps {
@@ -110,7 +111,16 @@ export function CollectionDetailOverlay({
             unique={!!slot.unique}
             etat={slot.donation?.etat}
             size={CARD_WIDTH}
-          />
+          >
+            <ItemImage
+              templateId={slot.templateId}
+              categorie={slot.categorie}
+              fit="contain"
+              fallbackIconSize={100}
+              fallbackIconColor="var(--brass-500)"
+              alt={slot.nom}
+            />
+          </FrameItem>
         </div>
 
         <div style={actionCard}>
