@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 /**
- * Génère les illustrations d'items via Gemini 2.5 Flash Image ("Nano Banana").
+ * Génère les illustrations d'items via Gemini Image API ("Nano Banana" / "Nano Banana Pro").
+ *
+ * Modèles disponibles (drapeau --model) :
+ *   - `pro`  → gemini-3-pro-image-preview  (Nano Banana Pro, défaut, meilleure qualité)
+ *   - `flash`→ gemini-2.5-flash-image      (Nano Banana, plus rapide / économique)
  *
  * Usage :
- *   GEMINI_API_KEY=xxx npm run gen:images               # tous les items du config, skip si fichier existant
- *   GEMINI_API_KEY=xxx npm run gen:images -- --force    # regénère tous
- *   GEMINI_API_KEY=xxx npm run gen:images -- mus.diapason_acier mus.flute_traversiere_yamaha
+ *   GEMINI_API_KEY=xxx npm run gen:images                                     # par défaut Nano Banana Pro
+ *   GEMINI_API_KEY=xxx npm run gen:images -- --model=flash                    # bascule sur Nano Banana
+ *   GEMINI_API_KEY=xxx npm run gen:images -- --force                          # regénère tous
+ *   GEMINI_API_KEY=xxx npm run gen:images -- mus.diapason_acier               # un seul item
+ *   GEMINI_API_KEY=xxx npm run gen:images -- --resolution=2K --aspect=1:1     # surcharge format (Pro uniquement)
  *
  * Le config est lu depuis scripts/item-prompts.json
  * Les PNG sont écrits dans public/items/{templateId}.png
@@ -23,15 +29,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const OUTPUT_DIR = path.join(PROJECT_ROOT, "public", "items");
 const CONFIG_PATH = path.join(__dirname, "item-prompts.json");
-const MODEL = "gemini-2.5-flash-image";
+
+const MODEL_IDS = {
+  pro: "gemini-3-pro-image-preview",
+  flash: "gemini-2.5-flash-image",
+};
 
 const STYLE_BRIEF = [
   "Vintage Art Déco product illustration in a museum catalog style.",
   "Elegant ink line-art with subtle sepia and forest green color wash.",
   "Centered single object, isolated on a cream parchment background with subtle paper grain texture.",
   "Soft directional lighting, no harsh shadows, no text, no captions, no watermark.",
-  "Clean geometric composition with thin gold accent border framing.",
-  "Square 1:1 aspect ratio.",
+  "Clean geometric composition.",
   "Style of 1920s-1930s French decorative arts.",
 ].join(" ");
 
@@ -46,6 +55,21 @@ if (!apiKey) {
 const args = process.argv.slice(2);
 const force = args.includes("--force");
 const verbose = args.includes("--verbose");
+
+function flagValue(name, fallback) {
+  const prefix = `--${name}=`;
+  const hit = args.find((a) => a.startsWith(prefix));
+  return hit ? hit.slice(prefix.length) : fallback;
+}
+
+const modelKey = flagValue("model", "pro");
+const model = MODEL_IDS[modelKey];
+if (!model) {
+  console.error(`❌ --model="${modelKey}" inconnu. Valeurs : pro | flash`);
+  process.exit(1);
+}
+const aspectRatio = flagValue("aspect", "1:1");
+const imageSize = flagValue("resolution", "2K");
 const onlyIds = args.filter((a) => !a.startsWith("--"));
 
 async function main() {
@@ -85,13 +109,21 @@ async function main() {
 
     const prompt = `${STYLE_BRIEF}\n\nSubject: ${item.description}.`;
     if (verbose) console.log(`  prompt → ${prompt}`);
-    console.log(`🎨  ${item.templateId} — génération en cours…`);
+    console.log(`🎨  ${item.templateId} — génération en cours (${model})…`);
+
+    const requestConfig =
+      modelKey === "pro"
+        ? {
+            model,
+            contents: prompt,
+            config: {
+              imageConfig: { aspectRatio, imageSize },
+            },
+          }
+        : { model, contents: prompt };
 
     try {
-      const response = await ai.models.generateContent({
-        model: MODEL,
-        contents: prompt,
-      });
+      const response = await ai.models.generateContent(requestConfig);
 
       const parts = response.candidates?.[0]?.content?.parts ?? [];
       let saved = false;
