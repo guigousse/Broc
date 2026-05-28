@@ -10,6 +10,7 @@ import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import { useGame } from "@/context/GameContext";
+import { useSettings } from "@/context/SettingsContext";
 import { coutEntree, getBrocanteById } from "@/data/brocantes";
 import { estDebloquee } from "@/lib/deblocage";
 import { genererSession, reagirNegociation } from "@/lib/chine";
@@ -36,6 +37,11 @@ export default function SessionChinePage() {
     marquerVuTemplate,
     marquerDejaPossedeTemplate,
   } = useGame();
+  const { startCrowd, stopCrowd } = useSettings();
+  useEffect(() => {
+    startCrowd();
+    return () => stopCrowd();
+  }, [startCrowd, stopCrowd]);
 
   const brocante = useMemo(
     () => getBrocanteById(params.brocanteId),

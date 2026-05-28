@@ -11,6 +11,7 @@ import { EtatBadge } from "@/components/ui/EtatBadge";
 import { RareteBadge } from "@/components/ui/RareteBadge";
 import { SessionSummary } from "@/components/SessionSummary";
 import { useGame } from "@/context/GameContext";
+import { useSettings } from "@/context/SettingsContext";
 import {
   JOURNEE_DUREE_SECONDES,
   classeBourse,
@@ -80,6 +81,11 @@ export default function VitrineJourneePage() {
     gagnerXP,
     marquerVuTemplate,
   } = useGame();
+  const { startCrowd, stopCrowd } = useSettings();
+  useEffect(() => {
+    startCrowd();
+    return () => stopCrowd();
+  }, [startCrowd, stopCrowd]);
 
   // Modifiers issus des compétences (calculés à la première occurrence où state est dispo)
   const modifiersRef = useRef<VitrineModifiers | null>(null);
