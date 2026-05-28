@@ -26,29 +26,52 @@ function etoileCount(etat: EtatObjet | undefined): number {
   }
 }
 
-const cellBase: CSSProperties = {
-  aspectRatio: "1 / 1",
-  position: "relative",
-  width: "100%",
-  boxSizing: "border-box",
-  display: "block",
-  cursor: "pointer",
-  padding: 0,
-  overflow: "hidden",
-};
+const GRAY_BG = "var(--paper-200)";
+const GRAY_OUTER = "var(--paper-500)";
+const GRAY_INNER = "var(--paper-400)";
 
-const imageLayer: CSSProperties = {
+interface CornerLProps {
+  position: "tl" | "tr" | "bl" | "br";
+  color: string;
+}
+
+function CornerL({ position, color }: CornerLProps) {
+  const isTop = position === "tl" || position === "tr";
+  const isLeft = position === "tl" || position === "bl";
+  return (
+    <span
+      aria-hidden
+      style={{
+        position: "absolute",
+        width: 9,
+        height: 9,
+        top: isTop ? 6 : undefined,
+        bottom: isTop ? undefined : 6,
+        left: isLeft ? 6 : undefined,
+        right: isLeft ? undefined : 6,
+        borderTop: isTop ? `1px solid ${color}` : "none",
+        borderBottom: isTop ? "none" : `1px solid ${color}`,
+        borderLeft: isLeft ? `1px solid ${color}` : "none",
+        borderRight: isLeft ? "none" : `1px solid ${color}`,
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
+
+const centerLayer: CSSProperties = {
   position: "absolute",
   inset: 0,
   display: "grid",
   placeItems: "center",
+  pointerEvents: "none",
 };
 
 const starsRow: CSSProperties = {
   position: "absolute",
   left: 0,
   right: 0,
-  bottom: 4,
+  bottom: 6,
   display: "flex",
   justifyContent: "center",
   gap: 2,
@@ -59,8 +82,9 @@ const newBadge: CSSProperties = {
   position: "absolute",
   top: 3,
   right: 3,
-  width: 16,
+  minWidth: 16,
   height: 16,
+  padding: "0 3px",
   display: "grid",
   placeItems: "center",
   background: "var(--vermillion-600)",
@@ -71,6 +95,7 @@ const newBadge: CSSProperties = {
   lineHeight: 1,
   border: "1px solid var(--paper-100)",
   boxShadow: "0 1px 2px rgba(0,0,0,0.35)",
+  pointerEvents: "none",
 };
 
 export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
@@ -80,22 +105,33 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
         const isDonne = s.donation !== null;
         const isVu = !isDonne && s.vu;
         const isSilhouette = !isDonne && !isVu;
-        const showNewBadge = s.vu && !isDonne && s.vuDansCollection === false;
+        const showNewBadge =
+          s.vu && !isDonne && s.vuDansCollection === false;
         const colors = getRarityColors(s.rarete, !!s.unique);
         const filledStars = isDonne ? etoileCount(s.donation?.etat) : 0;
 
-        const cellStyle: CSSProperties = isSilhouette
-          ? {
-              ...cellBase,
-              border: "1px dashed var(--paper-500)",
-              background: "var(--paper-200)",
-            }
-          : {
-              ...cellBase,
-              border: `1px solid ${colors.outer}`,
-              background: colors.thumbBg,
-              filter: isVu ? "grayscale(0.95) brightness(0.85)" : "none",
-            };
+        // Donné : pleines couleurs rareté. Vu ou silhouette : fond gris papier.
+        const outerColor = isDonne ? colors.outer : GRAY_OUTER;
+        const innerColor = isDonne ? colors.inner : GRAY_INNER;
+        const bg = isDonne ? colors.thumbBg : GRAY_BG;
+        const iconColor = isDonne ? colors.thumbIcon : GRAY_OUTER;
+        const isInteractable = !isSilhouette;
+
+        const cellStyle: CSSProperties = {
+          aspectRatio: "1 / 1",
+          position: "relative",
+          width: "100%",
+          boxSizing: "border-box",
+          border: `1.5px solid ${outerColor}`,
+          borderStyle: isSilhouette ? "dashed" : "solid",
+          background: bg,
+          boxShadow: isSilhouette
+            ? "none"
+            : `inset 0 0 0 2px ${isDonne ? "var(--paper-100)" : GRAY_BG}, inset 0 0 0 3px ${innerColor}`,
+          cursor: isInteractable ? "pointer" : "default",
+          padding: 0,
+          overflow: "hidden",
+        };
 
         return (
           <button
@@ -104,19 +140,26 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
             onClick={() => onTap?.(s)}
             disabled={isSilhouette}
             aria-label={isSilhouette ? "Pièce inconnue" : s.nom}
-            style={{
-              ...cellStyle,
-              cursor: isSilhouette ? "default" : "pointer",
-            }}
+            style={cellStyle}
           >
-            {/* Placeholder "image" — icône catégorie en grand (en attendant la vraie image) */}
-            <div style={imageLayer}>
+            {/* Coins Art Déco */}
+            {!isSilhouette && (
+              <>
+                <CornerL position="tl" color={innerColor} />
+                <CornerL position="tr" color={innerColor} />
+                <CornerL position="bl" color={innerColor} />
+                <CornerL position="br" color={innerColor} />
+              </>
+            )}
+
+            {/* Centre — emplacement image (placeholder icône catégorie pour l'instant) */}
+            <div style={centerLayer}>
               {isSilhouette ? (
                 <span
                   style={{
                     fontFamily: "var(--font-display)",
                     fontSize: 28,
-                    color: "var(--paper-500)",
+                    color: GRAY_OUTER,
                   }}
                 >
                   ?
@@ -124,36 +167,32 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
               ) : (
                 <CategorieIcon
                   categorie={s.categorie}
-                  size={40}
+                  size={36}
                   strokeWidth={1.2}
-                  color={colors.thumbIcon}
+                  color={iconColor}
                 />
               )}
             </div>
 
-            {/* Badge "*" nouveau découvert (uniquement si vu et pas encore consulté) */}
+            {/* Badge "*" — nouveauté pas encore consultée */}
             {showNewBadge && (
               <span style={newBadge} aria-label="Nouvellement découvert">
                 *
               </span>
             )}
 
-            {/* Étoiles en bas centre — seulement si donné (état connu) */}
+            {/* Étoiles d'état — uniquement si donné */}
             {isDonne && (
               <div style={starsRow} aria-label={`État : ${s.donation?.etat}`}>
                 {[0, 1, 2].map((i) => (
                   <Star
                     key={i}
-                    size={12}
+                    size={11}
                     strokeWidth={1.8}
-                    fill={
-                      i < filledStars
-                        ? colors.outer
-                        : "var(--paper-100)"
-                    }
+                    fill={i < filledStars ? colors.outer : "var(--paper-100)"}
                     color={colors.outer}
                     style={{
-                      filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.45))",
+                      filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))",
                     }}
                   />
                 ))}
