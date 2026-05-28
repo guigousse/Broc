@@ -237,6 +237,9 @@ export default function StockagePage() {
         open={objetOuvert !== null}
         onClose={() => setObjetOuvert(null)}
         prixMarche={objetOuvert?.prixReferenceReel ?? 0}
+        prixMarcheConnu={
+          objetOuvert ? categoriesConnuesVitrine.has(objetOuvert.categorie) : false
+        }
         onSetPrixVente={definirPrixVenteSouhaite}
         onAjouterEtal={ajouterAEtal}
         brocanteOuverteNom={brocanteOuverteNom}

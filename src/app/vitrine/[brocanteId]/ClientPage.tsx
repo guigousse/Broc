@@ -389,7 +389,8 @@ export default function VitrineBrocantePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    const prix = suggererPrix(o.prixReferenceReel);
+                    const prix =
+                      o.prixVenteSouhaite ?? suggererPrix(o.prixReferenceReel);
                     mettreEnVitrine(o.id, prix);
                   }}
                   style={{

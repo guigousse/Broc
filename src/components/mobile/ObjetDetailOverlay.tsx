@@ -10,6 +10,8 @@ interface ObjetDetailOverlayProps {
   open: boolean;
   onClose: () => void;
   prixMarche: number;
+  /** Prix marché visible ? Vrai si compétence Connaisseur Vitrine débloquée pour cette catégorie. */
+  prixMarcheConnu: boolean;
   onSetPrixVente: (objetId: string, prix: number) => void;
   onAjouterEtal: ((objet: Objet, prix: number) => void) | null;
   brocanteOuverteNom: string | null;
@@ -152,6 +154,7 @@ export function ObjetDetailOverlay({
   open,
   onClose,
   prixMarche,
+  prixMarcheConnu,
   onSetPrixVente,
   onAjouterEtal,
   brocanteOuverteNom,
@@ -240,7 +243,9 @@ export function ObjetDetailOverlay({
           </div>
           <div style={priceBox}>
             <div style={priceLabel}>Prix du marché</div>
-            <div style={priceValue}>{Math.round(prixMarche)} €</div>
+            <div style={priceValue}>
+              {prixMarcheConnu ? `${Math.round(prixMarche)} €` : "?"}
+            </div>
           </div>
         </div>
 
