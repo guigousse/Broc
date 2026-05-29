@@ -82,21 +82,15 @@ const starsRow: CSSProperties = {
 
 const newBadge: CSSProperties = {
   position: "absolute",
-  top: 3,
-  right: 3,
-  minWidth: 16,
-  height: 16,
-  padding: "0 3px",
-  display: "grid",
-  placeItems: "center",
-  background: "var(--vermillion-600)",
-  color: "var(--paper-100)",
+  top: 4,
+  right: 6,
   fontFamily: "var(--font-display)",
-  fontSize: 14,
+  fontSize: 22,
   fontWeight: 700,
   lineHeight: 1,
-  border: "1px solid var(--paper-100)",
-  boxShadow: "0 1px 2px rgba(0,0,0,0.35)",
+  color: "var(--vermillion-600)",
+  textShadow:
+    "0 0 2px var(--paper-100), 0 0 4px var(--paper-100), 0 1px 2px rgba(0,0,0,0.45)",
   pointerEvents: "none",
 };
 

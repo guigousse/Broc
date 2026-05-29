@@ -97,6 +97,17 @@ export default function CollectionPage() {
     {} as Record<CategorieObjet, number>,
   );
 
+  // Nouveautés non consultées par catégorie (slot vu mais vuDansCollection=false)
+  const nouveautesParCat = CATEGORIES.reduce(
+    (acc, c) => {
+      acc[c] = (state.collection[c] ?? []).some(
+        (s) => s.vu && s.vuDansCollection === false,
+      );
+      return acc;
+    },
+    {} as Record<CategorieObjet, boolean>,
+  );
+
   // Sélection courante : valeur + libellé du bandeau
   const bandeauLabel = filtre ? filtre : "Valeur totale";
   const bandeauValeur = filtre ? valeurs[filtre] ?? 0 : global.valeur;
@@ -163,6 +174,7 @@ export default function CollectionPage() {
               (s, c) => s + (state.collection[c]?.length ?? 0),
               0,
             )}
+            nouveautesParCat={nouveautesParCat}
           />
         </StickyTop>
       }

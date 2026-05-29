@@ -29,6 +29,11 @@ interface CategoriePickerProps {
   totauxParCat?: Partial<Record<CategorieObjet, number>>;
   /** Optionnel : total global (somme des totauxParCat) pour le bouton "Tous". */
   totalGlobal?: number;
+  /**
+   * Optionnel : pour chaque catégorie, indique s'il y a des items découverts
+   * non encore consultés dans la collection (affiche un astérisque rouge).
+   */
+  nouveautesParCat?: Partial<Record<CategorieObjet, boolean>>;
 }
 
 const ICONS: Record<string, LucideIcon> = {
@@ -51,17 +56,30 @@ const cellBase: CSSProperties = {
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  gap: 1,
-  padding: 2,
+  gap: 3,
+  padding: "4px 2px 6px",
   position: "relative",
   cursor: "pointer",
 };
 
 const countText: CSSProperties = {
   fontFamily: "var(--font-mono)",
-  fontSize: 7,
+  fontSize: 8,
+  fontWeight: 700,
   letterSpacing: "0.04em",
   color: "var(--brass-700)",
+};
+
+const newStarStyle: CSSProperties = {
+  position: "absolute",
+  top: 2,
+  right: 4,
+  fontFamily: "var(--font-display)",
+  fontSize: 14,
+  fontWeight: 700,
+  lineHeight: 1,
+  color: "var(--vermillion-600)",
+  pointerEvents: "none",
 };
 
 export function CategoriePicker({
@@ -71,8 +89,11 @@ export function CategoriePicker({
   total,
   totauxParCat,
   totalGlobal,
+  nouveautesParCat,
 }: CategoriePickerProps) {
   const showFraction = totauxParCat !== undefined;
+  const hasAnyNew =
+    !!nouveautesParCat && CATEGORIES.some((c) => nouveautesParCat[c]);
   const cells: Array<{
     key: string;
     cat: CategorieObjet | null;
@@ -80,6 +101,7 @@ export function CategoriePicker({
     count: number;
     max: number | null;
     label: string;
+    nouveau: boolean;
   }> = [
     {
       key: "all",
@@ -88,6 +110,7 @@ export function CategoriePicker({
       count: total,
       max: showFraction ? (totalGlobal ?? null) : null,
       label: "Tous",
+      nouveau: hasAnyNew,
     },
     ...CATEGORIES.map((c) => ({
       key: c,
@@ -96,6 +119,7 @@ export function CategoriePicker({
       count: comptesParCat[c] ?? 0,
       max: showFraction ? (totauxParCat?.[c] ?? null) : null,
       label: c,
+      nouveau: !!nouveautesParCat?.[c],
     })),
   ];
 
@@ -143,6 +167,11 @@ export function CategoriePicker({
             >
               {cell.max !== null ? `${cell.count}/${cell.max}` : cell.count}
             </span>
+            {cell.nouveau && (
+              <span style={newStarStyle} aria-label="Nouveautés">
+                *
+              </span>
+            )}
           </button>
         );
       })}
