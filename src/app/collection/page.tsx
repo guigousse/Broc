@@ -88,6 +88,19 @@ export default function CollectionPage() {
     .map((c) => `${c} ${Math.round(valeurs[c] ?? 0)} €`)
     .join(" · ");
 
+  // Totaux par catégorie (slots possibles, peu importe l'état découvert/donné)
+  const totauxParCat = CATEGORIES.reduce(
+    (acc, c) => {
+      acc[c] = (state.collection[c] ?? []).length;
+      return acc;
+    },
+    {} as Record<CategorieObjet, number>,
+  );
+
+  // Sélection courante : valeur + libellé du bandeau
+  const bandeauLabel = filtre ? filtre : "Valeur totale";
+  const bandeauValeur = filtre ? valeurs[filtre] ?? 0 : global.valeur;
+
   const plein = stockageEstPlein(state);
 
   return (
@@ -114,7 +127,7 @@ export default function CollectionPage() {
                 color: "var(--brass-700)",
               }}
             >
-              — Valeur totale —
+              — {bandeauLabel} —
             </div>
             <div
               style={{
@@ -124,9 +137,9 @@ export default function CollectionPage() {
                 letterSpacing: "0.04em",
               }}
             >
-              {Math.round(global.valeur).toLocaleString("fr-FR")} €
+              {Math.round(bandeauValeur).toLocaleString("fr-FR")} €
             </div>
-            {breakdown && (
+            {!filtre && breakdown && (
               <div
                 style={{
                   fontFamily: "var(--font-serif)",
@@ -145,6 +158,11 @@ export default function CollectionPage() {
             onChange={setFiltre}
             comptesParCat={comptes}
             total={global.donnees}
+            totauxParCat={totauxParCat}
+            totalGlobal={CATEGORIES.reduce(
+              (s, c) => s + (state.collection[c]?.length ?? 0),
+              0,
+            )}
           />
         </StickyTop>
       }

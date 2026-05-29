@@ -125,8 +125,9 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
           position: "relative",
           width: "100%",
           boxSizing: "border-box",
-          border: `1.5px solid ${outerColor}`,
-          borderStyle: isSilhouette ? "dashed" : "solid",
+          border: isSilhouette
+            ? `1.5px dashed ${GRAY_OUTER}`
+            : `1.5px solid ${outerColor}`,
           background: bg,
           boxShadow: isSilhouette
             ? "none"
@@ -134,6 +135,8 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
           cursor: isInteractable ? "pointer" : "default",
           padding: 0,
           overflow: "hidden",
+          display: "grid",
+          placeItems: "center",
           // Pour les items vus (non donnés), grisaille + éclaircit + opacité réduite
           // pour rendre l'image clairement estompée par rapport aux items collectés.
           filter: isVu
@@ -160,19 +163,21 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
               </>
             )}
 
-            {/* Centre — image de l'item (fallback icône catégorie) */}
-            <div style={centerLayer}>
-              {isSilhouette ? (
-                <span
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: 28,
-                    color: GRAY_OUTER,
-                  }}
-                >
-                  ?
-                </span>
-              ) : (
+            {/* Centre — image ou "?" si silhouette */}
+            {isSilhouette ? (
+              <span
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 36,
+                  fontWeight: 700,
+                  color: GRAY_OUTER,
+                  lineHeight: 1,
+                }}
+              >
+                ?
+              </span>
+            ) : (
+              <div style={centerLayer}>
                 <ItemImage
                   templateId={s.templateId}
                   categorie={s.categorie}
@@ -181,8 +186,8 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
                   fallbackIconColor={iconColor}
                   alt={s.nom}
                 />
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Badge "*" — nouveauté pas encore consultée */}
             {showNewBadge && (

@@ -21,6 +21,14 @@ interface CategoriePickerProps {
   onChange: (c: CategorieObjet | null) => void;
   comptesParCat: Partial<Record<CategorieObjet, number>>;
   total: number;
+  /**
+   * Optionnel : si fourni, affiche le compté en "X/Y" (collection) au lieu
+   * du seul compté (stockage). La valeur est le nombre de slots possibles
+   * dans chaque catégorie.
+   */
+  totauxParCat?: Partial<Record<CategorieObjet, number>>;
+  /** Optionnel : total global (somme des totauxParCat) pour le bouton "Tous". */
+  totalGlobal?: number;
 }
 
 const ICONS: Record<string, LucideIcon> = {
@@ -61,20 +69,32 @@ export function CategoriePicker({
   onChange,
   comptesParCat,
   total,
+  totauxParCat,
+  totalGlobal,
 }: CategoriePickerProps) {
+  const showFraction = totauxParCat !== undefined;
   const cells: Array<{
     key: string;
     cat: CategorieObjet | null;
     icon: LucideIcon;
     count: number;
+    max: number | null;
     label: string;
   }> = [
-    { key: "all", cat: null, icon: LayoutGrid, count: total, label: "Tous" },
+    {
+      key: "all",
+      cat: null,
+      icon: LayoutGrid,
+      count: total,
+      max: showFraction ? (totalGlobal ?? null) : null,
+      label: "Tous",
+    },
     ...CATEGORIES.map((c) => ({
       key: c,
       cat: c as CategorieObjet | null,
       icon: ICONS[c] ?? LayoutGrid,
       count: comptesParCat[c] ?? 0,
+      max: showFraction ? (totauxParCat?.[c] ?? null) : null,
       label: c,
     })),
   ];
@@ -121,7 +141,7 @@ export function CategoriePicker({
                 color: active ? "var(--brass-300)" : "var(--brass-700)",
               }}
             >
-              {cell.count}
+              {cell.max !== null ? `${cell.count}/${cell.max}` : cell.count}
             </span>
           </button>
         );
