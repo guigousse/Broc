@@ -1,10 +1,12 @@
 "use client";
 
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
-import { BookOpen, Wrench } from "lucide-react";
+import { Album, Anvil, Plus } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
+import { getItemImageUrl } from "@/lib/itemImages";
+import { flyToTab } from "@/lib/flyAnimation";
 import type { Objet } from "@/types/game";
 
 interface StockageItemRowProps {
@@ -68,6 +70,28 @@ const thumbBase: CSSProperties = {
   height: 44,
   display: "grid",
   placeItems: "center",
+};
+
+const iconWithPlus: CSSProperties = {
+  position: "relative",
+  display: "inline-grid",
+  placeItems: "center",
+  width: 28,
+  height: 28,
+};
+
+const plusBadge: CSSProperties = {
+  position: "absolute",
+  right: -6,
+  bottom: -4,
+  width: 14,
+  height: 14,
+  borderRadius: "50%",
+  background: "var(--paper-100)",
+  border: "1.5px solid currentColor",
+  display: "grid",
+  placeItems: "center",
+  color: "inherit",
 };
 
 export function StockageItemRow({
@@ -146,15 +170,30 @@ export function StockageItemRow({
     background: rarityColors.thumbBg,
     border: `1px solid ${rarityColors.outer}`,
   };
+  const thumbRef = useRef<HTMLDivElement>(null);
+
+  const animateToTab = (tabPath: string) => {
+    const el = thumbRef.current;
+    if (!el) return;
+    flyToTab({
+      fromRect: el.getBoundingClientRect(),
+      imageUrl: getItemImageUrl(objet.templateId),
+      fallbackBg: rarityColors.thumbBg,
+      borderColor: rarityColors.outer,
+      targetSelector: `[data-fly-target="${tabPath}"]`,
+    });
+  };
 
   const handleAtelier = () => {
     if (!atelier.disponible) return;
+    animateToTab("/atelier");
     onEnvoyerAtelier(objet);
     setSnapped("closed");
   };
 
   const handleCollection = () => {
     if (!collection.disponible) return;
+    animateToTab("/collection");
     onEnvoyerCollection(objet);
     setSnapped("closed");
   };
@@ -174,7 +213,12 @@ export function StockageItemRow({
           disabled={!atelier.disponible}
           aria-label="Envoyer à l'atelier"
         >
-          <Wrench size={20} strokeWidth={1.5} />
+          <span style={iconWithPlus}>
+            <Anvil size={22} strokeWidth={1.5} />
+            <span style={plusBadge}>
+              <Plus size={9} strokeWidth={3} />
+            </span>
+          </span>
         </button>
         <button
           type="button"
@@ -183,7 +227,12 @@ export function StockageItemRow({
           disabled={!collection.disponible}
           aria-label="Envoyer dans la collection"
         >
-          <BookOpen size={20} strokeWidth={1.5} />
+          <span style={iconWithPlus}>
+            <Album size={22} strokeWidth={1.5} />
+            <span style={plusBadge}>
+              <Plus size={9} strokeWidth={3} />
+            </span>
+          </span>
         </button>
       </div>
       <div
@@ -197,7 +246,7 @@ export function StockageItemRow({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <div style={thumbStyle}>
+        <div ref={thumbRef} style={thumbStyle}>
           <ItemImage
             templateId={objet.templateId}
             categorie={objet.categorie}

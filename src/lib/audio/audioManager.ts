@@ -99,6 +99,26 @@ class AudioManager {
     osc.stop(now + 0.05);
   }
 
+  /** Petit "ding" ascendant, joué quand un item est ajouté à un emplacement. */
+  playPickup(): void {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(660, now);
+    osc.frequency.exponentialRampToValueAtTime(1320, now + 0.12);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.35, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    osc.connect(gain);
+    gain.connect(this.master);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+
   async playCash(): Promise<void> {
     if (!this.prefs.cash) return;
     this.ensureCtx();
