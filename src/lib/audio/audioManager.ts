@@ -99,24 +99,48 @@ class AudioManager {
     osc.stop(now + 0.05);
   }
 
-  /** Petit "ding" ascendant, joué quand un item est ajouté à un emplacement. */
+  /**
+   * Petite mélodie enthousiaste à 3 notes (do-mi-sol majeur), jouée
+   * quand un item est ajouté à un emplacement (atelier / collection).
+   */
   playPickup(): void {
     if (!this.prefs.clic) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(660, now);
-    osc.frequency.exponentialRampToValueAtTime(1320, now + 0.12);
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.35, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-    osc.connect(gain);
-    gain.connect(this.master);
-    osc.start(now);
-    osc.stop(now + 0.25);
+    const ctx = this.ctx;
+    const master = this.master;
+    const now = ctx.currentTime;
+    // Accord arpégé : C5 (523), E5 (659), G5 (784) — gamme ascendante joyeuse
+    const notes = [523.25, 659.25, 783.99];
+    const stepMs = 80;
+    notes.forEach((freq, i) => {
+      const t0 = now + (i * stepMs) / 1000;
+      const dur = 0.22;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.28, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    });
+    // Petit "sparkle" final (note plus aiguë C6)
+    const tEnd = now + (notes.length * stepMs) / 1000;
+    const sparkle = ctx.createOscillator();
+    const sparkleGain = ctx.createGain();
+    sparkle.type = "sine";
+    sparkle.frequency.setValueAtTime(1046.5, tEnd);
+    sparkleGain.gain.setValueAtTime(0, tEnd);
+    sparkleGain.gain.linearRampToValueAtTime(0.22, tEnd + 0.01);
+    sparkleGain.gain.exponentialRampToValueAtTime(0.001, tEnd + 0.32);
+    sparkle.connect(sparkleGain);
+    sparkleGain.connect(master);
+    sparkle.start(tEnd);
+    sparkle.stop(tEnd + 0.35);
   }
 
   async playCash(): Promise<void> {

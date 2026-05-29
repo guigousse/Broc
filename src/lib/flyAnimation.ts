@@ -34,9 +34,9 @@ export function flyToTab(opts: FlyOpts): void {
 
   const target = document.querySelector(opts.targetSelector) as HTMLElement | null;
 
-  if (opts.playSound !== false) audioManager.playPickup();
-
   if (!target) {
+    // Pas de cible visible : joue quand même le son pour le feedback.
+    if (opts.playSound !== false) audioManager.playPickup();
     return;
   }
   const toRect = target.getBoundingClientRect();
@@ -87,6 +87,7 @@ export function flyToTab(opts: FlyOpts): void {
     // reflow pour redéclencher l'animation si déclenchée plusieurs fois
     void target.offsetWidth;
     target.classList.add(PULSE_CLASS);
+    if (opts.playSound !== false) audioManager.playPickup();
     window.setTimeout(() => target.classList.remove(PULSE_CLASS), 650);
   }, duration);
 }

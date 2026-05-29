@@ -1,13 +1,14 @@
 "use client";
 
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
-import { Album, Anvil, Plus } from "lucide-react";
+import { Album, Anvil, ArrowRight, Star } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
+import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
 import { getItemImageUrl } from "@/lib/itemImages";
 import { flyToTab } from "@/lib/flyAnimation";
-import type { Objet } from "@/types/game";
+import type { EtatObjet, Objet } from "@/types/game";
 
 interface StockageItemRowProps {
   objet: Objet;
@@ -80,19 +81,28 @@ const iconWithPlus: CSSProperties = {
   height: 28,
 };
 
-const plusBadge: CSSProperties = {
+const arrowBadge: CSSProperties = {
   position: "absolute",
-  right: -6,
+  right: -8,
   bottom: -4,
-  width: 14,
-  height: 14,
-  borderRadius: "50%",
-  background: "var(--paper-100)",
-  border: "1.5px solid currentColor",
   display: "grid",
   placeItems: "center",
   color: "inherit",
+  filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.4))",
 };
+
+function etoileCount(etat: EtatObjet): number {
+  switch (etat) {
+    case "Mauvais":
+      return 0;
+    case "Bon":
+      return 1;
+    case "Très bon":
+      return 2;
+    case "Pristin état":
+      return 3;
+  }
+}
 
 export function StockageItemRow({
   objet,
@@ -215,8 +225,8 @@ export function StockageItemRow({
         >
           <span style={iconWithPlus}>
             <Anvil size={22} strokeWidth={1.5} />
-            <span style={plusBadge}>
-              <Plus size={9} strokeWidth={3} />
+            <span style={arrowBadge}>
+              <ArrowRight size={12} strokeWidth={2.4} />
             </span>
           </span>
         </button>
@@ -229,8 +239,8 @@ export function StockageItemRow({
         >
           <span style={iconWithPlus}>
             <Album size={22} strokeWidth={1.5} />
-            <span style={plusBadge}>
-              <Plus size={9} strokeWidth={3} />
+            <span style={arrowBadge}>
+              <ArrowRight size={12} strokeWidth={2.4} />
             </span>
           </span>
         </button>
@@ -271,13 +281,42 @@ export function StockageItemRow({
           </div>
           <div
             style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 9.5,
-              color: "var(--ink-500)",
-              marginTop: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 4,
             }}
+            aria-label={`État ${objet.etat}, catégorie ${objet.categorie}`}
           >
-            {objet.etat} · {objet.rarete} · {objet.categorie}
+            <span
+              style={{ display: "flex", gap: 1 }}
+              aria-label={`État : ${objet.etat}`}
+            >
+              {[0, 1, 2].map((i) => (
+                <Star
+                  key={i}
+                  size={12}
+                  strokeWidth={1.8}
+                  fill={
+                    i < etoileCount(objet.etat)
+                      ? rarityColors.outer
+                      : "transparent"
+                  }
+                  color={rarityColors.outer}
+                />
+              ))}
+            </span>
+            <span
+              style={{ display: "inline-flex", alignItems: "center" }}
+              aria-label={`Catégorie : ${objet.categorie}`}
+            >
+              <CategorieIcon
+                categorie={objet.categorie}
+                size={14}
+                strokeWidth={1.5}
+                color="var(--brass-700)"
+              />
+            </span>
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
