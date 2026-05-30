@@ -228,6 +228,24 @@ export function proposerOffre(
     nego.cibleSecrete,
     persona.elanPct,
   );
+
+  // Si la concession dépasse l'offre du joueur, l'adverse s'aligne et accepte
+  // — il serait illogique de surenchérir contre le joueur (vendeur sous l'offre
+  // d'achat, ou client au-dessus du prix demandé).
+  const accordParAlignement =
+    nego.mode === "achat" ? nouveauPrix <= offre : nouveauPrix >= offre;
+  if (accordParAlignement) {
+    return {
+      ...nego,
+      tour,
+      humeur: Math.min(nego.humeur, 0.3),
+      prixAdverseCourant: offre,
+      derniereOffreJoueur: offre,
+      statut: "conclu",
+      message: pickMessage(MESSAGES_ACCORD, offre),
+    };
+  }
+
   const contreMsgs =
     nego.mode === "achat" ? MESSAGES_CONTRE_OFFRE_VENDEUR : MESSAGES_CONTRE_OFFRE_CLIENT;
   return {
