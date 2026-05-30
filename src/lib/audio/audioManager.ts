@@ -100,6 +100,28 @@ class AudioManager {
   }
 
   /**
+   * Tic discret de drag, plus aigu et plus court que playClick.
+   * Pensé pour être joué en rafale pendant un drag, throttlé côté appelant.
+   */
+  playTick(): void {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(1200, now);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.001);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.018);
+    osc.connect(gain);
+    gain.connect(this.master);
+    osc.start(now);
+    osc.stop(now + 0.03);
+  }
+
+  /**
    * Petite mélodie enthousiaste à 3 notes (do-mi-sol majeur), jouée
    * quand un item est ajouté à un emplacement (atelier / collection).
    */
