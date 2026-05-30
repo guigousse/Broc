@@ -39,8 +39,12 @@ export function NegoBar({
   const tick = useTickSound();
   const lastValRef = useRef(prixJoueur);
 
-  const pctJoueur = (prixJoueur / echelleMax) * 100;
-  const pctAdverse = (prixAdverse / echelleMax) * 100;
+  useEffect(() => {
+    lastValRef.current = prixJoueur;
+  }, [prixJoueur]);
+
+  const pctJoueur = Math.min(100, Math.max(0, (prixJoueur / echelleMax) * 100));
+  const pctAdverse = Math.min(100, Math.max(0, (prixAdverse / echelleMax) * 100));
 
   useEffect(() => {
     if (!dragging) return;
