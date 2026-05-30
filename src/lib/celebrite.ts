@@ -1,5 +1,6 @@
 import type { CelebriteEvenement } from "@/types/game";
 import type { ClientPersonnage } from "@/data/clients";
+import { calculerAxesNego } from "@/data/clients";
 import { BROCANTES } from "@/data/brocantes";
 import { CELEBRITES } from "@/data/celebrites";
 import { PERIODE_TENDANCES_JOURS } from "@/lib/tendances";
@@ -23,20 +24,26 @@ export function tirerCelebrite(): CelebriteEvenement {
  * forte propension à acheter plusieurs pièces d'un coup.
  */
 export function buildCelebritePersonnage(c: CelebriteEvenement): ClientPersonnage {
+  const appetitMin = 1.8;
+  const appetitMax = 2.5;
+  const durete = 0.1;
+  const appetitMoyen = (appetitMin + appetitMax) / 2;
+  const axes = calculerAxesNego(durete, appetitMoyen);
   return {
     id: `celebrite.${c.brocanteId}.${c.jourSemaine}.${c.nom}`,
     archetypeId: "celebrite",
     archetypeNom: "Célébrité",
     nom: c.nom,
     ambiance: "Entre escortée d'un photographe ; la rumeur la précède.",
-    appetitMin: 1.8,
-    appetitMax: 2.5,
-    durete: 0.1,
+    appetitMin,
+    appetitMax,
+    durete,
     chanceMulti: 0.7,
     categoriesPreferees: [],
     categoriesEvitees: [],
     bonusPreference: 0.3,
     malusEvitement: 0.2,
     tierMin: 1,
+    ...axes,
   };
 }
