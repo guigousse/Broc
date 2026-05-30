@@ -56,7 +56,7 @@ export function NegociationSheet({
   const offreInitialeJoueur =
     mode === "achat"
       ? Math.max(1, Math.round(echelleMax * 0.25))
-      : Math.max(1, Math.round(echelleMax * 0.75));
+      : echelleMax;
 
   const [offreJoueur, setOffreJoueur] = useState<number>(offreInitialeJoueur);
   useEffect(() => {
