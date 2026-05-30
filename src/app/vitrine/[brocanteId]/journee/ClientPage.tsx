@@ -15,11 +15,15 @@ import {
   JOURNEE_DUREE_SECONDES,
   classeBourse,
   genererClientEvent,
+  personaDepuisClient,
   prochainIntervalleClient,
-  reagirContreOffre,
+  proposerOffreVente,
   type ClientEvent,
   type VitrineModifiers,
 } from "@/lib/vitrine";
+import { ouvrirNegociation } from "@/lib/negociation";
+import { NegociationSheet } from "@/components/mobile/NegociationSheet";
+import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
 import { getBrocanteById } from "@/data/brocantes";
 import { coutStand, niveauRequis } from "@/data/standLevels";
@@ -125,6 +129,8 @@ export default function VitrineJourneePage() {
   const [clientActuel, setClientActuel] = useState<ClientEvent | null>(null);
   const [journal, setJournal] = useState<EntreeJournal[]>([]);
   const [contreOffre, setContreOffre] = useState<number>(0);
+  const [negoVente, setNegoVente] = useState<NegociationState | null>(null);
+  const [revelationDejaFaite, setRevelationDejaFaite] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [journeeFinie, setJourneeFinie] = useState(false);
   const [ventesEffectuees, setVentesEffectuees] = useState<VenteHistorique[]>([]);
@@ -315,6 +321,12 @@ export default function VitrineJourneePage() {
             setClientActuel(ev);
             setRevelationFaite(false);
             setContreOffre(Math.round((ev.prixDemande + ev.offreInitiale) / 2));
+            if (ev.mode === "negociation") {
+              setNegoVente(ouvrirNegociation("vente", ev.offreInitiale, ev.prixMax));
+              setRevelationDejaFaite(false);
+            } else {
+              setNegoVente(null);
+            }
           }
           return prochainIntervalleClient(mods?.intervalleMultiplier ?? 1);
         }
@@ -423,42 +435,58 @@ export default function VitrineJourneePage() {
     setFeedback(null);
   };
 
-  const handleContreOffre = (ev: ClientEvent) => {
-    const res = reagirContreOffre(
-      contreOffre,
-      ev,
-      modifiersRef.current ?? undefined,
-      { revelationDejaFaite: revelationFaite },
+  const encaisserVente = (ev: ClientEvent, prixFinal: number) => {
+    vendreDeVitrine(
+      ev.panier.map((p) => p.objet.id),
+      prixFinal,
     );
-    if (res.revelation) {
-      setRevelationFaite(true);
-      setFeedback(res.message);
-      return;
+    enregistrerVentes(ev, prixFinal);
+    gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
+    ajouterJournal({
+      heure: heureCourante(),
+      texte: `${ev.persona.nom} accepte ${describePanier(ev)} à ${prixFinal} €.`,
+      ton: "vente",
+    });
+    setClientActuel(null);
+    setNegoVente(null);
+    setFeedback(null);
+  };
+
+  const terminerVisiteClient = (ev: ClientEvent) => {
+    ajouterJournal({
+      heure: heureCourante(),
+      texte: `${ev.persona.nom} s'éloigne sans rien acheter.`,
+      ton: "info",
+    });
+    setClientActuel(null);
+    setNegoVente(null);
+    setFeedback(null);
+  };
+
+  const handleProposerVente = (ev: ClientEvent, offre: number) => {
+    if (!negoVente) return;
+    const next = proposerOffreVente(
+      negoVente,
+      ev.persona,
+      offre,
+      modifiersRef.current ?? undefined,
+      { revelationDejaFaite },
+    );
+    setNegoVente(next);
+
+    // Détection de la révélation Diplomate (en_cours après ce qui aurait été fache).
+    if (
+      next.statut === "en_cours" &&
+      next.humeur >= 0.95 &&
+      !revelationDejaFaite
+    ) {
+      setRevelationDejaFaite(true);
     }
-    if (res.accepte) {
-      vendreDeVitrine(
-        ev.panier.map((p) => p.objet.id),
-        res.prixFinal,
-      );
-      enregistrerVentes(ev, res.prixFinal);
-      gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
-      ajouterJournal({
-        heure: heureCourante(),
-        texte: `${ev.persona.nom} accepte ${describePanier(ev)} à ${res.prixFinal} €.`,
-        ton: "vente",
-      });
-      setClientActuel(null);
-      setFeedback(null);
-    } else if (res.fache) {
-      ajouterJournal({
-        heure: heureCourante(),
-        texte: res.message,
-        ton: "echec",
-      });
-      setClientActuel(null);
-      setFeedback(null);
-    } else {
-      setFeedback(res.message);
+
+    if (next.statut === "conclu") {
+      encaisserVente(ev, offre);
+    } else if (next.statut === "fache" || next.statut === "refus_poli") {
+      terminerVisiteClient(ev);
     }
   };
 
@@ -690,7 +718,7 @@ export default function VitrineJourneePage() {
         ]}
       />
 
-      {clientActuel && !journeeFinie && (
+      {clientActuel && !journeeFinie && clientActuel.mode !== "negociation" && (
         <ClientModal
           ev={clientActuel}
           contreOffre={contreOffre}
@@ -704,8 +732,25 @@ export default function VitrineJourneePage() {
           onContreOffreChange={setContreOffre}
           onAccepterDirect={() => handleAccepterAchatDirect(clientActuel)}
           onAccepterOffre={() => handleAccepterOffreClient(clientActuel)}
-          onContreOffrir={() => handleContreOffre(clientActuel)}
-          onRefuser={() => handleRefuser(clientActuel)}
+          onContreOffrir={() => {}}
+          onRefuser={() => terminerVisiteClient(clientActuel)}
+        />
+      )}
+
+      {clientActuel && !journeeFinie && negoVente && clientActuel.mode === "negociation" && (
+        <NegociationSheet
+          open={true}
+          onClose={() => terminerVisiteClient(clientActuel)}
+          mode="vente"
+          persona={personaDepuisClient(clientActuel.persona)}
+          echelleMax={clientActuel.prixDemande}
+          cibleSecrete={clientActuel.prixMax}
+          prixDepartAdverse={negoVente.prixAdverseCourant}
+          nego={negoVente}
+          onUpdateNego={setNegoVente}
+          onConclu={(prixFinal) => {
+            encaisserVente(clientActuel, prixFinal);
+          }}
         />
       )}
     </div>
