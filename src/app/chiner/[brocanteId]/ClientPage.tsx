@@ -11,7 +11,7 @@ import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { coutEntree, getBrocanteById } from "@/data/brocantes";
 import { estDebloquee } from "@/lib/deblocage";
-import { genererSession, reagirNegociation } from "@/lib/chine";
+import { genererSession } from "@/lib/chine";
 import { stockageEstPlein } from "@/lib/stockage";
 import { indexJourSemaine } from "@/lib/meteo";
 import {
@@ -54,8 +54,6 @@ export default function SessionChinePage() {
   const sessionEnregistreeRef = useRef(false);
   /** Garde synchrone — empêche le double-paiement du droit d'entrée (StrictMode). */
   const entreePayeeRef = useRef(false);
-  /** Négociation en cours par objet : id → offre saisie. */
-  const [negoEnCours, setNegoEnCours] = useState<Record<string, number>>({});
   /** Affiche le résumé de session avant retour au QG. */
   const [resumeOuvert, setResumeOuvert] = useState(false);
   /** XP gagnée localement durant la session, par arbre. */
@@ -132,59 +130,24 @@ export default function SessionChinePage() {
       prev ? prev.map((it) => (it.id === id ? { ...it, ...patch } : it)) : prev,
     );
 
-  const handleFermerNego = (id: string) => {
-    setNegoEnCours((prev) => {
-      const { [id]: _, ...rest } = prev;
-      return rest;
-    });
-  };
-
-  /**
-   * Propose une offre directement (offre passée en argument, pas lue depuis negoEnCours).
-   * Utilisé par NegociationSheet pour éviter le problème de batching React.
-   */
-  const handleProposerOffre = (id: string, offre: number) => {
-    const it = items.find((x) => x.id === id);
-    if (!it) return;
-    const res = reagirNegociation(
-      offre,
-      { prixVendeur: it.prixVendeur, prixMinAccept: it.prixMinAccept },
-      it.negociationsTentees,
-    );
-    if (res.accepte) {
-      setItem(id, {
-        prixVendeur: res.prixFinal,
-        prixMinAccept: res.prixFinal,
-        negociationsTentees: it.negociationsTentees + 1,
-        statut: "disponible",
-      });
-      handleFermerNego(id);
-      gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
-    } else if (res.fache) {
-      setItem(id, {
-        negociationsTentees: it.negociationsTentees + 1,
-        statut: "refuse",
-      });
-      handleFermerNego(id);
-    } else {
-      // Refus poli
-      setItem(id, { negociationsTentees: it.negociationsTentees + 1 });
-    }
-    setFlash(res.message);
-  };
-
+  /** Achat au prix affiché (bouton direct). */
   const handleAcheter = (id: string) => {
     const it = items.find((x) => x.id === id);
     if (!it) return;
-    if (state.budget < it.prixVendeur) {
+    handleAchatAuPrix(it, it.prixVendeur);
+  };
+
+  /** Achat à un prix personnalisé (depuis la négo ou le bouton direct). */
+  const handleAchatAuPrix = (it: ObjetEnVente, prix: number) => {
+    if (state.budget < prix) {
       setFlash("La caisse refuse — fonds insuffisants.");
       return;
     }
-    ajusterBudget(-it.prixVendeur);
-    ajouterObjet({ ...it.objet, prixAchat: it.prixVendeur });
+    ajusterBudget(-prix);
+    ajouterObjet({ ...it.objet, prixAchat: prix });
     marquerDejaPossedeTemplate(it.objet.templateId);
     gagnerXPLocal(catTreeId(it.objet.categorie), XP_ACHAT_OBJET);
-    setItem(id, { statut: "achete" });
+    setItem(it.id, { statut: "achete" });
     setAchats((prev) => [
       ...prev,
       {
@@ -192,10 +155,10 @@ export default function SessionChinePage() {
         categorie: it.objet.categorie,
         etat: it.objet.etat,
         prixReferenceReel: it.objet.prixReferenceReel,
-        prixPaye: it.prixVendeur,
+        prixPaye: prix,
       },
     ]);
-    setFlash(`Acquis pour ${it.prixVendeur} €. Noté dans le carnet.`);
+    setFlash(`Acquis pour ${prix} €. Noté dans le carnet.`);
   };
 
   const handleRentrer = () => {
@@ -286,7 +249,7 @@ export default function SessionChinePage() {
             gap: 8,
           }}
         >
-          {(items ?? []).map((it) => (
+          {(items ?? []).filter((it) => it.statut !== "refuse").map((it) => (
             <ObjetCardMobile
               key={it.id}
               item={it}
@@ -294,6 +257,10 @@ export default function SessionChinePage() {
               plein={plein}
               onNegocier={() => setNegoOuverte(it.id)}
               onAcheter={() => handleAcheter(it.id)}
+              onAcheterApresRefusPoli={() => {
+                const prixFinal = it.negociation?.prixAdverseCourant ?? it.prixVendeur;
+                handleAchatAuPrix(it, prixFinal);
+              }}
             />
           ))}
         </div>
@@ -328,22 +295,31 @@ export default function SessionChinePage() {
         ]}
       />
 
-      {negoOuverte && (() => {
-        const it = (items ?? []).find((i) => i.id === negoOuverte);
-        if (!it) return null;
-        return (
-          <NegociationSheet
-            open
-            onClose={() => setNegoOuverte(null)}
-            prixAffiche={it.prixVendeur}
-            offreInitiale={Math.round(it.prixVendeur * 0.8)}
-            onProposer={(offre) => {
-              handleProposerOffre(it.id, offre);
-              setNegoOuverte(null);
-            }}
-          />
-        );
-      })()}
+      {(items ?? []).map((it) => (
+        <NegociationSheet
+          key={it.id}
+          open={negoOuverte === it.id}
+          onClose={() => setNegoOuverte(null)}
+          mode="achat"
+          persona={it.persona}
+          echelleMax={it.prixVendeur}
+          cibleSecrete={it.prixMinAccept}
+          prixDepartAdverse={it.negociation?.prixAdverseCourant ?? it.prixVendeur}
+          nego={it.negociation}
+          onUpdateNego={(nego) => {
+            if (nego.statut === "fache") {
+              setItem(it.id, { negociation: nego, statut: "refuse" });
+            } else {
+              setItem(it.id, { negociation: nego });
+            }
+          }}
+          onConclu={(prixFinal) => {
+            handleAchatAuPrix(it, prixFinal);
+            gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
+            setNegoOuverte(null);
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -354,15 +330,18 @@ function ObjetCardMobile({
   plein,
   onNegocier,
   onAcheter,
+  onAcheterApresRefusPoli,
 }: {
   item: ObjetEnVente;
   budget: number;
   plein: boolean;
   onNegocier: () => void;
   onAcheter: () => void;
+  onAcheterApresRefusPoli: () => void;
 }) {
   const { objet, prixVendeur, statut } = item;
   const tropCher = budget < prixVendeur;
+  const refusPoli = item.negociation?.statut === "refus_poli";
 
   if (statut === "achete") {
     return (
@@ -435,39 +414,59 @@ function ObjetCardMobile({
             </span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-            <button
-              type="button"
-              onClick={onNegocier}
-              disabled={plein}
-              style={{
-                ...miniBtn(false),
-                opacity: plein ? 0.45 : 1,
-                cursor: plein ? "not-allowed" : "pointer",
-              }}
-            >
-              Négo
-            </button>
-            <button
-              type="button"
-              onClick={onAcheter}
-              disabled={tropCher || plein}
-              style={{
-                ...miniBtn(true),
-                opacity: tropCher || plein ? 0.45 : 1,
-                cursor: tropCher || plein ? "not-allowed" : "pointer",
-                ...(item.negociationsTentees > 0 && !tropCher && !plein
-                  ? {
-                      background: "var(--brass-700)",
-                      color: "var(--paper-100)",
-                      boxShadow:
-                        "inset 0 0 0 1px var(--brass-700), 0 0 0 2px var(--brass-300), 0 2px 6px rgba(176,136,56,0.45)",
-                      animation: "broc-pulse 1.6s ease-in-out infinite",
-                    }
-                  : {}),
-              }}
-            >
-              Acheter
-            </button>
+            {refusPoli ? (
+              <button
+                type="button"
+                onClick={onAcheterApresRefusPoli}
+                disabled={tropCher || plein}
+                style={{
+                  ...miniBtn(true),
+                  gridColumn: "1 / -1",
+                  opacity: tropCher || plein ? 0.45 : 1,
+                  cursor: tropCher || plein ? "not-allowed" : "pointer",
+                  background: "var(--brass-700)",
+                  color: "var(--paper-100)",
+                }}
+              >
+                Acheter — {item.negociation?.prixAdverseCourant ?? prixVendeur} €
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={onNegocier}
+                  disabled={plein}
+                  style={{
+                    ...miniBtn(false),
+                    opacity: plein ? 0.45 : 1,
+                    cursor: plein ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Négo
+                </button>
+                <button
+                  type="button"
+                  onClick={onAcheter}
+                  disabled={tropCher || plein}
+                  style={{
+                    ...miniBtn(true),
+                    opacity: tropCher || plein ? 0.45 : 1,
+                    cursor: tropCher || plein ? "not-allowed" : "pointer",
+                    ...(item.negociationsTentees > 0 && !tropCher && !plein
+                      ? {
+                          background: "var(--brass-700)",
+                          color: "var(--paper-100)",
+                          boxShadow:
+                            "inset 0 0 0 1px var(--brass-700), 0 0 0 2px var(--brass-300), 0 2px 6px rgba(176,136,56,0.45)",
+                          animation: "broc-pulse 1.6s ease-in-out infinite",
+                        }
+                      : {}),
+                  }}
+                >
+                  Acheter
+                </button>
+              </>
+            )}
           </div>
         </>
       }
