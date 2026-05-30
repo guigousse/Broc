@@ -114,6 +114,25 @@ function offreInsultante(
 }
 
 /**
+ * Distance normalisée entre l'offre et le seuil d'insulte.
+ * 0 = offre proche d'être acceptée ; 1 = offre à la limite de l'insulte.
+ * Une offre encore plus basse (au-delà du seuil) est traitée par
+ * offreInsultante() en amont — on clamp ici à [0, 1].
+ */
+function distanceVersInsulte(
+  mode: NegoMode,
+  offre: number,
+  prixAdverseCourant: number,
+  tolerancePct: number,
+): number {
+  const seuil = prixAdverseCourant * tolerancePct;
+  if (seuil <= 0) return 0;
+  const delta =
+    mode === "achat" ? prixAdverseCourant - offre : offre - prixAdverseCourant;
+  return Math.min(1, Math.max(0, delta / seuil));
+}
+
+/**
  * Fonction pure : prend l'état + persona + offre joueur, renvoie le nouvel état.
  * Aucun side-effect.
  */
@@ -125,21 +144,31 @@ export function proposerOffre(
   if (nego.statut !== "en_cours") return nego;
   const tour = nego.tour + 1;
   const pressionTour = tour / persona.patience;
-  const humeurBase = Math.min(1, pressionTour);
 
-  // 1. Accord
+  // 1. Accord — quelle que soit l'humeur, l'accord conclu apaise.
   if (offreRejoint(nego.mode, offre, nego.prixAdverseCourant)) {
     return {
       ...nego,
       tour,
-      humeur: humeurBase,
+      humeur: Math.min(nego.humeur, 0.3),
       derniereOffreJoueur: offre,
       statut: "conclu",
       message: pickMessage(MESSAGES_ACCORD, offre),
     };
   }
 
-  // 2. Colère franche (offre insultante)
+  // Humeur — montée principalement portée par la distance de l'offre au prix
+  // adverse. Une offre très basse fait grimper l'humeur fortement, même au
+  // tour 1. La pression du tour ajoute une pousse secondaire.
+  const distance = distanceVersInsulte(
+    nego.mode,
+    offre,
+    nego.prixAdverseCourant,
+    persona.tolerancePct,
+  );
+  const humeur = Math.min(1, 0.85 * distance + 0.3 * pressionTour);
+
+  // 2. Colère franche (offre insultante — au-delà du seuil de tolérance)
   if (offreInsultante(nego.mode, offre, nego.prixAdverseCourant, persona.tolerancePct)) {
     return {
       ...nego,
@@ -151,27 +180,41 @@ export function proposerOffre(
     };
   }
 
-  // 3. Colère prématurée aléatoire
-  const chanceColere = Math.max(0, (1 - persona.sangFroid) * pressionTour * 0.5);
-  if (Math.random() < chanceColere) {
+  // 3. Fin de négo probabiliste, pilotée par l'humeur. Plus l'humeur est
+  // élevée (rouge), plus la probabilité tend vers 1. Le sangFroid atténue.
+  // Humeur élevée → fache ; humeur moyenne → refus poli.
+  const chanceFin = Math.pow(humeur, 1.5) * (1 - persona.sangFroid * 0.5);
+  if (Math.random() < chanceFin) {
+    if (humeur >= 0.6) {
+      return {
+        ...nego,
+        tour,
+        humeur: 1,
+        derniereOffreJoueur: offre,
+        statut: "fache",
+        message: pickMessage(MESSAGES_FACHE),
+      };
+    }
+    const refusMsgs =
+      nego.mode === "achat" ? MESSAGES_REFUS_POLI_VENDEUR : MESSAGES_REFUS_POLI_CLIENT;
     return {
       ...nego,
       tour,
-      humeur: 1,
+      humeur,
       derniereOffreJoueur: offre,
-      statut: "fache",
-      message: pickMessage(MESSAGES_FACHE),
+      statut: "refus_poli",
+      message: pickMessage(refusMsgs),
     };
   }
 
-  // 4. Refus poli (patience dépassée)
+  // 4. Refus poli (patience épuisée)
   if (tour >= persona.patience) {
     const refusMsgs =
       nego.mode === "achat" ? MESSAGES_REFUS_POLI_VENDEUR : MESSAGES_REFUS_POLI_CLIENT;
     return {
       ...nego,
       tour,
-      humeur: Math.max(humeurBase, 0.8),
+      humeur: Math.max(humeur, 0.8),
       derniereOffreJoueur: offre,
       statut: "refus_poli",
       message: pickMessage(refusMsgs),
@@ -190,7 +233,7 @@ export function proposerOffre(
   return {
     ...nego,
     tour,
-    humeur: humeurBase,
+    humeur,
     prixAdverseCourant: nouveauPrix,
     derniereOffreJoueur: offre,
     statut: "en_cours",

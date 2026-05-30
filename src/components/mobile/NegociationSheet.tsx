@@ -65,12 +65,11 @@ export function NegociationSheet({
 
   const enCours = localNego.statut === "en_cours";
 
+  // Le joueur peut s'aligner exactement sur le prix adverse → bouton "Accepter".
   const minJoueur =
-    mode === "achat" ? 1 : Math.max(1, localNego.prixAdverseCourant + 1);
+    mode === "achat" ? 1 : Math.max(1, localNego.prixAdverseCourant);
   const maxJoueur =
-    mode === "achat"
-      ? Math.max(1, localNego.prixAdverseCourant - 1)
-      : echelleMax;
+    mode === "achat" ? localNego.prixAdverseCourant : echelleMax;
 
   const handleProposer = () => {
     const next = proposerOffre(localNego, persona, offreJoueur);

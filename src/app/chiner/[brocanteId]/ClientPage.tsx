@@ -307,11 +307,7 @@ export default function SessionChinePage() {
           prixDepartAdverse={it.negociation?.prixAdverseCourant ?? it.prixVendeur}
           nego={it.negociation}
           onUpdateNego={(nego) => {
-            if (nego.statut === "fache") {
-              setItem(it.id, { negociation: nego, statut: "refuse" });
-            } else {
-              setItem(it.id, { negociation: nego });
-            }
+            setItem(it.id, { negociation: nego });
           }}
           onConclu={(prixFinal) => {
             handleAchatAuPrix(it, prixFinal);
@@ -342,6 +338,7 @@ function ObjetCardMobile({
   const { objet, prixVendeur, statut } = item;
   const tropCher = budget < prixVendeur;
   const refusPoli = item.negociation?.statut === "refus_poli";
+  const fache = item.negociation?.statut === "fache";
 
   if (statut === "achete") {
     return (
@@ -368,6 +365,65 @@ function ObjetCardMobile({
           </div>
         }
       />
+    );
+  }
+
+  if (fache) {
+    return (
+      <div style={{ position: "relative" }}>
+        <ItemCard
+          templateId={objet.templateId}
+          categorie={objet.categorie}
+          etat={objet.etat}
+          rarete={objet.rarete}
+          nom={objet.nom}
+          dimmed
+          footer={
+            <div
+              style={{
+                textAlign: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "var(--ink-500)",
+                padding: "4px 0",
+              }}
+            >
+              — Indisponible —
+            </div>
+          }
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
+          }}
+        >
+          <span
+            style={{
+              transform: "rotate(-18deg)",
+              color: "var(--vermillion-600)",
+              fontFamily: "var(--font-display)",
+              fontSize: 13,
+              fontWeight: 800,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              border: "2px solid var(--vermillion-600)",
+              padding: "5px 12px",
+              background: "rgba(255, 245, 232, 0.85)",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Vendeur fâché
+          </span>
+        </div>
+      </div>
     );
   }
 
