@@ -40,6 +40,12 @@ export interface ClientPersonnage {
   bonusPreference: number;
   malusEvitement: number;
   tierMin: 1 | 2 | 3;
+  // === Axes de négociation (mode vente) — calculés depuis durete & appetit ===
+  margePct: number;
+  elanPct: number;
+  patience: number;
+  tolerancePct: number;
+  sangFroid: number;
 }
 
 // ======================================================================
