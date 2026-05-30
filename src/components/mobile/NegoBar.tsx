@@ -85,6 +85,7 @@ export function NegoBar({
         <div
           style={{
             ...cursorStyle,
+            top: -16,
             left: `${pctAdverse}%`,
             background: COLOR_ADVERSE,
             color: "white",
@@ -92,12 +93,13 @@ export function NegoBar({
           }}
         >
           {prixAdverse}€
-          <span style={labelStyle}>Lui</span>
+          <span style={{ ...labelStyle, top: -14, bottom: "auto" }}>Lui</span>
         </div>
         <div
           onPointerDown={startDrag}
           style={{
             ...cursorStyle,
+            top: 32,
             left: `${pctJoueur}%`,
             background: COLOR_JOUEUR,
             color: "white",
@@ -117,12 +119,12 @@ export function NegoBar({
 const wrapStyle: CSSProperties = {
   position: "relative",
   padding: "0 24px",
-  margin: "14px 0 4px",
+  margin: "36px 0 4px",
 };
 
 const trackStyle: CSSProperties = {
   position: "relative",
-  height: 60,
+  height: 76,
   borderRadius: 2,
   background:
     "linear-gradient(to bottom, transparent 28px, rgba(0,0,0,0.12) 28px, rgba(0,0,0,0.12) 32px, transparent 32px)",
@@ -130,7 +132,6 @@ const trackStyle: CSSProperties = {
 
 const cursorStyle: CSSProperties = {
   position: "absolute",
-  top: 12,
   width: 36,
   height: 36,
   borderRadius: "50%",
