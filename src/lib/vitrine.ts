@@ -1,11 +1,14 @@
 import type {
   Brocante,
   CategorieObjet,
+  NegoPersona,
+  NegociationState,
   ObjetEnVitrine,
   Tendance,
 } from "@/types/game";
 import type { ClientPersonnage } from "@/data/clients";
 import { modificateurTendance } from "@/lib/tendances";
+import { proposerOffre } from "@/lib/negociation";
 
 /**
  * Bonus appliqué quand l'objet correspond à la spécialisation de la brocante
@@ -242,57 +245,49 @@ export function genererClientEvent(
   };
 }
 
-export interface ResultatContreOffre {
-  accepte: boolean;
-  fache: boolean;
-  /** Diplomate : au lieu de partir fâché, le client révèle son prix max et offre une dernière chance. */
-  revelation: boolean;
-  message: string;
-  prixFinal: number;
+/** Construit un NegoPersona à partir d'un ClientPersonnage (mode vente). */
+export function personaDepuisClient(client: ClientPersonnage): NegoPersona {
+  return {
+    archetype: client.archetypeId,
+    margePct: client.margePct,
+    elanPct: client.elanPct,
+    patience: client.patience,
+    tolerancePct: client.tolerancePct,
+    sangFroid: client.sangFroid,
+  };
 }
 
-export function reagirContreOffre(
+/**
+ * Pas à pas vente. Encapsule la fonction pure proposerOffre + la révélation
+ * du prixMax si la compétence Diplomate est active et pas encore consommée.
+ */
+export function proposerOffreVente(
+  nego: NegociationState,
+  client: ClientPersonnage,
   contreOffre: number,
-  event: ClientEvent,
   modifiers: VitrineModifiers = DEFAULT_MODIFIERS,
   options: { revelationDejaFaite?: boolean } = {},
-): ResultatContreOffre {
-  const seuil = seuilColereEffectif(event.panier, modifiers);
-  if (contreOffre <= event.prixMax) {
+): NegociationState {
+  const persona = personaDepuisClient(client);
+  const next = proposerOffre(nego, persona, contreOffre);
+
+  // Diplomate : si on tombe fâché et que la révélation n'a pas eu lieu, on
+  // transforme la fâcherie en refus poli accompagné de la révélation du
+  // prixMax, et on autorise un dernier tour en remettant statut → en_cours.
+  if (
+    next.statut === "fache" &&
+    modifiers.diplomate &&
+    !options.revelationDejaFaite
+  ) {
     return {
-      accepte: true,
-      fache: false,
-      revelation: false,
-      prixFinal: contreOffre,
-      message: `Vendu. ${event.persona.nom} sort sa bourse.`,
+      ...next,
+      statut: "en_cours",
+      humeur: 0.95,
+      message: `« Mon plafond, c'est ${nego.cibleSecrete} €. Une dernière fois, je vous écoute. »`,
     };
   }
-  if (contreOffre > event.prixMax * seuil) {
-    // Diplomate : révèle son prix max au lieu de partir — sauf si la révélation a déjà été faite (et donc épuisée).
-    if (modifiers.diplomate && !options.revelationDejaFaite) {
-      return {
-        accepte: false,
-        fache: false,
-        revelation: true,
-        prixFinal: 0,
-        message: `« Mon plafond, c'est ${event.prixMax} €. Une dernière fois, je vous écoute. »`,
-      };
-    }
-    return {
-      accepte: false,
-      fache: true,
-      revelation: false,
-      prixFinal: 0,
-      message: `« Vous vous moquez de moi ! » ${event.persona.nom} tourne les talons.`,
-    };
-  }
-  return {
-    accepte: false,
-    fache: false,
-    revelation: false,
-    prixFinal: 0,
-    message: `${event.persona.nom} fronce les sourcils — c'est encore trop cher.`,
-  };
+
+  return next;
 }
 
 export const JOURNEE_DUREE_SECONDES = 90;
