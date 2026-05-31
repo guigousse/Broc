@@ -124,12 +124,9 @@ export function NegociationSheet({
       topDecoration={<PersonaAvatar message={bubbleMessage} info={personaInfo} />}
     >
       <div style={artDecoFrame}>
-        <div style={artDecoCornerTL} aria-hidden />
-        <div style={artDecoCornerTR} aria-hidden />
-        <div style={artDecoCornerBL} aria-hidden />
-        <div style={artDecoCornerBR} aria-hidden />
         <span style={artDecoText}>{nomAffiche}</span>
       </div>
+      <div style={contentPadStyle}>
       {header && <div style={headerStyle}>{header}</div>}
       {venteDirecte ? (
         <div style={btnRowStyle}>
@@ -202,6 +199,7 @@ export function NegociationSheet({
           </div>
         </>
       )}
+      </div>
     </BottomSheet>
   );
 }
@@ -224,46 +222,14 @@ const nomStyle: CSSProperties = {
 
 const artDecoFrame: CSSProperties = {
   position: "relative",
-  margin: "0 0 14px",
-  padding: "10px 36px",
+  padding: "12px 48px",
   background:
     "linear-gradient(180deg, var(--brass-300) 0%, var(--brass-500) 50%, var(--brass-300) 100%)",
-  border: "1.5px solid var(--brass-700)",
+  borderBottom: "2px solid var(--brass-700)",
   boxShadow:
-    "inset 0 0 0 2px rgba(255,243,213,0.55), inset 0 0 0 3px var(--brass-700)",
+    "inset 0 0 0 2px rgba(255,243,213,0.5), inset 0 -3px 0 0 rgba(0,0,0,0.06)",
+  borderRadius: "12px 12px 0 0",
   textAlign: "center",
-};
-
-const artDecoCornerBase: CSSProperties = {
-  position: "absolute",
-  width: 8,
-  height: 8,
-  background: "var(--forest-800)",
-  transform: "rotate(45deg)",
-};
-
-const artDecoCornerTL: CSSProperties = {
-  ...artDecoCornerBase,
-  top: -5,
-  left: 14,
-};
-
-const artDecoCornerTR: CSSProperties = {
-  ...artDecoCornerBase,
-  top: -5,
-  right: 14,
-};
-
-const artDecoCornerBL: CSSProperties = {
-  ...artDecoCornerBase,
-  bottom: -5,
-  left: 14,
-};
-
-const artDecoCornerBR: CSSProperties = {
-  ...artDecoCornerBase,
-  bottom: -5,
-  right: 14,
 };
 
 const artDecoText: CSSProperties = {
@@ -276,6 +242,10 @@ const artDecoText: CSSProperties = {
   textShadow: "0 1px 0 rgba(255,243,213,0.6)",
   position: "relative",
   zIndex: 1,
+};
+
+const contentPadStyle: CSSProperties = {
+  padding: "16px 16px 8px",
 };
 
 const sectionLabel: CSSProperties = {

@@ -32,7 +32,7 @@ const sheetWrap = (maxHeightPct: number): CSSProperties => ({
   right: 0,
   bottom: 0,
   zIndex: 41,
-  background: "var(--paper-100)",
+  background: "var(--paper-200)",
   borderTop: "2px solid var(--forest-800)",
   borderRadius: "14px 14px 0 0",
   boxShadow: "0 -6px 18px rgba(40,25,5,0.20)",
@@ -139,7 +139,7 @@ export function BottomSheet({
         <div
           style={{
             overflowY: "auto",
-            padding: topDecoration ? "60px 16px 12px" : "12px 16px",
+            padding: topDecoration ? 0 : "12px 16px",
           }}
         >
           {children}
@@ -151,7 +151,7 @@ export function BottomSheet({
 
 const topDecorationStyle: CSSProperties = {
   position: "absolute",
-  top: -42,
+  top: -86,
   left: 16,
   right: 16,
   zIndex: 2,
@@ -160,7 +160,7 @@ const topDecorationStyle: CSSProperties = {
 
 const floatingCloseBtn: CSSProperties = {
   position: "absolute",
-  top: 8,
+  top: 14,
   right: 10,
   zIndex: 3,
   width: 30,
