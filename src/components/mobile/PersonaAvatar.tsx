@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
+import Image from "next/image";
 import { Info } from "lucide-react";
 import {
   PersonaInfoOverlay,
@@ -12,16 +13,31 @@ interface PersonaAvatarProps {
   message: string;
   /** Données d'infos persona pour l'overlay (i). */
   info: PersonaInfo;
+  /** Illustration PNG du personnage. Si absent, fallback SVG schématique. */
+  illustrationSrc?: string;
 }
 
 const AVATAR_SIZE = 92;
 
-export function PersonaAvatar({ message, info }: PersonaAvatarProps) {
+export function PersonaAvatar({ message, info, illustrationSrc }: PersonaAvatarProps) {
   const [overlayOpen, setOverlayOpen] = useState(false);
+  const [illustrationFailed, setIllustrationFailed] = useState(false);
+  const showIllustration = illustrationSrc && !illustrationFailed;
   return (
     <>
       <div style={rowStyle}>
         <div style={avatarWrap}>
+          {showIllustration ? (
+            <Image
+              src={illustrationSrc}
+              alt=""
+              width={AVATAR_SIZE}
+              height={AVATAR_SIZE}
+              style={illustrationStyle}
+              onError={() => setIllustrationFailed(true)}
+              priority
+            />
+          ) : (
           <svg
             viewBox="0 0 80 80"
             width={AVATAR_SIZE}
@@ -43,6 +59,7 @@ export function PersonaAvatar({ message, info }: PersonaAvatarProps) {
               fill="var(--forest-800)"
             />
           </svg>
+          )}
           <button
             type="button"
             onClick={() => setOverlayOpen(true)}
@@ -81,6 +98,14 @@ const avatarWrap: CSSProperties = {
 
 const svgStyle: CSSProperties = {
   display: "block",
+  filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.25))",
+};
+
+const illustrationStyle: CSSProperties = {
+  display: "block",
+  width: AVATAR_SIZE,
+  height: AVATAR_SIZE,
+  objectFit: "contain",
   filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.25))",
 };
 

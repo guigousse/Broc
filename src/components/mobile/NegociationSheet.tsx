@@ -32,6 +32,8 @@ interface NegociationSheetProps {
   personaInfo: PersonaInfo;
   /** Nom affiché en titre (sous l'avatar). */
   nomAffiche: string;
+  /** Illustration PNG du persona (passée à PersonaAvatar). */
+  illustrationSrc?: string;
   /** Quand renseigné, remplace la zone négo par une vente directe. */
   venteDirecte?: {
     prixDirect: number;
@@ -54,6 +56,7 @@ export function NegociationSheet({
   header,
   personaInfo,
   nomAffiche,
+  illustrationSrc,
   venteDirecte,
 }: NegociationSheetProps) {
   const [localNego, setLocalNego] = useState<NegociationState>(
@@ -121,7 +124,13 @@ export function NegociationSheet({
       open={open}
       onClose={onClose}
       title={title}
-      topDecoration={<PersonaAvatar message={bubbleMessage} info={personaInfo} />}
+      topDecoration={
+        <PersonaAvatar
+          message={bubbleMessage}
+          info={personaInfo}
+          illustrationSrc={illustrationSrc}
+        />
+      }
     >
       <div style={artDecoFrame}>
         <span style={artDecoText}>{nomAffiche}</span>

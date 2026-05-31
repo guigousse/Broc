@@ -7,6 +7,7 @@ import { SessionSummary } from "@/components/SessionSummary";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
+import { getVendeurIllustration } from "@/lib/personaIllustrations";
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -308,6 +309,7 @@ export default function SessionChinePage() {
           prixDepartAdverse={it.negociation?.prixAdverseCourant ?? it.prixVendeur}
           nego={it.negociation}
           nomAffiche="Un vendeur"
+          illustrationSrc={getVendeurIllustration(it.persona.archetype)}
           personaInfo={{
             archetypeNom: undefined,
             revelePersona: false,
