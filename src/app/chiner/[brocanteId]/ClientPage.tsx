@@ -307,6 +307,13 @@ export default function SessionChinePage() {
           cibleSecrete={it.prixMinAccept}
           prixDepartAdverse={it.negociation?.prixAdverseCourant ?? it.prixVendeur}
           nego={it.negociation}
+          nomAffiche="Un vendeur"
+          personaInfo={{
+            archetypeNom: undefined,
+            revelePersona: false,
+            releveBourse: false,
+            oeilAiguise: false,
+          }}
           header={
             <NegoItemRow
               objet={it.objet}

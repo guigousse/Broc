@@ -719,26 +719,7 @@ export default function VitrineJourneePage() {
         ]}
       />
 
-      {clientActuel && !journeeFinie && clientActuel.mode !== "negociation" && (
-        <ClientModal
-          ev={clientActuel}
-          contreOffre={contreOffre}
-          feedback={feedback}
-          revelePersona={modifiersRef.current?.revelePersona ?? false}
-          releveBourse={modifiersRef.current?.releveBourse ?? false}
-          oeilAiguise={
-            (modifiersRef.current?.oeilAiguise ?? false) || revelationFaite
-          }
-          revelationFaite={revelationFaite}
-          onContreOffreChange={setContreOffre}
-          onAccepterDirect={() => handleAccepterAchatDirect(clientActuel)}
-          onAccepterOffre={() => handleAccepterOffreClient(clientActuel)}
-          onContreOffrir={() => {}}
-          onRefuser={() => terminerVisiteClient(clientActuel)}
-        />
-      )}
-
-      {clientActuel && !journeeFinie && negoVente && clientActuel.mode === "negociation" && (
+      {clientActuel && !journeeFinie && (
         <NegociationSheet
           open={true}
           onClose={() => terminerVisiteClient(clientActuel)}
@@ -746,91 +727,70 @@ export default function VitrineJourneePage() {
           persona={personaDepuisClient(clientActuel.persona)}
           echelleMax={clientActuel.prixDemande}
           cibleSecrete={clientActuel.prixMax}
-          prixDepartAdverse={negoVente.prixAdverseCourant}
-          nego={negoVente}
+          prixDepartAdverse={
+            clientActuel.mode === "negociation" && negoVente
+              ? negoVente.prixAdverseCourant
+              : clientActuel.prixDemande
+          }
+          nego={clientActuel.mode === "negociation" ? negoVente : null}
+          nomAffiche={
+            modifiersRef.current?.revelePersona ||
+            clientActuel.persona.archetypeId === "celebrite"
+              ? clientActuel.persona.nom
+              : "Un inconnu"
+          }
+          personaInfo={{
+            nom: clientActuel.persona.nom,
+            archetypeNom: clientActuel.persona.archetypeNom,
+            ambiance: clientActuel.persona.ambiance,
+            bourse: classeBourse(clientActuel.persona),
+            prixMax: clientActuel.prixMax,
+            revelePersona:
+              (modifiersRef.current?.revelePersona ?? false) ||
+              clientActuel.persona.archetypeId === "celebrite",
+            releveBourse: modifiersRef.current?.releveBourse ?? false,
+            oeilAiguise:
+              (modifiersRef.current?.oeilAiguise ?? false) || revelationFaite,
+          }}
           header={
-            <div>
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 9,
-                  letterSpacing: "0.24em",
-                  textTransform: "uppercase",
-                  color: clientActuel.fancy
-                    ? "var(--vermillion-600)"
-                    : "var(--brass-700)",
-                  textAlign: "center",
-                  marginBottom: 4,
-                }}
-              >
-                — {clientActuel.persona.archetypeId === "celebrite"
-                  ? "✦ une célébrité s'arrête ✦"
-                  : clientActuel.fancy
-                    ? "une bourse rondelette s'approche"
-                    : "un client s'approche"} —
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 700,
-                  fontSize: 16,
-                  letterSpacing: "0.10em",
-                  textTransform: "uppercase",
-                  color: "var(--forest-800)",
-                  textAlign: "center",
-                  lineHeight: 1.1,
-                }}
-              >
-                {modifiersRef.current?.revelePersona ||
-                clientActuel.persona.archetypeId === "celebrite"
-                  ? clientActuel.persona.nom
-                  : "Un inconnu"}
-              </div>
-              {modifiersRef.current?.revelePersona && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
+              {clientActuel.panier.map((p) => (
                 <div
+                  key={p.objet.id}
                   style={{
-                    fontFamily: "var(--font-serif)",
-                    fontStyle: "italic",
-                    fontSize: 12,
-                    color: "var(--ink-500)",
-                    textAlign: "center",
-                    margin: "4px 0 0",
+                    padding: "8px 10px",
+                    background: "var(--paper-100)",
+                    border: "1px solid var(--brass-700)",
                   }}
                 >
-                  {clientActuel.persona.ambiance}
+                  <NegoItemRow
+                    objet={p.objet}
+                    prix={p.prixVente}
+                    prixLabel="Prix demandé"
+                  />
                 </div>
-              )}
-              <div
-                style={{
-                  marginTop: 12,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                }}
-              >
-                {clientActuel.panier.map((p) => (
-                  <div
-                    key={p.objet.id}
-                    style={{
-                      padding: "8px 10px",
-                      background: "var(--paper-100)",
-                      border: "1px solid var(--brass-700)",
-                    }}
-                  >
-                    <NegoItemRow
-                      objet={p.objet}
-                      prix={p.prixVente}
-                      prixLabel="Prix demandé"
-                    />
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           }
           onUpdateNego={setNegoVente}
           onConclu={(prixFinal) => {
             encaisserVente(clientActuel, prixFinal);
           }}
+          venteDirecte={
+            clientActuel.mode === "achat-direct"
+              ? {
+                  prixDirect: clientActuel.prixDemande,
+                  onAccepter: () => handleAccepterAchatDirect(clientActuel),
+                  onRefuser: () => terminerVisiteClient(clientActuel),
+                }
+              : undefined
+          }
         />
       )}
     </div>
