@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { NegoBar } from "@/components/mobile/NegoBar";
 import { HumeurGauge } from "@/components/mobile/HumeurGauge";
@@ -24,6 +24,8 @@ interface NegociationSheetProps {
   nego: NegociationState | null;
   onUpdateNego: (nego: NegociationState) => void;
   onConclu: (prixFinal: number) => void;
+  /** Contenu contextuel affiché en haut de la sheet (objet en achat, acheteur+panier en vente). */
+  header?: ReactNode;
 }
 
 export function NegociationSheet({
@@ -37,6 +39,7 @@ export function NegociationSheet({
   nego,
   onUpdateNego,
   onConclu,
+  header,
 }: NegociationSheetProps) {
   const [localNego, setLocalNego] = useState<NegociationState>(
     nego ?? ouvrirNegociation(mode, prixDepartAdverse, cibleSecrete),
@@ -96,6 +99,7 @@ export function NegociationSheet({
 
   return (
     <BottomSheet open={open} onClose={onClose} title={title}>
+      {header && <div style={headerStyle}>{header}</div>}
       <p style={subtitleStyle}>{localNego.message}</p>
       <NegoBar
         mode={mode}
@@ -137,6 +141,14 @@ export function NegociationSheet({
 function offreRejoint(mode: NegoMode, offre: number, prixAdverse: number): boolean {
   return mode === "achat" ? offre >= prixAdverse : offre <= prixAdverse;
 }
+
+const headerStyle: CSSProperties = {
+  margin: "0 0 14px",
+  padding: "12px 14px",
+  background: "var(--paper-300)",
+  border: "1px solid var(--brass-500)",
+  borderRadius: 6,
+};
 
 const subtitleStyle: CSSProperties = {
   fontFamily: "var(--font-serif)",

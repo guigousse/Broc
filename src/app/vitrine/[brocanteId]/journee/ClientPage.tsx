@@ -747,6 +747,131 @@ export default function VitrineJourneePage() {
           cibleSecrete={clientActuel.prixMax}
           prixDepartAdverse={negoVente.prixAdverseCourant}
           nego={negoVente}
+          header={
+            <div>
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 9,
+                  letterSpacing: "0.24em",
+                  textTransform: "uppercase",
+                  color: clientActuel.fancy
+                    ? "var(--vermillion-600)"
+                    : "var(--brass-700)",
+                  textAlign: "center",
+                  marginBottom: 4,
+                }}
+              >
+                — {clientActuel.persona.archetypeId === "celebrite"
+                  ? "✦ une célébrité s'arrête ✦"
+                  : clientActuel.fancy
+                    ? "une bourse rondelette s'approche"
+                    : "un client s'approche"} —
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 700,
+                  fontSize: 16,
+                  letterSpacing: "0.10em",
+                  textTransform: "uppercase",
+                  color: "var(--forest-800)",
+                  textAlign: "center",
+                  lineHeight: 1.1,
+                }}
+              >
+                {modifiersRef.current?.revelePersona ||
+                clientActuel.persona.archetypeId === "celebrite"
+                  ? clientActuel.persona.nom
+                  : "Un inconnu"}
+              </div>
+              {modifiersRef.current?.revelePersona && (
+                <div
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontStyle: "italic",
+                    fontSize: 12,
+                    color: "var(--ink-500)",
+                    textAlign: "center",
+                    margin: "4px 0 0",
+                  }}
+                >
+                  {clientActuel.persona.ambiance}
+                </div>
+              )}
+              <div
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                {clientActuel.panier.map((p) => (
+                  <div
+                    key={p.objet.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "baseline",
+                      padding: "6px 10px",
+                      background: "var(--paper-100)",
+                      border: "1px solid var(--brass-700)",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 600,
+                        fontSize: 12,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "var(--forest-800)",
+                        flex: 1,
+                        minWidth: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {p.objet.nom}
+                      <span
+                        style={{
+                          marginLeft: 6,
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 10,
+                          color: "var(--ink-500)",
+                          letterSpacing: "0.08em",
+                          textTransform: "none",
+                        }}
+                      >
+                        {p.objet.etat}
+                      </span>
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 700,
+                        fontSize: 14,
+                        color: "var(--forest-800)",
+                      }}
+                    >
+                      {p.prixVente}
+                      <span
+                        style={{
+                          fontSize: 10,
+                          color: "var(--brass-700)",
+                          marginLeft: 2,
+                        }}
+                      >
+                        €
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          }
           onUpdateNego={setNegoVente}
           onConclu={(prixFinal) => {
             encaisserVente(clientActuel, prixFinal);
