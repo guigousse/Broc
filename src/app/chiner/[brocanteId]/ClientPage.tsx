@@ -7,6 +7,7 @@ import { SessionSummary } from "@/components/SessionSummary";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
+import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { coutEntree, getBrocanteById } from "@/data/brocantes";
@@ -307,55 +308,11 @@ export default function SessionChinePage() {
           prixDepartAdverse={it.negociation?.prixAdverseCourant ?? it.prixVendeur}
           nego={it.negociation}
           header={
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 64, flex: "0 0 auto" }}>
-                <ItemCard
-                  templateId={it.objet.templateId}
-                  categorie={it.objet.categorie}
-                  etat={it.objet.etat}
-                  rarete={it.objet.rarete}
-                  nom={it.objet.nom}
-                />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                    color: "var(--forest-800)",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {it.objet.nom}
-                </div>
-                <div
-                  style={{
-                    marginTop: 4,
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 10,
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    color: "var(--ink-500)",
-                  }}
-                >
-                  {it.objet.categorie} · {it.objet.etat} · {it.objet.rarete}
-                </div>
-                <div
-                  style={{
-                    marginTop: 6,
-                    fontFamily: "var(--font-display)",
-                    fontSize: 12,
-                    color: "var(--brass-700)",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  Prix affiché : <strong>{it.prixVendeur} €</strong>
-                </div>
-              </div>
-            </div>
+            <NegoItemRow
+              objet={it.objet}
+              prix={it.prixVendeur}
+              prixLabel="Prix affiché"
+            />
           }
           onUpdateNego={(nego) => {
             setItem(it.id, { negociation: nego });

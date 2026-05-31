@@ -58,7 +58,7 @@ const actionBtn = (
 
 const item: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "44px 1fr auto",
+  gridTemplateColumns: "48px 1fr auto",
   gap: 10,
   alignItems: "center",
   padding: "8px 12px",
@@ -67,8 +67,8 @@ const item: CSSProperties = {
 };
 
 const thumbBase: CSSProperties = {
-  width: 44,
-  height: 44,
+  width: 48,
+  height: 48,
   display: "grid",
   placeItems: "center",
 };

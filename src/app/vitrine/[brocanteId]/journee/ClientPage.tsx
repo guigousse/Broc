@@ -23,6 +23,7 @@ import {
 } from "@/lib/vitrine";
 import { ouvrirNegociation } from "@/lib/negociation";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
+import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
 import { getBrocanteById } from "@/data/brocantes";
@@ -801,72 +802,26 @@ export default function VitrineJourneePage() {
               )}
               <div
                 style={{
-                  marginTop: 10,
+                  marginTop: 12,
                   display: "flex",
                   flexDirection: "column",
-                  gap: 6,
+                  gap: 8,
                 }}
               >
                 {clientActuel.panier.map((p) => (
                   <div
                     key={p.objet.id}
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "baseline",
-                      padding: "6px 10px",
+                      padding: "8px 10px",
                       background: "var(--paper-100)",
                       border: "1px solid var(--brass-700)",
                     }}
                   >
-                    <span
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontWeight: 600,
-                        fontSize: 12,
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                        color: "var(--forest-800)",
-                        flex: 1,
-                        minWidth: 0,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {p.objet.nom}
-                      <span
-                        style={{
-                          marginLeft: 6,
-                          fontFamily: "var(--font-mono)",
-                          fontSize: 10,
-                          color: "var(--ink-500)",
-                          letterSpacing: "0.08em",
-                          textTransform: "none",
-                        }}
-                      >
-                        {p.objet.etat}
-                      </span>
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontWeight: 700,
-                        fontSize: 14,
-                        color: "var(--forest-800)",
-                      }}
-                    >
-                      {p.prixVente}
-                      <span
-                        style={{
-                          fontSize: 10,
-                          color: "var(--brass-700)",
-                          marginLeft: 2,
-                        }}
-                      >
-                        €
-                      </span>
-                    </span>
+                    <NegoItemRow
+                      objet={p.objet}
+                      prix={p.prixVente}
+                      prixLabel="Prix demandé"
+                    />
                   </div>
                 ))}
               </div>
