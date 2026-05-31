@@ -14,6 +14,8 @@ interface PersonaAvatarProps {
   info: PersonaInfo;
 }
 
+const AVATAR_SIZE = 92;
+
 export function PersonaAvatar({ message, info }: PersonaAvatarProps) {
   const [overlayOpen, setOverlayOpen] = useState(false);
   return (
@@ -22,8 +24,8 @@ export function PersonaAvatar({ message, info }: PersonaAvatarProps) {
         <div style={avatarWrap}>
           <svg
             viewBox="0 0 80 80"
-            width={84}
-            height={84}
+            width={AVATAR_SIZE}
+            height={AVATAR_SIZE}
             style={svgStyle}
             aria-hidden
           >
@@ -53,7 +55,7 @@ export function PersonaAvatar({ message, info }: PersonaAvatarProps) {
         <div style={bubbleWrap}>
           <div style={tailOuter} aria-hidden />
           <div style={tailInner} aria-hidden />
-          <div style={bubbleText}>{message}</div>
+          <span style={bubbleText}>{message}</span>
         </div>
       </div>
       {overlayOpen && (
@@ -67,18 +69,19 @@ const rowStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 12,
-  margin: "0 0 12px",
 };
 
 const avatarWrap: CSSProperties = {
   position: "relative",
   flex: "0 0 auto",
-  width: 84,
-  height: 84,
+  width: AVATAR_SIZE,
+  height: AVATAR_SIZE,
+  pointerEvents: "auto",
 };
 
 const svgStyle: CSSProperties = {
   display: "block",
+  filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.25))",
 };
 
 const infoBtn: CSSProperties = {
@@ -96,16 +99,19 @@ const infoBtn: CSSProperties = {
   cursor: "pointer",
   padding: 0,
   boxShadow: "0 2px 4px rgba(0,0,0,0.22)",
+  pointerEvents: "auto",
 };
 
 const bubbleWrap: CSSProperties = {
   position: "relative",
-  flex: 1,
-  minWidth: 0,
-  padding: "10px 14px",
+  display: "inline-block",
+  maxWidth: "70%",
+  padding: "8px 12px",
   background: "var(--paper-100)",
   border: "1px solid var(--brass-500)",
   borderRadius: 8,
+  boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+  pointerEvents: "auto",
 };
 
 const tailOuter: CSSProperties = {
@@ -138,5 +144,6 @@ const bubbleText: CSSProperties = {
   fontSize: 13,
   color: "var(--ink-700)",
   lineHeight: 1.4,
-  minHeight: 28,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
 };

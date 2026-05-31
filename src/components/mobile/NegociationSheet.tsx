@@ -117,9 +117,19 @@ export function NegociationSheet({
   const title = venteDirecte ? "Vente" : "Négociation";
 
   return (
-    <BottomSheet open={open} onClose={onClose} title={title}>
-      <PersonaAvatar message={bubbleMessage} info={personaInfo} />
-      <h2 style={nomStyle}>{nomAffiche}</h2>
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title={title}
+      topDecoration={<PersonaAvatar message={bubbleMessage} info={personaInfo} />}
+    >
+      <div style={artDecoFrame}>
+        <div style={artDecoCornerTL} aria-hidden />
+        <div style={artDecoCornerTR} aria-hidden />
+        <div style={artDecoCornerBL} aria-hidden />
+        <div style={artDecoCornerBR} aria-hidden />
+        <span style={artDecoText}>{nomAffiche}</span>
+      </div>
       {header && <div style={headerStyle}>{header}</div>}
       {venteDirecte ? (
         <div style={btnRowStyle}>
@@ -210,6 +220,62 @@ const nomStyle: CSSProperties = {
   textAlign: "center",
   margin: "4px 0 12px",
   lineHeight: 1.15,
+};
+
+const artDecoFrame: CSSProperties = {
+  position: "relative",
+  margin: "0 0 14px",
+  padding: "10px 36px",
+  background:
+    "linear-gradient(180deg, var(--brass-300) 0%, var(--brass-500) 50%, var(--brass-300) 100%)",
+  border: "1.5px solid var(--brass-700)",
+  boxShadow:
+    "inset 0 0 0 2px rgba(255,243,213,0.55), inset 0 0 0 3px var(--brass-700)",
+  textAlign: "center",
+};
+
+const artDecoCornerBase: CSSProperties = {
+  position: "absolute",
+  width: 8,
+  height: 8,
+  background: "var(--forest-800)",
+  transform: "rotate(45deg)",
+};
+
+const artDecoCornerTL: CSSProperties = {
+  ...artDecoCornerBase,
+  top: -5,
+  left: 14,
+};
+
+const artDecoCornerTR: CSSProperties = {
+  ...artDecoCornerBase,
+  top: -5,
+  right: 14,
+};
+
+const artDecoCornerBL: CSSProperties = {
+  ...artDecoCornerBase,
+  bottom: -5,
+  left: 14,
+};
+
+const artDecoCornerBR: CSSProperties = {
+  ...artDecoCornerBase,
+  bottom: -5,
+  right: 14,
+};
+
+const artDecoText: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontWeight: 700,
+  fontSize: 18,
+  letterSpacing: "0.18em",
+  textTransform: "uppercase",
+  color: "var(--forest-800)",
+  textShadow: "0 1px 0 rgba(255,243,213,0.6)",
+  position: "relative",
+  zIndex: 1,
 };
 
 const sectionLabel: CSSProperties = {
