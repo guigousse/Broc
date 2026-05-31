@@ -85,7 +85,6 @@ export function NegoBar({
         <div
           style={{
             ...cursorStyle,
-            top: -16,
             left: `${pctAdverse}%`,
             background: COLOR_ADVERSE,
             color: "white",
@@ -99,7 +98,6 @@ export function NegoBar({
           onPointerDown={startDrag}
           style={{
             ...cursorStyle,
-            top: 32,
             left: `${pctJoueur}%`,
             background: COLOR_JOUEUR,
             color: "white",
@@ -119,12 +117,12 @@ export function NegoBar({
 const wrapStyle: CSSProperties = {
   position: "relative",
   padding: "0 24px",
-  margin: "36px 0 4px",
+  margin: "28px 0 4px",
 };
 
 const trackStyle: CSSProperties = {
   position: "relative",
-  height: 76,
+  height: 60,
   borderRadius: 2,
   background:
     "linear-gradient(to bottom, transparent 28px, rgba(0,0,0,0.12) 28px, rgba(0,0,0,0.12) 32px, transparent 32px)",
@@ -132,6 +130,7 @@ const trackStyle: CSSProperties = {
 
 const cursorStyle: CSSProperties = {
   position: "absolute",
+  top: 12,
   width: 36,
   height: 36,
   borderRadius: "50%",
