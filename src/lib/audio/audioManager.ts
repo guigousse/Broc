@@ -177,6 +177,30 @@ class AudioManager {
     src.start();
   }
 
+  async playRepair(): Promise<void> {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/repair.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
+  async playBreak(): Promise<void> {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/break.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   async startCrowd(): Promise<void> {
     if (!this.prefs.foule) return;
     this.ensureCtx();
