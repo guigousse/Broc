@@ -119,6 +119,7 @@ export function TabBar() {
             }}
           >
             <span
+              data-fly-target={t.path}
               style={{
                 ...iconBox,
                 background: active ? "var(--forest-800)" : "var(--paper-100)",

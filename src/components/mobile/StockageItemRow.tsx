@@ -1,9 +1,14 @@
 "use client";
 
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
-import { BookOpen, Wrench } from "lucide-react";
+import { Album, Anvil, ArrowRight, Star } from "lucide-react";
+import { ItemImage } from "@/components/ui/ItemImage";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
-import type { Objet } from "@/types/game";
+import { getRarityColors } from "@/lib/rarityColors";
+import { getTemplate } from "@/data/objetTemplates";
+import { getItemImageUrl } from "@/lib/itemImages";
+import { flyToTab } from "@/lib/flyAnimation";
+import type { EtatObjet, Objet } from "@/types/game";
 
 interface StockageItemRowProps {
   objet: Objet;
@@ -53,7 +58,7 @@ const actionBtn = (
 
 const item: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "44px 1fr auto",
+  gridTemplateColumns: "48px 1fr auto",
   gap: 10,
   alignItems: "center",
   padding: "8px 12px",
@@ -61,15 +66,43 @@ const item: CSSProperties = {
   touchAction: "pan-y",
 };
 
-const thumb: CSSProperties = {
-  width: 44,
-  height: 44,
-  background:
-    "linear-gradient(135deg, var(--paper-500) 0%, var(--brass-700) 100%)",
-  border: "1px solid var(--brass-700)",
+const thumbBase: CSSProperties = {
+  width: 48,
+  height: 48,
   display: "grid",
   placeItems: "center",
 };
+
+const iconWithPlus: CSSProperties = {
+  position: "relative",
+  display: "inline-grid",
+  placeItems: "center",
+  width: 28,
+  height: 28,
+};
+
+const arrowBadge: CSSProperties = {
+  position: "absolute",
+  right: -8,
+  bottom: -4,
+  display: "grid",
+  placeItems: "center",
+  color: "inherit",
+  filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.4))",
+};
+
+function etoileCount(etat: EtatObjet): number {
+  switch (etat) {
+    case "Mauvais":
+      return 0;
+    case "Bon":
+      return 1;
+    case "Très bon":
+      return 2;
+    case "Pristin état":
+      return 3;
+  }
+}
 
 export function StockageItemRow({
   objet,
@@ -120,9 +153,15 @@ export function StockageItemRow({
       return;
     }
     const finalDelta = dragX;
+    const wasVerticalScroll = axisLockedRef.current === "v";
     setDragging(false);
     setDragX(0);
     startRef.current = null;
+    // Si l'utilisateur a scrollé verticalement, ne pas déclencher le tap
+    if (wasVerticalScroll) {
+      axisLockedRef.current = null;
+      return;
+    }
     if (!movedRef.current || axisLockedRef.current !== "h") {
       if (Math.abs(finalDelta) < TAP_THRESHOLD) {
         onTap(objet);
@@ -134,14 +173,37 @@ export function StockageItemRow({
     else setSnapped("closed");
   };
 
+  const isUnique = !!getTemplate(objet.templateId)?.unique;
+  const rarityColors = getRarityColors(objet.rarete, isUnique);
+  const thumbStyle: CSSProperties = {
+    ...thumbBase,
+    background: rarityColors.thumbBg,
+    border: `1px solid ${rarityColors.outer}`,
+  };
+  const thumbRef = useRef<HTMLDivElement>(null);
+
+  const animateToTab = (tabPath: string) => {
+    const el = thumbRef.current;
+    if (!el) return;
+    flyToTab({
+      fromRect: el.getBoundingClientRect(),
+      imageUrl: getItemImageUrl(objet.templateId),
+      fallbackBg: rarityColors.thumbBg,
+      borderColor: rarityColors.outer,
+      targetSelector: `[data-fly-target="${tabPath}"]`,
+    });
+  };
+
   const handleAtelier = () => {
     if (!atelier.disponible) return;
+    animateToTab("/atelier");
     onEnvoyerAtelier(objet);
     setSnapped("closed");
   };
 
   const handleCollection = () => {
     if (!collection.disponible) return;
+    animateToTab("/collection");
     onEnvoyerCollection(objet);
     setSnapped("closed");
   };
@@ -161,7 +223,12 @@ export function StockageItemRow({
           disabled={!atelier.disponible}
           aria-label="Envoyer à l'atelier"
         >
-          <Wrench size={20} strokeWidth={1.5} />
+          <span style={iconWithPlus}>
+            <Anvil size={22} strokeWidth={1.5} />
+            <span style={arrowBadge}>
+              <ArrowRight size={12} strokeWidth={2.4} />
+            </span>
+          </span>
         </button>
         <button
           type="button"
@@ -170,7 +237,12 @@ export function StockageItemRow({
           disabled={!collection.disponible}
           aria-label="Envoyer dans la collection"
         >
-          <BookOpen size={20} strokeWidth={1.5} />
+          <span style={iconWithPlus}>
+            <Album size={22} strokeWidth={1.5} />
+            <span style={arrowBadge}>
+              <ArrowRight size={12} strokeWidth={2.4} />
+            </span>
+          </span>
         </button>
       </div>
       <div
@@ -184,12 +256,14 @@ export function StockageItemRow({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <div style={thumb}>
-          <CategorieIcon
+        <div ref={thumbRef} style={thumbStyle}>
+          <ItemImage
+            templateId={objet.templateId}
             categorie={objet.categorie}
-            size={20}
-            strokeWidth={1.5}
-            color="var(--brass-100)"
+            fit="cover"
+            fallbackIconSize={20}
+            fallbackIconColor={rarityColors.thumbIcon}
+            alt={objet.nom}
           />
         </div>
         <div>
@@ -207,13 +281,42 @@ export function StockageItemRow({
           </div>
           <div
             style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 9.5,
-              color: "var(--ink-500)",
-              marginTop: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 4,
             }}
+            aria-label={`État ${objet.etat}, catégorie ${objet.categorie}`}
           >
-            {objet.etat} · {objet.rarete} · {objet.categorie}
+            <span
+              style={{ display: "flex", gap: 1 }}
+              aria-label={`État : ${objet.etat}`}
+            >
+              {[0, 1, 2].map((i) => (
+                <Star
+                  key={i}
+                  size={12}
+                  strokeWidth={1.8}
+                  fill={
+                    i < etoileCount(objet.etat)
+                      ? rarityColors.outer
+                      : "transparent"
+                  }
+                  color={rarityColors.outer}
+                />
+              ))}
+            </span>
+            <span
+              style={{ display: "inline-flex", alignItems: "center" }}
+              aria-label={`Catégorie : ${objet.categorie}`}
+            >
+              <CategorieIcon
+                categorie={objet.categorie}
+                size={14}
+                strokeWidth={1.5}
+                color="var(--brass-700)"
+              />
+            </span>
           </div>
         </div>
         <div style={{ textAlign: "right" }}>

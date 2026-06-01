@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { Store, X } from "lucide-react";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { FrameItem } from "@/components/ui/FrameItem";
+import { ItemImage } from "@/components/ui/ItemImage";
+import { getTemplate } from "@/data/objetTemplates";
 import type { Objet } from "@/types/game";
 
 interface ObjetDetailOverlayProps {
@@ -21,132 +22,89 @@ const backdrop: CSSProperties = {
   position: "fixed",
   inset: 0,
   zIndex: 105,
-  background: "rgba(15,31,24,0.78)",
+  background: "rgba(15,31,24,0.82)",
   display: "grid",
   placeItems: "center",
   padding: "20px",
 };
 
+const CARD_WIDTH = 290;
+
 const card: CSSProperties = {
-  maxWidth: 380,
-  width: "100%",
-  background: "var(--paper-100)",
-  border: "1px solid var(--brass-500)",
-  boxShadow:
-    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
-  padding: "16px",
-  maxHeight: "90vh",
-  overflowY: "auto",
-};
-
-const topBar: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  marginBottom: 12,
-};
-
-const titleStyle: CSSProperties = {
-  fontFamily: "var(--font-display)",
-  fontSize: 12,
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-  color: "var(--forest-800)",
-  fontWeight: 700,
-  flex: 1,
-};
-
-const closeBtn: CSSProperties = {
+  width: CARD_WIDTH,
+  maxWidth: "100%",
+  position: "relative",
   background: "transparent",
-  border: "1px solid var(--brass-500)",
-  color: "var(--brass-700)",
-  padding: 4,
-  cursor: "pointer",
-  display: "grid",
-  placeItems: "center",
 };
 
 const previewWrap: CSSProperties = {
-  width: 120,
-  height: 120,
-  margin: "8px auto 12px",
-  background:
-    "linear-gradient(135deg, var(--paper-500) 0%, var(--brass-700) 100%)",
-  border: "1px solid var(--brass-700)",
   display: "grid",
   placeItems: "center",
+  marginBottom: 40,
+  position: "relative",
 };
 
-const meta: CSSProperties = {
+const prixCard: CSSProperties = {
+  position: "relative",
+  background: "var(--paper-100)",
+  border: "1px solid var(--brass-500)",
+  boxShadow:
+    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-700), 0 10px 20px rgba(0,0,0,0.3)",
+  padding: "20px 22px",
+};
+
+const prixRow: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "baseline",
+  padding: "10px 0",
+  borderBottom: "1px dotted var(--brass-500)",
+};
+
+const prixRowLast: CSSProperties = {
+  ...prixRow,
+  borderBottom: "none",
+};
+
+const prixLabel: CSSProperties = {
   fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  letterSpacing: "0.12em",
-  color: "var(--ink-500)",
-  textAlign: "center",
-  marginBottom: 16,
-};
-
-const priceGrid: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 10,
-  marginBottom: 14,
-};
-
-const priceBox: CSSProperties = {
-  border: "1px dotted var(--brass-500)",
-  padding: "8px 10px",
-  background: "var(--paper-200)",
-};
-
-const priceLabel: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 9,
-  letterSpacing: "0.16em",
+  fontSize: 10.5,
+  letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: "var(--brass-700)",
 };
 
-const priceValue: CSSProperties = {
+const prixValue: CSSProperties = {
   fontFamily: "var(--font-display)",
   fontSize: 14,
   color: "var(--forest-800)",
-  marginTop: 2,
-};
-
-const venteRow: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  marginBottom: 14,
+  fontWeight: 600,
 };
 
 const venteInput: CSSProperties = {
-  flex: 1,
-  padding: "8px 10px",
-  border: "1px solid var(--brass-500)",
-  background: "var(--paper-200)",
   fontFamily: "var(--font-display)",
   fontSize: 14,
   color: "var(--forest-800)",
+  fontWeight: 600,
+  border: "none",
+  borderBottom: "1px solid var(--brass-500)",
+  background: "transparent",
+  textAlign: "right",
+  width: 64,
   outline: "none",
+  padding: "2px 4px",
 };
 
-const etalBtn: CSSProperties = {
-  width: "100%",
-  padding: "12px",
-  border: "1px solid var(--brass-500)",
-  background: "var(--forest-800)",
-  color: "var(--brass-300)",
-  fontFamily: "var(--font-display)",
-  fontSize: 12,
-  letterSpacing: "0.16em",
-  textTransform: "uppercase",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
+const restaurationBanner: CSSProperties = {
+  padding: "8px 10px",
+  background: "var(--paper-200)",
+  border: "1px dotted var(--brass-700)",
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  letterSpacing: "0.12em",
+  color: "var(--brass-700)",
+  textAlign: "center",
+  marginBottom: 12,
 };
 
 export function ObjetDetailOverlay({
@@ -156,8 +114,6 @@ export function ObjetDetailOverlay({
   prixMarche,
   prixMarcheConnu,
   onSetPrixVente,
-  onAjouterEtal,
-  brocanteOuverteNom,
 }: ObjetDetailOverlayProps) {
   const [prixLocal, setPrixLocal] = useState<number>(0);
 
@@ -176,6 +132,7 @@ export function ObjetDetailOverlay({
   };
 
   const enRestauration = !!objet.enRestauration;
+  const isUnique = !!getTemplate(objet.templateId)?.unique;
 
   return (
     <div
@@ -191,101 +148,64 @@ export function ObjetDetailOverlay({
       }}
     >
       <div style={card}>
-        <div style={topBar}>
-          <div style={titleStyle}>{objet.nom}</div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            style={closeBtn}
-          >
-            <X size={14} strokeWidth={1.5} />
-          </button>
-        </div>
-
         <div style={previewWrap}>
-          <CategorieIcon
+          <FrameItem
             categorie={objet.categorie}
-            size={56}
-            strokeWidth={1.2}
-            color="var(--brass-100)"
-          />
-        </div>
-
-        <div style={meta}>
-          {objet.etat} · {objet.rarete} · {objet.categorie}
-        </div>
-
-        {enRestauration && (
-          <div
-            style={{
-              padding: "8px 10px",
-              background: "var(--paper-300)",
-              border: "1px dotted var(--brass-700)",
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              letterSpacing: "0.12em",
-              color: "var(--brass-700)",
-              textAlign: "center",
-              marginBottom: 12,
-            }}
+            titre={objet.nom}
+            rarete={objet.rarete}
+            unique={isUnique}
+            etat={objet.etat}
+            size={CARD_WIDTH}
           >
-            En restauration jusqu&apos;au jour {objet.enRestauration?.jourFin}
-          </div>
-        )}
+            <ItemImage
+              templateId={objet.templateId}
+              categorie={objet.categorie}
+              fit="cover"
+              fallbackIconSize={100}
+              fallbackIconColor="var(--brass-500)"
+              alt={objet.nom}
+            />
+          </FrameItem>
+        </div>
 
-        <div style={priceGrid}>
-          <div style={priceBox}>
-            <div style={priceLabel}>Prix d&apos;achat</div>
-            <div style={priceValue}>
-              {objet.prixAchat !== undefined ? `${objet.prixAchat} €` : "—"}
+        <div style={prixCard}>
+          {enRestauration && (
+            <div style={restaurationBanner}>
+              En restauration jusqu&apos;au jour {objet.enRestauration?.jourFin}
             </div>
+          )}
+
+          <div style={prixRow}>
+            <span style={prixLabel}>Prix du marché</span>
+            <span style={prixValue}>
+              {prixMarcheConnu ? `${Math.round(prixMarche)} €` : "? €"}
+            </span>
           </div>
-          <div style={priceBox}>
-            <div style={priceLabel}>Prix du marché</div>
-            <div style={priceValue}>
-              {prixMarcheConnu ? `${Math.round(prixMarche)} €` : "?"}
-            </div>
+
+          <div style={prixRow}>
+            <span style={prixLabel}>Prix d&apos;achat</span>
+            <span style={prixValue}>
+              {objet.prixAchat !== undefined ? `${objet.prixAchat} €` : "— €"}
+            </span>
+          </div>
+
+          <div style={prixRowLast}>
+            <span style={prixLabel}>Prix de vente</span>
+            <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+              <input
+                type="number"
+                min={0}
+                value={prixLocal}
+                onChange={(e) => setPrixLocal(Number(e.target.value) || 0)}
+                onBlur={commitPrix}
+                style={venteInput}
+                disabled={enRestauration}
+                aria-label="Prix de vente"
+              />
+              <span style={prixValue}>€</span>
+            </span>
           </div>
         </div>
-
-        <div style={priceLabel}>Prix de vente</div>
-        <div style={venteRow}>
-          <input
-            type="number"
-            min={0}
-            value={prixLocal}
-            onChange={(e) => setPrixLocal(Number(e.target.value) || 0)}
-            onBlur={commitPrix}
-            style={venteInput}
-            disabled={enRestauration}
-          />
-          <span
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 14,
-              color: "var(--brass-700)",
-            }}
-          >
-            €
-          </span>
-        </div>
-
-        {onAjouterEtal && !enRestauration && (
-          <button
-            type="button"
-            onClick={() => {
-              commitPrix();
-              onAjouterEtal(objet, prixLocal);
-              onClose();
-            }}
-            style={etalBtn}
-          >
-            <Store size={16} strokeWidth={1.5} />
-            Mettre à l&apos;étal
-            {brocanteOuverteNom ? ` · ${brocanteOuverteNom}` : ""}
-          </button>
-        )}
       </div>
     </div>
   );

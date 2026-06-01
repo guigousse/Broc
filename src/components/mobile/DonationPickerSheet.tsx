@@ -2,7 +2,9 @@
 
 import type { CSSProperties } from "react";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { ItemImage } from "@/components/ui/ItemImage";
+import { getRarityColors } from "@/lib/rarityColors";
+import { getTemplate } from "@/data/objetTemplates";
 import type { CollectionSlot, Objet } from "@/types/game";
 
 interface DonationPickerSheetProps {
@@ -25,15 +27,10 @@ const itemStyle: CSSProperties = {
   borderBottom: "1px dotted var(--paper-500)",
 };
 
-const thumbStyle: CSSProperties = {
+const thumbBase: CSSProperties = {
   width: 44,
   height: 44,
-  background:
-    "linear-gradient(135deg, var(--paper-500) 0%, var(--brass-700) 100%)",
-  border: "1px solid var(--brass-700)",
-  display: "grid",
-  placeItems: "center",
-  color: "var(--brass-100)",
+  overflow: "hidden",
 };
 
 export function DonationPickerSheet({
@@ -110,14 +107,27 @@ export function DonationPickerSheet({
           Aucun objet éligible dans le stock pour cet emplacement.
         </p>
       ) : (
-        candidats.map((o) => (
+        candidats.map((o) => {
+          const c = getRarityColors(
+            o.rarete,
+            !!getTemplate(o.templateId)?.unique,
+          );
+          return (
           <div key={o.id} style={itemStyle}>
-            <div style={thumbStyle}>
-              <CategorieIcon
+            <div
+              style={{
+                ...thumbBase,
+                background: c.thumbBg,
+                border: `1px solid ${c.outer}`,
+              }}
+            >
+              <ItemImage
+                templateId={o.templateId}
                 categorie={o.categorie}
-                size={20}
-                strokeWidth={1.5}
-                color="var(--brass-100)"
+                fit="cover"
+                fallbackIconSize={20}
+                fallbackIconColor={c.thumbIcon}
+                alt={o.nom}
               />
             </div>
             <div>
@@ -161,7 +171,8 @@ export function DonationPickerSheet({
               Donner
             </button>
           </div>
-        ))
+          );
+        })
       )}
     </BottomSheet>
   );

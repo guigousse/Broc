@@ -9,6 +9,13 @@ interface BottomSheetProps {
   children: ReactNode;
   /** Hauteur max en % du viewport. Défaut 88. */
   maxHeightPct?: number;
+  /**
+   * Décoration positionnée absolu au-dessus du bord supérieur de la sheet.
+   * Utile pour qu'un personnage / avatar "sorte" du cadre vers le haut.
+   * Quand fourni, le titre et le séparateur d'en-tête sont masqués et seul
+   * le bouton Fermer reste accessible en haut à droite.
+   */
+  topDecoration?: ReactNode;
 }
 
 const scrimStyle: CSSProperties = {
@@ -25,7 +32,7 @@ const sheetWrap = (maxHeightPct: number): CSSProperties => ({
   right: 0,
   bottom: 0,
   zIndex: 41,
-  background: "var(--paper-100)",
+  background: "var(--paper-200)",
   borderTop: "2px solid var(--forest-800)",
   borderRadius: "14px 14px 0 0",
   boxShadow: "0 -6px 18px rgba(40,25,5,0.20)",
@@ -58,6 +65,7 @@ export function BottomSheet({
   title,
   children,
   maxHeightPct = 88,
+  topDecoration,
 }: BottomSheetProps) {
   useEffect(() => {
     if (!open) return;
@@ -77,39 +85,65 @@ export function BottomSheet({
   return (
     <>
       <div style={scrimStyle} onClick={onClose} aria-hidden />
-      <div style={sheetWrap(maxHeightPct)} role="dialog" aria-modal="true">
-        <div style={handleStyle} aria-hidden />
-        <div style={headerStyle}>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 11,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "var(--forest-800)",
-            }}
-          >
-            {title ?? ""}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--brass-700)",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: 4,
-            }}
-          >
-            Fermer ✕
-          </button>
+      <div
+        style={sheetWrap(maxHeightPct)}
+        role="dialog"
+        aria-modal="true"
+      >
+        {topDecoration ? (
+          <div style={topDecorationStyle}>{topDecoration}</div>
+        ) : (
+          <>
+            <div style={handleStyle} aria-hidden />
+            <div style={headerStyle}>
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 11,
+                  letterSpacing: "0.22em",
+                  textTransform: "uppercase",
+                  color: "var(--forest-800)",
+                }}
+              >
+                {title ?? ""}
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Fermer"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  color: "var(--brass-700)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 4,
+                }}
+              >
+                Fermer ✕
+              </button>
+            </div>
+          </>
+        )}
+        <div
+          style={{
+            overflowY: "auto",
+            padding: topDecoration ? 0 : "12px 16px",
+          }}
+        >
+          {children}
         </div>
-        <div style={{ overflowY: "auto", padding: "12px 16px" }}>{children}</div>
       </div>
     </>
   );
 }
+
+const topDecorationStyle: CSSProperties = {
+  position: "absolute",
+  top: -138,
+  left: 16,
+  right: 16,
+  zIndex: 2,
+  pointerEvents: "none",
+};

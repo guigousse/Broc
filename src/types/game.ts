@@ -43,6 +43,12 @@ export interface CollectionSlot {
   /** Donation présente dans le slot (état + valeur préservés). null = slot vide. */
   donation: { etat: EtatObjet; valeur: number } | null;
   unique?: boolean;
+  /**
+   * Vrai si le joueur a consulté ce slot dans la page Collection depuis sa découverte.
+   * Passé à `false` quand `vu` devient vrai (nouvelle découverte), repassé à `true` au tap.
+   * Pilote l'affichage du badge "nouveau" (astérisque) sur la grille.
+   */
+  vuDansCollection?: boolean;
 }
 
 export interface ObjetEnVitrine {
@@ -118,6 +124,8 @@ export interface GameState {
   niveauAtelier: 1 | 2 | 3;
   /** Niveau du stockage (1 à 4). Détermine capacité et loyer. */
   niveauStockage: 1 | 2 | 3 | 4;
+  /** Stock de pièces d'amélioration par catégorie (≥ 0, illimité). */
+  piecesAmelioration: Record<CategorieObjet, number>;
 }
 
 export type CompetenceId = string;
@@ -260,4 +268,52 @@ export interface ObjetEnVente {
   /** Nombre de tentatives de négociation effectuées (pour info / XP). */
   negociationsTentees: number;
   statut: "disponible" | "achete" | "refuse";
+  /** Persona vendeur tiré à l'instanciation (mode achat). */
+  persona: NegoPersona;
+  /** État de la négo en cours sur cet item. null avant première ouverture, valeur conservée entre fermetures. */
+  negociation: NegociationState | null;
+}
+
+/** Identifiant d'archétype vendeur (chinage). */
+export type VendeurArchetypeId =
+  | "naif"
+  | "grincheux"
+  | "bonhomme"
+  | "malin"
+  | "mamie"
+  | "antiquaire";
+
+/** Sens de la négociation. */
+export type NegoMode = "achat" | "vente";
+
+/** Persona générique commun aux deux modes. */
+export interface NegoPersona {
+  /** Identifiant de l'archétype source (vendeur ou client). */
+  archetype: string;
+  /** Marge totale lâchable, 0–1. */
+  margePct: number;
+  /** Fraction du gap concédée par tour, 0–1. */
+  elanPct: number;
+  /** Nombre de tours max avant refus poli. */
+  patience: number;
+  /** Seuil de tolérance, 0–1. */
+  tolerancePct: number;
+  /** Résistance à l'alea de colère, 0–1. */
+  sangFroid: number;
+}
+
+/** Statut courant d'une négociation. */
+export type NegoStatut = "en_cours" | "refus_poli" | "fache" | "conclu";
+
+/** État persistant d'une négociation en cours. */
+export interface NegociationState {
+  mode: NegoMode;
+  tour: number;
+  humeur: number;
+  prixAdverseCourant: number;
+  /** Cible secrète de l'adverse : prixMinAccept (achat) ou prixMax (vente). */
+  cibleSecrete: number;
+  derniereOffreJoueur: number | null;
+  statut: NegoStatut;
+  message: string;
 }

@@ -37,7 +37,7 @@ import {
   emptyTreeState,
   getCompetence,
 } from "@/data/competences";
-import { CATEGORIES, migrerCategorie } from "@/data/categories";
+import { CATEGORIES, migrerCategorie, emptyPiecesAmelioration } from "@/data/categories";
 import { recalculerPrixReference } from "@/lib/etat";
 
 const ETATS_VALIDES = new Set<EtatObjet>([
@@ -66,11 +66,13 @@ import {
   initCollection,
   marquerDejaPossede as marquerDejaPossedeFn,
   marquerVu as marquerVuFn,
+  marquerVuDansCollection as marquerVuDansCollectionFn,
   donnerObjet as donnerObjetFn,
   retirerDonation as retirerDonationFn,
 } from "@/lib/collection";
 import { getTemplate } from "@/data/objetTemplates";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
+import { coutAmelioration, rendementDemantelement } from "@/lib/atelier";
 import { audioManager } from "@/lib/audio/audioManager";
 
 interface GameContextValue {
@@ -95,11 +97,17 @@ interface GameContextValue {
     etatCible: EtatObjet,
     options?: { dureeJours?: number },
   ) => { ok: boolean; raison?: string };
+  demantelerObjet: (objetId: string) => {
+    ok: boolean;
+    raison?: string;
+    pieces?: number;
+  };
   ameliorerAtelier: () => { ok: boolean; raison?: string };
   ameliorerStockage: () => { ok: boolean; raison?: string };
   definirPrixVenteSouhaite: (objetId: string, prix: number) => void;
   gagnerXP: (treeId: CompetenceTreeId, montant: number) => void;
   marquerVuTemplate: (templateId: string) => void;
+  marquerVuDansCollection: (templateId: string) => void;
   marquerDejaPossedeTemplate: (templateId: string) => void;
   donnerACollection: (objetId: string) => { ok: boolean; raison?: string };
   retirerDeCollection: (templateId: string) => { ok: boolean; raison?: string };
@@ -320,6 +328,19 @@ function migrerSauvegarde(loaded: GameState): GameState {
         total <= 10 ? 1 : total <= 25 ? 2 : total <= 50 ? 3 : 4;
       return fallbackTier;
     })(),
+    piecesAmelioration: (() => {
+      const loadedPieces = (loaded as Partial<GameState>).piecesAmelioration;
+      const base = emptyPiecesAmelioration();
+      if (loadedPieces && typeof loadedPieces === "object") {
+        for (const cat of CATEGORIES) {
+          const v = (loadedPieces as Record<string, unknown>)[cat];
+          if (typeof v === "number" && Number.isFinite(v) && v >= 0) {
+            base[cat] = Math.floor(v);
+          }
+        }
+      }
+      return base;
+    })(),
   };
 }
 
@@ -373,6 +394,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dernierHuissier: null,
       niveauAtelier: 1,
       niveauStockage: 1,
+      piecesAmelioration: emptyPiecesAmelioration(),
     });
     router.push("/qg");
   }, [router]);
@@ -830,6 +852,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
           raison: `Vous n'avez pas la compétence Réparer — ${objet.categorie}.`,
         };
 
+      const cout = coutAmelioration(objet, etatCible);
+      const dispo = current.piecesAmelioration[objet.categorie] ?? 0;
+      if (dispo < cout)
+        return {
+          ok: false,
+          raison: `Manque ${cout - dispo} pièce${cout - dispo > 1 ? "s" : ""} ${objet.categorie}.`,
+        };
+
       const duree = Math.max(1, options.dureeJours ?? 7);
       const jourFin = current.jourActuel + duree;
 
@@ -840,9 +870,43 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ? { ...o, enRestauration: { etatCible, jourFin } }
             : o,
         );
-        return { ...prev, inventaireJoueur: inv };
+        const piecesAmelioration = {
+          ...prev.piecesAmelioration,
+          [objet.categorie]:
+            (prev.piecesAmelioration[objet.categorie] ?? 0) - cout,
+        };
+        return { ...prev, inventaireJoueur: inv, piecesAmelioration };
       });
       return { ok: true };
+    },
+    [],
+  );
+
+  const demantelerObjet = useCallback(
+    (objetId: string): { ok: boolean; raison?: string; pieces?: number } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: "Pas de partie." };
+      const objet = current.inventaireJoueur.find((o) => o.id === objetId);
+      if (!objet)
+        return { ok: false, raison: "Objet introuvable dans l'inventaire." };
+      if (objet.enRestauration)
+        return { ok: false, raison: "Objet en restauration." };
+
+      const pieces = rendementDemantelement(objet);
+
+      setState((prev) => {
+        if (!prev) return prev;
+        const stillThere = prev.inventaireJoueur.find((o) => o.id === objetId);
+        if (!stillThere || stillThere.enRestauration) return prev;
+        const inv = prev.inventaireJoueur.filter((o) => o.id !== objetId);
+        const piecesAmelioration = {
+          ...prev.piecesAmelioration,
+          [objet.categorie]:
+            (prev.piecesAmelioration[objet.categorie] ?? 0) + pieces,
+        };
+        return { ...prev, inventaireJoueur: inv, piecesAmelioration };
+      });
+      return { ok: true, pieces };
     },
     [],
   );
@@ -869,6 +933,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) =>
       prev
         ? { ...prev, collection: marquerVuFn(prev.collection, templateId) }
+        : prev,
+    );
+  }, []);
+
+  const marquerVuDansCollection = useCallback((templateId: string) => {
+    setState((prev) =>
+      prev
+        ? {
+            ...prev,
+            collection: marquerVuDansCollectionFn(prev.collection, templateId),
+          }
         : prev,
     );
   }, []);
@@ -1020,11 +1095,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       enregistrerSession,
       debloquerCompetence,
       restaurerObjet,
+      demantelerObjet,
       ameliorerAtelier,
       ameliorerStockage,
       definirPrixVenteSouhaite,
       gagnerXP,
       marquerVuTemplate,
+      marquerVuDansCollection,
       marquerDejaPossedeTemplate,
       donnerACollection,
       retirerDeCollection,
@@ -1052,11 +1129,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       enregistrerSession,
       debloquerCompetence,
       restaurerObjet,
+      demantelerObjet,
       ameliorerAtelier,
       ameliorerStockage,
       definirPrixVenteSouhaite,
       gagnerXP,
       marquerVuTemplate,
+      marquerVuDansCollection,
       marquerDejaPossedeTemplate,
       donnerACollection,
       retirerDeCollection,

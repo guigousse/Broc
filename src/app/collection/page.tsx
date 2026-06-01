@@ -7,6 +7,7 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
 import { CategoriePicker } from "@/components/mobile/CategoriePicker";
 import { CollectionGrid } from "@/components/CollectionGrid";
+import { CollectionDetailOverlay } from "@/components/mobile/CollectionDetailOverlay";
 import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
@@ -16,9 +17,16 @@ import type { CategorieObjet, CollectionSlot } from "@/types/game";
 
 export default function CollectionPage() {
   const router = useRouter();
-  const { state, isHydrated, donnerACollection, retirerDeCollection } = useGame();
+  const {
+    state,
+    isHydrated,
+    donnerACollection,
+    retirerDeCollection,
+    marquerVuDansCollection,
+  } = useGame();
   const [filtre, setFiltre] = useState<CategorieObjet | null>(null);
   const [slotActif, setSlotActif] = useState<CollectionSlot | null>(null);
+  const [pickerOuvert, setPickerOuvert] = useState(false);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -80,6 +88,30 @@ export default function CollectionPage() {
     .map((c) => `${c} ${Math.round(valeurs[c] ?? 0)} €`)
     .join(" · ");
 
+  // Totaux par catégorie (slots possibles, peu importe l'état découvert/donné)
+  const totauxParCat = CATEGORIES.reduce(
+    (acc, c) => {
+      acc[c] = (state.collection[c] ?? []).length;
+      return acc;
+    },
+    {} as Record<CategorieObjet, number>,
+  );
+
+  // Nouveautés non consultées par catégorie (slot vu mais vuDansCollection=false)
+  const nouveautesParCat = CATEGORIES.reduce(
+    (acc, c) => {
+      acc[c] = (state.collection[c] ?? []).some(
+        (s) => s.vu && s.vuDansCollection === false,
+      );
+      return acc;
+    },
+    {} as Record<CategorieObjet, boolean>,
+  );
+
+  // Sélection courante : valeur + libellé du bandeau
+  const bandeauLabel = filtre ? filtre : "Valeur totale";
+  const bandeauValeur = filtre ? valeurs[filtre] ?? 0 : global.valeur;
+
   const plein = stockageEstPlein(state);
 
   return (
@@ -106,7 +138,7 @@ export default function CollectionPage() {
                 color: "var(--brass-700)",
               }}
             >
-              — Valeur totale —
+              — {bandeauLabel} —
             </div>
             <div
               style={{
@@ -116,9 +148,9 @@ export default function CollectionPage() {
                 letterSpacing: "0.04em",
               }}
             >
-              {Math.round(global.valeur).toLocaleString("fr-FR")} €
+              {Math.round(bandeauValeur).toLocaleString("fr-FR")} €
             </div>
-            {breakdown && (
+            {!filtre && breakdown && (
               <div
                 style={{
                   fontFamily: "var(--font-serif)",
@@ -137,29 +169,51 @@ export default function CollectionPage() {
             onChange={setFiltre}
             comptesParCat={comptes}
             total={global.donnees}
+            totauxParCat={totauxParCat}
+            totalGlobal={CATEGORIES.reduce(
+              (s, c) => s + (state.collection[c]?.length ?? 0),
+              0,
+            )}
+            nouveautesParCat={nouveautesParCat}
           />
         </StickyTop>
       }
     >
-      <CollectionGrid slots={slotsFiltres} onTap={setSlotActif} />
+      <CollectionGrid
+        slots={slotsFiltres}
+        onTap={(s) => {
+          if (s.vu && s.vuDansCollection === false) {
+            marquerVuDansCollection(s.templateId);
+          }
+          setSlotActif(s);
+        }}
+      />
     </MobileLayout>
-    <DonationPickerSheet
-      open={slotActif !== null}
+    <CollectionDetailOverlay
+      open={slotActif !== null && !pickerOuvert}
       onClose={() => setSlotActif(null)}
+      slot={slotActif}
+      candidatsCount={candidats.length}
+      retirerDisabled={plein}
+      onAjouter={() => setPickerOuvert(true)}
+      onRetirer={() => {
+        if (!slotActif?.donation) return;
+        const res = retirerDeCollection(slotActif.templateId);
+        if (res.ok) setSlotActif(null);
+      }}
+    />
+    <DonationPickerSheet
+      open={pickerOuvert}
+      onClose={() => setPickerOuvert(false)}
       slot={slotActif}
       candidats={candidats}
       onDonner={(objetId) => {
         const res = donnerACollection(objetId);
-        if (res.ok) setSlotActif(null);
+        if (res.ok) {
+          setPickerOuvert(false);
+          setSlotActif(null);
+        }
       }}
-      onRetirer={
-        slotActif?.donation
-          ? () => {
-              const res = retirerDeCollection(slotActif.templateId);
-              if (res.ok) setSlotActif(null);
-            }
-          : undefined
-      }
       retirerDisabled={plein}
     />
   </>

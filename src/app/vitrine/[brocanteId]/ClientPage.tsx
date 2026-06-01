@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { ItemImage } from "@/components/ui/ItemImage";
+import { getRarityColors } from "@/lib/rarityColors";
+import { getTemplate } from "@/data/objetTemplates";
 import { useGame } from "@/context/GameContext";
 import { getBrocanteById } from "@/data/brocantes";
 import {
@@ -196,20 +198,32 @@ export default function VitrineBrocantePage() {
                       : "1px dotted var(--paper-500)",
                 }}
               >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    background:
-                      "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
-                    border: "1px solid var(--brass-700)",
-                    display: "grid",
-                    placeItems: "center",
-                    color: "var(--brass-100)",
-                  }}
-                >
-                  <CategorieIcon categorie={ov.objet.categorie} size={18} strokeWidth={1.5} color="var(--brass-100)" />
-                </div>
+                {(() => {
+                  const c = getRarityColors(
+                    ov.objet.rarete,
+                    !!getTemplate(ov.objet.templateId)?.unique,
+                  );
+                  return (
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        background: c.thumbBg,
+                        border: `1px solid ${c.outer}`,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <ItemImage
+                        templateId={ov.objet.templateId}
+                        categorie={ov.objet.categorie}
+                        fit="cover"
+                        fallbackIconSize={18}
+                        fallbackIconColor={c.thumbIcon}
+                        alt={ov.objet.nom}
+                      />
+                    </div>
+                  );
+                })()}
                 <div>
                   <div
                     style={{
@@ -299,19 +313,32 @@ export default function VitrineBrocantePage() {
                       : "1px dotted var(--paper-500)",
                 }}
               >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
-                    border: "1px solid var(--brass-700)",
-                    display: "grid",
-                    placeItems: "center",
-                    color: "var(--brass-100)",
-                  }}
-                >
-                  <CategorieIcon categorie={o.categorie} size={18} strokeWidth={1.5} color="var(--brass-100)" />
-                </div>
+                {(() => {
+                  const c = getRarityColors(
+                    o.rarete,
+                    !!getTemplate(o.templateId)?.unique,
+                  );
+                  return (
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        background: c.thumbBg,
+                        border: `1px solid ${c.outer}`,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <ItemImage
+                        templateId={o.templateId}
+                        categorie={o.categorie}
+                        fit="cover"
+                        fallbackIconSize={18}
+                        fallbackIconColor={c.thumbIcon}
+                        alt={o.nom}
+                      />
+                    </div>
+                  );
+                })()}
                 <div>
                   <div
                     style={{

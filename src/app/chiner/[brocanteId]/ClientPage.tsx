@@ -2,18 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
-import { EtatBadge } from "@/components/ui/EtatBadge";
-import { RareteBadge } from "@/components/ui/RareteBadge";
+import { ItemCard } from "@/components/ui/ItemCard";
 import { SessionSummary } from "@/components/SessionSummary";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
+import {
+  getVendeurIllustration,
+  getVendeurIllustrationFache,
+} from "@/lib/personaIllustrations";
+import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { coutEntree, getBrocanteById } from "@/data/brocantes";
 import { estDebloquee } from "@/lib/deblocage";
-import { genererSession, reagirNegociation } from "@/lib/chine";
+import { genererSession } from "@/lib/chine";
 import { stockageEstPlein } from "@/lib/stockage";
 import { indexJourSemaine } from "@/lib/meteo";
 import {
@@ -56,8 +59,6 @@ export default function SessionChinePage() {
   const sessionEnregistreeRef = useRef(false);
   /** Garde synchrone — empêche le double-paiement du droit d'entrée (StrictMode). */
   const entreePayeeRef = useRef(false);
-  /** Négociation en cours par objet : id → offre saisie. */
-  const [negoEnCours, setNegoEnCours] = useState<Record<string, number>>({});
   /** Affiche le résumé de session avant retour au QG. */
   const [resumeOuvert, setResumeOuvert] = useState(false);
   /** XP gagnée localement durant la session, par arbre. */
@@ -134,59 +135,24 @@ export default function SessionChinePage() {
       prev ? prev.map((it) => (it.id === id ? { ...it, ...patch } : it)) : prev,
     );
 
-  const handleFermerNego = (id: string) => {
-    setNegoEnCours((prev) => {
-      const { [id]: _, ...rest } = prev;
-      return rest;
-    });
-  };
-
-  /**
-   * Propose une offre directement (offre passée en argument, pas lue depuis negoEnCours).
-   * Utilisé par NegociationSheet pour éviter le problème de batching React.
-   */
-  const handleProposerOffre = (id: string, offre: number) => {
-    const it = items.find((x) => x.id === id);
-    if (!it) return;
-    const res = reagirNegociation(
-      offre,
-      { prixVendeur: it.prixVendeur, prixMinAccept: it.prixMinAccept },
-      it.negociationsTentees,
-    );
-    if (res.accepte) {
-      setItem(id, {
-        prixVendeur: res.prixFinal,
-        prixMinAccept: res.prixFinal,
-        negociationsTentees: it.negociationsTentees + 1,
-        statut: "disponible",
-      });
-      handleFermerNego(id);
-      gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
-    } else if (res.fache) {
-      setItem(id, {
-        negociationsTentees: it.negociationsTentees + 1,
-        statut: "refuse",
-      });
-      handleFermerNego(id);
-    } else {
-      // Refus poli
-      setItem(id, { negociationsTentees: it.negociationsTentees + 1 });
-    }
-    setFlash(res.message);
-  };
-
+  /** Achat au prix affiché (bouton direct). */
   const handleAcheter = (id: string) => {
     const it = items.find((x) => x.id === id);
     if (!it) return;
-    if (state.budget < it.prixVendeur) {
+    handleAchatAuPrix(it, it.prixVendeur);
+  };
+
+  /** Achat à un prix personnalisé (depuis la négo ou le bouton direct). */
+  const handleAchatAuPrix = (it: ObjetEnVente, prix: number) => {
+    if (state.budget < prix) {
       setFlash("La caisse refuse — fonds insuffisants.");
       return;
     }
-    ajusterBudget(-it.prixVendeur);
-    ajouterObjet({ ...it.objet, prixAchat: it.prixVendeur });
+    ajusterBudget(-prix);
+    ajouterObjet({ ...it.objet, prixAchat: prix });
     marquerDejaPossedeTemplate(it.objet.templateId);
     gagnerXPLocal(catTreeId(it.objet.categorie), XP_ACHAT_OBJET);
-    setItem(id, { statut: "achete" });
+    setItem(it.id, { statut: "achete" });
     setAchats((prev) => [
       ...prev,
       {
@@ -194,10 +160,10 @@ export default function SessionChinePage() {
         categorie: it.objet.categorie,
         etat: it.objet.etat,
         prixReferenceReel: it.objet.prixReferenceReel,
-        prixPaye: it.prixVendeur,
+        prixPaye: prix,
       },
     ]);
-    setFlash(`Acquis pour ${it.prixVendeur} €. Noté dans le carnet.`);
+    setFlash(`Acquis pour ${prix} €. Noté dans le carnet.`);
   };
 
   const handleRentrer = () => {
@@ -288,7 +254,7 @@ export default function SessionChinePage() {
             gap: 8,
           }}
         >
-          {(items ?? []).map((it) => (
+          {(items ?? []).filter((it) => it.statut !== "refuse").map((it) => (
             <ObjetCardMobile
               key={it.id}
               item={it}
@@ -296,6 +262,10 @@ export default function SessionChinePage() {
               plein={plein}
               onNegocier={() => setNegoOuverte(it.id)}
               onAcheter={() => handleAcheter(it.id)}
+              onAcheterApresRefusPoli={() => {
+                const prixFinal = it.negociation?.prixAdverseCourant ?? it.prixVendeur;
+                handleAchatAuPrix(it, prixFinal);
+              }}
             />
           ))}
         </div>
@@ -330,22 +300,43 @@ export default function SessionChinePage() {
         ]}
       />
 
-      {negoOuverte && (() => {
-        const it = (items ?? []).find((i) => i.id === negoOuverte);
-        if (!it) return null;
-        return (
-          <NegociationSheet
-            open
-            onClose={() => setNegoOuverte(null)}
-            prixAffiche={it.prixVendeur}
-            offreInitiale={Math.round(it.prixVendeur * 0.8)}
-            onProposer={(offre) => {
-              handleProposerOffre(it.id, offre);
-              setNegoOuverte(null);
-            }}
-          />
-        );
-      })()}
+      {(items ?? []).map((it) => (
+        <NegociationSheet
+          key={it.id}
+          open={negoOuverte === it.id}
+          onClose={() => setNegoOuverte(null)}
+          mode="achat"
+          persona={it.persona}
+          echelleMax={it.prixVendeur}
+          cibleSecrete={it.prixMinAccept}
+          prixDepartAdverse={it.negociation?.prixAdverseCourant ?? it.prixVendeur}
+          nego={it.negociation}
+          nomAffiche="Un vendeur"
+          illustrationSrc={getVendeurIllustration(it.persona.archetype)}
+          illustrationFacheSrc={getVendeurIllustrationFache(it.persona.archetype)}
+          personaInfo={{
+            archetypeNom: undefined,
+            revelePersona: false,
+            releveBourse: false,
+            oeilAiguise: false,
+          }}
+          header={
+            <NegoItemRow
+              objet={it.objet}
+              prix={it.prixVendeur}
+              prixLabel="Prix affiché"
+            />
+          }
+          onUpdateNego={(nego) => {
+            setItem(it.id, { negociation: nego });
+          }}
+          onConclu={(prixFinal) => {
+            handleAchatAuPrix(it, prixFinal);
+            gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
+            setNegoOuverte(null);
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -356,187 +347,207 @@ function ObjetCardMobile({
   plein,
   onNegocier,
   onAcheter,
+  onAcheterApresRefusPoli,
 }: {
   item: ObjetEnVente;
   budget: number;
   plein: boolean;
   onNegocier: () => void;
   onAcheter: () => void;
+  onAcheterApresRefusPoli: () => void;
 }) {
   const { objet, prixVendeur, statut } = item;
   const tropCher = budget < prixVendeur;
+  const refusPoli = item.negociation?.statut === "refus_poli";
+  const fache = item.negociation?.statut === "fache";
+
   if (statut === "achete") {
     return (
-      <article
-        style={{
-          border: "1px solid var(--brass-500)",
-          background: "var(--paper-300)",
-          padding: 6,
-          opacity: 0.4,
-          display: "flex",
-          flexDirection: "column",
-          gap: 5,
-        }}
-      >
-        <div
-          style={{
-            aspectRatio: "4/3",
-            background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
-            display: "grid",
-            placeItems: "center",
-            color: "var(--brass-100)",
-          }}
-        >
-          <CategorieIcon categorie={objet.categorie} size={28} strokeWidth={1.5} color="var(--brass-100)" />
-        </div>
-        <div
-          style={{
-            textAlign: "center",
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            color: "var(--ink-500)",
-          }}
-        >
-          — Acquis —
-        </div>
-      </article>
+      <ItemCard
+        templateId={objet.templateId}
+        categorie={objet.categorie}
+        etat={objet.etat}
+        rarete={objet.rarete}
+        nom={objet.nom}
+        dimmed
+        footer={
+          <div
+            style={{
+              textAlign: "center",
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "var(--ink-500)",
+              padding: "4px 0",
+            }}
+          >
+            — Acquis —
+          </div>
+        }
+      />
     );
   }
-  return (
-    <article
-      style={{
-        border: `1px solid ${statut === "refuse" ? "var(--vermillion-600)" : "var(--brass-500)"}`,
-        background: "var(--paper-300)",
-        padding: 6,
-        display: "flex",
-        flexDirection: "column",
-        gap: 5,
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          aspectRatio: "4/3",
-          background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 3,
-          color: "var(--brass-100)",
-        }}
-      >
-        <CategorieIcon categorie={objet.categorie} size={24} strokeWidth={1.5} color="var(--brass-100)" />
-        <span
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 8,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-          }}
-        >
-          {objet.categorie}
-        </span>
 
-        {/* Badges overlay bottom of image */}
+  if (fache) {
+    return (
+      <div style={{ position: "relative" }}>
+        <ItemCard
+          templateId={objet.templateId}
+          categorie={objet.categorie}
+          etat={objet.etat}
+          rarete={objet.rarete}
+          nom={objet.nom}
+          dimmed
+          footer={
+            <div
+              style={{
+                textAlign: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "var(--ink-500)",
+                padding: "4px 0",
+              }}
+            >
+              — Indisponible —
+            </div>
+          }
+        />
         <div
           style={{
             position: "absolute",
-            bottom: 3,
-            left: 3,
-            right: 3,
+            inset: 0,
             display: "flex",
-            justifyContent: "space-between",
-            gap: 4,
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
           }}
         >
-          <EtatBadge etat={objet.etat} />
-          <RareteBadge rarete={objet.rarete} />
+          <span
+            style={{
+              transform: "rotate(-18deg)",
+              color: "var(--vermillion-600)",
+              fontFamily: "var(--font-display)",
+              fontSize: 13,
+              fontWeight: 800,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              border: "2px solid var(--vermillion-600)",
+              padding: "5px 12px",
+              background: "rgba(255, 245, 232, 0.85)",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Vendeur fâché
+          </span>
         </div>
       </div>
-      <div
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          color: "var(--forest-800)",
-          lineHeight: 1.15,
-          minHeight: "2.3em",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-          textAlign: "center",
-          padding: "0 2px",
-        }}
-      >
-        {objet.nom}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          fontFamily: "var(--font-mono)",
-          fontSize: 10,
-          letterSpacing: "0.06em",
-          color: "var(--ink-500)",
-          padding: "2px 4px",
-        }}
-      >
-        <span>
-          {item.negociationsTentees > 0 ? "Prix négocié :" : "Prix demandé :"}
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 14,
-            fontWeight: 700,
-            color: tropCher ? "var(--vermillion-600)" : "var(--forest-800)",
-          }}
-        >
-          {prixVendeur} €
-        </span>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-        <button
-          type="button"
-          onClick={onNegocier}
-          disabled={plein}
-          style={{
-            ...miniBtn(false),
-            opacity: plein ? 0.45 : 1,
-            cursor: plein ? "not-allowed" : "pointer",
-          }}
-        >
-          Négo
-        </button>
-        <button
-          type="button"
-          onClick={onAcheter}
-          disabled={tropCher || plein}
-          style={{
-            ...miniBtn(true),
-            opacity: tropCher || plein ? 0.45 : 1,
-            cursor: tropCher || plein ? "not-allowed" : "pointer",
-            // surbrillance après négociation
-            ...(item.negociationsTentees > 0 && !tropCher && !plein
-              ? {
+    );
+  }
+
+  return (
+    <ItemCard
+      templateId={objet.templateId}
+      categorie={objet.categorie}
+      etat={objet.etat}
+      rarete={objet.rarete}
+      nom={objet.nom}
+      style={
+        statut === "refuse"
+          ? { borderColor: "var(--vermillion-600)" }
+          : undefined
+      }
+      footer={
+        <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.06em",
+              color: "var(--ink-500)",
+              padding: "2px 4px",
+            }}
+          >
+            <span>
+              {item.negociationsTentees > 0
+                ? "Prix négocié :"
+                : "Prix demandé :"}
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 14,
+                fontWeight: 700,
+                color: tropCher ? "var(--vermillion-600)" : "var(--forest-800)",
+              }}
+            >
+              {prixVendeur} €
+            </span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+            {refusPoli ? (
+              <button
+                type="button"
+                onClick={onAcheterApresRefusPoli}
+                disabled={tropCher || plein}
+                style={{
+                  ...miniBtn(true),
+                  gridColumn: "1 / -1",
+                  opacity: tropCher || plein ? 0.45 : 1,
+                  cursor: tropCher || plein ? "not-allowed" : "pointer",
                   background: "var(--brass-700)",
                   color: "var(--paper-100)",
-                  boxShadow:
-                    "inset 0 0 0 1px var(--brass-700), 0 0 0 2px var(--brass-300), 0 2px 6px rgba(176,136,56,0.45)",
-                  animation: "broc-pulse 1.6s ease-in-out infinite",
-                }
-              : {}),
-          }}
-        >
-          Acheter
-        </button>
-      </div>
-    </article>
+                }}
+              >
+                Acheter — {item.negociation?.prixAdverseCourant ?? prixVendeur} €
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={onNegocier}
+                  disabled={plein}
+                  style={{
+                    ...miniBtn(false),
+                    opacity: plein ? 0.45 : 1,
+                    cursor: plein ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Négo
+                </button>
+                <button
+                  type="button"
+                  onClick={onAcheter}
+                  disabled={tropCher || plein}
+                  style={{
+                    ...miniBtn(true),
+                    opacity: tropCher || plein ? 0.45 : 1,
+                    cursor: tropCher || plein ? "not-allowed" : "pointer",
+                    ...(item.negociationsTentees > 0 && !tropCher && !plein
+                      ? {
+                          background: "var(--brass-700)",
+                          color: "var(--paper-100)",
+                          boxShadow:
+                            "inset 0 0 0 1px var(--brass-700), 0 0 0 2px var(--brass-300), 0 2px 6px rgba(176,136,56,0.45)",
+                          animation: "broc-pulse 1.6s ease-in-out infinite",
+                        }
+                      : {}),
+                  }}
+                >
+                  Acheter
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      }
+    />
   );
 }
 
