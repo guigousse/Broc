@@ -1,16 +1,21 @@
 "use client";
 
+import { Cog } from "lucide-react";
 import type { CategorieObjet } from "@/types/game";
-import { CATEGORIES, CATEGORIE_EMOJI } from "@/data/categories";
+import { CATEGORIES } from "@/data/categories";
+import { CategorieIcon } from "@/components/ui/CategorieIcon";
 
 interface PiecesInventoryBarProps {
   pieces: Record<CategorieObjet, number>;
 }
 
+const COG_SIZE = 42;
+const ICON_SIZE = 18;
+
 /**
- * Bandeau horizontal des 7 catégories sous forme d'engrenages stylisés.
- * Chaque case = emoji de la catégorie + nombre de pièces dispo en dessous.
- * Largeur fixe par case, scroll horizontal si le viewport est trop étroit.
+ * Bandeau horizontal des 7 catégories sous forme d'engrenages laiton.
+ * Chaque case = <Cog /> lucide (stroke laiton) + <CategorieIcon /> centrée
+ * + compteur monospace en dessous. Scroll horizontal sur viewport étroit.
  */
 export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
   return (
@@ -33,7 +38,7 @@ export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
           title={`${cat} : ${pieces[cat] ?? 0} pièces`}
           style={{
             flex: "0 0 auto",
-            width: 46,
+            width: 50,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -43,20 +48,38 @@ export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
           <div
             aria-hidden
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              border: "1.5px solid var(--brass-500)",
-              background: "var(--paper-100)",
+              position: "relative",
+              width: COG_SIZE,
+              height: COG_SIZE,
               display: "grid",
               placeItems: "center",
-              fontSize: 18,
-              lineHeight: 1,
-              boxShadow:
-                "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+              filter: "drop-shadow(0 1px 1px rgba(40,25,5,0.30))",
             }}
           >
-            {CATEGORIE_EMOJI[cat]}
+            <Cog
+              size={COG_SIZE}
+              strokeWidth={1.5}
+              color="var(--brass-700)"
+              fill="var(--paper-100)"
+            />
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                display: "grid",
+                placeItems: "center",
+                lineHeight: 0,
+              }}
+            >
+              <CategorieIcon
+                categorie={cat}
+                size={ICON_SIZE}
+                strokeWidth={1.6}
+                color="var(--forest-800)"
+              />
+            </div>
           </div>
           <div
             style={{
