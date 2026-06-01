@@ -124,6 +124,8 @@ export interface GameState {
   niveauAtelier: 1 | 2 | 3;
   /** Niveau du stockage (1 à 4). Détermine capacité et loyer. */
   niveauStockage: 1 | 2 | 3 | 4;
+  /** Stock de pièces d'amélioration par catégorie (≥ 0, illimité). */
+  piecesAmelioration: Record<CategorieObjet, number>;
 }
 
 export type CompetenceId = string;
