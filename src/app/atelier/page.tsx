@@ -14,6 +14,8 @@ import {
 } from "@/lib/competences";
 import { recalculerPrixReference } from "@/lib/etat";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
+import { coutAmelioration } from "@/lib/atelier";
+import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
 import type { EtatObjet, Objet } from "@/types/game";
 
 const sectTitle: React.CSSProperties = {
@@ -147,6 +149,7 @@ export default function AtelierPage() {
         </StickyTop>
       }
     >
+      <PiecesInventoryBar pieces={state.piecesAmelioration} />
           <div
             style={{
               border: "1px solid var(--brass-500)",
@@ -355,6 +358,10 @@ export default function AtelierPage() {
               o.etat,
               cible,
             );
+            const cout = coutAmelioration(o, cible);
+            const dispo = state.piecesAmelioration[o.categorie] ?? 0;
+            const manquePieces = dispo < cout;
+            const disabled = pleine || manquePieces;
             return (
               <div
                 key={o.id}
@@ -397,10 +404,22 @@ export default function AtelierPage() {
                       {prixApres} €
                     </span>
                   </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9.5,
+                      color: manquePieces ? "var(--rouge-700, #8b1a1a)" : "var(--brass-700)",
+                      marginTop: 2,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    coût : {cout} ⚙ {o.categorie}
+                    {manquePieces ? ` · manque ${cout - dispo}` : ""}
+                  </div>
                 </div>
                 <button
                   type="button"
-                  disabled={pleine}
+                  disabled={disabled}
                   onClick={() => handleRestaurer(o, cible)}
                   style={{
                     padding: "6px 10px",
@@ -409,10 +428,10 @@ export default function AtelierPage() {
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
                     border: "1px solid var(--brass-500)",
-                    background: pleine ? "var(--paper-200)" : "var(--forest-800)",
-                    color: pleine ? "var(--ink-500)" : "var(--brass-300)",
-                    cursor: pleine ? "not-allowed" : "pointer",
-                    opacity: pleine ? 0.6 : 1,
+                    background: disabled ? "var(--paper-200)" : "var(--forest-800)",
+                    color: disabled ? "var(--ink-500)" : "var(--brass-300)",
+                    cursor: disabled ? "not-allowed" : "pointer",
+                    opacity: disabled ? 0.6 : 1,
                   }}
                 >
                   Lancer
