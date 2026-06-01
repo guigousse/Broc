@@ -38,14 +38,6 @@ const objectsLayer: CSSProperties = {
 export function QgScene({ children }: QgSceneProps) {
   return (
     <div style={wrapStyle} aria-label="Décor du QG">
-      {/* Calque 0 : vue extérieure (visible uniquement à travers les fenêtres transparentes du fond). */}
-      <img
-        src="/qg/exterieur-jour.png"
-        alt=""
-        style={layerStyle(0)}
-        draggable={false}
-      />
-      {/* Calque 1 : fond du cabinet avec carreaux transparents. */}
       <img
         src="/qg/fond-cabinet.png"
         alt=""
