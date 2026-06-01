@@ -141,6 +141,8 @@ export interface GameState {
   dernierLoyer: { jour: number; montant: number; tierNom: string } | null;
   /** Dernier événement huissier (liquidation forcée). null = aucun. */
   dernierHuissier?: HuissierEvent | null;
+  /** Lettres reçues (huissier en V1, extensible). */
+  courriers: Courrier[];
   /** Niveau de l'atelier (1, 2 ou 3). Nombre de slots = niveau. Par défaut 1. */
   niveauAtelier: 1 | 2 | 3;
   /** Niveau du stockage (1 à 4). Détermine capacité et loyer. */

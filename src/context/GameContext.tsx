@@ -39,6 +39,7 @@ import {
 } from "@/data/competences";
 import { CATEGORIES, migrerCategorie, emptyPiecesAmelioration } from "@/data/categories";
 import { recalculerPrixReference } from "@/lib/etat";
+import { migrerCourriers } from "@/lib/courrier";
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -314,6 +315,7 @@ function migrerSauvegarde(loaded: GameState): GameState {
     influenceUtilisee: loaded.influenceUtilisee ?? false,
     dernierLoyer: loaded.dernierLoyer ?? null,
     dernierHuissier: loaded.dernierHuissier ?? null,
+    courriers: migrerCourriers(loaded.courriers, loaded.dernierHuissier),
     niveauAtelier:
       (loaded as Partial<GameState>).niveauAtelier === 2 || (loaded as Partial<GameState>).niveauAtelier === 3
         ? (loaded as Partial<GameState>).niveauAtelier!
@@ -392,6 +394,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       influenceUtilisee: false,
       dernierLoyer: null,
       dernierHuissier: null,
+      courriers: [],
       niveauAtelier: 1,
       niveauStockage: 1,
       piecesAmelioration: emptyPiecesAmelioration(),
