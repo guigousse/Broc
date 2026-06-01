@@ -244,7 +244,7 @@ export default function AtelierPage() {
         </div>
       )}
 
-      <h2 style={sectTitle}>— Travaux en cours —</h2>
+      <h2 style={sectTitle} data-fly-target="travaux">— Travaux en cours —</h2>
       {enCours.length === 0 ? (
         <div style={cardWrap}>
           <p

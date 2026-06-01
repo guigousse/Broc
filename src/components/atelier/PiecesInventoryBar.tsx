@@ -29,6 +29,7 @@ export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
         <div
           key={cat}
           role="listitem"
+          data-fly-target={`piece-${cat}`}
           title={`${cat} : ${pieces[cat] ?? 0} pièces`}
           style={{
             display: "flex",
