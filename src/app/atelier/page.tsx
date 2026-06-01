@@ -16,7 +16,9 @@ import { recalculerPrixReference } from "@/lib/etat";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import { coutAmelioration, peutDemanteler, rendementDemantelement } from "@/lib/atelier";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Hammer, Pickaxe } from "lucide-react";
+import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { AtelierItemRow } from "@/components/atelier/AtelierItemRow";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
 import type { EtatObjet, Objet } from "@/types/game";
 
@@ -271,30 +273,25 @@ export default function AtelierPage() {
             const restant = Math.max(0, fin - state.jourActuel);
             const ready = state.jourActuel >= fin;
             return (
-              <div
+              <AtelierItemRow
                 key={o.id}
-                style={{
-                  padding: "10px 0",
-                  borderBottom:
-                    i === enCours.length - 1
-                      ? "none"
-                      : "1px dotted var(--paper-500)",
-                }}
-              >
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                objet={o}
+                isLast={i === enCours.length - 1}
+                metaLigne={
                   <span
                     style={{
-                      flex: 1,
-                      fontFamily: "var(--font-display)",
-                      fontSize: 11,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: "var(--forest-800)",
-                      fontWeight: 700,
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9.5,
+                      color: "var(--ink-500)",
+                      letterSpacing: "0.04em",
                     }}
                   >
-                    {o.nom}
+                    {o.etat} → {o.enRestauration!.etatCible}
+                    {" · "}
+                    {ready ? "prêt ✓" : `fin jour N°${String(fin).padStart(3, "0")}`}
                   </span>
+                }
+                action={
                   <span
                     style={{
                       fontFamily: "var(--font-mono)",
@@ -302,23 +299,13 @@ export default function AtelierPage() {
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
                       color: ready ? "var(--forest-700)" : "var(--brass-700)",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {ready ? "Prêt ✓" : `${restant} j. rest.`}
                   </span>
-                </div>
-                <span
-                  style={{
-                    fontFamily: "var(--font-serif)",
-                    fontStyle: "italic",
-                    fontSize: 12,
-                    color: "var(--ink-500)",
-                  }}
-                >
-                  {o.etat} → {o.enRestauration!.etatCible}
-                  {" · "}fin jour N°{String(fin).padStart(3, "0")}
-                </span>
-              </div>
+                }
+              />
             );
           })}
         </div>
@@ -360,82 +347,68 @@ export default function AtelierPage() {
             const manquePieces = dispo < cout;
             const disabled = pleine || manquePieces;
             return (
-              <div
+              <AtelierItemRow
                 key={o.id}
-                style={{
-                  padding: "10px 0",
-                  borderBottom:
-                    i === restaurables.length - 1
-                      ? "none"
-                      : "1px dotted var(--paper-500)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      fontSize: 11,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: "var(--forest-800)",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {o.nom}
-                  </div>
+                objet={o}
+                isLast={i === restaurables.length - 1}
+                metaLigne={
                   <div
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: 9.5,
                       color: "var(--ink-500)",
-                      marginTop: 2,
-                    }}
-                  >
-                    {o.etat} → {cible} · {duree} j.
-                    {" · "}réf. {o.prixReferenceReel} →{" "}
-                    <span style={{ color: "var(--brass-700)" }}>
-                      {prixApres} €
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 9.5,
-                      color: manquePieces ? "var(--rouge-700, #8b1a1a)" : "var(--brass-700)",
-                      marginTop: 2,
                       letterSpacing: "0.04em",
                     }}
                   >
-                    coût : {cout} ⚙ {o.categorie}
-                    {manquePieces
-                      ? ` · manque ${cout - dispo} pièce${cout - dispo > 1 ? "s" : ""}`
-                      : ""}
+                    {o.etat} → {cible} · {duree} j. · réf. {o.prixReferenceReel} →{" "}
+                    <span style={{ color: "var(--brass-700)" }}>{prixApres} €</span>
                   </div>
-                </div>
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => handleRestaurer(o, cible)}
-                  style={{
-                    padding: "6px 10px",
-                    fontFamily: "var(--font-display)",
-                    fontSize: 9.5,
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    border: "1px solid var(--brass-500)",
-                    background: disabled ? "var(--paper-200)" : "var(--forest-800)",
-                    color: disabled ? "var(--ink-500)" : "var(--brass-300)",
-                    cursor: disabled ? "not-allowed" : "pointer",
-                    opacity: disabled ? 0.6 : 1,
-                  }}
-                >
-                  Lancer
-                </button>
-              </div>
+                }
+                action={
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => handleRestaurer(o, cible)}
+                    aria-label={`Lancer la restauration — coût ${cout} pièces ${o.categorie}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "8px 10px",
+                      border: "1px solid var(--brass-500)",
+                      background: disabled
+                        ? "var(--paper-200)"
+                        : "var(--forest-800)",
+                      color: disabled ? "var(--ink-500)" : "var(--brass-300)",
+                      cursor: disabled ? "not-allowed" : "pointer",
+                      opacity: disabled ? 0.7 : 1,
+                    }}
+                  >
+                    <Hammer size={18} strokeWidth={1.5} />
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 3,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: manquePieces
+                          ? "var(--rouge-700, #8b1a1a)"
+                          : "inherit",
+                      }}
+                    >
+                      {cout}
+                      <CategorieIcon
+                        categorie={o.categorie}
+                        size={12}
+                        strokeWidth={1.6}
+                        color="currentColor"
+                      />
+                    </span>
+                  </button>
+                }
+              />
             );
           })}
         </div>
@@ -460,73 +433,60 @@ export default function AtelierPage() {
           {demantelables.map((o, i) => {
             const yieldPieces = rendementDemantelement(o);
             return (
-              <div
+              <AtelierItemRow
                 key={o.id}
-                style={{
-                  padding: "10px 0",
-                  borderBottom:
-                    i === demantelables.length - 1
-                      ? "none"
-                      : "1px dotted var(--paper-500)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      fontSize: 11,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: "var(--forest-800)",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {o.nom}
-                  </div>
-                  <div
+                objet={o}
+                isLast={i === demantelables.length - 1}
+                metaLigne={
+                  <span
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: 9.5,
                       color: "var(--ink-500)",
-                      marginTop: 2,
-                    }}
-                  >
-                    {o.etat} · réf. {o.prixReferenceReel} €
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 9.5,
-                      color: "var(--brass-700)",
-                      marginTop: 2,
                       letterSpacing: "0.04em",
                     }}
                   >
-                    rendement : {yieldPieces} ⚙ {o.categorie}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setDemantelerCible(o)}
-                  style={{
-                    padding: "6px 10px",
-                    fontFamily: "var(--font-display)",
-                    fontSize: 9.5,
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    border: "1px solid var(--brass-500)",
-                    background: "var(--paper-100)",
-                    color: "var(--forest-800)",
-                    cursor: "pointer",
-                  }}
-                >
-                  Démanteler
-                </button>
-              </div>
+                    réf. {o.prixReferenceReel} €
+                  </span>
+                }
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setDemantelerCible(o)}
+                    aria-label={`Démanteler — rendement ${yieldPieces} pièces ${o.categorie}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "8px 10px",
+                      border: "1px solid var(--brass-500)",
+                      background: "var(--brass-600)",
+                      color: "var(--paper-100)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Pickaxe size={18} strokeWidth={1.5} />
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 3,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 11,
+                        fontWeight: 700,
+                      }}
+                    >
+                      +{yieldPieces}
+                      <CategorieIcon
+                        categorie={o.categorie}
+                        size={12}
+                        strokeWidth={1.6}
+                        color="currentColor"
+                      />
+                    </span>
+                  </button>
+                }
+              />
             );
           })}
         </div>
