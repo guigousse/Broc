@@ -14,7 +14,7 @@ import {
 } from "@/lib/competences";
 import { recalculerPrixReference } from "@/lib/etat";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
-import { coutAmelioration, rendementDemantelement } from "@/lib/atelier";
+import { coutAmelioration, peutDemanteler, rendementDemantelement } from "@/lib/atelier";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
 import type { EtatObjet, Objet } from "@/types/game";
@@ -72,7 +72,7 @@ export default function AtelierPage() {
   }, [state]);
   const demantelables = useMemo(() => {
     if (!state) return [];
-    return state.inventaireJoueur.filter((o) => !o.enRestauration);
+    return state.inventaireJoueur.filter((o) => peutDemanteler(state, o).disponible);
   }, [state]);
 
   if (!isHydrated || !state) {
@@ -432,7 +432,9 @@ export default function AtelierPage() {
                     }}
                   >
                     coût : {cout} ⚙ {o.categorie}
-                    {manquePieces ? ` · manque ${cout - dispo}` : ""}
+                    {manquePieces
+                      ? ` · manque ${cout - dispo} pièce${cout - dispo > 1 ? "s" : ""}`
+                      : ""}
                   </div>
                 </div>
                 <button

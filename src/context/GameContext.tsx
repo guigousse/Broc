@@ -896,6 +896,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       setState((prev) => {
         if (!prev) return prev;
+        const stillThere = prev.inventaireJoueur.find((o) => o.id === objetId);
+        if (!stillThere || stillThere.enRestauration) return prev;
         const inv = prev.inventaireJoueur.filter((o) => o.id !== objetId);
         const piecesAmelioration = {
           ...prev.piecesAmelioration,
