@@ -10,9 +10,9 @@ import type { EtatObjet, Objet } from "@/types/game";
 
 interface AtelierItemRowProps {
   objet: Objet;
-  /** Ligne contextuelle (durée, prix, etc.) — sans la transition d'état (rendue via les étoiles). */
+  /** Ligne contextuelle (durée, prix, etc.). */
   metaLigne: ReactNode;
-  /** Zone d'action (bouton ou badge texte). Affichée à droite de la meta line. */
+  /** Zone d'action (bouton ou badge texte). Verticalement centrée à droite. */
   action: ReactNode;
   /** Si fourni, les étoiles rendent une transition `actuel → cible`. */
   etatCible?: EtatObjet;
@@ -22,7 +22,7 @@ interface AtelierItemRowProps {
 
 const row: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "48px 1fr",
+  gridTemplateColumns: "48px 1fr auto",
   gap: 10,
   alignItems: "center",
   padding: "10px 12px",
@@ -64,17 +64,6 @@ function renderStars(count: number, color: string): ReactNode {
   );
 }
 
-/**
- * Ligne d'objet réutilisable par les 3 sections de la page Atelier
- * (Travaux en cours, Restaurations possibles, Démantèlement).
- *
- * Layout : thumb 48×48 dans la 1re colonne, contenu en pile dans la 2e
- * (nom plein-largeur, ligne d'étoiles + CategorieIcon, ligne meta + action).
- * Le bouton d'action ne squeeze plus le titre.
- *
- * Quand `etatCible` est passé, les étoiles affichent une transition
- * `actuel → cible`. Sinon, elles affichent juste l'état actuel.
- */
 export function AtelierItemRow({
   objet,
   metaLigne,
@@ -156,19 +145,9 @@ export function AtelierItemRow({
             color="var(--brass-700)"
           />
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 8,
-            marginTop: 4,
-          }}
-        >
-          <div style={{ minWidth: 0, flex: 1 }}>{metaLigne}</div>
-          <div style={{ flex: "0 0 auto" }}>{action}</div>
-        </div>
+        <div style={{ marginTop: 4 }}>{metaLigne}</div>
       </div>
+      <div>{action}</div>
     </div>
   );
 }

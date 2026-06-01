@@ -16,10 +16,10 @@ import { recalculerPrixReference } from "@/lib/etat";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import { coutAmelioration, peutDemanteler, rendementDemantelement } from "@/lib/atelier";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
-import { ArrowUp, Hammer, Pickaxe } from "lucide-react";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { ArrowUp } from "lucide-react";
 import { AtelierItemRow } from "@/components/atelier/AtelierItemRow";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
+import { PieceIcon } from "@/components/atelier/PieceIcon";
 import type { EtatObjet, Objet } from "@/types/game";
 
 const sectTitle: React.CSSProperties = {
@@ -366,7 +366,7 @@ export default function AtelierPage() {
                       display: "flex",
                       alignItems: "center",
                       gap: 5,
-                      padding: "5px 8px",
+                      padding: "4px 6px",
                       border: "1px solid var(--brass-500)",
                       background: disabled
                         ? "var(--paper-200)"
@@ -376,28 +376,19 @@ export default function AtelierPage() {
                       opacity: disabled ? 0.7 : 1,
                     }}
                   >
-                    <Hammer size={16} strokeWidth={1.5} />
                     <span
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 3,
                         fontFamily: "var(--font-mono)",
-                        fontSize: 10.5,
+                        fontSize: 11,
                         fontWeight: 700,
                         color: manquePieces
                           ? "var(--rouge-700, #8b1a1a)"
                           : "inherit",
                       }}
                     >
-                      {cout}
-                      <CategorieIcon
-                        categorie={o.categorie}
-                        size={11}
-                        strokeWidth={1.6}
-                        color="currentColor"
-                      />
+                      −{cout}
                     </span>
+                    <PieceIcon categorie={o.categorie} size={22} />
                   </button>
                 }
               />
@@ -450,32 +441,23 @@ export default function AtelierPage() {
                       display: "flex",
                       alignItems: "center",
                       gap: 5,
-                      padding: "5px 8px",
+                      padding: "4px 6px",
                       border: "1px solid var(--brass-500)",
                       background: "var(--brass-600)",
                       color: "var(--paper-100)",
                       cursor: "pointer",
                     }}
                   >
-                    <Pickaxe size={16} strokeWidth={1.5} />
                     <span
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 3,
                         fontFamily: "var(--font-mono)",
-                        fontSize: 10.5,
+                        fontSize: 11,
                         fontWeight: 700,
                       }}
                     >
                       +{yieldPieces}
-                      <CategorieIcon
-                        categorie={o.categorie}
-                        size={11}
-                        strokeWidth={1.6}
-                        color="currentColor"
-                      />
                     </span>
+                    <PieceIcon categorie={o.categorie} size={22} />
                   </button>
                 }
               />
