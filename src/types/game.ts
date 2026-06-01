@@ -139,8 +139,6 @@ export interface GameState {
   influenceUtilisee: boolean;
   /** Dernier loyer prélevé (utile pour l'UI). null = pas encore prélevé. */
   dernierLoyer: { jour: number; montant: number; tierNom: string } | null;
-  /** Dernier événement huissier (liquidation forcée). null = aucun. */
-  dernierHuissier?: HuissierEvent | null;
   /** Lettres reçues (huissier en V1, extensible). */
   courriers: Courrier[];
   /** Niveau de l'atelier (1, 2 ou 3). Nombre de slots = niveau. Par défaut 1. */

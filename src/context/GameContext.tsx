@@ -118,8 +118,6 @@ interface GameContextValue {
   rerollMeteo: () => { ok: boolean; raison?: string };
   /** Influence (compétence Vision 3) : retire la brocante de la célébrité courante. */
   rerollCelebrite: () => { ok: boolean; raison?: string };
-  /** Acquitte l'événement huissier (réinitialise dernierHuissier). */
-  marquerHuissierVu: () => void;
   /** Marque un courrier comme lu (utilisé par le QG). */
   marquerCourrierLu: (id: string) => void;
 }
@@ -316,8 +314,7 @@ function migrerSauvegarde(loaded: GameState): GameState {
         : tirerCelebrite(),
     influenceUtilisee: loaded.influenceUtilisee ?? false,
     dernierLoyer: loaded.dernierLoyer ?? null,
-    dernierHuissier: loaded.dernierHuissier ?? null,
-    courriers: migrerCourriers(loaded.courriers, loaded.dernierHuissier),
+    courriers: migrerCourriers(loaded.courriers, (loaded as GameState & { dernierHuissier?: HuissierEvent | null }).dernierHuissier),
     niveauAtelier:
       (loaded as Partial<GameState>).niveauAtelier === 2 || (loaded as Partial<GameState>).niveauAtelier === 3
         ? (loaded as Partial<GameState>).niveauAtelier!
@@ -395,7 +392,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       celebriteActuelle: tirerCelebrite(),
       influenceUtilisee: false,
       dernierLoyer: null,
-      dernierHuissier: null,
       courriers: [],
       niveauAtelier: 1,
       niveauStockage: 1,
@@ -474,7 +470,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       let nouveauBudget = budgetApresLoyer;
       let invApresHuissier = inv;
       let collectionApresHuissier = prev.collection;
-      let dernierHuissier: HuissierEvent | null = prev.dernierHuissier ?? null;
+      let dernierHuissier: HuissierEvent | null = null;
 
       if (tierStockage && budgetApresLoyer < 0) {
         const detteInitiale = budgetApresLoyer;
@@ -572,7 +568,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         // Reset le jeton d'influence à chaque édition.
         influenceUtilisee: refresh ? false : prev.influenceUtilisee,
         dernierLoyer,
-        dernierHuissier,
         courriers: nouveauxCourriers,
       };
     });
@@ -1060,10 +1055,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const marquerHuissierVu = useCallback(() => {
-    setState((prev) => (prev ? { ...prev, dernierHuissier: null } : prev));
-  }, []);
-
   const marquerCourrierLu = useCallback((id: string) => {
     setState((prev) => {
       if (!prev) return prev;
@@ -1129,7 +1120,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerBossDebloqueVu,
       rerollMeteo,
       rerollCelebrite,
-      marquerHuissierVu,
       marquerCourrierLu,
     }),
     [
@@ -1164,7 +1154,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerBossDebloqueVu,
       rerollMeteo,
       rerollCelebrite,
-      marquerHuissierVu,
       marquerCourrierLu,
     ],
   );
