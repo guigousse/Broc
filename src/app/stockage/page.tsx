@@ -213,12 +213,14 @@ export default function StockagePage() {
                 );
               })()}
             />
-            <CategoriePicker
-              selection={filtre}
-              onChange={setFiltre}
-              comptesParCat={comptes}
-              total={state.inventaireJoueur.length}
-            />
+            <div style={{ marginTop: 4 }}>
+              <CategoriePicker
+                selection={filtre}
+                onChange={setFiltre}
+                comptesParCat={comptes}
+                total={state.inventaireJoueur.length}
+              />
+            </div>
           </StickyTop>
         }
       >

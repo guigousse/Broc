@@ -150,18 +150,20 @@ export default function CollectionPage() {
               </div>
             }
           />
-          <CategoriePicker
-            selection={filtre}
-            onChange={setFiltre}
-            comptesParCat={comptes}
-            total={Object.values(comptes).reduce((s, v) => s + (v ?? 0), 0)}
-            totauxParCat={totauxParCat}
-            totalGlobal={Object.values(totauxParCat).reduce(
-              (s, v) => s + (v ?? 0),
-              0,
-            )}
-            nouveautesParCat={nouveautesParCat}
-          />
+          <div style={{ marginTop: 4 }}>
+            <CategoriePicker
+              selection={filtre}
+              onChange={setFiltre}
+              comptesParCat={comptes}
+              total={Object.values(comptes).reduce((s, v) => s + (v ?? 0), 0)}
+              totauxParCat={totauxParCat}
+              totalGlobal={Object.values(totauxParCat).reduce(
+                (s, v) => s + (v ?? 0),
+                0,
+              )}
+              nouveautesParCat={nouveautesParCat}
+            />
+          </div>
         </StickyTop>
       }
     >

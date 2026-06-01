@@ -65,11 +65,13 @@ export default function CompetencesPage() {
         stickyTop={
           <StickyTop>
             <PageHeaderBar title="Compétences" />
-            <TreePicker
-              trees={state.competenceTrees}
-              selectionne={tree}
-              onSelect={setTree}
-            />
+            <div style={{ marginTop: 4 }}>
+              <TreePicker
+                trees={state.competenceTrees}
+                selectionne={tree}
+                onSelect={setTree}
+              />
+            </div>
             <div
               style={{
                 textAlign: "center",
