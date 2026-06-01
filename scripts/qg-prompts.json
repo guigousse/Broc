@@ -6,37 +6,44 @@
   },
   {
     "id": "exterieur-jour",
-    "description": "Soft impressionistic view of Parisian street rooftops at midday, used as a distant background seen through windows. Aspect aligned to fond-cabinet so left and right window apertures both reveal pleasing views (treetops on left, roof slopes on right). Warm daylight, soft pastel sky.",
-    "transparent": false
+    "description": "Soft impressionistic view of Parisian street rooftops at midday. This image will be placed BEHIND the reference cabinet image — visible only through the window apertures (one on the left zone above the writing desk, one on the right zone of the reading nook). Compose so that the left window reveals treetops and the right window reveals roof slopes. Warm daylight, soft pastel sky, matching the warmth and palette of the reference. Same aspect ratio as the reference image.",
+    "transparent": false,
+    "reference": "fond-cabinet"
   },
   {
     "id": "porte",
-    "description": "Heavy wooden front door closed, with a polished brass letterbox slot at mid-height. Eye-level perspective. Warm soft light from upper-left. Isolated subject on transparent background.",
-    "transparent": true
+    "description": "A heavy wooden front door, closed, with a polished brass letterbox slot at mid-height. The door is intended to be composited on top of the CENTER zone of the reference image (the entrance wall), at the exact same position, perspective and scale as the door already shown in the reference. Match the reference's eye-level perspective, the soft warm light from upper-left, the rendering style (Art Déco line-art + sepia/forest green wash on cream parchment), and the door's apparent height in the reference. Isolated subject only — door panel, frame and letterbox visible — on transparent background, nothing else.",
+    "transparent": true,
+    "reference": "fond-cabinet"
   },
   {
     "id": "fauteuil",
-    "description": "Vintage tufted Chesterfield armchair in deep emerald-green velvet, three-quarter front view, lit from upper-left to match a cozy reading nook. Designed to sit naturally on a Persian rug. Isolated subject on transparent background.",
-    "transparent": true
+    "description": "A vintage tufted Chesterfield armchair in deep emerald-green velvet, three-quarter front view facing slightly toward the viewer. The armchair is intended to be placed on the Persian rug in the RIGHT zone (reading nook) of the reference image, in the empty floor space between the side table and the fireplace. Match the reference's eye-level perspective, scale (the armchair should fit naturally on the rug without overlapping the fireplace), and lighting (soft warm light from upper-left). Use the same Art Déco line-art + sepia/forest green wash style on cream parchment. Isolated subject on transparent background — armchair only, no rug, no nook elements.",
+    "transparent": true,
+    "reference": "fond-cabinet"
   },
   {
     "id": "journal",
-    "description": "Rolled-up vintage newspaper, lying flat on a wooden desk, slight perspective from above. Tied with a string. Isolated subject on transparent background.",
-    "transparent": true
+    "description": "A rolled-up vintage newspaper tied with a string, lying flat on a desk surface. The newspaper is intended to be placed on the mahogany writing desk in the LEFT zone of the reference image, viewed from the same slight top-down angle the desk surface has. Match the reference's perspective, scale (the rolled newspaper should look like a regular ~40cm log on the desk), lighting from upper-left, and the same Art Déco line-art + sepia/forest green wash style. Isolated subject on transparent background — newspaper only, no desk.",
+    "transparent": true,
+    "reference": "fond-cabinet"
   },
   {
     "id": "carnet",
-    "description": "Small leather-bound notebook, closed, brown cover with gilded edges, lying flat on a wooden desk, slight perspective from above. Isolated subject on transparent background.",
-    "transparent": true
+    "description": "A small leather-bound notebook, closed, brown cover with gilded edges, lying flat next to the rolled newspaper on the same writing desk. The notebook is intended to be placed on the mahogany writing desk in the LEFT zone of the reference image. Match the reference's perspective (same slight top-down angle as the desk), scale (notebook ~A6 size on the desk), lighting from upper-left, and the same Art Déco rendering style. Isolated subject on transparent background — notebook only, no desk.",
+    "transparent": true,
+    "reference": "fond-cabinet"
   },
   {
     "id": "gramophone",
-    "description": "Vintage gramophone with brass horn on a small wooden side table, eye-level perspective, lit from upper-left. Isolated subject on transparent background.",
-    "transparent": true
+    "description": "A vintage gramophone with brass horn on a small wooden side table. Intended to be placed next to the armchair in the RIGHT zone (reading nook) of the reference image. Match the reference's eye-level perspective, scale (the gramophone + side table should reach about the height of the armchair's backrest), lighting from upper-left, and the same Art Déco line-art + sepia/forest green wash on cream parchment. Isolated subject on transparent background — gramophone and its small side table only.",
+    "transparent": true,
+    "reference": "fond-cabinet"
   },
   {
     "id": "lettre",
-    "description": "Single closed white envelope as if dropped on the floor, slight perspective from above, soft shadow underneath. Isolated subject on transparent background.",
-    "transparent": true
+    "description": "A single closed white envelope as if dropped on the floor, slightly rotated, soft shadow underneath. Intended to be placed on the floor right in front of the door in the CENTER zone of the reference image. Match the reference's perspective on the floor (slight top-down) and lighting from upper-left. Same Art Déco rendering style. Isolated subject on transparent background — envelope only.",
+    "transparent": true,
+    "reference": "fond-cabinet"
   }
 ]

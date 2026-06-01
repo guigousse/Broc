@@ -10,6 +10,11 @@
  *   npm run gen:qg -- --aspect=16:9 fond-cabinet    # forcer un aspect en Pro
  *
  * Les PNG sont écrits dans public/qg/{id}.png.
+ *
+ * Si une entrée a un champ `reference: "<id>"`, le script charge
+ * `public/qg/<id>.png` et l'envoie comme image de référence à Gemini pour
+ * caler la perspective / la lumière / l'échelle. Le fichier de référence
+ * doit exister, sinon l'asset échoue.
  */
 
 import { GoogleGenAI } from "@google/genai";
@@ -63,6 +68,9 @@ const STYLE_BRIEF_BASE = [
 const STYLE_BRIEF_TRANSPARENT =
   "PNG with transparent background where instructed. Crisp clean edges around the subject for clean compositing.";
 
+const REFERENCE_INTRO =
+  "Reference image (first image, attached): the scene where the requested subject will be composited. Match the reference's perspective, eye-level/camera angle, scale, lighting direction (soft warm light from upper-left), color palette and Art Déco rendering style. Output only the requested isolated subject on a transparent background (or as instructed) — do NOT redraw the reference scene; just produce the subject that would composite naturally on top of it.";
+
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 if (!apiKey) {
   console.error("❌ GEMINI_API_KEY absente. Voir .env.example");
@@ -88,6 +96,18 @@ if (!model) {
 const defaultAspect = flagValue("aspect", "5:2");
 const imageSize = flagValue("resolution", "2K");
 const onlyIds = args.filter((a) => !a.startsWith("--"));
+
+async function loadReferenceImage(refId) {
+  const refPath = path.join(OUTPUT_DIR, `${refId}.png`);
+  try {
+    const buf = await fs.readFile(refPath);
+    return { mimeType: "image/png", data: buf.toString("base64") };
+  } catch (err) {
+    throw new Error(
+      `référence "${refId}.png" introuvable dans ${OUTPUT_DIR} (génère d'abord cet asset). Cause: ${err.message ?? err}`,
+    );
+  }
+}
 
 async function main() {
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
@@ -122,21 +142,50 @@ async function main() {
 
     const briefParts = [STYLE_BRIEF_BASE];
     if (item.transparent) briefParts.push(STYLE_BRIEF_TRANSPARENT);
-    const prompt = `${briefParts.join(" ")}\n\nSubject: ${item.description}`;
+    const promptText = `${briefParts.join(" ")}\n\nSubject: ${item.description}`;
     const aspectRatio = item.id === "fond-cabinet" || item.id === "exterieur-jour"
       ? defaultAspect
       : "1:1";
-    if (verbose) console.log(`  prompt → ${prompt}`);
-    console.log(`🎨  ${item.id} — génération en cours (${model}, ${aspectRatio})…`);
+
+    let contents;
+    try {
+      if (item.reference) {
+        const refImage = await loadReferenceImage(item.reference);
+        contents = [
+          {
+            role: "user",
+            parts: [
+              { text: REFERENCE_INTRO },
+              { inlineData: refImage },
+              { text: promptText },
+            ],
+          },
+        ];
+        console.log(
+          `🎨  ${item.id} — génération en cours (${model}, ${aspectRatio}, ref: ${item.reference})…`,
+        );
+      } else {
+        contents = promptText;
+        console.log(
+          `🎨  ${item.id} — génération en cours (${model}, ${aspectRatio})…`,
+        );
+      }
+    } catch (err) {
+      console.error(`❌  ${item.id} : ${err.message ?? err}`);
+      failed++;
+      continue;
+    }
+
+    if (verbose) console.log(`  prompt → ${promptText}`);
 
     const requestConfig =
       modelKey === "pro"
         ? {
             model,
-            contents: prompt,
+            contents,
             config: { imageConfig: { aspectRatio, imageSize } },
           }
-        : { model, contents: prompt };
+        : { model, contents };
 
     try {
       const response = await ai.models.generateContent(requestConfig);
