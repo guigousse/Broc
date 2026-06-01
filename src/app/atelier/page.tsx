@@ -14,7 +14,8 @@ import {
 } from "@/lib/competences";
 import { recalculerPrixReference } from "@/lib/etat";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
-import { coutAmelioration } from "@/lib/atelier";
+import { coutAmelioration, rendementDemantelement } from "@/lib/atelier";
+import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
 import type { EtatObjet, Objet } from "@/types/game";
 
@@ -37,8 +38,9 @@ const cardWrap: React.CSSProperties = {
 
 export default function AtelierPage() {
   const router = useRouter();
-  const { state, isHydrated, restaurerObjet, ameliorerAtelier } = useGame();
+  const { state, isHydrated, restaurerObjet, ameliorerAtelier, demantelerObjet } = useGame();
   const [flash, setFlash] = useState<string | null>(null);
+  const [demantelerCible, setDemantelerCible] = useState<Objet | null>(null);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -68,6 +70,10 @@ export default function AtelierPage() {
             peutRestaurerTresBonVersPristin(state, o.categorie))),
     );
   }, [state]);
+  const demantelables = useMemo(() => {
+    if (!state) return [];
+    return state.inventaireJoueur.filter((o) => !o.enRestauration);
+  }, [state]);
 
   if (!isHydrated || !state) {
     return (
@@ -87,6 +93,18 @@ export default function AtelierPage() {
   }
 
   const pleine = enCours.length >= ATELIER_SLOTS[state.niveauAtelier];
+
+  const handleConfirmDemanteler = () => {
+    if (!demantelerCible) return;
+    const res = demantelerObjet(demantelerCible.id);
+    if (res.ok) {
+      setFlash(`${demantelerCible.nom} démantelé · +${res.pieces} ⚙ ${demantelerCible.categorie}.`);
+    } else {
+      setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
+    }
+    setDemantelerCible(null);
+    setTimeout(() => setFlash(null), 2500);
+  };
 
   const handleRestaurer = (objet: Objet, cible: EtatObjet) => {
     const duree = dureeRestauration(state, objet.categorie, cible);
@@ -441,6 +459,158 @@ export default function AtelierPage() {
           })}
         </div>
       )}
+      <h2 style={sectTitle}>— Démantèlement —</h2>
+      {demantelables.length === 0 ? (
+        <div style={cardWrap}>
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontStyle: "italic",
+              color: "var(--ink-500)",
+              textAlign: "center",
+              padding: "12px 0",
+            }}
+          >
+            Aucun objet à démanteler en stock.
+          </p>
+        </div>
+      ) : (
+        <div style={cardWrap}>
+          {demantelables.map((o, i) => {
+            const yieldPieces = rendementDemantelement(o);
+            return (
+              <div
+                key={o.id}
+                style={{
+                  padding: "10px 0",
+                  borderBottom:
+                    i === demantelables.length - 1
+                      ? "none"
+                      : "1px dotted var(--paper-500)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: 11,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: "var(--forest-800)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {o.nom}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9.5,
+                      color: "var(--ink-500)",
+                      marginTop: 2,
+                    }}
+                  >
+                    {o.etat} · réf. {o.prixReferenceReel} €
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9.5,
+                      color: "var(--brass-700)",
+                      marginTop: 2,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    rendement : {yieldPieces} ⚙ {o.categorie}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDemantelerCible(o)}
+                  style={{
+                    padding: "6px 10px",
+                    fontFamily: "var(--font-display)",
+                    fontSize: 9.5,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    border: "1px solid var(--brass-500)",
+                    background: "var(--paper-100)",
+                    color: "var(--forest-800)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Démanteler
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <BottomSheet
+        open={demantelerCible !== null}
+        onClose={() => setDemantelerCible(null)}
+        title="Démantèlement"
+      >
+        {demantelerCible && (
+          <div style={{ padding: "8px 16px 16px" }}>
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: 13,
+                color: "var(--ink-700)",
+                marginBottom: 10,
+              }}
+            >
+              Démanteler <strong>{demantelerCible.nom}</strong> rend{" "}
+              <strong>{rendementDemantelement(demantelerCible)} ⚙ {demantelerCible.categorie}</strong>.
+              L'objet sera détruit définitivement.
+            </p>
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button
+                type="button"
+                onClick={() => setDemantelerCible(null)}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 10.5,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  border: "1px solid var(--brass-500)",
+                  background: "var(--paper-200)",
+                  color: "var(--ink-700)",
+                  cursor: "pointer",
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDemanteler}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 10.5,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  border: "1px solid var(--brass-500)",
+                  background: "var(--forest-800)",
+                  color: "var(--brass-300)",
+                  cursor: "pointer",
+                }}
+              >
+                Démanteler
+              </button>
+            </div>
+          </div>
+        )}
+      </BottomSheet>
     </MobileLayout>
   );
 }
