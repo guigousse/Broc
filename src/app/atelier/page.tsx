@@ -53,13 +53,6 @@ export default function AtelierPage() {
     () => state?.inventaireJoueur.filter((o) => o.enRestauration) ?? [],
     [state],
   );
-  const prets = useMemo(
-    () =>
-      enCours.filter(
-        (o) => (o.enRestauration?.jourFin ?? Infinity) <= (state?.jourActuel ?? 0),
-      ),
-    [enCours, state],
-  );
   const restaurables = useMemo(() => {
     if (!state) return [];
     return state.inventaireJoueur.filter(
