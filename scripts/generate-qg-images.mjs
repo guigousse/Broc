@@ -94,8 +94,9 @@ if (!model) {
   process.exit(1);
 }
 // Gemini Pro accepte : 1:1, 1:4, 1:8, 2:3, 3:2, 3:4, 4:1, 4:3, 4:5, 5:4, 8:1, 9:16, 16:9, 21:9.
-// 21:9 ≈ 2.33:1 — le plus large ratio "landscape standard", idéal pour notre panorama.
-const defaultAspect = flagValue("aspect", "21:9");
+// 16:9 ≈ 1.78:1 — chaque tiers (visible sur un écran portrait) fait ≈ 1:1.69,
+// suffisamment vertical pour un cadrage smartphone portrait.
+const defaultAspect = flagValue("aspect", "16:9");
 const imageSize = flagValue("resolution", "2K");
 const onlyIds = args.filter((a) => !a.startsWith("--"));
 
