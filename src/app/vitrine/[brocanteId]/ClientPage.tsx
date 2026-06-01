@@ -361,7 +361,7 @@ export default function VitrineBrocantePage() {
                   >
                     {o.etat} · {o.rarete}
                     {aConnaisseurVitrine(state, o.categorie)
-                      ? ` · ref. ${Math.round(o.prixReferenceReel)} €`
+                      ? ` · valeur ${Math.round(o.prixReferenceReel)} €`
                       : o.prixAchat != null
                         ? ` · achat ${o.prixAchat} €`
                         : ""}

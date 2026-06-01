@@ -337,7 +337,7 @@ export function StockageItemRow({
               letterSpacing: "0.06em",
             }}
           >
-            ref.
+            valeur
           </div>
         </div>
       </div>
