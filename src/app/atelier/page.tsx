@@ -279,8 +279,6 @@ export default function AtelierPage() {
                       letterSpacing: "0.04em",
                     }}
                   >
-                    {o.etat} → {o.enRestauration!.etatCible}
-                    {" · "}
                     {ready ? "prêt ✓" : `fin jour N°${String(fin).padStart(3, "0")}`}
                   </span>
                 }
@@ -288,7 +286,7 @@ export default function AtelierPage() {
                   <span
                     style={{
                       fontFamily: "var(--font-mono)",
-                      fontSize: 9.5,
+                      fontSize: 9,
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
                       color: ready ? "var(--forest-700)" : "var(--brass-700)",
@@ -343,6 +341,7 @@ export default function AtelierPage() {
               <AtelierItemRow
                 key={o.id}
                 objet={o}
+                etatCible={cible}
                 isLast={i === restaurables.length - 1}
                 metaLigne={
                   <div
@@ -353,7 +352,7 @@ export default function AtelierPage() {
                       letterSpacing: "0.04em",
                     }}
                   >
-                    {o.etat} → {cible} · {duree} j. · réf. {o.prixReferenceReel} →{" "}
+                    {duree} j. · valeur {o.prixReferenceReel} →{" "}
                     <span style={{ color: "var(--brass-700)" }}>{prixApres} €</span>
                   </div>
                 }
@@ -366,8 +365,8 @@ export default function AtelierPage() {
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 6,
-                      padding: "8px 10px",
+                      gap: 5,
+                      padding: "5px 8px",
                       border: "1px solid var(--brass-500)",
                       background: disabled
                         ? "var(--paper-200)"
@@ -377,14 +376,14 @@ export default function AtelierPage() {
                       opacity: disabled ? 0.7 : 1,
                     }}
                   >
-                    <Hammer size={18} strokeWidth={1.5} />
+                    <Hammer size={16} strokeWidth={1.5} />
                     <span
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 3,
                         fontFamily: "var(--font-mono)",
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: 700,
                         color: manquePieces
                           ? "var(--rouge-700, #8b1a1a)"
@@ -394,7 +393,7 @@ export default function AtelierPage() {
                       {cout}
                       <CategorieIcon
                         categorie={o.categorie}
-                        size={12}
+                        size={11}
                         strokeWidth={1.6}
                         color="currentColor"
                       />
@@ -439,7 +438,7 @@ export default function AtelierPage() {
                       letterSpacing: "0.04em",
                     }}
                   >
-                    réf. {o.prixReferenceReel} €
+                    valeur {o.prixReferenceReel} €
                   </span>
                 }
                 action={
@@ -450,29 +449,29 @@ export default function AtelierPage() {
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 6,
-                      padding: "8px 10px",
+                      gap: 5,
+                      padding: "5px 8px",
                       border: "1px solid var(--brass-500)",
                       background: "var(--brass-600)",
                       color: "var(--paper-100)",
                       cursor: "pointer",
                     }}
                   >
-                    <Pickaxe size={18} strokeWidth={1.5} />
+                    <Pickaxe size={16} strokeWidth={1.5} />
                     <span
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 3,
                         fontFamily: "var(--font-mono)",
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: 700,
                       }}
                     >
                       +{yieldPieces}
                       <CategorieIcon
                         categorie={o.categorie}
-                        size={12}
+                        size={11}
                         strokeWidth={1.6}
                         color="currentColor"
                       />
