@@ -6,12 +6,12 @@ import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
 import { CategoriePicker } from "@/components/mobile/CategoriePicker";
+import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { CollectionGrid } from "@/components/CollectionGrid";
 import { CollectionDetailOverlay } from "@/components/mobile/CollectionDetailOverlay";
 import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
-import { progressionGlobale } from "@/lib/collection";
 import { stockageEstPlein } from "@/lib/stockage";
 import type { CategorieObjet, CollectionSlot } from "@/types/game";
 
@@ -46,6 +46,25 @@ export default function CollectionPage() {
     return acc;
   }, [state]);
 
+  const totauxParCat = useMemo(() => {
+    const acc: Partial<Record<CategorieObjet, number>> = {};
+    if (!state) return acc;
+    for (const c of CATEGORIES) acc[c] = (state.collection[c] ?? []).length;
+    return acc;
+  }, [state]);
+
+  const valeursParCat = useMemo(() => {
+    const acc: Partial<Record<CategorieObjet, number>> = {};
+    if (!state) return acc;
+    for (const c of CATEGORIES) {
+      acc[c] = (state.collection[c] ?? []).reduce(
+        (s, slot) => s + (slot.donation?.valeur ?? 0),
+        0,
+      );
+    }
+    return acc;
+  }, [state]);
+
   const candidats = useMemo(() => {
     if (!state || !slotActif) return [];
     return state.inventaireJoueur.filter((o) => o.templateId === slotActif.templateId);
@@ -68,35 +87,6 @@ export default function CollectionPage() {
     );
   }
 
-  const global = progressionGlobale(state.collection);
-
-  // valeurParCategorie(collection, cat) takes one cat at a time — compute map inline
-  const valeurs = CATEGORIES.reduce(
-    (acc, c) => {
-      acc[c] = (state.collection[c] ?? []).reduce(
-        (s, slot) => s + (slot.donation?.valeur ?? 0),
-        0,
-      );
-      return acc;
-    },
-    {} as Record<CategorieObjet, number>,
-  );
-
-  const breakdown = CATEGORIES.filter((c) => (valeurs[c] ?? 0) > 0)
-    .sort((a, b) => (valeurs[b] ?? 0) - (valeurs[a] ?? 0))
-    .slice(0, 3)
-    .map((c) => `${c} ${Math.round(valeurs[c] ?? 0)} €`)
-    .join(" · ");
-
-  // Totaux par catégorie (slots possibles, peu importe l'état découvert/donné)
-  const totauxParCat = CATEGORIES.reduce(
-    (acc, c) => {
-      acc[c] = (state.collection[c] ?? []).length;
-      return acc;
-    },
-    {} as Record<CategorieObjet, number>,
-  );
-
   // Nouveautés non consultées par catégorie (slot vu mais vuDansCollection=false)
   const nouveautesParCat = CATEGORIES.reduce(
     (acc, c) => {
@@ -108,9 +98,16 @@ export default function CollectionPage() {
     {} as Record<CategorieObjet, boolean>,
   );
 
-  // Sélection courante : valeur + libellé du bandeau
-  const bandeauLabel = filtre ? filtre : "Valeur totale";
-  const bandeauValeur = filtre ? valeurs[filtre] ?? 0 : global.valeur;
+  const labelGauche = filtre ?? "Total";
+  const valeurAffichee = filtre
+    ? (valeursParCat[filtre] ?? 0)
+    : Object.values(valeursParCat).reduce((s, v) => s + v, 0);
+  const possedeAffiche = filtre
+    ? (comptes[filtre] ?? 0)
+    : Object.values(comptes).reduce((s, v) => s + (v ?? 0), 0);
+  const totalAffiche = filtre
+    ? (totauxParCat[filtre] ?? 0)
+    : Object.values(totauxParCat).reduce((s, v) => s + (v ?? 0), 0);
 
   const plein = stockageEstPlein(state);
 
@@ -120,58 +117,47 @@ export default function CollectionPage() {
       header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
       stickyTop={
         <StickyTop>
-          <div
-            style={{
-              border: "1px solid var(--brass-500)",
-              padding: "8px 12px",
-              background: "var(--paper-100)",
-              textAlign: "center",
-              marginBottom: 8,
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 9,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                color: "var(--brass-700)",
-              }}
-            >
-              — {bandeauLabel} —
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 24,
-                color: "var(--forest-800)",
-                letterSpacing: "0.04em",
-              }}
-            >
-              {Math.round(bandeauValeur).toLocaleString("fr-FR")} €
-            </div>
-            {!filtre && breakdown && (
+          <PageHeaderBar
+            title="Collection"
+            left={
               <div
                 style={{
-                  fontFamily: "var(--font-serif)",
-                  fontStyle: "italic",
-                  fontSize: 11.5,
-                  color: "var(--ink-500)",
-                  marginTop: 4,
+                  fontFamily: "var(--font-display)",
+                  fontSize: 12,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "var(--forest-800)",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+                title={`${labelGauche} ${valeurAffichee} €`}
+              >
+                {labelGauche} {valeurAffichee} €
+              </div>
+            }
+            right={
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  color: "var(--brass-700)",
+                  letterSpacing: "0.06em",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {breakdown}
+                {possedeAffiche}/{totalAffiche}
               </div>
-            )}
-          </div>
+            }
+          />
           <CategoriePicker
             selection={filtre}
             onChange={setFiltre}
             comptesParCat={comptes}
-            total={global.donnees}
+            total={Object.values(comptes).reduce((s, v) => s + (v ?? 0), 0)}
             totauxParCat={totauxParCat}
-            totalGlobal={CATEGORIES.reduce(
-              (s, c) => s + (state.collection[c]?.length ?? 0),
+            totalGlobal={Object.values(totauxParCat).reduce(
+              (s, v) => s + (v ?? 0),
               0,
             )}
             nouveautesParCat={nouveautesParCat}

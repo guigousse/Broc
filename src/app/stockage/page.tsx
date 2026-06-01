@@ -16,6 +16,8 @@ import {
   getStockageTierParNiveau,
 } from "@/data/stockage";
 import { getCapaciteStockage, totalEnStock } from "@/lib/stockage";
+import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
+import { UpgradeButton } from "@/components/mobile/UpgradeButton";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import {
   atelierStatusPourObjet,
@@ -89,9 +91,7 @@ export default function StockagePage() {
   }
 
   const tier = getStockageTierParNiveau(state.niveauStockage);
-  const totalStock = totalEnStock(state);
   const capacite = getCapaciteStockage(state);
-  const ratio = capacite > 0 ? totalStock / capacite : 0;
 
   const atelierStatus = (o: Objet) => atelierStatusPourObjet(state, o);
   const collectionStatus = (o: Objet) => collectionStatusPourObjet(state, o);
@@ -140,66 +140,79 @@ export default function StockagePage() {
         header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
         stickyTop={
           <StickyTop>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 9,
-                letterSpacing: "0.24em",
-                textTransform: "uppercase",
-                color: "var(--brass-700)",
-                textAlign: "center",
-                marginBottom: 6,
-              }}
-            >
-              — Stockage · {tier.nom} —
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 17,
-                  color: "var(--forest-800)",
-                }}
-              >
-                {totalStock} / {capacite} obj.
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 9,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "var(--brass-700)",
-                }}
-              >
-                {tier.loyerHebdo > 0 ? `Loyer ${tier.loyerHebdo} €/sem.` : ""}
-              </span>
-            </div>
-            <div
-              style={{
-                height: 6,
-                background: "var(--paper-300)",
-                border: "1px solid var(--brass-500)",
-                margin: "6px 0 8px",
-              }}
-            >
-              <div
-                style={{
-                  height: "100%",
-                  background:
-                    ratio >= 1
-                      ? "var(--vermillion-600)"
-                      : "var(--forest-800)",
-                  width: `${Math.min(100, Math.round(ratio * 100))}%`,
-                }}
-              />
-            </div>
+            <PageHeaderBar
+              title="Stockage"
+              left={
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: 12,
+                      letterSpacing: "0.10em",
+                      textTransform: "uppercase",
+                      color: "var(--forest-800)",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {tier.nom} {totalEnStock(state)}/{capacite}
+                  </div>
+                  {tier.loyerHebdo > 0 && (
+                    <div
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 9,
+                        color: "var(--ink-500)",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      loyer {tier.loyerHebdo} €/sem
+                    </div>
+                  )}
+                </div>
+              }
+              right={(() => {
+                const up = getProchaineUpgradeStockage(state.niveauStockage);
+                if (!up) {
+                  return (
+                    <span
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 10,
+                        letterSpacing: "0.14em",
+                        textTransform: "uppercase",
+                        color: "var(--brass-700)",
+                        padding: "6px 10px",
+                      }}
+                    >
+                      MAX
+                    </span>
+                  );
+                }
+                return (
+                  <UpgradeButton
+                    niveauCible={up.niveauCible}
+                    cout={up.cout}
+                    peut={state.budget >= up.cout}
+                    onUpgrade={() => {
+                      const res = ameliorerStockage();
+                      if (!res.ok) setFlash(res.raison ?? "Impossible");
+                      else
+                        setFlash(`Stockage amélioré au LVL ${up.niveauCible}.`);
+                      setTimeout(() => setFlash(null), 2500);
+                    }}
+                  />
+                );
+              })()}
+            />
             <CategoriePicker
               selection={filtre}
               onChange={setFiltre}
@@ -209,89 +222,6 @@ export default function StockagePage() {
           </StickyTop>
         }
       >
-          <div
-            style={{
-              border: "1px solid var(--brass-500)",
-              background: "var(--paper-100)",
-              padding: "10px 14px",
-              boxShadow:
-                "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
-              marginBottom: 10,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 11,
-                  letterSpacing: "0.16em",
-                  textTransform: "uppercase",
-                  color: "var(--forest-800)",
-                }}
-              >
-                Stockage LVL {state.niveauStockage}
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 9.5,
-                  color: "var(--ink-500)",
-                  marginTop: 1,
-                }}
-              >
-                {capacite} obj.{tier.loyerHebdo > 0 ? ` · loyer ${tier.loyerHebdo} €/sem` : ""}
-              </div>
-            </div>
-            {(() => {
-              const up = getProchaineUpgradeStockage(state.niveauStockage);
-              if (!up) {
-                return (
-                  <span
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 9.5,
-                      color: "var(--brass-700)",
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Maximum
-                  </span>
-                );
-              }
-              const peut = state.budget >= up.cout;
-              return (
-                <button
-                  type="button"
-                  disabled={!peut}
-                  onClick={() => {
-                    const res = ameliorerStockage();
-                    if (!res.ok) setFlash(res.raison ?? "Impossible");
-                    else setFlash(`Stockage amélioré au LVL ${up.niveauCible}.`);
-                    setTimeout(() => setFlash(null), 2500);
-                  }}
-                  style={{
-                    padding: "8px 12px",
-                    fontFamily: "var(--font-display)",
-                    fontSize: 10.5,
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    border: "1px solid var(--brass-500)",
-                    background: peut ? "var(--forest-800)" : "var(--paper-200)",
-                    color: peut ? "var(--brass-300)" : "var(--ink-500)",
-                    cursor: peut ? "pointer" : "not-allowed",
-                    opacity: peut ? 1 : 0.6,
-                  }}
-                >
-                  LVL {up.niveauCible} · {up.cout} €
-                </button>
-              );
-            })()}
-          </div>
         {flash && (
           <div
             role="status"

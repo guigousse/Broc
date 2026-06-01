@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
+import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { TreePicker } from "@/components/mobile/TreePicker";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { useGame } from "@/context/GameContext";
@@ -18,16 +19,6 @@ import {
 import { etatCompetence } from "@/lib/competences";
 import { progressionNiveau } from "@/lib/xp";
 import type { CompetenceDef, CompetenceTreeId } from "@/types/game";
-
-const eyebrow = {
-  fontFamily: "var(--font-display)",
-  fontSize: 9,
-  letterSpacing: "0.24em",
-  textTransform: "uppercase" as const,
-  color: "var(--brass-700)",
-  textAlign: "center" as const,
-  marginBottom: 8,
-};
 
 export default function CompetencesPage() {
   const router = useRouter();
@@ -73,7 +64,7 @@ export default function CompetencesPage() {
         header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
         stickyTop={
           <StickyTop>
-            <div style={eyebrow}>— Grimoire des compétences —</div>
+            <PageHeaderBar title="Compétences" />
             <TreePicker
               trees={state.competenceTrees}
               selectionne={tree}

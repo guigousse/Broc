@@ -16,7 +16,8 @@ import { recalculerPrixReference } from "@/lib/etat";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import { coutAmelioration, peutDemanteler, rendementDemantelement } from "@/lib/atelier";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
-import { ArrowUp } from "lucide-react";
+import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
+import { UpgradeButton } from "@/components/mobile/UpgradeButton";
 import { AtelierItemRow } from "@/components/atelier/AtelierItemRow";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
@@ -264,112 +265,56 @@ export default function AtelierPage() {
       header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
       stickyTop={
         <StickyTop>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr auto 1fr",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 12,
-                letterSpacing: "0.10em",
-                textTransform: "uppercase",
-                color: "var(--forest-800)",
-                textAlign: "left",
-              }}
-            >
-              Établi {enCours.length}/{ATELIER_SLOTS[state.niveauAtelier]}
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 14,
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
-                color: "var(--brass-700)",
-                textAlign: "center",
-                whiteSpace: "nowrap",
-              }}
-            >
-              — Atelier —
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              {(() => {
-                const up = getProchaineUpgrade(state.niveauAtelier);
-                if (!up) {
-                  return (
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 10,
-                        letterSpacing: "0.14em",
-                        textTransform: "uppercase",
-                        color: "var(--brass-700)",
-                        padding: "6px 10px",
-                      }}
-                    >
-                      MAX
-                    </span>
-                  );
-                }
-                const peut = state.budget >= up.cout;
+          <PageHeaderBar
+            title="Atelier"
+            left={
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 12,
+                  letterSpacing: "0.10em",
+                  textTransform: "uppercase",
+                  color: "var(--forest-800)",
+                }}
+              >
+                Établi {enCours.length}/{ATELIER_SLOTS[state.niveauAtelier]}
+              </div>
+            }
+            right={(() => {
+              const up = getProchaineUpgrade(state.niveauAtelier);
+              if (!up) {
                 return (
-                  <button
-                    type="button"
-                    disabled={!peut}
-                    onClick={() => {
-                      const res = ameliorerAtelier();
-                      if (!res.ok) setFlash(res.raison ?? "Impossible");
-                      else setFlash(`Atelier amélioré au LVL ${up.niveauCible}.`);
-                      setTimeout(() => setFlash(null), 2500);
-                    }}
-                    aria-label={`Améliorer atelier vers LVL ${up.niveauCible} (${up.cout} €)`}
+                  <span
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 1,
-                      padding: "4px 10px",
-                      border: "1px solid var(--brass-500)",
-                      background: peut ? "var(--forest-800)" : "var(--paper-200)",
-                      color: peut ? "var(--brass-300)" : "var(--ink-500)",
-                      cursor: peut ? "pointer" : "not-allowed",
-                      opacity: peut ? 1 : 0.6,
-                      lineHeight: 1.1,
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 10,
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                      color: "var(--brass-700)",
+                      padding: "6px 10px",
                     }}
                   >
-                    <span
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontSize: 9.5,
-                        letterSpacing: "0.12em",
-                        textTransform: "uppercase",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 2,
-                      }}
-                    >
-                      <ArrowUp size={11} strokeWidth={2} />
-                      LVL{up.niveauCible}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 10,
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      {up.cout} €
-                    </span>
-                  </button>
+                    MAX
+                  </span>
                 );
-              })()}
-            </div>
-          </div>
+              }
+              return (
+                <UpgradeButton
+                  niveauCible={up.niveauCible}
+                  cout={up.cout}
+                  peut={state.budget >= up.cout}
+                  onUpgrade={() => {
+                    const res = ameliorerAtelier();
+                    if (!res.ok) setFlash(res.raison ?? "Impossible");
+                    else
+                      setFlash(`Atelier amélioré au LVL ${up.niveauCible}.`);
+                    setTimeout(() => setFlash(null), 2500);
+                  }}
+                  ariaLabel={`Améliorer atelier vers LVL ${up.niveauCible} (${up.cout} €)`}
+                />
+              );
+            })()}
+          />
           <div style={{ marginTop: 4 }}>
             <PiecesInventoryBar pieces={state.piecesAmelioration} />
           </div>
