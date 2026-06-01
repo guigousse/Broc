@@ -1,0 +1,42 @@
+[
+  {
+    "id": "fond-cabinet",
+    "description": "Wide panoramic interior of a cozy antique dealer's cabinet, eye-level perspective. Three contiguous zones from left to right (no visible separators): LEFT — writing-desk corner with a tall built-in bookshelf filled with old leather-bound books on the back wall, a tall window with wooden frame above the desk (warm sunlight streaming in, window glass MUST be fully transparent alpha channel), and an empty mahogany writing desk in the foreground; CENTER — entrance wall with a heavy wooden front door fitted with a polished brass letterbox slot, vintage damask wallpaper; RIGHT — reading nook with a stone fireplace (small warm fire burning), a tall window with wooden frame (transparent alpha channel on glass), Persian rug on parquet floor, a small side table, empty floor space where an armchair will be placed later. Soft warm light from upper-left. Cohesive lighting throughout. No people, no text, no captions. PNG with transparent alpha channel on the window glass areas only — everything else opaque.",
+    "transparent": true
+  },
+  {
+    "id": "exterieur-jour",
+    "description": "Soft impressionistic view of Parisian street rooftops at midday, used as a distant background seen through windows. Aspect aligned to fond-cabinet so left and right window apertures both reveal pleasing views (treetops on left, roof slopes on right). Warm daylight, soft pastel sky.",
+    "transparent": false
+  },
+  {
+    "id": "porte",
+    "description": "Heavy wooden front door closed, with a polished brass letterbox slot at mid-height. Eye-level perspective. Warm soft light from upper-left. Isolated subject on transparent background.",
+    "transparent": true
+  },
+  {
+    "id": "fauteuil",
+    "description": "Vintage tufted Chesterfield armchair in deep emerald-green velvet, three-quarter front view, lit from upper-left to match a cozy reading nook. Designed to sit naturally on a Persian rug. Isolated subject on transparent background.",
+    "transparent": true
+  },
+  {
+    "id": "journal",
+    "description": "Rolled-up vintage newspaper, lying flat on a wooden desk, slight perspective from above. Tied with a string. Isolated subject on transparent background.",
+    "transparent": true
+  },
+  {
+    "id": "carnet",
+    "description": "Small leather-bound notebook, closed, brown cover with gilded edges, lying flat on a wooden desk, slight perspective from above. Isolated subject on transparent background.",
+    "transparent": true
+  },
+  {
+    "id": "gramophone",
+    "description": "Vintage gramophone with brass horn on a small wooden side table, eye-level perspective, lit from upper-left. Isolated subject on transparent background.",
+    "transparent": true
+  },
+  {
+    "id": "lettre",
+    "description": "Single closed white envelope as if dropped on the floor, slight perspective from above, soft shadow underneath. Isolated subject on transparent background.",
+    "transparent": true
+  }
+]
