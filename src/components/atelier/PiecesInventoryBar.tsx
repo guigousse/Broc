@@ -9,9 +9,9 @@ interface PiecesInventoryBarProps {
 }
 
 /**
- * Bandeau horizontal des 7 catégories : grille pleine largeur (1fr × 7)
- * avec un engrenage laiton + icône de catégorie centrée, et compteur
- * monospace en dessous.
+ * Bandeau horizontal des 7 catégories : grille pleine largeur (1fr × 7).
+ * Chaque cellule affiche un engrenage laiton avec, au centre, le nombre
+ * de pièces disponibles en gras + l'icône de catégorie en badge.
  */
 export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
   return (
@@ -22,7 +22,7 @@ export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
         display: "grid",
         gridTemplateColumns: `repeat(${CATEGORIES.length}, 1fr)`,
         gap: 4,
-        padding: "6px 2px 8px",
+        padding: "2px 2px",
       }}
     >
       {CATEGORIES.map((cat) => (
@@ -33,23 +33,12 @@ export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
           title={`${cat} : ${pieces[cat] ?? 0} pièces`}
           style={{
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
-            gap: 2,
+            justifyContent: "center",
             minWidth: 0,
           }}
         >
-          <PieceIcon categorie={cat} size={36} />
-          <div
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              color: "var(--ink-700)",
-              letterSpacing: "0.04em",
-            }}
-          >
-            {pieces[cat] ?? 0}
-          </div>
+          <PieceIcon categorie={cat} size={36} count={pieces[cat] ?? 0} />
         </div>
       ))}
     </div>

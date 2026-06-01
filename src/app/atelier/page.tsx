@@ -370,11 +370,12 @@ export default function AtelierPage() {
               })()}
             </div>
           </div>
+          <div style={{ marginTop: 4 }}>
+            <PiecesInventoryBar pieces={state.piecesAmelioration} />
+          </div>
         </StickyTop>
       }
     >
-      <PiecesInventoryBar pieces={state.piecesAmelioration} />
-
       {flash && (
         <div
           style={{

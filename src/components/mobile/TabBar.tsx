@@ -47,7 +47,9 @@ const HIDDEN_EXACT = new Set(["/"]);
 const HIDDEN_PREFIXES = ["/chiner/", "/vitrine/"];
 
 const wrapStyle: CSSProperties = {
-  position: "sticky",
+  position: "fixed",
+  left: 0,
+  right: 0,
   bottom: 0,
   zIndex: 30,
   display: "grid",
