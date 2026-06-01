@@ -91,6 +91,27 @@ export interface HuissierEvent {
   budgetApres: number;
 }
 
+/* === Courrier (système de lettres au QG) ============================== */
+
+export type CourrierType = "huissier";
+
+export interface CourrierPayloadHuissier {
+  type: "huissier";
+  detteAvantSaisie: number;
+  saisies: SaisieHuissier[];
+  budgetApres: number;
+}
+
+export type CourrierPayload = CourrierPayloadHuissier; // discriminated union, extensible
+
+export interface Courrier {
+  id: string;
+  type: CourrierType;
+  jourRecu: number;
+  lu: boolean;
+  payload: CourrierPayload;
+}
+
 export interface GameState {
   budget: number;
   jourActuel: number;
