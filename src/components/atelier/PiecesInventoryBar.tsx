@@ -9,8 +9,8 @@ interface PiecesInventoryBarProps {
   pieces: Record<CategorieObjet, number>;
 }
 
-const COG_SIZE = 42;
-const ICON_SIZE = 18;
+const COG_SIZE = 36;
+const ICON_SIZE = 16;
 
 /**
  * Bandeau horizontal des 7 catégories sous forme d'engrenages laiton.
@@ -24,11 +24,8 @@ export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
       aria-label="Inventaire de pièces d'amélioration"
       style={{
         display: "flex",
-        gap: 6,
-        overflowX: "auto",
+        gap: 4,
         padding: "6px 2px 8px",
-        scrollbarWidth: "none",
-        WebkitOverflowScrolling: "touch",
       }}
     >
       {CATEGORIES.map((cat) => (
@@ -38,7 +35,7 @@ export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
           title={`${cat} : ${pieces[cat] ?? 0} pièces`}
           style={{
             flex: "0 0 auto",
-            width: 50,
+            width: 44,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
