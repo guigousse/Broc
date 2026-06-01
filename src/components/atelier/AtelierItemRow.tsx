@@ -84,6 +84,7 @@ export function AtelierItemRow({
   return (
     <div
       data-atelier-row
+      data-objet-id={objet.id}
       style={{
         ...row,
         borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
@@ -61,6 +61,7 @@ export default function AtelierPage() {
   const [onglet, setOnglet] = useState<"restaurations" | "demantelement">(
     "restaurations",
   );
+  const actionEnCoursRef = useRef(false);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -122,9 +123,18 @@ export default function AtelierPage() {
 
   const handleConfirmDemanteler = () => {
     if (!demantelerCible) return;
+    if (actionEnCoursRef.current) return;
+    actionEnCoursRef.current = true;
     const { objet, yieldPieces, thumbRect } = demantelerCible;
     void audioManager.playBreak();
     setDemantelerCible(null);
+    const rowEl = document.querySelector(
+      `[data-objet-id="${objet.id}"]`,
+    ) as HTMLElement | null;
+    if (rowEl) {
+      rowEl.style.transition = "opacity 250ms ease-in";
+      rowEl.style.opacity = "0";
+    }
     if (thumbRect) {
       const target = document.querySelector(
         `[data-fly-target="piece-${objet.categorie}"]`,
@@ -180,12 +190,16 @@ export default function AtelierPage() {
         setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
       }
       setTimeout(() => setFlash(null), 2500);
+      actionEnCoursRef.current = false;
     }, 620);
   };
 
   const handleConfirmRestaurer = () => {
     if (!restaurerCible) return;
+    if (actionEnCoursRef.current) return;
+    actionEnCoursRef.current = true;
     const { objet, etatCible, thumbRect } = restaurerCible;
+    const duree = dureeRestauration(state, objet.categorie, etatCible);
     void audioManager.playRepair();
     setRestaurerCible(null);
     if (thumbRect) {
@@ -234,13 +248,14 @@ export default function AtelierPage() {
       }
     }
     window.setTimeout(() => {
-      const res = restaurerObjet(objet.id, etatCible);
+      const res = restaurerObjet(objet.id, etatCible, { dureeJours: duree });
       if (res.ok) {
-        setFlash(`${objet.nom} en restauration · ${etatCible} dans 7 j.`);
+        setFlash(`${objet.nom} en restauration · ${etatCible} dans ${duree} j.`);
       } else {
         setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
       }
       setTimeout(() => setFlash(null), 2500);
+      actionEnCoursRef.current = false;
     }, 620);
   };
 
