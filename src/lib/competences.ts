@@ -99,20 +99,17 @@ export function aMaitreReparer(
   return aCompetence(`${catTreeId(cat)}.reparer.3`, state.competencesDebloquees);
 }
 
-/** Renvoie la durée (en jours) de la restauration pour atteindre l'état cible. */
+/**
+ * Durée fixe de restauration : 7 jours pour toute transition d'état.
+ * Conservée comme fonction (et non constante) pour ne pas casser les call-sites
+ * existants et garder une porte d'entrée future si on remodule la durée.
+ */
 export function dureeRestauration(
-  state: GameState,
-  cat: CategorieObjet,
-  etatCible: EtatObjet,
+  _state: GameState,
+  _cat: CategorieObjet,
+  _etatCible: EtatObjet,
 ): number {
-  const baseParCible: Partial<Record<EtatObjet, number>> = {
-    Bon: 7,
-    "Très bon": 14,
-    "Pristin état": 28,
-  };
-  const base = baseParCible[etatCible] ?? 7;
-  if (aMaitreReparer(state, cat)) return Math.ceil(base / 2);
-  return base;
+  return 7;
 }
 
 /**

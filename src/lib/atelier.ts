@@ -11,6 +11,7 @@ import {
   peutRestaurerTresBonVersPristin,
 } from "@/lib/competences";
 import { getCapaciteAtelier } from "@/data/atelier";
+import { recalculerPrixReference } from "@/lib/etat";
 
 /** Renvoie l'état cible naturel pour la prochaine restauration, ou null si déjà Pristin. */
 export function prochaineEtatCible(etat: EtatObjet): EtatObjet | null {
@@ -71,10 +72,17 @@ export function atelierStatusPourObjet(
     return { disponible: false, raison: "Déjà en parfait état." };
   if (!atelierAuneSlotLibre(state))
     return { disponible: false, raison: "Atelier plein." };
-  if (!prochaineEtatCible(o.etat))
-    return { disponible: false, raison: "Non restaurable." };
+  const cible = prochaineEtatCible(o.etat);
+  if (!cible) return { disponible: false, raison: "Non restaurable." };
   if (!peutRestaurerTransition(state, o.categorie, o.etat))
     return { disponible: false, raison: "Compétence Réparer manquante." };
+  const cout = coutAmelioration(o, cible);
+  const dispo = state.piecesAmelioration[o.categorie] ?? 0;
+  if (dispo < cout)
+    return {
+      disponible: false,
+      raison: `Manque ${cout - dispo} pièce${cout - dispo > 1 ? "s" : ""} ${o.categorie}.`,
+    };
   return { disponible: true };
 }
 
@@ -103,4 +111,33 @@ export function collectionStatusPourObjet(
     necessiteConfirmation: true,
     ancienneDonation: slot.donation,
   };
+}
+
+/**
+ * Coût en pièces de la catégorie pour faire passer `o` de son état actuel
+ * à `cible`. Min 1 pièce. Formule : ceil(gain_prixRef / 5).
+ */
+export function coutAmelioration(o: Objet, cible: EtatObjet): number {
+  const prixApres = recalculerPrixReference(o.prixReferenceReel, o.etat, cible);
+  const gain = Math.max(0, prixApres - o.prixReferenceReel);
+  return Math.max(1, Math.ceil(gain / 5));
+}
+
+/**
+ * Pièces rendues par le démantèlement d'un objet, basées sur son prix de
+ * référence courant (donc état-dépendant). Min 1 pièce. Formule : floor(prix / 5).
+ */
+export function rendementDemantelement(o: Objet): number {
+  return Math.max(1, Math.floor(o.prixReferenceReel / 5));
+}
+
+/** Calcule si un objet peut être démantelé (en stock, hors restauration, hors vitrine). */
+export function peutDemanteler(state: GameState, o: Objet): AtelierStatus {
+  if (o.enRestauration)
+    return { disponible: false, raison: "Objet en restauration." };
+  // Un objet en vitrine n'est PAS dans inventaireJoueur (cf. mettreEnVitrine
+  // qui le déplace), donc tester sa présence dans l'inventaire suffit.
+  const enStock = state.inventaireJoueur.some((x) => x.id === o.id);
+  if (!enStock) return { disponible: false, raison: "Objet introuvable en stock." };
+  return { disponible: true };
 }
