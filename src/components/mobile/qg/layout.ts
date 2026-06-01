@@ -16,18 +16,21 @@ export const QG_LAYOUT = {
     repos: 200,
   },
   objets: {
-    // Bureau (gauche, 0–100vw) : journal + carnet posés sur la surface du bureau
-    // dans la zone laissée libre devant la lampe et l'encrier.
-    journal: { left: 55, bottom: 33, width: 10 },
-    carnet: { left: 68, bottom: 33, width: 10 },
-    // Porte (centre, 100–200vw) : centrée à 150vw, sur la porte peinte dans le fond.
+    // Bureau (gauche, 0–100vw) : journal + carnet posés au PREMIER PLAN
+    // dans le coin avant-droit du plateau de bureau, devant les objets de
+    // déco déjà peints (lampe, encrier, sous-main).
+    journal: { left: 22, bottom: 17, width: 9 },
+    carnet: { left: 35, bottom: 18, width: 9 },
+    // Porte (centre, 100–200vw) : zone invisible cliquable, la porte est
+    // déjà peinte dans le fond. L'aspect-ratio est géré dans QgPorte.tsx.
     porte: { left: 138, bottom: 11, width: 24 },
     // Lettres au sol devant la porte, sur le runner persan.
     courrier: { left: 142, bottom: 4, width: 18 },
-    // Repos (droite, 200–300vw) : fauteuil sur la zone libre du tapis devant la cheminée.
-    fauteuil: { left: 210, bottom: 8, width: 28 },
-    // Gramophone sur le guéridon à droite du tapis.
-    gramophone: { left: 256, bottom: 24, width: 14 },
+    // Repos (droite, 200–300vw) : fauteuil sur la zone libre du tapis,
+    // monté de 10% en hauteur et agrandi (×2.3).
+    fauteuil: { left: 210, bottom: 18, width: 64 },
+    // Gramophone sur le guéridon, agrandi (×4) et miroir géré dans QgGramophone.tsx.
+    gramophone: { left: 250, bottom: 28, width: 56 },
   },
 } as const;
 

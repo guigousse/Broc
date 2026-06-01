@@ -19,7 +19,12 @@ export function QgGramophone() {
         src="/qg/gramophone.png"
         alt=""
         draggable={false}
-        style={{ width: "100%", height: "auto", display: "block" }}
+        style={{
+          width: "100%",
+          height: "auto",
+          display: "block",
+          transform: "scaleX(-1)", // pavillon vers la gauche (effet miroir)
+        }}
       />
     </div>
   );

@@ -6,20 +6,18 @@ interface QgPorteProps {
   onTap: () => void;
 }
 
+// La porte est déjà peinte dans le fond ; on garde seulement une zone
+// invisible cliquable, dimensionnée par un aspect-ratio porte standard.
 export function QgPorte({ onTap }: QgPorteProps) {
   return (
     <button
       type="button"
       onClick={onTap}
       aria-label="Porte d'entrée"
-      style={qgObjetStyle("porte")}
-    >
-      <img
-        src="/qg/porte.png"
-        alt=""
-        draggable={false}
-        style={{ width: "100%", height: "auto", display: "block" }}
-      />
-    </button>
+      style={{
+        ...qgObjetStyle("porte"),
+        aspectRatio: "2 / 7",
+      }}
+    />
   );
 }

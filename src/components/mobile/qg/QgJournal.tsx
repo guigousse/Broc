@@ -18,7 +18,13 @@ export function QgJournal({ onTap }: QgJournalProps) {
         src="/qg/journal.png"
         alt=""
         draggable={false}
-        style={{ width: "100%", height: "auto", display: "block" }}
+        style={{
+          width: "100%",
+          height: "auto",
+          display: "block",
+          transform: "rotate(30deg)",
+          transformOrigin: "center",
+        }}
       />
     </button>
   );
