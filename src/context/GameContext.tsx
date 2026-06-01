@@ -120,6 +120,8 @@ interface GameContextValue {
   rerollCelebrite: () => { ok: boolean; raison?: string };
   /** Acquitte l'événement huissier (réinitialise dernierHuissier). */
   marquerHuissierVu: () => void;
+  /** Marque un courrier comme lu (utilisé par le QG). */
+  marquerCourrierLu: (id: string) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -1062,6 +1064,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => (prev ? { ...prev, dernierHuissier: null } : prev));
   }, []);
 
+  const marquerCourrierLu = useCallback((id: string) => {
+    setState((prev) => {
+      if (!prev) return prev;
+      const next = prev.courriers.map((c) =>
+        c.id === id ? { ...c, lu: true } : c,
+      );
+      return { ...prev, courriers: next };
+    });
+  }, []);
+
   const acheterGazette = useCallback((): { ok: boolean; raison?: string } => {
     const current = stateRef.current;
     if (!current) return { ok: false, raison: "Pas de partie." };
@@ -1118,6 +1130,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       rerollMeteo,
       rerollCelebrite,
       marquerHuissierVu,
+      marquerCourrierLu,
     }),
     [
       state,
@@ -1152,6 +1165,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       rerollMeteo,
       rerollCelebrite,
       marquerHuissierVu,
+      marquerCourrierLu,
     ],
   );
 
