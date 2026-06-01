@@ -72,6 +72,7 @@ import {
 } from "@/lib/collection";
 import { getTemplate } from "@/data/objetTemplates";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
+import { coutAmelioration, rendementDemantelement } from "@/lib/atelier";
 import { audioManager } from "@/lib/audio/audioManager";
 
 interface GameContextValue {
@@ -851,13 +852,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           raison: `Vous n'avez pas la compétence Réparer — ${objet.categorie}.`,
         };
 
-      const prixApres = recalculerPrixReference(
-        objet.prixReferenceReel,
-        objet.etat,
-        etatCible,
-      );
-      const gain = Math.max(0, prixApres - objet.prixReferenceReel);
-      const cout = Math.max(1, Math.ceil(gain / 5));
+      const cout = coutAmelioration(objet, etatCible);
       const dispo = current.piecesAmelioration[objet.categorie] ?? 0;
       if (dispo < cout)
         return {
@@ -897,7 +892,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (objet.enRestauration)
         return { ok: false, raison: "Objet en restauration." };
 
-      const pieces = Math.max(1, Math.floor(objet.prixReferenceReel / 5));
+      const pieces = rendementDemantelement(objet);
 
       setState((prev) => {
         if (!prev) return prev;
