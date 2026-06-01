@@ -83,12 +83,13 @@ export function AtelierItemRow({
 
   return (
     <div
+      data-atelier-row
       style={{
         ...row,
         borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",
       }}
     >
-      <div style={thumbStyle}>
+      <div data-atelier-thumb style={thumbStyle}>
         <ItemImage
           templateId={objet.templateId}
           categorie={objet.categorie}
