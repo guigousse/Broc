@@ -16,6 +16,7 @@ import { recalculerPrixReference } from "@/lib/etat";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import { coutAmelioration, peutDemanteler, rendementDemantelement } from "@/lib/atelier";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
+import { ArrowUp } from "lucide-react";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
 import type { EtatObjet, Objet } from "@/types/game";
 
@@ -122,136 +123,114 @@ export default function AtelierPage() {
         <StickyTop>
           <div
             style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 9,
-              letterSpacing: "0.24em",
-              textTransform: "uppercase",
-              color: "var(--brass-700)",
-              textAlign: "center",
-              marginBottom: 6,
+              display: "grid",
+              gridTemplateColumns: "1fr auto 1fr",
+              alignItems: "center",
+              gap: 10,
             }}
           >
-            — Atelier · Établi —
-          </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-            }}
-          >
-            <span
+            <div
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: 15,
-                color: "var(--forest-800)",
-              }}
-            >
-              {enCours.length} / {ATELIER_SLOTS[state.niveauAtelier]} en chantier
-            </span>
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                letterSpacing: "0.14em",
+                fontSize: 12,
+                letterSpacing: "0.10em",
                 textTransform: "uppercase",
-                color:
-                  prets.length > 0 ? "var(--forest-700)" : "var(--brass-700)",
+                color: "var(--forest-800)",
+                textAlign: "left",
               }}
             >
-              {prets.length > 0
-                ? `${prets.length} prêt${prets.length > 1 ? "s" : ""}`
-                : "—"}
-            </span>
+              Établi {enCours.length}/{ATELIER_SLOTS[state.niveauAtelier]}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 14,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "var(--brass-700)",
+                textAlign: "center",
+                whiteSpace: "nowrap",
+              }}
+            >
+              — Atelier —
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              {(() => {
+                const up = getProchaineUpgrade(state.niveauAtelier);
+                if (!up) {
+                  return (
+                    <span
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 10,
+                        letterSpacing: "0.14em",
+                        textTransform: "uppercase",
+                        color: "var(--brass-700)",
+                        padding: "6px 10px",
+                      }}
+                    >
+                      MAX
+                    </span>
+                  );
+                }
+                const peut = state.budget >= up.cout;
+                return (
+                  <button
+                    type="button"
+                    disabled={!peut}
+                    onClick={() => {
+                      const res = ameliorerAtelier();
+                      if (!res.ok) setFlash(res.raison ?? "Impossible");
+                      else setFlash(`Atelier amélioré au LVL ${up.niveauCible}.`);
+                      setTimeout(() => setFlash(null), 2500);
+                    }}
+                    aria-label={`Améliorer atelier vers LVL ${up.niveauCible} (${up.cout} €)`}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 1,
+                      padding: "4px 10px",
+                      border: "1px solid var(--brass-500)",
+                      background: peut ? "var(--forest-800)" : "var(--paper-200)",
+                      color: peut ? "var(--brass-300)" : "var(--ink-500)",
+                      cursor: peut ? "pointer" : "not-allowed",
+                      opacity: peut ? 1 : 0.6,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: 9.5,
+                        letterSpacing: "0.12em",
+                        textTransform: "uppercase",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 2,
+                      }}
+                    >
+                      <ArrowUp size={11} strokeWidth={2} />
+                      LVL{up.niveauCible}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 10,
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      {up.cout} €
+                    </span>
+                  </button>
+                );
+              })()}
+            </div>
           </div>
         </StickyTop>
       }
     >
       <PiecesInventoryBar pieces={state.piecesAmelioration} />
-          <div
-            style={{
-              border: "1px solid var(--brass-500)",
-              background: "var(--paper-100)",
-              padding: "10px 14px",
-              boxShadow:
-                "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
-              marginBottom: 10,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 11,
-                  letterSpacing: "0.16em",
-                  textTransform: "uppercase",
-                  color: "var(--forest-800)",
-                }}
-              >
-                Atelier LVL {state.niveauAtelier}
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 9.5,
-                  color: "var(--ink-500)",
-                  marginTop: 1,
-                }}
-              >
-                {ATELIER_SLOTS[state.niveauAtelier]} slot
-                {ATELIER_SLOTS[state.niveauAtelier] > 1 ? "s" : ""}
-              </div>
-            </div>
-            {(() => {
-              const up = getProchaineUpgrade(state.niveauAtelier);
-              if (!up) {
-                return (
-                  <span
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 9.5,
-                      color: "var(--brass-700)",
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Maximum
-                  </span>
-                );
-              }
-              const peut = state.budget >= up.cout;
-              return (
-                <button
-                  type="button"
-                  disabled={!peut}
-                  onClick={() => {
-                    const res = ameliorerAtelier();
-                    if (!res.ok) setFlash(res.raison ?? "Impossible");
-                    else setFlash(`Atelier amélioré au LVL ${up.niveauCible}.`);
-                    setTimeout(() => setFlash(null), 2500);
-                  }}
-                  style={{
-                    padding: "8px 12px",
-                    fontFamily: "var(--font-display)",
-                    fontSize: 10.5,
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    border: "1px solid var(--brass-500)",
-                    background: peut ? "var(--forest-800)" : "var(--paper-200)",
-                    color: peut ? "var(--brass-300)" : "var(--ink-500)",
-                    cursor: peut ? "pointer" : "not-allowed",
-                    opacity: peut ? 1 : 0.6,
-                  }}
-                >
-                  LVL {up.niveauCible} · {up.cout} €
-                </button>
-              );
-            })()}
-          </div>
 
       {flash && (
         <div
