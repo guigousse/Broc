@@ -16,12 +16,18 @@ export const QG_LAYOUT = {
     repos: 200,
   },
   objets: {
-    journal: { left: 14, bottom: 32, width: 12 },
-    carnet: { left: 26, bottom: 32, width: 12 },
-    porte: { left: 136, bottom: 14, width: 28 },
-    courrier: { left: 134, bottom: 6, width: 14 },
-    fauteuil: { left: 226, bottom: 12, width: 32 },
-    gramophone: { left: 258, bottom: 22, width: 16 },
+    // Bureau (gauche, 0–100vw) : journal + carnet posés sur la surface du bureau
+    // dans la zone laissée libre devant la lampe et l'encrier.
+    journal: { left: 55, bottom: 33, width: 10 },
+    carnet: { left: 68, bottom: 33, width: 10 },
+    // Porte (centre, 100–200vw) : centrée à 150vw, sur la porte peinte dans le fond.
+    porte: { left: 138, bottom: 11, width: 24 },
+    // Lettres au sol devant la porte, sur le runner persan.
+    courrier: { left: 142, bottom: 4, width: 18 },
+    // Repos (droite, 200–300vw) : fauteuil sur la zone libre du tapis devant la cheminée.
+    fauteuil: { left: 210, bottom: 8, width: 28 },
+    // Gramophone sur le guéridon à droite du tapis.
+    gramophone: { left: 256, bottom: 24, width: 14 },
   },
 } as const;
 
