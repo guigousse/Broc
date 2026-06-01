@@ -39,7 +39,7 @@ import {
 } from "@/data/competences";
 import { CATEGORIES, migrerCategorie, emptyPiecesAmelioration } from "@/data/categories";
 import { recalculerPrixReference } from "@/lib/etat";
-import { migrerCourriers } from "@/lib/courrier";
+import { creerCourrierHuissier, migrerCourriers } from "@/lib/courrier";
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -546,6 +546,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      const nouveauxCourriers = dernierHuissier && dernierHuissier.jour === nouveauJour
+        ? [...prev.courriers, creerCourrierHuissier(dernierHuissier)]
+        : prev.courriers;
+
       return {
         ...prev,
         jourActuel: nouveauJour,
@@ -567,6 +571,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         influenceUtilisee: refresh ? false : prev.influenceUtilisee,
         dernierLoyer,
         dernierHuissier,
+        courriers: nouveauxCourriers,
       };
     });
   }, []);
