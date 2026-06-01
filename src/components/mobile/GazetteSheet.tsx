@@ -28,6 +28,10 @@ interface GazetteSheetProps {
   influenceUtilisee: boolean;
   onRerollMeteo: () => void;
   onRerollCelebrite: () => void;
+  achetee: boolean;
+  onAcheter: () => void;
+  budget: number;
+  prixGazette: number;
 }
 
 const sectionLabel: CSSProperties = {
@@ -79,6 +83,10 @@ export function GazetteSheet(props: GazetteSheetProps) {
     influenceUtilisee,
     onRerollMeteo,
     onRerollCelebrite,
+    achetee,
+    onAcheter,
+    budget,
+    prixGazette,
   } = props;
   const visibles = (tendances ?? []).filter((t) =>
     categoriesConnues.has(t.categorie),
@@ -94,6 +102,32 @@ export function GazetteSheet(props: GazetteSheetProps) {
       onClose={onClose}
       title={`La Gazette · N°${numeroEdition(jourActuel)}`}
     >
+      {!achetee && (
+        <div style={{ padding: 16, textAlign: "center" }}>
+          <p style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: 14 }}>
+            La Gazette est encore scellée.
+          </p>
+          <button
+            type="button"
+            disabled={budget < prixGazette}
+            onClick={onAcheter}
+            style={{
+              marginTop: 10,
+              padding: "10px 16px",
+              background: budget < prixGazette ? "var(--paper-500)" : "var(--forest-800)",
+              color: "var(--brass-300)",
+              border: "1px solid var(--brass-500)",
+              fontFamily: "var(--font-display)",
+              fontSize: 12,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              cursor: budget < prixGazette ? "not-allowed" : "pointer",
+            }}
+          >
+            Acheter ({prixGazette} €)
+          </button>
+        </div>
+      )}
       <div style={sectionLabel}>— Tendances —</div>
       {tries.length === 0 ? (
         <p
