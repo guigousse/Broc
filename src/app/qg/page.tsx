@@ -101,13 +101,15 @@ export default function QgPage() {
           style={{
             position: "relative",
             width: "auto",
+            // Le panorama interne fait 300vw de large pour une image 21:9 →
+            // hauteur naturelle de l'image = 300vw × 9/21 ≈ 128.57vw.
+            // On borne aussi par la zone disponible pour éviter tout overflow sur petit écran.
             height:
-              "calc(100dvh - var(--mobile-header-h) - 60px - var(--mobile-tabbar-h) - var(--safe-bottom))",
+              "min(calc(300vw * 9 / 21), calc(100dvh - var(--mobile-header-h) - 60px - var(--mobile-tabbar-h) - var(--safe-bottom)))",
             margin: "-12px -12px 0",
             overflow: "hidden",
           }}
         >
-          {/* 60px = hauteur approximative de StickyTop (WeekTimeline). Ajuster si besoin. */}
           <QgPanorama initialZone="porte">
             <QgScene>
               <QgJournal onTap={() => { playClick(); setGazetteOuverte(true); }} />
