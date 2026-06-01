@@ -18,6 +18,7 @@
  */
 
 import { GoogleGenAI } from "@google/genai";
+import sharp from "sharp";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -112,6 +113,42 @@ async function loadReferenceImage(refId) {
   }
 }
 
+/**
+ * Chroma-key : remplace tous les pixels proches d'une couleur cible par du
+ * transparent dans l'image PNG.
+ *
+ * @param {string} filePath chemin du PNG à modifier en place
+ * @param {[number, number, number]} target couleur RGB (0-255)
+ * @param {number} tolerance distance euclidienne max (sur R/G/B somme abs)
+ */
+async function chromaKey(filePath, target, tolerance = 60) {
+  const img = sharp(filePath);
+  const { data, info } = await img
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const [tr, tg, tb] = target;
+  let pxKeyed = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const dist = Math.abs(r - tr) + Math.abs(g - tg) + Math.abs(b - tb);
+    if (dist <= tolerance) {
+      data[i + 3] = 0; // alpha → 0
+      pxKeyed++;
+    }
+  }
+  const tmpPath = `${filePath}.tmp.png`;
+  await sharp(data, {
+    raw: { width: info.width, height: info.height, channels: 4 },
+  })
+    .png()
+    .toFile(tmpPath);
+  await fs.rename(tmpPath, filePath);
+  return pxKeyed;
+}
+
 async function main() {
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
   const config = JSON.parse(await fs.readFile(CONFIG_PATH, "utf8"));
@@ -199,6 +236,20 @@ async function main() {
           const buf = Buffer.from(part.inlineData.data, "base64");
           await fs.writeFile(outPath, buf);
           console.log(`✅  ${filename} (${Math.round(buf.length / 1024)} kB)`);
+          // Post-traitement chroma-key si demandé (rend transparent la couleur cible).
+          if (item.chromaKey) {
+            const { color, tolerance } = item.chromaKey;
+            try {
+              const px = await chromaKey(outPath, color, tolerance ?? 60);
+              console.log(
+                `🪟  ${filename} — chroma-key ${color.join(",")} : ${px} pixels rendus transparents`,
+              );
+            } catch (err) {
+              console.error(
+                `⚠️  ${filename} — chroma-key a échoué : ${err.message ?? err}`,
+              );
+            }
+          }
           saved = true;
           ok++;
           break;
