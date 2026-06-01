@@ -7,6 +7,7 @@ import { HumeurGauge } from "@/components/mobile/HumeurGauge";
 import { PersonaAvatar } from "@/components/mobile/PersonaAvatar";
 import type { PersonaInfo } from "@/components/mobile/PersonaInfoOverlay";
 import { proposerOffre, ouvrirNegociation } from "@/lib/negociation";
+import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import type { NegoMode, NegoPersona, NegociationState } from "@/types/game";
 
@@ -32,8 +33,10 @@ interface NegociationSheetProps {
   personaInfo: PersonaInfo;
   /** Nom affiché en titre (sous l'avatar). */
   nomAffiche: string;
-  /** Illustration PNG du persona (passée à PersonaAvatar). */
+  /** Illustration PNG du persona en humeur calme. */
   illustrationSrc?: string;
+  /** Illustration PNG du persona fâché (humeur ≥ HUMEUR_FACHE_SEUIL). */
+  illustrationFacheSrc?: string;
   /** Quand renseigné, remplace la zone négo par une vente directe. */
   venteDirecte?: {
     prixDirect: number;
@@ -57,6 +60,7 @@ export function NegociationSheet({
   personaInfo,
   nomAffiche,
   illustrationSrc,
+  illustrationFacheSrc,
   venteDirecte,
 }: NegociationSheetProps) {
   const [localNego, setLocalNego] = useState<NegociationState>(
@@ -85,6 +89,11 @@ export function NegociationSheet({
   }, [open, offreInitialeJoueur]);
 
   const enCours = localNego.statut === "en_cours";
+
+  const estFache =
+    localNego.statut === "fache" || localNego.humeur >= HUMEUR_FACHE_SEUIL;
+  const illustrationCourante =
+    estFache && illustrationFacheSrc ? illustrationFacheSrc : illustrationSrc;
 
   const minJoueur =
     mode === "achat" ? 1 : Math.max(1, localNego.prixAdverseCourant);
@@ -128,7 +137,7 @@ export function NegociationSheet({
         <PersonaAvatar
           message={bubbleMessage}
           info={personaInfo}
-          illustrationSrc={illustrationSrc}
+          illustrationSrc={illustrationCourante}
         />
       }
     >
