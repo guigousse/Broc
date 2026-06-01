@@ -91,17 +91,7 @@ export function BottomSheet({
         aria-modal="true"
       >
         {topDecoration ? (
-          <>
-            <div style={topDecorationStyle}>{topDecoration}</div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Fermer"
-              style={floatingCloseBtn}
-            >
-              ✕
-            </button>
-          </>
+          <div style={topDecorationStyle}>{topDecoration}</div>
         ) : (
           <>
             <div style={handleStyle} aria-hidden />
@@ -151,29 +141,9 @@ export function BottomSheet({
 
 const topDecorationStyle: CSSProperties = {
   position: "absolute",
-  top: -86,
+  top: -138,
   left: 16,
   right: 16,
   zIndex: 2,
   pointerEvents: "none",
-};
-
-const floatingCloseBtn: CSSProperties = {
-  position: "absolute",
-  top: 14,
-  right: 10,
-  zIndex: 3,
-  width: 30,
-  height: 30,
-  borderRadius: "50%",
-  background: "var(--paper-200)",
-  color: "var(--brass-700)",
-  border: "1px solid var(--brass-500)",
-  cursor: "pointer",
-  fontFamily: "var(--font-mono)",
-  fontSize: 13,
-  fontWeight: 700,
-  display: "grid",
-  placeItems: "center",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
 };

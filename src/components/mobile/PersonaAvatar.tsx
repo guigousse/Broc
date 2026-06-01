@@ -17,7 +17,7 @@ interface PersonaAvatarProps {
   illustrationSrc?: string;
 }
 
-const AVATAR_SIZE = 92;
+const AVATAR_SIZE = 138;
 
 export function PersonaAvatar({ message, info, illustrationSrc }: PersonaAvatarProps) {
   const [overlayOpen, setOverlayOpen] = useState(false);

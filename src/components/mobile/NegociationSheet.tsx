@@ -278,21 +278,22 @@ const headerStyle: CSSProperties = {
 const btnRowStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "1fr 1.4fr",
-  gap: 8,
-  marginTop: 18,
+  gap: 6,
+  marginTop: 10,
 };
 
 const btnPrimary: CSSProperties = {
-  padding: "12px 8px",
+  padding: "8px 6px",
   fontFamily: "var(--font-display)",
-  fontSize: 12,
-  letterSpacing: "0.16em",
+  fontSize: 11,
+  letterSpacing: "0.10em",
   textTransform: "uppercase",
   background: "var(--forest-800)",
   color: "var(--brass-300)",
   border: "1px solid var(--brass-500)",
   cursor: "pointer",
   gridColumn: "2 / 3",
+  lineHeight: 1.15,
 };
 
 const btnSecondary: CSSProperties = {
