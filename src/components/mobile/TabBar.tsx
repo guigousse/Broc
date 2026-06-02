@@ -55,7 +55,7 @@ const wrapStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(5, 1fr)",
   borderTop: "1px solid var(--brass-500)",
-  background: "var(--paper-200)",
+  background: "var(--forest-800)",
   padding: "6px 4px",
   paddingBottom: "calc(6px + var(--safe-bottom))",
   height: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
@@ -74,7 +74,7 @@ const tabBtn: CSSProperties = {
   fontSize: 9,
   letterSpacing: "0.1em",
   textTransform: "uppercase",
-  color: "var(--ink-500)",
+  color: "var(--brass-300)",
   padding: "4px 0",
 };
 
@@ -85,7 +85,7 @@ const iconBox: CSSProperties = {
   display: "grid",
   placeItems: "center",
   border: "1px solid var(--brass-500)",
-  background: "var(--paper-100)",
+  background: "transparent",
 };
 
 export function TabBar() {
@@ -117,20 +117,20 @@ export function TabBar() {
             }}
             style={{
               ...tabBtn,
-              color: active ? "var(--brass-700)" : "var(--ink-500)",
+              color: active ? "var(--brass-100)" : "var(--brass-300)",
             }}
           >
             <span
               data-fly-target={t.path}
               style={{
                 ...iconBox,
-                background: active ? "var(--forest-800)" : "var(--paper-100)",
+                background: active ? "var(--brass-500)" : "transparent",
               }}
             >
               <Icon
                 size={18}
                 strokeWidth={1.5}
-                color={active ? "var(--brass-300)" : "var(--forest-800)"}
+                color={active ? "var(--forest-800)" : "var(--brass-300)"}
               />
               {count > 0 && (
                 <span style={{ position: "absolute", top: -6, right: -6 }}>

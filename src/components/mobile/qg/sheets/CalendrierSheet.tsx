@@ -301,6 +301,9 @@ export function CalendrierSheet({
   if (!open) return null;
 
   const { mois, annee, nbJours, decalageDebut } = infosMois(jourActuel);
+  // `annee` est utilisée pour le calcul des dates internes mais n'est jamais
+  // affichée (le jeu ne se situe pas à une époque précise).
+  void annee;
 
   type Cell =
     | { key: string; empty: true }
@@ -369,9 +372,7 @@ export function CalendrierSheet({
             draggable={false}
           />
           <div style={content}>
-            <h2 style={moisLabel}>
-              {MOIS_LONG[mois]} {annee}
-            </h2>
+            <h2 style={moisLabel}>{MOIS_LONG[mois]}</h2>
             <div style={separator} />
             <div style={headerRow}>
               {JOURS_COURT.map((j) => (

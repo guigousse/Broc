@@ -23,6 +23,8 @@ const containerStyle: CSSProperties = {
   WebkitOverflowScrolling: "touch",
   display: "flex",
   flexDirection: "row",
+  alignItems: "center", // centre verticalement la scène quand elle est
+                        // plus petite que la zone disponible
 };
 
 const snapAnchorStyle: CSSProperties = {

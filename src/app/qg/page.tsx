@@ -125,18 +125,18 @@ function QgPageInner() {
       <>
       <MobileLayout
         header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
+        fillContent
       >
         <div
           style={{
             position: "relative",
-            width: "auto",
-            // Le panorama interne fait 300vw de large pour une image
-            // 2752×1536 (ratio réel du PNG, voir QG_LAYOUT.panoramaAspect).
-            // Hauteur naturelle = 300vw × 1536/2752 ≈ 167.4vw.
-            // On borne par la zone disponible pour éviter tout overflow sur petit écran.
+            width: "100%",
+            // Le panorama remplit exactement la zone visible entre header et
+            // tab bar pour que les bandeaux touchent les bords haut/bas de
+            // l'image (liserés brass-500 alignés sur les bords).
             height:
-              "min(calc(300vw * 1536 / 2752), calc(100dvh - var(--mobile-header-h) - 60px - var(--mobile-tabbar-h) - var(--safe-bottom)))",
-            margin: "-12px -12px 0",
+              "calc(100dvh - var(--safe-top) - var(--mobile-header-h) - var(--mobile-tabbar-h) - var(--safe-bottom))",
+            background: "var(--forest-800)",
             overflow: "hidden",
           }}
         >
