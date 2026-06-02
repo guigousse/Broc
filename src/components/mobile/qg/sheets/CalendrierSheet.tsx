@@ -14,6 +14,65 @@ interface CalendrierSheetProps {
   jourActuel: number;
 }
 
+/* ------------------------------------------------------------------ */
+/* Variations déterministes pour la croix manuscrite.                  */
+/* ------------------------------------------------------------------ */
+function pseudoRandom(seed: number, salt: number): number {
+  const x = Math.sin(seed * 12.9898 + salt * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function CroixManuscrite({ seed }: { seed: number }) {
+  const tilt = (pseudoRandom(seed, 1) - 0.5) * 22; // -11° à +11°
+  const off1x = (pseudoRandom(seed, 2) - 0.5) * 18;
+  const off1y = (pseudoRandom(seed, 3) - 0.5) * 18;
+  const off2x = (pseudoRandom(seed, 4) - 0.5) * 18;
+  const off2y = (pseudoRandom(seed, 5) - 0.5) * 18;
+  const sw = 5 + pseudoRandom(seed, 6) * 2; // 5 à 7
+  const stroke = "#a32a2a";
+
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      style={{
+        position: "absolute",
+        top: "-25%",
+        left: "-25%",
+        width: "150%",
+        height: "150%",
+        pointerEvents: "none",
+        transform: `rotate(${tilt.toFixed(2)}deg)`,
+        opacity: 0.92,
+      }}
+      aria-hidden
+    >
+      <line
+        x1={8 + off1x}
+        y1={8 + off1y}
+        x2={92 - off1x}
+        y2={92 - off1y}
+        stroke={stroke}
+        strokeWidth={sw}
+        strokeLinecap="round"
+      />
+      <line
+        x1={92 - off2x}
+        y1={8 + off2y}
+        x2={8 + off2x}
+        y2={92 - off2y}
+        stroke={stroke}
+        strokeWidth={sw}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Styles                                                              */
+/* ------------------------------------------------------------------ */
+
 const scrim: CSSProperties = {
   position: "fixed",
   inset: 0,
@@ -32,7 +91,7 @@ const stage: CSSProperties = {
   justifyContent: "center",
   padding:
     "max(60px, env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom))",
-  pointerEvents: "none", // les enfants gèrent
+  pointerEvents: "none",
 };
 
 const paperWrap: CSSProperties = {
@@ -74,14 +133,10 @@ const closeIconBtn: CSSProperties = {
   pointerEvents: "auto",
 };
 
-// Contenu interne : on travaille en % à l'intérieur du parchemin pour
-// respecter ses marges (studs aux 4 coins).
 const content: CSSProperties = {
   position: "absolute",
   inset: "9% 9% 9% 9%",
   display: "grid",
-  // ligne mois (auto), trait (auto), header jours (auto), puis 6 rangées
-  // de jours (1fr chacune pour remplir la hauteur restante).
   gridTemplateRows: "auto auto auto repeat(6, 1fr)",
   rowGap: "1.2%",
 };
@@ -131,13 +186,11 @@ const cellHeader: CSSProperties = {
 const cellJour: CSSProperties = {
   position: "relative",
   display: "flex",
-  flexDirection: "column",
   alignItems: "center",
-  justifyContent: "flex-start",
+  justifyContent: "center",
   fontFamily: "var(--font-display)",
   fontSize: "5.5cqw",
   color: "var(--ink-900)",
-  overflow: "hidden",
   height: "100%",
 };
 
@@ -146,48 +199,48 @@ const cellEmpty: CSSProperties = {
   color: "transparent",
 };
 
-function numCercle(variant: "passe" | "futur" | "today"): CSSProperties {
-  return {
-    display: "grid",
-    placeItems: "center",
-    width: "70%",
-    aspectRatio: "1 / 1",
-    borderRadius: "50%",
-    fontWeight: variant === "today" ? 700 : 500,
-    background:
-      variant === "today" ? "var(--forest-800)" : "transparent",
-    color:
-      variant === "today"
-        ? "var(--brass-300)"
-        : variant === "passe"
-          ? "rgba(0,0,0,0.55)"
-          : "var(--ink-900)",
-    border: variant === "today" ? "1px solid var(--brass-500)" : "none",
-    lineHeight: 1,
-  };
-}
-
-// Zone "infos" sous le numéro — vide pour l'instant, prête à recevoir
-// météo / événements plus tard.
-const infosSlot: CSSProperties = {
-  flex: 1,
-  width: "100%",
-  display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "center",
+/**
+ * Conteneur du chiffre : taille = taille du chiffre. Le cercle (jour actuel)
+ * et la croix (jour passé) sont positionnés en absolute autour du chiffre.
+ */
+const numWrap: CSSProperties = {
   position: "relative",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  lineHeight: 1,
+  // Padding visuel pour aérer la "boîte" du chiffre.
+  padding: "0.1em 0.2em",
 };
 
-const checkVert: CSSProperties = {
+const numText = (variant: "passe" | "futur" | "today"): CSSProperties => ({
+  position: "relative",
+  zIndex: 1,
+  fontWeight: variant === "today" ? 700 : 500,
+  color:
+    variant === "today"
+      ? "var(--brass-300)"
+      : variant === "passe"
+        ? "rgba(0,0,0,0.55)"
+        : "var(--ink-900)",
+});
+
+const circleToday: CSSProperties = {
   position: "absolute",
-  top: "-10%",
-  right: "12%",
-  fontSize: "3.8cqw",
-  lineHeight: 1,
-  color: "#1e8a3a",
-  fontWeight: 800,
-  textShadow: "0 0 2px rgba(255,255,255,0.8)",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "1.8em",
+  height: "1.8em",
+  borderRadius: "50%",
+  background: "var(--forest-800)",
+  border: "1px solid var(--brass-500)",
+  zIndex: 0,
 };
+
+/* ------------------------------------------------------------------ */
+/* Composant                                                           */
+/* ------------------------------------------------------------------ */
 
 export function CalendrierSheet({
   open,
@@ -236,7 +289,6 @@ export function CalendrierSheet({
   while (cells.length % 7 !== 0) {
     cells.push({ key: `t${cells.length}`, empty: true });
   }
-  // 6 rangées max, on tronque si certains mois en demandent moins.
   const rangees: Cell[][] = [];
   for (let r = 0; r < 6; r++) {
     rangees.push(cells.slice(r * 7, r * 7 + 7));
@@ -244,7 +296,6 @@ export function CalendrierSheet({
 
   return (
     <>
-      {/* Scrim non cliquable : pas de fermeture en tappant à côté. */}
       <div style={scrim} aria-hidden />
       <div style={stage} role="dialog" aria-modal="true">
         <div style={paperWrap}>
@@ -282,14 +333,15 @@ export function CalendrierSheet({
                   }
                   return (
                     <div key={c.key} style={cellJour}>
-                      <div style={numCercle(c.variant)}>{c.num}</div>
-                      <div style={infosSlot}>
-                        {c.variant === "passe" && (
-                          <span style={checkVert} aria-label="jour passé">
-                            ✓
-                          </span>
+                      <span style={numWrap}>
+                        {c.variant === "today" && (
+                          <span style={circleToday} aria-hidden />
                         )}
-                      </div>
+                        <span style={numText(c.variant)}>{c.num}</span>
+                        {c.variant === "passe" && (
+                          <CroixManuscrite seed={c.num} />
+                        )}
+                      </span>
                     </div>
                   );
                 })}
