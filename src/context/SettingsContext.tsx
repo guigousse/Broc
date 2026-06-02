@@ -42,6 +42,8 @@ interface SettingsValue {
   playDoorClose: () => void;
   startCrowd: () => void;
   stopCrowd: () => void;
+  startCatPurr: () => void;
+  stopCatPurr: () => void;
   tailleFonte: TailleFonte;
   setTailleFonte: (t: TailleFonte) => void;
 }
@@ -116,6 +118,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     void audioManager.startCrowd();
   }, []);
   const stopCrowd = useCallback(() => audioManager.stopCrowd(), []);
+  const startCatPurr = useCallback(() => {
+    void audioManager.startCatPurr();
+  }, []);
+  const stopCatPurr = useCallback(() => audioManager.stopCatPurr(), []);
 
   const setTailleFonte = useCallback((t: TailleFonte) => {
     setTailleFonteState(t);
@@ -135,6 +141,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       playDoorClose,
       startCrowd,
       stopCrowd,
+      startCatPurr,
+      stopCatPurr,
       tailleFonte,
       setTailleFonte,
     }),
@@ -149,6 +157,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       playDoorClose,
       startCrowd,
       stopCrowd,
+      startCatPurr,
+      stopCatPurr,
       tailleFonte,
       setTailleFonte,
     ],

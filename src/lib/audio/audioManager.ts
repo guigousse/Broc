@@ -21,6 +21,8 @@ class AudioManager {
   private master?: GainNode;
   private crowdSource?: AudioBufferSourceNode;
   private crowdGain?: GainNode;
+  private catPurrSource?: AudioBufferSourceNode;
+  private catPurrGain?: GainNode;
   private buffers: Map<string, AudioBuffer> = new Map();
   prefs: AudioPrefs = { ...DEFAULT_AUDIO_PREFS };
 
@@ -279,6 +281,41 @@ class AudioManager {
     src.stop(now + 0.31);
     this.crowdSource = undefined;
     this.crowdGain = undefined;
+  }
+
+  /** Ronronnement du chat en boucle (volume réduit). */
+  async startCatPurr(): Promise<void> {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    if (this.catPurrSource) return;
+    const buf = await this.loadBuffer("/sounds/cat-purr.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0;
+    src.connect(gain);
+    gain.connect(this.master);
+    const now = this.ctx.currentTime;
+    gain.gain.linearRampToValueAtTime(0.45, now + 0.15);
+    src.start();
+    this.catPurrSource = src;
+    this.catPurrGain = gain;
+  }
+
+  stopCatPurr(): void {
+    if (!this.ctx || !this.catPurrSource || !this.catPurrGain) return;
+    const now = this.ctx.currentTime;
+    const src = this.catPurrSource;
+    const gain = this.catPurrGain;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.2);
+    src.stop(now + 0.21);
+    this.catPurrSource = undefined;
+    this.catPurrGain = undefined;
   }
 
   loadPersisted(): AudioPrefs {

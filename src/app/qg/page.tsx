@@ -49,7 +49,14 @@ function QgPageInner() {
     marquerCourrierLu,
     avancerJour,
   } = useGame();
-  const { playClick, playPaper, playDoorOpen, playDoorClose } = useSettings();
+  const {
+    playClick,
+    playPaper,
+    playDoorOpen,
+    playDoorClose,
+    startCatPurr,
+    stopCatPurr,
+  } = useSettings();
 
   const [gazetteOuverte, setGazetteOuverte] = useState(false);
   const [porteOuverte, setPorteOuverte] = useState(false);
@@ -122,7 +129,14 @@ function QgPageInner() {
               />
               <QgFauteuil
                 chat={state.chatSurFauteuil}
-                onTap={() => { playClick(); setConfirmPasser(true); }}
+                onTap={() => {
+                  if (state.chatSurFauteuil) {
+                    startCatPurr();
+                  } else {
+                    playClick();
+                  }
+                  setConfirmPasser(true);
+                }}
               />
               <QgGramophone />
               <QgPortemanteau />
@@ -158,8 +172,12 @@ function QgPageInner() {
 
       <PasserConfirmSheet
         open={confirmPasser}
-        onClose={() => setConfirmPasser(false)}
+        onClose={() => {
+          stopCatPurr();
+          setConfirmPasser(false);
+        }}
         onConfirm={() => {
+          stopCatPurr();
           setConfirmPasser(false);
           avancerJour(1, true);
         }}
