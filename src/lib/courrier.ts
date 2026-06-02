@@ -1,4 +1,4 @@
-import type { Courrier, HuissierEvent } from "@/types/game";
+import type { Courrier } from "@/types/game";
 
 /** ID stable du déclencheur « lettre starter de Maman ». */
 export const ID_LETTRE_MAMAN_DEBUT = "lettre_maman_debut";
@@ -25,30 +25,15 @@ export function creerLettreMamanDebut(jour: number): Courrier {
   };
 }
 
-export function creerCourrierHuissier(ev: HuissierEvent): Courrier {
-  return {
-    id: `huissier-${ev.jour}`,
-    type: "huissier",
-    jourRecu: ev.jour,
-    lu: false,
-    payload: {
-      type: "huissier",
-      detteAvantSaisie: ev.detteAvantSaisie,
-      saisies: ev.saisies,
-      budgetApres: ev.budgetApres,
-    },
-  };
-}
-
-export function migrerCourriers(
-  existants: Courrier[] | undefined,
-  dernierHuissier: HuissierEvent | null | undefined,
-): Courrier[] {
-  const base = Array.isArray(existants) ? [...existants] : [];
-  if (!dernierHuissier) return base;
-  const candidate = creerCourrierHuissier(dernierHuissier);
-  if (base.some((c) => c.id === candidate.id)) return base;
-  return [...base, candidate];
+/**
+ * Filtre les anciens courriers d'huissier des sauvegardes existantes
+ * (système supprimé), tout en conservant les autres lettres.
+ */
+export function migrerCourriers(existants: Courrier[] | undefined): Courrier[] {
+  if (!Array.isArray(existants)) return [];
+  return existants.filter(
+    (c) => (c as { type?: string }).type !== "huissier",
+  );
 }
 
 /**

@@ -173,68 +173,9 @@ const actionBtn: CSSProperties = {
     "0 6px 14px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,225,160,0.20)",
 };
 
-/* Cas huissier (gardé sobre, en cohérence visuelle). */
-const huissierCard: CSSProperties = {
-  width: "100%",
-  maxWidth: 420,
-  border: "1px solid var(--vermillion-600)",
-  background: "var(--paper-100)",
-  padding: 16,
-  marginBottom: 18,
-};
-
 /* ------------------------------------------------------------------ */
 /* Rendus                                                              */
 /* ------------------------------------------------------------------ */
-
-function renderHuissier(c: Courrier) {
-  if (c.payload.type !== "huissier") return null;
-  const p = c.payload;
-  const total = p.saisies.reduce((s, x) => s + x.montantRecupere, 0);
-  return (
-    <>
-      <h3 style={{ ...titreLettre, color: "var(--vermillion-600)" }}>
-        Lettre de l'huissier
-      </h3>
-      <p
-        style={{
-          fontFamily: "var(--font-serif)",
-          fontStyle: "italic",
-          fontSize: 14,
-          lineHeight: 1.45,
-          color: "var(--ink-700)",
-        }}
-      >
-        Dette de{" "}
-        <strong style={{ fontWeight: 700 }}>
-          {Math.abs(p.detteAvantSaisie)} €
-        </strong>{" "}
-        après loyer. {p.saisies.length} bien
-        {p.saisies.length > 1 ? "s" : ""} saisi
-        {p.saisies.length > 1 ? "s" : ""} pour{" "}
-        <strong style={{ fontWeight: 700 }}>{total} €</strong>.
-      </p>
-      {p.saisies.length > 0 && (
-        <ul
-          style={{
-            margin: "8px 0 0 16px",
-            padding: 0,
-            fontFamily: "var(--font-mono)",
-            fontSize: 11,
-            color: "var(--ink-500)",
-          }}
-        >
-          {p.saisies.map((s, i) => (
-            <li key={i}>
-              {s.nom} ({s.type === "inventaire" ? "stock" : "collection"}) —{" "}
-              {s.montantRecupere} € (valeur {s.valeur} €)
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
-  );
-}
 
 function renderLettre(c: Courrier) {
   if (c.payload.type !== "lettre") return null;
@@ -325,11 +266,7 @@ export function CourrierSheet({
           ✕
         </button>
         <div style={scrollArea}>
-          {courant.type === "huissier" ? (
-            <div style={huissierCard}>{renderHuissier(courant)}</div>
-          ) : (
-            <article style={lettreCard}>{renderLettre(courant)}</article>
-          )}
+          <article style={lettreCard}>{renderLettre(courant)}</article>
         </div>
         <div style={bottomBar}>
           <button type="button" style={actionBtn} onClick={handleValider}>

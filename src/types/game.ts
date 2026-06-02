@@ -77,30 +77,9 @@ export interface CelebriteEvenement {
   jourSemaine: number;
 }
 
-export interface SaisieHuissier {
-  type: "inventaire" | "collection";
-  nom: string;
-  valeur: number;
-  montantRecupere: number;
-}
-
-export interface HuissierEvent {
-  jour: number;
-  detteAvantSaisie: number;
-  saisies: SaisieHuissier[];
-  budgetApres: number;
-}
-
 /* === Courrier (système de lettres au QG) ============================== */
 
-export type CourrierType = "huissier" | "lettre";
-
-export interface CourrierPayloadHuissier {
-  type: "huissier";
-  detteAvantSaisie: number;
-  saisies: SaisieHuissier[];
-  budgetApres: number;
-}
+export type CourrierType = "lettre";
 
 /** Récompense optionnelle attachée à une lettre. Appliquée à la lecture. */
 export interface RecompenseCourrier {
@@ -117,7 +96,7 @@ export interface CourrierPayloadLettre {
   recompense?: RecompenseCourrier;
 }
 
-export type CourrierPayload = CourrierPayloadHuissier | CourrierPayloadLettre;
+export type CourrierPayload = CourrierPayloadLettre;
 
 export interface Courrier {
   id: string;
@@ -154,7 +133,7 @@ export interface GameState {
   influenceUtilisee: boolean;
   /** Dernier loyer prélevé (utile pour l'UI). null = pas encore prélevé. */
   dernierLoyer: { jour: number; montant: number; tierNom: string } | null;
-  /** Lettres reçues (huissier en V1, extensible). */
+  /** Lettres reçues (narratives, événements, programmées…). */
   courriers: Courrier[];
   /** Niveau de l'atelier (1, 2 ou 3). Nombre de slots = niveau. Par défaut 1. */
   niveauAtelier: 1 | 2 | 3;
