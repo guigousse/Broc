@@ -32,7 +32,8 @@ const letterBase: CSSProperties = {
 
 export function QgCourrier({ nbNonLus, onTap }: QgCourrierProps) {
   if (nbNonLus <= 0) return null;
-  const n = Math.min(nbNonLus, 3);
+  // 1 lettre → single envelope ; 2+ → pile multilettre.
+  const src = nbNonLus === 1 ? "/qg/lettre.png" : "/qg/multilettre.png";
   return (
     <button
       type="button"
@@ -42,19 +43,12 @@ export function QgCourrier({ nbNonLus, onTap }: QgCourrierProps) {
       }`}
       style={wrap(nbNonLus)}
     >
-      {Array.from({ length: n }).map((_, i) => (
-        <img
-          key={i}
-          src="/qg/lettre.png"
-          alt=""
-          draggable={false}
-          style={{
-            ...letterBase,
-            transform: `translateX(${(i - 1) * 18}%) rotate(${(i - 1) * 6}deg)`,
-            zIndex: i,
-          }}
-        />
-      ))}
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        style={letterBase}
+      />
     </button>
   );
 }

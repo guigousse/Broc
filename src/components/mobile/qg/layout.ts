@@ -20,7 +20,8 @@ export const QG_LAYOUT = {
     // dans le coin avant du plateau. Le journal est agrandi (×2) et
     // tourné -30° (anti-horaire). Voir QgJournal.tsx pour le transform.
     journal: { left: 18, bottom: 10, width: 22 },
-    carnet: { left: 38, bottom: 18, width: 9 },
+    // Nouveau carnet = livre ouvert (asset ~3:1 wide), nettement plus grand.
+    carnet: { left: 42, bottom: 14, width: 26 },
     // Porte (centre, 100–200vw) : zone invisible cliquable, la porte est
     // déjà peinte dans le fond. L'aspect-ratio est géré dans QgPorte.tsx.
     porte: { left: 138, bottom: 11, width: 24 },
