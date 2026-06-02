@@ -14,7 +14,7 @@ const wrapStyle: CSSProperties = {
   zIndex: 30,
   paddingTop: "var(--safe-top)",
   background: "var(--forest-800)",
-  borderBottom: "1px solid var(--brass-500)",
+  borderBottom: "3px solid var(--brass-500)",
 };
 
 const innerStyle: CSSProperties = {

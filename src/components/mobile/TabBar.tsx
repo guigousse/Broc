@@ -54,7 +54,7 @@ const wrapStyle: CSSProperties = {
   zIndex: 30,
   display: "grid",
   gridTemplateColumns: "repeat(5, 1fr)",
-  borderTop: "1px solid var(--brass-500)",
+  borderTop: "3px solid var(--brass-500)",
   background: "var(--forest-800)",
   padding: "6px 4px",
   paddingBottom: "calc(6px + var(--safe-bottom))",
