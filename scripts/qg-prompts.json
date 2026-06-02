@@ -30,7 +30,7 @@
   },
   {
     "id": "gramophone",
-    "description": "A vintage gramophone with brass horn on a small wooden side table. Intended to be placed next to the armchair in the RIGHT zone (reading nook) of the reference image. Match the reference's eye-level perspective, scale (the gramophone + side table should reach about the height of the armchair's backrest), lighting from upper-left, and the same Art Déco line-art + sepia/forest green wash on cream parchment. Isolated subject on transparent background — gramophone and its small side table only.",
+    "description": "ONLY the vintage gramophone itself: a polished wooden box (the soundbox/mechanism, ~30cm wide) with a polished brass tulip horn pointing to the upper-left. ABSOLUTELY NO furniture, NO pedestal, NO side table, NO support of any kind under the gramophone — the wooden box appears to rest flat on an invisible surface, ready to be composited on top of the small wooden side table that already exists in the reference image. Three-quarter front view, eye-level perspective matching the reference, warm soft light from upper-left, same Art Déco line-art + sepia/forest green wash style on cream parchment. Isolated subject on transparent background — wooden gramophone box + brass horn ONLY, nothing else.",
     "transparent": true,
     "reference": "fond-cabinet"
   },
