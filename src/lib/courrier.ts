@@ -50,3 +50,25 @@ export function migrerCourriers(
   if (base.some((c) => c.id === candidate.id)) return base;
   return [...base, candidate];
 }
+
+/**
+ * Injecte la lettre starter de Maman dans une sauvegarde existante si elle
+ * n'a jamais été distribuée (ni dans les courriers, ni dans les déclencheurs).
+ * Retourne `{ courriers, declencheursAjoutes }`.
+ */
+export function injecterLettreMamanSiAbsente(
+  courriers: Courrier[],
+  declencheursDeclenches: string[],
+  jourCourant: number,
+): { courriers: Courrier[]; declencheursAjoutes: string[] } {
+  const dejaDeclenchee =
+    declencheursDeclenches.includes(ID_LETTRE_MAMAN_DEBUT) ||
+    courriers.some((c) => c.id === ID_LETTRE_MAMAN_DEBUT);
+  if (dejaDeclenchee) {
+    return { courriers, declencheursAjoutes: [] };
+  }
+  return {
+    courriers: [...courriers, creerLettreMamanDebut(jourCourant)],
+    declencheursAjoutes: [ID_LETTRE_MAMAN_DEBUT],
+  };
+}

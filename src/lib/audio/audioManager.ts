@@ -201,6 +201,19 @@ class AudioManager {
     src.start();
   }
 
+  /** Bruit de manipulation de papier (ouverture de lettre). */
+  async playPaper(): Promise<void> {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/paper.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   async startCrowd(): Promise<void> {
     if (!this.prefs.foule) return;
     this.ensureCtx();

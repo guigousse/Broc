@@ -43,6 +43,7 @@ import {
   ID_LETTRE_MAMAN_DEBUT,
   creerCourrierHuissier,
   creerLettreMamanDebut,
+  injecterLettreMamanSiAbsente,
   migrerCourriers,
 } from "@/lib/courrier";
 
@@ -285,6 +286,24 @@ function migrerSauvegarde(loaded: GameState): GameState {
     }
   }
 
+  const courriersMigrés = migrerCourriers(
+    loaded.courriers,
+    (loaded as GameState & { dernierHuissier?: HuissierEvent | null }).dernierHuissier,
+  );
+  const declencheursLoaded = Array.isArray(
+    (loaded as Partial<GameState>).declencheursDeclenches,
+  )
+    ? (loaded as GameState).declencheursDeclenches.filter(
+        (s): s is string => typeof s === "string",
+      )
+    : [];
+  const jourCourant = loaded.jourActuel ?? INITIAL_JOUR;
+  const apresInjection = injecterLettreMamanSiAbsente(
+    courriersMigrés,
+    declencheursLoaded,
+    jourCourant,
+  );
+
   return {
     ...loaded,
     inventaireJoueur: inventaire,
@@ -319,7 +338,7 @@ function migrerSauvegarde(loaded: GameState): GameState {
         : tirerCelebrite(),
     influenceUtilisee: loaded.influenceUtilisee ?? false,
     dernierLoyer: loaded.dernierLoyer ?? null,
-    courriers: migrerCourriers(loaded.courriers, (loaded as GameState & { dernierHuissier?: HuissierEvent | null }).dernierHuissier),
+    courriers: apresInjection.courriers,
     niveauAtelier:
       (loaded as Partial<GameState>).niveauAtelier === 2 || (loaded as Partial<GameState>).niveauAtelier === 3
         ? (loaded as Partial<GameState>).niveauAtelier!
@@ -355,13 +374,9 @@ function migrerSauvegarde(loaded: GameState): GameState {
       }
       return 0;
     })(),
-    declencheursDeclenches: Array.isArray(
-      (loaded as Partial<GameState>).declencheursDeclenches,
-    )
-      ? ((loaded as GameState).declencheursDeclenches.filter(
-          (s): s is string => typeof s === "string",
-        ))
-      : [],
+    declencheursDeclenches: Array.from(
+      new Set([...declencheursLoaded, ...apresInjection.declencheursAjoutes]),
+    ),
   };
 }
 

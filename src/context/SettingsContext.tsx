@@ -37,6 +37,7 @@ interface SettingsValue {
   setVolume: (v: number) => void;
   playClick: () => void;
   playCash: () => void;
+  playPaper: () => void;
   startCrowd: () => void;
   stopCrowd: () => void;
   tailleFonte: TailleFonte;
@@ -100,6 +101,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const playCash = useCallback(() => {
     void audioManager.playCash();
   }, []);
+  const playPaper = useCallback(() => {
+    void audioManager.playPaper();
+  }, []);
   const startCrowd = useCallback(() => {
     void audioManager.startCrowd();
   }, []);
@@ -118,6 +122,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setVolume,
       playClick,
       playCash,
+      playPaper,
       startCrowd,
       stopCrowd,
       tailleFonte,
@@ -129,6 +134,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setVolume,
       playClick,
       playCash,
+      playPaper,
       startCrowd,
       stopCrowd,
       tailleFonte,
