@@ -10,11 +10,11 @@
  */
 export const VINYLE_AUDIO_URLS: Record<string, string> = {
   "mus.vinyle_renaud_morgane":
-    "https://cdn1.suno.ai/4f496b5c-71a3-4cd3-af3a-d0bd0fdfe3c4.mp3",
+    "https://cdn1.suno.ai/250d5356-3526-47d5-82ab-ec2b659380a0.mp3",
   "mus.vinyle_cabrel_hors_saison":
-    "https://cdn1.suno.ai/fac1f750-85ff-45b8-ac68-eef17885a25a.mp3",
+    "https://cdn1.suno.ai/8f44edf8-5b5b-48f4-8dc4-e5b448549237.mp3",
   "mus.vinyle_piaf_non":
-    "https://cdn1.suno.ai/1a9029dd-7432-4d9f-a151-6bd47735c1ab.mp3",
+    "https://cdn1.suno.ai/00a75e41-1427-412d-8978-02b8148fa832.mp3",
 };
 
 export function vinylAudioUrl(templateId: string): string {
