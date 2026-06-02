@@ -23,11 +23,7 @@ export function PasserConfirmSheet({
         open={open}
         onClose={onClose}
         message="Un chat dort paisiblement sur le fauteuil. Impossible de passer la journée sans le déranger…"
-      >
-        <FloatingActionButton onClick={onClose} variant="secondary" minWidth={180}>
-          Fermer
-        </FloatingActionButton>
-      </FloatingActionBar>
+      />
     );
   }
   return (

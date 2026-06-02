@@ -5,7 +5,7 @@ import { useEffect, type CSSProperties, type ReactNode } from "react";
 interface FloatingActionBarProps {
   open: boolean;
   onClose: () => void;
-  children: ReactNode;
+  children?: ReactNode;
   /** Texte optionnel affiché au-dessus des boutons (ex. message bloquant). */
   message?: ReactNode;
 }
@@ -77,7 +77,7 @@ export function FloatingActionBar({
       <div style={scrim} onClick={onClose} aria-hidden />
       <div style={wrap} role="dialog" aria-modal="true">
         {message && <div style={messageBox}>{message}</div>}
-        <div style={buttonRow}>{children}</div>
+        {children && <div style={buttonRow}>{children}</div>}
       </div>
     </>
   );
