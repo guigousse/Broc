@@ -23,8 +23,6 @@ export function QgJournal({ onTap }: QgJournalProps) {
           width: "100%",
           height: "auto",
           display: "block",
-          transform: "rotate(-30deg)",
-          transformOrigin: "center",
         }}
       />
     </button>

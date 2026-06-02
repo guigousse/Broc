@@ -27,7 +27,6 @@ interface GazetteSheetProps {
   open: boolean;
   onClose: () => void;
   jourActuel: number;
-  prochainRafraichissement: number;
   tendances: readonly Tendance[];
   categoriesConnues: ReadonlySet<CategorieObjet>;
   /** Météo des 7 jours de la semaine de jeu courante. null si non révélée. */
@@ -96,7 +95,7 @@ const paperWrap: CSSProperties = {
   position: "relative",
   width: "100%",
   maxWidth: 380,
-  aspectRatio: "248 / 320",
+  aspectRatio: "248 / 336",
   pointerEvents: "auto",
   filter: "drop-shadow(0 10px 22px rgba(0,0,0,0.45))",
   containerType: "inline-size",
@@ -252,7 +251,6 @@ export function GazetteSheet(props: GazetteSheetProps) {
     open,
     onClose,
     jourActuel,
-    prochainRafraichissement,
     tendances,
     categoriesConnues,
     meteoSemaine,
@@ -282,7 +280,6 @@ export function GazetteSheet(props: GazetteSheetProps) {
 
   if (!open) return null;
 
-  const joursAvantRefresh = Math.max(0, prochainRafraichissement - jourActuel);
   const numeroSemaine = Math.floor((jourActuel - 1) / 7) + 1;
   const brocanteCeleb = celebrite ? getBrocanteById(celebrite.brocanteId) : null;
   const tendanceParCategorie = new Map(
@@ -306,9 +303,9 @@ export function GazetteSheet(props: GazetteSheetProps) {
             draggable={false}
           />
           <div style={content}>
-            {/* En-tête : Jour à gauche, N° de semaine à droite, AU-DESSUS de la bande titre */}
+            {/* En-tête : N° semaine à gauche et à droite, AU-DESSUS de la bande titre */}
             <div style={headerBar}>
-              <span>Jour {jourActuel}</span>
+              <span>Semaine {String(numeroSemaine).padStart(3, "0")}</span>
               <span>N° {String(numeroSemaine).padStart(3, "0")}</span>
             </div>
 
@@ -366,7 +363,10 @@ export function GazetteSheet(props: GazetteSheetProps) {
                     >
                       {JOURS_SEMAINE[celebrite.jourSemaine]}
                     </strong>
-                    .
+                    . Attendez-vous à une <strong style={{ fontStyle: "normal" }}>
+                      forte affluence
+                    </strong>{" "}
+                    et à de <strong style={{ fontStyle: "normal" }}>grosses bourses</strong> !
                   </p>
                 </div>
               ) : (
@@ -492,24 +492,6 @@ export function GazetteSheet(props: GazetteSheetProps) {
                   Débloquer avec <em>Bulletin météo</em>
                 </p>
               )}
-
-              {/* Footer : prochaine édition */}
-              <div
-                style={{
-                  marginTop: "auto",
-                  paddingTop: "2%",
-                  textAlign: "center",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "2.3cqw",
-                  letterSpacing: "0.16em",
-                  textTransform: "uppercase",
-                  color: "var(--ink-500)",
-                }}
-              >
-                {joursAvantRefresh === 0
-                  ? "Prochaine édition demain"
-                  : `Prochaine édition dans ${joursAvantRefresh} jour${joursAvantRefresh > 1 ? "s" : ""}`}
-              </div>
             </div>
 
             {/* CTA d'achat : visible uniquement si non achetée */}

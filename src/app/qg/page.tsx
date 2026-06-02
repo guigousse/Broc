@@ -235,7 +235,6 @@ function QgPageInner() {
         open={gazetteOuverte}
         onClose={() => setGazetteOuverte(false)}
         jourActuel={state.jourActuel}
-        prochainRafraichissement={state.prochainRafraichissementTendances}
         tendances={state.tendances}
         categoriesConnues={categoriesConnuesTendance}
         meteoSemaine={
