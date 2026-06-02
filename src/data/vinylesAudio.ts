@@ -11,6 +11,8 @@
 export const VINYLE_AUDIO_URLS: Record<string, string> = {
   "mus.vinyle_renaud_morgane":
     "https://cdn1.suno.ai/4f496b5c-71a3-4cd3-af3a-d0bd0fdfe3c4.mp3",
+  "mus.vinyle_cabrel_hors_saison":
+    "https://cdn1.suno.ai/fac1f750-85ff-45b8-ac68-eef17885a25a.mp3",
 };
 
 export function vinylAudioUrl(templateId: string): string {

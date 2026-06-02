@@ -51,7 +51,7 @@ const MUSIQUE_C: Row[] = [
   ["mus.vinyle_hallyday_rock_memphis", "Vinyle Hallyday 'Rock à Memphis'", 22],
   ["mus.vinyle_sardou_lacs", "Vinyle Sardou 'Les Lacs du Connemara'", 20],
   ["mus.vinyle_goldman_envole", "Vinyle Goldman 'Envole-moi'", 16],
-  ["mus.vinyle_cabrel_hors_saison", "Vinyle Cabrel 'Hors-saison'", 18],
+  ["mus.vinyle_cabrel_hors_saison", "Vinyle François Cabriol 'Hors-Piste'", 18],
   ["mus.vinyle_gainsbourg_melody", "Vinyle Gainsbourg 'Melody Nelson'", 70],
   ["mus.vinyle_higelin_alertez", "Vinyle Higelin 'Alertez les bébés'", 22],
   ["mus.vinyle_balavoine_aziza", "Vinyle Balavoine 'Aziza'", 18],
