@@ -121,26 +121,6 @@ const paperImg: CSSProperties = {
   pointerEvents: "none",
 };
 
-const closeIconBtn: CSSProperties = {
-  position: "absolute",
-  top: "-44px",
-  right: 0,
-  width: 36,
-  height: 36,
-  borderRadius: 18,
-  background: "rgba(20,15,5,0.55)",
-  border: "1px solid rgba(217,192,122,0.55)",
-  color: "var(--brass-300)",
-  fontFamily: "var(--font-display)",
-  fontSize: 14,
-  cursor: "pointer",
-  display: "grid",
-  placeItems: "center",
-  padding: 0,
-  zIndex: 2,
-  pointerEvents: "auto",
-};
-
 const content: CSSProperties = {
   position: "absolute",
   inset: "9% 9% 9% 9%",
@@ -354,17 +334,9 @@ export function CalendrierSheet({
 
   return (
     <>
-      <div style={scrim} aria-hidden />
+      <div style={scrim} onClick={onClose} aria-hidden />
       <div style={stage} role="dialog" aria-modal="true">
         <div style={paperWrap}>
-          <button
-            type="button"
-            style={closeIconBtn}
-            onClick={onClose}
-            aria-label="Fermer le calendrier"
-          >
-            ✕
-          </button>
           <img
             src="/qg/calendrier.png"
             alt=""

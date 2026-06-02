@@ -24,7 +24,10 @@ const wrap: CSSProperties = {
   right: 0,
   bottom: 0,
   zIndex: 51,
-  padding: "0 16px calc(20px + env(safe-area-inset-bottom))",
+  // padding-bottom inclut la hauteur de la tab bar + safe-area pour que
+  // les boutons restent au-dessus du bandeau inférieur.
+  padding:
+    "0 16px calc(16px + var(--mobile-tabbar-h) + env(safe-area-inset-bottom))",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",

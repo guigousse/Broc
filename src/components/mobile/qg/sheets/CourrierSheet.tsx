@@ -91,7 +91,10 @@ const closeIconBtn: CSSProperties = {
 const scrollArea: CSSProperties = {
   flex: 1,
   overflowY: "auto",
-  paddingBottom: "max(24px, env(safe-area-inset-bottom))",
+  // Réserve la hauteur de la tab bar pour que le bouton Récupérer reste
+  // accessible sans chevaucher le bandeau inférieur.
+  paddingBottom:
+    "calc(24px + var(--mobile-tabbar-h) + env(safe-area-inset-bottom))",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
