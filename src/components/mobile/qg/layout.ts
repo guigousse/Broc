@@ -19,7 +19,7 @@ export const QG_LAYOUT = {
     // Bureau (gauche, 0–100vw) : journal + carnet posés au PREMIER PLAN
     // dans le coin avant du plateau. Le journal est agrandi (×2) et
     // tourné -30° (anti-horaire). Voir QgJournal.tsx pour le transform.
-    journal: { left: 18, bottom: 10, width: 18 },
+    journal: { left: 18, bottom: 10, width: 22 },
     carnet: { left: 38, bottom: 18, width: 9 },
     // Porte (centre, 100–200vw) : zone invisible cliquable, la porte est
     // déjà peinte dans le fond. L'aspect-ratio est géré dans QgPorte.tsx.
@@ -31,7 +31,7 @@ export const QG_LAYOUT = {
     // Gramophone : agrandi (×1.5 → 84vw), positionné avec sa moitié basse
     // en dehors du cadre (bottom négatif). Le débordement est rogné par
     // l'overflow: hidden du conteneur. Miroir géré dans QgGramophone.tsx.
-    gramophone: { left: 255, bottom: -25, width: 84 },
+    gramophone: { left: 255, bottom: -10, width: 84 },
   },
 } as const;
 
