@@ -221,6 +221,32 @@ class AudioManager {
     src.start();
   }
 
+  /** Porte qui s'ouvre. */
+  async playDoorOpen(): Promise<void> {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/door-open.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
+  /** Porte qui se ferme. */
+  async playDoorClose(): Promise<void> {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/door-close.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   async startCrowd(): Promise<void> {
     if (!this.prefs.foule) return;
     this.ensureCtx();

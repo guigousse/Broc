@@ -49,7 +49,7 @@ function QgPageInner() {
     marquerCourrierLu,
     avancerJour,
   } = useGame();
-  const { playClick, playPaper } = useSettings();
+  const { playClick, playPaper, playDoorOpen, playDoorClose } = useSettings();
 
   const [gazetteOuverte, setGazetteOuverte] = useState(false);
   const [porteOuverte, setPorteOuverte] = useState(false);
@@ -122,7 +122,7 @@ function QgPageInner() {
             <QgScene>
               <QgJournal onTap={() => { playClick(); setGazetteOuverte(true); }} />
               <QgCarnet onTap={() => { playClick(); setCarnetOuvert(true); }} />
-              <QgPorte onTap={() => { playClick(); setPorteOuverte(true); }} />
+              <QgPorte onTap={() => { playDoorOpen(); setPorteOuverte(true); }} />
               <QgCourrier
                 nbNonLus={nbCourriersNonLus}
                 onTap={() => { playPaper(); setCourrierOuvert(true); }}
@@ -140,13 +140,18 @@ function QgPageInner() {
 
       <PorteSheet
         open={porteOuverte}
-        onClose={() => setPorteOuverte(false)}
+        onClose={() => {
+          playDoorClose();
+          setPorteOuverte(false);
+        }}
         vitrineActive={!!state.vitrine}
         onChiner={() => {
+          playDoorClose();
           setPorteOuverte(false);
           router.push("/chiner");
         }}
         onVitrine={() => {
+          playDoorClose();
           setPorteOuverte(false);
           router.push(
             state.vitrine ? `/vitrine/${state.vitrine.brocanteId}` : "/vitrine",
