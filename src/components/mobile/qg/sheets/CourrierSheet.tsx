@@ -6,6 +6,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButton";
 import { getExpediteur } from "@/data/expediteursCourrier";
 import { useSettings } from "@/context/SettingsContext";
 import type { Courrier } from "@/types/game";
@@ -158,22 +159,6 @@ const actionBtnWrap: CSSProperties = {
   marginTop: 20,
 };
 
-const actionBtn: CSSProperties = {
-  minWidth: 220,
-  padding: "14px 26px",
-  background: "var(--forest-800)",
-  color: "var(--brass-300)",
-  border: "1px solid var(--brass-500)",
-  borderRadius: 6,
-  fontFamily: "var(--font-display)",
-  fontSize: 12,
-  letterSpacing: "0.20em",
-  textTransform: "uppercase",
-  cursor: "pointer",
-  boxShadow:
-    "0 6px 14px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,225,160,0.20)",
-};
-
 /* ------------------------------------------------------------------ */
 /* Rendus                                                              */
 /* ------------------------------------------------------------------ */
@@ -269,11 +254,11 @@ export function CourrierSheet({
         <div style={scrollArea}>
           <article style={lettreCard}>{renderLettre(courant)}</article>
           <div style={actionBtnWrap}>
-            <button type="button" style={actionBtn} onClick={handleValider}>
+            <FloatingActionButton onClick={handleValider} minWidth={220}>
               {recompenseArgent
                 ? `Récupérer ${recompenseArgent} €`
                 : "Compris"}
-            </button>
+            </FloatingActionButton>
           </div>
         </div>
       </div>

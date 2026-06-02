@@ -1,7 +1,7 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { BottomSheet } from "@/components/mobile/BottomSheet";
+import { FloatingActionBar } from "@/components/mobile/qg/FloatingActionBar";
+import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButton";
 
 interface PasserConfirmSheetProps {
   open: boolean;
@@ -11,39 +11,6 @@ interface PasserConfirmSheetProps {
   bloque?: boolean;
 }
 
-const text: CSSProperties = {
-  fontFamily: "var(--font-serif)",
-  fontStyle: "italic",
-  fontSize: 14,
-  color: "var(--ink-700)",
-  textAlign: "center",
-  padding: "8px 4px 16px",
-};
-
-const row: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 10,
-};
-
-const btnConfirm: CSSProperties = {
-  padding: "14px 8px",
-  background: "var(--forest-800)",
-  color: "var(--brass-300)",
-  border: "1px solid var(--brass-500)",
-  fontFamily: "var(--font-display)",
-  fontSize: 12,
-  letterSpacing: "0.16em",
-  textTransform: "uppercase",
-  cursor: "pointer",
-};
-
-const btnCancel: CSSProperties = {
-  ...btnConfirm,
-  background: "var(--paper-200)",
-  color: "var(--ink-700)",
-};
-
 export function PasserConfirmSheet({
   open,
   onClose,
@@ -52,30 +19,22 @@ export function PasserConfirmSheet({
 }: PasserConfirmSheetProps) {
   if (bloque) {
     return (
-      <BottomSheet open={open} onClose={onClose} title="— Fauteuil occupé —">
-        <p style={text}>
-          Un chat dort paisiblement sur le fauteuil. Impossible de passer la journée
-          sans le déranger…
-        </p>
-        <button type="button" style={btnCancel} onClick={onClose}>
+      <FloatingActionBar
+        open={open}
+        onClose={onClose}
+        message="Un chat dort paisiblement sur le fauteuil. Impossible de passer la journée sans le déranger…"
+      >
+        <FloatingActionButton onClick={onClose} variant="secondary" minWidth={180}>
           Fermer
-        </button>
-      </BottomSheet>
+        </FloatingActionButton>
+      </FloatingActionBar>
     );
   }
   return (
-    <BottomSheet open={open} onClose={onClose} title="— Passer la journée —">
-      <p style={text}>
-        S'asseoir dans le fauteuil et laisser passer la journée ?
-      </p>
-      <div style={row}>
-        <button type="button" style={btnCancel} onClick={onClose}>
-          Annuler
-        </button>
-        <button type="button" style={btnConfirm} onClick={onConfirm}>
-          Confirmer
-        </button>
-      </div>
-    </BottomSheet>
+    <FloatingActionBar open={open} onClose={onClose}>
+      <FloatingActionButton onClick={onConfirm} minWidth={240}>
+        Se reposer (+1 jour)
+      </FloatingActionButton>
+    </FloatingActionBar>
   );
 }
