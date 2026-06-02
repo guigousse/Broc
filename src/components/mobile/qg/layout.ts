@@ -28,10 +28,9 @@ export const QG_LAYOUT = {
     courrier: { left: 142, bottom: 4, width: 18 },
     // Repos (droite, 200–300vw) : fauteuil sur la zone libre du tapis.
     fauteuil: { left: 201, bottom: 10, width: 51 },
-    // Gramophone : agrandi (×1.5 → 84vw), positionné avec sa moitié basse
-    // en dehors du cadre (bottom négatif). Le débordement est rogné par
-    // l'overflow: hidden du conteneur. Miroir géré dans QgGramophone.tsx.
-    gramophone: { left: 255, bottom: -10, width: 84 },
+    // Gramophone : nouveau PNG sans pedestal, à poser sur le guéridon
+    // peint dans le fond. Valeurs de départ raisonnables, à ajuster.
+    gramophone: { left: 250, bottom: 22, width: 20 },
   },
 } as const;
 
