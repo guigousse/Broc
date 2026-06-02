@@ -20,6 +20,14 @@ interface CourrierSheetProps {
 /* ------------------------------------------------------------------ */
 /* Markdown ultra-minimal : **gras** seulement.                       */
 /* ------------------------------------------------------------------ */
+const strongStyle: CSSProperties = {
+  fontWeight: 700,
+  color: "#1a1308",
+  borderBottom: "1.5px solid #1a1308",
+  padding: "0 1px",
+  whiteSpace: "nowrap",
+};
+
 function renderParaText(text: string): ReactNode[] {
   const parts: ReactNode[] = [];
   const re = /\*\*(.+?)\*\*/g;
@@ -28,7 +36,7 @@ function renderParaText(text: string): ReactNode[] {
   while ((match = re.exec(text)) !== null) {
     if (match.index > last) parts.push(text.slice(last, match.index));
     parts.push(
-      <strong key={match.index} style={{ fontWeight: 700 }}>
+      <strong key={match.index} style={strongStyle}>
         {match[1]}
       </strong>,
     );
@@ -82,7 +90,7 @@ const closeIconBtn: CSSProperties = {
 const scrollArea: CSSProperties = {
   flex: 1,
   overflowY: "auto",
-  paddingBottom: 110, // place pour le bouton fixe en bas
+  paddingBottom: "max(24px, env(safe-area-inset-bottom))",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
@@ -119,7 +127,7 @@ const corpsLettre: CSSProperties = {
   fontSize: 17,
   lineHeight: 1.4,
   color: "#3a2f1e",
-  margin: "0 0 2px",
+  margin: "0 0 14px",
   textIndent: "1.6em",
   textAlign: "left",
 };
@@ -142,22 +150,15 @@ const signatureLettre: CSSProperties = {
   transformOrigin: "right center",
 };
 
-const bottomBar: CSSProperties = {
-  position: "fixed",
-  left: 0,
-  right: 0,
-  bottom: 0,
-  padding: "12px 16px calc(12px + env(safe-area-inset-bottom))",
-  background:
-    "linear-gradient(to top, rgba(15,30,22,0.85), rgba(15,30,22,0))",
+const actionBtnWrap: CSSProperties = {
+  width: "100%",
+  maxWidth: 420,
   display: "flex",
   justifyContent: "center",
-  zIndex: 52,
-  pointerEvents: "none",
+  marginTop: 20,
 };
 
 const actionBtn: CSSProperties = {
-  pointerEvents: "auto",
   minWidth: 220,
   padding: "14px 26px",
   background: "var(--forest-800)",
@@ -267,13 +268,13 @@ export function CourrierSheet({
         </button>
         <div style={scrollArea}>
           <article style={lettreCard}>{renderLettre(courant)}</article>
-        </div>
-        <div style={bottomBar}>
-          <button type="button" style={actionBtn} onClick={handleValider}>
-            {recompenseArgent
-              ? `Récupérer ${recompenseArgent} €`
-              : "Compris"}
-          </button>
+          <div style={actionBtnWrap}>
+            <button type="button" style={actionBtn} onClick={handleValider}>
+              {recompenseArgent
+                ? `Récupérer ${recompenseArgent} €`
+                : "Compris"}
+            </button>
+          </div>
         </div>
       </div>
     </>
