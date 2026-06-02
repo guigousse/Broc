@@ -93,7 +93,7 @@ export interface HuissierEvent {
 
 /* === Courrier (système de lettres au QG) ============================== */
 
-export type CourrierType = "huissier";
+export type CourrierType = "huissier" | "lettre";
 
 export interface CourrierPayloadHuissier {
   type: "huissier";
@@ -102,7 +102,22 @@ export interface CourrierPayloadHuissier {
   budgetApres: number;
 }
 
-export type CourrierPayload = CourrierPayloadHuissier; // discriminated union, extensible
+/** Récompense optionnelle attachée à une lettre. Appliquée à la lecture. */
+export interface RecompenseCourrier {
+  argent?: number;
+}
+
+/** Lettre narrative générique (mère, ami, maire, client…). */
+export interface CourrierPayloadLettre {
+  type: "lettre";
+  expediteurId: string;
+  titre: string;
+  /** Corps découpé en paragraphes (un <p> par entrée). */
+  corps: string[];
+  recompense?: RecompenseCourrier;
+}
+
+export type CourrierPayload = CourrierPayloadHuissier | CourrierPayloadLettre;
 
 export interface Courrier {
   id: string;
@@ -151,6 +166,8 @@ export interface GameState {
   chatSurFauteuil: boolean;
   /** Nombre de passages volontaires consécutifs sans apparition du chat (pity timer, capé à 3). */
   passagesSansChat: number;
+  /** IDs des déclencheurs de courrier déjà résolus (anti-respawn pour programmés/one-shots). */
+  declencheursDeclenches: string[];
 }
 
 export type CompetenceId = string;

@@ -39,7 +39,12 @@ import {
 } from "@/data/competences";
 import { CATEGORIES, migrerCategorie, emptyPiecesAmelioration } from "@/data/categories";
 import { recalculerPrixReference } from "@/lib/etat";
-import { creerCourrierHuissier, migrerCourriers } from "@/lib/courrier";
+import {
+  ID_LETTRE_MAMAN_DEBUT,
+  creerCourrierHuissier,
+  creerLettreMamanDebut,
+  migrerCourriers,
+} from "@/lib/courrier";
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -350,6 +355,13 @@ function migrerSauvegarde(loaded: GameState): GameState {
       }
       return 0;
     })(),
+    declencheursDeclenches: Array.isArray(
+      (loaded as Partial<GameState>).declencheursDeclenches,
+    )
+      ? ((loaded as GameState).declencheursDeclenches.filter(
+          (s): s is string => typeof s === "string",
+        ))
+      : [],
   };
 }
 
@@ -400,12 +412,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       celebriteActuelle: tirerCelebrite(),
       influenceUtilisee: false,
       dernierLoyer: null,
-      courriers: [],
+      courriers: [creerLettreMamanDebut(INITIAL_JOUR)],
       niveauAtelier: 1,
       niveauStockage: 1,
       piecesAmelioration: emptyPiecesAmelioration(),
       chatSurFauteuil: false,
       passagesSansChat: 0,
+      declencheursDeclenches: [ID_LETTRE_MAMAN_DEBUT],
     });
     router.push("/qg");
   }, [router]);
@@ -1088,10 +1101,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const marquerCourrierLu = useCallback((id: string) => {
     setState((prev) => {
       if (!prev) return prev;
+      const cible = prev.courriers.find((c) => c.id === id);
+      if (!cible || cible.lu) return prev;
+      // Récompense (argent) appliquée à la lecture si la lettre en porte une.
+      let nouveauBudget = prev.budget;
+      if (cible.payload.type === "lettre" && cible.payload.recompense) {
+        if (typeof cible.payload.recompense.argent === "number") {
+          nouveauBudget += cible.payload.recompense.argent;
+        }
+      }
       const next = prev.courriers.map((c) =>
         c.id === id ? { ...c, lu: true } : c,
       );
-      return { ...prev, courriers: next };
+      return { ...prev, courriers: next, budget: nouveauBudget };
     });
   }, []);
 

@@ -28,7 +28,7 @@ export const QG_LAYOUT = {
     carnet: { left: 11.2, bottom: 20.2, width: 49.1 },
     porte: { left: 135.2, bottom: 27.7, width: 24.0 },
     courrier: { left: 145.2, bottom: 14.8, width: 18.0 },
-    fauteuil: { left: 197.5, bottom: 13.2, width: 53.7 },
+    fauteuil: { left: 202.8, bottom: 14.6, width: 36.3 },
     gramophone: { left: 245.7, bottom: 30.3, width: 17.0 },
     portemanteau: { left: 102.1, bottom: 15.9, width: 23.4 },
   },
