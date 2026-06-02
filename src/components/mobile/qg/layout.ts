@@ -24,7 +24,7 @@ export const QG_LAYOUT = {
     repos: 200,
   },
   objets: {
-    journal: { left: 15.0, bottom: 7.6, width: 25.9 },
+    journal: { left: 16.4, bottom: 8.2, width: 21.9 },
     carnet: { left: 11.2, bottom: 20.2, width: 49.1 },
     porte: { left: 135.2, bottom: 27.7, width: 24.0 },
     courrier: { left: 145.2, bottom: 14.8, width: 18.0 },
