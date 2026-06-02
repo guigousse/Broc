@@ -17,6 +17,7 @@ import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
 import { QgCourrier } from "@/components/mobile/qg/QgCourrier";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
+import { QgEditToggle } from "@/components/mobile/qg/dev/QgEditToggle";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
 import { CarnetSheet } from "@/components/mobile/qg/sheets/CarnetSheet";
@@ -186,6 +187,7 @@ function QgPageInner() {
         prixGazette={PRIX_GAZETTE}
       />
 
+      <QgEditToggle />
       {editEnabled && <QgEditPanel />}
     </>
     </QgEditProvider>
