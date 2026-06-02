@@ -36,7 +36,7 @@ import {
   aGenCarnetMondain,
 } from "@/lib/competences";
 import type { CategorieObjet, CollectionSlot } from "@/types/game";
-import { vinylAudioUrl } from "@/data/vinylesAudio";
+import { vinylAudioUrl, vinylHasAudio } from "@/data/vinylesAudio";
 
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
@@ -148,7 +148,8 @@ function QgPageInner() {
     return state.collection["Musique"].filter(
       (s) =>
         s.vu &&
-        VINYLE_PREFIXES.some((p) => s.templateId.startsWith(p)),
+        VINYLE_PREFIXES.some((p) => s.templateId.startsWith(p)) &&
+        vinylHasAudio(s.templateId),
     );
   }, [state]);
 

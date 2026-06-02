@@ -15,12 +15,19 @@ export const VINYLE_AUDIO_URLS: Record<string, string> = {
     "https://cdn1.suno.ai/8f44edf8-5b5b-48f4-8dc4-e5b448549237.mp3",
   "mus.vinyle_piaf_non":
     "https://cdn1.suno.ai/00a75e41-1427-412d-8978-02b8148fa832.mp3",
+  "mus.vinyle_hallyday_rock_memphis":
+    "https://cdn1.suno.ai/f0b8fc7a-2b25-488f-a235-1f71d7526c51.mp3",
 };
 
 export function vinylAudioUrl(templateId: string): string {
   return (
     VINYLE_AUDIO_URLS[templateId] ?? `/sounds/vinyles/${templateId}.mp3`
   );
+}
+
+/** Vrai si le vinyle a un audio jouable (URL externe mappée). */
+export function vinylHasAudio(templateId: string): boolean {
+  return templateId in VINYLE_AUDIO_URLS;
 }
 
 /**
