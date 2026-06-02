@@ -128,7 +128,7 @@ function QgPageInner() {
               <QgPortemanteau />
               <QgCalendrier
                 jourActuel={state.jourActuel}
-                onTap={() => { playClick(); setCalendrierOuvert(true); }}
+                onTap={() => setCalendrierOuvert(true)}
               />
             </QgScene>
           </QgPanorama>
