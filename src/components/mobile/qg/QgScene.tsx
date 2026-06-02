@@ -10,10 +10,14 @@ interface QgSceneProps {
   children: ReactNode;
 }
 
+// La scène a un aspect fixe = aspect du fond. Hauteur en vw pour rester
+// proportionnelle à la largeur (et donc ancrer les objets à l'image, pas au
+// viewport variable). Sur petit écran, le bas dépasse hors du QgPanorama
+// qui le clippe (overflow-y: hidden) ; les coordonnées restent cohérentes.
 const wrapStyle: CSSProperties = {
   position: "relative",
   width: `${QG_LAYOUT.panoramaWidth}vw`,
-  height: "100%",
+  height: `calc(${QG_LAYOUT.panoramaWidth}vw * ${QG_LAYOUT.panoramaAspect.h} / ${QG_LAYOUT.panoramaAspect.w})`,
   flexShrink: 0,
 };
 
@@ -43,7 +47,7 @@ const objectsLayer: CSSProperties = {
 export function QgScene({ children }: QgSceneProps) {
   const ctx = useQgEditContext();
   return (
-    <div style={wrapStyle} aria-label="Décor du QG">
+    <div style={wrapStyle} aria-label="Décor du QG" data-qg-scene="1">
       <img
         src="/qg/fond-cabinet.png"
         alt=""

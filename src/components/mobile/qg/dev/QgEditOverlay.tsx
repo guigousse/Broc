@@ -13,15 +13,16 @@ interface OutlineProps {
 function ObjetOutline({ qgKey }: OutlineProps) {
   const { left, bottom, width } = useQgObjet(qgKey);
   const ctx = useQgEditContext();
-  const panoramaRef = useRef<HTMLElement | null>(null);
+  const sceneRef = useRef<HTMLElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Find the panorama container height reference on mount
+  // Find the QgScene container (the actual ancestor of the bottom: Y%
+  // coordinate system used by the objects).
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const panorama = el.closest("[data-qg-panorama]") as HTMLElement | null;
-    panoramaRef.current = panorama;
+    const scene = el.closest("[data-qg-scene]") as HTMLElement | null;
+    sceneRef.current = scene;
   }, []);
 
   // Drag state stored in refs (no re-render during drag)
@@ -35,8 +36,8 @@ function ObjetOutline({ qgKey }: OutlineProps) {
   const resizeStartX = useRef(0);
   const startWidth = useRef(width);
 
-  function getPanoramaHeight(): number {
-    return panoramaRef.current?.clientHeight ?? window.innerHeight;
+  function getSceneHeight(): number {
+    return sceneRef.current?.clientHeight ?? window.innerHeight;
   }
 
   function onBodyPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
@@ -55,7 +56,7 @@ function ObjetOutline({ qgKey }: OutlineProps) {
     const dx = e.clientX - startX.current;
     const dy = e.clientY - startY.current;
     const vwPx = window.innerWidth / 100;
-    const hPx = getPanoramaHeight() / 100;
+    const hPx = getSceneHeight() / 100;
     const newLeft = startLeft.current + dx / vwPx;
     const newBottom = startBottom.current - dy / hPx;
     ctx.setOverride(qgKey, { left: newLeft, bottom: newBottom });

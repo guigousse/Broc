@@ -10,6 +10,8 @@
  */
 export const QG_LAYOUT = {
   panoramaWidth: 300, // vw
+  /** Aspect ratio de l'image de fond (fond-cabinet.png : 16:9). */
+  panoramaAspect: { w: 16, h: 9 },
   zones: {
     bureau: 0, // scroll-left à 0vw = vue gauche
     porte: 100, // vue par défaut
