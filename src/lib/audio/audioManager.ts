@@ -227,6 +227,19 @@ class AudioManager {
     src.start();
   }
 
+  /** Bruit de journal qu'on déplie (ouverture de la Gazette). */
+  async playNewspaper(): Promise<void> {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/newspaper.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   /** Porte qui s'ouvre. */
   async playDoorOpen(): Promise<void> {
     if (!this.prefs.clic) return;

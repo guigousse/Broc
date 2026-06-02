@@ -12,7 +12,6 @@ import {
   HelpCircle,
   type LucideIcon,
 } from "lucide-react";
-import { numeroEdition } from "@/lib/tendances";
 import { METEO_ICON } from "@/data/meteos";
 import { getBrocanteById } from "@/data/brocantes";
 import { JOURS_SEMAINE } from "@/lib/meteo";
@@ -114,7 +113,7 @@ const paperImg: CSSProperties = {
 
 const content: CSSProperties = {
   position: "absolute",
-  inset: "5% 8% 6% 8%",
+  inset: "2.5% 8% 6% 8%",
   display: "flex",
   flexDirection: "column",
   color: "var(--ink-900)",
@@ -131,15 +130,14 @@ const headerBar: CSSProperties = {
   letterSpacing: "0.18em",
   textTransform: "uppercase",
   color: "var(--ink-700)",
-  marginBottom: "1%",
+  marginBottom: 0,
+  padding: "0 1%",
 };
 
 /* --- zone réservée au titre gravé dans le PNG --- */
 
 const titleSpacer: CSSProperties = {
-  // Le PNG affiche le titre dans sa bande haute (~18% de hauteur sous notre
-  // padding 5%). On laisse l'espace correspondant vide ici.
-  flex: "0 0 22%",
+  flex: "0 0 21%",
 };
 
 /* --- séparateur Art Déco --- */
@@ -285,6 +283,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
   if (!open) return null;
 
   const joursAvantRefresh = Math.max(0, prochainRafraichissement - jourActuel);
+  const numeroSemaine = Math.floor((jourActuel - 1) / 7) + 1;
   const brocanteCeleb = celebrite ? getBrocanteById(celebrite.brocanteId) : null;
   const tendanceParCategorie = new Map(
     tendances.map((t) => [t.categorie, t.delta] as const),
@@ -307,10 +306,10 @@ export function GazetteSheet(props: GazetteSheetProps) {
             draggable={false}
           />
           <div style={content}>
-            {/* En-tête : Jour à gauche, N° à droite, AU-DESSUS de la bande titre */}
+            {/* En-tête : Jour à gauche, N° de semaine à droite, AU-DESSUS de la bande titre */}
             <div style={headerBar}>
               <span>Jour {jourActuel}</span>
-              <span>N° {numeroEdition(jourActuel)}</span>
+              <span>N° {String(numeroSemaine).padStart(3, "0")}</span>
             </div>
 
             {/* Espace réservé au titre gravé dans le PNG */}
@@ -318,8 +317,6 @@ export function GazetteSheet(props: GazetteSheetProps) {
 
             {/* Contenu floutable selon achat */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", ...lockedBlur }}>
-              <SeparateurArtDeco />
-
               {/* ============== Carnet mondain ============== */}
               <h3 style={sectionTitle}>Carnet mondain</h3>
               {revelerCelebrite && celebrite ? (

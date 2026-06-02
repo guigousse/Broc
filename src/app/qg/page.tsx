@@ -50,6 +50,7 @@ function QgPageInner() {
   const {
     playClick,
     playPaper,
+    playNewspaper,
     playDoorOpen,
     playDoorClose,
     startCatPurr,
@@ -138,7 +139,7 @@ function QgPageInner() {
         >
           <QgPanorama initialZone="porte" onScrollPos={handleScrollPos}>
             <QgScene>
-              <QgJournal onTap={() => { playClick(); setGazetteOuverte(true); }} />
+              <QgJournal onTap={() => { playNewspaper(); setGazetteOuverte(true); }} />
               <QgCarnet onTap={() => { playClick(); setCarnetOuvert(true); }} />
               <QgPorte onTap={() => { playDoorOpen(); setPorteOuverte(true); }} />
               <QgCourrier

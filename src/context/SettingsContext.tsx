@@ -38,6 +38,7 @@ interface SettingsValue {
   playClick: () => void;
   playCash: () => void;
   playPaper: () => void;
+  playNewspaper: () => void;
   playDoorOpen: () => void;
   playDoorClose: () => void;
   startCrowd: () => void;
@@ -108,6 +109,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const playPaper = useCallback(() => {
     void audioManager.playPaper();
   }, []);
+  const playNewspaper = useCallback(() => {
+    void audioManager.playNewspaper();
+  }, []);
   const playDoorOpen = useCallback(() => {
     void audioManager.playDoorOpen();
   }, []);
@@ -137,6 +141,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       playClick,
       playCash,
       playPaper,
+      playNewspaper,
       playDoorOpen,
       playDoorClose,
       startCrowd,
@@ -153,6 +158,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       playClick,
       playCash,
       playPaper,
+      playNewspaper,
       playDoorOpen,
       playDoorClose,
       startCrowd,
