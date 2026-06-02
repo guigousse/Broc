@@ -24,10 +24,14 @@ const containerStyle: CSSProperties = {
   // pan-x : restreint le geste tactile au scroll horizontal uniquement.
   // Empêche l'élastique iOS de tirer l'image vers le haut.
   touchAction: "pan-x",
+  // Cache la barre de scroll (Firefox + Edge).
+  scrollbarWidth: "none",
   display: "flex",
   flexDirection: "row",
-  alignItems: "center", // centre verticalement la scène quand elle est
-                        // plus petite que la zone disponible
+  // Aligne la scène en bas pour que le bord inférieur de l'image
+  // touche le haut du bandeau inférieur (le surplus passe en haut,
+  // confondu avec le bandeau supérieur via le fond forest-800).
+  alignItems: "flex-end",
 };
 
 const snapAnchorStyle: CSSProperties = {

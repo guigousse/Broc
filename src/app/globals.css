@@ -214,6 +214,13 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Masque la barre de scroll horizontale du panorama QG sur WebKit. */
+[data-qg-panorama]::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 @media (orientation: landscape) and (max-width: 900px) {
   body::before {
     content: "Tournez votre téléphone en portrait";
