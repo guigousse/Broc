@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, type CSSProperties } from "react";
-import { Play, Pause, SkipForward } from "lucide-react";
+import { Play, Pause, SkipForward, ExternalLink } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
+import { vinylSunoPageUrl } from "@/data/vinylesAudio";
 import type { CollectionSlot } from "@/types/game";
 
 interface GramophoneSheetProps {
@@ -75,8 +76,23 @@ const titreVinyle: CSSProperties = {
   fontSize: 14,
   letterSpacing: "0.12em",
   textTransform: "uppercase",
-  marginBottom: 8,
+  marginBottom: 4,
   minHeight: 18,
+};
+
+const sunoLink: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 4,
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: "var(--brass-300)",
+  opacity: 0.75,
+  textDecoration: "none",
+  marginBottom: 8,
 };
 
 const controls: CSSProperties = {
@@ -217,6 +233,21 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
           <div style={titreVinyle}>
             {vinyleCourant ? vinyleCourant.nom : "—"}
           </div>
+          {vinyleCourant && (() => {
+            const sunoUrl = vinylSunoPageUrl(vinyleCourant.templateId);
+            if (!sunoUrl) return null;
+            return (
+              <a
+                href={sunoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={sunoLink}
+              >
+                <ExternalLink size={11} strokeWidth={1.8} />
+                Ajouter sur Suno
+              </a>
+            );
+          })()}
 
           <div style={controls}>
             <button

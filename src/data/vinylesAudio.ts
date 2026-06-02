@@ -18,3 +18,16 @@ export function vinylAudioUrl(templateId: string): string {
     VINYLE_AUDIO_URLS[templateId] ?? `/sounds/vinyles/${templateId}.mp3`
   );
 }
+
+/**
+ * URL de la page Suno (pour ajout en favori, partage, etc.) — dérivée du
+ * CDN URL si c'est bien un fichier `cdn1.suno.ai/<uuid>.mp3`. Retourne
+ * `null` si pas d'URL externe ou si l'URL n'est pas Suno (fichier local).
+ */
+export function vinylSunoPageUrl(templateId: string): string | null {
+  const url = VINYLE_AUDIO_URLS[templateId];
+  if (!url) return null;
+  const m = url.match(/cdn1\.suno\.ai\/([0-9a-f-]+)\.mp3/i);
+  if (!m) return null;
+  return `https://suno.com/song/${m[1]}`;
+}
