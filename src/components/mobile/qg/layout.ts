@@ -29,7 +29,7 @@ export const QG_LAYOUT = {
     porte: { left: 135.2, bottom: 27.7, width: 24.0 },
     courrier: { left: 145.2, bottom: 14.8, width: 18.0 },
     fauteuil: { left: 197.5, bottom: 13.2, width: 53.7 },
-    gramophone: { left: 247.7, bottom: 30.3, width: 17.0 },
+    gramophone: { left: 245.7, bottom: 30.3, width: 17.0 },
     portemanteau: { left: 102.1, bottom: 15.9, width: 23.4 },
   },
 } as const;

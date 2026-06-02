@@ -147,6 +147,10 @@ export interface GameState {
   niveauStockage: 1 | 2 | 3 | 4;
   /** Stock de pièces d'amélioration par catégorie (≥ 0, illimité). */
   piecesAmelioration: Record<CategorieObjet, number>;
+  /** Un chat squatte le fauteuil et bloque l'action « Passer la journée ». */
+  chatSurFauteuil: boolean;
+  /** Nombre de passages volontaires consécutifs sans apparition du chat (pity timer, capé à 3). */
+  passagesSansChat: number;
 }
 
 export type CompetenceId = string;

@@ -83,7 +83,7 @@ interface GameContextValue {
   ajouterObjet: (objet: Objet) => void;
   retirerObjet: (id: string) => void;
   ajusterBudget: (delta: number) => void;
-  avancerJour: (nbJours?: number) => void;
+  avancerJour: (nbJours?: number, volontaire?: boolean) => void;
   reset: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
   mettreEnVitrine: (objetId: string, prixVente: number) => void;
@@ -342,6 +342,14 @@ function migrerSauvegarde(loaded: GameState): GameState {
       }
       return base;
     })(),
+    chatSurFauteuil: (loaded as Partial<GameState>).chatSurFauteuil ?? false,
+    passagesSansChat: (() => {
+      const v = (loaded as Partial<GameState>).passagesSansChat;
+      if (typeof v === "number" && Number.isFinite(v) && v >= 0) {
+        return Math.min(3, Math.floor(v));
+      }
+      return 0;
+    })(),
   };
 }
 
@@ -396,6 +404,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       niveauAtelier: 1,
       niveauStockage: 1,
       piecesAmelioration: emptyPiecesAmelioration(),
+      chatSurFauteuil: false,
+      passagesSansChat: 0,
     });
     router.push("/qg");
   }, [router]);
@@ -423,11 +433,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => (prev ? { ...prev, budget: prev.budget + delta } : prev));
   }, []);
 
-  const avancerJour = useCallback((nbJours: number = 1) => {
+  const avancerJour = useCallback((nbJours: number = 1, volontaire: boolean = false) => {
     setState((prev) => {
       if (!prev) return prev;
-      const nouveauJour = prev.jourActuel + Math.max(1, nbJours);
+      const pas = Math.max(1, nbJours);
+      const nouveauJour = prev.jourActuel + pas;
       const refresh = nouveauJour >= prev.prochainRafraichissementTendances;
+      // Chat : 50% de chance de partir par jour si présent.
+      let chatSurFauteuil = prev.chatSurFauteuil;
+      let passagesSansChat = prev.passagesSansChat;
+      for (let i = 0; i < pas; i++) {
+        if (chatSurFauteuil && Math.random() < 0.5) chatSurFauteuil = false;
+      }
+      // Apparition uniquement à la suite d'un passage volontaire.
+      // Pity timer : après 3 passages consécutifs sans chat, apparition garantie.
+      if (volontaire && !chatSurFauteuil) {
+        const proba = passagesSansChat >= 3 ? 1 : 0.5;
+        if (Math.random() < proba) {
+          chatSurFauteuil = true;
+          passagesSansChat = 0;
+        } else {
+          passagesSansChat = Math.min(3, passagesSansChat + 1);
+        }
+      }
       const inv = prev.inventaireJoueur.map((o) => {
         if (o.enRestauration && nouveauJour >= o.enRestauration.jourFin) {
           const cible = o.enRestauration.etatCible;
@@ -569,6 +597,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         influenceUtilisee: refresh ? false : prev.influenceUtilisee,
         dernierLoyer,
         courriers: nouveauxCourriers,
+        chatSurFauteuil,
+        passagesSansChat,
       };
     });
   }, []);

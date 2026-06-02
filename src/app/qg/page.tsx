@@ -127,7 +127,10 @@ function QgPageInner() {
                 nbNonLus={nbCourriersNonLus}
                 onTap={() => { playClick(); setCourrierOuvert(true); }}
               />
-              <QgFauteuil onTap={() => { playClick(); setConfirmPasser(true); }} />
+              <QgFauteuil
+                chat={state.chatSurFauteuil}
+                onTap={() => { playClick(); setConfirmPasser(true); }}
+              />
               <QgGramophone />
               <QgPortemanteau />
             </QgScene>
@@ -156,8 +159,9 @@ function QgPageInner() {
         onClose={() => setConfirmPasser(false)}
         onConfirm={() => {
           setConfirmPasser(false);
-          avancerJour(1);
+          avancerJour(1, true);
         }}
+        bloque={state.chatSurFauteuil}
       />
 
       <CarnetSheet open={carnetOuvert} onClose={() => setCarnetOuvert(false)} state={state} />

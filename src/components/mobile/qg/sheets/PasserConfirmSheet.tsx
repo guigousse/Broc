@@ -7,6 +7,8 @@ interface PasserConfirmSheetProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  /** Si vrai, l'action est bloquée (un chat dort sur le fauteuil). */
+  bloque?: boolean;
 }
 
 const text: CSSProperties = {
@@ -46,7 +48,21 @@ export function PasserConfirmSheet({
   open,
   onClose,
   onConfirm,
+  bloque = false,
 }: PasserConfirmSheetProps) {
+  if (bloque) {
+    return (
+      <BottomSheet open={open} onClose={onClose} title="— Fauteuil occupé —">
+        <p style={text}>
+          Un chat dort paisiblement sur le fauteuil. Impossible de passer la journée
+          sans le déranger…
+        </p>
+        <button type="button" style={btnCancel} onClick={onClose}>
+          Fermer
+        </button>
+      </BottomSheet>
+    );
+  }
   return (
     <BottomSheet open={open} onClose={onClose} title="— Passer la journée —">
       <p style={text}>
