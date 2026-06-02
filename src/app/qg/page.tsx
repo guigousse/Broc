@@ -75,7 +75,7 @@ function QgPageInner() {
   // proprement au démontage (changement de page).
   useEffect(() => {
     void audioManager.startAmbience();
-    void audioManager.startFireplace(0.7); // valeur de départ corrigée par onScrollPos
+    void audioManager.startFireplace(0.3); // valeur de départ corrigée par onScrollPos
     return () => {
       audioManager.stopAmbience();
       audioManager.stopFireplace();
@@ -83,16 +83,11 @@ function QgPageInner() {
   }, []);
 
   // Volume cheminée selon la position du panorama :
-  //   bureau (pos=0) → 0.30
-  //   porte  (pos=1) → 0.70
-  //   repos  (pos=2) → 1.00
+  //   bureau (pos=0) → 0.00 (éteint)
+  //   porte  (pos=1) → 0.30
+  //   repos  (pos=2) → 0.60
   const handleScrollPos = useCallback((pos: number) => {
-    let volume: number;
-    if (pos <= 1) {
-      volume = 0.3 + 0.4 * pos; // 0.30 → 0.70
-    } else {
-      volume = 0.7 + 0.3 * (pos - 1); // 0.70 → 1.00
-    }
+    const volume = 0.3 * pos;
     audioManager.setFireplaceVolume(volume);
   }, []);
 
