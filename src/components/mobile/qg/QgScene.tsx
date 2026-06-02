@@ -20,7 +20,10 @@ const layerStyle = (zIndex: number): CSSProperties => ({
   inset: 0,
   width: "100%",
   height: "100%",
-  objectFit: "contain",
+  // cover : l'image remplit toujours la largeur du panorama (pas de bandes
+  // latérales). Si le conteneur est moins haut que l'image naturelle (16:9),
+  // c'est le bas de l'image qui est rogné (object-position top).
+  objectFit: "cover",
   objectPosition: "top center",
   pointerEvents: "none",
   userSelect: "none",

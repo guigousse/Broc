@@ -26,11 +26,10 @@ export const QG_LAYOUT = {
     porte: { left: 138, bottom: 11, width: 24 },
     // Lettres au sol devant la porte, sur le runner persan.
     courrier: { left: 142, bottom: 4, width: 18 },
-    // Repos (droite, 200–300vw) : fauteuil sur la zone libre du tapis,
-    // monté de 10% en hauteur et agrandi (×2.3).
-    fauteuil: { left: 210, bottom: 18, width: 64 },
-    // Gramophone sur le guéridon, agrandi (×4) et miroir géré dans QgGramophone.tsx.
-    gramophone: { left: 250, bottom: 28, width: 56 },
+    // Repos (droite, 200–300vw) : fauteuil sur la zone libre du tapis.
+    fauteuil: { left: 203, bottom: 13, width: 51 },
+    // Gramophone sur le guéridon, miroir géré dans QgGramophone.tsx.
+    gramophone: { left: 245, bottom: 23, width: 56 },
   },
 } as const;
 
