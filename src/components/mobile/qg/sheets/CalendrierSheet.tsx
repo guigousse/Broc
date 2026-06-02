@@ -7,11 +7,19 @@ import {
   infosMois,
   jourForDate,
 } from "@/lib/calendrier";
+import { METEO_ICON } from "@/data/meteos";
+import type { Meteo } from "@/types/game";
 
 interface CalendrierSheetProps {
   open: boolean;
   onClose: () => void;
   jourActuel: number;
+  /** Météo de la semaine de jeu courante (7 entrées). null = non révélée. */
+  meteoSemaine?: Meteo[] | null;
+  /** Jour de jeu du début de la semaine courante (Jour 1, 8, 15, …). */
+  jourDebutSemaine?: number;
+  /** Jour de jeu de la célébrité de la semaine. null = non révélé. */
+  jourCelebrite?: number | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -186,8 +194,10 @@ const cellHeader: CSSProperties = {
 const cellJour: CSSProperties = {
   position: "relative",
   display: "flex",
+  flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
+  gap: "4%",
   fontFamily: "var(--font-display)",
   fontSize: "5.5cqw",
   color: "var(--ink-900)",
@@ -238,6 +248,30 @@ const circleToday: CSSProperties = {
   zIndex: 0,
 };
 
+const circleCelebrite: CSSProperties = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "2.05em",
+  height: "2.05em",
+  borderRadius: "50%",
+  border: "2px solid #b03030",
+  background: "transparent",
+  zIndex: 0,
+  pointerEvents: "none",
+};
+
+const meteoIconStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "55%",
+  aspectRatio: "1 / 1",
+  color: "rgba(0,0,0,0.65)",
+  lineHeight: 0,
+};
+
 /* ------------------------------------------------------------------ */
 /* Composant                                                           */
 /* ------------------------------------------------------------------ */
@@ -246,6 +280,9 @@ export function CalendrierSheet({
   open,
   onClose,
   jourActuel,
+  meteoSemaine,
+  jourDebutSemaine,
+  jourCelebrite,
 }: CalendrierSheetProps) {
   useEffect(() => {
     if (!open) return;
@@ -272,6 +309,8 @@ export function CalendrierSheet({
         empty: false;
         num: number;
         variant: "passe" | "futur" | "today";
+        meteo?: Meteo;
+        celebrite?: boolean;
       };
 
   const cells: Cell[] = [];
@@ -284,7 +323,23 @@ export function CalendrierSheet({
     let variant: "passe" | "futur" | "today" = "futur";
     if (jourCell === jourActuel) variant = "today";
     else if (jourCell < jourActuel) variant = "passe";
-    cells.push({ key: `d${n}`, empty: false, num: n, variant });
+
+    // Météo : visible uniquement si meteoSemaine fournie et jour dans
+    // la semaine de jeu courante.
+    let meteo: Meteo | undefined;
+    if (
+      meteoSemaine &&
+      typeof jourDebutSemaine === "number" &&
+      jourCell >= jourDebutSemaine &&
+      jourCell < jourDebutSemaine + 7
+    ) {
+      meteo = meteoSemaine[jourCell - jourDebutSemaine];
+    }
+
+    const celebrite =
+      typeof jourCelebrite === "number" && jourCelebrite === jourCell;
+
+    cells.push({ key: `d${n}`, empty: false, num: n, variant, meteo, celebrite });
   }
   while (cells.length % 7 !== 0) {
     cells.push({ key: `t${cells.length}`, empty: true });
@@ -331,9 +386,13 @@ export function CalendrierSheet({
                   if (c.empty) {
                     return <div key={c.key} style={cellEmpty} />;
                   }
+                  const Icon = c.meteo ? METEO_ICON[c.meteo] : null;
                   return (
                     <div key={c.key} style={cellJour}>
                       <span style={numWrap}>
+                        {c.celebrite && (
+                          <span style={circleCelebrite} aria-hidden />
+                        )}
                         {c.variant === "today" && (
                           <span style={circleToday} aria-hidden />
                         )}
@@ -342,6 +401,11 @@ export function CalendrierSheet({
                           <CroixManuscrite seed={c.num} />
                         )}
                       </span>
+                      {Icon && (
+                        <span style={meteoIconStyle} aria-hidden>
+                          <Icon size="100%" strokeWidth={1.6} />
+                        </span>
+                      )}
                     </div>
                   );
                 })}

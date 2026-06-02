@@ -26,7 +26,7 @@ import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { CATEGORIES } from "@/data/categories";
-import { meteoDuJour } from "@/lib/meteo";
+import { meteoDuJour, indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import {
   aConnaisseurTendance,
@@ -190,6 +190,19 @@ function QgPageInner() {
         open={calendrierOuvert}
         onClose={() => setCalendrierOuvert(false)}
         jourActuel={state.jourActuel}
+        jourDebutSemaine={state.jourActuel - indexJourSemaine(state.jourActuel)}
+        meteoSemaine={
+          state.gazetteAchetee && aGenBulletinMeteo(state)
+            ? state.meteoSemaine
+            : null
+        }
+        jourCelebrite={
+          state.gazetteAchetee && aGenCarnetMondain(state) && state.celebriteActuelle
+            ? state.jourActuel -
+              indexJourSemaine(state.jourActuel) +
+              state.celebriteActuelle.jourSemaine
+            : null
+        }
       />
 
       <CourrierSheet
