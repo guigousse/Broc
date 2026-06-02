@@ -17,7 +17,7 @@ export function creerLettreMamanDebut(jour: number): Courrier {
       corps: [
         "Mon cher enfant,",
         "Je sais que tu te lances dans cette nouvelle aventure de chineur, et je suis si fière de toi. Le marché aux puces est un monde merveilleux mais exigeant — sois patient, observe, apprends.",
-        "Je glisse dans cette enveloppe 150 € pour t'aider à démarrer. Achète-toi un bel objet pour ta première vitrine, ou garde-les pour les jours plus difficiles.",
+        "Je glisse dans cette enveloppe **150 €** pour t'aider à démarrer. Achète-toi un bel objet pour ta première vitrine, ou garde-les pour les jours plus difficiles.",
         "Pense à venir me voir quand tu auras un moment.",
       ],
       recompense: { argent: 150 },

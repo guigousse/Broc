@@ -81,6 +81,13 @@ class AudioManager {
     }
   }
 
+  /** Précharge des fichiers audio pour éliminer le délai au premier play. */
+  async preload(urls: string[]): Promise<void> {
+    this.ensureCtx();
+    if (!this.ctx) return;
+    await Promise.all(urls.map((u) => this.loadBuffer(u)));
+  }
+
   playClick(): void {
     if (!this.prefs.clic) return;
     this.ensureCtx();

@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, type CSSProperties } from "react";
-import { BottomSheet } from "@/components/mobile/BottomSheet";
+import {
+  useEffect,
+  useMemo,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { getExpediteur } from "@/data/expediteursCourrier";
 import { useSettings } from "@/context/SettingsContext";
 import type { Courrier } from "@/types/game";
@@ -13,58 +17,111 @@ interface CourrierSheetProps {
   onMarquerLu: (id: string) => void;
 }
 
-/* ---------- Styles ---------- */
+/* ------------------------------------------------------------------ */
+/* Markdown ultra-minimal : **gras** seulement.                       */
+/* ------------------------------------------------------------------ */
+function renderParaText(text: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  const re = /\*\*(.+?)\*\*/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    parts.push(
+      <strong key={match.index} style={{ fontWeight: 700 }}>
+        {match[1]}
+      </strong>,
+    );
+    last = re.lastIndex;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
+/* ------------------------------------------------------------------ */
+/* Styles                                                              */
+/* ------------------------------------------------------------------ */
+
+const scrim: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(15,30,22,0.55)",
+  zIndex: 50,
+  animation: "broc-fade-in 160ms ease",
+};
+
+const stage: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 51,
+  display: "flex",
+  flexDirection: "column",
+  padding: "max(24px, env(safe-area-inset-top)) 16px 0",
+  overflow: "hidden",
+};
+
+const closeIconBtn: CSSProperties = {
+  position: "absolute",
+  top: "max(12px, env(safe-area-inset-top))",
+  right: 12,
+  width: 36,
+  height: 36,
+  borderRadius: 18,
+  background: "rgba(20,15,5,0.45)",
+  border: "1px solid rgba(217,192,122,0.5)",
+  color: "var(--brass-300)",
+  fontFamily: "var(--font-display)",
+  fontSize: 14,
+  cursor: "pointer",
+  display: "grid",
+  placeItems: "center",
+  padding: 0,
+  zIndex: 52,
+};
+
+const scrollArea: CSSProperties = {
+  flex: 1,
+  overflowY: "auto",
+  paddingBottom: 110, // place pour le bouton fixe en bas
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+};
 
 const lettreCard: CSSProperties = {
   position: "relative",
+  width: "100%",
+  maxWidth: 420,
   background:
     "linear-gradient(135deg, #f6ecd2 0%, #f1e4c0 55%, #e7d6a8 100%)",
   border: "1px solid #b89c5e",
   boxShadow:
-    "inset 0 0 28px rgba(120, 90, 40, 0.18), 0 2px 6px rgba(0,0,0,0.12)",
-  padding: "22px 22px 18px",
-  margin: "6px 2px 28px",
+    "inset 0 0 28px rgba(120, 90, 40, 0.18), 0 6px 16px rgba(0,0,0,0.25)",
+  padding: "18px 20px 16px",
+  margin: "0 0 18px",
   borderRadius: 2,
-  // Coins légèrement abîmés simulés via clip-path subtil
-};
-
-const tagLettre: CSSProperties = {
-  display: "inline-block",
-  padding: "3px 10px",
-  background: "var(--brass-700)",
-  color: "var(--paper-100)",
-  fontFamily: "var(--font-display)",
-  fontSize: 9,
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
-  marginBottom: 12,
-};
-
-const tagHuissier: CSSProperties = {
-  ...tagLettre,
-  background: "var(--vermillion-600)",
 };
 
 const titreLettre: CSSProperties = {
   fontFamily: "var(--font-display)",
-  fontSize: 14,
+  fontSize: 13,
   fontWeight: 600,
   letterSpacing: "0.10em",
   textTransform: "uppercase",
-  margin: "0 0 14px",
+  margin: "0 0 12px",
   color: "var(--ink-700)",
   borderBottom: "1px dotted #a88f5a",
-  paddingBottom: 8,
+  paddingBottom: 6,
 };
 
 const corpsLettre: CSSProperties = {
   fontFamily: "var(--font-handwriting)",
-  fontSize: 20,
-  lineHeight: 1.45,
+  fontSize: 17,
+  lineHeight: 1.4,
   color: "#3a2f1e",
-  margin: "0 0 4px",
+  margin: "0 0 2px",
   textIndent: "1.6em",
-  textAlign: "justify",
+  textAlign: "left",
 };
 
 const corpsLettrePremier: CSSProperties = {
@@ -74,10 +131,10 @@ const corpsLettrePremier: CSSProperties = {
 
 const signatureLettre: CSSProperties = {
   fontFamily: "var(--font-handwriting)",
-  fontSize: 22,
+  fontSize: 20,
   lineHeight: 1.3,
-  marginTop: 16,
-  paddingRight: 8,
+  marginTop: 12,
+  paddingRight: 6,
   whiteSpace: "pre-line",
   textAlign: "right",
   color: "#2a2008",
@@ -85,53 +142,50 @@ const signatureLettre: CSSProperties = {
   transformOrigin: "right center",
 };
 
-const huissierCard: CSSProperties = {
-  border: "1px solid var(--brass-500)",
-  background: "var(--paper-100)",
-  padding: 12,
-  marginBottom: 10,
-  boxShadow:
-    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
-};
-
-const closeBtn: CSSProperties = {
-  marginTop: 8,
-  padding: "6px 12px",
-  background: "transparent",
-  border: "1px solid var(--brass-500)",
-  color: "var(--brass-700)",
-  fontFamily: "var(--font-display)",
-  fontSize: 10,
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-  cursor: "pointer",
-};
-
-const recupererWrap: CSSProperties = {
+const bottomBar: CSSProperties = {
+  position: "fixed",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  padding: "12px 16px calc(12px + env(safe-area-inset-bottom))",
+  background:
+    "linear-gradient(to top, rgba(15,30,22,0.85), rgba(15,30,22,0))",
   display: "flex",
   justifyContent: "center",
-  marginTop: -14,
-  marginBottom: 18,
-  position: "relative",
-  zIndex: 2,
+  zIndex: 52,
+  pointerEvents: "none",
 };
 
-const recupererBtn: CSSProperties = {
-  padding: "12px 22px",
+const actionBtn: CSSProperties = {
+  pointerEvents: "auto",
+  minWidth: 220,
+  padding: "14px 26px",
   background: "var(--forest-800)",
   color: "var(--brass-300)",
   border: "1px solid var(--brass-500)",
-  borderRadius: 4,
+  borderRadius: 6,
   fontFamily: "var(--font-display)",
   fontSize: 12,
-  letterSpacing: "0.18em",
+  letterSpacing: "0.20em",
   textTransform: "uppercase",
   cursor: "pointer",
   boxShadow:
-    "0 4px 10px rgba(40,25,5,0.30), inset 0 1px 0 rgba(255,225,160,0.18)",
+    "0 6px 14px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,225,160,0.20)",
 };
 
-/* ---------- Rendus par type ---------- */
+/* Cas huissier (gardé sobre, en cohérence visuelle). */
+const huissierCard: CSSProperties = {
+  width: "100%",
+  maxWidth: 420,
+  border: "1px solid var(--vermillion-600)",
+  background: "var(--paper-100)",
+  padding: 16,
+  marginBottom: 18,
+};
+
+/* ------------------------------------------------------------------ */
+/* Rendus                                                              */
+/* ------------------------------------------------------------------ */
 
 function renderHuissier(c: Courrier) {
   if (c.payload.type !== "huissier") return null;
@@ -139,26 +193,35 @@ function renderHuissier(c: Courrier) {
   const total = p.saisies.reduce((s, x) => s + x.montantRecupere, 0);
   return (
     <>
-      <span style={tagHuissier}>Lettre de l'huissier</span>
+      <h3 style={{ ...titreLettre, color: "var(--vermillion-600)" }}>
+        Lettre de l'huissier
+      </h3>
       <p
         style={{
           fontFamily: "var(--font-serif)",
           fontStyle: "italic",
-          fontSize: 13,
-          lineHeight: 1.4,
+          fontSize: 14,
+          lineHeight: 1.45,
+          color: "var(--ink-700)",
         }}
       >
-        Dette de {Math.abs(p.detteAvantSaisie)} € après loyer.{" "}
-        {p.saisies.length} bien{p.saisies.length > 1 ? "s" : ""} saisi
-        {p.saisies.length > 1 ? "s" : ""} pour {total} €.
+        Dette de{" "}
+        <strong style={{ fontWeight: 700 }}>
+          {Math.abs(p.detteAvantSaisie)} €
+        </strong>{" "}
+        après loyer. {p.saisies.length} bien
+        {p.saisies.length > 1 ? "s" : ""} saisi
+        {p.saisies.length > 1 ? "s" : ""} pour{" "}
+        <strong style={{ fontWeight: 700 }}>{total} €</strong>.
       </p>
       {p.saisies.length > 0 && (
         <ul
           style={{
-            margin: "6px 0 0 16px",
+            margin: "8px 0 0 16px",
             padding: 0,
             fontFamily: "var(--font-mono)",
-            fontSize: 10,
+            fontSize: 11,
+            color: "var(--ink-500)",
           }}
         >
           {p.saisies.map((s, i) => (
@@ -177,14 +240,12 @@ function renderLettre(c: Courrier) {
   if (c.payload.type !== "lettre") return null;
   const p = c.payload;
   const exp = getExpediteur(p.expediteurId);
-  const relation = exp ? exp.relation : "Inconnu";
   return (
     <>
-      <span style={tagLettre}>Lettre — {relation}</span>
       <h3 style={titreLettre}>{p.titre}</h3>
       {p.corps.map((para, i) => (
         <p key={i} style={i === 0 ? corpsLettrePremier : corpsLettre}>
-          {para}
+          {renderParaText(para)}
         </p>
       ))}
       {exp && <div style={signatureLettre}>{exp.signature}</div>}
@@ -192,7 +253,9 @@ function renderLettre(c: Courrier) {
   );
 }
 
-/* ---------- Composant ---------- */
+/* ------------------------------------------------------------------ */
+/* Composant                                                           */
+/* ------------------------------------------------------------------ */
 
 export function CourrierSheet({
   open,
@@ -200,7 +263,7 @@ export function CourrierSheet({
   courriers,
   onMarquerLu,
 }: CourrierSheetProps) {
-  const { playClick, playCash, playPaper } = useSettings();
+  const { playClick, playCash } = useSettings();
 
   const nonLus = useMemo(
     () =>
@@ -210,78 +273,72 @@ export function CourrierSheet({
     [courriers],
   );
 
-  // Bruit de papier à l'ouverture (s'il y a au moins une lettre à montrer).
-  useEffect(() => {
-    if (!open) return;
-    if (nonLus.length === 0) return;
-    playPaper();
-    // On ne rejoue pas le bruit si la liste change pendant que la sheet est
-    // ouverte (lecture d'une lettre), seulement à l'ouverture initiale.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  // Auto-close quand il ne reste plus aucune lettre non lue.
+  // Auto-close quand la pile est vide.
   useEffect(() => {
     if (!open) return;
     if (nonLus.length > 0) return;
     onClose();
   }, [open, nonLus.length, onClose]);
 
+  // Bloque le scroll du body pendant l'ouverture.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
   if (!open || nonLus.length === 0) return null;
 
+  // On affiche une lettre à la fois (la plus récente) pour permettre un
+  // unique bouton d'action fixé en bas.
+  const courant = nonLus[0];
+  const recompenseArgent =
+    courant.payload.type === "lettre" && courant.payload.recompense?.argent;
+
+  const handleValider = () => {
+    if (recompenseArgent) {
+      playCash();
+    } else {
+      playClick();
+    }
+    onMarquerLu(courant.id);
+  };
+
   return (
-    <BottomSheet open={open} onClose={onClose} title="— Courrier du jour —">
-      {nonLus.map((c) => {
-        const recompenseArgent =
-          c.payload.type === "lettre" && c.payload.recompense?.argent;
-        if (c.type === "huissier") {
-          return (
-            <div key={c.id} style={huissierCard}>
-              {renderHuissier(c)}
-              <button
-                type="button"
-                style={closeBtn}
-                onClick={() => {
-                  playClick();
-                  onMarquerLu(c.id);
-                }}
-              >
-                Compris ✕
-              </button>
-            </div>
-          );
-        }
-        return (
-          <div key={c.id}>
-            <article style={lettreCard}>{renderLettre(c)}</article>
-            <div style={recupererWrap}>
-              {recompenseArgent ? (
-                <button
-                  type="button"
-                  style={recupererBtn}
-                  onClick={() => {
-                    playCash();
-                    onMarquerLu(c.id);
-                  }}
-                >
-                  Récupérer {recompenseArgent} €
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  style={recupererBtn}
-                  onClick={() => {
-                    playClick();
-                    onMarquerLu(c.id);
-                  }}
-                >
-                  Compris
-                </button>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </BottomSheet>
+    <>
+      <div style={scrim} onClick={onClose} aria-hidden />
+      <div style={stage} role="dialog" aria-modal="true">
+        <button
+          type="button"
+          style={closeIconBtn}
+          onClick={onClose}
+          aria-label="Fermer"
+        >
+          ✕
+        </button>
+        <div style={scrollArea}>
+          {courant.type === "huissier" ? (
+            <div style={huissierCard}>{renderHuissier(courant)}</div>
+          ) : (
+            <article style={lettreCard}>{renderLettre(courant)}</article>
+          )}
+        </div>
+        <div style={bottomBar}>
+          <button type="button" style={actionBtn} onClick={handleValider}>
+            {recompenseArgent
+              ? `Récupérer ${recompenseArgent} €`
+              : "Compris"}
+          </button>
+        </div>
+      </div>
+    </>
   );
 }

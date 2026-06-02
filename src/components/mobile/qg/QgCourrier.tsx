@@ -1,6 +1,7 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useEffect, type CSSProperties } from "react";
+import { audioManager } from "@/lib/audio/audioManager";
 import { useQgObjet } from "./dev/QgEditContext";
 
 interface QgCourrierProps {
@@ -18,6 +19,12 @@ const letterBase: CSSProperties = {
 
 export function QgCourrier({ nbNonLus, onTap }: QgCourrierProps) {
   const { left, bottom, width } = useQgObjet("courrier");
+
+  // Précharge le buffer du bruit papier pour qu'il joue instantanément au tap.
+  useEffect(() => {
+    void audioManager.preload(["/sounds/paper.mp3"]);
+  }, []);
+
   if (nbNonLus <= 0) return null;
   // 1 lettre → single envelope ; 2+ → pile multilettre.
   const src = nbNonLus === 1 ? "/qg/lettre.png" : "/qg/multilettre.png";

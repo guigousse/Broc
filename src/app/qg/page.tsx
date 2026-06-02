@@ -49,7 +49,7 @@ function QgPageInner() {
     marquerCourrierLu,
     avancerJour,
   } = useGame();
-  const { playClick } = useSettings();
+  const { playClick, playPaper } = useSettings();
 
   const [gazetteOuverte, setGazetteOuverte] = useState(false);
   const [porteOuverte, setPorteOuverte] = useState(false);
@@ -125,7 +125,7 @@ function QgPageInner() {
               <QgPorte onTap={() => { playClick(); setPorteOuverte(true); }} />
               <QgCourrier
                 nbNonLus={nbCourriersNonLus}
-                onTap={() => { playClick(); setCourrierOuvert(true); }}
+                onTap={() => { playPaper(); setCourrierOuvert(true); }}
               />
               <QgFauteuil
                 chat={state.chatSurFauteuil}
