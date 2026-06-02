@@ -18,22 +18,12 @@ export const QG_LAYOUT = {
     repos: 200,
   },
   objets: {
-    // Bureau (gauche, 0–100vw) : journal + carnet posés au PREMIER PLAN
-    // dans le coin avant du plateau. Le journal est agrandi (×2) et
-    // tourné -30° (anti-horaire). Voir QgJournal.tsx pour le transform.
-    journal: { left: 18, bottom: 7, width: 22 },
-    // Nouveau carnet = livre ouvert (asset ~3:1 wide), nettement plus grand.
-    carnet: { left: 37, bottom: 19, width: 52 },
-    // Porte (centre, 100–200vw) : zone invisible cliquable, la porte est
-    // déjà peinte dans le fond. L'aspect-ratio est géré dans QgPorte.tsx.
-    porte: { left: 138, bottom: 11, width: 24 },
-    // Lettres au sol devant la porte, sur le runner persan.
-    courrier: { left: 142, bottom: 4, width: 18 },
-    // Repos (droite, 200–300vw) : fauteuil sur la zone libre du tapis.
-    fauteuil: { left: 201, bottom: 10, width: 51 },
-    // Gramophone : nouveau PNG sans pedestal, à poser sur le guéridon
-    // peint dans le fond.
-    gramophone: { left: 246, bottom: 26, width: 17 },
+    journal: { left: 15.0, bottom: 7.6, width: 25.9 },
+    carnet: { left: 11.2, bottom: 20.2, width: 49.1 },
+    porte: { left: 135.2, bottom: 27.7, width: 24.0 },
+    courrier: { left: 145.2, bottom: 14.8, width: 18.0 },
+    fauteuil: { left: 199.1, bottom: 13.1, width: 44.0 },
+    gramophone: { left: 247.7, bottom: 30.3, width: 17.0 },
   },
 } as const;
 
