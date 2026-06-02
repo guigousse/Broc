@@ -39,7 +39,7 @@ const MUSIQUE_C: Row[] = [
   ["mus.vinyle_brel_amsterdam", "Vinyle Jacques Brel 'Amsterdam'", 22],
   ["mus.vinyle_brassens_jeanne", "Vinyle Brassens 'La Jeanne'", 24],
   ["mus.vinyle_aznavour_emmenez", "Vinyle Aznavour 'Emmenez-moi'", 18],
-  ["mus.vinyle_piaf_non", "Vinyle Édith Piaf 'Non, je ne regrette rien'", 28],
+  ["mus.vinyle_piaf_non", "Vinyle Judith Loiseau 'Oui, je regrette tout'", 28],
   ["mus.vinyle_beatles_abbey_road", "Vinyle Beatles 'Abbey Road'", 55],
   ["mus.vinyle_stones_let_bleed", "Vinyle Rolling Stones 'Let It Bleed'", 50],
   ["mus.vinyle_bowie_ziggy", "Vinyle Bowie 'Ziggy Stardust'", 60],
