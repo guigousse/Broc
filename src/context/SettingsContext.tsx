@@ -45,7 +45,7 @@ interface SettingsValue {
   stopCrowd: () => void;
   startCatPurr: () => void;
   stopCatPurr: () => void;
-  playVinyl: (templateId: string, onEnded?: () => void) => void;
+  playVinyl: (url: string, onEnded?: () => void) => void;
   pauseVinyl: () => void;
   resumeVinyl: () => void;
   stopVinyl: () => void;
@@ -135,8 +135,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const stopCatPurr = useCallback(() => audioManager.stopCatPurr(), []);
 
   const playVinyl = useCallback(
-    (templateId: string, onEnded?: () => void) => {
-      void audioManager.playVinyl(templateId, onEnded);
+    (url: string, onEnded?: () => void) => {
+      void audioManager.playVinyl(url, onEnded);
     },
     [],
   );

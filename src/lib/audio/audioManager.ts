@@ -429,15 +429,16 @@ class AudioManager {
   /* ---------------------------------------------------------------- */
 
   /**
-   * Démarre la lecture d'un vinyle. Le fichier est cherché à
-   * `/sounds/vinyles/{templateId}.mp3`. Si absent, lecture silencieuse
-   * mais `onEnded` jamais appelé (pas de durée connue).
+   * Démarre la lecture d'un vinyle. L'URL est résolue par le caller
+   * (typiquement via `vinylAudioUrl(templateId)` qui regarde la table
+   * `VINYLE_AUDIO_URLS` puis fallback `/sounds/vinyles/{templateId}.mp3`).
+   * Si absent, lecture silencieuse mais `onEnded` jamais appelé.
    */
-  async playVinyl(templateId: string, onEnded?: () => void): Promise<void> {
+  async playVinyl(url: string, onEnded?: () => void): Promise<void> {
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     this.stopVinyl();
-    const audio = new Audio(`/sounds/vinyles/${templateId}.mp3`);
+    const audio = new Audio(url);
     audio.crossOrigin = "anonymous";
     audio.preload = "auto";
     let source: MediaElementAudioSourceNode;

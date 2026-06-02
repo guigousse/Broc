@@ -36,6 +36,7 @@ import {
   aGenCarnetMondain,
 } from "@/lib/competences";
 import type { CategorieObjet, CollectionSlot } from "@/types/game";
+import { vinylAudioUrl } from "@/data/vinylesAudio";
 
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
@@ -202,7 +203,7 @@ function QgPageInner() {
       vinyleCourantIdx === null ? 0 : (vinyleCourantIdx + 1) % vinyles.length;
     setVinyleCourantIdx(next);
     setVinyleEnLecture(true);
-    playVinyl(vinyles[next].templateId, () => {
+    playVinyl(vinylAudioUrl(vinyles[next].templateId), () => {
       // auto-next à la fin du morceau
       handleNext();
     });
@@ -215,7 +216,7 @@ function QgPageInner() {
       setVinyleCourantIdx(0);
       setVinyleEnLecture(true);
       void startNeedle();
-      playVinyl(vinyles[0].templateId, () => handleNext());
+      playVinyl(vinylAudioUrl(vinyles[0].templateId), () => handleNext());
       return;
     }
     if (vinyleEnLecture) {
@@ -242,7 +243,7 @@ function QgPageInner() {
       setVinyleCourantIdx(idx);
       setVinyleEnLecture(true);
       void startNeedle();
-      playVinyl(vinyles[idx].templateId, () => handleNext());
+      playVinyl(vinylAudioUrl(vinyles[idx].templateId), () => handleNext());
     },
     [vinyles, playVinyl, startNeedle, handleNext],
   );
