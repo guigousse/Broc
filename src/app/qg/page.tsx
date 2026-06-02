@@ -4,8 +4,6 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
-import { StickyTop } from "@/components/mobile/StickyTop";
-import { WeekTimeline } from "@/components/WeekTimeline";
 import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { QgPanorama } from "@/components/mobile/qg/QgPanorama";
 import { QgScene } from "@/components/mobile/qg/QgScene";
@@ -15,6 +13,7 @@ import { QgJournal } from "@/components/mobile/qg/QgJournal";
 import { QgCarnet } from "@/components/mobile/qg/QgCarnet";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
 import { QgPortemanteau } from "@/components/mobile/qg/QgPortemanteau";
+import { QgCalendrier } from "@/components/mobile/qg/QgCalendrier";
 import { QgCourrier } from "@/components/mobile/qg/QgCourrier";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
@@ -23,6 +22,7 @@ import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
 import { CarnetSheet } from "@/components/mobile/qg/sheets/CarnetSheet";
 import { CourrierSheet } from "@/components/mobile/qg/sheets/CourrierSheet";
+import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { CATEGORIES } from "@/data/categories";
@@ -56,6 +56,7 @@ function QgPageInner() {
   const [confirmPasser, setConfirmPasser] = useState(false);
   const [carnetOuvert, setCarnetOuvert] = useState(false);
   const [courrierOuvert, setCourrierOuvert] = useState(false);
+  const [calendrierOuvert, setCalendrierOuvert] = useState(false);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -95,14 +96,6 @@ function QgPageInner() {
       <>
       <MobileLayout
         header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
-        stickyTop={
-          <StickyTop>
-            <WeekTimeline
-              jourActuel={state.jourActuel}
-              meteoSemaine={aGenBulletinMeteo(state) ? state.meteoSemaine : undefined}
-            />
-          </StickyTop>
-        }
       >
         <div
           style={{
@@ -133,6 +126,10 @@ function QgPageInner() {
               />
               <QgGramophone />
               <QgPortemanteau />
+              <QgCalendrier
+                jourActuel={state.jourActuel}
+                onTap={() => { playClick(); setCalendrierOuvert(true); }}
+              />
             </QgScene>
           </QgPanorama>
         </div>
@@ -170,6 +167,12 @@ function QgPageInner() {
       />
 
       <CarnetSheet open={carnetOuvert} onClose={() => setCarnetOuvert(false)} state={state} />
+
+      <CalendrierSheet
+        open={calendrierOuvert}
+        onClose={() => setCalendrierOuvert(false)}
+        jourActuel={state.jourActuel}
+      />
 
       <CourrierSheet
         open={courrierOuvert}

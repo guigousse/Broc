@@ -31,6 +31,7 @@ export const QG_LAYOUT = {
     fauteuil: { left: 202.8, bottom: 14.6, width: 36.3 },
     gramophone: { left: 245.7, bottom: 30.3, width: 17.0 },
     portemanteau: { left: 102.1, bottom: 15.9, width: 23.4 },
+    calendrier: { left: 125.0, bottom: 55.0, width: 12.0 },
   },
 } as const;
 
