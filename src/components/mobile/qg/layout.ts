@@ -30,6 +30,9 @@ export const QG_LAYOUT = {
     courrier: { left: 145.2, bottom: 14.8, width: 18.0 },
     fauteuil: { left: 199.1, bottom: 13.1, width: 44.0 },
     gramophone: { left: 247.7, bottom: 30.3, width: 17.0 },
+    // Porte-manteau décoratif à droite de la porte (zone porte, 100–200vw).
+    // Valeurs de départ — à caler dans l'éditeur ?edit=1.
+    portemanteau: { left: 170, bottom: 5, width: 14 },
   },
 } as const;
 

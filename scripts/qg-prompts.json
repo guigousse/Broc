@@ -39,5 +39,11 @@
     "description": "A single closed white envelope as if dropped on the floor, slightly rotated, soft shadow underneath. Intended to be placed on the floor right in front of the door in the CENTER zone of the reference image. Match the reference's perspective on the floor (slight top-down) and lighting from upper-left. Same Art Déco rendering style. Isolated subject on transparent background — envelope only.",
     "transparent": true,
     "reference": "fond-cabinet"
+  },
+  {
+    "id": "portemanteau",
+    "description": "A tall vintage wooden coat rack (porte-manteau sur pied) standing upright, ~1.8m tall, with a polished brass crown of curved hooks at the top, slender turned-wood pole, weighted base ring. A felt top hat hangs on one hook; a long woolen scarf draped on another; an ebony cane with brass tip leans against the base. Three-quarter front view, eye-level perspective matching the reference, warm soft light from upper-left, same Art Déco line-art + sepia/forest green wash style on cream parchment. Intended to be placed on the parquet floor immediately to the right of the front door in the CENTER zone of the reference. Isolated subject on transparent background — coat rack and its accessories only, no wall, no floor.",
+    "transparent": true,
+    "reference": "fond-cabinet"
   }
 ]

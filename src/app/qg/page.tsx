@@ -14,6 +14,7 @@ import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgJournal } from "@/components/mobile/qg/QgJournal";
 import { QgCarnet } from "@/components/mobile/qg/QgCarnet";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
+import { QgPortemanteau } from "@/components/mobile/qg/QgPortemanteau";
 import { QgCourrier } from "@/components/mobile/qg/QgCourrier";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
@@ -128,6 +129,7 @@ function QgPageInner() {
               />
               <QgFauteuil onTap={() => { playClick(); setConfirmPasser(true); }} />
               <QgGramophone />
+              <QgPortemanteau />
             </QgScene>
           </QgPanorama>
         </div>
