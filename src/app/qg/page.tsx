@@ -107,11 +107,12 @@ function QgPageInner() {
           style={{
             position: "relative",
             width: "auto",
-            // Le panorama interne fait 300vw de large pour une image 16:9 →
-            // hauteur naturelle de l'image = 300vw × 9/16 ≈ 168.75vw.
+            // Le panorama interne fait 300vw de large pour une image
+            // 2752×1536 (ratio réel du PNG, voir QG_LAYOUT.panoramaAspect).
+            // Hauteur naturelle = 300vw × 1536/2752 ≈ 167.4vw.
             // On borne par la zone disponible pour éviter tout overflow sur petit écran.
             height:
-              "min(calc(300vw * 9 / 16), calc(100dvh - var(--mobile-header-h) - 60px - var(--mobile-tabbar-h) - var(--safe-bottom)))",
+              "min(calc(300vw * 1536 / 2752), calc(100dvh - var(--mobile-header-h) - 60px - var(--mobile-tabbar-h) - var(--safe-bottom)))",
             margin: "-12px -12px 0",
             overflow: "hidden",
           }}

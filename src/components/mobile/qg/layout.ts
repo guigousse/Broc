@@ -10,8 +10,14 @@
  */
 export const QG_LAYOUT = {
   panoramaWidth: 300, // vw
-  /** Aspect ratio de l'image de fond (fond-cabinet.png : 16:9). */
-  panoramaAspect: { w: 16, h: 9 },
+  /**
+   * Aspect ratio EXACT de l'image de fond (fond-cabinet.png : 2752×1536).
+   * Gemini Pro produit du 21:9 demandé mais sort en réalité ~1.79:1, pas
+   * pile 16:9 — on cale ici sur les dimensions réelles du PNG pour que
+   * `object-fit: cover` ne crop pas et que les coordonnées des objets
+   * restent ancrées à l'image sur tous les viewports.
+   */
+  panoramaAspect: { w: 2752, h: 1536 },
   zones: {
     bureau: 0, // scroll-left à 0vw = vue gauche
     porte: 100, // vue par défaut
