@@ -19,7 +19,7 @@ export const QG_LAYOUT = {
     // Bureau (gauche, 0–100vw) : journal + carnet posés au PREMIER PLAN
     // dans le coin avant du plateau. Le journal est agrandi (×2) et
     // tourné -30° (anti-horaire). Voir QgJournal.tsx pour le transform.
-    journal: { left: 18, bottom: 10, width: 22 },
+    journal: { left: 18, bottom: 7, width: 22 },
     // Nouveau carnet = livre ouvert (asset ~3:1 wide), nettement plus grand.
     carnet: { left: 42, bottom: 14, width: 26 },
     // Porte (centre, 100–200vw) : zone invisible cliquable, la porte est
@@ -30,8 +30,8 @@ export const QG_LAYOUT = {
     // Repos (droite, 200–300vw) : fauteuil sur la zone libre du tapis.
     fauteuil: { left: 201, bottom: 10, width: 51 },
     // Gramophone : nouveau PNG sans pedestal, à poser sur le guéridon
-    // peint dans le fond. Valeurs de départ raisonnables, à ajuster.
-    gramophone: { left: 250, bottom: 22, width: 20 },
+    // peint dans le fond.
+    gramophone: { left: 250, bottom: 26, width: 20 },
   },
 } as const;
 

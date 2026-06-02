@@ -23,7 +23,6 @@ export function QgGramophone() {
           width: "100%",
           height: "auto",
           display: "block",
-          transform: "scaleX(-1)", // pavillon vers la gauche (effet miroir)
         }}
       />
     </div>
