@@ -27,13 +27,12 @@ import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { CATEGORIES } from "@/data/categories";
-import { meteoDuJour, indexJourSemaine } from "@/lib/meteo";
+import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import {
   aConnaisseurTendance,
   aGenBulletinMeteo,
   aGenCarnetMondain,
-  aGenInfluence,
 } from "@/lib/competences";
 import type { CategorieObjet } from "@/types/game";
 
@@ -45,8 +44,6 @@ function QgPageInner() {
     state,
     isHydrated,
     acheterGazette,
-    rerollMeteo,
-    rerollCelebrite,
     marquerCourrierLu,
     avancerJour,
   } = useGame();
@@ -117,7 +114,6 @@ function QgPageInner() {
     );
   }
 
-  const meteo = meteoDuJour(state);
   const nbCourriersNonLus = state.courriers.filter((c) => !c.lu).length;
 
   return (
@@ -241,14 +237,15 @@ function QgPageInner() {
         prochainRafraichissement={state.prochainRafraichissementTendances}
         tendances={state.tendances}
         categoriesConnues={categoriesConnuesTendance}
-        meteo={meteo}
+        meteoSemaine={
+          state.gazetteAchetee && aGenBulletinMeteo(state)
+            ? state.meteoSemaine
+            : null
+        }
+        jourDebutSemaine={state.jourActuel - indexJourSemaine(state.jourActuel)}
         revelerMeteo={aGenBulletinMeteo(state)}
         celebrite={state.celebriteActuelle}
         revelerCelebrite={aGenCarnetMondain(state)}
-        peutInfluencer={aGenInfluence(state)}
-        influenceUtilisee={state.influenceUtilisee}
-        onRerollMeteo={() => rerollMeteo()}
-        onRerollCelebrite={() => rerollCelebrite()}
         achetee={state.gazetteAchetee}
         onAcheter={() => acheterGazette()}
         budget={state.budget}
