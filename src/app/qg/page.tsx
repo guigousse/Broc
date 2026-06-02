@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
@@ -24,6 +24,7 @@ import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmS
 import { CarnetSheet } from "@/components/mobile/qg/sheets/CarnetSheet";
 import { CourrierSheet } from "@/components/mobile/qg/sheets/CourrierSheet";
 import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
+import { GramophoneSheet } from "@/components/mobile/qg/sheets/GramophoneSheet";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { CATEGORIES } from "@/data/categories";
@@ -34,7 +35,17 @@ import {
   aGenBulletinMeteo,
   aGenCarnetMondain,
 } from "@/lib/competences";
-import type { CategorieObjet } from "@/types/game";
+import type { CategorieObjet, CollectionSlot } from "@/types/game";
+
+const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
+const GRAMO_SESSION_KEY = "broc.gramo.session";
+
+/** Volume vinyle selon la position du panorama (interpolation linéaire). */
+function volumeVinylForPos(pos: number): number {
+  const clamped = Math.max(0, Math.min(2, pos));
+  if (clamped <= 1) return 0.3 + 0.2 * clamped; // bureau → entrée : 0.30 → 0.50
+  return 0.5 + 0.3 * (clamped - 1); // entrée → cheminée : 0.50 → 0.80
+}
 
 function QgPageInner() {
   const router = useRouter();
@@ -55,6 +66,13 @@ function QgPageInner() {
     playDoorClose,
     startCatPurr,
     stopCatPurr,
+    playVinyl,
+    pauseVinyl,
+    resumeVinyl,
+    stopVinyl,
+    setVinylTargetVolume,
+    startNeedle,
+    stopNeedle,
   } = useSettings();
 
   const [gazetteOuverte, setGazetteOuverte] = useState(false);
@@ -63,6 +81,10 @@ function QgPageInner() {
   const [carnetOuvert, setCarnetOuvert] = useState(false);
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
+  const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
+  const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
+  const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
+  const panoramaPosRef = useRef(1);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -84,10 +106,19 @@ function QgPageInner() {
   //   bureau (pos=0) → 0.00 (éteint)
   //   porte  (pos=1) → 0.30
   //   repos  (pos=2) → 0.60
-  const handleScrollPos = useCallback((pos: number) => {
-    const volume = 0.3 * pos;
-    audioManager.setFireplaceVolume(volume);
-  }, []);
+  // Le volume vinyle est aussi piloté par la position du panorama, sauf
+  // si le sheet gramophone est ouvert (volume forcé à 100 % via l'effet
+  // dédié plus bas).
+  const handleScrollPos = useCallback(
+    (pos: number) => {
+      panoramaPosRef.current = pos;
+      audioManager.setFireplaceVolume(0.3 * pos);
+      if (!gramophoneOuvert) {
+        setVinylTargetVolume(volumeVinylForPos(pos));
+      }
+    },
+    [gramophoneOuvert, setVinylTargetVolume],
+  );
 
   const categoriesConnuesTendance = useMemo(() => {
     const s = new Set<CategorieObjet>();
@@ -95,6 +126,126 @@ function QgPageInner() {
     for (const c of CATEGORIES) if (aConnaisseurTendance(state, c)) s.add(c);
     return s;
   }, [state]);
+
+  /* ------------------------------------------------------------------ */
+  /* Gramophone — liste des vinyles, handlers, volume zonal, persistance */
+  /* ------------------------------------------------------------------ */
+
+  const vinyles = useMemo<CollectionSlot[]>(() => {
+    if (!state) return [];
+    return state.collection["Musique"].filter(
+      (s) =>
+        s.vu &&
+        VINYLE_PREFIXES.some((p) => s.templateId.startsWith(p)),
+    );
+  }, [state]);
+
+  // Ref pour accéder à l'index courant depuis les cleanups d'effets.
+  const vinyleCourantIdxRef = useRef<number | null>(null);
+  useEffect(() => {
+    vinyleCourantIdxRef.current = vinyleCourantIdx;
+  }, [vinyleCourantIdx]);
+
+  // Quand le sheet s'ouvre/ferme : ajuste le volume vinyle (100 % en sheet,
+  // sinon volume de la zone courante).
+  useEffect(() => {
+    if (gramophoneOuvert) {
+      setVinylTargetVolume(1);
+    } else {
+      setVinylTargetVolume(volumeVinylForPos(panoramaPosRef.current));
+    }
+  }, [gramophoneOuvert, setVinylTargetVolume]);
+
+  // Restauration à l'arrivée sur la page : si une session gramophone
+  // existe, on relance le son d'aiguille (musique non auto-relancée).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(GRAMO_SESSION_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { idx?: number; aiguille?: boolean };
+      if (parsed.aiguille) {
+        startNeedle();
+      }
+      if (typeof parsed.idx === "number") {
+        setVinyleCourantIdx(parsed.idx);
+      }
+    } catch {
+      /* ignore */
+    }
+    return () => {
+      // Sortie page QG : stoppe la musique, conserve l'aiguille si un
+      // vinyle était sur la platine.
+      stopVinyl();
+      // On garde startNeedle() actif si idx≠null. Le démontage du composant
+      // ne touche pas l'aiguille — elle s'arrête uniquement quand l'utilisateur
+      // ferme tout (page leave côté navigateur) ou via stopNeedle explicite.
+      // Persiste la session pour la prochaine entrée sur la page.
+      try {
+        window.localStorage.setItem(
+          GRAMO_SESSION_KEY,
+          JSON.stringify({
+            idx: vinyleCourantIdxRef.current,
+            aiguille: vinyleCourantIdxRef.current !== null,
+          }),
+        );
+      } catch {
+        /* ignore */
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleNext = useCallback(() => {
+    if (vinyles.length === 0) return;
+    const next =
+      vinyleCourantIdx === null ? 0 : (vinyleCourantIdx + 1) % vinyles.length;
+    setVinyleCourantIdx(next);
+    setVinyleEnLecture(true);
+    playVinyl(vinyles[next].templateId, () => {
+      // auto-next à la fin du morceau
+      handleNext();
+    });
+  }, [vinyles, vinyleCourantIdx, playVinyl]);
+
+  const handlePlayPause = useCallback(() => {
+    if (vinyles.length === 0) return;
+    if (vinyleCourantIdx === null) {
+      // Premier clic ▶ : démarre au premier vinyle.
+      setVinyleCourantIdx(0);
+      setVinyleEnLecture(true);
+      void startNeedle();
+      playVinyl(vinyles[0].templateId, () => handleNext());
+      return;
+    }
+    if (vinyleEnLecture) {
+      pauseVinyl();
+      setVinyleEnLecture(false);
+    } else {
+      resumeVinyl();
+      setVinyleEnLecture(true);
+    }
+  }, [
+    vinyles,
+    vinyleCourantIdx,
+    vinyleEnLecture,
+    playVinyl,
+    pauseVinyl,
+    resumeVinyl,
+    startNeedle,
+    handleNext,
+  ]);
+
+  const handleSelectVinyle = useCallback(
+    (idx: number) => {
+      if (idx < 0 || idx >= vinyles.length) return;
+      setVinyleCourantIdx(idx);
+      setVinyleEnLecture(true);
+      void startNeedle();
+      playVinyl(vinyles[idx].templateId, () => handleNext());
+    },
+    [vinyles, playVinyl, startNeedle, handleNext],
+  );
 
   if (!isHydrated || !state) {
     return (
@@ -157,7 +308,7 @@ function QgPageInner() {
                   setConfirmPasser(true);
                 }}
               />
-              <QgGramophone />
+              <QgGramophone onTap={() => { playClick(); setGramophoneOuvert(true); }} />
               <QgPortemanteau />
               <QgCalendrier
                 jourActuel={state.jourActuel}
@@ -229,6 +380,17 @@ function QgPageInner() {
         onClose={() => setCourrierOuvert(false)}
         courriers={state.courriers}
         onMarquerLu={(id) => marquerCourrierLu(id)}
+      />
+
+      <GramophoneSheet
+        open={gramophoneOuvert}
+        onClose={() => setGramophoneOuvert(false)}
+        vinyles={vinyles}
+        vinyleCourantIdx={vinyleCourantIdx}
+        enLecture={vinyleEnLecture}
+        onSelect={handleSelectVinyle}
+        onPlayPause={handlePlayPause}
+        onNext={handleNext}
       />
 
       <GazetteSheet

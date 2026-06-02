@@ -45,6 +45,13 @@ interface SettingsValue {
   stopCrowd: () => void;
   startCatPurr: () => void;
   stopCatPurr: () => void;
+  playVinyl: (templateId: string, onEnded?: () => void) => void;
+  pauseVinyl: () => void;
+  resumeVinyl: () => void;
+  stopVinyl: () => void;
+  setVinylTargetVolume: (v: number) => void;
+  startNeedle: () => void;
+  stopNeedle: () => void;
   tailleFonte: TailleFonte;
   setTailleFonte: (t: TailleFonte) => void;
 }
@@ -127,6 +134,24 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
   const stopCatPurr = useCallback(() => audioManager.stopCatPurr(), []);
 
+  const playVinyl = useCallback(
+    (templateId: string, onEnded?: () => void) => {
+      void audioManager.playVinyl(templateId, onEnded);
+    },
+    [],
+  );
+  const pauseVinyl = useCallback(() => audioManager.pauseVinyl(), []);
+  const resumeVinyl = useCallback(() => audioManager.resumeVinyl(), []);
+  const stopVinyl = useCallback(() => audioManager.stopVinyl(), []);
+  const setVinylTargetVolume = useCallback(
+    (v: number) => audioManager.setVinylTargetVolume(v),
+    [],
+  );
+  const startNeedle = useCallback(() => {
+    void audioManager.startNeedle();
+  }, []);
+  const stopNeedle = useCallback(() => audioManager.stopNeedle(), []);
+
   const setTailleFonte = useCallback((t: TailleFonte) => {
     setTailleFonteState(t);
     document.documentElement.style.setProperty("--font-scale", FONT_SCALE[t]);
@@ -148,6 +173,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       stopCrowd,
       startCatPurr,
       stopCatPurr,
+      playVinyl,
+      pauseVinyl,
+      resumeVinyl,
+      stopVinyl,
+      setVinylTargetVolume,
+      startNeedle,
+      stopNeedle,
       tailleFonte,
       setTailleFonte,
     }),
@@ -165,6 +197,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       stopCrowd,
       startCatPurr,
       stopCatPurr,
+      playVinyl,
+      pauseVinyl,
+      resumeVinyl,
+      stopVinyl,
+      setVinylTargetVolume,
+      startNeedle,
+      stopNeedle,
       tailleFonte,
       setTailleFonte,
     ],

@@ -2,19 +2,28 @@
 
 import { useQgObjet } from "./dev/QgEditContext";
 
-export function QgGramophone() {
+interface QgGramophoneProps {
+  onTap: () => void;
+}
+
+export function QgGramophone({ onTap }: QgGramophoneProps) {
   const { left, bottom, width } = useQgObjet("gramophone");
   return (
-    <div
+    <button
+      type="button"
+      onClick={onTap}
+      aria-label="Gramophone — choisir un vinyle"
       style={{
         position: "absolute",
         left: `${left}vw`,
         bottom: `${bottom}%`,
         width: `${width}vw`,
-        pointerEvents: "none",
+        background: "transparent",
+        border: "none",
+        padding: 0,
+        cursor: "pointer",
         opacity: 0.95,
       }}
-      aria-hidden
     >
       <img
         src="/qg/gramophone.png"
@@ -26,6 +35,6 @@ export function QgGramophone() {
           display: "block",
         }}
       />
-    </div>
+    </button>
   );
 }

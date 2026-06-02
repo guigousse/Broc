@@ -27,6 +27,12 @@ class AudioManager {
   private ambienceGain?: GainNode;
   private fireplaceSource?: AudioBufferSourceNode;
   private fireplaceGain?: GainNode;
+  private needleSource?: AudioBufferSourceNode;
+  private needleGain?: GainNode;
+  private vinylAudio?: HTMLAudioElement;
+  private vinylSource?: MediaElementAudioSourceNode;
+  private vinylGain?: GainNode;
+  private vinylEndedHandler?: () => void;
   private buffers: Map<string, AudioBuffer> = new Map();
   prefs: AudioPrefs = { ...DEFAULT_AUDIO_PREFS };
 
@@ -416,6 +422,133 @@ class AudioManager {
     src.stop(now + 0.31);
     this.fireplaceSource = undefined;
     this.fireplaceGain = undefined;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Gramophone — vinyle + aiguille                                    */
+  /* ---------------------------------------------------------------- */
+
+  /**
+   * Démarre la lecture d'un vinyle. Le fichier est cherché à
+   * `/sounds/vinyles/{templateId}.mp3`. Si absent, lecture silencieuse
+   * mais `onEnded` jamais appelé (pas de durée connue).
+   */
+  async playVinyl(templateId: string, onEnded?: () => void): Promise<void> {
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    this.stopVinyl();
+    const audio = new Audio(`/sounds/vinyles/${templateId}.mp3`);
+    audio.crossOrigin = "anonymous";
+    audio.preload = "auto";
+    let source: MediaElementAudioSourceNode;
+    try {
+      source = this.ctx.createMediaElementSource(audio);
+    } catch {
+      // Échec inattendu : on garde l'élément <audio> orphelin, lecture muette.
+      return;
+    }
+    const gain = this.ctx.createGain();
+    gain.gain.value = 1;
+    source.connect(gain);
+    gain.connect(this.master);
+    const handler = () => {
+      if (onEnded) onEnded();
+    };
+    audio.addEventListener("ended", handler);
+    this.vinylAudio = audio;
+    this.vinylSource = source;
+    this.vinylGain = gain;
+    this.vinylEndedHandler = handler;
+    try {
+      await audio.play();
+    } catch {
+      // Lecture refusée (par ex. autoplay sans user gesture) — on laisse
+      // l'élément en place, le caller peut retenter.
+    }
+  }
+
+  pauseVinyl(): void {
+    if (!this.vinylAudio) return;
+    this.vinylAudio.pause();
+  }
+
+  resumeVinyl(): void {
+    if (!this.vinylAudio) return;
+    void this.vinylAudio.play().catch(() => {
+      /* ignore */
+    });
+  }
+
+  stopVinyl(): void {
+    if (this.vinylAudio && this.vinylEndedHandler) {
+      this.vinylAudio.removeEventListener("ended", this.vinylEndedHandler);
+    }
+    if (this.vinylAudio) {
+      this.vinylAudio.pause();
+      this.vinylAudio.src = "";
+    }
+    if (this.vinylSource) {
+      try {
+        this.vinylSource.disconnect();
+      } catch {
+        /* ignore */
+      }
+    }
+    if (this.vinylGain) {
+      try {
+        this.vinylGain.disconnect();
+      } catch {
+        /* ignore */
+      }
+    }
+    this.vinylAudio = undefined;
+    this.vinylSource = undefined;
+    this.vinylGain = undefined;
+    this.vinylEndedHandler = undefined;
+  }
+
+  /** Ramp doux (~300 ms) vers le volume cible (0..1) pour le vinyle. */
+  setVinylTargetVolume(volume: number): void {
+    if (!this.ctx || !this.vinylGain) return;
+    const v = Math.max(0, Math.min(1, volume));
+    const now = this.ctx.currentTime;
+    this.vinylGain.gain.cancelScheduledValues(now);
+    this.vinylGain.gain.setValueAtTime(this.vinylGain.gain.value, now);
+    this.vinylGain.gain.linearRampToValueAtTime(v, now + 0.3);
+  }
+
+  /** Son d'aiguille en boucle (légèrement audible). */
+  async startNeedle(): Promise<void> {
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    if (this.needleSource) return;
+    const buf = await this.loadBuffer("/sounds/needle.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0;
+    src.connect(gain);
+    gain.connect(this.master);
+    const now = this.ctx.currentTime;
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.4);
+    src.start();
+    this.needleSource = src;
+    this.needleGain = gain;
+  }
+
+  stopNeedle(): void {
+    if (!this.ctx || !this.needleSource || !this.needleGain) return;
+    const now = this.ctx.currentTime;
+    const src = this.needleSource;
+    const gain = this.needleGain;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.3);
+    src.stop(now + 0.31);
+    this.needleSource = undefined;
+    this.needleGain = undefined;
   }
 
   loadPersisted(): AudioPrefs {
