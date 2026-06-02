@@ -86,6 +86,17 @@ export function formatDateLongue(jour: number): string {
 }
 
 /**
+ * Renvoie le jour de jeu du lundi at-or-after `jour`.
+ * Sert à aligner les cycles internes (gazette, loyer, météo) sur les
+ * semaines calendaires (Lundi → Dimanche).
+ */
+export function prochainLundi(jour: number): number {
+  const idx = indexJourSemaineReel(jour);
+  if (idx === 0) return jour;
+  return jour + (7 - idx);
+}
+
+/**
  * Renvoie les infos nécessaires pour rendre une grille mensuelle :
  * - `mois`, `annee` : du jour fourni
  * - `nbJours` : nombre de jours dans le mois

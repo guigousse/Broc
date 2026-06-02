@@ -1,6 +1,7 @@
 import type { GameState, Meteo } from "@/types/game";
 import { METEO_PROBA } from "@/data/meteos";
 import { PERIODE_TENDANCES_JOURS } from "@/lib/tendances";
+import { indexJourSemaineReel } from "@/lib/calendrier";
 
 export function tirerMeteo(): Meteo {
   const r = Math.random();
@@ -17,9 +18,12 @@ export function tirerMeteoSemaine(): Meteo[] {
   return Array.from({ length: PERIODE_TENDANCES_JOURS }, () => tirerMeteo());
 }
 
-/** Index du jour dans la semaine en cours (0 = lundi, 6 = dimanche). */
+/**
+ * Index du jour dans la semaine calendaire (0 = lundi, 6 = dimanche).
+ * Aligné sur le calendrier réel (Jour 1 = vendredi 6 juin 1924 → index 4).
+ */
 export function indexJourSemaine(jour: number): number {
-  return (jour - 1) % PERIODE_TENDANCES_JOURS;
+  return indexJourSemaineReel(jour);
 }
 
 /** Météo du jour courant, lue dans `meteoSemaine`. */

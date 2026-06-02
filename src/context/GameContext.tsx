@@ -42,6 +42,7 @@ import {
   injecterLettreMamanSiAbsente,
   migrerCourriers,
 } from "@/lib/courrier";
+import { prochainLundi } from "@/lib/calendrier";
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -312,9 +313,11 @@ function migrerSauvegarde(loaded: GameState): GameState {
       !categoriesObsolètes
         ? loaded.prochainesTendances
         : genererTendances(),
-    prochainRafraichissementTendances:
+    // Snap sur un lundi calendaire pour aligner le cycle interne.
+    prochainRafraichissementTendances: prochainLundi(
       loaded.prochainRafraichissementTendances ??
-      (loaded.jourActuel ?? INITIAL_JOUR) + PERIODE_TENDANCES_JOURS,
+        (loaded.jourActuel ?? INITIAL_JOUR) + 1,
+    ),
     competenceTrees: trees,
     competencesDebloquees,
     collection,
@@ -410,7 +413,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       historique: [],
       tendances: genererTendances(),
       prochainesTendances: genererTendances(),
-      prochainRafraichissementTendances: INITIAL_JOUR + PERIODE_TENDANCES_JOURS,
+      prochainRafraichissementTendances: prochainLundi(INITIAL_JOUR + 1),
       competenceTrees: emptyAllTrees(),
       competencesDebloquees: [],
       collection: initCollection(),
@@ -523,7 +526,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         tendances,
         prochainesTendances,
         prochainRafraichissementTendances: refresh
-          ? nouveauJour + PERIODE_TENDANCES_JOURS
+          ? prochainLundi(nouveauJour + 1)
           : prev.prochainRafraichissementTendances,
         // Reset l'achat de la Gazette à chaque nouvelle édition.
         gazetteAchetee: refresh ? false : prev.gazetteAchetee,
