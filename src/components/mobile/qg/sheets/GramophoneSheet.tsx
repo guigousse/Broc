@@ -58,30 +58,6 @@ const gramoImg: CSSProperties = {
   pointerEvents: "none",
 };
 
-/**
- * Plateau (zone où l'on pose le disque) — positionné en pourcentages
- * sur l'image `gramophoeface.png`. Approximation visuelle ; à affiner
- * à l'œil après premier rendu.
- */
-const plateauWrap: CSSProperties = {
-  position: "absolute",
-  left: "26%",
-  top: "55%",
-  width: "48%",
-  aspectRatio: "1 / 1",
-  display: "grid",
-  placeItems: "center",
-  pointerEvents: "none",
-};
-
-const plateauVinyle: CSSProperties = {
-  width: "82%",
-  height: "82%",
-  borderRadius: "50%",
-  overflow: "hidden",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.4) inset",
-};
-
 const panel: CSSProperties = {
   marginTop: 16,
   width: "min(92vw, 420px)",
@@ -235,24 +211,6 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
             style={gramoImg}
             draggable={false}
           />
-          <div style={plateauWrap} aria-hidden>
-            {vinyleCourant && (
-              <div
-                style={{
-                  ...plateauVinyle,
-                  animation: enLecture
-                    ? "broc-spin 2.5s linear infinite"
-                    : "none",
-                }}
-              >
-                <ItemImage
-                  templateId={vinyleCourant.templateId}
-                  categorie="Musique"
-                  fit="cover"
-                />
-              </div>
-            )}
-          </div>
         </div>
 
         <div style={panel}>
@@ -325,17 +283,6 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
           )}
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes broc-spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </>
   );
 }

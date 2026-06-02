@@ -110,16 +110,27 @@ function QgPageInner() {
   // Le volume vinyle est aussi piloté par la position du panorama, sauf
   // si le sheet gramophone est ouvert (volume forcé à 100 % via l'effet
   // dédié plus bas).
-  const handleScrollPos = useCallback(
-    (pos: number) => {
-      panoramaPosRef.current = pos;
-      audioManager.setFireplaceVolume(0.3 * pos);
-      if (!gramophoneOuvert) {
-        setVinylTargetVolume(volumeVinylForPos(pos));
-      }
-    },
-    [gramophoneOuvert, setVinylTargetVolume],
-  );
+  //
+  // IMPORTANT : l'identité de `handleScrollPos` doit rester stable, sinon
+  // QgPanorama (qui a `[onScrollPos]` dans son useEffect d'init) replace
+  // le scroll sur initialZone="porte" à chaque ouverture du sheet.
+  // → on lit l'état frais via une ref plutôt que de le mettre en dep.
+  const gramophoneOuvertRef = useRef(false);
+  useEffect(() => {
+    gramophoneOuvertRef.current = gramophoneOuvert;
+  }, [gramophoneOuvert]);
+  const setVinylTargetVolumeRef = useRef(setVinylTargetVolume);
+  useEffect(() => {
+    setVinylTargetVolumeRef.current = setVinylTargetVolume;
+  }, [setVinylTargetVolume]);
+
+  const handleScrollPos = useCallback((pos: number) => {
+    panoramaPosRef.current = pos;
+    audioManager.setFireplaceVolume(0.3 * pos);
+    if (!gramophoneOuvertRef.current) {
+      setVinylTargetVolumeRef.current(volumeVinylForPos(pos));
+    }
+  }, []);
 
   const categoriesConnuesTendance = useMemo(() => {
     const s = new Set<CategorieObjet>();
