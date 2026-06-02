@@ -23,6 +23,10 @@ class AudioManager {
   private crowdGain?: GainNode;
   private catPurrSource?: AudioBufferSourceNode;
   private catPurrGain?: GainNode;
+  private ambienceSource?: AudioBufferSourceNode;
+  private ambienceGain?: GainNode;
+  private fireplaceSource?: AudioBufferSourceNode;
+  private fireplaceGain?: GainNode;
   private buffers: Map<string, AudioBuffer> = new Map();
   prefs: AudioPrefs = { ...DEFAULT_AUDIO_PREFS };
 
@@ -316,6 +320,89 @@ class AudioManager {
     src.stop(now + 0.21);
     this.catPurrSource = undefined;
     this.catPurrGain = undefined;
+  }
+
+  /** Ambiance de rue calme du QG, en boucle. */
+  async startAmbience(): Promise<void> {
+    if (!this.prefs.foule) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    if (this.ambienceSource) return;
+    const buf = await this.loadBuffer("/sounds/ambience-qg.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0;
+    src.connect(gain);
+    gain.connect(this.master);
+    const now = this.ctx.currentTime;
+    gain.gain.linearRampToValueAtTime(0.35, now + 0.6);
+    src.start();
+    this.ambienceSource = src;
+    this.ambienceGain = gain;
+  }
+
+  stopAmbience(): void {
+    if (!this.ctx || !this.ambienceSource || !this.ambienceGain) return;
+    const now = this.ctx.currentTime;
+    const src = this.ambienceSource;
+    const gain = this.ambienceGain;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.3);
+    src.stop(now + 0.31);
+    this.ambienceSource = undefined;
+    this.ambienceGain = undefined;
+  }
+
+  /** Cheminée en boucle. Volume géré dynamiquement par setFireplaceVolume(). */
+  async startFireplace(initialVolume: number = 0.3): Promise<void> {
+    if (!this.prefs.foule) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    if (this.fireplaceSource) return;
+    const buf = await this.loadBuffer("/sounds/fireplace.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0;
+    src.connect(gain);
+    gain.connect(this.master);
+    const now = this.ctx.currentTime;
+    gain.gain.linearRampToValueAtTime(
+      Math.max(0, Math.min(1, initialVolume)),
+      now + 0.6,
+    );
+    src.start();
+    this.fireplaceSource = src;
+    this.fireplaceGain = gain;
+  }
+
+  /** Ajuste le volume de la cheminée en douceur (0..1). */
+  setFireplaceVolume(volume: number): void {
+    if (!this.ctx || !this.fireplaceGain) return;
+    const v = Math.max(0, Math.min(1, volume));
+    const now = this.ctx.currentTime;
+    this.fireplaceGain.gain.cancelScheduledValues(now);
+    this.fireplaceGain.gain.setValueAtTime(this.fireplaceGain.gain.value, now);
+    this.fireplaceGain.gain.linearRampToValueAtTime(v, now + 0.12);
+  }
+
+  stopFireplace(): void {
+    if (!this.ctx || !this.fireplaceSource || !this.fireplaceGain) return;
+    const now = this.ctx.currentTime;
+    const src = this.fireplaceSource;
+    const gain = this.fireplaceGain;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.3);
+    src.stop(now + 0.31);
+    this.fireplaceSource = undefined;
+    this.fireplaceGain = undefined;
   }
 
   loadPersisted(): AudioPrefs {

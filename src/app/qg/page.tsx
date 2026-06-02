@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { audioManager } from "@/lib/audio/audioManager";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
@@ -69,6 +70,32 @@ function QgPageInner() {
     if (isHydrated && !state) router.replace("/");
   }, [isHydrated, state, router]);
 
+  // Sons d'ambiance du QG (ambiance de rue en boucle + cheminée à volume
+  // variable selon la zone affichée). Démarrent au montage, s'arrêtent
+  // proprement au démontage (changement de page).
+  useEffect(() => {
+    void audioManager.startAmbience();
+    void audioManager.startFireplace(0.7); // valeur de départ corrigée par onScrollPos
+    return () => {
+      audioManager.stopAmbience();
+      audioManager.stopFireplace();
+    };
+  }, []);
+
+  // Volume cheminée selon la position du panorama :
+  //   bureau (pos=0) → 0.30
+  //   porte  (pos=1) → 0.70
+  //   repos  (pos=2) → 1.00
+  const handleScrollPos = useCallback((pos: number) => {
+    let volume: number;
+    if (pos <= 1) {
+      volume = 0.3 + 0.4 * pos; // 0.30 → 0.70
+    } else {
+      volume = 0.7 + 0.3 * (pos - 1); // 0.70 → 1.00
+    }
+    audioManager.setFireplaceVolume(volume);
+  }, []);
+
   const categoriesConnuesTendance = useMemo(() => {
     const s = new Set<CategorieObjet>();
     if (!state) return s;
@@ -118,7 +145,7 @@ function QgPageInner() {
             overflow: "hidden",
           }}
         >
-          <QgPanorama initialZone="porte">
+          <QgPanorama initialZone="porte" onScrollPos={handleScrollPos}>
             <QgScene>
               <QgJournal onTap={() => { playClick(); setGazetteOuverte(true); }} />
               <QgCarnet onTap={() => { playClick(); setCarnetOuvert(true); }} />
