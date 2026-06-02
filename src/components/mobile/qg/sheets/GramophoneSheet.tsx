@@ -37,14 +37,18 @@ const stage: CSSProperties = {
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "flex-end",
+  // Bottom : on remonte au-dessus du TabBar global (60px + safe-area).
   padding:
-    "max(40px, env(safe-area-inset-top)) 0 calc(20px + env(safe-area-inset-bottom))",
+    "max(40px, env(safe-area-inset-top)) 0 calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom))",
   pointerEvents: "none",
 };
 
+/** Gramophone scalé ×0.8 : 320 × 0.8 = 256, 80vw × 0.8 = 64vw. */
+const GRAMO_WIDTH = "min(64vw, 256px)";
+
 const gramoBlock: CSSProperties = {
   position: "relative",
-  width: "min(80vw, 320px)",
+  width: GRAMO_WIDTH,
   aspectRatio: "310 / 400",
   pointerEvents: "auto",
   filter: "drop-shadow(0 14px 28px rgba(0,0,0,0.55))",
@@ -59,8 +63,36 @@ const gramoImg: CSSProperties = {
   pointerEvents: "none",
 };
 
+/**
+ * Ligne des contrôles entre le gramophone et le panel. Largeur = largeur
+ * du gramophone, boutons aux extrémités gauche/droite.
+ */
+const controlsRow: CSSProperties = {
+  width: GRAMO_WIDTH,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  pointerEvents: "auto",
+  marginTop: 4,
+  marginBottom: 4,
+};
+
+const ctrlBtn: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 48,
+  height: 48,
+  borderRadius: "50%",
+  border: "1px solid var(--brass-500)",
+  background: "var(--forest-800)",
+  color: "var(--brass-300)",
+  cursor: "pointer",
+  padding: 0,
+  boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
+};
+
 const panel: CSSProperties = {
-  marginTop: 16,
   width: "min(92vw, 420px)",
   background: "rgba(20,32,26,0.92)",
   border: "1px solid var(--brass-700)",
@@ -93,30 +125,14 @@ const sunoLink: CSSProperties = {
   opacity: 0.75,
   textDecoration: "none",
   marginBottom: 8,
-};
-
-const controls: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 22,
   paddingBottom: 8,
   borderBottom: "1px dotted var(--brass-700)",
-  marginBottom: 8,
 };
 
-const ctrlBtn: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: 44,
-  height: 44,
-  borderRadius: "50%",
-  border: "1px solid var(--brass-500)",
-  background: "var(--forest-800)",
-  color: "var(--brass-300)",
-  cursor: "pointer",
-  padding: 0,
+const titreSeparator: CSSProperties = {
+  height: 0,
+  borderBottom: "1px dotted var(--brass-700)",
+  marginBottom: 8,
 };
 
 const bandeWrap: CSSProperties = {
@@ -172,6 +188,11 @@ const closeBtn: CSSProperties = {
   zIndex: 52,
 };
 
+/** Retire le préfixe "Vinyle " du nom de l'objet pour l'affichage. */
+function affichageTitreVinyle(nom: string): string {
+  return nom.replace(/^vinyle\s+/i, "");
+}
+
 /* ------------------------------------------------------------------ */
 /* Composant                                                           */
 /* ------------------------------------------------------------------ */
@@ -206,6 +227,10 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
 
   const vinyleCourant =
     vinyleCourantIdx !== null ? vinyles[vinyleCourantIdx] : null;
+  const sunoUrl = vinyleCourant
+    ? vinylSunoPageUrl(vinyleCourant.templateId)
+    : null;
+  const ctrlDisabled = vinyles.length === 0;
 
   return (
     <>
@@ -229,58 +254,56 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
           />
         </div>
 
+        <div style={controlsRow}>
+          <button
+            type="button"
+            aria-label={enLecture ? "Pause" : "Lecture"}
+            onClick={onPlayPause}
+            disabled={ctrlDisabled}
+            style={{
+              ...ctrlBtn,
+              opacity: ctrlDisabled ? 0.4 : 1,
+              cursor: ctrlDisabled ? "not-allowed" : "pointer",
+            }}
+          >
+            {enLecture ? (
+              <Pause size={22} strokeWidth={1.8} />
+            ) : (
+              <Play size={22} strokeWidth={1.8} />
+            )}
+          </button>
+          <button
+            type="button"
+            aria-label="Suivant"
+            onClick={onNext}
+            disabled={ctrlDisabled}
+            style={{
+              ...ctrlBtn,
+              opacity: ctrlDisabled ? 0.4 : 1,
+              cursor: ctrlDisabled ? "not-allowed" : "pointer",
+            }}
+          >
+            <SkipForward size={22} strokeWidth={1.8} />
+          </button>
+        </div>
+
         <div style={panel}>
           <div style={titreVinyle}>
-            {vinyleCourant ? vinyleCourant.nom : "—"}
+            {vinyleCourant ? affichageTitreVinyle(vinyleCourant.nom) : "—"}
           </div>
-          {vinyleCourant && (() => {
-            const sunoUrl = vinylSunoPageUrl(vinyleCourant.templateId);
-            if (!sunoUrl) return null;
-            return (
-              <a
-                href={sunoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={sunoLink}
-              >
-                <ExternalLink size={11} strokeWidth={1.8} />
-                Ajouter sur Suno
-              </a>
-            );
-          })()}
-
-          <div style={controls}>
-            <button
-              type="button"
-              aria-label={enLecture ? "Pause" : "Lecture"}
-              onClick={onPlayPause}
-              disabled={vinyles.length === 0}
-              style={{
-                ...ctrlBtn,
-                opacity: vinyles.length === 0 ? 0.4 : 1,
-                cursor: vinyles.length === 0 ? "not-allowed" : "pointer",
-              }}
+          {sunoUrl ? (
+            <a
+              href={sunoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={sunoLink}
             >
-              {enLecture ? (
-                <Pause size={20} strokeWidth={1.8} />
-              ) : (
-                <Play size={20} strokeWidth={1.8} />
-              )}
-            </button>
-            <button
-              type="button"
-              aria-label="Suivant"
-              onClick={onNext}
-              disabled={vinyles.length === 0}
-              style={{
-                ...ctrlBtn,
-                opacity: vinyles.length === 0 ? 0.4 : 1,
-                cursor: vinyles.length === 0 ? "not-allowed" : "pointer",
-              }}
-            >
-              <SkipForward size={20} strokeWidth={1.8} />
-            </button>
-          </div>
+              <ExternalLink size={11} strokeWidth={1.8} />
+              Ajouter sur Suno
+            </a>
+          ) : (
+            <div style={titreSeparator} />
+          )}
 
           {vinyles.length === 0 ? (
             <div style={emptyMsg}>
