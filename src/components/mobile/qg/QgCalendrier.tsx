@@ -11,7 +11,7 @@ interface QgCalendrierProps {
 
 const overlay: CSSProperties = {
   position: "absolute",
-  inset: 0,
+  inset: "18% 12% 18% 12%",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
@@ -19,21 +19,21 @@ const overlay: CSSProperties = {
   pointerEvents: "none",
   textAlign: "center",
   lineHeight: 1,
-  gap: "6%",
+  gap: "4%",
   containerType: "inline-size",
 };
 
 const jourCourt: CSSProperties = {
   fontFamily: "var(--font-display)",
-  fontSize: "18cqw",
-  letterSpacing: "0.15em",
-  color: "var(--vermillion-600)",
-  fontWeight: 600,
+  fontSize: "26cqw",
+  letterSpacing: "0.12em",
+  color: "var(--ink-900)",
+  fontWeight: 700,
 };
 
 const numJour: CSSProperties = {
   fontFamily: "var(--font-display)",
-  fontSize: "48cqw",
+  fontSize: "58cqw",
   fontWeight: 700,
   color: "var(--ink-900)",
 };
@@ -46,7 +46,14 @@ export function QgCalendrier({ jourActuel, onTap }: QgCalendrierProps) {
       type="button"
       onClick={onTap}
       aria-label={`Calendrier — ${labelJourCourt(jourActuel)} ${d.getUTCDate()}`}
-      style={{ ...style, position: "absolute" }}
+      style={{
+        ...style,
+        position: "absolute",
+        background: "transparent",
+        border: "none",
+        padding: 0,
+        cursor: "pointer",
+      }}
     >
       <img
         src="/qg/calendrier.png"
