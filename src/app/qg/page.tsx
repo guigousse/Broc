@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
@@ -15,6 +15,8 @@ import { QgJournal } from "@/components/mobile/qg/QgJournal";
 import { QgCarnet } from "@/components/mobile/qg/QgCarnet";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
 import { QgCourrier } from "@/components/mobile/qg/QgCourrier";
+import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
+import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
 import { CarnetSheet } from "@/components/mobile/qg/sheets/CarnetSheet";
@@ -32,8 +34,10 @@ import {
 } from "@/lib/competences";
 import type { CategorieObjet } from "@/types/game";
 
-export default function QgPage() {
+function QgPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editEnabled = searchParams.get("edit") === "1";
   const {
     state,
     isHydrated,
@@ -85,7 +89,8 @@ export default function QgPage() {
   const nbCourriersNonLus = state.courriers.filter((c) => !c.lu).length;
 
   return (
-    <>
+    <QgEditProvider enabled={editEnabled}>
+      <>
       <MobileLayout
         header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
         stickyTop={
@@ -180,6 +185,17 @@ export default function QgPage() {
         budget={state.budget}
         prixGazette={PRIX_GAZETTE}
       />
+
+      {editEnabled && <QgEditPanel />}
     </>
+    </QgEditProvider>
+  );
+}
+
+export default function QgPage() {
+  return (
+    <Suspense>
+      <QgPageInner />
+    </Suspense>
   );
 }

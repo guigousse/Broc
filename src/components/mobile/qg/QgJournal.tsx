@@ -1,18 +1,19 @@
 "use client";
 
-import { qgObjetStyle } from "./QgScene";
+import { useQgObjetStyle } from "./QgScene";
 
 interface QgJournalProps {
   onTap: () => void;
 }
 
 export function QgJournal({ onTap }: QgJournalProps) {
+  const style = useQgObjetStyle("journal");
   return (
     <button
       type="button"
       onClick={onTap}
       aria-label="Journal — la Gazette"
-      style={qgObjetStyle("journal")}
+      style={style}
     >
       <img
         src="/qg/journal.png"

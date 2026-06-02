@@ -2,6 +2,8 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "./layout";
+import { useQgObjet, useQgEditContext } from "./dev/QgEditContext";
+import { QgEditOverlay } from "./dev/QgEditOverlay";
 
 interface QgSceneProps {
   /** Objets interactifs (composants `Qg*`) positionnés par-dessus le fond. */
@@ -39,6 +41,7 @@ const objectsLayer: CSSProperties = {
 };
 
 export function QgScene({ children }: QgSceneProps) {
+  const ctx = useQgEditContext();
   return (
     <div style={wrapStyle} aria-label="Décor du QG">
       <img
@@ -47,14 +50,17 @@ export function QgScene({ children }: QgSceneProps) {
         style={layerStyle(1)}
         draggable={false}
       />
-      <div style={objectsLayer}>{children}</div>
+      <div style={objectsLayer}>
+        {children}
+        {ctx?.enabled && <QgEditOverlay />}
+      </div>
     </div>
   );
 }
 
-/** Helper pour positionner un objet à ses coordonnées du layout. */
-export function qgObjetStyle(key: QgObjetKey): CSSProperties {
-  const { left, bottom, width } = QG_LAYOUT.objets[key];
+/** Hook pour positionner un objet à ses coordonnées effectives (base + override). */
+export function useQgObjetStyle(key: QgObjetKey): CSSProperties {
+  const { left, bottom, width } = useQgObjet(key);
   return {
     position: "absolute",
     left: `${left}vw`,

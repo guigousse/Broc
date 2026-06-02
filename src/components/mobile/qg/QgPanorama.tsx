@@ -87,7 +87,7 @@ export function QgPanorama({ initialZone = "porte", children }: QgPanoramaProps)
   }, []);
 
   return (
-    <div ref={ref} style={containerStyle} aria-label="Panorama du QG">
+    <div ref={ref} style={containerStyle} aria-label="Panorama du QG" data-qg-panorama="1">
       {children}
       {ZONES.map((_, i) => (
         <div key={i} style={{ ...snapAnchorStyle, left: `${i * 100}vw` }} aria-hidden />

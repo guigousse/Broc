@@ -1,20 +1,21 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { QG_LAYOUT } from "./layout";
-
-const wrap: CSSProperties = {
-  position: "absolute",
-  left: `${QG_LAYOUT.objets.gramophone.left}vw`,
-  bottom: `${QG_LAYOUT.objets.gramophone.bottom}%`,
-  width: `${QG_LAYOUT.objets.gramophone.width}vw`,
-  pointerEvents: "none",
-  opacity: 0.95,
-};
+import { useQgObjet } from "./dev/QgEditContext";
 
 export function QgGramophone() {
+  const { left, bottom, width } = useQgObjet("gramophone");
   return (
-    <div style={wrap} aria-hidden>
+    <div
+      style={{
+        position: "absolute",
+        left: `${left}vw`,
+        bottom: `${bottom}%`,
+        width: `${width}vw`,
+        pointerEvents: "none",
+        opacity: 0.95,
+      }}
+      aria-hidden
+    >
       <img
         src="/qg/gramophone.png"
         alt=""

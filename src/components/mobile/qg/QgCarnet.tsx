@@ -1,18 +1,19 @@
 "use client";
 
-import { qgObjetStyle } from "./QgScene";
+import { useQgObjetStyle } from "./QgScene";
 
 interface QgCarnetProps {
   onTap: () => void;
 }
 
 export function QgCarnet({ onTap }: QgCarnetProps) {
+  const style = useQgObjetStyle("carnet");
   return (
     <button
       type="button"
       onClick={onTap}
       aria-label="Carnet — dernières sessions"
-      style={qgObjetStyle("carnet")}
+      style={style}
     >
       <img
         src="/qg/carnet.png"

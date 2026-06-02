@@ -1,26 +1,12 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { QG_LAYOUT } from "./layout";
+import { useQgObjet } from "./dev/QgEditContext";
 
 interface QgCourrierProps {
   nbNonLus: number;
   onTap: () => void;
 }
-
-const wrap = (nb: number): CSSProperties => ({
-  position: "absolute",
-  left: `${QG_LAYOUT.objets.courrier.left}vw`,
-  bottom: `${QG_LAYOUT.objets.courrier.bottom}%`,
-  width: `${QG_LAYOUT.objets.courrier.width}vw`,
-  background: "transparent",
-  border: "none",
-  padding: 0,
-  cursor: nb > 0 ? "pointer" : "default",
-  pointerEvents: nb > 0 ? "auto" : "none",
-  opacity: nb > 0 ? 1 : 0,
-  transition: "opacity 200ms ease",
-});
 
 const letterBase: CSSProperties = {
   position: "absolute",
@@ -31,6 +17,7 @@ const letterBase: CSSProperties = {
 };
 
 export function QgCourrier({ nbNonLus, onTap }: QgCourrierProps) {
+  const { left, bottom, width } = useQgObjet("courrier");
   if (nbNonLus <= 0) return null;
   // 1 lettre → single envelope ; 2+ → pile multilettre.
   const src = nbNonLus === 1 ? "/qg/lettre.png" : "/qg/multilettre.png";
@@ -41,7 +28,19 @@ export function QgCourrier({ nbNonLus, onTap }: QgCourrierProps) {
       aria-label={`${nbNonLus} lettre${nbNonLus > 1 ? "s" : ""} non lue${
         nbNonLus > 1 ? "s" : ""
       }`}
-      style={wrap(nbNonLus)}
+      style={{
+        position: "absolute",
+        left: `${left}vw`,
+        bottom: `${bottom}%`,
+        width: `${width}vw`,
+        background: "transparent",
+        border: "none",
+        padding: 0,
+        cursor: nbNonLus > 0 ? "pointer" : "default",
+        pointerEvents: nbNonLus > 0 ? "auto" : "none",
+        opacity: nbNonLus > 0 ? 1 : 0,
+        transition: "opacity 200ms ease",
+      }}
     >
       <img
         src={src}
