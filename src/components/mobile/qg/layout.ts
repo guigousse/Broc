@@ -30,8 +30,8 @@ export const QG_LAYOUT = {
     courrier: { left: 145.2, bottom: 14.8, width: 18.0 },
     fauteuil: { left: 202.8, bottom: 14.6, width: 36.3 },
     gramophone: { left: 245.7, bottom: 30.3, width: 17.0 },
-    portemanteau: { left: 102.1, bottom: 15.9, width: 23.4 },
-    calendrier: { left: 125.0, bottom: 55.0, width: 12.0 },
+    portemanteau: { left: 172.7, bottom: 15.4, width: 23.4 },
+    calendrier: { left: 109.6, bottom: 54.3, width: 11.8 },
   },
 } as const;
 
