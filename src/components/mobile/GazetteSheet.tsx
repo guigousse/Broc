@@ -112,7 +112,7 @@ const paperImg: CSSProperties = {
 
 const content: CSSProperties = {
   position: "absolute",
-  inset: "2.5% 8% 6% 8%",
+  inset: "1.4% 8% 6% 8%",
   display: "flex",
   flexDirection: "column",
   color: "var(--ink-900)",
@@ -438,7 +438,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
               {/* ============== Météo de la semaine ============== */}
               <h3 style={sectionTitle}>Météo de la semaine</h3>
               {revelerMeteo && meteoSemaine ? (
-                <div style={{ padding: "0.5% 2%" }}>
+                <div style={{ padding: "0 2%", marginTop: "-1%" }}>
                   <div style={meteoRow}>
                     {JOURS_COURT.map((j) => (
                       <div
@@ -475,8 +475,8 @@ export function GazetteSheet(props: GazetteSheetProps) {
                         >
                           <span
                             style={{
-                              width: "5.2cqw",
-                              height: "5.2cqw",
+                              width: "4.7cqw",
+                              height: "4.7cqw",
                               display: "inline-flex",
                             }}
                           >
