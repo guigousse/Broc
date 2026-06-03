@@ -74,8 +74,10 @@
   --tab-h:    clamp(56px, 15vw, 68px);
   --header-h: clamp(48px, 13vw, 60px);
 
-  /* Cartes objets */
-  --card-w:      clamp(108px, 28vw, 160px);
+  /* Cartes objets — min ≥ ~140 pour garantir 2 colonnes maxi sur mobile
+     (sinon la carte chiner/vitrine devient trop dense : image + titre +
+     prix + boutons ne tiennent plus). */
+  --card-w:      clamp(140px, 42vw, 168px);
   --card-radius: clamp(8px, 2vw, 14px);
 
   /* Espacements */

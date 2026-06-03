@@ -82,18 +82,17 @@ export function ItemCard({
           alt={nom}
         />
 
-        {/* Étoiles d'état — bas-gauche, plaque blanche bordée */}
+        {/* Étoiles d'état — ligne centrée en bas, style Collection (sans
+            plaque), drop-shadow pour rester lisible sur n'importe quel fond. */}
         <div
           style={{
             position: "absolute",
+            left: 0,
+            right: 0,
             bottom: 4,
-            left: 4,
             display: "flex",
-            gap: 1,
-            padding: "2px 4px",
-            background: "var(--paper-100)",
-            border: `1px solid ${colors.outer}`,
-            filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))",
+            justifyContent: "center",
+            gap: 2,
             pointerEvents: "none",
           }}
           aria-label={`État : ${etat}`}
@@ -101,22 +100,23 @@ export function ItemCard({
           {[0, 1, 2].map((i) => (
             <Star
               key={i}
-              size={10}
+              size={11}
               strokeWidth={1.8}
               fill={i < filled ? colors.outer : "var(--paper-100)"}
               color={colors.outer}
+              style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))" }}
             />
           ))}
         </div>
 
-        {/* Pastille catégorie — bas-droite */}
+        {/* Pastille catégorie — coin haut-droite (à l'écart du titre). */}
         <div
           style={{
             position: "absolute",
-            bottom: 4,
+            top: 4,
             right: 4,
-            width: 28,
-            height: 28,
+            width: 22,
+            height: 22,
             borderRadius: "50%",
             background: "var(--paper-100)",
             border: `1.2px solid ${colors.outer}`,
@@ -129,7 +129,7 @@ export function ItemCard({
         >
           <CategorieIcon
             categorie={categorie}
-            size={14}
+            size={11}
             strokeWidth={1.4}
             color="var(--forest-800)"
           />
