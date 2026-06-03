@@ -16,7 +16,14 @@ interface TabDef {
 }
 
 /**
- * Ordre cyclique : Bibliothèque → Bureau → Atelier → Stockage → Collection → (boucle)
+ * Ordre cyclique : Bibliothèque → Bureau → Stockage → Atelier → Collection → (boucle)
+ *
+ * Le panorama Atelier+Stockage est partagé : à gauche le stockage (porte verte
+ * + étagère), au centre/droite l'atelier (établi sous fenêtre vitrail + retour
+ * d'établi sur mur droit). On respecte cet ordre visuel dans la TabBar : en
+ * sortant du Bureau par la droite on entre dans le Stockage (gauche du
+ * panorama), puis on glisse vers l'Atelier (centre/droite du panorama).
+ *
  * L'onglet actif est toujours rendu en position centrale (index 2). Les autres
  * sont placés autour selon leur offset cyclique. Le swipe horizontal sur le
  * contenu (cf. SwipePager) suit ce même ordre.
@@ -33,6 +40,7 @@ export const TAB_ORDER: TabDef[] = [
       ),
   },
   { icon: Home, label: "Bureau", path: "/bureau" },
+  { icon: Warehouse, label: "Stockage", path: "/stockage" },
   {
     icon: Anvil,
     label: "Atelier",
@@ -44,7 +52,6 @@ export const TAB_ORDER: TabDef[] = [
           (o.enRestauration.jourFin ?? Infinity) <= state.jourActuel,
       ).length,
   },
-  { icon: Warehouse, label: "Stockage", path: "/stockage" },
   { icon: Album, label: "Collection", path: "/collection" },
 ];
 
