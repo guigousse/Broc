@@ -38,6 +38,7 @@ import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { GramophoneSheet } from "@/components/mobile/qg/sheets/GramophoneSheet";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
+import { panoramaActiveStore } from "@/lib/panoramaActiveStore";
 import { CATEGORIES } from "@/data/categories";
 import { ATELIER_LAYOUT } from "@/components/mobile/atelier-pano/layout";
 import { indexJourSemaine } from "@/lib/meteo";
@@ -164,6 +165,10 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       const snapIdx = Math.round(idx);
       setZoneActive((prev) => (prev === snapIdx ? prev : snapIdx));
 
+      // Highlight TabBar EN TEMPS RÉEL via le store partagé. Pas d'attente
+      // du débounce URL → la TabBar suit le scroll instantanément.
+      panoramaActiveStore.set(zoneIndexToTab(snapIdx));
+
       // Audio : volume cheminée + vinyle pilotés par la position. Pic à
       // repos (idx 2) où sont cheminée et gramophone. Fade vers atelier.
       audioManager.setFireplaceVolume(fireplaceVolumeForPos(idx));
@@ -171,7 +176,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         setVinylTargetVolumeRef.current(volumeVinylForPos(idx));
       }
 
-      // Sync URL : debounce 350 ms, mount guard 1200 ms.
+      // Sync URL : debounce 350 ms, mount guard 1200 ms. Le seul intérêt
+      // est de garder l'URL alignée pour le partage / le retour back ;
+      // la TabBar et les hotspots utilisent déjà le store ci-dessus.
       if (performance.now() - mountTimeRef.current < 1200) return;
       if (urlDebounceRef.current !== null) {
         window.clearTimeout(urlDebounceRef.current);
@@ -192,6 +199,16 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     },
     [currentTab, router],
   );
+
+  // Au démontage du layout (sortie de la zone panorama), on reset le store
+  // pour que la TabBar revienne au tracking pathname.
+  useEffect(() => {
+    panoramaActiveStore.set(currentTab);
+    return () => {
+      panoramaActiveStore.set(null);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Cleanup débounce URL au démontage.
   useEffect(() => {

@@ -92,7 +92,17 @@ export function SwipePager({ children }: { children: ReactNode }) {
   const prevPathnameRef = useRef<string | null>(null);
 
   const enabled = isTabBarRoute(pathname);
-  const direction = computeDirection(prevPathnameRef.current, pathname);
+  // L'animation d'entrée ne doit JOUER que si la pageKey change. Pour les
+  // transitions internes au groupe panorama (qui partagent "_panorama"),
+  // on garde un direction="none" → pas de class CSS rejouée → pas de flash.
+  const prevKey = prevPathnameRef.current
+    ? pageKeyForPathname(prevPathnameRef.current)
+    : null;
+  const currKey = pageKeyForPathname(pathname);
+  const direction =
+    prevKey === currKey
+      ? "none"
+      : computeDirection(prevPathnameRef.current, pathname);
 
   useEffect(() => {
     prevPathnameRef.current = pathname;

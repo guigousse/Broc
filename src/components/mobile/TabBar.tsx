@@ -2,10 +2,14 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { Album, Anvil, BookOpen, Home, Warehouse, type LucideIcon } from "lucide-react";
-import type { CSSProperties } from "react";
+import { useSyncExternalStore, type CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
+import {
+  panoramaActiveStore,
+  panoramaActiveServerSnapshot,
+} from "@/lib/panoramaActiveStore";
 import type { GameState } from "@/types/game";
 
 interface TabDef {
@@ -134,26 +138,37 @@ export function TabBar() {
   const { state, isHydrated } = useGame();
   const { playClick } = useSettings();
 
+  // Override "live" : quand on est dans le panorama unifié, le store
+  // émet l'onglet visé par le scroll EN TEMPS RÉEL. Permet à la TabBar
+  // de surligner la bonne entrée avant même que l'URL ne soit poussée
+  // par le débounce 350 ms.
+  const liveTab = useSyncExternalStore(
+    panoramaActiveStore.subscribe,
+    panoramaActiveStore.get,
+    panoramaActiveServerSnapshot,
+  );
+
   if (!isHydrated || !state) return null;
   if (!isTabBarRoute(pathname)) return null;
 
-  const activeIdx = findActiveTabIndex(pathname);
-  // Si aucune route ne matche (cas dégénéré), on retombe sur Bureau au centre.
-  const center = activeIdx >= 0 ? activeIdx : 1;
-  const N = TAB_ORDER.length;
+  const liveTabPath =
+    liveTab === "bureau"
+      ? "/bureau"
+      : liveTab === "stockage"
+        ? "/stockage"
+        : liveTab === "atelier"
+          ? "/atelier"
+          : null;
+  const effectivePath = liveTabPath ?? pathname;
+  const activeIdx = findActiveTabIndex(effectivePath);
 
-  // Slot 0..4 → on remplit en partant du centre (slot 2 = actif).
-  const slots = Array.from({ length: N }, (_, i) => {
-    const offset = i - 2; // -2, -1, 0, +1, +2
-    const idx = (center + offset + N) % N;
-    return { tab: TAB_ORDER[idx], offset };
-  });
-
+  // Ordre stable : pas de shuffle. L'onglet actif est simplement
+  // surligné — moins de mouvement visuel quand on change de section.
   return (
     <nav aria-label="Navigation principale" style={wrapStyle}>
-      {slots.map(({ tab, offset }) => {
+      {TAB_ORDER.map((tab, idx) => {
         const Icon = tab.icon;
-        const active = offset === 0;
+        const active = idx === activeIdx;
         const count = tab.badge ? tab.badge(state) : 0;
         return (
           <button
