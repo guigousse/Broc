@@ -6,8 +6,7 @@ import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import {
   AtelierPanorama,
-  ZONE_OFFSETS_VW,
-  animateScrollLeft,
+  panoramaZoneAnchorSelector,
 } from "./AtelierPanorama";
 import { AtelierScene } from "./AtelierScene";
 import { zoneToTab } from "./layout";
@@ -67,7 +66,7 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
   // (encore au milieu de la zone de départ) déclencherait un router.replace
   // qui annulerait la navigation que l'utilisateur vient de faire.
   const programmaticScrollRef = useRef(false);
-  const cancelAnimRef = useRef<(() => void) | null>(null);
+  const programmaticTimerRef = useRef<number | null>(null);
 
   const handleScrollPos = useCallback(
     (pos: number) => {
@@ -92,12 +91,12 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     [router, activeTab],
   );
 
-  // Quand activeTab change (clic TabBar OU mount sur /atelier ou /stockage),
-  // on anime le scroll du panorama vers la zone correspondante. Animation
-  // rAF maison, sans dépendre de `scrollTo({behavior:"smooth"})` ni de
-  // `scroll-snap-type` — qui sont incompatibles ensemble sur iOS Safari.
-  // Pendant l'animation, `programmaticScrollRef` bloque tout
-  // `router.replace` parasite déclenché par les events de scroll.
+  // Quand activeTab change (clic TabBar), on anime le scroll vers la zone
+  // correspondante via `anchor.scrollIntoView({behavior:"smooth",
+  // inline:"center"})`. C'est l'API "snap-aware" du navigateur : elle
+  // coopère avec `scroll-snap-type: x mandatory` (à la différence de
+  // `scrollTo()` ou `el.scrollLeft = X` qui sont silencieusement
+  // ignorés/annulés sur iOS Safari quand le snap est mandatory).
   useEffect(() => {
     if (activeTab === lastInternalTabRef.current) return;
     lastInternalTabRef.current = activeTab;
@@ -105,27 +104,33 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
       '[data-atelier-panorama="1"]',
     ) as HTMLDivElement | null;
     if (!el) return;
-    const vw = el.clientWidth;
-    if (vw <= 0) return;
-    const targetPx =
-      (ZONE_OFFSETS_VW[activeTab === "stockage" ? "stockage" : "etabli"] /
-        100) *
-      vw;
-    if (cancelAnimRef.current) cancelAnimRef.current();
+    const zone = activeTab === "stockage" ? "stockage" : "etabli";
+    const anchor = el.querySelector(
+      panoramaZoneAnchorSelector(zone),
+    ) as HTMLElement | null;
+    if (!anchor) return;
     programmaticScrollRef.current = true;
-    cancelAnimRef.current = animateScrollLeft(el, targetPx, 380, () => {
-      // Un rAF de battement pour laisser passer l'event de scroll du
-      // dernier frame AVANT de libérer le flag.
-      requestAnimationFrame(() => {
-        programmaticScrollRef.current = false;
-        cancelAnimRef.current = null;
-      });
+    anchor.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
     });
+    if (programmaticTimerRef.current !== null) {
+      window.clearTimeout(programmaticTimerRef.current);
+    }
+    // Durée généreuse pour absorber tous les events de scroll de
+    // l'animation, indépendamment du navigateur.
+    programmaticTimerRef.current = window.setTimeout(() => {
+      programmaticScrollRef.current = false;
+      programmaticTimerRef.current = null;
+    }, 900);
   }, [activeTab]);
 
   useEffect(() => {
     return () => {
-      if (cancelAnimRef.current) cancelAnimRef.current();
+      if (programmaticTimerRef.current !== null) {
+        window.clearTimeout(programmaticTimerRef.current);
+      }
     };
   }, []);
 
