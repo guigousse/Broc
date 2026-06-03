@@ -13,6 +13,7 @@
     "gen:images": "node scripts/generate-item-images.mjs",
     "gen:brocantes": "node scripts/generate-brocante-images.mjs",
     "gen:qg": "node scripts/generate-qg-images.mjs",
+    "gen:atelier": "node scripts/generate-atelier-images.mjs",
     "opt:images": "node scripts/optimize-item-images.mjs"
   },
   "dependencies": {
