@@ -82,7 +82,11 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
   // Si l'utilisateur clique un onglet de la TabBar pendant qu'il est dans le
   // panorama, l'`activeTab` change sans que le scroll ait bougé. On snappe
   // alors la zone correspondante. Pendant l'animation de scroll, on bloque
-  // le handler de scroll pour qu'il ne re-route pas en arrière.
+  // le handler de scroll pour qu'il ne re-route pas en arrière. On attend
+  // que le scroll ait réellement atteint la cible (un timeout fixe se révèle
+  // trop court sur mobile : si le flag retombe alors que le scrollLeft est
+  // encore dans la zone Stockage, handleScrollPos relance un router.replace
+  // vers /stockage et annule la navigation).
   useEffect(() => {
     if (activeTab === lastInternalTabRef.current) return;
     lastInternalTabRef.current = activeTab;
@@ -94,15 +98,24 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     if (vw <= 0) return;
     // Cible : Stockage → snap 18vw ; Atelier → snap 108vw (établi).
     const targetVw = activeTab === "stockage" ? 18 : 108;
+    const targetPx = (targetVw / 100) * vw;
     programmaticScrollRef.current = true;
-    el.scrollTo({ left: (targetVw / 100) * vw, behavior: "smooth" });
+    el.scrollTo({ left: targetPx, behavior: "smooth" });
     if (programmaticTimerRef.current !== null) {
       window.clearTimeout(programmaticTimerRef.current);
     }
-    programmaticTimerRef.current = window.setTimeout(() => {
-      programmaticScrollRef.current = false;
-      programmaticTimerRef.current = null;
-    }, 700);
+    const startedAt = performance.now();
+    const checkSettled = () => {
+      const closeEnough = Math.abs(el.scrollLeft - targetPx) < 4;
+      const timedOut = performance.now() - startedAt > 2000;
+      if (closeEnough || timedOut) {
+        programmaticScrollRef.current = false;
+        programmaticTimerRef.current = null;
+        return;
+      }
+      programmaticTimerRef.current = window.setTimeout(checkSettled, 60);
+    };
+    programmaticTimerRef.current = window.setTimeout(checkSettled, 60);
   }, [activeTab]);
 
   useEffect(() => {

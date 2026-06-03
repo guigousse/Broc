@@ -94,27 +94,34 @@ const tabBtn: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  gap: 3,
+  justifyContent: "center",
+  gap: 2,
   background: "transparent",
   border: "none",
   cursor: "pointer",
   fontFamily: "var(--font-mono)",
-  fontSize: "clamp(8px, 2.2vw, 10px)",
-  letterSpacing: "0.06em",
+  fontSize: "clamp(8px, 2.1vw, 10px)",
+  lineHeight: 1.1,
+  letterSpacing: "0.04em",
   textTransform: "uppercase",
   color: "var(--brass-300)",
-  padding: "4px 0",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
+  padding: "2px 0",
   minWidth: 0,
   textAlign: "center",
 };
 
+const tabLabel: CSSProperties = {
+  display: "block",
+  maxWidth: "100%",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
 const iconBox: CSSProperties = {
   position: "relative",
-  width: "clamp(30px, 8vw, 38px)",
-  height: "clamp(30px, 8vw, 38px)",
+  width: "clamp(26px, 7vw, 34px)",
+  height: "clamp(26px, 7vw, 34px)",
   display: "grid",
   placeItems: "center",
   border: "1px solid var(--brass-500)",
@@ -176,7 +183,7 @@ export function TabBar() {
               }}
             >
               <Icon
-                size={20}
+                size={18}
                 strokeWidth={1.5}
                 color={active ? "var(--forest-800)" : "var(--brass-300)"}
               />
@@ -186,7 +193,7 @@ export function TabBar() {
                 </span>
               )}
             </span>
-            {tab.label}
+            <span style={tabLabel}>{tab.label}</span>
           </button>
         );
       })}
