@@ -258,3 +258,25 @@ html, body {
   animation: broc-pulse-once 600ms ease-out;
   transform-origin: center;
 }
+
+/* ============================================================
+   Transitions entre onglets (SwipePager)
+   ============================================================ */
+@keyframes broc-page-enter-right {
+  0%   { transform: translateX(100%); opacity: 0; }
+  18%  { opacity: 1; }
+  100% { transform: translateX(0);    opacity: 1; }
+}
+@keyframes broc-page-enter-left {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  18%  { opacity: 1; }
+  100% { transform: translateX(0);     opacity: 1; }
+}
+.broc-page-enter-right {
+  animation: broc-page-enter-right 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+.broc-page-enter-left {
+  animation: broc-page-enter-left 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
