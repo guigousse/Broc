@@ -10,7 +10,7 @@ import { zoneToTab } from "./layout";
 import { useGame } from "@/context/GameContext";
 
 interface AtelierPanoramaViewProps {
-  /** Onglet sur lequel cette page est arrivée — pilote `initialZone`. */
+  /** Onglet courant déduit du pathname par le layout (panorama). */
   activeTab: "stockage" | "atelier";
 }
 
@@ -42,23 +42,27 @@ const fabBtn: CSSProperties = {
 /**
  * Vue plein écran du panorama Atelier+Stockage.
  *
- * Le scroll horizontal du panorama est synchronisé avec l'URL : si l'on
- * scrolle vers la gauche jusqu'à la zone "stockage", on remplace l'URL par
- * `/stockage` ; sinon on remplace par `/atelier`. La TabBar (qui dépend du
- * pathname) se met donc à jour automatiquement sans push d'historique.
+ * Hébergé par le layout (panorama) pour persister entre /atelier et /stockage
+ * (route group). Quand le scroll franchit une frontière de zone, on
+ * `router.replace` vers la route correspondante : la TabBar (qui se cale sur
+ * pathname) se met à jour sans push d'historique, et la couche panorama n'est
+ * pas démontée — pas de saccade.
  */
 export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
   const router = useRouter();
   const { state, isHydrated } = useGame();
 
-  // Garde la dernière route remplacée pour éviter les replace inutiles.
-  const lastPathRef = useRef<"stockage" | "atelier">(activeTab);
+  // Dernier onglet poussé par notre handler de scroll. Permet de distinguer
+  // "le pathname a changé parce qu'on a scrollé" (rien à faire) vs "le
+  // pathname a changé parce que l'utilisateur a cliqué la TabBar" (il faut
+  // alors snapper le scroll sur la zone correspondante).
+  const lastInternalTabRef = useRef<"stockage" | "atelier">(activeTab);
 
   const handleScrollPos = useCallback(
     (pos: number) => {
       const tab = zoneToTab(pos);
-      if (tab !== lastPathRef.current) {
-        lastPathRef.current = tab;
+      if (tab !== lastInternalTabRef.current) {
+        lastInternalTabRef.current = tab;
         router.replace(tab === "stockage" ? "/stockage" : "/atelier", {
           scroll: false,
         });
@@ -66,6 +70,23 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     },
     [router],
   );
+
+  // Si l'utilisateur clique un onglet de la TabBar pendant qu'il est dans le
+  // panorama, l'`activeTab` change sans que le scroll ait bougé. On snappe
+  // alors la zone correspondante.
+  useEffect(() => {
+    if (activeTab === lastInternalTabRef.current) return;
+    lastInternalTabRef.current = activeTab;
+    const el = document.querySelector(
+      '[data-atelier-panorama="1"]',
+    ) as HTMLDivElement | null;
+    if (!el) return;
+    const vw = el.clientWidth;
+    if (vw <= 0) return;
+    // Cible : Stockage → snap 14vw ; Atelier → snap 100vw (établi).
+    const targetVw = activeTab === "stockage" ? 14 : 100;
+    el.scrollTo({ left: (targetVw / 100) * vw, behavior: "smooth" });
+  }, [activeTab]);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -90,14 +111,14 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     );
   }
 
-  // Zone d'entrée : si on arrive sur /atelier on centre sur l'établi ; sur
-  // /stockage on cale sur la zone stockage (gauche).
+  // initialZone est appliquée UNIQUEMENT au premier montage du panorama
+  // (cf. AtelierPanorama). On utilise donc `activeTab` au mount uniquement.
   const initialZone = activeTab === "stockage" ? "stockage" : "etabli";
 
-  // Cible de gestion : tap sur le FAB → ouvre la liste correspondante.
   const gestionPath =
     activeTab === "stockage" ? "/stockage/gerer" : "/atelier/gerer";
-  const gestionLabel = activeTab === "stockage" ? "Gérer le stock" : "Gérer l'établi";
+  const gestionLabel =
+    activeTab === "stockage" ? "Gérer le stock" : "Gérer l'établi";
 
   return (
     <MobileLayout

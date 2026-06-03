@@ -31,7 +31,7 @@ interface TabDef {
 export const TAB_ORDER: TabDef[] = [
   {
     icon: BookOpen,
-    label: "Bibliothèque",
+    label: "Biblio.",
     path: "/bibliotheque",
     badge: (state) =>
       Object.values(state.competenceTrees).reduce(
@@ -99,8 +99,8 @@ const tabBtn: CSSProperties = {
   border: "none",
   cursor: "pointer",
   fontFamily: "var(--font-mono)",
-  fontSize: 8.5,
-  letterSpacing: "0.08em",
+  fontSize: 8,
+  letterSpacing: "0.06em",
   textTransform: "uppercase",
   color: "var(--brass-300)",
   padding: "4px 0",
@@ -108,6 +108,7 @@ const tabBtn: CSSProperties = {
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
   minWidth: 0,
+  textAlign: "center",
 };
 
 const iconBox: CSSProperties = {
