@@ -82,11 +82,14 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
   // Si l'utilisateur clique un onglet de la TabBar pendant qu'il est dans le
   // panorama, l'`activeTab` change sans que le scroll ait bougé. On snappe
   // alors la zone correspondante. Pendant l'animation de scroll, on bloque
-  // le handler de scroll pour qu'il ne re-route pas en arrière. On attend
-  // que le scroll ait réellement atteint la cible (un timeout fixe se révèle
-  // trop court sur mobile : si le flag retombe alors que le scrollLeft est
-  // encore dans la zone Stockage, handleScrollPos relance un router.replace
-  // vers /stockage et annule la navigation).
+  // le handler de scroll pour qu'il ne re-route pas en arrière.
+  //
+  // ATTENTION iOS Safari : `scroll-snap-type: x mandatory` bloque/perturbe
+  // `scrollTo({behavior: "smooth"})`. On désactive le snap le temps de
+  // l'animation, on force `scrollLeft = target` en filet de sécurité, puis
+  // on restaure le snap. Sinon scrollLeft reste à la zone de départ, le
+  // prochain event de scroll voit zone=stockage et fait
+  // `router.replace("/stockage")` → la navigation s'annule.
   useEffect(() => {
     if (activeTab === lastInternalTabRef.current) return;
     lastInternalTabRef.current = activeTab;
@@ -100,22 +103,23 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     const targetVw = activeTab === "stockage" ? 18 : 108;
     const targetPx = (targetVw / 100) * vw;
     programmaticScrollRef.current = true;
+    el.style.scrollSnapType = "none";
     el.scrollTo({ left: targetPx, behavior: "smooth" });
     if (programmaticTimerRef.current !== null) {
       window.clearTimeout(programmaticTimerRef.current);
     }
-    const startedAt = performance.now();
-    const checkSettled = () => {
-      const closeEnough = Math.abs(el.scrollLeft - targetPx) < 4;
-      const timedOut = performance.now() - startedAt > 2000;
-      if (closeEnough || timedOut) {
+    programmaticTimerRef.current = window.setTimeout(() => {
+      // Filet de sécurité : si le smooth scroll a échoué (iOS Safari +
+      // snap mandatory), on garantit l'arrivée par un set direct.
+      el.scrollLeft = targetPx;
+      el.style.scrollSnapType = "x mandatory";
+      // Un rAF de battement pour laisser passer l'event de scroll généré
+      // par le set ci-dessus AVANT de libérer le flag.
+      requestAnimationFrame(() => {
         programmaticScrollRef.current = false;
         programmaticTimerRef.current = null;
-        return;
-      }
-      programmaticTimerRef.current = window.setTimeout(checkSettled, 60);
-    };
-    programmaticTimerRef.current = window.setTimeout(checkSettled, 60);
+      });
+    }, 800);
   }, [activeTab]);
 
   useEffect(() => {
