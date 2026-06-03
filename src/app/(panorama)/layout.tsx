@@ -54,13 +54,18 @@ import type { CategorieObjet, CollectionSlot } from "@/types/game";
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
 
-/** Volume vinyle selon la position du panorama (pic à repos, idx 2). */
+/** Volume vinyle selon la position du panorama.
+ *  Bureau (0..2) : ramp 0.3 → 0.8 (pic au repos = gramophone).
+ *  Atelier : dip volontaire à stockage (3) et établi (4),
+ *  puis remontée à coinL (6) — autre source perceptible au bout
+ *  de l'atelier (fenêtre / mur partagé). */
 function volumeVinylForPos(pos: number): number {
   if (pos <= 0) return 0.3;
   if (pos <= 1) return 0.3 + 0.2 * pos; // 0.3 → 0.5
   if (pos <= 2) return 0.5 + 0.3 * (pos - 1); // 0.5 → 0.8
-  // Atelier : fade descendant 0.8 → 0.05 sur idx 2..5.
-  return Math.max(0.05, 0.8 - 0.25 * (pos - 2));
+  if (pos <= 3) return 0.8 - 0.45 * (pos - 2); // 0.8 → 0.35 (stockage)
+  if (pos <= 4) return 0.35 - 0.13 * (pos - 3); // 0.35 → 0.22 (établi)
+  return 0.22 + 0.23 * Math.min(1, pos - 4); // 0.22 → 0.45 (coinL)
 }
 
 /** Volume cheminée selon la position (triangulaire, pic à repos idx 2). */

@@ -32,7 +32,9 @@ function ambianceForPathname(pathname: string): Ambiance | null {
     pathname.startsWith("/chiner") ||
     pathname.startsWith("/vitrine")
   ) {
-    return { volume: 0.15, lowpassHz: 550 };
+    // Chiner / vendre : un peu plus présent (on est dehors mais la
+    // musique du local "porte" encore correctement).
+    return { volume: 0.32, lowpassHz: 700 };
   }
   if (
     pathname.startsWith("/atelier/gerer") ||
