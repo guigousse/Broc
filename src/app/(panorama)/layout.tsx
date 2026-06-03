@@ -244,12 +244,14 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     void targetIdx;
   }, [currentTab]);
 
-  // Gramophone — liste des vinyles + handlers.
+  // Gramophone — liste des vinyles. UNIQUEMENT ceux possédés (donnés à
+  // la collection) : seuil métier explicite, on ne joue pas un vinyle
+  // qu'on a juste croisé chez un vendeur.
   const vinyles = useMemo<CollectionSlot[]>(() => {
     if (!state) return [];
     return state.collection["Musique"].filter(
       (s) =>
-        s.vu &&
+        s.donation !== null &&
         VINYLE_PREFIXES.some((p) => s.templateId.startsWith(p)) &&
         vinylHasAudio(s.templateId),
     );

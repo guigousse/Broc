@@ -54,14 +54,16 @@ const stage: CSSProperties = {
 /** Gramophone : largeur calculée pour laisser de la place aux deux boutons. */
 const GRAMO_WIDTH = "min(58vw, 240px)";
 
-/** Ligne [bouton gauche · gramophone · bouton droit], centrée sur le lecteur. */
+/** Ligne [bouton gauche · gramophone · bouton droit]. Les boutons sont
+ * alignés sur le BAS du gramophone (niveau du socle bois), pas au centre
+ * de l'image — visuellement les commandes tombent à hauteur du fauteuil
+ * (à gauche) et du manteau de cheminée (à droite). */
 const gramoRow: CSSProperties = {
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-end",
   justifyContent: "center",
   gap: 14,
   pointerEvents: "auto",
-  // Aucune marge bas : l'image vient se poser sur le lecteur.
   marginBottom: 0,
 };
 
@@ -95,16 +97,22 @@ const ctrlBtn: CSSProperties = {
   padding: 0,
   boxShadow: "0 4px 12px rgba(0,0,0,0.45)",
   flexShrink: 0,
+  // Petit relèvement par rapport au socle pour éviter que le bouton
+  // ne soit "coupé" par le panneau qui vient juste en dessous.
+  marginBottom: 12,
 };
 
-/** Lecteur : pleine largeur, deux sections empilées. */
+/** Lecteur : pleine largeur, deux sections empilées. Pas de
+ * paddingBottom safe-area : `stage.bottom` calcule déjà la safe-area
+ * (cf. `calc(var(--mobile-tabbar-h) + var(--safe-bottom))`) — un
+ * paddingBottom ici doublerait la marge et laisserait un vide entre
+ * le panel et la barre de navigation. */
 const panel: CSSProperties = {
   width: "100%",
   borderTop: "1px solid var(--brass-700)",
   pointerEvents: "auto",
   color: "var(--brass-300)",
   fontFamily: "var(--font-display)",
-  paddingBottom: "env(safe-area-inset-bottom)",
 };
 
 /** Section haute : titre + lien Suno, fond vert sombre. */
