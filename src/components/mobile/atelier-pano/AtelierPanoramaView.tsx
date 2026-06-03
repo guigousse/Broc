@@ -55,51 +55,48 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
   const router = useRouter();
   const { state, isHydrated } = useGame();
 
-  // Dernier onglet poussé par notre handler de scroll. Permet de distinguer
-  // "le pathname a changé parce qu'on a scrollé" (rien à faire) vs "le
-  // pathname a changé parce que l'utilisateur a cliqué la TabBar" (il faut
-  // alors snapper le scroll sur la zone correspondante).
-  const lastInternalTabRef = useRef<"stockage" | "atelier">(activeTab);
-  // Vrai pendant un scroll programmatique (smooth scroll lancé par nous-mêmes
-  // après un changement externe d'activeTab). Pendant cette fenêtre, on
-  // ignore les évènements de scroll : sinon, l'état "transitoire" du scroll
-  // (encore au milieu de la zone de départ) déclencherait un router.replace
-  // qui annulerait la navigation que l'utilisateur vient de faire.
-  const programmaticScrollRef = useRef(false);
-  const programmaticTimerRef = useRef<number | null>(null);
+  // Sync URL ← scroll, robuste contre les artefacts de mount/init.
+  //
+  // Deux garde-fous :
+  // 1) `mountTimeRef` : pendant 1200 ms après le mount, on suspend toute
+  //    mise à jour d'URL. Évite que les events de scroll "fantômes"
+  //    déclenchés par l'init (scrollIntoView, set scrollLeft, etc.) ne
+  //    fassent router.replace("/stockage") avant que le panorama ait fini
+  //    de se positionner sur la zone cible.
+  // 2) `urlDebounceRef` : 350 ms de débounce. Le user qui swipe traverse
+  //    plusieurs valeurs de pos avant de relâcher — on ne touche à l'URL
+  //    qu'une fois le scroll stabilisé. Plus aucun mid-swipe replace.
+  const mountTimeRef = useRef(performance.now());
+  const latestPosRef = useRef(activeTab === "stockage" ? 0 : 1);
+  const urlDebounceRef = useRef<number | null>(null);
 
   const handleScrollPos = useCallback(
     (pos: number) => {
-      if (programmaticScrollRef.current) return;
-      const tab = zoneToTab(pos);
-      // Source de vérité : l'URL (`activeTab`). Si le scroll dit qu'on est
-      // déjà sur le tab actif, on resynchronise simplement la ref et on
-      // sort — pas de router.replace inutile. Ce garde-fou évite que le
-      // premier event de scroll qui suit un mount/init ne renvoie sur
-      // /stockage si scrollLeft n'a pas encore atteint la cible.
-      if (tab === activeTab) {
-        lastInternalTabRef.current = tab;
-        return;
+      latestPosRef.current = pos;
+      // Sus­pend toute sync pendant 1200 ms après le mount.
+      if (performance.now() - mountTimeRef.current < 1200) return;
+      if (urlDebounceRef.current !== null) {
+        window.clearTimeout(urlDebounceRef.current);
       }
-      if (tab !== lastInternalTabRef.current) {
-        lastInternalTabRef.current = tab;
+      urlDebounceRef.current = window.setTimeout(() => {
+        urlDebounceRef.current = null;
+        const tab = zoneToTab(latestPosRef.current);
+        if (tab === activeTab) return;
         router.replace(tab === "stockage" ? "/stockage" : "/atelier", {
           scroll: false,
         });
-      }
+      }, 350);
     },
     [router, activeTab],
   );
 
   // Quand activeTab change (clic TabBar), on anime le scroll vers la zone
   // correspondante via `anchor.scrollIntoView({behavior:"smooth",
-  // inline:"center"})`. C'est l'API "snap-aware" du navigateur : elle
-  // coopère avec `scroll-snap-type: x mandatory` (à la différence de
-  // `scrollTo()` ou `el.scrollLeft = X` qui sont silencieusement
-  // ignorés/annulés sur iOS Safari quand le snap est mandatory).
+  // inline:"center"})` — API snap-aware compatible iOS Safari. Note :
+  // SwipePager remount le sous-arbre à chaque changement de pathname,
+  // donc en pratique activeTab arrive déjà à sa valeur cible au mount
+  // et cet effet ne tire qu'en cas de changement post-mount.
   useEffect(() => {
-    if (activeTab === lastInternalTabRef.current) return;
-    lastInternalTabRef.current = activeTab;
     const el = document.querySelector(
       '[data-atelier-panorama="1"]',
     ) as HTMLDivElement | null;
@@ -109,27 +106,17 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
       panoramaZoneAnchorSelector(zone),
     ) as HTMLElement | null;
     if (!anchor) return;
-    programmaticScrollRef.current = true;
     anchor.scrollIntoView({
       behavior: "smooth",
       inline: "center",
       block: "nearest",
     });
-    if (programmaticTimerRef.current !== null) {
-      window.clearTimeout(programmaticTimerRef.current);
-    }
-    // Durée généreuse pour absorber tous les events de scroll de
-    // l'animation, indépendamment du navigateur.
-    programmaticTimerRef.current = window.setTimeout(() => {
-      programmaticScrollRef.current = false;
-      programmaticTimerRef.current = null;
-    }, 900);
   }, [activeTab]);
 
   useEffect(() => {
     return () => {
-      if (programmaticTimerRef.current !== null) {
-        window.clearTimeout(programmaticTimerRef.current);
+      if (urlDebounceRef.current !== null) {
+        window.clearTimeout(urlDebounceRef.current);
       }
     };
   }, []);

@@ -101,13 +101,25 @@ export function SwipePager({ children }: { children: ReactNode }) {
     // Si la zone touchée est un scrollable horizontal qui peut encore
     // bouger dans le sens du swipe, on laisse le scroll natif et on
     // n'enclenche pas la navigation.
+    //
+    // Cas particulier panorama atelier : la zone Stockage est snappée à
+    // scrollLeft ≈ 18vw (le contenu entre 0 et 18vw est juste un padding
+    // visuel sans zone interactive). On considère donc que la "vraie
+    // gauche" du panorama est 18vw, pas 0 — sinon il faut deux swipes
+    // pour passer de Stockage à Bureau. Idem en miroir pour la zone
+    // CoinL (snap à 195vw, max scrollable ≈ 200vw).
     const target = document.elementFromPoint(s.x, s.y);
     const scrollAncestor = findHorizontallyScrollableAncestor(target);
     if (scrollAncestor) {
       const sl = scrollAncestor.scrollLeft;
       const max = scrollAncestor.scrollWidth - scrollAncestor.clientWidth;
-      if (dx < 0 && sl < max - 1) return; // peut encore scroller à droite
-      if (dx > 0 && sl > 1) return; // peut encore scroller à gauche
+      const isAtelierPano =
+        scrollAncestor.getAttribute("data-atelier-panorama") === "1";
+      const vw = scrollAncestor.clientWidth;
+      const minScroll = isAtelierPano ? (18 / 100) * vw + 4 : 1;
+      const maxScroll = isAtelierPano ? (195 / 100) * vw - 4 : max - 1;
+      if (dx < 0 && sl < maxScroll) return; // peut encore scroller à droite
+      if (dx > 0 && sl > minScroll) return; // peut encore scroller à gauche
     }
 
     const idx = findActiveTabIndex(pathname);
