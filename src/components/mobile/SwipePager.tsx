@@ -28,6 +28,23 @@ import {
 const X_THRESHOLD = 60; // px
 const Y_RATIO = 0.7;
 
+/**
+ * Routes qui partagent le panorama unifié : on leur attribue la même
+ * `pageKey` pour que le sous-arbre ne re-monte PAS entre elles. Sans
+ * cette mutualisation, le scroll position du panorama serait perdue à
+ * chaque traversée de zone (la layout aurait beau être partagée, le
+ * <div key={pathname}> de SwipePager forcerait un unmount/remount).
+ */
+const PANORAMA_GROUP = new Set<string>([
+  "/bureau",
+  "/stockage",
+  "/atelier",
+]);
+
+function pageKeyForPathname(pathname: string): string {
+  return PANORAMA_GROUP.has(pathname) ? "_panorama" : pathname;
+}
+
 interface PointerStart {
   id: number;
   x: number;
@@ -100,26 +117,16 @@ export function SwipePager({ children }: { children: ReactNode }) {
 
     // Si la zone touchée est un scrollable horizontal qui peut encore
     // bouger dans le sens du swipe, on laisse le scroll natif et on
-    // n'enclenche pas la navigation.
-    //
-    // Cas particulier panorama atelier : la zone Stockage est snappée à
-    // scrollLeft ≈ 18vw (le contenu entre 0 et 18vw est juste un padding
-    // visuel sans zone interactive). On considère donc que la "vraie
-    // gauche" du panorama est 18vw, pas 0 — sinon il faut deux swipes
-    // pour passer de Stockage à Bureau. Idem en miroir pour la zone
-    // CoinL (snap à 195vw, max scrollable ≈ 200vw).
+    // n'enclenche pas la navigation. Pour le panorama unifié (data-
+    // unified-panorama), les bords correspondent EXACTEMENT aux zones
+    // bureau (gauche) et coinL (droite) → pas de cas spécial.
     const target = document.elementFromPoint(s.x, s.y);
     const scrollAncestor = findHorizontallyScrollableAncestor(target);
     if (scrollAncestor) {
       const sl = scrollAncestor.scrollLeft;
       const max = scrollAncestor.scrollWidth - scrollAncestor.clientWidth;
-      const isAtelierPano =
-        scrollAncestor.getAttribute("data-atelier-panorama") === "1";
-      const vw = scrollAncestor.clientWidth;
-      const minScroll = isAtelierPano ? (18 / 100) * vw + 4 : 1;
-      const maxScroll = isAtelierPano ? (195 / 100) * vw - 4 : max - 1;
-      if (dx < 0 && sl < maxScroll) return; // peut encore scroller à droite
-      if (dx > 0 && sl > minScroll) return; // peut encore scroller à gauche
+      if (dx < 0 && sl < max - 1) return; // peut encore scroller à droite
+      if (dx > 0 && sl > 1) return; // peut encore scroller à gauche
     }
 
     const idx = findActiveTabIndex(pathname);
@@ -140,6 +147,8 @@ export function SwipePager({ children }: { children: ReactNode }) {
         ? "broc-page-enter-left"
         : "";
 
+  const pageKey = pageKeyForPathname(pathname);
+
   return (
     <div
       onPointerDown={onPointerDown}
@@ -147,7 +156,7 @@ export function SwipePager({ children }: { children: ReactNode }) {
       onPointerCancel={onPointerCancel}
       style={{ touchAction: "pan-y", minHeight: "100dvh" }}
     >
-      <div key={pathname} className={animClass}>
+      <div key={pageKey} className={animClass}>
         {children}
       </div>
     </div>
