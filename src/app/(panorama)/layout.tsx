@@ -106,8 +106,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     playGramophoneSong,
     pauseVinyl,
     resumeVinyl,
-    stopGramophone,
     setVinylTargetVolume,
+    setVinylAmbianceVolume,
+    setVinylAmbianceLowpass,
     startNeedle,
   } = useSettings();
 
@@ -210,6 +211,15 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // À l'entrée dans le panorama (intérieur du bâtiment), on remet
+  // l'ambiance gramophone à "pleine pièce" (volume 1, lowpass 20000).
+  // Le contrôleur global GlobalVinylAmbiance reprendra la main dès qu'on
+  // sortira sur /chiner, /vitrine, /atelier/gerer, etc.
+  useEffect(() => {
+    setVinylAmbianceVolume(1);
+    setVinylAmbianceLowpass(20000);
+  }, [setVinylAmbianceVolume, setVinylAmbianceLowpass]);
+
   // Cleanup débounce URL au démontage.
   useEffect(() => {
     return () => {
@@ -281,9 +291,11 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
     return () => {
-      // Sortie du panorama : on coupe entièrement le gramophone (musique
-      // + crépitement + timers de la séquence Vinyl 1/2).
-      stopGramophone();
+      // IMPORTANT : on NE STOPPE PAS le gramophone à la sortie du
+      // panorama. La musique doit continuer à tourner quand le joueur
+      // va chiner ou dans une sous-pièce — étouffée et plus basse,
+      // mais audible (cf. GlobalVinylAmbiance). On persiste juste
+      // l'état pour le retour.
       try {
         window.localStorage.setItem(
           GRAMO_SESSION_KEY,

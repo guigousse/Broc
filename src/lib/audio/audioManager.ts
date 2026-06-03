@@ -34,6 +34,13 @@ class AudioManager {
   private vinylGain?: GainNode;
   private vinylEndedHandler?: () => void;
   private gramoTimers: number[] = [];
+  // Bus "ambiance gramophone" : un gain + lowpass partagés par la musique
+  // ET le crépitement (needle). Permet d'étouffer/atténuer l'ensemble du
+  // gramophone selon la pièce (proche = clair/fort, lointain = sourd/bas).
+  private vinylAmbianceGain?: GainNode;
+  private vinylAmbianceLowpass?: BiquadFilterNode;
+  private ambianceVolume = 1;
+  private ambianceLowpass = 20000;
   private buffers: Map<string, AudioBuffer> = new Map();
   prefs: AudioPrefs = { ...DEFAULT_AUDIO_PREFS };
 
@@ -429,6 +436,53 @@ class AudioManager {
   /* Gramophone — vinyle + aiguille                                    */
   /* ---------------------------------------------------------------- */
 
+  /** Crée le bus ambiance (gain + lowpass) si pas encore là. */
+  private ensureVinylAmbiance(): void {
+    if (!this.ctx || !this.master) return;
+    if (this.vinylAmbianceGain) return;
+    const gain = this.ctx.createGain();
+    gain.gain.value = this.ambianceVolume;
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = this.ambianceLowpass;
+    gain.connect(lp);
+    lp.connect(this.master);
+    this.vinylAmbianceGain = gain;
+    this.vinylAmbianceLowpass = lp;
+  }
+
+  /** Volume global du bus gramophone (musique + crépitement). 0..1. */
+  setVinylAmbianceVolume(v: number): void {
+    this.ambianceVolume = Math.max(0, Math.min(1, v));
+    if (!this.ctx || !this.vinylAmbianceGain) return;
+    const now = this.ctx.currentTime;
+    this.vinylAmbianceGain.gain.cancelScheduledValues(now);
+    this.vinylAmbianceGain.gain.setValueAtTime(
+      this.vinylAmbianceGain.gain.value,
+      now,
+    );
+    this.vinylAmbianceGain.gain.linearRampToValueAtTime(
+      this.ambianceVolume,
+      now + 0.4,
+    );
+  }
+
+  /** Fréquence de coupure du lowpass ambiance. 20000 = clair, 600 = étouffé. */
+  setVinylAmbianceLowpass(hz: number): void {
+    this.ambianceLowpass = Math.max(80, Math.min(20000, hz));
+    if (!this.ctx || !this.vinylAmbianceLowpass) return;
+    const now = this.ctx.currentTime;
+    this.vinylAmbianceLowpass.frequency.cancelScheduledValues(now);
+    this.vinylAmbianceLowpass.frequency.setValueAtTime(
+      this.vinylAmbianceLowpass.frequency.value,
+      now,
+    );
+    this.vinylAmbianceLowpass.frequency.linearRampToValueAtTime(
+      this.ambianceLowpass,
+      now + 0.4,
+    );
+  }
+
   /**
    * Démarre la lecture d'un vinyle. L'URL est résolue par le caller
    * (typiquement via `vinylAudioUrl(templateId)` qui regarde la table
@@ -438,6 +492,7 @@ class AudioManager {
   async playVinyl(url: string, onEnded?: () => void): Promise<void> {
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
+    this.ensureVinylAmbiance();
     this.stopVinyl();
     const audio = new Audio(url);
     audio.crossOrigin = "anonymous";
@@ -452,7 +507,9 @@ class AudioManager {
     const gain = this.ctx.createGain();
     gain.gain.value = 1;
     source.connect(gain);
-    gain.connect(this.master);
+    // Route via le bus ambiance (gain + lowpass) plutôt que master direct,
+    // pour que setVinylAmbianceVolume / Lowpass affectent la musique.
+    gain.connect(this.vinylAmbianceGain ?? this.master);
     const handler = () => {
       if (onEnded) onEnded();
     };
@@ -527,6 +584,7 @@ class AudioManager {
   async startNeedle(): Promise<void> {
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
+    this.ensureVinylAmbiance();
     if (this.needleSource) return;
     const buf = await this.loadBuffer("/sounds/vinyl-noise-loop.mp3");
     if (!buf) return;
@@ -536,7 +594,9 @@ class AudioManager {
     const gain = this.ctx.createGain();
     gain.gain.value = 0;
     src.connect(gain);
-    gain.connect(this.master);
+    // Idem playVinyl : via le bus ambiance pour que les pièces lointaines
+    // étouffent aussi le crépitement.
+    gain.connect(this.vinylAmbianceGain ?? this.master);
     const now = this.ctx.currentTime;
     gain.gain.linearRampToValueAtTime(0.28, now + 0.4);
     src.start();

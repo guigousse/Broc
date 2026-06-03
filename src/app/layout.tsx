@@ -3,6 +3,7 @@ import { GameProvider } from "@/context/GameContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { TabBar } from "@/components/mobile/TabBar";
 import { SwipePager } from "@/components/mobile/SwipePager";
+import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -44,6 +45,7 @@ export default function RootLayout({
           <GameProvider>
             <SwipePager>{children}</SwipePager>
             <TabBar />
+            <GlobalVinylAmbiance />
           </GameProvider>
         </SettingsProvider>
       </body>

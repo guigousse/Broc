@@ -54,6 +54,10 @@ interface SettingsValue {
   /** Arrêt complet du gramophone (musique + crépitement + timers). */
   stopGramophone: () => void;
   setVinylTargetVolume: (v: number) => void;
+  /** Volume du bus ambiance gramophone (0..1). 1 = pleine pièce, 0.2 = lointain. */
+  setVinylAmbianceVolume: (v: number) => void;
+  /** Coupure lowpass du bus ambiance (Hz). 20000 = clair, 600 = sourd. */
+  setVinylAmbianceLowpass: (hz: number) => void;
   startNeedle: () => void;
   stopNeedle: () => void;
   tailleFonte: TailleFonte;
@@ -158,6 +162,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     (v: number) => audioManager.setVinylTargetVolume(v),
     [],
   );
+  const setVinylAmbianceVolume = useCallback(
+    (v: number) => audioManager.setVinylAmbianceVolume(v),
+    [],
+  );
+  const setVinylAmbianceLowpass = useCallback(
+    (hz: number) => audioManager.setVinylAmbianceLowpass(hz),
+    [],
+  );
   const startNeedle = useCallback(() => {
     void audioManager.startNeedle();
   }, []);
@@ -191,6 +203,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       stopVinyl,
       stopGramophone,
       setVinylTargetVolume,
+      setVinylAmbianceVolume,
+      setVinylAmbianceLowpass,
       startNeedle,
       stopNeedle,
       tailleFonte,
@@ -217,6 +231,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       stopVinyl,
       stopGramophone,
       setVinylTargetVolume,
+      setVinylAmbianceVolume,
+      setVinylAmbianceLowpass,
       startNeedle,
       stopNeedle,
       tailleFonte,
