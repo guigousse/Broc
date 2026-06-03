@@ -53,9 +53,9 @@ const ZONES: ZoneKey[] = ["stockage", "etabli", "coinL"];
  *     tiers droit, on décale donc la snap vers la gauche.
  */
 const ZONE_OFFSETS_VW: Record<ZoneKey, number> = {
-  stockage: 14,
-  etabli: 100,
-  coinL: 186,
+  stockage: 18,
+  etabli: 108,
+  coinL: 195,
 };
 
 export function AtelierPanorama({

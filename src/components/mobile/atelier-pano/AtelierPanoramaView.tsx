@@ -83,8 +83,8 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     if (!el) return;
     const vw = el.clientWidth;
     if (vw <= 0) return;
-    // Cible : Stockage → snap 14vw ; Atelier → snap 100vw (établi).
-    const targetVw = activeTab === "stockage" ? 14 : 100;
+    // Cible : Stockage → snap 18vw ; Atelier → snap 108vw (établi).
+    const targetVw = activeTab === "stockage" ? 18 : 108;
     el.scrollTo({ left: (targetVw / 100) * vw, behavior: "smooth" });
   }, [activeTab]);
 
