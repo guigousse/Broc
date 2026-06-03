@@ -156,7 +156,12 @@ export function TabBar() {
             aria-label={tab.label}
             onClick={() => {
               playClick();
-              if (!active) router.push(tab.path);
+              if (!active) {
+                if (typeof navigator !== "undefined" && navigator.vibrate) {
+                  navigator.vibrate(8);
+                }
+                router.push(tab.path);
+              }
             }}
             style={{
               ...tabBtn,

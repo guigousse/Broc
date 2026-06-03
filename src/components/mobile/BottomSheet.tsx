@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 
 interface BottomSheetProps {
   open: boolean;
@@ -41,6 +48,7 @@ const sheetWrap = (maxHeightPct: number): CSSProperties => ({
   flexDirection: "column",
   paddingBottom: "calc(16px + var(--safe-bottom))",
   animation: "broc-slide-up 200ms ease",
+  touchAction: "none",
 });
 
 const handleStyle: CSSProperties = {
@@ -49,6 +57,7 @@ const handleStyle: CSSProperties = {
   background: "var(--paper-500)",
   borderRadius: 2,
   margin: "8px auto 6px",
+  cursor: "grab",
 };
 
 const headerStyle: CSSProperties = {
@@ -59,6 +68,10 @@ const headerStyle: CSSProperties = {
   borderBottom: "1px solid var(--brass-500)",
 };
 
+// Seuils de fermeture par swipe vers le bas.
+const DISMISS_RATIO = 0.3; // 30% de la hauteur
+const DISMISS_VELOCITY = 0.5; // px/ms
+
 export function BottomSheet({
   open,
   onClose,
@@ -67,6 +80,15 @@ export function BottomSheet({
   maxHeightPct = 88,
   topDecoration,
 }: BottomSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{
+    startY: number;
+    startT: number;
+    pointerId: number;
+    sheetH: number;
+  } | null>(null);
+  const [dragY, setDragY] = useState(0);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -80,13 +102,59 @@ export function BottomSheet({
     };
   }, [open, onClose]);
 
+  // Reset translateY quand on rouvre.
+  useEffect(() => {
+    if (open) setDragY(0);
+  }, [open]);
+
   if (!open) return null;
+
+  function startDrag(e: ReactPointerEvent<HTMLElement>) {
+    if (!sheetRef.current) return;
+    dragRef.current = {
+      startY: e.clientY,
+      startT: performance.now(),
+      pointerId: e.pointerId,
+      sheetH: sheetRef.current.getBoundingClientRect().height,
+    };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function moveDrag(e: ReactPointerEvent<HTMLElement>) {
+    const d = dragRef.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const dy = Math.max(0, e.clientY - d.startY);
+    setDragY(dy);
+  }
+
+  function endDrag(e: ReactPointerEvent<HTMLElement>) {
+    const d = dragRef.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const dy = Math.max(0, e.clientY - d.startY);
+    const dt = performance.now() - d.startT;
+    const velocity = dt > 0 ? dy / dt : 0;
+    const ratio = d.sheetH > 0 ? dy / d.sheetH : 0;
+    dragRef.current = null;
+
+    if (ratio > DISMISS_RATIO || velocity > DISMISS_VELOCITY) {
+      onClose();
+    } else {
+      setDragY(0);
+    }
+  }
+
+  const dragStyle: CSSProperties = {
+    transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
+    transition: dragRef.current ? "none" : "transform 200ms ease",
+    opacity: dragY > 0 ? Math.max(0.4, 1 - dragY / 600) : 1,
+  };
 
   return (
     <>
       <div style={scrimStyle} onClick={onClose} aria-hidden />
       <div
-        style={sheetWrap(maxHeightPct)}
+        ref={sheetRef}
+        style={{ ...sheetWrap(maxHeightPct), ...dragStyle }}
         role="dialog"
         aria-modal="true"
       >
@@ -94,8 +162,21 @@ export function BottomSheet({
           <div style={topDecorationStyle}>{topDecoration}</div>
         ) : (
           <>
-            <div style={handleStyle} aria-hidden />
-            <div style={headerStyle}>
+            <div
+              style={handleStyle}
+              aria-hidden
+              onPointerDown={startDrag}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+            />
+            <div
+              style={headerStyle}
+              onPointerDown={startDrag}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+            >
               <div
                 style={{
                   fontFamily: "var(--font-display)",
@@ -130,6 +211,7 @@ export function BottomSheet({
           style={{
             overflowY: "auto",
             padding: topDecoration ? 0 : "12px 16px",
+            touchAction: "pan-y",
           }}
         >
           {children}

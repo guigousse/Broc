@@ -86,6 +86,7 @@ function QgPageInner() {
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
   const panoramaPosRef = useRef(1);
+  const [zoneActive, setZoneActive] = useState(1);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -130,6 +131,10 @@ function QgPageInner() {
     if (!gramophoneOuvertRef.current) {
       setVinylTargetVolumeRef.current(volumeVinylForPos(pos));
     }
+    setZoneActive((prev) => {
+      const snap = Math.round(pos);
+      return snap === prev ? prev : snap;
+    });
   }, []);
 
   const categoriesConnuesTendance = useMemo(() => {
@@ -303,32 +308,80 @@ function QgPageInner() {
         >
           <QgPanorama initialZone="porte" onScrollPos={handleScrollPos}>
             <QgScene>
-              <QgJournal onTap={() => { playNewspaper(); setGazetteOuverte(true); }} />
-              <QgCarnet onTap={() => { playClick(); setCarnetOuvert(true); }} />
-              <QgPorte onTap={() => { playDoorOpen(); setPorteOuverte(true); }} />
-              <QgCourrier
-                nbNonLus={nbCourriersNonLus}
-                onTap={() => { playPaper(); setCourrierOuvert(true); }}
-              />
-              <QgFauteuil
-                chat={state.chatSurFauteuil}
-                onTap={() => {
-                  if (state.chatSurFauteuil) {
-                    startCatPurr();
-                  } else {
-                    playClick();
-                  }
-                  setConfirmPasser(true);
-                }}
-              />
-              <QgGramophone onTap={() => { playClick(); setGramophoneOuvert(true); }} />
-              <QgPortemanteau />
-              <QgCalendrier
-                jourActuel={state.jourActuel}
-                onTap={() => setCalendrierOuvert(true)}
-              />
+              {/* Virtualisation : on ne monte un objet QG que si sa zone est
+                  à distance 1 de la zone active. Réduit le DOM sur petits
+                  appareils et évite des re-rendus inutiles d'images PNG. */}
+              {Math.abs(zoneActive - 0) <= 1 && (
+                <>
+                  <QgJournal onTap={() => { playNewspaper(); setGazetteOuverte(true); }} />
+                  <QgCarnet onTap={() => { playClick(); setCarnetOuvert(true); }} />
+                </>
+              )}
+              {Math.abs(zoneActive - 1) <= 1 && (
+                <>
+                  <QgPorte onTap={() => { playDoorOpen(); setPorteOuverte(true); }} />
+                  <QgCourrier
+                    nbNonLus={nbCourriersNonLus}
+                    onTap={() => { playPaper(); setCourrierOuvert(true); }}
+                  />
+                  <QgPortemanteau />
+                  <QgCalendrier
+                    jourActuel={state.jourActuel}
+                    onTap={() => setCalendrierOuvert(true)}
+                  />
+                </>
+              )}
+              {Math.abs(zoneActive - 2) <= 1 && (
+                <>
+                  <QgFauteuil
+                    chat={state.chatSurFauteuil}
+                    onTap={() => {
+                      if (state.chatSurFauteuil) {
+                        startCatPurr();
+                      } else {
+                        playClick();
+                      }
+                      setConfirmPasser(true);
+                    }}
+                  />
+                  <QgGramophone onTap={() => { playClick(); setGramophoneOuvert(true); }} />
+                </>
+              )}
             </QgScene>
           </QgPanorama>
+
+          {/* Dots indicateur de zone (bureau / porte / repos). */}
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: "calc(8px + var(--safe-bottom))",
+              display: "flex",
+              justifyContent: "center",
+              gap: 6,
+              pointerEvents: "none",
+              zIndex: 5,
+            }}
+          >
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                style={{
+                  width: i === zoneActive ? 18 : 6,
+                  height: 6,
+                  borderRadius: 3,
+                  background:
+                    i === zoneActive
+                      ? "var(--brass-300)"
+                      : "rgba(241,227,191,0.45)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.45)",
+                  transition: "all 220ms ease",
+                }}
+              />
+            ))}
+          </div>
         </div>
       </MobileLayout>
 
