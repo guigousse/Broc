@@ -140,7 +140,7 @@ export function ItemCard({
       <div
         style={{
           fontFamily: "var(--font-display)",
-          fontSize: 10,
+          fontSize: "clamp(9px, 2.6vw, 12px)",
           fontWeight: 700,
           letterSpacing: "0.06em",
           textTransform: "uppercase",

@@ -13,7 +13,8 @@ interface FrameItemProps {
   unique?: boolean;
   /** État affiché en étoiles. Si omis, aucune étoile n'est rendue. */
   etat?: EtatObjet;
-  size?: number;
+  /** Largeur du cadre. Accepte n'importe quelle valeur CSS (px, clamp, var). */
+  size?: number | string;
   children?: ReactNode;
 }
 
@@ -56,7 +57,7 @@ export function FrameItem({
   rarete,
   unique = false,
   etat,
-  size = 240,
+  size = "min(240px, 72vw)",
   children,
 }: FrameItemProps) {
   const colors = getRarityColors(rarete, unique);

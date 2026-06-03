@@ -36,7 +36,7 @@ export function MobileHeader({ jour, budget }: MobileHeaderProps) {
           style={{
             fontFamily: "var(--font-display)",
             fontWeight: 700,
-            fontSize: 14,
+            fontSize: "clamp(13px, 3.8vw, 16px)",
             letterSpacing: "0.22em",
             color: "var(--brass-300)",
             textDecoration: "none",
@@ -48,7 +48,7 @@ export function MobileHeader({ jour, budget }: MobileHeaderProps) {
           style={{
             textAlign: "center",
             fontFamily: "var(--font-mono)",
-            fontSize: 9,
+            fontSize: "clamp(8px, 2.4vw, 10px)",
             letterSpacing: "0.2em",
             textTransform: "uppercase",
             color: "var(--brass-300)",
@@ -59,7 +59,7 @@ export function MobileHeader({ jour, budget }: MobileHeaderProps) {
             style={{
               display: "block",
               fontFamily: "var(--font-display)",
-              fontSize: 14,
+              fontSize: "clamp(13px, 3.8vw, 16px)",
               color: "var(--paper-100)",
               letterSpacing: "0.12em",
               marginTop: 1,
@@ -72,7 +72,7 @@ export function MobileHeader({ jour, budget }: MobileHeaderProps) {
           style={{
             textAlign: "right",
             fontFamily: "var(--font-mono)",
-            fontSize: 8,
+            fontSize: "clamp(8px, 2.2vw, 10px)",
             letterSpacing: "0.18em",
             textTransform: "uppercase",
             color: "var(--brass-700)",
@@ -84,7 +84,7 @@ export function MobileHeader({ jour, budget }: MobileHeaderProps) {
               display: "block",
               fontFamily: "var(--font-display)",
               fontWeight: 700,
-              fontSize: 14,
+              fontSize: "clamp(13px, 3.8vw, 16px)",
               color: "var(--brass-300)",
             }}
           >

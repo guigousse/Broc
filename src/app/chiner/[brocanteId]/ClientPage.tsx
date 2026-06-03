@@ -250,8 +250,8 @@ export default function SessionChinePage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 8,
+            gridTemplateColumns: "repeat(auto-fill, minmax(var(--card-w), 1fr))",
+            gap: "var(--gutter)",
           }}
         >
           {(items ?? []).filter((it) => it.statut !== "refuse").map((it) => (

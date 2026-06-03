@@ -25,8 +25,9 @@ export const viewport: Viewport = {
   themeColor: "#1A3326",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Zoom utilisateur autorisé (accessibilité WCAG 1.4.4).
+  maximumScale: 5,
+  userScalable: true,
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
 };

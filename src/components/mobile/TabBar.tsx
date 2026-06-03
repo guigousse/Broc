@@ -99,7 +99,7 @@ const tabBtn: CSSProperties = {
   border: "none",
   cursor: "pointer",
   fontFamily: "var(--font-mono)",
-  fontSize: 8,
+  fontSize: "clamp(8px, 2.2vw, 10px)",
   letterSpacing: "0.06em",
   textTransform: "uppercase",
   color: "var(--brass-300)",
@@ -113,8 +113,8 @@ const tabBtn: CSSProperties = {
 
 const iconBox: CSSProperties = {
   position: "relative",
-  width: 32,
-  height: 32,
+  width: "clamp(30px, 8vw, 38px)",
+  height: "clamp(30px, 8vw, 38px)",
   display: "grid",
   placeItems: "center",
   border: "1px solid var(--brass-500)",
@@ -152,6 +152,8 @@ export function TabBar() {
           <button
             key={tab.path}
             type="button"
+            aria-current={active ? "page" : undefined}
+            aria-label={tab.label}
             onClick={() => {
               playClick();
               if (!active) router.push(tab.path);
@@ -169,7 +171,7 @@ export function TabBar() {
               }}
             >
               <Icon
-                size={18}
+                size={20}
                 strokeWidth={1.5}
                 color={active ? "var(--forest-800)" : "var(--brass-300)"}
               />

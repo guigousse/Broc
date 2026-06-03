@@ -604,8 +604,8 @@ export default function VitrineJourneePage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-              gap: 10,
+              gridTemplateColumns: "repeat(auto-fill, minmax(var(--card-w), 1fr))",
+              gap: "var(--gutter)",
             }}
           >
             {(state.vitrine?.objets ?? []).map((e) => (

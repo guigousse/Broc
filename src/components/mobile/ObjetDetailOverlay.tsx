@@ -28,7 +28,7 @@ const backdrop: CSSProperties = {
   padding: "20px",
 };
 
-const CARD_WIDTH = 290;
+const CARD_WIDTH = "min(290px, 86vw)";
 
 const card: CSSProperties = {
   width: CARD_WIDTH,

@@ -96,7 +96,13 @@ const newBadge: CSSProperties = {
 
 export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(var(--card-w), 1fr))",
+        gap: "var(--gutter)",
+      }}
+    >
       {slots.map((s) => {
         const isDonne = s.donation !== null;
         const isVu = !isDonne && s.vu;
