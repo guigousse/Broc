@@ -9,7 +9,7 @@ import {
   panoramaZoneAnchorSelector,
 } from "./AtelierPanorama";
 import { AtelierScene } from "./AtelierScene";
-import { zoneToTab } from "./layout";
+import { ATELIER_LAYOUT, zoneToTab } from "./layout";
 import { useGame } from "@/context/GameContext";
 
 interface AtelierPanoramaViewProps {
@@ -17,30 +17,30 @@ interface AtelierPanoramaViewProps {
   activeTab: "stockage" | "atelier";
 }
 
-const fabRow: CSSProperties = {
-  position: "fixed",
-  left: 0,
-  right: 0,
-  bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom) + 12px)",
-  display: "flex",
-  justifyContent: "center",
-  pointerEvents: "none",
-  zIndex: 25,
-};
-
-const fabBtn: CSSProperties = {
-  pointerEvents: "auto",
-  padding: "10px 18px",
-  border: "1.5px solid var(--brass-500)",
-  background: "var(--forest-800)",
-  color: "var(--brass-100)",
-  fontFamily: "var(--font-display)",
-  fontSize: 11,
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-  cursor: "pointer",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
-};
+// Hotspot diégétique : zone cliquable transparente positionnée sur un
+// objet du décor (étagère, établi…). Pas de FAB flottant — on clique
+// directement sur le meuble. Évite de dépendre de la nav /atelier ↔
+// /stockage pour décider quel bouton afficher.
+function hotspotStyle(
+  obj: (typeof ATELIER_LAYOUT.objets)[keyof typeof ATELIER_LAYOUT.objets],
+  heightPct: number,
+): CSSProperties {
+  return {
+    position: "absolute",
+    left: `${obj.left}vw`,
+    bottom: `${obj.bottom}%`,
+    width: `${obj.width}vw`,
+    height: `${heightPct}%`,
+    background: "transparent",
+    border: "none",
+    padding: 0,
+    margin: 0,
+    cursor: "pointer",
+    pointerEvents: "auto",
+    // Pas de tap highlight bleu (couvert globalement, mais on est défensif).
+    WebkitTapHighlightColor: "transparent",
+  };
+}
 
 /**
  * Vue plein écran du panorama Atelier+Stockage.
@@ -161,11 +161,6 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
   // (cf. AtelierPanorama). On utilise donc `activeTab` au mount uniquement.
   const initialZone = activeTab === "stockage" ? "stockage" : "etabli";
 
-  const gestionPath =
-    activeTab === "stockage" ? "/stockage/gerer" : "/atelier/gerer";
-  const gestionLabel =
-    activeTab === "stockage" ? "Gérer le stock" : "Gérer l'établi";
-
   return (
     <MobileLayout
       header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
@@ -185,18 +180,25 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
           initialZone={initialZone}
           onScrollPos={handleScrollPos}
         >
-          <AtelierScene />
+          <AtelierScene>
+            {/* Hotspots cliquables sur les meubles du décor : remplacent
+                le FAB "Gérer le stock / l'établi". Indépendants de la
+                nav atelier ↔ stockage : où qu'on soit, taper l'étagère
+                ouvre le stock, taper l'établi ouvre la gestion atelier. */}
+            <button
+              type="button"
+              onClick={() => router.push("/stockage/gerer")}
+              aria-label="Ouvrir le stockage"
+              style={hotspotStyle(ATELIER_LAYOUT.objets.etagere, 55)}
+            />
+            <button
+              type="button"
+              onClick={() => router.push("/atelier/gerer")}
+              aria-label="Ouvrir l'établi"
+              style={hotspotStyle(ATELIER_LAYOUT.objets.etabli, 45)}
+            />
+          </AtelierScene>
         </AtelierPanorama>
-      </div>
-
-      <div style={fabRow}>
-        <button
-          type="button"
-          onClick={() => router.push(gestionPath)}
-          style={fabBtn}
-        >
-          {gestionLabel}
-        </button>
       </div>
     </MobileLayout>
   );
