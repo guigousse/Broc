@@ -16,6 +16,11 @@ interface ItemImageProps {
   fallbackIconColor?: string;
   /** Alt text pour l'image. */
   alt?: string;
+  /**
+   * Si vrai, l'image est rendue à 80 % du conteneur (laisse 20 % de marge
+   * autour). Utilisé dans les tuiles où le fond coloré doit rester visible.
+   */
+  padded?: boolean;
 }
 
 const wrapper: CSSProperties = {
@@ -33,6 +38,7 @@ export function ItemImage({
   fallbackIconSize = 40,
   fallbackIconColor = "var(--brass-700)",
   alt = "",
+  padded = false,
 }: ItemImageProps) {
   const src = getItemImageUrl(templateId);
   if (!src) {
@@ -47,6 +53,7 @@ export function ItemImage({
       </div>
     );
   }
+  const imgSize = padded ? "80%" : "100%";
   return (
     <div style={wrapper}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -54,8 +61,8 @@ export function ItemImage({
         src={src}
         alt={alt}
         style={{
-          width: "100%",
-          height: "100%",
+          width: imgSize,
+          height: imgSize,
           objectFit: fit,
           display: "block",
         }}

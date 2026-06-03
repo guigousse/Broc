@@ -94,10 +94,11 @@ export function AtelierItemRow({
         <ItemImage
           templateId={objet.templateId}
           categorie={objet.categorie}
-          fit="cover"
+          fit="contain"
           fallbackIconSize={20}
           fallbackIconColor={rarityColors.thumbIcon}
           alt={objet.nom}
+          padded
         />
       </div>
       <div style={{ minWidth: 0 }}>

@@ -175,10 +175,11 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
                 <ItemImage
                   templateId={s.templateId}
                   categorie={s.categorie}
-                  fit="cover"
+                  fit="contain"
                   fallbackIconSize={36}
                   fallbackIconColor={iconColor}
                   alt={s.nom}
+                  padded
                 />
               </div>
             )}

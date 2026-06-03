@@ -4,6 +4,8 @@ import { useEffect, type CSSProperties } from "react";
 import { Play, Pause, SkipForward, ExternalLink } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { vinylSunoPageUrl } from "@/data/vinylesAudio";
+import { getRarityColors } from "@/lib/rarityColors";
+import { getTemplate } from "@/data/objetTemplates";
 import type { CollectionSlot } from "@/types/game";
 
 interface GramophoneSheetProps {
@@ -148,19 +150,27 @@ const bandeWrap: CSSProperties = {
 const tileBase: CSSProperties = {
   flex: "0 0 64px",
   height: 64,
-  border: "1px solid var(--brass-700)",
-  background: "var(--paper-100)",
   borderRadius: 4,
   overflow: "hidden",
   cursor: "pointer",
   padding: 0,
 };
 
-const tileActif: CSSProperties = {
-  ...tileBase,
-  borderColor: "var(--brass-300)",
-  boxShadow: "0 0 0 2px var(--brass-300)",
-};
+function vinylTileStyle(
+  vinyl: CollectionSlot,
+  actif: boolean,
+): CSSProperties {
+  const tpl = getTemplate(vinyl.templateId);
+  const colors = getRarityColors(vinyl.rarete, !!tpl?.unique);
+  return {
+    ...tileBase,
+    border: `1px solid ${colors.outer}`,
+    background: colors.thumbBg,
+    ...(actif
+      ? { boxShadow: "0 0 0 2px var(--brass-300)" }
+      : null),
+  };
+}
 
 const emptyMsg: CSSProperties = {
   textAlign: "center",
@@ -327,13 +337,14 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                       onClick={() => onSelect(idx)}
                       title={v.nom}
                       aria-label={v.nom}
-                      style={actif ? tileActif : tileBase}
+                      style={vinylTileStyle(v, actif)}
                     >
                       <ItemImage
                         templateId={v.templateId}
                         categorie="Musique"
-                        fit="cover"
+                        fit="contain"
                         fallbackIconSize={28}
+                        padded
                       />
                     </button>
                   );

@@ -24,53 +24,57 @@ export function getRarityColors(
   unique = false,
 ): RarityColors {
   if (unique) {
+    // Violet pastel
     return {
-      outer: "#2E5F7F",
-      inner: "#5BA8C9",
-      accent: "#A8E0F0",
-      shadow: "rgba(46,95,127,0.5)",
+      outer: "#B89AD9",
+      inner: "#C3A8DE",
+      accent: "#E5D5F1",
+      shadow: "rgba(184,154,217,0.4)",
       thumbBg:
-        "linear-gradient(135deg, #A8E0F0 0%, #5BA8C9 55%, #2E5F7F 100%)",
-      thumbIcon: "#FBF7EE",
+        "linear-gradient(135deg, #E5D5F1 0%, #D0BBE6 100%)",
+      thumbIcon: "#4B2A6B",
       prestige: 3,
       label: "unique",
     };
   }
   switch (rarete) {
     case "legendaire":
+      // Rouge pastel
       return {
-        outer: "#B8881A",
-        inner: "#E8C657",
-        accent: "#FFE48F",
-        shadow: "rgba(184,136,26,0.45)",
+        outer: "#D9A0A0",
+        inner: "#E0B0B0",
+        accent: "#F4D9D9",
+        shadow: "rgba(217,160,160,0.4)",
         thumbBg:
-          "linear-gradient(135deg, #FFE48F 0%, #E8C657 50%, #B8881A 100%)",
-        thumbIcon: "#3D2A05",
+          "linear-gradient(135deg, #F4D9D9 0%, #E8BFBF 100%)",
+        thumbIcon: "#6B2E2E",
         prestige: 2,
         label: "legendaire",
       };
     case "rare":
+      // Bleu pastel
       return {
-        outer: "#4F5C6B",
-        inner: "#9BA8B5",
-        accent: "#D4DCE3",
-        shadow: "rgba(79,92,107,0.4)",
+        outer: "#8FB2D0",
+        inner: "#A8C2D9",
+        accent: "#DCEAF3",
+        shadow: "rgba(143,178,208,0.35)",
         thumbBg:
-          "linear-gradient(135deg, #D4DCE3 0%, #9BA8B5 50%, #4F5C6B 100%)",
-        thumbIcon: "#1B2530",
+          "linear-gradient(135deg, #DCEAF3 0%, #C0D6E8 100%)",
+        thumbIcon: "#2E4F6B",
         prestige: 1,
         label: "rare",
       };
     case "commun":
     default:
+      // Blanc cassé / beige
       return {
-        outer: "#5D3F1F",
-        inner: "#8C6B3E",
-        accent: "#B89968",
-        shadow: "rgba(93,63,31,0.3)",
+        outer: "#C9B98C",
+        inner: "#D9C9A0",
+        accent: "#F4ECD6",
+        shadow: "rgba(201,185,140,0.3)",
         thumbBg:
-          "linear-gradient(135deg, #B89968 0%, #8C6B3E 50%, #5D3F1F 100%)",
-        thumbIcon: "#FBF7EE",
+          "linear-gradient(135deg, #F4ECD6 0%, #E6D9B4 100%)",
+        thumbIcon: "#5D4F1F",
         prestige: 0,
         label: "commun",
       };
