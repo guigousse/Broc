@@ -294,7 +294,6 @@ export default function SessionChinePage() {
         buttons={[
           {
             label: "Rentrer · fin de journée",
-            variant: "secondary",
             onClick: handleRentrer,
           },
         ]}

@@ -58,17 +58,17 @@ export function ItemCard({
         padding: 6,
         display: "flex",
         flexDirection: "column",
-        gap: 6,
+        gap: 10,
         opacity: dimmed ? 0.5 : 1,
         ...style,
       }}
     >
-      {/* ─── Zone image carrée ─── */}
+      {/* ─── Zone image carrée — fond teinté par rareté (cf. CollectionGrid) ─── */}
       <div
         style={{
           position: "relative",
           aspectRatio: "1 / 1",
-          background: "var(--paper-100)",
+          background: colors.thumbBg,
           overflow: "hidden",
           filter: dimmed ? "grayscale(1)" : undefined,
         }}
@@ -76,20 +76,21 @@ export function ItemCard({
         <ItemImage
           templateId={templateId}
           categorie={categorie}
-          fit="cover"
+          fit="contain"
           fallbackIconSize={42}
           fallbackIconColor={colors.outer}
           alt={nom}
+          padded
         />
 
-        {/* Étoiles d'état — ligne centrée en bas, style Collection (sans
-            plaque), drop-shadow pour rester lisible sur n'importe quel fond. */}
+        {/* Étoiles d'état — ligne centrée juste sous l'image (zone teintée),
+            style Collection. Drop-shadow pour rester lisible. */}
         <div
           style={{
             position: "absolute",
             left: 0,
             right: 0,
-            bottom: 4,
+            bottom: 6,
             display: "flex",
             justifyContent: "center",
             gap: 2,

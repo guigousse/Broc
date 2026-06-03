@@ -23,32 +23,37 @@ const wrapStyle: CSSProperties = {
   zIndex: 25,
 };
 
+// Aligné sur FloatingActionButton (cf. sheets QG : Chiner / Étaler) — même
+// présence visuelle (radius, padding, ombre portée, highlight intérieur).
 const baseBtn: CSSProperties = {
   flex: 1,
-  padding: "12px 10px",
+  padding: "14px 22px",
   fontFamily: "var(--font-display)",
-  fontSize: 11,
-  letterSpacing: "0.18em",
+  fontSize: 12,
+  letterSpacing: "0.20em",
   textTransform: "uppercase",
-  border: "1px solid var(--brass-500)",
+  borderRadius: 6,
   textAlign: "center",
   cursor: "pointer",
+  whiteSpace: "nowrap",
 };
 
 const primaryBtn: CSSProperties = {
   ...baseBtn,
   background: "var(--forest-800)",
   color: "var(--brass-300)",
+  border: "1px solid var(--brass-500)",
   boxShadow:
-    "inset 0 0 0 2px var(--forest-800), inset 0 0 0 3px var(--brass-500), 0 4px 10px rgba(40,25,5,0.18)",
+    "0 6px 14px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,225,160,0.20)",
 };
 
 const secondaryBtn: CSSProperties = {
   ...baseBtn,
   background: "var(--paper-100)",
   color: "var(--forest-800)",
+  border: "1px solid var(--brass-700)",
   boxShadow:
-    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500), 0 4px 10px rgba(40,25,5,0.10)",
+    "0 6px 14px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.5)",
 };
 
 export function ActionFab({ buttons }: ActionFabProps) {
