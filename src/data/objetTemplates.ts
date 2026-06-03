@@ -37,7 +37,7 @@ const MUSIQUE_C: Row[] = [
   ["mus.cd_nirvana_in_utero", "Coffret CD Nirvana 'In Utero'", 18],
   ["mus.harmonica_hohner", "Harmonica chromatique Hohner", 35],
   ["mus.vinyle_brel_amsterdam", "Vinyle Jacques Brel 'Amsterdam'", 22],
-  ["mus.vinyle_brassens_jeanne", "Vinyle Brassens 'La Jeanne'", 24],
+  ["mus.vinyle_brassens_jeanne", "Vinyle Victor de la Brasse 'Bibelot'", 24],
   ["mus.vinyle_aznavour_emmenez", "Vinyle Aznavour 'Emmenez-moi'", 18],
   ["mus.vinyle_piaf_non", "Vinyle Judith Loiseau 'Oui, je regrette tout'", 28],
   ["mus.vinyle_beatles_abbey_road", "Vinyle Beatles 'Abbey Road'", 55],
