@@ -172,7 +172,7 @@ export default function SessionChinePage() {
 
   const handleRetourQg = () => {
     if (sessionEnregistreeRef.current) {
-      router.push("/qg");
+      router.push("/bureau");
       return;
     }
     sessionEnregistreeRef.current = true;
@@ -188,7 +188,7 @@ export default function SessionChinePage() {
       });
     }
     avancerJour();
-    router.push("/qg");
+    router.push("/bureau");
   };
 
   if (resumeOuvert) {

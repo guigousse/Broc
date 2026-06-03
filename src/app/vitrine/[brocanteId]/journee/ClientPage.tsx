@@ -501,7 +501,7 @@ export default function VitrineJourneePage() {
   };
 
   const handleRetourQg = () => {
-    router.push("/qg");
+    router.push("/bureau");
   };
 
   const progress = (1 - tempsRestant / JOURNEE_DUREE_SECONDES) * 100;

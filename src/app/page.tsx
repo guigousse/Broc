@@ -24,7 +24,7 @@ export default function TitleScreen() {
 
   const onContinuer = () => {
     playClick();
-    if (aSauvegarde) window.location.href = "/qg";
+    if (aSauvegarde) window.location.href = "/bureau";
   };
 
   const onReglages = () => {

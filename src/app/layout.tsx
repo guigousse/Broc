@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { GameProvider } from "@/context/GameContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { TabBar } from "@/components/mobile/TabBar";
+import { SwipePager } from "@/components/mobile/SwipePager";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -40,7 +41,7 @@ export default function RootLayout({
       <body style={{ minHeight: "100dvh", overflowX: "hidden" }}>
         <SettingsProvider>
           <GameProvider>
-            {children}
+            <SwipePager>{children}</SwipePager>
             <TabBar />
           </GameProvider>
         </SettingsProvider>

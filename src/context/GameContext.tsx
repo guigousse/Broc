@@ -431,7 +431,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       passagesSansChat: 0,
       declencheursDeclenches: [ID_LETTRE_MAMAN_DEBUT],
     });
-    router.push("/qg");
+    router.push("/bureau");
   }, [router]);
 
   const ajouterObjet = useCallback((objet: Objet) => {

@@ -430,7 +430,7 @@ export default function VitrineBrocantePage() {
             variant: "secondary",
             onClick: () => {
               viderVitrine();
-              router.push("/qg");
+              router.push("/bureau");
             },
           },
           {

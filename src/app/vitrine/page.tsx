@@ -65,7 +65,7 @@ export default function VitrineListePage() {
           titre="Exposer"
           sousTitre={`${dejaCount} brocante${dejaCount > 1 ? "s" : ""} ouverte${dejaCount > 1 ? "s" : ""}`}
           budget={state.budget}
-          onBack={() => router.push("/qg")}
+          onBack={() => router.push("/bureau")}
         />
       }
       stickyTop={

@@ -2,7 +2,7 @@
   "name": "Broc — Brocante simulation",
   "short_name": "Broc",
   "description": "Chinez, restaurez, négociez. Faites parler les objets de leur siècle.",
-  "start_url": "/qg",
+  "start_url": "/bureau",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FBF7EE",

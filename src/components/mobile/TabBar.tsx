@@ -15,9 +15,24 @@ interface TabDef {
   badge?: (state: GameState) => number;
 }
 
-const tabs: TabDef[] = [
-  { icon: Home, label: "QG", path: "/qg" },
-  { icon: Warehouse, label: "Stockage", path: "/stockage" },
+/**
+ * Ordre cyclique : Bibliothèque → Bureau → Atelier → Stockage → Collection → (boucle)
+ * L'onglet actif est toujours rendu en position centrale (index 2). Les autres
+ * sont placés autour selon leur offset cyclique. Le swipe horizontal sur le
+ * contenu (cf. SwipePager) suit ce même ordre.
+ */
+export const TAB_ORDER: TabDef[] = [
+  {
+    icon: BookOpen,
+    label: "Bibliothèque",
+    path: "/bibliotheque",
+    badge: (state) =>
+      Object.values(state.competenceTrees).reduce(
+        (s, t) => s + t.pointsDisponibles,
+        0,
+      ),
+  },
+  { icon: Home, label: "Bureau", path: "/bureau" },
   {
     icon: Anvil,
     label: "Atelier",
@@ -29,22 +44,28 @@ const tabs: TabDef[] = [
           (o.enRestauration.jourFin ?? Infinity) <= state.jourActuel,
       ).length,
   },
+  { icon: Warehouse, label: "Stockage", path: "/stockage" },
   { icon: Album, label: "Collection", path: "/collection" },
-  {
-    icon: BookOpen,
-    label: "Compét.",
-    path: "/competences",
-    badge: (state) =>
-      Object.values(state.competenceTrees).reduce(
-        (s, t) => s + t.pointsDisponibles,
-        0,
-      ),
-  },
 ];
 
-/** Routes sur lesquelles la tab bar est masquée (sessions plein écran). */
 const HIDDEN_EXACT = new Set(["/"]);
 const HIDDEN_PREFIXES = ["/chiner/", "/vitrine/"];
+
+/** Renvoie l'index dans TAB_ORDER de la route active, -1 si aucune ne matche. */
+export function findActiveTabIndex(pathname: string): number {
+  return TAB_ORDER.findIndex(
+    (t) => pathname === t.path || pathname.startsWith(`${t.path}/`),
+  );
+}
+
+/** Vrai si la TabBar doit être visible sur cette route. */
+export function isTabBarRoute(pathname: string): boolean {
+  if (HIDDEN_EXACT.has(pathname)) return false;
+  for (const p of HIDDEN_PREFIXES) {
+    if (pathname.startsWith(p)) return false;
+  }
+  return true;
+}
 
 const wrapStyle: CSSProperties = {
   position: "fixed",
@@ -71,11 +92,15 @@ const tabBtn: CSSProperties = {
   border: "none",
   cursor: "pointer",
   fontFamily: "var(--font-mono)",
-  fontSize: 9,
-  letterSpacing: "0.1em",
+  fontSize: 8.5,
+  letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--brass-300)",
   padding: "4px 0",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  minWidth: 0,
 };
 
 const iconBox: CSSProperties = {
@@ -95,25 +120,33 @@ export function TabBar() {
   const { playClick } = useSettings();
 
   if (!isHydrated || !state) return null;
-  if (HIDDEN_EXACT.has(pathname)) return null;
-  for (const p of HIDDEN_PREFIXES) {
-    if (pathname.startsWith(p)) return null;
-  }
+  if (!isTabBarRoute(pathname)) return null;
+
+  const activeIdx = findActiveTabIndex(pathname);
+  // Si aucune route ne matche (cas dégénéré), on retombe sur Bureau au centre.
+  const center = activeIdx >= 0 ? activeIdx : 1;
+  const N = TAB_ORDER.length;
+
+  // Slot 0..4 → on remplit en partant du centre (slot 2 = actif).
+  const slots = Array.from({ length: N }, (_, i) => {
+    const offset = i - 2; // -2, -1, 0, +1, +2
+    const idx = (center + offset + N) % N;
+    return { tab: TAB_ORDER[idx], offset };
+  });
 
   return (
     <nav aria-label="Navigation principale" style={wrapStyle}>
-      {tabs.map((t) => {
-        const Icon = t.icon;
-        const active =
-          pathname === t.path || pathname.startsWith(`${t.path}/`);
-        const count = t.badge ? t.badge(state) : 0;
+      {slots.map(({ tab, offset }) => {
+        const Icon = tab.icon;
+        const active = offset === 0;
+        const count = tab.badge ? tab.badge(state) : 0;
         return (
           <button
-            key={t.path}
+            key={tab.path}
             type="button"
             onClick={() => {
               playClick();
-              router.push(t.path);
+              if (!active) router.push(tab.path);
             }}
             style={{
               ...tabBtn,
@@ -121,7 +154,7 @@ export function TabBar() {
             }}
           >
             <span
-              data-fly-target={t.path}
+              data-fly-target={tab.path}
               style={{
                 ...iconBox,
                 background: active ? "var(--brass-500)" : "transparent",
@@ -138,7 +171,7 @@ export function TabBar() {
                 </span>
               )}
             </span>
-            {t.label}
+            {tab.label}
           </button>
         );
       })}
