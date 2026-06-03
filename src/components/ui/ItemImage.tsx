@@ -1,6 +1,7 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import Image from "next/image";
+import { useState, type CSSProperties } from "react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { getItemImageUrl } from "@/lib/itemImages";
 import type { CategorieObjet } from "@/types/game";
@@ -21,15 +22,26 @@ interface ItemImageProps {
    * autour). Utilisé dans les tuiles où le fond coloré doit rester visible.
    */
   padded?: boolean;
+  /**
+   * Attribut `sizes` passé à next/image. Doit refléter la largeur réelle
+   * d'affichage pour que Next serve la variante optimale. Par défaut on
+   * cible une carte de grille mobile (~150px sur la majorité des écrans).
+   */
+  sizes?: string;
+  /** Charger en priorité (above-the-fold, overlay détail…). */
+  priority?: boolean;
 }
 
 const wrapper: CSSProperties = {
+  position: "relative",
   width: "100%",
   height: "100%",
   display: "grid",
   placeItems: "center",
   overflow: "hidden",
 };
+
+const DEFAULT_SIZES = "(max-width: 600px) 45vw, 200px";
 
 export function ItemImage({
   templateId,
@@ -39,8 +51,12 @@ export function ItemImage({
   fallbackIconColor = "var(--brass-700)",
   alt = "",
   padded = false,
+  sizes = DEFAULT_SIZES,
+  priority = false,
 }: ItemImageProps) {
   const src = getItemImageUrl(templateId);
+  const [loaded, setLoaded] = useState(false);
+
   if (!src) {
     return (
       <div style={wrapper}>
@@ -53,20 +69,43 @@ export function ItemImage({
       </div>
     );
   }
+
   const imgSize = padded ? "80%" : "100%";
+
   return (
     <div style={wrapper}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={alt}
+      {/* Skeleton — visible tant que l'image n'a pas chargé */}
+      {!loaded && (
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(110deg, var(--paper-200) 30%, var(--brass-100) 50%, var(--paper-200) 70%)",
+            backgroundSize: "200% 100%",
+            animation: "broc-skeleton-shimmer 1.2s ease-in-out infinite",
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      <div
         style={{
+          position: "relative",
           width: imgSize,
           height: imgSize,
-          objectFit: fit,
-          display: "block",
         }}
-      />
+      >
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={sizes}
+          priority={priority}
+          onLoad={() => setLoaded(true)}
+          style={{ objectFit: fit, display: "block" }}
+        />
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight, Store } from "lucide-react";
 import type { Brocante, GameState } from "@/types/game";
 import { coutEntree } from "@/data/brocantes";
@@ -236,15 +237,13 @@ export function BrocanteCarousel({
               <article key={b.id} style={slideStyle} aria-roledescription="slide">
                 <div style={imgFrame}>
                   {imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={imageUrl}
                       alt={b.nom}
+                      fill
+                      sizes="(max-width: 600px) 86vw, 320px"
                       style={{
-                        width: "100%",
-                        height: "100%",
                         objectFit: "cover",
-                        display: "block",
                         filter: debloquee
                           ? undefined
                           : "grayscale(1) brightness(0.95)",

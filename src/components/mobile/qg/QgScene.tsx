@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "./layout";
 import { useQgObjet, useQgEditContext } from "./dev/QgEditContext";
@@ -48,11 +49,14 @@ export function QgScene({ children }: QgSceneProps) {
   const ctx = useQgEditContext();
   return (
     <div style={wrapStyle} aria-label="Décor du QG" data-qg-scene="1">
-      <img
+      <Image
         src="/qg/fond-cabinet.png"
         alt=""
-        style={layerStyle(1)}
+        fill
+        sizes={`${QG_LAYOUT.panoramaWidth}vw`}
+        priority
         draggable={false}
+        style={layerStyle(1)}
       />
       <div style={objectsLayer}>
         {children}

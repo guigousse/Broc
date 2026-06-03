@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { Brocante, GameState } from "@/types/game";
 import { coutEntree } from "@/data/brocantes";
@@ -125,15 +126,13 @@ export function BrocanteCard({
       {/* Image carrée à gauche */}
       <div style={imageBoxStyle}>
         {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={imageUrl}
             alt={brocante.nom}
+            fill
+            sizes="96px"
             style={{
-              width: "100%",
-              height: "100%",
               objectFit: "cover",
-              display: "block",
               filter: debloquee ? undefined : "grayscale(1) brightness(0.85)",
             }}
           />
