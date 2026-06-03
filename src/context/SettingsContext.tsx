@@ -46,9 +46,13 @@ interface SettingsValue {
   startCatPurr: () => void;
   stopCatPurr: () => void;
   playVinyl: (url: string, onEnded?: () => void) => void;
+  /** Séquence audio Gramophone : Vinyl 1 → +1s → Vinyl 2 + musique. */
+  playGramophoneSong: (url: string, onEnded?: () => void) => void;
   pauseVinyl: () => void;
   resumeVinyl: () => void;
   stopVinyl: () => void;
+  /** Arrêt complet du gramophone (musique + crépitement + timers). */
+  stopGramophone: () => void;
   setVinylTargetVolume: (v: number) => void;
   startNeedle: () => void;
   stopNeedle: () => void;
@@ -140,9 +144,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+  const playGramophoneSong = useCallback(
+    (url: string, onEnded?: () => void) => {
+      void audioManager.playGramophoneSong(url, onEnded);
+    },
+    [],
+  );
   const pauseVinyl = useCallback(() => audioManager.pauseVinyl(), []);
   const resumeVinyl = useCallback(() => audioManager.resumeVinyl(), []);
   const stopVinyl = useCallback(() => audioManager.stopVinyl(), []);
+  const stopGramophone = useCallback(() => audioManager.stopGramophone(), []);
   const setVinylTargetVolume = useCallback(
     (v: number) => audioManager.setVinylTargetVolume(v),
     [],
@@ -174,9 +185,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       startCatPurr,
       stopCatPurr,
       playVinyl,
+      playGramophoneSong,
       pauseVinyl,
       resumeVinyl,
       stopVinyl,
+      stopGramophone,
       setVinylTargetVolume,
       startNeedle,
       stopNeedle,
@@ -198,9 +211,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       startCatPurr,
       stopCatPurr,
       playVinyl,
+      playGramophoneSong,
       pauseVinyl,
       resumeVinyl,
       stopVinyl,
+      stopGramophone,
       setVinylTargetVolume,
       startNeedle,
       stopNeedle,

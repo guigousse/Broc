@@ -33,6 +33,7 @@ class AudioManager {
   private vinylSource?: MediaElementAudioSourceNode;
   private vinylGain?: GainNode;
   private vinylEndedHandler?: () => void;
+  private gramoTimers: number[] = [];
   private buffers: Map<string, AudioBuffer> = new Map();
   prefs: AudioPrefs = { ...DEFAULT_AUDIO_PREFS };
 
@@ -518,12 +519,16 @@ class AudioManager {
     this.vinylGain.gain.linearRampToValueAtTime(v, now + 0.3);
   }
 
-  /** Son d'aiguille en boucle (légèrement audible). */
+  /**
+   * Boucle "vinyl noise" du gramophone (crépitement permanent). Conserve
+   * le nom historique `startNeedle` côté API publique pour ne pas casser
+   * les appelants, mais charge désormais /sounds/vinyl-noise-loop.mp3.
+   */
   async startNeedle(): Promise<void> {
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     if (this.needleSource) return;
-    const buf = await this.loadBuffer("/sounds/needle.mp3");
+    const buf = await this.loadBuffer("/sounds/vinyl-noise-loop.mp3");
     if (!buf) return;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
@@ -533,7 +538,7 @@ class AudioManager {
     src.connect(gain);
     gain.connect(this.master);
     const now = this.ctx.currentTime;
-    gain.gain.linearRampToValueAtTime(0.18, now + 0.4);
+    gain.gain.linearRampToValueAtTime(0.28, now + 0.4);
     src.start();
     this.needleSource = src;
     this.needleGain = gain;
@@ -550,6 +555,58 @@ class AudioManager {
     src.stop(now + 0.31);
     this.needleSource = undefined;
     this.needleGain = undefined;
+  }
+
+  /** One-shot fire-and-forget (Vinyl 1 / Vinyl 2). */
+  private async playOneShot(url: string, volume = 1): Promise<void> {
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer(url);
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = this.ctx.createGain();
+    gain.gain.value = volume;
+    src.connect(gain);
+    gain.connect(this.master);
+    src.start();
+  }
+
+  /**
+   * Séquence audio complète au lancement d'une chanson :
+   *   t=0    Vinyl 1 (one-shot intro)
+   *   t=1s   Vinyl 2 (one-shot transition) + musique
+   *   loop   Vinyl noise (déjà lancé / ramping in)
+   * Plus de chanson à la fin : le loop continue jusqu'à stopGramophone().
+   */
+  async playGramophoneSong(
+    musicUrl: string,
+    onEnded?: () => void,
+  ): Promise<void> {
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    // Annule toute séquence en cours (musique précédente, timers).
+    this.gramoTimers.forEach((t) => window.clearTimeout(t));
+    this.gramoTimers = [];
+    this.stopVinyl();
+    // Assure le crépitement de fond.
+    void this.startNeedle();
+    // Vinyl 1 maintenant.
+    void this.playOneShot("/sounds/vinyl-1.mp3", 0.7);
+    // Vinyl 2 + musique après 1 seconde.
+    const t = window.setTimeout(() => {
+      void this.playOneShot("/sounds/vinyl-2.mp3", 0.6);
+      void this.playVinyl(musicUrl, onEnded);
+    }, 1000);
+    this.gramoTimers.push(t);
+  }
+
+  /** Arrêt complet du gramophone : musique, loop, timers en attente. */
+  stopGramophone(): void {
+    this.gramoTimers.forEach((t) => window.clearTimeout(t));
+    this.gramoTimers = [];
+    this.stopVinyl();
+    this.stopNeedle();
   }
 
   loadPersisted(): AudioPrefs {

@@ -103,10 +103,10 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     playDoorClose,
     startCatPurr,
     stopCatPurr,
-    playVinyl,
+    playGramophoneSong,
     pauseVinyl,
     resumeVinyl,
-    stopVinyl,
+    stopGramophone,
     setVinylTargetVolume,
     startNeedle,
   } = useSettings();
@@ -279,7 +279,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
     return () => {
-      stopVinyl();
+      // Sortie du panorama : on coupe entièrement le gramophone (musique
+      // + crépitement + timers de la séquence Vinyl 1/2).
+      stopGramophone();
       try {
         window.localStorage.setItem(
           GRAMO_SESSION_KEY,
@@ -301,16 +303,22 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       vinyleCourantIdx === null ? 0 : (vinyleCourantIdx + 1) % vinyles.length;
     setVinyleCourantIdx(next);
     setVinyleEnLecture(true);
-    playVinyl(vinylAudioUrl(vinyles[next].templateId), () => handleNext());
-  }, [vinyles, vinyleCourantIdx, playVinyl]);
+    // playGramophoneSong gère la séquence Vinyl 1 → +1s → Vinyl 2 +
+    // musique. Le crépitement de fond (vinyl-noise-loop) est déjà
+    // assuré par startNeedle() invoqué en interne.
+    playGramophoneSong(vinylAudioUrl(vinyles[next].templateId), () =>
+      handleNext(),
+    );
+  }, [vinyles, vinyleCourantIdx, playGramophoneSong]);
 
   const handlePlayPause = useCallback(() => {
     if (vinyles.length === 0) return;
     if (vinyleCourantIdx === null) {
       setVinyleCourantIdx(0);
       setVinyleEnLecture(true);
-      void startNeedle();
-      playVinyl(vinylAudioUrl(vinyles[0].templateId), () => handleNext());
+      playGramophoneSong(vinylAudioUrl(vinyles[0].templateId), () =>
+        handleNext(),
+      );
       return;
     }
     if (vinyleEnLecture) {
@@ -324,10 +332,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     vinyles,
     vinyleCourantIdx,
     vinyleEnLecture,
-    playVinyl,
+    playGramophoneSong,
     pauseVinyl,
     resumeVinyl,
-    startNeedle,
     handleNext,
   ]);
 
@@ -336,10 +343,11 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       if (idx < 0 || idx >= vinyles.length) return;
       setVinyleCourantIdx(idx);
       setVinyleEnLecture(true);
-      void startNeedle();
-      playVinyl(vinylAudioUrl(vinyles[idx].templateId), () => handleNext());
+      playGramophoneSong(vinylAudioUrl(vinyles[idx].templateId), () =>
+        handleNext(),
+      );
     },
-    [vinyles, playVinyl, startNeedle, handleNext],
+    [vinyles, playGramophoneSong, handleNext],
   );
 
   const categoriesConnuesTendance = useMemo(() => {
