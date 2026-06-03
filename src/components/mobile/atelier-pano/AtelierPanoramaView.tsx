@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
-import { AtelierPanorama } from "./AtelierPanorama";
+import {
+  AtelierPanorama,
+  ZONE_OFFSETS_VW,
+  animateScrollLeft,
+} from "./AtelierPanorama";
 import { AtelierScene } from "./AtelierScene";
 import { zoneToTab } from "./layout";
 import { useGame } from "@/context/GameContext";
@@ -63,7 +67,7 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
   // (encore au milieu de la zone de départ) déclencherait un router.replace
   // qui annulerait la navigation que l'utilisateur vient de faire.
   const programmaticScrollRef = useRef(false);
-  const programmaticTimerRef = useRef<number | null>(null);
+  const cancelAnimRef = useRef<(() => void) | null>(null);
 
   const handleScrollPos = useCallback(
     (pos: number) => {
@@ -88,17 +92,12 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     [router, activeTab],
   );
 
-  // Si l'utilisateur clique un onglet de la TabBar pendant qu'il est dans le
-  // panorama, l'`activeTab` change sans que le scroll ait bougé. On snappe
-  // alors la zone correspondante. Pendant l'animation de scroll, on bloque
-  // le handler de scroll pour qu'il ne re-route pas en arrière.
-  //
-  // ATTENTION iOS Safari : `scroll-snap-type: x mandatory` bloque/perturbe
-  // `scrollTo({behavior: "smooth"})`. On désactive le snap le temps de
-  // l'animation, on force `scrollLeft = target` en filet de sécurité, puis
-  // on restaure le snap. Sinon scrollLeft reste à la zone de départ, le
-  // prochain event de scroll voit zone=stockage et fait
-  // `router.replace("/stockage")` → la navigation s'annule.
+  // Quand activeTab change (clic TabBar OU mount sur /atelier ou /stockage),
+  // on anime le scroll du panorama vers la zone correspondante. Animation
+  // rAF maison, sans dépendre de `scrollTo({behavior:"smooth"})` ni de
+  // `scroll-snap-type` — qui sont incompatibles ensemble sur iOS Safari.
+  // Pendant l'animation, `programmaticScrollRef` bloque tout
+  // `router.replace` parasite déclenché par les events de scroll.
   useEffect(() => {
     if (activeTab === lastInternalTabRef.current) return;
     lastInternalTabRef.current = activeTab;
@@ -108,42 +107,25 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     if (!el) return;
     const vw = el.clientWidth;
     if (vw <= 0) return;
-    // Cible : Stockage → snap 18vw ; Atelier → snap 108vw (établi).
-    const targetVw = activeTab === "stockage" ? 18 : 108;
-    const targetPx = (targetVw / 100) * vw;
+    const targetPx =
+      (ZONE_OFFSETS_VW[activeTab === "stockage" ? "stockage" : "etabli"] /
+        100) *
+      vw;
+    if (cancelAnimRef.current) cancelAnimRef.current();
     programmaticScrollRef.current = true;
-    el.style.scrollSnapType = "none";
-    el.scrollTo({ left: targetPx, behavior: "smooth" });
-    if (programmaticTimerRef.current !== null) {
-      window.clearTimeout(programmaticTimerRef.current);
-    }
-    programmaticTimerRef.current = window.setTimeout(() => {
-      // Filet de sécurité : si le smooth scroll a échoué (iOS Safari +
-      // snap mandatory), on garantit l'arrivée par un set direct. On
-      // force scrollBehavior=auto le temps du set : sinon, l'élément a
-      // scrollBehavior:smooth (cf. AtelierPanorama init) qui retransforme
-      // l'assignation en smooth scroll susceptible d'échouer à nouveau.
-      const savedBehavior = el.style.scrollBehavior;
-      el.style.scrollBehavior = "auto";
-      el.scrollLeft = targetPx;
-      el.style.scrollBehavior = savedBehavior;
-      el.style.scrollSnapType = "x mandatory";
-      // Deux rAF de battement pour laisser passer les events de scroll
-      // générés par les resets ci-dessus AVANT de libérer le flag.
+    cancelAnimRef.current = animateScrollLeft(el, targetPx, 380, () => {
+      // Un rAF de battement pour laisser passer l'event de scroll du
+      // dernier frame AVANT de libérer le flag.
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          programmaticScrollRef.current = false;
-          programmaticTimerRef.current = null;
-        });
+        programmaticScrollRef.current = false;
+        cancelAnimRef.current = null;
       });
-    }, 800);
+    });
   }, [activeTab]);
 
   useEffect(() => {
     return () => {
-      if (programmaticTimerRef.current !== null) {
-        window.clearTimeout(programmaticTimerRef.current);
-      }
+      if (cancelAnimRef.current) cancelAnimRef.current();
     };
   }, []);
 

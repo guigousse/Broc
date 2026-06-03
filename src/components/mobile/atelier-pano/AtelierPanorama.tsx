@@ -14,13 +14,20 @@ interface AtelierPanoramaProps {
   onScrollPos?: (pos: number) => void;
 }
 
+// IMPORTANT : on N'UTILISE PAS `scroll-snap-type: mandatory` ici.
+// iOS Safari le rend incompatible avec tout scroll programmatique
+// (`scrollTo`, `el.scrollLeft = X`), au point que les sets sont soit
+// ignorés, soit annulés par le snap engine. Conséquence observée :
+// arrivée sur /atelier → scrollLeft reste à 0 → premier event de scroll
+// dit "zone stockage" → router.replace("/stockage") → retour systématique.
+// On gère donc le snap nous-mêmes en JS (animation rAF + snap à la fin
+// d'un swipe utilisateur, cf. plus bas).
 const containerStyle: CSSProperties = {
   position: "relative",
   width: "100%",
   height: "100%",
   overflowX: "auto",
   overflowY: "hidden",
-  scrollSnapType: "x mandatory",
   scrollBehavior: "auto",
   WebkitOverflowScrolling: "touch",
   touchAction: "pan-x",
@@ -30,27 +37,13 @@ const containerStyle: CSSProperties = {
   alignItems: "flex-end",
 };
 
-const snapAnchorStyle: CSSProperties = {
-  position: "absolute",
-  top: 0,
-  width: "100vw",
-  height: "100%",
-  scrollSnapAlign: "center",
-  pointerEvents: "none",
-};
-
 const ZONES: ZoneKey[] = ["stockage", "etabli", "coinL"];
 
 /**
  * Position de scroll (en vw) pour chaque zone. Plutôt que des multiples
  * stricts de 100vw (qui placeraient les snaps aux tiers exacts de l'image),
  * on décale légèrement pour centrer visuellement l'élément clé de chaque
- * zone dans le viewport :
- *   • zone 0 (stockage) — l'étagère est dans la moitié droite du tiers
- *     gauche, on décale donc la snap vers la droite pour la recentrer.
- *   • zone 1 (établi)   — déjà parfaitement centrée à 50% de l'image.
- *   • zone 2 (coin L)   — le retour d'établi est dans la moitié gauche du
- *     tiers droit, on décale donc la snap vers la gauche.
+ * zone dans le viewport.
  */
 const ZONE_OFFSETS_VW: Record<ZoneKey, number> = {
   stockage: 18,
@@ -58,70 +51,128 @@ const ZONE_OFFSETS_VW: Record<ZoneKey, number> = {
   coinL: 195,
 };
 
+/** Anime scrollLeft vers `targetPx` en ~`duration` ms via rAF (easeOutCubic). */
+function animateScrollLeft(
+  el: HTMLElement,
+  targetPx: number,
+  duration: number,
+  onDone?: () => void,
+): () => void {
+  const startPx = el.scrollLeft;
+  const distance = targetPx - startPx;
+  if (Math.abs(distance) < 1) {
+    onDone?.();
+    return () => {};
+  }
+  const start = performance.now();
+  let rafId = 0;
+  let cancelled = false;
+  const step = () => {
+    if (cancelled) return;
+    const t = Math.min((performance.now() - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.scrollLeft = startPx + distance * eased;
+    if (t < 1) {
+      rafId = requestAnimationFrame(step);
+    } else {
+      el.scrollLeft = targetPx;
+      onDone?.();
+    }
+  };
+  rafId = requestAnimationFrame(step);
+  return () => {
+    cancelled = true;
+    cancelAnimationFrame(rafId);
+  };
+}
+
 export function AtelierPanorama({
   initialZone = "etabli",
   children,
   onScrollPos,
 }: AtelierPanoramaProps) {
   const ref = useRef<HTMLDivElement>(null);
-  // Garde un pointeur stable vers le dernier callback : évite que les
-  // re-rendus du parent (via setState) remontent l'effet d'init et fassent
-  // sauter le scroll en plein swipe.
   const onScrollPosRef = useRef(onScrollPos);
   useEffect(() => {
     onScrollPosRef.current = onScrollPos;
   }, [onScrollPos]);
 
-  // Init UNIQUEMENT au premier montage. `initialZone` peut changer par la
-  // suite (navigation entre /atelier et /stockage) mais on ne veut PAS
-  // re-snapper, car le scroll en cours est piloté par le doigt de
-  // l'utilisateur.
-  //
-  // ATTENTION iOS Safari : avec `scroll-snap-type: x mandatory`, un set
-  // direct `el.scrollLeft = X` peut être ignoré ou annulé immédiatement
-  // par le snap engine. On désactive le snap le temps du set initial,
-  // puis on le restaure. Sinon, l'utilisateur arrivant sur /atelier
-  // verrait scrollLeft rester à 0 → premier event de scroll dit "zone
-  // stockage" → router.replace("/stockage") → l'URL retombe sur stock.
+  // Init au premier montage : positionne le scroll sur la zone initiale.
+  // Plus de scroll-snap CSS → set direct fiable, pas de fight iOS.
   const didInitRef = useRef(false);
   useEffect(() => {
     if (didInitRef.current) return;
     const el = ref.current;
     if (!el) return;
     const vw = el.clientWidth;
-    el.style.scrollSnapType = "none";
     el.scrollLeft = (ZONE_OFFSETS_VW[initialZone] / 100) * vw;
-    el.style.scrollSnapType = "x mandatory";
-    el.style.scrollBehavior = "smooth";
     didInitRef.current = true;
     onScrollPosRef.current?.(ZONES.indexOf(initialZone));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Listener de scroll → propage la position normalisée au parent.
+  // Snap JS : après 140 ms sans nouvel event de scroll (= fin de swipe),
+  // on anime vers la zone la plus proche. C'est l'équivalent JS de
+  // `scroll-snap-type: mandatory`, sans les bugs iOS.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     let raf = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
+    let snapTimer: number | null = null;
+    let snapAnim: (() => void) | null = null;
+    let animating = false;
+
+    const reportPos = () => {
+      const vw = el.clientWidth;
+      if (vw <= 0) return;
+      const offset0 = ZONE_OFFSETS_VW.stockage;
+      const span = ZONE_OFFSETS_VW.coinL - offset0;
+      const pos = ((el.scrollLeft / vw) - offset0) * 2 / span;
+      onScrollPosRef.current?.(
+        Math.max(0, Math.min(ZONES.length - 1, pos)),
+      );
+    };
+
+    const scheduleSnap = () => {
+      if (snapTimer !== null) window.clearTimeout(snapTimer);
+      snapTimer = window.setTimeout(() => {
+        snapTimer = null;
+        if (animating) return;
         const vw = el.clientWidth;
         if (vw <= 0) return;
-        // Conversion scrollLeft → position de zone (0..2) en utilisant les
-        // offsets décalés. Les snaps stockage/établi/coinL sont à 14/100/186
-        // vw : on interpole linéairement (les écarts sont égaux à 86 vw).
-        const offset0 = ZONE_OFFSETS_VW.stockage;
-        const span = ZONE_OFFSETS_VW.coinL - offset0;
-        const pos = ((el.scrollLeft / vw) - offset0) * 2 / span;
-        onScrollPosRef.current?.(
-          Math.max(0, Math.min(ZONES.length - 1, pos)),
-        );
-      });
+        // Trouve la zone la plus proche (en vw) de la position courante.
+        const currentVw = el.scrollLeft / vw;
+        let nearest: ZoneKey = "etabli";
+        let bestDist = Infinity;
+        for (const z of ZONES) {
+          const d = Math.abs(currentVw - ZONE_OFFSETS_VW[z]);
+          if (d < bestDist) {
+            bestDist = d;
+            nearest = z;
+          }
+        }
+        const targetPx = (ZONE_OFFSETS_VW[nearest] / 100) * vw;
+        if (Math.abs(el.scrollLeft - targetPx) < 2) return;
+        animating = true;
+        snapAnim = animateScrollLeft(el, targetPx, 260, () => {
+          animating = false;
+          snapAnim = null;
+        });
+      }, 140);
+    };
+
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(reportPos);
+      if (!animating) scheduleSnap();
     };
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       el.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
+      if (snapTimer !== null) window.clearTimeout(snapTimer);
+      if (snapAnim) snapAnim();
     };
   }, []);
 
@@ -133,16 +184,8 @@ export function AtelierPanorama({
       data-atelier-panorama="1"
     >
       {children}
-      {ZONES.map((zone) => (
-        <div
-          key={zone}
-          style={{
-            ...snapAnchorStyle,
-            left: `${ZONE_OFFSETS_VW[zone]}vw`,
-          }}
-          aria-hidden
-        />
-      ))}
     </div>
   );
 }
+
+export { animateScrollLeft, ZONE_OFFSETS_VW };
