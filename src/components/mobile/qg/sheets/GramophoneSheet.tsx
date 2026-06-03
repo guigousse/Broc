@@ -25,7 +25,11 @@ interface GramophoneSheetProps {
 
 const scrim: CSSProperties = {
   position: "fixed",
-  inset: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  // Laisse la barre de navigation visible et accessible.
+  bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
   background: "rgba(15,30,22,0.55)",
   zIndex: 50,
   animation: "broc-fade-in 160ms ease",
@@ -33,7 +37,11 @@ const scrim: CSSProperties = {
 
 const stage: CSSProperties = {
   position: "fixed",
-  inset: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  // Le bas du sheet se cale juste au-dessus de la barre de navigation.
+  bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
   zIndex: 51,
   display: "flex",
   flexDirection: "column",

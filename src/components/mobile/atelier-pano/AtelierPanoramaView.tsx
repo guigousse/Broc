@@ -57,9 +57,17 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
   // pathname a changé parce que l'utilisateur a cliqué la TabBar" (il faut
   // alors snapper le scroll sur la zone correspondante).
   const lastInternalTabRef = useRef<"stockage" | "atelier">(activeTab);
+  // Vrai pendant un scroll programmatique (smooth scroll lancé par nous-mêmes
+  // après un changement externe d'activeTab). Pendant cette fenêtre, on
+  // ignore les évènements de scroll : sinon, l'état "transitoire" du scroll
+  // (encore au milieu de la zone de départ) déclencherait un router.replace
+  // qui annulerait la navigation que l'utilisateur vient de faire.
+  const programmaticScrollRef = useRef(false);
+  const programmaticTimerRef = useRef<number | null>(null);
 
   const handleScrollPos = useCallback(
     (pos: number) => {
+      if (programmaticScrollRef.current) return;
       const tab = zoneToTab(pos);
       if (tab !== lastInternalTabRef.current) {
         lastInternalTabRef.current = tab;
@@ -73,7 +81,8 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
 
   // Si l'utilisateur clique un onglet de la TabBar pendant qu'il est dans le
   // panorama, l'`activeTab` change sans que le scroll ait bougé. On snappe
-  // alors la zone correspondante.
+  // alors la zone correspondante. Pendant l'animation de scroll, on bloque
+  // le handler de scroll pour qu'il ne re-route pas en arrière.
   useEffect(() => {
     if (activeTab === lastInternalTabRef.current) return;
     lastInternalTabRef.current = activeTab;
@@ -85,8 +94,24 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     if (vw <= 0) return;
     // Cible : Stockage → snap 18vw ; Atelier → snap 108vw (établi).
     const targetVw = activeTab === "stockage" ? 18 : 108;
+    programmaticScrollRef.current = true;
     el.scrollTo({ left: (targetVw / 100) * vw, behavior: "smooth" });
+    if (programmaticTimerRef.current !== null) {
+      window.clearTimeout(programmaticTimerRef.current);
+    }
+    programmaticTimerRef.current = window.setTimeout(() => {
+      programmaticScrollRef.current = false;
+      programmaticTimerRef.current = null;
+    }, 700);
   }, [activeTab]);
+
+  useEffect(() => {
+    return () => {
+      if (programmaticTimerRef.current !== null) {
+        window.clearTimeout(programmaticTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
