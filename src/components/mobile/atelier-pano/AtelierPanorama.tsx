@@ -76,13 +76,22 @@ export function AtelierPanorama({
   // suite (navigation entre /atelier et /stockage) mais on ne veut PAS
   // re-snapper, car le scroll en cours est piloté par le doigt de
   // l'utilisateur.
+  //
+  // ATTENTION iOS Safari : avec `scroll-snap-type: x mandatory`, un set
+  // direct `el.scrollLeft = X` peut être ignoré ou annulé immédiatement
+  // par le snap engine. On désactive le snap le temps du set initial,
+  // puis on le restaure. Sinon, l'utilisateur arrivant sur /atelier
+  // verrait scrollLeft rester à 0 → premier event de scroll dit "zone
+  // stockage" → router.replace("/stockage") → l'URL retombe sur stock.
   const didInitRef = useRef(false);
   useEffect(() => {
     if (didInitRef.current) return;
     const el = ref.current;
     if (!el) return;
     const vw = el.clientWidth;
+    el.style.scrollSnapType = "none";
     el.scrollLeft = (ZONE_OFFSETS_VW[initialZone] / 100) * vw;
+    el.style.scrollSnapType = "x mandatory";
     el.style.scrollBehavior = "smooth";
     didInitRef.current = true;
     onScrollPosRef.current?.(ZONES.indexOf(initialZone));

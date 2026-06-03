@@ -69,6 +69,15 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     (pos: number) => {
       if (programmaticScrollRef.current) return;
       const tab = zoneToTab(pos);
+      // Source de vérité : l'URL (`activeTab`). Si le scroll dit qu'on est
+      // déjà sur le tab actif, on resynchronise simplement la ref et on
+      // sort — pas de router.replace inutile. Ce garde-fou évite que le
+      // premier event de scroll qui suit un mount/init ne renvoie sur
+      // /stockage si scrollLeft n'a pas encore atteint la cible.
+      if (tab === activeTab) {
+        lastInternalTabRef.current = tab;
+        return;
+      }
       if (tab !== lastInternalTabRef.current) {
         lastInternalTabRef.current = tab;
         router.replace(tab === "stockage" ? "/stockage" : "/atelier", {
@@ -76,7 +85,7 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
         });
       }
     },
-    [router],
+    [router, activeTab],
   );
 
   // Si l'utilisateur clique un onglet de la TabBar pendant qu'il est dans le
@@ -110,14 +119,22 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
     }
     programmaticTimerRef.current = window.setTimeout(() => {
       // Filet de sécurité : si le smooth scroll a échoué (iOS Safari +
-      // snap mandatory), on garantit l'arrivée par un set direct.
+      // snap mandatory), on garantit l'arrivée par un set direct. On
+      // force scrollBehavior=auto le temps du set : sinon, l'élément a
+      // scrollBehavior:smooth (cf. AtelierPanorama init) qui retransforme
+      // l'assignation en smooth scroll susceptible d'échouer à nouveau.
+      const savedBehavior = el.style.scrollBehavior;
+      el.style.scrollBehavior = "auto";
       el.scrollLeft = targetPx;
+      el.style.scrollBehavior = savedBehavior;
       el.style.scrollSnapType = "x mandatory";
-      // Un rAF de battement pour laisser passer l'event de scroll généré
-      // par le set ci-dessus AVANT de libérer le flag.
+      // Deux rAF de battement pour laisser passer les events de scroll
+      // générés par les resets ci-dessus AVANT de libérer le flag.
       requestAnimationFrame(() => {
-        programmaticScrollRef.current = false;
-        programmaticTimerRef.current = null;
+        requestAnimationFrame(() => {
+          programmaticScrollRef.current = false;
+          programmaticTimerRef.current = null;
+        });
       });
     }, 800);
   }, [activeTab]);
