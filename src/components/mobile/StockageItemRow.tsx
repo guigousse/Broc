@@ -210,6 +210,7 @@ export function StockageItemRow({
 
   return (
     <div
+      data-pager-swipe-ignore="1"
       style={{
         ...wrap,
         borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",

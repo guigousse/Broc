@@ -65,6 +65,16 @@ function findHorizontallyScrollableAncestor(
   return null;
 }
 
+/** Vrai si un ancêtre porte `data-pager-swipe-ignore="1"`. */
+function hasSwipeIgnoreAncestor(el: Element | null): boolean {
+  let node: Element | null = el;
+  while (node && node instanceof HTMLElement) {
+    if (node.dataset.pagerSwipeIgnore === "1") return true;
+    node = node.parentElement;
+  }
+  return false;
+}
+
 /** Sens du déplacement d'un onglet à l'autre dans le cycle. */
 function computeDirection(
   prev: string | null,
@@ -131,6 +141,10 @@ export function SwipePager({ children }: { children: ReactNode }) {
     // unified-panorama), les bords correspondent EXACTEMENT aux zones
     // bureau (gauche) et coinL (droite) → pas de cas spécial.
     const target = document.elementFromPoint(s.x, s.y);
+    // Si la zone touchée (ou un ancêtre) gère elle-même un geste swipe
+    // (ex : ligne stockage avec swipe-to-reveal), on s'efface — sinon
+    // ajouter un item à la collection ferait aussi quitter la page.
+    if (target && hasSwipeIgnoreAncestor(target)) return;
     const scrollAncestor = findHorizontallyScrollableAncestor(target);
     if (scrollAncestor) {
       const sl = scrollAncestor.scrollLeft;

@@ -223,6 +223,23 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     setVinylAmbianceLowpass(20000);
   }, [setVinylAmbianceVolume, setVinylAmbianceLowpass]);
 
+  // Verrouille le scroll vertical du document tant qu'on est dans le
+  // panorama : sinon, le geste vertical (notamment l'overscroll iOS)
+  // décale toute la page vers le haut et révèle du blanc sous la barre
+  // de nav. Le panorama lui-même a touch-action:pan-x mais le body
+  // peut quand même bouncer sur iOS Safari.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const prevOverflow = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.touchAction = prevTouchAction;
+    };
+  }, []);
+
   // Cleanup débounce URL au démontage.
   useEffect(() => {
     return () => {
@@ -509,14 +526,17 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
             </div>
           </UnifiedPanorama>
 
-          {/* Dots indicateur de section active. */}
+          {/* Dots indicateur de section active. Le conteneur parent
+              exclut déjà safe-bottom de sa hauteur — `bottom: 10px`
+              place les dots juste au-dessus du bas du panorama (≈ au
+              ras de la barre de navigation), comme demandé. */}
           <div
             aria-hidden
             style={{
               position: "absolute",
               left: 0,
               right: 0,
-              bottom: "calc(8px + var(--safe-bottom))",
+              bottom: 10,
               display: "flex",
               justifyContent: "center",
               gap: 6,
