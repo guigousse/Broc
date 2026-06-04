@@ -8,8 +8,27 @@ import {
   type ReactNode,
 } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
+import { CHAT_BALADEUR_LAYOUT } from "../chatBaladeurLayout";
+import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
 
-export interface QgObjetOverride {
+export type EditableKey = QgObjetKey | ChatBaladeurId;
+
+const CHAT_KEYS = new Set<string>(CHAT_BALADEUR_ORDER);
+
+function isChatKey(key: EditableKey): key is ChatBaladeurId {
+  return CHAT_KEYS.has(key);
+}
+
+function baseCoord(key: EditableKey): {
+  left: number;
+  bottom: number;
+  width: number;
+} {
+  if (isChatKey(key)) return CHAT_BALADEUR_LAYOUT[key];
+  return QG_LAYOUT.objets[key];
+}
+
+export interface ObjetOverride {
   left?: number;
   bottom?: number;
   width?: number;
@@ -17,9 +36,9 @@ export interface QgObjetOverride {
 
 interface QgEditContextValue {
   enabled: boolean;
-  overrides: Partial<Record<QgObjetKey, QgObjetOverride>>;
-  setOverride: (key: QgObjetKey, partial: QgObjetOverride) => void;
-  resetOverride: (key: QgObjetKey) => void;
+  overrides: Partial<Record<EditableKey, ObjetOverride>>;
+  setOverride: (key: EditableKey, partial: ObjetOverride) => void;
+  resetOverride: (key: EditableKey) => void;
   resetAll: () => void;
 }
 
@@ -33,11 +52,11 @@ export function QgEditProvider({
   children: ReactNode;
 }) {
   const [overrides, setOverrides] = useState<
-    Partial<Record<QgObjetKey, QgObjetOverride>>
+    Partial<Record<EditableKey, ObjetOverride>>
   >({});
 
   const setOverride = useCallback(
-    (key: QgObjetKey, partial: QgObjetOverride) => {
+    (key: EditableKey, partial: ObjetOverride) => {
       setOverrides((prev) => ({
         ...prev,
         [key]: { ...(prev[key] ?? {}), ...partial },
@@ -45,7 +64,7 @@ export function QgEditProvider({
     },
     [],
   );
-  const resetOverride = useCallback((key: QgObjetKey) => {
+  const resetOverride = useCallback((key: EditableKey) => {
     setOverrides((prev) => {
       const next = { ...prev };
       delete next[key];
@@ -63,13 +82,26 @@ export function QgEditProvider({
   );
 }
 
-/** Returns the effective coordinates (base + override) for one object. */
+/** Coords effectives (base + override) pour un objet QG. */
 export function useQgObjet(key: QgObjetKey): {
   left: number;
   bottom: number;
   width: number;
 } {
-  const base = QG_LAYOUT.objets[key];
+  return useEditableCoord(key);
+}
+
+/** Coords effectives (base + override) pour un chat baladeur. */
+export function useChatBaladeurCoord(key: ChatBaladeurId): {
+  left: number;
+  bottom: number;
+  width: number;
+} {
+  return useEditableCoord(key);
+}
+
+function useEditableCoord(key: EditableKey) {
+  const base = baseCoord(key);
   const ctx = useContext(QgEditContext);
   const o = ctx?.overrides[key];
   return {
