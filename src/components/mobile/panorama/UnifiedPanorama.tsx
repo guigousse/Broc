@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { QgEditOverlay } from "../qg/dev/QgEditOverlay";
 
 /**
  * Panorama unifié 6 sections : bureau (1,2,3) → atelier (4,5,6).
@@ -212,7 +213,10 @@ export function UnifiedPanorama({
           draggable={false}
         />
         {/* Objets interactifs positionnés au-dessus */}
-        <div style={objectsLayer}>{children}</div>
+        <div style={objectsLayer}>
+          {children}
+          {process.env.NEXT_PUBLIC_QG_EDIT === "1" && <QgEditOverlay />}
+        </div>
       </div>
 
       {/* Snap anchors (1 par zone) */}

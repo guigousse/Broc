@@ -29,6 +29,9 @@ import { QgPortemanteau } from "@/components/mobile/qg/QgPortemanteau";
 import { QgCalendrier } from "@/components/mobile/qg/QgCalendrier";
 import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
+import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
+import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
+import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
 import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
@@ -417,8 +420,10 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   const showQgZone = (qgZoneIdx: 0 | 1 | 2) =>
     Math.abs(zoneActive - qgZoneIdx) <= 1;
 
+  const editEnabled = process.env.NEXT_PUBLIC_QG_EDIT === "1";
+
   return (
-    <>
+    <QgEditProvider enabled={editEnabled}>
       <MobileLayout
         header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
         fillContent
@@ -524,6 +529,11 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                 )}
               />
             </div>
+
+            <QgChatBaladeur
+              jourActuel={state.jourActuel}
+              chatSurFauteuil={state.chatSurFauteuil}
+            />
           </UnifiedPanorama>
 
           {/* Dots indicateur de section active. Le conteneur parent
@@ -666,7 +676,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         budget={state.budget}
         prixGazette={PRIX_GAZETTE}
       />
-    </>
+
+      {editEnabled && <QgEditPanel />}
+    </QgEditProvider>
   );
 }
 
