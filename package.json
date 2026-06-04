@@ -14,7 +14,10 @@
     "gen:brocantes": "node scripts/generate-brocante-images.mjs",
     "gen:qg": "node scripts/generate-qg-images.mjs",
     "gen:atelier": "node scripts/generate-atelier-images.mjs",
-    "opt:images": "node scripts/optimize-item-images.mjs"
+    "opt:images": "node scripts/optimize-item-images.mjs",
+    "gen:webp": "node scripts/generate-webp.mjs",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "lucide-react": "^1.16.0",
@@ -32,6 +35,7 @@
     "sharp": "^0.34.5",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.8"
   }
 }
