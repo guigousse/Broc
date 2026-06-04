@@ -7,6 +7,22 @@ export const FACTEUR_ETAT: Record<EtatObjet, number> = {
   "Pristin état": 1.4,
 };
 
+/** Nombre d'étoiles pleines par état (0 à 3). Source unique. */
+export const ETAT_STARS: Record<EtatObjet, 0 | 1 | 2 | 3> = {
+  Mauvais: 0,
+  Bon: 1,
+  "Très bon": 2,
+  "Pristin état": 3,
+};
+
+/** Nombre maximum d'étoiles dans l'échelle d'état. */
+export const ETAT_STARS_MAX = 3;
+
+/** Étoiles pleines pour un état donné. `undefined` ⇒ 0. */
+export function etoileCount(etat: EtatObjet | undefined): number {
+  return etat ? ETAT_STARS[etat] : 0;
+}
+
 const ORDRE: readonly EtatObjet[] = [
   "Mauvais",
   "Bon",

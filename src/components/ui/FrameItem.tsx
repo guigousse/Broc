@@ -1,9 +1,10 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { Star } from "lucide-react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
 import type { CategorieObjet, EtatObjet, Rarete } from "@/types/game";
 
 interface FrameItemProps {
@@ -28,19 +29,6 @@ const IMG_TOP = TITRE_STRIP + 3;
 const IMG_BOTTOM = H - 8;
 const IMG_LEFT = 8;
 const IMG_RIGHT = W - 8;
-
-function etoileCount(etat: EtatObjet): number {
-  switch (etat) {
-    case "Mauvais":
-      return 0;
-    case "Bon":
-      return 1;
-    case "Très bon":
-      return 2;
-    case "Pristin état":
-      return 3;
-  }
-}
 
 const overlaySvgStyle: CSSProperties = {
   position: "absolute",
@@ -362,14 +350,18 @@ export function FrameItem({
 
       {/* ─── Étoiles d'état (plaque blanche bordée) ─── */}
       {etat && (
-        <div
+        <StarRow
+          filled={filledStars}
+          color={colors.outer}
+          size={22}
+          gap={3}
+          emptyFill="var(--paper-100)"
+          display="flex"
           style={{
             position: "absolute",
             left: `${(((W / 2 - MEDAL_R - 4) / 2) / W) * 100}%`,
             top: "100%",
             transform: "translate(-50%, -50%)",
-            display: "flex",
-            gap: 3,
             padding: "5px 7px",
             background: "var(--paper-100)",
             border: `1.5px solid ${colors.outer}`,
@@ -378,17 +370,7 @@ export function FrameItem({
             pointerEvents: "none",
           }}
           aria-label={`État : ${etat}`}
-        >
-          {[0, 1, 2].map((i) => (
-            <Star
-              key={i}
-              size={22}
-              strokeWidth={1.8}
-              fill={i < filledStars ? colors.outer : "var(--paper-100)"}
-              color={colors.outer}
-            />
-          ))}
-        </div>
+        />
       )}
     </div>
   );

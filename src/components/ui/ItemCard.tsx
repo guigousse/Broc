@@ -1,10 +1,11 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { Star } from "lucide-react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { ItemImage } from "@/components/ui/ItemImage";
+import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
 import type { CategorieObjet, EtatObjet, Rarete } from "@/types/game";
 
 interface ItemCardProps {
@@ -20,19 +21,6 @@ interface ItemCardProps {
   dimmed?: boolean;
   /** Style supplémentaire appliqué à l'article. */
   style?: CSSProperties;
-}
-
-function etoileCount(etat: EtatObjet): number {
-  switch (etat) {
-    case "Mauvais":
-      return 0;
-    case "Bon":
-      return 1;
-    case "Très bon":
-      return 2;
-    case "Pristin état":
-      return 3;
-  }
 }
 
 export function ItemCard({
@@ -85,30 +73,24 @@ export function ItemCard({
 
         {/* Étoiles d'état — ligne centrée juste sous l'image (zone teintée),
             style Collection. Drop-shadow pour rester lisible. */}
-        <div
+        <StarRow
+          filled={filled}
+          color={colors.outer}
+          size={11}
+          gap={2}
+          emptyFill="var(--paper-100)"
+          dropShadow
+          display="flex"
           style={{
             position: "absolute",
             left: 0,
             right: 0,
             bottom: 6,
-            display: "flex",
             justifyContent: "center",
-            gap: 2,
             pointerEvents: "none",
           }}
           aria-label={`État : ${etat}`}
-        >
-          {[0, 1, 2].map((i) => (
-            <Star
-              key={i}
-              size={11}
-              strokeWidth={1.8}
-              fill={i < filled ? colors.outer : "var(--paper-100)"}
-              color={colors.outer}
-              style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))" }}
-            />
-          ))}
-        </div>
+        />
 
         {/* Pastille catégorie — coin haut-droite (à l'écart du titre). */}
         <div

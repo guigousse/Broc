@@ -1,14 +1,16 @@
 "use client";
 
 import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
-import { Album, Anvil, ArrowRight, Star } from "lucide-react";
+import { Album, Anvil, ArrowRight } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
 import { getTemplate } from "@/data/objetTemplates";
 import { getItemImageUrl } from "@/lib/itemImages";
 import { flyToTab } from "@/lib/flyAnimation";
-import type { EtatObjet, Objet } from "@/types/game";
+import type { Objet } from "@/types/game";
 
 interface StockageItemRowProps {
   objet: Objet;
@@ -90,19 +92,6 @@ const arrowBadge: CSSProperties = {
   color: "inherit",
   filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.4))",
 };
-
-function etoileCount(etat: EtatObjet): number {
-  switch (etat) {
-    case "Mauvais":
-      return 0;
-    case "Bon":
-      return 1;
-    case "Très bon":
-      return 2;
-    case "Pristin état":
-      return 3;
-  }
-}
 
 export function StockageItemRow({
   objet,
@@ -290,24 +279,12 @@ export function StockageItemRow({
             }}
             aria-label={`État ${objet.etat}, catégorie ${objet.categorie}`}
           >
-            <span
-              style={{ display: "flex", gap: 1 }}
+            <StarRow
+              filled={etoileCount(objet.etat)}
+              color={rarityColors.outer}
+              display="flex"
               aria-label={`État : ${objet.etat}`}
-            >
-              {[0, 1, 2].map((i) => (
-                <Star
-                  key={i}
-                  size={12}
-                  strokeWidth={1.8}
-                  fill={
-                    i < etoileCount(objet.etat)
-                      ? rarityColors.outer
-                      : "transparent"
-                  }
-                  color={rarityColors.outer}
-                />
-              ))}
-            </span>
+            />
             <span
               style={{ display: "inline-flex", alignItems: "center" }}
               aria-label={`Catégorie : ${objet.categorie}`}

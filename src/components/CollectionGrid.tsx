@@ -1,29 +1,15 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { Star } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
+import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
-import type { CollectionSlot, EtatObjet } from "@/types/game";
+import { etoileCount } from "@/lib/etat";
+import type { CollectionSlot } from "@/types/game";
 
 interface CollectionGridProps {
   slots: CollectionSlot[];
   onTap?: (slot: CollectionSlot) => void;
-}
-
-function etoileCount(etat: EtatObjet | undefined): number {
-  switch (etat) {
-    case "Mauvais":
-      return 0;
-    case "Bon":
-      return 1;
-    case "Très bon":
-      return 2;
-    case "Pristin état":
-      return 3;
-    default:
-      return 0;
-  }
 }
 
 const GRAY_BG = "var(--paper-200)";
@@ -199,20 +185,17 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
 
             {/* Étoiles d'état — uniquement si donné */}
             {isDonne && (
-              <div style={starsRow} aria-label={`État : ${s.donation?.etat}`}>
-                {[0, 1, 2].map((i) => (
-                  <Star
-                    key={i}
-                    size={11}
-                    strokeWidth={1.8}
-                    fill={i < filledStars ? colors.outer : "var(--paper-100)"}
-                    color={colors.outer}
-                    style={{
-                      filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))",
-                    }}
-                  />
-                ))}
-              </div>
+              <StarRow
+                filled={filledStars}
+                color={colors.outer}
+                size={11}
+                gap={2}
+                emptyFill="var(--paper-100)"
+                dropShadow
+                display="flex"
+                style={starsRow}
+                aria-label={`État : ${s.donation?.etat}`}
+              />
             )}
           </button>
         );

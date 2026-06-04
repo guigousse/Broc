@@ -1,30 +1,18 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { Star } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
 import { getTemplate } from "@/data/objetTemplates";
-import type { EtatObjet, Objet } from "@/types/game";
+import type { Objet } from "@/types/game";
 
 interface NegoItemRowProps {
   objet: Objet;
   prix: number;
   prixLabel?: string;
-}
-
-function etoileCount(etat: EtatObjet): number {
-  switch (etat) {
-    case "Mauvais":
-      return 0;
-    case "Bon":
-      return 1;
-    case "Très bon":
-      return 2;
-    case "Pristin état":
-      return 3;
-  }
 }
 
 export function NegoItemRow({ objet, prix, prixLabel }: NegoItemRowProps) {
@@ -52,17 +40,12 @@ export function NegoItemRow({ objet, prix, prixLabel }: NegoItemRowProps) {
       <div style={{ minWidth: 0 }}>
         <div style={nomStyle}>{objet.nom}</div>
         <div style={metaRow}>
-          <span style={{ display: "flex", gap: 1 }} aria-label={`État : ${objet.etat}`}>
-            {[0, 1, 2].map((i) => (
-              <Star
-                key={i}
-                size={12}
-                strokeWidth={1.8}
-                fill={i < etoileCount(objet.etat) ? colors.outer : "transparent"}
-                color={colors.outer}
-              />
-            ))}
-          </span>
+          <StarRow
+            filled={etoileCount(objet.etat)}
+            color={colors.outer}
+            display="flex"
+            aria-label={`État : ${objet.etat}`}
+          />
           <span style={{ display: "inline-flex", alignItems: "center" }}>
             <CategorieIcon
               categorie={objet.categorie}

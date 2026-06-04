@@ -1,10 +1,12 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
 import { getTemplate } from "@/data/objetTemplates";
 import type { EtatObjet, Objet } from "@/types/game";
 
@@ -35,33 +37,8 @@ const thumbBase: CSSProperties = {
   placeItems: "center",
 };
 
-function etoileCount(etat: EtatObjet): number {
-  switch (etat) {
-    case "Mauvais":
-      return 0;
-    case "Bon":
-      return 1;
-    case "Très bon":
-      return 2;
-    case "Pristin état":
-      return 3;
-  }
-}
-
 function renderStars(count: number, color: string): ReactNode {
-  return (
-    <span style={{ display: "inline-flex", gap: 1 }}>
-      {[0, 1, 2].map((i) => (
-        <Star
-          key={i}
-          size={12}
-          strokeWidth={1.8}
-          fill={i < count ? color : "transparent"}
-          color={color}
-        />
-      ))}
-    </span>
-  );
+  return <StarRow filled={count} color={color} />;
 }
 
 export function AtelierItemRow({
