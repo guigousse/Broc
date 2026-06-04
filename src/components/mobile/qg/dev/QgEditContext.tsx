@@ -13,6 +13,7 @@ import { CHAT_BALADEUR_LAYOUT } from "../chatBaladeurLayout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
 
 const STORAGE_KEY = "broc.qg-edit.overrides";
+const ACTIVE_STORAGE_KEY = "broc.qg-edit.active";
 
 export type EditableKey = QgObjetKey | ChatBaladeurId;
 
@@ -39,6 +40,9 @@ export interface ObjetOverride {
 
 interface QgEditContextValue {
   enabled: boolean;
+  /** Toggle runtime : quand false, overlay/preview-all sont masqués. */
+  active: boolean;
+  setActive: (a: boolean) => void;
   overrides: Partial<Record<EditableKey, ObjetOverride>>;
   setOverride: (key: EditableKey, partial: ObjetOverride) => void;
   resetOverride: (key: EditableKey) => void;
@@ -78,6 +82,27 @@ export function QgEditProvider({
     }
   }, [overrides, enabled]);
 
+  // Toggle « actif » : par défaut true à l'entrée en mode édition.
+  const [active, setActiveState] = useState<boolean>(() => {
+    if (!enabled || typeof window === "undefined") return true;
+    try {
+      const raw = window.localStorage.getItem(ACTIVE_STORAGE_KEY);
+      return raw === null ? true : raw === "1";
+    } catch {
+      return true;
+    }
+  });
+  const setActive = useCallback((a: boolean) => {
+    setActiveState(a);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(ACTIVE_STORAGE_KEY, a ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
+
   const setOverride = useCallback(
     (key: EditableKey, partial: ObjetOverride) => {
       setOverrides((prev) => ({
@@ -107,7 +132,15 @@ export function QgEditProvider({
 
   return (
     <QgEditContext.Provider
-      value={{ enabled, overrides, setOverride, resetOverride, resetAll }}
+      value={{
+        enabled,
+        active,
+        setActive,
+        overrides,
+        setOverride,
+        resetOverride,
+        resetAll,
+      }}
     >
       {children}
     </QgEditContext.Provider>

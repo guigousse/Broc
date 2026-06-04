@@ -539,7 +539,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
             <QgChatBaladeur
               jourActuel={state.jourActuel}
               chatSurFauteuil={state.chatSurFauteuil}
-              editPreviewAll={editEnabled}
             />
           </UnifiedPanorama>
 

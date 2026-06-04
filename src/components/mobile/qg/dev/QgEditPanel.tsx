@@ -14,6 +14,14 @@ import {
 const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
 const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
 
+// Position au-dessous du header mobile (var injectée par MobileLayout).
+const ANCHOR_STYLE = {
+  position: "fixed" as const,
+  top: "calc(var(--safe-top) + var(--mobile-header-h) + 8px)",
+  right: 12,
+  zIndex: 100,
+};
+
 function QgRow({ qgKey }: { qgKey: QgObjetKey }) {
   const { left, bottom, width } = useQgObjet(qgKey);
   return <CoordRow name={qgKey} left={left} bottom={bottom} width={width} />;
@@ -52,6 +60,7 @@ function CoordRow({
 export function QgEditPanel() {
   const ctx = useQgEditContext();
   const [collapsed, setCollapsed] = useState(false);
+  const active = ctx?.active ?? false;
 
   function effective(key: EditableKey) {
     const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
@@ -93,10 +102,7 @@ export function QgEditPanel() {
     return (
       <div
         style={{
-          position: "fixed",
-          bottom: 12,
-          right: 12,
-          zIndex: 100,
+          ...ANCHOR_STYLE,
           background: "rgba(20, 16, 10, 0.9)",
           border: "1px solid var(--brass-500)",
           borderRadius: 6,
@@ -106,10 +112,25 @@ export function QgEditPanel() {
           color: "var(--brass-500)",
           cursor: "pointer",
           userSelect: "none",
+          display: "flex",
+          gap: 6,
+          alignItems: "center",
         }}
         onClick={() => setCollapsed(false)}
       >
-        QG edit mode
+        <span>QG edit</span>
+        <span
+          style={{
+            fontSize: 9,
+            padding: "1px 5px",
+            borderRadius: 8,
+            background: active ? "var(--brass-500)" : "rgba(168,120,60,0.25)",
+            color: active ? "#1a1208" : "var(--brass-500)",
+            fontWeight: "bold",
+          }}
+        >
+          {active ? "ON" : "OFF"}
+        </span>
       </div>
     );
   }
@@ -117,15 +138,13 @@ export function QgEditPanel() {
   return (
     <div
       style={{
-        position: "fixed",
-        bottom: 12,
-        right: 12,
-        zIndex: 100,
+        ...ANCHOR_STYLE,
         background: "rgba(20, 16, 10, 0.92)",
         border: "1px solid var(--brass-500)",
         borderRadius: 8,
         padding: "10px 12px",
         minWidth: 280,
+        maxWidth: "calc(100vw - 24px)",
         maxHeight: "70vh",
         overflowY: "auto",
         boxShadow: "0 4px 20px rgba(0,0,0,0.6)",
@@ -137,6 +156,7 @@ export function QgEditPanel() {
           alignItems: "center",
           justifyContent: "space-between",
           marginBottom: 8,
+          gap: 8,
         }}
       >
         <span
@@ -150,22 +170,44 @@ export function QgEditPanel() {
         >
           QG edit mode
         </span>
-        <button
-          type="button"
-          onClick={() => setCollapsed(true)}
-          style={{
-            background: "none",
-            border: "none",
-            color: "var(--brass-500)",
-            cursor: "pointer",
-            fontSize: 13,
-            padding: "0 2px",
-            lineHeight: 1,
-          }}
-          aria-label="Replier"
-        >
-          ✕
-        </button>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={() => ctx?.setActive(!active)}
+            style={{
+              background: active ? "var(--brass-500)" : "transparent",
+              border: "1px solid var(--brass-500)",
+              borderRadius: 12,
+              padding: "2px 10px",
+              fontSize: 10,
+              fontFamily: "monospace",
+              fontWeight: "bold",
+              color: active ? "#1a1208" : "var(--brass-500)",
+              cursor: "pointer",
+              letterSpacing: "0.05em",
+            }}
+            aria-pressed={active}
+            aria-label={active ? "Désactiver l'outil" : "Activer l'outil"}
+          >
+            {active ? "ACTIF" : "INACTIF"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setCollapsed(true)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--brass-500)",
+              cursor: "pointer",
+              fontSize: 13,
+              padding: "0 2px",
+              lineHeight: 1,
+            }}
+            aria-label="Replier"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <div
@@ -174,6 +216,7 @@ export function QgEditPanel() {
           borderRadius: 4,
           padding: "6px 8px",
           marginBottom: 8,
+          opacity: active ? 1 : 0.45,
         }}
       >
         <div style={{ color: "#8aa", fontSize: 10, marginBottom: 4 }}>// QG objets</div>

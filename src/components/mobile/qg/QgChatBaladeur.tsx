@@ -6,17 +6,11 @@ import {
   selectChatBaladeur,
   type ChatBaladeurId,
 } from "@/lib/chatBaladeur";
-import { useChatBaladeurCoord } from "./dev/QgEditContext";
+import { useChatBaladeurCoord, useQgEditContext } from "./dev/QgEditContext";
 
 interface QgChatBaladeurProps {
   jourActuel: number;
   chatSurFauteuil: boolean;
-  /**
-   * Mode édition : rend les 3 sprites en même temps, à leur position
-   * respective, pour permettre un placement pixel-perfect depuis l'outil
-   * de dev. `chatSurFauteuil` est ignoré dans ce mode.
-   */
-  editPreviewAll?: boolean;
 }
 
 const SRC: Record<ChatBaladeurId, string> = {
@@ -44,9 +38,10 @@ function ChatSprite({ id }: { id: ChatBaladeurId }) {
 export function QgChatBaladeur({
   jourActuel,
   chatSurFauteuil,
-  editPreviewAll = false,
 }: QgChatBaladeurProps) {
-  if (editPreviewAll) {
+  const ctx = useQgEditContext();
+  // En édition active, on rend les 3 sprites pour placement pixel-perfect.
+  if (ctx?.enabled && ctx.active) {
     return (
       <>
         {CHAT_BALADEUR_ORDER.map((id) => (
