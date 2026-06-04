@@ -137,7 +137,7 @@ export default function StockagePage() {
   return (
     <>
       <MobileLayout
-        header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
+        header={<MobileHeader budget={state.budget} />}
         stickyTop={
           <StickyTop>
             <PageHeaderBar

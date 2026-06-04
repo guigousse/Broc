@@ -455,7 +455,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   return (
     <QgEditProvider enabled={editEnabled}>
       <MobileLayout
-        header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
+        header={<MobileHeader budget={state.budget} />}
         fillContent
       >
         <div

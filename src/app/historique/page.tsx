@@ -50,7 +50,7 @@ export default function HistoriquePage() {
     });
 
   return (
-    <MobileLayout header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}>
+    <MobileLayout header={<MobileHeader budget={state.budget} />}>
       {state.historique.length === 0 ? (
         <p
           style={{

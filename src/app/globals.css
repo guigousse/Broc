@@ -2,6 +2,14 @@
 
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Verve Shadow';
+  src: url('/fonts/VerveShadow.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ============================================================
    BROC — NÉO-ART DÉCO VINTAGE DESIGN TOKENS
    ============================================================ */
@@ -65,6 +73,7 @@
   --font-mono:    'DM Mono', 'Courier Prime', 'Courier New', monospace;
   --font-tag:     'Courier Prime', 'DM Mono', 'Courier New', monospace;
   --font-handwriting: 'Caveat', 'Bradley Hand', 'Comic Sans MS', cursive;
+  --font-broc-title: 'Verve Shadow', 'Cinzel', Georgia, serif;
 
   /* ============================================================
      Tokens dimensionnels fluides (Phase A — multi-écrans)

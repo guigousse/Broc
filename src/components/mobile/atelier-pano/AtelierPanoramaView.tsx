@@ -150,7 +150,7 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
 
   return (
     <MobileLayout
-      header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}
+      header={<MobileHeader budget={state.budget} />}
       fillContent
     >
       <div
