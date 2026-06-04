@@ -27,7 +27,7 @@ export function QgCourrier({ nbNonLus, onTap }: QgCourrierProps) {
 
   if (nbNonLus <= 0) return null;
   // 1 lettre → single envelope ; 2+ → pile multilettre.
-  const src = nbNonLus === 1 ? "/qg/lettre.png" : "/qg/multilettre.png";
+  const src = nbNonLus === 1 ? "/qg/lettre.webp" : "/qg/multilettre.webp";
   return (
     <button
       type="button"

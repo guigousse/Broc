@@ -56,7 +56,7 @@ export function QgCalendrier({ jourActuel, onTap }: QgCalendrierProps) {
       }}
     >
       <img
-        src="/qg/calendrier.png"
+        src="/qg/calendrier.webp"
         alt=""
         draggable={false}
         style={{ width: "100%", height: "auto", display: "block" }}

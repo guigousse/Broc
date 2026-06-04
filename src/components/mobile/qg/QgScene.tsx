@@ -50,7 +50,7 @@ export function QgScene({ children }: QgSceneProps) {
   return (
     <div style={wrapStyle} aria-label="Décor du QG" data-qg-scene="1">
       <Image
-        src="/qg/fond-cabinet.png"
+        src="/qg/fond-cabinet.webp"
         alt=""
         fill
         sizes={`${QG_LAYOUT.panoramaWidth}vw`}

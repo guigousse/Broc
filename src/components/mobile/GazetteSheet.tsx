@@ -297,7 +297,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
       <div style={stage} role="dialog" aria-modal="true">
         <div style={paperWrap}>
           <img
-            src="/qg/journalouvert.png"
+            src="/qg/journalouvert.webp"
             alt=""
             style={paperImg}
             draggable={false}

@@ -25,8 +25,11 @@ export const BROCANTES_WITH_IMAGE: ReadonlySet<string> = new Set<string>([
   "salon-antiquaires-drouot",
 ]);
 
+/**
+ * Retourne le chemin du WebP de la brocante (généré par `scripts/generate-webp.mjs`).
+ */
 export function getBrocanteImageUrl(brocanteId: string): string | null {
   return BROCANTES_WITH_IMAGE.has(brocanteId)
-    ? `/brocantes/${brocanteId}.png`
+    ? `/brocantes/${brocanteId}.webp`
     : null;
 }

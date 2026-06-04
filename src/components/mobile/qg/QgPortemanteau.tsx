@@ -16,7 +16,7 @@ export function QgPortemanteau() {
       aria-hidden
     >
       <img
-        src="/qg/portemanteau.png"
+        src="/qg/portemanteau.webp"
         alt=""
         draggable={false}
         style={{

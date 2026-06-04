@@ -294,7 +294,7 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
 
           <div style={gramoBlock}>
             <img
-              src="/qg/gramophoeface.png"
+              src="/qg/gramophoeface.webp"
               alt=""
               style={gramoImg}
               draggable={false}

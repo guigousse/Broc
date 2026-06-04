@@ -16,7 +16,7 @@ export function QgJournal({ onTap }: QgJournalProps) {
       style={style}
     >
       <img
-        src="/qg/journal.png"
+        src="/qg/journal.webp"
         alt=""
         draggable={false}
         style={{

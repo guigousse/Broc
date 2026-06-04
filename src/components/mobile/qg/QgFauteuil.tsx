@@ -17,7 +17,7 @@ export function QgFauteuil({ onTap, chat = false }: QgFauteuilProps) {
       style={style}
     >
       <img
-        src={chat ? "/qg/fauteuilchat.png" : "/qg/fauteuil.png"}
+        src={chat ? "/qg/fauteuilchat.webp" : "/qg/fauteuil.webp"}
         alt=""
         draggable={false}
         style={{ width: "100%", height: "auto", display: "block" }}

@@ -16,7 +16,7 @@ export function QgGramophone({ onTap }: QgGramophoneProps) {
       style={style}
     >
       <img
-        src="/qg/gramophone.png"
+        src="/qg/gramophone.webp"
         alt=""
         draggable={false}
         style={{

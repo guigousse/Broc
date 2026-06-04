@@ -200,7 +200,7 @@ export function UnifiedPanorama({
       <div style={sceneStyle} data-unified-scene="1">
         {/* Fonds stitchés */}
         <img
-          src="/qg/fond-cabinet.png"
+          src="/qg/fond-cabinet.webp"
           alt=""
           style={bgQgStyle}
           draggable={false}

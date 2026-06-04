@@ -439,8 +439,13 @@ export const ITEMS_WITH_IMAGE: ReadonlySet<string> = new Set<string>([
   "uniq.ma.vase_ming_dynasty",
 ]);
 
+/**
+ * Retourne le chemin du WebP de l'item (généré par `scripts/generate-webp.mjs`).
+ * Supporté nativement par tous les navigateurs cibles (Tauri WebKit/WebView2
+ * + browsers modernes).
+ */
 export function getItemImageUrl(templateId: string): string | null {
   return ITEMS_WITH_IMAGE.has(templateId)
-    ? `/items/${templateId}.png`
+    ? `/items/${templateId}.webp`
     : null;
 }

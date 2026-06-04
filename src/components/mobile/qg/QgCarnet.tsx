@@ -16,7 +16,7 @@ export function QgCarnet({ onTap }: QgCarnetProps) {
       style={style}
     >
       <img
-        src="/qg/carnet.png"
+        src="/qg/carnet.webp"
         alt=""
         draggable={false}
         style={{ width: "100%", height: "auto", display: "block" }}

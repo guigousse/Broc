@@ -338,7 +338,7 @@ export function CalendrierSheet({
       <div style={stage} role="dialog" aria-modal="true">
         <div style={paperWrap}>
           <img
-            src="/qg/calendrier.png"
+            src="/qg/calendrier.webp"
             alt=""
             style={paperImg}
             draggable={false}
