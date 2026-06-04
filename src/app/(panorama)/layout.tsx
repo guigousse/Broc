@@ -186,6 +186,8 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       // Sync URL : debounce 350 ms, mount guard 1200 ms. Le seul intérêt
       // est de garder l'URL alignée pour le partage / le retour back ;
       // la TabBar et les hotspots utilisent déjà le store ci-dessus.
+      // En mode édition, on coupe net : la nav remount/reset les states.
+      if (editEnabledRef.current) return;
       if (performance.now() - mountTimeRef.current < 1200) return;
       if (urlDebounceRef.current !== null) {
         window.clearTimeout(urlDebounceRef.current);
@@ -423,6 +425,10 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   // TEMP : forcé pour positionner le chat baladeur depuis la prod.
   // À remettre sur `process.env.NEXT_PUBLIC_QG_EDIT === "1"` après placement.
   const editEnabled = true;
+  const editEnabledRef = useRef(editEnabled);
+  useEffect(() => {
+    editEnabledRef.current = editEnabled;
+  }, [editEnabled]);
 
   return (
     <QgEditProvider enabled={editEnabled}>

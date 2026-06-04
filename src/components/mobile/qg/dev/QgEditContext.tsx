@@ -4,12 +4,15 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_LAYOUT } from "../chatBaladeurLayout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
+
+const STORAGE_KEY = "broc.qg-edit.overrides";
 
 export type EditableKey = QgObjetKey | ChatBaladeurId;
 
@@ -51,9 +54,29 @@ export function QgEditProvider({
   enabled: boolean;
   children: ReactNode;
 }) {
+  // Init synchrone depuis localStorage en mode édition — empêche le reset
+  // visuel sur les navigations (re-render de PanoramaInner).
   const [overrides, setOverrides] = useState<
     Partial<Record<EditableKey, ObjetOverride>>
-  >({});
+  >(() => {
+    if (!enabled || typeof window === "undefined") return {};
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw) as Partial<Record<EditableKey, ObjetOverride>>;
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    if (!enabled || typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+    } catch {
+      /* ignore */
+    }
+  }, [overrides, enabled]);
 
   const setOverride = useCallback(
     (key: EditableKey, partial: ObjetOverride) => {
@@ -71,7 +94,16 @@ export function QgEditProvider({
       return next;
     });
   }, []);
-  const resetAll = useCallback(() => setOverrides({}), []);
+  const resetAll = useCallback(() => {
+    setOverrides({});
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
 
   return (
     <QgEditContext.Provider
