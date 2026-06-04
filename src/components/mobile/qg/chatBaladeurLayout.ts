@@ -11,7 +11,7 @@ export const CHAT_BALADEUR_LAYOUT: Record<
   ChatBaladeurId,
   { left: number; bottom: number; width: number }
 > = {
-  "qg-fenetre":      { left: 60,  bottom: 30, width: 6 },
-  "atelier-fenetre": { left: 360, bottom: 28, width: 6 },
-  "atelier-marche":  { left: 450, bottom: 14, width: 5 },
+  "qg-fenetre":      { left: 235.0, bottom: 28.2, width: 10.7 },
+  "atelier-fenetre": { left: 435.0, bottom: 41.0, width: 13.5 },
+  "atelier-marche":  { left: 443.7, bottom: 68.2, width: 8.3 },
 };

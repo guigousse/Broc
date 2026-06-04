@@ -422,9 +422,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   const showQgZone = (qgZoneIdx: 0 | 1 | 2) =>
     Math.abs(zoneActive - qgZoneIdx) <= 1;
 
-  // TEMP : forcé pour positionner le chat baladeur depuis la prod.
-  // À remettre sur `process.env.NEXT_PUBLIC_QG_EDIT === "1"` après placement.
-  const editEnabled = true;
+  const editEnabled = process.env.NEXT_PUBLIC_QG_EDIT === "1";
   const editEnabledRef = useRef(editEnabled);
   useEffect(() => {
     editEnabledRef.current = editEnabled;
