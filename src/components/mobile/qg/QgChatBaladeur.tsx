@@ -1,30 +1,32 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { selectChatBaladeur } from "@/lib/chatBaladeur";
-import { CHAT_BALADEUR_LAYOUT } from "./chatBaladeurLayout";
+import {
+  CHAT_BALADEUR_ORDER,
+  selectChatBaladeur,
+  type ChatBaladeurId,
+} from "@/lib/chatBaladeur";
 import { useChatBaladeurCoord } from "./dev/QgEditContext";
 
 interface QgChatBaladeurProps {
   jourActuel: number;
   chatSurFauteuil: boolean;
+  /**
+   * Mode édition : rend les 3 sprites en même temps, à leur position
+   * respective, pour permettre un placement pixel-perfect depuis l'outil
+   * de dev. `chatSurFauteuil` est ignoré dans ce mode.
+   */
+  editPreviewAll?: boolean;
 }
 
-const SRC: Record<keyof typeof CHAT_BALADEUR_LAYOUT, string> = {
-  "qg-fenetre":      "/qg/chat-baladeur/qg-fenetre.webp",
+const SRC: Record<ChatBaladeurId, string> = {
+  "qg-fenetre": "/qg/chat-baladeur/qg-fenetre.webp",
   "atelier-fenetre": "/qg/chat-baladeur/atelier-fenetre.webp",
-  "atelier-marche":  "/qg/chat-baladeur/atelier-marche.webp",
+  "atelier-marche": "/qg/chat-baladeur/atelier-marche.webp",
 };
 
-export function QgChatBaladeur({ jourActuel, chatSurFauteuil }: QgChatBaladeurProps) {
-  const id = selectChatBaladeur(jourActuel, chatSurFauteuil);
-  // Hooks doivent toujours être appelés dans le même ordre — on hooke
-  // avec un id stable (le premier de la table) puis on guard à la fin.
-  const fallbackId = "qg-fenetre" as const;
-  const { left, bottom, width } = useChatBaladeurCoord(id ?? fallbackId);
-
-  if (id === null) return null;
-
+function ChatSprite({ id }: { id: ChatBaladeurId }) {
+  const { left, bottom, width } = useChatBaladeurCoord(id);
   const style: CSSProperties = {
     position: "absolute",
     left: `${left}vw`,
@@ -36,14 +38,25 @@ export function QgChatBaladeur({ jourActuel, chatSurFauteuil }: QgChatBaladeurPr
     display: "block",
     zIndex: 2,
   };
+  return <img src={SRC[id]} alt="" draggable={false} style={style} aria-hidden />;
+}
 
-  return (
-    <img
-      src={SRC[id]}
-      alt=""
-      draggable={false}
-      style={style}
-      aria-hidden
-    />
-  );
+export function QgChatBaladeur({
+  jourActuel,
+  chatSurFauteuil,
+  editPreviewAll = false,
+}: QgChatBaladeurProps) {
+  if (editPreviewAll) {
+    return (
+      <>
+        {CHAT_BALADEUR_ORDER.map((id) => (
+          <ChatSprite key={id} id={id} />
+        ))}
+      </>
+    );
+  }
+
+  const id = selectChatBaladeur(jourActuel, chatSurFauteuil);
+  if (id === null) return null;
+  return <ChatSprite id={id} />;
 }
