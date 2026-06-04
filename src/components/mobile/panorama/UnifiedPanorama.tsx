@@ -215,7 +215,8 @@ export function UnifiedPanorama({
         {/* Objets interactifs positionnés au-dessus */}
         <div style={objectsLayer}>
           {children}
-          {process.env.NEXT_PUBLIC_QG_EDIT === "1" && <QgEditOverlay />}
+          {/* TEMP : forcé pour positionner le chat baladeur depuis la prod. */}
+          <QgEditOverlay />
         </div>
       </div>
 
