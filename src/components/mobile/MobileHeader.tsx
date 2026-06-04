@@ -30,6 +30,7 @@ const innerStyle: CSSProperties = {
 const labelStyle: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: "clamp(8px, 2.2vw, 10px)",
+  fontWeight: 700,
   letterSpacing: "0.18em",
   textTransform: "uppercase",
   color: "var(--brass-700)",
@@ -57,23 +58,24 @@ export function MobileHeader({
           style={{
             fontFamily: "var(--font-broc-title)",
             fontWeight: 400,
-            fontSize: "clamp(22px, 6.5vw, 30px)",
+            fontSize: "clamp(26px, 7.8vw, 36px)",
             letterSpacing: "0.04em",
             color: "var(--brass-300)",
             textDecoration: "none",
             lineHeight: 1,
+            display: "inline-flex",
+            alignItems: "center",
+            height: "100%",
           }}
         >
           Broc
         </Link>
         <span />
-        <div style={{ textAlign: "right", ...labelStyle, color: "var(--brass-700)" }}>
+        <div style={{ textAlign: "center", ...labelStyle }}>
           Tickets
           <strong style={valueStyle}>
             {tickets.current}
-            <span style={{ color: "var(--brass-700)", fontWeight: 400 }}>
-              /{tickets.max}
-            </span>
+            <span style={{ color: "var(--brass-700)" }}>/{tickets.max}</span>
           </strong>
         </div>
         <div style={{ textAlign: "right", ...labelStyle }}>
