@@ -2,15 +2,42 @@
 
 import { useState } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
-import { useQgObjet, useQgEditContext } from "./QgEditContext";
+import { CHAT_BALADEUR_LAYOUT } from "../chatBaladeurLayout";
+import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
+import {
+  useQgObjet,
+  useChatBaladeurCoord,
+  useQgEditContext,
+  type EditableKey,
+} from "./QgEditContext";
 
-const KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
+const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
+const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
 
-function KeyRow({ qgKey }: { qgKey: QgObjetKey }) {
+function QgRow({ qgKey }: { qgKey: QgObjetKey }) {
   const { left, bottom, width } = useQgObjet(qgKey);
+  return <CoordRow name={qgKey} left={left} bottom={bottom} width={width} />;
+}
+
+function ChatRow({ chatKey }: { chatKey: ChatBaladeurId }) {
+  const { left, bottom, width } = useChatBaladeurCoord(chatKey);
+  return <CoordRow name={chatKey} left={left} bottom={bottom} width={width} />;
+}
+
+function CoordRow({
+  name,
+  left,
+  bottom,
+  width,
+}: {
+  name: string;
+  left: number;
+  bottom: number;
+  width: number;
+}) {
   return (
     <div style={{ fontFamily: "monospace", fontSize: 11, lineHeight: 1.6, color: "#e8d5a3" }}>
-      <span style={{ color: "#a8c4e0" }}>{qgKey}</span>
+      <span style={{ color: "#a8c4e0" }}>{name}</span>
       {": { left: "}
       <span style={{ color: "#b8e0a8" }}>{left.toFixed(1)}</span>
       {", bottom: "}
@@ -26,20 +53,35 @@ export function QgEditPanel() {
   const ctx = useQgEditContext();
   const [collapsed, setCollapsed] = useState(false);
 
+  function effective(key: EditableKey) {
+    const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
+    const base = isChat
+      ? CHAT_BALADEUR_LAYOUT[key as ChatBaladeurId]
+      : QG_LAYOUT.objets[key as QgObjetKey];
+    const o = ctx?.overrides[key];
+    return {
+      left: o?.left ?? base.left,
+      bottom: o?.bottom ?? base.bottom,
+      width: o?.width ?? base.width,
+    };
+  }
+
   function handleCopy() {
-    const lines = KEYS.map((key) => {
-      // Access live values via DOM would require hooks, but we need them all together.
-      // We'll build the snippet from the ctx overrides + base values.
-      const base = QG_LAYOUT.objets[key];
-      const o = ctx?.overrides[key];
-      const left = o?.left ?? base.left;
-      const bottom = o?.bottom ?? base.bottom;
-      const width = o?.width ?? base.width;
-      return `    ${key}: { left: ${left.toFixed(1)}, bottom: ${bottom.toFixed(1)}, width: ${width.toFixed(1)} },`;
+    const qg = QG_KEYS.map((k) => {
+      const e = effective(k);
+      return `    ${k}: { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
     });
-    const snippet = lines.join("\n");
+    const chat = CHAT_KEYS.map((k) => {
+      const e = effective(k);
+      return `  "${k}": { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
+    });
+    const snippet =
+      "// QG objets\n" +
+      qg.join("\n") +
+      "\n\n// Chat baladeur\n" +
+      chat.join("\n");
     navigator.clipboard.writeText(snippet).catch(() => {
-      // silently ignore clipboard errors in insecure contexts
+      /* clipboard indisponible en contexte non sécurisé : on ignore */
     });
   }
 
@@ -84,10 +126,11 @@ export function QgEditPanel() {
         borderRadius: 8,
         padding: "10px 12px",
         minWidth: 280,
+        maxHeight: "70vh",
+        overflowY: "auto",
         boxShadow: "0 4px 20px rgba(0,0,0,0.6)",
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -125,7 +168,6 @@ export function QgEditPanel() {
         </button>
       </div>
 
-      {/* Code snippet */}
       <div
         style={{
           background: "rgba(0,0,0,0.4)",
@@ -134,12 +176,16 @@ export function QgEditPanel() {
           marginBottom: 8,
         }}
       >
-        {KEYS.map((key) => (
-          <KeyRow key={key} qgKey={key} />
+        <div style={{ color: "#8aa", fontSize: 10, marginBottom: 4 }}>// QG objets</div>
+        {QG_KEYS.map((k) => (
+          <QgRow key={k} qgKey={k} />
+        ))}
+        <div style={{ color: "#8aa", fontSize: 10, margin: "6px 0 4px" }}>// Chat baladeur</div>
+        {CHAT_KEYS.map((k) => (
+          <ChatRow key={k} chatKey={k} />
         ))}
       </div>
 
-      {/* Actions */}
       <div style={{ display: "flex", gap: 6 }}>
         <button
           type="button"

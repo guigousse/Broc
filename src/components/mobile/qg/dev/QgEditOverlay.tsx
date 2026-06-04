@@ -2,30 +2,46 @@
 
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
-import { useQgObjet, useQgEditContext } from "./QgEditContext";
+import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
+import {
+  useQgObjet,
+  useChatBaladeurCoord,
+  useQgEditContext,
+  type EditableKey,
+} from "./QgEditContext";
 
-const KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
+const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
+const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
+const ALL_KEYS: EditableKey[] = [...QG_KEYS, ...CHAT_KEYS];
 
-interface OutlineProps {
-  qgKey: QgObjetKey;
+function useCoord(key: EditableKey) {
+  // CHAT_BALADEUR_ORDER est petit et stable — on peut faire un includes.
+  const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
+  // Les deux hooks ont la même signature ; on choisit selon la classe de
+  // clé en respectant l'ordre des appels (toujours un seul hook actif).
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return isChat
+    ? useChatBaladeurCoord(key as ChatBaladeurId)
+    : useQgObjet(key as QgObjetKey);
 }
 
-function ObjetOutline({ qgKey }: OutlineProps) {
-  const { left, bottom, width } = useQgObjet(qgKey);
+interface OutlineProps {
+  editKey: EditableKey;
+}
+
+function ObjetOutline({ editKey }: OutlineProps) {
+  const { left, bottom, width } = useCoord(editKey);
   const ctx = useQgEditContext();
   const sceneRef = useRef<HTMLElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Find the QgScene container (the actual ancestor of the bottom: Y%
-  // coordinate system used by the objects).
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const scene = el.closest("[data-qg-scene]") as HTMLElement | null;
+    const scene = el.closest("[data-unified-scene]") as HTMLElement | null;
     sceneRef.current = scene;
   }, []);
 
-  // Drag state stored in refs (no re-render during drag)
   const dragging = useRef(false);
   const startX = useRef(0);
   const startY = useRef(0);
@@ -59,7 +75,7 @@ function ObjetOutline({ qgKey }: OutlineProps) {
     const hPx = getSceneHeight() / 100;
     const newLeft = startLeft.current + dx / vwPx;
     const newBottom = startBottom.current - dy / hPx;
-    ctx.setOverride(qgKey, { left: newLeft, bottom: newBottom });
+    ctx.setOverride(editKey, { left: newLeft, bottom: newBottom });
   }
 
   function onBodyPointerUp(e: ReactPointerEvent<HTMLDivElement>) {
@@ -82,7 +98,7 @@ function ObjetOutline({ qgKey }: OutlineProps) {
     const dx = e.clientX - resizeStartX.current;
     const vwPx = window.innerWidth / 100;
     const newWidth = Math.max(1, startWidth.current + dx / vwPx);
-    ctx.setOverride(qgKey, { width: newWidth });
+    ctx.setOverride(editKey, { width: newWidth });
   }
 
   function onResizePointerUp(e: ReactPointerEvent<HTMLDivElement>) {
@@ -99,14 +115,12 @@ function ObjetOutline({ qgKey }: OutlineProps) {
         left: `${left}vw`,
         bottom: `${bottom}%`,
         width: `${width}vw`,
-        // Use a tall min-height to remain grabbable even for invisible objects
         minHeight: "4vh",
         zIndex: 20,
         pointerEvents: "auto",
         touchAction: "none",
       }}
     >
-      {/* Draggable body */}
       <div
         onPointerDown={onBodyPointerDown}
         onPointerMove={onBodyPointerMove}
@@ -121,7 +135,6 @@ function ObjetOutline({ qgKey }: OutlineProps) {
           userSelect: "none",
         }}
       >
-        {/* Key label */}
         <span
           style={{
             position: "absolute",
@@ -137,11 +150,10 @@ function ObjetOutline({ qgKey }: OutlineProps) {
             whiteSpace: "nowrap",
           }}
         >
-          {qgKey}
+          {editKey}
         </span>
       </div>
 
-      {/* Resize handle — bottom-right corner */}
       <div
         onPointerDown={onResizePointerDown}
         onPointerMove={onResizePointerMove}
@@ -160,7 +172,6 @@ function ObjetOutline({ qgKey }: OutlineProps) {
         }}
       />
 
-      {/* Info badge — below the outline */}
       <div
         style={{
           position: "absolute",
@@ -185,8 +196,8 @@ function ObjetOutline({ qgKey }: OutlineProps) {
 export function QgEditOverlay() {
   return (
     <>
-      {KEYS.map((key) => (
-        <ObjetOutline key={key} qgKey={key} />
+      {ALL_KEYS.map((key) => (
+        <ObjetOutline key={key} editKey={key} />
       ))}
     </>
   );
