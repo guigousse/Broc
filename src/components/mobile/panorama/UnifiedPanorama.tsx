@@ -215,7 +215,8 @@ export function UnifiedPanorama({
         {/* Objets interactifs positionnés au-dessus */}
         <div style={objectsLayer}>
           {children}
-          {process.env.NEXT_PUBLIC_QG_EDIT === "1" && <QgEditOverlay />}
+          {/* L'overlay s'auto-gate via le contexte d'édition (enabled + active). */}
+          <QgEditOverlay />
         </div>
       </div>
 

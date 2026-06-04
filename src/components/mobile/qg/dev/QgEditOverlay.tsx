@@ -195,7 +195,7 @@ function ObjetOutline({ editKey }: OutlineProps) {
 
 export function QgEditOverlay() {
   const ctx = useQgEditContext();
-  if (!ctx?.active) return null;
+  if (!ctx?.enabled || !ctx.active) return null;
   return (
     <>
       {ALL_KEYS.map((key) => (
