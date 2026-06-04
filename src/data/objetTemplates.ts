@@ -54,7 +54,7 @@ const MUSIQUE_C: Row[] = [
   ["mus.vinyle_cabrel_hors_saison", "Vinyle François Cabriol 'Hors-Piste'", 18],
   ["mus.vinyle_gainsbourg_melody", "Vinyle Gainsbourg 'Melody Nelson'", 70],
   ["mus.vinyle_higelin_alertez", "Vinyle Higelin 'Alertez les bébés'", 22],
-  ["mus.vinyle_balavoine_aziza", "Vinyle Balavoine 'Aziza'", 18],
+  ["mus.vinyle_balavoine_aziza", "Vinyle Miguel Pavane 'La Zizanie'", 18],
   ["mus.vinyle_souchon_foule", "Vinyle Souchon 'Foule sentimentale'", 14],
   ["mus.cd_daft_punk_homework", "CD Daft Punk 'Homework'", 14],
   ["mus.cd_radiohead_ok", "CD Radiohead 'OK Computer'", 16],
