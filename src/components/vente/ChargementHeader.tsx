@@ -1,21 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { NiveauCamion } from "@/types/game";
 import { getCamion, getProchainCamion } from "@/data/camion";
 import { CamionIcon } from "./CamionIcon";
 
 interface Props {
   niveau: NiveauCamion;
-  placesUtilisees: number;
+  nbObjets: number;
   budget: number;
   onUpgrade: (niveau: NiveauCamion) => void;
 }
 
-export function ChargementHeader({ niveau, placesUtilisees, budget, onUpgrade }: Props) {
+export function ChargementHeader({ niveau, nbObjets, budget, onUpgrade }: Props) {
   const camion = getCamion(niveau);
   const prochain = getProchainCamion(niveau);
-  const pct = Math.min(100, (placesUtilisees / camion.capacitePlaces) * 100);
   const peutUpgrade = !!prochain && budget >= (prochain.prixUpgradeVersCeNiveau ?? 0);
   const [confirm, setConfirm] = useState<boolean>(false);
+
+  // Reset l'état "Confirmer" si le niveau change (après upgrade).
+  useEffect(() => {
+    setConfirm(false);
+  }, [niveau]);
 
   return (
     <div
@@ -43,23 +47,14 @@ export function ChargementHeader({ niveau, placesUtilisees, budget, onUpgrade }:
         </div>
         <div
           style={{
-            height: 8,
-            background: "var(--paper-300)",
-            border: "1px solid var(--brass-500)",
-            margin: "3px 0 2px",
-          }}
-        >
-          <div style={{ height: "100%", background: "var(--forest-800)", width: `${pct}%` }} />
-        </div>
-        <div
-          style={{
             fontFamily: "var(--font-display)",
-            fontSize: 11,
+            fontSize: 13,
             color: "var(--forest-800)",
             fontWeight: 700,
+            marginTop: 2,
           }}
         >
-          {placesUtilisees} / {camion.capacitePlaces} places
+          {nbObjets} objet{nbObjets > 1 ? "s" : ""} chargé{nbObjets > 1 ? "s" : ""}
         </div>
       </div>
       {prochain && (

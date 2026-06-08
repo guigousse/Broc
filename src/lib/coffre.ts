@@ -29,6 +29,42 @@ export function capaciteSuffit(
   return placesActuelles + placesAjoutees <= capaciteMax;
 }
 
+/**
+ * Calcule les IDs des objets en collision dans le coffre (bbox-based).
+ * Inclut aussi les objets qui sortent des bornes [0, 1] × [0, 1].
+ * Renvoie un Set d'objet IDs à mettre en rouge.
+ */
+export function computeOverlaps(
+  items: ReadonlyArray<{ id: string; posX: number; posY: number; scale: number }>,
+): Set<string> {
+  const sortants = new Set<string>();
+  const bboxes = items.map((it) => ({
+    id: it.id,
+    bbox: {
+      x: it.posX - it.scale / 2,
+      y: it.posY - it.scale / 2,
+      w: it.scale,
+      h: it.scale,
+    },
+  }));
+  // Hors-coffre
+  for (const b of bboxes) {
+    if (b.bbox.x < 0 || b.bbox.y < 0 || b.bbox.x + b.bbox.w > 1 || b.bbox.y + b.bbox.h > 1) {
+      sortants.add(b.id);
+    }
+  }
+  // Chevauchements deux à deux
+  for (let i = 0; i < bboxes.length; i++) {
+    for (let j = i + 1; j < bboxes.length; j++) {
+      if (bboxOverlap(bboxes[i].bbox, bboxes[j].bbox)) {
+        sortants.add(bboxes[i].id);
+        sortants.add(bboxes[j].id);
+      }
+    }
+  }
+  return sortants;
+}
+
 /* --- Alpha mask --------------------------------------------------- */
 
 /**

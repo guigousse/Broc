@@ -17,9 +17,6 @@ interface Props {
   overlap?: boolean;
 }
 
-const LONG_PRESS_MS = 300;
-const LONG_PRESS_MAX_MOVE = 5;
-
 export function ItemDansCoffre({
   ov,
   capacitePlaces,
@@ -36,20 +33,35 @@ export function ItemDansCoffre({
   const sizePx = scale * cotePixels;
 
   const elRef = useRef<HTMLDivElement>(null);
-  const startRef = useRef<{ x: number; y: number; t: number; moved: boolean } | null>(null);
+  // Pointers actifs sur cet objet : pour détecter le second doigt = rotation.
+  const activePointers = useRef<Set<number>>(new Set());
+  const dragPointer = useRef<number | null>(null);
   const [dragging, setDragging] = useState(false);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    activePointers.current.add(e.pointerId);
+    // Second doigt sur le même objet → rotation +90° et on annule le drag en cours.
+    if (activePointers.current.size >= 2) {
+      onRotate();
+      navigator.vibrate?.(20);
+      if (dragPointer.current !== null) {
+        try {
+          e.currentTarget.releasePointerCapture(dragPointer.current);
+        } catch {
+          // pointer déjà relâché — ignore
+        }
+        dragPointer.current = null;
+      }
+      setDragging(false);
+      return;
+    }
     e.currentTarget.setPointerCapture(e.pointerId);
-    startRef.current = { x: e.clientX, y: e.clientY, t: Date.now(), moved: false };
+    dragPointer.current = e.pointerId;
     setDragging(true);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!startRef.current) return;
-    const dx = e.clientX - startRef.current.x;
-    const dy = e.clientY - startRef.current.y;
-    if (Math.hypot(dx, dy) > LONG_PRESS_MAX_MOVE) startRef.current.moved = true;
+    if (dragPointer.current !== e.pointerId) return;
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const px = (e.clientX - rect.left) / rect.width;
@@ -57,23 +69,22 @@ export function ItemDansCoffre({
     onMove(Math.max(0, Math.min(1, px)), Math.max(0, Math.min(1, py)));
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    const s = startRef.current;
-    startRef.current = null;
-    setDragging(false);
-    if (!s) return;
-    const heldMs = Date.now() - s.t;
-    if (!s.moved && heldMs >= LONG_PRESS_MS) {
-      onRotate();
-      navigator.vibrate?.(20);
-      return;
+  const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    activePointers.current.delete(e.pointerId);
+    if (dragPointer.current === e.pointerId) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        // ignore
+      }
+      dragPointer.current = null;
+      setDragging(false);
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const insideX = e.clientX >= rect.left && e.clientX <= rect.right;
+      const insideY = e.clientY >= rect.top && e.clientY <= rect.bottom;
+      if (!insideX || !insideY) onDragOut();
     }
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const insideX = e.clientX >= rect.left && e.clientX <= rect.right;
-    const insideY = e.clientY >= rect.top && e.clientY <= rect.bottom;
-    if (!insideX || !insideY) onDragOut();
   };
 
   const posX = (ov.posX ?? 0.5) * cotePixels;
@@ -85,7 +96,8 @@ export function ItemDansCoffre({
       ref={elRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
       style={{
         position: "absolute",
         left: posX - sizePx / 2,
@@ -94,7 +106,8 @@ export function ItemDansCoffre({
         height: sizePx,
         transform: `rotate(${rot}deg)`,
         transition: dragging ? "none" : "transform 120ms",
-        outline: overlap ? "2px solid var(--vermillion-600)" : "none",
+        outline: overlap ? "3px solid var(--vermillion-600)" : "none",
+        outlineOffset: overlap ? 2 : 0,
         cursor: dragging ? "grabbing" : "grab",
         touchAction: "none",
       }}
