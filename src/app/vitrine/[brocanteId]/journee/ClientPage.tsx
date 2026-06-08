@@ -26,7 +26,7 @@ import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
-import { getBrocanteById } from "@/data/brocantes";
+import { getBrocanteById, fraisEntree } from "@/data/brocantes";
 import {
   TREE_GENERAL,
   XP_NEGOCIATION_REUSSIE_GENERAL,
@@ -174,11 +174,9 @@ export default function VitrineJourneePage() {
   useEffect(() => {
     if (standSnapshot.current !== null) return;
     if (!state || !state.vitrine || state.vitrine.objets.length === 0 || !brocante) return;
-    // Loyer = 0 temporairement : sera relié à fraisEntree(brocante) via le wizard
-    // dans les Tasks 14-16 du plan vente-coffre-camion.
     standSnapshot.current = {
       niveau: state.niveauCamion,
-      loyer: 0,
+      loyer: fraisEntree(brocante),
       tailleInitiale: state.vitrine.objets.length,
     };
   }, [state, brocante]);
