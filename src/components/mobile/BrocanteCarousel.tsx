@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Store } from "lucide-react";
 import type { Brocante, GameState } from "@/types/game";
-import { coutEntree } from "@/data/brocantes";
+import { fraisEntree } from "@/data/brocantes";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 
 interface BrocanteCarouselProps {
@@ -217,7 +217,7 @@ export function BrocanteCarousel({
 
   const current = brocantes[activeIdx];
   const currentDebloquee = debloqueesIds.has(current.id);
-  const currentEntree = coutEntree(current);
+  const currentEntree = fraisEntree(current);
   const currentPeutEntrer = state.budget >= currentEntree;
 
   return (
@@ -269,7 +269,7 @@ export function BrocanteCarousel({
                 <div style={tierStyle}>{"★".repeat(b.tier)}</div>
                 <p style={descStyle}>{b.description}</p>
                 <div style={metaStyle}>
-                  {b.taillePool} items · entrée {coutEntree(b)} €
+                  {b.taillePool} items · entrée {fraisEntree(b)} €
                 </div>
                 {!debloquee && raison && (
                   <div style={lockStyle}>⊘ {raison}</div>

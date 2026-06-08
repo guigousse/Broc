@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { Brocante, GameState } from "@/types/game";
-import { coutEntree } from "@/data/brocantes";
+import { fraisEntree } from "@/data/brocantes";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import { Store } from "lucide-react";
 
@@ -117,7 +117,7 @@ export function BrocanteCard({
   destination,
 }: BrocanteCardProps) {
   const router = useRouter();
-  const entree = coutEntree(brocante);
+  const entree = fraisEntree(brocante);
   const peutEntrer = state.budget >= entree;
   const imageUrl = getBrocanteImageUrl(brocante.id);
 

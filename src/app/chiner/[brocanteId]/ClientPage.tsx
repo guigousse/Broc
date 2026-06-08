@@ -14,7 +14,7 @@ import {
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
-import { coutEntree, getBrocanteById } from "@/data/brocantes";
+import { fraisEntree, getBrocanteById } from "@/data/brocantes";
 import { estDebloquee } from "@/lib/deblocage";
 import { genererSession } from "@/lib/chine";
 import { stockageEstPlein } from "@/lib/stockage";
@@ -82,7 +82,7 @@ export default function SessionChinePage() {
     // le joueur ne peut plus être expulsé (par exemple si son solde redescend).
     if (items === null && !entreePayeeRef.current) {
       if (!estDebloquee(brocante, state)) return router.replace("/chiner");
-      const frais = coutEntree(brocante);
+      const frais = fraisEntree(brocante);
       if (state.budget < frais) {
         return router.replace(`/chiner?raison=budget&id=${brocante.id}`);
       }
