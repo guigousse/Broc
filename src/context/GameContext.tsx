@@ -19,10 +19,12 @@ import {
   type CompetenceTreeId,
   type EtatObjet,
   type GameState,
+  type NiveauCamion,
   type Objet,
   type ObjetEnVitrine,
   type Session,
 } from "@/types/game";
+import { getCamion } from "@/data/camion";
 import { createStarterInventory } from "@/data/starterInventory";
 import { createGameRepository } from "@/lib/storage/createGameRepository";
 import { migrerSauvegarde } from "@/lib/migrations";
@@ -75,9 +77,22 @@ interface GameContextValue {
   avancerJour: (nbJours?: number, volontaire?: boolean) => void;
   reset: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
-  mettreEnVitrine: (objetId: string, prixVente: number) => void;
+  mettreEnVitrine: (
+    objetId: string,
+    prixVente: number,
+    posX?: number,
+    posY?: number,
+    rotation?: 0 | 90 | 180 | 270,
+  ) => void;
   retirerDeVitrine: (objetId: string) => void;
   ajusterPrixVitrine: (objetId: string, prixVente: number) => void;
+  ajusterPositionVitrine: (
+    objetId: string,
+    posX: number,
+    posY: number,
+    rotation: 0 | 90 | 180 | 270,
+  ) => void;
+  acheterCamion: (niveau: NiveauCamion) => void;
   viderVitrine: () => void;
   vendreDeVitrine: (objetIds: string[], prixTotal: number) => void;
   enregistrerSession: (session: Session) => void;
@@ -163,6 +178,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       courriers: [creerLettreMamanDebut(INITIAL_JOUR)],
       niveauAtelier: 1,
       niveauStockage: 1,
+      niveauCamion: 1,
       piecesAmelioration: emptyPiecesAmelioration(),
       chatSurFauteuil: false,
       passagesSansChat: 0,
@@ -403,20 +419,72 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const mettreEnVitrine = useCallback((objetId: string, prixVente: number) => {
+  const mettreEnVitrine = useCallback(
+    (
+      objetId: string,
+      prixVente: number,
+      posX?: number,
+      posY?: number,
+      rotation?: 0 | 90 | 180 | 270,
+    ) => {
+      setState((prev) => {
+        if (!prev || !prev.vitrine) return prev;
+        const objet = prev.inventaireJoueur.find((o) => o.id === objetId);
+        if (!objet) return prev;
+        const nouvelEntree: ObjetEnVitrine = {
+          objet,
+          prixVente,
+          ...(posX !== undefined ? { posX } : {}),
+          ...(posY !== undefined ? { posY } : {}),
+          ...(rotation !== undefined ? { rotation } : {}),
+        };
+        return {
+          ...prev,
+          inventaireJoueur: prev.inventaireJoueur.filter(
+            (o) => o.id !== objetId,
+          ),
+          vitrine: {
+            ...prev.vitrine,
+            objets: [...prev.vitrine.objets, nouvelEntree],
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const ajusterPositionVitrine = useCallback(
+    (
+      objetId: string,
+      posX: number,
+      posY: number,
+      rotation: 0 | 90 | 180 | 270,
+    ) => {
+      setState((prev) =>
+        prev && prev.vitrine
+          ? {
+              ...prev,
+              vitrine: {
+                ...prev.vitrine,
+                objets: prev.vitrine.objets.map((e) =>
+                  e.objet.id === objetId ? { ...e, posX, posY, rotation } : e,
+                ),
+              },
+            }
+          : prev,
+      );
+    },
+    [],
+  );
+
+  const acheterCamion = useCallback((niveau: NiveauCamion) => {
     setState((prev) => {
-      if (!prev || !prev.vitrine) return prev;
-      const objet = prev.inventaireJoueur.find((o) => o.id === objetId);
-      if (!objet) return prev;
-      const nouvelEntree: ObjetEnVitrine = { objet, prixVente };
-      return {
-        ...prev,
-        inventaireJoueur: prev.inventaireJoueur.filter((o) => o.id !== objetId),
-        vitrine: {
-          ...prev.vitrine,
-          objets: [...prev.vitrine.objets, nouvelEntree],
-        },
-      };
+      if (!prev) return prev;
+      if (niveau !== prev.niveauCamion + 1) return prev;
+      const camion = getCamion(niveau);
+      const prix = camion.prixUpgradeVersCeNiveau ?? 0;
+      if (prev.budget < prix) return prev;
+      return { ...prev, niveauCamion: niveau, budget: prev.budget - prix };
     });
   }, []);
 
@@ -817,6 +885,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       mettreEnVitrine,
       retirerDeVitrine,
       ajusterPrixVitrine,
+      ajusterPositionVitrine,
+      acheterCamion,
       viderVitrine,
       vendreDeVitrine,
       enregistrerSession,
@@ -851,6 +921,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       mettreEnVitrine,
       retirerDeVitrine,
       ajusterPrixVitrine,
+      ajusterPositionVitrine,
+      acheterCamion,
       viderVitrine,
       vendreDeVitrine,
       enregistrerSession,

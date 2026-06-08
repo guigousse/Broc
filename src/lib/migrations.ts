@@ -301,6 +301,11 @@ export function migrerSauvegarde(loaded: GameState): GameState {
         total <= 10 ? 1 : total <= 25 ? 2 : total <= 50 ? 3 : 4;
       return fallbackTier;
     })(),
+    niveauCamion: (() => {
+      const v = (loaded as Partial<GameState>).niveauCamion;
+      if (v === 2 || v === 3 || v === 4) return v;
+      return 1;
+    })(),
     piecesAmelioration: (() => {
       const loadedPieces = (loaded as Partial<GameState>).piecesAmelioration;
       const base = emptyPiecesAmelioration();

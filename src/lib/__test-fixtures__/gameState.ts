@@ -45,6 +45,7 @@ export function createMockGameState(patch: Partial<GameState> = {}): GameState {
     courriers: [],
     niveauAtelier: 1,
     niveauStockage: 1,
+    niveauCamion: 1,
     piecesAmelioration: pieces,
     chatSurFauteuil: false,
     passagesSansChat: 0,
