@@ -27,7 +27,6 @@ import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
 import { getBrocanteById } from "@/data/brocantes";
-import { coutStand, niveauRequis } from "@/data/standLevels";
 import {
   TREE_GENERAL,
   XP_NEGOCIATION_REUSSIE_GENERAL,
@@ -54,8 +53,8 @@ import { buildCelebritePersonnage } from "@/lib/celebrite";
 import type {
   CategorieObjet,
   EtatObjet,
+  NiveauCamion,
   Rarete,
-  StandLevel,
   VenteHistorique,
 } from "@/types/game";
 
@@ -170,19 +169,18 @@ export default function VitrineJourneePage() {
     poolRef.current = genererPoolClients(20, brocante.tier);
   }
 
-  // Snapshot du stand au montage (avant que la vitrine soit modifiée par les ventes)
-  const standSnapshot = useRef<{ niveau: StandLevel; loyer: number; tailleInitiale: number } | null>(null);
+  // Snapshot du camion au montage (avant que la vitrine soit modifiée par les ventes)
+  const standSnapshot = useRef<{ niveau: NiveauCamion; loyer: number; tailleInitiale: number } | null>(null);
   useEffect(() => {
     if (standSnapshot.current !== null) return;
     if (!state || !state.vitrine || state.vitrine.objets.length === 0 || !brocante) return;
-    const conf = niveauRequis(state.vitrine.objets.length);
-    if (conf) {
-      standSnapshot.current = {
-        niveau: conf.niveau,
-        loyer: coutStand(brocante.tier, conf.niveau),
-        tailleInitiale: state.vitrine.objets.length,
-      };
-    }
+    // Loyer = 0 temporairement : sera relié à fraisEntree(brocante) via le wizard
+    // dans les Tasks 14-16 du plan vente-coffre-camion.
+    standSnapshot.current = {
+      niveau: state.niveauCamion,
+      loyer: 0,
+      tailleInitiale: state.vitrine.objets.length,
+    };
   }, [state, brocante]);
 
   // Refs pour éviter les closures stale dans l'intervalle
@@ -252,7 +250,7 @@ export default function VitrineJourneePage() {
         type: "vente",
         jour: state?.jourActuel ?? 0,
         timestamp: Date.now(),
-        niveauStand: standSnapshot.current.niveau,
+        niveauCamion: standSnapshot.current.niveau,
         loyer: standSnapshot.current.loyer,
         ventes: ventesEffectuees,
         invendus: tailleInvendus,

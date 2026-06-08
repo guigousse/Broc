@@ -237,23 +237,13 @@ export interface SessionVente {
   type: "vente";
   jour: number;
   timestamp: number;
-  niveauStand: StandLevel;
+  niveauCamion: NiveauCamion;
   loyer: number;
   ventes: VenteHistorique[];
   invendus: number;
 }
 
 export type Session = SessionChinage | SessionVente;
-
-export type StandLevel = 1 | 2 | 3;
-
-export interface StandConfig {
-  niveau: StandLevel;
-  capaciteMin: number;
-  capaciteMax: number;
-  loyer: number;
-  nom: string;
-}
 
 export const INITIAL_BUDGET = 150;
 export const INITIAL_JOUR = 1;

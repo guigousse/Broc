@@ -23,7 +23,7 @@ function resumer(s: Session): { kind: string; lbl: string; pl: number } {
     const net = recettes - cogs;
     return {
       kind: "Vente",
-      lbl: `${s.ventes.length} vente${s.ventes.length > 1 ? "s" : ""} · stand ${s.niveauStand}`,
+      lbl: `${s.ventes.length} vente${s.ventes.length > 1 ? "s" : ""} · camion ${s.niveauCamion}`,
       pl: net,
     };
   }

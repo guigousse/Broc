@@ -28,7 +28,7 @@ function venteSession(cat: CategorieObjet, n = 1): Session {
     type: "vente",
     jour: 1,
     timestamp: 0,
-    niveauStand: 1,
+    niveauCamion: 1,
     loyer: 0,
     ventes,
     invendus: 0,
