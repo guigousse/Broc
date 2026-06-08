@@ -1,4 +1,7 @@
-import type { CategorieObjet, Rarete } from "@/types/game";
+import type { CategorieObjet, Rarete, TailleObjet } from "@/types/game";
+import { LEGENDAIRES } from "@/data/legendaires";
+import { UNIQUES } from "@/data/uniques";
+import { TAILLES_OVERRIDE } from "@/data/objetTemplatesTailles";
 
 export interface ObjetTemplate {
   templateId: string;
@@ -9,6 +12,8 @@ export interface ObjetTemplate {
   prixRefBase: number;
   /** Si vrai, ne peut être possédé qu'une fois par partie. */
   unique?: boolean;
+  /** Taille (XS→XL). Si omis, default par catégorie via `tailleDe()`. */
+  taille?: TailleObjet;
 }
 
 type Row = [templateId: string, nom: string, prixRefBase: number];
@@ -474,9 +479,6 @@ export const OBJET_TEMPLATES: ObjetTemplate[] = [
   ...section("Bricolage", "rare", BRICOLAGE_R),
 ];
 
-import { LEGENDAIRES } from "@/data/legendaires";
-import { UNIQUES } from "@/data/uniques";
-
 export { LEGENDAIRES };
 
 /**
@@ -531,9 +533,23 @@ export function poolPourTier(tier: 1 | 2 | 3 | 4): ObjetTemplate[] {
   return POOL_CHINAGE.filter((t) => tierMinTemplate(t.templateId) <= tier);
 }
 
-const ALL_TEMPLATES: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES, ...UNIQUES];
+export const ALL_TEMPLATES: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES, ...UNIQUES];
 
 /** Résout un templateId vers son template (incluant les légendaires). */
 export function getTemplate(templateId: string): ObjetTemplate | undefined {
   return ALL_TEMPLATES.find((t) => t.templateId === templateId);
+}
+
+const TAILLE_DEFAUT: Record<CategorieObjet, TailleObjet> = {
+  "Musique": "S",
+  "Jeux & Loisirs": "S",
+  "Livres & Papeterie": "S",
+  "Mode": "S",
+  "Maison": "M",
+  "Objets d'art": "M",
+  "Bricolage": "S",
+};
+
+export function tailleDe(t: ObjetTemplate): TailleObjet {
+  return t.taille ?? TAILLES_OVERRIDE[t.templateId] ?? TAILLE_DEFAUT[t.categorie];
 }
