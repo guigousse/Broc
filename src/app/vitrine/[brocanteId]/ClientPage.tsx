@@ -88,11 +88,12 @@ export default function VitrineBrocantePage() {
     mettreEnVitrine(objetId, prix, posX, posY, 0);
   };
 
-  const handleRotate = (objetId: string) => {
+  const handleRotate = (objetId: string, angle: number) => {
     const ov = coffre.find((o) => o.objet.id === objetId);
     if (!ov) return;
-    const next = (((ov.rotation ?? 0) + 90) % 360) as 0 | 90 | 180 | 270;
-    ajusterPositionVitrine(objetId, ov.posX ?? 0.5, ov.posY ?? 0.5, next);
+    // Normalise dans [0, 360).
+    const norm = ((angle % 360) + 360) % 360;
+    ajusterPositionVitrine(objetId, ov.posX ?? 0.5, ov.posY ?? 0.5, norm);
   };
 
   const handleOuvrir = () => {

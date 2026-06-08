@@ -10,7 +10,7 @@ interface Props {
   objets: ObjetEnVitrine[];
   overlaps: Set<string>;
   onMove: (objetId: string, posX: number, posY: number) => void;
-  onRotate: (objetId: string) => void;
+  onRotate: (objetId: string, angle: number) => void;
   onRetour: (objetId: string) => void;
 }
 
@@ -67,7 +67,7 @@ export function CoffreCanvas({
               containerRef={ref}
               overlap={overlaps.has(ov.objet.id)}
               onMove={(x, y) => onMove(ov.objet.id, x, y)}
-              onRotate={() => onRotate(ov.objet.id)}
+              onRotate={(angle) => onRotate(ov.objet.id, angle)}
               onDragOut={() => onRetour(ov.objet.id)}
             />
           );

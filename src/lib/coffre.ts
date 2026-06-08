@@ -97,7 +97,7 @@ export function cacheMask(key: string, bits: Uint8Array): void {
 export async function buildAlphaMask(
   src: string,
   size: number,
-  rotation: 0 | 90 | 180 | 270,
+  rotation: number,
 ): Promise<Uint8Array> {
   const key = maskKey(src, size, rotation);
   const cached = getCachedMask(key);
@@ -173,4 +173,101 @@ export function maskOutOfBounds(
     }
   }
   return false;
+}
+
+/* --- Overlap pixel-perfect avec rotation continue ----------------- */
+
+/**
+ * Description d'un objet dans l'espace normalisé du coffre [0,1] × [0,1].
+ * Le mask est le masque alpha base (orientation 0°), de taille maskSize × maskSize.
+ */
+export interface PixelItem {
+  id: string;
+  cx: number;       // 0..1
+  cy: number;       // 0..1
+  scale: number;    // taille relative au côté du coffre
+  rot: number;      // degrés
+  mask: Uint8Array; // longueur maskSize²
+  maskSize: number;
+}
+
+/**
+ * Teste si l'objet sort du coffre (un seul pixel opaque hors [0,1] suffit).
+ */
+export function pixelOutOfBounds(item: PixelItem): boolean {
+  const N = item.maskSize;
+  const rad = (item.rot * Math.PI) / 180;
+  const c = Math.cos(rad), s = Math.sin(rad);
+  // On itère sur le masque base et on transforme chaque pixel opaque vers le coffre.
+  for (let py = 0; py < N; py++) {
+    for (let px = 0; px < N; px++) {
+      if (!item.mask[py * N + px]) continue;
+      const lx = (px + 0.5) / N - 0.5;
+      const ly = (py + 0.5) / N - 0.5;
+      const gx = item.cx + (lx * c - ly * s) * item.scale;
+      const gy = item.cy + (lx * s + ly * c) * item.scale;
+      if (gx < 0 || gx > 1 || gy < 0 || gy > 1) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Teste le chevauchement pixel-perfect entre deux objets avec rotation libre.
+ * On itère sur les pixels opaques de A, on les transforme vers le coffre,
+ * puis on les ramène dans le référentiel local de B pour échantillonner son masque.
+ */
+export function pixelOverlap(a: PixelItem, b: PixelItem): boolean {
+  // Élimination rapide par cercles englobants (rayon = scale * sqrt(2) / 2).
+  const r2 = Math.SQRT2 / 2;
+  const dx = a.cx - b.cx, dy = a.cy - b.cy;
+  const dist = Math.hypot(dx, dy);
+  if (dist > r2 * (a.scale + b.scale)) return false;
+
+  const NA = a.maskSize, NB = b.maskSize;
+  const aRad = (a.rot * Math.PI) / 180;
+  const cA = Math.cos(aRad), sA = Math.sin(aRad);
+  // Pour ramener une coord globale dans le repère local de B on applique -rot.
+  const bRad = -(b.rot * Math.PI) / 180;
+  const cB = Math.cos(bRad), sB = Math.sin(bRad);
+
+  for (let py = 0; py < NA; py++) {
+    for (let px = 0; px < NA; px++) {
+      if (!a.mask[py * NA + px]) continue;
+      const lAx = (px + 0.5) / NA - 0.5;
+      const lAy = (py + 0.5) / NA - 0.5;
+      const gx = a.cx + (lAx * cA - lAy * sA) * a.scale;
+      const gy = a.cy + (lAx * sA + lAy * cA) * a.scale;
+      // Vers le repère local de B
+      const dxB = (gx - b.cx) / b.scale;
+      const dyB = (gy - b.cy) / b.scale;
+      const lBx = dxB * cB - dyB * sB + 0.5;
+      const lBy = dxB * sB + dyB * cB + 0.5;
+      if (lBx < 0 || lBx >= 1 || lBy < 0 || lBy >= 1) continue;
+      const bx = Math.floor(lBx * NB);
+      const by = Math.floor(lBy * NB);
+      if (b.mask[by * NB + bx]) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Calcule l'ensemble des IDs en conflit (chevauchements + hors-coffre) pixel-perfect.
+ * Si un item n'a pas encore son masque chargé, il est ignoré (overlap conservé du tour précédent côté UI).
+ */
+export function computeOverlapsPixel(items: ReadonlyArray<PixelItem>): Set<string> {
+  const out = new Set<string>();
+  for (const it of items) {
+    if (pixelOutOfBounds(it)) out.add(it.id);
+  }
+  for (let i = 0; i < items.length; i++) {
+    for (let j = i + 1; j < items.length; j++) {
+      if (pixelOverlap(items[i], items[j])) {
+        out.add(items[i].id);
+        out.add(items[j].id);
+      }
+    }
+  }
+  return out;
 }

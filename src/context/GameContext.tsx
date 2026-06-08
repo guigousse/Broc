@@ -82,7 +82,7 @@ interface GameContextValue {
     prixVente: number,
     posX?: number,
     posY?: number,
-    rotation?: 0 | 90 | 180 | 270,
+    rotation?: number,
   ) => void;
   retirerDeVitrine: (objetId: string) => void;
   ajusterPrixVitrine: (objetId: string, prixVente: number) => void;
@@ -90,7 +90,7 @@ interface GameContextValue {
     objetId: string,
     posX: number,
     posY: number,
-    rotation: 0 | 90 | 180 | 270,
+    rotation: number,
   ) => void;
   acheterCamion: (niveau: NiveauCamion) => void;
   viderVitrine: () => void;
@@ -425,7 +425,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       prixVente: number,
       posX?: number,
       posY?: number,
-      rotation?: 0 | 90 | 180 | 270,
+      rotation?: number,
     ) => {
       setState((prev) => {
         if (!prev || !prev.vitrine) return prev;
@@ -458,7 +458,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       objetId: string,
       posX: number,
       posY: number,
-      rotation: 0 | 90 | 180 | 270,
+      rotation: number,
     ) => {
       setState((prev) =>
         prev && prev.vitrine

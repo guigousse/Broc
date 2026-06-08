@@ -11,10 +11,15 @@ interface Props {
   capacitePlaces: number;
   cotePixels: number;
   onMove: (posX: number, posY: number) => void; // 0..1
-  onRotate: () => void;
+  onRotate: (angle: number) => void;             // degrés, valeur absolue
   onDragOut: () => void;
   containerRef: React.RefObject<HTMLDivElement | null>;
   overlap?: boolean;
+}
+
+interface PointerInfo {
+  x: number;
+  y: number;
 }
 
 export function ItemDansCoffre({
@@ -33,34 +38,51 @@ export function ItemDansCoffre({
   const sizePx = scale * cotePixels;
 
   const elRef = useRef<HTMLDivElement>(null);
-  // Pointers actifs sur cet objet : pour détecter le second doigt = rotation.
-  const activePointers = useRef<Set<number>>(new Set());
+  // Pointers actifs sur cet objet (multi-touch).
+  const pointers = useRef<Map<number, PointerInfo>>(new Map());
+  // Etat du geste pinch-rotate.
+  const pinchRef = useRef<{ startAngle: number; startRotation: number } | null>(null);
+  // Pointer principal qui drag (le premier posé).
   const dragPointer = useRef<number | null>(null);
-  const [dragging, setDragging] = useState(false);
+  const [active, setActive] = useState(false);
+
+  const angleBetween = (a: PointerInfo, b: PointerInfo): number =>
+    (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    activePointers.current.add(e.pointerId);
-    // Second doigt sur le même objet → rotation +90° et on annule le drag en cours.
-    if (activePointers.current.size >= 2) {
-      onRotate();
-      navigator.vibrate?.(20);
-      if (dragPointer.current !== null) {
-        try {
-          e.currentTarget.releasePointerCapture(dragPointer.current);
-        } catch {
-          // pointer déjà relâché — ignore
-        }
-        dragPointer.current = null;
-      }
-      setDragging(false);
-      return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.current.size === 1) {
+      // Premier doigt : drag
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+      dragPointer.current = e.pointerId;
+      setActive(true);
+    } else if (pointers.current.size === 2) {
+      // Second doigt : passe en mode rotation pinch
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+      const [pA, pB] = Array.from(pointers.current.values());
+      pinchRef.current = {
+        startAngle: angleBetween(pA, pB),
+        startRotation: ov.rotation ?? 0,
+      };
+      navigator.vibrate?.(10);
     }
-    e.currentTarget.setPointerCapture(e.pointerId);
-    dragPointer.current = e.pointerId;
-    setDragging(true);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.current.size >= 2 && pinchRef.current) {
+      // Rotation pinch continue
+      const [pA, pB] = Array.from(pointers.current.values());
+      const a = angleBetween(pA, pB);
+      const delta = a - pinchRef.current.startAngle;
+      onRotate(pinchRef.current.startRotation + delta);
+      return;
+    }
+
+    // Drag single-finger
     if (dragPointer.current !== e.pointerId) return;
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -70,26 +92,48 @@ export function ItemDansCoffre({
   };
 
   const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
-    activePointers.current.delete(e.pointerId);
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.delete(e.pointerId);
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+
+    if (pointers.current.size < 2) pinchRef.current = null;
+
     if (dragPointer.current === e.pointerId) {
-      try {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-      } catch {
-        // ignore
+      // Le pointeur principal a été levé : check drag-out + repasse au prochain doigt s'il en reste un
+      if (pointers.current.size === 0) {
+        dragPointer.current = null;
+        setActive(false);
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const insideX = e.clientX >= rect.left && e.clientX <= rect.right;
+        const insideY = e.clientY >= rect.top && e.clientY <= rect.bottom;
+        if (!insideX || !insideY) onDragOut();
+      } else {
+        // Reste un doigt → ce doigt devient le drag
+        dragPointer.current = Array.from(pointers.current.keys())[0]!;
       }
-      dragPointer.current = null;
-      setDragging(false);
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const insideX = e.clientX >= rect.left && e.clientX <= rect.right;
-      const insideY = e.clientY >= rect.top && e.clientY <= rect.bottom;
-      if (!insideX || !insideY) onDragOut();
     }
   };
 
   const posX = (ov.posX ?? 0.5) * cotePixels;
   const posY = (ov.posY ?? 0.5) * cotePixels;
   const rot = ov.rotation ?? 0;
+
+  // Filtres CSS : surbrillance dorée si actif, halo rouge si overlap.
+  const filters: string[] = [];
+  if (overlap) {
+    filters.push(
+      "drop-shadow(0 0 0 var(--vermillion-600))",
+      "drop-shadow(0 0 4px var(--vermillion-600))",
+      "drop-shadow(0 0 4px var(--vermillion-600))",
+    );
+  } else if (active) {
+    filters.push(
+      "drop-shadow(0 0 3px var(--brass-500))",
+      "drop-shadow(0 0 6px var(--brass-500))",
+    );
+  }
+  const filterStyle = filters.join(" ");
 
   return (
     <div
@@ -105,11 +149,11 @@ export function ItemDansCoffre({
         width: sizePx,
         height: sizePx,
         transform: `rotate(${rot}deg)`,
-        transition: dragging ? "none" : "transform 120ms",
-        outline: overlap ? "3px solid var(--vermillion-600)" : "none",
-        outlineOffset: overlap ? 2 : 0,
-        cursor: dragging ? "grabbing" : "grab",
+        transition: active ? "none" : "transform 120ms",
+        cursor: active ? "grabbing" : "grab",
         touchAction: "none",
+        filter: filterStyle || undefined,
+        willChange: active ? "transform, filter" : undefined,
       }}
     >
       <ItemImage

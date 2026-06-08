@@ -57,8 +57,8 @@ export interface ObjetEnVitrine {
   /** Position du centre dans le coffre, en pourcentage du côté (0..1). Optionnel pour rétro-compat. */
   posX?: number;
   posY?: number;
-  /** Rotation, en multiples de 90°. Optionnel pour rétro-compat. */
-  rotation?: 0 | 90 | 180 | 270;
+  /** Rotation libre en degrés (0..360, valeurs hors plage tolérées). Optionnel pour rétro-compat. */
+  rotation?: number;
 }
 
 export interface VitrineActive {
