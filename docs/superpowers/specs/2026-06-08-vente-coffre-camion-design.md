@@ -82,22 +82,37 @@ export function getProchainCamion(n: NiveauCamion): CamionConfig | null {
 
 > **Note design :** le `cotePixels` reste identique pour les 4 niveaux à l'écran (toujours plein écran carré). Ce qui change, c'est la **densité de places** : un coffre N4 expose la même surface visuelle qu'un N1 mais admet plus d'objets simultanément, parce que chaque place visuelle vaut moins en "places". En pratique, on garde l'unité `1 place ≈ 1/capacitePlaces × surface du coffre` et on adapte les tailles visuelles des objets en conséquence (voir §3.4).
 
-### 1.3 Frais d'entrée
+### 1.3 Frais d'entrée (chinage ET vente — barème unifié)
 
-**Fichier nouveau (ou ajout à `src/data/brocantes.ts`) :** `src/data/fraisEntree.ts`
+**Fichier :** `src/data/brocantes.ts` — on remplace les valeurs existantes de `COUT_ENTREE_PAR_TIER` par le nouveau barème, et on renomme la constante en `FRAIS_ENTREE` pour refléter le double usage (chinage + vente).
 
 ```ts
-import type { BrocanteTier } from "@/types/game";
+import type { Brocante, BrocanteTier } from "@/types/game";
 
+/**
+ * Droit d'entrée payé à chaque session (chinage OU vente), par tier.
+ */
 export const FRAIS_ENTREE: Record<BrocanteTier, number> = {
   1: 5,
   2: 10,
   3: 25,
   4: 50,
 };
+
+export function fraisEntree(brocante: Brocante): number {
+  if (brocante.id === "vide-grenier-quartier") return 0; // exception préservée
+  return FRAIS_ENTREE[brocante.tier];
+}
 ```
 
-Le matrice `COUTS_STAND` et le système `STAND_LEVELS` (`src/data/standLevels.ts`) sont **supprimés** ainsi que toutes leurs références dans le code (voir §4).
+> **Changement de balance** : l'ancien barème chinage (5/20/60/150) descend à (5/10/25/50). Conséquence : chiner devient moins punitif, surtout en tier 3/4. Si l'équilibre du chinage en souffre, ajuster ailleurs (e.g. prix d'achat, fenêtre de négociation).
+
+L'ancien nom `coutEntree(brocante)` est renommé `fraisEntree(brocante)`. Mettre à jour les importeurs :
+- `src/app/chiner/[brocanteId]/ClientPage.tsx` (`coutEntree` → `fraisEntree`)
+- `src/components/BrocanteCard.tsx`
+- `src/components/mobile/BrocanteCarousel.tsx`
+
+La matrice `COUTS_STAND` et le système `STAND_LEVELS` (`src/data/standLevels.ts`) sont **supprimés** ainsi que toutes leurs références dans le code (voir §4).
 
 ### 1.4 GameState
 
@@ -249,7 +264,9 @@ Confirmé → `ajusterBudget(-prix)` et `setNiveauCamion(prochain)`. La taille v
 
 ### 3.6 Frais d'entrée
 
-À la validation finale (bouton "Ouvrir l'étal"), on prélève `FRAIS_ENTREE[brocante.tier]` du budget. Si budget insuffisant, le bouton est désactivé avec un message "La caisse n'a pas de quoi payer l'entrée."
+À la validation finale (bouton "Ouvrir l'étal"), on prélève `fraisEntree(brocante)` du budget. Si budget insuffisant, le bouton est désactivé avec un message "La caisse n'a pas de quoi payer l'entrée."
+
+Côté chinage (`src/app/chiner/[brocanteId]/ClientPage.tsx`), la logique existante est conservée : `fraisEntree(brocante)` remplace `coutEntree(brocante)` à la ligne 85.
 
 ## 4. Migrations / suppressions
 
