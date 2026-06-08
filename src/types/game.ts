@@ -54,6 +54,11 @@ export interface CollectionSlot {
 export interface ObjetEnVitrine {
   objet: Objet;
   prixVente: number;
+  /** Position du centre dans le coffre, en pourcentage du côté (0..1). Optionnel pour rétro-compat. */
+  posX?: number;
+  posY?: number;
+  /** Rotation, en multiples de 90°. Optionnel pour rétro-compat. */
+  rotation?: 0 | 90 | 180 | 270;
 }
 
 export interface VitrineActive {
@@ -139,6 +144,8 @@ export interface GameState {
   niveauAtelier: 1 | 2 | 3;
   /** Niveau du stockage (1 à 4). Détermine capacité et loyer. */
   niveauStockage: 1 | 2 | 3 | 4;
+  /** Niveau du camion (1 à 4). Détermine la capacité du coffre. Défaut 1. */
+  niveauCamion: NiveauCamion;
   /** Stock de pièces d'amélioration par catégorie (≥ 0, illimité). */
   piecesAmelioration: Record<CategorieObjet, number>;
   /** Un chat squatte le fauteuil et bloque l'action « Passer la journée ». */
@@ -338,3 +345,15 @@ export interface NegociationState {
   statut: NegoStatut;
   message: string;
 }
+
+export type TailleObjet = "XS" | "S" | "M" | "L" | "XL";
+
+export const PLACES_PAR_TAILLE: Record<TailleObjet, number> = {
+  XS: 1,
+  S:  2,
+  M:  4,
+  L:  6,
+  XL: 9,
+};
+
+export type NiveauCamion = 1 | 2 | 3 | 4;
