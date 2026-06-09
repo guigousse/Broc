@@ -35,8 +35,8 @@ describe("placesUtilisees", () => {
   ];
 
   it("somme correctement les places", () => {
-    // PLACES_PAR_TAILLE actuels : XS=1.10, S=1.86, M=3.15
-    expect(placesUtilisees(items)).toBeCloseTo(1.10 + 1.86 + 3.15, 3);
+    // PLACES_PAR_TAILLE actuels : XS=0.75, S=1.00, M=1.50
+    expect(placesUtilisees(items)).toBeCloseTo(0.75 + 1.00 + 1.50, 3);
   });
 });
 
