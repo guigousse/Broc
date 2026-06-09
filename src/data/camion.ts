@@ -8,41 +8,37 @@ export interface CamionConfig {
   visuelId: string;
   /** Ratio largeur/hauteur du visuel du coffre (utilisé pour aspect-ratio CSS). */
   aspectRatio: number;
-  /**
-   * Facteur de zoom CSS appliqué au visuel et au masque (auto-dérivé via
-   * `scripts/mask-bbox.mjs`: imgSide / (bboxContenant + 2 × 20px padding)).
-   */
-  displayZoom: number;
-  /** Centre du contenant dans le masque (0..1). Auto-dérivé. */
-  displayCenterX: number;
-  displayCenterY: number;
-  /**
-   * Taille relative du coffre à l'écran (1 = pleine largeur). Calculée à
-   * partir de la capacité pour assurer une progression visuelle cohérente.
-   */
-  relativeSize: number;
+  /** Position horizontale du centre du camion sur le fond garage (0..1). */
+  garageX: number;
+  /** Position verticale du centre du camion sur le fond garage (0..1). */
+  garageY: number;
+  /** Taille du camion en fraction de la largeur du fond garage (0..1). */
+  garageScale: number;
   capacitePlaces: number;
   prixUpgradeVersCeNiveau: number | null;
 }
+
+/** Ratio aspect du fond garage (constante alignée sur l'asset courant). */
+export const GARAGE_ASPECT_RATIO = 2230 / 1888;
 
 export const CAMIONS: readonly CamionConfig[] = [
   {
     niveau: 1, nom: "Rogers", visuelId: "rogers",
     aspectRatio: 1408 / 1358,
-    displayZoom: 1.325, displayCenterX: 0.499, displayCenterY: 0.452,
-    relativeSize: 0.8, capacitePlaces: 9, prixUpgradeVersCeNiveau: null,
+    garageX: 0.5, garageY: 0.55, garageScale: 0.45,
+    capacitePlaces: 9, prixUpgradeVersCeNiveau: null,
   },
   {
     niveau: 2, nom: "Break", visuelId: "break",
     aspectRatio: 1718 / 1456,
-    displayZoom: 1.344, displayCenterX: 0.500, displayCenterY: 0.447,
-    relativeSize: 0.9, capacitePlaces: 16, prixUpgradeVersCeNiveau: 150,
+    garageX: 0.5, garageY: 0.55, garageScale: 0.55,
+    capacitePlaces: 16, prixUpgradeVersCeNiveau: 150,
   },
   {
     niveau: 3, nom: "Utilitaire", visuelId: "utilitaire",
     aspectRatio: 1269 / 1343,
-    displayZoom: 1.312, displayCenterX: 0.498, displayCenterY: 0.487,
-    relativeSize: 0.98, capacitePlaces: 25, prixUpgradeVersCeNiveau: 500,
+    garageX: 0.5, garageY: 0.55, garageScale: 0.55,
+    capacitePlaces: 25, prixUpgradeVersCeNiveau: 500,
   },
 ] as const;
 

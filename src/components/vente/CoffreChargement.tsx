@@ -20,6 +20,10 @@ import { audioManager } from "@/lib/audio/audioManager";
 import { ChargementHeader } from "./ChargementHeader";
 import { CoffreCanvas } from "./CoffreCanvas";
 import { CarrouselStock } from "./CarrouselStock";
+import { CamionDevTool } from "./CamionDevTool";
+
+// Dev only — affiche le panneau de réglage position/scale du camion sur le garage.
+const DEV_CAMION_TOOL = true;
 
 const MASK_SIZE = 48;
 const TRUNK_MASK_SIZE = 256;
@@ -70,24 +74,19 @@ export function CoffreChargement(p: Props) {
     };
   }, [p.coffre]);
 
-  // Collision pixel-perfect : on crop le masque strict avec les mêmes zoom +
-  // center que le rendu du visuel, pour que les coords [0,1] des items dans le
-  // container correspondent à la zone du contenant.
+  // Collision pixel-perfect : masque strict mappé sur l'image entière.
   useEffect(() => {
     if (!assets) {
       setTrunkMask(null);
       return;
     }
-    const zoom = camion.displayZoom ?? 1;
-    const cx = camion.displayCenterX ?? 0.5;
-    const cy = camion.displayCenterY ?? 0.5;
-    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE, zoom, cx, cy);
+    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE);
     if (cached) {
       setTrunkMask(cached);
       return;
     }
     let cancelled = false;
-    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE, zoom, cx, cy)
+    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE)
       .then((m) => {
         if (!cancelled) setTrunkMask(m);
       })
@@ -97,7 +96,13 @@ export function CoffreChargement(p: Props) {
     return () => {
       cancelled = true;
     };
-  }, [assets, camion.displayZoom, camion.displayCenterX, camion.displayCenterY]);
+  }, [assets]);
+
+  // Override dev de la position/scale du camion sur le garage. Clé = visuelId.
+  const [devOverrides, setDevOverrides] = useState<
+    Record<string, { x: number; y: number; scale: number }>
+  >({});
+  const currentOverride = devOverrides[camion.visuelId] ?? null;
 
   const overlaps = useMemo(() => {
     void maskTick;
@@ -153,10 +158,22 @@ export function CoffreChargement(p: Props) {
         objets={p.coffre}
         overlaps={overlaps}
         closing={closing}
+        devOverride={currentOverride}
         onMove={p.onMove}
         onRotate={p.onRotate}
         onRetour={p.onRetirer}
       />
+      {DEV_CAMION_TOOL && !closing && (
+        <CamionDevTool
+          visuelId={camion.visuelId}
+          x={currentOverride?.x ?? camion.garageX}
+          y={currentOverride?.y ?? camion.garageY}
+          scale={currentOverride?.scale ?? camion.garageScale}
+          onChange={(next) =>
+            setDevOverrides((prev) => ({ ...prev, [camion.visuelId]: next }))
+          }
+        />
+      )}
       <CarrouselStock stock={p.stock} onPickUp={handlePickUp} />
       {/* Spacer pour libérer la zone occupée par la barre fixed du bas. */}
       <div style={{ height: "calc(72px + var(--safe-bottom))" }} aria-hidden />

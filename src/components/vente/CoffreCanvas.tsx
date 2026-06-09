@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
-import { getCamion, getScaleCoffre } from "@/data/camion";
+import { GARAGE_ASPECT_RATIO, getCamion, getScaleCoffre } from "@/data/camion";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
 import { getCoffreAssets } from "@/lib/coffreAssets";
 import { ItemDansCoffre } from "./ItemDansCoffre";
@@ -11,8 +11,9 @@ interface Props {
   niveauCamion: NiveauCamion;
   objets: ObjetEnVitrine[];
   overlaps: Set<string>;
-  /** Si vrai, le coffre est représenté fermé (transition de validation). */
   closing: boolean;
+  /** Overrides dev pour position/scale du camion (cf. CamionDevTool). */
+  devOverride?: { x: number; y: number; scale: number } | null;
   onMove: (objetId: string, posX: number, posY: number) => void;
   onRotate: (objetId: string, angle: number) => void;
   onRetour: (objetId: string) => void;
@@ -32,6 +33,7 @@ export function CoffreCanvas({
   objets,
   overlaps,
   closing,
+  devOverride,
   onMove,
   onRotate,
   onRetour,
@@ -173,102 +175,51 @@ export function CoffreCanvas({
     setSelectedId(itemId);
   };
 
-  const aspectRatio = camion.aspectRatio;
-  const relativeSize = camion.relativeSize ?? 1;
-  const zoom = camion.displayZoom ?? 1;
-  const centerX = camion.displayCenterX ?? 0.5;
-  const centerY = camion.displayCenterY ?? 0.5;
   const bgImage = closing ? assets?.ferme : assets?.ouvert;
-  const clipMask = assets?.maskExpanded;
-  const sizePct = `${100 * zoom}%`;
-  // Aligne (centerX, centerY) du source sur le centre du container.
-  const bgPosX = zoom === 1 ? 50 : ((0.5 - zoom * centerX) / (1 - zoom)) * 100;
-  const bgPosY = zoom === 1 ? 50 : ((0.5 - zoom * centerY) / (1 - zoom)) * 100;
-  const posStr = `${bgPosX.toFixed(2)}% ${bgPosY.toFixed(2)}%`;
+  // Position et taille du camion sur le fond garage (override dev prioritaire).
+  const garageX = devOverride?.x ?? camion.garageX;
+  const garageY = devOverride?.y ?? camion.garageY;
+  const garageScale = devOverride?.scale ?? camion.garageScale;
 
   return (
     <div
       style={{
-        padding: 14,
-        // Fond garage en arrière-plan (placeholder : paper-200 si l'asset
-        // n'existe pas encore). À remplacer par le visuel généré dans
-        // public/coffre/fond-garage.webp.
+        width: "100%",
+        aspectRatio: `${GARAGE_ASPECT_RATIO}`,
+        position: "relative",
         background:
           'var(--paper-200) center / cover no-repeat url("/coffre/fond-garage.webp")',
-        display: "flex",
-        justifyContent: "center",
-        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Conteneur du camion — positionné en absolu, centré à (garageX, garageY). */}
       <div
         ref={ref}
         onPointerDown={handlePointerDown}
         style={{
-          width: `${relativeSize * 100}%`,
-          aspectRatio: `${aspectRatio}`,
-          position: "relative",
-          background: bgImage
-            ? `${posStr} / ${sizePct} no-repeat url("${bgImage}")`
-            : "repeating-linear-gradient(45deg, var(--ink-700), var(--ink-700) 6px, var(--ink-500) 6px, var(--ink-500) 12px)",
-          // Clip silhouette + 40 px de halo.
-          maskImage: clipMask ? `url("${clipMask}")` : undefined,
-          maskSize: sizePct,
-          maskRepeat: "no-repeat",
-          maskPosition: posStr,
-          WebkitMaskImage: clipMask ? `url("${clipMask}")` : undefined,
-          WebkitMaskSize: sizePct,
-          WebkitMaskRepeat: "no-repeat",
-          WebkitMaskPosition: posStr,
-          borderRadius: 6,
+          position: "absolute",
+          left: `${garageX * 100}%`,
+          top: `${garageY * 100}%`,
+          width: `${garageScale * 100}%`,
+          aspectRatio: `${camion.aspectRatio}`,
+          transform: "translate(-50%, -50%)",
           touchAction: "none",
-          overflow: "hidden",
-          transition: "background-image 250ms ease-out, width 200ms ease-out",
+          background: bgImage
+            ? `center / contain no-repeat url("${bgImage}")`
+            : undefined,
+          transition: "background-image 250ms ease-out",
         }}
       >
-        {!bgImage && (
-          <div
-            style={{
-              position: "absolute",
-              top: 6,
-              left: 8,
-              fontFamily: "var(--font-mono)",
-              fontSize: 9,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--brass-300)",
-              opacity: 0.7,
-              pointerEvents: "none",
-            }}
-          >
-            — coffre ouvert —
-          </div>
-        )}
-        {assets && !closing && (
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: `${posStr} / ${sizePct} no-repeat url("${assets.mask}")`,
-              opacity: 0.65,
-              pointerEvents: "none",
-              transition: "opacity 200ms ease-out",
-              zIndex: 1,
-            }}
-          />
-        )}
         {!closing &&
           objets.map((ov) => {
             const w = ref.current?.getBoundingClientRect().width ?? 280;
-            const h = ref.current?.getBoundingClientRect().height ?? 280;
-            // Les items sont positionnés en pourcent du coffre, on les rend en px.
             return (
               <ItemDansCoffre
                 key={ov.objet.id}
                 ov={ov}
                 capacitePlaces={camion.capacitePlaces}
                 cotePixelsX={w}
-                cotePixelsY={h}
+                cotePixelsY={w / camion.aspectRatio}
                 active={selectedId === ov.objet.id}
                 overlap={overlaps.has(ov.objet.id)}
               />
