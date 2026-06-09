@@ -179,12 +179,12 @@ export function CoffreCanvas({
   const centerX = camion.displayCenterX ?? 0.5;
   const centerY = camion.displayCenterY ?? 0.5;
   const bgImage = closing ? assets?.ferme : assets?.ouvert;
-  // Image rendue à zoom × largeur container, positionnée pour aligner
-  // (centerX, centerY) du source sur le centre du container. Pas de clip : la
-  // carrosserie autour déborde naturellement.
-  const imgWidthPct = 100 * zoom; // % de la largeur du wrapper
-  const imgLeftPct = (0.5 - zoom * centerX) * 100;
-  const imgTopPct = (0.5 - zoom * centerY) * 100;
+  const clipMask = assets?.maskExpanded;
+  const sizePct = `${100 * zoom}%`;
+  // Aligne (centerX, centerY) du source sur le centre du container.
+  const bgPosX = zoom === 1 ? 50 : ((0.5 - zoom * centerX) / (1 - zoom)) * 100;
+  const bgPosY = zoom === 1 ? 50 : ((0.5 - zoom * centerY) / (1 - zoom)) * 100;
+  const posStr = `${bgPosX.toFixed(2)}% ${bgPosY.toFixed(2)}%`;
 
   return (
     <div
@@ -203,32 +203,23 @@ export function CoffreCanvas({
           aspectRatio: `${aspectRatio}`,
           position: "relative",
           background: bgImage
-            ? undefined
+            ? `${posStr} / ${sizePct} no-repeat url("${bgImage}")`
             : "repeating-linear-gradient(45deg, var(--ink-700), var(--ink-700) 6px, var(--ink-500) 6px, var(--ink-500) 12px)",
+          // Clip silhouette + 40 px de halo.
+          maskImage: clipMask ? `url("${clipMask}")` : undefined,
+          maskSize: sizePct,
+          maskRepeat: "no-repeat",
+          maskPosition: posStr,
+          WebkitMaskImage: clipMask ? `url("${clipMask}")` : undefined,
+          WebkitMaskSize: sizePct,
+          WebkitMaskRepeat: "no-repeat",
+          WebkitMaskPosition: posStr,
           borderRadius: 6,
           touchAction: "none",
-          overflow: "visible",
-          transition: "width 200ms ease-out",
+          overflow: "hidden",
+          transition: "background-image 250ms ease-out, width 200ms ease-out",
         }}
       >
-        {bgImage && (
-          <img
-            src={bgImage}
-            alt=""
-            aria-hidden
-            draggable={false}
-            style={{
-              position: "absolute",
-              top: `${imgTopPct.toFixed(2)}%`,
-              left: `${imgLeftPct.toFixed(2)}%`,
-              width: `${imgWidthPct.toFixed(2)}%`,
-              height: "auto",
-              pointerEvents: "none",
-              userSelect: "none",
-              zIndex: 0,
-            }}
-          />
-        )}
         {!bgImage && (
           <div
             style={{
