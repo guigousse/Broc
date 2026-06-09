@@ -25,9 +25,9 @@ export function ItemDansCoffre({
   const tpl = getTemplate(ov.objet.templateId);
   const taille = tpl ? tailleDe(tpl) : "S";
   const scale = getScaleCoffre(taille, capacitePlaces);
-  // Le côté de référence est le plus petit des deux pour garder un objet carré.
-  const refCote = Math.min(cotePixelsX, cotePixelsY);
-  const sizePx = scale * refCote;
+  // Référence = largeur du container. Évite que les objets grossissent quand
+  // l'aspectRatio est "plus haut que large" (cas du fourgon Utilitaire).
+  const sizePx = scale * cotePixelsX;
 
   const posX = (ov.posX ?? 0.5) * cotePixelsX;
   const posY = (ov.posY ?? 0.5) * cotePixelsY;
