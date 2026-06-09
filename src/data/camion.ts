@@ -9,19 +9,41 @@ export interface CamionConfig {
   /** Ratio largeur/hauteur du visuel du coffre (utilisé pour aspect-ratio CSS). */
   aspectRatio: number;
   /**
-   * Facteur de zoom CSS appliqué au visuel et au masque (défaut 1).
-   * > 1 = recadre l'image en gardant la zone centrale (utile quand l'asset
-   * inclut beaucoup de carrosserie autour du contenant).
+   * Facteur de zoom CSS appliqué au visuel et au masque (auto-dérivé via
+   * `scripts/mask-bbox.mjs`: imgSide / (bboxContenant + 2 × 20px padding)).
    */
-  displayZoom?: number;
+  displayZoom: number;
+  /** Centre du contenant dans le masque (0..1). Auto-dérivé. */
+  displayCenterX: number;
+  displayCenterY: number;
+  /**
+   * Taille relative du coffre à l'écran (1 = pleine largeur). Calculée à
+   * partir de la capacité pour assurer une progression visuelle cohérente.
+   */
+  relativeSize: number;
   capacitePlaces: number;
   prixUpgradeVersCeNiveau: number | null;
 }
 
 export const CAMIONS: readonly CamionConfig[] = [
-  { niveau: 1, nom: "Rogers",     visuelId: "rogers", aspectRatio: 1408 / 1358, capacitePlaces: 9,  prixUpgradeVersCeNiveau: null },
-  { niveau: 2, nom: "Break",      visuelId: "break",  aspectRatio: 1718 / 1456, capacitePlaces: 16, prixUpgradeVersCeNiveau: 150 },
-  { niveau: 3, nom: "Utilitaire", visuelId: "utilitaire", aspectRatio: 1269 / 1343, displayZoom: 1.4, capacitePlaces: 25, prixUpgradeVersCeNiveau: 500 },
+  {
+    niveau: 1, nom: "Rogers", visuelId: "rogers",
+    aspectRatio: 1408 / 1358,
+    displayZoom: 1.38, displayCenterX: 0.5, displayCenterY: 0.452,
+    relativeSize: 0.6, capacitePlaces: 9, prixUpgradeVersCeNiveau: null,
+  },
+  {
+    niveau: 2, nom: "Break", visuelId: "break",
+    aspectRatio: 1718 / 1456,
+    displayZoom: 1.39, displayCenterX: 0.5, displayCenterY: 0.447,
+    relativeSize: 0.8, capacitePlaces: 16, prixUpgradeVersCeNiveau: 150,
+  },
+  {
+    niveau: 3, nom: "Utilitaire", visuelId: "utilitaire",
+    aspectRatio: 1269 / 1343,
+    displayZoom: 1.37, displayCenterX: 0.5, displayCenterY: 0.487,
+    relativeSize: 1.0, capacitePlaces: 25, prixUpgradeVersCeNiveau: 500,
+  },
 ] as const;
 
 export function getCamion(niveau: NiveauCamion): CamionConfig {

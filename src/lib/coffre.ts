@@ -301,8 +301,10 @@ export async function buildTrunkMask(
   src: string,
   size: number,
   zoom = 1,
+  centerX = 0.5,
+  centerY = 0.5,
 ): Promise<TrunkMask> {
-  const key = `${src}:${size}:${zoom}`;
+  const key = `${src}:${size}:${zoom}:${centerX.toFixed(3)}:${centerY.toFixed(3)}`;
   const cached = TRUNK_MASK_CACHE.get(key);
   if (cached) return cached;
 
@@ -315,14 +317,14 @@ export async function buildTrunkMask(
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d")!;
-  if (zoom === 1) {
+  if (zoom === 1 && centerX === 0.5 && centerY === 0.5) {
     ctx.drawImage(img, 0, 0, size, size);
   } else {
-    // Crop centré : on prélève une zone (1/zoom) du source et on l'étire à size.
+    // Crop autour de (centerX, centerY) : zone (1/zoom) du source, étirée à size.
     const srcW = img.naturalWidth / zoom;
     const srcH = img.naturalHeight / zoom;
-    const srcX = (img.naturalWidth - srcW) / 2;
-    const srcY = (img.naturalHeight - srcH) / 2;
+    const srcX = img.naturalWidth * centerX - srcW / 2;
+    const srcY = img.naturalHeight * centerY - srcH / 2;
     ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, size, size);
   }
   const data = ctx.getImageData(0, 0, size, size).data;
@@ -344,8 +346,12 @@ export function getCachedTrunkMask(
   src: string,
   size: number,
   zoom = 1,
+  centerX = 0.5,
+  centerY = 0.5,
 ): TrunkMask | undefined {
-  return TRUNK_MASK_CACHE.get(`${src}:${size}:${zoom}`);
+  return TRUNK_MASK_CACHE.get(
+    `${src}:${size}:${zoom}:${centerX.toFixed(3)}:${centerY.toFixed(3)}`,
+  );
 }
 
 /**

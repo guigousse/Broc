@@ -175,25 +175,40 @@ export function CoffreCanvas({
 
   const aspectRatio = camion.aspectRatio;
   const zoom = camion.displayZoom ?? 1;
+  const centerX = camion.displayCenterX ?? 0.5;
+  const centerY = camion.displayCenterY ?? 0.5;
+  const relativeSize = camion.relativeSize ?? 1;
   const bgImage = closing ? assets?.ferme : assets?.ouvert;
   const bgSize = `${100 * zoom}%`;
+  // Background-position : aligne le point (centerX, centerY) du source sur
+  // le centre du container, sachant que le source est rendu à `zoom`× la taille.
+  const bgPosX = zoom === 1 ? 50 : ((0.5 - zoom * centerX) / (1 - zoom)) * 100;
+  const bgPosY = zoom === 1 ? 50 : ((0.5 - zoom * centerY) / (1 - zoom)) * 100;
+  const bgPos = `${bgPosX.toFixed(2)}% ${bgPosY.toFixed(2)}%`;
 
   return (
-    <div style={{ padding: 14, background: "var(--paper-200)" }}>
+    <div
+      style={{
+        padding: 14,
+        background: "var(--paper-200)",
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
       <div
         ref={ref}
         onPointerDown={handlePointerDown}
         style={{
-          width: "100%",
+          width: `${relativeSize * 100}%`,
           aspectRatio: `${aspectRatio}`,
           position: "relative",
           background: bgImage
-            ? `center center / ${bgSize} no-repeat url("${bgImage}")`
+            ? `${bgPos} / ${bgSize} no-repeat url("${bgImage}")`
             : "repeating-linear-gradient(45deg, var(--ink-700), var(--ink-700) 6px, var(--ink-500) 6px, var(--ink-500) 12px)",
           borderRadius: 6,
           touchAction: "none",
           overflow: "hidden",
-          transition: "background-image 250ms ease-out",
+          transition: "background-image 250ms ease-out, width 200ms ease-out",
         }}
       >
         {!bgImage && (
@@ -220,7 +235,7 @@ export function CoffreCanvas({
             style={{
               position: "absolute",
               inset: 0,
-              background: `center center / ${bgSize} no-repeat url("${assets.mask}")`,
+              background: `${bgPos} / ${bgSize} no-repeat url("${assets.mask}")`,
               opacity: 0.65,
               pointerEvents: "none",
               transition: "opacity 200ms ease-out",
