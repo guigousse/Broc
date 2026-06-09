@@ -29,9 +29,9 @@ for (const id of masks) {
   results[id] = r;
 }
 
-// Choix design : padding de 20 px autour du contenant (en coords source).
-const PADDING = 20;
-console.log("Mesures bbox + padding 20px :");
+// Choix design : padding de 40 px autour du contenant (en coords source).
+const PADDING = 40;
+console.log(`Mesures bbox + padding ${PADDING}px :`);
 console.log();
 for (const id of masks) {
   const r = results[id];

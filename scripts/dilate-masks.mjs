@@ -1,6 +1,6 @@
 import sharp from "sharp";
 
-const RADIUS = 20; // pixels d'offset autour du contenant
+const RADIUS = 40; // pixels d'offset autour du contenant
 
 async function dilate(file, outFile) {
   const img = sharp(file);

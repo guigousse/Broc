@@ -29,20 +29,20 @@ export const CAMIONS: readonly CamionConfig[] = [
   {
     niveau: 1, nom: "Rogers", visuelId: "rogers",
     aspectRatio: 1408 / 1358,
-    displayZoom: 1, displayCenterX: 0.5, displayCenterY: 0.5,
+    displayZoom: 1.325, displayCenterX: 0.499, displayCenterY: 0.452,
     relativeSize: 0.8, capacitePlaces: 9, prixUpgradeVersCeNiveau: null,
   },
   {
     niveau: 2, nom: "Break", visuelId: "break",
     aspectRatio: 1718 / 1456,
-    displayZoom: 1, displayCenterX: 0.5, displayCenterY: 0.5,
+    displayZoom: 1.344, displayCenterX: 0.500, displayCenterY: 0.447,
     relativeSize: 0.9, capacitePlaces: 16, prixUpgradeVersCeNiveau: 150,
   },
   {
     niveau: 3, nom: "Utilitaire", visuelId: "utilitaire",
     aspectRatio: 1269 / 1343,
-    displayZoom: 1, displayCenterX: 0.5, displayCenterY: 0.5,
-    relativeSize: 1.0, capacitePlaces: 25, prixUpgradeVersCeNiveau: 500,
+    displayZoom: 1.312, displayCenterX: 0.498, displayCenterY: 0.487,
+    relativeSize: 0.98, capacitePlaces: 25, prixUpgradeVersCeNiveau: 500,
   },
 ] as const;
 
