@@ -15,7 +15,7 @@ export interface CamionConfig {
 export const CAMIONS: readonly CamionConfig[] = [
   { niveau: 1, nom: "Rogers",     visuelId: "rogers", aspectRatio: 1408 / 1358, capacitePlaces: 9,  prixUpgradeVersCeNiveau: null },
   { niveau: 2, nom: "Break",      visuelId: "break",  aspectRatio: 1718 / 1456, capacitePlaces: 16, prixUpgradeVersCeNiveau: 150 },
-  { niveau: 3, nom: "Utilitaire", visuelId: "utilitaire", aspectRatio: 1,       capacitePlaces: 25, prixUpgradeVersCeNiveau: 500 },
+  { niveau: 3, nom: "Utilitaire", visuelId: "utilitaire", aspectRatio: 1269 / 1343, capacitePlaces: 25, prixUpgradeVersCeNiveau: 500 },
 ] as const;
 
 export function getCamion(niveau: NiveauCamion): CamionConfig {
