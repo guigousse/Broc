@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
-import { GARAGE_ASPECT_RATIO, getCamion, getScaleCoffre } from "@/data/camion";
+import { getCamion, getScaleCoffre } from "@/data/camion";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
 import { getCoffreAssets } from "@/lib/coffreAssets";
 import { ItemDansCoffre } from "./ItemDansCoffre";
@@ -185,7 +185,11 @@ export function CoffreCanvas({
     <div
       style={{
         width: "100%",
-        aspectRatio: `${GARAGE_ASPECT_RATIO}`,
+        // Pleine largeur, hauteur calée sur l'espace dispo (header + carrousel +
+        // barre d'action). L'image est rendue en cover : pleine largeur, crop
+        // vertical en haut/bas grâce à la marge prévue dans l'asset.
+        height:
+          "calc(100dvh - 60px - 100px - 76px - var(--safe-top) - var(--safe-bottom))",
         position: "relative",
         background:
           'var(--paper-200) center / cover no-repeat url("/coffre/fond-garage.webp")',
