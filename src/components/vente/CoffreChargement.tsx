@@ -162,12 +162,12 @@ export function CoffreChargement(p: Props) {
         style={{
           position: "sticky",
           bottom: 0,
-          padding: "10px 14px calc(10px + var(--safe-bottom))",
-          background: "var(--paper-100)",
+          padding: "12px 14px calc(12px + var(--safe-bottom))",
+          background: "var(--forest-800)",
           borderTop: "1px solid var(--brass-500)",
           display: "flex",
           flexDirection: "column",
-          gap: 6,
+          gap: 8,
         }}
       >
         {overlaps.size > 0 && !closing && (
@@ -191,14 +191,16 @@ export function CoffreChargement(p: Props) {
             disabled={closing}
             style={{
               flex: 1,
-              padding: "10px",
+              padding: "11px 10px",
               border: "1px solid var(--brass-500)",
-              background: "var(--paper-100)",
+              background: "transparent",
+              color: "var(--brass-300)",
               fontFamily: "var(--font-display)",
-              fontSize: 11,
-              letterSpacing: "0.14em",
+              fontSize: 11.5,
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               opacity: closing ? 0.4 : 1,
+              cursor: closing ? "not-allowed" : "pointer",
             }}
           >
             Annuler
@@ -209,16 +211,18 @@ export function CoffreChargement(p: Props) {
             onClick={handleValider}
             style={{
               flex: 2,
-              padding: "10px",
+              padding: "11px 10px",
               border: "1px solid var(--brass-500)",
               background:
-                peutValider && !closing ? "var(--forest-800)" : "var(--paper-300)",
+                peutValider && !closing ? "var(--brass-500)" : "transparent",
               color:
-                peutValider && !closing ? "var(--brass-300)" : "var(--ink-500)",
+                peutValider && !closing ? "var(--forest-800)" : "var(--ink-500)",
               fontFamily: "var(--font-display)",
-              fontSize: 11,
-              letterSpacing: "0.14em",
+              fontSize: 11.5,
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
+              fontWeight: 700,
+              cursor: peutValider && !closing ? "pointer" : "not-allowed",
             }}
           >
             {closing ? "Fermeture du coffre…" : "Valider le chargement"}

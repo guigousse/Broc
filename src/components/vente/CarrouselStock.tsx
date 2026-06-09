@@ -34,7 +34,7 @@ export function CarrouselStock({ stock, onPickUp }: Props) {
     <>
       <div
         style={{
-          padding: "10px 14px 4px",
+          padding: "10px 14px 6px",
           fontFamily: "var(--font-display)",
           fontSize: 10,
           letterSpacing: "0.18em",
@@ -46,10 +46,10 @@ export function CarrouselStock({ stock, onPickUp }: Props) {
       </div>
       <div
         style={{
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
           gap: 10,
           padding: "0 14px 14px",
-          overflowX: "auto",
         }}
       >
         {tri.map((o) => (
