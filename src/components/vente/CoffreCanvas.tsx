@@ -218,7 +218,7 @@ export function CoffreCanvas({
               position: "absolute",
               inset: 0,
               background: `center / contain no-repeat url("${assets.mask}")`,
-              opacity: 0.35,
+              opacity: 0.65,
               pointerEvents: "none",
               transition: "opacity 200ms ease-out",
             }}
