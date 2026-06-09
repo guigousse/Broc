@@ -8,6 +8,8 @@ interface Props {
   onPickUp: (objetId: string, clientX: number, clientY: number) => void;
 }
 
+const ITEM_WIDTH = 76;
+
 export function CarrouselStock({ stock, onPickUp }: Props) {
   if (stock.length === 0) {
     return (
@@ -18,7 +20,8 @@ export function CarrouselStock({ stock, onPickUp }: Props) {
           fontSize: 12.5,
           color: "var(--ink-500)",
           textAlign: "center",
-          padding: 12,
+          padding: "8px 12px",
+          margin: 0,
         }}
       >
         Aucun objet à charger. Allez chiner !
@@ -31,31 +34,26 @@ export function CarrouselStock({ stock, onPickUp }: Props) {
   );
 
   return (
-    <>
-      <div
-        style={{
-          padding: "10px 14px 6px",
-          fontFamily: "var(--font-display)",
-          fontSize: 10,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--forest-800)",
-        }}
-      >
-        — Stock disponible ({stock.length}) —
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-          gap: 10,
-          padding: "0 14px 14px",
-        }}
-      >
-        {tri.map((o) => (
-          <ItemEnCarrousel key={o.id} objet={o} onDragToCoffre={onPickUp} />
-        ))}
-      </div>
-    </>
+    <div
+      style={{
+        display: "flex",
+        gap: 10,
+        padding: "10px 14px",
+        overflowX: "auto",
+        overflowY: "hidden",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+        background: "var(--paper-100)",
+      }}
+    >
+      {tri.map((o) => (
+        <div
+          key={o.id}
+          style={{ flex: `0 0 ${ITEM_WIDTH}px`, width: ITEM_WIDTH }}
+        >
+          <ItemEnCarrousel objet={o} onDragToCoffre={onPickUp} />
+        </div>
+      ))}
+    </div>
   );
 }

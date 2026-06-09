@@ -104,7 +104,9 @@ export function ItemEnCarrousel({ objet, onDragToCoffre }: Props) {
     border: `1.5px solid ${colors.outer}`,
     background: colors.thumbBg,
     boxShadow: `inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px ${colors.inner}`,
-    touchAction: "none",
+    // pan-x : laisse le scroll horizontal du carrousel s'exécuter ; les gestes
+    // verticaux (drag vers le coffre) sont gérés par nos pointer events.
+    touchAction: "pan-x",
     cursor: "grab",
     overflow: "hidden",
   };

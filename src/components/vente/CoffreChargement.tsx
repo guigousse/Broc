@@ -17,13 +17,15 @@ import {
 import { getItemImageUrl } from "@/lib/itemImages";
 import { getCoffreAssets } from "@/lib/coffreAssets";
 import { audioManager } from "@/lib/audio/audioManager";
-import { ChargementHeader } from "./ChargementHeader";
 import { CoffreCanvas } from "./CoffreCanvas";
 import { CarrouselStock } from "./CarrouselStock";
 import { CamionDevTool } from "./CamionDevTool";
+import { CamionSwitcher } from "./CamionSwitcher";
 
 // Dev only — affiche le panneau de réglage position/scale du camion sur le garage.
 const DEV_CAMION_TOOL = true;
+// Dev only — bouton flottant qui cycle les niveaux de camion.
+const DEV_COFFRE_SWITCH = true;
 
 const MASK_SIZE = 48;
 const TRUNK_MASK_SIZE = 256;
@@ -146,13 +148,9 @@ export function CoffreChargement(p: Props) {
 
   return (
     <>
-      <ChargementHeader
-        niveau={p.niveauCamion}
-        nbObjets={p.coffre.length}
-        budget={p.budget}
-        onUpgrade={p.onUpgrade}
-        onSetNiveauDev={p.onSetNiveauDev}
-      />
+      {DEV_COFFRE_SWITCH && p.onSetNiveauDev && (
+        <CamionSwitcher niveau={p.niveauCamion} onSetNiveauDev={p.onSetNiveauDev} />
+      )}
       <CoffreCanvas
         niveauCamion={p.niveauCamion}
         objets={p.coffre}

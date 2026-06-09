@@ -18,8 +18,8 @@ export interface CamionConfig {
   prixUpgradeVersCeNiveau: number | null;
 }
 
-/** Ratio aspect du fond garage (constante alignée sur l'asset courant). */
-export const GARAGE_ASPECT_RATIO = 2230 / 1888;
+/** Ratio aspect du fond garage (constante alignée sur l'asset courant — portrait). */
+export const GARAGE_ASPECT_RATIO = 1536 / 2752;
 
 export const CAMIONS: readonly CamionConfig[] = [
   {
