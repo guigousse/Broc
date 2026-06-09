@@ -338,12 +338,17 @@ export interface NegociationState {
 
 export type TailleObjet = "XS" | "S" | "M" | "L" | "XL";
 
+/**
+ * Surface relative occupée par taille. Ratio côté ≈ ×1,3 entre chaque taille
+ * successive (donc ×1,69 en surface). XL = capacité du coffre N1 (9 places),
+ * pour que XL remplisse exactement le coffre Rogers.
+ */
 export const PLACES_PAR_TAILLE: Record<TailleObjet, number> = {
-  XS: 1,
-  S:  2,
-  M:  4,
-  L:  6,
-  XL: 9,
+  XS: 1.10,
+  S:  1.86,
+  M:  3.15,
+  L:  5.33,
+  XL: 9.00,
 };
 
 export type NiveauCamion = 1 | 2 | 3 | 4;
