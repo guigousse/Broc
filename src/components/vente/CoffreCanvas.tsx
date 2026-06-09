@@ -174,17 +174,10 @@ export function CoffreCanvas({
   };
 
   const aspectRatio = camion.aspectRatio;
-  const zoom = camion.displayZoom ?? 1;
-  const centerX = camion.displayCenterX ?? 0.5;
-  const centerY = camion.displayCenterY ?? 0.5;
   const relativeSize = camion.relativeSize ?? 1;
   const bgImage = closing ? assets?.ferme : assets?.ouvert;
-  const bgSize = `${100 * zoom}%`;
-  // Background-position : aligne le point (centerX, centerY) du source sur
-  // le centre du container, sachant que le source est rendu à `zoom`× la taille.
-  const bgPosX = zoom === 1 ? 50 : ((0.5 - zoom * centerX) / (1 - zoom)) * 100;
-  const bgPosY = zoom === 1 ? 50 : ((0.5 - zoom * centerY) / (1 - zoom)) * 100;
-  const bgPos = `${bgPosX.toFixed(2)}% ${bgPosY.toFixed(2)}%`;
+  // Le visuel est clipé par le masque dilaté (silhouette du contenant + 20 px).
+  const clipMask = assets?.maskExpanded;
 
   return (
     <div
@@ -203,8 +196,17 @@ export function CoffreCanvas({
           aspectRatio: `${aspectRatio}`,
           position: "relative",
           background: bgImage
-            ? `${bgPos} / ${bgSize} no-repeat url("${bgImage}")`
+            ? `center / contain no-repeat url("${bgImage}")`
             : "repeating-linear-gradient(45deg, var(--ink-700), var(--ink-700) 6px, var(--ink-500) 6px, var(--ink-500) 12px)",
+          // Clip à la silhouette du contenant + 20 px de halo.
+          maskImage: clipMask ? `url("${clipMask}")` : undefined,
+          maskSize: "contain",
+          maskRepeat: "no-repeat",
+          maskPosition: "center",
+          WebkitMaskImage: clipMask ? `url("${clipMask}")` : undefined,
+          WebkitMaskSize: "contain",
+          WebkitMaskRepeat: "no-repeat",
+          WebkitMaskPosition: "center",
           borderRadius: 6,
           touchAction: "none",
           overflow: "hidden",
@@ -229,19 +231,8 @@ export function CoffreCanvas({
             — coffre ouvert —
           </div>
         )}
-        {assets && !closing && (
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: `${bgPos} / ${bgSize} no-repeat url("${assets.mask}")`,
-              opacity: 0.65,
-              pointerEvents: "none",
-              transition: "opacity 200ms ease-out",
-            }}
-          />
-        )}
+        {/* Overlay du masque supprimé : le visuel est déjà clipé à la
+            silhouette via mask-image, donc plus besoin de le surligner. */}
         {!closing &&
           objets.map((ov) => {
             const w = ref.current?.getBoundingClientRect().width ?? 280;

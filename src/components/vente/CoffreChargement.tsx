@@ -70,22 +70,20 @@ export function CoffreChargement(p: Props) {
     };
   }, [p.coffre]);
 
-  // Chargement du masque du contenant (forme du coffre).
+  // Chargement du masque strict du contenant (pour la collision pixel-perfect).
+  // Pas de cropping : les coords [0,1] des items mappent à l'image entière.
   useEffect(() => {
     if (!assets) {
       setTrunkMask(null);
       return;
     }
-    const zoom = camion.displayZoom ?? 1;
-    const cx = camion.displayCenterX ?? 0.5;
-    const cy = camion.displayCenterY ?? 0.5;
-    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE, zoom, cx, cy);
+    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE);
     if (cached) {
       setTrunkMask(cached);
       return;
     }
     let cancelled = false;
-    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE, zoom, cx, cy)
+    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE)
       .then((m) => {
         if (!cancelled) setTrunkMask(m);
       })
@@ -95,7 +93,7 @@ export function CoffreChargement(p: Props) {
     return () => {
       cancelled = true;
     };
-  }, [assets, camion.displayZoom, camion.displayCenterX, camion.displayCenterY]);
+  }, [assets]);
 
   const overlaps = useMemo(() => {
     void maskTick;
