@@ -175,18 +175,9 @@ export function CoffreCanvas({
 
   const aspectRatio = camion.aspectRatio;
   const relativeSize = camion.relativeSize ?? 1;
-  const zoom = camion.displayZoom ?? 1;
-  const centerX = camion.displayCenterX ?? 0.5;
-  const centerY = camion.displayCenterY ?? 0.5;
   const bgImage = closing ? assets?.ferme : assets?.ouvert;
-  // Le visuel est clipé par le masque dilaté (silhouette du contenant + 40 px).
-  const clipMask = assets?.maskExpanded;
-  const sizePct = `${100 * zoom}%`;
-  // Pour aligner (centerX, centerY) du source sur le centre du container avec
-  // background-size: zoom × container, formule = (0.5 − zoom·c)/(1 − zoom).
-  const bgPosX = zoom === 1 ? 50 : ((0.5 - zoom * centerX) / (1 - zoom)) * 100;
-  const bgPosY = zoom === 1 ? 50 : ((0.5 - zoom * centerY) / (1 - zoom)) * 100;
-  const posStr = `${bgPosX.toFixed(2)}% ${bgPosY.toFixed(2)}%`;
+  // TEST : image entière, sans crop ni mask-image — on garde uniquement le
+  // cadrage (relativeSize) et l'aspectRatio du visuel.
 
   return (
     <div
@@ -205,18 +196,8 @@ export function CoffreCanvas({
           aspectRatio: `${aspectRatio}`,
           position: "relative",
           background: bgImage
-            ? `${posStr} / ${sizePct} no-repeat url("${bgImage}")`
+            ? `center / contain no-repeat url("${bgImage}")`
             : "repeating-linear-gradient(45deg, var(--ink-700), var(--ink-700) 6px, var(--ink-500) 6px, var(--ink-500) 12px)",
-          // Clip à la silhouette du contenant + 40 px de halo, aligné via zoom + center
-          // pour que la silhouette remplisse le container.
-          maskImage: clipMask ? `url("${clipMask}")` : undefined,
-          maskSize: sizePct,
-          maskRepeat: "no-repeat",
-          maskPosition: posStr,
-          WebkitMaskImage: clipMask ? `url("${clipMask}")` : undefined,
-          WebkitMaskSize: sizePct,
-          WebkitMaskRepeat: "no-repeat",
-          WebkitMaskPosition: posStr,
           borderRadius: 6,
           touchAction: "none",
           overflow: "hidden",

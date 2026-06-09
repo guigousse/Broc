@@ -70,24 +70,19 @@ export function CoffreChargement(p: Props) {
     };
   }, [p.coffre]);
 
-  // Chargement du masque strict du contenant (pour la collision pixel-perfect).
-  // On crop avec les mêmes zoom + center que le rendu CSS pour que les coords
-  // [0,1] des items mappent bien à la zone visible du coffre.
+  // TEST sans crop : la collision mappe à l'image entière (pas de zoom).
   useEffect(() => {
     if (!assets) {
       setTrunkMask(null);
       return;
     }
-    const zoom = camion.displayZoom ?? 1;
-    const cx = camion.displayCenterX ?? 0.5;
-    const cy = camion.displayCenterY ?? 0.5;
-    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE, zoom, cx, cy);
+    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE);
     if (cached) {
       setTrunkMask(cached);
       return;
     }
     let cancelled = false;
-    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE, zoom, cx, cy)
+    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE)
       .then((m) => {
         if (!cancelled) setTrunkMask(m);
       })
@@ -97,7 +92,7 @@ export function CoffreChargement(p: Props) {
     return () => {
       cancelled = true;
     };
-  }, [assets, camion.displayZoom, camion.displayCenterX, camion.displayCenterY]);
+  }, [assets]);
 
   const overlaps = useMemo(() => {
     void maskTick;
