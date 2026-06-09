@@ -18,6 +18,11 @@ export const COFFRE_ASSETS: Record<string, CoffreAssets> = {
     ferme: "/coffre/rogers-ferme.webp",
     mask: "/coffre/rogers-mask.webp",
   },
+  break: {
+    ouvert: "/coffre/break-ouvert.webp",
+    ferme: "/coffre/break-ferme.webp",
+    mask: "/coffre/break-mask.webp",
+  },
 };
 
 export function getCoffreAssets(visuelId: string): CoffreAssets | null {
