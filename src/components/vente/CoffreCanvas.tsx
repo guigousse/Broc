@@ -184,15 +184,20 @@ export function CoffreCanvas({
   return (
     <div
       style={{
-        width: "100%",
-        // Pleine largeur, hauteur calée sur l'espace dispo (header + carrousel +
-        // barre d'action). L'image est rendue en cover : pleine largeur, crop
-        // vertical en haut/bas grâce à la marge prévue dans l'asset.
+        width: "100vw",
+        marginLeft: "calc(50% - 50vw)",
+        // Hauteur calée sur l'espace dispo (header + carrousel + barre action).
         height:
           "calc(100dvh - 60px - 100px - 76px - var(--safe-top) - var(--safe-bottom))",
         position: "relative",
-        background:
-          'var(--paper-200) center / cover no-repeat url("/coffre/fond-garage.webp")',
+        backgroundColor: "var(--paper-200)",
+        backgroundImage: "url('/coffre/fond-garage.webp')",
+        // 100% auto force la largeur de l'image à 100 % du wrapper, hauteur auto
+        // (proportionnelle). Le surplus vertical est croppé par overflow:hidden,
+        // ce qui correspond aux marges haut/bas que l'asset prévoit.
+        backgroundSize: "100% auto",
+        backgroundPosition: "center center",
+        backgroundRepeat: "no-repeat",
         overflow: "hidden",
       }}
     >
