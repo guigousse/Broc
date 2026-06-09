@@ -351,4 +351,4 @@ export const PLACES_PAR_TAILLE: Record<TailleObjet, number> = {
   XL: 5.00,
 };
 
-export type NiveauCamion = 1 | 2 | 3 | 4;
+export type NiveauCamion = 1 | 2 | 3;

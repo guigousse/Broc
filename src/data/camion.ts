@@ -16,7 +16,6 @@ export const CAMIONS: readonly CamionConfig[] = [
   { niveau: 1, nom: "Rogers",     visuelId: "rogers", aspectRatio: 1408 / 1358, capacitePlaces: 9,  prixUpgradeVersCeNiveau: null },
   { niveau: 2, nom: "Break",      visuelId: "break",  aspectRatio: 1,           capacitePlaces: 16, prixUpgradeVersCeNiveau: 150 },
   { niveau: 3, nom: "Utilitaire", visuelId: "utilitaire", aspectRatio: 1,       capacitePlaces: 25, prixUpgradeVersCeNiveau: 500 },
-  { niveau: 4, nom: "Fourgon",    visuelId: "fourgon", aspectRatio: 1,          capacitePlaces: 36, prixUpgradeVersCeNiveau: 1500 },
 ] as const;
 
 export function getCamion(niveau: NiveauCamion): CamionConfig {
@@ -24,7 +23,7 @@ export function getCamion(niveau: NiveauCamion): CamionConfig {
 }
 
 export function getProchainCamion(niveau: NiveauCamion): CamionConfig | null {
-  return niveau < 4 ? CAMIONS[niveau] : null;
+  return niveau < 3 ? CAMIONS[niveau] : null;
 }
 
 /**
@@ -44,9 +43,6 @@ const CAPACITE_REFERENCE = 9;
  *  - Rogers (cap 9)     → 0.745 du côté
  *  - Break  (cap 16)    → 0.645
  *  - Utilitaire (cap 25) → 0.577
- *  - Fourgon (cap 36)   → 0.527
- *
- * (vs. ancienne formule √ : 0.745 / 0.559 / 0.447 / 0.373 — beaucoup plus agressif)
  */
 export function getScaleCoffre(
   taille: TailleObjet,

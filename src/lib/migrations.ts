@@ -303,7 +303,9 @@ export function migrerSauvegarde(loaded: GameState): GameState {
     })(),
     niveauCamion: (() => {
       const v = (loaded as Partial<GameState>).niveauCamion;
-      if (v === 2 || v === 3 || v === 4) return v;
+      if (v === 2 || v === 3) return v;
+      // Anciennes saves "Fourgon" (4) → ramenées à Utilitaire (3).
+      if ((v as number) === 4) return 3;
       return 1;
     })(),
     piecesAmelioration: (() => {
