@@ -290,15 +290,19 @@ export interface TrunkMask {
 const TRUNK_MASK_CACHE = new Map<string, TrunkMask>();
 
 /**
- * Charge l'image `src` (PNG/WebP avec un fond blanc et silhouette opaque ou
- * transparent), produit un masque binaire à `size × size` (1 = pixel "blanc/
- * intérieur", 0 = bordure ou extérieur). Mis en cache par `src`+`size`.
+ * Charge l'image `src` (WebP/PNG avec silhouette blanche), produit un masque
+ * binaire à `size × size` (1 = pixel "blanc/intérieur", 0 = bordure ou
+ * extérieur). Mis en cache par `src`+`size`+`zoom`.
+ *
+ * Si `zoom > 1`, on n'utilise que la zone centrale du source (cropping
+ * synchronisé avec `background-size: ${100 * zoom}%` côté CSS).
  */
 export async function buildTrunkMask(
   src: string,
   size: number,
+  zoom = 1,
 ): Promise<TrunkMask> {
-  const key = `${src}:${size}`;
+  const key = `${src}:${size}:${zoom}`;
   const cached = TRUNK_MASK_CACHE.get(key);
   if (cached) return cached;
 
@@ -311,7 +315,16 @@ export async function buildTrunkMask(
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, 0, 0, size, size);
+  if (zoom === 1) {
+    ctx.drawImage(img, 0, 0, size, size);
+  } else {
+    // Crop centré : on prélève une zone (1/zoom) du source et on l'étire à size.
+    const srcW = img.naturalWidth / zoom;
+    const srcH = img.naturalHeight / zoom;
+    const srcX = (img.naturalWidth - srcW) / 2;
+    const srcY = (img.naturalHeight - srcH) / 2;
+    ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, size, size);
+  }
   const data = ctx.getImageData(0, 0, size, size).data;
   const bits = new Uint8Array(size * size);
   for (let i = 0; i < size * size; i++) {
@@ -319,8 +332,6 @@ export async function buildTrunkMask(
     const g = data[i * 4 + 1];
     const b = data[i * 4 + 2];
     const a = data[i * 4 + 3];
-    // "Intérieur" = pixel opaque ET très clair (proche du blanc). La bordure
-    // dessinée (gris/noir) du masque est exclue.
     const luma = (r + g + b) / 3;
     bits[i] = a > 32 && luma > 200 ? 1 : 0;
   }
@@ -329,8 +340,12 @@ export async function buildTrunkMask(
   return mask;
 }
 
-export function getCachedTrunkMask(src: string, size: number): TrunkMask | undefined {
-  return TRUNK_MASK_CACHE.get(`${src}:${size}`);
+export function getCachedTrunkMask(
+  src: string,
+  size: number,
+  zoom = 1,
+): TrunkMask | undefined {
+  return TRUNK_MASK_CACHE.get(`${src}:${size}:${zoom}`);
 }
 
 /**

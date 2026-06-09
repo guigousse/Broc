@@ -174,7 +174,9 @@ export function CoffreCanvas({
   };
 
   const aspectRatio = camion.aspectRatio;
+  const zoom = camion.displayZoom ?? 1;
   const bgImage = closing ? assets?.ferme : assets?.ouvert;
+  const bgSize = `${100 * zoom}%`;
 
   return (
     <div style={{ padding: 14, background: "var(--paper-200)" }}>
@@ -186,10 +188,11 @@ export function CoffreCanvas({
           aspectRatio: `${aspectRatio}`,
           position: "relative",
           background: bgImage
-            ? `center / contain no-repeat url("${bgImage}")`
+            ? `center center / ${bgSize} no-repeat url("${bgImage}")`
             : "repeating-linear-gradient(45deg, var(--ink-700), var(--ink-700) 6px, var(--ink-500) 6px, var(--ink-500) 12px)",
           borderRadius: 6,
           touchAction: "none",
+          overflow: "hidden",
           transition: "background-image 250ms ease-out",
         }}
       >
@@ -217,7 +220,7 @@ export function CoffreCanvas({
             style={{
               position: "absolute",
               inset: 0,
-              background: `center / contain no-repeat url("${assets.mask}")`,
+              background: `center center / ${bgSize} no-repeat url("${assets.mask}")`,
               opacity: 0.65,
               pointerEvents: "none",
               transition: "opacity 200ms ease-out",

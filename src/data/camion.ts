@@ -8,6 +8,12 @@ export interface CamionConfig {
   visuelId: string;
   /** Ratio largeur/hauteur du visuel du coffre (utilisé pour aspect-ratio CSS). */
   aspectRatio: number;
+  /**
+   * Facteur de zoom CSS appliqué au visuel et au masque (défaut 1).
+   * > 1 = recadre l'image en gardant la zone centrale (utile quand l'asset
+   * inclut beaucoup de carrosserie autour du contenant).
+   */
+  displayZoom?: number;
   capacitePlaces: number;
   prixUpgradeVersCeNiveau: number | null;
 }
@@ -15,7 +21,7 @@ export interface CamionConfig {
 export const CAMIONS: readonly CamionConfig[] = [
   { niveau: 1, nom: "Rogers",     visuelId: "rogers", aspectRatio: 1408 / 1358, capacitePlaces: 9,  prixUpgradeVersCeNiveau: null },
   { niveau: 2, nom: "Break",      visuelId: "break",  aspectRatio: 1718 / 1456, capacitePlaces: 16, prixUpgradeVersCeNiveau: 150 },
-  { niveau: 3, nom: "Utilitaire", visuelId: "utilitaire", aspectRatio: 1269 / 1343, capacitePlaces: 25, prixUpgradeVersCeNiveau: 500 },
+  { niveau: 3, nom: "Utilitaire", visuelId: "utilitaire", aspectRatio: 1269 / 1343, displayZoom: 1.4, capacitePlaces: 25, prixUpgradeVersCeNiveau: 500 },
 ] as const;
 
 export function getCamion(niveau: NiveauCamion): CamionConfig {

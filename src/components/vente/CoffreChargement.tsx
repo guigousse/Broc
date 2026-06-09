@@ -75,13 +75,14 @@ export function CoffreChargement(p: Props) {
       setTrunkMask(null);
       return;
     }
-    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE);
+    const zoom = camion.displayZoom ?? 1;
+    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE, zoom);
     if (cached) {
       setTrunkMask(cached);
       return;
     }
     let cancelled = false;
-    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE)
+    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE, zoom)
       .then((m) => {
         if (!cancelled) setTrunkMask(m);
       })
@@ -91,7 +92,7 @@ export function CoffreChargement(p: Props) {
     return () => {
       cancelled = true;
     };
-  }, [assets]);
+  }, [assets, camion.displayZoom]);
 
   const overlaps = useMemo(() => {
     void maskTick;
