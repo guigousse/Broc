@@ -25,19 +25,19 @@ export const CAMIONS: readonly CamionConfig[] = [
   {
     niveau: 1, nom: "Rogers", visuelId: "rogers",
     aspectRatio: 1408 / 1358,
-    garageX: 0.5, garageY: 0.55, garageScale: 0.45,
+    garageX: 0.5, garageY: 0.69, garageScale: 0.82,
     capacitePlaces: 9, prixUpgradeVersCeNiveau: null,
   },
   {
     niveau: 2, nom: "Break", visuelId: "break",
     aspectRatio: 1718 / 1456,
-    garageX: 0.5, garageY: 0.55, garageScale: 0.55,
+    garageX: 0.5, garageY: 0.68, garageScale: 1.005,
     capacitePlaces: 16, prixUpgradeVersCeNiveau: 150,
   },
   {
     niveau: 3, nom: "Utilitaire", visuelId: "utilitaire",
     aspectRatio: 1269 / 1343,
-    garageX: 0.5, garageY: 0.55, garageScale: 0.55,
+    garageX: 0.5, garageY: 0.60, garageScale: 0.99,
     capacitePlaces: 25, prixUpgradeVersCeNiveau: 500,
   },
 ] as const;
