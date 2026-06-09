@@ -158,16 +158,23 @@ export function CoffreChargement(p: Props) {
         onRetour={p.onRetirer}
       />
       <CarrouselStock stock={p.stock} onPickUp={handlePickUp} />
+      {/* Spacer pour libérer la zone occupée par la barre fixed du bas. */}
+      <div style={{ height: "calc(72px + var(--safe-bottom))" }} aria-hidden />
       <div
         style={{
-          position: "sticky",
+          position: "fixed",
+          left: 0,
+          right: 0,
           bottom: 0,
           padding: "12px 14px calc(12px + var(--safe-bottom))",
           background: "var(--forest-800)",
-          borderTop: "1px solid var(--brass-500)",
+          // Liseré doré en intersection avec la partie supérieure (mirroir du header BROC).
+          borderTop: "2px solid var(--brass-500)",
+          boxShadow: "0 -1px 0 var(--brass-300), 0 -8px 16px rgba(0,0,0,0.2)",
           display: "flex",
           flexDirection: "column",
           gap: 8,
+          zIndex: 50,
         }}
       >
         {overlaps.size > 0 && !closing && (
