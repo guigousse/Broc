@@ -238,8 +238,20 @@ export function CoffreCanvas({
             — coffre ouvert —
           </div>
         )}
-        {/* Overlay du masque supprimé : le visuel est déjà clipé à la
-            silhouette via mask-image, donc plus besoin de le surligner. */}
+        {assets && !closing && (
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `${posStr} / ${sizePct} no-repeat url("${assets.mask}")`,
+              opacity: 0.65,
+              pointerEvents: "none",
+              transition: "opacity 200ms ease-out",
+              zIndex: 1,
+            }}
+          />
+        )}
         {!closing &&
           objets.map((ov) => {
             const w = ref.current?.getBoundingClientRect().width ?? 280;

@@ -63,6 +63,7 @@ export function ItemDansCoffre({
         filter: filterStyle || undefined,
         willChange: active ? "transform, filter" : undefined,
         pointerEvents: "none",
+        zIndex: 2,
       }}
     >
       <ItemImage
