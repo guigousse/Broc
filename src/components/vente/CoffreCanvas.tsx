@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
-import { getCamion } from "@/data/camion";
+import { getCamion, getScaleCoffre } from "@/data/camion";
+import { getTemplate, tailleDe } from "@/data/objetTemplates";
 import { ItemDansCoffre } from "./ItemDansCoffre";
 
 interface Props {
@@ -50,13 +51,27 @@ export function CoffreCanvas({
   const objetsRef = useRef(objets);
   objetsRef.current = objets;
 
+  /**
+   * Hit-test manuel basé sur la bbox de chaque objet (en coords [0,1]).
+   * Itère du dernier au premier pour récupérer l'objet au-dessus de la pile.
+   */
   const hitTest = (clientX: number, clientY: number): string | null => {
-    const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
-    let cursor: HTMLElement | null = el;
-    while (cursor) {
-      const id = cursor.getAttribute?.("data-coffre-item-id");
-      if (id) return id;
-      cursor = cursor.parentElement;
+    if (!ref.current) return null;
+    const rect = ref.current.getBoundingClientRect();
+    const px = (clientX - rect.left) / rect.width;
+    const py = (clientY - rect.top) / rect.height;
+    if (px < 0 || px > 1 || py < 0 || py > 1) return null;
+    const items = objetsRef.current;
+    for (let i = items.length - 1; i >= 0; i--) {
+      const ov = items[i];
+      const tpl = getTemplate(ov.objet.templateId);
+      if (!tpl) continue;
+      const scale = getScaleCoffre(tailleDe(tpl), camion.capacitePlaces);
+      const cx = ov.posX ?? 0.5;
+      const cy = ov.posY ?? 0.5;
+      if (Math.abs(px - cx) <= scale / 2 && Math.abs(py - cy) <= scale / 2) {
+        return ov.objet.id;
+      }
     }
     return null;
   };
