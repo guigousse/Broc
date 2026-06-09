@@ -70,19 +70,24 @@ export function CoffreChargement(p: Props) {
     };
   }, [p.coffre]);
 
-  // TEST sans crop : la collision mappe à l'image entière (pas de zoom).
+  // Collision pixel-perfect : on crop le masque strict avec les mêmes zoom +
+  // center que le rendu du visuel, pour que les coords [0,1] des items dans le
+  // container correspondent à la zone du contenant.
   useEffect(() => {
     if (!assets) {
       setTrunkMask(null);
       return;
     }
-    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE);
+    const zoom = camion.displayZoom ?? 1;
+    const cx = camion.displayCenterX ?? 0.5;
+    const cy = camion.displayCenterY ?? 0.5;
+    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE, zoom, cx, cy);
     if (cached) {
       setTrunkMask(cached);
       return;
     }
     let cancelled = false;
-    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE)
+    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE, zoom, cx, cy)
       .then((m) => {
         if (!cancelled) setTrunkMask(m);
       })
@@ -92,7 +97,7 @@ export function CoffreChargement(p: Props) {
     return () => {
       cancelled = true;
     };
-  }, [assets]);
+  }, [assets, camion.displayZoom, camion.displayCenterX, camion.displayCenterY]);
 
   const overlaps = useMemo(() => {
     void maskTick;
