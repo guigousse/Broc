@@ -93,6 +93,8 @@ interface GameContextValue {
     rotation: number,
   ) => void;
   acheterCamion: (niveau: NiveauCamion) => void;
+  /** Dev only — force le niveau sans coût ni adjacence. */
+  setNiveauCamionDev: (niveau: NiveauCamion) => void;
   viderVitrine: () => void;
   vendreDeVitrine: (objetIds: string[], prixTotal: number) => void;
   enregistrerSession: (session: Session) => void;
@@ -486,6 +488,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (prev.budget < prix) return prev;
       return { ...prev, niveauCamion: niveau, budget: prev.budget - prix };
     });
+  }, []);
+
+  // Dev-only : set direct du niveau sans coût ni vérification d'adjacence.
+  // Utilisé par le bouton de switch dans ChargementHeader pour tester les visuels.
+  const setNiveauCamionDev = useCallback((niveau: NiveauCamion) => {
+    setState((prev) => (prev ? { ...prev, niveauCamion: niveau } : prev));
   }, []);
 
   const retirerDeVitrine = useCallback((objetId: string) => {
@@ -887,6 +895,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ajusterPrixVitrine,
       ajusterPositionVitrine,
       acheterCamion,
+      setNiveauCamionDev,
       viderVitrine,
       vendreDeVitrine,
       enregistrerSession,
@@ -923,6 +932,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ajusterPrixVitrine,
       ajusterPositionVitrine,
       acheterCamion,
+      setNiveauCamionDev,
       viderVitrine,
       vendreDeVitrine,
       enregistrerSession,

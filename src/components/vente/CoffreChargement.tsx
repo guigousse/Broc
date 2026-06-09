@@ -35,6 +35,7 @@ interface Props {
   onRotate: (objetId: string, angle: number) => void;
   onRetirer: (objetId: string) => void;
   onUpgrade: (n: NiveauCamion) => void;
+  onSetNiveauDev?: (n: NiveauCamion) => void;
   onValider: () => void;
   onAnnuler: () => void;
 }
@@ -141,6 +142,7 @@ export function CoffreChargement(p: Props) {
         nbObjets={p.coffre.length}
         budget={p.budget}
         onUpgrade={p.onUpgrade}
+        onSetNiveauDev={p.onSetNiveauDev}
       />
       <CoffreCanvas
         niveauCamion={p.niveauCamion}

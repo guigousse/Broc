@@ -1,16 +1,26 @@
 import { useEffect, useState } from "react";
 import type { NiveauCamion } from "@/types/game";
-import { getCamion, getProchainCamion } from "@/data/camion";
+import { CAMIONS, getCamion, getProchainCamion } from "@/data/camion";
 import { CamionIcon } from "./CamionIcon";
+
+// Dev only — set à false pour cacher le bouton de switch des coffres.
+const DEV_COFFRE_SWITCH = true;
 
 interface Props {
   niveau: NiveauCamion;
   nbObjets: number;
   budget: number;
   onUpgrade: (niveau: NiveauCamion) => void;
+  onSetNiveauDev?: (niveau: NiveauCamion) => void;
 }
 
-export function ChargementHeader({ niveau, nbObjets, budget, onUpgrade }: Props) {
+export function ChargementHeader({
+  niveau,
+  nbObjets,
+  budget,
+  onUpgrade,
+  onSetNiveauDev,
+}: Props) {
   const camion = getCamion(niveau);
   const prochain = getProchainCamion(niveau);
   const peutUpgrade = !!prochain && budget >= (prochain.prixUpgradeVersCeNiveau ?? 0);
@@ -57,6 +67,33 @@ export function ChargementHeader({ niveau, nbObjets, budget, onUpgrade }: Props)
           {nbObjets} objet{nbObjets > 1 ? "s" : ""} chargé{nbObjets > 1 ? "s" : ""}
         </div>
       </div>
+      {DEV_COFFRE_SWITCH && onSetNiveauDev && (
+        <button
+          type="button"
+          onClick={() => {
+            const next = (((niveau - 1) + 1) % CAMIONS.length) + 1;
+            onSetNiveauDev(next as NiveauCamion);
+          }}
+          aria-label="Dev: cycle camion level"
+          style={{
+            padding: "6px 8px",
+            border: "1px dashed var(--vermillion-600)",
+            background: "var(--paper-100)",
+            color: "var(--vermillion-600)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 9,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            lineHeight: 1.2,
+            marginRight: 4,
+          }}
+        >
+          DEV
+          <br />
+          N{niveau}
+        </button>
+      )}
       {prochain && (
         <button
           type="button"

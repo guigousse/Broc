@@ -26,6 +26,7 @@ export default function VitrineBrocantePage() {
     viderVitrine,
     ajusterBudget,
     acheterCamion,
+    setNiveauCamionDev,
   } = useGame();
 
   const brocante = useMemo(() => getBrocanteById(params.brocanteId), [params.brocanteId]);
@@ -127,6 +128,7 @@ export default function VitrineBrocantePage() {
             onRotate={handleRotate}
             onRetirer={retirerDeVitrine}
             onUpgrade={acheterCamion}
+            onSetNiveauDev={setNiveauCamionDev}
             onValider={() => setEtape("pricing")}
             onAnnuler={() => { viderVitrine(); router.push("/vitrine"); }}
           />
