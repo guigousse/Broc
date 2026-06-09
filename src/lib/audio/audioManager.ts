@@ -280,6 +280,19 @@ class AudioManager {
     src.start();
   }
 
+  /** Coffre de camionnette qui se ferme (validation chargement). */
+  async playCoffreFerme(): Promise<void> {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/coffre-ferme.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   async startCrowd(): Promise<void> {
     if (!this.prefs.foule) return;
     this.ensureCtx();

@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
 import { getCamion, getScaleCoffre } from "@/data/camion";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
+import { getCoffreAssets } from "@/lib/coffreAssets";
 import { ItemDansCoffre } from "./ItemDansCoffre";
 
 interface Props {
   niveauCamion: NiveauCamion;
   objets: ObjetEnVitrine[];
   overlaps: Set<string>;
+  /** Si vrai, le coffre est représenté fermé (transition de validation). */
+  closing: boolean;
   onMove: (objetId: string, posX: number, posY: number) => void;
   onRotate: (objetId: string, angle: number) => void;
   onRetour: (objetId: string) => void;
@@ -28,33 +31,30 @@ export function CoffreCanvas({
   niveauCamion,
   objets,
   overlaps,
+  closing,
   onMove,
   onRotate,
   onRetour,
 }: Props) {
   const camion = getCamion(niveauCamion);
+  const assets = getCoffreAssets(camion.visuelId);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Sélection unique : un seul objet à la fois.
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
   selectedIdRef.current = selectedId;
 
-  // Pointer principal qui drag l'objet sélectionné.
   const dragPointerId = useRef<number | null>(null);
-  // Tous les pointeurs actuellement actifs (n'importe où).
   const pointers = useRef<Map<number, PointerInfo>>(new Map());
-  // État de la rotation en cours (pinch).
-  const pinchRef = useRef<{ startAngle: number; startRotation: number; otherId: number } | null>(null);
+  const pinchRef = useRef<{
+    startAngle: number;
+    startRotation: number;
+    otherId: number;
+  } | null>(null);
 
-  // Accès direct aux objets actuels pour récupérer la rotation au moment du pinch.
   const objetsRef = useRef(objets);
   objetsRef.current = objets;
 
-  /**
-   * Hit-test manuel basé sur la bbox de chaque objet (en coords [0,1]).
-   * Itère du dernier au premier pour récupérer l'objet au-dessus de la pile.
-   */
   const hitTest = (clientX: number, clientY: number): string | null => {
     if (!ref.current) return null;
     const rect = ref.current.getBoundingClientRect();
@@ -76,12 +76,10 @@ export function CoffreCanvas({
     return null;
   };
 
-  /* --- Listener global pour gérer le 2e doigt n'importe où ----------- */
   useEffect(() => {
     if (selectedId === null) return;
 
     const handleDown = (e: PointerEvent) => {
-      // Premier doigt déjà actif (drag). Ce nouveau pointeur est le second → rotation.
       if (pointers.current.has(e.pointerId)) return;
       if (dragPointerId.current === null) return;
       pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -106,7 +104,6 @@ export function CoffreCanvas({
       const id = selectedIdRef.current;
       if (!id) return;
 
-      // Si pinch en cours, rotation prioritaire (le drag est suspendu).
       if (pinchRef.current && dragPointerId.current !== null) {
         const p1 = pointers.current.get(dragPointerId.current);
         const p2 = pointers.current.get(pinchRef.current.otherId);
@@ -117,7 +114,6 @@ export function CoffreCanvas({
         return;
       }
 
-      // Sinon, drag normal sur le pointeur principal.
       if (e.pointerId !== dragPointerId.current) return;
       if (!ref.current) return;
       const rect = ref.current.getBoundingClientRect();
@@ -130,13 +126,11 @@ export function CoffreCanvas({
       if (!pointers.current.has(e.pointerId)) return;
       pointers.current.delete(e.pointerId);
 
-      // 2e doigt relâché → fin du pinch, on conserve la sélection.
       if (pinchRef.current && e.pointerId === pinchRef.current.otherId) {
         pinchRef.current = null;
         return;
       }
 
-      // Doigt principal relâché → fin de la sélection.
       if (e.pointerId === dragPointerId.current) {
         const id = selectedIdRef.current;
         const insideRect = (() => {
@@ -149,7 +143,6 @@ export function CoffreCanvas({
             e.clientY <= rect.bottom
           );
         })();
-        // Cleanup
         dragPointerId.current = null;
         pinchRef.current = null;
         pointers.current.clear();
@@ -170,9 +163,8 @@ export function CoffreCanvas({
     };
   }, [selectedId, onMove, onRotate, onRetour]);
 
-  /* --- Pointer down sur le canvas : initie la sélection ------------- */
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    // Si une sélection est déjà active, on laisse le listener global gérer.
+    if (closing) return;
     if (selectedIdRef.current !== null) return;
     const itemId = hitTest(e.clientX, e.clientY);
     if (!itemId) return;
@@ -181,6 +173,9 @@ export function CoffreCanvas({
     setSelectedId(itemId);
   };
 
+  const aspectRatio = camion.aspectRatio;
+  const bgImage = closing ? assets?.ferme : assets?.ouvert;
+
   return (
     <div style={{ padding: 14, background: "var(--paper-200)" }}>
       <div
@@ -188,45 +183,51 @@ export function CoffreCanvas({
         onPointerDown={handlePointerDown}
         style={{
           width: "100%",
-          aspectRatio: "1 / 1",
+          aspectRatio: `${aspectRatio}`,
           position: "relative",
-          background:
-            "repeating-linear-gradient(45deg, var(--ink-700), var(--ink-700) 6px, var(--ink-500) 6px, var(--ink-500) 12px)",
-          border: "4px solid var(--ink-700)",
+          background: bgImage
+            ? `center / contain no-repeat url("${bgImage}")`
+            : "repeating-linear-gradient(45deg, var(--ink-700), var(--ink-700) 6px, var(--ink-500) 6px, var(--ink-500) 12px)",
           borderRadius: 6,
-          boxShadow: "inset 0 0 30px rgba(0,0,0,0.4)",
           touchAction: "none",
+          transition: "background-image 250ms ease-out",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: 6,
-            left: 8,
-            fontFamily: "var(--font-mono)",
-            fontSize: 9,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: "var(--brass-300)",
-            opacity: 0.7,
-            pointerEvents: "none",
-          }}
-        >
-          — coffre ouvert —
-        </div>
-        {objets.map((ov) => {
-          const w = ref.current?.getBoundingClientRect().width ?? camion.cotePixels;
-          return (
-            <ItemDansCoffre
-              key={ov.objet.id}
-              ov={ov}
-              capacitePlaces={camion.capacitePlaces}
-              cotePixels={w}
-              active={selectedId === ov.objet.id}
-              overlap={overlaps.has(ov.objet.id)}
-            />
-          );
-        })}
+        {!bgImage && (
+          <div
+            style={{
+              position: "absolute",
+              top: 6,
+              left: 8,
+              fontFamily: "var(--font-mono)",
+              fontSize: 9,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--brass-300)",
+              opacity: 0.7,
+              pointerEvents: "none",
+            }}
+          >
+            — coffre ouvert —
+          </div>
+        )}
+        {!closing &&
+          objets.map((ov) => {
+            const w = ref.current?.getBoundingClientRect().width ?? 280;
+            const h = ref.current?.getBoundingClientRect().height ?? 280;
+            // Les items sont positionnés en pourcent du coffre, on les rend en px.
+            return (
+              <ItemDansCoffre
+                key={ov.objet.id}
+                ov={ov}
+                capacitePlaces={camion.capacitePlaces}
+                cotePixelsX={w}
+                cotePixelsY={h}
+                active={selectedId === ov.objet.id}
+                overlap={overlaps.has(ov.objet.id)}
+              />
+            );
+          })}
       </div>
     </div>
   );

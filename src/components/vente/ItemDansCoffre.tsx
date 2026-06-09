@@ -8,32 +8,31 @@ import { getScaleCoffre } from "@/data/camion";
 interface Props {
   ov: ObjetEnVitrine;
   capacitePlaces: number;
-  cotePixels: number;
-  active: boolean;   // l'objet est en cours de manipulation
-  overlap?: boolean; // l'objet est en collision
+  cotePixelsX: number;
+  cotePixelsY: number;
+  active: boolean;
+  overlap?: boolean;
 }
 
-/**
- * Rendu visuel d'un objet posé dans le coffre. La gestion des pointer events
- * est centralisée dans CoffreCanvas pour assurer une sélection unique.
- */
 export function ItemDansCoffre({
   ov,
   capacitePlaces,
-  cotePixels,
+  cotePixelsX,
+  cotePixelsY,
   active,
   overlap,
 }: Props) {
   const tpl = getTemplate(ov.objet.templateId);
   const taille = tpl ? tailleDe(tpl) : "S";
   const scale = getScaleCoffre(taille, capacitePlaces);
-  const sizePx = scale * cotePixels;
+  // Le côté de référence est le plus petit des deux pour garder un objet carré.
+  const refCote = Math.min(cotePixelsX, cotePixelsY);
+  const sizePx = scale * refCote;
 
-  const posX = (ov.posX ?? 0.5) * cotePixels;
-  const posY = (ov.posY ?? 0.5) * cotePixels;
+  const posX = (ov.posX ?? 0.5) * cotePixelsX;
+  const posY = (ov.posY ?? 0.5) * cotePixelsY;
   const rot = ov.rotation ?? 0;
 
-  // Halo doré (sélection) ou halo rouge (collision).
   const filters: string[] = [];
   if (overlap) {
     filters.push(
@@ -61,10 +60,9 @@ export function ItemDansCoffre({
         transform: `rotate(${rot}deg)`,
         transition: active ? "none" : "transform 120ms",
         cursor: active ? "grabbing" : "grab",
-        // touchAction n'a pas d'effet ici car le parent gère le pointer.
         filter: filterStyle || undefined,
         willChange: active ? "transform, filter" : undefined,
-        pointerEvents: "none", // CoffreCanvas gère, on évite la captation
+        pointerEvents: "none",
       }}
     >
       <ItemImage

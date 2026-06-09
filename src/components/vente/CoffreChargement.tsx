@@ -6,19 +6,24 @@ import { getCamion, getScaleCoffre } from "@/data/camion";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
 import {
   buildAlphaMask,
-  cacheMask,
+  buildTrunkMask,
   computeOverlapsPixel,
-  computeOverlaps,
   getCachedMask,
+  getCachedTrunkMask,
   maskKey,
   type PixelItem,
+  type TrunkMask,
 } from "@/lib/coffre";
 import { getItemImageUrl } from "@/lib/itemImages";
+import { getCoffreAssets } from "@/lib/coffreAssets";
+import { audioManager } from "@/lib/audio/audioManager";
 import { ChargementHeader } from "./ChargementHeader";
 import { CoffreCanvas } from "./CoffreCanvas";
 import { CarrouselStock } from "./CarrouselStock";
 
-const MASK_SIZE = 48; // résolution du masque alpha pour la collision
+const MASK_SIZE = 48;
+const TRUNK_MASK_SIZE = 256;
+const CLOSING_DURATION_MS = 900;
 
 interface Props {
   niveauCamion: NiveauCamion;
@@ -34,7 +39,6 @@ interface Props {
   onAnnuler: () => void;
 }
 
-/** Masque de remplacement (carré plein) pour les items sans image. */
 function buildSolidMask(size: number): Uint8Array {
   const bits = new Uint8Array(size * size);
   bits.fill(1);
@@ -43,10 +47,13 @@ function buildSolidMask(size: number): Uint8Array {
 
 export function CoffreChargement(p: Props) {
   const camion = getCamion(p.niveauCamion);
-  // Bump pour re-render quand de nouveaux masques sont chargés en cache.
-  const [maskTick, setMaskTick] = useState(0);
+  const assets = getCoffreAssets(camion.visuelId);
 
-  // Préchargement des alpha-masks pour les items présents dans le coffre.
+  const [maskTick, setMaskTick] = useState(0);
+  const [trunkMask, setTrunkMask] = useState<TrunkMask | null>(null);
+  const [closing, setClosing] = useState(false);
+
+  // Pré-chargement des alpha-masks des items présents.
   useEffect(() => {
     let cancelled = false;
     const tasks = p.coffre
@@ -54,11 +61,7 @@ export function CoffreChargement(p: Props) {
       .filter((src): src is string => !!src)
       .filter((src) => !getCachedMask(maskKey(src, MASK_SIZE, 0)));
     if (tasks.length === 0) return;
-    Promise.all(
-      tasks.map((src) =>
-        buildAlphaMask(src, MASK_SIZE, 0).catch(() => null),
-      ),
-    ).then(() => {
+    Promise.all(tasks.map((src) => buildAlphaMask(src, MASK_SIZE, 0).catch(() => null))).then(() => {
       if (!cancelled) setMaskTick((t) => t + 1);
     });
     return () => {
@@ -66,9 +69,32 @@ export function CoffreChargement(p: Props) {
     };
   }, [p.coffre]);
 
-  // Construit les PixelItem à partir du coffre.
+  // Chargement du masque du contenant (forme du coffre).
+  useEffect(() => {
+    if (!assets) {
+      setTrunkMask(null);
+      return;
+    }
+    const cached = getCachedTrunkMask(assets.mask, TRUNK_MASK_SIZE);
+    if (cached) {
+      setTrunkMask(cached);
+      return;
+    }
+    let cancelled = false;
+    buildTrunkMask(assets.mask, TRUNK_MASK_SIZE)
+      .then((m) => {
+        if (!cancelled) setTrunkMask(m);
+      })
+      .catch(() => {
+        if (!cancelled) setTrunkMask(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [assets]);
+
   const overlaps = useMemo(() => {
-    void maskTick; // force la dépendance
+    void maskTick;
     const items: PixelItem[] = [];
     for (const ov of p.coffre) {
       const tpl = getTemplate(ov.objet.templateId);
@@ -89,17 +115,20 @@ export function CoffreChargement(p: Props) {
         maskSize: MASK_SIZE,
       });
     }
-    // Si AUCUN masque alpha n'est encore en cache, fallback rapide bbox
-    // (évite que l'écran soit tout rouge en attendant les images).
-    return computeOverlapsPixel(items);
-  }, [p.coffre, camion.capacitePlaces, maskTick]);
+    return computeOverlapsPixel(items, trunkMask);
+  }, [p.coffre, camion.capacitePlaces, maskTick, trunkMask]);
 
-  // Note : `computeOverlaps` reste importé pour fallback bbox éventuel (non utilisé en MVP).
-  void computeOverlaps;
-  void cacheMask;
-
-  const handlePickUp = (objetId: string, _clientX: number, _clientY: number) => {
+  const handlePickUp = (objetId: string) => {
     p.onAjouter(objetId, 0.5, 0.5);
+  };
+
+  const handleValider = () => {
+    if (closing) return;
+    setClosing(true);
+    void audioManager.playCoffreFerme();
+    window.setTimeout(() => {
+      p.onValider();
+    }, CLOSING_DURATION_MS);
   };
 
   const peutValider = p.coffre.length > 0 && overlaps.size === 0;
@@ -116,6 +145,7 @@ export function CoffreChargement(p: Props) {
         niveauCamion={p.niveauCamion}
         objets={p.coffre}
         overlaps={overlaps}
+        closing={closing}
         onMove={p.onMove}
         onRotate={p.onRotate}
         onRetour={p.onRetirer}
@@ -133,7 +163,7 @@ export function CoffreChargement(p: Props) {
           gap: 6,
         }}
       >
-        {overlaps.size > 0 && (
+        {overlaps.size > 0 && !closing && (
           <p
             style={{
               fontFamily: "var(--font-serif)",
@@ -144,13 +174,14 @@ export function CoffreChargement(p: Props) {
               margin: 0,
             }}
           >
-            Réarrangez le coffre — certains objets se chevauchent.
+            Réarrangez le coffre — certains objets ne tiennent pas.
           </p>
         )}
         <div style={{ display: "flex", gap: 10 }}>
           <button
             type="button"
             onClick={p.onAnnuler}
+            disabled={closing}
             style={{
               flex: 1,
               padding: "10px",
@@ -160,27 +191,30 @@ export function CoffreChargement(p: Props) {
               fontSize: 11,
               letterSpacing: "0.14em",
               textTransform: "uppercase",
+              opacity: closing ? 0.4 : 1,
             }}
           >
             Annuler
           </button>
           <button
             type="button"
-            disabled={!peutValider}
-            onClick={p.onValider}
+            disabled={!peutValider || closing}
+            onClick={handleValider}
             style={{
               flex: 2,
               padding: "10px",
               border: "1px solid var(--brass-500)",
-              background: peutValider ? "var(--forest-800)" : "var(--paper-300)",
-              color: peutValider ? "var(--brass-300)" : "var(--ink-500)",
+              background:
+                peutValider && !closing ? "var(--forest-800)" : "var(--paper-300)",
+              color:
+                peutValider && !closing ? "var(--brass-300)" : "var(--ink-500)",
               fontFamily: "var(--font-display)",
               fontSize: 11,
               letterSpacing: "0.14em",
               textTransform: "uppercase",
             }}
           >
-            Valider le chargement
+            {closing ? "Fermeture du coffre…" : "Valider le chargement"}
           </button>
         </div>
       </div>

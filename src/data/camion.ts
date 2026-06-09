@@ -4,16 +4,19 @@ import { PLACES_PAR_TAILLE } from "@/types/game";
 export interface CamionConfig {
   niveau: NiveauCamion;
   nom: string;
-  cotePixels: number;
+  /** Identifiant des assets visuels (ouvert/fermé/masque) — voir `coffreAssets`. */
+  visuelId: string;
+  /** Ratio largeur/hauteur du visuel du coffre (utilisé pour aspect-ratio CSS). */
+  aspectRatio: number;
   capacitePlaces: number;
   prixUpgradeVersCeNiveau: number | null;
 }
 
 export const CAMIONS: readonly CamionConfig[] = [
-  { niveau: 1, nom: "4L",         cotePixels: 280, capacitePlaces: 9,  prixUpgradeVersCeNiveau: null },
-  { niveau: 2, nom: "Break",      cotePixels: 280, capacitePlaces: 16, prixUpgradeVersCeNiveau: 150 },
-  { niveau: 3, nom: "Utilitaire", cotePixels: 280, capacitePlaces: 25, prixUpgradeVersCeNiveau: 500 },
-  { niveau: 4, nom: "Fourgon",    cotePixels: 280, capacitePlaces: 36, prixUpgradeVersCeNiveau: 1500 },
+  { niveau: 1, nom: "Rogers",     visuelId: "rogers", aspectRatio: 1408 / 1358, capacitePlaces: 9,  prixUpgradeVersCeNiveau: null },
+  { niveau: 2, nom: "Break",      visuelId: "break",  aspectRatio: 1,           capacitePlaces: 16, prixUpgradeVersCeNiveau: 150 },
+  { niveau: 3, nom: "Utilitaire", visuelId: "utilitaire", aspectRatio: 1,       capacitePlaces: 25, prixUpgradeVersCeNiveau: 500 },
+  { niveau: 4, nom: "Fourgon",    visuelId: "fourgon", aspectRatio: 1,          capacitePlaces: 36, prixUpgradeVersCeNiveau: 1500 },
 ] as const;
 
 export function getCamion(niveau: NiveauCamion): CamionConfig {

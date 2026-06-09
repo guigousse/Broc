@@ -254,12 +254,20 @@ export function pixelOverlap(a: PixelItem, b: PixelItem): boolean {
 
 /**
  * Calcule l'ensemble des IDs en conflit (chevauchements + hors-coffre) pixel-perfect.
- * Si un item n'a pas encore son masque chargé, il est ignoré (overlap conservé du tour précédent côté UI).
+ * Si `trunkMask` est fourni, la sortie de coffre s'évalue sur ce masque
+ * (1 = pixel intérieur autorisé). Sinon, on retombe sur les bornes [0,1].
  */
-export function computeOverlapsPixel(items: ReadonlyArray<PixelItem>): Set<string> {
+export function computeOverlapsPixel(
+  items: ReadonlyArray<PixelItem>,
+  trunkMask?: TrunkMask | null,
+): Set<string> {
   const out = new Set<string>();
   for (const it of items) {
-    if (pixelOutOfBounds(it)) out.add(it.id);
+    if (trunkMask) {
+      if (pixelOutOfTrunk(it, trunkMask)) out.add(it.id);
+    } else if (pixelOutOfBounds(it)) {
+      out.add(it.id);
+    }
   }
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
@@ -270,4 +278,83 @@ export function computeOverlapsPixel(items: ReadonlyArray<PixelItem>): Set<strin
     }
   }
   return out;
+}
+
+/* --- Masque du contenant du coffre -------------------------------- */
+
+export interface TrunkMask {
+  bits: Uint8Array; // longueur size*size, 1 = intérieur autorisé
+  size: number;
+}
+
+const TRUNK_MASK_CACHE = new Map<string, TrunkMask>();
+
+/**
+ * Charge l'image `src` (PNG/WebP avec un fond blanc et silhouette opaque ou
+ * transparent), produit un masque binaire à `size × size` (1 = pixel "blanc/
+ * intérieur", 0 = bordure ou extérieur). Mis en cache par `src`+`size`.
+ */
+export async function buildTrunkMask(
+  src: string,
+  size: number,
+): Promise<TrunkMask> {
+  const key = `${src}:${size}`;
+  const cached = TRUNK_MASK_CACHE.get(key);
+  if (cached) return cached;
+
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = src;
+  await img.decode();
+
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0, size, size);
+  const data = ctx.getImageData(0, 0, size, size).data;
+  const bits = new Uint8Array(size * size);
+  for (let i = 0; i < size * size; i++) {
+    const r = data[i * 4];
+    const g = data[i * 4 + 1];
+    const b = data[i * 4 + 2];
+    const a = data[i * 4 + 3];
+    // "Intérieur" = pixel opaque ET très clair (proche du blanc). La bordure
+    // dessinée (gris/noir) du masque est exclue.
+    const luma = (r + g + b) / 3;
+    bits[i] = a > 32 && luma > 200 ? 1 : 0;
+  }
+  const mask: TrunkMask = { bits, size };
+  TRUNK_MASK_CACHE.set(key, mask);
+  return mask;
+}
+
+export function getCachedTrunkMask(src: string, size: number): TrunkMask | undefined {
+  return TRUNK_MASK_CACHE.get(`${src}:${size}`);
+}
+
+/**
+ * Teste si l'objet sort de l'intérieur du coffre défini par le `trunkMask`.
+ * Itère sur les pixels opaques de l'item, projette en coords [0,1] et
+ * échantillonne le masque.
+ */
+export function pixelOutOfTrunk(item: PixelItem, trunk: TrunkMask): boolean {
+  const N = item.maskSize;
+  const M = trunk.size;
+  const rad = (item.rot * Math.PI) / 180;
+  const c = Math.cos(rad), s = Math.sin(rad);
+  for (let py = 0; py < N; py++) {
+    for (let px = 0; px < N; px++) {
+      if (!item.mask[py * N + px]) continue;
+      const lx = (px + 0.5) / N - 0.5;
+      const ly = (py + 0.5) / N - 0.5;
+      const gx = item.cx + (lx * c - ly * s) * item.scale;
+      const gy = item.cy + (lx * s + ly * c) * item.scale;
+      if (gx < 0 || gx >= 1 || gy < 0 || gy >= 1) return true;
+      const mx = Math.floor(gx * M);
+      const my = Math.floor(gy * M);
+      if (!trunk.bits[my * M + mx]) return true;
+    }
+  }
+  return false;
 }
