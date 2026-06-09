@@ -190,9 +190,14 @@ export function CoffreCanvas({
     <div
       style={{
         padding: 14,
-        background: "var(--paper-200)",
+        // Fond garage en arrière-plan (placeholder : paper-200 si l'asset
+        // n'existe pas encore). À remplacer par le visuel généré dans
+        // public/coffre/fond-garage.webp.
+        background:
+          'var(--paper-200) center / cover no-repeat url("/coffre/fond-garage.webp")',
         display: "flex",
         justifyContent: "center",
+        position: "relative",
       }}
     >
       <div
