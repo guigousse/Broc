@@ -211,6 +211,19 @@ export function CoffreCanvas({
             — coffre ouvert —
           </div>
         )}
+        {assets && !closing && (
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `center / contain no-repeat url("${assets.mask}")`,
+              opacity: 0.35,
+              pointerEvents: "none",
+              transition: "opacity 200ms ease-out",
+            }}
+          />
+        )}
         {!closing &&
           objets.map((ov) => {
             const w = ref.current?.getBoundingClientRect().width ?? 280;
