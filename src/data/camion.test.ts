@@ -24,12 +24,17 @@ describe("camion", () => {
   });
 
   it("getScaleCoffre: XL en N1 ≈ 0.745", () => {
-    // PLACES_PAR_TAILLE.XL = 5 ; côté = sqrt(5 / 9) ≈ 0.745
+    // Base √(5/9), shrinkFactor = 1 → 0.745
     expect(getScaleCoffre("XL", 9)).toBeCloseTo(0.745, 2);
   });
 
-  it("getScaleCoffre: XS en N4 ≈ 0.144", () => {
-    // PLACES_PAR_TAILLE.XS = 0.75 ; côté = sqrt(0.75 / 36) ≈ 0.1443
-    expect(getScaleCoffre("XS", 36)).toBeCloseTo(0.144, 2);
+  it("getScaleCoffre: XL en N4 ≈ 0.527", () => {
+    // Base √(5/9), shrinkFactor = (9/36)^0.25 = 0.707 → 0.527
+    expect(getScaleCoffre("XL", 36)).toBeCloseTo(0.527, 2);
+  });
+
+  it("getScaleCoffre: XS en N4 décroît modérément (~0.204)", () => {
+    // Base √(0.75/9) × (9/36)^0.25 = 0.289 × 0.707 ≈ 0.204
+    expect(getScaleCoffre("XS", 36)).toBeCloseTo(0.204, 2);
   });
 });

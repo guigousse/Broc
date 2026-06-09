@@ -28,12 +28,31 @@ export function getProchainCamion(niveau: NiveauCamion): CamionConfig | null {
 }
 
 /**
+ * Capacité de référence (Rogers, N1) qui sert d'ancrage : à cette capacité,
+ * les objets gardent leur scale "naturelle" √(places / 9).
+ */
+const CAPACITE_REFERENCE = 9;
+
+/**
  * Échelle visuelle d'un objet en fonction de la taille et de la capacité totale du coffre.
- * Hypothèse : 1 XL en N1 (9 places) = tout le coffre (scale = 1).
+ *
+ * Formule hybride : la base reste √(places/9) pour le coffre Rogers, et un
+ * facteur de réduction additionnel `(9/capacite)^0.25` modère la décroissance
+ * dans les coffres plus grands. Au lieu de rétrécir avec √, on tire avec ^0.25.
+ *
+ * Exemple piano XL (5 places) :
+ *  - Rogers (cap 9)     → 0.745 du côté
+ *  - Break  (cap 16)    → 0.645
+ *  - Utilitaire (cap 25) → 0.577
+ *  - Fourgon (cap 36)   → 0.527
+ *
+ * (vs. ancienne formule √ : 0.745 / 0.559 / 0.447 / 0.373 — beaucoup plus agressif)
  */
 export function getScaleCoffre(
   taille: TailleObjet,
   capacitePlaces: number,
 ): number {
-  return Math.sqrt(PLACES_PAR_TAILLE[taille] / capacitePlaces);
+  const baseScale = Math.sqrt(PLACES_PAR_TAILLE[taille] / CAPACITE_REFERENCE);
+  const shrinkFactor = Math.pow(CAPACITE_REFERENCE / capacitePlaces, 0.25);
+  return baseScale * shrinkFactor;
 }
