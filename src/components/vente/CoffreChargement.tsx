@@ -30,8 +30,9 @@ const DEV_COFFRE_SWITCH = true;
 const MASK_SIZE = 48;
 const TRUNK_MASK_SIZE = 256;
 const CLOSING_DURATION_MS = 900;
+const DEPART_DELAY_MS = 2000;
 const DEPART_DURATION_MS = 5000;
-const DEPART_TARGET = { x: 0.5, y: 0.5, scale: 0.05 } as const;
+const DEPART_TARGET = { x: 0.5, y: 0.5, scale: 0.03 } as const;
 
 interface Props {
   niveauCamion: NiveauCamion;
@@ -148,7 +149,8 @@ export function CoffreChargement(p: Props) {
     setClosing(true);
     void audioManager.playCoffreFerme();
 
-    // Après la fermeture du coffre, on enchaîne sur le départ de la voiture.
+    // Après la fermeture du coffre + un délai d'attente, on enchaîne sur le
+    // départ de la voiture.
     window.setTimeout(() => {
       const startX = camion.garageX;
       const startY = camion.garageY;
@@ -173,7 +175,7 @@ export function CoffreChargement(p: Props) {
         }
       };
       departRafRef.current = requestAnimationFrame(tick);
-    }, CLOSING_DURATION_MS);
+    }, CLOSING_DURATION_MS + DEPART_DELAY_MS);
   };
 
   useEffect(
