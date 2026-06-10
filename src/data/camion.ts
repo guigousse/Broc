@@ -25,7 +25,7 @@ export const CAMIONS: readonly CamionConfig[] = [
   {
     niveau: 1, nom: "Rogers", visuelId: "rogers",
     aspectRatio: 1408 / 1358,
-    garageX: 0.5, garageY: 0.705, garageScale: 0.910,
+    garageX: 0.5, garageY: 0.680, garageScale: 0.820,
     capacitePlaces: 9, prixUpgradeVersCeNiveau: null,
   },
   {

@@ -1,7 +1,7 @@
 import sharp from "sharp";
 
 const CAMIONS = [
-  { id: "rogers",     scale: 0.910, aspect: 1408 / 1358 },
+  { id: "rogers",     scale: 0.820, aspect: 1408 / 1358 },
   { id: "break",      scale: 0.975, aspect: 1718 / 1456 },
   { id: "utilitaire", scale: 0.990, aspect: 1269 / 1343 },
 ];
