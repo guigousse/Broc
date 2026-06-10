@@ -178,7 +178,6 @@ export function CoffreCanvas({
     setSelectedId(itemId);
   };
 
-  const bgImage = closing ? assets?.ferme : assets?.ouvert;
   // Position et taille du camion sur le fond garage (override dev prioritaire).
   const garageX = devOverride?.x ?? camion.garageX;
   const garageY = devOverride?.y ?? camion.garageY;
@@ -216,13 +215,39 @@ export function CoffreCanvas({
           aspectRatio: `${camion.aspectRatio}`,
           transform: "translate(-50%, -50%)",
           touchAction: "none",
-          background: bgImage
-            ? `center / contain no-repeat url("${bgImage}")`
-            : undefined,
           opacity: truckOpacity,
-          transition: "background-image 250ms ease-out",
         }}
       >
+        {/* Couche du coffre ouvert : visible par défaut, fondue à 0
+            quand on bascule en mode "closing". Les deux images sont
+            toujours rendues en parallèle pour permettre un crossfade
+            sans blanc transitoire. */}
+        {assets?.ouvert && (
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `center / contain no-repeat url("${assets.ouvert}")`,
+              opacity: closing ? 0 : 1,
+              transition: "opacity 300ms ease-out",
+              pointerEvents: "none",
+            }}
+          />
+        )}
+        {assets?.ferme && (
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `center / contain no-repeat url("${assets.ferme}")`,
+              opacity: closing ? 1 : 0,
+              transition: "opacity 300ms ease-out",
+              pointerEvents: "none",
+            }}
+          />
+        )}
         {/* Overlay du masque (semi-transparent) — délimite la zone de
             chargement pour le joueur, masqué pendant la fermeture. */}
         {assets && !closing && (
