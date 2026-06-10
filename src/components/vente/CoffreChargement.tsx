@@ -29,9 +29,14 @@ const DEV_COFFRE_SWITCH = true;
 
 const MASK_SIZE = 48;
 const TRUNK_MASK_SIZE = 256;
-const CLOSING_DURATION_MS = 900;
-const DEPART_DELAY_MS = 2000;
-const DEPART_DURATION_MS = 5000;
+// Séquence de validation : tout doit terminer à 5 000 ms.
+//  0 – 500 ms   : le coffre se ferme (son playCoffreFerme).
+//  500 ms       : le bruit du moteur démarre (playDepartVoiture).
+//  1 500 ms     : la voiture commence à avancer (tween).
+//  5 000 ms     : fin du tween + fondu son/opacité → onValider.
+const CLOSING_DURATION_MS = 500;
+const DEPART_DELAY_MS = 1000; // attente entre fin de fermeture et début du tween
+const DEPART_DURATION_MS = 3500;
 const DEPART_TARGET = { x: 0.5, y: 0.5, scale: 0.03 } as const;
 
 interface Props {
@@ -149,12 +154,12 @@ export function CoffreChargement(p: Props) {
     if (closing) return;
     setClosing(true);
     void audioManager.playCoffreFerme();
-    // L'audio de démarrage commence dès la fermeture du coffre et tourne
-    // pendant tout le cycle (fermeture + pause + tween), jusqu'à la fin de
-    // l'animation. Fondu audio sur les dernières secondes (cf. audioManager).
-    const totalDurationMs =
-      CLOSING_DURATION_MS + DEPART_DELAY_MS + DEPART_DURATION_MS;
-    void audioManager.playDepartVoiture(totalDurationMs);
+    // Le bruit du moteur démarre à la fin de la fermeture du coffre
+    // (CLOSING_DURATION_MS) et tourne jusqu'à la fin de l'animation.
+    window.setTimeout(() => {
+      const audioDurationMs = DEPART_DELAY_MS + DEPART_DURATION_MS;
+      void audioManager.playDepartVoiture(audioDurationMs);
+    }, CLOSING_DURATION_MS);
 
     // Après la fermeture du coffre + un délai d'attente, on enchaîne sur le
     // tween visuel de la voiture qui s'éloigne.
