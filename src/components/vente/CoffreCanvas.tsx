@@ -191,7 +191,7 @@ export function CoffreCanvas({
         marginLeft: "calc(50% - 50vw)",
         // Hauteur calée sur l'espace dispo (header + carrousel + barre action).
         height:
-          "calc(100dvh - 60px - 100px - 76px - var(--safe-top) - var(--safe-bottom))",
+          "calc(100dvh - var(--mobile-header-h) - 100px - var(--mobile-tabbar-h) - var(--safe-top) - var(--safe-bottom))",
         position: "relative",
         backgroundColor: "var(--paper-200)",
         backgroundImage: "url('/coffre/fond-garage.webp')",
@@ -223,6 +223,21 @@ export function CoffreCanvas({
           transition: "background-image 250ms ease-out",
         }}
       >
+        {/* Overlay du masque (semi-transparent) — délimite la zone de
+            chargement pour le joueur, masqué pendant la fermeture. */}
+        {assets && !closing && (
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `center / contain no-repeat url("${assets.mask}")`,
+              opacity: 0.6,
+              pointerEvents: "none",
+              zIndex: 1,
+            }}
+          />
+        )}
         {!closing &&
           objets.map((ov) => {
             const w = ref.current?.getBoundingClientRect().width ?? 280;

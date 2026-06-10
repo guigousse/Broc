@@ -19,13 +19,10 @@ import { getCoffreAssets } from "@/lib/coffreAssets";
 import { audioManager } from "@/lib/audio/audioManager";
 import { CoffreCanvas } from "./CoffreCanvas";
 import { CarrouselStock } from "./CarrouselStock";
-import { CamionDevTool } from "./CamionDevTool";
-import { CamionSwitcher } from "./CamionSwitcher";
+import { DevPanel } from "./DevPanel";
 
-// Dev only — affiche le panneau de réglage position/scale du camion sur le garage.
-const DEV_CAMION_TOOL = true;
-// Dev only — bouton flottant qui cycle les niveaux de camion.
-const DEV_COFFRE_SWITCH = true;
+// Dev only — affiche le panneau dev (switcher + sliders position/scale).
+const DEV_PANEL = true;
 
 const MASK_SIZE = 48;
 const TRUNK_MASK_SIZE = 256;
@@ -206,8 +203,18 @@ export function CoffreChargement(p: Props) {
 
   return (
     <>
-      {DEV_COFFRE_SWITCH && p.onSetNiveauDev && (
-        <CamionSwitcher niveau={p.niveauCamion} onSetNiveauDev={p.onSetNiveauDev} />
+      {DEV_PANEL && p.onSetNiveauDev && (
+        <DevPanel
+          niveau={p.niveauCamion}
+          visuelId={camion.visuelId}
+          x={currentOverride?.x ?? camion.garageX}
+          y={currentOverride?.y ?? camion.garageY}
+          scale={currentOverride?.scale ?? camion.garageScale}
+          onSetNiveauDev={p.onSetNiveauDev}
+          onChange={(next) =>
+            setDevOverrides((prev) => ({ ...prev, [camion.visuelId]: next }))
+          }
+        />
       )}
       <CoffreCanvas
         niveauCamion={p.niveauCamion}
@@ -220,33 +227,29 @@ export function CoffreChargement(p: Props) {
         onRotate={p.onRotate}
         onRetour={p.onRetirer}
       />
-      {DEV_CAMION_TOOL && !closing && (
-        <CamionDevTool
-          visuelId={camion.visuelId}
-          x={currentOverride?.x ?? camion.garageX}
-          y={currentOverride?.y ?? camion.garageY}
-          scale={currentOverride?.scale ?? camion.garageScale}
-          onChange={(next) =>
-            setDevOverrides((prev) => ({ ...prev, [camion.visuelId]: next }))
-          }
-        />
-      )}
       <CarrouselStock stock={p.stock} onPickUp={handlePickUp} />
-      {/* Spacer pour libérer la zone occupée par la barre fixed du bas. */}
-      <div style={{ height: "calc(72px + var(--safe-bottom))" }} aria-hidden />
+      {/* Spacer pour libérer la zone occupée par la barre fixed du bas
+          (même hauteur que la TabBar du QG). */}
+      <div
+        style={{ height: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))" }}
+        aria-hidden
+      />
       <div
         style={{
           position: "fixed",
           left: 0,
           right: 0,
           bottom: 0,
-          padding: "12px 14px calc(12px + var(--safe-bottom))",
+          height: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
+          paddingLeft: 12,
+          paddingRight: 12,
+          paddingBottom: "var(--safe-bottom)",
           background: "var(--forest-800)",
           // Liseré doré en intersection avec la partie supérieure (mirroir du header BROC).
           borderTop: "2px solid var(--brass-500)",
           boxShadow: "0 -1px 0 var(--brass-300), 0 -8px 16px rgba(0,0,0,0.2)",
           display: "flex",
-          flexDirection: "column",
+          alignItems: "center",
           gap: 8,
           zIndex: 50,
         }}
@@ -254,9 +257,13 @@ export function CoffreChargement(p: Props) {
         {overlaps.size > 0 && !closing && (
           <p
             style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: -22,
               fontFamily: "var(--font-serif)",
               fontStyle: "italic",
-              fontSize: 11.5,
+              fontSize: 11,
               color: "var(--vermillion-600)",
               textAlign: "center",
               margin: 0,
@@ -265,50 +272,48 @@ export function CoffreChargement(p: Props) {
             Réarrangez le coffre — certains objets ne tiennent pas.
           </p>
         )}
-        <div style={{ display: "flex", gap: 10 }}>
-          <button
-            type="button"
-            onClick={p.onAnnuler}
-            disabled={closing}
-            style={{
-              flex: 1,
-              padding: "11px 10px",
-              border: "1px solid var(--brass-500)",
-              background: "transparent",
-              color: "var(--brass-300)",
-              fontFamily: "var(--font-display)",
-              fontSize: 11.5,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              opacity: closing ? 0.4 : 1,
-              cursor: closing ? "not-allowed" : "pointer",
-            }}
-          >
-            Annuler
-          </button>
-          <button
-            type="button"
-            disabled={!peutValider || closing}
-            onClick={handleValider}
-            style={{
-              flex: 2,
-              padding: "11px 10px",
-              border: "1px solid var(--brass-500)",
-              background:
-                peutValider && !closing ? "var(--brass-500)" : "transparent",
-              color:
-                peutValider && !closing ? "var(--forest-800)" : "var(--ink-500)",
-              fontFamily: "var(--font-display)",
-              fontSize: 11.5,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              fontWeight: 700,
-              cursor: peutValider && !closing ? "pointer" : "not-allowed",
-            }}
-          >
-            {closing ? "Fermeture du coffre…" : "Valider le chargement"}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={p.onAnnuler}
+          disabled={closing}
+          style={{
+            flex: 1,
+            height: "calc(100% - 8px)",
+            border: "1px solid var(--brass-500)",
+            background: "transparent",
+            color: "var(--brass-300)",
+            fontFamily: "var(--font-display)",
+            fontSize: 11,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            opacity: closing ? 0.4 : 1,
+            cursor: closing ? "not-allowed" : "pointer",
+          }}
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          disabled={!peutValider || closing}
+          onClick={handleValider}
+          style={{
+            flex: 2,
+            height: "calc(100% - 8px)",
+            border: "1px solid var(--brass-500)",
+            background:
+              peutValider && !closing ? "var(--brass-500)" : "transparent",
+            color:
+              peutValider && !closing ? "var(--forest-800)" : "var(--ink-500)",
+            fontFamily: "var(--font-display)",
+            fontSize: 11,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            fontWeight: 700,
+            cursor: peutValider && !closing ? "pointer" : "not-allowed",
+          }}
+        >
+          {closing ? "Fermeture…" : "Valider le chargement"}
+        </button>
       </div>
     </>
   );
