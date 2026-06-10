@@ -113,6 +113,7 @@ export function CoffreChargement(p: Props) {
   const [departOverride, setDepartOverride] = useState<
     { x: number; y: number; scale: number } | null
   >(null);
+  const [truckOpacity, setTruckOpacity] = useState(1);
   const departRafRef = useRef<number | null>(null);
 
   const overlaps = useMemo(() => {
@@ -167,6 +168,9 @@ export function CoffreChargement(p: Props) {
           y: startY + (DEPART_TARGET.y - startY) * eased,
           scale: startScale + (DEPART_TARGET.scale - startScale) * eased,
         });
+        // Sur la dernière seconde, fondu d'opacité 1 → 0.
+        const fadeStart = (DEPART_DURATION_MS - 1000) / DEPART_DURATION_MS;
+        setTruckOpacity(t < fadeStart ? 1 : Math.max(0, (1 - t) / (1 - fadeStart)));
         if (t < 1) {
           departRafRef.current = requestAnimationFrame(tick);
         } else {
@@ -201,6 +205,7 @@ export function CoffreChargement(p: Props) {
         overlaps={overlaps}
         closing={closing}
         devOverride={departOverride ?? currentOverride}
+        truckOpacity={truckOpacity}
         onMove={p.onMove}
         onRotate={p.onRotate}
         onRetour={p.onRetirer}

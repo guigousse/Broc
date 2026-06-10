@@ -14,6 +14,8 @@ interface Props {
   closing: boolean;
   /** Overrides dev pour position/scale du camion (cf. CamionDevTool). */
   devOverride?: { x: number; y: number; scale: number } | null;
+  /** Opacité du camion (utilisée pour le fondu de sortie au départ). Défaut 1. */
+  truckOpacity?: number;
   onMove: (objetId: string, posX: number, posY: number) => void;
   onRotate: (objetId: string, angle: number) => void;
   onRetour: (objetId: string) => void;
@@ -34,6 +36,7 @@ export function CoffreCanvas({
   overlaps,
   closing,
   devOverride,
+  truckOpacity = 1,
   onMove,
   onRotate,
   onRetour,
@@ -216,6 +219,7 @@ export function CoffreCanvas({
           background: bgImage
             ? `center / contain no-repeat url("${bgImage}")`
             : undefined,
+          opacity: truckOpacity,
           transition: "background-image 250ms ease-out",
         }}
       >
