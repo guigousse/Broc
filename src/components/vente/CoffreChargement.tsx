@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { NiveauCamion, Objet, ObjetEnVitrine } from "@/types/game";
 import { getCamion, getScaleCoffre } from "@/data/camion";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
@@ -30,6 +30,8 @@ const DEV_COFFRE_SWITCH = true;
 const MASK_SIZE = 48;
 const TRUNK_MASK_SIZE = 256;
 const CLOSING_DURATION_MS = 900;
+const DEPART_DURATION_MS = 5000;
+const DEPART_TARGET = { x: 0.5, y: 0.5, scale: 0.05 } as const;
 
 interface Props {
   niveauCamion: NiveauCamion;
@@ -106,6 +108,12 @@ export function CoffreChargement(p: Props) {
   >({});
   const currentOverride = devOverrides[camion.visuelId] ?? null;
 
+  // Animation de départ (la voiture s'éloigne en perspective).
+  const [departOverride, setDepartOverride] = useState<
+    { x: number; y: number; scale: number } | null
+  >(null);
+  const departRafRef = useRef<number | null>(null);
+
   const overlaps = useMemo(() => {
     void maskTick;
     const items: PixelItem[] = [];
@@ -139,10 +147,44 @@ export function CoffreChargement(p: Props) {
     if (closing) return;
     setClosing(true);
     void audioManager.playCoffreFerme();
+
+    // Après la fermeture du coffre, on enchaîne sur le départ de la voiture.
     window.setTimeout(() => {
-      p.onValider();
+      const startX = camion.garageX;
+      const startY = camion.garageY;
+      const startScale = camion.garageScale;
+      const startedAt = performance.now();
+      void audioManager.playDepartVoiture(DEPART_DURATION_MS);
+
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - startedAt) / DEPART_DURATION_MS);
+        // Ease-in-out cubique pour un mouvement plus fluide.
+        const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        setDepartOverride({
+          x: startX + (DEPART_TARGET.x - startX) * eased,
+          y: startY + (DEPART_TARGET.y - startY) * eased,
+          scale: startScale + (DEPART_TARGET.scale - startScale) * eased,
+        });
+        if (t < 1) {
+          departRafRef.current = requestAnimationFrame(tick);
+        } else {
+          departRafRef.current = null;
+          p.onValider();
+        }
+      };
+      departRafRef.current = requestAnimationFrame(tick);
     }, CLOSING_DURATION_MS);
   };
+
+  useEffect(
+    () => () => {
+      if (departRafRef.current !== null) {
+        cancelAnimationFrame(departRafRef.current);
+        departRafRef.current = null;
+      }
+    },
+    [],
+  );
 
   const peutValider = p.coffre.length > 0 && overlaps.size === 0;
 
@@ -156,7 +198,7 @@ export function CoffreChargement(p: Props) {
         objets={p.coffre}
         overlaps={overlaps}
         closing={closing}
-        devOverride={currentOverride}
+        devOverride={departOverride ?? currentOverride}
         onMove={p.onMove}
         onRotate={p.onRotate}
         onRetour={p.onRetirer}

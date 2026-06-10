@@ -293,6 +293,32 @@ class AudioManager {
     src.start();
   }
 
+  /**
+   * Démarrage et départ de la voiture, avec fondu de sortie sur `durationMs`
+   * pour simuler l'éloignement.
+   */
+  async playDepartVoiture(durationMs: number): Promise<void> {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/depart-voiture.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 1;
+    src.connect(gain);
+    gain.connect(this.master);
+    const now = this.ctx.currentTime;
+    const end = now + durationMs / 1000;
+    // Fondu de sortie : reste à plein volume sur les 60 % initiaux puis décroît.
+    gain.gain.setValueAtTime(1, now);
+    gain.gain.setValueAtTime(1, now + (durationMs * 0.6) / 1000);
+    gain.gain.linearRampToValueAtTime(0, end);
+    src.start();
+    src.stop(end);
+  }
+
   async startCrowd(): Promise<void> {
     if (!this.prefs.foule) return;
     this.ensureCtx();
