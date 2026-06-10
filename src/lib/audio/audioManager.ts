@@ -294,8 +294,8 @@ class AudioManager {
   }
 
   /**
-   * Démarrage et départ de la voiture, avec fondu de sortie sur `durationMs`
-   * pour simuler l'éloignement.
+   * Démarrage et départ de la voiture. Lu jusqu'à `durationMs`, avec un
+   * fondu de sortie sur la dernière seconde pour simuler l'éloignement final.
    */
   async playDepartVoiture(durationMs: number): Promise<void> {
     if (!this.prefs.clic) return;
@@ -311,9 +311,9 @@ class AudioManager {
     gain.connect(this.master);
     const now = this.ctx.currentTime;
     const end = now + durationMs / 1000;
-    // Fondu de sortie : reste à plein volume sur les 60 % initiaux puis décroît.
+    const fadeStart = Math.max(now, end - 1);
     gain.gain.setValueAtTime(1, now);
-    gain.gain.setValueAtTime(1, now + (durationMs * 0.6) / 1000);
+    gain.gain.setValueAtTime(1, fadeStart);
     gain.gain.linearRampToValueAtTime(0, end);
     src.start();
     src.stop(end);

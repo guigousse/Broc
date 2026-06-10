@@ -149,15 +149,20 @@ export function CoffreChargement(p: Props) {
     if (closing) return;
     setClosing(true);
     void audioManager.playCoffreFerme();
+    // L'audio de démarrage commence dès la fermeture du coffre et tourne
+    // pendant tout le cycle (fermeture + pause + tween), jusqu'à la fin de
+    // l'animation. Fondu audio sur les dernières secondes (cf. audioManager).
+    const totalDurationMs =
+      CLOSING_DURATION_MS + DEPART_DELAY_MS + DEPART_DURATION_MS;
+    void audioManager.playDepartVoiture(totalDurationMs);
 
     // Après la fermeture du coffre + un délai d'attente, on enchaîne sur le
-    // départ de la voiture.
+    // tween visuel de la voiture qui s'éloigne.
     window.setTimeout(() => {
       const startX = camion.garageX;
       const startY = camion.garageY;
       const startScale = camion.garageScale;
       const startedAt = performance.now();
-      void audioManager.playDepartVoiture(DEPART_DURATION_MS);
 
       const tick = (now: number) => {
         const t = Math.min(1, (now - startedAt) / DEPART_DURATION_MS);
