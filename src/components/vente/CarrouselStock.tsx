@@ -43,7 +43,28 @@ export function CarrouselStock({ stock, onPickUp }: Props) {
         overflowY: "hidden",
         scrollbarWidth: "none",
         msOverflowStyle: "none",
-        background: "var(--paper-100)",
+        // Texture bois : lattes verticales avec veines, palette brass tirée
+        // sur le warm-tan pour rester dans le ton de l'app.
+        background: `
+          repeating-linear-gradient(
+            90deg,
+            #b89968 0px,
+            #b89968 38px,
+            #9a7c4d 39px,
+            #b89968 40px,
+            #b89968 76px,
+            #8a6d40 77px,
+            #b89968 78px
+          ),
+          repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.04) 0px,
+            rgba(0, 0, 0, 0.04) 1px,
+            transparent 1px,
+            transparent 4px
+          )
+        `,
+        boxShadow: "inset 0 1px 0 rgba(0, 0, 0, 0.15)",
       }}
     >
       {tri.map((o) => (

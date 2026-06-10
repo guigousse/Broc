@@ -201,6 +201,10 @@ export function CoffreCanvas({
         backgroundPosition: "center center",
         backgroundRepeat: "no-repeat",
         overflow: "hidden",
+        // Liseré doré à l'intersection avec le carrousel en dessous,
+        // miroir de celui de la barre d'action (idem header BROC).
+        borderBottom: "2px solid var(--brass-500)",
+        boxShadow: "0 1px 0 var(--brass-300)",
       }}
     >
       {/* Conteneur du camion — positionné en absolu, centré à (garageX, garageY). */}
