@@ -447,3 +447,72 @@ nav[aria-label="Navigation principale"] :focus-visible,
   content-visibility: auto;
   contain-intrinsic-size: auto 65px;
 }
+
+/* ============================================================
+   Slider "items par ligne" (Collection) — esprit potard Marshall :
+   rail sombre à 3 crans laiton, curseur laiton strié.
+   ============================================================ */
+.broc-colonnes-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 96px;
+  height: 24px;
+  background: transparent;
+  cursor: pointer;
+}
+.broc-colonnes-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background:
+    radial-gradient(circle 2.5px at 3px 50%, var(--brass-500) 99%, transparent),
+    radial-gradient(circle 2.5px at 50% 50%, var(--brass-500) 99%, transparent),
+    radial-gradient(circle 2.5px at calc(100% - 3px) 50%, var(--brass-500) 99%, transparent),
+    var(--ink-900);
+}
+.broc-colonnes-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
+  border-radius: 50%;
+  border: 2px solid var(--brass-900);
+  background:
+    repeating-conic-gradient(
+      rgba(79, 61, 20, 0.45) 0deg 7deg,
+      rgba(0, 0, 0, 0) 7deg 14deg
+    ),
+    radial-gradient(
+      circle at 32% 30%,
+      var(--brass-100) 0%,
+      var(--brass-500) 55%,
+      var(--brass-700) 100%
+    );
+  box-shadow:
+    inset 0 0 0 2px var(--brass-300),
+    0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.broc-colonnes-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ink-900);
+}
+.broc-colonnes-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--brass-900);
+  background:
+    repeating-conic-gradient(
+      rgba(79, 61, 20, 0.45) 0deg 7deg,
+      rgba(0, 0, 0, 0) 7deg 14deg
+    ),
+    radial-gradient(
+      circle at 32% 30%,
+      var(--brass-100) 0%,
+      var(--brass-500) 55%,
+      var(--brass-700) 100%
+    );
+  box-shadow:
+    inset 0 0 0 2px var(--brass-300),
+    0 1px 3px rgba(0, 0, 0, 0.5);
+}
