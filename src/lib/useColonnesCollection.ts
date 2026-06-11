@@ -8,7 +8,11 @@ import {
 
 export const CLE_COLONNES = "broc.collection.colonnes";
 
-export type Colonnes = 1 | 2 | 3;
+export type Colonnes = 1 | 2 | 3 | 4 | 5;
+
+function estColonnes(v: number): v is Colonnes {
+  return Number.isInteger(v) && v >= 1 && v <= 5;
+}
 
 /**
  * Préférence "items par ligne" de la page Collection. Démarre à 3 (rendu
@@ -20,7 +24,7 @@ export function useColonnesCollection(): [Colonnes, (v: Colonnes) => void] {
 
   useEffect(() => {
     const v = safeLocalStorageGet<number>(CLE_COLONNES, 3);
-    if (v === 1 || v === 2 || v === 3) setColonnes(v);
+    if (estColonnes(v)) setColonnes(v);
   }, []);
 
   const changer = (v: Colonnes) => {

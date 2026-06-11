@@ -197,4 +197,11 @@ describe("CollectionGrid", () => {
     expect(rangee.style.gridTemplateColumns).toBe("repeat(2, 1fr)");
     expect(screen.getAllByTestId("planche")).toHaveLength(2);
   });
+
+  it("étagères : colonnes=5 → repeat(5, 1fr), une seule planche pour 3 slots", () => {
+    render(<CollectionGrid slots={slots} colonnes={5} />);
+    const rangee = screen.getAllByRole("button")[0].parentElement as HTMLElement;
+    expect(rangee.style.gridTemplateColumns).toBe("repeat(5, 1fr)");
+    expect(screen.getAllByTestId("planche")).toHaveLength(1);
+  });
 });

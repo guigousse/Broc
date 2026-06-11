@@ -5,6 +5,7 @@ import { ItemImage } from "@/components/ui/ItemImage";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
+import type { Colonnes } from "@/lib/useColonnesCollection";
 import type { CollectionSlot } from "@/types/game";
 
 interface CollectionGridProps {
@@ -13,7 +14,7 @@ interface CollectionGridProps {
   /** TemplateIds présents dans l'inventaire du joueur (badge "+"). */
   enStockIds?: ReadonlySet<string>;
   /** Items par ligne (réglé par le slider de zoom). */
-  colonnes?: 1 | 2 | 3;
+  colonnes?: Colonnes;
 }
 
 const GRAY_BG = "var(--paper-200)";

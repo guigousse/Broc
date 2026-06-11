@@ -29,4 +29,22 @@ describe("useColonnesCollection", () => {
     expect(result.current[0]).toBe(2);
     expect(window.localStorage.getItem(CLE_COLONNES)).toBe("2");
   });
+
+  it("accepte 5 (nouvelle borne haute)", () => {
+    window.localStorage.setItem(CLE_COLONNES, "5");
+    const { result } = renderHook(() => useColonnesCollection());
+    expect(result.current[0]).toBe(5);
+  });
+
+  it("accepte 4", () => {
+    window.localStorage.setItem(CLE_COLONNES, "4");
+    const { result } = renderHook(() => useColonnesCollection());
+    expect(result.current[0]).toBe(4);
+  });
+
+  it("rejette un nombre hors plage (0, 6) → défaut 3", () => {
+    window.localStorage.setItem(CLE_COLONNES, "6");
+    const { result } = renderHook(() => useColonnesCollection());
+    expect(result.current[0]).toBe(3);
+  });
 });
