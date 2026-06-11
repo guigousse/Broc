@@ -89,9 +89,9 @@ interface CollectionCellProps {
 }
 
 /**
- * Cellule mémoïsée : ne re-rend que si son slot change (référence) ou si
+ * Cellule mémoïsée : ne re-rend que si son slot (référence), `enStock` ou
  * `onTap` change — la grille passe un wrapper stable (latest-ref), donc en
- * pratique seul le slot compte.
+ * pratique seuls le slot et le booléen enStock comptent.
  */
 const CollectionCell = memo(function CollectionCell({
   slot: s,
