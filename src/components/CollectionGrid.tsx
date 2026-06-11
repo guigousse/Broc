@@ -10,6 +10,8 @@ import type { CollectionSlot } from "@/types/game";
 interface CollectionGridProps {
   slots: CollectionSlot[];
   onTap?: (slot: CollectionSlot) => void;
+  /** TemplateIds présents dans l'inventaire du joueur (badge "+"). */
+  enStockIds?: ReadonlySet<string>;
 }
 
 const GRAY_BG = "var(--paper-200)";
@@ -83,6 +85,7 @@ const newBadge: CSSProperties = {
 interface CollectionCellProps {
   slot: CollectionSlot;
   onTap: (slot: CollectionSlot) => void;
+  enStock: boolean;
 }
 
 /**
@@ -93,11 +96,14 @@ interface CollectionCellProps {
 const CollectionCell = memo(function CollectionCell({
   slot: s,
   onTap,
+  enStock,
 }: CollectionCellProps) {
   const isDonne = s.donation !== null;
   const isVu = !isDonne && s.vu;
   const isSilhouette = !isDonne && !isVu;
-  const showNewBadge = s.vu && !isDonne && s.vuDansCollection === false;
+  const showStockBadge = enStock && !isDonne;
+  const showNewBadge =
+    !showStockBadge && s.vu && !isDonne && s.vuDansCollection === false;
   const colors = getRarityColors(s.rarete, !!s.unique);
   const filledStars = isDonne ? etoileCount(s.donation?.etat) : 0;
 
@@ -126,11 +132,6 @@ const CollectionCell = memo(function CollectionCell({
     overflow: "hidden",
     display: "grid",
     placeItems: "center",
-    // Pour les items vus (non donnés), grisaille + éclaircit + opacité réduite
-    // pour rendre l'image clairement estompée par rapport aux items collectés.
-    filter: isVu
-      ? "grayscale(1) brightness(1.35) contrast(0.7) opacity(0.55)"
-      : undefined,
   };
 
   return (
@@ -166,7 +167,15 @@ const CollectionCell = memo(function CollectionCell({
           ?
         </span>
       ) : (
-        <div style={centerLayer}>
+        <div
+          style={{
+            ...centerLayer,
+            // Grisaille sur l'image seule : les badges du bouton restent en couleur.
+            filter: isVu
+              ? "grayscale(1) brightness(1.35) contrast(0.7) opacity(0.55)"
+              : undefined,
+          }}
+        >
           <ItemImage
             templateId={s.templateId}
             categorie={s.categorie}
@@ -177,6 +186,13 @@ const CollectionCell = memo(function CollectionCell({
             padded
           />
         </div>
+      )}
+
+      {/* Badge "+" — exemplaire en stock, pas encore donné (prioritaire sur "*") */}
+      {showStockBadge && (
+        <span style={newBadge} aria-label="Exemplaire disponible en stock">
+          +
+        </span>
       )}
 
       {/* Badge "*" — nouveauté pas encore consultée */}
@@ -204,7 +220,7 @@ const CollectionCell = memo(function CollectionCell({
   );
 });
 
-export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
+export function CollectionGrid({ slots, onTap, enStockIds }: CollectionGridProps) {
   // Wrapper stable (pattern latest-ref) : même si le parent passe une arrow
   // function inline recréée à chaque render, les cellules mémoïsées gardent
   // une référence stable et ne re-rendent que quand leur slot change.
@@ -224,7 +240,12 @@ export function CollectionGrid({ slots, onTap }: CollectionGridProps) {
       }}
     >
       {slots.map((s) => (
-        <CollectionCell key={s.templateId} slot={s} onTap={stableOnTap} />
+        <CollectionCell
+          key={s.templateId}
+          slot={s}
+          onTap={stableOnTap}
+          enStock={enStockIds?.has(s.templateId) ?? false}
+        />
       ))}
     </div>
   );

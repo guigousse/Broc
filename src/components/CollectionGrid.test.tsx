@@ -129,4 +129,55 @@ describe("CollectionGrid", () => {
     const point = silhouette.querySelector("span");
     expect(point?.style.fontFamily).toBe("var(--font-broc-title)");
   });
+
+  const slotNouveau = makeSlot({
+    templateId: "n",
+    nom: "Objet N",
+    donation: null,
+    vu: true,
+    vuDansCollection: false,
+  });
+
+  it("badge * : affiché pour une nouveauté non consultée", () => {
+    render(<CollectionGrid slots={[slotNouveau]} />);
+    expect(screen.getByLabelText("Nouvellement découvert").textContent).toBe("*");
+  });
+
+  it("badge + : affiché si le templateId est en stock et le slot non donné", () => {
+    render(
+      <CollectionGrid
+        slots={[makeSlot({ templateId: "s", nom: "Objet S", donation: null })]}
+        enStockIds={new Set(["s"])}
+      />,
+    );
+    expect(
+      screen.getByLabelText("Exemplaire disponible en stock").textContent,
+    ).toBe("+");
+  });
+
+  it("badge + : absent si le slot est déjà donné", () => {
+    render(
+      <CollectionGrid
+        slots={[makeSlot({ templateId: "d", nom: "Objet D" })]}
+        enStockIds={new Set(["d"])}
+      />,
+    );
+    expect(screen.queryByLabelText("Exemplaire disponible en stock")).toBeNull();
+  });
+
+  it("priorité : + masque * quand les deux conditions sont vraies", () => {
+    render(
+      <CollectionGrid slots={[slotNouveau]} enStockIds={new Set(["n"])} />,
+    );
+    expect(screen.getByLabelText("Exemplaire disponible en stock")).toBeTruthy();
+    expect(screen.queryByLabelText("Nouvellement découvert")).toBeNull();
+  });
+
+  it("le filtre grisaille s'applique à la couche image, pas au bouton (badges en couleur)", () => {
+    render(<CollectionGrid slots={[slotNouveau]} />);
+    const bouton = screen.getByRole("button", { name: "Objet N" });
+    expect(bouton.style.filter).toBe("");
+    const coucheImage = screen.getByTestId("img-n").parentElement;
+    expect(coucheImage?.style.filter).toContain("grayscale");
+  });
 });
