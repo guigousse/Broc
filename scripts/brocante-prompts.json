@@ -1,0 +1,19 @@
+[
+  { "id": "vide-grenier-quartier", "description": "a humble neighborhood yard sale scene, a few foldable tables on a sunny suburban street, modest objects displayed (plates, books, toys), a few suggested human silhouettes in the distance, casual and familial atmosphere" },
+  { "id": "marche-aux-puces-dimanche", "description": "a busy Sunday flea market scene, rows of vendor stalls with mixed antiques and bric-a-brac, awnings stretched overhead, a crowd of silhouetted browsers, lively atmosphere" },
+  { "id": "bouquinerie-plein-air", "description": "an outdoor open-air book stall scene, wooden trestle tables lined with cardboard boxes overflowing with old books, hardbacks stacked vertically, a quiet studious atmosphere" },
+  { "id": "vide-dressing-centre", "description": "a vintage clothing pop-up sale scene, garment racks displaying vintage dresses and jackets, folded textiles on a table, a small mannequin in the background, urban setting" },
+  { "id": "brocante-club-jeux", "description": "a vintage board games and toys flea market stand, stacked retro game boxes, scattered cards and dice, plush toys and small action figures, playful atmosphere" },
+  { "id": "deballage-collectionneurs", "description": "a serious collectors' display table at a market, neatly arranged glass cases with small numbered objects (figurines, coins, badges), labeled tags visible, organized atmosphere" },
+  { "id": "marche-saint-ouen", "description": "the iconic Paris Saint-Ouen flea market street scene, narrow cobblestoned alleys lined with antique shops, painted wooden facades, ornate iron signs, late afternoon light" },
+  { "id": "disquaire-independant", "description": "an independent vintage record shop interior, wooden crates filled with vinyl LPs, vintage hi-fi gear on shelves, jazz posters on the walls, dim warm lighting" },
+  { "id": "atelier-bricoleur", "description": "an old tinkerer workshop scene, vintage hand tools hung on a pegboard wall, sawdust on the wooden floor, half-restored furniture pieces in the corner" },
+  { "id": "marche-antiquaires-bibelots", "description": "a refined antiques market stall scene, silver candelabras, porcelain figurines, ornate clocks arranged on a velvet-draped table, soft museum-style lighting" },
+  { "id": "foire-chatou", "description": "the famous Foire de Chatou riverside antique fair scene, white tents along the Seine riverbank with reflections on the water, leafy trees, refined French countryside ambiance" },
+  { "id": "salon-grands-collectionneurs", "description": "an upscale collectors' salon scene, large vaulted hall with display cases lit by chandeliers, gentlemen in dark suits viewing exhibits, formal museum atmosphere" },
+  { "id": "drouot-mode-couture", "description": "the Drouot auction hall haute couture vintage fashion display, mannequins wearing 1920s evening gowns, beaded dresses on hangers, soft spotlights, Art Déco interior" },
+  { "id": "salon-violon-ancien", "description": "an antique violin specialist salon scene, several violins hanging on cream walls, a single violin on a green velvet stand in the foreground, refined musical atmosphere" },
+  { "id": "galerie-arts-decoratifs", "description": "an Art Déco decorative arts gallery interior, geometric patterned floors, gilded screens, lacquered chinese cabinets, sleek 1925 Paris exposition aesthetic" },
+  { "id": "galerie-tableaux-sculptures", "description": "a fine art gallery interior with framed oil paintings on cream walls and bronze sculptures on white pedestals, polished hardwood floor, soft museum lighting" },
+  { "id": "salon-antiquaires-drouot", "description": "the grand Drouot Paris auction house main hall, ornate Art Déco interior with marble columns, chandeliers, rows of bidders facing an auctioneer's podium, very prestigious atmosphere" }
+]

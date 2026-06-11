@@ -8,6 +8,11 @@ interface MobileLayoutProps {
   children: ReactNode;
   /** Padding bottom additionnel (utile quand un FAB est affiché). */
   scrollPaddingBottom?: number;
+  /**
+   * Si vrai, le main n'a aucun padding (sauf la réserve pour la tab bar
+   * fixée en bas). Le contenu s'étend bord à bord et touche les bandeaux.
+   */
+  fillContent?: boolean;
 }
 
 const outerStyle: CSSProperties = {
@@ -22,6 +27,7 @@ export function MobileLayout({
   stickyTop,
   children,
   scrollPaddingBottom = 0,
+  fillContent = false,
 }: MobileLayoutProps) {
   return (
     <div style={outerStyle}>
@@ -30,7 +36,9 @@ export function MobileLayout({
       <main
         style={{
           flex: 1,
-          padding: `12px 12px calc(${scrollPaddingBottom}px + var(--mobile-tabbar-h) + var(--safe-bottom))`,
+          padding: fillContent
+            ? `0 0 calc(var(--mobile-tabbar-h) + var(--safe-bottom))`
+            : `12px 12px calc(${scrollPaddingBottom}px + var(--mobile-tabbar-h) + var(--safe-bottom))`,
         }}
       >
         {children}

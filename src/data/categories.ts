@@ -34,3 +34,26 @@ export function migrerCategorie(cat: string): CategorieObjet {
   if ((CATEGORIES as string[]).includes(cat)) return cat as CategorieObjet;
   return CATEGORIES_LEGACY_MAP[cat] ?? "Maison";
 }
+
+export const CATEGORIE_EMOJI: Record<CategorieObjet, string> = {
+  Musique: "🎵",
+  "Jeux & Loisirs": "🎲",
+  "Livres & Papeterie": "📚",
+  Mode: "👗",
+  Maison: "🏠",
+  "Objets d'art": "🎨",
+  Bricolage: "🔧",
+};
+
+/** Crée un dictionnaire de pièces vide (0 pour chaque catégorie). */
+export function emptyPiecesAmelioration(): Record<CategorieObjet, number> {
+  return {
+    Musique: 0,
+    "Jeux & Loisirs": 0,
+    "Livres & Papeterie": 0,
+    Mode: 0,
+    Maison: 0,
+    "Objets d'art": 0,
+    Bricolage: 0,
+  };
+}

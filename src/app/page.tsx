@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { BrassCorners } from "@/components/ui/BrassCorners";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -11,20 +12,21 @@ export default function TitleScreen() {
   const { nouvellePartie, state, isHydrated } = useGame();
   const { playClick } = useSettings();
   const [reglagesOuverts, setReglagesOuverts] = useState(false);
+  const [confirmNouvellePartie, setConfirmNouvellePartie] = useState(false);
   const aSauvegarde = isHydrated && state !== null;
 
   const onNouvellePartie = () => {
     playClick();
     if (aSauvegarde) {
-      if (!window.confirm("Cela écrasera la partie en cours. Continuer ?"))
-        return;
+      setConfirmNouvellePartie(true);
+      return;
     }
     nouvellePartie();
   };
 
   const onContinuer = () => {
     playClick();
-    if (aSauvegarde) window.location.href = "/qg";
+    if (aSauvegarde) window.location.href = "/bureau";
   };
 
   const onReglages = () => {
@@ -203,6 +205,17 @@ export default function TitleScreen() {
         open={reglagesOuverts}
         onClose={() => setReglagesOuverts(false)}
       />
+      <ConfirmModal
+        open={confirmNouvellePartie}
+        onClose={() => setConfirmNouvellePartie(false)}
+        onConfirm={nouvellePartie}
+        titre="Nouvelle partie"
+        confirmLabel="Recommencer"
+        danger
+      >
+        Votre partie en cours sera définitivement écrasée : budget, inventaire,
+        collection et progression seront perdus. Continuer ?
+      </ConfirmModal>
     </main>
   );
 }

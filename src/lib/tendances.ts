@@ -4,7 +4,7 @@ import { CATEGORIES } from "@/data/categories";
 export const PERIODE_TENDANCES_JOURS = 7;
 export const NB_TENDANCES = 5;
 /** Prix d'une édition de la Gazette (à racheter à chaque refresh). */
-export const PRIX_GAZETTE = 20;
+export const PRIX_GAZETTE = 10;
 const DELTA_MIN = -25;
 const DELTA_MAX = 25;
 

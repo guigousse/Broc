@@ -16,7 +16,15 @@ export const localGameRepository: GameRepository = {
   },
   async save(state) {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (err) {
+      // Quota localStorage dépassé ou stockage indisponible (navigation privée).
+      console.warn(
+        "[localGameRepository] Échec de la sauvegarde de la partie :",
+        err,
+      );
+    }
   },
   async clear() {
     if (typeof window === "undefined") return;

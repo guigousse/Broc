@@ -12,3 +12,6 @@ src-tauri/gen
 
 # Superpowers brainstorm/mockup workspace
 .superpowers/
+
+# Originaux des items avant suppression du fond — non déployés
+archives/

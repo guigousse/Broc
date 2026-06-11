@@ -31,16 +31,17 @@ const innerStyle: CSSProperties = {
 };
 
 const btnStyle: CSSProperties = {
-  width: 32,
-  height: 32,
+  width: 44,
+  height: 44,
   display: "grid",
   placeItems: "center",
   border: "1px solid var(--brass-500)",
   color: "var(--brass-300)",
   fontFamily: "var(--font-display)",
-  fontSize: 16,
+  fontSize: 18,
   background: "transparent",
   cursor: "pointer",
+  borderRadius: "var(--radius-btn)",
 };
 
 export function ContextualHeader({
@@ -82,7 +83,7 @@ export function ContextualHeader({
             <div
               style={{
                 fontFamily: "var(--font-mono)",
-                fontSize: 9,
+                fontSize: 11,
                 letterSpacing: "0.12em",
                 color: "var(--brass-700)",
                 marginTop: 1,
@@ -99,10 +100,10 @@ export function ContextualHeader({
           style={{
             textAlign: "right",
             fontFamily: "var(--font-mono)",
-            fontSize: 8,
+            fontSize: 10,
             letterSpacing: "0.16em",
             textTransform: "uppercase",
-            color: "var(--brass-700)",
+            color: "var(--brass-500)",
           }}
         >
           Caisse
@@ -110,8 +111,8 @@ export function ContextualHeader({
             style={{
               display: "block",
               fontFamily: "var(--font-display)",
-              fontSize: 12,
-              color: "var(--brass-300)",
+              fontSize: 14,
+              color: "var(--brass-100)",
             }}
           >
             {budget.toLocaleString("fr-FR")} €

@@ -13,9 +13,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const SIZE_STYLES: Record<Size, CSSProperties> = {
-  sm: { padding: "7px 14px", fontSize: 10 },
-  md: { padding: "12px 22px", fontSize: 12 },
-  lg: { padding: "16px 32px", fontSize: 14 },
+  sm: { padding: "9px 14px", fontSize: 11, minHeight: 36 },
+  md: { padding: "12px 22px", fontSize: 12, minHeight: 44 },
+  lg: { padding: "16px 32px", fontSize: 14, minHeight: 48 },
 };
 
 const VARIANT_STYLES: Record<Variant, CSSProperties> = {
@@ -79,7 +79,8 @@ export function Button({
         letterSpacing: "0.18em",
         fontWeight: 600,
         cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.55 : 1,
+        opacity: disabled ? 0.4 : 1,
+        filter: disabled ? "grayscale(0.65)" : undefined,
         transition: "all 200ms ease",
         ...SIZE_STYLES[size],
         ...base,

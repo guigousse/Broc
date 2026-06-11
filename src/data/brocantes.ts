@@ -1,19 +1,18 @@
 import type { Brocante, BrocanteTier } from "@/types/game";
 
 /**
- * Droit d'entrée payé à chaque session de chinage, par tier.
- * Évite de spam les brocantes en quête de tendances favorables ou de légendaires.
+ * Droit d'entrée payé à chaque session (chinage OU vente), par tier.
  */
-export const COUT_ENTREE_PAR_TIER: Record<BrocanteTier, number> = {
+export const FRAIS_ENTREE: Record<BrocanteTier, number> = {
   1: 5,
-  2: 20,
-  3: 60,
-  4: 150,
+  2: 10,
+  3: 25,
+  4: 50,
 };
 
-export function coutEntree(brocante: Brocante): number {
+export function fraisEntree(brocante: Brocante): number {
   if (brocante.id === "vide-grenier-quartier") return 0;
-  return COUT_ENTREE_PAR_TIER[brocante.tier];
+  return FRAIS_ENTREE[brocante.tier];
 }
 
 export const BROCANTES: Brocante[] = [
@@ -100,7 +99,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 250 },
+        { type: "valeurCollection", montant: 150 },
         { type: "brocantesDebloquees", tier: 1, nombre: 3 },
       ],
     },
@@ -118,8 +117,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 350 },
-        { type: "valeurCollectionCategorie", categorie: "Maison", montant: 100 },
+        { type: "valeurCollection", montant: 250 },
+        { type: "valeurCollectionCategorie", categorie: "Maison", montant: 80 },
       ],
     },
   },
@@ -137,8 +136,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 300 },
-        { type: "valeurCollectionCategorie", categorie: "Musique", montant: 100 },
+        { type: "valeurCollection", montant: 220 },
+        { type: "valeurCollectionCategorie", categorie: "Musique", montant: 80 },
       ],
     },
   },
@@ -156,8 +155,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 280 },
-        { type: "valeurCollectionCategorie", categorie: "Bricolage", montant: 80 },
+        { type: "valeurCollection", montant: 200 },
+        { type: "valeurCollectionCategorie", categorie: "Bricolage", montant: 60 },
       ],
     },
   },
@@ -175,8 +174,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 350 },
-        { type: "valeurCollectionCategorie", categorie: "Maison", montant: 130 },
+        { type: "valeurCollection", montant: 300 },
+        { type: "valeurCollectionCategorie", categorie: "Maison", montant: 100 },
       ],
     },
   },
@@ -206,8 +205,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 1000 },
-        { type: "brocantesDebloquees", tier: 2, nombre: 5 },
+        { type: "valeurCollection", montant: 800 },
+        { type: "brocantesDebloquees", tier: 2, nombre: 4 },
       ],
     },
   },

@@ -40,6 +40,12 @@ export interface ClientPersonnage {
   bonusPreference: number;
   malusEvitement: number;
   tierMin: 1 | 2 | 3;
+  // === Axes de négociation (mode vente) — calculés depuis durete & appetit ===
+  margePct: number;
+  elanPct: number;
+  patience: number;
+  tolerancePct: number;
+  sangFroid: number;
 }
 
 // ======================================================================
@@ -246,26 +252,51 @@ interface PersonnageSource {
   ambiance?: string;
 }
 
+/**
+ * Calcule les 5 axes de négociation depuis durete (0–1) et appetitMoyen (0–1).
+ * Mapping figé par le spec 2026-05-30-negociation-interactive-design.
+ */
+export function calculerAxesNego(durete: number, appetitMoyen: number): {
+  margePct: number;
+  elanPct: number;
+  patience: number;
+  tolerancePct: number;
+  sangFroid: number;
+} {
+  return {
+    margePct: 0.20 + (1 - durete) * 0.25,
+    elanPct: Math.max(0.05, 1 - durete * 0.7),
+    patience: 3 + Math.round((1 - durete) * 3),
+    tolerancePct: 0.20 + durete * 0.30,
+    sangFroid: Math.min(1, 0.5 + appetitMoyen * 0.3),
+  };
+}
+
 function makePersonnages(
   arch: ClientArchetype,
   sources: PersonnageSource[],
 ): ClientPersonnage[] {
-  return sources.map((src, i) => ({
-    id: `${arch.id}.${i}`,
-    archetypeId: arch.id,
-    archetypeNom: arch.nom,
-    nom: src.nom,
-    ambiance: src.ambiance ?? arch.ambianceDefault,
-    appetitMin: arch.appetitMin,
-    appetitMax: arch.appetitMax,
-    durete: arch.durete,
-    chanceMulti: arch.chanceMulti,
-    categoriesPreferees: arch.categoriesPreferees,
-    categoriesEvitees: arch.categoriesEvitees ?? [],
-    bonusPreference: arch.bonusPreference ?? 0.3,
-    malusEvitement: arch.malusEvitement ?? 0.2,
-    tierMin: arch.tierMin,
-  }));
+  return sources.map((src, i) => {
+    const appetitMoyen = (arch.appetitMin + arch.appetitMax) / 2;
+    const axes = calculerAxesNego(arch.durete, appetitMoyen);
+    return {
+      id: `${arch.id}.${i}`,
+      archetypeId: arch.id,
+      archetypeNom: arch.nom,
+      nom: src.nom,
+      ambiance: src.ambiance ?? arch.ambianceDefault,
+      appetitMin: arch.appetitMin,
+      appetitMax: arch.appetitMax,
+      durete: arch.durete,
+      chanceMulti: arch.chanceMulti,
+      categoriesPreferees: arch.categoriesPreferees,
+      categoriesEvitees: arch.categoriesEvitees ?? [],
+      bonusPreference: arch.bonusPreference ?? 0.3,
+      malusEvitement: arch.malusEvitement ?? 0.2,
+      tierMin: arch.tierMin,
+      ...axes,
+    };
+  });
 }
 
 export const ALL_PERSONNAGES: ClientPersonnage[] = [

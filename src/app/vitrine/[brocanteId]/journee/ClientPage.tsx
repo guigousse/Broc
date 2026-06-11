@@ -6,9 +6,8 @@ import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
 import { Button } from "@/components/ui/Button";
 import { DecoDivider } from "@/components/ui/DecoDivider";
-import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { EtatBadge } from "@/components/ui/EtatBadge";
-import { RareteBadge } from "@/components/ui/RareteBadge";
+import { ItemCard } from "@/components/ui/ItemCard";
 import { SessionSummary } from "@/components/SessionSummary";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -16,14 +15,18 @@ import {
   JOURNEE_DUREE_SECONDES,
   classeBourse,
   genererClientEvent,
+  personaDepuisClient,
   prochainIntervalleClient,
-  reagirContreOffre,
+  proposerOffreVente,
   type ClientEvent,
   type VitrineModifiers,
 } from "@/lib/vitrine";
+import { ouvrirNegociation } from "@/lib/negociation";
+import { NegociationSheet } from "@/components/mobile/NegociationSheet";
+import { NegoItemRow } from "@/components/mobile/NegoItemRow";
+import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
-import { getBrocanteById } from "@/data/brocantes";
-import { coutStand, niveauRequis } from "@/data/standLevels";
+import { getBrocanteById, fraisEntree } from "@/data/brocantes";
 import {
   TREE_GENERAL,
   XP_NEGOCIATION_REUSSIE_GENERAL,
@@ -50,8 +53,8 @@ import { buildCelebritePersonnage } from "@/lib/celebrite";
 import type {
   CategorieObjet,
   EtatObjet,
+  NiveauCamion,
   Rarete,
-  StandLevel,
   VenteHistorique,
 } from "@/types/game";
 
@@ -126,6 +129,8 @@ export default function VitrineJourneePage() {
   const [clientActuel, setClientActuel] = useState<ClientEvent | null>(null);
   const [journal, setJournal] = useState<EntreeJournal[]>([]);
   const [contreOffre, setContreOffre] = useState<number>(0);
+  const [negoVente, setNegoVente] = useState<NegociationState | null>(null);
+  const [revelationDejaFaite, setRevelationDejaFaite] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [journeeFinie, setJourneeFinie] = useState(false);
   const [ventesEffectuees, setVentesEffectuees] = useState<VenteHistorique[]>([]);
@@ -143,6 +148,10 @@ export default function VitrineJourneePage() {
   };
   const fancyClientApparuRef = useRef(false);
   fancyClientApparuRef.current = fancyClientApparu;
+  /** Diplomate : la révélation du prix max est limitée à UNE par journée de
+      vente — ce ref passe à true à la première révélation et n'est jamais
+      réinitialisé entre les clients. */
+  const diplomatieUtiliseeAujourdhuiRef = useRef(false);
   const celebriteApparueRef = useRef(false);
   // Détecte si la célébrité de la semaine vise cette brocante aujourd'hui.
   const celebriteIciAujourdhui =
@@ -164,19 +173,16 @@ export default function VitrineJourneePage() {
     poolRef.current = genererPoolClients(20, brocante.tier);
   }
 
-  // Snapshot du stand au montage (avant que la vitrine soit modifiée par les ventes)
-  const standSnapshot = useRef<{ niveau: StandLevel; loyer: number; tailleInitiale: number } | null>(null);
+  // Snapshot du camion au montage (avant que la vitrine soit modifiée par les ventes)
+  const standSnapshot = useRef<{ niveau: NiveauCamion; loyer: number; tailleInitiale: number } | null>(null);
   useEffect(() => {
     if (standSnapshot.current !== null) return;
     if (!state || !state.vitrine || state.vitrine.objets.length === 0 || !brocante) return;
-    const conf = niveauRequis(state.vitrine.objets.length);
-    if (conf) {
-      standSnapshot.current = {
-        niveau: conf.niveau,
-        loyer: coutStand(brocante.tier, conf.niveau),
-        tailleInitiale: state.vitrine.objets.length,
-      };
-    }
+    standSnapshot.current = {
+      niveau: state.niveauCamion,
+      loyer: fraisEntree(brocante),
+      tailleInitiale: state.vitrine.objets.length,
+    };
   }, [state, brocante]);
 
   // Refs pour éviter les closures stale dans l'intervalle
@@ -246,7 +252,7 @@ export default function VitrineJourneePage() {
         type: "vente",
         jour: state?.jourActuel ?? 0,
         timestamp: Date.now(),
-        niveauStand: standSnapshot.current.niveau,
+        niveauCamion: standSnapshot.current.niveau,
         loyer: standSnapshot.current.loyer,
         ventes: ventesEffectuees,
         invendus: tailleInvendus,
@@ -316,6 +322,12 @@ export default function VitrineJourneePage() {
             setClientActuel(ev);
             setRevelationFaite(false);
             setContreOffre(Math.round((ev.prixDemande + ev.offreInitiale) / 2));
+            if (ev.mode === "negociation") {
+              setNegoVente(ouvrirNegociation("vente", ev.offreInitiale, ev.prixMax));
+              setRevelationDejaFaite(false);
+            } else {
+              setNegoVente(null);
+            }
           }
           return prochainIntervalleClient(mods?.intervalleMultiplier ?? 1);
         }
@@ -424,42 +436,66 @@ export default function VitrineJourneePage() {
     setFeedback(null);
   };
 
-  const handleContreOffre = (ev: ClientEvent) => {
-    const res = reagirContreOffre(
-      contreOffre,
-      ev,
-      modifiersRef.current ?? undefined,
-      { revelationDejaFaite: revelationFaite },
+  const encaisserVente = (ev: ClientEvent, prixFinal: number) => {
+    vendreDeVitrine(
+      ev.panier.map((p) => p.objet.id),
+      prixFinal,
     );
-    if (res.revelation) {
+    enregistrerVentes(ev, prixFinal);
+    gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
+    ajouterJournal({
+      heure: heureCourante(),
+      texte: `${ev.persona.nom} accepte ${describePanier(ev)} à ${prixFinal} €.`,
+      ton: "vente",
+    });
+    setClientActuel(null);
+    setNegoVente(null);
+    setFeedback(null);
+  };
+
+  const terminerVisiteClient = (ev: ClientEvent) => {
+    ajouterJournal({
+      heure: heureCourante(),
+      texte: `${ev.persona.nom} s'éloigne sans rien acheter.`,
+      ton: "info",
+    });
+    setClientActuel(null);
+    setNegoVente(null);
+    setFeedback(null);
+  };
+
+  const handleProposerVente = (ev: ClientEvent, offre: number) => {
+    if (!negoVente) return;
+    const next = proposerOffreVente(
+      negoVente,
+      ev.persona,
+      offre,
+      modifiersRef.current ?? undefined,
+      {
+        // Une seule révélation Diplomate par journée : une fois consommée,
+        // les clients suivants sont traités comme si elle avait déjà eu lieu.
+        revelationDejaFaite:
+          revelationDejaFaite || diplomatieUtiliseeAujourdhuiRef.current,
+      },
+    );
+    setNegoVente(next);
+
+    // Détection de la révélation Diplomate (en_cours après ce qui aurait été fache).
+    if (
+      next.statut === "en_cours" &&
+      next.humeur >= 0.95 &&
+      !revelationDejaFaite &&
+      !diplomatieUtiliseeAujourdhuiRef.current
+    ) {
+      setRevelationDejaFaite(true);
+      diplomatieUtiliseeAujourdhuiRef.current = true;
       setRevelationFaite(true);
-      setFeedback(res.message);
-      return;
     }
-    if (res.accepte) {
-      vendreDeVitrine(
-        ev.panier.map((p) => p.objet.id),
-        res.prixFinal,
-      );
-      enregistrerVentes(ev, res.prixFinal);
-      gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
-      ajouterJournal({
-        heure: heureCourante(),
-        texte: `${ev.persona.nom} accepte ${describePanier(ev)} à ${res.prixFinal} €.`,
-        ton: "vente",
-      });
-      setClientActuel(null);
-      setFeedback(null);
-    } else if (res.fache) {
-      ajouterJournal({
-        heure: heureCourante(),
-        texte: res.message,
-        ton: "echec",
-      });
-      setClientActuel(null);
-      setFeedback(null);
-    } else {
-      setFeedback(res.message);
+
+    if (next.statut === "conclu") {
+      encaisserVente(ev, offre);
+    } else if (next.statut === "fache" || next.statut === "refus_poli") {
+      terminerVisiteClient(ev);
     }
   };
 
@@ -473,7 +509,7 @@ export default function VitrineJourneePage() {
   };
 
   const handleRetourQg = () => {
-    router.push("/qg");
+    router.push("/bureau");
   };
 
   const progress = (1 - tempsRestant / JOURNEE_DUREE_SECONDES) * 100;
@@ -576,13 +612,14 @@ export default function VitrineJourneePage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-              gap: 10,
+              gridTemplateColumns: "repeat(auto-fill, minmax(var(--card-w), 1fr))",
+              gap: "var(--gutter)",
             }}
           >
             {(state.vitrine?.objets ?? []).map((e) => (
               <ArticleSurEtal
                 key={e.objet.id}
+                templateId={e.objet.templateId}
                 nom={e.objet.nom}
                 categorie={e.objet.categorie}
                 etat={e.objet.etat}
@@ -691,21 +728,77 @@ export default function VitrineJourneePage() {
       />
 
       {clientActuel && !journeeFinie && (
-        <ClientModal
-          ev={clientActuel}
-          contreOffre={contreOffre}
-          feedback={feedback}
-          revelePersona={modifiersRef.current?.revelePersona ?? false}
-          releveBourse={modifiersRef.current?.releveBourse ?? false}
-          oeilAiguise={
-            (modifiersRef.current?.oeilAiguise ?? false) || revelationFaite
+        <NegociationSheet
+          open={true}
+          onClose={() => terminerVisiteClient(clientActuel)}
+          mode="vente"
+          persona={personaDepuisClient(clientActuel.persona)}
+          echelleMax={clientActuel.prixDemande}
+          cibleSecrete={clientActuel.prixMax}
+          prixDepartAdverse={
+            clientActuel.mode === "negociation" && negoVente
+              ? negoVente.prixAdverseCourant
+              : clientActuel.prixDemande
           }
-          revelationFaite={revelationFaite}
-          onContreOffreChange={setContreOffre}
-          onAccepterDirect={() => handleAccepterAchatDirect(clientActuel)}
-          onAccepterOffre={() => handleAccepterOffreClient(clientActuel)}
-          onContreOffrir={() => handleContreOffre(clientActuel)}
-          onRefuser={() => handleRefuser(clientActuel)}
+          nego={clientActuel.mode === "negociation" ? negoVente : null}
+          nomAffiche={
+            modifiersRef.current?.revelePersona ||
+            clientActuel.persona.archetypeId === "celebrite"
+              ? clientActuel.persona.nom
+              : "Un inconnu"
+          }
+          personaInfo={{
+            nom: clientActuel.persona.nom,
+            archetypeNom: clientActuel.persona.archetypeNom,
+            ambiance: clientActuel.persona.ambiance,
+            bourse: classeBourse(clientActuel.persona),
+            prixMax: clientActuel.prixMax,
+            revelePersona:
+              (modifiersRef.current?.revelePersona ?? false) ||
+              clientActuel.persona.archetypeId === "celebrite",
+            releveBourse: modifiersRef.current?.releveBourse ?? false,
+            oeilAiguise:
+              (modifiersRef.current?.oeilAiguise ?? false) || revelationFaite,
+          }}
+          header={
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
+              {clientActuel.panier.map((p) => (
+                <div
+                  key={p.objet.id}
+                  style={{
+                    padding: "8px 10px",
+                    background: "var(--paper-100)",
+                    border: "1px solid var(--brass-700)",
+                  }}
+                >
+                  <NegoItemRow
+                    objet={p.objet}
+                    prix={p.prixVente}
+                    prixLabel="Prix demandé"
+                  />
+                </div>
+              ))}
+            </div>
+          }
+          onUpdateNego={setNegoVente}
+          onConclu={(prixFinal) => {
+            encaisserVente(clientActuel, prixFinal);
+          }}
+          venteDirecte={
+            clientActuel.mode === "achat-direct"
+              ? {
+                  prixDirect: clientActuel.prixDemande,
+                  onAccepter: () => handleAccepterAchatDirect(clientActuel),
+                  onRefuser: () => terminerVisiteClient(clientActuel),
+                }
+              : undefined
+          }
         />
       )}
     </div>
@@ -766,12 +859,14 @@ function Horloge({
 }
 
 function ArticleSurEtal({
+  templateId,
   nom,
   categorie,
   etat,
   rarete,
   prix,
 }: {
+  templateId: string;
   nom: string;
   categorie: CategorieObjet;
   etat: EtatObjet;
@@ -779,96 +874,30 @@ function ArticleSurEtal({
   prix: number;
 }) {
   return (
-    <article
-      style={{
-        background: "var(--paper-300)",
-        border: "1px solid var(--brass-500)",
-        padding: 6,
-        boxShadow: "0 2px 0 var(--paper-400)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 5,
-      }}
-    >
-      {/* Image block with gradient + icon + category label + badges overlay */}
-      <div
-        style={{
-          position: "relative",
-          aspectRatio: "4/3",
-          background: "linear-gradient(135deg, var(--paper-500), var(--brass-700))",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 3,
-          color: "var(--brass-100)",
-        }}
-      >
-        <CategorieIcon categorie={categorie} size={24} strokeWidth={1.5} color="var(--brass-100)" />
-        <span
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 8,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-          }}
-        >
-          {categorie}
-        </span>
-        {/* Badges overlay */}
+    <ItemCard
+      templateId={templateId}
+      categorie={categorie}
+      etat={etat}
+      rarete={rarete}
+      nom={nom}
+      footer={
         <div
           style={{
-            position: "absolute",
-            bottom: 3,
-            left: 3,
-            right: 3,
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 4,
+            paddingTop: 4,
+            borderTop: "1px dotted var(--paper-500)",
+            fontFamily: "var(--font-display)",
+            fontWeight: 700,
+            fontSize: 18,
+            color: "var(--forest-800)",
+            textAlign: "right",
+            padding: "4px 4px 0",
           }}
         >
-          <EtatBadge etat={etat} />
-          <RareteBadge rarete={rarete} />
+          {prix}
+          <span style={{ fontSize: 11, color: "var(--brass-700)" }}>€</span>
         </div>
-      </div>
-      {/* Object name */}
-      <div
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          color: "var(--forest-800)",
-          lineHeight: 1.15,
-          minHeight: "2.3em",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-          textAlign: "center",
-          padding: "0 2px",
-        }}
-      >
-        {nom}
-      </div>
-      {/* Price */}
-      <div
-        style={{
-          paddingTop: 4,
-          borderTop: "1px dotted var(--paper-500)",
-          fontFamily: "var(--font-display)",
-          fontWeight: 700,
-          fontSize: 18,
-          color: "var(--forest-800)",
-          textAlign: "right",
-          padding: "4px 4px 0",
-        }}
-      >
-        {prix}
-        <span style={{ fontSize: 11, color: "var(--brass-700)" }}>€</span>
-      </div>
-    </article>
+      }
+    />
   );
 }
 
@@ -1033,7 +1062,7 @@ function ClientModal({
             }}
             title={
               revelationFaite
-                ? "Diplomate — le client a révélé son plafond"
+                ? "Diplomate — le client a révélé son plafond (1 fois par journée)"
                 : "Compétence Œil aiguisé"
             }
           >

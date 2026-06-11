@@ -1,8 +1,21 @@
 "use client";
 
-import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
-import { BookOpen, Wrench } from "lucide-react";
+import {
+  memo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+} from "react";
+import { Album, Anvil, ArrowRight } from "lucide-react";
+import { ItemImage } from "@/components/ui/ItemImage";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { StarRow } from "@/components/ui/StarRow";
+import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
+import { getTemplate } from "@/data/objetTemplates";
+import { getItemImageUrl } from "@/lib/itemImages";
+import { flyToTab } from "@/lib/flyAnimation";
 import type { Objet } from "@/types/game";
 
 interface StockageItemRowProps {
@@ -46,14 +59,14 @@ const actionBtn = (
   cursor: enabled ? "pointer" : "not-allowed",
   opacity: enabled ? 1 : 0.55,
   fontFamily: "var(--font-mono)",
-  fontSize: 8,
+  fontSize: 10,
   letterSpacing: "0.12em",
   textTransform: "uppercase",
 });
 
 const item: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "44px 1fr auto",
+  gridTemplateColumns: "48px 1fr auto",
   gap: 10,
   alignItems: "center",
   padding: "8px 12px",
@@ -61,17 +74,32 @@ const item: CSSProperties = {
   touchAction: "pan-y",
 };
 
-const thumb: CSSProperties = {
-  width: 44,
-  height: 44,
-  background:
-    "linear-gradient(135deg, var(--paper-500) 0%, var(--brass-700) 100%)",
-  border: "1px solid var(--brass-700)",
+const thumbBase: CSSProperties = {
+  width: 48,
+  height: 48,
   display: "grid",
   placeItems: "center",
 };
 
-export function StockageItemRow({
+const iconWithPlus: CSSProperties = {
+  position: "relative",
+  display: "inline-grid",
+  placeItems: "center",
+  width: 28,
+  height: 28,
+};
+
+const arrowBadge: CSSProperties = {
+  position: "absolute",
+  right: -8,
+  bottom: -4,
+  display: "grid",
+  placeItems: "center",
+  color: "inherit",
+  filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.4))",
+};
+
+function StockageItemRowBase({
   objet,
   valeurConnue,
   atelier,
@@ -120,9 +148,15 @@ export function StockageItemRow({
       return;
     }
     const finalDelta = dragX;
+    const wasVerticalScroll = axisLockedRef.current === "v";
     setDragging(false);
     setDragX(0);
     startRef.current = null;
+    // Si l'utilisateur a scrollé verticalement, ne pas déclencher le tap
+    if (wasVerticalScroll) {
+      axisLockedRef.current = null;
+      return;
+    }
     if (!movedRef.current || axisLockedRef.current !== "h") {
       if (Math.abs(finalDelta) < TAP_THRESHOLD) {
         onTap(objet);
@@ -134,20 +168,45 @@ export function StockageItemRow({
     else setSnapped("closed");
   };
 
+  const isUnique = !!getTemplate(objet.templateId)?.unique;
+  const rarityColors = getRarityColors(objet.rarete, isUnique);
+  const thumbStyle: CSSProperties = {
+    ...thumbBase,
+    background: rarityColors.thumbBg,
+    border: `1px solid ${rarityColors.outer}`,
+  };
+  const thumbRef = useRef<HTMLDivElement>(null);
+
+  const animateToTab = (tabPath: string) => {
+    const el = thumbRef.current;
+    if (!el) return;
+    flyToTab({
+      fromRect: el.getBoundingClientRect(),
+      imageUrl: getItemImageUrl(objet.templateId),
+      fallbackBg: rarityColors.thumbBg,
+      borderColor: rarityColors.outer,
+      targetSelector: `[data-fly-target="${tabPath}"]`,
+    });
+  };
+
   const handleAtelier = () => {
     if (!atelier.disponible) return;
+    animateToTab("/atelier");
     onEnvoyerAtelier(objet);
     setSnapped("closed");
   };
 
   const handleCollection = () => {
     if (!collection.disponible) return;
+    animateToTab("/collection");
     onEnvoyerCollection(objet);
     setSnapped("closed");
   };
 
   return (
     <div
+      data-pager-swipe-ignore="1"
+      className="broc-list-row"
       style={{
         ...wrap,
         borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",
@@ -161,7 +220,12 @@ export function StockageItemRow({
           disabled={!atelier.disponible}
           aria-label="Envoyer à l'atelier"
         >
-          <Wrench size={20} strokeWidth={1.5} />
+          <span style={iconWithPlus}>
+            <Anvil size={22} strokeWidth={1.5} />
+            <span style={arrowBadge}>
+              <ArrowRight size={12} strokeWidth={2.4} />
+            </span>
+          </span>
         </button>
         <button
           type="button"
@@ -170,7 +234,12 @@ export function StockageItemRow({
           disabled={!collection.disponible}
           aria-label="Envoyer dans la collection"
         >
-          <BookOpen size={20} strokeWidth={1.5} />
+          <span style={iconWithPlus}>
+            <Album size={22} strokeWidth={1.5} />
+            <span style={arrowBadge}>
+              <ArrowRight size={12} strokeWidth={2.4} />
+            </span>
+          </span>
         </button>
       </div>
       <div
@@ -184,12 +253,15 @@ export function StockageItemRow({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <div style={thumb}>
-          <CategorieIcon
+        <div ref={thumbRef} style={thumbStyle}>
+          <ItemImage
+            templateId={objet.templateId}
             categorie={objet.categorie}
-            size={20}
-            strokeWidth={1.5}
-            color="var(--brass-100)"
+            fit="contain"
+            fallbackIconSize={20}
+            fallbackIconColor={rarityColors.thumbIcon}
+            alt={objet.nom}
+            padded
           />
         </div>
         <div>
@@ -207,13 +279,30 @@ export function StockageItemRow({
           </div>
           <div
             style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 9.5,
-              color: "var(--ink-500)",
-              marginTop: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 4,
             }}
+            aria-label={`État ${objet.etat}, catégorie ${objet.categorie}`}
           >
-            {objet.etat} · {objet.rarete} · {objet.categorie}
+            <StarRow
+              filled={etoileCount(objet.etat)}
+              color={rarityColors.outer}
+              display="flex"
+              aria-label={`État : ${objet.etat}`}
+            />
+            <span
+              style={{ display: "inline-flex", alignItems: "center" }}
+              aria-label={`Catégorie : ${objet.categorie}`}
+            >
+              <CategorieIcon
+                categorie={objet.categorie}
+                size={14}
+                strokeWidth={1.5}
+                color="var(--brass-700)"
+              />
+            </span>
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
@@ -229,15 +318,38 @@ export function StockageItemRow({
           <div
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: 9,
+              fontSize: 10,
               color: "var(--brass-700)",
               letterSpacing: "0.06em",
             }}
           >
-            ref.
+            valeur
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+/**
+ * Mémoïsé avec un comparateur custom : `atelier` et `collection` sont des
+ * objets recréés à chaque render du parent (résultats de `atelierStatus(o)` /
+ * `collectionStatus(o)`) — on les compare donc par valeur. Les callbacks sont
+ * comparés par référence : pour que le memo soit effectif, le parent doit les
+ * stabiliser (useCallback), cf. stockage/gerer/page.tsx.
+ */
+export const StockageItemRow = memo(
+  StockageItemRowBase,
+  (prev, next) =>
+    prev.objet === next.objet &&
+    prev.valeurConnue === next.valeurConnue &&
+    prev.isLast === next.isLast &&
+    prev.onTap === next.onTap &&
+    prev.onEnvoyerAtelier === next.onEnvoyerAtelier &&
+    prev.onEnvoyerCollection === next.onEnvoyerCollection &&
+    prev.atelier.disponible === next.atelier.disponible &&
+    prev.atelier.raison === next.atelier.raison &&
+    prev.collection.disponible === next.collection.disponible &&
+    prev.collection.necessiteConfirmation ===
+      next.collection.necessiteConfirmation,
+);

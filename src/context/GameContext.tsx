@@ -15,43 +15,33 @@ import {
   INITIAL_BUDGET,
   INITIAL_JOUR,
   type CategorieObjet,
-  type CollectionSlot,
   type CompetenceId,
   type CompetenceTreeId,
   type EtatObjet,
   type GameState,
-  type HuissierEvent,
+  type NiveauCamion,
   type Objet,
   type ObjetEnVitrine,
-  type SaisieHuissier,
   type Session,
-  type VitrineActive,
 } from "@/types/game";
+import { getCamion } from "@/data/camion";
 import { createStarterInventory } from "@/data/starterInventory";
-import { localGameRepository } from "@/lib/storage/localGameRepository";
+import { createGameRepository } from "@/lib/storage/createGameRepository";
+import { migrerSauvegarde } from "@/lib/migrations";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
 import {
-  COMPETENCES,
   catTreeId,
   emptyAllTrees,
   emptyTreeState,
   getCompetence,
 } from "@/data/competences";
-import { CATEGORIES, migrerCategorie } from "@/data/categories";
+import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
 import { recalculerPrixReference } from "@/lib/etat";
-
-const ETATS_VALIDES = new Set<EtatObjet>([
-  "Mauvais",
-  "Bon",
-  "Très bon",
-  "Pristin état",
-]);
-function migrerEtat(etat: string): EtatObjet {
-  if (ETATS_VALIDES.has(etat as EtatObjet)) return etat as EtatObjet;
-  // Ancienne valeur "Comme neuf" → "Très bon".
-  if (etat === "Comme neuf") return "Très bon";
-  return "Bon";
-}
+import {
+  ID_LETTRE_MAMAN_DEBUT,
+  creerLettreMamanDebut,
+} from "@/lib/courrier";
+import { prochainLundi } from "@/lib/calendrier";
 import { appliquerGainXP } from "@/lib/xp";
 import { aGenInfluence, peutRestaurerCategorie } from "@/lib/competences";
 import { tirerMeteo, tirerMeteoSemaine, indexJourSemaine } from "@/lib/meteo";
@@ -66,26 +56,48 @@ import {
   initCollection,
   marquerDejaPossede as marquerDejaPossedeFn,
   marquerVu as marquerVuFn,
+  marquerVuDansCollection as marquerVuDansCollectionFn,
   donnerObjet as donnerObjetFn,
   retirerDonation as retirerDonationFn,
 } from "@/lib/collection";
 import { getTemplate } from "@/data/objetTemplates";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
+import { coutAmelioration, rendementDemantelement } from "@/lib/atelier";
 import { audioManager } from "@/lib/audio/audioManager";
 
-interface GameContextValue {
+const gameRepository = createGameRepository();
+
+interface GameStateValue {
   state: GameState | null;
   isHydrated: boolean;
+}
+
+interface GameActionsValue {
   nouvellePartie: () => void;
   ajouterObjet: (objet: Objet) => void;
   retirerObjet: (id: string) => void;
   ajusterBudget: (delta: number) => void;
-  avancerJour: (nbJours?: number) => void;
+  avancerJour: (nbJours?: number, volontaire?: boolean) => void;
   reset: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
-  mettreEnVitrine: (objetId: string, prixVente: number) => void;
+  mettreEnVitrine: (
+    objetId: string,
+    prixVente: number,
+    posX?: number,
+    posY?: number,
+    rotation?: number,
+  ) => void;
   retirerDeVitrine: (objetId: string) => void;
   ajusterPrixVitrine: (objetId: string, prixVente: number) => void;
+  ajusterPositionVitrine: (
+    objetId: string,
+    posX: number,
+    posY: number,
+    rotation: number,
+  ) => void;
+  acheterCamion: (niveau: NiveauCamion) => void;
+  /** Dev only — force le niveau sans coût ni adjacence. */
+  setNiveauCamionDev: (niveau: NiveauCamion) => void;
   viderVitrine: () => void;
   vendreDeVitrine: (objetIds: string[], prixTotal: number) => void;
   enregistrerSession: (session: Session) => void;
@@ -95,11 +107,17 @@ interface GameContextValue {
     etatCible: EtatObjet,
     options?: { dureeJours?: number },
   ) => { ok: boolean; raison?: string };
+  demantelerObjet: (objetId: string) => {
+    ok: boolean;
+    raison?: string;
+    pieces?: number;
+  };
   ameliorerAtelier: () => { ok: boolean; raison?: string };
   ameliorerStockage: () => { ok: boolean; raison?: string };
   definirPrixVenteSouhaite: (objetId: string, prix: number) => void;
   gagnerXP: (treeId: CompetenceTreeId, montant: number) => void;
   marquerVuTemplate: (templateId: string) => void;
+  marquerVuDansCollection: (templateId: string) => void;
   marquerDejaPossedeTemplate: (templateId: string) => void;
   donnerACollection: (objetId: string) => { ok: boolean; raison?: string };
   retirerDeCollection: (templateId: string) => { ok: boolean; raison?: string };
@@ -109,219 +127,17 @@ interface GameContextValue {
   rerollMeteo: () => { ok: boolean; raison?: string };
   /** Influence (compétence Vision 3) : retire la brocante de la célébrité courante. */
   rerollCelebrite: () => { ok: boolean; raison?: string };
-  /** Acquitte l'événement huissier (réinitialise dernierHuissier). */
-  marquerHuissierVu: () => void;
+  /** Marque un courrier comme lu (utilisé par le QG). */
+  marquerCourrierLu: (id: string) => void;
 }
 
-const GameContext = createContext<GameContextValue | null>(null);
+type GameContextValue = GameStateValue & GameActionsValue;
 
-/**
- * Migration des sauvegardes : remappe les anciennes catégories vers les nouvelles
- * et reset les arbres de compétences (les IDs `cat.<ancienne>` sont obsolètes).
- */
-function migrerSauvegarde(loaded: GameState): GameState {
-  const VALID_CATS = new Set<string>(CATEGORIES);
-  const vitrineArray = Array.isArray(loaded.vitrine)
-    ? (loaded.vitrine as ObjetEnVitrine[])
-    : loaded.vitrine?.objets ?? [];
-  const categoriesObsolètes =
-    loaded.inventaireJoueur?.some((o) => !VALID_CATS.has(o.categorie)) ||
-    vitrineArray?.some((v: ObjetEnVitrine) => !VALID_CATS.has(v.objet.categorie)) ||
-    loaded.tendances?.some((t) => !VALID_CATS.has(t.categorie));
-
-  const inventaire = (loaded.inventaireJoueur ?? []).map((o) => ({
-    ...o,
-    categorie: migrerCategorie(o.categorie),
-    etat: migrerEtat(o.etat),
-    templateId: o.templateId ?? `legacy.${(o.nom ?? "objet").toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
-    rarete: o.rarete ?? "commun",
-  }));
-
-  // Détecte le format ancien (tableau) et migre vers le nouveau (VitrineActive | null).
-  // Les objets éventuellement présents dans l'ancienne vitrine sont retournés en stock.
-  const ancienneVitrine: ObjetEnVitrine[] = Array.isArray(loaded.vitrine)
-    ? (loaded.vitrine as ObjetEnVitrine[]).map((v) => ({
-        ...v,
-        objet: {
-          ...v.objet,
-          categorie: migrerCategorie(v.objet.categorie),
-          etat: migrerEtat(v.objet.etat),
-          templateId:
-            v.objet.templateId ??
-            `legacy.${(v.objet.nom ?? "objet").toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
-          rarete: v.objet.rarete ?? "commun",
-        },
-      }))
-    : [];
-
-  // Migration : si l'ancienne vitrine contenait des objets, on les remet dans l'inventaire.
-  for (const v of ancienneVitrine) {
-    inventaire.push(v.objet);
-  }
-
-  // Vitrine au nouveau format : conservée si déjà migrée, sinon null.
-  const vitrineActuelle =
-    loaded.vitrine &&
-    !Array.isArray(loaded.vitrine) &&
-    (loaded.vitrine as { brocanteId?: string }).brocanteId
-      ? (loaded.vitrine as VitrineActive)
-      : null;
-
-  const historique = (loaded.historique ?? []).map((s) => {
-    if (s.type === "chinage") {
-      return {
-        ...s,
-        achats: s.achats.map((a) => ({
-          ...a,
-          categorie: migrerCategorie(a.categorie),
-          etat: migrerEtat(a.etat),
-        })),
-      };
-    }
-    return {
-      ...s,
-      ventes: s.ventes.map((v) => ({
-        ...v,
-        categorie: migrerCategorie(v.categorie),
-        etat: migrerEtat(v.etat),
-      })),
-    };
-  });
-
-  // Purge les compétences débloquées dont l'ID n'existe plus dans le catalogue.
-  const validIds = new Set(COMPETENCES.map((c) => c.id));
-  const competencesValides = (loaded.competencesDebloquees ?? []).filter((id) =>
-    validIds.has(id),
-  );
-  const idsObsoletes =
-    (loaded.competencesDebloquees ?? []).length !== competencesValides.length;
-
-  // Si schéma cat obsolète OU IDs de comp obsolètes, on reset les arbres (XP, points perdus).
-  const resetTrees = categoriesObsolètes || idsObsoletes;
-  const trees = resetTrees
-    ? emptyAllTrees()
-    : { ...emptyAllTrees(), ...(loaded.competenceTrees ?? {}) };
-
-  const competencesDebloquees = resetTrees ? [] : competencesValides;
-
-  // Collection : on repart de la structure courante (peut contenir de nouveaux
-  // templates ajoutés depuis le dernier save), puis on rapatrie l'état persisté
-  // (vu, dejaPossede, donation) en faisant un join par templateId.
-  let collection = initCollection();
-  const loadedCollection = (loaded as { collection?: unknown }).collection;
-  const ancienCatalogue = (loaded as unknown as { catalogue?: Record<string, Array<{ templateId: string; vu?: boolean; possede?: number }>> }).catalogue;
-  if (loadedCollection && typeof loadedCollection === "object") {
-    const indexParId = new Map<
-      string,
-      { vu?: boolean; dejaPossede?: boolean; donation?: { etat: string; valeur: number } | null }
-    >();
-    for (const cat of Object.keys(loadedCollection as Record<string, unknown>)) {
-      const slots = (loadedCollection as Record<string, unknown>)[cat];
-      if (!Array.isArray(slots)) continue;
-      for (const s of slots) {
-        if (s && typeof s === "object" && typeof (s as { templateId?: unknown }).templateId === "string") {
-          indexParId.set(
-            (s as { templateId: string }).templateId,
-            s as { vu?: boolean; dejaPossede?: boolean; donation?: { etat: string; valeur: number } | null },
-          );
-        }
-      }
-    }
-    const fusion: Record<string, typeof collection[keyof typeof collection]> = {};
-    for (const cat of Object.keys(collection) as Array<keyof typeof collection>) {
-      fusion[cat] = collection[cat].map((slot) => {
-        const persiste = indexParId.get(slot.templateId);
-        if (!persiste) return slot;
-        return {
-          ...slot,
-          vu: !!persiste.vu || slot.vu,
-          dejaPossede: !!persiste.dejaPossede || slot.dejaPossede,
-          donation:
-            persiste.donation && persiste.donation.etat
-              ? {
-                  etat: migrerEtat(persiste.donation.etat) as typeof slot.donation extends { etat: infer T } ? T : never,
-                  valeur: persiste.donation.valeur,
-                }
-              : slot.donation,
-        };
-      });
-    }
-    collection = fusion as typeof collection;
-  } else if (ancienCatalogue) {
-    // Très vieux save (avant la refonte Collection) : on rapatrie ce qu'on peut.
-    for (const cat of Object.keys(ancienCatalogue)) {
-      const entrees = ancienCatalogue[cat] ?? [];
-      for (const e of entrees) {
-        if (e.vu) collection = marquerVuFn(collection, e.templateId);
-        if ((e.possede ?? 0) > 0)
-          collection = marquerDejaPossedeFn(collection, e.templateId);
-      }
-    }
-  }
-
-  // Filet de sécurité : tout objet actuellement en stock ou en vitrine
-  // doit apparaître comme `dejaPossede` dans la collection. Couvre le cas
-  // où le save d'origine (avant fix de persistance) avait perdu la marque.
-  for (const o of inventaire) {
-    collection = marquerDejaPossedeFn(collection, o.templateId);
-  }
-  if (vitrineActuelle) {
-    for (const v of vitrineActuelle.objets) {
-      collection = marquerDejaPossedeFn(collection, v.objet.templateId);
-    }
-  }
-
-  return {
-    ...loaded,
-    inventaireJoueur: inventaire,
-    vitrine: vitrineActuelle,
-    historique,
-    tendances:
-      loaded.tendances && loaded.tendances.length > 0 && !categoriesObsolètes
-        ? loaded.tendances
-        : genererTendances(),
-    prochainesTendances:
-      loaded.prochainesTendances &&
-      loaded.prochainesTendances.length > 0 &&
-      !categoriesObsolètes
-        ? loaded.prochainesTendances
-        : genererTendances(),
-    prochainRafraichissementTendances:
-      loaded.prochainRafraichissementTendances ??
-      (loaded.jourActuel ?? INITIAL_JOUR) + PERIODE_TENDANCES_JOURS,
-    competenceTrees: trees,
-    competencesDebloquees,
-    collection,
-    gazetteAchetee: loaded.gazetteAchetee ?? false,
-    bossDebloqueSeen: loaded.bossDebloqueSeen ?? false,
-    meteoSemaine:
-      Array.isArray(loaded.meteoSemaine) && loaded.meteoSemaine.length === 7
-        ? loaded.meteoSemaine
-        : tirerMeteoSemaine(),
-    celebriteActuelle:
-      loaded.celebriteActuelle &&
-      typeof (loaded.celebriteActuelle as { jourSemaine?: number }).jourSemaine === "number"
-        ? loaded.celebriteActuelle
-        : tirerCelebrite(),
-    influenceUtilisee: loaded.influenceUtilisee ?? false,
-    dernierLoyer: loaded.dernierLoyer ?? null,
-    dernierHuissier: loaded.dernierHuissier ?? null,
-    niveauAtelier:
-      (loaded as Partial<GameState>).niveauAtelier === 2 || (loaded as Partial<GameState>).niveauAtelier === 3
-        ? (loaded as Partial<GameState>).niveauAtelier!
-        : 1,
-    niveauStockage: (() => {
-      const v = (loaded as Partial<GameState>).niveauStockage;
-      if (v === 2 || v === 3 || v === 4) return v;
-      const inv = loaded.inventaireJoueur ?? [];
-      const vit = loaded.vitrine?.objets ?? [];
-      const total = inv.length + vit.length;
-      const fallbackTier: 1 | 2 | 3 | 4 =
-        total <= 10 ? 1 : total <= 25 ? 2 : total <= 50 ? 3 : 4;
-      return fallbackTier;
-    })(),
-  };
-}
+// Deux contextes séparés : l'état (change à chaque mutation) et les actions
+// (objet mémoïsé une seule fois — les consommateurs d'actions seules ne
+// re-rendent jamais sur mutation d'état).
+const GameStateContext = createContext<GameStateValue | null>(null);
+const GameActionsContext = createContext<GameActionsValue | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -332,7 +148,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    localGameRepository.load().then((loaded) => {
+    gameRepository.load().then((loaded) => {
       if (cancelled) return;
       // Migration : ajoute les champs manquants + remap les anciennes catégories.
       const migrated: GameState | null = loaded
@@ -348,7 +164,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isHydrated || !state) return;
-    localGameRepository.save(state);
+    gameRepository.save(state);
   }, [state, isHydrated]);
 
   const nouvellePartie = useCallback(() => {
@@ -360,7 +176,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       historique: [],
       tendances: genererTendances(),
       prochainesTendances: genererTendances(),
-      prochainRafraichissementTendances: INITIAL_JOUR + PERIODE_TENDANCES_JOURS,
+      prochainRafraichissementTendances: prochainLundi(INITIAL_JOUR + 1),
       competenceTrees: emptyAllTrees(),
       competencesDebloquees: [],
       collection: initCollection(),
@@ -370,11 +186,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       celebriteActuelle: tirerCelebrite(),
       influenceUtilisee: false,
       dernierLoyer: null,
-      dernierHuissier: null,
+      courriers: [creerLettreMamanDebut(INITIAL_JOUR)],
       niveauAtelier: 1,
       niveauStockage: 1,
+      niveauCamion: 1,
+      piecesAmelioration: emptyPiecesAmelioration(),
+      chatSurFauteuil: false,
+      passagesSansChat: 0,
+      declencheursDeclenches: [ID_LETTRE_MAMAN_DEBUT],
     });
-    router.push("/qg");
+    router.push("/bureau");
   }, [router]);
 
   const ajouterObjet = useCallback((objet: Objet) => {
@@ -400,11 +221,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => (prev ? { ...prev, budget: prev.budget + delta } : prev));
   }, []);
 
-  const avancerJour = useCallback((nbJours: number = 1) => {
+  const avancerJour = useCallback((nbJours: number = 1, volontaire: boolean = false) => {
     setState((prev) => {
       if (!prev) return prev;
-      const nouveauJour = prev.jourActuel + Math.max(1, nbJours);
+      const pas = Math.max(1, nbJours);
+      const nouveauJour = prev.jourActuel + pas;
       const refresh = nouveauJour >= prev.prochainRafraichissementTendances;
+      // Chat : 50% de chance de partir par jour si présent.
+      let chatSurFauteuil = prev.chatSurFauteuil;
+      let passagesSansChat = prev.passagesSansChat;
+      for (let i = 0; i < pas; i++) {
+        if (chatSurFauteuil && Math.random() < 0.5) chatSurFauteuil = false;
+      }
+      // Apparition uniquement à la suite d'un passage volontaire.
+      // Pity timer : après 3 passages consécutifs sans chat, apparition garantie.
+      if (volontaire && !chatSurFauteuil) {
+        const proba = passagesSansChat >= 3 ? 1 : 0.5;
+        if (Math.random() < proba) {
+          chatSurFauteuil = true;
+          passagesSansChat = 0;
+        } else {
+          passagesSansChat = Math.min(3, passagesSansChat + 1);
+        }
+      }
       const inv = prev.inventaireJoueur.map((o) => {
         if (o.enRestauration && nouveauJour >= o.enRestauration.jourFin) {
           const cible = o.enRestauration.etatCible;
@@ -443,94 +282,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
           }
         : prev.dernierLoyer;
 
-      // Huissier : si le budget est négatif après loyer, liquidation forcée.
-      let nouveauBudget = budgetApresLoyer;
-      let invApresHuissier = inv;
-      let collectionApresHuissier = prev.collection;
-      let dernierHuissier: HuissierEvent | null = prev.dernierHuissier ?? null;
-
-      if (tierStockage && budgetApresLoyer < 0) {
-        const detteInitiale = budgetApresLoyer;
-        const saisies: SaisieHuissier[] = [];
-
-        // 1) inventaire (hors restauration), tri par prix réf croissant
-        const liquidables = invApresHuissier
-          .filter((o) => !o.enRestauration)
-          .sort((a, b) => a.prixReferenceReel - b.prixReferenceReel);
-        const idsLiquides = new Set<string>();
-        for (const o of liquidables) {
-          if (nouveauBudget >= 0) break;
-          const mt = Math.max(1, Math.round(o.prixReferenceReel / 2));
-          nouveauBudget += mt;
-          saisies.push({
-            type: "inventaire",
-            nom: o.nom,
-            valeur: o.prixReferenceReel,
-            montantRecupere: mt,
-          });
-          idsLiquides.add(o.id);
-        }
-        if (idsLiquides.size > 0) {
-          invApresHuissier = invApresHuissier.filter((o) => !idsLiquides.has(o.id));
-        }
-
-        // 2) si toujours négatif, prendre dans la collection (slots avec donation)
-        if (nouveauBudget < 0) {
-          const donations: Array<{ cat: CategorieObjet; idx: number; slot: CollectionSlot }> = [];
-          for (const cat of Object.keys(collectionApresHuissier) as CategorieObjet[]) {
-            const slots = collectionApresHuissier[cat] ?? [];
-            for (let i = 0; i < slots.length; i++) {
-              if (slots[i].donation !== null) {
-                donations.push({ cat, idx: i, slot: slots[i] });
-              }
-            }
-          }
-          donations.sort(
-            (a, b) => (a.slot.donation!.valeur) - (b.slot.donation!.valeur),
-          );
-
-          const newCollection: typeof collectionApresHuissier = { ...collectionApresHuissier };
-          const dirtyCats = new Set<CategorieObjet>();
-
-          for (const d of donations) {
-            if (nouveauBudget >= 0) break;
-            const valeur = d.slot.donation!.valeur;
-            const mt = Math.max(1, Math.round(valeur / 2));
-            nouveauBudget += mt;
-            saisies.push({
-              type: "collection",
-              nom: d.slot.nom,
-              valeur,
-              montantRecupere: mt,
-            });
-            dirtyCats.add(d.cat);
-            newCollection[d.cat] = newCollection[d.cat].map((s, i) =>
-              i === d.idx ? { ...s, donation: null } : s,
-            );
-          }
-          if (dirtyCats.size > 0) collectionApresHuissier = newCollection;
-        }
-
-        if (saisies.length > 0) {
-          dernierHuissier = {
-            jour: nouveauJour,
-            detteAvantSaisie: detteInitiale,
-            saisies,
-            budgetApres: nouveauBudget,
-          };
-        }
-      }
-
       return {
         ...prev,
         jourActuel: nouveauJour,
-        inventaireJoueur: invApresHuissier,
-        collection: collectionApresHuissier,
-        budget: nouveauBudget,
+        inventaireJoueur: inv,
+        budget: budgetApresLoyer,
         tendances,
         prochainesTendances,
         prochainRafraichissementTendances: refresh
-          ? nouveauJour + PERIODE_TENDANCES_JOURS
+          ? prochainLundi(nouveauJour + 1)
           : prev.prochainRafraichissementTendances,
         // Reset l'achat de la Gazette à chaque nouvelle édition.
         gazetteAchetee: refresh ? false : prev.gazetteAchetee,
@@ -541,7 +301,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         // Reset le jeton d'influence à chaque édition.
         influenceUtilisee: refresh ? false : prev.influenceUtilisee,
         dernierLoyer,
-        dernierHuissier,
+        chatSurFauteuil,
+        passagesSansChat,
       };
     });
   }, []);
@@ -645,7 +406,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const reset = useCallback(() => {
     setState(null);
-    localGameRepository.clear();
+    gameRepository.clear();
   }, []);
 
   const ouvrirVitrine = useCallback((brocanteId: string) => {
@@ -669,21 +430,79 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const mettreEnVitrine = useCallback((objetId: string, prixVente: number) => {
+  const mettreEnVitrine = useCallback(
+    (
+      objetId: string,
+      prixVente: number,
+      posX?: number,
+      posY?: number,
+      rotation?: number,
+    ) => {
+      setState((prev) => {
+        if (!prev || !prev.vitrine) return prev;
+        const objet = prev.inventaireJoueur.find((o) => o.id === objetId);
+        if (!objet) return prev;
+        const nouvelEntree: ObjetEnVitrine = {
+          objet,
+          prixVente,
+          ...(posX !== undefined ? { posX } : {}),
+          ...(posY !== undefined ? { posY } : {}),
+          ...(rotation !== undefined ? { rotation } : {}),
+        };
+        return {
+          ...prev,
+          inventaireJoueur: prev.inventaireJoueur.filter(
+            (o) => o.id !== objetId,
+          ),
+          vitrine: {
+            ...prev.vitrine,
+            objets: [...prev.vitrine.objets, nouvelEntree],
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const ajusterPositionVitrine = useCallback(
+    (
+      objetId: string,
+      posX: number,
+      posY: number,
+      rotation: number,
+    ) => {
+      setState((prev) =>
+        prev && prev.vitrine
+          ? {
+              ...prev,
+              vitrine: {
+                ...prev.vitrine,
+                objets: prev.vitrine.objets.map((e) =>
+                  e.objet.id === objetId ? { ...e, posX, posY, rotation } : e,
+                ),
+              },
+            }
+          : prev,
+      );
+    },
+    [],
+  );
+
+  const acheterCamion = useCallback((niveau: NiveauCamion) => {
     setState((prev) => {
-      if (!prev || !prev.vitrine) return prev;
-      const objet = prev.inventaireJoueur.find((o) => o.id === objetId);
-      if (!objet) return prev;
-      const nouvelEntree: ObjetEnVitrine = { objet, prixVente };
-      return {
-        ...prev,
-        inventaireJoueur: prev.inventaireJoueur.filter((o) => o.id !== objetId),
-        vitrine: {
-          ...prev.vitrine,
-          objets: [...prev.vitrine.objets, nouvelEntree],
-        },
-      };
+      if (!prev) return prev;
+      if (niveau !== prev.niveauCamion + 1) return prev;
+      const camion = getCamion(niveau);
+      const prix = camion.prixUpgradeVersCeNiveau ?? 0;
+      if (prev.budget < prix) return prev;
+      return { ...prev, niveauCamion: niveau, budget: prev.budget - prix };
     });
+  }, []);
+
+  // Dev-only : set direct du niveau sans coût ni vérification d'adjacence.
+  // Utilisé par le bouton de switch dans ChargementHeader pour tester les visuels.
+  const setNiveauCamionDev = useCallback((niveau: NiveauCamion) => {
+    setState((prev) => (prev ? { ...prev, niveauCamion: niveau } : prev));
   }, []);
 
   const retirerDeVitrine = useCallback((objetId: string) => {
@@ -830,6 +649,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
           raison: `Vous n'avez pas la compétence Réparer — ${objet.categorie}.`,
         };
 
+      const cout = coutAmelioration(objet, etatCible);
+      const dispo = current.piecesAmelioration[objet.categorie] ?? 0;
+      if (dispo < cout)
+        return {
+          ok: false,
+          raison: `Manque ${cout - dispo} pièce${cout - dispo > 1 ? "s" : ""} ${objet.categorie}.`,
+        };
+
       const duree = Math.max(1, options.dureeJours ?? 7);
       const jourFin = current.jourActuel + duree;
 
@@ -840,9 +667,43 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ? { ...o, enRestauration: { etatCible, jourFin } }
             : o,
         );
-        return { ...prev, inventaireJoueur: inv };
+        const piecesAmelioration = {
+          ...prev.piecesAmelioration,
+          [objet.categorie]:
+            (prev.piecesAmelioration[objet.categorie] ?? 0) - cout,
+        };
+        return { ...prev, inventaireJoueur: inv, piecesAmelioration };
       });
       return { ok: true };
+    },
+    [],
+  );
+
+  const demantelerObjet = useCallback(
+    (objetId: string): { ok: boolean; raison?: string; pieces?: number } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: "Pas de partie." };
+      const objet = current.inventaireJoueur.find((o) => o.id === objetId);
+      if (!objet)
+        return { ok: false, raison: "Objet introuvable dans l'inventaire." };
+      if (objet.enRestauration)
+        return { ok: false, raison: "Objet en restauration." };
+
+      const pieces = rendementDemantelement(objet);
+
+      setState((prev) => {
+        if (!prev) return prev;
+        const stillThere = prev.inventaireJoueur.find((o) => o.id === objetId);
+        if (!stillThere || stillThere.enRestauration) return prev;
+        const inv = prev.inventaireJoueur.filter((o) => o.id !== objetId);
+        const piecesAmelioration = {
+          ...prev.piecesAmelioration,
+          [objet.categorie]:
+            (prev.piecesAmelioration[objet.categorie] ?? 0) + pieces,
+        };
+        return { ...prev, inventaireJoueur: inv, piecesAmelioration };
+      });
+      return { ok: true, pieces };
     },
     [],
   );
@@ -869,6 +730,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) =>
       prev
         ? { ...prev, collection: marquerVuFn(prev.collection, templateId) }
+        : prev,
+    );
+  }, []);
+
+  const marquerVuDansCollection = useCallback((templateId: string) => {
+    setState((prev) =>
+      prev
+        ? {
+            ...prev,
+            collection: marquerVuDansCollectionFn(prev.collection, templateId),
+          }
         : prev,
     );
   }, []);
@@ -913,7 +785,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               nom: tpl.nom,
               categorie: tpl.categorie,
               etat: ancienne.etat,
-              prixReferenceReel: ancienne.valeur,
+              prixReferenceReel: ancienne.valeurBase ?? ancienne.valeur,
               rarete: tpl.rarete,
             });
           }
@@ -956,7 +828,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               nom: tpl.nom,
               categorie: tpl.categorie,
               etat: ancienne.etat,
-              prixReferenceReel: ancienne.valeur,
+              prixReferenceReel: ancienne.valeurBase ?? ancienne.valeur,
               rarete: tpl.rarete,
             },
           ],
@@ -975,8 +847,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const marquerHuissierVu = useCallback(() => {
-    setState((prev) => (prev ? { ...prev, dernierHuissier: null } : prev));
+  const marquerCourrierLu = useCallback((id: string) => {
+    setState((prev) => {
+      if (!prev) return prev;
+      const cible = prev.courriers.find((c) => c.id === id);
+      if (!cible || cible.lu) return prev;
+      // Récompense (argent) appliquée à la lecture si la lettre en porte une.
+      let nouveauBudget = prev.budget;
+      if (cible.payload.type === "lettre" && cible.payload.recompense) {
+        if (typeof cible.payload.recompense.argent === "number") {
+          nouveauBudget += cible.payload.recompense.argent;
+        }
+      }
+      const next = prev.courriers.map((c) =>
+        c.id === id ? { ...c, lu: true } : c,
+      );
+      return { ...prev, courriers: next, budget: nouveauBudget };
+    });
   }, []);
 
   const acheterGazette = useCallback((): { ok: boolean; raison?: string } => {
@@ -1001,10 +888,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
-  const value = useMemo<GameContextValue>(
+  const stateValue = useMemo<GameStateValue>(
+    () => ({ state, isHydrated }),
+    [state, isHydrated],
+  );
+
+  // Toutes les actions sont des useCallback stables → cet objet n'est créé
+  // qu'une seule fois en pratique (deps stables).
+  const actionsValue = useMemo<GameActionsValue>(
     () => ({
-      state,
-      isHydrated,
       nouvellePartie,
       ajouterObjet,
       retirerObjet,
@@ -1015,16 +907,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
       mettreEnVitrine,
       retirerDeVitrine,
       ajusterPrixVitrine,
+      ajusterPositionVitrine,
+      acheterCamion,
+      setNiveauCamionDev,
       viderVitrine,
       vendreDeVitrine,
       enregistrerSession,
       debloquerCompetence,
       restaurerObjet,
+      demantelerObjet,
       ameliorerAtelier,
       ameliorerStockage,
       definirPrixVenteSouhaite,
       gagnerXP,
       marquerVuTemplate,
+      marquerVuDansCollection,
       marquerDejaPossedeTemplate,
       donnerACollection,
       retirerDeCollection,
@@ -1032,11 +929,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerBossDebloqueVu,
       rerollMeteo,
       rerollCelebrite,
-      marquerHuissierVu,
+      marquerCourrierLu,
     }),
     [
-      state,
-      isHydrated,
       nouvellePartie,
       ajouterObjet,
       retirerObjet,
@@ -1047,16 +942,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
       mettreEnVitrine,
       retirerDeVitrine,
       ajusterPrixVitrine,
+      ajusterPositionVitrine,
+      acheterCamion,
+      setNiveauCamionDev,
       viderVitrine,
       vendreDeVitrine,
       enregistrerSession,
       debloquerCompetence,
       restaurerObjet,
+      demantelerObjet,
       ameliorerAtelier,
       ameliorerStockage,
       definirPrixVenteSouhaite,
       gagnerXP,
       marquerVuTemplate,
+      marquerVuDansCollection,
       marquerDejaPossedeTemplate,
       donnerACollection,
       retirerDeCollection,
@@ -1064,15 +964,53 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerBossDebloqueVu,
       rerollMeteo,
       rerollCelebrite,
-      marquerHuissierVu,
+      marquerCourrierLu,
     ],
   );
 
-  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
+  return (
+    <GameActionsContext.Provider value={actionsValue}>
+      <GameStateContext.Provider value={stateValue}>
+        {children}
+      </GameStateContext.Provider>
+    </GameActionsContext.Provider>
+  );
 }
 
-export function useGame() {
-  const ctx = useContext(GameContext);
-  if (!ctx) throw new Error("useGame doit être utilisé dans un <GameProvider>");
+/**
+ * API historique — état + actions combinés. Re-rend à chaque mutation d'état
+ * (comme avant la séparation des contextes).
+ */
+export function useGame(): GameContextValue {
+  const stateCtx = useContext(GameStateContext);
+  const actionsCtx = useContext(GameActionsContext);
+  if (!stateCtx || !actionsCtx)
+    throw new Error("useGame doit être utilisé dans un <GameProvider>");
+  return useMemo(
+    () => ({ ...stateCtx, ...actionsCtx }),
+    [stateCtx, actionsCtx],
+  );
+}
+
+/**
+ * Actions seules — l'objet est stable, le composant ne re-rend jamais
+ * sur mutation d'état du jeu.
+ */
+export function useGameActions(): GameActionsValue {
+  const ctx = useContext(GameActionsContext);
+  if (!ctx)
+    throw new Error(
+      "useGameActions doit être utilisé dans un <GameProvider>",
+    );
+  return ctx;
+}
+
+/** État seul (state + isHydrated) — sans les actions. */
+export function useGameStateOnly(): GameStateValue {
+  const ctx = useContext(GameStateContext);
+  if (!ctx)
+    throw new Error(
+      "useGameStateOnly doit être utilisé dans un <GameProvider>",
+    );
   return ctx;
 }

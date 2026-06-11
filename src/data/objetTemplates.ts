@@ -1,4 +1,7 @@
-import type { CategorieObjet, Rarete } from "@/types/game";
+import type { CategorieObjet, Rarete, TailleObjet } from "@/types/game";
+import { LEGENDAIRES } from "@/data/legendaires";
+import { UNIQUES } from "@/data/uniques";
+import { TAILLES_OVERRIDE } from "@/data/objetTemplatesTailles";
 
 export interface ObjetTemplate {
   templateId: string;
@@ -9,6 +12,8 @@ export interface ObjetTemplate {
   prixRefBase: number;
   /** Si vrai, ne peut être possédé qu'une fois par partie. */
   unique?: boolean;
+  /** Taille (XS→XL). Si omis, default par catégorie via `tailleDe()`. */
+  taille?: TailleObjet;
 }
 
 type Row = [templateId: string, nom: string, prixRefBase: number];
@@ -36,10 +41,10 @@ const MUSIQUE_C: Row[] = [
   ["mus.33tours_jazz_inconnu", "33 tours de jazz inconnu", 8],
   ["mus.cd_nirvana_in_utero", "Coffret CD Nirvana 'In Utero'", 18],
   ["mus.harmonica_hohner", "Harmonica chromatique Hohner", 35],
-  ["mus.vinyle_brel_amsterdam", "Vinyle Jacques Brel 'Amsterdam'", 22],
-  ["mus.vinyle_brassens_jeanne", "Vinyle Brassens 'La Jeanne'", 24],
-  ["mus.vinyle_aznavour_emmenez", "Vinyle Aznavour 'Emmenez-moi'", 18],
-  ["mus.vinyle_piaf_non", "Vinyle Édith Piaf 'Non, je ne regrette rien'", 28],
+  ["mus.vinyle_brel_amsterdam", "Vinyle Stevranos 'Vive la fêt(a)'", 22],
+  ["mus.vinyle_brassens_jeanne", "Vinyle Victor de la Brasse 'Bibelot'", 24],
+  ["mus.vinyle_aznavour_emmenez", "Vinyle Paul Nazamour 'Demain enfin'", 18],
+  ["mus.vinyle_piaf_non", "Vinyle Judith Loiseau 'Oui, je regrette tout'", 28],
   ["mus.vinyle_beatles_abbey_road", "Vinyle Beatles 'Abbey Road'", 55],
   ["mus.vinyle_stones_let_bleed", "Vinyle Rolling Stones 'Let It Bleed'", 50],
   ["mus.vinyle_bowie_ziggy", "Vinyle Bowie 'Ziggy Stardust'", 60],
@@ -47,14 +52,14 @@ const MUSIQUE_C: Row[] = [
   ["mus.vinyle_dylan_blonde", "Vinyle Dylan 'Blonde on Blonde'", 40],
   ["mus.vinyle_indochine_aventurier", "Vinyle Indochine 'L'Aventurier'", 24],
   ["mus.vinyle_mylene_farmer_ainsi", "Vinyle Mylène Farmer 'Ainsi soit je…'", 26],
-  ["mus.vinyle_renaud_morgane", "Vinyle Renaud 'Morgane de toi'", 18],
-  ["mus.vinyle_hallyday_rock_memphis", "Vinyle Hallyday 'Rock à Memphis'", 22],
+  ["mus.vinyle_renaud_morgane", "Vinyle Rénaut 'Mégane sans toit'", 18],
+  ["mus.vinyle_hallyday_rock_memphis", "Vinyle Hollyday 'Caillou à Woippy'", 22],
   ["mus.vinyle_sardou_lacs", "Vinyle Sardou 'Les Lacs du Connemara'", 20],
-  ["mus.vinyle_goldman_envole", "Vinyle Goldman 'Envole-moi'", 16],
-  ["mus.vinyle_cabrel_hors_saison", "Vinyle Cabrel 'Hors-saison'", 18],
+  ["mus.vinyle_goldman_envole", "Vinyle Silverguy 'Moi au volant'", 16],
+  ["mus.vinyle_cabrel_hors_saison", "Vinyle François Cabriol 'Hors-Piste'", 18],
   ["mus.vinyle_gainsbourg_melody", "Vinyle Gainsbourg 'Melody Nelson'", 70],
   ["mus.vinyle_higelin_alertez", "Vinyle Higelin 'Alertez les bébés'", 22],
-  ["mus.vinyle_balavoine_aziza", "Vinyle Balavoine 'Aziza'", 18],
+  ["mus.vinyle_balavoine_aziza", "Vinyle Miguel Pavane 'La Zizanie'", 18],
   ["mus.vinyle_souchon_foule", "Vinyle Souchon 'Foule sentimentale'", 14],
   ["mus.cd_daft_punk_homework", "CD Daft Punk 'Homework'", 14],
   ["mus.cd_radiohead_ok", "CD Radiohead 'OK Computer'", 16],
@@ -474,9 +479,6 @@ export const OBJET_TEMPLATES: ObjetTemplate[] = [
   ...section("Bricolage", "rare", BRICOLAGE_R),
 ];
 
-import { LEGENDAIRES } from "@/data/legendaires";
-import { UNIQUES } from "@/data/uniques";
-
 export { LEGENDAIRES };
 
 /**
@@ -531,9 +533,23 @@ export function poolPourTier(tier: 1 | 2 | 3 | 4): ObjetTemplate[] {
   return POOL_CHINAGE.filter((t) => tierMinTemplate(t.templateId) <= tier);
 }
 
-const ALL_TEMPLATES: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES, ...UNIQUES];
+export const ALL_TEMPLATES: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES, ...UNIQUES];
 
 /** Résout un templateId vers son template (incluant les légendaires). */
 export function getTemplate(templateId: string): ObjetTemplate | undefined {
   return ALL_TEMPLATES.find((t) => t.templateId === templateId);
+}
+
+const TAILLE_DEFAUT: Record<CategorieObjet, TailleObjet> = {
+  "Musique": "S",
+  "Jeux & Loisirs": "S",
+  "Livres & Papeterie": "S",
+  "Mode": "S",
+  "Maison": "M",
+  "Objets d'art": "M",
+  "Bricolage": "S",
+};
+
+export function tailleDe(t: ObjetTemplate): TailleObjet {
+  return t.taille ?? TAILLES_OVERRIDE[t.templateId] ?? TAILLE_DEFAUT[t.categorie];
 }

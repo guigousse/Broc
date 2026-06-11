@@ -6,6 +6,7 @@ import {
 } from "@/data/objetTemplates";
 import type { Brocante, CelebriteEvenement } from "@/types/game";
 import { modificateurTendance } from "@/lib/tendances";
+import { tirerPersonaVendeur, calculerPrixMinAcceptDepuisPersona } from "@/lib/personas";
 
 /**
  * Quand une célébrité visite la brocante : multiplicateur appliqué aux poids
@@ -75,9 +76,8 @@ function instancier(
     1,
     Math.round(prixReferenceReel * facteurVendeur * modTend * modSpec),
   );
-  const { min: tolMin, max: tolMax } = TOLERANCE_PAR_TIER[tier];
-  const tolerance = tolMin + Math.random() * (tolMax - tolMin);
-  const prixMinAccept = Math.max(1, Math.round(prixVendeur * tolerance));
+  const persona = tirerPersonaVendeur(brocante);
+  const prixMinAccept = calculerPrixMinAcceptDepuisPersona(persona, prixVendeur);
 
   return {
     id: crypto.randomUUID(),
@@ -95,28 +95,37 @@ function instancier(
     prixMinAccept,
     negociationsTentees: 0,
     statut: "disponible",
+    persona,
+    negociation: null,
   };
 }
 
-const POIDS_RARETE: Record<Rarete, number> = {
-  commun: 88,
-  rare: 10,
-  legendaire: 2,
+/**
+ * Poids de tirage par rareté, selon le tier de la brocante.
+ * Les brocantes prestigieuses (3⭐/4⭐) sortent un peu plus de belles pièces
+ * pour adoucir le grind de fin de partie.
+ */
+const POIDS_RARETE_PAR_TIER: Record<1 | 2 | 3 | 4, Record<Rarete, number>> = {
+  1: { commun: 88, rare: 10, legendaire: 2 },
+  2: { commun: 88, rare: 10, legendaire: 2 },
+  3: { commun: 85, rare: 12, legendaire: 3 },
+  4: { commun: 80, rare: 15, legendaire: 5 },
 };
 
-function poidsRarete(rarete: Rarete, boost: boolean): number {
-  const base = POIDS_RARETE[rarete];
+function poidsRarete(rarete: Rarete, boost: boolean, tier: 1 | 2 | 3 | 4): number {
+  const base = POIDS_RARETE_PAR_TIER[tier][rarete];
   return boost && rarete !== "commun" ? base * CELEBRITE_BOOST_RARES : base;
 }
 
 function tirerTemplatePondere(
   pool: readonly ObjetTemplate[],
   boostRares: boolean,
+  tier: 1 | 2 | 3 | 4,
 ): ObjetTemplate {
-  const total = pool.reduce((s, t) => s + poidsRarete(t.rarete, boostRares), 0);
+  const total = pool.reduce((s, t) => s + poidsRarete(t.rarete, boostRares, tier), 0);
   let r = Math.random() * total;
   for (const t of pool) {
-    r -= poidsRarete(t.rarete, boostRares);
+    r -= poidsRarete(t.rarete, boostRares, tier);
     if (r <= 0) return t;
   }
   return pool[pool.length - 1];
@@ -193,7 +202,7 @@ export function genererSession(
     }
     if (pool.length === 0) continue;
 
-    const t = tirerTemplatePondere(pool, celebritePresente);
+    const t = tirerTemplatePondere(pool, celebritePresente, brocante?.tier ?? 1);
     // Pas de doublon pour rares et légendaires
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
     dejaTires.add(t.templateId);
@@ -202,94 +211,3 @@ export function genererSession(
   return items;
 }
 
-export interface ResultatNegociation {
-  accepte: boolean;
-  fache: boolean;
-  prixFinal: number;
-  message: string;
-}
-
-/** Le seuil min monte de X % de l'écart (prixVendeur − prixMinAccept) par tentative. */
-const DURCISSEMENT_PAR_TENTATIVE = 0.18;
-/** Le seuil de colère monte de Y points par tentative. */
-const COLERE_MONTEE_PAR_TENTATIVE = 0.06;
-/** Probabilité de colère aléatoire ajoutée à chaque tentative supplémentaire. */
-const CHANCE_FACHE_PAR_TENTATIVE = 0.1;
-
-const MESSAGES_REFUS_POLI = [
-  `« C'est encore trop peu. Faites un effort. »`,
-  `« Allons, vous savez bien que ça vaut mieux. »`,
-  `« Je commence à m'impatienter… »`,
-  `« Dernière chance avant que je remballe. »`,
-];
-
-/**
- * Réaction du vendeur à une contre-proposition du joueur.
- * Plus le joueur a fait de tentatives, plus le vendeur durcit sa position :
- * - son prix min accepté se rapproche de son prix demandé
- * - son seuil de colère remonte
- * - une chance aléatoire de colère s'ajoute, croissante par tentative
- */
-export function reagirNegociation(
-  offre: number,
-  objet: { prixVendeur: number; prixMinAccept: number },
-  tentativesPrecedentes: number = 0,
-): ResultatNegociation {
-  const t = Math.max(0, tentativesPrecedentes);
-
-  // Durcissement progressif du prix min accepté
-  const ecart = Math.max(0, objet.prixVendeur - objet.prixMinAccept);
-  const facteurDurcissement = Math.min(1, t * DURCISSEMENT_PAR_TENTATIVE);
-  const prixMinActuel = Math.round(
-    objet.prixMinAccept + ecart * facteurDurcissement,
-  );
-
-  // Seuil de colère qui grimpe
-  const seuilColereActuel = Math.min(
-    0.95,
-    SEUIL_COLERE_VENDEUR + t * COLERE_MONTEE_PAR_TENTATIVE,
-  );
-  const seuilEnEuros = Math.round(objet.prixVendeur * seuilColereActuel);
-
-  // Chance aléatoire de colère qui croît avec le nombre de tentatives
-  const chanceFacheRandom = Math.min(0.6, t * CHANCE_FACHE_PAR_TENTATIVE);
-
-  if (offre >= prixMinActuel) {
-    return {
-      accepte: true,
-      fache: false,
-      prixFinal: offre,
-      message: `Marché conclu à ${offre} €.`,
-    };
-  }
-
-  if (offre < seuilEnEuros) {
-    return {
-      accepte: false,
-      fache: true,
-      prixFinal: 0,
-      message: `« Vous vous moquez de moi ? » Le vendeur range l'objet.`,
-    };
-  }
-
-  // Zone refus poli — mais avec risque croissant de colère aléatoire
-  if (chanceFacheRandom > 0 && Math.random() < chanceFacheRandom) {
-    return {
-      accepte: false,
-      fache: true,
-      prixFinal: 0,
-      message: `« Vous abusez de ma patience. » Le vendeur range l'objet et tourne le dos.`,
-    };
-  }
-
-  const msg =
-    MESSAGES_REFUS_POLI[
-      Math.min(t, MESSAGES_REFUS_POLI.length - 1)
-    ];
-  return {
-    accepte: false,
-    fache: false,
-    prixFinal: 0,
-    message: `Le vendeur secoue la tête : ${msg}`,
-  };
-}

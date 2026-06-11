@@ -23,7 +23,7 @@ function resumer(s: Session): { kind: string; lbl: string; pl: number } {
     const net = recettes - cogs;
     return {
       kind: "Vente",
-      lbl: `${s.ventes.length} vente${s.ventes.length > 1 ? "s" : ""} · stand ${s.niveauStand}`,
+      lbl: `${s.ventes.length} vente${s.ventes.length > 1 ? "s" : ""} · camion ${s.niveauCamion}`,
       pl: net,
     };
   }
@@ -50,7 +50,7 @@ export default function HistoriquePage() {
     });
 
   return (
-    <MobileLayout header={<MobileHeader jour={state.jourActuel} budget={state.budget} />}>
+    <MobileLayout header={<MobileHeader budget={state.budget} />}>
       {state.historique.length === 0 ? (
         <p
           style={{

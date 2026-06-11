@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 
 interface BottomSheetProps {
   open: boolean;
@@ -9,6 +16,13 @@ interface BottomSheetProps {
   children: ReactNode;
   /** Hauteur max en % du viewport. Défaut 88. */
   maxHeightPct?: number;
+  /**
+   * Décoration positionnée absolu au-dessus du bord supérieur de la sheet.
+   * Utile pour qu'un personnage / avatar "sorte" du cadre vers le haut.
+   * Quand fourni, le titre et le séparateur d'en-tête sont masqués et seul
+   * le bouton Fermer reste accessible en haut à droite.
+   */
+  topDecoration?: ReactNode;
 }
 
 const scrimStyle: CSSProperties = {
@@ -25,7 +39,7 @@ const sheetWrap = (maxHeightPct: number): CSSProperties => ({
   right: 0,
   bottom: 0,
   zIndex: 41,
-  background: "var(--paper-100)",
+  background: "var(--paper-200)",
   borderTop: "2px solid var(--forest-800)",
   borderRadius: "14px 14px 0 0",
   boxShadow: "0 -6px 18px rgba(40,25,5,0.20)",
@@ -34,6 +48,7 @@ const sheetWrap = (maxHeightPct: number): CSSProperties => ({
   flexDirection: "column",
   paddingBottom: "calc(16px + var(--safe-bottom))",
   animation: "broc-slide-up 200ms ease",
+  touchAction: "none",
 });
 
 const handleStyle: CSSProperties = {
@@ -42,6 +57,7 @@ const handleStyle: CSSProperties = {
   background: "var(--paper-500)",
   borderRadius: 2,
   margin: "8px auto 6px",
+  cursor: "grab",
 };
 
 const headerStyle: CSSProperties = {
@@ -52,13 +68,28 @@ const headerStyle: CSSProperties = {
   borderBottom: "1px solid var(--brass-500)",
 };
 
+// Seuils de fermeture par swipe vers le bas — volontairement exigeants pour
+// éviter les fermetures involontaires en pleine négociation/donation.
+const DISMISS_RATIO = 0.4; // 40% de la hauteur
+const DISMISS_VELOCITY = 0.8; // px/ms (flick franc uniquement)
+
 export function BottomSheet({
   open,
   onClose,
   title,
   children,
   maxHeightPct = 88,
+  topDecoration,
 }: BottomSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{
+    startY: number;
+    startT: number;
+    pointerId: number;
+    sheetH: number;
+  } | null>(null);
+  const [dragY, setDragY] = useState(0);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -72,44 +103,137 @@ export function BottomSheet({
     };
   }, [open, onClose]);
 
+  // Reset translateY quand on rouvre.
+  useEffect(() => {
+    if (open) setDragY(0);
+  }, [open]);
+
   if (!open) return null;
+
+  function startDrag(e: ReactPointerEvent<HTMLElement>) {
+    if (!sheetRef.current) return;
+    dragRef.current = {
+      startY: e.clientY,
+      startT: performance.now(),
+      pointerId: e.pointerId,
+      sheetH: sheetRef.current.getBoundingClientRect().height,
+    };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function moveDrag(e: ReactPointerEvent<HTMLElement>) {
+    const d = dragRef.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const dy = Math.max(0, e.clientY - d.startY);
+    setDragY(dy);
+  }
+
+  function endDrag(e: ReactPointerEvent<HTMLElement>) {
+    const d = dragRef.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const dy = Math.max(0, e.clientY - d.startY);
+    const dt = performance.now() - d.startT;
+    const velocity = dt > 0 ? dy / dt : 0;
+    const ratio = d.sheetH > 0 ? dy / d.sheetH : 0;
+    dragRef.current = null;
+
+    if (ratio > DISMISS_RATIO || velocity > DISMISS_VELOCITY) {
+      onClose();
+    } else {
+      setDragY(0);
+    }
+  }
+
+  const dragStyle: CSSProperties = {
+    transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
+    transition: dragRef.current ? "none" : "transform 200ms ease",
+    opacity: dragY > 0 ? Math.max(0.4, 1 - dragY / 600) : 1,
+  };
 
   return (
     <>
       <div style={scrimStyle} onClick={onClose} aria-hidden />
-      <div style={sheetWrap(maxHeightPct)} role="dialog" aria-modal="true">
-        <div style={handleStyle} aria-hidden />
-        <div style={headerStyle}>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 11,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "var(--forest-800)",
-            }}
-          >
-            {title ?? ""}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--brass-700)",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: 4,
-            }}
-          >
-            Fermer ✕
-          </button>
+      <div
+        ref={sheetRef}
+        style={{ ...sheetWrap(maxHeightPct), ...dragStyle }}
+        role="dialog"
+        aria-modal="true"
+      >
+        {topDecoration ? (
+          <div style={topDecorationStyle}>{topDecoration}</div>
+        ) : (
+          <>
+            <div
+              style={handleStyle}
+              aria-hidden
+              onPointerDown={startDrag}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+            />
+            <div
+              style={headerStyle}
+              onPointerDown={startDrag}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+            >
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 11,
+                  letterSpacing: "0.22em",
+                  textTransform: "uppercase",
+                  color: "var(--forest-800)",
+                }}
+              >
+                {title ?? ""}
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Fermer"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--brass-700)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  minHeight: 40,
+                  minWidth: 64,
+                  margin: "-8px -12px -8px 0",
+                  padding: "8px 12px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: 4,
+                }}
+              >
+                Fermer ✕
+              </button>
+            </div>
+          </>
+        )}
+        <div
+          style={{
+            overflowY: "auto",
+            padding: topDecoration ? 0 : "12px 16px",
+            touchAction: "pan-y",
+          }}
+        >
+          {children}
         </div>
-        <div style={{ overflowY: "auto", padding: "12px 16px" }}>{children}</div>
       </div>
     </>
   );
 }
+
+const topDecorationStyle: CSSProperties = {
+  position: "absolute",
+  top: -138,
+  left: 16,
+  right: 16,
+  zIndex: 2,
+  pointerEvents: "none",
+};

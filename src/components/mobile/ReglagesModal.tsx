@@ -1,9 +1,10 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { X } from "lucide-react";
 import { BrassCorners } from "@/components/ui/BrassCorners";
-import { useGame } from "@/context/GameContext";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useGameActions } from "@/context/GameContext";
 import { useSettings, type TailleFonte } from "@/context/SettingsContext";
 import type { AudioPrefs } from "@/lib/audio/audioManager";
 
@@ -149,7 +150,9 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
     tailleFonte,
     setTailleFonte,
   } = useSettings();
-  const { reset } = useGame();
+  // Actions seules : la modale ne re-rend plus à chaque mutation d'état du jeu.
+  const { reset } = useGameActions();
+  const [confirmSuppression, setConfirmSuppression] = useState(false);
 
   if (!open) return null;
 
@@ -165,11 +168,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
 
   const onSupprimerSave = () => {
     playClick();
-    if (
-      !window.confirm("Êtes-vous sûr ? Cette action est irréversible.")
-    )
-      return;
-    reset();
+    setConfirmSuppression(true);
   };
 
   const onFermer = () => {
@@ -320,6 +319,17 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
           <div>Conçu par G. Fenard · 2026</div>
         </div>
       </section>
+      <ConfirmModal
+        open={confirmSuppression}
+        onClose={() => setConfirmSuppression(false)}
+        onConfirm={reset}
+        titre="Supprimer la sauvegarde"
+        confirmLabel="Supprimer"
+        danger
+      >
+        Toute votre progression sera définitivement effacée. Cette action est
+        irréversible. Êtes-vous sûr ?
+      </ConfirmModal>
     </div>
   );
 }

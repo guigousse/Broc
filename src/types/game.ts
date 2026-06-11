@@ -40,14 +40,29 @@ export interface CollectionSlot {
   vu: boolean;
   /** Vrai si possédé au moins une fois (achat, restauration). */
   dejaPossede: boolean;
-  /** Donation présente dans le slot (état + valeur préservés). null = slot vide. */
-  donation: { etat: EtatObjet; valeur: number } | null;
+  /**
+   * Donation présente dans le slot (état + valeur préservés). null = slot vide.
+   * `valeur` inclut la prime de restauration (Très bon/Pristin) ; `valeurBase`
+   * conserve le prix de référence brut pour recréer l'objet si on le retire.
+   */
+  donation: { etat: EtatObjet; valeur: number; valeurBase?: number } | null;
   unique?: boolean;
+  /**
+   * Vrai si le joueur a consulté ce slot dans la page Collection depuis sa découverte.
+   * Passé à `false` quand `vu` devient vrai (nouvelle découverte), repassé à `true` au tap.
+   * Pilote l'affichage du badge "nouveau" (astérisque) sur la grille.
+   */
+  vuDansCollection?: boolean;
 }
 
 export interface ObjetEnVitrine {
   objet: Objet;
   prixVente: number;
+  /** Position du centre dans le coffre, en pourcentage du côté (0..1). Optionnel pour rétro-compat. */
+  posX?: number;
+  posY?: number;
+  /** Rotation libre en degrés (0..360, valeurs hors plage tolérées). Optionnel pour rétro-compat. */
+  rotation?: number;
 }
 
 export interface VitrineActive {
@@ -71,21 +86,38 @@ export interface CelebriteEvenement {
   jourSemaine: number;
 }
 
-export interface SaisieHuissier {
-  type: "inventaire" | "collection";
-  nom: string;
-  valeur: number;
-  montantRecupere: number;
+/* === Courrier (système de lettres au QG) ============================== */
+
+export type CourrierType = "lettre";
+
+/** Récompense optionnelle attachée à une lettre. Appliquée à la lecture. */
+export interface RecompenseCourrier {
+  argent?: number;
 }
 
-export interface HuissierEvent {
-  jour: number;
-  detteAvantSaisie: number;
-  saisies: SaisieHuissier[];
-  budgetApres: number;
+/** Lettre narrative générique (mère, ami, maire, client…). */
+export interface CourrierPayloadLettre {
+  type: "lettre";
+  expediteurId: string;
+  titre: string;
+  /** Corps découpé en paragraphes (un <p> par entrée). */
+  corps: string[];
+  recompense?: RecompenseCourrier;
+}
+
+export type CourrierPayload = CourrierPayloadLettre;
+
+export interface Courrier {
+  id: string;
+  type: CourrierType;
+  jourRecu: number;
+  lu: boolean;
+  payload: CourrierPayload;
 }
 
 export interface GameState {
+  /** Version du schéma de sauvegarde (cf. SAVE_VERSION dans lib/migrations). Absente sur les vieux saves. */
+  version?: number;
   budget: number;
   jourActuel: number;
   inventaireJoueur: Objet[];
@@ -112,12 +144,22 @@ export interface GameState {
   influenceUtilisee: boolean;
   /** Dernier loyer prélevé (utile pour l'UI). null = pas encore prélevé. */
   dernierLoyer: { jour: number; montant: number; tierNom: string } | null;
-  /** Dernier événement huissier (liquidation forcée). null = aucun. */
-  dernierHuissier?: HuissierEvent | null;
+  /** Lettres reçues (narratives, événements, programmées…). */
+  courriers: Courrier[];
   /** Niveau de l'atelier (1, 2 ou 3). Nombre de slots = niveau. Par défaut 1. */
   niveauAtelier: 1 | 2 | 3;
   /** Niveau du stockage (1 à 4). Détermine capacité et loyer. */
   niveauStockage: 1 | 2 | 3 | 4;
+  /** Niveau du camion (1 à 4). Détermine la capacité du coffre. Défaut 1. */
+  niveauCamion: NiveauCamion;
+  /** Stock de pièces d'amélioration par catégorie (≥ 0, illimité). */
+  piecesAmelioration: Record<CategorieObjet, number>;
+  /** Un chat squatte le fauteuil et bloque l'action « Passer la journée ». */
+  chatSurFauteuil: boolean;
+  /** Nombre de passages volontaires consécutifs sans apparition du chat (pity timer, capé à 3). */
+  passagesSansChat: number;
+  /** IDs des déclencheurs de courrier déjà résolus (anti-respawn pour programmés/one-shots). */
+  declencheursDeclenches: string[];
 }
 
 export type CompetenceId = string;
@@ -201,23 +243,13 @@ export interface SessionVente {
   type: "vente";
   jour: number;
   timestamp: number;
-  niveauStand: StandLevel;
+  niveauCamion: NiveauCamion;
   loyer: number;
   ventes: VenteHistorique[];
   invendus: number;
 }
 
 export type Session = SessionChinage | SessionVente;
-
-export type StandLevel = 1 | 2 | 3;
-
-export interface StandConfig {
-  niveau: StandLevel;
-  capaciteMin: number;
-  capaciteMax: number;
-  loyer: number;
-  nom: string;
-}
 
 export const INITIAL_BUDGET = 150;
 export const INITIAL_JOUR = 1;
@@ -260,4 +292,69 @@ export interface ObjetEnVente {
   /** Nombre de tentatives de négociation effectuées (pour info / XP). */
   negociationsTentees: number;
   statut: "disponible" | "achete" | "refuse";
+  /** Persona vendeur tiré à l'instanciation (mode achat). */
+  persona: NegoPersona;
+  /** État de la négo en cours sur cet item. null avant première ouverture, valeur conservée entre fermetures. */
+  negociation: NegociationState | null;
 }
+
+/** Identifiant d'archétype vendeur (chinage). */
+export type VendeurArchetypeId =
+  | "naif"
+  | "grincheux"
+  | "bonhomme"
+  | "malin"
+  | "mamie"
+  | "antiquaire";
+
+/** Sens de la négociation. */
+export type NegoMode = "achat" | "vente";
+
+/** Persona générique commun aux deux modes. */
+export interface NegoPersona {
+  /** Identifiant de l'archétype source (vendeur ou client). */
+  archetype: string;
+  /** Marge totale lâchable, 0–1. */
+  margePct: number;
+  /** Fraction du gap concédée par tour, 0–1. */
+  elanPct: number;
+  /** Nombre de tours max avant refus poli. */
+  patience: number;
+  /** Seuil de tolérance, 0–1. */
+  tolerancePct: number;
+  /** Résistance à l'alea de colère, 0–1. */
+  sangFroid: number;
+}
+
+/** Statut courant d'une négociation. */
+export type NegoStatut = "en_cours" | "refus_poli" | "fache" | "conclu";
+
+/** État persistant d'une négociation en cours. */
+export interface NegociationState {
+  mode: NegoMode;
+  tour: number;
+  humeur: number;
+  prixAdverseCourant: number;
+  /** Cible secrète de l'adverse : prixMinAccept (achat) ou prixMax (vente). */
+  cibleSecrete: number;
+  derniereOffreJoueur: number | null;
+  statut: NegoStatut;
+  message: string;
+}
+
+export type TailleObjet = "XS" | "S" | "M" | "L" | "XL";
+
+/**
+ * Surface relative occupée par taille. Calibration manuelle pour avoir des
+ * objets visuellement compacts dans le coffre N1 Rogers (cap 9) :
+ * XS ≈ 29 % / S ≈ 33 % / M ≈ 41 % / L ≈ 58 % / XL ≈ 75 % du côté.
+ */
+export const PLACES_PAR_TAILLE: Record<TailleObjet, number> = {
+  XS: 0.75,
+  S:  1.00,
+  M:  1.50,
+  L:  3.00,
+  XL: 5.00,
+};
+
+export type NiveauCamion = 1 | 2 | 3;

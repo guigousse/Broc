@@ -14,9 +14,16 @@ interface InventoryGridProps {
 }
 
 const card: CSSProperties = {
+  position: "relative",
   border: "1px solid var(--brass-500)",
   background: "var(--paper-100)",
-  padding: "6px 0",
+  // Padding interne pour que les rows ne touchent ni les bords ni le filet
+  // intérieur dessiné par le boxShadow (3px) — on laisse 6px de marge.
+  padding: "6px 6px",
+  // Le boxShadow inset reste devant car il appartient à l'élément parent qui
+  // empile au-dessus des descendants statiques ; pour garantir la priorité on
+  // ne fait pas dépasser les enfants via overflow: hidden.
+  overflow: "hidden",
   boxShadow:
     "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
 };

@@ -31,7 +31,7 @@ function resumer(s: Session): { kind: string; lbl: string; pl: number } {
     const net = recettes - cogs;
     return {
       kind: "Vente",
-      lbl: `${s.ventes.length} vente${s.ventes.length > 1 ? "s" : ""} · stand ${s.niveauStand}`,
+      lbl: `${s.ventes.length} vente${s.ventes.length > 1 ? "s" : ""} · camion ${s.niveauCamion}`,
       pl: net,
     };
   }
@@ -78,7 +78,7 @@ export function QgHistorique({ state }: QgHistoriqueProps) {
             <span
               style={{
                 fontFamily: "var(--font-mono)",
-                fontSize: 9,
+                fontSize: 10,
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
                 color: "var(--brass-700)",
@@ -110,7 +110,7 @@ export function QgHistorique({ state }: QgHistoriqueProps) {
                 style={{
                   display: "block",
                   fontFamily: "var(--font-display)",
-                  fontSize: 9,
+                  fontSize: 10,
                   letterSpacing: "0.18em",
                   textTransform: "uppercase",
                   color: "var(--brass-700)",
@@ -142,7 +142,7 @@ export function QgHistorique({ state }: QgHistoriqueProps) {
           background: "transparent",
           border: "none",
           fontFamily: "var(--font-mono)",
-          fontSize: 9,
+          fontSize: 10,
           letterSpacing: "0.16em",
           textTransform: "uppercase",
           color: "var(--brass-700)",

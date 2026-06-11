@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { GameProvider } from "@/context/GameContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { TabBar } from "@/components/mobile/TabBar";
+import { SwipePager } from "@/components/mobile/SwipePager";
+import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
+import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,8 +27,9 @@ export const viewport: Viewport = {
   themeColor: "#1A3326",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Zoom utilisateur autorisé (accessibilité WCAG 1.4.4).
+  maximumScale: 5,
+  userScalable: true,
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
 };
@@ -40,8 +44,11 @@ export default function RootLayout({
       <body style={{ minHeight: "100dvh", overflowX: "hidden" }}>
         <SettingsProvider>
           <GameProvider>
-            {children}
-            <TabBar />
+            <ToastProvider>
+              <SwipePager>{children}</SwipePager>
+              <TabBar />
+              <GlobalVinylAmbiance />
+            </ToastProvider>
           </GameProvider>
         </SettingsProvider>
       </body>

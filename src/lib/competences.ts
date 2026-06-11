@@ -99,25 +99,21 @@ export function aMaitreReparer(
   return aCompetence(`${catTreeId(cat)}.reparer.3`, state.competencesDebloquees);
 }
 
-/** Renvoie la durée (en jours) de la restauration pour atteindre l'état cible. */
+/**
+ * Durée de restauration : 5 jours pour toute transition d'état,
+ * ramenée à 3 jours quand le palier Maître de la catégorie est débloqué.
+ */
 export function dureeRestauration(
   state: GameState,
   cat: CategorieObjet,
-  etatCible: EtatObjet,
+  _etatCible: EtatObjet,
 ): number {
-  const baseParCible: Partial<Record<EtatObjet, number>> = {
-    Bon: 7,
-    "Très bon": 14,
-    "Pristin état": 28,
-  };
-  const base = baseParCible[etatCible] ?? 7;
-  if (aMaitreReparer(state, cat)) return Math.ceil(base / 2);
-  return base;
+  return aMaitreReparer(state, cat) ? 3 : 5;
 }
 
 /**
  * Bonus d'appétit catégoriel cumulatif (Passion 1/2/3).
- * 0.10 / 0.25 / 0.40 selon le palier max débloqué (palier plus haut écrase).
+ * 0.10 / 0.20 / 0.30 selon le palier max débloqué (palier plus haut écrase).
  * Retourne 0 si aucun palier de Passion débloqué pour cette catégorie.
  */
 export function bonusPassionCategorie(
@@ -125,31 +121,31 @@ export function bonusPassionCategorie(
   cat: CategorieObjet,
 ): number {
   const t = catTreeId(cat);
-  if (aCompetence(`${t}.passion.3`, state.competencesDebloquees)) return 0.40;
-  if (aCompetence(`${t}.passion.2`, state.competencesDebloquees)) return 0.25;
+  if (aCompetence(`${t}.passion.3`, state.competencesDebloquees)) return 0.30;
+  if (aCompetence(`${t}.passion.2`, state.competencesDebloquees)) return 0.20;
   if (aCompetence(`${t}.passion.1`, state.competencesDebloquees)) return 0.10;
   return 0;
 }
 
-/** Conservé pour compat — équivaut à un bonus Passion ≥ 0.25. */
+/** Conservé pour compat — équivaut à un bonus Passion ≥ palier 2. */
 export function aSpecialisteCategorie(
   state: GameState,
   cat: CategorieObjet,
 ): boolean {
-  return bonusPassionCategorie(state, cat) >= 0.25;
+  return bonusPassionCategorie(state, cat) >= 0.20;
 }
 
 /**
  * Bonus catégoriel au seuil de colère (Œil aiguisé 1/2/3).
- * 0.05 / 0.15 / 0.30 selon le palier max débloqué (palier plus haut écrase).
+ * 0.05 / 0.10 / 0.20 selon le palier max débloqué (palier plus haut écrase).
  */
 export function bonusSeuilColereCategorie(
   state: GameState,
   cat: CategorieObjet,
 ): number {
   const t = catTreeId(cat);
-  if (aCompetence(`${t}.oeil_aiguise.3`, state.competencesDebloquees)) return 0.30;
-  if (aCompetence(`${t}.oeil_aiguise.2`, state.competencesDebloquees)) return 0.15;
+  if (aCompetence(`${t}.oeil_aiguise.3`, state.competencesDebloquees)) return 0.20;
+  if (aCompetence(`${t}.oeil_aiguise.2`, state.competencesDebloquees)) return 0.10;
   if (aCompetence(`${t}.oeil_aiguise.1`, state.competencesDebloquees)) return 0.05;
   return 0;
 }
