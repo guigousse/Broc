@@ -12,6 +12,8 @@ interface CollectionGridProps {
   onTap?: (slot: CollectionSlot) => void;
   /** TemplateIds présents dans l'inventaire du joueur (badge "+"). */
   enStockIds?: ReadonlySet<string>;
+  /** Items par ligne (réglé par le slider de zoom). */
+  colonnes?: 1 | 2 | 3;
 }
 
 const GRAY_BG = "var(--paper-200)";
@@ -80,6 +82,15 @@ const newBadge: CSSProperties = {
   textShadow:
     "0 0 2px var(--paper-100), 0 0 4px var(--paper-100), 0 1px 2px rgba(0,0,0,0.45)",
   pointerEvents: "none",
+};
+
+const planche: CSSProperties = {
+  height: 16,
+  marginTop: 6,
+  marginBottom: 16,
+  background: "var(--gradient-shelf)",
+  borderTop: "2px solid var(--shelf-edge)",
+  boxShadow: "0 3px 5px rgba(0, 0, 0, 0.28)",
 };
 
 interface CollectionCellProps {
@@ -220,7 +231,12 @@ const CollectionCell = memo(function CollectionCell({
   );
 });
 
-export function CollectionGrid({ slots, onTap, enStockIds }: CollectionGridProps) {
+export function CollectionGrid({
+  slots,
+  onTap,
+  enStockIds,
+  colonnes = 3,
+}: CollectionGridProps) {
   // Wrapper stable (pattern latest-ref) : même si le parent passe une arrow
   // function inline recréée à chaque render, les cellules mémoïsées gardent
   // une référence stable et ne re-rendent que quand leur slot change.
@@ -231,21 +247,35 @@ export function CollectionGrid({ slots, onTap, enStockIds }: CollectionGridProps
     [],
   );
 
+  const rangees: CollectionSlot[][] = [];
+  for (let i = 0; i < slots.length; i += colonnes) {
+    rangees.push(slots.slice(i, i + colonnes));
+  }
+
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(var(--card-w), 1fr))",
-        gap: "var(--gutter)",
-      }}
-    >
-      {slots.map((s) => (
-        <CollectionCell
-          key={s.templateId}
-          slot={s}
-          onTap={stableOnTap}
-          enStock={enStockIds?.has(s.templateId) ?? false}
-        />
+    <div>
+      {rangees.map((rangee) => (
+        <div key={rangee[0].templateId}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${colonnes}, 1fr)`,
+              gap: "var(--gutter)",
+              padding: "0 var(--gutter)",
+            }}
+          >
+            {rangee.map((s) => (
+              <CollectionCell
+                key={s.templateId}
+                slot={s}
+                onTap={stableOnTap}
+                enStock={enStockIds?.has(s.templateId) ?? false}
+              />
+            ))}
+          </div>
+          {/* Planche d'étagère sous la rangée */}
+          <div aria-hidden data-testid="planche" style={planche} />
+        </div>
       ))}
     </div>
   );

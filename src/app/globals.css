@@ -61,6 +61,11 @@
   --gradient-humeur: linear-gradient(to right, #3a7c43 0%, #d99000 60%, #c44 100%);
   /* Bois sombre du coffre/camion (CarrouselStock, GramophoneSheet). */
   --gradient-cargo-wood: linear-gradient(180deg, #3d2614 0%, #2a1a0e 50%, #1f130a 100%);
+  /* Étagères de la Collection : fond bois clair derrière la grille,
+     planche brune sous chaque rangée, chant clair sur le dessus. */
+  --wood-light: linear-gradient(180deg, #F0DEAE 0%, #E9D29C 100%);
+  --gradient-shelf: linear-gradient(180deg, #B08A52 0%, #99713C 50%, #7C5B2F 100%);
+  --shelf-edge: #CBA96B;
   /* Couleur du joueur dans la barre de négociation (face au brass adverse). */
   --nego-joueur: var(--forest-600);
 

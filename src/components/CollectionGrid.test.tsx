@@ -180,4 +180,21 @@ describe("CollectionGrid", () => {
     const coucheImage = screen.getByTestId("img-n").parentElement;
     expect(coucheImage?.style.filter).toContain("grayscale");
   });
+
+  it("étagères : une planche par rangée (3 slots, colonnes=3 → 1 planche)", () => {
+    render(<CollectionGrid slots={slots} />);
+    expect(screen.getAllByTestId("planche")).toHaveLength(1);
+  });
+
+  it("étagères : colonnes=1 → une planche par item", () => {
+    render(<CollectionGrid slots={slots} colonnes={1} />);
+    expect(screen.getAllByTestId("planche")).toHaveLength(3);
+  });
+
+  it("étagères : la rangée utilise repeat(colonnes, 1fr)", () => {
+    render(<CollectionGrid slots={slots} colonnes={2} />);
+    const rangee = screen.getAllByRole("button")[0].parentElement as HTMLElement;
+    expect(rangee.style.gridTemplateColumns).toBe("repeat(2, 1fr)");
+    expect(screen.getAllByTestId("planche")).toHaveLength(2);
+  });
 });
