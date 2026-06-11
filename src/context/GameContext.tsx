@@ -67,9 +67,12 @@ import { audioManager } from "@/lib/audio/audioManager";
 
 const gameRepository = createGameRepository();
 
-interface GameContextValue {
+interface GameStateValue {
   state: GameState | null;
   isHydrated: boolean;
+}
+
+interface GameActionsValue {
   nouvellePartie: () => void;
   ajouterObjet: (objet: Objet) => void;
   retirerObjet: (id: string) => void;
@@ -128,7 +131,13 @@ interface GameContextValue {
   marquerCourrierLu: (id: string) => void;
 }
 
-const GameContext = createContext<GameContextValue | null>(null);
+type GameContextValue = GameStateValue & GameActionsValue;
+
+// Deux contextes séparés : l'état (change à chaque mutation) et les actions
+// (objet mémoïsé une seule fois — les consommateurs d'actions seules ne
+// re-rendent jamais sur mutation d'état).
+const GameStateContext = createContext<GameStateValue | null>(null);
+const GameActionsContext = createContext<GameActionsValue | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -776,7 +785,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               nom: tpl.nom,
               categorie: tpl.categorie,
               etat: ancienne.etat,
-              prixReferenceReel: ancienne.valeur,
+              prixReferenceReel: ancienne.valeurBase ?? ancienne.valeur,
               rarete: tpl.rarete,
             });
           }
@@ -819,7 +828,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               nom: tpl.nom,
               categorie: tpl.categorie,
               etat: ancienne.etat,
-              prixReferenceReel: ancienne.valeur,
+              prixReferenceReel: ancienne.valeurBase ?? ancienne.valeur,
               rarete: tpl.rarete,
             },
           ],
@@ -879,10 +888,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
-  const value = useMemo<GameContextValue>(
+  const stateValue = useMemo<GameStateValue>(
+    () => ({ state, isHydrated }),
+    [state, isHydrated],
+  );
+
+  // Toutes les actions sont des useCallback stables → cet objet n'est créé
+  // qu'une seule fois en pratique (deps stables).
+  const actionsValue = useMemo<GameActionsValue>(
     () => ({
-      state,
-      isHydrated,
       nouvellePartie,
       ajouterObjet,
       retirerObjet,
@@ -918,8 +932,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       marquerCourrierLu,
     }),
     [
-      state,
-      isHydrated,
       nouvellePartie,
       ajouterObjet,
       retirerObjet,
@@ -956,11 +968,49 @@ export function GameProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
+  return (
+    <GameActionsContext.Provider value={actionsValue}>
+      <GameStateContext.Provider value={stateValue}>
+        {children}
+      </GameStateContext.Provider>
+    </GameActionsContext.Provider>
+  );
 }
 
-export function useGame() {
-  const ctx = useContext(GameContext);
-  if (!ctx) throw new Error("useGame doit être utilisé dans un <GameProvider>");
+/**
+ * API historique — état + actions combinés. Re-rend à chaque mutation d'état
+ * (comme avant la séparation des contextes).
+ */
+export function useGame(): GameContextValue {
+  const stateCtx = useContext(GameStateContext);
+  const actionsCtx = useContext(GameActionsContext);
+  if (!stateCtx || !actionsCtx)
+    throw new Error("useGame doit être utilisé dans un <GameProvider>");
+  return useMemo(
+    () => ({ ...stateCtx, ...actionsCtx }),
+    [stateCtx, actionsCtx],
+  );
+}
+
+/**
+ * Actions seules — l'objet est stable, le composant ne re-rend jamais
+ * sur mutation d'état du jeu.
+ */
+export function useGameActions(): GameActionsValue {
+  const ctx = useContext(GameActionsContext);
+  if (!ctx)
+    throw new Error(
+      "useGameActions doit être utilisé dans un <GameProvider>",
+    );
+  return ctx;
+}
+
+/** État seul (state + isHydrated) — sans les actions. */
+export function useGameStateOnly(): GameStateValue {
+  const ctx = useContext(GameStateContext);
+  if (!ctx)
+    throw new Error(
+      "useGameStateOnly doit être utilisé dans un <GameProvider>",
+    );
   return ctx;
 }

@@ -37,7 +37,7 @@ export function emptyAllTrees(): Record<CompetenceTreeId, CompetenceTreeState> {
 const PALIER_DEFAULTS = [
   { coutPoints: 1, niveauArbreRequis: 1 },
   { coutPoints: 2, niveauArbreRequis: 2 },
-  { coutPoints: 3, niveauArbreRequis: 4 },
+  { coutPoints: 3, niveauArbreRequis: 5 },
 ] as const;
 
 function definirPaliers(
@@ -81,7 +81,7 @@ const TREE_GENERAL_DEF: CompetenceTreeDef = {
         {
           nom: "Diplomate",
           description:
-            "Au lieu de partir fâché, le client vous lâche son prix max exact et vous laisse une dernière contre-offre.",
+            "Au lieu de partir fâché, le client vous lâche son prix max exact et vous laisse une dernière contre-offre (1 fois par journée).",
         },
       ]),
     },
@@ -159,15 +159,15 @@ function brancheReparer(cat: CategorieObjet): PalierDef[] {
   return definirPaliers([
     {
       nom: `Apprenti — ${cat}`,
-      description: `Vous restaurez les pièces « ${cat} » en mauvais état (Mauvais → Bon, 7 jours).`,
+      description: `Vous restaurez les pièces « ${cat} » en mauvais état (Mauvais → Bon, 5 jours).`,
     },
     {
       nom: `Artisan — ${cat}`,
-      description: `Vous parachevez les pièces déjà décentes (Bon → Très bon, 7 jours).`,
+      description: `Vous parachevez les pièces déjà décentes (Bon → Très bon, 5 jours).`,
     },
     {
       nom: `Maître — ${cat}`,
-      description: `Vous parvenez à élever les pièces au pristin état (Très bon → Pristin état, 7 jours) et ramenez toute restauration « ${cat} » à 3 jours.`,
+      description: `Vous parvenez à élever les pièces au pristin état (Très bon → Pristin état) et ramenez toute restauration « ${cat} » à 3 jours.`,
     },
   ]);
 }
@@ -197,11 +197,11 @@ function branchePassion(cat: CategorieObjet): PalierDef[] {
     },
     {
       nom: `Passionné — ${cat}`,
-      description: `Les clients paient +25 % pour les objets « ${cat} » (remplace Amateur).`,
+      description: `Les clients paient +20 % pour les objets « ${cat} » (remplace Amateur).`,
     },
     {
       nom: `Mordu — ${cat}`,
-      description: `Les clients paient +40 % pour les objets « ${cat} » (remplace Passionné).`,
+      description: `Les clients paient +30 % pour les objets « ${cat} » (remplace Passionné).`,
     },
   ]);
 }
@@ -214,11 +214,11 @@ function brancheOeilAiguise(cat: CategorieObjet): PalierDef[] {
     },
     {
       nom: `Verbe haut — ${cat}`,
-      description: `Étend le seuil de colère de +15 % pour les ventes « ${cat} » (remplace Verbe agile).`,
+      description: `Étend le seuil de colère de +10 % pour les ventes « ${cat} » (remplace Verbe agile).`,
     },
     {
       nom: `Verbe d'or — ${cat}`,
-      description: `Étend le seuil de colère de +30 % pour les ventes « ${cat} » (remplace Verbe haut).`,
+      description: `Étend le seuil de colère de +20 % pour les ventes « ${cat} » (remplace Verbe haut).`,
     },
   ]);
 }

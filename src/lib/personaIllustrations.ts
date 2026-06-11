@@ -4,21 +4,21 @@ import type { VendeurArchetypeId } from "@/types/game";
 export const HUMEUR_FACHE_SEUIL = 0.75;
 
 const VENDEUR_ILLUSTRATION_MAP: Record<VendeurArchetypeId, string> = {
-  naif: "/personas/vendeur-naif.png",
-  bonhomme: "/personas/vendeur-bonhomme.png",
-  mamie: "/personas/vendeur-mamie.png",
-  malin: "/personas/vendeur-malin.png",
-  grincheux: "/personas/vendeur-grincheux.png",
-  antiquaire: "/personas/vendeur-antiquaire.png",
+  naif: "/personas/vendeur-naif.webp",
+  bonhomme: "/personas/vendeur-bonhomme.webp",
+  mamie: "/personas/vendeur-mamie.webp",
+  malin: "/personas/vendeur-malin.webp",
+  grincheux: "/personas/vendeur-grincheux.webp",
+  antiquaire: "/personas/vendeur-antiquaire.webp",
 };
 
 const VENDEUR_ILLUSTRATION_FACHE_MAP: Record<VendeurArchetypeId, string> = {
-  naif: "/personas/vendeur-naif-fache.png",
-  bonhomme: "/personas/vendeur-bonhomme-fache.png",
-  mamie: "/personas/vendeur-mamie-fache.png",
-  malin: "/personas/vendeur-malin-fache.png",
-  grincheux: "/personas/vendeur-grincheux-fache.png",
-  antiquaire: "/personas/vendeur-antiquaire-fache.png",
+  naif: "/personas/vendeur-naif-fache.webp",
+  bonhomme: "/personas/vendeur-bonhomme-fache.webp",
+  mamie: "/personas/vendeur-mamie-fache.webp",
+  malin: "/personas/vendeur-malin-fache.webp",
+  grincheux: "/personas/vendeur-grincheux-fache.webp",
+  antiquaire: "/personas/vendeur-antiquaire-fache.webp",
 };
 
 /** Retourne le chemin de l'illustration d'un vendeur, ou undefined si l'archétype est inconnu. */

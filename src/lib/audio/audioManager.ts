@@ -1,3 +1,8 @@
+import {
+  safeLocalStorageGet,
+  safeLocalStorageSet,
+} from "@/lib/storage/safeLocalStorage";
+
 export interface AudioPrefs {
   volume: number;
   foule: boolean;
@@ -52,12 +57,7 @@ class AudioManager {
   }
 
   persist(): void {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(this.prefs));
-    } catch {
-      /* localStorage indisponible */
-    }
+    safeLocalStorageSet(STORAGE_KEY, this.prefs);
   }
 
   ensureCtx(): void {
@@ -709,15 +709,8 @@ class AudioManager {
   }
 
   loadPersisted(): AudioPrefs {
-    if (typeof window === "undefined") return { ...DEFAULT_AUDIO_PREFS };
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { ...DEFAULT_AUDIO_PREFS };
-      const parsed = JSON.parse(raw) as Partial<AudioPrefs>;
-      return { ...DEFAULT_AUDIO_PREFS, ...parsed };
-    } catch {
-      return { ...DEFAULT_AUDIO_PREFS };
-    }
+    const parsed = safeLocalStorageGet<Partial<AudioPrefs>>(STORAGE_KEY, {});
+    return { ...DEFAULT_AUDIO_PREFS, ...parsed };
   }
 }
 

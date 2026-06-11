@@ -6,6 +6,7 @@ import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
 import { BrocanteCarousel } from "@/components/mobile/BrocanteCarousel";
+import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { useGame } from "@/context/GameContext";
 import { brocantesParTier } from "@/data/brocantes";
 import { estDebloquee, decrireConditions } from "@/lib/deblocage";
@@ -52,20 +53,7 @@ export default function ChinerListePage() {
   }, [state]);
 
   if (!isHydrated || !state) {
-    return (
-      <main
-        style={{
-          display: "grid",
-          placeItems: "center",
-          minHeight: "100dvh",
-          fontFamily: "var(--font-mono)",
-          color: "var(--ink-500)",
-          fontSize: 12,
-        }}
-      >
-        — préparation des halles…
-      </main>
-    );
+    return <SkeletonScreen label="— préparation des halles…" />;
   }
 
   const liste = brocantesParTier(tier);

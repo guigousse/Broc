@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { memo, type CSSProperties, type ReactNode } from "react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { StarRow } from "@/components/ui/StarRow";
@@ -23,7 +23,7 @@ interface ItemCardProps {
   style?: CSSProperties;
 }
 
-export function ItemCard({
+function ItemCardBase({
   templateId,
   categorie,
   etat,
@@ -146,3 +146,10 @@ export function ItemCard({
     </article>
   );
 }
+
+/**
+ * Mémoïsé : purement props-driven. Note — `footer` et `style` sont souvent
+ * des littéraux recréés par les parents ; le memo n'est alors effectif que
+ * si le parent les stabilise (useMemo) ou les omet.
+ */
+export const ItemCard = memo(ItemCardBase);

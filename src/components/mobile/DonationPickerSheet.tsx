@@ -76,16 +76,19 @@ export function DonationPickerSheet({
               onClick={retirerDisabled ? undefined : onRetirer}
               disabled={retirerDisabled}
               style={{
-                padding: "6px 10px",
+                padding: "8px 12px",
+                minHeight: 40,
                 fontFamily: "var(--font-display)",
                 fontSize: 10,
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
                 border: "1px solid var(--vermillion-600)",
+                borderRadius: "var(--radius-btn)",
                 background: "var(--paper-100)",
                 color: "var(--vermillion-600)",
                 cursor: retirerDisabled ? "not-allowed" : "pointer",
                 opacity: retirerDisabled ? 0.45 : 1,
+                filter: retirerDisabled ? "grayscale(0.65)" : undefined,
               }}
             >
               {retirerDisabled ? "Stockage plein" : "Retirer"}
@@ -146,7 +149,7 @@ export function DonationPickerSheet({
               <div
                 style={{
                   fontFamily: "var(--font-mono)",
-                  fontSize: 9.5,
+                  fontSize: 10.5,
                   color: "var(--ink-500)",
                 }}
               >
@@ -157,12 +160,14 @@ export function DonationPickerSheet({
               type="button"
               onClick={() => onDonner(o.id)}
               style={{
-                padding: "6px 10px",
+                padding: "8px 14px",
+                minHeight: 40,
                 fontFamily: "var(--font-display)",
                 fontSize: 10,
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
                 border: "1px solid var(--brass-500)",
+                borderRadius: "var(--radius-btn)",
                 background: "var(--forest-800)",
                 color: "var(--brass-300)",
                 cursor: "pointer",

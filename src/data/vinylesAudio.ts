@@ -23,6 +23,12 @@ export const VINYLE_AUDIO_URLS: Record<string, string> = {
     "https://cdn1.suno.ai/ea9901d4-6a5e-4068-b63a-2aee8a99abc0.mp3",
   "mus.vinyle_balavoine_aziza":
     "https://cdn1.suno.ai/2a2d276e-c23a-44ea-ac50-3bf527b46b8a.mp3",
+  "mus.vinyle_goldman_envole":
+    "https://cdn1.suno.ai/28c44102-d03c-45d7-81f3-15570ca4a60c.mp3",
+  "mus.vinyle_aznavour_emmenez":
+    "https://cdn1.suno.ai/d9aa836d-586f-42a6-bf96-f685cfe2e5a7.mp3",
+  "mus.vinyle_brel_amsterdam":
+    "https://cdn1.suno.ai/1014423e-6b54-431d-bd67-6109ce3c55b5.mp3",
 };
 
 export function vinylAudioUrl(templateId: string): string {

@@ -1,21 +1,24 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { Angry, Meh, Smile, SmilePlus, type LucideIcon } from "lucide-react";
 
 interface HumeurGaugeProps {
   /** Humeur courante, 0–1. */
   humeur: number;
 }
 
-function emojiForHumeur(humeur: number): string {
-  if (humeur < 0.25) return "😊";
-  if (humeur < 0.5) return "🙂";
-  if (humeur < 0.75) return "😐";
-  return "😠";
+/** Icône (Lucide, trait 1.5 — cohérent Art Déco) + teinte selon l'humeur. */
+function iconForHumeur(humeur: number): { Icon: LucideIcon; color: string } {
+  if (humeur < 0.25) return { Icon: SmilePlus, color: "var(--patina-500)" };
+  if (humeur < 0.5) return { Icon: Smile, color: "var(--patina-500)" };
+  if (humeur < 0.75) return { Icon: Meh, color: "var(--brass-600)" };
+  return { Icon: Angry, color: "var(--vermillion-600)" };
 }
 
 export function HumeurGauge({ humeur }: HumeurGaugeProps) {
   const clamped = Math.min(1, Math.max(0, humeur));
+  const { Icon, color } = iconForHumeur(clamped);
   return (
     <div style={wrapStyle}>
       <span style={labelStyle}>Humeur</span>
@@ -23,7 +26,7 @@ export function HumeurGauge({ humeur }: HumeurGaugeProps) {
         <div style={fillStyle} />
         <div style={{ ...pointerStyle, left: `${clamped * 100}%` }} />
       </div>
-      <span style={emojiStyle}>{emojiForHumeur(clamped)}</span>
+      <Icon size={18} strokeWidth={1.5} color={color} aria-hidden />
     </div>
   );
 }
@@ -57,7 +60,7 @@ const fillStyle: CSSProperties = {
   position: "absolute",
   inset: 0,
   borderRadius: 3,
-  background: "linear-gradient(to right, #3a7c43 0%, #d99000 60%, #c44 100%)",
+  background: "var(--gradient-humeur)",
 };
 
 const pointerStyle: CSSProperties = {
@@ -65,10 +68,6 @@ const pointerStyle: CSSProperties = {
   top: -3,
   width: 2,
   height: 12,
-  background: "#222",
+  background: "var(--ink-900)",
   transition: "left 200ms ease-out",
-};
-
-const emojiStyle: CSSProperties = {
-  fontSize: 16,
 };

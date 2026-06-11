@@ -115,12 +115,14 @@ export function collectionStatusPourObjet(
 
 /**
  * Coût en pièces de la catégorie pour faire passer `o` de son état actuel
- * à `cible`. Min 1 pièce. Formule : ceil(gain_prixRef / 5).
+ * à `cible`. Min 1 pièce. Formule : ceil(gain_prixRef / 10) — une pièce
+ * "vaut" ~5 € au démantèlement, la restauration laisse donc ~la moitié
+ * du gain en marge nette.
  */
 export function coutAmelioration(o: Objet, cible: EtatObjet): number {
   const prixApres = recalculerPrixReference(o.prixReferenceReel, o.etat, cible);
   const gain = Math.max(0, prixApres - o.prixReferenceReel);
-  return Math.max(1, Math.ceil(gain / 5));
+  return Math.max(1, Math.ceil(gain / 10));
 }
 
 /**

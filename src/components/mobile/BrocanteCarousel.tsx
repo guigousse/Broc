@@ -62,8 +62,8 @@ const arrowBtn: CSSProperties = {
   position: "absolute",
   top: "50%",
   transform: "translateY(-50%)",
-  width: 36,
-  height: 36,
+  width: 44,
+  height: 44,
   display: "grid",
   placeItems: "center",
   background: "var(--paper-100)",
@@ -127,6 +127,7 @@ const lockStyle: CSSProperties = {
 const dotsRow: CSSProperties = {
   display: "flex",
   justifyContent: "center",
+  alignItems: "center",
   gap: 6,
   paddingTop: 6,
 };
@@ -135,12 +136,21 @@ const dotStyle = (active: boolean): CSSProperties => ({
   width: active ? 22 : 8,
   height: 8,
   borderRadius: 4,
-  background: active ? "var(--forest-800)" : "var(--brass-500)",
+  background: active ? "var(--brass-500)" : "var(--paper-500)",
   transition: "width 180ms ease, background 180ms ease",
   cursor: "pointer",
   border: "none",
   padding: 0,
 });
+
+const compteurStyle: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  letterSpacing: "0.1em",
+  color: "var(--ink-500)",
+  textAlign: "center",
+  marginTop: 2,
+};
 
 const enterBtn = (
   debloquee: boolean,
@@ -303,16 +313,21 @@ export function BrocanteCarousel({
       </div>
 
       {/* Indicateurs de pagination */}
-      <div style={dotsRow}>
-        {brocantes.map((b, i) => (
-          <button
-            key={b.id}
-            type="button"
-            onClick={() => goTo(i)}
-            style={dotStyle(i === activeIdx)}
-            aria-label={`Aller à la brocante ${i + 1}`}
-          />
-        ))}
+      <div>
+        <div style={dotsRow}>
+          {brocantes.map((b, i) => (
+            <button
+              key={b.id}
+              type="button"
+              onClick={() => goTo(i)}
+              style={dotStyle(i === activeIdx)}
+              aria-label={`Aller à la brocante ${i + 1}`}
+            />
+          ))}
+        </div>
+        <div style={compteurStyle} aria-hidden>
+          {activeIdx + 1} / {brocantes.length}
+        </div>
       </div>
 
       {/* Bouton ENTRER (toujours pour la brocante actuellement visible) */}

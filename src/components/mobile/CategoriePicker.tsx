@@ -64,7 +64,7 @@ const cellBase: CSSProperties = {
 
 const countText: CSSProperties = {
   fontFamily: "var(--font-mono)",
-  fontSize: 8,
+  fontSize: 10,
   fontWeight: 700,
   letterSpacing: "0.04em",
   color: "var(--brass-700)",

@@ -46,7 +46,7 @@ export function CarrouselStock({ stock, onPickUp }: Props) {
         // Même fond que la bande de vinyles du gramophone (QG) : gradient
         // bois sombre, borderTop noir, inset shadow en haut.
         background:
-          "linear-gradient(180deg, #3d2614 0%, #2a1a0e 50%, #1f130a 100%)",
+          "var(--gradient-cargo-wood)",
         borderTop: "1px solid rgba(0,0,0,0.4)",
         boxShadow: "inset 0 2px 6px rgba(0,0,0,0.55)",
       }}

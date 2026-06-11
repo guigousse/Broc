@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
@@ -73,6 +73,51 @@ export default function StockagePage() {
     return acc;
   }, [state]);
 
+  // Callbacks stabilisés (useCallback) pour que les StockageItemRow mémoïsées
+  // ne re-rendent pas quand seul l'état local de la page change (flash,
+  // overlay ouvert, filtre…).
+  const atelierStatus = useCallback(
+    (o: Objet) =>
+      state ? atelierStatusPourObjet(state, o) : { disponible: false },
+    [state],
+  );
+  const collectionStatus = useCallback(
+    (o: Objet) =>
+      state
+        ? collectionStatusPourObjet(state, o)
+        : { disponible: false, necessiteConfirmation: false },
+    [state],
+  );
+
+  const envoyerAtelier = useCallback(
+    (o: Objet) => {
+      const cible = prochaineEtatCible(o.etat);
+      if (!cible) return;
+      const res = restaurerObjet(o.id, cible);
+      if (res.ok) setFlash(`${o.nom} envoyé à l'atelier.`);
+      else setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
+      setTimeout(() => setFlash(null), 2500);
+    },
+    [restaurerObjet],
+  );
+
+  const envoyerCollection = useCallback(
+    (o: Objet) => {
+      if (!state) return;
+      const status = collectionStatusPourObjet(state, o);
+      if (!status.disponible && !status.necessiteConfirmation) return;
+      if (status.necessiteConfirmation && status.ancienneDonation) {
+        setAskReplace({ objet: o, ancienne: status.ancienneDonation });
+        return;
+      }
+      const res = donnerACollection(o.id);
+      if (res.ok) setFlash(`${o.nom} ajouté à la collection.`);
+      else setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
+      setTimeout(() => setFlash(null), 2500);
+    },
+    [state, donnerACollection],
+  );
+
   if (!isHydrated || !state) {
     return (
       <main
@@ -92,31 +137,6 @@ export default function StockagePage() {
 
   const tier = getStockageTierParNiveau(state.niveauStockage);
   const capacite = getCapaciteStockage(state);
-
-  const atelierStatus = (o: Objet) => atelierStatusPourObjet(state, o);
-  const collectionStatus = (o: Objet) => collectionStatusPourObjet(state, o);
-
-  const envoyerAtelier = (o: Objet) => {
-    const cible = prochaineEtatCible(o.etat);
-    if (!cible) return;
-    const res = restaurerObjet(o.id, cible);
-    if (res.ok) setFlash(`${o.nom} envoyé à l'atelier.`);
-    else setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
-    setTimeout(() => setFlash(null), 2500);
-  };
-
-  const envoyerCollection = (o: Objet) => {
-    const status = collectionStatusPourObjet(state, o);
-    if (!status.disponible && !status.necessiteConfirmation) return;
-    if (status.necessiteConfirmation && status.ancienneDonation) {
-      setAskReplace({ objet: o, ancienne: status.ancienneDonation });
-      return;
-    }
-    const res = donnerACollection(o.id);
-    if (res.ok) setFlash(`${o.nom} ajouté à la collection.`);
-    else setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
-    setTimeout(() => setFlash(null), 2500);
-  };
 
   const confirmerReplace = () => {
     if (!askReplace) return;

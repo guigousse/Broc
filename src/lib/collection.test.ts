@@ -145,7 +145,11 @@ describe("donnerObjet", () => {
   it("pose une donation dans un slot vide, ancienne = null", () => {
     const col = withSlots([emptySlot("t1", "Musique")]);
     const res = donnerObjet(col, "t1", "Bon", 50);
-    expect(res.collection.Musique[0].donation).toEqual({ etat: "Bon", valeur: 50 });
+    expect(res.collection.Musique[0].donation).toEqual({
+      etat: "Bon",
+      valeur: 50,
+      valeurBase: 50,
+    });
     expect(res.collection.Musique[0].vu).toBe(true);
     expect(res.collection.Musique[0].dejaPossede).toBe(true);
     expect(res.ancienne).toBeNull();
@@ -159,11 +163,23 @@ describe("donnerObjet", () => {
       },
     ]);
     const res = donnerObjet(col, "t1", "Pristin état", 200);
+    // Prime de restauration : Pristin état → valeur ×1.25, base conservée.
     expect(res.collection.Musique[0].donation).toEqual({
       etat: "Pristin état",
-      valeur: 200,
+      valeur: 250,
+      valeurBase: 200,
     });
     expect(res.ancienne).toEqual({ etat: "Mauvais", valeur: 10 });
+  });
+
+  it("applique la prime d'état Très bon (×1.1)", () => {
+    const col = withSlots([emptySlot("t1", "Musique")]);
+    const res = donnerObjet(col, "t1", "Très bon", 100);
+    expect(res.collection.Musique[0].donation).toEqual({
+      etat: "Très bon",
+      valeur: 110,
+      valeurBase: 100,
+    });
   });
 });
 

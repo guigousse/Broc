@@ -14,6 +14,10 @@ import {
   DEFAULT_AUDIO_PREFS,
   type AudioPrefs,
 } from "@/lib/audio/audioManager";
+import {
+  safeLocalStorageGet,
+  safeLocalStorageSet,
+} from "@/lib/storage/safeLocalStorage";
 
 export type TailleFonte = "petit" | "normal" | "grand";
 
@@ -67,24 +71,12 @@ interface SettingsValue {
 const SettingsContext = createContext<SettingsValue | null>(null);
 
 function loadDisplay(): DisplayPrefs {
-  if (typeof window === "undefined") return { ...DEFAULT_DISPLAY };
-  try {
-    const raw = window.localStorage.getItem(DISPLAY_KEY);
-    if (!raw) return { ...DEFAULT_DISPLAY };
-    const parsed = JSON.parse(raw) as Partial<DisplayPrefs>;
-    return { ...DEFAULT_DISPLAY, ...parsed };
-  } catch {
-    return { ...DEFAULT_DISPLAY };
-  }
+  const parsed = safeLocalStorageGet<Partial<DisplayPrefs>>(DISPLAY_KEY, {});
+  return { ...DEFAULT_DISPLAY, ...parsed };
 }
 
 function persistDisplay(p: DisplayPrefs): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(DISPLAY_KEY, JSON.stringify(p));
-  } catch {
-    /* ignore */
-  }
+  safeLocalStorageSet(DISPLAY_KEY, p);
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {

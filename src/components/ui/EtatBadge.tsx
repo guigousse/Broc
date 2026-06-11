@@ -33,7 +33,7 @@ export function EtatBadge({ etat }: { etat: EtatObjet }) {
     <span
       style={{
         fontFamily: "var(--font-display)",
-        fontSize: 8,
+        fontSize: 10,
         letterSpacing: "0.14em",
         textTransform: "uppercase",
         fontWeight: 600,

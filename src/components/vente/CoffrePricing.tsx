@@ -85,7 +85,7 @@ export function CoffrePricing({
                 <div style={{ fontFamily: "var(--font-display)", fontSize: 10.5, color: "var(--forest-800)" }}>
                   {ov.objet.nom}
                 </div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--ink-500)" }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-500)" }}>
                   {ov.objet.etat} · {ov.objet.rarete}
                 </div>
               </div>

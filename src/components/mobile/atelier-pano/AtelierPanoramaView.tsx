@@ -10,7 +10,7 @@ import {
 } from "./AtelierPanorama";
 import { AtelierScene } from "./AtelierScene";
 import { ATELIER_LAYOUT, zoneToTab } from "./layout";
-import { useGame } from "@/context/GameContext";
+import { useGameStateOnly } from "@/context/GameContext";
 
 interface AtelierPanoramaViewProps {
   /** Onglet courant déduit du pathname par le layout (panorama). */
@@ -53,7 +53,7 @@ function hotspotStyle(
  */
 export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
   const router = useRouter();
-  const { state, isHydrated } = useGame();
+  const { state, isHydrated } = useGameStateOnly();
 
   // Sync URL ← scroll, robuste contre les artefacts de mount/init.
   //

@@ -81,14 +81,14 @@ const descStyle: CSSProperties = {
 
 const metaStyle: CSSProperties = {
   fontFamily: "var(--font-mono)",
-  fontSize: 9.5,
+  fontSize: 10.5,
   color: "var(--brass-700)",
   letterSpacing: "0.08em",
 };
 
 const lockStyle: CSSProperties = {
   fontFamily: "var(--font-mono)",
-  fontSize: 9,
+  fontSize: 10,
   color: "var(--vermillion-600)",
   letterSpacing: "0.06em",
   lineHeight: 1.2,

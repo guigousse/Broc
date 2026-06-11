@@ -107,7 +107,7 @@ const metaRow: CSSProperties = {
 
 const labelStyle: CSSProperties = {
   fontFamily: "var(--font-mono)",
-  fontSize: 9,
+  fontSize: 10,
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: "var(--brass-700)",

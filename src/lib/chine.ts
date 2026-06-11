@@ -100,25 +100,32 @@ function instancier(
   };
 }
 
-const POIDS_RARETE: Record<Rarete, number> = {
-  commun: 88,
-  rare: 10,
-  legendaire: 2,
+/**
+ * Poids de tirage par rareté, selon le tier de la brocante.
+ * Les brocantes prestigieuses (3⭐/4⭐) sortent un peu plus de belles pièces
+ * pour adoucir le grind de fin de partie.
+ */
+const POIDS_RARETE_PAR_TIER: Record<1 | 2 | 3 | 4, Record<Rarete, number>> = {
+  1: { commun: 88, rare: 10, legendaire: 2 },
+  2: { commun: 88, rare: 10, legendaire: 2 },
+  3: { commun: 85, rare: 12, legendaire: 3 },
+  4: { commun: 80, rare: 15, legendaire: 5 },
 };
 
-function poidsRarete(rarete: Rarete, boost: boolean): number {
-  const base = POIDS_RARETE[rarete];
+function poidsRarete(rarete: Rarete, boost: boolean, tier: 1 | 2 | 3 | 4): number {
+  const base = POIDS_RARETE_PAR_TIER[tier][rarete];
   return boost && rarete !== "commun" ? base * CELEBRITE_BOOST_RARES : base;
 }
 
 function tirerTemplatePondere(
   pool: readonly ObjetTemplate[],
   boostRares: boolean,
+  tier: 1 | 2 | 3 | 4,
 ): ObjetTemplate {
-  const total = pool.reduce((s, t) => s + poidsRarete(t.rarete, boostRares), 0);
+  const total = pool.reduce((s, t) => s + poidsRarete(t.rarete, boostRares, tier), 0);
   let r = Math.random() * total;
   for (const t of pool) {
-    r -= poidsRarete(t.rarete, boostRares);
+    r -= poidsRarete(t.rarete, boostRares, tier);
     if (r <= 0) return t;
   }
   return pool[pool.length - 1];
@@ -195,7 +202,7 @@ export function genererSession(
     }
     if (pool.length === 0) continue;
 
-    const t = tirerTemplatePondere(pool, celebritePresente);
+    const t = tirerTemplatePondere(pool, celebritePresente, brocante?.tier ?? 1);
     // Pas de doublon pour rares et légendaires
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
     dejaTires.add(t.templateId);

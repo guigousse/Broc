@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import {
+  memo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+} from "react";
 import { Album, Anvil, ArrowRight } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
@@ -53,7 +59,7 @@ const actionBtn = (
   cursor: enabled ? "pointer" : "not-allowed",
   opacity: enabled ? 1 : 0.55,
   fontFamily: "var(--font-mono)",
-  fontSize: 8,
+  fontSize: 10,
   letterSpacing: "0.12em",
   textTransform: "uppercase",
 });
@@ -93,7 +99,7 @@ const arrowBadge: CSSProperties = {
   filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.4))",
 };
 
-export function StockageItemRow({
+function StockageItemRowBase({
   objet,
   valeurConnue,
   atelier,
@@ -200,6 +206,7 @@ export function StockageItemRow({
   return (
     <div
       data-pager-swipe-ignore="1"
+      className="broc-list-row"
       style={{
         ...wrap,
         borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",
@@ -311,7 +318,7 @@ export function StockageItemRow({
           <div
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: 9,
+              fontSize: 10,
               color: "var(--brass-700)",
               letterSpacing: "0.06em",
             }}
@@ -323,3 +330,26 @@ export function StockageItemRow({
     </div>
   );
 }
+
+/**
+ * Mémoïsé avec un comparateur custom : `atelier` et `collection` sont des
+ * objets recréés à chaque render du parent (résultats de `atelierStatus(o)` /
+ * `collectionStatus(o)`) — on les compare donc par valeur. Les callbacks sont
+ * comparés par référence : pour que le memo soit effectif, le parent doit les
+ * stabiliser (useCallback), cf. stockage/gerer/page.tsx.
+ */
+export const StockageItemRow = memo(
+  StockageItemRowBase,
+  (prev, next) =>
+    prev.objet === next.objet &&
+    prev.valeurConnue === next.valeurConnue &&
+    prev.isLast === next.isLast &&
+    prev.onTap === next.onTap &&
+    prev.onEnvoyerAtelier === next.onEnvoyerAtelier &&
+    prev.onEnvoyerCollection === next.onEnvoyerCollection &&
+    prev.atelier.disponible === next.atelier.disponible &&
+    prev.atelier.raison === next.atelier.raison &&
+    prev.collection.disponible === next.collection.disponible &&
+    prev.collection.necessiteConfirmation ===
+      next.collection.necessiteConfirmation,
+);

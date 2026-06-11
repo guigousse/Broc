@@ -148,6 +148,10 @@ export default function VitrineJourneePage() {
   };
   const fancyClientApparuRef = useRef(false);
   fancyClientApparuRef.current = fancyClientApparu;
+  /** Diplomate : la révélation du prix max est limitée à UNE par journée de
+      vente — ce ref passe à true à la première révélation et n'est jamais
+      réinitialisé entre les clients. */
+  const diplomatieUtiliseeAujourdhuiRef = useRef(false);
   const celebriteApparueRef = useRef(false);
   // Détecte si la célébrité de la semaine vise cette brocante aujourd'hui.
   const celebriteIciAujourdhui =
@@ -467,7 +471,12 @@ export default function VitrineJourneePage() {
       ev.persona,
       offre,
       modifiersRef.current ?? undefined,
-      { revelationDejaFaite },
+      {
+        // Une seule révélation Diplomate par journée : une fois consommée,
+        // les clients suivants sont traités comme si elle avait déjà eu lieu.
+        revelationDejaFaite:
+          revelationDejaFaite || diplomatieUtiliseeAujourdhuiRef.current,
+      },
     );
     setNegoVente(next);
 
@@ -475,9 +484,12 @@ export default function VitrineJourneePage() {
     if (
       next.statut === "en_cours" &&
       next.humeur >= 0.95 &&
-      !revelationDejaFaite
+      !revelationDejaFaite &&
+      !diplomatieUtiliseeAujourdhuiRef.current
     ) {
       setRevelationDejaFaite(true);
+      diplomatieUtiliseeAujourdhuiRef.current = true;
+      setRevelationFaite(true);
     }
 
     if (next.statut === "conclu") {
@@ -1050,7 +1062,7 @@ function ClientModal({
             }}
             title={
               revelationFaite
-                ? "Diplomate — le client a révélé son plafond"
+                ? "Diplomate — le client a révélé son plafond (1 fois par journée)"
                 : "Compétence Œil aiguisé"
             }
           >

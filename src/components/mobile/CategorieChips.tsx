@@ -27,7 +27,7 @@ const chip: CSSProperties = {
   background: "var(--paper-100)",
   color: "var(--ink-500)",
   fontFamily: "var(--font-mono)",
-  fontSize: 9.5,
+  fontSize: 10.5,
   letterSpacing: "0.1em",
   textTransform: "uppercase",
   whiteSpace: "nowrap",

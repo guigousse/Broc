@@ -156,7 +156,7 @@ export function ItemEnCarrousel({ objet, onDragToCoffre }: Props) {
           background: "var(--brass-700)",
           color: "#fff",
           fontFamily: "var(--font-mono)",
-          fontSize: 9,
+          fontSize: 10,
           padding: "1px 4px",
           borderRadius: 2,
           letterSpacing: "0.04em",

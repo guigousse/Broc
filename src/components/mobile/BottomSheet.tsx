@@ -68,9 +68,10 @@ const headerStyle: CSSProperties = {
   borderBottom: "1px solid var(--brass-500)",
 };
 
-// Seuils de fermeture par swipe vers le bas.
-const DISMISS_RATIO = 0.3; // 30% de la hauteur
-const DISMISS_VELOCITY = 0.5; // px/ms
+// Seuils de fermeture par swipe vers le bas — volontairement exigeants pour
+// éviter les fermetures involontaires en pleine négociation/donation.
+const DISMISS_RATIO = 0.4; // 40% de la hauteur
+const DISMISS_VELOCITY = 0.8; // px/ms (flick franc uniquement)
 
 export function BottomSheet({
   open,
@@ -194,12 +195,19 @@ export function BottomSheet({
                 aria-label="Fermer"
                 style={{
                   fontFamily: "var(--font-mono)",
-                  fontSize: 11,
+                  fontSize: 12,
                   color: "var(--brass-700)",
                   background: "transparent",
                   border: "none",
                   cursor: "pointer",
-                  padding: 4,
+                  minHeight: 40,
+                  minWidth: 64,
+                  margin: "-8px -12px -8px 0",
+                  padding: "8px 12px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: 4,
                 }}
               >
                 Fermer ✕

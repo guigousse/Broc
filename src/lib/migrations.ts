@@ -31,6 +31,13 @@ import { genererTendances } from "@/lib/tendances";
 // après audit s'il reste inutile.
 void donnerObjetFn;
 
+/**
+ * Version courante du schéma de sauvegarde. Posée sur tout état retourné par
+ * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
+ * une migration.
+ */
+export const SAVE_VERSION = 2;
+
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
   "Bon",
@@ -52,8 +59,23 @@ export function migrerEtat(etat: string): EtatObjet {
  * apparus depuis la dernière version du jeu.
  *
  * Fonction pure : `loaded` n'est pas muté, un nouvel objet est retourné.
+ *
+ * Filet de sécurité : si la migration lève une exception (save inattendu),
+ * l'état chargé est retourné tel quel plutôt que de casser la partie.
  */
 export function migrerSauvegarde(loaded: GameState): GameState {
+  try {
+    return { ...appliquerMigrations(loaded), version: SAVE_VERSION };
+  } catch (err) {
+    console.error(
+      "[migrations] Échec de la migration de sauvegarde, état conservé tel quel :",
+      err,
+    );
+    return loaded;
+  }
+}
+
+function appliquerMigrations(loaded: GameState): GameState {
   const VALID_CATS = new Set<string>(CATEGORIES);
   const vitrineArray = Array.isArray(loaded.vitrine)
     ? (loaded.vitrine as ObjetEnVitrine[])

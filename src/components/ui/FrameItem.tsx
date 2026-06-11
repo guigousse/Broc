@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { memo, type CSSProperties, type ReactNode } from "react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
@@ -39,7 +39,7 @@ const overlaySvgStyle: CSSProperties = {
   overflow: "visible",
 };
 
-export function FrameItem({
+function FrameItemBase({
   categorie,
   titre,
   rarete,
@@ -138,7 +138,7 @@ export function FrameItem({
           <span
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: 8,
+              fontSize: 10,
               letterSpacing: "0.28em",
               textTransform: "uppercase",
               color: colors.outer,
@@ -375,3 +375,10 @@ export function FrameItem({
     </div>
   );
 }
+
+/**
+ * Mémoïsé : purement props-driven (deux SVG assez coûteux à re-rendre).
+ * Note — `children` est souvent un littéral JSX recréé par les parents ;
+ * le memo n'est alors effectif que si le parent le stabilise.
+ */
+export const FrameItem = memo(FrameItemBase);

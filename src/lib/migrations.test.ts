@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { GameState } from "@/types/game";
-import { migrerEtat, migrerSauvegarde } from "./migrations";
+import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState } from "./__test-fixtures__/gameState";
 
@@ -136,6 +136,35 @@ describe("migrerSauvegarde — purge des compétences obsolètes", () => {
     });
     const m = migrerSauvegarde(state);
     expect(m.competencesDebloquees).toEqual([]);
+  });
+});
+
+describe("migrerSauvegarde — versioning", () => {
+  it("pose version = SAVE_VERSION sur l'état migré", () => {
+    const fresh = createMockGameState();
+    expect(migrerSauvegarde(fresh).version).toBe(SAVE_VERSION);
+  });
+
+  it("écrase une ancienne version par SAVE_VERSION", () => {
+    const old = { ...createMockGameState(), version: 1 } as GameState;
+    expect(migrerSauvegarde(old).version).toBe(SAVE_VERSION);
+  });
+});
+
+describe("migrerSauvegarde — filet de sécurité en cas d'exception", () => {
+  it("retourne l'état chargé tel quel si la migration lève une exception", () => {
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    // `achats` non-itérable → `.map` lève une TypeError pendant la migration.
+    const broken = {
+      ...createMockGameState(),
+      historique: [{ type: "chinage", achats: null }],
+    } as unknown as GameState;
+    const result = migrerSauvegarde(broken);
+    expect(result).toBe(broken);
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });
 

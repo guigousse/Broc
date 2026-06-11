@@ -21,7 +21,7 @@ interface NegoBarProps {
   readOnly?: boolean;
 }
 
-const COLOR_JOUEUR = "#2b5a8c";
+const COLOR_JOUEUR = "var(--nego-joueur)";
 const COLOR_ADVERSE = "var(--brass-700, #8c6a2b)";
 
 export function NegoBar({

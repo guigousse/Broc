@@ -102,27 +102,50 @@ export function marquerVuDansCollection(
 export interface ResultatDonation {
   collection: Record<CategorieObjet, CollectionSlot[]>;
   /** Si le slot était déjà rempli, l'ancienne donation déplacée (à recréer dans l'inventaire par le caller). */
-  ancienne: { etat: EtatObjet; valeur: number } | null;
+  ancienne: { etat: EtatObjet; valeur: number; valeurBase?: number } | null;
+}
+
+/**
+ * Prime appliquée à la valeur de collection d'une donation selon l'état de la
+ * pièce. Récompense le passage par l'atelier : une pièce restaurée "muséale"
+ * compte plus que sa simple valeur marchande.
+ */
+export const PRIME_DONATION_ETAT: Record<EtatObjet, number> = {
+  Mauvais: 1,
+  Bon: 1,
+  "Très bon": 1.1,
+  "Pristin état": 1.25,
+};
+
+/** Valeur de collection d'une donation : prix de référence × prime d'état. */
+export function valeurDonation(etat: EtatObjet, prixReference: number): number {
+  return Math.round(prixReference * PRIME_DONATION_ETAT[etat]);
 }
 
 /**
  * Pose une donation dans le slot du `templateId`. Si le slot était déjà rempli,
  * l'ancienne donation est retournée pour que le caller puisse la remettre en inventaire.
+ * `valeur` est calculée avec la prime d'état ; `prixReference` brut est conservé
+ * dans `valeurBase` pour recréer l'objet sans inflation si on le retire.
  */
 export function donnerObjet(
   collection: Record<CategorieObjet, CollectionSlot[]>,
   templateId: string,
   etat: EtatObjet,
-  valeur: number,
+  prixReference: number,
 ): ResultatDonation {
-  let ancienne: { etat: EtatObjet; valeur: number } | null = null;
+  let ancienne: ResultatDonation["ancienne"] = null;
   const next = modifierSlot(collection, templateId, (s) => {
     ancienne = s.donation;
     return {
       ...s,
       vu: true,
       dejaPossede: true,
-      donation: { etat, valeur },
+      donation: {
+        etat,
+        valeur: valeurDonation(etat, prixReference),
+        valeurBase: prixReference,
+      },
     };
   });
   return { collection: next, ancienne };
@@ -136,7 +159,7 @@ export function retirerDonation(
   collection: Record<CategorieObjet, CollectionSlot[]>,
   templateId: string,
 ): ResultatDonation {
-  let ancienne: { etat: EtatObjet; valeur: number } | null = null;
+  let ancienne: ResultatDonation["ancienne"] = null;
   const next = modifierSlot(collection, templateId, (s) => {
     if (!s.donation) return s;
     ancienne = s.donation;

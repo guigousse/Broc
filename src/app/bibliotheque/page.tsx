@@ -8,6 +8,8 @@ import { StickyTop } from "@/components/mobile/StickyTop";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { TreePicker } from "@/components/mobile/TreePicker";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
+import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
+import { useToast } from "@/components/ui/Toast";
 import { useGame } from "@/context/GameContext";
 import {
   COMPETENCES,
@@ -23,9 +25,9 @@ import type { CompetenceDef, CompetenceTreeId } from "@/types/game";
 export default function CompetencesPage() {
   const router = useRouter();
   const { state, isHydrated, debloquerCompetence } = useGame();
+  const { toast } = useToast();
   const [tree, setTree] = useState<CompetenceTreeId>(TREE_GENERAL);
   const [palierActif, setPalierActif] = useState<CompetenceDef | null>(null);
-  const [flash, setFlash] = useState<string | null>(null);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -37,20 +39,7 @@ export default function CompetencesPage() {
   }, [tree]);
 
   if (!isHydrated || !state) {
-    return (
-      <main
-        style={{
-          display: "grid",
-          placeItems: "center",
-          minHeight: "100dvh",
-          fontFamily: "var(--font-mono)",
-          color: "var(--ink-500)",
-          fontSize: 12,
-        }}
-      >
-        — consultation du grimoire…
-      </main>
-    );
+    return <SkeletonScreen label="— consultation du grimoire…" />;
   }
 
   const treeState = state.competenceTrees[tree];
@@ -157,23 +146,6 @@ export default function CompetencesPage() {
           </StickyTop>
         }
       >
-        {flash && (
-          <div
-            style={{
-              padding: "10px 12px",
-              background: "var(--brass-100)",
-              border: "1px solid var(--brass-700)",
-              fontFamily: "var(--font-serif)",
-              fontStyle: "italic",
-              fontSize: 12.5,
-              color: "var(--ink-700)",
-              marginBottom: 8,
-            }}
-          >
-            « {flash} »
-          </div>
-        )}
-
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {treeDef?.branches.map((branche) => {
             const comps = competencesParBranche(tree, branche.id).sort(
@@ -258,14 +230,16 @@ export default function CompetencesPage() {
             onAcheter={() => {
               const res = debloquerCompetence(palierActif.id);
               if (res.ok) {
-                setFlash(`Compétence acquise : ${palierActif.nom}.`);
+                toast(`Compétence acquise : ${palierActif.nom}`, {
+                  type: "succes",
+                });
                 setPalierActif(null);
               } else {
-                setFlash(
-                  `Impossible : ${res.raison ?? "condition non remplie"}.`,
+                toast(
+                  `Impossible : ${res.raison ?? "condition non remplie"}`,
+                  { type: "erreur" },
                 );
               }
-              setTimeout(() => setFlash(null), 2500);
             }}
           />
         )}

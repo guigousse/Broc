@@ -4,6 +4,7 @@ import { SettingsProvider } from "@/context/SettingsContext";
 import { TabBar } from "@/components/mobile/TabBar";
 import { SwipePager } from "@/components/mobile/SwipePager";
 import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
+import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -43,9 +44,11 @@ export default function RootLayout({
       <body style={{ minHeight: "100dvh", overflowX: "hidden" }}>
         <SettingsProvider>
           <GameProvider>
-            <SwipePager>{children}</SwipePager>
-            <TabBar />
-            <GlobalVinylAmbiance />
+            <ToastProvider>
+              <SwipePager>{children}</SwipePager>
+              <TabBar />
+              <GlobalVinylAmbiance />
+            </ToastProvider>
           </GameProvider>
         </SettingsProvider>
       </body>

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Album, Anvil, BookOpen, Home, Warehouse, type LucideIcon } from "lucide-react";
 import { useSyncExternalStore, type CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
-import { useGame } from "@/context/GameContext";
+import { useGameStateOnly } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import {
   panoramaActiveStore,
@@ -15,6 +15,8 @@ import type { GameState } from "@/types/game";
 interface TabDef {
   icon: LucideIcon;
   label: string;
+  /** Libellé complet pour les lecteurs d'écran quand `label` est abrégé. */
+  ariaLabel?: string;
   path: string;
   badge?: (state: GameState) => number;
 }
@@ -35,6 +37,7 @@ export const TAB_ORDER: TabDef[] = [
   {
     icon: BookOpen,
     label: "Biblio.",
+    ariaLabel: "Bibliothèque",
     path: "/bibliotheque",
     badge: (state) =>
       Object.values(state.competenceTrees).reduce(
@@ -102,7 +105,7 @@ const tabBtn: CSSProperties = {
   border: "none",
   cursor: "pointer",
   fontFamily: "var(--font-mono)",
-  fontSize: "clamp(8px, 2.1vw, 10px)",
+  fontSize: "clamp(10px, 2.6vw, 12px)",
   lineHeight: 1.1,
   letterSpacing: "0.04em",
   textTransform: "uppercase",
@@ -133,7 +136,7 @@ const iconBox: CSSProperties = {
 export function TabBar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { state, isHydrated } = useGame();
+  const { state, isHydrated } = useGameStateOnly();
   const { playClick } = useSettings();
 
   // Override "live" : quand on est dans le panorama unifié, le store
@@ -173,7 +176,7 @@ export function TabBar() {
             key={tab.path}
             type="button"
             aria-current={active ? "page" : undefined}
-            aria-label={tab.label}
+            aria-label={tab.ariaLabel ?? tab.label}
             onClick={() => {
               playClick();
               if (!active) {

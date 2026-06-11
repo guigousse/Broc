@@ -721,7 +721,15 @@ export default function AtelierPage() {
             >
               Restaurer <strong>{restaurerCible.objet.nom}</strong> en{" "}
               <strong>{restaurerCible.etatCible}</strong> prend{" "}
-              <strong>7 jours</strong> et coûte{" "}
+              <strong>
+                {dureeRestauration(
+                  state,
+                  restaurerCible.objet.categorie,
+                  restaurerCible.etatCible,
+                )}{" "}
+                jours
+              </strong>{" "}
+              et coûte{" "}
               <strong>
                 {restaurerCible.cout} ⚙ {restaurerCible.objet.categorie}
               </strong>

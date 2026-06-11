@@ -95,6 +95,24 @@ const venteInput: CSSProperties = {
   padding: "2px 4px",
 };
 
+const stepBtn = (disabled: boolean): CSSProperties => ({
+  width: 44,
+  height: 44,
+  minWidth: 44,
+  display: "grid",
+  placeItems: "center",
+  border: "1px solid var(--brass-500)",
+  background: "var(--paper-100)",
+  color: "var(--forest-800)",
+  fontFamily: "var(--font-display)",
+  fontSize: 20,
+  fontWeight: 600,
+  lineHeight: 1,
+  cursor: disabled ? "not-allowed" : "pointer",
+  opacity: disabled ? 0.45 : 1,
+  padding: 0,
+});
+
 const restaurationBanner: CSSProperties = {
   padding: "8px 10px",
   background: "var(--paper-200)",
@@ -132,6 +150,13 @@ export function ObjetDetailOverlay({
   };
 
   const enRestauration = !!objet.enRestauration;
+
+  const ajusterPrix = (delta: number) => {
+    if (!objet || enRestauration) return;
+    const next = Math.max(0, prixLocal + delta);
+    setPrixLocal(next);
+    onSetPrixVente(objet.id, next);
+  };
   const isUnique = !!getTemplate(objet.templateId)?.unique;
 
   return (
@@ -189,20 +214,54 @@ export function ObjetDetailOverlay({
             </span>
           </div>
 
-          <div style={prixRowLast}>
+          <div
+            style={{
+              ...prixRowLast,
+              flexDirection: "column",
+              alignItems: "stretch",
+              gap: 8,
+            }}
+          >
             <span style={prixLabel}>Prix de vente</span>
-            <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-              <input
-                type="number"
-                min={0}
-                value={prixLocal}
-                onChange={(e) => setPrixLocal(Number(e.target.value) || 0)}
-                onBlur={commitPrix}
-                style={venteInput}
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 8,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => ajusterPrix(-5)}
                 disabled={enRestauration}
-                aria-label="Prix de vente"
-              />
-              <span style={prixValue}>€</span>
+                style={stepBtn(enRestauration)}
+                aria-label="Diminuer le prix de vente de 5 €"
+              >
+                −
+              </button>
+              <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                <input
+                  type="number"
+                  min={0}
+                  value={prixLocal}
+                  onChange={(e) => setPrixLocal(Number(e.target.value) || 0)}
+                  onBlur={commitPrix}
+                  style={venteInput}
+                  disabled={enRestauration}
+                  aria-label="Prix de vente"
+                />
+                <span style={prixValue}>€</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => ajusterPrix(5)}
+                disabled={enRestauration}
+                style={stepBtn(enRestauration)}
+                aria-label="Augmenter le prix de vente de 5 €"
+              >
+                +
+              </button>
             </span>
           </div>
         </div>

@@ -47,7 +47,7 @@ export function ChargementHeader({
         <div
           style={{
             fontFamily: "var(--font-mono)",
-            fontSize: 9,
+            fontSize: 10,
             letterSpacing: "0.14em",
             textTransform: "uppercase",
             color: "var(--brass-700)",
@@ -81,7 +81,7 @@ export function ChargementHeader({
             background: "var(--paper-100)",
             color: "var(--vermillion-600)",
             fontFamily: "var(--font-mono)",
-            fontSize: 9,
+            fontSize: 10,
             letterSpacing: "0.1em",
             textTransform: "uppercase",
             cursor: "pointer",
@@ -105,7 +105,7 @@ export function ChargementHeader({
             background: peutUpgrade ? "var(--brass-500)" : "var(--paper-300)",
             color: peutUpgrade ? "#fff" : "var(--ink-500)",
             fontFamily: "var(--font-display)",
-            fontSize: 9,
+            fontSize: 10,
             letterSpacing: "0.12em",
             textTransform: "uppercase",
             cursor: peutUpgrade ? "pointer" : "not-allowed",

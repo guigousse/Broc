@@ -56,6 +56,7 @@ await loadDotEnv();
 const STYLE_BRIEF = [
   "Vintage Art Déco scene illustration in a museum catalog style.",
   "Elegant ink line-art with subtle sepia and forest green color wash.",
+  "Color palette: warm sepia and muted forest-green tones on cream parchment, consistent with the headquarters cabinet panorama. Avoid bright neons or high-saturation colors.",
   "Composition: a wide-angle scene depicting the location, viewed slightly from above, soft and atmospheric, no people in the foreground (only distant silhouettes if any).",
   "Cream parchment background with subtle paper grain texture.",
   "Soft directional lighting, no harsh shadows, no text overlays, no captions, no watermark.",

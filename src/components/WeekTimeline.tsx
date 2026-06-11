@@ -18,7 +18,7 @@ const cellBase: CSSProperties = {
   padding: "5px 0",
   border: "1px solid var(--paper-500)",
   fontFamily: "var(--font-mono)",
-  fontSize: 9,
+  fontSize: 10,
   letterSpacing: "0.1em",
   color: "var(--ink-500)",
 };

@@ -99,7 +99,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 250 },
+        { type: "valeurCollection", montant: 150 },
         { type: "brocantesDebloquees", tier: 1, nombre: 3 },
       ],
     },
@@ -117,8 +117,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 350 },
-        { type: "valeurCollectionCategorie", categorie: "Maison", montant: 100 },
+        { type: "valeurCollection", montant: 250 },
+        { type: "valeurCollectionCategorie", categorie: "Maison", montant: 80 },
       ],
     },
   },
@@ -136,8 +136,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 300 },
-        { type: "valeurCollectionCategorie", categorie: "Musique", montant: 100 },
+        { type: "valeurCollection", montant: 220 },
+        { type: "valeurCollectionCategorie", categorie: "Musique", montant: 80 },
       ],
     },
   },
@@ -155,8 +155,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 280 },
-        { type: "valeurCollectionCategorie", categorie: "Bricolage", montant: 80 },
+        { type: "valeurCollection", montant: 200 },
+        { type: "valeurCollectionCategorie", categorie: "Bricolage", montant: 60 },
       ],
     },
   },
@@ -174,8 +174,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 350 },
-        { type: "valeurCollectionCategorie", categorie: "Maison", montant: 130 },
+        { type: "valeurCollection", montant: 300 },
+        { type: "valeurCollectionCategorie", categorie: "Maison", montant: 100 },
       ],
     },
   },
@@ -205,8 +205,8 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "valeurCollection", montant: 1000 },
-        { type: "brocantesDebloquees", tier: 2, nombre: 5 },
+        { type: "valeurCollection", montant: 800 },
+        { type: "brocantesDebloquees", tier: 2, nombre: 4 },
       ],
     },
   },

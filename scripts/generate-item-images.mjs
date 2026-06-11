@@ -85,6 +85,7 @@ function backgroundPhrase(rarete) {
 function buildStyleBrief(rarete) {
   return [
     "Vintage product illustration in a museum catalog style, elegant ink line-art with subtle sepia and forest green color wash.",
+    "Color palette: warm sepia and muted forest-green tones on cream parchment, consistent with the headquarters cabinet panorama. Avoid bright neons or high-saturation colors.",
     `Single object isolated on a ${backgroundPhrase(rarete)} background with subtle paper grain texture.`,
     "Background must be strictly neutral and empty — absolutely NO decorative borders, NO geometric Art Déco frames, NO corner ornaments, NO patterns, NO motifs around the object. Just the plain paper background.",
     "Soft directional lighting, no harsh shadows, no text, no captions, no watermark, no labels other than what is naturally on the object itself.",

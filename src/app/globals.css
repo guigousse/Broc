@@ -52,6 +52,17 @@
   --vermillion-500: #B85240;
   --velvet-700: #5C2B3E;
   --patina-500: #6B7F6E;
+  /* Rouge d'urgence (calendrier, alertes) — variante sombre du vermillion. */
+  --red-urgent: #A32A2A;
+  --red-urgent-strong: #B03030;
+
+  /* Gradients récurrents */
+  /* Jauge d'humeur client : contentement → neutre → colère (teintes patina/brass/vermillion). */
+  --gradient-humeur: linear-gradient(to right, #3a7c43 0%, #d99000 60%, #c44 100%);
+  /* Bois sombre du coffre/camion (CarrouselStock, GramophoneSheet). */
+  --gradient-cargo-wood: linear-gradient(180deg, #3d2614 0%, #2a1a0e 50%, #1f130a 100%);
+  /* Couleur du joueur dans la barre de négociation (face au brass adverse). */
+  --nego-joueur: var(--forest-600);
 
   /* Semantic */
   --bg:                var(--paper-200);
@@ -93,15 +104,22 @@
   --gutter:     clamp(8px, 3vw, 16px);
   --pad-screen: clamp(10px, 3vw, 18px);
 
-  /* Typo fluide (multipliée ensuite par --font-scale) */
-  --fs-eyebrow: clamp(9px, 2.5vw, 11px);
-  --fs-meta:    clamp(10px, 2.8vw, 12px);
+  /* Typo fluide (multipliée ensuite par --font-scale)
+     Plancher relevé (a11y) : aucun texte porteur d'info sous 10px. */
+  --fs-eyebrow: clamp(10px, 2.8vw, 12px);
+  --fs-meta:    clamp(11px, 3vw, 13px);
   --fs-body:    clamp(13px, 3.8vw, 16px);
   --fs-title:   clamp(15px, 4.5vw, 20px);
   --fs-display: clamp(20px, 6vw, 28px);
 
-  /* Cibles tactiles */
-  --tap-min: clamp(40px, 11vw, 48px);
+  /* Cibles tactiles — 44px mini recommandé (Apple HIG / WCAG 2.5.5) */
+  --tap-min: clamp(44px, 11.5vw, 48px);
+
+  /* Rayons de bordure standardisés */
+  --radius-pill:  999px;
+  --radius-sheet: 14px;
+  --radius-card:  8px;
+  --radius-btn:   6px;
 }
 
 /* Tailwind v4 theme bridge — exposes tokens as Tailwind utilities */
@@ -279,8 +297,8 @@ html, body {
    ============================================================ */
 :focus { outline: none; }
 :focus-visible {
-  outline: 2px solid var(--brass-300);
-  outline-offset: 2px;
+  outline: 3px solid var(--brass-600);
+  outline-offset: 3px;
 }
 /* Pour les éléments fond sombre (TabBar), on bascule sur paper-100
    pour rester lisible. */
@@ -380,3 +398,47 @@ nav[aria-label="Navigation principale"] :focus-visible,
    des overlays (aperçu d'objet, modales) se cale bien sur le viewport.
    `will-change: transform` était à proscrire ici car il créait un
    containing block permanent. */
+
+/* ============================================================
+   Toast (bandeau de confirmation au-dessus de la TabBar)
+   ============================================================ */
+@keyframes broc-toast-in {
+  from { transform: translate(-50%, 16px); opacity: 0; }
+  to   { transform: translate(-50%, 0);    opacity: 1; }
+}
+
+/* ============================================================
+   SkeletonScreen (blocs shimmer pendant l'hydratation)
+   ============================================================ */
+.broc-skeleton-block {
+  background: linear-gradient(
+    110deg,
+    var(--paper-200) 35%,
+    var(--brass-100) 50%,
+    var(--paper-200) 65%
+  );
+  background-size: 200% 100%;
+  animation: broc-skeleton-shimmer 1.6s linear infinite;
+  border: 1px solid var(--paper-300);
+}
+
+/* ============================================================
+   Perf — rendu paresseux des longues grilles / listes
+   ============================================================ */
+/* Cellule de CollectionGrid : carrée, largeur ≈ var(--card-w)
+   (clamp 140–180px). content-visibility: auto permet au navigateur de
+   sauter le rendu (layout + paint) des cellules hors écran ; la taille
+   intrinsèque (~ milieu du clamp) garde une scrollbar stable quand le
+   contenu est sauté. La largeur réelle vient de la piste de grille et la
+   hauteur de l'aspect-ratio 1/1 : la valeur n'est qu'un fallback. */
+.broc-grid-cell {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 154px;
+}
+
+/* Ligne de StockageItemRow : vignette 48px + padding 2×8px + bordure
+   pointillée ≈ 65px de haut. La largeur vient du flux block (100%). */
+.broc-list-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 65px;
+}

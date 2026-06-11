@@ -37,7 +37,7 @@ function CroixManuscrite({ seed }: { seed: number }) {
   const off2x = (pseudoRandom(seed, 4) - 0.5) * 18;
   const off2y = (pseudoRandom(seed, 5) - 0.5) * 18;
   const sw = 5 + pseudoRandom(seed, 6) * 2; // 5 à 7
-  const stroke = "#a32a2a";
+  const stroke = "var(--red-urgent)";
 
   return (
     <svg
@@ -236,7 +236,7 @@ const circleCelebrite: CSSProperties = {
   width: "2.05em",
   height: "2.05em",
   borderRadius: "50%",
-  border: "2px solid #b03030",
+  border: "2px solid var(--red-urgent-strong)",
   background: "transparent",
   zIndex: 0,
   pointerEvents: "none",

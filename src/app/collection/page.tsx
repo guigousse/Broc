@@ -10,10 +10,14 @@ import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { CollectionGrid } from "@/components/CollectionGrid";
 import { CollectionDetailOverlay } from "@/components/mobile/CollectionDetailOverlay";
 import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
+import { useToast } from "@/components/ui/Toast";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import { stockageEstPlein } from "@/lib/stockage";
-import type { CategorieObjet, CollectionSlot } from "@/types/game";
+import { valeurDonation } from "@/lib/collection";
+import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 export default function CollectionPage() {
   const router = useRouter();
@@ -24,9 +28,11 @@ export default function CollectionPage() {
     retirerDeCollection,
     marquerVuDansCollection,
   } = useGame();
+  const { toast } = useToast();
   const [filtre, setFiltre] = useState<CategorieObjet | null>(null);
   const [slotActif, setSlotActif] = useState<CollectionSlot | null>(null);
   const [pickerOuvert, setPickerOuvert] = useState(false);
+  const [objetADonner, setObjetADonner] = useState<Objet | null>(null);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -71,20 +77,7 @@ export default function CollectionPage() {
   }, [state, slotActif]);
 
   if (!isHydrated || !state) {
-    return (
-      <main
-        style={{
-          display: "grid",
-          placeItems: "center",
-          minHeight: "100dvh",
-          fontFamily: "var(--font-mono)",
-          color: "var(--ink-500)",
-          fontSize: 12,
-        }}
-      >
-        — consultation de la collection…
-      </main>
-    );
+    return <SkeletonScreen label="— consultation de la collection…" />;
   }
 
   // Nouveautés non consultées par catégorie (slot vu mais vuDansCollection=false)
@@ -187,7 +180,10 @@ export default function CollectionPage() {
       onRetirer={() => {
         if (!slotActif?.donation) return;
         const res = retirerDeCollection(slotActif.templateId);
-        if (res.ok) setSlotActif(null);
+        if (res.ok) {
+          setSlotActif(null);
+          toast("Repris dans le stock", { type: "info" });
+        }
       }}
     />
     <DonationPickerSheet
@@ -196,14 +192,44 @@ export default function CollectionPage() {
       slot={slotActif}
       candidats={candidats}
       onDonner={(objetId) => {
-        const res = donnerACollection(objetId);
-        if (res.ok) {
-          setPickerOuvert(false);
-          setSlotActif(null);
-        }
+        const objet = candidats.find((o) => o.id === objetId) ?? null;
+        setObjetADonner(objet);
       }}
       retirerDisabled={plein}
     />
+    <ConfirmModal
+      open={objetADonner !== null}
+      onClose={() => setObjetADonner(null)}
+      onConfirm={() => {
+        if (!objetADonner) return;
+        const valeur = valeurDonation(
+          objetADonner.etat,
+          objetADonner.prixReferenceReel,
+        );
+        const res = donnerACollection(objetADonner.id);
+        if (res.ok) {
+          setPickerOuvert(false);
+          setSlotActif(null);
+          toast(`Donné à la collection — +${valeur} € de valeur`, {
+            type: "succes",
+          });
+        }
+      }}
+      titre="Donner à la collection"
+      confirmLabel="Donner"
+    >
+      {objetADonner && (
+        <>
+          « {objetADonner.nom} » ({objetADonner.etat}) quittera votre stock et
+          rejoindra la collection pour{" "}
+          {valeurDonation(objetADonner.etat, objetADonner.prixReferenceReel)} €
+          de valeur.
+          {slotActif?.donation
+            ? " L'exemplaire déjà exposé reviendra dans votre inventaire."
+            : ""}
+        </>
+      )}
+    </ConfirmModal>
   </>
   );
 }

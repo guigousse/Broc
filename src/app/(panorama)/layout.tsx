@@ -11,6 +11,10 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { audioManager } from "@/lib/audio/audioManager";
+import {
+  safeLocalStorageGet,
+  safeLocalStorageSet,
+} from "@/lib/storage/safeLocalStorage";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import {
@@ -305,33 +309,22 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   // Restauration session gramophone à l'entrée du panorama.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(GRAMO_SESSION_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { idx?: number; aiguille?: boolean };
-        if (parsed.aiguille) startNeedle();
-        if (typeof parsed.idx === "number") setVinyleCourantIdx(parsed.idx);
-      }
-    } catch {
-      /* ignore */
-    }
+    const parsed = safeLocalStorageGet<{ idx?: number; aiguille?: boolean }>(
+      GRAMO_SESSION_KEY,
+      {},
+    );
+    if (parsed.aiguille) startNeedle();
+    if (typeof parsed.idx === "number") setVinyleCourantIdx(parsed.idx);
     return () => {
       // IMPORTANT : on NE STOPPE PAS le gramophone à la sortie du
       // panorama. La musique doit continuer à tourner quand le joueur
       // va chiner ou dans une sous-pièce — étouffée et plus basse,
       // mais audible (cf. GlobalVinylAmbiance). On persiste juste
       // l'état pour le retour.
-      try {
-        window.localStorage.setItem(
-          GRAMO_SESSION_KEY,
-          JSON.stringify({
-            idx: vinyleCourantIdxRef.current,
-            aiguille: vinyleCourantIdxRef.current !== null,
-          }),
-        );
-      } catch {
-        /* ignore */
-      }
+      safeLocalStorageSet(GRAMO_SESSION_KEY, {
+        idx: vinyleCourantIdxRef.current,
+        aiguille: vinyleCourantIdxRef.current !== null,
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
