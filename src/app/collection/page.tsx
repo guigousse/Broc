@@ -108,6 +108,7 @@ export default function CollectionPage() {
   return (
   <>
     <MobileLayout
+      scrollPaddingBottom={56}
       header={<MobileHeader budget={state.budget} />}
       stickyTop={
         <StickyTop>
