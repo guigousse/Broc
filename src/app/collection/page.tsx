@@ -100,13 +100,6 @@ export default function CollectionPage() {
   const valeurAffichee = filtre
     ? (valeursParCat[filtre] ?? 0)
     : Object.values(valeursParCat).reduce((s, v) => s + v, 0);
-  const possedeAffiche = filtre
-    ? (comptes[filtre] ?? 0)
-    : Object.values(comptes).reduce((s, v) => s + (v ?? 0), 0);
-  const totalAffiche = filtre
-    ? (totauxParCat[filtre] ?? 0)
-    : Object.values(totauxParCat).reduce((s, v) => s + (v ?? 0), 0);
-
   const plein = stockageEstPlein(state);
 
   return (
