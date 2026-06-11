@@ -115,7 +115,7 @@ const CollectionCell = memo(function CollectionCell({
     width: "100%",
     boxSizing: "border-box",
     border: isSilhouette
-      ? `1.5px dashed ${GRAY_OUTER}`
+      ? `1px dashed ${GRAY_OUTER}`
       : `1.5px solid ${outerColor}`,
     background: bg,
     boxShadow: isSilhouette
@@ -156,9 +156,9 @@ const CollectionCell = memo(function CollectionCell({
       {isSilhouette ? (
         <span
           style={{
-            fontFamily: "var(--font-display)",
+            fontFamily: "var(--font-broc-title)",
             fontSize: 36,
-            fontWeight: 700,
+            fontWeight: 400,
             color: GRAY_OUTER,
             lineHeight: 1,
           }}

@@ -116,4 +116,17 @@ describe("CollectionGrid", () => {
     // Seul "b" a une nouvelle référence → seule sa cellule re-rend.
     expect(itemImageRenders).toEqual(["b"]);
   });
+
+  it("silhouette : bordure pointillée de largeur entière (rendu WebKit fiable)", () => {
+    render(<CollectionGrid slots={slots} />);
+    const silhouette = screen.getByRole("button", { name: "Pièce inconnue" });
+    expect(silhouette.style.border).toBe("1px dashed var(--paper-500)");
+  });
+
+  it("silhouette : le « ? » utilise la police Art Déco du titre Broc", () => {
+    render(<CollectionGrid slots={slots} />);
+    const silhouette = screen.getByRole("button", { name: "Pièce inconnue" });
+    const point = silhouette.querySelector("span");
+    expect(point?.style.fontFamily).toBe("var(--font-broc-title)");
+  });
 });
