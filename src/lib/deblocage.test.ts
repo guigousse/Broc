@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CategorieObjet, ConditionDeblocage, Session } from "@/types/game";
-import { descriptionCondition, estDebloquee } from "./deblocage";
+import { getBrocanteById } from "@/data/brocantes";
+import {
+  calculerBrocantesDebloqueesParTier,
+  descriptionCondition,
+  estDebloquee,
+} from "./deblocage";
 import {
   createMockBrocante,
   createMockGameState,
@@ -208,6 +213,35 @@ describe("estDebloquee — type brocantesDebloquees", () => {
       nombre: 1,
     });
     expect(estDebloquee(broc, createMockGameState())).toBe(false);
+  });
+});
+
+describe("calculerBrocantesDebloqueesParTier", () => {
+  it("débloque en cascade les brocantes à condition brocantesDebloquees", () => {
+    // 200 € en Livres → tier 1 : vide-grenier (départ), marché aux puces
+    // (valeur 30), bouquinerie (Livres 20) = 3 débloquées → le Déballage des
+    // collectionneurs (valeur 150 + 3 brocantes 1⭐) doit suivre.
+    const state = createMockGameState();
+    state.collection["Livres & Papeterie"] = [
+      createMockSlot({ donation: { etat: "Bon", valeur: 200 } }),
+    ];
+    const map = calculerBrocantesDebloqueesParTier(state);
+    expect(map.get(1)!.size).toBe(3);
+    expect(map.get(2)!.has("deballage-collectionneurs")).toBe(true);
+    const deballage = getBrocanteById("deballage-collectionneurs")!;
+    expect(estDebloquee(deballage, state, map)).toBe(true);
+  });
+
+  it("garde verrouillée une brocante dont le quota de tier n'est pas atteint", () => {
+    // 160 € en Maison → seulement 2 brocantes 1⭐ (départ + valeur 30) :
+    // le Déballage reste verrouillé malgré valeurCollection >= 150.
+    const state = createMockGameState();
+    state.collection["Maison"] = [
+      createMockSlot({ donation: { etat: "Bon", valeur: 160 } }),
+    ];
+    const map = calculerBrocantesDebloqueesParTier(state);
+    expect(map.get(1)!.size).toBe(2);
+    expect(map.get(2)!.has("deballage-collectionneurs")).toBe(false);
   });
 });
 

@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { useGame } from "@/context/GameContext";
-import { getBrocanteById, fraisEntree, brocantesParTier } from "@/data/brocantes";
+import { getBrocanteById, fraisEntree } from "@/data/brocantes";
 import { CoffreChargement } from "@/components/vente/CoffreChargement";
 import { CoffrePricing } from "@/components/vente/CoffrePricing";
-import { estDebloquee } from "@/lib/deblocage";
+import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
 import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 const SUGGESTION_FACTEUR = 1.4;
@@ -37,14 +37,7 @@ export default function VitrineBrocantePage() {
     if (!state) return router.replace("/");
     if (!brocante) return router.replace("/vitrine");
 
-    const deb = new Map<1 | 2 | 3 | 4, Set<string>>([
-      [1, new Set()], [2, new Set()], [3, new Set()], [4, new Set()],
-    ]);
-    for (const tier of [1, 2, 3, 4] as const) {
-      for (const b of brocantesParTier(tier)) {
-        if (estDebloquee(b, state, deb)) deb.get(tier)!.add(b.id);
-      }
-    }
+    const deb = calculerBrocantesDebloqueesParTier(state);
     if (!deb.get(brocante.tier)!.has(brocante.id)) {
       router.replace("/vitrine");
       return;

@@ -8,7 +8,10 @@ import { StickyTop } from "@/components/mobile/StickyTop";
 import { BrocanteCarousel } from "@/components/mobile/BrocanteCarousel";
 import { useGame } from "@/context/GameContext";
 import { brocantesParTier } from "@/data/brocantes";
-import { estDebloquee, decrireConditions } from "@/lib/deblocage";
+import {
+  calculerBrocantesDebloqueesParTier,
+  decrireConditions,
+} from "@/lib/deblocage";
 
 type Tier = 1 | 2 | 3 | 4;
 
@@ -36,19 +39,8 @@ export default function VitrineListePage() {
   }, [isHydrated, state, router]);
 
   const debloqueesParTier = useMemo(() => {
-    const m = new Map<Tier, Set<string>>([
-      [1, new Set()],
-      [2, new Set()],
-      [3, new Set()],
-      [4, new Set()],
-    ]);
-    if (!state) return m;
-    for (const t of [1, 2, 3, 4] as const) {
-      for (const b of brocantesParTier(t)) {
-        if (estDebloquee(b, state, m)) m.get(t)!.add(b.id);
-      }
-    }
-    return m;
+    if (!state) return new Map<Tier, Set<string>>();
+    return calculerBrocantesDebloqueesParTier(state);
   }, [state]);
 
   if (!isHydrated || !state) return null;

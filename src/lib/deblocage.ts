@@ -5,6 +5,7 @@ import type {
   GameState,
 } from "@/types/game";
 import { valeurTotale, valeurParCategorie } from "@/lib/collection";
+import { brocantesParTier } from "@/data/brocantes";
 
 export function descriptionCondition(c: ConditionDeblocage): string {
   switch (c.type) {
@@ -45,6 +46,29 @@ function compterVentesCategorie(
 /** Retourne une courte description de la condition de déblocage d'une brocante. */
 export function decrireConditions(brocante: Brocante, _state: GameState): string {
   return descriptionCondition(brocante.conditionDeblocage);
+}
+
+/**
+ * Calcule, tier par tier (en cascade : les conditions `brocantesDebloquees`
+ * d'un tier supérieur voient les tiers inférieurs déjà résolus), l'ensemble
+ * des brocantes débloquées. À passer à `estDebloquee` pour toute brocante
+ * dont la condition référence d'autres brocantes.
+ */
+export function calculerBrocantesDebloqueesParTier(
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
+): Map<1 | 2 | 3 | 4, Set<string>> {
+  const m = new Map<1 | 2 | 3 | 4, Set<string>>([
+    [1, new Set()],
+    [2, new Set()],
+    [3, new Set()],
+    [4, new Set()],
+  ]);
+  for (const tier of [1, 2, 3, 4] as const) {
+    for (const b of brocantesParTier(tier)) {
+      if (estDebloquee(b, state, m)) m.get(tier)!.add(b.id);
+    }
+  }
+  return m;
 }
 
 export function estDebloquee(

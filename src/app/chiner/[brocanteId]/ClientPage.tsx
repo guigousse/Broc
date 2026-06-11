@@ -15,7 +15,10 @@ import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { fraisEntree, getBrocanteById } from "@/data/brocantes";
-import { estDebloquee } from "@/lib/deblocage";
+import {
+  calculerBrocantesDebloqueesParTier,
+  estDebloquee,
+} from "@/lib/deblocage";
 import { genererSession } from "@/lib/chine";
 import { stockageEstPlein } from "@/lib/stockage";
 import { indexJourSemaine } from "@/lib/meteo";
@@ -81,7 +84,12 @@ export default function SessionChinePage() {
     // La condition de déblocage n'est vérifiée qu'à l'entrée — une fois sur place
     // le joueur ne peut plus être expulsé (par exemple si son solde redescend).
     if (items === null && !entreePayeeRef.current) {
-      if (!estDebloquee(brocante, state)) return router.replace("/chiner");
+      // Le map en cascade est indispensable : sans lui, les conditions
+      // `brocantesDebloquees` sont toujours fausses et la brocante (pourtant
+      // affichée débloquée dans la liste) renvoie aussitôt vers /chiner.
+      if (!estDebloquee(brocante, state, calculerBrocantesDebloqueesParTier(state))) {
+        return router.replace("/chiner");
+      }
       const frais = fraisEntree(brocante);
       if (state.budget < frais) {
         return router.replace(`/chiner?raison=budget&id=${brocante.id}`);
