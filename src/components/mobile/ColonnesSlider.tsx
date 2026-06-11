@@ -15,7 +15,7 @@ const wrap: CSSProperties = {
   zIndex: 35,
   display: "flex",
   alignItems: "center",
-  padding: "6px 12px",
+  padding: "2px 12px",
   borderRadius: 999,
   background: "var(--forest-800)",
   border: "1px solid var(--brass-600)",
@@ -28,7 +28,7 @@ export function ColonnesSlider({ value, onChange }: ColonnesSliderProps) {
       <input
         type="range"
         min={1}
-        max={3}
+        max={5}
         step={1}
         value={value}
         aria-label="Items par ligne"

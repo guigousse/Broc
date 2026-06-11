@@ -46,5 +46,10 @@ describe("useColonnesCollection", () => {
     window.localStorage.setItem(CLE_COLONNES, "6");
     const { result } = renderHook(() => useColonnesCollection());
     expect(result.current[0]).toBe(3);
+
+    window.localStorage.clear();
+    window.localStorage.setItem(CLE_COLONNES, "0");
+    const { result: resultZero } = renderHook(() => useColonnesCollection());
+    expect(resultZero.current[0]).toBe(3);
   });
 });

@@ -430,15 +430,15 @@ nav[aria-label="Navigation principale"] :focus-visible,
 /* ============================================================
    Perf — rendu paresseux des longues grilles / listes
    ============================================================ */
-/* Cellule de CollectionGrid : carrée, largeur ≈ var(--card-w)
-   (clamp 140–180px). content-visibility: auto permet au navigateur de
-   sauter le rendu (layout + paint) des cellules hors écran ; la taille
-   intrinsèque (~ milieu du clamp) garde une scrollbar stable quand le
-   contenu est sauté. La largeur réelle vient de la piste de grille et la
-   hauteur de l'aspect-ratio 1/1 : la valeur n'est qu'un fallback. */
+/* Cellule de CollectionGrid : carrée, varie de ~70px (5 colonnes) à ~350px
+   (1 colonne). content-visibility: auto permet au navigateur de sauter le
+   rendu (layout + paint) des cellules hors écran ; « auto » mémorise la
+   taille réelle après le premier rendu, donc pas de reflux. La largeur
+   réelle vient de la piste de grille et la hauteur de l'aspect-ratio 1/1 :
+   la valeur n'est qu'un fallback. */
 .broc-grid-cell {
   content-visibility: auto;
-  contain-intrinsic-size: auto 154px;
+  contain-intrinsic-size: auto 100px;
 }
 
 /* Ligne de StockageItemRow : vignette 48px + padding 2×8px + bordure
@@ -450,30 +450,34 @@ nav[aria-label="Navigation principale"] :focus-visible,
 
 /* ============================================================
    Slider "items par ligne" (Collection) — esprit potard Marshall :
-   rail sombre à 3 crans laiton, curseur laiton strié.
+   rail sombre à 5 crans laiton, curseur laiton strié.
    ============================================================ */
 .broc-colonnes-slider {
   -webkit-appearance: none;
   appearance: none;
   width: 96px;
-  height: 40px;
+  height: 28px;
   background: transparent;
   cursor: pointer;
 }
 .broc-colonnes-slider::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 2px;
+  /* Crans alignés sur les arrêts du potard de 18px :
+     centre à 9px + (100% - 18px) × F, F = 0 / .25 / .5 / .75 / 1. */
   background:
-    radial-gradient(circle 2.5px at 11px 50%, var(--brass-500) 99%, transparent),
+    radial-gradient(circle 2.5px at 9px 50%, var(--brass-500) 99%, transparent),
+    radial-gradient(circle 2.5px at calc(9px + (100% - 18px) * 0.25) 50%, var(--brass-500) 99%, transparent),
     radial-gradient(circle 2.5px at 50% 50%, var(--brass-500) 99%, transparent),
-    radial-gradient(circle 2.5px at calc(100% - 11px) 50%, var(--brass-500) 99%, transparent),
+    radial-gradient(circle 2.5px at calc(9px + (100% - 18px) * 0.75) 50%, var(--brass-500) 99%, transparent),
+    radial-gradient(circle 2.5px at calc(100% - 9px) 50%, var(--brass-500) 99%, transparent),
     var(--ink-900);
 }
 .broc-colonnes-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
-  margin-top: -9px;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
   border-radius: 50%;
   border: 2px solid var(--brass-900);
   background:
@@ -497,8 +501,8 @@ nav[aria-label="Navigation principale"] :focus-visible,
   background: var(--ink-900);
 }
 .broc-colonnes-slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   border: 2px solid var(--brass-900);
   background:
