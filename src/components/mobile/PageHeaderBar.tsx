@@ -6,12 +6,21 @@ interface PageHeaderBarProps {
   title: string;
   left?: ReactNode;
   right?: ReactNode;
+  /** "center" (défaut) : grid 3 colonnes. "left" : titre à gauche, right à droite. */
+  align?: "center" | "left";
 }
 
-const wrap: CSSProperties = {
+const wrapCenter: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "1fr auto 1fr",
   alignItems: "center",
+  gap: 10,
+};
+
+const wrapLeft: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
   gap: 10,
 };
 
@@ -38,15 +47,31 @@ const titleStyle: CSSProperties = {
 
 /**
  * En-tête sticky commun aux pages Atelier / Stockage / Collection / Compétences.
- * Grid 3 colonnes : left (libre, peut être absent), titre centré encadré
- * de tirets, right (libre, peut être absent). Les zones libres ont
- * min-width 0 pour gérer le truncate sans casser le centrage du titre.
+ * Mode "center" : grid 3 colonnes left | titre | right, zones libres en
+ * min-width 0 pour le truncate. Mode "left" : titre à gauche, right à droite
+ * (pas de zone left), pour libérer la largeur quand le contenu latéral est long.
  */
-export function PageHeaderBar({ title, left, right }: PageHeaderBarProps) {
+export function PageHeaderBar({
+  title,
+  left,
+  right,
+  align = "center",
+}: PageHeaderBarProps) {
+  const titre = <div style={titleStyle}>— {title.toUpperCase()} —</div>;
+
+  if (align === "left") {
+    return (
+      <div style={wrapLeft}>
+        {titre}
+        <div style={colRight}>{right ?? null}</div>
+      </div>
+    );
+  }
+
   return (
-    <div style={wrap}>
+    <div style={wrapCenter}>
       <div style={colLeft}>{left ?? null}</div>
-      <div style={titleStyle}>— {title.toUpperCase()} —</div>
+      {titre}
       <div style={colRight}>{right ?? null}</div>
     </div>
   );
