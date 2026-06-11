@@ -241,6 +241,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     if (typeof document === "undefined") return;
     const prevOverflow = document.body.style.overflow;
     const prevTouchAction = document.body.style.touchAction;
+    // Le scroll résiduel d'un onglet précédent (Collection/Stockage) serait
+    // figé par le verrou et décalerait tout le panorama vers le haut.
+    window.scrollTo(0, 0);
     document.body.style.overflow = "hidden";
     document.body.style.touchAction = "none";
     return () => {
