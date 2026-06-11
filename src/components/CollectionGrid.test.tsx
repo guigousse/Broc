@@ -204,4 +204,22 @@ describe("CollectionGrid", () => {
     expect(rangee.style.gridTemplateColumns).toBe("repeat(5, 1fr)");
     expect(screen.getAllByTestId("planche")).toHaveLength(1);
   });
+
+  it("étagères : planche et espaces proportionnels au zoom", () => {
+    const attendus: Array<[1 | 3 | 5, number, number, number]> = [
+      [1, 48, 18, 48],
+      [3, 16, 6, 16],
+      [5, 10, 4, 10],
+    ];
+    for (const [colonnes, hauteur, espaceHaut, espaceBas] of attendus) {
+      const { unmount } = render(
+        <CollectionGrid slots={slots} colonnes={colonnes} />,
+      );
+      const planche = screen.getAllByTestId("planche")[0];
+      expect(planche.style.height).toBe(`${hauteur}px`);
+      expect(planche.style.marginTop).toBe(`${espaceHaut}px`);
+      expect(planche.style.marginBottom).toBe(`${espaceBas}px`);
+      unmount();
+    }
+  });
 });

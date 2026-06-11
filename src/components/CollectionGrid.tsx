@@ -85,14 +85,20 @@ const newBadge: CSSProperties = {
   pointerEvents: "none",
 };
 
-const planche: CSSProperties = {
-  height: 16,
-  marginTop: 6,
-  marginBottom: 16,
-  background: "var(--gradient-shelf)",
-  borderTop: "2px solid var(--shelf-edge)",
-  boxShadow: "0 3px 5px rgba(0, 0, 0, 0.28)",
-};
+/**
+ * Planche proportionnelle à la taille des items : la base (16px de bois,
+ * 6px d'air au-dessus, 16px entre étagères) est celle du zoom à 3 colonnes.
+ */
+function plancheStyle(colonnes: Colonnes): CSSProperties {
+  return {
+    height: Math.round(48 / colonnes),
+    marginTop: Math.round(18 / colonnes),
+    marginBottom: Math.round(48 / colonnes),
+    background: "var(--gradient-shelf)",
+    borderTop: "2px solid var(--shelf-edge)",
+    boxShadow: "0 3px 5px rgba(0, 0, 0, 0.28)",
+  };
+}
 
 interface CollectionCellProps {
   slot: CollectionSlot;
@@ -252,6 +258,8 @@ export function CollectionGrid({
   for (let i = 0; i < slots.length; i += colonnes) {
     rangees.push(slots.slice(i, i + colonnes));
   }
+
+  const planche = plancheStyle(colonnes);
 
   return (
     <div>
