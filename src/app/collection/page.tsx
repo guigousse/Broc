@@ -76,6 +76,11 @@ export default function CollectionPage() {
     return state.inventaireJoueur.filter((o) => o.templateId === slotActif.templateId);
   }, [state, slotActif]);
 
+  const enStockIds = useMemo(
+    () => new Set((state?.inventaireJoueur ?? []).map((o) => o.templateId)),
+    [state],
+  );
+
   if (!isHydrated || !state) {
     return <SkeletonScreen label="— consultation de la collection…" />;
   }
@@ -112,7 +117,8 @@ export default function CollectionPage() {
         <StickyTop>
           <PageHeaderBar
             title="Collection"
-            left={
+            align="left"
+            right={
               <div
                 style={{
                   fontFamily: "var(--font-display)",
@@ -124,22 +130,9 @@ export default function CollectionPage() {
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}
-                title={`${labelGauche} ${valeurAffichee} €`}
+                title={`${labelGauche} · ${valeurAffichee} €`}
               >
-                {labelGauche} {valeurAffichee} €
-              </div>
-            }
-            right={
-              <div
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 11,
-                  color: "var(--brass-700)",
-                  letterSpacing: "0.06em",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {possedeAffiche}/{totalAffiche}
+                {labelGauche} · {valeurAffichee} €
               </div>
             }
           />
@@ -162,6 +155,7 @@ export default function CollectionPage() {
     >
       <CollectionGrid
         slots={slotsFiltres}
+        enStockIds={enStockIds}
         onTap={(s) => {
           if (s.vu && s.vuDansCollection === false) {
             marquerVuDansCollection(s.templateId);
