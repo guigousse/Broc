@@ -10,9 +10,9 @@ interface ColonnesSliderProps {
 
 const wrap: CSSProperties = {
   position: "fixed",
-  left: 12,
+  left: "calc(12px + var(--safe-left))",
   bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom) + 12px)",
-  zIndex: 40,
+  zIndex: 35,
   display: "flex",
   alignItems: "center",
   padding: "6px 12px",
@@ -24,7 +24,7 @@ const wrap: CSSProperties = {
 
 export function ColonnesSlider({ value, onChange }: ColonnesSliderProps) {
   return (
-    <div style={wrap}>
+    <div style={wrap} data-on-dark>
       <input
         type="range"
         min={1}

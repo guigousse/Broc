@@ -456,7 +456,7 @@ nav[aria-label="Navigation principale"] :focus-visible,
   -webkit-appearance: none;
   appearance: none;
   width: 96px;
-  height: 24px;
+  height: 40px;
   background: transparent;
   cursor: pointer;
 }
@@ -464,9 +464,9 @@ nav[aria-label="Navigation principale"] :focus-visible,
   height: 4px;
   border-radius: 2px;
   background:
-    radial-gradient(circle 2.5px at 3px 50%, var(--brass-500) 99%, transparent),
+    radial-gradient(circle 2.5px at 11px 50%, var(--brass-500) 99%, transparent),
     radial-gradient(circle 2.5px at 50% 50%, var(--brass-500) 99%, transparent),
-    radial-gradient(circle 2.5px at calc(100% - 3px) 50%, var(--brass-500) 99%, transparent),
+    radial-gradient(circle 2.5px at calc(100% - 11px) 50%, var(--brass-500) 99%, transparent),
     var(--ink-900);
 }
 .broc-colonnes-slider::-webkit-slider-thumb {
