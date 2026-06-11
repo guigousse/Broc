@@ -8,6 +8,8 @@ import { StickyTop } from "@/components/mobile/StickyTop";
 import { CategoriePicker } from "@/components/mobile/CategoriePicker";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { CollectionGrid } from "@/components/CollectionGrid";
+import { ColonnesSlider } from "@/components/mobile/ColonnesSlider";
+import { useColonnesCollection } from "@/lib/useColonnesCollection";
 import { CollectionDetailOverlay } from "@/components/mobile/CollectionDetailOverlay";
 import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -33,6 +35,7 @@ export default function CollectionPage() {
   const [slotActif, setSlotActif] = useState<CollectionSlot | null>(null);
   const [pickerOuvert, setPickerOuvert] = useState(false);
   const [objetADonner, setObjetADonner] = useState<Objet | null>(null);
+  const [colonnes, setColonnes] = useColonnesCollection();
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -146,17 +149,28 @@ export default function CollectionPage() {
         </StickyTop>
       }
     >
-      <CollectionGrid
-        slots={slotsFiltres}
-        enStockIds={enStockIds}
-        onTap={(s) => {
-          if (s.vu && s.vuDansCollection === false) {
-            marquerVuDansCollection(s.templateId);
-          }
-          setSlotActif(s);
+      <div
+        style={{
+          // Pleine largeur : annule le padding 12px du <main> du MobileLayout.
+          margin: "-12px -12px 0",
+          padding: "12px 0 4px",
+          background: "var(--wood-light)",
         }}
-      />
+      >
+        <CollectionGrid
+          slots={slotsFiltres}
+          colonnes={colonnes}
+          enStockIds={enStockIds}
+          onTap={(s) => {
+            if (s.vu && s.vuDansCollection === false) {
+              marquerVuDansCollection(s.templateId);
+            }
+            setSlotActif(s);
+          }}
+        />
+      </div>
     </MobileLayout>
+    <ColonnesSlider value={colonnes} onChange={setColonnes} />
     <CollectionDetailOverlay
       open={slotActif !== null && !pickerOuvert}
       onClose={() => setSlotActif(null)}
