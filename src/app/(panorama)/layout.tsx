@@ -4,6 +4,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -237,7 +238,10 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   // décale toute la page vers le haut et révèle du blanc sous la barre
   // de nav. Le panorama lui-même a touch-action:pan-x mais le body
   // peut quand même bouncer sur iOS Safari.
-  useEffect(() => {
+  // useLayoutEffect : le reset doit se faire AVANT le premier paint, sinon
+  // iOS affiche un instant l'état overscrollé (panorama relevé, bande
+  // blanche en bas) avant de se recaler — glitch visible.
+  useLayoutEffect(() => {
     if (typeof document === "undefined") return;
     const prevOverflow = document.body.style.overflow;
     const prevTouchAction = document.body.style.touchAction;
