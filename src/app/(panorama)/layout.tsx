@@ -456,10 +456,14 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       >
         <div
           style={{
-            position: "relative",
-            width: "100%",
-            height:
-              "calc(100dvh - var(--safe-top) - var(--mobile-header-h) - var(--mobile-tabbar-h) - var(--safe-bottom))",
+            // Fixed (hors flux) : le panorama est ancré entre header et
+            // TabBar, insensible à tout scroll résiduel du document ramené
+            // d'un autre onglet.
+            position: "fixed",
+            top: "calc(var(--safe-top) + var(--mobile-header-h))",
+            left: 0,
+            right: 0,
+            bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
             background: "var(--forest-800)",
             overflow: "hidden",
           }}
