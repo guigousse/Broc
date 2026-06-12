@@ -8,9 +8,11 @@ import {
   type StockageBoxKey,
 } from "../stockageBoxesLayout";
 import {
+  ETAGERE_LEG_KEY,
   useQgObjet,
   useChatBaladeurCoord,
   useStockageBoxCoord,
+  useEtagereLegMaskCoord,
   useQgEditContext,
   type EditableKey,
 } from "./QgEditContext";
@@ -18,13 +20,21 @@ import {
 const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
 const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
 const BOX_KEYS = [...STOCKAGE_BOX_ORDER] as StockageBoxKey[];
-const ALL_KEYS: EditableKey[] = [...QG_KEYS, ...CHAT_KEYS, ...BOX_KEYS];
+const ALL_KEYS: EditableKey[] = [
+  ...QG_KEYS,
+  ...CHAT_KEYS,
+  ...BOX_KEYS,
+  ETAGERE_LEG_KEY,
+];
 
 function useCoord(key: EditableKey) {
   // Tous les hooks utilisent la même implémentation interne ; le dispatch
   // est cohérent puisque chaque key appartient à une seule famille.
   const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
   const isBox = (STOCKAGE_BOX_ORDER as readonly string[]).includes(key);
+  const isLeg = key === ETAGERE_LEG_KEY;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  if (isLeg) return useEtagereLegMaskCoord();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   if (isBox) return useStockageBoxCoord(key as StockageBoxKey);
   // eslint-disable-next-line react-hooks/rules-of-hooks

@@ -5,14 +5,17 @@ import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_LAYOUT } from "../chatBaladeurLayout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
 import {
+  ETAGERE_LEG_MASK_LAYOUT,
   STOCKAGE_BOX_ORDER,
   STOCKAGE_BOXES_LAYOUT,
   type StockageBoxKey,
 } from "../stockageBoxesLayout";
 import {
+  ETAGERE_LEG_KEY,
   useQgObjet,
   useChatBaladeurCoord,
   useStockageBoxCoord,
+  useEtagereLegMaskCoord,
   useQgEditContext,
   type EditableKey,
 } from "./QgEditContext";
@@ -42,6 +45,13 @@ function ChatRow({ chatKey }: { chatKey: ChatBaladeurId }) {
 function BoxRow({ boxKey }: { boxKey: StockageBoxKey }) {
   const { left, bottom, width } = useStockageBoxCoord(boxKey);
   return <CoordRow name={boxKey} left={left} bottom={bottom} width={width} />;
+}
+
+function LegRow() {
+  const { left, bottom, width } = useEtagereLegMaskCoord();
+  return (
+    <CoordRow name={ETAGERE_LEG_KEY} left={left} bottom={bottom} width={width} />
+  );
 }
 
 function CoordRow({
@@ -77,11 +87,14 @@ export function QgEditPanel() {
   function effective(key: EditableKey) {
     const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
     const isBox = (STOCKAGE_BOX_ORDER as readonly string[]).includes(key);
-    const base = isBox
-      ? STOCKAGE_BOXES_LAYOUT[key as StockageBoxKey]
-      : isChat
-        ? CHAT_BALADEUR_LAYOUT[key as ChatBaladeurId]
-        : QG_LAYOUT.objets[key as QgObjetKey];
+    const isLeg = key === ETAGERE_LEG_KEY;
+    const base = isLeg
+      ? ETAGERE_LEG_MASK_LAYOUT
+      : isBox
+        ? STOCKAGE_BOXES_LAYOUT[key as StockageBoxKey]
+        : isChat
+          ? CHAT_BALADEUR_LAYOUT[key as ChatBaladeurId]
+          : QG_LAYOUT.objets[key as QgObjetKey];
     const o = ctx?.overrides[key];
     return {
       left: o?.left ?? base.left,
@@ -103,13 +116,17 @@ export function QgEditPanel() {
       const e = effective(k);
       return `  ${k}: { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
     });
+    const leg = effective(ETAGERE_LEG_KEY);
+    const legLine = `  ${ETAGERE_LEG_KEY}: { left: ${leg.left.toFixed(1)}, bottom: ${leg.bottom.toFixed(1)}, width: ${leg.width.toFixed(1)} },`;
     const snippet =
       "// QG objets\n" +
       qg.join("\n") +
       "\n\n// Chat baladeur\n" +
       chat.join("\n") +
       "\n\n// Cartons stockage\n" +
-      boxes.join("\n");
+      boxes.join("\n") +
+      "\n\n// Masque étagère\n" +
+      legLine;
     navigator.clipboard.writeText(snippet).catch(() => {
       /* clipboard indisponible en contexte non sécurisé : on ignore */
     });
@@ -252,6 +269,8 @@ export function QgEditPanel() {
         {BOX_KEYS.map((k) => (
           <BoxRow key={k} boxKey={k} />
         ))}
+        <div style={{ color: "#8aa", fontSize: 10, margin: "6px 0 4px" }}>// Masque étagère</div>
+        <LegRow />
       </div>
 
       <div style={{ display: "flex", gap: 6 }}>

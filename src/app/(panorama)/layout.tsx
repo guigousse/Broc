@@ -38,6 +38,7 @@ import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
 import { QgStockageBoxes } from "@/components/mobile/qg/QgStockageBoxes";
+import { EtagereLegMask } from "@/components/mobile/qg/EtagereLegMask";
 import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
@@ -559,6 +560,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
             {/* Cartons cliquables sur l'étagère de stockage (coords absolues
                 dans le panorama 600vw — la zone atelier débute à 300vw). */}
             <QgStockageBoxes />
+            {/* Masque du montant droit : redessine la tranche du fond par
+                dessus les cartons → effet de profondeur. */}
+            <EtagereLegMask />
 
             <QgChatBaladeur
               jourActuel={state.jourActuel}

@@ -52,7 +52,10 @@ function OneBox({ boxKey }: OneBoxProps) {
           width: "100%",
           height: "auto",
           userSelect: "none",
-          filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.35))",
+          // Baisse de luminosité + légère désaturation pour coller à la
+          // palette du décor (un peu trop clair sinon).
+          filter:
+            "brightness(0.86) saturate(0.92) drop-shadow(0 2px 3px rgba(0,0,0,0.4))",
         }}
       />
     </button>
