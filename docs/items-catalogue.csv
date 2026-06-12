@@ -1,0 +1,393 @@
+﻿templateId;nom;categorie;rarete;unique;tierMin;prix_Mauvais;prix_Bon;prix_TresBon;prix_PristinEtat
+br.marteau_menuisier;Marteau de menuisier;Bricolage;commun;;1;2;5;8;11
+br.metre_pliant_bois_2m;Mètre pliant en bois 2 m;Bricolage;commun;;1;2;5;8;11
+br.lot_vis_clous_anciens;Lot de vis et clous anciens;Bricolage;commun;;1;2;5;8;11
+br.cle_a_molette_ancienne;Clé à molette ancienne;Bricolage;commun;;1;3;6;10;14
+br.pince_etirer_cuivre;Pince à étirer en cuivre;Bricolage;commun;;1;4;7;12;17
+br.marteau_arracheur;Marteau arracheur de clous;Bricolage;commun;;1;4;7;12;17
+br.cle_anglaise_old;Clé anglaise ancienne (BTP);Bricolage;commun;;1;4;7;12;17
+br.scie_egoine_stanley;Scie égoïne Stanley;Bricolage;commun;;1;4;8;14;20
+br.masse_fer_forge;Masse en fer forgé;Bricolage;commun;;1;4;8;14;20
+br.tournevis_lot_ancien;Lot de tournevis anciens;Bricolage;commun;;1;4;8;14;20
+br.equerre_metallique;Équerre métallique de menuisier;Bricolage;commun;;1;4;8;14;20
+br.lot_limes_charpentier;Lot de limes de charpentier;Bricolage;commun;;1;5;10;16;22
+br.marteau_horloger;Marteau d'horloger;Bricolage;commun;;1;5;10;16;22
+br.scie_arc_charpentier;Scie d'arc de charpentier;Bricolage;commun;;2;5;11;18;25
+br.boite_quincaillerie_metal;Boîte de quincaillerie en métal;Bricolage;commun;;2;5;11;18;25
+br.lampe_baladeuse_atelier;Lampe baladeuse d'atelier;Bricolage;commun;;2;5;11;18;25
+br.tenailles_forgeron;Tenailles de forgeron;Bricolage;commun;;2;5;11;18;25
+br.niveau_a_bulle_laiton;Niveau à bulle en laiton;Bricolage;commun;;2;7;13;22;31
+br.fer_a_souder_vintage;Fer à souder vintage (1970);Bricolage;commun;;2;7;13;22;31
+br.rabot_bois_artisanal;Rabot artisanal en bois;Bricolage;commun;;2;7;13;22;31
+br.mortaisier_acier;Mortaisier acier ancien;Bricolage;commun;;2;7;13;22;31
+br.tournevis_horloger_lot;Lot de tournevis d'horloger;Bricolage;commun;;2;7;13;22;31
+br.tariere_charpentier;Tarière de charpentier;Bricolage;commun;;2;7;14;24;34
+br.pied_a_coulisse_acier;Pied à coulisse en acier;Bricolage;commun;;2;8;17;28;39
+br.etau_de_table_regulier;Étau de table régulier;Bricolage;commun;;2;8;17;28;39
+br.ciseaux_a_bois_lot;Lot de ciseaux à bois (5 pièces);Bricolage;commun;;2;8;17;28;39
+br.trusquin_acajou_laiton;Trusquin acajou et laiton;Bricolage;commun;;3;8;17;28;39
+br.serre_joints_lot;Lot de serre-joints en fer;Bricolage;commun;;3;8;17;28;39
+br.scie_japonaise_recente;Scie japonaise (Ryoba récente);Bricolage;commun;;3;9;18;30;42
+br.perceuse_a_manivelle;Perceuse manuelle à manivelle;Bricolage;commun;;3;9;18;30;42
+br.varlope_chene;Varlope en chêne ancienne;Bricolage;commun;;3;9;18;30;42
+br.compas_charpentier_xixe;Compas de charpentier XIXe;Bricolage;commun;;3;10;19;32;45
+br.plane_charronnier;Plane de charronnier;Bricolage;commun;;3;10;19;32;45
+br.rabot_stanley_no4;Rabot Stanley n°4;Bricolage;commun;;3;11;21;35;49
+br.caisse_outils_chene;Caisse à outils en chêne ancienne;Bricolage;commun;;3;11;23;38;53
+br.gouge_sculpteur_lot;Lot de gouges de sculpteur;Bricolage;commun;;3;11;23;38;53
+br.boite_outils_complete;Boîte à outils complète;Bricolage;commun;;3;14;27;45;63
+br.etabli_pliant_ancien;Établi pliant ancien;Bricolage;commun;;3;17;33;55;77
+br.enclume_petit_modele;Petite enclume d'établi;Bricolage;commun;;3;18;36;60;84
+br.etabli_chene_atelier;Établi de chêne d'atelier;Bricolage;commun;;3;27;54;90;126
+br.balance_romaine_fonte;Balance romaine en fonte ancienne;Bricolage;rare;;1;48;96;160;224
+br.scie_disston_no7;Scie Disston n°7 ancienne;Bricolage;rare;;1;54;108;180;252
+br.tariere_grande_xviiie;Grande tarière XVIIIe;Bricolage;rare;;1;54;108;180;252
+br.coffret_dessin_industriel;Coffret de dessin industriel laiton;Bricolage;rare;;1;60;120;200;280
+br.outils_peugeot_freres;Boîte d'outils Peugeot Frères (signée);Bricolage;rare;;2;66;132;220;308
+br.singer_fonte_xixe;Machine à coudre Singer fonte XIXe;Bricolage;rare;;2;72;144;240;336
+br.rabot_stanley_bedrock;Rabot Stanley Bedrock 605;Bricolage;rare;;2;84;168;280;392
+br.enclume_grande_forge;Grande enclume de forge;Bricolage;rare;;2;90;180;300;420
+br.tour_a_bois_atelier;Tour à bois d'atelier ancien;Bricolage;rare;;3;96;192;320;448
+br.coffret_ebeniste_xixe;Coffret d'outils d'ébéniste XIXe;Bricolage;rare;;3;114;228;380;532
+br.outils_compagnon_devoir;Lot d'outils 'Compagnon du Devoir';Bricolage;rare;;3;144;288;480;672
+br.etabli_compagnonnage_xixe;Établi de compagnonnage XIXe;Bricolage;rare;;3;180;360;600;840
+leg.br.scie_japonaise_edo;Scie japonaise période Edo;Bricolage;legendaire;;;240;480;800;1120
+leg.br.coffret_compagnon_signe;Coffret de Compagnon du Devoir signé;Bricolage;legendaire;;;660;1320;2200;3080
+leg.br.tour_holtzapffel_xixe;Tour à métaux Holtzapffel (XIXe);Bricolage;legendaire;;;1140;2280;3800;5320
+uniq.br.coffre_outils_louis_xiv;Coffre d'outils d'ébéniste de Louis XIV;Bricolage;legendaire;oui;;1560;3120;5200;7280
+jx.billes_verre_lot;Lot de billes en verre anciennes;Jeux & Loisirs;commun;;1;4;7;12;17
+jx.mille_bornes_60s;Mille Bornes années 60;Jeux & Loisirs;commun;;1;4;8;14;20
+jx.manette_dualshock1;Manette DualShock PS1;Jeux & Loisirs;commun;;1;5;11;18;25
+jx.trivial_pursuit_genus;Trivial Pursuit édition Genus;Jeux & Loisirs;commun;;1;5;11;18;25
+jx.petits_chevaux_bois;Jeu des Petits Chevaux en bois;Jeux & Loisirs;commun;;1;5;11;18;25
+jx.yo_yo_duncan_alu;Yo-yo Duncan aluminium;Jeux & Loisirs;commun;;1;5;11;18;25
+jx.cluedo_vintage;Cluedo édition vintage;Jeux & Loisirs;commun;;1;6;12;20;28
+jx.monopoly_80s;Boîte 'Monopoly' années 80;Jeux & Loisirs;commun;;1;7;13;22;31
+jx.soldat_plomb_napoleonien;Soldat de plomb napoléonien;Jeux & Loisirs;commun;;1;7;13;22;31
+jx.figurine_kinder_lot;Lot de figurines Kinder collector;Jeux & Loisirs;commun;;1;7;13;22;31
+jx.risk_1992;Boîte 'Risk' édition 1992;Jeux & Loisirs;commun;;1;8;15;25;35
+jx.manette_n64;Manette Nintendo 64;Jeux & Loisirs;commun;;1;8;15;25;35
+jx.dominos_os;Boîte de dominos en os;Jeux & Loisirs;commun;;1;8;17;28;39
+jx.figurine_smurfs_lot;Lot de figurines Schtroumpfs Schleich;Jeux & Loisirs;commun;;2;8;17;28;39
+jx.cartouche_sonic_megadrive;Cartouche Sonic Megadrive;Jeux & Loisirs;commun;;2;9;18;30;42
+jx.manette_megadrive;Manette Megadrive;Jeux & Loisirs;commun;;2;11;21;35;49
+jx.jeu_ps1_resident_evil;Jeu PS1 'Resident Evil';Jeux & Loisirs;commun;;2;11;21;35;49
+jx.lot_yu_gi_oh;Lot de cartes Yu-Gi-Oh anciennes;Jeux & Loisirs;commun;;2;11;21;35;49
+jx.cartouche_streetfighter_snes;Cartouche Street Fighter II SNES;Jeux & Loisirs;commun;;2;11;23;38;53
+jx.ps1_crash_bandicoot;Jeu PS1 'Crash Bandicoot';Jeux & Loisirs;commun;;2;12;24;40;56
+jx.jeu_ps1_metal_gear;Jeu PS1 'Metal Gear Solid';Jeux & Loisirs;commun;;2;12;24;40;56
+jx.cartouche_megaman_nes;Cartouche Mega Man NES;Jeux & Loisirs;commun;;2;14;27;45;63
+jx.echecs_buis_acajou;Jeu d'échecs en buis et acajou;Jeux & Loisirs;commun;;2;14;27;45;63
+jx.barbie_seventies;Poupée Barbie années 70;Jeux & Loisirs;commun;;2;14;27;45;63
+jx.poupee_porcelaine_ancienne;Poupée en porcelaine ancienne;Jeux & Loisirs;commun;;2;15;30;50;70
+jx.jeu_n64_zelda_oot;Jeu N64 'Ocarina of Time';Jeux & Loisirs;commun;;2;17;33;55;77
+jx.backgammon_cuir;Backgammon en cuir bordeaux;Jeux & Loisirs;commun;;3;17;33;55;77
+jx.petite_armee_plomb;Lot de soldats de plomb (10 pièces);Jeux & Loisirs;commun;;3;17;33;55;77
+jx.cartouche_zelda_nes;Cartouche Zelda NES;Jeux & Loisirs;commun;;3;18;36;60;84
+jx.console_ps2_jeux;Sony PlayStation 2 avec jeux;Jeux & Loisirs;commun;;3;18;36;60;84
+jx.jeu_dreamcast_shenmue;Jeu Dreamcast 'Shenmue';Jeux & Loisirs;commun;;3;18;36;60;84
+jx.lot_pokemon_jungle;Lot cartes Pokémon set Jungle;Jeux & Loisirs;commun;;3;18;36;60;84
+jx.peluche_ours_steiff;Ours en peluche Steiff (récent);Jeux & Loisirs;commun;;3;20;39;65;91
+jx.console_dreamcast_complete;Sega Dreamcast complète;Jeux & Loisirs;commun;;3;21;42;70;98
+jx.cartouche_mario;Cartouche Super Mario Bros;Jeux & Loisirs;commun;;3;24;48;80;112
+jx.magic_lot_revised;Lot de cartes Magic Revised;Jeux & Loisirs;commun;;3;24;48;80;112
+jx.console_atari_2600;Console Atari 2600 en boîte;Jeux & Loisirs;commun;;3;26;51;85;119
+jx.gameboy_color_violette;Game Boy Color violette;Jeux & Loisirs;commun;;3;27;54;90;126
+jx.console_snes_complete;Super Nintendo complète;Jeux & Loisirs;commun;;3;29;57;95;133
+jx.console_nes_japonaise;Console Famicom japonaise;Jeux & Loisirs;commun;;3;33;66;110;154
+jx.figurine_star_wars_kenner_78;Figurine Star Wars Kenner 1978;Jeux & Loisirs;rare;;1;33;66;110;154
+jx.figurine_he_man_origines;Figurine He-Man (origines);Jeux & Loisirs;rare;;1;42;84;140;196
+jx.figurine_starwars_dark_vador_kenner;Figurine Dark Vador Kenner 1977;Jeux & Loisirs;rare;;1;54;108;180;252
+jx.lego_pirate_complete;LEGO Pirates 6285 complet;Jeux & Loisirs;rare;;1;54;108;180;252
+jx.cartouche_chrono_trigger;Cartouche Chrono Trigger SNES;Jeux & Loisirs;rare;;2;60;120;200;280
+jx.cartes_pokemon_1ere_edition;Lot cartes Pokémon 1ère édition;Jeux & Loisirs;rare;;2;66;132;220;308
+jx.borne_arcade_mini;Mini borne d'arcade Space Invaders;Jeux & Loisirs;rare;;2;84;168;280;392
+jx.peluche_steiff_ours_1920;Peluche Steiff ours années 1920;Jeux & Loisirs;rare;;2;84;168;280;392
+jx.train_marklin_ho;Train Märklin HO complet;Jeux & Loisirs;rare;;3;96;192;320;448
+jx.cartes_pokemon_japan_holo;Cartes Pokémon Holo japonaises;Jeux & Loisirs;rare;;3;108;216;360;504
+jx.console_neogeo_aes;Console NeoGeo AES;Jeux & Loisirs;rare;;3;180;360;600;840
+jx.flipper_gottlieb_60s;Flipper Gottlieb années 60;Jeux & Loisirs;rare;;3;225;450;750;1050
+leg.jx.babyfoot_bonzini_itsf;Baby-foot Bonzini ITSF (compétition);Jeux & Loisirs;legendaire;;;660;1320;2200;3080
+leg.jx.cartouche_stadium_events;Cartouche NES 'Stadium Events';Jeux & Loisirs;legendaire;;;1140;2280;3800;5320
+leg.jx.cartouche_nwc_1990;Cartouche Nintendo World Championships 1990;Jeux & Loisirs;legendaire;;;1260;2520;4200;5880
+uniq.jx.console_pong_1972;Prototype Pong, Atari 1972;Jeux & Loisirs;legendaire;oui;;1950;3900;6500;9100
+lv.cahier_ecolier_seyes;Cahier d'écolier Seyès années 50;Livres & Papeterie;commun;;1;2;5;8;11
+lv.cartes_postales_anciennes;Cartes postales anciennes (boîte);Livres & Papeterie;commun;;1;3;5;9;13
+lv.monte_cristo;Roman 'Le Comte de Monte-Cristo';Livres & Papeterie;commun;;1;3;6;10;14
+lv.rouge_noir_coffret;Le Rouge et le Noir — coffret;Livres & Papeterie;commun;;1;4;7;12;17
+lv.livres_scolaires_anciens;Lot de livres scolaires anciens;Livres & Papeterie;commun;;1;4;7;12;17
+lv.magazine_geo_lot;Lot de magazines Géo années 80;Livres & Papeterie;commun;;1;4;7;12;17
+lv.paris_match_70s;Lot de magazines Paris-Match 70s;Livres & Papeterie;commun;;1;4;8;14;20
+lv.duras_amant;L'Amant — Marguerite Duras;Livres & Papeterie;commun;;1;4;8;14;20
+lv.dictionnaire_robert_70s;Dictionnaire Robert (1973);Livres & Papeterie;commun;;1;4;8;14;20
+lv.plume_sergent_major;Boîte de plumes Sergent-Major;Livres & Papeterie;commun;;1;4;8;14;20
+lv.almanach_vermot;Almanach Vermot ancien;Livres & Papeterie;commun;;1;5;9;15;21
+lv.bd_petit_nicolas;Le Petit Nicolas, Sempé-Goscinny;Livres & Papeterie;commun;;1;5;10;16;22
+lv.bovary_relie;Madame Bovary, édition reliée;Livres & Papeterie;commun;;1;5;11;18;25
+lv.sartre_nausee;La Nausée — Sartre;Livres & Papeterie;commun;;2;5;11;18;25
+lv.lucky_luke_dalton;Lucky Luke 'Les Daltons';Livres & Papeterie;commun;;2;5;11;18;25
+lv.atlas_michelin_60s;Atlas géographique Michelin années 60;Livres & Papeterie;commun;;2;5;11;18;25
+lv.papier_filigrane_lot;Lot de papier filigrané ancien;Livres & Papeterie;commun;;2;5;11;18;25
+lv.spirou_marsupilami;Spirou et le Marsupilami;Livres & Papeterie;commun;;2;6;12;20;28
+lv.tintin_lune;BD Tintin 'On a marché sur la Lune';Livres & Papeterie;commun;;2;7;13;22;31
+lv.colette_cheri_relie;Chéri — Colette, relié;Livres & Papeterie;commun;;2;7;13;22;31
+lv.asterix_zizanie;Astérix 'La Zizanie';Livres & Papeterie;commun;;2;7;13;22;31
+lv.larousse_universel_2vol;Larousse universel 2 volumes;Livres & Papeterie;commun;;2;7;13;22;31
+lv.magazine_lui_60s;Lot de magazines Lui années 60;Livres & Papeterie;commun;;2;7;13;22;31
+lv.simone_beauvoir_deuxieme;Le Deuxième Sexe (édition 60s);Livres & Papeterie;commun;;2;7;14;24;34
+lv.album_photos_velours;Album photos relié velours;Livres & Papeterie;commun;;2;7;14;24;34
+lv.camus_etranger;L'Étranger — Camus (réimpression);Livres & Papeterie;commun;;2;8;15;25;35
+lv.bd_blueberry_lieutenant;Blueberry — Lieutenant Blueberry;Livres & Papeterie;commun;;3;8;16;26;36
+lv.livre_recettes_curnonsky;Livre de recettes — Curnonsky;Livres & Papeterie;commun;;3;8;17;28;39
+lv.coffret_loupes_lecture;Coffret de loupes de lecture en laiton;Livres & Papeterie;commun;;3;8;17;28;39
+lv.asterix_gaulois_reimpr;Astérix le Gaulois (réimpression);Livres & Papeterie;commun;;3;9;18;30;42
+lv.bd_corto_maltese;Corto Maltese — La Ballade;Livres & Papeterie;commun;;3;9;18;30;42
+lv.encrier_porcelaine_xixe;Encrier en porcelaine XIXe;Livres & Papeterie;commun;;3;9;18;30;42
+lv.zola_germinal_xixe;Germinal, édition XIXe;Livres & Papeterie;commun;;3;11;21;35;49
+lv.encyclopedie_quillet_lot;Lot d'encyclopédies Quillet;Livres & Papeterie;commun;;3;11;21;35;49
+lv.lampe_huile_biblio;Lampe à huile de bibliothèque;Livres & Papeterie;commun;;3;11;23;38;53
+lv.carte_marine_xixe;Carte marine XIXe encadrée;Livres & Papeterie;commun;;3;14;27;45;63
+lv.miserables_pleiade;Les Misérables — édition Pléiade;Livres & Papeterie;commun;;3;15;30;50;70
+lv.tintin_calculus;Tintin 'L'Affaire Tournesol' 1956;Livres & Papeterie;commun;;3;20;39;65;91
+lv.proust_recherche_folio;À la Recherche du temps perdu (coffret);Livres & Papeterie;commun;;3;21;42;70;98
+lv.stylo_waterman_vintage;Stylo plume Waterman vintage;Livres & Papeterie;commun;;3;23;45;75;105
+lv.cartes_postales_belle_epoque_rare;Lot cartes postales Belle Époque (rare);Livres & Papeterie;rare;;1;42;84;140;196
+lv.atlas_diderot_planche;Planche de l'Encyclopédie de Diderot;Livres & Papeterie;rare;;1;54;108;180;252
+lv.hugo_legende_relie_cuir;La Légende des siècles — reliure cuir XIXe;Livres & Papeterie;rare;;1;60;120;200;280
+lv.tintin_or_noir_1950;Tintin 'Au pays de l'or noir' 1950;Livres & Papeterie;rare;;1;66;132;220;308
+lv.encrier_argent_xixe;Encrier en argent massif XIXe;Livres & Papeterie;rare;;2;66;132;220;308
+lv.lucky_luke_eo_1947;Lucky Luke — premier album 1947;Livres & Papeterie;rare;;2;72;144;240;336
+lv.asterix_gaulois_eo_1961;Astérix le Gaulois — édition originale 1961;Livres & Papeterie;rare;;2;84;168;280;392
+lv.stylo_montblanc_meisterstuck;Stylo Montblanc Meisterstück doré;Livres & Papeterie;rare;;2;84;168;280;392
+lv.proust_swann_dedicace;Du côté de chez Swann (dédicacé);Livres & Papeterie;rare;;3;105;210;350;490
+lv.eo_petit_prince_1943;Édition originale 'Le Petit Prince' (1943, US);Livres & Papeterie;rare;;3;114;228;380;532
+lv.livre_heures_xviie;Livre d'heures du XVIIe siècle;Livres & Papeterie;rare;;3;180;360;600;840
+lv.bible_olivetan_xvie;Bible Olivetan édition XVIe;Livres & Papeterie;rare;;3;270;540;900;1260
+leg.lv.miserables_originale;Édition originale 'Les Misérables' (1862);Livres & Papeterie;legendaire;;;660;1320;2200;3080
+leg.lv.manuscrit_enlumine_xve;Manuscrit enluminé du XVe siècle;Livres & Papeterie;legendaire;;;1260;2520;4200;5880
+leg.lv.gutenberg_feuillet;Feuillet original Bible de Gutenberg;Livres & Papeterie;legendaire;;;1950;3900;6500;9100
+uniq.lv.manuscrit_voltaire;Manuscrit autographe de Voltaire;Livres & Papeterie;legendaire;oui;;2340;4680;7800;10920
+ma.figurine_porcelaine;Petite figurine en porcelaine;Maison;commun;;1;4;7;12;17
+ma.verres_a_pied_lot6;Lot de 6 verres à pied;Maison;commun;;1;5;11;18;25
+ma.pichet_faience_emaillee;Pichet en faïence émaillée;Maison;commun;;1;5;11;18;25
+ma.cafetiere_emaillee_50s;Cafetière émaillée des années 50;Maison;commun;;1;5;11;18;25
+ma.tasses_porcelaine_paris;Lot de tasses 'Porcelaine de Paris';Maison;commun;;1;7;13;22;31
+ma.bonbonniere_porcelaine;Bonbonnière en porcelaine;Maison;commun;;1;7;13;22;31
+ma.service_cafe_faience;Service café faïence (6 personnes);Maison;commun;;1;7;14;24;34
+ma.statuette_africaine_bois;Statuette africaine en bois;Maison;commun;;1;8;15;25;35
+ma.tabouret_bois_patine;Tabouret en bois patiné;Maison;commun;;1;8;17;28;39
+ma.saliere_argent_minerve;Salière en argent (Minerve);Maison;commun;;1;8;17;28;39
+ma.plateau_marqueterie;Plateau en marqueterie;Maison;commun;;1;8;17;28;39
+ma.service_the_faience;Service à thé en faïence;Maison;commun;;1;9;18;30;42
+ma.plat_faience_olympe;Plat 'Olympe' en faïence;Maison;commun;;1;9;18;30;42
+ma.saladier_verre_boheme;Saladier en verre de Bohême;Maison;commun;;2;9;18;30;42
+ma.carafe_cristal_taille;Carafe en cristal taillé;Maison;commun;;2;11;21;35;49
+ma.timbale_argent_bapteme;Timbale d'argent de baptême;Maison;commun;;2;11;21;35;49
+ma.lampe_petrole_ancienne;Lampe à pétrole ancienne;Maison;commun;;2;11;21;35;49
+ma.service_the_chinois;Service à thé chinois en porcelaine;Maison;commun;;2;11;23;38;53
+ma.service_liqueur_cristal;Service à liqueur en cristal taillé;Maison;commun;;2;11;23;38;53
+ma.seau_a_glace_plaque;Seau à glace en argent plaqué;Maison;commun;;2;11;23;38;53
+ma.coupe_emaillee_longwy;Coupe à fruits émaillée Longwy;Maison;commun;;2;14;27;45;63
+ma.saliere_poivriere_argent;Paire salière-poivrière en argent;Maison;commun;;2;14;27;45;63
+ma.pendule_voyage_laiton;Pendule de voyage en laiton;Maison;commun;;2;15;30;50;70
+ma.bougeoirs_laiton_louisxv;Paire de bougeoirs en laiton Louis XV;Maison;commun;;2;17;33;55;77
+ma.miroir_baroque_petit;Miroir baroque doré (petit);Maison;commun;;2;17;33;55;77
+ma.lampe_globe_opaline;Lampe à globe d'opaline;Maison;commun;;2;17;33;55;77
+ma.cendrier_daum_cristal;Cendrier Daum cristal;Maison;commun;;3;18;36;60;84
+ma.nature_morte_xixe_cadre;Tableau nature morte XIXe (cadre doré);Maison;commun;;3;18;36;60;84
+ma.plat_vallauris_picasso_style;Plat Vallauris style Picasso;Maison;commun;;3;21;42;70;98
+ma.horloge_carillon_westminster;Horloge carillon Westminster;Maison;commun;;3;21;42;70;98
+ma.coffre_chinois_laque;Coffre chinois en laque;Maison;commun;;3;21;42;70;98
+ma.pendulette_bronze;Pendulette de voyage en bronze;Maison;commun;;3;21;42;70;98
+ma.service_porcelaine_limoges;Service porcelaine Limoges 12 couverts;Maison;commun;;3;24;48;80;112
+ma.miroir_psyche;Miroir psyché de chambre;Maison;commun;;3;24;48;80;112
+ma.vase_cristal_baccarat;Vase en cristal Baccarat;Maison;commun;;3;27;54;90;126
+ma.gueridon_salon;Guéridon de salon ancien;Maison;commun;;3;27;54;90;126
+ma.lustre_bronze_cristal_petit;Petit lustre bronze et cristal;Maison;commun;;3;29;57;95;133
+ma.vase_lalique_recent;Vase Lalique récent;Maison;commun;;3;33;66;110;154
+ma.pendule_marbre_xixe;Pendule cheminée en marbre XIXe;Maison;commun;;3;33;66;110;154
+ma.couverts_christofle_24;Couverts Christofle 24 pièces;Maison;commun;;3;42;84;140;196
+ma.boite_musique_ancienne;Boîte à musique ancienne;Maison;rare;;1;17;33;55;77
+ma.lampe_bureau_artdeco;Lampe de bureau Art Déco;Maison;rare;;1;39;78;130;182
+ma.miroir_dore_fronton;Miroir doré à fronton;Maison;rare;;1;42;84;140;196
+ma.vase_daum_signe;Vase Daum signé;Maison;rare;;1;84;168;280;392
+ma.service_meissen;Service à thé Meissen 6 tasses;Maison;rare;;2;114;228;380;532
+ma.bibliotheque_louis_philippe;Bibliothèque Louis-Philippe en acajou;Maison;rare;;2;135;270;450;630
+ma.candelabre_argent_5branches;Candélabre 5 branches en argent massif;Maison;rare;;2;144;288;480;672
+ma.lustre_cristal_baccarat;Lustre en cristal Baccarat;Maison;rare;;2;180;360;600;840
+ma.couverts_puiforcat;Couverts Puiforcat 36 pièces;Maison;rare;;3;180;360;600;840
+ma.tapis_persan_ispahan;Tapis persan Ispahan ancien;Maison;rare;;3;210;420;700;980
+ma.commode_louis_xv_marqueterie;Commode Louis XV en marqueterie;Maison;rare;;3;270;540;900;1260
+ma.pendule_breguet_signee;Pendule signée Breguet;Maison;rare;;3;360;720;1200;1680
+leg.ma.pendule_louis_xiv_boulle;Pendule Louis XIV en marqueterie Boulle;Maison;legendaire;;;1260;2520;4200;5880
+leg.ma.tapis_savonnerie_xviie;Tapis de la Savonnerie (XVIIe);Maison;legendaire;;;1440;2880;4800;6720
+leg.ma.oeuf_faberge;Œuf de Fabergé (réplique impériale);Maison;legendaire;;;1650;3300;5500;7700
+uniq.ma.vase_ming_dynasty;Vase porcelaine dynastie Ming;Maison;legendaire;oui;;3300;6600;11000;15400
+mo.gants_cuir_femme;Gants de cuir façon dame;Mode;commun;;1;4;7;12;17
+mo.casquette_gavroche_60s;Casquette gavroche années 60;Mode;commun;;1;4;8;14;20
+mo.cravate_club_anglaise;Cravate club anglaise;Mode;commun;;1;4;8;14;20
+mo.veste_jean_delavee;Veste en jean délavée;Mode;commun;;1;5;9;15;21
+mo.pantalon_pattes_eph;Pantalon pattes d'éph années 70;Mode;commun;;1;5;10;16;22
+mo.ceinture_cuir_laiton;Ceinture cuir à boucle laiton;Mode;commun;;1;5;10;16;22
+mo.jupe_plissee_60s;Jupe plissée années 60;Mode;commun;;1;5;11;18;25
+mo.polo_lacoste_pique;Polo Lacoste piqué ancien;Mode;commun;;1;5;11;18;25
+mo.chapeau_feutre_50s;Chapeau de feutre années 50;Mode;commun;;1;7;13;22;31
+mo.robe_70s_disco;Robe disco années 70;Mode;commun;;1;7;13;22;31
+mo.chemise_lacoste_originale;Chemise Lacoste originale 70s;Mode;commun;;1;7;13;22;31
+mo.foulard_soie_motifs;Foulard en soie à motifs;Mode;commun;;1;7;13;22;31
+mo.broche_pinup_strass;Broche pin-up en strass;Mode;commun;;1;7;13;22;31
+mo.epingle_cravate_strass;Épingle à cravate à strass;Mode;commun;;2;7;13;22;31
+mo.boucles_oreilles_perles;Boucles d'oreilles perles;Mode;commun;;2;7;14;24;34
+mo.robe_80s_epaulettes;Robe à épaulettes années 80;Mode;commun;;2;8;15;25;35
+mo.robe_60s_mini;Mini-robe années 60;Mode;commun;;2;8;17;28;39
+mo.ombrelle_dentelle_xixe;Ombrelle en dentelle XIXe;Mode;commun;;2;8;17;28;39
+mo.bracelet_jonc_argent;Bracelet jonc en argent ancien;Mode;commun;;2;9;18;30;42
+mo.sac_seventies_cuir;Sac à main seventies en cuir;Mode;commun;;2;10;19;32;45
+mo.manteau_lainage_60s;Manteau en lainage des années 60;Mode;commun;;2;11;21;35;49
+mo.eventail_nacre;Éventail en nacre;Mode;commun;;2;11;21;35;49
+mo.bague_chevaliere_argent;Bague chevalière en argent;Mode;commun;;2;11;21;35;49
+mo.robe_50s_pinup;Robe pin-up années 50;Mode;commun;;2;11;23;38;53
+mo.chaussures_richelieu_cuir;Souliers Richelieu en cuir vintage;Mode;commun;;2;11;23;38;53
+mo.broche_camee_xixe;Broche camée XIXe;Mode;commun;;2;11;23;38;53
+mo.cravate_charvet_soie;Cravate Charvet en soie;Mode;commun;;3;11;23;38;53
+mo.bottes_camperos_cuir;Bottes camperos en cuir;Mode;commun;;3;14;27;45;63
+mo.collier_perles_culture;Collier de perles de culture;Mode;commun;;3;14;27;45;63
+mo.montre_seiko_5_vintage;Montre Seiko 5 vintage;Mode;commun;;3;15;30;50;70
+mo.chapeau_panama_montecristi;Panama Montecristi récent;Mode;commun;;3;17;33;55;77
+mo.montre_lip_dauphine;Montre Lip Dauphine dorée;Mode;commun;;3;17;33;55;77
+mo.blouson_cuir_vintage;Blouson cuir vintage;Mode;commun;;3;18;36;60;84
+mo.chapeau_borsalino;Chapeau Borsalino feutre;Mode;commun;;3;18;36;60;84
+mo.escarpins_seconde_main;Escarpins de marque seconde main;Mode;commun;;3;21;42;70;98
+mo.montre_yema_superman;Montre Yema Super-Man;Mode;commun;;3;21;42;70;98
+mo.carre_hermes_recent;Carré Hermès récent (occasion);Mode;commun;;3;24;48;80;112
+mo.portefeuille_lv_monogram;Portefeuille Louis Vuitton monogramme;Mode;commun;;3;24;48;80;112
+mo.trench_burberry_classique;Trench-coat Burberry classique;Mode;commun;;3;27;54;90;126
+mo.ceinture_hermes_h_recente;Ceinture Hermès H récente;Mode;commun;;3;27;54;90;126
+mo.broche_emaillee_artdeco;Broche émaillée Art Déco;Mode;rare;;1;18;36;60;84
+mo.sac_lancel;Sac à main en cuir Lancel;Mode;rare;;1;33;66;110;154
+mo.chemise_dior_homme;Chemise Dior Homme défilé;Mode;rare;;1;54;108;180;252
+mo.sac_celine_phantom;Sac Céline Phantom;Mode;rare;;1;66;132;220;308
+mo.foulard_hermes_brides;Foulard Hermès 'Brides de gala' rare;Mode;rare;;2;72;144;240;336
+mo.manteau_burberry_couture_60s;Manteau Burberry couture années 60;Mode;rare;;2;84;168;280;392
+mo.tailleur_chanel_70s;Tailleur Chanel des années 70;Mode;rare;;2;108;216;360;504
+mo.veste_ysl_smoking_80s;Veste smoking YSL des années 80;Mode;rare;;2;126;252;420;588
+mo.sac_chanel_classic;Sac Chanel Classic (occasion);Mode;rare;;3;144;288;480;672
+mo.sac_hermes_kelly;Sac Hermès Kelly (occasion);Mode;rare;;3;180;360;600;840
+mo.bague_cartier_trinity;Bague Cartier Trinity (occasion);Mode;rare;;3;180;360;600;840
+mo.collier_van_cleef_alhambra;Collier Van Cleef Alhambra (occasion);Mode;rare;;3;210;420;700;980
+leg.mo.robe_chanel_1925;Robe Chanel n°5 originale (1925);Mode;legendaire;;;900;1800;3000;4200
+leg.mo.dior_new_look_1955;Robe haute couture Dior 'New Look' (1955);Mode;legendaire;;;1050;2100;3500;4900
+leg.mo.birkin_himalaya;Sac Birkin Himalaya (provenance);Mode;legendaire;;;1350;2700;4500;6300
+uniq.mo.bijou_marie_antoinette;Bijou ayant appartenu à Marie-Antoinette;Mode;legendaire;oui;;2550;5100;8500;11900
+mus.33tours_jazz_inconnu;33 tours de jazz inconnu;Musique;commun;;1;2;5;8;11
+mus.k7_audio_mixtape_90s;K7 mixtape années 90;Musique;commun;;1;2;5;8;11
+mus.cd_noir_desir_666;CD Noir Désir '666.667 Club';Musique;commun;;1;4;7;12;17
+mus.diapason_acier;Diapason en acier d'orchestre;Musique;commun;;1;4;7;12;17
+mus.vinyle_souchon_foule;Vinyle Souchon 'Foule sentimentale';Musique;commun;;1;4;8;14;20
+mus.cd_daft_punk_homework;CD Daft Punk 'Homework';Musique;commun;;1;4;8;14;20
+mus.vinyle_goldman_envole;Vinyle Silverguy 'Moi au volant';Musique;commun;;1;5;10;16;22
+mus.cd_radiohead_ok;CD Radiohead 'OK Computer';Musique;commun;;1;5;10;16;22
+mus.cd_nirvana_in_utero;Coffret CD Nirvana 'In Utero';Musique;commun;;1;5;11;18;25
+mus.vinyle_aznavour_emmenez;Vinyle Paul Nazamour 'Demain enfin';Musique;commun;;1;5;11;18;25
+mus.vinyle_renaud_morgane;Vinyle Rénaut 'Mégane sans toit';Musique;commun;;1;5;11;18;25
+mus.vinyle_cabrel_hors_saison;Vinyle François Cabriol 'Hors-Piste';Musique;commun;;1;5;11;18;25
+mus.vinyle_balavoine_aziza;Vinyle Miguel Pavane 'La Zizanie';Musique;commun;;1;5;11;18;25
+mus.partition_satie;Partitions Erik Satie;Musique;commun;;2;5;11;18;25
+mus.vinyle_telephone_dure_limite;Vinyle Téléphone 'Dure Limite';Musique;commun;;2;6;12;20;28
+mus.vinyle_sardou_lacs;Vinyle Sardou 'Les Lacs du Connemara';Musique;commun;;2;6;12;20;28
+mus.vinyle_brel_amsterdam;Vinyle Stevranos 'Vive la fêt(a)';Musique;commun;;2;7;13;22;31
+mus.vinyle_hallyday_rock_memphis;Vinyle Hollyday 'Caillou à Woippy';Musique;commun;;2;7;13;22;31
+mus.vinyle_higelin_alertez;Vinyle Higelin 'Alertez les bébés';Musique;commun;;2;7;13;22;31
+mus.cd_iam_ecole;CD IAM 'L'École du micro d'argent';Musique;commun;;2;7;13;22;31
+mus.vinyle_brassens_jeanne;Vinyle Victor de la Brasse 'Bibelot';Musique;commun;;2;7;14;24;34
+mus.vinyle_indochine_aventurier;Vinyle Indochine 'L'Aventurier';Musique;commun;;2;7;14;24;34
+mus.partition_chopin;Partitions de Chopin reliées;Musique;commun;;2;8;15;25;35
+mus.vinyle_mylene_farmer_ainsi;Vinyle Mylène Farmer 'Ainsi soit je…';Musique;commun;;2;8;16;26;36
+mus.vinyle_piaf_non;Vinyle Judith Loiseau 'Oui, je regrette tout';Musique;commun;;2;8;17;28;39
+mus.radio_cassette_sanyo;Radio-cassette Sanyo années 80;Musique;commun;;2;9;18;30;42
+mus.harmonica_hohner;Harmonica chromatique Hohner;Musique;commun;;3;11;21;35;49
+mus.metronome_wittner;Métronome Wittner mécanique;Musique;commun;;3;11;21;35;49
+mus.vinyle_dylan_blonde;Vinyle Dylan 'Blonde on Blonde';Musique;commun;;3;12;24;40;56
+mus.walkman_sony_wm;Walkman Sony WM-A1;Musique;commun;;3;12;24;40;56
+mus.ukulele_soprano;Ukulélé soprano en koa;Musique;commun;;3;12;24;40;56
+mus.vinyle_pink_floyd_wall;Vinyle Pink Floyd 'The Wall';Musique;commun;;3;14;27;45;63
+mus.vinyle_zeppelin_iv;Vinyle Led Zeppelin IV;Musique;commun;;3;14;27;45;63
+mus.vinyle_stones_let_bleed;Vinyle Rolling Stones 'Let It Bleed';Musique;commun;;3;15;30;50;70
+mus.vinyle_beatles_abbey_road;Vinyle Beatles 'Abbey Road';Musique;commun;;3;17;33;55;77
+mus.vinyle_bowie_ziggy;Vinyle Bowie 'Ziggy Stardust';Musique;commun;;3;18;36;60;84
+mus.vinyle_gainsbourg_melody;Vinyle Gainsbourg 'Melody Nelson';Musique;commun;;3;21;42;70;98
+mus.flute_traversiere_yamaha;Flûte traversière Yamaha;Musique;commun;;3;24;48;80;112
+mus.tourne_disque_thorens;Tourne-disque Thorens TD-150;Musique;commun;;3;27;54;90;126
+mus.clarinette_buffet;Clarinette Buffet Crampon;Musique;commun;;3;27;54;90;126
+mus.guitare_classique_ancienne;Vieille guitare classique;Musique;rare;;1;36;72;120;168
+mus.boite_musique_mecanique;Boîte à musique mécanique à cylindre;Musique;rare;;1;54;108;180;252
+mus.vinyle_stones_test_pressing;Test pressing Rolling Stones;Musique;rare;;1;60;120;200;280
+mus.accordeon_paolo_soprani;Accordéon Paolo Soprani signé;Musique;rare;;1;60;120;200;280
+mus.banjo_gibson_5cordes;Banjo Gibson 5 cordes ancien;Musique;rare;;2;72;144;240;336
+mus.vinyle_beatles_dedicace;Vinyle Beatles dédicacé (album solo);Musique;rare;;2;84;168;280;392
+mus.theremine_moog;Thérémine Moog Etherwave;Musique;rare;;2;84;168;280;392
+mus.violon_atelier_mirecourt;Violon d'atelier — Mirecourt XIXe;Musique;rare;;2;96;192;320;448
+mus.guitare_fender_strato_70s;Fender Stratocaster (1970s);Musique;rare;;3;114;228;380;532
+mus.guitare_gibson_les_paul;Guitare Gibson Les Paul (1980s);Musique;rare;;3;135;270;450;630
+mus.synthe_moog_minimoog;Synthé Moog Minimoog (1970);Musique;rare;;3;180;360;600;840
+mus.saxophone_selmer_mark_vi;Saxophone Selmer Mark VI;Musique;rare;;3;210;420;700;980
+leg.mus.piano_pleyel_concert;Piano Pleyel de concert (1900);Musique;legendaire;;;1140;2280;3800;5320
+leg.mus.stradivarius;Violon Stradivarius (1715);Musique;legendaire;;;1350;2700;4500;6300
+leg.mus.guitare_hendrix_provenance;Guitare avec provenance Hendrix;Musique;legendaire;;;1560;3120;5200;7280
+uniq.mus.violon_paganini;"Violon ""Il Cannone"" de Paganini";Musique;legendaire;oui;;2700;5400;9000;12600
+art.gravure_ancienne_xixe;Gravure ancienne du XIXe siècle;Objets d'art;commun;;1;7;13;22;31
+art.gravure_jouy_paris;Gravure 'Vue de Paris' Jouy;Objets d'art;commun;;1;7;13;22;31
+art.platre_atelier_torse;Plâtre d'atelier — torse;Objets d'art;commun;;1;7;13;22;31
+art.assiette_picasso_style;Assiette décorative style Picasso;Objets d'art;commun;;1;7;13;22;31
+art.dessin_fusain_atelier;Dessin au fusain (atelier);Objets d'art;commun;;1;8;15;25;35
+art.masque_tribal_decoratif;Masque tribal décoratif;Objets d'art;commun;;1;8;17;28;39
+art.gravure_durer_reimpr;Gravure Dürer (réimpression);Objets d'art;commun;;1;8;17;28;39
+art.peinture_naive_paysanne;Peinture naïve — scène paysanne;Objets d'art;commun;;1;8;17;28;39
+art.miniature_portrait_dame;Miniature — portrait de dame;Objets d'art;commun;;1;8;17;28;39
+art.aquarelle_paysage_anonyme;Aquarelle de paysage (anonyme XIXe);Objets d'art;commun;;1;9;18;30;42
+art.aquarelle_paysage_provencal;Aquarelle paysage provençal;Objets d'art;commun;;1;10;19;32;45
+art.masque_inuit_inspiration;Masque décoratif d'inspiration Inuit;Objets d'art;commun;;1;10;19;32;45
+art.coupe_emaillee_longwy_art;Coupe émaillée Longwy;Objets d'art;commun;;1;10;19;32;45
+art.aquarelle_marine_xixe;Aquarelle marine du XIXe;Objets d'art;commun;;2;11;21;35;49
+art.statuette_egyptienne_inspi;Statuette d'inspiration égyptienne;Objets d'art;commun;;2;11;21;35;49
+art.terre_cuite_buste;Petit buste en terre cuite;Objets d'art;commun;;2;11;23;38;53
+art.terre_cuite_putto;Terre cuite — putto;Objets d'art;commun;;2;11;23;38;53
+art.plaque_email_limoges;Plaque émaillée Limoges religieuse;Objets d'art;commun;;2;11;23;38;53
+art.boite_marqueterie_florentine;Boîte de marqueterie florentine;Objets d'art;commun;;2;11;23;38;53
+art.pastel_portrait_femme;Pastel — portrait de femme;Objets d'art;commun;;2;12;24;40;56
+art.terre_cuite_femme_classique;Femme classique en terre cuite;Objets d'art;commun;;2;13;25;42;59
+art.icone_orthodoxe_bois;Icône orthodoxe sur bois;Objets d'art;commun;;2;14;27;45;63
+art.eventail_chinois_peint;Éventail chinois peint à la main;Objets d'art;commun;;2;14;27;45;63
+art.lithographie_signee_xxe;Lithographie signée du XXe;Objets d'art;commun;;2;15;30;50;70
+art.huile_anonyme_xixe;Huile sur toile anonyme XIXe;Objets d'art;commun;;2;15;30;50;70
+art.serigraphie_pop_signee;Sérigraphie pop-art signée;Objets d'art;commun;;2;17;33;55;77
+art.estampe_hiroshige_paysage;Estampe Hiroshige — paysage;Objets d'art;commun;;3;17;33;55;77
+art.boite_laquee_japonaise;Boîte laquée japonaise (Edo récent);Objets d'art;commun;;3;17;33;55;77
+art.estampe_hokusai_edition;Estampe japonaise Hokusai (édition);Objets d'art;commun;;3;18;36;60;84
+art.statue_bouddha_pierre;Statue de Bouddha en pierre;Objets d'art;commun;;3;18;36;60;84
+art.portrait_bourgeois_xixe;Portrait à l'huile (bourgeois XIXe);Objets d'art;commun;;3;20;39;65;91
+art.nature_morte_xixe_cadre;Nature morte XIXe encadrée;Objets d'art;commun;;3;21;42;70;98
+art.bronze_animalier;Bronze animalier signé;Objets d'art;commun;;3;23;45;75;105
+art.vase_lallemant_polychrome;Vase Robert Lallemant polychrome;Objets d'art;commun;;3;23;45;75;105
+art.bronze_petite_danseuse;Petit bronze 'Danseuse';Objets d'art;commun;;3;24;48;80;112
+art.icone_russe_doree;Icône russe dorée;Objets d'art;commun;;3;24;48;80;112
+art.bronze_buste_voltaire;Buste de Voltaire en bronze;Objets d'art;commun;;3;27;54;90;126
+art.petite_sculpture_ivoire;Petite sculpture en ivoire;Objets d'art;commun;;3;27;54;90;126
+art.litho_chagall_planche;Lithographie Chagall (planche);Objets d'art;commun;;3;29;57;95;133
+art.bronze_barye_style;Bronze signé style Barye;Objets d'art;commun;;3;29;57;95;133
+art.dessin_signe_ecole_francaise;Dessin signé d'école française;Objets d'art;rare;;1;54;108;180;252
+art.gravure_rembrandt_reimpr;Gravure Rembrandt (réimpression originale);Objets d'art;rare;;1;72;144;240;336
+art.vase_galle_signe;Vase Émile Gallé signé;Objets d'art;rare;;1;78;156;260;364
+art.vase_lalique_signe;Vase Lalique signé;Objets d'art;rare;;1;84;168;280;392
+art.aquarelle_dufy_signee;Aquarelle signée Raoul Dufy;Objets d'art;rare;;2;105;210;350;490
+art.litho_picasso_signe_planche;Lithographie Picasso (planche signée);Objets d'art;rare;;2;114;228;380;532
+art.estampe_picasso_signee;Estampe Picasso signée;Objets d'art;rare;;2;135;270;450;630
+art.dessin_dali_signe;Dessin signé Salvador Dalí;Objets d'art;rare;;2;144;288;480;672
+art.bronze_giacometti_planche;Bronze d'atelier signé Giacometti (planche);Objets d'art;rare;;3;180;360;600;840
+art.toile_buffet_signee;Toile signée Bernard Buffet;Objets d'art;rare;;3;180;360;600;840
+art.huile_corot_attribuee;Huile attribuée à Corot;Objets d'art;rare;;3;210;420;700;980
+art.sculpture_rodin_planche;Petite sculpture (planche atelier Rodin);Objets d'art;rare;;3;240;480;800;1120
+leg.art.dessin_matisse_etude;Dessin signé Henri Matisse (étude);Objets d'art;legendaire;;;1260;2520;4200;5880
+leg.art.dessin_picasso_etude;Dessin signé Picasso (étude);Objets d'art;legendaire;;;1440;2880;4800;6720
+leg.art.toile_chagall_attribuee;Toile attribuée à Marc Chagall (étude);Objets d'art;legendaire;;;1650;3300;5500;7700
+uniq.art.toile_monet_inedite;Toile inédite de Claude Monet;Objets d'art;legendaire;oui;;3600;7200;12000;16800
