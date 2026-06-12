@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
@@ -28,6 +28,14 @@ import { getBrocanteById } from "@/data/brocantes";
 import type { CategorieObjet, EtatObjet, Objet } from "@/types/game";
 
 export default function StockagePage() {
+  return (
+    <Suspense fallback={null}>
+      <StockagePageInner />
+    </Suspense>
+  );
+}
+
+function StockagePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
