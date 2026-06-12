@@ -61,7 +61,9 @@ export const STOCKAGE_BOXES_LAYOUT: Record<StockageBoxKey, BoxLayout> = {
     bottom: 43.5,
     width: 20.1,
     categorie: "Jeux & Loisirs",
-    src: "/qg/boxes/box-jeux.webp",
+    // Version croppée à droite : la partie du carton qui passerait derrière
+    // le montant droit de l'étagère est rognée dans l'image elle-même.
+    src: "/qg/boxes/box-jeux-crop.png",
     label: "Jeux & Loisirs",
   },
   boxLivres: {
@@ -85,7 +87,8 @@ export const STOCKAGE_BOXES_LAYOUT: Record<StockageBoxKey, BoxLayout> = {
     bottom: 30.0,
     width: 20.1,
     categorie: "Maison",
-    src: "/qg/boxes/box-maison.webp",
+    // Version croppée à droite (passe derrière le montant droit).
+    src: "/qg/boxes/box-maison-crop.png",
     label: "Maison",
   },
   boxArt: {
@@ -117,20 +120,3 @@ export const STOCKAGE_BOX_ORDER: readonly StockageBoxKey[] = [
   "boxBricolage",
 ];
 
-/**
- * Masque vertical au-dessus des cartons pour faire passer les cartons
- * "derrière" le montant droit de l'étagère (effet de profondeur).
- *
- * Le composant `EtagereLegMask` re-rend l'image de fond atelier dans
- * une fenêtre découpée (overflow:hidden) positionnée pile sur le
- * montant. zIndex 3 > cartons (zIndex 2 hérité).
- *
- * Coords éditables via le dev tool (?qgedit=1) sous la key `etagereLegRight`.
- */
-export const ETAGERE_LEG_MASK_LAYOUT = {
-  left: 407.0, // vw absolu (scène 600vw)
-  bottom: 6.0, // % depuis le bas de la scène
-  width: 6.0, // vw
-  /** Hauteur du masque en % de la hauteur de scène (non éditable). */
-  heightPct: 84,
-} as const;

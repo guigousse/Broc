@@ -12,7 +12,6 @@ import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_LAYOUT } from "../chatBaladeurLayout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
 import {
-  ETAGERE_LEG_MASK_LAYOUT,
   STOCKAGE_BOX_ORDER,
   STOCKAGE_BOXES_LAYOUT,
   type StockageBoxKey,
@@ -21,14 +20,7 @@ import {
 const STORAGE_KEY = "broc.qg-edit.overrides";
 const ACTIVE_STORAGE_KEY = "broc.qg-edit.active";
 
-export const ETAGERE_LEG_KEY = "etagereLegRight" as const;
-export type EtagereLegKey = typeof ETAGERE_LEG_KEY;
-
-export type EditableKey =
-  | QgObjetKey
-  | ChatBaladeurId
-  | StockageBoxKey
-  | EtagereLegKey;
+export type EditableKey = QgObjetKey | ChatBaladeurId | StockageBoxKey;
 
 const CHAT_KEYS = new Set<string>(CHAT_BALADEUR_ORDER);
 const BOX_KEYS = new Set<string>(STOCKAGE_BOX_ORDER);
@@ -41,22 +33,11 @@ function isBoxKey(key: EditableKey): key is StockageBoxKey {
   return BOX_KEYS.has(key);
 }
 
-function isLegKey(key: EditableKey): key is EtagereLegKey {
-  return key === ETAGERE_LEG_KEY;
-}
-
 function baseCoord(key: EditableKey): {
   left: number;
   bottom: number;
   width: number;
 } {
-  if (isLegKey(key)) {
-    return {
-      left: ETAGERE_LEG_MASK_LAYOUT.left,
-      bottom: ETAGERE_LEG_MASK_LAYOUT.bottom,
-      width: ETAGERE_LEG_MASK_LAYOUT.width,
-    };
-  }
   if (isBoxKey(key)) {
     const b = STOCKAGE_BOXES_LAYOUT[key];
     return { left: b.left, bottom: b.bottom, width: b.width };
@@ -205,15 +186,6 @@ export function useStockageBoxCoord(key: StockageBoxKey): {
   width: number;
 } {
   return useEditableCoord(key);
-}
-
-/** Coords effectives (base + override) du masque du montant droit. */
-export function useEtagereLegMaskCoord(): {
-  left: number;
-  bottom: number;
-  width: number;
-} {
-  return useEditableCoord(ETAGERE_LEG_KEY);
 }
 
 function useEditableCoord(key: EditableKey) {
