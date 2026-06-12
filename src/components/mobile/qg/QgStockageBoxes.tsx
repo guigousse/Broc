@@ -52,10 +52,18 @@ function OneBox({ boxKey }: OneBoxProps) {
           width: "100%",
           height: "auto",
           userSelect: "none",
-          // Baisse de luminosité + légère désaturation pour coller à la
-          // palette du décor (un peu trop clair sinon).
+          // Aligne le carton sur la palette du décor :
+          //   - brightness 0.78  : assombrit pour matcher les cartons en
+          //     haut de l'étagère (peints en brun mat dans le fond).
+          //   - saturate 0.82    : retire la dominante peach/orange un
+          //     peu trop pétante du PNG d'origine.
+          //   - contrast 1.05    : récupère un peu de tenue sur les
+          //     traits noirs après l'assombrissement.
+          //   - sepia 0.08       : pousse légèrement vers le brun chaud
+          //     du carton kraft des cartons de fond.
+          //   - drop-shadow      : ancrage au sol/étagère.
           filter:
-            "brightness(0.86) saturate(0.92) drop-shadow(0 2px 3px rgba(0,0,0,0.4))",
+            "brightness(0.78) saturate(0.82) contrast(1.05) sepia(0.08) drop-shadow(0 2px 3px rgba(0,0,0,0.42))",
         }}
       />
     </button>
