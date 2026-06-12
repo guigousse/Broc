@@ -37,6 +37,7 @@ import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
 import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
+import { QgStockageBoxes } from "@/components/mobile/qg/QgStockageBoxes";
 import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
@@ -546,15 +547,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
             >
               <button
                 type="button"
-                onClick={() => router.push("/stockage/gerer")}
-                aria-label="Ouvrir le stockage"
-                style={atelierHotspotStyle(
-                  ATELIER_LAYOUT.objets.etagere,
-                  55,
-                )}
-              />
-              <button
-                type="button"
                 onClick={() => router.push("/atelier/gerer")}
                 aria-label="Ouvrir l'établi"
                 style={atelierHotspotStyle(
@@ -563,6 +555,10 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                 )}
               />
             </div>
+
+            {/* Cartons cliquables sur l'étagère de stockage (coords absolues
+                dans le panorama 600vw — la zone atelier débute à 300vw). */}
+            <QgStockageBoxes />
 
             <QgChatBaladeur
               jourActuel={state.jourActuel}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
@@ -29,6 +29,7 @@ import type { CategorieObjet, EtatObjet, Objet } from "@/types/game";
 
 export default function StockagePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     state,
     isHydrated,
@@ -38,7 +39,17 @@ export default function StockagePage() {
     definirPrixVenteSouhaite,
     ameliorerStockage,
   } = useGame();
-  const [filtre, setFiltre] = useState<CategorieObjet | null>(null);
+  // Pré-filtre depuis ?cat= (ex. carton catégorie cliqué depuis le panorama).
+  // Garde une valeur seulement si la catégorie est valide.
+  const initialFiltre = useMemo<CategorieObjet | null>(() => {
+    const raw = searchParams.get("cat");
+    if (!raw) return null;
+    return (CATEGORIES as string[]).includes(raw)
+      ? (raw as CategorieObjet)
+      : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [filtre, setFiltre] = useState<CategorieObjet | null>(initialFiltre);
   const [objetOuvert, setObjetOuvert] = useState<Objet | null>(null);
   const [askReplace, setAskReplace] = useState<{
     objet: Objet;

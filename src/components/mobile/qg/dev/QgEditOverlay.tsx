@@ -4,21 +4,29 @@ import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
 import {
+  STOCKAGE_BOX_ORDER,
+  type StockageBoxKey,
+} from "../stockageBoxesLayout";
+import {
   useQgObjet,
   useChatBaladeurCoord,
+  useStockageBoxCoord,
   useQgEditContext,
   type EditableKey,
 } from "./QgEditContext";
 
 const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
 const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
-const ALL_KEYS: EditableKey[] = [...QG_KEYS, ...CHAT_KEYS];
+const BOX_KEYS = [...STOCKAGE_BOX_ORDER] as StockageBoxKey[];
+const ALL_KEYS: EditableKey[] = [...QG_KEYS, ...CHAT_KEYS, ...BOX_KEYS];
 
 function useCoord(key: EditableKey) {
-  // CHAT_BALADEUR_ORDER est petit et stable — on peut faire un includes.
+  // Tous les hooks utilisent la même implémentation interne ; le dispatch
+  // est cohérent puisque chaque key appartient à une seule famille.
   const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
-  // Les deux hooks ont la même signature ; on choisit selon la classe de
-  // clé en respectant l'ordre des appels (toujours un seul hook actif).
+  const isBox = (STOCKAGE_BOX_ORDER as readonly string[]).includes(key);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  if (isBox) return useStockageBoxCoord(key as StockageBoxKey);
   // eslint-disable-next-line react-hooks/rules-of-hooks
   return isChat
     ? useChatBaladeurCoord(key as ChatBaladeurId)

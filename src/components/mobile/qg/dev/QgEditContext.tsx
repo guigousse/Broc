@@ -11,16 +11,26 @@ import {
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_LAYOUT } from "../chatBaladeurLayout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
+import {
+  STOCKAGE_BOX_ORDER,
+  STOCKAGE_BOXES_LAYOUT,
+  type StockageBoxKey,
+} from "../stockageBoxesLayout";
 
 const STORAGE_KEY = "broc.qg-edit.overrides";
 const ACTIVE_STORAGE_KEY = "broc.qg-edit.active";
 
-export type EditableKey = QgObjetKey | ChatBaladeurId;
+export type EditableKey = QgObjetKey | ChatBaladeurId | StockageBoxKey;
 
 const CHAT_KEYS = new Set<string>(CHAT_BALADEUR_ORDER);
+const BOX_KEYS = new Set<string>(STOCKAGE_BOX_ORDER);
 
 function isChatKey(key: EditableKey): key is ChatBaladeurId {
   return CHAT_KEYS.has(key);
+}
+
+function isBoxKey(key: EditableKey): key is StockageBoxKey {
+  return BOX_KEYS.has(key);
 }
 
 function baseCoord(key: EditableKey): {
@@ -28,6 +38,10 @@ function baseCoord(key: EditableKey): {
   bottom: number;
   width: number;
 } {
+  if (isBoxKey(key)) {
+    const b = STOCKAGE_BOXES_LAYOUT[key];
+    return { left: b.left, bottom: b.bottom, width: b.width };
+  }
   if (isChatKey(key)) return CHAT_BALADEUR_LAYOUT[key];
   return QG_LAYOUT.objets[key];
 }
@@ -158,6 +172,15 @@ export function useQgObjet(key: QgObjetKey): {
 
 /** Coords effectives (base + override) pour un chat baladeur. */
 export function useChatBaladeurCoord(key: ChatBaladeurId): {
+  left: number;
+  bottom: number;
+  width: number;
+} {
+  return useEditableCoord(key);
+}
+
+/** Coords effectives (base + override) pour un carton de stockage. */
+export function useStockageBoxCoord(key: StockageBoxKey): {
   left: number;
   bottom: number;
   width: number;
