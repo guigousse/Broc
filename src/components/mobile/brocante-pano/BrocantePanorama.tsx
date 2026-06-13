@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import type { Brocante, BrocanteTier, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import { BrocanteScene } from "./BrocanteScene";
+import { BrocanteTransition, TRANSITION_WIDTH_VW } from "./BrocanteTransition";
 import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
 import { BrocanteBottomBar } from "./BrocanteBottomBar";
 
@@ -78,6 +79,14 @@ export function BrocantePanorama({
     return max;
   }, [brocantes, debloqueesIds]);
 
+  // Décalage horizontal (en vw) du début de chaque scène, en tenant compte
+  // des fillers de transition (largeur TRANSITION_WIDTH_VW) insérés entre
+  // chaque paire de scènes.
+  const tierOffsetsVw = useMemo(
+    () => TIERS.map((_, idx) => idx * (100 + TRANSITION_WIDTH_VW)),
+    [],
+  );
+
   // Scroll initial vers la scène du maxUnlockedTier (au mount uniquement).
   const didInitRef = useRef(false);
   useEffect(() => {
@@ -86,10 +95,10 @@ export function BrocantePanorama({
     if (!el) return;
     const idx = TIERS.indexOf(maxUnlockedTier);
     if (idx > 0) {
-      el.scrollLeft = idx * el.clientWidth;
+      el.scrollLeft = (tierOffsetsVw[idx] / 100) * el.clientWidth;
     }
     didInitRef.current = true;
-  }, [maxUnlockedTier]);
+  }, [maxUnlockedTier, tierOffsetsVw]);
 
   const selectedIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -97,6 +106,8 @@ export function BrocantePanorama({
   }, [selectedId]);
 
   // Reset de la sélection si la brocante choisie n'est plus dans le tier visible.
+  // Avec les fillers de transition, chaque tier i démarre à un offset connu :
+  // on prend l'offset le plus proche pour déterminer le tier courant.
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -106,8 +117,17 @@ export function BrocantePanorama({
       raf = requestAnimationFrame(() => {
         const cw = el.clientWidth;
         if (cw <= 0) return;
-        const tierIdx = Math.round(el.scrollLeft / cw);
-        const currentTier = TIERS[Math.max(0, Math.min(TIERS.length - 1, tierIdx))];
+        const currentVw = (el.scrollLeft / cw) * 100;
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        for (let i = 0; i < tierOffsetsVw.length; i++) {
+          const d = Math.abs(currentVw - tierOffsetsVw[i]);
+          if (d < bestDist) {
+            bestDist = d;
+            bestIdx = i;
+          }
+        }
+        const currentTier = TIERS[bestIdx];
         const currentSelectedId = selectedIdRef.current;
         if (currentSelectedId) {
           const sel = brocantesById.get(currentSelectedId);
@@ -120,7 +140,7 @@ export function BrocantePanorama({
       el.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
     };
-  }, [brocantesById]);
+  }, [brocantesById, tierOffsetsVw]);
 
   const selected = selectedId ? brocantesById.get(selectedId) ?? null : null;
   const selectedDebloquee = selected ? debloqueesIds.has(selected.id) : false;
@@ -137,15 +157,19 @@ export function BrocantePanorama({
     <>
       <div style={wrapperStyle}>
         <div ref={scrollerRef} style={scrollerStyle} aria-label="Panorama des brocantes">
-          {TIERS.map((tier) => (
-            <BrocanteScene
-              key={tier}
-              tier={tier}
-              brocantesById={brocantesById}
-              selectedId={selectedId}
-              debloqueesIds={debloqueesIds}
-              onSelect={setSelectedId}
-            />
+          {TIERS.map((tier, idx) => (
+            <Fragment key={tier}>
+              <BrocanteScene
+                tier={tier}
+                brocantesById={brocantesById}
+                selectedId={selectedId}
+                debloqueesIds={debloqueesIds}
+                onSelect={setSelectedId}
+              />
+              {idx < TIERS.length - 1 && (
+                <BrocanteTransition from={tier as 1 | 2 | 3} />
+              )}
+            </Fragment>
           ))}
         </div>
         {selected && (

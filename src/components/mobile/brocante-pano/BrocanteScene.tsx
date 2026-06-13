@@ -14,7 +14,8 @@ interface BrocanteSceneProps {
   onSelect: (id: string) => void;
 }
 
-// Dégradés de stub par tier (en attendant les vraies illustrations).
+// Dégradés de stub par tier (utilisés tant que `scene-tier-{n}.webp`
+// n'est pas généré par `npm run gen:scenes`).
 const STUB_GRADIENT: Record<BrocanteTier, string> = {
   1: "linear-gradient(180deg, #c9d3c2 0%, #8a9a82 60%, #5c6b58 100%)",
   2: "linear-gradient(180deg, #b8a382 0%, #8a6f4a 60%, #5b4527 100%)",
@@ -28,7 +29,11 @@ const sceneStyle = (tier: BrocanteTier): CSSProperties => ({
   width: "100vw",
   alignSelf: "stretch",
   scrollSnapAlign: "start",
-  background: STUB_GRADIENT[tier],
+  // Tente d'abord l'image générée (`gen:scenes`), sinon le dégradé stub.
+  backgroundImage: `url("/brocantes/scenes/scene-tier-${tier}.webp"), ${STUB_GRADIENT[tier]}`,
+  backgroundSize: "cover, cover",
+  backgroundPosition: "center, center",
+  backgroundRepeat: "no-repeat, no-repeat",
   overflow: "hidden",
 });
 

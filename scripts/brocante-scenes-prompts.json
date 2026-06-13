@@ -1,0 +1,47 @@
+[
+  {
+    "id": "scene-tier-1",
+    "kind": "scene",
+    "tier": 1,
+    "description": "Interior wall view of a MODEST NEIGHBORHOOD HALL where a humble first-tier brocante is held — a community room, a parish hall, a village association space. The viewer faces the wall straight on (eye-level, no angle). The composition is dominated by the WALL (about 75% of the image height in the middle), with a horizontal strip of FLOOR at the bottom (about 12% of the image height) and a horizontal strip of CEILING at the top (about 12% of the image height). The wall surface itself is plain and almost entirely EMPTY — no paintings, no frames, no posters drawn into the image (paintings will be composited on top later by the layout). Wall: faded cream-and-rose striped wallpaper, slightly peeling at the seams, a few small scuffs and old picture-hook holes (no actual paintings). Floor: scratched lacquered light-oak parquet, simple rectangular planks. Ceiling: a plain stuccoed beige finish with a small modest plaster cornice. Subtle architectural details only: a simple painted skirting board at the floor line, a discreet picture rail running along the top of the wall. Lighting: gentle warm overhead daylight from a window out of frame on the left, no harsh shadows. The wall area between the picture rail and the skirting must be left visually plain and uncluttered so that frames can be hung on it later. No people, no furniture, no signage."
+  },
+  {
+    "id": "transition-1-2",
+    "kind": "transition",
+    "from": 1,
+    "to": 2,
+    "description": "A NARROW VERTICAL TRANSITION PASSAGE between two interior walls, viewed straight on. The composition is dominated by an OPEN DOORWAY in the middle: a simple wooden frame with a worn green-painted door panel pushed open, revealing a glimpse of warmer light beyond. Left half of the image: continuation of MODEST HALL — faded cream-and-rose striped wallpaper, scratched light-oak parquet floor, plain beige ceiling cornice. Right half of the image: BEGINNING OF A REFINED VINTAGE COVERED MARKET — exposed warm-red brick wall, polished honey-toned hardwood floor with wider planks, decorative iron-cast cornice. The floor line is CONTINUOUS across the entire width (no step, no drop), and the ceiling line is also CONTINUOUS — only the wall material changes. The doorway sits roughly centered. The wall surfaces on either side of the doorway should be plain (no frames, no posters). Lighting: warm directional light coming from the right side, suggesting the next room is more inviting and prestigious. No people, no furniture, no text."
+  },
+  {
+    "id": "scene-tier-2",
+    "kind": "scene",
+    "tier": 2,
+    "description": "Interior wall view of a REFINED VINTAGE COVERED MARKET HALL where a second-tier brocante is held — a halles-style hall with industrial elegance. The viewer faces the wall straight on (eye-level, no angle). Composition: wall takes about 75% of image height in the middle, floor strip about 12% at the bottom, ceiling strip about 12% at the top. The wall surface itself is mostly EMPTY (no paintings, no frames drawn in — they will be composited later). Wall: warm exposed RED BRICK with subtle whitewashed mortar lines, two slender CAST-IRON pillars/pilasters spaced wide apart against the wall (NOT crossing the central area where frames will hang), a discreet horizontal copper picture rail running across the upper third. Floor: polished honey-toned HARDWOOD with wide planks, smooth and lightly lustrous. Ceiling: warm beige plaster with an ORNATE CAST-IRON cornice molding running horizontally. Lighting: a warmer overhead light, evoking gas-lamp sconces just out of frame, slightly more golden than tier 1. The bulk of the wall between picture rail and skirting must remain plain so frames can be hung on it later. No people, no signage, no merchandise."
+  },
+  {
+    "id": "transition-2-3",
+    "kind": "transition",
+    "from": 2,
+    "to": 3,
+    "description": "A NARROW VERTICAL TRANSITION PASSAGE between two interior walls, viewed straight on. The composition is dominated by a CLASSICAL ARCHWAY in the middle: an elegant rounded stone arch with a simple keystone, suggesting passage from a market hall into a refined art gallery. Left half of the image: continuation of REFINED COVERED MARKET — exposed warm-red brick wall, polished honey-toned hardwood floor, cast-iron cornice molding. Right half of the image: BEGINNING OF AN ART GALLERY — pale GREEN-GREY painted plaster wall with a moulded picture rail and a delicate Greek-key border below the ceiling cornice, herringbone PARQUET floor in a darker chestnut tone. The FLOOR LINE is continuous across the entire width (no step), the CEILING LINE is continuous. Only the wall material and floor pattern change. The arch sits centered. The wall surfaces on either side must be plain (no frames). Lighting: cooler, more diffused light coming from the right, suggesting a more refined museum atmosphere ahead. No people, no furniture, no text."
+  },
+  {
+    "id": "scene-tier-3",
+    "kind": "scene",
+    "tier": 3,
+    "description": "Interior wall view of a REFINED ART GALLERY where a third-tier brocante is held — a Drouot-style auction hall, an Art Déco salon. The viewer faces the wall straight on (eye-level, no angle). Composition: wall takes about 75% of image height in the middle, floor strip about 12% at the bottom, ceiling strip about 12% at the top. The wall surface itself is mostly EMPTY (no paintings drawn in — frames will be composited later). Wall: smooth pale GREEN-GREY plaster with a delicate moulded PICTURE RAIL in dark wood running across the upper third of the wall, a thin Greek-key gilded BORDER just below the ceiling cornice, simple matching baseboard at the floor line. Floor: dark CHESTNUT HERRINGBONE PARQUET, polished and lustrous, with a thin protective brass strip along the edge. Ceiling: warm cream plaster with a refined moulded CORNICE in classical style, slightly gilded at the highlights. Lighting: even, cool museum-grade diffused light from the upper edges (suggesting recessed spotlights pointing down at the wall), creating a soft halo across the upper wall. The bulk of the wall between the picture rail and baseboard must remain plain so frames can be hung on it later. No people, no signage, no merchandise."
+  },
+  {
+    "id": "transition-3-4",
+    "kind": "transition",
+    "from": 3,
+    "to": 4,
+    "description": "A NARROW VERTICAL TRANSITION PASSAGE between two interior walls, viewed straight on. The composition is dominated by a PAIR OF FORMAL VELVET-ROPE STANCHIONS in the middle (small polished brass posts joined by a heavy crimson velvet rope, suggesting an exclusive entrance). Left half of the image: continuation of REFINED ART GALLERY — pale green-grey plaster wall, herringbone chestnut parquet, refined cream cornice. Right half of the image: BEGINNING OF THE GRAND DROUOT SALON — deep CRIMSON DAMASK WALLPAPER with subtle gold flock pattern, polished CREAMY MARBLE FLOOR with thin grey veining, ornate GILDED CROWN MOULDING. The floor line is CONTINUOUS across the entire width (no step), the ceiling line is also continuous. Only the wall material and floor pattern change. The velvet ropes sit centered. The wall surfaces on either side must be plain (no frames, no portraits). Lighting: warmer and richer from the right, suggesting opulent chandelier light spilling out from the grand salon. No people, no furniture, no text."
+  },
+  {
+    "id": "scene-tier-4",
+    "kind": "scene",
+    "tier": 4,
+    "description": "Interior wall view of THE GRAND SALON DES ANTIQUAIRES DE DROUOT — the most prestigious fourth-tier auction salon. The viewer faces the wall straight on (eye-level, no angle). Composition: wall takes about 75% of image height in the middle, floor strip about 12% at the bottom, ceiling strip about 12% at the top. The wall surface itself is mostly EMPTY (no paintings or portraits drawn in — frames will be composited later). Wall: deep CRIMSON-RED DAMASK WALLPAPER with subtle gold-leaf floral flock pattern, ornate GILDED MOULDED PANELS framing the central wall area (panel border NOT in the center where frames will hang, but along the outer edges), a richly gilded MOULDED CHAIR RAIL at mid-height. Floor: polished CREAMY MARBLE with thin grey veining, mirror-like. Ceiling: cream plaster with an extremely ornate GILDED CROWN MOULDING, suggestion of a crystal chandelier crown just barely entering the frame from above. Lighting: warm golden chandelier light from above, soft reflections on the marble floor, opulent and refined. The central wall area between the chair rail and crown moulding must remain plain so frames can be hung on it later. No people, no signage, no merchandise."
+  }
+]

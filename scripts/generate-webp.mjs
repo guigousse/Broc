@@ -23,6 +23,7 @@ const PROJECT_ROOT = path.resolve(__dirname, "..");
 const DIRS = [
   path.join(PROJECT_ROOT, "public", "items"),
   path.join(PROJECT_ROOT, "public", "brocantes"),
+  path.join(PROJECT_ROOT, "public", "brocantes", "scenes"),
   path.join(PROJECT_ROOT, "public", "qg"),
 ];
 const QUALITY = Number(process.env.WEBP_QUALITY ?? 82);
