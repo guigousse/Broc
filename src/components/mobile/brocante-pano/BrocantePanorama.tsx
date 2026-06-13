@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import type { Brocante, BrocanteTier, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import { BrocanteScene } from "./BrocanteScene";
-import { BrocanteDetailPanel } from "./BrocanteDetailPanel";
+import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
+import { BrocanteBottomBar } from "./BrocanteBottomBar";
 
 interface BrocantePanoramaProps {
   brocantes: Brocante[];
@@ -13,15 +14,16 @@ interface BrocantePanoramaProps {
   debloqueesIds: Set<string>;
   decrireConditions: (b: Brocante) => string;
   destination: "chiner" | "vitrine";
+  onBack: () => void;
 }
 
 const TIERS: BrocanteTier[] = [1, 2, 3, 4];
 
 const wrapperStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
+  position: "relative",
   flex: 1,
   minHeight: 0,
+  display: "flex",
 };
 
 const scrollerStyle: CSSProperties = {
@@ -39,12 +41,23 @@ const scrollerStyle: CSSProperties = {
   flexDirection: "row",
 };
 
+const floatingLayer: CSSProperties = {
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  padding: "0 14px calc(var(--mobile-tabbar-h) + var(--safe-bottom) + 12px)",
+  pointerEvents: "none",
+  zIndex: 20,
+};
+
 export function BrocantePanorama({
   brocantes,
   state,
   debloqueesIds,
   decrireConditions,
   destination,
+  onBack,
 }: BrocantePanoramaProps) {
   const router = useRouter();
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -84,8 +97,6 @@ export function BrocantePanorama({
   }, [selectedId]);
 
   // Reset de la sélection si la brocante choisie n'est plus dans le tier visible.
-  // (Écoute le scroll une seule fois — la sélection est lue via ref pour éviter
-  //  de ré-attacher le listener à chaque clic.)
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -115,33 +126,43 @@ export function BrocantePanorama({
   const selectedDebloquee = selected ? debloqueesIds.has(selected.id) : false;
   const selectedPeutEntrer = selected ? state.budget >= fraisEntree(selected) : false;
   const selectedRaison = selected && !selectedDebloquee ? decrireConditions(selected) : null;
+  const continuerActif = !!(selected && selectedDebloquee && selectedPeutEntrer);
 
-  const onEntrer = useCallback(() => {
-    if (!selected || !selectedDebloquee || !selectedPeutEntrer) return;
+  const onContinuer = useCallback(() => {
+    if (!selected || !continuerActif) return;
     router.push(`/${destination}/${selected.id}`);
-  }, [selected, selectedDebloquee, selectedPeutEntrer, router, destination]);
+  }, [selected, continuerActif, router, destination]);
 
   return (
-    <div style={wrapperStyle}>
-      <div ref={scrollerRef} style={scrollerStyle} aria-label="Panorama des brocantes">
-        {TIERS.map((tier) => (
-          <BrocanteScene
-            key={tier}
-            tier={tier}
-            brocantesById={brocantesById}
-            selectedId={selectedId}
-            debloqueesIds={debloqueesIds}
-            onSelect={setSelectedId}
-          />
-        ))}
+    <>
+      <div style={wrapperStyle}>
+        <div ref={scrollerRef} style={scrollerStyle} aria-label="Panorama des brocantes">
+          {TIERS.map((tier) => (
+            <BrocanteScene
+              key={tier}
+              tier={tier}
+              brocantesById={brocantesById}
+              selectedId={selectedId}
+              debloqueesIds={debloqueesIds}
+              onSelect={setSelectedId}
+            />
+          ))}
+        </div>
+        {selected && (
+          <div style={floatingLayer}>
+            <BrocanteDetailFloating
+              brocante={selected}
+              debloquee={selectedDebloquee}
+              raisonVerrouillage={selectedRaison}
+            />
+          </div>
+        )}
       </div>
-      <BrocanteDetailPanel
-        brocante={selected}
-        debloquee={selectedDebloquee}
-        peutEntrer={selectedPeutEntrer}
-        raisonVerrouillage={selectedRaison}
-        onEntrer={onEntrer}
+      <BrocanteBottomBar
+        onBack={onBack}
+        onContinuer={onContinuer}
+        continuerActif={continuerActif}
       />
-    </div>
+    </>
   );
 }

@@ -18,8 +18,10 @@ const minimalState = {
   budget: 1000,
 } as unknown as GameState;
 
+const noop = () => {};
+
 describe("BrocantePanorama", () => {
-  it("affiche le prompt vide au montage", () => {
+  it("ne montre aucun détail au montage (rien sélectionné)", () => {
     render(
       <BrocantePanorama
         brocantes={BROCANTES}
@@ -27,12 +29,13 @@ describe("BrocantePanorama", () => {
         debloqueesIds={new Set(["vide-grenier-quartier"])}
         decrireConditions={() => "raison"}
         destination="chiner"
+        onBack={noop}
       />,
     );
-    expect(screen.getByText(/choisissez une brocante/i)).toBeTruthy();
+    expect(screen.queryByRole("heading")).toBeNull();
   });
 
-  it("met à jour le panneau détail au clic sur un cadre", () => {
+  it("Continuer est désactivé tant qu'aucune brocante n'est sélectionnée", () => {
     render(
       <BrocantePanorama
         brocantes={BROCANTES}
@@ -40,14 +43,31 @@ describe("BrocantePanorama", () => {
         debloqueesIds={new Set(["vide-grenier-quartier"])}
         decrireConditions={() => "raison"}
         destination="chiner"
+        onBack={noop}
+      />,
+    );
+    const continuer = screen.getByRole("button", { name: /continuer/i }) as HTMLButtonElement;
+    expect(continuer.disabled).toBe(true);
+  });
+
+  it("affiche le détail flottant et active Continuer au clic sur un cadre débloqué", () => {
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES}
+        state={minimalState}
+        debloqueesIds={new Set(["vide-grenier-quartier"])}
+        decrireConditions={() => "raison"}
+        destination="chiner"
+        onBack={noop}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /vide-grenier du quartier/i }));
     expect(screen.getByRole("heading", { name: /vide-grenier du quartier/i })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /entrer/i })).toBeTruthy();
+    const continuer = screen.getByRole("button", { name: /continuer/i }) as HTMLButtonElement;
+    expect(continuer.disabled).toBe(false);
   });
 
-  it("affiche la raison de verrouillage quand la brocante n'est pas débloquée", () => {
+  it("affiche la raison de verrouillage et laisse Continuer désactivé pour une brocante fermée", () => {
     render(
       <BrocantePanorama
         brocantes={BROCANTES}
@@ -55,11 +75,29 @@ describe("BrocantePanorama", () => {
         debloqueesIds={new Set()}
         decrireConditions={() => "Atteignez 30 € de valeur de collection."}
         destination="chiner"
+        onBack={noop}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /vide-grenier du quartier/i }));
     expect(screen.getByText(/atteignez 30 €/i)).toBeTruthy();
-    expect((screen.getByRole("button", { name: /fermé/i }) as HTMLButtonElement).disabled).toBe(true);
+    const continuer = screen.getByRole("button", { name: /continuer/i }) as HTMLButtonElement;
+    expect(continuer.disabled).toBe(true);
+  });
+
+  it("appelle onBack au clic sur Retour", () => {
+    const onBack = vi.fn();
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES}
+        state={minimalState}
+        debloqueesIds={new Set(["vide-grenier-quartier"])}
+        decrireConditions={() => "raison"}
+        destination="chiner"
+        onBack={onBack}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /retour/i }));
+    expect(onBack).toHaveBeenCalled();
   });
 
   it("réinitialise la sélection au snap vers un autre tier", async () => {
@@ -70,27 +108,24 @@ describe("BrocantePanorama", () => {
         debloqueesIds={new Set(["vide-grenier-quartier"])}
         decrireConditions={() => "raison"}
         destination="chiner"
+        onBack={noop}
       />,
     );
 
-    // Sélectionne une brocante du tier 1
     fireEvent.click(screen.getByRole("button", { name: /vide-grenier du quartier/i }));
     expect(screen.queryByRole("heading", { name: /vide-grenier du quartier/i })).toBeTruthy();
 
-    // Simule un snap vers le tier 2 : largeur de scène = clientWidth, on positionne
-    // scrollLeft = clientWidth pour atterrir sur la 2ème scène.
     const scroller = document.querySelector('[aria-label="Panorama des brocantes"]') as HTMLDivElement;
     expect(scroller).toBeTruthy();
     Object.defineProperty(scroller, "clientWidth", { configurable: true, value: 400 });
     scroller.scrollLeft = 400;
     fireEvent.scroll(scroller);
 
-    // Laisse passer le rAF qu'utilise le listener.
     await new Promise<void>((resolve) =>
       requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
     );
 
-    // La sélection doit avoir été réinitialisée → prompt vide.
-    expect(screen.getByText(/choisissez une brocante/i)).toBeTruthy();
+    // Plus de heading visible → la sélection a été réinitialisée.
+    expect(screen.queryByRole("heading", { name: /vide-grenier du quartier/i })).toBeNull();
   });
 });

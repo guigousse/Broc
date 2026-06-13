@@ -60,7 +60,7 @@ export const TAB_ORDER: TabDef[] = [
   },
 ];
 
-const HIDDEN_EXACT = new Set(["/"]);
+const HIDDEN_EXACT = new Set(["/", "/chiner", "/vitrine"]);
 const HIDDEN_PREFIXES = ["/chiner/", "/vitrine/"];
 
 /** Renvoie l'index dans TAB_ORDER de la route active, -1 si aucune ne matche. */

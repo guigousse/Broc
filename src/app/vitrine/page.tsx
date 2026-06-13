@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
-import { ContextualHeader } from "@/components/mobile/ContextualHeader";
+import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { BrocantePanorama } from "@/components/mobile/brocante-pano/BrocantePanorama";
 import { useGame } from "@/context/GameContext";
 import { BROCANTES } from "@/data/brocantes";
@@ -31,23 +31,14 @@ export default function VitrineListePage() {
   if (!isHydrated || !state) return null;
 
   return (
-    <MobileLayout
-      header={
-        <ContextualHeader
-          titre="Exposer"
-          sousTitre={`${debloqueesIds.size} brocante${debloqueesIds.size > 1 ? "s" : ""} ouverte${debloqueesIds.size > 1 ? "s" : ""}`}
-          budget={state.budget}
-          onBack={() => router.push("/bureau")}
-        />
-      }
-      fillContent
-    >
+    <MobileLayout header={<MobileHeader budget={state.budget} />} fillContent>
       <BrocantePanorama
         brocantes={BROCANTES}
         state={state}
         debloqueesIds={debloqueesIds}
         decrireConditions={(b) => decrireConditions(b, state)}
         destination="vitrine"
+        onBack={() => router.push("/bureau")}
       />
     </MobileLayout>
   );

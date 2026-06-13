@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
-import { ContextualHeader } from "@/components/mobile/ContextualHeader";
+import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { BrocantePanorama } from "@/components/mobile/brocante-pano/BrocantePanorama";
 import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { useGame } from "@/context/GameContext";
@@ -34,23 +34,14 @@ export default function ChinerListePage() {
   }
 
   return (
-    <MobileLayout
-      header={
-        <ContextualHeader
-          titre="Chiner"
-          sousTitre={`${debloqueesIds.size} brocante${debloqueesIds.size > 1 ? "s" : ""} ouverte${debloqueesIds.size > 1 ? "s" : ""}`}
-          budget={state.budget}
-          onBack={() => router.push("/bureau")}
-        />
-      }
-      fillContent
-    >
+    <MobileLayout header={<MobileHeader budget={state.budget} />} fillContent>
       <BrocantePanorama
         brocantes={BROCANTES}
         state={state}
         debloqueesIds={debloqueesIds}
         decrireConditions={(b) => decrireConditions(b, state)}
         destination="chiner"
+        onBack={() => router.push("/bureau")}
       />
     </MobileLayout>
   );
