@@ -26,7 +26,7 @@ const sceneStyle = (tier: BrocanteTier): CSSProperties => ({
   position: "relative",
   flex: "0 0 100vw",
   width: "100vw",
-  height: "100%",
+  alignSelf: "stretch",
   scrollSnapAlign: "start",
   background: STUB_GRADIENT[tier],
   overflow: "hidden",
