@@ -15,3 +15,11 @@ src-tauri/gen
 
 # Originaux des items avant suppression du fond — non déployés
 archives/
+
+# PNGs sources des illustrations (générés par gen:*) : seuls les WebP
+# servis sont commités, les PNG restent locaux.
+public/items/*.png
+public/brocantes/*.png
+public/brocantes/scenes/*.png
+public/qg/*.png
+public/atelier/*.png
