@@ -78,7 +78,14 @@ export function BrocantePanorama({
     didInitRef.current = true;
   }, [maxUnlockedTier]);
 
+  const selectedIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
   // Reset de la sélection si la brocante choisie n'est plus dans le tier visible.
+  // (Écoute le scroll une seule fois — la sélection est lue via ref pour éviter
+  //  de ré-attacher le listener à chaque clic.)
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -89,9 +96,10 @@ export function BrocantePanorama({
         const cw = el.clientWidth;
         if (cw <= 0) return;
         const tierIdx = Math.round(el.scrollLeft / cw);
-        const currentTier = TIERS[Math.max(0, Math.min(3, tierIdx))];
-        if (selectedId) {
-          const sel = brocantesById.get(selectedId);
+        const currentTier = TIERS[Math.max(0, Math.min(TIERS.length - 1, tierIdx))];
+        const currentSelectedId = selectedIdRef.current;
+        if (currentSelectedId) {
+          const sel = brocantesById.get(currentSelectedId);
           if (sel && sel.tier !== currentTier) setSelectedId(null);
         }
       });
@@ -101,7 +109,7 @@ export function BrocantePanorama({
       el.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
     };
-  }, [selectedId, brocantesById]);
+  }, [brocantesById]);
 
   const selected = selectedId ? brocantesById.get(selectedId) ?? null : null;
   const selectedDebloquee = selected ? debloqueesIds.has(selected.id) : false;
