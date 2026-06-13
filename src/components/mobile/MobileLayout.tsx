@@ -36,6 +36,9 @@ export function MobileLayout({
       <main
         style={{
           flex: 1,
+          minHeight: 0,
+          display: fillContent ? "flex" : undefined,
+          flexDirection: fillContent ? "column" : undefined,
           padding: fillContent
             ? `0 0 calc(var(--mobile-tabbar-h) + var(--safe-bottom))`
             : `12px 12px calc(${scrollPaddingBottom}px + var(--mobile-tabbar-h) + var(--safe-bottom))`,

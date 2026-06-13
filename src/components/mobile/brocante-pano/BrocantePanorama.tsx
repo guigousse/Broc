@@ -20,7 +20,7 @@ const TIERS: BrocanteTier[] = [1, 2, 3, 4];
 const wrapperStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  height: "100%",
+  flex: 1,
   minHeight: 0,
 };
 
