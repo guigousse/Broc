@@ -8,8 +8,8 @@ interface BrocanteTransitionProps {
   from: 1 | 2 | 3;
 }
 
-/** Largeur du filler en vw — bien moins large qu'une scène. */
-export const TRANSITION_WIDTH_VW = 30;
+/** Largeur du filler en pixels — une fine bande verticale entre scènes. */
+export const TRANSITION_WIDTH_PX = 150;
 
 // Dégradé stub par transition (utilisé tant que le filler n'est pas généré).
 const STUB_GRADIENT: Record<1 | 2 | 3, string> = {
@@ -20,8 +20,8 @@ const STUB_GRADIENT: Record<1 | 2 | 3, string> = {
 
 const transitionStyle = (from: BrocanteTransitionProps["from"]): CSSProperties => ({
   position: "relative",
-  flex: `0 0 ${TRANSITION_WIDTH_VW}vw`,
-  width: `${TRANSITION_WIDTH_VW}vw`,
+  flex: `0 0 ${TRANSITION_WIDTH_PX}px`,
+  width: `${TRANSITION_WIDTH_PX}px`,
   alignSelf: "stretch",
   // Pas de scroll-snap : on glisse au-dessus, le snap se fait sur les scènes.
   backgroundImage: `url("/brocantes/scenes/transition-${from}-${from + 1}.webp"), ${STUB_GRADIENT[from]}`,

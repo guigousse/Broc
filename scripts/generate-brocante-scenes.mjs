@@ -80,12 +80,13 @@ const STYLE_BRIEF = [
  * compatibles avec le moteur de cadres CSS qui les surcouchent.
  */
 const COMPOSITION_BRIEF = [
-  "CRITICAL composition constraint:",
+  "CRITICAL composition constraints — image will be displayed on a MOBILE PHONE in PORTRAIT mode (9:16 vertical canvas):",
   "the image is a WALL VIEW seen straight on at eye level (no angle, no perspective tilt).",
-  "The wall surface occupies roughly the middle 75 % of the image height; a thin horizontal strip of FLOOR runs along the bottom 12 % of the image, and a thin horizontal strip of CEILING / cornice runs along the top 12 %.",
-  "The wall area in the middle must remain VISUALLY UNCLUTTERED — no paintings, no frames, no posters, no portraits, no merchandise, no hanging objects.",
-  "Frames will be composited on top of this image later, so the central wall region must read as plain wall.",
-  "Architectural details (picture rail, baseboard, cornice, panel mouldings, pillars, archway) must run NEAR THE EDGES (top, bottom, sides) and not invade the central wall area.",
+  "The composition is strongly VERTICAL: the wall surface occupies roughly the middle 76 % of the image height; a thin horizontal strip of FLOOR (with a hint of perspective) runs along the bottom 12 % of the image; a thin horizontal strip of CEILING / cornice runs along the top 12 %.",
+  "Frame the wall so it fills the FULL WIDTH of the portrait canvas edge to edge — no side margins, no vignette.",
+  "The wall area in the middle must remain VISUALLY UNCLUTTERED — no paintings, no frames, no posters, no portraits, no merchandise, no hanging objects, no signage.",
+  "Painting frames will be composited on top of this image later, so the central wall region must read as plain wall.",
+  "Architectural details (picture rail, baseboard, cornice, panel mouldings, pillars) must run NEAR THE EDGES (top edge, bottom edge, far left/right edges) and not invade the central wall area.",
 ].join(" ");
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;

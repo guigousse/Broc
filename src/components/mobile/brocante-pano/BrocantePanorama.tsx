@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Brocante, BrocanteTier, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import { BrocanteScene } from "./BrocanteScene";
-import { BrocanteTransition, TRANSITION_WIDTH_VW } from "./BrocanteTransition";
+import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
 import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
 import { BrocanteBottomBar } from "./BrocanteBottomBar";
 
@@ -79,11 +79,12 @@ export function BrocantePanorama({
     return max;
   }, [brocantes, debloqueesIds]);
 
-  // Décalage horizontal (en vw) du début de chaque scène, en tenant compte
-  // des fillers de transition (largeur TRANSITION_WIDTH_VW) insérés entre
-  // chaque paire de scènes.
-  const tierOffsetsVw = useMemo(
-    () => TIERS.map((_, idx) => idx * (100 + TRANSITION_WIDTH_VW)),
+  // Décalage horizontal (en pixels) du début de chaque scène. Chaque scène
+  // fait `clientWidth` px ; entre deux scènes consécutives s'intercale un
+  // filler de TRANSITION_WIDTH_PX. → offset(i) = i * (clientWidth + filler).
+  const tierOffsetPx = useCallback(
+    (idx: number, clientWidth: number) =>
+      idx * (clientWidth + TRANSITION_WIDTH_PX),
     [],
   );
 
@@ -95,10 +96,10 @@ export function BrocantePanorama({
     if (!el) return;
     const idx = TIERS.indexOf(maxUnlockedTier);
     if (idx > 0) {
-      el.scrollLeft = (tierOffsetsVw[idx] / 100) * el.clientWidth;
+      el.scrollLeft = tierOffsetPx(idx, el.clientWidth);
     }
     didInitRef.current = true;
-  }, [maxUnlockedTier, tierOffsetsVw]);
+  }, [maxUnlockedTier, tierOffsetPx]);
 
   const selectedIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -106,8 +107,8 @@ export function BrocantePanorama({
   }, [selectedId]);
 
   // Reset de la sélection si la brocante choisie n'est plus dans le tier visible.
-  // Avec les fillers de transition, chaque tier i démarre à un offset connu :
-  // on prend l'offset le plus proche pour déterminer le tier courant.
+  // On prend l'offset (en pixels) le plus proche du scrollLeft pour identifier
+  // le tier courant.
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -117,11 +118,10 @@ export function BrocantePanorama({
       raf = requestAnimationFrame(() => {
         const cw = el.clientWidth;
         if (cw <= 0) return;
-        const currentVw = (el.scrollLeft / cw) * 100;
         let bestIdx = 0;
         let bestDist = Infinity;
-        for (let i = 0; i < tierOffsetsVw.length; i++) {
-          const d = Math.abs(currentVw - tierOffsetsVw[i]);
+        for (let i = 0; i < TIERS.length; i++) {
+          const d = Math.abs(el.scrollLeft - tierOffsetPx(i, cw));
           if (d < bestDist) {
             bestDist = d;
             bestIdx = i;
@@ -140,7 +140,7 @@ export function BrocantePanorama({
       el.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
     };
-  }, [brocantesById, tierOffsetsVw]);
+  }, [brocantesById, tierOffsetPx]);
 
   const selected = selectedId ? brocantesById.get(selectedId) ?? null : null;
   const selectedDebloquee = selected ? debloqueesIds.has(selected.id) : false;
