@@ -166,9 +166,7 @@ export function BrocantePanorama({
                 debloqueesIds={debloqueesIds}
                 onSelect={setSelectedId}
               />
-              {idx < TIERS.length - 1 && (
-                <BrocanteTransition from={tier as 1 | 2 | 3} />
-              )}
+              {idx < TIERS.length - 1 && <BrocanteTransition />}
             </Fragment>
           ))}
         </div>

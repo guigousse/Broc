@@ -6,37 +6,16 @@
     "description": "Interior wall view of a MODEST NEIGHBORHOOD HALL where a humble first-tier brocante is held — a community room, a parish hall, a village association space. The viewer faces the wall straight on (eye-level, no angle). The composition is dominated by the WALL (about 75% of the image height in the middle), with a horizontal strip of FLOOR at the bottom (about 12% of the image height) and a horizontal strip of CEILING at the top (about 12% of the image height). The wall surface itself is plain and almost entirely EMPTY — no paintings, no frames, no posters drawn into the image (paintings will be composited on top later by the layout). Wall: faded cream-and-rose striped wallpaper, slightly peeling at the seams, a few small scuffs and old picture-hook holes (no actual paintings). Floor: scratched lacquered light-oak parquet, simple rectangular planks. Ceiling: a plain stuccoed beige finish with a small modest plaster cornice. Subtle architectural details only: a simple painted skirting board at the floor line, a discreet picture rail running along the top of the wall. Lighting: gentle warm overhead daylight from a window out of frame on the left, no harsh shadows. The wall area between the picture rail and the skirting must be left visually plain and uncluttered so that frames can be hung on it later. No people, no furniture, no signage."
   },
   {
-    "id": "transition-1-2",
-    "kind": "transition",
-    "from": 1,
-    "to": 2,
-    "description": "A NARROW TALL VERTICAL STRIP showing a single doorway between two adjoining walls. CRITICAL: the entire visual content must be centered in the middle ~30 % of the image width — the side margins will be cropped out. The center shows a TALL DOOR FRAME with a worn green-painted wooden door pushed slightly open, revealing a hint of warmer golden light beyond. Faded cream-and-rose striped wallpaper just visible at the very left edge, exposed warm-red brick wall just visible at the very right edge. The floor line (continuous, no step) and the ceiling cornice line are both unbroken across the entire width. Lighting: soft directional light from the right. The composition reads top-to-bottom as a single tall narrow doorway, NOT as a wide-room view."
-  },
-  {
     "id": "scene-tier-2",
     "kind": "scene",
     "tier": 2,
     "description": "Interior wall view of a REFINED VINTAGE COVERED MARKET HALL where a second-tier brocante is held — a halles-style hall with industrial elegance. The viewer faces the wall straight on (eye-level, no angle). Composition: wall takes about 75% of image height in the middle, floor strip about 12% at the bottom, ceiling strip about 12% at the top. The wall surface itself is mostly EMPTY (no paintings, no frames drawn in — they will be composited later). Wall: warm exposed RED BRICK with subtle whitewashed mortar lines, two slender CAST-IRON pillars/pilasters spaced wide apart against the wall (NOT crossing the central area where frames will hang), a discreet horizontal copper picture rail running across the upper third. Floor: polished honey-toned HARDWOOD with wide planks, smooth and lightly lustrous. Ceiling: warm beige plaster with an ORNATE CAST-IRON cornice molding running horizontally. Lighting: a warmer overhead light, evoking gas-lamp sconces just out of frame, slightly more golden than tier 1. The bulk of the wall between picture rail and skirting must remain plain so frames can be hung on it later. No people, no signage, no merchandise."
   },
   {
-    "id": "transition-2-3",
-    "kind": "transition",
-    "from": 2,
-    "to": 3,
-    "description": "A NARROW TALL VERTICAL STRIP showing a single fluted column flanked by two wall materials. CRITICAL: the entire visual content must be centered in the middle ~30 % of the image width — the side margins will be cropped out. The center shows a TALL ELEGANT FLUTED PILASTER (or slender stone column) running floor to ceiling, with a simple ionic capital at the top and a square base at the floor. Exposed warm-red brick just visible at the very left edge, pale green-grey moulded plaster just visible at the very right edge. The floor transitions from honey-toned hardwood (left) to dark chestnut herringbone parquet (right) with a continuous unbroken line. The ceiling line is unbroken across. Lighting: cool diffused museum light from the right. The composition reads top-to-bottom as a single tall narrow column, NOT as a wide-room view."
-  },
-  {
     "id": "scene-tier-3",
     "kind": "scene",
     "tier": 3,
     "description": "Interior wall view of a REFINED ART GALLERY where a third-tier brocante is held — a Drouot-style auction hall, an Art Déco salon. The viewer faces the wall straight on (eye-level, no angle). Composition: wall takes about 75% of image height in the middle, floor strip about 12% at the bottom, ceiling strip about 12% at the top. The wall surface itself is mostly EMPTY (no paintings drawn in — frames will be composited later). Wall: smooth pale GREEN-GREY plaster with a delicate moulded PICTURE RAIL in dark wood running across the upper third of the wall, a thin Greek-key gilded BORDER just below the ceiling cornice, simple matching baseboard at the floor line. Floor: dark CHESTNUT HERRINGBONE PARQUET, polished and lustrous, with a thin protective brass strip along the edge. Ceiling: warm cream plaster with a refined moulded CORNICE in classical style, slightly gilded at the highlights. Lighting: even, cool museum-grade diffused light from the upper edges (suggesting recessed spotlights pointing down at the wall), creating a soft halo across the upper wall. The bulk of the wall between the picture rail and baseboard must remain plain so frames can be hung on it later. No people, no signage, no merchandise."
-  },
-  {
-    "id": "transition-3-4",
-    "kind": "transition",
-    "from": 3,
-    "to": 4,
-    "description": "A NARROW TALL VERTICAL STRIP showing a heavy velvet drape between two walls. CRITICAL: the entire visual content must be centered in the middle ~30 % of the image width — the side margins will be cropped out. The center shows a HEAVY FLOOR-TO-CEILING CRIMSON VELVET CURTAIN held back by a single ornate gilded rope tieback, revealing a soft golden glow behind the drape. Pale green-grey plaster wall just visible at the very left edge, deep crimson damask wallpaper just visible at the very right edge. The floor transitions from dark chestnut herringbone parquet (left) to polished creamy marble (right) with a continuous unbroken line. The ceiling line is unbroken across, with a hint of gilded crown moulding at the very top. Lighting: warm opulent golden light from the right, escaping through the drape. The composition reads top-to-bottom as a single tall narrow drape, NOT as a wide-room view."
   },
   {
     "id": "scene-tier-4",

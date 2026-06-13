@@ -1,42 +1,67 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import type { BrocanteTier } from "@/types/game";
 
-interface BrocanteTransitionProps {
-  /** Tier de gauche (1..3). Le filler `transition-{from}-{from+1}` sera utilisé. */
-  from: 1 | 2 | 3;
-}
+/** Largeur de la bande de séparation entre deux scènes, en pixels. */
+export const TRANSITION_WIDTH_PX = 30;
 
-/** Largeur du filler en pixels — une fine bande verticale entre scènes. */
-export const TRANSITION_WIDTH_PX = 150;
-
-// Dégradé stub par transition (utilisé tant que le filler n'est pas généré).
-const STUB_GRADIENT: Record<1 | 2 | 3, string> = {
-  1: "linear-gradient(90deg, #5c6b58 0%, #5b4527 100%)",
-  2: "linear-gradient(90deg, #5b4527 0%, #5d3d1d 100%)",
-  3: "linear-gradient(90deg, #5d3d1d 0%, #2d0d10 100%)",
-};
-
-const transitionStyle = (from: BrocanteTransitionProps["from"]): CSSProperties => ({
+/**
+ * Fine bande de laiton verticale Art Déco placée entre deux scènes
+ * consécutives. Purement décorative — pas d'image, pas d'interaction,
+ * pas de snap (le snap reste sur les centres de scène).
+ */
+const wrapStyle: CSSProperties = {
   position: "relative",
   flex: `0 0 ${TRANSITION_WIDTH_PX}px`,
   width: `${TRANSITION_WIDTH_PX}px`,
   alignSelf: "stretch",
-  // Pas de scroll-snap : on glisse au-dessus, le snap se fait sur les scènes.
-  backgroundImage: `url("/brocantes/scenes/transition-${from}-${from + 1}.webp"), ${STUB_GRADIENT[from]}`,
-  backgroundSize: "cover, cover",
-  backgroundPosition: "center, center",
-  backgroundRepeat: "no-repeat, no-repeat",
+  // Dégradé laiton : reflet vertical doux + filets fins en bordure.
+  background: [
+    "linear-gradient(90deg,",
+    "rgba(0,0,0,0.35) 0%,",
+    "var(--brass-700) 4%,",
+    "var(--brass-500) 14%,",
+    "var(--brass-300) 50%,",
+    "var(--brass-500) 86%,",
+    "var(--brass-700) 96%,",
+    "rgba(0,0,0,0.35) 100%)",
+  ].join(" "),
+  borderLeft: "1px solid var(--brass-700)",
+  borderRight: "1px solid var(--brass-700)",
+  boxShadow:
+    "inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 12px rgba(20,12,0,0.4)",
   pointerEvents: "none",
-});
+  overflow: "hidden",
+};
 
-export function BrocanteTransition({ from }: BrocanteTransitionProps) {
+/** Petit motif de rivets Art Déco au centre, en CSS pur. */
+const rivetsStyle: CSSProperties = {
+  position: "absolute",
+  left: "50%",
+  top: 0,
+  bottom: 0,
+  width: 4,
+  transform: "translateX(-50%)",
+  background: [
+    "repeating-linear-gradient(",
+    "180deg,",
+    "transparent 0px,",
+    "transparent 36px,",
+    "var(--brass-700) 36px,",
+    "var(--brass-700) 38px,",
+    "rgba(0,0,0,0.4) 38px,",
+    "rgba(0,0,0,0.4) 40px,",
+    "var(--brass-700) 40px,",
+    "var(--brass-700) 42px,",
+    "transparent 42px,",
+    "transparent 80px)",
+  ].join(" "),
+};
+
+export function BrocanteTransition() {
   return (
-    <div
-      style={transitionStyle(from)}
-      aria-hidden
-      data-brocante-transition={`${from}-${from + 1}`}
-    />
+    <div style={wrapStyle} aria-hidden data-brocante-transition>
+      <div style={rivetsStyle} />
+    </div>
   );
 }
