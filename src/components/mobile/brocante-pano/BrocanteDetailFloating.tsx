@@ -8,13 +8,26 @@ import { fraisEntree } from "@/data/brocantes";
 interface BrocanteDetailFloatingProps {
   brocante: Brocante;
   debloquee: boolean;
+  /** Le joueur a-t-il assez de budget ? Influence la couleur du prix. */
+  peutEntrer: boolean;
   /** Liste des conditions atomiques (uniquement utilisée si !debloquee). */
   conditions: string[];
 }
 
+// Conteneur global : carte descriptive + meta flottants en dessous.
+const wrapStyle: CSSProperties = {
+  pointerEvents: "auto",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 10,
+  maxWidth: 520,
+  margin: "0 auto",
+};
+
 const cardStyle: CSSProperties = {
   position: "relative",
-  pointerEvents: "auto",
+  width: "100%",
   background: "rgba(245,239,225,0.94)",
   border: "1px solid var(--brass-700)",
   borderRadius: 6,
@@ -27,12 +40,10 @@ const cardStyle: CSSProperties = {
   flexDirection: "column",
   alignItems: "center",
   gap: 8,
-  maxWidth: 520,
-  margin: "0 auto",
+  boxSizing: "border-box",
 };
 
 const titleStyle: CSSProperties = {
-  // Titre en typo Arcane Nine, dorée.
   fontFamily: "var(--font-brocante-title)",
   fontSize: 30,
   fontWeight: 400,
@@ -62,34 +73,35 @@ const descStyle: CSSProperties = {
   textAlign: "center",
 };
 
-const metaRowStyle: CSSProperties = {
+// Meta flottants — sous la carte, sans fond, ombre légère pour lisibilité.
+const metaFloatRowStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
+  justifyContent: "center",
   gap: 12,
+  textShadow: "0 1px 2px rgba(245,239,225,0.55), 0 0 6px rgba(245,239,225,0.4)",
 };
 
-// Nombre d'items — gras + rouge.
 const metaItemsStyle: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: 11,
   fontWeight: 700,
   letterSpacing: "0.14em",
   textTransform: "lowercase",
-  color: "var(--vermillion-600)",
+  color: "var(--ink-900)",
 };
 
-// Encadré "ticket d'entrée" rouge avec montant + ticket.
-const fraisBoxStyle: CSSProperties = {
-  display: "inline-flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: 2,
-  background: "var(--paper-100)",
-  border: "1.5px solid var(--vermillion-600)",
-  borderRadius: 3,
-  padding: "4px 10px",
-  boxShadow: "0 1px 3px rgba(120,30,20,0.2)",
-  lineHeight: 1.05,
+// Encadré "ticket d'entrée" — noir par défaut, rouge si budget insuffisant.
+const fraisBoxStyle = (peutEntrer: boolean): CSSProperties => {
+  const color = peutEntrer ? "var(--ink-900)" : "var(--vermillion-600)";
+  return {
+    display: "inline-flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 2,
+    color,
+    lineHeight: 1.05,
+  };
 };
 
 const fraisLineStyle: CSSProperties = {
@@ -99,7 +111,6 @@ const fraisLineStyle: CSSProperties = {
   fontFamily: "var(--font-display)",
   fontSize: 13,
   fontWeight: 700,
-  color: "var(--vermillion-600)",
   letterSpacing: "0.06em",
 };
 
@@ -107,7 +118,7 @@ const fraisLabelStyle: CSSProperties = {
   fontSize: 9,
   letterSpacing: "0.18em",
   textTransform: "uppercase",
-  opacity: 0.8,
+  opacity: 0.85,
   fontWeight: 700,
   fontFamily: "var(--font-mono)",
 };
@@ -117,8 +128,26 @@ const ticketLineStyle: CSSProperties = {
   fontSize: 9.5,
   fontWeight: 700,
   letterSpacing: "0.10em",
-  color: "var(--vermillion-600)",
   opacity: 0.85,
+};
+
+// Badge ambiance — petit pill laiton/forêt à droite du prix.
+const ambianceBadgeStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  background: "var(--forest-800)",
+  color: "var(--brass-300)",
+  fontFamily: "var(--font-mono)",
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: "0.18em",
+  textTransform: "uppercase",
+  padding: "4px 9px",
+  border: "1px solid var(--brass-500)",
+  borderRadius: 3,
+  boxShadow: "0 2px 5px rgba(20,12,0,0.45)",
+  whiteSpace: "nowrap",
+  textShadow: "none",
 };
 
 // Layout verrouillé.
@@ -157,43 +186,51 @@ const conditionsSeparatorStyle: CSSProperties = {
 export function BrocanteDetailFloating({
   brocante,
   debloquee,
+  peutEntrer,
   conditions,
 }: BrocanteDetailFloatingProps) {
   // --- Layout VERROUILLÉ : nom + cadenas + liste des conditions ---
   if (!debloquee) {
     return (
-      <aside style={cardStyle} aria-live="polite">
-        <div style={titleRowStyle}>
-          <h2 style={titleStyle}>{brocante.nom}</h2>
-          <Lock size={20} strokeWidth={2.2} style={lockIconStyle} />
-        </div>
-        <div style={conditionsSeparatorStyle} aria-hidden />
-        <ul style={conditionsListStyle}>
-          {conditions.map((c, i) => (
-            <li key={i} style={conditionItemStyle}>
-              {c}
-            </li>
-          ))}
-        </ul>
-      </aside>
+      <div style={wrapStyle}>
+        <aside style={cardStyle} aria-live="polite">
+          <div style={titleRowStyle}>
+            <h2 style={titleStyle}>{brocante.nom}</h2>
+            <Lock size={20} strokeWidth={2.2} style={lockIconStyle} />
+          </div>
+          <div style={conditionsSeparatorStyle} aria-hidden />
+          <ul style={conditionsListStyle}>
+            {conditions.map((c, i) => (
+              <li key={i} style={conditionItemStyle}>
+                {c}
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </div>
     );
   }
 
-  // --- Layout DÉBLOQUÉ : titre + description + items / entrée+ticket ---
+  // --- Layout DÉBLOQUÉ : carte + meta flottants en dessous ---
   return (
-    <aside style={cardStyle} aria-live="polite">
-      <h2 style={titleStyle}>{brocante.nom}</h2>
-      <p style={descStyle}>{brocante.description}</p>
-      <div style={metaRowStyle}>
+    <div style={wrapStyle}>
+      <aside style={cardStyle} aria-live="polite">
+        <h2 style={titleStyle}>{brocante.nom}</h2>
+        <p style={descStyle}>{brocante.description}</p>
+      </aside>
+      <div style={metaFloatRowStyle}>
         <span style={metaItemsStyle}>{brocante.taillePool} items</span>
-        <span style={fraisBoxStyle}>
+        <span style={fraisBoxStyle(peutEntrer)}>
           <span style={fraisLineStyle}>
             <span style={fraisLabelStyle}>Entrée</span>
             {fraisEntree(brocante)} €
           </span>
           <span style={ticketLineStyle}>+ 1 ticket</span>
         </span>
+        <span style={ambianceBadgeStyle} aria-label={`Ambiance : ${brocante.ambiance}`}>
+          {brocante.ambiance}
+        </span>
       </div>
-    </aside>
+    </div>
   );
 }

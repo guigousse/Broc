@@ -197,6 +197,7 @@ export function BrocantePanorama({
             <BrocanteDetailFloating
               brocante={selected}
               debloquee={selectedDebloquee}
+              peutEntrer={selectedPeutEntrer}
               conditions={selectedConditions}
             />
           </div>
