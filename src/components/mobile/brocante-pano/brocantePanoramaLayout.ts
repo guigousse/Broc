@@ -51,7 +51,7 @@ export const TIER_3_FRAMES: FrameCoord[] = [
 
 // Tier 4 — 1 cadre central monumental (coords validées)
 export const TIER_4_FRAMES: FrameCoord[] = [
-  { id: "salon-antiquaires-drouot", left: "32%", top: "16%", width: "36%", height: "50%" },
+  { id: "salon-antiquaires-drouot", left: "18.75%", top: "21.17%", width: "61.64%", height: "36.84%" },
 ];
 
 export const SCENE_FRAMES: Record<BrocanteTier, FrameCoord[]> = {
