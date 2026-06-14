@@ -1,9 +1,10 @@
 "use client";
 
-import { Lock, Ticket } from "lucide-react";
+import { Ticket } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
+import type { ConditionInfo } from "@/lib/deblocage";
 import { CATEGORY_ICONS } from "./categoryIcons";
 
 interface BrocanteDetailFloatingProps {
@@ -11,8 +12,8 @@ interface BrocanteDetailFloatingProps {
   debloquee: boolean;
   /** Le joueur a-t-il assez de budget ? Influence la couleur du prix. */
   peutEntrer: boolean;
-  /** Liste des conditions atomiques (uniquement utilisée si !debloquee). */
-  conditions: string[];
+  /** Conditions atomiques + drapeau "satisfaite" (uniquement si !debloquee). */
+  conditions: ConditionInfo[];
 }
 
 const cardStyle: CSSProperties = {
@@ -51,11 +52,12 @@ const titleStyle: CSSProperties = {
   textWrap: "balance",
 };
 
-const titleRowStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
+/** Variante grisée du titre quand la brocante est verrouillée. */
+const titleStyleLocked: CSSProperties = {
+  ...titleStyle,
+  color: "#6b6657",
+  textShadow: "0 1px 0 rgba(255,255,255,0.35)",
+  filter: "saturate(0.4)",
 };
 
 const descStyle: CSSProperties = {
@@ -194,12 +196,6 @@ function CornerOrnament({
   );
 }
 
-// Layout verrouillé.
-const lockIconStyle: CSSProperties = {
-  color: "var(--vermillion-600)",
-  flexShrink: 0,
-};
-
 const conditionsListStyle: CSSProperties = {
   listStyle: "none",
   padding: 0,
@@ -210,14 +206,20 @@ const conditionsListStyle: CSSProperties = {
   alignItems: "center",
 };
 
-const conditionItemStyle: CSSProperties = {
+const conditionItemBase: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: 11,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
-  color: "var(--vermillion-600)",
   fontWeight: 700,
 };
+
+const conditionItemStyle = (met: boolean): CSSProperties => ({
+  ...conditionItemBase,
+  // Met = condition satisfaite → en rouge (visuellement marqué "fait").
+  // Non satisfaite → en gris foncé neutre.
+  color: met ? "var(--vermillion-600)" : "#3a3327",
+});
 
 export function BrocanteDetailFloating({
   brocante,
@@ -229,7 +231,7 @@ export function BrocanteDetailFloating({
     ? CATEGORY_ICONS[brocante.specialisation]
     : null;
 
-  // --- Layout VERROUILLÉ : nom + cadenas + liste des conditions ---
+  // --- Layout VERROUILLÉ : nom gris + liste des conditions colorées ---
   if (!debloquee) {
     return (
       <aside style={cardStyle} aria-live="polite">
@@ -237,15 +239,12 @@ export function BrocanteDetailFloating({
         <CornerOrnament position="tr" />
         <CornerOrnament position="bl" />
         <CornerOrnament position="br" />
-        <div style={titleRowStyle}>
-          <h2 style={titleStyle}>{brocante.nom}</h2>
-          <Lock size={20} strokeWidth={2.2} style={lockIconStyle} />
-        </div>
+        <h2 style={titleStyleLocked}>{brocante.nom}</h2>
         <div style={goldRuleStyle} aria-hidden />
         <ul style={conditionsListStyle}>
           {conditions.map((c, i) => (
-            <li key={i} style={conditionItemStyle}>
-              {c}
+            <li key={i} style={conditionItemStyle(c.met)}>
+              {c.text}
             </li>
           ))}
         </ul>

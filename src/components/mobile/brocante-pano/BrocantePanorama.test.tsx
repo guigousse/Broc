@@ -85,7 +85,9 @@ describe("BrocantePanorama", () => {
         onBack={noop}
       />,
     );
-    // marche-aux-puces-dimanche a `valeurCollection: 30` → "Collection : 0/30 €"
+    // marche-aux-puces-dimanche a `valeurCollection: 30`.
+    // Collection vide (0) → condition non remplie, doit apparaître avec
+    // texte "COLLECTION : 0/30 €".
     fireEvent.click(screen.getByRole("button", { name: /marché aux puces du dimanche/i }));
     expect(screen.getByText(/collection : 0\/30 €/i)).toBeTruthy();
     const continuer = screen.getByRole("button", { name: /continuer/i }) as HTMLButtonElement;

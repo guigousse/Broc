@@ -6,7 +6,7 @@ import type { Brocante, BrocanteTier, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import {
   calculerBrocantesDebloqueesParTier,
-  decrireConditionsCourtes,
+  listerConditionsAvecEtat,
 } from "@/lib/deblocage";
 import { BrocanteScene } from "./BrocanteScene";
 import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
@@ -181,7 +181,7 @@ export function BrocantePanorama({
   const selectedPeutEntrer = selected ? state.budget >= fraisEntree(selected) : false;
   const selectedConditions =
     selected && !selectedDebloquee
-      ? decrireConditionsCourtes(selected, state, parTier)
+      ? listerConditionsAvecEtat(selected, state, parTier)
       : [];
   const continuerActif = !!(selected && selectedDebloquee && selectedPeutEntrer);
 

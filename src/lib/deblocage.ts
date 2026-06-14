@@ -104,6 +104,25 @@ export function decrireConditionsCourtes(
   return [descriptionConditionCourte(c, state, parTier)];
 }
 
+/** Décrit chaque condition atomique avec un drapeau "satisfaite ?". */
+export interface ConditionInfo {
+  text: string;
+  met: boolean;
+}
+
+export function listerConditionsAvecEtat(
+  brocante: Brocante,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
+  parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
+): ConditionInfo[] {
+  const c = brocante.conditionDeblocage;
+  const atomic = c.type === "ET" ? c.conditions : [c];
+  return atomic.map((cc) => ({
+    text: descriptionConditionCourte(cc, state, parTier),
+    met: evaluerCondition(cc, state, parTier),
+  }));
+}
+
 /**
  * Calcule, tier par tier (en cascade : les conditions `brocantesDebloquees`
  * d'un tier supérieur voient les tiers inférieurs déjà résolus), l'ensemble
