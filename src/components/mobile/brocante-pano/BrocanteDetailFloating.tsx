@@ -4,7 +4,6 @@ import { Lock } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
-import { CATEGORY_ICONS } from "./categoryIcons";
 
 interface BrocanteDetailFloatingProps {
   brocante: Brocante;
@@ -33,10 +32,10 @@ const cardStyle: CSSProperties = {
 };
 
 const titleStyle: CSSProperties = {
-  // Lettre manuscrite dorée — typo Caveat.
-  fontFamily: "var(--font-handwriting)",
-  fontSize: 28,
-  fontWeight: 700,
+  // Titre en typo Arcane Nine, dorée.
+  fontFamily: "var(--font-brocante-title)",
+  fontSize: 30,
+  fontWeight: 400,
   color: "var(--brass-500)",
   textShadow:
     "0 1px 0 rgba(255,235,180,0.4), 0 1px 2px rgba(80,50,10,0.25)",
@@ -69,56 +68,57 @@ const metaRowStyle: CSSProperties = {
   gap: 12,
 };
 
+// Nombre d'items — gras + rouge.
 const metaItemsStyle: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: 11,
   fontWeight: 700,
   letterSpacing: "0.14em",
-  textTransform: "uppercase",
-  color: "var(--brass-700)",
-};
-
-// Badge catégorie circulaire — placé dans la fenêtre, à droite du prix.
-const categoryBadgeStyle: CSSProperties = {
-  width: 28,
-  height: 28,
-  borderRadius: "50%",
-  background:
-    "radial-gradient(circle at 30% 28%, #f0d18b 0%, #c89c4e 55%, #8a6429 100%)",
-  border: "1.5px solid var(--brass-700)",
-  display: "grid",
-  placeItems: "center",
-  color: "#3a2410",
-  boxShadow:
-    "0 2px 4px rgba(20,12,0,0.45), inset 0 1px 0 rgba(255,235,180,0.45)",
-  flexShrink: 0,
-};
-
-// Encadré "ticket d'entrée" rouge.
-const fraisStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "baseline",
-  gap: 3,
-  fontFamily: "var(--font-display)",
-  fontSize: 14,
-  fontWeight: 700,
+  textTransform: "lowercase",
   color: "var(--vermillion-600)",
+};
+
+// Encadré "ticket d'entrée" rouge avec montant + ticket.
+const fraisBoxStyle: CSSProperties = {
+  display: "inline-flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 2,
   background: "var(--paper-100)",
   border: "1.5px solid var(--vermillion-600)",
   borderRadius: 3,
-  padding: "3px 9px",
-  letterSpacing: "0.06em",
+  padding: "4px 10px",
   boxShadow: "0 1px 3px rgba(120,30,20,0.2)",
+  lineHeight: 1.05,
+};
+
+const fraisLineStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "baseline",
+  gap: 5,
+  fontFamily: "var(--font-display)",
+  fontSize: 13,
+  fontWeight: 700,
+  color: "var(--vermillion-600)",
+  letterSpacing: "0.06em",
 };
 
 const fraisLabelStyle: CSSProperties = {
   fontSize: 9,
   letterSpacing: "0.18em",
   textTransform: "uppercase",
-  color: "var(--vermillion-600)",
-  opacity: 0.75,
+  opacity: 0.8,
   fontWeight: 700,
   fontFamily: "var(--font-mono)",
+};
+
+const ticketLineStyle: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 9.5,
+  fontWeight: 700,
+  letterSpacing: "0.10em",
+  color: "var(--vermillion-600)",
+  opacity: 0.85,
 };
 
 // Layout verrouillé.
@@ -179,28 +179,20 @@ export function BrocanteDetailFloating({
     );
   }
 
-  // --- Layout DÉBLOQUÉ : titre + description + items / entrée [+ badge] ---
-  const Icon = brocante.specialisation
-    ? CATEGORY_ICONS[brocante.specialisation]
-    : null;
+  // --- Layout DÉBLOQUÉ : titre + description + items / entrée+ticket ---
   return (
     <aside style={cardStyle} aria-live="polite">
       <h2 style={titleStyle}>{brocante.nom}</h2>
       <p style={descStyle}>{brocante.description}</p>
       <div style={metaRowStyle}>
         <span style={metaItemsStyle}>{brocante.taillePool} items</span>
-        <span style={fraisStyle}>
-          <span style={fraisLabelStyle}>Entrée</span>
-          {fraisEntree(brocante)} €
+        <span style={fraisBoxStyle}>
+          <span style={fraisLineStyle}>
+            <span style={fraisLabelStyle}>Entrée</span>
+            {fraisEntree(brocante)} €
+          </span>
+          <span style={ticketLineStyle}>+ 1 ticket</span>
         </span>
-        {Icon && (
-          <div
-            style={categoryBadgeStyle}
-            aria-label={`Spécialité : ${brocante.specialisation}`}
-          >
-            <Icon size={16} strokeWidth={2} />
-          </div>
-        )}
       </div>
     </aside>
   );

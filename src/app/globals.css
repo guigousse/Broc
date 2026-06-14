@@ -10,6 +10,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Arcane Nine';
+  src: url('/fonts/ArcaneNine.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ============================================================
    BROC — NÉO-ART DÉCO VINTAGE DESIGN TOKENS
    ============================================================ */
@@ -94,6 +102,7 @@
   --font-tag:     'Courier Prime', 'DM Mono', 'Courier New', monospace;
   --font-handwriting: 'Caveat', 'Bradley Hand', 'Comic Sans MS', cursive;
   --font-broc-title: 'Verve Shadow', 'Cinzel', Georgia, serif;
+  --font-brocante-title: 'Arcane Nine', 'Caveat', 'Bradley Hand', cursive;
 
   /* ============================================================
      Tokens dimensionnels fluides (Phase A — multi-écrans)
