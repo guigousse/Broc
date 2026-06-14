@@ -15,6 +15,7 @@
     "gen:scenes": "node scripts/generate-brocante-scenes.mjs",
     "gen:icons": "node scripts/generate-app-icons.mjs",
     "process:cadres": "node scripts/process-cadres.mjs",
+    "measure:cadres": "node scripts/measure-cadres.mjs",
     "gen:qg": "node scripts/generate-qg-images.mjs",
     "gen:atelier": "node scripts/generate-atelier-images.mjs",
     "opt:images": "node scripts/optimize-item-images.mjs",

@@ -24,6 +24,7 @@ interface EditCtx {
 }
 
 const LS_KEY = "broc.cadre-edit.overrides";
+const LS_ENABLED_KEY = "broc.cadre-edit.enabled";
 
 const Ctx = createContext<EditCtx>({
   enabled: false,
@@ -49,7 +50,30 @@ export function BrocanteFramesEditProvider({ children }: { children: ReactNode }
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get("cadreedit") === "1") setEnabled(true);
+    const q = params.get("cadreedit");
+    if (q === "1") {
+      try {
+        window.localStorage.setItem(LS_ENABLED_KEY, "1");
+      } catch {
+        // ignore
+      }
+      setEnabled(true);
+      return;
+    }
+    if (q === "0") {
+      try {
+        window.localStorage.removeItem(LS_ENABLED_KEY);
+      } catch {
+        // ignore
+      }
+      setEnabled(false);
+      return;
+    }
+    try {
+      if (window.localStorage.getItem(LS_ENABLED_KEY) === "1") setEnabled(true);
+    } catch {
+      // ignore
+    }
   }, []);
 
   useEffect(() => {
@@ -90,7 +114,34 @@ export function BrocanteFramesEditProvider({ children }: { children: ReactNode }
     [enabled, overrides, setOverride, resetOverride, resetAll],
   );
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={value}>
+      {children}
+      {enabled && (
+        <div
+          style={{
+            position: "fixed",
+            top: "calc(var(--safe-top, 0px) + var(--mobile-header-h, 0px))",
+            left: 0,
+            right: 0,
+            background: "rgba(220,170,60,0.92)",
+            color: "var(--forest-800)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            fontWeight: 700,
+            padding: "4px 12px",
+            textAlign: "center",
+            zIndex: 101,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.35)",
+          }}
+        >
+          🛠 Cadre edit mode actif — `?cadreedit=0` pour quitter
+        </div>
+      )}
+    </Ctx.Provider>
+  );
 }
 
 /** Fusionne un FrameCoord avec son override courant si présent. */

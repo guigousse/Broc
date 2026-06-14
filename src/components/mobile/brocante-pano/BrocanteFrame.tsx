@@ -5,6 +5,7 @@ import { Store } from "lucide-react";
 import type { CSSProperties } from "react";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import type { FrameCoord } from "./brocantePanoramaLayout";
+import { CADRE_HOLES } from "./cadreHoles.generated";
 
 interface BrocanteFrameProps {
   brocanteId: string;
@@ -15,38 +16,40 @@ interface BrocanteFrameProps {
   onSelect: (id: string) => void;
 }
 
+const buttonReset: CSSProperties = {
+  padding: 0,
+  border: "none",
+  background: "transparent",
+  cursor: "pointer",
+  WebkitTapHighlightColor: "transparent",
+};
+
 const frameOuter = (coord: FrameCoord, selected: boolean): CSSProperties => ({
+  ...buttonReset,
   position: "absolute",
   left: coord.left,
   top: coord.top,
   width: coord.width,
   height: coord.height,
-  padding: 0,
-  // Si un cadre bois est utilisé, on supprime la bordure CSS (le bois la
-  // remplace) ; sinon, bordure laiton classique.
-  border: coord.cadreIndex
-    ? "none"
-    : selected
-      ? "3px solid var(--brass-300)"
-      : "2px solid var(--brass-700)",
-  background: coord.cadreIndex ? "transparent" : "var(--paper-200)",
-  boxShadow: coord.cadreIndex
-    ? selected
-      ? "0 0 18px 4px rgba(220,170,60,0.55), 0 6px 14px rgba(40,25,5,0.25)"
-      : "0 4px 10px rgba(40,25,5,0.25)"
-    : selected
-      ? "0 0 0 2px var(--brass-500), 0 0 18px 4px rgba(220,170,60,0.55), 0 6px 14px rgba(40,25,5,0.25)"
-      : "inset 0 0 0 2px var(--paper-100), 0 4px 10px rgba(40,25,5,0.25)",
   overflow: "visible",
-  cursor: "pointer",
-  opacity: selected ? 1 : 0.92,
-  transition: "box-shadow 200ms ease, opacity 200ms ease, border-color 200ms ease",
+  opacity: selected ? 1 : 0.94,
+  filter: selected
+    ? "drop-shadow(0 0 12px rgba(220,170,60,0.55)) drop-shadow(0 4px 8px rgba(40,25,5,0.35))"
+    : "drop-shadow(0 4px 6px rgba(40,25,5,0.35))",
+  transition: "opacity 200ms ease, filter 200ms ease",
 });
 
-const imgClipped: CSSProperties = {
+const cadreImgStyle: CSSProperties = {
   position: "absolute",
   inset: 0,
-  overflow: "hidden",
+  width: "100%",
+  height: "100%",
+  pointerEvents: "none",
+  zIndex: 2,
+  // Étire le bois pour qu'il remplisse exactement le slot — l'utilisateur
+  // peut ajuster width/height via l'outil dev (?cadreedit=1) pour conserver
+  // l'aspect naturel du cadre s'il le souhaite.
+  objectFit: "fill",
 };
 
 const fallbackStyle: CSSProperties = {
@@ -57,10 +60,30 @@ const fallbackStyle: CSSProperties = {
   background: "linear-gradient(135deg, var(--paper-300) 0%, var(--brass-700) 100%)",
 };
 
-const overlayStyle: CSSProperties = {
+// Style fallback pour les tiers SANS cadre bois (laiton CSS).
+const brassFrameOuter = (coord: FrameCoord, selected: boolean): CSSProperties => ({
+  ...buttonReset,
   position: "absolute",
-  inset: 0,
-  pointerEvents: "none",
+  left: coord.left,
+  top: coord.top,
+  width: coord.width,
+  height: coord.height,
+  border: selected
+    ? "3px solid var(--brass-300)"
+    : "2px solid var(--brass-700)",
+  background: "var(--paper-200)",
+  boxShadow: selected
+    ? "0 0 0 2px var(--brass-500), 0 0 18px 4px rgba(220,170,60,0.55), 0 6px 14px rgba(40,25,5,0.25)"
+    : "inset 0 0 0 2px var(--paper-100), 0 4px 10px rgba(40,25,5,0.25)",
+  overflow: "hidden",
+  opacity: selected ? 1 : 0.92,
+  transition: "box-shadow 200ms ease, opacity 200ms ease, border-color 200ms ease",
+});
+
+const brassImgWrap: CSSProperties = {
+  position: "relative",
+  width: "100%",
+  height: "100%",
 };
 
 export function BrocanteFrame({
@@ -72,6 +95,55 @@ export function BrocanteFrame({
   onSelect,
 }: BrocanteFrameProps) {
   const imageUrl = getBrocanteImageUrl(brocanteId);
+
+  // Cas SANS cadre bois (tier 2/3/4 — bordure laiton CSS).
+  if (!coord.cadreIndex) {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect(brocanteId)}
+        aria-label={nom}
+        aria-pressed={selected}
+        aria-disabled={!debloquee}
+        style={brassFrameOuter(coord, selected)}
+      >
+        <div style={brassImgWrap}>
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt=""
+              fill
+              sizes="(max-width: 600px) 20vw, 200px"
+              style={{
+                objectFit: "cover",
+                filter: debloquee ? undefined : "grayscale(1) brightness(0.85)",
+              }}
+            />
+          ) : (
+            <div style={fallbackStyle}>
+              <Store size={32} strokeWidth={1.2} color="var(--brass-100)" />
+            </div>
+          )}
+        </div>
+      </button>
+    );
+  }
+
+  // Cas AVEC cadre bois : la peinture est positionnée EXACTEMENT dans le
+  // trou intérieur du cadre (mesuré par `scripts/measure-cadres.mjs`).
+  // `overflow: hidden` sur le conteneur de peinture garantit qu'aucun
+  // pixel ne déborde dans le bois.
+  const hole = CADRE_HOLES[coord.cadreIndex];
+  const paintingWrapStyle: CSSProperties = {
+    position: "absolute",
+    left: `${hole.left}%`,
+    top: `${hole.top}%`,
+    width: `${hole.width}%`,
+    height: `${hole.height}%`,
+    overflow: "hidden",
+    zIndex: 1,
+  };
+
   return (
     <button
       type="button"
@@ -81,7 +153,8 @@ export function BrocanteFrame({
       aria-disabled={!debloquee}
       style={frameOuter(coord, selected)}
     >
-      <div style={imgClipped}>
+      {/* Peinture clipée dans le trou */}
+      <div style={paintingWrapStyle}>
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -99,14 +172,13 @@ export function BrocanteFrame({
           </div>
         )}
       </div>
-      {coord.cadreIndex && (
-        <img
-          src={`/cadres/cadre-${coord.cadreIndex}.webp`}
-          alt=""
-          style={overlayStyle}
-          draggable={false}
-        />
-      )}
+      {/* Cadre bois en surcouche */}
+      <img
+        src={`/cadres/cadre-${coord.cadreIndex}.webp`}
+        alt=""
+        style={cadreImgStyle}
+        draggable={false}
+      />
     </button>
   );
 }
