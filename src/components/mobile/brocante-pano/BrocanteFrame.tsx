@@ -1,15 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { Store } from "lucide-react";
+import { Lock, Store } from "lucide-react";
 import type { CSSProperties } from "react";
+import type { Brocante } from "@/types/game";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import type { FrameCoord } from "./brocantePanoramaLayout";
 import { useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
+import { CATEGORY_ICONS } from "./categoryIcons";
 
 interface BrocanteFrameProps {
-  brocanteId: string;
-  nom: string;
+  brocante: Brocante;
   coord: FrameCoord;
   selected: boolean;
   debloquee: boolean;
@@ -36,15 +37,17 @@ const frameOuter = (coord: FrameCoord, selected: boolean): CSSProperties => ({
   boxShadow: selected
     ? "0 0 0 2px var(--brass-500), 0 0 18px 4px rgba(220,170,60,0.55), 0 6px 14px rgba(40,25,5,0.25)"
     : "inset 0 0 0 2px var(--paper-100), 0 4px 10px rgba(40,25,5,0.25)",
-  overflow: "hidden",
+  // overflow:hidden pour cliper la peinture, mais on autorise le badge à
+  // déborder en utilisant un wrapper interne + un badge en absolute hors clip.
+  overflow: "visible",
   opacity: selected ? 1 : 0.92,
   transition: "box-shadow 200ms ease, opacity 200ms ease, border-color 200ms ease",
 });
 
-const imgWrap: CSSProperties = {
-  position: "relative",
-  width: "100%",
-  height: "100%",
+const paintingWrap: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  overflow: "hidden",
 };
 
 const fallbackStyle: CSSProperties = {
@@ -55,45 +58,83 @@ const fallbackStyle: CSSProperties = {
   background: "linear-gradient(135deg, var(--paper-300) 0%, var(--brass-700) 100%)",
 };
 
-/**
- * Zoom appliqué à la peinture à l'intérieur du cadre. Combiné à
- * `overflow: hidden` sur le cadre, on agrandit la peinture et on clippe
- * ce qui déborde — la peinture occupe plus de surface visible.
- */
 const PAINTING_ZOOM = 1.4;
 
 const zoomedImageStyle = (debloquee: boolean): CSSProperties => ({
   objectFit: "cover",
   transform: `scale(${PAINTING_ZOOM})`,
   transformOrigin: "center center",
-  filter: debloquee ? undefined : "grayscale(1) brightness(0.85)",
+  filter: debloquee ? undefined : "grayscale(1) brightness(0.7)",
 });
 
+// Cadenas centré (overlay) pour les brocantes verrouillées.
+const lockOverlayStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  display: "grid",
+  placeItems: "center",
+  pointerEvents: "none",
+  zIndex: 3,
+};
+
+const lockBubbleStyle: CSSProperties = {
+  width: "44%",
+  aspectRatio: "1 / 1",
+  maxWidth: 56,
+  borderRadius: "50%",
+  background: "rgba(20,12,0,0.65)",
+  border: "2px solid var(--brass-500)",
+  display: "grid",
+  placeItems: "center",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.45)",
+  color: "var(--brass-300)",
+};
+
+// Badge catégorie circulaire en haut-droite (déborde du cadre).
+const categoryBadgeStyle: CSSProperties = {
+  position: "absolute",
+  top: -10,
+  right: -10,
+  width: 30,
+  height: 30,
+  borderRadius: "50%",
+  background:
+    "radial-gradient(circle at 30% 28%, #f0d18b 0%, #c89c4e 55%, #8a6429 100%)",
+  border: "1.5px solid var(--brass-700)",
+  display: "grid",
+  placeItems: "center",
+  color: "#3a2410",
+  boxShadow: "0 2px 5px rgba(20,12,0,0.55), inset 0 1px 0 rgba(255,235,180,0.45)",
+  pointerEvents: "none",
+  zIndex: 4,
+};
+
 export function BrocanteFrame({
-  brocanteId,
-  nom,
+  brocante,
   coord,
   selected,
   debloquee,
   onSelect,
 }: BrocanteFrameProps) {
-  const imageUrl = getBrocanteImageUrl(brocanteId);
+  const imageUrl = getBrocanteImageUrl(brocante.id);
   const { enabled: editing } = useBrocanteFramesEdit();
-  // En mode édition, on rend le bouton inerte pour laisser les pointer
-  // events filer vers l'overlay d'édition (poignées / coins).
-  const onClickHandler = editing ? undefined : () => onSelect(brocanteId);
+  const onClickHandler = editing ? undefined : () => onSelect(brocante.id);
   const pointerEvents: CSSProperties["pointerEvents"] = editing ? "none" : "auto";
+
+  const Icon = brocante.specialisation
+    ? CATEGORY_ICONS[brocante.specialisation]
+    : null;
 
   return (
     <button
       type="button"
       onClick={onClickHandler}
-      aria-label={nom}
+      aria-label={brocante.nom}
       aria-pressed={selected}
       aria-disabled={!debloquee}
       style={{ ...frameOuter(coord, selected), pointerEvents }}
     >
-      <div style={imgWrap}>
+      <div style={paintingWrap}>
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -107,7 +148,22 @@ export function BrocanteFrame({
             <Store size={32} strokeWidth={1.2} color="var(--brass-100)" />
           </div>
         )}
+        {!debloquee && (
+          <div style={lockOverlayStyle} aria-hidden>
+            <div style={lockBubbleStyle}>
+              <Lock size={20} strokeWidth={2.2} />
+            </div>
+          </div>
+        )}
       </div>
+      {Icon && (
+        <div
+          style={categoryBadgeStyle}
+          aria-label={`Spécialité : ${brocante.specialisation}`}
+        >
+          <Icon size={16} strokeWidth={2} />
+        </div>
+      )}
     </button>
   );
 }

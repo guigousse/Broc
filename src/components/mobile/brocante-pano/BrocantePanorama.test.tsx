@@ -27,7 +27,6 @@ describe("BrocantePanorama", () => {
         brocantes={BROCANTES}
         state={minimalState}
         debloqueesIds={new Set(["vide-grenier-quartier"])}
-        decrireConditions={() => "raison"}
         destination="chiner"
         onBack={noop}
       />,
@@ -41,7 +40,6 @@ describe("BrocantePanorama", () => {
         brocantes={BROCANTES}
         state={minimalState}
         debloqueesIds={new Set(["vide-grenier-quartier"])}
-        decrireConditions={() => "raison"}
         destination="chiner"
         onBack={noop}
       />,
@@ -56,7 +54,6 @@ describe("BrocantePanorama", () => {
         brocantes={BROCANTES}
         state={minimalState}
         debloqueesIds={new Set(["vide-grenier-quartier"])}
-        decrireConditions={() => "raison"}
         destination="chiner"
         onBack={noop}
       />,
@@ -67,19 +64,19 @@ describe("BrocantePanorama", () => {
     expect(continuer.disabled).toBe(false);
   });
 
-  it("affiche la raison de verrouillage et laisse Continuer désactivé pour une brocante fermée", () => {
+  it("affiche la liste des conditions et laisse Continuer désactivé pour une brocante fermée", () => {
     render(
       <BrocantePanorama
         brocantes={BROCANTES}
         state={minimalState}
         debloqueesIds={new Set()}
-        decrireConditions={() => "Atteignez 30 € de valeur de collection."}
         destination="chiner"
         onBack={noop}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /vide-grenier du quartier/i }));
-    expect(screen.getByText(/atteignez 30 €/i)).toBeTruthy();
+    // marche-aux-puces-dimanche a `valeurCollection: 30` → "Collection > 30 €"
+    fireEvent.click(screen.getByRole("button", { name: /marché aux puces du dimanche/i }));
+    expect(screen.getByText(/collection > 30 €/i)).toBeTruthy();
     const continuer = screen.getByRole("button", { name: /continuer/i }) as HTMLButtonElement;
     expect(continuer.disabled).toBe(true);
   });
@@ -91,7 +88,6 @@ describe("BrocantePanorama", () => {
         brocantes={BROCANTES}
         state={minimalState}
         debloqueesIds={new Set(["vide-grenier-quartier"])}
-        decrireConditions={() => "raison"}
         destination="chiner"
         onBack={onBack}
       />,
@@ -106,7 +102,6 @@ describe("BrocantePanorama", () => {
         brocantes={BROCANTES}
         state={minimalState}
         debloqueesIds={new Set(["vide-grenier-quartier"])}
-        decrireConditions={() => "raison"}
         destination="chiner"
         onBack={noop}
       />,

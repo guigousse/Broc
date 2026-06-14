@@ -2,12 +2,24 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { BrocanteFrame } from "./BrocanteFrame";
+import type { Brocante } from "@/types/game";
 
 afterEach(cleanup);
 
-const baseProps = {
-  brocanteId: "vide-grenier-quartier",
+const brocante: Brocante = {
+  id: "vide-grenier-quartier",
   nom: "Vide-grenier du quartier",
+  description: "test",
+  ambiance: "Familial",
+  tier: 1,
+  etoiles: 1,
+  taillePool: 6,
+  poolExclusif: [],
+  conditionDeblocage: { type: "depart" },
+};
+
+const baseProps = {
+  brocante,
   coord: { id: "vide-grenier-quartier", left: "6%", top: "28%", width: "16%", height: "32%" },
 };
 
@@ -37,5 +49,19 @@ describe("BrocanteFrame", () => {
     expect(btn.getAttribute("aria-disabled")).toBe("true");
     fireEvent.click(btn);
     expect(onSelect).toHaveBeenCalledWith("vide-grenier-quartier");
+  });
+
+  it("affiche un badge spécialité quand brocante.specialisation est définie", () => {
+    const speBrocante: Brocante = { ...brocante, specialisation: "Musique" };
+    render(
+      <BrocanteFrame
+        {...baseProps}
+        brocante={speBrocante}
+        selected={false}
+        debloquee
+        onSelect={() => {}}
+      />,
+    );
+    expect(screen.getByLabelText("Spécialité : Musique")).toBeTruthy();
   });
 });

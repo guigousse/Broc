@@ -1,5 +1,6 @@
 "use client";
 
+import { Lock } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
@@ -7,7 +8,8 @@ import { fraisEntree } from "@/data/brocantes";
 interface BrocanteDetailFloatingProps {
   brocante: Brocante;
   debloquee: boolean;
-  raisonVerrouillage: string | null;
+  /** Liste des conditions atomiques (uniquement utilisée si !debloquee). */
+  conditions: string[];
 }
 
 const cardStyle: CSSProperties = {
@@ -27,7 +29,6 @@ const cardStyle: CSSProperties = {
   gap: 8,
   maxWidth: 520,
   margin: "0 auto",
-  overflow: "visible",
 };
 
 const titleStyle: CSSProperties = {
@@ -42,6 +43,13 @@ const titleStyle: CSSProperties = {
   margin: 0,
   lineHeight: 1.05,
   letterSpacing: "0.01em",
+};
+
+const titleRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
 };
 
 const descStyle: CSSProperties = {
@@ -95,44 +103,67 @@ const fraisLabelStyle: CSSProperties = {
   fontFamily: "var(--font-mono)",
 };
 
-const lockStyle: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 10,
+// Layout verrouillé.
+const lockIconStyle: CSSProperties = {
   color: "var(--vermillion-600)",
-  letterSpacing: "0.06em",
-  textAlign: "center",
-  lineHeight: 1.3,
+  flexShrink: 0,
 };
 
-// Badge ambiance — superposé en haut-droite de la fenêtre.
-const ambianceBadgeStyle: CSSProperties = {
-  position: "absolute",
-  top: -10,
-  right: 14,
-  background: "var(--forest-800)",
-  color: "var(--brass-300)",
+const conditionsListStyle: CSSProperties = {
+  listStyle: "none",
+  padding: 0,
+  margin: "4px 0 0",
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+  alignItems: "center",
+};
+
+const conditionItemStyle: CSSProperties = {
   fontFamily: "var(--font-mono)",
-  fontSize: 9,
-  fontWeight: 700,
-  letterSpacing: "0.18em",
+  fontSize: 11,
+  letterSpacing: "0.08em",
   textTransform: "uppercase",
-  padding: "4px 10px",
-  border: "1px solid var(--brass-500)",
-  borderRadius: 3,
-  boxShadow: "0 3px 6px rgba(20,12,0,0.45)",
-  whiteSpace: "nowrap",
+  color: "var(--vermillion-600)",
+  fontWeight: 700,
+};
+
+const conditionsSeparatorStyle: CSSProperties = {
+  width: 40,
+  height: 1,
+  background: "var(--brass-500)",
+  opacity: 0.5,
+  margin: "2px 0 4px",
 };
 
 export function BrocanteDetailFloating({
   brocante,
   debloquee,
-  raisonVerrouillage,
+  conditions,
 }: BrocanteDetailFloatingProps) {
+  // --- Layout VERROUILLÉ : nom + cadenas + liste des conditions ---
+  if (!debloquee) {
+    return (
+      <aside style={cardStyle} aria-live="polite">
+        <div style={titleRowStyle}>
+          <h2 style={titleStyle}>{brocante.nom}</h2>
+          <Lock size={20} strokeWidth={2.2} style={lockIconStyle} />
+        </div>
+        <div style={conditionsSeparatorStyle} aria-hidden />
+        <ul style={conditionsListStyle}>
+          {conditions.map((c, i) => (
+            <li key={i} style={conditionItemStyle}>
+              {c}
+            </li>
+          ))}
+        </ul>
+      </aside>
+    );
+  }
+
+  // --- Layout DÉBLOQUÉ : titre + description + items / entrée ---
   return (
     <aside style={cardStyle} aria-live="polite">
-      <span style={ambianceBadgeStyle} aria-label={`Ambiance : ${brocante.ambiance}`}>
-        {brocante.ambiance}
-      </span>
       <h2 style={titleStyle}>{brocante.nom}</h2>
       <p style={descStyle}>{brocante.description}</p>
       <div style={metaRowStyle}>
@@ -142,9 +173,6 @@ export function BrocanteDetailFloating({
           {fraisEntree(brocante)} €
         </span>
       </div>
-      {!debloquee && raisonVerrouillage && (
-        <div style={lockStyle}>⊘ {raisonVerrouillage}</div>
-      )}
     </aside>
   );
 }

@@ -7,10 +7,7 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { BrocantePanorama } from "@/components/mobile/brocante-pano/BrocantePanorama";
 import { useGame } from "@/context/GameContext";
 import { BROCANTES } from "@/data/brocantes";
-import {
-  calculerBrocantesDebloqueesParTier,
-  decrireConditions,
-} from "@/lib/deblocage";
+import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
 
 export default function VitrineListePage() {
   const router = useRouter();
@@ -36,7 +33,6 @@ export default function VitrineListePage() {
         brocantes={BROCANTES}
         state={state}
         debloqueesIds={debloqueesIds}
-        decrireConditions={(b) => decrireConditions(b, state)}
         destination="vitrine"
         onBack={() => router.push("/bureau")}
       />

@@ -63,8 +63,7 @@ export function BrocanteScene({
         return (
           <BrocanteFrame
             key={b.id}
-            brocanteId={b.id}
-            nom={b.nom}
+            brocante={b}
             coord={merged}
             selected={selectedId === b.id}
             debloquee={debloqueesIds.has(b.id)}

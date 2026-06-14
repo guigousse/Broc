@@ -48,6 +48,35 @@ export function decrireConditions(brocante: Brocante, _state: GameState): string
   return descriptionCondition(brocante.conditionDeblocage);
 }
 
+/** Variante compacte (style "Collection > X €", "Musique > Y €"). */
+export function descriptionConditionCourte(c: ConditionDeblocage): string {
+  switch (c.type) {
+    case "depart":
+      return "Disponible";
+    case "jour":
+      return `Jour > ${c.jour}`;
+    case "budget":
+      return `Budget > ${c.montant} €`;
+    case "ventesCategorie":
+      return `${c.categorie} > ${c.nombre} ventes`;
+    case "brocantesDebloquees":
+      return `${c.nombre} brocantes ${"★".repeat(c.tier)}`;
+    case "valeurCollection":
+      return `Collection > ${c.montant} €`;
+    case "valeurCollectionCategorie":
+      return `${c.categorie} > ${c.montant} €`;
+    case "ET":
+      return c.conditions.map(descriptionConditionCourte).join(" + ");
+  }
+}
+
+/** Liste les conditions de déblocage atomiques (déplie le ET). */
+export function decrireConditionsCourtes(brocante: Brocante): string[] {
+  const c = brocante.conditionDeblocage;
+  if (c.type === "ET") return c.conditions.map(descriptionConditionCourte);
+  return [descriptionConditionCourte(c)];
+}
+
 /**
  * Calcule, tier par tier (en cascade : les conditions `brocantesDebloquees`
  * d'un tier supérieur voient les tiers inférieurs déjà résolus), l'ensemble

@@ -8,10 +8,7 @@ import { BrocantePanorama } from "@/components/mobile/brocante-pano/BrocantePano
 import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { useGame } from "@/context/GameContext";
 import { BROCANTES } from "@/data/brocantes";
-import {
-  calculerBrocantesDebloqueesParTier,
-  decrireConditions,
-} from "@/lib/deblocage";
+import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
 
 export default function ChinerListePage() {
   const router = useRouter();
@@ -39,7 +36,6 @@ export default function ChinerListePage() {
         brocantes={BROCANTES}
         state={state}
         debloqueesIds={debloqueesIds}
-        decrireConditions={(b) => decrireConditions(b, state)}
         destination="chiner"
         onBack={() => router.push("/bureau")}
       />

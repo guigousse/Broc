@@ -4,6 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSPr
 import { useRouter } from "next/navigation";
 import type { Brocante, BrocanteTier, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
+import { decrireConditionsCourtes } from "@/lib/deblocage";
 import { BrocanteScene } from "./BrocanteScene";
 import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
 import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
@@ -17,7 +18,6 @@ interface BrocantePanoramaProps {
   brocantes: Brocante[];
   state: GameState;
   debloqueesIds: Set<string>;
-  decrireConditions: (b: Brocante) => string;
   destination: "chiner" | "vitrine";
   onBack: () => void;
 }
@@ -60,7 +60,6 @@ export function BrocantePanorama({
   brocantes,
   state,
   debloqueesIds,
-  decrireConditions,
   destination,
   onBack,
 }: BrocantePanoramaProps) {
@@ -166,7 +165,8 @@ export function BrocantePanorama({
   const selected = selectedId ? brocantesById.get(selectedId) ?? null : null;
   const selectedDebloquee = selected ? debloqueesIds.has(selected.id) : false;
   const selectedPeutEntrer = selected ? state.budget >= fraisEntree(selected) : false;
-  const selectedRaison = selected && !selectedDebloquee ? decrireConditions(selected) : null;
+  const selectedConditions =
+    selected && !selectedDebloquee ? decrireConditionsCourtes(selected) : [];
   const continuerActif = !!(selected && selectedDebloquee && selectedPeutEntrer);
 
   const onContinuer = useCallback(() => {
@@ -197,7 +197,7 @@ export function BrocantePanorama({
             <BrocanteDetailFloating
               brocante={selected}
               debloquee={selectedDebloquee}
-              raisonVerrouillage={selectedRaison}
+              conditions={selectedConditions}
             />
           </div>
         )}
