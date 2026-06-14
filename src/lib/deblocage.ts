@@ -48,33 +48,60 @@ export function decrireConditions(brocante: Brocante, _state: GameState): string
   return descriptionCondition(brocante.conditionDeblocage);
 }
 
-/** Variante compacte (style "Collection > X €", "Musique > Y €"). */
-export function descriptionConditionCourte(c: ConditionDeblocage): string {
+/**
+ * Variante compacte AVEC progression, style :
+ *   "Collection : 1280/1600 €"
+ *   "Musique : 420/500 €"
+ *   "Brocantes ★★ : 3/4"
+ *
+ * `state` est requis pour calculer la valeur actuelle du joueur. Pour
+ * les conditions "brocantesDebloquees", `parTier` (résultat de
+ * calculerBrocantesDebloqueesParTier) est nécessaire.
+ */
+export function descriptionConditionCourte(
+  c: ConditionDeblocage,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
+  parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
+): string {
   switch (c.type) {
     case "depart":
       return "Disponible";
     case "jour":
-      return `Jour > ${c.jour}`;
+      return `Jour : ${state.jourActuel}/${c.jour}`;
     case "budget":
-      return `Budget > ${c.montant} €`;
-    case "ventesCategorie":
-      return `${c.categorie} > ${c.nombre} ventes`;
-    case "brocantesDebloquees":
-      return `${c.nombre} brocantes ${"★".repeat(c.tier)}`;
+      return `Budget : ${state.budget}/${c.montant} €`;
+    case "ventesCategorie": {
+      const n = compterVentesCategorie(state.historique, c.categorie);
+      return `${c.categorie} : ${n}/${c.nombre} ventes`;
+    }
+    case "brocantesDebloquees": {
+      const n = parTier?.get(c.tier)?.size ?? 0;
+      return `Brocantes ${"★".repeat(c.tier)} : ${n}/${c.nombre}`;
+    }
     case "valeurCollection":
-      return `Collection > ${c.montant} €`;
+      return `Collection : ${Math.floor(valeurTotale(state.collection))}/${c.montant} €`;
     case "valeurCollectionCategorie":
-      return `${c.categorie} > ${c.montant} €`;
+      return `${c.categorie} : ${Math.floor(valeurParCategorie(state.collection, c.categorie))}/${c.montant} €`;
     case "ET":
-      return c.conditions.map(descriptionConditionCourte).join(" + ");
+      return c.conditions
+        .map((cc) => descriptionConditionCourte(cc, state, parTier))
+        .join(" + ");
   }
 }
 
 /** Liste les conditions de déblocage atomiques (déplie le ET). */
-export function decrireConditionsCourtes(brocante: Brocante): string[] {
+export function decrireConditionsCourtes(
+  brocante: Brocante,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
+  parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
+): string[] {
   const c = brocante.conditionDeblocage;
-  if (c.type === "ET") return c.conditions.map(descriptionConditionCourte);
-  return [descriptionConditionCourte(c)];
+  if (c.type === "ET") {
+    return c.conditions.map((cc) =>
+      descriptionConditionCourte(cc, state, parTier),
+    );
+  }
+  return [descriptionConditionCourte(c, state, parTier)];
 }
 
 /**

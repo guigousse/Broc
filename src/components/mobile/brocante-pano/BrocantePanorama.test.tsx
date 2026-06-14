@@ -16,6 +16,17 @@ vi.mock("next/navigation", () => ({
 
 const minimalState = {
   budget: 1000,
+  jourActuel: 0,
+  historique: [],
+  collection: {
+    Musique: [],
+    "Jeux & Loisirs": [],
+    "Livres & Papeterie": [],
+    Mode: [],
+    Maison: [],
+    "Objets d'art": [],
+    Bricolage: [],
+  },
 } as unknown as GameState;
 
 const noop = () => {};
@@ -74,9 +85,9 @@ describe("BrocantePanorama", () => {
         onBack={noop}
       />,
     );
-    // marche-aux-puces-dimanche a `valeurCollection: 30` → "Collection > 30 €"
+    // marche-aux-puces-dimanche a `valeurCollection: 30` → "Collection : 0/30 €"
     fireEvent.click(screen.getByRole("button", { name: /marché aux puces du dimanche/i }));
-    expect(screen.getByText(/collection > 30 €/i)).toBeTruthy();
+    expect(screen.getByText(/collection : 0\/30 €/i)).toBeTruthy();
     const continuer = screen.getByRole("button", { name: /continuer/i }) as HTMLButtonElement;
     expect(continuer.disabled).toBe(true);
   });

@@ -4,7 +4,10 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSPr
 import { useRouter } from "next/navigation";
 import type { Brocante, BrocanteTier, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
-import { decrireConditionsCourtes } from "@/lib/deblocage";
+import {
+  calculerBrocantesDebloqueesParTier,
+  decrireConditionsCourtes,
+} from "@/lib/deblocage";
 import { BrocanteScene } from "./BrocanteScene";
 import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
 import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
@@ -166,11 +169,20 @@ export function BrocantePanorama({
     };
   }, [brocantesById, tierOffsetPx]);
 
+  // Recompute la cascade tier-par-tier — nécessaire pour afficher la
+  // progression "X/Y brocantes ★★" dans les conditions.
+  const parTier = useMemo(
+    () => calculerBrocantesDebloqueesParTier(state),
+    [state],
+  );
+
   const selected = selectedId ? brocantesById.get(selectedId) ?? null : null;
   const selectedDebloquee = selected ? debloqueesIds.has(selected.id) : false;
   const selectedPeutEntrer = selected ? state.budget >= fraisEntree(selected) : false;
   const selectedConditions =
-    selected && !selectedDebloquee ? decrireConditionsCourtes(selected) : [];
+    selected && !selectedDebloquee
+      ? decrireConditionsCourtes(selected, state, parTier)
+      : [];
   const continuerActif = !!(selected && selectedDebloquee && selectedPeutEntrer);
 
   const onContinuer = useCallback(() => {
