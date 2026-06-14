@@ -4,6 +4,7 @@ import { Lock } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
+import { CATEGORY_ICONS } from "./categoryIcons";
 
 interface BrocanteDetailFloatingProps {
   brocante: Brocante;
@@ -70,10 +71,27 @@ const metaRowStyle: CSSProperties = {
 
 const metaItemsStyle: CSSProperties = {
   fontFamily: "var(--font-mono)",
-  fontSize: 10.5,
+  fontSize: 11,
+  fontWeight: 700,
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: "var(--brass-700)",
+};
+
+// Badge catégorie circulaire — placé dans la fenêtre, à droite du prix.
+const categoryBadgeStyle: CSSProperties = {
+  width: 28,
+  height: 28,
+  borderRadius: "50%",
+  background:
+    "radial-gradient(circle at 30% 28%, #f0d18b 0%, #c89c4e 55%, #8a6429 100%)",
+  border: "1.5px solid var(--brass-700)",
+  display: "grid",
+  placeItems: "center",
+  color: "#3a2410",
+  boxShadow:
+    "0 2px 4px rgba(20,12,0,0.45), inset 0 1px 0 rgba(255,235,180,0.45)",
+  flexShrink: 0,
 };
 
 // Encadré "ticket d'entrée" rouge.
@@ -161,7 +179,10 @@ export function BrocanteDetailFloating({
     );
   }
 
-  // --- Layout DÉBLOQUÉ : titre + description + items / entrée ---
+  // --- Layout DÉBLOQUÉ : titre + description + items / entrée [+ badge] ---
+  const Icon = brocante.specialisation
+    ? CATEGORY_ICONS[brocante.specialisation]
+    : null;
   return (
     <aside style={cardStyle} aria-live="polite">
       <h2 style={titleStyle}>{brocante.nom}</h2>
@@ -172,6 +193,14 @@ export function BrocanteDetailFloating({
           <span style={fraisLabelStyle}>Entrée</span>
           {fraisEntree(brocante)} €
         </span>
+        {Icon && (
+          <div
+            style={categoryBadgeStyle}
+            aria-label={`Spécialité : ${brocante.specialisation}`}
+          >
+            <Icon size={16} strokeWidth={2} />
+          </div>
+        )}
       </div>
     </aside>
   );

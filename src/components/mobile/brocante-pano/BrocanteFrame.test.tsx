@@ -51,17 +51,4 @@ describe("BrocanteFrame", () => {
     expect(onSelect).toHaveBeenCalledWith("vide-grenier-quartier");
   });
 
-  it("affiche un badge spécialité quand brocante.specialisation est définie", () => {
-    const speBrocante: Brocante = { ...brocante, specialisation: "Musique" };
-    render(
-      <BrocanteFrame
-        {...baseProps}
-        brocante={speBrocante}
-        selected={false}
-        debloquee
-        onSelect={() => {}}
-      />,
-    );
-    expect(screen.getByLabelText("Spécialité : Musique")).toBeTruthy();
-  });
 });

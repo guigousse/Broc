@@ -7,7 +7,6 @@ import type { Brocante } from "@/types/game";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import type { FrameCoord } from "./brocantePanoramaLayout";
 import { useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
-import { CATEGORY_ICONS } from "./categoryIcons";
 
 interface BrocanteFrameProps {
   brocante: Brocante;
@@ -90,25 +89,6 @@ const lockBubbleStyle: CSSProperties = {
   color: "var(--brass-300)",
 };
 
-// Badge catégorie circulaire en haut-droite (déborde du cadre).
-const categoryBadgeStyle: CSSProperties = {
-  position: "absolute",
-  top: -10,
-  right: -10,
-  width: 30,
-  height: 30,
-  borderRadius: "50%",
-  background:
-    "radial-gradient(circle at 30% 28%, #f0d18b 0%, #c89c4e 55%, #8a6429 100%)",
-  border: "1.5px solid var(--brass-700)",
-  display: "grid",
-  placeItems: "center",
-  color: "#3a2410",
-  boxShadow: "0 2px 5px rgba(20,12,0,0.55), inset 0 1px 0 rgba(255,235,180,0.45)",
-  pointerEvents: "none",
-  zIndex: 4,
-};
-
 export function BrocanteFrame({
   brocante,
   coord,
@@ -120,10 +100,6 @@ export function BrocanteFrame({
   const { enabled: editing } = useBrocanteFramesEdit();
   const onClickHandler = editing ? undefined : () => onSelect(brocante.id);
   const pointerEvents: CSSProperties["pointerEvents"] = editing ? "none" : "auto";
-
-  const Icon = brocante.specialisation
-    ? CATEGORY_ICONS[brocante.specialisation]
-    : null;
 
   return (
     <button
@@ -156,14 +132,6 @@ export function BrocanteFrame({
           </div>
         )}
       </div>
-      {Icon && (
-        <div
-          style={categoryBadgeStyle}
-          aria-label={`Spécialité : ${brocante.specialisation}`}
-        >
-          <Icon size={16} strokeWidth={2} />
-        </div>
-      )}
     </button>
   );
 }
