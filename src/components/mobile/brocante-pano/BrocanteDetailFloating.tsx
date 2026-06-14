@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { Lock, Ticket } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
@@ -26,12 +26,12 @@ const cardStyle: CSSProperties = {
     "inset 0 0 0 3px var(--paper-100), inset 0 0 0 4px var(--brass-500), 0 8px 22px rgba(20,12,0,0.45)",
   backdropFilter: "blur(2px)",
   WebkitBackdropFilter: "blur(2px)",
-  padding: "18px 22px 14px",
+  padding: "14px 18px 12px",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  gap: 8,
-  maxWidth: 520,
+  gap: 6,
+  maxWidth: 480,
   margin: "0 auto",
   overflow: "visible",
   boxSizing: "border-box",
@@ -39,7 +39,7 @@ const cardStyle: CSSProperties = {
 
 const titleStyle: CSSProperties = {
   fontFamily: "var(--font-brocante-title)",
-  fontSize: 24,
+  fontSize: 20,
   fontWeight: 400,
   color: "var(--brass-500)",
   textShadow:
@@ -61,10 +61,10 @@ const titleRowStyle: CSSProperties = {
 const descStyle: CSSProperties = {
   fontFamily: "var(--font-serif)",
   fontStyle: "italic",
-  fontSize: 13,
+  fontSize: 12.5,
   color: "var(--ink-500)",
   margin: 0,
-  lineHeight: 1.4,
+  lineHeight: 1.35,
   textAlign: "center",
 };
 
@@ -95,43 +95,45 @@ const metaItemsStyle: CSSProperties = {
   color: "var(--ink-900)",
 };
 
+// Affichage du coût d'entrée : un encadré horizontal compact regroupant
+// l'icône billet, le label "ENTRÉE", le montant, le "+", puis l'icône ticket.
+// Style "ticket de gala" — passe en rouge si !peutEntrer.
 const fraisBoxStyle = (peutEntrer: boolean): CSSProperties => {
   const color = peutEntrer ? "var(--ink-900)" : "var(--vermillion-600)";
   return {
     display: "inline-flex",
-    flexDirection: "column",
     alignItems: "center",
-    gap: 2,
+    gap: 6,
     color,
-    lineHeight: 1.05,
+    background: peutEntrer ? "rgba(245,239,225,0.85)" : "rgba(245,225,225,0.85)",
+    border: `1px solid ${peutEntrer ? "var(--brass-700)" : "var(--vermillion-600)"}`,
+    borderRadius: 3,
+    padding: "4px 9px",
+    lineHeight: 1,
   };
 };
 
-const fraisLineStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "baseline",
-  gap: 5,
-  fontFamily: "var(--font-display)",
-  fontSize: 13,
-  fontWeight: 700,
-  letterSpacing: "0.06em",
-};
-
 const fraisLabelStyle: CSSProperties = {
-  fontSize: 9,
+  fontFamily: "var(--font-mono)",
+  fontSize: 8.5,
   letterSpacing: "0.18em",
   textTransform: "uppercase",
-  opacity: 0.85,
+  opacity: 0.75,
   fontWeight: 700,
-  fontFamily: "var(--font-mono)",
 };
 
-const ticketLineStyle: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 9.5,
+const fraisAmountStyle: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 14,
   fontWeight: 700,
-  letterSpacing: "0.10em",
-  opacity: 0.85,
+  letterSpacing: "0.04em",
+};
+
+const fraisPlusStyle: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  fontWeight: 700,
+  opacity: 0.55,
 };
 
 // Cachet thème circulaire — intégré dans la meta row à droite du prix.
@@ -263,12 +265,14 @@ export function BrocanteDetailFloating({
       <div style={goldRuleStyle} aria-hidden />
       <div style={metaRowStyle}>
         <span style={metaItemsStyle}>{brocante.taillePool} items</span>
-        <span style={fraisBoxStyle(peutEntrer)}>
-          <span style={fraisLineStyle}>
-            <span style={fraisLabelStyle}>Entrée</span>
-            {fraisEntree(brocante)} €
-          </span>
-          <span style={ticketLineStyle}>+ 1 ticket</span>
+        <span
+          style={fraisBoxStyle(peutEntrer)}
+          aria-label={`Entrée : ${fraisEntree(brocante)} euros et 1 ticket`}
+        >
+          <span style={fraisLabelStyle}>Entrée</span>
+          <span style={fraisAmountStyle}>{fraisEntree(brocante)} €</span>
+          <span style={fraisPlusStyle}>+</span>
+          <Ticket size={14} strokeWidth={2} />
         </span>
         {ThemeIcon && (
           <div

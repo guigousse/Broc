@@ -51,9 +51,10 @@ const floatingLayer: CSSProperties = {
   left: 0,
   right: 0,
   bottom: 0,
-  // Petit espace seulement au-dessus de la barre du bas pour que la fenêtre
-  // descende au plus près du bord (demande utilisateur).
-  padding: "0 14px calc(var(--mobile-tabbar-h) + var(--safe-bottom) + 2px)",
+  // Le scroller exclut déjà la zone tabbar via MobileLayout fillContent.
+  // Ici, juste un petit liseré pour ne pas coller le bord de la fenêtre
+  // contre la barre du bas.
+  padding: "0 14px 8px",
   pointerEvents: "none",
   zIndex: 20,
 };
