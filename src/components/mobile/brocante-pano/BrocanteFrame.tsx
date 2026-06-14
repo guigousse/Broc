@@ -93,6 +93,21 @@ const brassImgWrap: CSSProperties = {
   height: "100%",
 };
 
+/**
+ * Zoom appliqué à la peinture à l'intérieur du cadre. La combinaison
+ * `object-fit: cover` + `transform: scale()` agrandit l'image et le wrapper
+ * (`overflow: hidden`) clippe ce qui déborde — la peinture occupe plus de
+ * surface visible dans le cadre.
+ */
+const PAINTING_ZOOM = 1.4;
+
+const zoomedImageStyle = (debloquee: boolean): CSSProperties => ({
+  objectFit: "cover",
+  transform: `scale(${PAINTING_ZOOM})`,
+  transformOrigin: "center center",
+  filter: debloquee ? undefined : "grayscale(1) brightness(0.85)",
+});
+
 export function BrocanteFrame({
   brocanteId,
   nom,
@@ -126,10 +141,7 @@ export function BrocanteFrame({
               alt=""
               fill
               sizes="(max-width: 600px) 20vw, 200px"
-              style={{
-                objectFit: "cover",
-                filter: debloquee ? undefined : "grayscale(1) brightness(0.85)",
-              }}
+              style={zoomedImageStyle(debloquee)}
             />
           ) : (
             <div style={fallbackStyle}>
@@ -165,7 +177,7 @@ export function BrocanteFrame({
       aria-disabled={!debloquee}
       style={{ ...frameOuter(coord, selected, hole.cadreAspect), pointerEvents }}
     >
-      {/* Peinture clipée dans le trou */}
+      {/* Peinture clipée dans le trou + zoom 1.4× */}
       <div style={paintingWrapStyle}>
         {imageUrl ? (
           <Image
@@ -173,10 +185,7 @@ export function BrocanteFrame({
             alt=""
             fill
             sizes="(max-width: 600px) 20vw, 200px"
-            style={{
-              objectFit: "cover",
-              filter: debloquee ? undefined : "grayscale(1) brightness(0.85)",
-            }}
+            style={zoomedImageStyle(debloquee)}
           />
         ) : (
           <div style={fallbackStyle}>

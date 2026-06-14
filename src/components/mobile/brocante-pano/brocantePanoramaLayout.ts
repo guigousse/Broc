@@ -32,15 +32,19 @@ export interface PlaqueCoord {
 }
 
 // Tier 1 — 5 brocantes, chacune dans un cadre bois différent (1-5).
-// Aspects approximatifs des cadres :
-//   cadre 1 = 5:6 portrait     cadre 2 = 1:1 carré      cadre 3 = 3:4 portrait
-//   cadre 4 = 5:4 paysage      cadre 5 = 3:2 paysage
+// Layout : 3 cadres sur la ligne du haut, 2 cadres sur la ligne du bas.
+// Aspects naturels des cadres (mesurés par measure:cadres) :
+//   cadre 1 = 0.84 portrait    cadre 2 = 0.96 presque carré    cadre 3 = 0.68 portrait étroit
+//   cadre 4 = 1.18 paysage     cadre 5 = 1.32 paysage
+// La hauteur est calculée automatiquement via aspect-ratio (pas de déformation).
 export const TIER_1_FRAMES: FrameCoord[] = [
-  { id: "vide-grenier-quartier",     cadreIndex: 1, left: "6%",  top: "28%", width: "16%", height: "32%" },
-  { id: "marche-aux-puces-dimanche", cadreIndex: 2, left: "25%", top: "28%", width: "16%", height: "32%" },
-  { id: "bouquinerie-plein-air",     cadreIndex: 3, left: "44%", top: "28%", width: "16%", height: "32%" },
-  { id: "vide-dressing-centre",      cadreIndex: 4, left: "63%", top: "28%", width: "16%", height: "32%" },
-  { id: "brocante-club-jeux",        cadreIndex: 5, left: "82%", top: "28%", width: "16%", height: "32%" },
+  // Ligne du haut (3 cadres)
+  { id: "vide-grenier-quartier",     cadreIndex: 1, left: "5%",  top: "10%", width: "28%", height: "32%" },
+  { id: "marche-aux-puces-dimanche", cadreIndex: 2, left: "36%", top: "10%", width: "28%", height: "32%" },
+  { id: "bouquinerie-plein-air",     cadreIndex: 3, left: "67%", top: "10%", width: "28%", height: "32%" },
+  // Ligne du bas (2 cadres)
+  { id: "vide-dressing-centre",      cadreIndex: 4, left: "20%", top: "48%", width: "28%", height: "32%" },
+  { id: "brocante-club-jeux",        cadreIndex: 5, left: "52%", top: "48%", width: "28%", height: "32%" },
 ];
 
 export const TIER_2_FRAMES: FrameCoord[] = [
@@ -61,7 +65,7 @@ export const TIER_3_FRAMES: FrameCoord[] = [
   { id: "galerie-tableaux-sculptures",     left: "84%", top: "24%", width: "14%", height: "30%" },
 ];
 
-// Tier 4 — 1 cadre central monumental
+// Tier 4 — 1 cadre central monumental (coords validées)
 export const TIER_4_FRAMES: FrameCoord[] = [
   { id: "salon-antiquaires-drouot", left: "32%", top: "16%", width: "36%", height: "50%" },
 ];
