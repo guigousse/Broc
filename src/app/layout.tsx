@@ -18,6 +18,19 @@ export const metadata: Metadata = {
     title: "Broc",
   },
   applicationName: "Broc",
+  openGraph: {
+    title: "Broc — Une simulation de brocante",
+    description:
+      "Chinez, restaurez, négociez. Faites parler les objets de leur siècle.",
+    type: "website",
+    locale: "fr_FR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Broc — Une simulation de brocante",
+    description:
+      "Chinez, restaurez, négociez. Faites parler les objets de leur siècle.",
+  },
   other: {
     "mobile-web-app-capable": "yes",
   },
