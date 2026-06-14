@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as R
 import type { BrocanteTier } from "@/types/game";
 import { SCENE_FRAMES } from "./brocantePanoramaLayout";
 import { applyOverride, useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
-import { CADRE_HOLES } from "./cadreHoles.generated";
 
 interface EditOverlayProps {
   tier: BrocanteTier;
@@ -24,7 +23,6 @@ type Op =
       baseLeft: number;
       baseTop: number;
       corner: "tl" | "tr" | "bl" | "br";
-      lockAspect: boolean;
     };
 
 function pctToNum(v: string) {
@@ -140,44 +138,22 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
         let newTop = c.baseTop;
         let newW = c.baseW;
         let newH = c.baseH;
-        if (c.lockAspect) {
-          // Pour les cadres bois : redimensionnement uniforme. On utilise le
-          // delta du COIN tiré (signe positif = vers l'extérieur). On garde
-          // l'aspect base via le ratio baseH/baseW.
-          const sign = c.corner === "br" || c.corner === "bl" ? 1 : -1;
-          const factorW =
-            c.corner === "br" || c.corner === "tr"
-              ? dxPct
-              : -dxPct;
-          // On ignore dyPct pour rester simple — la hauteur suit l'aspect.
-          const deltaW = factorW;
-          newW = Math.max(2, c.baseW + deltaW);
-          newH = (newW * c.baseH) / c.baseW;
-          if (c.corner === "tl" || c.corner === "tr") {
-            newTop = c.baseTop + (c.baseH - newH);
-          }
-          if (c.corner === "tl" || c.corner === "bl") {
-            newLeft = c.baseLeft + (c.baseW - newW);
-          }
-          void sign;
-        } else {
-          if (c.corner === "br") {
-            newW = Math.max(2, c.baseW + dxPct);
-            newH = Math.max(2, c.baseH + dyPct);
-          } else if (c.corner === "tr") {
-            newW = Math.max(2, c.baseW + dxPct);
-            newH = Math.max(2, c.baseH - dyPct);
-            newTop = c.baseTop + dyPct;
-          } else if (c.corner === "bl") {
-            newW = Math.max(2, c.baseW - dxPct);
-            newH = Math.max(2, c.baseH + dyPct);
-            newLeft = c.baseLeft + dxPct;
-          } else if (c.corner === "tl") {
-            newW = Math.max(2, c.baseW - dxPct);
-            newH = Math.max(2, c.baseH - dyPct);
-            newLeft = c.baseLeft + dxPct;
-            newTop = c.baseTop + dyPct;
-          }
+        if (c.corner === "br") {
+          newW = Math.max(2, c.baseW + dxPct);
+          newH = Math.max(2, c.baseH + dyPct);
+        } else if (c.corner === "tr") {
+          newW = Math.max(2, c.baseW + dxPct);
+          newH = Math.max(2, c.baseH - dyPct);
+          newTop = c.baseTop + dyPct;
+        } else if (c.corner === "bl") {
+          newW = Math.max(2, c.baseW - dxPct);
+          newH = Math.max(2, c.baseH + dyPct);
+          newLeft = c.baseLeft + dxPct;
+        } else if (c.corner === "tl") {
+          newW = Math.max(2, c.baseW - dxPct);
+          newH = Math.max(2, c.baseH - dyPct);
+          newLeft = c.baseLeft + dxPct;
+          newTop = c.baseTop + dyPct;
         }
         setOverride(current.id, {
           left: numToPct(newLeft),
@@ -222,26 +198,17 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
     <>
       {frames.map((coord) => {
         const merged = applyOverride(coord, overrides[coord.id]);
-        const cadreAspect =
-          merged.cadreIndex !== undefined
-            ? CADRE_HOLES[merged.cadreIndex].cadreAspect
-            : undefined;
-        // Pour les cadres bois : on utilise aspect-ratio (vu que BrocanteFrame
-        // l'utilise aussi). L'overlay s'aligne exactement sur le rendu réel.
         const rect: CSSProperties = {
           position: "absolute",
           left: merged.left,
           top: merged.top,
           width: merged.width,
-          ...(cadreAspect !== undefined
-            ? { aspectRatio: String(cadreAspect) }
-            : { height: merged.height }),
+          height: merged.height,
           // pointer-events: none ICI — les enfants spécifiques
           // (move handle, corners) le réactivent en `auto`.
           pointerEvents: "none",
           zIndex: 50,
         };
-        const lockAspect = cadreAspect !== undefined;
         const onMoveStart = (e: RPE<HTMLDivElement>) => {
           e.preventDefault();
           e.stopPropagation();
@@ -271,14 +238,12 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
             baseW: pctToNum(merged.width),
             baseH: pctToNum(merged.height),
             corner,
-            lockAspect,
           });
         };
         return (
           <div key={coord.id} style={rect}>
             <div style={labelStyle}>
-              {coord.id} · {merged.left}/{merged.top} · {merged.width}
-              {lockAspect ? "" : `×${merged.height}`}
+              {coord.id} · {merged.left}/{merged.top} · {merged.width}×{merged.height}
             </div>
             <div
               style={moveHandleStyle}
@@ -311,7 +276,7 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
       <div style={panelStyle}>
         <div style={{ fontWeight: 700 }}>Cadres — tier {tier}</div>
         <div style={{ color: "var(--brass-700)", fontSize: 9 }}>
-          Drag = déplacer · Coins = redimensionner (aspect verrouillé pour cadres bois)
+          Drag = déplacer · Coins = redimensionner
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <button type="button" style={btnStyle} onClick={exportJson}>

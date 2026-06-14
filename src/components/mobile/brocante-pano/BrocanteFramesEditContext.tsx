@@ -12,7 +12,7 @@ import {
 import type { FrameCoord } from "./brocantePanoramaLayout";
 
 export type FrameOverride = Partial<
-  Pick<FrameCoord, "left" | "top" | "width" | "height" | "cadreIndex">
+  Pick<FrameCoord, "left" | "top" | "width" | "height">
 >;
 
 interface EditCtx {

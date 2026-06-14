@@ -18,11 +18,6 @@ export interface FrameCoord {
   width: string;
   /** En % de la hauteur de scène. */
   height: string;
-  /**
-   * Si présent, utilise le cadre bois `/cadres/cadre-{cadreIndex}.webp` en
-   * overlay au-dessus de l'illustration. Sinon : bordure CSS laiton.
-   */
-  cadreIndex?: 1 | 2 | 3 | 4 | 5;
 }
 
 export interface PlaqueCoord {
@@ -31,20 +26,15 @@ export interface PlaqueCoord {
   width: string;
 }
 
-// Tier 1 — 5 brocantes, chacune dans un cadre bois différent (1-5).
-// Layout : 3 cadres sur la ligne du haut, 2 cadres sur la ligne du bas.
-// Aspects naturels des cadres (mesurés par measure:cadres) :
-//   cadre 1 = 0.84 portrait    cadre 2 = 0.96 presque carré    cadre 3 = 0.68 portrait étroit
-//   cadre 4 = 1.18 paysage     cadre 5 = 1.32 paysage
-// La hauteur est calculée automatiquement via aspect-ratio (pas de déformation).
+// Tier 1 — 5 brocantes en 3+2 (3 cadres en haut, 2 en bas).
 export const TIER_1_FRAMES: FrameCoord[] = [
   // Ligne du haut (3 cadres)
-  { id: "vide-grenier-quartier",     cadreIndex: 1, left: "5%",  top: "10%", width: "28%", height: "32%" },
-  { id: "marche-aux-puces-dimanche", cadreIndex: 2, left: "36%", top: "10%", width: "28%", height: "32%" },
-  { id: "bouquinerie-plein-air",     cadreIndex: 3, left: "67%", top: "10%", width: "28%", height: "32%" },
+  { id: "vide-grenier-quartier",     left: "5%",  top: "10%", width: "28%", height: "32%" },
+  { id: "marche-aux-puces-dimanche", left: "36%", top: "10%", width: "28%", height: "32%" },
+  { id: "bouquinerie-plein-air",     left: "67%", top: "10%", width: "28%", height: "32%" },
   // Ligne du bas (2 cadres)
-  { id: "vide-dressing-centre",      cadreIndex: 4, left: "20%", top: "48%", width: "28%", height: "32%" },
-  { id: "brocante-club-jeux",        cadreIndex: 5, left: "52%", top: "48%", width: "28%", height: "32%" },
+  { id: "vide-dressing-centre",      left: "20%", top: "48%", width: "28%", height: "32%" },
+  { id: "brocante-club-jeux",        left: "52%", top: "48%", width: "28%", height: "32%" },
 ];
 
 export const TIER_2_FRAMES: FrameCoord[] = [
