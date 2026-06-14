@@ -25,11 +25,17 @@ type Op =
       corner: "tl" | "tr" | "bl" | "br";
     };
 
+/** Pas de la grille de snap, en pourcentage de la scène. */
+const SNAP_STEP_PCT = 1;
+
 function pctToNum(v: string) {
   return Number.parseFloat(v.replace("%", ""));
 }
 function numToPct(v: number) {
   return `${v.toFixed(2)}%`;
+}
+function snap(v: number) {
+  return Math.round(v / SNAP_STEP_PCT) * SNAP_STEP_PCT;
 }
 
 const handleBase: CSSProperties = {
@@ -56,22 +62,6 @@ const moveHandleStyle: CSSProperties = {
   zIndex: 55,
   touchAction: "none",
   pointerEvents: "auto",
-};
-
-const labelStyle: CSSProperties = {
-  position: "absolute",
-  left: 0,
-  top: -22,
-  background: "var(--forest-800)",
-  color: "var(--brass-300)",
-  fontFamily: "var(--font-mono)",
-  fontSize: 9,
-  letterSpacing: "0.08em",
-  padding: "2px 6px",
-  borderRadius: 2,
-  pointerEvents: "none",
-  zIndex: 61,
-  whiteSpace: "nowrap",
 };
 
 const panelStyle: CSSProperties = {
@@ -129,8 +119,8 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
       const dyPct = ((e.clientY - current.startY) / rect.height) * 100;
       if (current.kind === "move") {
         setOverride(current.id, {
-          left: numToPct(Math.max(0, current.baseLeft + dxPct)),
-          top: numToPct(Math.max(0, current.baseTop + dyPct)),
+          left: numToPct(snap(Math.max(0, current.baseLeft + dxPct))),
+          top: numToPct(snap(Math.max(0, current.baseTop + dyPct))),
         });
       } else {
         const c = current;
@@ -156,10 +146,10 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
           newTop = c.baseTop + dyPct;
         }
         setOverride(current.id, {
-          left: numToPct(newLeft),
-          top: numToPct(newTop),
-          width: numToPct(newW),
-          height: numToPct(newH),
+          left: numToPct(snap(newLeft)),
+          top: numToPct(snap(newTop)),
+          width: numToPct(snap(newW)),
+          height: numToPct(snap(newH)),
         });
       }
     };
@@ -242,9 +232,6 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
         };
         return (
           <div key={coord.id} style={rect}>
-            <div style={labelStyle}>
-              {coord.id} · {merged.left}/{merged.top} · {merged.width}×{merged.height}
-            </div>
             <div
               style={moveHandleStyle}
               onPointerDown={onMoveStart}

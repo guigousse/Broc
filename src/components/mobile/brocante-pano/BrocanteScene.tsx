@@ -7,6 +7,7 @@ import { ScenePlaque } from "./ScenePlaque";
 import { SCENE_FRAMES, SCENE_PLAQUE } from "./brocantePanoramaLayout";
 import { applyOverride, useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
 import { BrocanteFramesEditOverlay } from "./BrocanteFramesEditOverlay";
+import { EditGridOverlay } from "./EditGridOverlay";
 
 interface BrocanteSceneProps {
   tier: BrocanteTier;
@@ -82,7 +83,12 @@ export function BrocanteScene({
       <div style={plaqueWrapper(tier)}>
         <ScenePlaque tier={tier} />
       </div>
-      {editEnabled && <BrocanteFramesEditOverlay tier={tier} sceneRef={sceneRef} />}
+      {editEnabled && (
+        <>
+          <EditGridOverlay />
+          <BrocanteFramesEditOverlay tier={tier} sceneRef={sceneRef} />
+        </>
+      )}
     </section>
   );
 }
