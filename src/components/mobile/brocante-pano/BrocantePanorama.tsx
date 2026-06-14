@@ -50,11 +50,12 @@ const floatingLayer: CSSProperties = {
   position: "absolute",
   left: 0,
   right: 0,
-  bottom: 0,
-  // Le scroller exclut déjà la zone tabbar via MobileLayout fillContent.
-  // Ici, juste un petit liseré pour ne pas coller le bord de la fenêtre
-  // contre la barre du bas.
-  padding: "0 14px 8px",
+  // Bord supérieur juste sous le cadre le plus bas (atelier-bricoleur en
+  // tier 2 finit à ~63.35 %) + 1.5 % de marge → 65 %. La fenêtre flotte
+  // sous la rangée basse de cadres, indépendamment de la barre Retour/
+  // Continuer (le scroller exclut déjà cette zone via MobileLayout).
+  top: "65%",
+  padding: "0 14px",
   pointerEvents: "none",
   zIndex: 20,
 };
