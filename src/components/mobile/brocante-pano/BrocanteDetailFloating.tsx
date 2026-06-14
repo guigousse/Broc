@@ -134,23 +134,20 @@ const ticketLineStyle: CSSProperties = {
   opacity: 0.85,
 };
 
-// Cachet thème circulaire — top-right, déborde du cadre.
+// Cachet thème circulaire — intégré dans la meta row à droite du prix.
 const themeCachetStyle: CSSProperties = {
-  position: "absolute",
-  top: -14,
-  right: -14,
-  width: 38,
-  height: 38,
+  width: 32,
+  height: 32,
   borderRadius: "50%",
   background:
     "radial-gradient(circle at 30% 28%, #f0d18b 0%, #c89c4e 55%, #8a6429 100%)",
-  border: "2px solid var(--brass-700)",
+  border: "1.5px solid var(--brass-700)",
   display: "grid",
   placeItems: "center",
   color: "#3a2410",
   boxShadow:
-    "0 3px 6px rgba(20,12,0,0.55), inset 0 1px 0 rgba(255,235,180,0.45)",
-  zIndex: 1,
+    "0 2px 4px rgba(20,12,0,0.45), inset 0 1px 0 rgba(255,235,180,0.45)",
+  flexShrink: 0,
 };
 
 // Ornements de coin Art Déco.
@@ -238,14 +235,6 @@ export function BrocanteDetailFloating({
         <CornerOrnament position="tr" />
         <CornerOrnament position="bl" />
         <CornerOrnament position="br" />
-        {ThemeIcon && (
-          <div
-            style={themeCachetStyle}
-            aria-label={`Thème : ${brocante.specialisation}`}
-          >
-            <ThemeIcon size={20} strokeWidth={2} />
-          </div>
-        )}
         <div style={titleRowStyle}>
           <h2 style={titleStyle}>{brocante.nom}</h2>
           <Lock size={20} strokeWidth={2.2} style={lockIconStyle} />
@@ -269,14 +258,6 @@ export function BrocanteDetailFloating({
       <CornerOrnament position="tr" />
       <CornerOrnament position="bl" />
       <CornerOrnament position="br" />
-      {ThemeIcon && (
-        <div
-          style={themeCachetStyle}
-          aria-label={`Thème : ${brocante.specialisation}`}
-        >
-          <ThemeIcon size={20} strokeWidth={2} />
-        </div>
-      )}
       <h2 style={titleStyle}>{brocante.nom}</h2>
       <p style={descStyle}>{brocante.description}</p>
       <div style={goldRuleStyle} aria-hidden />
@@ -289,6 +270,14 @@ export function BrocanteDetailFloating({
           </span>
           <span style={ticketLineStyle}>+ 1 ticket</span>
         </span>
+        {ThemeIcon && (
+          <div
+            style={themeCachetStyle}
+            aria-label={`Thème : ${brocante.specialisation}`}
+          >
+            <ThemeIcon size={18} strokeWidth={2} />
+          </div>
+        )}
       </div>
     </aside>
   );

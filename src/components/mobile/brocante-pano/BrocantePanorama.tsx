@@ -51,7 +51,9 @@ const floatingLayer: CSSProperties = {
   left: 0,
   right: 0,
   bottom: 0,
-  padding: "0 14px calc(var(--mobile-tabbar-h) + var(--safe-bottom) + 12px)",
+  // Petit espace seulement au-dessus de la barre du bas pour que la fenêtre
+  // descende au plus près du bord (demande utilisateur).
+  padding: "0 14px calc(var(--mobile-tabbar-h) + var(--safe-bottom) + 2px)",
   pointerEvents: "none",
   zIndex: 20,
 };
