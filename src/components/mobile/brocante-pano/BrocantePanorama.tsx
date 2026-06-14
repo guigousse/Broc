@@ -8,6 +8,7 @@ import { BrocanteScene } from "./BrocanteScene";
 import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
 import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
 import { BrocanteBottomBar } from "./BrocanteBottomBar";
+import { BrocanteFramesEditProvider } from "./BrocanteFramesEditContext";
 
 interface BrocantePanoramaProps {
   brocantes: Brocante[];
@@ -154,7 +155,7 @@ export function BrocantePanorama({
   }, [selected, continuerActif, router, destination]);
 
   return (
-    <>
+    <BrocanteFramesEditProvider>
       <div style={wrapperStyle}>
         <div ref={scrollerRef} style={scrollerStyle} aria-label="Panorama des brocantes">
           {TIERS.map((tier, idx) => (
@@ -185,6 +186,6 @@ export function BrocantePanorama({
         onContinuer={onContinuer}
         continuerActif={continuerActif}
       />
-    </>
+    </BrocanteFramesEditProvider>
   );
 }

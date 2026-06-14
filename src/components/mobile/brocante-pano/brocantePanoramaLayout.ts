@@ -18,6 +18,11 @@ export interface FrameCoord {
   width: string;
   /** En % de la hauteur de scène. */
   height: string;
+  /**
+   * Si présent, utilise le cadre bois `/cadres/cadre-{cadreIndex}.webp` en
+   * overlay au-dessus de l'illustration. Sinon : bordure CSS laiton.
+   */
+  cadreIndex?: 1 | 2 | 3 | 4 | 5;
 }
 
 export interface PlaqueCoord {
@@ -26,13 +31,16 @@ export interface PlaqueCoord {
   width: string;
 }
 
-// Tier 1 — 5 brocantes alignées sur une rangée basse
+// Tier 1 — 5 brocantes, chacune dans un cadre bois différent (1-5).
+// Aspects approximatifs des cadres :
+//   cadre 1 = 5:6 portrait     cadre 2 = 1:1 carré      cadre 3 = 3:4 portrait
+//   cadre 4 = 5:4 paysage      cadre 5 = 3:2 paysage
 export const TIER_1_FRAMES: FrameCoord[] = [
-  { id: "vide-grenier-quartier",     left: "6%",  top: "28%", width: "16%", height: "32%" },
-  { id: "marche-aux-puces-dimanche", left: "25%", top: "28%", width: "16%", height: "32%" },
-  { id: "bouquinerie-plein-air",     left: "44%", top: "28%", width: "16%", height: "32%" },
-  { id: "vide-dressing-centre",      left: "63%", top: "28%", width: "16%", height: "32%" },
-  { id: "brocante-club-jeux",        left: "82%", top: "28%", width: "16%", height: "32%" },
+  { id: "vide-grenier-quartier",     cadreIndex: 1, left: "6%",  top: "28%", width: "16%", height: "32%" },
+  { id: "marche-aux-puces-dimanche", cadreIndex: 2, left: "25%", top: "28%", width: "16%", height: "32%" },
+  { id: "bouquinerie-plein-air",     cadreIndex: 3, left: "44%", top: "28%", width: "16%", height: "32%" },
+  { id: "vide-dressing-centre",      cadreIndex: 4, left: "63%", top: "28%", width: "16%", height: "32%" },
+  { id: "brocante-club-jeux",        cadreIndex: 5, left: "82%", top: "28%", width: "16%", height: "32%" },
 ];
 
 export const TIER_2_FRAMES: FrameCoord[] = [

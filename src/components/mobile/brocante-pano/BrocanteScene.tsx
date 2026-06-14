@@ -1,10 +1,12 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useRef, type CSSProperties } from "react";
 import type { Brocante, BrocanteTier } from "@/types/game";
 import { BrocanteFrame } from "./BrocanteFrame";
 import { ScenePlaque } from "./ScenePlaque";
 import { SCENE_FRAMES, SCENE_PLAQUE } from "./brocantePanoramaLayout";
+import { applyOverride, useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
+import { BrocanteFramesEditOverlay } from "./BrocanteFramesEditOverlay";
 
 interface BrocanteSceneProps {
   tier: BrocanteTier;
@@ -52,17 +54,25 @@ export function BrocanteScene({
   onSelect,
 }: BrocanteSceneProps) {
   const frames = SCENE_FRAMES[tier];
+  const { enabled: editEnabled, overrides } = useBrocanteFramesEdit();
+  const sceneRef = useRef<HTMLElement | null>(null);
   return (
-    <section style={sceneStyle(tier)} data-brocante-scene={tier} aria-label={`Scène tier ${tier}`}>
+    <section
+      ref={sceneRef}
+      style={sceneStyle(tier)}
+      data-brocante-scene={tier}
+      aria-label={`Scène tier ${tier}`}
+    >
       {frames.map((coord) => {
         const b = brocantesById.get(coord.id);
         if (!b) return null;
+        const merged = applyOverride(coord, overrides[coord.id]);
         return (
           <BrocanteFrame
             key={b.id}
             brocanteId={b.id}
             nom={b.nom}
-            coord={coord}
+            coord={merged}
             selected={selectedId === b.id}
             debloquee={debloqueesIds.has(b.id)}
             onSelect={onSelect}
@@ -72,6 +82,7 @@ export function BrocanteScene({
       <div style={plaqueWrapper(tier)}>
         <ScenePlaque tier={tier} />
       </div>
+      {editEnabled && <BrocanteFramesEditOverlay tier={tier} sceneRef={sceneRef} />}
     </section>
   );
 }
