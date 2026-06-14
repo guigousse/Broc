@@ -216,9 +216,9 @@ const conditionItemBase: CSSProperties = {
 
 const conditionItemStyle = (met: boolean): CSSProperties => ({
   ...conditionItemBase,
-  // Met = condition satisfaite → en rouge (visuellement marqué "fait").
-  // Non satisfaite → en gris foncé neutre.
-  color: met ? "var(--vermillion-600)" : "#3a3327",
+  // Convention standard : vert (couleur forest du thème) = palier atteint,
+  // rouge vermillon = palier encore manquant.
+  color: met ? "var(--forest-700)" : "var(--vermillion-600)",
 });
 
 export function BrocanteDetailFloating({
