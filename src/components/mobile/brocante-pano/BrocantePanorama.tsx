@@ -11,6 +11,7 @@ import { BrocanteBottomBar } from "./BrocanteBottomBar";
 import { BrocanteFramesEditProvider } from "./BrocanteFramesEditContext";
 import { CadreEditToggle } from "./CadreEditToggle";
 import { ScenePlaquesBar } from "./ScenePlaquesBar";
+import { ScenesEditPanel } from "./ScenesEditPanel";
 
 interface BrocantePanoramaProps {
   brocantes: Brocante[];
@@ -207,6 +208,7 @@ export function BrocantePanorama({
         continuerActif={continuerActif}
       />
       <CadreEditToggle />
+      <ScenesEditPanel currentTier={currentTier} />
     </BrocanteFramesEditProvider>
   );
 }
