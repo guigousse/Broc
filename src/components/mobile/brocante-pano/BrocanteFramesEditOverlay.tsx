@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as RPE } from "react";
 import type { BrocanteTier } from "@/types/game";
-import { SCENE_FRAMES, type FrameCoord } from "./brocantePanoramaLayout";
+import { SCENE_FRAMES } from "./brocantePanoramaLayout";
 import { applyOverride, useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
+import { CADRE_HOLES } from "./cadreHoles.generated";
 
 interface EditOverlayProps {
   tier: BrocanteTier;
@@ -13,7 +14,18 @@ interface EditOverlayProps {
 
 type Op =
   | { kind: "move"; id: string; startX: number; startY: number; baseLeft: number; baseTop: number }
-  | { kind: "resize"; id: string; startX: number; startY: number; baseW: number; baseH: number; baseLeft: number; baseTop: number; corner: "tl" | "tr" | "bl" | "br" };
+  | {
+      kind: "resize";
+      id: string;
+      startX: number;
+      startY: number;
+      baseW: number;
+      baseH: number;
+      baseLeft: number;
+      baseTop: number;
+      corner: "tl" | "tr" | "bl" | "br";
+      lockAspect: boolean;
+    };
 
 function pctToNum(v: string) {
   return Number.parseFloat(v.replace("%", ""));
@@ -24,26 +36,28 @@ function numToPct(v: number) {
 
 const handleBase: CSSProperties = {
   position: "absolute",
-  width: 14,
-  height: 14,
+  width: 22,
+  height: 22,
   background: "var(--brass-300)",
   border: "1.5px solid var(--forest-800)",
-  borderRadius: 2,
-  boxShadow: "0 1px 3px rgba(0,0,0,0.5)",
+  borderRadius: 3,
+  boxShadow: "0 1px 4px rgba(0,0,0,0.55)",
   cursor: "nwse-resize",
   zIndex: 60,
   touchAction: "none",
+  pointerEvents: "auto",
 };
 
 const moveHandleStyle: CSSProperties = {
   position: "absolute",
   inset: 0,
-  background: "rgba(220,170,60,0.08)",
+  background: "rgba(220,170,60,0.10)",
   outline: "1.5px dashed var(--brass-300)",
   outlineOffset: -2,
   cursor: "move",
   zIndex: 55,
   touchAction: "none",
+  pointerEvents: "auto",
 };
 
 const labelStyle: CSSProperties = {
@@ -64,8 +78,8 @@ const labelStyle: CSSProperties = {
 
 const panelStyle: CSSProperties = {
   position: "fixed",
-  right: 12,
-  bottom: "calc(var(--mobile-tabbar-h, 0px) + var(--safe-bottom, 0px) + 12px)",
+  right: 8,
+  bottom: "calc(var(--mobile-tabbar-h, 0px) + var(--safe-bottom, 0px) + 8px)",
   background: "var(--forest-800)",
   color: "var(--brass-300)",
   fontFamily: "var(--font-mono)",
@@ -78,7 +92,7 @@ const panelStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 6,
-  maxWidth: 280,
+  maxWidth: 240,
 };
 
 const btnStyle: CSSProperties = {
@@ -86,7 +100,7 @@ const btnStyle: CSSProperties = {
   color: "var(--forest-800)",
   border: "1px solid var(--brass-700)",
   borderRadius: 3,
-  padding: "5px 10px",
+  padding: "6px 10px",
   fontFamily: "var(--font-mono)",
   fontSize: 10,
   letterSpacing: "0.1em",
@@ -96,14 +110,15 @@ const btnStyle: CSSProperties = {
 };
 
 export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) {
-  const { enabled, overrides, setOverride, resetAll } = useBrocanteFramesEdit();
+  const { enabled, overrides, setOverride, setEnabled, resetAll } =
+    useBrocanteFramesEdit();
   const [op, setOp] = useState<Op | null>(null);
   const [copied, setCopied] = useState(false);
   const opRef = useRef<Op | null>(null);
   opRef.current = op;
 
-  // Listeners globaux pour pointer move/up — capturent même si la souris
-  // quitte le rectangle d'origine.
+  // Listeners globaux pour pointer move/up — capturent même si le doigt
+  // sort du rectangle d'origine.
   useEffect(() => {
     if (!enabled || !op) return;
     const onMove = (e: PointerEvent) => {
@@ -120,28 +135,49 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
           top: numToPct(Math.max(0, current.baseTop + dyPct)),
         });
       } else {
-        // resize : selon coin, on déplace + agrandit
         const c = current;
         let newLeft = c.baseLeft;
         let newTop = c.baseTop;
         let newW = c.baseW;
         let newH = c.baseH;
-        if (c.corner === "br") {
-          newW = Math.max(2, c.baseW + dxPct);
-          newH = Math.max(2, c.baseH + dyPct);
-        } else if (c.corner === "tr") {
-          newW = Math.max(2, c.baseW + dxPct);
-          newH = Math.max(2, c.baseH - dyPct);
-          newTop = c.baseTop + dyPct;
-        } else if (c.corner === "bl") {
-          newW = Math.max(2, c.baseW - dxPct);
-          newH = Math.max(2, c.baseH + dyPct);
-          newLeft = c.baseLeft + dxPct;
-        } else if (c.corner === "tl") {
-          newW = Math.max(2, c.baseW - dxPct);
-          newH = Math.max(2, c.baseH - dyPct);
-          newLeft = c.baseLeft + dxPct;
-          newTop = c.baseTop + dyPct;
+        if (c.lockAspect) {
+          // Pour les cadres bois : redimensionnement uniforme. On utilise le
+          // delta du COIN tiré (signe positif = vers l'extérieur). On garde
+          // l'aspect base via le ratio baseH/baseW.
+          const sign = c.corner === "br" || c.corner === "bl" ? 1 : -1;
+          const factorW =
+            c.corner === "br" || c.corner === "tr"
+              ? dxPct
+              : -dxPct;
+          // On ignore dyPct pour rester simple — la hauteur suit l'aspect.
+          const deltaW = factorW;
+          newW = Math.max(2, c.baseW + deltaW);
+          newH = (newW * c.baseH) / c.baseW;
+          if (c.corner === "tl" || c.corner === "tr") {
+            newTop = c.baseTop + (c.baseH - newH);
+          }
+          if (c.corner === "tl" || c.corner === "bl") {
+            newLeft = c.baseLeft + (c.baseW - newW);
+          }
+          void sign;
+        } else {
+          if (c.corner === "br") {
+            newW = Math.max(2, c.baseW + dxPct);
+            newH = Math.max(2, c.baseH + dyPct);
+          } else if (c.corner === "tr") {
+            newW = Math.max(2, c.baseW + dxPct);
+            newH = Math.max(2, c.baseH - dyPct);
+            newTop = c.baseTop + dyPct;
+          } else if (c.corner === "bl") {
+            newW = Math.max(2, c.baseW - dxPct);
+            newH = Math.max(2, c.baseH + dyPct);
+            newLeft = c.baseLeft + dxPct;
+          } else if (c.corner === "tl") {
+            newW = Math.max(2, c.baseW - dxPct);
+            newH = Math.max(2, c.baseH - dyPct);
+            newLeft = c.baseLeft + dxPct;
+            newTop = c.baseTop + dyPct;
+          }
         }
         setOverride(current.id, {
           left: numToPct(newLeft),
@@ -154,9 +190,11 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
     const onUp = () => setOp(null);
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
     };
   }, [enabled, op, sceneRef, setOverride]);
 
@@ -168,10 +206,13 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
     const result = frames.map((f) => applyOverride(f, overrides[f.id]));
     const text = JSON.stringify(result, null, 2);
     if (typeof navigator !== "undefined" && navigator.clipboard) {
-      void navigator.clipboard.writeText(text).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1600);
-      });
+      void navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1600);
+        })
+        .catch(() => console.log(text));
     } else {
       console.log(text);
     }
@@ -181,18 +222,30 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
     <>
       {frames.map((coord) => {
         const merged = applyOverride(coord, overrides[coord.id]);
+        const cadreAspect =
+          merged.cadreIndex !== undefined
+            ? CADRE_HOLES[merged.cadreIndex].cadreAspect
+            : undefined;
+        // Pour les cadres bois : on utilise aspect-ratio (vu que BrocanteFrame
+        // l'utilise aussi). L'overlay s'aligne exactement sur le rendu réel.
         const rect: CSSProperties = {
           position: "absolute",
           left: merged.left,
           top: merged.top,
           width: merged.width,
-          height: merged.height,
+          ...(cadreAspect !== undefined
+            ? { aspectRatio: String(cadreAspect) }
+            : { height: merged.height }),
+          // pointer-events: none ICI — les enfants spécifiques
+          // (move handle, corners) le réactivent en `auto`.
           pointerEvents: "none",
           zIndex: 50,
         };
+        const lockAspect = cadreAspect !== undefined;
         const onMoveStart = (e: RPE<HTMLDivElement>) => {
           e.preventDefault();
           e.stopPropagation();
+          (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
           setOp({
             kind: "move",
             id: coord.id,
@@ -207,6 +260,7 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
         ) => {
           e.preventDefault();
           e.stopPropagation();
+          (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
           setOp({
             kind: "resize",
             id: coord.id,
@@ -217,31 +271,37 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
             baseW: pctToNum(merged.width),
             baseH: pctToNum(merged.height),
             corner,
+            lockAspect,
           });
         };
         return (
           <div key={coord.id} style={rect}>
             <div style={labelStyle}>
-              {coord.id} · {merged.left} / {merged.top} · {merged.width} × {merged.height}
+              {coord.id} · {merged.left}/{merged.top} · {merged.width}
+              {lockAspect ? "" : `×${merged.height}`}
             </div>
-            <div style={moveHandleStyle} onPointerDown={onMoveStart} aria-label={`Déplacer ${coord.id}`} />
             <div
-              style={{ ...handleBase, left: -7, top: -7, cursor: "nwse-resize" }}
+              style={moveHandleStyle}
+              onPointerDown={onMoveStart}
+              aria-label={`Déplacer ${coord.id}`}
+            />
+            <div
+              style={{ ...handleBase, left: -11, top: -11 }}
               onPointerDown={onResizeStart("tl")}
               aria-label={`Resize ${coord.id} TL`}
             />
             <div
-              style={{ ...handleBase, right: -7, top: -7, cursor: "nesw-resize" }}
+              style={{ ...handleBase, right: -11, top: -11, cursor: "nesw-resize" }}
               onPointerDown={onResizeStart("tr")}
               aria-label={`Resize ${coord.id} TR`}
             />
             <div
-              style={{ ...handleBase, left: -7, bottom: -7, cursor: "nesw-resize" }}
+              style={{ ...handleBase, left: -11, bottom: -11, cursor: "nesw-resize" }}
               onPointerDown={onResizeStart("bl")}
               aria-label={`Resize ${coord.id} BL`}
             />
             <div
-              style={{ ...handleBase, right: -7, bottom: -7, cursor: "nwse-resize" }}
+              style={{ ...handleBase, right: -11, bottom: -11 }}
               onPointerDown={onResizeStart("br")}
               aria-label={`Resize ${coord.id} BR`}
             />
@@ -250,10 +310,10 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
       })}
       <div style={panelStyle}>
         <div style={{ fontWeight: 700 }}>Cadres — tier {tier}</div>
-        <div style={{ color: "var(--brass-700)" }}>
-          Drag pour déplacer · Coins pour redimensionner
+        <div style={{ color: "var(--brass-700)", fontSize: 9 }}>
+          Drag = déplacer · Coins = redimensionner (aspect verrouillé pour cadres bois)
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <button type="button" style={btnStyle} onClick={exportJson}>
             {copied ? "✓ Copié" : "Copier JSON"}
           </button>
@@ -265,6 +325,13 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
             }}
           >
             Reset
+          </button>
+          <button
+            type="button"
+            style={{ ...btnStyle, background: "var(--vermillion-600)", color: "white" }}
+            onClick={() => setEnabled(false)}
+          >
+            Quitter
           </button>
         </div>
       </div>

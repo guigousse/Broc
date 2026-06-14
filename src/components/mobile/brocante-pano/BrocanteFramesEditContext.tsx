@@ -17,6 +17,7 @@ export type FrameOverride = Partial<
 
 interface EditCtx {
   enabled: boolean;
+  setEnabled: (v: boolean) => void;
   overrides: Record<string, FrameOverride>;
   setOverride: (id: string, patch: FrameOverride) => void;
   resetOverride: (id: string) => void;
@@ -28,6 +29,7 @@ const LS_ENABLED_KEY = "broc.cadre-edit.enabled";
 
 const Ctx = createContext<EditCtx>({
   enabled: false,
+  setEnabled: () => {},
   overrides: {},
   setOverride: () => {},
   resetOverride: () => {},
@@ -109,39 +111,31 @@ export function BrocanteFramesEditProvider({ children }: { children: ReactNode }
 
   const resetAll = useCallback(() => setOverrides({}), []);
 
+  const setEnabledPersisted = useCallback((v: boolean) => {
+    if (typeof window !== "undefined") {
+      try {
+        if (v) window.localStorage.setItem(LS_ENABLED_KEY, "1");
+        else window.localStorage.removeItem(LS_ENABLED_KEY);
+      } catch {
+        // ignore
+      }
+    }
+    setEnabled(v);
+  }, []);
+
   const value = useMemo<EditCtx>(
-    () => ({ enabled, overrides, setOverride, resetOverride, resetAll }),
-    [enabled, overrides, setOverride, resetOverride, resetAll],
+    () => ({
+      enabled,
+      setEnabled: setEnabledPersisted,
+      overrides,
+      setOverride,
+      resetOverride,
+      resetAll,
+    }),
+    [enabled, setEnabledPersisted, overrides, setOverride, resetOverride, resetAll],
   );
 
-  return (
-    <Ctx.Provider value={value}>
-      {children}
-      {enabled && (
-        <div
-          style={{
-            position: "fixed",
-            top: "calc(var(--safe-top, 0px) + var(--mobile-header-h, 0px))",
-            left: 0,
-            right: 0,
-            background: "rgba(220,170,60,0.92)",
-            color: "var(--forest-800)",
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            fontWeight: 700,
-            padding: "4px 12px",
-            textAlign: "center",
-            zIndex: 101,
-            boxShadow: "0 2px 6px rgba(0,0,0,0.35)",
-          }}
-        >
-          🛠 Cadre edit mode actif — `?cadreedit=0` pour quitter
-        </div>
-      )}
-    </Ctx.Provider>
-  );
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 /** Fusionne un FrameCoord avec son override courant si présent. */

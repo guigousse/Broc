@@ -6,6 +6,7 @@ import type { CSSProperties } from "react";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import type { FrameCoord } from "./brocantePanoramaLayout";
 import { CADRE_HOLES } from "./cadreHoles.generated";
+import { useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
 
 interface BrocanteFrameProps {
   brocanteId: string;
@@ -24,13 +25,19 @@ const buttonReset: CSSProperties = {
   WebkitTapHighlightColor: "transparent",
 };
 
-const frameOuter = (coord: FrameCoord, selected: boolean): CSSProperties => ({
+const frameOuter = (
+  coord: FrameCoord,
+  selected: boolean,
+  cadreAspect: number,
+): CSSProperties => ({
   ...buttonReset,
   position: "absolute",
   left: coord.left,
   top: coord.top,
   width: coord.width,
-  height: coord.height,
+  // Pas de `height` : on laisse `aspect-ratio` calculer la hauteur pour
+  // que le cadre garde ses proportions naturelles (pas de déformation).
+  aspectRatio: String(cadreAspect),
   overflow: "visible",
   opacity: selected ? 1 : 0.94,
   filter: selected
@@ -95,17 +102,22 @@ export function BrocanteFrame({
   onSelect,
 }: BrocanteFrameProps) {
   const imageUrl = getBrocanteImageUrl(brocanteId);
+  const { enabled: editing } = useBrocanteFramesEdit();
+  // Quand on édite, on désactive le click handler pour ne pas voler les
+  // pointer events de l'overlay d'édition (poignées de déplacement / coins).
+  const onClickHandler = editing ? undefined : () => onSelect(brocanteId);
+  const pointerEvents: CSSProperties["pointerEvents"] = editing ? "none" : "auto";
 
   // Cas SANS cadre bois (tier 2/3/4 — bordure laiton CSS).
   if (!coord.cadreIndex) {
     return (
       <button
         type="button"
-        onClick={() => onSelect(brocanteId)}
+        onClick={onClickHandler}
         aria-label={nom}
         aria-pressed={selected}
         aria-disabled={!debloquee}
-        style={brassFrameOuter(coord, selected)}
+        style={{ ...brassFrameOuter(coord, selected), pointerEvents }}
       >
         <div style={brassImgWrap}>
           {imageUrl ? (
@@ -147,11 +159,11 @@ export function BrocanteFrame({
   return (
     <button
       type="button"
-      onClick={() => onSelect(brocanteId)}
+      onClick={onClickHandler}
       aria-label={nom}
       aria-pressed={selected}
       aria-disabled={!debloquee}
-      style={frameOuter(coord, selected)}
+      style={{ ...frameOuter(coord, selected, hole.cadreAspect), pointerEvents }}
     >
       {/* Peinture clipée dans le trou */}
       <div style={paintingWrapStyle}>

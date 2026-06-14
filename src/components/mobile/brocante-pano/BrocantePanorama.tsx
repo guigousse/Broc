@@ -9,6 +9,7 @@ import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
 import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
 import { BrocanteBottomBar } from "./BrocanteBottomBar";
 import { BrocanteFramesEditProvider } from "./BrocanteFramesEditContext";
+import { CadreEditToggle } from "./CadreEditToggle";
 
 interface BrocantePanoramaProps {
   brocantes: Brocante[];
@@ -186,6 +187,7 @@ export function BrocantePanorama({
         onContinuer={onContinuer}
         continuerActif={continuerActif}
       />
+      <CadreEditToggle />
     </BrocanteFramesEditProvider>
   );
 }
