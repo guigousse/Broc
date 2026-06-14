@@ -20,12 +20,6 @@ export interface FrameCoord {
   height: string;
 }
 
-export interface PlaqueCoord {
-  left: string;
-  top: string;
-  width: string;
-}
-
 // Tier 1 — 5 brocantes en 3+2 (3 cadres en haut, 2 en bas).
 export const TIER_1_FRAMES: FrameCoord[] = [
   // Ligne du haut (3 cadres)
@@ -65,11 +59,4 @@ export const SCENE_FRAMES: Record<BrocanteTier, FrameCoord[]> = {
   2: TIER_2_FRAMES,
   3: TIER_3_FRAMES,
   4: TIER_4_FRAMES,
-};
-
-export const SCENE_PLAQUE: Record<BrocanteTier, PlaqueCoord> = {
-  1: { left: "38%", top: "70%", width: "24%" },
-  2: { left: "38%", top: "70%", width: "24%" },
-  3: { left: "38%", top: "70%", width: "24%" },
-  4: { left: "30%", top: "74%", width: "40%" },
 };

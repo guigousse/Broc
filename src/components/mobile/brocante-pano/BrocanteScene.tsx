@@ -3,8 +3,7 @@
 import { useRef, type CSSProperties } from "react";
 import type { Brocante, BrocanteTier } from "@/types/game";
 import { BrocanteFrame } from "./BrocanteFrame";
-import { ScenePlaque } from "./ScenePlaque";
-import { SCENE_FRAMES, SCENE_PLAQUE } from "./brocantePanoramaLayout";
+import { SCENE_FRAMES } from "./brocantePanoramaLayout";
 import { applyOverride, useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
 import { BrocanteFramesEditOverlay } from "./BrocanteFramesEditOverlay";
 import { EditGridOverlay } from "./EditGridOverlay";
@@ -40,13 +39,6 @@ const sceneStyle = (tier: BrocanteTier): CSSProperties => ({
   overflow: "hidden",
 });
 
-const plaqueWrapper = (tier: BrocanteTier): CSSProperties => ({
-  position: "absolute",
-  left: SCENE_PLAQUE[tier].left,
-  top: SCENE_PLAQUE[tier].top,
-  width: SCENE_PLAQUE[tier].width,
-});
-
 export function BrocanteScene({
   tier,
   brocantesById,
@@ -80,9 +72,6 @@ export function BrocanteScene({
           />
         );
       })}
-      <div style={plaqueWrapper(tier)}>
-        <ScenePlaque tier={tier} />
-      </div>
       {editEnabled && (
         <>
           <EditGridOverlay />

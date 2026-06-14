@@ -10,6 +10,7 @@ import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
 import { BrocanteBottomBar } from "./BrocanteBottomBar";
 import { BrocanteFramesEditProvider } from "./BrocanteFramesEditContext";
 import { CadreEditToggle } from "./CadreEditToggle";
+import { ScenePlaquesBar } from "./ScenePlaquesBar";
 
 interface BrocantePanoramaProps {
   brocantes: Brocante[];
@@ -65,6 +66,7 @@ export function BrocantePanorama({
   const router = useRouter();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [currentTier, setCurrentTier] = useState<BrocanteTier>(1);
 
   const brocantesById = useMemo(() => {
     const m = new Map<string, Brocante>();
@@ -100,8 +102,23 @@ export function BrocantePanorama({
     if (idx > 0) {
       el.scrollLeft = tierOffsetPx(idx, el.clientWidth);
     }
+    setCurrentTier(maxUnlockedTier);
     didInitRef.current = true;
   }, [maxUnlockedTier, tierOffsetPx]);
+
+  // Smooth scroll programmatique vers une scène (tap sur un cartel).
+  const goToTier = useCallback(
+    (t: BrocanteTier) => {
+      const el = scrollerRef.current;
+      if (!el) return;
+      const idx = TIERS.indexOf(t);
+      el.scrollTo({
+        left: tierOffsetPx(idx, el.clientWidth),
+        behavior: "smooth",
+      });
+    },
+    [tierOffsetPx],
+  );
 
   const selectedIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -129,11 +146,12 @@ export function BrocantePanorama({
             bestIdx = i;
           }
         }
-        const currentTier = TIERS[bestIdx];
+        const tierAtScroll = TIERS[bestIdx];
+        setCurrentTier((prev) => (prev === tierAtScroll ? prev : tierAtScroll));
         const currentSelectedId = selectedIdRef.current;
         if (currentSelectedId) {
           const sel = brocantesById.get(currentSelectedId);
-          if (sel && sel.tier !== currentTier) setSelectedId(null);
+          if (sel && sel.tier !== tierAtScroll) setSelectedId(null);
         }
       });
     };
@@ -172,6 +190,7 @@ export function BrocantePanorama({
             </Fragment>
           ))}
         </div>
+        <ScenePlaquesBar currentTier={currentTier} onTierClick={goToTier} />
         {selected && (
           <div style={floatingLayer}>
             <BrocanteDetailFloating
