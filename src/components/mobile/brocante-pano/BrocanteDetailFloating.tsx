@@ -4,6 +4,7 @@ import { Lock } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
+import { CATEGORY_ICONS } from "./categoryIcons";
 
 interface BrocanteDetailFloatingProps {
   brocante: Brocante;
@@ -14,46 +15,40 @@ interface BrocanteDetailFloatingProps {
   conditions: string[];
 }
 
-// Conteneur global : carte descriptive + meta flottants en dessous.
-const wrapStyle: CSSProperties = {
-  pointerEvents: "auto",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: 10,
-  maxWidth: 520,
-  margin: "0 auto",
-};
-
 const cardStyle: CSSProperties = {
+  pointerEvents: "auto",
   position: "relative",
-  width: "100%",
-  background: "rgba(245,239,225,0.94)",
-  border: "1px solid var(--brass-700)",
+  background: "rgba(245,239,225,0.95)",
   borderRadius: 6,
-  padding: "14px 18px 16px",
+  // Double filet : extérieur brass-700 + intérieur brass-500 via shadow.
+  border: "1px solid var(--brass-700)",
   boxShadow:
-    "inset 0 0 0 2px var(--paper-100), 0 8px 22px rgba(20,12,0,0.45)",
+    "inset 0 0 0 3px var(--paper-100), inset 0 0 0 4px var(--brass-500), 0 8px 22px rgba(20,12,0,0.45)",
   backdropFilter: "blur(2px)",
   WebkitBackdropFilter: "blur(2px)",
+  padding: "18px 22px 14px",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   gap: 8,
+  maxWidth: 520,
+  margin: "0 auto",
+  overflow: "visible",
   boxSizing: "border-box",
 };
 
 const titleStyle: CSSProperties = {
   fontFamily: "var(--font-brocante-title)",
-  fontSize: 30,
+  fontSize: 24,
   fontWeight: 400,
   color: "var(--brass-500)",
   textShadow:
     "0 1px 0 rgba(255,235,180,0.4), 0 1px 2px rgba(80,50,10,0.25)",
   textAlign: "center",
   margin: 0,
-  lineHeight: 1.05,
+  lineHeight: 1.1,
   letterSpacing: "0.01em",
+  textWrap: "balance",
 };
 
 const titleRowStyle: CSSProperties = {
@@ -73,13 +68,22 @@ const descStyle: CSSProperties = {
   textAlign: "center",
 };
 
-// Meta flottants — sous la carte, sans fond, ombre légère pour lisibilité.
-const metaFloatRowStyle: CSSProperties = {
+// Filet doré séparateur — fin, centré, gradient.
+const goldRuleStyle: CSSProperties = {
+  width: "70%",
+  height: 1,
+  background:
+    "linear-gradient(90deg, transparent 0%, var(--brass-500) 20%, var(--brass-500) 80%, transparent 100%)",
+  margin: "6px 0 2px",
+};
+
+// Meta row inside the card.
+const metaRowStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: 12,
-  textShadow: "0 1px 2px rgba(245,239,225,0.55), 0 0 6px rgba(245,239,225,0.4)",
+  gap: 18,
+  marginTop: 4,
 };
 
 const metaItemsStyle: CSSProperties = {
@@ -91,7 +95,6 @@ const metaItemsStyle: CSSProperties = {
   color: "var(--ink-900)",
 };
 
-// Encadré "ticket d'entrée" — noir par défaut, rouge si budget insuffisant.
 const fraisBoxStyle = (peutEntrer: boolean): CSSProperties => {
   const color = peutEntrer ? "var(--ink-900)" : "var(--vermillion-600)";
   return {
@@ -131,24 +134,66 @@ const ticketLineStyle: CSSProperties = {
   opacity: 0.85,
 };
 
-// Badge ambiance — petit pill laiton/forêt à droite du prix.
-const ambianceBadgeStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  background: "var(--forest-800)",
-  color: "var(--brass-300)",
-  fontFamily: "var(--font-mono)",
-  fontSize: 9,
-  fontWeight: 700,
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
-  padding: "4px 9px",
-  border: "1px solid var(--brass-500)",
-  borderRadius: 3,
-  boxShadow: "0 2px 5px rgba(20,12,0,0.45)",
-  whiteSpace: "nowrap",
-  textShadow: "none",
+// Cachet thème circulaire — top-right, déborde du cadre.
+const themeCachetStyle: CSSProperties = {
+  position: "absolute",
+  top: -14,
+  right: -14,
+  width: 38,
+  height: 38,
+  borderRadius: "50%",
+  background:
+    "radial-gradient(circle at 30% 28%, #f0d18b 0%, #c89c4e 55%, #8a6429 100%)",
+  border: "2px solid var(--brass-700)",
+  display: "grid",
+  placeItems: "center",
+  color: "#3a2410",
+  boxShadow:
+    "0 3px 6px rgba(20,12,0,0.55), inset 0 1px 0 rgba(255,235,180,0.45)",
+  zIndex: 1,
 };
+
+// Ornements de coin Art Déco.
+const cornerOrnamentBase: CSSProperties = {
+  position: "absolute",
+  width: 18,
+  height: 18,
+  pointerEvents: "none",
+  color: "var(--brass-500)",
+};
+
+function CornerOrnament({
+  position,
+}: {
+  position: "tl" | "tr" | "bl" | "br";
+}) {
+  const rotation = {
+    tl: 0,
+    tr: 90,
+    br: 180,
+    bl: 270,
+  }[position];
+  const placement: CSSProperties = {
+    ...cornerOrnamentBase,
+    ...(position === "tl" || position === "tr" ? { top: 6 } : { bottom: 6 }),
+    ...(position === "tl" || position === "bl" ? { left: 6 } : { right: 6 }),
+    transform: `rotate(${rotation}deg)`,
+  };
+  return (
+    <svg viewBox="0 0 18 18" style={placement} aria-hidden>
+      {/* Petit motif déco "stairstep" + point */}
+      <path
+        d="M2 16 L2 12 L6 12 L6 8 L10 8 L10 4 L16 4"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        strokeLinecap="round"
+        opacity="0.85"
+      />
+      <circle cx="2" cy="16" r="1.3" fill="currentColor" />
+    </svg>
+  );
+}
 
 // Layout verrouillé.
 const lockIconStyle: CSSProperties = {
@@ -175,50 +220,67 @@ const conditionItemStyle: CSSProperties = {
   fontWeight: 700,
 };
 
-const conditionsSeparatorStyle: CSSProperties = {
-  width: 40,
-  height: 1,
-  background: "var(--brass-500)",
-  opacity: 0.5,
-  margin: "2px 0 4px",
-};
-
 export function BrocanteDetailFloating({
   brocante,
   debloquee,
   peutEntrer,
   conditions,
 }: BrocanteDetailFloatingProps) {
+  const ThemeIcon = brocante.specialisation
+    ? CATEGORY_ICONS[brocante.specialisation]
+    : null;
+
   // --- Layout VERROUILLÉ : nom + cadenas + liste des conditions ---
   if (!debloquee) {
     return (
-      <div style={wrapStyle}>
-        <aside style={cardStyle} aria-live="polite">
-          <div style={titleRowStyle}>
-            <h2 style={titleStyle}>{brocante.nom}</h2>
-            <Lock size={20} strokeWidth={2.2} style={lockIconStyle} />
+      <aside style={cardStyle} aria-live="polite">
+        <CornerOrnament position="tl" />
+        <CornerOrnament position="tr" />
+        <CornerOrnament position="bl" />
+        <CornerOrnament position="br" />
+        {ThemeIcon && (
+          <div
+            style={themeCachetStyle}
+            aria-label={`Thème : ${brocante.specialisation}`}
+          >
+            <ThemeIcon size={20} strokeWidth={2} />
           </div>
-          <div style={conditionsSeparatorStyle} aria-hidden />
-          <ul style={conditionsListStyle}>
-            {conditions.map((c, i) => (
-              <li key={i} style={conditionItemStyle}>
-                {c}
-              </li>
-            ))}
-          </ul>
-        </aside>
-      </div>
+        )}
+        <div style={titleRowStyle}>
+          <h2 style={titleStyle}>{brocante.nom}</h2>
+          <Lock size={20} strokeWidth={2.2} style={lockIconStyle} />
+        </div>
+        <div style={goldRuleStyle} aria-hidden />
+        <ul style={conditionsListStyle}>
+          {conditions.map((c, i) => (
+            <li key={i} style={conditionItemStyle}>
+              {c}
+            </li>
+          ))}
+        </ul>
+      </aside>
     );
   }
 
-  // --- Layout DÉBLOQUÉ : carte + meta flottants en dessous ---
+  // --- Layout DÉBLOQUÉ : titre + desc + filet d'or + meta intégrée ---
   return (
-    <div style={wrapStyle}>
-      <aside style={cardStyle} aria-live="polite">
-        <h2 style={titleStyle}>{brocante.nom}</h2>
-        <p style={descStyle}>{brocante.description}</p>
-      </aside>
-      <div style={metaFloatRowStyle}>
+    <aside style={cardStyle} aria-live="polite">
+      <CornerOrnament position="tl" />
+      <CornerOrnament position="tr" />
+      <CornerOrnament position="bl" />
+      <CornerOrnament position="br" />
+      {ThemeIcon && (
+        <div
+          style={themeCachetStyle}
+          aria-label={`Thème : ${brocante.specialisation}`}
+        >
+          <ThemeIcon size={20} strokeWidth={2} />
+        </div>
+      )}
+      <h2 style={titleStyle}>{brocante.nom}</h2>
+      <p style={descStyle}>{brocante.description}</p>
+      <div style={goldRuleStyle} aria-hidden />
+      <div style={metaRowStyle}>
         <span style={metaItemsStyle}>{brocante.taillePool} items</span>
         <span style={fraisBoxStyle(peutEntrer)}>
           <span style={fraisLineStyle}>
@@ -227,10 +289,7 @@ export function BrocanteDetailFloating({
           </span>
           <span style={ticketLineStyle}>+ 1 ticket</span>
         </span>
-        <span style={ambianceBadgeStyle} aria-label={`Ambiance : ${brocante.ambiance}`}>
-          {brocante.ambiance}
-        </span>
       </div>
-    </div>
+    </aside>
   );
 }
