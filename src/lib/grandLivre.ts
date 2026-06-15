@@ -30,6 +30,8 @@ export interface AppendLedgerOptions {
   applyBudget?: boolean;
   /** Timestamp explicite — par défaut `Date.now()`. */
   timestamp?: number;
+  /** ID explicite — par défaut généré via `crypto.randomUUID()`. Utile pour les tests snapshot. */
+  id?: string;
 }
 
 /**
@@ -45,10 +47,10 @@ export function appendLedger(
   const delta = partial.recette - partial.depense;
   const newBudget = applyBudget ? state.budget + delta : state.budget;
   const entry: LedgerEntry = {
-    id: makeId(),
+    ...partial,
+    id: opts.id ?? makeId(),
     timestamp: opts.timestamp ?? Date.now(),
     soldeApres: newBudget,
-    ...partial,
   };
   return {
     ...state,
@@ -107,10 +109,19 @@ function sessionVenteToEntry(
 }
 
 /**
- * Reconstruit best-effort un grand livre depuis l'historique de sessions.
- * Tri chronologique ascendant. `soldeApres` est calculé en remontant depuis
+ * Reconstruit un grand livre depuis l'historique de sessions, après migration.
+ * Tri chronologique ascendant. `soldeApres` est recalculé en remontant depuis
  * `budgetActuel` (la dernière entrée a `soldeApres = budgetActuel`, les
  * précédentes retirent l'effet des suivantes).
+ *
+ * Limitations connues (best-effort) :
+ * - Pas d'entrée loyer (le `loyer` des SessionVente n'est pas isolé en ligne dédiée).
+ * - Pas d'entrée frais de brocante (pas tracé dans `SessionChinage`).
+ * - Pas d'entrée gazette, courrier, upgrades : non récupérables depuis l'historique.
+ *
+ * Conséquence : la somme `recettes - dépenses` des entrées reconstruites ne
+ * matche pas nécessairement `budgetActuel - budgetInitial`. Le grand livre
+ * devient exact à partir des transactions postérieures à la migration.
  */
 export function reconstruireGrandLivre(
   historique: Session[],
