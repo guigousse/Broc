@@ -176,3 +176,59 @@ describe("migrerSauvegarde — immutabilité", () => {
     expect(JSON.stringify(fresh)).toBe(snapshot);
   });
 });
+
+describe("migrerSauvegarde — grand livre & missions", () => {
+  it("ajoute grandLivre vide si historique est vide", () => {
+    const state = createMockGameState({ historique: [], budget: 500 });
+    const migrated = migrerSauvegarde(state);
+    expect(migrated.grandLivre).toEqual([]);
+    expect(migrated.missions).toEqual([]);
+  });
+
+  it("reconstruit grandLivre depuis l'historique des sessions", () => {
+    const state = createMockGameState({
+      budget: 950,
+      historique: [
+        {
+          id: "s1",
+          type: "chinage",
+          jour: 2,
+          timestamp: 1000,
+          brocanteId: "broc-1",
+          brocanteNom: "Test",
+          achats: [
+            { nom: "A", categorie: "Musique", etat: "Bon", prixReferenceReel: 0, prixPaye: 50 },
+          ],
+        },
+      ],
+    });
+    const migrated = migrerSauvegarde(state);
+    expect(migrated.grandLivre).toHaveLength(1);
+    expect(migrated.grandLivre[0]).toMatchObject({
+      kind: "session_chinage",
+      depense: 50,
+      sessionId: "s1",
+      soldeApres: 950,
+    });
+  });
+
+  it("conserve grandLivre existant si déjà peuplé", () => {
+    const existantEntry = {
+      id: "x1",
+      timestamp: 100,
+      jour: 1,
+      kind: "gazette" as const,
+      designation: "Gazette",
+      recette: 0,
+      depense: 12,
+      soldeApres: 988,
+    };
+    const state = createMockGameState({ grandLivre: [existantEntry] });
+    const migrated = migrerSauvegarde(state);
+    expect(migrated.grandLivre).toEqual([existantEntry]);
+  });
+
+  it("SAVE_VERSION incrémenté à 3", () => {
+    expect(SAVE_VERSION).toBe(3);
+  });
+});

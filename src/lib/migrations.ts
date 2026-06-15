@@ -25,6 +25,7 @@ import {
 } from "@/lib/courrier";
 import { tirerMeteoSemaine } from "@/lib/meteo";
 import { genererTendances } from "@/lib/tendances";
+import { reconstruireGrandLivre } from "./grandLivre";
 
 // `donnerObjetFn` n'est pas utilisé dans la migration actuelle mais ré-exporté
 // pour faciliter d'éventuelles évolutions de migration ; supprimer cet alias
@@ -36,7 +37,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -356,5 +357,15 @@ function appliquerMigrations(loaded: GameState): GameState {
     declencheursDeclenches: Array.from(
       new Set([...declencheursLoaded, ...apresInjection.declencheursAjoutes]),
     ),
+    grandLivre: (() => {
+      const existing = (loaded as Partial<GameState>).grandLivre;
+      if (Array.isArray(existing) && existing.length > 0) return existing;
+      return reconstruireGrandLivre(historique, loaded.budget ?? 0);
+    })(),
+    missions: (() => {
+      const existing = (loaded as Partial<GameState>).missions;
+      if (Array.isArray(existing)) return existing;
+      return [];
+    })(),
   };
 }
