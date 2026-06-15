@@ -149,12 +149,14 @@ export default function VitrineBrocantePage() {
           />
         ) : (
           <CoffrePricing
-            brocante={brocante}
-            budget={state.budget}
             coffre={coffre}
             onAjusterPrix={ajusterPrixVitrine}
             onRetour={() => setEtape("packing")}
-            onOuvrir={handleOuvrir}
+            onValider={handleOuvrir}
+            validerLabel={`Ouvrir l'étal · ${fraisEntree(brocante)} €`}
+            validerActif={
+              state.budget >= fraisEntree(brocante) && coffre.length > 0
+            }
           />
         )}
       </main>

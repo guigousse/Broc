@@ -1,22 +1,23 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { useGame } from "@/context/GameContext";
 import { CoffreChargement } from "@/components/vente/CoffreChargement";
+import { CoffrePricing } from "@/components/vente/CoffrePricing";
 import { VITRINE_PREP_ID, vitrineEstEnPrep } from "@/lib/vitrinePrep";
 import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 const SUGGESTION_FACTEUR = 1.4;
 
 /**
- * Étape "préparation du coffre" sans brocante choisie. L'utilisateur charge
- * son camion ; le coffre est créé avec brocanteId = VITRINE_PREP_ID. À la
- * validation, on bascule sur l'écran de sélection de brocante (/vitrine).
+ * Préparation du coffre AVANT le choix de la brocante : packing puis pricing.
+ * À la fin du pricing, on bascule sur l'écran de sélection (/vitrine) — c'est
+ * là que la brocante est choisie, payée, et qu'on entre dans la journée.
  *
- * Si une vitrine est déjà attachée à une vraie brocante (pas en prep), on
- * redirige vers /vitrine/[id] pour respecter le flow existant.
+ * Le coffre est porté par `state.vitrine` avec brocanteId = VITRINE_PREP_ID,
+ * ré-attribué à la vraie brocante par BrocantePanorama au clic "Continuer".
  */
 export default function VitrinePrepPage() {
   const router = useRouter();
@@ -26,11 +27,14 @@ export default function VitrinePrepPage() {
     ouvrirVitrine,
     mettreEnVitrine,
     retirerDeVitrine,
+    ajusterPrixVitrine,
     ajusterPositionVitrine,
     viderVitrine,
     acheterCamion,
     setNiveauCamionDev,
   } = useGame();
+
+  const [etape, setEtape] = useState<"packing" | "pricing">("packing");
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -38,7 +42,7 @@ export default function VitrinePrepPage() {
       router.replace("/");
       return;
     }
-    // Vitrine attachée à une vraie brocante → on sort de la prep.
+    // Vitrine déjà attribuée à une vraie brocante → on sort de la prep.
     if (state.vitrine && !vitrineEstEnPrep(state)) {
       router.replace(`/vitrine/${state.vitrine.brocanteId}`);
       return;
@@ -102,33 +106,46 @@ export default function VitrinePrepPage() {
       }}
     >
       <ContextualHeader
-        titre="Chargement"
+        titre={etape === "packing" ? "Chargement" : "Tarification"}
         sousTitre="Préparation du coffre"
         budget={state.budget}
-        onBack={() => router.push("/bureau")}
+        onBack={() =>
+          etape === "pricing" ? setEtape("packing") : router.push("/bureau")
+        }
       />
       <main style={{ flex: 1, overflowY: "auto" }}>
-        <CoffreChargement
-          niveauCamion={state.niveauCamion as NiveauCamion}
-          budget={state.budget}
-          stock={stock}
-          coffre={coffre}
-          onAjouter={handleAjouter}
-          onMove={(id, x, y) => {
-            const ov = coffre.find((o) => o.objet.id === id);
-            if (!ov) return;
-            ajusterPositionVitrine(id, x, y, ov.rotation ?? 0);
-          }}
-          onRotate={handleRotate}
-          onRetirer={retirerDeVitrine}
-          onUpgrade={acheterCamion}
-          onSetNiveauDev={setNiveauCamionDev}
-          onValider={() => router.push("/vitrine")}
-          onAnnuler={() => {
-            viderVitrine();
-            router.push("/bureau");
-          }}
-        />
+        {etape === "packing" ? (
+          <CoffreChargement
+            niveauCamion={state.niveauCamion as NiveauCamion}
+            budget={state.budget}
+            stock={stock}
+            coffre={coffre}
+            onAjouter={handleAjouter}
+            onMove={(id, x, y) => {
+              const ov = coffre.find((o) => o.objet.id === id);
+              if (!ov) return;
+              ajusterPositionVitrine(id, x, y, ov.rotation ?? 0);
+            }}
+            onRotate={handleRotate}
+            onRetirer={retirerDeVitrine}
+            onUpgrade={acheterCamion}
+            onSetNiveauDev={setNiveauCamionDev}
+            onValider={() => setEtape("pricing")}
+            onAnnuler={() => {
+              viderVitrine();
+              router.push("/bureau");
+            }}
+          />
+        ) : (
+          <CoffrePricing
+            coffre={coffre}
+            onAjusterPrix={ajusterPrixVitrine}
+            onRetour={() => setEtape("packing")}
+            onValider={() => router.push("/vitrine")}
+            validerLabel="Choisir la brocante →"
+            validerActif={coffre.length > 0}
+          />
+        )}
       </main>
     </div>
   );

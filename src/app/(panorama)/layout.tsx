@@ -610,13 +610,13 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         onVitrine={() => {
           playDoorClose();
           setPorteOuverte(false);
-          // Nouveau flow "étaler" : préparation du coffre AVANT le choix de
-          // la brocante. Si une vitrine est déjà attribuée à une vraie
-          // brocante (étape pricing en cours), on y retourne directement.
-          // Sinon → /vitrine/prep (création ou reprise du coffre en prep).
+          // Flow étaler : packing + pricing en prep, puis sélection brocante,
+          // puis journée. Reprise :
+          //   - vitrine attachée à une vraie brocante → reprise de la journée.
+          //   - vitrine en prep (ou pas de vitrine) → /vitrine/prep.
           const v = state.vitrine;
           if (v && v.brocanteId !== VITRINE_PREP_ID) {
-            router.push(`/vitrine/${v.brocanteId}`);
+            router.push(`/vitrine/${v.brocanteId}/journee`);
           } else {
             router.push("/vitrine/prep");
           }

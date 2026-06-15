@@ -1,30 +1,31 @@
 "use client";
 
-import type { Brocante, ObjetEnVitrine } from "@/types/game";
-import { fraisEntree } from "@/data/brocantes";
+import type { ObjetEnVitrine } from "@/types/game";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
 import { ItemImage } from "@/components/ui/ItemImage";
 
 interface Props {
-  brocante: Brocante;
-  budget: number;
   coffre: ObjetEnVitrine[];
   onAjusterPrix: (objetId: string, prix: number) => void;
   onRetour: () => void;
-  onOuvrir: () => void;
+  /** Action de validation (continuer le flow). Anciennement `onOuvrir`. */
+  onValider: () => void;
+  /** Libellé du bouton de validation. Ex : "Ouvrir l'étal · 5 €" ou "Choisir la brocante →". */
+  validerLabel: string;
+  /** Override de l'état actif du bouton de validation. Par défaut : coffre non vide. */
+  validerActif?: boolean;
 }
 
 export function CoffrePricing({
-  brocante,
-  budget,
   coffre,
   onAjusterPrix,
   onRetour,
-  onOuvrir,
+  onValider,
+  validerLabel,
+  validerActif,
 }: Props) {
-  const frais = fraisEntree(brocante);
-  const peut = budget >= frais && coffre.length > 0;
+  const peut = validerActif ?? coffre.length > 0;
 
   return (
     <>
@@ -141,7 +142,7 @@ export function CoffrePricing({
         <button
           type="button"
           disabled={!peut}
-          onClick={onOuvrir}
+          onClick={onValider}
           style={{
             flex: 2,
             padding: 10,
@@ -154,7 +155,7 @@ export function CoffrePricing({
             textTransform: "uppercase",
           }}
         >
-          Ouvrir l&apos;étal · {frais} €
+          {validerLabel}
         </button>
       </div>
     </>

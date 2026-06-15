@@ -77,7 +77,7 @@ export function BrocantePanorama({
   onBack,
 }: BrocantePanoramaProps) {
   const router = useRouter();
-  const { attribuerVitrineABrocante } = useGameActions();
+  const { attribuerVitrineABrocante, ajusterBudget } = useGameActions();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [currentTier, setCurrentTier] = useState<BrocanteTier>(1);
@@ -201,15 +201,27 @@ export function BrocantePanorama({
     if (!selected || !continuerActif) return;
     // Mémorise le tier choisi pour les prochaines visites (chiner ou vitrine).
     setDernierTierVisite(selected.tier);
-    // En mode vitrine : si le coffre est en prep, on le ré-attribue à la
-    // brocante choisie (préserve objets/prix/positions). Le composant
-    // /vitrine/[id] détecte la vitrine pleine et démarre directement sur
-    // l'étape "pricing".
-    if (destination === "vitrine" && vitrineEstEnPrep(state)) {
-      attribuerVitrineABrocante(selected.id);
+    if (destination === "vitrine") {
+      // Nouveau flow : packing + pricing déjà faits en prep. Ici on ré-attribue
+      // le coffre, on paie le droit d'entrée et on entre directement dans la
+      // journée. La page intermédiaire /vitrine/[id] est court-circuitée.
+      if (vitrineEstEnPrep(state)) {
+        attribuerVitrineABrocante(selected.id);
+      }
+      ajusterBudget(-fraisEntree(selected));
+      router.push(`/vitrine/${selected.id}/journee`);
+      return;
     }
     router.push(`/${destination}/${selected.id}`);
-  }, [selected, continuerActif, router, destination, state, attribuerVitrineABrocante]);
+  }, [
+    selected,
+    continuerActif,
+    router,
+    destination,
+    state,
+    attribuerVitrineABrocante,
+    ajusterBudget,
+  ]);
 
   return (
     <BrocanteFramesEditProvider>
