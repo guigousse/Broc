@@ -2,7 +2,6 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { ATELIER_LAYOUT, type AtelierObjetKey } from "./layout";
-import { WorkshopSlots } from "./WorkshopSlots";
 
 interface AtelierSceneProps {
   /** Objets interactifs positionnés par-dessus le fond. */
@@ -36,13 +35,6 @@ const objectsLayer: CSSProperties = {
   pointerEvents: "none",
 };
 
-const slotsLayer: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  zIndex: 3,
-  pointerEvents: "none",
-};
-
 export function AtelierScene({ children }: AtelierSceneProps) {
   return (
     <div style={wrapStyle} aria-label="Décor atelier" data-atelier-scene="1">
@@ -53,9 +45,6 @@ export function AtelierScene({ children }: AtelierSceneProps) {
         draggable={false}
       />
       <div style={objectsLayer}>{children}</div>
-      <div style={slotsLayer}>
-        <WorkshopSlots />
-      </div>
     </div>
   );
 }

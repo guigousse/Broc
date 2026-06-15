@@ -50,6 +50,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { panoramaActiveStore } from "@/lib/panoramaActiveStore";
 import { CATEGORIES } from "@/data/categories";
 import { ATELIER_LAYOUT } from "@/components/mobile/atelier-pano/layout";
+import { WorkshopSlots } from "@/components/mobile/atelier-pano/WorkshopSlots";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import {
@@ -554,6 +555,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                   45,
                 )}
               />
+              <WorkshopSlots />
             </div>
 
             {/* Cartons cliquables sur l'étagère de stockage (coords absolues

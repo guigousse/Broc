@@ -76,16 +76,17 @@ function EmptySlot() {
       style={{
         width: "100%",
         height: "100%",
-        border: "1.5px solid rgba(197, 160, 89, 0.5)",
-        background: "rgba(255, 250, 240, 0.35)",
+        border: "2px dashed var(--brass-500)",
+        background: "rgba(255, 250, 240, 0.7)",
         borderRadius: 4,
         display: "grid",
         placeItems: "center",
         fontFamily: "var(--font-mono)",
-        fontSize: 8,
-        letterSpacing: "0.1em",
+        fontSize: 9,
+        letterSpacing: "0.12em",
         textTransform: "uppercase",
-        color: "rgba(76, 60, 40, 0.45)",
+        color: "var(--brass-700)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
       }}
       aria-label="Slot atelier libre"
     >
