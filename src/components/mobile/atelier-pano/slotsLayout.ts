@@ -22,8 +22,8 @@ export const ATELIER_SLOT_LAYOUT: Record<
   { left: number; bottom: number; width: number }
 > = {
   // Sur le rebord de la fenêtre vitrail, au-dessus de l'établi.
-  // left = 300 (shift atelier) + 135.5 (centre établi - slotSize/2).
-  "atelier-slot": { left: 435.5, bottom: 48, width: 9 },
+  // left absolu dans le panorama unifié (shift +300vw inclus).
+  "atelier-slot": { left: 447.5, bottom: 38.5, width: 20.1 },
 };
 
 /** Espacement horizontal entre deux slots consécutifs (vw). */

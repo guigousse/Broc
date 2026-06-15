@@ -21,7 +21,6 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import {
   UnifiedPanorama,
   UNIFIED_ZONE_ORDER,
-  ATELIER_X_SHIFT_VW,
   zoneIndexToTab,
   unifiedZoneAnchorSelector,
   type UnifiedZoneKey,
@@ -49,7 +48,6 @@ import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { panoramaActiveStore } from "@/lib/panoramaActiveStore";
 import { CATEGORIES } from "@/data/categories";
-import { ATELIER_LAYOUT } from "@/components/mobile/atelier-pano/layout";
 import { WorkshopSlots } from "@/components/mobile/atelier-pano/WorkshopSlots";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
@@ -536,29 +534,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
               </>
             )}
 
-            {/* ─── Section atelier (sections 4/5/6) — décalée +300vw ─── */}
-            <div
-              style={{
-                position: "absolute",
-                left: `${ATELIER_X_SHIFT_VW}vw`,
-                top: 0,
-                width: "300vw",
-                height: "100%",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => router.push("/atelier/gerer")}
-                aria-label="Ouvrir l'établi"
-                style={atelierHotspotStyle(
-                  ATELIER_LAYOUT.objets.etabli,
-                  45,
-                )}
-              />
-            </div>
-
-            {/* Slots de restauration — coords absolues dans le panorama
-                unifié (shift +300vw inclus), donc rendus directement ici. */}
+            {/* L'accès à /atelier/gerer se fait uniquement via les slots
+                de restauration ci-dessous (taper un slot libre, en cours
+                ou prêt → ouverture/action). Pas de hotspot sur l'établi. */}
             <WorkshopSlots />
 
             {/* Cartons cliquables sur l'étagère de stockage (coords absolues
@@ -718,27 +696,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       {editEnabled && <QgEditPanel />}
     </QgEditProvider>
   );
-}
-
-/** Style d'un hotspot atelier — coords relatives au sous-conteneur +300vw. */
-function atelierHotspotStyle(
-  obj: (typeof ATELIER_LAYOUT.objets)[keyof typeof ATELIER_LAYOUT.objets],
-  heightPct: number,
-): CSSProperties {
-  return {
-    position: "absolute",
-    left: `${obj.left}vw`,
-    bottom: `${obj.bottom}%`,
-    width: `${obj.width}vw`,
-    height: `${heightPct}%`,
-    background: "transparent",
-    border: "none",
-    padding: 0,
-    margin: 0,
-    cursor: "pointer",
-    pointerEvents: "auto",
-    WebkitTapHighlightColor: "transparent",
-  };
 }
 
 export default function PanoramaLayout({

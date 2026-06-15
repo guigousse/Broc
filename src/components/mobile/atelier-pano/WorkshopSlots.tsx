@@ -67,7 +67,7 @@ export function WorkshopSlots() {
                 onRecuperer={() => recupererObjetRestaure(objet.id)}
               />
             ) : (
-              <EmptySlot />
+              <EmptySlot onTap={() => router.push("/atelier/gerer")} />
             )}
           </div>
         );
@@ -76,9 +76,11 @@ export function WorkshopSlots() {
   );
 }
 
-function EmptySlot() {
+function EmptySlot({ onTap }: { onTap: () => void }) {
   return (
-    <div
+    <button
+      type="button"
+      onClick={onTap}
       style={{
         width: "100%",
         height: "100%",
@@ -93,11 +95,15 @@ function EmptySlot() {
         textTransform: "uppercase",
         color: "var(--brass-700)",
         boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+        padding: 0,
+        margin: 0,
+        cursor: "pointer",
+        WebkitTapHighlightColor: "transparent",
       }}
-      aria-label="Slot atelier libre"
+      aria-label="Ouvrir l'atelier (slot libre)"
     >
       libre
-    </div>
+    </button>
   );
 }
 
