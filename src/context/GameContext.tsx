@@ -28,6 +28,7 @@ import { getCamion } from "@/data/camion";
 import { createStarterInventory } from "@/data/starterInventory";
 import { createGameRepository } from "@/lib/storage/createGameRepository";
 import { migrerSauvegarde } from "@/lib/migrations";
+import { appendLedger } from "@/lib/grandLivre";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
 import {
   catTreeId,
@@ -201,6 +202,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       chatSurFauteuil: false,
       passagesSansChat: 0,
       declencheursDeclenches: [ID_LETTRE_MAMAN_DEBUT],
+      grandLivre: [],
+      missions: [],
     });
     router.push("/bureau");
   }, [router]);
@@ -344,15 +347,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ok: false,
         raison: `Il manque ${upgrade.cout - current.budget} €.`,
       };
-    setState((prev) =>
-      prev
-        ? {
-            ...prev,
-            budget: prev.budget - upgrade.cout,
-            niveauAtelier: upgrade.niveauCible,
-          }
-        : prev,
-    );
+    setState((prev) => {
+      if (!prev) return prev;
+      const next = appendLedger(prev, {
+        jour: prev.jourActuel,
+        kind: "upgrade_atelier",
+        designation: `Atelier N${upgrade.niveauCible}`,
+        recette: 0,
+        depense: upgrade.cout,
+      });
+      return { ...next, niveauAtelier: upgrade.niveauCible };
+    });
     return { ok: true };
   }, []);
 
@@ -366,15 +371,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ok: false,
         raison: `Il manque ${upgrade.cout - current.budget} €.`,
       };
-    setState((prev) =>
-      prev
-        ? {
-            ...prev,
-            budget: prev.budget - upgrade.cout,
-            niveauStockage: upgrade.niveauCible,
-          }
-        : prev,
-    );
+    setState((prev) => {
+      if (!prev) return prev;
+      const next = appendLedger(prev, {
+        jour: prev.jourActuel,
+        kind: "upgrade_stockage",
+        designation: `Stockage N${upgrade.niveauCible}`,
+        recette: 0,
+        depense: upgrade.cout,
+      });
+      return { ...next, niveauStockage: upgrade.niveauCible };
+    });
     return { ok: true };
   }, []);
 
@@ -502,7 +509,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const camion = getCamion(niveau);
       const prix = camion.prixUpgradeVersCeNiveau ?? 0;
       if (prev.budget < prix) return prev;
-      return { ...prev, niveauCamion: niveau, budget: prev.budget - prix };
+      const next = appendLedger(prev, {
+        jour: prev.jourActuel,
+        kind: "upgrade_camion",
+        designation: `Camion N${niveau}`,
+        recette: 0,
+        depense: prix,
+      });
+      return { ...next, niveauCamion: niveau };
     });
   }, []);
 
@@ -880,17 +894,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!prev) return prev;
       const cible = prev.courriers.find((c) => c.id === id);
       if (!cible || cible.lu) return prev;
-      // Récompense (argent) appliquée à la lecture si la lettre en porte une.
-      let nouveauBudget = prev.budget;
-      if (cible.payload.type === "lettre" && cible.payload.recompense) {
-        if (typeof cible.payload.recompense.argent === "number") {
-          nouveauBudget += cible.payload.recompense.argent;
-        }
-      }
-      const next = prev.courriers.map((c) =>
+      // Marque lu (immuable).
+      const courriersMaj = prev.courriers.map((c) =>
         c.id === id ? { ...c, lu: true } : c,
       );
-      return { ...prev, courriers: next, budget: nouveauBudget };
+      let next: GameState = { ...prev, courriers: courriersMaj };
+      // Récompense argent (lettre uniquement — les missions sont payées à la livraison).
+      if (cible.payload.type === "lettre" && cible.payload.recompense?.argent) {
+        next = appendLedger(next, {
+          jour: prev.jourActuel,
+          kind: "courrier_recompense",
+          designation: cible.payload.titre,
+          recette: cible.payload.recompense.argent,
+          depense: 0,
+          courrierId: id,
+        });
+      }
+      // Création de la résolution mission si payload mission.
+      if (cible.payload.type === "mission") {
+        next = {
+          ...next,
+          missions: [
+            ...next.missions,
+            { courrierId: id, statut: "active" },
+          ],
+        };
+      }
+      return next;
     });
   }, []);
 
@@ -904,15 +934,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ok: false,
         raison: `Budget insuffisant (${PRIX_GAZETTE} € requis).`,
       };
-    setState((prev) =>
-      prev
-        ? {
-            ...prev,
-            budget: prev.budget - PRIX_GAZETTE,
-            gazetteAchetee: true,
-          }
-        : prev,
-    );
+    setState((prev) => {
+      if (!prev) return prev;
+      const next = appendLedger(prev, {
+        jour: prev.jourActuel,
+        kind: "gazette",
+        designation: `Gazette du jour ${prev.jourActuel}`,
+        recette: 0,
+        depense: PRIX_GAZETTE,
+      });
+      return { ...next, gazetteAchetee: true };
+    });
     return { ok: true };
   }, []);
 
