@@ -555,8 +555,11 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                   45,
                 )}
               />
-              <WorkshopSlots />
             </div>
+
+            {/* Slots de restauration — coords absolues dans le panorama
+                unifié (shift +300vw inclus), donc rendus directement ici. */}
+            <WorkshopSlots />
 
             {/* Cartons cliquables sur l'étagère de stockage (coords absolues
                 dans le panorama 600vw — la zone atelier débute à 300vw).

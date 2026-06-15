@@ -16,14 +16,24 @@ import {
   STOCKAGE_BOXES_LAYOUT,
   type StockageBoxKey,
 } from "../stockageBoxesLayout";
+import {
+  ATELIER_SLOT_LAYOUT,
+  ATELIER_SLOT_ORDER,
+  type AtelierSlotKey,
+} from "@/components/mobile/atelier-pano/slotsLayout";
 
 const STORAGE_KEY = "broc.qg-edit.overrides";
 const ACTIVE_STORAGE_KEY = "broc.qg-edit.active";
 
-export type EditableKey = QgObjetKey | ChatBaladeurId | StockageBoxKey;
+export type EditableKey =
+  | QgObjetKey
+  | ChatBaladeurId
+  | StockageBoxKey
+  | AtelierSlotKey;
 
 const CHAT_KEYS = new Set<string>(CHAT_BALADEUR_ORDER);
 const BOX_KEYS = new Set<string>(STOCKAGE_BOX_ORDER);
+const SLOT_KEYS = new Set<string>(ATELIER_SLOT_ORDER);
 
 function isChatKey(key: EditableKey): key is ChatBaladeurId {
   return CHAT_KEYS.has(key);
@@ -31,6 +41,10 @@ function isChatKey(key: EditableKey): key is ChatBaladeurId {
 
 function isBoxKey(key: EditableKey): key is StockageBoxKey {
   return BOX_KEYS.has(key);
+}
+
+function isSlotKey(key: EditableKey): key is AtelierSlotKey {
+  return SLOT_KEYS.has(key);
 }
 
 function baseCoord(key: EditableKey): {
@@ -42,6 +56,7 @@ function baseCoord(key: EditableKey): {
     const b = STOCKAGE_BOXES_LAYOUT[key];
     return { left: b.left, bottom: b.bottom, width: b.width };
   }
+  if (isSlotKey(key)) return ATELIER_SLOT_LAYOUT[key];
   if (isChatKey(key)) return CHAT_BALADEUR_LAYOUT[key];
   return QG_LAYOUT.objets[key];
 }
@@ -181,6 +196,15 @@ export function useChatBaladeurCoord(key: ChatBaladeurId): {
 
 /** Coords effectives (base + override) pour un carton de stockage. */
 export function useStockageBoxCoord(key: StockageBoxKey): {
+  left: number;
+  bottom: number;
+  width: number;
+} {
+  return useEditableCoord(key);
+}
+
+/** Coords effectives (base + override) pour un slot de restauration atelier. */
+export function useAtelierSlotCoord(key: AtelierSlotKey): {
   left: number;
   bottom: number;
   width: number;

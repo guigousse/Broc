@@ -8,9 +8,14 @@ import {
   type StockageBoxKey,
 } from "../stockageBoxesLayout";
 import {
+  ATELIER_SLOT_ORDER,
+  type AtelierSlotKey,
+} from "@/components/mobile/atelier-pano/slotsLayout";
+import {
   useQgObjet,
   useChatBaladeurCoord,
   useStockageBoxCoord,
+  useAtelierSlotCoord,
   useQgEditContext,
   type EditableKey,
 } from "./QgEditContext";
@@ -18,15 +23,24 @@ import {
 const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
 const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
 const BOX_KEYS = [...STOCKAGE_BOX_ORDER] as StockageBoxKey[];
-const ALL_KEYS: EditableKey[] = [...QG_KEYS, ...CHAT_KEYS, ...BOX_KEYS];
+const SLOT_KEYS = [...ATELIER_SLOT_ORDER] as AtelierSlotKey[];
+const ALL_KEYS: EditableKey[] = [
+  ...QG_KEYS,
+  ...CHAT_KEYS,
+  ...BOX_KEYS,
+  ...SLOT_KEYS,
+];
 
 function useCoord(key: EditableKey) {
   // Tous les hooks utilisent la même implémentation interne ; le dispatch
   // est cohérent puisque chaque key appartient à une seule famille.
   const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
   const isBox = (STOCKAGE_BOX_ORDER as readonly string[]).includes(key);
+  const isSlot = (ATELIER_SLOT_ORDER as readonly string[]).includes(key);
   // eslint-disable-next-line react-hooks/rules-of-hooks
   if (isBox) return useStockageBoxCoord(key as StockageBoxKey);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  if (isSlot) return useAtelierSlotCoord(key as AtelierSlotKey);
   // eslint-disable-next-line react-hooks/rules-of-hooks
   return isChat
     ? useChatBaladeurCoord(key as ChatBaladeurId)

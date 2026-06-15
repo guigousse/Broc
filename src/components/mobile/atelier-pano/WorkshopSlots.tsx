@@ -1,18 +1,23 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Hourglass } from "lucide-react";
 import type { CSSProperties } from "react";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { useGameActions, useGameStateOnly } from "@/context/GameContext";
+import { useAtelierSlotCoord } from "@/components/mobile/qg/dev/QgEditContext";
 import { getCapaciteAtelier } from "@/data/atelier";
 import type { Objet } from "@/types/game";
-import { ATELIER_LAYOUT } from "./layout";
+import { ATELIER_SLOT_GAP_VW } from "./slotsLayout";
 
 /**
- * Slots de restauration affichés au-dessus de l'établi dans le panorama.
+ * Slots de restauration affichés au-dessus de l'établi dans le panorama
+ * unifié. Position pilotée par `ATELIER_SLOT_LAYOUT["atelier-slot"]`, éditable
+ * via l'outil QG edit (`?qgedit=1`). Coords absolues dans le panorama (shift
+ * +300vw inclus) — rendu comme enfant direct d'UnifiedPanorama.
  *
  * Trois états par slot :
- *   - vide     : cadre laiton translucide + libellé "libre".
+ *   - vide     : cadre pointillé laiton + libellé "libre".
  *   - en cours : PNG de l'objet + voile sombre + badge sablier "Xj".
  *                Tap → /atelier/gerer.
  *   - prêt     : PNG sans voile + bordure verte pulsante + pill "Récupérer".
@@ -24,32 +29,33 @@ export function WorkshopSlots() {
   const router = useRouter();
   const { state } = useGameStateOnly();
   const { recupererObjetRestaure } = useGameActions();
+  const slotCoord = useAtelierSlotCoord("atelier-slot");
 
   if (!state) return null;
 
   const capacite = getCapaciteAtelier(state.niveauAtelier);
-  const enCours: Objet[] = state.inventaireJoueur.filter((o) => o.enRestauration);
-  // Slots affichés = liste fixe de longueur `capacite`, remplie en ordre par
-  // les objets en cours. Les slots restants sont vides.
+  const enCours: Objet[] = state.inventaireJoueur.filter(
+    (o) => o.enRestauration,
+  );
   const occupants: (Objet | null)[] = Array.from({ length: capacite }, (_, i) =>
     enCours[i] ?? null,
   );
 
-  const { centerLeft, bottom, slotSize, gap } = ATELIER_LAYOUT.slotsRangee;
-  const totalWidth = capacite * slotSize + (capacite - 1) * gap;
-  const startLeft = centerLeft - totalWidth / 2;
+  const { left, bottom, width } = slotCoord;
 
   return (
     <>
       {occupants.map((objet, i) => {
-        const left = startLeft + i * (slotSize + gap);
+        const slotLeft = left + i * (width + ATELIER_SLOT_GAP_VW);
         const style: CSSProperties = {
           position: "absolute",
-          left: `${left}vw`,
+          left: `${slotLeft}vw`,
           bottom: `${bottom}%`,
-          width: `${slotSize}vw`,
-          height: `${slotSize}vw`,
+          width: `${width}vw`,
+          height: `${width}vw`,
           pointerEvents: "auto",
+          // Au-dessus des chats baladeurs (zIndex 2) et hotspots.
+          zIndex: 5,
         };
         return (
           <div key={`slot-${i}`} style={style}>
@@ -116,7 +122,9 @@ function OccupiedSlot({
     position: "relative",
     width: "100%",
     height: "100%",
-    border: ready ? "2px solid var(--forest-700)" : "1.5px solid var(--brass-700)",
+    border: ready
+      ? "2px solid var(--forest-700)"
+      : "1.5px solid var(--brass-700)",
     background: "rgba(255, 250, 240, 0.6)",
     borderRadius: 4,
     padding: 0,
@@ -171,17 +179,25 @@ function OccupiedSlot({
           position: "absolute",
           right: 3,
           bottom: 3,
-          padding: "1px 4px",
-          background: ready ? "var(--forest-700)" : "rgba(0,0,0,0.55)",
+          padding: "2px 5px",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 3,
+          background: ready ? "var(--forest-700)" : "rgba(0,0,0,0.6)",
           color: "var(--paper-100)",
           fontFamily: "var(--font-mono)",
           fontSize: 9,
           letterSpacing: "0.05em",
           borderRadius: 3,
-          lineHeight: 1.2,
+          lineHeight: 1,
         }}
       >
-        {ready ? "✓" : `⏳ ${restant}j`}
+        {ready ? "✓" : (
+          <>
+            <Hourglass size={10} strokeWidth={2} aria-hidden />
+            {`${restant}j`}
+          </>
+        )}
       </div>
       {ready && (
         <div

@@ -10,9 +10,15 @@ import {
   type StockageBoxKey,
 } from "../stockageBoxesLayout";
 import {
+  ATELIER_SLOT_LAYOUT,
+  ATELIER_SLOT_ORDER,
+  type AtelierSlotKey,
+} from "@/components/mobile/atelier-pano/slotsLayout";
+import {
   useQgObjet,
   useChatBaladeurCoord,
   useStockageBoxCoord,
+  useAtelierSlotCoord,
   useQgEditContext,
   type EditableKey,
 } from "./QgEditContext";
@@ -20,6 +26,7 @@ import {
 const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
 const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
 const BOX_KEYS = [...STOCKAGE_BOX_ORDER] as StockageBoxKey[];
+const SLOT_KEYS = [...ATELIER_SLOT_ORDER] as AtelierSlotKey[];
 
 // Position au-dessous du header mobile (var injectée par MobileLayout).
 const ANCHOR_STYLE = {
@@ -42,6 +49,11 @@ function ChatRow({ chatKey }: { chatKey: ChatBaladeurId }) {
 function BoxRow({ boxKey }: { boxKey: StockageBoxKey }) {
   const { left, bottom, width } = useStockageBoxCoord(boxKey);
   return <CoordRow name={boxKey} left={left} bottom={bottom} width={width} />;
+}
+
+function SlotRow({ slotKey }: { slotKey: AtelierSlotKey }) {
+  const { left, bottom, width } = useAtelierSlotCoord(slotKey);
+  return <CoordRow name={slotKey} left={left} bottom={bottom} width={width} />;
 }
 
 function CoordRow({
@@ -77,11 +89,14 @@ export function QgEditPanel() {
   function effective(key: EditableKey) {
     const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
     const isBox = (STOCKAGE_BOX_ORDER as readonly string[]).includes(key);
+    const isSlot = (ATELIER_SLOT_ORDER as readonly string[]).includes(key);
     const base = isBox
       ? STOCKAGE_BOXES_LAYOUT[key as StockageBoxKey]
-      : isChat
-        ? CHAT_BALADEUR_LAYOUT[key as ChatBaladeurId]
-        : QG_LAYOUT.objets[key as QgObjetKey];
+      : isSlot
+        ? ATELIER_SLOT_LAYOUT[key as AtelierSlotKey]
+        : isChat
+          ? CHAT_BALADEUR_LAYOUT[key as ChatBaladeurId]
+          : QG_LAYOUT.objets[key as QgObjetKey];
     const o = ctx?.overrides[key];
     return {
       left: o?.left ?? base.left,
@@ -103,13 +118,19 @@ export function QgEditPanel() {
       const e = effective(k);
       return `  ${k}: { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
     });
+    const slots = SLOT_KEYS.map((k) => {
+      const e = effective(k);
+      return `  "${k}": { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
+    });
     const snippet =
       "// QG objets\n" +
       qg.join("\n") +
       "\n\n// Chat baladeur\n" +
       chat.join("\n") +
       "\n\n// Cartons stockage\n" +
-      boxes.join("\n");
+      boxes.join("\n") +
+      "\n\n// Slots atelier\n" +
+      slots.join("\n");
     navigator.clipboard.writeText(snippet).catch(() => {
       /* clipboard indisponible en contexte non sécurisé : on ignore */
     });
@@ -251,6 +272,10 @@ export function QgEditPanel() {
         <div style={{ color: "#8aa", fontSize: 10, margin: "6px 0 4px" }}>// Cartons stockage</div>
         {BOX_KEYS.map((k) => (
           <BoxRow key={k} boxKey={k} />
+        ))}
+        <div style={{ color: "#8aa", fontSize: 10, margin: "6px 0 4px" }}>// Slots atelier</div>
+        {SLOT_KEYS.map((k) => (
+          <SlotRow key={k} slotKey={k} />
         ))}
       </div>
 
