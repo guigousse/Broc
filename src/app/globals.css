@@ -393,6 +393,18 @@ nav[aria-label="Navigation principale"] :focus-visible,
   transform-origin: center;
 }
 
+/* Pulsation douce de l'état "prêt à récupérer" sur un slot atelier. */
+@keyframes broc-slot-ready-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(85, 117, 79, 0.45);
+    border-color: var(--forest-700);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(85, 117, 79, 0);
+    border-color: var(--forest-700);
+  }
+}
+
 /* ============================================================
    Transitions entre onglets (SwipePager)
    ============================================================ */
