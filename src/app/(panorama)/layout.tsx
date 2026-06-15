@@ -40,7 +40,7 @@ import { QgStockageBoxes } from "@/components/mobile/qg/QgStockageBoxes";
 import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
-import { CarnetSheet } from "@/components/mobile/qg/sheets/CarnetSheet";
+import { CarnetOverlay } from "@/components/mobile/qg/overlays/CarnetOverlay";
 import { CourrierSheet } from "@/components/mobile/qg/sheets/CourrierSheet";
 import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { GramophoneSheet } from "@/components/mobile/qg/sheets/GramophoneSheet";
@@ -105,6 +105,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     isHydrated,
     acheterGazette,
     marquerCourrierLu,
+    livrerMission,
     avancerJour,
   } = useGame();
   const {
@@ -637,10 +638,11 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         bloque={state.chatSurFauteuil}
       />
 
-      <CarnetSheet
+      <CarnetOverlay
         open={carnetOuvert}
         onClose={() => setCarnetOuvert(false)}
         state={state}
+        onLivrerMission={(id) => livrerMission(id)}
       />
 
       <CalendrierSheet
