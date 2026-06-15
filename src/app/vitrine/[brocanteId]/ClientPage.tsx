@@ -25,7 +25,7 @@ export default function VitrineBrocantePage() {
     ajusterPrixVitrine,
     ajusterPositionVitrine,
     viderVitrine,
-    ajusterBudget,
+    payerFraisBrocante,
     acheterCamion,
     setNiveauCamionDev,
   } = useGame();
@@ -115,7 +115,7 @@ export default function VitrineBrocantePage() {
   const handleOuvrir = () => {
     const frais = fraisEntree(brocante);
     if (state.budget < frais) return;
-    ajusterBudget(-frais);
+    payerFraisBrocante(brocante.id, brocante.nom, frais);
     router.push(`/vitrine/${brocante.id}/journee`);
   };
 

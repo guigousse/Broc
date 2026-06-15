@@ -135,6 +135,8 @@ interface GameActionsValue {
   rerollMeteo: () => { ok: boolean; raison?: string };
   /** Influence (compétence Vision 3) : retire la brocante de la célébrité courante. */
   rerollCelebrite: () => { ok: boolean; raison?: string };
+  /** Paie le droit d'entrée d'une brocante (log ledger entry + déduit budget). */
+  payerFraisBrocante: (brocanteId: string, brocanteNom: string, montant: number) => void;
   /** Marque un courrier comme lu (utilisé par le QG). */
   marquerCourrierLu: (id: string) => void;
 }
@@ -948,6 +950,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  const payerFraisBrocante = useCallback(
+    (brocanteId: string, brocanteNom: string, montant: number) => {
+      void brocanteId;
+      if (montant <= 0) return;
+      setState((prev) => {
+        if (!prev) return prev;
+        return appendLedger(prev, {
+          jour: prev.jourActuel,
+          kind: "frais_brocante",
+          designation: `Entrée · ${brocanteNom}`,
+          recette: 0,
+          depense: montant,
+        });
+      });
+    },
+    [],
+  );
+
   const stateValue = useMemo<GameStateValue>(
     () => ({ state, isHydrated }),
     [state, isHydrated],
@@ -988,6 +1008,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       donnerACollection,
       retirerDeCollection,
       acheterGazette,
+      payerFraisBrocante,
       marquerBossDebloqueVu,
       rerollMeteo,
       rerollCelebrite,
@@ -1025,6 +1046,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       donnerACollection,
       retirerDeCollection,
       acheterGazette,
+      payerFraisBrocante,
       marquerBossDebloqueVu,
       rerollMeteo,
       rerollCelebrite,

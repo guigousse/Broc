@@ -43,6 +43,7 @@ export default function SessionChinePage() {
     gagnerXP,
     marquerVuTemplate,
     marquerDejaPossedeTemplate,
+    payerFraisBrocante,
   } = useGame();
   const { startCrowd, stopCrowd } = useSettings();
   useEffect(() => {
@@ -95,7 +96,7 @@ export default function SessionChinePage() {
         return router.replace(`/chiner?raison=budget&id=${brocante.id}`);
       }
       entreePayeeRef.current = true;
-      ajusterBudget(-frais);
+      payerFraisBrocante(brocante.id, brocante.nom, frais);
       const jourSemaine = indexJourSemaine(state.jourActuel);
       const celebriteAujourdhui =
         state.celebriteActuelle &&
@@ -115,7 +116,7 @@ export default function SessionChinePage() {
         marquerVuTemplate(it.objet.templateId);
       }
     }
-  }, [isHydrated, state, brocante, router, items, ajusterBudget]);
+  }, [isHydrated, state, brocante, router, items, payerFraisBrocante]);
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (
