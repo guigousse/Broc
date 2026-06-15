@@ -14,6 +14,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
+// BrocantePanorama consomme `useGameActions` pour attribuerVitrineABrocante.
+// On stub : aucun test ne déclenche le flow d'attribution.
+vi.mock("@/context/GameContext", () => ({
+  useGameActions: () => ({ attribuerVitrineABrocante: vi.fn() }),
+}));
+
 const minimalState = {
   budget: 1000,
   jourActuel: 0,

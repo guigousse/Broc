@@ -49,6 +49,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { panoramaActiveStore } from "@/lib/panoramaActiveStore";
 import { CATEGORIES } from "@/data/categories";
 import { WorkshopSlots } from "@/components/mobile/atelier-pano/WorkshopSlots";
+import { VITRINE_PREP_ID } from "@/lib/vitrinePrep";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import {
@@ -609,9 +610,16 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         onVitrine={() => {
           playDoorClose();
           setPorteOuverte(false);
-          router.push(
-            state.vitrine ? `/vitrine/${state.vitrine.brocanteId}` : "/vitrine",
-          );
+          // Nouveau flow "étaler" : préparation du coffre AVANT le choix de
+          // la brocante. Si une vitrine est déjà attribuée à une vraie
+          // brocante (étape pricing en cours), on y retourne directement.
+          // Sinon → /vitrine/prep (création ou reprise du coffre en prep).
+          const v = state.vitrine;
+          if (v && v.brocanteId !== VITRINE_PREP_ID) {
+            router.push(`/vitrine/${v.brocanteId}`);
+          } else {
+            router.push("/vitrine/prep");
+          }
         }}
       />
 

@@ -8,6 +8,12 @@ import {
   calculerBrocantesDebloqueesParTier,
   listerConditionsAvecEtat,
 } from "@/lib/deblocage";
+import {
+  getDernierTierVisite,
+  setDernierTierVisite,
+  vitrineEstEnPrep,
+} from "@/lib/vitrinePrep";
+import { useGameActions } from "@/context/GameContext";
 import { BrocanteScene } from "./BrocanteScene";
 import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
 import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
@@ -71,6 +77,7 @@ export function BrocantePanorama({
   onBack,
 }: BrocantePanoramaProps) {
   const router = useRouter();
+  const { attribuerVitrineABrocante } = useGameActions();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [currentTier, setCurrentTier] = useState<BrocanteTier>(1);
@@ -99,17 +106,22 @@ export function BrocantePanorama({
     [],
   );
 
-  // Scroll initial vers la scène du maxUnlockedTier (au mount uniquement).
+  // Scroll initial vers la scène la plus pertinente (au mount uniquement) :
+  // priorité au dernier tier visité (persistance localStorage UX), sinon
+  // tier max débloqué.
   const didInitRef = useRef(false);
   useEffect(() => {
     if (didInitRef.current) return;
     const el = scrollerRef.current;
     if (!el) return;
-    const idx = TIERS.indexOf(maxUnlockedTier);
+    const dernier = getDernierTierVisite();
+    const cible: BrocanteTier =
+      dernier !== null && dernier <= maxUnlockedTier ? dernier : maxUnlockedTier;
+    const idx = TIERS.indexOf(cible);
     if (idx > 0) {
       el.scrollLeft = tierOffsetPx(idx, el.clientWidth);
     }
-    setCurrentTier(maxUnlockedTier);
+    setCurrentTier(cible);
     didInitRef.current = true;
   }, [maxUnlockedTier, tierOffsetPx]);
 
@@ -187,8 +199,17 @@ export function BrocantePanorama({
 
   const onContinuer = useCallback(() => {
     if (!selected || !continuerActif) return;
+    // Mémorise le tier choisi pour les prochaines visites (chiner ou vitrine).
+    setDernierTierVisite(selected.tier);
+    // En mode vitrine : si le coffre est en prep, on le ré-attribue à la
+    // brocante choisie (préserve objets/prix/positions). Le composant
+    // /vitrine/[id] détecte la vitrine pleine et démarre directement sur
+    // l'étape "pricing".
+    if (destination === "vitrine" && vitrineEstEnPrep(state)) {
+      attribuerVitrineABrocante(selected.id);
+    }
     router.push(`/${destination}/${selected.id}`);
-  }, [selected, continuerActif, router, destination]);
+  }, [selected, continuerActif, router, destination, state, attribuerVitrineABrocante]);
 
   return (
     <BrocanteFramesEditProvider>

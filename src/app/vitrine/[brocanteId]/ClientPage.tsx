@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { useGame } from "@/context/GameContext";
@@ -8,6 +8,7 @@ import { getBrocanteById, fraisEntree } from "@/data/brocantes";
 import { CoffreChargement } from "@/components/vente/CoffreChargement";
 import { CoffrePricing } from "@/components/vente/CoffrePricing";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
+import { vitrineEstEnPrep } from "@/lib/vitrinePrep";
 import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 const SUGGESTION_FACTEUR = 1.4;
@@ -31,6 +32,20 @@ export default function VitrineBrocantePage() {
 
   const brocante = useMemo(() => getBrocanteById(params.brocanteId), [params.brocanteId]);
   const [etape, setEtape] = useState<"packing" | "pricing">("packing");
+  // Une seule décision d'étape initiale après hydratation : si la vitrine est
+  // déjà attachée à cette brocante et pleine (cas /vitrine/prep → sélection),
+  // on saute directement à "pricing". Ensuite l'utilisateur peut naviguer
+  // librement entre les deux étapes via les boutons Retour / Valider.
+  const didDecideEtapeRef = useRef(false);
+  useEffect(() => {
+    if (didDecideEtapeRef.current) return;
+    if (!isHydrated || !state || !brocante) return;
+    const v = state.vitrine;
+    if (v && v.brocanteId === brocante.id && v.objets.length > 0) {
+      setEtape("pricing");
+    }
+    didDecideEtapeRef.current = true;
+  }, [isHydrated, state, brocante]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -39,6 +54,13 @@ export default function VitrineBrocantePage() {
 
     const deb = calculerBrocantesDebloqueesParTier(state);
     if (!deb.get(brocante.tier)!.has(brocante.id)) {
+      router.replace("/vitrine");
+      return;
+    }
+    // Coffre encore en prep mais URL pointe sur une vraie brocante : on
+    // renvoie sur l'écran de sélection plutôt que de perdre la prep en
+    // recréant une vitrine vide.
+    if (vitrineEstEnPrep(state)) {
       router.replace("/vitrine");
       return;
     }

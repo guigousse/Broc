@@ -83,6 +83,8 @@ interface GameActionsValue {
   avancerJour: (nbJours?: number, volontaire?: boolean) => void;
   reset: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
+  /** Ré-attribue le coffre courant (mode prep) à une vraie brocante, sans perdre les objets/prix/positions. */
+  attribuerVitrineABrocante: (brocanteId: string) => void;
   mettreEnVitrine: (
     objetId: string,
     prixVente: number,
@@ -400,6 +402,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const reset = useCallback(() => {
     setState(null);
     gameRepository.clear();
+  }, []);
+
+  const attribuerVitrineABrocante = useCallback((brocanteId: string) => {
+    setState((prev) => {
+      if (!prev || !prev.vitrine) return prev;
+      // No-op si déjà sur la bonne brocante.
+      if (prev.vitrine.brocanteId === brocanteId) return prev;
+      return {
+        ...prev,
+        vitrine: { ...prev.vitrine, brocanteId },
+      };
+    });
   }, []);
 
   const ouvrirVitrine = useCallback((brocanteId: string) => {
@@ -918,6 +932,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       avancerJour,
       reset,
       ouvrirVitrine,
+      attribuerVitrineABrocante,
       mettreEnVitrine,
       retirerDeVitrine,
       ajusterPrixVitrine,
@@ -954,6 +969,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       avancerJour,
       reset,
       ouvrirVitrine,
+      attribuerVitrineABrocante,
       mettreEnVitrine,
       retirerDeVitrine,
       ajusterPrixVitrine,
