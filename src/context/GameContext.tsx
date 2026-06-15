@@ -36,7 +36,6 @@ import {
   getCompetence,
 } from "@/data/competences";
 import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
-import { recalculerPrixReference } from "@/lib/etat";
 import {
   ID_LETTRE_MAMAN_DEBUT,
   creerLettreMamanDebut,
@@ -62,7 +61,11 @@ import {
 } from "@/lib/collection";
 import { getTemplate } from "@/data/objetTemplates";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
-import { coutAmelioration, rendementDemantelement } from "@/lib/atelier";
+import {
+  appliquerRecuperation,
+  coutAmelioration,
+  rendementDemantelement,
+} from "@/lib/atelier";
 import { audioManager } from "@/lib/audio/audioManager";
 
 const gameRepository = createGameRepository();
@@ -112,6 +115,8 @@ interface GameActionsValue {
     raison?: string;
     pieces?: number;
   };
+  /** Récupère un objet dont la restauration est terminée : applique la mutation d'état + libère le slot. */
+  recupererObjetRestaure: (objetId: string) => { ok: boolean; raison?: string };
   ameliorerAtelier: () => { ok: boolean; raison?: string };
   ameliorerStockage: () => { ok: boolean; raison?: string };
   definirPrixVenteSouhaite: (objetId: string, prix: number) => void;
@@ -244,22 +249,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
           passagesSansChat = Math.min(3, passagesSansChat + 1);
         }
       }
-      const inv = prev.inventaireJoueur.map((o) => {
-        if (o.enRestauration && nouveauJour >= o.enRestauration.jourFin) {
-          const cible = o.enRestauration.etatCible;
-          return {
-            ...o,
-            etat: cible,
-            prixReferenceReel: recalculerPrixReference(
-              o.prixReferenceReel,
-              o.etat,
-              cible,
-            ),
-            enRestauration: undefined,
-          };
-        }
-        return o;
-      });
+      // La restauration ne se termine plus automatiquement au passage du jour :
+      // l'objet reste `enRestauration` jusqu'au clic explicite "Récupérer"
+      // (slot panorama ou page /atelier/gerer). cf. lib/atelier.appliquerRecuperation.
+      const inv = prev.inventaireJoueur;
       // Au refresh, les prochaines deviennent les courantes et on régénère un nouveau futur.
       const tendances = refresh
         ? (prev.prochainesTendances && prev.prochainesTendances.length > 0
@@ -708,6 +701,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const recupererObjetRestaure = useCallback(
+    (objetId: string): { ok: boolean; raison?: string } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: "Pas de partie." };
+      const objet = current.inventaireJoueur.find((o) => o.id === objetId);
+      if (!objet) return { ok: false, raison: "Objet introuvable." };
+      if (!objet.enRestauration)
+        return { ok: false, raison: "Objet pas en restauration." };
+      if (current.jourActuel < objet.enRestauration.jourFin)
+        return { ok: false, raison: "Restauration pas terminée." };
+
+      setState((prev) => {
+        if (!prev) return prev;
+        const next = appliquerRecuperation(prev, objetId);
+        return next ?? prev;
+      });
+      return { ok: true };
+    },
+    [],
+  );
+
   const gagnerXP = useCallback(
     (treeId: CompetenceTreeId, montant: number) => {
       if (montant <= 0) return;
@@ -916,6 +930,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       debloquerCompetence,
       restaurerObjet,
       demantelerObjet,
+      recupererObjetRestaure,
       ameliorerAtelier,
       ameliorerStockage,
       definirPrixVenteSouhaite,
@@ -951,6 +966,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       debloquerCompetence,
       restaurerObjet,
       demantelerObjet,
+      recupererObjetRestaure,
       ameliorerAtelier,
       ameliorerStockage,
       definirPrixVenteSouhaite,
