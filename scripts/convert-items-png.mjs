@@ -11,8 +11,10 @@ let totalOut = 0;
 
 for (const file of files) {
   const src = join(DIR, file);
-  // Retire un éventuel " - copie" et l'extension, puis ajoute .webp
-  const baseName = file.replace(/ - copie\.png$/i, ".png").replace(/\.png$/i, "");
+  // Retire un éventuel " - copie" / " - copie 2" / " - copie N" et l'extension.
+  const baseName = file
+    .replace(/ - copie( \d+)?\.png$/i, ".png")
+    .replace(/\.png$/i, "");
   const out = join(DIR, `${baseName}.webp`);
 
   const buf = await sharp(src).webp({ quality: 90, effort: 6 }).toBuffer();
