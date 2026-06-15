@@ -32,7 +32,7 @@ export const CAMIONS: readonly CamionConfig[] = [
     niveau: 2, nom: "Break", visuelId: "break",
     aspectRatio: 1718 / 1456,
     garageX: 0.5, garageY: 0.705, garageScale: 0.975,
-    capacitePlaces: 16, prixUpgradeVersCeNiveau: 150,
+    capacitePlaces: 16, prixUpgradeVersCeNiveau: 200,
   },
   {
     niveau: 3, nom: "Utilitaire", visuelId: "utilitaire",

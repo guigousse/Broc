@@ -11,8 +11,8 @@ export interface AtelierUpgrade {
 }
 
 export const ATELIER_UPGRADES: readonly AtelierUpgrade[] = [
-  { niveauActuel: 1, niveauCible: 2, cout: 500 },
-  { niveauActuel: 2, niveauCible: 3, cout: 2000 },
+  { niveauActuel: 1, niveauCible: 2, cout: 200 },
+  { niveauActuel: 2, niveauCible: 3, cout: 500 },
 ] as const;
 
 export function getProchaineUpgrade(niveau: 1 | 2 | 3): AtelierUpgrade | null {

@@ -314,13 +314,15 @@ function appliquerMigrations(loaded: GameState): GameState {
         ? (loaded as Partial<GameState>).niveauAtelier!
         : 1,
     niveauStockage: (() => {
-      const v = (loaded as Partial<GameState>).niveauStockage;
-      if (v === 2 || v === 3 || v === 4) return v;
+      // `v` peut venir d'une vieille sauvegarde et valoir 4 (Entrepôt supprimé).
+      const v = (loaded as { niveauStockage?: number }).niveauStockage;
+      if (v === 4) return 3; // migration : Entrepôt → Hangar.
+      if (v === 2 || v === 3) return v;
       const inv = loaded.inventaireJoueur ?? [];
       const vit = loaded.vitrine?.objets ?? [];
       const total = inv.length + vit.length;
-      const fallbackTier: 1 | 2 | 3 | 4 =
-        total <= 10 ? 1 : total <= 25 ? 2 : total <= 50 ? 3 : 4;
+      const fallbackTier: 1 | 2 | 3 =
+        total <= 10 ? 1 : total <= 25 ? 2 : 3;
       return fallbackTier;
     })(),
     niveauCamion: (() => {

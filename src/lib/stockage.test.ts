@@ -42,7 +42,7 @@ describe("totalEnStock", () => {
 
 describe("getCapaciteStockage", () => {
   it("retourne une capacité > 0 pour chaque niveau", () => {
-    for (const niveau of [1, 2, 3, 4] as const) {
+    for (const niveau of [1, 2, 3] as const) {
       const state = createMockGameState({ niveauStockage: niveau });
       expect(getCapaciteStockage(state)).toBeGreaterThan(0);
     }
@@ -50,8 +50,8 @@ describe("getCapaciteStockage", () => {
 
   it("la capacité croît avec le niveau", () => {
     const c1 = getCapaciteStockage(createMockGameState({ niveauStockage: 1 }));
-    const c4 = getCapaciteStockage(createMockGameState({ niveauStockage: 4 }));
-    expect(c4).toBeGreaterThan(c1);
+    const c3 = getCapaciteStockage(createMockGameState({ niveauStockage: 3 }));
+    expect(c3).toBeGreaterThan(c1);
   });
 });
 

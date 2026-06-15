@@ -149,7 +149,7 @@ export interface GameState {
   /** Niveau de l'atelier (1, 2 ou 3). Nombre de slots = niveau. Par défaut 1. */
   niveauAtelier: 1 | 2 | 3;
   /** Niveau du stockage (1 à 4). Détermine capacité et loyer. */
-  niveauStockage: 1 | 2 | 3 | 4;
+  niveauStockage: 1 | 2 | 3;
   /** Niveau du camion (1 à 4). Détermine la capacité du coffre. Défaut 1. */
   niveauCamion: NiveauCamion;
   /** Stock de pièces d'amélioration par catégorie (≥ 0, illimité). */
