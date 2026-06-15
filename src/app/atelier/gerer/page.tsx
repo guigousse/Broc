@@ -46,7 +46,14 @@ const cardWrap: React.CSSProperties = {
 
 export default function AtelierPage() {
   const router = useRouter();
-  const { state, isHydrated, restaurerObjet, ameliorerAtelier, demantelerObjet } = useGame();
+  const {
+    state,
+    isHydrated,
+    restaurerObjet,
+    ameliorerAtelier,
+    demantelerObjet,
+    recupererObjetRestaure,
+  } = useGame();
   const [flash, setFlash] = useState<string | null>(null);
   const [restaurerCible, setRestaurerCible] = useState<{
     objet: Objet;
@@ -377,18 +384,41 @@ export default function AtelierPage() {
                   </span>
                 }
                 action={
-                  <span
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 9,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: ready ? "var(--forest-700)" : "var(--brass-700)",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {ready ? "Prêt ✓" : `${restant} j. rest.`}
-                  </span>
+                  ready ? (
+                    <button
+                      type="button"
+                      onClick={() => recupererObjetRestaure(o.id)}
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 9,
+                        letterSpacing: "0.12em",
+                        textTransform: "uppercase",
+                        color: "var(--paper-100)",
+                        background: "var(--forest-700)",
+                        border: "1px solid var(--forest-800)",
+                        padding: "4px 8px",
+                        borderRadius: 3,
+                        whiteSpace: "nowrap",
+                        cursor: "pointer",
+                      }}
+                      aria-label={`Récupérer ${o.nom}`}
+                    >
+                      Récupérer ✓
+                    </button>
+                  ) : (
+                    <span
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 9,
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        color: "var(--brass-700)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {`${restant} j. rest.`}
+                    </span>
+                  )
                 }
               />
             );
