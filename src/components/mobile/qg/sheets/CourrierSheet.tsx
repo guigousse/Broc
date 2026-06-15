@@ -183,6 +183,49 @@ function renderLettre(c: Courrier) {
   );
 }
 
+const cibleEncart: CSSProperties = {
+  marginTop: 14,
+  padding: "10px 12px",
+  border: "1px dashed #a88f5a",
+  background: "rgba(255,250,235,0.5)",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  color: "#3a2f1e",
+  display: "grid",
+  gap: 4,
+};
+
+function renderMission(c: Courrier) {
+  if (c.payload.type !== "mission") return null;
+  const p = c.payload;
+  const exp = getExpediteur(p.expediteurId);
+  return (
+    <>
+      <h3 style={titreLettre}>{p.titre}</h3>
+      {p.corps.map((para, i) => (
+        <p key={i} style={i === 0 ? corpsLettrePremier : corpsLettre}>
+          {renderParaText(para)}
+        </p>
+      ))}
+      <div style={cibleEncart}>
+        <div>
+          <strong>Objet recherché :</strong> {p.cible.templateId}
+          {p.cible.etatMin ? ` (min. ${p.cible.etatMin})` : ""}
+        </div>
+        <div>
+          <strong>Récompense :</strong> +{p.recompense.argent} €
+        </div>
+        {p.jourLimite !== undefined && (
+          <div>
+            <strong>Avant le jour :</strong> {p.jourLimite}
+          </div>
+        )}
+      </div>
+      {exp && <div style={signatureLettre}>{exp.signature}</div>}
+    </>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Composant                                                           */
 /* ------------------------------------------------------------------ */
@@ -231,7 +274,8 @@ export function CourrierSheet({
   // unique bouton d'action fixé en bas.
   const courant = nonLus[0];
   const recompenseArgent =
-    courant.payload.type === "lettre" && courant.payload.recompense?.argent;
+    courant.payload.type === "lettre" ? courant.payload.recompense?.argent : null;
+  const estMission = courant.payload.type === "mission";
 
   const handleValider = () => {
     if (recompenseArgent) {
@@ -255,12 +299,18 @@ export function CourrierSheet({
           ✕
         </button>
         <div style={scrollArea}>
-          <article style={lettreCard}>{renderLettre(courant)}</article>
+          <article style={lettreCard}>
+            {courant.payload.type === "mission"
+              ? renderMission(courant)
+              : renderLettre(courant)}
+          </article>
           <div style={actionBtnWrap}>
             <FloatingActionButton onClick={handleValider} minWidth={220}>
-              {recompenseArgent
-                ? `Récupérer ${recompenseArgent} €`
-                : "Compris"}
+              {estMission
+                ? "Accepter la mission"
+                : recompenseArgent
+                  ? `Récupérer ${recompenseArgent} €`
+                  : "Compris"}
             </FloatingActionButton>
           </div>
         </div>
