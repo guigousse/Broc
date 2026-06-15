@@ -40,6 +40,7 @@ import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
 import {
   ID_LETTRE_MAMAN_DEBUT,
   creerLettreMamanDebut,
+  expireMissions,
 } from "@/lib/courrier";
 import { prochainLundi } from "@/lib/calendrier";
 import { appliquerGainXP } from "@/lib/xp";
@@ -129,6 +130,8 @@ interface GameActionsValue {
   marquerDejaPossedeTemplate: (templateId: string) => void;
   donnerACollection: (objetId: string) => { ok: boolean; raison?: string };
   retirerDeCollection: (templateId: string) => { ok: boolean; raison?: string };
+  /** Livre une mission : retire l'objet ciblé de l'inventaire et crédite la récompense. */
+  livrerMission: (courrierId: string) => { ok: boolean; raison?: string };
   acheterGazette: () => { ok: boolean; raison?: string };
   marquerBossDebloqueVu: () => void;
   /** Influence (compétence Vision 3) : retire la météo du jour. */
@@ -298,9 +301,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
         passagesSansChat,
       };
 
+      // Tick d'expiration des missions actives à échéance.
+      const missionsApresExpiration = expireMissions(
+        prev.missions,
+        prev.courriers,
+        nouveauJour,
+      );
+      const baseAvecMissions: GameState = { ...base, missions: missionsApresExpiration };
+
       // Loyer (si refresh hebdo)
       if (tierStockage) {
-        return appendLedger(base, {
+        return appendLedger(baseAvecMissions, {
           jour: nouveauJour,
           kind: "loyer",
           designation: `Loyer · ${tierStockage.nom}`,
@@ -308,7 +319,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           depense: tierStockage.loyerHebdo,
         });
       }
-      return base;
+      return baseAvecMissions;
     });
   }, []);
 
@@ -967,6 +978,54 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const livrerMission = useCallback(
+    (courrierId: string): { ok: boolean; raison?: string } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: "Pas de partie." };
+      const courrier = current.courriers.find((c) => c.id === courrierId);
+      if (!courrier || courrier.payload.type !== "mission") {
+        return { ok: false, raison: "Mission introuvable." };
+      }
+      const reso = current.missions.find((m) => m.courrierId === courrierId);
+      if (!reso || reso.statut !== "active") {
+        return { ok: false, raison: "Mission non active." };
+      }
+      const { cible, recompense } = courrier.payload;
+      const ETATS_ORDRE: EtatObjet[] = ["Mauvais", "Bon", "Très bon", "Pristin état"];
+      const minIdx = cible.etatMin ? ETATS_ORDRE.indexOf(cible.etatMin) : 0;
+      const matchIdx = current.inventaireJoueur.findIndex(
+        (o) =>
+          o.templateId === cible.templateId &&
+          !o.enRestauration &&
+          ETATS_ORDRE.indexOf(o.etat) >= minIdx,
+      );
+      if (matchIdx === -1) {
+        return { ok: false, raison: "Aucun objet correspondant dans l'inventaire." };
+      }
+      const titreMission = courrier.payload.titre;
+      setState((prev) => {
+        if (!prev) return prev;
+        const invMaj = prev.inventaireJoueur.filter((_, i) => i !== matchIdx);
+        const missionsMaj = prev.missions.map((m) =>
+          m.courrierId === courrierId
+            ? { ...m, statut: "livree" as const, jourResolution: prev.jourActuel }
+            : m,
+        );
+        const credited = appendLedger(prev, {
+          jour: prev.jourActuel,
+          kind: "mission_recompense",
+          designation: `Mission · ${titreMission}`,
+          recette: recompense.argent,
+          depense: 0,
+          courrierId,
+        });
+        return { ...credited, inventaireJoueur: invMaj, missions: missionsMaj };
+      });
+      return { ok: true };
+    },
+    [],
+  );
+
   const acheterGazette = useCallback((): { ok: boolean; raison?: string } => {
     const current = stateRef.current;
     if (!current) return { ok: false, raison: "Pas de partie." };
@@ -1050,6 +1109,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       retirerDeCollection,
       acheterGazette,
       payerFraisBrocante,
+      livrerMission,
       marquerBossDebloqueVu,
       rerollMeteo,
       rerollCelebrite,
@@ -1088,6 +1148,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       retirerDeCollection,
       acheterGazette,
       payerFraisBrocante,
+      livrerMission,
       marquerBossDebloqueVu,
       rerollMeteo,
       rerollCelebrite,

@@ -1,4 +1,9 @@
-import type { Courrier } from "@/types/game";
+import type {
+  Courrier,
+  CourrierPayloadMission,
+  EtatObjet,
+  MissionResolution,
+} from "@/types/game";
 
 /** ID stable du déclencheur « lettre starter de Maman ». */
 export const ID_LETTRE_MAMAN_DEBUT = "lettre_maman_debut";
@@ -56,4 +61,54 @@ export function injecterLettreMamanSiAbsente(
     courriers: [...courriers, creerLettreMamanDebut(jourCourant)],
     declencheursAjoutes: [ID_LETTRE_MAMAN_DEBUT],
   };
+}
+
+/** Crée un Courrier de type mission. */
+export function creerCourrierMission(args: {
+  id: string;
+  jour: number;
+  expediteurId: string;
+  titre: string;
+  corps: string[];
+  cible: { templateId: string; etatMin?: EtatObjet };
+  jourLimite?: number;
+  recompense: { argent: number };
+}): Courrier {
+  const payload: CourrierPayloadMission = {
+    type: "mission",
+    expediteurId: args.expediteurId,
+    titre: args.titre,
+    corps: args.corps,
+    cible: args.cible,
+    recompense: args.recompense,
+    ...(args.jourLimite !== undefined ? { jourLimite: args.jourLimite } : {}),
+  };
+  return {
+    id: args.id,
+    type: "mission",
+    jourRecu: args.jour,
+    lu: false,
+    payload,
+  };
+}
+
+/**
+ * Marque comme expirées les missions actives dont le courrier porte un
+ * `jourLimite` dépassé. Retourne un nouveau tableau.
+ */
+export function expireMissions(
+  missions: MissionResolution[],
+  courriers: Courrier[],
+  jourActuel: number,
+): MissionResolution[] {
+  const indexCourrier = new Map(courriers.map((c) => [c.id, c]));
+  return missions.map((m) => {
+    if (m.statut !== "active") return m;
+    const c = indexCourrier.get(m.courrierId);
+    if (!c || c.payload.type !== "mission") return m;
+    const limite = c.payload.jourLimite;
+    if (typeof limite !== "number") return m;
+    if (jourActuel <= limite) return m;
+    return { ...m, statut: "expiree", jourResolution: jourActuel };
+  });
 }

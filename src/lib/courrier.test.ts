@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { Courrier } from "@/types/game";
+import type { Courrier, MissionResolution } from "@/types/game";
 import {
   ID_LETTRE_MAMAN_DEBUT,
+  creerCourrierMission,
   creerLettreMamanDebut,
+  expireMissions,
   injecterLettreMamanSiAbsente,
   migrerCourriers,
 } from "./courrier";
@@ -96,5 +98,76 @@ describe("injecterLettreMamanSiAbsente", () => {
     expect(res.courriers[0]).toBe(autreCourrier);
     expect(res.courriers[1].id).toBe(ID_LETTRE_MAMAN_DEBUT);
     expect(res.courriers[1].jourRecu).toBe(5);
+  });
+});
+
+describe("creerCourrierMission", () => {
+  it("crée un courrier de type mission avec les bons champs", () => {
+    const c = creerCourrierMission({
+      id: "miss-1",
+      jour: 5,
+      expediteurId: "joueur_vide_grenier",
+      titre: "Une quête vidéoludique",
+      corps: ["Cher chineur,", "Trouve-moi **Ocarina of Time**."],
+      cible: { templateId: "jeu.zelda_ocarina", etatMin: "Très bon" },
+      jourLimite: 12,
+      recompense: { argent: 200 },
+    });
+    expect(c.type).toBe("mission");
+    expect(c.lu).toBe(false);
+    expect(c.jourRecu).toBe(5);
+    if (c.payload.type === "mission") {
+      expect(c.payload.cible.templateId).toBe("jeu.zelda_ocarina");
+      expect(c.payload.cible.etatMin).toBe("Très bon");
+      expect(c.payload.jourLimite).toBe(12);
+      expect(c.payload.recompense.argent).toBe(200);
+    } else {
+      throw new Error("payload should be mission");
+    }
+  });
+});
+
+describe("expireMissions", () => {
+  function missionCourrier(id: string, jourLimite?: number): Courrier {
+    return {
+      id,
+      type: "mission",
+      jourRecu: 1,
+      lu: true,
+      payload: {
+        type: "mission",
+        expediteurId: "x",
+        titre: "T",
+        corps: [],
+        cible: { templateId: "tpl" },
+        jourLimite,
+        recompense: { argent: 50 },
+      },
+    };
+  }
+
+  it("expire les missions actives dont jourLimite < jourActuel", () => {
+    const courriers: Courrier[] = [missionCourrier("m1", 5)];
+    const missions: MissionResolution[] = [{ courrierId: "m1", statut: "active" }];
+    const out = expireMissions(missions, courriers, 6);
+    expect(out).toEqual([
+      { courrierId: "m1", statut: "expiree", jourResolution: 6 },
+    ]);
+  });
+
+  it("laisse intactes les missions sans jourLimite", () => {
+    const courriers: Courrier[] = [missionCourrier("m1")];
+    const missions: MissionResolution[] = [{ courrierId: "m1", statut: "active" }];
+    const out = expireMissions(missions, courriers, 999);
+    expect(out).toEqual(missions);
+  });
+
+  it("laisse intactes les missions déjà livrées", () => {
+    const courriers: Courrier[] = [missionCourrier("m1", 2)];
+    const missions: MissionResolution[] = [
+      { courrierId: "m1", statut: "livree", jourResolution: 1 },
+    ];
+    const out = expireMissions(missions, courriers, 100);
+    expect(out).toEqual(missions);
   });
 });
