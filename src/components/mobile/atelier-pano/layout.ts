@@ -30,6 +30,18 @@ export const ATELIER_LAYOUT = {
     etagereMurale: { left: 235, bottom: 50, width: 16 },
     lustre: { left: 240, bottom: 70, width: 14 },
   },
+  /**
+   * Rangée de slots de restauration affichée au-dessus de l'établi, sur le
+   * rebord intérieur de la fenêtre vitrail. Coordonnées en vw (left), %
+   * (bottom) et vw (width / slotSize / gap). Le composant WorkshopSlots
+   * centre N slots (N = niveauAtelier) dans cette rangée.
+   */
+  slotsRangee: {
+    centerLeft: 140, // vw — centre horizontal sur l'établi (left=110, width=60 → centre 140)
+    bottom: 48,      // %  — sur le rebord de fenêtre, au-dessus de l'établi (bottom=16, devant le vitrail)
+    slotSize: 9,     // vw — taille d'un slot (largeur = hauteur)
+    gap: 1.5,        // vw — espace entre slots
+  },
 } as const;
 
 export type AtelierObjetKey = keyof typeof ATELIER_LAYOUT.objets;
