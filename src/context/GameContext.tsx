@@ -271,9 +271,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         : prev.prochainesTendances;
       // Loyer hebdomadaire : prélevé à la fin de chaque semaine (refresh Gazette).
       const tierStockage = refresh ? getStockageTierParNiveau(prev.niveauStockage) : null;
-      const budgetApresLoyer = tierStockage
-        ? prev.budget - tierStockage.loyerHebdo
-        : prev.budget;
       const dernierLoyer = tierStockage
         ? {
             jour: nouveauJour,
@@ -282,28 +279,36 @@ export function GameProvider({ children }: { children: ReactNode }) {
           }
         : prev.dernierLoyer;
 
-      return {
+      // Base state (sans encore appliquer le loyer)
+      const base: GameState = {
         ...prev,
         jourActuel: nouveauJour,
         inventaireJoueur: inv,
-        budget: budgetApresLoyer,
         tendances,
         prochainesTendances,
         prochainRafraichissementTendances: refresh
           ? prochainLundi(nouveauJour + 1)
           : prev.prochainRafraichissementTendances,
-        // Reset l'achat de la Gazette à chaque nouvelle édition.
         gazetteAchetee: refresh ? false : prev.gazetteAchetee,
-        // Météo : la semaine entière est pré-tirée à chaque refresh hebdo.
         meteoSemaine: refresh ? tirerMeteoSemaine() : prev.meteoSemaine,
-        // Célébrité : nouvelle à chaque édition de la Gazette.
         celebriteActuelle: refresh ? tirerCelebrite() : prev.celebriteActuelle,
-        // Reset le jeton d'influence à chaque édition.
         influenceUtilisee: refresh ? false : prev.influenceUtilisee,
         dernierLoyer,
         chatSurFauteuil,
         passagesSansChat,
       };
+
+      // Loyer (si refresh hebdo)
+      if (tierStockage) {
+        return appendLedger(base, {
+          jour: nouveauJour,
+          kind: "loyer",
+          designation: `Loyer · ${tierStockage.nom}`,
+          recette: 0,
+          depense: tierStockage.loyerHebdo,
+        });
+      }
+      return base;
     });
   }, []);
 
@@ -598,9 +603,45 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const enregistrerSession = useCallback((session: Session) => {
-    setState((prev) =>
-      prev ? { ...prev, historique: [session, ...prev.historique] } : prev,
-    );
+    setState((prev) => {
+      if (!prev) return prev;
+      const withSession = {
+        ...prev,
+        historique: [session, ...prev.historique],
+      };
+      // Push une entrée ledger informative (le budget a déjà été muté pendant
+      // la journée par ajusterBudget / vendreDeVitrine — applyBudget=false).
+      if (session.type === "chinage") {
+        const depense = session.achats.reduce((s, a) => s + a.prixPaye, 0);
+        const n = session.achats.length;
+        return appendLedger(
+          withSession,
+          {
+            jour: session.jour,
+            kind: "session_chinage",
+            designation: `${session.brocanteNom} · ${n} acqui${n > 1 ? "s" : ""}`,
+            recette: 0,
+            depense,
+            sessionId: session.id,
+          },
+          { applyBudget: false, timestamp: session.timestamp },
+        );
+      }
+      const recette = session.ventes.reduce((s, v) => s + v.prixVente, 0);
+      const n = session.ventes.length;
+      return appendLedger(
+        withSession,
+        {
+          jour: session.jour,
+          kind: "session_vente",
+          designation: `Étal · ${n} vente${n > 1 ? "s" : ""}`,
+          recette,
+          depense: 0,
+          sessionId: session.id,
+        },
+        { applyBudget: false, timestamp: session.timestamp },
+      );
+    });
   }, []);
 
   const debloquerCompetence = useCallback(
