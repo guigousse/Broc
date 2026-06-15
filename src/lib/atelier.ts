@@ -133,6 +133,39 @@ export function rendementDemantelement(o: Objet): number {
   return Math.max(1, Math.floor(o.prixReferenceReel / 5));
 }
 
+/**
+ * Applique la fin de restauration d'un objet : mute son état vers `etatCible`,
+ * recalcule son prix de référence, et efface `enRestauration`. Retourne null si
+ * l'objet n'existe pas, n'est pas en restauration, ou si la restauration n'est
+ * pas encore terminée (`jourActuel < jourFin`).
+ *
+ * Helper pur — appelé par GameContext.recupererObjetRestaure.
+ */
+export function appliquerRecuperation(
+  state: GameState,
+  objetId: string,
+): GameState | null {
+  const objet = state.inventaireJoueur.find((o) => o.id === objetId);
+  if (!objet || !objet.enRestauration) return null;
+  if (state.jourActuel < objet.enRestauration.jourFin) return null;
+  const cible = objet.enRestauration.etatCible;
+  const inv = state.inventaireJoueur.map((o) =>
+    o.id === objetId
+      ? {
+          ...o,
+          etat: cible,
+          prixReferenceReel: recalculerPrixReference(
+            o.prixReferenceReel,
+            o.etat,
+            cible,
+          ),
+          enRestauration: undefined,
+        }
+      : o,
+  );
+  return { ...state, inventaireJoueur: inv };
+}
+
 /** Calcule si un objet peut être démantelé (en stock, hors restauration, hors vitrine). */
 export function peutDemanteler(state: GameState, o: Objet): AtelierStatus {
   if (o.enRestauration)

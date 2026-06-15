@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  appliquerRecuperation,
   atelierAuneSlotLibre,
   atelierStatusPourObjet,
   collectionStatusPourObjet,
@@ -287,5 +288,59 @@ describe("peutDemanteler", () => {
     const o = createMockObjet();
     const state = createMockGameState({ inventaireJoueur: [o] });
     expect(peutDemanteler(state, o).disponible).toBe(true);
+  });
+});
+
+describe("appliquerRecuperation", () => {
+  it("retourne null si l'objet n'existe pas", () => {
+    const s = createMockGameState({ inventaireJoueur: [] });
+    expect(appliquerRecuperation(s, "inconnu")).toBeNull();
+  });
+
+  it("retourne null si l'objet n'est pas en restauration", () => {
+    const o = createMockObjet({ id: "o1", etat: "Bon" });
+    const s = createMockGameState({ inventaireJoueur: [o] });
+    expect(appliquerRecuperation(s, "o1")).toBeNull();
+  });
+
+  it("retourne null si la restauration n'est pas encore terminée", () => {
+    const o = createMockObjet({
+      id: "o1",
+      etat: "Bon",
+      enRestauration: { etatCible: "Très bon", jourFin: 10 },
+    });
+    const s = createMockGameState({ inventaireJoueur: [o], jourActuel: 5 });
+    expect(appliquerRecuperation(s, "o1")).toBeNull();
+  });
+
+  it("mute l'état et efface enRestauration quand prêt", () => {
+    const o = createMockObjet({
+      id: "o1",
+      etat: "Bon",
+      prixReferenceReel: 100,
+      enRestauration: { etatCible: "Très bon", jourFin: 5 },
+    });
+    const s = createMockGameState({ inventaireJoueur: [o], jourActuel: 5 });
+    const next = appliquerRecuperation(s, "o1");
+    expect(next).not.toBeNull();
+    const updated = next!.inventaireJoueur.find((x) => x.id === "o1")!;
+    expect(updated.etat).toBe("Très bon");
+    expect(updated.enRestauration).toBeUndefined();
+    expect(updated.prixReferenceReel).toBeGreaterThan(100);
+  });
+
+  it("ne touche pas aux autres objets de l'inventaire", () => {
+    const o1 = createMockObjet({
+      id: "o1",
+      etat: "Bon",
+      enRestauration: { etatCible: "Très bon", jourFin: 1 },
+    });
+    const o2 = createMockObjet({ id: "o2", etat: "Mauvais" });
+    const s = createMockGameState({
+      inventaireJoueur: [o1, o2],
+      jourActuel: 5,
+    });
+    const next = appliquerRecuperation(s, "o1")!;
+    expect(next.inventaireJoueur.find((x) => x.id === "o2")).toEqual(o2);
   });
 });
