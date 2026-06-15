@@ -88,7 +88,7 @@ export interface CelebriteEvenement {
 
 /* === Courrier (système de lettres au QG) ============================== */
 
-export type CourrierType = "lettre";
+export type CourrierType = "lettre" | "mission";
 
 /** Récompense optionnelle attachée à une lettre. Appliquée à la lecture. */
 export interface RecompenseCourrier {
@@ -105,7 +105,25 @@ export interface CourrierPayloadLettre {
   recompense?: RecompenseCourrier;
 }
 
-export type CourrierPayload = CourrierPayloadLettre;
+/** Mission reçue par lettre : trouver un objet précis contre récompense. */
+export interface CourrierPayloadMission {
+  type: "mission";
+  expediteurId: string;
+  titre: string;
+  /** Corps narratif (même rendu que les lettres). */
+  corps: string[];
+  /** Objet demandé. */
+  cible: {
+    templateId: string;
+    /** État minimum requis pour livrer (Mauvais < Bon < Très bon < Pristin). */
+    etatMin?: EtatObjet;
+  };
+  /** Si défini, mission expirée si `jourActuel > jourLimite`. */
+  jourLimite?: number;
+  recompense: { argent: number };
+}
+
+export type CourrierPayload = CourrierPayloadLettre | CourrierPayloadMission;
 
 export interface Courrier {
   id: string;
@@ -113,6 +131,53 @@ export interface Courrier {
   jourRecu: number;
   lu: boolean;
   payload: CourrierPayload;
+}
+
+/* === Missions (résolution côté state, dérivée des Courrier mission) === */
+
+export type MissionStatut = "active" | "livree" | "expiree";
+
+/** Résolution d'une mission (couple avec un Courrier de type mission). */
+export interface MissionResolution {
+  /** Référence vers le Courrier qui porte le payload mission. */
+  courrierId: string;
+  statut: MissionStatut;
+  /** Jour de livraison (statut=livree) ou d'expiration (statut=expiree). */
+  jourResolution?: number;
+}
+
+/* === Grand livre (journal de toutes les transactions de budget) ======= */
+
+export type LedgerKind =
+  | "session_chinage"
+  | "session_vente"
+  | "frais_brocante"
+  | "loyer"
+  | "gazette"
+  | "courrier_recompense"
+  | "mission_recompense"
+  | "upgrade_atelier"
+  | "upgrade_stockage"
+  | "upgrade_camion";
+
+export interface LedgerEntry {
+  id: string;
+  jour: number;
+  /** Horodatage absolu (Date.now()) pour le tri stable. */
+  timestamp: number;
+  kind: LedgerKind;
+  /** Libellé court visible dans le tableau : "Brocante du Lac · 4 acquis". */
+  designation: string;
+  /** Argent entrant (>= 0). */
+  recette: number;
+  /** Argent sortant (>= 0). */
+  depense: number;
+  /** Snapshot du budget après l'opération — utilisé pour la colonne Solde. */
+  soldeApres: number;
+  /** Si l'entrée est liée à une session du joueur (chinage/vente). */
+  sessionId?: string;
+  /** Si l'entrée est liée à un courrier (récompense lettre / mission). */
+  courrierId?: string;
 }
 
 export interface GameState {
@@ -160,6 +225,10 @@ export interface GameState {
   passagesSansChat: number;
   /** IDs des déclencheurs de courrier déjà résolus (anti-respawn pour programmés/one-shots). */
   declencheursDeclenches: string[];
+  /** Grand livre — journal de toutes les transactions de budget. */
+  grandLivre: LedgerEntry[];
+  /** Résolutions de mission (1 par Courrier de type mission lu). */
+  missions: MissionResolution[];
 }
 
 export type CompetenceId = string;
