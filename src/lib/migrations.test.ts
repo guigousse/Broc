@@ -197,8 +197,9 @@ describe("migrerSauvegarde — grand livre & missions", () => {
           brocanteId: "broc-1",
           brocanteNom: "Test",
           achats: [
-            { nom: "A", categorie: "Musique", etat: "Bon", prixReferenceReel: 0, prixPaye: 50 },
+            { templateId: "legacy", nom: "A", categorie: "Musique", etat: "Bon", prixReferenceReel: 0, prixPaye: 50 },
           ],
+          xpGagne: {},
         },
       ],
     });
@@ -228,7 +229,42 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 3", () => {
-    expect(SAVE_VERSION).toBe(3);
+  it("SAVE_VERSION incrémenté à 4", () => {
+    expect(SAVE_VERSION).toBe(4);
+  });
+
+  it("v3 → v4 : backfille xpGagne et templateId sur sessions existantes", () => {
+    const v3Save = {
+      version: 3,
+      historique: [
+        {
+          id: "s1",
+          type: "chinage",
+          jour: 2,
+          timestamp: 1000,
+          brocanteId: "b",
+          brocanteNom: "B",
+          achats: [{ nom: "Truc", categorie: "Outillage", etat: "Bon", prixReferenceReel: 50, prixPaye: 20 }],
+        },
+        {
+          id: "s2",
+          type: "vente",
+          jour: 3,
+          timestamp: 2000,
+          niveauCamion: 1,
+          loyer: 5,
+          ventes: [{ nom: "Bidule", categorie: "Outillage", etat: "Bon", prixReferenceReel: 100, prixVente: 80, prixAchat: 30 }],
+          invendus: 0,
+        },
+      ],
+    };
+    const out = migrerSauvegarde(v3Save as never);
+    expect(out.version).toBe(4);
+    expect(out.historique[0].xpGagne).toEqual({});
+    expect(out.historique[1].xpGagne).toEqual({});
+    const session0 = out.historique[0] as { achats: Array<{ templateId: string }> };
+    expect(session0.achats[0].templateId).toBe("legacy");
+    const session1 = out.historique[1] as { ventes: Array<{ templateId: string }> };
+    expect(session1.ventes[0].templateId).toBe("legacy");
   });
 });

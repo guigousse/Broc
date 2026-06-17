@@ -281,6 +281,10 @@ export interface CompetenceTreeDef {
 }
 
 export interface ObjetSnapshot {
+  /** templateId source (ex. "out.scie_egoine_stanley"). Ajouté pour
+   *  permettre la résolution d'image au replay. Pour les sessions migrées
+   *  d'une ancienne save, vaut "legacy" (pas d'image disponible). */
+  templateId: string;
   nom: string;
   categorie: CategorieObjet;
   etat: EtatObjet;
@@ -305,6 +309,8 @@ export interface SessionChinage {
   brocanteId: string;
   brocanteNom: string;
   achats: AchatHistorique[];
+  /** XP gagné pendant cette session, indexé par arbre. Vide si pré-migration. */
+  xpGagne: Record<CompetenceTreeId, number>;
 }
 
 export interface SessionVente {
@@ -316,6 +322,7 @@ export interface SessionVente {
   loyer: number;
   ventes: VenteHistorique[];
   invendus: number;
+  xpGagne: Record<CompetenceTreeId, number>;
 }
 
 export type Session = SessionChinage | SessionVente;

@@ -75,9 +75,10 @@ describe("reconstruireGrandLivre", () => {
       brocanteId: "broc-1",
       brocanteNom: "Brocante du Lac",
       achats: [
-        { nom: "A", categorie: "Musique", etat: "Bon", prixReferenceReel: 30, prixPaye: 20 },
-        { nom: "B", categorie: "Musique", etat: "Bon", prixReferenceReel: 50, prixPaye: 30 },
+        { templateId: "legacy", nom: "A", categorie: "Musique", etat: "Bon", prixReferenceReel: 30, prixPaye: 20 },
+        { templateId: "legacy", nom: "B", categorie: "Musique", etat: "Bon", prixReferenceReel: 50, prixPaye: 30 },
       ],
+      xpGagne: {},
     };
     const out = reconstruireGrandLivre([sess], 950);
     expect(out).toHaveLength(1);
@@ -101,10 +102,11 @@ describe("reconstruireGrandLivre", () => {
       niveauCamion: 1,
       loyer: 0,
       ventes: [
-        { nom: "X", categorie: "Mode", etat: "Bon", prixReferenceReel: 100, prixVente: 80, prixAchat: 20 },
-        { nom: "Y", categorie: "Mode", etat: "Bon", prixReferenceReel: 60, prixVente: 50, prixAchat: 10 },
+        { templateId: "legacy", nom: "X", categorie: "Mode", etat: "Bon", prixReferenceReel: 100, prixVente: 80, prixAchat: 20 },
+        { templateId: "legacy", nom: "Y", categorie: "Mode", etat: "Bon", prixReferenceReel: 60, prixVente: 50, prixAchat: 10 },
       ],
       invendus: 0,
+      xpGagne: {},
     };
     const out = reconstruireGrandLivre([sess], 1130);
     expect(out).toHaveLength(1);
@@ -120,13 +122,15 @@ describe("reconstruireGrandLivre", () => {
     const s1: SessionChinage = {
       id: "s1", type: "chinage", jour: 1, timestamp: 1000,
       brocanteId: "b", brocanteNom: "B",
-      achats: [{ nom: "A", categorie: "Musique", etat: "Bon", prixReferenceReel: 0, prixPaye: 30 }],
+      achats: [{ templateId: "legacy", nom: "A", categorie: "Musique", etat: "Bon", prixReferenceReel: 0, prixPaye: 30 }],
+      xpGagne: {},
     };
     const s2: SessionVente = {
       id: "s2", type: "vente", jour: 2, timestamp: 2000,
       niveauCamion: 1, loyer: 0,
-      ventes: [{ nom: "X", categorie: "Mode", etat: "Bon", prixReferenceReel: 0, prixVente: 80, prixAchat: 0 }],
+      ventes: [{ templateId: "legacy", nom: "X", categorie: "Mode", etat: "Bon", prixReferenceReel: 0, prixVente: 80, prixAchat: 0 }],
       invendus: 0,
+      xpGagne: {},
     };
     // L'historique du jeu stocke "plus récent en premier" — on passe les deux ordres.
     const out = reconstruireGrandLivre([s2, s1], 1050);

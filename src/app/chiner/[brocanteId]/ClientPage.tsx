@@ -165,6 +165,7 @@ export default function SessionChinePage() {
     setAchats((prev) => [
       ...prev,
       {
+        templateId: it.objet.templateId,
         nom: it.objet.nom,
         categorie: it.objet.categorie,
         etat: it.objet.etat,
@@ -194,6 +195,7 @@ export default function SessionChinePage() {
         brocanteId: brocante.id,
         brocanteNom: brocante.nom,
         achats,
+        xpGagne: xpSession,
       });
     }
     avancerJour();

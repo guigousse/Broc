@@ -256,6 +256,7 @@ export default function VitrineJourneePage() {
         loyer: standSnapshot.current.loyer,
         ventes: ventesEffectuees,
         invendus: tailleInvendus,
+        xpGagne: xpSession,
       });
     }
 
@@ -381,6 +382,7 @@ export default function VitrineJourneePage() {
     const totalDemande = ev.prixDemande;
     const ratio = totalDemande > 0 ? prixTotal / totalDemande : 1;
     const nouvelles: VenteHistorique[] = ev.panier.map((p) => ({
+      templateId: p.objet.templateId,
       nom: p.objet.nom,
       categorie: p.objet.categorie,
       etat: p.objet.etat,

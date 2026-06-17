@@ -37,6 +37,7 @@ function venteSession(cat: CategorieObjet, n = 1): Session {
     loyer: 0,
     ventes,
     invendus: 0,
+    xpGagne: {},
   };
 }
 

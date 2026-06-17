@@ -37,7 +37,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -132,18 +132,26 @@ function appliquerMigrations(loaded: GameState): GameState {
         ...s,
         achats: s.achats.map((a) => ({
           ...a,
+          // Préserve le templateId existant si présent dans la save, sinon
+          // backfill avec "legacy" pour les anciennes sauvegardes (pas d'image
+          // disponible au replay). Strictement équivalent à
+          // `{ templateId: a.templateId ?? "legacy", ...a }` mais sans clé dupliquée.
+          templateId: (a as { templateId?: string }).templateId ?? "legacy",
           categorie: migrerCategorie(a.categorie),
           etat: migrerEtat(a.etat),
         })),
+        xpGagne: (s as { xpGagne?: Record<string, number> }).xpGagne ?? {},
       };
     }
     return {
       ...s,
       ventes: s.ventes.map((v) => ({
         ...v,
+        templateId: (v as { templateId?: string }).templateId ?? "legacy",
         categorie: migrerCategorie(v.categorie),
         etat: migrerEtat(v.etat),
       })),
+      xpGagne: (s as { xpGagne?: Record<string, number> }).xpGagne ?? {},
     };
   });
 
