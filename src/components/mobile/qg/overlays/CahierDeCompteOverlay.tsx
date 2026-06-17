@@ -252,7 +252,7 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
                         {j.net > 0 ? `+${j.net}` : j.net} €
                       </span>
                       <span style={{ color: "#5e4a25" }}>
-                        {peutReplay ? "▸" : isExpanded ? "▾" : "▸"}
+                        {!peutReplay && isExpanded ? "▾" : "▸"}
                       </span>
                     </div>
                     {!peutReplay && isExpanded && <DetailRepos journee={j} />}
