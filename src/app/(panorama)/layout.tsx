@@ -40,7 +40,8 @@ import { QgStockageBoxes } from "@/components/mobile/qg/QgStockageBoxes";
 import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
-import { CarnetOverlay } from "@/components/mobile/qg/overlays/CarnetOverlay";
+import { CahierDeCompteOverlay } from "@/components/mobile/qg/overlays/CahierDeCompteOverlay";
+import { CarnetNotesOverlay } from "@/components/mobile/qg/overlays/CarnetNotesOverlay";
 import { CourrierSheet } from "@/components/mobile/qg/sheets/CourrierSheet";
 import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { GramophoneSheet } from "@/components/mobile/qg/sheets/GramophoneSheet";
@@ -134,6 +135,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   const [porteOuverte, setPorteOuverte] = useState(false);
   const [confirmPasser, setConfirmPasser] = useState(false);
   const [carnetOuvert, setCarnetOuvert] = useState(false);
+  const [carnetNotesOuvert, setCarnetNotesOuvert] = useState(false);
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
@@ -638,9 +640,15 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         bloque={state.chatSurFauteuil}
       />
 
-      <CarnetOverlay
+      <CahierDeCompteOverlay
         open={carnetOuvert}
         onClose={() => setCarnetOuvert(false)}
+        state={state}
+      />
+
+      <CarnetNotesOverlay
+        open={carnetNotesOuvert}
+        onClose={() => setCarnetNotesOuvert(false)}
         state={state}
         onLivrerMission={(id) => livrerMission(id)}
       />
