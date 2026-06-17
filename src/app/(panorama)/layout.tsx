@@ -25,8 +25,9 @@ import {
   unifiedZoneAnchorSelector,
   type UnifiedZoneKey,
 } from "@/components/mobile/panorama/UnifiedPanorama";
-import { QgJournal } from "@/components/mobile/qg/QgJournal";
 import { QgCarnet } from "@/components/mobile/qg/QgCarnet";
+import { QgCarnetNotes } from "@/components/mobile/qg/QgCarnetNotes";
+import { QgPorteRevues } from "@/components/mobile/qg/QgPorteRevues";
 import { QgPorte } from "@/components/mobile/qg/QgPorte";
 import { QgCourrier } from "@/components/mobile/qg/QgCourrier";
 import { QgPortemanteau } from "@/components/mobile/qg/QgPortemanteau";
@@ -63,6 +64,7 @@ import type { CategorieObjet, CollectionSlot } from "@/types/game";
 
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
+const ETATS_MISSION_ORDRE = ["Mauvais", "Bon", "Très bon", "Pristin état"] as const;
 
 /** Volume vinyle selon la position du panorama.
  *  Bureau (0..2) : ramp 0.3 → 0.8 (pic au repos = gramophone).
@@ -135,7 +137,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   const [porteOuverte, setPorteOuverte] = useState(false);
   const [confirmPasser, setConfirmPasser] = useState(false);
   const [carnetOuvert, setCarnetOuvert] = useState(false);
-  // Monté mais pas encore ouvert depuis l'UI — le bouton viendra avec QgCarnetNotes (asset bureau en attente).
   const [carnetNotesOuvert, setCarnetNotesOuvert] = useState(false);
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
@@ -306,6 +307,30 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         VINYLE_PREFIXES.some((p) => s.templateId.startsWith(p)) &&
         vinylHasAudio(s.templateId),
     );
+  }, [state]);
+
+  const missionsCounters = useMemo(() => {
+    let actives = 0;
+    let livrables = 0;
+    if (!state) return { actives, livrables };
+    for (const m of state.missions) {
+      if (m.statut !== "active") continue;
+      const c = state.courriers.find((cc) => cc.id === m.courrierId);
+      if (!c || c.payload.type !== "mission") continue;
+      const p = c.payload;
+      const minIdx = p.cible.etatMin
+        ? ETATS_MISSION_ORDRE.indexOf(p.cible.etatMin)
+        : 0;
+      const livrable = state.inventaireJoueur.some(
+        (o) =>
+          o.templateId === p.cible.templateId &&
+          !o.enRestauration &&
+          ETATS_MISSION_ORDRE.indexOf(o.etat) >= minIdx,
+      );
+      if (livrable) livrables += 1;
+      else actives += 1;
+    }
+    return { actives, livrables };
   }, [state]);
 
   const vinyleCourantIdxRef = useRef<number | null>(null);
@@ -484,16 +509,18 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
             {/* ─── Section bureau (sections 1/2/3) ─── */}
             {showQgZone(0) && (
               <>
-                <QgJournal
-                  onTap={() => {
-                    playNewspaper();
-                    setGazetteOuverte(true);
-                  }}
-                />
                 <QgCarnet
                   onTap={() => {
                     playClick();
                     setCarnetOuvert(true);
+                  }}
+                />
+                <QgCarnetNotes
+                  nbActives={missionsCounters.actives}
+                  nbLivrables={missionsCounters.livrables}
+                  onTap={() => {
+                    playClick();
+                    setCarnetNotesOuvert(true);
                   }}
                 />
               </>
@@ -517,6 +544,13 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                 <QgCalendrier
                   jourActuel={state.jourActuel}
                   onTap={() => setCalendrierOuvert(true)}
+                />
+                <QgPorteRevues
+                  gazetteAchetee={state.gazetteAchetee}
+                  onTap={() => {
+                    playNewspaper();
+                    setGazetteOuverte(true);
+                  }}
                 />
               </>
             )}
