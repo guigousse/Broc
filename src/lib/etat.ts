@@ -23,7 +23,8 @@ export function etoileCount(etat: EtatObjet | undefined): number {
   return etat ? ETAT_STARS[etat] : 0;
 }
 
-const ORDRE: readonly EtatObjet[] = [
+/** Ordre croissant des états (du pire au meilleur). Source unique. */
+export const ETATS_ORDRE: readonly EtatObjet[] = [
   "Mauvais",
   "Bon",
   "Très bon",
@@ -32,9 +33,9 @@ const ORDRE: readonly EtatObjet[] = [
 
 /** Renvoie l'état suivant (ou null si déjà au sommet). */
 export function etatSuivant(etat: EtatObjet): EtatObjet | null {
-  const i = ORDRE.indexOf(etat);
-  if (i < 0 || i === ORDRE.length - 1) return null;
-  return ORDRE[i + 1];
+  const i = ETATS_ORDRE.indexOf(etat);
+  if (i < 0 || i === ETATS_ORDRE.length - 1) return null;
+  return ETATS_ORDRE[i + 1];
 }
 
 /** Recalcule le prix de référence pour un nouvel état (préserve la valeur de base). */

@@ -42,7 +42,7 @@ export function QgCarnetNotes({ nbActives, nbLivrables, onTap }: QgCarnetNotesPr
     ? "Carnet de notes — aucune mission"
     : `Carnet de notes — ${total} mission${total > 1 ? "s" : ""}`;
   return (
-    <button type="button" onClick={onTap} aria-label={label} style={{ ...baseStyle, position: "absolute" }}>
+    <button type="button" onClick={onTap} aria-label={label} style={baseStyle}>
       <img
         src="/qg/carnet-rouge.webp"
         alt=""

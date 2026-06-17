@@ -60,11 +60,11 @@ import {
   aGenCarnetMondain,
 } from "@/lib/competences";
 import { vinylAudioUrl, vinylHasAudio } from "@/data/vinylesAudio";
+import { estMissionLivrable } from "@/lib/missions";
 import type { CategorieObjet, CollectionSlot } from "@/types/game";
 
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
-const ETATS_MISSION_ORDRE = ["Mauvais", "Bon", "Très bon", "Pristin état"] as const;
 
 /** Volume vinyle selon la position du panorama.
  *  Bureau (0..2) : ramp 0.3 → 0.8 (pic au repos = gramophone).
@@ -317,17 +317,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       if (m.statut !== "active") continue;
       const c = state.courriers.find((cc) => cc.id === m.courrierId);
       if (!c || c.payload.type !== "mission") continue;
-      const p = c.payload;
-      const minIdx = p.cible.etatMin
-        ? ETATS_MISSION_ORDRE.indexOf(p.cible.etatMin)
-        : 0;
-      const livrable = state.inventaireJoueur.some(
-        (o) =>
-          o.templateId === p.cible.templateId &&
-          !o.enRestauration &&
-          ETATS_MISSION_ORDRE.indexOf(o.etat) >= minIdx,
-      );
-      if (livrable) livrables += 1;
+      if (estMissionLivrable(c.payload, state.inventaireJoueur)) livrables += 1;
       else actives += 1;
     }
     return { actives, livrables };

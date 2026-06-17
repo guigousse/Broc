@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { getTemplate } from "@/data/objetTemplates";
+import { estMissionLivrable } from "@/lib/missions";
 import type {
   Courrier,
   CourrierPayloadMission,
-  EtatObjet,
   GameState,
   MissionResolution,
 } from "@/types/game";
@@ -16,8 +16,6 @@ interface CarnetNotesOverlayProps {
   state: GameState;
   onLivrerMission: (courrierId: string) => { ok: boolean; raison?: string };
 }
-
-const ETATS_ORDRE: EtatObjet[] = ["Mauvais", "Bon", "Très bon", "Pristin état"];
 
 /* ─── styles ─── */
 
@@ -180,15 +178,7 @@ function MissionActiveCarte({
   const p: CourrierPayloadMission = courrier.payload;
   const tpl = getTemplate(p.cible.templateId);
   const nomCible = tpl?.nom ?? p.cible.templateId;
-  const minIdx = p.cible.etatMin ? ETATS_ORDRE.indexOf(p.cible.etatMin) : 0;
-  const livrable =
-    reso.statut === "active" &&
-    state.inventaireJoueur.some(
-      (o) =>
-        o.templateId === p.cible.templateId &&
-        !o.enRestauration &&
-        ETATS_ORDRE.indexOf(o.etat) >= minIdx,
-    );
+  const livrable = reso.statut === "active" && estMissionLivrable(p, state.inventaireJoueur);
   return (
     <article style={livrable ? { ...carteActive, borderColor: "#6e1f1f" } : carteActive}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
