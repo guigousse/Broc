@@ -90,11 +90,11 @@ describe("agregerJournees", () => {
     expect(out).toEqual([]);
   });
 
-  it("soldeFin = soldeApres de la dernière écriture par timestamp", () => {
+  it("soldeFin = soldeApres de la dernière écriture par timestamp (entries triées asc même si données dans le désordre)", () => {
     const out = agregerJournees(
       [
-        ledger(9, 0, 10, "loyer", "Loyer", { soldeApres: 800, timestamp: 1 }),
         ledger(9, 100, 0, "courrier_recompense", "Récompense", { soldeApres: 900, timestamp: 2 }),
+        ledger(9, 0, 10, "loyer", "Loyer", { soldeApres: 800, timestamp: 1 }),
       ],
       [],
     );
