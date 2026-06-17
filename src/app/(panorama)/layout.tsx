@@ -135,6 +135,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   const [porteOuverte, setPorteOuverte] = useState(false);
   const [confirmPasser, setConfirmPasser] = useState(false);
   const [carnetOuvert, setCarnetOuvert] = useState(false);
+  // Monté mais pas encore ouvert depuis l'UI — le bouton viendra avec QgCarnetNotes (asset bureau en attente).
   const [carnetNotesOuvert, setCarnetNotesOuvert] = useState(false);
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
