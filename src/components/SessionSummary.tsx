@@ -2,6 +2,7 @@ import type { CompetenceTreeId } from "@/types/game";
 import { Button } from "@/components/ui/Button";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { DecoDivider } from "@/components/ui/DecoDivider";
+import { ItemVignetteKraft } from "@/components/ui/ItemVignetteKraft";
 import { Panel } from "@/components/ui/Panel";
 import { getTreeMeta } from "@/data/competences";
 
@@ -142,16 +143,12 @@ export function SessionSummary({
                         : "none",
                   }}
                 >
-                  <CategorieIcon
-                    categorie={it.categorie}
-                    size={16}
-                    color="var(--brass-700)"
-                  />
+                  <ItemVignetteKraft templateId={it.templateId} categorie={it.categorie} />
                   <span
                     style={{
                       fontFamily: "var(--font-display)",
                       fontWeight: 600,
-                      fontSize: 13,
+                      fontSize: 11,
                       letterSpacing: "0.08em",
                       textTransform: "uppercase",
                       color: "var(--forest-800)",
