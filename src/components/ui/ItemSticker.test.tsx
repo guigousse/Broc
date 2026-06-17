@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render } from "@testing-library/react";
-import { ItemVignetteKraft } from "./ItemVignetteKraft";
+import { ItemSticker } from "./ItemSticker";
 
 afterEach(cleanup);
 
-describe("ItemVignetteKraft", () => {
+describe("ItemSticker", () => {
   it("rend l'image de l'item quand le templateId est connu", () => {
     const { container } = render(
-      <ItemVignetteKraft templateId="br.scie_egoine_stanley" categorie="Bricolage" />,
+      <ItemSticker templateId="br.scie_egoine_stanley" categorie="Bricolage" />,
     );
     const img = container.querySelector("img");
     expect(img).toBeTruthy();
@@ -17,7 +17,7 @@ describe("ItemVignetteKraft", () => {
 
   it("rend un fallback CategorieIcon quand le templateId n'a pas d'image", () => {
     const { container } = render(
-      <ItemVignetteKraft templateId="legacy" categorie="Bricolage" />,
+      <ItemSticker templateId="legacy" categorie="Bricolage" />,
     );
     const img = container.querySelector("img");
     expect(img).toBeFalsy();
