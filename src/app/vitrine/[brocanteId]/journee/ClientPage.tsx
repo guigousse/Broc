@@ -537,6 +537,7 @@ export default function VitrineJourneePage() {
         }
         bravo={bravoTout}
         items={ventesEffectuees.map((v) => ({
+          templateId: v.templateId,
           nom: v.nom,
           categorie: v.categorie,
           prix: v.prixVente,

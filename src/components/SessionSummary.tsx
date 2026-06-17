@@ -6,6 +6,7 @@ import { Panel } from "@/components/ui/Panel";
 import { getTreeMeta } from "@/data/competences";
 
 export interface SummaryItem {
+  templateId: string;
   nom: string;
   categorie: import("@/types/game").CategorieObjet;
   prix: number;
@@ -19,6 +20,12 @@ interface SessionSummaryProps {
   xpGagne: Record<CompetenceTreeId, number>;
   /** Si vente : afficher un grand "Bravo!" quand toute la vitrine est écoulée. */
   bravo?: boolean;
+  /** Libellé du bouton de retour. Défaut : "Rentrer au QG". */
+  retourLabel?: string;
+  /** Si vrai, le panel XP affiche "Aucune expérience enregistrée pour cette
+   *  session" au lieu de "Aucune expérience gagnée cette fois-ci". Utile
+   *  pour les replays de sessions migrées (xpGagne vide ≠ session sans XP). */
+  xpReplayMode?: boolean;
   onRetour: () => void;
 }
 
@@ -29,6 +36,8 @@ export function SessionSummary({
   items,
   xpGagne,
   bravo = false,
+  retourLabel,
+  xpReplayMode = false,
   onRetour,
 }: SessionSummaryProps) {
   const total = items.reduce((s, it) => s + it.prix, 0);
@@ -212,7 +221,9 @@ export function SessionSummary({
                 margin: 0,
               }}
             >
-              Aucune expérience gagnée cette fois-ci.
+              {xpReplayMode
+                ? "Aucune expérience enregistrée pour cette session."
+                : "Aucune expérience gagnée cette fois-ci."}
             </p>
           ) : (
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -283,7 +294,7 @@ export function SessionSummary({
 
         <div style={{ display: "flex", justifyContent: "center" }}>
           <Button variant="primary" size="lg" onClick={onRetour}>
-            Rentrer au QG
+            {retourLabel ?? "Rentrer au QG"}
           </Button>
         </div>
       </div>

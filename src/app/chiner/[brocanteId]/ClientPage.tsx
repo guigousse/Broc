@@ -209,6 +209,7 @@ export default function SessionChinePage() {
         titre={brocante.nom}
         sousTitre={`${achats.length} pièce${achats.length > 1 ? "s" : ""} ramenée${achats.length > 1 ? "s" : ""} de la chine.`}
         items={achats.map((a) => ({
+          templateId: a.templateId,
           nom: a.nom,
           categorie: a.categorie,
           prix: a.prixPaye,
