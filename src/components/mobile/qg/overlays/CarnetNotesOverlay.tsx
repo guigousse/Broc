@@ -286,7 +286,7 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission }: Ca
           <div style={ruban} aria-hidden />
           <button type="button" style={closeBtn} onClick={onClose} aria-label="Fermer">✕</button>
           <div style={enTete}>
-            <h2 style={titre}>Carnet de Notes</h2>
+            <h2 style={titre}>Carnet de commande</h2>
             <div style={sousTitre}>Jour {state.jourActuel}</div>
           </div>
           <div style={contenu}>

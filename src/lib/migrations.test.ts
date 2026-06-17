@@ -182,7 +182,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     const state = createMockGameState({ historique: [], budget: 500 });
     const migrated = migrerSauvegarde(state);
     expect(migrated.grandLivre).toEqual([]);
-    expect(migrated.missions).toEqual([]);
+    // Trois missions de test sont injectées automatiquement au démarrage.
+    expect(migrated.missions.map((m) => m.statut)).toEqual(["active", "active", "active"]);
   });
 
   it("reconstruit grandLivre depuis l'historique des sessions", () => {

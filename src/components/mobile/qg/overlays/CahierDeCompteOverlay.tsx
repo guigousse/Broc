@@ -45,6 +45,38 @@ const cahier: CSSProperties = {
   overflow: "hidden",
 };
 
+/* Stage spécifique au mode replay : conteneur scrollable plein écran
+ *  (SessionSummary contient son propre `min-height: 100dvh`, donc on doit
+ *  permettre au stage de défiler). */
+const replayStage: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 51,
+  overflowY: "auto",
+  WebkitOverflowScrolling: "touch",
+};
+
+/* Bouton de retour flottant, toujours visible en haut à gauche pendant le
+ *  replay (au cas où le contenu est trop long pour scroller jusqu'au bouton
+ *  natif du SessionSummary). */
+const replayBackBtn: CSSProperties = {
+  position: "fixed",
+  top: "max(12px, env(safe-area-inset-top))",
+  left: 12,
+  zIndex: 52,
+  padding: "8px 14px",
+  background: "rgba(20,15,5,0.85)",
+  color: "var(--brass-300)",
+  border: "1px solid rgba(217,192,122,0.5)",
+  borderRadius: 20,
+  fontFamily: "var(--font-display)",
+  fontSize: 12,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+};
+
 const closeBtn: CSSProperties = {
   position: "absolute",
   top: 10,
@@ -193,7 +225,7 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
     return (
       <>
         <div style={scrim} onClick={() => setReplayOf(null)} aria-hidden />
-        <div style={stage} role="dialog" aria-modal="true">
+        <div style={replayStage} role="dialog" aria-modal="true">
           <SessionSummary
             type={session.type}
             titre={titreReplay}
@@ -204,6 +236,14 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
             onRetour={() => setReplayOf(null)}
           />
         </div>
+        <button
+          type="button"
+          onClick={() => setReplayOf(null)}
+          aria-label="Retour au Cahier"
+          style={replayBackBtn}
+        >
+          ← Retour
+        </button>
       </>
     );
   }

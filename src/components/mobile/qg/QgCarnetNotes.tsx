@@ -39,8 +39,8 @@ export function QgCarnetNotes({ nbActives, nbLivrables, onTap }: QgCarnetNotesPr
   const baseStyle = useQgObjetStyle("carnetRouge");
   const total = nbActives + nbLivrables;
   const label = total === 0
-    ? "Carnet de notes — aucune mission"
-    : `Carnet de notes — ${total} mission${total > 1 ? "s" : ""}`;
+    ? "Carnet de commande — aucune mission"
+    : `Carnet de commande — ${total} mission${total > 1 ? "s" : ""}`;
   return (
     <button type="button" onClick={onTap} aria-label={label} style={baseStyle}>
       <img

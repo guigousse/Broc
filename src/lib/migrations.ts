@@ -21,6 +21,7 @@ import {
 } from "@/lib/collection";
 import {
   injecterLettreMamanSiAbsente,
+  injecterMissionsTestSiAbsentes,
   migrerCourriers,
 } from "@/lib/courrier";
 import { tirerMeteoSemaine } from "@/lib/meteo";
@@ -287,11 +288,23 @@ function appliquerMigrations(loaded: GameState): GameState {
       )
     : [];
   const jourCourant = loaded.jourActuel ?? INITIAL_JOUR;
-  const apresInjection = injecterLettreMamanSiAbsente(
+  const apresMaman = injecterLettreMamanSiAbsente(
     courriersMigrés,
     declencheursLoaded,
     jourCourant,
   );
+  const apresMissionsTest = injecterMissionsTestSiAbsentes(
+    apresMaman.courriers,
+    [...declencheursLoaded, ...apresMaman.declencheursAjoutes],
+    jourCourant,
+  );
+  const apresInjection = {
+    courriers: apresMissionsTest.courriers,
+    declencheursAjoutes: [
+      ...apresMaman.declencheursAjoutes,
+      ...apresMissionsTest.declencheursAjoutes,
+    ],
+  };
 
   return {
     ...loaded,
@@ -386,8 +399,18 @@ function appliquerMigrations(loaded: GameState): GameState {
     })(),
     missions: (() => {
       const existing = (loaded as Partial<GameState>).missions;
-      if (Array.isArray(existing)) return existing;
-      return [];
+      const base: GameState["missions"] = Array.isArray(existing) ? existing : [];
+      // Ouvre automatiquement les missions de test injectées : on les fait
+      // basculer en `active` pour qu'elles apparaissent immédiatement dans le
+      // carnet de commande, sans nécessiter un passage par la lettre.
+      const dejaResolu = new Set(base.map((m) => m.courrierId));
+      const ajout: GameState["missions"] = [];
+      for (const c of apresMissionsTest.declencheursAjoutes) {
+        if (dejaResolu.has(c)) continue;
+        ajout.push({ courrierId: c, statut: "active" });
+      }
+      // Marque les courriers correspondants comme lus pour éviter le badge non-lu.
+      return [...base, ...ajout];
     })(),
   };
 }

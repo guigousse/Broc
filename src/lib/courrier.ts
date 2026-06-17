@@ -92,6 +92,89 @@ export function creerCourrierMission(args: {
   };
 }
 
+/** ID stable des trois missions de test (auto-injectées au démarrage). */
+export const ID_MISSIONS_TEST = [
+  "mission_test_etagere",
+  "mission_test_balance",
+  "mission_test_vinyle",
+] as const;
+
+/** Trois missions de test injectées au démarrage pour faire vivre le carnet de
+ *  commande. Cibles, expéditeurs et récompenses variés pour exercer l'UI.
+ *  Marquées `lu: true` directement pour qu'elles apparaissent immédiatement
+ *  dans le carnet (sans passer par la boîte aux lettres). */
+export function creerMissionsTest(jour: number): Courrier[] {
+  return [
+    {
+      ...creerCourrierMission({
+        id: "mission_test_etagere",
+        jour,
+        expediteurId: "maman",
+        titre: "Une lampe pour le salon",
+        corps: [
+          "Mon enfant,",
+          "Mon abat-jour vient de rendre l'âme et je rêve d'une **lampe à pétrole ancienne** en laiton, ces grandes lanternes qu'on voit dans les vieilles auberges.",
+          "Si tu en croises une chez un de tes brocanteurs, je t'en serais infiniment reconnaissante. Je te dédommagerai bien sûr.",
+        ],
+        cible: { templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" },
+        jourLimite: jour + 12,
+        recompense: { argent: 90 },
+      }),
+      lu: true,
+    },
+    {
+      ...creerCourrierMission({
+        id: "mission_test_balance",
+        jour,
+        expediteurId: "maman",
+        titre: "Pour ma collection de cuisine",
+        corps: [
+          "Bonjour cher chineur,",
+          "Je collectionne les objets de cuisine d'antan et il me manque une **balance romaine en fonte ancienne** en bon état pour compléter mon étagère.",
+          "Je suis prête à y mettre le prix si la pièce est belle.",
+        ],
+        cible: { templateId: "br.balance_romaine_fonte", etatMin: "Très bon" },
+        jourLimite: jour + 20,
+        recompense: { argent: 160 },
+      }),
+      lu: true,
+    },
+    {
+      ...creerCourrierMission({
+        id: "mission_test_vinyle",
+        jour,
+        expediteurId: "maman",
+        titre: "Pour le pick-up du salon",
+        corps: [
+          "Salutations,",
+          "Mon vieux pick-up cherche un compagnon : un **vinyle 33 tours des Beatles, Abbey Road**, en état correct suffirait à me combler.",
+          "Pas pressé — tu as un mois pour le trouver.",
+        ],
+        cible: { templateId: "mus.vinyle_beatles_abbey_road" },
+        jourLimite: jour + 30,
+        recompense: { argent: 55 },
+      }),
+      lu: true,
+    },
+  ];
+}
+
+/** Injecte les missions de test dans une sauvegarde si aucune n'est déjà
+ *  présente / déclenchée. Idempotent. */
+export function injecterMissionsTestSiAbsentes(
+  courriers: Courrier[],
+  declencheursDeclenches: string[],
+  jourCourant: number,
+): { courriers: Courrier[]; declencheursAjoutes: string[] } {
+  const dejaPresentes = new Set([...courriers.map((c) => c.id), ...declencheursDeclenches]);
+  const aInjecter = creerMissionsTest(jourCourant).filter((c) => !dejaPresentes.has(c.id));
+  if (aInjecter.length === 0) return { courriers, declencheursAjoutes: [] };
+  return {
+    courriers: [...courriers, ...aInjecter],
+    declencheursAjoutes: aInjecter.map((c) => c.id),
+  };
+}
+
 /**
  * Marque comme expirées les missions actives dont le courrier porte un
  * `jourLimite` dépassé. Retourne un nouveau tableau.
