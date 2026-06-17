@@ -57,7 +57,7 @@ export function ItemVignetteKraft({ templateId, categorie, size = 52 }: ItemVign
         <img src={url} alt="" draggable={false} style={imageStyle} />
       ) : (
         <span style={fallbackStyle}>
-          <CategorieIcon categorie={categorie} size={Math.round(size * 0.4)} color="#f3e6c5" />
+          <CategorieIcon categorie={categorie} size={Math.round(size * 0.4)} color="var(--paper-100)" />
         </span>
       )}
     </span>
