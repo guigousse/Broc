@@ -25,7 +25,27 @@ import {
 } from "@/lib/courrier";
 import { tirerMeteoSemaine } from "@/lib/meteo";
 import { genererTendances } from "@/lib/tendances";
+import { ALL_TEMPLATES } from "@/data/objetTemplates";
 import { reconstruireGrandLivre } from "./grandLivre";
+
+/** Index nom → templateId pour résoudre les anciens objets persistés sans
+ *  templateId (saves v ≤ 3). Utilisé par `resoudreTemplateId`. */
+const TEMPLATE_ID_PAR_NOM = new Map<string, string>(
+  ALL_TEMPLATES.map((t) => [t.nom, t.templateId]),
+);
+
+/** Résout le templateId d'un objet persisté. Si le templateId existant est
+ *  un faux "legacy.xxx" (ancien backfill) ou absent, tente d'abord un match
+ *  par nom exact dans le registre des templates. Sinon, tombe sur le slug. */
+function resoudreTemplateId(o: { templateId?: unknown; nom?: unknown }): string {
+  const tid = typeof o.templateId === "string" ? o.templateId : "";
+  if (tid && !tid.startsWith("legacy") && tid !== "legacy") return tid;
+  const nom = typeof o.nom === "string" ? o.nom : "";
+  const match = TEMPLATE_ID_PAR_NOM.get(nom);
+  if (match) return match;
+  if (tid) return tid;
+  return `legacy.${nom.toLowerCase().replace(/[^a-z0-9]+/g, "_") || "objet"}`;
+}
 
 // `donnerObjetFn` n'est pas utilisé dans la migration actuelle mais ré-exporté
 // pour faciliter d'éventuelles évolutions de migration ; supprimer cet alias
@@ -90,9 +110,7 @@ function appliquerMigrations(loaded: GameState): GameState {
     ...o,
     categorie: migrerCategorie(o.categorie),
     etat: migrerEtat(o.etat),
-    templateId:
-      o.templateId ??
-      `legacy.${(o.nom ?? "objet").toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
+    templateId: resoudreTemplateId(o),
     rarete: o.rarete ?? "commun",
   }));
 
@@ -132,11 +150,7 @@ function appliquerMigrations(loaded: GameState): GameState {
         ...s,
         achats: s.achats.map((a) => ({
           ...a,
-          // Préserve le templateId existant si présent dans la save, sinon
-          // backfill avec "legacy" pour les anciennes sauvegardes (pas d'image
-          // disponible au replay). Strictement équivalent à
-          // `{ templateId: a.templateId ?? "legacy", ...a }` mais sans clé dupliquée.
-          templateId: (a as { templateId?: string }).templateId ?? "legacy",
+          templateId: resoudreTemplateId(a),
           categorie: migrerCategorie(a.categorie),
           etat: migrerEtat(a.etat),
         })),
@@ -147,7 +161,7 @@ function appliquerMigrations(loaded: GameState): GameState {
       ...s,
       ventes: s.ventes.map((v) => ({
         ...v,
-        templateId: (v as { templateId?: string }).templateId ?? "legacy",
+        templateId: resoudreTemplateId(v),
         categorie: migrerCategorie(v.categorie),
         etat: migrerEtat(v.etat),
       })),

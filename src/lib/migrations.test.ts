@@ -262,9 +262,28 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(out.version).toBe(4);
     expect(out.historique[0].xpGagne).toEqual({});
     expect(out.historique[1].xpGagne).toEqual({});
+    // Pas de match nom→template (noms fictifs) → fallback slug "legacy.<nom>".
     const session0 = out.historique[0] as { achats: Array<{ templateId: string }> };
-    expect(session0.achats[0].templateId).toBe("legacy");
+    expect(session0.achats[0].templateId).toBe("legacy.truc");
     const session1 = out.historique[1] as { ventes: Array<{ templateId: string }> };
-    expect(session1.ventes[0].templateId).toBe("legacy");
+    expect(session1.ventes[0].templateId).toBe("legacy.bidule");
+  });
+
+  it("résout le templateId d'inventaire par nom exact si templateId absent ou legacy.*", () => {
+    const v3Save = {
+      version: 3,
+      inventaireJoueur: [
+        // 1) Sans templateId, nom exact d'un template → matché.
+        { id: "o1", nom: "Équerre métallique de menuisier", categorie: "Bricolage", etat: "Bon", prixReferenceReel: 14 },
+        // 2) Avec un faux "legacy.querre_..." → matché par nom exact.
+        { id: "o2", templateId: "legacy.querre_m_tallique_de_menuisier", nom: "Équerre métallique de menuisier", categorie: "Bricolage", etat: "Bon", prixReferenceReel: 14 },
+        // 3) Nom inconnu → fallback slug.
+        { id: "o3", nom: "Objet inconnu", categorie: "Bricolage", etat: "Bon", prixReferenceReel: 10 },
+      ],
+    };
+    const out = migrerSauvegarde(v3Save as never);
+    expect(out.inventaireJoueur[0].templateId).toBe("br.equerre_metallique");
+    expect(out.inventaireJoueur[1].templateId).toBe("br.equerre_metallique");
+    expect(out.inventaireJoueur[2].templateId).toBe("legacy.objet_inconnu");
   });
 });
