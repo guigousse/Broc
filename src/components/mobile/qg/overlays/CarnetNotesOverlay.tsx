@@ -41,17 +41,20 @@ const carnet: CSSProperties = {
   width: "100%",
   maxWidth: 360,
   maxHeight: "85dvh",
-  background: "linear-gradient(180deg, #f4e9cd 0%, #ecdfb6 100%)",
+  backgroundColor: "#f4e9cd",
+  /* deux couches : lignes horizontales pâles (tile 24px) + dégradé crème de base. */
+  backgroundImage: [
+    "linear-gradient(180deg, transparent 0, transparent 21px, rgba(200,181,138,0.45) 22px, transparent 23px)",
+    "linear-gradient(180deg, #f4e9cd 0%, #ecdfb6 100%)",
+  ].join(", "),
+  backgroundSize: "100% 24px, 100% 100%",
+  backgroundRepeat: "repeat, no-repeat",
   border: "2px solid #6e1f1f",
   borderRadius: 4,
   boxShadow: "inset 0 0 30px rgba(120, 60, 40, 0.15), 0 14px 28px rgba(0,0,0,0.4)",
   display: "flex",
   flexDirection: "column",
   overflow: "hidden",
-  /* fond ligné/quadrillé : gradient répété de fines lignes horizontales très pâles */
-  backgroundImage:
-    "linear-gradient(180deg, transparent 0, transparent 21px, rgba(200,181,138,0.45) 22px, transparent 23px)",
-  backgroundSize: "100% 24px",
 };
 
 const closeBtn: CSSProperties = {
