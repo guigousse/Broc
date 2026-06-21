@@ -20,6 +20,7 @@ export function createMemoryGameRepository(
     },
     async save(next) {
       state = next;
+      return true;
     },
     async clear() {
       state = null;

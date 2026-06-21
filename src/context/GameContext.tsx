@@ -27,7 +27,8 @@ import {
 import { getCamion } from "@/data/camion";
 import { createStarterInventory } from "@/data/starterInventory";
 import { createGameRepository } from "@/lib/storage/createGameRepository";
-import { migrerSauvegarde } from "@/lib/migrations";
+import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
+import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
 import {
@@ -154,10 +155,13 @@ const GameActionsContext = createContext<GameActionsValue | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const { toast } = useToastSafe();
   const [state, setState] = useState<GameState | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const stateRef = useRef<GameState | null>(null);
   stateRef.current = state;
+  // Évite de spammer le toast : on n'alerte qu'à la bascule succès→échec.
+  const saveEnEchecRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -177,11 +181,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isHydrated || !state) return;
-    gameRepository.save(state);
-  }, [state, isHydrated]);
+    gameRepository.save(state).then((ok) => {
+      if (!ok && !saveEnEchecRef.current) {
+        saveEnEchecRef.current = true;
+        toast(
+          "Sauvegarde impossible — stockage plein ou indisponible. Ta progression risque d'être perdue.",
+          { type: "erreur" },
+        );
+      } else if (ok && saveEnEchecRef.current) {
+        saveEnEchecRef.current = false;
+        toast("Sauvegarde rétablie.", { type: "succes" });
+      }
+    });
+  }, [state, isHydrated, toast]);
 
   const nouvellePartie = useCallback(() => {
     setState({
+      version: SAVE_VERSION,
       budget: INITIAL_BUDGET,
       jourActuel: INITIAL_JOUR,
       inventaireJoueur: createStarterInventory(),

@@ -59,7 +59,7 @@ describe("localGameRepository — save", () => {
 
   it("save puis load restitue l'état", async () => {
     const state = createMockGameState({ jourActuel: 17 });
-    await localGameRepository.save(state);
+    expect(await localGameRepository.save(state)).toBe(true);
     expect((await localGameRepository.load())?.jourActuel).toBe(17);
   });
 
@@ -89,7 +89,7 @@ describe("localGameRepository — environnement sans window", () => {
     vi.stubGlobal("window", undefined);
     await expect(
       localGameRepository.save(createMockGameState()),
-    ).resolves.toBeUndefined();
+    ).resolves.toBe(false);
   });
 
   it("clear() ne plante pas si window est undefined (SSR)", async () => {

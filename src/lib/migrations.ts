@@ -86,6 +86,15 @@ export function migrerEtat(etat: string): EtatObjet {
  * l'état chargé est retourné tel quel plutôt que de casser la partie.
  */
 export function migrerSauvegarde(loaded: GameState): GameState {
+  // Garde anti-régression : une sauvegarde issue d'une version FUTURE du jeu
+  // (ex. retour à une build plus ancienne via TestFlight) ne doit pas être
+  // « migrée » vers le bas — on la conserve telle quelle.
+  if (typeof loaded.version === "number" && loaded.version > SAVE_VERSION) {
+    console.warn(
+      `[migrations] Sauvegarde version ${loaded.version} > ${SAVE_VERSION} (build plus ancienne) : conservée telle quelle.`,
+    );
+    return loaded;
+  }
   try {
     return { ...appliquerMigrations(loaded), version: SAVE_VERSION };
   } catch (err) {

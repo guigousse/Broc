@@ -107,3 +107,14 @@ export function useToast(): ToastContextValue {
   }
   return ctx;
 }
+
+const NOOP_TOAST: ToastContextValue = { toast: () => {} };
+
+/**
+ * Variante non-bloquante : retourne un toast no-op si aucun `ToastProvider`
+ * n'est présent (utile pour les composants/contextes qui peuvent vivre hors
+ * du provider, ex. tests unitaires) au lieu de lever une erreur.
+ */
+export function useToastSafe(): ToastContextValue {
+  return useContext(ToastContext) ?? NOOP_TOAST;
+}

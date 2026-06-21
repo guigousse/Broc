@@ -288,3 +288,20 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(out.inventaireJoueur[2].templateId).toBe("legacy.objet_inconnu");
   });
 });
+
+describe("migrerSauvegarde — garde anti-régression de version", () => {
+  it("conserve telle quelle une sauvegarde d'une version future (> SAVE_VERSION)", () => {
+    const futur = createMockGameState({ budget: 999 });
+    futur.version = SAVE_VERSION + 1;
+    const r = migrerSauvegarde(futur);
+    expect(r).toBe(futur); // non migré : même référence
+    expect(r.version).toBe(SAVE_VERSION + 1);
+  });
+
+  it("migre normalement une sauvegarde de version courante ou antérieure", () => {
+    const ancien = createMockGameState();
+    ancien.version = SAVE_VERSION - 1;
+    const r = migrerSauvegarde(ancien);
+    expect(r.version).toBe(SAVE_VERSION);
+  });
+});

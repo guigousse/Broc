@@ -7,6 +7,7 @@ import type { GameState } from "@/types/game";
  */
 export interface GameRepository {
   load(): Promise<GameState | null>;
-  save(state: GameState): Promise<void>;
+  /** Persiste l'état. Retourne `true` si réussi, `false` si échec (quota plein, stockage indisponible…). */
+  save(state: GameState): Promise<boolean>;
   clear(): Promise<void>;
 }

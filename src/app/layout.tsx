@@ -56,13 +56,13 @@ export default function RootLayout({
     <html lang="fr">
       <body style={{ minHeight: "100dvh", overflowX: "hidden" }}>
         <SettingsProvider>
-          <GameProvider>
-            <ToastProvider>
+          <ToastProvider>
+            <GameProvider>
               <SwipePager>{children}</SwipePager>
               <TabBar />
               <GlobalVinylAmbiance />
-            </ToastProvider>
-          </GameProvider>
+            </GameProvider>
+          </ToastProvider>
         </SettingsProvider>
       </body>
     </html>
