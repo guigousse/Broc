@@ -197,7 +197,7 @@ export default function TitleScreen() {
             textTransform: "uppercase",
           }}
         >
-          ver. 0.1 · saison de printemps · 1924
+          ver. 1.0 · saison de printemps · 1924
         </div>
       </div>
 

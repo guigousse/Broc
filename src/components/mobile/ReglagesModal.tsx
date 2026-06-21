@@ -314,9 +314,24 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
             lineHeight: 1.8,
           }}
         >
-          <div>ver. 0.1 · saison de printemps · 1924</div>
+          <div>ver. 1.0 · saison de printemps · 1924</div>
           <div>Broc — une simulation de brocante</div>
           <div>Conçu par G. Fenard · 2026</div>
+          <div style={{ marginTop: 8 }}>
+            <a
+              href="/privacy"
+              style={{ color: "var(--brass-700)", textDecoration: "underline" }}
+            >
+              Confidentialité
+            </a>
+            {" · "}
+            <a
+              href="/mentions-legales"
+              style={{ color: "var(--brass-700)", textDecoration: "underline" }}
+            >
+              Mentions légales
+            </a>
+          </div>
         </div>
       </section>
       <ConfirmModal
