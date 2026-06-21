@@ -4,14 +4,22 @@
  * Si un `templateId` est ici, sa valeur est utilisée pour la lecture. Sinon,
  * fallback sur `/sounds/vinyles/{templateId}.mp3`.
  *
- * NOTE (lancement App Store) : les anciennes pistes Suno (pastiches d'artistes
- * réels, hébergées sur un CDN externe) ont été retirées pour des raisons de
- * droits d'auteur et pour supprimer toute dépendance réseau. À remplacer par
- * des musiques 100 % originales ou libres de droits (CC0), hébergées en local
- * dans `public/sounds/vinyles/`. Tant que cette table est vide, le gramophone
- * n'a aucun vinyle jouable (voir `vinylHasAudio`).
+ * NOTE (lancement App Store) : les anciennes pistes Suno (CDN externe) ont été
+ * retirées. Les pistes ci-dessous sont des pastiches originaux fournis par
+ * l'auteur, hébergés EN LOCAL dans `public/sounds/vinyles/` → aucune dépendance
+ * réseau, lecture hors-ligne.
  */
-export const VINYLE_AUDIO_URLS: Record<string, string> = {};
+export const VINYLE_AUDIO_URLS: Record<string, string> = {
+  "mus.vinyle_victor_de_la_brasse_bibelot": "/sounds/vinyles/mus.vinyle_victor_de_la_brasse_bibelot.mp3",
+  "mus.vinyle_hollyday_caillou_a_woippy": "/sounds/vinyles/mus.vinyle_hollyday_caillou_a_woippy.mp3",
+  "mus.vinyle_paul_nazamour_demain_enfin": "/sounds/vinyles/mus.vinyle_paul_nazamour_demain_enfin.mp3",
+  "mus.vinyle_francois_cabriol_hors_piste": "/sounds/vinyles/mus.vinyle_francois_cabriol_hors_piste.mp3",
+  "mus.vinyle_miguel_pavane_la_zizanie": "/sounds/vinyles/mus.vinyle_miguel_pavane_la_zizanie.mp3",
+  "mus.vinyle_renaut_megane_sans_toit": "/sounds/vinyles/mus.vinyle_renaut_megane_sans_toit.mp3",
+  "mus.vinyle_silverguy_moi_au_volant": "/sounds/vinyles/mus.vinyle_silverguy_moi_au_volant.mp3",
+  "mus.vinyle_judith_loiseau_oui_je_regrette_tout": "/sounds/vinyles/mus.vinyle_judith_loiseau_oui_je_regrette_tout.mp3",
+  "mus.vinyle_stevranos_vive_la_fet_a": "/sounds/vinyles/mus.vinyle_stevranos_vive_la_fet_a.mp3",
+};
 
 export function vinylAudioUrl(templateId: string): string {
   return (
