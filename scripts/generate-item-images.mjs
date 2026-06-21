@@ -33,6 +33,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const OUTPUT_DIR = path.join(PROJECT_ROOT, "public", "items");
 const CONFIG_PATH = path.join(__dirname, "item-prompts.json");
+const MASTERS_DIR = path.join(__dirname, "item-masters");
+const MASTERS_CONFIG = path.join(__dirname, "item-masters.json");
 const ENV_PATH = path.join(PROJECT_ROOT, ".env");
 
 // Charge les variables d'un fichier .env (KEY=VALUE par ligne) si présent.
@@ -105,6 +107,10 @@ if (!apiKey) {
 const args = process.argv.slice(2);
 const force = args.includes("--force");
 const verbose = args.includes("--verbose");
+// Mode "masters" : génère les boîtiers/pochettes vierges dans scripts/item-masters/
+// (text-to-image). Les items normaux peuvent ensuite y faire référence via `ref`
+// pour un rendu image-to-image cohérent (même corps, seule l'étiquette change).
+const mastersMode = args.includes("--masters");
 
 function flagValue(name, fallback) {
   const prefix = `--${name}=`;
@@ -123,10 +129,20 @@ const imageSize = flagValue("resolution", "2K");
 const prefix = flagValue("prefix", null);
 const onlyIds = args.filter((a) => !a.startsWith("--"));
 
-async function main() {
-  await fs.mkdir(OUTPUT_DIR, { recursive: true });
+/** Charge une image de référence (master) en base64 pour l'image-to-image. */
+async function loadRefBase64(ref) {
+  const refPath = path.join(MASTERS_DIR, `${ref}.png`);
+  const buf = await fs.readFile(refPath);
+  return buf.toString("base64");
+}
 
-  const raw = await fs.readFile(CONFIG_PATH, "utf8");
+async function main() {
+  await fs.mkdir(MASTERS_DIR, { recursive: true });
+  const outputDir = mastersMode ? MASTERS_DIR : OUTPUT_DIR;
+  const configPath = mastersMode ? MASTERS_CONFIG : CONFIG_PATH;
+  await fs.mkdir(outputDir, { recursive: true });
+
+  const raw = await fs.readFile(configPath, "utf8");
   const config = JSON.parse(raw);
   let todo = config;
   if (onlyIds.length) {
@@ -149,7 +165,7 @@ async function main() {
 
   for (const item of todo) {
     const filename = `${item.templateId}.png`;
-    const outPath = path.join(OUTPUT_DIR, filename);
+    const outPath = path.join(outputDir, filename);
 
     if (!force) {
       try {
@@ -163,21 +179,41 @@ async function main() {
     }
 
     const rarete = item.rarete ?? "commun";
-    const styleBrief = buildStyleBrief(rarete);
-    const prompt = `${styleBrief}\n\nSubject: ${item.description}.`;
-    if (verbose) console.log(`  prompt → ${prompt}`);
+
+    // Image-to-image : l'item référence un master (boîtier/pochette). On garde
+    // le corps identique et on ne remplace que l'étiquette/cover → continuité
+    // visuelle entre tous les items du même groupe.
+    let contents;
+    if (item.ref) {
+      const slot = item.slot ?? "label";
+      const refData = await loadRefBase64(item.ref);
+      const editPrompt = [
+        "Using the provided reference image, keep the object's exact shape, color, materials, proportions, angle, lighting, framing and plain neutral background strictly identical — do not redraw or move the object.",
+        `Modify ONLY the ${slot}: fill it with a new illustration of: ${item.description}.`,
+        "Keep the same vintage museum-catalog aesthetic: elegant ink line-art with subtle sepia and muted forest-green color wash. No added text, no captions, no brand logos. Strict square 1:1 composition.",
+      ].join(" ");
+      contents = [
+        { inlineData: { mimeType: "image/png", data: refData } },
+        { text: editPrompt },
+      ];
+      if (verbose) console.log(`  ref → ${item.ref} (${slot}) :: ${item.description}`);
+    } else {
+      const styleBrief = buildStyleBrief(rarete);
+      contents = `${styleBrief}\n\nSubject: ${item.description}.`;
+      if (verbose) console.log(`  prompt → ${contents}`);
+    }
     console.log(`🎨  ${item.templateId} — génération en cours (${model})…`);
 
     const requestConfig =
       modelKey === "pro"
         ? {
             model,
-            contents: prompt,
+            contents,
             config: {
               imageConfig: { aspectRatio, imageSize },
             },
           }
-        : { model, contents: prompt };
+        : { model, contents };
 
     try {
       const response = await ai.models.generateContent(requestConfig);

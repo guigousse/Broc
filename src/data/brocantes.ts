@@ -106,7 +106,7 @@ export const BROCANTES: Brocante[] = [
   },
   {
     id: "marche-saint-ouen",
-    nom: "Marché Saint-Ouen",
+    nom: "Grandes Puces de la Capitale",
     description:
       "Le mythique marché aux puces. Antiquaires patentés, prix qui piquent, pépites possibles.",
     ambiance: "Historique",
@@ -186,7 +186,7 @@ export const BROCANTES: Brocante[] = [
   // ============================================================
   {
     id: "foire-chatou",
-    nom: "Foire de Chatou",
+    nom: "Grande Foire aux Antiquités",
     description:
       "Deux fois par an, l'Île des Impressionnistes accueille la fine fleur du métier.",
     ambiance: "Mondain",
@@ -235,7 +235,7 @@ export const BROCANTES: Brocante[] = [
   },
   {
     id: "drouot-mode-couture",
-    nom: "Drouot — Mode et Couture",
+    nom: "Hôtel des Ventes — Mode et Couture",
     description:
       "Ventes thématiques où passent les grandes pièces : robes signées, sacs iconiques.",
     ambiance: "Couture",
@@ -304,7 +304,7 @@ export const BROCANTES: Brocante[] = [
   },
   {
     id: "galerie-tableaux-sculptures",
-    nom: "Galerie Drouot — Tableaux & Sculptures",
+    nom: "Galerie des Ventes — Tableaux & Sculptures",
     description:
       "Cadres dorés au mur, sculptures sur socles. On y entre comme à l'opéra, on en sort plus pauvre, parfois plus riche.",
     ambiance: "Galerie",
@@ -332,7 +332,7 @@ export const BROCANTES: Brocante[] = [
   // ============================================================
   {
     id: "salon-antiquaires-drouot",
-    nom: "Salon des Antiquaires de Drouot",
+    nom: "Grand Salon des Antiquaires",
     description:
       "Le saint des saints. Les plus grands collectionneurs s'y croisent, les pièces uniques y trouvent leur dernier passage.",
     ambiance: "Mythique",

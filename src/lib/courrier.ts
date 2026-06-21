@@ -147,7 +147,7 @@ export function creerMissionsTest(jour: number): Courrier[] {
         titre: "Pour le pick-up du salon",
         corps: [
           "Salutations,",
-          "Mon vieux pick-up cherche un compagnon : un **vinyle 33 tours des Beatles, Abbey Road**, en état correct suffirait à me combler.",
+          "Mon vieux pick-up cherche un compagnon : un **vinyle de pop britannique des années 60**, en état correct suffirait à me combler.",
           "Pas pressé — tu as un mois pour le trouver.",
         ],
         cible: { templateId: "mus.vinyle_beatles_abbey_road" },

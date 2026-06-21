@@ -2,7 +2,7 @@ import type { ObjetTemplate } from "@/data/objetTemplates";
 
 /**
  * 6 objets UNIQUES (un par catégorie) — ne peuvent être possédés qu'une fois par partie.
- * N'apparaissent QUE dans le `poolExclusif` du boss (Salon des Antiquaires de Drouot).
+ * N'apparaissent QUE dans le `poolExclusif` du boss (Grand Salon des Antiquaires).
  * Compléter le catalogue passe par leur acquisition.
  */
 export const UNIQUES: ObjetTemplate[] = [
@@ -16,7 +16,7 @@ export const UNIQUES: ObjetTemplate[] = [
   },
   {
     templateId: "uniq.jx.console_pong_1972",
-    nom: "Prototype Pong, Atari 1972",
+    nom: "Prototype de la toute première console de jeu (1972)",
     categorie: "Jeux & Loisirs",
     rarete: "legendaire",
     prixRefBase: 6500,
