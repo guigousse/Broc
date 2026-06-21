@@ -118,18 +118,19 @@ export function migrerSauvegarde(loaded: GameState): GameState {
     );
     return loaded;
   }
+  // 1) Remap des templateId historiques (harmonisation des noms) AVANT toute
+  //    autre migration, pour que la collection/inventaire se reconcilient sur
+  //    les nouveaux ids. Appliqué hors du try : même si une migration ultérieure
+  //    échoue, les ids restent à jour (objets non perdus).
+  const remapped = remapTemplateIds(loaded);
   try {
-    // 1) Remap des templateId historiques (harmonisation des noms) AVANT toute
-    //    autre migration, pour que la collection/inventaire se reconcilient sur
-    //    les nouveaux ids.
-    const remapped = remapTemplateIds(loaded);
     return { ...appliquerMigrations(remapped), version: SAVE_VERSION };
   } catch (err) {
     console.error(
-      "[migrations] Échec de la migration de sauvegarde, état conservé tel quel :",
+      "[migrations] Échec de la migration de sauvegarde, état conservé (ids remappés) :",
       err,
     );
-    return loaded;
+    return remapped;
   }
 }
 

@@ -162,7 +162,9 @@ describe("migrerSauvegarde — filet de sécurité en cas d'exception", () => {
       historique: [{ type: "chinage", achats: null }],
     } as unknown as GameState;
     const result = migrerSauvegarde(broken);
-    expect(result).toBe(broken);
+    // Le catch renvoie l'état remappé (clone) ; ici aucun ancien id → contenu
+    // identique à l'entrée.
+    expect(result).toStrictEqual(broken);
     expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });
