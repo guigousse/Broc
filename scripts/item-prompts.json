@@ -94,7 +94,7 @@
 {
 "templateId": "mus.vinyle_du_led_guirlande_escalator_du_paradis",
 "rarete": "commun",
-"description": "an old bearded hermit holding a lantern on a misty hillside, antique engraving style cover",
+"description": "a long shining escalator rising up through clouds into a bright golden sky towards the heavens, surreal dreamlike album cover, warm celestial light",
 "ref": "vinyl",
 "slot": "album cover"
 },
@@ -122,14 +122,14 @@
 {
 "templateId": "mus.vinyle_renaut_megane_sans_toit",
 "rarete": "commun",
-"description": "a cheeky working-class singer with a red bandana leaning on a battered convertible car, hand-drawn cover",
+"description": "a cheeky singer with a red bandana joyfully driving a battered roofless open-top convertible car down a sunny country road, wind in the air, hand-drawn cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
 "templateId": "mus.vinyle_hollyday_caillou_a_woippy",
 "rarete": "commun",
-"description": "a rockabilly singer in a leather jacket with a pompadour holding a microphone, energetic cover",
+"description": "a naive childlike crayon storybook illustration of a smiling round grey pebble character holding a tiny guitar in a sunny little village, playful and very childish cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
@@ -143,14 +143,14 @@
 {
 "templateId": "mus.vinyle_silverguy_moi_au_volant",
 "rarete": "commun",
-"description": "a denim-clad singer-songwriter with an acoustic guitar on a bright simple background, friendly cover",
+"description": "a cheerful denim-clad singer gripping a big car steering wheel and singing with eyes closed, seen from inside a vintage car, warm playful hand-drawn cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
 "templateId": "mus.vinyle_francois_cabriol_hors_piste",
 "rarete": "commun",
-"description": "a quiet autumnal countryside lane with bare trees and warm low light, gentle cover",
+"description": "a lone off-piste skier carving through deep fresh powder snow down a steep alpine mountain slope, dynamic snowy mountain illustration, album cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
