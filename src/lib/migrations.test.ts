@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { GameState } from "@/types/game";
 import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
-import { createMockGameState } from "./__test-fixtures__/gameState";
+import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
 
 describe("migrerEtat", () => {
   it("conserve les états valides", () => {
@@ -286,6 +286,38 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(out.inventaireJoueur[0].templateId).toBe("br.equerre_metallique");
     expect(out.inventaireJoueur[1].templateId).toBe("br.equerre_metallique");
     expect(out.inventaireJoueur[2].templateId).toBe("legacy.objet_inconnu");
+  });
+});
+
+describe("migrerSauvegarde — remap des templateId historiques", () => {
+  it("remappe les anciens ids de l'inventaire vers les nouveaux", () => {
+    const save = createMockGameState({
+      inventaireJoueur: [
+        createMockObjet({
+          templateId: "mus.vinyle_gainsbourg_melody",
+          categorie: "Musique",
+        }),
+      ],
+    });
+    const ids = migrerSauvegarde(save).inventaireJoueur.map((o) => o.templateId);
+    expect(ids).toContain("mus.vinyle_concept_laga_jagavaganaigase_du_dandy_a");
+    expect(ids).not.toContain("mus.vinyle_gainsbourg_melody");
+  });
+
+  it("réaffiche l'objet remappé comme possédé dans la collection", () => {
+    const save = createMockGameState({
+      inventaireJoueur: [
+        createMockObjet({
+          templateId: "jx.cartouche_mario",
+          categorie: "Jeux & Loisirs",
+        }),
+      ],
+    });
+    const migrated = migrerSauvegarde(save);
+    const slot = migrated.collection["Jeux & Loisirs"].find(
+      (s) => s.templateId === "jx.cartouche_le_plombier_sauteur_8_bit",
+    );
+    expect(slot?.dejaPossede).toBe(true);
   });
 });
 

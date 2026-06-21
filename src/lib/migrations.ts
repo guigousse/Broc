@@ -27,7 +27,30 @@ import {
 import { tirerMeteoSemaine } from "@/lib/meteo";
 import { genererTendances } from "@/lib/tendances";
 import { ALL_TEMPLATES } from "@/data/objetTemplates";
+import { OLD_TO_NEW_TEMPLATE_ID } from "@/data/templateIdRenames";
 import { reconstruireGrandLivre } from "./grandLivre";
+
+/**
+ * Remappe en profondeur tout ancien templateId (avant l'harmonisation des noms
+ * du 2026-06-22) vers son nouvel identifiant, partout dans la sauvegarde
+ * (inventaire, vitrine, collection, missions, grand livre…). Indispensable pour
+ * ne pas perdre les objets des parties créées avant le renommage. Idempotent :
+ * un id déjà à jour n'est pas dans la table et reste inchangé.
+ */
+function remapTemplateIds<T>(value: T): T {
+  if (typeof value === "string") {
+    return (OLD_TO_NEW_TEMPLATE_ID[value] ?? value) as unknown as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((v) => remapTemplateIds(v)) as unknown as T;
+  }
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) out[k] = remapTemplateIds(v);
+    return out as unknown as T;
+  }
+  return value;
+}
 
 /** Index nom → templateId pour résoudre les anciens objets persistés sans
  *  templateId (saves v ≤ 3). Utilisé par `resoudreTemplateId`. */
@@ -96,7 +119,11 @@ export function migrerSauvegarde(loaded: GameState): GameState {
     return loaded;
   }
   try {
-    return { ...appliquerMigrations(loaded), version: SAVE_VERSION };
+    // 1) Remap des templateId historiques (harmonisation des noms) AVANT toute
+    //    autre migration, pour que la collection/inventaire se reconcilient sur
+    //    les nouveaux ids.
+    const remapped = remapTemplateIds(loaded);
+    return { ...appliquerMigrations(remapped), version: SAVE_VERSION };
   } catch (err) {
     console.error(
       "[migrations] Échec de la migration de sauvegarde, état conservé tel quel :",
