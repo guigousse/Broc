@@ -8,11 +8,11 @@ afterEach(cleanup);
 describe("ItemSticker", () => {
   it("rend l'image de l'item quand le templateId est connu", () => {
     const { container } = render(
-      <ItemSticker templateId="br.scie_egoine_stanley" categorie="Bricolage" />,
+      <ItemSticker templateId="br.scie_egoine_de_charpentier" categorie="Bricolage" />,
     );
     const img = container.querySelector("img");
     expect(img).toBeTruthy();
-    expect(img?.getAttribute("src")).toContain("/items/br.scie_egoine_stanley.webp");
+    expect(img?.getAttribute("src")).toContain("/items/br.scie_egoine_de_charpentier.webp");
   });
 
   it("rend un fallback CategorieIcon quand le templateId n'a pas d'image", () => {

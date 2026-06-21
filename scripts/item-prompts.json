@@ -1,6 +1,6 @@
 [
 {
-"templateId": "jx.monopoly_80s",
+"templateId": "jx.jeu_magnatimmo_annees_80",
 "rarete": "commun",
 "description": "a 1980s Monopoly board game box, top-down three-quarter view, vintage cardboard with worn corners, classic red and white branding visible on lid, square box shape"
 },
@@ -10,14 +10,14 @@
 "description": "a small patinated wooden stool, four turned legs, weathered natural wood finish with subtle nicks and faded paint traces, simple farmhouse design, three-quarter view"
 },
 {
-"templateId": "mus.vinyle_pink_floyd_wall",
+"templateId": "mus.vinyle_le_mur_des_flamants_roses",
 "rarete": "commun",
 "description": "a surreal wall of pale bricks under a stormy sky with a small pink flamingo, minimalist conceptual album illustration",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_telephone_dure_limite",
+"templateId": "mus.vinyle_grand_max_des_combines",
 "rarete": "commun",
 "description": "a bold graphic illustration of vintage telephone handsets crackling with electric energy, gritty French rock poster style",
 "ref": "vinyl",
@@ -31,180 +31,180 @@
 "slot": "album cover"
 },
 {
-"templateId": "mus.cd_nirvana_in_utero",
+"templateId": "mus.coffret_cd_grunge_beatitude",
 "rarete": "commun",
 "description": "a serene winged figure with faint visible anatomy lines, ethereal grunge album cover, muted tones",
 "ref": "cd",
 "slot": "album cover"
 },
 {
-"templateId": "mus.harmonica_hohner",
+"templateId": "mus.harmonica_chromatique_de_bluesman",
 "rarete": "commun",
 "description": "a vintage Hohner chromatic harmonica, polished metal body with comb, side view"
 },
 {
-"templateId": "mus.vinyle_brel_amsterdam",
+"templateId": "mus.vinyle_stevranos_vive_la_fet_a",
 "rarete": "commun",
 "description": "a festive harbour port scene with sailors and tilted houses, expressive hand-drawn cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_brassens_jeanne",
+"templateId": "mus.vinyle_victor_de_la_brasse_bibelot",
 "rarete": "commun",
 "description": "a moustached folk singer with a guitar and a small cat, warm hand-drawn cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_aznavour_emmenez",
+"templateId": "mus.vinyle_paul_nazamour_demain_enfin",
 "rarete": "commun",
 "description": "a romantic crooner silhouette against a glowing sunset cityscape, elegant vintage cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_piaf_non",
+"templateId": "mus.vinyle_judith_loiseau_oui_je_regrette_tout",
 "rarete": "commun",
 "description": "a petite chanteuse in a black dress singing under a single spotlight, dramatic vintage cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_beatles_abbey_road",
+"templateId": "mus.vinyle_des_scarabees_passage_cloute",
 "rarete": "commun",
 "description": "a large ornate beetle walking across the bold white stripes of a pedestrian crossing seen from above, stylized graphic cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_stones_let_bleed",
+"templateId": "mus.vinyle_des_trolling_sons_bet_it_heal",
 "rarete": "commun",
 "description": "a surreal stacked layer cake topped with a tiny figurine and a vinyl record, playful pop-art cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_bowie_ziggy",
+"templateId": "mus.vinyle_du_david_bah_oui_comete",
 "rarete": "commun",
 "description": "a flamboyant glam-rock performer with theatrical makeup and wild colourful hair under stage lights, vivid cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_zeppelin_iv",
+"templateId": "mus.vinyle_du_led_guirlande_escalator_du_paradis",
 "rarete": "commun",
 "description": "an old bearded hermit holding a lantern on a misty hillside, antique engraving style cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_dylan_blonde",
+"templateId": "mus.vinyle_du_ryan_sober_blonde_ou_brune",
 "rarete": "commun",
 "description": "a blurry grainy portrait of a curly-haired folk musician in a scarf, vintage cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_indochine_aventurier",
+"templateId": "mus.vinyle_new_wave_l_explorateur",
 "rarete": "commun",
 "description": "a 1980s new-wave explorer silhouette with a pith helmet against bold geometric shapes, stylized cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_mylene_farmer_ainsi",
+"templateId": "mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle",
 "rarete": "commun",
 "description": "a mysterious red-haired woman in a romantic gothic setting, ethereal cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_renaud_morgane",
+"templateId": "mus.vinyle_renaut_megane_sans_toit",
 "rarete": "commun",
 "description": "a cheeky working-class singer with a red bandana leaning on a battered convertible car, hand-drawn cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_hallyday_rock_memphis",
+"templateId": "mus.vinyle_hollyday_caillou_a_woippy",
 "rarete": "commun",
 "description": "a rockabilly singer in a leather jacket with a pompadour holding a microphone, energetic cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_sardou_lacs",
+"templateId": "mus.vinyle_les_pates_carbonnara_michele_sardaigna",
 "rarete": "commun",
 "description": "a misty Irish lake landscape with rolling green hills, romantic cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_goldman_envole",
+"templateId": "mus.vinyle_silverguy_moi_au_volant",
 "rarete": "commun",
 "description": "a denim-clad singer-songwriter with an acoustic guitar on a bright simple background, friendly cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_cabrel_hors_saison",
+"templateId": "mus.vinyle_francois_cabriol_hors_piste",
 "rarete": "commun",
 "description": "a quiet autumnal countryside lane with bare trees and warm low light, gentle cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_gainsbourg_melody",
+"templateId": "mus.vinyle_concept_laga_jagavaganaigase_du_dandy_a",
 "rarete": "commun",
 "description": "a moody dandy with a cigarette leaning against a vintage car at dusk, cinematic concept cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_higelin_alertez",
+"templateId": "mus.vinyle_classique_incontournable_classique",
 "rarete": "commun",
 "description": "a playful surreal scene with floating babies and musical notes, whimsical baroque-rock cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_balavoine_aziza",
+"templateId": "mus.vinyle_miguel_pavane_la_zizanie",
 "rarete": "commun",
 "description": "a passionate curly-haired singer reaching out, warm emotive cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_souchon_foule",
+"templateId": "mus.vinyle_whale_song_son_terrestre_n1",
 "rarete": "commun",
 "description": "a tender crowd of small silhouetted people under a soft pastel sky, poetic cover",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.cd_daft_punk_homework",
+"templateId": "mus.cd_bad_luck_des_punkbot",
 "rarete": "commun",
 "description": "two robots with chrome helmets posing under disco lights, electronic music album cover",
 "ref": "cd",
 "slot": "album cover"
 },
 {
-"templateId": "mus.cd_radiohead_ok",
+"templateId": "mus.cd_ok_ai_frequencies",
 "rarete": "commun",
 "description": "an abstract glitchy highway with cold data lines, alternative-rock album cover",
 "ref": "cd",
 "slot": "album cover"
 },
 {
-"templateId": "mus.cd_noir_desir_666",
+"templateId": "mus.cd_club_67_souhait_obscur",
 "rarete": "commun",
 "description": "a dark moody nightclub scene lit by red neon, gritty French rock album cover",
 "ref": "cd",
 "slot": "album cover"
 },
 {
-"templateId": "mus.cd_iam_ecole",
+"templateId": "mus.cd_le_micro_argente_nou",
 "rarete": "commun",
 "description": "a gleaming silver microphone framed by ancient Egyptian motifs, hip-hop album cover",
 "ref": "cd",
@@ -216,17 +216,17 @@
 "description": "a vintage compact audio cassette tape with a handwritten 90s mixtape paper label, slight three-quarter view"
 },
 {
-"templateId": "mus.walkman_sony_wm",
+"templateId": "mus.baladeur_a_cassette_annees_80",
 "rarete": "commun",
 "description": "a vintage 1980s portable cassette player with a foam-padded headphone set, no brand logos or text, slight three-quarter view"
 },
 {
-"templateId": "mus.radio_cassette_sanyo",
+"templateId": "mus.radio_cassette_annees_80",
 "rarete": "commun",
 "description": "a vintage 1980s boombox with dual cassette decks and large speakers, no brand logos or text, three-quarter view"
 },
 {
-"templateId": "mus.tourne_disque_thorens",
+"templateId": "mus.tourne_disque_a_courroie_vintage",
 "rarete": "commun",
 "description": "a vintage belt-drive turntable with a tonearm on a wooden plinth, no brand logos or text, three-quarter view"
 },
@@ -241,7 +241,7 @@
 "description": "a small stack of vintage Erik Satie piano sheet music, slim hardbound editions"
 },
 {
-"templateId": "mus.metronome_wittner",
+"templateId": "mus.metronome_mecanique_a_pyramide",
 "rarete": "commun",
 "description": "a vintage mechanical Wittner pendulum metronome, pyramidal wooden case, side view"
 },
@@ -251,12 +251,12 @@
 "description": "an orchestral steel tuning fork (A440), polished metal finish, vertical side view, with a small wooden handle, simple geometric form"
 },
 {
-"templateId": "mus.flute_traversiere_yamaha",
+"templateId": "mus.flute_traversiere_argentee",
 "rarete": "commun",
 "description": "a silver Yamaha transverse flute, full length side view, keys visible, elegant proportions, slight diagonal composition"
 },
 {
-"templateId": "mus.clarinette_buffet",
+"templateId": "mus.clarinette_en_ebene",
 "rarete": "commun",
 "description": "a Buffet Crampon clarinet in five parts, polished blackwood with silver keys, side view"
 },
@@ -271,36 +271,36 @@
 "description": "an old classical acoustic guitar with nylon strings, varnished spruce top and worn wood, three-quarter view"
 },
 {
-"templateId": "mus.vinyle_beatles_dedicace",
+"templateId": "mus.vinyle_des_scarabees_dedicace_album_solo",
 "rarete": "rare",
 "description": "a plain elegant solo album cover with a small beetle emblem and a handwritten ink signature across the corner",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_stones_test_pressing",
+"templateId": "mus.test_pressing_des_trolling_sons",
 "rarete": "rare",
 "description": "a plain white-label test-pressing look with minimal typographic markings and no artwork",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
-"templateId": "mus.guitare_gibson_les_paul",
+"templateId": "mus.guitare_electrique_a_corps_plein_modele_legend",
 "rarete": "rare",
 "description": "a vintage solid-body electric guitar with a single-cutaway mahogany body and a sunburst finish, no brand logos, three-quarter full-length view"
 },
 {
-"templateId": "mus.guitare_fender_strato_70s",
+"templateId": "mus.guitare_electrique_a_trois_micros_solid_body_1",
 "rarete": "rare",
 "description": "a vintage solid-body electric guitar with a double-cutaway body and three single-coil pickups, sunburst finish, no brand logos, three-quarter full-length view"
 },
 {
-"templateId": "mus.accordeon_paolo_soprani",
+"templateId": "mus.accordeon_italien_signe",
 "rarete": "rare",
 "description": "an Italian Paolo Soprani accordion with bellows half-open and a faint handwritten signature on the front, three-quarter view"
 },
 {
-"templateId": "mus.banjo_gibson_5cordes",
+"templateId": "mus.banjo_5_cordes_ancien",
 "rarete": "rare",
 "description": "an antique 5-string banjo with a metal resonator and engraved details, no brand logos"
 },
@@ -310,12 +310,12 @@
 "description": "a handmade 19th-century Mirecourt workshop violin with bow, varnished maple and spruce, side view"
 },
 {
-"templateId": "mus.theremine_moog",
+"templateId": "mus.theremine_a_antennes",
 "rarete": "rare",
 "description": "a vintage theremin with two antennas on a wooden cabinet, no brand logos"
 },
 {
-"templateId": "mus.synthe_moog_minimoog",
+"templateId": "mus.synthetiseur_analogique_mini_1970",
 "rarete": "rare",
 "description": "a vintage 1970s analog synthesizer with wooden side panels and many patch knobs and sliders, no brand logos"
 },
@@ -325,22 +325,22 @@
 "description": "an antique mechanical cylinder music box in an inlaid wooden case, open lid showing the brass cylinder mechanism, three-quarter view"
 },
 {
-"templateId": "mus.saxophone_selmer_mark_vi",
+"templateId": "mus.saxophone_alto_professionnel",
 "rarete": "rare",
 "description": "a vintage Selmer Mark VI alto saxophone, lacquered brass finish with subtle patina, mother-of-pearl key inlays, slight three-quarter angle"
 },
 {
-"templateId": "leg.mus.stradivarius",
+"templateId": "leg.mus.violon_de_maitre_cremonais_1715",
 "rarete": "legendaire",
 "description": "an ornate antique Stradivarius violin from 1715 with rich reddish-orange varnish, scrolled headstock, set on a black velvet cushion, side view"
 },
 {
-"templateId": "leg.mus.piano_pleyel_concert",
+"templateId": "leg.mus.piano_a_queue_de_concert_1900",
 "rarete": "legendaire",
 "description": "a Pleyel grand concert piano from circa 1900, polished ebony finish, closed lid, three-quarter view, refined Belle Époque craftsmanship"
 },
 {
-"templateId": "leg.mus.guitare_hendrix_provenance",
+"templateId": "leg.mus.guitare_de_legende_de_johny_perdrix_jouee_a_l",
 "rarete": "legendaire",
 "description": "a legendary electric guitar restrung for left-handed upside-down playing, flamboyant 1960s psychedelic finish, no brand logos, three-quarter view"
 },
@@ -350,7 +350,7 @@
 "description": "the legendary 'Il Cannone' Paganini violin (Guarneri del Gesù 1743), deep reddish-brown varnish, highly detailed scroll and f-holes, museum display piece, side view"
 },
 {
-"templateId": "jx.cartouche_mario",
+"templateId": "jx.cartouche_le_plombier_sauteur_8_bit",
 "rarete": "commun",
 "ref": "cartridge-8bit",
 "slot": "cartridge label panel",
@@ -362,12 +362,12 @@
 "description": "a vintage black 16-bit gamepad with a round directional pad and three colored action buttons, no brand logos or text"
 },
 {
-"templateId": "jx.gameboy_color_violette",
+"templateId": "jx.playbox_pocket",
 "rarete": "commun",
 "description": "a vintage handheld game console in translucent purple plastic with a small screen and buttons, no brand logos or text, three-quarter view"
 },
 {
-"templateId": "jx.ps1_crash_bandicoot",
+"templateId": "jx.jeu_foxy_crush_32_bit",
 "rarete": "commun",
 "description": "a goofy spinning cartoon critter with big round eyes and a wide grin in a jungle, invented platformer mascot not resembling any existing character",
 "ref": "game-case",
@@ -379,126 +379,126 @@
 "description": "a vintage 1992 'Risk' strategy board game box, world map illustration on lid, slight three-quarter view, worn cardboard"
 },
 {
-"templateId": "jx.cartouche_zelda_nes",
+"templateId": "jx.cartouche_la_legende_de_solda_8_bit",
 "rarete": "commun",
 "description": "a young hero in a brown traveller's hooded cloak holding a round wooden shield and a short sword, in a pixel-art forest, invented hero not resembling any existing character",
 "ref": "cartridge-8bit",
 "slot": "cartridge label panel"
 },
 {
-"templateId": "jx.cartouche_megaman_nes",
+"templateId": "jx.cartouche_bluebot_8_bit",
 "rarete": "commun",
 "description": "a small silver-and-orange round-headed robot hero running through a futuristic pixel-art level, no arm cannon, invented robot not resembling any existing character",
 "ref": "cartridge-8bit",
 "slot": "cartridge label panel"
 },
 {
-"templateId": "jx.cartouche_sonic_megadrive",
+"templateId": "jx.cartouche_turbo_herisson_16_bit",
 "rarete": "commun",
 "description": "a speedy little brown hedgehog wearing racing goggles and a scarf, dashing across a green grassy pixel landscape, invented mascot not resembling any existing character",
 "ref": "cartridge-16bit",
 "slot": "cartridge label panel"
 },
 {
-"templateId": "jx.cartouche_streetfighter_snes",
+"templateId": "jx.cartouche_street_castagne_ii_16_bit",
 "rarete": "commun",
 "description": "two generic martial artists sparring in plain training outfits in a 16-bit arcade scene, invented fighters not resembling any existing character",
 "ref": "cartridge-16bit",
 "slot": "cartridge label panel"
 },
 {
-"templateId": "jx.console_snes_complete",
+"templateId": "jx.super_console_16_bit_complete",
 "rarete": "commun",
 "description": "a vintage 16-bit home video game console in pale grey with two gamepad controllers and coiled cables, no brand logos or text, three-quarter view"
 },
 {
-"templateId": "jx.console_nes_japonaise",
+"templateId": "jx.console_familiale_8_bit_japonaise",
 "rarete": "commun",
 "description": "a vintage 8-bit home video game console in red and white plastic with attached controllers, no brand logos or text, three-quarter view"
 },
 {
-"templateId": "jx.console_atari_2600",
+"templateId": "jx.console_de_salon_a_cartouches_annees_70",
 "rarete": "commun",
 "description": "a vintage 1970s home video game console with a woodgrain front panel and a single joystick controller, no brand logos or text, three-quarter view"
 },
 {
-"templateId": "jx.console_dreamcast_complete",
+"templateId": "jx.console_128_bit_reve_complete",
 "rarete": "commun",
 "description": "a vintage white 128-bit home game console with a controller and a small memory card, no brand logos or text, three-quarter view"
 },
 {
-"templateId": "jx.console_ps2_jeux",
+"templateId": "jx.console_de_salon_128_bit_avec_jeux",
 "rarete": "commun",
 "description": "a slim black 128-bit home game console beside a small stack of plain disc cases, no brand logos or text, three-quarter view"
 },
 {
-"templateId": "jx.manette_dualshock1",
+"templateId": "jx.manette_vibraduo",
 "rarete": "commun",
 "description": "a vintage grey gamepad with twin analog sticks and shoulder buttons, no brand logos or text"
 },
 {
-"templateId": "jx.manette_n64",
+"templateId": "jx.manette_tetrapod_64_bit",
 "rarete": "commun",
 "description": "a vintage grey three-pronged gamepad with a central analog stick, no brand logos or text"
 },
 {
-"templateId": "jx.jeu_ps1_resident_evil",
+"templateId": "jx.jeu_le_manoir_du_mal_32_bit",
 "rarete": "commun",
 "description": "a spooky haunted mansion at night with an ominous green glow, survival-horror game cover, invented art",
 "ref": "game-case",
 "slot": "game cover"
 },
 {
-"templateId": "jx.jeu_ps1_metal_gear",
+"templateId": "jx.jeu_engrenage_de_metal_infiltration_32_bit",
 "rarete": "commun",
 "description": "a stealthy soldier crouching beside large metal gears and machinery, military stealth game cover, invented characters",
 "ref": "game-case",
 "slot": "game cover"
 },
 {
-"templateId": "jx.jeu_dreamcast_shenmue",
+"templateId": "jx.jeu_d_aventure_japonais_128_bit",
 "rarete": "commun",
 "description": "a contemplative young martial artist in a snowy Japanese town, adventure game cover, invented characters",
 "ref": "game-case",
 "slot": "game cover"
 },
 {
-"templateId": "jx.jeu_n64_zelda_oot",
+"templateId": "jx.jeu_solda_flute_temporelle_aventure_3d_64_bit",
 "rarete": "commun",
 "description": "a vintage Nintendo 64 game cartridge in original box, featuring a young hero artwork on the cover, three-quarter view"
 },
 {
-"templateId": "jx.magic_lot_revised",
+"templateId": "jx.lot_de_cartes_l_assemblee_des_mages",
 "rarete": "commun",
 "description": "a hand-held fan of five vintage collectible trading cards spread out in an arc; the front-most card, positioned at the far LEFT and overlapping all the others on top, faces backwards showing its decorative card back with the title \"L'ASSEMBLÉE DES MAGES\" on a banner and a central ornate emblem; the other four cards fan out to the right behind it, facing front, each showing a different invented fantasy wizard, dragon or spell scene in a framed illustration with an invented short name on a top banner and small numeric stats in the bottom corners, inspired by classic trading-card design, consistent ornate borders on every card, top-down view, no real brand logos"
 },
 {
-"templateId": "jx.lot_yu_gi_oh",
+"templateId": "jx.lot_de_cartes_de_yo_hi_ah",
 "rarete": "commun",
 "description": "a hand-held fan of five vintage collectible trading cards spread out in an arc; the front-most card, positioned at the far LEFT and overlapping all the others on top, faces backwards showing its decorative card back with the title \"YO-HI-AH\" on a banner and a central ornate emblem; the other four cards fan out to the right behind it, facing front, each showing a different invented fierce fantasy monster in a framed illustration with an invented short name on a top banner and small numeric stats in the bottom corners, inspired by classic trading-card design, consistent ornate borders on every card, top-down view, no real brand logos"
 },
 {
-"templateId": "jx.lot_pokemon_jungle",
+"templateId": "jx.cartes_pocket_monster_set_jungle",
 "rarete": "commun",
 "description": "a hand-held fan of five vintage collectible trading cards spread out in an arc; the front-most card, positioned at the far LEFT and overlapping all the others on top, faces backwards showing its decorative card back with the title \"POCKET MONSTER\" on a banner and a central ornate emblem; the other four cards fan out to the right behind it, facing front, each showing a different original invented cute fantasy creature in a jungle setting in a framed illustration with an invented short name on a top banner and small numeric stats in the bottom corners, inspired by classic trading-card design, consistent ornate borders on every card, top-down view, no real brand logos"
 },
 {
-"templateId": "jx.monopoly_80s",
+"templateId": "jx.jeu_magnatimmo_annees_80",
 "rarete": "commun",
 "description": "a vintage 1980s real-estate trading board game box, three-quarter top view, the title \"MAGNATIMMO\" printed boldly on the worn cardboard lid, a cheerful plump property-developer character in a pinstripe suit and a fedora (no top hat, no monocle, no cane, no moustache) holding a small house and a fan of banknotes, a few small buildings, no real brand logos, invented game"
 },
 {
-"templateId": "jx.trivial_pursuit_genus",
+"templateId": "jx.jeu_question_pour_un_fromage_culture_generale",
 "rarete": "commun",
 "description": "a vintage trivia board game box, three-quarter top view, the title \"QUESTION POUR UN FROMAGE\" printed on the lid with colourful pie-wedge tokens and question marks, invented branding, no real brand logos"
 },
 {
-"templateId": "jx.cluedo_vintage",
+"templateId": "jx.jeu_kicekatue_mr_mayonnaise_vintage",
 "rarete": "commun",
 "description": "a vintage murder-mystery board game box, three-quarter top view, the title \"KICÉKATUÉ MR. MAYONNAISE ?\" printed on the lid above an illustrated mansion, a magnifying glass and silhouette suspects, invented branding, no real brand logos"
 },
 {
-"templateId": "jx.mille_bornes_60s",
+"templateId": "jx.jeu_de_cartes_long_trajet_annees_60",
 "rarete": "commun",
 "description": "a vintage 1960s French road-trip card game box, three-quarter top view, the title \"LONG TRAJET\" printed on the lid with an illustrated winding road and an old car, invented branding, no real brand logos"
 },
@@ -543,7 +543,7 @@
 "description": "a small group of ten hand-painted lead soldier figurines arranged in formation, slight three-quarter view"
 },
 {
-"templateId": "jx.peluche_ours_steiff",
+"templateId": "jx.ours_en_peluche_mohair_recent",
 "rarete": "commun",
 "description": "a recent mohair teddy bear sitting upright, no brand tags or ear buttons, slight three-quarter view"
 },
@@ -553,37 +553,37 @@
 "description": "an antique porcelain doll with painted face and lace dress, sitting upright, slight three-quarter view, no harsh expression"
 },
 {
-"templateId": "jx.barbie_seventies",
+"templateId": "jx.poupee_barberousse_annees_70",
 "rarete": "commun",
 "description": "a vintage 1970s fashion mannequin doll with styled blonde hair and a mod outfit, invented doll not resembling any existing brand, no logos"
 },
 {
-"templateId": "jx.figurine_smurfs_lot",
+"templateId": "jx.lot_de_figurines_de_spountch",
 "rarete": "commun",
 "description": "a small group of little woodland gnome figurines in assorted coloured caps (red, yellow, green, blue), round friendly faces, varied poses, invented characters not resembling any existing franchise"
 },
 {
-"templateId": "jx.figurine_kinder_lot",
+"templateId": "jx.lot_de_figurines_d_ufs_surprises",
 "rarete": "commun",
 "description": "a small group of tiny collectible surprise-egg figurines in playful poses, invented characters, no logos, top-down view"
 },
 {
-"templateId": "jx.cartes_pokemon_1ere_edition",
+"templateId": "jx.cartes_pocket_monster_1ere_edition",
 "rarete": "rare",
 "description": "a hand-held fan of five vintage collectible trading cards spread out in an arc; the front-most card, positioned at the far LEFT and overlapping all the others on top, faces backwards showing its decorative card back with the title \"POCKET MONSTER\" on a banner and a central ornate emblem; the other four cards fan out to the right behind it, facing front, each showing a different original invented cute fantasy creature in a framed illustration with an invented short name on a top banner and small numeric stats in the bottom corners, inspired by classic trading-card design, vintage first-edition worn look, consistent ornate borders on every card, top-down view, no real brand logos"
 },
 {
-"templateId": "jx.figurine_star_wars_kenner_78",
+"templateId": "jx.figurine_de_guerre_galactique_1978",
 "rarete": "rare",
 "description": "a vintage 1978 science-fiction space-saga action figure sealed on an original blister card, invented character not resembling any existing franchise, no logos or text"
 },
 {
-"templateId": "jx.figurine_starwars_dark_vador_kenner",
+"templateId": "jx.figurine_de_dark_father_1977",
 "rarete": "rare",
 "description": "a vintage action figure of a tall warlord in dark plated armour with a flowing cape and a horned war helmet, sealed on a blister card, invented villain not resembling any existing character, no logos"
 },
 {
-"templateId": "jx.flipper_gottlieb_60s",
+"templateId": "jx.flipper_a_plateau_annees_60",
 "rarete": "rare",
 "description": "a vintage 1960s pinball machine with colourful painted backglass artwork and chrome legs, invented artwork, no brand logos"
 },
@@ -593,39 +593,39 @@
 "description": "a small tabletop arcade cabinet with an illuminated pixel space-shooter screen of descending alien invaders, invented artwork, no brand logos"
 },
 {
-"templateId": "jx.cartes_pokemon_japan_holo",
+"templateId": "jx.cartes_pocket_monster_holographiques_japonaise",
 "rarete": "rare",
 "description": "a hand-held fan of five vintage collectible trading cards spread out in an arc; the front-most card, positioned at the far LEFT and overlapping all the others on top, faces backwards showing its decorative card back with the title \"POCKET MONSTER\" on a banner and a central ornate emblem; the other four cards fan out to the right behind it, facing front, each showing a different original invented cute fantasy creature in a framed illustration with an invented short name on a top banner and small numeric stats in the bottom corners, inspired by classic trading-card design, shimmering holographic foil, consistent ornate borders on every card, top-down view, no real brand logos"
 },
 {
-"templateId": "jx.cartouche_chrono_trigger",
+"templateId": "jx.cartouche_gachette_du_temps_rpg_16_bit",
 "rarete": "rare",
 "description": "a young traveller with a backpack standing before a glowing swirling portal in a 16-bit fantasy field, invented characters not resembling any existing franchise",
 "ref": "cartridge-16bit",
 "slot": "cartridge label panel"
 },
 {
-"templateId": "jx.console_neogeo_aes",
+"templateId": "jx.console_d_arcade_domestique_neo",
 "rarete": "rare",
 "description": "a large black home arcade game console with a big cartridge slot and a chunky joystick controller, no brand logos or text, three-quarter view"
 },
 {
-"templateId": "jx.train_marklin_ho",
+"templateId": "jx.train_electrique_ho_de_precision",
 "rarete": "rare",
 "description": "a vintage HO-scale model train set, a locomotive with several wagons on a curved section of track, no brand logos"
 },
 {
-"templateId": "jx.lego_pirate_complete",
+"templateId": "jx.grand_set_de_briques_pirates_complet",
 "rarete": "rare",
 "description": "a vintage interlocking plastic-brick pirate ship model in red, white and brown bricks, generic building blocks, no brand logos"
 },
 {
-"templateId": "jx.figurine_he_man_origines",
+"templateId": "jx.figurine_du_capitaine_muscle_origines",
 "rarete": "rare",
 "description": "a vintage action figure of a generic brawny warrior in a fur loincloth holding a broadsword, invented hero not resembling any existing character, no logos"
 },
 {
-"templateId": "jx.peluche_steiff_ours_1920",
+"templateId": "jx.ours_en_peluche_mohair_annees_1920",
 "rarete": "rare",
 "description": "an antique 1920s mohair teddy bear with jointed limbs and worn fur, no brand tags or ear buttons"
 },
@@ -637,7 +637,7 @@
 "slot": "cartridge label panel"
 },
 {
-"templateId": "leg.jx.babyfoot_bonzini_itsf",
+"templateId": "leg.jx.baby_foot_de_competition_minibon_homologue",
 "rarete": "legendaire",
 "description": "a competition-grade Bonzini French foosball table with red and blue cast figurines, polished wood frame, three-quarter view, full length"
 },
@@ -649,7 +649,7 @@
 "slot": "cartridge label panel"
 },
 {
-"templateId": "uniq.jx.console_pong_1972",
+"templateId": "uniq.jx.prototype_de_la_toute_premiere_console_de_jeu",
 "rarete": "legendaire",
 "description": "the original 1972 prototype of the very first home video game console, a small wooden cabinet with a tiny CRT screen showing two white paddles and a dot, no brand logos or text"
 },
@@ -674,7 +674,7 @@
 "description": "a vintage copper stretching pliers with brass joint and worn wooden handles, side view"
 },
 {
-"templateId": "br.scie_egoine_stanley",
+"templateId": "br.scie_egoine_de_charpentier",
 "rarete": "commun",
 "description": "a vintage Stanley handsaw with polished wooden handle and steel blade, side view"
 },
@@ -794,7 +794,7 @@
 "description": "an antique oak jointer plane with long wooden body and iron blade, side view"
 },
 {
-"templateId": "br.rabot_stanley_no4",
+"templateId": "br.rabot_metallique_n4_d_ebeniste",
 "rarete": "commun",
 "description": "a vintage Stanley No.4 smoothing plane with cast iron body and rosewood knob and tote, three-quarter view"
 },
@@ -854,17 +854,17 @@
 "description": "a set of miniature watchmaker screwdrivers in a small revolving stand, top-down three-quarter view"
 },
 {
-"templateId": "br.outils_peugeot_freres",
+"templateId": "br.boite_d_outils_de_manufacture_signee",
 "rarete": "rare",
 "description": "a vintage Peugeot Frères signed wooden tool box with a hand-engraved brass plaque on the lid, open showing assorted vintage hand tools, three-quarter view"
 },
 {
-"templateId": "br.scie_disston_no7",
+"templateId": "br.scie_a_dos_de_menuisier_n7_ancienne",
 "rarete": "rare",
 "description": "an antique Disston No.7 handsaw with carved applewood handle and etched steel blade, side view"
 },
 {
-"templateId": "br.rabot_stanley_bedrock",
+"templateId": "br.rabot_d_ebeniste_a_semelle_modele_605",
 "rarete": "rare",
 "description": "a vintage Stanley Bedrock 605 hand plane with japanned cast iron body and rosewood handles, three-quarter view"
 },
@@ -874,12 +874,12 @@
 "description": "a 19th-century ebéniste cabinetmaker's tool chest in walnut, open showing meticulously arranged carving tools and chisels, three-quarter view"
 },
 {
-"templateId": "br.etabli_compagnonnage_xixe",
+"templateId": "br.etabli_de_compagnonnage_xixe",
 "rarete": "rare",
 "description": "a 19th-century French compagnonnage workbench in massive oak with integrated wooden vises and tool well, full length three-quarter view"
 },
 {
-"templateId": "br.singer_fonte_xixe",
+"templateId": "br.machine_a_coudre_en_fonte_a_pedale_xixe",
 "rarete": "rare",
 "description": "a 19th-century Singer cast iron sewing machine with ornate gold decals on a black body, mounted on a treadle wooden table, three-quarter view"
 },
@@ -894,7 +894,7 @@
 "description": "a large forge anvil with massive horn and broad working surface, side view"
 },
 {
-"templateId": "br.outils_compagnon_devoir",
+"templateId": "br.lot_d_outils_de_compagnon_du_tour_de_france",
 "rarete": "rare",
 "description": "a 'Compagnon du Devoir' tool set with chisels, mallets and gouges neatly arranged in a leather roll, top-down view"
 },
@@ -919,12 +919,12 @@
 "description": "an Edo-period Japanese pull saw with delicately wrapped handle in rattan and shadowy carbon steel blade, displayed on a black wooden stand, side view, museum piece"
 },
 {
-"templateId": "leg.br.coffret_compagnon_signe",
+"templateId": "leg.br.coffret_d_outils_de_compagnon",
 "rarete": "legendaire",
 "description": "a signed 'Compagnon du Devoir' master craftsman tool chest in dark walnut with brass nameplate, lid open showing pristine antique tools, three-quarter view"
 },
 {
-"templateId": "leg.br.tour_holtzapffel_xixe",
+"templateId": "leg.br.tour_a_metaux_d_orfevre_de_prestige_xixe",
 "rarete": "legendaire",
 "description": "a 19th-century Holtzapffel ornamental metal-turning lathe with intricate brass and steel gearing, three-quarter view, museum piece"
 },
@@ -979,17 +979,17 @@
 "description": "a 1970s denim bell-bottom flared trousers, laid flat, top-down view"
 },
 {
-"templateId": "mo.chemise_lacoste_originale",
+"templateId": "mo.chemise_golgothor_70s",
 "rarete": "commun",
 "description": "a vintage 1970s pique cotton tennis polo shirt in white with a small green crocodile-style embroidered logo, laid flat, top-down view"
 },
 {
-"templateId": "mo.polo_lacoste_pique",
+"templateId": "mo.polo_golgothor",
 "rarete": "commun",
 "description": "a vintage pique cotton tennis polo shirt in pastel blue with a small green crocodile-style embroidered logo, laid flat, top-down view"
 },
 {
-"templateId": "mo.trench_burberry_classique",
+"templateId": "mo.trench_coat_berrybeurre",
 "rarete": "commun",
 "description": "a classic beige cotton trench coat with belt, button front and shoulder epaulettes, displayed on a slim mannequin bust, three-quarter view"
 },
@@ -1029,7 +1029,7 @@
 "description": "a vintage silk scarf with colorful paisley pattern, gracefully draped showing the pattern, top-down view"
 },
 {
-"templateId": "mo.carre_hermes_recent",
+"templateId": "mo.carre_de_soie_talaria_recent",
 "rarete": "commun",
 "description": "a luxury French silk square scarf with intricate equestrian-style print, neatly folded into a square, top-down view"
 },
@@ -1039,7 +1039,7 @@
 "description": "a fine woven Montecristi Panama straw hat with black ribbon band, side three-quarter view"
 },
 {
-"templateId": "mo.chapeau_borsalino",
+"templateId": "mo.chapeau_de_feutre_italien_a_large_bord",
 "rarete": "commun",
 "description": "a vintage Borsalino style fine felt fedora hat in dark brown with grosgrain band, side three-quarter view"
 },
@@ -1054,7 +1054,7 @@
 "description": "a pair of vintage lady's tan leather gloves, neatly arranged with one cuff slightly turned, top-down view"
 },
 {
-"templateId": "mo.ombrelle_dentelle_xixe",
+"templateId": "mo.ombrelle_en_dentelle_xixe",
 "rarete": "commun",
 "description": "a 19th-century ivory lace parasol with carved wooden handle, partially open, three-quarter view"
 },
@@ -1099,22 +1099,22 @@
 "description": "a vintage rhinestone tie pin with sparkling stones, top-down view"
 },
 {
-"templateId": "mo.montre_lip_dauphine",
+"templateId": "mo.montre_doree_vintage",
 "rarete": "commun",
 "description": "a vintage Lip Dauphine gold-tone wristwatch with cream dial and brown leather strap, top-down view"
 },
 {
-"templateId": "mo.montre_yema_superman",
+"templateId": "mo.montre_de_plongee_vintage",
 "rarete": "commun",
 "description": "a vintage Yema Super-Man dive wristwatch with rotating bezel and steel bracelet, top-down view"
 },
 {
-"templateId": "mo.montre_seiko_5_vintage",
+"templateId": "mo.montre_automatique_vintage",
 "rarete": "commun",
 "description": "a vintage Seiko 5 automatic wristwatch with day-date complication and steel bracelet, top-down view"
 },
 {
-"templateId": "mo.cravate_charvet_soie",
+"templateId": "mo.cravate_en_soie_de_luxe",
 "rarete": "commun",
 "description": "a luxury French silk tie with subtle pattern, neatly rolled showing the texture, top-down view"
 },
@@ -1124,17 +1124,17 @@
 "description": "a vintage striped English regimental club tie in green and navy diagonal stripes, neatly rolled, top-down view"
 },
 {
-"templateId": "mo.ceinture_hermes_h_recente",
+"templateId": "mo.ceinture_talaria",
 "rarete": "commun",
 "description": "a luxury leather belt with a polished gold-tone H-shaped buckle, coiled in a flat spiral, top-down view"
 },
 {
-"templateId": "mo.portefeuille_lv_monogram",
+"templateId": "mo.portefeuille_polis_futton",
 "rarete": "commun",
 "description": "a luxury monogrammed canvas wallet with leather edges, closed flat, top-down view"
 },
 {
-"templateId": "mo.sac_lancel",
+"templateId": "mo.sac_a_main_cancel",
 "rarete": "rare",
 "description": "a vintage Lancel cognac leather handbag with brass turn-lock and structured shape, three-quarter view"
 },
@@ -1144,62 +1144,62 @@
 "description": "an Art Déco enameled brooch with geometric patterns in black and gold cloisonné, top-down view"
 },
 {
-"templateId": "mo.sac_hermes_kelly",
+"templateId": "mo.sac_a_main_talaria",
 "rarete": "rare",
 "description": "a luxury structured leather handbag with rolled handle, top flap and padlock, in caramel leather, three-quarter view, no logos"
 },
 {
-"templateId": "mo.sac_chanel_classic",
+"templateId": "mo.sac_chaine",
 "rarete": "rare",
 "description": "a luxury quilted black leather handbag with gold chain strap and turn-lock, three-quarter view, no copyrighted logo"
 },
 {
-"templateId": "mo.sac_celine_phantom",
+"templateId": "mo.sac_cedrine_tempome",
 "rarete": "rare",
 "description": "a structured luxury tote handbag in beige leather with wide gussets and short handles, three-quarter view"
 },
 {
-"templateId": "mo.manteau_burberry_couture_60s",
+"templateId": "mo.manteau_berrybeurre",
 "rarete": "rare",
 "description": "a 1960s haute couture beige check-lined cotton trench coat with double-breasted buttons and belt, on a slim mannequin bust, three-quarter view"
 },
 {
-"templateId": "mo.tailleur_chanel_70s",
+"templateId": "mo.tailleur_chaine_annees_70",
 "rarete": "rare",
 "description": "a 1970s haute couture two-piece tweed lady's suit with trim detail and gold buttons, on a slim mannequin bust, three-quarter view, no face"
 },
 {
-"templateId": "mo.chemise_dior_homme",
+"templateId": "mo.chemise_ridor",
 "rarete": "rare",
 "description": "a luxury men's runway shirt in crisp white poplin with mother-of-pearl buttons, laid flat with the collar neatly arranged, top-down view"
 },
 {
-"templateId": "mo.veste_ysl_smoking_80s",
+"templateId": "mo.veste_smoking_msg",
 "rarete": "rare",
 "description": "a 1980s haute couture lady's tuxedo blazer in black wool with satin shawl lapels, displayed on a slim mannequin bust, three-quarter view, no face"
 },
 {
-"templateId": "mo.collier_van_cleef_alhambra",
+"templateId": "mo.collier_a_motifs_trefle_porte_bonheur",
 "rarete": "rare",
 "description": "a luxury gold necklace with quatrefoil-shaped mother-of-pearl medallions in delicate links, gracefully coiled, top-down view"
 },
 {
-"templateId": "mo.bague_cartier_trinity",
+"templateId": "mo.bague_a_trois_anneaux_d_or_occasion",
 "rarete": "rare",
 "description": "a luxury trinity ring with three intertwined bands of yellow gold, rose gold and white gold, three-quarter view"
 },
 {
-"templateId": "mo.foulard_hermes_brides",
+"templateId": "mo.carre_de_soie_talaria_ancien",
 "rarete": "rare",
 "description": "a rare luxury silk square scarf with elegant 'bridles' equestrian motif in burgundy and gold, neatly folded, top-down view, no copyrighted brand name visible"
 },
 {
-"templateId": "leg.mo.robe_chanel_1925",
+"templateId": "leg.mo.la_petite_robe_noire_chaine_1925",
 "rarete": "legendaire",
 "description": "an original 1925 haute couture black silk crepe little dress with hand-stitched beadwork, displayed on a slim 1920s mannequin bust, three-quarter view, no face"
 },
 {
-"templateId": "leg.mo.dior_new_look_1955",
+"templateId": "leg.mo.robe_ridor_new_look_1955",
 "rarete": "legendaire",
 "description": "an original 1955 'New Look' haute couture cinched-waist full-skirt dress in pale ivory taffeta, displayed on a slim mannequin bust, three-quarter view, no face"
 },
@@ -1269,7 +1269,7 @@
 "description": "a signed 20th-century lithograph print with abstract modernist composition, framed in thin black wood, top-down view"
 },
 {
-"templateId": "art.litho_chagall_planche",
+"templateId": "art.lithographie_de_chacal_planche",
 "rarete": "commun",
 "description": "a signed lithograph plate in the dreamy style of Chagall, with floating figures and vivid colors, framed in thin wood, top-down view"
 },
@@ -1374,7 +1374,7 @@
 "description": "an enameled Limoges plaque with religious scene in deep blue and gold cloisonné, framed in dark wood, top-down view"
 },
 {
-"templateId": "art.vase_lallemant_polychrome",
+"templateId": "art.vase_art_deco_bebert_germain",
 "rarete": "commun",
 "description": "a colorful Art Déco ceramic vase by Robert Lallemant with polychrome geometric patterns, side view"
 },
@@ -1399,7 +1399,7 @@
 "description": "an antique miniature painted portrait of a lady in oval gold frame, very small, top-down view"
 },
 {
-"templateId": "art.assiette_picasso_style",
+"templateId": "art.assiette_decorative_signee_picassiette",
 "rarete": "commun",
 "description": "a decorative ceramic plate in the style of Picasso's Vallauris pottery, with simplified bullfighter or face motif, top-down view"
 },
@@ -1424,12 +1424,12 @@
 "description": "a signed Émile Gallé Art Nouveau cameo glass vase with botanical floral motif in amber and green layers, side view"
 },
 {
-"templateId": "art.litho_picasso_signe_planche",
+"templateId": "art.lithographie_cubiste_signee_picassiette_planch",
 "rarete": "rare",
 "description": "a signed Picasso-style modernist lithograph plate, with bold abstract forms and graphic line work, framed simply, top-down view"
 },
 {
-"templateId": "art.dessin_dali_signe",
+"templateId": "art.dessin_surrealiste_aux_montres_molles_signe",
 "rarete": "rare",
 "description": "a signed surrealist ink drawing in the style of Salvador Dalí, with melting forms and elongated figures, framed simply, top-down view"
 },
@@ -1439,7 +1439,7 @@
 "description": "a Rembrandt-style original reprint etching with dramatic chiaroscuro and detailed figures, framed simply, top-down view"
 },
 {
-"templateId": "art.bronze_giacometti_planche",
+"templateId": "art.bronze_d_atelier_aux_silhouettes_filiformes_pl",
 "rarete": "rare",
 "description": "a tall elongated walking figure bronze sculpture in the style of Giacometti, on a small bronze plinth, three-quarter view"
 },
@@ -1449,42 +1449,42 @@
 "description": "an oil painting attributed to Corot, depicting a misty forest landscape with a small figure, in an ornate gilt frame, top-down view"
 },
 {
-"templateId": "art.vase_lalique_signe",
+"templateId": "art.vase_en_verre_moule_laluck_signe",
 "rarete": "rare",
 "description": "a signed Lalique frosted glass vase with bas-relief female figures in Art Déco style, side view"
 },
 {
-"templateId": "art.sculpture_rodin_planche",
+"templateId": "art.petite_sculpture_rondin_planche",
 "rarete": "rare",
 "description": "a small Rodin-style atelier bronze of a contemplative seated figure on a square stone base, three-quarter view"
 },
 {
-"templateId": "art.estampe_picasso_signee",
+"templateId": "art.estampe_cubiste_signee_picassiette",
 "rarete": "rare",
 "description": "a signed Picasso-style print with bullfighter or dove motif, framed in slim wood, top-down view"
 },
 {
-"templateId": "art.aquarelle_dufy_signee",
+"templateId": "art.aquarelle_fauviste_de_roland_duff_signee",
 "rarete": "rare",
 "description": "a signed Raoul Dufy-style watercolor of a colorful seaside regatta scene, framed in slim gilt wood, top-down view"
 },
 {
-"templateId": "art.toile_buffet_signee",
+"templateId": "art.toile_expressionniste_de_bebert_bahut_signee",
 "rarete": "rare",
 "description": "a signed Bernard Buffet-style oil painting of a stark cityscape with angular forms and somber palette, in slim black frame, top-down view"
 },
 {
-"templateId": "leg.art.dessin_picasso_etude",
+"templateId": "leg.art.dessin_cubiste_signe_picassiette_etude",
 "rarete": "legendaire",
 "description": "a museum-quality signed Picasso study drawing in bold ink line work on aged paper, in elegant gilt frame, top-down view"
 },
 {
-"templateId": "leg.art.dessin_matisse_etude",
+"templateId": "leg.art.dessin_fauviste_aux_gouaches_decoupees_etude",
 "rarete": "legendaire",
 "description": "a museum-quality signed Henri Matisse study drawing with flowing line work and bold simplicity, in slim gilt frame, top-down view"
 },
 {
-"templateId": "leg.art.toile_chagall_attribuee",
+"templateId": "leg.art.toile_onirique_de_chacal_etude",
 "rarete": "legendaire",
 "description": "an oil painting attributed to Marc Chagall with floating figures, bright colors and dreamlike composition, in ornate gilt frame, top-down view"
 },
@@ -1499,7 +1499,7 @@
 "description": "a vintage hardback edition of a 19th-century French adventure novel with embossed gold lettering on a red leather cover, slight three-quarter view"
 },
 {
-"templateId": "lv.tintin_lune",
+"templateId": "lv.les_aventures_de_titou_cap_sur_la_lune",
 "rarete": "commun",
 "description": "a young cartoon adventurer in a colourful jumper pointing excitedly at a tall sleek silver rocket on a launchpad, clean ligne-claire comic style, invented character not resembling any existing franchise, no dog",
 "ref": "bd-album",
@@ -1566,49 +1566,49 @@
 "description": "a vintage paperback French novel with minimalist sepia photo cover (Asian river scene) and simple typography, top-down view"
 },
 {
-"templateId": "lv.asterix_gaulois_reimpr",
+"templateId": "lv.le_petit_moustachu_reimpression",
 "rarete": "commun",
 "description": "a short feisty Gaulish villager with a long blond moustache and a plain leather cap, beside a tall stout companion, humorous comic cover, invented characters not resembling any existing franchise",
 "ref": "bd-album",
 "slot": "album cover"
 },
 {
-"templateId": "lv.asterix_zizanie",
+"templateId": "lv.le_petit_moustachu_zbeul_au_village",
 "rarete": "commun",
 "description": "a short feisty Gaulish villager with a long blond moustache amid a comic village brawl, humorous comic cover, invented characters not resembling any existing franchise",
 "ref": "bd-album",
 "slot": "album cover"
 },
 {
-"templateId": "lv.lucky_luke_dalton",
+"templateId": "lv.funky_look_les_freres_bandots",
 "rarete": "commun",
 "description": "a lanky cowboy in a yellow shirt facing four grumpy identical bandit brothers, humorous western comic cover, invented characters",
 "ref": "bd-album",
 "slot": "album cover"
 },
 {
-"templateId": "lv.spirou_marsupilami",
+"templateId": "lv.roupille_et_queue_longue",
 "rarete": "commun",
 "description": "a cheerful bellboy in a red uniform with a small long-tailed spotted jungle creature, humorous comic cover, invented characters not resembling any existing franchise",
 "ref": "bd-album",
 "slot": "album cover"
 },
 {
-"templateId": "lv.bd_blueberry_lieutenant",
+"templateId": "lv.le_lieutenant_du_far_west",
 "rarete": "commun",
 "description": "a rugged cavalry lieutenant in the old west, realistic adventure comic cover, invented character",
 "ref": "bd-album",
 "slot": "album cover"
 },
 {
-"templateId": "lv.bd_corto_maltese",
+"templateId": "lv.le_marin_reveur_la_ballade",
 "rarete": "commun",
 "description": "a dreamy sailor with an earring and a captain's cap by the sea, elegant adventure comic cover, invented character",
 "ref": "bd-album",
 "slot": "album cover"
 },
 {
-"templateId": "lv.bd_petit_nicolas",
+"templateId": "lv.les_histoires_du_petit_ecolier",
 "rarete": "commun",
 "description": "a mischievous little schoolboy with his friends, simple sketchy children's book cover, invented characters",
 "ref": "bd-album",
@@ -1680,7 +1680,7 @@
 "description": "a small stack of 1960s vintage French men's lifestyle magazines with stylized fashion-illustration covers, top-down three-quarter view, no nudity"
 },
 {
-"templateId": "lv.tintin_calculus",
+"templateId": "lv.les_aventures_de_titou_l_affaire_du_professeur",
 "rarete": "commun",
 "description": "a young cartoon adventurer with a bumbling bespectacled inventor examining a strange contraption, clean ligne-claire comic style, invented characters not resembling any existing franchise, no dog",
 "ref": "bd-album",
@@ -1712,26 +1712,26 @@
 "description": "a vintage burgundy velvet-bound photo album with brass clasp, slight three-quarter view"
 },
 {
-"templateId": "lv.eo_petit_prince_1943",
+"templateId": "lv.conte_de_l_aviateur_et_de_l_enfant_roi_edition",
 "rarete": "rare",
 "description": "a vintage children's storybook with a worn cream cover, the title \"L'Aviateur et l'Enfant-Roi\" in elegant lettering, a delicate watercolour of a small red biplane over golden desert dunes with a tiny waving child below and a few faint stars, gentle aviator fairy-tale illustration, invented characters, no boy standing on a tiny planet"
 },
 {
-"templateId": "lv.tintin_or_noir_1950",
+"templateId": "lv.les_aventures_de_titou_petrole_1950",
 "rarete": "rare",
 "description": "a young cartoon adventurer in a desert beside oil derricks and a vintage car, clean ligne-claire comic style, invented character not resembling any existing franchise, no dog",
 "ref": "bd-album",
 "slot": "album cover"
 },
 {
-"templateId": "lv.asterix_gaulois_eo_1961",
+"templateId": "lv.le_petit_moustachu_edition_originale_1961",
 "rarete": "rare",
 "description": "a short feisty Gaulish villager with a long blond moustache and a plain leather cap, vintage first-edition comic cover, invented characters not resembling any existing franchise",
 "ref": "bd-album",
 "slot": "album cover"
 },
 {
-"templateId": "lv.lucky_luke_eo_1947",
+"templateId": "lv.funky_look_premier_album_1947",
 "rarete": "rare",
 "description": "a lanky lone cowboy on horseback at sunset, vintage first-edition western comic cover, invented characters",
 "ref": "bd-album",
@@ -1768,7 +1768,7 @@
 "description": "a small set of rare Belle Époque French postcards with hand-tinted color illustrations of Parisian scenes, neatly fanned out, top-down view"
 },
 {
-"templateId": "lv.stylo_montblanc_meisterstuck",
+"templateId": "lv.stylo_plume_haut_de_gamme_a_l_etoile_blanche_d",
 "rarete": "rare",
 "description": "a luxury black fountain pen with gold cap and clip, side view on a neutral surface, no copyrighted brand logo visible"
 },
@@ -1818,12 +1818,12 @@
 "description": "a set of six matching crystal wine glasses with delicate stems, neatly aligned in two rows, top-down three-quarter view"
 },
 {
-"templateId": "ma.vase_cristal_baccarat",
+"templateId": "ma.vase_en_cristal_baraka",
 "rarete": "commun",
 "description": "a tall cut-crystal vase with refined facets catching light, side view on a neutral surface"
 },
 {
-"templateId": "ma.vase_lalique_recent",
+"templateId": "ma.vase_en_verre_moule_laluck_recent",
 "rarete": "commun",
 "description": "a frosted glass vase in Art Déco style with bas-relief female figures on the body, side view"
 },
@@ -1858,17 +1858,17 @@
 "description": "a Longwy enameled ceramic fruit bowl with crackled blue glaze and floral motif, three-quarter view"
 },
 {
-"templateId": "ma.plat_vallauris_picasso_style",
+"templateId": "ma.plat_en_ceramique_de_vallauris_signe_picassiet",
 "rarete": "commun",
 "description": "a decorative Vallauris ceramic plate in the style of Picasso's pottery, with simplified bullfighter or face motif, top-down view"
 },
 {
-"templateId": "ma.cendrier_daum_cristal",
+"templateId": "ma.cendrier_en_pate_de_cristal_dome",
 "rarete": "commun",
 "description": "a thick frosted Daum-style crystal ashtray with abstract curved form, top-down three-quarter view"
 },
 {
-"templateId": "ma.couverts_christofle_24",
+"templateId": "ma.menagere_en_metal_argente_24_pieces",
 "rarete": "commun",
 "description": "a set of silver-plated flatware neatly arranged in an open velvet-lined wooden case, top-down view"
 },
@@ -2008,17 +2008,17 @@
 "description": "an antique gilded wall mirror with elaborate carved pediment featuring a coat of arms and foliate scrolls, top-down view"
 },
 {
-"templateId": "ma.service_meissen",
+"templateId": "ma.service_a_the_en_porcelaine_de_saxe_6_tasses",
 "rarete": "rare",
 "description": "a fine porcelain tea service for six with refined blue onion pattern and gold trim: teapot, sugar bowl, milk jug and cups, top-down three-quarter view"
 },
 {
-"templateId": "ma.vase_daum_signe",
+"templateId": "ma.vase_en_pate_de_verre_dome_signe",
 "rarete": "rare",
 "description": "a signed Daum-style Art Déco cameo glass vase with bas-relief botanical motif in amber and green layers, side view"
 },
 {
-"templateId": "ma.lustre_cristal_baccarat",
+"templateId": "ma.lustre_en_cristal_baraka",
 "rarete": "rare",
 "description": "a grand cut-crystal chandelier with many arms and cascading prism droplets, hanging in a neutral space, three-quarter view"
 },
@@ -2033,7 +2033,7 @@
 "description": "an antique fine wool Isfahan Persian carpet with intricate central medallion and floral border, laid flat, top-down view"
 },
 {
-"templateId": "ma.pendule_breguet_signee",
+"templateId": "ma.pendule_d_horloger_braguette_signee",
 "rarete": "rare",
 "description": "a signed antique 19th-century pendule mantel clock with refined gilt bronze case and enamel dial, side view"
 },
@@ -2043,7 +2043,7 @@
 "description": "a solid silver five-branch candelabra with ornate baluster stem and detailed casting, top-down three-quarter view"
 },
 {
-"templateId": "ma.couverts_puiforcat",
+"templateId": "ma.menagere_en_argent_massif_36_pieces",
 "rarete": "rare",
 "description": "a luxury silver flatware set of 36 pieces neatly arranged in an open mahogany case lined with velvet, top-down view"
 },
@@ -2053,7 +2053,7 @@
 "description": "a tall Louis-Philippe mahogany bookcase with glass-paned doors and richly carved cornice, three-quarter view"
 },
 {
-"templateId": "leg.ma.oeuf_faberge",
+"templateId": "leg.ma.uf_joaillier_imperial_en_email_replique",
 "rarete": "legendaire",
 "description": "an imperial Russian jeweled enamel egg with gold filigree, set on a tiny gold stand under a glass display dome, three-quarter view, museum piece"
 },

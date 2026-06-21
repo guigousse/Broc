@@ -150,7 +150,7 @@ export function creerMissionsTest(jour: number): Courrier[] {
           "Mon vieux pick-up cherche un compagnon : un **vinyle de pop britannique des années 60**, en état correct suffirait à me combler.",
           "Pas pressé — tu as un mois pour le trouver.",
         ],
-        cible: { templateId: "mus.vinyle_beatles_abbey_road" },
+        cible: { templateId: "mus.vinyle_des_scarabees_passage_cloute" },
         jourLimite: jour + 30,
         recompense: { argent: 55 },
       }),

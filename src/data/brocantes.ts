@@ -196,7 +196,7 @@ export const BROCANTES: Brocante[] = [
     // Légendaires des catégories non couvertes par les spé 3⭐ : Jeux + Livres
     poolExclusif: [
       "leg.jx.cartouche_stadium_events",
-      "leg.jx.babyfoot_bonzini_itsf",
+      "leg.jx.baby_foot_de_competition_minibon_homologue",
       "leg.jx.cartouche_nwc_1990",
       "leg.lv.miserables_originale",
       "leg.lv.gutenberg_feuillet",
@@ -222,8 +222,8 @@ export const BROCANTES: Brocante[] = [
     // Légendaire Bricolage (le 6e, non couvert par spé 3⭐)
     poolExclusif: [
       "leg.br.scie_japonaise_edo",
-      "leg.br.coffret_compagnon_signe",
-      "leg.br.tour_holtzapffel_xixe",
+      "leg.br.coffret_d_outils_de_compagnon",
+      "leg.br.tour_a_metaux_d_orfevre_de_prestige_xixe",
     ],
     conditionDeblocage: {
       type: "ET",
@@ -244,8 +244,8 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Mode",
     taillePool: 8,
     poolExclusif: [
-      "leg.mo.robe_chanel_1925",
-      "leg.mo.dior_new_look_1955",
+      "leg.mo.la_petite_robe_noire_chaine_1925",
+      "leg.mo.robe_ridor_new_look_1955",
       "leg.mo.birkin_himalaya",
     ],
     conditionDeblocage: {
@@ -267,9 +267,9 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Musique",
     taillePool: 7,
     poolExclusif: [
-      "leg.mus.stradivarius",
-      "leg.mus.piano_pleyel_concert",
-      "leg.mus.guitare_hendrix_provenance",
+      "leg.mus.violon_de_maitre_cremonais_1715",
+      "leg.mus.piano_a_queue_de_concert_1900",
+      "leg.mus.guitare_de_legende_de_johny_perdrix_jouee_a_l",
     ],
     conditionDeblocage: {
       type: "ET",
@@ -290,7 +290,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Maison",
     taillePool: 8,
     poolExclusif: [
-      "leg.ma.oeuf_faberge",
+      "leg.ma.uf_joaillier_imperial_en_email_replique",
       "leg.ma.tapis_savonnerie_xviie",
       "leg.ma.pendule_louis_xiv_boulle",
     ],
@@ -313,9 +313,9 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Objets d'art",
     taillePool: 8,
     poolExclusif: [
-      "leg.art.dessin_picasso_etude",
-      "leg.art.dessin_matisse_etude",
-      "leg.art.toile_chagall_attribuee",
+      "leg.art.dessin_cubiste_signe_picassiette_etude",
+      "leg.art.dessin_fauviste_aux_gouaches_decoupees_etude",
+      "leg.art.toile_onirique_de_chacal_etude",
     ],
     conditionDeblocage: {
       type: "ET",
@@ -341,7 +341,7 @@ export const BROCANTES: Brocante[] = [
     taillePool: 12,
     poolExclusif: [
       "uniq.mus.violon_paganini",
-      "uniq.jx.console_pong_1972",
+      "uniq.jx.prototype_de_la_toute_premiere_console_de_jeu",
       "uniq.lv.manuscrit_voltaire",
       "uniq.mo.bijou_marie_antoinette",
       "uniq.ma.vase_ming_dynasty",

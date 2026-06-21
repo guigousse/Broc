@@ -15,7 +15,7 @@ export const UNIQUES: ObjetTemplate[] = [
     unique: true,
   },
   {
-    templateId: "uniq.jx.console_pong_1972",
+    templateId: "uniq.jx.prototype_de_la_toute_premiere_console_de_jeu",
     nom: "Prototype de la toute première console de jeu (1972)",
     categorie: "Jeux & Loisirs",
     rarete: "legendaire",
