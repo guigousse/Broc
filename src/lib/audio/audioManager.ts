@@ -62,7 +62,12 @@ class AudioManager {
 
   ensureCtx(): void {
     if (typeof window === "undefined") return;
-    if (this.ctx) return;
+    if (this.ctx) {
+      // iOS (Safari / WKWebView) : le contexte peut rester/repasser "suspended"
+      // tant qu'aucun geste utilisateur ne l'a débloqué. On retente un resume.
+      if (this.ctx.state === "suspended") void this.ctx.resume();
+      return;
+    }
     const Ctx =
       window.AudioContext ?? (window as WindowAudio).webkitAudioContext;
     if (!Ctx) return;
@@ -70,6 +75,25 @@ class AudioManager {
     this.master = this.ctx.createGain();
     this.master.gain.value = this.prefs.volume / 100;
     this.master.connect(this.ctx.destination);
+    // iOS : un AudioContext démarre "suspended" ; on tente un resume immédiat
+    // (efficace si on est dans un geste) + des écouteurs de déblocage globaux.
+    if (this.ctx.state === "suspended") void this.ctx.resume();
+    this.installUnlockHandlers();
+  }
+
+  private unlockInstalled = false;
+
+  /** Débloque l'AudioContext au premier geste utilisateur (requis sur iOS). */
+  private installUnlockHandlers(): void {
+    if (this.unlockInstalled || typeof window === "undefined") return;
+    if (typeof window.addEventListener !== "function") return;
+    this.unlockInstalled = true;
+    const unlock = () => {
+      if (this.ctx && this.ctx.state === "suspended") void this.ctx.resume();
+    };
+    for (const ev of ["pointerdown", "touchend", "keydown"] as const) {
+      window.addEventListener(ev, unlock, { passive: true });
+    }
   }
 
   setVolume(v: number): void {
