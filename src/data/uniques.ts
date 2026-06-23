@@ -32,7 +32,7 @@ export const UNIQUES: ObjetTemplate[] = [
   },
   {
     templateId: "uniq.mo.bijou_marie_antoinette",
-    nom: "Bijou ayant appartenu à Marie-Antoinette",
+    nom: "Les bijoux de la reine",
     categorie: "Mode",
     rarete: "legendaire",
     prixRefBase: 8500,
