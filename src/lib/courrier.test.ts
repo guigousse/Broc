@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Courrier, MissionResolution } from "@/types/game";
 import {
   ID_LETTRE_MAMAN_DEBUT,
+  ID_MISSIONS_TEST,
   creerCourrierMission,
   creerLettreMamanDebut,
   creerMissionsTest,
@@ -175,15 +176,9 @@ describe("expireMissions", () => {
   });
 });
 
-describe("creerMissionsTest — nouveau format", () => {
-  it("produit des missions avec categorie et cibles[]", () => {
-    const ms = creerMissionsTest(1);
-    for (const c of ms) {
-      expect(c.payload.type).toBe("mission");
-      if (c.payload.type !== "mission") continue;
-      expect(["principale", "secondaire"]).toContain(c.payload.categorie);
-      expect(Array.isArray(c.payload.cibles)).toBe(true);
-      expect(c.payload.cibles.length).toBeGreaterThan(0);
-    }
+describe("creerMissionsTest (déprécié, SP2)", () => {
+  it("ne produit plus de missions de démo (générateur + arc principal à la place)", () => {
+    expect(creerMissionsTest(1)).toEqual([]);
+    expect(ID_MISSIONS_TEST).toEqual([]);
   });
 });
