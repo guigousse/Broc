@@ -20,6 +20,7 @@ function enCourrier(ch: ChapitrePrincipal, jour: number): Courrier {
       ...(ch.payload.jourLimiteOffset !== undefined
         ? { jourLimite: jour + ch.payload.jourLimiteOffset }
         : {}),
+      ...(ch.payload.conserverCibles ? { conserverCibles: true } : {}),
     }),
     lu: true,
   };

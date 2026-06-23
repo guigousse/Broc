@@ -128,6 +128,9 @@ export interface CourrierPayloadMission {
   /** Si défini, mission expirée si `jourActuel > jourLimite`. */
   jourLimite?: number;
   recompense: { argent: number };
+  /** Si vrai, la livraison ne consomme PAS les objets ciblés (le joueur les
+   *  garde). Utilisé par la finale de l'arc principal (« Les bijoux de la reine »). */
+  conserverCibles?: boolean;
 }
 
 export type CourrierPayload = CourrierPayloadLettre | CourrierPayloadMission;

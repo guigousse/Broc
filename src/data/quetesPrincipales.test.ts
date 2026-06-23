@@ -14,9 +14,10 @@ describe("QUETES_PRINCIPALES", () => {
     expect(QUETES_PRINCIPALES[0].condition).toEqual({ type: "depart" });
   });
 
-  it("le dernier chapitre cible l'unique des bijoux de la reine", () => {
+  it("le dernier chapitre cible l'unique des bijoux de la reine, sans le consommer", () => {
     const last = QUETES_PRINCIPALES[QUETES_PRINCIPALES.length - 1];
     expect(last.payload.cibles.some((c) => c.templateId === "uniq.mo.bijou_marie_antoinette")).toBe(true);
+    expect(last.payload.conserverCibles).toBe(true);
   });
 
   it("toutes les cibles référencent des templates existants", () => {

@@ -75,6 +75,7 @@ export function creerCourrierMission(args: {
   cibles: MissionCible[];
   jourLimite?: number;
   recompense: { argent: number };
+  conserverCibles?: boolean;
 }): Courrier {
   const payload: CourrierPayloadMission = {
     type: "mission",
@@ -85,6 +86,7 @@ export function creerCourrierMission(args: {
     cibles: args.cibles,
     recompense: args.recompense,
     ...(args.jourLimite !== undefined ? { jourLimite: args.jourLimite } : {}),
+    ...(args.conserverCibles ? { conserverCibles: true } : {}),
   };
   return {
     id: args.id,

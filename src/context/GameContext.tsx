@@ -1029,10 +1029,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return { ok: false, raison: "Objets requis manquants dans l'inventaire." };
       }
       const titreMission = courrier.payload.titre;
-      const aRetirerSet = new Set(aRetirer);
+      // Certaines missions (finale de l'arc principal) valident à la possession
+      // sans consommer l'objet : le joueur garde la pièce.
+      const conserver = courrier.payload.conserverCibles === true;
+      const aRetirerSet = new Set(conserver ? [] : aRetirer);
       setState((prev) => {
         if (!prev) return prev;
-        const invMaj = prev.inventaireJoueur.filter((_, i) => !aRetirerSet.has(i));
+        const invMaj = conserver
+          ? prev.inventaireJoueur
+          : prev.inventaireJoueur.filter((_, i) => !aRetirerSet.has(i));
         const missionsMaj = prev.missions.map((m) =>
           m.courrierId === courrierId
             ? { ...m, statut: "livree" as const, jourResolution: prev.jourActuel }

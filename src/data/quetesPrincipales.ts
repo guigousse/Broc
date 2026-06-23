@@ -11,6 +11,8 @@ export interface ChapitrePrincipal {
     recompense: { argent: number };
     /** Échéance = jour d'injection + offset. Absent ⇒ pas d'échéance. */
     jourLimiteOffset?: number;
+    /** Si vrai, la livraison ne consomme pas les objets (le joueur les garde). */
+    conserverCibles?: boolean;
   };
 }
 
@@ -110,6 +112,7 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
       cibles: [{ templateId: "uniq.mo.bijou_marie_antoinette" }],
       recompense: { argent: 500 },
       jourLimiteOffset: undefined,
+      conserverCibles: true,
     },
   },
 ];
