@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { getTemplate } from "@/data/objetTemplates";
 import { estMissionLivrable } from "@/lib/missions";
-import type {
-  Courrier,
-  CourrierPayloadMission,
-  GameState,
-  MissionResolution,
-} from "@/types/game";
+import { CommandeRow } from "./CommandeRow";
+import type { Courrier, GameState, MissionResolution } from "@/types/game";
 
 interface CarnetNotesOverlayProps {
   open: boolean;
@@ -128,140 +124,78 @@ const sectionLabel: CSSProperties = {
   marginTop: 10,
 };
 
-const carteActive: CSSProperties = {
-  padding: "10px 12px",
-  border: "1px solid rgba(110,31,31,0.3)",
-  background: "rgba(255,250,235,0.5)",
-  marginBottom: 10,
-  borderRadius: 2,
-};
+/* ─── tri des missions actives ─── */
 
-const carteTerminee: CSSProperties = {
-  padding: "6px 12px",
-  marginBottom: 6,
-  borderRadius: 2,
-  opacity: 0.55,
-  fontFamily: "var(--font-serif)",
-  fontSize: 11,
-  color: "#3a2f1e",
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 8,
-};
-
-const livrerBtn: CSSProperties = {
-  marginTop: 10,
-  width: "100%",
-  padding: "8px 12px",
-  background: "#6e1f1f",
-  color: "#f4e9cd",
-  border: "none",
-  fontFamily: "var(--font-display)",
-  fontSize: 11,
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
-  cursor: "pointer",
-  borderRadius: 2,
-};
-
-/* ─── Cartes ─── */
-
-function MissionActiveCarte({
-  courrier,
-  reso,
-  state,
-  onLivrer,
-}: {
-  courrier: Courrier;
-  reso: MissionResolution;
-  state: GameState;
-  onLivrer: () => void;
-}) {
-  if (courrier.payload.type !== "mission") return null;
-  const p: CourrierPayloadMission = courrier.payload;
-  const cible0 = p.cibles[0];
-  const tpl = getTemplate(cible0?.templateId ?? "");
-  const nomCible = tpl?.nom ?? cible0?.templateId ?? "";
-  const livrable = reso.statut === "active" && estMissionLivrable(p, state.inventaireJoueur);
-  return (
-    <article style={livrable ? { ...carteActive, borderColor: "#6e1f1f" } : carteActive}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-        <div style={{ fontFamily: "var(--font-display)", fontSize: 12, color: "#1a1308" }}>{p.titre}</div>
-        <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: livrable ? "#6e1f1f" : "#5e4a25" }}>
-          {livrable ? "Livrable" : "Active"}
-        </div>
-      </div>
-      <div style={{ marginTop: 6, fontFamily: "var(--font-serif)", fontSize: 11, color: "#3a2f1e" }}>
-        Demande : <strong>{nomCible}</strong>
-        {cible0?.etatMin ? ` · ${cible0.etatMin} min.` : ""}
-      </div>
-      <div style={{ marginTop: 2, fontFamily: "var(--font-serif)", fontSize: 11, color: "#3a2f1e" }}>
-        Récompense : <strong>+{p.recompense.argent} €</strong>
-      </div>
-      {p.jourLimite !== undefined && (
-        <div style={{ marginTop: 2, fontFamily: "var(--font-mono)", fontSize: 10, color: p.jourLimite - state.jourActuel <= 3 ? "#a31f1f" : "#5e4a25" }}>
-          Avant le jour {p.jourLimite} (J−{Math.max(0, p.jourLimite - state.jourActuel)})
-        </div>
-      )}
-      {livrable && (
-        <button type="button" onClick={onLivrer} style={livrerBtn}>
-          Livrer
-        </button>
-      )}
-    </article>
-  );
-}
-
-function MissionTermineeCarte({
-  courrier,
-  reso,
-}: {
-  courrier: Courrier;
-  reso: MissionResolution;
-}) {
-  if (courrier.payload.type !== "mission") return null;
-  const p = courrier.payload;
-  const cible0 = p.cibles[0];
-  const tpl = getTemplate(cible0?.templateId ?? "");
-  const nomCible = tpl?.nom ?? cible0?.templateId ?? "";
-  const couleurStatut = reso.statut === "livree" ? "#2c5e3f" : "#a31f1f";
-  const libelleStatut = reso.statut === "livree" ? `Livrée J${reso.jourResolution}` : `Expirée J${reso.jourResolution}`;
-  return (
-    <div style={carteTerminee}>
-      <span style={{ textDecoration: "line-through" }}>
-        {p.titre} — {nomCible}
-      </span>
-      <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: couleurStatut }}>
-        {libelleStatut}
-      </span>
-    </div>
-  );
+function trierActives(
+  missions: MissionResolution[],
+  byId: Map<string, Courrier>,
+  inv: GameState["inventaireJoueur"],
+) {
+  return [...missions].sort((a, b) => {
+    const ca = byId.get(a.courrierId);
+    const cb = byId.get(b.courrierId);
+    const pa = ca?.payload.type === "mission" ? ca.payload : null;
+    const pb = cb?.payload.type === "mission" ? cb.payload : null;
+    const lva = pa && estMissionLivrable(pa, inv) ? 0 : 1;
+    const lvb = pb && estMissionLivrable(pb, inv) ? 0 : 1;
+    if (lva !== lvb) return lva - lvb; // livrables d'abord
+    const ja = pa?.jourLimite ?? Infinity;
+    const jb = pb?.jourLimite ?? Infinity;
+    if (ja !== jb) return ja - jb; // échéance proche
+    return (ca?.jourRecu ?? 0) - (cb?.jourRecu ?? 0);
+  });
 }
 
 /* ─── Composant principal ─── */
 
 export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission }: CarnetNotesOverlayProps) {
-  const courriersById = useMemo(() => new Map(state.courriers.map((c) => [c.id, c])), [state.courriers]);
-  const actives = useMemo(
+  const [ouvertId, setOuvertId] = useState<string | null>(null);
+  const [termineesVisibles, setTermineesVisibles] = useState(false);
+  const byId = useMemo(() => new Map(state.courriers.map((c) => [c.id, c])), [state.courriers]);
+
+  const actives = useMemo(() => state.missions.filter((m) => m.statut === "active"), [state.missions]);
+
+  const principales = useMemo(
     () =>
-      [...state.missions]
-        .filter((m) => m.statut === "active")
-        .sort((a, b) => {
-          const ca = courriersById.get(a.courrierId);
-          const cb = courriersById.get(b.courrierId);
-          const la = ca && ca.payload.type === "mission" ? ca.payload.jourLimite ?? Infinity : Infinity;
-          const lb = cb && cb.payload.type === "mission" ? cb.payload.jourLimite ?? Infinity : Infinity;
-          if (la !== lb) return la - lb;
-          return (ca?.jourRecu ?? 0) - (cb?.jourRecu ?? 0);
+      trierActives(
+        actives.filter((m) => {
+          const c = byId.get(m.courrierId);
+          return c?.payload.type === "mission" && c.payload.categorie === "principale";
         }),
-    [state.missions, courriersById],
+        byId,
+        state.inventaireJoueur,
+      ),
+    [actives, byId, state.inventaireJoueur],
   );
+
+  const secondaires = useMemo(
+    () =>
+      trierActives(
+        actives.filter((m) => {
+          const c = byId.get(m.courrierId);
+          return c?.payload.type === "mission" && c.payload.categorie === "secondaire";
+        }),
+        byId,
+        state.inventaireJoueur,
+      ),
+    [actives, byId, state.inventaireJoueur],
+  );
+
   const terminees = useMemo(
     () =>
       [...state.missions]
         .filter((m) => m.statut !== "active")
         .sort((a, b) => (b.jourResolution ?? 0) - (a.jourResolution ?? 0)),
     [state.missions],
+  );
+
+  const nbLivrables = useMemo(
+    () =>
+      actives.filter((m) => {
+        const c = byId.get(m.courrierId);
+        return c?.payload.type === "mission" && estMissionLivrable(c.payload, state.inventaireJoueur);
+      }).length,
+    [actives, byId, state.inventaireJoueur],
   );
 
   useEffect(() => {
@@ -280,6 +214,29 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission }: Ca
 
   if (!open) return null;
 
+  const renderSection = (label: string, liste: MissionResolution[]) => {
+    if (liste.length === 0) return null;
+    return (
+      <>
+        <div style={sectionLabel}>{label}</div>
+        {liste.map((m) => {
+          const c = byId.get(m.courrierId);
+          if (!c) return null;
+          return (
+            <CommandeRow
+              key={m.courrierId}
+              courrier={c}
+              state={state}
+              ouvert={ouvertId === m.courrierId}
+              onToggle={() => setOuvertId((id) => (id === m.courrierId ? null : m.courrierId))}
+              onLivrer={() => onLivrerMission(m.courrierId)}
+            />
+          );
+        })}
+      </>
+    );
+  };
+
   return (
     <>
       <div style={scrim} onClick={onClose} aria-hidden />
@@ -288,44 +245,50 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission }: Ca
           <div style={ruban} aria-hidden />
           <button type="button" style={closeBtn} onClick={onClose} aria-label="Fermer">✕</button>
           <div style={enTete}>
-            <h2 style={titre}>Carnet de commande</h2>
-            <div style={sousTitre}>Jour {state.jourActuel}</div>
+            <h2 style={titre}>Carnet de commandes</h2>
+            <div style={sousTitre}>
+              Jour {state.jourActuel}
+              {nbLivrables > 0 ? ` · ${nbLivrables} livrable${nbLivrables > 1 ? "s" : ""}` : ""}
+            </div>
           </div>
           <div style={contenu}>
-            {state.missions.length === 0 ? (
+            {actives.length === 0 && terminees.length === 0 ? (
               <p style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", color: "#5e4a25", textAlign: "center", padding: "30px 10px" }}>
-                Aucune mission reçue pour l'instant.
+                Aucune commande pour l&apos;instant.
               </p>
             ) : (
               <>
-                <div style={{ ...sectionLabel, marginTop: 0, borderTop: "none" }}>— En cours —</div>
-                {actives.length === 0 ? (
-                  <p style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", color: "#5e4a25", textAlign: "center", padding: "6px 10px" }}>
-                    Aucune mission en cours.
-                  </p>
-                ) : (
-                  actives.map((m) => {
-                    const c = courriersById.get(m.courrierId);
-                    if (!c) return null;
-                    return (
-                      <MissionActiveCarte
-                        key={m.courrierId}
-                        courrier={c}
-                        reso={m}
-                        state={state}
-                        onLivrer={() => onLivrerMission(m.courrierId)}
-                      />
-                    );
-                  })
-                )}
+                {renderSection("Commandes principales", principales)}
+                {renderSection("Commandes secondaires", secondaires)}
                 {terminees.length > 0 && (
                   <>
-                    <div style={sectionLabel}>— Terminées —</div>
-                    {terminees.map((m) => {
-                      const c = courriersById.get(m.courrierId);
-                      if (!c) return null;
-                      return <MissionTermineeCarte key={m.courrierId} courrier={c} reso={m} />;
-                    })}
+                    <button
+                      type="button"
+                      onClick={() => setTermineesVisibles((v) => !v)}
+                      style={{ ...sectionLabel, background: "none", border: "none", width: "100%", cursor: "pointer" }}
+                    >
+                      Terminées {termineesVisibles ? "▾" : "▸"}
+                    </button>
+                    {termineesVisibles &&
+                      terminees.map((m) => {
+                        const c = byId.get(m.courrierId);
+                        if (!c || c.payload.type !== "mission") return null;
+                        const tpl = getTemplate(c.payload.cibles[0]?.templateId ?? "");
+                        const couleur = m.statut === "livree" ? "#2c5e3f" : "#a31f1f";
+                        return (
+                          <div
+                            key={m.courrierId}
+                            style={{ display: "flex", justifyContent: "space-between", gap: 8, padding: "6px 14px", opacity: 0.55, fontFamily: "var(--font-serif)", fontSize: 11, color: "#3a2f1e" }}
+                          >
+                            <span style={{ textDecoration: "line-through" }}>
+                              {c.payload.titre} — {tpl?.nom ?? ""}
+                            </span>
+                            <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", color: couleur }}>
+                              {m.statut === "livree" ? `Livrée J${m.jourResolution}` : `Expirée J${m.jourResolution}`}
+                            </span>
+                          </div>
+                        );
+                      })}
                   </>
                 )}
               </>
