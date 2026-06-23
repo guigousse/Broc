@@ -27,11 +27,11 @@ export const EXPEDITEURS: Record<string, ExpediteurDef> = {
   },
   "jeux-video": {
     id: "jeux-video",
-    nom: "Théo",
-    personnalite: "Chineur de jeux rétro",
+    nom: "Le Joueur du Vide-grenier",
+    personnalite: "Passionné de jeux vidéo",
     domaine: "Jeux & Loisirs",
     avatar: "/personas/commanditaires/jeux-video.webp",
-    signature: "À plus dans le pixel,\nThéo",
+    signature: "À plus dans le pixel,\nLe Joueur du Vide-grenier",
   },
   "set-designer": {
     id: "set-designer",

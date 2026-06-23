@@ -136,7 +136,7 @@ export function creerMissionsTest(jour: number): Courrier[] {
         id: "demo_theo_stand",
         jour,
         expediteurId: "jeux-video",
-        titre: "Le stand rétro de Théo",
+        titre: "Le stand rétro du Vide-grenier",
         corps: [
           "Salut !",
           "Je monte un stand rétro pour la convention : il me manque une **manette**, un **jeu de cartes de voyage** et un **jeu de culture générale**.",
