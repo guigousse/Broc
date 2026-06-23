@@ -179,8 +179,9 @@ function MissionActiveCarte({
 }) {
   if (courrier.payload.type !== "mission") return null;
   const p: CourrierPayloadMission = courrier.payload;
-  const tpl = getTemplate(p.cible.templateId);
-  const nomCible = tpl?.nom ?? p.cible.templateId;
+  const cible0 = p.cibles[0];
+  const tpl = getTemplate(cible0?.templateId ?? "");
+  const nomCible = tpl?.nom ?? cible0?.templateId ?? "";
   const livrable = reso.statut === "active" && estMissionLivrable(p, state.inventaireJoueur);
   return (
     <article style={livrable ? { ...carteActive, borderColor: "#6e1f1f" } : carteActive}>
@@ -192,7 +193,7 @@ function MissionActiveCarte({
       </div>
       <div style={{ marginTop: 6, fontFamily: "var(--font-serif)", fontSize: 11, color: "#3a2f1e" }}>
         Demande : <strong>{nomCible}</strong>
-        {p.cible.etatMin ? ` · ${p.cible.etatMin} min.` : ""}
+        {cible0?.etatMin ? ` · ${cible0.etatMin} min.` : ""}
       </div>
       <div style={{ marginTop: 2, fontFamily: "var(--font-serif)", fontSize: 11, color: "#3a2f1e" }}>
         Récompense : <strong>+{p.recompense.argent} €</strong>
@@ -220,8 +221,9 @@ function MissionTermineeCarte({
 }) {
   if (courrier.payload.type !== "mission") return null;
   const p = courrier.payload;
-  const tpl = getTemplate(p.cible.templateId);
-  const nomCible = tpl?.nom ?? p.cible.templateId;
+  const cible0 = p.cibles[0];
+  const tpl = getTemplate(cible0?.templateId ?? "");
+  const nomCible = tpl?.nom ?? cible0?.templateId ?? "";
   const couleurStatut = reso.statut === "livree" ? "#2c5e3f" : "#a31f1f";
   const libelleStatut = reso.statut === "livree" ? `Livrée J${reso.jourResolution}` : `Expirée J${reso.jourResolution}`;
   return (

@@ -142,7 +142,7 @@ export function migrerSauvegarde(loaded: GameState): GameState {
  */
 function normaliserMissionPayload(c: Courrier): Courrier {
   if (c.payload.type !== "mission") return c;
-  const p = c.payload as Record<string, unknown>;
+  const p = c.payload as unknown as Record<string, unknown>;
   if (Array.isArray(p.cibles) && typeof p.categorie === "string") return c;
   const cibles = Array.isArray(p.cibles)
     ? (p.cibles as unknown[])

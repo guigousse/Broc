@@ -30,6 +30,7 @@ import { createGameRepository } from "@/lib/storage/createGameRepository";
 import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
 import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
+import { indicesAConsommerPourLivraison } from "@/lib/missions";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
 import {
   catTreeId,
@@ -1006,22 +1007,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!reso || reso.statut !== "active") {
         return { ok: false, raison: "Mission non active." };
       }
-      const { cible, recompense } = courrier.payload;
-      const ETATS_ORDRE: EtatObjet[] = ["Mauvais", "Bon", "Très bon", "Pristin état"];
-      const minIdx = cible.etatMin ? ETATS_ORDRE.indexOf(cible.etatMin) : 0;
-      const matchIdx = current.inventaireJoueur.findIndex(
-        (o) =>
-          o.templateId === cible.templateId &&
-          !o.enRestauration &&
-          ETATS_ORDRE.indexOf(o.etat) >= minIdx,
+      const { recompense } = courrier.payload;
+      const aRetirer = indicesAConsommerPourLivraison(
+        courrier.payload,
+        current.inventaireJoueur,
       );
-      if (matchIdx === -1) {
-        return { ok: false, raison: "Aucun objet correspondant dans l'inventaire." };
+      if (!aRetirer) {
+        return { ok: false, raison: "Objets requis manquants dans l'inventaire." };
       }
       const titreMission = courrier.payload.titre;
+      const aRetirerSet = new Set(aRetirer);
       setState((prev) => {
         if (!prev) return prev;
-        const invMaj = prev.inventaireJoueur.filter((_, i) => i !== matchIdx);
+        const invMaj = prev.inventaireJoueur.filter((_, i) => !aRetirerSet.has(i));
         const missionsMaj = prev.missions.map((m) =>
           m.courrierId === courrierId
             ? { ...m, statut: "livree" as const, jourResolution: prev.jourActuel }

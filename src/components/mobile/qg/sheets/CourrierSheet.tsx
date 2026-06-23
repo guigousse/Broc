@@ -209,8 +209,10 @@ function renderMission(c: Courrier) {
       ))}
       <div style={cibleEncart}>
         <div>
-          <strong>Objet recherché :</strong> {p.cible.templateId}
-          {p.cible.etatMin ? ` (min. ${p.cible.etatMin})` : ""}
+          <strong>Objet{p.cibles.length > 1 ? "s" : ""} recherché{p.cibles.length > 1 ? "s" : ""} :</strong>{" "}
+          {p.cibles
+            .map((c) => `${c.templateId}${c.etatMin ? ` (min. ${c.etatMin})` : ""}`)
+            .join(", ")}
         </div>
         <div>
           <strong>Récompense :</strong> +{p.recompense.argent} €
