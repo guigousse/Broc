@@ -19,6 +19,9 @@ export const VINYLE_AUDIO_URLS: Record<string, string> = {
   "mus.vinyle_silverguy_moi_au_volant": "/sounds/vinyles/mus.vinyle_silverguy_moi_au_volant.mp3",
   "mus.vinyle_judith_loiseau_oui_je_regrette_tout": "/sounds/vinyles/mus.vinyle_judith_loiseau_oui_je_regrette_tout.mp3",
   "mus.vinyle_stevranos_vive_la_fet_a": "/sounds/vinyles/mus.vinyle_stevranos_vive_la_fet_a.mp3",
+  "mus.33tours_jazz_2": "/sounds/vinyles/mus.33tours_jazz_2.mp3",
+  "mus.33tours_jazz_3": "/sounds/vinyles/mus.33tours_jazz_3.mp3",
+  "mus.vinyle_concept_laga_jagavaganaigase_du_dandy_a": "/sounds/vinyles/mus.vinyle_concept_laga_jagavaganaigase_du_dandy_a.mp3",
 };
 
 export function vinylAudioUrl(templateId: string): string {

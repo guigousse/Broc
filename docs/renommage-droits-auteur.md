@@ -15,8 +15,8 @@
 | mus.vinyle_stones_let_bleed | Rolling Stones – Let It Bleed | Vinyle des Trolling Sons — 'Bet it Heal' | |
 | mus.vinyle_bowie_ziggy | David Bowie – Ziggy Stardust | Vinyle du David Bah Oui — 'Comète' | |
 | mus.vinyle_zeppelin_iv | Led Zeppelin IV | Vinyle du Led Guirlande - Escalator du Paradis | |
-| mus.vinyle_dylan_blonde | Bob Dylan – Blonde on Blonde | Vinyle du Ryan Sober — 'Blonde ou Brune' | |
-| mus.vinyle_indochine_aventurier | Indochine – L'Aventurier | Vinyle New Wave — 'L'Explorateur' | |
+| mus.vinyle_dylan_blonde | Bob Dylan – Blonde on Blonde | 33 tours de jazz (II) | Remplacé le 2026-06-24 par un 33 tours de jazz (id : mus.33tours_jazz_2) |
+| mus.vinyle_indochine_aventurier | Indochine – L'Aventurier | 33 tours de jazz (III) | Remplacé le 2026-06-24 par un 33 tours de jazz (id : mus.33tours_jazz_3) |
 | mus.vinyle_mylene_farmer_ainsi | Mylène Farmer – Ainsi soit je | Vinyle de la Rousse Mystique — 'Ainsi soit-elle' | |
 | mus.vinyle_sardou_lacs | Sardou – Les Lacs du Connemara | Vinyle 'Les Pâtes Carbonnara' — Michele Sardaigna | |
 | mus.vinyle_gainsbourg_melody | Gainsbourg – Melody Nelson | Vinyle concept — 'Laga Jagavaganaigase' du Dandy à la Gitane | |

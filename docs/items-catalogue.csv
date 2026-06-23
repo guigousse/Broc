@@ -279,7 +279,7 @@ leg.mo.la_petite_robe_noire_chaine_1925;La petite robe noire Chaîné (1925);Mod
 leg.mo.robe_ridor_new_look_1955;Robe Ridor 'New Look' (1955);Mode;legendaire;;;1050;2100;3500;4900
 leg.mo.birkin_himalaya;Sac à main d'exception de grande sellerie (provenance);Mode;legendaire;;;1350;2700;4500;6300
 uniq.mo.bijou_marie_antoinette;Bijou ayant appartenu à Marie-Antoinette;Mode;legendaire;oui;;2550;5100;8500;11900
-mus.33tours_jazz_inconnu;33 tours de jazz inconnu;Musique;commun;;1;2;5;8;11
+mus.33tours_jazz_1;33 tours de jazz inconnu;Musique;commun;;1;2;5;8;11
 mus.k7_audio_mixtape_90s;K7 mixtape années 90;Musique;commun;;1;2;5;8;11
 mus.cd_club_67_souhait_obscur;CD 'Club 67' — Souhait Obscur;Musique;commun;;1;4;7;12;17
 mus.diapason_acier;Diapason en acier d'orchestre;Musique;commun;;1;4;7;12;17
@@ -300,14 +300,14 @@ mus.vinyle_hollyday_caillou_a_woippy;Vinyle Hollyday 'Caillou à Woippy';Musique
 mus.vinyle_classique_incontournable_classique;Vinyle 'Classique incontournable' — Classique;Musique;commun;;2;7;13;22;31
 mus.cd_le_micro_argente_nou;CD 'Le Micro Argenté' — Nou;Musique;commun;;2;7;13;22;31
 mus.vinyle_victor_de_la_brasse_bibelot;Vinyle Victor de la Brasse 'Bibelot';Musique;commun;;2;7;14;24;34
-mus.vinyle_new_wave_l_explorateur;Vinyle New Wave — 'L'Explorateur';Musique;commun;;2;7;14;24;34
+mus.33tours_jazz_3;33 tours de jazz (III);Musique;commun;;2;7;14;24;34
 mus.partition_chopin;Partitions de Chopin reliées;Musique;commun;;2;8;15;25;35
 mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle;Vinyle de la Rousse Mystique — 'Ainsi soit-elle';Musique;commun;;2;8;16;26;36
 mus.vinyle_judith_loiseau_oui_je_regrette_tout;Vinyle Judith Loiseau 'Oui, je regrette tout';Musique;commun;;2;8;17;28;39
 mus.radio_cassette_annees_80;Radio-cassette années 80;Musique;commun;;2;9;18;30;42
 mus.harmonica_chromatique_de_bluesman;Harmonica chromatique de bluesman;Musique;commun;;3;11;21;35;49
 mus.metronome_mecanique_a_pyramide;Métronome mécanique à pyramide;Musique;commun;;3;11;21;35;49
-mus.vinyle_du_ryan_sober_blonde_ou_brune;Vinyle du Ryan Sober — 'Blonde ou Brune';Musique;commun;;3;12;24;40;56
+mus.33tours_jazz_2;33 tours de jazz (II);Musique;commun;;3;12;24;40;56
 mus.baladeur_a_cassette_annees_80;Baladeur à cassette années 80;Musique;commun;;3;12;24;40;56
 mus.ukulele_soprano;Ukulélé soprano en koa;Musique;commun;;3;12;24;40;56
 mus.vinyle_le_mur_des_flamants_roses;Vinyle 'Le Mur' des Flamants Roses;Musique;commun;;3;14;27;45;63

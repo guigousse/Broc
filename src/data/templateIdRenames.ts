@@ -149,12 +149,12 @@ export const OLD_TO_NEW_TEMPLATE_ID: Record<string, string> = {
   "mus.vinyle_brassens_jeanne": "mus.vinyle_victor_de_la_brasse_bibelot",
   "mus.vinyle_brel_amsterdam": "mus.vinyle_stevranos_vive_la_fet_a",
   "mus.vinyle_cabrel_hors_saison": "mus.vinyle_francois_cabriol_hors_piste",
-  "mus.vinyle_dylan_blonde": "mus.vinyle_du_ryan_sober_blonde_ou_brune",
+  "mus.vinyle_dylan_blonde": "mus.33tours_jazz_2",
   "mus.vinyle_gainsbourg_melody": "mus.vinyle_concept_laga_jagavaganaigase_du_dandy_a",
   "mus.vinyle_goldman_envole": "mus.vinyle_silverguy_moi_au_volant",
   "mus.vinyle_hallyday_rock_memphis": "mus.vinyle_hollyday_caillou_a_woippy",
   "mus.vinyle_higelin_alertez": "mus.vinyle_classique_incontournable_classique",
-  "mus.vinyle_indochine_aventurier": "mus.vinyle_new_wave_l_explorateur",
+  "mus.vinyle_indochine_aventurier": "mus.33tours_jazz_3",
   "mus.vinyle_mylene_farmer_ainsi": "mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle",
   "mus.vinyle_piaf_non": "mus.vinyle_judith_loiseau_oui_je_regrette_tout",
   "mus.vinyle_pink_floyd_wall": "mus.vinyle_le_mur_des_flamants_roses",
@@ -167,4 +167,11 @@ export const OLD_TO_NEW_TEMPLATE_ID: Record<string, string> = {
   "mus.vinyle_zeppelin_iv": "mus.vinyle_du_led_guirlande_escalator_du_paradis",
   "mus.walkman_sony_wm": "mus.baladeur_a_cassette_annees_80",
   "uniq.jx.console_pong_1972": "uniq.jx.prototype_de_la_toute_premiere_console_de_jeu",
+
+  // Refonte des 33 tours de jazz (2026-06-24) : l'ancien « jazz inconnu » devient
+  // jazz_1 ; le vinyle « Ryan Sober » est remplacé par un 2e 33 tours de jazz.
+  "mus.33tours_jazz_inconnu": "mus.33tours_jazz_1",
+  "mus.vinyle_du_ryan_sober_blonde_ou_brune": "mus.33tours_jazz_2",
+  // (2026-06-24) le vinyle « New Wave — L'Explorateur » devient un 3e 33 tours de jazz.
+  "mus.vinyle_new_wave_l_explorateur": "mus.33tours_jazz_3",
 };
