@@ -22,7 +22,7 @@ const row: CSSProperties = {
 };
 const avatar: CSSProperties = {
   width: 42, height: 42, borderRadius: "50%", flex: "0 0 auto",
-  border: "2px solid #c8a24a", objectFit: "cover", background: "#d9c79a",
+  border: "2px solid #c8a24a", objectFit: "cover", objectPosition: "top center", background: "#d9c79a",
   display: "grid", placeItems: "center", color: "#6e1f1f",
   fontFamily: "var(--font-display)", fontSize: 16, overflow: "hidden",
 };

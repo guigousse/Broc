@@ -95,70 +95,116 @@ export function creerCourrierMission(args: {
   };
 }
 
-/** ID stable des trois missions de test (auto-injectées au démarrage). */
+/** ID stable des missions de démo (auto-injectées au démarrage). */
 export const ID_MISSIONS_TEST = [
-  "mission_test_etagere",
-  "mission_test_balance",
-  "mission_test_vinyle",
+  "demo_maman_vitrine",
+  "demo_theo_stand",
+  "demo_clara_tournage",
+  "demo_arianne_defile",
+  "demo_paulhenry_galerie",
 ] as const;
 
-/** Trois missions de test injectées au démarrage pour faire vivre le carnet de
- *  commande. Cibles, expéditeurs et récompenses variés pour exercer l'UI.
- *  Marquées `lu: true` directement pour qu'elles apparaissent immédiatement
- *  dans le carnet (sans passer par la boîte aux lettres). */
+/** Missions de démonstration injectées au démarrage pour faire vivre le carnet
+ *  de commandes. Réparties sur les commanditaires (catégories principale /
+ *  secondaire, mono- et multi-cibles) pour exercer l'UI. Marquées `lu: true`
+ *  pour apparaître directement dans le carnet. */
 export function creerMissionsTest(jour: number): Courrier[] {
   return [
     {
       ...creerCourrierMission({
-        id: "mission_test_etagere",
+        id: "demo_maman_vitrine",
         jour,
         expediteurId: "maman",
-        titre: "Une lampe pour le salon",
+        titre: "La vitrine de Maman",
         corps: [
           "Mon enfant,",
-          "Mon abat-jour vient de rendre l'âme et je rêve d'une **lampe à pétrole ancienne** en laiton, ces grandes lanternes qu'on voit dans les vieilles auberges.",
-          "Si tu en croises une chez un de tes brocanteurs, je t'en serais infiniment reconnaissante. Je te dédommagerai bien sûr.",
+          "Je refais la déco du salon et il me faudrait deux pièces : une **lampe à pétrole ancienne** en laiton et un joli **pichet en faïence émaillée**.",
+          "Prends ton temps, mais ne les oublie pas !",
         ],
         categorie: "principale",
-        cibles: [{ templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" }],
-        jourLimite: jour + 12,
-        recompense: { argent: 90 },
+        cibles: [
+          { templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" },
+          { templateId: "ma.pichet_faience_emaillee" },
+        ],
+        jourLimite: jour + 40,
+        recompense: { argent: 130 },
       }),
       lu: true,
     },
     {
       ...creerCourrierMission({
-        id: "mission_test_balance",
+        id: "demo_theo_stand",
         jour,
-        expediteurId: "maman",
-        titre: "Pour ma collection de cuisine",
+        expediteurId: "jeux-video",
+        titre: "Le stand rétro de Théo",
         corps: [
-          "Bonjour cher chineur,",
-          "Je collectionne les objets de cuisine d'antan et il me manque une **balance romaine en fonte ancienne** en bon état pour compléter mon étagère.",
-          "Je suis prête à y mettre le prix si la pièce est belle.",
+          "Salut !",
+          "Je monte un stand rétro pour la convention : il me manque une **manette**, un **jeu de cartes de voyage** et un **jeu de culture générale**.",
+          "Trois pièces et c'est bon — je te revaudrai ça grassement.",
         ],
-        categorie: "secondaire",
-        cibles: [{ templateId: "br.balance_romaine_fonte", etatMin: "Très bon" }],
-        jourLimite: jour + 20,
-        recompense: { argent: 160 },
+        categorie: "principale",
+        cibles: [
+          { templateId: "jx.manette_vibraduo" },
+          { templateId: "jx.jeu_de_cartes_long_trajet_annees_60" },
+          { templateId: "jx.jeu_question_pour_un_fromage_culture_generale" },
+        ],
+        jourLimite: jour + 45,
+        recompense: { argent: 200 },
       }),
       lu: true,
     },
     {
       ...creerCourrierMission({
-        id: "mission_test_vinyle",
+        id: "demo_clara_tournage",
         jour,
-        expediteurId: "maman",
-        titre: "Pour le pick-up du salon",
+        expediteurId: "set-designer",
+        titre: "Décor d'un tournage",
         corps: [
-          "Salutations,",
-          "Mon vieux pick-up cherche un compagnon : un **vinyle de pop britannique des années 60**, en état correct suffirait à me combler.",
-          "Pas pressé — tu as un mois pour le trouver.",
+          "Bonjour,",
+          "Pour un décor d'époque, je cherche une **cafetière émaillée des années 50** en bon état. Le détail qui fera vrai à l'image.",
         ],
         categorie: "secondaire",
-        cibles: [{ templateId: "mus.vinyle_des_scarabees_passage_cloute" }],
+        cibles: [{ templateId: "ma.cafetiere_emaillee_50s", etatMin: "Bon" }],
         jourLimite: jour + 30,
-        recompense: { argent: 55 },
+        recompense: { argent: 70 },
+      }),
+      lu: true,
+    },
+    {
+      ...creerCourrierMission({
+        id: "demo_arianne_defile",
+        jour,
+        expediteurId: "mode",
+        titre: "Pièces vintage pour le défilé",
+        corps: [
+          "Cher chineur,",
+          "Ma prochaine collection mêle le vintage : il me faut une **veste en jean délavée** et une **casquette gavroche**.",
+          "Le bon vêtement raconte une histoire.",
+        ],
+        categorie: "secondaire",
+        cibles: [
+          { templateId: "mo.veste_jean_delavee" },
+          { templateId: "mo.casquette_gavroche_60s" },
+        ],
+        jourLimite: jour + 35,
+        recompense: { argent: 95 },
+      }),
+      lu: true,
+    },
+    {
+      ...creerCourrierMission({
+        id: "demo_paulhenry_galerie",
+        jour,
+        expediteurId: "art",
+        titre: "Une pièce pour la galerie",
+        corps: [
+          "Cher ami,",
+          "Ma galerie manque d'une **gravure ancienne du XIXe** pour compléter l'accrochage. Une belle pièce, naturellement.",
+        ],
+        categorie: "secondaire",
+        cibles: [{ templateId: "art.gravure_ancienne_xixe" }],
+        jourLimite: jour + 50,
+        recompense: { argent: 80 },
       }),
       lu: true,
     },

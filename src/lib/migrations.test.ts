@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { GameState } from "@/types/game";
 import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
-import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
+import { ID_LETTRE_MAMAN_DEBUT, ID_MISSIONS_TEST } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
 
 describe("migrerEtat", () => {
@@ -184,8 +184,9 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     const state = createMockGameState({ historique: [], budget: 500 });
     const migrated = migrerSauvegarde(state);
     expect(migrated.grandLivre).toEqual([]);
-    // Trois missions de test sont injectées automatiquement au démarrage.
-    expect(migrated.missions.map((m) => m.statut)).toEqual(["active", "active", "active"]);
+    // Les missions de démo sont injectées automatiquement au démarrage (toutes actives).
+    expect(migrated.missions.length).toBe(ID_MISSIONS_TEST.length);
+    expect(migrated.missions.every((m) => m.statut === "active")).toBe(true);
   });
 
   it("reconstruit grandLivre depuis l'historique des sessions", () => {
