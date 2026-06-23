@@ -105,19 +105,26 @@ export interface CourrierPayloadLettre {
   recompense?: RecompenseCourrier;
 }
 
-/** Mission reçue par lettre : trouver un objet précis contre récompense. */
+/** Catégorie d'une commande : principale (importante/scénarisée) ou secondaire. */
+export type MissionCategorie = "principale" | "secondaire";
+
+/** Une cible d'une commande : un objet précis à fournir. */
+export interface MissionCible {
+  templateId: string;
+  /** État minimum requis (Mauvais < Bon < Très bon < Pristin état). */
+  etatMin?: EtatObjet;
+}
+
+/** Mission reçue par lettre : fournir un ou plusieurs objets contre récompense. */
 export interface CourrierPayloadMission {
   type: "mission";
+  categorie: MissionCategorie;
   expediteurId: string;
   titre: string;
   /** Corps narratif (même rendu que les lettres). */
   corps: string[];
-  /** Objet demandé. */
-  cible: {
-    templateId: string;
-    /** État minimum requis pour livrer (Mauvais < Bon < Très bon < Pristin). */
-    etatMin?: EtatObjet;
-  };
+  /** Objets demandés (1 ou plusieurs). */
+  cibles: MissionCible[];
   /** Si défini, mission expirée si `jourActuel > jourLimite`. */
   jourLimite?: number;
   recompense: { argent: number };
