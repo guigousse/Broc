@@ -8,6 +8,7 @@ import {
 } from "react";
 import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButton";
 import { getExpediteur } from "@/data/expediteursCourrier";
+import { getTemplate } from "@/data/objetTemplates";
 import { useSettings } from "@/context/SettingsContext";
 import type { Courrier } from "@/types/game";
 
@@ -211,7 +212,7 @@ function renderMission(c: Courrier) {
         <div>
           <strong>Objet{p.cibles.length > 1 ? "s" : ""} recherché{p.cibles.length > 1 ? "s" : ""} :</strong>{" "}
           {p.cibles
-            .map((c) => `${c.templateId}${c.etatMin ? ` (min. ${c.etatMin})` : ""}`)
+            .map((c) => `${getTemplate(c.templateId)?.nom ?? c.templateId}${c.etatMin ? ` (min. ${c.etatMin})` : ""}`)
             .join(", ")}
         </div>
         <div>

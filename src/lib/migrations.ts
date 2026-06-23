@@ -468,7 +468,7 @@ function appliquerMigrations(loaded: GameState): GameState {
         if (dejaResolu.has(c)) continue;
         ajout.push({ courrierId: c, statut: "active" });
       }
-      // Marque les courriers correspondants comme lus pour éviter le badge non-lu.
+      // Ajoute une résolution "active" pour chaque mission de test injectée.
       return [...base, ...ajout];
     })(),
   };

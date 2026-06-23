@@ -37,6 +37,9 @@
     ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
+    },
+    "iOS": {
+      "minimumSystemVersion": "13.0"
     }
   }
 }
