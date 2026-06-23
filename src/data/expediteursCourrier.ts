@@ -25,6 +25,14 @@ export const EXPEDITEURS: Record<string, ExpediteurDef> = {
     avatar: "/personas/commanditaires/maman.webp",
     signature: "Avec tout mon amour,\nMaman",
   },
+  "grand-pere": {
+    id: "grand-pere",
+    nom: "Grand-père",
+    personnalite: "Antiquaire disparu",
+    relation: "Grand-père",
+    avatar: "/personas/commanditaires/grand-pere.webp",
+    signature: "À toi de jouer, petit.\nGrand-père",
+  },
   "jeux-video": {
     id: "jeux-video",
     nom: "Le Joueur du Vide-grenier",
