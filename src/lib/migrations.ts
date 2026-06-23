@@ -1,5 +1,6 @@
 import {
   INITIAL_JOUR,
+  type Courrier,
   type EtatObjet,
   type GameState,
   type ObjetEnVitrine,
@@ -132,6 +133,25 @@ export function migrerSauvegarde(loaded: GameState): GameState {
     );
     return remapped;
   }
+}
+
+/**
+ * Normalise un payload mission de l'ancien format (cible unique) vers le
+ * nouveau (cibles[] + categorie). Idempotent : un payload déjà au nouveau
+ * format est retourné inchangé.
+ */
+function normaliserMissionPayload(c: Courrier): Courrier {
+  if (c.payload.type !== "mission") return c;
+  const p = c.payload as Record<string, unknown>;
+  if (Array.isArray(p.cibles) && typeof p.categorie === "string") return c;
+  const cibles = Array.isArray(p.cibles)
+    ? (p.cibles as unknown[])
+    : p.cible
+      ? [p.cible]
+      : [];
+  const next = { ...p, categorie: (p.categorie as string) ?? "secondaire", cibles };
+  delete (next as { cible?: unknown }).cible;
+  return { ...c, payload: next as Courrier["payload"] };
 }
 
 function appliquerMigrations(loaded: GameState): GameState {
@@ -316,7 +336,9 @@ function appliquerMigrations(loaded: GameState): GameState {
     }
   }
 
-  const courriersMigrés = migrerCourriers(loaded.courriers);
+  const courriersMigrés = migrerCourriers(loaded.courriers).map(
+    normaliserMissionPayload,
+  );
   const declencheursLoaded = Array.isArray(
     (loaded as Partial<GameState>).declencheursDeclenches,
   )

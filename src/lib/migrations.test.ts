@@ -339,3 +339,32 @@ describe("migrerSauvegarde — garde anti-régression de version", () => {
     expect(r.version).toBe(SAVE_VERSION);
   });
 });
+
+describe("migrerSauvegarde — missions cible→cibles", () => {
+  it("convertit l'ancien champ cible en cibles[] et ajoute categorie", () => {
+    const save = createMockGameState();
+    (save as unknown as { courriers: unknown[] }).courriers = [
+      {
+        id: "m1",
+        type: "mission",
+        jourRecu: 1,
+        lu: true,
+        payload: {
+          type: "mission",
+          expediteurId: "maman",
+          titre: "Vieux format",
+          corps: [],
+          cible: { templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" },
+          recompense: { argent: 50 },
+        },
+      },
+    ];
+    const out = migrerSauvegarde(save);
+    const p = out.courriers[0].payload;
+    expect(p.type).toBe("mission");
+    if (p.type !== "mission") return;
+    expect(p.categorie).toBe("secondaire");
+    expect(p.cibles).toEqual([{ templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" }]);
+    expect((p as unknown as { cible?: unknown }).cible).toBeUndefined();
+  });
+});
