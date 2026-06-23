@@ -1,9 +1,17 @@
+import type { CategorieObjet } from "@/types/game";
+
 export interface ExpediteurDef {
   id: string;
-  /** Nom affiché dans la signature et le badge. */
+  /** Nom affiché (signature, ligne du carnet). */
   nom: string;
-  /** Lien avec le joueur (« Mère », « Ami d'enfance », « Maire »…). */
-  relation: string;
+  /** Personnalité affichée sous le titre de la quête. */
+  personnalite: string;
+  /** Catégorie d'objets que ce commanditaire demande (sert au sous-projet 2). */
+  domaine?: CategorieObjet;
+  /** Lien avec le joueur (optionnel). */
+  relation?: string;
+  /** Chemin du portrait (webp dans public/personas/commanditaires/). */
+  avatar?: string;
   /** Formule de fin de lettre (multi-ligne ok). */
   signature: string;
 }
@@ -12,8 +20,42 @@ export const EXPEDITEURS: Record<string, ExpediteurDef> = {
   maman: {
     id: "maman",
     nom: "Maman",
+    personnalite: "Ta mère",
     relation: "Mère",
+    avatar: "/personas/commanditaires/maman.webp",
     signature: "Avec tout mon amour,\nMaman",
+  },
+  "jeux-video": {
+    id: "jeux-video",
+    nom: "Théo",
+    personnalite: "Passionné de jeux vidéo",
+    domaine: "Jeux & Loisirs",
+    avatar: "/personas/commanditaires/jeux-video.webp",
+    signature: "À plus dans le pixel,\nThéo",
+  },
+  "set-designer": {
+    id: "set-designer",
+    nom: "Margaux",
+    personnalite: "Set designer",
+    domaine: "Maison",
+    avatar: "/personas/commanditaires/set-designer.webp",
+    signature: "Merci d'avance,\nMargaux",
+  },
+  mode: {
+    id: "mode",
+    nom: "Camille",
+    personnalite: "Designeuse de mode",
+    domaine: "Mode",
+    avatar: "/personas/commanditaires/mode.webp",
+    signature: "Avec style,\nCamille",
+  },
+  art: {
+    id: "art",
+    nom: "M. Aubert",
+    personnalite: "Collectionneur d'art",
+    domaine: "Objets d'art",
+    avatar: "/personas/commanditaires/art.webp",
+    signature: "Bien à vous,\nM. Aubert",
   },
 };
 
