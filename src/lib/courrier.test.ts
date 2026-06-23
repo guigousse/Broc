@@ -4,6 +4,7 @@ import {
   ID_LETTRE_MAMAN_DEBUT,
   creerCourrierMission,
   creerLettreMamanDebut,
+  creerMissionsTest,
   expireMissions,
   injecterLettreMamanSiAbsente,
   migrerCourriers,
@@ -109,7 +110,8 @@ describe("creerCourrierMission", () => {
       expediteurId: "joueur_vide_grenier",
       titre: "Une quête vidéoludique",
       corps: ["Cher chineur,", "Trouve-moi **Ocarina of Time**."],
-      cible: { templateId: "jeu.zelda_ocarina", etatMin: "Très bon" },
+      categorie: "secondaire",
+      cibles: [{ templateId: "jeu.zelda_ocarina", etatMin: "Très bon" }],
       jourLimite: 12,
       recompense: { argent: 200 },
     });
@@ -117,8 +119,8 @@ describe("creerCourrierMission", () => {
     expect(c.lu).toBe(false);
     expect(c.jourRecu).toBe(5);
     if (c.payload.type === "mission") {
-      expect(c.payload.cible.templateId).toBe("jeu.zelda_ocarina");
-      expect(c.payload.cible.etatMin).toBe("Très bon");
+      expect(c.payload.cibles[0].templateId).toBe("jeu.zelda_ocarina");
+      expect(c.payload.cibles[0].etatMin).toBe("Très bon");
       expect(c.payload.jourLimite).toBe(12);
       expect(c.payload.recompense.argent).toBe(200);
     } else {
@@ -136,10 +138,11 @@ describe("expireMissions", () => {
       lu: true,
       payload: {
         type: "mission",
+        categorie: "secondaire",
         expediteurId: "x",
         titre: "T",
         corps: [],
-        cible: { templateId: "tpl" },
+        cibles: [{ templateId: "tpl" }],
         jourLimite,
         recompense: { argent: 50 },
       },
@@ -169,5 +172,18 @@ describe("expireMissions", () => {
     ];
     const out = expireMissions(missions, courriers, 100);
     expect(out).toEqual(missions);
+  });
+});
+
+describe("creerMissionsTest — nouveau format", () => {
+  it("produit des missions avec categorie et cibles[]", () => {
+    const ms = creerMissionsTest(1);
+    for (const c of ms) {
+      expect(c.payload.type).toBe("mission");
+      if (c.payload.type !== "mission") continue;
+      expect(["principale", "secondaire"]).toContain(c.payload.categorie);
+      expect(Array.isArray(c.payload.cibles)).toBe(true);
+      expect(c.payload.cibles.length).toBeGreaterThan(0);
+    }
   });
 });

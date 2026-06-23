@@ -1,7 +1,8 @@
 import type {
   Courrier,
   CourrierPayloadMission,
-  EtatObjet,
+  MissionCategorie,
+  MissionCible,
   MissionResolution,
 } from "@/types/game";
 
@@ -70,16 +71,18 @@ export function creerCourrierMission(args: {
   expediteurId: string;
   titre: string;
   corps: string[];
-  cible: { templateId: string; etatMin?: EtatObjet };
+  categorie: MissionCategorie;
+  cibles: MissionCible[];
   jourLimite?: number;
   recompense: { argent: number };
 }): Courrier {
   const payload: CourrierPayloadMission = {
     type: "mission",
+    categorie: args.categorie,
     expediteurId: args.expediteurId,
     titre: args.titre,
     corps: args.corps,
-    cible: args.cible,
+    cibles: args.cibles,
     recompense: args.recompense,
     ...(args.jourLimite !== undefined ? { jourLimite: args.jourLimite } : {}),
   };
@@ -116,7 +119,8 @@ export function creerMissionsTest(jour: number): Courrier[] {
           "Mon abat-jour vient de rendre l'âme et je rêve d'une **lampe à pétrole ancienne** en laiton, ces grandes lanternes qu'on voit dans les vieilles auberges.",
           "Si tu en croises une chez un de tes brocanteurs, je t'en serais infiniment reconnaissante. Je te dédommagerai bien sûr.",
         ],
-        cible: { templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" },
+        categorie: "principale",
+        cibles: [{ templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" }],
         jourLimite: jour + 12,
         recompense: { argent: 90 },
       }),
@@ -133,7 +137,8 @@ export function creerMissionsTest(jour: number): Courrier[] {
           "Je collectionne les objets de cuisine d'antan et il me manque une **balance romaine en fonte ancienne** en bon état pour compléter mon étagère.",
           "Je suis prête à y mettre le prix si la pièce est belle.",
         ],
-        cible: { templateId: "br.balance_romaine_fonte", etatMin: "Très bon" },
+        categorie: "secondaire",
+        cibles: [{ templateId: "br.balance_romaine_fonte", etatMin: "Très bon" }],
         jourLimite: jour + 20,
         recompense: { argent: 160 },
       }),
@@ -150,7 +155,8 @@ export function creerMissionsTest(jour: number): Courrier[] {
           "Mon vieux pick-up cherche un compagnon : un **vinyle de pop britannique des années 60**, en état correct suffirait à me combler.",
           "Pas pressé — tu as un mois pour le trouver.",
         ],
-        cible: { templateId: "mus.vinyle_des_scarabees_passage_cloute" },
+        categorie: "secondaire",
+        cibles: [{ templateId: "mus.vinyle_des_scarabees_passage_cloute" }],
         jourLimite: jour + 30,
         recompense: { argent: 55 },
       }),
