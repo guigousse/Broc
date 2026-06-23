@@ -158,7 +158,7 @@ export function estDebloquee(
   );
 }
 
-function evaluerCondition(
+export function evaluerCondition(
   c: ConditionDeblocage,
   state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
   brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,

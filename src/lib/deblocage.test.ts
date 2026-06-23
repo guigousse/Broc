@@ -5,6 +5,7 @@ import {
   calculerBrocantesDebloqueesParTier,
   descriptionCondition,
   estDebloquee,
+  evaluerCondition,
 } from "./deblocage";
 import {
   createMockBrocante,
@@ -295,5 +296,11 @@ describe("estDebloquee — type ET (composition)", () => {
         createMockGameState(),
       ),
     ).toBe(true);
+  });
+});
+
+describe("evaluerCondition (exporté)", () => {
+  it("retourne true pour la condition depart", () => {
+    expect(evaluerCondition({ type: "depart" }, createMockGameState())).toBe(true);
   });
 });
