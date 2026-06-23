@@ -22,9 +22,9 @@ import {
 } from "@/lib/collection";
 import {
   injecterLettreMamanSiAbsente,
-  injecterMissionsTestSiAbsentes,
   migrerCourriers,
 } from "@/lib/courrier";
+import { debloquerQuetesPrincipales } from "@/lib/quetes/principales";
 import { tirerMeteoSemaine } from "@/lib/meteo";
 import { genererTendances } from "@/lib/tendances";
 import { ALL_TEMPLATES } from "@/data/objetTemplates";
@@ -352,18 +352,35 @@ function appliquerMigrations(loaded: GameState): GameState {
     declencheursLoaded,
     jourCourant,
   );
-  const apresMissionsTest = injecterMissionsTestSiAbsentes(
-    apresMaman.courriers,
-    [...declencheursLoaded, ...apresMaman.declencheursAjoutes],
+  const apresInjection = {
+    courriers: apresMaman.courriers,
+    declencheursAjoutes: [...apresMaman.declencheursAjoutes],
+  };
+
+  // Amorce de l'arc principal au chargement : on injecte le prochain chapitre
+  // dû (chapitre 1 pour une partie naissante) ainsi que sa résolution active.
+  const missionsExistantes: GameState["missions"] = Array.isArray(loaded.missions)
+    ? loaded.missions
+    : [];
+  const amorce = debloquerQuetesPrincipales(
+    {
+      ...(loaded as GameState),
+      // Les conditions de déblocage lisent collection/historique/budget/jour :
+      // on s'appuie sur les valeurs migrées, pas sur le brut `loaded`.
+      jourActuel: jourCourant,
+      budget: loaded.budget ?? 0,
+      historique,
+      collection,
+      courriers: apresInjection.courriers,
+      missions: missionsExistantes,
+    },
     jourCourant,
   );
-  const apresInjection = {
-    courriers: apresMissionsTest.courriers,
-    declencheursAjoutes: [
-      ...apresMaman.declencheursAjoutes,
-      ...apresMissionsTest.declencheursAjoutes,
-    ],
-  };
+  const courriersFinaux = [...apresInjection.courriers, ...amorce];
+  const missionsFinales: GameState["missions"] = [
+    ...missionsExistantes,
+    ...amorce.map((c) => ({ courrierId: c.id, statut: "active" as const })),
+  ];
 
   return {
     ...loaded,
@@ -402,7 +419,7 @@ function appliquerMigrations(loaded: GameState): GameState {
         : tirerCelebrite(),
     influenceUtilisee: loaded.influenceUtilisee ?? false,
     dernierLoyer: loaded.dernierLoyer ?? null,
-    courriers: apresInjection.courriers,
+    courriers: courriersFinaux,
     niveauAtelier:
       (loaded as Partial<GameState>).niveauAtelier === 2 ||
       (loaded as Partial<GameState>).niveauAtelier === 3
@@ -456,20 +473,6 @@ function appliquerMigrations(loaded: GameState): GameState {
       if (Array.isArray(existing) && existing.length > 0) return existing;
       return reconstruireGrandLivre(historique, loaded.budget ?? 0);
     })(),
-    missions: (() => {
-      const existing = (loaded as Partial<GameState>).missions;
-      const base: GameState["missions"] = Array.isArray(existing) ? existing : [];
-      // Ouvre automatiquement les missions de test injectées : on les fait
-      // basculer en `active` pour qu'elles apparaissent immédiatement dans le
-      // carnet de commande, sans nécessiter un passage par la lettre.
-      const dejaResolu = new Set(base.map((m) => m.courrierId));
-      const ajout: GameState["missions"] = [];
-      for (const c of apresMissionsTest.declencheursAjoutes) {
-        if (dejaResolu.has(c)) continue;
-        ajout.push({ courrierId: c, statut: "active" });
-      }
-      // Ajoute une résolution "active" pour chaque mission de test injectée.
-      return [...base, ...ajout];
-    })(),
+    missions: missionsFinales,
   };
 }

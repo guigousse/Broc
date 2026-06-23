@@ -95,120 +95,14 @@ export function creerCourrierMission(args: {
   };
 }
 
-/** ID stable des missions de démo (auto-injectées au démarrage). */
-export const ID_MISSIONS_TEST = [
-  "demo_maman_vitrine",
-  "demo_theo_stand",
-  "demo_clara_tournage",
-  "demo_arianne_defile",
-  "demo_paulhenry_galerie",
-] as const;
+/** Conservé vide : les missions de démo ont été retirées au profit du
+ *  générateur de quêtes + de l'arc principal (cf. src/lib/quetes/). */
+export const ID_MISSIONS_TEST = [] as const;
 
-/** Missions de démonstration injectées au démarrage pour faire vivre le carnet
- *  de commandes. Réparties sur les commanditaires (catégories principale /
- *  secondaire, mono- et multi-cibles) pour exercer l'UI. Marquées `lu: true`
- *  pour apparaître directement dans le carnet. */
-export function creerMissionsTest(jour: number): Courrier[] {
-  return [
-    {
-      ...creerCourrierMission({
-        id: "demo_maman_vitrine",
-        jour,
-        expediteurId: "maman",
-        titre: "La vitrine de Maman",
-        corps: [
-          "Mon enfant,",
-          "Je refais la déco du salon et il me faudrait deux pièces : une **lampe à pétrole ancienne** en laiton et un joli **pichet en faïence émaillée**.",
-          "Prends ton temps, mais ne les oublie pas !",
-        ],
-        categorie: "principale",
-        cibles: [
-          { templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" },
-          { templateId: "ma.pichet_faience_emaillee" },
-        ],
-        jourLimite: jour + 40,
-        recompense: { argent: 130 },
-      }),
-      lu: true,
-    },
-    {
-      ...creerCourrierMission({
-        id: "demo_theo_stand",
-        jour,
-        expediteurId: "jeux-video",
-        titre: "Le stand rétro du Vide-grenier",
-        corps: [
-          "Salut !",
-          "Je monte un stand rétro pour la convention : il me manque une **manette**, un **jeu de cartes de voyage** et un **jeu de culture générale**.",
-          "Trois pièces et c'est bon — je te revaudrai ça grassement.",
-        ],
-        categorie: "principale",
-        cibles: [
-          { templateId: "jx.manette_vibraduo" },
-          { templateId: "jx.jeu_de_cartes_long_trajet_annees_60" },
-          { templateId: "jx.jeu_question_pour_un_fromage_culture_generale" },
-        ],
-        jourLimite: jour + 45,
-        recompense: { argent: 200 },
-      }),
-      lu: true,
-    },
-    {
-      ...creerCourrierMission({
-        id: "demo_clara_tournage",
-        jour,
-        expediteurId: "set-designer",
-        titre: "Décor d'un tournage",
-        corps: [
-          "Bonjour,",
-          "Pour un décor d'époque, je cherche une **cafetière émaillée des années 50** en bon état. Le détail qui fera vrai à l'image.",
-        ],
-        categorie: "secondaire",
-        cibles: [{ templateId: "ma.cafetiere_emaillee_50s", etatMin: "Bon" }],
-        jourLimite: jour + 30,
-        recompense: { argent: 70 },
-      }),
-      lu: true,
-    },
-    {
-      ...creerCourrierMission({
-        id: "demo_arianne_defile",
-        jour,
-        expediteurId: "mode",
-        titre: "Pièces vintage pour le défilé",
-        corps: [
-          "Cher chineur,",
-          "Ma prochaine collection mêle le vintage : il me faut une **veste en jean délavée** et une **casquette gavroche**.",
-          "Le bon vêtement raconte une histoire.",
-        ],
-        categorie: "secondaire",
-        cibles: [
-          { templateId: "mo.veste_jean_delavee" },
-          { templateId: "mo.casquette_gavroche_60s" },
-        ],
-        jourLimite: jour + 35,
-        recompense: { argent: 95 },
-      }),
-      lu: true,
-    },
-    {
-      ...creerCourrierMission({
-        id: "demo_paulhenry_galerie",
-        jour,
-        expediteurId: "art",
-        titre: "Une pièce pour la galerie",
-        corps: [
-          "Cher ami,",
-          "Ma galerie manque d'une **gravure ancienne du XIXe** pour compléter l'accrochage. Une belle pièce, naturellement.",
-        ],
-        categorie: "secondaire",
-        cibles: [{ templateId: "art.gravure_ancienne_xixe" }],
-        jourLimite: jour + 50,
-        recompense: { argent: 80 },
-      }),
-      lu: true,
-    },
-  ];
+/** Plus de missions de démo : les quêtes proviennent du générateur + de l'arc
+ *  principal (cf. src/lib/quetes/). Conservé vide pour compat d'API. */
+export function creerMissionsTest(_jour: number): Courrier[] {
+  return [];
 }
 
 /** Injecte les missions de test dans une sauvegarde si aucune n'est déjà

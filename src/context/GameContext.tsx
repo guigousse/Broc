@@ -55,6 +55,7 @@ import {
   getStockageTierParNiveau,
 } from "@/data/stockage";
 import { stockageEstPlein } from "@/lib/stockage";
+import { tickQuetes } from "@/lib/quetes/tick";
 import {
   initCollection,
   marquerDejaPossede as marquerDejaPossedeFn,
@@ -197,7 +198,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state, isHydrated, toast]);
 
   const nouvellePartie = useCallback(() => {
-    setState({
+    const initial: GameState = {
       version: SAVE_VERSION,
       budget: INITIAL_BUDGET,
       jourActuel: INITIAL_JOUR,
@@ -226,7 +227,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       declencheursDeclenches: [ID_LETTRE_MAMAN_DEBUT],
       grandLivre: [],
       missions: [],
-    });
+    };
+    // Amorce de l'arc principal (chapitre 1) à la création. Le `rng` 0,99
+    // garantit qu'aucune quête secondaire n'est générée dès le jour 1.
+    const tick = tickQuetes(initial, initial.jourActuel, () => 0.99);
+    setState({ ...initial, courriers: tick.courriers, missions: tick.missions });
     router.push("/bureau");
   }, [router]);
 
@@ -326,9 +331,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       );
       const baseAvecMissions: GameState = { ...base, missions: missionsApresExpiration };
 
+      // Tick des quêtes : déblocage de l'arc principal + génération secondaire.
+      const tick = tickQuetes(baseAvecMissions, nouveauJour);
+      const baseAvecQuetes: GameState = {
+        ...baseAvecMissions,
+        courriers: tick.courriers,
+        missions: tick.missions,
+      };
+
       // Loyer (si refresh hebdo)
       if (tierStockage) {
-        return appendLedger(baseAvecMissions, {
+        return appendLedger(baseAvecQuetes, {
           jour: nouveauJour,
           kind: "loyer",
           designation: `Loyer · ${tierStockage.nom}`,
@@ -336,7 +349,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           depense: tierStockage.loyerHebdo,
         });
       }
-      return baseAvecMissions;
+      return baseAvecQuetes;
     });
   }, []);
 
