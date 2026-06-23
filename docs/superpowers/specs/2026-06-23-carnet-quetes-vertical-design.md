@@ -90,9 +90,10 @@ pastille avec initiale.
 
 ### Livraison (`livrerMission`, `GameContext`)
 
-- Vérifie la livrabilité, **retire un objet par cible** (le moins bon état
-  satisfaisant en priorité, pour que le joueur garde ses meilleures pièces… à
-  confirmer ; par défaut : premier objet satisfaisant).
+- Vérifie la livrabilité, **retire un objet par cible** en consommant **le
+  moins bon état satisfaisant en priorité** (le joueur garde ses meilleures
+  pièces). Si plusieurs cibles partagent un `templateId`, on réserve des objets
+  distincts.
 - Crédite `recompense.argent` (entrée grand livre `mission_recompense`).
 - Passe la `MissionResolution` en `livree` + `jourResolution`.
 
@@ -177,13 +178,13 @@ Point d'entrée inchangé : bouton « carnet rouge » du bureau
   exclu).
 - `migrations.test.ts` : `cible` → `cibles`, `categorie` par défaut.
 - `courrier.test.ts` : missions de test valides au nouveau format.
+- `GameContext`/livraison : `livrerMission` retire bien un objet par cible, le
+  **moins bon état d'abord**, crédite la récompense, passe en `livree`.
 - Tests composant (jsdom) pour `CarnetNotesOverlay` : sections, accordéon
   (1 ouvert max), bouton Livrer grisé/actif.
 
 ## Risques / points ouverts
 
-- **Priorité de consommation** à la livraison (premier objet satisfaisant vs le
-  moins bon état) — défaut : premier satisfaisant ; à affiner si besoin.
 - Les **avatars** des nouveaux commanditaires dépendent de la fourniture des
   portraits ; fallback pastille en attendant.
 - Le contenu réel des quêtes (principales scénarisées) arrive au sous-projet 2 ;
