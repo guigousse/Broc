@@ -71,7 +71,13 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
   {
     id: "principale_ch4",
     ordre: 4,
-    condition: { type: "brocantesDebloquees", tier: 3, nombre: 5 },
+    condition: {
+      type: "ET",
+      conditions: [
+        { type: "valeurCollection", montant: 5000 },
+        { type: "brocantesDebloquees", tier: 3, nombre: 5 },
+      ],
+    },
     payload: {
       titre: "L'invitation",
       corps: [
@@ -87,7 +93,13 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
   {
     id: "principale_ch5",
     ordre: 5,
-    condition: { type: "brocantesDebloquees", tier: 3, nombre: 5 },
+    condition: {
+      type: "ET",
+      conditions: [
+        { type: "valeurCollection", montant: 5000 },
+        { type: "brocantesDebloquees", tier: 3, nombre: 5 },
+      ],
+    },
     payload: {
       titre: "Les bijoux de la reine",
       corps: [

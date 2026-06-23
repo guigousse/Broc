@@ -104,23 +104,6 @@ export const ID_MISSIONS_TEST = [] as const;
 export function creerMissionsTest(_jour: number): Courrier[] {
   return [];
 }
-
-/** Injecte les missions de test dans une sauvegarde si aucune n'est déjà
- *  présente / déclenchée. Idempotent. */
-export function injecterMissionsTestSiAbsentes(
-  courriers: Courrier[],
-  declencheursDeclenches: string[],
-  jourCourant: number,
-): { courriers: Courrier[]; declencheursAjoutes: string[] } {
-  const dejaPresentes = new Set([...courriers.map((c) => c.id), ...declencheursDeclenches]);
-  const aInjecter = creerMissionsTest(jourCourant).filter((c) => !dejaPresentes.has(c.id));
-  if (aInjecter.length === 0) return { courriers, declencheursAjoutes: [] };
-  return {
-    courriers: [...courriers, ...aInjecter],
-    declencheursAjoutes: aInjecter.map((c) => c.id),
-  };
-}
-
 /**
  * Marque comme expirées les missions actives dont le courrier porte un
  * `jourLimite` dépassé. Retourne un nouveau tableau.
