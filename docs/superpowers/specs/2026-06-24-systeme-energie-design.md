@@ -45,6 +45,11 @@ Transformer les « tickets » en **Énergie** :
 - **Énergie = 0 à l'entrée** : entrée **bloquée** (toast « Plus d'énergie »), au même
   titre que le blocage budget existant (`raison=budget`). Pas de modale auto ; la
   recharge se fait via le « + » du header.
+- **Anti-triche horloge** : la recharge ne doit **jamais** être avançable en
+  trafiquant l'heure du téléphone. Approche retenue = **temps de confiance** via une
+  abstraction `TimeSource` (header `Date` d'un endpoint HTTPS aujourd'hui, temps
+  serveur Supabase plus tard), couplée à une **horloge monotone** (`performance.now()`,
+  insensible aux changements d'heure système) pour le tick en session. Voir §2bis.
 
 ## Architecture
 
@@ -64,11 +69,16 @@ Transformer les « tickets » en **Énergie** :
 ```ts
 /** Énergie courante (0..ENERGIE_MAX). Démarre pleine. */
 energie: number;
-/** Timestamp (Date.now()) de l'ancre du dernier calcul d'énergie. */
+/** Ancre du dernier calcul d'énergie : timestamp de TEMPS DE CONFIANCE
+ *  (ms epoch), pas l'horloge brute du device. Voir §2bis. */
 energieDerniereMaj: number;
-/** Compteur de pubs de recharge regardées dans le jour calendaire courant. */
+/** Compteur de pubs de recharge regardées dans le jour de confiance courant. */
 pubsRecharge: { jourCle: string; compte: number };
 ```
+
+> ⚠️ `energieDerniereMaj` est toujours exprimé en **temps de confiance** (epoch ms).
+> Le crédit d'énergie se calcule contre le temps de confiance courant (§2bis), jamais
+> contre `Date.now()` brut — c'est ce qui neutralise l'avance d'horloge.
 
 Constantes centrales (dans `src/lib/energie.ts`) :
 ```ts
@@ -78,12 +88,58 @@ export const PUBS_MAX_PAR_JOUR = 10;
 export const ENERGIE_PAR_PUB = 1;
 ```
 
-`jourCle` = date locale `YYYY-MM-DD` (helper `cleJour(now)` dans `energie.ts`).
+`jourCle` = date `YYYY-MM-DD` dérivée du **temps de confiance** (helper `cleJour(now)`
+dans `energie.ts`).
+
+### 2bis. Temps de confiance & anti-triche — `src/lib/temps/`
+
+But : neutraliser l'avance/recul de l'horloge système. Deux briques.
+
+**a) `TimeSource` (temps de confiance réseau)** — `src/lib/temps/timeSource.ts`
+```ts
+export interface TimeSource {
+  /** Temps de confiance courant (ms epoch), ou null si indisponible (offline). */
+  maintenant(): Promise<number | null>;
+}
+```
+- `HttpDateTimeSource` (actuel) : `fetch` (HEAD) d'un endpoint HTTPS, lecture du
+  header `Date` (contrôlé serveur, pas par le device). Timeout court, renvoie `null`
+  hors ligne / en échec.
+- Futur : `SupabaseTimeSource` (RPC `select now()`), même interface — swap à un seul
+  point d'injection (`getTimeSource()`).
+
+**b) Horloge monotone (tick en session, sans réseau)** — `src/lib/temps/horloge.ts`
+- À chaque **sync** réussie, on mémorise un couple de référence
+  `ancre = { confiance: number, mono: number }` où `mono = performance.now()`
+  (monotone, insensible aux changements d'heure système).
+- Temps de confiance courant à tout instant **sans réseau** :
+  `tempsConfianceCourant(ancre) = ancre.confiance + (performance.now() - ancre.mono)`.
+- Conséquence : une fois UNE sync obtenue au lancement, toute la session (même hors
+  ligne) tique sur un temps non falsifiable. Avancer l'horloge système n'a aucun effet.
+
+**Politique de synchronisation & fallback**
+1. Au lancement (et au retour de focus, et périodiquement ~10 min) : `maintenant()`.
+   - Succès → pose l'ancre `{confiance, mono}` ; settle l'énergie contre ce temps.
+   - Échec (offline) **mais ancre déjà posée cette session** → on continue sur la
+     monotone (extrapolation), parfaitement sûr.
+   - Échec **et aucune ancre** (démarrage à froid hors ligne) → fallback **prudent** :
+     on n'utilise PAS `Date.now()` pour créditer ; l'énergie reste **figée** à la
+     valeur persistée jusqu'à la première sync. Anti-recul appliqué. (Compromis sûr :
+     un démarrage à froid hors ligne ne recharge pas tant qu'on n'a pas vérifié l'heure.)
+2. Anti-recul permanent : si le temps de confiance calculé est **antérieur** à
+   `energieDerniereMaj`, on ré-ancre sans créditer (jamais d'énergie négative ni de
+   « banque » négative).
+3. Réconciliation : le crédit se calcule toujours
+   `floor((tempsConfiance - energieDerniereMaj) / 30min)` → un joueur légitimement
+   absent 3 h récupère son énergie dès la 1ʳᵉ sync au retour, sans jamais faire
+   confiance à l'horloge locale.
 
 ### 3. Module pur — `src/lib/energie.ts` (testable, sans horloge réelle)
 
-Toutes les fonctions prennent `now: number` en paramètre (aucun `Date.now()`
-caché → tests déterministes).
+Toutes les fonctions prennent `now: number` (= **temps de confiance** injecté par
+l'appelant) en paramètre — aucun `Date.now()`/`performance.now()` caché → tests
+déterministes. Le câblage temps de confiance (§2bis) vit dans `src/lib/temps/` et
+dans `GameContext`, pas dans ce module pur.
 
 - `cleJour(now): string` — clé de jour calendaire local `YYYY-MM-DD`.
 - `settleEnergie(state, now): { energie, energieDerniereMaj }`
@@ -120,20 +176,30 @@ export interface AdProvider {
 
 ### 5. Actions `GameContext` (`src/context/GameContext.tsx`)
 
-- État : 3 nouveaux champs initialisés dans `nouvellePartie` :
-  `energie: ENERGIE_MAX`, `energieDerniereMaj: Date.now()`,
-  `pubsRecharge: { jourCle: cleJour(Date.now()), compte: 0 }`.
-- `consommerEnergie(n: number)` : `settleEnergie` puis `energie = max(0, energie - n)`.
+Le contexte expose le **temps de confiance courant** (§2bis) via un petit hook
+interne (`useTempsConfiance`) qui maintient l'ancre `{confiance, mono}` et fournit
+`tempsConfianceCourant()`. Toutes les actions ci-dessous passent ce temps de
+confiance comme `now` au module pur `energie.ts` — jamais `Date.now()` brut.
+
+- État : 3 nouveaux champs initialisés dans `nouvellePartie`. À la création, on
+  tente une sync ; en attendant on amorce avec `Date.now()` comme valeur d'ancre
+  (partie neuve → énergie pleine, pas d'enjeu de triche au jour 1) :
+  `energie: ENERGIE_MAX`, `energieDerniereMaj: <temps de confiance | Date.now()>`,
+  `pubsRecharge: { jourCle: cleJour(<idem>), compte: 0 }`.
+- `consommerEnergie(n: number)` : `settleEnergie(state, tempsConfiance)` puis
+  `energie = max(0, energie - n)`.
 - `crediterEnergiePub()` : `settleEnergie`, applique reset jour si besoin, si
   `restant > 0` → `energie = min(ENERGIE_MAX, energie + ENERGIE_PAR_PUB)` et
   `compte += 1`. No-op si plafond atteint.
-- `rafraichirEnergie()` : `settleEnergie` → persiste l'état. Appelé :
-  - au montage (hydratation),
-  - au retour de focus / `visibilitychange`,
+- `rafraichirEnergie()` : `settleEnergie(state, tempsConfiance)` → persiste l'état.
+  Appelé :
+  - au montage (hydratation), après tentative de sync,
+  - au retour de focus / `visibilitychange` (re-sync),
   - via un intervalle léger (~60 s) tant que l'app est ouverte.
+  - Si aucun temps de confiance disponible (cold start offline) → no-op (énergie figée).
 - L'affichage du header recalcule l'énergie/minuteur **en local chaque seconde**
-  (dérivé de `energie` + `energieDerniereMaj` via `energie.ts`), **sans** réécrire
-  l'état global → pas de sauvegarde chaque seconde.
+  (dérivé de `energie` + `energieDerniereMaj` + `tempsConfianceCourant()` via
+  `energie.ts`), **sans** réécrire l'état global → pas de sauvegarde chaque seconde.
 
 ### 6. Consommation à l'entrée (chiner + vente)
 
@@ -171,10 +237,15 @@ Composant `EnergieRecharge` (panneau/popover) ouvert par le « + » du header :
   - regen : +1 toutes les 30 min, plafonné à `ENERGIE_MAX` ;
   - conservation du reste (ancre avancée correctement) ;
   - plein → ancre = now (pas de banque) ;
-  - horloge reculée → tolérée ;
+  - temps de confiance reculé → ré-ancrage sans crédit (anti-recul) ;
   - `secondesAvantProchaine` cohérent / `null` si plein ;
   - reset quotidien des pubs sur changement de `cleJour` ;
   - `peutRegarderPub` au plafond.
+- `src/lib/temps/horloge.test.ts` : `tempsConfianceCourant` = ancre + delta
+  monotone ; immunité à un `now` système trafiqué (on injecte un faux
+  `performance.now`/ancre → le résultat ne dépend pas de l'heure système).
+- `src/lib/temps/timeSource` : `HttpDateTimeSource` renvoie `null` sur échec/timeout
+  (test avec `fetch` mocké) et un epoch sur header `Date` valide.
 - `src/lib/ads/adProvider` : le stub résout `{ rewarded: true }`.
 - `src/lib/migrations.test.ts` : `SAVE_VERSION === 5` ; défauts énergie posés sur
   un vieux save ; un save déjà v5 conserve ses valeurs.
@@ -182,6 +253,18 @@ Composant `EnergieRecharge` (panneau/popover) ouvert par le « + » du header :
 ## Hors périmètre (YAGNI)
 
 - Intégration réelle d'un SDK de pub (AdMob/Tauri) — seulement préparée via l'interface.
-- Persistance Supabase (localStorage uniquement, comme l'existant).
+- `SupabaseTimeSource` — préparée via l'interface `TimeSource`, branchée quand le
+  backend Supabase existera. Aujourd'hui : `HttpDateTimeSource` (header `Date`).
+- Persistance Supabase du `GameState` (localStorage uniquement, comme l'existant).
 - Coût d'énergie variable par tier ou par brocante (fixé à 1).
 - Achat d'énergie contre argent réel / in-app purchase.
+
+## Note importante (UX horloge réelle)
+
+La recharge dépend du **temps réel de confiance**, pas des « jours de jeu »
+(`jourActuel`). Conséquences assumées :
+- Fermer/rouvrir l'app plus tard crédite l'énergie écoulée (dès la 1ʳᵉ sync réseau).
+- Avancer/reculer l'horloge du téléphone **n'a aucun effet** (temps de confiance +
+  horloge monotone).
+- **Démarrage à froid hors ligne** (jamais synchronisé cette session) : l'énergie
+  reste **figée** jusqu'à la première vérification réseau — choix de sécurité assumé.
