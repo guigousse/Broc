@@ -20,6 +20,7 @@ import {
   estDebloquee,
 } from "@/lib/deblocage";
 import { genererSession } from "@/lib/chine";
+import { energieCourante } from "@/lib/energie";
 import { stockageEstPlein } from "@/lib/stockage";
 import { indexJourSemaine } from "@/lib/meteo";
 import {
@@ -44,6 +45,8 @@ export default function SessionChinePage() {
     marquerVuTemplate,
     marquerDejaPossedeTemplate,
     payerFraisBrocante,
+    tempsConfiance,
+    consommerEnergie,
   } = useGame();
   const { startCrowd, stopCrowd } = useSettings();
   useEffect(() => {
@@ -95,8 +98,13 @@ export default function SessionChinePage() {
       if (state.budget < frais) {
         return router.replace(`/chiner?raison=budget&id=${brocante.id}`);
       }
+      const maintenant = tempsConfiance() ?? Date.now();
+      if (energieCourante(state, maintenant) < 1) {
+        return router.replace(`/chiner?raison=energie&id=${brocante.id}`);
+      }
       entreePayeeRef.current = true;
       payerFraisBrocante(brocante.id, brocante.nom, frais);
+      consommerEnergie(1);
       const jourSemaine = indexJourSemaine(state.jourActuel);
       const celebriteAujourdhui =
         state.celebriteActuelle &&
@@ -116,7 +124,7 @@ export default function SessionChinePage() {
         marquerVuTemplate(it.objet.templateId);
       }
     }
-  }, [isHydrated, state, brocante, router, items, payerFraisBrocante]);
+  }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie]);
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (
