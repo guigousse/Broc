@@ -75,8 +75,6 @@ import { audioManager } from "@/lib/audio/audioManager";
 import {
   ENERGIE_MAX,
   ENERGIE_PAR_PUB,
-  cleJour,
-  compteursPubs,
   secondesAvantPlein,
   settleEnergie,
 } from "@/lib/energie";
@@ -268,15 +266,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!prev) return prev;
       const now = tempsConfiance() ?? Date.now();
       const settled = settleEnergie(prev, now);
-      const apresSettle = { ...prev, ...settled };
-      if (compteursPubs(apresSettle, now).restant <= 0) return apresSettle;
-      const jourCle = cleJour(now);
-      const compteActuel =
-        prev.pubsRecharge.jourCle === jourCle ? prev.pubsRecharge.compte : 0;
       return {
-        ...apresSettle,
+        ...prev,
+        ...settled,
         energie: Math.min(ENERGIE_MAX, settled.energie + ENERGIE_PAR_PUB),
-        pubsRecharge: { jourCle, compte: compteActuel + 1 },
       };
     });
   }, [tempsConfiance]);
@@ -323,18 +316,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Tout est no-op hors Tauri.
   const energie = state?.energie;
   const energieDerniereMaj = state?.energieDerniereMaj;
-  const pubsRecharge = state?.pubsRecharge;
   useEffect(() => {
     if (
       !isHydrated ||
       energie === undefined ||
       energieDerniereMaj === undefined ||
-      !pubsRecharge ||
       !notificationsDisponibles()
     ) {
       return;
     }
-    const snap = { energie, energieDerniereMaj, pubsRecharge };
+    const snap = { energie, energieDerniereMaj };
     let annule = false;
     (async () => {
       if (energie >= ENERGIE_MAX) {
@@ -350,7 +341,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return () => {
       annule = true;
     };
-  }, [isHydrated, energie, energieDerniereMaj, pubsRecharge, tempsConfiance]);
+  }, [isHydrated, energie, energieDerniereMaj, tempsConfiance]);
 
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {
@@ -384,7 +375,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       missions: [],
       energie: ENERGIE_MAX,
       energieDerniereMaj: Date.now(),
-      pubsRecharge: { jourCle: cleJour(Date.now()), compte: 0 },
     };
     // Amorce de l'arc principal (chapitre 1) à la création. Le `rng` 0,99
     // garantit qu'aucune quête secondaire n'est générée dès le jour 1.

@@ -2,22 +2,13 @@ import type { GameState } from "@/types/game";
 
 export const ENERGIE_MAX = 5;
 export const RECHARGE_INTERVAL_MS = 30 * 60 * 1000; // 30 min
-export const PUBS_MAX_PAR_JOUR = 10;
 export const ENERGIE_PAR_PUB = 1;
 
 /** Sous-ensemble de GameState manipulé par ce module (facilite tests + appels). */
 export type EnergieState = Pick<
   GameState,
-  "energie" | "energieDerniereMaj" | "pubsRecharge"
+  "energie" | "energieDerniereMaj"
 >;
-
-/** Clé de jour calendaire local `YYYY-MM-DD` à partir d'un epoch ms. */
-export function cleJour(now: number): string {
-  const d = new Date(now);
-  const mois = String(d.getMonth() + 1).padStart(2, "0");
-  const jour = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${mois}-${jour}`;
-}
 
 /**
  * Crédite l'énergie écoulée depuis l'ancre. `now` = TEMPS DE CONFIANCE (epoch ms),
@@ -78,16 +69,3 @@ export function secondesAvantPlein(
   return prochaine + paliersRestants * (RECHARGE_INTERVAL_MS / 1000);
 }
 
-/** Compteur de pubs du jour de confiance courant (reset implicite si nouveau jour). */
-export function compteursPubs(
-  state: EnergieState,
-  now: number,
-): { compte: number; restant: number } {
-  const compte =
-    state.pubsRecharge.jourCle === cleJour(now) ? state.pubsRecharge.compte : 0;
-  return { compte, restant: Math.max(0, PUBS_MAX_PAR_JOUR - compte) };
-}
-
-export function peutRegarderPub(state: EnergieState, now: number): boolean {
-  return compteursPubs(state, now).restant > 0;
-}

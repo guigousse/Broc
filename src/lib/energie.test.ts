@@ -2,14 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   ENERGIE_MAX,
   RECHARGE_INTERVAL_MS,
-  PUBS_MAX_PAR_JOUR,
-  cleJour,
   settleEnergie,
   energieCourante,
   secondesAvantProchaine,
   secondesAvantPlein,
-  compteursPubs,
-  peutRegarderPub,
   type EnergieState,
 } from "./energie";
 
@@ -19,7 +15,6 @@ function etat(partial: Partial<EnergieState> = {}): EnergieState {
   return {
     energie: 0,
     energieDerniereMaj: T0,
-    pubsRecharge: { jourCle: cleJour(T0), compte: 0 },
     ...partial,
   };
 }
@@ -95,26 +90,5 @@ describe("secondesAvantPlein", () => {
     const r = secondesAvantPlein(etat({ energie: 3 }), T0 + 10 * 60 * 1000);
     // 20 min pour le prochain +1, puis 1 palier de 30 min → 50 min.
     expect(r).toBe(20 * 60 + 30 * 60);
-  });
-});
-
-describe("pubs", () => {
-  it("compte le jour courant, restant = max - compte", () => {
-    const r = compteursPubs(etat({ pubsRecharge: { jourCle: cleJour(T0), compte: 3 } }), T0);
-    expect(r.compte).toBe(3);
-    expect(r.restant).toBe(PUBS_MAX_PAR_JOUR - 3);
-  });
-
-  it("reset au changement de jour calendaire", () => {
-    const veille = etat({ pubsRecharge: { jourCle: cleJour(T0), compte: 10 } });
-    const lendemain = T0 + 24 * 60 * 60 * 1000;
-    const r = compteursPubs(veille, lendemain);
-    expect(r.compte).toBe(0);
-    expect(r.restant).toBe(PUBS_MAX_PAR_JOUR);
-  });
-
-  it("peutRegarderPub faux au plafond du jour", () => {
-    const e = etat({ pubsRecharge: { jourCle: cleJour(T0), compte: PUBS_MAX_PAR_JOUR } });
-    expect(peutRegarderPub(e, T0)).toBe(false);
   });
 });

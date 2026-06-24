@@ -6,8 +6,6 @@ import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import {
   ENERGIE_MAX,
-  PUBS_MAX_PAR_JOUR,
-  compteursPubs,
   energieCourante,
   secondesAvantProchaine,
 } from "@/lib/energie";
@@ -58,8 +56,7 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
   const now = tempsConfiance() ?? Date.now();
   const energie = energieCourante(state, now);
   const restantSec = secondesAvantProchaine(state, now);
-  const { restant } = compteursPubs(state, now);
-  const pubIndisponible = enCours || restant <= 0;
+  const pubIndisponible = enCours;
 
   const regarderPub = async () => {
     if (pubIndisponible) return;
@@ -124,18 +121,8 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
           }}
         >
           <Zap size={16} />
-          {enCours
-            ? "Pub en cours…"
-            : restant <= 0
-              ? `Limite du jour atteinte (${PUBS_MAX_PAR_JOUR}/${PUBS_MAX_PAR_JOUR})`
-              : "Regarder une pub — +1 ⚡"}
+          {enCours ? "Pub en cours…" : "Regarder une pub — +1 ⚡"}
         </button>
-
-        {restant > 0 && !enCours && (
-          <p style={{ fontSize: 11, color: "var(--brass-700)", margin: "8px 0 0", textAlign: "center" }}>
-            {restant} pub{restant > 1 ? "s" : ""} restante{restant > 1 ? "s" : ""} aujourd'hui
-          </p>
-        )}
       </div>
     </div>
   );

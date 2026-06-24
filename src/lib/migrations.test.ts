@@ -245,8 +245,6 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     const migré = migrerSauvegarde({ version: 4 } as unknown as GameState);
     expect(migré.energie).toBe(5);
     expect(typeof migré.energieDerniereMaj).toBe("number");
-    expect(migré.pubsRecharge.compte).toBe(0);
-    expect(typeof migré.pubsRecharge.jourCle).toBe("string");
   });
 
   it("conserve les valeurs énergie d'un save déjà v5", () => {
@@ -255,12 +253,10 @@ describe("migrerSauvegarde — grand livre & missions", () => {
       ...base,
       energie: 2,
       energieDerniereMaj: 1234,
-      pubsRecharge: { jourCle: "2026-06-24", compte: 7 },
     } as GameState;
     const migré = migrerSauvegarde(v5);
     expect(migré.energie).toBe(2);
     expect(migré.energieDerniereMaj).toBe(1234);
-    expect(migré.pubsRecharge).toEqual({ jourCle: "2026-06-24", compte: 7 });
   });
 
   it("v3 → v4 : backfille xpGagne et templateId sur sessions existantes", () => {
