@@ -77,8 +77,15 @@ import {
   ENERGIE_PAR_PUB,
   cleJour,
   compteursPubs,
+  secondesAvantPlein,
   settleEnergie,
 } from "@/lib/energie";
+import {
+  notificationsDisponibles,
+  assurerPermission,
+  planifierPleinEnergie,
+  annulerPleinEnergie,
+} from "@/lib/notifications/energieNotif";
 import {
   poserAncre,
   tempsConfianceCourant,
@@ -309,6 +316,41 @@ export function GameProvider({ children }: { children: ReactNode }) {
       window.clearInterval(tickTimer);
     };
   }, [isHydrated, rafraichirEnergie]);
+
+  // Notification « énergie pleine » : (re)planifie une notif système à l'instant
+  // où l'énergie atteindra 5/5, et l'annule quand elle est pleine. La permission
+  // est demandée la 1ʳᵉ fois que l'énergie passe sous le max (= 1ʳᵉ consommation).
+  // Tout est no-op hors Tauri.
+  const energie = state?.energie;
+  const energieDerniereMaj = state?.energieDerniereMaj;
+  const pubsRecharge = state?.pubsRecharge;
+  useEffect(() => {
+    if (
+      !isHydrated ||
+      energie === undefined ||
+      energieDerniereMaj === undefined ||
+      !pubsRecharge ||
+      !notificationsDisponibles()
+    ) {
+      return;
+    }
+    const snap = { energie, energieDerniereMaj, pubsRecharge };
+    let annule = false;
+    (async () => {
+      if (energie >= ENERGIE_MAX) {
+        await annulerPleinEnergie();
+        return;
+      }
+      const ok = await assurerPermission();
+      if (annule || !ok) return;
+      const reste = secondesAvantPlein(snap, tempsConfiance() ?? Date.now());
+      if (reste === null) return;
+      await planifierPleinEnergie(Date.now() + reste * 1000);
+    })();
+    return () => {
+      annule = true;
+    };
+  }, [isHydrated, energie, energieDerniereMaj, pubsRecharge, tempsConfiance]);
 
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {
