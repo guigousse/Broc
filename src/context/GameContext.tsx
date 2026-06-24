@@ -72,6 +72,19 @@ import {
   rendementDemantelement,
 } from "@/lib/atelier";
 import { audioManager } from "@/lib/audio/audioManager";
+import {
+  ENERGIE_MAX,
+  ENERGIE_PAR_PUB,
+  cleJour,
+  compteursPubs,
+  settleEnergie,
+} from "@/lib/energie";
+import {
+  poserAncre,
+  tempsConfianceCourant,
+  type AncreTemps,
+} from "@/lib/temps/horloge";
+import { getTimeSource } from "@/lib/temps/timeSource";
 
 const gameRepository = createGameRepository();
 
@@ -145,6 +158,14 @@ interface GameActionsValue {
   payerFraisBrocante: (brocanteId: string, brocanteNom: string, montant: number) => void;
   /** Marque un courrier comme lu (utilisé par le QG). */
   marquerCourrierLu: (id: string) => void;
+  /** Temps de confiance courant (epoch ms) ou null si pas encore synchronisé. */
+  tempsConfiance: () => number | null;
+  /** Retire `n` énergie (settle d'abord ; jamais < 0). */
+  consommerEnergie: (n: number) => void;
+  /** Crédite +ENERGIE_PAR_PUB et incrémente le compteur de pubs du jour. No-op au plafond. */
+  crediterEnergiePub: () => void;
+  /** Settle l'énergie contre le temps de confiance et persiste. No-op si pas de temps de confiance. */
+  rafraichirEnergie: () => void;
 }
 
 type GameContextValue = GameStateValue & GameActionsValue;
@@ -197,6 +218,88 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [state, isHydrated, toast]);
 
+  const ancreRef = useRef<AncreTemps | null>(null);
+
+  const tempsConfiance = useCallback((): number | null => {
+    if (!ancreRef.current) return null;
+    return tempsConfianceCourant(ancreRef.current, performance.now());
+  }, []);
+
+  const rafraichirEnergie = useCallback(() => {
+    const now = tempsConfiance();
+    if (now === null) return; // cold start offline : énergie figée
+    setState((prev) => {
+      if (!prev) return prev;
+      const s = settleEnergie(prev, now);
+      if (
+        s.energie === prev.energie &&
+        s.energieDerniereMaj === prev.energieDerniereMaj
+      ) {
+        return prev;
+      }
+      return { ...prev, ...s };
+    });
+  }, [tempsConfiance]);
+
+  const consommerEnergie = useCallback(
+    (n: number) => {
+      setState((prev) => {
+        if (!prev) return prev;
+        const now = tempsConfiance();
+        const base = now === null ? prev : { ...prev, ...settleEnergie(prev, now) };
+        return { ...base, energie: Math.max(0, base.energie - n) };
+      });
+    },
+    [tempsConfiance],
+  );
+
+  const crediterEnergiePub = useCallback(() => {
+    setState((prev) => {
+      if (!prev) return prev;
+      const t = tempsConfiance();
+      const now = t ?? Date.now();
+      const settled =
+        t !== null
+          ? settleEnergie(prev, now)
+          : { energie: prev.energie, energieDerniereMaj: prev.energieDerniereMaj };
+      const apresSettle = { ...prev, ...settled };
+      if (compteursPubs(apresSettle, now).restant <= 0) return apresSettle;
+      const jourCle = cleJour(now);
+      const compteActuel =
+        prev.pubsRecharge.jourCle === jourCle ? prev.pubsRecharge.compte : 0;
+      return {
+        ...apresSettle,
+        energie: Math.min(ENERGIE_MAX, settled.energie + ENERGIE_PAR_PUB),
+        pubsRecharge: { jourCle, compte: compteActuel + 1 },
+      };
+    });
+  }, [tempsConfiance]);
+
+  // Synchronisation du temps de confiance : pose l'ancre puis settle l'énergie.
+  useEffect(() => {
+    if (!isHydrated) return;
+    let actif = true;
+    const sync = async () => {
+      const t = await getTimeSource().maintenant();
+      if (!actif || t === null) return;
+      ancreRef.current = poserAncre(t, performance.now());
+      rafraichirEnergie();
+    };
+    sync();
+    const onFocus = () => sync();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    const syncTimer = window.setInterval(sync, 10 * 60 * 1000); // re-sync /10 min
+    const tickTimer = window.setInterval(() => rafraichirEnergie(), 60 * 1000); // settle /60 s
+    return () => {
+      actif = false;
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+      window.clearInterval(syncTimer);
+      window.clearInterval(tickTimer);
+    };
+  }, [isHydrated, rafraichirEnergie]);
+
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {
       version: SAVE_VERSION,
@@ -227,6 +330,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       declencheursDeclenches: [ID_LETTRE_MAMAN_DEBUT],
       grandLivre: [],
       missions: [],
+      energie: ENERGIE_MAX,
+      energieDerniereMaj: Date.now(),
+      pubsRecharge: { jourCle: cleJour(Date.now()), compte: 0 },
     };
     // Amorce de l'arc principal (chapitre 1) à la création. Le `rng` 0,99
     // garantit qu'aucune quête secondaire n'est générée dès le jour 1.
@@ -1146,6 +1252,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       rerollMeteo,
       rerollCelebrite,
       marquerCourrierLu,
+      tempsConfiance,
+      consommerEnergie,
+      crediterEnergiePub,
+      rafraichirEnergie,
     }),
     [
       nouvellePartie,
@@ -1185,6 +1295,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       rerollMeteo,
       rerollCelebrite,
       marquerCourrierLu,
+      tempsConfiance,
+      consommerEnergie,
+      crediterEnergiePub,
+      rafraichirEnergie,
     ],
   );
 

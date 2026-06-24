@@ -47,7 +47,7 @@ describe("progressionMission", () => {
   });
 
   it("ignore un objet en restauration", () => {
-    const inv = [obj({ templateId: "a", enRestauration: true })];
+    const inv = [obj({ templateId: "a", enRestauration: { etatCible: "Très bon", jourFin: 99 } })];
     const p = progressionMission(mission([{ templateId: "a" }]), inv);
     expect(p.remplies).toBe(0);
   });
