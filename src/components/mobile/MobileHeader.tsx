@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { Zap, Plus } from "lucide-react";
+import { useState } from "react";
 import type { CSSProperties } from "react";
+import { useGame, useGameActions } from "@/context/GameContext";
+import { ENERGIE_MAX, energieCourante } from "@/lib/energie";
+import { EnergieRecharge } from "./EnergieRecharge";
 
 interface MobileHeaderProps {
   budget: number;
-  tickets?: { current: number; max: number };
 }
 
 const wrapStyle: CSSProperties = {
@@ -46,10 +50,15 @@ const valueStyle: CSSProperties = {
   marginTop: 2,
 };
 
-export function MobileHeader({
-  budget,
-  tickets = { current: 5, max: 5 },
-}: MobileHeaderProps) {
+export function MobileHeader({ budget }: MobileHeaderProps) {
+  const { state } = useGame();
+  const { tempsConfiance } = useGameActions();
+  const [rechargeOuverte, setRechargeOuverte] = useState(false);
+
+  const now = tempsConfiance() ?? Date.now();
+  const energie = state ? energieCourante(state, now) : ENERGIE_MAX;
+  const peutRecharger = energie < ENERGIE_MAX;
+
   return (
     <header style={wrapStyle}>
       <div style={innerStyle}>
@@ -72,10 +81,40 @@ export function MobileHeader({
         </Link>
         <span />
         <div style={{ textAlign: "center", ...labelStyle }}>
-          Tickets
-          <strong style={valueStyle}>
-            {tickets.current}
-            <span style={{ color: "var(--brass-700)" }}>/{tickets.max}</span>
+          Énergie
+          <strong
+            style={{
+              ...valueStyle,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 4,
+            }}
+          >
+            {peutRecharger && (
+              <button
+                onClick={() => setRechargeOuverte(true)}
+                aria-label="Recharger l'énergie"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  border: "1.5px solid var(--brass-500)",
+                  background: "transparent",
+                  color: "var(--brass-300)",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                <Plus size={12} strokeWidth={3} />
+              </button>
+            )}
+            <Zap size={15} strokeWidth={2.5} aria-hidden />
+            {energie}
+            <span style={{ color: "var(--brass-700)" }}>/{ENERGIE_MAX}</span>
           </strong>
         </div>
         <div style={{ textAlign: "right", ...labelStyle }}>
@@ -83,6 +122,8 @@ export function MobileHeader({
           <strong style={valueStyle}>{budget.toLocaleString("fr-FR")} €</strong>
         </div>
       </div>
+
+      {rechargeOuverte && <EnergieRecharge onClose={() => setRechargeOuverte(false)} />}
     </header>
   );
 }
