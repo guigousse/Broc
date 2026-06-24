@@ -237,8 +237,30 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 4", () => {
-    expect(SAVE_VERSION).toBe(4);
+  it("SAVE_VERSION incrémenté à 5", () => {
+    expect(SAVE_VERSION).toBe(5);
+  });
+
+  it("pose des défauts énergie sur un vieux save sans ces champs", () => {
+    const migré = migrerSauvegarde({ version: 4 } as unknown as GameState);
+    expect(migré.energie).toBe(5);
+    expect(typeof migré.energieDerniereMaj).toBe("number");
+    expect(migré.pubsRecharge.compte).toBe(0);
+    expect(typeof migré.pubsRecharge.jourCle).toBe("string");
+  });
+
+  it("conserve les valeurs énergie d'un save déjà v5", () => {
+    const base = migrerSauvegarde({ version: 4 } as unknown as GameState);
+    const v5 = {
+      ...base,
+      energie: 2,
+      energieDerniereMaj: 1234,
+      pubsRecharge: { jourCle: "2026-06-24", compte: 7 },
+    } as GameState;
+    const migré = migrerSauvegarde(v5);
+    expect(migré.energie).toBe(2);
+    expect(migré.energieDerniereMaj).toBe(1234);
+    expect(migré.pubsRecharge).toEqual({ jourCle: "2026-06-24", compte: 7 });
   });
 
   it("v3 → v4 : backfille xpGagne et templateId sur sessions existantes", () => {
@@ -267,7 +289,7 @@ describe("migrerSauvegarde — grand livre & missions", () => {
       ],
     };
     const out = migrerSauvegarde(v3Save as never);
-    expect(out.version).toBe(4);
+    expect(out.version).toBe(SAVE_VERSION);
     expect(out.historique[0].xpGagne).toEqual({});
     expect(out.historique[1].xpGagne).toEqual({});
     // Pas de match nom→template (noms fictifs) → fallback slug "legacy.<nom>".

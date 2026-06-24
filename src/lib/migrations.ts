@@ -30,6 +30,7 @@ import { genererTendances } from "@/lib/tendances";
 import { ALL_TEMPLATES } from "@/data/objetTemplates";
 import { OLD_TO_NEW_TEMPLATE_ID } from "@/data/templateIdRenames";
 import { reconstruireGrandLivre } from "./grandLivre";
+import { ENERGIE_MAX, cleJour } from "@/lib/energie";
 
 /**
  * Remappe en profondeur tout ancien templateId (avant l'harmonisation des noms
@@ -82,7 +83,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -474,5 +475,28 @@ function appliquerMigrations(loaded: GameState): GameState {
       return reconstruireGrandLivre(historique, loaded.budget ?? 0);
     })(),
     missions: missionsFinales,
+    energie: (() => {
+      const v = (loaded as Partial<GameState>).energie;
+      if (typeof v === "number" && Number.isFinite(v)) {
+        return Math.max(0, Math.min(ENERGIE_MAX, Math.floor(v)));
+      }
+      return ENERGIE_MAX;
+    })(),
+    energieDerniereMaj:
+      typeof (loaded as Partial<GameState>).energieDerniereMaj === "number"
+        ? (loaded as GameState).energieDerniereMaj
+        : Date.now(),
+    pubsRecharge: (() => {
+      const p = (loaded as Partial<GameState>).pubsRecharge;
+      if (
+        p &&
+        typeof p === "object" &&
+        typeof (p as { jourCle?: unknown }).jourCle === "string" &&
+        typeof (p as { compte?: unknown }).compte === "number"
+      ) {
+        return { jourCle: p.jourCle, compte: Math.max(0, Math.floor(p.compte)) };
+      }
+      return { jourCle: cleJour(Date.now()), compte: 0 };
+    })(),
   };
 }

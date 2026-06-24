@@ -52,6 +52,9 @@ export function createMockGameState(patch: Partial<GameState> = {}): GameState {
     declencheursDeclenches: [],
     grandLivre: [],
     missions: [],
+    energie: 5,
+    energieDerniereMaj: 1_700_000_000_000,
+    pubsRecharge: { jourCle: "2026-01-01", compte: 0 },
   };
 
   return { ...base, ...patch };
