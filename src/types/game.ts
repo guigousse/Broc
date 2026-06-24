@@ -239,6 +239,13 @@ export interface GameState {
   grandLivre: LedgerEntry[];
   /** Résolutions de mission (1 par Courrier de type mission lu). */
   missions: MissionResolution[];
+  /** Énergie courante (0..ENERGIE_MAX). Démarre pleine. */
+  energie: number;
+  /** Ancre du dernier calcul d'énergie : timestamp de TEMPS DE CONFIANCE (epoch ms),
+   *  jamais l'horloge brute du device (cf. lib/temps). */
+  energieDerniereMaj: number;
+  /** Pubs de recharge regardées dans le jour de confiance courant. */
+  pubsRecharge: { jourCle: string; compte: number };
 }
 
 export type CompetenceId = string;
