@@ -53,6 +53,19 @@ export function energieCourante(state: EnergieState, now: number): number {
   return settleEnergie(state, now).energie;
 }
 
+/**
+ * Énergie à afficher / à utiliser pour les décisions de jeu. Si le temps de
+ * confiance n'est pas disponible (cold start hors-ligne, pas encore
+ * synchronisé), renvoie l'énergie persistée telle quelle (GELÉE) — jamais une
+ * valeur recalculée sur Date.now(), pour neutraliser la triche d'horloge.
+ */
+export function energieAffichee(
+  state: EnergieState,
+  nowConfiance: number | null,
+): number {
+  return nowConfiance === null ? state.energie : energieCourante(state, nowConfiance);
+}
+
 /** Secondes avant le prochain +1, ou null si déjà plein. */
 export function secondesAvantProchaine(
   state: EnergieState,

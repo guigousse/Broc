@@ -9,7 +9,7 @@ import { CoffreChargement } from "@/components/vente/CoffreChargement";
 import { CoffrePricing } from "@/components/vente/CoffrePricing";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
 import { vitrineEstEnPrep } from "@/lib/vitrinePrep";
-import { energieCourante } from "@/lib/energie";
+import { energieAffichee } from "@/lib/energie";
 import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 const SUGGESTION_FACTEUR = 1.4;
@@ -118,8 +118,7 @@ export default function VitrineBrocantePage() {
   const handleOuvrir = () => {
     const frais = fraisEntree(brocante);
     if (state.budget < frais) return;
-    const maintenant = tempsConfiance() ?? Date.now();
-    if (energieCourante(state, maintenant) < 1) return; // plus d'énergie
+    if (energieAffichee(state, tempsConfiance()) < 1) return; // plus d'énergie (gelée si pas sync)
     payerFraisBrocante(brocante.id, brocante.nom, frais);
     consommerEnergie(1);
     router.push(`/vitrine/${brocante.id}/journee`);
@@ -163,7 +162,7 @@ export default function VitrineBrocantePage() {
             validerActif={
               state.budget >= fraisEntree(brocante) &&
               coffre.length > 0 &&
-              energieCourante(state, tempsConfiance() ?? Date.now()) >= 1
+              energieAffichee(state, tempsConfiance()) >= 1
             }
           />
         )}

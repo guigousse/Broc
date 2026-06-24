@@ -14,13 +14,14 @@ import {
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
+import { useToast } from "@/components/ui/Toast";
 import { fraisEntree, getBrocanteById } from "@/data/brocantes";
 import {
   calculerBrocantesDebloqueesParTier,
   estDebloquee,
 } from "@/lib/deblocage";
 import { genererSession } from "@/lib/chine";
-import { energieCourante } from "@/lib/energie";
+import { energieAffichee } from "@/lib/energie";
 import { stockageEstPlein } from "@/lib/stockage";
 import { indexJourSemaine } from "@/lib/meteo";
 import {
@@ -49,6 +50,7 @@ export default function SessionChinePage() {
     consommerEnergie,
   } = useGame();
   const { startCrowd, stopCrowd } = useSettings();
+  const { toast } = useToast();
   useEffect(() => {
     startCrowd();
     return () => stopCrowd();
@@ -98,8 +100,10 @@ export default function SessionChinePage() {
       if (state.budget < frais) {
         return router.replace(`/chiner?raison=budget&id=${brocante.id}`);
       }
-      const maintenant = tempsConfiance() ?? Date.now();
-      if (energieCourante(state, maintenant) < 1) {
+      if (energieAffichee(state, tempsConfiance()) < 1) {
+        toast("Plus d'énergie — attends la recharge ou regarde une pub.", {
+          type: "info",
+        });
         return router.replace(`/chiner?raison=energie&id=${brocante.id}`);
       }
       entreePayeeRef.current = true;
@@ -124,7 +128,7 @@ export default function SessionChinePage() {
         marquerVuTemplate(it.objet.templateId);
       }
     }
-  }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie]);
+  }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast]);
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (

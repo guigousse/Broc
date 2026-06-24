@@ -4,6 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSPr
 import { useRouter } from "next/navigation";
 import type { Brocante, BrocanteTier, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
+import { energieAffichee } from "@/lib/energie";
 import {
   calculerBrocantesDebloqueesParTier,
   listerConditionsAvecEtat,
@@ -77,7 +78,8 @@ export function BrocantePanorama({
   onBack,
 }: BrocantePanoramaProps) {
   const router = useRouter();
-  const { attribuerVitrineABrocante, ajusterBudget } = useGameActions();
+  const { attribuerVitrineABrocante, ajusterBudget, consommerEnergie, tempsConfiance } =
+    useGameActions();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [currentTier, setCurrentTier] = useState<BrocanteTier>(1);
@@ -190,7 +192,10 @@ export function BrocantePanorama({
 
   const selected = selectedId ? brocantesById.get(selectedId) ?? null : null;
   const selectedDebloquee = selected ? debloqueesIds.has(selected.id) : false;
-  const selectedPeutEntrer = selected ? state.budget >= fraisEntree(selected) : false;
+  const selectedPeutEntrer = selected
+    ? state.budget >= fraisEntree(selected) &&
+      energieAffichee(state, tempsConfiance()) >= 1
+    : false;
   const selectedConditions =
     selected && !selectedDebloquee
       ? listerConditionsAvecEtat(selected, state, parTier)
@@ -209,6 +214,7 @@ export function BrocantePanorama({
         attribuerVitrineABrocante(selected.id);
       }
       ajusterBudget(-fraisEntree(selected));
+      consommerEnergie(1);
       router.push(`/vitrine/${selected.id}/journee`);
       return;
     }
@@ -221,6 +227,7 @@ export function BrocantePanorama({
     state,
     attribuerVitrineABrocante,
     ajusterBudget,
+    consommerEnergie,
   ]);
 
   return (

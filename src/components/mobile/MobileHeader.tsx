@@ -5,7 +5,7 @@ import { Zap, Plus } from "lucide-react";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
-import { ENERGIE_MAX, energieCourante } from "@/lib/energie";
+import { ENERGIE_MAX, energieAffichee } from "@/lib/energie";
 import { EnergieRecharge } from "./EnergieRecharge";
 
 interface MobileHeaderProps {
@@ -55,8 +55,7 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   const { tempsConfiance } = useGameActions();
   const [rechargeOuverte, setRechargeOuverte] = useState(false);
 
-  const now = tempsConfiance() ?? Date.now();
-  const energie = state ? energieCourante(state, now) : ENERGIE_MAX;
+  const energie = state ? energieAffichee(state, tempsConfiance()) : ENERGIE_MAX;
   const peutRecharger = energie < ENERGIE_MAX;
 
   return (
