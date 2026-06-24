@@ -8,7 +8,7 @@ import {
   ENERGIE_MAX,
   PUBS_MAX_PAR_JOUR,
   compteursPubs,
-  energieAffichee,
+  energieCourante,
   secondesAvantProchaine,
 } from "@/lib/energie";
 import { getAdProvider } from "@/lib/ads/adProvider";
@@ -55,10 +55,10 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
   }, []);
 
   if (!state) return null;
-  const t = tempsConfiance();
-  const energie = energieAffichee(state, t);
-  const restantSec = t === null ? null : secondesAvantProchaine(state, t);
-  const { restant } = compteursPubs(state, t ?? Date.now());
+  const now = tempsConfiance() ?? Date.now();
+  const energie = energieCourante(state, now);
+  const restantSec = secondesAvantProchaine(state, now);
+  const { restant } = compteursPubs(state, now);
   const pubIndisponible = enCours || restant <= 0;
 
   const regarderPub = async () => {
@@ -100,11 +100,9 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
         </div>
 
         <p style={{ fontSize: 13, color: "var(--brass-200)", margin: "0 0 14px" }}>
-          {t === null
-            ? "Synchronisation de l'heure…"
-            : restantSec === null
-              ? "Énergie au maximum."
-              : `Prochaine ⚡ dans ${formatMMSS(restantSec)}`}
+          {restantSec === null
+            ? "Énergie au maximum."
+            : `Prochaine ⚡ dans ${formatMMSS(restantSec)}`}
         </p>
 
         <button

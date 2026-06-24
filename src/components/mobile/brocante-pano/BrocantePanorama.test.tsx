@@ -16,8 +16,8 @@ vi.mock("next/navigation", () => ({
 
 // BrocantePanorama consomme `useGameActions` pour attribuerVitrineABrocante,
 // ajusterBudget, consommerEnergie et tempsConfiance. On stub : aucun test ne
-// déclenche le flow d'attribution. `tempsConfiance` renvoie null → l'énergie
-// affichée est gelée sur state.energie (voir energieAffichee).
+// déclenche le flow d'attribution. `tempsConfiance` renvoie null → les sites
+// retombent sur Date.now() (base gracieuse) ; minimalState a energie: 5.
 vi.mock("@/context/GameContext", () => ({
   useGameActions: () => ({
     attribuerVitrineABrocante: vi.fn(),

@@ -220,6 +220,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const ancreRef = useRef<AncreTemps | null>(null);
 
+  // Temps effectif courant (ancre device/réseau + horloge monotone). null
+  // uniquement avant la pose de l'ancre (tout premier rendu) ; les sites d'appel
+  // retombent alors sur Date.now() comme base gracieuse.
   const tempsConfiance = useCallback((): number | null => {
     if (!ancreRef.current) return null;
     return tempsConfianceCourant(ancreRef.current, performance.now());
@@ -227,7 +230,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const rafraichirEnergie = useCallback(() => {
     const now = tempsConfiance();
-    if (now === null) return; // cold start offline : énergie figée
+    if (now === null) return; // ancre pas encore posée — settle au prochain tick/sync
     setState((prev) => {
       if (!prev) return prev;
       const s = settleEnergie(prev, now);
@@ -245,8 +248,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (n: number) => {
       setState((prev) => {
         if (!prev) return prev;
-        const now = tempsConfiance();
-        const base = now === null ? prev : { ...prev, ...settleEnergie(prev, now) };
+        const now = tempsConfiance() ?? Date.now();
+        const base = { ...prev, ...settleEnergie(prev, now) };
         return { ...base, energie: Math.max(0, base.energie - n) };
       });
     },
@@ -256,12 +259,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const crediterEnergiePub = useCallback(() => {
     setState((prev) => {
       if (!prev) return prev;
-      const t = tempsConfiance();
-      const now = t ?? Date.now();
-      const settled =
-        t !== null
-          ? settleEnergie(prev, now)
-          : { energie: prev.energie, energieDerniereMaj: prev.energieDerniereMaj };
+      const now = tempsConfiance() ?? Date.now();
+      const settled = settleEnergie(prev, now);
       const apresSettle = { ...prev, ...settled };
       if (compteursPubs(apresSettle, now).restant <= 0) return apresSettle;
       const jourCle = cleJour(now);
@@ -275,14 +274,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [tempsConfiance]);
 
-  // Synchronisation du temps de confiance : pose l'ancre puis settle l'énergie.
+  // Temps effectif & recharge — dégradation gracieuse :
+  // 1) Base immédiate sur l'horloge du device, ancrée à `performance.now()`
+  //    (monotone) → l'énergie se recharge TOUJOURS, même hors-ligne, et changer
+  //    l'heure système en cours de session n'a aucun effet (anti-recul via settle).
+  // 2) Quand le temps de confiance réseau répond, on REPOSE l'ancre dessus →
+  //    corrige le décalage et neutralise une avance d'horloge faite avant le lancement.
   useEffect(() => {
     if (!isHydrated) return;
     let actif = true;
+    if (!ancreRef.current) {
+      ancreRef.current = poserAncre(Date.now(), performance.now());
+    }
     const sync = async () => {
       const t = await getTimeSource().maintenant();
-      if (!actif || t === null) return;
-      ancreRef.current = poserAncre(t, performance.now());
+      if (!actif) return;
+      if (t !== null) {
+        // Temps de confiance obtenu : corrige l'ancre (mono inchangée → pas de saut).
+        ancreRef.current = poserAncre(t, performance.now());
+      }
       rafraichirEnergie();
     };
     sync();

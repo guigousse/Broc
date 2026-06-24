@@ -6,7 +6,6 @@ import {
   cleJour,
   settleEnergie,
   energieCourante,
-  energieAffichee,
   secondesAvantProchaine,
   compteursPubs,
   peutRegarderPub,
@@ -74,16 +73,6 @@ describe("energieCourante / secondesAvantProchaine", () => {
   it("secondesAvantProchaine compte le temps restant jusqu'au prochain +1", () => {
     const s = secondesAvantProchaine(etat({ energie: 0 }), T0 + 10 * 60 * 1000);
     expect(s).toBe(20 * 60); // 30 - 10 min restantes
-  });
-});
-
-describe("energieAffichee", () => {
-  it("renvoie l'énergie gelée (state.energie) si pas de temps de confiance", () => {
-    expect(energieAffichee(etat({ energie: 3 }), null)).toBe(3);
-  });
-
-  it("settle normalement si un temps de confiance est fourni", () => {
-    expect(energieAffichee(etat({ energie: 1 }), T0 + RECHARGE_INTERVAL_MS)).toBe(2);
   });
 });
 

@@ -21,7 +21,7 @@ import {
   estDebloquee,
 } from "@/lib/deblocage";
 import { genererSession } from "@/lib/chine";
-import { energieAffichee } from "@/lib/energie";
+import { energieCourante } from "@/lib/energie";
 import { stockageEstPlein } from "@/lib/stockage";
 import { indexJourSemaine } from "@/lib/meteo";
 import {
@@ -100,7 +100,7 @@ export default function SessionChinePage() {
       if (state.budget < frais) {
         return router.replace(`/chiner?raison=budget&id=${brocante.id}`);
       }
-      if (energieAffichee(state, tempsConfiance()) < 1) {
+      if (energieCourante(state, tempsConfiance() ?? Date.now()) < 1) {
         toast("Plus d'énergie — attends la recharge ou regarde une pub.", {
           type: "info",
         });

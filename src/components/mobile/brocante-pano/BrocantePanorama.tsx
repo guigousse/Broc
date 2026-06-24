@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSPr
 import { useRouter } from "next/navigation";
 import type { Brocante, BrocanteTier, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
-import { energieAffichee } from "@/lib/energie";
+import { energieCourante } from "@/lib/energie";
 import {
   calculerBrocantesDebloqueesParTier,
   listerConditionsAvecEtat,
@@ -194,7 +194,7 @@ export function BrocantePanorama({
   const selectedDebloquee = selected ? debloqueesIds.has(selected.id) : false;
   const selectedPeutEntrer = selected
     ? state.budget >= fraisEntree(selected) &&
-      energieAffichee(state, tempsConfiance()) >= 1
+      energieCourante(state, tempsConfiance() ?? Date.now()) >= 1
     : false;
   const selectedConditions =
     selected && !selectedDebloquee

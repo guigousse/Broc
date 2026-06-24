@@ -45,11 +45,13 @@ Transformer les « tickets » en **Énergie** :
 - **Énergie = 0 à l'entrée** : entrée **bloquée** (toast « Plus d'énergie »), au même
   titre que le blocage budget existant (`raison=budget`). Pas de modale auto ; la
   recharge se fait via le « + » du header.
-- **Anti-triche horloge** : la recharge ne doit **jamais** être avançable en
-  trafiquant l'heure du téléphone. Approche retenue = **temps de confiance** via une
-  abstraction `TimeSource` (header `Date` d'un endpoint HTTPS aujourd'hui, temps
-  serveur Supabase plus tard), couplée à une **horloge monotone** (`performance.now()`,
-  insensible aux changements d'heure système) pour le tick en session. Voir §2bis.
+- **Anti-triche horloge (dégradation gracieuse)** : objectif = ne pas pouvoir
+  avancer la recharge en trafiquant l'heure, **sans** rendre la recharge dépendante
+  du réseau. Base = horloge du device ancrée à une **horloge monotone**
+  (`performance.now()`, insensible aux changements d'heure en session) ; un **temps
+  de confiance** réseau (`TimeSource` : `timeapi.io` aujourd'hui, Supabase plus tard)
+  **corrige** l'ancre quand il est disponible (neutralise l'avance d'horloge en
+  ligne). Triche résiduelle bornée seulement en hors-ligne total. Voir §2bis.
 
 ## Architecture
 
@@ -102,30 +104,35 @@ export interface TimeSource {
   maintenant(): Promise<number | null>;
 }
 ```
-- `HttpDateTimeSource` (actuel) : `fetch` (HEAD) d'un endpoint HTTPS, lecture du
-  header `Date` (contrôlé serveur, pas par le device). Timeout court, renvoie `null`
-  hors ligne / en échec.
+- `HttpTimeSource` (actuel) : `fetch` d'une API de temps JSON CORS-permissive
+  (`timeapi.io`, `{year,month,day,hour,minute,seconds,milliSeconds}` en UTC →
+  epoch via `Date.UTC`). Timeout court, renvoie `null` hors ligne / en échec.
+  (NB : `worldtimeapi.org`, prévu initialement, s'est révélé hors service.)
 - Futur : `SupabaseTimeSource` (RPC `select now()`), même interface — swap à un seul
   point d'injection (`getTimeSource()`).
 
 **b) Horloge monotone (tick en session, sans réseau)** — `src/lib/temps/horloge.ts`
-- À chaque **sync** réussie, on mémorise un couple de référence
-  `ancre = { confiance: number, mono: number }` où `mono = performance.now()`
-  (monotone, insensible aux changements d'heure système).
-- Temps de confiance courant à tout instant **sans réseau** :
+- On mémorise un couple de référence `ancre = { confiance: number, mono: number }`
+  où `mono = performance.now()` (monotone, insensible aux changements d'heure système).
+- Temps effectif courant à tout instant **sans réseau** :
   `tempsConfianceCourant(ancre) = ancre.confiance + (performance.now() - ancre.mono)`.
-- Conséquence : une fois UNE sync obtenue au lancement, toute la session (même hors
-  ligne) tique sur un temps non falsifiable. Avancer l'horloge système n'a aucun effet.
+- Conséquence : une fois l'ancre posée (au montage), toute la session tique sur un
+  temps non falsifiable. Avancer l'horloge système **en cours de session** n'a aucun effet.
 
-**Politique de synchronisation & fallback**
-1. Au lancement (et au retour de focus, et périodiquement ~10 min) : `maintenant()`.
-   - Succès → pose l'ancre `{confiance, mono}` ; settle l'énergie contre ce temps.
-   - Échec (offline) **mais ancre déjà posée cette session** → on continue sur la
-     monotone (extrapolation), parfaitement sûr.
-   - Échec **et aucune ancre** (démarrage à froid hors ligne) → fallback **prudent** :
-     on n'utilise PAS `Date.now()` pour créditer ; l'énergie reste **figée** à la
-     valeur persistée jusqu'à la première sync. Anti-recul appliqué. (Compromis sûr :
-     un démarrage à froid hors ligne ne recharge pas tant qu'on n'a pas vérifié l'heure.)
+**Politique de synchronisation & fallback — DÉGRADATION GRACIEUSE**
+
+Décision révisée (2026-06-24, après constat que la source réseau peut être
+indisponible) : la recharge ne dépend **plus** d'une dépendance dure au réseau.
+Le jeu doit toujours recharger ; le temps de confiance sert de **correcteur**, pas
+de prérequis.
+
+1. **Base immédiate au montage** : on pose l'ancre depuis l'**horloge du device**
+   (`confiance = Date.now()`, `mono = performance.now()`). L'énergie se recharge
+   donc **toujours**, même hors ligne, et change d'horloge en session = sans effet.
+2. **Correction réseau** : au lancement (puis focus + ~10 min), `maintenant()`.
+   Succès → on **repose l'ancre** sur le temps de confiance (`mono` à jour) → corrige
+   le décalage et neutralise une avance d'horloge faite **avant** le lancement.
+   Échec (offline) → on garde l'ancre device, on continue à recharger.
 2. Anti-recul permanent : si le temps de confiance calculé est **antérieur** à
    `energieDerniereMaj`, on ré-ancre sans créditer (jamais d'énergie négative ni de
    « banque » négative).
@@ -196,7 +203,8 @@ confiance comme `now` au module pur `energie.ts` — jamais `Date.now()` brut.
   - au montage (hydratation), après tentative de sync,
   - au retour de focus / `visibilitychange` (re-sync),
   - via un intervalle léger (~60 s) tant que l'app est ouverte.
-  - Si aucun temps de confiance disponible (cold start offline) → no-op (énergie figée).
+  - L'ancre étant posée dès le montage (base device), `tempsConfiance()` est non-null
+    après montage ; les sites d'appel utilisent `tempsConfiance() ?? Date.now()`.
 - L'affichage du header recalcule l'énergie/minuteur **en local chaque seconde**
   (dérivé de `energie` + `energieDerniereMaj` + `tempsConfianceCourant()` via
   `energie.ts`), **sans** réécrire l'état global → pas de sauvegarde chaque seconde.
@@ -254,17 +262,21 @@ Composant `EnergieRecharge` (panneau/popover) ouvert par le « + » du header :
 
 - Intégration réelle d'un SDK de pub (AdMob/Tauri) — seulement préparée via l'interface.
 - `SupabaseTimeSource` — préparée via l'interface `TimeSource`, branchée quand le
-  backend Supabase existera. Aujourd'hui : `HttpDateTimeSource` (header `Date`).
+  backend Supabase existera (fermera la triche d'horloge résiduelle hors ligne).
+  Aujourd'hui : `HttpTimeSource` (`timeapi.io`, JSON UTC).
 - Persistance Supabase du `GameState` (localStorage uniquement, comme l'existant).
 - Coût d'énergie variable par tier ou par brocante (fixé à 1).
 - Achat d'énergie contre argent réel / in-app purchase.
 
 ## Note importante (UX horloge réelle)
 
-La recharge dépend du **temps réel de confiance**, pas des « jours de jeu »
-(`jourActuel`). Conséquences assumées :
-- Fermer/rouvrir l'app plus tard crédite l'énergie écoulée (dès la 1ʳᵉ sync réseau).
-- Avancer/reculer l'horloge du téléphone **n'a aucun effet** (temps de confiance +
-  horloge monotone).
-- **Démarrage à froid hors ligne** (jamais synchronisé cette session) : l'énergie
-  reste **figée** jusqu'à la première vérification réseau — choix de sécurité assumé.
+La recharge dépend du **temps réel** (ancre device, corrigée par le temps de
+confiance réseau), pas des « jours de jeu » (`jourActuel`). Modèle = **dégradation
+gracieuse**. Conséquences assumées :
+- Fermer/rouvrir l'app plus tard crédite l'énergie écoulée — **toujours**, même hors ligne.
+- Changer l'horloge **en cours de session** n'a aucun effet (ancre monotone).
+- **En ligne** : l'avance d'horloge faite avant le lancement est neutralisée (l'ancre
+  est reposée sur le temps de confiance dès la 1ʳᵉ sync).
+- **Hors ligne total** (jamais synchronisé) : avancer l'horloge avant lancement peut
+  créditer jusqu'au plafond (5) — triche résiduelle bornée, assumée, refermée plus
+  tard par `SupabaseTimeSource`. Anti-recul toujours actif.

@@ -48,22 +48,11 @@ export function settleEnergie(
   return { energie: nouvelle, energieDerniereMaj: ancre };
 }
 
-/** Énergie courante effective (après settle), pour l'affichage. */
+/** Énergie courante effective (après settle), pour l'affichage et les décisions.
+ *  `now` = temps effectif (ancre monotone, corrigée par le temps de confiance
+ *  quand le réseau est dispo ; cf. lib/temps + GameContext). */
 export function energieCourante(state: EnergieState, now: number): number {
   return settleEnergie(state, now).energie;
-}
-
-/**
- * Énergie à afficher / à utiliser pour les décisions de jeu. Si le temps de
- * confiance n'est pas disponible (cold start hors-ligne, pas encore
- * synchronisé), renvoie l'énergie persistée telle quelle (GELÉE) — jamais une
- * valeur recalculée sur Date.now(), pour neutraliser la triche d'horloge.
- */
-export function energieAffichee(
-  state: EnergieState,
-  nowConfiance: number | null,
-): number {
-  return nowConfiance === null ? state.energie : energieCourante(state, nowConfiance);
 }
 
 /** Secondes avant le prochain +1, ou null si déjà plein. */
