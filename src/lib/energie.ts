@@ -66,6 +66,18 @@ export function secondesAvantProchaine(
   return Math.max(0, Math.ceil((prochaine - now) / 1000));
 }
 
+/** Secondes avant d'atteindre ENERGIE_MAX, ou null si déjà plein. */
+export function secondesAvantPlein(
+  state: EnergieState,
+  now: number,
+): number | null {
+  const courante = energieCourante(state, now);
+  if (courante >= ENERGIE_MAX) return null;
+  const prochaine = secondesAvantProchaine(state, now) ?? 0;
+  const paliersRestants = ENERGIE_MAX - courante - 1; // paliers pleins après le prochain +1
+  return prochaine + paliersRestants * (RECHARGE_INTERVAL_MS / 1000);
+}
+
 /** Compteur de pubs du jour de confiance courant (reset implicite si nouveau jour). */
 export function compteursPubs(
   state: EnergieState,

@@ -7,6 +7,7 @@ import {
   settleEnergie,
   energieCourante,
   secondesAvantProchaine,
+  secondesAvantPlein,
   compteursPubs,
   peutRegarderPub,
   type EnergieState,
@@ -73,6 +74,27 @@ describe("energieCourante / secondesAvantProchaine", () => {
   it("secondesAvantProchaine compte le temps restant jusqu'au prochain +1", () => {
     const s = secondesAvantProchaine(etat({ energie: 0 }), T0 + 10 * 60 * 1000);
     expect(s).toBe(20 * 60); // 30 - 10 min restantes
+  });
+});
+
+describe("secondesAvantPlein", () => {
+  it("renvoie null si déjà plein", () => {
+    expect(secondesAvantPlein(etat({ energie: ENERGIE_MAX }), T0)).toBeNull();
+  });
+
+  it("4/5 fraîchement settle → 30 min", () => {
+    expect(secondesAvantPlein(etat({ energie: 4 }), T0)).toBe(30 * 60);
+  });
+
+  it("0/5 fraîchement settle → 5 paliers de 30 min", () => {
+    // 1 palier pour le prochain +1, puis 4 paliers jusqu'à 5/5.
+    expect(secondesAvantPlein(etat({ energie: 0 }), T0)).toBe(5 * 30 * 60);
+  });
+
+  it("3/5 avec 10 min déjà écoulées sur le prochain palier", () => {
+    const r = secondesAvantPlein(etat({ energie: 3 }), T0 + 10 * 60 * 1000);
+    // 20 min pour le prochain +1, puis 1 palier de 30 min → 50 min.
+    expect(r).toBe(20 * 60 + 30 * 60);
   });
 });
 
