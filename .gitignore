@@ -8,7 +8,10 @@ out
 next-env.d.ts
 # Tauri build artefacts
 src-tauri/target
-src-tauri/gen
+# gen/ : on versionne les projets natifs (gen/apple, gen/android) pour préserver
+# la config de signature/entitlements ; seuls les artefacts générés sont ignorés
+# (schemas + dossiers couverts par gen/apple/.gitignore : build/, Externals/, xcuserdata/).
+src-tauri/gen/schemas/
 
 # Superpowers brainstorm/mockup workspace
 .superpowers/
