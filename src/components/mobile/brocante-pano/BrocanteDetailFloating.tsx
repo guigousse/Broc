@@ -1,6 +1,6 @@
 "use client";
 
-import { Ticket } from "lucide-react";
+import { Zap } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
@@ -98,8 +98,8 @@ const metaItemsStyle: CSSProperties = {
 };
 
 // Affichage du coût d'entrée : un encadré horizontal compact regroupant
-// l'icône billet, le label "ENTRÉE", le montant, le "+", puis l'icône ticket.
-// Style "ticket de gala" — passe en rouge si !peutEntrer.
+// l'icône billet, le label "ENTRÉE", le montant, le "+", puis l'icône énergie.
+// Style "billet de gala" — passe en rouge si !peutEntrer.
 const fraisBoxStyle = (peutEntrer: boolean): CSSProperties => {
   const color = peutEntrer ? "var(--ink-900)" : "var(--vermillion-600)";
   return {
@@ -266,12 +266,12 @@ export function BrocanteDetailFloating({
         <span style={metaItemsStyle}>{brocante.taillePool} items</span>
         <span
           style={fraisBoxStyle(peutEntrer)}
-          aria-label={`Entrée : ${fraisEntree(brocante)} euros et 1 ticket`}
+          aria-label={`Entrée : ${fraisEntree(brocante)} euros et 1 énergie`}
         >
           <span style={fraisLabelStyle}>Entrée</span>
           <span style={fraisAmountStyle}>{fraisEntree(brocante)} €</span>
           <span style={fraisPlusStyle}>+</span>
-          <Ticket size={14} strokeWidth={2} />
+          <Zap size={14} strokeWidth={2} />
         </span>
         {ThemeIcon && (
           <div
