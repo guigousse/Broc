@@ -22,6 +22,7 @@
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@tauri-apps/plugin-notification": "^2.3.3",
     "lucide-react": "^1.16.0",
     "next": "^16.2.6",
     "react": "19.0.0",
