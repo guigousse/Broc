@@ -74,15 +74,7 @@ jobs:
           # Sanity : le .p8 doit être une clé privée PEM valide.
           head -1 "$F8" | grep -q "BEGIN PRIVATE KEY" \
             || { echo "::error::ASC_KEY_P8 corrompu (base64 invalide)"; exit 1; }
-          # Vérifie l'authentification tout de suite (échoue vite si 401).
-          out=$(xcrun altool --list-apps --apiKey "$KID" --apiIssuer "$ISS" 2>&1) || true
-          if echo "$out" | grep -qiE "Retrieved|Application:"; then
-            echo "✅ Clé API authentifiée."
-          else
-            echo "$out" | grep -i error | head
-            echo "::error::La clé API ne s'authentifie pas (vérifie ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8)"
-            exit 1
-          fi
+          echo "✅ .p8 en place (l'auth réelle se fait via fastlane à l'upload)."
 
       # 1) Archive NON signée (aucun certificat local requis).
       - name: Archive (non signée)
@@ -143,14 +135,27 @@ jobs:
           path: /tmp/export/*.ipa
 
       # 3) Upload TestFlight via la clé API.
-      - name: Upload TestFlight
+      # Upload via fastlane (spaceship) plutôt qu'altool : altool de Xcode 26.3
+      # rejette l'auth par clé API (401) alors que la clé est valide.
+      - name: Upload TestFlight (fastlane)
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
-          KID=$(printf '%s' "$ASC_KEY_ID" | tr -d '[:space:]')
-          ISS=$(printf '%s' "$ASC_ISSUER_ID" | tr -d '[:space:]')
+          P8B64=$(printf '%s' "$ASC_KEY_P8" | tr -d '[:space:]')
+          cat > "$RUNNER_TEMP/asc_key.json" <<EOF
+          {
+            "key_id": "${ASC_KEY_ID}",
+            "issuer_id": "${ASC_ISSUER_ID}",
+            "key": "${P8B64}",
+            "is_key_content_base64": true,
+            "in_house": false
+          }
+          EOF
           IPA=$(ls /tmp/export/*.ipa | head -1)
-          echo "Upload de $IPA"
-          out=$(xcrun altool --upload-app -f "$IPA" -t ios --apiKey "$KID" --apiIssuer "$ISS" 2>&1)
-          echo "$out"
-          # altool renvoie parfois 0 malgré une erreur → on vérifie la sortie.
-          echo "$out" | grep -qiE "No errors|UPLOAD SUCCEEDED" \
-            || { echo "::error::Upload altool échoué"; exit 1; }
+          echo "Upload de $IPA via fastlane"
+          fastlane pilot upload \
+            --api_key_path "$RUNNER_TEMP/asc_key.json" \
+            --ipa "$IPA" \
+            --app_identifier com.guigousse.broc \
+            --skip_submission true \
+            --skip_waiting_for_build_processing true
