@@ -14,6 +14,13 @@ export interface NotifSpec {
   body: string;
   /** Horodatage de déclenchement (epoch ms). */
   atMs: number;
+  /**
+   * Son joué à l'affichage. `"default"` = son système (iOS retombe sur le son
+   * par défaut quand le fichier nommé est introuvable ; Android utilise le son
+   * du canal par défaut). Un nom de fichier embarqué = son personnalisé.
+   * Omis = silencieux sur iOS.
+   */
+  sound?: string;
 }
 
 /** Vrai uniquement sous runtime Tauri (internals injectés par Tauri). */
@@ -60,6 +67,7 @@ export async function programmer(spec: NotifSpec): Promise<void> {
       id: spec.id,
       title: spec.title,
       body: spec.body,
+      sound: spec.sound,
       schedule: Schedule.at(new Date(spec.atMs), false, true),
     });
   } catch {

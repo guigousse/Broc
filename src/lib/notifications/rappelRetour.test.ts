@@ -29,6 +29,12 @@ describe("construireRappels (pur)", () => {
       expect(s.body.length).toBeGreaterThan(0);
     }
   });
+
+  it("chaque rappel demande le son par défaut", () => {
+    for (const s of construireRappels(0)) {
+      expect(s.sound).toBe("default");
+    }
+  });
 });
 
 describe("rappelRetour hors Tauri", () => {

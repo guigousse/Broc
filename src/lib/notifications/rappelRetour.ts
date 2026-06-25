@@ -39,6 +39,7 @@ export function construireRappels(now: number): NotifSpec[] {
     id: NOTIF_IDS.RAPPEL_RETOUR[i],
     title: r.title,
     body: r.body,
+    sound: "default",
     atMs: now + r.offsetMs,
   }));
 }

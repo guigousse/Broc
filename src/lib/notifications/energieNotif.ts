@@ -25,6 +25,7 @@ export async function planifierPleinEnergie(atMs: number): Promise<void> {
     id: NOTIF_IDS.ENERGIE_PLEINE,
     title: "Énergie pleine ⚡",
     body: "Tes 5 énergies sont prêtes — reviens chiner !",
+    sound: "default",
     atMs,
   });
 }
