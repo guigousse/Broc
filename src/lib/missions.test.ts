@@ -21,7 +21,7 @@ function obj(patch: Partial<Objet>): Objet {
 function mission(cibles: CourrierPayloadMission["cibles"]): CourrierPayloadMission {
   return {
     type: "mission",
-    categorie: "secondaire",
+    categorie: "quotidienne",
     expediteurId: "maman",
     titre: "T",
     corps: [],

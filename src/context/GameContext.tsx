@@ -428,12 +428,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
       declencheursDeclenches: [ID_LETTRE_MAMAN_DEBUT],
       grandLivre: [],
       missions: [],
+      quetesPeriodiques: {
+        quotidien: { cle: "", courrierIds: [] },
+        hebdo: { cle: "", courrierIds: [] },
+      },
       energie: ENERGIE_MAX,
       energieDerniereMaj: Date.now(),
     };
-    // Amorce de l'arc principal (chapitre 1) à la création. Le `rng` 0,99
-    // garantit qu'aucune quête secondaire n'est générée dès le jour 1.
-    const tick = tickQuetes(initial, initial.jourActuel, () => 0.99);
+    // Amorce de l'arc principal (chapitre 1) à la création.
+    const tick = tickQuetes(initial, initial.jourActuel);
     setState({ ...initial, courriers: tick.courriers, missions: tick.missions });
     router.push("/bureau");
   }, [router]);

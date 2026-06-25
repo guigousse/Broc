@@ -11,7 +11,7 @@ function withMissions(): GameState {
   const s = createMockGameState();
   s.courriers = [
     { id: "p1", type: "mission", jourRecu: 1, lu: true, payload: { type: "mission", categorie: "principale", expediteurId: "maman", titre: "Quête A", corps: ["a"], cibles: [{ templateId: "x" }], recompense: { argent: 10 } } },
-    { id: "s1", type: "mission", jourRecu: 1, lu: true, payload: { type: "mission", categorie: "secondaire", expediteurId: "art", titre: "Quête B", corps: ["b"], cibles: [{ templateId: "y" }], recompense: { argent: 20 } } },
+    { id: "s1", type: "mission", jourRecu: 1, lu: true, payload: { type: "mission", categorie: "quotidienne", expediteurId: "art", titre: "Quête B", corps: ["b"], cibles: [{ templateId: "y" }], recompense: { argent: 20 } } },
   ];
   s.missions = [
     { courrierId: "p1", statut: "active" },

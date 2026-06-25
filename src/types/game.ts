@@ -108,7 +108,7 @@ export interface CourrierPayloadLettre {
 }
 
 /** Catégorie d'une commande : principale (importante/scénarisée) ou secondaire. */
-export type MissionCategorie = "principale" | "secondaire";
+export type MissionCategorie = "principale" | "quotidienne" | "hebdomadaire";
 
 /** Une cible d'une commande : un objet précis à fournir. */
 export interface MissionCible {
@@ -148,6 +148,14 @@ export interface Courrier {
 /* === Missions (résolution côté state, dérivée des Courrier mission) === */
 
 export type MissionStatut = "active" | "livree" | "expiree";
+
+/** Lot de commandes périodiques en cours (quotidien ou hebdo). */
+export interface LotPeriodique {
+  /** Clé de période : "2026-06-25" (jour local) ou "2026-W26" (semaine ISO locale). */
+  cle: string;
+  /** IDs des courriers du lot courant. */
+  courrierIds: string[];
+}
 
 /** Résolution d'une mission (couple avec un Courrier de type mission). */
 export interface MissionResolution {
@@ -241,6 +249,11 @@ export interface GameState {
   grandLivre: LedgerEntry[];
   /** Résolutions de mission (1 par Courrier de type mission lu). */
   missions: MissionResolution[];
+  /** Lots de commandes périodiques en cours (quotidien / hebdo). */
+  quetesPeriodiques: {
+    quotidien: LotPeriodique;
+    hebdo: LotPeriodique;
+  };
   /** Énergie courante (0..ENERGIE_MAX). Démarre pleine. */
   energie: number;
   /** Ancre du dernier calcul d'énergie : timestamp de TEMPS DE CONFIANCE (epoch ms),

@@ -111,7 +111,7 @@ describe("creerCourrierMission", () => {
       expediteurId: "joueur_vide_grenier",
       titre: "Une quête vidéoludique",
       corps: ["Cher chineur,", "Trouve-moi **Ocarina of Time**."],
-      categorie: "secondaire",
+      categorie: "quotidienne",
       cibles: [{ templateId: "jeu.zelda_ocarina", etatMin: "Très bon" }],
       jourLimite: 12,
       recompense: { argent: 200 },
@@ -139,7 +139,7 @@ describe("expireMissions", () => {
       lu: true,
       payload: {
         type: "mission",
-        categorie: "secondaire",
+        categorie: "quotidienne",
         expediteurId: "x",
         titre: "T",
         corps: [],

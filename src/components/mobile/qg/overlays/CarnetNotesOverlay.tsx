@@ -173,7 +173,10 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission }: Ca
       trierActives(
         actives.filter((m) => {
           const c = byId.get(m.courrierId);
-          return c?.payload.type === "mission" && c.payload.categorie === "secondaire";
+          return (
+            c?.payload.type === "mission" &&
+            (c.payload.categorie === "quotidienne" || c.payload.categorie === "hebdomadaire")
+          );
         }),
         byId,
         state.inventaireJoueur,

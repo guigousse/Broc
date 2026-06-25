@@ -163,7 +163,7 @@ function normaliserMissionPayload(c: Courrier): Courrier {
     : p.cible
       ? [p.cible]
       : [];
-  const next = { ...p, categorie: (p.categorie as string) ?? "secondaire", cibles };
+  const next = { ...p, categorie: (p.categorie as string) ?? "quotidienne", cibles };
   delete (next as { cible?: unknown }).cible;
   return { ...c, payload: next as Courrier["payload"] };
 }

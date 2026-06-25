@@ -438,7 +438,7 @@ describe("migrerSauvegarde — missions cible→cibles", () => {
     const p = out.courriers[0].payload;
     expect(p.type).toBe("mission");
     if (p.type !== "mission") return;
-    expect(p.categorie).toBe("secondaire");
+    expect(p.categorie).toBe("quotidienne");
     expect(p.cibles).toEqual([{ templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" }]);
     expect((p as unknown as { cible?: unknown }).cible).toBeUndefined();
   });
