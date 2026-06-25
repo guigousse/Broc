@@ -387,11 +387,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     .join("|");
   useEffect(() => {
     if (!isHydrated) return;
+    // `finMs` est en TEMPS DE CONFIANCE, mais le planificateur OS programme sur
+    // l'HORLOGE MURALE. On convertit chaque échéance en horloge murale (comme la
+    // notif énergie), sinon la notif tomberait au mauvais moment réel si l'horloge
+    // de l'appareil dérive du temps réseau (y compris une triche d'horloge).
+    const ecart = (tempsConfiance() ?? Date.now()) - Date.now(); // confiance - mural
     const objets = (stateRef.current?.inventaireJoueur ?? [])
       .filter((o) => o.enRestauration)
-      .map((o) => ({ nom: o.nom, finMs: o.enRestauration!.finMs }));
-    const now = tempsConfiance() ?? Date.now();
-    void synchroniserNotifsRestauration(objets, now);
+      .map((o) => ({ nom: o.nom, finMs: o.enRestauration!.finMs - ecart }));
+    void synchroniserNotifsRestauration(objets, Date.now());
   }, [isHydrated, restauKey, tempsConfiance]);
 
   const nouvellePartie = useCallback(() => {

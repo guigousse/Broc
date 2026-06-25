@@ -52,7 +52,7 @@ const cardWrap: React.CSSProperties = {
 /** Le SDK pub n'existe pas encore : bouton « Terminer (pub) » masqué au lancement. */
 const PUB_DISPONIBLE = false;
 
-/** Formate une durée (ms) en « 1 h », « 1 h 30 », « 45 min », « 0:42 ». */
+/** Formate une durée (ms) en « 1 h », « 1 h 30 » ou « 45 min » (granularité minute). */
 function formatDuree(ms: number): string {
   const totalMin = Math.ceil(ms / 60000);
   if (totalMin >= 60) {
