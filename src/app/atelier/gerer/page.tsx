@@ -287,7 +287,7 @@ export default function AtelierPage() {
       if (res.ok) {
         setFlash(
           `${objet.nom} en restauration · ${etatCible} dans ${formatDuree(
-            dureeRestaurationMs(state, objet.categorie, etatCible),
+            dureeRestaurationMs(state, objet.categorie, objet.etat),
           )}`,
         );
       } else {
@@ -572,7 +572,7 @@ export default function AtelierPage() {
                     ? "Très bon"
                     : "Pristin état";
               const duree = formatDuree(
-                dureeRestaurationMs(state, o.categorie, cible),
+                dureeRestaurationMs(state, o.categorie, o.etat),
               );
               const prixApres = recalculerPrixReference(
                 o.prixReferenceReel,
@@ -820,7 +820,7 @@ export default function AtelierPage() {
                   dureeRestaurationMs(
                     state,
                     restaurerCible.objet.categorie,
-                    restaurerCible.etatCible,
+                    restaurerCible.objet.etat,
                   ),
                 )}
               </strong>{" "}
