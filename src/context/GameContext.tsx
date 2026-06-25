@@ -556,7 +556,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       );
       const baseAvecMissions: GameState = { ...base, missions: missionsApresExpiration };
 
-      // Tick des quêtes : déblocage de l'arc principal + génération secondaire.
+      // Tick des quêtes : déblocage de l'arc principal uniquement (les commandes
+      // quotidiennes/hebdomadaires sont gérées en temps réel via le settle).
       const tick = tickQuetes(baseAvecMissions, nouveauJour);
       const baseAvecQuetes: GameState = {
         ...baseAvecMissions,
