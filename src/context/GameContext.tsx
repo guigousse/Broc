@@ -89,6 +89,7 @@ import {
   programmerRappelRetour,
   annulerRappelRetour,
 } from "@/lib/notifications/rappelRetour";
+import { synchroniserNotifsRestauration } from "@/lib/notifications/restaurationNotif";
 import {
   poserAncre,
   tempsConfianceCourant,
@@ -376,6 +377,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("pageshow", onPageShow);
     };
   }, [isHydrated]);
+
+  // Notif « Objet restauré » : (re)programme une notif par objet en restauration
+  // à son échéance, à chaque changement de l'ensemble. No-op hors Tauri / sans
+  // permission. Clé de dépendance = ids+finMs sérialisés (relance sur changement).
+  const restauKey = (state?.inventaireJoueur ?? [])
+    .filter((o) => o.enRestauration)
+    .map((o) => `${o.id}:${o.enRestauration!.finMs}`)
+    .join("|");
+  useEffect(() => {
+    if (!isHydrated) return;
+    const objets = (stateRef.current?.inventaireJoueur ?? [])
+      .filter((o) => o.enRestauration)
+      .map((o) => ({ nom: o.nom, finMs: o.enRestauration!.finMs }));
+    const now = tempsConfiance() ?? Date.now();
+    void synchroniserNotifsRestauration(objets, now);
+  }, [isHydrated, restauKey, tempsConfiance]);
 
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {
