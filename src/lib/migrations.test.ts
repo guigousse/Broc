@@ -237,8 +237,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 5", () => {
-    expect(SAVE_VERSION).toBe(5);
+  it("SAVE_VERSION incrémenté à 6", () => {
+    expect(SAVE_VERSION).toBe(6);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -360,6 +360,58 @@ describe("migrerSauvegarde — garde anti-régression de version", () => {
     ancien.version = SAVE_VERSION - 1;
     const r = migrerSauvegarde(ancien);
     expect(r.version).toBe(SAVE_VERSION);
+  });
+});
+
+describe("migration enRestauration jour → temps réel", () => {
+  it("convertit l'ancien jourFin en {debutMs:0, finMs:0} (prêt immédiatement)", () => {
+    const ancienne = {
+      version: 5,
+      inventaireJoueur: [
+        {
+          id: "x",
+          templateId: "t",
+          categorie: "Livres & Papeterie",
+          etat: "Bon",
+          rarete: "commun",
+          prixReferenceReel: 10,
+          enRestauration: { etatCible: "Très bon", jourFin: 42 },
+        },
+      ],
+    } as unknown as Parameters<typeof migrerSauvegarde>[0];
+
+    const migre = migrerSauvegarde(ancienne);
+    const o = migre.inventaireJoueur[0];
+    expect(o.enRestauration).toEqual({
+      etatCible: "Très bon",
+      debutMs: 0,
+      finMs: 0,
+    });
+  });
+
+  it("préserve un enRestauration déjà au nouveau format {debutMs, finMs}", () => {
+    const ancienne = {
+      version: 5,
+      inventaireJoueur: [
+        {
+          id: "y",
+          templateId: "t2",
+          categorie: "Livres & Papeterie",
+          etat: "Bon",
+          rarete: "commun",
+          prixReferenceReel: 10,
+          enRestauration: { etatCible: "Très bon", debutMs: 1000, finMs: 5000 },
+        },
+      ],
+    } as unknown as Parameters<typeof migrerSauvegarde>[0];
+
+    const migre = migrerSauvegarde(ancienne);
+    const o = migre.inventaireJoueur[0];
+    expect(o.enRestauration).toEqual({
+      etatCible: "Très bon",
+      debutMs: 1000,
+      finMs: 5000,
+    });
   });
 });
 

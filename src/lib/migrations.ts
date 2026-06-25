@@ -83,7 +83,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -98,6 +98,19 @@ export function migrerEtat(etat: string): EtatObjet {
   // Ancienne valeur "Comme neuf" → "Très bon".
   if (etat === "Comme neuf") return "Très bon";
   return "Bon";
+}
+
+/** Convertit un `enRestauration` legacy ({jourFin}) en temps réel. Prêt immédiatement. */
+export function migrerEnRestauration(
+  enRest: unknown,
+): { etatCible: string; debutMs: number; finMs: number } | undefined {
+  if (!enRest || typeof enRest !== "object") return undefined;
+  const e = enRest as Record<string, unknown>;
+  if (typeof e.finMs === "number" && typeof e.debutMs === "number") {
+    return e as { etatCible: string; debutMs: number; finMs: number };
+  }
+  // Ancien format (jourFin) ou incomplet → prêt immédiatement.
+  return { etatCible: String(e.etatCible), debutMs: 0, finMs: 0 };
 }
 
 /**
@@ -171,7 +184,10 @@ function appliquerMigrations(loaded: GameState): GameState {
     etat: migrerEtat(o.etat),
     templateId: resoudreTemplateId(o),
     rarete: o.rarete ?? "commun",
-  }));
+    enRestauration: o.enRestauration
+      ? migrerEnRestauration(o.enRestauration)
+      : undefined,
+  })) as GameState["inventaireJoueur"];
 
   // Détecte le format ancien (tableau) et migre vers le nouveau (VitrineActive | null).
   // Les objets éventuellement présents dans l'ancienne vitrine sont retournés en stock.
