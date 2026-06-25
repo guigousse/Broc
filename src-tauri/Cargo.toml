@@ -24,3 +24,11 @@ log = "0.4"
 tauri = { version = "2.11.2", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-notification = "2"
+
+# Patch local : corrige la sérialisation des dates de notifs planifiées, dont le
+# format ISO-8601 (9 décimales + offset `+00:00`) était rejeté par le parseur
+# natif iOS du plugin → notifs jamais programmées sur iOS. Le crate vendoré ne
+# diffère de la 2.3.3 que par cette sérialisation (src/models.rs). À retirer si
+# le plugin amont corrige le bug.
+[patch.crates-io]
+tauri-plugin-notification = { path = "vendor/tauri-plugin-notification" }
