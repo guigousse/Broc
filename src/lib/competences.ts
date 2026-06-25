@@ -99,17 +99,6 @@ export function aMaitreReparer(
   return aCompetence(`${catTreeId(cat)}.reparer.3`, state.competencesDebloquees);
 }
 
-/**
- * Durée de restauration : 5 jours pour toute transition d'état,
- * ramenée à 3 jours quand le palier Maître de la catégorie est débloqué.
- */
-export function dureeRestauration(
-  state: GameState,
-  cat: CategorieObjet,
-  _etatCible: EtatObjet,
-): number {
-  return aMaitreReparer(state, cat) ? 3 : 5;
-}
 
 /**
  * Bonus d'appétit catégoriel cumulatif (Passion 1/2/3).
