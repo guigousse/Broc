@@ -110,6 +110,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     marquerCourrierLu,
     livrerMission,
     avancerJour,
+    tempsConfiance,
   } = useGame();
   const {
     playClick,
@@ -676,6 +677,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         onClose={() => setCarnetNotesOuvert(false)}
         state={state}
         onLivrerMission={(id) => livrerMission(id)}
+        tempsConfiance={tempsConfiance}
       />
 
       <CalendrierSheet

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { getTemplate } from "@/data/objetTemplates";
 import { estMissionLivrable } from "@/lib/missions";
+import { prochainMinuitLocalMs, prochainLundiLocalMs } from "@/lib/quetes/periode";
 import { CommandeRow } from "./CommandeRow";
 import type { Courrier, GameState, MissionResolution } from "@/types/game";
 
@@ -11,6 +12,18 @@ interface CarnetNotesOverlayProps {
   onClose: () => void;
   state: GameState;
   onLivrerMission: (courrierId: string) => { ok: boolean; raison?: string };
+  /** Temps de confiance (epoch ms) ; `Date.now()` à défaut. */
+  tempsConfiance?: () => number | null;
+}
+
+function formatRestant(ms: number): string {
+  const min = Math.max(0, Math.ceil(ms / 60000));
+  if (min >= 60) {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`;
+  }
+  return `${min} min`;
 }
 
 /* ─── styles ─── */
@@ -124,6 +137,16 @@ const sectionLabel: CSSProperties = {
   marginTop: 10,
 };
 
+const sectionSousLabel: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 9,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: "#7a6438",
+  textAlign: "center",
+  padding: "0 0 6px",
+};
+
 /* ─── tri des missions actives ─── */
 
 function trierActives(
@@ -148,10 +171,16 @@ function trierActives(
 
 /* ─── Composant principal ─── */
 
-export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission }: CarnetNotesOverlayProps) {
+export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission, tempsConfiance }: CarnetNotesOverlayProps) {
   const [ouvertId, setOuvertId] = useState<string | null>(null);
   const [termineesVisibles, setTermineesVisibles] = useState(false);
+  const [, tick] = useState(0);
   const byId = useMemo(() => new Map(state.courriers.map((c) => [c.id, c])), [state.courriers]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => tick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const actives = useMemo(() => state.missions.filter((m) => m.statut === "active"), [state.missions]);
 
@@ -168,15 +197,25 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission }: Ca
     [actives, byId, state.inventaireJoueur],
   );
 
-  const secondaires = useMemo(
+  const quotidiennes = useMemo(
     () =>
       trierActives(
         actives.filter((m) => {
           const c = byId.get(m.courrierId);
-          return (
-            c?.payload.type === "mission" &&
-            (c.payload.categorie === "quotidienne" || c.payload.categorie === "hebdomadaire")
-          );
+          return c?.payload.type === "mission" && c.payload.categorie === "quotidienne";
+        }),
+        byId,
+        state.inventaireJoueur,
+      ),
+    [actives, byId, state.inventaireJoueur],
+  );
+
+  const hebdomadaires = useMemo(
+    () =>
+      trierActives(
+        actives.filter((m) => {
+          const c = byId.get(m.courrierId);
+          return c?.payload.type === "mission" && c.payload.categorie === "hebdomadaire";
         }),
         byId,
         state.inventaireJoueur,
@@ -217,11 +256,16 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission }: Ca
 
   if (!open) return null;
 
-  const renderSection = (label: string, liste: MissionResolution[]) => {
+  const now = tempsConfiance?.() ?? Date.now();
+  const resteQuotidien = prochainMinuitLocalMs(now) - now;
+  const resteHebdo = prochainLundiLocalMs(now) - now;
+
+  const renderSection = (label: string, liste: MissionResolution[], sousLabel?: string) => {
     if (liste.length === 0) return null;
     return (
       <>
         <div style={sectionLabel}>{label}</div>
+        {sousLabel ? <div style={sectionSousLabel}>{sousLabel}</div> : null}
         {liste.map((m) => {
           const c = byId.get(m.courrierId);
           if (!c) return null;
@@ -262,7 +306,16 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission }: Ca
             ) : (
               <>
                 {renderSection("Commandes principales", principales)}
-                {renderSection("Commandes secondaires", secondaires)}
+                {renderSection(
+                  "Commandes quotidiennes",
+                  quotidiennes,
+                  `Renouvellement dans ${formatRestant(resteQuotidien)}`,
+                )}
+                {renderSection(
+                  "Commandes hebdomadaires",
+                  hebdomadaires,
+                  `Renouvellement dans ${formatRestant(resteHebdo)}`,
+                )}
                 {terminees.length > 0 && (
                   <>
                     <button

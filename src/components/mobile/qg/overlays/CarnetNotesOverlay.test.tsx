@@ -21,10 +21,10 @@ function withMissions(): GameState {
 }
 
 describe("CarnetNotesOverlay", () => {
-  it("affiche les sections principales et secondaires", () => {
+  it("affiche les sections principales et quotidiennes", () => {
     render(<CarnetNotesOverlay open state={withMissions()} onClose={() => {}} onLivrerMission={() => ({ ok: true })} />);
     expect(screen.getByText(/principales/i)).toBeTruthy();
-    expect(screen.getByText(/secondaires/i)).toBeTruthy();
+    expect(screen.getByText(/quotidiennes/i)).toBeTruthy();
     expect(screen.getByText("Quête A")).toBeTruthy();
     expect(screen.getByText("Quête B")).toBeTruthy();
   });
