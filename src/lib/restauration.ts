@@ -1,0 +1,55 @@
+import type { CategorieObjet, EtatObjet, GameState } from "@/types/game";
+import { aMaitreReparer } from "@/lib/competences";
+
+/** Durée totale par état de DÉPART (plus l'objet est bon, plus c'est long). */
+export const DUREE_RESTAURATION_MS: Record<EtatObjet, number> = {
+  Mauvais: 1 * 60 * 60 * 1000,
+  Bon: 2 * 60 * 60 * 1000,
+  "Très bon": 4 * 60 * 60 * 1000,
+  "Pristin état": 0, // non restaurable
+};
+
+/** Facteur appliqué à la durée si la catégorie a le palier « Maître Réparer ». */
+export const MAITRE_REPARER_FACTEUR = 0.6;
+
+/** Fenêtre (avant la fin) pendant laquelle on peut terminer via pub. */
+export const FENETRE_PUB_MS = 30 * 60 * 1000;
+
+/** Sous-ensemble temporel d'`enRestauration` manipulé par les fonctions pures. */
+type Timer = { debutMs: number; finMs: number };
+
+/** Durée totale (ms) pour restaurer un objet de `etatDepart`, compétence incluse. */
+export function dureeRestaurationMs(
+  state: GameState,
+  cat: CategorieObjet,
+  etatDepart: EtatObjet,
+): number {
+  const base = DUREE_RESTAURATION_MS[etatDepart];
+  return aMaitreReparer(state, cat)
+    ? Math.round(base * MAITRE_REPARER_FACTEUR)
+    : base;
+}
+
+/** Millisecondes restantes (plancher 0). `now` = temps de confiance. */
+export function restantMs(enRest: Timer, now: number): number {
+  return Math.max(0, enRest.finMs - now);
+}
+
+/** Progression 0→1. Renvoie 1 si la fenêtre est nulle/négative. */
+export function progression(enRest: Timer, now: number): number {
+  const total = enRest.finMs - enRest.debutMs;
+  if (total <= 0) return 1;
+  const p = (now - enRest.debutMs) / total;
+  return p < 0 ? 0 : p > 1 ? 1 : p;
+}
+
+/** Restauration terminée (récupérable). */
+export function estPret(enRest: Timer, now: number): boolean {
+  return now >= enRest.finMs;
+}
+
+/** Vrai si on est dans la fenêtre pub : 0 < restant <= 30 min. */
+export function peutTerminerImmediat(enRest: Timer, now: number): boolean {
+  const r = enRest.finMs - now;
+  return r > 0 && r <= FENETRE_PUB_MS;
+}
