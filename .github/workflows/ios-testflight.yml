@@ -52,14 +52,31 @@ jobs:
         run: npm ci
 
       # Clé API App Store Connect (signature cloud-managed + upload).
-      - name: Préparer la clé API
+      - name: Préparer + vérifier la clé API
         env:
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
+          set -e
+          # Nettoie tout espace/retour-ligne parasite des secrets saisis à la main.
+          KID=$(printf '%s' "$ASC_KEY_ID" | tr -d '[:space:]')
+          ISS=$(printf '%s' "$ASC_ISSUER_ID" | tr -d '[:space:]')
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "$ASC_KEY_P8" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          echo "Clé API écrite."
+          printf '%s' "$ASC_KEY_P8" | tr -d '[:space:]' | base64 --decode \
+            > ~/.appstoreconnect/private_keys/AuthKey_${KID}.p8
+          # Sanity : le .p8 doit être une clé privée PEM valide.
+          head -1 ~/.appstoreconnect/private_keys/AuthKey_${KID}.p8 | grep -q "BEGIN PRIVATE KEY" \
+            || { echo "::error::ASC_KEY_P8 corrompu (base64 invalide)"; exit 1; }
+          # Vérifie l'authentification tout de suite (échoue vite si 401).
+          out=$(xcrun altool --list-apps --apiKey "$KID" --apiIssuer "$ISS" 2>&1) || true
+          if echo "$out" | grep -qiE "Retrieved|Application:"; then
+            echo "✅ Clé API authentifiée."
+          else
+            echo "$out" | grep -i error | head
+            echo "::error::La clé API ne s'authentifie pas (vérifie ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8)"
+            exit 1
+          fi
 
       # 1) Archive NON signée (aucun certificat local requis).
       - name: Archive (non signée)
@@ -127,8 +144,12 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
+          KID=$(printf '%s' "$ASC_KEY_ID" | tr -d '[:space:]')
+          ISS=$(printf '%s' "$ASC_ISSUER_ID" | tr -d '[:space:]')
           IPA=$(ls /tmp/export/*.ipa | head -1)
           echo "Upload de $IPA"
-          xcrun altool --upload-app -f "$IPA" -t ios \
-            --apiKey "$ASC_KEY_ID" \
-            --apiIssuer "$ASC_ISSUER_ID"
+          out=$(xcrun altool --upload-app -f "$IPA" -t ios --apiKey "$KID" --apiIssuer "$ISS" 2>&1)
+          echo "$out"
+          # altool renvoie parfois 0 malgré une erreur → on vérifie la sortie.
+          echo "$out" | grep -qiE "No errors|UPLOAD SUCCEEDED" \
+            || { echo "::error::Upload altool échoué"; exit 1; }
