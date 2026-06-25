@@ -83,7 +83,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -353,9 +353,20 @@ function appliquerMigrations(loaded: GameState): GameState {
     }
   }
 
-  const courriersMigrés = migrerCourriers(loaded.courriers).map(
+  // Catégorie "secondaire" supprimée du modèle (v7) : on retire les courriers
+  // mission « secondaire » et leurs missions associées. Accès souple car la
+  // valeur n'existe plus dans le type `MissionCategorie`.
+  const estSecondaire = (c: { payload?: { type?: string; categorie?: string } }) =>
+    c.payload?.type === "mission" &&
+    (c.payload as { categorie?: string }).categorie === "secondaire";
+
+  const courriersNormalises = migrerCourriers(loaded.courriers).map(
     normaliserMissionPayload,
   );
+  const idsSecondairesSupprimes = new Set(
+    courriersNormalises.filter((c) => estSecondaire(c)).map((c) => c.id),
+  );
+  const courriersMigrés = courriersNormalises.filter((c) => !estSecondaire(c));
   const declencheursLoaded = Array.isArray(
     (loaded as Partial<GameState>).declencheursDeclenches,
   )
@@ -376,9 +387,9 @@ function appliquerMigrations(loaded: GameState): GameState {
 
   // Amorce de l'arc principal au chargement : on injecte le prochain chapitre
   // dû (chapitre 1 pour une partie naissante) ainsi que sa résolution active.
-  const missionsExistantes: GameState["missions"] = Array.isArray(loaded.missions)
-    ? loaded.missions
-    : [];
+  const missionsExistantes: GameState["missions"] = (
+    Array.isArray(loaded.missions) ? loaded.missions : []
+  ).filter((m) => !idsSecondairesSupprimes.has(m.courrierId));
   const amorce = debloquerQuetesPrincipales(
     {
       ...(loaded as GameState),
@@ -491,6 +502,10 @@ function appliquerMigrations(loaded: GameState): GameState {
       return reconstruireGrandLivre(historique, loaded.budget ?? 0);
     })(),
     missions: missionsFinales,
+    quetesPeriodiques: loaded.quetesPeriodiques ?? {
+      quotidien: { cle: "", courrierIds: [] },
+      hebdo: { cle: "", courrierIds: [] },
+    },
     energie: (() => {
       const v = (loaded as Partial<GameState>).energie;
       if (typeof v === "number" && Number.isFinite(v)) {

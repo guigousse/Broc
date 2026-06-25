@@ -237,8 +237,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 6", () => {
-    expect(SAVE_VERSION).toBe(6);
+  it("SAVE_VERSION incrémenté à 7", () => {
+    expect(SAVE_VERSION).toBe(7);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -412,6 +412,42 @@ describe("migration enRestauration jour → temps réel", () => {
       debutMs: 1000,
       finMs: 5000,
     });
+  });
+});
+
+describe("migration quêtes périodiques (v7)", () => {
+  it("supprime les courriers/missions secondaires et ajoute quetesPeriodiques", () => {
+    const ancienne = {
+      version: 6,
+      courriers: [
+        { id: "p1", type: "mission", jourRecu: 1, lu: true, payload: { type: "mission", categorie: "principale", expediteurId: "grand-pere", titre: "t", corps: [], cibles: [], recompense: { argent: 0 } } },
+        { id: "s1", type: "mission", jourRecu: 1, lu: true, payload: { type: "mission", categorie: "secondaire", expediteurId: "maman", titre: "t", corps: [], cibles: [], recompense: { argent: 0 } } },
+      ],
+      missions: [
+        { courrierId: "p1", statut: "active" },
+        { courrierId: "s1", statut: "active" },
+      ],
+    } as unknown as Parameters<typeof migrerSauvegarde>[0];
+
+    const migre = migrerSauvegarde(ancienne);
+    expect(migre.courriers.find((c) => c.id === "s1")).toBeUndefined();
+    expect(migre.missions.find((m) => m.courrierId === "s1")).toBeUndefined();
+    expect(migre.courriers.find((c) => c.id === "p1")).toBeDefined();
+    expect(migre.quetesPeriodiques).toEqual({
+      quotidien: { cle: "", courrierIds: [] },
+      hebdo: { cle: "", courrierIds: [] },
+    });
+  });
+
+  it("préserve un quetesPeriodiques déjà présent", () => {
+    const dejaV7 = {
+      version: 7,
+      courriers: [],
+      missions: [],
+      quetesPeriodiques: { quotidien: { cle: "2026-06-25", courrierIds: ["quo_2026-06-25_0"] }, hebdo: { cle: "2026-W26", courrierIds: [] } },
+    } as unknown as Parameters<typeof migrerSauvegarde>[0];
+    const migre = migrerSauvegarde(dejaV7);
+    expect(migre.quetesPeriodiques.quotidien.cle).toBe("2026-06-25");
   });
 });
 
