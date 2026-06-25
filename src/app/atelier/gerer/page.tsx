@@ -7,11 +7,16 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
 import { useGame } from "@/context/GameContext";
 import {
-  dureeRestauration,
   peutRestaurerBonVersTresBon,
   peutRestaurerMauvaisVersBon,
   peutRestaurerTresBonVersPristin,
 } from "@/lib/competences";
+import {
+  dureeRestaurationMs,
+  restantMs,
+  estPret,
+  peutTerminerImmediat,
+} from "@/lib/restauration";
 import { recalculerPrixReference } from "@/lib/etat";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import { coutAmelioration, peutDemanteler, rendementDemantelement } from "@/lib/atelier";
@@ -44,16 +49,39 @@ const cardWrap: React.CSSProperties = {
     "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
 };
 
+/** Le SDK pub n'existe pas encore : bouton « Terminer (pub) » masqué au lancement. */
+const PUB_DISPONIBLE = false;
+
+/** Formate une durée (ms) en « 1 h », « 1 h 30 », « 45 min », « 0:42 ». */
+function formatDuree(ms: number): string {
+  const totalMin = Math.ceil(ms / 60000);
+  if (totalMin >= 60) {
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`;
+  }
+  if (totalMin >= 1) return `${totalMin} min`;
+  return `${Math.ceil(ms / 1000)} s`;
+}
+
 export default function AtelierPage() {
   const router = useRouter();
   const {
     state,
     isHydrated,
     restaurerObjet,
+    terminerRestaurationImmediate,
+    tempsConfiance,
     ameliorerAtelier,
     demantelerObjet,
     recupererObjetRestaure,
   } = useGame();
+  // Re-render chaque seconde pour rafraîchir les comptes à rebours de restauration.
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, []);
   const [flash, setFlash] = useState<string | null>(null);
   const [restaurerCible, setRestaurerCible] = useState<{
     objet: Objet;
@@ -207,7 +235,6 @@ export default function AtelierPage() {
     if (actionEnCoursRef.current) return;
     actionEnCoursRef.current = true;
     const { objet, etatCible, thumbRect } = restaurerCible;
-    const duree = dureeRestauration(state, objet.categorie, etatCible);
     void audioManager.playRepair();
     setRestaurerCible(null);
     if (thumbRect) {
@@ -256,9 +283,13 @@ export default function AtelierPage() {
       }
     }
     window.setTimeout(() => {
-      const res = restaurerObjet(objet.id, etatCible, { dureeJours: duree });
+      const res = restaurerObjet(objet.id, etatCible);
       if (res.ok) {
-        setFlash(`${objet.nom} en restauration · ${etatCible} dans ${duree} j.`);
+        setFlash(
+          `${objet.nom} en restauration · ${etatCible} dans ${formatDuree(
+            dureeRestaurationMs(state, objet.categorie, etatCible),
+          )}`,
+        );
       } else {
         setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
       }
@@ -363,9 +394,11 @@ export default function AtelierPage() {
       ) : (
         <div style={cardWrap}>
           {enCours.map((o, i) => {
-            const fin = o.enRestauration!.jourFin;
-            const restant = Math.max(0, fin - state.jourActuel);
-            const ready = state.jourActuel >= fin;
+            const now = tempsConfiance() ?? Date.now();
+            const enRest = o.enRestauration!;
+            const ready = estPret(enRest, now);
+            const reste = restantMs(enRest, now);
+            const peutPub = PUB_DISPONIBLE && peutTerminerImmediat(enRest, now);
             return (
               <AtelierItemRow
                 key={o.id}
@@ -380,7 +413,7 @@ export default function AtelierPage() {
                       letterSpacing: "0.04em",
                     }}
                   >
-                    {ready ? "prêt ✓" : `fin jour N°${String(fin).padStart(3, "0")}`}
+                    {ready ? "prêt ✓" : formatDuree(reste)}
                   </span>
                 }
                 action={
@@ -408,15 +441,44 @@ export default function AtelierPage() {
                   ) : (
                     <span
                       style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 9,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        color: "var(--brass-700)",
-                        whiteSpace: "nowrap",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
                       }}
                     >
-                      {`${restant} j. rest.`}
+                      <span
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 9,
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                          color: "var(--brass-700)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {formatDuree(reste)}
+                      </span>
+                      {peutPub && (
+                        <button
+                          type="button"
+                          onClick={() => terminerRestaurationImmediate(o.id)}
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            fontSize: 9,
+                            letterSpacing: "0.12em",
+                            textTransform: "uppercase",
+                            color: "var(--paper-100)",
+                            background: "var(--brass-600)",
+                            border: "1px solid var(--brass-700)",
+                            padding: "4px 8px",
+                            borderRadius: 3,
+                            whiteSpace: "nowrap",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Terminer (pub)
+                        </button>
+                      )}
                     </span>
                   )
                 }
@@ -509,7 +571,9 @@ export default function AtelierPage() {
                   : o.etat === "Bon"
                     ? "Très bon"
                     : "Pristin état";
-              const duree = dureeRestauration(state, o.categorie, cible);
+              const duree = formatDuree(
+                dureeRestaurationMs(state, o.categorie, cible),
+              );
               const prixApres = recalculerPrixReference(
                 o.prixReferenceReel,
                 o.etat,
@@ -532,7 +596,7 @@ export default function AtelierPage() {
                         letterSpacing: "0.04em",
                       }}
                     >
-                      {duree} j. · valeur {o.prixReferenceReel} →{" "}
+                      {duree} · valeur {o.prixReferenceReel} →{" "}
                       <span style={{ color: "var(--brass-700)" }}>
                         {prixApres} €
                       </span>
@@ -752,12 +816,13 @@ export default function AtelierPage() {
               Restaurer <strong>{restaurerCible.objet.nom}</strong> en{" "}
               <strong>{restaurerCible.etatCible}</strong> prend{" "}
               <strong>
-                {dureeRestauration(
-                  state,
-                  restaurerCible.objet.categorie,
-                  restaurerCible.etatCible,
-                )}{" "}
-                jours
+                {formatDuree(
+                  dureeRestaurationMs(
+                    state,
+                    restaurerCible.objet.categorie,
+                    restaurerCible.etatCible,
+                  ),
+                )}
               </strong>{" "}
               et coûte{" "}
               <strong>
