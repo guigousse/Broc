@@ -1,0 +1,47 @@
+// @vitest-environment jsdom
+import { describe, it, expect } from "vitest";
+import {
+  notifsRestauration,
+  synchroniserNotifsRestauration,
+} from "./restaurationNotif";
+import { NOTIF_IDS } from "./ids";
+
+describe("notifsRestauration (pur)", () => {
+  it("une notif par objet non terminé, IDs 100..102, à finMs", () => {
+    const now = 1000;
+    const specs = notifsRestauration(
+      [
+        { nom: "Vase", finMs: 5000 },
+        { nom: "Lampe", finMs: 8000 },
+      ],
+      now,
+    );
+    expect(specs.map((s) => s.id)).toEqual([
+      NOTIF_IDS.RESTAURATION[0],
+      NOTIF_IDS.RESTAURATION[1],
+    ]);
+    expect(specs.map((s) => s.atMs)).toEqual([5000, 8000]);
+    expect(specs[0].body).toContain("Vase");
+    expect(specs[0].sound).toBe("default");
+  });
+
+  it("ignore les objets déjà terminés (finMs <= now)", () => {
+    expect(notifsRestauration([{ nom: "X", finMs: 500 }], 1000)).toHaveLength(0);
+  });
+
+  it("plafonne à 3 notifs (nombre d'IDs réservés)", () => {
+    const objets = Array.from({ length: 5 }, (_, i) => ({
+      nom: `O${i}`,
+      finMs: 10000 + i,
+    }));
+    expect(notifsRestauration(objets, 0)).toHaveLength(3);
+  });
+});
+
+describe("synchroniserNotifsRestauration hors Tauri", () => {
+  it("est un no-op sans lever", async () => {
+    await expect(
+      synchroniserNotifsRestauration([{ nom: "X", finMs: 9_999_999_999 }], 0),
+    ).resolves.toBeUndefined();
+  });
+});
