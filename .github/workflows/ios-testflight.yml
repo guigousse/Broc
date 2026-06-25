@@ -1,0 +1,117 @@
+name: iOS → TestFlight
+
+# Build cloud iOS (Xcode 26 requis par Apple) puis upload TestFlight.
+# Déclenchement manuel (Actions) OU à chaque push sur la branche de travail.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/systeme-energie
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Xcode 26+ : indispensable, Apple refuse les builds < SDK iOS 26.
+      - name: Select Xcode 26
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Versions (vérif SDK)
+        run: |
+          xcodebuild -version
+          echo "--- SDK iOS dispo ---"
+          xcodebuild -showsdks | grep -i iphoneos || true
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Rust + cible iOS
+        run: |
+          rustup update stable
+          rustup target add aarch64-apple-ios
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: cargo-ios-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: cargo-ios-
+
+      - name: Dépendances frontend
+        run: npm ci
+
+      # Clé API App Store Connect (signature cloud-managed + upload).
+      - name: Préparer la clé API
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_P8" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          echo "Clé API écrite."
+
+      # 1) Archive NON signée (aucun certificat local requis).
+      - name: Archive (non signée)
+        env:
+          APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          npx tauri ios build --target aarch64 --archive-only --no-sign \
+            --build-number ${{ github.run_number }}
+
+      # 2) Export SIGNÉ via la clé API (signature « cloud-managed » par Apple).
+      - name: Export signé (App Store)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cat > /tmp/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>destination</key><string>export</string>
+          </dict></plist>
+          EOF
+          ARCHIVE="src-tauri/gen/apple/build/app_iOS.xcarchive"
+          rm -rf /tmp/export
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE" \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -exportPath /tmp/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          ls -lh /tmp/export/*.ipa
+
+      - name: Sauvegarde de l'IPA (artefact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Broc-ios-ipa
+          path: /tmp/export/*.ipa
+
+      # 3) Upload TestFlight via la clé API.
+      - name: Upload TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          IPA=$(ls /tmp/export/*.ipa | head -1)
+          echo "Upload de $IPA"
+          xcrun altool --upload-app -f "$IPA" -t ios \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
