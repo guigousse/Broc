@@ -85,6 +85,10 @@ import {
   annulerPleinEnergie,
 } from "@/lib/notifications/energieNotif";
 import {
+  programmerRappelRetour,
+  annulerRappelRetour,
+} from "@/lib/notifications/rappelRetour";
+import {
   poserAncre,
   tempsConfianceCourant,
   type AncreTemps,
@@ -342,6 +346,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
       annule = true;
     };
   }, [isHydrated, energie, energieDerniereMaj, tempsConfiance]);
+
+  // Rappel de retour : programme la série J+1/J+3/J+7 quand l'app passe en
+  // arrière-plan, l'annule à la réouverture. No-op hors Tauri ou si la
+  // permission n'est pas déjà accordée (jamais de prompt à la sortie).
+  useEffect(() => {
+    if (!isHydrated) return;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        void programmerRappelRetour(Date.now());
+      } else {
+        void annulerRappelRetour();
+      }
+    };
+    // pagehide : filet pour iOS quand la WebView est suspendue.
+    const onPageHide = () => void programmerRappelRetour(Date.now());
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, [isHydrated]);
 
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {
