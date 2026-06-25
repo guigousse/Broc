@@ -69,11 +69,31 @@ jobs:
           npx tauri ios build --target aarch64 --archive-only --no-sign \
             --build-number ${{ github.run_number }}
 
-      # 2) Export SIGNÉ via la clé API (signature « cloud-managed » par Apple).
+      # Import du certificat de distribution (.p12) + profil App Store dans un
+      # trousseau temporaire → signature MANUELLE (pas d'auth API pour signer).
+      - name: Importer certificat + profil
+        env:
+          DIST_CERT_P12: ${{ secrets.DIST_CERT_P12 }}
+          DIST_CERT_PASSWORD: ${{ secrets.DIST_CERT_PASSWORD }}
+          APP_STORE_PROFILE: ${{ secrets.APP_STORE_PROFILE }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
+          KP="$(openssl rand -base64 24)"
+          security create-keychain -p "$KP" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KP" "$KEYCHAIN"
+          echo "$DIST_CERT_P12" | base64 --decode > "$RUNNER_TEMP/dist.p12"
+          security import "$RUNNER_TEMP/dist.p12" -k "$KEYCHAIN" -P "$DIST_CERT_PASSWORD" -A -t cert -f pkcs12
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KP" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | sed s/\"//g)
+          security default-keychain -s "$KEYCHAIN"
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "$APP_STORE_PROFILE" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/app-store.mobileprovision"
+          echo "Identités disponibles :"; security find-identity -v -p codesigning "$KEYCHAIN"
+
+      # 2) Export SIGNÉ (signature MANUELLE : certificat + profil fournis).
       - name: Export signé (App Store)
         env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           cat > /tmp/ExportOptions.plist <<EOF
@@ -82,20 +102,21 @@ jobs:
           <plist version="1.0"><dict>
             <key>method</key><string>app-store-connect</string>
             <key>teamID</key><string>${APPLE_TEAM_ID}</string>
-            <key>signingStyle</key><string>automatic</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.guigousse.broc</key>
+              <string>iOS Team Store Provisioning Profile: com.guigousse.broc</string>
+            </dict>
             <key>destination</key><string>export</string>
           </dict></plist>
           EOF
-          ARCHIVE="src-tauri/gen/apple/build/app_iOS.xcarchive"
           rm -rf /tmp/export
           xcodebuild -exportArchive \
-            -archivePath "$ARCHIVE" \
+            -archivePath "src-tauri/gen/apple/build/app_iOS.xcarchive" \
             -exportOptionsPlist /tmp/ExportOptions.plist \
-            -exportPath /tmp/export \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+            -exportPath /tmp/export
           ls -lh /tmp/export/*.ipa
 
       - name: Sauvegarde de l'IPA (artefact)
