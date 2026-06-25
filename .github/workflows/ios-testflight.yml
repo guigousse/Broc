@@ -12,6 +12,11 @@ jobs:
   build:
     runs-on: macos-15
     timeout-minutes: 60
+    # Identifiants NON secrets (le secret reste le .p8). En clair = pas de faute de frappe.
+    env:
+      ASC_KEY_ID: KHFCLB86L9
+      ASC_ISSUER_ID: 3ee169dd-aa33-4e93-a93c-e998185376b3
+      APPLE_TEAM_ID: 9D78779LKL
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,8 +60,6 @@ jobs:
       - name: Préparer + vérifier la clé API
         env:
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           set -e
           # Nettoie tout espace/retour-ligne parasite des secrets saisis à la main.
@@ -110,8 +113,6 @@ jobs:
 
       # 2) Export SIGNÉ (signature MANUELLE : certificat + profil fournis).
       - name: Export signé (App Store)
-        env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           cat > /tmp/ExportOptions.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -140,9 +141,6 @@ jobs:
 
       # 3) Upload TestFlight via la clé API.
       - name: Upload TestFlight
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           KID=$(printf '%s' "$ASC_KEY_ID" | tr -d '[:space:]')
           ISS=$(printf '%s' "$ASC_ISSUER_ID" | tr -d '[:space:]')
