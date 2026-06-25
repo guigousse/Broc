@@ -56,6 +56,8 @@ import {
 } from "@/data/stockage";
 import { stockageEstPlein } from "@/lib/stockage";
 import { tickQuetes } from "@/lib/quetes/tick";
+import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
+import { synchroniserNotifsQuetes } from "@/lib/notifications/quetesNotif";
 import {
   initCollection,
   marquerDejaPossede as marquerDejaPossedeFn,
@@ -257,6 +259,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [tempsConfiance]);
 
+  const rafraichirQuetes = useCallback(() => {
+    const now = tempsConfiance() ?? Date.now();
+    setState((prev) => (prev ? settleQuetesPeriodiques(prev, now) : prev));
+  }, [tempsConfiance]);
+
   const consommerEnergie = useCallback(
     (n: number) => {
       setState((prev) => {
@@ -302,13 +309,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ancreRef.current = poserAncre(t, performance.now());
       }
       rafraichirEnergie();
+      rafraichirQuetes();
     };
     sync();
     const onFocus = () => sync();
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
     const syncTimer = window.setInterval(sync, 10 * 60 * 1000); // re-sync /10 min
-    const tickTimer = window.setInterval(() => rafraichirEnergie(), 60 * 1000); // settle /60 s
+    const tickTimer = window.setInterval(() => {
+      rafraichirEnergie();
+      rafraichirQuetes();
+    }, 60 * 1000); // settle /60 s
     return () => {
       actif = false;
       window.removeEventListener("focus", onFocus);
@@ -316,7 +327,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       window.clearInterval(syncTimer);
       window.clearInterval(tickTimer);
     };
-  }, [isHydrated, rafraichirEnergie]);
+  }, [isHydrated, rafraichirEnergie, rafraichirQuetes]);
 
   // Notification « énergie pleine » : (re)planifie une notif système à l'instant
   // où l'énergie atteindra 5/5, et l'annule quand elle est pleine. La permission
@@ -397,6 +408,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       .map((o) => ({ nom: o.nom, finMs: o.enRestauration!.finMs - ecart }));
     void synchroniserNotifsRestauration(objets, Date.now());
   }, [isHydrated, restauKey, tempsConfiance]);
+
+  // Notif « Nouvelles quêtes » : programme aux prochains resets (minuit / lundi).
+  // Relancée quand un lot change de clé. Échéances déjà en horloge murale (periode.ts).
+  const quetesCles = `${state?.quetesPeriodiques.quotidien.cle ?? ""}|${state?.quetesPeriodiques.hebdo.cle ?? ""}`;
+  useEffect(() => {
+    if (!isHydrated) return;
+    void synchroniserNotifsQuetes(Date.now());
+  }, [isHydrated, quetesCles]);
 
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {
