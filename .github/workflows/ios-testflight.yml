@@ -68,8 +68,11 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           printf '%s' "$ASC_KEY_P8" | tr -d '[:space:]' | base64 --decode \
             > ~/.appstoreconnect/private_keys/AuthKey_${KID}.p8
+          F8=~/.appstoreconnect/private_keys/AuthKey_${KID}.p8
+          # Empreinte (ne révèle pas la clé) — DOIT être : taille=257 lignes=5 sha12=28ef64eb3388
+          echo "EMPREINTE p8 -> taille=$(wc -c < "$F8") lignes=$(wc -l < "$F8") sha12=$(shasum -a 256 "$F8" | cut -c1-12)"
           # Sanity : le .p8 doit être une clé privée PEM valide.
-          head -1 ~/.appstoreconnect/private_keys/AuthKey_${KID}.p8 | grep -q "BEGIN PRIVATE KEY" \
+          head -1 "$F8" | grep -q "BEGIN PRIVATE KEY" \
             || { echo "::error::ASC_KEY_P8 corrompu (base64 invalide)"; exit 1; }
           # Vérifie l'authentification tout de suite (échoue vite si 401).
           out=$(xcrun altool --list-apps --apiKey "$KID" --apiIssuer "$ISS" 2>&1) || true
