@@ -137,17 +137,18 @@ export function rendementDemantelement(o: Objet): number {
  * Applique la fin de restauration d'un objet : mute son état vers `etatCible`,
  * recalcule son prix de référence, et efface `enRestauration`. Retourne null si
  * l'objet n'existe pas, n'est pas en restauration, ou si la restauration n'est
- * pas encore terminée (`jourActuel < jourFin`).
+ * pas encore terminée (`now < finMs`). `now` = temps de confiance (epoch ms).
  *
- * Helper pur — appelé par GameContext.recupererObjetRestaure.
+ * Helper pur — appelé par GameContext.
  */
 export function appliquerRecuperation(
   state: GameState,
   objetId: string,
+  now: number,
 ): GameState | null {
   const objet = state.inventaireJoueur.find((o) => o.id === objetId);
   if (!objet || !objet.enRestauration) return null;
-  if (state.jourActuel < objet.enRestauration.jourFin) return null;
+  if (now < objet.enRestauration.finMs) return null;
   const cible = objet.enRestauration.etatCible;
   const inv = state.inventaireJoueur.map((o) =>
     o.id === objetId

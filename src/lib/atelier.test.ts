@@ -90,9 +90,9 @@ describe("nbRestaurationsEnCours / atelierAuneSlotLibre", () => {
   it("compte les objets enRestauration=true dans l'inventaire", () => {
     const state = createMockGameState({
       inventaireJoueur: [
-        createMockObjet({ enRestauration: { etatCible: "Bon", jourFin: 10 } }),
+        createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } }),
         createMockObjet({ enRestauration: undefined }),
-        createMockObjet({ enRestauration: { etatCible: "Bon", jourFin: 10 } }),
+        createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } }),
       ],
     });
     expect(nbRestaurationsEnCours(state)).toBe(2);
@@ -106,7 +106,7 @@ describe("nbRestaurationsEnCours / atelierAuneSlotLibre", () => {
   it("atelier niveau 1 plein avec 1 en cours", () => {
     const state = createMockGameState({
       niveauAtelier: 1,
-      inventaireJoueur: [createMockObjet({ enRestauration: { etatCible: "Bon", jourFin: 10 } })],
+      inventaireJoueur: [createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } })],
     });
     expect(atelierAuneSlotLibre(state)).toBe(false);
   });
@@ -115,8 +115,8 @@ describe("nbRestaurationsEnCours / atelierAuneSlotLibre", () => {
     const state = createMockGameState({
       niveauAtelier: 3,
       inventaireJoueur: [
-        createMockObjet({ enRestauration: { etatCible: "Bon", jourFin: 10 } }),
-        createMockObjet({ enRestauration: { etatCible: "Bon", jourFin: 10 } }),
+        createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } }),
+        createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } }),
       ],
     });
     expect(atelierAuneSlotLibre(state)).toBe(true);
@@ -162,7 +162,7 @@ describe("peutRestaurerTransition", () => {
 describe("atelierStatusPourObjet — refus", () => {
   it("refus si objet déjà en restauration", () => {
     const state = createMockGameState();
-    const o = createMockObjet({ enRestauration: { etatCible: "Bon", jourFin: 10 } });
+    const o = createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } });
     const res = atelierStatusPourObjet(state, o);
     expect(res.disponible).toBe(false);
     expect(res.raison).toMatch(/cours/i);
@@ -177,7 +177,7 @@ describe("atelierStatusPourObjet — refus", () => {
   it("refus si atelier plein", () => {
     const state = createMockGameState({
       niveauAtelier: 1,
-      inventaireJoueur: [createMockObjet({ enRestauration: { etatCible: "Bon", jourFin: 10 } })],
+      inventaireJoueur: [createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } })],
     });
     const o = createMockObjet({ etat: "Mauvais" });
     expect(atelierStatusPourObjet(state, o).disponible).toBe(false);
@@ -233,7 +233,7 @@ describe("collectionStatusPourObjet", () => {
 
   it("indisponible si l'objet est en restauration", () => {
     const state = createMockGameState();
-    const o = createMockObjet({ enRestauration: { etatCible: "Bon", jourFin: 10 } });
+    const o = createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } });
     expect(collectionStatusPourObjet(state, o).disponible).toBe(false);
   });
 
@@ -273,7 +273,7 @@ describe("collectionStatusPourObjet", () => {
 
 describe("peutDemanteler", () => {
   it("refus si l'objet est en restauration", () => {
-    const o = createMockObjet({ enRestauration: { etatCible: "Bon", jourFin: 10 } });
+    const o = createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } });
     const state = createMockGameState({ inventaireJoueur: [o] });
     expect(peutDemanteler(state, o).disponible).toBe(false);
   });
@@ -294,23 +294,23 @@ describe("peutDemanteler", () => {
 describe("appliquerRecuperation", () => {
   it("retourne null si l'objet n'existe pas", () => {
     const s = createMockGameState({ inventaireJoueur: [] });
-    expect(appliquerRecuperation(s, "inconnu")).toBeNull();
+    expect(appliquerRecuperation(s, "inconnu", 999999)).toBeNull();
   });
 
   it("retourne null si l'objet n'est pas en restauration", () => {
     const o = createMockObjet({ id: "o1", etat: "Bon" });
     const s = createMockGameState({ inventaireJoueur: [o] });
-    expect(appliquerRecuperation(s, "o1")).toBeNull();
+    expect(appliquerRecuperation(s, "o1", 999999)).toBeNull();
   });
 
   it("retourne null si la restauration n'est pas encore terminée", () => {
     const o = createMockObjet({
       id: "o1",
       etat: "Bon",
-      enRestauration: { etatCible: "Très bon", jourFin: 10 },
+      enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 10 },
     });
     const s = createMockGameState({ inventaireJoueur: [o], jourActuel: 5 });
-    expect(appliquerRecuperation(s, "o1")).toBeNull();
+    expect(appliquerRecuperation(s, "o1", 0)).toBeNull();
   });
 
   it("mute l'état et efface enRestauration quand prêt", () => {
@@ -318,10 +318,10 @@ describe("appliquerRecuperation", () => {
       id: "o1",
       etat: "Bon",
       prixReferenceReel: 100,
-      enRestauration: { etatCible: "Très bon", jourFin: 5 },
+      enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 5 },
     });
     const s = createMockGameState({ inventaireJoueur: [o], jourActuel: 5 });
-    const next = appliquerRecuperation(s, "o1");
+    const next = appliquerRecuperation(s, "o1", 999999);
     expect(next).not.toBeNull();
     const updated = next!.inventaireJoueur.find((x) => x.id === "o1")!;
     expect(updated.etat).toBe("Très bon");
@@ -333,14 +333,14 @@ describe("appliquerRecuperation", () => {
     const o1 = createMockObjet({
       id: "o1",
       etat: "Bon",
-      enRestauration: { etatCible: "Très bon", jourFin: 1 },
+      enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 1 },
     });
     const o2 = createMockObjet({ id: "o2", etat: "Mauvais" });
     const s = createMockGameState({
       inventaireJoueur: [o1, o2],
       jourActuel: 5,
     });
-    const next = appliquerRecuperation(s, "o1")!;
+    const next = appliquerRecuperation(s, "o1", 999999)!;
     expect(next.inventaireJoueur.find((x) => x.id === "o2")).toEqual(o2);
   });
 });

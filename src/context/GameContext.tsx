@@ -71,6 +71,7 @@ import {
   coutAmelioration,
   rendementDemantelement,
 } from "@/lib/atelier";
+import { dureeRestaurationMs, peutTerminerImmediat } from "@/lib/restauration";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
   ENERGIE_MAX,
@@ -137,7 +138,9 @@ interface GameActionsValue {
   restaurerObjet: (
     objetId: string,
     etatCible: EtatObjet,
-    options?: { dureeJours?: number },
+  ) => { ok: boolean; raison?: string };
+  terminerRestaurationImmediate: (
+    objetId: string,
   ) => { ok: boolean; raison?: string };
   demantelerObjet: (objetId: string) => {
     ok: boolean;
@@ -911,7 +914,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (
       objetId: string,
       etatCible: EtatObjet,
-      options: { dureeJours?: number } = {},
     ): { ok: boolean; raison?: string } => {
       const current = stateRef.current;
       if (!current) return { ok: false, raison: "Pas de partie." };
@@ -941,14 +943,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
           raison: `Manque ${cout - dispo} pièce${cout - dispo > 1 ? "s" : ""} ${objet.categorie}.`,
         };
 
-      const duree = Math.max(1, options.dureeJours ?? 7);
-      const jourFin = current.jourActuel + duree;
+      const now = tempsConfiance() ?? Date.now();
+      const debutMs = now;
+      const finMs = now + dureeRestaurationMs(current, objet.categorie, objet.etat);
 
       setState((prev) => {
         if (!prev) return prev;
         const inv = prev.inventaireJoueur.map((o) =>
           o.id === objetId
-            ? { ...o, enRestauration: { etatCible, jourFin } }
+            ? { ...o, enRestauration: { etatCible, debutMs, finMs } }
             : o,
         );
         const piecesAmelioration = {
@@ -960,7 +963,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
       return { ok: true };
     },
-    [],
+    [tempsConfiance],
   );
 
   const demantelerObjet = useCallback(
@@ -1000,17 +1003,43 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!objet) return { ok: false, raison: "Objet introuvable." };
       if (!objet.enRestauration)
         return { ok: false, raison: "Objet pas en restauration." };
-      if (current.jourActuel < objet.enRestauration.jourFin)
+      const now = tempsConfiance() ?? Date.now();
+      if (now < objet.enRestauration.finMs)
         return { ok: false, raison: "Restauration pas terminée." };
 
       setState((prev) => {
         if (!prev) return prev;
-        const next = appliquerRecuperation(prev, objetId);
+        const next = appliquerRecuperation(prev, objetId, now);
         return next ?? prev;
       });
       return { ok: true };
     },
-    [],
+    [tempsConfiance],
+  );
+
+  // Terminer une restauration via pub (fenêtre < 30 min). Le DÉCLENCHEUR pub est
+  // un stub : cette action est appelée par le bouton UI, lui-même masqué tant que
+  // PUB_DISPONIBLE est faux. La mécanique (fonction pure + mutation) est prête.
+  const terminerRestaurationImmediate = useCallback(
+    (objetId: string): { ok: boolean; raison?: string } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: "Pas de partie." };
+      const objet = current.inventaireJoueur.find((o) => o.id === objetId);
+      if (!objet?.enRestauration)
+        return { ok: false, raison: "Objet pas en restauration." };
+      const now = tempsConfiance() ?? Date.now();
+      if (!peutTerminerImmediat(objet.enRestauration, now))
+        return { ok: false, raison: "Hors fenêtre (≤ 30 min)." };
+      const fin = objet.enRestauration.finMs;
+      setState((prev) => {
+        if (!prev) return prev;
+        // Forcer la complétion : on applique avec now = finMs (>= finMs).
+        const next = appliquerRecuperation(prev, objetId, fin);
+        return next ?? prev;
+      });
+      return { ok: true };
+    },
+    [tempsConfiance],
   );
 
   const gagnerXP = useCallback(
@@ -1307,6 +1336,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       enregistrerSession,
       debloquerCompetence,
       restaurerObjet,
+      terminerRestaurationImmediate,
       demantelerObjet,
       recupererObjetRestaure,
       ameliorerAtelier,
@@ -1350,6 +1380,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       enregistrerSession,
       debloquerCompetence,
       restaurerObjet,
+      terminerRestaurationImmediate,
       demantelerObjet,
       recupererObjetRestaure,
       ameliorerAtelier,

@@ -195,9 +195,7 @@ export function ObjetDetailOverlay({
 
         <div style={prixCard}>
           {enRestauration && (
-            <div style={restaurationBanner}>
-              En restauration jusqu&apos;au jour {objet.enRestauration?.jourFin}
-            </div>
+            <div style={restaurationBanner}>En restauration à l&apos;atelier</div>
           )}
 
           <div style={prixRow}>

@@ -4,12 +4,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { Album, Anvil, BookOpen, Home, Warehouse, type LucideIcon } from "lucide-react";
 import { useSyncExternalStore, type CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
-import { useGameStateOnly } from "@/context/GameContext";
+import { useGameActions, useGameStateOnly } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import {
   panoramaActiveStore,
   panoramaActiveServerSnapshot,
 } from "@/lib/panoramaActiveStore";
+import { estPret } from "@/lib/restauration";
 import type { GameState } from "@/types/game";
 
 interface TabDef {
@@ -18,7 +19,8 @@ interface TabDef {
   /** Libellé complet pour les lecteurs d'écran quand `label` est abrégé. */
   ariaLabel?: string;
   path: string;
-  badge?: (state: GameState) => number;
+  /** `now` = temps de confiance (epoch ms) pour les badges dépendant du temps réel. */
+  badge?: (state: GameState, now: number) => number;
 }
 
 /**
@@ -51,11 +53,9 @@ export const TAB_ORDER: TabDef[] = [
     icon: Anvil,
     label: "Atelier",
     path: "/atelier",
-    badge: (state) =>
+    badge: (state, now) =>
       state.inventaireJoueur.filter(
-        (o) =>
-          o.enRestauration &&
-          (o.enRestauration.jourFin ?? Infinity) <= state.jourActuel,
+        (o) => o.enRestauration && estPret(o.enRestauration, now),
       ).length,
   },
 ];
@@ -137,6 +137,7 @@ export function TabBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { state, isHydrated } = useGameStateOnly();
+  const { tempsConfiance } = useGameActions();
   const { playClick } = useSettings();
 
   // Override "live" : quand on est dans le panorama unifié, le store
@@ -162,6 +163,7 @@ export function TabBar() {
           : null;
   const effectivePath = liveTabPath ?? pathname;
   const activeIdx = findActiveTabIndex(effectivePath);
+  const now = tempsConfiance() ?? Date.now();
 
   // Ordre stable : pas de shuffle. L'onglet actif est simplement
   // surligné — moins de mouvement visuel quand on change de section.
@@ -170,7 +172,7 @@ export function TabBar() {
       {TAB_ORDER.map((tab, idx) => {
         const Icon = tab.icon;
         const active = idx === activeIdx;
-        const count = tab.badge ? tab.badge(state) : 0;
+        const count = tab.badge ? tab.badge(state, now) : 0;
         return (
           <button
             key={tab.path}

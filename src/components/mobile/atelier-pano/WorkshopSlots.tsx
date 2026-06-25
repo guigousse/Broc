@@ -7,6 +7,7 @@ import { ItemImage } from "@/components/ui/ItemImage";
 import { useGameActions, useGameStateOnly } from "@/context/GameContext";
 import { useAtelierSlotCoord } from "@/components/mobile/qg/dev/QgEditContext";
 import { getCapaciteAtelier } from "@/data/atelier";
+import { estPret, restantMs } from "@/lib/restauration";
 import type { Objet } from "@/types/game";
 import { ATELIER_SLOT_GAP_VW } from "./slotsLayout";
 
@@ -28,11 +29,12 @@ import { ATELIER_SLOT_GAP_VW } from "./slotsLayout";
 export function WorkshopSlots() {
   const router = useRouter();
   const { state } = useGameStateOnly();
-  const { recupererObjetRestaure } = useGameActions();
+  const { recupererObjetRestaure, tempsConfiance } = useGameActions();
   const slotCoord = useAtelierSlotCoord("atelier-slot");
 
   if (!state) return null;
 
+  const now = tempsConfiance() ?? Date.now();
   const capacite = getCapaciteAtelier(state.niveauAtelier);
   const enCours: Objet[] = state.inventaireJoueur.filter(
     (o) => o.enRestauration,
@@ -62,7 +64,7 @@ export function WorkshopSlots() {
             {objet ? (
               <OccupiedSlot
                 objet={objet}
-                jourActuel={state.jourActuel}
+                now={now}
                 onTapEnCours={() => router.push("/atelier/gerer")}
                 onRecuperer={() => recupererObjetRestaure(objet.id)}
               />
@@ -109,20 +111,28 @@ function EmptySlot({ onTap }: { onTap: () => void }) {
 
 interface OccupiedSlotProps {
   objet: Objet;
-  jourActuel: number;
+  now: number;
   onTapEnCours: () => void;
   onRecuperer: () => void;
 }
 
+/** Libellé compact du temps restant : « 3h », « 12min » ou « <1min ». */
+function formatRestant(ms: number): string {
+  const min = Math.ceil(ms / 60000);
+  if (min <= 0) return "<1min";
+  if (min < 60) return `${min}min`;
+  return `${Math.ceil(min / 60)}h`;
+}
+
 function OccupiedSlot({
   objet,
-  jourActuel,
+  now,
   onTapEnCours,
   onRecuperer,
 }: OccupiedSlotProps) {
-  const fin = objet.enRestauration!.jourFin;
-  const ready = jourActuel >= fin;
-  const restant = Math.max(1, fin - jourActuel);
+  const enRest = objet.enRestauration!;
+  const ready = estPret(enRest, now);
+  const restant = formatRestant(restantMs(enRest, now));
 
   const wrapper: CSSProperties = {
     position: "relative",
@@ -150,7 +160,7 @@ function OccupiedSlot({
       aria-label={
         ready
           ? `Récupérer ${objet.nom}`
-          : `${objet.nom} en restauration, ${restant} jour${restant > 1 ? "s" : ""} restant${restant > 1 ? "s" : ""}`
+          : `${objet.nom} en restauration, ${restant} restant`
       }
       style={wrapper}
     >
@@ -201,7 +211,7 @@ function OccupiedSlot({
         {ready ? "✓" : (
           <>
             <Hourglass size={10} strokeWidth={2} aria-hidden />
-            {`${restant}j`}
+            {restant}
           </>
         )}
       </div>

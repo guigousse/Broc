@@ -22,11 +22,13 @@ export interface Objet {
   prixAchat?: number;
   /** Prix de vente fixé par le joueur dans l'overlay. Utilisé par défaut à la mise à l'étal. */
   prixVenteSouhaite?: number;
-  /** Présent si l'objet est en cours de restauration à l'atelier. */
+  /** Présent si l'objet est en cours de restauration à l'atelier (temps réel). */
   enRestauration?: {
     etatCible: EtatObjet;
-    /** Jour à partir duquel la restauration sera terminée (>=). */
-    jourFin: number;
+    /** Ancre (temps de confiance, epoch ms) du début. */
+    debutMs: number;
+    /** Échéance (epoch ms) : restauration prête quand now >= finMs. */
+    finMs: number;
   };
 }
 
