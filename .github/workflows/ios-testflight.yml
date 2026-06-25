@@ -102,17 +102,13 @@ jobs:
           <plist version="1.0"><dict>
             <key>method</key><string>app-store-connect</string>
             <key>teamID</key><string>${APPLE_TEAM_ID}</string>
-            <key>signingStyle</key><string>manual</string>
-            <key>signingCertificate</key><string>Apple Distribution</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.guigousse.broc</key>
-              <string>iOS Team Store Provisioning Profile: com.guigousse.broc</string>
-            </dict>
+            <key>signingStyle</key><string>automatic</string>
             <key>destination</key><string>export</string>
           </dict></plist>
           EOF
           rm -rf /tmp/export
+          # Pas de -allowProvisioningUpdates : on signe avec le certificat + profil
+          # géré déjà installés (aucun appel à Apple → pas de 401).
           xcodebuild -exportArchive \
             -archivePath "src-tauri/gen/apple/build/app_iOS.xcarchive" \
             -exportOptionsPlist /tmp/ExportOptions.plist \
