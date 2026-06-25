@@ -7,6 +7,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useGameActions } from "@/context/GameContext";
 import { useSettings, type TailleFonte } from "@/context/SettingsContext";
 import type { AudioPrefs } from "@/lib/audio/audioManager";
+import { DebugNotifs } from "@/components/mobile/DebugNotifs";
 
 interface ReglagesModalProps {
   open: boolean;
@@ -301,6 +302,8 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
           Supprimer la sauvegarde
         </button>
       </section>
+
+      <DebugNotifs />
 
       <section style={section}>
         <h3 style={sectionTitle}>À propos</h3>
