@@ -359,13 +359,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         void annulerRappelRetour();
       }
     };
-    // pagehide : filet pour iOS quand la WebView est suspendue.
+    // pagehide/pageshow : filet pour iOS, où `visibilitychange → visible`
+    // n'est pas garanti au réveil depuis le bfcache. pageshow ré-annule au
+    // retour pour rester symétrique avec pagehide.
     const onPageHide = () => void programmerRappelRetour(Date.now());
+    const onPageShow = () => void annulerRappelRetour();
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, [isHydrated]);
 
