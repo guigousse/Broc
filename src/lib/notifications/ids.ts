@@ -9,4 +9,5 @@ export const NOTIF_IDS = {
   RESTAURATION: [100, 101, 102] as const, // 1 par slot d'atelier (max niveau 3)
   // Réservé 🅱️ restauration : 100–199 (1 par slot d'atelier)
   // Réservé 🅲 quêtes      : 200–299
+  QUETES: [200, 201] as const, // 200 = reset quotidien, 201 = reset hebdo
 } as const;
