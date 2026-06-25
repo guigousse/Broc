@@ -1,58 +1,35 @@
 /**
- * Wrapper autour du plugin Tauri `notification`. Tout est no-op hors runtime
- * Tauri (navigateur `npm run dev`) et toute erreur plugin est avalée — une panne
- * de notification ne doit jamais casser le jeu. Le plugin est chargé en import
- * dynamique pour que son code natif ne soit jamais évalué hors Tauri.
+ * Notif « énergie pleine ». Mince couche métier au-dessus du cœur générique
+ * (`./index`) : un titre/corps + l'ID dédié. API publique INCHANGÉE pour
+ * GameContext (`planifierPleinEnergie`, `annulerPleinEnergie`,
+ * `assurerPermission`, `notificationsDisponibles`).
  */
+import { NOTIF_IDS } from "./ids";
+import {
+  notificationsDisponibles,
+  demanderPermission,
+  programmer,
+  annuler,
+} from "./index";
 
-/** Identifiant fixe (32-bit) de la notif « énergie pleine » — réutilisé pour replacer/annuler. */
-const NOTIF_ENERGIE_PLEINE_ID = 1;
+export { notificationsDisponibles };
 
-/** Vrai uniquement sous runtime Tauri (présence des internals injectés par Tauri). */
-export function notificationsDisponibles(): boolean {
-  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-}
-
-/** Demande/contrôle la permission. Idempotent (iOS ne re-prompt pas une fois décidé). */
+/** Demande/contrôle la permission (idempotent). Alias métier du cœur. */
 export async function assurerPermission(): Promise<boolean> {
-  if (!notificationsDisponibles()) return false;
-  try {
-    const { isPermissionGranted, requestPermission } = await import(
-      "@tauri-apps/plugin-notification"
-    );
-    if (await isPermissionGranted()) return true;
-    return (await requestPermission()) === "granted";
-  } catch {
-    return false;
-  }
+  return demanderPermission();
 }
 
-/** Programme (ou replace) la notif « énergie pleine » à l'horodatage `atMs` (epoch ms). */
+/** Programme (ou replace) la notif « énergie pleine » à `atMs` (epoch ms). */
 export async function planifierPleinEnergie(atMs: number): Promise<void> {
-  if (!notificationsDisponibles()) return;
-  try {
-    const { sendNotification, cancel, Schedule } = await import(
-      "@tauri-apps/plugin-notification"
-    );
-    await cancel([NOTIF_ENERGIE_PLEINE_ID]).catch(() => {});
-    sendNotification({
-      id: NOTIF_ENERGIE_PLEINE_ID,
-      title: "Énergie pleine ⚡",
-      body: "Tes 5 énergies sont prêtes — reviens chiner !",
-      schedule: Schedule.at(new Date(atMs), false, true),
-    });
-  } catch {
-    // no-op : ne jamais casser le jeu si la notif échoue.
-  }
+  await programmer({
+    id: NOTIF_IDS.ENERGIE_PLEINE,
+    title: "Énergie pleine ⚡",
+    body: "Tes 5 énergies sont prêtes — reviens chiner !",
+    atMs,
+  });
 }
 
 /** Annule la notif « énergie pleine » programmée (si présente). */
 export async function annulerPleinEnergie(): Promise<void> {
-  if (!notificationsDisponibles()) return;
-  try {
-    const { cancel } = await import("@tauri-apps/plugin-notification");
-    await cancel([NOTIF_ENERGIE_PLEINE_ID]);
-  } catch {
-    // no-op.
-  }
+  await annuler([NOTIF_IDS.ENERGIE_PLEINE]);
 }
