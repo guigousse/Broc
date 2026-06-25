@@ -178,6 +178,11 @@ func handleScheduledNotification(_ schedule: NotificationSchedule) throws
   case .at(let date, let repeating):
     let dateFormatter = DateFormatter()
     dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+    // PATCH LOCAL : le `Z` du format est un littéral (entre quotes), donc sans
+    // timeZone explicite le formatter interpréterait l'heure comme LOCALE. La
+    // date est émise en UTC (cf. src/models.rs) → on force UTC, sinon décalage
+    // d'erreur (instant dans le passé en fuseau positif → pastScheduledTime).
+    dateFormatter.timeZone = TimeZone(identifier: "UTC")
     dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
 
     if let at = dateFormatter.date(from: date) {
