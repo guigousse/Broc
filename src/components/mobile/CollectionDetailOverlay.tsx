@@ -2,8 +2,9 @@
 
 import type { CSSProperties } from "react";
 import { BookOpen, Plus, Trash2 } from "lucide-react";
-import { FrameItem } from "@/components/ui/FrameItem";
-import { ItemImage } from "@/components/ui/ItemImage";
+import { BrassCorners } from "@/components/ui/BrassCorners";
+import { ItemSticker } from "@/components/ui/ItemSticker";
+import { getRarityColors } from "@/lib/rarityColors";
 import type { CollectionSlot } from "@/types/game";
 
 interface CollectionDetailOverlayProps {
@@ -30,20 +31,44 @@ const backdrop: CSSProperties = {
   padding: "20px",
 };
 
-const CARD_WIDTH = "min(290px, 86vw)";
-
 const card: CSSProperties = {
-  width: CARD_WIDTH,
+  width: "min(300px, 88vw)",
   maxWidth: "100%",
   position: "relative",
-  background: "transparent",
+  display: "grid",
+  gap: 14,
 };
 
-const previewWrap: CSSProperties = {
+/** Bandeau titre : fond vert, coins Art Déco laiton, police lisible de l'app. */
+const titleBar: CSSProperties = {
+  position: "relative",
+  background: "var(--forest-800)",
+  border: "1px solid var(--brass-500)",
+  padding: "12px 28px",
+  textAlign: "center",
+};
+
+const titleText: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 16,
+  letterSpacing: "0.04em",
+  color: "var(--brass-300)",
+  lineHeight: 1.2,
+};
+
+/** Cadre de l'item : fond bois (comme la collection) + coins Art Déco laiton. */
+const itemFrame: CSSProperties = {
+  position: "relative",
+  width: "100%",
+  aspectRatio: "1 / 1",
+  background: "var(--wood-light)",
+  border: "1.5px solid var(--brass-500)",
+  boxShadow:
+    "0 10px 20px rgba(0,0,0,0.3), inset 0 0 22px rgba(40,25,5,0.18)",
   display: "grid",
   placeItems: "center",
-  marginBottom: 40,
-  position: "relative",
+  padding: "16%",
+  boxSizing: "border-box",
 };
 
 const actionCard: CSSProperties = {
@@ -52,9 +77,17 @@ const actionCard: CSSProperties = {
   border: "1px solid var(--brass-500)",
   boxShadow:
     "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-700), 0 10px 20px rgba(0,0,0,0.3)",
-  padding: "18px 22px",
+  padding: "16px 22px",
   display: "grid",
   gap: 10,
+};
+
+const infoLine: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 13,
+  letterSpacing: "0.06em",
+  color: "var(--forest-800)",
+  textAlign: "center",
 };
 
 const btnBase: CSSProperties = {
@@ -91,6 +124,7 @@ export function CollectionDetailOverlay({
 }: CollectionDetailOverlayProps) {
   if (!open || !slot) return null;
   const isDonne = slot.donation !== null;
+  const colors = getRarityColors(slot.rarete, !!slot.unique);
 
   return (
     <div
@@ -103,32 +137,32 @@ export function CollectionDetailOverlay({
       }}
     >
       <div style={card}>
-        <div style={previewWrap}>
-          <FrameItem
-            categorie={slot.categorie}
-            titre={slot.nom}
-            rarete={slot.rarete}
-            unique={!!slot.unique}
-            etat={slot.donation?.etat}
-            size={CARD_WIDTH}
-          >
-            <ItemImage
-              templateId={slot.templateId}
-              categorie={slot.categorie}
-              fit="cover"
-              fallbackIconSize={100}
-              fallbackIconColor="var(--brass-500)"
-              alt={slot.nom}
-            />
-          </FrameItem>
+        {/* 1. Bandeau titre */}
+        <div style={titleBar}>
+          <BrassCorners inset={5} size={16} color="var(--brass-500)" />
+          <span style={titleText}>{slot.nom}</span>
         </div>
 
+        {/* 2. Cadre item (fond bois) — sticker grisé si non possédé */}
+        <div style={itemFrame}>
+          <BrassCorners inset={6} size={22} color="var(--brass-500)" />
+          <ItemSticker
+            templateId={slot.templateId}
+            categorie={slot.categorie}
+            fill
+            tilt={false}
+            variant={isDonne ? "normal" : "grise"}
+            halo={colors.outer}
+          />
+        </div>
+
+        {/* 3. Encadré info + action */}
         <div style={actionCard}>
           {isDonne ? (
             <>
-              <div style={noteText}>
-                Donation : {slot.donation?.etat} ·{" "}
-                {Math.round(slot.donation?.valeur ?? 0)} €
+              <div style={infoLine}>État : {slot.donation?.etat}</div>
+              <div style={infoLine}>
+                Valeur : {Math.round(slot.donation?.valeur ?? 0)} €
               </div>
               <button
                 type="button"
@@ -150,23 +184,16 @@ export function CollectionDetailOverlay({
                 }}
               >
                 <Trash2 size={16} strokeWidth={1.6} />
-                {retirerDisabled
-                  ? "Stockage plein"
-                  : "Retirer de la collection"}
+                {retirerDisabled ? "Stockage plein" : "Retirer de la collection"}
               </button>
             </>
           ) : (
             <>
-              {candidatsCount === 0 ? (
-                <div style={noteText}>
-                  Aucun objet éligible dans le stock pour cette pièce.
-                </div>
-              ) : (
-                <div style={noteText}>
-                  {candidatsCount} objet{candidatsCount > 1 ? "s" : ""} dans le
-                  stock pour cette pièce.
-                </div>
-              )}
+              <div style={noteText}>
+                {candidatsCount === 0
+                  ? "Aucun objet éligible dans le stock pour cette pièce."
+                  : `${candidatsCount} objet${candidatsCount > 1 ? "s" : ""} dans le stock pour cette pièce.`}
+              </div>
               <button
                 type="button"
                 onClick={candidatsCount === 0 ? undefined : onAjouter}
@@ -186,11 +213,7 @@ export function CollectionDetailOverlay({
                 }}
               >
                 <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                  }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                 >
                   <BookOpen size={16} strokeWidth={1.6} />
                   <Plus size={12} strokeWidth={2} />
