@@ -1061,9 +1061,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [tempsConfiance],
   );
 
-  // Terminer une restauration via pub (fenêtre < 30 min). Le DÉCLENCHEUR pub est
-  // un stub : cette action est appelée par le bouton UI, lui-même masqué tant que
-  // PUB_DISPONIBLE est faux. La mécanique (fonction pure + mutation) est prête.
+  // Terminer une restauration via pub récompensée (fenêtre < 30 min). Appelée par
+  // le bouton atelier après getAdProvider().showRewardedAd() (comme l'énergie). Le
+  // StubAdProvider simule la pub aujourd'hui ; swap vers AdMob à un seul endroit.
   const terminerRestaurationImmediate = useCallback(
     (objetId: string): { ok: boolean; raison?: string } => {
       const current = stateRef.current;

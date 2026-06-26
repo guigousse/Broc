@@ -31,6 +31,7 @@ import { audioManager } from "@/lib/audio/audioManager";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getItemImageUrl } from "@/lib/itemImages";
 import { getTemplate } from "@/data/objetTemplates";
+import { getAdProvider } from "@/lib/ads/adProvider";
 
 const sectTitle: React.CSSProperties = {
   fontFamily: "var(--font-display)",
@@ -48,9 +49,6 @@ const cardWrap: React.CSSProperties = {
   boxShadow:
     "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
 };
-
-/** Le SDK pub n'existe pas encore : bouton « Terminer (pub) » masqué au lancement. */
-const PUB_DISPONIBLE = false;
 
 /** Formate une durée (ms) en « 1 h », « 1 h 30 » ou « 45 min » (granularité minute). */
 function formatDuree(ms: number): string {
@@ -83,6 +81,19 @@ export default function AtelierPage() {
     return () => window.clearInterval(id);
   }, []);
   const [flash, setFlash] = useState<string | null>(null);
+  // Accélération via pub récompensée (même provider que l'énergie). Le StubAdProvider
+  // simule la pub et accorde la récompense ; sera remplacé par AdMob à terme.
+  const [pubEnCours, setPubEnCours] = useState(false);
+  const accelererViaPub = async (objetId: string) => {
+    if (pubEnCours) return;
+    setPubEnCours(true);
+    try {
+      const { rewarded } = await getAdProvider().showRewardedAd();
+      if (rewarded) terminerRestaurationImmediate(objetId);
+    } finally {
+      setPubEnCours(false);
+    }
+  };
   const [restaurerCible, setRestaurerCible] = useState<{
     objet: Objet;
     etatCible: EtatObjet;
@@ -398,7 +409,7 @@ export default function AtelierPage() {
             const enRest = o.enRestauration!;
             const ready = estPret(enRest, now);
             const reste = restantMs(enRest, now);
-            const peutPub = PUB_DISPONIBLE && peutTerminerImmediat(enRest, now);
+            const peutPub = peutTerminerImmediat(enRest, now);
             return (
               <AtelierItemRow
                 key={o.id}
@@ -461,7 +472,8 @@ export default function AtelierPage() {
                       {peutPub && (
                         <button
                           type="button"
-                          onClick={() => terminerRestaurationImmediate(o.id)}
+                          disabled={pubEnCours}
+                          onClick={() => accelererViaPub(o.id)}
                           style={{
                             fontFamily: "var(--font-mono)",
                             fontSize: 9,
@@ -473,10 +485,11 @@ export default function AtelierPage() {
                             padding: "4px 8px",
                             borderRadius: 3,
                             whiteSpace: "nowrap",
-                            cursor: "pointer",
+                            cursor: pubEnCours ? "not-allowed" : "pointer",
+                            opacity: pubEnCours ? 0.6 : 1,
                           }}
                         >
-                          Terminer (pub)
+                          {pubEnCours ? "Pub en cours…" : "Terminer (pub) ▶"}
                         </button>
                       )}
                     </span>
