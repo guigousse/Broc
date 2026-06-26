@@ -120,6 +120,7 @@ const CollectionCell = memo(function CollectionCell({
         templateId={s.templateId}
         categorie={s.categorie}
         fill
+        tilt={false}
         variant={variant}
         halo={halo}
       />

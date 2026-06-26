@@ -17,6 +17,8 @@ interface ItemStickerProps {
   variant?: StickerVariant;
   /** Couleur du halo de rareté (dégradé radial derrière le sticker). Aucun halo si absent. */
   halo?: string;
+  /** Légère inclinaison déterministe (défaut true). Mettre false pour un rendu droit. */
+  tilt?: boolean;
 }
 
 /** Angle déterministe en degrés dans ~[-3, +3] à partir du templateId, pour
@@ -30,11 +32,13 @@ function angleFromId(templateId: string): number {
   return ((hash % 70) - 35) / 10; // -3.5° → +3.4°
 }
 
-/** Halo blanc autour de la silhouette alpha + ombre portée chaude.
+/** Ombre portée chaude (sans contour). */
+const ombrePortee = "drop-shadow( 0 2px 3px rgba(40,25,5,0.35))";
+
+/** Halo blanc autour de la silhouette alpha (contour die-cut) + ombre portée.
  *  L'empilement de 8 drop-shadow décale l'alpha dans toutes les directions :
- *  l'union des halos forme un contour épais ~2 px. Le dernier drop-shadow
- *  ajoute l'ombre projetée sur la page. */
-const stickerFilter = [
+ *  l'union des halos forme un contour épais ~2 px. */
+const contourBlanc = [
   "drop-shadow( 1.5px  0    0 #fdfaf2)",
   "drop-shadow(-1.5px  0    0 #fdfaf2)",
   "drop-shadow( 0     1.5px 0 #fdfaf2)",
@@ -43,15 +47,15 @@ const stickerFilter = [
   "drop-shadow(-1px   1px   0 #fdfaf2)",
   "drop-shadow( 1px  -1px   0 #fdfaf2)",
   "drop-shadow(-1px  -1px   0 #fdfaf2)",
-  "drop-shadow( 0     2px   3px rgba(40,25,5,0.35))",
+  ombrePortee,
 ].join(" ");
 
-/** Filtre appliqué à l'image/icône selon la variante. */
+/** Filtre appliqué à l'image/icône selon la variante. Silhouette = noir + contour blanc. */
 function variantFilter(variant: StickerVariant): string {
-  if (variant === "silhouette") return `brightness(0) ${stickerFilter}`;
+  if (variant === "silhouette") return `brightness(0) ${contourBlanc}`;
   if (variant === "grise")
-    return `grayscale(1) brightness(1.3) contrast(0.75) opacity(0.55) ${stickerFilter}`;
-  return stickerFilter;
+    return `grayscale(1) brightness(1.3) contrast(0.75) opacity(0.55) ${contourBlanc}`;
+  return contourBlanc;
 }
 
 const wrapStyle = (
@@ -81,16 +85,20 @@ const haloStyle = (color: string): CSSProperties => ({
   zIndex: 0,
 });
 
-const imageStyle: CSSProperties = {
-  position: "relative",
-  zIndex: 1,
-  maxWidth: "100%",
-  maxHeight: "100%",
-  width: "auto",
-  height: "auto",
-  objectFit: "contain",
-  pointerEvents: "none",
-};
+/** Style de l'image : en mode `fill`, strictement contrainte à la cellule
+ *  (`objectFit:contain`) pour ne JAMAIS déborder ; sinon centrée à sa taille. */
+function imageStyle(fill: boolean, filter: string): CSSProperties {
+  return {
+    position: "relative",
+    zIndex: 1,
+    objectFit: "contain",
+    pointerEvents: "none",
+    filter,
+    ...(fill
+      ? { width: "100%", height: "100%" }
+      : { maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto" }),
+  };
+}
 
 export function ItemSticker({
   templateId,
@@ -99,9 +107,10 @@ export function ItemSticker({
   fill = false,
   variant = "normal",
   halo,
+  tilt = true,
 }: ItemStickerProps) {
   const url = getItemImageUrl(templateId);
-  const angle = angleFromId(templateId);
+  const angle = tilt ? angleFromId(templateId) : 0;
   const filter = variantFilter(variant);
   return (
     <span style={wrapStyle(size, angle, fill)} aria-hidden>
@@ -111,7 +120,9 @@ export function ItemSticker({
           src={url}
           alt=""
           draggable={false}
-          style={{ ...imageStyle, filter }}
+          loading="lazy"
+          decoding="async"
+          style={imageStyle(fill, filter)}
         />
       ) : (
         <span style={{ position: "relative", zIndex: 1, filter }}>
