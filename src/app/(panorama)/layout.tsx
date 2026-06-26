@@ -52,6 +52,7 @@ import { panoramaActiveStore } from "@/lib/panoramaActiveStore";
 import { CATEGORIES } from "@/data/categories";
 import { WorkshopSlots } from "@/components/mobile/atelier-pano/WorkshopSlots";
 import { VITRINE_PREP_ID } from "@/lib/vitrinePrep";
+import { stockageEstPlein } from "@/lib/stockage";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import {
@@ -631,6 +632,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
           setPorteOuverte(false);
         }}
         vitrineActive={!!state.vitrine}
+        chinerDesactive={stockageEstPlein(state)}
         onChiner={() => {
           playDoorClose();
           setPorteOuverte(false);

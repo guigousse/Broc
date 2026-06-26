@@ -10,6 +10,8 @@ interface FloatingActionButtonProps {
   ariaLabel?: string;
   /** Largeur min imposée (ex. lorsqu'on veut un bouton large isolé). */
   minWidth?: number;
+  /** Désactive le bouton (grisé, non cliquable). */
+  disabled?: boolean;
 }
 
 const base: CSSProperties = {
@@ -43,14 +45,29 @@ export function FloatingActionButton({
   variant = "primary",
   ariaLabel,
   minWidth = 200,
+  disabled = false,
 }: FloatingActionButtonProps) {
   const style: CSSProperties = {
     ...base,
     ...(variant === "secondary" ? secondaryOverride : {}),
     minWidth,
+    ...(disabled
+      ? {
+          opacity: 0.45,
+          filter: "grayscale(0.6)",
+          cursor: "not-allowed",
+          boxShadow: "none",
+        }
+      : {}),
   };
   return (
-    <button type="button" style={style} onClick={onClick} aria-label={ariaLabel}>
+    <button
+      type="button"
+      style={style}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+    >
       {children}
     </button>
   );
