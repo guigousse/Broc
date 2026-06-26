@@ -6,21 +6,35 @@ import { CollectionGrid } from "./CollectionGrid";
 import type { CollectionSlot } from "@/types/game";
 
 /**
- * ItemImage repose sur next/image (loader, IntersectionObserver…) — inutile
- * pour tester la grille. On le remplace par un stub traçable qui permet en
- * plus de compter les re-renders des cellules mémoïsées.
+ * ItemSticker repose sur des images/filtres inutiles pour tester la grille. On
+ * le remplace par un stub traçable qui expose `variant`/`halo` (assertions) et
+ * permet de compter les re-renders des cellules mémoïsées.
  */
-const itemImageRenders: string[] = [];
-vi.mock("@/components/ui/ItemImage", () => ({
-  ItemImage: ({ templateId }: { templateId: string }) => {
-    itemImageRenders.push(templateId);
-    return <span data-testid={`img-${templateId}`} />;
+const stickerRenders: string[] = [];
+vi.mock("@/components/ui/ItemSticker", () => ({
+  ItemSticker: ({
+    templateId,
+    variant,
+    halo,
+  }: {
+    templateId: string;
+    variant?: string;
+    halo?: string;
+  }) => {
+    stickerRenders.push(templateId);
+    return (
+      <span
+        data-testid={`sticker-${templateId}`}
+        data-variant={variant ?? "normal"}
+        data-halo={halo ?? ""}
+      />
+    );
   },
 }));
 
 afterEach(() => {
   cleanup();
-  itemImageRenders.length = 0;
+  stickerRenders.length = 0;
 });
 
 function makeSlot(overrides: Partial<CollectionSlot> = {}): CollectionSlot {
@@ -49,13 +63,40 @@ describe("CollectionGrid", () => {
     expect(screen.getAllByRole("button")).toHaveLength(3);
   });
 
-  it("les slots inconnus sont des silhouettes désactivées avec « ? »", () => {
+  it("non découvert : silhouette désactivée, variant silhouette, pas de halo", () => {
     render(<CollectionGrid slots={slots} />);
     const silhouette = screen.getByRole("button", { name: "Pièce inconnue" });
     expect((silhouette as HTMLButtonElement).disabled).toBe(true);
-    expect(silhouette.textContent).toBe("?");
-    // Pas d'image rendue pour la silhouette.
-    expect(screen.queryByTestId("img-c")).toBeNull();
+    const sticker = screen.getByTestId("sticker-c");
+    expect(sticker.getAttribute("data-variant")).toBe("silhouette");
+    expect(sticker.getAttribute("data-halo")).toBe(""); // rareté non révélée
+  });
+
+  it("vu non possédé : variant grisé + halo de rareté", () => {
+    render(
+      <CollectionGrid
+        slots={[makeSlot({ templateId: "v", nom: "Objet V", donation: null })]}
+      />,
+    );
+    const sticker = screen.getByTestId("sticker-v");
+    expect(sticker.getAttribute("data-variant")).toBe("grise");
+    expect(sticker.getAttribute("data-halo")).toBe("#C9B98C"); // commun outer
+  });
+
+  it("possédé : variant normal + halo de rareté", () => {
+    render(
+      <CollectionGrid slots={[makeSlot({ templateId: "p", nom: "Objet P" })]} />,
+    );
+    const sticker = screen.getByTestId("sticker-p");
+    expect(sticker.getAttribute("data-variant")).toBe("normal");
+    expect(sticker.getAttribute("data-halo")).toBe("#C9B98C");
+  });
+
+  it("plus de cadre : la cellule est transparente (pas de fond/cadre)", () => {
+    render(<CollectionGrid slots={slots} />);
+    const bouton = screen.getByRole("button", { name: "Objet A" });
+    expect(bouton.style.background).toBe("transparent");
+    expect(bouton.style.boxShadow).toBe(""); // plus de filet interne
   });
 
   it("onTap remonte le slot exact de la cellule cliquée", async () => {
@@ -92,20 +133,20 @@ describe("CollectionGrid", () => {
     const { rerender } = render(
       <CollectionGrid slots={slots} onTap={() => {}} />,
     );
-    const rendersInitiaux = itemImageRenders.length;
+    const rendersInitiaux = stickerRenders.length;
     expect(rendersInitiaux).toBeGreaterThan(0);
 
     // Nouveau handler inline (référence différente) mais mêmes slots :
     // grâce au wrapper stable, aucune cellule ne doit re-rendre.
     rerender(<CollectionGrid slots={slots} onTap={() => {}} />);
-    expect(itemImageRenders.length).toBe(rendersInitiaux);
+    expect(stickerRenders.length).toBe(rendersInitiaux);
   });
 
   it("mémoïsation : seule la cellule dont le slot change re-rend", () => {
     const { rerender } = render(
       <CollectionGrid slots={slots} onTap={() => {}} />,
     );
-    itemImageRenders.length = 0;
+    stickerRenders.length = 0;
 
     const slotsModifies = [
       slots[0],
@@ -114,20 +155,7 @@ describe("CollectionGrid", () => {
     ];
     rerender(<CollectionGrid slots={slotsModifies} onTap={() => {}} />);
     // Seul "b" a une nouvelle référence → seule sa cellule re-rend.
-    expect(itemImageRenders).toEqual(["b"]);
-  });
-
-  it("silhouette : bordure pointillée de largeur entière (rendu WebKit fiable)", () => {
-    render(<CollectionGrid slots={slots} />);
-    const silhouette = screen.getByRole("button", { name: "Pièce inconnue" });
-    expect(silhouette.style.border).toBe("1px dashed var(--paper-500)");
-  });
-
-  it("silhouette : le « ? » utilise la police Art Déco du titre Broc", () => {
-    render(<CollectionGrid slots={slots} />);
-    const silhouette = screen.getByRole("button", { name: "Pièce inconnue" });
-    const point = silhouette.querySelector("span");
-    expect(point?.style.fontFamily).toBe("var(--font-broc-title)");
+    expect(stickerRenders).toEqual(["b"]);
   });
 
   const slotNouveau = makeSlot({
@@ -171,14 +199,6 @@ describe("CollectionGrid", () => {
     );
     expect(screen.getByLabelText("Exemplaire disponible en stock")).toBeTruthy();
     expect(screen.queryByLabelText("Nouvellement découvert")).toBeNull();
-  });
-
-  it("le filtre grisaille s'applique à la couche image, pas au bouton (badges en couleur)", () => {
-    render(<CollectionGrid slots={[slotNouveau]} />);
-    const bouton = screen.getByRole("button", { name: "Objet N" });
-    expect(bouton.style.filter).toBe("");
-    const coucheImage = screen.getByTestId("img-n").parentElement;
-    expect(coucheImage?.style.filter).toContain("grayscale");
   });
 
   it("étagères : une planche par rangée (3 slots, colonnes=3 → 1 planche)", () => {
