@@ -30,6 +30,8 @@ interface BrocantePanoramaProps {
   debloqueesIds: Set<string>;
   destination: "chiner" | "vitrine";
   onBack: () => void;
+  /** Positionne la barre de plaques (tiers) en bas plutôt qu'en haut. */
+  plaquesEnBas?: boolean;
 }
 
 const TIERS: BrocanteTier[] = [1, 2, 3, 4];
@@ -76,6 +78,7 @@ export function BrocantePanorama({
   debloqueesIds,
   destination,
   onBack,
+  plaquesEnBas = false,
 }: BrocantePanoramaProps) {
   const router = useRouter();
   const { attribuerVitrineABrocante, ajusterBudget, consommerEnergie, tempsConfiance } =
@@ -247,7 +250,11 @@ export function BrocantePanorama({
             </Fragment>
           ))}
         </div>
-        <ScenePlaquesBar currentTier={currentTier} onTierClick={goToTier} />
+        <ScenePlaquesBar
+          currentTier={currentTier}
+          onTierClick={goToTier}
+          position={plaquesEnBas ? "bottom" : "top"}
+        />
         {selected && (
           <div style={floatingLayer}>
             <BrocanteDetailFloating

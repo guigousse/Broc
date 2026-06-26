@@ -29,18 +29,6 @@ export function CoffrePricing({
 
   return (
     <>
-      <h2
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: 11,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--forest-800)",
-          margin: "10px 14px 6px",
-        }}
-      >
-        — Tarification —
-      </h2>
       <section
         style={{
           margin: "0 12px 12px",

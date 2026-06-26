@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ContextualHeader } from "@/components/mobile/ContextualHeader";
+import { MobileHeader } from "@/components/mobile/MobileHeader";
+import { EtapeBandeau } from "@/components/vente/EtapeBandeau";
 import { useGame } from "@/context/GameContext";
 import { CoffreChargement } from "@/components/vente/CoffreChargement";
 import { CoffrePricing } from "@/components/vente/CoffrePricing";
@@ -105,14 +106,12 @@ export default function VitrinePrepPage() {
         background: "var(--paper-100)",
       }}
     >
-      <ContextualHeader
-        titre={etape === "packing" ? "Chargement" : "Tarification"}
-        sousTitre="Préparation du coffre"
-        budget={state.budget}
-        onBack={() =>
-          etape === "pricing" ? setEtape("packing") : router.push("/bureau")
-        }
-      />
+      <MobileHeader budget={state.budget} />
+      <EtapeBandeau>
+        {etape === "packing"
+          ? "1 — Préparation du coffre"
+          : "2 — Tarification"}
+      </EtapeBandeau>
       <main style={{ flex: 1, overflowY: "auto" }}>
         {etape === "packing" ? (
           <CoffreChargement

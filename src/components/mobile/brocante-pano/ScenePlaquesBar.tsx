@@ -7,22 +7,24 @@ import type { BrocanteTier } from "@/types/game";
 interface ScenePlaquesBarProps {
   currentTier: BrocanteTier;
   onTierClick: (t: BrocanteTier) => void;
+  /** Place la barre en haut (défaut) ou en bas de la zone panorama. */
+  position?: "top" | "bottom";
 }
 
 const TIERS: BrocanteTier[] = [1, 2, 3, 4];
 
-const barStyle: CSSProperties = {
+const barStyle = (position: "top" | "bottom"): CSSProperties => ({
   position: "absolute",
   left: 0,
   right: 0,
-  top: 8,
+  ...(position === "bottom" ? { bottom: 8 } : { top: 8 }),
   display: "flex",
   justifyContent: "center",
   gap: 10,
   padding: "0 12px",
   zIndex: 25,
   pointerEvents: "none", // les boutons réactivent
-};
+});
 
 /**
  * Cartel laiton style étiquette de musée : rectangle aux coins arrondis,
@@ -104,9 +106,10 @@ const ariaLabel = (tier: BrocanteTier) =>
 export function ScenePlaquesBar({
   currentTier,
   onTierClick,
+  position = "top",
 }: ScenePlaquesBarProps) {
   return (
-    <div style={barStyle} aria-label="Navigation par tier">
+    <div style={barStyle(position)} aria-label="Navigation par tier">
       {TIERS.map((t) => {
         const active = t === currentTier;
         return (

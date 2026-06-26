@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
+import { EtapeBandeau } from "@/components/vente/EtapeBandeau";
 import { BrocantePanorama } from "@/components/mobile/brocante-pano/BrocantePanorama";
 import { useGame } from "@/context/GameContext";
 import { BROCANTES } from "@/data/brocantes";
@@ -28,12 +29,17 @@ export default function VitrineListePage() {
   if (!isHydrated || !state) return null;
 
   return (
-    <MobileLayout header={<MobileHeader budget={state.budget} />} fillContent>
+    <MobileLayout
+      header={<MobileHeader budget={state.budget} />}
+      stickyTop={<EtapeBandeau>3 — Choix de la brocante</EtapeBandeau>}
+      fillContent
+    >
       <BrocantePanorama
         brocantes={BROCANTES}
         state={state}
         debloqueesIds={debloqueesIds}
         destination="vitrine"
+        plaquesEnBas
         onBack={() => router.push("/bureau")}
       />
     </MobileLayout>
