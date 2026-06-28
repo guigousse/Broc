@@ -16,13 +16,18 @@ interface BrocanteDetailFloatingProps {
   conditions: ConditionInfo[];
 }
 
-// Plus de boîte papier : la fenêtre est transparente, le texte flotte
-// directement « devant » le décor de la scène.
 const cardStyle: CSSProperties = {
   pointerEvents: "auto",
   position: "relative",
-  background: "transparent",
-  padding: "4px 18px 8px",
+  background: "rgba(245,239,225,0.95)",
+  borderRadius: 6,
+  // Double filet : extérieur brass-700 + intérieur brass-500 via shadow.
+  border: "1px solid var(--brass-700)",
+  boxShadow:
+    "inset 0 0 0 3px var(--paper-100), inset 0 0 0 4px var(--brass-500), 0 8px 22px rgba(20,12,0,0.45)",
+  backdropFilter: "blur(2px)",
+  WebkitBackdropFilter: "blur(2px)",
+  padding: "14px 18px 12px",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
@@ -38,9 +43,8 @@ const titleStyle: CSSProperties = {
   fontSize: 20,
   fontWeight: 400,
   color: "var(--brass-500)",
-  // Ombre renforcée : le titre flotte désormais sur fond transparent.
   textShadow:
-    "0 1px 0 rgba(255,235,180,0.5), 0 1px 3px rgba(40,24,4,0.55)",
+    "0 1px 0 rgba(255,235,180,0.4), 0 1px 2px rgba(80,50,10,0.25)",
   textAlign: "center",
   margin: 0,
   lineHeight: 1.1,
@@ -56,18 +60,14 @@ const titleStyleLocked: CSSProperties = {
   filter: "saturate(0.4)",
 };
 
-// Description manuscrite (Caveat), fond transparent : on s'appuie sur une
-// ombre douce (halo clair + léger contour sombre) pour rester lisible
-// par-dessus le décor.
 const descStyle: CSSProperties = {
-  fontFamily: "var(--font-handwriting)",
-  fontSize: 16,
-  color: "var(--ink-900)",
+  fontFamily: "var(--font-serif)",
+  fontStyle: "italic",
+  fontSize: 12.5,
+  color: "var(--ink-500)",
   margin: 0,
-  lineHeight: 1.3,
+  lineHeight: 1.35,
   textAlign: "center",
-  textShadow:
-    "0 1px 0 rgba(245,239,225,0.9), 0 1px 4px rgba(20,12,0,0.28)",
 };
 
 // Filet doré séparateur — fin, centré, gradient.
@@ -79,18 +79,13 @@ const goldRuleStyle: CSSProperties = {
   margin: "6px 0 2px",
 };
 
-// Meta row : conserve un fond discret pour garder le texte mono lisible
-// alors que le reste de la fenêtre est passé en transparent.
+// Meta row inside the card.
 const metaRowStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   gap: 18,
   marginTop: 4,
-  background: "rgba(245,239,225,0.78)",
-  border: "1px solid var(--brass-700)",
-  borderRadius: 4,
-  padding: "5px 12px",
 };
 
 const metaItemsStyle: CSSProperties = {
@@ -159,6 +154,48 @@ const themeCachetStyle: CSSProperties = {
   flexShrink: 0,
 };
 
+// Ornements de coin Art Déco.
+const cornerOrnamentBase: CSSProperties = {
+  position: "absolute",
+  width: 18,
+  height: 18,
+  pointerEvents: "none",
+  color: "var(--brass-500)",
+};
+
+function CornerOrnament({
+  position,
+}: {
+  position: "tl" | "tr" | "bl" | "br";
+}) {
+  const rotation = {
+    tl: 0,
+    tr: 90,
+    br: 180,
+    bl: 270,
+  }[position];
+  const placement: CSSProperties = {
+    ...cornerOrnamentBase,
+    ...(position === "tl" || position === "tr" ? { top: 6 } : { bottom: 6 }),
+    ...(position === "tl" || position === "bl" ? { left: 6 } : { right: 6 }),
+    transform: `rotate(${rotation}deg)`,
+  };
+  return (
+    <svg viewBox="0 0 18 18" style={placement} aria-hidden>
+      {/* Petit motif déco "stairstep" + point */}
+      <path
+        d="M2 16 L2 12 L6 12 L6 8 L10 8 L10 4 L16 4"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        strokeLinecap="round"
+        opacity="0.85"
+      />
+      <circle cx="2" cy="16" r="1.3" fill="currentColor" />
+    </svg>
+  );
+}
+
 const conditionsListStyle: CSSProperties = {
   listStyle: "none",
   padding: 0,
@@ -175,8 +212,6 @@ const conditionItemBase: CSSProperties = {
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   fontWeight: 700,
-  // Lisibilité sur fond transparent (la fenêtre n'a plus de boîte papier).
-  textShadow: "0 1px 0 rgba(245,239,225,0.9), 0 1px 3px rgba(20,12,0,0.3)",
 };
 
 const conditionItemStyle = (met: boolean): CSSProperties => ({
@@ -200,6 +235,10 @@ export function BrocanteDetailFloating({
   if (!debloquee) {
     return (
       <aside style={cardStyle} aria-live="polite">
+        <CornerOrnament position="tl" />
+        <CornerOrnament position="tr" />
+        <CornerOrnament position="bl" />
+        <CornerOrnament position="br" />
         <h2 style={titleStyleLocked}>{brocante.nom}</h2>
         <div style={goldRuleStyle} aria-hidden />
         <ul style={conditionsListStyle}>
@@ -216,6 +255,10 @@ export function BrocanteDetailFloating({
   // --- Layout DÉBLOQUÉ : titre + desc + filet d'or + meta intégrée ---
   return (
     <aside style={cardStyle} aria-live="polite">
+      <CornerOrnament position="tl" />
+      <CornerOrnament position="tr" />
+      <CornerOrnament position="bl" />
+      <CornerOrnament position="br" />
       <h2 style={titleStyle}>{brocante.nom}</h2>
       <p style={descStyle}>{brocante.description}</p>
       <div style={goldRuleStyle} aria-hidden />
