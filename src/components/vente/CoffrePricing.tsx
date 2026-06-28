@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import type { ObjetEnVitrine } from "@/types/game";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
@@ -8,6 +7,7 @@ import { etoileCount } from "@/lib/etat";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { StarRow } from "@/components/ui/StarRow";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { PrixSlider } from "./PrixSlider";
 
 interface Props {
   coffre: ObjetEnVitrine[];
@@ -20,34 +20,6 @@ interface Props {
   /** Override de l'état actif du bouton de validation. Par défaut : coffre non vide. */
   validerActif?: boolean;
 }
-
-/** Amplitude du curseur autour du prix du marché : -100 % … +100 % (centré sur la valeur). */
-const MARGE_PCT = 100;
-
-const priceInput: CSSProperties = {
-  width: 56,
-  padding: "2px 4px",
-  border: "1px solid var(--brass-700)",
-  background: "var(--paper-100)",
-  fontFamily: "var(--font-display)",
-  fontSize: 15,
-  textAlign: "right",
-  color: "var(--forest-800)",
-};
-
-const margeLabel: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 10,
-  letterSpacing: "0.04em",
-  marginTop: 2,
-};
-
-const boundLabel: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 9.5,
-  color: "var(--ink-500)",
-  letterSpacing: "0.04em",
-};
 
 export function CoffrePricing({
   coffre,
@@ -73,14 +45,7 @@ export function CoffrePricing({
           const isUnique = !!getTemplate(ov.objet.templateId)?.unique;
           const c = getRarityColors(ov.objet.rarete, isUnique);
           const isLast = i === coffre.length - 1;
-
           const ref = Math.max(1, Math.round(ov.objet.prixReferenceReel));
-          const prix = ov.prixVente;
-          const pct = Math.round((prix / ref - 1) * 100);
-          const sliderPct = Math.min(MARGE_PCT, Math.max(-MARGE_PCT, pct));
-          const pctLabel = `${pct >= 0 ? "+" : "−"}${Math.abs(pct)} %`;
-          const pctColor =
-            pct > 0 ? "var(--forest-700)" : pct < 0 ? "var(--vermillion-600)" : "var(--ink-500)";
 
           return (
             <div
@@ -90,11 +55,11 @@ export function CoffrePricing({
                 borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",
               }}
             >
-              {/* Ligne 1 : sticker · (nom + état/thème) · prix + marge */}
+              {/* Ligne 1 : sticker · (nom + état/thème) */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "56px 1fr auto",
+                  gridTemplateColumns: "56px 1fr",
                   gap: 10,
                   alignItems: "center",
                 }}
@@ -149,49 +114,16 @@ export function CoffrePricing({
                     </span>
                   </div>
                 </div>
-
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 2 }}>
-                    <input
-                      type="number"
-                      min={1}
-                      value={prix}
-                      onChange={(e) =>
-                        onAjusterPrix(ov.objet.id, Math.max(1, Number(e.target.value)))
-                      }
-                      style={priceInput}
-                      aria-label={`Prix de ${ov.objet.nom}`}
-                    />
-                    <span style={{ fontFamily: "var(--font-display)", fontSize: 13, color: "var(--brass-700)" }}>
-                      €
-                    </span>
-                  </div>
-                  <div style={{ ...margeLabel, color: pctColor }}>{pctLabel}</div>
-                </div>
               </div>
 
-              {/* Ligne 2 : curseur borné autour de la valeur */}
-              <div style={{ marginTop: 8 }}>
-                <input
-                  type="range"
-                  min={-MARGE_PCT}
-                  max={MARGE_PCT}
-                  step={1}
-                  value={sliderPct}
-                  onChange={(e) =>
-                    onAjusterPrix(
-                      ov.objet.id,
-                      Math.max(1, Math.round(ref * (1 + Number(e.target.value) / 100))),
-                    )
-                  }
-                  aria-label={`Régler le prix de ${ov.objet.nom} (prix du marché ${ref} €)`}
-                  style={{ width: "100%", accentColor: "var(--brass-700)" }}
+              {/* Ligne 2 : curseur de prix (poignée = prix, façon négociation) */}
+              <div style={{ marginTop: 10 }}>
+                <PrixSlider
+                  value={ov.prixVente}
+                  marche={ref}
+                  achat={ov.objet.prixAchat}
+                  onChange={(prix) => onAjusterPrix(ov.objet.id, prix)}
                 />
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 1 }}>
-                  <span style={boundLabel}>−100 %</span>
-                  <span style={boundLabel}>prix du marché {ref} €</span>
-                  <span style={boundLabel}>+100 %</span>
-                </div>
               </div>
             </div>
           );
