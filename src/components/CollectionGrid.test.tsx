@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CollectionGrid } from "./CollectionGrid";
+import { prefetchThumbs } from "@/lib/prefetchThumbs";
 import type { CollectionSlot } from "@/types/game";
 
 /**
@@ -11,6 +12,11 @@ import type { CollectionSlot } from "@/types/game";
  * permet de compter les re-renders des cellules mémoïsées.
  */
 const stickerRenders: string[] = [];
+vi.mock("@/lib/prefetchThumbs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/prefetchThumbs")>();
+  return { ...actual, prefetchThumbs: vi.fn() };
+});
+
 vi.mock("@/components/ui/ItemSticker", () => ({
   ItemSticker: ({
     templateId,
@@ -58,6 +64,20 @@ const slots: CollectionSlot[] = [
 ];
 
 describe("CollectionGrid", () => {
+  it("réchauffe le cache des vignettes des slots affichés au montage", () => {
+    render(
+      <CollectionGrid
+        slots={[
+          makeSlot({ templateId: "br.scie_egoine_de_charpentier" }),
+          makeSlot({ templateId: "sans-image" }),
+        ]}
+      />,
+    );
+    expect(prefetchThumbs).toHaveBeenCalledWith([
+      "/items/thumbs/br.scie_egoine_de_charpentier.webp",
+    ]);
+  });
+
   it("rend un bouton par slot (N slots → N cellules)", () => {
     render(<CollectionGrid slots={slots} />);
     expect(screen.getAllByRole("button")).toHaveLength(3);

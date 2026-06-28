@@ -3,6 +3,7 @@
 import {
   memo,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -10,6 +11,7 @@ import {
 } from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { ItemSticker, type StickerVariant } from "@/components/ui/ItemSticker";
+import { prefetchThumbs, thumbUrlsForSlots } from "@/lib/prefetchThumbs";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
@@ -132,6 +134,7 @@ const CollectionCell = memo(function CollectionCell({
         variant={variant}
         halo={halo}
         thumb
+        eager
       />
 
       {/* Badge "+" — exemplaire en stock, pas encore donné (prioritaire sur "*") */}
@@ -187,6 +190,12 @@ export function CollectionGrid({
     rangees.push(slots.slice(i, i + colonnes));
   }
 
+  // Warm-up : réchauffe le cache HTTP des vignettes affichées (octets seulement,
+  // pas de décodage → iOS-safe). Suit le filtre catégorie via `slots`.
+  useEffect(() => {
+    prefetchThumbs(thumbUrlsForSlots(slots));
+  }, [slots]);
+
   const planche = plancheStyle(colonnes);
 
   // ─── Virtualisation par rangée ───────────────────────────────────────────
@@ -214,7 +223,7 @@ export function CollectionGrid({
   const virtualizer = useWindowVirtualizer({
     count: rangees.length,
     estimateSize: estimateRow,
-    overscan: 4,
+    overscan: 8,
     scrollMargin,
     getItemKey: (i) => rangees[i][0].templateId,
   });
