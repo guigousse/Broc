@@ -7,7 +7,7 @@
  * scroll reste débouncée pour éviter le spam de router.replace.
  */
 
-type ActiveTab = "bureau" | "stockage" | "atelier" | null;
+type ActiveTab = "collection" | "bureau" | "stockage" | "atelier" | null;
 
 let current: ActiveTab = null;
 const listeners = new Set<() => void>();

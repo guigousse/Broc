@@ -18,6 +18,9 @@ import { QgEditOverlay } from "../qg/dev/QgEditOverlay";
  */
 
 export type UnifiedZoneKey =
+  | "lecture"
+  | "vitrine"
+  | "escalier"
   | "bureau"
   | "porte"
   | "repos"
@@ -26,19 +29,28 @@ export type UnifiedZoneKey =
   | "coinL";
 
 /**
- * Offsets en vw dans le panorama unifié (largeur totale 600vw).
- * Les offsets atelier sont décalés de +300vw (après l'image bureau).
+ * Offsets en vw dans le panorama unifié (largeur totale 900vw).
+ * Section Collection à gauche (0–200) ; bureau (+300) ; atelier (+600).
+ * Les offsets Collection (lecture/vitrine/escalier) cadrent respectivement
+ * la bibliothèque (gauche), la vitrine (centre) et l'escalier (droite).
+ * À affiner contre l'art en Task 9.
  */
 export const UNIFIED_ZONE_OFFSETS: Record<UnifiedZoneKey, number> = {
-  bureau: 0,
-  porte: 100,
-  repos: 200,
-  stockage: 18 + 300, // 318
-  etabli: 108 + 300, // 408
-  coinL: 195 + 300, // 495
+  lecture: 15,
+  vitrine: 135,
+  escalier: 250,
+  bureau: 0 + 300, // 300
+  porte: 100 + 300, // 400
+  repos: 200 + 300, // 500
+  stockage: 18 + 600, // 618
+  etabli: 108 + 600, // 708
+  coinL: 195 + 600, // 795
 };
 
 export const UNIFIED_ZONE_ORDER: UnifiedZoneKey[] = [
+  "lecture",
+  "vitrine",
+  "escalier",
   "bureau",
   "porte",
   "repos",
@@ -47,9 +59,11 @@ export const UNIFIED_ZONE_ORDER: UnifiedZoneKey[] = [
   "coinL",
 ];
 
-export const UNIFIED_PANORAMA_WIDTH_VW = 600;
-/** Décalage des coordonnées atelier en vw (à ajouter aux `left` originaux). */
-export const ATELIER_X_SHIFT_VW = 300;
+export const UNIFIED_PANORAMA_WIDTH_VW = 900;
+/** Largeur d'une section (vw). Les objets QG/atelier existants sont décalés
+ *  de +300vw via un wrapper translateX dans le rendu (cf. Task 4) — leurs
+ *  coordonnées baked NE changent PAS. */
+export const COLLECTION_X_SHIFT_VW = 300;
 
 const containerStyle: CSSProperties = {
   position: "relative",
@@ -236,10 +250,13 @@ export function UnifiedPanorama({
   );
 }
 
-/** Mappe un index de zone (0-5) vers le tab URL associé. */
-export function zoneIndexToTab(idx: number): "bureau" | "stockage" | "atelier" {
-  if (idx <= 2) return "bureau";
-  if (idx === 3) return "stockage";
+/** Mappe un index de zone (0-8) vers le tab URL associé. */
+export function zoneIndexToTab(
+  idx: number,
+): "collection" | "bureau" | "stockage" | "atelier" {
+  if (idx <= 2) return "collection";
+  if (idx <= 5) return "bureau";
+  if (idx === 6) return "stockage";
   return "atelier";
 }
 
