@@ -8,7 +8,7 @@ import {
   type PointerEvent,
 } from "react";
 import { Album, Anvil, ArrowRight } from "lucide-react";
-import { ItemImage } from "@/components/ui/ItemImage";
+import { ItemSticker } from "@/components/ui/ItemSticker";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
@@ -66,17 +66,17 @@ const actionBtn = (
 
 const item: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "48px 1fr auto",
+  gridTemplateColumns: "56px 1fr auto",
   gap: 10,
   alignItems: "center",
-  padding: "8px 12px",
+  padding: "12px 12px",
   background: "var(--paper-100)",
   touchAction: "pan-y",
 };
 
 const thumbBase: CSSProperties = {
-  width: 48,
-  height: 48,
+  width: 56,
+  height: 56,
   display: "grid",
   placeItems: "center",
 };
@@ -170,11 +170,6 @@ function StockageItemRowBase({
 
   const isUnique = !!getTemplate(objet.templateId)?.unique;
   const rarityColors = getRarityColors(objet.rarete, isUnique);
-  const thumbStyle: CSSProperties = {
-    ...thumbBase,
-    background: rarityColors.thumbBg,
-    border: `1px solid ${rarityColors.outer}`,
-  };
   const thumbRef = useRef<HTMLDivElement>(null);
 
   const animateToTab = (tabPath: string) => {
@@ -253,15 +248,16 @@ function StockageItemRowBase({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <div ref={thumbRef} style={thumbStyle}>
-          <ItemImage
+        <div ref={thumbRef} style={thumbBase}>
+          <ItemSticker
             templateId={objet.templateId}
             categorie={objet.categorie}
-            fit="contain"
-            fallbackIconSize={20}
-            fallbackIconColor={rarityColors.thumbIcon}
-            alt={objet.nom}
-            padded
+            fill
+            tilt={false}
+            variant="normal"
+            halo={rarityColors.outer}
+            thumb
+            eager
           />
         </div>
         <div>

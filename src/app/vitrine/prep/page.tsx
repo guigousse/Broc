@@ -10,7 +10,8 @@ import { CoffrePricing } from "@/components/vente/CoffrePricing";
 import { VITRINE_PREP_ID, vitrineEstEnPrep } from "@/lib/vitrinePrep";
 import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
-const SUGGESTION_FACTEUR = 1.4;
+// Prix par défaut = prix du marché (curseur de tarification centré sur la valeur).
+const SUGGESTION_FACTEUR = 1;
 
 /**
  * Préparation du coffre AVANT le choix de la brocante : packing puis pricing.
@@ -118,7 +119,7 @@ export default function VitrinePrepPage() {
           overflowY: "auto",
           // Étape tarification (liste, pas image) : on décale le contenu sous
           // le texte d'étape flottant. Packing (image) reste à fleur du header.
-          paddingTop: etape === "pricing" ? 48 : 0,
+          paddingTop: etape === "pricing" ? 70 : 0,
         }}
       >
         {etape === "packing" ? (

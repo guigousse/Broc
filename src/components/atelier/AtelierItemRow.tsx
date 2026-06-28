@@ -2,7 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
-import { ItemImage } from "@/components/ui/ItemImage";
+import { ItemSticker } from "@/components/ui/ItemSticker";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
@@ -24,15 +24,15 @@ interface AtelierItemRowProps {
 
 const row: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "48px 1fr auto",
+  gridTemplateColumns: "56px 1fr auto",
   gap: 10,
   alignItems: "center",
-  padding: "10px 12px",
+  padding: "14px 12px",
 };
 
 const thumbBase: CSSProperties = {
-  width: 48,
-  height: 48,
+  width: 56,
+  height: 56,
   display: "grid",
   placeItems: "center",
 };
@@ -50,11 +50,6 @@ export function AtelierItemRow({
 }: AtelierItemRowProps) {
   const isUnique = !!getTemplate(objet.templateId)?.unique;
   const rarityColors = getRarityColors(objet.rarete, isUnique);
-  const thumbStyle: CSSProperties = {
-    ...thumbBase,
-    background: rarityColors.thumbBg,
-    border: `1px solid ${rarityColors.outer}`,
-  };
   const currentStars = etoileCount(objet.etat);
   const targetStars = etatCible !== undefined ? etoileCount(etatCible) : null;
 
@@ -67,15 +62,16 @@ export function AtelierItemRow({
         borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",
       }}
     >
-      <div data-atelier-thumb style={thumbStyle}>
-        <ItemImage
+      <div data-atelier-thumb style={thumbBase}>
+        <ItemSticker
           templateId={objet.templateId}
           categorie={objet.categorie}
-          fit="contain"
-          fallbackIconSize={20}
-          fallbackIconColor={rarityColors.thumbIcon}
-          alt={objet.nom}
-          padded
+          fill
+          tilt={false}
+          variant="normal"
+          halo={rarityColors.outer}
+          thumb
+          eager
         />
       </div>
       <div style={{ minWidth: 0 }}>

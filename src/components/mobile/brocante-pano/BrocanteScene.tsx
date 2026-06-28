@@ -25,18 +25,52 @@ const STUB_GRADIENT: Record<BrocanteTier, string> = {
   4: "linear-gradient(180deg, #6c1d22 0%, #2d0d10 100%)",
 };
 
-const sceneStyle = (tier: BrocanteTier): CSSProperties => ({
+/**
+ * Ratio largeur/hauteur de la BOÎTE DE CONTENU de la scène (portrait, < 1).
+ *
+ * La boîte fait toujours `height: 100%` (pleine hauteur garantie → le décor
+ * n'est jamais rogné en haut/bas) ; sa largeur en découle (= AR × hauteur).
+ * Comme ce ratio est CONSTANT quel que soit l'écran, les cadres (en % de la
+ * boîte) restent alignés partout — aucun re-réglage nécessaire.
+ *
+ * 👉 SEUL bouton de calibrage : ajuster cette valeur pour que, sur le
+ * téléphone de référence, la boîte remplisse exactement la largeur (≈ 100vw /
+ * hauteur du scroller). Sur iPad/grand écran, la boîte (plus étroite) se
+ * centre et laisse des bandes latérales.
+ */
+const SCENE_AR = 0.65;
+
+const sceneStyle: CSSProperties = {
   position: "relative",
   flex: "0 0 100vw",
   width: "100vw",
   alignSelf: "stretch",
   scrollSnapAlign: "start",
-  // Tente d'abord l'image générée (`gen:scenes`), sinon le dégradé stub.
+  // Centre la boîte de contenu ; le reste forme les bandes latérales.
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "stretch",
+  overflow: "hidden",
+  // Bandes latérales : vignette laiton (style cadre doré de musée).
+  background:
+    "radial-gradient(130% 100% at 50% 50%, var(--brass-300) 0%, var(--brass-500) 62%, var(--brass-700) 100%)",
+};
+
+// Boîte de contenu : ratio constant, pleine hauteur, porte le décor + cadres.
+const sceneInnerStyle = (tier: BrocanteTier): CSSProperties => ({
+  position: "relative",
+  height: "100%",
+  aspectRatio: String(SCENE_AR),
+  flexShrink: 0,
+  // Image générée (`gen:scenes`) sinon dégradé stub. La boîte = même ratio
+  // partout → `cover` ne rogne plus que les côtés, jamais le haut/bas.
   backgroundImage: `url("/brocantes/scenes/scene-tier-${tier}.webp"), ${STUB_GRADIENT[tier]}`,
   backgroundSize: "cover, cover",
   backgroundPosition: "center, center",
   backgroundRepeat: "no-repeat, no-repeat",
   overflow: "hidden",
+  // Léger liseré pour détacher la scène des bandes (effet tableau encadré).
+  boxShadow: "0 0 0 1px rgba(0,0,0,0.55), 0 6px 28px rgba(0,0,0,0.4)",
 });
 
 export function BrocanteScene({
@@ -48,35 +82,38 @@ export function BrocanteScene({
 }: BrocanteSceneProps) {
   const frames = SCENE_FRAMES[tier];
   const { enabled: editEnabled, overrides } = useBrocanteFramesEdit();
-  const sceneRef = useRef<HTMLElement | null>(null);
+  // sceneRef pointe sur la BOÎTE DE CONTENU : c'est la base des % des cadres
+  // (et la mesure px→% de l'outil d'édition).
+  const sceneRef = useRef<HTMLDivElement | null>(null);
   return (
     <section
-      ref={sceneRef}
-      style={sceneStyle(tier)}
+      style={sceneStyle}
       data-brocante-scene={tier}
       aria-label={`Scène tier ${tier}`}
     >
-      {frames.map((coord) => {
-        const b = brocantesById.get(coord.id);
-        if (!b) return null;
-        const merged = applyOverride(coord, overrides[coord.id]);
-        return (
-          <BrocanteFrame
-            key={b.id}
-            brocante={b}
-            coord={merged}
-            selected={selectedId === b.id}
-            debloquee={debloqueesIds.has(b.id)}
-            onSelect={onSelect}
-          />
-        );
-      })}
-      {editEnabled && (
-        <>
-          <EditGridOverlay />
-          <BrocanteFramesEditOverlay tier={tier} sceneRef={sceneRef} />
-        </>
-      )}
+      <div ref={sceneRef} style={sceneInnerStyle(tier)}>
+        {frames.map((coord) => {
+          const b = brocantesById.get(coord.id);
+          if (!b) return null;
+          const merged = applyOverride(coord, overrides[coord.id]);
+          return (
+            <BrocanteFrame
+              key={b.id}
+              brocante={b}
+              coord={merged}
+              selected={selectedId === b.id}
+              debloquee={debloqueesIds.has(b.id)}
+              onSelect={onSelect}
+            />
+          );
+        })}
+        {editEnabled && (
+          <>
+            <EditGridOverlay />
+            <BrocanteFramesEditOverlay tier={tier} sceneRef={sceneRef} />
+          </>
+        )}
+      </div>
     </section>
   );
 }

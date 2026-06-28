@@ -1,9 +1,13 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import type { ObjetEnVitrine } from "@/types/game";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
-import { ItemImage } from "@/components/ui/ItemImage";
+import { etoileCount } from "@/lib/etat";
+import { ItemSticker } from "@/components/ui/ItemSticker";
+import { StarRow } from "@/components/ui/StarRow";
+import { CategorieIcon } from "@/components/ui/CategorieIcon";
 
 interface Props {
   coffre: ObjetEnVitrine[];
@@ -16,6 +20,34 @@ interface Props {
   /** Override de l'état actif du bouton de validation. Par défaut : coffre non vide. */
   validerActif?: boolean;
 }
+
+/** Amplitude du curseur autour du prix du marché : -100 % … +100 % (centré sur la valeur). */
+const MARGE_PCT = 100;
+
+const priceInput: CSSProperties = {
+  width: 56,
+  padding: "2px 4px",
+  border: "1px solid var(--brass-700)",
+  background: "var(--paper-100)",
+  fontFamily: "var(--font-display)",
+  fontSize: 15,
+  textAlign: "right",
+  color: "var(--forest-800)",
+};
+
+const margeLabel: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  letterSpacing: "0.04em",
+  marginTop: 2,
+};
+
+const boundLabel: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 9.5,
+  color: "var(--ink-500)",
+  letterSpacing: "0.04em",
+};
 
 export function CoffrePricing({
   coffre,
@@ -38,63 +70,128 @@ export function CoffrePricing({
         }}
       >
         {coffre.map((ov, i) => {
-          const c = getRarityColors(
-            ov.objet.rarete,
-            !!getTemplate(ov.objet.templateId)?.unique,
-          );
+          const isUnique = !!getTemplate(ov.objet.templateId)?.unique;
+          const c = getRarityColors(ov.objet.rarete, isUnique);
+          const isLast = i === coffre.length - 1;
+
+          const ref = Math.max(1, Math.round(ov.objet.prixReferenceReel));
+          const prix = ov.prixVente;
+          const pct = Math.round((prix / ref - 1) * 100);
+          const sliderPct = Math.min(MARGE_PCT, Math.max(-MARGE_PCT, pct));
+          const pctLabel = `${pct >= 0 ? "+" : "−"}${Math.abs(pct)} %`;
+          const pctColor =
+            pct > 0 ? "var(--forest-700)" : pct < 0 ? "var(--vermillion-600)" : "var(--ink-500)";
+
           return (
             <div
               key={ov.objet.id}
               style={{
-                display: "grid",
-                gridTemplateColumns: "36px 1fr auto",
-                gap: 8,
-                alignItems: "center",
-                padding: "8px 0",
-                borderBottom: i === coffre.length - 1 ? "none" : "1px dotted var(--paper-500)",
+                padding: "14px 0",
+                borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",
               }}
             >
+              {/* Ligne 1 : sticker · (nom + état/thème) · prix + marge */}
               <div
                 style={{
-                  width: 36,
-                  height: 36,
-                  background: c.thumbBg,
-                  border: `1px solid ${c.outer}`,
-                  overflow: "hidden",
+                  display: "grid",
+                  gridTemplateColumns: "56px 1fr auto",
+                  gap: 10,
+                  alignItems: "center",
                 }}
               >
-                <ItemImage
-                  templateId={ov.objet.templateId}
-                  categorie={ov.objet.categorie}
-                  fit="cover"
-                  alt={ov.objet.nom}
-                />
-              </div>
-              <div>
-                <div style={{ fontFamily: "var(--font-display)", fontSize: 10.5, color: "var(--forest-800)" }}>
-                  {ov.objet.nom}
+                <div style={{ width: 56, height: 56, display: "grid", placeItems: "center" }}>
+                  <ItemSticker
+                    templateId={ov.objet.templateId}
+                    categorie={ov.objet.categorie}
+                    fill
+                    tilt={false}
+                    variant="normal"
+                    halo={c.outer}
+                    thumb
+                    eager
+                  />
                 </div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-500)" }}>
-                  {ov.objet.etat} · {ov.objet.rarete}
+
+                <div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: 12.5,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: "var(--forest-800)",
+                      fontWeight: 700,
+                      lineHeight: 1.15,
+                    }}
+                  >
+                    {ov.objet.nom}
+                  </div>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}
+                    aria-label={`État ${ov.objet.etat}, catégorie ${ov.objet.categorie}`}
+                  >
+                    <StarRow
+                      filled={etoileCount(ov.objet.etat)}
+                      color={c.outer}
+                      display="flex"
+                      aria-label={`État : ${ov.objet.etat}`}
+                    />
+                    <span
+                      style={{ display: "inline-flex", alignItems: "center" }}
+                      aria-label={`Catégorie : ${ov.objet.categorie}`}
+                    >
+                      <CategorieIcon
+                        categorie={ov.objet.categorie}
+                        size={14}
+                        strokeWidth={1.5}
+                        color="var(--brass-700)"
+                      />
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 2 }}>
+                    <input
+                      type="number"
+                      min={1}
+                      value={prix}
+                      onChange={(e) =>
+                        onAjusterPrix(ov.objet.id, Math.max(1, Number(e.target.value)))
+                      }
+                      style={priceInput}
+                      aria-label={`Prix de ${ov.objet.nom}`}
+                    />
+                    <span style={{ fontFamily: "var(--font-display)", fontSize: 13, color: "var(--brass-700)" }}>
+                      €
+                    </span>
+                  </div>
+                  <div style={{ ...margeLabel, color: pctColor }}>{pctLabel}</div>
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+
+              {/* Ligne 2 : curseur borné autour de la valeur */}
+              <div style={{ marginTop: 8 }}>
                 <input
-                  type="number"
-                  min={1}
-                  value={ov.prixVente}
-                  onChange={(e) => onAjusterPrix(ov.objet.id, Number(e.target.value))}
-                  style={{
-                    width: 56,
-                    padding: "4px 6px",
-                    border: "1px solid var(--brass-700)",
-                    background: "var(--paper-100)",
-                    fontFamily: "var(--font-display)",
-                    fontSize: 12,
-                    textAlign: "right",
-                  }}
+                  type="range"
+                  min={-MARGE_PCT}
+                  max={MARGE_PCT}
+                  step={1}
+                  value={sliderPct}
+                  onChange={(e) =>
+                    onAjusterPrix(
+                      ov.objet.id,
+                      Math.max(1, Math.round(ref * (1 + Number(e.target.value) / 100))),
+                    )
+                  }
+                  aria-label={`Régler le prix de ${ov.objet.nom} (prix du marché ${ref} €)`}
+                  style={{ width: "100%", accentColor: "var(--brass-700)" }}
                 />
-                <span style={{ fontFamily: "var(--font-display)", color: "var(--brass-700)" }}>€</span>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 1 }}>
+                  <span style={boundLabel}>−100 %</span>
+                  <span style={boundLabel}>prix du marché {ref} €</span>
+                  <span style={boundLabel}>+100 %</span>
+                </div>
               </div>
             </div>
           );
