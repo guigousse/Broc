@@ -154,13 +154,15 @@ export function TabBar() {
   if (!isTabBarRoute(pathname)) return null;
 
   const liveTabPath =
-    liveTab === "bureau"
-      ? "/bureau"
-      : liveTab === "stockage"
-        ? "/stockage"
-        : liveTab === "atelier"
-          ? "/atelier"
-          : null;
+    liveTab === "collection"
+      ? "/collection"
+      : liveTab === "bureau"
+        ? "/bureau"
+        : liveTab === "stockage"
+          ? "/stockage"
+          : liveTab === "atelier"
+            ? "/atelier"
+            : null;
   const effectivePath = liveTabPath ?? pathname;
   const activeIdx = findActiveTabIndex(effectivePath);
   const now = tempsConfiance() ?? Date.now();
