@@ -4,17 +4,17 @@ import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { QgEditOverlay } from "../qg/dev/QgEditOverlay";
 
 /**
- * Panorama unifié 6 sections : bureau (1,2,3) → atelier (4,5,6).
+ * Panorama unifié 9 zones : collection (0-2) · bureau (3-5) · atelier (6-8).
  *
- * Un seul conteneur de scroll horizontal continu. Les images de fond
- * (qg + atelier) sont stitchées côte à côte. Les snap anchors couvrent
- * les 6 zones avec scroll-snap natif. L'expérience est fluide :
- * depuis la zone 4 (stockage), swipe vers la droite → zone 3 (repos)
- * sans interruption.
+ * Un seul conteneur de scroll horizontal continu. Les trois images de fond
+ * (collection@0vw, bureau@300vw, atelier@600vw) sont stitchées côte à côte.
+ * Les snap anchors couvrent les 9 zones avec scroll-snap natif. L'expérience
+ * est fluide : depuis la zone 6 (stockage), swipe vers la gauche → zone 5
+ * (repos) sans interruption.
  *
  * Persistance : ce composant DOIT être monté dans une layout partagée
- * couvrant /bureau, /stockage, /atelier (sinon SwipePager re-key sur
- * pathname change et le scroll se perd).
+ * couvrant /collection, /bureau, /stockage, /atelier (sinon SwipePager
+ * re-key sur pathname change et le scroll se perd).
  */
 
 export type UnifiedZoneKey =
@@ -99,9 +99,9 @@ const sceneStyle: CSSProperties = {
   flexShrink: 0,
 };
 
-const bgQgStyle: CSSProperties = {
+const bgSectionStyle = (leftVw: number): CSSProperties => ({
   position: "absolute",
-  left: 0,
+  left: `${leftVw}vw`,
   top: 0,
   width: "300vw",
   height: "100%",
@@ -110,19 +110,18 @@ const bgQgStyle: CSSProperties = {
   pointerEvents: "none",
   userSelect: "none",
   display: "block",
-};
+});
 
-const bgAtelierStyle: CSSProperties = {
+/** Wrapper des objets QG/atelier : décalés de +300vw (section Collection
+ *  insérée à gauche) sans toucher à leurs coordonnées baked. */
+const shiftedObjectsLayer: CSSProperties = {
   position: "absolute",
-  left: "300vw",
   top: 0,
-  width: "300vw",
+  left: 0,
+  width: "100%",
   height: "100%",
-  objectFit: "cover",
-  objectPosition: "top center",
+  transform: `translateX(${COLLECTION_X_SHIFT_VW}vw)`,
   pointerEvents: "none",
-  userSelect: "none",
-  display: "block",
 };
 
 const objectsLayer: CSSProperties = {
@@ -135,6 +134,8 @@ const objectsLayer: CSSProperties = {
 interface UnifiedPanoramaProps {
   initialZone?: UnifiedZoneKey;
   children?: ReactNode;
+  /** Objets de la section Collection (gauche, offsets 0–300, NON décalés). */
+  collectionChildren?: ReactNode;
   /**
    * Index de zone fractionnaire (0 = bureau ... 5 = coinL). Émis à
    * chaque rAF de scroll, après ré-interpolation depuis scrollLeft.
@@ -145,6 +146,7 @@ interface UnifiedPanoramaProps {
 export function UnifiedPanorama({
   initialZone = "porte",
   children,
+  collectionChildren,
   onZoneIndex,
 }: UnifiedPanoramaProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -213,24 +215,36 @@ export function UnifiedPanorama({
       data-unified-panorama="1"
     >
       <div style={sceneStyle} data-unified-scene="1">
-        {/* Fonds stitchés */}
+        {/* Fonds stitchés : collection (0) · bureau (300) · atelier (600) */}
+        <img
+          src="/collection/fond-collection.webp"
+          alt=""
+          style={bgSectionStyle(0)}
+          draggable={false}
+        />
         <img
           src="/qg/fond-cabinet.webp"
           alt=""
-          style={bgQgStyle}
+          style={bgSectionStyle(300)}
           draggable={false}
         />
         <img
           src="/atelier/fond-atelier.png"
           alt=""
-          style={bgAtelierStyle}
+          style={bgSectionStyle(600)}
           draggable={false}
         />
         {/* Objets interactifs positionnés au-dessus */}
         <div style={objectsLayer}>
-          {children}
-          {/* L'overlay s'auto-gate via le contexte d'édition (enabled + active). */}
-          <QgEditOverlay />
+          {/* Section Collection : NON décalée (left absolu 0–300vw). */}
+          {collectionChildren}
+          {/* QG + atelier : décalés de +300vw (wrapper), coords baked inchangées. */}
+          <div style={shiftedObjectsLayer}>
+            {children}
+            {/* L'overlay s'auto-gate via le contexte d'édition (enabled + active).
+                Dans le wrapper → ses cadres restent alignés sur les objets QG/atelier. */}
+            <QgEditOverlay />
+          </div>
         </div>
       </div>
 
