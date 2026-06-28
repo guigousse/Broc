@@ -63,39 +63,30 @@ import {
 import { vinylAudioUrl, vinylHasAudio } from "@/data/vinylesAudio";
 import { estMissionLivrable } from "@/lib/missions";
 import type { CategorieObjet, CollectionSlot } from "@/types/game";
+import {
+  volumeVinylForPos,
+  fireplaceVolumeForPos,
+} from "@/components/mobile/panorama/audioCurves";
+import { CollectionVitrine } from "@/components/mobile/collection-pano/CollectionVitrine";
+import { CollectionGridOverlay } from "@/components/mobile/CollectionGridOverlay";
 
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
 
-/** Volume vinyle selon la position du panorama.
- *  Bureau (0..2) : ramp 0.3 → 0.8 (pic au repos = gramophone).
- *  Atelier : décroissance douce, 0.4 / 0.3 / 0.2 aux sections 4/5/6. */
-function volumeVinylForPos(pos: number): number {
-  if (pos <= 0) return 0.3;
-  if (pos <= 1) return 0.3 + 0.2 * pos; // 0.3 → 0.5
-  if (pos <= 2) return 0.5 + 0.3 * (pos - 1); // 0.5 → 0.8
-  if (pos <= 3) return 0.8 - 0.4 * (pos - 2); // 0.8 → 0.4 (stockage)
-  if (pos <= 4) return 0.4 - 0.1 * (pos - 3); // 0.4 → 0.3 (établi)
-  return Math.max(0.2, 0.3 - 0.1 * (pos - 4)); // 0.3 → 0.2 (coinL)
-}
-
-/** Volume cheminée selon la position (triangulaire, pic à repos idx 2). */
-function fireplaceVolumeForPos(pos: number): number {
-  if (pos <= 0) return 0;
-  if (pos <= 2) return 0.3 * pos; // 0 → 0.6
-  return Math.max(0, 0.6 - 0.2 * (pos - 2)); // 0.6 → 0
-}
-
 /** Mappe un tab → initialZone du panorama. */
 function tabToInitialZone(
-  tab: "bureau" | "stockage" | "atelier",
+  tab: "collection" | "bureau" | "stockage" | "atelier",
 ): UnifiedZoneKey {
-  if (tab === "bureau") return "porte"; // vue par défaut du bureau
+  if (tab === "collection") return "vitrine"; // centre de la section
+  if (tab === "bureau") return "porte";
   if (tab === "stockage") return "stockage";
   return "etabli";
 }
 
-function pathnameToTab(pathname: string): "bureau" | "stockage" | "atelier" {
+function pathnameToTab(
+  pathname: string,
+): "collection" | "bureau" | "stockage" | "atelier" {
+  if (pathname.startsWith("/collection")) return "collection";
   if (pathname.startsWith("/stockage")) return "stockage";
   if (pathname.startsWith("/atelier")) return "atelier";
   return "bureau";
@@ -145,6 +136,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
+  const [grilleCollectionOuverte, setGrilleCollectionOuverte] = useState(false);
 
   // Index de zone fractionnaire courant (0..5).
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf(mountInitialZoneRef.current));
@@ -210,11 +202,13 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         const targetTab = zoneIndexToTab(Math.round(zoneIdxRef.current));
         if (targetTab !== currentTab) {
           const target =
-            targetTab === "bureau"
-              ? "/bureau"
-              : targetTab === "stockage"
-                ? "/stockage"
-                : "/atelier";
+            targetTab === "collection"
+              ? "/collection"
+              : targetTab === "bureau"
+                ? "/bureau"
+                : targetTab === "stockage"
+                  ? "/stockage"
+                  : "/atelier";
           router.replace(target, { scroll: false });
         }
       }, 350);
@@ -439,10 +433,11 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
 
   const nbCourriersNonLus = state.courriers.filter((c) => !c.lu).length;
 
-  // Virtualisation : on ne monte les objets QG que si leur zone est à
-  // distance 1 de la zone active (en index 0..5). bureau/porte/repos = 0/1/2.
-  const showQgZone = (qgZoneIdx: 0 | 1 | 2) =>
+  // Virtualisation : monte un objet si sa zone est à distance ≤ 1 de la zone
+  // active (index 0..8). bureau/porte/repos = 3/4/5 ; vitrine = 1.
+  const showQgZone = (qgZoneIdx: 3 | 4 | 5) =>
     Math.abs(zoneActive - qgZoneIdx) <= 1;
+  const showVitrineZone = Math.abs(zoneActive - 1) <= 1;
 
   // Edit mode :
   //   - activé par défaut si `NEXT_PUBLIC_QG_EDIT=1` au build, OU
@@ -497,9 +492,19 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
           <UnifiedPanorama
             initialZone={mountInitialZoneRef.current}
             onZoneIndex={handleZoneIndex}
+            collectionChildren={
+              showVitrineZone && (
+                <CollectionVitrine
+                  onTap={() => {
+                    playClick();
+                    setGrilleCollectionOuverte(true);
+                  }}
+                />
+              )
+            }
           >
             {/* ─── Section bureau (sections 1/2/3) ─── */}
-            {showQgZone(0) && (
+            {showQgZone(3) && (
               <>
                 <QgCarnet
                   onTap={() => {
@@ -517,7 +522,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                 />
               </>
             )}
-            {showQgZone(1) && (
+            {showQgZone(4) && (
               <>
                 <QgPorte
                   onTap={() => {
@@ -546,7 +551,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                 />
               </>
             )}
-            {showQgZone(2) && (
+            {showQgZone(5) && (
               <>
                 <QgFauteuil
                   chat={state.chatSurFauteuil}
@@ -738,6 +743,11 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         onAcheter={() => acheterGazette()}
         budget={state.budget}
         prixGazette={PRIX_GAZETTE}
+      />
+
+      <CollectionGridOverlay
+        open={grilleCollectionOuverte}
+        onClose={() => setGrilleCollectionOuverte(false)}
       />
 
       {editEnabled && <QgEditPanel />}
