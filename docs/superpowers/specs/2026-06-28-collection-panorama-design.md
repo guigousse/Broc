@@ -20,7 +20,7 @@ La Collection devient une scène panoramique à part entière : le **cabinet pri
 
 > **Note (2026-06-28) :** l'image finale, générée sur Gemini et placée dans `public/collection/fond-collection.webp`, a une composition légèrement différente de l'esquisse initiale. On s'aligne sur l'image réelle, décrite ci-dessous. Papier peint **Art Déco bordeaux géométrique** (au lieu du vert sauge), tapis Art Déco rouge au sol, suspension Art Déco au plafond — même perspective frontale, mêmes fenêtres sur la rue parisienne et même rendu illustré que le bureau.
 
-- **Gauche (`bibliotheque`) — Coin lecture.** Haute **bibliothèque** boisée pleine de livres (avec une petite lampe allumée) + une fenêtre à petits carreaux sur la rue. Purement d'ambiance.
+- **Gauche (`lecture`) — Coin lecture.** Haute **bibliothèque** boisée pleine de livres (avec une petite lampe allumée) + une fenêtre à petits carreaux sur la rue. Purement d'ambiance.
 - **Centre (`vitrine`) — La vitrine (seul hotspot, zone d'arrivée de la section).** Grande **vitrine Art Déco vitrée et éclairée**, garnie de pièces d'antiquaire (vases, horloge, statuettes, sextant, cloches en verre). **Décor statique** (ne reflète PAS les objets réellement possédés par le joueur). **Taper la vitrine → ouvre l'écran/grille Collection existant.** C'est le point focal de la scène.
 - **Droite (`escalier`) — Fenêtre + escalier en colimaçon.** Une seconde fenêtre sur la rue, puis un bel **escalier en fer forgé** Art Déco montant hors champ. **Purement d'ambiance** (aucune action). Suggère un étage au-dessus : réserve narrative pour le futur.
 
@@ -37,20 +37,20 @@ La Collection devient une scène panoramique à part entière : le **cabinet pri
 Nouvel ordre des zones, de gauche à droite :
 
 ```
-bibliotheque → vitrine → escalier → bureau → porte → repos → stockage → etabli → coinL
+lecture → vitrine → escalier → bureau → porte → repos → stockage → etabli → coinL
 ```
 
 Ordre des images dans le panorama : `fond-collection` | `fond-cabinet` | `fond-atelier`.
 
 - Largeur totale du panorama : **600vw → 900vw**.
-- La section Collection occupe les offsets **0 / 100 / 200** (bibliotheque / vitrine / escalier) ; les sections existantes sont **décalées de +300vw** (bureau 0→300, porte 100→400, repos 200→500, stockage 318→618, etabli 408→708, coinL 495→795).
+- La section Collection occupe les offsets **0 / 100 / 200** (lecture / vitrine / escalier) ; les sections existantes sont **décalées de +300vw** (bureau 0→300, porte 100→400, repos 200→500, stockage 318→618, etabli 408→708, coinL 495→795).
 - Les valeurs exactes (inset des zones extrêmes) seront ajustées contre l'art final, comme pour l'atelier.
 - La **zone d'arrivée par défaut de l'app reste `porte`** (centre du bureau) : la logique nommée n'est pas affectée, seuls les offsets changent. En revanche, naviguer vers la route `/collection` ouvre la zone **`vitrine`** (centre de la section, le point focal).
 
 ### Fichiers à créer
 
 - `src/components/mobile/collection-pano/layout.ts` — sur le modèle de `qg/layout.ts` :
-  `COLLECTION_LAYOUT = { panoramaWidth: 300, panoramaAspect: { w: 2752, h: 1536 }, zones: { bibliotheque, vitrine, escalier }, objets: { vitrine: { left, bottom, width } } }`, type `CollectionObjetKey`, hook `useCollectionObjetStyle`. Coordonnées de la vitrine (centre de l'image) à caler avec l'overlay d'édition dev.
+  `COLLECTION_LAYOUT = { panoramaWidth: 300, panoramaAspect: { w: 2752, h: 1536 }, zones: { lecture, vitrine, escalier }, objets: { vitrine: { left, bottom, width } } }`, type `CollectionObjetKey`, hook `useCollectionObjetStyle`. Coordonnées de la vitrine (centre de l'image) à caler avec l'overlay d'édition dev.
 - `src/components/mobile/collection-pano/CollectionScene.tsx` — affiche `/collection/fond-collection.webp` (sur le modèle de `QgScene.tsx`).
 - `src/components/mobile/collection-pano/CollectionVitrine.tsx` — `<button>` positionné via `useCollectionObjetStyle("vitrine")`, `onTap` → ouvre la Collection.
 - `src/app/(panorama)/collection/page.tsx` — marqueur de route (`return null`).
