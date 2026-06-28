@@ -112,7 +112,15 @@ export default function VitrinePrepPage() {
           ? "1 — Préparation du coffre"
           : "2 — Tarification"}
       </EtapeBandeau>
-      <main style={{ flex: 1, overflowY: "auto" }}>
+      <main
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          // Étape tarification (liste, pas image) : on décale le contenu sous
+          // le texte d'étape flottant. Packing (image) reste à fleur du header.
+          paddingTop: etape === "pricing" ? 48 : 0,
+        }}
+      >
         {etape === "packing" ? (
           <CoffreChargement
             niveauCamion={state.niveauCamion as NiveauCamion}

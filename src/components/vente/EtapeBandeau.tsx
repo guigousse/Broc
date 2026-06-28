@@ -16,10 +16,12 @@ const etapeTexte: CSSProperties = {
   pointerEvents: "none",
   zIndex: 40,
   // Titre d'étape manuscrit (Caveat) : pas de capitales ni d'interlettrage,
-  // qui dénaturent une écriture cursive.
+  // qui dénaturent une écriture cursive. Laiton clair, italique + gras.
   fontFamily: "var(--font-handwriting)",
-  fontSize: 22,
-  color: "var(--forest-800)",
+  fontStyle: "italic",
+  fontWeight: 700,
+  fontSize: 24,
+  color: "var(--brass-300)",
 };
 
 export function EtapeBandeau({ children }: { children: ReactNode }) {
