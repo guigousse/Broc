@@ -30,15 +30,14 @@ export type UnifiedZoneKey =
 
 /**
  * Offsets en vw dans le panorama unifié (largeur totale 900vw).
- * Section Collection à gauche (0–200) ; bureau (+300) ; atelier (+600).
- * Les offsets Collection (lecture/vitrine/escalier) cadrent respectivement
- * la bibliothèque (gauche), la vitrine (centre) et l'escalier (droite).
- * À affiner contre l'art en Task 9.
+ * Section Collection (0–300vw) : viewports [0,100] / [100,200] / [200,300]
+ * — même convention que le bureau (0/100/200 avant décalage +300vw).
+ * Section bureau (+300vw) ; atelier (+600vw).
  */
 export const UNIFIED_ZONE_OFFSETS: Record<UnifiedZoneKey, number> = {
-  lecture: 15,
-  vitrine: 135,
-  escalier: 250,
+  lecture: 0,
+  vitrine: 100,
+  escalier: 200,
   bureau: 0 + 300, // 300
   porte: 100 + 300, // 400
   repos: 200 + 300, // 500
@@ -93,7 +92,7 @@ const snapAnchorStyle: CSSProperties = {
 const sceneStyle: CSSProperties = {
   position: "relative",
   width: `${UNIFIED_PANORAMA_WIDTH_VW}vw`,
-  // Hauteur = aspect d'une image (les 2 ont le même aspect 2752:1536),
+  // Hauteur = aspect d'une image (les 3 ont le même aspect 2752:1536),
   // proportionnée à la largeur d'UNE moitié (300vw).
   height: `calc(300vw * 1536 / 2752)`,
   flexShrink: 0,

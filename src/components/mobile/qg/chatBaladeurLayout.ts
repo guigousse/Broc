@@ -4,7 +4,7 @@ import type { ChatBaladeurId } from "@/lib/chatBaladeur";
  * Coordonnées des 3 emplacements du chat baladeur dans le panorama
  * unifié. Mêmes conventions que `QG_LAYOUT` / `ATELIER_LAYOUT` :
  * `left` et `width` en vw, `bottom` en pourcentage. Pour les chats
- * atelier, le décalage +300vw (`ATELIER_X_SHIFT_VW`) est déjà inclus
+ * atelier, le décalage +300vw (`COLLECTION_X_SHIFT_VW`) est déjà inclus
  * dans `left`.
  */
 export const CHAT_BALADEUR_LAYOUT: Record<

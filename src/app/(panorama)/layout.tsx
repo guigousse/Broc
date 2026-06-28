@@ -182,7 +182,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       panoramaActiveStore.set(zoneIndexToTab(snapIdx));
 
       // Audio : volume cheminée + vinyle pilotés par la position. Pic à
-      // repos (idx 2) où sont cheminée et gramophone. Fade vers atelier.
+      // repos (idx 5) où sont cheminée et gramophone. Fade vers atelier.
       audioManager.setFireplaceVolume(fireplaceVolumeForPos(idx));
       if (!gramophoneOuvertRef.current) {
         setVinylTargetVolumeRef.current(volumeVinylForPos(idx));

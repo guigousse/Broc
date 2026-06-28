@@ -38,6 +38,9 @@ describe("modèle de zones unifié", () => {
     for (const z of ["bureau", "porte", "repos"] as UnifiedZoneKey[]) {
       expect(UNIFIED_ZONE_OFFSETS[z]).toBeGreaterThanOrEqual(300);
     }
+    for (const z of ["stockage", "etabli", "coinL"] as UnifiedZoneKey[]) {
+      expect(UNIFIED_ZONE_OFFSETS[z]).toBeGreaterThanOrEqual(600);
+    }
   });
 
   it("mappe l'index de zone vers le bon onglet", () => {
