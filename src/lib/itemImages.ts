@@ -449,3 +449,17 @@ export function getItemImageUrl(templateId: string): string | null {
     ? `/items/${templateId}.webp`
     : null;
 }
+
+/**
+ * Retourne le chemin de la vignette de l'item (max 384 px, générée par
+ * `scripts/generate-item-thumbs.mjs`). À utiliser dans les listes/grilles
+ * denses : décoder le plein format (~1600 px) pour des centaines de cellules
+ * fait exploser la mémoire (sous iOS, le WebView recharge la page). La vignette
+ * se décode ~20× plus léger. Les vues « plein écran » (overlay détail) gardent
+ * `getItemImageUrl`.
+ */
+export function getItemThumbUrl(templateId: string): string | null {
+  return ITEMS_WITH_IMAGE.has(templateId)
+    ? `/items/thumbs/${templateId}.webp`
+    : null;
+}

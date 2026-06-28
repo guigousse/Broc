@@ -136,6 +136,8 @@ interface GameActionsValue {
   setNiveauCamionDev: (niveau: NiveauCamion) => void;
   viderVitrine: () => void;
   vendreDeVitrine: (objetIds: string[], prixTotal: number) => void;
+  /** Persiste le temps restant de la journée de vente (reprise après mise en arrière-plan). */
+  sauverTempsVitrine: (tempsRestantSec: number) => void;
   enregistrerSession: (session: Session) => void;
   debloquerCompetence: (id: CompetenceId) => { ok: boolean; raison?: string };
   restaurerObjet: (
@@ -869,6 +871,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  /**
+   * Sauvegarde le temps restant de la journée de vente en cours dans
+   * `state.vitrine`. Écrit AUSSI de façon synchrone dans le dépôt : sur iOS,
+   * l'app peut être suspendue juste après le passage en arrière-plan, avant que
+   * l'effet d'auto-sauvegarde (post-commit) ne s'exécute. localStorage étant
+   * synchrone, on persiste immédiatement pour ne pas perdre le compteur.
+   */
+  const sauverTempsVitrine = useCallback((tempsRestantSec: number) => {
+    const prev = stateRef.current;
+    if (!prev?.vitrine) return;
+    if (prev.vitrine.tempsRestantSec === tempsRestantSec) return;
+    const next: GameState = {
+      ...prev,
+      vitrine: { ...prev.vitrine, tempsRestantSec },
+    };
+    stateRef.current = next;
+    setState(next);
+    void gameRepository.save(next);
+  }, []);
+
   const enregistrerSession = useCallback((session: Session) => {
     setState((prev) => {
       if (!prev) return prev;
@@ -1377,6 +1399,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setNiveauCamionDev,
       viderVitrine,
       vendreDeVitrine,
+      sauverTempsVitrine,
       enregistrerSession,
       debloquerCompetence,
       restaurerObjet,
@@ -1421,6 +1444,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setNiveauCamionDev,
       viderVitrine,
       vendreDeVitrine,
+      sauverTempsVitrine,
       enregistrerSession,
       debloquerCompetence,
       restaurerObjet,

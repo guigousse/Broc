@@ -2,14 +2,14 @@ import type { CSSProperties, ReactNode } from "react";
 
 /** Bandeau d'étape affiché sous le header standard dans le flux vente. */
 const bandeau: CSSProperties = {
-  padding: "9px 16px",
+  padding: "6px 16px",
   textAlign: "center",
   background: "var(--paper-200)",
   borderBottom: "1px solid var(--brass-500)",
-  fontFamily: "var(--font-display)",
-  fontSize: 13,
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
+  // Titre d'étape manuscrit (Caveat) : pas de capitales ni d'interlettrage,
+  // qui dénaturent une écriture cursive.
+  fontFamily: "var(--font-handwriting)",
+  fontSize: 22,
   color: "var(--forest-800)",
 };
 

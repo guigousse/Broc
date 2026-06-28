@@ -1,6 +1,14 @@
 "use client";
 
-import { memo, useCallback, useRef, type CSSProperties } from "react";
+import {
+  memo,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { ItemSticker, type StickerVariant } from "@/components/ui/ItemSticker";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
@@ -123,6 +131,7 @@ const CollectionCell = memo(function CollectionCell({
         tilt={false}
         variant={variant}
         halo={halo}
+        thumb
       />
 
       {/* Badge "+" — exemplaire en stock, pas encore donné (prioritaire sur "*") */}
@@ -180,31 +189,88 @@ export function CollectionGrid({
 
   const planche = plancheStyle(colonnes);
 
+  // ─── Virtualisation par rangée ───────────────────────────────────────────
+  // La grille rend potentiellement tout le catalogue (centaines d'items).
+  // Sans fenêtrage, chaque image se décode en mémoire et le coût des filtres
+  // CSS s'accumule → saccades et, sous iOS, rechargement du WebView. On ne
+  // monte donc que les rangées visibles (le document scrolle au niveau window).
+  const parentRef = useRef<HTMLDivElement>(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
+  useLayoutEffect(() => {
+    const top = parentRef.current?.offsetTop ?? 0;
+    setScrollMargin((prev) => (prev !== top ? top : prev));
+  });
+
+  const estimateRow = useCallback(() => {
+    const w = typeof window !== "undefined" ? window.innerWidth : 390;
+    const cell = w / colonnes; // cellule ~carrée, grille pleine largeur
+    const espacePlanche =
+      Math.round(48 / colonnes) +
+      Math.round(18 / colonnes) +
+      Math.round(48 / colonnes);
+    return Math.round(cell + espacePlanche);
+  }, [colonnes]);
+
+  const virtualizer = useWindowVirtualizer({
+    count: rangees.length,
+    estimateSize: estimateRow,
+    overscan: 4,
+    scrollMargin,
+    getItemKey: (i) => rangees[i][0].templateId,
+  });
+
+  // Le zoom change la hauteur des rangées → recalcule les positions.
+  useLayoutEffect(() => {
+    virtualizer.measure();
+  }, [colonnes, virtualizer]);
+
   return (
-    <div>
-      {rangees.map((rangee) => (
-        <div key={rangee[0].templateId}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${colonnes}, 1fr)`,
-              gap: "var(--gutter)",
-              padding: "0 var(--gutter)",
-            }}
-          >
-            {rangee.map((s) => (
-              <CollectionCell
-                key={s.templateId}
-                slot={s}
-                onTap={stableOnTap}
-                enStock={enStockIds?.has(s.templateId) ?? false}
-              />
-            ))}
-          </div>
-          {/* Planche d'étagère sous la rangée */}
-          <div aria-hidden data-testid="planche" style={planche} />
-        </div>
-      ))}
+    <div ref={parentRef}>
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: virtualizer.getTotalSize(),
+        }}
+      >
+        {virtualizer.getVirtualItems().map((item) => {
+          const rangee = rangees[item.index];
+          return (
+            <div
+              key={item.key}
+              data-index={item.index}
+              ref={virtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${item.start - scrollMargin}px)`,
+              }}
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${colonnes}, 1fr)`,
+                  gap: "var(--gutter)",
+                  padding: "0 var(--gutter)",
+                }}
+              >
+                {rangee.map((s) => (
+                  <CollectionCell
+                    key={s.templateId}
+                    slot={s}
+                    onTap={stableOnTap}
+                    enStock={enStockIds?.has(s.templateId) ?? false}
+                  />
+                ))}
+              </div>
+              {/* Planche d'étagère sous la rangée */}
+              <div aria-hidden data-testid="planche" style={planche} />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

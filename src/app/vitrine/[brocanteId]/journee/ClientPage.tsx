@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
@@ -81,6 +88,7 @@ export default function VitrineJourneePage() {
     viderVitrine,
     avancerJour,
     enregistrerSession,
+    sauverTempsVitrine,
     gagnerXP,
     marquerVuTemplate,
   } = useGame();
@@ -162,6 +170,21 @@ export default function VitrineJourneePage() {
       ? state.celebriteActuelle
       : null;
   const tempsRestantRef = useRef(JOURNEE_DUREE_SECONDES);
+  /** Restauration du temps restant persisté : effectuée une seule fois, dès que
+   *  l'état est hydraté. Sans ce ref, l'initialiseur `useState` capturerait
+   *  `state === null` (avant hydratation) et resterait bloqué à la durée pleine
+   *  → le timer repartirait de zéro après réouverture de l'app. */
+  const tempsRestaureRef = useRef(false);
+  useLayoutEffect(() => {
+    if (tempsRestaureRef.current) return;
+    if (!isHydrated || !state?.vitrine) return;
+    tempsRestaureRef.current = true;
+    const saved = state.vitrine.tempsRestantSec;
+    if (typeof saved === "number" && saved < JOURNEE_DUREE_SECONDES) {
+      setTempsRestant(saved);
+      tempsRestantRef.current = saved;
+    }
+  }, [isHydrated, state]);
   /** Garde synchrone — empêche que terminerJournee s'exécute plus d'une fois. */
   const journeeTermineeRef = useRef(false);
   /** Ref vers terminerJournee, affectée plus bas pour casser la dépendance temporelle. */
@@ -268,6 +291,10 @@ export default function VitrineJourneePage() {
   // Boucle de tick : décrémente le temps et déclenche les clients
   useEffect(() => {
     if (journeeFinie) return;
+    // N'attaque pas le compte à rebours avant que le temps restant persisté
+    // ait été restauré (cf. tempsRestaureRef), sinon on décrémenterait depuis
+    // la durée pleine.
+    if (!isHydrated) return;
 
     const id = window.setInterval(() => {
       // En pause si un client est devant nous
@@ -337,7 +364,30 @@ export default function VitrineJourneePage() {
     }, TICK_MS);
 
     return () => window.clearInterval(id);
-  }, [journeeFinie, terminerJournee]);
+  }, [journeeFinie, terminerJournee, isHydrated]);
+
+  // Persiste le temps restant aux moments charnières : passage en arrière-plan
+  // (iOS suspend le JS sans préavis), pagehide, et démontage (navigation vers le
+  // QG). À la réouverture de l'app ou au retour dans la vente, le compte à
+  // rebours reprend là où il en était au lieu de repartir de la durée pleine.
+  useEffect(() => {
+    if (!isHydrated) return;
+    const persister = () => {
+      if (journeeTermineeRef.current) return;
+      sauverTempsVitrine(tempsRestantRef.current);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") persister();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", persister);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", persister);
+      // Démontage (ex. retour au QG en cours de journée) : ultime sauvegarde.
+      persister();
+    };
+  }, [isHydrated, sauverTempsVitrine]);
 
   // Si la vitrine se vide en cours de journée, on marque le "bravo" et on termine.
   useEffect(() => {

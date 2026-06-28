@@ -70,6 +70,14 @@ export interface ObjetEnVitrine {
 export interface VitrineActive {
   brocanteId: string;
   objets: ObjetEnVitrine[];
+  /**
+   * Temps restant (en secondes) de la journée de vente en cours. Persisté pour
+   * reprendre le compte à rebours là où il en était après une mise en
+   * arrière-plan / fermeture de l'app (le timer n'est pas une horloge réelle :
+   * il se met en pause sur les clients, donc on sauvegarde le restant, pas un
+   * horodatage de départ). Absent tant que la journée n'a pas démarré.
+   */
+  tempsRestantSec?: number;
 }
 
 export interface Tendance {

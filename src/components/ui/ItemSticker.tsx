@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
-import { getItemImageUrl } from "@/lib/itemImages";
+import { getItemImageUrl, getItemThumbUrl } from "@/lib/itemImages";
 import type { CategorieObjet } from "@/types/game";
 
 /** État visuel du sticker dans la collection. */
@@ -19,6 +19,12 @@ interface ItemStickerProps {
   halo?: string;
   /** Légère inclinaison déterministe (défaut true). Mettre false pour un rendu droit. */
   tilt?: boolean;
+  /**
+   * Si vrai, charge la vignette (~384 px) plutôt que le plein format (~1600 px).
+   * À activer dans les grilles/listes denses pour éviter l'explosion mémoire ;
+   * laisser false pour les vues plein écran (overlay détail).
+   */
+  thumb?: boolean;
 }
 
 /** Angle déterministe en degrés dans ~[-3, +3] à partir du templateId, pour
@@ -108,8 +114,9 @@ export function ItemSticker({
   variant = "normal",
   halo,
   tilt = true,
+  thumb = false,
 }: ItemStickerProps) {
-  const url = getItemImageUrl(templateId);
+  const url = thumb ? getItemThumbUrl(templateId) : getItemImageUrl(templateId);
   const angle = tilt ? angleFromId(templateId) : 0;
   const filter = variantFilter(variant);
   return (
