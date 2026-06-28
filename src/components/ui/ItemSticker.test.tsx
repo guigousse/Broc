@@ -23,4 +23,22 @@ describe("ItemSticker", () => {
     expect(img).toBeFalsy();
     expect(container.querySelector("svg")).toBeTruthy();
   });
+
+  it("charge en lazy par défaut", () => {
+    const { container } = render(
+      <ItemSticker templateId="br.scie_egoine_de_charpentier" categorie="Bricolage" />,
+    );
+    expect(container.querySelector("img")?.getAttribute("loading")).toBe("lazy");
+  });
+
+  it("charge en eager quand eager=true", () => {
+    const { container } = render(
+      <ItemSticker
+        templateId="br.scie_egoine_de_charpentier"
+        categorie="Bricolage"
+        eager
+      />,
+    );
+    expect(container.querySelector("img")?.getAttribute("loading")).toBe("eager");
+  });
 });

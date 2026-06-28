@@ -25,6 +25,12 @@ interface ItemStickerProps {
    * laisser false pour les vues plein écran (overlay détail).
    */
   thumb?: boolean;
+  /**
+   * Si vrai, l'image charge immédiatement (`loading="eager"`) au lieu de
+   * `lazy`. À activer dans les listes virtualisées (la virtualisation borne
+   * déjà le nombre de cellules montées) pour éviter le fondu « pop-in ».
+   */
+  eager?: boolean;
 }
 
 /** Angle déterministe en degrés dans ~[-3, +3] à partir du templateId, pour
@@ -115,6 +121,7 @@ export function ItemSticker({
   halo,
   tilt = true,
   thumb = false,
+  eager = false,
 }: ItemStickerProps) {
   const url = thumb ? getItemThumbUrl(templateId) : getItemImageUrl(templateId);
   const angle = tilt ? angleFromId(templateId) : 0;
@@ -127,7 +134,7 @@ export function ItemSticker({
           src={url}
           alt=""
           draggable={false}
-          loading="lazy"
+          loading={eager ? "eager" : "lazy"}
           decoding="async"
           style={imageStyle(fill, filter)}
         />
