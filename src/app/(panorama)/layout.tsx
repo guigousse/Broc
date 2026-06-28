@@ -68,7 +68,6 @@ import {
   fireplaceVolumeForPos,
 } from "@/components/mobile/panorama/audioCurves";
 import { CollectionVitrine } from "@/components/mobile/collection-pano/CollectionVitrine";
-import { CollectionGridOverlay } from "@/components/mobile/CollectionGridOverlay";
 
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
@@ -136,7 +135,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
-  const [grilleCollectionOuverte, setGrilleCollectionOuverte] = useState(false);
 
   // Index de zone fractionnaire courant (0..5).
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf(mountInitialZoneRef.current));
@@ -497,7 +495,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                 <CollectionVitrine
                   onTap={() => {
                     playClick();
-                    setGrilleCollectionOuverte(true);
+                    router.push("/collection/grille");
                   }}
                 />
               )
@@ -743,11 +741,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         onAcheter={() => acheterGazette()}
         budget={state.budget}
         prixGazette={PRIX_GAZETTE}
-      />
-
-      <CollectionGridOverlay
-        open={grilleCollectionOuverte}
-        onClose={() => setGrilleCollectionOuverte(false)}
       />
 
       {editEnabled && <QgEditPanel />}
