@@ -107,7 +107,7 @@ export default function VitrinePrepPage() {
       }}
     >
       <MobileHeader budget={state.budget} />
-      <EtapeBandeau>
+      <EtapeBandeau floating>
         {etape === "packing"
           ? "1 — Préparation du coffre"
           : "2 — Tarification"}
