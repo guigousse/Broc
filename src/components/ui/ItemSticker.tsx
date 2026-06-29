@@ -15,8 +15,6 @@ interface ItemStickerProps {
   fill?: boolean;
   /** Rendu : normal, grisé (vu non possédé) ou silhouette noire (non découvert). */
   variant?: StickerVariant;
-  /** Couleur du halo de rareté (dégradé radial derrière le sticker). Aucun halo si absent. */
-  halo?: string;
   /** Légère inclinaison déterministe (défaut true). Mettre false pour un rendu droit. */
   tilt?: boolean;
   /**
@@ -47,18 +45,15 @@ function angleFromId(templateId: string): number {
 /** Ombre portée chaude (sans contour). */
 const ombrePortee = "drop-shadow( 0 2px 3px rgba(40,25,5,0.35))";
 
-/** Halo blanc autour de la silhouette alpha (contour die-cut) + ombre portée.
- *  L'empilement de 8 drop-shadow décale l'alpha dans toutes les directions :
- *  l'union des halos forme un contour épais ~2 px. */
+/** Contour blanc die-cut autour de la silhouette alpha + ombre portée.
+ *  4 drop-shadow cardinaux (au lieu de 8) décalent l'alpha dans les 4 directions :
+ *  leur union forme un contour ~1.5 px. Le passage de 8 à 4 passes de filtre
+ *  par cellule réduit nettement le coût GPU au scroll des grilles denses. */
 const contourBlanc = [
   "drop-shadow( 1.5px  0    0 #fdfaf2)",
   "drop-shadow(-1.5px  0    0 #fdfaf2)",
   "drop-shadow( 0     1.5px 0 #fdfaf2)",
   "drop-shadow( 0    -1.5px 0 #fdfaf2)",
-  "drop-shadow( 1px   1px   0 #fdfaf2)",
-  "drop-shadow(-1px   1px   0 #fdfaf2)",
-  "drop-shadow( 1px  -1px   0 #fdfaf2)",
-  "drop-shadow(-1px  -1px   0 #fdfaf2)",
   ombrePortee,
 ].join(" ");
 
@@ -85,30 +80,32 @@ const wrapStyle = (
   transform: `rotate(${angle}deg)`,
 });
 
-/** Glow radial de rareté, derrière le sticker, débordant légèrement. */
-const haloStyle = (color: string): CSSProperties => ({
-  position: "absolute",
-  inset: "-16%",
-  borderRadius: "50%",
-  background: `radial-gradient(circle, ${color} 0%, transparent 68%)`,
-  opacity: 0.55,
-  filter: "blur(3px)",
-  pointerEvents: "none",
-  zIndex: 0,
-});
-
-/** Style de l'image : en mode `fill`, strictement contrainte à la cellule
- *  (`objectFit:contain`) pour ne JAMAIS déborder ; sinon centrée à sa taille. */
+/** Style de l'image : en mode `fill`, l'image est SORTIE DU FLUX
+ *  (`position:absolute; inset:0`) et contrainte par `objectFit:contain`.
+ *  Hors-flux, sa taille intrinsèque ne peut JAMAIS pousser la cellule : le
+ *  carré `aspect-ratio:1/1` du parent est respecté sur tous les moteurs (iOS
+ *  WebKit laissait sinon un PNG très haut — violon, guitare — agrandir la
+ *  rangée). Hors `fill`, l'image reste dans le flux, centrée à sa taille. */
 function imageStyle(fill: boolean, filter: string): CSSProperties {
   return {
-    position: "relative",
     zIndex: 1,
     objectFit: "contain",
     pointerEvents: "none",
     filter,
     ...(fill
-      ? { width: "100%", height: "100%" }
-      : { maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto" }),
+      ? {
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+        }
+      : {
+          position: "relative",
+          maxWidth: "100%",
+          maxHeight: "100%",
+          width: "auto",
+          height: "auto",
+        }),
   };
 }
 
@@ -118,7 +115,6 @@ export function ItemSticker({
   size = 60,
   fill = false,
   variant = "normal",
-  halo,
   tilt = true,
   thumb = false,
   eager = false,
@@ -128,7 +124,6 @@ export function ItemSticker({
   const filter = variantFilter(variant);
   return (
     <span style={wrapStyle(size, angle, fill)} aria-hidden>
-      {halo ? <span style={haloStyle(halo)} /> : null}
       {url ? (
         <img
           src={url}

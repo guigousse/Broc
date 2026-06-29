@@ -4,7 +4,6 @@ import type { CSSProperties } from "react";
 import { BookOpen, Plus, Trash2 } from "lucide-react";
 import { BrassCorners } from "@/components/ui/BrassCorners";
 import { ItemSticker } from "@/components/ui/ItemSticker";
-import { getRarityColors } from "@/lib/rarityColors";
 import type { CollectionSlot } from "@/types/game";
 
 interface CollectionDetailOverlayProps {
@@ -124,7 +123,6 @@ export function CollectionDetailOverlay({
 }: CollectionDetailOverlayProps) {
   if (!open || !slot) return null;
   const isDonne = slot.donation !== null;
-  const colors = getRarityColors(slot.rarete, !!slot.unique);
 
   return (
     <div
@@ -152,7 +150,6 @@ export function CollectionDetailOverlay({
             fill
             tilt={false}
             variant={isDonne ? "normal" : "grise"}
-            halo={colors.outer}
           />
         </div>
 

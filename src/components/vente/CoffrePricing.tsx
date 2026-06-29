@@ -71,7 +71,6 @@ export function CoffrePricing({
                     fill
                     tilt={false}
                     variant="normal"
-                    halo={c.outer}
                     thumb
                     eager
                   />

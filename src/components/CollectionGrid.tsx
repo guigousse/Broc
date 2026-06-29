@@ -79,8 +79,9 @@ interface CollectionCellProps {
  * pratique seuls le slot et le booléen enStock comptent.
  *
  * Rendu « sticker » sans cadre : silhouette noire (non découvert), sticker
- * grisé (vu non possédé) ou normal (possédé). La rareté est portée par un halo
- * dégradé derrière le sticker (sauf silhouette : rareté non révélée).
+ * grisé (vu non possédé) ou normal (possédé). La rareté n'est plus signalée
+ * par un halo dans la grille (coûteux au scroll) ; elle reste lisible dans
+ * l'overlay détail et via les étoiles d'état.
  */
 const CollectionCell = memo(function CollectionCell({
   slot: s,
@@ -101,13 +102,16 @@ const CollectionCell = memo(function CollectionCell({
     : isVu
       ? "grise"
       : "normal";
-  // Silhouette : pas de halo (rareté révélée seulement une fois découvert).
-  const halo = isSilhouette ? undefined : colors.outer;
 
   const cellStyle: CSSProperties = {
     aspectRatio: "1 / 1",
     position: "relative",
     width: "100%",
+    // min-width:0 → la cellule (grid item) peut rétrécir sous le min-content de
+    // son image. Sans ça, la largeur intrinsèque de la vignette empêche la
+    // cellule de passer sous une certaine taille et la 5e colonne déborde, même
+    // avec des pistes en minmax(0,1fr).
+    minWidth: 0,
     boxSizing: "border-box",
     border: "none",
     background: "transparent",
@@ -132,7 +136,6 @@ const CollectionCell = memo(function CollectionCell({
         fill
         tilt={false}
         variant={variant}
-        halo={halo}
         thumb
         eager
       />
@@ -260,9 +263,10 @@ export function CollectionGrid({
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: `repeat(${colonnes}, 1fr)`,
+                  gridTemplateColumns: `repeat(${colonnes}, minmax(0, 1fr))`,
                   gap: "var(--gutter)",
                   padding: "0 var(--gutter)",
+                  boxSizing: "border-box",
                 }}
               >
                 {rangee.map((s) => (

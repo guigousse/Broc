@@ -255,7 +255,6 @@ function StockageItemRowBase({
             fill
             tilt={false}
             variant="normal"
-            halo={rarityColors.outer}
             thumb
             eager
           />

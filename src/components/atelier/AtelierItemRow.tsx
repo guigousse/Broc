@@ -69,7 +69,6 @@ export function AtelierItemRow({
           fill
           tilt={false}
           variant="normal"
-          halo={rarityColors.outer}
           thumb
           eager
         />

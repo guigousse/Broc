@@ -8,8 +8,8 @@ import type { CollectionSlot } from "@/types/game";
 
 /**
  * ItemSticker repose sur des images/filtres inutiles pour tester la grille. On
- * le remplace par un stub traçable qui expose `variant`/`halo` (assertions) et
- * permet de compter les re-renders des cellules mémoïsées.
+ * le remplace par un stub traçable qui expose `variant` (assertions) et permet
+ * de compter les re-renders des cellules mémoïsées.
  */
 const stickerRenders: string[] = [];
 vi.mock("@/lib/prefetchThumbs", async (importOriginal) => {
@@ -21,18 +21,15 @@ vi.mock("@/components/ui/ItemSticker", () => ({
   ItemSticker: ({
     templateId,
     variant,
-    halo,
   }: {
     templateId: string;
     variant?: string;
-    halo?: string;
   }) => {
     stickerRenders.push(templateId);
     return (
       <span
         data-testid={`sticker-${templateId}`}
         data-variant={variant ?? "normal"}
-        data-halo={halo ?? ""}
       />
     );
   },
@@ -83,16 +80,15 @@ describe("CollectionGrid", () => {
     expect(screen.getAllByRole("button")).toHaveLength(3);
   });
 
-  it("non découvert : silhouette désactivée, variant silhouette, pas de halo", () => {
+  it("non découvert : silhouette désactivée, variant silhouette", () => {
     render(<CollectionGrid slots={slots} />);
     const silhouette = screen.getByRole("button", { name: "Pièce inconnue" });
     expect((silhouette as HTMLButtonElement).disabled).toBe(true);
     const sticker = screen.getByTestId("sticker-c");
     expect(sticker.getAttribute("data-variant")).toBe("silhouette");
-    expect(sticker.getAttribute("data-halo")).toBe(""); // rareté non révélée
   });
 
-  it("vu non possédé : variant grisé + halo de rareté", () => {
+  it("vu non possédé : variant grisé", () => {
     render(
       <CollectionGrid
         slots={[makeSlot({ templateId: "v", nom: "Objet V", donation: null })]}
@@ -100,16 +96,14 @@ describe("CollectionGrid", () => {
     );
     const sticker = screen.getByTestId("sticker-v");
     expect(sticker.getAttribute("data-variant")).toBe("grise");
-    expect(sticker.getAttribute("data-halo")).toBe("#C9B98C"); // commun outer
   });
 
-  it("possédé : variant normal + halo de rareté", () => {
+  it("possédé : variant normal", () => {
     render(
       <CollectionGrid slots={[makeSlot({ templateId: "p", nom: "Objet P" })]} />,
     );
     const sticker = screen.getByTestId("sticker-p");
     expect(sticker.getAttribute("data-variant")).toBe("normal");
-    expect(sticker.getAttribute("data-halo")).toBe("#C9B98C");
   });
 
   it("plus de cadre : la cellule est transparente (pas de fond/cadre)", () => {
@@ -231,17 +225,20 @@ describe("CollectionGrid", () => {
     expect(screen.getAllByTestId("planche")).toHaveLength(3);
   });
 
-  it("étagères : la rangée utilise repeat(colonnes, 1fr)", () => {
+  it("étagères : la rangée utilise repeat(colonnes, minmax(0, 1fr))", () => {
     render(<CollectionGrid slots={slots} colonnes={2} />);
     const rangee = screen.getAllByRole("button")[0].parentElement as HTMLElement;
-    expect(rangee.style.gridTemplateColumns).toBe("repeat(2, 1fr)");
+    expect(rangee.style.gridTemplateColumns).toBe("repeat(2, minmax(0, 1fr))");
+    // box-sizing border-box : le padding latéral ne déborde pas la largeur.
+    expect(rangee.style.boxSizing).toBe("border-box");
     expect(screen.getAllByTestId("planche")).toHaveLength(2);
   });
 
-  it("étagères : colonnes=5 → repeat(5, 1fr), une seule planche pour 3 slots", () => {
+  it("étagères : colonnes=5 → minmax(0, 1fr) (anti-débordement), une seule planche pour 3 slots", () => {
     render(<CollectionGrid slots={slots} colonnes={5} />);
     const rangee = screen.getAllByRole("button")[0].parentElement as HTMLElement;
-    expect(rangee.style.gridTemplateColumns).toBe("repeat(5, 1fr)");
+    expect(rangee.style.gridTemplateColumns).toBe("repeat(5, minmax(0, 1fr))");
+    expect(rangee.style.boxSizing).toBe("border-box");
     expect(screen.getAllByTestId("planche")).toHaveLength(1);
   });
 
