@@ -71,6 +71,7 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "mus.saxophone_alto_professionnel": "L",
   "mus.theremine_a_antennes": "L",
   "mus.synthetiseur_analogique_mini_1970": "L",
+  "leg.mus.guitare_de_legende_de_johny_perdrix_jouee_a_l": "L",
   // Énorme
   "leg.mus.piano_a_queue_de_concert_1900": "XL",
 
@@ -103,6 +104,26 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "jx.console_d_arcade_domestique_neo": "S",
   "jx.borne_arcade_mini": "M",
   "jx.flipper_a_plateau_annees_60": "L",
+  // Cartouches, jeux CD, console de poche, manettes, cartes → poing fermé
+  "jx.cartouche_le_plombier_sauteur_8_bit": "XS",
+  "jx.cartouche_la_legende_de_solda_8_bit": "XS",
+  "jx.cartouche_bluebot_8_bit": "XS",
+  "jx.cartouche_turbo_herisson_16_bit": "XS",
+  "jx.cartouche_street_castagne_ii_16_bit": "XS",
+  "leg.jx.cartouche_stadium_events": "XS",
+  "leg.jx.cartouche_nwc_1990": "XS",
+  "jx.playbox_pocket": "XS",
+  "jx.jeu_foxy_crush_32_bit": "XS",
+  "jx.jeu_le_manoir_du_mal_32_bit": "XS",
+  "jx.jeu_engrenage_de_metal_infiltration_32_bit": "XS",
+  "jx.jeu_d_aventure_japonais_128_bit": "XS",
+  "jx.jeu_solda_flute_temporelle_aventure_3d_64_bit": "XS",
+  "jx.jeu_de_cartes_long_trajet_annees_60": "XS",
+  "jx.manette_megadrive": "XS",
+  "jx.manette_vibraduo": "XS",
+  "jx.manette_tetrapod_64_bit": "XS",
+  // Meuble
+  "leg.jx.baby_foot_de_competition_minibon_homologue": "L",
 
   // ============================================================
   // LIVRES & PAPETERIE
@@ -159,6 +180,11 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "lv.bible_olivetan_xvie": "S",
   "lv.hugo_legende_relie_cuir": "S",
   "lv.coffret_loupes_lecture": "S",
+  // Manuscrits / éditions légendaires → comme tous les livres, XS
+  "leg.lv.miserables_originale": "XS",
+  "leg.lv.gutenberg_feuillet": "XS",
+  "leg.lv.manuscrit_enlumine_xve": "XS",
+  "uniq.lv.manuscrit_voltaire": "XS",
   // Encadrés / lampes
   "lv.carte_marine_xixe": "M",
   "lv.lampe_huile_biblio": "S",
@@ -179,6 +205,9 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "mo.montre_automatique_vintage": "XS",
   "mo.bracelet_jonc_argent": "XS",
   "mo.collier_perles_culture": "XS",
+  "mo.collier_a_motifs_trefle_porte_bonheur": "XS",
+  "mo.carre_de_soie_talaria_ancien": "XS",
+  "uniq.mo.bijou_marie_antoinette": "XS",
   "mo.cravate_en_soie_de_luxe": "XS",
   "mo.cravate_club_anglaise": "XS",
   "mo.foulard_soie_motifs": "XS",
@@ -207,6 +236,7 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "mo.polo_golgothor": "S",
   "mo.trench_coat_berrybeurre": "M",
   "mo.manteau_lainage_60s": "M",
+  "mo.manteau_berrybeurre": "M",
   // Chaussures
   "mo.chaussures_richelieu_cuir": "S",
   "mo.escarpins_seconde_main": "S",
@@ -218,10 +248,48 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "mo.sac_chaine": "S",
 
   // ============================================================
-  // MAISON
+  // MAISON  (défaut catégorie = M)
   // ============================================================
-  // Petits objets
+  // Bibelots — tiennent dans une main fermée
   "ma.figurine_porcelaine": "XS",
+  "ma.saliere_argent_minerve": "XS",
+  "ma.timbale_argent_bapteme": "XS",
+  "ma.cendrier_en_pate_de_cristal_dome": "XS",
+  "ma.pendule_voyage_laiton": "XS",
+  "ma.pendulette_bronze": "XS",
+  "ma.bonbonniere_porcelaine": "XS",
+  "ma.saliere_poivriere_argent": "XS",
+  "leg.ma.uf_joaillier_imperial_en_email_replique": "XS",
+  // Vaisselle, vases, lampes de table — main ouverte
+  "ma.statuette_africaine_bois": "S",
+  "ma.verres_a_pied_lot6": "S",
+  "ma.vase_en_cristal_baraka": "S",
+  "ma.vase_en_verre_moule_laluck_recent": "S",
+  "ma.vase_en_pate_de_verre_dome_signe": "S",
+  "ma.carafe_cristal_taille": "S",
+  "ma.plat_faience_olympe": "S",
+  "ma.plat_en_ceramique_de_vallauris_signe_picassiet": "S",
+  "ma.coupe_emaillee_longwy": "S",
+  "ma.tasses_porcelaine_paris": "S",
+  "ma.pichet_faience_emaillee": "S",
+  "ma.bougeoirs_laiton_louisxv": "S",
+  "ma.service_liqueur_cristal": "S",
+  "ma.plateau_marqueterie": "S",
+  "ma.lampe_petrole_ancienne": "S",
+  "ma.lampe_globe_opaline": "S",
+  "ma.saladier_verre_boheme": "S",
+  "ma.cafetiere_emaillee_50s": "S",
+  "ma.seau_a_glace_plaque": "S",
+  "ma.boite_musique_ancienne": "S",
+  "ma.menagere_en_metal_argente_24_pieces": "S",
+  // Volumineux conservés en M (services complets, horloges, candélabre…)
+  // → laissés au défaut M, pas besoin d'override.
+  // Encombrants
+  "ma.tabouret_bois_patine": "L",
+  "ma.coffre_chinois_laque": "L",
+  "ma.lustre_en_cristal_baraka": "L",
+  "ma.tapis_persan_ispahan": "L",
+  "leg.ma.tapis_savonnerie_xviie": "L",
   // Bibliothèque, mobilier
   "ma.bibliotheque_louis_philippe": "L",
   "ma.miroir_psyche": "L",
@@ -231,10 +299,56 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "ma.commode_louis_xv_marqueterie": "XL",
 
   // ============================================================
-  // OBJETS D'ART
+  // OBJETS D'ART  (défaut catégorie = M)
   // ============================================================
   "art.petite_sculpture_ivoire": "XS",
+  "art.miniature_portrait_dame": "XS",
   "art.petite_sculpture_rondin_planche": "S",
+  // Petites sculptures, bronzes, terres cuites — main ouverte
+  "art.terre_cuite_buste": "S",
+  "art.terre_cuite_putto": "S",
+  "art.bronze_animalier": "S",
+  "art.bronze_barye_style": "S",
+  "art.bronze_petite_danseuse": "S",
+  "art.statuette_egyptienne_inspi": "S",
+  // Masques, boîtes, vases, icônes, éventail
+  "art.masque_tribal_decoratif": "S",
+  "art.masque_inuit_inspiration": "S",
+  "art.boite_laquee_japonaise": "S",
+  "art.boite_marqueterie_florentine": "S",
+  "art.eventail_chinois_peint": "S",
+  "art.assiette_decorative_signee_picassiette": "S",
+  "art.vase_art_deco_bebert_germain": "S",
+  "art.vase_galle_signe": "S",
+  "art.vase_en_verre_moule_laluck_signe": "S",
+  "art.coupe_emaillee_longwy_art": "S",
+  "art.plaque_email_limoges": "S",
+  "art.icone_orthodoxe_bois": "S",
+  "art.icone_russe_doree": "S",
+  // Œuvres encadrées sur papier (aquarelles, pastels, dessins, gravures, estampes, lithos, sérigraphie)
+  "art.aquarelle_paysage_anonyme": "S",
+  "art.aquarelle_marine_xixe": "S",
+  "art.aquarelle_paysage_provencal": "S",
+  "art.aquarelle_fauviste_de_roland_duff_signee": "S",
+  "art.pastel_portrait_femme": "S",
+  "art.dessin_fusain_atelier": "S",
+  "art.dessin_signe_ecole_francaise": "S",
+  "art.dessin_surrealiste_aux_montres_molles_signe": "S",
+  "leg.art.dessin_cubiste_signe_picassiette_etude": "S",
+  "leg.art.dessin_fauviste_aux_gouaches_decoupees_etude": "S",
+  "art.gravure_ancienne_xixe": "S",
+  "art.gravure_durer_reimpr": "S",
+  "art.gravure_jouy_paris": "S",
+  "art.gravure_rembrandt_reimpr": "S",
+  "art.estampe_hokusai_edition": "S",
+  "art.estampe_hiroshige_paysage": "S",
+  "art.estampe_cubiste_signee_picassiette": "S",
+  "art.lithographie_signee_xxe": "S",
+  "art.lithographie_de_chacal_planche": "S",
+  "art.lithographie_cubiste_signee_picassiette_planch": "S",
+  "art.serigraphie_pop_signee": "S",
+  // Conservés en M : bustes/torses imposants, statue de pierre, huiles/toiles sur châssis
+  // → laissés au défaut M, pas besoin d'override.
 
   // ============================================================
   // BRICOLAGE
@@ -253,6 +367,12 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "br.fer_a_souder_vintage": "XS",
   "br.tariere_charpentier": "S",
   "br.tenailles_forgeron": "XS",
+  "br.pince_etirer_cuivre": "XS",
+  "br.tournevis_lot_ancien": "XS",
+  "br.tournevis_horloger_lot": "XS",
+  "br.niveau_a_bulle_laiton": "XS",
+  "br.pied_a_coulisse_acier": "XS",
+  "br.trusquin_acajou_laiton": "XS",
   "br.lot_limes_charpentier": "XS",
   "br.lot_vis_clous_anciens": "XS",
   "br.ciseaux_a_bois_lot": "XS",
@@ -275,4 +395,7 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "br.etabli_de_compagnonnage_xixe": "XL",
   "br.tour_a_bois_atelier": "XL",
   "leg.br.tour_a_metaux_d_orfevre_de_prestige_xixe": "XL",
+  // Machine à coudre à pédale (meuble fonte) et grand coffre d'outils
+  "br.machine_a_coudre_en_fonte_a_pedale_xixe": "L",
+  "uniq.br.coffre_outils_louis_xiv": "M",
 };
