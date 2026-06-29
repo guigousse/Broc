@@ -34,8 +34,15 @@ const Y_RATIO = 0.7;
  * cette mutualisation, le scroll position du panorama serait perdue à
  * chaque traversée de zone (la layout aurait beau être partagée, le
  * <div key={pathname}> de SwipePager forcerait un unmount/remount).
+ *
+ * `/collection` en fait partie : la collection EST une section du panorama
+ * (zones lecture/vitrine/escalier de CollectionVitrine). L'omettre faisait
+ * remonter tout le panorama dès qu'un swipe rapide franchissait la frontière
+ * collection↔bureau, et le re-mount recentrait brutalement sur le centre de
+ * la nouvelle section (porte / vitrine) → saccade.
  */
 const PANORAMA_GROUP = new Set<string>([
+  "/collection",
   "/bureau",
   "/stockage",
   "/atelier",
