@@ -22,7 +22,9 @@ import {
 } from "@/lib/deblocage";
 import { genererSession } from "@/lib/chine";
 import { energieCourante } from "@/lib/energie";
-import { stockageEstPlein } from "@/lib/stockage";
+import { placeRestante, stockageEstPlein } from "@/lib/stockage";
+import { nbBoitesReclamees, tenterApparition, VENDEUR_MYSTERE_ILLUSTRATION } from "@/lib/boiteMystere";
+import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import {
   TREE_GENERAL,
@@ -74,6 +76,10 @@ export default function SessionChinePage() {
   const [xpSession, setXpSession] = useState<Record<string, number>>({});
   /** ID de l'objet dont la négociation est ouverte dans le BottomSheet. */
   const [negoOuverte, setNegoOuverte] = useState<string | null>(null);
+  /** Le vendeur mystère est-il présent dans cette session (tiré à l'entrée) ? */
+  const [vendeurPresent, setVendeurPresent] = useState(false);
+  /** La modale de la boîte mystère est-elle ouverte ? */
+  const [boiteOuverte, setBoiteOuverte] = useState(false);
 
   const gagnerXPLocal = (treeId: string, montant: number) => {
     gagnerXP(treeId, montant);
@@ -126,6 +132,13 @@ export default function SessionChinePage() {
       setFlash(`Droit d'entrée payé : ${frais} €.`);
       for (const it of session) {
         marquerVuTemplate(it.objet.templateId);
+      }
+      // Vendeur mystère : tirage à probabilité décroissante (1/10, puis ÷2 par
+      // boîte déjà réclamée aujourd'hui). N'apparaît que s'il reste de la place
+      // (jamais de pub gâchée).
+      const nReclamees = nbBoitesReclamees(state, state.jourActuel);
+      if (placeRestante(state) >= 1 && tenterApparition(nReclamees)) {
+        setVendeurPresent(true);
       }
     }
   }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast]);
@@ -277,6 +290,44 @@ export default function SessionChinePage() {
             gap: "var(--gutter)",
           }}
         >
+          {vendeurPresent && (
+            <button
+              type="button"
+              onClick={() => setBoiteOuverte(true)}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                gap: 6,
+                padding: 8,
+                background: "var(--forest-800)",
+                border: "2px solid var(--brass-500)",
+                borderRadius: 10,
+                cursor: "pointer",
+                color: "var(--brass-300)",
+                fontFamily: "var(--font-display)",
+                aspectRatio: "3 / 4",
+                overflow: "hidden",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={VENDEUR_MYSTERE_ILLUSTRATION}
+                alt="Vendeur mystère"
+                style={{ width: "100%", height: "auto", borderRadius: 6 }}
+              />
+              <span
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Vendeur mystère
+              </span>
+            </button>
+          )}
           {(items ?? []).filter((it) => it.statut !== "refuse").map((it) => (
             <ObjetCardMobile
               key={it.id}
@@ -359,6 +410,16 @@ export default function SessionChinePage() {
           }}
         />
       ))}
+      {boiteOuverte && (
+        <BoiteMystereOverlay
+          brocante={brocante}
+          onClose={() => setBoiteOuverte(false)}
+          onClaimed={() => {
+            setBoiteOuverte(false);
+            setVendeurPresent(false); // consommée pour cette session
+          }}
+        />
+      )}
     </div>
   );
 }
