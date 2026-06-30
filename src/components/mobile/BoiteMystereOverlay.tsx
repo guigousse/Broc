@@ -84,6 +84,8 @@ export function BoiteMystereOverlay({
       const gagne = tirerContenuBoite(brocante);
       reclamerBoiteMystere(gagne);
       setObjet(gagne);
+    } catch {
+      toast("Erreur lors de la pub — réessaie.", { type: "erreur" });
     } finally {
       setEnCours(false);
     }
