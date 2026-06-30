@@ -31,7 +31,8 @@ inflation et progression trivialisée. Toute la calibration vise cet équilibre.
 ## Calibration (chiffres de référence — réglables)
 
 ### Apparition
-- **`CHANCE_APPARITION = 0.20`** : 20 % de chance par entrée en brocante.
+- **`CHANCE_APPARITION = 0.10`** : 10 % de chance par entrée en brocante.
+  Un joueur faisant ~5 entrées/jour a ~41 % de croiser le vendeur (1 boîte max).
 - **Plafond : 1 boîte *réclamée* par `jourActuel`.** Le plafond porte sur la
   réclamation (la pub vue), pas sur l'apparition. Tant qu'aucune boîte n'a été
   réclamée ce jour, le tirage d'apparition a lieu à chaque entrée.
@@ -81,7 +82,7 @@ uniques/doublons.
 - Constantes : `CHANCE_APPARITION`, `POIDS_RARETE_BOITE`, `DISTRIB_ETAT_BOITE`.
 - `boiteMystereDisponible(state, jourActuel): boolean` — vrai si aucune boîte
   réclamée ce jour (`state.derniereBoiteMystereJour !== jourActuel`).
-- `tenterApparition(rng = Math.random): boolean` — tire les 20 %.
+- `tenterApparition(rng = Math.random): boolean` — tire les 10 %.
 - `tirerContenuBoite(brocante, tendances, exclureUniques, rng = Math.random): Objet`
   — tire rareté (table boîte) + template dans le pool tier (dédup uniques déjà
   possédés) + état (table boîte) ; calcule `prixReferenceReel` via `FACTEUR_ETAT`.
@@ -121,7 +122,7 @@ l'état.
 
 ## Flux UX
 1. Le joueur entre dans une brocante (−1 ⚡).
-2. Si éligible (place libre + pas de boîte aujourd'hui) et tirage 20 % réussi :
+2. Si éligible (place libre + pas de boîte aujourd'hui) et tirage 10 % réussi :
    le vendeur mystère figure parmi les étals.
 3. Le joueur tape dessus → modale boîte fermée.
 4. « Regarder une pub » → pub → révélation de l'objet → ajouté à l'inventaire.
