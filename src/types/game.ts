@@ -267,6 +267,9 @@ export interface GameState {
   /** Ancre du dernier calcul d'énergie : timestamp de TEMPS DE CONFIANCE (epoch ms),
    *  jamais l'horloge brute du device (cf. lib/temps). */
   energieDerniereMaj: number;
+  /** Suivi des boîtes mystère réclamées le jour de jeu courant
+   *  (pilote la probabilité d'apparition décroissante). Absent = aucune. */
+  boiteMystere?: { jour: number; reclamees: number };
 }
 
 export type CompetenceId = string;
