@@ -98,6 +98,7 @@ import {
   type AncreTemps,
 } from "@/lib/temps/horloge";
 import { getTimeSource } from "@/lib/temps/timeSource";
+import { appliquerReclamation } from "@/lib/boiteMystere";
 
 const gameRepository = createGameRepository();
 
@@ -181,6 +182,8 @@ interface GameActionsValue {
   consommerEnergie: (n: number) => void;
   /** Crédite +ENERGIE_PAR_PUB et incrémente le compteur de pubs du jour. No-op au plafond. */
   crediterEnergiePub: () => void;
+  /** Réclame une boîte mystère : ajoute l'objet (si place) et incrémente le compteur du jour. */
+  reclamerBoiteMystere: (objet: Objet) => void;
   /** Settle l'énergie contre le temps de confiance et persiste. No-op si pas de temps de confiance. */
   rafraichirEnergie: () => void;
 }
@@ -290,6 +293,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       };
     });
   }, [tempsConfiance]);
+
+  const reclamerBoiteMystere = useCallback((objet: Objet) => {
+    setState((prev) => {
+      if (!prev) return prev;
+      // Filet : ne jamais ajouter en silence si le stockage est plein
+      // (l'UI bloque déjà avant la pub, ceci couvre la course).
+      if (stockageEstPlein(prev)) return prev;
+      return appliquerReclamation(prev, objet);
+    });
+  }, []);
 
   // Temps effectif & recharge — dégradation gracieuse :
   // 1) Base immédiate sur l'horloge du device, ancrée à `performance.now()`
@@ -1425,6 +1438,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       tempsConfiance,
       consommerEnergie,
       crediterEnergiePub,
+      reclamerBoiteMystere,
       rafraichirEnergie,
     }),
     [
@@ -1470,6 +1484,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       tempsConfiance,
       consommerEnergie,
       crediterEnergiePub,
+      reclamerBoiteMystere,
       rafraichirEnergie,
     ],
   );
