@@ -122,9 +122,12 @@ l'état.
 - **`ClientPage`** : à la génération de session, calcule
   `vendeurPresent = placeRestante(state) >= 1 && tenterApparition(nbBoitesReclamees(state, jourActuel))`.
   Stocké en state local du composant (comme les items). Rend une **carte
-  spéciale** parmi les objets (icône cadeau/boîte lucide, style distinct).
+  spéciale** parmi les objets, illustrée par l'art du PNJ
+  (`/personas/vendeur-mystere.webp` — costume vert/or à masque point
+  d'interrogation, fourni), style distinct des étals normaux.
 - **`BoiteMystereOverlay`** (nouveau composant, calqué sur `EnergieRecharge`) :
-  modale présentant la boîte fermée + bouton « Regarder une pub pour ouvrir ».
+  modale présentant le PNJ (`/personas/vendeur-mystere.webp`) + la boîte fermée
+  + bouton « Regarder une pub pour ouvrir ».
   - Au clic : `getAdProvider().showRewardedAd()`.
   - Si `rewarded` : `tirerContenuBoite(...)` → `reclamerBoiteMystere(objet)` →
     animation de révélation (image, nom, couleur de rareté, étoiles d'état,
@@ -168,7 +171,9 @@ l'état.
 - Récompenses non-objet (argent, pièces d'amélioration, énergie).
 - Indice de rareté / catégorie visible avant la pub.
 - Cooldown temps réel (l'auto-limitation par proba décroissante suffit en v1).
-- Art final du PNJ (icône placeholder en v1).
+
+## Assets fournis
+- `public/personas/vendeur-mystere.webp` (420×399) — illustration du PNJ.
 
 ## Curseurs réglables (post-launch, selon métriques)
 `CHANCE_APPARITION_BASE`, le facteur de décroissance (÷2 par boîte), poids de
