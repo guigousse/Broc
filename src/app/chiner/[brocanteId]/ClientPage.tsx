@@ -290,7 +290,7 @@ export default function SessionChinePage() {
             gap: "var(--gutter)",
           }}
         >
-          {vendeurPresent && (
+          {vendeurPresent && !plein && (
             <button
               type="button"
               onClick={() => setBoiteOuverte(true)}

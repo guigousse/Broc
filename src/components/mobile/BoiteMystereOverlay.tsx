@@ -82,7 +82,12 @@ export function BoiteMystereOverlay({
       const { rewarded } = await getAdProvider().showRewardedAd();
       if (!rewarded) return; // pub non terminée : la boîte reste ouvrable
       const gagne = tirerContenuBoite(brocante);
-      reclamerBoiteMystere(gagne);
+      if (!reclamerBoiteMystere(gagne)) {
+        toast("Stockage plein — fais de la place avant d'ouvrir la boîte.", {
+          type: "info",
+        });
+        return;
+      }
       setObjet(gagne);
     } catch {
       toast("Erreur lors de la pub — réessaie.", { type: "erreur" });

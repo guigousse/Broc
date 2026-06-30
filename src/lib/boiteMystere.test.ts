@@ -10,7 +10,7 @@ import {
   POIDS_RARETE_BOITE,
 } from "./boiteMystere";
 import { FACTEUR_ETAT } from "./etat";
-import { poolPourTier } from "@/data/objetTemplates";
+import { poolPourTier, getTemplate } from "@/data/objetTemplates";
 import type { GameState, Objet } from "@/types/game";
 
 describe("chanceApparition", () => {
@@ -50,6 +50,10 @@ describe("tirerContenuBoite", () => {
     expect(["Mauvais", "Bon", "Très bon", "Pristin état"]).toContain(o.etat);
     expect(o.prixReferenceReel).toBeGreaterThanOrEqual(1);
     expect(typeof o.id).toBe("string");
+    const tmpl = getTemplate(o.templateId)!;
+    expect(o.prixReferenceReel).toBe(
+      Math.max(1, Math.round(tmpl.prixRefBase * FACTEUR_ETAT[o.etat])),
+    );
   });
 
   it("peut sortir du Pristin (introuvable en chinage normal)", () => {

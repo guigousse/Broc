@@ -182,8 +182,8 @@ interface GameActionsValue {
   consommerEnergie: (n: number) => void;
   /** Crédite +ENERGIE_PAR_PUB et incrémente le compteur de pubs du jour. No-op au plafond. */
   crediterEnergiePub: () => void;
-  /** Réclame une boîte mystère : ajoute l'objet (si place) et incrémente le compteur du jour. */
-  reclamerBoiteMystere: (objet: Objet) => void;
+  /** Réclame une boîte mystère : ajoute l'objet (si place), marque la collection et incrémente le compteur du jour. Renvoie false si le stockage est plein. */
+  reclamerBoiteMystere: (objet: Objet) => boolean;
   /** Settle l'énergie contre le temps de confiance et persiste. No-op si pas de temps de confiance. */
   rafraichirEnergie: () => void;
 }
@@ -294,14 +294,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [tempsConfiance]);
 
-  const reclamerBoiteMystere = useCallback((objet: Objet) => {
+  const reclamerBoiteMystere = useCallback((objet: Objet): boolean => {
+    const current = stateRef.current;
+    // Filet : ne jamais ajouter en silence si le stockage est plein
+    // (l'UI bloque déjà avant la pub ; ceci couvre la course).
+    if (!current || stockageEstPlein(current)) return false;
     setState((prev) => {
       if (!prev) return prev;
-      // Filet : ne jamais ajouter en silence si le stockage est plein
-      // (l'UI bloque déjà avant la pub, ceci couvre la course).
       if (stockageEstPlein(prev)) return prev;
-      return appliquerReclamation(prev, objet);
+      const next = appliquerReclamation(prev, objet);
+      // Cohérence Collection : marque vu + déjà possédé, comme l'achat normal.
+      let collection = marquerVuFn(next.collection, objet.templateId);
+      collection = marquerDejaPossedeFn(collection, objet.templateId);
+      return { ...next, collection };
     });
+    return true;
   }, []);
 
   // Temps effectif & recharge — dégradation gracieuse :
