@@ -45,8 +45,9 @@ export function ChineMystereDrawer({
 const drawerStyle: CSSProperties = {
   flex: "none",
   background: "transparent",
-  maxHeight: "82vh",
-  overflowY: "auto",
+  overflow: "hidden",
+  overscrollBehavior: "contain",
+  touchAction: "none",
 };
 
 const imageZone: CSSProperties = {

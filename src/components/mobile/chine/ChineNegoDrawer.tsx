@@ -72,7 +72,7 @@ export function ChineNegoDrawer({
   };
 
   return (
-    <div style={drawerStyle}>
+    <div style={drawerStyle(expanded)}>
       {/* Image + actions flottantes, sans fond, au-dessus du bandeau. */}
       <div style={imageZone}>
         {illustrationCourante && (
@@ -158,12 +158,15 @@ export function ChineNegoDrawer({
   );
 }
 
-const drawerStyle: CSSProperties = {
+/** Replié : rien ne scrolle/bouge (touch figé). Déployé : la négo peut scroller. */
+const drawerStyle = (expanded: boolean): CSSProperties => ({
   flex: "none",
   background: "transparent",
   maxHeight: "82vh",
-  overflowY: "auto",
-};
+  overflowY: expanded ? "auto" : "hidden",
+  overscrollBehavior: "contain",
+  touchAction: expanded ? "pan-y" : "none",
+});
 
 /** Zone image + actions sans fond : le vendeur « sort » au-dessus du bandeau. */
 const imageZone: CSSProperties = {
@@ -175,7 +178,7 @@ const imageZone: CSSProperties = {
 };
 
 const vendeurImg: CSSProperties = {
-  height: "clamp(143px, 21vh, 182px)",
+  height: "clamp(112px, 16vh, 148px)",
   width: "auto",
   objectFit: "contain",
   flex: "0 0 auto",
@@ -191,8 +194,9 @@ const rightZone: CSSProperties = {
   alignItems: "flex-end",
 };
 
-/** Boutons côte à côte, centrés, 10px au-dessus du bandeau. */
+/** Boutons côte à côte remplissant la largeur dispo, 10px au-dessus du bandeau. */
 const peekBtnRow: CSSProperties = {
+  width: "100%",
   display: "flex",
   flexDirection: "row",
   gap: 10,
@@ -262,13 +266,16 @@ const MARBRE_BLANC =
   "linear-gradient(160deg, #ffffff 0%, #f2f4f3 48%, #ffffff 60%, #e9edec 100%)";
 
 const btnBase: CSSProperties = {
-  padding: "12px 20px",
+  flex: 1,
+  minWidth: 0,
+  padding: "12px 8px",
   borderRadius: 11,
   border: "2px solid var(--brass-600)",
   fontFamily: "var(--font-display)",
   fontWeight: 700,
-  fontSize: 17,
+  fontSize: 15,
   whiteSpace: "nowrap",
+  textAlign: "center",
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8), 0 1px 2px rgba(40,25,5,0.18)",
   cursor: "pointer",
 };

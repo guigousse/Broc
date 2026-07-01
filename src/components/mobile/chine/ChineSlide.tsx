@@ -162,7 +162,7 @@ const stickerBox: CSSProperties = {
 };
 
 const stickerImg: CSSProperties = {
-  width: "min(288px, 82vw)",
+  width: "min(224px, 60vw)",
   aspectRatio: "1 / 1",
 };
 
