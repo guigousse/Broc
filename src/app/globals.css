@@ -1157,3 +1157,15 @@ nav[aria-label="Navigation principale"] :focus-visible,
     inset 0 0 0 2px var(--brass-300),
     0 1px 3px rgba(0, 0, 0, 0.5);
 }
+
+@keyframes chine-slide-in-left {
+  from { transform: translateX(24px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+@keyframes chine-slide-in-right {
+  from { transform: translateX(-24px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chine-slide { animation: none !important; }
+}
