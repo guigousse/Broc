@@ -87,6 +87,10 @@ export function ChineSlideVue({
             <span style={{ color: "var(--brass-200)", fontSize: 13 }}>
               Boîte déjà ouverte.
             </span>
+          ) : plein ? (
+            <span style={{ color: "var(--vermillion-600)", fontSize: 13, fontFamily: "var(--font-display)" }}>
+              Stockage plein
+            </span>
           ) : (
             <button type="button" style={btn(false)} onClick={onOuvrirBoite}>
               Regarder une pub pour ouvrir
@@ -100,8 +104,10 @@ export function ChineSlideVue({
   const { item } = slide;
   const { objet, prixVendeur, statut } = item;
   const acquis = statut === "achete";
+  const fache = item.negociation?.statut === "fache";
   const tropCher = budget < prixVendeur;
   const acheterDisabled = acquis || tropCher || plein;
+  const illustrationVendeur = getVendeurIllustration(item.persona.archetype);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -129,16 +135,20 @@ export function ChineSlideVue({
         </div>
       </div>
       <div style={moitieBasse}>
-        {getVendeurIllustration(item.persona.archetype) && (
+        {illustrationVendeur && (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
-            src={getVendeurIllustration(item.persona.archetype)}
+            src={illustrationVendeur}
             alt="Vendeur"
             style={{ height: 96, width: "auto", borderRadius: 8 }}
           />
         )}
         {acquis ? (
           <span style={{ color: "var(--brass-200)", fontSize: 14 }}>— Acquis —</span>
+        ) : fache ? (
+          <span style={{ color: "var(--vermillion-600)", fontSize: 13, fontFamily: "var(--font-display)" }}>
+            Vendeur fâché
+          </span>
         ) : plein ? (
           <span style={{ color: "var(--vermillion-600)", fontSize: 13, fontFamily: "var(--font-display)" }}>
             Stockage plein

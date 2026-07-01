@@ -145,6 +145,23 @@ export default function SessionChinePage() {
     }
   }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast]);
 
+  const estRareOuPlus = (it: ObjetEnVente): boolean =>
+    it.objet.rarete !== "commun" ||
+    getTemplate(it.objet.templateId)?.unique === true;
+
+  const slides: ChineSlide[] = useMemo(() => {
+    const liste: ChineSlide[] = [];
+    if (vendeurPresent) liste.push({ kind: "mystere" });
+    for (const it of (items ?? []).filter((x) => x.statut !== "refuse")) {
+      liste.push({ kind: "item", item: it, estRareOuPlus: estRareOuPlus(it) });
+    }
+    return liste;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vendeurPresent, items]);
+
+  /** Item dont la négociation est ouverte (pour la feuille unique). */
+  const itemEnNego = (items ?? []).find((x) => x.id === negoOuverte) ?? null;
+
   if (!isHydrated || !state || !brocante || items === null) {
     return (
       <main
@@ -165,23 +182,6 @@ export default function SessionChinePage() {
   }
 
   const plein = stockageEstPlein(state);
-
-  const estRareOuPlus = (it: ObjetEnVente): boolean =>
-    it.objet.rarete !== "commun" ||
-    getTemplate(it.objet.templateId)?.unique === true;
-
-  const slides: ChineSlide[] = useMemo(() => {
-    const liste: ChineSlide[] = [];
-    if (vendeurPresent) liste.push({ kind: "mystere" });
-    for (const it of (items ?? []).filter((x) => x.statut !== "refuse")) {
-      liste.push({ kind: "item", item: it, estRareOuPlus: estRareOuPlus(it) });
-    }
-    return liste;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vendeurPresent, items]);
-
-  /** Item dont la négociation est ouverte (pour la feuille unique). */
-  const itemEnNego = (items ?? []).find((x) => x.id === negoOuverte) ?? null;
 
   const setItem = (id: string, patch: Partial<ObjetEnVente>) =>
     setItems((prev) =>
