@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { SessionSummary } from "@/components/SessionSummary";
-import { ContextualHeader } from "@/components/mobile/ContextualHeader";
-import { NegociationSheet } from "@/components/mobile/NegociationSheet";
+import { MobileHeader } from "@/components/mobile/MobileHeader";
+import { ChineNegoDrawer } from "@/components/mobile/chine/ChineNegoDrawer";
+import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import {
   getVendeurIllustration,
   getVendeurIllustrationFache,
@@ -62,9 +63,9 @@ export default function SessionChinePage() {
     () => getBrocanteById(params.brocanteId),
     [params.brocanteId],
   );
+  const brocanteBg = brocante ? getBrocanteImageUrl(brocante.id) : null;
 
   const [items, setItems] = useState<ObjetEnVente[] | null>(null);
-  const [flash, setFlash] = useState<string | null>(null);
   const [achats, setAchats] = useState<AchatHistorique[]>([]);
   /** Garde synchrone — empêche un double-enregistrement de la session. */
   const sessionEnregistreeRef = useRef(false);
@@ -131,7 +132,7 @@ export default function SessionChinePage() {
         celebriteAujourdhui,
       );
       setItems(session);
-      setFlash(`Droit d'entrée payé : ${frais} €.`);
+      toast(`Droit d'entrée payé : ${frais} €.`, { type: "info" });
       for (const it of session) {
         marquerVuTemplate(it.objet.templateId);
       }
@@ -158,9 +159,6 @@ export default function SessionChinePage() {
     return liste;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendeurPresent, items]);
-
-  /** Item dont la négociation est ouverte (pour la feuille unique). */
-  const itemEnNego = (items ?? []).find((x) => x.id === negoOuverte) ?? null;
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (
@@ -198,7 +196,7 @@ export default function SessionChinePage() {
   /** Achat à un prix personnalisé (depuis la négo ou le bouton direct). */
   const handleAchatAuPrix = (it: ObjetEnVente, prix: number) => {
     if (state.budget < prix) {
-      setFlash("La caisse refuse — fonds insuffisants.");
+      toast("La caisse refuse — fonds insuffisants.", { type: "erreur" });
       return;
     }
     ajusterBudget(-prix);
@@ -217,7 +215,7 @@ export default function SessionChinePage() {
         prixPaye: prix,
       },
     ]);
-    setFlash(`Acquis pour ${prix} €. Noté dans le carnet.`);
+    toast(`Acquis pour ${prix} €. Noté dans le carnet.`, { type: "succes" });
   };
 
   const handleRentrer = () => {
@@ -266,75 +264,72 @@ export default function SessionChinePage() {
   return (
     <div
       style={{
-        minHeight: "100dvh",
+        height: "100dvh",
+        overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         background: "var(--paper-100)",
       }}
     >
-      <ContextualHeader
-        titre={brocante.nom}
-        sousTitre={`${achats.length}${items ? ` / ${items.length}` : ""} acquis · ${achats.reduce((s, a) => s + a.prixPaye, 0)} €`}
-        budget={state.budget}
-        onBack={handleRentrer}
-        backIcon="close"
-      />
-      <main style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-        {flash && (
+      <MobileHeader budget={state.budget} />
+      <main
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+          overflow: "hidden",
+          background: "var(--paper-100)",
+        }}
+      >
+        {brocanteBg && (
           <div
+            aria-hidden
             style={{
-              padding: "8px 12px",
-              background: "var(--brass-100)",
-              border: "1px solid var(--brass-700)",
-              fontFamily: "var(--font-serif)",
-              fontStyle: "italic",
-              fontSize: 13,
-              color: "var(--ink-700)",
+              position: "absolute",
+              inset: 0,
+              zIndex: 0,
+              backgroundImage: `linear-gradient(rgba(15,30,22,0.42), rgba(15,30,22,0.42)), url("${brocanteBg}")`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "blur(7px)",
+              transform: "scale(1.08)",
             }}
-          >
-            « {flash} »
-          </div>
+          />
         )}
-        <div style={{ flex: 1, minHeight: 0 }}>
+        <div style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}>
           <ItemSwipeDeck
             slides={slides}
-            budget={state.budget}
             plein={plein}
             boiteReclamee={boiteReclamee}
-            onAcheter={(item) => handleAcheter(item.id)}
-            onNegocier={(item) => setNegoOuverte(item.id)}
             onOuvrirBoite={() => setBoiteOuverte(true)}
+            onQuitter={handleRentrer}
+            onNavigate={() => setNegoOuverte(null)}
+            renderNegoDrawer={(item) => (
+              <ChineNegoDrawer
+                key={item.id}
+                item={item}
+                budget={state.budget}
+                plein={plein}
+                expanded={negoOuverte === item.id}
+                illustrationSrc={getVendeurIllustration(item.persona.archetype)}
+                illustrationFacheSrc={getVendeurIllustrationFache(item.persona.archetype)}
+                onExpand={() => setNegoOuverte(item.id)}
+                onCollapse={() => setNegoOuverte(null)}
+                onUpdateNego={(nego) => setItem(item.id, { negociation: nego })}
+                onConclu={(prixFinal) => {
+                  handleAchatAuPrix(item, prixFinal);
+                  gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
+                  setNegoOuverte(null);
+                }}
+                onAcheterDirect={() => handleAcheter(item.id)}
+              />
+            )}
           />
         </div>
       </main>
 
-      {itemEnNego && (
-        <NegociationSheet
-          open={negoOuverte === itemEnNego.id}
-          onClose={() => setNegoOuverte(null)}
-          mode="achat"
-          persona={itemEnNego.persona}
-          echelleMax={itemEnNego.prixVendeur}
-          cibleSecrete={itemEnNego.prixMinAccept}
-          prixDepartAdverse={itemEnNego.negociation?.prixAdverseCourant ?? itemEnNego.prixVendeur}
-          nego={itemEnNego.negociation}
-          nomAffiche="Un vendeur"
-          illustrationSrc={getVendeurIllustration(itemEnNego.persona.archetype)}
-          illustrationFacheSrc={getVendeurIllustrationFache(itemEnNego.persona.archetype)}
-          personaInfo={{
-            archetypeNom: undefined,
-            revelePersona: false,
-            releveBourse: false,
-            oeilAiguise: false,
-          }}
-          onUpdateNego={(nego) => setItem(itemEnNego.id, { negociation: nego })}
-          onConclu={(prixFinal) => {
-            handleAchatAuPrix(itemEnNego, prixFinal);
-            gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
-            setNegoOuverte(null);
-          }}
-        />
-      )}
       {boiteOuverte && (
         <BoiteMystereOverlay
           brocante={brocante}

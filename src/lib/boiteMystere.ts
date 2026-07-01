@@ -5,6 +5,12 @@ import { FACTEUR_ETAT } from "@/lib/etat";
 /** Chemin de l'illustration du PNJ vendeur mystère (public/). */
 export const VENDEUR_MYSTERE_ILLUSTRATION = "/personas/vendeur-mystere.webp";
 
+/** Image de la boîte mystère fermée (sticker, public/). */
+export const BOITE_MYSTERE_IMAGE = "/items/boite-mystere.webp";
+
+/** Image de la boîte mystère ouverte (révélation, public/). */
+export const BOITE_MYSTERE_OUVERTE_IMAGE = "/items/boite-mystere-ouverte.webp";
+
 /** Probabilité d'apparition de la 1ʳᵉ boîte du jour (par entrée en brocante). */
 export const CHANCE_APPARITION_BASE = 0.1;
 

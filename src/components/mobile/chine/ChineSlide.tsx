@@ -1,102 +1,105 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { ItemCard } from "@/components/ui/ItemCard";
-import { getVendeurIllustration } from "@/lib/personaIllustrations";
-import { VENDEUR_MYSTERE_ILLUSTRATION } from "@/lib/boiteMystere";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import { ItemSticker } from "@/components/ui/ItemSticker";
+import { StarRow } from "@/components/ui/StarRow";
+import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { etoileCount } from "@/lib/etat";
+import { getRarityColors } from "@/lib/rarityColors";
+import { BOITE_MYSTERE_IMAGE } from "@/lib/boiteMystere";
 import type { ObjetEnVente } from "@/types/game";
+
+/**
+ * Met à l'échelle son contenu (taille naturelle fixe) pour qu'il tienne
+ * toujours dans la zone disponible — qui rétrécit quand le tiroir de négo
+ * s'ouvre. L'objet reste donc visible entre le header et la bulle du vendeur.
+ */
+function ScaleToFit({ children }: { children: ReactNode }) {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const outer = outerRef.current;
+    const inner = innerRef.current;
+    if (!outer || !inner) return;
+    const compute = () => {
+      const s = getComputedStyle(outer);
+      const availH =
+        outer.clientHeight -
+        parseFloat(s.paddingTop) -
+        parseFloat(s.paddingBottom);
+      const availW =
+        outer.clientWidth -
+        parseFloat(s.paddingLeft) -
+        parseFloat(s.paddingRight);
+      const natH = inner.offsetHeight;
+      const natW = inner.offsetWidth;
+      if (!natH || !natW) return;
+      setScale(Math.min(1, availH / natH, availW / natW));
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(outer);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div ref={outerRef} style={scaleOuter}>
+      <div ref={innerRef} style={{ transform: `scale(${scale})`, transformOrigin: "center" }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const scaleOuter: CSSProperties = {
+  flex: 1,
+  minHeight: 0,
+  width: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  overflow: "hidden",
+  padding: 16,
+};
 
 /** Une carte du carrousel de chinage : un objet à négocier, ou le vendeur mystère. */
 export type ChineSlide =
   | { kind: "item"; item: ObjetEnVente; estRareOuPlus: boolean }
   | { kind: "mystere" };
 
-const moitieHaute: CSSProperties = {
-  flex: 1,
-  minHeight: 0,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: 16,
-};
-
-const moitieBasse: CSSProperties = {
-  flex: 1,
-  minHeight: 0,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 12,
-  padding: 16,
-  borderTop: "2px solid var(--brass-500)",
-  background: "var(--forest-800)",
-};
-
-const btnBase: CSSProperties = {
-  padding: "12px 18px",
-  borderRadius: 10,
-  border: "2px solid var(--brass-500)",
-  fontFamily: "var(--font-display)",
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-function btn(disabled: boolean): CSSProperties {
-  return {
-    ...btnBase,
-    background: disabled ? "var(--forest-700)" : "var(--brass-500)",
-    color: disabled ? "var(--brass-700)" : "var(--forest-900)",
-    cursor: disabled ? "not-allowed" : "pointer",
-  };
-}
-
-export function ChineSlideVue({
-  slide,
-  budget,
-  plein,
-  boiteReclamee,
-  onAcheter,
-  onNegocier,
-  onOuvrirBoite,
-}: {
-  slide: ChineSlide;
-  budget: number;
-  plein: boolean;
-  boiteReclamee: boolean;
-  onAcheter: (item: ObjetEnVente) => void;
-  onNegocier: (item: ObjetEnVente) => void;
-  onOuvrirBoite: () => void;
-}) {
+/**
+ * Rendu de la partie « objet » d'une carte de chinage (sticker). Le vendeur +
+ * les actions vivent dans le tiroir rendu sous la carte (ChineNegoDrawer pour
+ * un objet, ChineMystereDrawer pour la boîte mystère).
+ */
+export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
   if (slide.kind === "mystere") {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <div style={moitieHaute}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={VENDEUR_MYSTERE_ILLUSTRATION}
-            alt="Vendeur mystère"
-            style={{ maxHeight: "100%", maxWidth: "100%", borderRadius: 12 }}
-          />
-        </div>
-        <div style={moitieBasse}>
-          <strong style={{ color: "var(--brass-300)", fontFamily: "var(--font-display)" }}>
-            Vendeur mystère
-          </strong>
-          {boiteReclamee ? (
-            <span style={{ color: "var(--brass-200)", fontSize: 13 }}>
-              Boîte déjà ouverte.
-            </span>
-          ) : plein ? (
-            <span style={{ color: "var(--vermillion-600)", fontSize: 13, fontFamily: "var(--font-display)" }}>
-              Stockage plein
-            </span>
-          ) : (
-            <button type="button" style={btn(false)} onClick={onOuvrirBoite}>
-              Regarder une pub pour ouvrir
-            </button>
-          )}
-        </div>
+        <ScaleToFit>
+          <div style={stickerBox}>
+            <div style={stickerImg}>
+              <ItemSticker
+                templateId="boite-mystere"
+                categorie="Objets d'art"
+                srcOverride={BOITE_MYSTERE_IMAGE}
+                fill
+                tilt={false}
+                eager
+                outlinePx={3}
+              />
+            </div>
+            <div style={titre}>Boîte mystère</div>
+          </div>
+        </ScaleToFit>
       </div>
     );
   }
@@ -104,71 +107,110 @@ export function ChineSlideVue({
   const { item } = slide;
   const { objet, prixVendeur, statut } = item;
   const acquis = statut === "achete";
-  const fache = item.negociation?.statut === "fache";
-  const tropCher = budget < prixVendeur;
-  const acheterDisabled = acquis || tropCher || plein;
-  const illustrationVendeur = getVendeurIllustration(item.persona.archetype);
+  const rarity = getRarityColors(objet.rarete);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={moitieHaute}>
-        <div style={{ width: "100%", maxWidth: 240 }}>
-          <ItemCard
-            templateId={objet.templateId}
-            categorie={objet.categorie}
-            etat={objet.etat}
-            rarete={objet.rarete}
-            nom={objet.nom}
-            dimmed={acquis}
-          />
-          <div
-            style={{
-              textAlign: "center",
-              marginTop: 8,
-              fontFamily: "var(--font-display)",
-              color: "var(--ink-700)",
-              fontSize: 15,
-            }}
-          >
-            {prixVendeur} €
+      <ScaleToFit>
+        <div style={stickerBox}>
+          {/* Sticker die-cut, comme la collection. */}
+          <div style={stickerImg}>
+            <ItemSticker
+              templateId={objet.templateId}
+              categorie={objet.categorie}
+              fill
+              tilt={false}
+              variant={acquis ? "grise" : "normal"}
+              thumb
+              eager
+              outlinePx={3}
+            />
+          </div>
+
+          <div style={titre}>{objet.nom}</div>
+
+          <div style={infoRow}>
+            <div style={infoCol}>
+              <StarRow
+                filled={etoileCount(objet.etat)}
+                color={rarity.outer}
+                size={20}
+                gap={3}
+                dropShadow
+                emptyFill="rgba(255,243,213,0.35)"
+                display="flex"
+                aria-label={`État : ${objet.etat}`}
+              />
+              <div style={categorieLigne}>
+                <CategorieIcon categorie={objet.categorie} size={15} color="var(--paper-100)" />
+                <span>{objet.categorie}</span>
+              </div>
+            </div>
+            <div style={prixLigne}>{prixVendeur} €</div>
           </div>
         </div>
-      </div>
-      <div style={moitieBasse}>
-        {illustrationVendeur && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={illustrationVendeur}
-            alt="Vendeur"
-            style={{ height: 96, width: "auto", borderRadius: 8 }}
-          />
-        )}
-        {acquis ? (
-          <span style={{ color: "var(--brass-200)", fontSize: 14 }}>— Acquis —</span>
-        ) : fache ? (
-          <span style={{ color: "var(--vermillion-600)", fontSize: 13, fontFamily: "var(--font-display)" }}>
-            Vendeur fâché
-          </span>
-        ) : plein ? (
-          <span style={{ color: "var(--vermillion-600)", fontSize: 13, fontFamily: "var(--font-display)" }}>
-            Stockage plein
-          </span>
-        ) : (
-          <div style={{ display: "flex", gap: 10 }}>
-            <button type="button" style={btn(false)} onClick={() => onNegocier(item)}>
-              Négocier
-            </button>
-            <button
-              type="button"
-              style={btn(acheterDisabled)}
-              disabled={acheterDisabled}
-              onClick={() => onAcheter(item)}
-            >
-              Acheter {prixVendeur} €
-            </button>
-          </div>
-        )}
-      </div>
+      </ScaleToFit>
     </div>
   );
 }
+
+const stickerBox: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 10,
+};
+
+const stickerImg: CSSProperties = {
+  width: "min(288px, 82vw)",
+  aspectRatio: "1 / 1",
+};
+
+const titre: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontWeight: 700,
+  fontSize: 17,
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  color: "var(--paper-100)",
+  textAlign: "center",
+  textShadow: "0 1px 4px rgba(0,0,0,0.65)",
+  lineHeight: 1.15,
+};
+
+const infoRow: CSSProperties = {
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 14,
+};
+
+const infoCol: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 5,
+};
+
+const categorieLigne: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--paper-100)",
+  textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+};
+
+/** Prix à droite, occupant la double hauteur (état + catégorie). */
+const prixLigne: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  fontFamily: "var(--font-display)",
+  fontWeight: 700,
+  fontSize: 26,
+  color: "var(--brass-300)",
+  textShadow: "0 1px 4px rgba(0,0,0,0.65)",
+};

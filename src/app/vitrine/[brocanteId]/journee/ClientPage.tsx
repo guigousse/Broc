@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ContextualHeader } from "@/components/mobile/ContextualHeader";
+import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
 import { Button } from "@/components/ui/Button";
 import { DecoDivider } from "@/components/ui/DecoDivider";
@@ -607,11 +607,7 @@ export default function VitrineJourneePage() {
         background: "var(--paper-100)",
       }}
     >
-      <ContextualHeader
-        titre="Journée de vente"
-        sousTitre={brocante ? brocante.nom : ""}
-        budget={state.budget}
-      />
+      <MobileHeader budget={state.budget} />
 
       <main
         style={{

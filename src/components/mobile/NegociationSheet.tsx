@@ -31,8 +31,8 @@ interface NegociationSheetProps {
   header?: ReactNode;
   /** Infos persona pour l'overlay (i). */
   personaInfo: PersonaInfo;
-  /** Nom affiché en titre (sous l'avatar). */
-  nomAffiche: string;
+  /** Nom affiché en titre (sous l'avatar). Omis → pas de bandeau nom (ex. chine). */
+  nomAffiche?: string;
   /** Illustration PNG du persona en humeur calme. */
   illustrationSrc?: string;
   /** Illustration PNG du persona fâché (humeur ≥ HUMEUR_FACHE_SEUIL). */
@@ -141,9 +141,11 @@ export function NegociationSheet({
         />
       }
     >
-      <div style={artDecoFrame}>
-        <span style={artDecoText}>{nomAffiche}</span>
-      </div>
+      {nomAffiche && (
+        <div style={artDecoFrame}>
+          <span style={artDecoText}>{nomAffiche}</span>
+        </div>
+      )}
       <div style={contentPadStyle}>
       {header && <div style={headerStyle}>{header}</div>}
       {venteDirecte ? (
@@ -225,18 +227,6 @@ export function NegociationSheet({
 function offreRejoint(mode: NegoMode, offre: number, prixAdverse: number): boolean {
   return mode === "achat" ? offre >= prixAdverse : offre <= prixAdverse;
 }
-
-const nomStyle: CSSProperties = {
-  fontFamily: "var(--font-display)",
-  fontWeight: 700,
-  fontSize: 20,
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-  color: "var(--forest-800)",
-  textAlign: "center",
-  margin: "4px 0 12px",
-  lineHeight: 1.15,
-};
 
 const artDecoFrame: CSSProperties = {
   position: "relative",

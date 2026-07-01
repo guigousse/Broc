@@ -228,7 +228,7 @@ class AudioManager {
     osc.frequency.setValueAtTime(280, now);
     osc.frequency.exponentialRampToValueAtTime(440, now + 0.09);
     gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.16, now + 0.008);
+    gain.gain.linearRampToValueAtTime(0.3, now + 0.008);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
     osc.connect(gain);
     gain.connect(this.master);
@@ -432,7 +432,7 @@ class AudioManager {
     src.connect(gain);
     gain.connect(this.master);
     const now = this.ctx.currentTime;
-    gain.gain.linearRampToValueAtTime(0.6, now + 0.8);
+    gain.gain.linearRampToValueAtTime(0.4, now + 0.8);
     src.start();
     this.crowdSource = src;
     this.crowdGain = gain;

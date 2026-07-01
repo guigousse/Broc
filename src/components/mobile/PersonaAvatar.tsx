@@ -69,11 +69,13 @@ export function PersonaAvatar({ message, info, illustrationSrc }: PersonaAvatarP
             <Info size={12} strokeWidth={2.5} />
           </button>
         </div>
-        <div style={bubbleWrap}>
-          <div style={tailOuter} aria-hidden />
-          <div style={tailInner} aria-hidden />
-          <span style={bubbleText}>{message}</span>
-        </div>
+        {message && (
+          <div style={bubbleWrap}>
+            <div style={tailOuter} aria-hidden />
+            <div style={tailInner} aria-hidden />
+            <span style={bubbleText}>{message}</span>
+          </div>
+        )}
       </div>
       {overlayOpen && (
         <PersonaInfoOverlay info={info} onClose={() => setOverlayOpen(false)} />

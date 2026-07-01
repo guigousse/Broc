@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ContextualHeader } from "@/components/mobile/ContextualHeader";
+import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { useGame } from "@/context/GameContext";
 import { getBrocanteById, fraisEntree } from "@/data/brocantes";
 import { CoffreChargement } from "@/components/vente/CoffreChargement";
@@ -126,12 +126,7 @@ export default function VitrineBrocantePage() {
 
   return (
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", background: "var(--paper-100)" }}>
-      <ContextualHeader
-        titre={etape === "packing" ? "Chargement" : "Tarification"}
-        sousTitre={`${brocante.nom} · ${"★".repeat(brocante.tier)}`}
-        budget={state.budget}
-        onBack={() => (etape === "pricing" ? setEtape("packing") : router.push("/vitrine"))}
-      />
+      <MobileHeader budget={state.budget} />
       <main style={{ flex: 1, overflowY: "auto" }}>
         {etape === "packing" ? (
           <CoffreChargement

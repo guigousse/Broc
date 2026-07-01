@@ -978,6 +978,104 @@ nav[aria-label="Navigation principale"] :focus-visible,
   from { opacity: 0; }
   to { opacity: 1; }
 }
+@keyframes broc-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+/* Boîte mystère : secousse qui accélère et grossit jusqu'à l'apogée. */
+@keyframes boite-secousse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  6% {
+    transform: translate(-1px, 0) rotate(-0.4deg);
+  }
+  12% {
+    transform: translate(1px, 0) rotate(0.4deg);
+  }
+  30% {
+    transform: translate(-2px, 1px) rotate(-1deg);
+  }
+  36% {
+    transform: translate(2px, -1px) rotate(1deg);
+  }
+  55% {
+    transform: translate(-4px, 1px) rotate(-1.9deg);
+  }
+  60% {
+    transform: translate(4px, -1px) rotate(1.9deg);
+  }
+  74% {
+    transform: translate(-6px, 2px) rotate(-2.7deg);
+  }
+  79% {
+    transform: translate(6px, -2px) rotate(2.7deg);
+  }
+  88% {
+    transform: translate(-9px, 3px) rotate(-3.4deg);
+  }
+  92% {
+    transform: translate(9px, -3px) rotate(3.4deg);
+  }
+  96% {
+    transform: translate(-5px, 2px) rotate(-2deg);
+  }
+}
+/* Aura qui émane autour de la boîte (croît pendant la secousse). */
+@keyframes boite-aura {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  60% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1.25);
+  }
+}
+@keyframes boite-aura-pulse {
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.34);
+  }
+}
+/* Flash lumineux à l'apogée (ouverture). */
+@keyframes boite-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+/* L'item sort de l'ouverture en grossissant. */
+@keyframes item-sort-boite {
+  0% {
+    transform: translateY(26px) scale(0.04);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-46px) scale(1);
+    opacity: 1;
+  }
+}
 @keyframes broc-slide-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }

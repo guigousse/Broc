@@ -29,6 +29,10 @@ interface ItemStickerProps {
    * déjà le nombre de cellules montées) pour éviter le fondu « pop-in ».
    */
   eager?: boolean;
+  /** Épaisseur (px) du contour die-cut blanc. Défaut 1.5. */
+  outlinePx?: number;
+  /** URL d'image directe (bypasse `getItemImageUrl`) — ex. boîte mystère. */
+  srcOverride?: string;
 }
 
 /** Angle déterministe en degrés dans ~[-3, +3] à partir du templateId, pour
@@ -49,20 +53,23 @@ const ombrePortee = "drop-shadow( 0 2px 3px rgba(40,25,5,0.35))";
  *  4 drop-shadow cardinaux (au lieu de 8) décalent l'alpha dans les 4 directions :
  *  leur union forme un contour ~1.5 px. Le passage de 8 à 4 passes de filtre
  *  par cellule réduit nettement le coût GPU au scroll des grilles denses. */
-const contourBlanc = [
-  "drop-shadow( 1.5px  0    0 #fdfaf2)",
-  "drop-shadow(-1.5px  0    0 #fdfaf2)",
-  "drop-shadow( 0     1.5px 0 #fdfaf2)",
-  "drop-shadow( 0    -1.5px 0 #fdfaf2)",
-  ombrePortee,
-].join(" ");
+function contourBlanc(px: number): string {
+  return [
+    `drop-shadow( ${px}px  0    0 #fdfaf2)`,
+    `drop-shadow(-${px}px  0    0 #fdfaf2)`,
+    `drop-shadow( 0     ${px}px 0 #fdfaf2)`,
+    `drop-shadow( 0    -${px}px 0 #fdfaf2)`,
+    ombrePortee,
+  ].join(" ");
+}
 
 /** Filtre appliqué à l'image/icône selon la variante. Silhouette = noir + contour blanc. */
-function variantFilter(variant: StickerVariant): string {
-  if (variant === "silhouette") return `brightness(0) ${contourBlanc}`;
+function variantFilter(variant: StickerVariant, outlinePx: number): string {
+  const contour = contourBlanc(outlinePx);
+  if (variant === "silhouette") return `brightness(0) ${contour}`;
   if (variant === "grise")
-    return `grayscale(1) brightness(1.3) contrast(0.75) opacity(0.55) ${contourBlanc}`;
-  return contourBlanc;
+    return `grayscale(1) brightness(1.3) contrast(0.75) opacity(0.55) ${contour}`;
+  return contour;
 }
 
 const wrapStyle = (
@@ -118,10 +125,14 @@ export function ItemSticker({
   tilt = true,
   thumb = false,
   eager = false,
+  outlinePx = 1.5,
+  srcOverride,
 }: ItemStickerProps) {
-  const url = thumb ? getItemThumbUrl(templateId) : getItemImageUrl(templateId);
+  const url =
+    srcOverride ??
+    (thumb ? getItemThumbUrl(templateId) : getItemImageUrl(templateId));
   const angle = tilt ? angleFromId(templateId) : 0;
-  const filter = variantFilter(variant);
+  const filter = variantFilter(variant, outlinePx);
   return (
     <span style={wrapStyle(size, angle, fill)} aria-hidden>
       {url ? (

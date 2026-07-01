@@ -1,17 +1,25 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Gift, X } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import { useToast } from "@/components/ui/Toast";
 import { getAdProvider } from "@/lib/ads/adProvider";
+import { audioManager } from "@/lib/audio/audioManager";
 import {
   tirerContenuBoite,
-  VENDEUR_MYSTERE_ILLUSTRATION,
+  BOITE_MYSTERE_IMAGE,
+  BOITE_MYSTERE_OUVERTE_IMAGE,
 } from "@/lib/boiteMystere";
 import { stockageEstPlein } from "@/lib/stockage";
 import { ItemCard } from "@/components/ui/ItemCard";
+import { ItemSticker } from "@/components/ui/ItemSticker";
 import type { Brocante, Objet } from "@/types/game";
+
+const VIBRATION_MS = 1500;
+const ECLOSION_MS = 1000;
+
+type Phase = "sealed" | "vibration" | "eclosion" | "reveal";
 
 const overlayStyle: CSSProperties = {
   position: "fixed",
@@ -52,6 +60,26 @@ const boutonStyle = (disabled: boolean): CSSProperties => ({
   gap: 8,
 });
 
+const sceneStyle: CSSProperties = {
+  position: "relative",
+  height: 210,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 8,
+};
+
+const auraStyle: CSSProperties = {
+  position: "absolute",
+  width: 230,
+  height: 230,
+  borderRadius: "50%",
+  background:
+    "radial-gradient(circle, rgba(255,214,120,0.65) 0%, rgba(255,190,80,0.22) 45%, rgba(255,190,80,0) 70%)",
+  filter: "blur(3px)",
+  pointerEvents: "none",
+};
+
 export function BoiteMystereOverlay({
   brocante,
   onClose,
@@ -64,12 +92,21 @@ export function BoiteMystereOverlay({
   const { state, reclamerBoiteMystere } = useGame();
   const { toast } = useToast();
   const [enCours, setEnCours] = useState(false);
+  const [phase, setPhase] = useState<Phase>("sealed");
   const [objet, setObjet] = useState<Objet | null>(null);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(
+    () => () => {
+      timersRef.current.forEach(clearTimeout);
+    },
+    [],
+  );
 
   if (!state) return null;
 
   const ouvrir = async () => {
-    if (enCours || objet) return;
+    if (enCours || phase !== "sealed") return;
     // Ne jamais gâcher une pub : si le stock est plein, on bloque avant.
     if (stockageEstPlein(state)) {
       toast("Stockage plein — fais de la place avant d'ouvrir la boîte.", {
@@ -89,12 +126,23 @@ export function BoiteMystereOverlay({
         return;
       }
       setObjet(gagne);
+      // Séquence : secousse (fermée) → apogée/éclosion (ouverte + item) → révélation.
+      setPhase("vibration");
+      timersRef.current.push(
+        setTimeout(() => {
+          setPhase("eclosion");
+          audioManager.playCash();
+        }, VIBRATION_MS),
+        setTimeout(() => setPhase("reveal"), VIBRATION_MS + ECLOSION_MS),
+      );
     } catch {
       toast("Erreur lors de la pub — réessaie.", { type: "erreur" });
     } finally {
       setEnCours(false);
     }
   };
+
+  const enAnimation = phase === "vibration" || phase === "eclosion";
 
   return (
     <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true">
@@ -115,8 +163,14 @@ export function BoiteMystereOverlay({
           <X size={20} />
         </button>
 
-        {objet ? (
+        {phase === "reveal" && objet ? (
           <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={BOITE_MYSTERE_OUVERTE_IMAGE}
+              alt="Boîte mystère ouverte"
+              style={{ width: 150, height: "auto", margin: "0 auto 6px", display: "block" }}
+            />
             <h2 style={{ fontSize: 18, margin: "4px 0 12px" }}>
               Tu as trouvé&nbsp;:
             </h2>
@@ -136,21 +190,97 @@ export function BoiteMystereOverlay({
               Parfait !
             </button>
           </>
+        ) : enAnimation ? (
+          <>
+            <div style={sceneStyle}>
+              {/* Aura qui émane autour de la boîte. */}
+              <div
+                style={{
+                  ...auraStyle,
+                  animation:
+                    phase === "vibration"
+                      ? `boite-aura ${VIBRATION_MS}ms ease-in forwards`
+                      : "boite-aura-pulse 900ms ease-in-out infinite",
+                }}
+              />
+              {/* Flash à l'apogée (ouverture). */}
+              {phase === "eclosion" && (
+                <div
+                  style={{
+                    position: "absolute",
+                    width: 270,
+                    height: 270,
+                    borderRadius: "50%",
+                    background:
+                      "radial-gradient(circle, rgba(255,246,224,0.95) 0%, rgba(255,224,150,0) 65%)",
+                    animation: "boite-flash 700ms ease-out forwards",
+                    pointerEvents: "none",
+                  }}
+                />
+              )}
+              {/* La boîte : fermée qui vibre, puis ouverte. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={
+                  phase === "vibration"
+                    ? BOITE_MYSTERE_IMAGE
+                    : BOITE_MYSTERE_OUVERTE_IMAGE
+                }
+                alt="Boîte mystère"
+                style={{
+                  width: 180,
+                  height: "auto",
+                  display: "block",
+                  position: "relative",
+                  zIndex: 1,
+                  animation:
+                    phase === "vibration"
+                      ? `boite-secousse ${VIBRATION_MS}ms cubic-bezier(0.36,0,0.66,1) forwards`
+                      : undefined,
+                }}
+              />
+              {/* L'item sort de l'ouverture en grossissant. */}
+              {phase === "eclosion" && objet && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 6,
+                    width: 122,
+                    height: 122,
+                    zIndex: 2,
+                    animation: "item-sort-boite 1s ease-out forwards",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <ItemSticker
+                    templateId={objet.templateId}
+                    categorie={objet.categorie}
+                    fill
+                    tilt={false}
+                    eager
+                    outlinePx={2.5}
+                  />
+                </div>
+              )}
+            </div>
+            <p style={{ fontSize: 13, color: "var(--brass-200)", margin: 0 }}>
+              {phase === "vibration" ? "La boîte s'ouvre…" : "✨"}
+            </p>
+          </>
         ) : (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={VENDEUR_MYSTERE_ILLUSTRATION}
-              alt="Vendeur mystère"
+              src={BOITE_MYSTERE_IMAGE}
+              alt="Boîte mystère"
               style={{
-                width: 140,
+                width: 170,
                 height: "auto",
                 margin: "0 auto 10px",
                 display: "block",
-                borderRadius: 10,
               }}
             />
-            <h2 style={{ fontSize: 18, margin: "0 0 6px" }}>Vendeur mystère</h2>
+            <h2 style={{ fontSize: 18, margin: "0 0 6px" }}>Boîte mystère</h2>
             <p style={{ fontSize: 13, color: "var(--brass-200)", margin: "0 0 16px" }}>
               Une boîte scellée… personne ne sait ce qu'elle cache. Regarde une
               pub pour l'ouvrir.
