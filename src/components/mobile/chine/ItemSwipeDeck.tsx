@@ -45,11 +45,10 @@ export function ItemSwipeDeck({
   }, [index, slides]);
 
   const go = (delta: number) => {
-    setIndex((i) => {
-      const next = Math.min(slides.length - 1, Math.max(0, i + delta));
-      if (next !== i) setDir(delta > 0 ? "left" : "right");
-      return next;
-    });
+    const next = Math.min(slides.length - 1, Math.max(0, index + delta));
+    if (next === index) return;
+    setDir(delta > 0 ? "left" : "right");
+    setIndex(next);
   };
 
   const onPointerDown = (e: PointerEvent) => {
@@ -78,6 +77,7 @@ export function ItemSwipeDeck({
         style={{ flex: 1, minHeight: 0, position: "relative", touchAction: "pan-y" }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
+        onPointerCancel={() => { startXRef.current = null; }}
       >
         <div
           key={clamped}
