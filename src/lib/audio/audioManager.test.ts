@@ -338,6 +338,38 @@ describe("audioManager — effets et préférences", () => {
     expect(FakeAudioContext.instances).toHaveLength(0);
   });
 
+  it("playApparition crée un oscillateur avec enveloppe quand clic est actif", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playApparition();
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.oscillators).toHaveLength(1);
+    expect(ctx.oscillators[0].start).toHaveBeenCalled();
+    expect(ctx.oscillators[0].stop).toHaveBeenCalled();
+  });
+
+  it("playRarete joue un arpège de 3 notes quand clic est actif", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playRarete();
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.oscillators).toHaveLength(3);
+  });
+
+  it("playMystere joue 2 notes quand clic est actif", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playMystere();
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.oscillators).toHaveLength(2);
+  });
+
+  it("les sons de chinage sont muets quand la préférence clic est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("clic", false);
+    audioManager.playApparition();
+    audioManager.playRarete();
+    audioManager.playMystere();
+    expect(FakeAudioContext.instances).toHaveLength(0);
+  });
+
   it("playCash respecte la préférence cash désactivée (aucun fetch)", async () => {
     const { audioManager } = await freshManager();
     audioManager.setPref("cash", false);

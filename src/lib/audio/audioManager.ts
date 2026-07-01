@@ -216,6 +216,80 @@ class AudioManager {
     sparkle.stop(tEnd + 0.35);
   }
 
+  /** Apparition d'une carte de chinage : léger glissando montant, court et doux. */
+  playApparition(): void {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(440, now + 0.09);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.16, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    osc.connect(gain);
+    gain.connect(this.master);
+    osc.start(now);
+    osc.stop(now + 0.16);
+  }
+
+  /** Rareté (rare/lég./unique) : petit arpège cristallin ascendant, superposable. */
+  playRarete(): void {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const ctx = this.ctx;
+    const master = this.master;
+    const now = ctx.currentTime;
+    const notes = [1046.5, 1318.5, 1568.0]; // C6 E6 G6
+    const stepMs = 70;
+    notes.forEach((freq, i) => {
+      const t0 = now + (i * stepMs) / 1000;
+      const dur = 0.26;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.14, t0 + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    });
+  }
+
+  /** Vendeur mystère : deux notes feutrées à intervalle intrigant, longue traîne. */
+  playMystere(): void {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const ctx = this.ctx;
+    const master = this.master;
+    const now = ctx.currentTime;
+    const notes = [369.99, 523.25]; // F#4 -> C5
+    const stepMs = 160;
+    notes.forEach((freq, i) => {
+      const t0 = now + (i * stepMs) / 1000;
+      const dur = 0.6;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.12, t0 + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.05);
+    });
+  }
+
   async playCash(): Promise<void> {
     if (!this.prefs.cash) return;
     this.ensureCtx();
