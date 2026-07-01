@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ItemCard } from "@/components/ui/ItemCard";
 import { SessionSummary } from "@/components/SessionSummary";
 import { ContextualHeader } from "@/components/mobile/ContextualHeader";
-import { ActionFab } from "@/components/mobile/ActionFab";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import {
   getVendeurIllustration,
   getVendeurIllustrationFache,
 } from "@/lib/personaIllustrations";
-import { NegoItemRow } from "@/components/mobile/NegoItemRow";
+import { ItemSwipeDeck } from "@/components/mobile/chine/ItemSwipeDeck";
+import type { ChineSlide } from "@/components/mobile/chine/ChineSlide";
+import { getTemplate } from "@/data/objetTemplates";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/components/ui/Toast";
@@ -23,7 +23,7 @@ import {
 import { genererSession } from "@/lib/chine";
 import { energieCourante } from "@/lib/energie";
 import { placeRestante, stockageEstPlein } from "@/lib/stockage";
-import { nbBoitesReclamees, tenterApparition, VENDEUR_MYSTERE_ILLUSTRATION } from "@/lib/boiteMystere";
+import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
 import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import {
@@ -80,6 +80,8 @@ export default function SessionChinePage() {
   const [vendeurPresent, setVendeurPresent] = useState(false);
   /** La modale de la boîte mystère est-elle ouverte ? */
   const [boiteOuverte, setBoiteOuverte] = useState(false);
+  /** Vrai une fois la boîte mystère réclamée dans cette session (masque le bouton pub). */
+  const [boiteReclamee, setBoiteReclamee] = useState(false);
 
   const gagnerXPLocal = (treeId: string, montant: number) => {
     gagnerXP(treeId, montant);
@@ -163,6 +165,23 @@ export default function SessionChinePage() {
   }
 
   const plein = stockageEstPlein(state);
+
+  const estRareOuPlus = (it: ObjetEnVente): boolean =>
+    it.objet.rarete !== "commun" ||
+    getTemplate(it.objet.templateId)?.unique === true;
+
+  const slides: ChineSlide[] = useMemo(() => {
+    const liste: ChineSlide[] = [];
+    if (vendeurPresent) liste.push({ kind: "mystere" });
+    for (const it of (items ?? []).filter((x) => x.statut !== "refuse")) {
+      liste.push({ kind: "item", item: it, estRareOuPlus: estRareOuPlus(it) });
+    }
+    return liste;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vendeurPresent, items]);
+
+  /** Item dont la négociation est ouverte (pour la feuille unique). */
+  const itemEnNego = (items ?? []).find((x) => x.id === negoOuverte) ?? null;
 
   const setItem = (id: string, patch: Partial<ObjetEnVente>) =>
     setItems((prev) =>
@@ -260,389 +279,72 @@ export default function SessionChinePage() {
         onBack={handleRentrer}
         backIcon="close"
       />
-      <main
-        style={{
-          flex: 1,
-          padding: `12px 12px calc(80px + var(--safe-bottom))`,
-          overflowY: "auto",
-        }}
-      >
+      <main style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
         {flash && (
           <div
             style={{
-              padding: "10px 12px",
+              padding: "8px 12px",
               background: "var(--brass-100)",
               border: "1px solid var(--brass-700)",
               fontFamily: "var(--font-serif)",
               fontStyle: "italic",
               fontSize: 13,
               color: "var(--ink-700)",
-              marginBottom: 10,
             }}
           >
             « {flash} »
           </div>
         )}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(var(--card-w), 1fr))",
-            gap: "var(--gutter)",
-          }}
-        >
-          {vendeurPresent && !plein && (
-            <button
-              type="button"
-              onClick={() => setBoiteOuverte(true)}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                gap: 6,
-                padding: 8,
-                background: "var(--forest-800)",
-                border: "2px solid var(--brass-500)",
-                borderRadius: 10,
-                cursor: "pointer",
-                color: "var(--brass-300)",
-                fontFamily: "var(--font-display)",
-                aspectRatio: "3 / 4",
-                overflow: "hidden",
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={VENDEUR_MYSTERE_ILLUSTRATION}
-                alt="Vendeur mystère"
-                style={{ width: "100%", height: "auto", borderRadius: 6 }}
-              />
-              <span
-                style={{
-                  fontSize: 11,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Vendeur mystère
-              </span>
-            </button>
-          )}
-          {(items ?? []).filter((it) => it.statut !== "refuse").map((it) => (
-            <ObjetCardMobile
-              key={it.id}
-              item={it}
-              budget={state.budget}
-              plein={plein}
-              onNegocier={() => setNegoOuverte(it.id)}
-              onAcheter={() => handleAcheter(it.id)}
-              onAcheterApresRefusPoli={() => {
-                const prixFinal = it.negociation?.prixAdverseCourant ?? it.prixVendeur;
-                handleAchatAuPrix(it, prixFinal);
-              }}
-            />
-          ))}
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <ItemSwipeDeck
+            slides={slides}
+            budget={state.budget}
+            plein={plein}
+            boiteReclamee={boiteReclamee}
+            onAcheter={(item) => handleAcheter(item.id)}
+            onNegocier={(item) => setNegoOuverte(item.id)}
+            onOuvrirBoite={() => setBoiteOuverte(true)}
+          />
         </div>
       </main>
 
-      {plein && (
-        <div
-          role="status"
-          style={{
-            padding: "8px 12px",
-            background: "var(--vermillion-600)",
-            color: "var(--paper-100)",
-            border: "1px solid var(--velvet-700)",
-            fontFamily: "var(--font-display)",
-            fontSize: 11,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            textAlign: "center",
-            marginBottom: 8,
-          }}
-        >
-          Stockage plein
-        </div>
-      )}
-      <ActionFab
-        buttons={[
-          {
-            label: "Rentrer · fin de journée",
-            onClick: handleRentrer,
-          },
-        ]}
-      />
-
-      {(items ?? []).map((it) => (
+      {itemEnNego && (
         <NegociationSheet
-          key={it.id}
-          open={negoOuverte === it.id}
+          open={negoOuverte === itemEnNego.id}
           onClose={() => setNegoOuverte(null)}
           mode="achat"
-          persona={it.persona}
-          echelleMax={it.prixVendeur}
-          cibleSecrete={it.prixMinAccept}
-          prixDepartAdverse={it.negociation?.prixAdverseCourant ?? it.prixVendeur}
-          nego={it.negociation}
+          persona={itemEnNego.persona}
+          echelleMax={itemEnNego.prixVendeur}
+          cibleSecrete={itemEnNego.prixMinAccept}
+          prixDepartAdverse={itemEnNego.negociation?.prixAdverseCourant ?? itemEnNego.prixVendeur}
+          nego={itemEnNego.negociation}
           nomAffiche="Un vendeur"
-          illustrationSrc={getVendeurIllustration(it.persona.archetype)}
-          illustrationFacheSrc={getVendeurIllustrationFache(it.persona.archetype)}
+          illustrationSrc={getVendeurIllustration(itemEnNego.persona.archetype)}
+          illustrationFacheSrc={getVendeurIllustrationFache(itemEnNego.persona.archetype)}
           personaInfo={{
             archetypeNom: undefined,
             revelePersona: false,
             releveBourse: false,
             oeilAiguise: false,
           }}
-          header={
-            <NegoItemRow
-              objet={it.objet}
-              prix={it.prixVendeur}
-              prixLabel="Prix affiché"
-            />
-          }
-          onUpdateNego={(nego) => {
-            setItem(it.id, { negociation: nego });
-          }}
+          onUpdateNego={(nego) => setItem(itemEnNego.id, { negociation: nego })}
           onConclu={(prixFinal) => {
-            handleAchatAuPrix(it, prixFinal);
+            handleAchatAuPrix(itemEnNego, prixFinal);
             gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
             setNegoOuverte(null);
           }}
         />
-      ))}
+      )}
       {boiteOuverte && (
         <BoiteMystereOverlay
           brocante={brocante}
           onClose={() => setBoiteOuverte(false)}
           onClaimed={() => {
             setBoiteOuverte(false);
-            setVendeurPresent(false); // consommée pour cette session
+            setBoiteReclamee(true);
           }}
         />
       )}
     </div>
   );
 }
-
-function ObjetCardMobile({
-  item,
-  budget,
-  plein,
-  onNegocier,
-  onAcheter,
-  onAcheterApresRefusPoli,
-}: {
-  item: ObjetEnVente;
-  budget: number;
-  plein: boolean;
-  onNegocier: () => void;
-  onAcheter: () => void;
-  onAcheterApresRefusPoli: () => void;
-}) {
-  const { objet, prixVendeur, statut } = item;
-  const tropCher = budget < prixVendeur;
-  const refusPoli = item.negociation?.statut === "refus_poli";
-  const fache = item.negociation?.statut === "fache";
-
-  if (statut === "achete") {
-    return (
-      <ItemCard
-        templateId={objet.templateId}
-        categorie={objet.categorie}
-        etat={objet.etat}
-        rarete={objet.rarete}
-        nom={objet.nom}
-        dimmed
-        footer={
-          <div
-            style={{
-              textAlign: "center",
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: "var(--ink-500)",
-              padding: "4px 0",
-            }}
-          >
-            — Acquis —
-          </div>
-        }
-      />
-    );
-  }
-
-  if (fache) {
-    return (
-      <div style={{ position: "relative" }}>
-        <ItemCard
-          templateId={objet.templateId}
-          categorie={objet.categorie}
-          etat={objet.etat}
-          rarete={objet.rarete}
-          nom={objet.nom}
-          dimmed
-          footer={
-            <div
-              style={{
-                textAlign: "center",
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color: "var(--ink-500)",
-                padding: "4px 0",
-              }}
-            >
-              — Indisponible —
-            </div>
-          }
-        />
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            pointerEvents: "none",
-          }}
-        >
-          <span
-            style={{
-              transform: "rotate(-18deg)",
-              color: "var(--vermillion-600)",
-              fontFamily: "var(--font-display)",
-              fontSize: 13,
-              fontWeight: 800,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              border: "2px solid var(--vermillion-600)",
-              padding: "5px 12px",
-              background: "rgba(255, 245, 232, 0.85)",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Vendeur fâché
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <ItemCard
-      templateId={objet.templateId}
-      categorie={objet.categorie}
-      etat={objet.etat}
-      rarete={objet.rarete}
-      nom={objet.nom}
-      style={
-        statut === "refuse"
-          ? { borderColor: "var(--vermillion-600)" }
-          : undefined
-      }
-      footer={
-        <>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              letterSpacing: "0.06em",
-              color: "var(--ink-500)",
-              padding: "2px 4px",
-            }}
-          >
-            <span>
-              {item.negociationsTentees > 0
-                ? "Prix négocié :"
-                : "Prix demandé :"}
-            </span>
-            <span
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 14,
-                fontWeight: 700,
-                color: tropCher ? "var(--vermillion-600)" : "var(--forest-800)",
-              }}
-            >
-              {prixVendeur} €
-            </span>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-            {refusPoli ? (
-              <button
-                type="button"
-                onClick={onAcheterApresRefusPoli}
-                disabled={tropCher || plein}
-                style={{
-                  ...miniBtn(true),
-                  gridColumn: "1 / -1",
-                  opacity: tropCher || plein ? 0.45 : 1,
-                  cursor: tropCher || plein ? "not-allowed" : "pointer",
-                  background: "var(--brass-700)",
-                  color: "var(--paper-100)",
-                }}
-              >
-                Acheter — {item.negociation?.prixAdverseCourant ?? prixVendeur} €
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={onNegocier}
-                  disabled={plein}
-                  style={{
-                    ...miniBtn(false),
-                    opacity: plein ? 0.45 : 1,
-                    cursor: plein ? "not-allowed" : "pointer",
-                  }}
-                >
-                  Négo
-                </button>
-                <button
-                  type="button"
-                  onClick={onAcheter}
-                  disabled={tropCher || plein}
-                  style={{
-                    ...miniBtn(true),
-                    opacity: tropCher || plein ? 0.45 : 1,
-                    cursor: tropCher || plein ? "not-allowed" : "pointer",
-                    ...(item.negociationsTentees > 0 && !tropCher && !plein
-                      ? {
-                          background: "var(--brass-700)",
-                          color: "var(--paper-100)",
-                          boxShadow:
-                            "inset 0 0 0 1px var(--brass-700), 0 0 0 2px var(--brass-300), 0 2px 6px rgba(176,136,56,0.45)",
-                          animation: "broc-pulse 1.6s ease-in-out infinite",
-                        }
-                      : {}),
-                  }}
-                >
-                  Acheter
-                </button>
-              </>
-            )}
-          </div>
-        </>
-      }
-    />
-  );
-}
-
-const miniBtn = (primary: boolean): CSSProperties => ({
-  padding: "6px 0",
-  textAlign: "center",
-  fontFamily: "var(--font-display)",
-  fontSize: 8.5,
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  border: "1px solid var(--brass-500)",
-  background: primary ? "var(--forest-800)" : "var(--paper-100)",
-  color: primary ? "var(--brass-300)" : "var(--forest-800)",
-  cursor: "pointer",
-});
