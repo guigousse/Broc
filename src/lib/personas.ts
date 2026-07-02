@@ -1,4 +1,4 @@
-import type { Brocante, NegoPersona, VendeurArchetypeId } from "@/types/game";
+import type { Brocante, CategorieObjet, NegoPersona, VendeurArchetypeId } from "@/types/game";
 
 /** Médianes des 5 axes par archétype vendeur. */
 const PERSONAS_VENDEUR_BASE: Record<
@@ -74,6 +74,24 @@ const BIAIS_AMBIANCE: Partial<Record<string, Partial<Record<VendeurArchetypeId, 
   Studieux: { antiquaire: 6 },
 };
 
+/** Spécialisation d'un archétype vendeur pour une catégorie d'objets. */
+export interface AffiniteCategorie {
+  categorie: CategorieObjet;
+  /** Bonus additif de poids de tirage quand l'objet est de cette catégorie. */
+  boostPoids: number;
+  /** Plancher du facteur prix aléatoire : le spécialiste connaît la cote, il ne brade jamais. */
+  facteurCoteMin: number;
+}
+
+const AFFINITE_CATEGORIE: Partial<Record<VendeurArchetypeId, AffiniteCategorie>> = {
+  disquaire: { categorie: "Musique", boostPoids: 25, facteurCoteMin: 0.95 },
+};
+
+/** Affinité de catégorie d'un archétype, ou undefined s'il est généraliste. */
+export function getAffiniteCategorie(archetype: string): AffiniteCategorie | undefined {
+  return AFFINITE_CATEGORIE[archetype as VendeurArchetypeId];
+}
+
 function jitter(v: number, amplitude = 0.1): number {
   const factor = 1 + (Math.random() * 2 - 1) * amplitude;
   return v * factor;
@@ -90,13 +108,21 @@ function pickPondere<T extends string>(weights: Record<T, number>): T {
 }
 
 /** Tire un persona vendeur pour un item d'une brocante donnée. */
-export function tirerPersonaVendeur(brocante: Brocante | undefined): NegoPersona {
+export function tirerPersonaVendeur(
+  brocante: Brocante | undefined,
+  categorie?: CategorieObjet,
+): NegoPersona {
   const tier = brocante?.tier ?? 1;
   const base = { ...POIDS_PAR_TIER[tier] };
   const biais = brocante ? BIAIS_AMBIANCE[brocante.ambiance] : undefined;
   if (biais) {
     for (const [arch, bonus] of Object.entries(biais) as [VendeurArchetypeId, number][]) {
       base[arch] = (base[arch] ?? 0) + bonus;
+    }
+  }
+  if (categorie) {
+    for (const [arch, aff] of Object.entries(AFFINITE_CATEGORIE) as [VendeurArchetypeId, AffiniteCategorie][]) {
+      if (aff.categorie === categorie) base[arch] = (base[arch] ?? 0) + aff.boostPoids;
     }
   }
   const archetype = pickPondere(base);

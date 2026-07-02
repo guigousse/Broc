@@ -3,6 +3,7 @@ import {
   NOM_ARCHETYPE,
   NOM_VENDEUR,
   calculerPrixMinAcceptDepuisPersona,
+  getAffiniteCategorie,
   getNomVendeur,
   tirerPersonaVendeur,
 } from "./personas";
@@ -181,5 +182,35 @@ describe("tirerPersonaVendeur — nouveaux archétypes", () => {
         expect(tirerPersonaVendeur(broc).archetype).not.toBe("disquaire");
       }
     }
+  });
+});
+
+describe("affinité de catégorie", () => {
+  it("getAffiniteCategorie décrit le disquaire et rien pour les autres", () => {
+    expect(getAffiniteCategorie("disquaire")).toEqual({
+      categorie: "Musique",
+      boostPoids: 25,
+      facteurCoteMin: 0.95,
+    });
+    expect(getAffiniteCategorie("naif")).toBeUndefined();
+    expect(getAffiniteCategorie("inconnu")).toBeUndefined();
+  });
+
+  it("le disquaire ne sort jamais sur une catégorie ≠ Musique", () => {
+    const broc = createMockBrocante({ tier: 2, etoiles: 2, ambiance: "" });
+    for (let i = 0; i < 200; i++) {
+      const p = tirerPersonaVendeur(broc, "Maison");
+      expect(p.archetype).not.toBe("disquaire");
+    }
+  });
+
+  it("le disquaire sort régulièrement sur Musique", () => {
+    const broc = createMockBrocante({ tier: 2, etoiles: 2, ambiance: "" });
+    let disquaire = 0;
+    for (let i = 0; i < 300; i++) {
+      if (tirerPersonaVendeur(broc, "Musique").archetype === "disquaire") disquaire++;
+    }
+    // boost 25 sur ~168 de poids total tier 2 → ~15 % attendu ; ≥ 5 est très conservateur.
+    expect(disquaire).toBeGreaterThanOrEqual(5);
   });
 });
