@@ -8,6 +8,7 @@ import {
   tirerPersonaVendeur,
 } from "./personas";
 import { createMockBrocante } from "./__test-fixtures__/gameState";
+import { EXPEDITEURS } from "@/data/expediteursCourrier";
 
 describe("NOM_ARCHETYPE", () => {
   it("a une entrée par archétype vendeur", () => {
@@ -219,6 +220,58 @@ describe("affinité de catégorie", () => {
     for (let i = 0; i < 200; i++) {
       const p = tirerPersonaVendeur(broc, "Maison");
       expect(p.archetype).not.toBe("disquaire");
+    }
+  });
+});
+
+describe("commanditaires vendeurs", () => {
+  const CAS = [
+    { arch: "joueur", expediteur: "jeux-video", cat: "Jeux & Loisirs", mauvaise: "Maison" },
+    { arch: "setdesigner", expediteur: "set-designer", cat: "Maison", mauvaise: "Mode" },
+    { arch: "modeuse", expediteur: "mode", cat: "Mode", mauvaise: "Jeux & Loisirs" },
+    { arch: "esthete", expediteur: "art", cat: "Objets d'art", mauvaise: "Musique" },
+  ] as const;
+
+  it("les noms sont dérivés des expéditeurs de courrier", () => {
+    for (const { arch, expediteur } of CAS) {
+      expect(NOM_VENDEUR[arch]).toBe(EXPEDITEURS[expediteur].nom);
+    }
+  });
+
+  it("getAffiniteCategorie décrit les 4 commanditaires", () => {
+    expect(getAffiniteCategorie("joueur")).toEqual({ categorie: "Jeux & Loisirs", boostPoids: 25, facteurCoteMin: 0.85 });
+    expect(getAffiniteCategorie("setdesigner")).toEqual({ categorie: "Maison", boostPoids: 25, facteurCoteMin: 0.80 });
+    expect(getAffiniteCategorie("modeuse")).toEqual({ categorie: "Mode", boostPoids: 25, facteurCoteMin: 0.95 });
+    expect(getAffiniteCategorie("esthete")).toEqual({ categorie: "Objets d'art", boostPoids: 25, facteurCoteMin: 0.95 });
+  });
+
+  it("un commanditaire ne sort jamais hors de sa catégorie", () => {
+    const broc = createMockBrocante({ tier: 2, etoiles: 2, ambiance: "" });
+    for (const { arch, mauvaise } of CAS) {
+      for (let i = 0; i < 150; i++) {
+        expect(tirerPersonaVendeur(broc, mauvaise).archetype).not.toBe(arch);
+      }
+    }
+  });
+
+  it("les biais Geek et Mondain ne font pas fuiter joueur/esthete hors catégorie", () => {
+    const geek = createMockBrocante({ tier: 2, etoiles: 2, ambiance: "Geek" });
+    const mondain = createMockBrocante({ tier: 2, etoiles: 2, ambiance: "Mondain" });
+    for (let i = 0; i < 150; i++) {
+      expect(tirerPersonaVendeur(geek, "Musique").archetype).not.toBe("joueur");
+      expect(tirerPersonaVendeur(mondain, "Mode").archetype).not.toBe("esthete");
+    }
+  });
+
+  it("chaque commanditaire sort régulièrement sur sa catégorie", () => {
+    const broc = createMockBrocante({ tier: 2, etoiles: 2, ambiance: "" });
+    for (const { arch, cat } of CAS) {
+      let n = 0;
+      for (let i = 0; i < 300; i++) {
+        if (tirerPersonaVendeur(broc, cat).archetype === arch) n++;
+      }
+      // boost 25 sur 126 de poids total tier 2 (151 avec le boost) → ~16,6 % attendu ; ≥ 5 est très conservateur.
+      expect(n).toBeGreaterThanOrEqual(5);
     }
   });
 });

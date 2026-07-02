@@ -1,4 +1,5 @@
 import type { Brocante, CategorieObjet, NegoPersona, VendeurArchetypeId } from "@/types/game";
+import { EXPEDITEURS } from "@/data/expediteursCourrier";
 
 /** Médianes des 5 axes par archétype vendeur. */
 const PERSONAS_VENDEUR_BASE: Record<
@@ -15,6 +16,10 @@ const PERSONAS_VENDEUR_BASE: Record<
   videcave:   { margePct: 0.70, elanPct: 0.80, patience: 2, tolerancePct: 0.85, sangFroid: 0.70 },
   bonimenteur: { margePct: 0.65, elanPct: 0.40, patience: 4, tolerancePct: 0.60, sangFroid: 0.75 },
   disquaire:  { margePct: 0.15, elanPct: 0.35, patience: 5, tolerancePct: 0.40, sangFroid: 0.90 },
+  joueur:      { margePct: 0.35, elanPct: 0.50, patience: 4, tolerancePct: 0.65, sangFroid: 0.75 },
+  setdesigner: { margePct: 0.50, elanPct: 0.65, patience: 3, tolerancePct: 0.70, sangFroid: 0.80 },
+  modeuse:     { margePct: 0.20, elanPct: 0.30, patience: 4, tolerancePct: 0.45, sangFroid: 0.85 },
+  esthete:     { margePct: 0.10, elanPct: 0.30, patience: 3, tolerancePct: 0.30, sangFroid: 0.45 },
 };
 
 /** Nom lisible affiché en sheet (titre + sous-titre). */
@@ -29,6 +34,10 @@ export const NOM_ARCHETYPE: Record<VendeurArchetypeId, string> = {
   videcave: "Le Vide-Cave",
   bonimenteur: "Le Bonimenteur",
   disquaire: "Le Disquaire",
+  joueur: "Le Joueur",
+  setdesigner: "La Set Designer",
+  modeuse: "La Designeuse",
+  esthete: "L'Esthète",
 };
 
 /** Nom propre fixe de chaque personnage vendeur (affiché sur la plaque de négo). */
@@ -43,6 +52,11 @@ export const NOM_VENDEUR: Record<VendeurArchetypeId, string> = {
   videcave: "Jeannot Vide-Cave",
   bonimenteur: "Oscar la Tchatche",
   disquaire: "Barnabé 33-Tours",
+  // Commanditaires de quêtes — noms dérivés du courrier (source unique).
+  joueur: EXPEDITEURS["jeux-video"].nom,
+  setdesigner: EXPEDITEURS["set-designer"].nom,
+  modeuse: EXPEDITEURS.mode.nom,
+  esthete: EXPEDITEURS.art.nom,
 };
 
 /** Nom affichable d'un vendeur, avec repli générique si l'archétype est inconnu. */
@@ -55,10 +69,10 @@ export function getNomVendeur(archetype: string): string {
  * appliqués par-dessus dans `tirerPersonaVendeur()`.
  */
 const POIDS_PAR_TIER: Record<1 | 2 | 3 | 4, Record<VendeurArchetypeId, number>> = {
-  1: { naif: 4,  bonhomme: 28, mamie: 22, malin: 8,  grincheux: 26, antiquaire: 0,  pipelette: 14, videcave: 10, bonimenteur: 6,  disquaire: 0 },
-  2: { naif: 1,  bonhomme: 20, mamie: 12, malin: 30, grincheux: 17, antiquaire: 20, pipelette: 8,  videcave: 8,  bonimenteur: 10, disquaire: 0 },
-  3: { naif: 0,  bonhomme: 8,  mamie: 4,  malin: 30, grincheux: 13, antiquaire: 45, pipelette: 3,  videcave: 3,  bonimenteur: 8,  disquaire: 0 },
-  4: { naif: 0,  bonhomme: 4,  mamie: 2,  malin: 24, grincheux: 10, antiquaire: 60, pipelette: 1,  videcave: 0,  bonimenteur: 4,  disquaire: 0 },
+  1: { naif: 4,  bonhomme: 28, mamie: 22, malin: 8,  grincheux: 26, antiquaire: 0,  pipelette: 14, videcave: 10, bonimenteur: 6,  disquaire: 0, joueur: 0, setdesigner: 0, modeuse: 0, esthete: 0 },
+  2: { naif: 1,  bonhomme: 20, mamie: 12, malin: 30, grincheux: 17, antiquaire: 20, pipelette: 8,  videcave: 8,  bonimenteur: 10, disquaire: 0, joueur: 0, setdesigner: 0, modeuse: 0, esthete: 0 },
+  3: { naif: 0,  bonhomme: 8,  mamie: 4,  malin: 30, grincheux: 13, antiquaire: 45, pipelette: 3,  videcave: 3,  bonimenteur: 8,  disquaire: 0, joueur: 0, setdesigner: 0, modeuse: 0, esthete: 0 },
+  4: { naif: 0,  bonhomme: 4,  mamie: 2,  malin: 24, grincheux: 10, antiquaire: 60, pipelette: 1,  videcave: 0,  bonimenteur: 4,  disquaire: 0, joueur: 0, setdesigner: 0, modeuse: 0, esthete: 0 },
 };
 
 /** Biais additif d'ambiance — pousse certains archétypes au sein d'un tier. */
@@ -66,8 +80,8 @@ const BIAIS_AMBIANCE: Partial<Record<string, Partial<Record<VendeurArchetypeId, 
   Familial: { bonhomme: 10, mamie: 8, pipelette: 6 },
   Sélect: { antiquaire: 20 },
   Précieux: { antiquaire: 25 },
-  Mondain: { antiquaire: 15, malin: 5 },
-  Geek: { malin: 12 },
+  Mondain: { antiquaire: 15, malin: 5, esthete: 6 },
+  Geek: { malin: 12, joueur: 8 },
   Vinyle: { malin: 12, disquaire: 10 },
   Sciure: { grincheux: 6 },
   Dense: { grincheux: 8 },
@@ -85,6 +99,10 @@ export interface AffiniteCategorie {
 
 const AFFINITE_CATEGORIE: Partial<Record<VendeurArchetypeId, AffiniteCategorie>> = {
   disquaire: { categorie: "Musique", boostPoids: 25, facteurCoteMin: 0.95 },
+  joueur:      { categorie: "Jeux & Loisirs", boostPoids: 25, facteurCoteMin: 0.85 },
+  setdesigner: { categorie: "Maison",         boostPoids: 25, facteurCoteMin: 0.80 },
+  modeuse:     { categorie: "Mode",           boostPoids: 25, facteurCoteMin: 0.95 },
+  esthete:     { categorie: "Objets d'art",   boostPoids: 25, facteurCoteMin: 0.95 },
 };
 
 /** Affinité de catégorie d'un archétype, ou undefined s'il est généraliste. */

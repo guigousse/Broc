@@ -1,4 +1,5 @@
 import type { VendeurArchetypeId } from "@/types/game";
+import { EXPEDITEURS } from "@/data/expediteursCourrier";
 
 /** Au-dessus de ce seuil d'humeur (0–1), le vendeur est représenté fâché. */
 export const HUMEUR_FACHE_SEUIL = 0.75;
@@ -17,6 +18,11 @@ const VENDEUR_ILLUSTRATION_MAP: Record<VendeurArchetypeId, string> = {
   videcave: ILLUSTRATION_PLACEHOLDER,
   bonimenteur: ILLUSTRATION_PLACEHOLDER,
   disquaire: ILLUSTRATION_PLACEHOLDER,
+  // Commanditaires de quêtes — avatar du courrier (pas encore de variante fâchée).
+  joueur: EXPEDITEURS["jeux-video"].avatar ?? ILLUSTRATION_PLACEHOLDER,
+  setdesigner: EXPEDITEURS["set-designer"].avatar ?? ILLUSTRATION_PLACEHOLDER,
+  modeuse: EXPEDITEURS.mode.avatar ?? ILLUSTRATION_PLACEHOLDER,
+  esthete: EXPEDITEURS.art.avatar ?? ILLUSTRATION_PLACEHOLDER,
 };
 
 const VENDEUR_ILLUSTRATION_FACHE_MAP: Record<VendeurArchetypeId, string> = {
@@ -30,6 +36,10 @@ const VENDEUR_ILLUSTRATION_FACHE_MAP: Record<VendeurArchetypeId, string> = {
   videcave: ILLUSTRATION_PLACEHOLDER,
   bonimenteur: ILLUSTRATION_PLACEHOLDER,
   disquaire: ILLUSTRATION_PLACEHOLDER,
+  joueur: EXPEDITEURS["jeux-video"].avatar ?? ILLUSTRATION_PLACEHOLDER,
+  setdesigner: EXPEDITEURS["set-designer"].avatar ?? ILLUSTRATION_PLACEHOLDER,
+  modeuse: EXPEDITEURS.mode.avatar ?? ILLUSTRATION_PLACEHOLDER,
+  esthete: EXPEDITEURS.art.avatar ?? ILLUSTRATION_PLACEHOLDER,
 };
 
 /** Retourne le chemin de l'illustration d'un vendeur, ou undefined si l'archétype est inconnu. */
