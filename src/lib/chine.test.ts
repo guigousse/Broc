@@ -148,3 +148,28 @@ describe("genererSession — disquaire connaît la cote", () => {
     }
   });
 });
+
+describe("genererSession — commanditaires connaissent leur cote", () => {
+  it("chaque commanditaire n'apparaît que sur sa catégorie, au-dessus de son plancher", () => {
+    const broc = createMockBrocante({ tier: 2, etoiles: 2, ambiance: "" });
+    const items = [];
+    for (let s = 0; s < 40; s++) items.push(...genererSession(12, [], broc));
+    const CAS = [
+      { arch: "joueur", cat: "Jeux & Loisirs", min: 0.85 },
+      { arch: "setdesigner", cat: "Maison", min: 0.8 },
+      { arch: "modeuse", cat: "Mode", min: 0.95 },
+      { arch: "esthete", cat: "Objets d'art", min: 0.95 },
+    ] as const;
+    for (const { arch, cat, min } of CAS) {
+      const duSpe = items.filter((it) => it.persona.archetype === arch);
+      expect(duSpe.length).toBeGreaterThan(0);
+      for (const it of duSpe) {
+        expect(it.objet.categorie).toBe(cat);
+        // facteurCoteMin ; tolérance de 1 € pour l'arrondi.
+        expect(it.prixVendeur).toBeGreaterThanOrEqual(
+          Math.round(it.objet.prixReferenceReel * min) - 1,
+        );
+      }
+    }
+  });
+});
