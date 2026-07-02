@@ -6,7 +6,11 @@ import {
 } from "@/data/objetTemplates";
 import type { Brocante, CelebriteEvenement } from "@/types/game";
 import { modificateurTendance } from "@/lib/tendances";
-import { tirerPersonaVendeur, calculerPrixMinAcceptDepuisPersona } from "@/lib/personas";
+import {
+  tirerPersonaVendeur,
+  calculerPrixMinAcceptDepuisPersona,
+  getAffiniteCategorie,
+} from "@/lib/personas";
 
 /**
  * Quand une célébrité visite la brocante : multiplicateur appliqué aux poids
@@ -57,6 +61,9 @@ export const SEUIL_COLERE_VENDEUR = 0.5;
  */
 export const BONUS_SPECIALISATION = 1.1;
 
+/** Surcote du bonimenteur : son prix affiché est gonflé, sa vraie cote est en dessous. */
+export const SURCOTE_BONIMENTEUR = 1.35;
+
 function instancier(
   template: ObjetTemplate,
   tendances: readonly Tendance[],
@@ -68,15 +75,22 @@ function instancier(
     1,
     Math.round(template.prixRefBase * FACTEUR_ETAT[etat]),
   );
-  const facteurVendeur = 0.6 + Math.random() * 0.8;
+  const persona = tirerPersonaVendeur(brocante, template.categorie);
+  const affinite = getAffiniteCategorie(persona.archetype);
+  // Un spécialiste connaît la cote de sa catégorie : il ne brade jamais.
+  const facteurCoteMin =
+    affinite && affinite.categorie === template.categorie
+      ? affinite.facteurCoteMin
+      : 0;
+  const facteurVendeur = Math.max(facteurCoteMin, 0.6 + Math.random() * 0.8);
   const modTend = modificateurTendance(template.categorie, tendances);
   const modSpec =
     brocante?.specialisation === template.categorie ? BONUS_SPECIALISATION : 1;
+  const surcote = persona.archetype === "bonimenteur" ? SURCOTE_BONIMENTEUR : 1;
   const prixVendeur = Math.max(
     1,
-    Math.round(prixReferenceReel * facteurVendeur * modTend * modSpec),
+    Math.round(prixReferenceReel * facteurVendeur * modTend * modSpec * surcote),
   );
-  const persona = tirerPersonaVendeur(brocante);
   const prixMinAccept = calculerPrixMinAcceptDepuisPersona(persona, prixVendeur);
 
   return {

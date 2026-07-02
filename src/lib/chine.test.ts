@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BONUS_SPECIALISATION,
   SEUIL_COLERE_VENDEUR,
+  SURCOTE_BONIMENTEUR,
   genererSession,
 } from "./chine";
 import { createMockBrocante } from "./__test-fixtures__/gameState";
@@ -107,6 +108,43 @@ describe("genererSession — déterminisme du statut initial", () => {
       expect(it.statut).toBe("disponible");
       expect(it.negociation).toBeNull();
       expect(it.negociationsTentees).toBe(0);
+    }
+  });
+});
+
+describe("genererSession — surcote bonimenteur", () => {
+  it("SURCOTE_BONIMENTEUR vaut 1.35", () => {
+    expect(SURCOTE_BONIMENTEUR).toBe(1.35);
+  });
+
+  it("les objets du bonimenteur sont surcotés (jamais de prix bradé)", () => {
+    const broc = createMockBrocante({ tier: 2, etoiles: 2, ambiance: "" });
+    const items = [];
+    for (let s = 0; s < 30; s++) items.push(...genererSession(12, [], broc));
+    const duBonimenteur = items.filter((it) => it.persona.archetype === "bonimenteur");
+    expect(duBonimenteur.length).toBeGreaterThan(0);
+    for (const it of duBonimenteur) {
+      // facteur min 0.6 × surcote 1.35 = 0.81 ; tolérance de 1 € pour l'arrondi.
+      expect(it.prixVendeur).toBeGreaterThanOrEqual(
+        Math.round(it.objet.prixReferenceReel * 0.81) - 1,
+      );
+    }
+  });
+});
+
+describe("genererSession — disquaire connaît la cote", () => {
+  it("le disquaire n'apparaît que sur des objets Musique, jamais bradés", () => {
+    const broc = createMockBrocante({ tier: 2, etoiles: 2, ambiance: "" });
+    const items = [];
+    for (let s = 0; s < 40; s++) items.push(...genererSession(12, [], broc));
+    const duDisquaire = items.filter((it) => it.persona.archetype === "disquaire");
+    expect(duDisquaire.length).toBeGreaterThan(0);
+    for (const it of duDisquaire) {
+      expect(it.objet.categorie).toBe("Musique");
+      // facteurCoteMin 0.95 ; tolérance de 1 € pour l'arrondi.
+      expect(it.prixVendeur).toBeGreaterThanOrEqual(
+        Math.round(it.objet.prixReferenceReel * 0.95) - 1,
+      );
     }
   });
 });
