@@ -6,6 +6,7 @@ import { HumeurGauge } from "@/components/mobile/HumeurGauge";
 import { proposerOffre, ouvrirNegociation } from "@/lib/negociation";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
+import { getNomVendeur } from "@/lib/personas";
 import type { NegociationState, ObjetEnVente } from "@/types/game";
 
 /**
@@ -107,7 +108,7 @@ export function ChineNegoDrawer({
       </div>
 
       {/* Bandeau nom pleine largeur, coins hauts arrondis (comme l'ancienne fiche). */}
-      <div style={namePlate}>Un vendeur</div>
+      <div style={namePlate}>{getNomVendeur(persona.archetype)}</div>
 
       <div style={accordionOuter(expanded)}>
         <div style={accordionInner}>
