@@ -27,18 +27,9 @@ Livres & Papeterie et Bricolage restent sans spécialiste.
 
 ## 2. Source unique noms + avatars
 
-`src/lib/personas.ts` importe `EXPEDITEURS` depuis
-`@/data/expediteursCourrier` et déclare un mapping :
-
-```ts
-/** Archétypes vendeurs incarnés par un commanditaire de quêtes. */
-const EXPEDITEUR_PAR_ARCHETYPE: Partial<Record<VendeurArchetypeId, string>> = {
-  joueur: "jeux-video",
-  setdesigner: "set-designer",
-  modeuse: "mode",
-  esthete: "art",
-};
-```
+`src/lib/personas.ts` et `src/lib/personaIllustrations.ts` importent
+`EXPEDITEURS` depuis `@/data/expediteursCourrier` et référencent directement
+les entrées (pas de mapping intermédiaire — il serait du code mort) :
 
 - `NOM_VENDEUR` référence `EXPEDITEURS[...].nom` pour ces 4 entrées (pas de
   copie de chaîne). Renommer un commanditaire côté courrier renomme le vendeur.
