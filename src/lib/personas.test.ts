@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   NOM_ARCHETYPE,
+  NOM_VENDEUR,
   calculerPrixMinAcceptDepuisPersona,
+  getNomVendeur,
   tirerPersonaVendeur,
 } from "./personas";
 import { createMockBrocante } from "./__test-fixtures__/gameState";
@@ -115,5 +117,69 @@ describe("calculerPrixMinAcceptDepuisPersona", () => {
       137,
     );
     expect(Number.isInteger(p)).toBe(true);
+  });
+});
+
+describe("NOM_VENDEUR", () => {
+  const archetypes = [
+    "naif", "bonhomme", "mamie", "malin", "grincheux", "antiquaire",
+    "pipelette", "videcave", "bonimenteur", "disquaire",
+  ] as const;
+
+  it("a un nom pour chacun des 10 archétypes", () => {
+    for (const a of archetypes) {
+      expect(NOM_VENDEUR[a]).toBeTruthy();
+    }
+  });
+
+  it("tous les noms sont distincts", () => {
+    const noms = new Set(Object.values(NOM_VENDEUR));
+    expect(noms.size).toBe(Object.keys(NOM_VENDEUR).length);
+  });
+
+  it("les noms validés par la spec", () => {
+    expect(NOM_VENDEUR.naif).toBe("P'tit Lucien");
+    expect(NOM_VENDEUR.bonhomme).toBe("Dédé la Bretelle");
+    expect(NOM_VENDEUR.mamie).toBe("Mamie Odette");
+    expect(NOM_VENDEUR.malin).toBe("Anatole la Combine");
+    expect(NOM_VENDEUR.grincheux).toBe("Père Anselme");
+    expect(NOM_VENDEUR.antiquaire).toBe("Madame Vasseur");
+    expect(NOM_VENDEUR.pipelette).toBe("Tata Monique");
+    expect(NOM_VENDEUR.videcave).toBe("Jeannot Vide-Cave");
+    expect(NOM_VENDEUR.bonimenteur).toBe("Oscar la Tchatche");
+    expect(NOM_VENDEUR.disquaire).toBe("Barnabé 33-Tours");
+  });
+});
+
+describe("getNomVendeur", () => {
+  it("retourne le nom du personnage", () => {
+    expect(getNomVendeur("grincheux")).toBe("Père Anselme");
+  });
+
+  it("retombe sur « Un vendeur » pour un archétype inconnu", () => {
+    expect(getNomVendeur("inconnu")).toBe("Un vendeur");
+  });
+});
+
+describe("tirerPersonaVendeur — nouveaux archétypes", () => {
+  it("les nouveaux archétypes courants sortent en tier 1", () => {
+    const broc = createMockBrocante({ tier: 1, etoiles: 1, ambiance: "" });
+    const counts: Record<string, number> = {};
+    for (let i = 0; i < 300; i++) {
+      const p = tirerPersonaVendeur(broc);
+      counts[p.archetype] = (counts[p.archetype] ?? 0) + 1;
+    }
+    // pipelette poids 14 et videcave poids 10 sur ~148 : quasi impossible de ne jamais sortir en 300 tirages.
+    expect(counts.pipelette ?? 0).toBeGreaterThan(0);
+    expect(counts.videcave ?? 0).toBeGreaterThan(0);
+  });
+
+  it("le disquaire ne sort jamais sans catégorie (poids 0 partout)", () => {
+    for (const tier of [1, 2, 3, 4] as const) {
+      const broc = createMockBrocante({ tier, etoiles: tier, ambiance: "" });
+      for (let i = 0; i < 100; i++) {
+        expect(tirerPersonaVendeur(broc).archetype).not.toBe("disquaire");
+      }
+    }
   });
 });

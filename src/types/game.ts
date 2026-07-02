@@ -422,7 +422,11 @@ export type VendeurArchetypeId =
   | "bonhomme"
   | "malin"
   | "mamie"
-  | "antiquaire";
+  | "antiquaire"
+  | "pipelette"
+  | "videcave"
+  | "bonimenteur"
+  | "disquaire";
 
 /** Sens de la négociation. */
 export type NegoMode = "achat" | "vente";
