@@ -11,10 +11,10 @@ const PERSONAS_VENDEUR_BASE: Record<
   malin:      { margePct: 0.25, elanPct: 0.20, patience: 5, tolerancePct: 0.50, sangFroid: 0.80 },
   grincheux:  { margePct: 0.10, elanPct: 0.25, patience: 3, tolerancePct: 0.30, sangFroid: 0.25 },
   antiquaire: { margePct: 0.12, elanPct: 0.45, patience: 4, tolerancePct: 0.35, sangFroid: 0.95 },
-  pipelette:   { margePct: 0.55, elanPct: 0.30, patience: 6, tolerancePct: 0.85, sangFroid: 0.98 },
-  videcave:    { margePct: 0.70, elanPct: 0.80, patience: 2, tolerancePct: 0.85, sangFroid: 0.70 },
+  pipelette:  { margePct: 0.55, elanPct: 0.30, patience: 6, tolerancePct: 0.85, sangFroid: 0.98 },
+  videcave:   { margePct: 0.70, elanPct: 0.80, patience: 2, tolerancePct: 0.85, sangFroid: 0.70 },
   bonimenteur: { margePct: 0.65, elanPct: 0.40, patience: 4, tolerancePct: 0.60, sangFroid: 0.75 },
-  disquaire:   { margePct: 0.15, elanPct: 0.35, patience: 5, tolerancePct: 0.40, sangFroid: 0.90 },
+  disquaire:  { margePct: 0.15, elanPct: 0.35, patience: 5, tolerancePct: 0.40, sangFroid: 0.90 },
 };
 
 /** Nom lisible affiché en sheet (titre + sous-titre). */
@@ -117,6 +117,9 @@ export function tirerPersonaVendeur(
   const biais = brocante ? BIAIS_AMBIANCE[brocante.ambiance] : undefined;
   if (biais) {
     for (const [arch, bonus] of Object.entries(biais) as [VendeurArchetypeId, number][]) {
+      // Un spécialiste n'apparaît jamais hors de sa catégorie : le biais d'ambiance ne s'applique pas s'il a une affinité qui ne correspond pas.
+      const aff = AFFINITE_CATEGORIE[arch];
+      if (aff && aff.categorie !== categorie) continue;
       base[arch] = (base[arch] ?? 0) + bonus;
     }
   }

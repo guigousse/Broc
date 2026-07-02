@@ -210,7 +210,15 @@ describe("affinité de catégorie", () => {
     for (let i = 0; i < 300; i++) {
       if (tirerPersonaVendeur(broc, "Musique").archetype === "disquaire") disquaire++;
     }
-    // boost 25 sur ~168 de poids total tier 2 → ~15 % attendu ; ≥ 5 est très conservateur.
+    // boost 25 sur 126 de poids total tier 2 (151 avec le boost) → ~16,6 % attendu ; ≥ 5 est très conservateur.
     expect(disquaire).toBeGreaterThanOrEqual(5);
+  });
+
+  it("le biais d'ambiance Vinyle ne fait pas sortir le disquaire hors Musique", () => {
+    const broc = createMockBrocante({ tier: 2, etoiles: 2, ambiance: "Vinyle" });
+    for (let i = 0; i < 200; i++) {
+      const p = tirerPersonaVendeur(broc, "Maison");
+      expect(p.archetype).not.toBe("disquaire");
+    }
   });
 });

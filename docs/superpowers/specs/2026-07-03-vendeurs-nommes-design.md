@@ -57,7 +57,9 @@ Poids de tirage par tier (`POIDS_PAR_TIER`) :
 | disquaire | 0 | 0 | 0 | 0 (spawn uniquement via affinité) |
 
 Biais d'ambiance additionnels (`BIAIS_AMBIANCE`) : Familial → pipelette +6 ;
-Vinyle → disquaire +10 (s'ajoute au bonus d'affinité).
+Vinyle → disquaire +10 (s'ajoute au bonus d'affinité). Ce biais Vinyle ne
+s'applique au disquaire que sur des objets de catégorie Musique — un
+spécialiste n'apparaît jamais hors de sa catégorie.
 
 ## 3. Mécanique d'affinité de catégorie
 
@@ -90,8 +92,9 @@ Dans `instancier()`, le persona est tiré **avant** le calcul de `prixVendeur`
 (réordonnancement ; l'affinité a de toute façon besoin de la catégorie, pas du
 prix). Si `archetype === "bonimenteur"`, le prix affiché est multiplié par
 **1.35**. Son `prixMinAccept` reste dérivé du prix gonflé via sa marge 0.65 →
-plancher ≈ 47 % du prix affiché. Effet gameplay : payer sans négocier = se faire
-avoir (~+35 % du juste prix) ; négocier fort = vraie affaire.
+plancher = 35 % du prix affiché (gonflé), soit ≈ 47 % du juste prix pré-surcote.
+Effet gameplay : payer sans négocier = se faire avoir (~+35 % du juste prix) ;
+négocier fort = vraie affaire.
 
 Constante exportée : `SURCOTE_BONIMENTEUR = 1.35`.
 
