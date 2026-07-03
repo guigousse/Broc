@@ -40,6 +40,8 @@ export interface ClientPersonnage {
   bonusPreference: number;
   malusEvitement: number;
   tierMin: 1 | 2 | 3;
+  /** Plafond de bourse absolu (€). Absent → dérivé de la classe de bourse. */
+  bourseMax?: number;
   // === Axes de négociation (mode vente) — calculés depuis durete & appetit ===
   margePct: number;
   elanPct: number;

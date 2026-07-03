@@ -23,6 +23,12 @@ export function tirerCelebrite(): CelebriteEvenement {
  * la faire apparaître à la vente. Très grosse bourse, peu de marchandage,
  * forte propension à acheter plusieurs pièces d'un coup.
  */
+/**
+ * Bourse de la célébrité : bien au-dessus de la classe « grosse » (2 000 €) —
+ * c'est le meilleur client du jeu — sans rendre liquides les pièces à 5 chiffres.
+ */
+export const BOURSE_CELEBRITE = 6000;
+
 export function buildCelebritePersonnage(c: CelebriteEvenement): ClientPersonnage {
   const appetitMin = 1.8;
   const appetitMax = 2.5;
@@ -44,6 +50,7 @@ export function buildCelebritePersonnage(c: CelebriteEvenement): ClientPersonnag
     bonusPreference: 0.3,
     malusEvitement: 0.2,
     tierMin: 1,
+    bourseMax: BOURSE_CELEBRITE,
     ...axes,
   };
 }

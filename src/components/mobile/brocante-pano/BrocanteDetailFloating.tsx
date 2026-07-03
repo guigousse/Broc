@@ -4,6 +4,7 @@ import { Zap } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
+import { bourseMoyenne } from "@/lib/vitrine";
 import type { ConditionInfo } from "@/lib/deblocage";
 import { CATEGORY_ICONS } from "./categoryIcons";
 
@@ -14,6 +15,8 @@ interface BrocanteDetailFloatingProps {
   peutEntrer: boolean;
   /** Conditions atomiques + drapeau "satisfaite" (uniquement si !debloquee). */
   conditions: ConditionInfo[];
+  /** Contexte : chinage (nb d'objets à chiner) ou vente (bourse moyenne des clients). */
+  destination: "chiner" | "vitrine";
 }
 
 const cardStyle: CSSProperties = {
@@ -226,6 +229,7 @@ export function BrocanteDetailFloating({
   debloquee,
   peutEntrer,
   conditions,
+  destination,
 }: BrocanteDetailFloatingProps) {
   const ThemeIcon = brocante.specialisation
     ? CATEGORY_ICONS[brocante.specialisation]
@@ -263,7 +267,16 @@ export function BrocanteDetailFloating({
       <p style={descStyle}>{brocante.description}</p>
       <div style={goldRuleStyle} aria-hidden />
       <div style={metaRowStyle}>
-        <span style={metaItemsStyle}>{brocante.taillePool} items</span>
+        {destination === "chiner" ? (
+          <span style={metaItemsStyle}>{brocante.taillePool} items</span>
+        ) : (
+          <span
+            style={metaItemsStyle}
+            aria-label={`Bourse moyenne des clients : ${bourseMoyenne(brocante.tier)} euros`}
+          >
+            Bourse moy. {bourseMoyenne(brocante.tier)} €
+          </span>
+        )}
         <span
           style={fraisBoxStyle(peutEntrer)}
           aria-label={`Entrée : ${fraisEntree(brocante)} euros et 1 énergie`}

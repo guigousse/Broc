@@ -3,7 +3,8 @@ import type { CelebriteEvenement } from "@/types/game";
 import { BROCANTES } from "@/data/brocantes";
 import { CELEBRITES } from "@/data/celebrites";
 import { PERIODE_TENDANCES_JOURS } from "./tendances";
-import { buildCelebritePersonnage, tirerCelebrite } from "./celebrite";
+import { BOURSE_CELEBRITE, buildCelebritePersonnage, tirerCelebrite } from "./celebrite";
+import { BOURSE_PAR_CLASSE } from "./vitrine";
 
 beforeEach(() => {
   vi.spyOn(Math, "random").mockReturnValue(0.5);
@@ -66,6 +67,12 @@ describe("buildCelebritePersonnage", () => {
 
   it("archetypeId = 'celebrite'", () => {
     expect(buildCelebritePersonnage(ev).archetypeId).toBe("celebrite");
+  });
+
+  it("a une bourse dédiée bien au-dessus de la classe grosse (meilleur client du jeu)", () => {
+    const p = buildCelebritePersonnage(ev);
+    expect(p.bourseMax).toBe(BOURSE_CELEBRITE);
+    expect(BOURSE_CELEBRITE).toBeGreaterThan(BOURSE_PAR_CLASSE.grosse);
   });
 
   it("ID stable (déterministe pour un même événement)", () => {

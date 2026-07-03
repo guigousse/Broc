@@ -6,7 +6,7 @@ import type {
   ObjetEnVitrine,
   Tendance,
 } from "@/types/game";
-import type { ClientPersonnage } from "@/data/clients";
+import { ALL_PERSONNAGES, type ClientPersonnage } from "@/data/clients";
 import { modificateurTendance } from "@/lib/tendances";
 import { proposerOffre } from "@/lib/negociation";
 
@@ -79,6 +79,35 @@ export function classeBourse(persona: ClientPersonnage): ClasseBourse {
   return "grosse";
 }
 
+/**
+ * Plafond de bourse absolu (€) par classe : quel que soit son appétit relatif,
+ * un client ne paie jamais plus que ce qu'il a en poche. Ancre la valeur des
+ * tiers (les belles pièces exigent des clients riches) et coupe l'inflation
+ * du flip de légendaires.
+ */
+export const BOURSE_PAR_CLASSE: Record<ClasseBourse, number> = {
+  petite: 80,
+  moyenne: 300,
+  grosse: 2000,
+};
+
+/** Bourse d'un persona : plafond explicite (célébrité) ou celui de sa classe. */
+export function bourseDe(persona: ClientPersonnage): number {
+  return persona.bourseMax ?? BOURSE_PAR_CLASSE[classeBourse(persona)];
+}
+
+/**
+ * Bourse moyenne des clients susceptibles de visiter une brocante de ce tier
+ * (vivier filtré par `tierMin`, comme `genererPoolClients`). Affichée au choix
+ * de la brocante en mode vente.
+ */
+export function bourseMoyenne(tier: 1 | 2 | 3 | 4): number {
+  const eligibles = ALL_PERSONNAGES.filter((p) => p.tierMin <= tier);
+  if (eligibles.length === 0) return 0;
+  const total = eligibles.reduce((s, p) => s + bourseDe(p), 0);
+  return Math.round(total / eligibles.length);
+}
+
 const CHANCE_MULTI = 0.2;
 /**
  * Modificateur appliqué au `prixMax` quand le client prend ≥ 2 objets : il veut
@@ -139,7 +168,8 @@ function calculerPrixMax(
     );
   }, 0);
   const modBundle = panier.length > 1 ? 1 + BONUS_BUNDLE : 1;
-  return Math.max(1, Math.round(brut * modBundle));
+  // Plafond absolu : l'appétit est un pourcentage, la bourse est un montant.
+  return Math.max(1, Math.min(Math.round(brut * modBundle), bourseDe(persona)));
 }
 
 /** Calcule le seuil de colère effectif pour ce panier (général + max bonus catégoriel). */
@@ -183,7 +213,8 @@ export function genererClientEvent(
   // dans une fourchette plausible pour sa bourse. Au-delà, il passe son chemin.
   const accessibles = vitrine.filter((it) => {
     const plafondClient =
-      it.objet.prixReferenceReel * persona.appetitMax * SEUIL_INTERET_ACHETEUR;
+      Math.min(it.objet.prixReferenceReel * persona.appetitMax, bourseDe(persona)) *
+      SEUIL_INTERET_ACHETEUR;
     return it.prixVente <= plafondClient;
   });
   if (accessibles.length === 0) return null;

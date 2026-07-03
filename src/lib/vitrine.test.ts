@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BONUS_SPECIALISATION_CLIENT,
+  BOURSE_PAR_CLASSE,
   CLIENT_INTERVALLE_MAX_SEC,
   CLIENT_INTERVALLE_MIN_SEC,
   DEFAULT_MODIFIERS,
+  bourseDe,
+  bourseMoyenne,
   classeBourse,
   genererClientEvent,
   personaDepuisClient,
@@ -228,5 +231,97 @@ describe("proposerOffreVente — Diplomate transforme fache en en_cours", () => 
       revelationDejaFaite: true,
     });
     expect(res.statut).toBe("fache");
+  });
+});
+
+/* ===================================================================== */
+/* Plafond de bourse par classe de client                                */
+/* ===================================================================== */
+
+describe("bourse des clients — plafond absolu", () => {
+  it("BOURSE_PAR_CLASSE définit des montants strictement croissants", () => {
+    expect(BOURSE_PAR_CLASSE.petite).toBeGreaterThan(0);
+    expect(BOURSE_PAR_CLASSE.moyenne).toBeGreaterThan(BOURSE_PAR_CLASSE.petite);
+    expect(BOURSE_PAR_CLASSE.grosse).toBeGreaterThan(BOURSE_PAR_CLASSE.moyenne);
+  });
+
+  it("bourseDe retourne la bourse de la classe du persona", () => {
+    expect(bourseDe(createMockClient({ appetitMax: 0.7 }))).toBe(BOURSE_PAR_CLASSE.petite);
+    expect(bourseDe(createMockClient({ appetitMax: 1.1 }))).toBe(BOURSE_PAR_CLASSE.moyenne);
+    expect(bourseDe(createMockClient({ appetitMax: 1.5 }))).toBe(BOURSE_PAR_CLASSE.grosse);
+  });
+
+  it("bourseDe respecte un bourseMax explicite (célébrité)", () => {
+    const c = createMockClient({ appetitMax: 2.5, bourseMax: 6000 });
+    expect(bourseDe(c)).toBe(6000);
+  });
+
+  it("le prixMax d'un client ne dépasse jamais sa bourse", () => {
+    // Grosse bourse (appétit 1,4-1,5) devant un objet de très haute valeur :
+    // sans plafond, prixMax ≈ 10 000 × 1,45 ; avec plafond → ≤ 2 000.
+    const c = createMockClient({ appetitMin: 1.4, appetitMax: 1.5 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 10000 },
+        prixVente: 1900,
+      }),
+    ];
+    const ev = genererClientEvent(c, vitrine);
+    expect(ev).not.toBeNull();
+    expect(ev!.prixMax).toBeLessThanOrEqual(BOURSE_PAR_CLASSE.grosse);
+  });
+
+  it("une petite bourse n'envisage pas un objet affiché loin au-dessus de ses moyens", () => {
+    // Avant plafond : plafond d'intérêt = 10 000 × 0,8 × 1,6 = 12 800 → il
+    // aurait « envisagé » un objet à 9 000 € qu'il ne peut pas payer.
+    const c = createMockClient({ appetitMin: 0.6, appetitMax: 0.8 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 10000 },
+        prixVente: 9000,
+      }),
+    ];
+    expect(genererClientEvent(c, vitrine)).toBeNull();
+  });
+
+  it("la bourse plafonne aussi un panier multi-objets (bonus bundle compris)", () => {
+    const c = createMockClient({ appetitMin: 1.4, appetitMax: 1.5, chanceMulti: 1 });
+    const vitrine = [
+      createMockObjetEnVitrine({ objet: { prixReferenceReel: 5000 }, prixVente: 1500 }),
+      createMockObjetEnVitrine({ objet: { prixReferenceReel: 5000 }, prixVente: 1500 }),
+    ];
+    const ev = genererClientEvent(c, vitrine);
+    expect(ev).not.toBeNull();
+    expect(ev!.panier.length).toBe(2);
+    expect(ev!.prixMax).toBeLessThanOrEqual(BOURSE_PAR_CLASSE.grosse);
+  });
+
+  it("sous le plafond, le comportement est inchangé", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1 });
+    const vitrine = [
+      createMockObjetEnVitrine({ objet: { prixReferenceReel: 100 }, prixVente: 50 }),
+    ];
+    const ev = genererClientEvent(c, vitrine);
+    expect(ev).not.toBeNull();
+    expect(ev!.mode).toBe("achat-direct");
+    // appétit figé à 1 (random 0.5), pas de préférence → prixMax = 100
+    expect(ev!.prixMax).toBe(100);
+  });
+});
+
+describe("bourseMoyenne — affichage par brocante", () => {
+  it("croît avec le tier (les grosses bourses n'arrivent qu'en tiers 3)", () => {
+    expect(bourseMoyenne(1)).toBeLessThan(bourseMoyenne(3));
+    expect(bourseMoyenne(2)).toBeLessThanOrEqual(bourseMoyenne(3));
+  });
+
+  it("les tiers 3 et 4 partagent le même vivier de clients", () => {
+    expect(bourseMoyenne(3)).toBe(bourseMoyenne(4));
+  });
+
+  it("vaut la moyenne des bourses des personas éligibles au tier", () => {
+    // Tier 1 : retraite (petite 80), étudiant (petite 80), touriste (grosse 2000),
+    // famille (moyenne 300), opportuniste (moyenne 300) → 2760 / 5 = 552.
+    expect(bourseMoyenne(1)).toBe(552);
   });
 });

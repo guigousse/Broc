@@ -262,6 +262,7 @@ export function BrocantePanorama({
               debloquee={selectedDebloquee}
               peutEntrer={selectedPeutEntrer}
               conditions={selectedConditions}
+              destination={destination}
             />
           </div>
         )}
