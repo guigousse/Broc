@@ -166,6 +166,7 @@ interface GameActionsValue {
   ameliorerStockage: () => { ok: boolean; raison?: string };
   definirPrixVenteSouhaite: (objetId: string, prix: number) => void;
   gagnerXP: (treeId: CompetenceTreeId, montant: number) => void;
+  gagnerXPBrocanteur: (montant: number, categorie?: CategorieObjet) => void;
   marquerVuTemplate: (templateId: string) => void;
   marquerVuDansCollection: (templateId: string) => void;
   marquerDejaPossedeTemplate: (templateId: string) => void;
@@ -1169,6 +1170,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const gagnerXPBrocanteur = useCallback(
+    (montant: number, categorie?: CategorieObjet) => {
+      if (montant <= 0) return;
+      setState((prev) => {
+        if (!prev) return prev;
+        const affinites = categorie
+          ? { ...prev.affinites, [categorie]: (prev.affinites[categorie] ?? 0) + 1 }
+          : prev.affinites;
+        return {
+          ...prev,
+          brocanteur: appliquerGainXPBrocanteur(prev.brocanteur, montant),
+          affinites,
+        };
+      });
+    },
+    [],
+  );
+
   const marquerVuTemplate = useCallback((templateId: string) => {
     setState((prev) =>
       prev
@@ -1453,6 +1472,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ameliorerStockage,
       definirPrixVenteSouhaite,
       gagnerXP,
+      gagnerXPBrocanteur,
       marquerVuTemplate,
       marquerVuDansCollection,
       marquerDejaPossedeTemplate,
@@ -1499,6 +1519,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ameliorerStockage,
       definirPrixVenteSouhaite,
       gagnerXP,
+      gagnerXPBrocanteur,
       marquerVuTemplate,
       marquerVuDansCollection,
       marquerDejaPossedeTemplate,
