@@ -50,6 +50,12 @@ import {
   appliquerGainXPBrocanteur,
   emptyAffinites,
   emptyBrocanteur,
+  POINTS_BONUS_CHAPITRE,
+  XP_DECOUVERTE_COLLECTION,
+  XP_QUETE_HEBDO,
+  XP_QUETE_PRINCIPALE,
+  XP_QUETE_QUOTIDIENNE,
+  XP_RESTAURATION_ETAPE,
 } from "@/lib/xp";
 import { aGenInfluence, peutRestaurerCategorie } from "@/lib/competences";
 import { tirerMeteo, tirerMeteoSemaine, indexJourSemaine } from "@/lib/meteo";
@@ -1105,6 +1111,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const gagnerXPBrocanteur = useCallback(
+    (montant: number, categorie?: CategorieObjet) => {
+      if (montant <= 0) return;
+      setState((prev) => {
+        if (!prev) return prev;
+        const affinites = categorie
+          ? { ...prev.affinites, [categorie]: (prev.affinites[categorie] ?? 0) + 1 }
+          : prev.affinites;
+        return {
+          ...prev,
+          brocanteur: appliquerGainXPBrocanteur(prev.brocanteur, montant),
+          affinites,
+        };
+      });
+    },
+    [],
+  );
+
   const recupererObjetRestaure = useCallback(
     (objetId: string): { ok: boolean; raison?: string } => {
       const current = stateRef.current;
@@ -1122,9 +1146,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const next = appliquerRecuperation(prev, objetId, now);
         return next ?? prev;
       });
+      gagnerXPBrocanteur(XP_RESTAURATION_ETAPE, objet.categorie);
       return { ok: true };
     },
-    [tempsConfiance],
+    [tempsConfiance, gagnerXPBrocanteur],
   );
 
   // Terminer une restauration via pub récompensée (fenêtre < 30 min). Appelée par
@@ -1147,9 +1172,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const next = appliquerRecuperation(prev, objetId, fin);
         return next ?? prev;
       });
+      gagnerXPBrocanteur(XP_RESTAURATION_ETAPE, objet.categorie);
       return { ok: true };
     },
-    [tempsConfiance],
+    [tempsConfiance, gagnerXPBrocanteur],
   );
 
   const gagnerXP = useCallback(
@@ -1164,24 +1190,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ...prev.competenceTrees,
             [treeId]: appliquerGainXP(tree, montant),
           },
-        };
-      });
-    },
-    [],
-  );
-
-  const gagnerXPBrocanteur = useCallback(
-    (montant: number, categorie?: CategorieObjet) => {
-      if (montant <= 0) return;
-      setState((prev) => {
-        if (!prev) return prev;
-        const affinites = categorie
-          ? { ...prev.affinites, [categorie]: (prev.affinites[categorie] ?? 0) + 1 }
-          : prev.affinites;
-        return {
-          ...prev,
-          brocanteur: appliquerGainXPBrocanteur(prev.brocanteur, montant),
-          affinites,
         };
       });
     },
@@ -1208,11 +1216,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const marquerDejaPossedeTemplate = useCallback((templateId: string) => {
-    setState((prev) =>
-      prev
-        ? { ...prev, collection: marquerDejaPossedeFn(prev.collection, templateId) }
-        : prev,
-    );
+    setState((prev) => {
+      if (!prev) return prev;
+      const dejaConnu = Object.values(prev.collection).some((slots) =>
+        slots.some((s) => s.templateId === templateId && s.dejaPossede),
+      );
+      const next = {
+        ...prev,
+        collection: marquerDejaPossedeFn(prev.collection, templateId),
+      };
+      if (dejaConnu) return next;
+      return {
+        ...next,
+        brocanteur: appliquerGainXPBrocanteur(next.brocanteur, XP_DECOUVERTE_COLLECTION),
+      };
+    });
   }, []);
 
   const donnerACollection = useCallback(
@@ -1389,9 +1407,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
         });
         return { ...credited, inventaireJoueur: invMaj, missions: missionsMaj };
       });
+      const categorieMission = courrier.payload.categorie;
+      const xpMission =
+        categorieMission === "principale"
+          ? XP_QUETE_PRINCIPALE
+          : categorieMission === "hebdomadaire"
+            ? XP_QUETE_HEBDO
+            : XP_QUETE_QUOTIDIENNE;
+      gagnerXPBrocanteur(xpMission);
+      if (categorieMission === "principale") {
+        // Bonus de points de compétence par chapitre livré (décision D4).
+        setState((prev) =>
+          prev
+            ? {
+                ...prev,
+                brocanteur: {
+                  ...prev.brocanteur,
+                  pointsDisponibles:
+                    prev.brocanteur.pointsDisponibles + POINTS_BONUS_CHAPITRE,
+                },
+              }
+            : prev,
+        );
+      }
       return { ok: true };
     },
-    [],
+    [gagnerXPBrocanteur],
   );
 
   const acheterGazette = useCallback((): { ok: boolean; raison?: string } => {

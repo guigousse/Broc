@@ -40,6 +40,7 @@ import {
   XP_VENTE_OBJET,
   catTreeId,
 } from "@/data/competences";
+import { XP_JUSTE_PRIX } from "@/lib/xp";
 import {
   aGenBonneReputation,
   aGenDiplomate,
@@ -162,6 +163,11 @@ export default function VitrineJourneePage() {
       ...prev,
       [treeId]: (prev[treeId] ?? 0) + montant,
     }));
+  };
+  /** XP de Brocanteur sans passer par un arbre de compétence (ex : juste prix). */
+  const gagnerXPBrocanteurLocal = (montant: number) => {
+    gagnerXPBrocanteur(montant);
+    setXpBrocanteurSession((prev) => prev + montant);
   };
   const fancyClientApparuRef = useRef(false);
   fancyClientApparuRef.current = fancyClientApparu;
@@ -472,6 +478,7 @@ export default function VitrineJourneePage() {
       ev.prixDemande,
     );
     enregistrerVentes(ev, ev.prixDemande);
+    gagnerXPBrocanteurLocal(XP_JUSTE_PRIX);
     ajouterJournal({
       heure: heureCourante(),
       texte: `${ev.persona.nom} achète ${describePanier(ev)} pour ${ev.prixDemande} €.`,
