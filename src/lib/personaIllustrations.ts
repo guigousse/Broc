@@ -18,7 +18,7 @@ const VENDEUR_ILLUSTRATION_MAP: Record<VendeurArchetypeId, string> = {
   videcave: ILLUSTRATION_PLACEHOLDER,
   bonimenteur: ILLUSTRATION_PLACEHOLDER,
   disquaire: ILLUSTRATION_PLACEHOLDER,
-  // Commanditaires de quêtes — avatar du courrier (pas encore de variante fâchée).
+  // Commanditaires de quêtes — avatar du courrier (source unique).
   joueur: EXPEDITEURS["jeux-video"].avatar ?? ILLUSTRATION_PLACEHOLDER,
   setdesigner: EXPEDITEURS["set-designer"].avatar ?? ILLUSTRATION_PLACEHOLDER,
   modeuse: EXPEDITEURS.mode.avatar ?? ILLUSTRATION_PLACEHOLDER,
@@ -36,10 +36,11 @@ const VENDEUR_ILLUSTRATION_FACHE_MAP: Record<VendeurArchetypeId, string> = {
   videcave: ILLUSTRATION_PLACEHOLDER,
   bonimenteur: ILLUSTRATION_PLACEHOLDER,
   disquaire: ILLUSTRATION_PLACEHOLDER,
-  joueur: EXPEDITEURS["jeux-video"].avatar ?? ILLUSTRATION_PLACEHOLDER,
-  setdesigner: EXPEDITEURS["set-designer"].avatar ?? ILLUSTRATION_PLACEHOLDER,
-  modeuse: EXPEDITEURS.mode.avatar ?? ILLUSTRATION_PLACEHOLDER,
-  esthete: EXPEDITEURS.art.avatar ?? ILLUSTRATION_PLACEHOLDER,
+  // Commanditaires de quêtes — variantes fâchées propres au chinage.
+  joueur: "/personas/commanditaires/jeux-video-fache.webp",
+  setdesigner: "/personas/commanditaires/set-designer-fache.webp",
+  modeuse: "/personas/commanditaires/mode-fache.webp",
+  esthete: "/personas/commanditaires/art-fache.webp",
 };
 
 /** Retourne le chemin de l'illustration d'un vendeur, ou undefined si l'archétype est inconnu. */
