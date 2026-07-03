@@ -45,7 +45,12 @@ import {
   expireMissions,
 } from "@/lib/courrier";
 import { prochainLundi } from "@/lib/calendrier";
-import { appliquerGainXP } from "@/lib/xp";
+import {
+  appliquerGainXP,
+  appliquerGainXPBrocanteur,
+  emptyAffinites,
+  emptyBrocanteur,
+} from "@/lib/xp";
 import { aGenInfluence, peutRestaurerCategorie } from "@/lib/competences";
 import { tirerMeteo, tirerMeteoSemaine, indexJourSemaine } from "@/lib/meteo";
 import { tirerCelebrite } from "@/lib/celebrite";
@@ -468,6 +473,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       prochainRafraichissementTendances: prochainLundi(INITIAL_JOUR + 1),
       competenceTrees: emptyAllTrees(),
       competencesDebloquees: [],
+      brocanteur: emptyBrocanteur(),
+      affinites: emptyAffinites(),
       collection: initCollection(),
       gazetteAchetee: false,
       bossDebloqueSeen: false,

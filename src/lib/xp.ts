@@ -1,4 +1,7 @@
-import type { CompetenceTreeState } from "@/types/game";
+import { CATEGORIES } from "@/data/categories";
+import type { BrocanteurState, CategorieObjet, CompetenceTreeState } from "@/types/game";
+
+export type { BrocanteurState };
 
 export const XP_PAR_NIVEAU = 100;
 
@@ -30,12 +33,6 @@ export function progressionNiveau(tree: CompetenceTreeState): number {
 }
 
 /* === Niveau de Brocanteur (global) ==================================== */
-
-export interface BrocanteurState {
-  xp: number;
-  niveau: number;
-  pointsDisponibles: number;
-}
 
 /** ΔXP(N) = PENTE·N + PALIER_1 − PENTE  (N=1 → 100, N=2 → 160, …). */
 export const XP_BROCANTEUR_PALIER_1 = 100;
@@ -91,3 +88,13 @@ export const XP_QUETE_HEBDO = 75;
 export const XP_QUETE_PRINCIPALE = 100;
 /** Premier exemplaire d'un template ajouté à la collection. */
 export const XP_DECOUVERTE_COLLECTION = 10;
+
+export function emptyBrocanteur(): BrocanteurState {
+  return { xp: 0, niveau: 0, pointsDisponibles: 0 };
+}
+
+export function emptyAffinites(): Record<CategorieObjet, number> {
+  const out = {} as Record<CategorieObjet, number>;
+  for (const c of CATEGORIES) out[c] = 0;
+  return out;
+}

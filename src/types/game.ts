@@ -226,6 +226,10 @@ export interface GameState {
   gazetteAchetee: boolean;
   competenceTrees: Record<CompetenceTreeId, CompetenceTreeState>;
   competencesDebloquees: CompetenceId[];
+  /** Niveau global du joueur (Niveau de Brocanteur) : XP, niveau, points de compétence. */
+  brocanteur: BrocanteurState;
+  /** Nombre de transactions (achats + ventes) par catégorie — gate d'affinité des paliers 2-3. */
+  affinites: Record<CategorieObjet, number>;
   collection: Record<CategorieObjet, CollectionSlot[]>;
   /** Vrai si la modale d'annonce du déblocage du boss a déjà été montrée. */
   bossDebloqueSeen: boolean;
@@ -280,6 +284,12 @@ export type CompetenceId = string;
 export type CompetenceTreeId = string;
 
 export interface CompetenceTreeState {
+  xp: number;
+  niveau: number;
+  pointsDisponibles: number;
+}
+
+export interface BrocanteurState {
   xp: number;
   niveau: number;
   pointsDisponibles: number;
