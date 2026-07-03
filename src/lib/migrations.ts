@@ -31,6 +31,7 @@ import { ALL_TEMPLATES } from "@/data/objetTemplates";
 import { OLD_TO_NEW_TEMPLATE_ID } from "@/data/templateIdRenames";
 import { reconstruireGrandLivre } from "./grandLivre";
 import { ENERGIE_MAX } from "@/lib/energie";
+import { appliquerGainXPBrocanteur, emptyAffinites, emptyBrocanteur } from "@/lib/xp";
 
 /**
  * Remappe en profondeur tout ancien templateId (avant l'harmonisation des noms
@@ -83,7 +84,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -517,5 +518,47 @@ function appliquerMigrations(loaded: GameState): GameState {
       typeof (loaded as Partial<GameState>).energieDerniereMaj === "number"
         ? (loaded as GameState).energieDerniereMaj
         : Date.now(),
+    brocanteur: (() => {
+      const b = (loaded as Partial<GameState>).brocanteur;
+      if (
+        b &&
+        typeof b.xp === "number" &&
+        typeof b.niveau === "number" &&
+        typeof b.pointsDisponibles === "number"
+      ) {
+        return b; // save déjà v8 : on ne recalcule pas (idempotence).
+      }
+      const totalXP = Object.values(loaded.competenceTrees ?? {}).reduce(
+        (acc, t) => acc + (typeof t?.xp === "number" ? t.xp : 0),
+        0,
+      );
+      // Niveau dérivé de la nouvelle courbe ; points à 0 (l'économie de
+      // points reste portée par les arbres jusqu'à la migration du plan 2).
+      const converti = appliquerGainXPBrocanteur(emptyBrocanteur(), totalXP);
+      return { ...converti, pointsDisponibles: 0 };
+    })(),
+    affinites: (() => {
+      const a = (loaded as Partial<GameState>).affinites;
+      if (a && typeof a === "object") {
+        const base = emptyAffinites();
+        for (const cat of CATEGORIES) {
+          const v = (a as Record<string, unknown>)[cat];
+          if (typeof v === "number" && Number.isFinite(v) && v >= 0) {
+            base[cat] = Math.floor(v);
+          }
+        }
+        return base;
+      }
+      // Backfill depuis l'historique migré : 1 par achat + 1 par vente.
+      const base = emptyAffinites();
+      for (const s of historique) {
+        if (s.type === "chinage") {
+          for (const ach of s.achats) base[ach.categorie] += 1;
+        } else {
+          for (const v of s.ventes) base[v.categorie] += 1;
+        }
+      }
+      return base;
+    })(),
   };
 }

@@ -237,8 +237,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 7", () => {
-    expect(SAVE_VERSION).toBe(7);
+  it("SAVE_VERSION incrémenté à 8", () => {
+    expect(SAVE_VERSION).toBe(8);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -448,6 +448,65 @@ describe("migration quêtes périodiques (v7)", () => {
     } as unknown as Parameters<typeof migrerSauvegarde>[0];
     const migre = migrerSauvegarde(dejaV7);
     expect(migre.quetesPeriodiques.quotidien.cle).toBe("2026-06-25");
+  });
+});
+
+/**
+ * Fabrique une save "v7" : un GameState complet auquel on retire `brocanteur`
+ * et `affinites` (champs requis apparus en v8), pour simuler une vieille
+ * sauvegarde chargée par une build antérieure au Niveau de Brocanteur.
+ */
+function fabriqueSaveV7(patch: Partial<GameState> = {}): GameState {
+  const complet = createMockGameState(patch);
+  const { brocanteur: _brocanteur, affinites: _affinites, ...sansNiveau } =
+    complet;
+  return { ...sansNiveau, version: 7 } as unknown as GameState;
+}
+
+describe("migration v8 — Niveau de Brocanteur", () => {
+  it("backfille brocanteur depuis la somme des XP d'arbres", () => {
+    const save = fabriqueSaveV7();
+    save.competenceTrees = {
+      ...save.competenceTrees,
+      general: { xp: 150, niveau: 1, pointsDisponibles: 0 },
+      "cat.Musique": { xp: 350, niveau: 3, pointsDisponibles: 1 },
+    };
+    const migre = migrerSauvegarde(save);
+    // 150 + 350 = 500 XP → courbe 30N²+70N : niveau 3 (seuil 480), pas 4 (760)
+    expect(migre.brocanteur).toEqual({ xp: 500, niveau: 3, pointsDisponibles: 0 });
+    expect(migre.version).toBe(8);
+  });
+
+  it("recalcule les affinités depuis l'historique", () => {
+    const save = fabriqueSaveV7();
+    (save as unknown as { historique: unknown[] }).historique = [
+      {
+        id: "s1", type: "chinage", jour: 1, timestamp: 1, brocanteId: "b",
+        brocanteNom: "B", xpGagne: {},
+        achats: [
+          { templateId: "t1", nom: "Vinyle", categorie: "Musique", etat: "Bon", prixReferenceReel: 10, prixPaye: 5 },
+          { templateId: "t2", nom: "Robe", categorie: "Mode", etat: "Bon", prixReferenceReel: 10, prixPaye: 5 },
+        ],
+      },
+      {
+        id: "s2", type: "vente", jour: 2, timestamp: 2, niveauCamion: 1, loyer: 0,
+        invendus: 0, xpGagne: {},
+        ventes: [
+          { templateId: "t1", nom: "Vinyle", categorie: "Musique", etat: "Bon", prixReferenceReel: 10, prixVente: 20, prixAchat: 5 },
+        ],
+      },
+    ];
+    const migre = migrerSauvegarde(save);
+    expect(migre.affinites["Musique"]).toBe(2); // 1 achat + 1 vente
+    expect(migre.affinites["Mode"]).toBe(1);
+    expect(migre.affinites["Maison"]).toBe(0);
+  });
+
+  it("idempotente : une save v8 rechargée ne change pas brocanteur/affinites", () => {
+    const migre1 = migrerSauvegarde(fabriqueSaveV7());
+    const migre2 = migrerSauvegarde(migre1);
+    expect(migre2.brocanteur).toEqual(migre1.brocanteur);
+    expect(migre2.affinites).toEqual(migre1.affinites);
   });
 });
 
