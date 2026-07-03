@@ -22,7 +22,7 @@ describe("notifsRestauration (pur)", () => {
     ]);
     expect(specs.map((s) => s.atMs)).toEqual([5000, 8000]);
     expect(specs[0].body).toContain("Vase");
-    expect(specs[0].sound).toBe("default");
+    expect(specs[0].sound).toBe("marteau.wav");
   });
 
   it("ignore les objets déjà terminés (finMs <= now)", () => {

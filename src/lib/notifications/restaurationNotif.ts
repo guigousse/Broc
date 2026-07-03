@@ -23,7 +23,7 @@ export function notifsRestauration(
       id: NOTIF_IDS.RESTAURATION[i],
       title: "Atelier",
       body: `« ${o.nom} » est restauré ✓`,
-      sound: "default",
+      sound: "marteau.wav",
       atMs: o.finMs,
     }));
 }

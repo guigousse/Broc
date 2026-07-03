@@ -431,13 +431,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
     void synchroniserNotifsRestauration(objets, Date.now());
   }, [isHydrated, restauKey, tempsConfiance]);
 
-  // Notif « Nouvelles quêtes » : programme aux prochains resets (minuit / lundi).
-  // Relancée quand un lot change de clé. Échéances déjà en horloge murale (periode.ts).
+  // Notifs « Nouvelles quêtes » (8h, décalées du reset minuit) + rappel du soir
+  // (19h) si le lot du jour/de la semaine a encore une mission active. Relancée
+  // sur changement de lot (nouveau cycle) ou de statut (livraison → annule le
+  // rappel devenu inutile). Échéances en horloge murale (periode.ts).
   const quetesCles = `${state?.quetesPeriodiques.quotidien.cle ?? ""}|${state?.quetesPeriodiques.hebdo.cle ?? ""}`;
+  const quotidienIds = new Set(state?.quetesPeriodiques.quotidien.courrierIds ?? []);
+  const hebdoIds = new Set(state?.quetesPeriodiques.hebdo.courrierIds ?? []);
+  const quotidienNonTerminee = (state?.missions ?? []).some(
+    (m) => quotidienIds.has(m.courrierId) && m.statut === "active",
+  );
+  const hebdoNonTerminee = (state?.missions ?? []).some(
+    (m) => hebdoIds.has(m.courrierId) && m.statut === "active",
+  );
   useEffect(() => {
     if (!isHydrated) return;
-    void synchroniserNotifsQuetes(Date.now());
-  }, [isHydrated, quetesCles]);
+    void synchroniserNotifsQuetes(Date.now(), { quotidienNonTerminee, hebdoNonTerminee });
+  }, [isHydrated, quetesCles, quotidienNonTerminee, hebdoNonTerminee]);
 
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {
