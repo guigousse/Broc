@@ -4,7 +4,7 @@ import { EXPEDITEURS } from "@/data/expediteursCourrier";
 /** Au-dessus de ce seuil d'humeur (0–1), le vendeur est représenté fâché. */
 export const HUMEUR_FACHE_SEUIL = 0.75;
 
-/** Placeholder tant que les illustrations des nouveaux vendeurs ne sont pas générées. */
+/** Repli si un avatar de commanditaire venait à manquer (champ optionnel). */
 const ILLUSTRATION_PLACEHOLDER = "/personas/vendeur-mystere.webp";
 
 const VENDEUR_ILLUSTRATION_MAP: Record<VendeurArchetypeId, string> = {
@@ -14,10 +14,10 @@ const VENDEUR_ILLUSTRATION_MAP: Record<VendeurArchetypeId, string> = {
   malin: "/personas/vendeur-malin.webp",
   grincheux: "/personas/vendeur-grincheux.webp",
   antiquaire: "/personas/vendeur-antiquaire.webp",
-  pipelette: ILLUSTRATION_PLACEHOLDER,
-  videcave: ILLUSTRATION_PLACEHOLDER,
-  bonimenteur: ILLUSTRATION_PLACEHOLDER,
-  disquaire: ILLUSTRATION_PLACEHOLDER,
+  pipelette: "/personas/vendeur-pipelette.webp",
+  videcave: "/personas/vendeur-videcave.webp",
+  bonimenteur: "/personas/vendeur-bonimenteur.webp",
+  disquaire: "/personas/vendeur-disquaire.webp",
   // Commanditaires de quêtes — avatar du courrier (source unique).
   joueur: EXPEDITEURS["jeux-video"].avatar ?? ILLUSTRATION_PLACEHOLDER,
   setdesigner: EXPEDITEURS["set-designer"].avatar ?? ILLUSTRATION_PLACEHOLDER,
@@ -32,10 +32,10 @@ const VENDEUR_ILLUSTRATION_FACHE_MAP: Record<VendeurArchetypeId, string> = {
   malin: "/personas/vendeur-malin-fache.webp",
   grincheux: "/personas/vendeur-grincheux-fache.webp",
   antiquaire: "/personas/vendeur-antiquaire-fache.webp",
-  pipelette: ILLUSTRATION_PLACEHOLDER,
-  videcave: ILLUSTRATION_PLACEHOLDER,
-  bonimenteur: ILLUSTRATION_PLACEHOLDER,
-  disquaire: ILLUSTRATION_PLACEHOLDER,
+  pipelette: "/personas/vendeur-pipelette-fache.webp",
+  videcave: "/personas/vendeur-videcave-fache.webp",
+  bonimenteur: "/personas/vendeur-bonimenteur-fache.webp",
+  disquaire: "/personas/vendeur-disquaire-fache.webp",
   // Commanditaires de quêtes — variantes fâchées propres au chinage.
   joueur: "/personas/commanditaires/jeux-video-fache.webp",
   setdesigner: "/personas/commanditaires/set-designer-fache.webp",
