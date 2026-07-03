@@ -90,6 +90,7 @@ export default function VitrineJourneePage() {
     enregistrerSession,
     sauverTempsVitrine,
     gagnerXP,
+    gagnerXPBrocanteur,
     marquerVuTemplate,
   } = useGame();
   const { startCrowd, stopCrowd } = useSettings();
@@ -146,9 +147,17 @@ export default function VitrineJourneePage() {
   const [revelationFaite, setRevelationFaite] = useState(false);
   const [bravoTout, setBravoTout] = useState(false);
   const [xpSession, setXpSession] = useState<Record<string, number>>({});
+  /** XP de Brocanteur gagnée localement durant la session. */
+  const [xpBrocanteurSession, setXpBrocanteurSession] = useState(0);
 
-  const gagnerXPLocal = (treeId: string, montant: number) => {
+  const gagnerXPLocal = (
+    treeId: string,
+    montant: number,
+    categorie?: CategorieObjet,
+  ) => {
     gagnerXP(treeId, montant);
+    gagnerXPBrocanteur(montant, categorie);
+    setXpBrocanteurSession((prev) => prev + montant);
     setXpSession((prev) => ({
       ...prev,
       [treeId]: (prev[treeId] ?? 0) + montant,
@@ -280,12 +289,22 @@ export default function VitrineJourneePage() {
         ventes: ventesEffectuees,
         invendus: tailleInvendus,
         xpGagne: xpSession,
+        xpBrocanteur: xpBrocanteurSession,
       });
     }
 
     viderVitrine();
     avancerJour();
-  }, [journeeFinie, viderVitrine, avancerJour, enregistrerSession, state, ventesEffectuees]);
+  }, [
+    journeeFinie,
+    viderVitrine,
+    avancerJour,
+    enregistrerSession,
+    state,
+    ventesEffectuees,
+    xpSession,
+    xpBrocanteurSession,
+  ]);
   terminerJourneeRef.current = terminerJournee;
 
   // Boucle de tick : décrémente le temps et déclenche les clients
@@ -443,7 +462,7 @@ export default function VitrineJourneePage() {
     setVentesEffectuees((prev) => [...prev, ...nouvelles]);
     // XP par objet vendu, par catégorie
     for (const p of ev.panier) {
-      gagnerXPLocal(catTreeId(p.objet.categorie), XP_VENTE_OBJET);
+      gagnerXPLocal(catTreeId(p.objet.categorie), XP_VENTE_OBJET, p.objet.categorie);
     }
   };
 

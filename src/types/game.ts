@@ -365,6 +365,8 @@ export interface SessionChinage {
   achats: AchatHistorique[];
   /** XP gagné pendant cette session, indexé par arbre. Vide si pré-migration. */
   xpGagne: Record<CompetenceTreeId, number>;
+  /** XP de Brocanteur gagnée pendant la session (absent sur les vieilles saves). */
+  xpBrocanteur?: number;
 }
 
 export interface SessionVente {
@@ -377,6 +379,8 @@ export interface SessionVente {
   ventes: VenteHistorique[];
   invendus: number;
   xpGagne: Record<CompetenceTreeId, number>;
+  /** XP de Brocanteur gagnée pendant la session (absent sur les vieilles saves). */
+  xpBrocanteur?: number;
 }
 
 export type Session = SessionChinage | SessionVente;

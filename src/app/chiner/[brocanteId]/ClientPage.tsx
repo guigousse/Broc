@@ -33,7 +33,7 @@ import {
   XP_NEGOCIATION_REUSSIE_GENERAL,
   catTreeId,
 } from "@/data/competences";
-import type { AchatHistorique, ObjetEnVente } from "@/types/game";
+import type { AchatHistorique, CategorieObjet, ObjetEnVente } from "@/types/game";
 
 export default function SessionChinePage() {
   const router = useRouter();
@@ -46,6 +46,7 @@ export default function SessionChinePage() {
     avancerJour,
     enregistrerSession,
     gagnerXP,
+    gagnerXPBrocanteur,
     marquerVuTemplate,
     marquerDejaPossedeTemplate,
     payerFraisBrocante,
@@ -75,6 +76,8 @@ export default function SessionChinePage() {
   const [resumeOuvert, setResumeOuvert] = useState(false);
   /** XP gagnée localement durant la session, par arbre. */
   const [xpSession, setXpSession] = useState<Record<string, number>>({});
+  /** XP de Brocanteur gagnée localement durant la session. */
+  const [xpBrocanteurSession, setXpBrocanteurSession] = useState(0);
   /** ID de l'objet dont la négociation est ouverte dans le BottomSheet. */
   const [negoOuverte, setNegoOuverte] = useState<string | null>(null);
   /** Le vendeur mystère est-il présent dans cette session (tiré à l'entrée) ? */
@@ -84,8 +87,14 @@ export default function SessionChinePage() {
   /** Vrai une fois la boîte mystère réclamée dans cette session (masque le bouton pub). */
   const [boiteReclamee, setBoiteReclamee] = useState(false);
 
-  const gagnerXPLocal = (treeId: string, montant: number) => {
+  const gagnerXPLocal = (
+    treeId: string,
+    montant: number,
+    categorie?: CategorieObjet,
+  ) => {
     gagnerXP(treeId, montant);
+    gagnerXPBrocanteur(montant, categorie);
+    setXpBrocanteurSession((prev) => prev + montant);
     setXpSession((prev) => ({
       ...prev,
       [treeId]: (prev[treeId] ?? 0) + montant,
@@ -203,7 +212,7 @@ export default function SessionChinePage() {
     ajusterBudget(-prix);
     ajouterObjet({ ...it.objet, prixAchat: prix });
     marquerDejaPossedeTemplate(it.objet.templateId);
-    gagnerXPLocal(catTreeId(it.objet.categorie), XP_ACHAT_OBJET);
+    gagnerXPLocal(catTreeId(it.objet.categorie), XP_ACHAT_OBJET, it.objet.categorie);
     setItem(it.id, { statut: "achete" });
     setAchats((prev) => [
       ...prev,
@@ -239,6 +248,7 @@ export default function SessionChinePage() {
         brocanteNom: brocante.nom,
         achats,
         xpGagne: xpSession,
+        xpBrocanteur: xpBrocanteurSession,
       });
     }
     avancerJour();
