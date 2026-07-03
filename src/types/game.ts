@@ -270,6 +270,9 @@ export interface GameState {
   /** Suivi des boîtes mystère réclamées le jour de jeu courant
    *  (pilote la probabilité d'apparition décroissante). Absent = aucune. */
   boiteMystere?: { jour: number; reclamees: number };
+  /** Pubs « +1 énergie » vues ce jour calendaire local (plafond quotidien,
+   *  clé YYYY-MM-DD en temps de confiance). Absent = aucune aujourd'hui. */
+  pubsEnergie?: { cle: string; n: number };
 }
 
 export type CompetenceId = string;

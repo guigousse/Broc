@@ -6,7 +6,9 @@ import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import {
   ENERGIE_MAX,
+  PUBS_ENERGIE_MAX_PAR_JOUR,
   energieCourante,
+  pubsEnergieRestantes,
   secondesAvantProchaine,
 } from "@/lib/energie";
 import { getAdProvider } from "@/lib/ads/adProvider";
@@ -56,7 +58,9 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
   const now = tempsConfiance() ?? Date.now();
   const energie = energieCourante(state, now);
   const restantSec = secondesAvantProchaine(state, now);
-  const pubIndisponible = enCours;
+  const pubsRestantes = pubsEnergieRestantes(state.pubsEnergie, now);
+  // Quota épuisé : on bloque AVANT de lancer la pub (jamais de pub gâchée).
+  const pubIndisponible = enCours || pubsRestantes <= 0;
 
   const regarderPub = async () => {
     if (pubIndisponible) return;
@@ -121,7 +125,11 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
           }}
         >
           <Zap size={16} />
-          {enCours ? "Pub en cours…" : "Regarder une pub — +1 ⚡"}
+          {enCours
+            ? "Pub en cours…"
+            : pubsRestantes <= 0
+              ? "Plus de pub aujourd'hui — reviens demain"
+              : `Regarder une pub — +1 ⚡ (${pubsRestantes}/${PUBS_ENERGIE_MAX_PAR_JOUR})`}
         </button>
       </div>
     </div>

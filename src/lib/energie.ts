@@ -69,3 +69,43 @@ export function secondesAvantPlein(
   return prochaine + paliersRestants * (RECHARGE_INTERVAL_MS / 1000);
 }
 
+
+/* === Pubs énergie : plafond quotidien ================================== */
+
+/**
+ * Nombre max de pubs « +1 énergie » par jour calendaire local. Petit plafond
+ * volontaire : hygiène vis-à-vis des régies (trafic répétitif = invalid
+ * traffic) et garde-fou d'économie — la pub complète la régénération, elle ne
+ * la remplace pas.
+ */
+export const PUBS_ENERGIE_MAX_PAR_JOUR = 5;
+
+/** Compteur du jour : clé de jour local (YYYY-MM-DD) + nombre de pubs vues. */
+export type PubsEnergieJour = { cle: string; n: number };
+
+/** Clé de jour calendaire local — même convention que les quêtes quotidiennes. */
+function cleJour(now: number): string {
+  const d = new Date(now);
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+/** Pubs énergie encore disponibles aujourd'hui. `now` = temps de confiance. */
+export function pubsEnergieRestantes(
+  pubs: PubsEnergieJour | undefined,
+  now: number,
+): number {
+  const n = pubs && pubs.cle === cleJour(now) ? pubs.n : 0;
+  return Math.max(0, PUBS_ENERGIE_MAX_PAR_JOUR - n);
+}
+
+/** Enregistre une pub vue (bascule de compteur si le jour a changé). */
+export function enregistrerPubEnergie(
+  pubs: PubsEnergieJour | undefined,
+  now: number,
+): PubsEnergieJour {
+  const cle = cleJour(now);
+  const n = pubs && pubs.cle === cle ? pubs.n : 0;
+  return { cle, n: n + 1 };
+}

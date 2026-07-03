@@ -78,6 +78,8 @@ import { audioManager } from "@/lib/audio/audioManager";
 import {
   ENERGIE_MAX,
   ENERGIE_PAR_PUB,
+  enregistrerPubEnergie,
+  pubsEnergieRestantes,
   secondesAvantPlein,
   settleEnergie,
 } from "@/lib/energie";
@@ -180,7 +182,8 @@ interface GameActionsValue {
   tempsConfiance: () => number | null;
   /** Retire `n` énergie (settle d'abord ; jamais < 0). */
   consommerEnergie: (n: number) => void;
-  /** Crédite +ENERGIE_PAR_PUB et incrémente le compteur de pubs du jour. No-op au plafond. */
+  /** Crédite +ENERGIE_PAR_PUB et incrémente le compteur de pubs du jour.
+   *  No-op au plafond d'énergie comme au plafond quotidien de pubs. */
   crediterEnergiePub: () => void;
   /** Réclame une boîte mystère : ajoute l'objet (si place), marque la collection et incrémente le compteur du jour. Renvoie false si le stockage est plein. */
   reclamerBoiteMystere: (objet: Objet) => boolean;
@@ -285,11 +288,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => {
       if (!prev) return prev;
       const now = tempsConfiance() ?? Date.now();
+      // Plafond quotidien : l'UI bloque avant la pub, ceci couvre la course.
+      if (pubsEnergieRestantes(prev.pubsEnergie, now) <= 0) return prev;
       const settled = settleEnergie(prev, now);
       return {
         ...prev,
         ...settled,
         energie: Math.min(ENERGIE_MAX, settled.energie + ENERGIE_PAR_PUB),
+        pubsEnergie: enregistrerPubEnergie(prev.pubsEnergie, now),
       };
     });
   }, [tempsConfiance]);

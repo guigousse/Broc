@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   ENERGIE_MAX,
+  PUBS_ENERGIE_MAX_PAR_JOUR,
   RECHARGE_INTERVAL_MS,
+  enregistrerPubEnergie,
+  pubsEnergieRestantes,
   settleEnergie,
   energieCourante,
   secondesAvantProchaine,
@@ -90,5 +93,52 @@ describe("secondesAvantPlein", () => {
     const r = secondesAvantPlein(etat({ energie: 3 }), T0 + 10 * 60 * 1000);
     // 20 min pour le prochain +1, puis 1 palier de 30 min → 50 min.
     expect(r).toBe(20 * 60 + 30 * 60);
+  });
+});
+
+/* ===================================================================== */
+/* Plafond quotidien des pubs énergie (conformité régies publicitaires)  */
+/* ===================================================================== */
+
+describe("pubs énergie — plafond quotidien", () => {
+  // 3 juillet 2026, 10 h heure locale (clé de jour local, comme les quêtes).
+  const MATIN = new Date(2026, 6, 3, 10, 0, 0).getTime();
+  const SOIR = new Date(2026, 6, 3, 23, 30, 0).getTime();
+  const LENDEMAIN = new Date(2026, 6, 4, 0, 5, 0).getTime();
+
+  it("le plafond est petit et positif (hygiène régie, pas un robinet)", () => {
+    expect(PUBS_ENERGIE_MAX_PAR_JOUR).toBeGreaterThanOrEqual(1);
+    expect(PUBS_ENERGIE_MAX_PAR_JOUR).toBeLessThanOrEqual(10);
+  });
+
+  it("sans compteur, tout le quota du jour est disponible", () => {
+    expect(pubsEnergieRestantes(undefined, MATIN)).toBe(PUBS_ENERGIE_MAX_PAR_JOUR);
+  });
+
+  it("chaque pub enregistrée décrémente le quota du même jour", () => {
+    let pubs = enregistrerPubEnergie(undefined, MATIN);
+    expect(pubsEnergieRestantes(pubs, SOIR)).toBe(PUBS_ENERGIE_MAX_PAR_JOUR - 1);
+    pubs = enregistrerPubEnergie(pubs, SOIR);
+    expect(pubsEnergieRestantes(pubs, SOIR)).toBe(PUBS_ENERGIE_MAX_PAR_JOUR - 2);
+  });
+
+  it("le quota ne descend jamais sous zéro", () => {
+    let pubs = enregistrerPubEnergie(undefined, MATIN);
+    for (let i = 0; i < PUBS_ENERGIE_MAX_PAR_JOUR + 3; i++) {
+      pubs = enregistrerPubEnergie(pubs, MATIN);
+    }
+    expect(pubsEnergieRestantes(pubs, MATIN)).toBe(0);
+  });
+
+  it("le compteur repart à zéro au minuit local suivant", () => {
+    let pubs = enregistrerPubEnergie(undefined, MATIN);
+    for (let i = 0; i < PUBS_ENERGIE_MAX_PAR_JOUR; i++) {
+      pubs = enregistrerPubEnergie(pubs, SOIR);
+    }
+    expect(pubsEnergieRestantes(pubs, SOIR)).toBe(0);
+    expect(pubsEnergieRestantes(pubs, LENDEMAIN)).toBe(PUBS_ENERGIE_MAX_PAR_JOUR);
+    // et l'enregistrement du lendemain ouvre bien un nouveau compteur
+    const apres = enregistrerPubEnergie(pubs, LENDEMAIN);
+    expect(pubsEnergieRestantes(apres, LENDEMAIN)).toBe(PUBS_ENERGIE_MAX_PAR_JOUR - 1);
   });
 });
