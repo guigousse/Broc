@@ -2,9 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   XP_PAR_NIVEAU,
   appliquerGainXP,
+  appliquerGainXPBrocanteur,
+  emptyAffinites,
+  emptyBrocanteur,
   progressionNiveau,
+  progressionNiveauBrocanteur,
   xpRequisPourNiveau,
+  xpRequisPourNiveauBrocanteur,
 } from "./xp";
+import { CATEGORIES } from "@/data/categories";
 
 const fresh = () => ({ xp: 0, niveau: 0, pointsDisponibles: 0 });
 
@@ -134,12 +140,6 @@ describe("progressionNiveau", () => {
   });
 });
 
-import {
-  appliquerGainXPBrocanteur,
-  progressionNiveauBrocanteur,
-  xpRequisPourNiveauBrocanteur,
-} from "./xp";
-
 const freshBrocanteur = () => ({ xp: 0, niveau: 0, pointsDisponibles: 0 });
 
 describe("xpRequisPourNiveauBrocanteur — courbe quadratique 30N²+70N", () => {
@@ -206,9 +206,6 @@ describe("progressionNiveauBrocanteur", () => {
     expect(progressionNiveauBrocanteur({ xp: 180, niveau: 1, pointsDisponibles: 0 })).toBe(0.5);
   });
 });
-
-import { emptyAffinites, emptyBrocanteur } from "./xp";
-import { CATEGORIES } from "@/data/categories";
 
 describe("états initiaux Brocanteur", () => {
   it("emptyBrocanteur : tout à zéro", () => {

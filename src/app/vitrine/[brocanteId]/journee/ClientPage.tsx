@@ -40,7 +40,11 @@ import {
   XP_VENTE_OBJET,
   catTreeId,
 } from "@/data/competences";
-import { XP_JUSTE_PRIX } from "@/lib/xp";
+import {
+  XP_JUSTE_PRIX,
+  XP_NEGO_BROCANTEUR,
+  XP_VENTE_BROCANTEUR,
+} from "@/lib/xp";
 import {
   aGenBonneReputation,
   aGenDiplomate,
@@ -153,15 +157,16 @@ export default function VitrineJourneePage() {
 
   const gagnerXPLocal = (
     treeId: string,
-    montant: number,
+    montantArbre: number,
+    montantBrocanteur: number,
     categorie?: CategorieObjet,
   ) => {
-    gagnerXP(treeId, montant);
-    gagnerXPBrocanteur(montant, categorie);
-    setXpBrocanteurSession((prev) => prev + montant);
+    gagnerXP(treeId, montantArbre);
+    gagnerXPBrocanteur(montantBrocanteur, categorie);
+    setXpBrocanteurSession((prev) => prev + montantBrocanteur);
     setXpSession((prev) => ({
       ...prev,
-      [treeId]: (prev[treeId] ?? 0) + montant,
+      [treeId]: (prev[treeId] ?? 0) + montantArbre,
     }));
   };
   /** XP de Brocanteur sans passer par un arbre de compétence (ex : juste prix). */
@@ -468,7 +473,12 @@ export default function VitrineJourneePage() {
     setVentesEffectuees((prev) => [...prev, ...nouvelles]);
     // XP par objet vendu, par catégorie
     for (const p of ev.panier) {
-      gagnerXPLocal(catTreeId(p.objet.categorie), XP_VENTE_OBJET, p.objet.categorie);
+      gagnerXPLocal(
+        catTreeId(p.objet.categorie),
+        XP_VENTE_OBJET,
+        XP_VENTE_BROCANTEUR,
+        p.objet.categorie,
+      );
     }
   };
 
@@ -494,7 +504,7 @@ export default function VitrineJourneePage() {
       ev.offreInitiale,
     );
     enregistrerVentes(ev, ev.offreInitiale);
-    gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
+    gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL, XP_NEGO_BROCANTEUR);
     ajouterJournal({
       heure: heureCourante(),
       texte: `${ev.persona.nom} repart avec ${describePanier(ev)} à ${ev.offreInitiale} € (négocié).`,
@@ -520,7 +530,7 @@ export default function VitrineJourneePage() {
       prixFinal,
     );
     enregistrerVentes(ev, prixFinal);
-    gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
+    gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL, XP_NEGO_BROCANTEUR);
     ajouterJournal({
       heure: heureCourante(),
       texte: `${ev.persona.nom} accepte ${describePanier(ev)} à ${prixFinal} €.`,

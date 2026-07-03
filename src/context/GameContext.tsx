@@ -1144,12 +1144,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setState((prev) => {
         if (!prev) return prev;
         const next = appliquerRecuperation(prev, objetId, now);
-        return next ?? prev;
+        if (!next) return prev;
+        return {
+          ...next,
+          brocanteur: appliquerGainXPBrocanteur(
+            next.brocanteur,
+            XP_RESTAURATION_ETAPE,
+          ),
+        };
       });
-      gagnerXPBrocanteur(XP_RESTAURATION_ETAPE, objet.categorie);
       return { ok: true };
     },
-    [tempsConfiance, gagnerXPBrocanteur],
+    [tempsConfiance],
   );
 
   // Terminer une restauration via pub récompensée (fenêtre < 30 min). Appelée par
@@ -1170,12 +1176,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (!prev) return prev;
         // Forcer la complétion : on applique avec now = finMs (>= finMs).
         const next = appliquerRecuperation(prev, objetId, fin);
-        return next ?? prev;
+        if (!next) return prev;
+        return {
+          ...next,
+          brocanteur: appliquerGainXPBrocanteur(
+            next.brocanteur,
+            XP_RESTAURATION_ETAPE,
+          ),
+        };
       });
-      gagnerXPBrocanteur(XP_RESTAURATION_ETAPE, objet.categorie);
       return { ok: true };
     },
-    [tempsConfiance, gagnerXPBrocanteur],
+    [tempsConfiance],
   );
 
   const gagnerXP = useCallback(
@@ -1387,6 +1399,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // sans consommer l'objet : le joueur garde la pièce.
       const conserver = courrier.payload.conserverCibles === true;
       const aRetirerSet = new Set(conserver ? [] : aRetirer);
+      const categorieMission = courrier.payload.categorie;
+      const xpMission =
+        categorieMission === "principale"
+          ? XP_QUETE_PRINCIPALE
+          : categorieMission === "hebdomadaire"
+            ? XP_QUETE_HEBDO
+            : XP_QUETE_QUOTIDIENNE;
       setState((prev) => {
         if (!prev) return prev;
         const invMaj = conserver
@@ -1405,34 +1424,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
           depense: 0,
           courrierId,
         });
-        return { ...credited, inventaireJoueur: invMaj, missions: missionsMaj };
-      });
-      const categorieMission = courrier.payload.categorie;
-      const xpMission =
-        categorieMission === "principale"
-          ? XP_QUETE_PRINCIPALE
-          : categorieMission === "hebdomadaire"
-            ? XP_QUETE_HEBDO
-            : XP_QUETE_QUOTIDIENNE;
-      gagnerXPBrocanteur(xpMission);
-      if (categorieMission === "principale") {
-        // Bonus de points de compétence par chapitre livré (décision D4).
-        setState((prev) =>
-          prev
+        const avecXP = appliquerGainXPBrocanteur(credited.brocanteur, xpMission);
+        // Bonus de points de compétence par chapitre livré (décision D4),
+        // appliqué APRÈS le gain d'XP pour ne pas écraser les points de level-up.
+        const brocanteur =
+          categorieMission === "principale"
             ? {
-                ...prev,
-                brocanteur: {
-                  ...prev.brocanteur,
-                  pointsDisponibles:
-                    prev.brocanteur.pointsDisponibles + POINTS_BONUS_CHAPITRE,
-                },
+                ...avecXP,
+                pointsDisponibles:
+                  avecXP.pointsDisponibles + POINTS_BONUS_CHAPITRE,
               }
-            : prev,
-        );
-      }
+            : avecXP;
+        return {
+          ...credited,
+          inventaireJoueur: invMaj,
+          missions: missionsMaj,
+          brocanteur,
+        };
+      });
       return { ok: true };
     },
-    [gagnerXPBrocanteur],
+    [],
   );
 
   const acheterGazette = useCallback((): { ok: boolean; raison?: string } => {

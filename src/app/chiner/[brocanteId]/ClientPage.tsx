@@ -33,6 +33,11 @@ import {
   XP_NEGOCIATION_REUSSIE_GENERAL,
   catTreeId,
 } from "@/data/competences";
+import {
+  XP_ACHAT_BROCANTEUR,
+  XP_DECOUVERTE_COLLECTION,
+  XP_NEGO_BROCANTEUR,
+} from "@/lib/xp";
 import type { AchatHistorique, CategorieObjet, ObjetEnVente } from "@/types/game";
 
 export default function SessionChinePage() {
@@ -89,15 +94,16 @@ export default function SessionChinePage() {
 
   const gagnerXPLocal = (
     treeId: string,
-    montant: number,
+    montantArbre: number,
+    montantBrocanteur: number,
     categorie?: CategorieObjet,
   ) => {
-    gagnerXP(treeId, montant);
-    gagnerXPBrocanteur(montant, categorie);
-    setXpBrocanteurSession((prev) => prev + montant);
+    gagnerXP(treeId, montantArbre);
+    gagnerXPBrocanteur(montantBrocanteur, categorie);
+    setXpBrocanteurSession((prev) => prev + montantBrocanteur);
     setXpSession((prev) => ({
       ...prev,
-      [treeId]: (prev[treeId] ?? 0) + montant,
+      [treeId]: (prev[treeId] ?? 0) + montantArbre,
     }));
   };
 
@@ -211,8 +217,21 @@ export default function SessionChinePage() {
     }
     ajusterBudget(-prix);
     ajouterObjet({ ...it.objet, prixAchat: prix });
+    // Aligne l'accumulateur d'affichage sur le +10 de découverte crédité
+    // atomiquement par le GameContext (première possession du template).
+    const estDecouverte = !Object.values(state.collection).some((slots) =>
+      slots.some((s) => s.templateId === it.objet.templateId && s.dejaPossede),
+    );
     marquerDejaPossedeTemplate(it.objet.templateId);
-    gagnerXPLocal(catTreeId(it.objet.categorie), XP_ACHAT_OBJET, it.objet.categorie);
+    if (estDecouverte) {
+      setXpBrocanteurSession((prev) => prev + XP_DECOUVERTE_COLLECTION);
+    }
+    gagnerXPLocal(
+      catTreeId(it.objet.categorie),
+      XP_ACHAT_OBJET,
+      XP_ACHAT_BROCANTEUR,
+      it.objet.categorie,
+    );
     setItem(it.id, { statut: "achete" });
     setAchats((prev) => [
       ...prev,
@@ -331,7 +350,11 @@ export default function SessionChinePage() {
                 onUpdateNego={(nego) => setItem(item.id, { negociation: nego })}
                 onConclu={(prixFinal) => {
                   handleAchatAuPrix(item, prixFinal);
-                  gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL);
+                  gagnerXPLocal(
+                    TREE_GENERAL,
+                    XP_NEGOCIATION_REUSSIE_GENERAL,
+                    XP_NEGO_BROCANTEUR,
+                  );
                   setNegoOuverte(null);
                 }}
                 onAcheterDirect={() => handleAcheter(item.id)}

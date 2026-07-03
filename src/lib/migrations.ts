@@ -522,11 +522,19 @@ function appliquerMigrations(loaded: GameState): GameState {
       const b = (loaded as Partial<GameState>).brocanteur;
       if (
         b &&
-        typeof b.xp === "number" &&
-        typeof b.niveau === "number" &&
-        typeof b.pointsDisponibles === "number"
+        Number.isFinite(b.xp) &&
+        b.xp >= 0 &&
+        Number.isFinite(b.niveau) &&
+        b.niveau >= 0 &&
+        Number.isFinite(b.pointsDisponibles) &&
+        b.pointsDisponibles >= 0
       ) {
-        return b; // save déjà v8 : on ne recalcule pas (idempotence).
+        // save déjà v8 : on ne recalcule pas (idempotence) — copie nettoyée.
+        return {
+          xp: Math.max(0, b.xp),
+          niveau: Math.max(0, Math.floor(b.niveau)),
+          pointsDisponibles: Math.max(0, Math.floor(b.pointsDisponibles)),
+        };
       }
       const totalXP = Object.values(loaded.competenceTrees ?? {}).reduce(
         (acc, t) => acc + (typeof t?.xp === "number" ? t.xp : 0),
