@@ -21,7 +21,7 @@ import {
   calculerBrocantesDebloqueesParTier,
   estDebloquee,
 } from "@/lib/deblocage";
-import { genererSession } from "@/lib/chine";
+import { genererSession, uniquesExclusDuChinage } from "@/lib/chine";
 import { energieCourante } from "@/lib/energie";
 import { placeRestante, stockageEstPlein } from "@/lib/stockage";
 import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
@@ -130,6 +130,7 @@ export default function SessionChinePage() {
         state.tendances,
         brocante,
         celebriteAujourdhui,
+        uniquesExclusDuChinage(state),
       );
       setItems(session);
       toast(`Droit d'entrée payé : ${frais} €.`, { type: "info" });
