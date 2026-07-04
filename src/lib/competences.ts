@@ -2,11 +2,10 @@ import type {
   CategorieObjet,
   CompetenceDef,
   CompetenceId,
-  CompetenceTreeState,
   EtatObjet,
   GameState,
 } from "@/types/game";
-import { TREE_GENERAL, catTreeId, getCompetence } from "@/data/competences";
+import { TREE_GENERAL, catTreeId, getCompetence, getTreeDef } from "@/data/competences";
 
 export function aCompetence(
   id: CompetenceId,
@@ -17,20 +16,44 @@ export function aCompetence(
 
 export type EtatCompetence = "debloquee" | "disponible" | "verrouillee";
 
+export interface ContexteCompetences {
+  /** Points de compétence disponibles — state.brocanteur.pointsDisponibles. */
+  pointsDisponibles: number;
+  /** Niveau de Brocanteur global — state.brocanteur.niveau. */
+  niveauBrocanteur: number;
+  /** Affinités par catégorie — state.affinites. */
+  affinites: Record<CategorieObjet, number>;
+}
+
+export function contexteDepuisState(
+  state: Pick<GameState, "brocanteur" | "affinites">,
+): ContexteCompetences {
+  return {
+    pointsDisponibles: state.brocanteur.pointsDisponibles,
+    niveauBrocanteur: state.brocanteur.niveau,
+    affinites: state.affinites,
+  };
+}
+
+/** Catégorie d'affinité d'une compétence (null pour l'arbre général). */
+export function affiniteRequisePourComp(
+  comp: CompetenceDef,
+): { categorie: CategorieObjet | null; requise: number } {
+  const cat = getTreeDef(comp.treeId)?.categorie ?? null;
+  return { categorie: cat, requise: cat ? comp.affiniteRequise : 0 };
+}
+
 export function etatCompetence(
   comp: CompetenceDef,
   debloquees: readonly CompetenceId[],
-  tree: CompetenceTreeState | undefined,
+  ctx: ContexteCompetences,
 ): EtatCompetence {
   if (debloquees.includes(comp.id)) return "debloquee";
-  const prereqOk = comp.prerequis.every((p) => debloquees.includes(p));
-  if (!prereqOk) return "verrouillee";
-  if (!tree) return "verrouillee";
-  // TODO(plan 2, tâches 2-3): gating provisoire — compare le niveau de l'arbre
-  // (tree.niveau) au niveauBrocanteurRequis en attendant le redesign qui lira
-  // le niveau de Brocanteur global + l'affinité de catégorie.
-  if (tree.niveau < comp.niveauBrocanteurRequis) return "verrouillee";
-  if (tree.pointsDisponibles < comp.coutPoints) return "verrouillee";
+  if (!comp.prerequis.every((p) => debloquees.includes(p))) return "verrouillee";
+  if (ctx.niveauBrocanteur < comp.niveauBrocanteurRequis) return "verrouillee";
+  const { categorie, requise } = affiniteRequisePourComp(comp);
+  if (categorie && (ctx.affinites[categorie] ?? 0) < requise) return "verrouillee";
+  if (ctx.pointsDisponibles < comp.coutPoints) return "verrouillee";
   return "disponible";
 }
 

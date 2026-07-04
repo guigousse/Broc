@@ -994,12 +994,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return { ok: false, raison: "Déjà débloquée." };
 
       const tree = current.competenceTrees[comp.treeId] ?? emptyTreeState();
-      // TODO(plan 2, tâches 2-3): gating provisoire — même substitution que
-      // etatCompetence (src/lib/competences.ts), en attendant le redesign.
-      if (tree.niveau < comp.niveauBrocanteurRequis)
+      // TODO(plan 3): gating transitoire — la dépense de points reste sur
+      // l'arbre (tree.pointsDisponibles) jusqu'au redesign complet qui la
+      // fera porter sur le pool global (current.brocanteur).
+      if (current.brocanteur.niveau < comp.niveauBrocanteurRequis)
         return {
           ok: false,
-          raison: `Niveau ${comp.niveauBrocanteurRequis} requis dans cet arbre.`,
+          raison: `Niveau de Brocanteur ${comp.niveauBrocanteurRequis} requis.`,
         };
       if (tree.pointsDisponibles < comp.coutPoints)
         return { ok: false, raison: "Pas assez de points." };

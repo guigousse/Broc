@@ -18,7 +18,7 @@ import {
   getTreeMeta,
   competencesParBranche,
 } from "@/data/competences";
-import { etatCompetence } from "@/lib/competences";
+import { contexteDepuisState, etatCompetence } from "@/lib/competences";
 import { progressionNiveau } from "@/lib/xp";
 import type { CompetenceDef, CompetenceTreeId } from "@/types/game";
 
@@ -193,7 +193,7 @@ export default function CompetencesPage() {
                     const etat = etatCompetence(
                       c,
                       state.competencesDebloquees,
-                      treeState,
+                      contexteDepuisState(state),
                     );
                     return (
                       <PalierTile
@@ -225,7 +225,7 @@ export default function CompetencesPage() {
             etat={etatCompetence(
               palierActif,
               state.competencesDebloquees,
-              treeState,
+              contexteDepuisState(state),
             )}
             onAcheter={() => {
               const res = debloquerCompetence(palierActif.id);
