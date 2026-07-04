@@ -26,7 +26,10 @@ export function etatCompetence(
   const prereqOk = comp.prerequis.every((p) => debloquees.includes(p));
   if (!prereqOk) return "verrouillee";
   if (!tree) return "verrouillee";
-  if (tree.niveau < comp.niveauRequis) return "verrouillee";
+  // TODO(plan 2, tâches 2-3): gating provisoire — compare le niveau de l'arbre
+  // (tree.niveau) au niveauBrocanteurRequis en attendant le redesign qui lira
+  // le niveau de Brocanteur global + l'affinité de catégorie.
+  if (tree.niveau < comp.niveauBrocanteurRequis) return "verrouillee";
   if (tree.pointsDisponibles < comp.coutPoints) return "verrouillee";
   return "disponible";
 }

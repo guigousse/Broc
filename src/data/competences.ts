@@ -33,11 +33,16 @@ export function emptyAllTrees(): Record<CompetenceTreeId, CompetenceTreeState> {
 // PATTERNS DE PALIERS — modèles réutilisés pour générer les branches
 // =====================================================================
 
-/** Coût et niveau requis par défaut pour les paliers 1/2/3. */
+export const AFFINITE_PALIER_2 = 20;
+export const AFFINITE_PALIER_3 = 50;
+export const NIVEAU_BROCANTEUR_PALIER_2_GENERAL = 5;
+export const NIVEAU_BROCANTEUR_PALIER_3 = 12;
+
+/** Coût, niveau de Brocanteur et affinité par défaut pour les paliers 1/2/3 (arbres thématiques). */
 const PALIER_DEFAULTS = [
-  { coutPoints: 1, niveauArbreRequis: 1 },
-  { coutPoints: 2, niveauArbreRequis: 2 },
-  { coutPoints: 3, niveauArbreRequis: 5 },
+  { coutPoints: 1, niveauBrocanteurRequis: 0, affiniteRequise: 0 },
+  { coutPoints: 2, niveauBrocanteurRequis: 0, affiniteRequise: AFFINITE_PALIER_2 },
+  { coutPoints: 3, niveauBrocanteurRequis: NIVEAU_BROCANTEUR_PALIER_3, affiniteRequise: AFFINITE_PALIER_3 },
 ] as const;
 
 function definirPaliers(
@@ -48,7 +53,9 @@ function definirPaliers(
     nom: p.nom,
     description: p.description,
     coutPoints: p.coutPoints ?? PALIER_DEFAULTS[i]?.coutPoints ?? 1,
-    niveauArbreRequis: p.niveauArbreRequis ?? PALIER_DEFAULTS[i]?.niveauArbreRequis ?? 1,
+    niveauBrocanteurRequis:
+      p.niveauBrocanteurRequis ?? PALIER_DEFAULTS[i]?.niveauBrocanteurRequis ?? 0,
+    affiniteRequise: p.affiniteRequise ?? PALIER_DEFAULTS[i]?.affiniteRequise ?? 0,
     placeholder: p.placeholder,
   }));
 }
@@ -72,11 +79,12 @@ const TREE_GENERAL_DEF: CompetenceTreeDef = {
         {
           nom: "Verbe haut",
           description:
-            "Le seuil de colère client est étendu (1,2× → 1,4× son prix max).",
+            "Les clients tolèrent des contre-offres 20 % plus gourmandes avant de s'agacer.",
         },
         {
           nom: "Verbe d'or",
-          description: "Le seuil de colère grimpe encore (1,2× → 1,6× son prix max).",
+          description:
+            "Les clients tolèrent des contre-offres 40 % plus gourmandes avant de s'agacer.",
         },
         {
           nom: "Diplomate",
@@ -159,15 +167,15 @@ function brancheReparer(cat: CategorieObjet): PalierDef[] {
   return definirPaliers([
     {
       nom: `Apprenti — ${cat}`,
-      description: `Vous restaurez les pièces « ${cat} » en mauvais état (Mauvais → Bon, 5 jours).`,
+      description: `Vous restaurez les pièces « ${cat} » en mauvais état (Mauvais → Bon, quelques heures).`,
     },
     {
       nom: `Artisan — ${cat}`,
-      description: `Vous parachevez les pièces déjà décentes (Bon → Très bon, 5 jours).`,
+      description: `Vous parachevez les pièces déjà décentes (Bon → Très bon, quelques heures).`,
     },
     {
       nom: `Maître — ${cat}`,
-      description: `Vous parvenez à élever les pièces au pristin état (Très bon → Pristin état) et ramenez toute restauration « ${cat} » à 3 jours.`,
+      description: `Vous parvenez à élever les pièces au pristin état et réduisez toutes les durées de restauration « ${cat} » de 40 %.`,
     },
   ]);
 }
@@ -210,15 +218,15 @@ function brancheOeilAiguise(cat: CategorieObjet): PalierDef[] {
   return definirPaliers([
     {
       nom: `Verbe agile — ${cat}`,
-      description: `Quand un client cible des objets « ${cat} », votre seuil de colère est étendu de +5 %.`,
+      description: `Quand un client négocie un objet « ${cat} », il tolère des contre-offres +10 % plus gourmandes.`,
     },
     {
       nom: `Verbe haut — ${cat}`,
-      description: `Étend le seuil de colère de +10 % pour les ventes « ${cat} » (remplace Verbe agile).`,
+      description: `Quand un client négocie un objet « ${cat} », il tolère des contre-offres +20 % plus gourmandes (remplace Verbe agile).`,
     },
     {
       nom: `Verbe d'or — ${cat}`,
-      description: `Étend le seuil de colère de +20 % pour les ventes « ${cat} » (remplace Verbe haut).`,
+      description: `Quand un client négocie un objet « ${cat} », il tolère des contre-offres +30 % plus gourmandes (remplace Verbe haut).`,
     },
   ]);
 }
@@ -252,6 +260,7 @@ export const TREES: CompetenceTreeDef[] = [
 export const ALL_TREE_IDS: CompetenceTreeId[] = TREES.map((t) => t.id);
 
 function expandTree(tree: CompetenceTreeDef): CompetenceDef[] {
+  const estGeneral = tree.type === "general";
   return tree.branches.flatMap((b) =>
     b.paliers.map((p) => ({
       id: `${tree.id}.${b.id}.${p.numero}`,
@@ -261,7 +270,10 @@ function expandTree(tree: CompetenceTreeDef): CompetenceDef[] {
       nom: p.nom,
       description: p.description,
       coutPoints: p.coutPoints,
-      niveauRequis: p.niveauArbreRequis,
+      niveauBrocanteurRequis: estGeneral
+        ? [0, NIVEAU_BROCANTEUR_PALIER_2_GENERAL, NIVEAU_BROCANTEUR_PALIER_3][p.numero - 1] ?? 0
+        : p.niveauBrocanteurRequis,
+      affiniteRequise: estGeneral ? 0 : p.affiniteRequise,
       prerequis:
         p.numero === 1 ? [] : [`${tree.id}.${b.id}.${p.numero - 1}`],
       placeholder: p.placeholder,

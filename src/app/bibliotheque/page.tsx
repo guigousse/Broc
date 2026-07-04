@@ -149,7 +149,7 @@ export default function CompetencesPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {treeDef?.branches.map((branche) => {
             const comps = competencesParBranche(tree, branche.id).sort(
-              (a, b) => a.niveauRequis - b.niveauRequis,
+              (a, b) => a.niveauBrocanteurRequis - b.niveauBrocanteurRequis,
             );
             if (comps.length === 0) return null;
             return (
@@ -330,7 +330,7 @@ function PalierTile({
           opacity: 0.85,
         }}
       >
-        N{comp.niveauRequis}
+        N{comp.niveauBrocanteurRequis}
       </span>
     </button>
   );
@@ -404,13 +404,13 @@ function PalierDetail({
         <div>
           Niveau requis :{" "}
           <strong style={{ fontFamily: "var(--font-display)" }}>
-            N{comp.niveauRequis}
+            N{comp.niveauBrocanteurRequis}
           </strong>
           <br />
           <span
             style={{
               color:
-                niveauActuel >= comp.niveauRequis
+                niveauActuel >= comp.niveauBrocanteurRequis
                   ? "var(--forest-700)"
                   : "var(--vermillion-600)",
             }}
@@ -465,7 +465,7 @@ function PalierDetail({
             letterSpacing: "0.06em",
           }}
         >
-          ⊘ Verrouillée — N{comp.niveauRequis} requis (vous avez N
+          ⊘ Verrouillée — N{comp.niveauBrocanteurRequis} requis (vous avez N
           {niveauActuel})
         </div>
       ) : (

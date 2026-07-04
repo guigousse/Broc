@@ -9,7 +9,7 @@ import { aCompetence, etatCompetence } from "./competences";
 function comp(
   id: string,
   opts: {
-    niveauRequis?: number;
+    niveauBrocanteurRequis?: number;
     coutPoints?: number;
     prerequis?: string[];
   } = {},
@@ -21,7 +21,8 @@ function comp(
     palierNumero: 1,
     nom: id,
     description: "",
-    niveauRequis: opts.niveauRequis ?? 1,
+    niveauBrocanteurRequis: opts.niveauBrocanteurRequis ?? 1,
+    affiniteRequise: 0,
     coutPoints: opts.coutPoints ?? 1,
     prerequis: (opts.prerequis ?? []) as CompetenceId[],
   };
@@ -71,7 +72,7 @@ describe("etatCompetence — verrouillee par prérequis", () => {
   it("retourne disponible si tous les prérequis sont satisfaits", () => {
     const c = comp("general.charisme.2", {
       prerequis: ["general.charisme.1"],
-      niveauRequis: 1,
+      niveauBrocanteurRequis: 1,
       coutPoints: 1,
     });
     expect(
@@ -94,15 +95,15 @@ describe("etatCompetence — verrouillee par arbre manquant", () => {
 });
 
 describe("etatCompetence — verrouillee par niveau insuffisant", () => {
-  it("retourne verrouillee si tree.niveau < niveauRequis", () => {
-    const c = comp("general.charisme.1", { niveauRequis: 3, coutPoints: 1 });
+  it("retourne verrouillee si tree.niveau < niveauBrocanteurRequis", () => {
+    const c = comp("general.charisme.1", { niveauBrocanteurRequis: 3, coutPoints: 1 });
     expect(etatCompetence(c, [] as CompetenceId[], tree(2, 5))).toBe(
       "verrouillee",
     );
   });
 
-  it("retourne disponible si tree.niveau == niveauRequis", () => {
-    const c = comp("general.charisme.1", { niveauRequis: 3, coutPoints: 1 });
+  it("retourne disponible si tree.niveau == niveauBrocanteurRequis", () => {
+    const c = comp("general.charisme.1", { niveauBrocanteurRequis: 3, coutPoints: 1 });
     expect(etatCompetence(c, [] as CompetenceId[], tree(3, 5))).toBe(
       "disponible",
     );
@@ -111,14 +112,14 @@ describe("etatCompetence — verrouillee par niveau insuffisant", () => {
 
 describe("etatCompetence — verrouillee par points insuffisants", () => {
   it("retourne verrouillee si pointsDisponibles < coutPoints", () => {
-    const c = comp("general.charisme.1", { niveauRequis: 1, coutPoints: 3 });
+    const c = comp("general.charisme.1", { niveauBrocanteurRequis: 1, coutPoints: 3 });
     expect(etatCompetence(c, [] as CompetenceId[], tree(5, 2))).toBe(
       "verrouillee",
     );
   });
 
   it("retourne disponible si pointsDisponibles == coutPoints", () => {
-    const c = comp("general.charisme.1", { niveauRequis: 1, coutPoints: 3 });
+    const c = comp("general.charisme.1", { niveauBrocanteurRequis: 1, coutPoints: 3 });
     expect(etatCompetence(c, [] as CompetenceId[], tree(5, 3))).toBe(
       "disponible",
     );
@@ -127,7 +128,7 @@ describe("etatCompetence — verrouillee par points insuffisants", () => {
 
 describe("etatCompetence — ordre de priorité", () => {
   it("debloquee gagne sur verrouillee même si niveau/points insuffisants", () => {
-    const c = comp("general.charisme.1", { niveauRequis: 99, coutPoints: 99 });
+    const c = comp("general.charisme.1", { niveauBrocanteurRequis: 99, coutPoints: 99 });
     expect(
       etatCompetence(
         c,
@@ -140,7 +141,7 @@ describe("etatCompetence — ordre de priorité", () => {
   it("prerequis manquant ⇒ verrouillee même si tree est OK", () => {
     const c = comp("general.charisme.2", {
       prerequis: ["general.charisme.1"],
-      niveauRequis: 1,
+      niveauBrocanteurRequis: 1,
       coutPoints: 0,
     });
     expect(etatCompetence(c, [] as CompetenceId[], tree(99, 99))).toBe(

@@ -994,10 +994,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return { ok: false, raison: "Déjà débloquée." };
 
       const tree = current.competenceTrees[comp.treeId] ?? emptyTreeState();
-      if (tree.niveau < comp.niveauRequis)
+      // TODO(plan 2, tâches 2-3): gating provisoire — même substitution que
+      // etatCompetence (src/lib/competences.ts), en attendant le redesign.
+      if (tree.niveau < comp.niveauBrocanteurRequis)
         return {
           ok: false,
-          raison: `Niveau ${comp.niveauRequis} requis dans cet arbre.`,
+          raison: `Niveau ${comp.niveauBrocanteurRequis} requis dans cet arbre.`,
         };
       if (tree.pointsDisponibles < comp.coutPoints)
         return { ok: false, raison: "Pas assez de points." };

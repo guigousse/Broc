@@ -303,7 +303,10 @@ export interface CompetenceDef {
   nom: string;
   description: string;
   coutPoints: number;
-  niveauRequis: number;
+  /** Niveau de Brocanteur minimal pour acheter ce palier. */
+  niveauBrocanteurRequis: number;
+  /** Transactions (achats + ventes) requises dans la catégorie de l'arbre. 0 pour l'arbre général. */
+  affiniteRequise: number;
   prerequis: CompetenceId[];
   placeholder?: boolean;
 }
@@ -313,7 +316,10 @@ export interface PalierDef {
   nom: string;
   description: string;
   coutPoints: number;
-  niveauArbreRequis: number;
+  /** Niveau de Brocanteur minimal pour acheter ce palier. */
+  niveauBrocanteurRequis: number;
+  /** Transactions (achats + ventes) requises dans la catégorie de l'arbre. 0 pour l'arbre général. */
+  affiniteRequise: number;
   placeholder?: boolean;
 }
 
