@@ -183,6 +183,15 @@ export const CHANCE_EXCLUSIF_PAR_SESSION: Record<1 | 2 | 3 | 4, number> = {
 /** Part minimale d'items de la catégorie de spécialisation (brocantes spécialisées). */
 const QUOTA_SPECIALISATION = 0.5;
 
+/**
+ * Pool générique (hors poolExclusif) d'une brocante, filtré par tier. Source
+ * unique partagée entre `genererSession` et `genererRemplacement` (La Fouille) —
+ * ce dernier n'a jamais accès au poolExclusif, qui n'entre pas dans ce pool.
+ */
+function poolGeneriquePour(brocante?: Brocante): readonly ObjetTemplate[] {
+  return poolPourTier(brocante?.tier ?? 1);
+}
+
 export function genererSession(
   taille: number,
   tendances: readonly Tendance[] = [],
@@ -208,7 +217,7 @@ export function genererSession(
     .filter((t): t is ObjetTemplate => t !== undefined && !exclus?.has(t.templateId));
 
   // Pool générique filtré par tier (1⭐ → 1/3, 2⭐ → 2/3, 3⭐+ → tout).
-  const poolGenerique = poolPourTier(brocante?.tier ?? 1);
+  const poolGenerique = poolGeneriquePour(brocante);
 
   // Brocantes spécialisées : force au moins QUOTA_SPECIALISATION d'items du thème.
   const spe = brocante?.specialisation;
@@ -263,6 +272,42 @@ export function genererSession(
   return items;
 }
 
+/**
+ * La Fouille : retire un nouvel objet pour remplacer `aRemplacer`, avec les
+ * règles de la session (mix de rareté du tier, pas de doublon non-commun avec
+ * l'étal courant, exclusion des uniques), SANS jamais piocher dans le
+ * poolExclusif (garde-fou : pas de 2ᵉ pièce d'exception via la Fouille).
+ */
+export function genererRemplacement(
+  aRemplacer: ObjetEnVente,
+  itemsCourants: readonly ObjetEnVente[],
+  tendances: readonly Tendance[] = [],
+  brocante?: Brocante,
+  celebrite?: CelebriteEvenement | null,
+  exclus?: ReadonlySet<string>,
+): ObjetEnVente {
+  const tier = brocante?.tier ?? 1;
+  const celebritePresente =
+    !!brocante && !!celebrite && celebrite.brocanteId === brocante.id;
+  // Pas de doublon rare/légendaire avec le reste de l'étal (aRemplacer exclu :
+  // c'est justement la place qu'on libère).
+  const dejaTires = new Set(
+    itemsCourants
+      .filter((it) => it.id !== aRemplacer.id && it.objet.rarete !== "commun")
+      .map((it) => it.objet.templateId),
+  );
+  const pool = poolGeneriquePour(brocante).filter(
+    (t) => !exclus?.has(t.templateId),
+  );
+  for (let essai = 0; essai < 50; essai++) {
+    const t = tirerTemplatePondere(pool, celebritePresente, tier);
+    if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
+    return instancier(t, tendances, tier, brocante);
+  }
+  // Filet : un commun quelconque du pool (le pool contient toujours des communs).
+  const communs = pool.filter((t) => t.rarete === "commun");
+  return instancier(pickRandom(communs), tendances, tier, brocante);
+}
 
 /* === Unicité effective des objets uniques ============================== */
 

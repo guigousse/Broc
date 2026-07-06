@@ -21,7 +21,8 @@ import {
   calculerBrocantesDebloqueesParTier,
   estDebloquee,
 } from "@/lib/deblocage";
-import { genererSession, uniquesExclusDuChinage } from "@/lib/chine";
+import { genererRemplacement, genererSession, uniquesExclusDuChinage } from "@/lib/chine";
+import { activeDebloquee, usagesRestants } from "@/lib/actives";
 import { aConnaisseurChinage } from "@/lib/competences";
 import { energieCourante } from "@/lib/energie";
 import { placeRestante, stockageEstPlein } from "@/lib/stockage";
@@ -51,6 +52,7 @@ export default function SessionChinePage() {
     payerFraisBrocante,
     tempsConfiance,
     consommerEnergie,
+    utiliserActive,
   } = useGame();
   const { startCrowd, stopCrowd } = useSettings();
   const { toast } = useToast();
@@ -83,6 +85,8 @@ export default function SessionChinePage() {
   const [boiteOuverte, setBoiteOuverte] = useState(false);
   /** Vrai une fois la boîte mystère réclamée dans cette session (masque le bouton pub). */
   const [boiteReclamee, setBoiteReclamee] = useState(false);
+  /** Le Flair (N5) : révèle la cote pour toute la session une fois activé (portée session, pas de persistance). */
+  const [flairActif, setFlairActif] = useState(false);
 
   const gagnerXPLocal = (montant: number, categorie?: CategorieObjet) => {
     gagnerXPBrocanteur(montant, categorie);
@@ -156,12 +160,12 @@ export default function SessionChinePage() {
         kind: "item",
         item: it,
         estRareOuPlus: estRareOuPlus(it),
-        coteConnue: state ? aConnaisseurChinage(state, it.objet.categorie) : false,
+        coteConnue: flairActif || (state ? aConnaisseurChinage(state, it.objet.categorie) : false),
       });
     }
     return liste;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vendeurPresent, items, state]);
+  }, [vendeurPresent, items, state, flairActif]);
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (
@@ -188,6 +192,26 @@ export default function SessionChinePage() {
     setItems((prev) =>
       prev ? prev.map((it) => (it.id === id ? { ...it, ...patch } : it)) : prev,
     );
+
+  /** Le Flair (N5) : révèle la cote de tout l'étal pour le reste de la session. */
+  const jouerFlair = () => {
+    if (utiliserActive("flair")) setFlairActif(true);
+  };
+
+  /** La Fouille (N9) : remplace l'objet ciblé par un nouveau tirage. */
+  const jouerFouille = (it: ObjetEnVente) => {
+    if (!items) return;
+    if (!utiliserActive("fouille")) return;
+    const remplacement = genererRemplacement(
+      it,
+      items,
+      state.tendances,
+      brocante,
+      state.celebriteActuelle,
+      uniquesExclusDuChinage(state),
+    );
+    setItems((prev) => (prev ? prev.map((x) => (x.id === it.id ? remplacement : x)) : prev));
+  };
 
   /** Achat au prix affiché (bouton direct). */
   const handleAcheter = (id: string) => {
@@ -285,6 +309,47 @@ export default function SessionChinePage() {
       }}
     >
       <MobileHeader budget={state.budget} />
+      {activeDebloquee(state, "flair") && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            padding: "6px 14px",
+            background: "var(--forest-800)",
+            borderBottom: "1px solid var(--brass-700)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={jouerFlair}
+            disabled={flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel) <= 0}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: "transparent",
+              border: "1.5px solid var(--brass-500)",
+              borderRadius: 8,
+              color: "var(--brass-300)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "clamp(10px, 2.6vw, 12px)",
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              padding: "4px 10px",
+              cursor:
+                flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel) <= 0
+                  ? "default"
+                  : "pointer",
+              opacity:
+                flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel) <= 0
+                  ? 0.4
+                  : 1,
+            }}
+          >
+            🔍 Flair ({usagesRestants(state.activesUtilisees, "flair", state.jourActuel)})
+          </button>
+        </div>
+      )}
       <main
         style={{
           flex: 1,
@@ -319,6 +384,9 @@ export default function SessionChinePage() {
             onOuvrirBoite={() => setBoiteOuverte(true)}
             onQuitter={handleRentrer}
             onNavigate={() => setNegoOuverte(null)}
+            fouilleDebloquee={activeDebloquee(state, "fouille")}
+            fouilleRestants={usagesRestants(state.activesUtilisees, "fouille", state.jourActuel)}
+            onFouille={jouerFouille}
             renderNegoDrawer={(item) => (
               <ChineNegoDrawer
                 key={item.id}

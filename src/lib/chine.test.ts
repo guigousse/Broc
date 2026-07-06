@@ -5,6 +5,7 @@ import {
   MIX_RARETE_PAR_TIER,
   SEUIL_COLERE_VENDEUR,
   SURCOTE_BONIMENTEUR,
+  genererRemplacement,
   genererSession,
   uniquesExclusDuChinage,
 } from "./chine";
@@ -468,5 +469,69 @@ describe("genererSession — l'exclusif est un événement (au plus 1 par sessio
 
   it("T4 (boss) : ~80 % des sessions, toujours au plus une", () => {
     statsExclusif(4, [0.70, 0.90]);
+  });
+});
+
+/* ===================================================================== */
+/* La Fouille (N9) : remplacement d'un objet de l'étal                   */
+/* ===================================================================== */
+
+describe("genererRemplacement (La Fouille)", () => {
+  const brocT2 = createMockBrocante({
+    id: "broc-fouille-t2",
+    tier: 2,
+    etoiles: 2,
+    taillePool: 6,
+  });
+
+  it("retourne un objet différent, jamais un template non-commun déjà sur l'étal, même statut/négo initiaux", () => {
+    const session = genererSession(6, [], brocT2);
+    const cible = session[0];
+    for (let i = 0; i < 50; i++) {
+      const r = genererRemplacement(cible, session, [], brocT2, null, undefined);
+      expect(r.id).not.toBe(cible.id);
+      if (r.objet.rarete !== "commun") {
+        const autresTemplates = session
+          .filter((s) => s.id !== cible.id)
+          .map((s) => s.objet.templateId);
+        expect(autresTemplates).not.toContain(r.objet.templateId);
+      }
+      expect(r.statut).toBe("disponible");
+      expect(r.negociation).toBeNull();
+      expect(r.negociationsTentees).toBe(0);
+    }
+  });
+
+  it("ne pioche jamais dans le poolExclusif (pas de 2e pièce d'exception via la Fouille)", () => {
+    const TOUS_LES_UNIQUES = UNIQUES.map((u) => u.templateId);
+    const boss = createMockBrocante({
+      id: "broc-fouille-boss",
+      tier: 4,
+      etoiles: 4,
+      taillePool: 12,
+      poolExclusif: [...TOUS_LES_UNIQUES],
+    });
+    const session = genererSession(boss.taillePool, [], boss);
+    for (let i = 0; i < 100; i++) {
+      const r = genererRemplacement(session[0], session, [], boss, null, undefined);
+      expect(TOUS_LES_UNIQUES.includes(r.objet.templateId)).toBe(false);
+    }
+  });
+
+  it("respecte l'exclusion (garde-fou `exclus`) pour un template du pool générique", () => {
+    // Légendaire du pool générique T3+ (cf. describe "l'exclusif est un événement").
+    const TEMPLATE_GENERIQUE_EXCLU = "leg.mus.violon_de_maitre_cremonais_1715";
+    const brocT3 = createMockBrocante({
+      id: "broc-fouille-t3",
+      tier: 3,
+      etoiles: 3,
+      taillePool: 6,
+    });
+    const exclus = new Set([TEMPLATE_GENERIQUE_EXCLU]);
+    const session = genererSession(6, [], brocT3);
+    for (let i = 0; i < 200; i++) {
+      const r = genererRemplacement(session[0], session, [], brocT3, null, exclus);
+      expect(r.objet.templateId).not.toBe(TEMPLATE_GENERIQUE_EXCLU);
+    }
   });
 });

@@ -24,6 +24,9 @@ export function ItemSwipeDeck({
   onQuitter,
   renderNegoDrawer,
   onNavigate,
+  fouilleDebloquee,
+  fouilleRestants,
+  onFouille,
 }: {
   slides: ChineSlide[];
   plein: boolean;
@@ -34,6 +37,12 @@ export function ItemSwipeDeck({
   renderNegoDrawer?: (item: ObjetEnVente) => ReactNode;
   /** Appelé à chaque changement de carte (replie la négo en cours). */
   onNavigate?: () => void;
+  /** La Fouille (N9) : compétence active débloquée (contrôle la visibilité du bouton par carte). */
+  fouilleDebloquee?: boolean;
+  /** Usages restants de la Fouille pour aujourd'hui. */
+  fouilleRestants?: number;
+  /** Déclenche le remplacement de la carte courante. */
+  onFouille?: (item: ObjetEnVente) => void;
 }) {
   const [index, setIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
@@ -236,6 +245,35 @@ export function ItemSwipeDeck({
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {currentItem &&
+            fouilleDebloquee &&
+            currentItem.statut !== "achete" &&
+            currentItem.negociation?.statut !== "en_cours" && (
+              <button
+                type="button"
+                aria-label="La Fouille — chercher un autre objet"
+                onClick={() => onFouille?.(currentItem)}
+                disabled={!fouilleRestants}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "transparent",
+                  border: "1.5px solid var(--brass-500)",
+                  borderRadius: 8,
+                  color: "var(--brass-300)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "clamp(10px, 2.6vw, 12px)",
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  padding: "4px 8px",
+                  cursor: fouilleRestants ? "pointer" : "default",
+                  opacity: fouilleRestants ? 1 : 0.4,
+                }}
+              >
+                🧹 Fouille ({fouilleRestants ?? 0})
+              </button>
+            )}
           <button
             type="button"
             aria-label="Précédent"
