@@ -133,9 +133,20 @@ export default function VitrineJourneePage() {
   }
 
   const [tempsRestant, setTempsRestant] = useState(JOURNEE_DUREE_SECONDES);
-  const [prochainClient, setProchainClient] = useState(() =>
-    prochainIntervalleClient(modifiersRef.current?.intervalleMultiplier ?? 1),
-  );
+  /** Compte à rebours avant le prochain client. Jamais affiché → simple ref
+   *  (pas de useState) : le spawn d'un client déclenche des setState externes
+   *  (marquerVuTemplate sur GameContext). Les imbriquer dans le callback
+   *  updater d'un setState local faisait rejouer ces appels pendant le
+   *  rendu de VitrineJourneePage (React invoque l'updater lors du traitement
+   *  du useState propriétaire) → warning « setState pendant le rendu d'un
+   *  autre composant ». En ref, ce code s'exécute en JS normal dans le tick
+   *  du setInterval, hors de tout rendu React. */
+  const prochainClientRef = useRef<number | null>(null);
+  if (prochainClientRef.current === null) {
+    prochainClientRef.current = prochainIntervalleClient(
+      modifiersRef.current?.intervalleMultiplier ?? 1,
+    );
+  }
   const [clientActuel, setClientActuel] = useState<ClientEvent | null>(null);
   const [journal, setJournal] = useState<EntreeJournal[]>([]);
   const [negoVente, setNegoVente] = useState<NegociationState | null>(null);
@@ -285,7 +296,7 @@ export default function VitrineJourneePage() {
   const jouerCriee = () => {
     if (!utiliserActive("criee")) return;
     crieeRestantsRef.current = CRIEE_NB_CLIENTS;
-    setProchainClient(0.1); // déclenche le spawn au prochain tick, sans attendre l'intervalle
+    prochainClientRef.current = 0.1; // déclenche le spawn au prochain tick, sans attendre l'intervalle
   };
 
   useEffect(() => {
@@ -388,8 +399,13 @@ export default function VitrineJourneePage() {
         return next;
       });
 
-      setProchainClient((p) => {
-        const next = p - TICK_MS / 1000;
+      // Décrémente le compte à rebours du prochain client en JS pur (ref, pas
+      // de useState) : le spawn ci-dessous déclenche des setState externes
+      // (marquerVuTemplate sur GameContext) et locaux, qui doivent s'exécuter
+      // en code normal dans ce tick — pas imbriqués dans le callback d'un
+      // updater React, cf. commentaire sur prochainClientRef plus haut.
+      {
+        const next = prochainClientRef.current! - TICK_MS / 1000;
         if (next <= 0) {
           const mods = modifiersRef.current ?? undefined;
           const tempsEcoulePct =
@@ -440,12 +456,16 @@ export default function VitrineJourneePage() {
           // quota consommé continue de s'égrener sans planter.
           if (crieeRestantsRef.current > 0) {
             crieeRestantsRef.current -= 1;
-            return CRIEE_INTERVALLE_SEC;
+            prochainClientRef.current = CRIEE_INTERVALLE_SEC;
+          } else {
+            prochainClientRef.current = prochainIntervalleClient(
+              mods?.intervalleMultiplier ?? 1,
+            );
           }
-          return prochainIntervalleClient(mods?.intervalleMultiplier ?? 1);
+        } else {
+          prochainClientRef.current = next;
         }
-        return next;
-      });
+      }
     }, TICK_MS);
 
     return () => window.clearInterval(id);
