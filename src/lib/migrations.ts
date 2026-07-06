@@ -512,6 +512,18 @@ function appliquerMigrations(loaded: GameState): GameState {
     collection,
     gazetteAchetee: loaded.gazetteAchetee ?? false,
     bossDebloqueSeen: loaded.bossDebloqueSeen ?? false,
+    niveauVu: (() => {
+      // `brocanteurConverti.niveau` (calculé plus haut, avant l'amorce des
+      // quêtes principales) est le niveau migré définitif — identique à celui
+      // du bloc `brocanteur` final ci-dessous (même variable que le clamp
+      // d'énergie, cf. commentaire associé).
+      const v = (loaded as Partial<GameState>).niveauVu;
+      const niveauFinal = brocanteurConverti.niveau;
+      if (Number.isFinite(v) && (v as number) >= 0) {
+        return Math.min(Math.floor(v as number), niveauFinal);
+      }
+      return niveauFinal; // saves d'avant la feature : tout est déjà « vu ».
+    })(),
     meteoSemaine:
       Array.isArray(loaded.meteoSemaine) && loaded.meteoSemaine.length === 7
         ? loaded.meteoSemaine

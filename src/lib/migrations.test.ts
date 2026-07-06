@@ -511,8 +511,12 @@ describe("migration quêtes périodiques (v7)", () => {
  */
 function fabriqueSaveV7(patch: Partial<GameState> = {}): GameState {
   const complet = createMockGameState(patch);
-  const { brocanteur: _brocanteur, affinites: _affinites, ...sansNiveau } =
-    complet;
+  const {
+    brocanteur: _brocanteur,
+    affinites: _affinites,
+    niveauVu: _niveauVu,
+    ...sansNiveau
+  } = complet;
   return { ...sansNiveau, version: 7 } as unknown as GameState;
 }
 
@@ -747,5 +751,24 @@ describe("migration v10 — suppression de competenceTrees", () => {
     (save as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 1100, niveau: 11, pointsDisponibles: 4 } };
     const migre = migrerSauvegarde(save);
     expect(migre.brocanteur.niveau).toBe(5); // 1100 XP → N5 (30n²+70n)
+  });
+});
+
+describe("niveauVu (célébration de level-up)", () => {
+  it("backfillé au niveau courant pour toute save existante (pas de spam)", () => {
+    const save = fabriqueSaveV7();
+    (save as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 1100, niveau: 11, pointsDisponibles: 4 } };
+    const migre = migrerSauvegarde(save);
+    expect(migre.niveauVu).toBe(migre.brocanteur.niveau); // 5
+  });
+  it("clampé au niveau courant si corrompu au-dessus", () => {
+    const m1 = migrerSauvegarde(fabriqueSaveV7());
+    const migre = migrerSauvegarde({ ...m1, niveauVu: 99 });
+    expect(migre.niveauVu).toBe(migre.brocanteur.niveau);
+  });
+  it("préservé s'il est valide et en retard (célébration en attente)", () => {
+    const m1 = migrerSauvegarde(fabriqueSaveV7());
+    const enAttente = { ...m1, brocanteur: { xp: 1100, niveau: 5, pointsDisponibles: 5 }, niveauVu: 3 };
+    expect(migrerSauvegarde(enAttente).niveauVu).toBe(3);
   });
 });

@@ -40,6 +40,7 @@ export function createMockGameState(patch: Partial<GameState> = {}): GameState {
     affinites: emptyAffinites(),
     collection,
     bossDebloqueSeen: false,
+    niveauVu: 0,
     meteoSemaine: [],
     celebriteActuelle: null,
     influenceUtilisee: false,

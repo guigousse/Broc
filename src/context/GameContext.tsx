@@ -189,6 +189,8 @@ interface GameActionsValue {
   livrerMission: (courrierId: string) => { ok: boolean; raison?: string };
   acheterGazette: () => { ok: boolean; raison?: string };
   marquerBossDebloqueVu: () => void;
+  /** Avance `niveauVu` d'UN niveau (clampé à `brocanteur.niveau`) — célébration séquentielle des level-up. */
+  marquerNiveauVu: () => void;
   /** Influence (compétence Vision 3) : retire la météo du jour. */
   rerollMeteo: () => { ok: boolean; raison?: string };
   /** Influence (compétence Vision 3) : retire la brocante de la célébrité courante. */
@@ -498,6 +500,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       collection: initCollection(),
       gazetteAchetee: false,
       bossDebloqueSeen: false,
+      niveauVu: 0,
       meteoSemaine: tirerMeteoSemaine(),
       celebriteActuelle: tirerCelebrite(),
       influenceUtilisee: false,
@@ -1350,6 +1353,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const marquerNiveauVu = useCallback(() => {
+    setState((prev) =>
+      prev && prev.niveauVu < prev.brocanteur.niveau
+        ? { ...prev, niveauVu: Math.min(prev.niveauVu + 1, prev.brocanteur.niveau) }
+        : prev,
+    );
+  }, []);
+
   const marquerCourrierLu = useCallback((id: string) => {
     setState((prev) => {
       if (!prev) return prev;
@@ -1548,6 +1559,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       payerFraisBrocante,
       livrerMission,
       marquerBossDebloqueVu,
+      marquerNiveauVu,
       rerollMeteo,
       rerollCelebrite,
       marquerCourrierLu,
@@ -1595,6 +1607,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       payerFraisBrocante,
       livrerMission,
       marquerBossDebloqueVu,
+      marquerNiveauVu,
       rerollMeteo,
       rerollCelebrite,
       marquerCourrierLu,

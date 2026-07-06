@@ -234,6 +234,8 @@ export interface GameState {
   collection: Record<CategorieObjet, CollectionSlot[]>;
   /** Vrai si la modale d'annonce du déblocage du boss a déjà été montrée. */
   bossDebloqueSeen: boolean;
+  /** Dernier Niveau de Brocanteur déjà célébré par l'écran de level-up. Toujours ≤ brocanteur.niveau. */
+  niveauVu: number;
   /** Météo de chaque jour de la semaine en cours (longueur 7, lundi → dimanche). Régénérée à chaque édition. */
   meteoSemaine: Meteo[];
   /** Célébrité attendue cette édition de la Gazette. null = aucune (avant la 1ʳᵉ édition). */
