@@ -183,26 +183,29 @@ async function main() {
     const briefParts = [STYLE_BRIEF_BASE];
     if (item.transparent) briefParts.push(STYLE_BRIEF_TRANSPARENT);
     const promptText = `${briefParts.join(" ")}\n\nSubject: ${item.description}`;
-    const aspectRatio = item.id === "fond-cabinet" || item.id === "exterieur-jour"
-      ? defaultAspect
-      : "1:1";
+    // Aspect par entrée (champ `aspect` du JSON), sinon défauts historiques.
+    const aspectRatio =
+      item.aspect ??
+      (item.id === "fond-cabinet" || item.id === "exterieur-jour"
+        ? defaultAspect
+        : "1:1");
 
     let contents;
     try {
       if (item.reference) {
-        const refImage = await loadReferenceImage(item.reference);
-        contents = [
-          {
-            role: "user",
-            parts: [
-              { text: REFERENCE_INTRO },
-              { inlineData: refImage },
-              { text: promptText },
-            ],
-          },
-        ];
+        // `reference` : un id ou un tableau d'ids — les images sont fournies
+        // dans l'ordre au modèle (référencées « image 1 », « image 2 »… dans le prompt).
+        const refIds = Array.isArray(item.reference)
+          ? item.reference
+          : [item.reference];
+        const parts = [{ text: REFERENCE_INTRO }];
+        for (const refId of refIds) {
+          parts.push({ inlineData: await loadReferenceImage(refId) });
+        }
+        parts.push({ text: promptText });
+        contents = [{ role: "user", parts }];
         console.log(
-          `🎨  ${item.id} — génération en cours (${model}, ${aspectRatio}, ref: ${item.reference})…`,
+          `🎨  ${item.id} — génération en cours (${model}, ${aspectRatio}, ref: ${refIds.join(" + ")})…`,
         );
       } else {
         contents = promptText;
