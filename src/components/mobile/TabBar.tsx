@@ -57,7 +57,14 @@ export const TAB_ORDER: TabDef[] = [
 ];
 
 const HIDDEN_EXACT = new Set(["/", "/chiner", "/vitrine"]);
-const HIDDEN_PREFIXES = ["/chiner/", "/vitrine/"];
+
+/**
+ * Préfixes de routes de « session » (brocante en cours de chinage, vitrine en
+ * cours de tenue) : la TabBar s'efface pendant ces écrans plein-écran, et
+ * l'écran de level-up global (`LevelUpOverlay`) diffère aussi sa célébration
+ * tant qu'on est dedans, pour ne pas interrompre l'action en cours.
+ */
+export const ROUTES_SESSION_PREFIXES = ["/chiner/", "/vitrine/"];
 
 /** Renvoie l'index dans TAB_ORDER de la route active, -1 si aucune ne matche. */
 export function findActiveTabIndex(pathname: string): number {
@@ -69,7 +76,7 @@ export function findActiveTabIndex(pathname: string): number {
 /** Vrai si la TabBar doit être visible sur cette route. */
 export function isTabBarRoute(pathname: string): boolean {
   if (HIDDEN_EXACT.has(pathname)) return false;
-  for (const p of HIDDEN_PREFIXES) {
+  for (const p of ROUTES_SESSION_PREFIXES) {
     if (pathname.startsWith(p)) return false;
   }
   return true;

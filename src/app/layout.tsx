@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { GameProvider } from "@/context/GameContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { TabBar } from "@/components/mobile/TabBar";
+import { LevelUpOverlay } from "@/components/mobile/LevelUpOverlay";
 import { SwipePager } from "@/components/mobile/SwipePager";
 import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -60,6 +61,7 @@ export default function RootLayout({
             <GameProvider>
               <SwipePager>{children}</SwipePager>
               <TabBar />
+              <LevelUpOverlay />
               <GlobalVinylAmbiance />
             </GameProvider>
           </ToastProvider>
