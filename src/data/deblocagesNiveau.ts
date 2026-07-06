@@ -1,5 +1,6 @@
 import { NIVEAU_BROCANTES_T2, NIVEAU_BROCANTES_T3, NIVEAU_BROCANTES_T4 } from "@/data/brocantes";
 import { NIVEAU_ENERGIE_BONUS_1, NIVEAU_ENERGIE_BONUS_2 } from "@/lib/energie";
+import { NIVEAU_BROCANTEUR_PALIER_3 } from "@/data/competences";
 
 export type FamilleDeblocage = "jalon" | "contenu" | "economie" | "confort" | "active";
 
@@ -24,7 +25,7 @@ export const DEBLOCAGES_PAR_NIVEAU: readonly DeblocageNiveau[] = [
   { niveau: 9, titre: "Active 🧹 La Fouille", famille: "active", effectif: true },
   { niveau: NIVEAU_BROCANTES_T3, titre: "Accès aux belles foires (T3)", famille: "jalon", effectif: true },
   { niveau: 11, titre: "Camion niveau 2 à l'achat", famille: "economie", effectif: false },
-  { niveau: 12, titre: "Paliers 3 des compétences", famille: "jalon", effectif: false },
+  { niveau: NIVEAU_BROCANTEUR_PALIER_3, titre: "Paliers 3 des compétences", famille: "jalon", effectif: true },
   { niveau: 13, titre: "Active 🎩 Le Boniment", famille: "active", effectif: true },
   { niveau: NIVEAU_ENERGIE_BONUS_2, titre: "Énergie max +1 (= 7)", famille: "confort", effectif: true },
   { niveau: 15, titre: "Active 💬 La Tchatche", famille: "active", effectif: true },

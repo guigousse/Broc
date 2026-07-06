@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Zap, Plus } from "lucide-react";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { ENERGIE_MAX, energieCourante, energieMaxPourNiveau } from "@/lib/energie";
 import { progressionNiveauBrocanteur } from "@/lib/xp";
+import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { EnergieRecharge } from "./EnergieRecharge";
 
 interface MobileHeaderProps {
@@ -85,12 +87,35 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   const { state } = useGame();
   const { tempsConfiance } = useGameActions();
   const [rechargeOuverte, setRechargeOuverte] = useState(false);
+  const pathname = usePathname();
 
   const energieMax = state ? energieMaxPourNiveau(state.brocanteur.niveau) : ENERGIE_MAX;
   const energie = state
     ? energieCourante(state, tempsConfiance() ?? Date.now(), energieMax)
     : ENERGIE_MAX;
   const peutRecharger = energie < energieMax;
+
+  // La puce XP ne doit pas naviguer pendant une session (chinage/vitrine) : un
+  // mistap ferait sortir de la session et re-paierait le droit d'entrée +
+  // re-consommerait l'énergie à la re-entrée. Elle ne doit pas non plus
+  // naviguer avant N1, car l'écran Compétences est masqué tant que le joueur
+  // n'a pas ouvert son premier point.
+  const enSession = ROUTES_SESSION_PREFIXES.some((p) => pathname?.startsWith(p));
+  const xpNavigationBloquee = enSession || (state ? state.brocanteur.niveau < 1 : true);
+  const xpLabel = state ? `Niveau de Brocanteur ${state.brocanteur.niveau}` : undefined;
+  const xpContenu = state ? (
+    <>
+      <span style={xpNiveauStyle}>N{state.brocanteur.niveau}</span>
+      <span style={xpTrackStyle}>
+        <span
+          style={{
+            ...xpFillStyle,
+            width: `${Math.round(progressionNiveauBrocanteur(state.brocanteur) * 100)}%`,
+          }}
+        />
+      </span>
+    </>
+  ) : null;
 
   return (
     <header style={wrapStyle}>
@@ -113,22 +138,15 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
           Broc
         </Link>
         {state ? (
-          <Link
-            href="/bibliotheque"
-            style={xpBlocStyle}
-            aria-label={`Niveau de Brocanteur ${state.brocanteur.niveau}`}
-            data-fly-target="xp-header"
-          >
-            <span style={xpNiveauStyle}>N{state.brocanteur.niveau}</span>
-            <span style={xpTrackStyle}>
-              <span
-                style={{
-                  ...xpFillStyle,
-                  width: `${Math.round(progressionNiveauBrocanteur(state.brocanteur) * 100)}%`,
-                }}
-              />
+          xpNavigationBloquee ? (
+            <span style={xpBlocStyle} aria-label={xpLabel} data-fly-target="xp-header">
+              {xpContenu}
             </span>
-          </Link>
+          ) : (
+            <Link href="/bibliotheque" style={xpBlocStyle} aria-label={xpLabel} data-fly-target="xp-header">
+              {xpContenu}
+            </Link>
+          )
         ) : (
           <span />
         )}

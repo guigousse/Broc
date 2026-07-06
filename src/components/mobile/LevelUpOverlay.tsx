@@ -132,7 +132,7 @@ export function LevelUpOverlay() {
   const prochain = prochainDeblocage(niveauACelebrer);
 
   return (
-    <div style={scrim} role="dialog" aria-label={`Niveau ${niveauACelebrer} atteint`}>
+    <div style={scrim} role="dialog" aria-modal="true" aria-label={`Niveau ${niveauACelebrer} atteint`}>
       <div style={carte}>
         <div style={eyebrow}>— niveau de brocanteur —</div>
         <div style={titre}>Niveau {niveauACelebrer} !</div>

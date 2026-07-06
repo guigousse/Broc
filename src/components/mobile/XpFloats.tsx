@@ -62,7 +62,7 @@ const float: CSSProperties = {
   background: "var(--paper-100)",
   border: "1px solid var(--brass-500)",
   padding: "1px 6px",
-  animation: "broc-xp-float 900ms ease-out forwards",
+  animation: `broc-xp-float ${XP_FLOAT_DUREE_MS}ms ease-out forwards`,
 };
 
 /** Vue purement affichage — empile les floats « +XP » en haut à droite,

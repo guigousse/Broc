@@ -5,7 +5,7 @@ import { NIVEAU_ACTIVES } from "@/lib/actives";
 describe("table des déblocages par niveau", () => {
   it("les jalons validés sont effectifs", () => {
     const effectifs = DEBLOCAGES_PAR_NIVEAU.filter((d) => d.effectif).map((d) => d.niveau).sort((a, b) => a - b);
-    expect(effectifs).toEqual([1, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 20]);
+    expect(effectifs).toEqual([1, 4, 5, 7, 8, 9, 10, 12, 13, 14, 15, 17, 20]);
   });
   it("chaque niveau 1..20 a au moins une ligne (déblocage nommé)", () => {
     for (let n = 1; n <= 20; n++) expect(deblocagesPourNiveau(n).length).toBeGreaterThan(0);
