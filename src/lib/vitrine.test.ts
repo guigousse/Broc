@@ -18,6 +18,7 @@ import {
   createMockClient,
   createMockObjetEnVitrine,
 } from "./__test-fixtures__/gameState";
+import type { NegociationState } from "@/types/game";
 
 beforeEach(() => {
   // Fige Math.random à 0.5 par défaut (milieu de plage).
@@ -34,7 +35,8 @@ describe("constantes", () => {
   });
 
   it("DEFAULT_MODIFIERS expose tous les flags neutres", () => {
-    expect(DEFAULT_MODIFIERS.seuilColere).toBeGreaterThan(1);
+    expect(DEFAULT_MODIFIERS.bonusToleranceNego).toBe(0);
+    expect(DEFAULT_MODIFIERS.bonusToleranceParCategorie.size).toBe(0);
     expect(DEFAULT_MODIFIERS.intervalleMultiplier).toBe(1);
     expect(DEFAULT_MODIFIERS.revelePersona).toBe(false);
     expect(DEFAULT_MODIFIERS.releveBourse).toBe(false);
@@ -231,6 +233,31 @@ describe("proposerOffreVente — Diplomate transforme fache en en_cours", () => 
       revelationDejaFaite: true,
     });
     expect(res.statut).toBe("fache");
+  });
+});
+
+describe("proposerOffreVente — boost de tolérance (Verbe haut/d'or)", () => {
+  it("une contre-offre insultante sans boost passe avec +40 %", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.99);
+    const nego = {
+      mode: "vente",
+      tour: 1,
+      humeur: 0,
+      prixAdverseCourant: 100,
+      cibleSecrete: 120,
+      derniereOffreJoueur: null,
+      statut: "en_cours",
+      message: "",
+    } as NegociationState;
+    const client = createMockClient({ tolerancePct: 0.2, sangFroid: 1, patience: 9 });
+    // offre à 125 : delta 25 % > 20 % → insultante sans boost
+    const sans = proposerOffreVente(nego, client, 125, DEFAULT_MODIFIERS, {});
+    expect(sans.statut).toBe("fache");
+    // avec boost 0.4 : tolérance effective 0.28 → 125 (25 %) n'est plus insultante
+    const avec = proposerOffreVente(nego, client, 125, DEFAULT_MODIFIERS, {
+      toleranceBoost: 0.4,
+    });
+    expect(avec.statut).not.toBe("fache");
   });
 });
 

@@ -150,27 +150,35 @@ export function aSpecialisteCategorie(
   return bonusPassionCategorie(state, cat) >= 0.20;
 }
 
-/**
- * Bonus catégoriel au seuil de colère (Œil aiguisé 1/2/3).
- * 0.05 / 0.10 / 0.20 selon le palier max débloqué (palier plus haut écrase).
- */
-export function bonusSeuilColereCategorie(
+export const BONUS_TOLERANCE_VERBE_HAUT = 0.20;
+export const BONUS_TOLERANCE_VERBE_DOR = 0.40;
+export const BONUS_TOLERANCE_CATEGORIE = [0.10, 0.20, 0.30] as const;
+
+/** Bonus général de tolérance de négociation (Verbe d'or écrase Verbe haut). */
+export function bonusToleranceNegoGeneral(state: GameState): number {
+  if (aGenVerbeDOr(state)) return BONUS_TOLERANCE_VERBE_DOR;
+  if (aGenVerbeHaut(state)) return BONUS_TOLERANCE_VERBE_HAUT;
+  return 0;
+}
+
+/** Bonus catégoriel de tolérance (Œil aiguisé 1/2/3 — le plus haut écrase). */
+export function bonusToleranceCategorie(
   state: GameState,
   cat: CategorieObjet,
 ): number {
   const t = catTreeId(cat);
-  if (aCompetence(`${t}.oeil_aiguise.3`, state.competencesDebloquees)) return 0.20;
-  if (aCompetence(`${t}.oeil_aiguise.2`, state.competencesDebloquees)) return 0.10;
-  if (aCompetence(`${t}.oeil_aiguise.1`, state.competencesDebloquees)) return 0.05;
+  if (aCompetence(`${t}.oeil_aiguise.3`, state.competencesDebloquees)) return BONUS_TOLERANCE_CATEGORIE[2];
+  if (aCompetence(`${t}.oeil_aiguise.2`, state.competencesDebloquees)) return BONUS_TOLERANCE_CATEGORIE[1];
+  if (aCompetence(`${t}.oeil_aiguise.1`, state.competencesDebloquees)) return BONUS_TOLERANCE_CATEGORIE[0];
   return 0;
 }
 
-/** Général · Négociation palier 1 : seuil de colère 1.4× au lieu de 1.2×. */
+/** Général · Négociation palier 1 : Verbe haut — booste la tolérance de négociation. */
 export function aGenVerbeHaut(state: GameState): boolean {
   return aCompetence(`${TREE_GENERAL}.negociation.1`, state.competencesDebloquees);
 }
 
-/** Général · Négociation palier 2 : seuil de colère 1.6×. */
+/** Général · Négociation palier 2 : Verbe d'or — booste davantage la tolérance de négociation. */
 export function aGenVerbeDOr(state: GameState): boolean {
   return aCompetence(`${TREE_GENERAL}.negociation.2`, state.competencesDebloquees);
 }

@@ -19,10 +19,10 @@ export const BONUS_SPECIALISATION_CLIENT = 1.1;
 export interface VitrineModifiers {
   /** Bonus d'appétit catégoriel (Passion 1/2/3 cumulé via valeurs max), par catégorie. */
   bonusPassionParCategorie: Map<CategorieObjet, number>;
-  /** Bonus catégoriel au seuil de colère (Œil aiguisé 1/2/3), par catégorie. */
-  bonusSeuilColereParCategorie: Map<CategorieObjet, number>;
-  /** Seuil de colère général (étendu par Verbe haut / Verbe d'or). */
-  seuilColere: number;
+  /** Bonus catégoriel de tolérance de négociation (Œil aiguisé 1/2/3), par catégorie. */
+  bonusToleranceParCategorie: Map<CategorieObjet, number>;
+  /** Bonus général de tolérance de négociation (Verbe haut / Verbe d'or). */
+  bonusToleranceNego: number;
   /** Multiplicateur de l'intervalle entre clients (Présentation soignée → 0.75). */
   intervalleMultiplier: number;
   /** Lecteur d'âmes : afficher nom + ambiance du persona. */
@@ -41,8 +41,8 @@ export interface VitrineModifiers {
 
 export const DEFAULT_MODIFIERS: VitrineModifiers = {
   bonusPassionParCategorie: new Map(),
-  bonusSeuilColereParCategorie: new Map(),
-  seuilColere: 1.2,
+  bonusToleranceParCategorie: new Map(),
+  bonusToleranceNego: 0,
   intervalleMultiplier: 1,
   revelePersona: false,
   releveBourse: false,
@@ -69,6 +69,8 @@ export interface ClientEvent {
   mode: "achat-direct" | "negociation";
   /** Vrai si le client a été boosté (Stand renommé). */
   fancy?: boolean;
+  /** Bonus de tolérance de négociation (général + max catégoriel du panier). */
+  toleranceBoost: number;
 }
 
 export type ClasseBourse = "petite" | "moyenne" | "grosse";
@@ -129,6 +131,13 @@ const OFFRE_TROP_CHER = 0.95;
  * son chemin. Volontairement permissif pour éviter les journées silencieuses.
  */
 const SEUIL_INTERET_ACHETEUR = 1.6;
+/**
+ * Au-delà de ce ratio (prixDemande / prixMax), le client considère le prix
+ * affiché comme normal à négocier (branche médiane de `genererClientEvent`).
+ * Comportement de base inchangé pour tous ; boosté par la vraie tolérance
+ * de négociation via `ClientEvent.toleranceBoost` / `proposerOffreVente`.
+ */
+export const SEUIL_NEGO_NORMALE = 1.2;
 
 function calculerPrixMax(
   panier: ObjetEnVitrine[],
@@ -170,19 +179,6 @@ function calculerPrixMax(
   const modBundle = panier.length > 1 ? 1 + BONUS_BUNDLE : 1;
   // Plafond absolu : l'appétit est un pourcentage, la bourse est un montant.
   return Math.max(1, Math.min(Math.round(brut * modBundle), bourseDe(persona)));
-}
-
-/** Calcule le seuil de colère effectif pour ce panier (général + max bonus catégoriel). */
-function seuilColereEffectif(
-  panier: ObjetEnVitrine[],
-  modifiers: VitrineModifiers,
-): number {
-  let bonusCat = 0;
-  for (const it of panier) {
-    const b = modifiers.bonusSeuilColereParCategorie.get(it.objet.categorie) ?? 0;
-    if (b > bonusCat) bonusCat = b;
-  }
-  return modifiers.seuilColere + bonusCat;
 }
 
 /**
@@ -247,7 +243,7 @@ export function genererClientEvent(
   if (prixDemande <= prixMax * SEUIL_ACHAT_DIRECT) {
     mode = "achat-direct";
     offreInitiale = prixDemande;
-  } else if (prixDemande <= prixMax * seuilColereEffectif(panier, modifiers)) {
+  } else if (prixDemande <= prixMax * SEUIL_NEGO_NORMALE) {
     mode = "negociation";
     // Dureté : 0 = offre généreuse (jusqu'à 100 % du max), 1 = offre serrée (jusqu'à ~80 %).
     // Range resserrée pour éviter les offres trop basses : haut 0.80→1.00, bas 0.70→0.90.
@@ -264,6 +260,13 @@ export function genererClientEvent(
     offreInitiale = Math.max(1, Math.round(prixMax * ratio));
   }
 
+  let boostCat = 0;
+  for (const it of panier) {
+    const b = modifiers.bonusToleranceParCategorie.get(it.objet.categorie) ?? 0;
+    if (b > boostCat) boostCat = b;
+  }
+  const toleranceBoost = modifiers.bonusToleranceNego + boostCat;
+
   return {
     id: crypto.randomUUID(),
     persona,
@@ -273,6 +276,7 @@ export function genererClientEvent(
     offreInitiale,
     mode,
     fancy: options.fancy,
+    toleranceBoost,
   };
 }
 
@@ -297,9 +301,11 @@ export function proposerOffreVente(
   client: ClientPersonnage,
   contreOffre: number,
   modifiers: VitrineModifiers = DEFAULT_MODIFIERS,
-  options: { revelationDejaFaite?: boolean } = {},
+  options: { revelationDejaFaite?: boolean; toleranceBoost?: number } = {},
 ): NegociationState {
-  const persona = personaDepuisClient(client);
+  const base = personaDepuisClient(client);
+  const boost = options.toleranceBoost ?? 0;
+  const persona = boost > 0 ? { ...base, tolerancePct: base.tolerancePct * (1 + boost) } : base;
   const next = proposerOffre(nego, persona, contreOffre);
 
   // Diplomate : si on tombe fâché et que la révélation n'a pas eu lieu, on

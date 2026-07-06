@@ -47,10 +47,9 @@ import {
   aGenOeilAiguise,
   aGenPresentationSoignee,
   aGenStandRenomme,
-  aGenVerbeDOr,
-  aGenVerbeHaut,
   bonusPassionCategorie,
-  bonusSeuilColereCategorie,
+  bonusToleranceCategorie,
+  bonusToleranceNegoGeneral,
 } from "@/lib/competences";
 import { CATEGORIES } from "@/data/categories";
 import { METEO_INTERVALLE_MULT } from "@/data/meteos";
@@ -101,22 +100,17 @@ export default function VitrineJourneePage() {
   const modifiersRef = useRef<VitrineModifiers | null>(null);
   if (state && modifiersRef.current === null) {
     const bonusPassionParCategorie = new Map<CategorieObjet, number>();
-    const bonusSeuilColereParCategorie = new Map<CategorieObjet, number>();
+    const bonusToleranceParCategorie = new Map<CategorieObjet, number>();
     for (const c of CATEGORIES) {
       const p = bonusPassionCategorie(state, c);
       if (p > 0) bonusPassionParCategorie.set(c, p);
-      const s = bonusSeuilColereCategorie(state, c);
-      if (s > 0) bonusSeuilColereParCategorie.set(c, s);
+      const t = bonusToleranceCategorie(state, c);
+      if (t > 0) bonusToleranceParCategorie.set(c, t);
     }
-    const seuilColere = aGenVerbeDOr(state)
-      ? 1.6
-      : aGenVerbeHaut(state)
-        ? 1.4
-        : 1.2;
     modifiersRef.current = {
       bonusPassionParCategorie,
-      bonusSeuilColereParCategorie,
-      seuilColere,
+      bonusToleranceParCategorie,
+      bonusToleranceNego: bonusToleranceNegoGeneral(state),
       intervalleMultiplier:
         (aGenPresentationSoignee(state) ? 0.75 : 1) *
         METEO_INTERVALLE_MULT[meteoDuJour(state)],
@@ -540,6 +534,7 @@ export default function VitrineJourneePage() {
         // les clients suivants sont traités comme si elle avait déjà eu lieu.
         revelationDejaFaite:
           revelationDejaFaite || diplomatieUtiliseeAujourdhuiRef.current,
+        toleranceBoost: ev.toleranceBoost,
       },
     );
     setNegoVente(next);

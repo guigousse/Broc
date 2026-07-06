@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
-import type { CompetenceDef, CompetenceId } from "@/types/game";
-import { aCompetence, contexteDepuisState, etatCompetence } from "./competences";
+import type { CompetenceDef, CompetenceId, GameState } from "@/types/game";
+import {
+  aCompetence,
+  bonusToleranceCategorie,
+  bonusToleranceNegoGeneral,
+  contexteDepuisState,
+  etatCompetence,
+} from "./competences";
 import { getCompetence } from "@/data/competences";
 import { emptyAffinites } from "@/lib/xp";
+
+function stateAvec(debloquees: CompetenceId[]): GameState {
+  return { competencesDebloquees: debloquees } as GameState;
+}
 
 function comp(
   id: string,
@@ -197,5 +207,68 @@ describe("etatCompetence v2 — pool global", () => {
 
   it("déjà débloquée prime sur tout", () => {
     expect(etatCompetence(p3, [p1.id, p2.id, p3.id], ctx({ pointsDisponibles: 0, niveauBrocanteur: 0 }))).toBe("debloquee");
+  });
+});
+
+describe("bonusToleranceCategorie — Œil aiguisé", () => {
+  it("retourne 0 sans compétence débloquée", () => {
+    expect(bonusToleranceCategorie(stateAvec([]), "Musique")).toBe(0);
+  });
+
+  it("retourne 0.10 au palier 1", () => {
+    expect(
+      bonusToleranceCategorie(
+        stateAvec(["cat.Musique.oeil_aiguise.1" as CompetenceId]),
+        "Musique",
+      ),
+    ).toBe(0.10);
+  });
+
+  it("retourne 0.20 au palier 2 (écrase le palier 1)", () => {
+    expect(
+      bonusToleranceCategorie(
+        stateAvec([
+          "cat.Musique.oeil_aiguise.1" as CompetenceId,
+          "cat.Musique.oeil_aiguise.2" as CompetenceId,
+        ]),
+        "Musique",
+      ),
+    ).toBe(0.20);
+  });
+
+  it("retourne 0.30 au palier 3 (écrase les paliers inférieurs)", () => {
+    expect(
+      bonusToleranceCategorie(
+        stateAvec([
+          "cat.Musique.oeil_aiguise.1" as CompetenceId,
+          "cat.Musique.oeil_aiguise.2" as CompetenceId,
+          "cat.Musique.oeil_aiguise.3" as CompetenceId,
+        ]),
+        "Musique",
+      ),
+    ).toBe(0.30);
+  });
+});
+
+describe("bonusToleranceNegoGeneral — Verbe haut / Verbe d'or", () => {
+  it("retourne 0 sans compétence débloquée", () => {
+    expect(bonusToleranceNegoGeneral(stateAvec([]))).toBe(0);
+  });
+
+  it("retourne 0.20 avec Verbe haut", () => {
+    expect(
+      bonusToleranceNegoGeneral(stateAvec(["general.negociation.1" as CompetenceId])),
+    ).toBe(0.20);
+  });
+
+  it("retourne 0.40 avec Verbe d'or (écrase Verbe haut)", () => {
+    expect(
+      bonusToleranceNegoGeneral(
+        stateAvec([
+          "general.negociation.1" as CompetenceId,
+          "general.negociation.2" as CompetenceId,
+        ]),
+      ),
+    ).toBe(0.40);
   });
 });
