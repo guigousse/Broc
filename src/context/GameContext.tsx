@@ -16,7 +16,6 @@ import {
   INITIAL_JOUR,
   type CategorieObjet,
   type CompetenceId,
-  type CompetenceTreeId,
   type EtatObjet,
   type GameState,
   type NiveauCamion,
@@ -32,12 +31,7 @@ import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
 import { indicesAConsommerPourLivraison } from "@/lib/missions";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
-import {
-  catTreeId,
-  emptyAllTrees,
-  emptyTreeState,
-  getCompetence,
-} from "@/data/competences";
+import { emptyAllTrees, getCompetence } from "@/data/competences";
 import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
 import {
   ID_LETTRE_MAMAN_DEBUT,
@@ -46,7 +40,6 @@ import {
 } from "@/lib/courrier";
 import { prochainLundi } from "@/lib/calendrier";
 import {
-  appliquerGainXP,
   appliquerGainXPBrocanteur,
   emptyAffinites,
   emptyBrocanteur,
@@ -57,7 +50,13 @@ import {
   XP_QUETE_QUOTIDIENNE,
   XP_RESTAURATION_ETAPE,
 } from "@/lib/xp";
-import { aGenInfluence, peutRestaurerCategorie } from "@/lib/competences";
+import {
+  aGenInfluence,
+  affiniteRequisePourComp,
+  contexteDepuisState,
+  etatCompetence,
+  peutRestaurerCategorie,
+} from "@/lib/competences";
 import { tirerMeteo, tirerMeteoSemaine, indexJourSemaine } from "@/lib/meteo";
 import { tirerCelebrite } from "@/lib/celebrite";
 import {
@@ -171,7 +170,6 @@ interface GameActionsValue {
   ameliorerAtelier: () => { ok: boolean; raison?: string };
   ameliorerStockage: () => { ok: boolean; raison?: string };
   definirPrixVenteSouhaite: (objetId: string, prix: number) => void;
-  gagnerXP: (treeId: CompetenceTreeId, montant: number) => void;
   gagnerXPBrocanteur: (montant: number, categorie?: CategorieObjet) => void;
   marquerVuTemplate: (templateId: string) => void;
   marquerVuDansCollection: (templateId: string) => void;
@@ -987,39 +985,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (id: CompetenceId): { ok: boolean; raison?: string } => {
       const comp = getCompetence(id);
       if (!comp) return { ok: false, raison: "Compétence introuvable." };
-
       const current = stateRef.current;
       if (!current) return { ok: false, raison: "Pas de partie en cours." };
-      if (current.competencesDebloquees.includes(id))
-        return { ok: false, raison: "Déjà débloquée." };
-
-      const tree = current.competenceTrees[comp.treeId] ?? emptyTreeState();
-      // TODO(plan 3): gating transitoire — la dépense de points reste sur
-      // l'arbre (tree.pointsDisponibles) jusqu'au redesign complet qui la
-      // fera porter sur le pool global (current.brocanteur).
-      if (current.brocanteur.niveau < comp.niveauBrocanteurRequis)
-        return {
-          ok: false,
-          raison: `Niveau de Brocanteur ${comp.niveauBrocanteurRequis} requis.`,
-        };
-      if (tree.pointsDisponibles < comp.coutPoints)
-        return { ok: false, raison: "Pas assez de points." };
-      const prereqOk = comp.prerequis.every((p) =>
-        current.competencesDebloquees.includes(p),
-      );
-      if (!prereqOk) return { ok: false, raison: "Prérequis non remplis." };
-
+      const etat = etatCompetence(comp, current.competencesDebloquees, contexteDepuisState(current));
+      if (etat === "debloquee") return { ok: false, raison: "Déjà débloquée." };
+      if (etat === "verrouillee") {
+        if (current.brocanteur.niveau < comp.niveauBrocanteurRequis)
+          return { ok: false, raison: `Niveau de Brocanteur ${comp.niveauBrocanteurRequis} requis.` };
+        const { categorie, requise } = affiniteRequisePourComp(comp);
+        if (categorie && (current.affinites[categorie] ?? 0) < requise)
+          return { ok: false, raison: `Affinité ${categorie} insuffisante (${current.affinites[categorie] ?? 0}/${requise}).` };
+        if (current.brocanteur.pointsDisponibles < comp.coutPoints)
+          return { ok: false, raison: "Pas assez de points." };
+        return { ok: false, raison: "Prérequis non remplis." };
+      }
       setState((prev) => {
         if (!prev) return prev;
-        const treePrev = prev.competenceTrees[comp.treeId] ?? emptyTreeState();
+        if (prev.competencesDebloquees.includes(id)) return prev;
+        if (prev.brocanteur.pointsDisponibles < comp.coutPoints) return prev;
         return {
           ...prev,
-          competenceTrees: {
-            ...prev.competenceTrees,
-            [comp.treeId]: {
-              ...treePrev,
-              pointsDisponibles: treePrev.pointsDisponibles - comp.coutPoints,
-            },
+          brocanteur: {
+            ...prev.brocanteur,
+            pointsDisponibles: prev.brocanteur.pointsDisponibles - comp.coutPoints,
           },
           competencesDebloquees: [...prev.competencesDebloquees, id],
         };
@@ -1191,24 +1179,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     },
     [tempsConfiance],
-  );
-
-  const gagnerXP = useCallback(
-    (treeId: CompetenceTreeId, montant: number) => {
-      if (montant <= 0) return;
-      setState((prev) => {
-        if (!prev) return prev;
-        const tree = prev.competenceTrees[treeId] ?? emptyTreeState();
-        return {
-          ...prev,
-          competenceTrees: {
-            ...prev.competenceTrees,
-            [treeId]: appliquerGainXP(tree, montant),
-          },
-        };
-      });
-    },
-    [],
   );
 
   const marquerVuTemplate = useCallback((templateId: string) => {
@@ -1527,7 +1497,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ameliorerAtelier,
       ameliorerStockage,
       definirPrixVenteSouhaite,
-      gagnerXP,
       gagnerXPBrocanteur,
       marquerVuTemplate,
       marquerVuDansCollection,
@@ -1574,7 +1543,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ameliorerAtelier,
       ameliorerStockage,
       definirPrixVenteSouhaite,
-      gagnerXP,
       gagnerXPBrocanteur,
       marquerVuTemplate,
       marquerVuDansCollection,

@@ -18,7 +18,10 @@ interface SessionSummaryProps {
   titre: string;
   sousTitre?: string;
   items: SummaryItem[];
+  /** XP par arbre — non vide uniquement pour un replay de vieille session (pré pool global). */
   xpGagne: Record<CompetenceTreeId, number>;
+  /** XP de Brocanteur gagnée pendant la session (sessions courantes, pool global). */
+  xpBrocanteur?: number;
   /** Si vente : afficher un grand "Bravo!" quand toute la vitrine est écoulée. */
   bravo?: boolean;
   /** Libellé du bouton de retour. Défaut : "Rentrer au QG". */
@@ -36,6 +39,7 @@ export function SessionSummary({
   sousTitre,
   items,
   xpGagne,
+  xpBrocanteur,
   bravo = false,
   retourLabel,
   xpReplayMode = false,
@@ -43,6 +47,7 @@ export function SessionSummary({
 }: SessionSummaryProps) {
   const total = items.reduce((s, it) => s + it.prix, 0);
   const xpEntries = Object.entries(xpGagne).filter(([, v]) => v > 0);
+  const totalXp = xpBrocanteur ?? xpEntries.reduce((s, [, v]) => s + v, 0);
 
   return (
     <div
@@ -204,24 +209,23 @@ export function SessionSummary({
           </div>
         </Panel>
 
-        <Panel
-          eyebrow="— expérience gagnée —"
-          title={`+${xpEntries.reduce((s, [, v]) => s + v, 0)} XP`}
-        >
+        <Panel eyebrow="— expérience gagnée —" title={`+${totalXp} XP`}>
           {xpEntries.length === 0 ? (
-            <p
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontStyle: "italic",
-                color: "var(--ink-500)",
-                textAlign: "center",
-                margin: 0,
-              }}
-            >
-              {xpReplayMode
-                ? "Aucune expérience enregistrée pour cette session."
-                : "Aucune expérience gagnée cette fois-ci."}
-            </p>
+            totalXp === 0 ? (
+              <p
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontStyle: "italic",
+                  color: "var(--ink-500)",
+                  textAlign: "center",
+                  margin: 0,
+                }}
+              >
+                {xpReplayMode
+                  ? "Aucune expérience enregistrée pour cette session."
+                  : "Aucune expérience gagnée cette fois-ci."}
+              </p>
+            ) : null
           ) : (
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {xpEntries.map(([treeId, xp], i, arr) => {

@@ -337,10 +337,3 @@ export function getTreeMeta(treeId: CompetenceTreeId): TreeMeta {
     categorie: def.categorie,
   };
 }
-
-// =====================================================================
-// GAINS D'XP PAR ACTION
-// =====================================================================
-export const XP_ACHAT_OBJET = 10;
-export const XP_VENTE_OBJET = 20;
-export const XP_NEGOCIATION_REUSSIE_GENERAL = 5;

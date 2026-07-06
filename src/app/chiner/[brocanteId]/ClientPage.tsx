@@ -28,12 +28,6 @@ import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
 import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import {
-  TREE_GENERAL,
-  XP_ACHAT_OBJET,
-  XP_NEGOCIATION_REUSSIE_GENERAL,
-  catTreeId,
-} from "@/data/competences";
-import {
   XP_ACHAT_BROCANTEUR,
   XP_DECOUVERTE_COLLECTION,
   XP_NEGO_BROCANTEUR,
@@ -50,7 +44,6 @@ export default function SessionChinePage() {
     ajusterBudget,
     avancerJour,
     enregistrerSession,
-    gagnerXP,
     gagnerXPBrocanteur,
     marquerVuTemplate,
     marquerDejaPossedeTemplate,
@@ -79,8 +72,6 @@ export default function SessionChinePage() {
   const entreePayeeRef = useRef(false);
   /** Affiche le résumé de session avant retour au QG. */
   const [resumeOuvert, setResumeOuvert] = useState(false);
-  /** XP gagnée localement durant la session, par arbre. */
-  const [xpSession, setXpSession] = useState<Record<string, number>>({});
   /** XP de Brocanteur gagnée localement durant la session. */
   const [xpBrocanteurSession, setXpBrocanteurSession] = useState(0);
   /** ID de l'objet dont la négociation est ouverte dans le BottomSheet. */
@@ -92,19 +83,9 @@ export default function SessionChinePage() {
   /** Vrai une fois la boîte mystère réclamée dans cette session (masque le bouton pub). */
   const [boiteReclamee, setBoiteReclamee] = useState(false);
 
-  const gagnerXPLocal = (
-    treeId: string,
-    montantArbre: number,
-    montantBrocanteur: number,
-    categorie?: CategorieObjet,
-  ) => {
-    gagnerXP(treeId, montantArbre);
-    gagnerXPBrocanteur(montantBrocanteur, categorie);
-    setXpBrocanteurSession((prev) => prev + montantBrocanteur);
-    setXpSession((prev) => ({
-      ...prev,
-      [treeId]: (prev[treeId] ?? 0) + montantArbre,
-    }));
+  const gagnerXPLocal = (montant: number, categorie?: CategorieObjet) => {
+    gagnerXPBrocanteur(montant, categorie);
+    setXpBrocanteurSession((prev) => prev + montant);
   };
 
   useEffect(() => {
@@ -226,12 +207,7 @@ export default function SessionChinePage() {
     if (estDecouverte) {
       setXpBrocanteurSession((prev) => prev + XP_DECOUVERTE_COLLECTION);
     }
-    gagnerXPLocal(
-      catTreeId(it.objet.categorie),
-      XP_ACHAT_OBJET,
-      XP_ACHAT_BROCANTEUR,
-      it.objet.categorie,
-    );
+    gagnerXPLocal(XP_ACHAT_BROCANTEUR, it.objet.categorie);
     setItem(it.id, { statut: "achete" });
     setAchats((prev) => [
       ...prev,
@@ -266,7 +242,7 @@ export default function SessionChinePage() {
         brocanteId: brocante.id,
         brocanteNom: brocante.nom,
         achats,
-        xpGagne: xpSession,
+        xpGagne: {},
         xpBrocanteur: xpBrocanteurSession,
       });
     }
@@ -285,7 +261,8 @@ export default function SessionChinePage() {
           categorie: a.categorie,
           prix: a.prixPaye,
         }))}
-        xpGagne={xpSession}
+        xpGagne={{}}
+        xpBrocanteur={xpBrocanteurSession}
         onRetour={handleRetourQg}
       />
     );
@@ -350,11 +327,7 @@ export default function SessionChinePage() {
                 onUpdateNego={(nego) => setItem(item.id, { negociation: nego })}
                 onConclu={(prixFinal) => {
                   handleAchatAuPrix(item, prixFinal);
-                  gagnerXPLocal(
-                    TREE_GENERAL,
-                    XP_NEGOCIATION_REUSSIE_GENERAL,
-                    XP_NEGO_BROCANTEUR,
-                  );
+                  gagnerXPLocal(XP_NEGO_BROCANTEUR);
                   setNegoOuverte(null);
                 }}
                 onAcheterDirect={() => handleAcheter(item.id)}

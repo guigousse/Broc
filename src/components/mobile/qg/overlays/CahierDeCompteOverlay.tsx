@@ -231,6 +231,7 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
             titre={titreReplay}
             items={items}
             xpGagne={session.xpGagne}
+            xpBrocanteur={session.xpBrocanteur}
             retourLabel="Retour au Cahier"
             xpReplayMode
             onRetour={() => setReplayOf(null)}

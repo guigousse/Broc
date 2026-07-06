@@ -35,12 +35,6 @@ import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
 import { getBrocanteById, fraisEntree } from "@/data/brocantes";
 import {
-  TREE_GENERAL,
-  XP_NEGOCIATION_REUSSIE_GENERAL,
-  XP_VENTE_OBJET,
-  catTreeId,
-} from "@/data/competences";
-import {
   XP_JUSTE_PRIX,
   XP_NEGO_BROCANTEUR,
   XP_VENTE_BROCANTEUR,
@@ -94,7 +88,6 @@ export default function VitrineJourneePage() {
     avancerJour,
     enregistrerSession,
     sauverTempsVitrine,
-    gagnerXP,
     gagnerXPBrocanteur,
     marquerVuTemplate,
   } = useGame();
@@ -151,23 +144,12 @@ export default function VitrineJourneePage() {
   const [fancyClientApparu, setFancyClientApparu] = useState(false);
   const [revelationFaite, setRevelationFaite] = useState(false);
   const [bravoTout, setBravoTout] = useState(false);
-  const [xpSession, setXpSession] = useState<Record<string, number>>({});
   /** XP de Brocanteur gagnée localement durant la session. */
   const [xpBrocanteurSession, setXpBrocanteurSession] = useState(0);
 
-  const gagnerXPLocal = (
-    treeId: string,
-    montantArbre: number,
-    montantBrocanteur: number,
-    categorie?: CategorieObjet,
-  ) => {
-    gagnerXP(treeId, montantArbre);
-    gagnerXPBrocanteur(montantBrocanteur, categorie);
-    setXpBrocanteurSession((prev) => prev + montantBrocanteur);
-    setXpSession((prev) => ({
-      ...prev,
-      [treeId]: (prev[treeId] ?? 0) + montantArbre,
-    }));
+  const gagnerXPLocal = (montant: number, categorie?: CategorieObjet) => {
+    gagnerXPBrocanteur(montant, categorie);
+    setXpBrocanteurSession((prev) => prev + montant);
   };
   /** XP de Brocanteur sans passer par un arbre de compétence (ex : juste prix). */
   const gagnerXPBrocanteurLocal = (montant: number) => {
@@ -299,7 +281,7 @@ export default function VitrineJourneePage() {
         loyer: standSnapshot.current.loyer,
         ventes: ventesEffectuees,
         invendus: tailleInvendus,
-        xpGagne: xpSession,
+        xpGagne: {},
         xpBrocanteur: xpBrocanteurSession,
       });
     }
@@ -313,7 +295,6 @@ export default function VitrineJourneePage() {
     enregistrerSession,
     state,
     ventesEffectuees,
-    xpSession,
     xpBrocanteurSession,
   ]);
   terminerJourneeRef.current = terminerJournee;
@@ -473,12 +454,7 @@ export default function VitrineJourneePage() {
     setVentesEffectuees((prev) => [...prev, ...nouvelles]);
     // XP par objet vendu, par catégorie
     for (const p of ev.panier) {
-      gagnerXPLocal(
-        catTreeId(p.objet.categorie),
-        XP_VENTE_OBJET,
-        XP_VENTE_BROCANTEUR,
-        p.objet.categorie,
-      );
+      gagnerXPLocal(XP_VENTE_BROCANTEUR, p.objet.categorie);
     }
   };
 
@@ -504,7 +480,7 @@ export default function VitrineJourneePage() {
       ev.offreInitiale,
     );
     enregistrerVentes(ev, ev.offreInitiale);
-    gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL, XP_NEGO_BROCANTEUR);
+    gagnerXPLocal(XP_NEGO_BROCANTEUR);
     ajouterJournal({
       heure: heureCourante(),
       texte: `${ev.persona.nom} repart avec ${describePanier(ev)} à ${ev.offreInitiale} € (négocié).`,
@@ -530,7 +506,7 @@ export default function VitrineJourneePage() {
       prixFinal,
     );
     enregistrerVentes(ev, prixFinal);
-    gagnerXPLocal(TREE_GENERAL, XP_NEGOCIATION_REUSSIE_GENERAL, XP_NEGO_BROCANTEUR);
+    gagnerXPLocal(XP_NEGO_BROCANTEUR);
     ajouterJournal({
       heure: heureCourante(),
       texte: `${ev.persona.nom} accepte ${describePanier(ev)} à ${prixFinal} €.`,
@@ -628,7 +604,8 @@ export default function VitrineJourneePage() {
           categorie: v.categorie,
           prix: v.prixVente,
         }))}
-        xpGagne={xpSession}
+        xpGagne={{}}
+        xpBrocanteur={xpBrocanteurSession}
         onRetour={handleRetourQg}
       />
     );
