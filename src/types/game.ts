@@ -1,3 +1,5 @@
+import type { ActivesUtilisees } from "@/lib/actives";
+
 export type CategorieObjet =
   | "Musique"
   | "Jeux & Loisirs"
@@ -277,6 +279,8 @@ export interface GameState {
   /** Pubs « +1 énergie » vues ce jour calendaire local (plafond quotidien,
    *  clé YYYY-MM-DD en temps de confiance). Absent = aucune aujourd'hui. */
   pubsEnergie?: { cle: string; n: number };
+  /** Usages du jour des compétences actives (clé = jourActuel). Absent tant qu'aucune active n'a servi. */
+  activesUtilisees?: ActivesUtilisees;
 }
 
 export type CompetenceId = string;

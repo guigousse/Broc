@@ -84,6 +84,12 @@ import {
   rendementDemantelement,
 } from "@/lib/atelier";
 import { dureeRestaurationMs, peutTerminerImmediat } from "@/lib/restauration";
+import {
+  activeDebloquee,
+  consommerActive,
+  usagesRestants,
+  type ActiveId,
+} from "@/lib/actives";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
   ENERGIE_MAX,
@@ -154,6 +160,8 @@ interface GameActionsValue {
   sauverTempsVitrine: (tempsRestantSec: number) => void;
   enregistrerSession: (session: Session) => void;
   debloquerCompetence: (id: CompetenceId) => { ok: boolean; raison?: string };
+  /** Consomme un usage journalier d'une compétence active. `false` si verrouillée ou quota épuisé. */
+  utiliserActive: (id: ActiveId) => boolean;
   restaurerObjet: (
     objetId: string,
     etatCible: EtatObjet,
@@ -1025,6 +1033,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  // Atomique : pré-check sur stateRef.current puis re-check dans l'updater
+  // (même discipline que debloquerCompetence). Le pré-check et l'updater
+  // peuvent diverger au même tick (plusieurs setState en attente) ; le retour
+  // `true` garantit seulement l'intention, l'updater garantit l'état réel —
+  // comme les quotas ici valent 1 usage la plupart du temps, un double-tap au
+  // même tick reste sans effet d'état (le 2ᵉ appel de l'updater ne trouve
+  // plus de quota et renvoie `prev` inchangé).
+  const utiliserActive = useCallback((id: ActiveId): boolean => {
+    const current = stateRef.current;
+    if (!current) return false;
+    if (!activeDebloquee(current, id)) return false;
+    if (usagesRestants(current.activesUtilisees, id, current.jourActuel) <= 0) return false;
+    setState((prev) => {
+      if (!prev) return prev;
+      const next = consommerActive(prev.activesUtilisees, id, prev.jourActuel);
+      if (!next) return prev;
+      return { ...prev, activesUtilisees: next };
+    });
+    return true;
+  }, []);
+
   const restaurerObjet = useCallback(
     (
       objetId: string,
@@ -1500,6 +1529,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       sauverTempsVitrine,
       enregistrerSession,
       debloquerCompetence,
+      utiliserActive,
       restaurerObjet,
       terminerRestaurationImmediate,
       demantelerObjet,
@@ -1546,6 +1576,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       sauverTempsVitrine,
       enregistrerSession,
       debloquerCompetence,
+      utiliserActive,
       restaurerObjet,
       terminerRestaurationImmediate,
       demantelerObjet,

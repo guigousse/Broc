@@ -224,7 +224,7 @@ export function aGenOeilAiguise(state: GameState): boolean {
 }
 
 /** Général · Négociation palier 3 : Diplomate — révèle prix max et donne une dernière chance. */
-export function aGenDiplomate(state: GameState): boolean {
+export function aGenDiplomate(state: Pick<GameState, "competencesDebloquees">): boolean {
   return aCompetence(`${TREE_GENERAL}.negociation.3`, state.competencesDebloquees);
 }
 

@@ -650,3 +650,28 @@ describe("migrerSauvegarde — missions cible→cibles", () => {
     expect((p as unknown as { cible?: unknown }).cible).toBeUndefined();
   });
 });
+
+describe("migrerSauvegarde — sanitation activesUtilisees", () => {
+  it("ne conserve que les clés connues avec jour/usages valides", () => {
+    const save = createMockGameState();
+    (save as unknown as { activesUtilisees: unknown }).activesUtilisees = {
+      flair: { jour: 2, usages: 1 },
+      zombie: { jour: 2, usages: 1 },
+      fouille: { jour: Number.NaN, usages: 1 },
+    };
+    const migre = migrerSauvegarde(save);
+    expect(migre.activesUtilisees).toEqual({ flair: { jour: 2, usages: 1 } });
+  });
+
+  it("absent si aucune entrée valide (undefined, pas objet vide)", () => {
+    const save = createMockGameState();
+    (save as unknown as { activesUtilisees: unknown }).activesUtilisees = { zombie: { jour: 1, usages: 1 } };
+    const migre = migrerSauvegarde(save);
+    expect(migre.activesUtilisees).toBeUndefined();
+  });
+
+  it("absent si le champ n'est pas persisté", () => {
+    const migre = migrerSauvegarde(createMockGameState());
+    expect(migre.activesUtilisees).toBeUndefined();
+  });
+});
