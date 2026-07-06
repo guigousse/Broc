@@ -370,6 +370,20 @@ describe("audioManager — effets et préférences", () => {
     expect(FakeAudioContext.instances).toHaveLength(0);
   });
 
+  it("playLevelUp joue une fanfare de 4 notes montantes", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playLevelUp();
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.oscillators).toHaveLength(4);
+  });
+
+  it("playLevelUp est muet quand la préférence clic est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("clic", false);
+    audioManager.playLevelUp();
+    expect(FakeAudioContext.instances).toHaveLength(0);
+  });
+
   it("playCash respecte la préférence cash désactivée (aucun fetch)", async () => {
     const { audioManager } = await freshManager();
     audioManager.setPref("cash", false);

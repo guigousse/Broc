@@ -263,6 +263,29 @@ class AudioManager {
     });
   }
 
+  /** Fanfare de level-up : arpège majeur montant C5-E5-G5-C6, triangle, ~0,9 s. Placeholder synthé. */
+  playLevelUp(): void {
+    if (!this.prefs.clic) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    const t0 = this.ctx.currentTime;
+    notes.forEach((freq, i) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      const t = t0 + i * 0.11;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(i === notes.length - 1 ? 0.3 : 0.22, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + (i === notes.length - 1 ? 0.55 : 0.28));
+      osc.connect(gain);
+      gain.connect(this.master!);
+      osc.start(t);
+      osc.stop(t + (i === notes.length - 1 ? 0.6 : 0.32));
+    });
+  }
+
   /** Vendeur mystère : deux notes feutrées à intervalle intrigant, longue traîne. */
   playMystere(): void {
     if (!this.prefs.clic) return;
