@@ -11,7 +11,7 @@ import {
   emptyPiecesAmelioration,
   migrerCategorie,
 } from "@/data/categories";
-import { COMPETENCES, emptyAllTrees } from "@/data/competences";
+import { COMPETENCES, emptyAllTrees, getCompetence } from "@/data/competences";
 import { prochainLundi } from "@/lib/calendrier";
 import { tirerCelebrite } from "@/lib/celebrite";
 import {
@@ -31,7 +31,12 @@ import { ALL_TEMPLATES } from "@/data/objetTemplates";
 import { OLD_TO_NEW_TEMPLATE_ID } from "@/data/templateIdRenames";
 import { reconstruireGrandLivre } from "./grandLivre";
 import { ENERGIE_MAX } from "@/lib/energie";
-import { appliquerGainXPBrocanteur, emptyAffinites, emptyBrocanteur } from "@/lib/xp";
+import {
+  appliquerGainXPBrocanteur,
+  emptyAffinites,
+  emptyBrocanteur,
+  POINTS_BONUS_CHAPITRE,
+} from "@/lib/xp";
 
 /**
  * Remappe en profondeur tout ancien templateId (avant l'harmonisation des noms
@@ -84,7 +89,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -519,31 +524,40 @@ function appliquerMigrations(loaded: GameState): GameState {
         ? (loaded as GameState).energieDerniereMaj
         : Date.now(),
     brocanteur: (() => {
+      const dejaV9 = typeof loaded.version === "number" && loaded.version >= 9;
       const b = (loaded as Partial<GameState>).brocanteur;
-      if (
-        b &&
-        Number.isFinite(b.xp) &&
-        b.xp >= 0 &&
-        Number.isFinite(b.niveau) &&
-        b.niveau >= 0 &&
-        Number.isFinite(b.pointsDisponibles) &&
-        b.pointsDisponibles >= 0
-      ) {
-        // save déjà v8 : on ne recalcule pas (idempotence) — copie nettoyée.
-        return {
-          xp: Math.max(0, b.xp),
-          niveau: Math.max(0, Math.floor(b.niveau)),
-          pointsDisponibles: Math.max(0, Math.floor(b.pointsDisponibles)),
-        };
+      const bienForme =
+        b && Number.isFinite(b.xp) && b.xp >= 0 &&
+        Number.isFinite(b.niveau) && b.niveau >= 0 &&
+        Number.isFinite(b.pointsDisponibles) && b.pointsDisponibles >= 0;
+      if (dejaV9 && bienForme) {
+        return { xp: Math.max(0, b!.xp), niveau: Math.max(0, Math.floor(b!.niveau)), pointsDisponibles: Math.max(0, Math.floor(b!.pointsDisponibles)) };
       }
-      const totalXP = Object.values(loaded.competenceTrees ?? {}).reduce(
-        (acc, t) => acc + (typeof t?.xp === "number" ? t.xp : 0),
+      // < v9 : (re)calcul du niveau depuis l'XP (somme des arbres si absent),
+      // puis refund du pool : niveaux + bonus chapitres − points déjà dépensés.
+      const totalXP = bienForme
+        ? b!.xp
+        : Object.values(loaded.competenceTrees ?? {}).reduce(
+            (acc, t) => acc + (Number.isFinite(t?.xp) && t!.xp > 0 ? t!.xp : 0),
+            0,
+          );
+      const converti = appliquerGainXPBrocanteur(emptyBrocanteur(), totalXP);
+      const chapitresLivres = missionsFinales.filter((m) => {
+        if (m.statut !== "livree") return false;
+        const c = courriersFinaux.find((cc) => cc.id === m.courrierId);
+        return c?.payload.type === "mission" && c.payload.categorie === "principale";
+      }).length;
+      const pointsDepenses = competencesDebloquees.reduce(
+        (acc, id) => acc + (getCompetence(id)?.coutPoints ?? 0),
         0,
       );
-      // Niveau dérivé de la nouvelle courbe ; points à 0 (l'économie de
-      // points reste portée par les arbres jusqu'à la migration du plan 2).
-      const converti = appliquerGainXPBrocanteur(emptyBrocanteur(), totalXP);
-      return { ...converti, pointsDisponibles: 0 };
+      return {
+        ...converti,
+        pointsDisponibles: Math.max(
+          0,
+          converti.niveau + POINTS_BONUS_CHAPITRE * chapitresLivres - pointsDepenses,
+        ),
+      };
     })(),
     affinites: (() => {
       const a = (loaded as Partial<GameState>).affinites;

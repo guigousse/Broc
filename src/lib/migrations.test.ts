@@ -237,8 +237,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 8", () => {
-    expect(SAVE_VERSION).toBe(8);
+  it("SAVE_VERSION incrémenté à 9", () => {
+    expect(SAVE_VERSION).toBe(9);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -473,8 +473,9 @@ describe("migration v8 — Niveau de Brocanteur", () => {
     };
     const migre = migrerSauvegarde(save);
     // 150 + 350 = 500 XP → courbe 30N²+70N : niveau 3 (seuil 480), pas 4 (760)
-    expect(migre.brocanteur).toEqual({ xp: 500, niveau: 3, pointsDisponibles: 0 });
-    expect(migre.version).toBe(8);
+    // Refund v9 : pool = niveau + 2×chapitres livrés (0) − points dépensés (0) = 3
+    expect(migre.brocanteur).toEqual({ xp: 500, niveau: 3, pointsDisponibles: 3 });
+    expect(migre.version).toBe(9);
   });
 
   it("recalcule les affinités depuis l'historique", () => {
@@ -507,6 +508,64 @@ describe("migration v8 — Niveau de Brocanteur", () => {
     const migre2 = migrerSauvegarde(migre1);
     expect(migre2.brocanteur).toEqual(migre1.brocanteur);
     expect(migre2.affinites).toEqual(migre1.affinites);
+  });
+});
+
+describe("migration v9 — refund du pool global", () => {
+  it("pool = niveau + 2×chapitres livrés − points dépensés, clampé à 0", () => {
+    const save = fabriqueSaveV7();
+    // 1100 XP d'arbres → niveau Brocanteur 5 (seuil 1100)
+    save.competenceTrees = { ...save.competenceTrees, general: { xp: 1100, niveau: 11, pointsDisponibles: 4 } };
+    // 2 paliers achetés : reparer.1 (1 pt) + reparer.2 (2 pts) = 3 pts dépensés
+    save.competencesDebloquees = ["cat.Musique.reparer.1", "cat.Musique.reparer.2"];
+    const migre = migrerSauvegarde(save);
+    expect(migre.version).toBe(9);
+    expect(migre.brocanteur.niveau).toBe(5);
+    expect(migre.brocanteur.pointsDisponibles).toBe(2); // 5 + 0 − 3
+    expect(migre.competencesDebloquees).toEqual(["cat.Musique.reparer.1", "cat.Musique.reparer.2"]);
+  });
+
+  it("clamp à 0 si plus dépensé que gagné", () => {
+    const save = fabriqueSaveV7();
+    save.competenceTrees = { ...save.competenceTrees, general: { xp: 100, niveau: 1, pointsDisponibles: 0 } }; // niveau global 1
+    save.competencesDebloquees = ["cat.Musique.reparer.1", "cat.Musique.reparer.2"]; // 3 pts dépensés
+    const migre = migrerSauvegarde(save);
+    expect(migre.brocanteur.pointsDisponibles).toBe(0);
+  });
+
+  it("idempotence : une save v9 garde son pool", () => {
+    const m1 = migrerSauvegarde(fabriqueSaveV7());
+    const pool = m1.brocanteur.pointsDisponibles;
+    const m2 = migrerSauvegarde(m1);
+    expect(m2.brocanteur.pointsDisponibles).toBe(pool);
+  });
+
+  it("bonus de 2 points par chapitre principal livré", () => {
+    const save = fabriqueSaveV7({
+      courriers: [
+        {
+          id: "c1",
+          type: "mission",
+          jourRecu: 1,
+          lu: true,
+          payload: {
+            type: "mission",
+            categorie: "principale",
+            expediteurId: "maman",
+            titre: "Chapitre 1",
+            corps: [],
+            cibles: [],
+            recompense: { argent: 0 },
+          },
+        },
+      ],
+      missions: [{ courrierId: "c1", statut: "livree" }],
+    });
+    save.competenceTrees = { ...save.competenceTrees, general: { xp: 100, niveau: 1, pointsDisponibles: 0 } }; // niveau global 1
+    save.competencesDebloquees = [];
+    const migre = migrerSauvegarde(save);
+    expect(migre.brocanteur.niveau).toBe(1);
+    expect(migre.brocanteur.pointsDisponibles).toBe(3); // 1 + 2×1 − 0
   });
 });
 
