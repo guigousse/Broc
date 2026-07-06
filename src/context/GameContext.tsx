@@ -1006,6 +1006,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const etat = etatCompetence(comp, current.competencesDebloquees, contexteDepuisState(current));
       if (etat === "debloquee") return { ok: false, raison: "Déjà débloquée." };
       if (etat === "verrouillee") {
+        if (!comp.prerequis.every((p) => current.competencesDebloquees.includes(p)))
+          return { ok: false, raison: "Prérequis non remplis." };
         if (current.brocanteur.niveau < comp.niveauBrocanteurRequis)
           return { ok: false, raison: `Niveau de Brocanteur ${comp.niveauBrocanteurRequis} requis.` };
         const { categorie, requise } = affiniteRequisePourComp(comp);
@@ -1013,7 +1015,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           return { ok: false, raison: `Affinité ${categorie} insuffisante (${current.affinites[categorie] ?? 0}/${requise}).` };
         if (current.brocanteur.pointsDisponibles < comp.coutPoints)
           return { ok: false, raison: "Pas assez de points." };
-        return { ok: false, raison: "Prérequis non remplis." };
+        return { ok: false, raison: "Conditions non remplies." };
       }
       setState((prev) => {
         if (!prev) return prev;

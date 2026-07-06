@@ -12,6 +12,7 @@ import { vitrineEstEnPrep } from "@/lib/vitrinePrep";
 import { energieCourante } from "@/lib/energie";
 import { CATEGORIES } from "@/data/categories";
 import { aConnaisseurVitrine } from "@/lib/competences";
+import { prixSuggere } from "@/lib/prixSuggere";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 const SUGGESTION_FACTEUR = 1.4;
@@ -110,9 +111,11 @@ export default function VitrineBrocantePage() {
   const handleAjouter = (objetId: string, posX: number, posY: number) => {
     const obj = state.inventaireJoueur.find((o) => o.id === objetId);
     if (!obj) return;
-    const prix =
-      obj.prixVenteSouhaite ??
-      Math.max(1, Math.round(obj.prixReferenceReel * SUGGESTION_FACTEUR));
+    const prix = prixSuggere(
+      obj,
+      categoriesConnuesVitrine.has(obj.categorie),
+      SUGGESTION_FACTEUR,
+    );
     mettreEnVitrine(objetId, prix, posX, posY, 0);
   };
 

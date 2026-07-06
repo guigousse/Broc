@@ -442,15 +442,20 @@ function appliquerMigrations(loaded: GameState): GameState {
         pointsDisponibles: Math.max(0, Math.floor(brocanteurCharge!.pointsDisponibles)),
       }
     : null;
-  const brocanteurConverti = brocanteurFinalV9 ?? appliquerGainXPBrocanteur(
-    emptyBrocanteur(),
-    brocanteurBienForme
-      ? brocanteurCharge!.xp
-      : Object.values(loaded.competenceTrees ?? {}).reduce(
-          (acc, t) => acc + (Number.isFinite(t?.xp) && t!.xp > 0 ? t!.xp : 0),
-          0,
-        ),
-  );
+  // Le fallback de `totalXP` ne doit dépendre QUE de la validité de `xp`
+  // lui-même — pas de `brocanteurBienForme` en entier — sinon un autre champ
+  // malformé (ex. `pointsDisponibles` NaN suite à un bug de migration) fait
+  // perdre de l'XP pourtant valide.
+  const xpValide =
+    !!brocanteurCharge && Number.isFinite(brocanteurCharge.xp) && brocanteurCharge.xp >= 0;
+  const totalXP = xpValide
+    ? brocanteurCharge!.xp
+    : Object.values(loaded.competenceTrees ?? {}).reduce(
+        (acc, t) => acc + (Number.isFinite(t?.xp) && t!.xp > 0 ? t!.xp : 0),
+        0,
+      );
+  const brocanteurConverti =
+    brocanteurFinalV9 ?? appliquerGainXPBrocanteur(emptyBrocanteur(), totalXP);
 
   // Amorce de l'arc principal au chargement : on injecte le prochain chapitre
   // dû (chapitre 1 pour une partie naissante) ainsi que sa résolution active.

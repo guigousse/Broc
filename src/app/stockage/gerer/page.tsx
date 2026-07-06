@@ -315,7 +315,9 @@ function StockagePageInner() {
             ? {
                 nom: askReplace.objet.nom,
                 etat: askReplace.objet.etat,
-                valeur: askReplace.objet.prixReferenceReel,
+                valeur: categoriesConnuesVitrine.has(askReplace.objet.categorie)
+                  ? askReplace.objet.prixReferenceReel
+                  : null,
               }
             : { nom: "", etat: "Bon", valeur: 0 }
         }

@@ -20,6 +20,7 @@ import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import { stockageEstPlein } from "@/lib/stockage";
 import { valeurDonation } from "@/lib/collection";
+import { aConnaisseurVitrine } from "@/lib/competences";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 export default function CollectionPage() {
@@ -84,6 +85,13 @@ export default function CollectionPage() {
     () => new Set((state?.inventaireJoueur ?? []).map((o) => o.templateId)),
     [state],
   );
+
+  const categoriesConnuesVitrine = useMemo(() => {
+    const s = new Set<CategorieObjet>();
+    if (!state) return s;
+    for (const c of CATEGORIES) if (aConnaisseurVitrine(state, c)) s.add(c);
+    return s;
+  }, [state]);
 
   if (!isHydrated || !state) {
     return <SkeletonScreen label="— consultation de la collection…" />;
@@ -218,12 +226,16 @@ export default function CollectionPage() {
         setObjetADonner(objet);
       }}
       retirerDisabled={plein}
+      categoriesConnues={categoriesConnuesVitrine}
     />
     <ConfirmModal
       open={objetADonner !== null}
       onClose={() => setObjetADonner(null)}
       onConfirm={() => {
         if (!objetADonner) return;
+        // La valeur créditée ne change pas ; seul son affichage est masqué
+        // si la valeur de marché de la catégorie n'est pas encore connue.
+        const valeurConnue = categoriesConnuesVitrine.has(objetADonner.categorie);
         const valeur = valeurDonation(
           objetADonner.etat,
           objetADonner.prixReferenceReel,
@@ -232,9 +244,12 @@ export default function CollectionPage() {
         if (res.ok) {
           setPickerOuvert(false);
           setSlotActif(null);
-          toast(`Donné à la collection — +${valeur} € de valeur`, {
-            type: "succes",
-          });
+          toast(
+            valeurConnue
+              ? `Donné à la collection — +${valeur} € de valeur`
+              : "Donné à la collection.",
+            { type: "succes" },
+          );
         }
       }}
       titre="Donner à la collection"
@@ -242,10 +257,16 @@ export default function CollectionPage() {
     >
       {objetADonner && (
         <>
-          « {objetADonner.nom} » ({objetADonner.etat}) quittera votre stock et
-          rejoindra la collection pour{" "}
-          {valeurDonation(objetADonner.etat, objetADonner.prixReferenceReel)} €
-          de valeur.
+          « {objetADonner.nom} » ({objetADonner.etat}) quittera votre stock et{" "}
+          {categoriesConnuesVitrine.has(objetADonner.categorie) ? (
+            <>
+              rejoindra la collection pour{" "}
+              {valeurDonation(objetADonner.etat, objetADonner.prixReferenceReel)}{" "}
+              € de valeur.
+            </>
+          ) : (
+            "rejoindra la collection."
+          )}
           {slotActif?.donation
             ? " L'exemplaire déjà exposé reviendra dans votre inventaire."
             : ""}

@@ -622,6 +622,25 @@ describe("migration v9 — refund du pool global", () => {
   });
 });
 
+describe("migration v9 — durcissement du fallback XP", () => {
+  it("v9 malformée (pointsDisponibles NaN) : l'XP valide est préservée", () => {
+    const save = {
+      ...migrerSauvegarde(fabriqueSaveV7()),
+      brocanteur: { xp: 1100, niveau: 5, pointsDisponibles: NaN },
+    };
+    const m = migrerSauvegarde(save);
+    expect(m.brocanteur.xp).toBe(1100);
+    expect(m.brocanteur.niveau).toBe(5);
+  });
+
+  it("la migration ne mute pas son argument", () => {
+    const save = fabriqueSaveV7();
+    const copie = structuredClone(save);
+    migrerSauvegarde(save);
+    expect(save).toEqual(copie);
+  });
+});
+
 describe("migrerSauvegarde — missions cible→cibles", () => {
   it("convertit l'ancien champ cible en cibles[] et ajoute categorie", () => {
     const save = createMockGameState();

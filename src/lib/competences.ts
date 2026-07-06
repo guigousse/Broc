@@ -117,7 +117,7 @@ export function aConnaisseurChinage(
   return aCompetence(`${catTreeId(cat)}.connaisseur.3`, state.competencesDebloquees);
 }
 
-/** Réparer palier 3 (Maître) : durée de restauration réduite à 3 jours. */
+/** Réparer palier 3 (Maître) : accès au Pristin et durées de restauration réduites de 40 %. */
 export function aMaitreReparer(
   state: GameState,
   cat: CategorieObjet,

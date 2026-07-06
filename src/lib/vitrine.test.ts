@@ -15,6 +15,7 @@ import {
   personaDepuisClient,
   prochainIntervalleClient,
   proposerOffreVente,
+  type VitrineModifiers,
 } from "./vitrine";
 import { ouvrirNegociation } from "./negociation";
 import {
@@ -203,6 +204,37 @@ describe("genererClientEvent — invariants généraux", () => {
     expect(ev!.persona.appetitMin).toBeGreaterThan(1);
     expect(ev!.persona.appetitMax).toBeGreaterThan(1);
     expect(ev!.fancy).toBe(true);
+  });
+});
+
+describe("genererClientEvent — formule de toleranceBoost à la génération", () => {
+  it("additionne le bonus général et le MAX (pas la somme) des bonus catégoriels du panier", () => {
+    // chanceMulti: 1 force un panier à 2 objets (Math.random figé à 0.5 par le
+    // beforeEach global, < 1 → veutDeux toujours vrai ; shuffle Fisher-Yates
+    // neutre à 0.5 sur un tableau à 2 éléments → ordre préservé).
+    const c = createMockClient({ chanceMulti: 1 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { categorie: "Musique", prixReferenceReel: 100 },
+        prixVente: 100,
+      }),
+      createMockObjetEnVitrine({
+        objet: { categorie: "Mode", prixReferenceReel: 100 },
+        prixVente: 100,
+      }),
+    ];
+    const modifiers: VitrineModifiers = {
+      ...DEFAULT_MODIFIERS,
+      bonusToleranceNego: 0.2,
+      bonusToleranceParCategorie: new Map([
+        ["Musique", 0.1],
+        ["Mode", 0.3],
+      ]),
+    };
+    const ev = genererClientEvent(c, vitrine, [], modifiers);
+    expect(ev).not.toBeNull();
+    expect(ev!.panier).toHaveLength(2);
+    expect(ev!.toleranceBoost).toBeCloseTo(0.2 + 0.3);
   });
 });
 

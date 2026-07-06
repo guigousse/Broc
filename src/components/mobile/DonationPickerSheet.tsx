@@ -5,7 +5,7 @@ import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
-import type { CollectionSlot, Objet } from "@/types/game";
+import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 interface DonationPickerSheetProps {
   open: boolean;
@@ -16,6 +16,8 @@ interface DonationPickerSheetProps {
   onRetirer?: () => void;
   /** Si true, bouton "Retirer" grisé avec libellé "Stockage plein". */
   retirerDisabled?: boolean;
+  /** Catégories dont la valeur de référence est connue (Connaisseur 2) — sinon le prix reste masqué. */
+  categoriesConnues: ReadonlySet<CategorieObjet>;
 }
 
 const itemStyle: CSSProperties = {
@@ -41,6 +43,7 @@ export function DonationPickerSheet({
   onDonner,
   onRetirer,
   retirerDisabled = false,
+  categoriesConnues,
 }: DonationPickerSheetProps) {
   return (
     <BottomSheet
@@ -153,7 +156,10 @@ export function DonationPickerSheet({
                   color: "var(--ink-500)",
                 }}
               >
-                {o.etat} · {o.rarete} · {Math.round(o.prixReferenceReel)} €
+                {o.etat} · {o.rarete}
+                {categoriesConnues.has(o.categorie)
+                  ? ` · ${Math.round(o.prixReferenceReel)} €`
+                  : ""}
               </div>
             </div>
             <button

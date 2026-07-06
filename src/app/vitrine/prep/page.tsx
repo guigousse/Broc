@@ -10,6 +10,7 @@ import { CoffrePricing } from "@/components/vente/CoffrePricing";
 import { VITRINE_PREP_ID, vitrineEstEnPrep } from "@/lib/vitrinePrep";
 import { CATEGORIES } from "@/data/categories";
 import { aConnaisseurVitrine } from "@/lib/competences";
+import { prixSuggere } from "@/lib/prixSuggere";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 // Prix par défaut = prix du marché (curseur de tarification centré sur la valeur).
@@ -94,9 +95,11 @@ export default function VitrinePrepPage() {
   const handleAjouter = (objetId: string, posX: number, posY: number) => {
     const obj = state.inventaireJoueur.find((o) => o.id === objetId);
     if (!obj) return;
-    const prix =
-      obj.prixVenteSouhaite ??
-      Math.max(1, Math.round(obj.prixReferenceReel * SUGGESTION_FACTEUR));
+    const prix = prixSuggere(
+      obj,
+      categoriesConnuesVitrine.has(obj.categorie),
+      SUGGESTION_FACTEUR,
+    );
     mettreEnVitrine(objetId, prix, posX, posY, 0);
   };
 

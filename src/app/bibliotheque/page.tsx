@@ -30,6 +30,7 @@ import { progressionNiveauBrocanteur } from "@/lib/xp";
 import type {
   CategorieObjet,
   CompetenceDef,
+  CompetenceId,
   CompetenceTreeId,
 } from "@/types/game";
 
@@ -246,6 +247,7 @@ export default function CompetencesPage() {
             niveauActuel={state.brocanteur.niveau}
             pointsDisponibles={state.brocanteur.pointsDisponibles}
             affinites={state.affinites}
+            competencesDebloquees={state.competencesDebloquees}
             etat={etatCompetence(
               palierActif,
               state.competencesDebloquees,
@@ -368,6 +370,7 @@ function PalierDetail({
   niveauActuel,
   pointsDisponibles,
   affinites,
+  competencesDebloquees,
   etat,
   onAcheter,
 }: {
@@ -376,6 +379,7 @@ function PalierDetail({
   niveauActuel: number;
   pointsDisponibles: number;
   affinites: Record<CategorieObjet, number>;
+  competencesDebloquees: readonly CompetenceId[];
   etat: "debloquee" | "disponible" | "verrouillee";
   onAcheter: () => void;
 }) {
@@ -392,6 +396,9 @@ function PalierDetail({
   const affiniteActuelle = affiniteCategorie
     ? (affinites[affiniteCategorie] ?? 0)
     : 0;
+  const prerequisRemplis = comp.prerequis.every((p) =>
+    competencesDebloquees.includes(p),
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -509,8 +516,14 @@ function PalierDetail({
             letterSpacing: "0.06em",
           }}
         >
-          ⊘ Verrouillée — N{comp.niveauBrocanteurRequis} requis (vous avez N
-          {niveauActuel})
+          ⊘ Verrouillée —{" "}
+          {!prerequisRemplis
+            ? "palier précédent requis"
+            : niveauActuel < comp.niveauBrocanteurRequis
+              ? `N${comp.niveauBrocanteurRequis} requis (vous avez N${niveauActuel})`
+              : affiniteRequise > 0 && affiniteActuelle < affiniteRequise
+                ? `affinité ${affiniteCategorie} ${affiniteActuelle}/${affiniteRequise}`
+                : "pas assez de points"}
         </div>
       ) : (
         <button

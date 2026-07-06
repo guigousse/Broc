@@ -7,7 +7,9 @@ interface ConfirmReplaceModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  nouvelObjet: { nom: string; etat: EtatObjet; valeur: number };
+  /** `valeur` est `null` quand la valeur de marché de la catégorie n'est pas
+   *  encore connue (Connaisseur 2 absent) — affichée « ? » plutôt que masquée. */
+  nouvelObjet: { nom: string; etat: EtatObjet; valeur: number | null };
   ancienneDonation: { etat: EtatObjet; valeur: number };
 }
 
@@ -87,7 +89,8 @@ export function ConfirmReplaceModal({
           « {nouvelObjet.nom} » est déjà dans votre collection en{" "}
           {ancienneDonation.etat.toLowerCase()} (valeur {ancienneDonation.valeur} €).
           Le remplacer par votre nouvel exemplaire en {nouvelObjet.etat.toLowerCase()}{" "}
-          ({nouvelObjet.valeur} €) ? L&apos;ancien reviendra dans votre inventaire.
+          ({nouvelObjet.valeur === null ? "?" : nouvelObjet.valeur} €) ? L&apos;ancien
+          reviendra dans votre inventaire.
         </p>
         <div style={{ display: "flex", gap: 10 }}>
           <button type="button" onClick={onClose} style={btn("ghost")}>
