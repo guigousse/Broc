@@ -22,8 +22,9 @@ import {
   competencesParBranche,
 } from "@/data/competences";
 import { contexteDepuisState, etatCompetence } from "@/lib/competences";
-import { progressionNiveauBrocanteur } from "@/lib/xp";
+import { detailProgressionBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
 import { prochainDeblocage } from "@/data/deblocagesNiveau";
+import { ParcoursSheet } from "@/components/mobile/ParcoursSheet";
 import type {
   CompetenceDef,
   CompetenceId,
@@ -36,6 +37,7 @@ export default function CompetencesPage() {
   const { toast } = useToast();
   const [tree, setTree] = useState<CompetenceTreeId>(TREE_GENERAL);
   const [palierActif, setPalierActif] = useState<CompetenceDef | null>(null);
+  const [parcoursOuvert, setParcoursOuvert] = useState(false);
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -54,6 +56,9 @@ export default function CompetencesPage() {
   const treeDef = getTreeDef(tree);
   const xpProgress = progressionNiveauBrocanteur(state.brocanteur);
   const prochain = prochainDeblocage(state.brocanteur.niveau);
+  const { dansNiveau, requisNiveau, manquant } = detailProgressionBrocanteur(
+    state.brocanteur,
+  );
 
   const allTreeIds: CompetenceTreeId[] = [
     TREE_GENERAL,
@@ -164,9 +169,32 @@ export default function CompetencesPage() {
                 </span>
               </div>
             </div>
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 9.5,
+                color: "var(--brass-700)",
+                letterSpacing: "0.04em",
+                padding: "4px 2px 0",
+                textAlign: "right",
+              }}
+            >
+              {dansNiveau.toLocaleString("fr-FR")} /{" "}
+              {requisNiveau.toLocaleString("fr-FR")} XP — encore{" "}
+              {manquant.toLocaleString("fr-FR")}
+            </div>
             {prochain && (
-              <div
+              <button
+                type="button"
+                onClick={() => setParcoursOuvert(true)}
+                aria-label="Voir le parcours des déblocages"
                 style={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "left",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
                   fontFamily: "var(--font-mono)",
                   fontSize: 9.5,
                   color: "var(--brass-700)",
@@ -174,8 +202,8 @@ export default function CompetencesPage() {
                   padding: "4px 2px 0",
                 }}
               >
-                Prochain — Niv. {prochain.niveau} : {prochain.titre}
-              </div>
+                Prochain — Niv. {prochain.niveau} : {prochain.titre} ▸
+              </button>
             )}
           </StickyTop>
         }
@@ -279,6 +307,12 @@ export default function CompetencesPage() {
           />
         )}
       </BottomSheet>
+
+      <ParcoursSheet
+        open={parcoursOuvert}
+        onClose={() => setParcoursOuvert(false)}
+        niveau={state.brocanteur.niveau}
+      />
     </>
   );
 }

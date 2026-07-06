@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   appliquerGainXPBrocanteur,
+  detailProgressionBrocanteur,
   emptyBrocanteur,
   progressionNiveauBrocanteur,
   xpRequisPourNiveauBrocanteur,
@@ -70,6 +71,28 @@ describe("progressionNiveauBrocanteur", () => {
     expect(progressionNiveauBrocanteur({ xp: 100, niveau: 1, pointsDisponibles: 0 })).toBe(0);
     // niveau 1 → 2 : seuils 100 → 234, span 134 ; 100+67=167 → 0.5
     expect(progressionNiveauBrocanteur({ xp: 167, niveau: 1, pointsDisponibles: 0 })).toBe(0.5);
+  });
+});
+
+describe("detailProgressionBrocanteur", () => {
+  it("état frais (xp 0, niveau 0) : rien accumulé, palier 1 = 100", () => {
+    expect(detailProgressionBrocanteur(freshBrocanteur())).toEqual({
+      dansNiveau: 0,
+      requisNiveau: 100,
+      manquant: 100,
+    });
+  });
+
+  it("mi-niveau (xp 150, niveau 1) : seuil(1)=100, seuil(2)=234", () => {
+    expect(
+      detailProgressionBrocanteur({ xp: 150, niveau: 1, pointsDisponibles: 0 }),
+    ).toEqual({ dansNiveau: 50, requisNiveau: 134, manquant: 84 });
+  });
+
+  it("pile au seuil (xp === seuil(n)) : dansNiveau à 0", () => {
+    expect(
+      detailProgressionBrocanteur({ xp: 100, niveau: 1, pointsDisponibles: 0 }),
+    ).toEqual({ dansNiveau: 0, requisNiveau: 134, manquant: 134 });
   });
 });
 

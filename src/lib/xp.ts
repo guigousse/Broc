@@ -53,6 +53,20 @@ export function progressionNiveauBrocanteur(b: BrocanteurState): number {
   return Math.min(1, (b.xp - seuilCourant) / span);
 }
 
+/** Détail chiffré de la progression vers le prochain niveau de Brocanteur. */
+export function detailProgressionBrocanteur(b: BrocanteurState): {
+  dansNiveau: number;
+  requisNiveau: number;
+  manquant: number;
+} {
+  const seuilCourant = xpRequisPourNiveauBrocanteur(b.niveau);
+  const seuilProchain = xpRequisPourNiveauBrocanteur(b.niveau + 1);
+  const requisNiveau = seuilProchain - seuilCourant;
+  const dansNiveau = Math.max(0, b.xp - seuilCourant);
+  const manquant = Math.max(0, requisNiveau - dansNiveau);
+  return { dansNiveau, requisNiveau, manquant };
+}
+
 /* === Gains d'XP Brocanteur par action (rapport §07) ==================== */
 export const XP_ACHAT_BROCANTEUR = 10;
 export const XP_VENTE_BROCANTEUR = 20;

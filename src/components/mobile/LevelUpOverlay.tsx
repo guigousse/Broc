@@ -7,19 +7,13 @@ import { audioManager } from "@/lib/audio/audioManager";
 import {
   deblocagesPourNiveau,
   prochainDeblocage,
+  LIBELLE_FAMILLE,
   type FamilleDeblocage,
 } from "@/data/deblocagesNiveau";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 
-const LIBELLE_FAMILLE: Record<FamilleDeblocage, string> = {
-  jalon: "Jalon",
-  contenu: "Contenu",
-  economie: "Économie",
-  confort: "Confort",
-  active: "Active",
-};
-
-const COULEUR_FAMILLE: Record<FamilleDeblocage, string> = {
+/** Couleur par famille de déblocage (style UI, réutilisé par ParcoursSheet). */
+export const COULEUR_FAMILLE: Record<FamilleDeblocage, string> = {
   jalon: "var(--brass-700)",
   contenu: "var(--forest-600)",
   economie: "var(--patina-500)",
@@ -81,7 +75,8 @@ const ligneDeblocage: CSSProperties = {
   gap: 6,
 };
 
-function chipFamille(famille: FamilleDeblocage): CSSProperties {
+/** Style de puce famille, réutilisé par ParcoursSheet. */
+export function chipFamille(famille: FamilleDeblocage): CSSProperties {
   return {
     fontFamily: "var(--font-mono)",
     fontSize: 9.5,
