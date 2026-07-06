@@ -88,6 +88,7 @@ import { audioManager } from "@/lib/audio/audioManager";
 import {
   ENERGIE_MAX,
   ENERGIE_PAR_PUB,
+  energieMaxPourNiveau,
   enregistrerPubEnergie,
   pubsEnergieRestantes,
   secondesAvantPlein,
@@ -266,7 +267,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (now === null) return; // ancre pas encore posée — settle au prochain tick/sync
     setState((prev) => {
       if (!prev) return prev;
-      const s = settleEnergie(prev, now);
+      const s = settleEnergie(prev, now, energieMaxPourNiveau(prev.brocanteur.niveau));
       if (
         s.energie === prev.energie &&
         s.energieDerniereMaj === prev.energieDerniereMaj
@@ -287,7 +288,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setState((prev) => {
         if (!prev) return prev;
         const now = tempsConfiance() ?? Date.now();
-        const base = { ...prev, ...settleEnergie(prev, now) };
+        const base = {
+          ...prev,
+          ...settleEnergie(prev, now, energieMaxPourNiveau(prev.brocanteur.niveau)),
+        };
         return { ...base, energie: Math.max(0, base.energie - n) };
       });
     },
@@ -300,11 +304,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const now = tempsConfiance() ?? Date.now();
       // Plafond quotidien : l'UI bloque avant la pub, ceci couvre la course.
       if (pubsEnergieRestantes(prev.pubsEnergie, now) <= 0) return prev;
-      const settled = settleEnergie(prev, now);
+      const max = energieMaxPourNiveau(prev.brocanteur.niveau);
+      const settled = settleEnergie(prev, now, max);
       return {
         ...prev,
         ...settled,
-        energie: Math.min(ENERGIE_MAX, settled.energie + ENERGIE_PAR_PUB),
+        energie: Math.min(max, settled.energie + ENERGIE_PAR_PUB),
         pubsEnergie: enregistrerPubEnergie(prev.pubsEnergie, now),
       };
     });
@@ -373,32 +378,35 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Tout est no-op hors Tauri.
   const energie = state?.energie;
   const energieDerniereMaj = state?.energieDerniereMaj;
+  const niveauBrocanteur = state?.brocanteur.niveau;
   useEffect(() => {
     if (
       !isHydrated ||
       energie === undefined ||
       energieDerniereMaj === undefined ||
+      niveauBrocanteur === undefined ||
       !notificationsDisponibles()
     ) {
       return;
     }
     const snap = { energie, energieDerniereMaj };
+    const max = energieMaxPourNiveau(niveauBrocanteur);
     let annule = false;
     (async () => {
-      if (energie >= ENERGIE_MAX) {
+      if (energie >= max) {
         await annulerPleinEnergie();
         return;
       }
       const ok = await assurerPermission();
       if (annule || !ok) return;
-      const reste = secondesAvantPlein(snap, tempsConfiance() ?? Date.now());
+      const reste = secondesAvantPlein(snap, tempsConfiance() ?? Date.now(), max);
       if (reste === null) return;
       await planifierPleinEnergie(Date.now() + reste * 1000);
     })();
     return () => {
       annule = true;
     };
-  }, [isHydrated, energie, energieDerniereMaj, tempsConfiance]);
+  }, [isHydrated, energie, energieDerniereMaj, niveauBrocanteur, tempsConfiance]);
 
   // Rappel de retour : programme la série J+1/J+3/J+7 quand l'app passe en
   // arrière-plan, l'annule à la réouverture. No-op hors Tauri ou si la

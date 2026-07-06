@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import {
-  ENERGIE_MAX,
   PUBS_ENERGIE_MAX_PAR_JOUR,
   energieCourante,
+  energieMaxPourNiveau,
   pubsEnergieRestantes,
   secondesAvantProchaine,
 } from "@/lib/energie";
@@ -56,8 +56,9 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
 
   if (!state) return null;
   const now = tempsConfiance() ?? Date.now();
-  const energie = energieCourante(state, now);
-  const restantSec = secondesAvantProchaine(state, now);
+  const energieMax = energieMaxPourNiveau(state.brocanteur.niveau);
+  const energie = energieCourante(state, now, energieMax);
+  const restantSec = secondesAvantProchaine(state, now, energieMax);
   const pubsRestantes = pubsEnergieRestantes(state.pubsEnergie, now);
   // Quota épuisé : on bloque AVANT de lancer la pub (jamais de pub gâchée).
   const pubIndisponible = enCours || pubsRestantes <= 0;
@@ -96,7 +97,7 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
           <Zap size={22} strokeWidth={2.5} />
           <strong style={{ fontSize: 22 }}>
             {energie}
-            <span style={{ color: "var(--brass-700)" }}>/{ENERGIE_MAX}</span>
+            <span style={{ color: "var(--brass-700)" }}>/{energieMax}</span>
           </strong>
         </div>
 

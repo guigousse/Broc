@@ -27,7 +27,11 @@ vi.mock("@/context/GameContext", () => ({
 
 describe("EnergieRecharge — plafond quotidien de pubs", () => {
   it("quota disponible : le bouton est actif et affiche le compteur", () => {
-    mockState = { energie: 2, energieDerniereMaj: Date.now() };
+    mockState = {
+      energie: 2,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
     render(<EnergieRecharge onClose={() => {}} />);
     const btn = screen.getByRole("button", { name: /regarder une pub/i });
     expect((btn as HTMLButtonElement).disabled).toBe(false);
@@ -39,6 +43,7 @@ describe("EnergieRecharge — plafond quotidien de pubs", () => {
       energie: 2,
       energieDerniereMaj: Date.now(),
       pubsEnergie: { cle: cleAujourdhui(), n: PUBS_ENERGIE_MAX_PAR_JOUR },
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
     };
     render(<EnergieRecharge onClose={() => {}} />);
     const btn = screen.getByRole("button", { name: /plus de pub aujourd'hui/i });

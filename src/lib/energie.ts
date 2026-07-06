@@ -4,6 +4,19 @@ export const ENERGIE_MAX = 5;
 export const RECHARGE_INTERVAL_MS = 30 * 60 * 1000; // 30 min
 export const ENERGIE_PAR_PUB = 1;
 
+/** Jalons du Niveau de Brocanteur qui étendent l'énergie max (D3). */
+export const NIVEAU_ENERGIE_BONUS_1 = 8;
+export const NIVEAU_ENERGIE_BONUS_2 = 14;
+
+/** Énergie max effective selon le Niveau de Brocanteur : 5 / 6 (N8) / 7 (N14). */
+export function energieMaxPourNiveau(niveau: number): number {
+  return (
+    ENERGIE_MAX +
+    (niveau >= NIVEAU_ENERGIE_BONUS_1 ? 1 : 0) +
+    (niveau >= NIVEAU_ENERGIE_BONUS_2 ? 1 : 0)
+  );
+}
+
 /** Sous-ensemble de GameState manipulé par ce module (facilite tests + appels). */
 export type EnergieState = Pick<
   GameState,
@@ -17,6 +30,7 @@ export type EnergieState = Pick<
 export function settleEnergie(
   state: EnergieState,
   now: number,
+  energieMax: number = ENERGIE_MAX,
 ): { energie: number; energieDerniereMaj: number } {
   const { energie, energieDerniereMaj } = state;
   // Anti-recul : temps de confiance antérieur à l'ancre → ré-ancre, pas de crédit.
@@ -24,16 +38,16 @@ export function settleEnergie(
     return { energie, energieDerniereMaj: now };
   }
   // Déjà plein : pas de banque de temps, l'ancre suit `now`.
-  if (energie >= ENERGIE_MAX) {
-    return { energie: ENERGIE_MAX, energieDerniereMaj: now };
+  if (energie >= energieMax) {
+    return { energie: energieMax, energieDerniereMaj: now };
   }
   const gagne = Math.floor((now - energieDerniereMaj) / RECHARGE_INTERVAL_MS);
   if (gagne <= 0) {
     return { energie, energieDerniereMaj };
   }
-  const nouvelle = Math.min(ENERGIE_MAX, energie + gagne);
+  const nouvelle = Math.min(energieMax, energie + gagne);
   const ancre =
-    nouvelle >= ENERGIE_MAX
+    nouvelle >= energieMax
       ? now
       : energieDerniereMaj + gagne * RECHARGE_INTERVAL_MS;
   return { energie: nouvelle, energieDerniereMaj: ancre };
@@ -42,30 +56,36 @@ export function settleEnergie(
 /** Énergie courante effective (après settle), pour l'affichage et les décisions.
  *  `now` = temps effectif (ancre monotone, corrigée par le temps de confiance
  *  quand le réseau est dispo ; cf. lib/temps + GameContext). */
-export function energieCourante(state: EnergieState, now: number): number {
-  return settleEnergie(state, now).energie;
+export function energieCourante(
+  state: EnergieState,
+  now: number,
+  energieMax: number = ENERGIE_MAX,
+): number {
+  return settleEnergie(state, now, energieMax).energie;
 }
 
 /** Secondes avant le prochain +1, ou null si déjà plein. */
 export function secondesAvantProchaine(
   state: EnergieState,
   now: number,
+  energieMax: number = ENERGIE_MAX,
 ): number | null {
-  const settled = settleEnergie(state, now);
-  if (settled.energie >= ENERGIE_MAX) return null;
+  const settled = settleEnergie(state, now, energieMax);
+  if (settled.energie >= energieMax) return null;
   const prochaine = settled.energieDerniereMaj + RECHARGE_INTERVAL_MS;
   return Math.max(0, Math.ceil((prochaine - now) / 1000));
 }
 
-/** Secondes avant d'atteindre ENERGIE_MAX, ou null si déjà plein. */
+/** Secondes avant d'atteindre `energieMax`, ou null si déjà plein. */
 export function secondesAvantPlein(
   state: EnergieState,
   now: number,
+  energieMax: number = ENERGIE_MAX,
 ): number | null {
-  const courante = energieCourante(state, now);
-  if (courante >= ENERGIE_MAX) return null;
-  const prochaine = secondesAvantProchaine(state, now) ?? 0;
-  const paliersRestants = ENERGIE_MAX - courante - 1; // paliers pleins après le prochain +1
+  const courante = energieCourante(state, now, energieMax);
+  if (courante >= energieMax) return null;
+  const prochaine = secondesAvantProchaine(state, now, energieMax) ?? 0;
+  const paliersRestants = energieMax - courante - 1; // paliers pleins après le prochain +1
   return prochaine + paliersRestants * (RECHARGE_INTERVAL_MS / 1000);
 }
 

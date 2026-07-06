@@ -5,7 +5,7 @@ import { Zap, Plus } from "lucide-react";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
-import { ENERGIE_MAX, energieCourante } from "@/lib/energie";
+import { ENERGIE_MAX, energieCourante, energieMaxPourNiveau } from "@/lib/energie";
 import { EnergieRecharge } from "./EnergieRecharge";
 
 interface MobileHeaderProps {
@@ -55,10 +55,11 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   const { tempsConfiance } = useGameActions();
   const [rechargeOuverte, setRechargeOuverte] = useState(false);
 
+  const energieMax = state ? energieMaxPourNiveau(state.brocanteur.niveau) : ENERGIE_MAX;
   const energie = state
-    ? energieCourante(state, tempsConfiance() ?? Date.now())
+    ? energieCourante(state, tempsConfiance() ?? Date.now(), energieMax)
     : ENERGIE_MAX;
-  const peutRecharger = energie < ENERGIE_MAX;
+  const peutRecharger = energie < energieMax;
 
   return (
     <header style={wrapStyle}>
@@ -115,7 +116,7 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
             )}
             <Zap size={15} strokeWidth={2.5} aria-hidden />
             {energie}
-            <span style={{ color: "var(--brass-700)" }}>/{ENERGIE_MAX}</span>
+            <span style={{ color: "var(--brass-700)" }}>/{energieMax}</span>
           </strong>
         </div>
         <div style={{ textAlign: "right", ...labelStyle }}>

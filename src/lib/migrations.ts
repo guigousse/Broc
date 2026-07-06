@@ -30,7 +30,7 @@ import { genererTendances } from "@/lib/tendances";
 import { ALL_TEMPLATES } from "@/data/objetTemplates";
 import { OLD_TO_NEW_TEMPLATE_ID } from "@/data/templateIdRenames";
 import { reconstruireGrandLivre } from "./grandLivre";
-import { ENERGIE_MAX } from "@/lib/energie";
+import { energieMaxPourNiveau } from "@/lib/energie";
 import {
   appliquerGainXPBrocanteur,
   emptyAffinites,
@@ -574,11 +574,16 @@ function appliquerMigrations(loaded: GameState): GameState {
       hebdo: { cle: "", courrierIds: [] },
     },
     energie: (() => {
+      // `brocanteurConverti.niveau` (calculé plus haut, avant l'amorce des
+      // quêtes principales) est le niveau migré définitif : on peut donc
+      // clamper sur le max réel plutôt que sur la borne de base — on ne veut
+      // jamais tronquer l'énergie d'un joueur qui a débloqué N8/N14.
+      const max = energieMaxPourNiveau(brocanteurConverti.niveau);
       const v = (loaded as Partial<GameState>).energie;
       if (typeof v === "number" && Number.isFinite(v)) {
-        return Math.max(0, Math.min(ENERGIE_MAX, Math.floor(v)));
+        return Math.max(0, Math.min(max, Math.floor(v)));
       }
-      return ENERGIE_MAX;
+      return max;
     })(),
     energieDerniereMaj:
       typeof (loaded as Partial<GameState>).energieDerniereMaj === "number"
