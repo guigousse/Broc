@@ -229,8 +229,6 @@ export interface GameState {
   competencesDebloquees: CompetenceId[];
   /** Niveau global du joueur (Niveau de Brocanteur) : XP, niveau, points de compétence. */
   brocanteur: BrocanteurState;
-  /** Nombre de transactions (achats + ventes) par catégorie — gate d'affinité des paliers 2-3. */
-  affinites: Record<CategorieObjet, number>;
   collection: Record<CategorieObjet, CollectionSlot[]>;
   /** Vrai si la modale d'annonce du déblocage du boss a déjà été montrée. */
   bossDebloqueSeen: boolean;
@@ -304,8 +302,6 @@ export interface CompetenceDef {
   coutPoints: number;
   /** Niveau de Brocanteur minimal pour acheter ce palier. */
   niveauBrocanteurRequis: number;
-  /** Transactions (achats + ventes) requises dans la catégorie de l'arbre. 0 pour l'arbre général. */
-  affiniteRequise: number;
   prerequis: CompetenceId[];
   placeholder?: boolean;
 }
@@ -317,8 +313,6 @@ export interface PalierDef {
   coutPoints: number;
   /** Niveau de Brocanteur minimal pour acheter ce palier. */
   niveauBrocanteurRequis: number;
-  /** Transactions (achats + ventes) requises dans la catégorie de l'arbre. 0 pour l'arbre général. */
-  affiniteRequise: number;
   placeholder?: boolean;
 }
 

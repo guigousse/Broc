@@ -34,7 +34,6 @@ import { energieMaxPourNiveau } from "@/lib/energie";
 import { QUOTA_ACTIVES, type ActiveId, type ActivesUtilisees } from "@/lib/actives";
 import {
   appliquerGainXPBrocanteur,
-  emptyAffinites,
   emptyBrocanteur,
   POINTS_BONUS_CHAPITRE,
 } from "@/lib/xp";
@@ -90,7 +89,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -172,16 +171,13 @@ function assurerFiletSecuriteMinimal(save: GameState): GameState {
     typeof (b as { xp?: unknown }).xp === "number" &&
     typeof (b as { niveau?: unknown }).niveau === "number" &&
     typeof (b as { pointsDisponibles?: unknown }).pointsDisponibles === "number";
-  const affinitesValide =
-    !!save.affinites && typeof save.affinites === "object";
   const competencesValide = Array.isArray(save.competencesDebloquees);
 
-  if (brocanteurValide && affinitesValide && competencesValide) return save;
+  if (brocanteurValide && competencesValide) return save;
 
   return {
     ...save,
     brocanteur: brocanteurValide ? save.brocanteur : emptyBrocanteur(),
-    affinites: affinitesValide ? save.affinites : emptyAffinites(),
     competencesDebloquees: competencesValide ? save.competencesDebloquees : [],
   };
 }
@@ -485,11 +481,21 @@ function appliquerMigrations(loaded: GameState): GameState {
   // explicitement du spread pour qu'une vieille save qui le portait encore ne
   // le voie pas traverser tel quel dans l'état migré (cf. fallback `arbresLegacy`
   // plus haut, seul lecteur légitime de ce champ legacy).
-  const { competenceTrees: _competenceTreesLegacy, ...loadedSansCompetenceTrees } =
-    loaded as unknown as GameState & { competenceTrees?: unknown };
+  // `affinites` (compteur de transactions par catégorie) n'existe plus dans le
+  // schéma (v11, décision 2026-07-06 : paliers gatés par points + niveau
+  // seulement) : même traitement, exclu du spread pour qu'une vieille save qui
+  // le portait encore ne le voie pas traverser tel quel dans l'état migré.
+  const {
+    competenceTrees: _competenceTreesLegacy,
+    affinites: _affinitesLegacy,
+    ...loadedSansChampsSupprimes
+  } = loaded as unknown as GameState & {
+    competenceTrees?: unknown;
+    affinites?: unknown;
+  };
 
   return {
-    ...loadedSansCompetenceTrees,
+    ...loadedSansChampsSupprimes,
     inventaireJoueur: inventaire,
     vitrine: vitrineActuelle,
     historique,
@@ -632,29 +638,6 @@ function appliquerMigrations(loaded: GameState): GameState {
           brocanteurConverti.niveau + POINTS_BONUS_CHAPITRE * chapitresLivres - pointsDepenses,
         ),
       };
-    })(),
-    affinites: (() => {
-      const a = (loaded as Partial<GameState>).affinites;
-      if (a && typeof a === "object") {
-        const base = emptyAffinites();
-        for (const cat of CATEGORIES) {
-          const v = (a as Record<string, unknown>)[cat];
-          if (typeof v === "number" && Number.isFinite(v) && v >= 0) {
-            base[cat] = Math.floor(v);
-          }
-        }
-        return base;
-      }
-      // Backfill depuis l'historique migré : 1 par achat + 1 par vente.
-      const base = emptyAffinites();
-      for (const s of historique) {
-        if (s.type === "chinage") {
-          for (const ach of s.achats) base[ach.categorie] += 1;
-        } else {
-          for (const v of s.ventes) base[v.categorie] += 1;
-        }
-      }
-      return base;
     })(),
     activesUtilisees: (() => {
       const a = (loaded as Partial<GameState>).activesUtilisees;

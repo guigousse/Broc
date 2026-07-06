@@ -1,12 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   appliquerGainXPBrocanteur,
-  emptyAffinites,
   emptyBrocanteur,
   progressionNiveauBrocanteur,
   xpRequisPourNiveauBrocanteur,
 } from "./xp";
-import { CATEGORIES } from "@/data/categories";
 
 const freshBrocanteur = () => ({ xp: 0, niveau: 0, pointsDisponibles: 0 });
 
@@ -78,10 +76,5 @@ describe("progressionNiveauBrocanteur", () => {
 describe("états initiaux Brocanteur", () => {
   it("emptyBrocanteur : tout à zéro", () => {
     expect(emptyBrocanteur()).toEqual({ xp: 0, niveau: 0, pointsDisponibles: 0 });
-  });
-  it("emptyAffinites : une entrée à 0 par catégorie", () => {
-    const a = emptyAffinites();
-    for (const c of CATEGORIES) expect(a[c]).toBe(0);
-    expect(Object.keys(a)).toHaveLength(CATEGORIES.length);
   });
 });

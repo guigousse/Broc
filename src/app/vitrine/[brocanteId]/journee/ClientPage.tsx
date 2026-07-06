@@ -163,13 +163,7 @@ export default function VitrineJourneePage() {
 
   const { floats, pousserXp } = useXpFloats();
 
-  const gagnerXPLocal = (montant: number, categorie?: CategorieObjet) => {
-    gagnerXPBrocanteur(montant, categorie);
-    setXpBrocanteurSession((prev) => prev + montant);
-    pousserXp(montant);
-  };
-  /** XP de Brocanteur sans passer par un arbre de compétence (ex : juste prix). */
-  const gagnerXPBrocanteurLocal = (montant: number) => {
+  const gagnerXPLocal = (montant: number) => {
     gagnerXPBrocanteur(montant);
     setXpBrocanteurSession((prev) => prev + montant);
     pousserXp(montant);
@@ -571,8 +565,8 @@ export default function VitrineJourneePage() {
     }));
     setVentesEffectuees((prev) => [...prev, ...nouvelles]);
     // XP par objet vendu, par catégorie
-    for (const p of ev.panier) {
-      gagnerXPLocal(XP_VENTE_BROCANTEUR, p.objet.categorie);
+    for (let i = 0; i < ev.panier.length; i++) {
+      gagnerXPLocal(XP_VENTE_BROCANTEUR);
     }
   };
 
@@ -582,7 +576,7 @@ export default function VitrineJourneePage() {
       ev.prixDemande,
     );
     enregistrerVentes(ev, ev.prixDemande);
-    gagnerXPBrocanteurLocal(XP_JUSTE_PRIX);
+    gagnerXPLocal(XP_JUSTE_PRIX);
     ajouterJournal({
       heure: heureCourante(),
       texte: `${ev.persona.nom} achète ${describePanier(ev)} pour ${ev.prixDemande} €.`,

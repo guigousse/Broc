@@ -35,7 +35,7 @@ import {
   XP_DECOUVERTE_COLLECTION,
   XP_NEGO_BROCANTEUR,
 } from "@/lib/xp";
-import type { AchatHistorique, CategorieObjet, ObjetEnVente } from "@/types/game";
+import type { AchatHistorique, ObjetEnVente } from "@/types/game";
 
 export default function SessionChinePage() {
   const router = useRouter();
@@ -91,8 +91,8 @@ export default function SessionChinePage() {
 
   const { floats, pousserXp } = useXpFloats();
 
-  const gagnerXPLocal = (montant: number, categorie?: CategorieObjet) => {
-    gagnerXPBrocanteur(montant, categorie);
+  const gagnerXPLocal = (montant: number) => {
+    gagnerXPBrocanteur(montant);
     setXpBrocanteurSession((prev) => prev + montant);
     pousserXp(montant);
   };
@@ -242,7 +242,7 @@ export default function SessionChinePage() {
       setXpBrocanteurSession((prev) => prev + XP_DECOUVERTE_COLLECTION);
       pousserXp(XP_DECOUVERTE_COLLECTION);
     }
-    gagnerXPLocal(XP_ACHAT_BROCANTEUR, it.objet.categorie);
+    gagnerXPLocal(XP_ACHAT_BROCANTEUR);
     setItem(it.id, { statut: "achete" });
     setAchats((prev) => [
       ...prev,

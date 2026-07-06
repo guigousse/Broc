@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation";
 import {
   INITIAL_BUDGET,
   INITIAL_JOUR,
-  type CategorieObjet,
   type CompetenceId,
   type EtatObjet,
   type GameState,
@@ -41,7 +40,6 @@ import {
 import { prochainLundi } from "@/lib/calendrier";
 import {
   appliquerGainXPBrocanteur,
-  emptyAffinites,
   emptyBrocanteur,
   POINTS_BONUS_CHAPITRE,
   XP_DECOUVERTE_COLLECTION,
@@ -52,7 +50,6 @@ import {
 } from "@/lib/xp";
 import {
   aGenInfluence,
-  affiniteRequisePourComp,
   contexteDepuisState,
   etatCompetence,
   peutRestaurerCategorie,
@@ -179,7 +176,7 @@ interface GameActionsValue {
   ameliorerAtelier: () => { ok: boolean; raison?: string };
   ameliorerStockage: () => { ok: boolean; raison?: string };
   definirPrixVenteSouhaite: (objetId: string, prix: number) => void;
-  gagnerXPBrocanteur: (montant: number, categorie?: CategorieObjet) => void;
+  gagnerXPBrocanteur: (montant: number) => void;
   marquerVuTemplate: (templateId: string) => void;
   marquerVuDansCollection: (templateId: string) => void;
   marquerDejaPossedeTemplate: (templateId: string) => void;
@@ -496,7 +493,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       prochainRafraichissementTendances: prochainLundi(INITIAL_JOUR + 1),
       competencesDebloquees: [],
       brocanteur: emptyBrocanteur(),
-      affinites: emptyAffinites(),
       collection: initCollection(),
       gazetteAchetee: false,
       bossDebloqueSeen: false,
@@ -1012,9 +1008,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
           return { ok: false, raison: "Prérequis non remplis." };
         if (current.brocanteur.niveau < comp.niveauBrocanteurRequis)
           return { ok: false, raison: `Niveau de Brocanteur ${comp.niveauBrocanteurRequis} requis.` };
-        const { categorie, requise } = affiniteRequisePourComp(comp);
-        if (categorie && (current.affinites[categorie] ?? 0) < requise)
-          return { ok: false, raison: `Affinité ${categorie} insuffisante (${current.affinites[categorie] ?? 0}/${requise}).` };
         if (current.brocanteur.pointsDisponibles < comp.coutPoints)
           return { ok: false, raison: "Pas assez de points." };
         return { ok: false, raison: "Conditions non remplies." };
@@ -1143,23 +1136,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const gagnerXPBrocanteur = useCallback(
-    (montant: number, categorie?: CategorieObjet) => {
-      if (montant <= 0) return;
-      setState((prev) => {
-        if (!prev) return prev;
-        const affinites = categorie
-          ? { ...prev.affinites, [categorie]: (prev.affinites[categorie] ?? 0) + 1 }
-          : prev.affinites;
-        return {
-          ...prev,
-          brocanteur: appliquerGainXPBrocanteur(prev.brocanteur, montant),
-          affinites,
-        };
-      });
-    },
-    [],
-  );
+  const gagnerXPBrocanteur = useCallback((montant: number) => {
+    if (montant <= 0) return;
+    setState((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        brocanteur: appliquerGainXPBrocanteur(prev.brocanteur, montant),
+      };
+    });
+  }, []);
 
   const recupererObjetRestaure = useCallback(
     (objetId: string): { ok: boolean; raison?: string } => {

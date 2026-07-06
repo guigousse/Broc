@@ -5,7 +5,7 @@ import type {
   EtatObjet,
   GameState,
 } from "@/types/game";
-import { TREE_GENERAL, catTreeId, getCompetence, getTreeDef } from "@/data/competences";
+import { TREE_GENERAL, catTreeId, getCompetence } from "@/data/competences";
 
 export function aCompetence(
   id: CompetenceId,
@@ -21,26 +21,15 @@ export interface ContexteCompetences {
   pointsDisponibles: number;
   /** Niveau de Brocanteur global — state.brocanteur.niveau. */
   niveauBrocanteur: number;
-  /** Affinités par catégorie — state.affinites. */
-  affinites: Record<CategorieObjet, number>;
 }
 
 export function contexteDepuisState(
-  state: Pick<GameState, "brocanteur" | "affinites">,
+  state: Pick<GameState, "brocanteur">,
 ): ContexteCompetences {
   return {
     pointsDisponibles: state.brocanteur.pointsDisponibles,
     niveauBrocanteur: state.brocanteur.niveau,
-    affinites: state.affinites,
   };
-}
-
-/** Catégorie d'affinité d'une compétence (null pour l'arbre général). */
-export function affiniteRequisePourComp(
-  comp: CompetenceDef,
-): { categorie: CategorieObjet | null; requise: number } {
-  const cat = getTreeDef(comp.treeId)?.categorie ?? null;
-  return { categorie: cat, requise: cat ? comp.affiniteRequise : 0 };
 }
 
 export function etatCompetence(
@@ -51,8 +40,6 @@ export function etatCompetence(
   if (debloquees.includes(comp.id)) return "debloquee";
   if (!comp.prerequis.every((p) => debloquees.includes(p))) return "verrouillee";
   if (ctx.niveauBrocanteur < comp.niveauBrocanteurRequis) return "verrouillee";
-  const { categorie, requise } = affiniteRequisePourComp(comp);
-  if (categorie && (ctx.affinites[categorie] ?? 0) < requise) return "verrouillee";
   if (ctx.pointsDisponibles < comp.coutPoints) return "verrouillee";
   return "disponible";
 }

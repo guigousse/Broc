@@ -20,16 +20,14 @@ export const CATEGORIES_THEMATIQUES: CategorieObjet[] = CATEGORIES;
 // PATTERNS DE PALIERS — modèles réutilisés pour générer les branches
 // =====================================================================
 
-export const AFFINITE_PALIER_2 = 20;
-export const AFFINITE_PALIER_3 = 50;
 export const NIVEAU_BROCANTEUR_PALIER_2_GENERAL = 5;
 export const NIVEAU_BROCANTEUR_PALIER_3 = 12;
 
-/** Coût, niveau de Brocanteur et affinité par défaut pour les paliers 1/2/3 (arbres thématiques). */
+/** Coût et niveau de Brocanteur par défaut pour les paliers 1/2/3 (arbres thématiques). */
 const PALIER_DEFAULTS = [
-  { coutPoints: 1, niveauBrocanteurRequis: 0, affiniteRequise: 0 },
-  { coutPoints: 2, niveauBrocanteurRequis: 0, affiniteRequise: AFFINITE_PALIER_2 },
-  { coutPoints: 3, niveauBrocanteurRequis: NIVEAU_BROCANTEUR_PALIER_3, affiniteRequise: AFFINITE_PALIER_3 },
+  { coutPoints: 1, niveauBrocanteurRequis: 0 },
+  { coutPoints: 2, niveauBrocanteurRequis: 0 },
+  { coutPoints: 3, niveauBrocanteurRequis: NIVEAU_BROCANTEUR_PALIER_3 },
 ] as const;
 
 function definirPaliers(
@@ -42,7 +40,6 @@ function definirPaliers(
     coutPoints: p.coutPoints ?? PALIER_DEFAULTS[i]?.coutPoints ?? 1,
     niveauBrocanteurRequis:
       p.niveauBrocanteurRequis ?? PALIER_DEFAULTS[i]?.niveauBrocanteurRequis ?? 0,
-    affiniteRequise: p.affiniteRequise ?? PALIER_DEFAULTS[i]?.affiniteRequise ?? 0,
     placeholder: p.placeholder,
   }));
 }
@@ -260,7 +257,6 @@ function expandTree(tree: CompetenceTreeDef): CompetenceDef[] {
       niveauBrocanteurRequis: estGeneral
         ? [0, NIVEAU_BROCANTEUR_PALIER_2_GENERAL, NIVEAU_BROCANTEUR_PALIER_3][p.numero - 1] ?? 0
         : p.niveauBrocanteurRequis,
-      affiniteRequise: estGeneral ? 0 : p.affiniteRequise,
       prerequis:
         p.numero === 1 ? [] : [`${tree.id}.${b.id}.${p.numero - 1}`],
       placeholder: p.placeholder,

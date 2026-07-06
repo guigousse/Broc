@@ -21,15 +21,10 @@ import {
   getTreeMeta,
   competencesParBranche,
 } from "@/data/competences";
-import {
-  affiniteRequisePourComp,
-  contexteDepuisState,
-  etatCompetence,
-} from "@/lib/competences";
+import { contexteDepuisState, etatCompetence } from "@/lib/competences";
 import { progressionNiveauBrocanteur } from "@/lib/xp";
 import { prochainDeblocage } from "@/data/deblocagesNiveau";
 import type {
-  CategorieObjet,
   CompetenceDef,
   CompetenceId,
   CompetenceTreeId,
@@ -261,7 +256,6 @@ export default function CompetencesPage() {
             tree={tree}
             niveauActuel={state.brocanteur.niveau}
             pointsDisponibles={state.brocanteur.pointsDisponibles}
-            affinites={state.affinites}
             competencesDebloquees={state.competencesDebloquees}
             etat={etatCompetence(
               palierActif,
@@ -384,7 +378,6 @@ function PalierDetail({
   tree: _tree,
   niveauActuel,
   pointsDisponibles,
-  affinites,
   competencesDebloquees,
   etat,
   onAcheter,
@@ -393,7 +386,6 @@ function PalierDetail({
   tree: CompetenceTreeId;
   niveauActuel: number;
   pointsDisponibles: number;
-  affinites: Record<CategorieObjet, number>;
   competencesDebloquees: readonly CompetenceId[];
   etat: "debloquee" | "disponible" | "verrouillee";
   onAcheter: () => void;
@@ -406,11 +398,6 @@ function PalierDetail({
   const treeDef = getTreeDef(comp.treeId);
   const branche = treeDef?.branches.find((b) => b.id === comp.brancheId);
 
-  const { categorie: affiniteCategorie, requise: affiniteRequise } =
-    affiniteRequisePourComp(comp);
-  const affiniteActuelle = affiniteCategorie
-    ? (affinites[affiniteCategorie] ?? 0)
-    : 0;
   const prerequisRemplis = comp.prerequis.every((p) =>
     competencesDebloquees.includes(p),
   );
@@ -492,14 +479,6 @@ function PalierDetail({
             Dispo : {pointsDisponibles} pt{pointsDisponibles > 1 ? "s" : ""}
           </span>
         </div>
-        {affiniteCategorie && affiniteRequise > 0 && (
-          <div style={{ gridColumn: "1 / -1" }}>
-            Affinité {affiniteCategorie} :{" "}
-            <strong style={{ fontFamily: "var(--font-display)" }}>
-              {affiniteActuelle}/{affiniteRequise}
-            </strong>
-          </div>
-        )}
       </div>
 
       {isDebloquee ? (
@@ -536,9 +515,7 @@ function PalierDetail({
             ? "palier précédent requis"
             : niveauActuel < comp.niveauBrocanteurRequis
               ? `N${comp.niveauBrocanteurRequis} requis (vous avez N${niveauActuel})`
-              : affiniteRequise > 0 && affiniteActuelle < affiniteRequise
-                ? `affinité ${affiniteCategorie} ${affiniteActuelle}/${affiniteRequise}`
-                : "pas assez de points"}
+              : "pas assez de points"}
         </div>
       ) : (
         <button

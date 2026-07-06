@@ -1,5 +1,4 @@
-import { CATEGORIES } from "@/data/categories";
-import type { BrocanteurState, CategorieObjet } from "@/types/game";
+import type { BrocanteurState } from "@/types/game";
 
 export type { BrocanteurState };
 
@@ -70,10 +69,4 @@ export const XP_DECOUVERTE_COLLECTION = 10;
 
 export function emptyBrocanteur(): BrocanteurState {
   return { xp: 0, niveau: 0, pointsDisponibles: 0 };
-}
-
-export function emptyAffinites(): Record<CategorieObjet, number> {
-  const out = {} as Record<CategorieObjet, number>;
-  for (const c of CATEGORIES) out[c] = 0;
-  return out;
 }

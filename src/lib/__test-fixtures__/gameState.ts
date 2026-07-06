@@ -10,7 +10,7 @@ import type {
 } from "@/types/game";
 import type { ClientPersonnage } from "@/data/clients";
 import { CATEGORIES } from "@/data/categories";
-import { emptyAffinites, emptyBrocanteur } from "@/lib/xp";
+import { emptyBrocanteur } from "@/lib/xp";
 
 /**
  * Construit un GameState minimal valide pour les tests. Tous les champs
@@ -37,7 +37,6 @@ export function createMockGameState(patch: Partial<GameState> = {}): GameState {
     gazetteAchetee: false,
     competencesDebloquees: [],
     brocanteur: emptyBrocanteur(),
-    affinites: emptyAffinites(),
     collection,
     bossDebloqueSeen: false,
     niveauVu: 0,

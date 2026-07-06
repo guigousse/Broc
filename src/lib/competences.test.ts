@@ -8,7 +8,6 @@ import {
   etatCompetence,
 } from "./competences";
 import { getCompetence } from "@/data/competences";
-import { emptyAffinites } from "@/lib/xp";
 
 function stateAvec(debloquees: CompetenceId[]): GameState {
   return { competencesDebloquees: debloquees } as GameState;
@@ -30,7 +29,6 @@ function comp(
     nom: id,
     description: "",
     niveauBrocanteurRequis: opts.niveauBrocanteurRequis ?? 1,
-    affiniteRequise: 0,
     coutPoints: opts.coutPoints ?? 1,
     prerequis: (opts.prerequis ?? []) as CompetenceId[],
   };
@@ -59,7 +57,6 @@ describe("etatCompetence — debloquee", () => {
       etatCompetence(c, ["general.charisme.1"] as CompetenceId[], {
         pointsDisponibles: 0,
         niveauBrocanteur: 0,
-        affinites: emptyAffinites(),
       }),
     ).toBe("debloquee");
   });
@@ -72,7 +69,6 @@ describe("etatCompetence — verrouillee par prérequis", () => {
       etatCompetence(c, [] as CompetenceId[], {
         pointsDisponibles: 99,
         niveauBrocanteur: 99,
-        affinites: emptyAffinites(),
       }),
     ).toBe("verrouillee");
   });
@@ -87,7 +83,6 @@ describe("etatCompetence — verrouillee par prérequis", () => {
       etatCompetence(c, ["general.charisme.1"] as CompetenceId[], {
         pointsDisponibles: 1,
         niveauBrocanteur: 1,
-        affinites: emptyAffinites(),
       }),
     ).toBe("disponible");
   });
@@ -100,7 +95,6 @@ describe("etatCompetence — verrouillee par niveau insuffisant", () => {
       etatCompetence(c, [] as CompetenceId[], {
         pointsDisponibles: 5,
         niveauBrocanteur: 2,
-        affinites: emptyAffinites(),
       }),
     ).toBe("verrouillee");
   });
@@ -111,7 +105,6 @@ describe("etatCompetence — verrouillee par niveau insuffisant", () => {
       etatCompetence(c, [] as CompetenceId[], {
         pointsDisponibles: 5,
         niveauBrocanteur: 3,
-        affinites: emptyAffinites(),
       }),
     ).toBe("disponible");
   });
@@ -124,7 +117,6 @@ describe("etatCompetence — verrouillee par points insuffisants", () => {
       etatCompetence(c, [] as CompetenceId[], {
         pointsDisponibles: 2,
         niveauBrocanteur: 5,
-        affinites: emptyAffinites(),
       }),
     ).toBe("verrouillee");
   });
@@ -135,7 +127,6 @@ describe("etatCompetence — verrouillee par points insuffisants", () => {
       etatCompetence(c, [] as CompetenceId[], {
         pointsDisponibles: 3,
         niveauBrocanteur: 5,
-        affinites: emptyAffinites(),
       }),
     ).toBe("disponible");
   });
@@ -148,7 +139,6 @@ describe("etatCompetence — ordre de priorité", () => {
       etatCompetence(c, ["general.charisme.1"] as CompetenceId[], {
         pointsDisponibles: 0,
         niveauBrocanteur: 0,
-        affinites: emptyAffinites(),
       }),
     ).toBe("debloquee");
   });
@@ -163,7 +153,6 @@ describe("etatCompetence — ordre de priorité", () => {
       etatCompetence(c, [] as CompetenceId[], {
         pointsDisponibles: 99,
         niveauBrocanteur: 99,
-        affinites: emptyAffinites(),
       }),
     ).toBe("verrouillee");
   });
@@ -172,37 +161,34 @@ describe("etatCompetence — ordre de priorité", () => {
 const ctx = (over: Partial<ReturnType<typeof contexteDepuisState>> = {}) => ({
   pointsDisponibles: 10,
   niveauBrocanteur: 20,
-  affinites: { ...emptyAffinites(), Musique: 60 },
   ...over,
 });
 
-describe("etatCompetence v2 — pool global", () => {
+describe("etatCompetence v2 — pool global (paliers gatés par points + niveau seulement — décision 2026-07-06)", () => {
   const p1 = getCompetence("cat.Musique.reparer.1")!;
   const p2 = getCompetence("cat.Musique.reparer.2")!;
   const p3 = getCompetence("cat.Musique.reparer.3")!;
   const gen3 = getCompetence("general.negociation.3")!;
 
   it("palier 1 : disponible avec 1 point, sans autre condition", () => {
-    expect(etatCompetence(p1, [], ctx({ niveauBrocanteur: 0, affinites: emptyAffinites() }))).toBe("disponible");
-    expect(etatCompetence(p1, [], ctx({ pointsDisponibles: 0, niveauBrocanteur: 0, affinites: emptyAffinites() }))).toBe("verrouillee");
+    expect(etatCompetence(p1, [], ctx({ niveauBrocanteur: 0 }))).toBe("disponible");
+    expect(etatCompetence(p1, [], ctx({ pointsDisponibles: 0, niveauBrocanteur: 0 }))).toBe("verrouillee");
   });
 
-  it("palier 2 : exige palier 1 + affinité 20", () => {
+  it("palier 2 : exige palier 1 + points, aucune autre condition", () => {
     expect(etatCompetence(p2, [], ctx())).toBe("verrouillee"); // prérequis manquant
-    expect(etatCompetence(p2, [p1.id], ctx({ affinites: { ...emptyAffinites(), Musique: 19 } }))).toBe("verrouillee");
-    expect(etatCompetence(p2, [p1.id], ctx({ affinites: { ...emptyAffinites(), Musique: 20 } }))).toBe("disponible");
+    expect(etatCompetence(p2, [p1.id], ctx({ pointsDisponibles: 0 }))).toBe("verrouillee");
+    expect(etatCompetence(p2, [p1.id], ctx())).toBe("disponible");
   });
 
-  it("palier 3 : exige palier 2 + affinité 50 + Brocanteur N12", () => {
+  it("palier 3 : exige palier 2 + Brocanteur N12", () => {
     expect(etatCompetence(p3, [p1.id, p2.id], ctx({ niveauBrocanteur: 11 }))).toBe("verrouillee");
     expect(etatCompetence(p3, [p1.id, p2.id], ctx({ niveauBrocanteur: 12 }))).toBe("disponible");
-    expect(etatCompetence(p3, [p1.id, p2.id], ctx({ affinites: { ...emptyAffinites(), Musique: 49 } }))).toBe("verrouillee");
   });
 
-  it("général palier 3 : Brocanteur N12, jamais d'affinité", () => {
-    const base = ctx({ affinites: emptyAffinites() });
-    expect(etatCompetence(gen3, ["general.negociation.1", "general.negociation.2"], { ...base, niveauBrocanteur: 12 })).toBe("disponible");
-    expect(etatCompetence(gen3, ["general.negociation.1", "general.negociation.2"], { ...base, niveauBrocanteur: 11 })).toBe("verrouillee");
+  it("général palier 3 : Brocanteur N12", () => {
+    expect(etatCompetence(gen3, ["general.negociation.1", "general.negociation.2"], ctx({ niveauBrocanteur: 12 }))).toBe("disponible");
+    expect(etatCompetence(gen3, ["general.negociation.1", "general.negociation.2"], ctx({ niveauBrocanteur: 11 }))).toBe("verrouillee");
   });
 
   it("déjà débloquée prime sur tout", () => {

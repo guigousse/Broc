@@ -3,7 +3,7 @@ import type { GameState } from "@/types/game";
 import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
-import { emptyAffinites, emptyBrocanteur, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
+import { emptyBrocanteur, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
 import * as principalesModule from "@/lib/quetes/principales";
 
 describe("migrerEtat", () => {
@@ -172,14 +172,14 @@ describe("migrerSauvegarde — filet de sécurité en cas d'exception", () => {
   });
 });
 
-describe("migrerSauvegarde — filet de sécurité minimal (lifeboat brocanteur/affinites)", () => {
+describe("migrerSauvegarde — filet de sécurité minimal (lifeboat brocanteur)", () => {
   // `appliquerMigrations` appelle `debloquerQuetesPrincipales` (import réel de
   // @/lib/quetes/principales) vers la fin de son traitement. On la fait
   // exploser une fois pour simuler un échec de migration inattendu SANS
   // passer par une exception levée pendant `remapTemplateIds` (qui tourne
   // hors du try : un getter piégé sur le save lui-même y exploserait avant
   // même d'atteindre le try/catch, ce qui ne teste pas le bon chemin).
-  it("garantit brocanteur/affinites/competencesDebloquees même si la migration explose sur un save qui en est dépourvu", () => {
+  it("garantit brocanteur/competencesDebloquees même si la migration explose sur un save qui en est dépourvu", () => {
     const errorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
@@ -189,11 +189,10 @@ describe("migrerSauvegarde — filet de sécurité minimal (lifeboat brocanteur/
         throw new Error("boom — échec simulé de migration");
       });
 
-    const saveDepourvue = fabriqueSaveV7(); // v7 : pas de brocanteur/affinites
+    const saveDepourvue = fabriqueSaveV7(); // v7 : pas de brocanteur
     const result = migrerSauvegarde(saveDepourvue);
 
     expect(result.brocanteur).toEqual(emptyBrocanteur());
-    expect(result.affinites).toEqual(emptyAffinites());
     expect(Array.isArray(result.competencesDebloquees)).toBe(true);
     expect(errorSpy).toHaveBeenCalled();
 
@@ -201,7 +200,7 @@ describe("migrerSauvegarde — filet de sécurité minimal (lifeboat brocanteur/
     errorSpy.mockRestore();
   });
 
-  it("ne touche pas à un brocanteur/affinites déjà bien formés si la migration explose", () => {
+  it("ne touche pas à un brocanteur déjà bien formé si la migration explose", () => {
     const errorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
@@ -290,8 +289,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 10", () => {
-    expect(SAVE_VERSION).toBe(10);
+  it("SAVE_VERSION incrémenté à 11", () => {
+    expect(SAVE_VERSION).toBe(11);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -506,14 +505,13 @@ describe("migration quêtes périodiques (v7)", () => {
 
 /**
  * Fabrique une save "v7" : un GameState complet auquel on retire `brocanteur`
- * et `affinites` (champs requis apparus en v8), pour simuler une vieille
- * sauvegarde chargée par une build antérieure au Niveau de Brocanteur.
+ * (champ requis apparu en v8), pour simuler une vieille sauvegarde chargée
+ * par une build antérieure au Niveau de Brocanteur.
  */
 function fabriqueSaveV7(patch: Partial<GameState> = {}): GameState {
   const complet = createMockGameState(patch);
   const {
     brocanteur: _brocanteur,
-    affinites: _affinites,
     niveauVu: _niveauVu,
     ...sansNiveau
   } = complet;
@@ -534,36 +532,10 @@ describe("migration v8 — Niveau de Brocanteur", () => {
     expect(migre.version).toBe(SAVE_VERSION);
   });
 
-  it("recalcule les affinités depuis l'historique", () => {
-    const save = fabriqueSaveV7();
-    (save as unknown as { historique: unknown[] }).historique = [
-      {
-        id: "s1", type: "chinage", jour: 1, timestamp: 1, brocanteId: "b",
-        brocanteNom: "B", xpGagne: {},
-        achats: [
-          { templateId: "t1", nom: "Vinyle", categorie: "Musique", etat: "Bon", prixReferenceReel: 10, prixPaye: 5 },
-          { templateId: "t2", nom: "Robe", categorie: "Mode", etat: "Bon", prixReferenceReel: 10, prixPaye: 5 },
-        ],
-      },
-      {
-        id: "s2", type: "vente", jour: 2, timestamp: 2, niveauCamion: 1, loyer: 0,
-        invendus: 0, xpGagne: {},
-        ventes: [
-          { templateId: "t1", nom: "Vinyle", categorie: "Musique", etat: "Bon", prixReferenceReel: 10, prixVente: 20, prixAchat: 5 },
-        ],
-      },
-    ];
-    const migre = migrerSauvegarde(save);
-    expect(migre.affinites["Musique"]).toBe(2); // 1 achat + 1 vente
-    expect(migre.affinites["Mode"]).toBe(1);
-    expect(migre.affinites["Maison"]).toBe(0);
-  });
-
-  it("idempotente : une save v8 rechargée ne change pas brocanteur/affinites", () => {
+  it("idempotente : une save v8 rechargée ne change pas brocanteur", () => {
     const migre1 = migrerSauvegarde(fabriqueSaveV7());
     const migre2 = migrerSauvegarde(migre1);
     expect(migre2.brocanteur).toEqual(migre1.brocanteur);
-    expect(migre2.affinites).toEqual(migre1.affinites);
   });
 });
 
@@ -732,17 +704,13 @@ function migrerAvecVersion(s: GameState, v: number): GameState {
 }
 
 describe("migration v10 — suppression de competenceTrees", () => {
-  it("SAVE_VERSION vaut 10", () => {
-    expect(SAVE_VERSION).toBe(10);
-  });
-
   it("une save v9 avec competenceTrees le perd, brocanteur intact", () => {
     const v9 = migrerAvecVersion(fabriqueSaveV7(), 9);
     (v9 as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 500, niveau: 5, pointsDisponibles: 2 } };
     v9.brocanteur = { xp: 1100, niveau: 5, pointsDisponibles: 2 };
     const migre = migrerSauvegarde(v9);
     expect("competenceTrees" in migre).toBe(false);
-    expect(migre.version).toBe(10);
+    expect(migre.version).toBe(SAVE_VERSION);
     expect(migre.brocanteur).toEqual({ xp: 1100, niveau: 5, pointsDisponibles: 2 });
   });
 
@@ -751,6 +719,22 @@ describe("migration v10 — suppression de competenceTrees", () => {
     (save as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 1100, niveau: 11, pointsDisponibles: 4 } };
     const migre = migrerSauvegarde(save);
     expect(migre.brocanteur.niveau).toBe(5); // 1100 XP → N5 (17n²+83n : seuil N5=840, N6=1110)
+  });
+});
+
+describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
+  it("SAVE_VERSION vaut 11", () => {
+    expect(SAVE_VERSION).toBe(11);
+  });
+
+  it("une save v10 avec le champ legacy le perd, brocanteur intact", () => {
+    const v10 = migrerAvecVersion(fabriqueSaveV7(), 10);
+    (v10 as unknown as Record<string, unknown>).affinites = { Musique: 12, Mode: 3 };
+    v10.brocanteur = { xp: 1100, niveau: 5, pointsDisponibles: 2 };
+    const migre = migrerSauvegarde(v10);
+    expect("affinites" in migre).toBe(false);
+    expect(migre.version).toBe(SAVE_VERSION);
+    expect(migre.brocanteur).toEqual({ xp: 1100, niveau: 5, pointsDisponibles: 2 });
   });
 });
 
