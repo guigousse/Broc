@@ -183,28 +183,29 @@ export default function CompetencesPage() {
               {requisNiveau.toLocaleString("fr-FR")} XP — encore{" "}
               {manquant.toLocaleString("fr-FR")}
             </div>
-            {prochain && (
-              <button
-                type="button"
-                onClick={() => setParcoursOuvert(true)}
-                aria-label="Voir le parcours des déblocages"
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 9.5,
-                  color: "var(--brass-700)",
-                  letterSpacing: "0.06em",
-                  padding: "4px 2px 0",
-                }}
-              >
-                Prochain — Niv. {prochain.niveau} : {prochain.titre} ▸
-              </button>
-            )}
+            {/* Le bouton reste visible même sans prochain déblocage (niveau ≥ 20) : le Parcours sert aussi de récapitulatif. */}
+            <button
+              type="button"
+              onClick={() => setParcoursOuvert(true)}
+              aria-label="Voir le parcours des déblocages"
+              style={{
+                display: "block",
+                width: "100%",
+                textAlign: "left",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-mono)",
+                fontSize: 9.5,
+                color: "var(--brass-700)",
+                letterSpacing: "0.06em",
+                padding: "4px 2px 0",
+              }}
+            >
+              {prochain
+                ? `Prochain — Niv. ${prochain.niveau} : ${prochain.titre} ▸`
+                : "Parcours des déblocages ▸"}
+            </button>
           </StickyTop>
         }
       >
