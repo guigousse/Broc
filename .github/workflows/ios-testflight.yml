@@ -1,12 +1,12 @@
 name: iOS → TestFlight
 
 # Build cloud iOS (Xcode 26 requis par Apple) puis upload TestFlight.
-# Déclenchement manuel (Actions) OU à chaque push sur la branche de travail.
+# Déclenchement manuel (Actions) OU à chaque push sur main.
 on:
   workflow_dispatch:
   push:
     branches:
-      - feat/systeme-energie
+      - main
 
 jobs:
   build:
