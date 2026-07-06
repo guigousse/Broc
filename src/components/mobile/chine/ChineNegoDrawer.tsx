@@ -76,8 +76,15 @@ export function ChineNegoDrawer({
   };
 
   const handleRelancer = () => {
-    if (!tchatche || !tchatche.consommer()) return;
+    if (!tchatche) return;
+    // relancerNegociation renvoie l'état INCHANGÉ (identité) si le statut
+    // n'est ni "fache" ni "refus_poli" — notamment "conclu" (achat raté sur
+    // budget après une négo conclue, drawer refermé puis rouvert). On calcule
+    // AVANT de consommer : sinon le quota persistant de La Tchatche est brûlé
+    // pour un effet nul.
     const next = relancerNegociation(localNego);
+    if (next === localNego) return;
+    if (!tchatche.consommer()) return;
     setLocalNego(next);
     onUpdateNego(next);
   };
@@ -165,8 +172,11 @@ export function ChineNegoDrawer({
                 </button>
               </>
             ) : (
+              // Couvre "fache" ET "conclu" (drawer refermé puis rouvert après
+              // un achat raté sur budget). La Tchatche ne rouvre que "fache" —
+              // sur "conclu" le bouton ne doit pas apparaître.
               <>
-                {tchatche && tchatche.restantes > 0 && (
+                {localNego.statut === "fache" && tchatche && tchatche.restantes > 0 && (
                   <button type="button" style={btnSecondary} onClick={handleRelancer}>
                     💬 La Tchatche ({tchatche.restantes})
                   </button>
@@ -174,7 +184,7 @@ export function ChineNegoDrawer({
                 <button
                   type="button"
                   style={
-                    tchatche && tchatche.restantes > 0
+                    localNego.statut === "fache" && tchatche && tchatche.restantes > 0
                       ? { ...btnSecondary, gridColumn: "2 / 3" }
                       : { ...btnSecondary, gridColumn: "1 / -1" }
                   }

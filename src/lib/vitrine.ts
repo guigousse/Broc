@@ -368,6 +368,7 @@ export function appliquerBoniment(
   return {
     ...nego,
     prixAdverseCourant: nego.cibleSecrete,
+    derniereOffreJoueur: offreJoueur,
     message: "« Voilà mon dernier mot : c'est ça ou rien. »",
   };
 }

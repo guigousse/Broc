@@ -463,6 +463,7 @@ describe("appliquerBoniment (Le Boniment)", () => {
     const r = appliquerBoniment(nego, 116);
     expect(r.statut).toBe("en_cours");
     expect(r.prixAdverseCourant).toBe(100); // = cibleSecrete
+    expect(r.derniereOffreJoueur).toBe(116); // cohérence état : offre du joueur tracée
   });
 
   it("ne s'applique qu'à une négo de vente en cours", () => {
