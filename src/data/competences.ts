@@ -4,7 +4,6 @@ import type {
   CompetenceId,
   CompetenceTreeDef,
   CompetenceTreeId,
-  CompetenceTreeState,
   PalierDef,
 } from "@/types/game";
 import { CATEGORIES } from "@/data/categories";
@@ -16,18 +15,6 @@ export function catTreeId(categorie: CategorieObjet): CompetenceTreeId {
 }
 
 export const CATEGORIES_THEMATIQUES: CategorieObjet[] = CATEGORIES;
-
-export function emptyTreeState(): CompetenceTreeState {
-  return { xp: 0, niveau: 0, pointsDisponibles: 0 };
-}
-
-export function emptyAllTrees(): Record<CompetenceTreeId, CompetenceTreeState> {
-  const trees: Record<CompetenceTreeId, CompetenceTreeState> = {
-    [TREE_GENERAL]: emptyTreeState(),
-  };
-  for (const c of CATEGORIES_THEMATIQUES) trees[catTreeId(c)] = emptyTreeState();
-  return trees;
-}
 
 // =====================================================================
 // PATTERNS DE PALIERS — modèles réutilisés pour générer les branches

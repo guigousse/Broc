@@ -290,8 +290,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 9", () => {
-    expect(SAVE_VERSION).toBe(9);
+  it("SAVE_VERSION incrémenté à 10", () => {
+    expect(SAVE_VERSION).toBe(10);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -519,8 +519,7 @@ function fabriqueSaveV7(patch: Partial<GameState> = {}): GameState {
 describe("migration v8 — Niveau de Brocanteur", () => {
   it("backfille brocanteur depuis la somme des XP d'arbres", () => {
     const save = fabriqueSaveV7();
-    save.competenceTrees = {
-      ...save.competenceTrees,
+    (save as unknown as Record<string, unknown>).competenceTrees = {
       general: { xp: 150, niveau: 1, pointsDisponibles: 0 },
       "cat.Musique": { xp: 350, niveau: 3, pointsDisponibles: 1 },
     };
@@ -528,7 +527,7 @@ describe("migration v8 — Niveau de Brocanteur", () => {
     // 150 + 350 = 500 XP → courbe 30N²+70N : niveau 3 (seuil 480), pas 4 (760)
     // Refund v9 : pool = niveau + 2×chapitres livrés (0) − points dépensés (0) = 3
     expect(migre.brocanteur).toEqual({ xp: 500, niveau: 3, pointsDisponibles: 3 });
-    expect(migre.version).toBe(9);
+    expect(migre.version).toBe(SAVE_VERSION);
   });
 
   it("recalcule les affinités depuis l'historique", () => {
@@ -568,11 +567,11 @@ describe("migration v9 — refund du pool global", () => {
   it("pool = niveau + 2×chapitres livrés − points dépensés, clampé à 0", () => {
     const save = fabriqueSaveV7();
     // 1100 XP d'arbres → niveau Brocanteur 5 (seuil 1100)
-    save.competenceTrees = { ...save.competenceTrees, general: { xp: 1100, niveau: 11, pointsDisponibles: 4 } };
+    (save as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 1100, niveau: 11, pointsDisponibles: 4 } };
     // 2 paliers achetés : reparer.1 (1 pt) + reparer.2 (2 pts) = 3 pts dépensés
     save.competencesDebloquees = ["cat.Musique.reparer.1", "cat.Musique.reparer.2"];
     const migre = migrerSauvegarde(save);
-    expect(migre.version).toBe(9);
+    expect(migre.version).toBe(SAVE_VERSION);
     expect(migre.brocanteur.niveau).toBe(5);
     expect(migre.brocanteur.pointsDisponibles).toBe(2); // 5 + 0 − 3
     expect(migre.competencesDebloquees).toEqual(["cat.Musique.reparer.1", "cat.Musique.reparer.2"]);
@@ -580,7 +579,7 @@ describe("migration v9 — refund du pool global", () => {
 
   it("clamp à 0 si plus dépensé que gagné", () => {
     const save = fabriqueSaveV7();
-    save.competenceTrees = { ...save.competenceTrees, general: { xp: 100, niveau: 1, pointsDisponibles: 0 } }; // niveau global 1
+    (save as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 100, niveau: 1, pointsDisponibles: 0 } }; // niveau global 1
     save.competencesDebloquees = ["cat.Musique.reparer.1", "cat.Musique.reparer.2"]; // 3 pts dépensés
     const migre = migrerSauvegarde(save);
     expect(migre.brocanteur.pointsDisponibles).toBe(0);
@@ -614,7 +613,7 @@ describe("migration v9 — refund du pool global", () => {
       ],
       missions: [{ courrierId: "c1", statut: "livree" }],
     });
-    save.competenceTrees = { ...save.competenceTrees, general: { xp: 100, niveau: 1, pointsDisponibles: 0 } }; // niveau global 1
+    (save as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 100, niveau: 1, pointsDisponibles: 0 } }; // niveau global 1
     save.competencesDebloquees = [];
     const migre = migrerSauvegarde(save);
     expect(migre.brocanteur.niveau).toBe(1);
@@ -719,5 +718,34 @@ describe("migrerSauvegarde — sanitation activesUtilisees", () => {
     };
     const migre = migrerSauvegarde(save);
     expect(migre.activesUtilisees).toBeUndefined();
+  });
+});
+
+/** Migre puis force la version obtenue à `v` (simule une save déjà passée par une version donnée). */
+function migrerAvecVersion(s: GameState, v: number): GameState {
+  const m = migrerSauvegarde(s);
+  return { ...m, version: v };
+}
+
+describe("migration v10 — suppression de competenceTrees", () => {
+  it("SAVE_VERSION vaut 10", () => {
+    expect(SAVE_VERSION).toBe(10);
+  });
+
+  it("une save v9 avec competenceTrees le perd, brocanteur intact", () => {
+    const v9 = migrerAvecVersion(fabriqueSaveV7(), 9);
+    (v9 as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 500, niveau: 5, pointsDisponibles: 2 } };
+    v9.brocanteur = { xp: 1100, niveau: 5, pointsDisponibles: 2 };
+    const migre = migrerSauvegarde(v9);
+    expect("competenceTrees" in migre).toBe(false);
+    expect(migre.version).toBe(10);
+    expect(migre.brocanteur).toEqual({ xp: 1100, niveau: 5, pointsDisponibles: 2 });
+  });
+
+  it("la conversion pré-v9 lit toujours les arbres des vieilles saves", () => {
+    const save = fabriqueSaveV7();
+    (save as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 1100, niveau: 11, pointsDisponibles: 4 } };
+    const migre = migrerSauvegarde(save);
+    expect(migre.brocanteur.niveau).toBe(5); // 1100 XP → N5 (30n²+70n)
   });
 });

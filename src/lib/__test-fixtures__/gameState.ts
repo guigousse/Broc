@@ -35,7 +35,6 @@ export function createMockGameState(patch: Partial<GameState> = {}): GameState {
     prochainesTendances: [],
     prochainRafraichissementTendances: 8,
     gazetteAchetee: false,
-    competenceTrees: {},
     competencesDebloquees: [],
     brocanteur: emptyBrocanteur(),
     affinites: emptyAffinites(),

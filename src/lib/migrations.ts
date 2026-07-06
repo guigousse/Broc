@@ -11,7 +11,7 @@ import {
   emptyPiecesAmelioration,
   migrerCategorie,
 } from "@/data/categories";
-import { COMPETENCES, emptyAllTrees, getCompetence } from "@/data/competences";
+import { COMPETENCES, getCompetence } from "@/data/competences";
 import { prochainLundi } from "@/lib/calendrier";
 import { tirerCelebrite } from "@/lib/celebrite";
 import {
@@ -90,7 +90,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -289,13 +289,9 @@ function appliquerMigrations(loaded: GameState): GameState {
   const idsObsoletes =
     (loaded.competencesDebloquees ?? []).length !== competencesValides.length;
 
-  // Si schéma cat obsolète OU IDs de comp obsolètes, on reset les arbres (XP, points perdus).
-  const resetTrees = categoriesObsolètes || idsObsoletes;
-  const trees = resetTrees
-    ? emptyAllTrees()
-    : { ...emptyAllTrees(), ...(loaded.competenceTrees ?? {}) };
-
-  const competencesDebloquees = resetTrees ? [] : competencesValides;
+  // Si schéma cat obsolète OU IDs de comp obsolètes, on reset les compétences débloquées.
+  const resetCompetences = categoriesObsolètes || idsObsoletes;
+  const competencesDebloquees = resetCompetences ? [] : competencesValides;
 
   // Collection : on repart de la structure courante (peut contenir de nouveaux
   // templates ajoutés depuis le dernier save), puis on rapatrie l'état persisté
@@ -448,10 +444,12 @@ function appliquerMigrations(loaded: GameState): GameState {
   // perdre de l'XP pourtant valide.
   const xpValide =
     !!brocanteurCharge && Number.isFinite(brocanteurCharge.xp) && brocanteurCharge.xp >= 0;
+  const arbresLegacy = (loaded as { competenceTrees?: Record<string, { xp?: number }> })
+    .competenceTrees;
   const totalXP = xpValide
     ? brocanteurCharge!.xp
-    : Object.values(loaded.competenceTrees ?? {}).reduce(
-        (acc, t) => acc + (Number.isFinite(t?.xp) && t!.xp > 0 ? t!.xp : 0),
+    : Object.values(arbresLegacy ?? {}).reduce(
+        (acc, t) => acc + (Number.isFinite(t?.xp) && (t!.xp as number) > 0 ? (t!.xp as number) : 0),
         0,
       );
   const brocanteurConverti =
@@ -483,8 +481,15 @@ function appliquerMigrations(loaded: GameState): GameState {
     ...amorce.map((c) => ({ courrierId: c.id, statut: "active" as const })),
   ];
 
+  // `competenceTrees` (arbres) n'existe plus dans le schéma (v10) : on l'exclut
+  // explicitement du spread pour qu'une vieille save qui le portait encore ne
+  // le voie pas traverser tel quel dans l'état migré (cf. fallback `arbresLegacy`
+  // plus haut, seul lecteur légitime de ce champ legacy).
+  const { competenceTrees: _competenceTreesLegacy, ...loadedSansCompetenceTrees } =
+    loaded as unknown as GameState & { competenceTrees?: unknown };
+
   return {
-    ...loaded,
+    ...loadedSansCompetenceTrees,
     inventaireJoueur: inventaire,
     vitrine: vitrineActuelle,
     historique,
@@ -503,7 +508,6 @@ function appliquerMigrations(loaded: GameState): GameState {
       loaded.prochainRafraichissementTendances ??
         (loaded.jourActuel ?? INITIAL_JOUR) + 1,
     ),
-    competenceTrees: trees,
     competencesDebloquees,
     collection,
     gazetteAchetee: loaded.gazetteAchetee ?? false,

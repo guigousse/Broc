@@ -226,7 +226,6 @@ export interface GameState {
   prochainRafraichissementTendances: number;
   /** Édition courante de la Gazette achetée ? Reset à false à chaque refresh. */
   gazetteAchetee: boolean;
-  competenceTrees: Record<CompetenceTreeId, CompetenceTreeState>;
   competencesDebloquees: CompetenceId[];
   /** Niveau global du joueur (Niveau de Brocanteur) : XP, niveau, points de compétence. */
   brocanteur: BrocanteurState;
@@ -286,12 +285,6 @@ export interface GameState {
 export type CompetenceId = string;
 /** ID d'un arbre — soit "general", soit `cat.<Categorie>` */
 export type CompetenceTreeId = string;
-
-export interface CompetenceTreeState {
-  xp: number;
-  niveau: number;
-  pointsDisponibles: number;
-}
 
 export interface BrocanteurState {
   xp: number;

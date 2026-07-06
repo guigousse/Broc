@@ -31,7 +31,7 @@ import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
 import { indicesAConsommerPourLivraison } from "@/lib/missions";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
-import { emptyAllTrees, getCompetence } from "@/data/competences";
+import { getCompetence } from "@/data/competences";
 import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
 import {
   ID_LETTRE_MAMAN_DEBUT,
@@ -492,7 +492,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       tendances: genererTendances(),
       prochainesTendances: genererTendances(),
       prochainRafraichissementTendances: prochainLundi(INITIAL_JOUR + 1),
-      competenceTrees: emptyAllTrees(),
       competencesDebloquees: [],
       brocanteur: emptyBrocanteur(),
       affinites: emptyAffinites(),
