@@ -41,11 +41,7 @@ export const TAB_ORDER: TabDef[] = [
     label: "Biblio.",
     ariaLabel: "Bibliothèque",
     path: "/bibliotheque",
-    badge: (state) =>
-      Object.values(state.competenceTrees).reduce(
-        (s, t) => s + t.pointsDisponibles,
-        0,
-      ),
+    badge: (state) => state.brocanteur.pointsDisponibles,
   },
   { icon: Home, label: "Bureau", path: "/bureau" },
   { icon: Warehouse, label: "Stockage", path: "/stockage" },

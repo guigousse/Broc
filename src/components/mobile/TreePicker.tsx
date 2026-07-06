@@ -12,21 +12,17 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
-import { Badge } from "@/components/mobile/Badge";
 import { CATEGORIES } from "@/data/categories";
 import {
   TREE_GENERAL,
   catTreeId,
   getTreeMeta,
 } from "@/data/competences";
-import type {
-  CategorieObjet,
-  CompetenceTreeId,
-  CompetenceTreeState,
-} from "@/types/game";
+import type { CategorieObjet, CompetenceTreeId } from "@/types/game";
 
 interface TreePickerProps {
-  trees: Record<CompetenceTreeId, CompetenceTreeState>;
+  /** Nombre de compétences débloquées par arbre (sur 12), calculé par le parent. */
+  nbDebloqueesParTree: Record<CompetenceTreeId, number>;
   selectionne: CompetenceTreeId;
   onSelect: (id: CompetenceTreeId) => void;
 }
@@ -63,7 +59,11 @@ const lvlText: CSSProperties = {
   color: "var(--brass-700)",
 };
 
-export function TreePicker({ trees, selectionne, onSelect }: TreePickerProps) {
+export function TreePicker({
+  nbDebloqueesParTree,
+  selectionne,
+  onSelect,
+}: TreePickerProps) {
   const allIds: CompetenceTreeId[] = [
     TREE_GENERAL,
     ...CATEGORIES.map((c) => catTreeId(c)),
@@ -81,10 +81,8 @@ export function TreePicker({ trees, selectionne, onSelect }: TreePickerProps) {
     >
       {allIds.map((id) => {
         const meta = getTreeMeta(id);
-        const tree = trees[id];
         const active = id === selectionne;
-        const points = tree?.pointsDisponibles ?? 0;
-        const niveau = tree?.niveau ?? 0;
+        const nbDebloquees = nbDebloqueesParTree[id] ?? 0;
         const iconKey: string =
           id === TREE_GENERAL
             ? "general"
@@ -117,13 +115,8 @@ export function TreePicker({ trees, selectionne, onSelect }: TreePickerProps) {
                 color: active ? "var(--brass-300)" : "var(--brass-700)",
               }}
             >
-              {niveau > 0 ? `N${niveau}` : "—"}
+              {nbDebloquees}/12
             </span>
-            {points > 0 && (
-              <span style={{ position: "absolute", top: -3, right: -3 }}>
-                <Badge count={points} />
-              </span>
-            )}
           </button>
         );
       })}

@@ -11,16 +11,27 @@ import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { useToast } from "@/components/ui/Toast";
 import { useGame } from "@/context/GameContext";
+import { CATEGORIES } from "@/data/categories";
 import {
   COMPETENCES,
   TREE_GENERAL,
+  catTreeId,
+  competencesParTree,
   getTreeDef,
   getTreeMeta,
   competencesParBranche,
 } from "@/data/competences";
-import { contexteDepuisState, etatCompetence } from "@/lib/competences";
-import { progressionNiveau } from "@/lib/xp";
-import type { CompetenceDef, CompetenceTreeId } from "@/types/game";
+import {
+  affiniteRequisePourComp,
+  contexteDepuisState,
+  etatCompetence,
+} from "@/lib/competences";
+import { progressionNiveauBrocanteur } from "@/lib/xp";
+import type {
+  CategorieObjet,
+  CompetenceDef,
+  CompetenceTreeId,
+} from "@/types/game";
 
 export default function CompetencesPage() {
   const router = useRouter();
@@ -42,10 +53,22 @@ export default function CompetencesPage() {
     return <SkeletonScreen label="— consultation du grimoire…" />;
   }
 
-  const treeState = state.competenceTrees[tree];
   const meta = getTreeMeta(tree);
   const treeDef = getTreeDef(tree);
-  const xpProgress = progressionNiveau(treeState);
+  const xpProgress = progressionNiveauBrocanteur(state.brocanteur);
+
+  const allTreeIds: CompetenceTreeId[] = [
+    TREE_GENERAL,
+    ...CATEGORIES.map((c) => catTreeId(c)),
+  ];
+  const nbDebloqueesParTree = Object.fromEntries(
+    allTreeIds.map((id) => [
+      id,
+      competencesParTree(id).filter((c) =>
+        state.competencesDebloquees.includes(c.id),
+      ).length,
+    ]),
+  ) as Record<CompetenceTreeId, number>;
 
   return (
     <>
@@ -56,7 +79,7 @@ export default function CompetencesPage() {
             <PageHeaderBar title="Compétences" />
             <div style={{ marginTop: 4 }}>
               <TreePicker
-                trees={state.competenceTrees}
+                nbDebloqueesParTree={nbDebloqueesParTree}
                 selectionne={tree}
                 onSelect={setTree}
               />
@@ -87,7 +110,7 @@ export default function CompetencesPage() {
               }}
             >
               <div style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>
-                N{treeState.niveau}
+                N{state.brocanteur.niveau}
                 <span
                   style={{
                     display: "block",
@@ -122,13 +145,13 @@ export default function CompetencesPage() {
                   fontFamily: "var(--font-display)",
                   fontSize: 14,
                   color:
-                    treeState.pointsDisponibles > 0
+                    state.brocanteur.pointsDisponibles > 0
                       ? "var(--vermillion-600)"
                       : "var(--ink-500)",
                   textAlign: "right",
                 }}
               >
-                {treeState.pointsDisponibles}
+                {state.brocanteur.pointsDisponibles}
                 <span
                   style={{
                     display: "block",
@@ -220,8 +243,9 @@ export default function CompetencesPage() {
           <PalierDetail
             comp={palierActif}
             tree={tree}
-            niveauActuel={treeState.niveau}
-            pointsDisponibles={treeState.pointsDisponibles}
+            niveauActuel={state.brocanteur.niveau}
+            pointsDisponibles={state.brocanteur.pointsDisponibles}
+            affinites={state.affinites}
             etat={etatCompetence(
               palierActif,
               state.competencesDebloquees,
@@ -321,17 +345,19 @@ function PalierTile({
       <span style={{ fontSize: 18, fontWeight: 700 }}>
         {comp.palierNumero}
       </span>
-      <span
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 8,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          opacity: 0.85,
-        }}
-      >
-        N{comp.niveauBrocanteurRequis}
-      </span>
+      {comp.niveauBrocanteurRequis > 0 && (
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 8,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            opacity: 0.85,
+          }}
+        >
+          N{comp.niveauBrocanteurRequis}
+        </span>
+      )}
     </button>
   );
 }
@@ -341,6 +367,7 @@ function PalierDetail({
   tree: _tree,
   niveauActuel,
   pointsDisponibles,
+  affinites,
   etat,
   onAcheter,
 }: {
@@ -348,6 +375,7 @@ function PalierDetail({
   tree: CompetenceTreeId;
   niveauActuel: number;
   pointsDisponibles: number;
+  affinites: Record<CategorieObjet, number>;
   etat: "debloquee" | "disponible" | "verrouillee";
   onAcheter: () => void;
 }) {
@@ -358,6 +386,12 @@ function PalierDetail({
   // Find branch name for the eyebrow label
   const treeDef = getTreeDef(comp.treeId);
   const branche = treeDef?.branches.find((b) => b.id === comp.brancheId);
+
+  const { categorie: affiniteCategorie, requise: affiniteRequise } =
+    affiniteRequisePourComp(comp);
+  const affiniteActuelle = affiniteCategorie
+    ? (affinites[affiniteCategorie] ?? 0)
+    : 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -401,23 +435,25 @@ function PalierDetail({
           background: "var(--paper-200)",
         }}
       >
-        <div>
-          Niveau requis :{" "}
-          <strong style={{ fontFamily: "var(--font-display)" }}>
-            N{comp.niveauBrocanteurRequis}
-          </strong>
-          <br />
-          <span
-            style={{
-              color:
-                niveauActuel >= comp.niveauBrocanteurRequis
-                  ? "var(--forest-700)"
-                  : "var(--vermillion-600)",
-            }}
-          >
-            Actuel : N{niveauActuel}
-          </span>
-        </div>
+        {comp.niveauBrocanteurRequis > 0 && (
+          <div>
+            Niveau requis :{" "}
+            <strong style={{ fontFamily: "var(--font-display)" }}>
+              N{comp.niveauBrocanteurRequis}
+            </strong>
+            <br />
+            <span
+              style={{
+                color:
+                  niveauActuel >= comp.niveauBrocanteurRequis
+                    ? "var(--forest-700)"
+                    : "var(--vermillion-600)",
+              }}
+            >
+              Actuel : N{niveauActuel}
+            </span>
+          </div>
+        )}
         <div>
           Coût :{" "}
           <strong style={{ fontFamily: "var(--font-display)" }}>
@@ -434,6 +470,14 @@ function PalierDetail({
             Dispo : {pointsDisponibles} pt{pointsDisponibles > 1 ? "s" : ""}
           </span>
         </div>
+        {affiniteCategorie && affiniteRequise > 0 && (
+          <div style={{ gridColumn: "1 / -1" }}>
+            Affinité {affiniteCategorie} :{" "}
+            <strong style={{ fontFamily: "var(--font-display)" }}>
+              {affiniteActuelle}/{affiniteRequise}
+            </strong>
+          </div>
+        )}
       </div>
 
       {isDebloquee ? (
