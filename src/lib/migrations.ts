@@ -391,6 +391,36 @@ function appliquerMigrations(loaded: GameState): GameState {
     declencheursAjoutes: [...apresMaman.declencheursAjoutes],
   };
 
+  // Niveau de Brocanteur : calculé ici (avant l'amorce des quêtes principales)
+  // car `debloquerQuetesPrincipales` évalue le déblocage de TOUTES les
+  // brocantes (double gate T2-T4 par `niveau`), qui a donc besoin d'un
+  // `brocanteur.niveau` déjà défini — le brut `loaded.brocanteur` peut être
+  // absent (vieille save). Seul `pointsDisponibles` (bonus chapitres livrés)
+  // est finalisé plus tard, une fois `missionsFinales` connu.
+  const dejaV9 = typeof loaded.version === "number" && loaded.version >= 9;
+  const brocanteurCharge = (loaded as Partial<GameState>).brocanteur;
+  const brocanteurBienForme =
+    !!brocanteurCharge &&
+    Number.isFinite(brocanteurCharge.xp) && brocanteurCharge.xp >= 0 &&
+    Number.isFinite(brocanteurCharge.niveau) && brocanteurCharge.niveau >= 0 &&
+    Number.isFinite(brocanteurCharge.pointsDisponibles) && brocanteurCharge.pointsDisponibles >= 0;
+  const brocanteurFinalV9 = dejaV9 && brocanteurBienForme
+    ? {
+        xp: Math.max(0, brocanteurCharge!.xp),
+        niveau: Math.max(0, Math.floor(brocanteurCharge!.niveau)),
+        pointsDisponibles: Math.max(0, Math.floor(brocanteurCharge!.pointsDisponibles)),
+      }
+    : null;
+  const brocanteurConverti = brocanteurFinalV9 ?? appliquerGainXPBrocanteur(
+    emptyBrocanteur(),
+    brocanteurBienForme
+      ? brocanteurCharge!.xp
+      : Object.values(loaded.competenceTrees ?? {}).reduce(
+          (acc, t) => acc + (Number.isFinite(t?.xp) && t!.xp > 0 ? t!.xp : 0),
+          0,
+        ),
+  );
+
   // Amorce de l'arc principal au chargement : on injecte le prochain chapitre
   // dû (chapitre 1 pour une partie naissante) ainsi que sa résolution active.
   const missionsExistantes: GameState["missions"] = (
@@ -407,6 +437,7 @@ function appliquerMigrations(loaded: GameState): GameState {
       collection,
       courriers: apresInjection.courriers,
       missions: missionsExistantes,
+      brocanteur: brocanteurConverti,
     },
     jourCourant,
   );
@@ -524,24 +555,10 @@ function appliquerMigrations(loaded: GameState): GameState {
         ? (loaded as GameState).energieDerniereMaj
         : Date.now(),
     brocanteur: (() => {
-      const dejaV9 = typeof loaded.version === "number" && loaded.version >= 9;
-      const b = (loaded as Partial<GameState>).brocanteur;
-      const bienForme =
-        b && Number.isFinite(b.xp) && b.xp >= 0 &&
-        Number.isFinite(b.niveau) && b.niveau >= 0 &&
-        Number.isFinite(b.pointsDisponibles) && b.pointsDisponibles >= 0;
-      if (dejaV9 && bienForme) {
-        return { xp: Math.max(0, b!.xp), niveau: Math.max(0, Math.floor(b!.niveau)), pointsDisponibles: Math.max(0, Math.floor(b!.pointsDisponibles)) };
-      }
-      // < v9 : (re)calcul du niveau depuis l'XP (somme des arbres si absent),
-      // puis refund du pool : niveaux + bonus chapitres − points déjà dépensés.
-      const totalXP = bienForme
-        ? b!.xp
-        : Object.values(loaded.competenceTrees ?? {}).reduce(
-            (acc, t) => acc + (Number.isFinite(t?.xp) && t!.xp > 0 ? t!.xp : 0),
-            0,
-          );
-      const converti = appliquerGainXPBrocanteur(emptyBrocanteur(), totalXP);
+      // `brocanteurFinalV9`/`brocanteurConverti` sont calculés plus haut (avant
+      // l'amorce des quêtes principales, cf. commentaire associé).
+      if (brocanteurFinalV9) return brocanteurFinalV9;
+      // < v9 : refund du pool = niveau + bonus chapitres − points déjà dépensés.
       const chapitresLivres = missionsFinales.filter((m) => {
         if (m.statut !== "livree") return false;
         const c = courriersFinaux.find((cc) => cc.id === m.courrierId);
@@ -552,10 +569,10 @@ function appliquerMigrations(loaded: GameState): GameState {
         0,
       );
       return {
-        ...converti,
+        ...brocanteurConverti,
         pointsDisponibles: Math.max(
           0,
-          converti.niveau + POINTS_BONUS_CHAPITRE * chapitresLivres - pointsDepenses,
+          brocanteurConverti.niveau + POINTS_BONUS_CHAPITRE * chapitresLivres - pointsDepenses,
         ),
       };
     })(),

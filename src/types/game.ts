@@ -402,6 +402,7 @@ export type ConditionDeblocage =
   | { type: "brocantesDebloquees"; tier: 1 | 2 | 3; nombre: number }
   | { type: "valeurCollection"; montant: number }
   | { type: "valeurCollectionCategorie"; categorie: CategorieObjet; montant: number }
+  | { type: "niveau"; niveau: number }
   | { type: "ET"; conditions: ConditionDeblocage[] };
 
 export type BrocanteTier = 1 | 2 | 3 | 4;

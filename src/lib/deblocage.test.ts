@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { CategorieObjet, ConditionDeblocage, Session } from "@/types/game";
-import { getBrocanteById } from "@/data/brocantes";
+import {
+  BROCANTES,
+  getBrocanteById,
+  NIVEAU_BROCANTES_T2,
+  NIVEAU_BROCANTES_T3,
+  NIVEAU_BROCANTES_T4,
+} from "@/data/brocantes";
 import {
   calculerBrocantesDebloqueesParTier,
   descriptionCondition,
@@ -222,8 +228,10 @@ describe("calculerBrocantesDebloqueesParTier", () => {
   it("débloque en cascade les brocantes à condition brocantesDebloquees", () => {
     // 200 € en Livres → tier 1 : vide-grenier (départ), marché aux puces
     // (valeur 30), bouquinerie (Livres 20) = 3 débloquées → le Déballage des
-    // collectionneurs (valeur 150 + 3 brocantes 1⭐) doit suivre.
-    const state = createMockGameState();
+    // collectionneurs (valeur 150 + 3 brocantes 1⭐ + niveau T2) doit suivre.
+    const state = createMockGameState({
+      brocanteur: { xp: 0, niveau: NIVEAU_BROCANTES_T2, pointsDisponibles: 0 },
+    });
     state.collection["Livres & Papeterie"] = [
       createMockSlot({ donation: { etat: "Bon", valeur: 200 } }),
     ];
@@ -302,5 +310,34 @@ describe("estDebloquee — type ET (composition)", () => {
 describe("evaluerCondition (exporté)", () => {
   it("retourne true pour la condition depart", () => {
     expect(evaluerCondition({ type: "depart" }, createMockGameState())).toBe(true);
+  });
+});
+
+function fabriqueState(patch: { niveau: number }) {
+  return createMockGameState({
+    brocanteur: { xp: 0, niveau: patch.niveau, pointsDisponibles: 0 },
+  });
+}
+
+describe("condition niveau (double gate)", () => {
+  it("évalue le niveau de Brocanteur", () => {
+    const cond = { type: "niveau", niveau: 4 } as const;
+    expect(evaluerCondition(cond, fabriqueState({ niveau: 3 }))).toBe(false);
+    expect(evaluerCondition(cond, fabriqueState({ niveau: 4 }))).toBe(true);
+  });
+
+  it("décrit la condition", () => {
+    expect(descriptionCondition({ type: "niveau", niveau: 10 })).toContain("Niveau de Brocanteur 10");
+  });
+
+  it("toutes les brocantes T2/T3/T4 exigent le niveau du tier", () => {
+    for (const b of BROCANTES) {
+      if (b.tier === 1) continue;
+      const attendu = { 2: NIVEAU_BROCANTES_T2, 3: NIVEAU_BROCANTES_T3, 4: NIVEAU_BROCANTES_T4 }[b.tier];
+      const c = b.conditionDeblocage;
+      expect(c.type).toBe("ET");
+      const niveaux = (c.type === "ET" ? c.conditions : []).filter((x) => x.type === "niveau");
+      expect(niveaux).toEqual([{ type: "niveau", niveau: attendu }]);
+    }
   });
 });

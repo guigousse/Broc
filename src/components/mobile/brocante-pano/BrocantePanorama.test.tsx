@@ -32,6 +32,7 @@ const minimalState = {
   energie: 5,
   jourActuel: 0,
   historique: [],
+  brocanteur: { xp: 0, niveau: 0, pointsDisponibles: 0 },
   collection: {
     Musique: [],
     "Jeux & Loisirs": [],

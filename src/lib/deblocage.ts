@@ -23,6 +23,8 @@ export function descriptionCondition(c: ConditionDeblocage): string {
       return `Débloqué quand votre collection atteint ${c.montant} €`;
     case "valeurCollectionCategorie":
       return `Débloqué quand votre collection « ${c.categorie} » atteint ${c.montant} €`;
+    case "niveau":
+      return `Niveau de Brocanteur ${c.niveau} requis`;
     case "ET":
       return c.conditions.map(descriptionCondition).join(" + ");
   }
@@ -60,7 +62,7 @@ export function decrireConditions(brocante: Brocante, _state: GameState): string
  */
 export function descriptionConditionCourte(
   c: ConditionDeblocage,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): string {
   switch (c.type) {
@@ -82,6 +84,8 @@ export function descriptionConditionCourte(
       return `Collection : ${Math.floor(valeurTotale(state.collection))}/${c.montant} €`;
     case "valeurCollectionCategorie":
       return `${c.categorie} : ${Math.floor(valeurParCategorie(state.collection, c.categorie))}/${c.montant} €`;
+    case "niveau":
+      return `Niveau ${c.niveau} (vous : N${state.brocanteur.niveau})`;
     case "ET":
       return c.conditions
         .map((cc) => descriptionConditionCourte(cc, state, parTier))
@@ -92,7 +96,7 @@ export function descriptionConditionCourte(
 /** Liste les conditions de déblocage atomiques (déplie le ET). */
 export function decrireConditionsCourtes(
   brocante: Brocante,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): string[] {
   const c = brocante.conditionDeblocage;
@@ -112,7 +116,7 @@ export interface ConditionInfo {
 
 export function listerConditionsAvecEtat(
   brocante: Brocante,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): ConditionInfo[] {
   const c = brocante.conditionDeblocage;
@@ -130,7 +134,7 @@ export function listerConditionsAvecEtat(
  * dont la condition référence d'autres brocantes.
  */
 export function calculerBrocantesDebloqueesParTier(
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
 ): Map<1 | 2 | 3 | 4, Set<string>> {
   const m = new Map<1 | 2 | 3 | 4, Set<string>>([
     [1, new Set()],
@@ -148,7 +152,7 @@ export function calculerBrocantesDebloqueesParTier(
 
 export function estDebloquee(
   brocante: Brocante,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
   brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): boolean {
   return evaluerCondition(
@@ -160,7 +164,7 @@ export function estDebloquee(
 
 export function evaluerCondition(
   c: ConditionDeblocage,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection">,
+  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
   brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): boolean {
   switch (c.type) {
@@ -180,6 +184,8 @@ export function evaluerCondition(
       return valeurTotale(state.collection) >= c.montant;
     case "valeurCollectionCategorie":
       return valeurParCategorie(state.collection, c.categorie) >= c.montant;
+    case "niveau":
+      return state.brocanteur.niveau >= c.niveau;
     case "ET":
       return c.conditions.every((cc) =>
         evaluerCondition(cc, state, brocantesDebloqueesParTier),
