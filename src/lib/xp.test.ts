@@ -10,23 +10,23 @@ import { CATEGORIES } from "@/data/categories";
 
 const freshBrocanteur = () => ({ xp: 0, niveau: 0, pointsDisponibles: 0 });
 
-describe("xpRequisPourNiveauBrocanteur — courbe quadratique 30N²+70N", () => {
-  it("seuils cumulés du rapport de design", () => {
+describe("xpRequisPourNiveauBrocanteur — courbe quadratique 17N²+83N (aplatie 2026-07-06)", () => {
+  it("seuils cumulés post-aplatissement", () => {
     expect(xpRequisPourNiveauBrocanteur(0)).toBe(0);
     expect(xpRequisPourNiveauBrocanteur(1)).toBe(100);
-    expect(xpRequisPourNiveauBrocanteur(2)).toBe(260);
-    expect(xpRequisPourNiveauBrocanteur(3)).toBe(480);
-    expect(xpRequisPourNiveauBrocanteur(5)).toBe(1100);
-    expect(xpRequisPourNiveauBrocanteur(10)).toBe(3700);
-    expect(xpRequisPourNiveauBrocanteur(20)).toBe(13400);
-    expect(xpRequisPourNiveauBrocanteur(30)).toBe(29100);
+    expect(xpRequisPourNiveauBrocanteur(2)).toBe(234);
+    expect(xpRequisPourNiveauBrocanteur(3)).toBe(402);
+    expect(xpRequisPourNiveauBrocanteur(5)).toBe(840);
+    expect(xpRequisPourNiveauBrocanteur(10)).toBe(2530);
+    expect(xpRequisPourNiveauBrocanteur(20)).toBe(8460);
+    expect(xpRequisPourNiveauBrocanteur(30)).toBe(17790);
   });
 
-  it("l'incrément entre niveaux vaut 60N+40", () => {
+  it("l'incrément entre niveaux vaut 34N+66", () => {
     for (const n of [1, 2, 5, 10, 25]) {
       expect(
         xpRequisPourNiveauBrocanteur(n) - xpRequisPourNiveauBrocanteur(n - 1),
-      ).toBe(60 * n + 40);
+      ).toBe(34 * n + 66);
     }
   });
 
@@ -70,8 +70,8 @@ describe("appliquerGainXPBrocanteur", () => {
 describe("progressionNiveauBrocanteur", () => {
   it("0 juste après un level-up, 0.5 à mi-chemin", () => {
     expect(progressionNiveauBrocanteur({ xp: 100, niveau: 1, pointsDisponibles: 0 })).toBe(0);
-    // niveau 1 → 2 : seuils 100 → 260, span 160 ; 100+80=180 → 0.5
-    expect(progressionNiveauBrocanteur({ xp: 180, niveau: 1, pointsDisponibles: 0 })).toBe(0.5);
+    // niveau 1 → 2 : seuils 100 → 234, span 134 ; 100+67=167 → 0.5
+    expect(progressionNiveauBrocanteur({ xp: 167, niveau: 1, pointsDisponibles: 0 })).toBe(0.5);
   });
 });
 

@@ -5,15 +5,23 @@ export type { BrocanteurState };
 
 /* === Niveau de Brocanteur (global) ==================================== */
 
-/** ΔXP(N) = PENTE·N + PALIER_1 − PENTE  (N=1 → 100, N=2 → 160, …). */
+/**
+ * ΔXP(N) = PENTE·N + PALIER_1 − PENTE  (N=1 → 100, N=2 → 134, …).
+ *
+ * Courbe aplatie le 2026-07-06 : la simulation mesure un revenu d'XP réel
+ * 2,5-4× sous les hypothèses du rapport initial (pente 60), ce qui créait
+ * un plateau de 44-57 j après N14. La pente est ramenée à 34 (palier 1
+ * inchangé à 100) pour ramener ce gap tardif à ~7-9 j au revenu mesuré,
+ * sans toucher au tout début de la progression.
+ */
 export const XP_BROCANTEUR_PALIER_1 = 100;
-export const XP_BROCANTEUR_PENTE = 60;
+export const XP_BROCANTEUR_PENTE = 34;
 
-/** Seuil CUMULÉ pour atteindre `niveau` : Σ ΔXP = 30·N² + 70·N. */
+/** Seuil CUMULÉ pour atteindre `niveau` : Σ ΔXP = 17·N² + 83·N. */
 export function xpRequisPourNiveauBrocanteur(niveau: number): number {
   const n = Math.max(0, niveau);
-  const a = XP_BROCANTEUR_PENTE / 2; // 30
-  const b = XP_BROCANTEUR_PALIER_1 - XP_BROCANTEUR_PENTE / 2; // 70
+  const a = XP_BROCANTEUR_PENTE / 2; // 17
+  const b = XP_BROCANTEUR_PALIER_1 - XP_BROCANTEUR_PENTE / 2; // 83
   return a * n * n + b * n;
 }
 

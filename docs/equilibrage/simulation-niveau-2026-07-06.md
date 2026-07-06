@@ -190,3 +190,55 @@ _Jours médians de déblocage des actives (indicatif, NIVEAU_ACTIVES) :_ flair=J
 - Ratio prixMax(bundle) / (prixMax(obj1 seul) + prixMax(obj2 seul)) : p50 = 1.124, p90 = 1.461
 - Gain au-delà de la valeur ajoutée (€) : p50 = 25.0, p90 = 82.0
 
+## 8. Après aplatissement (34N+66)
+
+Courbe corrigée le 2026-07-06 suite à ce même rapport (`src/lib/xp.ts` :
+`XP_BROCANTEUR_PENTE` 60 → 34, seuil cumulé 30N²+70N → 17N²+83N ; N1 = 100 XP
+inchangé). Re-simulation avec le même moteur, mêmes profils/seeds/durée ;
+rejoue `SIMULATION=1 npx vitest run src/lib/simulation/niveauSim.test.ts`.
+
+### Jour médian par jalon (avant → après)
+
+| Profil | N10 | N14 | N20 (runs l'ayant atteint) |
+|---|---|---|---|
+| Casual | 20 → **13** | 45 (4/12) → **23** (8/12) | non atteint (0/12) → **50** (2/12) |
+| Régulier | 16 → **11** | 35 (11/12) → **20** (12/12) | 83 (2/12) → **38** (6/12) |
+| Hardcore | 15 → **9** | 27 (12/12) → **17** (12/12) | 80 (5/12) → **33** (9/12) |
+
+### Écart max entre deux niveaux avant N20 (avant → après)
+
+| Profil | Observé max | Médiane des runs |
+|---|---|---|
+| Casual | 57j → **53j** | 42.0j → **37.0j** |
+| Régulier | 44j → **32j** | 38.0j → **26.0j** |
+| Hardcore | 31j → **20j** | 25.0j → **4.0j** |
+
+### Verdicts vs cibles du rapport (avant → après)
+
+| Profil | N10 ∈ [J10,J25] | N20 ≤ J90 | Écart max avant N20 ≤ 5j |
+|---|---|---|---|
+| Casual | OK → OK | NON → OK | NON → NON |
+| Régulier | OK → OK | OK → OK | NON → NON |
+| Hardcore | **OK → NON** (médian passe à J9, sous la borne basse J10) | OK → OK | NON → NON |
+
+### Constat
+
+- Le plateau tardif se réduit nettement en **médiane** (le cas le plus
+  parlant : Hardcore 25.0j → 4.0j), et Régulier/Casual gagnent 6-11j sur le
+  jalon N10 et 12-45j sur N14. C'est la correction attendue.
+- L'« écart max observé » (pire run individuel) baisse beaucoup moins que
+  prévu (régulier 44j→32j, pas ~7-9j) : ce chiffre reste dominé par les runs
+  qui n'atteignent toujours pas N20 en 120 jours (2/12 en Casual, 6/12 en
+  Régulier, 9/12 en Hardcore) — la métrique mesure alors le temps restant
+  jusqu'à J120, pas un écart entre deux level-ups. Amélioration réelle mais
+  plus modeste que l'hypothèse « ~7-9j au revenu mesuré » du rapport pour
+  cette statistique précise.
+- **Régression à signaler** : le profil Hardcore, qui respectait la cible
+  N10 ∈ [J10,J25] avant l'aplatissement (médian J15), tombe maintenant à
+  J9 — sous la borne basse. La pente plus faible accélère aussi le tout
+  début de la partie pour les profils à fort débit d'XP/jour (Hardcore =
+  97.9 XP/j simulé), pas seulement la fin. À arbitrer : soit la cible N10
+  basse (J10) est trop stricte pour ce profil, soit il faut une courbe qui
+  ne s'aplatit qu'au-delà d'un certain niveau plutôt qu'une pente unique
+  sur tout le parcours. Pas de nouveau tuning appliqué sans validation.
+
