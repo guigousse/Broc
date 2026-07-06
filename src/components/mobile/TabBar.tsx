@@ -21,6 +21,8 @@ interface TabDef {
   path: string;
   /** `now` = temps de confiance (epoch ms) pour les badges dépendant du temps réel. */
   badge?: (state: GameState, now: number) => number;
+  /** Onglet masqué tant que la condition est vraie (onboarding progressif). */
+  masque?: (state: GameState) => boolean;
 }
 
 /**
@@ -42,6 +44,10 @@ export const TAB_ORDER: TabDef[] = [
     ariaLabel: "Bibliothèque",
     path: "/bibliotheque",
     badge: (state) => state.brocanteur.pointsDisponibles,
+    // Masqué avant le premier level-up : l'écran Compétences s'ouvre au
+    // niveau 1 (cf. deblocagesNiveau). La navigation directe vers
+    // /bibliotheque à niveau 0 reste possible (choix assumé, non bloqué).
+    masque: (s) => s.brocanteur.niveau < 1,
   },
   { icon: Home, label: "Bureau", path: "/bureau" },
   { icon: Warehouse, label: "Stockage", path: "/stockage" },
@@ -89,7 +95,6 @@ const wrapStyle: CSSProperties = {
   bottom: 0,
   zIndex: 30,
   display: "grid",
-  gridTemplateColumns: "repeat(5, 1fr)",
   borderTop: "3px solid var(--brass-500)",
   background: "var(--forest-800)",
   padding: "6px 4px",
@@ -153,8 +158,14 @@ export function TabBar() {
     panoramaActiveServerSnapshot,
   );
 
-  if (!isHydrated || !state) return null;
+  if (!isHydrated) return null;
   if (!isTabBarRoute(pathname)) return null;
+
+  // Onglets masqués (onboarding progressif) : filtrés selon l'état courant.
+  // `state` null (pré-hydratation du state du jeu) → aucun masque appliqué,
+  // pour ne pas faire clignoter la disparition d'un onglet chez un joueur
+  // qui, une fois hydraté, l'aura bien débloqué.
+  const visibleTabs = TAB_ORDER.filter((t) => !state || !t.masque?.(state));
 
   const liveTabPath =
     liveTab === "collection"
@@ -168,16 +179,24 @@ export function TabBar() {
             : null;
   const effectivePath = liveTabPath ?? pathname;
   const activeIdx = findActiveTabIndex(effectivePath);
+  const activeTab = activeIdx >= 0 ? TAB_ORDER[activeIdx] : null;
   const now = tempsConfiance() ?? Date.now();
 
   // Ordre stable : pas de shuffle. L'onglet actif est simplement
   // surligné — moins de mouvement visuel quand on change de section.
+  // La grille s'adapte au nombre d'onglets visibles (4 ou 5) automatiquement.
   return (
-    <nav aria-label="Navigation principale" style={wrapStyle}>
-      {TAB_ORDER.map((tab, idx) => {
+    <nav
+      aria-label="Navigation principale"
+      style={{
+        ...wrapStyle,
+        gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)`,
+      }}
+    >
+      {visibleTabs.map((tab) => {
         const Icon = tab.icon;
-        const active = idx === activeIdx;
-        const count = tab.badge ? tab.badge(state, now) : 0;
+        const active = tab === activeTab;
+        const count = state && tab.badge ? tab.badge(state, now) : 0;
         return (
           <button
             key={tab.path}
