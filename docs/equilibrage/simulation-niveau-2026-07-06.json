@@ -1,0 +1,381 @@
+{
+  "casual": {
+    "label": "Casual (2 visites/jour)",
+    "courbeNiveauParJour": [
+      {
+        "jour": 7,
+        "p10": 5,
+        "median": 6,
+        "p90": 6
+      },
+      {
+        "jour": 14,
+        "p10": 7,
+        "median": 8,
+        "p90": 8
+      },
+      {
+        "jour": 30,
+        "p10": 8,
+        "median": 10,
+        "p90": 12
+      },
+      {
+        "jour": 60,
+        "p10": 8,
+        "median": 11,
+        "p90": 13
+      },
+      {
+        "jour": 90,
+        "p10": 9,
+        "median": 11,
+        "p90": 14
+      },
+      {
+        "jour": 120,
+        "p10": 10,
+        "median": 12,
+        "p90": 14
+      }
+    ],
+    "joursMilestones": [
+      {
+        "niveau": 4,
+        "atteintPar": "12/12",
+        "jourMedian": 4
+      },
+      {
+        "niveau": 5,
+        "atteintPar": "12/12",
+        "jourMedian": 5
+      },
+      {
+        "niveau": 8,
+        "atteintPar": "12/12",
+        "jourMedian": 12
+      },
+      {
+        "niveau": 10,
+        "atteintPar": "11/12",
+        "jourMedian": 20
+      },
+      {
+        "niveau": 14,
+        "atteintPar": "4/12",
+        "jourMedian": 45
+      },
+      {
+        "niveau": 20,
+        "atteintPar": "0/12",
+        "jourMedian": null
+      }
+    ],
+    "xpParJourMoyenParSource": {
+      "achat": 9.430555555555555,
+      "decouverte": 5.486111111111112,
+      "negoAchat": 4.715277777777778,
+      "vente": 12.166666666666666,
+      "justePrix": 1.2291666666666667,
+      "negoVente": 2.4270833333333335,
+      "restauration": 7.375,
+      "queteQuotidienne": 2.638888888888889,
+      "queteHebdo": 3.125,
+      "questePrincipale": 1.6666666666666667
+    },
+    "xpParJourTotal": 50.260416666666664,
+    "doubleGate": {
+      "tier2": {
+        "niveauPct": 0,
+        "ecoPct": 100,
+        "bothPct": 0,
+        "n": 12
+      }
+    },
+    "energieSessionsAvantApres": {
+      "N8": {
+        "avant": 3,
+        "apres": 3
+      },
+      "N14": {
+        "avant": 3,
+        "apres": 3.9
+      }
+    },
+    "joursMediansActives": {
+      "flair": 5,
+      "lotGarni": 10,
+      "fouille": 16,
+      "boniment": 35,
+      "tchatche": 43,
+      "criee": null,
+      "diplomate": null
+    },
+    "verdicts": {
+      "n10EntreJ10EtJ25": true,
+      "jourMedianN10": 20,
+      "n20SousJ90": false,
+      "jourMedianN20": null,
+      "ecartMaxAvantN20Observe": 57,
+      "ecartMaxAvantN20Median": 42,
+      "ecartMaxAvantN20Sous5j": false
+    }
+  },
+  "regulier": {
+    "label": "Régulier (4 visites/jour)",
+    "courbeNiveauParJour": [
+      {
+        "jour": 7,
+        "p10": 5,
+        "median": 6,
+        "p90": 6
+      },
+      {
+        "jour": 14,
+        "p10": 8,
+        "median": 9,
+        "p90": 10
+      },
+      {
+        "jour": 30,
+        "p10": 11,
+        "median": 12,
+        "p90": 14
+      },
+      {
+        "jour": 60,
+        "p10": 12,
+        "median": 14,
+        "p90": 16
+      },
+      {
+        "jour": 90,
+        "p10": 13,
+        "median": 15,
+        "p90": 17
+      },
+      {
+        "jour": 120,
+        "p10": 14,
+        "median": 16,
+        "p90": 18
+      }
+    ],
+    "joursMilestones": [
+      {
+        "niveau": 4,
+        "atteintPar": "12/12",
+        "jourMedian": 3
+      },
+      {
+        "niveau": 5,
+        "atteintPar": "12/12",
+        "jourMedian": 5
+      },
+      {
+        "niveau": 8,
+        "atteintPar": "12/12",
+        "jourMedian": 11
+      },
+      {
+        "niveau": 10,
+        "atteintPar": "12/12",
+        "jourMedian": 16
+      },
+      {
+        "niveau": 14,
+        "atteintPar": "11/12",
+        "jourMedian": 35
+      },
+      {
+        "niveau": 20,
+        "atteintPar": "2/12",
+        "jourMedian": 83
+      }
+    ],
+    "xpParJourMoyenParSource": {
+      "achat": 15.4375,
+      "decouverte": 6.493055555555555,
+      "negoAchat": 7.71875,
+      "vente": 20.083333333333332,
+      "justePrix": 2.013888888888889,
+      "negoVente": 4.013888888888889,
+      "restauration": 14.75,
+      "queteQuotidienne": 2.569444444444444,
+      "queteHebdo": 3.125,
+      "questePrincipale": 4.166666666666667
+    },
+    "xpParJourTotal": 80.37152777777777,
+    "doubleGate": {
+      "tier2": {
+        "niveauPct": 0,
+        "ecoPct": 100,
+        "bothPct": 0,
+        "n": 12
+      }
+    },
+    "energieSessionsAvantApres": {
+      "N8": {
+        "avant": 5,
+        "apres": 5.9
+      },
+      "N14": {
+        "avant": 6,
+        "apres": 6
+      }
+    },
+    "joursMediansActives": {
+      "flair": 5,
+      "lotGarni": 8,
+      "fouille": 12,
+      "boniment": 26,
+      "tchatche": 34,
+      "criee": 75,
+      "diplomate": null
+    },
+    "verdicts": {
+      "n10EntreJ10EtJ25": true,
+      "jourMedianN10": 16,
+      "n20SousJ90": true,
+      "jourMedianN20": 83,
+      "ecartMaxAvantN20Observe": 44,
+      "ecartMaxAvantN20Median": 38,
+      "ecartMaxAvantN20Sous5j": false
+    }
+  },
+  "hardcore": {
+    "label": "Hardcore (présence quasi continue)",
+    "courbeNiveauParJour": [
+      {
+        "jour": 7,
+        "p10": 6,
+        "median": 7,
+        "p90": 7
+      },
+      {
+        "jour": 14,
+        "p10": 9,
+        "median": 9,
+        "p90": 10
+      },
+      {
+        "jour": 30,
+        "p10": 10,
+        "median": 14,
+        "p90": 14
+      },
+      {
+        "jour": 60,
+        "p10": 11,
+        "median": 16,
+        "p90": 19
+      },
+      {
+        "jour": 90,
+        "p10": 13,
+        "median": 17,
+        "p90": 20
+      },
+      {
+        "jour": 120,
+        "p10": 14,
+        "median": 18,
+        "p90": 21
+      }
+    ],
+    "joursMilestones": [
+      {
+        "niveau": 4,
+        "atteintPar": "12/12",
+        "jourMedian": 3
+      },
+      {
+        "niveau": 5,
+        "atteintPar": "12/12",
+        "jourMedian": 4
+      },
+      {
+        "niveau": 8,
+        "atteintPar": "12/12",
+        "jourMedian": 9
+      },
+      {
+        "niveau": 10,
+        "atteintPar": "12/12",
+        "jourMedian": 15
+      },
+      {
+        "niveau": 14,
+        "atteintPar": "12/12",
+        "jourMedian": 27
+      },
+      {
+        "niveau": 20,
+        "atteintPar": "5/12",
+        "jourMedian": 80
+      }
+    ],
+    "xpParJourMoyenParSource": {
+      "achat": 18.63888888888889,
+      "decouverte": 6.479166666666667,
+      "negoAchat": 9.319444444444445,
+      "vente": 24.791666666666668,
+      "justePrix": 2.4722222222222223,
+      "negoVente": 4.961805555555555,
+      "restauration": 29.5,
+      "queteQuotidienne": 2.725694444444444,
+      "queteHebdo": 3.125,
+      "questePrincipale": 4.166666666666667
+    },
+    "xpParJourTotal": 106.18055555555556,
+    "doubleGate": {
+      "tier2": {
+        "niveauPct": 0,
+        "ecoPct": 100,
+        "bothPct": 0,
+        "n": 12
+      }
+    },
+    "energieSessionsAvantApres": {
+      "N8": {
+        "avant": 7,
+        "apres": 7.9
+      },
+      "N14": {
+        "avant": 8,
+        "apres": 8.895652173913044
+      }
+    },
+    "joursMediansActives": {
+      "flair": 4,
+      "lotGarni": 7,
+      "fouille": 12,
+      "boniment": 23,
+      "tchatche": 31,
+      "criee": 40,
+      "diplomate": null
+    },
+    "verdicts": {
+      "n10EntreJ10EtJ25": true,
+      "jourMedianN10": 15,
+      "n20SousJ90": true,
+      "jourMedianN20": 80,
+      "ecartMaxAvantN20Observe": 31,
+      "ecartMaxAvantN20Median": 25,
+      "ecartMaxAvantN20Sous5j": false
+    }
+  },
+  "fouille": {
+    "raresBaseParEtal": 1.103,
+    "raresApres3RemplacementsParEtal": 1.609,
+    "multiplicateur": 1.4587488667271078,
+    "trials": 1000
+  },
+  "lotGarni": {
+    "p50Gain": 25,
+    "p90Gain": 82,
+    "p50Ratio": 1.123931623931624,
+    "p90Ratio": 1.461139896373057,
+    "trials": 1000
+  }
+}
