@@ -40,6 +40,12 @@ interface GazetteSheetProps {
   onAcheter: () => void;
   budget: number;
   prixGazette: number;
+  /** Influence (compétence Vision 3) disponible et pas encore consommée aujourd'hui. */
+  influenceDisponible: boolean;
+  /** Relance la météo de la semaine via l'Influence. */
+  onRerollMeteo: () => void;
+  /** Relance la célébrité annoncée via l'Influence. */
+  onRerollCelebrite: () => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -211,6 +217,22 @@ const sectionTitle: CSSProperties = {
   color: "var(--ink-900)",
 };
 
+const influenceButton: CSSProperties = {
+  display: "block",
+  margin: "0.6% auto 0",
+  padding: 0,
+  background: "none",
+  border: "none",
+  fontFamily: "var(--font-mono)",
+  fontSize: "2.3cqw",
+  letterSpacing: "0.04em",
+  color: "var(--ink-700)",
+  opacity: 0.75,
+  cursor: "pointer",
+  textDecoration: "underline",
+  textUnderlineOffset: "2px",
+};
+
 const placeholderLock: CSSProperties = {
   fontFamily: "var(--font-serif)",
   fontStyle: "italic",
@@ -262,6 +284,9 @@ export function GazetteSheet(props: GazetteSheetProps) {
     onAcheter,
     budget,
     prixGazette,
+    influenceDisponible,
+    onRerollMeteo,
+    onRerollCelebrite,
   } = props;
 
   useEffect(() => {
@@ -317,6 +342,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
               {/* ============== Carnet mondain ============== */}
               <h3 style={sectionTitle}>Carnet mondain</h3>
               {revelerCelebrite && celebrite ? (
+                <>
                 <div
                   style={{
                     display: "grid",
@@ -369,6 +395,16 @@ export function GazetteSheet(props: GazetteSheetProps) {
                     et à de <strong style={{ fontStyle: "normal" }}>grosses bourses</strong> !
                   </p>
                 </div>
+                {influenceDisponible && (
+                  <button
+                    type="button"
+                    onClick={onRerollCelebrite}
+                    style={influenceButton}
+                  >
+                    ↻ Influence
+                  </button>
+                )}
+                </>
               ) : (
                 <p style={placeholderLock}>
                   Débloquer avec <em>Carnet mondain</em>
@@ -486,6 +522,15 @@ export function GazetteSheet(props: GazetteSheetProps) {
                       );
                     })}
                   </div>
+                  {influenceDisponible && (
+                    <button
+                      type="button"
+                      onClick={onRerollMeteo}
+                      style={influenceButton}
+                    >
+                      ↻ Influence
+                    </button>
+                  )}
                 </div>
               ) : (
                 <p style={placeholderLock}>

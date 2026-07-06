@@ -1381,6 +1381,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
             : XP_QUETE_QUOTIDIENNE;
       setState((prev) => {
         if (!prev) return prev;
+        const resoPrev = prev.missions.find((m) => m.courrierId === courrierId);
+        if (!resoPrev || resoPrev.statut !== "active") return prev;
         const invMaj = conserver
           ? prev.inventaireJoueur
           : prev.inventaireJoueur.filter((_, i) => !aRetirerSet.has(i));

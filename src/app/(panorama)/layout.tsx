@@ -59,6 +59,7 @@ import {
   aConnaisseurTendance,
   aGenBulletinMeteo,
   aGenCarnetMondain,
+  aGenInfluence,
 } from "@/lib/competences";
 import { vinylAudioUrl, vinylHasAudio } from "@/data/vinylesAudio";
 import { estMissionLivrable } from "@/lib/missions";
@@ -102,6 +103,8 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     livrerMission,
     avancerJour,
     tempsConfiance,
+    rerollMeteo,
+    rerollCelebrite,
   } = useGame();
   const {
     playClick,
@@ -741,6 +744,11 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
         onAcheter={() => acheterGazette()}
         budget={state.budget}
         prixGazette={PRIX_GAZETTE}
+        influenceDisponible={
+          aGenInfluence(state) && !state.influenceUtilisee && state.gazetteAchetee
+        }
+        onRerollMeteo={() => rerollMeteo()}
+        onRerollCelebrite={() => rerollCelebrite()}
       />
 
       {editEnabled && <QgEditPanel />}

@@ -336,6 +336,39 @@ describe("bourse des clients — plafond absolu", () => {
   });
 });
 
+describe("calculerPrixMax — la Passion perce le plafond de bourse", () => {
+  it("bonus Passion 30% étend le plafond (cote 400, bourse moyenne 300 → 390)", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 400, categorie: "Musique" },
+        prixVente: 350,
+      }),
+    ];
+    const modifiers = {
+      ...DEFAULT_MODIFIERS,
+      bonusPassionParCategorie: new Map([["Musique", 0.3] as const]),
+    };
+    const ev = genererClientEvent(c, vitrine, [], modifiers);
+    expect(ev).not.toBeNull();
+    // brut = 400 × 1 × 1.3 = 520 ; plafond percé = 300 × 1.3 = 390 → min = 390.
+    expect(ev!.prixMax).toBe(390);
+  });
+
+  it("sans Passion, le plafond de bourse reste ferme (cote 400, bourse moyenne 300 → 300)", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 400, categorie: "Musique" },
+        prixVente: 350,
+      }),
+    ];
+    const ev = genererClientEvent(c, vitrine, [], DEFAULT_MODIFIERS);
+    expect(ev).not.toBeNull();
+    expect(ev!.prixMax).toBe(300);
+  });
+});
+
 describe("bourseMoyenne — affichage par brocante", () => {
   it("croît avec le tier (les grosses bourses n'arrivent qu'en tiers 3)", () => {
     expect(bourseMoyenne(1)).toBeLessThan(bourseMoyenne(3));

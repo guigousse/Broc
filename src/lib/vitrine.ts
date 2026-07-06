@@ -177,8 +177,15 @@ function calculerPrixMax(
     );
   }, 0);
   const modBundle = panier.length > 1 ? 1 + BONUS_BUNDLE : 1;
-  // Plafond absolu : l'appétit est un pourcentage, la bourse est un montant.
-  return Math.max(1, Math.min(Math.round(brut * modBundle), bourseDe(persona)));
+  // La Passion fait craquer la tirelire : le plafond de bourse est étendu
+  // du même bonus que le prix (min(brut, bourse × (1 + passion max du panier))).
+  let passionMax = 0;
+  for (const x of panier) {
+    const b = modifiers.bonusPassionParCategorie.get(x.objet.categorie) ?? 0;
+    if (b > passionMax) passionMax = b;
+  }
+  const plafond = Math.round(bourseDe(persona) * (1 + passionMax));
+  return Math.max(1, Math.min(Math.round(brut * modBundle), plafond));
 }
 
 /**
