@@ -322,7 +322,14 @@ function StockagePageInner() {
             : { nom: "", etat: "Bon", valeur: 0 }
         }
         ancienneDonation={
-          askReplace ? askReplace.ancienne : { etat: "Bon", valeur: 0 }
+          askReplace
+            ? {
+                etat: askReplace.ancienne.etat,
+                valeur: categoriesConnuesVitrine.has(askReplace.objet.categorie)
+                  ? askReplace.ancienne.valeur
+                  : null,
+              }
+            : { etat: "Bon", valeur: 0 }
         }
       />
     </>

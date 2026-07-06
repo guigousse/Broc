@@ -203,6 +203,9 @@ export default function VitrineJourneePage() {
   }, [isHydrated, state]);
   /** Garde synchrone — empêche que terminerJournee s'exécute plus d'une fois. */
   const journeeTermineeRef = useRef(false);
+  /** Garde synchrone — empêche que la fin de journée déclenchée par le passage
+   *  à 0 de `tempsRestant` (cf. effet ci-dessous) ne se déclenche plus d'une fois. */
+  const finDeclencheeRef = useRef(false);
   /** Ref vers terminerJournee, affectée plus bas pour casser la dépendance temporelle. */
   const terminerJourneeRef = useRef<() => void>(() => {});
   /** Pool de personnages pré-tirés pour la session, consommé séquentiellement. */
@@ -395,14 +398,11 @@ export default function VitrineJourneePage() {
       // En pause si un client est devant nous
       if (clientActuelRef.current) return;
 
-      setTempsRestant((t) => {
-        const next = Math.max(0, t - TICK_MS / 1000);
-        tempsRestantRef.current = next;
-        if (next === 0) {
-          window.setTimeout(() => terminerJournee(), 0);
-        }
-        return next;
-      });
+      // Updater pur : ni écriture de ref, ni effet de bord (setTimeout) ici —
+      // la synchro de tempsRestantRef et le déclenchement de fin de journée
+      // sont délégués à des useEffect dédiés ci-dessous, réagissant au
+      // changement de `tempsRestant`.
+      setTempsRestant((t) => Math.max(0, t - TICK_MS / 1000));
 
       // Décrémente le compte à rebours du prochain client en JS pur (ref, pas
       // de useState) : le spawn ci-dessous déclenche des setState externes
@@ -475,6 +475,25 @@ export default function VitrineJourneePage() {
 
     return () => window.clearInterval(id);
   }, [journeeFinie, terminerJournee, isHydrated]);
+
+  // Synchro du ref depuis l'état : tempsRestantRef.current doit toujours
+  // refléter le dernier `tempsRestant` rendu (lu par la persistance
+  // arrière-plan/pagehide et par le calcul de tempsEcoulePct dans le tick).
+  useEffect(() => {
+    tempsRestantRef.current = tempsRestant;
+  }, [tempsRestant]);
+
+  // Fin de journée déclenchée par l'écoulement du temps : ne se déclenche
+  // qu'une fois (finDeclencheeRef), et seulement quand le tick a effectivement
+  // pu décrémenter jusqu'à 0 — ce qui n'arrive jamais pendant qu'un client est
+  // présent puisque le tick ci-dessus ne touche pas à `tempsRestant` tant que
+  // clientActuelRef.current est vrai.
+  useEffect(() => {
+    if (tempsRestant !== 0) return;
+    if (finDeclencheeRef.current) return;
+    finDeclencheeRef.current = true;
+    terminerJournee();
+  }, [tempsRestant, terminerJournee]);
 
   // Persiste le temps restant aux moments charnières : passage en arrière-plan
   // (iOS suspend le JS sans préavis), pagehide, et démontage (navigation vers le
@@ -701,26 +720,26 @@ export default function VitrineJourneePage() {
             {`Vitrine · ${heureCourante()}`}
           </div>
           <Horloge tempsRestant={tempsRestant} progress={progress} />
-          {activeDebloquee(state, "criee") &&
-            usagesRestants(state.activesUtilisees, "criee", state.jourActuel) > 0 && (
-              <div style={{ marginTop: 8 }}>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={jouerCriee}
-                  disabled={
-                    !!clientActuel ||
-                    tempsRestant < CRIEE_INTERVALLE_SEC * CRIEE_NB_CLIENTS
-                  }
-                >
-                  {`📣 La Criée (${usagesRestants(
-                    state.activesUtilisees,
-                    "criee",
-                    state.jourActuel,
-                  )})`}
-                </Button>
-              </div>
-            )}
+          {activeDebloquee(state, "criee") && (
+            <div style={{ marginTop: 8 }}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={jouerCriee}
+                disabled={
+                  !!clientActuel ||
+                  tempsRestant < CRIEE_INTERVALLE_SEC * CRIEE_NB_CLIENTS ||
+                  usagesRestants(state.activesUtilisees, "criee", state.jourActuel) === 0
+                }
+              >
+                {`📣 La Criée (${usagesRestants(
+                  state.activesUtilisees,
+                  "criee",
+                  state.jourActuel,
+                )})`}
+              </Button>
+            </div>
+          )}
         </section>
 
         {/* Articles sur l'étal */}

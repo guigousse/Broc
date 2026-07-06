@@ -3,7 +3,7 @@ import type { GameState } from "@/types/game";
 import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
-import { emptyAffinites, emptyBrocanteur } from "@/lib/xp";
+import { emptyAffinites, emptyBrocanteur, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
 import * as principalesModule from "@/lib/quetes/principales";
 
 describe("migrerEtat", () => {
@@ -770,5 +770,14 @@ describe("niveauVu (célébration de level-up)", () => {
     const m1 = migrerSauvegarde(fabriqueSaveV7());
     const enAttente = { ...m1, brocanteur: { xp: 1100, niveau: 5, pointsDisponibles: 5 }, niveauVu: 3 };
     expect(migrerSauvegarde(enAttente).niveauVu).toBe(3);
+  });
+});
+
+describe("migration — clamp énergie dynamique (niveau Brocanteur)", () => {
+  it("clamp énergie : une save N14 avec 7 d'énergie ne perd rien, 9 est ramené à 7", () => {
+    const m1 = migrerSauvegarde(fabriqueSaveV7());
+    const n14 = { ...m1, brocanteur: { xp: xpRequisPourNiveauBrocanteur(14), niveau: 14, pointsDisponibles: 0 }, niveauVu: 14, energie: 7 };
+    expect(migrerSauvegarde(n14).energie).toBe(7);
+    expect(migrerSauvegarde({ ...n14, energie: 9 }).energie).toBe(7);
   });
 });

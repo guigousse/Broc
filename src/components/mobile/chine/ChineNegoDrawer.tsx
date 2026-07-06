@@ -143,18 +143,19 @@ export function ChineNegoDrawer({
           <div style={negoBtnRow}>
             {localNego.statut === "refus_poli" ? (
               <>
-                {tchatche && tchatche.restantes > 0 && (
-                  <button type="button" style={btnSecondary} onClick={handleRelancer}>
+                {tchatche && (
+                  <button
+                    type="button"
+                    style={btnSecondaryState(tchatche.restantes === 0)}
+                    disabled={tchatche.restantes === 0}
+                    onClick={handleRelancer}
+                  >
                     💬 La Tchatche ({tchatche.restantes})
                   </button>
                 )}
                 <button
                   type="button"
-                  style={
-                    tchatche && tchatche.restantes > 0
-                      ? btnPrimary
-                      : { ...btnPrimary, gridColumn: "1 / -1" }
-                  }
+                  style={tchatche ? btnPrimary : { ...btnPrimary, gridColumn: "1 / -1" }}
                   onClick={() => onConclu(localNego.prixAdverseCourant)}
                 >
                   Acheter au prix affiché — {localNego.prixAdverseCourant} €
@@ -174,17 +175,23 @@ export function ChineNegoDrawer({
             ) : (
               // Couvre "fache" ET "conclu" (drawer refermé puis rouvert après
               // un achat raté sur budget). La Tchatche ne rouvre que "fache" —
-              // sur "conclu" le bouton ne doit pas apparaître.
+              // sur "conclu" le bouton ne doit pas apparaître (quota épuisé →
+              // désactivé, mais toujours affiché avec son compteur).
               <>
-                {localNego.statut === "fache" && tchatche && tchatche.restantes > 0 && (
-                  <button type="button" style={btnSecondary} onClick={handleRelancer}>
+                {localNego.statut === "fache" && tchatche && (
+                  <button
+                    type="button"
+                    style={btnSecondaryState(tchatche.restantes === 0)}
+                    disabled={tchatche.restantes === 0}
+                    onClick={handleRelancer}
+                  >
                     💬 La Tchatche ({tchatche.restantes})
                   </button>
                 )}
                 <button
                   type="button"
                   style={
-                    localNego.statut === "fache" && tchatche && tchatche.restantes > 0
+                    localNego.statut === "fache" && tchatche
                       ? { ...btnSecondary, gridColumn: "2 / 3" }
                       : { ...btnSecondary, gridColumn: "1 / -1" }
                   }
@@ -362,3 +369,13 @@ const btnSecondary: CSSProperties = {
   color: "var(--forest-800)",
   gridColumn: "1 / 2",
 };
+
+/** Variante désactivée (quota d'active épuisé) : bouton toujours visible,
+ *  mais grisé — reprend le pattern disabled de Flair/Fouille (opacité ~0.45). */
+function btnSecondaryState(disabled: boolean): CSSProperties {
+  return {
+    ...btnSecondary,
+    opacity: disabled ? 0.45 : 1,
+    cursor: disabled ? "not-allowed" : "pointer",
+  };
+}

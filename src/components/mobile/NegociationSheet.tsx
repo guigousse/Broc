@@ -211,19 +211,21 @@ export function NegociationSheet({
           <HumeurGauge humeur={localNego.humeur} />
           {enCours && (lotGarni || boniment) && (
             <div style={activeBtnRowStyle}>
-              {lotGarni && lotGarni.restantes > 0 && (
+              {lotGarni && (
                 <button
                   type="button"
-                  style={btnActive}
+                  style={btnActiveState(lotGarni.restantes === 0)}
+                  disabled={lotGarni.restantes === 0}
                   onClick={lotGarni.onOuvrir}
                 >
                   🧺 Lot garni ({lotGarni.restantes})
                 </button>
               )}
-              {boniment && boniment.restantes > 0 && (
+              {boniment && (
                 <button
                   type="button"
-                  style={btnActive}
+                  style={btnActiveState(boniment.restantes === 0)}
+                  disabled={boniment.restantes === 0}
                   onClick={handleBoniment}
                 >
                   🎩 Le Boniment ({boniment.restantes})
@@ -353,6 +355,16 @@ const btnActive: CSSProperties = {
   lineHeight: 1.15,
   flex: "1 1 auto",
 };
+
+/** Variante désactivée (quota d'active épuisé) : bouton toujours visible,
+ *  mais grisé — reprend le pattern disabled de Flair/Fouille (opacité ~0.45). */
+function btnActiveState(disabled: boolean): CSSProperties {
+  return {
+    ...btnActive,
+    opacity: disabled ? 0.45 : 1,
+    cursor: disabled ? "not-allowed" : "pointer",
+  };
+}
 
 const btnPrimary: CSSProperties = {
   padding: "8px 6px",

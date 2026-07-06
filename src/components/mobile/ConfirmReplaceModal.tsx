@@ -10,7 +10,9 @@ interface ConfirmReplaceModalProps {
   /** `valeur` est `null` quand la valeur de marché de la catégorie n'est pas
    *  encore connue (Connaisseur 2 absent) — affichée « ? » plutôt que masquée. */
   nouvelObjet: { nom: string; etat: EtatObjet; valeur: number | null };
-  ancienneDonation: { etat: EtatObjet; valeur: number };
+  /** `valeur` est `null` selon la même règle que `nouvelObjet` (catégorie non
+   *  connue via Connaisseur 2) — affichée « ? » plutôt que masquée. */
+  ancienneDonation: { etat: EtatObjet; valeur: number | null };
 }
 
 const backdrop: CSSProperties = {
@@ -87,7 +89,8 @@ export function ConfirmReplaceModal({
         <div style={title}>— Remplacer la donation ? —</div>
         <p style={body}>
           « {nouvelObjet.nom} » est déjà dans votre collection en{" "}
-          {ancienneDonation.etat.toLowerCase()} (valeur {ancienneDonation.valeur} €).
+          {ancienneDonation.etat.toLowerCase()} (valeur{" "}
+          {ancienneDonation.valeur === null ? "?" : ancienneDonation.valeur} €).
           Le remplacer par votre nouvel exemplaire en {nouvelObjet.etat.toLowerCase()}{" "}
           ({nouvelObjet.valeur === null ? "?" : nouvelObjet.valeur} €) ? L&apos;ancien
           reviendra dans votre inventaire.

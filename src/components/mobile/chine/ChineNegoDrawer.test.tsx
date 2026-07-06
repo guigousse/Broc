@@ -101,4 +101,16 @@ describe("ChineNegoDrawer — La Tchatche (N15)", () => {
     expect(consommer).toHaveBeenCalledTimes(1);
     expect(onUpdateNego).not.toHaveBeenCalled();
   });
+
+  it("restantes à 0 : le bouton reste affiché mais désactivé, pas caché", () => {
+    const consommer = vi.fn(() => true);
+    const item = makeItem(makeNego({ statut: "fache" }));
+    renderDrawer(item, consommer, 0);
+
+    const btn = screen.getByText(/La Tchatche/) as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+
+    fireEvent.click(btn);
+    expect(consommer).not.toHaveBeenCalled();
+  });
 });
