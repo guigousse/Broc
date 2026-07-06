@@ -3,7 +3,7 @@
 import { useState, type CSSProperties } from "react";
 import { NegoBar } from "@/components/mobile/NegoBar";
 import { HumeurGauge } from "@/components/mobile/HumeurGauge";
-import { proposerOffre, ouvrirNegociation } from "@/lib/negociation";
+import { proposerOffre, ouvrirNegociation, relancerNegociation } from "@/lib/negociation";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { getNomVendeur } from "@/lib/personas";
@@ -28,6 +28,7 @@ export function ChineNegoDrawer({
   onUpdateNego,
   onConclu,
   onAcheterDirect,
+  tchatche,
 }: {
   item: ObjetEnVente;
   budget: number;
@@ -40,6 +41,8 @@ export function ChineNegoDrawer({
   onUpdateNego: (nego: NegociationState) => void;
   onConclu: (prixFinal: number) => void;
   onAcheterDirect: () => void;
+  /** Active de chine « La Tchatche » (N15) : rouvre une négo fâchée/refusée. */
+  tchatche?: { restantes: number; consommer: () => boolean };
 }) {
   const { prixVendeur, statut, persona } = item;
   const acquis = statut === "achete";
@@ -70,6 +73,13 @@ export function ChineNegoDrawer({
       audioManager.playCash();
       setTimeout(() => onConclu(offreJoueur), 600);
     }
+  };
+
+  const handleRelancer = () => {
+    if (!tchatche || !tchatche.consommer()) return;
+    const next = relancerNegociation(localNego);
+    setLocalNego(next);
+    onUpdateNego(next);
   };
 
   return (
@@ -125,13 +135,24 @@ export function ChineNegoDrawer({
           />
           <div style={negoBtnRow}>
             {localNego.statut === "refus_poli" ? (
-              <button
-                type="button"
-                style={{ ...btnPrimary, gridColumn: "1 / -1" }}
-                onClick={() => onConclu(localNego.prixAdverseCourant)}
-              >
-                Acheter au prix affiché — {localNego.prixAdverseCourant} €
-              </button>
+              <>
+                {tchatche && tchatche.restantes > 0 && (
+                  <button type="button" style={btnSecondary} onClick={handleRelancer}>
+                    💬 La Tchatche ({tchatche.restantes})
+                  </button>
+                )}
+                <button
+                  type="button"
+                  style={
+                    tchatche && tchatche.restantes > 0
+                      ? btnPrimary
+                      : { ...btnPrimary, gridColumn: "1 / -1" }
+                  }
+                  onClick={() => onConclu(localNego.prixAdverseCourant)}
+                >
+                  Acheter au prix affiché — {localNego.prixAdverseCourant} €
+                </button>
+              </>
             ) : enCours ? (
               <>
                 <button type="button" style={btnSecondary} onClick={onCollapse}>
@@ -144,13 +165,24 @@ export function ChineNegoDrawer({
                 </button>
               </>
             ) : (
-              <button
-                type="button"
-                style={{ ...btnSecondary, gridColumn: "1 / -1" }}
-                onClick={onCollapse}
-              >
-                Fermer
-              </button>
+              <>
+                {tchatche && tchatche.restantes > 0 && (
+                  <button type="button" style={btnSecondary} onClick={handleRelancer}>
+                    💬 La Tchatche ({tchatche.restantes})
+                  </button>
+                )}
+                <button
+                  type="button"
+                  style={
+                    tchatche && tchatche.restantes > 0
+                      ? { ...btnSecondary, gridColumn: "2 / 3" }
+                      : { ...btnSecondary, gridColumn: "1 / -1" }
+                  }
+                  onClick={onCollapse}
+                >
+                  Fermer
+                </button>
+              </>
             )}
           </div>
         </div>

@@ -258,3 +258,16 @@ export function proposerOffre(
     message: pickMessage(contreMsgs, nouveauPrix),
   };
 }
+
+/** La Tchatche : le vendeur se ravise — négociation rouverte, humeur remise à neutre. Pure. */
+export const HUMEUR_RELANCE = 0.2;
+
+export function relancerNegociation(nego: NegociationState): NegociationState {
+  if (nego.statut !== "fache" && nego.statut !== "refus_poli") return nego;
+  return {
+    ...nego,
+    statut: "en_cours",
+    humeur: HUMEUR_RELANCE,
+    message: "« Bon… allez, je vous écoute une dernière fois. »",
+  };
+}

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NegoPersona, NegociationState } from "@/types/game";
-import { ouvrirNegociation, proposerOffre } from "./negociation";
+import { HUMEUR_RELANCE, ouvrirNegociation, proposerOffre, relancerNegociation } from "./negociation";
 
 function persona(patch: Partial<NegoPersona> = {}): NegoPersona {
   return {
@@ -211,6 +211,33 @@ describe("proposerOffre — fin probabiliste (humeur élevée)", () => {
     );
     // Persona très calme + random élevé → contre-offre attendue, pas refus
     expect(res.statut).toBe("en_cours");
+  });
+});
+
+describe("relancerNegociation (La Tchatche)", () => {
+  const base: NegociationState = {
+    mode: "achat",
+    tour: 3,
+    humeur: 1,
+    prixAdverseCourant: 80,
+    cibleSecrete: 60,
+    derniereOffreJoueur: 50,
+    statut: "fache",
+    message: "…",
+  };
+  it("rouvre une négo fâchée avec humeur neutre", () => {
+    const r = relancerNegociation(base);
+    expect(r.statut).toBe("en_cours");
+    expect(r.humeur).toBe(HUMEUR_RELANCE);
+    expect(r.prixAdverseCourant).toBe(80); // le prix courant ne bouge pas
+    expect(r.message).toContain("écoute");
+  });
+  it("rouvre aussi un refus poli", () => {
+    expect(relancerNegociation({ ...base, statut: "refus_poli" }).statut).toBe("en_cours");
+  });
+  it("ne touche pas une négo en cours ou conclue", () => {
+    expect(relancerNegociation({ ...base, statut: "en_cours" })).toEqual({ ...base, statut: "en_cours" });
+    expect(relancerNegociation({ ...base, statut: "conclu" })).toEqual({ ...base, statut: "conclu" });
   });
 });
 
