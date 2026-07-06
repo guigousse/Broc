@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  BONIMENT_MARGE,
   BONUS_SPECIALISATION_CLIENT,
   BOURSE_PAR_CLASSE,
   CLIENT_INTERVALLE_MAX_SEC,
   CLIENT_INTERVALLE_MIN_SEC,
   DEFAULT_MODIFIERS,
+  ajouterAuPanier,
+  appliquerBoniment,
   bourseDe,
   bourseMoyenne,
   classeBourse,
@@ -395,5 +398,88 @@ describe("bourseMoyenne — affichage par brocante", () => {
     // Tier 1 : retraite (petite 80), étudiant (petite 80), touriste (grosse 2000),
     // famille (moyenne 300), opportuniste (moyenne 300) → 2760 / 5 = 552.
     expect(bourseMoyenne(1)).toBe(552);
+  });
+});
+
+/* ===================================================================== */
+/* Actives de vente : Le Boniment (N13) + Le Lot garni (N7)              */
+/* ===================================================================== */
+
+describe("appliquerBoniment (Le Boniment)", () => {
+  const nego: NegociationState = {
+    mode: "vente",
+    tour: 2,
+    humeur: 0.4,
+    prixAdverseCourant: 90,
+    cibleSecrete: 100,
+    derniereOffreJoueur: null,
+    statut: "en_cours",
+    message: "",
+  };
+
+  it("BONIMENT_MARGE vaut 1.15", () => {
+    expect(BONIMENT_MARGE).toBe(1.15);
+  });
+
+  it("conclut si l'offre ≤ 115 % du prix max", () => {
+    const r = appliquerBoniment(nego, 115);
+    expect(r.statut).toBe("conclu");
+    expect(r.prixAdverseCourant).toBe(115); // le montant conclu = l'offre du joueur
+  });
+
+  it("sinon le client abat sa meilleure contre-offre (son plafond)", () => {
+    const r = appliquerBoniment(nego, 116);
+    expect(r.statut).toBe("en_cours");
+    expect(r.prixAdverseCourant).toBe(100); // = cibleSecrete
+  });
+
+  it("ne s'applique qu'à une négo de vente en cours", () => {
+    expect(appliquerBoniment({ ...nego, statut: "fache" }, 100)).toEqual({
+      ...nego,
+      statut: "fache",
+    });
+  });
+
+  it("ne s'applique pas en mode achat", () => {
+    const negoAchat: NegociationState = { ...nego, mode: "achat" };
+    expect(appliquerBoniment(negoAchat, 100)).toEqual(negoAchat);
+  });
+});
+
+describe("ajouterAuPanier (Le Lot garni)", () => {
+  it("ajoute l'objet, recalcule prixDemande/prixMax et remet la cible de négo à l'échelle", () => {
+    const persona = createMockClient({ appetitMin: 1, appetitMax: 1 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 50,
+      }),
+    ];
+    const ev1 = genererClientEvent(persona, vitrine)!;
+    expect(ev1).not.toBeNull();
+    const nego1 = ouvrirNegociation("vente", 80, ev1.prixMax);
+
+    const objet2 = createMockObjetEnVitrine({
+      objet: { prixReferenceReel: 100 },
+      prixVente: 50,
+    });
+
+    const { ev: ev2, nego: nego2 } = ajouterAuPanier(
+      ev1,
+      objet2,
+      nego1,
+      [],
+      DEFAULT_MODIFIERS,
+    );
+
+    expect(ev2.panier).toHaveLength(2);
+    expect(ev2.prixDemande).toBe(ev1.prixDemande + 50);
+    expect(ev2.prixMax).toBeGreaterThan(ev1.prixMax); // le panier vaut plus
+    expect(nego2.cibleSecrete).toBe(ev2.prixMax);
+    // prixAdverseCourant remis à l'échelle proportionnellement
+    expect(nego2.prixAdverseCourant).toBe(
+      Math.round((nego1.prixAdverseCourant * ev2.prixMax) / ev1.prixMax),
+    );
+    expect(nego2.statut).toBe("en_cours");
   });
 });

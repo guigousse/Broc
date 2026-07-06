@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
 } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
@@ -20,6 +21,7 @@ import { useSettings } from "@/context/SettingsContext";
 import {
   DEFAULT_MODIFIERS,
   JOURNEE_DUREE_SECONDES,
+  ajouterAuPanier,
   classeBourse,
   genererClientEvent,
   personaDepuisClient,
@@ -29,7 +31,7 @@ import {
   type VitrineModifiers,
 } from "@/lib/vitrine";
 import { ouvrirNegociation } from "@/lib/negociation";
-import { usagesRestants } from "@/lib/actives";
+import { activeDebloquee, usagesRestants } from "@/lib/actives";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import type { NegociationState } from "@/types/game";
@@ -60,6 +62,7 @@ import type {
   CategorieObjet,
   EtatObjet,
   NiveauCamion,
+  ObjetEnVitrine,
   Rarete,
   VenteHistorique,
 } from "@/types/game";
@@ -136,6 +139,8 @@ export default function VitrineJourneePage() {
   const [ventesEffectuees, setVentesEffectuees] = useState<VenteHistorique[]>([]);
   const [fancyClientApparu, setFancyClientApparu] = useState(false);
   const [revelationFaite, setRevelationFaite] = useState(false);
+  /** Le Lot garni (N7) : mini-picker ouvert pour choisir le 2e objet à ajouter au panier. */
+  const [lotGarniOuvert, setLotGarniOuvert] = useState(false);
   const [bravoTout, setBravoTout] = useState(false);
   /** XP de Brocanteur gagnée localement durant la session. */
   const [xpBrocanteurSession, setXpBrocanteurSession] = useState(0);
@@ -237,6 +242,34 @@ export default function VitrineJourneePage() {
     },
     [state, utiliserActive],
   );
+
+  /** Le Lot garni : ajoute l'objet choisi au panier du client en cours de négo,
+   *  recalcule prixDemande/prixMax et remet la négo à l'échelle. La mutation
+   *  touche à la fois `clientActuel` et `negoVente` — le sheet se resynchronise
+   *  via ses props `nego`/`cibleSecrete`/`echelleMax` (l'effet d'ouverture
+   *  existant réagit à leur changement, cf. NegociationSheet). */
+  const handleChoisirLotGarni = (choix: ObjetEnVitrine) => {
+    const ev = clientActuelRef.current;
+    if (!ev || !negoVente) {
+      setLotGarniOuvert(false);
+      return;
+    }
+    if (!utiliserActive("lotGarni")) {
+      setLotGarniOuvert(false);
+      return;
+    }
+    const { ev: evNext, nego: negoNext } = ajouterAuPanier(
+      ev,
+      choix,
+      negoVente,
+      state?.tendances ?? [],
+      modifiersRef.current ?? DEFAULT_MODIFIERS,
+      brocante,
+    );
+    setClientActuel(evNext);
+    setNegoVente(negoNext);
+    setLotGarniOuvert(false);
+  };
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -487,6 +520,7 @@ export default function VitrineJourneePage() {
       ton: "vente",
     });
     setClientActuel(null);
+    setLotGarniOuvert(false);
   };
 
   const encaisserVente = (ev: ClientEvent, prixFinal: number) => {
@@ -503,6 +537,7 @@ export default function VitrineJourneePage() {
     });
     setClientActuel(null);
     setNegoVente(null);
+    setLotGarniOuvert(false);
   };
 
   const terminerVisiteClient = (ev: ClientEvent) => {
@@ -513,6 +548,7 @@ export default function VitrineJourneePage() {
     });
     setClientActuel(null);
     setNegoVente(null);
+    setLotGarniOuvert(false);
   };
 
   const handleFermerEnAvance = () => {
@@ -532,6 +568,13 @@ export default function VitrineJourneePage() {
   const totalVentes = journal
     .filter((j) => j.ton === "vente")
     .length;
+
+  /** Le Lot garni : objets du stand pas déjà dans le panier du client en cours. */
+  const objetsAjoutablesLotGarni = clientActuel
+    ? (state.vitrine?.objets ?? []).filter(
+        (o) => !clientActuel.panier.some((p) => p.objet.id === o.objet.id),
+      )
+    : [];
 
   if (journeeFinie) {
     return (
@@ -814,7 +857,76 @@ export default function VitrineJourneePage() {
                 }
               : undefined
           }
+          boniment={
+            clientActuel.mode === "negociation" &&
+            activeDebloquee(state, "boniment")
+              ? {
+                  restantes: usagesRestants(
+                    state.activesUtilisees,
+                    "boniment",
+                    state.jourActuel,
+                  ),
+                  consommer: () => utiliserActive("boniment"),
+                }
+              : undefined
+          }
+          lotGarni={
+            clientActuel.mode === "negociation" &&
+            activeDebloquee(state, "lotGarni") &&
+            clientActuel.panier.length < 2 &&
+            objetsAjoutablesLotGarni.length > 0
+              ? {
+                  restantes: usagesRestants(
+                    state.activesUtilisees,
+                    "lotGarni",
+                    state.jourActuel,
+                  ),
+                  onOuvrir: () => setLotGarniOuvert(true),
+                }
+              : undefined
+          }
         />
+      )}
+
+      {lotGarniOuvert && clientActuel && (
+        <div style={lotGarniScrim} onClick={() => setLotGarniOuvert(false)} role="presentation">
+          <div
+            style={lotGarniCard}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div style={lotGarniHeader}>
+              <span style={lotGarniTitle}>🧺 Lot garni — ajouter un objet</span>
+              <button
+                type="button"
+                onClick={() => setLotGarniOuvert(false)}
+                aria-label="Fermer"
+                style={lotGarniCloseBtn}
+              >
+                ✕
+              </button>
+            </div>
+            {objetsAjoutablesLotGarni.length === 0 ? (
+              <p style={lotGarniEmpty}>Plus rien d'autre à proposer.</p>
+            ) : (
+              <ul style={lotGarniList}>
+                {objetsAjoutablesLotGarni.map((o) => (
+                  <li key={o.objet.id} style={lotGarniItemRow}>
+                    <span style={lotGarniItemNom}>{o.objet.nom}</span>
+                    <button
+                      type="button"
+                      style={lotGarniItemBtn}
+                      onClick={() => handleChoisirLotGarni(o)}
+                    >
+                      + {o.prixVente} €
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -959,3 +1071,99 @@ function FinDeJournee({
     </div>
   );
 }
+
+/* Mini-picker « Le Lot garni » : choix du 2e objet à ajouter au panier. */
+
+const lotGarniScrim: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(15,30,22,0.55)",
+  zIndex: 70,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 24,
+};
+
+const lotGarniCard: CSSProperties = {
+  background: "var(--paper-100)",
+  border: "1px solid var(--brass-500)",
+  boxShadow: "0 10px 30px rgba(15,30,22,0.4)",
+  padding: 16,
+  width: "100%",
+  maxWidth: 360,
+  maxHeight: "70dvh",
+  overflowY: "auto",
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+};
+
+const lotGarniHeader: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  paddingBottom: 10,
+  borderBottom: "1px solid var(--brass-500)",
+  marginBottom: 6,
+};
+
+const lotGarniTitle: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 11,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: "var(--forest-800)",
+};
+
+const lotGarniCloseBtn: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  color: "var(--brass-700)",
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  padding: 4,
+};
+
+const lotGarniEmpty: CSSProperties = {
+  fontFamily: "var(--font-serif)",
+  fontStyle: "italic",
+  color: "var(--ink-500)",
+  fontSize: 13,
+  textAlign: "center",
+  margin: "10px 0",
+};
+
+const lotGarniList: CSSProperties = {
+  listStyle: "none",
+  padding: 0,
+  margin: 0,
+};
+
+const lotGarniItemRow: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 8,
+  padding: "8px 0",
+  borderBottom: "1px dotted var(--paper-500)",
+};
+
+const lotGarniItemNom: CSSProperties = {
+  fontFamily: "var(--font-serif)",
+  fontSize: 13,
+  color: "var(--ink-700)",
+};
+
+const lotGarniItemBtn: CSSProperties = {
+  padding: "6px 10px",
+  fontFamily: "var(--font-display)",
+  fontSize: 11,
+  letterSpacing: "0.06em",
+  background: "var(--forest-800)",
+  color: "var(--brass-300)",
+  border: "1px solid var(--brass-500)",
+  cursor: "pointer",
+  flexShrink: 0,
+};

@@ -139,7 +139,7 @@ const SEUIL_INTERET_ACHETEUR = 1.6;
  */
 export const SEUIL_NEGO_NORMALE = 1.2;
 
-function calculerPrixMax(
+export function calculerPrixMax(
   panier: ObjetEnVitrine[],
   persona: ClientPersonnage,
   tendances: readonly Tendance[],
@@ -340,6 +340,69 @@ export function proposerOffreVente(
   }
 
   return next;
+}
+
+/** Le Boniment (N13) : closing — le client accepte jusqu'à 115 % de son plafond, sinon il abat son plafond. */
+export const BONIMENT_MARGE = 1.15;
+
+/**
+ * Le Boniment : coup de closing en fin de négo. Si l'offre du joueur reste
+ * sous 115 % du plafond secret du client, il l'accepte tel quel (le montant
+ * conclu, c'est l'offre du joueur). Sinon il abat sa dernière carte : son
+ * vrai plafond, sans se fâcher (la négo reste ouverte pour un dernier tour).
+ */
+export function appliquerBoniment(
+  nego: NegociationState,
+  offreJoueur: number,
+): NegociationState {
+  if (nego.mode !== "vente" || nego.statut !== "en_cours") return nego;
+  if (offreJoueur <= Math.round(nego.cibleSecrete * BONIMENT_MARGE)) {
+    return {
+      ...nego,
+      statut: "conclu",
+      prixAdverseCourant: offreJoueur,
+      humeur: Math.min(nego.humeur, 0.3),
+      message: "« Marché conclu ! Vous savez y faire… »",
+    };
+  }
+  return {
+    ...nego,
+    prixAdverseCourant: nego.cibleSecrete,
+    message: "« Voilà mon dernier mot : c'est ça ou rien. »",
+  };
+}
+
+/**
+ * Le Lot garni (N7) : ajoute un 2e objet du stand au panier en pleine
+ * négociation. Recalcule prixDemande/prixMax pour l'ensemble et remet la
+ * négo à l'échelle (cible + offre adverse courante, proportionnellement).
+ */
+export function ajouterAuPanier(
+  ev: ClientEvent,
+  ajout: ObjetEnVitrine,
+  nego: NegociationState,
+  tendances: readonly Tendance[],
+  modifiers: VitrineModifiers,
+  brocante?: Brocante,
+): { ev: ClientEvent; nego: NegociationState } {
+  const panier = [...ev.panier, ajout];
+  const prixMax = calculerPrixMax(panier, ev.persona, tendances, modifiers, brocante);
+  const evNext: ClientEvent = {
+    ...ev,
+    panier,
+    prixDemande: ev.prixDemande + ajout.prixVente,
+    prixMax,
+  };
+  const negoNext: NegociationState = {
+    ...nego,
+    cibleSecrete: prixMax,
+    prixAdverseCourant: Math.max(
+      1,
+      Math.round((nego.prixAdverseCourant * prixMax) / Math.max(1, ev.prixMax)),
+    ),
+    message: "« Hmm, les deux ensemble ? Faites-moi un prix… »",
+  };
+  return { ev: evNext, nego: negoNext };
 }
 
 export const JOURNEE_DUREE_SECONDES = 90;

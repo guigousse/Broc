@@ -7,6 +7,7 @@ import { HumeurGauge } from "@/components/mobile/HumeurGauge";
 import { PersonaAvatar } from "@/components/mobile/PersonaAvatar";
 import type { PersonaInfo } from "@/components/mobile/PersonaInfoOverlay";
 import { ouvrirNegociation } from "@/lib/negociation";
+import { appliquerBoniment } from "@/lib/vitrine";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import type { NegoMode, NegoPersona, NegociationState } from "@/types/game";
@@ -47,6 +48,14 @@ interface NegociationSheetProps {
     onAccepter: () => void;
     onRefuser: () => void;
   };
+  /** Active de vente « Le Boniment » (N13) : closing sur l'offre courante du
+   *  joueur. Le sheet calcule lui-même le nouvel état via `appliquerBoniment`
+   *  (même pattern que « La Tchatche » en chine) et le propage. */
+  boniment?: { restantes: number; consommer: () => boolean };
+  /** Active de vente « Le Lot garni » (N7) : ajoute un 2e objet au panier.
+   *  La mutation (panier + prix) touche aussi l'état client côté page —
+   *  c'est donc le parent qui l'effectue ; le sheet ne fait qu'ouvrir le picker. */
+  lotGarni?: { restantes: number; onOuvrir: () => void };
 }
 
 export function NegociationSheet({
@@ -67,6 +76,8 @@ export function NegociationSheet({
   illustrationSrc,
   illustrationFacheSrc,
   venteDirecte,
+  boniment,
+  lotGarni,
 }: NegociationSheetProps) {
   const [localNego, setLocalNego] = useState<NegociationState>(
     nego ?? ouvrirNegociation(mode, prixDepartAdverse, cibleSecrete),
@@ -114,6 +125,20 @@ export function NegociationSheet({
       audioManager.playCash();
       setTimeout(() => {
         onConclu(offreJoueur);
+      }, 600);
+    }
+  };
+
+  const handleBoniment = () => {
+    if (!boniment || !boniment.consommer()) return;
+    const next = appliquerBoniment(localNego, offreJoueur);
+    setLocalNego(next);
+    onUpdateNego(next);
+
+    if (next.statut === "conclu") {
+      audioManager.playCash();
+      setTimeout(() => {
+        onConclu(next.prixAdverseCourant);
       }, 600);
     }
   };
@@ -184,6 +209,28 @@ export function NegociationSheet({
             readOnly={!enCours}
           />
           <HumeurGauge humeur={localNego.humeur} />
+          {enCours && (lotGarni || boniment) && (
+            <div style={activeBtnRowStyle}>
+              {lotGarni && lotGarni.restantes > 0 && (
+                <button
+                  type="button"
+                  style={btnActive}
+                  onClick={lotGarni.onOuvrir}
+                >
+                  🧺 Lot garni ({lotGarni.restantes})
+                </button>
+              )}
+              {boniment && boniment.restantes > 0 && (
+                <button
+                  type="button"
+                  style={btnActive}
+                  onClick={handleBoniment}
+                >
+                  🎩 Le Boniment ({boniment.restantes})
+                </button>
+              )}
+            </div>
+          )}
           <div style={btnRowStyle}>
             {localNego.statut === "refus_poli" && mode === "achat" ? (
               <button
@@ -284,6 +331,27 @@ const btnRowStyle: CSSProperties = {
   gridTemplateColumns: "1fr 1.4fr",
   gap: 6,
   marginTop: 10,
+};
+
+const activeBtnRowStyle: CSSProperties = {
+  display: "flex",
+  gap: 6,
+  marginTop: 10,
+  flexWrap: "wrap",
+};
+
+const btnActive: CSSProperties = {
+  padding: "6px 10px",
+  fontFamily: "var(--font-display)",
+  fontSize: 10,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  background: "var(--paper-100)",
+  color: "var(--forest-800)",
+  border: "1.5px dashed var(--brass-700)",
+  cursor: "pointer",
+  lineHeight: 1.15,
+  flex: "1 1 auto",
 };
 
 const btnPrimary: CSSProperties = {
