@@ -129,9 +129,8 @@ describe("pubs énergie — plafond quotidien", () => {
   const SOIR = new Date(2026, 6, 3, 23, 30, 0).getTime();
   const LENDEMAIN = new Date(2026, 6, 4, 0, 5, 0).getTime();
 
-  it("le plafond est petit et positif (hygiène régie, pas un robinet)", () => {
-    expect(PUBS_ENERGIE_MAX_PAR_JOUR).toBeGreaterThanOrEqual(1);
-    expect(PUBS_ENERGIE_MAX_PAR_JOUR).toBeLessThanOrEqual(10);
+  it("le plafond vaut 20 (relevé le 2026-07-06, compteur UI supprimé)", () => {
+    expect(PUBS_ENERGIE_MAX_PAR_JOUR).toBe(20);
   });
 
   it("sans compteur, tout le quota du jour est disponible", () => {

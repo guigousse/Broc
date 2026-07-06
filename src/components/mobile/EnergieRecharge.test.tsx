@@ -26,7 +26,7 @@ vi.mock("@/context/GameContext", () => ({
 }));
 
 describe("EnergieRecharge — plafond quotidien de pubs", () => {
-  it("quota disponible : le bouton est actif et affiche le compteur", () => {
+  it("quota disponible : le bouton est actif, sans compteur affiché", () => {
     mockState = {
       energie: 2,
       energieDerniereMaj: Date.now(),
@@ -35,7 +35,8 @@ describe("EnergieRecharge — plafond quotidien de pubs", () => {
     render(<EnergieRecharge onClose={() => {}} />);
     const btn = screen.getByRole("button", { name: /regarder une pub/i });
     expect((btn as HTMLButtonElement).disabled).toBe(false);
-    expect(btn.textContent).toContain(`${PUBS_ENERGIE_MAX_PAR_JOUR}/${PUBS_ENERGIE_MAX_PAR_JOUR}`);
+    // Le plafond (20/j) agit silencieusement : plus de « x/y » dans le libellé.
+    expect(btn.textContent).not.toMatch(/\d+\s*\/\s*\d+/);
   });
 
   it("quota épuisé : le bouton est désactivé AVANT de lancer la pub", () => {

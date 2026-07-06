@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import {
-  PUBS_ENERGIE_MAX_PAR_JOUR,
   energieCourante,
   energieMaxPourNiveau,
   pubsEnergieRestantes,
@@ -130,7 +129,7 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
             ? "Pub en cours…"
             : pubsRestantes <= 0
               ? "Plus de pub aujourd'hui — reviens demain"
-              : `Regarder une pub — +1 ⚡ (${pubsRestantes}/${PUBS_ENERGIE_MAX_PAR_JOUR})`}
+              : "Regarder une pub — +1 ⚡"}
         </button>
       </div>
     </div>

@@ -93,12 +93,12 @@ export function secondesAvantPlein(
 /* === Pubs énergie : plafond quotidien ================================== */
 
 /**
- * Nombre max de pubs « +1 énergie » par jour calendaire local. Petit plafond
- * volontaire : hygiène vis-à-vis des régies (trafic répétitif = invalid
- * traffic) et garde-fou d'économie — la pub complète la régénération, elle ne
- * la remplace pas.
+ * Nombre max de pubs « +1 énergie » par jour calendaire local. Plafond large
+ * (relevé de 5 à 20 le 2026-07-06, demande Guillaume) : garde-fou d'hygiène
+ * vis-à-vis des régies (trafic répétitif = invalid traffic), silencieux côté
+ * UI — le compteur restant n'est plus affiché.
  */
-export const PUBS_ENERGIE_MAX_PAR_JOUR = 5;
+export const PUBS_ENERGIE_MAX_PAR_JOUR = 20;
 
 /** Compteur du jour : clé de jour local (YYYY-MM-DD) + nombre de pubs vues. */
 export type PubsEnergieJour = { cle: string; n: number };
