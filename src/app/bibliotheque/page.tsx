@@ -27,6 +27,7 @@ import {
   etatCompetence,
 } from "@/lib/competences";
 import { progressionNiveauBrocanteur } from "@/lib/xp";
+import { prochainDeblocage } from "@/data/deblocagesNiveau";
 import type {
   CategorieObjet,
   CompetenceDef,
@@ -57,6 +58,7 @@ export default function CompetencesPage() {
   const meta = getTreeMeta(tree);
   const treeDef = getTreeDef(tree);
   const xpProgress = progressionNiveauBrocanteur(state.brocanteur);
+  const prochain = prochainDeblocage(state.brocanteur.niveau);
 
   const allTreeIds: CompetenceTreeId[] = [
     TREE_GENERAL,
@@ -167,6 +169,19 @@ export default function CompetencesPage() {
                 </span>
               </div>
             </div>
+            {prochain && (
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 9.5,
+                  color: "var(--brass-700)",
+                  letterSpacing: "0.06em",
+                  padding: "4px 2px 0",
+                }}
+              >
+                Prochain — Niv. {prochain.niveau} : {prochain.titre}
+              </div>
+            )}
           </StickyTop>
         }
       >

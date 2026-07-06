@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { ENERGIE_MAX, energieCourante, energieMaxPourNiveau } from "@/lib/energie";
+import { progressionNiveauBrocanteur } from "@/lib/xp";
 import { EnergieRecharge } from "./EnergieRecharge";
 
 interface MobileHeaderProps {
@@ -50,6 +51,36 @@ const valueStyle: CSSProperties = {
   marginTop: 2,
 };
 
+const xpBlocStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  justifySelf: "center",
+  minWidth: 0,
+  textDecoration: "none",
+};
+
+const xpNiveauStyle: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 13,
+  color: "var(--paper-100)",
+};
+
+const xpTrackStyle: CSSProperties = {
+  width: 56,
+  height: 5,
+  background: "rgba(247,244,238,0.18)",
+  border: "1px solid var(--brass-500)",
+  overflow: "hidden",
+};
+
+const xpFillStyle: CSSProperties = {
+  display: "block",
+  height: "100%",
+  background: "var(--brass-500)",
+  transition: "width 300ms ease",
+};
+
 export function MobileHeader({ budget }: MobileHeaderProps) {
   const { state } = useGame();
   const { tempsConfiance } = useGameActions();
@@ -81,7 +112,26 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
         >
           Broc
         </Link>
-        <span />
+        {state ? (
+          <Link
+            href="/bibliotheque"
+            style={xpBlocStyle}
+            aria-label={`Niveau de Brocanteur ${state.brocanteur.niveau}`}
+            data-fly-target="xp-header"
+          >
+            <span style={xpNiveauStyle}>N{state.brocanteur.niveau}</span>
+            <span style={xpTrackStyle}>
+              <span
+                style={{
+                  ...xpFillStyle,
+                  width: `${Math.round(progressionNiveauBrocanteur(state.brocanteur) * 100)}%`,
+                }}
+              />
+            </span>
+          </Link>
+        ) : (
+          <span />
+        )}
         <div style={{ textAlign: "center", ...labelStyle }}>
           Énergie
           <strong

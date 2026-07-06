@@ -13,7 +13,7 @@ export interface DeblocageNiveau {
 
 /** Source de vérité du plan de déblocage (rapport §08). Seuls les jalons validés (D1/D3/actives) sont effectifs. */
 export const DEBLOCAGES_PAR_NIVEAU: readonly DeblocageNiveau[] = [
-  { niveau: 1, titre: "Premier point de compétence", famille: "jalon", effectif: false },
+  { niveau: 1, titre: "Ouverture de l'écran Compétences (+1 point)", famille: "jalon", effectif: true },
   { niveau: 2, titre: "L'Atelier vous tend les bras", famille: "contenu", effectif: false },
   { niveau: 3, titre: "Quêtes quotidiennes", famille: "contenu", effectif: false },
   { niveau: NIVEAU_BROCANTES_T2, titre: "Accès aux brocantes de quartier (T2)", famille: "economie", effectif: true },

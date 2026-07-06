@@ -44,8 +44,8 @@ describe("LevelUpOverlay", () => {
     mockPathname = "/bureau";
     render(<LevelUpOverlay />);
     expect(screen.getByText("Niveau 1 !")).toBeTruthy();
-    // deblocagesPourNiveau(1) = "Premier point de compétence" (famille jalon)
-    expect(screen.getByText(/Premier point de compétence/)).toBeTruthy();
+    // deblocagesPourNiveau(1) = "Ouverture de l'écran Compétences (+1 point)" (famille jalon)
+    expect(screen.getByText(/Ouverture de l'écran Compétences/)).toBeTruthy();
     // prochainDeblocage(1) = niveau 2, "L'Atelier vous tend les bras"
     expect(
       screen.getByText(/Prochain — Niv\. 2 : L'Atelier vous tend les bras/),
