@@ -18,6 +18,14 @@ interface PrixSliderProps {
   achat?: number | null;
   /** Amplitude en % de part et d'autre du marché (défaut 100 → -100 %…+100 %). */
   ampPct?: number;
+  /**
+   * Faux si le joueur n'a pas Connaisseur 2 pour cette catégorie : la pastille
+   * « valeur » (et tout texte affichant la référence) est masquée. La géométrie
+   * de l'échelle reste ancrée sur `marche` en interne — compromis assumé, elle
+   * ne fuit pas de valeur lisible. Défaut `true` pour ne pas casser les usages
+   * existants.
+   */
+  marcheConnu?: boolean;
   onChange: (prix: number) => void;
 }
 
@@ -35,6 +43,7 @@ export function PrixSlider({
   marche,
   achat,
   ampPct = 100,
+  marcheConnu = true,
   onChange,
 }: PrixSliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -80,9 +89,11 @@ export function PrixSlider({
       <div ref={trackRef} style={track}>
         <div style={line} />
 
-        <Pastille ratio={ratioOf(ref)} color={COL_VALEUR} size={34} label="valeur" labelPos="above">
-          {ref}€
-        </Pastille>
+        {marcheConnu && (
+          <Pastille ratio={ratioOf(ref)} color={COL_VALEUR} size={34} label="valeur" labelPos="above">
+            {ref}€
+          </Pastille>
+        )}
 
         {typeof achat === "number" && achat > 0 && (
           <Pastille ratio={ratioOf(achat)} color={COL_ACHAT} size={34} label="achat" labelPos="above">

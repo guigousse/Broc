@@ -7,6 +7,7 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
 import { useGame } from "@/context/GameContext";
 import {
+  aConnaisseurVitrine,
   peutRestaurerBonVersTresBon,
   peutRestaurerMauvaisVersBon,
   peutRestaurerTresBonVersPristin,
@@ -594,6 +595,9 @@ export default function AtelierPage() {
               );
               const cout = coutAmelioration(o, cible);
               const disabled = pleine;
+              const valeurConnue = state
+                ? aConnaisseurVitrine(state, o.categorie)
+                : false;
               return (
                 <AtelierItemRow
                   key={o.id}
@@ -609,10 +613,16 @@ export default function AtelierPage() {
                         letterSpacing: "0.04em",
                       }}
                     >
-                      {duree} · valeur {o.prixReferenceReel} →{" "}
-                      <span style={{ color: "var(--brass-700)" }}>
-                        {prixApres} €
-                      </span>
+                      {valeurConnue ? (
+                        <>
+                          {duree} · valeur {o.prixReferenceReel} →{" "}
+                          <span style={{ color: "var(--brass-700)" }}>
+                            {prixApres} €
+                          </span>
+                        </>
+                      ) : (
+                        <>{duree} · valeur ? → ?</>
+                      )}
                     </div>
                   }
                   action={
@@ -685,6 +695,9 @@ export default function AtelierPage() {
         <div style={{ ...cardWrap, borderColor: "var(--vermillion-600)" }}>
           {demantelables.map((o, i) => {
             const yieldPieces = rendementDemantelement(o);
+            const valeurConnue = state
+              ? aConnaisseurVitrine(state, o.categorie)
+              : false;
             return (
               <AtelierItemRow
                 key={o.id}
@@ -699,7 +712,7 @@ export default function AtelierPage() {
                       letterSpacing: "0.04em",
                     }}
                   >
-                    valeur {o.prixReferenceReel} €
+                    {valeurConnue ? `valeur ${o.prixReferenceReel} €` : "valeur ?"}
                   </span>
                 }
                 action={

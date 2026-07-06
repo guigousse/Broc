@@ -10,7 +10,9 @@ import { CoffrePricing } from "@/components/vente/CoffrePricing";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
 import { vitrineEstEnPrep } from "@/lib/vitrinePrep";
 import { energieCourante } from "@/lib/energie";
-import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
+import { CATEGORIES } from "@/data/categories";
+import { aConnaisseurVitrine } from "@/lib/competences";
+import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 const SUGGESTION_FACTEUR = 1.4;
 
@@ -78,6 +80,13 @@ export default function VitrineBrocantePage() {
     const ids = new Set(coffre.map((o) => o.objet.id));
     return state.inventaireJoueur.filter((o) => !ids.has(o.id) && !o.enRestauration);
   }, [state, coffre]);
+
+  const categoriesConnuesVitrine = useMemo(() => {
+    const s = new Set<CategorieObjet>();
+    if (!state) return s;
+    for (const c of CATEGORIES) if (aConnaisseurVitrine(state, c)) s.add(c);
+    return s;
+  }, [state]);
 
   if (!isHydrated || !state || !brocante) {
     return (
@@ -159,6 +168,7 @@ export default function VitrineBrocantePage() {
               coffre.length > 0 &&
               energieCourante(state, tempsConfiance() ?? Date.now()) >= 1
             }
+            categoriesConnues={categoriesConnuesVitrine}
           />
         )}
       </main>

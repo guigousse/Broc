@@ -72,7 +72,13 @@ const scaleOuter: CSSProperties = {
 
 /** Une carte du carrousel de chinage : un objet à négocier, ou le vendeur mystère. */
 export type ChineSlide =
-  | { kind: "item"; item: ObjetEnVente; estRareOuPlus: boolean }
+  | {
+      kind: "item";
+      item: ObjetEnVente;
+      estRareOuPlus: boolean;
+      /** Connaisseur 3 débloqué pour cette catégorie : la cote (valeur de référence) est révélée. */
+      coteConnue: boolean;
+    }
   | { kind: "mystere" };
 
 /**
@@ -146,7 +152,12 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
                 <span>{objet.categorie}</span>
               </div>
             </div>
-            <div style={prixLigne}>{prixVendeur} €</div>
+            <div style={prixCol}>
+              <div style={prixLigne}>{prixVendeur} €</div>
+              {slide.coteConnue && (
+                <div style={coteLigne}>cote {objet.prixReferenceReel} €</div>
+              )}
+            </div>
           </div>
         </div>
       </ScaleToFit>
@@ -204,7 +215,15 @@ const categorieLigne: CSSProperties = {
   textShadow: "0 1px 3px rgba(0,0,0,0.6)",
 };
 
-/** Prix à droite, occupant la double hauteur (état + catégorie). */
+/** Colonne prix à droite, occupant la double hauteur (état + catégorie). */
+const prixCol: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 2,
+};
+
+/** Prix vendeur affiché. */
 const prixLigne: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -213,4 +232,13 @@ const prixLigne: CSSProperties = {
   fontSize: 26,
   color: "var(--brass-300)",
   textShadow: "0 1px 4px rgba(0,0,0,0.65)",
+};
+
+/** Cote (valeur de référence) — Connaisseur 3. Mono, plus discret que le prix. */
+const coteLigne: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  letterSpacing: "0.04em",
+  color: "var(--brass-700)",
+  textShadow: "0 1px 3px rgba(0,0,0,0.6)",
 };

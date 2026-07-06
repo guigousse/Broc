@@ -8,7 +8,9 @@ import { useGame } from "@/context/GameContext";
 import { CoffreChargement } from "@/components/vente/CoffreChargement";
 import { CoffrePricing } from "@/components/vente/CoffrePricing";
 import { VITRINE_PREP_ID, vitrineEstEnPrep } from "@/lib/vitrinePrep";
-import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
+import { CATEGORIES } from "@/data/categories";
+import { aConnaisseurVitrine } from "@/lib/competences";
+import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 // Prix par défaut = prix du marché (curseur de tarification centré sur la valeur).
 const SUGGESTION_FACTEUR = 1;
@@ -62,6 +64,13 @@ export default function VitrinePrepPage() {
       (o) => !ids.has(o.id) && !o.enRestauration,
     );
   }, [state, coffre]);
+
+  const categoriesConnuesVitrine = useMemo(() => {
+    const s = new Set<CategorieObjet>();
+    if (!state) return s;
+    for (const c of CATEGORIES) if (aConnaisseurVitrine(state, c)) s.add(c);
+    return s;
+  }, [state]);
 
   if (!isHydrated || !state) {
     return (
@@ -152,6 +161,7 @@ export default function VitrinePrepPage() {
             onValider={() => router.push("/vitrine")}
             validerLabel="Choisir la brocante →"
             validerActif={coffre.length > 0}
+            categoriesConnues={categoriesConnuesVitrine}
           />
         )}
       </main>

@@ -22,6 +22,7 @@ import {
   estDebloquee,
 } from "@/lib/deblocage";
 import { genererSession, uniquesExclusDuChinage } from "@/lib/chine";
+import { aConnaisseurChinage } from "@/lib/competences";
 import { energieCourante } from "@/lib/energie";
 import { placeRestante, stockageEstPlein } from "@/lib/stockage";
 import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
@@ -151,11 +152,16 @@ export default function SessionChinePage() {
     const liste: ChineSlide[] = [];
     if (vendeurPresent) liste.push({ kind: "mystere" });
     for (const it of (items ?? []).filter((x) => x.statut !== "refuse")) {
-      liste.push({ kind: "item", item: it, estRareOuPlus: estRareOuPlus(it) });
+      liste.push({
+        kind: "item",
+        item: it,
+        estRareOuPlus: estRareOuPlus(it),
+        coteConnue: state ? aConnaisseurChinage(state, it.objet.categorie) : false,
+      });
     }
     return liste;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vendeurPresent, items]);
+  }, [vendeurPresent, items, state]);
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (

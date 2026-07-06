@@ -1,6 +1,6 @@
 "use client";
 
-import type { ObjetEnVitrine } from "@/types/game";
+import type { CategorieObjet, ObjetEnVitrine } from "@/types/game";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
 import { etoileCount } from "@/lib/etat";
@@ -19,6 +19,8 @@ interface Props {
   validerLabel: string;
   /** Override de l'état actif du bouton de validation. Par défaut : coffre non vide. */
   validerActif?: boolean;
+  /** Catégories pour lesquelles Connaisseur 2 est débloqué (valeur de référence visible). */
+  categoriesConnues: ReadonlySet<CategorieObjet>;
 }
 
 export function CoffrePricing({
@@ -28,6 +30,7 @@ export function CoffrePricing({
   onValider,
   validerLabel,
   validerActif,
+  categoriesConnues,
 }: Props) {
   const peut = validerActif ?? coffre.length > 0;
 
@@ -46,6 +49,7 @@ export function CoffrePricing({
           const c = getRarityColors(ov.objet.rarete, isUnique);
           const isLast = i === coffre.length - 1;
           const ref = Math.max(1, Math.round(ov.objet.prixReferenceReel));
+          const marcheConnu = categoriesConnues.has(ov.objet.categorie);
 
           return (
             <div
@@ -121,6 +125,7 @@ export function CoffrePricing({
                   value={ov.prixVente}
                   marche={ref}
                   achat={ov.objet.prixAchat}
+                  marcheConnu={marcheConnu}
                   onChange={(prix) => onAjusterPrix(ov.objet.id, prix)}
                 />
               </div>
