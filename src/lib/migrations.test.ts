@@ -674,4 +674,31 @@ describe("migrerSauvegarde — sanitation activesUtilisees", () => {
     const migre = migrerSauvegarde(createMockGameState());
     expect(migre.activesUtilisees).toBeUndefined();
   });
+
+  it("floor usages non entier (3.7 → 3)", () => {
+    const save = createMockGameState();
+    (save as unknown as { activesUtilisees: unknown }).activesUtilisees = {
+      fouille: { jour: 2, usages: 3.7 },
+    };
+    const migre = migrerSauvegarde(save);
+    expect(migre.activesUtilisees).toEqual({ fouille: { jour: 2, usages: 3 } });
+  });
+
+  it("purge une entrée dont jour est une chaîne", () => {
+    const save = createMockGameState();
+    (save as unknown as { activesUtilisees: unknown }).activesUtilisees = {
+      flair: { jour: "2", usages: 1 },
+    };
+    const migre = migrerSauvegarde(save);
+    expect(migre.activesUtilisees).toBeUndefined();
+  });
+
+  it("purge une entrée dont jour est négatif", () => {
+    const save = createMockGameState();
+    (save as unknown as { activesUtilisees: unknown }).activesUtilisees = {
+      flair: { jour: -1, usages: 1 },
+    };
+    const migre = migrerSauvegarde(save);
+    expect(migre.activesUtilisees).toBeUndefined();
+  });
 });

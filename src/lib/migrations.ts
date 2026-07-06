@@ -641,7 +641,7 @@ function appliquerMigrations(loaded: GameState): GameState {
       const propre: ActivesUtilisees = {};
       for (const [k, v] of Object.entries(a)) {
         if (!(k in QUOTA_ACTIVES)) continue;
-        if (!v || !Number.isFinite(v.jour) || !Number.isFinite(v.usages) || v.usages < 0) continue;
+        if (!v || !Number.isFinite(v.jour) || !Number.isFinite(v.usages) || v.usages < 0 || v.jour < 0) continue;
         propre[k as ActiveId] = { jour: Math.floor(v.jour), usages: Math.floor(v.usages) };
       }
       return Object.keys(propre).length ? propre : undefined;
