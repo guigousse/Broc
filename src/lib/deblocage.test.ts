@@ -340,4 +340,14 @@ describe("condition niveau (double gate)", () => {
       expect(niveaux).toEqual([{ type: "niveau", niveau: attendu }]);
     }
   });
+
+  it("ne lève pas si `brocanteur` est absent (save passée par le lifeboat de migration) : traite comme niveau 0", () => {
+    const stateSansBrocanteur = {
+      ...createMockGameState(),
+      brocanteur: undefined,
+    } as unknown as Parameters<typeof evaluerCondition>[1];
+    expect(
+      evaluerCondition({ type: "niveau", niveau: 4 }, stateSansBrocanteur),
+    ).toBe(false);
+  });
 });

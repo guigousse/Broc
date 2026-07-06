@@ -85,7 +85,8 @@ export function descriptionConditionCourte(
     case "valeurCollectionCategorie":
       return `${c.categorie} : ${Math.floor(valeurParCategorie(state.collection, c.categorie))}/${c.montant} €`;
     case "niveau":
-      return `Niveau ${c.niveau} (vous : N${state.brocanteur.niveau})`;
+      // Défensif : cf. commentaire dans evaluerCondition.
+      return `Niveau ${c.niveau} (vous : N${state.brocanteur?.niveau ?? 0})`;
     case "ET":
       return c.conditions
         .map((cc) => descriptionConditionCourte(cc, state, parTier))
@@ -185,7 +186,9 @@ export function evaluerCondition(
     case "valeurCollectionCategorie":
       return valeurParCategorie(state.collection, c.categorie) >= c.montant;
     case "niveau":
-      return state.brocanteur.niveau >= c.niveau;
+      // Défensif : un save passé par le filet de sécurité de migration peut
+      // manquer `brocanteur` (cf. migrations.ts → assurerFiletSecuriteMinimal).
+      return (state.brocanteur?.niveau ?? 0) >= c.niveau;
     case "ET":
       return c.conditions.every((cc) =>
         evaluerCondition(cc, state, brocantesDebloqueesParTier),

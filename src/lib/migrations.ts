@@ -151,8 +151,38 @@ export function migrerSauvegarde(loaded: GameState): GameState {
       "[migrations] Échec de la migration de sauvegarde, état conservé (ids remappés) :",
       err,
     );
-    return remapped;
+    return assurerFiletSecuriteMinimal(remapped);
   }
+}
+
+/**
+ * Filet de sécurité de dernier recours : appliqué uniquement quand
+ * `appliquerMigrations` a levé une exception (save inattendu). Ne rejoue
+ * AUCUNE migration — garantit juste que les champs lus sans garde ailleurs
+ * (ex. `state.brocanteur.niveau` dans `evaluerCondition`/`GameContext`)
+ * existent sous une forme minimale valide, pour qu'une sauvegarde cassée sur
+ * un point précis n'empêche pas de rouvrir la partie.
+ */
+function assurerFiletSecuriteMinimal(save: GameState): GameState {
+  const b = save.brocanteur as unknown;
+  const brocanteurValide =
+    !!b &&
+    typeof b === "object" &&
+    typeof (b as { xp?: unknown }).xp === "number" &&
+    typeof (b as { niveau?: unknown }).niveau === "number" &&
+    typeof (b as { pointsDisponibles?: unknown }).pointsDisponibles === "number";
+  const affinitesValide =
+    !!save.affinites && typeof save.affinites === "object";
+  const competencesValide = Array.isArray(save.competencesDebloquees);
+
+  if (brocanteurValide && affinitesValide && competencesValide) return save;
+
+  return {
+    ...save,
+    brocanteur: brocanteurValide ? save.brocanteur : emptyBrocanteur(),
+    affinites: affinitesValide ? save.affinites : emptyAffinites(),
+    competencesDebloquees: competencesValide ? save.competencesDebloquees : [],
+  };
 }
 
 /**

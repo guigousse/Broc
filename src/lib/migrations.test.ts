@@ -3,6 +3,8 @@ import type { GameState } from "@/types/game";
 import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
+import { emptyAffinites, emptyBrocanteur } from "@/lib/xp";
+import * as principalesModule from "@/lib/quetes/principales";
 
 describe("migrerEtat", () => {
   it("conserve les états valides", () => {
@@ -166,6 +168,57 @@ describe("migrerSauvegarde — filet de sécurité en cas d'exception", () => {
     // identique à l'entrée.
     expect(result).toStrictEqual(broken);
     expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+});
+
+describe("migrerSauvegarde — filet de sécurité minimal (lifeboat brocanteur/affinites)", () => {
+  // `appliquerMigrations` appelle `debloquerQuetesPrincipales` (import réel de
+  // @/lib/quetes/principales) vers la fin de son traitement. On la fait
+  // exploser une fois pour simuler un échec de migration inattendu SANS
+  // passer par une exception levée pendant `remapTemplateIds` (qui tourne
+  // hors du try : un getter piégé sur le save lui-même y exploserait avant
+  // même d'atteindre le try/catch, ce qui ne teste pas le bon chemin).
+  it("garantit brocanteur/affinites/competencesDebloquees même si la migration explose sur un save qui en est dépourvu", () => {
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const spy = vi
+      .spyOn(principalesModule, "debloquerQuetesPrincipales")
+      .mockImplementationOnce(() => {
+        throw new Error("boom — échec simulé de migration");
+      });
+
+    const saveDepourvue = fabriqueSaveV7(); // v7 : pas de brocanteur/affinites
+    const result = migrerSauvegarde(saveDepourvue);
+
+    expect(result.brocanteur).toEqual(emptyBrocanteur());
+    expect(result.affinites).toEqual(emptyAffinites());
+    expect(Array.isArray(result.competencesDebloquees)).toBe(true);
+    expect(errorSpy).toHaveBeenCalled();
+
+    spy.mockRestore();
+    errorSpy.mockRestore();
+  });
+
+  it("ne touche pas à un brocanteur/affinites déjà bien formés si la migration explose", () => {
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const spy = vi
+      .spyOn(principalesModule, "debloquerQuetesPrincipales")
+      .mockImplementationOnce(() => {
+        throw new Error("boom — échec simulé de migration");
+      });
+
+    const saveComplete = createMockGameState({
+      brocanteur: { xp: 42, niveau: 2, pointsDisponibles: 1 },
+    });
+    const result = migrerSauvegarde(saveComplete);
+
+    expect(result.brocanteur).toEqual({ xp: 42, niveau: 2, pointsDisponibles: 1 });
+
+    spy.mockRestore();
     errorSpy.mockRestore();
   });
 });
