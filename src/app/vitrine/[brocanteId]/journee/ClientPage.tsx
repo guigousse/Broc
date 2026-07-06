@@ -13,12 +13,12 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { ActionFab } from "@/components/mobile/ActionFab";
 import { Button } from "@/components/ui/Button";
 import { DecoDivider } from "@/components/ui/DecoDivider";
-import { EtatBadge } from "@/components/ui/EtatBadge";
 import { ItemCard } from "@/components/ui/ItemCard";
 import { SessionSummary } from "@/components/SessionSummary";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import {
+  DEFAULT_MODIFIERS,
   JOURNEE_DUREE_SECONDES,
   classeBourse,
   genererClientEvent,
@@ -29,6 +29,7 @@ import {
   type VitrineModifiers,
 } from "@/lib/vitrine";
 import { ouvrirNegociation } from "@/lib/negociation";
+import { usagesRestants } from "@/lib/actives";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import type { NegociationState } from "@/types/game";
@@ -89,6 +90,7 @@ export default function VitrineJourneePage() {
     sauverTempsVitrine,
     gagnerXPBrocanteur,
     marquerVuTemplate,
+    utiliserActive,
   } = useGame();
   const { startCrowd, stopCrowd } = useSettings();
   useEffect(() => {
@@ -129,10 +131,7 @@ export default function VitrineJourneePage() {
   );
   const [clientActuel, setClientActuel] = useState<ClientEvent | null>(null);
   const [journal, setJournal] = useState<EntreeJournal[]>([]);
-  const [contreOffre, setContreOffre] = useState<number>(0);
   const [negoVente, setNegoVente] = useState<NegociationState | null>(null);
-  const [revelationDejaFaite, setRevelationDejaFaite] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [journeeFinie, setJourneeFinie] = useState(false);
   const [ventesEffectuees, setVentesEffectuees] = useState<VenteHistorique[]>([]);
   const [fancyClientApparu, setFancyClientApparu] = useState(false);
@@ -152,10 +151,6 @@ export default function VitrineJourneePage() {
   };
   const fancyClientApparuRef = useRef(false);
   fancyClientApparuRef.current = fancyClientApparu;
-  /** Diplomate : la révélation du prix max est limitée à UNE par journée de
-      vente — ce ref passe à true à la première révélation et n'est jamais
-      réinitialisé entre les clients. */
-  const diplomatieUtiliseeAujourdhuiRef = useRef(false);
   const celebriteApparueRef = useRef(false);
   // Détecte si la célébrité de la semaine vise cette brocante aujourd'hui.
   const celebriteIciAujourdhui =
@@ -213,6 +208,35 @@ export default function VitrineJourneePage() {
 
   const clientActuelRef = useRef<ClientEvent | null>(null);
   clientActuelRef.current = clientActuel;
+
+  /** Calcule le prochain état de négo pour une contre-offre du joueur, en
+   *  passant par `proposerOffreVente` : tolérance boostée (Verbe haut/d'or,
+   *  Œil aiguisé) ET sauvetage Diplomate (quota persistant via les actives)
+   *  au lieu de l'ancien `proposerOffre` brut appelé par le sheet. */
+  const handleOffreVente = useCallback(
+    (nego: NegociationState, offre: number): NegociationState => {
+      const ev = clientActuelRef.current;
+      const mods = modifiersRef.current ?? DEFAULT_MODIFIERS;
+      if (!ev) return nego;
+      const diplomatieDispo =
+        mods.diplomate &&
+        usagesRestants(
+          state?.activesUtilisees,
+          "diplomate",
+          state?.jourActuel ?? 0,
+        ) > 0;
+      const next = proposerOffreVente(nego, ev.persona, offre, mods, {
+        revelationDejaFaite: !diplomatieDispo,
+        toleranceBoost: ev.toleranceBoost,
+      });
+      if (next.diplomatieDeclenchee) {
+        utiliserActive("diplomate");
+        setRevelationFaite(true);
+      }
+      return next;
+    },
+    [state, utiliserActive],
+  );
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -354,10 +378,8 @@ export default function VitrineJourneePage() {
             if (forceCelebrite) celebriteApparueRef.current = true;
             setClientActuel(ev);
             setRevelationFaite(false);
-            setContreOffre(Math.round((ev.prixDemande + ev.offreInitiale) / 2));
             if (ev.mode === "negociation") {
               setNegoVente(ouvrirNegociation("vente", ev.offreInitiale, ev.prixMax));
-              setRevelationDejaFaite(false);
             } else {
               setNegoVente(null);
             }
@@ -465,33 +487,6 @@ export default function VitrineJourneePage() {
       ton: "vente",
     });
     setClientActuel(null);
-    setFeedback(null);
-  };
-
-  const handleAccepterOffreClient = (ev: ClientEvent) => {
-    vendreDeVitrine(
-      ev.panier.map((p) => p.objet.id),
-      ev.offreInitiale,
-    );
-    enregistrerVentes(ev, ev.offreInitiale);
-    gagnerXPLocal(XP_NEGO_BROCANTEUR);
-    ajouterJournal({
-      heure: heureCourante(),
-      texte: `${ev.persona.nom} repart avec ${describePanier(ev)} à ${ev.offreInitiale} € (négocié).`,
-      ton: "vente",
-    });
-    setClientActuel(null);
-    setFeedback(null);
-  };
-
-  const handleRefuser = (ev: ClientEvent) => {
-    ajouterJournal({
-      heure: heureCourante(),
-      texte: `${ev.persona.nom} s'éloigne sans rien acheter.`,
-      ton: "info",
-    });
-    setClientActuel(null);
-    setFeedback(null);
   };
 
   const encaisserVente = (ev: ClientEvent, prixFinal: number) => {
@@ -508,7 +503,6 @@ export default function VitrineJourneePage() {
     });
     setClientActuel(null);
     setNegoVente(null);
-    setFeedback(null);
   };
 
   const terminerVisiteClient = (ev: ClientEvent) => {
@@ -519,43 +513,6 @@ export default function VitrineJourneePage() {
     });
     setClientActuel(null);
     setNegoVente(null);
-    setFeedback(null);
-  };
-
-  const handleProposerVente = (ev: ClientEvent, offre: number) => {
-    if (!negoVente) return;
-    const next = proposerOffreVente(
-      negoVente,
-      ev.persona,
-      offre,
-      modifiersRef.current ?? undefined,
-      {
-        // Une seule révélation Diplomate par journée : une fois consommée,
-        // les clients suivants sont traités comme si elle avait déjà eu lieu.
-        revelationDejaFaite:
-          revelationDejaFaite || diplomatieUtiliseeAujourdhuiRef.current,
-        toleranceBoost: ev.toleranceBoost,
-      },
-    );
-    setNegoVente(next);
-
-    // Détection de la révélation Diplomate (en_cours après ce qui aurait été fache).
-    if (
-      next.statut === "en_cours" &&
-      next.humeur >= 0.95 &&
-      !revelationDejaFaite &&
-      !diplomatieUtiliseeAujourdhuiRef.current
-    ) {
-      setRevelationDejaFaite(true);
-      diplomatieUtiliseeAujourdhuiRef.current = true;
-      setRevelationFaite(true);
-    }
-
-    if (next.statut === "conclu") {
-      encaisserVente(ev, offre);
-    } else if (next.statut === "fache" || next.statut === "refus_poli") {
-      terminerVisiteClient(ev);
-    }
   };
 
   const handleFermerEnAvance = () => {
@@ -847,6 +804,7 @@ export default function VitrineJourneePage() {
           onConclu={(prixFinal) => {
             encaisserVente(clientActuel, prixFinal);
           }}
+          onProposerOffre={handleOffreVente}
           venteDirecte={
             clientActuel.mode === "achat-direct"
               ? {
@@ -955,367 +913,6 @@ function ArticleSurEtal({
         </div>
       }
     />
-  );
-}
-
-function ClientModal({
-  ev,
-  contreOffre,
-  feedback,
-  revelePersona,
-  releveBourse,
-  oeilAiguise,
-  revelationFaite,
-  onContreOffreChange,
-  onAccepterDirect,
-  onAccepterOffre,
-  onContreOffrir,
-  onRefuser,
-}: {
-  ev: ClientEvent;
-  contreOffre: number;
-  feedback: string | null;
-  revelePersona: boolean;
-  releveBourse: boolean;
-  oeilAiguise: boolean;
-  revelationFaite: boolean;
-  onContreOffreChange: (v: number) => void;
-  onAccepterDirect: () => void;
-  onAccepterOffre: () => void;
-  onContreOffrir: () => void;
-  onRefuser: () => void;
-}) {
-  const bourseLabel = (() => {
-    const c = classeBourse(ev.persona);
-    if (c === "petite") return "◦ petite bourse";
-    if (c === "moyenne") return "◇ bourse moyenne";
-    return "◆ grosse bourse";
-  })();
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(15,30,22,0.65)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 50,
-        padding: 20,
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          background: "var(--paper-200)",
-          backgroundImage: "url(/assets/paper-grain.svg)",
-          backgroundSize: "320px 320px",
-          border: "1px solid var(--brass-500)",
-          boxShadow:
-            "inset 0 0 0 4px var(--paper-200), inset 0 0 0 5px var(--brass-500), 0 24px 60px rgba(15,30,22,0.5)",
-          padding: "28px 32px",
-          maxWidth: 540,
-          width: "100%",
-        }}
-      >
-        <div
-          style={{
-            textAlign: "center",
-            fontFamily: "var(--font-display)",
-            fontSize: 10,
-            letterSpacing: "0.28em",
-            textTransform: "uppercase",
-            color: ev.fancy ? "var(--vermillion-600)" : "var(--brass-700)",
-            fontWeight: 600,
-          }}
-        >
-          — {ev.persona.archetypeId === "celebrite"
-            ? "✦ une célébrité s'arrête ✦"
-            : ev.fancy
-              ? "une bourse rondelette s'approche"
-              : "un client s'approche"} —
-        </div>
-        <h2
-          style={{
-            textAlign: "center",
-            fontFamily: "var(--font-display)",
-            fontWeight: 700,
-            fontSize: 24,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: "var(--forest-800)",
-            margin: "6px 0 4px",
-            lineHeight: 1.1,
-          }}
-        >
-          {revelePersona || ev.persona.archetypeId === "celebrite"
-            ? ev.persona.nom
-            : "Un inconnu"}
-        </h2>
-        {revelePersona && (
-          <>
-            <div
-              style={{
-                textAlign: "center",
-                fontFamily: "var(--font-display)",
-                fontSize: 10,
-                letterSpacing: "0.24em",
-                textTransform: "uppercase",
-                color: "var(--brass-700)",
-                margin: "0 0 6px",
-              }}
-            >
-              — {ev.persona.archetypeNom} —
-            </div>
-            <p
-              style={{
-                textAlign: "center",
-                fontFamily: "var(--font-serif)",
-                fontStyle: "italic",
-                fontSize: 14,
-                color: "var(--ink-500)",
-                margin: "0 0 8px",
-              }}
-            >
-              {ev.persona.ambiance}
-            </p>
-          </>
-        )}
-        {releveBourse && (
-          <p
-            style={{
-              textAlign: "center",
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--brass-700)",
-              margin: "0 0 12px",
-            }}
-            title="Compétence Estimateur de bourse"
-          >
-            {bourseLabel}
-          </p>
-        )}
-
-        <DecoDivider />
-
-        {oeilAiguise && (
-          <div
-            style={{
-              marginTop: 12,
-              padding: "8px 12px",
-              border: `1px ${revelationFaite ? "solid" : "dashed"} var(--brass-700)`,
-              background: revelationFaite
-                ? "rgba(163, 59, 42, 0.08)"
-                : "var(--paper-300)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              letterSpacing: "0.1em",
-              color: "var(--ink-700)",
-            }}
-            title={
-              revelationFaite
-                ? "Diplomate — le client a révélé son plafond (1 fois par journée)"
-                : "Compétence Œil aiguisé"
-            }
-          >
-            <span style={{ color: "var(--brass-700)" }}>
-              {revelationFaite ? "PLAFOND LÂCHÉ" : "PRIX MAX LU"}
-            </span>
-            <span style={{ color: "var(--forest-700)", fontWeight: 700 }}>
-              {ev.prixMax} €
-            </span>
-          </div>
-        )}
-
-        <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-          {ev.panier.map((p) => (
-            <div
-              key={p.objet.id}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "8px 12px",
-                background: "var(--paper-300)",
-                border: "1px solid var(--brass-700)",
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    color: "var(--forest-800)",
-                  }}
-                >
-                  {p.objet.nom}
-                </div>
-                <div
-                  style={{
-                    marginTop: 4,
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "center",
-                  }}
-                >
-                  <EtatBadge etat={p.objet.etat} />
-                </div>
-              </div>
-              <span
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 700,
-                  fontSize: 18,
-                  color: "var(--forest-800)",
-                }}
-              >
-                {p.prixVente}
-                <span style={{ fontSize: 11, color: "var(--brass-700)" }}>€</span>
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {ev.mode === "achat-direct" ? (
-          <div style={{ marginTop: 18 }}>
-            <p
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontSize: 15,
-                color: "var(--ink-700)",
-                margin: "0 0 14px",
-              }}
-            >
-              « Je prends. Voici {ev.prixDemande} €. »
-            </p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <Button variant="ghost" size="md" onClick={onRefuser}>
-                Refuser
-              </Button>
-              <Button variant="primary" size="md" onClick={onAccepterDirect}>
-                Vendre · {ev.prixDemande} €
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div style={{ marginTop: 18 }}>
-            <p
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontSize: 15,
-                color: "var(--ink-700)",
-                margin: "0 0 14px",
-              }}
-            >
-              « Pour tout cela ? Je vous en propose{" "}
-              <strong style={{ color: "var(--forest-800)" }}>{ev.offreInitiale} €</strong>.
-              Vous demandez {ev.prixDemande} €, c'est un peu raide. »
-            </p>
-
-            {feedback && (
-              <p
-                style={{
-                  fontFamily: "var(--font-serif)",
-                  fontStyle: "italic",
-                  fontSize: 14,
-                  color: "var(--vermillion-600)",
-                  margin: "0 0 12px",
-                }}
-              >
-                {feedback}
-              </p>
-            )}
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 14,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 10,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: "var(--brass-700)",
-                }}
-              >
-                Votre contre-offre
-              </span>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  background: "var(--paper-300)",
-                  border: "1px solid var(--brass-700)",
-                  padding: "4px 10px",
-                }}
-              >
-                <input
-                  type="number"
-                  min={1}
-                  value={contreOffre}
-                  onChange={(e) =>
-                    onContreOffreChange(Math.max(1, Number(e.target.value) || 1))
-                  }
-                  style={{
-                    width: 80,
-                    background: "transparent",
-                    border: "none",
-                    outline: "none",
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 700,
-                    fontSize: 18,
-                    color: "var(--forest-800)",
-                    textAlign: "right",
-                  }}
-                />
-                <span
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: 12,
-                    color: "var(--brass-700)",
-                    marginLeft: 4,
-                  }}
-                >
-                  €
-                </span>
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                justifyContent: "flex-end",
-                flexWrap: "wrap",
-              }}
-            >
-              <Button variant="ghost" size="md" onClick={onRefuser}>
-                Refuser
-              </Button>
-              <Button variant="secondary" size="md" onClick={onAccepterOffre}>
-                Accepter · {ev.offreInitiale} €
-              </Button>
-              <Button variant="primary" size="md" onClick={onContreOffrir}>
-                Contre-offre · {contreOffre} €
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 

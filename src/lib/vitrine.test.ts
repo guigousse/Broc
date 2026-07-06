@@ -223,6 +223,7 @@ describe("proposerOffreVente — Diplomate transforme fache en en_cours", () => 
     });
     expect(res.statut).toBe("en_cours");
     expect(res.message).toMatch(/plafond/i);
+    expect(res.diplomatieDeclenchee).toBe(true);
   });
 
   it("si la révélation a déjà été faite, fache n'est plus transformée", () => {
@@ -233,6 +234,17 @@ describe("proposerOffreVente — Diplomate transforme fache en en_cours", () => 
       revelationDejaFaite: true,
     });
     expect(res.statut).toBe("fache");
+    expect(res.diplomatieDeclenchee).toBeFalsy();
+  });
+
+  it("sans diplomate, une fâcherie reste fache et diplomatieDeclenchee est absent", () => {
+    const nego = ouvrirNegociation("vente", 50, 90);
+    const client = createMockClient({ tolerancePct: 0.1 });
+    const res = proposerOffreVente(nego, client, 80, DEFAULT_MODIFIERS, {
+      revelationDejaFaite: false,
+    });
+    expect(res.statut).toBe("fache");
+    expect(res.diplomatieDeclenchee).toBeFalsy();
   });
 });
 

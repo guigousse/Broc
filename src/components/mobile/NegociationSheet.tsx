@@ -6,7 +6,7 @@ import { NegoBar } from "@/components/mobile/NegoBar";
 import { HumeurGauge } from "@/components/mobile/HumeurGauge";
 import { PersonaAvatar } from "@/components/mobile/PersonaAvatar";
 import type { PersonaInfo } from "@/components/mobile/PersonaInfoOverlay";
-import { proposerOffre, ouvrirNegociation } from "@/lib/negociation";
+import { ouvrirNegociation } from "@/lib/negociation";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import type { NegoMode, NegoPersona, NegociationState } from "@/types/game";
@@ -27,6 +27,10 @@ interface NegociationSheetProps {
   nego: NegociationState | null;
   onUpdateNego: (nego: NegociationState) => void;
   onConclu: (prixFinal: number) => void;
+  /** Calcule le prochain état de négociation pour une contre-offre du joueur
+   *  (délègue à `proposerOffre` ou, en vente, à `proposerOffreVente` pour que
+   *  la tolérance boostée et le sauvetage Diplomate s'appliquent réellement). */
+  onProposerOffre: (nego: NegociationState, offre: number) => NegociationState;
   /** Bloc panier d'objets (entre le titre et la zone de négociation). */
   header?: ReactNode;
   /** Infos persona pour l'overlay (i). */
@@ -56,6 +60,7 @@ export function NegociationSheet({
   nego,
   onUpdateNego,
   onConclu,
+  onProposerOffre,
   header,
   personaInfo,
   nomAffiche,
@@ -101,7 +106,7 @@ export function NegociationSheet({
     mode === "achat" ? localNego.prixAdverseCourant : echelleMax;
 
   const handleProposer = () => {
-    const next = proposerOffre(localNego, persona, offreJoueur);
+    const next = onProposerOffre(localNego, offreJoueur);
     setLocalNego(next);
     onUpdateNego(next);
 

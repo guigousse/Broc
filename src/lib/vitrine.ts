@@ -303,13 +303,20 @@ export function personaDepuisClient(client: ClientPersonnage): NegoPersona {
  * Pas à pas vente. Encapsule la fonction pure proposerOffre + la révélation
  * du prixMax si la compétence Diplomate est active et pas encore consommée.
  */
+export type NegociationVenteResult = NegociationState & {
+  /** Vrai si le sauvetage Diplomate vient de se déclencher sur ce tour
+   *  (fâcherie transformée en dernière chance). Champ dédié plutôt qu'un
+   *  sniff du message, pour un détecteur robuste côté appelant. */
+  diplomatieDeclenchee?: boolean;
+};
+
 export function proposerOffreVente(
   nego: NegociationState,
   client: ClientPersonnage,
   contreOffre: number,
   modifiers: VitrineModifiers = DEFAULT_MODIFIERS,
   options: { revelationDejaFaite?: boolean; toleranceBoost?: number } = {},
-): NegociationState {
+): NegociationVenteResult {
   const base = personaDepuisClient(client);
   const boost = options.toleranceBoost ?? 0;
   const persona = boost > 0 ? { ...base, tolerancePct: base.tolerancePct * (1 + boost) } : base;
@@ -328,6 +335,7 @@ export function proposerOffreVente(
       statut: "en_cours",
       humeur: 0.95,
       message: `« Mon plafond, c'est ${nego.cibleSecrete} €. Une dernière fois, je vous écoute. »`,
+      diplomatieDeclenchee: true,
     };
   }
 
