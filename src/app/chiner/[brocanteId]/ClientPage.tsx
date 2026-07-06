@@ -29,6 +29,7 @@ import { placeRestante, stockageEstPlein } from "@/lib/stockage";
 import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
 import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
+import { useXpFloats, XpFloatsVue } from "@/components/mobile/XpFloats";
 import {
   XP_ACHAT_BROCANTEUR,
   XP_DECOUVERTE_COLLECTION,
@@ -88,9 +89,12 @@ export default function SessionChinePage() {
   /** Le Flair (N5) : révèle la cote pour toute la session une fois activé (portée session, pas de persistance). */
   const [flairActif, setFlairActif] = useState(false);
 
+  const { floats, pousserXp } = useXpFloats();
+
   const gagnerXPLocal = (montant: number, categorie?: CategorieObjet) => {
     gagnerXPBrocanteur(montant, categorie);
     setXpBrocanteurSession((prev) => prev + montant);
+    pousserXp(montant);
   };
 
   useEffect(() => {
@@ -236,6 +240,7 @@ export default function SessionChinePage() {
     marquerDejaPossedeTemplate(it.objet.templateId);
     if (estDecouverte) {
       setXpBrocanteurSession((prev) => prev + XP_DECOUVERTE_COLLECTION);
+      pousserXp(XP_DECOUVERTE_COLLECTION);
     }
     gagnerXPLocal(XP_ACHAT_BROCANTEUR, it.objet.categorie);
     setItem(it.id, { statut: "achete" });
@@ -309,6 +314,7 @@ export default function SessionChinePage() {
       }}
     >
       <MobileHeader budget={state.budget} />
+      <XpFloatsVue floats={floats} />
       {activeDebloquee(state, "flair") && (
         <div
           style={{

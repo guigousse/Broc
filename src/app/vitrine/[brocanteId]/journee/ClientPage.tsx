@@ -37,6 +37,7 @@ import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
 import { getBrocanteById, fraisEntree } from "@/data/brocantes";
+import { useXpFloats, XpFloatsVue } from "@/components/mobile/XpFloats";
 import {
   XP_JUSTE_PRIX,
   XP_NEGO_BROCANTEUR,
@@ -160,14 +161,18 @@ export default function VitrineJourneePage() {
   /** XP de Brocanteur gagnée localement durant la session. */
   const [xpBrocanteurSession, setXpBrocanteurSession] = useState(0);
 
+  const { floats, pousserXp } = useXpFloats();
+
   const gagnerXPLocal = (montant: number, categorie?: CategorieObjet) => {
     gagnerXPBrocanteur(montant, categorie);
     setXpBrocanteurSession((prev) => prev + montant);
+    pousserXp(montant);
   };
   /** XP de Brocanteur sans passer par un arbre de compétence (ex : juste prix). */
   const gagnerXPBrocanteurLocal = (montant: number) => {
     gagnerXPBrocanteur(montant);
     setXpBrocanteurSession((prev) => prev + montant);
+    pousserXp(montant);
   };
   const fancyClientApparuRef = useRef(false);
   fancyClientApparuRef.current = fancyClientApparu;
@@ -661,6 +666,7 @@ export default function VitrineJourneePage() {
       }}
     >
       <MobileHeader budget={state.budget} />
+      <XpFloatsVue floats={floats} />
 
       <main
         style={{

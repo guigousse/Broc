@@ -1103,6 +1103,14 @@ nav[aria-label="Navigation principale"] :focus-visible,
   transform-origin: center;
 }
 
+/* Float « +XP » en session (chinage, vente) : monte puis s'efface. */
+@keyframes broc-xp-float {
+  0% { opacity: 0; transform: translateY(6px); }
+  15% { opacity: 1; transform: translateY(0); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-14px); }
+}
+
 /* Pulsation douce de l'état "prêt à récupérer" sur un slot atelier. */
 @keyframes broc-slot-ready-pulse {
   0%, 100% {
