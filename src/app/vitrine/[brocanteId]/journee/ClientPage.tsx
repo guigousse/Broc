@@ -68,6 +68,10 @@ import type {
 } from "@/types/game";
 
 const TICK_MS = 100;
+// Active de vente 📣 La Criée (N17) : fait défiler 3 clients coup sur coup,
+// à intervalle fixe qui ignore l'intervalle normal ET le multiplicateur météo.
+const CRIEE_NB_CLIENTS = 3;
+const CRIEE_INTERVALLE_SEC = 1;
 
 interface EntreeJournal {
   id: string;
@@ -214,6 +218,10 @@ export default function VitrineJourneePage() {
   const clientActuelRef = useRef<ClientEvent | null>(null);
   clientActuelRef.current = clientActuel;
 
+  // Active de vente 📣 La Criée (N17) : nombre de clients restants à faire
+  // défiler « coup sur coup » une fois déclenchée (cf. bloc de spawn du tick).
+  const crieeRestantsRef = useRef(0);
+
   /** Calcule le prochain état de négo pour une contre-offre du joueur, en
    *  passant par `proposerOffreVente` : tolérance boostée (Verbe haut/d'or,
    *  Œil aiguisé) ET sauvetage Diplomate (quota persistant via les actives)
@@ -269,6 +277,15 @@ export default function VitrineJourneePage() {
     setClientActuel(evNext);
     setNegoVente(negoNext);
     setLotGarniOuvert(false);
+  };
+
+  /** La Criée : consomme le quota du jour et programme 3 clients à la suite,
+   *  au rythme fixe `CRIEE_INTERVALLE_SEC` (cf. bloc de spawn du tick, qui
+   *  décrémente `crieeRestantsRef` à chaque client posé). */
+  const jouerCriee = () => {
+    if (!utiliserActive("criee")) return;
+    crieeRestantsRef.current = CRIEE_NB_CLIENTS;
+    setProchainClient(0.1); // déclenche le spawn au prochain tick, sans attendre l'intervalle
   };
 
   useEffect(() => {
@@ -416,6 +433,14 @@ export default function VitrineJourneePage() {
             } else {
               setNegoVente(null);
             }
+          }
+          // La Criée : coup sur coup à intervalle fixe, sans attendre le
+          // multiplicateur météo/compétences ni le tirage normal — même si
+          // aucun client n'a pu être posé (étal trop vide/inaccessible), le
+          // quota consommé continue de s'égrener sans planter.
+          if (crieeRestantsRef.current > 0) {
+            crieeRestantsRef.current -= 1;
+            return CRIEE_INTERVALLE_SEC;
           }
           return prochainIntervalleClient(mods?.intervalleMultiplier ?? 1);
         }
@@ -650,6 +675,26 @@ export default function VitrineJourneePage() {
             {`Vitrine · ${heureCourante()}`}
           </div>
           <Horloge tempsRestant={tempsRestant} progress={progress} />
+          {activeDebloquee(state, "criee") &&
+            usagesRestants(state.activesUtilisees, "criee", state.jourActuel) > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={jouerCriee}
+                  disabled={
+                    !!clientActuel ||
+                    tempsRestant < CRIEE_INTERVALLE_SEC * CRIEE_NB_CLIENTS
+                  }
+                >
+                  {`📣 La Criée (${usagesRestants(
+                    state.activesUtilisees,
+                    "criee",
+                    state.jourActuel,
+                  )})`}
+                </Button>
+              </div>
+            )}
         </section>
 
         {/* Articles sur l'étal */}
