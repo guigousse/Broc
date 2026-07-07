@@ -210,6 +210,21 @@ function slotOccupePlusRecent(
 }
 
 /**
+ * Efface la clé de save d'un slot et met son entrée d'index à null, en
+ * mutant `index` en place. Partagé par `supprimerSlot` et `viderSlotActif`,
+ * qui ne diffèrent que sur le devenir de `index.actif`.
+ */
+function effacerCleEtEntree(index: IndexSlots, n: NumeroSlot): void {
+  try {
+    window.localStorage.removeItem(cleSlot(n));
+  } catch {
+    // Le pire cas : la clé de save reste orpheline, mais l'index est quand
+    // même mis à jour pour refléter l'intention (slot considéré vide).
+  }
+  index.slots[n] = null;
+}
+
+/**
  * Efface la clé de save du slot et son entrée d'index. Si c'était
  * l'emplacement actif, l'actif bascule sur le slot occupé le plus récent
  * (sinon reste sur `n`, désormais vide).
@@ -218,17 +233,23 @@ export function supprimerSlot(n: NumeroSlot): void {
   if (typeof window === "undefined") return;
   const index = chargerIndex();
 
-  try {
-    window.localStorage.removeItem(cleSlot(n));
-  } catch {
-    // Le pire cas : la clé de save reste orpheline, mais l'index est quand
-    // même mis à jour pour refléter l'intention (slot considéré vide).
-  }
-
-  index.slots[n] = null;
+  effacerCleEtEntree(index, n);
   if (index.actif === n) {
     index.actif = slotOccupePlusRecent(index, n) ?? n;
   }
+  ecrireIndex(index);
+}
+
+/**
+ * Efface la clé de save du slot ACTIF et son entrée d'index, sans jamais
+ * rebasculer l'actif (contrairement à `supprimerSlot`). C'est la sémantique
+ * de « Supprimer la sauvegarde » dans Réglages : on repart à zéro sur LE
+ * MÊME emplacement, on ne change pas de partie en cours de route.
+ */
+export function viderSlotActif(): void {
+  if (typeof window === "undefined") return;
+  const index = chargerIndex();
+  effacerCleEtEntree(index, index.actif);
   ecrireIndex(index);
 }
 

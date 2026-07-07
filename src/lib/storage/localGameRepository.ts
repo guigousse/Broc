@@ -1,12 +1,13 @@
 import type { GameState } from "@/types/game";
 import type { GameRepository } from "./gameRepository";
-
-const STORAGE_KEY = "projet-broc:game-state:v1";
+import { cleSlot, slotActif, toucherDerniereSession, viderSlotActif } from "./slots";
 
 export const localGameRepository: GameRepository = {
   async load() {
     if (typeof window === "undefined") return null;
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    // slotActif() force chargerIndex(), qui migre paresseusement l'ancienne
+    // save unique (clé legacy) vers le slot 1 la toute première fois.
+    const raw = window.localStorage.getItem(cleSlot(slotActif()));
     if (!raw) return null;
     try {
       return JSON.parse(raw) as GameState;
@@ -16,9 +17,9 @@ export const localGameRepository: GameRepository = {
   },
   async save(state) {
     if (typeof window === "undefined") return false;
+    const n = slotActif();
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      return true;
+      window.localStorage.setItem(cleSlot(n), JSON.stringify(state));
     } catch (err) {
       // Quota localStorage dépassé ou stockage indisponible (navigation privée).
       console.warn(
@@ -27,9 +28,11 @@ export const localGameRepository: GameRepository = {
       );
       return false;
     }
+    toucherDerniereSession(n);
+    return true;
   },
   async clear() {
     if (typeof window === "undefined") return;
-    window.localStorage.removeItem(STORAGE_KEY);
+    viderSlotActif();
   },
 };

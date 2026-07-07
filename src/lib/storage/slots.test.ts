@@ -11,6 +11,7 @@ import {
   slotActif,
   supprimerSlot,
   toucherDerniereSession,
+  viderSlotActif,
 } from "./slots";
 
 const CLE_LEGACY = "projet-broc:game-state:v1";
@@ -251,6 +252,39 @@ describe("opérations", () => {
 
     localStorage.setItem(cleSlot(3), JSON.stringify({ budget: 1 }));
     expect(resumeSlot(3)).toBeNull();
+  });
+
+  it("viderSlotActif : vide la clé et l'entrée d'index de l'actif, sans rebasculer l'actif", () => {
+    localStorage.setItem(cleSlot(1), '{"budget":1}');
+    localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 1,
+        slots: {
+          1: { nom: "Ma partie", derniereSession: 100 },
+          2: { nom: null, derniereSession: 200 },
+          3: null,
+        },
+      }),
+    );
+
+    viderSlotActif();
+
+    const idx = chargerIndex();
+    expect(idx.actif).toBe(1);
+    expect(idx.slots[1]).toBeNull();
+    expect(localStorage.getItem(cleSlot(1))).toBeNull();
+    // Le slot 2, pourtant plus récent, n'est pas touché : contrairement à
+    // supprimerSlot, viderSlotActif ne rebascule jamais l'actif.
+    expect(idx.slots[2]).toEqual({ nom: null, derniereSession: 200 });
+  });
+
+  it("viderSlotActif sur un index par défaut (rien en storage) : no-op propre", () => {
+    viderSlotActif();
+
+    const idx = chargerIndex();
+    expect(idx.actif).toBe(1);
+    expect(idx.slots).toEqual({ 1: null, 2: null, 3: null });
   });
 
   it("toucherDerniereSession upsert sans écraser le nom", () => {
