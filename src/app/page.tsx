@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
+import { audioManager } from "@/lib/audio/audioManager";
 import {
   changerSlotActif,
   premierSlotLibre,
@@ -22,6 +23,90 @@ import {
 const DOOR_CX_PCT = 51;
 const DOOR_CY_PCT = 66;
 
+/**
+ * Parallaxe façon fond d'écran iPhone : la façade (légèrement zoomée pour
+ * garder des marges) glisse à l'inverse de l'inclinaison du téléphone.
+ * iOS 13+ exige une permission demandée DANS un geste utilisateur →
+ * on s'abonne au premier pointerdown quand `requestPermission` existe.
+ * Sans capteur (desktop) ou permission refusée : image simplement statique.
+ */
+function useTiltParallax(maxPx: number) {
+  const ref = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("DeviceOrientationEvent" in window))
+      return;
+
+    let raf = 0;
+    let running = false;
+    let baseBeta: number | null = null;
+    let baseGamma: number | null = null;
+    let targetX = 0;
+    let targetY = 0;
+    let curX = 0;
+    let curY = 0;
+
+    const tick = () => {
+      curX += (targetX - curX) * 0.08;
+      curY += (targetY - curY) * 0.08;
+      if (ref.current) {
+        ref.current.style.transform = `scale(1.08) translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0)`;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    const onOrient = (e: DeviceOrientationEvent) => {
+      if (e.beta === null || e.gamma === null) return;
+      // La première mesure sert de position de repos : on ne bouge que
+      // sur l'écart d'inclinaison, pas sur l'angle absolu de tenue.
+      if (baseBeta === null || baseGamma === null) {
+        baseBeta = e.beta;
+        baseGamma = e.gamma;
+      }
+      const clamp = (v: number, m: number) => Math.max(-m, Math.min(m, v));
+      targetX = (clamp(e.gamma - baseGamma, 18) / 18) * -maxPx;
+      targetY = (clamp(e.beta - baseBeta, 18) / 18) * -maxPx;
+      if (!running) {
+        running = true;
+        raf = requestAnimationFrame(tick);
+      }
+    };
+
+    const subscribe = () => {
+      window.addEventListener("deviceorientation", onOrient);
+    };
+
+    const doe = DeviceOrientationEvent as unknown as {
+      requestPermission?: () => Promise<string>;
+    };
+    const demanderPermission = () => {
+      window.removeEventListener("pointerdown", demanderPermission);
+      doe
+        .requestPermission?.()
+        .then((r) => {
+          if (r === "granted") subscribe();
+        })
+        .catch(() => {});
+    };
+
+    if (typeof doe.requestPermission === "function") {
+      window.addEventListener("pointerdown", demanderPermission, {
+        passive: true,
+      });
+    } else {
+      subscribe();
+    }
+
+    return () => {
+      window.removeEventListener("pointerdown", demanderPermission);
+      window.removeEventListener("deviceorientation", onOrient);
+      cancelAnimationFrame(raf);
+    };
+  }, [maxPx]);
+
+  return ref;
+}
+
 export default function TitleScreen() {
   const { nouvellePartie, state, isHydrated, reset, detacherPartie } = useGame();
   const { playClick } = useSettings();
@@ -34,6 +119,15 @@ export default function TitleScreen() {
   // Slot visé par le démarrage en cours, appliqué seulement à la fin de
   // l'intro (voir `onIntroFinie`) — jamais lu pendant l'intro elle-même.
   const slotCibleRef = useRef<NumeroSlot | null>(null);
+  const facadeRef = useTiltParallax(14);
+
+  // Même ambiance de rue que le QG (respecte la préférence sonore, no-op si
+  // déjà lancée). Sur iOS le contexte audio reste suspendu jusqu'au premier
+  // geste : le son démarre alors, via l'unlock global de l'audioManager.
+  // Pas de stop au démontage : le panorama reprend la même boucle à l'entrée.
+  useEffect(() => {
+    void audioManager.startAmbience();
+  }, []);
 
   const onIntroFinie = () => {
     // La bascule de slot est DIFFÉRÉE jusqu'ici (et pas faite en amont dans
@@ -107,8 +201,11 @@ export default function TitleScreen() {
         overflow: "hidden",
       }}
     >
-      {/* Façade de la maison du brocanteur, en fond plein écran. */}
+      {/* Façade de la maison du brocanteur, en fond plein écran.
+          Pré-zoomée (scale 1.08) pour que la parallaxe au gyroscope ne
+          découvre jamais les bords. */}
       <img
+        ref={facadeRef}
         src="/qg/facade-accueil.webp"
         alt=""
         style={{
@@ -119,6 +216,8 @@ export default function TitleScreen() {
           objectFit: "cover",
           objectPosition: `${DOOR_CX_PCT}% ${DOOR_CY_PCT}%`,
           display: "block",
+          transform: "scale(1.08)",
+          willChange: "transform",
         }}
         draggable={false}
       />
@@ -213,7 +312,7 @@ export default function TitleScreen() {
                   "inset 0 0 0 3px transparent, inset 0 0 0 4px var(--brass-500)",
               }}
             >
-              Continuer · Sauvegarde
+              Continuer
             </Button>
             <div style={{ display: "flex", gap: 4 }}>
               <Button
