@@ -31,11 +31,11 @@ export default function TitleScreen() {
   };
 
   const onIntroFinie = () => {
-    // L'intro joue AVANT la création de la sauvegarde et la navigation :
-    // `nouvellePartie()` est purement synchrone (pas d'effet de redirection),
-    // donc l'enchaînement direct ici est sûr.
+    // L'intro joue AVANT la création de la sauvegarde. `nouvellePartie()`
+    // navigue déjà vers /bureau via router.push — surtout PAS de
+    // window.location.href par-dessus : un rechargement dur couperait
+    // l'effet d'auto-sauvegarde (post-commit) et perdrait la partie fraîche.
     nouvellePartie();
-    window.location.href = "/bureau";
   };
 
   const onNouvellePartie = () => {
