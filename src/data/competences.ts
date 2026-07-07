@@ -320,3 +320,13 @@ export function getTreeMeta(treeId: CompetenceTreeId): TreeMeta {
     categorie: def.categorie,
   };
 }
+
+/**
+ * Chemin public du visuel d'une compétence.
+ * Les 7 arbres de catégorie partagent les 12 visuels `theme.*` ;
+ * l'arbre général a les siens (`general.*`). 24 assets pour 96 compétences.
+ */
+export function visuelCompetence(comp: CompetenceDef): string {
+  const prefixe = comp.treeId === TREE_GENERAL ? "general" : "theme";
+  return `/competences/${prefixe}.${comp.brancheId}.${comp.palierNumero}.webp`;
+}
