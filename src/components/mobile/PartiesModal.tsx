@@ -163,9 +163,10 @@ const relatifStyle: CSSProperties = {
 const videTitre: CSSProperties = {
   fontFamily: "var(--font-serif)",
   fontStyle: "italic",
-  fontSize: 14,
+  fontSize: 19,
   color: "var(--brass-700)",
-  marginBottom: 12,
+  textAlign: "center",
+  padding: "22px 0",
 };
 
 const actionsRow: CSSProperties = {
@@ -311,9 +312,8 @@ export function PartiesModal({
         </button>
       </div>
 
-      {/* margin auto haut/bas : cartes centrées verticalement quand ça tient,
-          flux normal scrollable quand ça déborde (petits écrans). */}
-      <div style={{ marginTop: "auto", marginBottom: "auto" }}>
+      {/* Les cartes suivent la barre de titre, avec un espace sous la croix. */}
+      <div style={{ marginTop: 18 }}>
       {lignes.map((ligne) => {
         const estActif = index.actif === ligne.n;
         const occupe = ligne.occupe;
@@ -388,16 +388,7 @@ export function PartiesModal({
                   </div>
                 </>
               ) : (
-                <>
-                  <div style={videTitre}>Emplacement vide</div>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => onNouvellePartie(ligne.n)}
-                  >
-                    Nouvelle partie ici
-                  </Button>
-                </>
+                <div style={videTitre}>Emplacement vide</div>
               )}
             </div>
           </section>

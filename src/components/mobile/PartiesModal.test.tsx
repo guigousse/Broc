@@ -89,9 +89,9 @@ describe("PartiesModal — mode gestion, liste", () => {
 
     const l3 = ligne(3);
     expect(within(l3).getByText("Emplacement vide")).toBeTruthy();
-    expect(
-      within(l3).getByRole("button", { name: "Nouvelle partie ici" }),
-    ).toBeTruthy();
+    // Un emplacement vide est purement informatif : aucune action proposée
+    // (la création passe par le bouton « Nouvelle partie » de l'écran-titre).
+    expect(within(l3).queryByRole("button")).toBeNull();
   });
 
   it("badge Active uniquement sur le slot actif", () => {
@@ -378,16 +378,15 @@ describe("PartiesModal — Supprimer", () => {
 });
 
 describe("PartiesModal — slot vide", () => {
-  it("Nouvelle partie ici appelle onNouvellePartie(n) directement, sans confirmation", () => {
+  it("aucune action sur un emplacement vide (création via l'écran-titre)", () => {
     const onNouvellePartie = vi.fn();
     render(
       <PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={onNouvellePartie} />,
     );
 
-    fireEvent.click(within(ligne(1)).getByRole("button", { name: "Nouvelle partie ici" }));
-
-    expect(onNouvellePartie).toHaveBeenCalledWith(1);
-    expect(screen.queryByRole("dialog", { name: /Supprimer|Écraser/ })).toBeNull();
+    expect(within(ligne(1)).getByText("Emplacement vide")).toBeTruthy();
+    expect(within(ligne(1)).queryByRole("button")).toBeNull();
+    expect(onNouvellePartie).not.toHaveBeenCalled();
   });
 });
 
@@ -450,7 +449,7 @@ describe("PartiesModal — mode choisir-ecrasement", () => {
     expect(chargerIndex().slots[2]).not.toBeNull();
   });
 
-  it("slot vide : Nouvelle partie ici direct (pas de confirmation)", () => {
+  it("slot vide : purement informatif, pas d'action directe", () => {
     const onNouvellePartie = vi.fn();
     render(
       <PartiesModal
@@ -461,8 +460,8 @@ describe("PartiesModal — mode choisir-ecrasement", () => {
       />,
     );
 
-    fireEvent.click(within(ligne(3)).getByRole("button", { name: "Nouvelle partie ici" }));
-    expect(onNouvellePartie).toHaveBeenCalledWith(3);
+    expect(within(ligne(3)).getByText("Emplacement vide")).toBeTruthy();
+    expect(within(ligne(3)).queryByRole("button")).toBeNull();
   });
 });
 
