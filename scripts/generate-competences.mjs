@@ -7,8 +7,10 @@
  *   npm run gen:competences -- general.negociation.1 # une ou plusieurs précises
  *   npm run gen:competences -- --force               # regénère même les présents
  *
- * Pipeline : Gemini pro 1:1 2K → composite du cadre SVG unique
- * (scripts/competences-frame.svg) → WebP 1024×1024 q85 dans public/competences/.
+ * Pipeline : Gemini pro 1:1 2K → WebP 1024×1024 q85 dans public/competences/.
+ * Les assets sont livrés SANS cadre et plein cadre bord à bord (décision
+ * 2026-07-07) : le cadre Art déco (scripts/competences-frame.svg) sera posé
+ * en overlay côté UI, pas incrusté dans les images.
  */
 
 import { GoogleGenAI } from "@google/genai";
@@ -21,12 +23,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const OUTPUT_DIR = path.join(PROJECT_ROOT, "public", "competences");
 const CONFIG_PATH = path.join(__dirname, "competences-prompts.json");
-const FRAME_PATH = path.join(__dirname, "competences-frame.svg");
 const ENV_PATH = path.join(PROJECT_ROOT, ".env");
 
 const MODEL = "gemini-3-pro-image-preview";
-const GEN_SIZE = 2048;
 const OUT_SIZE = 1024;
+// Le modèle dessine parfois un fin liseré/marge malgré la consigne full-bleed :
+// recadrage déterministe de ~3,5 % par bord sur le master avant le resize.
+const EDGE_CROP_RATIO = 0.035;
 
 async function loadDotEnv() {
   try {
@@ -68,12 +71,15 @@ const CHARACTER =
   "side-parted chestnut hair, three-piece brown tweed suit, white shirt with " +
   "rolled-up sleeves. Setting: 1920s France, flea-market world.";
 
-// Contraintes de cadrage : la scène est générée SANS cadre (composité ensuite).
+// Contraintes de cadrage : plein cadre bord à bord, aucun cadre dessiné
+// (le cadre Art déco sera posé en overlay côté UI).
 const FRAMING =
-  "Square 1:1 composition, one single scene, main subject centered with generous " +
-  "parchment breathing room toward the edges. NO border, NO frame, NO decorative " +
-  "edge of any kind (a frame is composited later). ABSOLUTELY NO TEXT: no letters, " +
-  "no words, no numbers, no signage, no watermark.";
+  "FULL-BLEED square 1:1 composition: the painted scene fills the ENTIRE square " +
+  "edge to edge — the environment (walls, street, stalls, sky) extends past all " +
+  "four edges as if cropped by the picture edge. NO empty paper margins, NO " +
+  "vignette of blank parchment around the subject, NO border, NO frame, NO " +
+  "decorative edge of any kind. ABSOLUTELY NO TEXT: no letters, no words, no " +
+  "numbers, no signage, no watermark.";
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 if (!apiKey) {
@@ -96,12 +102,6 @@ async function main() {
     console.error("Aucun visuel à générer (filtres trop restrictifs ?).");
     process.exit(1);
   }
-
-  // Cadre rasterisé une seule fois, réutilisé pour tous les composites.
-  const frame = await sharp(FRAME_PATH, { density: 96 })
-    .resize(GEN_SIZE, GEN_SIZE)
-    .png()
-    .toBuffer();
 
   console.log(`📋  ${todo.length} visuel(s) de compétence à traiter\n`);
   const ai = new GoogleGenAI({ apiKey });
@@ -136,15 +136,16 @@ async function main() {
         continue;
       }
       const raw = Buffer.from(img.inlineData.data, "base64");
-      // ATTENTION sharp : resize s'applique toujours AVANT composite dans une
-      // même chaîne (l'ordre des appels ne compte pas) → deux passes distinctes,
-      // sinon « Image to composite must have same dimensions or smaller ».
-      const composed = await sharp(raw)
-        .resize(GEN_SIZE, GEN_SIZE)
-        .composite([{ input: frame }])
-        .png()
-        .toBuffer();
-      const buf = await sharp(composed)
+      const meta = await sharp(raw).metadata();
+      const cropX = Math.round(meta.width * EDGE_CROP_RATIO);
+      const cropY = Math.round(meta.height * EDGE_CROP_RATIO);
+      const buf = await sharp(raw)
+        .extract({
+          left: cropX,
+          top: cropY,
+          width: meta.width - 2 * cropX,
+          height: meta.height - 2 * cropY,
+        })
         .resize(OUT_SIZE, OUT_SIZE)
         .webp({ quality: 85 })
         .toBuffer();

@@ -27,11 +27,18 @@ publicités illustrées des années 1920, pour enrichir l'écran Bibliothèque
   continuité du style maison (`STYLE_BRIEF_BASE` de
   `scripts/generate-qg-images.mjs`), donc la pipeline existante convient telle
   quelle côté rendu.
-- **Cadre identique incrusté** : la génération IA ne reproduit jamais deux fois
-  le même cadre → les scènes sont générées **sans cadre** (marge parchemin
-  simple), puis un **cadre Art déco unique** (dessiné une fois, déterministe)
-  est composité par le pipeline (sharp) sur les 24 images. Les fichiers livrés
-  sont autonomes et strictement identiques côté cadre.
+- **RÉVISION 2026-07-07 (retour Guillaume sur la série v1)** :
+  - **Plein cadre** : l'illustration remplit **tout le carré, bord à bord** —
+    aucune marge parchemin, aucun vide autour du sujet ; le décor s'étend
+    au-delà des quatre bords (cadrage coupé).
+  - **Pas de cadre incrusté** : les assets sont livrés **sans cadre** ; le
+    cadre Art déco sera posé **ultérieurement par-dessus** (overlay, côté UI).
+    `scripts/competences-frame.svg` est conservé pour cet usage futur mais
+    n'est plus composité par le pipeline.
+  - **Gradation renforcée** : la progression palier 1 → 3 d'une même branche
+    doit se *sentir* immédiatement — palier 1 modeste/épuré/lumière pâle du
+    matin, palier 2 confirmé/plus riche/lumière chaude, palier 3 apothéose
+    dorée/abondance/triomphe. Chaque prompt porte explicitement son cran.
 
 ## Iconographie (schéma directeur)
 
@@ -56,9 +63,9 @@ distinguent par ce sur quoi porte l'attention : la personne vs l'objet.
 
 - Prompts dans un fichier dédié (`scripts/competences-prompts.json`), généré via
   la pipeline Gemini (modèle pro, 1:1, brief maison), sortie
-  `public/competences/{id}.webp` après composite du cadre.
-- Cadre : asset unique versionné (SVG déterministe, filets + coins Art déco,
-  encre/or sur transparent), appliqué par sharp.
+  `public/competences/{id}.webp` **sans cadre, plein cadre bord à bord**.
+- Cadre : asset unique versionné (`scripts/competences-frame.svg`) réservé à
+  l'overlay UI futur — plus composité dans les assets.
 - Nommage : `general.{branche}.{palier}.webp` et `theme.{branche}.{palier}.webp`.
 
 ## Hors périmètre (chantiers suivants)
