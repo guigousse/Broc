@@ -413,6 +413,41 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     return s;
   }, [state]);
 
+  // Edit mode :
+  //   - activé par défaut si `NEXT_PUBLIC_QG_EDIT=1` au build, OU
+  //   - activable via `?qgedit=1` (persiste ensuite dans localStorage), OU
+  //   - désactivable via `?qgedit=0` (efface la clé).
+  // ⚠ Ces hooks vivaient APRÈS l'early return « ouverture du local… » :
+  // en navigation dure, le premier rendu (non hydraté) déclarait N hooks,
+  // le rendu hydraté N+4 → crash React #310 « Rendered more hooks ».
+  // Tous les hooks du composant DOIVENT précéder ce return (rules-of-hooks,
+  // désormais vérifié par `npm run lint:hooks`).
+  const [editEnabled, setEditEnabled] = useState(
+    () => process.env.NEXT_PUBLIC_QG_EDIT === "1",
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("qgedit");
+    if (q === "1") {
+      window.localStorage.setItem("broc.qg-edit.enabled", "1");
+      setEditEnabled(true);
+      return;
+    }
+    if (q === "0") {
+      window.localStorage.removeItem("broc.qg-edit.enabled");
+      setEditEnabled(process.env.NEXT_PUBLIC_QG_EDIT === "1");
+      return;
+    }
+    if (window.localStorage.getItem("broc.qg-edit.enabled") === "1") {
+      setEditEnabled(true);
+    }
+  }, []);
+  const editEnabledRef = useRef(editEnabled);
+  useEffect(() => {
+    editEnabledRef.current = editEnabled;
+  }, [editEnabled]);
+
   if (!isHydrated || !state) {
     return (
       <main
@@ -439,36 +474,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   const showQgZone = (qgZoneIdx: 3 | 4 | 5) =>
     Math.abs(zoneActive - qgZoneIdx) <= 1;
   const showVitrineZone = Math.abs(zoneActive - 1) <= 1;
-
-  // Edit mode :
-  //   - activé par défaut si `NEXT_PUBLIC_QG_EDIT=1` au build, OU
-  //   - activable via `?qgedit=1` (persiste ensuite dans localStorage), OU
-  //   - désactivable via `?qgedit=0` (efface la clé).
-  const [editEnabled, setEditEnabled] = useState(
-    () => process.env.NEXT_PUBLIC_QG_EDIT === "1",
-  );
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const q = params.get("qgedit");
-    if (q === "1") {
-      window.localStorage.setItem("broc.qg-edit.enabled", "1");
-      setEditEnabled(true);
-      return;
-    }
-    if (q === "0") {
-      window.localStorage.removeItem("broc.qg-edit.enabled");
-      setEditEnabled(process.env.NEXT_PUBLIC_QG_EDIT === "1");
-      return;
-    }
-    if (window.localStorage.getItem("broc.qg-edit.enabled") === "1") {
-      setEditEnabled(true);
-    }
-  }, []);
-  const editEnabledRef = useRef(editEnabled);
-  useEffect(() => {
-    editEnabledRef.current = editEnabled;
-  }, [editEnabled]);
 
   return (
     <QgEditProvider enabled={editEnabled}>

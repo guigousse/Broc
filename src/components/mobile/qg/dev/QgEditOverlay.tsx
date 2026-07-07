@@ -31,28 +31,51 @@ const ALL_KEYS: EditableKey[] = [
   ...SLOT_KEYS,
 ];
 
-function useCoord(key: EditableKey) {
-  // Tous les hooks utilisent la même implémentation interne ; le dispatch
-  // est cohérent puisque chaque key appartient à une seule famille.
-  const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
-  const isBox = (STOCKAGE_BOX_ORDER as readonly string[]).includes(key);
-  const isSlot = (ATELIER_SLOT_ORDER as readonly string[]).includes(key);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  if (isBox) return useStockageBoxCoord(key as StockageBoxKey);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  if (isSlot) return useAtelierSlotCoord(key as AtelierSlotKey);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  return isChat
-    ? useChatBaladeurCoord(key as ChatBaladeurId)
-    : useQgObjet(key as QgObjetKey);
-}
-
 interface OutlineProps {
   editKey: EditableKey;
 }
 
+/**
+ * Dispatch par COMPOSANT (et non par hook) : chaque famille de clé a son
+ * wrapper qui appelle SON hook inconditionnellement puis rend le corps
+ * partagé avec la coordonnée en prop — conforme aux rules-of-hooks
+ * (l'ancien `useCoord` dispatchait des hooks conditionnellement).
+ */
 function ObjetOutline({ editKey }: OutlineProps) {
-  const { left, bottom, width } = useCoord(editKey);
+  if ((STOCKAGE_BOX_ORDER as readonly string[]).includes(editKey)) {
+    return <OutlineBox editKey={editKey as StockageBoxKey} />;
+  }
+  if ((ATELIER_SLOT_ORDER as readonly string[]).includes(editKey)) {
+    return <OutlineSlot editKey={editKey as AtelierSlotKey} />;
+  }
+  if ((CHAT_BALADEUR_ORDER as readonly string[]).includes(editKey)) {
+    return <OutlineChat editKey={editKey as ChatBaladeurId} />;
+  }
+  return <OutlineQg editKey={editKey as QgObjetKey} />;
+}
+
+function OutlineBox({ editKey }: { editKey: StockageBoxKey }) {
+  const coord = useStockageBoxCoord(editKey);
+  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
+}
+function OutlineSlot({ editKey }: { editKey: AtelierSlotKey }) {
+  const coord = useAtelierSlotCoord(editKey);
+  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
+}
+function OutlineChat({ editKey }: { editKey: ChatBaladeurId }) {
+  const coord = useChatBaladeurCoord(editKey);
+  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
+}
+function OutlineQg({ editKey }: { editKey: QgObjetKey }) {
+  const coord = useQgObjet(editKey);
+  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
+}
+
+function OutlineAvecCoord({
+  editKey,
+  coord,
+}: OutlineProps & { coord: { left: number; bottom: number; width: number } }) {
+  const { left, bottom, width } = coord;
   const ctx = useQgEditContext();
   const sceneRef = useRef<HTMLElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
