@@ -56,7 +56,7 @@ vi.mock("@/lib/storage/slots", () => ({
 describe("TitleScreen — bascule de slot différée à la fin de l'intro", () => {
   it("« Nouvelle partie » lance l'intro SANS bascule immédiate de slot", () => {
     render(<TitleScreen />);
-    fireEvent.click(screen.getByText("Nouvelle Partie"));
+    fireEvent.click(screen.getByText("Nouvelle partie"));
 
     // L'intro est bien affichée (composant réel remplacé par le mock).
     expect(screen.getByTestId("intro-porte")).toBeTruthy();
@@ -67,7 +67,7 @@ describe("TitleScreen — bascule de slot différée à la fin de l'intro", () =
 
   it("à la fin de l'intro : changerSlotActif PUIS nouvellePartie, dans cet ordre", () => {
     render(<TitleScreen />);
-    fireEvent.click(screen.getByText("Nouvelle Partie"));
+    fireEvent.click(screen.getByText("Nouvelle partie"));
 
     expect(introOnFini).not.toBeNull();
     introOnFini!();
