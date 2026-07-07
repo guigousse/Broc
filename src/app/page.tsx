@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { BrassCorners } from "@/components/ui/BrassCorners";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
@@ -8,7 +8,12 @@ import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
-import { changerSlotActif, premierSlotLibre, type NumeroSlot } from "@/lib/storage/slots";
+import {
+  changerSlotActif,
+  premierSlotLibre,
+  slotActif,
+  type NumeroSlot,
+} from "@/lib/storage/slots";
 
 /**
  * Centre mesuré de la porte d'entrée sur `facade-accueil.webp` (même mesure
@@ -27,21 +32,35 @@ export default function TitleScreen() {
   >(null);
   const [introEnCours, setIntroEnCours] = useState(false);
   const aSauvegarde = isHydrated && state !== null;
+  // Slot visé par le démarrage en cours, appliqué seulement à la fin de
+  // l'intro (voir `onIntroFinie`) — jamais lu pendant l'intro elle-même.
+  const slotCibleRef = useRef<NumeroSlot | null>(null);
 
   const onIntroFinie = () => {
-    // L'intro joue AVANT la création de la sauvegarde. `nouvellePartie()`
-    // navigue déjà vers /bureau via router.push — surtout PAS de
-    // window.location.href par-dessus : un rechargement dur couperait
-    // l'effet d'auto-sauvegarde (post-commit) et perdrait la partie fraîche.
+    // La bascule de slot est DIFFÉRÉE jusqu'ici (et pas faite en amont dans
+    // `demarrerSurSlot`) : pendant les ~3,3 s de l'intro, le GameContext de
+    // cet écran-titre reste monté sur l'ANCIEN slot actif, avec son tick
+    // (/60 s) et ses handlers focus/visibilitychange toujours vivants. Si le
+    // slot actif changeait avant la fin de l'intro, un de ces déclencheurs
+    // pourrait auto-sauvegarder l'état de l'ancienne partie DANS le nouveau
+    // slot cible (déjà « actif » en storage) — corruption transitoire, et
+    // permanente si l'appli est tuée pendant l'intro. En repoussant la
+    // bascule ici, bascule + création (`nouvellePartie()`) sont atomiques :
+    // aucun tick de l'ancien contexte ne peut plus s'intercaler entre les
+    // deux. `nouvellePartie()` navigue déjà vers /bureau via router.push —
+    // surtout PAS de window.location.href par-dessus : un rechargement dur
+    // couperait l'effet d'auto-sauvegarde (post-commit) et perdrait la
+    // partie fraîche.
+    changerSlotActif(slotCibleRef.current ?? slotActif());
     nouvellePartie();
   };
 
-  // Change le slot actif puis lance l'intro : le flux intro → `nouvellePartie()`
-  // (ci-dessus) crée la partie dans le slot devenu actif. Partagé par le
+  // Mémorise le slot visé et lance l'intro — la bascule effective est
+  // différée à `onIntroFinie` (voir son commentaire). Partagé par le
   // premier-emplacement-libre direct et par les deux issues de la modal
   // Parties (« Nouvelle partie ici » / « Écraser »).
   const demarrerSurSlot = (n: NumeroSlot) => {
-    changerSlotActif(n);
+    slotCibleRef.current = n;
     setPartiesModal(null);
     setIntroEnCours(true);
   };
