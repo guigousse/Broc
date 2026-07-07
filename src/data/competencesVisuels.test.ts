@@ -30,3 +30,15 @@ describe("competences-prompts.json", () => {
     }
   });
 });
+
+describe("assets public/competences", () => {
+  it("les 24 visuels existent en webp", () => {
+    const manquants = IDS_ATTENDUS.filter(
+      (id) =>
+        !fs.existsSync(
+          path.join(process.cwd(), "public", "competences", `${id}.webp`),
+        ),
+    );
+    expect(manquants).toEqual([]);
+  });
+});
