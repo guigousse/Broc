@@ -62,3 +62,4 @@ Uniquement depuis l'écran titre (aucun état de jeu en vol) : choisir « Jouer 
 ## Hors périmètre
 
 Dupliquer un slot ; sauvegarde cloud (l'interface `GameRepository`/`createGameRepository` reste le point d'extension prévu) ; plus de 3 emplacements.
+Multi-onglets web : la conception assume une webview Tauri unique (une seule instance active à la fois). Deux onglets d'un même navigateur web ouverts sur l'appli pourraient écrire en croisé sur `localStorage` (index et clés de slot) sans aucune coordination — aucune garde n'est en place contre ce cas. À ajouter si un déploiement web (hors webview Tauri) est un jour envisagé.

@@ -115,6 +115,18 @@ function tenterMigrationLegacy(): void {
   }
   if (legacy === null) return;
 
+  // État anormal : la clé du slot 1 ne devrait jamais exister tant qu'aucun
+  // index n'a été créé (c'est justement ce que cette migration s'apprête à
+  // faire). Si elle existe déjà, ne rien risquer — on n'écrase pas une save
+  // potentiellement plus récente que la legacy avec `setItem` ci-dessous.
+  let cleSlot1Existante: string | null;
+  try {
+    cleSlot1Existante = window.localStorage.getItem(cleSlot(1));
+  } catch {
+    return;
+  }
+  if (cleSlot1Existante !== null) return;
+
   try {
     window.localStorage.setItem(cleSlot(1), legacy);
   } catch {
@@ -182,6 +194,9 @@ export function changerSlotActif(n: NumeroSlot): void {
 export function renommerSlot(n: NumeroSlot, nom: string | null): void {
   if (typeof window === "undefined") return;
   const index = chargerIndex();
+  // Un slot vide n'a rien à renommer : créer une MetaSlot fantôme ferait
+  // passer un emplacement vide pour occupé (voir `construireLignes`).
+  if (!index.slots[n]) return;
   const trimme = nom === null ? "" : nom.trim().slice(0, LONGUEUR_MAX_NOM);
   const nomFinal = trimme === "" ? null : trimme;
   const existant = index.slots[n];
@@ -269,7 +284,18 @@ export function premierSlotLibre(): NumeroSlot | null {
   if (typeof window === "undefined") return null;
   const index = chargerIndex();
   for (const n of NUMEROS_SLOTS) {
-    if (index.slots[n] === null) return n;
+    if (index.slots[n] !== null) continue;
+    // Un index corrompu/désynchronisé peut avoir une entrée null alors que
+    // la clé de save du slot existe encore (orpheline) : ne jamais la
+    // considérer libre, sous peine d'écraser une vraie partie sans passer
+    // par la confirmation Écraser.
+    let clePresente: boolean;
+    try {
+      clePresente = window.localStorage.getItem(cleSlot(n)) !== null;
+    } catch {
+      clePresente = false;
+    }
+    if (!clePresente) return n;
   }
   return null;
 }

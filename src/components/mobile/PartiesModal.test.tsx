@@ -16,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { PartiesModal } from "./PartiesModal";
 import {
+  CLE_INDEX,
   changerSlotActif,
   chargerIndex,
   cleSlot,
@@ -136,6 +137,48 @@ describe("PartiesModal — Jouer / Reprendre", () => {
 
     expect(within(ligne(1)).getByRole("button", { name: "Reprendre" })).toBeTruthy();
     expect(within(ligne(1)).queryByRole("button", { name: "Jouer" })).toBeNull();
+  });
+
+  it("Jouer appelle onAvantBascule AVANT changerSlotActif (détachement avant la bascule)", () => {
+    const location = mockLocation();
+    seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
+    seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
+    changerSlotActif(1);
+    const appels: string[] = [];
+    const onAvantBascule = vi.fn(() => {
+      appels.push(`avant:${chargerIndex().actif}`);
+    });
+
+    render(
+      <PartiesModal
+        open
+        onClose={vi.fn()}
+        mode="gestion"
+        onNouvellePartie={vi.fn()}
+        onAvantBascule={onAvantBascule}
+      />,
+    );
+    fireEvent.click(within(ligne(2)).getByRole("button", { name: "Jouer" }));
+
+    expect(onAvantBascule).toHaveBeenCalledTimes(1);
+    // L'actif storage était encore 1 au moment de l'appel : la callback a
+    // bien couru AVANT `changerSlotActif`, pas après.
+    expect(appels).toEqual(["avant:1"]);
+    expect(chargerIndex().actif).toBe(2);
+    expect(location.href).toBe("/bureau");
+  });
+
+  it("onAvantBascule absent (prop optionnelle) : Jouer reste sans erreur", () => {
+    const location = mockLocation();
+    seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
+    changerSlotActif(1);
+
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+
+    expect(() =>
+      fireEvent.click(within(ligne(1)).getByRole("button", { name: "Reprendre" })),
+    ).not.toThrow();
+    expect(location.href).toBe("/bureau");
   });
 });
 
@@ -264,6 +307,61 @@ describe("PartiesModal — Supprimer", () => {
     expect(chargerIndex().slots[2]).toBeNull();
   });
 
+  it("etaitActif est lu depuis le storage, pas depuis le state React périmé", () => {
+    const location = mockLocation();
+    seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
+    changerSlotActif(1);
+    const onAvantSuppressionActive = vi.fn();
+
+    render(
+      <PartiesModal
+        open
+        onClose={vi.fn()}
+        mode="gestion"
+        onNouvellePartie={vi.fn()}
+        onAvantSuppressionActive={onAvantSuppressionActive}
+      />,
+    );
+    // Bascule l'actif en storage vers 2 SANS repasser par la modal (simule
+    // un autre onglet/écran) : le state React `index` de la modal reste
+    // périmé sur actif=1.
+    changerSlotActif(2);
+
+    fireEvent.click(within(ligne(1)).getByRole("button", { name: "Supprimer" }));
+    const dialogue = screen.getByRole("dialog", { name: /Supprimer/ });
+    fireEvent.click(within(dialogue).getByRole("button", { name: "Supprimer" }));
+
+    // Le slot 1 n'est plus l'actif storage : ni la callback ni le reload.
+    expect(onAvantSuppressionActive).not.toHaveBeenCalled();
+    expect(location.reload).not.toHaveBeenCalled();
+    expect(chargerIndex().slots[1]).toBeNull();
+  });
+
+  it("double clic sur Confirmer Supprimer : la garde one-shot évite un double déclenchement", () => {
+    const location = mockLocation();
+    seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
+    changerSlotActif(1);
+    const onAvantSuppressionActive = vi.fn();
+
+    render(
+      <PartiesModal
+        open
+        onClose={vi.fn()}
+        mode="gestion"
+        onNouvellePartie={vi.fn()}
+        onAvantSuppressionActive={onAvantSuppressionActive}
+      />,
+    );
+    fireEvent.click(within(ligne(1)).getByRole("button", { name: "Supprimer" }));
+    const dialogue = screen.getByRole("dialog", { name: /Supprimer/ });
+    const boutonConfirmer = within(dialogue).getByRole("button", { name: "Supprimer" });
+    fireEvent.click(boutonConfirmer);
+    fireEvent.click(boutonConfirmer);
+
+    expect(onAvantSuppressionActive).toHaveBeenCalledTimes(1);
+    expect(location.reload).toHaveBeenCalledTimes(1);
+  });
+
   it("onAvantSuppressionActive absent (prop optionnelle) : la suppression du slot actif reste sans erreur", () => {
     mockLocation();
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
@@ -365,6 +463,27 @@ describe("PartiesModal — mode choisir-ecrasement", () => {
 
     fireEvent.click(within(ligne(3)).getByRole("button", { name: "Nouvelle partie ici" }));
     expect(onNouvellePartie).toHaveBeenCalledWith(3);
+  });
+});
+
+describe("PartiesModal — occupation dérivée de l'index OU de la clé", () => {
+  it("index corrompu mais clés de save intactes : les slots apparaissent occupés (résumé + nom fallback)", () => {
+    localStorage.setItem(
+      cleSlot(1),
+      JSON.stringify({ jourActuel: 3, budget: 700, brocanteur: { niveau: 2, xp: 0 } }),
+    );
+    localStorage.setItem(CLE_INDEX, "not-valid-json{");
+
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+
+    const l1 = ligne(1);
+    // Nom fallback « Partie N » : l'index corrompu n'a pas de MetaSlot à lire.
+    expect(within(l1).getByText("Partie 1")).toBeTruthy();
+    expect(within(l1).getByText(/Jour 3/)).toBeTruthy();
+    expect(within(l1).queryByText("Emplacement vide")).toBeNull();
+
+    const l2 = ligne(2);
+    expect(within(l2).getByText("Emplacement vide")).toBeTruthy();
   });
 });
 

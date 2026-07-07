@@ -103,6 +103,20 @@ describe("migration legacy", () => {
     // La legacy n'est pas touchée puisqu'un index existe déjà.
     expect(localStorage.getItem(CLE_LEGACY)).toBe('{"budget":123}');
   });
+
+  it("pas de migration si la clé du slot 1 existe déjà (état anormal) : rien n'est écrasé", () => {
+    localStorage.setItem(CLE_LEGACY, '{"budget":123}');
+    localStorage.setItem(cleSlot(1), '{"budget":999}');
+
+    const idx = chargerIndex();
+
+    // La clé du slot 1 garde sa valeur d'origine, pas celle de la legacy.
+    expect(localStorage.getItem(cleSlot(1))).toBe('{"budget":999}');
+    // Aucun index n'a été créé : ni migration, ni suppression de la legacy.
+    expect(localStorage.getItem(CLE_INDEX)).toBeNull();
+    expect(localStorage.getItem(CLE_LEGACY)).toBe('{"budget":123}');
+    expect(idx).toEqual({ actif: 1, slots: { 1: null, 2: null, 3: null } });
+  });
 });
 
 describe("opérations", () => {
@@ -135,6 +149,13 @@ describe("opérations", () => {
     idx = chargerIndex();
     expect(idx.slots[1]?.nom).toBeNull();
     expect(idx.slots[1]?.derniereSession).toBe(12345);
+  });
+
+  it("renommerSlot sur un slot vide : no-op, pas de MetaSlot fantôme", () => {
+    renommerSlot(2, "Nom fantôme");
+
+    const idx = chargerIndex();
+    expect(idx.slots[2]).toBeNull();
   });
 
   it("supprimerSlot d'un slot non actif : clé effacée, entrée null, actif inchangé", () => {
@@ -232,6 +253,18 @@ describe("opérations", () => {
       }),
     );
     expect(premierSlotLibre()).toBeNull();
+  });
+
+  it("premierSlotLibre ignore un slot dont l'entrée d'index est null mais la clé de save existe encore (orpheline)", () => {
+    localStorage.setItem(cleSlot(1), '{"budget":1}');
+    localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({ actif: 1, slots: { 1: null, 2: null, 3: null } }),
+    );
+
+    // Le slot 1 a une entrée d'index null mais une vraie save dessous : il
+    // n'est pas libre. Le slot 2 est réellement vide.
+    expect(premierSlotLibre()).toBe(2);
   });
 
   it("resumeSlot lit jourActuel/brocanteur.niveau/budget ; null si vide ou JSON invalide", () => {

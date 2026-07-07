@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { X } from "lucide-react";
 import { BrassCorners } from "@/components/ui/BrassCorners";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -10,6 +10,7 @@ import {
   chargerIndex,
   renommerSlot,
   resumeSlot,
+  slotActif,
   supprimerSlot,
   type IndexSlots,
   type NumeroSlot,
@@ -32,6 +33,18 @@ interface PartiesModalProps {
    * ressuscitant une partie qu'on croyait supprimée.
    */
   onAvantSuppressionActive?: () => void;
+  /**
+   * Appelé SYNCHRONE juste avant `changerSlotActif(n)` dans `onJouer`. Sert à
+   * détacher l'état en mémoire du `GameContext` (voir `detacherPartie()`)
+   * AVANT la bascule : sans ça, entre le changement d'emplacement actif en
+   * storage et le rechargement effectif de la page (`window.location.href`),
+   * le tick d'auto-sauvegarde de CET écran (toujours monté, toujours branché
+   * sur l'ANCIEN state) peut se glisser dans cette fenêtre et réécrire
+   * l'ancienne partie dans la clé du slot qu'on vient d'activer — perte
+   * silencieuse et définitive de la partie choisie. Même famille de course
+   * que `onAvantSuppressionActive` et que la bascule différée de l'intro.
+   */
+  onAvantBascule?: () => void;
 }
 
 const NUMEROS_SLOTS: readonly NumeroSlot[] = [1, 2, 3];
@@ -188,12 +201,17 @@ interface LigneSlot {
 function construireLignes(index: IndexSlots): LigneSlot[] {
   return NUMEROS_SLOTS.map((n) => {
     const meta = index.slots[n];
+    const resume = resumeSlot(n);
+    // Occupé si l'index le dit OU si une save lisible existe sous la clé du
+    // slot : un index corrompu/désynchronisé ne doit jamais faire passer une
+    // vraie partie pour un emplacement vide (sinon « Nouvelle partie »
+    // l'écraserait sans passer par la confirmation Écraser).
     return {
       n,
-      occupe: meta !== null,
+      occupe: meta !== null || resume !== null,
       nom: meta?.nom ?? null,
       derniereSession: meta?.derniereSession ?? 0,
-      resume: meta ? resumeSlot(n) : null,
+      resume,
     };
   });
 }
@@ -204,12 +222,17 @@ export function PartiesModal({
   mode,
   onNouvellePartie,
   onAvantSuppressionActive,
+  onAvantBascule,
 }: PartiesModalProps) {
   const [index, setIndex] = useState<IndexSlots | null>(null);
   const [renommage, setRenommage] = useState<NumeroSlot | null>(null);
   const [nomEnCours, setNomEnCours] = useState("");
   const [confirmSuppression, setConfirmSuppression] = useState<NumeroSlot | null>(null);
   const [confirmEcrasement, setConfirmEcrasement] = useState<NumeroSlot | null>(null);
+  // Garde one-shot : évite un double déclenchement de la suppression (ex.
+  // double clic / double événement) qui rejouerait `onAvantSuppressionActive`
+  // + `supprimerSlot` par-dessus un état déjà nettoyé.
+  const suppressionEnCoursRef = useRef(false);
 
   useEffect(() => {
     if (open) {
@@ -217,6 +240,7 @@ export function PartiesModal({
       setRenommage(null);
       setConfirmSuppression(null);
       setConfirmEcrasement(null);
+      suppressionEnCoursRef.current = false;
     }
   }, [open]);
 
@@ -225,6 +249,9 @@ export function PartiesModal({
   const rafraichir = () => setIndex(chargerIndex());
 
   const onJouer = (n: NumeroSlot) => {
+    // Détache l'état en mémoire AVANT la bascule : voir la doc de
+    // `onAvantBascule` sur la course avec le tick d'auto-sauvegarde.
+    onAvantBascule?.();
     changerSlotActif(n);
     window.location.href = "/bureau";
   };
@@ -245,7 +272,11 @@ export function PartiesModal({
   };
 
   const onSupprimerConfirme = (n: NumeroSlot) => {
-    const etaitActif = index.actif === n;
+    if (suppressionEnCoursRef.current) return;
+    suppressionEnCoursRef.current = true;
+    // Lu depuis le storage (pas le state React `index`, qui peut être
+    // périmé) : c'est la source de vérité au moment réel de la suppression.
+    const etaitActif = slotActif() === n;
     // Vide le state en mémoire AVANT la suppression + le reload : voir la
     // doc de `onAvantSuppressionActive` sur la course avec le tick
     // d'auto-sauvegarde.
@@ -254,6 +285,7 @@ export function PartiesModal({
     if (etaitActif) {
       window.location.reload();
     } else {
+      suppressionEnCoursRef.current = false;
       rafraichir();
     }
   };

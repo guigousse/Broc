@@ -130,6 +130,14 @@ interface GameActionsValue {
   ajusterBudget: (delta: number) => void;
   avancerJour: (nbJours?: number, volontaire?: boolean) => void;
   reset: () => void;
+  /**
+   * Détache l'état en mémoire sans toucher au storage — utilisé avant une
+   * bascule de slot pour que l'effet d'auto-save (gardé sur state null) ne
+   * puisse plus écrire. ⚠ NE PAS confondre avec `reset()` : `reset()` efface
+   * aussi la clé de save active (`gameRepository.clear()`), ce qui
+   * supprimerait la partie qu'on est justement en train de quitter.
+   */
+  detacherPartie: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
   /** Ré-attribue le coffre courant (mode prep) à une vraie brocante, sans perdre les objets/prix/positions. */
   attribuerVitrineABrocante: (brocanteId: string) => void;
@@ -748,6 +756,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState(null);
     gameRepository.clear();
   }, []);
+
+  // Détache l'état en mémoire sans toucher au storage — utilisé avant une
+  // bascule de slot pour que l'effet d'auto-save (gardé sur state null) ne
+  // puisse plus écrire.
+  const detacherPartie = useCallback(() => setState(null), []);
 
   const attribuerVitrineABrocante = useCallback((brocanteId: string) => {
     setState((prev) => {
@@ -1514,6 +1527,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ajusterBudget,
       avancerJour,
       reset,
+      detacherPartie,
       ouvrirVitrine,
       attribuerVitrineABrocante,
       mettreEnVitrine,
@@ -1562,6 +1576,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ajusterBudget,
       avancerJour,
       reset,
+      detacherPartie,
       ouvrirVitrine,
       attribuerVitrineABrocante,
       mettreEnVitrine,

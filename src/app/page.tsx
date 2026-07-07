@@ -24,7 +24,7 @@ const DOOR_CX_PCT = 51;
 const DOOR_CY_PCT = 66;
 
 export default function TitleScreen() {
-  const { nouvellePartie, state, isHydrated, reset } = useGame();
+  const { nouvellePartie, state, isHydrated, reset, detacherPartie } = useGame();
   const { playClick } = useSettings();
   const [reglagesOuverts, setReglagesOuverts] = useState(false);
   const [partiesModal, setPartiesModal] = useState<
@@ -261,9 +261,7 @@ export default function TitleScreen() {
             }}
           >
             <Button variant="primary" size="lg" onClick={onNouvellePartie}>
-              {aSauvegarde
-                ? "Recommencer une nouvelle partie"
-                : "Nouvelle Partie"}
+              {aSauvegarde ? "Nouvelle partie" : "Nouvelle Partie"}
             </Button>
             <Button
               variant="secondary"
@@ -325,6 +323,7 @@ export default function TitleScreen() {
         mode={partiesModal ?? "gestion"}
         onNouvellePartie={demarrerSurSlot}
         onAvantSuppressionActive={reset}
+        onAvantBascule={detacherPartie}
       />
     </main>
   );
