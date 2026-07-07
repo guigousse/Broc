@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButton";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
@@ -296,24 +297,26 @@ export default function TitleScreen() {
               alignItems: "center",
             }}
           >
-            <Button variant="primary" size="lg" onClick={onNouvellePartie}>
-              {aSauvegarde ? "Nouvelle partie" : "Nouvelle Partie"}
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              disabled={!aSauvegarde}
-              onClick={onContinuer}
+            {/* Même format que les boutons Chiner / Étaler du QG. */}
+            <div
               style={{
-                background: "transparent",
-                color: "var(--brass-300)",
-                borderColor: "var(--brass-500)",
-                boxShadow:
-                  "inset 0 0 0 3px transparent, inset 0 0 0 4px var(--brass-500)",
+                display: "flex",
+                gap: 10,
+                justifyContent: "center",
               }}
             >
-              Continuer
-            </Button>
+              <FloatingActionButton onClick={onNouvellePartie} minWidth={140}>
+                Nouvelle partie
+              </FloatingActionButton>
+              <FloatingActionButton
+                onClick={onContinuer}
+                variant="secondary"
+                disabled={!aSauvegarde}
+                minWidth={130}
+              >
+                Continuer
+              </FloatingActionButton>
+            </div>
             <div style={{ display: "flex", gap: 4 }}>
               <Button
                 variant="ghost"
