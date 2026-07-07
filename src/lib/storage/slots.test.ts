@@ -344,3 +344,18 @@ describe("opérations", () => {
     expect(typeof idx.slots[2]?.derniereSession).toBe("number");
   });
 });
+
+describe("renommerSlot — clé orpheline (index sans entrée)", () => {
+  it("renomme un slot occupé par sa clé même si l'index le croit vide", () => {
+    // Clé de save présente mais AUCUNE entrée d'index (état « index corrompu »
+    // que construireLignes affiche comme occupé — le Renommer doit marcher).
+    localStorage.setItem(cleSlot(2), JSON.stringify({ budget: 42 }));
+    renommerSlot(2, "Partie orpheline");
+    expect(chargerIndex().slots[2]?.nom).toBe("Partie orpheline");
+  });
+
+  it("reste un no-op sur un slot réellement vide (ni clé ni entrée)", () => {
+    renommerSlot(3, "Fantôme");
+    expect(chargerIndex().slots[3]).toBeNull();
+  });
+});

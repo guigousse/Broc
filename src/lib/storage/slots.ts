@@ -196,7 +196,16 @@ export function renommerSlot(n: NumeroSlot, nom: string | null): void {
   const index = chargerIndex();
   // Un slot vide n'a rien à renommer : créer une MetaSlot fantôme ferait
   // passer un emplacement vide pour occupé (voir `construireLignes`).
-  if (!index.slots[n]) return;
+  // ⚠ L'occupation se juge aussi par la CLÉ de save (clé orpheline sans
+  // entrée d'index — même critère que `premierSlotLibre`) : l'UI affiche
+  // alors le slot comme occupé et son Renommer doit fonctionner.
+  let cleOccupee = false;
+  try {
+    cleOccupee = window.localStorage.getItem(cleSlot(n)) !== null;
+  } catch {
+    // stockage indisponible : on s'en tient à l'index
+  }
+  if (!index.slots[n] && !cleOccupee) return;
   const trimme = nom === null ? "" : nom.trim().slice(0, LONGUEUR_MAX_NOM);
   const nomFinal = trimme === "" ? null : trimme;
   const existant = index.slots[n];
