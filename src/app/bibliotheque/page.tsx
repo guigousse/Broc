@@ -20,6 +20,7 @@ import {
   getTreeDef,
   getTreeMeta,
   competencesParBranche,
+  visuelCompetence,
 } from "@/data/competences";
 import { contexteDepuisState, etatCompetence } from "@/lib/competences";
 import { detailProgressionBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
@@ -335,36 +336,18 @@ function PalierTile({
     aspectRatio: "1/1",
     border: "1px solid var(--brass-500)",
     cursor: "pointer",
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-    gap: 2,
-    padding: 4,
-    fontFamily: "var(--font-display)",
+    padding: 0,
+    overflow: "hidden" as const,
+    background: "var(--paper-300)",
   };
 
-  const styleByState = isDebloquee
+  const styleByState = isVerrouillee
     ? {
         ...baseStyle,
-        background: "var(--forest-800)",
-        color: "var(--brass-300)",
-        boxShadow:
-          "inset 0 0 0 2px var(--forest-800), inset 0 0 0 3px var(--brass-500)",
+        borderStyle: "dashed" as const,
+        borderColor: "var(--paper-500)",
       }
-    : isVerrouillee
-      ? {
-          ...baseStyle,
-          background: "var(--paper-300)",
-          color: "var(--ink-300)",
-          borderStyle: "dashed" as const,
-          borderColor: "var(--paper-500)",
-        }
-      : {
-          ...baseStyle,
-          background: "var(--paper-100)",
-          color: "var(--forest-800)",
-        };
+    : baseStyle;
 
   return (
     <button
@@ -373,32 +356,69 @@ function PalierTile({
       style={styleByState}
       title={comp.nom}
     >
+      <img
+        src={visuelCompetence(comp)}
+        alt=""
+        loading="lazy"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          filter: isVerrouillee ? "grayscale(1)" : undefined,
+          opacity: isVerrouillee ? 0.55 : 1,
+        }}
+      />
+      {isDebloquee && (
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            boxShadow:
+              "inset 0 0 0 2px var(--forest-800), inset 0 0 0 3px var(--brass-500)",
+          }}
+        />
+      )}
       {isDebloquee && (
         <span
           aria-hidden
           style={{
             position: "absolute",
             top: 3,
-            right: 4,
+            right: 3,
+            width: 16,
+            height: 16,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "var(--forest-800)",
+            color: "var(--brass-300)",
             fontFamily: "var(--font-display)",
             fontSize: 10,
-            color: "var(--brass-300)",
+            lineHeight: 1,
           }}
         >
           ✓
         </span>
       )}
-      <span style={{ fontSize: 18, fontWeight: 700 }}>
-        {comp.palierNumero}
-      </span>
       {comp.niveauBrocanteurRequis > 0 && (
         <span
           style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: "2px 0",
+            textAlign: "center",
+            background: "color-mix(in srgb, var(--paper-100) 82%, transparent)",
+            color: isVerrouillee ? "var(--ink-500)" : "var(--forest-800)",
             fontFamily: "var(--font-mono)",
             fontSize: 8,
             letterSpacing: "0.1em",
             textTransform: "uppercase",
-            opacity: 0.85,
           }}
         >
           N{comp.niveauBrocanteurRequis}
