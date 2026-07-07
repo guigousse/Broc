@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { BrassCorners } from "@/components/ui/BrassCorners";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
@@ -162,28 +161,6 @@ export default function TitleScreen() {
         }}
       />
       <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 24,
-          border: "1px solid var(--brass-700)",
-          boxShadow:
-            "inset 0 0 0 5px transparent, inset 0 0 0 6px var(--brass-700)",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 32,
-          border: "1px solid var(--brass-500)",
-          pointerEvents: "none",
-        }}
-      />
-      <BrassCorners color="var(--brass-500)" inset={34} size={40} />
-
-      <div
         style={{
           position: "relative",
           flex: 1,
@@ -195,60 +172,20 @@ export default function TitleScreen() {
         }}
       >
         <div style={{ textAlign: "center", maxWidth: 720, margin: "0 auto" }}>
-          <img
-            src="/assets/broc-logo.png"
-            width={180}
-            height={180}
-            alt="Broc"
+          <h1
             style={{
-              display: "block",
-              margin: "0 auto 24px",
-              filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.4))",
-            }}
-          />
-
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 11,
-              letterSpacing: "0.4em",
-              textTransform: "uppercase",
-              color: "var(--brass-500)",
-              marginBottom: 12,
-              fontWeight: 600,
+              fontFamily: "var(--font-broc-title)",
+              fontWeight: 400,
+              fontSize: "clamp(64px, 22vw, 104px)",
+              letterSpacing: "0.04em",
+              lineHeight: 1,
+              color: "var(--paper-100)",
+              margin: 0,
+              textShadow: "0 8px 20px rgba(0,0,0,0.45)",
             }}
           >
-            — une simulation de brocante —
-          </div>
-
-          <img
-            src="/assets/broc-wordmark-light.svg"
-            width={520}
-            alt="Broc"
-            style={{
-              display: "block",
-              margin: "0 auto 6px",
-              maxWidth: "100%",
-              filter:
-                "drop-shadow(0 8px 20px rgba(0,0,0,0.45)) brightness(1.05)",
-            }}
-          />
-
-          <p
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontStyle: "italic",
-              fontSize: 20,
-              color: "var(--paper-300)",
-              margin: "8px auto 0",
-              maxWidth: 560,
-              lineHeight: 1.4,
-            }}
-          >
-            « Chinez, restaurez, négociez.
-            <br />
-            Faites parler les objets de leur siècle. »
-          </p>
+            Broc
+          </h1>
         </div>
 
         <div style={{ textAlign: "center", maxWidth: 720, margin: "0 auto" }}>
