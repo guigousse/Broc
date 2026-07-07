@@ -22,6 +22,16 @@ interface PartiesModalProps {
   mode: "gestion" | "choisir-ecrasement";
   /** Nouvelle partie dans ce slot — la confirmation d'écrasement est DANS la modal. */
   onNouvellePartie: (slot: NumeroSlot) => void;
+  /**
+   * Appelé SYNCHRONE juste avant `supprimerSlot(actif)` (uniquement quand le
+   * slot supprimé est l'actif). Sert à vider l'état en mémoire du
+   * `GameContext` (voir `reset()`) AVANT le `reload()` : sans ça, le tick
+   * d'auto-sauvegarde (settle énergie/quêtes, /60 s) peut se glisser entre
+   * la suppression et le rechargement effectif de la page et réécrire
+   * l'ancien state en mémoire dans la clé du slot qu'on vient de vider —
+   * ressuscitant une partie qu'on croyait supprimée.
+   */
+  onAvantSuppressionActive?: () => void;
 }
 
 const NUMEROS_SLOTS: readonly NumeroSlot[] = [1, 2, 3];
@@ -193,6 +203,7 @@ export function PartiesModal({
   onClose,
   mode,
   onNouvellePartie,
+  onAvantSuppressionActive,
 }: PartiesModalProps) {
   const [index, setIndex] = useState<IndexSlots | null>(null);
   const [renommage, setRenommage] = useState<NumeroSlot | null>(null);
@@ -235,6 +246,10 @@ export function PartiesModal({
 
   const onSupprimerConfirme = (n: NumeroSlot) => {
     const etaitActif = index.actif === n;
+    // Vide le state en mémoire AVANT la suppression + le reload : voir la
+    // doc de `onAvantSuppressionActive` sur la course avec le tick
+    // d'auto-sauvegarde.
+    if (etaitActif) onAvantSuppressionActive?.();
     supprimerSlot(n);
     if (etaitActif) {
       window.location.reload();

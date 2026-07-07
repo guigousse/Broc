@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { BrassCorners } from "@/components/ui/BrassCorners";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
+import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
+import { changerSlotActif, premierSlotLibre, type NumeroSlot } from "@/lib/storage/slots";
 
 /**
  * Centre mesuré de la porte d'entrée sur `facade-accueil.webp` (même mesure
@@ -18,17 +19,14 @@ const DOOR_CX_PCT = 51;
 const DOOR_CY_PCT = 66;
 
 export default function TitleScreen() {
-  const { nouvellePartie, state, isHydrated } = useGame();
+  const { nouvellePartie, state, isHydrated, reset } = useGame();
   const { playClick } = useSettings();
   const [reglagesOuverts, setReglagesOuverts] = useState(false);
-  const [confirmNouvellePartie, setConfirmNouvellePartie] = useState(false);
+  const [partiesModal, setPartiesModal] = useState<
+    "gestion" | "choisir-ecrasement" | null
+  >(null);
   const [introEnCours, setIntroEnCours] = useState(false);
   const aSauvegarde = isHydrated && state !== null;
-
-  const lancerNouvellePartie = () => {
-    setConfirmNouvellePartie(false);
-    setIntroEnCours(true);
-  };
 
   const onIntroFinie = () => {
     // L'intro joue AVANT la création de la sauvegarde. `nouvellePartie()`
@@ -38,13 +36,26 @@ export default function TitleScreen() {
     nouvellePartie();
   };
 
+  // Change le slot actif puis lance l'intro : le flux intro → `nouvellePartie()`
+  // (ci-dessus) crée la partie dans le slot devenu actif. Partagé par le
+  // premier-emplacement-libre direct et par les deux issues de la modal
+  // Parties (« Nouvelle partie ici » / « Écraser »).
+  const demarrerSurSlot = (n: NumeroSlot) => {
+    changerSlotActif(n);
+    setPartiesModal(null);
+    setIntroEnCours(true);
+  };
+
   const onNouvellePartie = () => {
     playClick();
-    if (aSauvegarde) {
-      setConfirmNouvellePartie(true);
+    const libre = premierSlotLibre();
+    if (libre !== null) {
+      demarrerSurSlot(libre);
       return;
     }
-    lancerNouvellePartie();
+    // Les 3 emplacements sont pleins : la modal Parties gère le choix de
+    // l'écrasement (avec sa propre confirmation) — plus de ConfirmModal ici.
+    setPartiesModal("choisir-ecrasement");
   };
 
   const onContinuer = () => {
@@ -55,6 +66,11 @@ export default function TitleScreen() {
   const onReglages = () => {
     playClick();
     setReglagesOuverts(true);
+  };
+
+  const onParties = () => {
+    playClick();
+    setPartiesModal("gestion");
   };
 
   if (introEnCours) {
@@ -245,14 +261,24 @@ export default function TitleScreen() {
             >
               Continuer · Sauvegarde
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onReglages}
-              style={{ color: "var(--brass-300)" }}
-            >
-              Réglages · Crédits
-            </Button>
+            <div style={{ display: "flex", gap: 4 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onParties}
+                style={{ color: "var(--brass-300)" }}
+              >
+                Parties
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onReglages}
+                style={{ color: "var(--brass-300)" }}
+              >
+                Réglages · Crédits
+              </Button>
+            </div>
           </div>
 
           <div
@@ -274,17 +300,13 @@ export default function TitleScreen() {
         open={reglagesOuverts}
         onClose={() => setReglagesOuverts(false)}
       />
-      <ConfirmModal
-        open={confirmNouvellePartie}
-        onClose={() => setConfirmNouvellePartie(false)}
-        onConfirm={lancerNouvellePartie}
-        titre="Nouvelle partie"
-        confirmLabel="Recommencer"
-        danger
-      >
-        Votre partie en cours sera définitivement écrasée : budget, inventaire,
-        collection et progression seront perdus. Continuer ?
-      </ConfirmModal>
+      <PartiesModal
+        open={partiesModal !== null}
+        onClose={() => setPartiesModal(null)}
+        mode={partiesModal ?? "gestion"}
+        onNouvellePartie={demarrerSurSlot}
+        onAvantSuppressionActive={reset}
+      />
     </main>
   );
 }

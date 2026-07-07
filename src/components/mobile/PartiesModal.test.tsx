@@ -210,6 +210,73 @@ describe("PartiesModal — Supprimer", () => {
     expect(chargerIndex().slots[1]).toBeNull();
     expect(location.reload).toHaveBeenCalledTimes(1);
   });
+
+  it("confirmer sur le slot ACTIF : onAvantSuppressionActive est appelé AVANT supprimerSlot", () => {
+    mockLocation();
+    seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
+    changerSlotActif(1);
+    const appels: string[] = [];
+    const onAvantSuppressionActive = vi.fn(() => {
+      appels.push(`avant:${chargerIndex().slots[1] !== null}`);
+    });
+
+    render(
+      <PartiesModal
+        open
+        onClose={vi.fn()}
+        mode="gestion"
+        onNouvellePartie={vi.fn()}
+        onAvantSuppressionActive={onAvantSuppressionActive}
+      />,
+    );
+    fireEvent.click(within(ligne(1)).getByRole("button", { name: "Supprimer" }));
+    const dialogue = screen.getByRole("dialog", { name: /Supprimer/ });
+    fireEvent.click(within(dialogue).getByRole("button", { name: "Supprimer" }));
+
+    expect(onAvantSuppressionActive).toHaveBeenCalledTimes(1);
+    // Le slot était encore occupé au moment de l'appel : la callback a bien
+    // couru AVANT `supprimerSlot`, pas après.
+    expect(appels).toEqual(["avant:true"]);
+    expect(chargerIndex().slots[1]).toBeNull();
+  });
+
+  it("confirmer sur un slot NON actif : onAvantSuppressionActive n'est PAS appelé", () => {
+    mockLocation();
+    seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
+    seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
+    changerSlotActif(1);
+    const onAvantSuppressionActive = vi.fn();
+
+    render(
+      <PartiesModal
+        open
+        onClose={vi.fn()}
+        mode="gestion"
+        onNouvellePartie={vi.fn()}
+        onAvantSuppressionActive={onAvantSuppressionActive}
+      />,
+    );
+    fireEvent.click(within(ligne(2)).getByRole("button", { name: "Supprimer" }));
+    const dialogue = screen.getByRole("dialog", { name: /Supprimer/ });
+    fireEvent.click(within(dialogue).getByRole("button", { name: "Supprimer" }));
+
+    expect(onAvantSuppressionActive).not.toHaveBeenCalled();
+    expect(chargerIndex().slots[2]).toBeNull();
+  });
+
+  it("onAvantSuppressionActive absent (prop optionnelle) : la suppression du slot actif reste sans erreur", () => {
+    mockLocation();
+    seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
+    changerSlotActif(1);
+
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    fireEvent.click(within(ligne(1)).getByRole("button", { name: "Supprimer" }));
+    const dialogue = screen.getByRole("dialog", { name: /Supprimer/ });
+    expect(() =>
+      fireEvent.click(within(dialogue).getByRole("button", { name: "Supprimer" })),
+    ).not.toThrow();
+    expect(chargerIndex().slots[1]).toBeNull();
+  });
 });
 
 describe("PartiesModal — slot vide", () => {
