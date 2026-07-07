@@ -75,6 +75,19 @@ describe("migration legacy", () => {
     expect(localStorage.getItem(cleSlot(1))).toBe('{"budget":123}');
   });
 
+  it("pas de migration si un index existe déjà mais est corrompu", () => {
+    localStorage.setItem(CLE_LEGACY, '{"budget":123}');
+    localStorage.setItem(CLE_INDEX, "not-valid-json{");
+
+    const idx = chargerIndex();
+
+    // La clé d'index existe (même corrompue) : on ne migre pas par-dessus,
+    // on retombe sur le défaut sans toucher à la legacy.
+    expect(idx).toEqual({ actif: 1, slots: { 1: null, 2: null, 3: null } });
+    expect(localStorage.getItem(cleSlot(1))).toBeNull();
+    expect(localStorage.getItem(CLE_LEGACY)).toBe('{"budget":123}');
+  });
+
   it("pas de migration si un index existe déjà", () => {
     localStorage.setItem(CLE_LEGACY, '{"budget":123}');
     localStorage.setItem(

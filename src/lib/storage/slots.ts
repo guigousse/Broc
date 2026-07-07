@@ -73,6 +73,20 @@ function lireIndexBrut(): IndexSlots | null {
   }
 }
 
+/**
+ * Distingue « aucune clé d'index » de « clé présente mais illisible » : la
+ * migration ne doit se déclencher que dans le premier cas, jamais par-dessus
+ * un index existant (même corrompu).
+ */
+function indexExiste(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(CLE_INDEX) !== null;
+  } catch {
+    return false;
+  }
+}
+
 function ecrireIndex(index: IndexSlots): boolean {
   if (typeof window === "undefined") return false;
   try {
@@ -143,13 +157,13 @@ function tenterMigrationLegacy(): void {
 export function chargerIndex(): IndexSlots {
   if (typeof window === "undefined") return indexParDefaut();
 
-  const existant = lireIndexBrut();
-  if (existant !== null) return existant;
+  if (indexExiste()) {
+    return lireIndexBrut() ?? indexParDefaut();
+  }
 
   tenterMigrationLegacy();
 
-  const apresMigration = lireIndexBrut();
-  return apresMigration ?? indexParDefaut();
+  return lireIndexBrut() ?? indexParDefaut();
 }
 
 export function slotActif(): NumeroSlot {
