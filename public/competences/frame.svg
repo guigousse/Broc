@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 2048">
+  <!-- Cadre Art déco unique des visuels de compétences.
+       Double filet brun encre + filet or, losanges aux quatre angles.
+       Fond transparent : composité au-dessus des scènes générées. -->
+  <g fill="none" stroke-linejoin="miter">
+    <rect x="84"  y="84"  width="1880" height="1880" stroke="#4a3a28" stroke-width="8"/>
+    <rect x="102" y="102" width="1844" height="1844" stroke="#a07f3c" stroke-width="2"/>
+    <rect x="118" y="118" width="1812" height="1812" stroke="#4a3a28" stroke-width="3"/>
+    <!-- Losanges d'angle, centrés sur (101,101) etc. — ornement par-dessus les filets -->
+    <path d="M 101 63  L 139 101  L 101 139  L 63 101  Z"  stroke="#4a3a28" stroke-width="5"/>
+    <path d="M 1947 63 L 1985 101 L 1947 139 L 1909 101 Z" stroke="#4a3a28" stroke-width="5"/>
+    <path d="M 101 1909  L 139 1947  L 101 1985  L 63 1947  Z"  stroke="#4a3a28" stroke-width="5"/>
+    <path d="M 1947 1909 L 1985 1947 L 1947 1985 L 1909 1947 Z" stroke="#4a3a28" stroke-width="5"/>
+    <!-- Petits losanges au milieu de chaque bord -->
+    <path d="M 1024 76  L 1049 101  L 1024 126  L 999 101  Z"  stroke="#4a3a28" stroke-width="4"/>
+    <path d="M 1024 1922 L 1049 1947 L 1024 1972 L 999 1947 Z" stroke="#4a3a28" stroke-width="4"/>
+    <path d="M 76 1024  L 101 999  L 126 1024  L 101 1049  Z"  stroke="#4a3a28" stroke-width="4"/>
+    <path d="M 1922 1024 L 1947 999 L 1972 1024 L 1947 1049 Z" stroke="#4a3a28" stroke-width="4"/>
+  </g>
+</svg>

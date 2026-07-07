@@ -48,6 +48,14 @@ describe("assets public/competences", () => {
     );
     expect(manquants).toEqual([]);
   });
+
+  it("le cadre overlay frame.svg existe", () => {
+    expect(
+      fs.existsSync(
+        path.join(process.cwd(), "public", "competences", "frame.svg"),
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("visuelCompetence", () => {

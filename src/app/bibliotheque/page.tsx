@@ -473,6 +473,40 @@ function PalierDetail({
         </div>
       )}
 
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          aspectRatio: "1/1",
+          background: "var(--paper-300)",
+        }}
+      >
+        <img
+          src={visuelCompetence(comp)}
+          alt={comp.nom}
+          style={{
+            display: "block",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: isVerrouillee ? "grayscale(1)" : undefined,
+            opacity: isVerrouillee ? 0.6 : 1,
+          }}
+        />
+        <img
+          src="/competences/frame.svg"
+          alt=""
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+          }}
+        />
+      </div>
+
       <p
         style={{
           fontFamily: "var(--font-serif)",
