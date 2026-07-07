@@ -89,9 +89,10 @@ describe("PartiesModal — mode gestion, liste", () => {
 
     const l3 = ligne(3);
     expect(within(l3).getByText("Emplacement vide")).toBeTruthy();
-    // Un emplacement vide est purement informatif : aucune action proposée
-    // (la création passe par le bouton « Nouvelle partie » de l'écran-titre).
-    expect(within(l3).queryByRole("button")).toBeNull();
+    // Un emplacement vide n'offre que le « + » de création.
+    expect(
+      within(l3).getByRole("button", { name: /Nouvelle partie dans l'emplacement 3/ }),
+    ).toBeTruthy();
   });
 
   it("badge Active uniquement sur le slot actif", () => {
@@ -378,15 +379,20 @@ describe("PartiesModal — Supprimer", () => {
 });
 
 describe("PartiesModal — slot vide", () => {
-  it("aucune action sur un emplacement vide (création via l'écran-titre)", () => {
+  it("le « + » appelle onNouvellePartie(n) directement, sans confirmation", () => {
     const onNouvellePartie = vi.fn();
     render(
       <PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={onNouvellePartie} />,
     );
 
-    expect(within(ligne(1)).getByText("Emplacement vide")).toBeTruthy();
-    expect(within(ligne(1)).queryByRole("button")).toBeNull();
-    expect(onNouvellePartie).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(ligne(1)).getByRole("button", {
+        name: /Nouvelle partie dans l'emplacement 1/,
+      }),
+    );
+
+    expect(onNouvellePartie).toHaveBeenCalledWith(1);
+    expect(screen.queryByRole("dialog", { name: /Supprimer|Écraser/ })).toBeNull();
   });
 });
 
@@ -449,7 +455,7 @@ describe("PartiesModal — mode choisir-ecrasement", () => {
     expect(chargerIndex().slots[2]).not.toBeNull();
   });
 
-  it("slot vide : purement informatif, pas d'action directe", () => {
+  it("slot vide : le « + » crée directement (pas de confirmation)", () => {
     const onNouvellePartie = vi.fn();
     render(
       <PartiesModal
@@ -460,8 +466,12 @@ describe("PartiesModal — mode choisir-ecrasement", () => {
       />,
     );
 
-    expect(within(ligne(3)).getByText("Emplacement vide")).toBeTruthy();
-    expect(within(ligne(3)).queryByRole("button")).toBeNull();
+    fireEvent.click(
+      within(ligne(3)).getByRole("button", {
+        name: /Nouvelle partie dans l'emplacement 3/,
+      }),
+    );
+    expect(onNouvellePartie).toHaveBeenCalledWith(3);
   });
 });
 

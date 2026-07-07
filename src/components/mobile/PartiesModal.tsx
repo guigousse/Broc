@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Button } from "@/components/ui/Button";
 import {
@@ -160,13 +160,33 @@ const relatifStyle: CSSProperties = {
   marginBottom: 12,
 };
 
+const videRow: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 14,
+  padding: "22px 0",
+};
+
 const videTitre: CSSProperties = {
   fontFamily: "var(--font-serif)",
   fontStyle: "italic",
   fontSize: 19,
   color: "var(--brass-700)",
-  textAlign: "center",
-  padding: "22px 0",
+};
+
+const btnPlus: CSSProperties = {
+  display: "grid",
+  placeItems: "center",
+  width: 34,
+  height: 34,
+  borderRadius: "50%",
+  border: "1.5px solid var(--brass-500)",
+  background: "transparent",
+  color: "var(--brass-700)",
+  cursor: "pointer",
+  padding: 0,
+  flexShrink: 0,
 };
 
 const actionsRow: CSSProperties = {
@@ -388,7 +408,17 @@ export function PartiesModal({
                   </div>
                 </>
               ) : (
-                <div style={videTitre}>Emplacement vide</div>
+                <div style={videRow}>
+                  <span style={videTitre}>Emplacement vide</span>
+                  <button
+                    type="button"
+                    onClick={() => onNouvellePartie(ligne.n)}
+                    aria-label={`Nouvelle partie dans l'emplacement ${ligne.n}`}
+                    style={btnPlus}
+                  >
+                    <Plus size={18} strokeWidth={2.5} />
+                  </button>
+                </div>
               )}
             </div>
           </section>
