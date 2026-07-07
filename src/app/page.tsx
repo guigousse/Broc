@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButton";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
+import { CreditsModal } from "@/components/mobile/CreditsModal";
 import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
 import { useGame } from "@/context/GameContext";
@@ -112,6 +113,7 @@ export default function TitleScreen() {
   const { nouvellePartie, state, isHydrated, reset, detacherPartie } = useGame();
   const { playClick } = useSettings();
   const [reglagesOuverts, setReglagesOuverts] = useState(false);
+  const [creditsOuverts, setCreditsOuverts] = useState(false);
   const [partiesModal, setPartiesModal] = useState<
     "gestion" | "choisir-ecrasement" | null
   >(null);
@@ -179,6 +181,11 @@ export default function TitleScreen() {
   const onReglages = () => {
     playClick();
     setReglagesOuverts(true);
+  };
+
+  const onCredits = () => {
+    playClick();
+    setCreditsOuverts(true);
   };
 
   const onParties = () => {
@@ -253,8 +260,8 @@ export default function TitleScreen() {
           position: "absolute",
           inset: 0,
           backgroundImage: `repeating-conic-gradient(
-            from 0deg at 50% 38%,
-            rgba(197,160,89,0.05) 0deg 4deg,
+            from 0deg at 50% 10%,
+            rgba(197,160,89,0.09) 0deg 4deg,
             rgba(0,0,0,0) 4deg 12deg
           )`,
           pointerEvents: "none",
@@ -332,7 +339,15 @@ export default function TitleScreen() {
                 onClick={onReglages}
                 style={{ color: "var(--brass-300)" }}
               >
-                Réglages · Crédits
+                Réglages
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onCredits}
+                style={{ color: "var(--brass-300)" }}
+              >
+                Crédits
               </Button>
             </div>
           </div>
@@ -355,6 +370,10 @@ export default function TitleScreen() {
       <ReglagesModal
         open={reglagesOuverts}
         onClose={() => setReglagesOuverts(false)}
+      />
+      <CreditsModal
+        open={creditsOuverts}
+        onClose={() => setCreditsOuverts(false)}
       />
       <PartiesModal
         open={partiesModal !== null}
