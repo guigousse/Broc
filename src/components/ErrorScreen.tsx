@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-const STORAGE_KEY = "projet-broc:game-state:v1";
+import { viderSlotActif } from "@/lib/storage/slots";
 
 /**
  * Écran de secours affiché par les error boundaries (`error.tsx`,
@@ -19,7 +18,8 @@ export function ErrorScreen({
 
   function reinitialiser() {
     try {
-      window.localStorage.removeItem(STORAGE_KEY);
+      // Ne réinitialise QUE la partie active (les autres emplacements sont préservés).
+      viderSlotActif();
     } catch {
       // ignore
     }
