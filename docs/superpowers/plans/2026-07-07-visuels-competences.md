@@ -408,9 +408,15 @@ async function main() {
         continue;
       }
       const raw = Buffer.from(img.inlineData.data, "base64");
-      const buf = await sharp(raw)
+      // ATTENTION sharp : resize s'applique toujours AVANT composite dans une
+      // même chaîne (l'ordre des appels ne compte pas) → deux passes distinctes,
+      // sinon « Image to composite must have same dimensions or smaller ».
+      const composed = await sharp(raw)
         .resize(GEN_SIZE, GEN_SIZE)
         .composite([{ input: frame }])
+        .png()
+        .toBuffer();
+      const buf = await sharp(composed)
         .resize(OUT_SIZE, OUT_SIZE)
         .webp({ quality: 85 })
         .toBuffer();
