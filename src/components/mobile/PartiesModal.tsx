@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { X } from "lucide-react";
-import { BrassCorners } from "@/components/ui/BrassCorners";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Button } from "@/components/ui/Button";
 import {
@@ -62,17 +61,17 @@ function tempsRelatif(ts: number): string {
 }
 
 /* ------------------------------------------------------------------ */
-/* Styles — même pattern que ReglagesModal (scrim, carte papier, mono). */
+/* Styles — voile flouté au-dessus de l'écran-titre (la façade reste    */
+/* visible derrière), cartes papier flottantes.                         */
 /* ------------------------------------------------------------------ */
 
 const wrap: CSSProperties = {
   position: "fixed",
   inset: 0,
   zIndex: 100,
-  backgroundColor: "var(--forest-900)",
-  backgroundImage:
-    "radial-gradient(ellipse at 50% 35%, rgba(40,74,56,0.7) 0%, rgba(15,31,24,0) 65%), url(/assets/grain-overlay.svg)",
-  backgroundSize: "cover, 320px 320px",
+  background: "rgba(15,31,24,0.35)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
   paddingTop: "var(--safe-top)",
   paddingBottom: "var(--safe-bottom)",
   display: "flex",
@@ -85,7 +84,6 @@ const topBar: CSSProperties = {
   alignItems: "center",
   justifyContent: "space-between",
   padding: "16px 24px",
-  borderBottom: "1px solid var(--brass-700)",
 };
 
 const titleStyle: CSSProperties = {
@@ -108,15 +106,14 @@ const closeBtn: CSSProperties = {
 };
 
 const section: CSSProperties = {
-  padding: "18px 24px",
-  borderBottom: "1px dotted var(--brass-700)",
+  padding: "10px 24px",
 };
 
 const carte: CSSProperties = {
   background: "var(--paper-100)",
   border: "1px solid var(--brass-500)",
   boxShadow:
-    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+    "0 16px 32px rgba(0,0,0,0.38), inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
   borderRadius: "var(--radius-card)",
   padding: "16px",
 };
@@ -302,7 +299,6 @@ export function PartiesModal({
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Parties" style={wrap}>
-      <BrassCorners color="var(--brass-500)" inset={10} size={32} />
       <div style={topBar}>
         <h2 style={titleStyle}>— Parties —</h2>
         <button
@@ -315,6 +311,9 @@ export function PartiesModal({
         </button>
       </div>
 
+      {/* margin auto haut/bas : cartes centrées verticalement quand ça tient,
+          flux normal scrollable quand ça déborde (petits écrans). */}
+      <div style={{ marginTop: "auto", marginBottom: "auto" }}>
       {lignes.map((ligne) => {
         const estActif = index.actif === ligne.n;
         const occupe = ligne.occupe;
@@ -404,6 +403,7 @@ export function PartiesModal({
           </section>
         );
       })}
+      </div>
 
       <ConfirmModal
         open={confirmSuppression !== null}
