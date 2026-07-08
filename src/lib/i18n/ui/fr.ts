@@ -1,0 +1,71 @@
+/**
+ * Dictionnaire UI français — LA SOURCE. Sa forme définit `DictionnaireUI` ;
+ * en.ts et es.ts sont contraints par ce type : une clé oubliée là-bas est
+ * une erreur de compilation.
+ */
+export const fr = {
+  commun: {
+    fermer: "Fermer",
+    annuler: "Annuler",
+    confirmer: "Confirmer",
+  },
+  menu: {
+    continuer: "Continuer",
+    nouvellePartie: "Nouvelle partie",
+    charger: "Charger",
+    reglages: "Réglages",
+    credits: "Crédits",
+  },
+  parties: {
+    titre: "— Parties —",
+    emplacementVide: "Emplacement vide",
+    creerDansEmplacement: "Nouvelle partie dans l'emplacement {n}",
+    choisirEmplacement: "Choisir l'emplacement {n}",
+    renommer: "Renommer",
+    renommerEmplacement: "Renommer l'emplacement {n}",
+    supprimer: "Supprimer",
+    ecraser: "Écraser",
+    lancer: "Lancer la partie",
+    active: "Active",
+    partieN: "Partie {n}",
+    jourNiveau: "Jour {jour} · Niveau {niveau}",
+    valeurCollection: "Valeur de la collection : {valeur} €",
+    aLInstant: "à l'instant",
+    ilYAMin: "il y a {n} min",
+    ilYAHeures: "il y a {n} h",
+    ilYAJours: "il y a {n} j",
+    confirmSupprimerTitre: "Supprimer « {nom} » ?",
+    confirmSupprimerCorps: "Cette partie sera définitivement perdue.",
+    confirmEcraserTitre: "Écraser « {nom} » ?",
+    confirmEcraserCorps:
+      "Cette partie sera définitivement perdue au profit d'une nouvelle.",
+  },
+  reglages: {
+    titre: "— Réglages —",
+    son: "Son",
+    volumeGeneral: "Volume général — {n}",
+    musique: "Musique",
+    effets: "Effets sonores",
+    ambiance: "Sons d'ambiance",
+    affichage: "Affichage",
+    taillePolice: "Taille de police",
+    petit: "Petit",
+    normal: "Normal",
+    grand: "Grand",
+    langue: "Langue",
+    notifications: "Notifications",
+    rappels: "Rappels (énergie, atelier, quêtes)",
+    notifsIndispo: "Disponibles sur l'application iOS",
+    permissionRequise: "Permission système requise",
+    autoriser: "Autoriser",
+    permissionAccordee: "Permission accordée ✓",
+  },
+  credits: {
+    titre: "— Crédits —",
+    baseline: "Broc — une simulation de brocante",
+    concu: "Conçu par G. Fenard · 2026",
+    version: "ver. 1.0 · saison de printemps · 1924",
+    confidentialite: "Confidentialité",
+    mentionsLegales: "Mentions légales",
+  },
+} as const;
