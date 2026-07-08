@@ -5,17 +5,28 @@ import {
 
 export interface AudioPrefs {
   volume: number;
-  foule: boolean;
-  cash: boolean;
-  clic: boolean;
+  /** Gramophone : vinyles + crépitement d'aiguille. */
+  musique: boolean;
+  /** Effets ponctuels : clics, encaissement, papier, portes, fanfares… */
+  effets: boolean;
+  /** Boucles d'ambiance : foule, rue, cheminée, ronron du chat. */
+  ambiance: boolean;
 }
 
 export const DEFAULT_AUDIO_PREFS: AudioPrefs = {
   volume: 70,
-  foule: true,
-  cash: true,
-  clic: true,
+  musique: true,
+  effets: true,
+  ambiance: true,
 };
+
+/** Forme v1 (pré-familles) encore présente dans le storage des anciens joueurs. */
+interface AudioPrefsLegacy {
+  volume?: number;
+  foule?: boolean;
+  cash?: boolean;
+  clic?: boolean;
+}
 
 const STORAGE_KEY = "projet-broc:audio:v1";
 
@@ -105,8 +116,17 @@ class AudioManager {
   setPref<K extends keyof AudioPrefs>(k: K, v: AudioPrefs[K]): void {
     this.prefs[k] = v;
     this.persist();
-    if (k === "foule" && v === false) {
+    // Couper une famille arrête aussi ses boucles déjà en cours — le gate
+    // à la source ne suffit que pour les sons futurs.
+    if (k === "ambiance" && v === false) {
       this.stopCrowd();
+      this.stopAmbience();
+      this.stopFireplace();
+      this.stopCatPurr();
+    }
+    if (k === "musique" && v === false) {
+      this.pauseVinyl();
+      this.stopNeedle();
     }
   }
 
@@ -133,7 +153,7 @@ class AudioManager {
   }
 
   playClick(): void {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const now = this.ctx.currentTime;
@@ -155,7 +175,7 @@ class AudioManager {
    * Pensé pour être joué en rafale pendant un drag, throttlé côté appelant.
    */
   playTick(): void {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const now = this.ctx.currentTime;
@@ -177,7 +197,7 @@ class AudioManager {
    * quand un item est ajouté à un emplacement (atelier / collection).
    */
   playPickup(): void {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const ctx = this.ctx;
@@ -218,7 +238,7 @@ class AudioManager {
 
   /** Apparition d'une carte de chinage : léger glissando montant, court et doux. */
   playApparition(): void {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const now = this.ctx.currentTime;
@@ -238,7 +258,7 @@ class AudioManager {
 
   /** Rareté (rare/lég./unique) : petit arpège cristallin ascendant, superposable. */
   playRarete(): void {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const ctx = this.ctx;
@@ -265,7 +285,7 @@ class AudioManager {
 
   /** Fanfare de level-up : arpège majeur montant C5-E5-G5-C6, triangle, ~0,9 s. Placeholder synthé. */
   playLevelUp(): void {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const ctx = this.ctx;
@@ -290,7 +310,7 @@ class AudioManager {
 
   /** Vendeur mystère : deux notes feutrées à intervalle intrigant, longue traîne. */
   playMystere(): void {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const ctx = this.ctx;
@@ -316,7 +336,7 @@ class AudioManager {
   }
 
   async playCash(): Promise<void> {
-    if (!this.prefs.cash) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const buf = await this.loadBuffer("/sounds/cash.mp3");
@@ -328,7 +348,7 @@ class AudioManager {
   }
 
   async playRepair(): Promise<void> {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const buf = await this.loadBuffer("/sounds/repair.mp3");
@@ -340,7 +360,7 @@ class AudioManager {
   }
 
   async playBreak(): Promise<void> {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const buf = await this.loadBuffer("/sounds/break.mp3");
@@ -353,7 +373,7 @@ class AudioManager {
 
   /** Bruit de manipulation de papier (ouverture de lettre). */
   async playPaper(): Promise<void> {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const buf = await this.loadBuffer("/sounds/paper.mp3");
@@ -366,7 +386,7 @@ class AudioManager {
 
   /** Bruit de journal qu'on déplie (ouverture de la Gazette). */
   async playNewspaper(): Promise<void> {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const buf = await this.loadBuffer("/sounds/newspaper.mp3");
@@ -379,7 +399,7 @@ class AudioManager {
 
   /** Porte qui s'ouvre. */
   async playDoorOpen(): Promise<void> {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const buf = await this.loadBuffer("/sounds/door-open.mp3");
@@ -392,7 +412,7 @@ class AudioManager {
 
   /** Porte qui se ferme. */
   async playDoorClose(): Promise<void> {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const buf = await this.loadBuffer("/sounds/door-close.mp3");
@@ -405,7 +425,7 @@ class AudioManager {
 
   /** Coffre de camionnette qui se ferme (validation chargement). */
   async playCoffreFerme(): Promise<void> {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const buf = await this.loadBuffer("/sounds/coffre-ferme.mp3");
@@ -421,7 +441,7 @@ class AudioManager {
    * fondu de sortie sur la dernière seconde pour simuler l'éloignement final.
    */
   async playDepartVoiture(durationMs: number): Promise<void> {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     const buf = await this.loadBuffer("/sounds/depart-voiture.mp3");
@@ -443,7 +463,7 @@ class AudioManager {
   }
 
   async startCrowd(): Promise<void> {
-    if (!this.prefs.foule) return;
+    if (!this.prefs.ambiance) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     if (this.crowdSource) return;
@@ -478,7 +498,7 @@ class AudioManager {
 
   /** Ronronnement du chat en boucle (volume réduit). */
   async startCatPurr(): Promise<void> {
-    if (!this.prefs.clic) return;
+    if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     if (this.catPurrSource) return;
@@ -513,7 +533,7 @@ class AudioManager {
 
   /** Ambiance de rue calme du QG, en boucle. */
   async startAmbience(): Promise<void> {
-    if (!this.prefs.foule) return;
+    if (!this.prefs.ambiance) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     if (this.ambienceSource) return;
@@ -548,7 +568,7 @@ class AudioManager {
 
   /** Cheminée en boucle. Volume géré dynamiquement par setFireplaceVolume(). */
   async startFireplace(initialVolume: number = 0.3): Promise<void> {
-    if (!this.prefs.foule) return;
+    if (!this.prefs.ambiance) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     if (this.fireplaceSource) return;
@@ -652,6 +672,7 @@ class AudioManager {
    * Si absent, lecture silencieuse mais `onEnded` jamais appelé.
    */
   async playVinyl(url: string, onEnded?: () => void): Promise<void> {
+    if (!this.prefs.musique) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     this.ensureVinylAmbiance();
@@ -694,6 +715,7 @@ class AudioManager {
   }
 
   resumeVinyl(): void {
+    if (!this.prefs.musique) return;
     if (!this.vinylAudio) return;
     void this.vinylAudio.play().catch(() => {
       /* ignore */
@@ -744,6 +766,7 @@ class AudioManager {
    * les appelants, mais charge désormais /sounds/vinyl-noise-loop.mp3.
    */
   async startNeedle(): Promise<void> {
+    if (!this.prefs.musique) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     this.ensureVinylAmbiance();
@@ -805,6 +828,7 @@ class AudioManager {
     musicUrl: string,
     onEnded?: () => void,
   ): Promise<void> {
+    if (!this.prefs.musique) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
     // Annule toute séquence en cours (musique précédente, timers).
@@ -832,8 +856,39 @@ class AudioManager {
   }
 
   loadPersisted(): AudioPrefs {
-    const parsed = safeLocalStorageGet<Partial<AudioPrefs>>(STORAGE_KEY, {});
-    return { ...DEFAULT_AUDIO_PREFS, ...parsed };
+    const parsed = safeLocalStorageGet<Partial<AudioPrefs> & AudioPrefsLegacy>(
+      STORAGE_KEY,
+      {},
+    );
+    // Migration v1 → familles : `foule` devient `ambiance`, `cash`/`clic`
+    // fusionnent en `effets` (actif si l'un des deux l'était). La forme
+    // migrée est réécrite au premier persist() ; en attendant, les clés
+    // legacy restantes dans le storage sont ignorées par le spread typé.
+    const estLegacy =
+      parsed.musique === undefined &&
+      (parsed.foule !== undefined ||
+        parsed.cash !== undefined ||
+        parsed.clic !== undefined);
+    if (estLegacy) {
+      return {
+        ...DEFAULT_AUDIO_PREFS,
+        volume:
+          typeof parsed.volume === "number"
+            ? parsed.volume
+            : DEFAULT_AUDIO_PREFS.volume,
+        ambiance: parsed.foule ?? true,
+        effets: (parsed.cash ?? true) || (parsed.clic ?? true),
+      };
+    }
+    return {
+      volume:
+        typeof parsed.volume === "number"
+          ? parsed.volume
+          : DEFAULT_AUDIO_PREFS.volume,
+      musique: parsed.musique ?? DEFAULT_AUDIO_PREFS.musique,
+      effets: parsed.effets ?? DEFAULT_AUDIO_PREFS.effets,
+      ambiance: parsed.ambiance ?? DEFAULT_AUDIO_PREFS.ambiance,
+    };
   }
 }
 

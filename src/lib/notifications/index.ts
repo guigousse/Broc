@@ -58,6 +58,10 @@ export async function demanderPermission(): Promise<boolean> {
 /** Programme (ou replace) une notif locale à `spec.atMs`. */
 export async function programmer(spec: NotifSpec): Promise<void> {
   if (!notificationsDisponibles()) return;
+  // Gate central : préférence joueur (Réglages → Notifications). Import
+  // dynamique local pour éviter le cycle prefs → annuler → index.
+  const { notifsActives } = await import("./prefs");
+  if (!notifsActives()) return;
   try {
     const { sendNotification, cancel, Schedule } = await import(
       "@tauri-apps/plugin-notification"

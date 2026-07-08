@@ -1,9 +1,15 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { X } from "lucide-react";
 import { useSettings, type TailleFonte } from "@/context/SettingsContext";
 import type { AudioPrefs } from "@/lib/audio/audioManager";
+import {
+  demanderPermission,
+  notificationsDisponibles,
+  permissionAccordee,
+} from "@/lib/notifications";
+import { notifsActives, setNotifsActives } from "@/lib/notifications/prefs";
 
 interface ReglagesModalProps {
   open: boolean;
@@ -180,12 +186,6 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
     { id: "grand", nom: "Grand" },
   ];
 
-  const themes = [
-    { id: "auto", nom: "Auto" },
-    { id: "clair", nom: "Clair" },
-    { id: "sombre", nom: "Sombre" },
-  ];
-
   return (
     <div role="dialog" aria-modal="true" aria-label="Réglages" style={wrap}>
       <div style={topBar}>
@@ -220,24 +220,24 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
           />
 
           <div style={togglesRow}>
-            <span>Bruit de foule</span>
+            <span>Musique</span>
             <Toggle
-              on={audioPrefs.foule}
-              onToggle={() => onToggleAudio("foule")}
+              on={audioPrefs.musique}
+              onToggle={() => onToggleAudio("musique")}
             />
           </div>
           <div style={togglesRow}>
-            <span>Sons d&apos;encaissement</span>
+            <span>Effets sonores</span>
             <Toggle
-              on={audioPrefs.cash}
-              onToggle={() => onToggleAudio("cash")}
+              on={audioPrefs.effets}
+              onToggle={() => onToggleAudio("effets")}
             />
           </div>
           <div style={togglesRow}>
-            <span>Clics</span>
+            <span>Sons d&apos;ambiance</span>
             <Toggle
-              on={audioPrefs.clic}
-              onToggle={() => onToggleAudio("clic")}
+              on={audioPrefs.ambiance}
+              onToggle={() => onToggleAudio("ambiance")}
             />
           </div>
         </section>
@@ -246,7 +246,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
           <h3 style={sectionTitle}>Affichage</h3>
 
           <div style={rowLabel}>Taille de police</div>
-          <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+          <div style={{ display: "flex", gap: 8 }}>
             {tailles.map((t) => (
               <button
                 key={t.id}
@@ -258,30 +258,78 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
               </button>
             ))}
           </div>
-
-          <div
-            style={{
-              ...rowLabel,
-              fontStyle: "italic",
-              color: "var(--brass-700)",
-            }}
-          >
-            Thème (à venir)
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {themes.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                disabled
-                style={segBtn(false, true)}
-              >
-                {t.nom}
-              </button>
-            ))}
-          </div>
         </section>
+
+        <SectionNotifications />
       </div>
     </div>
+  );
+}
+
+/**
+ * Encadré Notifications : préférence joueur (toggle) + état de la permission
+ * système iOS avec bouton « Autoriser » (le prompt ne peut venir que d'un
+ * geste). Hors app iOS (web/dev), simple mention d'indisponibilité.
+ */
+function SectionNotifications() {
+  const { playClick } = useSettings();
+  const dispo = notificationsDisponibles();
+  const [actives, setActives] = useState(true);
+  const [permission, setPermission] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setActives(notifsActives());
+    if (dispo) void permissionAccordee().then(setPermission);
+  }, [dispo]);
+
+  const onToggle = () => {
+    playClick();
+    const suivant = !actives;
+    setActives(suivant);
+    setNotifsActives(suivant);
+  };
+
+  const onAutoriser = () => {
+    playClick();
+    void demanderPermission().then(setPermission);
+  };
+
+  return (
+    <section style={carte} aria-label="Notifications">
+      <h3 style={sectionTitle}>Notifications</h3>
+
+      <div style={togglesRow}>
+        <span>Rappels (énergie, atelier, quêtes)</span>
+        <Toggle on={actives} onToggle={onToggle} />
+      </div>
+
+      {!dispo ? (
+        <div
+          style={{ ...rowLabel, fontStyle: "italic", color: "var(--brass-700)" }}
+        >
+          Disponibles sur l&apos;application iOS
+        </div>
+      ) : permission === false ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <span style={{ ...rowLabel, marginBottom: 0 }}>
+            Permission système requise
+          </span>
+          <button type="button" onClick={onAutoriser} style={segBtn(true)}>
+            Autoriser
+          </button>
+        </div>
+      ) : permission === true ? (
+        <div style={{ ...rowLabel, color: "var(--brass-500)" }}>
+          Permission accordée ✓
+        </div>
+      ) : null}
+    </section>
   );
 }

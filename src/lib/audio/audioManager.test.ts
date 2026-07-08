@@ -268,7 +268,7 @@ describe("audioManager — volume et persistance", () => {
     expect(stored.volume).toBe(42);
   });
 
-  it("setPref persiste et coupe la foule quand foule passe à false", async () => {
+  it("setPref persiste et coupe la foule quand ambiance passe à false", async () => {
     const { audioManager } = await freshManager();
     audioManager.ensureCtx();
     await audioManager.startCrowd();
@@ -276,10 +276,10 @@ describe("audioManager — volume et persistance", () => {
     const crowdSrc = ctx.bufferSources[0];
     expect(crowdSrc.start).toHaveBeenCalled();
 
-    audioManager.setPref("foule", false);
+    audioManager.setPref("ambiance", false);
     expect(crowdSrc.stop).toHaveBeenCalled();
     const stored = JSON.parse(storage.getItem(STORAGE_KEY)!) as AudioPrefs;
-    expect(stored.foule).toBe(false);
+    expect(stored.ambiance).toBe(false);
   });
 
   it("hydrate fusionne avec les défauts et applique le gain master", async () => {
@@ -293,11 +293,14 @@ describe("audioManager — volume et persistance", () => {
 
   it("loadPersisted relit les prefs sauvées et complète les champs manquants", async () => {
     const { audioManager, DEFAULT_AUDIO_PREFS } = await freshManager();
-    storage.setItem(STORAGE_KEY, JSON.stringify({ volume: 15, cash: false }));
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ volume: 15, effets: false }),
+    );
     expect(audioManager.loadPersisted()).toEqual({
       ...DEFAULT_AUDIO_PREFS,
       volume: 15,
-      cash: false,
+      effets: false,
     });
   });
 
@@ -305,6 +308,50 @@ describe("audioManager — volume et persistance", () => {
     const { audioManager, DEFAULT_AUDIO_PREFS } = await freshManager();
     storage.setItem(STORAGE_KEY, "{pas-du-json");
     expect(audioManager.loadPersisted()).toEqual(DEFAULT_AUDIO_PREFS);
+  });
+
+  it("loadPersisted migre la forme v1 : foule→ambiance, cash|clic→effets", async () => {
+    const { audioManager } = await freshManager();
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ volume: 33, foule: false, cash: false, clic: true }),
+    );
+    expect(audioManager.loadPersisted()).toEqual({
+      volume: 33,
+      musique: true,
+      ambiance: false,
+      // clic était encore actif : la famille effets reste active.
+      effets: true,
+    });
+
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ volume: 33, foule: true, cash: false, clic: false }),
+    );
+    expect(audioManager.loadPersisted()).toEqual({
+      volume: 33,
+      musique: true,
+      ambiance: true,
+      // cash ET clic coupés : effets coupés.
+      effets: false,
+    });
+  });
+
+  it("setPref musique=false met la lecture en pause et coupe le crépitement", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.ensureCtx();
+    await audioManager.startNeedle();
+    const ctx = FakeAudioContext.instances[0];
+    const needleSrc = ctx.bufferSources[0];
+    expect(needleSrc.start).toHaveBeenCalled();
+
+    audioManager.setPref("musique", false);
+    expect(needleSrc.stop).toHaveBeenCalled();
+
+    // Musique coupée : ni le crépitement ni la séquence gramophone ne
+    // redémarrent.
+    await audioManager.startNeedle();
+    expect(ctx.bufferSources).toHaveLength(1);
   });
 });
 
@@ -315,7 +362,7 @@ describe("audioManager — volume et persistance", () => {
 describe("audioManager — effets et préférences", () => {
   beforeEach(stubBrowserGlobals);
 
-  it("playClick crée un oscillateur avec enveloppe quand clic est actif", async () => {
+  it("playClick crée un oscillateur avec enveloppe quand effets est actif", async () => {
     const { audioManager } = await freshManager();
     audioManager.playClick();
     const ctx = FakeAudioContext.instances[0];
@@ -329,16 +376,16 @@ describe("audioManager — effets et préférences", () => {
     expect(fxGain.gain.exponentialRampToValueAtTime).toHaveBeenCalled();
   });
 
-  it("playClick / playTick muets quand la préférence clic est désactivée", async () => {
+  it("playClick / playTick muets quand la préférence effets est désactivée", async () => {
     const { audioManager } = await freshManager();
-    audioManager.setPref("clic", false);
+    audioManager.setPref("effets", false);
     audioManager.playClick();
     audioManager.playTick();
     // Pas de contexte créé : retour immédiat avant ensureCtx.
     expect(FakeAudioContext.instances).toHaveLength(0);
   });
 
-  it("playApparition crée un oscillateur avec enveloppe quand clic est actif", async () => {
+  it("playApparition crée un oscillateur avec enveloppe quand effets est actif", async () => {
     const { audioManager } = await freshManager();
     audioManager.playApparition();
     const ctx = FakeAudioContext.instances[0];
@@ -347,23 +394,23 @@ describe("audioManager — effets et préférences", () => {
     expect(ctx.oscillators[0].stop).toHaveBeenCalled();
   });
 
-  it("playRarete joue un arpège de 3 notes quand clic est actif", async () => {
+  it("playRarete joue un arpège de 3 notes quand effets est actif", async () => {
     const { audioManager } = await freshManager();
     audioManager.playRarete();
     const ctx = FakeAudioContext.instances[0];
     expect(ctx.oscillators).toHaveLength(3);
   });
 
-  it("playMystere joue 2 notes quand clic est actif", async () => {
+  it("playMystere joue 2 notes quand effets est actif", async () => {
     const { audioManager } = await freshManager();
     audioManager.playMystere();
     const ctx = FakeAudioContext.instances[0];
     expect(ctx.oscillators).toHaveLength(2);
   });
 
-  it("les sons de chinage sont muets quand la préférence clic est désactivée", async () => {
+  it("les sons de chinage sont muets quand la préférence effets est désactivée", async () => {
     const { audioManager } = await freshManager();
-    audioManager.setPref("clic", false);
+    audioManager.setPref("effets", false);
     audioManager.playApparition();
     audioManager.playRarete();
     audioManager.playMystere();
@@ -377,16 +424,16 @@ describe("audioManager — effets et préférences", () => {
     expect(ctx.oscillators).toHaveLength(4);
   });
 
-  it("playLevelUp est muet quand la préférence clic est désactivée", async () => {
+  it("playLevelUp est muet quand la préférence effets est désactivée", async () => {
     const { audioManager } = await freshManager();
-    audioManager.setPref("clic", false);
+    audioManager.setPref("effets", false);
     audioManager.playLevelUp();
     expect(FakeAudioContext.instances).toHaveLength(0);
   });
 
-  it("playCash respecte la préférence cash désactivée (aucun fetch)", async () => {
+  it("playCash respecte la préférence effets désactivée (aucun fetch)", async () => {
     const { audioManager } = await freshManager();
-    audioManager.setPref("cash", false);
+    audioManager.setPref("effets", false);
     await audioManager.playCash();
     expect(fetchMock).not.toHaveBeenCalled();
   });
