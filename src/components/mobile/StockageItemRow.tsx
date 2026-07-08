@@ -16,6 +16,8 @@ import { etoileCount } from "@/lib/etat";
 import { getTemplate } from "@/data/objetTemplates";
 import { getItemImageUrl } from "@/lib/itemImages";
 import { flyToTab } from "@/lib/flyAnimation";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 import type { Objet } from "@/types/game";
 
 interface StockageItemRowProps {
@@ -109,6 +111,7 @@ function StockageItemRowBase({
   onEnvoyerCollection,
   isLast,
 }: StockageItemRowProps) {
+  const { d, tr } = useLangue();
   const [dragX, setDragX] = useState(0);
   const [snapped, setSnapped] = useState<"open" | "closed">("closed");
   const [dragging, setDragging] = useState(false);
@@ -213,7 +216,7 @@ function StockageItemRowBase({
           style={actionBtn("var(--brass-600)", atelier.disponible)}
           onClick={handleAtelier}
           disabled={!atelier.disponible}
-          aria-label="Envoyer à l'atelier"
+          aria-label={d.inventaire.envoyerAtelier}
         >
           <span style={iconWithPlus}>
             <Anvil size={22} strokeWidth={1.5} />
@@ -227,7 +230,7 @@ function StockageItemRowBase({
           style={actionBtn("var(--forest-700)", collection.disponible)}
           onClick={handleCollection}
           disabled={!collection.disponible}
-          aria-label="Envoyer dans la collection"
+          aria-label={d.inventaire.envoyerCollection}
         >
           <span style={iconWithPlus}>
             <Album size={22} strokeWidth={1.5} />
@@ -279,17 +282,24 @@ function StockageItemRowBase({
               gap: 8,
               marginTop: 4,
             }}
-            aria-label={`État ${objet.etat}, catégorie ${objet.categorie}`}
+            aria-label={tr(d.inventaire.etatCategorieAria, {
+              etat: libelleEtat(objet.etat, d),
+              categorie: objet.categorie,
+            })}
           >
             <StarRow
               filled={etoileCount(objet.etat)}
               color={rarityColors.outer}
               display="flex"
-              aria-label={`État : ${objet.etat}`}
+              aria-label={tr(d.chine.etatAriaLabel, {
+                etat: libelleEtat(objet.etat, d),
+              })}
             />
             <span
               style={{ display: "inline-flex", alignItems: "center" }}
-              aria-label={`Catégorie : ${objet.categorie}`}
+              aria-label={tr(d.inventaire.categorieAria, {
+                categorie: objet.categorie,
+              })}
             >
               <CategorieIcon
                 categorie={objet.categorie}
@@ -318,7 +328,7 @@ function StockageItemRowBase({
               letterSpacing: "0.06em",
             }}
           >
-            valeur
+            {d.inventaire.valeurMot}
           </div>
         </div>
       </div>

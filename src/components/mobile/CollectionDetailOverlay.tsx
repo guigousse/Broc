@@ -4,6 +4,8 @@ import type { CSSProperties } from "react";
 import { BookOpen, Plus, Trash2 } from "lucide-react";
 import { BrassCorners } from "@/components/ui/BrassCorners";
 import { ItemSticker } from "@/components/ui/ItemSticker";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 import type { CollectionSlot } from "@/types/game";
 
 interface CollectionDetailOverlayProps {
@@ -121,6 +123,7 @@ export function CollectionDetailOverlay({
   onAjouter,
   onRetirer,
 }: CollectionDetailOverlayProps) {
+  const { d, tr } = useLangue();
   if (!open || !slot) return null;
   const isDonne = slot.donation !== null;
 
@@ -128,7 +131,7 @@ export function CollectionDetailOverlay({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Détail de la pièce"
+      aria-label={d.inventaire.detailPiece}
       style={backdrop}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -157,9 +160,15 @@ export function CollectionDetailOverlay({
         <div style={actionCard}>
           {isDonne ? (
             <>
-              <div style={infoLine}>État : {slot.donation?.etat}</div>
               <div style={infoLine}>
-                Valeur : {Math.round(slot.donation?.valeur ?? 0)} €
+                {tr(d.chine.etatAriaLabel, {
+                  etat: slot.donation ? libelleEtat(slot.donation.etat, d) : "",
+                })}
+              </div>
+              <div style={infoLine}>
+                {tr(d.inventaire.valeurLigne, {
+                  n: Math.round(slot.donation?.valeur ?? 0),
+                })}
               </div>
               <button
                 type="button"
@@ -181,15 +190,22 @@ export function CollectionDetailOverlay({
                 }}
               >
                 <Trash2 size={16} strokeWidth={1.6} />
-                {retirerDisabled ? "Stockage plein" : "Retirer de la collection"}
+                {retirerDisabled
+                  ? d.qg.stockagePlein
+                  : d.inventaire.retirerDeCollection}
               </button>
             </>
           ) : (
             <>
               <div style={noteText}>
                 {candidatsCount === 0
-                  ? "Aucun objet éligible dans le stock pour cette pièce."
-                  : `${candidatsCount} objet${candidatsCount > 1 ? "s" : ""} dans le stock pour cette pièce.`}
+                  ? d.inventaire.aucunCandidatPiece
+                  : tr(
+                      candidatsCount > 1
+                        ? d.inventaire.candidatsPiecePluriel
+                        : d.inventaire.candidatsPieceUn,
+                      { n: candidatsCount },
+                    )}
               </div>
               <button
                 type="button"
@@ -215,7 +231,7 @@ export function CollectionDetailOverlay({
                   <BookOpen size={16} strokeWidth={1.6} />
                   <Plus size={12} strokeWidth={2} />
                 </span>
-                Ajouter à la collection
+                {d.inventaire.ajouterALaCollection}
               </button>
             </>
           )}

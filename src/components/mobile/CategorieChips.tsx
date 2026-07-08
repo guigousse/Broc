@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { CategorieObjet } from "@/types/game";
 
 interface CategorieChipsProps {
@@ -41,6 +42,7 @@ export function CategorieChips({
   total,
   categories,
 }: CategorieChipsProps) {
+  const { d } = useLangue();
   return (
     <div style={wrap}>
       <button
@@ -53,7 +55,7 @@ export function CategorieChips({
           color: selection === null ? "var(--brass-300)" : "var(--ink-500)",
         }}
       >
-        Tous{" "}
+        {d.inventaire.tous}{" "}
         <strong
           style={{
             color: selection === null ? "var(--brass-300)" : "var(--brass-700)",

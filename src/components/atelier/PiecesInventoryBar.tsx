@@ -3,6 +3,7 @@
 import type { CategorieObjet } from "@/types/game";
 import { CATEGORIES } from "@/data/categories";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface PiecesInventoryBarProps {
   pieces: Record<CategorieObjet, number>;
@@ -14,10 +15,11 @@ interface PiecesInventoryBarProps {
  * de pièces disponibles en gras + l'icône de catégorie en badge.
  */
 export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
+  const { d, tr } = useLangue();
   return (
     <div
       role="list"
-      aria-label="Inventaire de pièces d'amélioration"
+      aria-label={d.inventaire.inventairePieces}
       style={{
         display: "grid",
         gridTemplateColumns: `repeat(${CATEGORIES.length}, 1fr)`,
@@ -30,7 +32,10 @@ export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
           key={cat}
           role="listitem"
           data-fly-target={`piece-${cat}`}
-          title={`${cat} : ${pieces[cat] ?? 0} pièces`}
+          title={tr(d.inventaire.piecesTitre, {
+            categorie: cat,
+            n: pieces[cat] ?? 0,
+          })}
           style={{
             display: "flex",
             alignItems: "center",

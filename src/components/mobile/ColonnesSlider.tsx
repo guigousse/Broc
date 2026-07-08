@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { Colonnes } from "@/lib/useColonnesCollection";
 
 interface ColonnesSliderProps {
@@ -23,6 +24,7 @@ const wrap: CSSProperties = {
 };
 
 export function ColonnesSlider({ value, onChange }: ColonnesSliderProps) {
+  const { d } = useLangue();
   return (
     <div style={wrap} data-on-dark>
       <input
@@ -31,7 +33,7 @@ export function ColonnesSlider({ value, onChange }: ColonnesSliderProps) {
         max={5}
         step={1}
         value={value}
-        aria-label="Items par ligne"
+        aria-label={d.inventaire.itemsParLigne}
         className="broc-colonnes-slider"
         onChange={(e) => onChange(Number(e.target.value) as Colonnes)}
       />

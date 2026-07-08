@@ -1,6 +1,8 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 import type { EtatObjet } from "@/types/game";
 
 interface ConfirmReplaceModalProps {
@@ -74,30 +76,34 @@ export function ConfirmReplaceModal({
   nouvelObjet,
   ancienneDonation,
 }: ConfirmReplaceModalProps) {
+  const { d, tr } = useLangue();
   if (!open) return null;
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Remplacer la donation"
+      aria-label={d.inventaire.remplacerDonationAria}
       style={backdrop}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div style={card}>
-        <div style={title}>— Remplacer la donation ? —</div>
+        <div style={title}>{d.inventaire.remplacerDonationTitre}</div>
         <p style={body}>
-          « {nouvelObjet.nom} » est déjà dans votre collection en{" "}
-          {ancienneDonation.etat.toLowerCase()} (valeur{" "}
-          {ancienneDonation.valeur === null ? "?" : ancienneDonation.valeur} €).
-          Le remplacer par votre nouvel exemplaire en {nouvelObjet.etat.toLowerCase()}{" "}
-          ({nouvelObjet.valeur === null ? "?" : nouvelObjet.valeur} €) ? L&apos;ancien
-          reviendra dans votre inventaire.
+          {tr(d.inventaire.remplacerCorps, {
+            nom: nouvelObjet.nom,
+            ancienEtat: libelleEtat(ancienneDonation.etat, d).toLowerCase(),
+            ancienneValeur:
+              ancienneDonation.valeur === null ? "?" : ancienneDonation.valeur,
+            nouvelEtat: libelleEtat(nouvelObjet.etat, d).toLowerCase(),
+            nouvelleValeur:
+              nouvelObjet.valeur === null ? "?" : nouvelObjet.valeur,
+          })}
         </p>
         <div style={{ display: "flex", gap: 10 }}>
           <button type="button" onClick={onClose} style={btn("ghost")}>
-            Annuler
+            {d.commun.annuler}
           </button>
           <button
             type="button"
@@ -107,7 +113,7 @@ export function ConfirmReplaceModal({
             }}
             style={btn("primary")}
           >
-            Remplacer
+            {d.inventaire.remplacer}
           </button>
         </div>
       </div>

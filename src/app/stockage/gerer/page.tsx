@@ -25,6 +25,7 @@ import {
   prochaineEtatCible,
 } from "@/lib/atelier";
 import { getBrocanteById } from "@/data/brocantes";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { CategorieObjet, EtatObjet, Objet } from "@/types/game";
 
 export default function StockagePage() {
@@ -38,6 +39,7 @@ export default function StockagePage() {
 function StockagePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { d, tr } = useLangue();
   const {
     state,
     isHydrated,
@@ -113,11 +115,16 @@ function StockagePageInner() {
       const cible = prochaineEtatCible(o.etat);
       if (!cible) return;
       const res = restaurerObjet(o.id, cible);
-      if (res.ok) setFlash(`${o.nom} envoyé à l'atelier.`);
-      else setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
+      if (res.ok) setFlash(tr(d.inventaire.flashEnvoyeAtelier, { nom: o.nom }));
+      else
+        setFlash(
+          tr(d.inventaire.impossibleRaison, {
+            raison: res.raison ?? d.inventaire.conditionNonRemplie,
+          }),
+        );
       setTimeout(() => setFlash(null), 2500);
     },
-    [restaurerObjet],
+    [restaurerObjet, d, tr],
   );
 
   const envoyerCollection = useCallback(
@@ -130,11 +137,17 @@ function StockagePageInner() {
         return;
       }
       const res = donnerACollection(o.id);
-      if (res.ok) setFlash(`${o.nom} ajouté à la collection.`);
-      else setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
+      if (res.ok)
+        setFlash(tr(d.inventaire.flashAjouteCollection, { nom: o.nom }));
+      else
+        setFlash(
+          tr(d.inventaire.impossibleRaison, {
+            raison: res.raison ?? d.inventaire.conditionNonRemplie,
+          }),
+        );
       setTimeout(() => setFlash(null), 2500);
     },
-    [state, donnerACollection],
+    [state, donnerACollection, d, tr],
   );
 
   if (!isHydrated || !state) {
@@ -149,7 +162,7 @@ function StockagePageInner() {
           fontSize: 12,
         }}
       >
-        — ouverture du stockage…
+        {d.inventaire.ouvertureStockage}
       </main>
     );
   }
@@ -160,8 +173,13 @@ function StockagePageInner() {
   const confirmerReplace = () => {
     if (!askReplace) return;
     const res = donnerACollection(askReplace.objet.id);
-    if (res.ok) setFlash("Donation remplacée.");
-    else setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
+    if (res.ok) setFlash(d.inventaire.donationRemplacee);
+    else
+      setFlash(
+        tr(d.inventaire.impossibleRaison, {
+          raison: res.raison ?? d.inventaire.conditionNonRemplie,
+        }),
+      );
     setTimeout(() => setFlash(null), 2500);
   };
 
@@ -180,7 +198,7 @@ function StockagePageInner() {
         stickyTop={
           <StickyTop>
             <PageHeaderBar
-              title="Stockage"
+              title={d.chrome.onglets.stockage}
               left={
                 <div
                   style={{
@@ -213,7 +231,7 @@ function StockagePageInner() {
                         letterSpacing: "0.04em",
                       }}
                     >
-                      loyer {tier.loyerHebdo} €/sem
+                      {tr(d.inventaire.loyerHebdo, { n: tier.loyerHebdo })}
                     </div>
                   )}
                 </div>
@@ -232,7 +250,7 @@ function StockagePageInner() {
                         padding: "6px 10px",
                       }}
                     >
-                      MAX
+                      {d.inventaire.max}
                     </span>
                   );
                 }
@@ -243,9 +261,14 @@ function StockagePageInner() {
                     peut={state.budget >= up.cout}
                     onUpgrade={() => {
                       const res = ameliorerStockage();
-                      if (!res.ok) setFlash(res.raison ?? "Impossible");
+                      if (!res.ok)
+                        setFlash(res.raison ?? d.inventaire.impossible);
                       else
-                        setFlash(`Stockage amélioré au LVL ${up.niveauCible}.`);
+                        setFlash(
+                          tr(d.inventaire.stockageAmeliore, {
+                            niveau: up.niveauCible,
+                          }),
+                        );
                       setTimeout(() => setFlash(null), 2500);
                     }}
                   />

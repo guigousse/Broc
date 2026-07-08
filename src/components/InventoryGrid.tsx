@@ -1,6 +1,9 @@
+"use client";
+
 import type { CSSProperties } from "react";
 import type { CategorieObjet, Objet } from "@/types/game";
 import { StockageItemRow } from "@/components/mobile/StockageItemRow";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { AtelierStatus, CollectionStatus } from "@/lib/atelier";
 
 interface InventoryGridProps {
@@ -37,6 +40,7 @@ export function InventoryGrid({
   atelierStatus,
   collectionStatus,
 }: InventoryGridProps) {
+  const { d } = useLangue();
   if (objets.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: "40px 20px" }}>
@@ -49,7 +53,7 @@ export function InventoryGrid({
             marginBottom: 12,
           }}
         >
-          Aucun objet dans cette catégorie.
+          {d.inventaire.aucunObjetCategorie}
         </div>
         <div
           style={{
@@ -60,7 +64,7 @@ export function InventoryGrid({
             color: "var(--brass-700)",
           }}
         >
-          Partez chiner pour la garnir.
+          {d.inventaire.partezChiner}
         </div>
       </div>
     );

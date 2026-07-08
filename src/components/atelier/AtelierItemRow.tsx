@@ -8,6 +8,8 @@ import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
 import { getTemplate } from "@/data/objetTemplates";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 import type { EtatObjet, Objet } from "@/types/game";
 
 interface AtelierItemRowProps {
@@ -48,6 +50,7 @@ export function AtelierItemRow({
   etatCible,
   isLast,
 }: AtelierItemRowProps) {
+  const { d, tr } = useLangue();
   const isUnique = !!getTemplate(objet.templateId)?.unique;
   const rarityColors = getRarityColors(objet.rarete, isUnique);
   const currentStars = etoileCount(objet.etat);
@@ -97,9 +100,16 @@ export function AtelierItemRow({
             marginTop: 4,
           }}
           aria-label={
-            targetStars !== null
-              ? `Transition d'état : ${objet.etat} vers ${etatCible}, catégorie ${objet.categorie}`
-              : `État ${objet.etat}, catégorie ${objet.categorie}`
+            targetStars !== null && etatCible !== undefined
+              ? tr(d.inventaire.transitionEtatAria, {
+                  etat: libelleEtat(objet.etat, d),
+                  cible: libelleEtat(etatCible, d),
+                  categorie: objet.categorie,
+                })
+              : tr(d.inventaire.etatCategorieAria, {
+                  etat: libelleEtat(objet.etat, d),
+                  categorie: objet.categorie,
+                })
           }
         >
           {renderStars(currentStars, rarityColors.outer)}

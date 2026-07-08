@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { FrameItem } from "@/components/ui/FrameItem";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { getTemplate } from "@/data/objetTemplates";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { Objet } from "@/types/game";
 
 interface ObjetDetailOverlayProps {
@@ -133,6 +134,7 @@ export function ObjetDetailOverlay({
   prixMarcheConnu,
   onSetPrixVente,
 }: ObjetDetailOverlayProps) {
+  const { d } = useLangue();
   const [prixLocal, setPrixLocal] = useState<number>(0);
 
   useEffect(() => {
@@ -163,7 +165,7 @@ export function ObjetDetailOverlay({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Détail de l'objet"
+      aria-label={d.inventaire.detailObjet}
       style={backdrop}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -195,18 +197,20 @@ export function ObjetDetailOverlay({
 
         <div style={prixCard}>
           {enRestauration && (
-            <div style={restaurationBanner}>En restauration à l&apos;atelier</div>
+            <div style={restaurationBanner}>
+              {d.inventaire.enRestaurationAtelier}
+            </div>
           )}
 
           <div style={prixRow}>
-            <span style={prixLabel}>Prix du marché</span>
+            <span style={prixLabel}>{d.inventaire.prixMarche}</span>
             <span style={prixValue}>
               {prixMarcheConnu ? `${Math.round(prixMarche)} €` : "? €"}
             </span>
           </div>
 
           <div style={prixRow}>
-            <span style={prixLabel}>Prix d&apos;achat</span>
+            <span style={prixLabel}>{d.inventaire.prixAchat}</span>
             <span style={prixValue}>
               {objet.prixAchat !== undefined ? `${objet.prixAchat} €` : "— €"}
             </span>
@@ -220,7 +224,7 @@ export function ObjetDetailOverlay({
               gap: 8,
             }}
           >
-            <span style={prixLabel}>Prix de vente</span>
+            <span style={prixLabel}>{d.inventaire.prixVente}</span>
             <span
               style={{
                 display: "flex",
@@ -234,7 +238,7 @@ export function ObjetDetailOverlay({
                 onClick={() => ajusterPrix(-5)}
                 disabled={enRestauration}
                 style={stepBtn(enRestauration)}
-                aria-label="Diminuer le prix de vente de 5 €"
+                aria-label={d.inventaire.diminuerPrixVente}
               >
                 −
               </button>
@@ -247,7 +251,7 @@ export function ObjetDetailOverlay({
                   onBlur={commitPrix}
                   style={venteInput}
                   disabled={enRestauration}
-                  aria-label="Prix de vente"
+                  aria-label={d.inventaire.prixVente}
                 />
                 <span style={prixValue}>€</span>
               </span>
@@ -256,7 +260,7 @@ export function ObjetDetailOverlay({
                 onClick={() => ajusterPrix(5)}
                 disabled={enRestauration}
                 style={stepBtn(enRestauration)}
-                aria-label="Augmenter le prix de vente de 5 €"
+                aria-label={d.inventaire.augmenterPrixVente}
               >
                 +
               </button>

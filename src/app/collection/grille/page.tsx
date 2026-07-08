@@ -21,10 +21,13 @@ import { CATEGORIES } from "@/data/categories";
 import { stockageEstPlein } from "@/lib/stockage";
 import { valeurDonation } from "@/lib/collection";
 import { aConnaisseurVitrine } from "@/lib/competences";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 export default function CollectionPage() {
   const router = useRouter();
+  const { d, tr } = useLangue();
   const {
     state,
     isHydrated,
@@ -94,7 +97,7 @@ export default function CollectionPage() {
   }, [state]);
 
   if (!isHydrated || !state) {
-    return <SkeletonScreen label="— consultation de la collection…" />;
+    return <SkeletonScreen label={d.inventaire.consultationCollection} />;
   }
 
   // Nouveautés non consultées par catégorie (slot vu mais vuDansCollection=false)
@@ -108,7 +111,7 @@ export default function CollectionPage() {
     {} as Record<CategorieObjet, boolean>,
   );
 
-  const labelGauche = filtre ?? "Total";
+  const labelGauche = filtre ?? d.inventaire.total;
   const valeurAffichee = filtre
     ? (valeursParCat[filtre] ?? 0)
     : Object.values(valeursParCat).reduce((s, v) => s + v, 0);
@@ -122,12 +125,12 @@ export default function CollectionPage() {
       stickyTop={
         <StickyTop>
           <PageHeaderBar
-            title="Collection"
+            title={d.chrome.onglets.collection}
             align="center"
             left={
               <button
                 type="button"
-                aria-label="Retour au cabinet"
+                aria-label={d.inventaire.retourCabinet}
                 onClick={() => router.push("/collection")}
                 style={{
                   display: "grid",
@@ -212,7 +215,7 @@ export default function CollectionPage() {
         const res = retirerDeCollection(slotActif.templateId);
         if (res.ok) {
           setSlotActif(null);
-          toast("Repris dans le stock", { type: "info" });
+          toast(d.inventaire.reprisDansStock, { type: "info" });
         }
       }}
     />
@@ -246,30 +249,30 @@ export default function CollectionPage() {
           setSlotActif(null);
           toast(
             valeurConnue
-              ? `Donné à la collection — +${valeur} € de valeur`
-              : "Donné à la collection.",
+              ? tr(d.inventaire.donneCollectionValeur, { valeur })
+              : d.inventaire.donneCollection,
             { type: "succes" },
           );
         }
       }}
-      titre="Donner à la collection"
-      confirmLabel="Donner"
+      titre={d.inventaire.donnerALaCollection}
+      confirmLabel={d.inventaire.donner}
     >
       {objetADonner && (
         <>
-          « {objetADonner.nom} » ({objetADonner.etat}) quittera votre stock et{" "}
-          {categoriesConnuesVitrine.has(objetADonner.categorie) ? (
-            <>
-              rejoindra la collection pour{" "}
-              {valeurDonation(objetADonner.etat, objetADonner.prixReferenceReel)}{" "}
-              € de valeur.
-            </>
-          ) : (
-            "rejoindra la collection."
-          )}
-          {slotActif?.donation
-            ? " L'exemplaire déjà exposé reviendra dans votre inventaire."
-            : ""}
+          {tr(d.inventaire.donationCorpsDebut, {
+            nom: objetADonner.nom,
+            etat: libelleEtat(objetADonner.etat, d),
+          })}{" "}
+          {categoriesConnuesVitrine.has(objetADonner.categorie)
+            ? tr(d.inventaire.donationCorpsAvecValeur, {
+                valeur: valeurDonation(
+                  objetADonner.etat,
+                  objetADonner.prixReferenceReel,
+                ),
+              })
+            : d.inventaire.donationCorpsSansValeur}
+          {slotActif?.donation ? d.inventaire.donationCorpsRemplacement : ""}
         </>
       )}
     </ConfirmModal>

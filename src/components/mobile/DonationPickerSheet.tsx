@@ -5,6 +5,8 @@ import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat, libelleRarete } from "@/lib/i18n/libelles";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 interface DonationPickerSheetProps {
@@ -45,11 +47,12 @@ export function DonationPickerSheet({
   retirerDisabled = false,
   categoriesConnues,
 }: DonationPickerSheetProps) {
+  const { d, tr } = useLangue();
   return (
     <BottomSheet
       open={open}
       onClose={onClose}
-      title={slot ? slot.nom : "Donation"}
+      title={slot ? slot.nom : d.inventaire.donation}
     >
       {slot?.donation && (
         <div
@@ -71,7 +74,9 @@ export function DonationPickerSheet({
               color: "var(--ink-700)",
             }}
           >
-            Slot rempli — valeur {Math.round(slot.donation.valeur)} €
+            {tr(d.inventaire.slotRempli, {
+              valeur: Math.round(slot.donation.valeur),
+            })}
           </span>
           {onRetirer && (
             <button
@@ -94,7 +99,7 @@ export function DonationPickerSheet({
                 filter: retirerDisabled ? "grayscale(0.65)" : undefined,
               }}
             >
-              {retirerDisabled ? "Stockage plein" : "Retirer"}
+              {retirerDisabled ? d.qg.stockagePlein : d.inventaire.retirer}
             </button>
           )}
         </div>
@@ -110,7 +115,7 @@ export function DonationPickerSheet({
             padding: "16px 0",
           }}
         >
-          Aucun objet éligible dans le stock pour cet emplacement.
+          {d.inventaire.aucunCandidatEmplacement}
         </p>
       ) : (
         candidats.map((o) => {
@@ -156,7 +161,7 @@ export function DonationPickerSheet({
                   color: "var(--ink-500)",
                 }}
               >
-                {o.etat} · {o.rarete}
+                {libelleEtat(o.etat, d)} · {libelleRarete(o.rarete, d)}
                 {categoriesConnues.has(o.categorie)
                   ? ` · ${Math.round(o.prixReferenceReel)} €`
                   : ""}
@@ -179,7 +184,7 @@ export function DonationPickerSheet({
                 cursor: "pointer",
               }}
             >
-              Donner
+              {d.inventaire.donner}
             </button>
           </div>
           );

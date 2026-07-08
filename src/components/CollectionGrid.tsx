@@ -15,6 +15,8 @@ import { prefetchThumbs, thumbUrlsForSlots } from "@/lib/prefetchThumbs";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 import type { Colonnes } from "@/lib/useColonnesCollection";
 import type { CollectionSlot } from "@/types/game";
 
@@ -88,6 +90,7 @@ const CollectionCell = memo(function CollectionCell({
   onTap,
   enStock,
 }: CollectionCellProps) {
+  const { d, tr } = useLangue();
   const isDonne = s.donation !== null;
   const isVu = !isDonne && s.vu;
   const isSilhouette = !isDonne && !isVu;
@@ -127,7 +130,7 @@ const CollectionCell = memo(function CollectionCell({
       className="broc-grid-cell"
       onClick={() => onTap(s)}
       disabled={isSilhouette}
-      aria-label={isSilhouette ? "Pièce inconnue" : s.nom}
+      aria-label={isSilhouette ? d.inventaire.pieceInconnue : s.nom}
       style={cellStyle}
     >
       <ItemSticker
@@ -142,14 +145,14 @@ const CollectionCell = memo(function CollectionCell({
 
       {/* Badge "+" — exemplaire en stock, pas encore donné (prioritaire sur "*") */}
       {showStockBadge && (
-        <span style={newBadge} aria-label="Exemplaire disponible en stock">
+        <span style={newBadge} aria-label={d.inventaire.exemplaireEnStock}>
           +
         </span>
       )}
 
       {/* Badge "*" — nouveauté pas encore consultée */}
       {showNewBadge && (
-        <span style={newBadge} aria-label="Nouvellement découvert">
+        <span style={newBadge} aria-label={d.inventaire.nouvellementDecouvert}>
           *
         </span>
       )}
@@ -165,7 +168,9 @@ const CollectionCell = memo(function CollectionCell({
           dropShadow
           display="flex"
           style={starsRow}
-          aria-label={`État : ${s.donation?.etat}`}
+          aria-label={tr(d.chine.etatAriaLabel, {
+            etat: s.donation ? libelleEtat(s.donation.etat, d) : "",
+          })}
         />
       )}
     </button>

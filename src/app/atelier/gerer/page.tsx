@@ -33,6 +33,8 @@ import { getRarityColors } from "@/lib/rarityColors";
 import { getItemImageUrl } from "@/lib/itemImages";
 import { getTemplate } from "@/data/objetTemplates";
 import { getAdProvider } from "@/lib/ads/adProvider";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 
 const sectTitle: React.CSSProperties = {
   fontFamily: "var(--font-display)",
@@ -65,6 +67,7 @@ function formatDuree(ms: number): string {
 
 export default function AtelierPage() {
   const router = useRouter();
+  const { d, tr } = useLangue();
   const {
     state,
     isHydrated,
@@ -162,7 +165,7 @@ export default function AtelierPage() {
           fontSize: 12,
         }}
       >
-        — préparation de l'établi…
+        {d.inventaire.preparationEtabli}
       </main>
     );
   }
@@ -232,10 +235,18 @@ export default function AtelierPage() {
       const res = demantelerObjet(objet.id);
       if (res.ok) {
         setFlash(
-          `${objet.nom} démantelé · +${res.pieces} ⚙ ${objet.categorie}.`,
+          tr(d.inventaire.flashDemantele, {
+            nom: objet.nom,
+            pieces: res.pieces ?? 0,
+            categorie: objet.categorie,
+          }),
         );
       } else {
-        setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
+        setFlash(
+          tr(d.inventaire.impossibleRaison, {
+            raison: res.raison ?? d.inventaire.conditionNonRemplie,
+          }),
+        );
       }
       setTimeout(() => setFlash(null), 2500);
       actionEnCoursRef.current = false;
@@ -298,12 +309,20 @@ export default function AtelierPage() {
       const res = restaurerObjet(objet.id, etatCible);
       if (res.ok) {
         setFlash(
-          `${objet.nom} en restauration · ${etatCible} dans ${formatDuree(
-            dureeRestaurationMs(state, objet.categorie, objet.etat),
-          )}`,
+          tr(d.inventaire.flashEnRestauration, {
+            nom: objet.nom,
+            etat: libelleEtat(etatCible, d),
+            duree: formatDuree(
+              dureeRestaurationMs(state, objet.categorie, objet.etat),
+            ),
+          }),
         );
       } else {
-        setFlash(`Impossible : ${res.raison ?? "condition non remplie"}`);
+        setFlash(
+          tr(d.inventaire.impossibleRaison, {
+            raison: res.raison ?? d.inventaire.conditionNonRemplie,
+          }),
+        );
       }
       setTimeout(() => setFlash(null), 2500);
       actionEnCoursRef.current = false;
@@ -316,7 +335,7 @@ export default function AtelierPage() {
       stickyTop={
         <StickyTop>
           <PageHeaderBar
-            title="Atelier"
+            title={d.chrome.onglets.atelier}
             left={
               <div
                 style={{
@@ -327,7 +346,10 @@ export default function AtelierPage() {
                   color: "var(--forest-800)",
                 }}
               >
-                Établi {enCours.length}/{ATELIER_SLOTS[state.niveauAtelier]}
+                {tr(d.inventaire.etabliCompteur, {
+                  n: enCours.length,
+                  max: ATELIER_SLOTS[state.niveauAtelier],
+                })}
               </div>
             }
             right={(() => {
@@ -344,7 +366,7 @@ export default function AtelierPage() {
                       padding: "6px 10px",
                     }}
                   >
-                    MAX
+                    {d.inventaire.max}
                   </span>
                 );
               }
@@ -355,12 +377,20 @@ export default function AtelierPage() {
                   peut={state.budget >= up.cout}
                   onUpgrade={() => {
                     const res = ameliorerAtelier();
-                    if (!res.ok) setFlash(res.raison ?? "Impossible");
+                    if (!res.ok)
+                      setFlash(res.raison ?? d.inventaire.impossible);
                     else
-                      setFlash(`Atelier amélioré au LVL ${up.niveauCible}.`);
+                      setFlash(
+                        tr(d.inventaire.atelierAmeliore, {
+                          niveau: up.niveauCible,
+                        }),
+                      );
                     setTimeout(() => setFlash(null), 2500);
                   }}
-                  ariaLabel={`Améliorer atelier vers LVL ${up.niveauCible} (${up.cout} €)`}
+                  ariaLabel={tr(d.inventaire.ameliorerAtelierAria, {
+                    niveau: up.niveauCible,
+                    cout: up.cout,
+                  })}
                 />
               );
             })()}
@@ -384,11 +414,13 @@ export default function AtelierPage() {
             marginBottom: 8,
           }}
         >
-          « {flash} »
+          {tr(d.inventaire.flashCitation, { texte: flash })}
         </div>
       )}
 
-      <h2 style={sectTitle} data-fly-target="travaux">— Travaux en cours —</h2>
+      <h2 style={sectTitle} data-fly-target="travaux">
+        {d.inventaire.travauxEnCours}
+      </h2>
       {enCours.length === 0 ? (
         <div style={cardWrap}>
           <p
@@ -400,7 +432,7 @@ export default function AtelierPage() {
               padding: "12px 0",
             }}
           >
-            Aucun chantier. L'établi est libre.
+            {d.inventaire.aucunChantier}
           </p>
         </div>
       ) : (
@@ -425,7 +457,7 @@ export default function AtelierPage() {
                       letterSpacing: "0.04em",
                     }}
                   >
-                    {ready ? "prêt ✓" : formatDuree(reste)}
+                    {ready ? d.inventaire.pret : formatDuree(reste)}
                   </span>
                 }
                 action={
@@ -446,9 +478,11 @@ export default function AtelierPage() {
                         whiteSpace: "nowrap",
                         cursor: "pointer",
                       }}
-                      aria-label={`Récupérer ${o.nom}`}
+                      aria-label={tr(d.inventaire.recupererAria, {
+                        nom: o.nom,
+                      })}
                     >
-                      Récupérer ✓
+                      {d.inventaire.recuperer}
                     </button>
                   ) : (
                     <span
@@ -490,7 +524,9 @@ export default function AtelierPage() {
                             opacity: pubEnCours ? 0.6 : 1,
                           }}
                         >
-                          {pubEnCours ? "Pub en cours…" : "Terminer (pub) ▶"}
+                          {pubEnCours
+                            ? d.chrome.pubEnCours
+                            : d.inventaire.terminerPub}
                         </button>
                       )}
                     </span>
@@ -533,7 +569,7 @@ export default function AtelierPage() {
             cursor: "pointer",
           }}
         >
-          Restaurations
+          {d.inventaire.ongletRestaurations}
         </button>
         <button
           type="button"
@@ -557,7 +593,7 @@ export default function AtelierPage() {
             cursor: "pointer",
           }}
         >
-          Démantèlement
+          {d.inventaire.ongletDemantelement}
         </button>
       </div>
 
@@ -573,7 +609,7 @@ export default function AtelierPage() {
                 padding: "12px 0",
               }}
             >
-              Aucune pièce à restaurer.
+              {d.inventaire.aucunePieceARestaurer}
             </p>
           </div>
         ) : (
@@ -615,13 +651,16 @@ export default function AtelierPage() {
                     >
                       {valeurConnue ? (
                         <>
-                          {duree} · valeur {o.prixReferenceReel} →{" "}
+                          {tr(d.inventaire.dureeValeurVers, {
+                            duree,
+                            valeur: o.prixReferenceReel,
+                          })}{" "}
                           <span style={{ color: "var(--brass-700)" }}>
-                            {prixApres} €
+                            {tr(d.chrome.montantEuros, { valeur: prixApres })}
                           </span>
                         </>
                       ) : (
-                        <>{duree} · valeur ? → ?</>
+                        <>{tr(d.inventaire.dureeValeurInconnue, { duree })}</>
                       )}
                     </div>
                   }
@@ -643,7 +682,10 @@ export default function AtelierPage() {
                           thumbRect: thumb?.getBoundingClientRect() ?? null,
                         });
                       }}
-                      aria-label={`Confirmer la restauration — coût ${cout} pièces ${o.categorie}`}
+                      aria-label={tr(d.inventaire.confirmerRestaurationAria, {
+                        cout,
+                        categorie: o.categorie,
+                      })}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -688,7 +730,7 @@ export default function AtelierPage() {
               padding: "12px 0",
             }}
           >
-            Aucun objet à démanteler en stock.
+            {d.inventaire.aucunObjetADemanteler}
           </p>
         </div>
       ) : (
@@ -712,7 +754,11 @@ export default function AtelierPage() {
                       letterSpacing: "0.04em",
                     }}
                   >
-                    {valeurConnue ? `valeur ${o.prixReferenceReel} €` : "valeur ?"}
+                    {valeurConnue
+                      ? tr(d.inventaire.valeurEuros, {
+                          n: o.prixReferenceReel,
+                        })
+                      : d.inventaire.valeurInconnue}
                   </span>
                 }
                 action={
@@ -731,7 +777,10 @@ export default function AtelierPage() {
                         thumbRect: thumb?.getBoundingClientRect() ?? null,
                       });
                     }}
-                    aria-label={`Démanteler — rendement ${yieldPieces} pièces ${o.categorie}`}
+                    aria-label={tr(d.inventaire.demantelerAria, {
+                      pieces: yieldPieces,
+                      categorie: o.categorie,
+                    })}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -764,7 +813,7 @@ export default function AtelierPage() {
       <BottomSheet
         open={demantelerCible !== null}
         onClose={() => setDemantelerCible(null)}
-        title="Démantèlement"
+        title={d.inventaire.ongletDemantelement}
       >
         {demantelerCible && (
           <div style={{ padding: "8px 16px 16px" }}>
@@ -776,12 +825,14 @@ export default function AtelierPage() {
                 marginBottom: 10,
               }}
             >
-              Démanteler <strong>{demantelerCible.objet.nom}</strong> rend{" "}
+              {d.inventaire.demantelerSeg1}{" "}
+              <strong>{demantelerCible.objet.nom}</strong>{" "}
+              {d.inventaire.demantelerSeg2}{" "}
               <strong>
                 {demantelerCible.yieldPieces} ⚙{" "}
                 {demantelerCible.objet.categorie}
               </strong>
-              . L'objet sera détruit définitivement.
+              {d.inventaire.demantelerSeg3}
             </p>
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               <button
@@ -800,7 +851,7 @@ export default function AtelierPage() {
                   cursor: "pointer",
                 }}
               >
-                Annuler
+                {d.commun.annuler}
               </button>
               <button
                 type="button"
@@ -818,7 +869,7 @@ export default function AtelierPage() {
                   cursor: "pointer",
                 }}
               >
-                Démanteler
+                {d.inventaire.demantelerBouton}
               </button>
             </div>
           </div>
@@ -827,7 +878,7 @@ export default function AtelierPage() {
       <BottomSheet
         open={restaurerCible !== null}
         onClose={() => setRestaurerCible(null)}
-        title="Restauration"
+        title={d.inventaire.titreRestauration}
       >
         {restaurerCible && (
           <div style={{ padding: "8px 16px 16px" }}>
@@ -839,8 +890,11 @@ export default function AtelierPage() {
                 marginBottom: 10,
               }}
             >
-              Restaurer <strong>{restaurerCible.objet.nom}</strong> en{" "}
-              <strong>{restaurerCible.etatCible}</strong> prend{" "}
+              {d.inventaire.restaurerSeg1}{" "}
+              <strong>{restaurerCible.objet.nom}</strong>{" "}
+              {d.inventaire.restaurerSeg2}{" "}
+              <strong>{libelleEtat(restaurerCible.etatCible, d)}</strong>{" "}
+              {d.inventaire.restaurerSeg3}{" "}
               <strong>
                 {formatDuree(
                   dureeRestaurationMs(
@@ -850,11 +904,11 @@ export default function AtelierPage() {
                   ),
                 )}
               </strong>{" "}
-              et coûte{" "}
+              {d.inventaire.restaurerSeg4}{" "}
               <strong>
                 {restaurerCible.cout} ⚙ {restaurerCible.objet.categorie}
               </strong>
-              .
+              {d.inventaire.restaurerSeg5}
             </p>
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               <button
@@ -873,7 +927,7 @@ export default function AtelierPage() {
                   cursor: "pointer",
                 }}
               >
-                Annuler
+                {d.commun.annuler}
               </button>
               <button
                 type="button"
@@ -891,7 +945,7 @@ export default function AtelierPage() {
                   cursor: "pointer",
                 }}
               >
-                Confirmer
+                {d.commun.confirmer}
               </button>
             </div>
           </div>

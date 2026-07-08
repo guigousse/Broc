@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { CATEGORIES } from "@/data/categories";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { CategorieObjet } from "@/types/game";
 
 interface CategoriePickerProps {
@@ -91,6 +92,7 @@ export function CategoriePicker({
   totalGlobal,
   nouveautesParCat,
 }: CategoriePickerProps) {
+  const { d } = useLangue();
   const showFraction = totauxParCat !== undefined;
   const hasAnyNew =
     !!nouveautesParCat && CATEGORIES.some((c) => nouveautesParCat[c]);
@@ -109,7 +111,7 @@ export function CategoriePicker({
       icon: LayoutGrid,
       count: total,
       max: showFraction ? (totalGlobal ?? null) : null,
-      label: "Tous",
+      label: d.inventaire.tous,
       nouveau: hasAnyNew,
     },
     ...CATEGORIES.map((c) => ({
@@ -126,7 +128,7 @@ export function CategoriePicker({
   return (
     <div
       role="tablist"
-      aria-label="Filtre par catégorie"
+      aria-label={d.inventaire.filtreParCategorie}
       style={{
         display: "grid",
         gridTemplateColumns: `repeat(${cells.length}, 1fr)`,
@@ -168,7 +170,7 @@ export function CategoriePicker({
               {cell.max !== null ? `${cell.count}/${cell.max}` : cell.count}
             </span>
             {cell.nouveau && (
-              <span style={newStarStyle} aria-label="Nouveautés">
+              <span style={newStarStyle} aria-label={d.inventaire.nouveautes}>
                 *
               </span>
             )}
