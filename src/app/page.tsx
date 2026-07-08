@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButton";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { FolderOpen, Info, Play, Plus, Settings } from "lucide-react";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { CreditsModal } from "@/components/mobile/CreditsModal";
 import { PartiesModal } from "@/components/mobile/PartiesModal";
@@ -24,6 +23,56 @@ import {
  */
 const DOOR_CX_PCT = 51;
 const DOOR_CY_PCT = 66;
+
+/**
+ * Bouton du menu d'accueil : même habillage que les boutons Chiner/Étaler
+ * du QG (FloatingActionButton primaire), avec l'icône de la fonction calée
+ * à gauche et le libellé justifié à droite.
+ */
+function BoutonMenu({
+  icon,
+  label,
+  onClick,
+  disabled = false,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 14,
+        width: 250,
+        padding: "14px 18px",
+        background: "var(--forest-800)",
+        color: "var(--brass-300)",
+        border: "1px solid var(--brass-500)",
+        borderRadius: 6,
+        fontFamily: "var(--font-display)",
+        fontSize: 12,
+        letterSpacing: "0.20em",
+        textTransform: "uppercase",
+        whiteSpace: "nowrap",
+        cursor: disabled ? "not-allowed" : "pointer",
+        boxShadow: disabled
+          ? "none"
+          : "0 6px 14px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,225,160,0.20)",
+        ...(disabled ? { opacity: 0.45, filter: "grayscale(0.6)" } : {}),
+      }}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
 
 /**
  * Parallaxe façon fond d'écran iPhone : la façade (légèrement zoomée pour
@@ -294,8 +343,8 @@ export default function TitleScreen() {
           </h1>
         </div>
 
-        {/* Menu : 5 boutons superposés, centrés à l'écran.
-            Format QG (Chiner/Étaler) pour les deux actions principales. */}
+        {/* Menu : 5 boutons superposés, centrés à l'écran, tous au format
+            du bouton Continuer (icône à gauche, libellé à droite). */}
         <div
           style={{
             flex: 1,
@@ -306,44 +355,32 @@ export default function TitleScreen() {
             gap: 12,
           }}
         >
-          <FloatingActionButton
+          <BoutonMenu
+            icon={<Play size={17} strokeWidth={2} aria-hidden />}
+            label="Continuer"
             onClick={onContinuer}
             disabled={!aSauvegarde}
-            minWidth={220}
-          >
-            Continuer
-          </FloatingActionButton>
-          <FloatingActionButton
+          />
+          <BoutonMenu
+            icon={<Plus size={17} strokeWidth={2} aria-hidden />}
+            label="Nouvelle partie"
             onClick={onNouvellePartie}
-            variant="secondary"
-            minWidth={220}
-          >
-            Nouvelle partie
-          </FloatingActionButton>
-          <Button
-            variant="ghost"
-            size="sm"
+          />
+          <BoutonMenu
+            icon={<FolderOpen size={17} strokeWidth={2} aria-hidden />}
+            label="Charger"
             onClick={onParties}
-            style={{ color: "var(--brass-300)" }}
-          >
-            Charger
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+          />
+          <BoutonMenu
+            icon={<Settings size={17} strokeWidth={2} aria-hidden />}
+            label="Réglages"
             onClick={onReglages}
-            style={{ color: "var(--brass-300)" }}
-          >
-            Réglages
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+          />
+          <BoutonMenu
+            icon={<Info size={17} strokeWidth={2} aria-hidden />}
+            label="Crédits"
             onClick={onCredits}
-            style={{ color: "var(--brass-300)" }}
-          >
-            Crédits
-          </Button>
+          />
         </div>
       </div>
 
