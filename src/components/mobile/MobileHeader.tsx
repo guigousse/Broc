@@ -9,6 +9,7 @@ import { useGame, useGameActions } from "@/context/GameContext";
 import { ENERGIE_MAX, energieCourante, energieMaxPourNiveau } from "@/lib/energie";
 import { progressionNiveauBrocanteur } from "@/lib/xp";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { EnergieRecharge } from "./EnergieRecharge";
 
 interface MobileHeaderProps {
@@ -88,6 +89,7 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   const { tempsConfiance } = useGameActions();
   const [rechargeOuverte, setRechargeOuverte] = useState(false);
   const pathname = usePathname();
+  const { d, tr, locale } = useLangue();
 
   const energieMax = state ? energieMaxPourNiveau(state.brocanteur.niveau) : ENERGIE_MAX;
   const energie = state
@@ -102,7 +104,9 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   // n'a pas ouvert son premier point.
   const enSession = ROUTES_SESSION_PREFIXES.some((p) => pathname?.startsWith(p));
   const xpNavigationBloquee = enSession || (state ? state.brocanteur.niveau < 1 : true);
-  const xpLabel = state ? `Niveau de Brocanteur ${state.brocanteur.niveau}` : undefined;
+  const xpLabel = state
+    ? tr(d.chrome.niveauBrocanteur, { n: state.brocanteur.niveau })
+    : undefined;
   const xpContenu = state ? (
     <>
       <span style={xpNiveauStyle}>N{state.brocanteur.niveau}</span>
@@ -151,7 +155,7 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
           <span />
         )}
         <div style={{ textAlign: "center", ...labelStyle }}>
-          Énergie
+          {d.chrome.energie}
           <strong
             style={{
               ...valueStyle,
@@ -164,7 +168,7 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
             {peutRecharger && (
               <button
                 onClick={() => setRechargeOuverte(true)}
-                aria-label="Recharger l'énergie"
+                aria-label={d.chrome.rechargerEnergie}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -188,8 +192,10 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
           </strong>
         </div>
         <div style={{ textAlign: "right", ...labelStyle }}>
-          Caisse
-          <strong style={valueStyle}>{budget.toLocaleString("fr-FR")} €</strong>
+          {d.chrome.caisse}
+          <strong style={valueStyle}>
+            {tr(d.chrome.montantEuros, { valeur: budget.toLocaleString(locale) })}
+          </strong>
         </div>
       </div>
 

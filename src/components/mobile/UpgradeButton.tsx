@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { ArrowUp } from "lucide-react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface UpgradeButtonProps {
   niveauCible: number;
@@ -57,19 +58,21 @@ export function UpgradeButton({
   onUpgrade,
   ariaLabel,
 }: UpgradeButtonProps) {
+  const { d, tr } = useLangue();
   return (
     <button
       type="button"
       disabled={!peut}
       onClick={onUpgrade}
       aria-label={
-        ariaLabel ?? `Améliorer vers LVL ${niveauCible} (${cout} €)`
+        ariaLabel ??
+        tr(d.chrome.ameliorerVersNiveau, { niveau: niveauCible, cout })
       }
       style={baseStyle(peut)}
     >
       <span style={labelStyle}>
         <ArrowUp size={11} strokeWidth={2} />
-        LVL{niveauCible}
+        {tr(d.chrome.lvlAbrege, { n: niveauCible })}
       </span>
       <span style={costStyle}>{cout} €</span>
     </button>

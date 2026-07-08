@@ -11,6 +11,7 @@ import {
   secondesAvantProchaine,
 } from "@/lib/energie";
 import { getAdProvider } from "@/lib/ads/adProvider";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 function formatMMSS(totalSec: number): string {
   const m = Math.floor(totalSec / 60);
@@ -46,6 +47,7 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
   const { tempsConfiance, crediterEnergiePub } = useGameActions();
   const [enCours, setEnCours] = useState(false);
   const [, force] = useState(0);
+  const { d, tr } = useLangue();
 
   // Tick local 1 s pour le minuteur (sans réécrire le state global).
   useEffect(() => {
@@ -78,7 +80,7 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
       <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onClose}
-          aria-label="Fermer"
+          aria-label={d.commun.fermer}
           style={{
             position: "absolute",
             top: 8,
@@ -102,8 +104,8 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
 
         <p style={{ fontSize: 13, color: "var(--brass-200)", margin: "0 0 14px" }}>
           {restantSec === null
-            ? "Énergie au maximum."
-            : `Prochaine ⚡ dans ${formatMMSS(restantSec)}`}
+            ? d.chrome.energieAuMaximum
+            : tr(d.chrome.prochaineEnergieDans, { temps: formatMMSS(restantSec) })}
         </p>
 
         <button
@@ -126,10 +128,10 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
         >
           <Zap size={16} />
           {enCours
-            ? "Pub en cours…"
+            ? d.chrome.pubEnCours
             : pubsRestantes <= 0
-              ? "Plus de pub aujourd'hui — reviens demain"
-              : "Regarder une pub — +1 ⚡"}
+              ? d.chrome.pubEpuisee
+              : d.chrome.regarderPub}
         </button>
       </div>
     </div>

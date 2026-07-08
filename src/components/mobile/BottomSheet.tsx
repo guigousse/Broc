@@ -8,6 +8,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface BottomSheetProps {
   open: boolean;
@@ -89,6 +90,7 @@ export function BottomSheet({
     sheetH: number;
   } | null>(null);
   const [dragY, setDragY] = useState(0);
+  const { d } = useLangue();
 
   useEffect(() => {
     if (!open) return;
@@ -192,7 +194,7 @@ export function BottomSheet({
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Fermer"
+                aria-label={d.commun.fermer}
                 style={{
                   fontFamily: "var(--font-mono)",
                   fontSize: 12,
@@ -210,7 +212,7 @@ export function BottomSheet({
                   gap: 4,
                 }}
               >
-                Fermer ✕
+                {d.commun.fermer} ✕
               </button>
             </div>
           </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 /** Durée d'affichage d'un float « +XP » avant retrait, en ms — doit matcher
  *  l'animation `broc-xp-float` (globals.css). */
@@ -72,12 +73,13 @@ export function XpFloatsVue({
 }: {
   floats: ReadonlyArray<{ id: number; montant: number }>;
 }) {
+  const { d, tr } = useLangue();
   if (floats.length === 0) return null;
   return (
     <div style={conteneur} aria-hidden="true">
       {floats.map((f) => (
         <span key={f.id} style={float}>
-          +{f.montant} XP
+          {tr(d.chrome.xpGagne, { n: f.montant })}
         </span>
       ))}
     </div>

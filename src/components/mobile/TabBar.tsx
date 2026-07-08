@@ -6,6 +6,8 @@ import { useSyncExternalStore, type CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
 import { useGameActions, useGameStateOnly } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import type { DictionnaireUI } from "@/lib/i18n/ui";
 import {
   panoramaActiveStore,
   panoramaActiveServerSnapshot,
@@ -13,11 +15,12 @@ import {
 import { estPret } from "@/lib/restauration";
 import type { GameState } from "@/types/game";
 
+/** Clé d'onglet — sert à retrouver le libellé traduit dans `d.chrome.onglets`. */
+type OngletCle = "collection" | "bibliotheque" | "bureau" | "stockage" | "atelier";
+
 interface TabDef {
   icon: LucideIcon;
-  label: string;
-  /** Libellé complet pour les lecteurs d'écran quand `label` est abrégé. */
-  ariaLabel?: string;
+  cle: OngletCle;
   path: string;
   /** `now` = temps de confiance (epoch ms) pour les badges dépendant du temps réel. */
   badge?: (state: GameState, now: number) => number;
@@ -37,11 +40,10 @@ interface TabDef {
  * Le swipe horizontal sur le contenu (cf. SwipePager) suit ce même ordre.
  */
 export const TAB_ORDER: TabDef[] = [
-  { icon: Album, label: "Collection", path: "/collection" },
+  { icon: Album, cle: "collection", path: "/collection" },
   {
     icon: BookOpen,
-    label: "Biblio.",
-    ariaLabel: "Bibliothèque",
+    cle: "bibliotheque",
     path: "/bibliotheque",
     badge: (state) => state.brocanteur.pointsDisponibles,
     // Masqué avant le premier level-up : l'écran Compétences s'ouvre au
@@ -49,11 +51,11 @@ export const TAB_ORDER: TabDef[] = [
     // /bibliotheque à niveau 0 reste possible (choix assumé, non bloqué).
     masque: (s) => s.brocanteur.niveau < 1,
   },
-  { icon: Home, label: "Bureau", path: "/bureau" },
-  { icon: Warehouse, label: "Stockage", path: "/stockage" },
+  { icon: Home, cle: "bureau", path: "/bureau" },
+  { icon: Warehouse, cle: "stockage", path: "/stockage" },
   {
     icon: Anvil,
-    label: "Atelier",
+    cle: "atelier",
     path: "/atelier",
     badge: (state, now) =>
       state.inventaireJoueur.filter(
@@ -61,6 +63,18 @@ export const TAB_ORDER: TabDef[] = [
       ).length,
   },
 ];
+
+/** Libellé abrégé affiché sous l'icône (colonne étroite) — cf. `d.chrome.onglets`. */
+function libelleAbrege(cle: OngletCle, d: DictionnaireUI): string {
+  return cle === "bibliotheque"
+    ? d.chrome.onglets.bibliothequeAbrege
+    : d.chrome.onglets[cle];
+}
+
+/** Libellé complet pour les lecteurs d'écran (aria-label), quand l'abrégé diffère. */
+function libelleAria(cle: OngletCle, d: DictionnaireUI): string {
+  return cle === "bibliotheque" ? d.chrome.onglets.bibliotheque : d.chrome.onglets[cle];
+}
 
 const HIDDEN_EXACT = new Set(["/", "/chiner", "/vitrine"]);
 
@@ -147,6 +161,7 @@ export function TabBar() {
   const { state, isHydrated } = useGameStateOnly();
   const { tempsConfiance } = useGameActions();
   const { playClick } = useSettings();
+  const { d } = useLangue();
 
   // Override "live" : quand on est dans le panorama unifié, le store
   // émet l'onglet visé par le scroll EN TEMPS RÉEL. Permet à la TabBar
@@ -187,7 +202,7 @@ export function TabBar() {
   // La grille s'adapte au nombre d'onglets visibles (4 ou 5) automatiquement.
   return (
     <nav
-      aria-label="Navigation principale"
+      aria-label={d.chrome.navigationPrincipale}
       style={{
         ...wrapStyle,
         gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)`,
@@ -202,7 +217,7 @@ export function TabBar() {
             key={tab.path}
             type="button"
             aria-current={active ? "page" : undefined}
-            aria-label={tab.ariaLabel ?? tab.label}
+            aria-label={libelleAria(tab.cle, d)}
             onClick={() => {
               playClick();
               if (!active) {
@@ -235,7 +250,7 @@ export function TabBar() {
                 </span>
               )}
             </span>
-            <span style={tabLabel}>{tab.label}</span>
+            <span style={tabLabel}>{libelleAbrege(tab.cle, d)}</span>
           </button>
         );
       })}

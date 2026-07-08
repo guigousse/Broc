@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { viderSlotActif } from "@/lib/storage/slots";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 /**
  * Écran de secours affiché par les error boundaries (`error.tsx`,
@@ -15,6 +16,7 @@ export function ErrorScreen({
   reset?: () => void;
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
+  const { d } = useLangue();
 
   function reinitialiser() {
     try {
@@ -44,33 +46,31 @@ export function ErrorScreen({
     >
       <div style={{ fontSize: 48 }}>🧰</div>
       <h1 style={{ fontFamily: "'Cinzel', serif", fontSize: 26, margin: 0 }}>
-        Oups, un grain de sable…
+        {d.chrome.errorTitre}
       </h1>
       <p style={{ fontSize: 18, maxWidth: 420, opacity: 0.9, margin: 0 }}>
-        Une erreur inattendue s’est produite. Ta partie est sauvegardée — un
-        simple rechargement suffit le plus souvent.
+        {d.chrome.errorCorps}
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
         <button onClick={() => (reset ? reset() : window.location.reload())} style={primary}>
-          Recharger le jeu
+          {d.chrome.errorRecharger}
         </button>
 
         {!confirmReset ? (
           <button onClick={() => setConfirmReset(true)} style={ghost}>
-            Réinitialiser la partie
+            {d.chrome.errorReinitialiser}
           </button>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <p style={{ fontSize: 15, opacity: 0.85, margin: 0, maxWidth: 360 }}>
-              ⚠️ Cela effacera définitivement ta sauvegarde. À n’utiliser que si
-              le jeu reste bloqué.
+              {d.chrome.errorConfirmCorps}
             </p>
             <button onClick={reinitialiser} style={danger}>
-              Confirmer la réinitialisation
+              {d.chrome.errorConfirmBouton}
             </button>
             <button onClick={() => setConfirmReset(false)} style={ghost}>
-              Annuler
+              {d.commun.annuler}
             </button>
           </div>
         )}
