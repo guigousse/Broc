@@ -273,7 +273,6 @@ export default function TitleScreen() {
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
           padding:
             "max(40px, var(--safe-top)) 24px max(28px, var(--safe-bottom))",
         }}
@@ -295,75 +294,56 @@ export default function TitleScreen() {
           </h1>
         </div>
 
-        <div style={{ textAlign: "center", maxWidth: 720, margin: "0 auto" }}>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-              alignItems: "center",
-            }}
+        {/* Menu : 5 boutons superposés, centrés à l'écran.
+            Format QG (Chiner/Étaler) pour les deux actions principales. */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <FloatingActionButton
+            onClick={onContinuer}
+            disabled={!aSauvegarde}
+            minWidth={220}
           >
-            {/* Même format que les boutons Chiner / Étaler du QG. */}
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                justifyContent: "center",
-              }}
-            >
-              <FloatingActionButton onClick={onNouvellePartie} minWidth={140}>
-                Nouvelle partie
-              </FloatingActionButton>
-              <FloatingActionButton
-                onClick={onContinuer}
-                variant="secondary"
-                disabled={!aSauvegarde}
-                minWidth={130}
-              >
-                Continuer
-              </FloatingActionButton>
-            </div>
-            <div style={{ display: "flex", gap: 4 }}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onParties}
-                style={{ color: "var(--brass-300)" }}
-              >
-                Parties
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onReglages}
-                style={{ color: "var(--brass-300)" }}
-              >
-                Réglages
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onCredits}
-                style={{ color: "var(--brass-300)" }}
-              >
-                Crédits
-              </Button>
-            </div>
-          </div>
-
-          <div
-            style={{
-              marginTop: 24,
-              fontFamily: "var(--font-mono)",
-              fontSize: 10.5,
-              color: "var(--brass-700)",
-              letterSpacing: "0.24em",
-              textTransform: "uppercase",
-            }}
+            Continuer
+          </FloatingActionButton>
+          <FloatingActionButton
+            onClick={onNouvellePartie}
+            variant="secondary"
+            minWidth={220}
           >
-            ver. 1.0 · saison de printemps · 1924
-          </div>
+            Nouvelle partie
+          </FloatingActionButton>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onParties}
+            style={{ color: "var(--brass-300)" }}
+          >
+            Charger
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onReglages}
+            style={{ color: "var(--brass-300)" }}
+          >
+            Réglages
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCredits}
+            style={{ color: "var(--brass-300)" }}
+          >
+            Crédits
+          </Button>
         </div>
       </div>
 
