@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { X } from "lucide-react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface CreditsModalProps {
   open: boolean;
@@ -80,16 +81,18 @@ const lignesMono: CSSProperties = {
 };
 
 export function CreditsModal({ open, onClose }: CreditsModalProps) {
+  const { d } = useLangue();
+
   if (!open) return null;
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Crédits" style={wrap}>
+    <div role="dialog" aria-modal="true" aria-label={d.credits.titre} style={wrap}>
       <div style={topBar}>
-        <h2 style={titleStyle}>— Crédits —</h2>
+        <h2 style={titleStyle}>{d.credits.titre}</h2>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Fermer"
+          aria-label={d.commun.fermer}
           style={closeBtn}
         >
           <X size={16} strokeWidth={1.5} />
@@ -97,23 +100,23 @@ export function CreditsModal({ open, onClose }: CreditsModalProps) {
       </div>
 
       <div style={carte}>
-        <div style={ligneTitre}>Broc — une simulation de brocante</div>
+        <div style={ligneTitre}>{d.credits.baseline}</div>
         <div style={lignesMono}>
-          <div>Conçu par G. Fenard · 2026</div>
-          <div>ver. 1.0 · saison de printemps · 1924</div>
+          <div>{d.credits.concu}</div>
+          <div>{d.credits.version}</div>
           <div style={{ marginTop: 8 }}>
             <a
               href="/privacy"
               style={{ color: "var(--brass-700)", textDecoration: "underline" }}
             >
-              Confidentialité
+              {d.credits.confidentialite}
             </a>
             {" · "}
             <a
               href="/mentions-legales"
               style={{ color: "var(--brass-700)", textDecoration: "underline" }}
             >
-              Mentions légales
+              {d.credits.mentionsLegales}
             </a>
           </div>
         </div>

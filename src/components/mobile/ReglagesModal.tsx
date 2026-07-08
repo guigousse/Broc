@@ -164,7 +164,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
     tailleFonte,
     setTailleFonte,
   } = useSettings();
-  const { locale, setLocale, d } = useLangue();
+  const { locale, setLocale, d, tr } = useLangue();
 
   if (!open) return null;
 
@@ -184,19 +184,19 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
   };
 
   const tailles: { id: TailleFonte; nom: string }[] = [
-    { id: "petit", nom: "Petit" },
-    { id: "normal", nom: "Normal" },
-    { id: "grand", nom: "Grand" },
+    { id: "petit", nom: d.reglages.petit },
+    { id: "normal", nom: d.reglages.normal },
+    { id: "grand", nom: d.reglages.grand },
   ];
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Réglages" style={wrap}>
+    <div role="dialog" aria-modal="true" aria-label={d.reglages.titre} style={wrap}>
       <div style={topBar}>
-        <h2 style={titleStyle}>— Réglages —</h2>
+        <h2 style={titleStyle}>{d.reglages.titre}</h2>
         <button
           type="button"
           onClick={onFermer}
-          aria-label="Fermer"
+          aria-label={d.commun.fermer}
           style={closeBtn}
         >
           <X size={16} strokeWidth={1.5} />
@@ -204,10 +204,10 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
       </div>
 
       <div style={{ marginTop: 18 }}>
-        <section style={carte} aria-label="Son">
-          <h3 style={sectionTitle}>Son</h3>
+        <section style={carte} aria-label={d.reglages.son}>
+          <h3 style={sectionTitle}>{d.reglages.son}</h3>
 
-          <div style={rowLabel}>Volume général — {audioPrefs.volume}</div>
+          <div style={rowLabel}>{tr(d.reglages.volumeGeneral, { n: audioPrefs.volume })}</div>
           <input
             type="range"
             min={0}
@@ -219,25 +219,25 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
               marginBottom: 14,
               accentColor: "var(--brass-500)",
             }}
-            aria-label="Volume général"
+            aria-label={tr(d.reglages.volumeGeneral, { n: audioPrefs.volume })}
           />
 
           <div style={togglesRow}>
-            <span>Musique</span>
+            <span>{d.reglages.musique}</span>
             <Toggle
               on={audioPrefs.musique}
               onToggle={() => onToggleAudio("musique")}
             />
           </div>
           <div style={togglesRow}>
-            <span>Effets sonores</span>
+            <span>{d.reglages.effets}</span>
             <Toggle
               on={audioPrefs.effets}
               onToggle={() => onToggleAudio("effets")}
             />
           </div>
           <div style={togglesRow}>
-            <span>Sons d&apos;ambiance</span>
+            <span>{d.reglages.ambiance}</span>
             <Toggle
               on={audioPrefs.ambiance}
               onToggle={() => onToggleAudio("ambiance")}
@@ -245,10 +245,10 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
           </div>
         </section>
 
-        <section style={carte} aria-label="Affichage">
-          <h3 style={sectionTitle}>Affichage</h3>
+        <section style={carte} aria-label={d.reglages.affichage}>
+          <h3 style={sectionTitle}>{d.reglages.affichage}</h3>
 
-          <div style={rowLabel}>Taille de police</div>
+          <div style={rowLabel}>{d.reglages.taillePolice}</div>
           <div style={{ display: "flex", gap: 8 }}>
             {tailles.map((t) => (
               <button
@@ -295,6 +295,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
  */
 function SectionNotifications() {
   const { playClick } = useSettings();
+  const { d } = useLangue();
   const dispo = notificationsDisponibles();
   const [actives, setActives] = useState(true);
   const [permission, setPermission] = useState<boolean | null>(null);
@@ -317,11 +318,11 @@ function SectionNotifications() {
   };
 
   return (
-    <section style={carte} aria-label="Notifications">
-      <h3 style={sectionTitle}>Notifications</h3>
+    <section style={carte} aria-label={d.reglages.notifications}>
+      <h3 style={sectionTitle}>{d.reglages.notifications}</h3>
 
       <div style={togglesRow}>
-        <span>Rappels (énergie, atelier, quêtes)</span>
+        <span>{d.reglages.rappels}</span>
         <Toggle on={actives} onToggle={onToggle} />
       </div>
 
@@ -329,7 +330,7 @@ function SectionNotifications() {
         <div
           style={{ ...rowLabel, fontStyle: "italic", color: "var(--brass-700)" }}
         >
-          Disponibles sur l&apos;application iOS
+          {d.reglages.notifsIndispo}
         </div>
       ) : permission === false ? (
         <div
@@ -341,15 +342,15 @@ function SectionNotifications() {
           }}
         >
           <span style={{ ...rowLabel, marginBottom: 0 }}>
-            Permission système requise
+            {d.reglages.permissionRequise}
           </span>
           <button type="button" onClick={onAutoriser} style={segBtn(true)}>
-            Autoriser
+            {d.reglages.autoriser}
           </button>
         </div>
       ) : permission === true ? (
         <div style={{ ...rowLabel, color: "var(--brass-500)" }}>
-          Permission accordée ✓
+          {d.reglages.permissionAccordee}
         </div>
       ) : null}
     </section>
