@@ -105,11 +105,11 @@ export const fr = {
     xpGagne: "+{n} XP",
     errorTitre: "Oups, un grain de sable…",
     errorCorps:
-      "Une erreur inattendue s'est produite. Ta partie est sauvegardée — un simple rechargement suffit le plus souvent.",
+      "Une erreur inattendue s’est produite. Ta partie est sauvegardée — un simple rechargement suffit le plus souvent.",
     errorRecharger: "Recharger le jeu",
     errorReinitialiser: "Réinitialiser la partie",
     errorConfirmCorps:
-      "⚠️ Cela effacera définitivement ta sauvegarde. À n'utiliser que si le jeu reste bloqué.",
+      "⚠️ Cela effacera définitivement ta sauvegarde. À n’utiliser que si le jeu reste bloqué.",
     errorConfirmBouton: "Confirmer la réinitialisation",
   },
 } as const;
