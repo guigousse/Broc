@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } f
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import type { DictionnaireUI } from "@/lib/i18n/ui";
 import {
   changerSlotActif,
   chargerIndex,
@@ -49,15 +51,18 @@ interface PartiesModalProps {
 const NUMEROS_SLOTS: readonly NumeroSlot[] = [1, 2, 3];
 const LONGUEUR_MAX_NOM = 24;
 
-/** « à l'instant » / « il y a X min » / « il y a X h » / « il y a X j » — pas de dépendance externe pour un affichage aussi simple. */
-function tempsRelatif(ts: number): string {
+/** « à l'instant » / « il y a X min/h/j » — localisé via le dictionnaire. */
+function tempsRelatif(
+  ts: number,
+  d: DictionnaireUI,
+  interpole: (g: string, p?: Record<string, string | number>) => string,
+): string {
   const minutes = Math.floor((Date.now() - ts) / 60000);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `il y a ${minutes} min`;
+  if (minutes < 1) return d.parties.aLInstant;
+  if (minutes < 60) return interpole(d.parties.ilYAMin, { n: minutes });
   const heures = Math.floor(minutes / 60);
-  if (heures < 24) return `il y a ${heures} h`;
-  const jours = Math.floor(heures / 24);
-  return `il y a ${jours} j`;
+  if (heures < 24) return interpole(d.parties.ilYAHeures, { n: heures });
+  return interpole(d.parties.ilYAJours, { n: Math.floor(heures / 24) });
 }
 
 /* ------------------------------------------------------------------ */
@@ -356,6 +361,7 @@ export function PartiesModal({
   // double clic / double événement) qui rejouerait `onAvantSuppressionActive`
   // + `supprimerSlot` par-dessus un état déjà nettoyé.
   const suppressionEnCoursRef = useRef(false);
+  const { d, tr, locale } = useLangue();
 
   useEffect(() => {
     if (open) {
@@ -428,13 +434,13 @@ export function PartiesModal({
       : undefined;
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Parties" style={wrap}>
+    <div role="dialog" aria-modal="true" aria-label={d.parties.titre} style={wrap}>
       <div style={topBar}>
-        <h2 style={titleStyle}>— Parties —</h2>
+        <h2 style={titleStyle}>{d.parties.titre}</h2>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Fermer"
+          aria-label={d.commun.fermer}
           style={closeBtn}
         >
           <X size={16} strokeWidth={1.5} />
@@ -468,7 +474,7 @@ export function PartiesModal({
                     role: "button",
                     tabIndex: 0,
                     "aria-pressed": choisi,
-                    "aria-label": `Choisir l'emplacement ${ligne.n}`,
+                    "aria-label": tr(d.parties.choisirEmplacement, { n: ligne.n }),
                     onClick: () => setSlotChoisi(ligne.n),
                     onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -495,28 +501,34 @@ export function PartiesModal({
                           onBlur={() => onCommitRenommage(ligne.n)}
                           onKeyDown={(e) => onKeyDownRenommage(ligne.n, e)}
                           style={inputStyle}
-                          aria-label={`Renommer l'emplacement ${ligne.n}`}
+                          aria-label={tr(d.parties.renommerEmplacement, { n: ligne.n })}
                         />
                       ) : (
                         <div style={nomRow}>
-                          <span style={nomStyle}>{ligne.nom ?? `Partie ${ligne.n}`}</span>
-                          {estActif && <span style={badgeActive}>Active</span>}
+                          <span style={nomStyle}>
+                            {ligne.nom ?? tr(d.parties.partieN, { n: ligne.n })}
+                          </span>
+                          {estActif && <span style={badgeActive}>{d.parties.active}</span>}
                         </div>
                       )}
 
                       {ligne.resume && (
                         <div style={resumeStyle}>
-                          Jour {ligne.resume.jour} · Niveau {ligne.resume.niveau}
+                          {tr(d.parties.jourNiveau, {
+                            jour: ligne.resume.jour,
+                            niveau: ligne.resume.niveau,
+                          })}
                         </div>
                       )}
                       {ligne.resume && (
                         <div style={resumeStyle}>
-                          Valeur de la collection :{" "}
-                          {ligne.resume.valeurCollection.toLocaleString("fr-FR")} €
+                          {tr(d.parties.valeurCollection, {
+                            valeur: ligne.resume.valeurCollection.toLocaleString(locale),
+                          })}
                         </div>
                       )}
                       <div style={relatifStyle}>
-                        {tempsRelatif(ligne.derniereSession)}
+                        {tempsRelatif(ligne.derniereSession, d, tr)}
                       </div>
                     </div>
 
@@ -525,7 +537,7 @@ export function PartiesModal({
                         <BoutonSlot
                           variant="secondary"
                           onClick={() => onDebuterRenommage(ligne.n, ligne.nom)}
-                          ariaLabel="Renommer"
+                          ariaLabel={d.parties.renommer}
                           style={{
                             padding: "12px 13px",
                             display: "grid",
@@ -537,7 +549,7 @@ export function PartiesModal({
                         <BoutonSlot
                           variant="danger"
                           onClick={() => setConfirmSuppression(ligne.n)}
-                          ariaLabel="Supprimer"
+                          ariaLabel={d.parties.supprimer}
                           style={{
                             padding: "12px 13px",
                             display: "grid",
@@ -556,18 +568,18 @@ export function PartiesModal({
                         variant="danger"
                         onClick={() => setConfirmEcrasement(ligne.n)}
                       >
-                        Écraser
+                        {d.parties.ecraser}
                       </BoutonSlot>
                     </div>
                   )}
                 </>
               ) : (
                 <div style={videRow}>
-                  <span style={videTitre}>Emplacement vide</span>
+                  <span style={videTitre}>{d.parties.emplacementVide}</span>
                   <button
                     type="button"
                     onClick={() => onNouvellePartie(ligne.n)}
-                    aria-label={`Nouvelle partie dans l'emplacement ${ligne.n}`}
+                    aria-label={tr(d.parties.creerDansEmplacement, { n: ligne.n })}
                     style={btnPlus}
                   >
                     <Plus size={18} strokeWidth={2.5} />
@@ -597,7 +609,7 @@ export function PartiesModal({
             }}
             style={slotChoisi === null ? btnLancerDesactive : btnLancer}
           >
-            Lancer la partie
+            {d.parties.lancer}
           </button>
         </div>
       )}
@@ -608,13 +620,15 @@ export function PartiesModal({
         onConfirm={() => {
           if (confirmSuppression !== null) onSupprimerConfirme(confirmSuppression);
         }}
-        titre={`Supprimer « ${
-          slotAConfirmerSuppression?.nom ?? `Partie ${confirmSuppression ?? ""}`
-        } » ?`}
-        confirmLabel="Supprimer"
+        titre={tr(d.parties.confirmSupprimerTitre, {
+          nom:
+            slotAConfirmerSuppression?.nom ??
+            tr(d.parties.partieN, { n: confirmSuppression ?? "" }),
+        })}
+        confirmLabel={d.parties.supprimer}
         danger
       >
-        Cette partie sera définitivement perdue.
+        {d.parties.confirmSupprimerCorps}
       </ConfirmModal>
 
       <ConfirmModal
@@ -623,13 +637,15 @@ export function PartiesModal({
         onConfirm={() => {
           if (confirmEcrasement !== null) onNouvellePartie(confirmEcrasement);
         }}
-        titre={`Écraser « ${
-          slotAConfirmerEcrasement?.nom ?? `Partie ${confirmEcrasement ?? ""}`
-        } » ?`}
-        confirmLabel="Écraser"
+        titre={tr(d.parties.confirmEcraserTitre, {
+          nom:
+            slotAConfirmerEcrasement?.nom ??
+            tr(d.parties.partieN, { n: confirmEcrasement ?? "" }),
+        })}
+        confirmLabel={d.parties.ecraser}
         danger
       >
-        Cette partie sera définitivement perdue au profit d&apos;une nouvelle.
+        {d.parties.confirmEcraserCorps}
       </ConfirmModal>
     </div>
   );

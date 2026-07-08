@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -93,10 +94,11 @@ export function ConfirmModal({
   onConfirm,
   titre,
   children,
-  confirmLabel = "Confirmer",
-  cancelLabel = "Annuler",
+  confirmLabel,
+  cancelLabel,
   danger = false,
 }: ConfirmModalProps) {
+  const { d } = useLangue();
   if (!open) return null;
   return (
     <div
@@ -113,7 +115,7 @@ export function ConfirmModal({
         <div style={bodyStyle}>{children}</div>
         <div style={{ display: "flex", gap: 10 }}>
           <button type="button" onClick={onClose} style={btn("ghost")}>
-            {cancelLabel}
+            {cancelLabel ?? d.commun.annuler}
           </button>
           <button
             type="button"
@@ -123,7 +125,7 @@ export function ConfirmModal({
             }}
             style={btn(danger ? "danger" : "primary")}
           >
-            {confirmLabel}
+            {confirmLabel ?? d.commun.confirmer}
           </button>
         </div>
       </div>
