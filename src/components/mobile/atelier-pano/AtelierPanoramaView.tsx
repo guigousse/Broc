@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, type CSSProperties } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
@@ -54,6 +55,7 @@ function hotspotStyle(
 export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
   const router = useRouter();
   const { state, isHydrated } = useGameStateOnly();
+  const { d } = useLangue();
 
   // Sync URL ← scroll, robuste contre les artefacts de mount/init.
   //
@@ -175,13 +177,13 @@ export function AtelierPanoramaView({ activeTab }: AtelierPanoramaViewProps) {
             <button
               type="button"
               onClick={() => router.push("/stockage/gerer")}
-              aria-label="Ouvrir le stockage"
+              aria-label={d.qg.ouvrirStockageSimple}
               style={hotspotStyle(ATELIER_LAYOUT.objets.etagere, 55)}
             />
             <button
               type="button"
               onClick={() => router.push("/atelier/gerer")}
-              aria-label="Ouvrir l'établi"
+              aria-label={d.qg.ouvrirEtabli}
               style={hotspotStyle(ATELIER_LAYOUT.objets.etabli, 45)}
             />
           </AtelierScene>

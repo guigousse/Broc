@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { Hourglass } from "lucide-react";
 import type { CSSProperties } from "react";
 import { ItemImage } from "@/components/ui/ItemImage";
@@ -79,6 +80,7 @@ export function WorkshopSlots() {
 }
 
 function EmptySlot({ onTap }: { onTap: () => void }) {
+  const { d } = useLangue();
   return (
     <button
       type="button"
@@ -102,9 +104,9 @@ function EmptySlot({ onTap }: { onTap: () => void }) {
         cursor: "pointer",
         WebkitTapHighlightColor: "transparent",
       }}
-      aria-label="Ouvrir l'atelier (slot libre)"
+      aria-label={d.qg.ouvrirAtelierSlotLibre}
     >
-      libre
+      {d.qg.slotLibre}
     </button>
   );
 }

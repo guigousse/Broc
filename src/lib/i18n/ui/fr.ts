@@ -138,6 +138,13 @@ export const fr = {
     seReposer: "Se reposer (+1 jour)",
     tousLesObjets: "Tous les objets",
     passerIntroAria: "Passer l'introduction",
+    panoAtelierStockage: "Panorama atelier et stockage",
+    decorAtelier: "Décor atelier",
+    ouvrirAtelierSlotLibre: "Ouvrir l'atelier (slot libre)",
+    ouvrirStockageSimple: "Ouvrir le stockage",
+    ouvrirEtabli: "Ouvrir l'établi",
+    ouvrirCollection: "Ouvrir la collection",
+    slotLibre: "libre",
   },
   sheets: {
     objetRecherche: "Objet recherché :",

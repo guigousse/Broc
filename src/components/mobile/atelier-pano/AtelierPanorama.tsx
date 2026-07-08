@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 type ZoneKey = "stockage" | "etabli" | "coinL";
 
@@ -70,6 +71,7 @@ export function AtelierPanorama({
   children,
   onScrollPos,
 }: AtelierPanoramaProps) {
+  const { d } = useLangue();
   const ref = useRef<HTMLDivElement>(null);
   const onScrollPosRef = useRef(onScrollPos);
   useEffect(() => {
@@ -127,7 +129,7 @@ export function AtelierPanorama({
     <div
       ref={ref}
       style={containerStyle}
-      aria-label="Panorama atelier et stockage"
+      aria-label={d.qg.panoAtelierStockage}
       data-atelier-panorama="1"
     >
       {children}

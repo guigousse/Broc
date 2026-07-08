@@ -135,6 +135,13 @@ export const es: DictionnaireUI = {
     seReposer: "Descansar (+1 día)",
     tousLesObjets: "Todos los objetos",
     passerIntroAria: "Saltar la introducción",
+    panoAtelierStockage: "Panorama del taller y el almacén",
+    decorAtelier: "Decorado del taller",
+    ouvrirAtelierSlotLibre: "Abrir el taller (hueco libre)",
+    ouvrirStockageSimple: "Abrir el almacén",
+    ouvrirEtabli: "Abrir el banco de trabajo",
+    ouvrirCollection: "Abrir la colección",
+    slotLibre: "libre",
   },
   sheets: {
     objetRecherche: "Objeto buscado:",

@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { ATELIER_LAYOUT, type AtelierObjetKey } from "./layout";
 
 interface AtelierSceneProps {
@@ -36,8 +37,9 @@ const objectsLayer: CSSProperties = {
 };
 
 export function AtelierScene({ children }: AtelierSceneProps) {
+  const { d } = useLangue();
   return (
-    <div style={wrapStyle} aria-label="Décor atelier" data-atelier-scene="1">
+    <div style={wrapStyle} aria-label={d.qg.decorAtelier} data-atelier-scene="1">
       <img
         src="/atelier/fond-atelier.png"
         alt=""
