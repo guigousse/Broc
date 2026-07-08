@@ -31,9 +31,9 @@ export const en: DictionnaireUI = {
     ilYAMin: "{n} min ago",
     ilYAHeures: "{n} h ago",
     ilYAJours: "{n} d ago",
-    confirmSupprimerTitre: 'Delete "{nom}"?',
+    confirmSupprimerTitre: "Delete “{nom}”?",
     confirmSupprimerCorps: "This game will be permanently lost.",
-    confirmEcraserTitre: 'Overwrite "{nom}"?',
+    confirmEcraserTitre: "Overwrite “{nom}”?",
     confirmEcraserCorps:
       "This game will be permanently lost and replaced by a new one.",
   },
