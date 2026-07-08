@@ -48,10 +48,9 @@ function BoutonMenu({
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        gap: 14,
-        width: 250,
-        padding: "14px 18px",
+        gap: 10,
+        width: 210,
+        padding: "14px 16px",
         background: "var(--forest-800)",
         color: "var(--brass-300)",
         border: "1px solid var(--brass-500)",
@@ -69,7 +68,8 @@ function BoutonMenu({
       }}
     >
       {icon}
-      <span>{label}</span>
+      {/* Libellé centré dans l'espace restant à droite de l'icône. */}
+      <span style={{ flex: 1, textAlign: "center" }}>{label}</span>
     </button>
   );
 }
