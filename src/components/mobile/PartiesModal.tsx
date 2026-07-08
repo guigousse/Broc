@@ -192,7 +192,7 @@ const relatifStyle: CSSProperties = {
   letterSpacing: "0.1em",
   textTransform: "uppercase",
   color: "var(--brass-500)",
-  marginBottom: 14,
+  marginTop: 4,
 };
 
 const videRow: CSSProperties = {
@@ -312,7 +312,12 @@ interface LigneSlot {
   occupe: boolean;
   nom: string | null;
   derniereSession: number;
-  resume: { jour: number; niveau: number; budget: number } | null;
+  resume: {
+    jour: number;
+    niveau: number;
+    budget: number;
+    valeurCollection: number;
+  } | null;
 }
 
 function construireLignes(index: IndexSlots): LigneSlot[] {
@@ -476,42 +481,52 @@ export function PartiesModal({
             >
               {occupe ? (
                 <>
-                  {renommage === ligne.n ? (
-                    <input
-                      autoFocus
-                      type="text"
-                      value={nomEnCours}
-                      maxLength={LONGUEUR_MAX_NOM}
-                      onChange={(e) => setNomEnCours(e.target.value)}
-                      onBlur={() => onCommitRenommage(ligne.n)}
-                      onKeyDown={(e) => onKeyDownRenommage(ligne.n, e)}
-                      style={inputStyle}
-                      aria-label={`Renommer l'emplacement ${ligne.n}`}
-                    />
-                  ) : (
-                    <div style={nomRow}>
-                      <span style={nomStyle}>{ligne.nom ?? `Partie ${ligne.n}`}</span>
-                      {estActif && <span style={badgeActive}>Active</span>}
-                    </div>
-                  )}
+                  {/* Infos à gauche (4 lignes), crayon + poubelle à droite
+                      sur la même hauteur que les infos. */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {renommage === ligne.n ? (
+                        <input
+                          autoFocus
+                          type="text"
+                          value={nomEnCours}
+                          maxLength={LONGUEUR_MAX_NOM}
+                          onChange={(e) => setNomEnCours(e.target.value)}
+                          onBlur={() => onCommitRenommage(ligne.n)}
+                          onKeyDown={(e) => onKeyDownRenommage(ligne.n, e)}
+                          style={inputStyle}
+                          aria-label={`Renommer l'emplacement ${ligne.n}`}
+                        />
+                      ) : (
+                        <div style={nomRow}>
+                          <span style={nomStyle}>{ligne.nom ?? `Partie ${ligne.n}`}</span>
+                          {estActif && <span style={badgeActive}>Active</span>}
+                        </div>
+                      )}
 
-                  {ligne.resume && (
-                    <div style={resumeStyle}>
-                      Jour {ligne.resume.jour} · Niveau {ligne.resume.niveau} ·{" "}
-                      {ligne.resume.budget.toLocaleString("fr-FR")} €
+                      {ligne.resume && (
+                        <div style={resumeStyle}>
+                          Jour {ligne.resume.jour} · Niveau {ligne.resume.niveau}
+                        </div>
+                      )}
+                      {ligne.resume && (
+                        <div style={resumeStyle}>
+                          Valeur de la collection :{" "}
+                          {ligne.resume.valeurCollection.toLocaleString("fr-FR")} €
+                        </div>
+                      )}
+                      <div style={relatifStyle}>
+                        {tempsRelatif(ligne.derniereSession)}
+                      </div>
                     </div>
-                  )}
-                  <div style={relatifStyle}>{tempsRelatif(ligne.derniereSession)}</div>
 
-                  <div style={actionsRow}>
-                    {mode === "gestion" ? (
-                      <>
+                    {mode === "gestion" && (
+                      <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                         <BoutonSlot
                           variant="secondary"
                           onClick={() => onDebuterRenommage(ligne.n, ligne.nom)}
                           ariaLabel="Renommer"
                           style={{
-                            marginLeft: "auto",
                             padding: "12px 13px",
                             display: "grid",
                             placeItems: "center",
@@ -531,16 +546,20 @@ export function PartiesModal({
                         >
                           <Trash2 size={16} strokeWidth={2} aria-hidden />
                         </BoutonSlot>
-                      </>
-                    ) : (
+                      </div>
+                    )}
+                  </div>
+
+                  {mode !== "gestion" && (
+                    <div style={{ ...actionsRow, marginTop: 12 }}>
                       <BoutonSlot
                         variant="danger"
                         onClick={() => setConfirmEcrasement(ligne.n)}
                       >
                         Écraser
                       </BoutonSlot>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div style={videRow}>
@@ -561,13 +580,11 @@ export function PartiesModal({
       })}
       </div>
 
+      {/* Juste sous les slots, dans le flux (pas collé en bas d'écran). */}
       {mode === "gestion" && (
         <div
           style={{
-            position: "sticky",
-            bottom: 0,
-            marginTop: "auto",
-            padding: "16px 24px 8px",
+            padding: "14px 24px 8px",
             display: "flex",
             justifyContent: "center",
           }}

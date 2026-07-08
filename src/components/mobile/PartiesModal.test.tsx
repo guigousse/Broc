@@ -82,7 +82,7 @@ describe("PartiesModal — mode gestion, liste", () => {
     expect(within(l1).getByText("Ma brocante")).toBeTruthy();
     expect(within(l1).getByText(/Jour 5/)).toBeTruthy();
     expect(within(l1).getByText(/Niveau 3/)).toBeTruthy();
-    expect(within(l1).getByText(/1.234 €|1 234 €|1 234 €/)).toBeTruthy();
+    expect(within(l1).getByText(/Valeur de la collection/)).toBeTruthy();
 
     const l2 = ligne(2);
     expect(within(l2).getByText("Partie 2")).toBeTruthy();

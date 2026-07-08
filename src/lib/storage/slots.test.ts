@@ -278,10 +278,32 @@ describe("opérations", () => {
         brocanteur: { xp: 0, niveau: 3, pointsDisponibles: 0 },
       }),
     );
-    expect(resumeSlot(1)).toEqual({ jour: 7, niveau: 3, budget: 456 });
+    // valeurCollection : 0 par défaut (save sans collection lisible).
+    expect(resumeSlot(1)).toEqual({
+      jour: 7,
+      niveau: 3,
+      budget: 456,
+      valeurCollection: 0,
+    });
 
     localStorage.setItem(cleSlot(2), "not-valid-json{");
     expect(resumeSlot(2)).toBeNull();
+
+    // valeurCollection somme les donations de la collection (plancher entier),
+    // et une collection partiellement absente/corrompue ne casse rien.
+    localStorage.setItem(
+      cleSlot(2),
+      JSON.stringify({
+        budget: 10,
+        jourActuel: 1,
+        brocanteur: { xp: 0, niveau: 1, pointsDisponibles: 0 },
+        collection: {
+          Maison: [{ donation: { valeur: 120.9 } }, {}],
+          Musique: [{ donation: { valeur: 65 } }],
+        },
+      }),
+    );
+    expect(resumeSlot(2)?.valeurCollection).toBe(185);
 
     localStorage.setItem(cleSlot(3), JSON.stringify({ budget: 1 }));
     expect(resumeSlot(3)).toBeNull();

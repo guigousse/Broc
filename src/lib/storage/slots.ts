@@ -1,4 +1,5 @@
 import type { GameState } from "@/types/game";
+import { valeurTotale } from "@/lib/collection";
 
 /**
  * Index des emplacements de sauvegarde (3 parties indépendantes sur le même
@@ -316,7 +317,12 @@ export function premierSlotLibre(): NumeroSlot | null {
  */
 export function resumeSlot(
   n: NumeroSlot,
-): { jour: number; niveau: number; budget: number } | null {
+): {
+  jour: number;
+  niveau: number;
+  budget: number;
+  valeurCollection: number;
+} | null {
   if (typeof window === "undefined") return null;
 
   let raw: string | null;
@@ -348,5 +354,16 @@ export function resumeSlot(
     return null;
   }
 
-  return { jour, niveau, budget };
+  // Valeur de collection défensive : une save ancienne/corrompue sans
+  // collection lisible affiche 0 plutôt que de faire échouer tout le résumé.
+  let valeurCollection = 0;
+  try {
+    valeurCollection = Math.floor(
+      valeurTotale((state.collection ?? {}) as GameState["collection"]),
+    );
+  } catch {
+    valeurCollection = 0;
+  }
+
+  return { jour, niveau, budget, valeurCollection };
 }
