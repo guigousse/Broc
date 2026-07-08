@@ -8,6 +8,7 @@ import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
   changerSlotActif,
@@ -161,6 +162,7 @@ function useTiltParallax(maxPx: number) {
 export default function TitleScreen() {
   const { nouvellePartie, state, isHydrated, reset, detacherPartie } = useGame();
   const { playClick } = useSettings();
+  const { d } = useLangue();
   const [reglagesOuverts, setReglagesOuverts] = useState(false);
   const [creditsOuverts, setCreditsOuverts] = useState(false);
   const [partiesModal, setPartiesModal] = useState<
@@ -357,28 +359,28 @@ export default function TitleScreen() {
         >
           <BoutonMenu
             icon={<Play size={17} strokeWidth={2} aria-hidden />}
-            label="Continuer"
+            label={d.menu.continuer}
             onClick={onContinuer}
             disabled={!aSauvegarde}
           />
           <BoutonMenu
             icon={<Plus size={17} strokeWidth={2} aria-hidden />}
-            label="Nouvelle partie"
+            label={d.menu.nouvellePartie}
             onClick={onNouvellePartie}
           />
           <BoutonMenu
             icon={<FolderOpen size={17} strokeWidth={2} aria-hidden />}
-            label="Charger"
+            label={d.menu.charger}
             onClick={onParties}
           />
           <BoutonMenu
             icon={<Settings size={17} strokeWidth={2} aria-hidden />}
-            label="Réglages"
+            label={d.menu.reglages}
             onClick={onReglages}
           />
           <BoutonMenu
             icon={<Info size={17} strokeWidth={2} aria-hidden />}
-            label="Crédits"
+            label={d.menu.credits}
             onClick={onCredits}
           />
         </div>
