@@ -5,6 +5,7 @@ import { DecoDivider } from "@/components/ui/DecoDivider";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { Panel } from "@/components/ui/Panel";
 import { getTreeMeta } from "@/data/competences";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 export interface SummaryItem {
   templateId: string;
@@ -45,6 +46,7 @@ export function SessionSummary({
   xpReplayMode = false,
   onRetour,
 }: SessionSummaryProps) {
+  const { d } = useLangue();
   const total = items.reduce((s, it) => s + it.prix, 0);
   const xpEntries = Object.entries(xpGagne).filter(([, v]) => v > 0);
   const totalXp = xpBrocanteur ?? xpEntries.reduce((s, [, v]) => s + v, 0);
@@ -72,10 +74,10 @@ export function SessionSummary({
         <Panel
           eyebrow={
             bravo
-              ? "— bravo ! étal vidé —"
+              ? d.vente.bilanEyebrowBravo
               : type === "chinage"
-                ? "— bilan de chinage —"
-                : "— bilan de la journée —"
+                ? d.vente.bilanEyebrowChinage
+                : d.vente.bilanEyebrowVente
           }
           title={titre}
         >
@@ -90,7 +92,7 @@ export function SessionSummary({
                 margin: "0 0 14px",
               }}
             >
-              Vous avez écoulé l'intégralité de votre étal.
+              {d.vente.bilanBravoTexte}
             </p>
           )}
           {sousTitre && (
@@ -122,8 +124,8 @@ export function SessionSummary({
               }}
             >
               {type === "chinage"
-                ? "Vous êtes rentré les mains vides."
-                : "Aucune vente conclue."}
+                ? d.vente.bilanChinageVide
+                : d.vente.bilanVenteVide}
             </p>
           ) : (
             <ul
@@ -194,7 +196,9 @@ export function SessionSummary({
               fontWeight: 700,
             }}
           >
-            <span>{type === "chinage" ? "Total dépensé" : "Total recette"}</span>
+            <span>
+              {type === "chinage" ? d.vente.bilanTotalDepense : d.vente.bilanTotalRecette}
+            </span>
             <span
               style={{
                 color:
@@ -209,7 +213,7 @@ export function SessionSummary({
           </div>
         </Panel>
 
-        <Panel eyebrow="— expérience gagnée —" title={`+${totalXp} XP`}>
+        <Panel eyebrow={d.vente.bilanEyebrowXp} title={`+${totalXp} XP`}>
           {xpEntries.length === 0 ? (
             totalXp === 0 ? (
               <p
@@ -221,9 +225,7 @@ export function SessionSummary({
                   margin: 0,
                 }}
               >
-                {xpReplayMode
-                  ? "Aucune expérience enregistrée pour cette session."
-                  : "Aucune expérience gagnée cette fois-ci."}
+                {xpReplayMode ? d.vente.bilanXpReplayVide : d.vente.bilanXpVide}
               </p>
             ) : null
           ) : (
@@ -295,7 +297,7 @@ export function SessionSummary({
 
         <div style={{ display: "flex", justifyContent: "center" }}>
           <Button variant="primary" size="lg" onClick={onRetour}>
-            {retourLabel ?? "Rentrer au QG"}
+            {retourLabel ?? d.vente.rentrerQg}
           </Button>
         </div>
       </div>

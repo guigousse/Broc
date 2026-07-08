@@ -13,6 +13,7 @@ import { energieCourante } from "@/lib/energie";
 import { CATEGORIES } from "@/data/categories";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { prixSuggere } from "@/lib/prixSuggere";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 const SUGGESTION_FACTEUR = 1.4;
@@ -35,6 +36,7 @@ export default function VitrineBrocantePage() {
     tempsConfiance,
     consommerEnergie,
   } = useGame();
+  const { d, tr } = useLangue();
 
   const brocante = useMemo(() => getBrocanteById(params.brocanteId), [params.brocanteId]);
   const [etape, setEtape] = useState<"packing" | "pricing">("packing");
@@ -103,7 +105,7 @@ export default function VitrineBrocantePage() {
           fontSize: 12,
         }}
       >
-        — préparation de l'étal…
+        {d.vente.preparationEtal}
       </main>
     );
   }
@@ -165,7 +167,7 @@ export default function VitrineBrocantePage() {
             onAjusterPrix={ajusterPrixVitrine}
             onRetour={() => setEtape("packing")}
             onValider={handleOuvrir}
-            validerLabel={`Ouvrir l'étal · ${fraisEntree(brocante)} €`}
+            validerLabel={tr(d.vente.ouvrirEtal, { prix: fraisEntree(brocante) })}
             validerActif={
               state.budget >= fraisEntree(brocante) &&
               coffre.length > 0 &&

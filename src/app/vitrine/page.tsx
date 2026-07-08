@@ -9,10 +9,12 @@ import { BrocantePanorama } from "@/components/mobile/brocante-pano/BrocantePano
 import { useGame } from "@/context/GameContext";
 import { BROCANTES } from "@/data/brocantes";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 export default function VitrineListePage() {
   const router = useRouter();
   const { state, isHydrated } = useGame();
+  const { d } = useLangue();
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -31,7 +33,7 @@ export default function VitrineListePage() {
   return (
     <MobileLayout
       header={<MobileHeader budget={state.budget} />}
-      stickyTop={<EtapeBandeau>3 — Choix de la brocante</EtapeBandeau>}
+      stickyTop={<EtapeBandeau>{d.vente.etapeChoixBrocante}</EtapeBandeau>}
       fillContent
     >
       <BrocantePanorama

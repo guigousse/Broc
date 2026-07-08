@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useTickSound } from "@/lib/audio/useTickSound";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { NegoMode } from "@/types/game";
 
 interface NegoBarProps {
@@ -34,6 +35,7 @@ export function NegoBar({
   onChangeJoueur,
   readOnly = false,
 }: NegoBarProps) {
+  const { d } = useLangue();
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const tick = useTickSound();
@@ -92,7 +94,9 @@ export function NegoBar({
           }}
         >
           {prixAdverse}€
-          <span style={{ ...labelStyle, top: -14, bottom: "auto" }}>Lui</span>
+          <span style={{ ...labelStyle, top: -14, bottom: "auto" }}>
+            {d.vente.labelAdverse}
+          </span>
         </div>
         <div
           onPointerDown={startDrag}
@@ -107,7 +111,7 @@ export function NegoBar({
           }}
         >
           {prixJoueur}€
-          <span style={labelStyle}>Vous</span>
+          <span style={labelStyle}>{d.vente.labelJoueur}</span>
         </div>
       </div>
     </div>

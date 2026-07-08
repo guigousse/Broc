@@ -11,6 +11,7 @@ import { VITRINE_PREP_ID, vitrineEstEnPrep } from "@/lib/vitrinePrep";
 import { CATEGORIES } from "@/data/categories";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { prixSuggere } from "@/lib/prixSuggere";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 // Prix par défaut = prix du marché (curseur de tarification centré sur la valeur).
@@ -38,6 +39,7 @@ export default function VitrinePrepPage() {
     acheterCamion,
     setNiveauCamionDev,
   } = useGame();
+  const { d } = useLangue();
 
   const [etape, setEtape] = useState<"packing" | "pricing">("packing");
 
@@ -87,7 +89,7 @@ export default function VitrinePrepPage() {
           fontSize: 12,
         }}
       >
-        — préparation du coffre…
+        {d.vente.preparationCoffre}
       </main>
     );
   }
@@ -122,8 +124,8 @@ export default function VitrinePrepPage() {
       <MobileHeader budget={state.budget} />
       <EtapeBandeau>
         {etape === "packing"
-          ? "1 — Préparation du coffre"
-          : "2 — Tarification"}
+          ? d.vente.etapePrepCoffre
+          : d.vente.etapeTarification}
       </EtapeBandeau>
       <main
         style={{
@@ -162,7 +164,7 @@ export default function VitrinePrepPage() {
             onAjusterPrix={ajusterPrixVitrine}
             onRetour={() => setEtape("packing")}
             onValider={() => router.push("/vitrine")}
-            validerLabel="Choisir la brocante →"
+            validerLabel={d.vente.choisirBrocante}
             validerActif={coffre.length > 0}
             categoriesConnues={categoriesConnuesVitrine}
           />

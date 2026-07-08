@@ -17,6 +17,7 @@ import {
 import { getItemImageUrl } from "@/lib/itemImages";
 import { getCoffreAssets } from "@/lib/coffreAssets";
 import { audioManager } from "@/lib/audio/audioManager";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { CoffreCanvas } from "./CoffreCanvas";
 import { CarrouselStock } from "./CarrouselStock";
 import { DevPanel } from "./DevPanel";
@@ -58,6 +59,7 @@ function buildSolidMask(size: number): Uint8Array {
 }
 
 export function CoffreChargement(p: Props) {
+  const { d } = useLangue();
   const camion = getCamion(p.niveauCamion);
   const assets = getCoffreAssets(camion.visuelId);
 
@@ -269,7 +271,7 @@ export function CoffreChargement(p: Props) {
               margin: 0,
             }}
           >
-            Réarrangez le coffre — certains objets ne tiennent pas.
+            {d.vente.reorganiserCoffre}
           </p>
         )}
         <button
@@ -290,7 +292,7 @@ export function CoffreChargement(p: Props) {
             cursor: closing ? "not-allowed" : "pointer",
           }}
         >
-          Annuler
+          {d.commun.annuler}
         </button>
         <button
           type="button"
@@ -312,7 +314,7 @@ export function CoffreChargement(p: Props) {
             cursor: peutValider && !closing ? "pointer" : "not-allowed",
           }}
         >
-          {closing ? "Fermeture…" : "Valider le chargement"}
+          {closing ? d.vente.fermetureEnCours : d.vente.validerChargement}
         </button>
       </div>
     </>

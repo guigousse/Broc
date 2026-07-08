@@ -59,6 +59,8 @@ import { CATEGORIES } from "@/data/categories";
 import { METEO_INTERVALLE_MULT } from "@/data/meteos";
 import { indexJourSemaine, meteoDuJour } from "@/lib/meteo";
 import { buildCelebritePersonnage } from "@/lib/celebrite";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import type { DictionnaireUI, tr } from "@/lib/i18n/ui";
 import type {
   CategorieObjet,
   EtatObjet,
@@ -100,6 +102,7 @@ export default function VitrineJourneePage() {
     marquerVuTemplate,
     utiliserActive,
   } = useGame();
+  const { d, tr } = useLangue();
   const { startCrowd, stopCrowd } = useSettings();
   useEffect(() => {
     startCrowd();
@@ -524,12 +527,12 @@ export default function VitrineJourneePage() {
       setBravoTout(true);
       ajouterJournal({
         heure: heureCourante(),
-        texte: "Plus rien à vendre — étal totalement écoulé !",
+        texte: d.vente.journalEcoule,
         ton: "vente",
       });
       terminerJournee();
     }
-  }, [state, isHydrated, journeeFinie, tempsRestant, terminerJournee, ajouterJournal, heureCourante]);
+  }, [state, isHydrated, journeeFinie, tempsRestant, terminerJournee, ajouterJournal, heureCourante, d]);
 
   if (!isHydrated || !state) {
     return (
@@ -545,7 +548,7 @@ export default function VitrineJourneePage() {
           fontSize: 12,
         }}
       >
-        — installation du stand…
+        {d.vente.installationStand}
       </main>
     );
   }
@@ -579,7 +582,11 @@ export default function VitrineJourneePage() {
     gagnerXPLocal(XP_JUSTE_PRIX);
     ajouterJournal({
       heure: heureCourante(),
-      texte: `${ev.persona.nom} achète ${describePanier(ev)} pour ${ev.prixDemande} €.`,
+      texte: tr(d.vente.journalAchete, {
+        nom: ev.persona.nom,
+        panier: describePanier(ev, d, tr),
+        prix: ev.prixDemande,
+      }),
       ton: "vente",
     });
     setClientActuel(null);
@@ -595,7 +602,11 @@ export default function VitrineJourneePage() {
     gagnerXPLocal(XP_NEGO_BROCANTEUR);
     ajouterJournal({
       heure: heureCourante(),
-      texte: `${ev.persona.nom} accepte ${describePanier(ev)} à ${prixFinal} €.`,
+      texte: tr(d.vente.journalAccepte, {
+        nom: ev.persona.nom,
+        panier: describePanier(ev, d, tr),
+        prix: prixFinal,
+      }),
       ton: "vente",
     });
     setClientActuel(null);
@@ -606,7 +617,7 @@ export default function VitrineJourneePage() {
   const terminerVisiteClient = (ev: ClientEvent) => {
     ajouterJournal({
       heure: heureCourante(),
-      texte: `${ev.persona.nom} s'éloigne sans rien acheter.`,
+      texte: tr(d.vente.journalEloigne, { nom: ev.persona.nom }),
       ton: "info",
     });
     setClientActuel(null);
@@ -617,7 +628,7 @@ export default function VitrineJourneePage() {
   const handleFermerEnAvance = () => {
     ajouterJournal({
       heure: heureCourante(),
-      texte: "Vous baissez le rideau plus tôt que prévu.",
+      texte: d.vente.journalRideau,
       ton: "info",
     });
     terminerJournee();
@@ -645,14 +656,19 @@ export default function VitrineJourneePage() {
         type="vente"
         titre={
           bravoTout
-            ? "Bravo ! Étal vidé"
-            : `Journée terminée · ${totalVentes} vente${totalVentes > 1 ? "s" : ""}`
+            ? d.vente.bravoEtalVide
+            : tr(
+                totalVentes > 1
+                  ? d.vente.titreJourneeVentes
+                  : d.vente.titreJourneeUneVente,
+                { n: totalVentes },
+              )
         }
         sousTitre={
           bravoTout
             ? undefined
             : totalVentes === 0
-              ? "La journée se termine sans la moindre vente."
+              ? d.vente.journeeSansVente
               : undefined
         }
         bravo={bravoTout}
@@ -711,7 +727,7 @@ export default function VitrineJourneePage() {
               marginBottom: 4,
             }}
           >
-            {`Vitrine · ${heureCourante()}`}
+            {tr(d.vente.enTeteVitrine, { heure: heureCourante() })}
           </div>
           <Horloge tempsRestant={tempsRestant} progress={progress} />
           {activeDebloquee(state, "criee") && (
@@ -747,7 +763,7 @@ export default function VitrineJourneePage() {
               padding: "16px 0",
             }}
           >
-            Votre étal est vide. Les badauds passent leur chemin.
+            {d.vente.etalVide}
           </p>
         ) : (
           <div
@@ -791,7 +807,7 @@ export default function VitrineJourneePage() {
               marginBottom: 8,
             }}
           >
-            — Journal de bord —
+            {d.vente.journalDeBord}
           </div>
           {journal.length === 0 ? (
             <p
@@ -804,7 +820,7 @@ export default function VitrineJourneePage() {
                 margin: "10px 0",
               }}
             >
-              Rien n'est encore arrivé.
+              {d.vente.journalVide}
             </p>
           ) : (
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -861,7 +877,7 @@ export default function VitrineJourneePage() {
       <ActionFab
         buttons={[
           {
-            label: "Baisser le rideau",
+            label: d.vente.baisserRideau,
             variant: "secondary",
             onClick: handleFermerEnAvance,
           },
@@ -886,7 +902,7 @@ export default function VitrineJourneePage() {
             modifiersRef.current?.revelePersona ||
             clientActuel.persona.archetypeId === "celebrite"
               ? clientActuel.persona.nom
-              : "Un inconnu"
+              : d.vente.clientInconnu
           }
           personaInfo={{
             nom: clientActuel.persona.nom,
@@ -921,7 +937,7 @@ export default function VitrineJourneePage() {
                   <NegoItemRow
                     objet={p.objet}
                     prix={p.prixVente}
-                    prixLabel="Prix demandé"
+                    prixLabel={d.vente.prixDemandeLabel}
                   />
                 </div>
               ))}
@@ -981,18 +997,18 @@ export default function VitrineJourneePage() {
             aria-modal="true"
           >
             <div style={lotGarniHeader}>
-              <span style={lotGarniTitle}>🧺 Lot garni — ajouter un objet</span>
+              <span style={lotGarniTitle}>{d.vente.lotGarniChoisirTitre}</span>
               <button
                 type="button"
                 onClick={() => setLotGarniOuvert(false)}
-                aria-label="Fermer"
+                aria-label={d.commun.fermer}
                 style={lotGarniCloseBtn}
               >
                 ✕
               </button>
             </div>
             {objetsAjoutablesLotGarni.length === 0 ? (
-              <p style={lotGarniEmpty}>Plus rien d'autre à proposer.</p>
+              <p style={lotGarniEmpty}>{d.vente.lotGarniAucunAutre}</p>
             ) : (
               <ul style={lotGarniList}>
                 {objetsAjoutablesLotGarni.map((o) => (
@@ -1016,9 +1032,15 @@ export default function VitrineJourneePage() {
   );
 }
 
-function describePanier(ev: ClientEvent): string {
-  if (ev.panier.length === 1) return `« ${ev.panier[0].objet.nom} »`;
-  return `${ev.panier.length} objets`;
+function describePanier(
+  ev: ClientEvent,
+  d: DictionnaireUI,
+  trFn: typeof tr,
+): string {
+  if (ev.panier.length === 1) {
+    return trFn(d.vente.panierUnique, { nom: ev.panier[0].objet.nom });
+  }
+  return trFn(d.vente.panierPluriel, { n: ev.panier.length });
 }
 
 function Horloge({
@@ -1028,6 +1050,7 @@ function Horloge({
   tempsRestant: number;
   progress: number;
 }) {
+  const { d } = useLangue();
   const sec = Math.ceil(tempsRestant);
   return (
     <div style={{ marginTop: 6 }}>
@@ -1042,7 +1065,7 @@ function Horloge({
           color: "var(--brass-700)",
         }}
       >
-        <span>Temps restant</span>
+        <span>{d.vente.tempsRestantLabel}</span>
         <span>{sec}s</span>
       </div>
       <div
@@ -1119,6 +1142,7 @@ function FinDeJournee({
   ventes: number;
   onRetour: () => void;
 }) {
+  const { d, tr } = useLangue();
   return (
     <div style={{ marginTop: 24, textAlign: "center" }}>
       <DecoDivider />
@@ -1132,10 +1156,10 @@ function FinDeJournee({
         }}
       >
         {ventes === 0
-          ? "La journée se termine sans la moindre vente."
+          ? d.vente.journeeSansVente
           : ventes === 1
-          ? "Une seule vente aujourd'hui. C'est un début."
-          : `${ventes} ventes inscrites au carnet.`}
+          ? d.vente.journeeUneVente
+          : tr(d.vente.journeeVentesInscrites, { n: ventes })}
       </p>
       <p
         style={{
@@ -1147,10 +1171,10 @@ function FinDeJournee({
           marginBottom: 18,
         }}
       >
-        Les invendus retournent dans votre vitrine privée.
+        {d.vente.invendusRetour}
       </p>
       <Button variant="primary" size="lg" onClick={onRetour}>
-        Rentrer au QG
+        {d.vente.rentrerQg}
       </Button>
     </div>
   );

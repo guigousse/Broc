@@ -7,6 +7,8 @@ import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
 import { getTemplate } from "@/data/objetTemplates";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 import type { Objet } from "@/types/game";
 
 interface NegoItemRowProps {
@@ -16,6 +18,7 @@ interface NegoItemRowProps {
 }
 
 export function NegoItemRow({ objet, prix, prixLabel }: NegoItemRowProps) {
+  const { d, tr } = useLangue();
   const isUnique = !!getTemplate(objet.templateId)?.unique;
   const colors = getRarityColors(objet.rarete, isUnique);
 
@@ -44,7 +47,7 @@ export function NegoItemRow({ objet, prix, prixLabel }: NegoItemRowProps) {
             filled={etoileCount(objet.etat)}
             color={colors.outer}
             display="flex"
-            aria-label={`État : ${objet.etat}`}
+            aria-label={tr(d.chine.etatAriaLabel, { etat: libelleEtat(objet.etat, d) })}
           />
           <span style={{ display: "inline-flex", alignItems: "center" }}>
             <CategorieIcon

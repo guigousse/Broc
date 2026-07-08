@@ -10,6 +10,7 @@ import { ouvrirNegociation } from "@/lib/negociation";
 import { appliquerBoniment } from "@/lib/vitrine";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { NegoMode, NegoPersona, NegociationState } from "@/types/game";
 
 interface NegociationSheetProps {
@@ -79,6 +80,7 @@ export function NegociationSheet({
   boniment,
   lotGarni,
 }: NegociationSheetProps) {
+  const { d, tr } = useLangue();
   const [localNego, setLocalNego] = useState<NegociationState>(
     nego ?? ouvrirNegociation(mode, prixDepartAdverse, cibleSecrete),
   );
@@ -153,10 +155,10 @@ export function NegociationSheet({
 
   // Texte affiché dans la bulle de dialogue
   const bubbleMessage = venteDirecte
-    ? `« Je prends. Voici ${venteDirecte.prixDirect} €. »`
+    ? tr(d.vente.bulleJePrends, { prix: venteDirecte.prixDirect })
     : localNego.message;
 
-  const title = venteDirecte ? "Vente" : "Négociation";
+  const title = venteDirecte ? d.vente.titreVente : d.vente.titreNegociation;
 
   return (
     <BottomSheet
@@ -185,19 +187,19 @@ export function NegociationSheet({
             style={btnSecondary}
             onClick={venteDirecte.onRefuser}
           >
-            Refuser
+            {d.vente.refuser}
           </button>
           <button
             type="button"
             style={btnPrimary}
             onClick={venteDirecte.onAccepter}
           >
-            Vendre · {venteDirecte.prixDirect} €
+            {tr(d.vente.vendrePrix, { prix: venteDirecte.prixDirect })}
           </button>
         </div>
       ) : (
         <>
-          <div style={sectionLabel}>— Négociation —</div>
+          <div style={sectionLabel}>{d.vente.sectionNegociation}</div>
           <NegoBar
             mode={mode}
             echelleMax={echelleMax}
@@ -240,7 +242,9 @@ export function NegociationSheet({
                 style={{ ...btnPrimary, gridColumn: "1 / -1" }}
                 onClick={handleAcheterApresRefus}
               >
-                Acheter au prix affiché — {localNego.prixAdverseCourant} €
+                {tr(d.chine.acheterPrixAffiche, {
+                  prix: localNego.prixAdverseCourant,
+                })}
               </button>
             ) : enCours ? (
               <>
@@ -249,7 +253,7 @@ export function NegociationSheet({
                   style={btnSecondary}
                   onClick={handleAbandonner}
                 >
-                  Laisser tomber
+                  {d.chine.laisserTomber}
                 </button>
                 <button
                   type="button"
@@ -257,8 +261,8 @@ export function NegociationSheet({
                   onClick={handleProposer}
                 >
                   {offreRejoint(mode, offreJoueur, localNego.prixAdverseCourant)
-                    ? `Accepter ${offreJoueur} €`
-                    : `Proposer ${offreJoueur} €`}
+                    ? tr(d.chine.accepterPrix, { prix: offreJoueur })
+                    : tr(d.chine.proposerPrix, { prix: offreJoueur })}
                 </button>
               </>
             ) : (
@@ -267,7 +271,7 @@ export function NegociationSheet({
                 style={{ ...btnSecondary, gridColumn: "1 / -1" }}
                 onClick={onClose}
               >
-                Fermer
+                {d.commun.fermer}
               </button>
             )}
           </div>
