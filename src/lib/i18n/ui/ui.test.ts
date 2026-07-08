@@ -17,4 +17,42 @@ describe("dictionnaires UI", () => {
   it("tr laisse le gabarit intact pour un paramètre manquant", () => {
     expect(tr("il y a {n} min")).toBe("il y a {n} min");
   });
+
+  it("parité des placeholders {x} : chaque feuille EN/ES porte exactement les jetons du FR", () => {
+    // tsc garantit la PRÉSENCE des clés (DeepStrings) ; ce test garantit
+    // que les gabarits restent interpolables : un {n} oublié dans une
+    // traduction compilerait mais livrerait une chaîne cassée en silence.
+    const jetons = (s: string) =>
+      [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(",");
+
+    const derives: string[] = [];
+    const compare = (
+      fr: Record<string, unknown>,
+      autre: Record<string, unknown>,
+      locale: string,
+      chemin: string,
+    ) => {
+      for (const [cle, valeurFr] of Object.entries(fr)) {
+        const valeurAutre = autre[cle];
+        if (typeof valeurFr === "string") {
+          if (jetons(valeurFr) !== jetons(valeurAutre as string)) {
+            derives.push(
+              `${locale}:${chemin}${cle} — fr[${jetons(valeurFr)}] vs [${jetons(valeurAutre as string)}]`,
+            );
+          }
+        } else {
+          compare(
+            valeurFr as Record<string, unknown>,
+            valeurAutre as Record<string, unknown>,
+            locale,
+            `${chemin}${cle}.`,
+          );
+        }
+      }
+    };
+
+    compare(DICTIONNAIRES.fr, DICTIONNAIRES.en, "en", "");
+    compare(DICTIONNAIRES.fr, DICTIONNAIRES.es, "es", "");
+    expect(derives).toEqual([]);
+  });
 });
