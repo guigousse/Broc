@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Plus, X } from "lucide-react";
+import type { ReactNode } from "react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { Button } from "@/components/ui/Button";
 import {
   changerSlotActif,
   chargerIndex,
@@ -110,10 +110,10 @@ const section: CSSProperties = {
 };
 
 const carte: CSSProperties = {
-  background: "var(--paper-100)",
+  background: "var(--forest-800)",
   border: "1px solid var(--brass-500)",
   boxShadow:
-    "0 16px 32px rgba(0,0,0,0.38), inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+    "0 16px 32px rgba(0,0,0,0.38), inset 0 0 0 2px var(--forest-800), inset 0 0 0 3px var(--brass-500)",
   borderRadius: "var(--radius-card)",
   padding: "16px",
 };
@@ -121,15 +121,15 @@ const carte: CSSProperties = {
 const nomRow: CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: 8,
-  marginBottom: 4,
+  gap: 10,
+  marginBottom: 6,
 };
 
 const nomStyle: CSSProperties = {
   fontFamily: "var(--font-display)",
-  fontSize: 14,
+  fontSize: 20,
   letterSpacing: "0.08em",
-  color: "var(--ink-700)",
+  color: "var(--paper-100)",
   fontWeight: 700,
 };
 
@@ -146,9 +146,9 @@ const badgeActive: CSSProperties = {
 
 const resumeStyle: CSSProperties = {
   fontFamily: "var(--font-serif)",
-  fontSize: 13,
-  color: "var(--ink-700)",
-  marginBottom: 2,
+  fontSize: 16.5,
+  color: "var(--paper-200)",
+  marginBottom: 4,
 };
 
 const relatifStyle: CSSProperties = {
@@ -156,8 +156,8 @@ const relatifStyle: CSSProperties = {
   fontSize: 10,
   letterSpacing: "0.1em",
   textTransform: "uppercase",
-  color: "var(--brass-700)",
-  marginBottom: 12,
+  color: "var(--brass-500)",
+  marginBottom: 14,
 };
 
 const videRow: CSSProperties = {
@@ -172,7 +172,7 @@ const videTitre: CSSProperties = {
   fontFamily: "var(--font-serif)",
   fontStyle: "italic",
   fontSize: 19,
-  color: "var(--brass-700)",
+  color: "var(--brass-300)",
 };
 
 const btnPlus: CSSProperties = {
@@ -183,11 +183,66 @@ const btnPlus: CSSProperties = {
   borderRadius: "50%",
   border: "1.5px solid var(--brass-500)",
   background: "transparent",
-  color: "var(--brass-700)",
+  color: "var(--brass-300)",
   cursor: "pointer",
   padding: 0,
   flexShrink: 0,
 };
+
+/* Boutons d'action des slots : format des boutons du menu d'accueil
+   (display, capitales, radius 6, ombre portée), couleurs conservées
+   par rôle — primaire forêt, secondaire papier, danger vermillon. */
+
+const btnSlotBase: CSSProperties = {
+  padding: "12px 14px",
+  borderRadius: 6,
+  fontFamily: "var(--font-display)",
+  fontSize: 11,
+  letterSpacing: "0.18em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+  boxShadow:
+    "0 6px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,225,160,0.20)",
+};
+
+const btnSlotVariants = {
+  primary: {
+    background: "var(--forest-800)",
+    color: "var(--brass-300)",
+    border: "1px solid var(--brass-500)",
+  },
+  secondary: {
+    background: "var(--paper-100)",
+    color: "var(--forest-800)",
+    border: "1px solid var(--brass-700)",
+  },
+  danger: {
+    background: "var(--vermillion-600)",
+    color: "var(--paper-200)",
+    border: "1px solid var(--velvet-700)",
+  },
+} satisfies Record<string, CSSProperties>;
+
+function BoutonSlot({
+  variant,
+  onClick,
+  children,
+}: {
+  variant: keyof typeof btnSlotVariants;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ ...btnSlotBase, ...btnSlotVariants[variant] }}
+    >
+      {children}
+    </button>
+  );
+}
 
 const actionsRow: CSSProperties = {
   display: "flex",
@@ -378,32 +433,29 @@ export function PartiesModal({
                   <div style={actionsRow}>
                     {mode === "gestion" ? (
                       <>
-                        <Button size="sm" variant="primary" onClick={() => onJouer(ligne.n)}>
+                        <BoutonSlot variant="primary" onClick={() => onJouer(ligne.n)}>
                           {estActif ? "Reprendre" : "Jouer"}
-                        </Button>
-                        <Button
-                          size="sm"
+                        </BoutonSlot>
+                        <BoutonSlot
                           variant="secondary"
                           onClick={() => onDebuterRenommage(ligne.n, ligne.nom)}
                         >
                           Renommer
-                        </Button>
-                        <Button
-                          size="sm"
+                        </BoutonSlot>
+                        <BoutonSlot
                           variant="danger"
                           onClick={() => setConfirmSuppression(ligne.n)}
                         >
                           Supprimer
-                        </Button>
+                        </BoutonSlot>
                       </>
                     ) : (
-                      <Button
-                        size="sm"
+                      <BoutonSlot
                         variant="danger"
                         onClick={() => setConfirmEcrasement(ligne.n)}
                       >
                         Écraser
-                      </Button>
+                      </BoutonSlot>
                     )}
                   </div>
                 </>
