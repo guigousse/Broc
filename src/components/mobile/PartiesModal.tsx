@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import {
@@ -118,6 +118,15 @@ const carte: CSSProperties = {
   padding: "16px",
 };
 
+/* Slot actif : liseré laiton nettement accentué (bordure claire + double
+   filet intérieur plus épais) pour le repérer d'un coup d'œil. */
+const carteActive: CSSProperties = {
+  ...carte,
+  border: "2px solid var(--brass-300)",
+  boxShadow:
+    "0 16px 32px rgba(0,0,0,0.38), 0 0 0 1px var(--brass-700), inset 0 0 0 2px var(--forest-800), inset 0 0 0 4px var(--brass-300)",
+};
+
 const nomRow: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -228,16 +237,21 @@ function BoutonSlot({
   variant,
   onClick,
   children,
+  ariaLabel,
+  style,
 }: {
   variant: keyof typeof btnSlotVariants;
   onClick: () => void;
   children: ReactNode;
+  ariaLabel?: string;
+  style?: CSSProperties;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      style={{ ...btnSlotBase, ...btnSlotVariants[variant] }}
+      aria-label={ariaLabel}
+      style={{ ...btnSlotBase, ...btnSlotVariants[variant], ...style }}
     >
       {children}
     </button>
@@ -400,7 +414,7 @@ export function PartiesModal({
             role="group"
             aria-label={`Emplacement ${ligne.n}`}
           >
-            <div style={carte}>
+            <div style={estActif ? carteActive : carte}>
               {occupe ? (
                 <>
                   {renommage === ligne.n ? (
@@ -445,8 +459,15 @@ export function PartiesModal({
                         <BoutonSlot
                           variant="danger"
                           onClick={() => setConfirmSuppression(ligne.n)}
+                          ariaLabel="Supprimer"
+                          style={{
+                            marginLeft: "auto",
+                            padding: "12px 13px",
+                            display: "grid",
+                            placeItems: "center",
+                          }}
                         >
-                          Supprimer
+                          <Trash2 size={16} strokeWidth={2} aria-hidden />
                         </BoutonSlot>
                       </>
                     ) : (
