@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
-import { Plus, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import {
@@ -118,13 +118,39 @@ const carte: CSSProperties = {
   padding: "16px",
 };
 
-/* Slot actif : liseré laiton nettement accentué (bordure claire + double
-   filet intérieur plus épais) pour le repérer d'un coup d'œil. */
-const carteActive: CSSProperties = {
+/* Slot choisi par le joueur : liseré laiton nettement accentué (bordure
+   claire + double filet intérieur plus épais) = surbrillance de sélection. */
+const carteChoisie: CSSProperties = {
   ...carte,
   border: "2px solid var(--brass-300)",
   boxShadow:
     "0 16px 32px rgba(0,0,0,0.38), 0 0 0 1px var(--brass-700), inset 0 0 0 2px var(--forest-800), inset 0 0 0 4px var(--brass-300)",
+};
+
+/* Bouton « Lancer la partie » : même format que les boutons du menu. */
+const btnLancer: CSSProperties = {
+  width: 250,
+  padding: "14px 16px",
+  background: "var(--forest-800)",
+  color: "var(--brass-300)",
+  border: "1px solid var(--brass-500)",
+  borderRadius: 6,
+  fontFamily: "var(--font-display)",
+  fontSize: 12,
+  letterSpacing: "0.20em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+  boxShadow:
+    "0 6px 14px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,225,160,0.20)",
+};
+
+const btnLancerDesactive: CSSProperties = {
+  ...btnLancer,
+  cursor: "not-allowed",
+  boxShadow: "none",
+  opacity: 0.45,
+  filter: "grayscale(0.6)",
 };
 
 const nomRow: CSSProperties = {
@@ -249,7 +275,11 @@ function BoutonSlot({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => {
+        // Ne pas déclencher la sélection de la carte porteuse.
+        e.stopPropagation();
+        onClick();
+      }}
       aria-label={ariaLabel}
       style={{ ...btnSlotBase, ...btnSlotVariants[variant], ...style }}
     >
@@ -312,6 +342,7 @@ export function PartiesModal({
   onAvantBascule,
 }: PartiesModalProps) {
   const [index, setIndex] = useState<IndexSlots | null>(null);
+  const [slotChoisi, setSlotChoisi] = useState<NumeroSlot | null>(null);
   const [renommage, setRenommage] = useState<NumeroSlot | null>(null);
   const [nomEnCours, setNomEnCours] = useState("");
   const [confirmSuppression, setConfirmSuppression] = useState<NumeroSlot | null>(null);
@@ -324,6 +355,7 @@ export function PartiesModal({
   useEffect(() => {
     if (open) {
       setIndex(chargerIndex());
+      setSlotChoisi(null);
       setRenommage(null);
       setConfirmSuppression(null);
       setConfirmEcrasement(null);
@@ -369,6 +401,9 @@ export function PartiesModal({
     // d'auto-sauvegarde.
     if (etaitActif) onAvantSuppressionActive?.();
     supprimerSlot(n);
+    // Un slot supprimé ne doit pas rester « choisi » : le bouton Lancer
+    // la partie pointerait sur un emplacement désormais vide.
+    if (slotChoisi === n) setSlotChoisi(null);
     if (etaitActif) {
       window.location.reload();
     } else {
@@ -406,6 +441,10 @@ export function PartiesModal({
       {lignes.map((ligne) => {
         const estActif = index.actif === ligne.n;
         const occupe = ligne.occupe;
+        // Un slot occupé se choisit d'un tap (surbrillance), le lancement
+        // passe par le bouton « Lancer la partie » en bas.
+        const selectionnable = mode === "gestion" && occupe;
+        const choisi = slotChoisi === ligne.n;
 
         return (
           <section
@@ -414,7 +453,27 @@ export function PartiesModal({
             role="group"
             aria-label={`Emplacement ${ligne.n}`}
           >
-            <div style={estActif ? carteActive : carte}>
+            <div
+              style={{
+                ...(choisi ? carteChoisie : carte),
+                ...(selectionnable ? { cursor: "pointer" } : {}),
+              }}
+              {...(selectionnable
+                ? {
+                    role: "button",
+                    tabIndex: 0,
+                    "aria-pressed": choisi,
+                    "aria-label": `Choisir l'emplacement ${ligne.n}`,
+                    onClick: () => setSlotChoisi(ligne.n),
+                    onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSlotChoisi(ligne.n);
+                      }
+                    },
+                  }
+                : {})}
+            >
               {occupe ? (
                 <>
                   {renommage === ligne.n ? (
@@ -447,21 +506,24 @@ export function PartiesModal({
                   <div style={actionsRow}>
                     {mode === "gestion" ? (
                       <>
-                        <BoutonSlot variant="primary" onClick={() => onJouer(ligne.n)}>
-                          {estActif ? "Reprendre" : "Jouer"}
-                        </BoutonSlot>
                         <BoutonSlot
                           variant="secondary"
                           onClick={() => onDebuterRenommage(ligne.n, ligne.nom)}
+                          ariaLabel="Renommer"
+                          style={{
+                            marginLeft: "auto",
+                            padding: "12px 13px",
+                            display: "grid",
+                            placeItems: "center",
+                          }}
                         >
-                          Renommer
+                          <Pencil size={16} strokeWidth={2} aria-hidden />
                         </BoutonSlot>
                         <BoutonSlot
                           variant="danger"
                           onClick={() => setConfirmSuppression(ligne.n)}
                           ariaLabel="Supprimer"
                           style={{
-                            marginLeft: "auto",
                             padding: "12px 13px",
                             display: "grid",
                             placeItems: "center",
@@ -498,6 +560,30 @@ export function PartiesModal({
         );
       })}
       </div>
+
+      {mode === "gestion" && (
+        <div
+          style={{
+            position: "sticky",
+            bottom: 0,
+            marginTop: "auto",
+            padding: "16px 24px 8px",
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <button
+            type="button"
+            disabled={slotChoisi === null}
+            onClick={() => {
+              if (slotChoisi !== null) onJouer(slotChoisi);
+            }}
+            style={slotChoisi === null ? btnLancerDesactive : btnLancer}
+          >
+            Lancer la partie
+          </button>
+        </div>
+      )}
 
       <ConfirmModal
         open={confirmSuppression !== null}

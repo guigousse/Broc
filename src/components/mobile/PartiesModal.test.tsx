@@ -117,30 +117,44 @@ describe("PartiesModal — mode gestion, liste", () => {
   });
 });
 
-describe("PartiesModal — Jouer / Reprendre", () => {
-  it("Jouer sur un slot non-actif : change l'actif et navigue vers /bureau", () => {
+describe("PartiesModal — sélection + Lancer la partie", () => {
+  it("« Lancer la partie » est grisé sans sélection, puis lance le slot choisi", () => {
     const location = mockLocation();
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
     changerSlotActif(1);
 
     render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
-    fireEvent.click(within(ligne(2)).getByRole("button", { name: "Jouer" }));
 
+    const lancer = screen.getByRole("button", { name: "Lancer la partie" });
+    expect(lancer).toHaveProperty("disabled", true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Choisir l'emplacement 2" }));
+    expect(lancer).toHaveProperty("disabled", false);
+
+    fireEvent.click(lancer);
     expect(chargerIndex().actif).toBe(2);
     expect(location.href).toBe("/bureau");
   });
 
-  it("le slot actif affiche « Reprendre » au lieu de « Jouer »", () => {
+  it("la surbrillance suit le slot cliqué (aria-pressed)", () => {
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
-    changerSlotActif(1);
+    seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
     render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
 
-    expect(within(ligne(1)).getByRole("button", { name: "Reprendre" })).toBeTruthy();
-    expect(within(ligne(1)).queryByRole("button", { name: "Jouer" })).toBeNull();
+    const carte1 = screen.getByRole("button", { name: "Choisir l'emplacement 1" });
+    const carte2 = screen.getByRole("button", { name: "Choisir l'emplacement 2" });
+    expect(carte1.getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(carte1);
+    expect(carte1.getAttribute("aria-pressed")).toBe("true");
+
+    fireEvent.click(carte2);
+    expect(carte1.getAttribute("aria-pressed")).toBe("false");
+    expect(carte2.getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("Jouer appelle onAvantBascule AVANT changerSlotActif (détachement avant la bascule)", () => {
+  it("Lancer appelle onAvantBascule AVANT changerSlotActif (détachement avant la bascule)", () => {
     const location = mockLocation();
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
@@ -159,7 +173,8 @@ describe("PartiesModal — Jouer / Reprendre", () => {
         onAvantBascule={onAvantBascule}
       />,
     );
-    fireEvent.click(within(ligne(2)).getByRole("button", { name: "Jouer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Choisir l'emplacement 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lancer la partie" }));
 
     expect(onAvantBascule).toHaveBeenCalledTimes(1);
     // L'actif storage était encore 1 au moment de l'appel : la callback a
@@ -169,15 +184,16 @@ describe("PartiesModal — Jouer / Reprendre", () => {
     expect(location.href).toBe("/bureau");
   });
 
-  it("onAvantBascule absent (prop optionnelle) : Jouer reste sans erreur", () => {
+  it("onAvantBascule absent (prop optionnelle) : Lancer reste sans erreur", () => {
     const location = mockLocation();
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     changerSlotActif(1);
 
     render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Choisir l'emplacement 1" }));
     expect(() =>
-      fireEvent.click(within(ligne(1)).getByRole("button", { name: "Reprendre" })),
+      fireEvent.click(screen.getByRole("button", { name: "Lancer la partie" })),
     ).not.toThrow();
     expect(location.href).toBe("/bureau");
   });
