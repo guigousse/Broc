@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface BrocanteDetailPanelProps {
   brocante: Brocante | null;
@@ -115,19 +116,20 @@ export function BrocanteDetailPanel({
   raisonVerrouillage,
   onEntrer,
 }: BrocanteDetailPanelProps) {
+  const { d, tr } = useLangue();
   if (!brocante) {
     return (
       <aside style={panelStyle}>
-        <div style={emptyStyle}>Choisissez une brocante</div>
+        <div style={emptyStyle}>{d.chine.choisissezBrocante}</div>
       </aside>
     );
   }
 
   const label = !debloquee
-    ? "Fermé"
+    ? d.chine.ferme
     : !peutEntrer
-      ? "Fonds insuffisants"
-      : "Entrer";
+      ? d.chine.fondsInsuffisants
+      : d.chine.entrer;
 
   return (
     <aside style={panelStyle}>
@@ -135,7 +137,10 @@ export function BrocanteDetailPanel({
       <div style={tierStyle}>{"★".repeat(brocante.tier)}</div>
       <p style={descStyle}>{brocante.description}</p>
       <div style={metaStyle}>
-        {brocante.taillePool} items · entrée {fraisEntree(brocante)} €
+        {tr(d.chine.metaBrocante, {
+          taille: brocante.taillePool,
+          prix: fraisEntree(brocante),
+        })}
       </div>
       {!debloquee && raisonVerrouillage && (
         <div style={lockStyle}>⊘ {raisonVerrouillage}</div>

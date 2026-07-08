@@ -8,6 +8,7 @@ import { StarRow } from "@/components/ui/StarRow";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface Props {
   objet: Objet;
@@ -46,6 +47,7 @@ function CornerL({ position, color }: CornerLProps) {
 }
 
 export function ItemEnCarrousel({ objet, onDragToCoffre }: Props) {
+  const { d, tr } = useLangue();
   const tpl = getTemplate(objet.templateId);
   const taille = tpl ? tailleDe(tpl) : "S";
   const colors = getRarityColors(objet.rarete, !!tpl?.unique);
@@ -207,7 +209,7 @@ export function ItemEnCarrousel({ objet, onDragToCoffre }: Props) {
           pointerEvents: "none",
           zIndex: 1,
         }}
-        aria-label={`État : ${objet.etat}`}
+        aria-label={tr(d.chine.etatAriaLabel, { etat: objet.etat })}
       />
     </div>
   );

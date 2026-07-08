@@ -1,6 +1,7 @@
 "use client";
 
 import type { Objet } from "@/types/game";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { ItemEnCarrousel } from "./ItemEnCarrousel";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 const ITEM_WIDTH = 76;
 
 export function CarrouselStock({ stock, onPickUp }: Props) {
+  const { d } = useLangue();
   if (stock.length === 0) {
     return (
       <p
@@ -24,7 +26,7 @@ export function CarrouselStock({ stock, onPickUp }: Props) {
           margin: 0,
         }}
       >
-        Aucun objet à charger. Allez chiner !
+        {d.vente.aucunObjetACharger}
       </p>
     );
   }

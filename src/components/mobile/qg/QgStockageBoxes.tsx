@@ -18,6 +18,7 @@ function OneBox({ boxKey }: OneBoxProps) {
   const { left, bottom, width } = useStockageBoxCoord(boxKey);
   const { d, tr } = useLangue();
   const def = STOCKAGE_BOXES_LAYOUT[boxKey];
+  const label = def.cleLabel === "tousLesObjets" ? d.qg.tousLesObjets : def.label ?? "";
 
   function handleClick() {
     const q = def.categorie ? `?cat=${encodeURIComponent(def.categorie)}` : "";
@@ -28,7 +29,7 @@ function OneBox({ boxKey }: OneBoxProps) {
     <button
       type="button"
       onClick={handleClick}
-      aria-label={tr(d.qg.ouvrirStockage, { label: def.label })}
+      aria-label={tr(d.qg.ouvrirStockage, { label })}
       style={{
         position: "absolute",
         left: `${left}vw`,

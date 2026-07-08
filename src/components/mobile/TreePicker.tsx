@@ -18,6 +18,7 @@ import {
   catTreeId,
   getTreeMeta,
 } from "@/data/competences";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { CategorieObjet, CompetenceTreeId } from "@/types/game";
 
 interface TreePickerProps {
@@ -64,6 +65,7 @@ export function TreePicker({
   selectionne,
   onSelect,
 }: TreePickerProps) {
+  const { d } = useLangue();
   const allIds: CompetenceTreeId[] = [
     TREE_GENERAL,
     ...CATEGORIES.map((c) => catTreeId(c)),
@@ -72,7 +74,7 @@ export function TreePicker({
   return (
     <div
       role="tablist"
-      aria-label="Arbres de compétences"
+      aria-label={d.bibliotheque.arbresAriaLabel}
       style={{
         display: "grid",
         gridTemplateColumns: `repeat(${allIds.length}, 1fr)`,

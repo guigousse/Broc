@@ -7,6 +7,7 @@ import {
   type CSSProperties,
   type JSX,
 } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 /**
  * Intro « zoom sur la porte » — jouée au lancement d'une nouvelle partie.
@@ -96,6 +97,7 @@ const tapLayerStyle: CSSProperties = {
 };
 
 export function IntroPorte({ onFini }: IntroPorteProps): JSX.Element {
+  const { d } = useLangue();
   const [reduit] = useState(prefersReducedMotion);
   const [phase, setPhase] = useState<Phase>(reduit ? "fade-reduit" : "contemplation");
   const finiRef = useRef(false);
@@ -155,7 +157,7 @@ export function IntroPorte({ onFini }: IntroPorteProps): JSX.Element {
       <button
         type="button"
         style={tapLayerStyle}
-        aria-label="Passer l'introduction"
+        aria-label={d.qg.passerIntroAria}
         onPointerDown={onSkip}
       />
     </div>

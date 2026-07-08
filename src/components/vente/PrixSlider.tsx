@@ -8,6 +8,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface PrixSliderProps {
   /** Prix de vente courant (poignée mobile). */
@@ -46,6 +47,7 @@ export function PrixSlider({
   marcheConnu = true,
   onChange,
 }: PrixSliderProps) {
+  const { d } = useLangue();
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const lastRef = useRef(value);
@@ -90,13 +92,25 @@ export function PrixSlider({
         <div style={line} />
 
         {marcheConnu && (
-          <Pastille ratio={ratioOf(ref)} color={COL_VALEUR} size={34} label="valeur" labelPos="above">
+          <Pastille
+            ratio={ratioOf(ref)}
+            color={COL_VALEUR}
+            size={34}
+            label={d.inventaire.valeurMot}
+            labelPos="above"
+          >
             {ref}€
           </Pastille>
         )}
 
         {typeof achat === "number" && achat > 0 && (
-          <Pastille ratio={ratioOf(achat)} color={COL_ACHAT} size={34} label="achat" labelPos="above">
+          <Pastille
+            ratio={ratioOf(achat)}
+            color={COL_ACHAT}
+            size={34}
+            label={d.vente.pastilleAchat}
+            labelPos="above"
+          >
             {achat}€
           </Pastille>
         )}
@@ -105,7 +119,7 @@ export function PrixSlider({
           ratio={ratioOf(value)}
           color={dragging ? "var(--forest-700)" : COL_VENTE}
           size={40}
-          label="vente"
+          label={d.vente.pastilleVente}
           labelPos="below"
           z={3}
           onPointerDown={(e) => {

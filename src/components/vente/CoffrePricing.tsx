@@ -7,6 +7,7 @@ import { etoileCount } from "@/lib/etat";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { StarRow } from "@/components/ui/StarRow";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { PrixSlider } from "./PrixSlider";
 
 interface Props {
@@ -32,6 +33,7 @@ export function CoffrePricing({
   validerActif,
   categoriesConnues,
 }: Props) {
+  const { d, tr } = useLangue();
   const peut = validerActif ?? coffre.length > 0;
 
   return (
@@ -96,17 +98,22 @@ export function CoffrePricing({
                   </div>
                   <div
                     style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}
-                    aria-label={`État ${ov.objet.etat}, catégorie ${ov.objet.categorie}`}
+                    aria-label={tr(d.inventaire.etatCategorieAria, {
+                      etat: ov.objet.etat,
+                      categorie: ov.objet.categorie,
+                    })}
                   >
                     <StarRow
                       filled={etoileCount(ov.objet.etat)}
                       color={c.outer}
                       display="flex"
-                      aria-label={`État : ${ov.objet.etat}`}
+                      aria-label={tr(d.chine.etatAriaLabel, { etat: ov.objet.etat })}
                     />
                     <span
                       style={{ display: "inline-flex", alignItems: "center" }}
-                      aria-label={`Catégorie : ${ov.objet.categorie}`}
+                      aria-label={tr(d.inventaire.categorieAria, {
+                        categorie: ov.objet.categorie,
+                      })}
                     >
                       <CategorieIcon
                         categorie={ov.objet.categorie}
@@ -158,7 +165,7 @@ export function CoffrePricing({
             textTransform: "uppercase",
           }}
         >
-          ← Coffre
+          {d.vente.retourCoffreCourt}
         </button>
         <button
           type="button"

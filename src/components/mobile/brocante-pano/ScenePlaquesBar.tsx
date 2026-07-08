@@ -3,6 +3,7 @@
 import { Crown } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { BrocanteTier } from "@/types/game";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface ScenePlaquesBarProps {
   currentTier: BrocanteTier;
@@ -98,18 +99,18 @@ function plaqueLabel(tier: BrocanteTier, active: boolean) {
   return <span style={starsStyle(active)}>{"★".repeat(tier)}</span>;
 }
 
-const ariaLabel = (tier: BrocanteTier) =>
-  tier === 4
-    ? "Tier 4 — Salon des Antiquaires"
-    : `Tier ${tier} — ${"★".repeat(tier)}`;
-
 export function ScenePlaquesBar({
   currentTier,
   onTierClick,
   position = "top",
 }: ScenePlaquesBarProps) {
+  const { d, tr } = useLangue();
+  const ariaLabel = (tier: BrocanteTier) =>
+    tier === 4
+      ? d.chine.tier4Aria
+      : tr(d.chine.tierEtoilesAria, { tier, etoiles: "★".repeat(tier) });
   return (
-    <div style={barStyle(position)} aria-label="Navigation par tier">
+    <div style={barStyle(position)} aria-label={d.chine.navigationParTierAria}>
       {TIERS.map((t) => {
         const active = t === currentTier;
         return (

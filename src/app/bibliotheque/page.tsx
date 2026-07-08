@@ -26,6 +26,7 @@ import { contexteDepuisState, etatCompetence } from "@/lib/competences";
 import { detailProgressionBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
 import { prochainDeblocage } from "@/data/deblocagesNiveau";
 import { ParcoursSheet } from "@/components/mobile/ParcoursSheet";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type {
   CompetenceDef,
   CompetenceId,
@@ -36,6 +37,7 @@ export default function CompetencesPage() {
   const router = useRouter();
   const { state, isHydrated, debloquerCompetence } = useGame();
   const { toast } = useToast();
+  const { d, tr, locale } = useLangue();
   const [tree, setTree] = useState<CompetenceTreeId>(TREE_GENERAL);
   const [palierActif, setPalierActif] = useState<CompetenceDef | null>(null);
   const [parcoursOuvert, setParcoursOuvert] = useState(false);
@@ -50,7 +52,7 @@ export default function CompetencesPage() {
   }, [tree]);
 
   if (!isHydrated || !state) {
-    return <SkeletonScreen label="— consultation du grimoire…" />;
+    return <SkeletonScreen label={d.bibliotheque.consultationGrimoire} />;
   }
 
   const meta = getTreeMeta(tree);
@@ -80,7 +82,7 @@ export default function CompetencesPage() {
         header={<MobileHeader budget={state.budget} />}
         stickyTop={
           <StickyTop>
-            <PageHeaderBar title="Compétences" />
+            <PageHeaderBar title={d.bibliotheque.titre} />
             <div style={{ marginTop: 4 }}>
               <TreePicker
                 nbDebloqueesParTree={nbDebloqueesParTree}
@@ -114,7 +116,7 @@ export default function CompetencesPage() {
               }}
             >
               <div style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>
-                N{state.brocanteur.niveau}
+                {tr(d.bibliotheque.niveauAbrege, { n: state.brocanteur.niveau })}
                 <span
                   style={{
                     display: "block",
@@ -125,7 +127,7 @@ export default function CompetencesPage() {
                     textTransform: "uppercase",
                   }}
                 >
-                  Niv.
+                  {d.bibliotheque.niveauCaption}
                 </span>
               </div>
               <div
@@ -166,7 +168,7 @@ export default function CompetencesPage() {
                     color: "var(--brass-700)",
                   }}
                 >
-                  Pts
+                  {d.bibliotheque.ptsCaption}
                 </span>
               </div>
             </div>
@@ -180,15 +182,17 @@ export default function CompetencesPage() {
                 textAlign: "right",
               }}
             >
-              {dansNiveau.toLocaleString("fr-FR")} /{" "}
-              {requisNiveau.toLocaleString("fr-FR")} XP — encore{" "}
-              {manquant.toLocaleString("fr-FR")}
+              {tr(d.bibliotheque.xpProgression, {
+                dansNiveau: dansNiveau.toLocaleString(locale),
+                requisNiveau: requisNiveau.toLocaleString(locale),
+                manquant: manquant.toLocaleString(locale),
+              })}
             </div>
             {/* Le bouton reste visible même sans prochain déblocage (niveau ≥ 20) : le Parcours sert aussi de récapitulatif. */}
             <button
               type="button"
               onClick={() => setParcoursOuvert(true)}
-              aria-label="Voir le parcours des déblocages"
+              aria-label={d.bibliotheque.voirParcoursAria}
               style={{
                 display: "block",
                 width: "100%",
@@ -204,8 +208,8 @@ export default function CompetencesPage() {
               }}
             >
               {prochain
-                ? `Prochain — Niv. ${prochain.niveau} : ${prochain.titre} ▸`
-                : "Parcours des déblocages ▸"}
+                ? `${tr(d.sheets.prochainNiv, { n: prochain.niveau })} ${prochain.titre} ▸`
+                : d.bibliotheque.parcoursDeblocages}
             </button>
           </StickyTop>
         }
@@ -295,13 +299,18 @@ export default function CompetencesPage() {
             onAcheter={() => {
               const res = debloquerCompetence(palierActif.id);
               if (res.ok) {
-                toast(`Compétence acquise : ${palierActif.nom}`, {
-                  type: "succes",
-                });
+                toast(
+                  tr(d.bibliotheque.competenceAcquiseToast, {
+                    nom: palierActif.nom,
+                  }),
+                  { type: "succes" },
+                );
                 setPalierActif(null);
               } else {
                 toast(
-                  `Impossible : ${res.raison ?? "condition non remplie"}`,
+                  tr(d.inventaire.impossibleRaison, {
+                    raison: res.raison ?? d.inventaire.conditionNonRemplie,
+                  }),
                   { type: "erreur" },
                 );
               }
@@ -328,6 +337,7 @@ function PalierTile({
   etat: "debloquee" | "disponible" | "verrouillee";
   onTap: () => void;
 }) {
+  const { tr, d } = useLangue();
   const isDebloquee = etat === "debloquee";
   const isVerrouillee = etat === "verrouillee";
 
@@ -421,7 +431,7 @@ function PalierTile({
             textTransform: "uppercase",
           }}
         >
-          N{comp.niveauBrocanteurRequis}
+          {tr(d.bibliotheque.niveauAbrege, { n: comp.niveauBrocanteurRequis })}
         </span>
       )}
     </button>
@@ -445,6 +455,7 @@ function PalierDetail({
   etat: "debloquee" | "disponible" | "verrouillee";
   onAcheter: () => void;
 }) {
+  const { d, tr } = useLangue();
   const isDebloquee = etat === "debloquee";
   const isVerrouillee = etat === "verrouillee";
   const peutPayer = pointsDisponibles >= comp.coutPoints;
@@ -535,9 +546,9 @@ function PalierDetail({
       >
         {comp.niveauBrocanteurRequis > 0 && (
           <div>
-            Niveau requis :{" "}
+            {d.bibliotheque.niveauRequisLabel}{" "}
             <strong style={{ fontFamily: "var(--font-display)" }}>
-              N{comp.niveauBrocanteurRequis}
+              {tr(d.bibliotheque.niveauAbrege, { n: comp.niveauBrocanteurRequis })}
             </strong>
             <br />
             <span
@@ -548,14 +559,17 @@ function PalierDetail({
                     : "var(--vermillion-600)",
               }}
             >
-              Actuel : N{niveauActuel}
+              {tr(d.bibliotheque.actuelNiveau, { n: niveauActuel })}
             </span>
           </div>
         )}
         <div>
-          Coût :{" "}
+          {d.bibliotheque.coutLabel}{" "}
           <strong style={{ fontFamily: "var(--font-display)" }}>
-            {comp.coutPoints} pt{comp.coutPoints > 1 ? "s" : ""}
+            {comp.coutPoints}{" "}
+            {comp.coutPoints > 1
+              ? d.bibliotheque.pointPluriel
+              : d.bibliotheque.pointUnique}
           </strong>
           <br />
           <span
@@ -565,7 +579,10 @@ function PalierDetail({
                 : "var(--vermillion-600)",
             }}
           >
-            Dispo : {pointsDisponibles} pt{pointsDisponibles > 1 ? "s" : ""}
+            {d.bibliotheque.dispoLabel} {pointsDisponibles}{" "}
+            {pointsDisponibles > 1
+              ? d.bibliotheque.pointPluriel
+              : d.bibliotheque.pointUnique}
           </span>
         </div>
       </div>
@@ -584,7 +601,7 @@ function PalierDetail({
             border: "1px solid var(--patina-500)",
           }}
         >
-          Compétence acquise ✓
+          {d.bibliotheque.competenceAcquiseBanniere}
         </div>
       ) : isVerrouillee ? (
         <div
@@ -599,12 +616,15 @@ function PalierDetail({
             letterSpacing: "0.06em",
           }}
         >
-          ⊘ Verrouillée —{" "}
+          {d.bibliotheque.verrouilleePrefixe}{" "}
           {!prerequisRemplis
-            ? "palier précédent requis"
+            ? d.bibliotheque.palierPrecedentRequis
             : niveauActuel < comp.niveauBrocanteurRequis
-              ? `N${comp.niveauBrocanteurRequis} requis (vous avez N${niveauActuel})`
-              : "pas assez de points"}
+              ? tr(d.bibliotheque.niveauRequisAvecActuel, {
+                  requis: comp.niveauBrocanteurRequis,
+                  actuel: niveauActuel,
+                })
+              : d.bibliotheque.pasAssezDePoints}
         </div>
       ) : (
         <button
@@ -626,8 +646,14 @@ function PalierDetail({
           }}
         >
           {peutPayer
-            ? `Acheter · ${comp.coutPoints} pt${comp.coutPoints > 1 ? "s" : ""}`
-            : "Points insuffisants"}
+            ? tr(d.bibliotheque.acheterBouton, {
+                cout: comp.coutPoints,
+                unite:
+                  comp.coutPoints > 1
+                    ? d.bibliotheque.pointPluriel
+                    : d.bibliotheque.pointUnique,
+              })
+            : d.bibliotheque.pointsInsuffisants}
         </button>
       )}
     </div>

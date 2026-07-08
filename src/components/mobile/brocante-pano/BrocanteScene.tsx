@@ -2,6 +2,7 @@
 
 import { useRef, type CSSProperties } from "react";
 import type { Brocante, BrocanteTier } from "@/types/game";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { BrocanteFrame } from "./BrocanteFrame";
 import { SCENE_FRAMES } from "./brocantePanoramaLayout";
 import { applyOverride, useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
@@ -80,6 +81,7 @@ export function BrocanteScene({
   debloqueesIds,
   onSelect,
 }: BrocanteSceneProps) {
+  const { d, tr } = useLangue();
   const frames = SCENE_FRAMES[tier];
   const { enabled: editEnabled, overrides } = useBrocanteFramesEdit();
   // sceneRef pointe sur la BOÎTE DE CONTENU : c'est la base des % des cadres
@@ -89,7 +91,7 @@ export function BrocanteScene({
     <section
       style={sceneStyle}
       data-brocante-scene={tier}
-      aria-label={`Scène tier ${tier}`}
+      aria-label={tr(d.chine.sceneTierAria, { tier })}
     >
       <div ref={sceneRef} style={sceneInnerStyle(tier)}>
         {frames.map((coord) => {

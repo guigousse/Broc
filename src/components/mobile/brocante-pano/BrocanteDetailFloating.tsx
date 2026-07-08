@@ -6,6 +6,7 @@ import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import { bourseMoyenne } from "@/lib/vitrine";
 import type { ConditionInfo } from "@/lib/deblocage";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { CATEGORY_ICONS } from "./categoryIcons";
 
 interface BrocanteDetailFloatingProps {
@@ -231,6 +232,7 @@ export function BrocanteDetailFloating({
   conditions,
   destination,
 }: BrocanteDetailFloatingProps) {
+  const { d, tr } = useLangue();
   const ThemeIcon = brocante.specialisation
     ? CATEGORY_ICONS[brocante.specialisation]
     : null;
@@ -268,20 +270,24 @@ export function BrocanteDetailFloating({
       <div style={goldRuleStyle} aria-hidden />
       <div style={metaRowStyle}>
         {destination === "chiner" ? (
-          <span style={metaItemsStyle}>{brocante.taillePool} items</span>
+          <span style={metaItemsStyle}>
+            {tr(d.chine.taillePoolItems, { n: brocante.taillePool })}
+          </span>
         ) : (
           <span
             style={metaItemsStyle}
-            aria-label={`Bourse moyenne des clients : ${bourseMoyenne(brocante.tier)} euros`}
+            aria-label={tr(d.chine.bourseMoyenneClientsAria, {
+              valeur: bourseMoyenne(brocante.tier),
+            })}
           >
-            Bourse moy. {bourseMoyenne(brocante.tier)} €
+            {tr(d.chine.bourseMoyLabel, { valeur: bourseMoyenne(brocante.tier) })}
           </span>
         )}
         <span
           style={fraisBoxStyle(peutEntrer)}
-          aria-label={`Entrée : ${fraisEntree(brocante)} euros et 1 énergie`}
+          aria-label={tr(d.chine.entreeAria, { prix: fraisEntree(brocante) })}
         >
-          <span style={fraisLabelStyle}>Entrée</span>
+          <span style={fraisLabelStyle}>{d.chine.entreeLabel}</span>
           <span style={fraisAmountStyle}>{fraisEntree(brocante)} €</span>
           <span style={fraisPlusStyle}>+</span>
           <Zap size={14} strokeWidth={2} />
@@ -289,7 +295,7 @@ export function BrocanteDetailFloating({
         {ThemeIcon && (
           <div
             style={themeCachetStyle}
-            aria-label={`Thème : ${brocante.specialisation}`}
+            aria-label={tr(d.chine.themeAria, { theme: brocante.specialisation ?? "" })}
           >
             <ThemeIcon size={18} strokeWidth={2} />
           </div>

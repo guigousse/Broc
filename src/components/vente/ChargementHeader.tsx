@@ -1,6 +1,9 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import type { NiveauCamion } from "@/types/game";
 import { CAMIONS, getCamion, getProchainCamion } from "@/data/camion";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { CamionIcon } from "./CamionIcon";
 
 // Dev only — set à false pour cacher le bouton de switch des coffres.
@@ -21,6 +24,7 @@ export function ChargementHeader({
   onUpgrade,
   onSetNiveauDev,
 }: Props) {
+  const { d, tr } = useLangue();
   const camion = getCamion(niveau);
   const prochain = getProchainCamion(niveau);
   const peutUpgrade = !!prochain && budget >= (prochain.prixUpgradeVersCeNiveau ?? 0);
@@ -53,7 +57,7 @@ export function ChargementHeader({
             color: "var(--brass-700)",
           }}
         >
-          Chargement — {camion.nom}
+          {tr(d.vente.chargementCamion, { nom: camion.nom })}
         </div>
         <div
           style={{
@@ -64,7 +68,12 @@ export function ChargementHeader({
             marginTop: 2,
           }}
         >
-          {nbObjets} objet{nbObjets > 1 ? "s" : ""} chargé{nbObjets > 1 ? "s" : ""}
+          {tr(
+            nbObjets > 1
+              ? d.vente.nbObjetsChargesPluriel
+              : d.vente.nbObjetsChargesUn,
+            { n: nbObjets },
+          )}
         </div>
       </div>
       {DEV_COFFRE_SWITCH && onSetNiveauDev && (
@@ -112,7 +121,14 @@ export function ChargementHeader({
             lineHeight: 1.3,
           }}
         >
-          {confirm ? `Confirmer · ${prochain.prixUpgradeVersCeNiveau} €` : `↑ ${prochain.nom} · ${prochain.prixUpgradeVersCeNiveau} €`}
+          {confirm
+            ? tr(d.vente.confirmerUpgradeCamion, {
+                prix: prochain.prixUpgradeVersCeNiveau ?? 0,
+              })
+            : tr(d.vente.upgradeCamionBouton, {
+                nom: prochain.nom,
+                prix: prochain.prixUpgradeVersCeNiveau ?? 0,
+              })}
         </button>
       )}
     </div>

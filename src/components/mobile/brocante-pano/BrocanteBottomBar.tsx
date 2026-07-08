@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { CSSProperties } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface BrocanteBottomBarProps {
   onBack: () => void;
@@ -70,11 +71,12 @@ export function BrocanteBottomBar({
   onContinuer,
   continuerActif,
 }: BrocanteBottomBarProps) {
+  const { d } = useLangue();
   return (
-    <div style={wrapStyle} role="toolbar" aria-label="Actions brocante">
-      <button type="button" onClick={onBack} style={backBtn} aria-label="Retour">
+    <div style={wrapStyle} role="toolbar" aria-label={d.chine.actionsBrocanteAria}>
+      <button type="button" onClick={onBack} style={backBtn} aria-label={d.chine.retour}>
         <ChevronLeft size={16} strokeWidth={2} />
-        Retour
+        {d.chine.retour}
       </button>
       <span />
       <button
@@ -82,9 +84,9 @@ export function BrocanteBottomBar({
         onClick={onContinuer}
         disabled={!continuerActif}
         style={continuerBtn(continuerActif)}
-        aria-label="Continuer"
+        aria-label={d.menu.continuer}
       >
-        Continuer
+        {d.menu.continuer}
         <ChevronRight size={16} strokeWidth={2} />
       </button>
     </div>

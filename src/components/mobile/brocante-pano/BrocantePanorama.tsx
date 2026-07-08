@@ -15,6 +15,7 @@ import {
   vitrineEstEnPrep,
 } from "@/lib/vitrinePrep";
 import { useGameActions } from "@/context/GameContext";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { BrocanteScene } from "./BrocanteScene";
 import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
 import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
@@ -81,6 +82,7 @@ export function BrocantePanorama({
   plaquesEnBas = false,
 }: BrocantePanoramaProps) {
   const router = useRouter();
+  const { d } = useLangue();
   const { attribuerVitrineABrocante, ajusterBudget, consommerEnergie, tempsConfiance } =
     useGameActions();
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -236,7 +238,7 @@ export function BrocantePanorama({
   return (
     <BrocanteFramesEditProvider>
       <div style={wrapperStyle}>
-        <div ref={scrollerRef} style={scrollerStyle} aria-label="Panorama des brocantes">
+        <div ref={scrollerRef} style={scrollerStyle} aria-label={d.chine.panoramaBrocantesAria}>
           {TIERS.map((tier, idx) => (
             <Fragment key={tier}>
               <BrocanteScene

@@ -7,6 +7,7 @@ import {
   PersonaInfoOverlay,
   type PersonaInfo,
 } from "@/components/mobile/PersonaInfoOverlay";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface PersonaAvatarProps {
   /** Texte contextuel affiché dans la bulle. */
@@ -20,6 +21,7 @@ interface PersonaAvatarProps {
 const AVATAR_SIZE = 138;
 
 export function PersonaAvatar({ message, info, illustrationSrc }: PersonaAvatarProps) {
+  const { d } = useLangue();
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [illustrationFailed, setIllustrationFailed] = useState(false);
   const showIllustration = illustrationSrc && !illustrationFailed;
@@ -63,7 +65,7 @@ export function PersonaAvatar({ message, info, illustrationSrc }: PersonaAvatarP
           <button
             type="button"
             onClick={() => setOverlayOpen(true)}
-            aria-label="Voir les infos du persona"
+            aria-label={d.chine.voirInfosPersonaAria}
             style={infoBtn}
           >
             <Info size={12} strokeWidth={2.5} />

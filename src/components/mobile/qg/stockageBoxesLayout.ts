@@ -30,8 +30,15 @@ interface BoxLayout {
   categorie: CategorieObjet | null;
   /** Image à afficher (sous /public). */
   src: string;
-  /** Label accessible. */
-  label: string;
+  /**
+   * Label accessible — nom de catégorie (donnée `CategorieObjet`, non
+   * traduite, cf. frontière SP2/SP3). `null` pour le carton générique
+   * "tous les objets", dont le libellé i18n est résolu via `cleLabel` par
+   * le composant consommateur (ce module n'importe pas le dictionnaire).
+   */
+  label: string | null;
+  /** Clé i18n du libellé générique, présente seulement quand `label` est `null`. */
+  cleLabel?: "tousLesObjets";
 }
 
 /**
@@ -46,7 +53,8 @@ export const STOCKAGE_BOXES_LAYOUT: Record<StockageBoxKey, BoxLayout> = {
     width: 20.1,
     categorie: null,
     src: "/qg/boxes/box-all.webp",
-    label: "Tous les objets",
+    label: null,
+    cleLabel: "tousLesObjets",
   },
   boxMusique: {
     left: 366.8,
