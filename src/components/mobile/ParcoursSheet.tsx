@@ -3,6 +3,7 @@
 import { useEffect, type CSSProperties } from "react";
 import { DEBLOCAGES_PAR_NIVEAU, LIBELLE_FAMILLE } from "@/data/deblocagesNiveau";
 import { chipFamille } from "@/components/mobile/LevelUpOverlay";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface ParcoursSheetProps {
   open: boolean;
@@ -135,6 +136,8 @@ const niveauCol: CSSProperties = {
 /* ------------------------------------------------------------------ */
 
 export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
+  const { d, tr } = useLangue();
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -156,24 +159,29 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
   return (
     <>
       <div style={scrim} onClick={onClose} aria-hidden />
-      <div style={stage} role="dialog" aria-modal="true" aria-label="Parcours du brocanteur">
+      <div
+        style={stage}
+        role="dialog"
+        aria-modal="true"
+        aria-label={d.sheets.parcoursAriaLabel}
+      >
         <div style={carte}>
           <button
             type="button"
             style={closeIconBtn}
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={d.commun.fermer}
           >
             ✕
           </button>
           <div style={header}>
-            <div style={eyebrow}>— parcours du brocanteur —</div>
-            <div style={titre}>Niveau {niveau}</div>
+            <div style={eyebrow}>{d.sheets.eyebrowParcours}</div>
+            <div style={titre}>{tr(d.sheets.niveauN, { n: niveau })}</div>
           </div>
           <div style={liste}>
-            {DEBLOCAGES_PAR_NIVEAU.map((d) => {
+            {DEBLOCAGES_PAR_NIVEAU.map((dep) => {
               let etat: "atteint" | "prochain" | "a-venir";
-              if (d.niveau <= niveau) {
+              if (dep.niveau <= niveau) {
                 etat = "atteint";
               } else if (!prochainTrouve) {
                 etat = "prochain";
@@ -183,24 +191,24 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
               }
               return (
                 <div
-                  key={d.niveau}
-                  data-testid={`parcours-row-${d.niveau}`}
+                  key={dep.niveau}
+                  data-testid={`parcours-row-${dep.niveau}`}
                   data-etat={etat}
                   style={ligneStyle(etat)}
                 >
                   <span style={niveauCol}>
                     {etat === "atteint" ? "✓ " : ""}
-                    Niv. {d.niveau}
+                    {tr(d.sheets.nivAbrege, { n: dep.niveau })}
                   </span>
-                  <span style={chipFamille(d.famille)}>
-                    {LIBELLE_FAMILLE[d.famille]}
+                  <span style={chipFamille(dep.famille)}>
+                    {LIBELLE_FAMILLE[dep.famille]}
                   </span>
-                  <span>{d.titre}</span>
+                  <span>{dep.titre}</span>
                 </div>
               );
             })}
           </div>
-          <div style={footnote}>Chaque niveau : +1 point de compétence</div>
+          <div style={footnote}>{d.sheets.chaqueNiveauPoint}</div>
         </div>
       </div>
     </>

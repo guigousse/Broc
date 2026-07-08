@@ -11,6 +11,7 @@ import {
   type FamilleDeblocage,
 } from "@/data/deblocagesNiveau";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 /** Couleur par famille de déblocage (style UI, réutilisé par ParcoursSheet). */
 export const COULEUR_FAMILLE: Record<FamilleDeblocage, string> = {
@@ -113,6 +114,7 @@ const btnContinuer: CSSProperties = {
 export function LevelUpOverlay() {
   const { state, marquerNiveauVu } = useGame();
   const pathname = usePathname();
+  const { d, tr } = useLangue();
   const enSession = ROUTES_SESSION_PREFIXES.some((p) => pathname?.startsWith(p));
   const niveauACelebrer =
     state && state.brocanteur.niveau > state.niveauVu ? state.niveauVu + 1 : null;
@@ -127,24 +129,33 @@ export function LevelUpOverlay() {
   const prochain = prochainDeblocage(niveauACelebrer);
 
   return (
-    <div style={scrim} role="dialog" aria-modal="true" aria-label={`Niveau ${niveauACelebrer} atteint`}>
+    <div
+      style={scrim}
+      role="dialog"
+      aria-modal="true"
+      aria-label={tr(d.sheets.niveauAtteintAriaLabel, { n: niveauACelebrer })}
+    >
       <div style={carte}>
-        <div style={eyebrow}>— niveau de brocanteur —</div>
-        <div style={titre}>Niveau {niveauACelebrer} !</div>
-        <div style={sousTitre}>+1 point de compétence</div>
-        {deblocages.map((d) => (
-          <div key={d.titre} style={ligneDeblocage}>
-            <span style={chipFamille(d.famille)}>{LIBELLE_FAMILLE[d.famille]}</span>
-            <span>{d.titre}</span>
+        <div style={eyebrow}>{d.sheets.eyebrowNiveauBrocanteur}</div>
+        <div style={titre}>
+          {tr(d.sheets.niveauNCelebration, { n: niveauACelebrer })}
+        </div>
+        <div style={sousTitre}>{d.sheets.plusUnPointCompetence}</div>
+        {deblocages.map((dep) => (
+          <div key={dep.titre} style={ligneDeblocage}>
+            <span style={chipFamille(dep.famille)}>
+              {LIBELLE_FAMILLE[dep.famille]}
+            </span>
+            <span>{dep.titre}</span>
           </div>
         ))}
         {prochain && (
           <div style={lignProchain}>
-            Prochain — Niv. {prochain.niveau} : {prochain.titre}
+            {tr(d.sheets.prochainNiv, { n: prochain.niveau })} {prochain.titre}
           </div>
         )}
         <button type="button" style={btnContinuer} onClick={marquerNiveauVu}>
-          Continuer
+          {d.menu.continuer}
         </button>
       </div>
     </div>

@@ -16,6 +16,7 @@ import { METEO_ICON } from "@/data/meteos";
 import { getBrocanteById } from "@/data/brocantes";
 import { JOURS_SEMAINE } from "@/lib/meteo";
 import { JOURS_COURT } from "@/lib/calendrier";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type {
   CategorieObjet,
   CelebriteEvenement,
@@ -288,6 +289,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
     onRerollMeteo,
     onRerollCelebrite,
   } = props;
+  const { d, tr } = useLangue();
 
   useEffect(() => {
     if (!open) return;
@@ -330,8 +332,16 @@ export function GazetteSheet(props: GazetteSheetProps) {
           <div style={content}>
             {/* En-tête : N° semaine à gauche et à droite, AU-DESSUS de la bande titre */}
             <div style={headerBar}>
-              <span>Semaine {String(numeroSemaine).padStart(3, "0")}</span>
-              <span>N° {String(numeroSemaine).padStart(3, "0")}</span>
+              <span>
+                {tr(d.sheets.semaineNumero, {
+                  n: String(numeroSemaine).padStart(3, "0"),
+                })}
+              </span>
+              <span>
+                {tr(d.sheets.numeroGazette, {
+                  n: String(numeroSemaine).padStart(3, "0"),
+                })}
+              </span>
             </div>
 
             {/* Espace réservé au titre gravé dans le PNG */}
@@ -407,14 +417,14 @@ export function GazetteSheet(props: GazetteSheetProps) {
                 </>
               ) : (
                 <p style={placeholderLock}>
-                  Débloquer avec <em>Carnet mondain</em>
+                  {d.sheets.debloquerAvec} <em>Carnet mondain</em>
                 </p>
               )}
 
               <SeparateurArtDeco />
 
               {/* ============== Tendance du marché ============== */}
-              <h3 style={sectionTitle}>Tendance du marché</h3>
+              <h3 style={sectionTitle}>{d.sheets.tendanceMarche}</h3>
               <div style={{ padding: "0 1%" }}>
                 {CATEGORIES_ORDRE.map((cat) => {
                   const connu = categoriesConnues.has(cat);
@@ -444,7 +454,9 @@ export function GazetteSheet(props: GazetteSheetProps) {
                           fontStyle: connu ? "normal" : "italic",
                         }}
                       >
-                        {connu ? cat : `Débloquer Veilleur — ${cat}`}
+                        {connu
+                          ? cat
+                          : `${d.sheets.debloquerPrefixe} Veilleur — ${cat}`}
                       </span>
                       {connu && typeof delta === "number" ? (
                         <span
@@ -472,7 +484,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
               <SeparateurArtDeco />
 
               {/* ============== Météo de la semaine ============== */}
-              <h3 style={sectionTitle}>Météo de la semaine</h3>
+              <h3 style={sectionTitle}>{d.sheets.meteoSemaineTitre}</h3>
               {revelerMeteo && meteoSemaine ? (
                 <div style={{ padding: "0 2%", marginTop: "-1%" }}>
                   <div style={meteoRow}>
@@ -534,7 +546,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
                 </div>
               ) : (
                 <p style={placeholderLock}>
-                  Débloquer avec <em>Bulletin météo</em>
+                  {d.sheets.debloquerAvec} <em>Bulletin météo</em>
                 </p>
               )}
             </div>
@@ -571,7 +583,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
                     boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
                   }}
                 >
-                  Acheter la gazette · {prixGazette} €
+                  {tr(d.sheets.acheterGazette, { prix: prixGazette })}
                 </button>
               </div>
             )}

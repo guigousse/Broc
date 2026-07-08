@@ -10,6 +10,9 @@ import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButto
 import { getExpediteur } from "@/data/expediteursCourrier";
 import { getTemplate } from "@/data/objetTemplates";
 import { useSettings } from "@/context/SettingsContext";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
+import type { DictionnaireUI, tr as TrFn } from "@/lib/i18n/ui";
 import type { Courrier } from "@/types/game";
 
 interface CourrierSheetProps {
@@ -196,7 +199,7 @@ const cibleEncart: CSSProperties = {
   gap: 4,
 };
 
-function renderMission(c: Courrier) {
+function renderMission(c: Courrier, d: DictionnaireUI, tr: typeof TrFn) {
   if (c.payload.type !== "mission") return null;
   const p = c.payload;
   const exp = getExpediteur(p.expediteurId);
@@ -210,17 +213,27 @@ function renderMission(c: Courrier) {
       ))}
       <div style={cibleEncart}>
         <div>
-          <strong>Objet{p.cibles.length > 1 ? "s" : ""} recherché{p.cibles.length > 1 ? "s" : ""} :</strong>{" "}
+          <strong>
+            {p.cibles.length > 1
+              ? d.sheets.objetsRecherches
+              : d.sheets.objetRecherche}
+          </strong>{" "}
           {p.cibles
-            .map((c) => `${getTemplate(c.templateId)?.nom ?? c.templateId}${c.etatMin ? ` (min. ${c.etatMin})` : ""}`)
+            .map((cible) => {
+              const nom = getTemplate(cible.templateId)?.nom ?? cible.templateId;
+              const suffixe = cible.etatMin
+                ? ` ${tr(d.sheets.etatMinSuffixe, { etat: libelleEtat(cible.etatMin, d) })}`
+                : "";
+              return `${nom}${suffixe}`;
+            })
             .join(", ")}
         </div>
         <div>
-          <strong>Récompense :</strong> +{p.recompense.argent} €
+          <strong>{d.sheets.recompenseLabel}</strong> +{p.recompense.argent} €
         </div>
         {p.jourLimite !== undefined && (
           <div>
-            <strong>Avant le jour :</strong> {p.jourLimite}
+            <strong>{d.sheets.avantLeJour}</strong> {p.jourLimite}
           </div>
         )}
       </div>
@@ -240,6 +253,7 @@ export function CourrierSheet({
   onMarquerLu,
 }: CourrierSheetProps) {
   const { playClick, playCash } = useSettings();
+  const { d, tr } = useLangue();
 
   const nonLus = useMemo(
     () =>
@@ -297,23 +311,23 @@ export function CourrierSheet({
           type="button"
           style={closeIconBtn}
           onClick={onClose}
-          aria-label="Fermer"
+          aria-label={d.commun.fermer}
         >
           ✕
         </button>
         <div style={scrollArea}>
           <article style={lettreCard}>
             {courant.payload.type === "mission"
-              ? renderMission(courant)
+              ? renderMission(courant, d, tr)
               : renderLettre(courant)}
           </article>
           <div style={actionBtnWrap}>
             <FloatingActionButton onClick={handleValider} minWidth={220}>
               {estMission
-                ? "Accepter la mission"
+                ? d.sheets.accepterMission
                 : recompenseArgent
-                  ? `Récupérer ${recompenseArgent} €`
-                  : "Compris"}
+                  ? tr(d.sheets.recupererMontant, { montant: recompenseArgent })
+                  : d.sheets.compris}
             </FloatingActionButton>
           </div>
         </div>

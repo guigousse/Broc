@@ -6,6 +6,7 @@ import { ItemImage } from "@/components/ui/ItemImage";
 import { vinylSunoPageUrl } from "@/data/vinylesAudio";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { CollectionSlot } from "@/types/game";
 
 interface GramophoneSheetProps {
@@ -235,6 +236,7 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
     onPlayPause,
     onNext,
   } = props;
+  const { d } = useLangue();
 
   useEffect(() => {
     if (!open) return;
@@ -265,7 +267,7 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
       <div style={stage} role="dialog" aria-modal="true">
         <button
           type="button"
-          aria-label="Fermer"
+          aria-label={d.commun.fermer}
           onClick={onClose}
           style={closeBtn}
         >
@@ -276,7 +278,7 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
         <div style={gramoRow}>
           <button
             type="button"
-            aria-label={enLecture ? "Pause" : "Lecture"}
+            aria-label={enLecture ? d.sheets.pause : d.sheets.lecture}
             onClick={onPlayPause}
             disabled={ctrlDisabled}
             style={{
@@ -303,7 +305,7 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
 
           <button
             type="button"
-            aria-label="Suivant"
+            aria-label={d.sheets.suivant}
             onClick={onNext}
             disabled={ctrlDisabled}
             style={{
@@ -330,7 +332,7 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                 style={sunoLink}
               >
                 <ExternalLink size={11} strokeWidth={1.8} />
-                Ajouter sur Suno
+                {d.sheets.ajouterSurSuno}
               </a>
             )}
           </div>
@@ -338,9 +340,9 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
           <div style={sectionVinyles}>
             {vinyles.length === 0 ? (
               <div style={emptyMsg}>
-                Aucun vinyle dans votre collection.
+                {d.sheets.aucunVinyle}
                 <br />
-                Trouvez-en chez vos vendeurs.
+                {d.sheets.trouvezVendeurs}
               </div>
             ) : (
               <div style={bandeWrap}>

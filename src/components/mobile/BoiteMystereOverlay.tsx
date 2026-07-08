@@ -14,6 +14,7 @@ import {
 import { stockageEstPlein } from "@/lib/stockage";
 import { ItemCard } from "@/components/ui/ItemCard";
 import { ItemSticker } from "@/components/ui/ItemSticker";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { Brocante, Objet } from "@/types/game";
 
 const VIBRATION_MS = 1500;
@@ -91,6 +92,7 @@ export function BoiteMystereOverlay({
 }) {
   const { state, reclamerBoiteMystere } = useGame();
   const { toast } = useToast();
+  const { d } = useLangue();
   const [enCours, setEnCours] = useState(false);
   const [phase, setPhase] = useState<Phase>("sealed");
   const [objet, setObjet] = useState<Objet | null>(null);
@@ -109,7 +111,7 @@ export function BoiteMystereOverlay({
     if (enCours || phase !== "sealed") return;
     // Ne jamais gâcher une pub : si le stock est plein, on bloque avant.
     if (stockageEstPlein(state)) {
-      toast("Stockage plein — fais de la place avant d'ouvrir la boîte.", {
+      toast(d.sheets.toastStockagePlein, {
         type: "info",
       });
       return;
@@ -120,7 +122,7 @@ export function BoiteMystereOverlay({
       if (!rewarded) return; // pub non terminée : la boîte reste ouvrable
       const gagne = tirerContenuBoite(brocante);
       if (!reclamerBoiteMystere(gagne)) {
-        toast("Stockage plein — fais de la place avant d'ouvrir la boîte.", {
+        toast(d.sheets.toastStockagePlein, {
           type: "info",
         });
         return;
@@ -136,7 +138,7 @@ export function BoiteMystereOverlay({
         setTimeout(() => setPhase("reveal"), VIBRATION_MS + ECLOSION_MS),
       );
     } catch {
-      toast("Erreur lors de la pub — réessaie.", { type: "erreur" });
+      toast(d.sheets.erreurPub, { type: "erreur" });
     } finally {
       setEnCours(false);
     }
@@ -149,7 +151,7 @@ export function BoiteMystereOverlay({
       <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onClose}
-          aria-label="Fermer"
+          aria-label={d.commun.fermer}
           style={{
             position: "absolute",
             top: 8,
@@ -168,11 +170,11 @@ export function BoiteMystereOverlay({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={BOITE_MYSTERE_OUVERTE_IMAGE}
-              alt="Boîte mystère ouverte"
+              alt={d.sheets.boiteMystereOuverteAlt}
               style={{ width: 150, height: "auto", margin: "0 auto 6px", display: "block" }}
             />
             <h2 style={{ fontSize: 18, margin: "4px 0 12px" }}>
-              Tu as trouvé&nbsp;:
+              {d.sheets.tuAsTrouve}
             </h2>
             <div style={{ maxWidth: 180, margin: "0 auto 14px" }}>
               <ItemCard
@@ -184,10 +186,10 @@ export function BoiteMystereOverlay({
               />
             </div>
             <p style={{ fontSize: 12, color: "var(--brass-200)", margin: "0 0 14px" }}>
-              Ajouté à ton stock.
+              {d.sheets.ajouteAuStock}
             </p>
             <button onClick={onClaimed} style={boutonStyle(false)}>
-              Parfait !
+              {d.sheets.parfait}
             </button>
           </>
         ) : enAnimation ? (
@@ -226,7 +228,7 @@ export function BoiteMystereOverlay({
                     ? BOITE_MYSTERE_IMAGE
                     : BOITE_MYSTERE_OUVERTE_IMAGE
                 }
-                alt="Boîte mystère"
+                alt={d.sheets.boiteMystereTitre}
                 style={{
                   width: 180,
                   height: "auto",
@@ -264,7 +266,7 @@ export function BoiteMystereOverlay({
               )}
             </div>
             <p style={{ fontSize: 13, color: "var(--brass-200)", margin: 0 }}>
-              {phase === "vibration" ? "La boîte s'ouvre…" : "✨"}
+              {phase === "vibration" ? d.sheets.boiteSouvre : "✨"}
             </p>
           </>
         ) : (
@@ -272,7 +274,7 @@ export function BoiteMystereOverlay({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={BOITE_MYSTERE_IMAGE}
-              alt="Boîte mystère"
+              alt={d.sheets.boiteMystereTitre}
               style={{
                 width: 170,
                 height: "auto",
@@ -280,10 +282,11 @@ export function BoiteMystereOverlay({
                 display: "block",
               }}
             />
-            <h2 style={{ fontSize: 18, margin: "0 0 6px" }}>Boîte mystère</h2>
+            <h2 style={{ fontSize: 18, margin: "0 0 6px" }}>
+              {d.sheets.boiteMystereTitre}
+            </h2>
             <p style={{ fontSize: 13, color: "var(--brass-200)", margin: "0 0 16px" }}>
-              Une boîte scellée… personne ne sait ce qu'elle cache. Regarde une
-              pub pour l'ouvrir.
+              {d.sheets.boiteDescription}
             </p>
             <button
               onClick={ouvrir}
@@ -291,7 +294,7 @@ export function BoiteMystereOverlay({
               style={boutonStyle(enCours)}
             >
               <Gift size={16} />
-              {enCours ? "Ouverture…" : "Regarder une pub pour ouvrir"}
+              {enCours ? d.sheets.ouverture : d.sheets.regarderPubPourOuvrir}
             </button>
           </>
         )}
