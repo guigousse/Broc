@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { VENDEUR_MYSTERE_ILLUSTRATION } from "@/lib/boiteMystere";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 /**
  * Tiroir du vendeur mystère — même structure que ChineNegoDrawer (perso qui
@@ -17,27 +18,26 @@ export function ChineMystereDrawer({
   boiteReclamee: boolean;
   onOuvrirBoite: () => void;
 }) {
+  const { d } = useLangue();
   return (
     <div style={drawerStyle}>
       <div style={imageZone}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={VENDEUR_MYSTERE_ILLUSTRATION} alt="Vendeur mystère" style={vendeurImg} />
+        <img src={VENDEUR_MYSTERE_ILLUSTRATION} alt={d.chine.vendeurMystere} style={vendeurImg} />
         <div style={rightZone}>
           {boiteReclamee ? (
-            <span style={statutTexte}>Boîte déjà ouverte.</span>
+            <span style={statutTexte}>{d.chine.boiteDejaOuverte}</span>
           ) : plein ? (
-            <span style={statutTexte}>Stockage plein</span>
+            <span style={statutTexte}>{d.qg.stockagePlein}</span>
           ) : (
             <button type="button" style={btnLuxe} onClick={onOuvrirBoite}>
-              Regarder une pub
-              <br />
-              pour ouvrir
+              {d.sheets.regarderPubPourOuvrir}
             </button>
           )}
         </div>
       </div>
 
-      <div style={namePlateLuxe}>Vendeur mystère</div>
+      <div style={namePlateLuxe}>{d.chine.vendeurMystere}</div>
     </div>
   );
 }

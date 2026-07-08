@@ -9,10 +9,12 @@ import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { useGame } from "@/context/GameContext";
 import { BROCANTES } from "@/data/brocantes";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 export default function ChinerListePage() {
   const router = useRouter();
   const { state, isHydrated } = useGame();
+  const { d } = useLangue();
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -27,7 +29,7 @@ export default function ChinerListePage() {
   }, [state]);
 
   if (!isHydrated || !state) {
-    return <SkeletonScreen label="— préparation des halles…" />;
+    return <SkeletonScreen label={d.chine.preparationHalles} />;
   }
 
   return (

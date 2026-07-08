@@ -2,6 +2,8 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { Lock } from "lucide-react";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import type { DictionnaireUI } from "@/lib/i18n/ui";
 
 export interface PersonaInfo {
   /** Nom propre du persona (révélé par Lecteur d'âmes). */
@@ -25,14 +27,18 @@ interface PersonaInfoOverlayProps {
   onClose: () => void;
 }
 
-function bourseLabel(b?: "petite" | "moyenne" | "grosse"): string {
-  if (b === "petite") return "◦ petite bourse";
-  if (b === "moyenne") return "◇ bourse moyenne";
-  if (b === "grosse") return "◆ grosse bourse";
+function bourseLabel(
+  b: "petite" | "moyenne" | "grosse" | undefined,
+  d: DictionnaireUI,
+): string {
+  if (b === "petite") return d.chine.bourseSymbolPetite;
+  if (b === "moyenne") return d.chine.bourseSymbolMoyenne;
+  if (b === "grosse") return d.chine.bourseSymbolGrosse;
   return "—";
 }
 
 export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
+  const { d, tr } = useLangue();
   return (
     <div style={scrim} onClick={onClose} role="presentation">
       <div
@@ -42,11 +48,11 @@ export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
         aria-modal="true"
       >
         <div style={cardHeader}>
-          <span style={cardTitle}>Infos du personnage</span>
+          <span style={cardTitle}>{d.chine.infosPersonnage}</span>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={d.commun.fermer}
             style={closeBtn}
           >
             ✕
@@ -55,7 +61,7 @@ export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
         <PalierRow
           title="Lecteur d'âmes"
           unlocked={info.revelePersona}
-          lockedText="Voir le nom et l'ambiance"
+          lockedText={d.chine.voirNomAmbiance}
         >
           <div style={lineMain}>{info.nom ?? "—"}</div>
           {info.archetypeNom && (
@@ -66,17 +72,19 @@ export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
         <PalierRow
           title="Estimateur de bourse"
           unlocked={info.releveBourse}
-          lockedText="Lire la classe de bourse"
+          lockedText={d.chine.lireClasseBourse}
         >
-          <div style={lineMain}>{bourseLabel(info.bourse)}</div>
+          <div style={lineMain}>{bourseLabel(info.bourse, d)}</div>
         </PalierRow>
         <PalierRow
           title="Œil aiguisé"
           unlocked={info.oeilAiguise}
-          lockedText="Lire le prix max exact"
+          lockedText={d.chine.lirePrixMax}
         >
           <div style={lineMain}>
-            Prix max : {info.prixMax !== undefined ? `${info.prixMax} €` : "—"}
+            {tr(d.chine.prixMaxLabel, {
+              valeur: info.prixMax !== undefined ? `${info.prixMax} €` : "—",
+            })}
           </div>
         </PalierRow>
       </div>

@@ -7,6 +7,7 @@ import type { Brocante, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import { Store } from "lucide-react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface BrocanteCardProps {
   brocante: Brocante;
@@ -117,6 +118,7 @@ export function BrocanteCard({
   destination,
 }: BrocanteCardProps) {
   const router = useRouter();
+  const { d, tr } = useLangue();
   const entree = fraisEntree(brocante);
   const peutEntrer = state.budget >= entree;
   const imageUrl = getBrocanteImageUrl(brocante.id);
@@ -163,7 +165,7 @@ export function BrocanteCard({
         <p style={descStyle}>{brocante.description}</p>
 
         <div style={metaStyle}>
-          {brocante.taillePool} items · entrée {entree} €
+          {tr(d.chine.metaBrocante, { taille: brocante.taillePool, prix: entree })}
         </div>
 
         {!debloquee && raisonVerrou && (
@@ -176,7 +178,7 @@ export function BrocanteCard({
           onClick={() => router.push(`/${destination}/${brocante.id}`)}
           style={btnStyle(debloquee, peutEntrer)}
         >
-          {debloquee ? "Entrer" : "Fermé"}
+          {debloquee ? d.chine.entrer : d.chine.ferme}
         </button>
       </div>
     </article>

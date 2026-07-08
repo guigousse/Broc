@@ -12,6 +12,7 @@ import { ChineSlideVue, type ChineSlide } from "./ChineSlide";
 import { ChineMystereDrawer } from "./ChineMystereDrawer";
 import { sonsRevelation } from "@/lib/chine/revelationSons";
 import { audioManager } from "@/lib/audio/audioManager";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { ObjetEnVente } from "@/types/game";
 
 const SWIPE_SEUIL_PX = 40;
@@ -44,6 +45,7 @@ export function ItemSwipeDeck({
   /** Déclenche le remplacement de la carte courante. */
   onFouille?: (item: ObjetEnVente) => void;
 }) {
+  const { d, tr } = useLangue();
   const [index, setIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -138,7 +140,7 @@ export function ItemSwipeDeck({
   if (slides.length === 0) {
     return (
       <div style={{ display: "grid", placeItems: "center", height: "100%", color: "var(--ink-500)" }}>
-        — rien à chiner ici —
+        {d.chine.rienAChiner}
       </div>
     );
   }
@@ -223,7 +225,7 @@ export function ItemSwipeDeck({
       >
         <button
           type="button"
-          aria-label="Quitter la brocante"
+          aria-label={d.chine.quitterBrocanteAriaLabel}
           onClick={onQuitter}
           style={{
             display: "inline-flex",
@@ -241,7 +243,7 @@ export function ItemSwipeDeck({
           }}
         >
           <DoorOpen size={26} strokeWidth={2} />
-          Sortir
+          {d.chine.sortir}
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -251,7 +253,7 @@ export function ItemSwipeDeck({
             currentItem.negociation?.statut !== "en_cours" && (
               <button
                 type="button"
-                aria-label="La Fouille — chercher un autre objet"
+                aria-label={tr(d.chine.fouilleAriaLabel, { nom: "La Fouille" })}
                 onClick={() => onFouille?.(currentItem)}
                 disabled={!fouilleRestants}
                 style={{
@@ -276,7 +278,7 @@ export function ItemSwipeDeck({
             )}
           <button
             type="button"
-            aria-label="Précédent"
+            aria-label={d.chine.precedent}
             onClick={() => go(-1)}
             disabled={clampedIdx === 0}
             style={{ background: "transparent", border: "none", cursor: clampedIdx === 0 ? "default" : "pointer", color: "var(--brass-300)", opacity: clampedIdx === 0 ? 0.3 : 1, padding: 0 }}
@@ -288,7 +290,7 @@ export function ItemSwipeDeck({
           </span>
           <button
             type="button"
-            aria-label="Suivant"
+            aria-label={d.sheets.suivant}
             onClick={() => go(1)}
             disabled={clampedIdx === slides.length - 1}
             style={{ background: "transparent", border: "none", cursor: clampedIdx === slides.length - 1 ? "default" : "pointer", color: "var(--brass-300)", opacity: clampedIdx === slides.length - 1 ? 0.3 : 1, padding: 0 }}

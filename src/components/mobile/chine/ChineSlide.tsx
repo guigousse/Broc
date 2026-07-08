@@ -13,6 +13,8 @@ import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { etoileCount } from "@/lib/etat";
 import { getRarityColors } from "@/lib/rarityColors";
 import { BOITE_MYSTERE_IMAGE } from "@/lib/boiteMystere";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 import type { ObjetEnVente } from "@/types/game";
 
 /**
@@ -87,6 +89,8 @@ export type ChineSlide =
  * un objet, ChineMystereDrawer pour la boîte mystère).
  */
 export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
+  const { d, tr } = useLangue();
+
   if (slide.kind === "mystere") {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -103,7 +107,7 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
                 outlinePx={3}
               />
             </div>
-            <div style={titre}>Boîte mystère</div>
+            <div style={titre}>{d.sheets.boiteMystereTitre}</div>
           </div>
         </ScaleToFit>
       </div>
@@ -145,7 +149,9 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
                 dropShadow
                 emptyFill="rgba(255,243,213,0.35)"
                 display="flex"
-                aria-label={`État : ${objet.etat}`}
+                aria-label={tr(d.chine.etatAriaLabel, {
+                  etat: libelleEtat(objet.etat, d),
+                })}
               />
               <div style={categorieLigne}>
                 <CategorieIcon categorie={objet.categorie} size={15} color="var(--paper-100)" />
@@ -155,7 +161,9 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
             <div style={prixCol}>
               <div style={prixLigne}>{prixVendeur} €</div>
               {slide.coteConnue && (
-                <div style={coteLigne}>cote {objet.prixReferenceReel} €</div>
+                <div style={coteLigne}>
+                  {tr(d.chine.coteLabel, { valeur: objet.prixReferenceReel })}
+                </div>
               )}
             </div>
           </div>

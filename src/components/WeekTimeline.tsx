@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { indexJourSemaine, JOURS_SEMAINE } from "@/lib/meteo";
 import { METEO_ICON } from "@/data/meteos";
 import type { Meteo } from "@/types/game";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface WeekTimelineProps {
   jourActuel: number;
@@ -24,11 +25,12 @@ const cellBase: CSSProperties = {
 };
 
 export function WeekTimeline({ jourActuel, meteoSemaine }: WeekTimelineProps) {
+  const { d } = useLangue();
   const idx = indexJourSemaine(jourActuel);
   return (
     <div
       role="list"
-      aria-label="Semaine en cours"
+      aria-label={d.chine.semaineEnCours}
       style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3 }}
     >
       {labels.map((l, i) => {

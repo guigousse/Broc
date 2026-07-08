@@ -16,6 +16,7 @@ import { getTemplate } from "@/data/objetTemplates";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/components/ui/Toast";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { fraisEntree, getBrocanteById } from "@/data/brocantes";
 import {
   calculerBrocantesDebloqueesParTier,
@@ -57,6 +58,7 @@ export default function SessionChinePage() {
   } = useGame();
   const { startCrowd, stopCrowd } = useSettings();
   const { toast } = useToast();
+  const { d, tr } = useLangue();
   useEffect(() => {
     startCrowd();
     return () => stopCrowd();
@@ -115,7 +117,7 @@ export default function SessionChinePage() {
         return router.replace(`/chiner?raison=budget&id=${brocante.id}`);
       }
       if (energieCourante(state, tempsConfiance() ?? Date.now()) < 1) {
-        toast("Plus d'énergie — attends la recharge ou regarde une pub.", {
+        toast(d.chine.plusEnergieToast, {
           type: "info",
         });
         return router.replace(`/chiner?raison=energie&id=${brocante.id}`);
@@ -138,7 +140,7 @@ export default function SessionChinePage() {
         uniquesExclusDuChinage(state),
       );
       setItems(session);
-      toast(`Droit d'entrée payé : ${frais} €.`, { type: "info" });
+      toast(tr(d.chine.droitEntreePaye, { frais }), { type: "info" });
       for (const it of session) {
         marquerVuTemplate(it.objet.templateId);
       }
@@ -150,7 +152,7 @@ export default function SessionChinePage() {
         setVendeurPresent(true);
       }
     }
-  }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast]);
+  }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast, d, tr]);
 
   const estRareOuPlus = (it: ObjetEnVente): boolean =>
     it.objet.rarete !== "commun" ||
@@ -185,7 +187,7 @@ export default function SessionChinePage() {
           fontSize: 12,
         }}
       >
-        — installation des étals…
+        {d.chine.installationEtals}
       </main>
     );
   }
@@ -227,7 +229,7 @@ export default function SessionChinePage() {
   /** Achat à un prix personnalisé (depuis la négo ou le bouton direct). */
   const handleAchatAuPrix = (it: ObjetEnVente, prix: number) => {
     if (state.budget < prix) {
-      toast("La caisse refuse — fonds insuffisants.", { type: "erreur" });
+      toast(d.chine.caisseRefuse, { type: "erreur" });
       return;
     }
     ajusterBudget(-prix);
@@ -255,7 +257,7 @@ export default function SessionChinePage() {
         prixPaye: prix,
       },
     ]);
-    toast(`Acquis pour ${prix} €. Noté dans le carnet.`, { type: "succes" });
+    toast(tr(d.chine.acquisPour, { prix }), { type: "succes" });
   };
 
   const handleRentrer = () => {

@@ -7,6 +7,7 @@ import { proposerOffre, ouvrirNegociation, relancerNegociation } from "@/lib/neg
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { getNomVendeur } from "@/lib/personas";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { NegociationState, ObjetEnVente } from "@/types/game";
 
 /**
@@ -44,6 +45,7 @@ export function ChineNegoDrawer({
   /** Active de chine « La Tchatche » (N15) : rouvre une négo fâchée/refusée. */
   tchatche?: { restantes: number; consommer: () => boolean };
 }) {
+  const { d, tr } = useLangue();
   const { prixVendeur, statut, persona } = item;
   const acquis = statut === "achete";
   const facheInitial = item.negociation?.statut === "fache";
@@ -95,21 +97,21 @@ export function ChineNegoDrawer({
       <div style={imageZone}>
         {illustrationCourante && (
           /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={illustrationCourante} alt="Vendeur" style={vendeurImg} />
+          <img src={illustrationCourante} alt={d.chine.altVendeur} style={vendeurImg} />
         )}
         <div style={rightZone}>
           {expanded ? (
             <div style={bubble}>{localNego.message}</div>
           ) : acquis ? (
-            <span style={statutTexte("var(--brass-700)")}>— Acquis —</span>
+            <span style={statutTexte("var(--brass-700)")}>{d.chine.acquisStatut}</span>
           ) : facheInitial ? (
-            <span style={statutTexte("var(--vermillion-600)")}>Vendeur fâché</span>
+            <span style={statutTexte("var(--vermillion-600)")}>{d.chine.vendeurFache}</span>
           ) : plein ? (
-            <span style={statutTexte("var(--vermillion-600)")}>Stockage plein</span>
+            <span style={statutTexte("var(--vermillion-600)")}>{d.qg.stockagePlein}</span>
           ) : (
             <div style={peekBtnRow}>
               <button type="button" style={btn(false)} onClick={onExpand}>
-                Négocier
+                {d.chine.negocier}
               </button>
               <button
                 type="button"
@@ -117,7 +119,7 @@ export function ChineNegoDrawer({
                 disabled={acheterDisabled}
                 onClick={onAcheterDirect}
               >
-                Acheter {prixVendeur} €
+                {tr(d.chine.acheterPrix, { prix: prixVendeur })}
               </button>
             </div>
           )}
@@ -158,18 +160,18 @@ export function ChineNegoDrawer({
                   style={tchatche ? btnPrimary : { ...btnPrimary, gridColumn: "1 / -1" }}
                   onClick={() => onConclu(localNego.prixAdverseCourant)}
                 >
-                  Acheter au prix affiché — {localNego.prixAdverseCourant} €
+                  {tr(d.chine.acheterPrixAffiche, { prix: localNego.prixAdverseCourant })}
                 </button>
               </>
             ) : enCours ? (
               <>
                 <button type="button" style={btnSecondary} onClick={onCollapse}>
-                  Laisser tomber
+                  {d.chine.laisserTomber}
                 </button>
                 <button type="button" style={btnPrimary} onClick={handleProposer}>
                   {offreJoueur >= localNego.prixAdverseCourant
-                    ? `Accepter ${offreJoueur} €`
-                    : `Proposer ${offreJoueur} €`}
+                    ? tr(d.chine.accepterPrix, { prix: offreJoueur })
+                    : tr(d.chine.proposerPrix, { prix: offreJoueur })}
                 </button>
               </>
             ) : (
@@ -197,7 +199,7 @@ export function ChineNegoDrawer({
                   }
                   onClick={onCollapse}
                 >
-                  Fermer
+                  {d.commun.fermer}
                 </button>
               </>
             )}

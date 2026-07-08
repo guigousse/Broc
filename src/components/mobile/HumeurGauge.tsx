@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { Angry, Meh, Smile, SmilePlus, type LucideIcon } from "lucide-react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface HumeurGaugeProps {
   /** Humeur courante, 0–1. */
@@ -17,11 +18,12 @@ function iconForHumeur(humeur: number): { Icon: LucideIcon; color: string } {
 }
 
 export function HumeurGauge({ humeur }: HumeurGaugeProps) {
+  const { d } = useLangue();
   const clamped = Math.min(1, Math.max(0, humeur));
   const { Icon, color } = iconForHumeur(clamped);
   return (
     <div style={wrapStyle}>
-      <span style={labelStyle}>Humeur</span>
+      <span style={labelStyle}>{d.chine.humeur}</span>
       <div style={trackStyle}>
         <div style={fillStyle} />
         <div style={{ ...pointerStyle, left: `${clamped * 100}%` }} />

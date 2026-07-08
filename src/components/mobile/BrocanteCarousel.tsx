@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Store } from "lucide-react";
 import type { Brocante, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface BrocanteCarouselProps {
   brocantes: Brocante[];
@@ -184,6 +185,7 @@ export function BrocanteCarousel({
   destination,
 }: BrocanteCarouselProps) {
   const router = useRouter();
+  const { d, tr } = useLangue();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -220,7 +222,7 @@ export function BrocanteCarousel({
           color: "var(--ink-500)",
         }}
       >
-        Aucune brocante dans ce tier.
+        {d.chine.aucuneBrocanteTier}
       </div>
     );
   }
@@ -237,14 +239,14 @@ export function BrocanteCarousel({
           ref={scrollerRef}
           onScroll={onScroll}
           style={scrollerStyle}
-          aria-roledescription="carrousel"
+          aria-roledescription={d.chine.roleCarrousel}
         >
           {brocantes.map((b) => {
             const debloquee = debloqueesIds.has(b.id);
             const raison = debloquee ? undefined : decrireConditions(b);
             const imageUrl = getBrocanteImageUrl(b.id);
             return (
-              <article key={b.id} style={slideStyle} aria-roledescription="slide">
+              <article key={b.id} style={slideStyle} aria-roledescription={d.chine.roleSlide}>
                 <div style={imgFrame}>
                   {imageUrl ? (
                     <Image
@@ -279,7 +281,10 @@ export function BrocanteCarousel({
                 <div style={tierStyle}>{"★".repeat(b.tier)}</div>
                 <p style={descStyle}>{b.description}</p>
                 <div style={metaStyle}>
-                  {b.taillePool} items · entrée {fraisEntree(b)} €
+                  {tr(d.chine.metaBrocante, {
+                    taille: b.taillePool,
+                    prix: fraisEntree(b),
+                  })}
                 </div>
                 {!debloquee && raison && (
                   <div style={lockStyle}>⊘ {raison}</div>
@@ -294,7 +299,7 @@ export function BrocanteCarousel({
           <button
             type="button"
             onClick={() => goTo(activeIdx - 1)}
-            aria-label="Brocante précédente"
+            aria-label={d.chine.brocantePrecedente}
             style={{ ...arrowBtn, left: 4 }}
           >
             <ChevronLeft size={20} strokeWidth={1.6} />
@@ -304,7 +309,7 @@ export function BrocanteCarousel({
           <button
             type="button"
             onClick={() => goTo(activeIdx + 1)}
-            aria-label="Brocante suivante"
+            aria-label={d.chine.brocanteSuivante}
             style={{ ...arrowBtn, right: 4 }}
           >
             <ChevronRight size={20} strokeWidth={1.6} />
@@ -321,7 +326,7 @@ export function BrocanteCarousel({
               type="button"
               onClick={() => goTo(i)}
               style={dotStyle(i === activeIdx)}
-              aria-label={`Aller à la brocante ${i + 1}`}
+              aria-label={tr(d.chine.allerBrocante, { n: i + 1 })}
             />
           ))}
         </div>
@@ -339,9 +344,9 @@ export function BrocanteCarousel({
       >
         {currentDebloquee
           ? currentPeutEntrer
-            ? "Entrer"
-            : "Fonds insuffisants"
-          : "Fermé"}
+            ? d.chine.entrer
+            : d.chine.fondsInsuffisants
+          : d.chine.ferme}
       </button>
     </div>
   );
