@@ -30,7 +30,7 @@ export const en: DictionnaireUI = {
     aLInstant: "just now",
     ilYAMin: "{n} min ago",
     ilYAHeures: "{n} h ago",
-    ilYAJours: "{n} d ago",
+    ilYAJours: "{n} days ago",
     confirmSupprimerTitre: "Delete “{nom}”?",
     confirmSupprimerCorps: "This game will be permanently lost.",
     confirmEcraserTitre: "Overwrite “{nom}”?",

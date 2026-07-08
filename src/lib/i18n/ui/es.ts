@@ -30,7 +30,7 @@ export const es: DictionnaireUI = {
     aLInstant: "ahora mismo",
     ilYAMin: "hace {n} min",
     ilYAHeures: "hace {n} h",
-    ilYAJours: "hace {n} d",
+    ilYAJours: "hace {n} días",
     confirmSupprimerTitre: "¿Eliminar «{nom}»?",
     confirmSupprimerCorps: "Esta partida se perderá definitivamente.",
     confirmEcraserTitre: "¿Sobrescribir «{nom}»?",
