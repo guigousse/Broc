@@ -3,6 +3,8 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { X } from "lucide-react";
 import { useSettings, type TailleFonte } from "@/context/SettingsContext";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { LOCALES, LOCALE_LABELS } from "@/lib/i18n/locales";
 import type { AudioPrefs } from "@/lib/audio/audioManager";
 import {
   demanderPermission,
@@ -162,6 +164,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
     tailleFonte,
     setTailleFonte,
   } = useSettings();
+  const { locale, setLocale } = useLangue();
 
   if (!open) return null;
 
@@ -255,6 +258,25 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
                 style={segBtn(tailleFonte === t.id)}
               >
                 {t.nom}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section style={carte} aria-label="Langue">
+          <h3 style={sectionTitle}>Langue</h3>
+          <div style={{ display: "flex", gap: 8 }}>
+            {LOCALES.map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => {
+                  playClick();
+                  setLocale(l);
+                }}
+                style={segBtn(locale === l)}
+              >
+                {LOCALE_LABELS[l]}
               </button>
             ))}
           </div>

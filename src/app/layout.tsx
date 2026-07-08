@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { GameProvider } from "@/context/GameContext";
 import { SettingsProvider } from "@/context/SettingsContext";
+import { LangueProvider } from "@/lib/i18n/LangueContext";
 import { TabBar } from "@/components/mobile/TabBar";
 import { LevelUpOverlay } from "@/components/mobile/LevelUpOverlay";
 import { SwipePager } from "@/components/mobile/SwipePager";
@@ -56,16 +57,18 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body style={{ minHeight: "100dvh", overflowX: "hidden" }}>
-        <SettingsProvider>
-          <ToastProvider>
-            <GameProvider>
-              <SwipePager>{children}</SwipePager>
-              <TabBar />
-              <LevelUpOverlay />
-              <GlobalVinylAmbiance />
-            </GameProvider>
-          </ToastProvider>
-        </SettingsProvider>
+        <LangueProvider>
+          <SettingsProvider>
+            <ToastProvider>
+              <GameProvider>
+                <SwipePager>{children}</SwipePager>
+                <TabBar />
+                <LevelUpOverlay />
+                <GlobalVinylAmbiance />
+              </GameProvider>
+            </ToastProvider>
+          </SettingsProvider>
+        </LangueProvider>
       </body>
     </html>
   );
