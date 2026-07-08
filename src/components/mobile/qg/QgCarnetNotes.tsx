@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { useQgObjetStyle } from "./QgScene";
 
 interface QgCarnetNotesProps {
@@ -37,10 +38,15 @@ const coinStyle: CSSProperties = {
 
 export function QgCarnetNotes({ nbActives, nbLivrables, onTap }: QgCarnetNotesProps) {
   const baseStyle = useQgObjetStyle("carnetRouge");
+  const { d, tr } = useLangue();
   const total = nbActives + nbLivrables;
-  const label = total === 0
-    ? "Carnet de commande — aucune mission"
-    : `Carnet de commande — ${total} mission${total > 1 ? "s" : ""}`;
+  const label =
+    total === 0
+      ? d.qg.carnetCommandeAucune
+      : tr(
+          total > 1 ? d.qg.carnetCommandeMissions : d.qg.carnetCommandeMission,
+          { n: total },
+        );
   return (
     <button type="button" onClick={onTap} aria-label={label} style={baseStyle}>
       <img

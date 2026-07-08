@@ -1,5 +1,6 @@
 "use client";
 
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { useQgObjetStyle } from "./QgScene";
 
 interface QgCarnetProps {
@@ -8,11 +9,12 @@ interface QgCarnetProps {
 
 export function QgCarnet({ onTap }: QgCarnetProps) {
   const style = useQgObjetStyle("carnet");
+  const { d } = useLangue();
   return (
     <button
       type="button"
       onClick={onTap}
-      aria-label="Carnet — dernières sessions"
+      aria-label={d.qg.carnetSessions}
       style={style}
     >
       <img

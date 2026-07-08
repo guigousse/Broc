@@ -11,6 +11,7 @@ import {
   type CSSProperties,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
   safeLocalStorageGet,
@@ -95,6 +96,7 @@ function pathnameToTab(
 function PanoramaInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { d } = useLangue();
   const {
     state,
     isHydrated,
@@ -462,7 +464,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
           fontSize: 12,
         }}
       >
-        — ouverture du local…
+        {d.qg.ouvertureLocal}
       </main>
     );
   }

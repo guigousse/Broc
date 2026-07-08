@@ -2,6 +2,7 @@
 
 import { useEffect, type CSSProperties } from "react";
 import { audioManager } from "@/lib/audio/audioManager";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { useQgObjet } from "./dev/QgEditContext";
 
 interface QgCourrierProps {
@@ -19,6 +20,7 @@ const letterBase: CSSProperties = {
 
 export function QgCourrier({ nbNonLus, onTap }: QgCourrierProps) {
   const { left, bottom, width } = useQgObjet("courrier");
+  const { d, tr } = useLangue();
 
   // Précharge le buffer du bruit papier pour qu'il joue instantanément au tap.
   useEffect(() => {
@@ -32,9 +34,10 @@ export function QgCourrier({ nbNonLus, onTap }: QgCourrierProps) {
     <button
       type="button"
       onClick={onTap}
-      aria-label={`${nbNonLus} lettre${nbNonLus > 1 ? "s" : ""} non lue${
-        nbNonLus > 1 ? "s" : ""
-      }`}
+      aria-label={tr(
+        nbNonLus > 1 ? d.qg.lettresNonLues : d.qg.lettreNonLue,
+        { n: nbNonLus },
+      )}
       style={{
         position: "absolute",
         left: `${left}vw`,

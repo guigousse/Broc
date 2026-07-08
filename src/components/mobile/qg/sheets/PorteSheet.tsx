@@ -2,6 +2,7 @@
 
 import { FloatingActionBar } from "@/components/mobile/qg/FloatingActionBar";
 import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButton";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface PorteSheetProps {
   open: boolean;
@@ -20,6 +21,7 @@ export function PorteSheet({
   onVitrine,
   chinerDesactive = false,
 }: PorteSheetProps) {
+  const { d } = useLangue();
   return (
     <FloatingActionBar open={open} onClose={onClose}>
       <div
@@ -41,7 +43,7 @@ export function PorteSheet({
               whiteSpace: "nowrap",
             }}
           >
-            Stockage plein
+            {d.qg.stockagePlein}
           </span>
         )}
         <FloatingActionButton
@@ -49,7 +51,7 @@ export function PorteSheet({
           disabled={chinerDesactive}
           minWidth={140}
         >
-          Chiner
+          {d.qg.chiner}
         </FloatingActionButton>
       </div>
       <FloatingActionButton
@@ -57,7 +59,7 @@ export function PorteSheet({
         variant="secondary"
         minWidth={140}
       >
-        Étaler
+        {d.qg.etaler}
       </FloatingActionButton>
     </FloatingActionBar>
   );

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { QG_LAYOUT, type QgObjetKey } from "./layout";
 import { useQgObjet, useQgEditContext } from "./dev/QgEditContext";
 import { QgEditOverlay } from "./dev/QgEditOverlay";
@@ -47,8 +48,9 @@ const objectsLayer: CSSProperties = {
 
 export function QgScene({ children }: QgSceneProps) {
   const ctx = useQgEditContext();
+  const { d } = useLangue();
   return (
-    <div style={wrapStyle} aria-label="Décor du QG" data-qg-scene="1">
+    <div style={wrapStyle} aria-label={d.qg.decor} data-qg-scene="1">
       <Image
         src="/qg/fond-cabinet.webp"
         alt=""

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import {
   STOCKAGE_BOX_ORDER,
   STOCKAGE_BOXES_LAYOUT,
@@ -15,6 +16,7 @@ interface OneBoxProps {
 function OneBox({ boxKey }: OneBoxProps) {
   const router = useRouter();
   const { left, bottom, width } = useStockageBoxCoord(boxKey);
+  const { d, tr } = useLangue();
   const def = STOCKAGE_BOXES_LAYOUT[boxKey];
 
   function handleClick() {
@@ -26,7 +28,7 @@ function OneBox({ boxKey }: OneBoxProps) {
     <button
       type="button"
       onClick={handleClick}
-      aria-label={`Ouvrir le stockage : ${def.label}`}
+      aria-label={tr(d.qg.ouvrirStockage, { label: def.label })}
       style={{
         position: "absolute",
         left: `${left}vw`,

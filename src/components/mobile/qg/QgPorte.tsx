@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { audioManager } from "@/lib/audio/audioManager";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { useQgObjetStyle } from "./QgScene";
 
 interface QgPorteProps {
@@ -12,6 +13,7 @@ interface QgPorteProps {
 // invisible cliquable, dimensionnée par un aspect-ratio porte standard.
 export function QgPorte({ onTap }: QgPorteProps) {
   const style = useQgObjetStyle("porte");
+  const { d } = useLangue();
 
   // Précharge des bruits de porte pour un déclenchement instantané au tap.
   useEffect(() => {
@@ -25,7 +27,7 @@ export function QgPorte({ onTap }: QgPorteProps) {
     <button
       type="button"
       onClick={onTap}
-      aria-label="Porte d'entrée"
+      aria-label={d.qg.porteEntree}
       style={{
         ...style,
         aspectRatio: "2 / 7",

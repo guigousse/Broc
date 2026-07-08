@@ -2,6 +2,7 @@
 
 import { FloatingActionBar } from "@/components/mobile/qg/FloatingActionBar";
 import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButton";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface PasserConfirmSheetProps {
   open: boolean;
@@ -17,19 +18,20 @@ export function PasserConfirmSheet({
   onConfirm,
   bloque = false,
 }: PasserConfirmSheetProps) {
+  const { d } = useLangue();
   if (bloque) {
     return (
       <FloatingActionBar
         open={open}
         onClose={onClose}
-        message="Un chat dort paisiblement sur le fauteuil. Impossible de passer la journée sans le déranger…"
+        message={d.qg.chatDortMessage}
       />
     );
   }
   return (
     <FloatingActionBar open={open} onClose={onClose}>
       <FloatingActionButton onClick={onConfirm} minWidth={240}>
-        Se reposer (+1 jour)
+        {d.qg.seReposer}
       </FloatingActionButton>
     </FloatingActionBar>
   );

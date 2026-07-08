@@ -1,5 +1,6 @@
 "use client";
 
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { useQgObjetStyle } from "./QgScene";
 
 interface QgFauteuilProps {
@@ -9,11 +10,12 @@ interface QgFauteuilProps {
 
 export function QgFauteuil({ onTap, chat = false }: QgFauteuilProps) {
   const style = useQgObjetStyle("fauteuil");
+  const { d } = useLangue();
   return (
     <button
       type="button"
       onClick={onTap}
-      aria-label={chat ? "Fauteuil occupé par un chat" : "Fauteuil — passer la journée"}
+      aria-label={chat ? d.qg.fauteuilChat : d.qg.fauteuilPasser}
       style={style}
     >
       <img

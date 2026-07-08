@@ -1,5 +1,6 @@
 "use client";
 
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { useQgObjetStyle } from "./QgScene";
 
 interface QgPorteRevuesProps {
@@ -10,10 +11,11 @@ interface QgPorteRevuesProps {
 
 export function QgPorteRevues({ gazetteAchetee, onTap }: QgPorteRevuesProps) {
   const style = useQgObjetStyle("porteRevues");
+  const { d } = useLangue();
   const src = gazetteAchetee ? "/qg/porte-revues-plein.webp" : "/qg/porte-revues-vide.webp";
   const label = gazetteAchetee
-    ? "Porte-revues — lire la Gazette"
-    : "Porte-revues — acheter la Gazette";
+    ? d.qg.porteRevuesLire
+    : d.qg.porteRevuesAcheter;
   return (
     <button type="button" onClick={onTap} aria-label={label} style={style}>
       <img

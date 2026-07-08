@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 interface QgPanoramaProps {
   initialZone?: "bureau" | "porte" | "repos";
@@ -51,6 +52,7 @@ export function QgPanorama({
   onScrollPos,
 }: QgPanoramaProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const { d } = useLangue();
 
   useEffect(() => {
     const el = ref.current;
@@ -83,7 +85,7 @@ export function QgPanorama({
   }, [onScrollPos]);
 
   return (
-    <div ref={ref} style={containerStyle} aria-label="Panorama du QG" data-qg-panorama="1">
+    <div ref={ref} style={containerStyle} aria-label={d.qg.panorama} data-qg-panorama="1">
       {children}
       {ZONES.map((_, i) => (
         <div key={i} style={{ ...snapAnchorStyle, left: `${i * 100}vw` }} aria-hidden />

@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { dateForJour, labelJourCourt } from "@/lib/calendrier";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { useQgObjetStyle } from "./QgScene";
 
 interface QgCalendrierProps {
@@ -40,12 +41,16 @@ const numJour: CSSProperties = {
 
 export function QgCalendrier({ jourActuel, onTap }: QgCalendrierProps) {
   const style = useQgObjetStyle("calendrier");
-  const d = dateForJour(jourActuel);
+  const { d, tr } = useLangue();
+  const date = dateForJour(jourActuel);
   return (
     <button
       type="button"
       onClick={onTap}
-      aria-label={`Calendrier — ${labelJourCourt(jourActuel)} ${d.getUTCDate()}`}
+      aria-label={tr(d.qg.calendrier, {
+        jour: labelJourCourt(jourActuel),
+        date: date.getUTCDate(),
+      })}
       style={{
         ...style,
         position: "absolute",
@@ -63,7 +68,7 @@ export function QgCalendrier({ jourActuel, onTap }: QgCalendrierProps) {
       />
       <div style={overlay}>
         <span style={jourCourt}>{labelJourCourt(jourActuel)}</span>
-        <span style={numJour}>{d.getUTCDate()}</span>
+        <span style={numJour}>{date.getUTCDate()}</span>
       </div>
     </button>
   );
