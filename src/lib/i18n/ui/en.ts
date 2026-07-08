@@ -20,6 +20,7 @@ export const en: DictionnaireUI = {
     choisirEmplacement: "Select slot {n}",
     renommer: "Rename",
     renommerEmplacement: "Rename slot {n}",
+    emplacementN: "Slot {n}",
     supprimer: "Delete",
     ecraser: "Overwrite",
     lancer: "Start game",
@@ -64,5 +65,16 @@ export const en: DictionnaireUI = {
     version: "ver. 1.0 · spring season · 1924",
     confidentialite: "Privacy",
     mentionsLegales: "Legal notice",
+  },
+  etats: {
+    mauvais: "Poor",
+    bon: "Good",
+    tresBon: "Very good",
+    pristin: "Pristine",
+  },
+  raretes: {
+    commun: "common",
+    rare: "rare",
+    legendaire: "legendary",
   },
 };

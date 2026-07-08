@@ -462,7 +462,7 @@ export function PartiesModal({
             key={ligne.n}
             style={section}
             role="group"
-            aria-label={`Emplacement ${ligne.n}`}
+            aria-label={tr(d.parties.emplacementN, { n: ligne.n })}
           >
             <div
               style={{

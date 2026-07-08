@@ -36,6 +36,9 @@ const LangueContext = createContext<ValeurLangue>({
 export function LangueProvider({ children }: { children: ReactNode }) {
   // "fr" au premier rendu (SSG) puis détection au montage : évite tout
   // mismatch d'hydratation avec l'export statique.
+  // Conséquence assumée : sur navigateur non-FR, premier paint en français
+  // puis bascule (flash d'une frame) — inhérent à l'export statique sans
+  // détection SSR.
   const [locale, setLocaleState] = useState<Locale>("fr");
 
   useEffect(() => {

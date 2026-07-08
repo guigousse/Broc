@@ -20,6 +20,7 @@ export const es: DictionnaireUI = {
     choisirEmplacement: "Elegir la ranura {n}",
     renommer: "Renombrar",
     renommerEmplacement: "Renombrar la ranura {n}",
+    emplacementN: "Ranura {n}",
     supprimer: "Eliminar",
     ecraser: "Sobrescribir",
     lancer: "Iniciar partida",
@@ -64,5 +65,16 @@ export const es: DictionnaireUI = {
     version: "ver. 1.0 · temporada de primavera · 1924",
     confidentialite: "Privacidad",
     mentionsLegales: "Aviso legal",
+  },
+  etats: {
+    mauvais: "Malo",
+    bon: "Bueno",
+    tresBon: "Muy bueno",
+    pristin: "Impecable",
+  },
+  raretes: {
+    commun: "común",
+    rare: "raro",
+    legendaire: "legendario",
   },
 };

@@ -23,6 +23,7 @@ export const fr = {
     choisirEmplacement: "Choisir l'emplacement {n}",
     renommer: "Renommer",
     renommerEmplacement: "Renommer l'emplacement {n}",
+    emplacementN: "Emplacement {n}",
     supprimer: "Supprimer",
     ecraser: "Écraser",
     lancer: "Lancer la partie",
@@ -67,5 +68,16 @@ export const fr = {
     version: "ver. 1.0 · saison de printemps · 1924",
     confidentialite: "Confidentialité",
     mentionsLegales: "Mentions légales",
+  },
+  etats: {
+    mauvais: "Mauvais",
+    bon: "Bon",
+    tresBon: "Très bon",
+    pristin: "Pristin état",
+  },
+  raretes: {
+    commun: "commun",
+    rare: "rare",
+    legendaire: "légendaire",
   },
 } as const;
