@@ -164,7 +164,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
     tailleFonte,
     setTailleFonte,
   } = useSettings();
-  const { locale, setLocale } = useLangue();
+  const { locale, setLocale, d } = useLangue();
 
   if (!open) return null;
 
@@ -263,8 +263,8 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
           </div>
         </section>
 
-        <section style={carte} aria-label="Langue">
-          <h3 style={sectionTitle}>Langue</h3>
+        <section style={carte} aria-label={d.reglages.langue}>
+          <h3 style={sectionTitle}>{d.reglages.langue}</h3>
           <div style={{ display: "flex", gap: 8 }}>
             {LOCALES.map((l) => (
               <button
