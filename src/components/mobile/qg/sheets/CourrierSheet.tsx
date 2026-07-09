@@ -11,7 +11,7 @@ import { getExpediteur } from "@/data/expediteursCourrier";
 import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
-import { nomTemplate } from "@/lib/i18n/contenu";
+import { nomTemplate, signatureExpediteur } from "@/lib/i18n/contenu";
 import type { Locale } from "@/lib/i18n/locales";
 import type { DictionnaireUI, tr as TrFn } from "@/lib/i18n/ui";
 import type { Courrier } from "@/types/game";
@@ -171,7 +171,7 @@ const actionBtnWrap: CSSProperties = {
 /* Rendus                                                              */
 /* ------------------------------------------------------------------ */
 
-function renderLettre(c: Courrier) {
+function renderLettre(c: Courrier, locale: Locale) {
   if (c.payload.type !== "lettre") return null;
   const p = c.payload;
   const exp = getExpediteur(p.expediteurId);
@@ -183,7 +183,11 @@ function renderLettre(c: Courrier) {
           {renderParaText(para)}
         </p>
       ))}
-      {exp && <div style={signatureLettre}>{exp.signature}</div>}
+      {exp && (
+        <div style={signatureLettre}>
+          {signatureExpediteur(p.expediteurId, locale)}
+        </div>
+      )}
     </>
   );
 }
@@ -243,7 +247,11 @@ function renderMission(
           </div>
         )}
       </div>
-      {exp && <div style={signatureLettre}>{exp.signature}</div>}
+      {exp && (
+        <div style={signatureLettre}>
+          {signatureExpediteur(p.expediteurId, locale)}
+        </div>
+      )}
     </>
   );
 }
@@ -325,7 +333,7 @@ export function CourrierSheet({
           <article style={lettreCard}>
             {courant.payload.type === "mission"
               ? renderMission(courant, d, tr, locale)
-              : renderLettre(courant)}
+              : renderLettre(courant, locale)}
           </article>
           <div style={actionBtnWrap}>
             <FloatingActionButton onClick={handleValider} minWidth={220}>

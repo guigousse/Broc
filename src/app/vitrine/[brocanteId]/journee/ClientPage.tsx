@@ -61,7 +61,12 @@ import { indexJourSemaine, meteoDuJour } from "@/lib/meteo";
 import { buildCelebritePersonnage } from "@/lib/celebrite";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI, tr } from "@/lib/i18n/ui";
-import { nomObjet } from "@/lib/i18n/contenu";
+import {
+  nomObjet,
+  nomClient,
+  ambianceClient,
+  nomArchetypeClient,
+} from "@/lib/i18n/contenu";
 import type { Locale } from "@/lib/i18n/locales";
 import type {
   CategorieObjet,
@@ -585,7 +590,7 @@ export default function VitrineJourneePage() {
     ajouterJournal({
       heure: heureCourante(),
       texte: tr(d.vente.journalAchete, {
-        nom: ev.persona.nom,
+        nom: nomClient(ev.persona, locale),
         panier: describePanier(ev, d, tr, locale),
         prix: ev.prixDemande,
       }),
@@ -605,7 +610,7 @@ export default function VitrineJourneePage() {
     ajouterJournal({
       heure: heureCourante(),
       texte: tr(d.vente.journalAccepte, {
-        nom: ev.persona.nom,
+        nom: nomClient(ev.persona, locale),
         panier: describePanier(ev, d, tr, locale),
         prix: prixFinal,
       }),
@@ -619,7 +624,7 @@ export default function VitrineJourneePage() {
   const terminerVisiteClient = (ev: ClientEvent) => {
     ajouterJournal({
       heure: heureCourante(),
-      texte: tr(d.vente.journalEloigne, { nom: ev.persona.nom }),
+      texte: tr(d.vente.journalEloigne, { nom: nomClient(ev.persona, locale) }),
       ton: "info",
     });
     setClientActuel(null);
@@ -903,13 +908,17 @@ export default function VitrineJourneePage() {
           nomAffiche={
             modifiersRef.current?.revelePersona ||
             clientActuel.persona.archetypeId === "celebrite"
-              ? clientActuel.persona.nom
+              ? nomClient(clientActuel.persona, locale)
               : d.vente.clientInconnu
           }
           personaInfo={{
-            nom: clientActuel.persona.nom,
-            archetypeNom: clientActuel.persona.archetypeNom,
-            ambiance: clientActuel.persona.ambiance,
+            nom: nomClient(clientActuel.persona, locale),
+            archetypeNom: nomArchetypeClient(
+              clientActuel.persona.archetypeId,
+              clientActuel.persona.archetypeNom,
+              locale,
+            ),
+            ambiance: ambianceClient(clientActuel.persona, locale),
             bourse: classeBourse(clientActuel.persona),
             prixMax: clientActuel.prixMax,
             revelePersona:

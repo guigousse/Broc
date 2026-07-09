@@ -6,8 +6,8 @@ import { HumeurGauge } from "@/components/mobile/HumeurGauge";
 import { proposerOffre, ouvrirNegociation, relancerNegociation } from "@/lib/negociation";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
-import { getNomVendeur } from "@/lib/personas";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomVendeur } from "@/lib/i18n/contenu";
 import type { NegociationState, ObjetEnVente } from "@/types/game";
 
 /**
@@ -45,7 +45,7 @@ export function ChineNegoDrawer({
   /** Active de chine « La Tchatche » (N15) : rouvre une négo fâchée/refusée. */
   tchatche?: { restantes: number; consommer: () => boolean };
 }) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const { prixVendeur, statut, persona } = item;
   const acquis = statut === "achete";
   const facheInitial = item.negociation?.statut === "fache";
@@ -127,7 +127,7 @@ export function ChineNegoDrawer({
       </div>
 
       {/* Bandeau nom pleine largeur, coins hauts arrondis (comme l'ancienne fiche). */}
-      <div style={namePlate}>{getNomVendeur(persona.archetype)}</div>
+      <div style={namePlate}>{nomVendeur(persona.archetype, locale)}</div>
 
       <div style={accordionOuter(expanded)}>
         <div style={accordionInner}>

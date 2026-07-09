@@ -6,7 +6,7 @@ import { getExpediteur } from "@/data/expediteursCourrier";
 import { progressionMission } from "@/lib/missions";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { nomTemplate } from "@/lib/i18n/contenu";
+import { nomTemplate, nomExpediteur, personnaliteExpediteur } from "@/lib/i18n/contenu";
 import type { Courrier, GameState } from "@/types/game";
 
 interface Props {
@@ -34,6 +34,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
   if (courrier.payload.type !== "mission") return null;
   const p = courrier.payload;
   const exp = getExpediteur(p.expediteurId);
+  const nomExp = exp ? nomExpediteur(p.expediteurId, locale) : null;
   const prog = progressionMission(p, state.inventaireJoueur);
   const jLimite = p.jourLimite;
   const jRestants = jLimite !== undefined ? Math.max(0, jLimite - state.jourActuel) : null;
@@ -45,12 +46,12 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
           // eslint-disable-next-line @next/next/no-img-element
           <img src={exp.avatar} alt="" style={avatar} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
         ) : (
-          <span style={avatar}>{exp?.nom?.[0] ?? "?"}</span>
+          <span style={avatar}>{nomExp?.[0] ?? "?"}</span>
         )}
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 13, color: "#1a1308" }}>{p.titre}</span>
           <span style={{ display: "block", fontFamily: "var(--font-serif)", fontSize: 11, color: "#7a6a44" }}>
-            {exp ? `${exp.nom} · ${exp.personnalite}` : ""}
+            {exp ? `${nomExp} · ${personnaliteExpediteur(p.expediteurId, locale)}` : ""}
           </span>
         </span>
         <span style={{ textAlign: "right", flex: "0 0 auto" }}>
