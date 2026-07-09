@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { estMissionLivrable } from "@/lib/missions";
 import { prochainMinuitLocalMs, prochainLundiLocalMs } from "@/lib/quetes/periode";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { nomTemplate } from "@/lib/i18n/contenu";
+import { nomTemplate, titreCourrier } from "@/lib/i18n/contenu";
 import { CommandeRow } from "./CommandeRow";
 import type { Courrier, GameState, MissionResolution } from "@/types/game";
 
@@ -339,7 +339,7 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission, temp
                             style={{ display: "flex", justifyContent: "space-between", gap: 8, padding: "6px 14px", opacity: 0.55, fontFamily: "var(--font-serif)", fontSize: 11, color: "#3a2f1e" }}
                           >
                             <span style={{ textDecoration: "line-through" }}>
-                              {c.payload.titre} —{" "}
+                              {titreCourrier(c, locale)} —{" "}
                               {cibleTemplateId ? nomTemplate(cibleTemplateId, locale) : ""}
                             </span>
                             <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", color: couleur }}>

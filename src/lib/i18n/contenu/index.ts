@@ -19,6 +19,8 @@ import { PERSONNAGES_EN, type OverlayPersonnages } from "./en/personnages";
 import { PERSONNAGES_ES } from "./es/personnages";
 import { DIVERS_EN } from "./en/divers";
 import { DIVERS_ES } from "./es/divers";
+import { COURRIER_EN } from "./en/courrier";
+import { COURRIER_ES } from "./es/courrier";
 
 /** Forme d'un overlay de compétences par langue (arbres / branches / paliers). */
 export interface OverlayCompetences {
@@ -342,6 +344,50 @@ export function nomCelebrite(nomFr: string, locale: Locale): string {
     if (trad) return trad;
   }
   return nomFr;
+}
+
+/* ------------------------------------------------------------------ */
+/* Courrier scénarisé : lettre de Maman + arc principal (par id stable)  */
+/* ------------------------------------------------------------------ */
+
+const COURRIER_OVERLAY: Record<
+  "en" | "es",
+  Record<string, { titre: string; corps: string[] }>
+> = {
+  en: COURRIER_EN,
+  es: COURRIER_ES,
+};
+
+/**
+ * Titre localisé d'un courrier scénarisé (lettre/mission d'arc). Résolution par
+ * `c.id` ; id absent de l'overlay → titre FR persisté dans le payload (vieilles
+ * saves + courriers périodiques générés). Jamais d'écriture en save.
+ */
+export function titreCourrier(
+  c: { id: string; payload: { titre: string } },
+  locale: Locale,
+): string {
+  if (locale !== "fr") {
+    const trad = COURRIER_OVERLAY[locale][c.id]?.titre;
+    if (trad) return trad;
+  }
+  return c.payload.titre;
+}
+
+/**
+ * Corps localisé d'un courrier scénarisé (paragraphes, `**gras**` conservé).
+ * Résolution par `c.id` ; id absent de l'overlay → corps FR persisté dans le
+ * payload. L'overlay garantit le même nombre de paragraphes que le FR.
+ */
+export function corpsCourrier(
+  c: { id: string; payload: { corps: string[] } },
+  locale: Locale,
+): string[] {
+  if (locale !== "fr") {
+    const trad = COURRIER_OVERLAY[locale][c.id]?.corps;
+    if (trad) return trad;
+  }
+  return c.payload.corps;
 }
 
 /* ------------------------------------------------------------------ */

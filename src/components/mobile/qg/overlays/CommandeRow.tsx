@@ -6,7 +6,7 @@ import { getExpediteur } from "@/data/expediteursCourrier";
 import { progressionMission } from "@/lib/missions";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { nomTemplate, nomExpediteur, personnaliteExpediteur } from "@/lib/i18n/contenu";
+import { corpsCourrier, nomTemplate, nomExpediteur, personnaliteExpediteur, titreCourrier } from "@/lib/i18n/contenu";
 import type { Courrier, GameState } from "@/types/game";
 
 interface Props {
@@ -49,7 +49,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
           <span style={avatar}>{nomExp?.[0] ?? "?"}</span>
         )}
         <span style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 13, color: "#1a1308" }}>{p.titre}</span>
+          <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 13, color: "#1a1308" }}>{titreCourrier(courrier, locale)}</span>
           <span style={{ display: "block", fontFamily: "var(--font-serif)", fontSize: 11, color: "#7a6a44" }}>
             {exp ? `${nomExp} · ${personnaliteExpediteur(p.expediteurId, locale)}` : ""}
           </span>
@@ -73,7 +73,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
 
       {ouvert && (
         <div style={{ padding: "4px 14px 14px", background: "rgba(255,250,235,0.45)", borderBottom: "1px solid rgba(110,31,31,0.18)" }}>
-          {p.corps.map((para, i) => (
+          {corpsCourrier(courrier, locale).map((para, i) => (
             <p key={i} style={{ fontStyle: "italic", color: "#4a3f28", fontSize: 12, margin: "6px 0" }}>{para}</p>
           ))}
           <div style={{ fontFamily: "var(--font-display)", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6e1f1f", margin: "8px 0 4px" }}>

@@ -11,7 +11,7 @@ import { getExpediteur } from "@/data/expediteursCourrier";
 import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
-import { nomTemplate, signatureExpediteur } from "@/lib/i18n/contenu";
+import { corpsCourrier, nomTemplate, signatureExpediteur, titreCourrier } from "@/lib/i18n/contenu";
 import type { Locale } from "@/lib/i18n/locales";
 import type { DictionnaireUI, tr as TrFn } from "@/lib/i18n/ui";
 import type { Courrier } from "@/types/game";
@@ -177,8 +177,8 @@ function renderLettre(c: Courrier, locale: Locale) {
   const exp = getExpediteur(p.expediteurId);
   return (
     <>
-      <h3 style={titreLettre}>{p.titre}</h3>
-      {p.corps.map((para, i) => (
+      <h3 style={titreLettre}>{titreCourrier(c, locale)}</h3>
+      {corpsCourrier(c, locale).map((para, i) => (
         <p key={i} style={i === 0 ? corpsLettrePremier : corpsLettre}>
           {renderParaText(para)}
         </p>
@@ -215,8 +215,8 @@ function renderMission(
   const exp = getExpediteur(p.expediteurId);
   return (
     <>
-      <h3 style={titreLettre}>{p.titre}</h3>
-      {p.corps.map((para, i) => (
+      <h3 style={titreLettre}>{titreCourrier(c, locale)}</h3>
+      {corpsCourrier(c, locale).map((para, i) => (
         <p key={i} style={i === 0 ? corpsLettrePremier : corpsLettre}>
           {renderParaText(para)}
         </p>
