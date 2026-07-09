@@ -17,7 +17,7 @@ import { getTemplate } from "@/data/objetTemplates";
 import { getItemImageUrl } from "@/lib/itemImages";
 import { flyToTab } from "@/lib/flyAnimation";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleEtat } from "@/lib/i18n/libelles";
+import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { Objet } from "@/types/game";
 
@@ -285,7 +285,7 @@ function StockageItemRowBase({
             }}
             aria-label={tr(d.inventaire.etatCategorieAria, {
               etat: libelleEtat(objet.etat, d),
-              categorie: objet.categorie,
+              categorie: libelleCategorie(objet.categorie, d),
             })}
           >
             <StarRow
@@ -299,7 +299,7 @@ function StockageItemRowBase({
             <span
               style={{ display: "inline-flex", alignItems: "center" }}
               aria-label={tr(d.inventaire.categorieAria, {
-                categorie: objet.categorie,
+                categorie: libelleCategorie(objet.categorie, d),
               })}
             >
               <CategorieIcon

@@ -34,7 +34,7 @@ import { getItemImageUrl } from "@/lib/itemImages";
 import { getTemplate } from "@/data/objetTemplates";
 import { getAdProvider } from "@/lib/ads/adProvider";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleEtat } from "@/lib/i18n/libelles";
+import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 
 const sectTitle: React.CSSProperties = {
@@ -685,7 +685,7 @@ export default function AtelierPage() {
                       }}
                       aria-label={tr(d.inventaire.confirmerRestaurationAria, {
                         cout,
-                        categorie: o.categorie,
+                        categorie: libelleCategorie(o.categorie, d),
                       })}
                       style={{
                         display: "flex",
@@ -780,7 +780,7 @@ export default function AtelierPage() {
                     }}
                     aria-label={tr(d.inventaire.demantelerAria, {
                       pieces: yieldPieces,
-                      categorie: o.categorie,
+                      categorie: libelleCategorie(o.categorie, d),
                     })}
                     style={{
                       display: "flex",
@@ -831,7 +831,7 @@ export default function AtelierPage() {
               {d.inventaire.demantelerSeg2}{" "}
               <strong>
                 {demantelerCible.yieldPieces} ⚙{" "}
-                {demantelerCible.objet.categorie}
+                {libelleCategorie(demantelerCible.objet.categorie, d)}
               </strong>
               {d.inventaire.demantelerSeg3}
             </p>
@@ -907,7 +907,7 @@ export default function AtelierPage() {
               </strong>{" "}
               {d.inventaire.restaurerSeg4}{" "}
               <strong>
-                {restaurerCible.cout} ⚙ {restaurerCible.objet.categorie}
+                {restaurerCible.cout} ⚙ {libelleCategorie(restaurerCible.objet.categorie, d)}
               </strong>
               {d.inventaire.restaurerSeg5}
             </p>

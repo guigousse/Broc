@@ -4,6 +4,7 @@ import type { CategorieObjet } from "@/types/game";
 import { CATEGORIES } from "@/data/categories";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 
 interface PiecesInventoryBarProps {
   pieces: Record<CategorieObjet, number>;
@@ -33,7 +34,7 @@ export function PiecesInventoryBar({ pieces }: PiecesInventoryBarProps) {
           role="listitem"
           data-fly-target={`piece-${cat}`}
           title={tr(d.inventaire.piecesTitre, {
-            categorie: cat,
+            categorie: libelleCategorie(cat, d),
             n: pieces[cat] ?? 0,
           })}
           style={{

@@ -14,7 +14,7 @@ import { etoileCount } from "@/lib/etat";
 import { getRarityColors } from "@/lib/rarityColors";
 import { BOITE_MYSTERE_IMAGE } from "@/lib/boiteMystere";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleEtat } from "@/lib/i18n/libelles";
+import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { ObjetEnVente } from "@/types/game";
 
@@ -156,7 +156,7 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
               />
               <div style={categorieLigne}>
                 <CategorieIcon categorie={objet.categorie} size={15} color="var(--paper-100)" />
-                <span>{objet.categorie}</span>
+                <span>{libelleCategorie(objet.categorie, d)}</span>
               </div>
             </div>
             <div style={prixCol}>

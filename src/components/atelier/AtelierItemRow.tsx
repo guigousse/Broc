@@ -9,7 +9,7 @@ import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
 import { getTemplate } from "@/data/objetTemplates";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleEtat } from "@/lib/i18n/libelles";
+import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { EtatObjet, Objet } from "@/types/game";
 
@@ -105,11 +105,11 @@ export function AtelierItemRow({
               ? tr(d.inventaire.transitionEtatAria, {
                   etat: libelleEtat(objet.etat, d),
                   cible: libelleEtat(etatCible, d),
-                  categorie: objet.categorie,
+                  categorie: libelleCategorie(objet.categorie, d),
                 })
               : tr(d.inventaire.etatCategorieAria, {
                   etat: libelleEtat(objet.etat, d),
-                  categorie: objet.categorie,
+                  categorie: libelleCategorie(objet.categorie, d),
                 })
           }
         >

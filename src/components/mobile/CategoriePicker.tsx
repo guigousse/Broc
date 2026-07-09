@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { CATEGORIES } from "@/data/categories";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 import type { CategorieObjet } from "@/types/game";
 
 interface CategoriePickerProps {
@@ -120,7 +121,7 @@ export function CategoriePicker({
       icon: ICONS[c] ?? LayoutGrid,
       count: comptesParCat[c] ?? 0,
       max: showFraction ? (totauxParCat?.[c] ?? null) : null,
-      label: c,
+      label: libelleCategorie(c, d),
       nouveau: !!nouveautesParCat?.[c],
     })),
   ];

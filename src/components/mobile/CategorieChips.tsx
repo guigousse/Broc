@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 import type { CategorieObjet } from "@/types/game";
 
 interface CategorieChipsProps {
@@ -80,7 +81,7 @@ export function CategorieChips({
               opacity: n === 0 ? 0.45 : 1,
             }}
           >
-            {c}{" "}
+            {libelleCategorie(c, d)}{" "}
             <strong
               style={{
                 color: active ? "var(--brass-300)" : "var(--brass-700)",

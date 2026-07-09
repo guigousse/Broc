@@ -5,6 +5,7 @@ export const en: DictionnaireUI = {
     fermer: "Close",
     annuler: "Cancel",
     confirmer: "Confirm",
+    ariaCategorie: "Category: {categorie}",
   },
   menu: {
     continuer: "Continue",
@@ -76,6 +77,15 @@ export const en: DictionnaireUI = {
     commun: "common",
     rare: "rare",
     legendaire: "legendary",
+  },
+  categories: {
+    musique: "Music",
+    jeuxLoisirs: "Games & Hobbies",
+    livresPapeterie: "Books & Stationery",
+    mode: "Fashion",
+    maison: "Home",
+    objetsArt: "Fine art",
+    bricolage: "DIY & Tools",
   },
   chrome: {
     onglets: {

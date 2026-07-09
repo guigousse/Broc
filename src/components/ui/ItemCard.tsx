@@ -6,6 +6,8 @@ import { ItemImage } from "@/components/ui/ItemImage";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 import type { CategorieObjet, EtatObjet, Rarete } from "@/types/game";
 
 interface ItemCardProps {
@@ -34,6 +36,7 @@ function ItemCardBase({
   dimmed = false,
   style,
 }: ItemCardProps) {
+  const { d, tr } = useLangue();
   const colors = getRarityColors(rarete, unique);
   const filled = etoileCount(etat);
 
@@ -108,7 +111,9 @@ function ItemCardBase({
             placeItems: "center",
             pointerEvents: "none",
           }}
-          aria-label={`Catégorie : ${categorie}`}
+          aria-label={tr(d.commun.ariaCategorie, {
+            categorie: libelleCategorie(categorie, d),
+          })}
         >
           <CategorieIcon
             categorie={categorie}

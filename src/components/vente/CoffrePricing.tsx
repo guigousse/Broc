@@ -9,6 +9,7 @@ import { StarRow } from "@/components/ui/StarRow";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomObjet } from "@/lib/i18n/contenu";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 import { PrixSlider } from "./PrixSlider";
 
 interface Props {
@@ -101,7 +102,7 @@ export function CoffrePricing({
                     style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}
                     aria-label={tr(d.inventaire.etatCategorieAria, {
                       etat: ov.objet.etat,
-                      categorie: ov.objet.categorie,
+                      categorie: libelleCategorie(ov.objet.categorie, d),
                     })}
                   >
                     <StarRow
@@ -113,7 +114,7 @@ export function CoffrePricing({
                     <span
                       style={{ display: "inline-flex", alignItems: "center" }}
                       aria-label={tr(d.inventaire.categorieAria, {
-                        categorie: ov.objet.categorie,
+                        categorie: libelleCategorie(ov.objet.categorie, d),
                       })}
                     >
                       <CategorieIcon

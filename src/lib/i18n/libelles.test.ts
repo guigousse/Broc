@@ -1,6 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, test } from "vitest";
+import { CATEGORIES } from "@/data/categories";
 import { DICTIONNAIRES } from "@/lib/i18n/ui";
-import { libelleEtat, libelleRarete } from "@/lib/i18n/libelles";
+import { libelleCategorie, libelleEtat, libelleRarete } from "@/lib/i18n/libelles";
+
+test("libelleCategorie couvre les 7 catégories dans les 3 langues", () => {
+  for (const locale of ["fr", "en", "es"] as const) {
+    for (const cat of CATEGORIES) {
+      const l = libelleCategorie(cat, DICTIONNAIRES[locale]);
+      expect(l.trim()).not.toBe("");
+    }
+  }
+  expect(libelleCategorie("Musique", DICTIONNAIRES.en)).toBe("Music");
+});
 
 describe("libelles état / rareté", () => {
   it("traduit les 4 états dans les 3 langues", () => {

@@ -2,6 +2,8 @@
 
 import { ChevronDown } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 import type { CategorieObjet } from "@/types/game";
 import { CategorieIcon } from "./CategorieIcon";
 
@@ -21,6 +23,7 @@ export function CategorieAccordion({
   defaultOpen = true,
   children,
 }: CategorieAccordionProps) {
+  const { d } = useLangue();
   const [open, setOpen] = useState(defaultOpen);
   return (
     <section
@@ -73,7 +76,7 @@ export function CategorieAccordion({
             flex: 1,
           }}
         >
-          {categorie}
+          {libelleCategorie(categorie, d)}
         </span>
         <span
           style={{

@@ -8,6 +8,7 @@ export const fr = {
     fermer: "Fermer",
     annuler: "Annuler",
     confirmer: "Confirmer",
+    ariaCategorie: "Catégorie : {categorie}",
   },
   menu: {
     continuer: "Continuer",
@@ -79,6 +80,15 @@ export const fr = {
     commun: "commun",
     rare: "rare",
     legendaire: "légendaire",
+  },
+  categories: {
+    musique: "Musique",
+    jeuxLoisirs: "Jeux & Loisirs",
+    livresPapeterie: "Livres & Papeterie",
+    mode: "Mode",
+    maison: "Maison",
+    objetsArt: "Objets d'art",
+    bricolage: "Bricolage",
   },
   chrome: {
     onglets: {

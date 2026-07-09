@@ -1,4 +1,4 @@
-import type { EtatObjet, Rarete } from "@/types/game";
+import type { CategorieObjet, EtatObjet, Rarete } from "@/types/game";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 
 /**
@@ -27,5 +27,24 @@ export function libelleRarete(rarete: Rarete, d: DictionnaireUI): string {
       return d.raretes.rare;
     case "legendaire":
       return d.raretes.legendaire;
+  }
+}
+
+export function libelleCategorie(cat: CategorieObjet, d: DictionnaireUI): string {
+  switch (cat) {
+    case "Musique":
+      return d.categories.musique;
+    case "Jeux & Loisirs":
+      return d.categories.jeuxLoisirs;
+    case "Livres & Papeterie":
+      return d.categories.livresPapeterie;
+    case "Mode":
+      return d.categories.mode;
+    case "Maison":
+      return d.categories.maison;
+    case "Objets d'art":
+      return d.categories.objetsArt;
+    case "Bricolage":
+      return d.categories.bricolage;
   }
 }

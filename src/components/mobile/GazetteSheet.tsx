@@ -17,6 +17,7 @@ import { getBrocanteById } from "@/data/brocantes";
 import { JOURS_SEMAINE } from "@/lib/meteo";
 import { JOURS_COURT } from "@/lib/calendrier";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 import type {
   CategorieObjet,
   CelebriteEvenement,
@@ -455,8 +456,8 @@ export function GazetteSheet(props: GazetteSheetProps) {
                         }}
                       >
                         {connu
-                          ? cat
-                          : `${d.sheets.debloquerPrefixe} Veilleur — ${cat}`}
+                          ? libelleCategorie(cat, d)
+                          : `${d.sheets.debloquerPrefixe} Veilleur — ${libelleCategorie(cat, d)}`}
                       </span>
                       {connu && typeof delta === "number" ? (
                         <span
