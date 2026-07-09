@@ -8,6 +8,7 @@ import type { Brocante, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { descriptionBrocante, nomBrocante } from "@/lib/i18n/contenu";
 
 interface BrocanteCarouselProps {
   brocantes: Brocante[];
@@ -185,7 +186,7 @@ export function BrocanteCarousel({
   destination,
 }: BrocanteCarouselProps) {
   const router = useRouter();
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -251,7 +252,7 @@ export function BrocanteCarousel({
                   {imageUrl ? (
                     <Image
                       src={imageUrl}
-                      alt={b.nom}
+                      alt={nomBrocante(b, locale)}
                       fill
                       sizes="(max-width: 600px) 86vw, 320px"
                       style={{
@@ -277,9 +278,9 @@ export function BrocanteCarousel({
                   )}
                 </div>
 
-                <h2 style={titleStyle}>{b.nom}</h2>
+                <h2 style={titleStyle}>{nomBrocante(b, locale)}</h2>
                 <div style={tierStyle}>{"★".repeat(b.tier)}</div>
-                <p style={descStyle}>{b.description}</p>
+                <p style={descStyle}>{descriptionBrocante(b, locale)}</p>
                 <div style={metaStyle}>
                   {tr(d.chine.metaBrocante, {
                     taille: b.taillePool,

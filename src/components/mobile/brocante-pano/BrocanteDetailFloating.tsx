@@ -7,6 +7,7 @@ import { fraisEntree } from "@/data/brocantes";
 import { bourseMoyenne } from "@/lib/vitrine";
 import type { ConditionInfo } from "@/lib/deblocage";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { descriptionBrocante, nomBrocante } from "@/lib/i18n/contenu";
 import { CATEGORY_ICONS } from "./categoryIcons";
 
 interface BrocanteDetailFloatingProps {
@@ -232,7 +233,7 @@ export function BrocanteDetailFloating({
   conditions,
   destination,
 }: BrocanteDetailFloatingProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const ThemeIcon = brocante.specialisation
     ? CATEGORY_ICONS[brocante.specialisation]
     : null;
@@ -245,7 +246,7 @@ export function BrocanteDetailFloating({
         <CornerOrnament position="tr" />
         <CornerOrnament position="bl" />
         <CornerOrnament position="br" />
-        <h2 style={titleStyleLocked}>{brocante.nom}</h2>
+        <h2 style={titleStyleLocked}>{nomBrocante(brocante, locale)}</h2>
         <div style={goldRuleStyle} aria-hidden />
         <ul style={conditionsListStyle}>
           {conditions.map((c, i) => (
@@ -265,8 +266,8 @@ export function BrocanteDetailFloating({
       <CornerOrnament position="tr" />
       <CornerOrnament position="bl" />
       <CornerOrnament position="br" />
-      <h2 style={titleStyle}>{brocante.nom}</h2>
-      <p style={descStyle}>{brocante.description}</p>
+      <h2 style={titleStyle}>{nomBrocante(brocante, locale)}</h2>
+      <p style={descStyle}>{descriptionBrocante(brocante, locale)}</p>
       <div style={goldRuleStyle} aria-hidden />
       <div style={metaRowStyle}>
         {destination === "chiner" ? (

@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { descriptionBrocante, nomBrocante } from "@/lib/i18n/contenu";
 
 interface BrocanteDetailPanelProps {
   brocante: Brocante | null;
@@ -116,7 +117,7 @@ export function BrocanteDetailPanel({
   raisonVerrouillage,
   onEntrer,
 }: BrocanteDetailPanelProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   if (!brocante) {
     return (
       <aside style={panelStyle}>
@@ -133,9 +134,9 @@ export function BrocanteDetailPanel({
 
   return (
     <aside style={panelStyle}>
-      <h2 style={titleStyle}>{brocante.nom}</h2>
+      <h2 style={titleStyle}>{nomBrocante(brocante, locale)}</h2>
       <div style={tierStyle}>{"★".repeat(brocante.tier)}</div>
-      <p style={descStyle}>{brocante.description}</p>
+      <p style={descStyle}>{descriptionBrocante(brocante, locale)}</p>
       <div style={metaStyle}>
         {tr(d.chine.metaBrocante, {
           taille: brocante.taillePool,

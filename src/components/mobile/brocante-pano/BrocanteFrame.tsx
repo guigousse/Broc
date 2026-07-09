@@ -7,6 +7,8 @@ import type { Brocante } from "@/types/game";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import type { FrameCoord } from "./brocantePanoramaLayout";
 import { useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomBrocante } from "@/lib/i18n/contenu";
 
 interface BrocanteFrameProps {
   brocante: Brocante;
@@ -97,6 +99,7 @@ export function BrocanteFrame({
   onSelect,
 }: BrocanteFrameProps) {
   const imageUrl = getBrocanteImageUrl(brocante.id);
+  const { locale } = useLangue();
   const { enabled: editing } = useBrocanteFramesEdit();
   const onClickHandler = editing ? undefined : () => onSelect(brocante.id);
   const pointerEvents: CSSProperties["pointerEvents"] = editing ? "none" : "auto";
@@ -105,7 +108,7 @@ export function BrocanteFrame({
     <button
       type="button"
       onClick={onClickHandler}
-      aria-label={brocante.nom}
+      aria-label={nomBrocante(brocante, locale)}
       aria-pressed={selected}
       aria-disabled={!debloquee}
       style={{ ...frameOuter(coord, selected), pointerEvents }}

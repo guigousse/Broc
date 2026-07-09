@@ -26,7 +26,7 @@ import {
 } from "@/lib/atelier";
 import { getBrocanteById } from "@/data/brocantes";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { nomObjet } from "@/lib/i18n/contenu";
+import { nomBrocante, nomObjet } from "@/lib/i18n/contenu";
 import type { CategorieObjet, EtatObjet, Objet } from "@/types/game";
 
 export default function StockagePage() {
@@ -193,8 +193,11 @@ function StockagePageInner() {
     ? (o: Objet, prix: number) => mettreEnVitrine(o.id, prix)
     : null;
 
-  const brocanteOuverteNom = state.vitrine
-    ? (getBrocanteById(state.vitrine.brocanteId)?.nom ?? null)
+  const brocanteOuverte = state.vitrine
+    ? getBrocanteById(state.vitrine.brocanteId)
+    : null;
+  const brocanteOuverteNom = brocanteOuverte
+    ? nomBrocante(brocanteOuverte, locale)
     : null;
 
   return (

@@ -2,6 +2,8 @@ import type { Locale } from "@/lib/i18n/locales";
 import { getTemplate } from "@/data/objetTemplates";
 import { OBJETS_EN } from "./en/objets";
 import { OBJETS_ES } from "./es/objets";
+import { BROCANTES_EN } from "./en/brocantes";
+import { BROCANTES_ES } from "./es/brocantes";
 
 /**
  * Overlays de contenu (spec i18n §2) : le français de `src/data/` est
@@ -37,6 +39,35 @@ export function nomObjet(
     if (trad) return trad;
   }
   return getTemplate(o.templateId)?.nom ?? o.nom;
+}
+
+const BROCANTES_OVERLAY: Record<
+  "en" | "es",
+  Record<string, { nom: string; description: string }>
+> = {
+  en: BROCANTES_EN,
+  es: BROCANTES_ES,
+};
+
+/** Nom localisé d'une brocante. Id absent de l'overlay → nom FR passé en argument. */
+export function nomBrocante(b: { id: string; nom: string }, locale: Locale): string {
+  if (locale !== "fr") {
+    const trad = BROCANTES_OVERLAY[locale][b.id]?.nom;
+    if (trad) return trad;
+  }
+  return b.nom;
+}
+
+/** Description localisée d'une brocante. Id absent de l'overlay → description FR passée en argument. */
+export function descriptionBrocante(
+  b: { id: string; description: string },
+  locale: Locale,
+): string {
+  if (locale !== "fr") {
+    const trad = BROCANTES_OVERLAY[locale][b.id]?.description;
+    if (trad) return trad;
+  }
+  return b.description;
 }
 
 /** Utils des tests de complétude par domaine. */

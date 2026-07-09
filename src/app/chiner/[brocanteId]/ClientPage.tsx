@@ -17,6 +17,7 @@ import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/components/ui/Toast";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomBrocante } from "@/lib/i18n/contenu";
 import { fraisEntree, getBrocanteById } from "@/data/brocantes";
 import {
   calculerBrocantesDebloqueesParTier,
@@ -58,7 +59,7 @@ export default function SessionChinePage() {
   } = useGame();
   const { startCrowd, stopCrowd } = useSettings();
   const { toast } = useToast();
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   useEffect(() => {
     startCrowd();
     return () => stopCrowd();
@@ -291,7 +292,7 @@ export default function SessionChinePage() {
     return (
       <SessionSummary
         type="chinage"
-        titre={brocante.nom}
+        titre={nomBrocante(brocante, locale)}
         items={achats.map((a) => ({
           templateId: a.templateId,
           nom: a.nom,

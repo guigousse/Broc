@@ -8,6 +8,7 @@ import { fraisEntree } from "@/data/brocantes";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import { Store } from "lucide-react";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { descriptionBrocante, nomBrocante } from "@/lib/i18n/contenu";
 
 interface BrocanteCardProps {
   brocante: Brocante;
@@ -118,7 +119,7 @@ export function BrocanteCard({
   destination,
 }: BrocanteCardProps) {
   const router = useRouter();
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const entree = fraisEntree(brocante);
   const peutEntrer = state.budget >= entree;
   const imageUrl = getBrocanteImageUrl(brocante.id);
@@ -130,7 +131,7 @@ export function BrocanteCard({
         {imageUrl ? (
           <Image
             src={imageUrl}
-            alt={brocante.nom}
+            alt={nomBrocante(brocante, locale)}
             fill
             sizes="96px"
             style={{
@@ -158,11 +159,11 @@ export function BrocanteCard({
             gap: 6,
           }}
         >
-          <span style={titleStyle}>{brocante.nom}</span>
+          <span style={titleStyle}>{nomBrocante(brocante, locale)}</span>
           <span style={tierStyle}>{"★".repeat(brocante.tier)}</span>
         </div>
 
-        <p style={descStyle}>{brocante.description}</p>
+        <p style={descStyle}>{descriptionBrocante(brocante, locale)}</p>
 
         <div style={metaStyle}>
           {tr(d.chine.metaBrocante, { taille: brocante.taillePool, prix: entree })}
