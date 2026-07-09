@@ -26,7 +26,7 @@ import {
 } from "@/lib/atelier";
 import { getBrocanteById } from "@/data/brocantes";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { nomBrocante, nomObjet } from "@/lib/i18n/contenu";
+import { nomBrocante, nomObjet, nomStockageTier } from "@/lib/i18n/contenu";
 import type { CategorieObjet, EtatObjet, Objet } from "@/types/game";
 
 export default function StockagePage() {
@@ -229,7 +229,7 @@ function StockagePageInner() {
                       textOverflow: "ellipsis",
                     }}
                   >
-                    {tier.nom} {totalEnStock(state)}/{capacite}
+                    {nomStockageTier(tier, locale)} {totalEnStock(state)}/{capacite}
                   </div>
                   {tier.loyerHebdo > 0 && (
                     <div

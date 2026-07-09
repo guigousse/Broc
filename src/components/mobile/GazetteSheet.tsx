@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { METEO_ICON } from "@/data/meteos";
 import { getBrocanteById } from "@/data/brocantes";
-import { nomBrocante } from "@/lib/i18n/contenu";
+import { nomBrocante, nomCelebrite } from "@/lib/i18n/contenu";
 import { JOURS_SEMAINE } from "@/lib/meteo";
 import { JOURS_COURT } from "@/lib/calendrier";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -390,7 +390,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
                       color: "var(--ink-700)",
                     }}
                   >
-                    <strong style={{ fontStyle: "normal" }}>{celebrite.nom}</strong>{" "}
+                    <strong style={{ fontStyle: "normal" }}>{nomCelebrite(celebrite.nom, locale)}</strong>{" "}
                     est annoncé(e) à{" "}
                     <strong style={{ fontStyle: "normal" }}>
                       {brocanteCeleb ? nomBrocante(brocanteCeleb, locale) : "une brocante"}

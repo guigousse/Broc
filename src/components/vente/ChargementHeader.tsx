@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { NiveauCamion } from "@/types/game";
 import { CAMIONS, getCamion, getProchainCamion } from "@/data/camion";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomCamion } from "@/lib/i18n/contenu";
 import { CamionIcon } from "./CamionIcon";
 
 // Dev only — set à false pour cacher le bouton de switch des coffres.
@@ -24,7 +25,7 @@ export function ChargementHeader({
   onUpgrade,
   onSetNiveauDev,
 }: Props) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const camion = getCamion(niveau);
   const prochain = getProchainCamion(niveau);
   const peutUpgrade = !!prochain && budget >= (prochain.prixUpgradeVersCeNiveau ?? 0);
@@ -57,7 +58,7 @@ export function ChargementHeader({
             color: "var(--brass-700)",
           }}
         >
-          {tr(d.vente.chargementCamion, { nom: camion.nom })}
+          {tr(d.vente.chargementCamion, { nom: nomCamion(camion, locale) })}
         </div>
         <div
           style={{
@@ -126,7 +127,7 @@ export function ChargementHeader({
                 prix: prochain.prixUpgradeVersCeNiveau ?? 0,
               })
             : tr(d.vente.upgradeCamionBouton, {
-                nom: prochain.nom,
+                nom: nomCamion(prochain, locale),
                 prix: prochain.prixUpgradeVersCeNiveau ?? 0,
               })}
         </button>

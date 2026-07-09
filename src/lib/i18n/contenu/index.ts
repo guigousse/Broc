@@ -13,6 +13,8 @@ import { DEBLOCAGES_EN } from "./en/deblocages";
 import { DEBLOCAGES_ES } from "./es/deblocages";
 import { PERSONNAGES_EN, type OverlayPersonnages } from "./en/personnages";
 import { PERSONNAGES_ES } from "./es/personnages";
+import { DIVERS_EN } from "./en/divers";
+import { DIVERS_ES } from "./es/divers";
 
 /** Forme d'un overlay de compétences par langue (arbres / branches / paliers). */
 export interface OverlayCompetences {
@@ -293,6 +295,49 @@ export function signatureExpediteur(id: string, locale: Locale): string {
     if (trad) return trad;
   }
   return EXPEDITEURS[id]?.signature ?? "";
+}
+
+/* ------------------------------------------------------------------ */
+/* Petits domaines : camions, paliers de stockage, célébrités          */
+/* ------------------------------------------------------------------ */
+
+const DIVERS_OVERLAY: Record<
+  "en" | "es",
+  { camions: Record<string, string>; stockage: Record<string, string>; celebrites: Record<string, string> }
+> = {
+  en: DIVERS_EN,
+  es: DIVERS_ES,
+};
+
+/** Nom localisé d'un camion. Clé = `visuelId` ; `visuelId` absent → nom FR passé en argument. */
+export function nomCamion(c: { visuelId: string; nom: string }, locale: Locale): string {
+  if (locale !== "fr") {
+    const trad = DIVERS_OVERLAY[locale].camions[c.visuelId];
+    if (trad) return trad;
+  }
+  return c.nom;
+}
+
+/** Nom localisé d'un palier de stockage. Clé = niveau en chaîne ; niveau absent → nom FR passé. */
+export function nomStockageTier(t: { niveau: 1 | 2 | 3; nom: string }, locale: Locale): string {
+  if (locale !== "fr") {
+    const trad = DIVERS_OVERLAY[locale].stockage[String(t.niveau)];
+    if (trad) return trad;
+  }
+  return t.nom;
+}
+
+/**
+ * Nom localisé d'une célébrité. Clé = chaîne FR canonique (persistée dans
+ * `CelebriteEvenement.nom`) ; chaîne absente de l'overlay → chaîne passée telle
+ * quelle (couvre les vieilles saves et tout ajout futur non traduit).
+ */
+export function nomCelebrite(nomFr: string, locale: Locale): string {
+  if (locale !== "fr") {
+    const trad = DIVERS_OVERLAY[locale].celebrites[nomFr];
+    if (trad) return trad;
+  }
+  return nomFr;
 }
 
 /** Utils des tests de complétude par domaine. */

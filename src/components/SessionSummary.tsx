@@ -6,7 +6,7 @@ import { ItemSticker } from "@/components/ui/ItemSticker";
 import { Panel } from "@/components/ui/Panel";
 import { getTreeMeta } from "@/data/competences";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { nomObjet } from "@/lib/i18n/contenu";
+import { nomArbre, nomObjet } from "@/lib/i18n/contenu";
 
 export interface SummaryItem {
   templateId: string;
@@ -277,7 +277,7 @@ export function SessionSummary({
                         color: "var(--forest-800)",
                       }}
                     >
-                      {meta.nom}
+                      {nomArbre(meta, locale)}
                     </span>
                     <span
                       style={{
