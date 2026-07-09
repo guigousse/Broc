@@ -8,10 +8,11 @@ import {
 } from "react";
 import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButton";
 import { getExpediteur } from "@/data/expediteursCourrier";
-import { getTemplate } from "@/data/objetTemplates";
 import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
+import { nomTemplate } from "@/lib/i18n/contenu";
+import type { Locale } from "@/lib/i18n/locales";
 import type { DictionnaireUI, tr as TrFn } from "@/lib/i18n/ui";
 import type { Courrier } from "@/types/game";
 
@@ -199,7 +200,12 @@ const cibleEncart: CSSProperties = {
   gap: 4,
 };
 
-function renderMission(c: Courrier, d: DictionnaireUI, tr: typeof TrFn) {
+function renderMission(
+  c: Courrier,
+  d: DictionnaireUI,
+  tr: typeof TrFn,
+  locale: Locale,
+) {
   if (c.payload.type !== "mission") return null;
   const p = c.payload;
   const exp = getExpediteur(p.expediteurId);
@@ -220,7 +226,7 @@ function renderMission(c: Courrier, d: DictionnaireUI, tr: typeof TrFn) {
           </strong>{" "}
           {p.cibles
             .map((cible) => {
-              const nom = getTemplate(cible.templateId)?.nom ?? cible.templateId;
+              const nom = nomTemplate(cible.templateId, locale);
               const suffixe = cible.etatMin
                 ? ` ${tr(d.sheets.etatMinSuffixe, { etat: libelleEtat(cible.etatMin, d) })}`
                 : "";
@@ -253,7 +259,7 @@ export function CourrierSheet({
   onMarquerLu,
 }: CourrierSheetProps) {
   const { playClick, playCash } = useSettings();
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
 
   const nonLus = useMemo(
     () =>
@@ -318,7 +324,7 @@ export function CourrierSheet({
         <div style={scrollArea}>
           <article style={lettreCard}>
             {courant.payload.type === "mission"
-              ? renderMission(courant, d, tr)
+              ? renderMission(courant, d, tr, locale)
               : renderLettre(courant)}
           </article>
           <div style={actionBtnWrap}>

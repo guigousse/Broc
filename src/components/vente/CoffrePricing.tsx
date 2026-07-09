@@ -8,6 +8,7 @@ import { ItemSticker } from "@/components/ui/ItemSticker";
 import { StarRow } from "@/components/ui/StarRow";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomObjet } from "@/lib/i18n/contenu";
 import { PrixSlider } from "./PrixSlider";
 
 interface Props {
@@ -33,7 +34,7 @@ export function CoffrePricing({
   validerActif,
   categoriesConnues,
 }: Props) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const peut = validerActif ?? coffre.length > 0;
 
   return (
@@ -94,7 +95,7 @@ export function CoffrePricing({
                       lineHeight: 1.15,
                     }}
                   >
-                    {ov.objet.nom}
+                    {nomObjet(ov.objet, locale)}
                   </div>
                   <div
                     style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}

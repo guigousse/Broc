@@ -5,6 +5,8 @@ import { getTemplate } from "@/data/objetTemplates";
 import { getExpediteur } from "@/data/expediteursCourrier";
 import { progressionMission } from "@/lib/missions";
 import { ItemImage } from "@/components/ui/ItemImage";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomTemplate } from "@/lib/i18n/contenu";
 import type { Courrier, GameState } from "@/types/game";
 
 interface Props {
@@ -28,6 +30,7 @@ const avatar: CSSProperties = {
 };
 
 export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Props) {
+  const { locale } = useLangue();
   if (courrier.payload.type !== "mission") return null;
   const p = courrier.payload;
   const exp = getExpediteur(p.expediteurId);
@@ -84,7 +87,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
                   <ItemImage templateId={cible.templateId} categorie={tpl?.categorie ?? "Maison"} alt="" fallbackIconSize={20} />
                 </span>
                 <span style={{ flex: 1, fontSize: 12, color: "#2b2418" }}>
-                  {tpl?.nom ?? cible.templateId}
+                  {nomTemplate(cible.templateId, locale)}
                   {cible.etatMin ? <span style={{ display: "block", fontSize: 10, color: "#8a7a52" }}>état min : {cible.etatMin}</span> : null}
                 </span>
                 <span style={{ color: ok ? "#2c5e3f" : "#b3a06a", fontWeight: 700 }}>{ok ? "✓" : "○"}</span>

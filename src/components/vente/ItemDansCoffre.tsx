@@ -4,6 +4,8 @@ import type { ObjetEnVitrine } from "@/types/game";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
 import { getScaleCoffre } from "@/data/camion";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomObjet } from "@/lib/i18n/contenu";
 
 interface Props {
   ov: ObjetEnVitrine;
@@ -22,6 +24,7 @@ export function ItemDansCoffre({
   active,
   overlap,
 }: Props) {
+  const { locale } = useLangue();
   const tpl = getTemplate(ov.objet.templateId);
   const taille = tpl ? tailleDe(tpl) : "S";
   const scale = getScaleCoffre(taille, capacitePlaces);
@@ -70,7 +73,7 @@ export function ItemDansCoffre({
         templateId={ov.objet.templateId}
         categorie={ov.objet.categorie}
         fit="contain"
-        alt={ov.objet.nom}
+        alt={nomObjet(ov.objet, locale)}
       />
     </div>
   );

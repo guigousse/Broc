@@ -6,6 +6,7 @@ import { BrassCorners } from "@/components/ui/BrassCorners";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { CollectionSlot } from "@/types/game";
 
 interface CollectionDetailOverlayProps {
@@ -123,7 +124,7 @@ export function CollectionDetailOverlay({
   onAjouter,
   onRetirer,
 }: CollectionDetailOverlayProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   if (!open || !slot) return null;
   const isDonne = slot.donation !== null;
 
@@ -141,7 +142,7 @@ export function CollectionDetailOverlay({
         {/* 1. Bandeau titre */}
         <div style={titleBar}>
           <BrassCorners inset={5} size={16} color="var(--brass-500)" />
-          <span style={titleText}>{slot.nom}</span>
+          <span style={titleText}>{nomObjet(slot, locale)}</span>
         </div>
 
         {/* 2. Cadre item (fond bois) — sticker grisé si non possédé */}

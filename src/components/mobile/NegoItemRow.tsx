@@ -9,6 +9,7 @@ import { etoileCount } from "@/lib/etat";
 import { getTemplate } from "@/data/objetTemplates";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { Objet } from "@/types/game";
 
 interface NegoItemRowProps {
@@ -18,7 +19,7 @@ interface NegoItemRowProps {
 }
 
 export function NegoItemRow({ objet, prix, prixLabel }: NegoItemRowProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const isUnique = !!getTemplate(objet.templateId)?.unique;
   const colors = getRarityColors(objet.rarete, isUnique);
 
@@ -37,11 +38,11 @@ export function NegoItemRow({ objet, prix, prixLabel }: NegoItemRowProps) {
           fit="cover"
           fallbackIconSize={24}
           fallbackIconColor={colors.thumbIcon}
-          alt={objet.nom}
+          alt={nomObjet(objet, locale)}
         />
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={nomStyle}>{objet.nom}</div>
+        <div style={nomStyle}>{nomObjet(objet, locale)}</div>
         <div style={metaRow}>
           <StarRow
             filled={etoileCount(objet.etat)}

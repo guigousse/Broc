@@ -18,6 +18,7 @@ import { getItemImageUrl } from "@/lib/itemImages";
 import { flyToTab } from "@/lib/flyAnimation";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { Objet } from "@/types/game";
 
 interface StockageItemRowProps {
@@ -111,7 +112,7 @@ function StockageItemRowBase({
   onEnvoyerCollection,
   isLast,
 }: StockageItemRowProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const [dragX, setDragX] = useState(0);
   const [snapped, setSnapped] = useState<"open" | "closed">("closed");
   const [dragging, setDragging] = useState(false);
@@ -273,7 +274,7 @@ function StockageItemRowBase({
               fontWeight: 700,
             }}
           >
-            {objet.nom}
+            {nomObjet(objet, locale)}
           </div>
           <div
             style={{

@@ -9,6 +9,7 @@ import { useGameActions, useGameStateOnly } from "@/context/GameContext";
 import { useAtelierSlotCoord } from "@/components/mobile/qg/dev/QgEditContext";
 import { getCapaciteAtelier } from "@/data/atelier";
 import { estPret, restantMs } from "@/lib/restauration";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { Objet } from "@/types/game";
 import { ATELIER_SLOT_GAP_VW } from "./slotsLayout";
 
@@ -132,9 +133,11 @@ function OccupiedSlot({
   onTapEnCours,
   onRecuperer,
 }: OccupiedSlotProps) {
+  const { d, tr, locale } = useLangue();
   const enRest = objet.enRestauration!;
   const ready = estPret(enRest, now);
   const restant = formatRestant(restantMs(enRest, now));
+  const nom = nomObjet(objet, locale);
 
   const wrapper: CSSProperties = {
     position: "relative",
@@ -161,8 +164,8 @@ function OccupiedSlot({
       onClick={ready ? onRecuperer : onTapEnCours}
       aria-label={
         ready
-          ? `Récupérer ${objet.nom}`
-          : `${objet.nom} en restauration, ${restant} restant`
+          ? tr(d.inventaire.recupererAria, { nom })
+          : `${nom} en restauration, ${restant} restant`
       }
       style={wrapper}
     >

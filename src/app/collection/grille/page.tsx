@@ -23,11 +23,12 @@ import { valeurDonation } from "@/lib/collection";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 export default function CollectionPage() {
   const router = useRouter();
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const {
     state,
     isHydrated,
@@ -261,7 +262,7 @@ export default function CollectionPage() {
       {objetADonner && (
         <>
           {tr(d.inventaire.donationCorpsDebut, {
-            nom: objetADonner.nom,
+            nom: nomObjet(objetADonner, locale),
             etat: libelleEtat(objetADonner.etat, d),
           })}{" "}
           {categoriesConnuesVitrine.has(objetADonner.categorie)

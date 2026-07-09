@@ -15,6 +15,7 @@ import { getRarityColors } from "@/lib/rarityColors";
 import { BOITE_MYSTERE_IMAGE } from "@/lib/boiteMystere";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { ObjetEnVente } from "@/types/game";
 
 /**
@@ -89,7 +90,7 @@ export type ChineSlide =
  * un objet, ChineMystereDrawer pour la boîte mystère).
  */
 export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
 
   if (slide.kind === "mystere") {
     return (
@@ -137,7 +138,7 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
             />
           </div>
 
-          <div style={titre}>{objet.nom}</div>
+          <div style={titre}>{nomObjet(objet, locale)}</div>
 
           <div style={infoRow}>
             <div style={infoCol}>

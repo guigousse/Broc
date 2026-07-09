@@ -5,6 +5,7 @@ import { FrameItem } from "@/components/ui/FrameItem";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { getTemplate } from "@/data/objetTemplates";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { Objet } from "@/types/game";
 
 interface ObjetDetailOverlayProps {
@@ -134,7 +135,7 @@ export function ObjetDetailOverlay({
   prixMarcheConnu,
   onSetPrixVente,
 }: ObjetDetailOverlayProps) {
-  const { d } = useLangue();
+  const { d, locale } = useLangue();
   const [prixLocal, setPrixLocal] = useState<number>(0);
 
   useEffect(() => {
@@ -178,7 +179,7 @@ export function ObjetDetailOverlay({
         <div style={previewWrap}>
           <FrameItem
             categorie={objet.categorie}
-            titre={objet.nom}
+            titre={nomObjet(objet, locale)}
             rarete={objet.rarete}
             unique={isUnique}
             etat={objet.etat}
@@ -190,7 +191,7 @@ export function ObjetDetailOverlay({
               fit="cover"
               fallbackIconSize={100}
               fallbackIconColor="var(--brass-500)"
-              alt={objet.nom}
+              alt={nomObjet(objet, locale)}
             />
           </FrameItem>
         </div>

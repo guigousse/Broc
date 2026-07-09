@@ -35,6 +35,7 @@ import { getTemplate } from "@/data/objetTemplates";
 import { getAdProvider } from "@/lib/ads/adProvider";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
+import { nomObjet } from "@/lib/i18n/contenu";
 
 const sectTitle: React.CSSProperties = {
   fontFamily: "var(--font-display)",
@@ -67,7 +68,7 @@ function formatDuree(ms: number): string {
 
 export default function AtelierPage() {
   const router = useRouter();
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const {
     state,
     isHydrated,
@@ -236,7 +237,7 @@ export default function AtelierPage() {
       if (res.ok) {
         setFlash(
           tr(d.inventaire.flashDemantele, {
-            nom: objet.nom,
+            nom: nomObjet(objet, locale),
             pieces: res.pieces ?? 0,
             categorie: objet.categorie,
           }),
@@ -310,7 +311,7 @@ export default function AtelierPage() {
       if (res.ok) {
         setFlash(
           tr(d.inventaire.flashEnRestauration, {
-            nom: objet.nom,
+            nom: nomObjet(objet, locale),
             etat: libelleEtat(etatCible, d),
             duree: formatDuree(
               dureeRestaurationMs(state, objet.categorie, objet.etat),
@@ -479,7 +480,7 @@ export default function AtelierPage() {
                         cursor: "pointer",
                       }}
                       aria-label={tr(d.inventaire.recupererAria, {
-                        nom: o.nom,
+                        nom: nomObjet(o, locale),
                       })}
                     >
                       {d.inventaire.recuperer}
@@ -826,7 +827,7 @@ export default function AtelierPage() {
               }}
             >
               {d.inventaire.demantelerSeg1}{" "}
-              <strong>{demantelerCible.objet.nom}</strong>{" "}
+              <strong>{nomObjet(demantelerCible.objet, locale)}</strong>{" "}
               {d.inventaire.demantelerSeg2}{" "}
               <strong>
                 {demantelerCible.yieldPieces} ⚙{" "}
@@ -891,7 +892,7 @@ export default function AtelierPage() {
               }}
             >
               {d.inventaire.restaurerSeg1}{" "}
-              <strong>{restaurerCible.objet.nom}</strong>{" "}
+              <strong>{nomObjet(restaurerCible.objet, locale)}</strong>{" "}
               {d.inventaire.restaurerSeg2}{" "}
               <strong>{libelleEtat(restaurerCible.etatCible, d)}</strong>{" "}
               {d.inventaire.restaurerSeg3}{" "}

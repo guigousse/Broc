@@ -9,6 +9,7 @@ import { getTemplate, tailleDe } from "@/data/objetTemplates";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomObjet } from "@/lib/i18n/contenu";
 
 interface Props {
   objet: Objet;
@@ -47,7 +48,7 @@ function CornerL({ position, color }: CornerLProps) {
 }
 
 export function ItemEnCarrousel({ objet, onDragToCoffre }: Props) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const tpl = getTemplate(objet.templateId);
   const taille = tpl ? tailleDe(tpl) : "S";
   const colors = getRarityColors(objet.rarete, !!tpl?.unique);
@@ -144,7 +145,7 @@ export function ItemEnCarrousel({ objet, onDragToCoffre }: Props) {
           fit="contain"
           fallbackIconSize={28}
           fallbackIconColor={colors.thumbIcon}
-          alt={objet.nom}
+          alt={nomObjet(objet, locale)}
           padded
         />
       </div>

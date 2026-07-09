@@ -2,6 +2,7 @@
 
 import type { Objet } from "@/types/game";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomObjet } from "@/lib/i18n/contenu";
 import { ItemEnCarrousel } from "./ItemEnCarrousel";
 
 interface Props {
@@ -12,7 +13,7 @@ interface Props {
 const ITEM_WIDTH = 76;
 
 export function CarrouselStock({ stock, onPickUp }: Props) {
-  const { d } = useLangue();
+  const { d, locale } = useLangue();
   if (stock.length === 0) {
     return (
       <p
@@ -32,7 +33,9 @@ export function CarrouselStock({ stock, onPickUp }: Props) {
   }
 
   const tri = [...stock].sort(
-    (a, b) => a.categorie.localeCompare(b.categorie) || a.nom.localeCompare(b.nom),
+    (a, b) =>
+      a.categorie.localeCompare(b.categorie) ||
+      nomObjet(a, locale).localeCompare(nomObjet(b, locale), locale),
   );
 
   return (

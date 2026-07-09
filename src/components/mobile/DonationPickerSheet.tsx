@@ -7,6 +7,7 @@ import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat, libelleRarete } from "@/lib/i18n/libelles";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 interface DonationPickerSheetProps {
@@ -47,12 +48,12 @@ export function DonationPickerSheet({
   retirerDisabled = false,
   categoriesConnues,
 }: DonationPickerSheetProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   return (
     <BottomSheet
       open={open}
       onClose={onClose}
-      title={slot ? slot.nom : d.inventaire.donation}
+      title={slot ? nomObjet(slot, locale) : d.inventaire.donation}
     >
       {slot?.donation && (
         <div
@@ -138,7 +139,7 @@ export function DonationPickerSheet({
                 fit="cover"
                 fallbackIconSize={20}
                 fallbackIconColor={c.thumbIcon}
-                alt={o.nom}
+                alt={nomObjet(o, locale)}
               />
             </div>
             <div>
@@ -152,7 +153,7 @@ export function DonationPickerSheet({
                   fontWeight: 700,
                 }}
               >
-                {o.nom}
+                {nomObjet(o, locale)}
               </div>
               <div
                 style={{

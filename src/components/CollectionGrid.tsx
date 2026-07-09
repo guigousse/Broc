@@ -17,6 +17,7 @@ import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { Colonnes } from "@/lib/useColonnesCollection";
 import type { CollectionSlot } from "@/types/game";
 
@@ -90,7 +91,7 @@ const CollectionCell = memo(function CollectionCell({
   onTap,
   enStock,
 }: CollectionCellProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const isDonne = s.donation !== null;
   const isVu = !isDonne && s.vu;
   const isSilhouette = !isDonne && !isVu;
@@ -130,7 +131,7 @@ const CollectionCell = memo(function CollectionCell({
       className="broc-grid-cell"
       onClick={() => onTap(s)}
       disabled={isSilhouette}
-      aria-label={isSilhouette ? d.inventaire.pieceInconnue : s.nom}
+      aria-label={isSilhouette ? d.inventaire.pieceInconnue : nomObjet(s, locale)}
       style={cellStyle}
     >
       <ItemSticker

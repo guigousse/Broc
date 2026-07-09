@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { getTemplate } from "@/data/objetTemplates";
 import { estMissionLivrable } from "@/lib/missions";
 import { prochainMinuitLocalMs, prochainLundiLocalMs } from "@/lib/quetes/periode";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomTemplate } from "@/lib/i18n/contenu";
 import { CommandeRow } from "./CommandeRow";
 import type { Courrier, GameState, MissionResolution } from "@/types/game";
 
@@ -172,6 +173,7 @@ function trierActives(
 /* ─── Composant principal ─── */
 
 export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission, tempsConfiance }: CarnetNotesOverlayProps) {
+  const { locale } = useLangue();
   const [ouvertId, setOuvertId] = useState<string | null>(null);
   const [termineesVisibles, setTermineesVisibles] = useState(false);
   const [, tick] = useState(0);
@@ -329,7 +331,7 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission, temp
                       terminees.map((m) => {
                         const c = byId.get(m.courrierId);
                         if (!c || c.payload.type !== "mission") return null;
-                        const tpl = getTemplate(c.payload.cibles[0]?.templateId ?? "");
+                        const cibleTemplateId = c.payload.cibles[0]?.templateId;
                         const couleur = m.statut === "livree" ? "#2c5e3f" : "#a31f1f";
                         return (
                           <div
@@ -337,7 +339,8 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission, temp
                             style={{ display: "flex", justifyContent: "space-between", gap: 8, padding: "6px 14px", opacity: 0.55, fontFamily: "var(--font-serif)", fontSize: 11, color: "#3a2f1e" }}
                           >
                             <span style={{ textDecoration: "line-through" }}>
-                              {c.payload.titre} — {tpl?.nom ?? ""}
+                              {c.payload.titre} —{" "}
+                              {cibleTemplateId ? nomTemplate(cibleTemplateId, locale) : ""}
                             </span>
                             <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", color: couleur }}>
                               {m.statut === "livree" ? `Livrée J${m.jourResolution}` : `Expirée J${m.jourResolution}`}

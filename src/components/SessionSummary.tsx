@@ -6,6 +6,7 @@ import { ItemSticker } from "@/components/ui/ItemSticker";
 import { Panel } from "@/components/ui/Panel";
 import { getTreeMeta } from "@/data/competences";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomObjet } from "@/lib/i18n/contenu";
 
 export interface SummaryItem {
   templateId: string;
@@ -46,7 +47,7 @@ export function SessionSummary({
   xpReplayMode = false,
   onRetour,
 }: SessionSummaryProps) {
-  const { d } = useLangue();
+  const { d, locale } = useLangue();
   const total = items.reduce((s, it) => s + it.prix, 0);
   const xpEntries = Object.entries(xpGagne).filter(([, v]) => v > 0);
   const totalXp = xpBrocanteur ?? xpEntries.reduce((s, [, v]) => s + v, 0);
@@ -161,7 +162,7 @@ export function SessionSummary({
                       color: "var(--forest-800)",
                     }}
                   >
-                    {it.nom}
+                    {nomObjet(it, locale)}
                   </span>
                   <span
                     style={{

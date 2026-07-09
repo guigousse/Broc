@@ -7,6 +7,7 @@ import { vinylSunoPageUrl } from "@/data/vinylesAudio";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { CollectionSlot } from "@/types/game";
 
 interface GramophoneSheetProps {
@@ -236,7 +237,7 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
     onPlayPause,
     onNext,
   } = props;
-  const { d } = useLangue();
+  const { d, locale } = useLangue();
 
   useEffect(() => {
     if (!open) return;
@@ -322,7 +323,9 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
         <div style={panel}>
           <div style={sectionTitre}>
             <div style={titreVinyle}>
-              {vinyleCourant ? affichageTitreVinyle(vinyleCourant.nom) : "—"}
+              {vinyleCourant
+                ? affichageTitreVinyle(nomObjet(vinyleCourant, locale))
+                : "—"}
             </div>
             {sunoUrl && (
               <a
@@ -348,13 +351,14 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
               <div style={bandeWrap}>
                 {vinyles.map((v, idx) => {
                   const actif = idx === vinyleCourantIdx;
+                  const nomVinyle = nomObjet(v, locale);
                   return (
                     <button
                       key={v.templateId}
                       type="button"
                       onClick={() => onSelect(idx)}
-                      title={v.nom}
-                      aria-label={v.nom}
+                      title={nomVinyle}
+                      aria-label={nomVinyle}
                       style={vinylTileStyle(v, actif)}
                     >
                       <ItemImage

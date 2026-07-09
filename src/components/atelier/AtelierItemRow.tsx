@@ -10,6 +10,7 @@ import { etoileCount } from "@/lib/etat";
 import { getTemplate } from "@/data/objetTemplates";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { EtatObjet, Objet } from "@/types/game";
 
 interface AtelierItemRowProps {
@@ -50,7 +51,7 @@ export function AtelierItemRow({
   etatCible,
   isLast,
 }: AtelierItemRowProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const isUnique = !!getTemplate(objet.templateId)?.unique;
   const rarityColors = getRarityColors(objet.rarete, isUnique);
   const currentStars = etoileCount(objet.etat);
@@ -90,7 +91,7 @@ export function AtelierItemRow({
             textOverflow: "ellipsis",
           }}
         >
-          {objet.nom}
+          {nomObjet(objet, locale)}
         </div>
         <div
           style={{

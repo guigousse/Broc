@@ -61,6 +61,8 @@ import { indexJourSemaine, meteoDuJour } from "@/lib/meteo";
 import { buildCelebritePersonnage } from "@/lib/celebrite";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI, tr } from "@/lib/i18n/ui";
+import { nomObjet } from "@/lib/i18n/contenu";
+import type { Locale } from "@/lib/i18n/locales";
 import type {
   CategorieObjet,
   EtatObjet,
@@ -102,7 +104,7 @@ export default function VitrineJourneePage() {
     marquerVuTemplate,
     utiliserActive,
   } = useGame();
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const { startCrowd, stopCrowd } = useSettings();
   useEffect(() => {
     startCrowd();
@@ -584,7 +586,7 @@ export default function VitrineJourneePage() {
       heure: heureCourante(),
       texte: tr(d.vente.journalAchete, {
         nom: ev.persona.nom,
-        panier: describePanier(ev, d, tr),
+        panier: describePanier(ev, d, tr, locale),
         prix: ev.prixDemande,
       }),
       ton: "vente",
@@ -604,7 +606,7 @@ export default function VitrineJourneePage() {
       heure: heureCourante(),
       texte: tr(d.vente.journalAccepte, {
         nom: ev.persona.nom,
-        panier: describePanier(ev, d, tr),
+        panier: describePanier(ev, d, tr, locale),
         prix: prixFinal,
       }),
       ton: "vente",
@@ -777,7 +779,7 @@ export default function VitrineJourneePage() {
               <ArticleSurEtal
                 key={e.objet.id}
                 templateId={e.objet.templateId}
-                nom={e.objet.nom}
+                nom={nomObjet(e.objet, locale)}
                 categorie={e.objet.categorie}
                 etat={e.objet.etat}
                 rarete={e.objet.rarete}
@@ -1013,7 +1015,7 @@ export default function VitrineJourneePage() {
               <ul style={lotGarniList}>
                 {objetsAjoutablesLotGarni.map((o) => (
                   <li key={o.objet.id} style={lotGarniItemRow}>
-                    <span style={lotGarniItemNom}>{o.objet.nom}</span>
+                    <span style={lotGarniItemNom}>{nomObjet(o.objet, locale)}</span>
                     <button
                       type="button"
                       style={lotGarniItemBtn}
@@ -1036,9 +1038,12 @@ function describePanier(
   ev: ClientEvent,
   d: DictionnaireUI,
   trFn: typeof tr,
+  locale: Locale,
 ): string {
   if (ev.panier.length === 1) {
-    return trFn(d.vente.panierUnique, { nom: ev.panier[0].objet.nom });
+    return trFn(d.vente.panierUnique, {
+      nom: nomObjet(ev.panier[0].objet, locale),
+    });
   }
   return trFn(d.vente.panierPluriel, { n: ev.panier.length });
 }

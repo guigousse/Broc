@@ -15,6 +15,7 @@ import { stockageEstPlein } from "@/lib/stockage";
 import { ItemCard } from "@/components/ui/ItemCard";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { Brocante, Objet } from "@/types/game";
 
 const VIBRATION_MS = 1500;
@@ -92,7 +93,7 @@ export function BoiteMystereOverlay({
 }) {
   const { state, reclamerBoiteMystere } = useGame();
   const { toast } = useToast();
-  const { d } = useLangue();
+  const { d, locale } = useLangue();
   const [enCours, setEnCours] = useState(false);
   const [phase, setPhase] = useState<Phase>("sealed");
   const [objet, setObjet] = useState<Objet | null>(null);
@@ -182,7 +183,7 @@ export function BoiteMystereOverlay({
                 categorie={objet.categorie}
                 etat={objet.etat}
                 rarete={objet.rarete}
-                nom={objet.nom}
+                nom={nomObjet(objet, locale)}
               />
             </div>
             <p style={{ fontSize: 12, color: "var(--brass-200)", margin: "0 0 14px" }}>

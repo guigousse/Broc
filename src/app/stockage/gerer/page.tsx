@@ -26,6 +26,7 @@ import {
 } from "@/lib/atelier";
 import { getBrocanteById } from "@/data/brocantes";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomObjet } from "@/lib/i18n/contenu";
 import type { CategorieObjet, EtatObjet, Objet } from "@/types/game";
 
 export default function StockagePage() {
@@ -39,7 +40,7 @@ export default function StockagePage() {
 function StockagePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const {
     state,
     isHydrated,
@@ -115,7 +116,10 @@ function StockagePageInner() {
       const cible = prochaineEtatCible(o.etat);
       if (!cible) return;
       const res = restaurerObjet(o.id, cible);
-      if (res.ok) setFlash(tr(d.inventaire.flashEnvoyeAtelier, { nom: o.nom }));
+      if (res.ok)
+        setFlash(
+          tr(d.inventaire.flashEnvoyeAtelier, { nom: nomObjet(o, locale) }),
+        );
       else
         setFlash(
           tr(d.inventaire.impossibleRaison, {
@@ -124,7 +128,7 @@ function StockagePageInner() {
         );
       setTimeout(() => setFlash(null), 2500);
     },
-    [restaurerObjet, d, tr],
+    [restaurerObjet, d, tr, locale],
   );
 
   const envoyerCollection = useCallback(
@@ -138,7 +142,9 @@ function StockagePageInner() {
       }
       const res = donnerACollection(o.id);
       if (res.ok)
-        setFlash(tr(d.inventaire.flashAjouteCollection, { nom: o.nom }));
+        setFlash(
+          tr(d.inventaire.flashAjouteCollection, { nom: nomObjet(o, locale) }),
+        );
       else
         setFlash(
           tr(d.inventaire.impossibleRaison, {
@@ -147,7 +153,7 @@ function StockagePageInner() {
         );
       setTimeout(() => setFlash(null), 2500);
     },
-    [state, donnerACollection, d, tr],
+    [state, donnerACollection, d, tr, locale],
   );
 
   if (!isHydrated || !state) {
@@ -336,7 +342,7 @@ function StockagePageInner() {
         nouvelObjet={
           askReplace
             ? {
-                nom: askReplace.objet.nom,
+                nom: nomObjet(askReplace.objet, locale),
                 etat: askReplace.objet.etat,
                 valeur: categoriesConnuesVitrine.has(askReplace.objet.categorie)
                   ? askReplace.objet.prixReferenceReel
