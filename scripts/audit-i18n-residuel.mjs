@@ -26,6 +26,7 @@ const FICHIERS_EXCLUS = [
   "src/components/mobile/qg/dev/",
   "src/components/mobile/brocante-pano/BrocanteFramesEditContext.tsx",
   "src/components/mobile/brocante-pano/BrocanteFramesEditOverlay.tsx",
+  "src/components/mobile/brocante-pano/ScenesEditPanel.tsx",
   "src/components/mobile/brocante-pano/cadreedit/",
   // Panneau dev du coffre (gated DEV_PANEL)
   "src/components/vente/DevPanel.tsx",
@@ -43,11 +44,28 @@ const FICHIERS_EXCLUS = [
 const LIGNES_TOLEREES = [
   // Libellés de catégories (CategorieObjet) : data, traduits en SP3.
   ["stockageBoxesLayout.ts", "categorie:", "CategorieObjet = data (SP3)"],
-  // Noms de compétences affichés tels quels : data (SP3), précédent
-  // Carnet mondain / Influence actés en Task 4.
-  ["GazetteSheet.tsx", "Bulletin météo", "nom de compétence = data (SP3)"],
-  ["PersonaInfoOverlay.tsx", "Œil aiguisé", "nom de compétence = data (SP3)"],
+  // Fallback FR canonique d'un nom de compétence dans un const de résolution
+  // (résolu à l'affichage via `nomCompetence`, cf. PALIERS_PRESENTATION).
+  ["PersonaInfoOverlay.tsx", "Œil aiguisé", "fallback FR de nomCompetence"],
 ];
+
+/**
+ * Cibles d'appel dont les chaînes sont techniques (messages de dev, invariants)
+ * et jamais de l'UI joueur : exclues du motif « littéral en argument ». `confirm`
+ * / `alert` / `prompt` restent captés (vraies boîtes de dialogue utilisateur).
+ */
+const APPELS_NON_UI = new Set([
+  "Error",
+  "TypeError",
+  "RangeError",
+  "warn",
+  "error",
+  "log",
+  "info",
+  "debug",
+  "assert",
+  "require",
+]);
 
 const MOTIF_FR =
   /[éèêëàâçîïôûùœÉÈÀÇŒ]|\b(le|la|les|des|une|votre|vos|avec|pour|dans|chez|sur)\b/;
@@ -89,6 +107,13 @@ function candidats(ligne) {
   )) {
     resultats.push(m[1] ?? m[2]);
   }
+  // Littéral passé en argument d'appel de fonction : renderSection("Texte", …).
+  // Capté au-delà des attributs/toasts pour ne pas manquer les libellés poussés
+  // via un helper de rendu. On ignore les cibles techniques (Error/console/…)
+  // dont les chaînes sont des messages de dev, jamais de l'UI joueur.
+  for (const m of ligne.matchAll(/\b([A-Za-z_$][\w$]*)\(\s*["'`]([^"'`]{3,})["'`]/g)) {
+    if (!APPELS_NON_UI.has(m[1])) resultats.push(m[2]);
+  }
   return resultats.filter(
     (t) => t && t.trim().length >= 3 && MOTIF_FR.test(t) && !MOTIF_BRUIT.test(t),
   );
@@ -100,7 +125,10 @@ for (const racine of RACINES) {
     if (estExclu(chemin)) continue;
     const lignes = readFileSync(chemin, "utf8").split("\n");
     lignes.forEach((ligne, i) => {
-      if (MOTIF_BRUIT.test(ligne) && !/aria-label|title=|placeholder|toast\(/.test(ligne)) return;
+      // Le filtre de bruit s'applique au CANDIDAT extrait (dans `candidats`),
+      // JAMAIS à la ligne entière : une ligne contenant une couleur hex ou un
+      // nom de classe pouvait masquer un vrai résidu à côté (« Prêt ✓ » dans un
+      // <span style={{ background: "#2c5e3f" }}>).
       if (estTolere(chemin, ligne)) return;
       for (const c of candidats(ligne)) {
         console.log(

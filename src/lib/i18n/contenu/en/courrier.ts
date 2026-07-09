@@ -19,7 +19,7 @@ export const COURRIER_EN: Record<string, { titre: string; corps: string[] }> = {
     corps: [
       "My dear child,",
       "I know you're setting out on this new adventure as a flea-market hunter, and I'm so proud of you. The flea market is a wonderful world, but a demanding one — be patient, keep your eyes open, learn as you go.",
-      "I've slipped **150 €** into this envelope to help you get started. Treat yourself to a lovely piece for your first window, or set it aside for the leaner days.",
+      "I've slipped **150 €** into this envelope to help you get started. Treat yourself to a lovely piece for your first shop window, or set it aside for the leaner days.",
       "Do come and see me when you have a moment.",
     ],
   },
