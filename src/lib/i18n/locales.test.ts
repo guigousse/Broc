@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   LOCALES,
   detecterLocale,
+  localeCourante,
   persisterLocale,
 } from "@/lib/i18n/locales";
 
@@ -45,5 +46,33 @@ describe("locales — détection et persistance", () => {
     vi.stubGlobal("navigator", { language: "fr-FR" });
     persisterLocale("en");
     expect(detecterLocale()).toBe("en");
+  });
+});
+
+describe("localeCourante — utilisable hors React (modules notifs)", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.unstubAllGlobals();
+  });
+
+  it("préférence persistée 'es' → 'es'", () => {
+    localStorage.setItem(CLE, JSON.stringify({ locale: "es" }));
+    expect(localeCourante()).toBe("es");
+  });
+
+  it("sans préférence → détection navigateur (comme detecterLocale)", () => {
+    vi.stubGlobal("navigator", { language: "es-ES" });
+    expect(localeCourante()).toBe("es");
+  });
+
+  it("SSR (pas de window) → 'fr' en repli, jamais 'en'", () => {
+    const win = globalThis.window;
+    // @ts-expect-error simulation SSR : window absent
+    delete globalThis.window;
+    try {
+      expect(localeCourante()).toBe("fr");
+    } finally {
+      globalThis.window = win;
+    }
   });
 });

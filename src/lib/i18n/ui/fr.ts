@@ -511,4 +511,37 @@ export const fr = {
     sam: "Sam",
     dim: "Dim",
   },
+  // Notifications locales (index.ts/energieNotif/quetesNotif/rappelRetour/
+  // restaurationNotif) : texte résolu à la programmation, jamais en save.
+  notifs: {
+    energie: {
+      titre: "Énergie pleine ⚡",
+      corps: "Tes 5 énergies sont prêtes — reviens chiner !",
+    },
+    quetes: {
+      nouvellesQuotidienTitre: "Nouvelles commandes",
+      nouvellesQuotidienCorps: "De nouvelles commandes du jour t'attendent !",
+      nouvellesHebdoTitre: "Commandes de la semaine",
+      nouvellesHebdoCorps:
+        "De nouvelles commandes hebdomadaires sont disponibles !",
+      rappelQuotidienTitre: "Commandes du jour en attente",
+      rappelQuotidienCorps:
+        "Il te reste des commandes du jour à honorer avant minuit !",
+      rappelHebdoTitre: "Commandes de la semaine en attente",
+      rappelHebdoCorps:
+        "Il te reste des commandes hebdomadaires avant la remise à zéro !",
+    },
+    rappelRetour: {
+      j1Titre: "Ta brocante prend la poussière…",
+      j1Corps: "Reviens chiner, le camion t'attend !",
+      j3Titre: "Des affaires t'attendent !",
+      j3Corps: "De nouvelles trouvailles sont à dénicher.",
+      j7Titre: "On range le camion ?",
+      j7Corps: "Reviens vite récupérer ton énergie ⚡",
+    },
+    restauration: {
+      titre: "Atelier",
+      corps: "« {nom} » est restauré ✓",
+    },
+  },
 } as const;

@@ -12,7 +12,7 @@ const JOUR_MS = 24 * 60 * 60 * 1000;
 describe("construireRappels (pur)", () => {
   it("programme 3 rappels aux offsets J+1 / J+3 / J+7 avec les bons IDs", () => {
     const now = 1_000_000_000_000;
-    const specs = construireRappels(now);
+    const specs = construireRappels(now, "fr");
 
     expect(specs).toHaveLength(3);
     expect(specs.map((s) => s.id)).toEqual([...NOTIF_IDS.RAPPEL_RETOUR]);
@@ -24,14 +24,14 @@ describe("construireRappels (pur)", () => {
   });
 
   it("chaque rappel a un titre et un corps non vides", () => {
-    for (const s of construireRappels(0)) {
+    for (const s of construireRappels(0, "fr")) {
       expect(s.title.length).toBeGreaterThan(0);
       expect(s.body.length).toBeGreaterThan(0);
     }
   });
 
   it("chaque rappel demande le son par défaut", () => {
-    for (const s of construireRappels(0)) {
+    for (const s of construireRappels(0, "fr")) {
       expect(s.sound).toBe("default");
     }
   });
@@ -39,7 +39,9 @@ describe("construireRappels (pur)", () => {
 
 describe("rappelRetour hors Tauri", () => {
   it("programmerRappelRetour() est un no-op sans lever (pas de permission)", async () => {
-    await expect(programmerRappelRetour(Date.now())).resolves.toBeUndefined();
+    await expect(
+      programmerRappelRetour(Date.now(), "fr"),
+    ).resolves.toBeUndefined();
   });
 
   it("annulerRappelRetour() est un no-op sans lever", async () => {

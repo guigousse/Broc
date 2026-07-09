@@ -11,31 +11,23 @@ import {
   annuler,
   permissionAccordee,
 } from "./index";
+import type { Locale } from "@/lib/i18n/locales";
+import { DICTIONNAIRES } from "@/lib/i18n/ui";
 
 const JOUR_MS = 24 * 60 * 60 * 1000;
 
-/** Définition de la série (offset depuis la sortie + textes, ton du jeu). */
-const RAPPELS: { offsetMs: number; title: string; body: string }[] = [
-  {
-    offsetMs: 1 * JOUR_MS,
-    title: "Ta brocante prend la poussière…",
-    body: "Reviens chiner, le camion t'attend !",
-  },
-  {
-    offsetMs: 3 * JOUR_MS,
-    title: "Des affaires t'attendent !",
-    body: "De nouvelles trouvailles sont à dénicher.",
-  },
-  {
-    offsetMs: 7 * JOUR_MS,
-    title: "On range le camion ?",
-    body: "Reviens vite récupérer ton énergie ⚡",
-  },
-];
-
-/** Construit les 3 specs à partir de l'instant de sortie `now` (epoch ms). Pur. */
-export function construireRappels(now: number): NotifSpec[] {
-  return RAPPELS.map((r, i) => ({
+/**
+ * Construit les 3 specs à partir de l'instant de sortie `now` (epoch ms).
+ * Pur. `locale` capturée par l'appelant au moment de la programmation.
+ */
+export function construireRappels(now: number, locale: Locale): NotifSpec[] {
+  const d = DICTIONNAIRES[locale].notifs.rappelRetour;
+  const rappels = [
+    { offsetMs: 1 * JOUR_MS, title: d.j1Titre, body: d.j1Corps },
+    { offsetMs: 3 * JOUR_MS, title: d.j3Titre, body: d.j3Corps },
+    { offsetMs: 7 * JOUR_MS, title: d.j7Titre, body: d.j7Corps },
+  ];
+  return rappels.map((r, i) => ({
     id: NOTIF_IDS.RAPPEL_RETOUR[i],
     title: r.title,
     body: r.body,
@@ -45,9 +37,12 @@ export function construireRappels(now: number): NotifSpec[] {
 }
 
 /** (Re)programme la série depuis `now`. No-op si permission non déjà accordée. */
-export async function programmerRappelRetour(now: number): Promise<void> {
+export async function programmerRappelRetour(
+  now: number,
+  locale: Locale,
+): Promise<void> {
   if (!(await permissionAccordee())) return;
-  for (const spec of construireRappels(now)) {
+  for (const spec of construireRappels(now, locale)) {
     await programmer(spec);
   }
 }

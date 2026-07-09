@@ -42,3 +42,16 @@ export function detecterLocale(): Locale {
 export function persisterLocale(locale: Locale): void {
   safeLocalStorageSet(CLE, { locale } satisfies LanguePref);
 }
+
+/**
+ * Locale effective, utilisable HORS React (les modules de notifications ne
+ * sont pas des composants) : même logique que `LangueProvider` — préférence
+ * persistée sinon détection navigateur. SSR-safe : replie sur `"fr"` quand
+ * `window` est absent, comme le premier rendu du provider (évite tout écart
+ * avec l'export statique — `detecterLocale()` seule retomberait sur `"en"`
+ * côté serveur faute de `navigator`).
+ */
+export function localeCourante(): Locale {
+  if (typeof window === "undefined") return "fr";
+  return detecterLocale();
+}

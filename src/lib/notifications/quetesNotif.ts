@@ -14,6 +14,8 @@ import {
   minuitLocalMs,
   veilleMs,
 } from "@/lib/quetes/periode";
+import type { Locale } from "@/lib/i18n/locales";
+import { DICTIONNAIRES } from "@/lib/i18n/ui";
 
 const HEURE_NOUVELLES_QUETES = 8; // matin : créneau d'engagement le plus fiable
 const HEURE_RAPPEL_QUETES = 19; // soir : dernière fenêtre avant la fin de journée
@@ -39,20 +41,28 @@ function notifRappel(
   return { id, title, body, sound: "regen.wav", atMs };
 }
 
-/** Construit les specs actives : 2 « nouvelles quêtes » + jusqu'à 2 rappels. `now` = epoch ms. */
-export function notifsQuetes(now: number, etat: EtatQuetesNotif): NotifSpec[] {
+/**
+ * Construit les specs actives : 2 « nouvelles quêtes » + jusqu'à 2 rappels.
+ * `now` = epoch ms. `locale` est capturée au scheduling par l'appelant.
+ */
+export function notifsQuetes(
+  now: number,
+  etat: EtatQuetesNotif,
+  locale: Locale,
+): NotifSpec[] {
+  const d = DICTIONNAIRES[locale].notifs.quetes;
   const specs: NotifSpec[] = [
     {
       id: NOTIF_IDS.QUETES[0],
-      title: "Nouvelles commandes",
-      body: "De nouvelles commandes du jour t'attendent !",
+      title: d.nouvellesQuotidienTitre,
+      body: d.nouvellesQuotidienCorps,
       sound: "regen.wav",
       atMs: plusHeureLocale(prochainMinuitLocalMs(now), HEURE_NOUVELLES_QUETES),
     },
     {
       id: NOTIF_IDS.QUETES[1],
-      title: "Commandes de la semaine",
-      body: "De nouvelles commandes hebdomadaires sont disponibles !",
+      title: d.nouvellesHebdoTitre,
+      body: d.nouvellesHebdoCorps,
       sound: "regen.wav",
       atMs: plusHeureLocale(prochainLundiLocalMs(now), HEURE_NOUVELLES_QUETES),
     },
@@ -60,8 +70,8 @@ export function notifsQuetes(now: number, etat: EtatQuetesNotif): NotifSpec[] {
 
   const rappelQuotidien = notifRappel(
     NOTIF_IDS.RAPPEL_QUETES[0],
-    "Commandes du jour en attente",
-    "Il te reste des commandes du jour à honorer avant minuit !",
+    d.rappelQuotidienTitre,
+    d.rappelQuotidienCorps,
     now,
     minuitLocalMs(now),
     etat.quotidienNonTerminee,
@@ -70,8 +80,8 @@ export function notifsQuetes(now: number, etat: EtatQuetesNotif): NotifSpec[] {
 
   const rappelHebdo = notifRappel(
     NOTIF_IDS.RAPPEL_QUETES[1],
-    "Commandes de la semaine en attente",
-    "Il te reste des commandes hebdomadaires avant la remise à zéro !",
+    d.rappelHebdoTitre,
+    d.rappelHebdoCorps,
     now,
     veilleMs(prochainLundiLocalMs(now)),
     etat.hebdoNonTerminee,
@@ -85,10 +95,11 @@ export function notifsQuetes(now: number, etat: EtatQuetesNotif): NotifSpec[] {
 export async function synchroniserNotifsQuetes(
   now: number,
   etat: EtatQuetesNotif,
+  locale: Locale,
 ): Promise<void> {
   await annuler([...NOTIF_IDS.QUETES, ...NOTIF_IDS.RAPPEL_QUETES]);
   if (!(await permissionAccordee())) return;
-  for (const spec of notifsQuetes(now, etat)) {
+  for (const spec of notifsQuetes(now, etat, locale)) {
     await programmer(spec);
   }
 }

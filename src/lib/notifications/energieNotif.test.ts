@@ -18,7 +18,9 @@ describe("energieNotif hors Tauri", () => {
   });
 
   it("planifier/annuler sont des no-op sans lever", async () => {
-    await expect(planifierPleinEnergie(Date.now() + 1000)).resolves.toBeUndefined();
+    await expect(
+      planifierPleinEnergie(Date.now() + 1000, "fr"),
+    ).resolves.toBeUndefined();
     await expect(annulerPleinEnergie()).resolves.toBeUndefined();
   });
 });

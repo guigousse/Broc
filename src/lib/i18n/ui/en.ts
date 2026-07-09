@@ -504,4 +504,34 @@ export const en: DictionnaireUI = {
     sam: "Sat",
     dim: "Sun",
   },
+  notifs: {
+    energie: {
+      titre: "Full energy ⚡",
+      corps: "Your 5 energy points are ready — come back and dig!",
+    },
+    quetes: {
+      nouvellesQuotidienTitre: "New orders",
+      nouvellesQuotidienCorps: "Today's new orders are waiting for you!",
+      nouvellesHebdoTitre: "Weekly orders",
+      nouvellesHebdoCorps: "New weekly orders are now available!",
+      rappelQuotidienTitre: "Today's orders pending",
+      rappelQuotidienCorps:
+        "You still have today's orders to fulfil before midnight!",
+      rappelHebdoTitre: "Weekly orders pending",
+      rappelHebdoCorps:
+        "You still have weekly orders left before the reset!",
+    },
+    rappelRetour: {
+      j1Titre: "Your stall is gathering dust…",
+      j1Corps: "Come back and dig, the truck is waiting!",
+      j3Titre: "Great finds are waiting for you!",
+      j3Corps: "New treasures are up for grabs.",
+      j7Titre: "Time to park the truck?",
+      j7Corps: "Come back soon to recover your energy ⚡",
+    },
+    restauration: {
+      titre: "Workshop",
+      corps: "\"{nom}\" is restored ✓",
+    },
+  },
 };

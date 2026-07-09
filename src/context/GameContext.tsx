@@ -115,6 +115,7 @@ import {
 } from "@/lib/temps/horloge";
 import { getTimeSource } from "@/lib/temps/timeSource";
 import { appliquerReclamation } from "@/lib/boiteMystere";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 const gameRepository = createGameRepository();
 
@@ -228,6 +229,11 @@ const GameActionsContext = createContext<GameActionsValue | null>(null);
 export function GameProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToastSafe();
+  // Locale courante (LangueProvider englobe GameProvider, cf. app/layout.tsx) :
+  // dépendance des effets de notifs ci-dessous pour les replanifier au
+  // changement de langue (Step 3.4 — pas de mécanisme dédié, on réutilise
+  // le pattern d'effet déjà en place pour l'état de jeu).
+  const { locale } = useLangue();
   const [state, setState] = useState<GameState | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const stateRef = useRef<GameState | null>(null);
@@ -416,12 +422,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (annule || !ok) return;
       const reste = secondesAvantPlein(snap, tempsConfiance() ?? Date.now(), max);
       if (reste === null) return;
-      await planifierPleinEnergie(Date.now() + reste * 1000);
+      await planifierPleinEnergie(Date.now() + reste * 1000, locale);
     })();
     return () => {
       annule = true;
     };
-  }, [isHydrated, energie, energieDerniereMaj, niveauBrocanteur, tempsConfiance]);
+  }, [isHydrated, energie, energieDerniereMaj, niveauBrocanteur, tempsConfiance, locale]);
 
   // Rappel de retour : programme la série J+1/J+3/J+7 quand l'app passe en
   // arrière-plan, l'annule à la réouverture. No-op hors Tauri ou si la
@@ -430,7 +436,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!isHydrated) return;
     const onVisibility = () => {
       if (document.visibilityState === "hidden") {
-        void programmerRappelRetour(Date.now());
+        void programmerRappelRetour(Date.now(), locale);
       } else {
         void annulerRappelRetour();
       }
@@ -438,7 +444,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // pagehide/pageshow : filet pour iOS, où `visibilitychange → visible`
     // n'est pas garanti au réveil depuis le bfcache. pageshow ré-annule au
     // retour pour rester symétrique avec pagehide.
-    const onPageHide = () => void programmerRappelRetour(Date.now());
+    const onPageHide = () => void programmerRappelRetour(Date.now(), locale);
     const onPageShow = () => void annulerRappelRetour();
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pagehide", onPageHide);
@@ -448,7 +454,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("pageshow", onPageShow);
     };
-  }, [isHydrated]);
+    // `locale` en dépendance : recrée les handlers avec la langue courante
+    // en closure, pour que la prochaine programmation (au passage en arrière-
+    // plan) parte toujours de la langue actuelle. Les rappels déjà programmés
+    // dans l'ancienne langue restent inchangés jusqu'à leur annulation
+    // naturelle (retour au premier plan) — dégradation douce acceptable.
+  }, [isHydrated, locale]);
 
   // Notif « Objet restauré » : (re)programme une notif par objet en restauration
   // à son échéance, à chaque changement de l'ensemble. No-op hors Tauri / sans
@@ -466,9 +477,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const ecart = (tempsConfiance() ?? Date.now()) - Date.now(); // confiance - mural
     const objets = (stateRef.current?.inventaireJoueur ?? [])
       .filter((o) => o.enRestauration)
-      .map((o) => ({ nom: o.nom, finMs: o.enRestauration!.finMs - ecart }));
-    void synchroniserNotifsRestauration(objets, Date.now());
-  }, [isHydrated, restauKey, tempsConfiance]);
+      .map((o) => ({
+        templateId: o.templateId,
+        nom: o.nom,
+        finMs: o.enRestauration!.finMs - ecart,
+      }));
+    void synchroniserNotifsRestauration(objets, Date.now(), locale);
+  }, [isHydrated, restauKey, tempsConfiance, locale]);
 
   // Notifs « Nouvelles quêtes » (8h, décalées du reset minuit) + rappel du soir
   // (19h) si le lot du jour/de la semaine a encore une mission active. Relancée
@@ -485,8 +500,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
   useEffect(() => {
     if (!isHydrated) return;
-    void synchroniserNotifsQuetes(Date.now(), { quotidienNonTerminee, hebdoNonTerminee });
-  }, [isHydrated, quetesCles, quotidienNonTerminee, hebdoNonTerminee]);
+    void synchroniserNotifsQuetes(
+      Date.now(),
+      { quotidienNonTerminee, hebdoNonTerminee },
+      locale,
+    );
+  }, [isHydrated, quetesCles, quotidienNonTerminee, hebdoNonTerminee, locale]);
 
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {

@@ -505,4 +505,34 @@ export const es: DictionnaireUI = {
     sam: "Sáb",
     dim: "Dom",
   },
+  notifs: {
+    energie: {
+      titre: "Energía al máximo ⚡",
+      corps: "Tus 5 energías están listas — ¡vuelve a rebuscar!",
+    },
+    quetes: {
+      nouvellesQuotidienTitre: "Nuevos pedidos",
+      nouvellesQuotidienCorps: "¡Te esperan los nuevos pedidos del día!",
+      nouvellesHebdoTitre: "Pedidos de la semana",
+      nouvellesHebdoCorps: "¡Ya están disponibles los nuevos pedidos semanales!",
+      rappelQuotidienTitre: "Pedidos del día pendientes",
+      rappelQuotidienCorps:
+        "¡Todavía te quedan pedidos del día por cumplir antes de medianoche!",
+      rappelHebdoTitre: "Pedidos de la semana pendientes",
+      rappelHebdoCorps:
+        "¡Todavía te quedan pedidos semanales antes de que se reinicien!",
+    },
+    rappelRetour: {
+      j1Titre: "Tu puesto de mercadillo acumula polvo…",
+      j1Corps: "¡Vuelve a rebuscar, la furgoneta te espera!",
+      j3Titre: "¡Te esperan buenas gangas!",
+      j3Corps: "Hay nuevos hallazgos por descubrir.",
+      j7Titre: "¿Guardamos la furgoneta?",
+      j7Corps: "Vuelve pronto a recuperar tu energía ⚡",
+    },
+    restauration: {
+      titre: "Taller",
+      corps: "«{nom}» está restaurado ✓",
+    },
+  },
 };
