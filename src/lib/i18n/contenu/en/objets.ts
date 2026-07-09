@@ -107,7 +107,7 @@ export const OBJETS_EN: Record<string, string> = {
   "jx.figurine_de_guerre_galactique_1978": "Galactic War figure (1978)",
   "jx.figurine_de_dark_father_1977": "Dark Father figure (1977)",
   "jx.flipper_a_plateau_annees_60": "1960s pinball machine",
-  "jx.borne_arcade_mini": "Mini arcade cabinet — Space Invaders",
+  "jx.borne_arcade_mini": "Mini arcade cabinet — Space Raiders",
   "jx.cartes_pocket_monster_holographiques_japonaise": "Japanese holographic 'Pocket Monster' cards",
   "jx.cartouche_gachette_du_temps_rpg_16_bit": "'Time Trigger' cartridge (16-bit RPG)",
   "jx.console_d_arcade_domestique_neo": "'Neo' home arcade console",
@@ -118,7 +118,7 @@ export const OBJETS_EN: Record<string, string> = {
 
   // ===== LIVRES & PAPETERIE — communs =====
   "lv.monte_cristo": "'The Count of Monte Cristo' novel",
-  "lv.les_aventures_de_titou_cap_sur_la_lune": "The Adventures of Titou — 'Destination Moon'",
+  "lv.les_aventures_de_titou_cap_sur_la_lune": "The Adventures of Titou — 'Bound for the Moon'",
   "lv.paris_match_70s": "1970s news magazines lot",
   "lv.cartes_postales_anciennes": "Antique postcards (box)",
   "lv.miserables_pleiade": "Les Misérables — prestige leather binding",
