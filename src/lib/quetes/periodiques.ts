@@ -61,6 +61,8 @@ function genererUne(
       categorie: type,
       cibles,
       recompense,
+      gabaritId: texte.gabaritId,
+      ...(etatMin ? { gabaritParams: { etatMin } } : {}),
     }),
     lu: true,
   };

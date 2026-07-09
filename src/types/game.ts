@@ -107,6 +107,15 @@ export interface RecompenseCourrier {
   argent?: number;
 }
 
+/**
+ * Paramètres de régénération d'un texte de courrier à gabarit (i18n SP4). Champ
+ * ADDITIF : son absence ⇒ comportement historique (lecture du payload FR).
+ */
+export interface CourrierGabaritParams {
+  /** État minimum requis, pour reformer la mention `{etat}` dans la locale. */
+  etatMin?: EtatObjet;
+}
+
 /** Lettre narrative générique (mère, ami, maire, client…). */
 export interface CourrierPayloadLettre {
   type: "lettre";
@@ -115,6 +124,13 @@ export interface CourrierPayloadLettre {
   /** Corps découpé en paragraphes (un <p> par entrée). */
   corps: string[];
   recompense?: RecompenseCourrier;
+  /**
+   * Id du gabarit de texte utilisé (`"cle#index"`, cf. `GabaritQueteId`). ADDITIF :
+   * permet de régénérer le texte dans la locale d'affichage. Absent ⇒ payload FR.
+   */
+  gabaritId?: string;
+  /** Paramètres de régénération (état min…). ADDITIF, absent ⇒ payload FR. */
+  gabaritParams?: CourrierGabaritParams;
 }
 
 /** Catégorie d'une commande : principale (importante/scénarisée) ou secondaire. */
@@ -143,6 +159,13 @@ export interface CourrierPayloadMission {
   /** Si vrai, la livraison ne consomme PAS les objets ciblés (le joueur les
    *  garde). Utilisé par la finale de l'arc principal (« Les bijoux de la reine »). */
   conserverCibles?: boolean;
+  /**
+   * Id du gabarit de texte utilisé (`"cle#index"`, cf. `GabaritQueteId`). ADDITIF :
+   * permet de régénérer le texte dans la locale d'affichage. Absent ⇒ payload FR.
+   */
+  gabaritId?: string;
+  /** Paramètres de régénération (état min…). ADDITIF, absent ⇒ payload FR. */
+  gabaritParams?: CourrierGabaritParams;
 }
 
 export type CourrierPayload = CourrierPayloadLettre | CourrierPayloadMission;

@@ -21,6 +21,11 @@ import { DIVERS_EN } from "./en/divers";
 import { DIVERS_ES } from "./es/divers";
 import { COURRIER_EN } from "./en/courrier";
 import { COURRIER_ES } from "./es/courrier";
+import { QUETES_GABARITS_EN } from "./en/quetesGabarits";
+import { QUETES_GABARITS_ES } from "./es/quetesGabarits";
+import { libelleEtat } from "@/lib/i18n/libelles";
+import { DICTIONNAIRES } from "@/lib/i18n/ui";
+import type { EtatObjet, MissionCible } from "@/types/game";
 
 /** Forme d'un overlay de compétences par langue (arbres / branches / paliers). */
 export interface OverlayCompetences {
@@ -358,16 +363,96 @@ const COURRIER_OVERLAY: Record<
   es: COURRIER_ES,
 };
 
+/* --- Quêtes périodiques : régénération par gabarit persisté (SP4) --- */
+
+const QUETES_GABARITS_OVERLAY: Record<
+  "en" | "es",
+  Record<string, { titre: string; corps: string[] }>
+> = {
+  en: QUETES_GABARITS_EN,
+  es: QUETES_GABARITS_ES,
+};
+
 /**
- * Titre localisé d'un courrier scénarisé (lettre/mission d'arc). Résolution par
- * `c.id` ; id absent de l'overlay → titre FR persisté dans le payload (vieilles
- * saves + courriers périodiques générés). Jamais d'écriture en save.
+ * Mise en forme des placeholders `{objets}`/`{etat}` PROPRE À CHAQUE LANGUE
+ * (guillemets, séparateurs, mention d'état) — pas un calque du FR. Le FR reste
+ * dans `quetes/textes.ts` ; ici on ne traite que les locales à régénérer.
+ */
+const MISE_EN_FORME_GABARIT: Record<
+  "en" | "es",
+  {
+    objets: (cibles: MissionCible[], locale: "en" | "es") => string;
+    etat: (etatMin: EtatObjet | undefined, locale: "en" | "es") => string;
+  }
+> = {
+  en: {
+    objets: (cibles, locale) =>
+      cibles.map((c) => `"${nomTemplate(c.templateId, locale)}"`).join(", "),
+    etat: (etatMin, locale) =>
+      etatMin ? ` (min. condition: ${libelleEtat(etatMin, DICTIONNAIRES[locale])})` : "",
+  },
+  es: {
+    objets: (cibles, locale) =>
+      cibles.map((c) => `« ${nomTemplate(c.templateId, locale)} »`).join(", "),
+    etat: (etatMin, locale) =>
+      etatMin ? ` (estado mín.: ${libelleEtat(etatMin, DICTIONNAIRES[locale])})` : "",
+  },
+};
+
+/** Payload d'un courrier tel que consommé par la régénération de gabarit. */
+type PayloadCourrier = {
+  titre: string;
+  corps: string[];
+  gabaritId?: string;
+  gabaritParams?: { etatMin?: EtatObjet };
+  cibles?: MissionCible[];
+};
+
+/**
+ * Régénère titre+corps d'un courrier périodique dans la locale (≠ fr) à partir
+ * de son `gabaritId` persisté et de l'overlay. Absorbe un index hors borne via
+ * `index % nbVariantes`. Retourne `null` si pas de gabarit résoluble (→ repli
+ * sur la voie id stable puis payload FR).
+ */
+function resoudreGabarit(
+  payload: PayloadCourrier,
+  locale: "en" | "es",
+): { titre: string; corps: string[] } | null {
+  const { gabaritId } = payload;
+  if (!gabaritId) return null;
+  const sep = gabaritId.lastIndexOf("#");
+  if (sep < 0) return null;
+  const cle = gabaritId.slice(0, sep);
+  const idx = Number.parseInt(gabaritId.slice(sep + 1), 10);
+  if (!Number.isFinite(idx)) return null;
+
+  const overlay = QUETES_GABARITS_OVERLAY[locale];
+  const variantes = Object.keys(overlay).filter((k) => k.startsWith(`${cle}#`));
+  if (variantes.length === 0) return null;
+  const cleReelle = `${cle}#${((idx % variantes.length) + variantes.length) % variantes.length}`;
+  const g = overlay[cleReelle];
+  if (!g) return null;
+
+  const fmt = MISE_EN_FORME_GABARIT[locale];
+  const objets = fmt.objets(payload.cibles ?? [], locale);
+  const etat = fmt.etat(payload.gabaritParams?.etatMin, locale);
+  const fill = (s: string) =>
+    s.replaceAll("{objets}", objets).replaceAll("{etat}", etat);
+  return { titre: fill(g.titre), corps: g.corps.map(fill) };
+}
+
+/**
+ * Titre localisé d'un courrier. Priorité : (1) régénération par gabarit persisté
+ * (quêtes périodiques) → (2) overlay par `c.id` (arc/lettre scénarisée, Task 4)
+ * → (3) titre FR du payload (vieilles saves, FR). Jamais d'écriture en save.
  */
 export function titreCourrier(
-  c: { id: string; payload: { titre: string } },
+  c: { id: string; payload: PayloadCourrier },
   locale: Locale,
 ): string {
   if (locale !== "fr") {
+    const regen = resoudreGabarit(c.payload, locale);
+    if (regen) return regen.titre;
     const trad = COURRIER_OVERLAY[locale][c.id]?.titre;
     if (trad) return trad;
   }
@@ -375,15 +460,16 @@ export function titreCourrier(
 }
 
 /**
- * Corps localisé d'un courrier scénarisé (paragraphes, `**gras**` conservé).
- * Résolution par `c.id` ; id absent de l'overlay → corps FR persisté dans le
- * payload. L'overlay garantit le même nombre de paragraphes que le FR.
+ * Corps localisé d'un courrier. Même priorité que `titreCourrier` : gabarit
+ * régénéré → overlay par id (mêmes paragraphes que le FR) → corps FR du payload.
  */
 export function corpsCourrier(
-  c: { id: string; payload: { corps: string[] } },
+  c: { id: string; payload: PayloadCourrier },
   locale: Locale,
 ): string[] {
   if (locale !== "fr") {
+    const regen = resoudreGabarit(c.payload, locale);
+    if (regen) return regen.corps;
     const trad = COURRIER_OVERLAY[locale][c.id]?.corps;
     if (trad) return trad;
   }

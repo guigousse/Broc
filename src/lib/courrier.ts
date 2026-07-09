@@ -1,5 +1,6 @@
 import type {
   Courrier,
+  CourrierGabaritParams,
   CourrierPayloadMission,
   MissionCategorie,
   MissionCible,
@@ -76,6 +77,8 @@ export function creerCourrierMission(args: {
   jourLimite?: number;
   recompense: { argent: number };
   conserverCibles?: boolean;
+  gabaritId?: string;
+  gabaritParams?: CourrierGabaritParams;
 }): Courrier {
   const payload: CourrierPayloadMission = {
     type: "mission",
@@ -87,6 +90,8 @@ export function creerCourrierMission(args: {
     recompense: args.recompense,
     ...(args.jourLimite !== undefined ? { jourLimite: args.jourLimite } : {}),
     ...(args.conserverCibles ? { conserverCibles: true } : {}),
+    ...(args.gabaritId !== undefined ? { gabaritId: args.gabaritId } : {}),
+    ...(args.gabaritParams !== undefined ? { gabaritParams: args.gabaritParams } : {}),
   };
   return {
     id: args.id,
