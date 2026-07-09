@@ -1,20 +1,23 @@
 import { describe, expect, test } from "vitest";
 import { ALL_TEMPLATES, getTemplate } from "@/data/objetTemplates";
 import { OBJETS_EN } from "@/lib/i18n/contenu/en/objets";
+import { OBJETS_ES } from "@/lib/i18n/contenu/es/objets";
 import { manquants, nomObjet, nomTemplate, orphelins } from "@/lib/i18n/contenu";
 
 const IDS = ALL_TEMPLATES.map((t) => t.templateId);
 
-describe("overlay objets EN", () => {
-  test("complétude : chaque templateId a son nom EN", () => {
-    expect(manquants(IDS, OBJETS_EN)).toEqual([]);
+describe.each([
+  ["EN", OBJETS_EN],
+  ["ES", OBJETS_ES],
+] as const)("overlay objets %s", (_, overlay) => {
+  test("complétude : chaque templateId a son nom", () => {
+    expect(manquants(IDS, overlay)).toEqual([]);
   });
-  test("pas d'entrée orpheline (id inconnu du catalogue)", () => {
-    expect(orphelins(IDS, OBJETS_EN)).toEqual([]);
+  test("pas d'entrée orpheline", () => {
+    expect(orphelins(IDS, overlay)).toEqual([]);
   });
   test("pas de nom vide", () => {
-    const vides = Object.entries(OBJETS_EN).filter(([, v]) => !v.trim());
-    expect(vides).toEqual([]);
+    expect(Object.entries(overlay).filter(([, v]) => !v.trim())).toEqual([]);
   });
 });
 
