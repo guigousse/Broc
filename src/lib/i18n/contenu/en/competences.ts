@@ -10,7 +10,7 @@ import type { OverlayCompetences } from "@/lib/i18n/contenu";
  */
 
 /** Libellé anglais de catégorie (miroir de ui/en.ts, local pour éviter un couplage au dictionnaire UI). */
-const CAT_EN: Record<CategorieObjet, string> = {
+export const CAT_EN: Record<CategorieObjet, string> = {
   Musique: "Music",
   "Jeux & Loisirs": "Games & Hobbies",
   "Livres & Papeterie": "Books & Stationery",

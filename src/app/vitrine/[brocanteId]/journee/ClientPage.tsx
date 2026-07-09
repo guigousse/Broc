@@ -66,6 +66,7 @@ import {
   nomClient,
   ambianceClient,
   nomArchetypeClient,
+  nomCelebrite,
 } from "@/lib/i18n/contenu";
 import type { Locale } from "@/lib/i18n/locales";
 import type {
@@ -111,6 +112,16 @@ export default function VitrineJourneePage() {
   } = useGame();
   const { d, tr, locale } = useLangue();
   const { startCrowd, stopCrowd } = useSettings();
+
+  /**
+   * Nom affiché d'un client. La célébrité (archetypeId "celebrite") persiste son
+   * nom en chaîne FR canonique (cf. celebrite.ts) → résolu à l'affichage via
+   * l'overlay `divers.celebrites` ; les autres clients passent par `nomClient`.
+   */
+  const nomAfficheClient = (persona: ClientPersonnage): string =>
+    persona.archetypeId === "celebrite"
+      ? nomCelebrite(persona.nom, locale)
+      : nomClient(persona, locale);
   useEffect(() => {
     startCrowd();
     return () => stopCrowd();
@@ -590,7 +601,7 @@ export default function VitrineJourneePage() {
     ajouterJournal({
       heure: heureCourante(),
       texte: tr(d.vente.journalAchete, {
-        nom: nomClient(ev.persona, locale),
+        nom: nomAfficheClient(ev.persona),
         panier: describePanier(ev, d, tr, locale),
         prix: ev.prixDemande,
       }),
@@ -610,7 +621,7 @@ export default function VitrineJourneePage() {
     ajouterJournal({
       heure: heureCourante(),
       texte: tr(d.vente.journalAccepte, {
-        nom: nomClient(ev.persona, locale),
+        nom: nomAfficheClient(ev.persona),
         panier: describePanier(ev, d, tr, locale),
         prix: prixFinal,
       }),
@@ -624,7 +635,7 @@ export default function VitrineJourneePage() {
   const terminerVisiteClient = (ev: ClientEvent) => {
     ajouterJournal({
       heure: heureCourante(),
-      texte: tr(d.vente.journalEloigne, { nom: nomClient(ev.persona, locale) }),
+      texte: tr(d.vente.journalEloigne, { nom: nomAfficheClient(ev.persona) }),
       ton: "info",
     });
     setClientActuel(null);
@@ -908,17 +919,23 @@ export default function VitrineJourneePage() {
           nomAffiche={
             modifiersRef.current?.revelePersona ||
             clientActuel.persona.archetypeId === "celebrite"
-              ? nomClient(clientActuel.persona, locale)
+              ? nomAfficheClient(clientActuel.persona)
               : d.vente.clientInconnu
           }
           personaInfo={{
-            nom: nomClient(clientActuel.persona, locale),
-            archetypeNom: nomArchetypeClient(
-              clientActuel.persona.archetypeId,
-              clientActuel.persona.archetypeNom,
-              locale,
-            ),
-            ambiance: ambianceClient(clientActuel.persona, locale),
+            nom: nomAfficheClient(clientActuel.persona),
+            archetypeNom:
+              clientActuel.persona.archetypeId === "celebrite"
+                ? d.vente.celebrite
+                : nomArchetypeClient(
+                    clientActuel.persona.archetypeId,
+                    clientActuel.persona.archetypeNom,
+                    locale,
+                  ),
+            ambiance:
+              clientActuel.persona.archetypeId === "celebrite"
+                ? d.vente.celebriteAmbiance
+                : ambianceClient(clientActuel.persona, locale),
             bourse: classeBourse(clientActuel.persona),
             prixMax: clientActuel.prixMax,
             revelePersona:

@@ -269,6 +269,8 @@ export const es: DictionnaireUI = {
     humeur: "Humor",
   },
   vente: {
+    celebrite: "Celebridad",
+    celebriteAmbiance: "Llega escoltada por un fotógrafo; el rumor la precede.",
     etapePrepCoffre: "1 — Preparación del baúl",
     etapeTarification: "2 — Precios",
     etapeChoixBrocante: "3 — Elegir el mercadillo",
@@ -366,6 +368,7 @@ export const es: DictionnaireUI = {
     flashEnRestauration: "{nom} en restauración · {etat} en {duree}",
     pret: "listo ✓",
     recupererAria: "Recoger {nom}",
+    enRestaurationAria: "{nom} en restauración, queda {restant}",
     recuperer: "Recoger ✓",
     terminerPub: "Terminar (anuncio) ▶",
     ongletRestaurations: "Restauraciones",

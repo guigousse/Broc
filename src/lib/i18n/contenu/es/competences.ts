@@ -10,7 +10,7 @@ import type { OverlayCompetences } from "@/lib/i18n/contenu";
  */
 
 /** Libellé espagnol de catégorie (miroir de ui/es.ts, local pour éviter un couplage au dictionnaire UI). */
-const CAT_ES: Record<CategorieObjet, string> = {
+export const CAT_ES: Record<CategorieObjet, string> = {
   Musique: "Música",
   "Jeux & Loisirs": "Juegos y ocio",
   "Livres & Papeterie": "Libros y papelería",

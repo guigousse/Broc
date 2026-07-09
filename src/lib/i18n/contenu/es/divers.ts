@@ -8,7 +8,7 @@
  */
 export const DIVERS_ES = {
   camions: { rogers: "Rogers", break: "Ranchera", utilitaire: "Furgoneta" },
-  stockage: { "1": "Garaje", "2": "Sótano", "3": "Almacén" },
+  stockage: { "1": "Garaje", "2": "Sótano", "3": "Nave" },
   celebrites: {
     "un grand couturier parisien": "un gran modisto parisino",
     "une icône du cinéma des années 60": "un icono del cine de los años 60",

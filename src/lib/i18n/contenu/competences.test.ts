@@ -1,8 +1,11 @@
 import { describe, expect, test } from "vitest";
 import { COMPETENCES, TREES } from "@/data/competences";
+import { CATEGORIES } from "@/data/categories";
 import { DEBLOCAGES_PAR_NIVEAU } from "@/data/deblocagesNiveau";
-import { COMPETENCES_EN } from "@/lib/i18n/contenu/en/competences";
-import { COMPETENCES_ES } from "@/lib/i18n/contenu/es/competences";
+import { COMPETENCES_EN, CAT_EN } from "@/lib/i18n/contenu/en/competences";
+import { COMPETENCES_ES, CAT_ES } from "@/lib/i18n/contenu/es/competences";
+import { DICTIONNAIRES } from "@/lib/i18n/ui";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 import { DEBLOCAGES_EN } from "@/lib/i18n/contenu/en/deblocages";
 import { DEBLOCAGES_ES } from "@/lib/i18n/contenu/es/deblocages";
 import {
@@ -85,6 +88,27 @@ test("nomBranche + descriptionBranche (branche sans desc FR → undefined)", () 
   const nego = gen.branches.find((b) => b.id === "negociation")!;
   expect(descriptionBranche("general", nego, "en")).toBe("Your counteroffers hold longer.");
   expect(descriptionBranche("general", nego, "fr")).toBe(nego.description);
+});
+
+test("ids general.presentation.1/2/3 (câblés en dur par PersonaInfoOverlay) existent", () => {
+  for (const id of [
+    "general.presentation.1",
+    "general.presentation.2",
+    "general.presentation.3",
+  ]) {
+    expect(PALIER_IDS).toContain(id);
+  }
+});
+
+describe.each([
+  ["EN", CAT_EN, DICTIONNAIRES.en],
+  ["ES", CAT_ES, DICTIONNAIRES.es],
+] as const)("table catégories %s = dico UI", (_, cat, dico) => {
+  test("libellés identiques au dictionnaire UI", () => {
+    for (const c of CATEGORIES) {
+      expect(cat[c]).toBe(libelleCategorie(c, dico));
+    }
+  });
 });
 
 test("résolution + fallback déblocages", () => {

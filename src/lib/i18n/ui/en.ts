@@ -269,6 +269,8 @@ export const en: DictionnaireUI = {
     humeur: "Mood",
   },
   vente: {
+    celebrite: "Celebrity",
+    celebriteAmbiance: "Sweeps in with a photographer in tow; rumour precedes her.",
     etapePrepCoffre: "1 — Loading the trunk",
     etapeTarification: "2 — Pricing",
     etapeChoixBrocante: "3 — Choose the flea market",
@@ -366,6 +368,7 @@ export const en: DictionnaireUI = {
     flashEnRestauration: "{nom} being restored · {etat} in {duree}",
     pret: "ready ✓",
     recupererAria: "Collect {nom}",
+    enRestaurationAria: "{nom} being restored, {restant} left",
     recuperer: "Collect ✓",
     terminerPub: "Finish (ad) ▶",
     ongletRestaurations: "Restorations",

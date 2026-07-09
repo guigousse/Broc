@@ -165,7 +165,7 @@ function OccupiedSlot({
       aria-label={
         ready
           ? tr(d.inventaire.recupererAria, { nom })
-          : `${nom} en restauration, ${restant} restant`
+          : tr(d.inventaire.enRestaurationAria, { nom, restant })
       }
       style={wrapper}
     >

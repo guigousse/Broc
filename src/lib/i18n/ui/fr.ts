@@ -272,6 +272,8 @@ export const fr = {
     humeur: "Humeur",
   },
   vente: {
+    celebrite: "Célébrité",
+    celebriteAmbiance: "Entre escortée d'un photographe ; la rumeur la précède.",
     etapePrepCoffre: "1 — Préparation du coffre",
     etapeTarification: "2 — Tarification",
     etapeChoixBrocante: "3 — Choix de la brocante",
@@ -369,6 +371,7 @@ export const fr = {
     flashEnRestauration: "{nom} en restauration · {etat} dans {duree}",
     pret: "prêt ✓",
     recupererAria: "Récupérer {nom}",
+    enRestaurationAria: "{nom} en restauration, {restant} restant",
     recuperer: "Récupérer ✓",
     terminerPub: "Terminer (pub) ▶",
     ongletRestaurations: "Restaurations",
