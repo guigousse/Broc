@@ -499,6 +499,32 @@ export const fr = {
     gazetteAchetee: "Gazette achetée",
     recompenseRecue: "Récompense reçue",
     missionRecompensee: "Mission récompensée",
+    titre: "Cahier de Compte",
+    sousTitre: "Jour {jour} · Solde {budget} €",
+    aucuneEcriture: "Aucune écriture.",
+    soldeApres: "Solde après : {solde} €",
+    typeChinage: "Chinage",
+    typeVente: "Vente",
+    typeRepos: "Repos",
+    fermer: "Fermer",
+    retourAuCahier: "Retour au Cahier",
+    retour: "Retour",
+  },
+  // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les
+  // `params` structurés (LedgerEntry.params). Reproduisent EXACTEMENT les chaînes
+  // FR historiquement écrites en `designation`. Clés `_un`/`_n` = singulier/pluriel.
+  ledger: {
+    loyer: "Loyer · {tier}",
+    upgradeAtelier: "Atelier N{niveau}",
+    upgradeStockage: "Stockage N{niveau}",
+    upgradeCamion: "Camion N{niveau}",
+    sessionChinageUn: "{brocante} · 1 acqui",
+    sessionChinageN: "{brocante} · {nb} acquis",
+    sessionVenteUne: "Étal · 1 vente",
+    sessionVenteN: "Étal · {nb} ventes",
+    gazette: "Gazette du jour {jour}",
+    fraisBrocante: "Entrée · {brocante}",
+    missionRecompense: "Mission · {titre}",
   },
   // Abréviations des jours de semaine (index 0 = Lundi, cf. JOURS_SEMAINE de meteo.ts
   // qui reste la valeur canonique côté logique — ici seul l'affichage est localisé).

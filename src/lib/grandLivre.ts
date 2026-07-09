@@ -2,6 +2,7 @@ import type {
   GameState,
   LedgerEntry,
   LedgerKind,
+  LedgerParams,
   Session,
   SessionChinage,
   SessionVente,
@@ -23,6 +24,8 @@ export interface AppendLedgerPartial {
   depense: number;
   sessionId?: string;
   courrierId?: string;
+  /** Données structurées pour le rendu localisé du libellé (SP4). Additif. */
+  params?: LedgerParams;
 }
 
 export interface AppendLedgerOptions {
@@ -86,6 +89,7 @@ function sessionChinageToEntry(
     depense,
     soldeApres,
     sessionId: s.id,
+    params: { brocanteId: s.brocanteId, nb: n },
   };
 }
 
@@ -105,6 +109,7 @@ function sessionVenteToEntry(
     depense: 0,
     soldeApres,
     sessionId: s.id,
+    params: { nb: n },
   };
 }
 

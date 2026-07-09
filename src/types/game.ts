@@ -213,6 +213,24 @@ export type LedgerKind =
   | "upgrade_stockage"
   | "upgrade_camion";
 
+/**
+ * Données structurées pour re-rendre le libellé d'une écriture dans la langue
+ * courante (SP4 i18n). Additif et optionnel : `designation` FR reste écrite pour
+ * compat/debug ; une entrée sans `params` (vieilles saves) retombe sur elle.
+ */
+export interface LedgerParams {
+  /** loyer (palier de stockage), upgrades (niveau cible). */
+  niveau?: number;
+  /** session_chinage, frais_brocante (id de brocante à relocaliser). */
+  brocanteId?: string;
+  /** session_chinage (nb d'acquis), session_vente (nb de ventes). */
+  nb?: number;
+  /** courrier_recompense, mission_recompense (courrier à retrouver dans le state). */
+  courrierId?: string;
+  /** gazette (jour d'achat). */
+  jour?: number;
+}
+
 export interface LedgerEntry {
   id: string;
   jour: number;
@@ -231,6 +249,8 @@ export interface LedgerEntry {
   sessionId?: string;
   /** Si l'entrée est liée à un courrier (récompense lettre / mission). */
   courrierId?: string;
+  /** Données structurées pour re-rendre le libellé localisé (SP4). Additif. */
+  params?: LedgerParams;
 }
 
 export interface GameState {

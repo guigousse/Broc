@@ -664,6 +664,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           designation: `Loyer · ${tierStockage.nom}`,
           recette: 0,
           depense: tierStockage.loyerHebdo,
+          params: { niveau: tierStockage.niveau },
         });
       }
       return baseAvecQuetes;
@@ -720,6 +721,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         designation: `Atelier N${upgrade.niveauCible}`,
         recette: 0,
         depense: upgrade.cout,
+        params: { niveau: upgrade.niveauCible },
       });
       return { ...next, niveauAtelier: upgrade.niveauCible };
     });
@@ -744,6 +746,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         designation: `Stockage N${upgrade.niveauCible}`,
         recette: 0,
         depense: upgrade.cout,
+        params: { niveau: upgrade.niveauCible },
       });
       return { ...next, niveauStockage: upgrade.niveauCible };
     });
@@ -885,6 +888,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         designation: `Camion N${niveau}`,
         recette: 0,
         depense: prix,
+        params: { niveau },
       });
       return { ...next, niveauCamion: niveau };
     });
@@ -1006,6 +1010,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             recette: 0,
             depense,
             sessionId: session.id,
+            params: { brocanteId: session.brocanteId, nb: n },
           },
           { applyBudget: false, timestamp: session.timestamp },
         );
@@ -1021,6 +1026,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           recette,
           depense: 0,
           sessionId: session.id,
+          params: { nb: n },
         },
         { applyBudget: false, timestamp: session.timestamp },
       );
@@ -1398,6 +1404,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           recette: cible.payload.recompense.argent,
           depense: 0,
           courrierId: id,
+          params: { courrierId: id },
         });
       }
       // Création de la résolution mission si payload mission.
@@ -1465,6 +1472,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           recette: recompense.argent,
           depense: 0,
           courrierId,
+          params: { courrierId },
         });
         const avecXP = appliquerGainXPBrocanteur(credited.brocanteur, xpMission);
         // Bonus de points de compétence par chapitre livré (décision D4),
@@ -1507,6 +1515,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         designation: `Gazette du jour ${prev.jourActuel}`,
         recette: 0,
         depense: PRIX_GAZETTE,
+        params: { jour: prev.jourActuel },
       });
       return { ...next, gazetteAchetee: true };
     });
@@ -1515,7 +1524,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const payerFraisBrocante = useCallback(
     (brocanteId: string, brocanteNom: string, montant: number) => {
-      void brocanteId;
       if (montant <= 0) return;
       setState((prev) => {
         if (!prev) return prev;
@@ -1525,6 +1533,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           designation: `Entrée · ${brocanteNom}`,
           recette: 0,
           depense: montant,
+          params: { brocanteId },
         });
       });
     },

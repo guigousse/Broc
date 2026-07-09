@@ -6,7 +6,11 @@ import type { GameState, Session } from "@/types/game";
 import { SessionSummary, type SummaryItem } from "@/components/SessionSummary";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomBrocante } from "@/lib/i18n/contenu";
+import { libelleLedger } from "@/lib/i18n/libelles";
 import { getBrocanteById } from "@/data/brocantes";
+import { tr, type DictionnaireUI } from "@/lib/i18n/ui";
+import type { Locale } from "@/lib/i18n/locales";
+import type { Courrier } from "@/types/game";
 
 interface CahierDeCompteOverlayProps {
   open: boolean;
@@ -165,28 +169,38 @@ function netStyle(net: number): CSSProperties {
   };
 }
 
-function typeLabel(t: JourneeHistorique["type"]): string {
-  if (t === "chinage") return "Chinage";
-  if (t === "vente") return "Vente";
-  return "Repos";
+function typeLabel(t: JourneeHistorique["type"], d: DictionnaireUI): string {
+  if (t === "chinage") return d.cahier.typeChinage;
+  if (t === "vente") return d.cahier.typeVente;
+  return d.cahier.typeRepos;
 }
 
 /* ─── Détail repos (inline) ─── */
 
-function DetailRepos({ journee }: { journee: JourneeHistorique }) {
+function DetailRepos({
+  journee,
+  d,
+  locale,
+  courriers,
+}: {
+  journee: JourneeHistorique;
+  d: DictionnaireUI;
+  locale: Locale;
+  courriers: Courrier[];
+}) {
   return (
     <div style={{ padding: "8px 12px 12px", background: "rgba(255,250,235,0.5)" }}>
       <ul style={{ margin: 0, padding: "0 0 0 14px", fontFamily: "var(--font-serif)", fontSize: 12, color: "#3a2f1e" }}>
         {journee.entries.map((e) => (
           <li key={e.id}>
-            {e.designation}
+            {libelleLedger(e, d, locale, courriers)}
             {e.recette > 0 ? <span style={{ color: "#2c5e3f" }}> +{e.recette} €</span> : null}
             {e.depense > 0 ? <span style={{ color: "#a31f1f" }}> −{e.depense} €</span> : null}
           </li>
         ))}
       </ul>
       <div style={{ marginTop: 6, fontFamily: "var(--font-display)", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>
-        Solde après : {journee.soldeFin} €
+        {tr(d.cahier.soldeApres, { solde: journee.soldeFin })}
       </div>
     </div>
   );
@@ -195,7 +209,7 @@ function DetailRepos({ journee }: { journee: JourneeHistorique }) {
 /* ─── Composant principal ─── */
 
 export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOverlayProps) {
-  const { d, tr, locale } = useLangue();
+  const { d, locale } = useLangue();
   const [reposExpanded, setReposExpanded] = useState<Set<number>>(new Set());
   const [replayOf, setReplayOf] = useState<Session | null>(null);
   const journees = useMemo(() => agregerJournees(state.grandLivre, state.historique), [state.grandLivre, state.historique]);
@@ -239,7 +253,7 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
             items={items}
             xpGagne={session.xpGagne}
             xpBrocanteur={session.xpBrocanteur}
-            retourLabel="Retour au Cahier"
+            retourLabel={d.cahier.retourAuCahier}
             xpReplayMode
             onRetour={() => setReplayOf(null)}
           />
@@ -247,10 +261,10 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
         <button
           type="button"
           onClick={() => setReplayOf(null)}
-          aria-label="Retour au Cahier"
+          aria-label={d.cahier.retourAuCahier}
           style={replayBackBtn}
         >
-          ← Retour
+          ← {d.cahier.retour}
         </button>
       </>
     );
@@ -261,15 +275,15 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
       <div style={scrim} onClick={onClose} aria-hidden />
       <div style={stage} role="dialog" aria-modal="true">
         <div style={cahier}>
-          <button type="button" style={closeBtn} onClick={onClose} aria-label="Fermer">✕</button>
+          <button type="button" style={closeBtn} onClick={onClose} aria-label={d.cahier.fermer}>✕</button>
           <div style={enTete}>
-            <h2 style={titre}>Cahier de Compte</h2>
-            <div style={sousTitre}>Jour {state.jourActuel} · Solde {state.budget} €</div>
+            <h2 style={titre}>{d.cahier.titre}</h2>
+            <div style={sousTitre}>{tr(d.cahier.sousTitre, { jour: state.jourActuel, budget: state.budget })}</div>
           </div>
           <div style={contenu}>
             {journees.length === 0 ? (
               <p style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", color: "#5e4a25", textAlign: "center", padding: "30px 10px" }}>
-                Aucune écriture.
+                {d.cahier.aucuneEcriture}
               </p>
             ) : (
               journees.map((j) => {
@@ -293,7 +307,7 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
                     >
                       <span style={jourCellule}>J{j.jour}</span>
                       <span>
-                        <div style={typeCellule}>{typeLabel(j.type)}</div>
+                        <div style={typeCellule}>{typeLabel(j.type, d)}</div>
                         <div style={libelleCellule}>{libelleJournee(j, d, locale)}</div>
                       </span>
                       <span style={netStyle(j.net)}>
@@ -303,7 +317,9 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
                         {!peutReplay && isExpanded ? "▾" : "▸"}
                       </span>
                     </div>
-                    {!peutReplay && isExpanded && <DetailRepos journee={j} />}
+                    {!peutReplay && isExpanded && (
+                      <DetailRepos journee={j} d={d} locale={locale} courriers={state.courriers} />
+                    )}
                   </div>
                 );
               })
