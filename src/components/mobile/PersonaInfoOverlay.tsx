@@ -3,7 +3,19 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Lock } from "lucide-react";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomCompetence } from "@/lib/i18n/contenu";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
+
+/**
+ * Les trois paliers de l'arbre Présentation (ids statiques générés par
+ * `expandTree`) — titres résolus via l'overlay compétences (SP3), nom FR
+ * canonique en fallback.
+ */
+const PALIERS_PRESENTATION = {
+  lecteurAmes: { id: "general.presentation.1", nom: "Lecteur d'âmes" },
+  estimateurBourse: { id: "general.presentation.2", nom: "Estimateur de bourse" },
+  oeilAiguise: { id: "general.presentation.3", nom: "Œil aiguisé" },
+} as const;
 
 export interface PersonaInfo {
   /** Nom propre du persona (révélé par Lecteur d'âmes). */
@@ -38,7 +50,7 @@ function bourseLabel(
 }
 
 export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   return (
     <div style={scrim} onClick={onClose} role="presentation">
       <div
@@ -59,7 +71,7 @@ export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
           </button>
         </div>
         <PalierRow
-          title="Lecteur d'âmes"
+          title={nomCompetence(PALIERS_PRESENTATION.lecteurAmes, locale)}
           unlocked={info.revelePersona}
           lockedText={d.chine.voirNomAmbiance}
         >
@@ -70,14 +82,14 @@ export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
           {info.ambiance && <div style={lineAmbiance}>{info.ambiance}</div>}
         </PalierRow>
         <PalierRow
-          title="Estimateur de bourse"
+          title={nomCompetence(PALIERS_PRESENTATION.estimateurBourse, locale)}
           unlocked={info.releveBourse}
           lockedText={d.chine.lireClasseBourse}
         >
           <div style={lineMain}>{bourseLabel(info.bourse, d)}</div>
         </PalierRow>
         <PalierRow
-          title="Œil aiguisé"
+          title={nomCompetence(PALIERS_PRESENTATION.oeilAiguise, locale)}
           unlocked={info.oeilAiguise}
           lockedText={d.chine.lirePrixMax}
         >
