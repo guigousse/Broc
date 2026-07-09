@@ -6,6 +6,7 @@ import { getExpediteur } from "@/data/expediteursCourrier";
 import { progressionMission } from "@/lib/missions";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 import { corpsCourrier, nomTemplate, nomExpediteur, personnaliteExpediteur, titreCourrier } from "@/lib/i18n/contenu";
 import type { Courrier, GameState } from "@/types/game";
 
@@ -30,7 +31,7 @@ const avatar: CSSProperties = {
 };
 
 export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Props) {
-  const { locale } = useLangue();
+  const { locale, d, tr } = useLangue();
   if (courrier.payload.type !== "mission") return null;
   const p = courrier.payload;
   const exp = getExpediteur(p.expediteurId);
@@ -56,7 +57,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
         </span>
         <span style={{ textAlign: "right", flex: "0 0 auto" }}>
           {prog.livrable ? (
-            <span style={{ display: "inline-block", background: "#2c5e3f", color: "#f4e9cd", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 10 }}>Prêt ✓</span>
+            <span style={{ display: "inline-block", background: "#2c5e3f", color: "#f4e9cd", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 10 }}>{d.carnet.pret}</span>
           ) : (
             <>
               <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#8a6d2e", fontSize: 13 }}>{prog.remplies}/{prog.total}</span>
@@ -77,7 +78,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
             <p key={i} style={{ fontStyle: "italic", color: "#4a3f28", fontSize: 12, margin: "6px 0" }}>{para}</p>
           ))}
           <div style={{ fontFamily: "var(--font-display)", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6e1f1f", margin: "8px 0 4px" }}>
-            Objets demandés ({prog.remplies}/{prog.total})
+            {tr(d.carnet.objetsDemandes, { rempli: prog.remplies, total: prog.total })}
           </div>
           {p.cibles.map((cible, i) => {
             const tpl = getTemplate(cible.templateId);
@@ -89,14 +90,14 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
                 </span>
                 <span style={{ flex: 1, fontSize: 12, color: "#2b2418" }}>
                   {nomTemplate(cible.templateId, locale)}
-                  {cible.etatMin ? <span style={{ display: "block", fontSize: 10, color: "#8a7a52" }}>état min : {cible.etatMin}</span> : null}
+                  {cible.etatMin ? <span style={{ display: "block", fontSize: 10, color: "#8a7a52" }}>{tr(d.carnet.etatMin, { etat: libelleEtat(cible.etatMin, d) })}</span> : null}
                 </span>
                 <span style={{ color: ok ? "#2c5e3f" : "#b3a06a", fontWeight: 700 }}>{ok ? "✓" : "○"}</span>
               </div>
             );
           })}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
-            <span style={{ fontSize: 12, color: "#4a3f28" }}>Récompense <b style={{ color: "#8a6d2e" }}>+{p.recompense.argent} €</b></span>
+            <span style={{ fontSize: 12, color: "#4a3f28" }}>{d.carnet.recompenseLabel} <b style={{ color: "#8a6d2e" }}>+{p.recompense.argent} €</b></span>
             <button
               type="button"
               onClick={onLivrer}
@@ -108,7 +109,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
                 opacity: prog.livrable ? 1 : 0.6,
               }}
             >
-              {prog.livrable ? "Livrer" : `Livrer (${prog.remplies}/${prog.total})`}
+              {prog.livrable ? d.carnet.livrer : tr(d.carnet.livrerProgress, { rempli: prog.remplies, total: prog.total })}
             </button>
           </div>
         </div>

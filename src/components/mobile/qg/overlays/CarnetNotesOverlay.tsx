@@ -173,7 +173,7 @@ function trierActives(
 /* ─── Composant principal ─── */
 
 export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission, tempsConfiance }: CarnetNotesOverlayProps) {
-  const { locale } = useLangue();
+  const { locale, d, tr } = useLangue();
   const [ouvertId, setOuvertId] = useState<string | null>(null);
   const [termineesVisibles, setTermineesVisibles] = useState(false);
   const [, tick] = useState(0);
@@ -292,31 +292,33 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission, temp
       <div style={stage} role="dialog" aria-modal="true">
         <div style={carnet}>
           <div style={ruban} aria-hidden />
-          <button type="button" style={closeBtn} onClick={onClose} aria-label="Fermer">✕</button>
+          <button type="button" style={closeBtn} onClick={onClose} aria-label={d.carnet.fermer}>✕</button>
           <div style={enTete}>
-            <h2 style={titre}>Carnet de commandes</h2>
+            <h2 style={titre}>{d.carnet.titre}</h2>
             <div style={sousTitre}>
-              Jour {state.jourActuel}
-              {nbLivrables > 0 ? ` · ${nbLivrables} livrable${nbLivrables > 1 ? "s" : ""}` : ""}
+              {tr(d.carnet.jour, { n: state.jourActuel })}
+              {nbLivrables > 0
+                ? tr(nbLivrables > 1 ? d.carnet.livrablesSuffixe_n : d.carnet.livrablesSuffixe_un, { n: nbLivrables })
+                : ""}
             </div>
           </div>
           <div style={contenu}>
             {actives.length === 0 && terminees.length === 0 ? (
               <p style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", color: "#5e4a25", textAlign: "center", padding: "30px 10px" }}>
-                Aucune commande pour l&apos;instant.
+                {d.carnet.aucuneCommande}
               </p>
             ) : (
               <>
-                {renderSection("Commandes principales", principales)}
+                {renderSection(d.carnet.sectionPrincipales, principales)}
                 {renderSection(
-                  "Commandes quotidiennes",
+                  d.carnet.sectionQuotidiennes,
                   quotidiennes,
-                  `Renouvellement dans ${formatRestant(resteQuotidien)}`,
+                  tr(d.carnet.renouvellement, { t: formatRestant(resteQuotidien) }),
                 )}
                 {renderSection(
-                  "Commandes hebdomadaires",
+                  d.carnet.sectionHebdomadaires,
                   hebdomadaires,
-                  `Renouvellement dans ${formatRestant(resteHebdo)}`,
+                  tr(d.carnet.renouvellement, { t: formatRestant(resteHebdo) }),
                 )}
                 {terminees.length > 0 && (
                   <>
@@ -325,7 +327,7 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission, temp
                       onClick={() => setTermineesVisibles((v) => !v)}
                       style={{ ...sectionLabel, background: "none", border: "none", width: "100%", cursor: "pointer" }}
                     >
-                      Terminées {termineesVisibles ? "▾" : "▸"}
+                      {d.carnet.terminees} {termineesVisibles ? "▾" : "▸"}
                     </button>
                     {termineesVisibles &&
                       terminees.map((m) => {
@@ -343,7 +345,9 @@ export function CarnetNotesOverlay({ open, onClose, state, onLivrerMission, temp
                               {cibleTemplateId ? nomTemplate(cibleTemplateId, locale) : ""}
                             </span>
                             <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", color: couleur }}>
-                              {m.statut === "livree" ? `Livrée J${m.jourResolution}` : `Expirée J${m.jourResolution}`}
+                              {m.statut === "livree"
+                                ? tr(d.carnet.livreeJour, { n: m.jourResolution ?? 0 })
+                                : tr(d.carnet.expireeJour, { n: m.jourResolution ?? 0 })}
                             </span>
                           </div>
                         );

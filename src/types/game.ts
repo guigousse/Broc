@@ -229,6 +229,14 @@ export interface LedgerParams {
   courrierId?: string;
   /** gazette (jour d'achat). */
   jour?: number;
+  /**
+   * mission_recompense : de quoi régénérer le TITRE localisé même après purge du
+   * courrier (lots périodiques). ADDITIF. `gabaritId`/`etatMin`/`templateIds`
+   * copiés du payload mission au moment de la livraison.
+   */
+  gabaritId?: string;
+  etatMin?: EtatObjet;
+  templateIds?: string[];
 }
 
 export interface LedgerEntry {

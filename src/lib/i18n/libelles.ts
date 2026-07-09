@@ -11,8 +11,8 @@ import type { Locale } from "@/lib/i18n/locales";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import { tr } from "@/lib/i18n/ui";
 import { getBrocanteById } from "@/data/brocantes";
-import { getStockageTierParNiveau } from "@/data/stockage";
-import { nomBrocante, nomStockageTier, titreCourrier } from "@/lib/i18n/contenu";
+import { getStockageTierParNiveau, type StockageTier } from "@/data/stockage";
+import { nomBrocante, nomStockageTier, titreCourrier, titreDepuisGabarit } from "@/lib/i18n/contenu";
 
 /**
  * Traduction À L'AFFICHAGE des unions internes persistées (EtatObjet,
@@ -168,7 +168,12 @@ export function libelleLedger(
   switch (e.kind) {
     case "loyer": {
       if (p.niveau === undefined) return e.designation;
-      const tier = getStockageTierParNiveau(p.niveau as 1 | 2 | 3);
+      // Le cast `as 1|2|3` est non prouvé (save corrompue possible) : `tier` peut
+      // être undefined à l'exécution → repli designation plutôt que crash.
+      const tier: StockageTier | undefined = getStockageTierParNiveau(
+        p.niveau as 1 | 2 | 3,
+      );
+      if (!tier) return e.designation;
       return tr(d.ledger.loyer, { tier: nomStockageTier(tier, locale) });
     }
     case "upgrade_atelier":
@@ -209,8 +214,14 @@ export function libelleLedger(
     }
     case "mission_recompense": {
       const courrier = courriers.find((c) => c.id === p.courrierId);
-      return courrier
-        ? tr(d.ledger.missionRecompense, { titre: titreCourrier(courrier, locale) })
+      if (courrier) {
+        return tr(d.ledger.missionRecompense, { titre: titreCourrier(courrier, locale) });
+      }
+      // Courrier purgé (lots périodiques) : régénère le titre depuis le gabarit
+      // persisté dans les params ; sinon fallback designation FR historisée.
+      const titreRegen = titreDepuisGabarit(p.gabaritId, p.templateIds, p.etatMin, locale);
+      return titreRegen
+        ? tr(d.ledger.missionRecompense, { titre: titreRegen })
         : e.designation;
     }
   }

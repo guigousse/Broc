@@ -510,6 +510,29 @@ export const fr = {
     retourAuCahier: "Retour au Cahier",
     retour: "Retour",
   },
+  // Carnet de commandes (overlay QG) : titres, sections, statuts de livraison.
+  // Clés `_un`/`_n` = singulier/pluriel (convention SP1). Placeholders identiques ×3 langues.
+  carnet: {
+    fermer: "Fermer",
+    titre: "Carnet de commandes",
+    jour: "Jour {n}",
+    livrablesSuffixe_un: " · {n} livrable",
+    livrablesSuffixe_n: " · {n} livrables",
+    aucuneCommande: "Aucune commande pour l'instant.",
+    sectionPrincipales: "Commandes principales",
+    sectionQuotidiennes: "Commandes quotidiennes",
+    sectionHebdomadaires: "Commandes hebdomadaires",
+    renouvellement: "Renouvellement dans {t}",
+    terminees: "Terminées",
+    livreeJour: "Livrée J{n}",
+    expireeJour: "Expirée J{n}",
+    pret: "Prêt ✓",
+    objetsDemandes: "Objets demandés ({rempli}/{total})",
+    etatMin: "état min : {etat}",
+    recompenseLabel: "Récompense",
+    livrer: "Livrer",
+    livrerProgress: "Livrer ({rempli}/{total})",
+  },
   // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les
   // `params` structurés (LedgerEntry.params). Reproduisent EXACTEMENT les chaînes
   // FR historiquement écrites en `designation`. Clés `_un`/`_n` = singulier/pluriel.

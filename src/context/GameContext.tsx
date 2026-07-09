@@ -1471,6 +1471,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return { ok: false, raison: raisonLocalisee("objetsRequisManquants") };
       }
       const titreMission = courrier.payload.titre;
+      // Capturés hors closure (le narrowing de `courrier.payload` en mission ne
+      // survit pas dans le callback de setState) : servent aux params ADDITIFS.
+      const gabaritIdMission = courrier.payload.gabaritId;
+      const etatMinMission = courrier.payload.gabaritParams?.etatMin;
+      const templateIdsMission = courrier.payload.cibles.map((c) => c.templateId);
       // Certaines missions (finale de l'arc principal) valident à la possession
       // sans consommer l'objet : le joueur garde la pièce.
       const conserver = courrier.payload.conserverCibles === true;
@@ -1501,7 +1506,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
           recette: recompense.argent,
           depense: 0,
           courrierId,
-          params: { courrierId },
+          // Params ADDITIFS : `courrierId` sert le rendu localisé tant que le
+          // courrier existe ; `gabaritId`/`etatMin`/`templateIds` permettent de
+          // régénérer le titre après purge du lot périodique (i18n SP4).
+          params: {
+            courrierId,
+            gabaritId: gabaritIdMission,
+            etatMin: etatMinMission,
+            templateIds: templateIdsMission,
+          },
         });
         const avecXP = appliquerGainXPBrocanteur(credited.brocanteur, xpMission);
         // Bonus de points de compétence par chapitre livré (décision D4),

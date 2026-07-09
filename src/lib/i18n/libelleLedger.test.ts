@@ -95,4 +95,41 @@ describe("libelleLedger — params structurés → rendu localisé", () => {
     expect(libelleLedger(e, DICTIONNAIRES.fr, "fr", [courrier])).toBe("Mission · Le vase");
     expect(libelleLedger(e, DICTIONNAIRES.en, "en", [courrier])).toContain("Le vase");
   });
+
+  test("mission_recompense : courrier purgé + params.gabaritId → titre EN régénéré", () => {
+    // Lot périodique purgé : le courrier n'est plus dans `courriers`, mais les
+    // params portent de quoi régénérer le titre depuis le gabarit (SP4).
+    const e = {
+      ...base,
+      recette: 10,
+      depense: 0,
+      kind: "mission_recompense",
+      designation: "Mission · Recherché : PlayBox Pocket",
+      params: {
+        courrierId: "quo_purge_1",
+        gabaritId: "generique#0",
+        etatMin: "Bon",
+        templateIds: ["jx.playbox_pocket"],
+      },
+    } as never;
+    // EN : titre régénéré via l'overlay gabarit ("Wanted: …") avec la cible localisée.
+    const en = libelleLedger(e, DICTIONNAIRES.en, "en", []);
+    expect(en).toContain("Wanted:");
+    expect(en).toContain("PlayBox Pocket");
+    // FR : pas de régénération → designation FR canonique historisée.
+    expect(libelleLedger(e, DICTIONNAIRES.fr, "fr", [])).toBe("Mission · Recherché : PlayBox Pocket");
+  });
+
+  test("mission_recompense : courrier purgé sans gabaritId → fallback designation", () => {
+    const e = {
+      ...base,
+      recette: 10,
+      depense: 0,
+      kind: "mission_recompense",
+      designation: "Mission · Le vase",
+      params: { courrierId: "purge_sans_gabarit" },
+    } as never;
+    expect(libelleLedger(e, DICTIONNAIRES.en, "en", [])).toBe("Mission · Le vase");
+    expect(libelleLedger(e, DICTIONNAIRES.fr, "fr", [])).toBe("Mission · Le vase");
+  });
 });

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { METEO_ICON } from "@/data/meteos";
 import { getBrocanteById } from "@/data/brocantes";
-import { nomBrocante, nomCelebrite } from "@/lib/i18n/contenu";
+import { nomBrocante, nomCelebrite, nomCompetence } from "@/lib/i18n/contenu";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleJourSemaine } from "@/lib/i18n/libelles";
 import type {
@@ -23,6 +23,17 @@ import type {
   Meteo,
   Tendance,
 } from "@/types/game";
+
+/**
+ * Les trois paliers de l'arbre Vision (ids statiques générés par `expandTree` :
+ * `general.vision.{numero}`) — noms résolus via l'overlay compétences (SP3),
+ * nom FR canonique en fallback. Mêmes ids que `src/data/competences.ts`.
+ */
+const PALIERS_VISION = {
+  bulletinMeteo: { id: "general.vision.1", nom: "Bulletin météo" },
+  carnetMondain: { id: "general.vision.2", nom: "Carnet mondain" },
+  influence: { id: "general.vision.3", nom: "Influence" },
+} as const;
 
 interface GazetteSheetProps {
   open: boolean;
@@ -440,13 +451,13 @@ export function GazetteSheet(props: GazetteSheetProps) {
                     onClick={onRerollCelebrite}
                     style={influenceButton}
                   >
-                    ↻ Influence
+                    ↻ {nomCompetence(PALIERS_VISION.influence, locale)}
                   </button>
                 )}
                 </>
               ) : (
                 <p style={placeholderLock}>
-                  {d.sheets.debloquerAvec} <em>Carnet mondain</em>
+                  {d.sheets.debloquerAvec} <em>{nomCompetence(PALIERS_VISION.carnetMondain, locale)}</em>
                 </p>
               )}
 
@@ -575,7 +586,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
                 </div>
               ) : (
                 <p style={placeholderLock}>
-                  {d.sheets.debloquerAvec} <em>Bulletin météo</em>
+                  {d.sheets.debloquerAvec} <em>{nomCompetence(PALIERS_VISION.bulletinMeteo, locale)}</em>
                 </p>
               )}
             </div>

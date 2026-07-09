@@ -409,16 +409,18 @@ type PayloadCourrier = {
 };
 
 /**
- * Régénère titre+corps d'un courrier périodique dans la locale (≠ fr) à partir
- * de son `gabaritId` persisté et de l'overlay. Absorbe un index hors borne via
- * `index % nbVariantes`. Retourne `null` si pas de gabarit résoluble (→ repli
- * sur la voie id stable puis payload FR).
+ * Cœur de régénération d'un texte de gabarit périodique dans la locale (≠ fr) :
+ * résout la variante par `gabaritId` (absorbe un index hors borne via
+ * `index % nbVariantes`) puis interpole `{objets}`/`{etat}`. `null` si pas de
+ * gabarit résoluble. Partagé par la voie payload (`resoudreGabarit`) et la voie
+ * ledger (`titreDepuisGabarit`, après purge du courrier).
  */
-function resoudreGabarit(
-  payload: PayloadCourrier,
+function resoudreGabaritCore(
+  gabaritId: string | undefined,
+  cibles: MissionCible[],
+  etatMin: EtatObjet | undefined,
   locale: "en" | "es",
 ): { titre: string; corps: string[] } | null {
-  const { gabaritId } = payload;
   if (!gabaritId) return null;
   const sep = gabaritId.lastIndexOf("#");
   if (sep < 0) return null;
@@ -434,11 +436,45 @@ function resoudreGabarit(
   if (!g) return null;
 
   const fmt = MISE_EN_FORME_GABARIT[locale];
-  const objets = fmt.objets(payload.cibles ?? [], locale);
-  const etat = fmt.etat(payload.gabaritParams?.etatMin, locale);
+  const objets = fmt.objets(cibles, locale);
+  const etat = fmt.etat(etatMin, locale);
   const fill = (s: string) =>
     s.replaceAll("{objets}", objets).replaceAll("{etat}", etat);
   return { titre: fill(g.titre), corps: g.corps.map(fill) };
+}
+
+/**
+ * Régénère titre+corps d'un courrier périodique depuis son payload. Repli `null`
+ * sur la voie id stable puis payload FR.
+ */
+function resoudreGabarit(
+  payload: PayloadCourrier,
+  locale: "en" | "es",
+): { titre: string; corps: string[] } | null {
+  return resoudreGabaritCore(
+    payload.gabaritId,
+    payload.cibles ?? [],
+    payload.gabaritParams?.etatMin,
+    locale,
+  );
+}
+
+/**
+ * Titre localisé d'une récompense de mission régénéré SANS le courrier (purgé
+ * par les lots périodiques) : le grand livre persiste `gabaritId`/`templateIds`/
+ * `etatMin` dans `LedgerParams`. `null` si locale fr (→ designation FR canonique)
+ * ou gabarit non résoluble. Réutilise `resoudreGabaritCore` (pas de duplication).
+ */
+export function titreDepuisGabarit(
+  gabaritId: string | undefined,
+  templateIds: string[] | undefined,
+  etatMin: EtatObjet | undefined,
+  locale: Locale,
+): string | null {
+  if (locale === "fr") return null;
+  const cibles: MissionCible[] = (templateIds ?? []).map((id) => ({ templateId: id }));
+  const regen = resoudreGabaritCore(gabaritId, cibles, etatMin, locale);
+  return regen ? regen.titre : null;
 }
 
 /**
