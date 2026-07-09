@@ -118,7 +118,7 @@ export const OBJETS_ES: Record<string, string> = {
   "jx.ours_en_peluche_mohair_annees_1920": "Oso de peluche de mohair de los años 20",
 
   // ===== LIVRES & PAPETERIE — communs =====
-  "lv.monte_cristo": "Novela 'El Conde de Montecristo'",
+  "lv.monte_cristo": "Novela 'El conde de Montecristo'",
   "lv.les_aventures_de_titou_cap_sur_la_lune": "Las Aventuras de Titou — 'Rumbo a la Luna'",
   "lv.paris_match_70s": "Lote de revistas de actualidad de los años 70",
   "lv.cartes_postales_anciennes": "Postales antiguas (caja)",
@@ -161,7 +161,7 @@ export const OBJETS_ES: Record<string, string> = {
 
   // ===== LIVRES & PAPETERIE — rares =====
   "lv.conte_de_l_aviateur_et_de_l_enfant_roi_edition": "Cuento del Aviador y el Niño-Rey (edición de 1943)",
-  "lv.les_aventures_de_titou_petrole_1950": "Las Aventuras de Titou — 'Oro negro' (1950)",
+  "lv.les_aventures_de_titou_petrole_1950": "Las Aventuras de Titou — 'Petróleo' (1950)",
   "lv.le_petit_moustachu_edition_originale_1961": "El Pequeño Bigotudo — primera edición de 1961",
   "lv.funky_look_premier_album_1947": "Funky Look — primer álbum de 1947",
   "lv.proust_swann_dedicace": "Por el camino de Swann (dedicado)",
