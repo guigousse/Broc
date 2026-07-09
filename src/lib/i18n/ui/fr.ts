@@ -537,6 +537,95 @@ export const fr = {
     sam: "Sam",
     dim: "Dim",
   },
+  // Mois longs (index 0 = janvier … 11 = décembre, cf. MOIS_LONG de calendrier.ts
+  // qui reste canonique côté logique ; ici seul l'affichage du calendrier est localisé).
+  mois: {
+    janvier: "janvier",
+    fevrier: "février",
+    mars: "mars",
+    avril: "avril",
+    mai: "mai",
+    juin: "juin",
+    juillet: "juillet",
+    aout: "août",
+    septembre: "septembre",
+    octobre: "octobre",
+    novembre: "novembre",
+    decembre: "décembre",
+  },
+  // Raisons d'échec des actions (GameContext) : toasts transitoires, JAMAIS
+  // persistés. Résolues hors React via `localeCourante()` (helper `raisonLocalisee`).
+  // Clés `Un`/`N` = singulier/pluriel (convention SP1). Placeholders identiques ×3 langues.
+  raisons: {
+    pasDePartie: "Pas de partie.",
+    pasDePartieEnCours: "Pas de partie en cours.",
+    influenceRequise: "Compétence Influence requise.",
+    influenceUtilisee: "Influence déjà utilisée cette édition.",
+    atelierMax: "Atelier déjà au maximum.",
+    stockageMax: "Stockage déjà au maximum.",
+    ilManqueEuros: "Il manque {n} €.",
+    competenceIntrouvable: "Compétence introuvable.",
+    dejaDebloquee: "Déjà débloquée.",
+    prerequisNonRemplis: "Prérequis non remplis.",
+    niveauBrocanteurRequis: "Niveau de Brocanteur {niveau} requis.",
+    pasAssezDePoints: "Pas assez de points.",
+    conditionsNonRemplies: "Conditions non remplies.",
+    objetIntrouvableInventaire: "Objet introuvable dans l'inventaire.",
+    objetDejaEnRestauration: "Cet objet est déjà en restauration.",
+    atelierPleinUn: "Atelier plein ({enCours}/{capacite} slot).",
+    atelierPleinN: "Atelier plein ({enCours}/{capacite} slots).",
+    competenceReparerManquante: "Vous n'avez pas la compétence Réparer — {categorie}.",
+    manquePiecesUn: "Manque {n} pièce {categorie}.",
+    manquePiecesN: "Manque {n} pièces {categorie}.",
+    objetEnRestauration: "Objet en restauration.",
+    objetIntrouvable: "Objet introuvable.",
+    objetPasEnRestauration: "Objet pas en restauration.",
+    restaurationPasTerminee: "Restauration pas terminée.",
+    horsFenetre30min: "Hors fenêtre (≤ 30 min).",
+    objetEnCoursDeRestauration: "Objet en cours de restauration.",
+    templateInconnu: "Template inconnu.",
+    stockagePlein: "Stockage plein.",
+    missionIntrouvable: "Mission introuvable.",
+    missionNonActive: "Mission non active.",
+    objetsRequisManquants: "Objets requis manquants dans l'inventaire.",
+    editionDejaAchetee: "Édition déjà achetée.",
+    budgetInsuffisantGazette: "Budget insuffisant ({prix} € requis).",
+    // Statuts d'atelier/démantèlement (atelier.ts, affichés dans gérer stockage/atelier).
+    dejaEnCours: "Déjà en cours.",
+    dejaParfaitEtat: "Déjà en parfait état.",
+    atelierPleinSimple: "Atelier plein.",
+    nonRestaurable: "Non restaurable.",
+    competenceReparerManquanteSimple: "Compétence Réparer manquante.",
+    objetIntrouvableStock: "Objet introuvable en stock.",
+  },
+  // Conditions de déblocage des brocantes (deblocage.ts) : rendues à l'affichage
+  // (panorama). `long` = description complète, `court` = avec progression.
+  // {etoiles} = chaîne d'étoiles déjà construite côté logique. Clés Un/N = pluriel.
+  deblocage: {
+    long: {
+      depart: "Disponible dès le départ",
+      jour: "Débloqué au jour {jour}",
+      budget: "Débloqué à partir de {montant} € de budget",
+      ventesCategorieUn: "Débloqué après {nombre} vente de {categorie}",
+      ventesCategorieN: "Débloqué après {nombre} ventes de {categorie}",
+      brocantesDebloqueesUn: "Débloqué après {nombre} brocante {etoiles} débloquée",
+      brocantesDebloqueesN: "Débloqué après {nombre} brocantes {etoiles} débloquées",
+      valeurCollection: "Débloqué quand votre collection atteint {montant} €",
+      valeurCollectionCategorie:
+        "Débloqué quand votre collection « {categorie} » atteint {montant} €",
+      niveau: "Niveau de Brocanteur {niveau} requis",
+    },
+    court: {
+      disponible: "Disponible",
+      jour: "Jour : {actuel}/{jour}",
+      budget: "Budget : {actuel}/{montant} €",
+      ventesCategorie: "{categorie} : {n}/{nombre} ventes",
+      brocantesDebloquees: "Brocantes {etoiles} : {n}/{nombre}",
+      valeurCollection: "Collection : {actuel}/{montant} €",
+      valeurCollectionCategorie: "{categorie} : {actuel}/{montant} €",
+      niveau: "Niveau {niveau} (vous : N{actuel})",
+    },
+  },
   // Notifications locales (index.ts/energieNotif/quetesNotif/rappelRetour/
   // restaurationNotif) : texte résolu à la programmation, jamais en save.
   notifs: {

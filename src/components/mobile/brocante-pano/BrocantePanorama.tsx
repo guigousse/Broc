@@ -203,7 +203,7 @@ export function BrocantePanorama({
     : false;
   const selectedConditions =
     selected && !selectedDebloquee
-      ? listerConditionsAvecEtat(selected, state, parTier)
+      ? listerConditionsAvecEtat(selected, state, d, parTier)
       : [];
   const continuerActif = !!(selected && selectedDebloquee && selectedPeutEntrer);
 

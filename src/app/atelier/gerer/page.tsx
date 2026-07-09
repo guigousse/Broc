@@ -151,8 +151,8 @@ export default function AtelierPage() {
   }, [state]);
   const demantelables = useMemo(() => {
     if (!state) return [];
-    return state.inventaireJoueur.filter((o) => peutDemanteler(state, o).disponible);
-  }, [state]);
+    return state.inventaireJoueur.filter((o) => peutDemanteler(state, o, d).disponible);
+  }, [state, d]);
 
   if (!isHydrated || !state) {
     return (

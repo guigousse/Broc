@@ -114,6 +114,31 @@ export function libelleJourSemaine(index: number, d: DictionnaireUI): string {
   return d.jours[CLES_JOURS[((index % 7) + 7) % 7]];
 }
 
+/** Clés du dictionnaire `mois`, indexées comme `MOIS_LONG` de calendrier.ts (0 = janvier). */
+const CLES_MOIS = [
+  "janvier",
+  "fevrier",
+  "mars",
+  "avril",
+  "mai",
+  "juin",
+  "juillet",
+  "aout",
+  "septembre",
+  "octobre",
+  "novembre",
+  "decembre",
+] as const;
+
+/**
+ * Nom localisé d'un mois (index 0-11, 0 = janvier — même convention que
+ * `MOIS_LONG` de `@/lib/calendrier`, qui reste la valeur canonique côté
+ * logique ; seul l'affichage passe par le dictionnaire).
+ */
+export function libelleMois(index: number, d: DictionnaireUI): string {
+  return d.mois[CLES_MOIS[((index % 12) + 12) % 12]];
+}
+
 /**
  * Nom de brocante localisé pour le grand livre : lookup par id dans les données,
  * puis overlay de langue. Id introuvable → `null` (le caller retombe alors sur la

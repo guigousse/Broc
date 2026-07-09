@@ -6,27 +6,47 @@ import type {
 } from "@/types/game";
 import { valeurTotale, valeurParCategorie } from "@/lib/collection";
 import { brocantesParTier } from "@/data/brocantes";
+import { tr, type DictionnaireUI } from "@/lib/i18n/ui";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 
-export function descriptionCondition(c: ConditionDeblocage): string {
+/**
+ * Description complète et localisée d'une condition de déblocage (SP4 i18n).
+ * Les valeurs de logique/save ne changent jamais ; seul le libellé rendu passe
+ * par le dictionnaire. `{etoiles}` est construit côté logique (⭐ répétées).
+ */
+export function descriptionCondition(
+  c: ConditionDeblocage,
+  d: DictionnaireUI,
+): string {
+  const L = d.deblocage.long;
   switch (c.type) {
     case "depart":
-      return "Disponible dès le départ";
+      return L.depart;
     case "jour":
-      return `Débloqué au jour ${c.jour}`;
+      return tr(L.jour, { jour: c.jour });
     case "budget":
-      return `Débloqué à partir de ${c.montant} € de budget`;
+      return tr(L.budget, { montant: c.montant });
     case "ventesCategorie":
-      return `Débloqué après ${c.nombre} vente${c.nombre > 1 ? "s" : ""} de ${c.categorie}`;
+      return tr(c.nombre > 1 ? L.ventesCategorieN : L.ventesCategorieUn, {
+        nombre: c.nombre,
+        categorie: libelleCategorie(c.categorie, d),
+      });
     case "brocantesDebloquees":
-      return `Débloqué après ${c.nombre} brocante${c.nombre > 1 ? "s" : ""} ${"⭐".repeat(c.tier)} débloquée${c.nombre > 1 ? "s" : ""}`;
+      return tr(
+        c.nombre > 1 ? L.brocantesDebloqueesN : L.brocantesDebloqueesUn,
+        { nombre: c.nombre, etoiles: "⭐".repeat(c.tier) },
+      );
     case "valeurCollection":
-      return `Débloqué quand votre collection atteint ${c.montant} €`;
+      return tr(L.valeurCollection, { montant: c.montant });
     case "valeurCollectionCategorie":
-      return `Débloqué quand votre collection « ${c.categorie} » atteint ${c.montant} €`;
+      return tr(L.valeurCollectionCategorie, {
+        categorie: libelleCategorie(c.categorie, d),
+        montant: c.montant,
+      });
     case "niveau":
-      return `Niveau de Brocanteur ${c.niveau} requis`;
+      return tr(L.niveau, { niveau: c.niveau });
     case "ET":
-      return c.conditions.map(descriptionCondition).join(" + ");
+      return c.conditions.map((cc) => descriptionCondition(cc, d)).join(" + ");
   }
 }
 
@@ -46,8 +66,12 @@ function compterVentesCategorie(
 }
 
 /** Retourne une courte description de la condition de déblocage d'une brocante. */
-export function decrireConditions(brocante: Brocante, _state: GameState): string {
-  return descriptionCondition(brocante.conditionDeblocage);
+export function decrireConditions(
+  brocante: Brocante,
+  _state: GameState,
+  d: DictionnaireUI,
+): string {
+  return descriptionCondition(brocante.conditionDeblocage, d);
 }
 
 /**
@@ -63,33 +87,53 @@ export function decrireConditions(brocante: Brocante, _state: GameState): string
 export function descriptionConditionCourte(
   c: ConditionDeblocage,
   state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
+  d: DictionnaireUI,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): string {
+  const C = d.deblocage.court;
   switch (c.type) {
     case "depart":
-      return "Disponible";
+      return C.disponible;
     case "jour":
-      return `Jour : ${state.jourActuel}/${c.jour}`;
+      return tr(C.jour, { actuel: state.jourActuel, jour: c.jour });
     case "budget":
-      return `Budget : ${state.budget}/${c.montant} €`;
+      return tr(C.budget, { actuel: state.budget, montant: c.montant });
     case "ventesCategorie": {
       const n = compterVentesCategorie(state.historique, c.categorie);
-      return `${c.categorie} : ${n}/${c.nombre} ventes`;
+      return tr(C.ventesCategorie, {
+        categorie: libelleCategorie(c.categorie, d),
+        n,
+        nombre: c.nombre,
+      });
     }
     case "brocantesDebloquees": {
       const n = parTier?.get(c.tier)?.size ?? 0;
-      return `Brocantes ${"★".repeat(c.tier)} : ${n}/${c.nombre}`;
+      return tr(C.brocantesDebloquees, {
+        etoiles: "★".repeat(c.tier),
+        n,
+        nombre: c.nombre,
+      });
     }
     case "valeurCollection":
-      return `Collection : ${Math.floor(valeurTotale(state.collection))}/${c.montant} €`;
+      return tr(C.valeurCollection, {
+        actuel: Math.floor(valeurTotale(state.collection)),
+        montant: c.montant,
+      });
     case "valeurCollectionCategorie":
-      return `${c.categorie} : ${Math.floor(valeurParCategorie(state.collection, c.categorie))}/${c.montant} €`;
+      return tr(C.valeurCollectionCategorie, {
+        categorie: libelleCategorie(c.categorie, d),
+        actuel: Math.floor(valeurParCategorie(state.collection, c.categorie)),
+        montant: c.montant,
+      });
     case "niveau":
       // Défensif : cf. commentaire dans evaluerCondition.
-      return `Niveau ${c.niveau} (vous : N${state.brocanteur?.niveau ?? 0})`;
+      return tr(C.niveau, {
+        niveau: c.niveau,
+        actuel: state.brocanteur?.niveau ?? 0,
+      });
     case "ET":
       return c.conditions
-        .map((cc) => descriptionConditionCourte(cc, state, parTier))
+        .map((cc) => descriptionConditionCourte(cc, state, d, parTier))
         .join(" + ");
   }
 }
@@ -98,15 +142,16 @@ export function descriptionConditionCourte(
 export function decrireConditionsCourtes(
   brocante: Brocante,
   state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
+  d: DictionnaireUI,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): string[] {
   const c = brocante.conditionDeblocage;
   if (c.type === "ET") {
     return c.conditions.map((cc) =>
-      descriptionConditionCourte(cc, state, parTier),
+      descriptionConditionCourte(cc, state, d, parTier),
     );
   }
-  return [descriptionConditionCourte(c, state, parTier)];
+  return [descriptionConditionCourte(c, state, d, parTier)];
 }
 
 /** Décrit chaque condition atomique avec un drapeau "satisfaite ?". */
@@ -118,12 +163,13 @@ export interface ConditionInfo {
 export function listerConditionsAvecEtat(
   brocante: Brocante,
   state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
+  d: DictionnaireUI,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): ConditionInfo[] {
   const c = brocante.conditionDeblocage;
   const atomic = c.type === "ET" ? c.conditions : [c];
   return atomic.map((cc) => ({
-    text: descriptionConditionCourte(cc, state, parTier),
+    text: descriptionConditionCourte(cc, state, d, parTier),
     met: evaluerCondition(cc, state, parTier),
   }));
 }

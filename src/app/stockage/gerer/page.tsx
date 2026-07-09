@@ -100,8 +100,8 @@ function StockagePageInner() {
   // overlay ouvert, filtre…).
   const atelierStatus = useCallback(
     (o: Objet) =>
-      state ? atelierStatusPourObjet(state, o) : { disponible: false },
-    [state],
+      state ? atelierStatusPourObjet(state, o, d) : { disponible: false },
+    [state, d],
   );
   const collectionStatus = useCallback(
     (o: Objet) =>

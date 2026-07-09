@@ -12,6 +12,8 @@ import {
 } from "@/lib/competences";
 import { getCapaciteAtelier } from "@/data/atelier";
 import { recalculerPrixReference } from "@/lib/etat";
+import { tr, type DictionnaireUI } from "@/lib/i18n/ui";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 
 /** Renvoie l'état cible naturel pour la prochaine restauration, ou null si déjà Pristin. */
 export function prochaineEtatCible(etat: EtatObjet): EtatObjet | null {
@@ -62,26 +64,35 @@ export interface AtelierStatus {
   raison?: string;
 }
 
-/** Calcule si un objet précis peut être envoyé à l'atelier. */
+/**
+ * Calcule si un objet précis peut être envoyé à l'atelier. La `raison` d'échec
+ * est localisée (SP4 i18n) via le dictionnaire injecté ; les valeurs de logique
+ * ne changent pas.
+ */
 export function atelierStatusPourObjet(
   state: GameState,
   o: Objet,
+  d: DictionnaireUI,
 ): AtelierStatus {
-  if (o.enRestauration) return { disponible: false, raison: "Déjà en cours." };
+  const R = d.raisons;
+  if (o.enRestauration) return { disponible: false, raison: R.dejaEnCours };
   if (o.etat === "Pristin état")
-    return { disponible: false, raison: "Déjà en parfait état." };
+    return { disponible: false, raison: R.dejaParfaitEtat };
   if (!atelierAuneSlotLibre(state))
-    return { disponible: false, raison: "Atelier plein." };
+    return { disponible: false, raison: R.atelierPleinSimple };
   const cible = prochaineEtatCible(o.etat);
-  if (!cible) return { disponible: false, raison: "Non restaurable." };
+  if (!cible) return { disponible: false, raison: R.nonRestaurable };
   if (!peutRestaurerTransition(state, o.categorie, o.etat))
-    return { disponible: false, raison: "Compétence Réparer manquante." };
+    return { disponible: false, raison: R.competenceReparerManquanteSimple };
   const cout = coutAmelioration(o, cible);
   const dispo = state.piecesAmelioration[o.categorie] ?? 0;
   if (dispo < cout)
     return {
       disponible: false,
-      raison: `Manque ${cout - dispo} pièce${cout - dispo > 1 ? "s" : ""} ${o.categorie}.`,
+      raison: tr(cout - dispo > 1 ? R.manquePiecesN : R.manquePiecesUn, {
+        n: cout - dispo,
+        categorie: libelleCategorie(o.categorie, d),
+      }),
     };
   return { disponible: true };
 }
@@ -168,12 +179,17 @@ export function appliquerRecuperation(
 }
 
 /** Calcule si un objet peut être démantelé (en stock, hors restauration, hors vitrine). */
-export function peutDemanteler(state: GameState, o: Objet): AtelierStatus {
+export function peutDemanteler(
+  state: GameState,
+  o: Objet,
+  d: DictionnaireUI,
+): AtelierStatus {
   if (o.enRestauration)
-    return { disponible: false, raison: "Objet en restauration." };
+    return { disponible: false, raison: d.raisons.objetEnRestauration };
   // Un objet en vitrine n'est PAS dans inventaireJoueur (cf. mettreEnVitrine
   // qui le déplace), donc tester sa présence dans l'inventaire suffit.
   const enStock = state.inventaireJoueur.some((x) => x.id === o.id);
-  if (!enStock) return { disponible: false, raison: "Objet introuvable en stock." };
+  if (!enStock)
+    return { disponible: false, raison: d.raisons.objetIntrouvableStock };
   return { disponible: true };
 }

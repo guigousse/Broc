@@ -1,13 +1,10 @@
 "use client";
 
 import { useEffect, type CSSProperties } from "react";
-import {
-  JOURS_COURT,
-  MOIS_LONG,
-  infosMois,
-  jourForDate,
-} from "@/lib/calendrier";
+import { infosMois, jourForDate } from "@/lib/calendrier";
 import { METEO_ICON } from "@/data/meteos";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleJourSemaine, libelleMois } from "@/lib/i18n/libelles";
 import type { Meteo } from "@/types/game";
 
 interface CalendrierSheetProps {
@@ -264,6 +261,7 @@ export function CalendrierSheet({
   jourDebutSemaine,
   jourCelebrite,
 }: CalendrierSheetProps) {
+  const { d } = useLangue();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -344,12 +342,12 @@ export function CalendrierSheet({
             draggable={false}
           />
           <div style={content}>
-            <h2 style={moisLabel}>{MOIS_LONG[mois]}</h2>
+            <h2 style={moisLabel}>{libelleMois(mois, d)}</h2>
             <div style={separator} />
             <div style={headerRow}>
-              {JOURS_COURT.map((j) => (
-                <div key={`h-${j}`} style={cellHeader}>
-                  {j}
+              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={`h-${i}`} style={cellHeader}>
+                  {libelleJourSemaine(i, d)}
                 </div>
               ))}
             </div>

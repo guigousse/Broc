@@ -18,6 +18,12 @@ import {
   createMockGameState,
   createMockSlot,
 } from "./__test-fixtures__/gameState";
+import { DICTIONNAIRES } from "@/lib/i18n/ui";
+
+// Les descriptions passent désormais par le dictionnaire (SP4 i18n) : on teste
+// la sortie FR canonique en injectant le dico français.
+const desc = (c: ConditionDeblocage) =>
+  descriptionCondition(c, DICTIONNAIRES.fr);
 
 function withCondition(c: ConditionDeblocage) {
   return createMockBrocante({ conditionDeblocage: c });
@@ -50,30 +56,30 @@ function venteSession(cat: CategorieObjet, n = 1): Session {
 
 describe("descriptionCondition", () => {
   it("formate chaque type", () => {
-    expect(descriptionCondition({ type: "depart" })).toMatch(/départ/i);
-    expect(descriptionCondition({ type: "jour", jour: 5 })).toMatch(/5/);
-    expect(descriptionCondition({ type: "budget", montant: 200 })).toMatch(
+    expect(desc({ type: "depart" })).toMatch(/départ/i);
+    expect(desc({ type: "jour", jour: 5 })).toMatch(/5/);
+    expect(desc({ type: "budget", montant: 200 })).toMatch(
       /200/,
     );
     expect(
-      descriptionCondition({
+      desc({
         type: "ventesCategorie",
         categorie: "Musique",
         nombre: 3,
       }),
     ).toMatch(/Musique/);
     expect(
-      descriptionCondition({
+      desc({
         type: "brocantesDebloquees",
         tier: 2,
         nombre: 4,
       }),
     ).toMatch(/4/);
     expect(
-      descriptionCondition({ type: "valeurCollection", montant: 500 }),
+      desc({ type: "valeurCollection", montant: 500 }),
     ).toMatch(/500/);
     expect(
-      descriptionCondition({
+      desc({
         type: "valeurCollectionCategorie",
         categorie: "Mode",
         montant: 100,
@@ -82,7 +88,7 @@ describe("descriptionCondition", () => {
   });
 
   it("ET concatène les sous-descriptions", () => {
-    const s = descriptionCondition({
+    const s = desc({
       type: "ET",
       conditions: [
         { type: "jour", jour: 5 },
@@ -95,14 +101,14 @@ describe("descriptionCondition", () => {
 
   it("singulier vs pluriel sur ventesCategorie", () => {
     expect(
-      descriptionCondition({
+      desc({
         type: "ventesCategorie",
         categorie: "Musique",
         nombre: 1,
       }),
     ).not.toMatch(/ventes/);
     expect(
-      descriptionCondition({
+      desc({
         type: "ventesCategorie",
         categorie: "Musique",
         nombre: 2,
@@ -327,7 +333,7 @@ describe("condition niveau (double gate)", () => {
   });
 
   it("décrit la condition", () => {
-    expect(descriptionCondition({ type: "niveau", niveau: 10 })).toContain("Niveau de Brocanteur 10");
+    expect(desc({ type: "niveau", niveau: 10 })).toContain("Niveau de Brocanteur 10");
   });
 
   it("toutes les brocantes T2/T3/T4 exigent le niveau du tier", () => {

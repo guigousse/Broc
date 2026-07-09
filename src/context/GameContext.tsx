@@ -116,8 +116,29 @@ import {
 import { getTimeSource } from "@/lib/temps/timeSource";
 import { appliquerReclamation } from "@/lib/boiteMystere";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
+import { localeCourante } from "@/lib/i18n/locales";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 
 const gameRepository = createGameRepository();
+
+/**
+ * Raison d'échec localisée (SP4 i18n). GameContext exécute ses raisons dans des
+ * callbacks mémoïsés, hors cycle de rendu — on lit donc la locale via
+ * `localeCourante()` (SSR-safe, hors React), JAMAIS un hook dans un callback.
+ * Les raisons sont des toasts transitoires, jamais persistés.
+ */
+function raisonLocalisee(
+  cle: keyof (typeof DICTIONNAIRES)["fr"]["raisons"],
+  params?: Record<string, string | number>,
+): string {
+  return tr(DICTIONNAIRES[localeCourante()].raisons[cle], params);
+}
+
+/** Nom de catégorie localisé dans la locale courante (pour interpolation dans les raisons). */
+function categorieLocalisee(cat: Parameters<typeof libelleCategorie>[0]): string {
+  return libelleCategorie(cat, DICTIONNAIRES[localeCourante()]);
+}
 
 interface GameStateValue {
   state: GameState | null;
@@ -673,11 +694,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const rerollMeteo = useCallback((): { ok: boolean; raison?: string } => {
     const current = stateRef.current;
-    if (!current) return { ok: false, raison: "Pas de partie." };
+    if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
     if (!aGenInfluence(current))
-      return { ok: false, raison: "Compétence Influence requise." };
+      return { ok: false, raison: raisonLocalisee("influenceRequise") };
     if (current.influenceUtilisee)
-      return { ok: false, raison: "Influence déjà utilisée cette édition." };
+      return { ok: false, raison: raisonLocalisee("influenceUtilisee") };
     setState((prev) => {
       if (!prev) return prev;
       const idx = indexJourSemaine(prev.jourActuel);
@@ -690,11 +711,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const rerollCelebrite = useCallback((): { ok: boolean; raison?: string } => {
     const current = stateRef.current;
-    if (!current) return { ok: false, raison: "Pas de partie." };
+    if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
     if (!aGenInfluence(current))
-      return { ok: false, raison: "Compétence Influence requise." };
+      return { ok: false, raison: raisonLocalisee("influenceRequise") };
     if (current.influenceUtilisee)
-      return { ok: false, raison: "Influence déjà utilisée cette édition." };
+      return { ok: false, raison: raisonLocalisee("influenceUtilisee") };
     setState((prev) =>
       prev
         ? { ...prev, celebriteActuelle: tirerCelebrite(), influenceUtilisee: true }
@@ -705,13 +726,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const ameliorerAtelier = useCallback((): { ok: boolean; raison?: string } => {
     const current = stateRef.current;
-    if (!current) return { ok: false, raison: "Pas de partie." };
+    if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
     const upgrade = getProchaineUpgrade(current.niveauAtelier);
-    if (!upgrade) return { ok: false, raison: "Atelier déjà au maximum." };
+    if (!upgrade) return { ok: false, raison: raisonLocalisee("atelierMax") };
     if (current.budget < upgrade.cout)
       return {
         ok: false,
-        raison: `Il manque ${upgrade.cout - current.budget} €.`,
+        raison: raisonLocalisee("ilManqueEuros", { n: upgrade.cout - current.budget }),
       };
     setState((prev) => {
       if (!prev) return prev;
@@ -730,13 +751,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const ameliorerStockage = useCallback((): { ok: boolean; raison?: string } => {
     const current = stateRef.current;
-    if (!current) return { ok: false, raison: "Pas de partie." };
+    if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
     const upgrade = getProchaineUpgradeStockage(current.niveauStockage);
-    if (!upgrade) return { ok: false, raison: "Stockage déjà au maximum." };
+    if (!upgrade) return { ok: false, raison: raisonLocalisee("stockageMax") };
     if (current.budget < upgrade.cout)
       return {
         ok: false,
-        raison: `Il manque ${upgrade.cout - current.budget} €.`,
+        raison: raisonLocalisee("ilManqueEuros", { n: upgrade.cout - current.budget }),
       };
     setState((prev) => {
       if (!prev) return prev;
@@ -1036,19 +1057,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const debloquerCompetence = useCallback(
     (id: CompetenceId): { ok: boolean; raison?: string } => {
       const comp = getCompetence(id);
-      if (!comp) return { ok: false, raison: "Compétence introuvable." };
+      if (!comp) return { ok: false, raison: raisonLocalisee("competenceIntrouvable") };
       const current = stateRef.current;
-      if (!current) return { ok: false, raison: "Pas de partie en cours." };
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartieEnCours") };
       const etat = etatCompetence(comp, current.competencesDebloquees, contexteDepuisState(current));
-      if (etat === "debloquee") return { ok: false, raison: "Déjà débloquée." };
+      if (etat === "debloquee") return { ok: false, raison: raisonLocalisee("dejaDebloquee") };
       if (etat === "verrouillee") {
         if (!comp.prerequis.every((p) => current.competencesDebloquees.includes(p)))
-          return { ok: false, raison: "Prérequis non remplis." };
+          return { ok: false, raison: raisonLocalisee("prerequisNonRemplis") };
         if (current.brocanteur.niveau < comp.niveauBrocanteurRequis)
-          return { ok: false, raison: `Niveau de Brocanteur ${comp.niveauBrocanteurRequis} requis.` };
+          return { ok: false, raison: raisonLocalisee("niveauBrocanteurRequis", { niveau: comp.niveauBrocanteurRequis }) };
         if (current.brocanteur.pointsDisponibles < comp.coutPoints)
-          return { ok: false, raison: "Pas assez de points." };
-        return { ok: false, raison: "Conditions non remplies." };
+          return { ok: false, raison: raisonLocalisee("pasAssezDePoints") };
+        return { ok: false, raison: raisonLocalisee("conditionsNonRemplies") };
       }
       setState((prev) => {
         if (!prev) return prev;
@@ -1095,23 +1116,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
       etatCible: EtatObjet,
     ): { ok: boolean; raison?: string } => {
       const current = stateRef.current;
-      if (!current) return { ok: false, raison: "Pas de partie." };
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
       const objet = current.inventaireJoueur.find((o) => o.id === objetId);
       if (!objet)
-        return { ok: false, raison: "Objet introuvable dans l'inventaire." };
+        return { ok: false, raison: raisonLocalisee("objetIntrouvableInventaire") };
       if (objet.enRestauration)
-        return { ok: false, raison: "Cet objet est déjà en restauration." };
+        return { ok: false, raison: raisonLocalisee("objetDejaEnRestauration") };
       const nbEnCours = current.inventaireJoueur.filter((o) => o.enRestauration).length;
       const capacite = ATELIER_SLOTS[current.niveauAtelier];
       if (nbEnCours >= capacite)
         return {
           ok: false,
-          raison: `Atelier plein (${nbEnCours}/${capacite} slot${capacite > 1 ? "s" : ""}).`,
+          raison: raisonLocalisee(capacite > 1 ? "atelierPleinN" : "atelierPleinUn", {
+            enCours: nbEnCours,
+            capacite,
+          }),
         };
       if (!peutRestaurerCategorie(current, objet.categorie))
         return {
           ok: false,
-          raison: `Vous n'avez pas la compétence Réparer — ${objet.categorie}.`,
+          raison: raisonLocalisee("competenceReparerManquante", {
+            categorie: categorieLocalisee(objet.categorie),
+          }),
         };
 
       const cout = coutAmelioration(objet, etatCible);
@@ -1119,7 +1145,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (dispo < cout)
         return {
           ok: false,
-          raison: `Manque ${cout - dispo} pièce${cout - dispo > 1 ? "s" : ""} ${objet.categorie}.`,
+          raison: raisonLocalisee(cout - dispo > 1 ? "manquePiecesN" : "manquePiecesUn", {
+            n: cout - dispo,
+            categorie: categorieLocalisee(objet.categorie),
+          }),
         };
 
       const now = tempsConfiance() ?? Date.now();
@@ -1148,12 +1177,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const demantelerObjet = useCallback(
     (objetId: string): { ok: boolean; raison?: string; pieces?: number } => {
       const current = stateRef.current;
-      if (!current) return { ok: false, raison: "Pas de partie." };
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
       const objet = current.inventaireJoueur.find((o) => o.id === objetId);
       if (!objet)
-        return { ok: false, raison: "Objet introuvable dans l'inventaire." };
+        return { ok: false, raison: raisonLocalisee("objetIntrouvableInventaire") };
       if (objet.enRestauration)
-        return { ok: false, raison: "Objet en restauration." };
+        return { ok: false, raison: raisonLocalisee("objetEnRestauration") };
 
       const pieces = rendementDemantelement(objet);
 
@@ -1188,14 +1217,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const recupererObjetRestaure = useCallback(
     (objetId: string): { ok: boolean; raison?: string } => {
       const current = stateRef.current;
-      if (!current) return { ok: false, raison: "Pas de partie." };
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
       const objet = current.inventaireJoueur.find((o) => o.id === objetId);
-      if (!objet) return { ok: false, raison: "Objet introuvable." };
+      if (!objet) return { ok: false, raison: raisonLocalisee("objetIntrouvable") };
       if (!objet.enRestauration)
-        return { ok: false, raison: "Objet pas en restauration." };
+        return { ok: false, raison: raisonLocalisee("objetPasEnRestauration") };
       const now = tempsConfiance() ?? Date.now();
       if (now < objet.enRestauration.finMs)
-        return { ok: false, raison: "Restauration pas terminée." };
+        return { ok: false, raison: raisonLocalisee("restaurationPasTerminee") };
 
       setState((prev) => {
         if (!prev) return prev;
@@ -1220,13 +1249,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const terminerRestaurationImmediate = useCallback(
     (objetId: string): { ok: boolean; raison?: string } => {
       const current = stateRef.current;
-      if (!current) return { ok: false, raison: "Pas de partie." };
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
       const objet = current.inventaireJoueur.find((o) => o.id === objetId);
       if (!objet?.enRestauration)
-        return { ok: false, raison: "Objet pas en restauration." };
+        return { ok: false, raison: raisonLocalisee("objetPasEnRestauration") };
       const now = tempsConfiance() ?? Date.now();
       if (!peutTerminerImmediat(objet.enRestauration, now))
-        return { ok: false, raison: "Hors fenêtre (≤ 30 min)." };
+        return { ok: false, raison: raisonLocalisee("horsFenetre30min") };
       const fin = objet.enRestauration.finMs;
       setState((prev) => {
         if (!prev) return prev;
@@ -1286,12 +1315,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const donnerACollection = useCallback(
     (objetId: string): { ok: boolean; raison?: string } => {
       const current = stateRef.current;
-      if (!current) return { ok: false, raison: "Pas de partie." };
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
       const objet = current.inventaireJoueur.find((o) => o.id === objetId);
       if (!objet)
-        return { ok: false, raison: "Objet introuvable dans l'inventaire." };
+        return { ok: false, raison: raisonLocalisee("objetIntrouvableInventaire") };
       if (objet.enRestauration)
-        return { ok: false, raison: "Objet en cours de restauration." };
+        return { ok: false, raison: raisonLocalisee("objetEnCoursDeRestauration") };
 
       setState((prev) => {
         if (!prev) return prev;
@@ -1334,11 +1363,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const retirerDeCollection = useCallback(
     (templateId: string): { ok: boolean; raison?: string } => {
       const current = stateRef.current;
-      if (!current) return { ok: false, raison: "Pas de partie." };
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
       const tpl = getTemplate(templateId);
-      if (!tpl) return { ok: false, raison: "Template inconnu." };
+      if (!tpl) return { ok: false, raison: raisonLocalisee("templateInconnu") };
       if (stockageEstPlein(current))
-        return { ok: false, raison: "Stockage plein." };
+        return { ok: false, raison: raisonLocalisee("stockagePlein") };
 
       setState((prev) => {
         if (!prev) return prev;
@@ -1424,14 +1453,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const livrerMission = useCallback(
     (courrierId: string): { ok: boolean; raison?: string } => {
       const current = stateRef.current;
-      if (!current) return { ok: false, raison: "Pas de partie." };
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
       const courrier = current.courriers.find((c) => c.id === courrierId);
       if (!courrier || courrier.payload.type !== "mission") {
-        return { ok: false, raison: "Mission introuvable." };
+        return { ok: false, raison: raisonLocalisee("missionIntrouvable") };
       }
       const reso = current.missions.find((m) => m.courrierId === courrierId);
       if (!reso || reso.statut !== "active") {
-        return { ok: false, raison: "Mission non active." };
+        return { ok: false, raison: raisonLocalisee("missionNonActive") };
       }
       const { recompense } = courrier.payload;
       const aRetirer = indicesAConsommerPourLivraison(
@@ -1439,7 +1468,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         current.inventaireJoueur,
       );
       if (!aRetirer) {
-        return { ok: false, raison: "Objets requis manquants dans l'inventaire." };
+        return { ok: false, raison: raisonLocalisee("objetsRequisManquants") };
       }
       const titreMission = courrier.payload.titre;
       // Certaines missions (finale de l'arc principal) valident à la possession
@@ -1499,13 +1528,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const acheterGazette = useCallback((): { ok: boolean; raison?: string } => {
     const current = stateRef.current;
-    if (!current) return { ok: false, raison: "Pas de partie." };
+    if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
     if (current.gazetteAchetee)
-      return { ok: false, raison: "Édition déjà achetée." };
+      return { ok: false, raison: raisonLocalisee("editionDejaAchetee") };
     if (current.budget < PRIX_GAZETTE)
       return {
         ok: false,
-        raison: `Budget insuffisant (${PRIX_GAZETTE} € requis).`,
+        raison: raisonLocalisee("budgetInsuffisantGazette", { prix: PRIX_GAZETTE }),
       };
     setState((prev) => {
       if (!prev) return prev;

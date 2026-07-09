@@ -12,6 +12,8 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { GameProvider, useGame } from "./GameContext";
 import { xpRequisPourNiveauBrocanteur } from "@/lib/xp";
+import { DICTIONNAIRES } from "@/lib/i18n/ui";
+import { localeCourante } from "@/lib/i18n/locales";
 import type { CompetenceId } from "@/types/game";
 
 // GameProvider appelle useRouter() (nouvellePartie → router.push("/bureau")).
@@ -114,7 +116,12 @@ describe("GameContext.debloquerCompetence — régression pool global", () => {
       res = result.current.debloquerCompetence(PALIER_1);
     });
 
-    expect(res).toEqual({ ok: false, raison: "Déjà débloquée." });
+    // La raison passe désormais par le dictionnaire (SP4 i18n) : on assied
+    // l'assertion sur la valeur localisée du dico, pas sur un littéral FR.
+    expect(res).toEqual({
+      ok: false,
+      raison: DICTIONNAIRES[localeCourante()].raisons.dejaDebloquee,
+    });
     // Pas de nouvelle décrémentation : le point restant du crédit précédent
     // (2 crédités, 1 dépensé) est toujours là.
     expect(result.current.state!.brocanteur.pointsDisponibles).toBe(1);

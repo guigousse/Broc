@@ -19,6 +19,7 @@ import {
   withCompetences,
   withPieces,
 } from "./__test-fixtures__/gameState";
+import { DICTIONNAIRES } from "@/lib/i18n/ui";
 
 describe("prochaineEtatCible", () => {
   it("Mauvais → Bon", () => expect(prochaineEtatCible("Mauvais")).toBe("Bon"));
@@ -163,7 +164,7 @@ describe("atelierStatusPourObjet — refus", () => {
   it("refus si objet déjà en restauration", () => {
     const state = createMockGameState();
     const o = createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } });
-    const res = atelierStatusPourObjet(state, o);
+    const res = atelierStatusPourObjet(state, o, DICTIONNAIRES.fr);
     expect(res.disponible).toBe(false);
     expect(res.raison).toMatch(/cours/i);
   });
@@ -171,7 +172,7 @@ describe("atelierStatusPourObjet — refus", () => {
   it("refus si objet en Pristin état", () => {
     const state = createMockGameState();
     const o = createMockObjet({ etat: "Pristin état" });
-    expect(atelierStatusPourObjet(state, o).disponible).toBe(false);
+    expect(atelierStatusPourObjet(state, o, DICTIONNAIRES.fr).disponible).toBe(false);
   });
 
   it("refus si atelier plein", () => {
@@ -180,13 +181,13 @@ describe("atelierStatusPourObjet — refus", () => {
       inventaireJoueur: [createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } })],
     });
     const o = createMockObjet({ etat: "Mauvais" });
-    expect(atelierStatusPourObjet(state, o).disponible).toBe(false);
+    expect(atelierStatusPourObjet(state, o, DICTIONNAIRES.fr).disponible).toBe(false);
   });
 
   it("refus si compétence Réparer manquante", () => {
     const state = createMockGameState();
     const o = createMockObjet({ etat: "Mauvais", categorie: "Musique" });
-    const res = atelierStatusPourObjet(state, o);
+    const res = atelierStatusPourObjet(state, o, DICTIONNAIRES.fr);
     expect(res.disponible).toBe(false);
     expect(res.raison).toMatch(/compétence/i);
   });
@@ -201,7 +202,7 @@ describe("atelierStatusPourObjet — refus", () => {
       categorie: "Musique",
       prixReferenceReel: 500,
     });
-    const res = atelierStatusPourObjet(state, o);
+    const res = atelierStatusPourObjet(state, o, DICTIONNAIRES.fr);
     expect(res.disponible).toBe(false);
     expect(res.raison).toMatch(/pièce/i);
   });
@@ -218,7 +219,7 @@ describe("atelierStatusPourObjet — succès", () => {
       categorie: "Musique",
       prixReferenceReel: 100,
     });
-    expect(atelierStatusPourObjet(state, o).disponible).toBe(true);
+    expect(atelierStatusPourObjet(state, o, DICTIONNAIRES.fr).disponible).toBe(true);
   });
 });
 
@@ -275,19 +276,19 @@ describe("peutDemanteler", () => {
   it("refus si l'objet est en restauration", () => {
     const o = createMockObjet({ enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 } });
     const state = createMockGameState({ inventaireJoueur: [o] });
-    expect(peutDemanteler(state, o).disponible).toBe(false);
+    expect(peutDemanteler(state, o, DICTIONNAIRES.fr).disponible).toBe(false);
   });
 
   it("refus si l'objet n'est pas en stock", () => {
     const o = createMockObjet({ id: "obj-absent" });
     const state = createMockGameState({ inventaireJoueur: [] });
-    expect(peutDemanteler(state, o).disponible).toBe(false);
+    expect(peutDemanteler(state, o, DICTIONNAIRES.fr).disponible).toBe(false);
   });
 
   it("OK si en stock et hors restauration", () => {
     const o = createMockObjet();
     const state = createMockGameState({ inventaireJoueur: [o] });
-    expect(peutDemanteler(state, o).disponible).toBe(true);
+    expect(peutDemanteler(state, o, DICTIONNAIRES.fr).disponible).toBe(true);
   });
 });
 
