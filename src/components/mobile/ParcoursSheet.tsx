@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, type CSSProperties } from "react";
-import { DEBLOCAGES_PAR_NIVEAU, LIBELLE_FAMILLE } from "@/data/deblocagesNiveau";
+import { DEBLOCAGES_PAR_NIVEAU } from "@/data/deblocagesNiveau";
 import { chipFamille } from "@/components/mobile/LevelUpOverlay";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleFamille } from "@/lib/i18n/libelles";
+import { titreDeblocage } from "@/lib/i18n/contenu";
 
 interface ParcoursSheetProps {
   open: boolean;
@@ -136,7 +138,7 @@ const niveauCol: CSSProperties = {
 /* ------------------------------------------------------------------ */
 
 export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
 
   useEffect(() => {
     if (!open) return;
@@ -201,9 +203,9 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
                     {tr(d.sheets.nivAbrege, { n: dep.niveau })}
                   </span>
                   <span style={chipFamille(dep.famille)}>
-                    {LIBELLE_FAMILLE[dep.famille]}
+                    {libelleFamille(dep.famille, d)}
                   </span>
-                  <span>{dep.titre}</span>
+                  <span>{titreDeblocage(dep, locale)}</span>
                 </div>
               );
             })}

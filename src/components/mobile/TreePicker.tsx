@@ -19,6 +19,7 @@ import {
   getTreeMeta,
 } from "@/data/competences";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomArbre } from "@/lib/i18n/contenu";
 import type { CategorieObjet, CompetenceTreeId } from "@/types/game";
 
 interface TreePickerProps {
@@ -65,7 +66,7 @@ export function TreePicker({
   selectionne,
   onSelect,
 }: TreePickerProps) {
-  const { d } = useLangue();
+  const { d, locale } = useLangue();
   const allIds: CompetenceTreeId[] = [
     TREE_GENERAL,
     ...CATEGORIES.map((c) => catTreeId(c)),
@@ -104,7 +105,7 @@ export function TreePicker({
                 ? "inset 0 0 0 2px var(--forest-800), inset 0 0 0 3px var(--brass-500)"
                 : "none",
             }}
-            title={meta.nom}
+            title={nomArbre(meta, locale)}
           >
             <Icon
               size={14}

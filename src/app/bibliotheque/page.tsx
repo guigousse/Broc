@@ -27,6 +27,14 @@ import { detailProgressionBrocanteur, progressionNiveauBrocanteur } from "@/lib/
 import { prochainDeblocage } from "@/data/deblocagesNiveau";
 import { ParcoursSheet } from "@/components/mobile/ParcoursSheet";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import {
+  descriptionBranche,
+  descriptionCompetence,
+  nomArbre,
+  nomBranche,
+  nomCompetence,
+  titreDeblocage,
+} from "@/lib/i18n/contenu";
 import type {
   CompetenceDef,
   CompetenceId,
@@ -102,7 +110,7 @@ export default function CompetencesPage() {
                 fontWeight: 700,
               }}
             >
-              {meta.nom}
+              {nomArbre(meta, locale)}
             </div>
             <div
               style={{
@@ -208,7 +216,7 @@ export default function CompetencesPage() {
               }}
             >
               {prochain
-                ? `${tr(d.sheets.prochainNiv, { n: prochain.niveau })} ${prochain.titre} ▸`
+                ? `${tr(d.sheets.prochainNiv, { n: prochain.niveau })} ${titreDeblocage(prochain, locale)} ▸`
                 : d.bibliotheque.parcoursDeblocages}
             </button>
           </StickyTop>
@@ -220,6 +228,7 @@ export default function CompetencesPage() {
               (a, b) => a.niveauBrocanteurRequis - b.niveauBrocanteurRequis,
             );
             if (comps.length === 0) return null;
+            const brancheDescription = descriptionBranche(tree, branche, locale);
             return (
               <section key={branche.id}>
                 <h3
@@ -234,9 +243,9 @@ export default function CompetencesPage() {
                     fontWeight: 700,
                   }}
                 >
-                  {branche.nom}
+                  {nomBranche(tree, branche, locale)}
                 </h3>
-                {branche.description && (
+                {brancheDescription && (
                   <p
                     style={{
                       fontFamily: "var(--font-serif)",
@@ -247,7 +256,7 @@ export default function CompetencesPage() {
                       lineHeight: 1.3,
                     }}
                   >
-                    {branche.description}
+                    {brancheDescription}
                   </p>
                 )}
                 <div
@@ -282,7 +291,7 @@ export default function CompetencesPage() {
       <BottomSheet
         open={palierActif !== null}
         onClose={() => setPalierActif(null)}
-        title={palierActif?.nom ?? ""}
+        title={palierActif ? nomCompetence(palierActif, locale) : ""}
       >
         {palierActif && (
           <PalierDetail
@@ -301,7 +310,7 @@ export default function CompetencesPage() {
               if (res.ok) {
                 toast(
                   tr(d.bibliotheque.competenceAcquiseToast, {
-                    nom: palierActif.nom,
+                    nom: nomCompetence(palierActif, locale),
                   }),
                   { type: "succes" },
                 );
@@ -337,7 +346,7 @@ function PalierTile({
   etat: "debloquee" | "disponible" | "verrouillee";
   onTap: () => void;
 }) {
-  const { tr, d } = useLangue();
+  const { tr, d, locale } = useLangue();
   const isDebloquee = etat === "debloquee";
   const isVerrouillee = etat === "verrouillee";
 
@@ -364,7 +373,7 @@ function PalierTile({
       type="button"
       onClick={onTap}
       style={styleByState}
-      title={comp.nom}
+      title={nomCompetence(comp, locale)}
     >
       <img
         src={visuelCompetence(comp)}
@@ -455,7 +464,7 @@ function PalierDetail({
   etat: "debloquee" | "disponible" | "verrouillee";
   onAcheter: () => void;
 }) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const isDebloquee = etat === "debloquee";
   const isVerrouillee = etat === "verrouillee";
   const peutPayer = pointsDisponibles >= comp.coutPoints;
@@ -480,7 +489,7 @@ function PalierDetail({
             color: "var(--brass-700)",
           }}
         >
-          {branche.nom}
+          {nomBranche(comp.treeId, branche, locale)}
         </div>
       )}
 
@@ -494,7 +503,7 @@ function PalierDetail({
       >
         <img
           src={visuelCompetence(comp)}
-          alt={comp.nom}
+          alt={nomCompetence(comp, locale)}
           style={{
             display: "block",
             width: "100%",
@@ -528,7 +537,7 @@ function PalierDetail({
           lineHeight: 1.4,
         }}
       >
-        {comp.description}
+        {descriptionCompetence(comp, locale)}
       </p>
 
       <div

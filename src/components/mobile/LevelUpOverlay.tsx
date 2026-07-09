@@ -7,11 +7,12 @@ import { audioManager } from "@/lib/audio/audioManager";
 import {
   deblocagesPourNiveau,
   prochainDeblocage,
-  LIBELLE_FAMILLE,
   type FamilleDeblocage,
 } from "@/data/deblocagesNiveau";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleFamille } from "@/lib/i18n/libelles";
+import { titreDeblocage } from "@/lib/i18n/contenu";
 
 /** Couleur par famille de déblocage (style UI, réutilisé par ParcoursSheet). */
 export const COULEUR_FAMILLE: Record<FamilleDeblocage, string> = {
@@ -114,7 +115,7 @@ const btnContinuer: CSSProperties = {
 export function LevelUpOverlay() {
   const { state, marquerNiveauVu } = useGame();
   const pathname = usePathname();
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const enSession = ROUTES_SESSION_PREFIXES.some((p) => pathname?.startsWith(p));
   const niveauACelebrer =
     state && state.brocanteur.niveau > state.niveauVu ? state.niveauVu + 1 : null;
@@ -144,14 +145,15 @@ export function LevelUpOverlay() {
         {deblocages.map((dep) => (
           <div key={dep.titre} style={ligneDeblocage}>
             <span style={chipFamille(dep.famille)}>
-              {LIBELLE_FAMILLE[dep.famille]}
+              {libelleFamille(dep.famille, d)}
             </span>
-            <span>{dep.titre}</span>
+            <span>{titreDeblocage(dep, locale)}</span>
           </div>
         ))}
         {prochain && (
           <div style={lignProchain}>
-            {tr(d.sheets.prochainNiv, { n: prochain.niveau })} {prochain.titre}
+            {tr(d.sheets.prochainNiv, { n: prochain.niveau })}{" "}
+            {titreDeblocage(prochain, locale)}
           </div>
         )}
         <button type="button" style={btnContinuer} onClick={marquerNiveauVu}>

@@ -87,6 +87,13 @@ export const es: DictionnaireUI = {
     objetsArt: "Objetos de arte",
     bricolage: "Bricolaje",
   },
+  familles: {
+    jalon: "Hito",
+    contenu: "Contenido",
+    economie: "Economía",
+    confort: "Comodidad",
+    active: "Activa",
+  },
   chrome: {
     onglets: {
       collection: "Colección",
