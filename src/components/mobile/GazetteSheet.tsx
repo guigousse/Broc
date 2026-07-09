@@ -580,7 +580,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
                       onClick={onRerollMeteo}
                       style={influenceButton}
                     >
-                      ↻ Influence
+                      ↻ {nomCompetence(PALIERS_VISION.influence, locale)}
                     </button>
                   )}
                 </div>
