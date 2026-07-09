@@ -15,10 +15,8 @@ import {
 import { METEO_ICON } from "@/data/meteos";
 import { getBrocanteById } from "@/data/brocantes";
 import { nomBrocante, nomCelebrite } from "@/lib/i18n/contenu";
-import { JOURS_SEMAINE } from "@/lib/meteo";
-import { JOURS_COURT } from "@/lib/calendrier";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleCategorie } from "@/lib/i18n/libelles";
+import { libelleCategorie, libelleJourSemaine } from "@/lib/i18n/libelles";
 import type {
   CategorieObjet,
   CelebriteEvenement,
@@ -432,7 +430,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
                       brocante: brocanteCeleb
                         ? nomBrocante(brocanteCeleb, locale)
                         : d.gazette.celebriteBrocanteInconnue,
-                      jour: JOURS_SEMAINE[celebrite.jourSemaine],
+                      jour: libelleJourSemaine(celebrite.jourSemaine, d),
                     })}
                   </p>
                 </div>
@@ -519,9 +517,9 @@ export function GazetteSheet(props: GazetteSheetProps) {
               {revelerMeteo && meteoSemaine ? (
                 <div style={{ padding: "0 2%", marginTop: "-1%" }}>
                   <div style={meteoRow}>
-                    {JOURS_COURT.map((j) => (
+                    {Array.from({ length: 7 }, (_, i) => (
                       <div
-                        key={`j-${j}`}
+                        key={`j-${i}`}
                         style={{
                           fontFamily: "var(--font-display)",
                           fontSize: "2.6cqw",
@@ -530,7 +528,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
                           color: "var(--ink-700)",
                         }}
                       >
-                        {j[0]}
+                        {libelleJourSemaine(i, d)[0]}
                       </div>
                     ))}
                   </div>

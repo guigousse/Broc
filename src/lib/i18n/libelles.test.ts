@@ -9,6 +9,7 @@ import {
   libelleCategorie,
   libelleEtat,
   libelleFamille,
+  libelleJourSemaine,
   libelleRarete,
 } from "@/lib/i18n/libelles";
 
@@ -88,5 +89,22 @@ describe("libelleActive", () => {
     expect(DEBLOCAGES_EN["Active 📣 La Criée"]).toContain(
       libelleActive("criee", DICTIONNAIRES.en),
     );
+  });
+});
+
+describe("libelleJourSemaine", () => {
+  it("couvre les 7 index dans les 3 langues, jamais vide", () => {
+    for (const locale of ["fr", "en", "es"] as const) {
+      for (let i = 0; i < 7; i++) {
+        expect(libelleJourSemaine(i, DICTIONNAIRES[locale]).trim()).not.toBe("");
+      }
+    }
+  });
+
+  it("abréviations attendues par langue", () => {
+    expect(libelleJourSemaine(0, DICTIONNAIRES.en)).toBe("Mon");
+    expect(libelleJourSemaine(0, DICTIONNAIRES.fr)).toBe("Lun");
+    expect(libelleJourSemaine(2, DICTIONNAIRES.es)).toBe("Mié");
+    expect(libelleJourSemaine(6, DICTIONNAIRES.en)).toBe("Sun");
   });
 });

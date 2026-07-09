@@ -1,10 +1,11 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { indexJourSemaine, JOURS_SEMAINE } from "@/lib/meteo";
+import { indexJourSemaine } from "@/lib/meteo";
 import { METEO_ICON } from "@/data/meteos";
 import type { Meteo } from "@/types/game";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleJourSemaine } from "@/lib/i18n/libelles";
 
 interface WeekTimelineProps {
   jourActuel: number;
@@ -12,7 +13,8 @@ interface WeekTimelineProps {
   meteoSemaine?: Meteo[];
 }
 
-const labels = ["L", "M", "M", "J", "V", "S", "D"];
+/** Index 0-6 des jours de la semaine (0 = Lundi) — libellés localisés à l'affichage. */
+const INDEX_JOURS = [0, 1, 2, 3, 4, 5, 6];
 
 const cellBase: CSSProperties = {
   textAlign: "center",
@@ -33,7 +35,7 @@ export function WeekTimeline({ jourActuel, meteoSemaine }: WeekTimelineProps) {
       aria-label={d.chine.semaineEnCours}
       style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3 }}
     >
-      {labels.map((l, i) => {
+      {INDEX_JOURS.map((i) => {
         const isToday = i === idx;
         const isWeekend = i >= 5;
         const meteo = meteoSemaine?.[i];
@@ -64,9 +66,9 @@ export function WeekTimeline({ jourActuel, meteoSemaine }: WeekTimelineProps) {
               alignItems: "center",
               gap: 2,
             }}
-            title={JOURS_SEMAINE[i]}
+            title={libelleJourSemaine(i, d)}
           >
-            <span>{l}</span>
+            <span>{libelleJourSemaine(i, d)[0]}</span>
             {Icon ? (
               <Icon size={12} strokeWidth={1.5} color={baseColor} aria-hidden />
             ) : null}

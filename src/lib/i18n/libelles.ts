@@ -90,3 +90,15 @@ export function libelleActive(id: ActiveId, d: DictionnaireUI): string {
       return d.actives.diplomate;
   }
 }
+
+/** Clés du dictionnaire `jours`, indexées comme `JOURS_SEMAINE` de meteo.ts (0 = Lundi). */
+const CLES_JOURS = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"] as const;
+
+/**
+ * Abréviation localisée d'un jour de semaine (index 0-6, 0 = Lundi — même
+ * convention que `JOURS_SEMAINE` de `@/lib/meteo`, qui reste la valeur
+ * canonique côté logique/save ; seul l'affichage passe par le dictionnaire).
+ */
+export function libelleJourSemaine(index: number, d: DictionnaireUI): string {
+  return d.jours[CLES_JOURS[((index % 7) + 7) % 7]];
+}

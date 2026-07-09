@@ -496,4 +496,13 @@ export const es: DictionnaireUI = {
     recompenseRecue: "Recompensa recibida",
     missionRecompensee: "Misión recompensada",
   },
+  jours: {
+    lun: "Lun",
+    mar: "Mar",
+    mer: "Mié",
+    jeu: "Jue",
+    ven: "Vie",
+    sam: "Sáb",
+    dim: "Dom",
+  },
 };

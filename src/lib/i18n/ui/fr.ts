@@ -500,4 +500,15 @@ export const fr = {
     recompenseRecue: "Récompense reçue",
     missionRecompensee: "Mission récompensée",
   },
+  // Abréviations des jours de semaine (index 0 = Lundi, cf. JOURS_SEMAINE de meteo.ts
+  // qui reste la valeur canonique côté logique — ici seul l'affichage est localisé).
+  jours: {
+    lun: "Lun",
+    mar: "Mar",
+    mer: "Mer",
+    jeu: "Jeu",
+    ven: "Ven",
+    sam: "Sam",
+    dim: "Dim",
+  },
 } as const;
