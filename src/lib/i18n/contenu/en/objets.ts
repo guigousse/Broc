@@ -5,7 +5,7 @@
  */
 export const OBJETS_EN: Record<string, string> = {
   // ===== MUSIQUE — communs =====
-  "mus.vinyle_le_mur_des_flamants_roses": "'The Wall' record by the Pink Flamingos",
+  "mus.vinyle_le_mur_des_flamants_roses": "'The Brick Wall' record by the Pink Flamingos",
   "mus.vinyle_grand_max_des_combines": "'Big Max' record by the Schemers",
   "mus.33tours_jazz_1": "LP by an unknown jazz band",
   "mus.coffret_cd_grunge_beatitude": "Grunge CD box set — 'Beatitude'",
@@ -78,7 +78,7 @@ export const OBJETS_EN: Record<string, string> = {
   "jx.manette_vibraduo": "Vibraduo controller",
   "jx.manette_tetrapod_64_bit": "Tetrapod controller (64-bit)",
   "jx.jeu_le_manoir_du_mal_32_bit": "'The Manor of Evil' game (32-bit)",
-  "jx.jeu_engrenage_de_metal_infiltration_32_bit": "'Metal Gear' game — stealth (32-bit)",
+  "jx.jeu_engrenage_de_metal_infiltration_32_bit": "'Metal Cogs' game — stealth (32-bit)",
   "jx.jeu_d_aventure_japonais_128_bit": "Japanese adventure game (128-bit)",
   "jx.jeu_solda_flute_temporelle_aventure_3d_64_bit": "'Solda — Time Flute' game (3D adventure, 64-bit)",
   "jx.lot_de_cartes_l_assemblee_des_mages": "'The Mages' Gathering' card lot",
@@ -160,7 +160,7 @@ export const OBJETS_EN: Record<string, string> = {
 
   // ===== LIVRES & PAPETERIE — rares =====
   "lv.conte_de_l_aviateur_et_de_l_enfant_roi_edition": "Tale of the Aviator and the Child-King (1943 edition)",
-  "lv.les_aventures_de_titou_petrole_1950": "The Adventures of Titou — 'Black Gold' (1950)",
+  "lv.les_aventures_de_titou_petrole_1950": "The Adventures of Titou — 'Crude Oil' (1950)",
   "lv.le_petit_moustachu_edition_originale_1961": "The Little Mustached One — first edition 1961",
   "lv.funky_look_premier_album_1947": "Funky Look — first album 1947",
   "lv.proust_swann_dedicace": "Swann's Way (signed)",
