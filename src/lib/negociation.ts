@@ -13,15 +13,16 @@ import type {
  * `texteNego()` (voir `src/lib/i18n/contenu`).
  *
  * Placeholders : `{prix}` (contre-offres, accord) et `{cibleSecrete}`
- * (diplomate). Ils doivent être UNIFORMES au sein d'une clé (le test
- * `nego.test.ts` l'impose) — d'où le `{prix}` désormais explicite sur la
- * variante « petit geste » de `contreVendeur`.
+ * (diplomate). Une variante peut ne pas utiliser tous les placeholders de sa
+ * clé (`tr` ignore les params inutilisés — cf. « petit geste ») ; le test
+ * `nego.test.ts` impose seulement qu'aucune variante FR/EN/ES n'en utilise
+ * HORS de l'ensemble FR de la clé.
  */
 export const POOLS_NEGO_FR: Record<CleMessageNego, string[]> = {
   ouvertureAchat: ["Faites glisser votre curseur pour proposer un prix."],
   ouvertureVente: ["Le client vous a fait une offre. À vous de répondre."],
   contreVendeur: [
-    "« Bon, allez, je vous fais un petit geste à {prix} €… »",
+    "« Bon, allez, je vous fais un petit geste… »",
     "« Hmm. Disons {prix} €. »",
     "« {prix} € et on en parle plus. »",
     "« Je peux descendre à {prix} €, c'est mon mieux. »",

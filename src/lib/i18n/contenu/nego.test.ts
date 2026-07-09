@@ -5,18 +5,24 @@ import { NEGO_ES } from "@/lib/i18n/contenu/es/nego";
 import { texteNego } from "@/lib/i18n/contenu";
 
 const CLES = Object.keys(POOLS_NEGO_FR) as (keyof typeof POOLS_NEGO_FR)[];
-const placeholders = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join(",");
+const placeholders = (s: string) => s.match(/\{\w+\}/g) ?? [];
+
+/** Ensemble autorisé par clé = union des placeholders de TOUTES les variantes FR. */
+const autorises = (cle: keyof typeof POOLS_NEGO_FR) =>
+  new Set(POOLS_NEGO_FR[cle].flatMap(placeholders));
 
 describe.each([["EN", NEGO_EN], ["ES", NEGO_ES]] as const)("pools négo %s", (_, pool) => {
   test("mêmes clés que le FR, aucun pool vide", () => {
     expect(Object.keys(pool).sort()).toEqual([...CLES].sort());
     for (const cle of CLES) expect(pool[cle].length).toBeGreaterThan(0);
   });
-  test("placeholders identiques au FR (par clé, ensemble uniforme)", () => {
+  test("placeholders : sous-ensemble de l'union FR par clé (une variante peut en omettre — tr ignore les params inutilisés)", () => {
     for (const cle of CLES) {
-      const attendu = placeholders(POOLS_NEGO_FR[cle][0]);
+      const ensemble = autorises(cle);
       for (const v of [...POOLS_NEGO_FR[cle], ...pool[cle]]) {
-        expect(placeholders(v)).toBe(attendu);
+        for (const ph of placeholders(v)) {
+          expect(ensemble, `${cle} : « ${v} » utilise ${ph} hors ensemble FR`).toContain(ph);
+        }
       }
     }
   });
