@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NegoPersona, NegociationState } from "@/types/game";
 import { HUMEUR_RELANCE, ouvrirNegociation, proposerOffre, relancerNegociation } from "./negociation";
+import { texteNego } from "@/lib/i18n/contenu";
 
 function persona(patch: Partial<NegoPersona> = {}): NegoPersona {
   return {
@@ -39,13 +40,15 @@ describe("ouvrirNegociation", () => {
     expect(n.cibleSecrete).toBe(60);
     expect(n.derniereOffreJoueur).toBeNull();
     expect(n.statut).toBe("en_cours");
-    expect(n.message).toMatch(/curseur/);
+    expect(n.message.cle).toBe("ouvertureAchat");
+    expect(texteNego(n.message, "fr")).toMatch(/curseur/);
   });
 
   it("crée un état initial valide en mode vente", () => {
     const n = ouvrirNegociation("vente", 50, 90);
     expect(n.mode).toBe("vente");
-    expect(n.message).toMatch(/offre/i);
+    expect(n.message.cle).toBe("ouvertureVente");
+    expect(texteNego(n.message, "fr")).toMatch(/offre/i);
   });
 });
 
@@ -81,7 +84,9 @@ describe("proposerOffre — accord direct (mode achat)", () => {
     const res = proposerOffre(n, persona(), 100);
     expect(res.statut).toBe("conclu");
     expect(res.derniereOffreJoueur).toBe(100);
-    expect(res.message).toMatch(/\b100 €/);
+    expect(res.message.cle).toBe("accord");
+    expect(res.message.params).toEqual({ prix: 100 });
+    expect(texteNego(res.message, "fr")).toMatch(/\b100 €/);
   });
 
   it("conclu si offre dépasse strictement le prix adverse", () => {
@@ -223,14 +228,15 @@ describe("relancerNegociation (La Tchatche)", () => {
     cibleSecrete: 60,
     derniereOffreJoueur: 50,
     statut: "fache",
-    message: "…",
+    message: { cle: "fache", variante: 0 },
   };
   it("rouvre une négo fâchée avec humeur neutre", () => {
     const r = relancerNegociation(base);
     expect(r.statut).toBe("en_cours");
     expect(r.humeur).toBe(HUMEUR_RELANCE);
     expect(r.prixAdverseCourant).toBe(80); // le prix courant ne bouge pas
-    expect(r.message).toContain("écoute");
+    expect(r.message.cle).toBe("relance");
+    expect(texteNego(r.message, "fr")).toContain("écoute");
   });
   it("rouvre aussi un refus poli", () => {
     expect(relancerNegociation({ ...base, statut: "refus_poli" }).statut).toBe("en_cours");

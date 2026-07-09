@@ -471,6 +471,31 @@ export interface NegoPersona {
 /** Statut courant d'une négociation. */
 export type NegoStatut = "en_cours" | "refus_poli" | "fache" | "conclu";
 
+/**
+ * Clé de pool de répliques de négociation. Chaque clé indexe une liste de
+ * variantes FR (`POOLS_NEGO_FR`) et ses homologues EN/ES (overlays `nego`).
+ * Le message affiché est résolu À L'AFFICHAGE via `texteNego()` (jamais
+ * persisté : `NegociationState` vit en `useState`, hors save).
+ */
+export type CleMessageNego =
+  | "ouvertureAchat" | "ouvertureVente"
+  | "contreVendeur" | "contreClient"
+  | "refusPoliVendeur" | "refusPoliClient"
+  | "fache" | "accord" | "relance"
+  | "diplomate" | "bonimentConclu" | "bonimentDernierMot" | "lotGarni";
+
+/**
+ * Message de négociation structuré (indépendant de la langue). On mémorise la
+ * clé de pool + l'index de variante tiré au moment de l'événement + les
+ * paramètres d'interpolation ; la langue est appliquée au rendu.
+ */
+export interface MessageNego {
+  cle: CleMessageNego;
+  /** Index de variante tiré au moment de l'événement (modulo la taille du pool par langue). */
+  variante: number;
+  params?: { prix?: number; cibleSecrete?: number };
+}
+
 /** État persistant d'une négociation en cours. */
 export interface NegociationState {
   mode: NegoMode;
@@ -481,7 +506,7 @@ export interface NegociationState {
   cibleSecrete: number;
   derniereOffreJoueur: number | null;
   statut: NegoStatut;
-  message: string;
+  message: MessageNego;
 }
 
 export type TailleObjet = "XS" | "S" | "M" | "L" | "XL";

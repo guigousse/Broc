@@ -18,6 +18,7 @@ import {
   type VitrineModifiers,
 } from "./vitrine";
 import { ouvrirNegociation } from "./negociation";
+import { texteNego } from "@/lib/i18n/contenu";
 import {
   createMockClient,
   createMockObjetEnVitrine,
@@ -257,7 +258,8 @@ describe("proposerOffreVente — Diplomate transforme fache en en_cours", () => 
       revelationDejaFaite: false,
     });
     expect(res.statut).toBe("en_cours");
-    expect(res.message).toMatch(/plafond/i);
+    expect(res.message.cle).toBe("diplomate");
+    expect(texteNego(res.message, "fr")).toMatch(/plafond/i);
     expect(res.diplomatieDeclenchee).toBe(true);
   });
 
@@ -294,7 +296,7 @@ describe("proposerOffreVente — boost de tolérance (Verbe haut/d'or)", () => {
       cibleSecrete: 120,
       derniereOffreJoueur: null,
       statut: "en_cours",
-      message: "",
+      message: { cle: "ouvertureVente", variante: 0 },
     } as NegociationState;
     const client = createMockClient({ tolerancePct: 0.2, sangFroid: 1, patience: 9 });
     // offre à 125 : delta 25 % > 20 % → insultante sans boost
@@ -446,7 +448,7 @@ describe("appliquerBoniment (Le Boniment)", () => {
     cibleSecrete: 100,
     derniereOffreJoueur: null,
     statut: "en_cours",
-    message: "",
+    message: { cle: "ouvertureVente", variante: 0 },
   };
 
   it("BONIMENT_MARGE vaut 1.15", () => {

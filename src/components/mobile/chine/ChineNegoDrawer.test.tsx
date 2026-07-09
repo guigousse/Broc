@@ -25,7 +25,7 @@ function makeNego(patch: Partial<NegociationState> = {}): NegociationState {
     cibleSecrete: 60,
     derniereOffreJoueur: 50,
     statut: "fache",
-    message: "« Vous vous moquez de moi ! »",
+    message: { cle: "fache", variante: 0 },
     ...patch,
   };
 }

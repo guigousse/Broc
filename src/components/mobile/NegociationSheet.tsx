@@ -11,6 +11,7 @@ import { appliquerBoniment } from "@/lib/vitrine";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { texteNego } from "@/lib/i18n/contenu";
 import type { NegoMode, NegoPersona, NegociationState } from "@/types/game";
 
 interface NegociationSheetProps {
@@ -80,7 +81,7 @@ export function NegociationSheet({
   boniment,
   lotGarni,
 }: NegociationSheetProps) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const [localNego, setLocalNego] = useState<NegociationState>(
     nego ?? ouvrirNegociation(mode, prixDepartAdverse, cibleSecrete),
   );
@@ -156,7 +157,7 @@ export function NegociationSheet({
   // Texte affiché dans la bulle de dialogue
   const bubbleMessage = venteDirecte
     ? tr(d.vente.bulleJePrends, { prix: venteDirecte.prixDirect })
-    : localNego.message;
+    : texteNego(localNego.message, locale);
 
   const title = venteDirecte ? d.vente.titreVente : d.vente.titreNegociation;
 

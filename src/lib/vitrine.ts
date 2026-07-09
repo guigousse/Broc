@@ -8,7 +8,7 @@ import type {
 } from "@/types/game";
 import { ALL_PERSONNAGES, type ClientPersonnage } from "@/data/clients";
 import { modificateurTendance } from "@/lib/tendances";
-import { proposerOffre } from "@/lib/negociation";
+import { pickMessage, proposerOffre } from "@/lib/negociation";
 
 /**
  * Bonus appliqué quand l'objet correspond à la spécialisation de la brocante
@@ -334,7 +334,7 @@ export function proposerOffreVente(
       ...next,
       statut: "en_cours",
       humeur: 0.95,
-      message: `« Mon plafond, c'est ${nego.cibleSecrete} €. Une dernière fois, je vous écoute. »`,
+      message: pickMessage("diplomate", { cibleSecrete: nego.cibleSecrete }),
       diplomatieDeclenchee: true,
     };
   }
@@ -362,14 +362,14 @@ export function appliquerBoniment(
       statut: "conclu",
       prixAdverseCourant: offreJoueur,
       humeur: Math.min(nego.humeur, 0.3),
-      message: "« Marché conclu ! Vous savez y faire… »",
+      message: pickMessage("bonimentConclu"),
     };
   }
   return {
     ...nego,
     prixAdverseCourant: nego.cibleSecrete,
     derniereOffreJoueur: offreJoueur,
-    message: "« Voilà mon dernier mot : c'est ça ou rien. »",
+    message: pickMessage("bonimentDernierMot"),
   };
 }
 
@@ -401,7 +401,7 @@ export function ajouterAuPanier(
       1,
       Math.round((nego.prixAdverseCourant * prixMax) / Math.max(1, ev.prixMax)),
     ),
-    message: "« Hmm, les deux ensemble ? Faites-moi un prix… »",
+    message: pickMessage("lotGarni"),
   };
   return { ev: evNext, nego: negoNext };
 }

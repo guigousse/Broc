@@ -7,7 +7,7 @@ import { proposerOffre, ouvrirNegociation, relancerNegociation } from "@/lib/neg
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { nomVendeur } from "@/lib/i18n/contenu";
+import { nomVendeur, texteNego } from "@/lib/i18n/contenu";
 import type { NegociationState, ObjetEnVente } from "@/types/game";
 
 /**
@@ -101,7 +101,7 @@ export function ChineNegoDrawer({
         )}
         <div style={rightZone}>
           {expanded ? (
-            <div style={bubble}>{localNego.message}</div>
+            <div style={bubble}>{texteNego(localNego.message, locale)}</div>
           ) : acquis ? (
             <span style={statutTexte("var(--brass-700)")}>{d.chine.acquisStatut}</span>
           ) : facheInitial ? (

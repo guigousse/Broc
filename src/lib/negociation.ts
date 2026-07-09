@@ -1,45 +1,72 @@
 import type {
+  CleMessageNego,
+  MessageNego,
   NegoMode,
   NegoPersona,
   NegociationState,
 } from "@/types/game";
 
-const MESSAGES_CONTRE_OFFRE_VENDEUR = [
-  "« Bon, allez, je vous fais un petit geste… »",
-  "« Hmm. Disons {prix} €. »",
-  "« {prix} € et on en parle plus. »",
-  "« Je peux descendre à {prix} €, c'est mon mieux. »",
-];
+/**
+ * Pools FR canoniques des répliques de négociation, indexés par clé
+ * (`CleMessageNego`). Source de vérité côté FR ; les overlays `en/nego.ts` /
+ * `es/nego.ts` reprennent la même forme. Le rendu localisé passe par
+ * `texteNego()` (voir `src/lib/i18n/contenu`).
+ *
+ * Placeholders : `{prix}` (contre-offres, accord) et `{cibleSecrete}`
+ * (diplomate). Ils doivent être UNIFORMES au sein d'une clé (le test
+ * `nego.test.ts` l'impose) — d'où le `{prix}` désormais explicite sur la
+ * variante « petit geste » de `contreVendeur`.
+ */
+export const POOLS_NEGO_FR: Record<CleMessageNego, string[]> = {
+  ouvertureAchat: ["Faites glisser votre curseur pour proposer un prix."],
+  ouvertureVente: ["Le client vous a fait une offre. À vous de répondre."],
+  contreVendeur: [
+    "« Bon, allez, je vous fais un petit geste à {prix} €… »",
+    "« Hmm. Disons {prix} €. »",
+    "« {prix} € et on en parle plus. »",
+    "« Je peux descendre à {prix} €, c'est mon mieux. »",
+  ],
+  contreClient: [
+    "« Je peux monter un peu : {prix} €. »",
+    "« {prix} €, et c'est ma proposition honnête. »",
+    "« Bon, allez, {prix} € si vous me l'enveloppez. »",
+  ],
+  refusPoliVendeur: [
+    "« Bon, je vais ranger. Mais c'est dommage. »",
+    "« Tant pis, à une prochaine fois. »",
+  ],
+  refusPoliClient: [
+    "« Tant pis, je vais voir ailleurs. »",
+    "« Je passerai mon tour, merci. »",
+  ],
+  fache: [
+    "« Vous vous moquez de moi ! »",
+    "« Vous abusez de ma patience. »",
+  ],
+  accord: [
+    "Marché conclu à {prix} €.",
+    "Vendu à {prix} €.",
+  ],
+  relance: ["« Bon… allez, je vous écoute une dernière fois. »"],
+  diplomate: [
+    "« Mon plafond, c'est {cibleSecrete} €. Une dernière fois, je vous écoute. »",
+  ],
+  bonimentConclu: ["« Marché conclu ! Vous savez y faire… »"],
+  bonimentDernierMot: ["« Voilà mon dernier mot : c'est ça ou rien. »"],
+  lotGarni: ["« Hmm, les deux ensemble ? Faites-moi un prix… »"],
+};
 
-const MESSAGES_CONTRE_OFFRE_CLIENT = [
-  "« Je peux monter un peu : {prix} €. »",
-  "« {prix} €, et c'est ma proposition honnête. »",
-  "« Bon, allez, {prix} € si vous me l'enveloppez. »",
-];
-
-const MESSAGES_REFUS_POLI_VENDEUR = [
-  "« Bon, je vais ranger. Mais c'est dommage. »",
-  "« Tant pis, à une prochaine fois. »",
-];
-
-const MESSAGES_REFUS_POLI_CLIENT = [
-  "« Tant pis, je vais voir ailleurs. »",
-  "« Je passerai mon tour, merci. »",
-];
-
-const MESSAGES_FACHE = [
-  "« Vous vous moquez de moi ! »",
-  "« Vous abusez de ma patience. »",
-];
-
-const MESSAGES_ACCORD = [
-  "Marché conclu à {prix} €.",
-  "Vendu à {prix} €.",
-];
-
-function pickMessage(list: readonly string[], prix?: number): string {
-  const msg = list[Math.floor(Math.random() * list.length)];
-  return prix !== undefined ? msg.replace("{prix}", String(prix)) : msg;
+/**
+ * Construit un `MessageNego` : tire une variante dans le pool FR (le modulo au
+ * rendu absorbe les tailles de pool différentes entre langues) et fige les
+ * paramètres d'interpolation. Ne résout PAS le texte (fait à l'affichage).
+ */
+export function pickMessage(
+  cle: CleMessageNego,
+  params?: { prix?: number; cibleSecrete?: number },
+): MessageNego {
+  const variante = Math.floor(Math.random() * POOLS_NEGO_FR[cle].length);
+  return params ? { cle, variante, params } : { cle, variante };
 }
 
 /**
@@ -63,10 +90,7 @@ export function ouvrirNegociation(
     cibleSecrete,
     derniereOffreJoueur: null,
     statut: "en_cours",
-    message:
-      mode === "achat"
-        ? "Faites glisser votre curseur pour proposer un prix."
-        : "Le client vous a fait une offre. À vous de répondre.",
+    message: pickMessage(mode === "achat" ? "ouvertureAchat" : "ouvertureVente"),
   };
 }
 
@@ -153,7 +177,7 @@ export function proposerOffre(
       humeur: Math.min(nego.humeur, 0.3),
       derniereOffreJoueur: offre,
       statut: "conclu",
-      message: pickMessage(MESSAGES_ACCORD, offre),
+      message: pickMessage("accord", { prix: offre }),
     };
   }
 
@@ -176,7 +200,7 @@ export function proposerOffre(
       humeur: 1,
       derniereOffreJoueur: offre,
       statut: "fache",
-      message: pickMessage(MESSAGES_FACHE),
+      message: pickMessage("fache"),
     };
   }
 
@@ -192,32 +216,32 @@ export function proposerOffre(
         humeur: 1,
         derniereOffreJoueur: offre,
         statut: "fache",
-        message: pickMessage(MESSAGES_FACHE),
+        message: pickMessage("fache"),
       };
     }
-    const refusMsgs =
-      nego.mode === "achat" ? MESSAGES_REFUS_POLI_VENDEUR : MESSAGES_REFUS_POLI_CLIENT;
+    const refusCle: CleMessageNego =
+      nego.mode === "achat" ? "refusPoliVendeur" : "refusPoliClient";
     return {
       ...nego,
       tour,
       humeur,
       derniereOffreJoueur: offre,
       statut: "refus_poli",
-      message: pickMessage(refusMsgs),
+      message: pickMessage(refusCle),
     };
   }
 
   // 4. Refus poli (patience épuisée)
   if (tour >= persona.patience) {
-    const refusMsgs =
-      nego.mode === "achat" ? MESSAGES_REFUS_POLI_VENDEUR : MESSAGES_REFUS_POLI_CLIENT;
+    const refusCle: CleMessageNego =
+      nego.mode === "achat" ? "refusPoliVendeur" : "refusPoliClient";
     return {
       ...nego,
       tour,
       humeur: Math.max(humeur, 0.8),
       derniereOffreJoueur: offre,
       statut: "refus_poli",
-      message: pickMessage(refusMsgs),
+      message: pickMessage(refusCle),
     };
   }
 
@@ -242,12 +266,12 @@ export function proposerOffre(
       prixAdverseCourant: offre,
       derniereOffreJoueur: offre,
       statut: "conclu",
-      message: pickMessage(MESSAGES_ACCORD, offre),
+      message: pickMessage("accord", { prix: offre }),
     };
   }
 
-  const contreMsgs =
-    nego.mode === "achat" ? MESSAGES_CONTRE_OFFRE_VENDEUR : MESSAGES_CONTRE_OFFRE_CLIENT;
+  const contreCle: CleMessageNego =
+    nego.mode === "achat" ? "contreVendeur" : "contreClient";
   return {
     ...nego,
     tour,
@@ -255,7 +279,7 @@ export function proposerOffre(
     prixAdverseCourant: nouveauPrix,
     derniereOffreJoueur: offre,
     statut: "en_cours",
-    message: pickMessage(contreMsgs, nouveauPrix),
+    message: pickMessage(contreCle, { prix: nouveauPrix }),
   };
 }
 
@@ -268,6 +292,6 @@ export function relancerNegociation(nego: NegociationState): NegociationState {
     ...nego,
     statut: "en_cours",
     humeur: HUMEUR_RELANCE,
-    message: "« Bon… allez, je vous écoute une dernière fois. »",
+    message: pickMessage("relance"),
   };
 }

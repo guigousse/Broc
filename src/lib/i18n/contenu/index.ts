@@ -1,5 +1,9 @@
 import type { Locale } from "@/lib/i18n/locales";
-import type { VendeurArchetypeId } from "@/types/game";
+import type { CleMessageNego, MessageNego, VendeurArchetypeId } from "@/types/game";
+import { tr } from "@/lib/i18n/ui";
+import { POOLS_NEGO_FR } from "@/lib/negociation";
+import { NEGO_EN } from "./en/nego";
+import { NEGO_ES } from "./es/nego";
 import { getTemplate } from "@/data/objetTemplates";
 import { NOM_ARCHETYPE, NOM_VENDEUR, getNomVendeur } from "@/lib/personas";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
@@ -338,6 +342,29 @@ export function nomCelebrite(nomFr: string, locale: Locale): string {
     if (trad) return trad;
   }
   return nomFr;
+}
+
+/* ------------------------------------------------------------------ */
+/* Négociation : répliques structurées (MessageNego) → texte localisé   */
+/* ------------------------------------------------------------------ */
+
+/** Pools de répliques par langue. FR = `POOLS_NEGO_FR` (source), EN/ES overlays. */
+const POOLS_NEGO: Record<Locale, Record<CleMessageNego, string[]>> = {
+  fr: POOLS_NEGO_FR,
+  en: NEGO_EN,
+  es: NEGO_ES,
+};
+
+/**
+ * Résout un `MessageNego` en texte affichable dans la langue demandée :
+ * lookup du pool par locale + clé, modulo sur la variante (les pools peuvent
+ * avoir des tailles différentes selon la langue), puis interpolation des
+ * `params` via `tr()`. Aucune écriture en save — appelé uniquement à l'affichage.
+ */
+export function texteNego(msg: MessageNego, locale: Locale): string {
+  const pool = POOLS_NEGO[locale][msg.cle];
+  const gabarit = pool[msg.variante % pool.length];
+  return tr(gabarit, msg.params);
 }
 
 /** Utils des tests de complétude par domaine. */
