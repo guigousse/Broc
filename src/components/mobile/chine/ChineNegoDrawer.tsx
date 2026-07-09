@@ -8,6 +8,7 @@ import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomVendeur, texteNego } from "@/lib/i18n/contenu";
+import { libelleActive } from "@/lib/i18n/libelles";
 import type { NegociationState, ObjetEnVente } from "@/types/game";
 
 /**
@@ -152,7 +153,7 @@ export function ChineNegoDrawer({
                     disabled={tchatche.restantes === 0}
                     onClick={handleRelancer}
                   >
-                    💬 La Tchatche ({tchatche.restantes})
+                    💬 {libelleActive("tchatche", d)} ({tchatche.restantes})
                   </button>
                 )}
                 <button
@@ -187,7 +188,7 @@ export function ChineNegoDrawer({
                     disabled={tchatche.restantes === 0}
                     onClick={handleRelancer}
                   >
-                    💬 La Tchatche ({tchatche.restantes})
+                    💬 {libelleActive("tchatche", d)} ({tchatche.restantes})
                   </button>
                 )}
                 <button

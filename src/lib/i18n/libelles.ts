@@ -1,5 +1,6 @@
 import type { CategorieObjet, EtatObjet, Rarete } from "@/types/game";
 import type { FamilleDeblocage } from "@/data/deblocagesNiveau";
+import type { ActiveId } from "@/lib/actives";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 
 /**
@@ -63,5 +64,29 @@ export function libelleFamille(f: FamilleDeblocage, d: DictionnaireUI): string {
       return d.familles.confort;
     case "active":
       return d.familles.active;
+  }
+}
+
+/**
+ * Nom localisé d'une active (HUD de chine/vente). Cohérence obligatoire avec
+ * les titres de déblocage EN/ES (`contenu/{en,es}/deblocages.ts`) : ce sont
+ * les MÊMES noms d'active déjà actés là-bas, réutilisés ici.
+ */
+export function libelleActive(id: ActiveId, d: DictionnaireUI): string {
+  switch (id) {
+    case "flair":
+      return d.actives.flair;
+    case "lotGarni":
+      return d.actives.lotGarni;
+    case "fouille":
+      return d.actives.fouille;
+    case "boniment":
+      return d.actives.boniment;
+    case "tchatche":
+      return d.actives.tchatche;
+    case "criee":
+      return d.actives.criee;
+    case "diplomate":
+      return d.actives.diplomate;
   }
 }

@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { agregerJournees, type JourneeHistorique } from "@/lib/historiqueJournalier";
+import { agregerJournees, libelleJournee, type JourneeHistorique } from "@/lib/historiqueJournalier";
 import type { GameState, Session } from "@/types/game";
 import { SessionSummary, type SummaryItem } from "@/components/SessionSummary";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomBrocante } from "@/lib/i18n/contenu";
+import { getBrocanteById } from "@/data/brocantes";
 
 interface CahierDeCompteOverlayProps {
   open: boolean;
@@ -192,6 +195,7 @@ function DetailRepos({ journee }: { journee: JourneeHistorique }) {
 /* ─── Composant principal ─── */
 
 export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOverlayProps) {
+  const { d, tr, locale } = useLangue();
   const [reposExpanded, setReposExpanded] = useState<Set<number>>(new Set());
   const [replayOf, setReplayOf] = useState<Session | null>(null);
   const journees = useMemo(() => agregerJournees(state.grandLivre, state.historique), [state.grandLivre, state.historique]);
@@ -221,7 +225,10 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
       session.type === "chinage"
         ? session.achats.map((a) => ({ templateId: a.templateId, nom: a.nom, categorie: a.categorie, prix: a.prixPaye }))
         : session.ventes.map((v) => ({ templateId: v.templateId, nom: v.nom, categorie: v.categorie, prix: v.prixVente }));
-    const titreReplay = session.type === "chinage" ? session.brocanteNom : `Marché du jour J${session.jour}`;
+    const titreReplay =
+      session.type === "chinage"
+        ? nomBrocante(getBrocanteById(session.brocanteId) ?? { id: session.brocanteId, nom: session.brocanteNom }, locale)
+        : tr(d.cahier.marcheDuJourN, { n: session.jour });
     return (
       <>
         <div style={scrim} onClick={() => setReplayOf(null)} aria-hidden />
@@ -287,7 +294,7 @@ export function CahierDeCompteOverlay({ open, onClose, state }: CahierDeCompteOv
                       <span style={jourCellule}>J{j.jour}</span>
                       <span>
                         <div style={typeCellule}>{typeLabel(j.type)}</div>
-                        <div style={libelleCellule}>{j.libelle}</div>
+                        <div style={libelleCellule}>{libelleJournee(j, d, locale)}</div>
                       </span>
                       <span style={netStyle(j.net)}>
                         {j.net > 0 ? `+${j.net}` : j.net} €

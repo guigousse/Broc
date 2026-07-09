@@ -469,4 +469,30 @@ export const en: DictionnaireUI = {
     pointsInsuffisants: "Not enough points",
     competenceAcquiseToast: "Skill acquired: {nom}",
   },
+  actives: {
+    flair: "The Nose",
+    lotGarni: "The Bundle",
+    fouille: "The Rummage",
+    boniment: "The Pitch",
+    tchatche: "The Gab",
+    criee: "The Cry",
+    diplomate: "Diplomat",
+  },
+  gazette: {
+    celebriteAnnonce:
+      "{nom} is expected at {brocante} on {jour}. Brace for crowds and heavy purses!",
+    celebriteBrocanteInconnue: "a flea market",
+  },
+  cahier: {
+    marcheDuJour: "Market day",
+    marcheDuJourN: "Market day D{n}",
+    journeeRepos: "Day off",
+    atelierAmeliore: "Workshop upgraded",
+    stockageAmeliore: "Storage upgraded",
+    camionAmeliore: "Truck upgraded",
+    loyerPreleve: "Rent deducted",
+    gazetteAchetee: "Gazette bought",
+    recompenseRecue: "Reward received",
+    missionRecompensee: "Mission rewarded",
+  },
 };

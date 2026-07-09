@@ -61,6 +61,7 @@ import { indexJourSemaine, meteoDuJour } from "@/lib/meteo";
 import { buildCelebritePersonnage } from "@/lib/celebrite";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI, tr } from "@/lib/i18n/ui";
+import { libelleActive } from "@/lib/i18n/libelles";
 import {
   nomObjet,
   nomClient,
@@ -760,7 +761,7 @@ export default function VitrineJourneePage() {
                   usagesRestants(state.activesUtilisees, "criee", state.jourActuel) === 0
                 }
               >
-                {`📣 La Criée (${usagesRestants(
+                {`📣 ${libelleActive("criee", d)} (${usagesRestants(
                   state.activesUtilisees,
                   "criee",
                   state.jourActuel,

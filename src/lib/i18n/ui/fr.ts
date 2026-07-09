@@ -474,4 +474,30 @@ export const fr = {
     pointsInsuffisants: "Points insuffisants",
     competenceAcquiseToast: "Compétence acquise : {nom}",
   },
+  actives: {
+    flair: "Le Flair",
+    lotGarni: "Lot garni",
+    fouille: "La Fouille",
+    boniment: "Le Boniment",
+    tchatche: "La Tchatche",
+    criee: "La Criée",
+    diplomate: "Diplomate",
+  },
+  gazette: {
+    celebriteAnnonce:
+      "{nom} est annoncé(e) à {brocante} le {jour}. Attendez-vous à une forte affluence et à de grosses bourses !",
+    celebriteBrocanteInconnue: "une brocante",
+  },
+  cahier: {
+    marcheDuJour: "Marché du jour",
+    marcheDuJourN: "Marché du jour J{n}",
+    journeeRepos: "Journée de repos",
+    atelierAmeliore: "Atelier amélioré",
+    stockageAmeliore: "Stockage amélioré",
+    camionAmeliore: "Camion amélioré",
+    loyerPreleve: "Loyer prélevé",
+    gazetteAchetee: "Gazette achetée",
+    recompenseRecue: "Récompense reçue",
+    missionRecompensee: "Mission récompensée",
+  },
 } as const;

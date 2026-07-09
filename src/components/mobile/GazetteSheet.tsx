@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 import {
   Music,
   Dices,
@@ -267,6 +267,43 @@ const meteoRow: CSSProperties = {
   marginTop: "0.5%",
 };
 
+/**
+ * Rendu de la phrase d'annonce de célébrité (`d.gazette.celebriteAnnonce`) avec mise en
+ * emphase des 3 valeurs interpolées — le gabarit reste un simple template par langue
+ * (`{nom}`/`{brocante}`/`{jour}`), on découpe dessus plutôt que de coder la structure de
+ * phrase en dur (qui diffère par langue).
+ */
+function renderCelebriteAnnonce(
+  gabarit: string,
+  valeurs: { nom: string; brocante: string; jour: string },
+): ReactNode[] {
+  const segments = gabarit.split(/(\{nom\}|\{brocante\}|\{jour\})/);
+  return segments.map((segment, i) => {
+    if (segment === "{nom}") {
+      return (
+        <strong key={i} style={{ fontStyle: "normal" }}>
+          {valeurs.nom}
+        </strong>
+      );
+    }
+    if (segment === "{brocante}") {
+      return (
+        <strong key={i} style={{ fontStyle: "normal" }}>
+          {valeurs.brocante}
+        </strong>
+      );
+    }
+    if (segment === "{jour}") {
+      return (
+        <strong key={i} style={{ fontStyle: "normal", textTransform: "uppercase" }}>
+          {valeurs.jour}
+        </strong>
+      );
+    }
+    return <span key={i}>{segment}</span>;
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Composant                                                           */
 /* ------------------------------------------------------------------ */
@@ -390,21 +427,13 @@ export function GazetteSheet(props: GazetteSheetProps) {
                       color: "var(--ink-700)",
                     }}
                   >
-                    <strong style={{ fontStyle: "normal" }}>{nomCelebrite(celebrite.nom, locale)}</strong>{" "}
-                    est annoncé(e) à{" "}
-                    <strong style={{ fontStyle: "normal" }}>
-                      {brocanteCeleb ? nomBrocante(brocanteCeleb, locale) : "une brocante"}
-                    </strong>{" "}
-                    le{" "}
-                    <strong
-                      style={{ fontStyle: "normal", textTransform: "uppercase" }}
-                    >
-                      {JOURS_SEMAINE[celebrite.jourSemaine]}
-                    </strong>
-                    . Attendez-vous à une <strong style={{ fontStyle: "normal" }}>
-                      forte affluence
-                    </strong>{" "}
-                    et à de <strong style={{ fontStyle: "normal" }}>grosses bourses</strong> !
+                    {renderCelebriteAnnonce(d.gazette.celebriteAnnonce, {
+                      nom: nomCelebrite(celebrite.nom, locale),
+                      brocante: brocanteCeleb
+                        ? nomBrocante(brocanteCeleb, locale)
+                        : d.gazette.celebriteBrocanteInconnue,
+                      jour: JOURS_SEMAINE[celebrite.jourSemaine],
+                    })}
                   </p>
                 </div>
                 {influenceDisponible && (

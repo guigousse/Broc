@@ -2,12 +2,25 @@ import { describe, expect, it, test } from "vitest";
 import { CATEGORIES } from "@/data/categories";
 import { DEBLOCAGES_PAR_NIVEAU } from "@/data/deblocagesNiveau";
 import { DICTIONNAIRES } from "@/lib/i18n/ui";
+import { DEBLOCAGES_EN } from "@/lib/i18n/contenu/en/deblocages";
+import type { ActiveId } from "@/lib/actives";
 import {
+  libelleActive,
   libelleCategorie,
   libelleEtat,
   libelleFamille,
   libelleRarete,
 } from "@/lib/i18n/libelles";
+
+const ACTIVE_IDS: ActiveId[] = [
+  "flair",
+  "lotGarni",
+  "fouille",
+  "boniment",
+  "tchatche",
+  "criee",
+  "diplomate",
+];
 
 test("libelleCategorie couvre les 7 catégories dans les 3 langues", () => {
   for (const locale of ["fr", "en", "es"] as const) {
@@ -45,4 +58,35 @@ test("libelleFamille couvre les 5 familles dans les 3 langues", () => {
   }
   expect(libelleFamille("active", DICTIONNAIRES.en)).toBe("Active skill");
   expect(libelleFamille("jalon", DICTIONNAIRES.es)).toBe("Hito");
+});
+
+describe("libelleActive", () => {
+  it("couvre les 7 ActiveId dans les 3 langues, jamais vide", () => {
+    for (const locale of ["fr", "en", "es"] as const) {
+      for (const id of ACTIVE_IDS) {
+        expect(libelleActive(id, DICTIONNAIRES[locale]).trim()).not.toBe("");
+      }
+    }
+  });
+
+  it("cohérence avec les titres de déblocage EN : le nom EN de l'active y apparaît", () => {
+    expect(DEBLOCAGES_EN["Active 🔍 Le Flair"]).toContain(
+      libelleActive("flair", DICTIONNAIRES.en),
+    );
+    expect(DEBLOCAGES_EN["Active 🧺 Le Lot garni"]).toContain(
+      libelleActive("lotGarni", DICTIONNAIRES.en),
+    );
+    expect(DEBLOCAGES_EN["Active 🧹 La Fouille"]).toContain(
+      libelleActive("fouille", DICTIONNAIRES.en),
+    );
+    expect(DEBLOCAGES_EN["Active 🎩 Le Boniment"]).toContain(
+      libelleActive("boniment", DICTIONNAIRES.en),
+    );
+    expect(DEBLOCAGES_EN["Active 💬 La Tchatche"]).toContain(
+      libelleActive("tchatche", DICTIONNAIRES.en),
+    );
+    expect(DEBLOCAGES_EN["Active 📣 La Criée"]).toContain(
+      libelleActive("criee", DICTIONNAIRES.en),
+    );
+  });
 });

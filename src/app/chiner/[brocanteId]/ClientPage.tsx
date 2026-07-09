@@ -18,6 +18,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/components/ui/Toast";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomBrocante } from "@/lib/i18n/contenu";
+import { libelleActive } from "@/lib/i18n/libelles";
 import { fraisEntree, getBrocanteById } from "@/data/brocantes";
 import {
   calculerBrocantesDebloqueesParTier,
@@ -355,7 +356,7 @@ export default function SessionChinePage() {
                   : 1,
             }}
           >
-            🔍 Flair ({usagesRestants(state.activesUtilisees, "flair", state.jourActuel)})
+            🔍 {libelleActive("flair", d)} ({usagesRestants(state.activesUtilisees, "flair", state.jourActuel)})
           </button>
         </div>
       )}

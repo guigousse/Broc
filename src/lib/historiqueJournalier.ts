@@ -1,4 +1,9 @@
 import type { LedgerEntry, LedgerKind, Session } from "@/types/game";
+import type { Locale } from "@/lib/i18n/locales";
+import type { DictionnaireUI } from "@/lib/i18n/ui";
+import { DICTIONNAIRES } from "@/lib/i18n/ui";
+import { getBrocanteById } from "@/data/brocantes";
+import { nomBrocante } from "@/lib/i18n/contenu";
 
 export type TypeJournee = "chinage" | "vente" | "repos";
 
@@ -6,27 +11,74 @@ export interface JourneeHistorique {
   jour: number;
   type: TypeJournee;
   session: Session | null;
+  /** Libellé FR canonique — conservé pour compat/debug ; l'affichage doit
+   *  passer par `libelleJournee(j, d, locale)` pour la version localisée. */
   libelle: string;
   entries: LedgerEntry[];
   net: number;
   soldeFin: number;
 }
 
-const PRIORITE_REPOS: { kind: LedgerKind; libelle: string }[] = [
-  { kind: "upgrade_atelier", libelle: "Atelier amélioré" },
-  { kind: "upgrade_stockage", libelle: "Stockage amélioré" },
-  { kind: "upgrade_camion", libelle: "Camion amélioré" },
-  { kind: "loyer", libelle: "Loyer prélevé" },
-  { kind: "gazette", libelle: "Gazette achetée" },
-  { kind: "courrier_recompense", libelle: "Récompense reçue" },
-  { kind: "mission_recompense", libelle: "Mission récompensée" },
+/** Sous-ensemble de `LedgerKind` éligible à un libellé de journée de repos, par ordre de priorité. */
+type ReposKind =
+  | "upgrade_atelier"
+  | "upgrade_stockage"
+  | "upgrade_camion"
+  | "loyer"
+  | "gazette"
+  | "courrier_recompense"
+  | "mission_recompense";
+
+const PRIORITE_REPOS: ReposKind[] = [
+  "upgrade_atelier",
+  "upgrade_stockage",
+  "upgrade_camion",
+  "loyer",
+  "gazette",
+  "courrier_recompense",
+  "mission_recompense",
 ];
 
-function libelleRepos(entries: LedgerEntry[]): string {
-  for (const { kind, libelle } of PRIORITE_REPOS) {
-    if (entries.some((e) => e.kind === kind)) return libelle;
+/** Détermine, parmi les écritures d'une journée de repos, quel type prime pour le libellé (ou aucun). */
+function reposKindPourEntries(entries: LedgerEntry[]): ReposKind | null {
+  return PRIORITE_REPOS.find((kind) => entries.some((e) => e.kind === kind)) ?? null;
+}
+
+/** Libellé localisé d'une journée de repos (switch exhaustif motif `libelleCategorie`). */
+export function libelleRepos(kind: ReposKind | null, d: DictionnaireUI): string {
+  switch (kind) {
+    case "upgrade_atelier":
+      return d.cahier.atelierAmeliore;
+    case "upgrade_stockage":
+      return d.cahier.stockageAmeliore;
+    case "upgrade_camion":
+      return d.cahier.camionAmeliore;
+    case "loyer":
+      return d.cahier.loyerPreleve;
+    case "gazette":
+      return d.cahier.gazetteAchetee;
+    case "courrier_recompense":
+      return d.cahier.recompenseRecue;
+    case "mission_recompense":
+      return d.cahier.missionRecompensee;
+    case null:
+      return d.cahier.journeeRepos;
   }
-  return "Journée de repos";
+}
+
+/**
+ * Libellé localisé d'une journée du Cahier de compte, résolu à l'affichage.
+ * Chinage : nom de brocante par `brocanteId` (fallback `brocanteNom` — vieilles
+ * saves / id introuvable). Vente : « Marché du jour ». Repos : priorité
+ * `PRIORITE_REPOS` sur les écritures du jour.
+ */
+export function libelleJournee(j: JourneeHistorique, d: DictionnaireUI, locale: Locale): string {
+  if (j.type === "chinage" && j.session?.type === "chinage") {
+    const brocante = getBrocanteById(j.session.brocanteId);
+    return brocante ? nomBrocante(brocante, locale) : j.session.brocanteNom;
+  }
+  if (j.type === "vente") return d.cahier.marcheDuJour;
+  return libelleRepos(reposKindPourEntries(j.entries), d);
 }
 
 export function agregerJournees(
@@ -56,10 +108,10 @@ export function agregerJournees(
       libelle = session.brocanteNom;
     } else if (session?.type === "vente") {
       type = "vente";
-      libelle = "Marché du jour";
+      libelle = DICTIONNAIRES.fr.cahier.marcheDuJour;
     } else {
       type = "repos";
-      libelle = libelleRepos(entries);
+      libelle = libelleRepos(reposKindPourEntries(entries), DICTIONNAIRES.fr);
     }
     result.push({ jour, type, session, libelle, entries, net, soldeFin });
   }

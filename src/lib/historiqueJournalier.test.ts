@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { agregerJournees } from "./historiqueJournalier";
+import { agregerJournees, libelleJournee } from "./historiqueJournalier";
+import { DICTIONNAIRES } from "@/lib/i18n/ui";
 import type { LedgerEntry, Session } from "@/types/game";
 
 function ledger(jour: number, recette: number, depense: number, kind: LedgerEntry["kind"], designation: string, opts: Partial<LedgerEntry> = {}): LedgerEntry {
@@ -100,5 +101,67 @@ describe("agregerJournees", () => {
     );
     expect(out[0].soldeFin).toBe(900);
     expect(out[0].entries.map((e) => e.designation)).toEqual(["Loyer", "Récompense"]);
+  });
+});
+
+describe("libelleJournee (résolution localisée à l'affichage)", () => {
+  it("session chinage avec brocanteId connu → nom de brocante localisé", () => {
+    const out = agregerJournees(
+      [ledger(3, 0, 50, "session_chinage", "Vide-grenier du quartier", { sessionId: "c-3", soldeApres: 950 })],
+      [{
+        id: "c-3",
+        type: "chinage",
+        jour: 3,
+        timestamp: 3000,
+        brocanteId: "vide-grenier-quartier",
+        brocanteNom: "Vide-grenier du quartier",
+        achats: [],
+        xpGagne: {},
+      }],
+    );
+    expect(libelleJournee(out[0], DICTIONNAIRES.en, "en")).toBe("Neighborhood yard sale");
+    expect(libelleJournee(out[0], DICTIONNAIRES.fr, "fr")).toBe("Vide-grenier du quartier");
+  });
+
+  it("session chinage avec brocanteId inconnu → fallback brocanteNom persisté", () => {
+    const out = agregerJournees(
+      [ledger(3, 0, 50, "session_chinage", "Brocante disparue", { sessionId: "c-3", soldeApres: 950 })],
+      [{
+        id: "c-3",
+        type: "chinage",
+        jour: 3,
+        timestamp: 3000,
+        brocanteId: "id-inconnu-vieille-save",
+        brocanteNom: "Brocante disparue",
+        achats: [],
+        xpGagne: {},
+      }],
+    );
+    expect(libelleJournee(out[0], DICTIONNAIRES.en, "en")).toBe("Brocante disparue");
+  });
+
+  it("journée vente → d.cahier.marcheDuJour localisé", () => {
+    const out = agregerJournees(
+      [ledger(4, 120, 0, "session_vente", "Marché", { sessionId: "v-4", soldeApres: 1120 })],
+      [vente(4)],
+    );
+    expect(libelleJournee(out[0], DICTIONNAIRES.en, "en")).toBe(DICTIONNAIRES.en.cahier.marcheDuJour);
+    expect(libelleJournee(out[0], DICTIONNAIRES.es, "es")).toBe(DICTIONNAIRES.es.cahier.marcheDuJour);
+  });
+
+  it("journée repos → libellé localisé selon la priorité (atelier amélioré)", () => {
+    const out = agregerJournees(
+      [ledger(6, 0, 180, "upgrade_atelier", "Atelier amélioré", { soldeApres: 820 })],
+      [],
+    );
+    expect(libelleJournee(out[0], DICTIONNAIRES.en, "en")).toBe(DICTIONNAIRES.en.cahier.atelierAmeliore);
+  });
+
+  it("journée repos sans écriture reconnue → libellé générique 'journée de repos' localisé", () => {
+    const out = agregerJournees(
+      [ledger(7, 0, 0, "frais_brocante", "Entrée", { soldeApres: 800 })],
+      [],
+    );
+    expect(libelleJournee(out[0], DICTIONNAIRES.es, "es")).toBe(DICTIONNAIRES.es.cahier.journeeRepos);
   });
 });

@@ -12,6 +12,7 @@ import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { texteNego } from "@/lib/i18n/contenu";
+import { libelleActive } from "@/lib/i18n/libelles";
 import type { NegoMode, NegoPersona, NegociationState } from "@/types/game";
 
 interface NegociationSheetProps {
@@ -221,7 +222,7 @@ export function NegociationSheet({
                   disabled={lotGarni.restantes === 0}
                   onClick={lotGarni.onOuvrir}
                 >
-                  🧺 Lot garni ({lotGarni.restantes})
+                  🧺 {libelleActive("lotGarni", d)} ({lotGarni.restantes})
                 </button>
               )}
               {boniment && (
@@ -231,7 +232,7 @@ export function NegociationSheet({
                   disabled={boniment.restantes === 0}
                   onClick={handleBoniment}
                 >
-                  🎩 Le Boniment ({boniment.restantes})
+                  🎩 {libelleActive("boniment", d)} ({boniment.restantes})
                 </button>
               )}
             </div>

@@ -470,4 +470,30 @@ export const es: DictionnaireUI = {
     pointsInsuffisants: "Puntos insuficientes",
     competenceAcquiseToast: "Habilidad adquirida: {nom}",
   },
+  actives: {
+    flair: "El Olfato",
+    lotGarni: "El Lote",
+    fouille: "El Rebusco",
+    boniment: "El Camelo",
+    tchatche: "La Cháchara",
+    criee: "El Pregón",
+    diplomate: "Diplomático",
+  },
+  gazette: {
+    celebriteAnnonce:
+      "¡Se anuncia a {nom} en {brocante} el {jour}! Espera mucha afluencia y bolsas bien llenas.",
+    celebriteBrocanteInconnue: "un mercadillo",
+  },
+  cahier: {
+    marcheDuJour: "Mercado del día",
+    marcheDuJourN: "Mercado del día D{n}",
+    journeeRepos: "Día de descanso",
+    atelierAmeliore: "Taller mejorado",
+    stockageAmeliore: "Almacén mejorado",
+    camionAmeliore: "Camión mejorado",
+    loyerPreleve: "Alquiler cobrado",
+    gazetteAchetee: "Gaceta comprada",
+    recompenseRecue: "Recompensa recibida",
+    missionRecompensee: "Misión recompensada",
+  },
 };

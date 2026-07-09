@@ -13,6 +13,7 @@ import { ChineMystereDrawer } from "./ChineMystereDrawer";
 import { sonsRevelation } from "@/lib/chine/revelationSons";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleActive } from "@/lib/i18n/libelles";
 import type { ObjetEnVente } from "@/types/game";
 
 const SWIPE_SEUIL_PX = 40;
@@ -253,7 +254,7 @@ export function ItemSwipeDeck({
             currentItem.negociation?.statut !== "en_cours" && (
               <button
                 type="button"
-                aria-label={tr(d.chine.fouilleAriaLabel, { nom: "La Fouille" })}
+                aria-label={tr(d.chine.fouilleAriaLabel, { nom: libelleActive("fouille", d) })}
                 onClick={() => onFouille?.(currentItem)}
                 disabled={!fouilleRestants}
                 style={{
