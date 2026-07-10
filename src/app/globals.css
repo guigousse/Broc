@@ -982,6 +982,17 @@ nav[aria-label="Navigation principale"] :focus-visible,
   from { opacity: 1; }
   to { opacity: 0; }
 }
+/* Fenêtre flottante des pièces (stockage…) : la bande sort de sous le
+   header (glisse vers le bas), le panneau sort de la TabBar (monte).
+   Les +24px compensent le gap/padding pour partir totalement hors champ. */
+@keyframes broc-float-bande-in {
+  from { transform: translateY(calc(-100% - 24px)); }
+  to { transform: translateY(0); }
+}
+@keyframes broc-float-panneau-in {
+  from { transform: translateY(calc(100% + 24px)); }
+  to { transform: translateY(0); }
+}
 /* Boîte mystère : secousse qui accélère et grossit jusqu'à l'apogée. */
 @keyframes boite-secousse {
   0%,
