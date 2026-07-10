@@ -353,6 +353,7 @@ export const fr = {
     aucunObjetCategorie: "Aucun objet dans cette catégorie.",
     partezChiner: "Partez chiner pour la garnir.",
     envoyerCollection: "Envoyer dans la collection",
+    remplacerCollection: "Remplacer l'exemplaire de la collection",
     etatCategorieAria: "État {etat}, catégorie {categorie}",
     categorieAria: "Catégorie : {categorie}",
     valeurMot: "valeur",

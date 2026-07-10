@@ -350,6 +350,7 @@ export const en: DictionnaireUI = {
     aucunObjetCategorie: "No items in this category.",
     partezChiner: "Go picking to fill it.",
     envoyerCollection: "Send to the collection",
+    remplacerCollection: "Replace the collection copy",
     etatCategorieAria: "Condition {etat}, category {categorie}",
     categorieAria: "Category: {categorie}",
     valeurMot: "value",

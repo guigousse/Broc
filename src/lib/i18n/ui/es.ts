@@ -350,6 +350,7 @@ export const es: DictionnaireUI = {
     aucunObjetCategorie: "Ningún objeto en esta categoría.",
     partezChiner: "Sal a rebuscar para llenarla.",
     envoyerCollection: "Enviar a la colección",
+    remplacerCollection: "Reemplazar el ejemplar de la colección",
     etatCategorieAria: "Estado {etat}, categoría {categorie}",
     categorieAria: "Categoría: {categorie}",
     valeurMot: "valor",

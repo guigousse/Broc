@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useRef, type CSSProperties } from "react";
-import { Album, ArrowRight } from "lucide-react";
+import { Album, ArrowRight, RotateCw } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { StarRow } from "@/components/ui/StarRow";
@@ -13,12 +13,13 @@ import { flyToTab } from "@/lib/flyAnimation";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
+import type { CollectionStatus } from "@/lib/atelier";
 import type { Objet } from "@/types/game";
 
 interface StockageItemRowProps {
   objet: Objet;
   valeurConnue: boolean;
-  collection: { disponible: boolean; necessiteConfirmation: boolean };
+  collection: CollectionStatus;
   onTap: (objet: Objet) => void;
   onEnvoyerCollection: (objet: Objet) => void;
   isLast: boolean;
@@ -107,7 +108,9 @@ function StockageItemRowBase({
 
   const handleCollection = () => {
     if (!collection.disponible) return;
-    animateToTab("/collection");
+    // Remplacement (confirmation à venir) : pas d'animation de vol tant que
+    // le joueur n'a pas confirmé — seul le don direct fait voler l'objet.
+    if (!collection.necessiteConfirmation) animateToTab("/collection");
     onEnvoyerCollection(objet);
   };
 
@@ -192,24 +195,39 @@ function StockageItemRowBase({
             </span>
           </div>
         </div>
-        {/* stopPropagation : ne déclenche pas le tap de la fiche (détail). */}
-        <button
-          type="button"
-          style={collectionInlineBtn(collection.disponible)}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleCollection();
-          }}
-          disabled={!collection.disponible}
-          aria-label={d.inventaire.envoyerCollection}
-        >
-          <span style={iconWithPlus}>
-            <Album size={22} strokeWidth={1.5} />
-            <span style={arrowBadge}>
-              <ArrowRight size={12} strokeWidth={2.4} />
+        {/* Déjà donné à l'identique (même état) : pas de bouton. Sinon,
+            flèche droite = don direct, flèche circulaire = remplacement
+            d'un exemplaire dans un autre état (confirmation en aval).
+            stopPropagation : ne déclenche pas le tap de la fiche (détail). */}
+        {collection.dejaIdentique ? (
+          <span aria-hidden style={{ width: 44 }} />
+        ) : (
+          <button
+            type="button"
+            style={collectionInlineBtn(collection.disponible)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCollection();
+            }}
+            disabled={!collection.disponible}
+            aria-label={
+              collection.necessiteConfirmation
+                ? d.inventaire.remplacerCollection
+                : d.inventaire.envoyerCollection
+            }
+          >
+            <span style={iconWithPlus}>
+              <Album size={22} strokeWidth={1.5} />
+              <span style={arrowBadge}>
+                {collection.necessiteConfirmation ? (
+                  <RotateCw size={12} strokeWidth={2.4} />
+                ) : (
+                  <ArrowRight size={12} strokeWidth={2.4} />
+                )}
+              </span>
             </span>
-          </span>
-        </button>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -231,6 +249,7 @@ export const StockageItemRow = memo(
     prev.onTap === next.onTap &&
     prev.onEnvoyerCollection === next.onEnvoyerCollection &&
     prev.collection.disponible === next.collection.disponible &&
+    prev.collection.dejaIdentique === next.collection.dejaIdentique &&
     prev.collection.necessiteConfirmation ===
       next.collection.necessiteConfirmation,
 );

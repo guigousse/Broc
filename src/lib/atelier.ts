@@ -100,6 +100,8 @@ export function atelierStatusPourObjet(
 export interface CollectionStatus {
   disponible: boolean;
   necessiteConfirmation: boolean;
+  /** Un exemplaire du même template, dans le MÊME état, est déjà donné. */
+  dejaIdentique?: boolean;
   ancienneDonation?: { etat: EtatObjet; valeur: number };
 }
 
@@ -115,7 +117,11 @@ export function collectionStatusPourObjet(
   if (slot.donation === null)
     return { disponible: true, necessiteConfirmation: false };
   if (slot.donation.etat === o.etat) {
-    return { disponible: false, necessiteConfirmation: false };
+    return {
+      disponible: false,
+      necessiteConfirmation: false,
+      dejaIdentique: true,
+    };
   }
   return {
     disponible: true,
