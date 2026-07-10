@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { AtelierSlots } from "./AtelierSlots";
 import { LangueProvider } from "@/lib/i18n/LangueContext";
-import { createMockObjet } from "@/lib/__test-fixtures__/gameState";
 
 afterEach(cleanup);
 
