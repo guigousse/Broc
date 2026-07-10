@@ -98,7 +98,9 @@ export function AtelierSlots({
   const { d, tr, locale } = useLangue();
 
   return (
-    <div style={rangee}>
+    // data-fly-target="travaux" : cible de l'animation de vol quand une
+    // restauration démarre (l'objet « entre » dans la rangée de slots).
+    <div style={rangee} data-fly-target="travaux">
       {[0, 1, 2].map((idx) => {
         // Verrouillé : au-delà des slots débloqués.
         if (idx >= slotsDebloques) {
