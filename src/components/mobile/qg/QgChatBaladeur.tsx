@@ -15,8 +15,6 @@ interface QgChatBaladeurProps {
 
 const SRC: Record<ChatBaladeurId, string> = {
   "qg-fenetre": "/qg/chat-baladeur/qg-fenetre.webp",
-  "atelier-fenetre": "/qg/chat-baladeur/atelier-fenetre.webp",
-  "atelier-marche": "/qg/chat-baladeur/atelier-marche.webp",
 };
 
 function ChatSprite({ id }: { id: ChatBaladeurId }) {

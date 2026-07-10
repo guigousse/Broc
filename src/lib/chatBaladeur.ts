@@ -2,11 +2,7 @@
  * Identifiants des emplacements du chat baladeur. L'ordre détermine
  * le cycle de tirage (`jourActuel % CHAT_BALADEUR_ORDER.length`).
  */
-export const CHAT_BALADEUR_ORDER = [
-  "qg-fenetre",
-  "atelier-fenetre",
-  "atelier-marche",
-] as const;
+export const CHAT_BALADEUR_ORDER = ["qg-fenetre"] as const;
 
 export type ChatBaladeurId = (typeof CHAT_BALADEUR_ORDER)[number];
 
