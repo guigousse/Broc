@@ -349,7 +349,6 @@ export default function CompetencesPage() {
           <PalierDetail
             comp={palierActif}
             tree={tree}
-            niveauActuel={state.brocanteur.niveau}
             pointsDisponibles={state.brocanteur.pointsDisponibles}
             competencesDebloquees={state.competencesDebloquees}
             etat={etatCompetence(
@@ -518,7 +517,6 @@ function PalierTile({
 function PalierDetail({
   comp,
   tree: _tree,
-  niveauActuel,
   pointsDisponibles,
   competencesDebloquees,
   etat,
@@ -526,7 +524,6 @@ function PalierDetail({
 }: {
   comp: CompetenceDef;
   tree: CompetenceTreeId;
-  niveauActuel: number;
   pointsDisponibles: number;
   competencesDebloquees: readonly CompetenceId[];
   etat: "debloquee" | "disponible" | "verrouillee";
@@ -537,34 +534,33 @@ function PalierDetail({
   const isVerrouillee = etat === "verrouillee";
   const peutPayer = pointsDisponibles >= comp.coutPoints;
 
-  // Find branch name for the eyebrow label
-  const treeDef = getTreeDef(comp.treeId);
-  const branche = treeDef?.branches.find((b) => b.id === comp.brancheId);
-
-  const prerequisRemplis = comp.prerequis.every((p) =>
-    competencesDebloquees.includes(p),
-  );
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {branche && (
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 9,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: "var(--brass-700)",
-          }}
-        >
-          {nomBranche(comp.treeId, branche, locale)}
-        </div>
-      )}
+      {/* Titre encadré, centré et aligné sur la largeur de l'image. */}
+      <div
+        style={{
+          width: "min(220px, 60vw)",
+          margin: "0 auto",
+          padding: "8px 10px",
+          border: "1px solid var(--brass-500)",
+          background: "var(--paper-200)",
+          textAlign: "center",
+          fontFamily: "var(--font-display)",
+          fontSize: 13,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: "var(--forest-800)",
+          fontWeight: 700,
+        }}
+      >
+        {nomCompetence(comp, locale)}
+      </div>
 
       <div
         style={{
           position: "relative",
-          width: "100%",
+          width: "min(220px, 60vw)",
+          margin: "0 auto",
           aspectRatio: "1/1",
           background: "var(--paper-300)",
         }}
@@ -603,66 +599,13 @@ function PalierDetail({
           color: "var(--ink-700)",
           margin: 0,
           lineHeight: 1.4,
-        }}
-      >
-        {descriptionCompetence(comp, locale)}
-      </p>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 8,
-          fontFamily: "var(--font-mono)",
-          fontSize: 11,
-          color: "var(--ink-700)",
-          padding: "8px 10px",
+          padding: "10px 12px",
           border: "1px solid var(--brass-500)",
           background: "var(--paper-200)",
         }}
       >
-        {comp.niveauBrocanteurRequis > 0 && (
-          <div>
-            {d.bibliotheque.niveauRequisLabel}{" "}
-            <strong style={{ fontFamily: "var(--font-display)" }}>
-              {tr(d.bibliotheque.niveauAbrege, { n: comp.niveauBrocanteurRequis })}
-            </strong>
-            <br />
-            <span
-              style={{
-                color:
-                  niveauActuel >= comp.niveauBrocanteurRequis
-                    ? "var(--forest-700)"
-                    : "var(--vermillion-600)",
-              }}
-            >
-              {tr(d.bibliotheque.actuelNiveau, { n: niveauActuel })}
-            </span>
-          </div>
-        )}
-        <div>
-          {d.bibliotheque.coutLabel}{" "}
-          <strong style={{ fontFamily: "var(--font-display)" }}>
-            {comp.coutPoints}{" "}
-            {comp.coutPoints > 1
-              ? d.bibliotheque.pointPluriel
-              : d.bibliotheque.pointUnique}
-          </strong>
-          <br />
-          <span
-            style={{
-              color: peutPayer
-                ? "var(--forest-700)"
-                : "var(--vermillion-600)",
-            }}
-          >
-            {d.bibliotheque.dispoLabel} {pointsDisponibles}{" "}
-            {pointsDisponibles > 1
-              ? d.bibliotheque.pointPluriel
-              : d.bibliotheque.pointUnique}
-          </span>
-        </div>
-      </div>
+        {descriptionCompetence(comp, locale)}
+      </p>
 
       {isDebloquee ? (
         <div
@@ -680,30 +623,7 @@ function PalierDetail({
         >
           {d.bibliotheque.competenceAcquiseBanniere}
         </div>
-      ) : isVerrouillee ? (
-        <div
-          style={{
-            padding: "10px 12px",
-            background: "var(--paper-200)",
-            border: "1px dashed var(--vermillion-600)",
-            color: "var(--vermillion-600)",
-            textAlign: "center",
-            fontFamily: "var(--font-mono)",
-            fontSize: 11,
-            letterSpacing: "0.06em",
-          }}
-        >
-          {d.bibliotheque.verrouilleePrefixe}{" "}
-          {!prerequisRemplis
-            ? d.bibliotheque.palierPrecedentRequis
-            : niveauActuel < comp.niveauBrocanteurRequis
-              ? tr(d.bibliotheque.niveauRequisAvecActuel, {
-                  requis: comp.niveauBrocanteurRequis,
-                  actuel: niveauActuel,
-                })
-              : d.bibliotheque.pasAssezDePoints}
-        </div>
-      ) : (
+      ) : isVerrouillee ? null : (
         <button
           type="button"
           onClick={onAcheter}
@@ -722,15 +642,7 @@ function PalierDetail({
             opacity: peutPayer ? 1 : 0.6,
           }}
         >
-          {peutPayer
-            ? tr(d.bibliotheque.acheterBouton, {
-                cout: comp.coutPoints,
-                unite:
-                  comp.coutPoints > 1
-                    ? d.bibliotheque.pointPluriel
-                    : d.bibliotheque.pointUnique,
-              })
-            : d.bibliotheque.pointsInsuffisants}
+          {d.bibliotheque.acheterBouton}
         </button>
       )}
     </div>
