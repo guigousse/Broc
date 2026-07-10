@@ -984,13 +984,15 @@ nav[aria-label="Navigation principale"] :focus-visible,
 }
 /* Fenêtre flottante des pièces (stockage…) : la bande sort de sous le
    header (glisse vers le bas), le panneau sort de la TabBar (monte).
-   Les +24px compensent le gap/padding pour partir totalement hors champ. */
+   Le -110%/110% dépasse 100% pour compenser gap/padding (hors champ complet).
+   ⚠ Pas de calc() dans les transforms de @keyframes : Lightning CSS (Turbopack)
+   jette silencieusement toute la règle @keyframes → les blocs « popent ». */
 @keyframes broc-float-bande-in {
-  from { transform: translateY(calc(-100% - 24px)); }
+  from { transform: translateY(-110%); }
   to { transform: translateY(0); }
 }
 @keyframes broc-float-panneau-in {
-  from { transform: translateY(calc(100% + 24px)); }
+  from { transform: translateY(110%); }
   to { transform: translateY(0); }
 }
 /* Boîte mystère : secousse qui accélère et grossit jusqu'à l'apogée. */
