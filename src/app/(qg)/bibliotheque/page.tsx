@@ -88,10 +88,25 @@ export default function CompetencesPage() {
                 onSelect={setTree}
               />
             </div>
+          </>
+        }
+        milieu={
+          /* Bloc indépendant entre bande et panneau : carte propre (le
+             milieu du châssis est un bloc libre sans habillage). */
+          <div
+            style={{
+              border: "1px solid var(--brass-500)",
+              borderRadius: "var(--radius-card)",
+              boxShadow:
+                "0 16px 32px rgba(0,0,0,0.38), inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+              background: "var(--paper-100)",
+              padding: "8px 10px 10px",
+            }}
+          >
             <div
               style={{
                 textAlign: "center",
-                marginTop: 6,
+                marginTop: 0,
                 fontFamily: "var(--font-display)",
                 fontSize: 11,
                 letterSpacing: "0.18em",
@@ -209,7 +224,7 @@ export default function CompetencesPage() {
                 ? `${tr(d.sheets.prochainNiv, { n: prochain.niveau })} ${titreDeblocage(prochain, locale)} ▸`
                 : d.bibliotheque.parcoursDeblocages}
             </button>
-          </>
+          </div>
         }
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
