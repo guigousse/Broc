@@ -78,6 +78,18 @@ function computeDirection(
   return forward <= backward ? "right" : "left";
 }
 
+/**
+ * Routes qui partagent le layout (qg) (panorama bureau + fenêtres
+ * flottantes) : même pageKey pour que le sous-arbre ne re-monte PAS entre
+ * elles — sinon le panorama perdrait sa position de scroll et sauterait
+ * pendant la transition bureau ↔ stockage.
+ */
+const QG_GROUP = new Set<string>(["/bureau", "/stockage"]);
+
+function pageKeyForPathname(pathname: string): string {
+  return QG_GROUP.has(pathname) ? "_qg" : pathname;
+}
+
 export function SwipePager({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -85,7 +97,16 @@ export function SwipePager({ children }: { children: ReactNode }) {
   const prevPathnameRef = useRef<string | null>(null);
 
   const enabled = isTabBarRoute(pathname);
-  const direction = computeDirection(prevPathnameRef.current, pathname);
+  // L'animation d'entrée ne joue que si la pageKey change : les
+  // transitions internes au groupe (qg) gardent direction="none".
+  const prevKey = prevPathnameRef.current
+    ? pageKeyForPathname(prevPathnameRef.current)
+    : null;
+  const currKey = pageKeyForPathname(pathname);
+  const direction =
+    prevKey === currKey
+      ? "none"
+      : computeDirection(prevPathnameRef.current, pathname);
 
   useEffect(() => {
     prevPathnameRef.current = pathname;
@@ -144,6 +165,8 @@ export function SwipePager({ children }: { children: ReactNode }) {
         ? "broc-page-enter-left"
         : "";
 
+  const pageKey = pageKeyForPathname(pathname);
+
   return (
     <div
       onPointerDown={onPointerDown}
@@ -151,7 +174,7 @@ export function SwipePager({ children }: { children: ReactNode }) {
       onPointerCancel={onPointerCancel}
       style={{ touchAction: "pan-y", minHeight: "100dvh" }}
     >
-      <div key={pathname} className={animClass}>
+      <div key={pageKey} className={animClass}>
         {children}
       </div>
     </div>

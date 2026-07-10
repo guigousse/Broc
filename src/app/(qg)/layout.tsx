@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * Layout du groupe (qg) : monte le panorama du bureau (zones porte/bureau/
+ * repos, sheets QG, gramophone) une seule fois, partagé entre `/bureau`
+ * (page marqueur, rend null) et `/stockage` (fenêtre flottante par-dessus
+ * le panorama flouté, cf. FloatingRoomOverlay). Le verrou de scroll du
+ * document et l'ambiance audio du bureau restent actifs quand la fenêtre
+ * flottante Stockage est ouverte — c'est voulu : on reste « dans la
+ * pièce », le panneau d'items a son propre scroll interne.
+ */
+
 import {
   Suspense,
   useCallback,
@@ -67,7 +77,7 @@ import {
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
 
-function BureauPageInner() {
+function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { d } = useLangue();
   const {
@@ -493,6 +503,11 @@ function BureauPageInner() {
         </div>
       </MobileLayout>
 
+      {/* Pages du groupe (qg) : /bureau rend null ; /stockage rend la
+          fenêtre flottante (FloatingRoomOverlay) par-dessus le panorama.
+          Les sheets QG ci-dessous gardent leurs z-index (40+) au-dessus. */}
+      {children}
+
       {/* Sheets QG. */}
       <PorteSheet
         open={porteOuverte}
@@ -619,10 +634,14 @@ function BureauPageInner() {
   );
 }
 
-export default function BureauPage() {
+export default function QgLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <Suspense fallback={null}>
-      <BureauPageInner />
+      <QgLayoutInner>{children}</QgLayoutInner>
     </Suspense>
   );
 }

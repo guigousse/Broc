@@ -1,10 +1,8 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { MobileLayout } from "@/components/mobile/MobileLayout";
-import { MobileHeader } from "@/components/mobile/MobileHeader";
-import { StickyTop } from "@/components/mobile/StickyTop";
+import { Suspense, useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { FloatingRoomOverlay } from "@/components/mobile/floating-room/FloatingRoomOverlay";
 import { CategoriePicker } from "@/components/mobile/CategoriePicker";
 import { InventoryGrid } from "@/components/InventoryGrid";
 import { ObjetDetailOverlay } from "@/components/mobile/ObjetDetailOverlay";
@@ -38,7 +36,6 @@ export default function StockagePage() {
 }
 
 function StockagePageInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { d, tr, locale } = useLangue();
   const {
@@ -67,10 +64,6 @@ function StockagePageInner() {
     ancienne: { etat: EtatObjet; valeur: number };
   } | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (isHydrated && !state) router.replace("/");
-  }, [isHydrated, state, router]);
 
   const categoriesConnuesVitrine = useMemo(() => {
     const s = new Set<CategorieObjet>();
@@ -156,22 +149,9 @@ function StockagePageInner() {
     [state, donnerACollection, d, tr, locale],
   );
 
-  if (!isHydrated || !state) {
-    return (
-      <main
-        style={{
-          display: "grid",
-          placeItems: "center",
-          minHeight: "100dvh",
-          fontFamily: "var(--font-mono)",
-          color: "var(--ink-500)",
-          fontSize: 12,
-        }}
-      >
-        {d.inventaire.ouvertureStockage}
-      </main>
-    );
-  }
+  // Le layout (qg) gate le rendu (redirect + écran d'attente) : ce garde
+  // ne sert qu'au narrowing TypeScript.
+  if (!isHydrated || !state) return null;
 
   const tier = getStockageTierParNiveau(state.niveauStockage);
   const capacite = getCapaciteStockage(state);
@@ -202,10 +182,9 @@ function StockagePageInner() {
 
   return (
     <>
-      <MobileLayout
-        header={<MobileHeader budget={state.budget} />}
-        stickyTop={
-          <StickyTop>
+      <FloatingRoomOverlay
+        bande={
+          <>
             <PageHeaderBar
               title={d.chrome.onglets.stockage}
               left={
@@ -292,7 +271,7 @@ function StockagePageInner() {
                 total={state.inventaireJoueur.length}
               />
             </div>
-          </StickyTop>
+          </>
         }
       >
         {flash && (
@@ -323,7 +302,7 @@ function StockagePageInner() {
           atelierStatus={atelierStatus}
           collectionStatus={collectionStatus}
         />
-      </MobileLayout>
+      </FloatingRoomOverlay>
 
       <ObjetDetailOverlay
         objet={objetOuvert}
