@@ -106,20 +106,6 @@ export default function CompetencesPage() {
           >
             <div
               style={{
-                textAlign: "center",
-                marginTop: 0,
-                fontFamily: "var(--font-display)",
-                fontSize: 11,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--forest-800)",
-                fontWeight: 700,
-              }}
-            >
-              {nomArbre(meta, locale)}
-            </div>
-            <div
-              style={{
                 marginTop: 8,
                 border: "1px solid var(--brass-500)",
                 background: "var(--paper-100)",
@@ -273,6 +259,21 @@ export default function CompetencesPage() {
           </div>
         }
       >
+        {/* Nom de l'arbre sélectionné, en tête de la section basse. */}
+        <div
+          style={{
+            textAlign: "center",
+            fontFamily: "var(--font-display)",
+            fontSize: 11,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: "var(--forest-800)",
+            fontWeight: 700,
+            marginBottom: 10,
+          }}
+        >
+          {nomArbre(meta, locale)}
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {treeDef?.branches.map((branche) => {
             const comps = competencesParBranche(tree, branche.id).sort(
