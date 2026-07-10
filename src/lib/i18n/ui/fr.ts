@@ -433,6 +433,7 @@ export const fr = {
     detailObjet: "Détail de l'objet",
     enRestaurationAtelier: "En restauration à l'atelier",
     prixMarche: "Prix du marché",
+    prixMarcheInconnu: "Prix du marché : ? €",
     prixAchat: "Prix d'achat",
     // — remplacement de donation —
     remplacerDonationAria: "Remplacer la donation",

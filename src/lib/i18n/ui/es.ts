@@ -429,6 +429,7 @@ export const es: DictionnaireUI = {
     detailObjet: "Detalle del objeto",
     enRestaurationAtelier: "En restauración en el taller",
     prixMarche: "Precio de mercado",
+    prixMarcheInconnu: "Precio de mercado: ? €",
     prixAchat: "Precio de compra",
     // — remplacement de donation —
     remplacerDonationAria: "Reemplazar la donación",

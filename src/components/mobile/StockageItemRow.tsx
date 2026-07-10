@@ -183,8 +183,9 @@ function StockageItemRowBase({
               />
             </span>
           </div>
-          {/* Prix du marché sous la ligne état + thème ; « ? € » tant que
-              la compétence connaisseur n'est pas débloquée. */}
+          {/* Prix du marché sous la ligne état + thème ; libellé complet
+              « Prix du marché : ? € » tant que la compétence connaisseur
+              n'est pas débloquée. */}
           <div
             style={{
               fontFamily: "var(--font-display)",
@@ -193,7 +194,9 @@ function StockageItemRowBase({
               marginTop: 4,
             }}
           >
-            {valeurConnue ? `${Math.round(objet.prixReferenceReel)} €` : "? €"}
+            {valeurConnue
+              ? `${Math.round(objet.prixReferenceReel)} €`
+              : d.inventaire.prixMarcheInconnu}
           </div>
         </div>
         {/* Déjà donné à l'identique (même état) : pas de bouton. Sinon,
