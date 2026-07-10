@@ -400,6 +400,7 @@ function PalierTile({
 }) {
   const { tr, d, locale } = useLangue();
   const isDebloquee = etat === "debloquee";
+  const isDisponible = etat === "disponible";
   const isVerrouillee = etat === "verrouillee";
 
   const baseStyle = {
@@ -437,10 +438,25 @@ function PalierTile({
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          filter: isVerrouillee ? "grayscale(1)" : undefined,
+          // La couleur est réservée aux compétences POSSÉDÉES : les
+          // achetables restent grises (pleines), les verrouillées grises
+          // et estompées.
+          filter: isDebloquee ? undefined : "grayscale(1)",
           opacity: isVerrouillee ? 0.55 : 1,
         }}
       />
+      {/* Achetable : liseré laiton épais qui signale « à portée ». */}
+      {isDisponible && (
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            boxShadow: "inset 0 0 0 3px var(--brass-500)",
+          }}
+        />
+      )}
       {isDebloquee && (
         <span
           aria-hidden
