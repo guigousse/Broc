@@ -11,8 +11,10 @@ export type { BrocanteurState };
  * (palier 1 inchangé à 100). Au revenu mesuré par niveauSim (croisière
  * ≈ 21 XP/j régulier · 14 casual · 36 hardcore), N100 tombe à ≈ 1 an pour
  * un joueur régulier (~4 mois hardcore, ~2 ans casual) et N30 (dernier
- * atout) à ~2 semaines. L'ancienne pente 34 rendait N50+ inatteignable
- * (N30 = 507 j régulier). Sonde : calibration.probe.test.ts (describe.skip).
+ * atout) à ~2 semaines. En HEURES DE JEU effectives (5 min/session
+ * d'énergie), N100 ≈ 137-184 h selon le profil — l'exigence « ≥ 80 h »
+ * est couverte avec marge (validé 2026-07-10). L'ancienne pente 34
+ * rendait N50+ inatteignable. Sonde : calibration.probe.test.ts.
  */
 export const XP_BROCANTEUR_PALIER_1 = 100;
 export const XP_BROCANTEUR_PENTE = 1;

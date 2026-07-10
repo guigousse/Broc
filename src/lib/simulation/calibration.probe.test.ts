@@ -39,8 +39,25 @@ describe.skip("PROBE courbe d'XP (calibration manuelle)", () => {
         const d60 = r.days[59];
         return d60.xp / 60;
       });
+      // Heures de jeu effectives : sessions cumulées jusqu'au jalon × 5 min.
+      const heures = (cible: number) => {
+        const hs = runs
+          .map((r) => {
+            const jour = jourAtteinteNiveau(r, cible);
+            if (jour === null) return null;
+            let sessions = 0;
+            for (const d of r.days) {
+              if (d.jour > jour) break;
+              sessions += d.sessionsTotal;
+            }
+            return (sessions * 5) / 60;
+          })
+          .filter((h): h is number => h !== null)
+          .sort((a, b) => a - b);
+        return hs.length === runs.length ? `${Math.round(median(hs))}h` : "—";
+      };
       console.log(
-        `[${profile.id}] ${ligne.join(" ")} | XP/j j1-60≈${Math.round(median(xpJTot.sort((a, b) => a - b)))} · j300+≈${Math.round(median(xpJTardif.sort((a, b) => a - b)))}`,
+        `[${profile.id}] ${ligne.join(" ")} | heures N30:${heures(30)} N60:${heures(60)} N100:${heures(100)}`,
       );
     }
   }, 120000);
