@@ -59,8 +59,9 @@ tracking pathname seul (`useSyncExternalStore` retiré de `TabBar.tsx`).
 
 ## 2. Routes & TabBar
 
-- Le groupe `(panorama)` est supprimé. Le layout panorama devient
-  `src/app/bureau/layout.tsx` + `src/app/bureau/page.tsx`.
+- Le groupe `(panorama)` est supprimé. Tout le rendu du panorama est porté
+  par une page unique `src/app/bureau/page.tsx` (plus besoin du couple
+  layout + pages marqueurs : il n'y a plus qu'une route).
 - Promotions de routes :
   - `src/app/stockage/gerer/page.tsx` → `src/app/stockage/page.tsx`
   - `src/app/atelier/gerer/page.tsx` → `src/app/atelier/page.tsx`
