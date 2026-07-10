@@ -361,7 +361,6 @@ export const fr = {
     categorieAria: "Catégorie : {categorie}",
     valeurMot: "valeur",
     // — atelier —
-    preparationEtabli: "— préparation de l'établi…",
     etabliCompteur: "Établi {n}/{max}",
     atelierAmeliore: "Atelier amélioré au LVL {niveau}.",
     ameliorerAtelierAria: "Améliorer atelier vers LVL {niveau} ({cout} €)",

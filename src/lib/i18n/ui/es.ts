@@ -358,7 +358,6 @@ export const es: DictionnaireUI = {
     categorieAria: "Categoría: {categorie}",
     valeurMot: "valor",
     // — atelier —
-    preparationEtabli: "— preparando el banco de trabajo…",
     etabliCompteur: "Banco de trabajo {n}/{max}",
     atelierAmeliore: "Taller mejorado a LVL {niveau}.",
     ameliorerAtelierAria: "Mejorar el taller a LVL {niveau} ({cout} €)",

@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { MobileLayout } from "@/components/mobile/MobileLayout";
-import { MobileHeader } from "@/components/mobile/MobileHeader";
-import { StickyTop } from "@/components/mobile/StickyTop";
+import { FloatingRoomOverlay } from "@/components/mobile/floating-room/FloatingRoomOverlay";
 import { useGame } from "@/context/GameContext";
 import {
   aConnaisseurVitrine,
@@ -67,7 +64,6 @@ function formatDuree(ms: number): string {
 }
 
 export default function AtelierPage() {
-  const router = useRouter();
   const { d, tr, locale } = useLangue();
   const {
     state,
@@ -115,10 +111,6 @@ export default function AtelierPage() {
   );
   const actionEnCoursRef = useRef(false);
 
-  useEffect(() => {
-    if (isHydrated && !state) router.replace("/");
-  }, [isHydrated, state, router]);
-
   const enCours = useMemo(
     () => state?.inventaireJoueur.filter((o) => o.enRestauration) ?? [],
     [state],
@@ -154,22 +146,9 @@ export default function AtelierPage() {
     return state.inventaireJoueur.filter((o) => peutDemanteler(state, o, d).disponible);
   }, [state, d]);
 
-  if (!isHydrated || !state) {
-    return (
-      <main
-        style={{
-          display: "grid",
-          placeItems: "center",
-          minHeight: "100dvh",
-          fontFamily: "var(--font-mono)",
-          color: "var(--ink-500)",
-          fontSize: 12,
-        }}
-      >
-        {d.inventaire.preparationEtabli}
-      </main>
-    );
-  }
+  // Le layout (qg) gate le rendu (redirect + écran d'attente) : ce garde
+  // ne sert qu'au narrowing TypeScript.
+  if (!isHydrated || !state) return null;
 
   const pleine = enCours.length >= ATELIER_SLOTS[state.niveauAtelier];
 
@@ -331,10 +310,10 @@ export default function AtelierPage() {
   };
 
   return (
-    <MobileLayout
-      header={<MobileHeader budget={state.budget} />}
-      stickyTop={
-        <StickyTop>
+    <>
+    <FloatingRoomOverlay
+      bande={
+        <>
           <PageHeaderBar
             title={d.chrome.onglets.atelier}
             left={
@@ -399,7 +378,7 @@ export default function AtelierPage() {
           <div style={{ marginTop: 4 }}>
             <PiecesInventoryBar pieces={state.piecesAmelioration} />
           </div>
-        </StickyTop>
+        </>
       }
     >
       {flash && (
@@ -811,6 +790,8 @@ export default function AtelierPage() {
         </div>
       )}
 
+    </FloatingRoomOverlay>
+
       <BottomSheet
         open={demantelerCible !== null}
         onClose={() => setDemantelerCible(null)}
@@ -952,6 +933,6 @@ export default function AtelierPage() {
           </div>
         )}
       </BottomSheet>
-    </MobileLayout>
+    </>
   );
 }

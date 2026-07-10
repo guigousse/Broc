@@ -358,7 +358,6 @@ export const en: DictionnaireUI = {
     categorieAria: "Category: {categorie}",
     valeurMot: "value",
     // — atelier —
-    preparationEtabli: "— getting the workbench ready…",
     etabliCompteur: "Workbench {n}/{max}",
     atelierAmeliore: "Workshop upgraded to LVL {niveau}.",
     ameliorerAtelierAria: "Upgrade workshop to LVL {niveau} ({cout} €)",
