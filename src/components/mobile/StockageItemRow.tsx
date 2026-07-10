@@ -32,8 +32,12 @@ interface StockageItemRowProps {
   isLast: boolean;
 }
 
-const ACTIONS_WIDTH = 112;
-const SNAP_THRESHOLD = 60;
+// Une seule action en swipe-reveal (atelier) : l'envoi collection a son
+// bouton permanent à droite de la fiche.
+const ACTIONS_WIDTH = 56;
+// Seuil d'ouverture = moitié de la zone d'action (le drag est clampé à
+// -ACTIONS_WIDTH : un seuil supérieur rendrait l'ouverture impossible).
+const SNAP_THRESHOLD = ACTIONS_WIDTH / 2;
 const TAP_THRESHOLD = 8;
 
 const wrap: CSSProperties = {
@@ -92,6 +96,20 @@ const iconWithPlus: CSSProperties = {
   width: 28,
   height: 28,
 };
+
+/** Bouton collection permanent, à droite de la fiche (hors swipe-reveal). */
+const collectionInlineBtn = (enabled: boolean): CSSProperties => ({
+  width: 44,
+  height: 44,
+  border: "1px solid var(--brass-500)",
+  background: enabled ? "var(--forest-700)" : "var(--paper-500)",
+  color: enabled ? "var(--paper-100)" : "var(--ink-500)",
+  display: "grid",
+  placeItems: "center",
+  cursor: enabled ? "pointer" : "not-allowed",
+  opacity: enabled ? 1 : 0.55,
+  alignSelf: "center",
+});
 
 const arrowBadge: CSSProperties = {
   position: "absolute",
@@ -227,20 +245,6 @@ function StockageItemRowBase({
             </span>
           </span>
         </button>
-        <button
-          type="button"
-          style={actionBtn("var(--forest-700)", collection.disponible)}
-          onClick={handleCollection}
-          disabled={!collection.disponible}
-          aria-label={d.inventaire.envoyerCollection}
-        >
-          <span style={iconWithPlus}>
-            <Album size={22} strokeWidth={1.5} />
-            <span style={arrowBadge}>
-              <ArrowRight size={12} strokeWidth={2.4} />
-            </span>
-          </span>
-        </button>
       </div>
       <div
         style={{
@@ -264,11 +268,12 @@ function StockageItemRowBase({
             eager
           />
         </div>
-        <div>
+        {/* alignSelf start : le titre s'aligne sur le HAUT de la vignette. */}
+        <div style={{ alignSelf: "start" }}>
           <div
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: 11,
+              fontSize: 13,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
               color: "var(--forest-800)",
@@ -282,7 +287,7 @@ function StockageItemRowBase({
               display: "flex",
               alignItems: "center",
               gap: 8,
-              marginTop: 4,
+              marginTop: 6,
             }}
             aria-label={tr(d.inventaire.etatCategorieAria, {
               etat: libelleEtat(objet.etat, d),
@@ -292,6 +297,7 @@ function StockageItemRowBase({
             <StarRow
               filled={etoileCount(objet.etat)}
               color={rarityColors.outer}
+              size={15}
               display="flex"
               aria-label={tr(d.chine.etatAriaLabel, {
                 etat: libelleEtat(objet.etat, d),
@@ -305,34 +311,45 @@ function StockageItemRowBase({
             >
               <CategorieIcon
                 categorie={objet.categorie}
-                size={14}
+                size={17}
                 strokeWidth={1.5}
                 color="var(--brass-700)"
               />
             </span>
+            {/* Valeur à droite du logo de thème — libère la colonne de
+                droite pour le bouton collection permanent. */}
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 13,
+                color: "var(--forest-800)",
+              }}
+            >
+              {valeurConnue ? `${Math.round(objet.prixReferenceReel)} €` : "?"}
+            </span>
           </div>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 13,
-              color: "var(--forest-800)",
-            }}
-          >
-            {valeurConnue ? `${Math.round(objet.prixReferenceReel)} €` : "?"}
-          </div>
-          <div
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              color: "var(--brass-700)",
-              letterSpacing: "0.06em",
-            }}
-          >
-            {d.inventaire.valeurMot}
-          </div>
-        </div>
+        {/* stopPropagation : ne déclenche ni le tap de la fiche (détail)
+            ni le tracking du swipe-reveal. */}
+        <button
+          type="button"
+          style={collectionInlineBtn(collection.disponible)}
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleCollection();
+          }}
+          disabled={!collection.disponible}
+          aria-label={d.inventaire.envoyerCollection}
+        >
+          <span style={iconWithPlus}>
+            <Album size={22} strokeWidth={1.5} />
+            <span style={arrowBadge}>
+              <ArrowRight size={12} strokeWidth={2.4} />
+            </span>
+          </span>
+        </button>
       </div>
     </div>
   );
