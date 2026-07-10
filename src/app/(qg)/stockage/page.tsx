@@ -272,27 +272,8 @@ function StockagePageInner() {
         open={askReplace !== null}
         onClose={() => setAskReplace(null)}
         onConfirm={confirmerReplace}
-        nouvelObjet={
-          askReplace
-            ? {
-                nom: nomObjet(askReplace.objet, locale),
-                etat: askReplace.objet.etat,
-                valeur: categoriesConnuesVitrine.has(askReplace.objet.categorie)
-                  ? askReplace.objet.prixReferenceReel
-                  : null,
-              }
-            : { nom: "", etat: "Bon", valeur: 0 }
-        }
-        ancienneDonation={
-          askReplace
-            ? {
-                etat: askReplace.ancienne.etat,
-                valeur: categoriesConnuesVitrine.has(askReplace.objet.categorie)
-                  ? askReplace.ancienne.valeur
-                  : null,
-              }
-            : { etat: "Bon", valeur: 0 }
-        }
+        objet={askReplace?.objet ?? null}
+        ancienEtat={askReplace?.ancienne.etat ?? null}
       />
     </>
   );

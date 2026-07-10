@@ -433,8 +433,8 @@ export const en: DictionnaireUI = {
     // — remplacement de donation —
     remplacerDonationAria: "Replace the donation",
     remplacerDonationTitre: "— Replace the donation? —",
-    remplacerCorps:
-      "“{nom}” is already in your collection in {ancienEtat} condition (value {ancienneValeur} €). Replace it with your new copy in {nouvelEtat} condition ({nouvelleValeur} €)? The old one will return to your inventory.",
+    enCollectionLabel: "In collection",
+    nouveauLabel: "New",
     remplacer: "Replace",
     // — filtres & réglages de grille —
     tous: "All",

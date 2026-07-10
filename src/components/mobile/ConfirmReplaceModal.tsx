@@ -1,20 +1,25 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { ArrowRight } from "lucide-react";
+import { ItemSticker } from "@/components/ui/ItemSticker";
+import { StarRow } from "@/components/ui/StarRow";
+import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
+import { getTemplate } from "@/data/objetTemplates";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
-import type { EtatObjet } from "@/types/game";
+import type { EtatObjet, Objet } from "@/types/game";
 
 interface ConfirmReplaceModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  /** `valeur` est `null` quand la valeur de marché de la catégorie n'est pas
-   *  encore connue (Connaisseur 2 absent) — affichée « ? » plutôt que masquée. */
-  nouvelObjet: { nom: string; etat: EtatObjet; valeur: number | null };
-  /** `valeur` est `null` selon la même règle que `nouvelObjet` (catégorie non
-   *  connue via Connaisseur 2) — affichée « ? » plutôt que masquée. */
-  ancienneDonation: { etat: EtatObjet; valeur: number | null };
+  /** Le nouvel exemplaire (celui du stockage) — même template que celui
+   *  déjà donné, seul l'état diffère. */
+  objet: Objet | null;
+  /** L'exemplaire actuellement dans la collection (avant). */
+  ancienEtat: EtatObjet | null;
 }
 
 const backdrop: CSSProperties = {
@@ -47,13 +52,35 @@ const title: CSSProperties = {
   marginBottom: 16,
 };
 
-const body: CSSProperties = {
-  fontFamily: "var(--font-serif)",
-  fontStyle: "italic",
-  fontSize: 14,
-  lineHeight: 1.45,
-  color: "var(--ink-700)",
+/* Avant/après : [exemplaire en collection] → [nouvel exemplaire]. */
+const compareRow: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 12,
   marginBottom: 18,
+};
+
+const colonne: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 6,
+  width: 110,
+};
+
+const stickerBox: CSSProperties = {
+  width: 96,
+  height: 96,
+};
+
+const colonneLabel: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 9.5,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: "var(--brass-700)",
+  textAlign: "center",
 };
 
 const btn = (variant: "ghost" | "primary"): CSSProperties => ({
@@ -73,11 +100,39 @@ export function ConfirmReplaceModal({
   open,
   onClose,
   onConfirm,
-  nouvelObjet,
-  ancienneDonation,
+  objet,
+  ancienEtat,
 }: ConfirmReplaceModalProps) {
   const { d, tr } = useLangue();
-  if (!open) return null;
+  if (!open || !objet || ancienEtat === null) return null;
+
+  const isUnique = !!getTemplate(objet.templateId)?.unique;
+  const starColor = getRarityColors(objet.rarete, isUnique).outer;
+
+  const colonneEtat = (etat: EtatObjet, label: string) => (
+    <div style={colonne}>
+      <div style={stickerBox}>
+        <ItemSticker
+          templateId={objet.templateId}
+          categorie={objet.categorie}
+          fill
+          tilt={false}
+          variant="normal"
+          eager
+        />
+      </div>
+      <StarRow
+        filled={etoileCount(etat)}
+        color={starColor}
+        size={14}
+        aria-label={tr(d.chine.etatAriaLabel, {
+          etat: libelleEtat(etat, d),
+        })}
+      />
+      <span style={colonneLabel}>{label}</span>
+    </div>
+  );
+
   return (
     <div
       role="dialog"
@@ -90,17 +145,16 @@ export function ConfirmReplaceModal({
     >
       <div style={card}>
         <div style={title}>{d.inventaire.remplacerDonationTitre}</div>
-        <p style={body}>
-          {tr(d.inventaire.remplacerCorps, {
-            nom: nouvelObjet.nom,
-            ancienEtat: libelleEtat(ancienneDonation.etat, d).toLowerCase(),
-            ancienneValeur:
-              ancienneDonation.valeur === null ? "?" : ancienneDonation.valeur,
-            nouvelEtat: libelleEtat(nouvelObjet.etat, d).toLowerCase(),
-            nouvelleValeur:
-              nouvelObjet.valeur === null ? "?" : nouvelObjet.valeur,
-          })}
-        </p>
+        <div style={compareRow}>
+          {colonneEtat(ancienEtat, d.inventaire.enCollectionLabel)}
+          <ArrowRight
+            size={28}
+            strokeWidth={2}
+            color="var(--brass-700)"
+            aria-hidden
+          />
+          {colonneEtat(objet.etat, d.inventaire.nouveauLabel)}
+        </div>
         <div style={{ display: "flex", gap: 10 }}>
           <button type="button" onClick={onClose} style={btn("ghost")}>
             {d.commun.annuler}

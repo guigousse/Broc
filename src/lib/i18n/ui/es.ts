@@ -434,8 +434,8 @@ export const es: DictionnaireUI = {
     // — remplacement de donation —
     remplacerDonationAria: "Reemplazar la donación",
     remplacerDonationTitre: "— ¿Reemplazar la donación? —",
-    remplacerCorps:
-      "«{nom}» ya está en tu colección en estado {ancienEtat} (valor {ancienneValeur} €). ¿Reemplazarlo por tu nuevo ejemplar en estado {nouvelEtat} ({nouvelleValeur} €)? El antiguo volverá a tu inventario.",
+    enCollectionLabel: "En colección",
+    nouveauLabel: "Nuevo",
     remplacer: "Reemplazar",
     // — filtres & réglages de grille —
     tous: "Todos",

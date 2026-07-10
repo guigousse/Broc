@@ -438,8 +438,8 @@ export const fr = {
     // — remplacement de donation —
     remplacerDonationAria: "Remplacer la donation",
     remplacerDonationTitre: "— Remplacer la donation ? —",
-    remplacerCorps:
-      "« {nom} » est déjà dans votre collection en {ancienEtat} (valeur {ancienneValeur} €). Le remplacer par votre nouvel exemplaire en {nouvelEtat} ({nouvelleValeur} €) ? L'ancien reviendra dans votre inventaire.",
+    enCollectionLabel: "En collection",
+    nouveauLabel: "Nouveau",
     remplacer: "Remplacer",
     // — filtres & réglages de grille —
     tous: "Tous",
