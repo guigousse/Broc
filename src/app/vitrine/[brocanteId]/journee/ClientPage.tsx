@@ -938,7 +938,10 @@ export default function VitrineJourneePage() {
                 ? d.vente.celebriteAmbiance
                 : ambianceClient(clientActuel.persona, locale),
             bourse: bourseDe(clientActuel.persona),
-            prixMax: clientActuel.prixMax,
+            // Œil aiguisé ne révèle plus qu'une fourchette ; le prix exact
+            // n'apparaît que via la révélation Diplomate.
+            fourchettePrixMax: clientActuel.fourchettePrixMax,
+            prixMax: revelationFaite ? clientActuel.prixMax : undefined,
             revelePersona:
               (modifiersRef.current?.revelePersona ?? false) ||
               clientActuel.persona.archetypeId === "celebrite",

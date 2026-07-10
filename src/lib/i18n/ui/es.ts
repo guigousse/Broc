@@ -264,6 +264,7 @@ export const es: DictionnaireUI = {
     boursePocheLabel: "{valeur} en el bolsillo",
     lirePrixMax: "Leer el precio máximo exacto",
     prixMaxLabel: "Precio máx.: {valeur}",
+    fourchetteLabel: "entre {min} y {max} €",
     humeur: "Humor",
   },
   vente: {

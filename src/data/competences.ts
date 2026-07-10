@@ -115,7 +115,8 @@ const TREE_GENERAL_DEF: CompetenceTreeDef = {
         },
         {
           nom: "Œil aiguisé",
-          description: "La fiche de négociation affiche le prix max exact du client.",
+          description:
+            "La fiche de négociation affiche une fourchette de 20 % dans laquelle se cache le prix max du client — jamais pile au centre.",
         },
       ]),
     },

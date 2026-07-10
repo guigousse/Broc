@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  calculerFourchettePrixMax,
   BONIMENT_MARGE,
   BONUS_SPECIALISATION_CLIENT,
   BOURSE_PAR_CLASSE,
@@ -516,5 +517,34 @@ describe("ajouterAuPanier (Le Lot garni)", () => {
       Math.round((nego1.prixAdverseCourant * ev2.prixMax) / ev1.prixMax),
     );
     expect(nego2.statut).toBe("en_cours");
+  });
+});
+
+describe("calculerFourchettePrixMax (Œil aiguisé)", () => {
+  it("contient toujours le prix max, largeur ≈ 20 %", () => {
+    for (let i = 0; i < 200; i++) {
+      const f = calculerFourchettePrixMax(100);
+      expect(f.min).toBeLessThanOrEqual(100);
+      expect(f.max).toBeGreaterThanOrEqual(100);
+      expect(f.max - f.min).toBeGreaterThanOrEqual(19);
+      expect(f.max - f.min).toBeLessThanOrEqual(21);
+    }
+  });
+
+  it("le prix max n'est jamais pile au centre ni au bord (u ∈ [0,15 ; 0,85])", () => {
+    // Alea contrôlé : u = 0,15 + alea × 0,7.
+    const fBas = calculerFourchettePrixMax(100, () => 0); // u = 0,15
+    expect(100 - fBas.min).toBe(3); // 20 × 0,15
+    const fHaut = calculerFourchettePrixMax(100, () => 1); // u = 0,85
+    expect(100 - fHaut.min).toBe(17); // 20 × 0,85
+    // Position variable selon l'aléa (Math.random est mocké par la suite :
+    // on injecte l'aléa) : les tirages ne donnent pas tous le même min.
+    const mins = new Set(
+      Array.from(
+        { length: 50 },
+        (_, i) => calculerFourchettePrixMax(100, () => i / 50).min,
+      ),
+    );
+    expect(mins.size).toBeGreaterThan(10);
   });
 });

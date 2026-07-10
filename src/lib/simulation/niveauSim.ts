@@ -55,6 +55,7 @@ import {
   uniquesExclusDuChinage,
 } from "@/lib/chine";
 import {
+  calculerFourchettePrixMax,
   ajouterAuPanier,
   calculerPrixMax,
   DEFAULT_MODIFIERS,
@@ -820,6 +821,7 @@ export function runLotGarniMicroSim(trials = 1000): LotGarniMicroSimResult {
       offreInitiale: Math.round(prixMax1 * 0.9),
       mode: "negociation" as const,
       toleranceBoost: 0,
+      fourchettePrixMax: calculerFourchettePrixMax(prixMax1),
     };
     const nego = ouvrirNegociation("vente", ev.offreInitiale, prixMax1);
     const { ev: evApres } = ajouterAuPanier(ev, ov2, nego, [], DEFAULT_MODIFIERS);

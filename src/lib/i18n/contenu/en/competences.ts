@@ -146,7 +146,8 @@ export const COMPETENCES_EN: OverlayCompetences = {
     },
     "general.presentation.3": {
       nom: "Keen eye",
-      description: "The haggling panel shows the customer's exact max price.",
+      description:
+        "The haggling panel shows a 20% range hiding the customer's max price — never dead centre.",
     },
     "general.vision.1": {
       nom: "Weather report",

@@ -149,7 +149,8 @@ export const COMPETENCES_ES: OverlayCompetences = {
     },
     "general.presentation.3": {
       nom: "Ojo agudo",
-      description: "La ficha de regateo muestra el precio máximo exacto del cliente.",
+      description:
+        "La ficha de regateo muestra una horquilla del 20 % donde se esconde el precio máximo del cliente — nunca justo en el centro.",
     },
     "general.vision.1": {
       nom: "Parte meteorológico",

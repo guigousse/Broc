@@ -267,6 +267,7 @@ export const fr = {
     boursePocheLabel: "{valeur} en poche",
     lirePrixMax: "Lire le prix max exact",
     prixMaxLabel: "Prix max : {valeur}",
+    fourchetteLabel: "entre {min} et {max} €",
     humeur: "Humeur",
   },
   vente: {

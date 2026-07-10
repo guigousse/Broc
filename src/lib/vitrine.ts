@@ -71,6 +71,26 @@ export interface ClientEvent {
   fancy?: boolean;
   /** Bonus de tolérance de négociation (général + max catégoriel du panier). */
   toleranceBoost: number;
+  /** Fourchette « Œil aiguisé » : contient prixMax, largeur 20 %, prix
+   *  jamais pile au centre. Calculée UNE fois (stable pour le client). */
+  fourchettePrixMax: { min: number; max: number };
+}
+
+/**
+ * Fourchette d'estimation du prix max (palier Présentation 3) : largeur
+ * totale = 20 % du prix max, position du vrai prix tirée uniformément
+ * entre 15 % et 85 % de la fourchette — connaître la fourchette ne suffit
+ * donc pas à déduire le prix (jamais pile au centre, jamais au bord).
+ */
+export function calculerFourchettePrixMax(
+  prixMax: number,
+  alea: () => number = Math.random,
+): { min: number; max: number } {
+  const largeur = Math.max(2, prixMax * 0.2);
+  const u = 0.15 + alea() * 0.7;
+  const min = Math.round(prixMax - largeur * u);
+  const max = Math.round(min + largeur);
+  return { min: Math.min(min, prixMax), max: Math.max(max, prixMax) };
 }
 
 export type ClasseBourse = "petite" | "moyenne" | "grosse";
@@ -284,6 +304,7 @@ export function genererClientEvent(
     mode,
     fancy: options.fancy,
     toleranceBoost,
+    fourchettePrixMax: calculerFourchettePrixMax(prixMax),
   };
 }
 

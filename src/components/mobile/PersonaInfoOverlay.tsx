@@ -25,7 +25,9 @@ export interface PersonaInfo {
   ambiance?: string;
   /** Bourse du client en € — l'argent en poche (révélée par Estimateur de bourse). */
   bourse?: number;
-  /** Prix max secret (révélé par Œil aiguisé). */
+  /** Fourchette du prix max (révélée par Œil aiguisé — jamais centrée). */
+  fourchettePrixMax?: { min: number; max: number };
+  /** Prix max exact (révélation Diplomate uniquement). */
   prixMax?: number;
   /** Flags de révélation par compétence. */
   revelePersona: boolean;
@@ -88,7 +90,15 @@ export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
         >
           <div style={lineMain}>
             {tr(d.chine.prixMaxLabel, {
-              valeur: info.prixMax !== undefined ? `${info.prixMax} €` : "—",
+              valeur:
+                info.prixMax !== undefined
+                  ? `${info.prixMax} €`
+                  : info.fourchettePrixMax
+                    ? tr(d.chine.fourchetteLabel, {
+                        min: info.fourchettePrixMax.min,
+                        max: info.fourchettePrixMax.max,
+                      })
+                    : "—",
             })}
           </div>
         </PalierRow>
