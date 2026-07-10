@@ -27,21 +27,22 @@ interface AtelierItemRowProps {
 
 const row: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "56px 1fr auto",
+  gridTemplateColumns: "67px 1fr auto",
   gap: 10,
   alignItems: "center",
   padding: "14px 12px",
 };
 
+// 67 = ancien 56 agrandi de 20 % (aligné sur les fiches du stockage).
 const thumbBase: CSSProperties = {
-  width: 56,
-  height: 56,
+  width: 67,
+  height: 67,
   display: "grid",
   placeItems: "center",
 };
 
 function renderStars(count: number, color: string): ReactNode {
-  return <StarRow filled={count} color={color} />;
+  return <StarRow filled={count} color={color} size={15} />;
 }
 
 export function AtelierItemRow({
@@ -77,11 +78,12 @@ export function AtelierItemRow({
           eager
         />
       </div>
-      <div style={{ minWidth: 0 }}>
+      {/* alignSelf start : le titre s'aligne sur le HAUT de la vignette. */}
+      <div style={{ minWidth: 0, alignSelf: "start" }}>
         <div
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: 11,
+            fontSize: 13,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
             color: "var(--forest-800)",
@@ -126,7 +128,7 @@ export function AtelierItemRow({
           )}
           <CategorieIcon
             categorie={objet.categorie}
-            size={14}
+            size={17}
             strokeWidth={1.5}
             color="var(--brass-700)"
           />

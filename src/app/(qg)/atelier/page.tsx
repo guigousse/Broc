@@ -43,12 +43,13 @@ const sectTitle: React.CSSProperties = {
   margin: "10px 2px 6px",
 };
 
+// Pas de cadre propre : le panneau de la fenêtre flottante fournit déjà
+// la carte — un second liseré ferait une double ligne (même choix que le
+// stockage). Les listes sont structurées par les titres de section et les
+// séparateurs entre lignes.
 const cardWrap: React.CSSProperties = {
-  border: "1px solid var(--brass-500)",
   background: "var(--paper-100)",
-  padding: "8px 12px",
-  boxShadow:
-    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
+  overflow: "hidden",
 };
 
 /** Formate une durée (ms) en « 1 h », « 1 h 30 » ou « 45 min » (granularité minute). */
@@ -700,7 +701,7 @@ export default function AtelierPage() {
           </div>
         )
       ) : demantelables.length === 0 ? (
-        <div style={{ ...cardWrap, borderColor: "var(--vermillion-600)" }}>
+        <div style={cardWrap}>
           <p
             style={{
               fontFamily: "var(--font-serif)",
@@ -714,7 +715,7 @@ export default function AtelierPage() {
           </p>
         </div>
       ) : (
-        <div style={{ ...cardWrap, borderColor: "var(--vermillion-600)" }}>
+        <div style={cardWrap}>
           {demantelables.map((o, i) => {
             const yieldPieces = rendementDemantelement(o);
             const valeurConnue = state
