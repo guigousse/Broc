@@ -9,24 +9,34 @@ export type { BrocanteurState };
  *
  * Courbe recalibrée le 2026-07-10 pour l'échelle 100 niveaux : pente 34 → 1
  * (palier 1 inchangé à 100). Au revenu mesuré par niveauSim (croisière
- * ≈ 21 XP/j régulier · 14 casual · 36 hardcore), N100 tombe à ≈ 1 an pour
- * un joueur régulier (~4 mois hardcore, ~2 ans casual) et N30 (dernier
- * atout) à ~2 semaines. En HEURES DE JEU effectives (5 min/session
- * d'énergie), N100 ≈ 137-184 h selon le profil — l'exigence « ≥ 80 h »
- * est couverte avec marge (validé 2026-07-10). L'ancienne pente 34
- * rendait N50+ inatteignable. Sonde : calibration.probe.test.ts.
+ * ≈ 21 XP/j régulier · 14 casual · 36 hardcore) : N30 (dernier atout)
+ * ≈ 6-8 h de jeu, puis la QUEUE quadratique (+C·(N−30)² par niveau après
+ * le coude N30) fait grimper la facture jusqu'à ~689 XP pour N99→100
+ * (≈ 2 journées d'énergie pleines). N100 ≈ 307 h de jeu hardcore
+ * (~1,4 an calendaire) / 415 h régulier — objectif de prestige, validé
+ * le 2026-07-10. Sonde : calibration.probe.test.ts (describe.skip).
  */
 export const XP_BROCANTEUR_PALIER_1 = 100;
 export const XP_BROCANTEUR_PENTE = 1;
+/** Coude de la courbe : la queue quadratique démarre après le dernier atout (N30). */
+export const XP_COUDE_NIVEAU = 30;
+/** Intensité de la queue : ΔXP gagne C·(N−30)² par niveau au-delà du coude. */
+export const XP_QUEUE_C = 0.1;
 /** Niveau plafond : la progression s'arrête à 100 (l'XP au-delà est ignorée). */
 export const NIVEAU_BROCANTEUR_MAX = 100;
 
-/** Seuil CUMULÉ pour atteindre `niveau` : Σ ΔXP = 0,5·N² + 99,5·N. */
+/**
+ * Seuil CUMULÉ pour atteindre `niveau` :
+ * Σ ΔXP = 0,5·N² + 99,5·N + C·Σ_{i=1..N−30} i²  (dernier terme nul si N ≤ 30).
+ * Σ i² = k(k+1)(2k+1)/6 — forme fermée, arrondie à l'entier.
+ */
 export function xpRequisPourNiveauBrocanteur(niveau: number): number {
   const n = Math.max(0, niveau);
   const a = XP_BROCANTEUR_PENTE / 2; // 0,5
   const b = XP_BROCANTEUR_PALIER_1 - XP_BROCANTEUR_PENTE / 2; // 99,5
-  return a * n * n + b * n;
+  const k = Math.max(0, n - XP_COUDE_NIVEAU);
+  const queue = (XP_QUEUE_C * k * (k + 1) * (2 * k + 1)) / 6;
+  return Math.round(a * n * n + b * n + queue);
 }
 
 /** Points de compétence gagnés par niveau de Brocanteur. */

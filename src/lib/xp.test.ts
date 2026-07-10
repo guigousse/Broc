@@ -21,12 +21,23 @@ describe("xpRequisPourNiveauBrocanteur — courbe quasi plate 0,5N²+99,5N (éch
     expect(xpRequisPourNiveauBrocanteur(30)).toBe(3435);
   });
 
-  it("l'incrément entre niveaux vaut N + 99", () => {
-    for (const n of [1, 2, 5, 10, 25, 100]) {
+  it("l'incrément vaut N + 99 jusqu'au coude (N ≤ 30)", () => {
+    for (const n of [1, 2, 5, 10, 25, 30]) {
       expect(
         xpRequisPourNiveauBrocanteur(n) - xpRequisPourNiveauBrocanteur(n - 1),
       ).toBe(n + 99);
     }
+  });
+
+  it("queue quadratique après le coude : N99→100 ≈ 689 XP", () => {
+    // ΔXP(100) = 199 + 0,1·70² = 689 (±1 d'arrondi de la forme fermée).
+    const delta =
+      xpRequisPourNiveauBrocanteur(100) - xpRequisPourNiveauBrocanteur(99);
+    expect(Math.abs(delta - 689)).toBeLessThanOrEqual(1);
+    // Cumul N100 ≈ 26 630 (14 950 de base + 11 680 de queue).
+    expect(xpRequisPourNiveauBrocanteur(100)).toBe(26630);
+    // Le coude ne change rien avant N30.
+    expect(xpRequisPourNiveauBrocanteur(30)).toBe(3435);
   });
 
   it("niveaux négatifs traités comme 0", () => {
