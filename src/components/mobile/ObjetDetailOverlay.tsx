@@ -163,16 +163,9 @@ export function ObjetDetailOverlay({
           )}
 
           <div style={prixRow}>
-            <span style={prixLabel}>{d.inventaire.etatMot}</span>
-            <span
-              style={{ display: "flex", alignItems: "center", gap: 6 }}
-            >
-              <StarRow
-                filled={etoileCount(objet.etat)}
-                color={getRarityColors(objet.rarete, isUnique).outer}
-                size={13}
-              />
-              <span style={prixValue}>{libelleEtat(objet.etat, d)}</span>
+            <span style={prixLabel}>{d.inventaire.rareteMot}</span>
+            <span style={{ ...prixValue, color: rarityColors.outer }}>
+              {libelleRarete(objet.rarete, d)}
             </span>
           </div>
 
@@ -194,9 +187,16 @@ export function ObjetDetailOverlay({
           </div>
 
           <div style={prixRow}>
-            <span style={prixLabel}>{d.inventaire.rareteMot}</span>
-            <span style={{ ...prixValue, color: rarityColors.outer }}>
-              {libelleRarete(objet.rarete, d)}
+            <span style={prixLabel}>{d.inventaire.etatMot}</span>
+            <span
+              style={{ display: "flex", alignItems: "center", gap: 6 }}
+            >
+              <StarRow
+                filled={etoileCount(objet.etat)}
+                color={getRarityColors(objet.rarete, isUnique).outer}
+                size={13}
+              />
+              <span style={prixValue}>{libelleEtat(objet.etat, d)}</span>
             </span>
           </div>
 
