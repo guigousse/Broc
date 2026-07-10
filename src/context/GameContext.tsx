@@ -620,7 +620,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
       // La restauration ne se termine plus automatiquement au passage du jour :
       // l'objet reste `enRestauration` jusqu'au clic explicite "Récupérer"
-      // (slot panorama ou page /atelier/gerer). cf. lib/atelier.appliquerRecuperation.
+      // (page /atelier). cf. lib/atelier.appliquerRecuperation.
       const inv = prev.inventaireJoueur;
       // Au refresh, les prochaines deviennent les courantes et on régénère un nouveau futur.
       const tendances = refresh

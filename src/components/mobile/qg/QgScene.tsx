@@ -14,7 +14,7 @@ interface QgSceneProps {
 
 // La scène a un aspect fixe = aspect du fond. Hauteur en vw pour rester
 // proportionnelle à la largeur (et donc ancrer les objets à l'image, pas au
-// viewport variable). Sur petit écran, le bas dépasse hors du QgPanorama
+// viewport variable). Sur petit écran, le bas dépasse hors de la scène
 // qui le clippe (overflow-y: hidden) ; les coordonnées restent cohérentes.
 const wrapStyle: CSSProperties = {
   position: "relative",

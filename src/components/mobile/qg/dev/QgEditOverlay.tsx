@@ -4,32 +4,15 @@ import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
 import {
-  STOCKAGE_BOX_ORDER,
-  type StockageBoxKey,
-} from "../stockageBoxesLayout";
-import {
-  ATELIER_SLOT_ORDER,
-  type AtelierSlotKey,
-} from "@/components/mobile/atelier-pano/slotsLayout";
-import {
   useQgObjet,
   useChatBaladeurCoord,
-  useStockageBoxCoord,
-  useAtelierSlotCoord,
   useQgEditContext,
   type EditableKey,
 } from "./QgEditContext";
 
 const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
 const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
-const BOX_KEYS = [...STOCKAGE_BOX_ORDER] as StockageBoxKey[];
-const SLOT_KEYS = [...ATELIER_SLOT_ORDER] as AtelierSlotKey[];
-const ALL_KEYS: EditableKey[] = [
-  ...QG_KEYS,
-  ...CHAT_KEYS,
-  ...BOX_KEYS,
-  ...SLOT_KEYS,
-];
+const ALL_KEYS: EditableKey[] = [...QG_KEYS, ...CHAT_KEYS];
 
 interface OutlineProps {
   editKey: EditableKey;
@@ -42,26 +25,12 @@ interface OutlineProps {
  * (l'ancien `useCoord` dispatchait des hooks conditionnellement).
  */
 function ObjetOutline({ editKey }: OutlineProps) {
-  if ((STOCKAGE_BOX_ORDER as readonly string[]).includes(editKey)) {
-    return <OutlineBox editKey={editKey as StockageBoxKey} />;
-  }
-  if ((ATELIER_SLOT_ORDER as readonly string[]).includes(editKey)) {
-    return <OutlineSlot editKey={editKey as AtelierSlotKey} />;
-  }
   if ((CHAT_BALADEUR_ORDER as readonly string[]).includes(editKey)) {
     return <OutlineChat editKey={editKey as ChatBaladeurId} />;
   }
   return <OutlineQg editKey={editKey as QgObjetKey} />;
 }
 
-function OutlineBox({ editKey }: { editKey: StockageBoxKey }) {
-  const coord = useStockageBoxCoord(editKey);
-  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
-}
-function OutlineSlot({ editKey }: { editKey: AtelierSlotKey }) {
-  const coord = useAtelierSlotCoord(editKey);
-  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
-}
 function OutlineChat({ editKey }: { editKey: ChatBaladeurId }) {
   const coord = useChatBaladeurCoord(editKey);
   return <OutlineAvecCoord editKey={editKey} coord={coord} />;
