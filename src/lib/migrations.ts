@@ -31,7 +31,7 @@ import { ALL_TEMPLATES } from "@/data/objetTemplates";
 import { OLD_TO_NEW_TEMPLATE_ID } from "@/data/templateIdRenames";
 import { reconstruireGrandLivre } from "./grandLivre";
 import { ENERGIE_MAX } from "@/lib/energie";
-import { QUOTA_ACTIVES, type ActiveId, type ActivesUtilisees } from "@/lib/actives";
+import { ACTIVE_IDS, type ActiveId, type ActivesUtilisees } from "@/lib/actives";
 import {
   appliquerGainXPBrocanteur,
   emptyBrocanteur,
@@ -643,7 +643,7 @@ function appliquerMigrations(loaded: GameState): GameState {
       if (!a || typeof a !== "object") return undefined;
       const propre: ActivesUtilisees = {};
       for (const [k, v] of Object.entries(a)) {
-        if (!(k in QUOTA_ACTIVES)) continue;
+        if (!ACTIVE_IDS.includes(k as ActiveId)) continue;
         if (!v || !Number.isFinite(v.jour) || !Number.isFinite(v.usages) || v.usages < 0 || v.jour < 0) continue;
         propre[k as ActiveId] = { jour: Math.floor(v.jour), usages: Math.floor(v.usages) };
       }

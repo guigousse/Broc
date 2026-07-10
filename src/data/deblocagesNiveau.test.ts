@@ -1,11 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { DEBLOCAGES_PAR_NIVEAU, deblocagesPourNiveau, prochainDeblocage } from "./deblocagesNiveau";
-import { NIVEAU_ACTIVES } from "@/lib/actives";
+import { NIVEAU_ACTIVES, NIVEAU_USAGE_2, NIVEAU_USAGE_3 } from "@/lib/actives";
 
 describe("table des déblocages par niveau", () => {
   it("les jalons validés sont effectifs", () => {
     const effectifs = DEBLOCAGES_PAR_NIVEAU.filter((d) => d.effectif).map((d) => d.niveau).sort((a, b) => a - b);
-    expect(effectifs).toEqual([1, 3, 4, 5, 7, 9, 10, 10, 13, 15, 17, 20, 30]);
+    expect(effectifs).toEqual([
+      1, 3, 4, 5, 10, 10, 10, 15, 20, 20, 25, 30, 30, 35, 40, 45, 50, 55, 60,
+      65, 70, 75, 80, 85, 90,
+    ]);
   });
   it("la table est triée par niveau (contrat de prochainDeblocage)", () => {
     const niveaux = DEBLOCAGES_PAR_NIVEAU.map((d) => d.niveau);
@@ -24,8 +27,13 @@ describe("table des déblocages par niveau", () => {
     expect(l1[0].titre).toContain("Compétences");
   });
 
-  it("les lignes famille active correspondent exactement à NIVEAU_ACTIVES", () => {
+  it("les lignes famille active couvrent déblocages + 2ᵉ + 3ᵉ usages", () => {
     const parNiveau = DEBLOCAGES_PAR_NIVEAU.filter((d) => d.famille === "active").map((d) => d.niveau).sort((a, b) => a - b);
-    expect(parNiveau).toEqual(Object.values(NIVEAU_ACTIVES).sort((a, b) => a - b));
+    const attendus = [
+      ...Object.values(NIVEAU_ACTIVES),
+      ...Object.values(NIVEAU_USAGE_2),
+      ...Object.values(NIVEAU_USAGE_3),
+    ].sort((a, b) => a - b);
+    expect(parNiveau).toEqual(attendus);
   });
 });

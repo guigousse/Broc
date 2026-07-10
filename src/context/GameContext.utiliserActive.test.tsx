@@ -129,25 +129,29 @@ describe("GameContext.utiliserActive — gating, quota et atomicité", () => {
     expect(result.current.state!.activesUtilisees!.flair!.usages).toBe(1);
   });
 
-  it("quota 3 : 'fouille' autorise trois usages puis refuse le quatrième", async () => {
+  it("quota par niveau : 'fouille' à 1 usage au N15, 2 au N45", async () => {
     const result = await setupNouvellePartie();
-    atteindreNiveau(result, 9); // requis pour 'fouille'
+    atteindreNiveau(result, 15); // déblocage 'fouille' (échelle 100 niveaux)
 
-    for (let i = 1; i <= 3; i++) {
-      let res: boolean | undefined;
-      act(() => {
-        res = result.current.utiliserActive("fouille");
-      });
-      expect(res).toBe(true);
-      expect(result.current.state!.activesUtilisees!.fouille!.usages).toBe(i);
-    }
-
-    let quatrieme: boolean | undefined;
+    let res: boolean | undefined;
     act(() => {
-      quatrieme = result.current.utiliserActive("fouille");
+      res = result.current.utiliserActive("fouille");
     });
-    expect(quatrieme).toBe(false);
-    expect(result.current.state!.activesUtilisees!.fouille!.usages).toBe(3);
+    expect(res).toBe(true);
+    expect(result.current.state!.activesUtilisees!.fouille!.usages).toBe(1);
+
+    let deuxieme: boolean | undefined;
+    act(() => {
+      deuxieme = result.current.utiliserActive("fouille");
+    });
+    expect(deuxieme).toBe(false); // quota 1/jour au N15
+
+    atteindreNiveau(result, 45); // 2ᵉ usage quotidien débloqué
+    act(() => {
+      deuxieme = result.current.utiliserActive("fouille");
+    });
+    expect(deuxieme).toBe(true);
+    expect(result.current.state!.activesUtilisees!.fouille!.usages).toBe(2);
   });
 
   it("refus — 'diplomate' sans la compétence Négociation palier 3, même à haut niveau", async () => {

@@ -15,6 +15,8 @@ export type { BrocanteurState };
  */
 export const XP_BROCANTEUR_PALIER_1 = 100;
 export const XP_BROCANTEUR_PENTE = 34;
+/** Niveau plafond : la progression s'arrête à 100 (l'XP au-delà est ignorée). */
+export const NIVEAU_BROCANTEUR_MAX = 100;
 
 /** Seuil CUMULÉ pour atteindre `niveau` : Σ ΔXP = 17·N² + 83·N. */
 export function xpRequisPourNiveauBrocanteur(niveau: number): number {
@@ -37,7 +39,10 @@ export function appliquerGainXPBrocanteur(
   const nouveauXP = b.xp + gain;
   let niveau = b.niveau;
   let pointsDisponibles = b.pointsDisponibles;
-  while (nouveauXP >= xpRequisPourNiveauBrocanteur(niveau + 1)) {
+  while (
+    niveau < NIVEAU_BROCANTEUR_MAX &&
+    nouveauXP >= xpRequisPourNiveauBrocanteur(niveau + 1)
+  ) {
     niveau += 1;
     pointsDisponibles += POINTS_PAR_NIVEAU;
   }
@@ -46,6 +51,7 @@ export function appliquerGainXPBrocanteur(
 
 /** Progression vers le prochain niveau de Brocanteur (0..1). */
 export function progressionNiveauBrocanteur(b: BrocanteurState): number {
+  if (b.niveau >= NIVEAU_BROCANTEUR_MAX) return 1;
   const seuilCourant = xpRequisPourNiveauBrocanteur(b.niveau);
   const seuilProchain = xpRequisPourNiveauBrocanteur(b.niveau + 1);
   const span = seuilProchain - seuilCourant;
@@ -59,6 +65,10 @@ export function detailProgressionBrocanteur(b: BrocanteurState): {
   requisNiveau: number;
   manquant: number;
 } {
+  if (b.niveau >= NIVEAU_BROCANTEUR_MAX) {
+    // Au plafond : barre pleine, plus rien à grimper.
+    return { dansNiveau: 0, requisNiveau: 0, manquant: 0 };
+  }
   const seuilCourant = xpRequisPourNiveauBrocanteur(b.niveau);
   const seuilProchain = xpRequisPourNiveauBrocanteur(b.niveau + 1);
   const requisNiveau = seuilProchain - seuilCourant;

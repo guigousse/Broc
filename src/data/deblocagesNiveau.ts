@@ -4,6 +4,7 @@ import {
   NIVEAU_BROCANTEUR_PALIER_3,
 } from "@/data/competences";
 import { NIVEAU_QUETES_PERIODIQUES } from "@/lib/quetes/settlePeriodiques";
+import { NIVEAU_ACTIVES, NIVEAU_USAGE_2, NIVEAU_USAGE_3 } from "@/lib/actives";
 
 export type FamilleDeblocage = "jalon" | "contenu" | "economie" | "confort" | "active";
 
@@ -25,22 +26,40 @@ export interface DeblocageNiveau {
 }
 
 /** Source de vérité du plan de déblocage (rapport §08). Seuls les jalons validés (D1/D3/actives) sont effectifs. */
-export const DEBLOCAGES_PAR_NIVEAU: readonly DeblocageNiveau[] = [
+/** Libellés FR canoniques des 6 atouts (clés des overlays en/es). */
+const ATOUTS: ReadonlyArray<{ id: keyof typeof NIVEAU_ACTIVES; titre: string }> = [
+  { id: "flair", titre: "Atout 🔍 Le Flair" },
+  { id: "lotGarni", titre: "Atout 🧺 Le Lot garni" },
+  { id: "fouille", titre: "Atout 🧹 La Fouille" },
+  { id: "boniment", titre: "Atout 🎩 Le Boniment" },
+  { id: "tchatche", titre: "Atout 💬 La Tchatche" },
+  { id: "criee", titre: "Atout 📣 La Criée" },
+];
+
+const ENTREES: readonly DeblocageNiveau[] = [
   { niveau: 1, titre: "Ouverture de l'écran Compétences (+1 point)", famille: "jalon", effectif: true },
   { niveau: NIVEAU_QUETES_PERIODIQUES, titre: "Quêtes quotidiennes et hebdomadaires", famille: "contenu", effectif: true },
   { niveau: NIVEAU_BROCANTES_T2, titre: "Accès aux brocantes de quartier (T2)", famille: "economie", effectif: true },
-  { niveau: 5, titre: "Atout 🔍 Le Flair", famille: "active", effectif: true },
-  { niveau: 7, titre: "Atout 🧺 Le Lot garni", famille: "active", effectif: true },
-  { niveau: 9, titre: "Atout 🧹 La Fouille", famille: "active", effectif: true },
   { niveau: NIVEAU_BROCANTES_T3, titre: "Accès aux belles foires (T3)", famille: "jalon", effectif: true },
   { niveau: NIVEAU_BROCANTEUR_PALIER_2, titre: "Paliers 2 des compétences", famille: "jalon", effectif: true },
-  { niveau: 13, titre: "Atout 🎩 Le Boniment", famille: "active", effectif: true },
-  { niveau: 15, titre: "Atout 💬 La Tchatche", famille: "active", effectif: true },
-  { niveau: 17, titre: "Atout 📣 La Criée", famille: "active", effectif: true },
   { niveau: NIVEAU_BROCANTES_T4, titre: "Accès au Grand Salon (T4)", famille: "jalon", effectif: true },
-  // Le tableau doit rester trié par niveau : prochainDeblocage fait un find().
   { niveau: NIVEAU_BROCANTEUR_PALIER_3, titre: "Paliers 3 des compétences", famille: "jalon", effectif: true },
+  // Échelle des atouts : déblocage N5→30, 2ᵉ usage N35→60, 3ᵉ N65→90.
+  ...ATOUTS.map((a) => ({
+    niveau: NIVEAU_ACTIVES[a.id], titre: a.titre, famille: "active" as const, effectif: true,
+  })),
+  ...ATOUTS.map((a) => ({
+    niveau: NIVEAU_USAGE_2[a.id], titre: `${a.titre} — 2ᵉ usage par jour`, famille: "active" as const, effectif: true,
+  })),
+  ...ATOUTS.map((a) => ({
+    niveau: NIVEAU_USAGE_3[a.id], titre: `${a.titre} — 3ᵉ usage par jour`, famille: "active" as const, effectif: true,
+  })),
 ];
+
+/** Table triée par niveau (contrat de `prochainDeblocage` : find() en ordre). */
+export const DEBLOCAGES_PAR_NIVEAU: readonly DeblocageNiveau[] = [...ENTREES].sort(
+  (a, b) => a.niveau - b.niveau,
+);
 
 export function deblocagesPourNiveau(niveau: number): DeblocageNiveau[] {
   return DEBLOCAGES_PAR_NIVEAU.filter((d) => d.niveau === niveau);

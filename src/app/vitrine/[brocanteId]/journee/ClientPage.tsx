@@ -272,6 +272,7 @@ export default function VitrineJourneePage() {
           state?.activesUtilisees,
           "diplomate",
           state?.jourActuel ?? 0,
+          state?.brocanteur.niveau ?? 0,
         ) > 0;
       const next = proposerOffreVente(nego, ev.persona, offre, mods, {
         revelationDejaFaite: !diplomatieDispo,
@@ -758,13 +759,14 @@ export default function VitrineJourneePage() {
                 disabled={
                   !!clientActuel ||
                   tempsRestant < CRIEE_INTERVALLE_SEC * CRIEE_NB_CLIENTS ||
-                  usagesRestants(state.activesUtilisees, "criee", state.jourActuel) === 0
+                  usagesRestants(state.activesUtilisees, "criee", state.jourActuel, state.brocanteur.niveau) === 0
                 }
               >
                 {`📣 ${libelleActive("criee", d)} (${usagesRestants(
                   state.activesUtilisees,
                   "criee",
                   state.jourActuel,
+                  state.brocanteur.niveau,
                 )})`}
               </Button>
             </div>
@@ -997,6 +999,7 @@ export default function VitrineJourneePage() {
                     state.activesUtilisees,
                     "boniment",
                     state.jourActuel,
+                    state.brocanteur.niveau,
                   ),
                   consommer: () => utiliserActive("boniment"),
                 }
@@ -1012,6 +1015,7 @@ export default function VitrineJourneePage() {
                     state.activesUtilisees,
                     "lotGarni",
                     state.jourActuel,
+                    state.brocanteur.niveau,
                   ),
                   onOuvrir: () => setLotGarniOuvert(true),
                 }

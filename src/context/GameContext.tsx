@@ -1099,10 +1099,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const current = stateRef.current;
     if (!current) return false;
     if (!activeDebloquee(current, id)) return false;
-    if (usagesRestants(current.activesUtilisees, id, current.jourActuel) <= 0) return false;
+    if (usagesRestants(current.activesUtilisees, id, current.jourActuel, current.brocanteur.niveau) <= 0) return false;
     setState((prev) => {
       if (!prev) return prev;
-      const next = consommerActive(prev.activesUtilisees, id, prev.jourActuel);
+      const next = consommerActive(prev.activesUtilisees, id, prev.jourActuel, current.brocanteur.niveau);
       if (!next) return prev;
       return { ...prev, activesUtilisees: next };
     });

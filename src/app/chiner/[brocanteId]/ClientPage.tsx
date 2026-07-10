@@ -332,7 +332,7 @@ export default function SessionChinePage() {
           <button
             type="button"
             onClick={jouerFlair}
-            disabled={flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel) <= 0}
+            disabled={flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel, state.brocanteur.niveau) <= 0}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -347,16 +347,16 @@ export default function SessionChinePage() {
               textTransform: "uppercase",
               padding: "4px 10px",
               cursor:
-                flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel) <= 0
+                flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel, state.brocanteur.niveau) <= 0
                   ? "default"
                   : "pointer",
               opacity:
-                flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel) <= 0
+                flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel, state.brocanteur.niveau) <= 0
                   ? 0.4
                   : 1,
             }}
           >
-            🔍 {libelleActive("flair", d)} ({usagesRestants(state.activesUtilisees, "flair", state.jourActuel)})
+            🔍 {libelleActive("flair", d)} ({usagesRestants(state.activesUtilisees, "flair", state.jourActuel, state.brocanteur.niveau)})
           </button>
         </div>
       )}
@@ -395,7 +395,7 @@ export default function SessionChinePage() {
             onQuitter={handleRentrer}
             onNavigate={() => setNegoOuverte(null)}
             fouilleDebloquee={activeDebloquee(state, "fouille")}
-            fouilleRestants={usagesRestants(state.activesUtilisees, "fouille", state.jourActuel)}
+            fouilleRestants={usagesRestants(state.activesUtilisees, "fouille", state.jourActuel, state.brocanteur.niveau)}
             onFouille={jouerFouille}
             renderNegoDrawer={(item) => (
               <ChineNegoDrawer
@@ -418,7 +418,7 @@ export default function SessionChinePage() {
                 tchatche={
                   activeDebloquee(state, "tchatche")
                     ? {
-                        restantes: usagesRestants(state.activesUtilisees, "tchatche", state.jourActuel),
+                        restantes: usagesRestants(state.activesUtilisees, "tchatche", state.jourActuel, state.brocanteur.niveau),
                         consommer: () => utiliserActive("tchatche"),
                       }
                     : undefined

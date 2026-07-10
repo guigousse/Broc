@@ -79,7 +79,7 @@ import {
 } from "@/lib/xp";
 import { ENERGIE_MAX, RECHARGE_INTERVAL_MS } from "@/lib/energie";
 import { calculerBrocantesDebloqueesParTier, evaluerCondition } from "@/lib/deblocage";
-import { NIVEAU_ACTIVES, QUOTA_ACTIVES, type ActiveId } from "@/lib/actives";
+import { NIVEAU_ACTIVES, quotaActives, type ActiveId } from "@/lib/actives";
 import { ouvrirNegociation, proposerOffre } from "@/lib/negociation";
 import { donnerObjet, initCollection, valeurTotale } from "@/lib/collection";
 import { tirerMeteo } from "@/lib/meteo";
@@ -695,7 +695,7 @@ export function joursMediansActives(runs: RunResult[]): Record<ActiveId, number 
   return out;
 }
 
-export { QUOTA_ACTIVES };
+export { quotaActives };
 
 /* === Micro-sim 1 : Fouille (farm check) ================================= */
 

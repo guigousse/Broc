@@ -18,27 +18,20 @@ describe("ParcoursSheet", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("ouvert au niveau 8 : N8 et en-dessous atteints, N9 mis en avant", () => {
+  it("ouvert au niveau 8 : niveaux ≤ 8 atteints, groupe N10 mis en avant", () => {
     render(<ParcoursSheet open onClose={vi.fn()} niveau={8} />);
 
-    const rowN7 = screen.getByTestId("parcours-row-7");
-    expect(rowN7.getAttribute("data-etat")).toBe("atteint");
+    const rowN5 = screen.getByTestId("parcours-row-5");
+    expect(rowN5.getAttribute("data-etat")).toBe("atteint");
 
-    const rowN9 = screen.getByTestId("parcours-row-9");
-    expect(rowN9.getAttribute("data-etat")).toBe("prochain");
-
-    // Deux déblocages au niveau 10 (brocantes T3 + paliers 2 des compétences).
+    // Prochain niveau après 8 = 10 (T3 + paliers 2 + Lot garni : 3 lignes,
+    // toutes marquées « prochain » — une seule pastille dans la timeline).
     const rowsN10 = screen.getAllByTestId("parcours-row-10");
-    expect(rowsN10.length).toBe(2);
-    for (const r of rowsN10) expect(r.getAttribute("data-etat")).toBe("a-venir");
+    expect(rowsN10.length).toBe(3);
+    for (const r of rowsN10) expect(r.getAttribute("data-etat")).toBe("prochain");
 
-    // Une seule ligne "prochain" dans toute la liste.
-    const toutesLesLignes = screen.getAllByTestId(/^parcours-row-/);
-    const prochains = toutesLesLignes.filter(
-      (el) => el.getAttribute("data-etat") === "prochain",
-    );
-    expect(prochains).toHaveLength(1);
-
+    const rowN15 = screen.getByTestId("parcours-row-15");
+    expect(rowN15.getAttribute("data-etat")).toBe("a-venir");
   });
 
   it("affiche le niveau courant et la note sur les points de compétence", () => {
