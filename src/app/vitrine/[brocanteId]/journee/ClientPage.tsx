@@ -22,7 +22,7 @@ import {
   DEFAULT_MODIFIERS,
   JOURNEE_DUREE_SECONDES,
   ajouterAuPanier,
-  classeBourse,
+  bourseDe,
   genererClientEvent,
   personaDepuisClient,
   prochainIntervalleClient,
@@ -937,7 +937,7 @@ export default function VitrineJourneePage() {
               clientActuel.persona.archetypeId === "celebrite"
                 ? d.vente.celebriteAmbiance
                 : ambianceClient(clientActuel.persona, locale),
-            bourse: classeBourse(clientActuel.persona),
+            bourse: bourseDe(clientActuel.persona),
             prixMax: clientActuel.prixMax,
             revelePersona:
               (modifiersRef.current?.revelePersona ?? false) ||

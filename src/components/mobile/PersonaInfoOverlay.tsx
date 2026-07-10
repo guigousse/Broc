@@ -4,7 +4,6 @@ import type { CSSProperties, ReactNode } from "react";
 import { Lock } from "lucide-react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomCompetence } from "@/lib/i18n/contenu";
-import type { DictionnaireUI } from "@/lib/i18n/ui";
 
 /**
  * Les trois paliers de l'arbre Présentation (ids statiques générés par
@@ -24,8 +23,8 @@ export interface PersonaInfo {
   archetypeNom?: string;
   /** Phrase d'ambiance (révélée par Lecteur d'âmes). */
   ambiance?: string;
-  /** Classe de bourse (révélée par Estimateur de bourse). */
-  bourse?: "petite" | "moyenne" | "grosse";
+  /** Bourse du client en € — l'argent en poche (révélée par Estimateur de bourse). */
+  bourse?: number;
   /** Prix max secret (révélé par Œil aiguisé). */
   prixMax?: number;
   /** Flags de révélation par compétence. */
@@ -37,16 +36,6 @@ export interface PersonaInfo {
 interface PersonaInfoOverlayProps {
   info: PersonaInfo;
   onClose: () => void;
-}
-
-function bourseLabel(
-  b: "petite" | "moyenne" | "grosse" | undefined,
-  d: DictionnaireUI,
-): string {
-  if (b === "petite") return d.chine.bourseSymbolPetite;
-  if (b === "moyenne") return d.chine.bourseSymbolMoyenne;
-  if (b === "grosse") return d.chine.bourseSymbolGrosse;
-  return "—";
 }
 
 export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
@@ -84,9 +73,13 @@ export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
         <PalierRow
           title={nomCompetence(PALIERS_PRESENTATION.estimateurBourse, locale)}
           unlocked={info.releveBourse}
-          lockedText={d.chine.lireClasseBourse}
+          lockedText={d.chine.lireBourse}
         >
-          <div style={lineMain}>{bourseLabel(info.bourse, d)}</div>
+          <div style={lineMain}>
+            {tr(d.chine.boursePocheLabel, {
+              valeur: info.bourse !== undefined ? `${Math.round(info.bourse)} €` : "—",
+            })}
+          </div>
         </PalierRow>
         <PalierRow
           title={nomCompetence(PALIERS_PRESENTATION.oeilAiguise, locale)}

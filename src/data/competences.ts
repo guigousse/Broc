@@ -111,7 +111,7 @@ const TREE_GENERAL_DEF: CompetenceTreeDef = {
         {
           nom: "Estimateur de bourse",
           description:
-            "La classe de richesse du client (petite, moyenne ou grosse bourse) s'affiche.",
+            "La bourse du client — l'argent qu'il a en poche — s'affiche dans la fiche de négociation.",
         },
         {
           nom: "Œil aiguisé",
