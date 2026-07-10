@@ -5,7 +5,6 @@ import { ChevronRight } from "lucide-react";
 import { FloatingRoomOverlay } from "@/components/mobile/floating-room/FloatingRoomOverlay";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { TreePicker } from "@/components/mobile/TreePicker";
-import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { useToast } from "@/components/ui/Toast";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
@@ -340,13 +339,8 @@ export default function CompetencesPage() {
         </div>
       </FloatingRoomOverlay>
 
-      <BottomSheet
-        open={palierActif !== null}
-        onClose={() => setPalierActif(null)}
-        title={palierActif ? nomCompetence(palierActif, locale) : ""}
-      >
-        {palierActif && (
-          <PalierDetail
+      {palierActif && (
+          <PalierOverlay
             comp={palierActif}
             tree={tree}
             pointsDisponibles={state.brocanteur.pointsDisponibles}
@@ -355,7 +349,8 @@ export default function CompetencesPage() {
               palierActif,
               state.competencesDebloquees,
               contexteDepuisState(state),
-            )}
+          )}
+            onClose={() => setPalierActif(null)}
             onAcheter={() => {
               const res = debloquerCompetence(palierActif.id);
               if (res.ok) {
@@ -376,8 +371,7 @@ export default function CompetencesPage() {
               }
             }}
           />
-        )}
-      </BottomSheet>
+      )}
 
       <ParcoursSheet
         open={parcoursOuvert}
@@ -514,13 +508,19 @@ function PalierTile({
   );
 }
 
-function PalierDetail({
+/**
+ * Fiche compétence plein écran : image dans son cadre, flottante au centre
+ * (titre encadré au-dessus), + panneau qui monte du bas de l'écran
+ * (description encadrée, action). Tap hors du panneau → fermeture.
+ */
+function PalierOverlay({
   comp,
   tree: _tree,
   pointsDisponibles,
   competencesDebloquees,
   etat,
   onAcheter,
+  onClose,
 }: {
   comp: CompetenceDef;
   tree: CompetenceTreeId;
@@ -528,6 +528,7 @@ function PalierDetail({
   competencesDebloquees: readonly CompetenceId[];
   etat: "debloquee" | "disponible" | "verrouillee";
   onAcheter: () => void;
+  onClose: () => void;
 }) {
   const { d, tr, locale } = useLangue();
   const isDebloquee = etat === "debloquee";
@@ -535,7 +536,37 @@ function PalierDetail({
   const peutPayer = pointsDisponibles >= comp.coutPoints;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={nomCompetence(comp, locale)}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 105,
+        background: "rgba(15,31,24,0.82)",
+        display: "flex",
+        flexDirection: "column",
+        animation: "broc-fade-in 160ms ease",
+      }}
+    >
+      {/* Zone centrale : cadre flottant (tap à côté → fermeture). */}
+      <div
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "grid",
+          placeItems: "center",
+          padding: 20,
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {/* Titre encadré, centré et aligné sur la largeur de l'image. */}
       <div
         style={{
@@ -591,6 +622,23 @@ function PalierDetail({
         />
       </div>
 
+        </div>
+      </div>
+
+      {/* Panneau bas : monte de l'écran (même langage que les tiroirs). */}
+      <div
+        style={{
+          background: "var(--paper-200)",
+          borderTop: "2px solid var(--forest-800)",
+          borderRadius: "14px 14px 0 0",
+          boxShadow: "0 -6px 18px rgba(40,25,5,0.20)",
+          padding: "16px 16px calc(16px + var(--safe-bottom))",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          animation: "broc-slide-up 200ms ease",
+        }}
+      >
       <p
         style={{
           fontFamily: "var(--font-serif)",
@@ -601,7 +649,7 @@ function PalierDetail({
           lineHeight: 1.4,
           padding: "10px 12px",
           border: "1px solid var(--brass-500)",
-          background: "var(--paper-200)",
+          background: "var(--paper-100)",
         }}
       >
         {descriptionCompetence(comp, locale)}
@@ -645,6 +693,7 @@ function PalierDetail({
           {d.bibliotheque.acheterBouton}
         </button>
       )}
+      </div>
     </div>
   );
 }
