@@ -9,23 +9,23 @@ import {
 
 const freshBrocanteur = () => ({ xp: 0, niveau: 0, pointsDisponibles: 0 });
 
-describe("xpRequisPourNiveauBrocanteur — courbe quadratique 17N²+83N (aplatie 2026-07-06)", () => {
+describe("xpRequisPourNiveauBrocanteur — courbe quasi plate 0,5N²+99,5N (échelle 100 niveaux, 2026-07-10)", () => {
   it("seuils cumulés post-aplatissement", () => {
     expect(xpRequisPourNiveauBrocanteur(0)).toBe(0);
     expect(xpRequisPourNiveauBrocanteur(1)).toBe(100);
-    expect(xpRequisPourNiveauBrocanteur(2)).toBe(234);
-    expect(xpRequisPourNiveauBrocanteur(3)).toBe(402);
-    expect(xpRequisPourNiveauBrocanteur(5)).toBe(840);
-    expect(xpRequisPourNiveauBrocanteur(10)).toBe(2530);
-    expect(xpRequisPourNiveauBrocanteur(20)).toBe(8460);
-    expect(xpRequisPourNiveauBrocanteur(30)).toBe(17790);
+    expect(xpRequisPourNiveauBrocanteur(2)).toBe(201);
+    expect(xpRequisPourNiveauBrocanteur(3)).toBe(303);
+    expect(xpRequisPourNiveauBrocanteur(5)).toBe(510);
+    expect(xpRequisPourNiveauBrocanteur(10)).toBe(1045);
+    expect(xpRequisPourNiveauBrocanteur(20)).toBe(2190);
+    expect(xpRequisPourNiveauBrocanteur(30)).toBe(3435);
   });
 
-  it("l'incrément entre niveaux vaut 34N+66", () => {
-    for (const n of [1, 2, 5, 10, 25]) {
+  it("l'incrément entre niveaux vaut N + 99", () => {
+    for (const n of [1, 2, 5, 10, 25, 100]) {
       expect(
         xpRequisPourNiveauBrocanteur(n) - xpRequisPourNiveauBrocanteur(n - 1),
-      ).toBe(34 * n + 66);
+      ).toBe(n + 99);
     }
   });
 
@@ -45,10 +45,17 @@ describe("appliquerGainXPBrocanteur", () => {
     expect(res).toEqual({ xp: 100, niveau: 1, pointsDisponibles: 1 });
   });
 
-  it("multi-level-up en un seul gain (480 XP → niveau 3, 3 points)", () => {
+  it("multi-level-up en un seul gain (480 XP → niveau 4, 4 points)", () => {
+    // Cumuls : N1 100 · N2 201 · N3 303 · N4 406 · N5 510.
     const res = appliquerGainXPBrocanteur(freshBrocanteur(), 480);
-    expect(res.niveau).toBe(3);
-    expect(res.pointsDisponibles).toBe(3);
+    expect(res.niveau).toBe(4);
+    expect(res.pointsDisponibles).toBe(4);
+  });
+
+  it("plafond : l'XP au-delà du niveau 100 ne fait plus monter", () => {
+    const res = appliquerGainXPBrocanteur(freshBrocanteur(), 1_000_000);
+    expect(res.niveau).toBe(100);
+    expect(res.pointsDisponibles).toBe(100);
   });
 
   it("conserve les points déjà présents", () => {
@@ -69,8 +76,8 @@ describe("appliquerGainXPBrocanteur", () => {
 describe("progressionNiveauBrocanteur", () => {
   it("0 juste après un level-up, 0.5 à mi-chemin", () => {
     expect(progressionNiveauBrocanteur({ xp: 100, niveau: 1, pointsDisponibles: 0 })).toBe(0);
-    // niveau 1 → 2 : seuils 100 → 234, span 134 ; 100+67=167 → 0.5
-    expect(progressionNiveauBrocanteur({ xp: 167, niveau: 1, pointsDisponibles: 0 })).toBe(0.5);
+    // niveau 1 → 2 : seuils 100 → 201, span 101 ; 100+50,5=150,5 → 0.5
+    expect(progressionNiveauBrocanteur({ xp: 150.5, niveau: 1, pointsDisponibles: 0 })).toBe(0.5);
   });
 });
 
@@ -83,16 +90,16 @@ describe("detailProgressionBrocanteur", () => {
     });
   });
 
-  it("mi-niveau (xp 150, niveau 1) : seuil(1)=100, seuil(2)=234", () => {
+  it("mi-niveau (xp 150, niveau 1) : seuil(1)=100, seuil(2)=201", () => {
     expect(
       detailProgressionBrocanteur({ xp: 150, niveau: 1, pointsDisponibles: 0 }),
-    ).toEqual({ dansNiveau: 50, requisNiveau: 134, manquant: 84 });
+    ).toEqual({ dansNiveau: 50, requisNiveau: 101, manquant: 51 });
   });
 
   it("pile au seuil (xp === seuil(n)) : dansNiveau à 0", () => {
     expect(
       detailProgressionBrocanteur({ xp: 100, niveau: 1, pointsDisponibles: 0 }),
-    ).toEqual({ dansNiveau: 0, requisNiveau: 134, manquant: 134 });
+    ).toEqual({ dansNiveau: 0, requisNiveau: 101, manquant: 101 });
   });
 });
 

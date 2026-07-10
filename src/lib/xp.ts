@@ -5,24 +5,25 @@ export type { BrocanteurState };
 /* === Niveau de Brocanteur (global) ==================================== */
 
 /**
- * ΔXP(N) = PENTE·N + PALIER_1 − PENTE  (N=1 → 100, N=2 → 134, …).
+ * ΔXP(N) = PENTE·N + PALIER_1 − PENTE  (N=1 → 100, N=2 → 101, …).
  *
- * Courbe aplatie le 2026-07-06 : la simulation mesure un revenu d'XP réel
- * 2,5-4× sous les hypothèses du rapport initial (pente 60), ce qui créait
- * un plateau de 44-57 j après N14. La pente est ramenée à 34 (palier 1
- * inchangé à 100) pour ramener ce gap tardif à ~7-9 j au revenu mesuré,
- * sans toucher au tout début de la progression.
+ * Courbe recalibrée le 2026-07-10 pour l'échelle 100 niveaux : pente 34 → 1
+ * (palier 1 inchangé à 100). Au revenu mesuré par niveauSim (croisière
+ * ≈ 21 XP/j régulier · 14 casual · 36 hardcore), N100 tombe à ≈ 1 an pour
+ * un joueur régulier (~4 mois hardcore, ~2 ans casual) et N30 (dernier
+ * atout) à ~2 semaines. L'ancienne pente 34 rendait N50+ inatteignable
+ * (N30 = 507 j régulier). Sonde : calibration.probe.test.ts (describe.skip).
  */
 export const XP_BROCANTEUR_PALIER_1 = 100;
-export const XP_BROCANTEUR_PENTE = 34;
+export const XP_BROCANTEUR_PENTE = 1;
 /** Niveau plafond : la progression s'arrête à 100 (l'XP au-delà est ignorée). */
 export const NIVEAU_BROCANTEUR_MAX = 100;
 
-/** Seuil CUMULÉ pour atteindre `niveau` : Σ ΔXP = 17·N² + 83·N. */
+/** Seuil CUMULÉ pour atteindre `niveau` : Σ ΔXP = 0,5·N² + 99,5·N. */
 export function xpRequisPourNiveauBrocanteur(niveau: number): number {
   const n = Math.max(0, niveau);
-  const a = XP_BROCANTEUR_PENTE / 2; // 17
-  const b = XP_BROCANTEUR_PALIER_1 - XP_BROCANTEUR_PENTE / 2; // 83
+  const a = XP_BROCANTEUR_PENTE / 2; // 0,5
+  const b = XP_BROCANTEUR_PALIER_1 - XP_BROCANTEUR_PENTE / 2; // 99,5
   return a * n * n + b * n;
 }
 
