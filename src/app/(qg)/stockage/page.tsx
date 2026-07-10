@@ -18,9 +18,8 @@ import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { UpgradeButton } from "@/components/mobile/UpgradeButton";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { collectionStatusPourObjet } from "@/lib/atelier";
-import { getBrocanteById } from "@/data/brocantes";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { nomBrocante, nomObjet, nomStockageTier } from "@/lib/i18n/contenu";
+import { nomObjet, nomStockageTier } from "@/lib/i18n/contenu";
 import type { CategorieObjet, EtatObjet, Objet } from "@/types/game";
 
 export default function StockagePage() {
@@ -37,9 +36,7 @@ function StockagePageInner() {
   const {
     state,
     isHydrated,
-    mettreEnVitrine,
     donnerACollection,
-    definirPrixVenteSouhaite,
     ameliorerStockage,
   } = useGame();
   // Pré-filtre optionnel depuis ?cat= (deep-link de catégorie).
@@ -138,17 +135,6 @@ function StockagePageInner() {
       );
     setTimeout(() => setFlash(null), 2500);
   };
-
-  const ajouterAEtal = state.vitrine
-    ? (o: Objet, prix: number) => mettreEnVitrine(o.id, prix)
-    : null;
-
-  const brocanteOuverte = state.vitrine
-    ? getBrocanteById(state.vitrine.brocanteId)
-    : null;
-  const brocanteOuverteNom = brocanteOuverte
-    ? nomBrocante(brocanteOuverte, locale)
-    : null;
 
   return (
     <>
@@ -280,9 +266,6 @@ function StockagePageInner() {
         prixMarcheConnu={
           objetOuvert ? categoriesConnuesVitrine.has(objetOuvert.categorie) : false
         }
-        onSetPrixVente={definirPrixVenteSouhaite}
-        onAjouterEtal={ajouterAEtal}
-        brocanteOuverteNom={brocanteOuverteNom}
       />
 
       <ConfirmReplaceModal

@@ -353,6 +353,7 @@ export const fr = {
     aucunObjetCategorie: "Aucun objet dans cette catégorie.",
     partezChiner: "Partez chiner pour la garnir.",
     etatMot: "État",
+    rareteMot: "Rareté",
     themeMot: "Thème",
     envoyerCollection: "Envoyer dans la collection",
     remplacerCollection: "Remplacer l'exemplaire de la collection",
@@ -433,9 +434,6 @@ export const fr = {
     enRestaurationAtelier: "En restauration à l'atelier",
     prixMarche: "Prix du marché",
     prixAchat: "Prix d'achat",
-    prixVente: "Prix de vente",
-    diminuerPrixVente: "Diminuer le prix de vente de 5 €",
-    augmenterPrixVente: "Augmenter le prix de vente de 5 €",
     // — remplacement de donation —
     remplacerDonationAria: "Remplacer la donation",
     remplacerDonationTitre: "— Remplacer la donation ? —",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { StarRow } from "@/components/ui/StarRow";
@@ -8,7 +8,7 @@ import { getTemplate } from "@/data/objetTemplates";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
+import { libelleCategorie, libelleEtat, libelleRarete } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { Objet } from "@/types/game";
 
@@ -19,9 +19,6 @@ interface ObjetDetailOverlayProps {
   prixMarche: number;
   /** Prix marché visible ? Vrai si compétence Connaisseur Vitrine débloquée pour cette catégorie. */
   prixMarcheConnu: boolean;
-  onSetPrixVente: (objetId: string, prix: number) => void;
-  onAjouterEtal: ((objet: Objet, prix: number) => void) | null;
-  brocanteOuverteNom: string | null;
 }
 
 const backdrop: CSSProperties = {
@@ -52,8 +49,8 @@ const previewWrap: CSSProperties = {
 
 /* L'objet est présenté en sticker (découpe autocollant), plus de cadre. */
 const stickerBox: CSSProperties = {
-  width: "min(210px, 60vw)",
-  height: "min(210px, 60vw)",
+  width: "min(263px, 75vw)",
+  height: "min(263px, 75vw)",
 };
 
 const titreCard: CSSProperties = {
@@ -105,38 +102,6 @@ const prixValue: CSSProperties = {
   fontWeight: 600,
 };
 
-const venteInput: CSSProperties = {
-  fontFamily: "var(--font-display)",
-  fontSize: 14,
-  color: "var(--forest-800)",
-  fontWeight: 600,
-  border: "none",
-  borderBottom: "1px solid var(--brass-500)",
-  background: "transparent",
-  textAlign: "right",
-  width: 64,
-  outline: "none",
-  padding: "2px 4px",
-};
-
-const stepBtn = (disabled: boolean): CSSProperties => ({
-  width: 44,
-  height: 44,
-  minWidth: 44,
-  display: "grid",
-  placeItems: "center",
-  border: "1px solid var(--brass-500)",
-  background: "var(--paper-100)",
-  color: "var(--forest-800)",
-  fontFamily: "var(--font-display)",
-  fontSize: 20,
-  fontWeight: 600,
-  lineHeight: 1,
-  cursor: disabled ? "not-allowed" : "pointer",
-  opacity: disabled ? 0.45 : 1,
-  padding: 0,
-});
-
 const restaurationBanner: CSSProperties = {
   padding: "8px 10px",
   background: "var(--paper-200)",
@@ -155,34 +120,14 @@ export function ObjetDetailOverlay({
   onClose,
   prixMarche,
   prixMarcheConnu,
-  onSetPrixVente,
 }: ObjetDetailOverlayProps) {
   const { d, locale } = useLangue();
-  const [prixLocal, setPrixLocal] = useState<number>(0);
-
-  useEffect(() => {
-    if (!objet) return;
-    const defaut =
-      objet.prixVenteSouhaite ?? Math.max(1, Math.round(prixMarche * 1.4));
-    setPrixLocal(defaut);
-  }, [objet, prixMarche]);
 
   if (!open || !objet) return null;
 
-  const commitPrix = () => {
-    if (!objet) return;
-    onSetPrixVente(objet.id, prixLocal);
-  };
-
   const enRestauration = !!objet.enRestauration;
-
-  const ajusterPrix = (delta: number) => {
-    if (!objet || enRestauration) return;
-    const next = Math.max(0, prixLocal + delta);
-    setPrixLocal(next);
-    onSetPrixVente(objet.id, next);
-  };
   const isUnique = !!getTemplate(objet.templateId)?.unique;
+  const rarityColors = getRarityColors(objet.rarete, isUnique);
 
   return (
     <div
@@ -191,10 +136,7 @@ export function ObjetDetailOverlay({
       aria-label={d.inventaire.detailObjet}
       style={backdrop}
       onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          commitPrix();
-          onClose();
-        }
+        if (e.target === e.currentTarget) onClose();
       }}
     >
       <div style={card}>
@@ -252,67 +194,23 @@ export function ObjetDetailOverlay({
           </div>
 
           <div style={prixRow}>
+            <span style={prixLabel}>{d.inventaire.rareteMot}</span>
+            <span style={{ ...prixValue, color: rarityColors.outer }}>
+              {libelleRarete(objet.rarete, d)}
+            </span>
+          </div>
+
+          <div style={prixRow}>
             <span style={prixLabel}>{d.inventaire.prixMarche}</span>
             <span style={prixValue}>
               {prixMarcheConnu ? `${Math.round(prixMarche)} €` : "? €"}
             </span>
           </div>
 
-          <div style={prixRow}>
+          <div style={prixRowLast}>
             <span style={prixLabel}>{d.inventaire.prixAchat}</span>
             <span style={prixValue}>
               {objet.prixAchat !== undefined ? `${objet.prixAchat} €` : "— €"}
-            </span>
-          </div>
-
-          <div
-            style={{
-              ...prixRowLast,
-              flexDirection: "column",
-              alignItems: "stretch",
-              gap: 8,
-            }}
-          >
-            <span style={prixLabel}>{d.inventaire.prixVente}</span>
-            <span
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 8,
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => ajusterPrix(-5)}
-                disabled={enRestauration}
-                style={stepBtn(enRestauration)}
-                aria-label={d.inventaire.diminuerPrixVente}
-              >
-                −
-              </button>
-              <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                <input
-                  type="number"
-                  min={0}
-                  value={prixLocal}
-                  onChange={(e) => setPrixLocal(Number(e.target.value) || 0)}
-                  onBlur={commitPrix}
-                  style={venteInput}
-                  disabled={enRestauration}
-                  aria-label={d.inventaire.prixVente}
-                />
-                <span style={prixValue}>€</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => ajusterPrix(5)}
-                disabled={enRestauration}
-                style={stepBtn(enRestauration)}
-                aria-label={d.inventaire.augmenterPrixVente}
-              >
-                +
-              </button>
             </span>
           </div>
         </div>

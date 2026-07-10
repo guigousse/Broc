@@ -350,6 +350,7 @@ export const en: DictionnaireUI = {
     aucunObjetCategorie: "No items in this category.",
     partezChiner: "Go picking to fill it.",
     etatMot: "Condition",
+    rareteMot: "Rarity",
     themeMot: "Theme",
     envoyerCollection: "Send to the collection",
     remplacerCollection: "Replace the collection copy",
@@ -428,9 +429,6 @@ export const en: DictionnaireUI = {
     enRestaurationAtelier: "Being restored at the workshop",
     prixMarche: "Market price",
     prixAchat: "Purchase price",
-    prixVente: "Sale price",
-    diminuerPrixVente: "Lower the sale price by 5 €",
-    augmenterPrixVente: "Raise the sale price by 5 €",
     // — remplacement de donation —
     remplacerDonationAria: "Replace the donation",
     remplacerDonationTitre: "— Replace the donation? —",
