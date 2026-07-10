@@ -110,7 +110,7 @@ function BureauPageInner() {
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
 
-  // Index de zone fractionnaire courant (0..2).
+  // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
   const [zoneActive, setZoneActive] = useState(zoneIdxRef.current);
 
@@ -119,8 +119,8 @@ function BureauPageInner() {
     if (isHydrated && !state) router.replace("/");
   }, [isHydrated, state, router]);
 
-  // Audio QG : ambience + cheminée. Démarrent au mount du layout, s'arrêtent
-  // au démontage (sortie du groupe panorama).
+  // Audio QG : ambience + cheminée. Démarrent au mount de la page, s'arrêtent
+  // au démontage (sortie du bureau).
   useEffect(() => {
     void audioManager.startAmbience();
     void audioManager.startFireplace(0.3);
@@ -334,10 +334,6 @@ function BureauPageInner() {
       setEditEnabled(true);
     }
   }, []);
-  const editEnabledRef = useRef(editEnabled);
-  useEffect(() => {
-    editEnabledRef.current = editEnabled;
-  }, [editEnabled]);
 
   if (!isHydrated || !state) {
     return (

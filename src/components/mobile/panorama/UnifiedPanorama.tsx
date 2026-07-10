@@ -81,8 +81,10 @@ interface UnifiedPanoramaProps {
   initialZone?: UnifiedZoneKey;
   children?: ReactNode;
   /**
-   * Index de zone fractionnaire (0 = bureau … 2 = repos). Émis à chaque
-   * rAF de scroll, après ré-interpolation depuis scrollLeft.
+   * Index de la zone la plus proche (0 = bureau … 2 = repos), émis à
+   * chaque rAF de scroll. Seule l'init (mount) émet l'index exact de la
+   * zone cible ; ensuite l'index est celui de la zone la plus proche
+   * (entier snappé), pas une valeur fractionnaire.
    */
   onZoneIndex?: (idx: number) => void;
 }

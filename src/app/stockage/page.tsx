@@ -50,7 +50,7 @@ function StockagePageInner() {
     definirPrixVenteSouhaite,
     ameliorerStockage,
   } = useGame();
-  // Pré-filtre depuis ?cat= (ex. carton catégorie cliqué depuis le panorama).
+  // Pré-filtre optionnel depuis ?cat= (deep-link de catégorie).
   // Garde une valeur seulement si la catégorie est valide.
   const initialFiltre = useMemo<CategorieObjet | null>(() => {
     const raw = searchParams.get("cat");
