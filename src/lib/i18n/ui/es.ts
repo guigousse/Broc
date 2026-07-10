@@ -349,6 +349,8 @@ export const es: DictionnaireUI = {
     donationRemplacee: "Donación reemplazada.",
     aucunObjetCategorie: "Ningún objeto en esta categoría.",
     partezChiner: "Sal a rebuscar para llenarla.",
+    etatMot: "Estado",
+    themeMot: "Tema",
     envoyerCollection: "Enviar a la colección",
     remplacerCollection: "Reemplazar el ejemplar de la colección",
     etatCategorieAria: "Estado {etat}, categoría {categorie}",

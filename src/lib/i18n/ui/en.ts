@@ -349,6 +349,8 @@ export const en: DictionnaireUI = {
     donationRemplacee: "Donation replaced.",
     aucunObjetCategorie: "No items in this category.",
     partezChiner: "Go picking to fill it.",
+    etatMot: "Condition",
+    themeMot: "Theme",
     envoyerCollection: "Send to the collection",
     remplacerCollection: "Replace the collection copy",
     etatCategorieAria: "Condition {etat}, category {categorie}",

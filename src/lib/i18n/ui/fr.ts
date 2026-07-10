@@ -352,6 +352,8 @@ export const fr = {
     donationRemplacee: "Donation remplacée.",
     aucunObjetCategorie: "Aucun objet dans cette catégorie.",
     partezChiner: "Partez chiner pour la garnir.",
+    etatMot: "État",
+    themeMot: "Thème",
     envoyerCollection: "Envoyer dans la collection",
     remplacerCollection: "Remplacer l'exemplaire de la collection",
     etatCategorieAria: "État {etat}, catégorie {categorie}",

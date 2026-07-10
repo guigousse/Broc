@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { FrameItem } from "@/components/ui/FrameItem";
-import { ItemImage } from "@/components/ui/ItemImage";
+import { ItemSticker } from "@/components/ui/ItemSticker";
+import { CategorieIcon } from "@/components/ui/CategorieIcon";
+import { StarRow } from "@/components/ui/StarRow";
 import { getTemplate } from "@/data/objetTemplates";
+import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { Objet } from "@/types/game";
 
@@ -42,8 +46,26 @@ const card: CSSProperties = {
 const previewWrap: CSSProperties = {
   display: "grid",
   placeItems: "center",
-  marginBottom: 40,
+  marginBottom: 28,
   position: "relative",
+};
+
+/* L'objet est présenté en sticker (découpe autocollant), plus de cadre. */
+const stickerBox: CSSProperties = {
+  width: "min(210px, 60vw)",
+  height: "min(210px, 60vw)",
+};
+
+const titreCard: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 14,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: "var(--forest-800)",
+  fontWeight: 700,
+  textAlign: "center",
+  paddingBottom: 10,
+  borderBottom: "1px dotted var(--brass-500)",
 };
 
 const prixCard: CSSProperties = {
@@ -177,31 +199,57 @@ export function ObjetDetailOverlay({
     >
       <div style={card}>
         <div style={previewWrap}>
-          <FrameItem
-            categorie={objet.categorie}
-            titre={nomObjet(objet, locale)}
-            rarete={objet.rarete}
-            unique={isUnique}
-            etat={objet.etat}
-            size={CARD_WIDTH}
-          >
-            <ItemImage
+          <div style={stickerBox}>
+            <ItemSticker
               templateId={objet.templateId}
               categorie={objet.categorie}
-              fit="cover"
-              fallbackIconSize={100}
-              fallbackIconColor="var(--brass-500)"
-              alt={nomObjet(objet, locale)}
+              fill
+              tilt={false}
+              variant="normal"
+              eager
             />
-          </FrameItem>
+          </div>
         </div>
 
         <div style={prixCard}>
+          <div style={titreCard}>{nomObjet(objet, locale)}</div>
+
           {enRestauration && (
             <div style={restaurationBanner}>
               {d.inventaire.enRestaurationAtelier}
             </div>
           )}
+
+          <div style={prixRow}>
+            <span style={prixLabel}>{d.inventaire.etatMot}</span>
+            <span
+              style={{ display: "flex", alignItems: "center", gap: 6 }}
+            >
+              <StarRow
+                filled={etoileCount(objet.etat)}
+                color={getRarityColors(objet.rarete, isUnique).outer}
+                size={13}
+              />
+              <span style={prixValue}>{libelleEtat(objet.etat, d)}</span>
+            </span>
+          </div>
+
+          <div style={prixRow}>
+            <span style={prixLabel}>{d.inventaire.themeMot}</span>
+            <span
+              style={{ display: "flex", alignItems: "center", gap: 6 }}
+            >
+              <CategorieIcon
+                categorie={objet.categorie}
+                size={15}
+                strokeWidth={1.5}
+                color="var(--brass-700)"
+              />
+              <span style={prixValue}>
+                {libelleCategorie(objet.categorie, d)}
+              </span>
+            </span>
+          </div>
 
           <div style={prixRow}>
             <span style={prixLabel}>{d.inventaire.prixMarche}</span>
