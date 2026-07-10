@@ -53,3 +53,15 @@ export function peutTerminerImmediat(enRest: Timer, now: number): boolean {
   const r = enRest.finMs - now;
   return r > 0 && r <= FENETRE_PUB_MS;
 }
+
+/** Formate une durée (ms) en « 1 h », « 1 h 30 » ou « 45 min » (granularité minute). */
+export function formatDuree(ms: number): string {
+  const totalMin = Math.ceil(ms / 60000);
+  if (totalMin >= 60) {
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`;
+  }
+  if (totalMin >= 1) return `${totalMin} min`;
+  return `${Math.ceil(ms / 1000)} s`;
+}

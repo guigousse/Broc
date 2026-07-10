@@ -12,18 +12,19 @@ import {
 import {
   dureeRestaurationMs,
   restantMs,
-  estPret,
   peutTerminerImmediat,
+  formatDuree,
 } from "@/lib/restauration";
 import { recalculerPrixReference } from "@/lib/etat";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import { coutAmelioration, peutDemanteler, rendementDemantelement } from "@/lib/atelier";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
-import { UpgradeButton } from "@/components/mobile/UpgradeButton";
 import { AtelierItemRow } from "@/components/atelier/AtelierItemRow";
+import { AtelierSlots } from "@/components/atelier/AtelierSlots";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
+import { ItemSticker } from "@/components/ui/ItemSticker";
 import type { EtatObjet, Objet } from "@/types/game";
 import { audioManager } from "@/lib/audio/audioManager";
 import { getRarityColors } from "@/lib/rarityColors";
@@ -52,16 +53,24 @@ const cardWrap: React.CSSProperties = {
   overflow: "hidden",
 };
 
-/** Formate une durée (ms) en « 1 h », « 1 h 30 » ou « 45 min » (granularité minute). */
-function formatDuree(ms: number): string {
-  const totalMin = Math.ceil(ms / 60000);
-  if (totalMin >= 60) {
-    const h = Math.floor(totalMin / 60);
-    const m = totalMin % 60;
-    return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`;
-  }
-  if (totalMin >= 1) return `${totalMin} min`;
-  return `${Math.ceil(ms / 1000)} s`;
+/** Boutons ghost/primary des tiroirs (mêmes styles que le tiroir démantèlement). */
+function btnSheet(
+  variant: "ghost" | "primary",
+  disabled = false,
+): React.CSSProperties {
+  return {
+    flex: 1,
+    padding: "10px 12px",
+    fontFamily: "var(--font-display)",
+    fontSize: 10.5,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    border: "1px solid var(--brass-500)",
+    background: variant === "primary" ? "var(--forest-800)" : "var(--paper-200)",
+    color: variant === "primary" ? "var(--brass-300)" : "var(--ink-700)",
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.6 : 1,
+  };
 }
 
 export default function AtelierPage() {
@@ -107,9 +116,9 @@ export default function AtelierPage() {
     yieldPieces: number;
     thumbRect: DOMRect | null;
   } | null>(null);
-  const [onglet, setOnglet] = useState<"restaurations" | "demantelement">(
-    "restaurations",
-  );
+  const [achatSlotOuvert, setAchatSlotOuvert] = useState(false);
+  const [choisirOuvert, setChoisirOuvert] = useState(false);
+  const [enCoursDetail, setEnCoursDetail] = useState<Objet | null>(null);
   const actionEnCoursRef = useRef(false);
 
   const enCours = useMemo(
@@ -150,8 +159,6 @@ export default function AtelierPage() {
   // Le layout (qg) gate le rendu (redirect + écran d'attente) : ce garde
   // ne sert qu'au narrowing TypeScript.
   if (!isHydrated || !state) return null;
-
-  const pleine = enCours.length >= ATELIER_SLOTS[state.niveauAtelier];
 
   const handleConfirmDemanteler = () => {
     if (!demantelerCible) return;
@@ -333,53 +340,23 @@ export default function AtelierPage() {
                 })}
               </div>
             }
-            right={(() => {
-              const up = getProchaineUpgrade(state.niveauAtelier);
-              if (!up) {
-                return (
-                  <span
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 10,
-                      letterSpacing: "0.14em",
-                      textTransform: "uppercase",
-                      color: "var(--brass-700)",
-                      padding: "6px 10px",
-                    }}
-                  >
-                    {d.inventaire.max}
-                  </span>
-                );
-              }
-              return (
-                <UpgradeButton
-                  niveauCible={up.niveauCible}
-                  cout={up.cout}
-                  peut={state.budget >= up.cout}
-                  onUpgrade={() => {
-                    const res = ameliorerAtelier();
-                    if (!res.ok)
-                      setFlash(res.raison ?? d.inventaire.impossible);
-                    else
-                      setFlash(
-                        tr(d.inventaire.atelierAmeliore, {
-                          niveau: up.niveauCible,
-                        }),
-                      );
-                    setTimeout(() => setFlash(null), 2500);
-                  }}
-                  ariaLabel={tr(d.inventaire.ameliorerAtelierAria, {
-                    niveau: up.niveauCible,
-                    cout: up.cout,
-                  })}
-                />
-              );
-            })()}
           />
           <div style={{ marginTop: 4 }}>
             <PiecesInventoryBar pieces={state.piecesAmelioration} />
           </div>
         </>
+      }
+      milieu={
+        <AtelierSlots
+          slotsDebloques={state.niveauAtelier}
+          enCours={enCours}
+          now={tempsConfiance() ?? Date.now()}
+          prochaineUpgrade={getProchaineUpgrade(state.niveauAtelier)}
+          onAcheterSlot={() => setAchatSlotOuvert(true)}
+          onSlotVide={() => setChoisirOuvert(true)}
+          onEnCours={(o) => setEnCoursDetail(o)}
+          onRecuperer={(o) => recupererObjetRestaure(o.id)}
+        />
       }
     >
       {flash && (
@@ -399,308 +376,8 @@ export default function AtelierPage() {
         </div>
       )}
 
-      <h2 style={sectTitle} data-fly-target="travaux">
-        {d.inventaire.travauxEnCours}
-      </h2>
-      {enCours.length === 0 ? (
-        <div style={cardWrap}>
-          <p
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontStyle: "italic",
-              color: "var(--ink-500)",
-              textAlign: "center",
-              padding: "12px 0",
-            }}
-          >
-            {d.inventaire.aucunChantier}
-          </p>
-        </div>
-      ) : (
-        <div style={cardWrap}>
-          {enCours.map((o, i) => {
-            const now = tempsConfiance() ?? Date.now();
-            const enRest = o.enRestauration!;
-            const ready = estPret(enRest, now);
-            const reste = restantMs(enRest, now);
-            const peutPub = peutTerminerImmediat(enRest, now);
-            return (
-              <AtelierItemRow
-                key={o.id}
-                objet={o}
-                isLast={i === enCours.length - 1}
-                metaLigne={
-                  <span
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 9.5,
-                      color: "var(--ink-500)",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    {ready ? d.inventaire.pret : formatDuree(reste)}
-                  </span>
-                }
-                action={
-                  ready ? (
-                    <button
-                      type="button"
-                      onClick={() => recupererObjetRestaure(o.id)}
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 9,
-                        letterSpacing: "0.12em",
-                        textTransform: "uppercase",
-                        color: "var(--paper-100)",
-                        background: "var(--forest-700)",
-                        border: "1px solid var(--forest-800)",
-                        padding: "4px 8px",
-                        borderRadius: 3,
-                        whiteSpace: "nowrap",
-                        cursor: "pointer",
-                      }}
-                      aria-label={tr(d.inventaire.recupererAria, {
-                        nom: nomObjet(o, locale),
-                      })}
-                    >
-                      {d.inventaire.recuperer}
-                    </button>
-                  ) : (
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: 9,
-                          letterSpacing: "0.1em",
-                          textTransform: "uppercase",
-                          color: "var(--brass-700)",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {formatDuree(reste)}
-                      </span>
-                      {peutPub && (
-                        <button
-                          type="button"
-                          disabled={pubEnCours}
-                          onClick={() => accelererViaPub(o.id)}
-                          style={{
-                            fontFamily: "var(--font-mono)",
-                            fontSize: 9,
-                            letterSpacing: "0.12em",
-                            textTransform: "uppercase",
-                            color: "var(--paper-100)",
-                            background: "var(--brass-600)",
-                            border: "1px solid var(--brass-700)",
-                            padding: "4px 8px",
-                            borderRadius: 3,
-                            whiteSpace: "nowrap",
-                            cursor: pubEnCours ? "not-allowed" : "pointer",
-                            opacity: pubEnCours ? 0.6 : 1,
-                          }}
-                        >
-                          {pubEnCours
-                            ? d.chrome.pubEnCours
-                            : d.inventaire.terminerPub}
-                        </button>
-                      )}
-                    </span>
-                  )
-                }
-              />
-            );
-          })}
-        </div>
-      )}
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 4,
-          marginTop: 14,
-          marginBottom: 6,
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setOnglet("restaurations")}
-          aria-pressed={onglet === "restaurations"}
-          style={{
-            padding: "8px 12px",
-            border: "1px solid var(--brass-500)",
-            background:
-              onglet === "restaurations"
-                ? "var(--forest-800)"
-                : "var(--paper-100)",
-            color:
-              onglet === "restaurations"
-                ? "var(--brass-300)"
-                : "var(--ink-500)",
-            fontFamily: "var(--font-display)",
-            fontSize: 11,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            cursor: "pointer",
-          }}
-        >
-          {d.inventaire.ongletRestaurations}
-        </button>
-        <button
-          type="button"
-          onClick={() => setOnglet("demantelement")}
-          aria-pressed={onglet === "demantelement"}
-          style={{
-            padding: "8px 12px",
-            border: "1px solid var(--brass-500)",
-            background:
-              onglet === "demantelement"
-                ? "var(--forest-800)"
-                : "var(--paper-100)",
-            color:
-              onglet === "demantelement"
-                ? "var(--brass-300)"
-                : "var(--ink-500)",
-            fontFamily: "var(--font-display)",
-            fontSize: 11,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            cursor: "pointer",
-          }}
-        >
-          {d.inventaire.ongletDemantelement}
-        </button>
-      </div>
-
-      {onglet === "restaurations" ? (
-        restaurables.length === 0 ? (
-          <div style={cardWrap}>
-            <p
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontStyle: "italic",
-                color: "var(--ink-500)",
-                textAlign: "center",
-                padding: "12px 0",
-              }}
-            >
-              {d.inventaire.aucunePieceARestaurer}
-            </p>
-          </div>
-        ) : (
-          <div style={cardWrap}>
-            {restaurables.map((o, i) => {
-              const cible: EtatObjet =
-                o.etat === "Mauvais"
-                  ? "Bon"
-                  : o.etat === "Bon"
-                    ? "Très bon"
-                    : "Pristin état";
-              const duree = formatDuree(
-                dureeRestaurationMs(state, o.categorie, o.etat),
-              );
-              const prixApres = recalculerPrixReference(
-                o.prixReferenceReel,
-                o.etat,
-                cible,
-              );
-              const cout = coutAmelioration(o, cible);
-              const disabled = pleine;
-              const valeurConnue = state
-                ? aConnaisseurVitrine(state, o.categorie)
-                : false;
-              return (
-                <AtelierItemRow
-                  key={o.id}
-                  objet={o}
-                  etatCible={cible}
-                  isLast={i === restaurables.length - 1}
-                  metaLigne={
-                    <div
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 9.5,
-                        color: "var(--ink-500)",
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      {valeurConnue ? (
-                        <>
-                          {tr(d.inventaire.dureeValeurVers, {
-                            duree,
-                            valeur: o.prixReferenceReel,
-                          })}{" "}
-                          <span style={{ color: "var(--brass-700)" }}>
-                            {tr(d.chrome.montantEuros, { valeur: prixApres })}
-                          </span>
-                        </>
-                      ) : (
-                        <>{tr(d.inventaire.dureeValeurInconnue, { duree })}</>
-                      )}
-                    </div>
-                  }
-                  action={
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={(e) => {
-                        const rowEl = (e.currentTarget as HTMLElement).closest(
-                          "[data-atelier-row]",
-                        ) as HTMLElement | null;
-                        const thumb = rowEl?.querySelector(
-                          "[data-atelier-thumb]",
-                        ) as HTMLElement | null;
-                        setRestaurerCible({
-                          objet: o,
-                          etatCible: cible,
-                          cout,
-                          thumbRect: thumb?.getBoundingClientRect() ?? null,
-                        });
-                      }}
-                      aria-label={tr(d.inventaire.confirmerRestaurationAria, {
-                        cout,
-                        categorie: libelleCategorie(o.categorie, d),
-                      })}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5,
-                        padding: "4px 6px",
-                        border: "1px solid var(--brass-500)",
-                        background: disabled
-                          ? "var(--paper-200)"
-                          : "var(--forest-800)",
-                        color: disabled
-                          ? "var(--ink-500)"
-                          : "var(--brass-300)",
-                        cursor: disabled ? "not-allowed" : "pointer",
-                        opacity: disabled ? 0.7 : 1,
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: 11,
-                          fontWeight: 700,
-                        }}
-                      >
-                        −{cout}
-                      </span>
-                      <PieceIcon categorie={o.categorie} size={22} />
-                    </button>
-                  }
-                />
-              );
-            })}
-          </div>
-        )
-      ) : demantelables.length === 0 ? (
+      <h2 style={sectTitle}>{d.inventaire.ongletDemantelement}</h2>
+      {demantelables.length === 0 ? (
         <div style={cardWrap}>
           <p
             style={{
@@ -931,6 +608,259 @@ export default function AtelierPage() {
                 {d.commun.confirmer}
               </button>
             </div>
+          </div>
+        )}
+      </BottomSheet>
+
+      {/* Achat de slot. */}
+      <BottomSheet
+        open={achatSlotOuvert}
+        onClose={() => setAchatSlotOuvert(false)}
+        title={d.inventaire.acheterSlotTitre}
+      >
+        {(() => {
+          const up = getProchaineUpgrade(state.niveauAtelier);
+          if (!up) return null;
+          const peut = state.budget >= up.cout;
+          return (
+            <div style={{ padding: "8px 16px 16px" }}>
+              <p
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: 13,
+                  color: "var(--ink-700)",
+                  marginBottom: 12,
+                }}
+              >
+                {tr(d.inventaire.acheterSlotCorps, {
+                  n: up.niveauCible,
+                  cout: up.cout,
+                })}
+              </p>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setAchatSlotOuvert(false)}
+                  style={btnSheet("ghost")}
+                >
+                  {d.commun.annuler}
+                </button>
+                <button
+                  type="button"
+                  disabled={!peut}
+                  onClick={() => {
+                    const res = ameliorerAtelier();
+                    setAchatSlotOuvert(false);
+                    if (!res.ok) {
+                      setFlash(res.raison ?? d.inventaire.impossible);
+                      setTimeout(() => setFlash(null), 2500);
+                    }
+                  }}
+                  style={btnSheet("primary", !peut)}
+                >
+                  {d.inventaire.acheterSlotCta} — {up.cout} €
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+      </BottomSheet>
+
+      {/* Choix d'un objet à restaurer (slot vide). */}
+      <BottomSheet
+        open={choisirOuvert}
+        onClose={() => setChoisirOuvert(false)}
+        title={d.inventaire.choisirObjetTitre}
+      >
+        <div style={{ padding: "0 4px 12px" }}>
+          {restaurables.length === 0 ? (
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontStyle: "italic",
+                color: "var(--ink-500)",
+                textAlign: "center",
+                padding: "16px 12px",
+              }}
+            >
+              {d.inventaire.aucunePieceARestaurer}
+            </p>
+          ) : (
+            restaurables.map((o, i) => {
+              const cible: EtatObjet =
+                o.etat === "Mauvais"
+                  ? "Bon"
+                  : o.etat === "Bon"
+                    ? "Très bon"
+                    : "Pristin état";
+              const duree = formatDuree(
+                dureeRestaurationMs(state, o.categorie, o.etat),
+              );
+              const prixApres = recalculerPrixReference(
+                o.prixReferenceReel,
+                o.etat,
+                cible,
+              );
+              const cout = coutAmelioration(o, cible);
+              const valeurConnue = state
+                ? aConnaisseurVitrine(state, o.categorie)
+                : false;
+              return (
+                <AtelierItemRow
+                  key={o.id}
+                  objet={o}
+                  etatCible={cible}
+                  isLast={i === restaurables.length - 1}
+                  metaLigne={
+                    <div
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 9.5,
+                        color: "var(--ink-500)",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      {valeurConnue ? (
+                        <>
+                          {tr(d.inventaire.dureeValeurVers, {
+                            duree,
+                            valeur: o.prixReferenceReel,
+                          })}{" "}
+                          <span style={{ color: "var(--brass-700)" }}>
+                            {tr(d.chrome.montantEuros, { valeur: prixApres })}
+                          </span>
+                        </>
+                      ) : (
+                        <>{tr(d.inventaire.dureeValeurInconnue, { duree })}</>
+                      )}
+                    </div>
+                  }
+                  action={
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        const rowEl = (e.currentTarget as HTMLElement).closest(
+                          "[data-atelier-row]",
+                        ) as HTMLElement | null;
+                        const thumb = rowEl?.querySelector(
+                          "[data-atelier-thumb]",
+                        ) as HTMLElement | null;
+                        setChoisirOuvert(false);
+                        setRestaurerCible({
+                          objet: o,
+                          etatCible: cible,
+                          cout,
+                          thumbRect: thumb?.getBoundingClientRect() ?? null,
+                        });
+                      }}
+                      aria-label={tr(d.inventaire.confirmerRestaurationAria, {
+                        cout,
+                        categorie: libelleCategorie(o.categorie, d),
+                      })}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 5,
+                        padding: "4px 6px",
+                        border: "1px solid var(--brass-500)",
+                        background: "var(--forest-800)",
+                        color: "var(--brass-300)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 11,
+                          fontWeight: 700,
+                        }}
+                      >
+                        −{cout}
+                      </span>
+                      <PieceIcon categorie={o.categorie} size={22} />
+                    </button>
+                  }
+                />
+              );
+            })
+          )}
+        </div>
+      </BottomSheet>
+
+      {/* Détail d'une restauration en cours. */}
+      <BottomSheet
+        open={enCoursDetail !== null}
+        onClose={() => setEnCoursDetail(null)}
+        title={d.inventaire.enCoursDetailTitre}
+      >
+        {enCoursDetail && enCoursDetail.enRestauration && (
+          <div style={{ padding: "8px 16px 16px", textAlign: "center" }}>
+            <div style={{ width: 96, height: 96, margin: "0 auto 8px" }}>
+              <ItemSticker
+                templateId={enCoursDetail.templateId}
+                categorie={enCoursDetail.categorie}
+                fill
+                tilt={false}
+                variant="normal"
+                eager
+              />
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 13,
+                textTransform: "uppercase",
+                color: "var(--forest-800)",
+                fontWeight: 700,
+                marginBottom: 4,
+              }}
+            >
+              {nomObjet(enCoursDetail, locale)}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--ink-700)",
+                marginBottom: 12,
+              }}
+            >
+              {formatDuree(
+                restantMs(
+                  enCoursDetail.enRestauration,
+                  tempsConfiance() ?? Date.now(),
+                ),
+              )}
+            </div>
+            {peutTerminerImmediat(
+              enCoursDetail.enRestauration,
+              tempsConfiance() ?? Date.now(),
+            ) && (
+              <button
+                type="button"
+                disabled={pubEnCours}
+                onClick={() => {
+                  accelererViaPub(enCoursDetail.id);
+                  setEnCoursDetail(null);
+                }}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 9,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "var(--paper-100)",
+                  background: "var(--brass-600)",
+                  border: "1px solid var(--brass-700)",
+                  padding: "6px 12px",
+                  borderRadius: 3,
+                  whiteSpace: "nowrap",
+                  cursor: pubEnCours ? "not-allowed" : "pointer",
+                  opacity: pubEnCours ? 0.6 : 1,
+                }}
+              >
+                {pubEnCours ? d.chrome.pubEnCours : d.inventaire.terminerPub}
+              </button>
+            )}
           </div>
         )}
       </BottomSheet>
