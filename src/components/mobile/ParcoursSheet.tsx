@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { DEBLOCAGES_PAR_NIVEAU } from "@/data/deblocagesNiveau";
-import { chipFamille } from "@/components/mobile/LevelUpOverlay";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleFamille } from "@/lib/i18n/libelles";
 import { titreDeblocage } from "@/lib/i18n/contenu";
 
 interface ParcoursSheetProps {
@@ -105,33 +103,97 @@ const footnote: CSSProperties = {
   borderTop: "1px solid var(--brass-500)",
 };
 
-function ligneStyle(etat: "atteint" | "prochain" | "a-venir"): CSSProperties {
-  const base: CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "6px 10px",
-    margin: "2px 6px",
-    fontFamily: "var(--font-mono)",
-    fontSize: 12,
-    color: "var(--ink-700)",
+/* ── Timeline verticale : rail laiton + pastilles de niveau à gauche,
+      déblocages à droite. Rail plein sur le parcouru, pointillé au-delà. ── */
+
+type EtatNiveau = "atteint" | "prochain" | "a-venir";
+
+const groupeRow: CSSProperties = {
+  display: "flex",
+  alignItems: "stretch",
+  padding: "0 10px 0 6px",
+};
+
+const railCol: CSSProperties = {
+  width: 52,
+  flexShrink: 0,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+};
+
+function segment(plein: boolean, visible: boolean): CSSProperties {
+  return {
+    flex: 1,
+    minHeight: 6,
+    width: 0,
+    borderLeft: visible
+      ? `2px ${plein ? "solid" : "dashed"} ${plein ? "var(--brass-500)" : "var(--paper-500)"}`
+      : "2px solid transparent",
   };
-  if (etat === "atteint") return { ...base, opacity: 0.5 };
-  if (etat === "prochain") {
-    return {
-      ...base,
-      background: "var(--paper-300)",
-      border: "1px solid var(--brass-500)",
-    };
-  }
-  return base;
 }
 
-const niveauCol: CSSProperties = {
-  flexShrink: 0,
-  width: 44,
-  fontWeight: 700,
-};
+function pastille(etat: EtatNiveau): CSSProperties {
+  const base: CSSProperties = {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    display: "grid",
+    placeItems: "center",
+    fontFamily: "var(--font-display)",
+    fontSize: 11,
+    fontWeight: 700,
+    flexShrink: 0,
+    boxShadow: "0 1px 3px rgba(40,25,5,0.25)",
+  };
+  if (etat === "atteint")
+    return {
+      ...base,
+      background: "var(--forest-800)",
+      border: "2px solid var(--brass-500)",
+      color: "var(--brass-300)",
+    };
+  if (etat === "prochain")
+    return {
+      ...base,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      fontSize: 13,
+      background: "var(--paper-100)",
+      border: "2px solid var(--vermillion-600)",
+      color: "var(--vermillion-600)",
+    };
+  return {
+    ...base,
+    background: "var(--paper-300)",
+    border: "1px solid var(--brass-500)",
+    color: "var(--ink-500)",
+  };
+}
+
+function contenuCol(etat: EtatNiveau): CSSProperties {
+  return {
+    flex: 1,
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: 3,
+    padding: "10px 0",
+    opacity: etat === "atteint" ? 0.55 : 1,
+  };
+}
+
+function titreLigne(etat: EtatNiveau): CSSProperties {
+  return {
+    fontFamily: etat === "prochain" ? "var(--font-display)" : "var(--font-serif)",
+    fontSize: etat === "prochain" ? 13 : 12.5,
+    fontWeight: etat === "prochain" ? 700 : 400,
+    color: etat === "a-venir" ? "var(--ink-500)" : "var(--forest-800)",
+    lineHeight: 1.3,
+  };
+}
 
 /* ------------------------------------------------------------------ */
 /* Composant                                                           */
@@ -139,6 +201,15 @@ const niveauCol: CSSProperties = {
 
 export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
   const { d, tr, locale } = useLangue();
+  const prochainRef = useRef<HTMLDivElement>(null);
+
+  // À l'ouverture, centre la liste sur le prochain palier : le joueur voit
+  // immédiatement où il en est.
+  useEffect(() => {
+    if (!open) return;
+    // scrollIntoView optionnel : absent de jsdom (tests).
+    prochainRef.current?.scrollIntoView?.({ block: "center" });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -156,7 +227,16 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
 
   if (!open) return null;
 
-  let prochainTrouve = false;
+  // Regroupe les déblocages par niveau (le N10 en a deux) et trie — le rail
+  // est une seule ligne de progression, une pastille par niveau.
+  const parNiveau = new Map<number, typeof DEBLOCAGES_PAR_NIVEAU[number][]>();
+  for (const dep of DEBLOCAGES_PAR_NIVEAU) {
+    const arr = parNiveau.get(dep.niveau) ?? [];
+    arr.push(dep);
+    parNiveau.set(dep.niveau, arr);
+  }
+  const niveaux = [...parNiveau.keys()].sort((a, b) => a - b);
+  const prochainNiveau = niveaux.find((n) => n > niveau);
 
   return (
     <>
@@ -181,31 +261,37 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
             <div style={titre}>{tr(d.sheets.niveauN, { n: niveau })}</div>
           </div>
           <div style={liste}>
-            {DEBLOCAGES_PAR_NIVEAU.map((dep) => {
-              let etat: "atteint" | "prochain" | "a-venir";
-              if (dep.niveau <= niveau) {
-                etat = "atteint";
-              } else if (!prochainTrouve) {
-                etat = "prochain";
-                prochainTrouve = true;
-              } else {
-                etat = "a-venir";
-              }
+            {niveaux.map((n, gi) => {
+              const etat: EtatNiveau =
+                n <= niveau ? "atteint" : n === prochainNiveau ? "prochain" : "a-venir";
+              const deps = parNiveau.get(n)!;
               return (
                 <div
-                  key={dep.niveau}
-                  data-testid={`parcours-row-${dep.niveau}`}
-                  data-etat={etat}
-                  style={ligneStyle(etat)}
+                  key={n}
+                  ref={etat === "prochain" ? prochainRef : undefined}
+                  style={groupeRow}
                 >
-                  <span style={niveauCol}>
-                    {etat === "atteint" ? "✓ " : ""}
-                    {tr(d.sheets.nivAbrege, { n: dep.niveau })}
-                  </span>
-                  <span style={chipFamille(dep.famille)}>
-                    {libelleFamille(dep.famille, d)}
-                  </span>
-                  <span>{titreDeblocage(dep, locale)}</span>
+                  <div style={railCol}>
+                    <div style={segment(etat !== "a-venir", gi > 0)} />
+                    <div style={pastille(etat)} aria-hidden>
+                      {tr(d.sheets.nivAbrege, { n })}
+                    </div>
+                    <div
+                      style={segment(etat === "atteint", gi < niveaux.length - 1)}
+                    />
+                  </div>
+                  <div style={contenuCol(etat)}>
+                    {deps.map((dep) => (
+                      <div
+                        key={`${dep.niveau}-${dep.titre}`}
+                        data-testid={`parcours-row-${dep.niveau}`}
+                        data-etat={etat}
+                        style={titreLigne(etat)}
+                      >
+                        {titreDeblocage(dep, locale)}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               );
             })}
