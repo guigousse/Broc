@@ -52,10 +52,11 @@ const bandeStyle: CSSProperties = {
   animation: "broc-float-bande-in 320ms ease-out",
 };
 
+/* Le milieu n'est PAS une carte : bloc libre sur le fond flouté — ses
+   éléments (ex. les 3 slots d'atelier) portent leur propre habillage et
+   flottent indépendamment les uns des autres. */
 const milieuStyle: CSSProperties = {
-  ...carte,
   flexShrink: 0,
-  padding: "10px",
   // Fondu simple : le milieu apparaît entre les deux blocs qui glissent.
   animation: "broc-fade-in 320ms ease-out",
 };

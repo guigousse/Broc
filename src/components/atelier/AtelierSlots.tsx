@@ -27,20 +27,26 @@ interface AtelierSlotsProps {
   onRecuperer: (objet: Objet) => void;
 }
 
+/* Répartition équidistante : un tiers de la largeur par slot, chaque
+   carré centré dans son tiers — les carrés sont indépendants (pas
+   d'encadré commun, ils posent sur le fond flouté). */
 const rangee: CSSProperties = {
-  display: "flex",
-  justifyContent: "center",
-  gap: 14,
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr 1fr",
+  placeItems: "center",
 };
 
+// 114 = ancien 76 agrandi de 50 %.
 const carreBase: CSSProperties = {
-  width: 76,
-  height: 76,
+  width: 114,
+  height: 114,
   display: "grid",
   placeItems: "center",
   position: "relative",
   border: "1px dashed var(--brass-500)",
+  borderRadius: "var(--radius-card)",
   background: "var(--paper-200)",
+  boxShadow: "0 10px 22px rgba(0,0,0,0.32)",
   padding: 0,
   cursor: "pointer",
 };
@@ -53,11 +59,11 @@ const carreVerrouille: CSSProperties = {
 
 const prixStyle: CSSProperties = {
   position: "absolute",
-  bottom: 4,
+  bottom: 6,
   left: 0,
   right: 0,
   fontFamily: "var(--font-mono)",
-  fontSize: 9,
+  fontSize: 11,
   letterSpacing: "0.08em",
   color: "var(--forest-800)",
   textAlign: "center",
@@ -69,7 +75,7 @@ const tempsStyle: CSSProperties = {
   left: 0,
   right: 0,
   fontFamily: "var(--font-mono)",
-  fontSize: 9,
+  fontSize: 10.5,
   letterSpacing: "0.06em",
   color: "var(--ink-700)",
   textAlign: "center",
@@ -119,7 +125,7 @@ export function AtelierSlots({
                   : d.inventaire.slotVerrouilleAria
               }
             >
-              <Lock size={22} strokeWidth={1.6} color="var(--ink-500)" />
+              <Lock size={32} strokeWidth={1.6} color="var(--ink-500)" />
               {premierVerrouille && prochaineUpgrade && (
                 <span style={prixStyle}>{prochaineUpgrade.cout} €</span>
               )}
@@ -137,7 +143,7 @@ export function AtelierSlots({
               onClick={onSlotVide}
               aria-label={d.inventaire.slotVideAria}
             >
-              <Plus size={26} strokeWidth={1.6} color="var(--brass-700)" />
+              <Plus size={38} strokeWidth={1.6} color="var(--brass-700)" />
             </button>
           );
         }
