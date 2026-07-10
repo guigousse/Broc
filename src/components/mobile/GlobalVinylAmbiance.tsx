@@ -7,19 +7,19 @@ import { audioManager } from "@/lib/audio/audioManager";
 /**
  * Contrôleur global d'ambiance gramophone basé sur la route.
  *
- * Dans le panorama (bureau / stockage / atelier), la layout panorama
- * pilote l'ambiance à "pleine pièce" et la position de scroll module
- * volume musique zone par zone (cf. handleZoneIndex).
+ * Dans le panorama (bureau), la page bureau pilote l'ambiance à
+ * "pleine pièce" et la position de scroll module volume musique zone
+ * par zone (cf. handleZoneIndex).
  *
- * Hors panorama (chiner, vitrine, gerer, biblio…), on étouffe et on
- * baisse pour donner l'impression d'entendre la musique de loin —
- * sans interrompre la lecture. Détail :
- *  - chiner / vitrine            : franchement lointain (mur extérieur)
- *  - atelier/gerer, stockage/gerer : pièce voisine fermée
- *  - autres                      : niveau "à distance" générique
+ * Hors panorama (chiner, vitrine, stockage, atelier, biblio…), on
+ * étouffe et on baisse pour donner l'impression d'entendre la musique
+ * de loin — sans interrompre la lecture. Détail :
+ *  - chiner / vitrine     : franchement lointain (mur extérieur)
+ *  - atelier, stockage    : pièce voisine fermée
+ *  - autres                : niveau "à distance" générique
  */
 
-const PANORAMA_PATHS = new Set<string>(["/bureau", "/stockage", "/atelier"]);
+const PANORAMA_PATHS = new Set<string>(["/bureau"]);
 
 interface Ambiance {
   volume: number;
@@ -36,10 +36,8 @@ function ambianceForPathname(pathname: string): Ambiance | null {
     // musique du local "porte" encore correctement).
     return { volume: 0.32, lowpassHz: 700 };
   }
-  if (
-    pathname.startsWith("/atelier/gerer") ||
-    pathname.startsWith("/stockage/gerer")
-  ) {
+  if (pathname.startsWith("/atelier") || pathname.startsWith("/stockage")) {
+    // Atelier / stockage : pièces voisines fermées.
     return { volume: 0.28, lowpassHz: 800 };
   }
   // /, /bibliotheque, /collection, autres : à distance générique

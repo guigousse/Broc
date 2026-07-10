@@ -10,7 +10,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
@@ -22,9 +22,6 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import {
   UnifiedPanorama,
   UNIFIED_ZONE_ORDER,
-  zoneIndexToTab,
-  unifiedZoneAnchorSelector,
-  type UnifiedZoneKey,
 } from "@/components/mobile/panorama/UnifiedPanorama";
 import { QgCarnet } from "@/components/mobile/qg/QgCarnet";
 import { QgCarnetNotes } from "@/components/mobile/qg/QgCarnetNotes";
@@ -38,7 +35,6 @@ import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
 import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
-import { QgStockageBoxes } from "@/components/mobile/qg/QgStockageBoxes";
 import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
@@ -49,9 +45,7 @@ import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { GramophoneSheet } from "@/components/mobile/qg/sheets/GramophoneSheet";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
-import { panoramaActiveStore } from "@/lib/panoramaActiveStore";
 import { CATEGORIES } from "@/data/categories";
-import { WorkshopSlots } from "@/components/mobile/atelier-pano/WorkshopSlots";
 import { VITRINE_PREP_ID } from "@/lib/vitrinePrep";
 import { stockageEstPlein } from "@/lib/stockage";
 import { indexJourSemaine } from "@/lib/meteo";
@@ -69,33 +63,12 @@ import {
   volumeVinylForPos,
   fireplaceVolumeForPos,
 } from "@/components/mobile/panorama/audioCurves";
-import { CollectionVitrine } from "@/components/mobile/collection-pano/CollectionVitrine";
 
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
 
-/** Mappe un tab → initialZone du panorama. */
-function tabToInitialZone(
-  tab: "collection" | "bureau" | "stockage" | "atelier",
-): UnifiedZoneKey {
-  if (tab === "collection") return "vitrine"; // centre de la section
-  if (tab === "bureau") return "porte";
-  if (tab === "stockage") return "stockage";
-  return "etabli";
-}
-
-function pathnameToTab(
-  pathname: string,
-): "collection" | "bureau" | "stockage" | "atelier" {
-  if (pathname.startsWith("/collection")) return "collection";
-  if (pathname.startsWith("/stockage")) return "stockage";
-  if (pathname.startsWith("/atelier")) return "atelier";
-  return "bureau";
-}
-
-function PanoramaInner({ children }: { children: React.ReactNode }) {
+function BureauPageInner() {
   const router = useRouter();
-  const pathname = usePathname();
   const { d } = useLangue();
   const {
     state,
@@ -125,10 +98,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     startNeedle,
   } = useSettings();
 
-  const currentTab = pathnameToTab(pathname);
-  // Zone initiale = calculée au PREMIER mount uniquement (cf. UnifiedPanorama).
-  const mountInitialZoneRef = useRef<UnifiedZoneKey>(tabToInitialZone(currentTab));
-
   // Sheets QG.
   const [gazetteOuverte, setGazetteOuverte] = useState(false);
   const [porteOuverte, setPorteOuverte] = useState(false);
@@ -141,13 +110,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
 
-  // Index de zone fractionnaire courant (0..5).
-  const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf(mountInitialZoneRef.current));
+  // Index de zone fractionnaire courant (0..2).
+  const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
   const [zoneActive, setZoneActive] = useState(zoneIdxRef.current);
-
-  // Sync URL ← scroll, robuste (mount guard + debounce).
-  const mountTimeRef = useRef(performance.now());
-  const urlDebounceRef = useRef<number | null>(null);
 
   // Redirection si pas d'état (cohérent avec les anciennes pages).
   useEffect(() => {
@@ -174,65 +139,23 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
     setVinylTargetVolumeRef.current = setVinylTargetVolume;
   }, [setVinylTargetVolume]);
 
-  const handleZoneIndex = useCallback(
-    (idx: number) => {
-      zoneIdxRef.current = idx;
-      const snapIdx = Math.round(idx);
-      setZoneActive((prev) => (prev === snapIdx ? prev : snapIdx));
+  const handleZoneIndex = useCallback((idx: number) => {
+    zoneIdxRef.current = idx;
+    const snapIdx = Math.round(idx);
+    setZoneActive((prev) => (prev === snapIdx ? prev : snapIdx));
 
-      // Highlight TabBar EN TEMPS RÉEL via le store partagé. Pas d'attente
-      // du débounce URL → la TabBar suit le scroll instantanément.
-      panoramaActiveStore.set(zoneIndexToTab(snapIdx));
-
-      // Audio : volume cheminée + vinyle pilotés par la position. Pic à
-      // repos (idx 5) où sont cheminée et gramophone. Fade vers atelier.
-      audioManager.setFireplaceVolume(fireplaceVolumeForPos(idx));
-      if (!gramophoneOuvertRef.current) {
-        setVinylTargetVolumeRef.current(volumeVinylForPos(idx));
-      }
-
-      // Sync URL : debounce 350 ms, mount guard 1200 ms. Le seul intérêt
-      // est de garder l'URL alignée pour le partage / le retour back ;
-      // la TabBar et les hotspots utilisent déjà le store ci-dessus.
-      // En mode édition, on coupe net : la nav remount/reset les states.
-      if (editEnabledRef.current) return;
-      if (performance.now() - mountTimeRef.current < 1200) return;
-      if (urlDebounceRef.current !== null) {
-        window.clearTimeout(urlDebounceRef.current);
-      }
-      urlDebounceRef.current = window.setTimeout(() => {
-        urlDebounceRef.current = null;
-        const targetTab = zoneIndexToTab(Math.round(zoneIdxRef.current));
-        if (targetTab !== currentTab) {
-          const target =
-            targetTab === "collection"
-              ? "/collection"
-              : targetTab === "bureau"
-                ? "/bureau"
-                : targetTab === "stockage"
-                  ? "/stockage"
-                  : "/atelier";
-          router.replace(target, { scroll: false });
-        }
-      }, 350);
-    },
-    [currentTab, router],
-  );
-
-  // Au démontage du layout (sortie de la zone panorama), on reset le store
-  // pour que la TabBar revienne au tracking pathname.
-  useEffect(() => {
-    panoramaActiveStore.set(currentTab);
-    return () => {
-      panoramaActiveStore.set(null);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Audio : volume cheminée + vinyle pilotés par la position. Pic au
+    // repos (idx 2) où sont cheminée et gramophone.
+    audioManager.setFireplaceVolume(fireplaceVolumeForPos(idx));
+    if (!gramophoneOuvertRef.current) {
+      setVinylTargetVolumeRef.current(volumeVinylForPos(idx));
+    }
   }, []);
 
   // À l'entrée dans le panorama (intérieur du bâtiment), on remet
   // l'ambiance gramophone à "pleine pièce" (volume 1, lowpass 20000).
   // Le contrôleur global GlobalVinylAmbiance reprendra la main dès qu'on
-  // sortira sur /chiner, /vitrine, /atelier/gerer, etc.
+  // sortira sur /chiner, /vitrine, /atelier, etc.
   useEffect(() => {
     setVinylAmbianceVolume(1);
     setVinylAmbianceLowpass(20000);
@@ -260,40 +183,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
       document.body.style.touchAction = prevTouchAction;
     };
   }, []);
-
-  // Cleanup débounce URL au démontage.
-  useEffect(() => {
-    return () => {
-      if (urlDebounceRef.current !== null) {
-        window.clearTimeout(urlDebounceRef.current);
-      }
-    };
-  }, []);
-
-  // Quand le pathname change (clic TabBar ou nav externe), on smooth-scroll
-  // vers la zone cible — sauf si on est déjà autour (évite les anti-loops).
-  useEffect(() => {
-    const targetZone = tabToInitialZone(currentTab);
-    const targetIdx = UNIFIED_ZONE_ORDER.indexOf(targetZone);
-    const currentIdx = Math.round(zoneIdxRef.current);
-    const currentZoneTab = zoneIndexToTab(currentIdx);
-    if (currentZoneTab === currentTab) return; // déjà sur la bonne section
-    const el = document.querySelector(
-      '[data-unified-panorama="1"]',
-    ) as HTMLDivElement | null;
-    if (!el) return;
-    const anchor = el.querySelector(
-      unifiedZoneAnchorSelector(targetZone),
-    ) as HTMLElement | null;
-    if (!anchor) return;
-    anchor.scrollIntoView({
-      behavior: "smooth",
-      inline: "center",
-      block: "nearest",
-    });
-    // Force le réindex (au cas où le scroll smooth foire silencieusement).
-    void targetIdx;
-  }, [currentTab]);
 
   // Gramophone — liste des vinyles. UNIQUEMENT ceux possédés (donnés à
   // la collection) : seuil métier explicite, on ne joue pas un vinyle
@@ -472,10 +361,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   const nbCourriersNonLus = state.courriers.filter((c) => !c.lu).length;
 
   // Virtualisation : monte un objet si sa zone est à distance ≤ 1 de la zone
-  // active (index 0..8). bureau/porte/repos = 3/4/5 ; vitrine = 1.
-  const showQgZone = (qgZoneIdx: 3 | 4 | 5) =>
+  // active (index 0..2). bureau/porte/repos = 0/1/2.
+  const showQgZone = (qgZoneIdx: 0 | 1 | 2) =>
     Math.abs(zoneActive - qgZoneIdx) <= 1;
-  const showVitrineZone = Math.abs(zoneActive - 1) <= 1;
 
   return (
     <QgEditProvider enabled={editEnabled}>
@@ -497,22 +385,9 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
             overflow: "hidden",
           }}
         >
-          <UnifiedPanorama
-            initialZone={mountInitialZoneRef.current}
-            onZoneIndex={handleZoneIndex}
-            collectionChildren={
-              showVitrineZone && (
-                <CollectionVitrine
-                  onTap={() => {
-                    playClick();
-                    router.push("/collection/grille");
-                  }}
-                />
-              )
-            }
-          >
-            {/* ─── Section bureau (sections 1/2/3) ─── */}
-            {showQgZone(3) && (
+          <UnifiedPanorama initialZone="porte" onZoneIndex={handleZoneIndex}>
+            {/* ─── Sections du bureau (0/1/2) ─── */}
+            {showQgZone(0) && (
               <>
                 <QgCarnet
                   onTap={() => {
@@ -530,7 +405,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                 />
               </>
             )}
-            {showQgZone(4) && (
+            {showQgZone(1) && (
               <>
                 <QgPorte
                   onTap={() => {
@@ -559,7 +434,7 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                 />
               </>
             )}
-            {showQgZone(5) && (
+            {showQgZone(2) && (
               <>
                 <QgFauteuil
                   chat={state.chatSurFauteuil}
@@ -577,18 +452,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
                 />
               </>
             )}
-
-            {/* L'accès à /atelier/gerer se fait uniquement via les slots
-                de restauration ci-dessous (taper un slot libre, en cours
-                ou prêt → ouverture/action). Pas de hotspot sur l'établi. */}
-            <WorkshopSlots />
-
-            {/* Cartons cliquables sur l'étagère de stockage (coords absolues
-                dans le panorama 600vw — la zone atelier débute à 300vw).
-                Les cartons de la colonne droite (boxJeux/boxMaison) utilisent
-                des assets pré-croppés pour passer "derrière" le montant droit
-                de l'étagère sans avoir besoin d'un masque DOM. */}
-            <QgStockageBoxes />
 
             <QgChatBaladeur
               jourActuel={state.jourActuel}
@@ -633,9 +496,6 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </MobileLayout>
-
-      {/* Page-level children (vide en pratique — toutes les pages sont des marqueurs). */}
-      {children}
 
       {/* Sheets QG. */}
       <PorteSheet
@@ -763,14 +623,10 @@ function PanoramaInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function PanoramaLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function BureauPage() {
   return (
     <Suspense fallback={null}>
-      <PanoramaInner>{children}</PanoramaInner>
+      <BureauPageInner />
     </Suspense>
   );
 }

@@ -401,7 +401,6 @@ export const fr = {
       "Transition d'état : {etat} vers {cible}, catégorie {categorie}",
     // — collection —
     consultationCollection: "— consultation de la collection…",
-    retourCabinet: "Retour au cabinet",
     total: "Total",
     reprisDansStock: "Repris dans le stock",
     donneCollectionValeur: "Donné à la collection — +{valeur} € de valeur",

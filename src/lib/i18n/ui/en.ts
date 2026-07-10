@@ -398,7 +398,6 @@ export const en: DictionnaireUI = {
       "Condition transition: {etat} to {cible}, category {categorie}",
     // — collection —
     consultationCollection: "— browsing the collection…",
-    retourCabinet: "Back to the cabinet",
     total: "Total",
     reprisDansStock: "Taken back into storage",
     donneCollectionValeur: "Donated to the collection — +{valeur} € in value",

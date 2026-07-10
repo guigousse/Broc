@@ -2,16 +2,12 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { Album, Anvil, BookOpen, Home, Warehouse, type LucideIcon } from "lucide-react";
-import { useSyncExternalStore, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
 import { useGameActions, useGameStateOnly } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
-import {
-  panoramaActiveStore,
-  panoramaActiveServerSnapshot,
-} from "@/lib/panoramaActiveStore";
 import { estPret } from "@/lib/restauration";
 import type { GameState } from "@/types/game";
 
@@ -31,13 +27,8 @@ interface TabDef {
 /**
  * Ordre cyclique : Collection → Bibliothèque → Bureau → Stockage → Atelier → (boucle)
  *
- * Le panorama Atelier+Stockage est partagé : à gauche le stockage (porte verte
- * + étagère), au centre/droite l'atelier (établi sous fenêtre vitrail + retour
- * d'établi sur mur droit). On respecte cet ordre visuel dans la TabBar : en
- * sortant du Bureau par la droite on entre dans le Stockage (gauche du
- * panorama), puis on glisse vers l'Atelier (centre/droite du panorama).
- *
- * Le swipe horizontal sur le contenu (cf. SwipePager) suit ce même ordre.
+ * Seul le Bureau est un panorama (3 zones swipables). Les autres onglets
+ * ouvrent directement leur écran de gestion.
  */
 export const TAB_ORDER: TabDef[] = [
   { icon: Album, cle: "collection", path: "/collection" },
@@ -163,16 +154,6 @@ export function TabBar() {
   const { playClick } = useSettings();
   const { d } = useLangue();
 
-  // Override "live" : quand on est dans le panorama unifié, le store
-  // émet l'onglet visé par le scroll EN TEMPS RÉEL. Permet à la TabBar
-  // de surligner la bonne entrée avant même que l'URL ne soit poussée
-  // par le débounce 350 ms.
-  const liveTab = useSyncExternalStore(
-    panoramaActiveStore.subscribe,
-    panoramaActiveStore.get,
-    panoramaActiveServerSnapshot,
-  );
-
   if (!isHydrated) return null;
   if (!isTabBarRoute(pathname)) return null;
 
@@ -182,18 +163,7 @@ export function TabBar() {
   // qui, une fois hydraté, l'aura bien débloqué.
   const visibleTabs = TAB_ORDER.filter((t) => !state || !t.masque?.(state));
 
-  const liveTabPath =
-    liveTab === "collection"
-      ? "/collection"
-      : liveTab === "bureau"
-        ? "/bureau"
-        : liveTab === "stockage"
-          ? "/stockage"
-          : liveTab === "atelier"
-            ? "/atelier"
-            : null;
-  const effectivePath = liveTabPath ?? pathname;
-  const activeIdx = findActiveTabIndex(effectivePath);
+  const activeIdx = findActiveTabIndex(pathname);
   const activeTab = activeIdx >= 0 ? TAB_ORDER[activeIdx] : null;
   const now = tempsConfiance() ?? Date.now();
 

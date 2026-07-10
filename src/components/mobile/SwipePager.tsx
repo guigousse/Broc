@@ -28,30 +28,6 @@ import {
 const X_THRESHOLD = 60; // px
 const Y_RATIO = 0.7;
 
-/**
- * Routes qui partagent le panorama unifié : on leur attribue la même
- * `pageKey` pour que le sous-arbre ne re-monte PAS entre elles. Sans
- * cette mutualisation, le scroll position du panorama serait perdue à
- * chaque traversée de zone (la layout aurait beau être partagée, le
- * <div key={pathname}> de SwipePager forcerait un unmount/remount).
- *
- * `/collection` en fait partie : la collection EST une section du panorama
- * (zones lecture/vitrine/escalier de CollectionVitrine). L'omettre faisait
- * remonter tout le panorama dès qu'un swipe rapide franchissait la frontière
- * collection↔bureau, et le re-mount recentrait brutalement sur le centre de
- * la nouvelle section (porte / vitrine) → saccade.
- */
-const PANORAMA_GROUP = new Set<string>([
-  "/collection",
-  "/bureau",
-  "/stockage",
-  "/atelier",
-]);
-
-function pageKeyForPathname(pathname: string): string {
-  return PANORAMA_GROUP.has(pathname) ? "_panorama" : pathname;
-}
-
 interface PointerStart {
   id: number;
   x: number;
@@ -109,17 +85,7 @@ export function SwipePager({ children }: { children: ReactNode }) {
   const prevPathnameRef = useRef<string | null>(null);
 
   const enabled = isTabBarRoute(pathname);
-  // L'animation d'entrée ne doit JOUER que si la pageKey change. Pour les
-  // transitions internes au groupe panorama (qui partagent "_panorama"),
-  // on garde un direction="none" → pas de class CSS rejouée → pas de flash.
-  const prevKey = prevPathnameRef.current
-    ? pageKeyForPathname(prevPathnameRef.current)
-    : null;
-  const currKey = pageKeyForPathname(pathname);
-  const direction =
-    prevKey === currKey
-      ? "none"
-      : computeDirection(prevPathnameRef.current, pathname);
+  const direction = computeDirection(prevPathnameRef.current, pathname);
 
   useEffect(() => {
     prevPathnameRef.current = pathname;
@@ -146,7 +112,7 @@ export function SwipePager({ children }: { children: ReactNode }) {
     // bouger dans le sens du swipe, on laisse le scroll natif et on
     // n'enclenche pas la navigation. Pour le panorama unifié (data-
     // unified-panorama), les bords correspondent EXACTEMENT aux zones
-    // bureau (gauche) et coinL (droite) → pas de cas spécial.
+    // bureau (gauche) et repos (droite) → pas de cas spécial.
     const target = document.elementFromPoint(s.x, s.y);
     // Si la zone touchée (ou un ancêtre) gère elle-même un geste swipe
     // (ex : ligne stockage avec swipe-to-reveal), on s'efface — sinon
@@ -178,8 +144,6 @@ export function SwipePager({ children }: { children: ReactNode }) {
         ? "broc-page-enter-left"
         : "";
 
-  const pageKey = pageKeyForPathname(pathname);
-
   return (
     <div
       onPointerDown={onPointerDown}
@@ -187,7 +151,7 @@ export function SwipePager({ children }: { children: ReactNode }) {
       onPointerCancel={onPointerCancel}
       style={{ touchAction: "pan-y", minHeight: "100dvh" }}
     >
-      <div key={pageKey} className={animClass}>
+      <div key={pathname} className={animClass}>
         {children}
       </div>
     </div>

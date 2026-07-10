@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { StickyTop } from "@/components/mobile/StickyTop";
@@ -128,25 +127,6 @@ export default function CollectionPage() {
           <PageHeaderBar
             title={d.chrome.onglets.collection}
             align="center"
-            left={
-              <button
-                type="button"
-                aria-label={d.inventaire.retourCabinet}
-                onClick={() => router.push("/collection")}
-                style={{
-                  display: "grid",
-                  placeItems: "center",
-                  width: 32,
-                  height: 32,
-                  border: "1px solid var(--brass-500)",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "var(--forest-800)",
-                }}
-              >
-                <ChevronLeft size={18} strokeWidth={1.6} />
-              </button>
-            }
             right={
               <div
                 style={{

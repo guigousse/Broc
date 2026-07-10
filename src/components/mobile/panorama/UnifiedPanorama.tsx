@@ -1,68 +1,28 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import { QgEditOverlay } from "../qg/dev/QgEditOverlay";
 
 /**
- * Panorama unifié 9 zones : collection (0-2) · bureau (3-5) · atelier (6-8).
- *
- * Un seul conteneur de scroll horizontal continu. Les trois images de fond
- * (collection@0vw, bureau@300vw, atelier@600vw) sont stitchées côte à côte.
- * Les snap anchors couvrent les 9 zones avec scroll-snap natif. L'expérience
- * est fluide : depuis la zone 6 (stockage), swipe vers la gauche → zone 5
- * (repos) sans interruption.
- *
- * Persistance : ce composant DOIT être monté dans une layout partagée
- * couvrant /collection, /bureau, /stockage, /atelier (sinon SwipePager
- * re-key sur pathname change et le scroll se perd).
+ * Panorama du bureau : une seule image de fond (`/qg/fond-cabinet.webp`,
+ * 300vw), 3 zones de snap (bureau · porte · repos) avec scroll horizontal
+ * natif. Le stockage, l'atelier et la collection ne sont plus des sections
+ * du panorama : on y accède directement par la TabBar.
  */
 
-export type UnifiedZoneKey =
-  | "lecture"
-  | "vitrine"
-  | "escalier"
-  | "bureau"
-  | "porte"
-  | "repos"
-  | "stockage"
-  | "etabli"
-  | "coinL";
+export type UnifiedZoneKey = "bureau" | "porte" | "repos";
 
-/**
- * Offsets en vw dans le panorama unifié (largeur totale 900vw).
- * Section Collection (0–300vw) : viewports [0,100] / [100,200] / [200,300]
- * — même convention que le bureau (0/100/200 avant décalage +300vw).
- * Section bureau (+300vw) ; atelier (+600vw).
- */
+/** Offsets en vw des centres de zone (largeur totale 300vw). */
 export const UNIFIED_ZONE_OFFSETS: Record<UnifiedZoneKey, number> = {
-  lecture: 0,
-  vitrine: 100,
-  escalier: 200,
-  bureau: 0 + 300, // 300
-  porte: 100 + 300, // 400
-  repos: 200 + 300, // 500
-  stockage: 18 + 600, // 618
-  etabli: 108 + 600, // 708
-  coinL: 195 + 600, // 795
+  bureau: 0,
+  porte: 100,
+  repos: 200,
 };
 
-export const UNIFIED_ZONE_ORDER: UnifiedZoneKey[] = [
-  "lecture",
-  "vitrine",
-  "escalier",
-  "bureau",
-  "porte",
-  "repos",
-  "stockage",
-  "etabli",
-  "coinL",
-];
+export const UNIFIED_ZONE_ORDER: UnifiedZoneKey[] = ["bureau", "porte", "repos"];
 
-export const UNIFIED_PANORAMA_WIDTH_VW = 900;
-/** Largeur d'une section (vw). Les objets QG/atelier existants sont décalés
- *  de +300vw via un wrapper translateX dans le rendu (cf. Task 4) — leurs
- *  coordonnées baked NE changent PAS. */
-export const COLLECTION_X_SHIFT_VW = 300;
+export const UNIFIED_PANORAMA_WIDTH_VW = 300;
 
 const containerStyle: CSSProperties = {
   position: "relative",
@@ -92,35 +52,22 @@ const snapAnchorStyle: CSSProperties = {
 const sceneStyle: CSSProperties = {
   position: "relative",
   width: `${UNIFIED_PANORAMA_WIDTH_VW}vw`,
-  // Hauteur = aspect d'une image (les 3 ont le même aspect 2752:1536),
-  // proportionnée à la largeur d'UNE moitié (300vw).
-  height: `calc(300vw * 1536 / 2752)`,
+  // Hauteur proportionnée à l'aspect de l'image bureau (2752:1536).
+  height: `calc(${UNIFIED_PANORAMA_WIDTH_VW}vw * 1536 / 2752)`,
   flexShrink: 0,
 };
 
-const bgSectionStyle = (leftVw: number): CSSProperties => ({
+const bgStyle: CSSProperties = {
   position: "absolute",
-  left: `${leftVw}vw`,
+  left: 0,
   top: 0,
-  width: "300vw",
+  width: "100%",
   height: "100%",
   objectFit: "cover",
   objectPosition: "top center",
   pointerEvents: "none",
   userSelect: "none",
   display: "block",
-});
-
-/** Wrapper des objets QG/atelier : décalés de +300vw (section Collection
- *  insérée à gauche) sans toucher à leurs coordonnées baked. */
-const shiftedObjectsLayer: CSSProperties = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "100%",
-  transform: `translateX(${COLLECTION_X_SHIFT_VW}vw)`,
-  pointerEvents: "none",
 };
 
 const objectsLayer: CSSProperties = {
@@ -133,11 +80,9 @@ const objectsLayer: CSSProperties = {
 interface UnifiedPanoramaProps {
   initialZone?: UnifiedZoneKey;
   children?: ReactNode;
-  /** Objets de la section Collection (gauche, offsets 0–300, NON décalés). */
-  collectionChildren?: ReactNode;
   /**
-   * Index de zone fractionnaire (0 = bureau ... 5 = coinL). Émis à
-   * chaque rAF de scroll, après ré-interpolation depuis scrollLeft.
+   * Index de zone fractionnaire (0 = bureau … 2 = repos). Émis à chaque
+   * rAF de scroll, après ré-interpolation depuis scrollLeft.
    */
   onZoneIndex?: (idx: number) => void;
 }
@@ -145,9 +90,9 @@ interface UnifiedPanoramaProps {
 export function UnifiedPanorama({
   initialZone = "porte",
   children,
-  collectionChildren,
   onZoneIndex,
 }: UnifiedPanoramaProps) {
+  const { d } = useLangue();
   const ref = useRef<HTMLDivElement>(null);
   const onZoneIndexRef = useRef(onZoneIndex);
   useEffect(() => {
@@ -185,14 +130,13 @@ export function UnifiedPanorama({
         if (clientWidth <= 0) return;
         // scrollLeft en vw (1vw = 1% de la largeur du viewport ≈ clientWidth).
         const currentVw = (el.scrollLeft / clientWidth) * 100;
-        // Trouve la zone la plus proche (en vw).
         let closestIdx = 0;
         let bestDist = Infinity;
         for (let i = 0; i < UNIFIED_ZONE_ORDER.length; i++) {
           const z = UNIFIED_ZONE_ORDER[i];
-          const d = Math.abs(currentVw - UNIFIED_ZONE_OFFSETS[z]);
-          if (d < bestDist) {
-            bestDist = d;
+          const dz = Math.abs(currentVw - UNIFIED_ZONE_OFFSETS[z]);
+          if (dz < bestDist) {
+            bestDist = dz;
             closestIdx = i;
           }
         }
@@ -210,40 +154,21 @@ export function UnifiedPanorama({
     <div
       ref={ref}
       style={containerStyle}
-      aria-label="Panorama du local (bureau, stockage, atelier)"
+      aria-label={d.qg.panorama}
       data-unified-panorama="1"
     >
       <div style={sceneStyle} data-unified-scene="1">
-        {/* Fonds stitchés : collection (0) · bureau (300) · atelier (600) */}
-        <img
-          src="/collection/fond-collection.webp"
-          alt=""
-          style={bgSectionStyle(0)}
-          draggable={false}
-        />
         <img
           src="/qg/fond-cabinet.webp"
           alt=""
-          style={bgSectionStyle(300)}
-          draggable={false}
-        />
-        <img
-          src="/atelier/fond-atelier.png"
-          alt=""
-          style={bgSectionStyle(600)}
+          style={bgStyle}
           draggable={false}
         />
         {/* Objets interactifs positionnés au-dessus */}
         <div style={objectsLayer}>
-          {/* Section Collection : NON décalée (left absolu 0–300vw). */}
-          {collectionChildren}
-          {/* QG + atelier : décalés de +300vw (wrapper), coords baked inchangées. */}
-          <div style={shiftedObjectsLayer}>
-            {children}
-            {/* L'overlay s'auto-gate via le contexte d'édition (enabled + active).
-                Dans le wrapper → ses cadres restent alignés sur les objets QG/atelier. */}
-            <QgEditOverlay />
-          </div>
+          {children}
+          {/* L'overlay s'auto-gate via le contexte d'édition (enabled + active). */}
+          <QgEditOverlay />
         </div>
       </div>
 
@@ -261,19 +186,4 @@ export function UnifiedPanorama({
       ))}
     </div>
   );
-}
-
-/** Mappe un index de zone (0-8) vers le tab URL associé. */
-export function zoneIndexToTab(
-  idx: number,
-): "collection" | "bureau" | "stockage" | "atelier" {
-  if (idx <= 2) return "collection";
-  if (idx <= 5) return "bureau";
-  if (idx === 6) return "stockage";
-  return "atelier";
-}
-
-/** Sélecteur d'un anchor de zone, pour scrollIntoView programmatique. */
-export function unifiedZoneAnchorSelector(zone: UnifiedZoneKey): string {
-  return `[data-unified-zone="${zone}"]`;
 }
