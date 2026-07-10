@@ -91,7 +91,6 @@ import { audioManager } from "@/lib/audio/audioManager";
 import {
   ENERGIE_MAX,
   ENERGIE_PAR_PUB,
-  energieMaxPourNiveau,
   enregistrerPubEnergie,
   pubsEnergieRestantes,
   secondesAvantPlein,
@@ -309,7 +308,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (now === null) return; // ancre pas encore posée — settle au prochain tick/sync
     setState((prev) => {
       if (!prev) return prev;
-      const s = settleEnergie(prev, now, energieMaxPourNiveau(prev.brocanteur.niveau));
+      const s = settleEnergie(prev, now, ENERGIE_MAX);
       if (
         s.energie === prev.energie &&
         s.energieDerniereMaj === prev.energieDerniereMaj
@@ -332,7 +331,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const now = tempsConfiance() ?? Date.now();
         const base = {
           ...prev,
-          ...settleEnergie(prev, now, energieMaxPourNiveau(prev.brocanteur.niveau)),
+          ...settleEnergie(prev, now, ENERGIE_MAX),
         };
         return { ...base, energie: Math.max(0, base.energie - n) };
       });
@@ -346,7 +345,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const now = tempsConfiance() ?? Date.now();
       // Plafond quotidien : l'UI bloque avant la pub, ceci couvre la course.
       if (pubsEnergieRestantes(prev.pubsEnergie, now) <= 0) return prev;
-      const max = energieMaxPourNiveau(prev.brocanteur.niveau);
+      const max = ENERGIE_MAX;
       const settled = settleEnergie(prev, now, max);
       return {
         ...prev,
@@ -432,7 +431,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return;
     }
     const snap = { energie, energieDerniereMaj };
-    const max = energieMaxPourNiveau(niveauBrocanteur);
+    const max = ENERGIE_MAX;
     let annule = false;
     (async () => {
       if (energie >= max) {

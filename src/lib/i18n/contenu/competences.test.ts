@@ -112,9 +112,11 @@ describe.each([
 });
 
 test("résolution + fallback déblocages", () => {
-  const dep = DEBLOCAGES_PAR_NIVEAU.find((d) => d.titre === "Quêtes quotidiennes")!;
+  const dep = DEBLOCAGES_PAR_NIVEAU.find(
+    (d) => d.titre === "Quêtes quotidiennes et hebdomadaires",
+  )!;
   expect(titreDeblocage(dep, "fr")).toBe(dep.titre);
-  expect(titreDeblocage(dep, "en")).toBe("Daily quests");
+  expect(titreDeblocage(dep, "en")).toBe("Daily and weekly quests");
   expect(titreDeblocage(dep, "es")).toBe(DEBLOCAGES_ES[dep.titre]);
   expect(titreDeblocage({ titre: "Inconnu" }, "es")).toBe("Inconnu");
 });

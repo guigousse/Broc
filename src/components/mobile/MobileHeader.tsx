@@ -6,7 +6,7 @@ import { Zap, Plus } from "lucide-react";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
-import { ENERGIE_MAX, energieCourante, energieMaxPourNiveau } from "@/lib/energie";
+import { ENERGIE_MAX, energieCourante } from "@/lib/energie";
 import { progressionNiveauBrocanteur } from "@/lib/xp";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -91,7 +91,7 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   const pathname = usePathname();
   const { d, tr, locale } = useLangue();
 
-  const energieMax = state ? energieMaxPourNiveau(state.brocanteur.niveau) : ENERGIE_MAX;
+  const energieMax = ENERGIE_MAX;
   const energie = state
     ? energieCourante(state, tempsConfiance() ?? Date.now(), energieMax)
     : ENERGIE_MAX;

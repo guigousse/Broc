@@ -7,7 +7,6 @@ import {
   pubsEnergieRestantes,
   settleEnergie,
   energieCourante,
-  energieMaxPourNiveau,
   secondesAvantProchaine,
   secondesAvantPlein,
   type EnergieState,
@@ -94,16 +93,6 @@ describe("secondesAvantPlein", () => {
     const r = secondesAvantPlein(etat({ energie: 3 }), T0 + 10 * 60 * 1000);
     // 20 min pour le prochain +1, puis 1 palier de 30 min → 50 min.
     expect(r).toBe(20 * 60 + 30 * 60);
-  });
-});
-
-describe("energieMaxPourNiveau", () => {
-  it("5 avant N8, 6 de N8 à N13, 7 dès N14", () => {
-    expect(energieMaxPourNiveau(0)).toBe(5);
-    expect(energieMaxPourNiveau(7)).toBe(5);
-    expect(energieMaxPourNiveau(8)).toBe(6);
-    expect(energieMaxPourNiveau(13)).toBe(6);
-    expect(energieMaxPourNiveau(14)).toBe(7);
   });
 });
 

@@ -1,21 +1,11 @@
 import type { GameState } from "@/types/game";
 
+/** Énergie maximale — FIXE (décision 2026-07-10 : plus de bonus de niveau). */
 export const ENERGIE_MAX = 5;
 export const RECHARGE_INTERVAL_MS = 30 * 60 * 1000; // 30 min
 export const ENERGIE_PAR_PUB = 1;
 
 /** Jalons du Niveau de Brocanteur qui étendent l'énergie max (D3). */
-export const NIVEAU_ENERGIE_BONUS_1 = 8;
-export const NIVEAU_ENERGIE_BONUS_2 = 14;
-
-/** Énergie max effective selon le Niveau de Brocanteur : 5 / 6 (N8) / 7 (N14). */
-export function energieMaxPourNiveau(niveau: number): number {
-  return (
-    ENERGIE_MAX +
-    (niveau >= NIVEAU_ENERGIE_BONUS_1 ? 1 : 0) +
-    (niveau >= NIVEAU_ENERGIE_BONUS_2 ? 1 : 0)
-  );
-}
 
 /** Sous-ensemble de GameState manipulé par ce module (facilite tests + appels). */
 export type EnergieState = Pick<

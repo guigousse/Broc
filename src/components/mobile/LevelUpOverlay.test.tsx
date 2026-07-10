@@ -48,7 +48,7 @@ describe("LevelUpOverlay", () => {
     expect(screen.getByText(/Ouverture de l'écran Compétences/)).toBeTruthy();
     // prochainDeblocage(1) = niveau 2, "L'Atelier vous tend les bras"
     expect(
-      screen.getByText(/Prochain — Niv\. 2 : L'Atelier vous tend les bras/),
+      screen.getByText(/Prochain — Niv\. 3 : Quêtes quotidiennes et hebdomadaires/),
     ).toBeTruthy();
   });
 

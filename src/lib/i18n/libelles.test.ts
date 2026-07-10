@@ -71,22 +71,22 @@ describe("libelleActive", () => {
   });
 
   it("cohérence avec les titres de déblocage EN : le nom EN de l'active y apparaît", () => {
-    expect(DEBLOCAGES_EN["Active 🔍 Le Flair"]).toContain(
+    expect(DEBLOCAGES_EN["Atout 🔍 Le Flair"]).toContain(
       libelleActive("flair", DICTIONNAIRES.en),
     );
-    expect(DEBLOCAGES_EN["Active 🧺 Le Lot garni"]).toContain(
+    expect(DEBLOCAGES_EN["Atout 🧺 Le Lot garni"]).toContain(
       libelleActive("lotGarni", DICTIONNAIRES.en),
     );
-    expect(DEBLOCAGES_EN["Active 🧹 La Fouille"]).toContain(
+    expect(DEBLOCAGES_EN["Atout 🧹 La Fouille"]).toContain(
       libelleActive("fouille", DICTIONNAIRES.en),
     );
-    expect(DEBLOCAGES_EN["Active 🎩 Le Boniment"]).toContain(
+    expect(DEBLOCAGES_EN["Atout 🎩 Le Boniment"]).toContain(
       libelleActive("boniment", DICTIONNAIRES.en),
     );
-    expect(DEBLOCAGES_EN["Active 💬 La Tchatche"]).toContain(
+    expect(DEBLOCAGES_EN["Atout 💬 La Tchatche"]).toContain(
       libelleActive("tchatche", DICTIONNAIRES.en),
     );
-    expect(DEBLOCAGES_EN["Active 📣 La Criée"]).toContain(
+    expect(DEBLOCAGES_EN["Atout 📣 La Criée"]).toContain(
       libelleActive("criee", DICTIONNAIRES.en),
     );
   });

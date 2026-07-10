@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import {
+  ENERGIE_MAX,
   energieCourante,
-  energieMaxPourNiveau,
   pubsEnergieRestantes,
   secondesAvantProchaine,
 } from "@/lib/energie";
@@ -57,7 +57,7 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
 
   if (!state) return null;
   const now = tempsConfiance() ?? Date.now();
-  const energieMax = energieMaxPourNiveau(state.brocanteur.niveau);
+  const energieMax = ENERGIE_MAX;
   const energie = energieCourante(state, now, energieMax);
   const restantSec = secondesAvantProchaine(state, now, energieMax);
   const pubsRestantes = pubsEnergieRestantes(state.pubsEnergie, now);

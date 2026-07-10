@@ -30,7 +30,7 @@ import { genererTendances } from "@/lib/tendances";
 import { ALL_TEMPLATES } from "@/data/objetTemplates";
 import { OLD_TO_NEW_TEMPLATE_ID } from "@/data/templateIdRenames";
 import { reconstruireGrandLivre } from "./grandLivre";
-import { energieMaxPourNiveau } from "@/lib/energie";
+import { ENERGIE_MAX } from "@/lib/energie";
 import { QUOTA_ACTIVES, type ActiveId, type ActivesUtilisees } from "@/lib/actives";
 import {
   appliquerGainXPBrocanteur,
@@ -603,11 +603,9 @@ function appliquerMigrations(loaded: GameState): GameState {
       hebdo: { cle: "", courrierIds: [] },
     },
     energie: (() => {
-      // `brocanteurConverti.niveau` (calculé plus haut, avant l'amorce des
-      // quêtes principales) est le niveau migré définitif : on peut donc
-      // clamper sur le max réel plutôt que sur la borne de base — on ne veut
-      // jamais tronquer l'énergie d'un joueur qui a débloqué N8/N14.
-      const max = energieMaxPourNiveau(brocanteurConverti.niveau);
+      // Énergie max FIXE à 5 depuis 2026-07-10 : les sauvegardes qui
+      // avaient 6-7 (ex-bonus N8/N14) sont plafonnées au chargement.
+      const max = ENERGIE_MAX;
       const v = (loaded as Partial<GameState>).energie;
       if (typeof v === "number" && Number.isFinite(v)) {
         return Math.max(0, Math.min(max, Math.floor(v)));

@@ -21,8 +21,8 @@ describe("ParcoursSheet", () => {
   it("ouvert au niveau 8 : N8 et en-dessous atteints, N9 mis en avant", () => {
     render(<ParcoursSheet open onClose={vi.fn()} niveau={8} />);
 
-    const rowN8 = screen.getByTestId("parcours-row-8");
-    expect(rowN8.getAttribute("data-etat")).toBe("atteint");
+    const rowN7 = screen.getByTestId("parcours-row-7");
+    expect(rowN7.getAttribute("data-etat")).toBe("atteint");
 
     const rowN9 = screen.getByTestId("parcours-row-9");
     expect(rowN9.getAttribute("data-etat")).toBe("prochain");
@@ -39,8 +39,6 @@ describe("ParcoursSheet", () => {
     );
     expect(prochains).toHaveLength(1);
 
-    // La récompense énergie (N8) est bien visible dans la liste.
-    expect(screen.getByText(/Énergie max \+1 \(= 6\)/)).toBeTruthy();
   });
 
   it("affiche le niveau courant et la note sur les points de compétence", () => {

@@ -6,8 +6,15 @@ import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 const now = Date.UTC(2026, 5, 25, 12, 0, 0);
 
 describe("settleQuetesPeriodiques", () => {
+  it("verrou : niveau < 3 → aucun lot, état inchangé (référence)", () => {
+    const state = createMockGameState();
+    state.brocanteur.niveau = 2;
+    expect(settleQuetesPeriodiques(state, now)).toBe(state);
+  });
+
   it("génère les lots quand les clés sont vides (nouvelle partie)", () => {
     const state = createMockGameState();
+    state.brocanteur.niveau = 3;
     const out = settleQuetesPeriodiques(state, now);
     expect(out.quetesPeriodiques.quotidien.cle).toBe(cleJourLocal(now));
     expect(out.quetesPeriodiques.hebdo.cle).toBe(cleSemaineLocale(now));
@@ -20,13 +27,17 @@ describe("settleQuetesPeriodiques", () => {
   });
 
   it("est idempotent si les clés n'ont pas changé", () => {
-    const state = settleQuetesPeriodiques(createMockGameState(), now);
+    const base = createMockGameState();
+    base.brocanteur.niveau = 3;
+    const state = settleQuetesPeriodiques(base, now);
     const again = settleQuetesPeriodiques(state, now);
     expect(again).toBe(state); // référence inchangée
   });
 
   it("régénère le lot quotidien quand le jour change (et supprime l'ancien)", () => {
-    const j1 = settleQuetesPeriodiques(createMockGameState(), now);
+    const baseJ = createMockGameState();
+    baseJ.brocanteur.niveau = 3;
+    const j1 = settleQuetesPeriodiques(baseJ, now);
     const anciensIds = j1.quetesPeriodiques.quotidien.courrierIds;
     const j2 = settleQuetesPeriodiques(j1, now + 24 * 60 * 60 * 1000);
     expect(j2.quetesPeriodiques.quotidien.cle).not.toBe(j1.quetesPeriodiques.quotidien.cle);

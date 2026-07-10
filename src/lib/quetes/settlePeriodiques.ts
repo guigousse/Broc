@@ -2,6 +2,14 @@ import type { GameState, LotPeriodique } from "@/types/game";
 import { cleJourLocal, cleSemaineLocale } from "./periode";
 import { genererLot, type TypePeriodique } from "./periodiques";
 
+/**
+ * Niveau de Brocanteur requis pour les quêtes quotidiennes ET hebdomadaires
+ * (déblocage simultané — cf. parcours). Avant : aucun verrou, les lots se
+ * généraient dès que le pool d'objets atteignables était non vide (bug :
+ * un don à la collection suffisait à les faire apparaître).
+ */
+export const NIVEAU_QUETES_PERIODIQUES = 3;
+
 /** Régénère un lot si sa clé a changé. Retourne le nouvel état partiel, ou null si inchangé. */
 function settleUnLot(
   state: GameState,
@@ -31,6 +39,9 @@ function settleUnLot(
  * `now` = temps de confiance (epoch ms). Idempotent si rien n'a changé (même référence).
  */
 export function settleQuetesPeriodiques(state: GameState, now: number): GameState {
+  // Verrou de niveau : pas de commandes périodiques avant le N3.
+  if (state.brocanteur.niveau < NIVEAU_QUETES_PERIODIQUES) return state;
+
   let courriers = state.courriers;
   let missions = state.missions;
   let quotidien = state.quetesPeriodiques.quotidien;

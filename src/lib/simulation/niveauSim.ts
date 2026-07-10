@@ -77,7 +77,7 @@ import {
   XP_RESTAURATION_ETAPE,
   XP_VENTE_BROCANTEUR,
 } from "@/lib/xp";
-import { ENERGIE_MAX, energieMaxPourNiveau, RECHARGE_INTERVAL_MS } from "@/lib/energie";
+import { ENERGIE_MAX, RECHARGE_INTERVAL_MS } from "@/lib/energie";
 import { calculerBrocantesDebloqueesParTier, evaluerCondition } from "@/lib/deblocage";
 import { NIVEAU_ACTIVES, QUOTA_ACTIVES, type ActiveId } from "@/lib/actives";
 import { ouvrirNegociation, proposerOffre } from "@/lib/negociation";
@@ -99,7 +99,7 @@ export function mulberry32(seed: number): () => number {
 
 /** Petite aide : durée (heures) pour un plein régénéré depuis 0, à un niveau donné. */
 export function heuresPourPlein(niveau: number): number {
-  return (energieMaxPourNiveau(niveau) * RECHARGE_INTERVAL_MS) / 3_600_000;
+  return (ENERGIE_MAX * RECHARGE_INTERVAL_MS) / 3_600_000;
 }
 
 /* === Profils de joueurs ================================================= */
@@ -539,7 +539,7 @@ export function runSimulation(
     const debloqueesDebutJour = debloqueesAvant;
 
     const brocante = brocanteCourante(debloqueesDebutJour);
-    const energyMax = energieMaxPourNiveau(sim.brocanteur.niveau);
+    const energyMax = ENERGIE_MAX;
     const pubs = Math.min(profile.pubsPerDay, 5);
     const sessionsDispo = Math.max(
       1,

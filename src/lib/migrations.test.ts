@@ -762,11 +762,10 @@ describe("niveauVu (célébration de level-up)", () => {
   });
 });
 
-describe("migration — clamp énergie dynamique (niveau Brocanteur)", () => {
-  it("clamp énergie : une save N14 avec 7 d'énergie ne perd rien, 9 est ramené à 7", () => {
-    const m1 = migrerSauvegarde(fabriqueSaveV7());
-    const n14 = { ...m1, brocanteur: { xp: xpRequisPourNiveauBrocanteur(14), niveau: 14, pointsDisponibles: 0 }, niveauVu: 14, energie: 7 };
-    expect(migrerSauvegarde(n14).energie).toBe(7);
-    expect(migrerSauvegarde({ ...n14, energie: 9 }).energie).toBe(7);
+describe("migration — clamp énergie (max fixe à 5)", () => {
+  it("une save ex-N14 avec 7 d'énergie est ramenée à 5", () => {
+    const state = createMockGameState({ energie: 7 });
+    state.brocanteur.niveau = 14;
+    expect(migrerSauvegarde(state).energie).toBe(5);
   });
 });
