@@ -26,11 +26,11 @@ function paliersThematiques(cat: CategorieObjet): OverlayCompetences["paliers"] 
   return {
     [`cat.${cat}.reparer.1`]: {
       nom: `Apprentice — ${c}`,
-      description: `You restore ${c} pieces in poor condition (Poor → Good, a few hours).`,
+      description: `You restore ${c} pieces in poor condition (Poor → Good, 1 hour).`,
     },
     [`cat.${cat}.reparer.2`]: {
       nom: `Craftsman — ${c}`,
-      description: `You perfect already-decent pieces (Good → Very good, a few hours).`,
+      description: `You perfect already-decent pieces (Good → Very good, 2 hours).`,
     },
     [`cat.${cat}.reparer.3`]: {
       nom: `Master — ${c}`,
@@ -123,7 +123,8 @@ export const COMPETENCES_EN: OverlayCompetences = {
     },
     "general.charisme.1": {
       nom: "Neat display",
-      description: "Passersby visit 25% more often (interval ×0.75).",
+      description:
+        "The interval between two passersby is cut by 25% (×0.75) — about a third more customers over the day.",
     },
     "general.charisme.2": {
       nom: "Good name",
@@ -154,7 +155,7 @@ export const COMPETENCES_EN: OverlayCompetences = {
     "general.vision.2": {
       nom: "Society column",
       description:
-        "The celebrity announced this issue and the flea market hosting them are revealed to you (big boost to rares & legendaries while picking).",
+        "The celebrity announced this issue and the flea market hosting them are revealed to you: that day, your odds of finding rares or legendaries while picking are doubled, and the picking pile grows by 50%.",
     },
     "general.vision.3": {
       nom: "Influence",

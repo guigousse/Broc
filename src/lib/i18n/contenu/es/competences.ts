@@ -26,11 +26,11 @@ function paliersThematiques(cat: CategorieObjet): OverlayCompetences["paliers"] 
   return {
     [`cat.${cat}.reparer.1`]: {
       nom: `Aprendiz — ${c}`,
-      description: `Restauras las piezas « ${c} » en mal estado (Malo → Bueno, unas horas).`,
+      description: `Restauras las piezas « ${c} » en mal estado (Malo → Bueno, 1 hora).`,
     },
     [`cat.${cat}.reparer.2`]: {
       nom: `Artesano — ${c}`,
-      description: `Rematas las piezas ya decentes (Bueno → Muy bueno, unas horas).`,
+      description: `Rematas las piezas ya decentes (Bueno → Muy bueno, 2 horas).`,
     },
     [`cat.${cat}.reparer.3`]: {
       nom: `Maestro — ${c}`,
@@ -125,7 +125,8 @@ export const COMPETENCES_ES: OverlayCompetences = {
     },
     "general.charisme.1": {
       nom: "Puesto cuidado",
-      description: "Los transeúntes visitan un 25 % más a menudo (intervalo ×0,75).",
+      description:
+        "El intervalo entre dos transeúntes se reduce un 25 % (×0,75): alrededor de un tercio más de clientes en el día.",
     },
     "general.charisme.2": {
       nom: "Buena fama",
@@ -158,7 +159,7 @@ export const COMPETENCES_ES: OverlayCompetences = {
     "general.vision.2": {
       nom: "Ecos de sociedad",
       description:
-        "Se te revela el nombre de la celebridad anunciada esta edición y el mercadillo que la acoge (gran impulso a raros y legendarios al rebuscar).",
+        "Se te revela el nombre de la celebridad anunciada esta edición y el mercadillo que la acoge: ese día, tus probabilidades de encontrar objetos raros o legendarios al rebuscar se duplican y el montón de rebusca crece un 50 %.",
     },
     "general.vision.3": {
       nom: "Influencia",

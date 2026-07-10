@@ -84,7 +84,8 @@ const TREE_GENERAL_DEF: CompetenceTreeDef = {
       paliers: definirPaliers([
         {
           nom: "Présentation soignée",
-          description: "Les passants visitent 25 % plus souvent (intervalle ×0,75).",
+          description:
+            "L'intervalle entre deux passants est réduit de 25 % (×0,75), soit environ un tiers de clients en plus sur la journée.",
         },
         {
           nom: "Bonne réputation",
@@ -131,7 +132,7 @@ const TREE_GENERAL_DEF: CompetenceTreeDef = {
         {
           nom: "Carnet mondain",
           description:
-            "Le nom de la célébrité annoncée cette édition et la brocante qui l'accueille vous sont révélés (grand boost rares & légendaires en chinage).",
+            "Le nom de la célébrité annoncée cette édition et la brocante qui l'accueille vous sont révélés : ce jour-là, vos chances de dénicher du rare ou légendaire sont doublées et le tas de chine grossit de 50 %.",
         },
         {
           nom: "Influence",
@@ -151,11 +152,11 @@ function brancheReparer(cat: CategorieObjet): PalierDef[] {
   return definirPaliers([
     {
       nom: `Apprenti — ${cat}`,
-      description: `Vous restaurez les pièces « ${cat} » en mauvais état (Mauvais → Bon, quelques heures).`,
+      description: `Vous restaurez les pièces « ${cat} » en mauvais état (Mauvais → Bon, 1 heure).`,
     },
     {
       nom: `Artisan — ${cat}`,
-      description: `Vous parachevez les pièces déjà décentes (Bon → Très bon, quelques heures).`,
+      description: `Vous parachevez les pièces déjà décentes (Bon → Très bon, 2 heures).`,
     },
     {
       nom: `Maître — ${cat}`,
