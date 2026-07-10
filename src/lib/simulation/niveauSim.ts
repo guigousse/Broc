@@ -76,6 +76,7 @@ import {
   XP_QUETE_QUOTIDIENNE,
   XP_RESTAURATION_ETAPE,
   XP_VENTE_BROCANTEUR,
+  multiplicateurXPRarete,
 } from "@/lib/xp";
 import { ENERGIE_MAX, RECHARGE_INTERVAL_MS } from "@/lib/energie";
 import { calculerBrocantesDebloqueesParTier, evaluerCondition } from "@/lib/deblocage";
@@ -388,8 +389,9 @@ function joueJourChine(
     const res = tenterAchat(item, sim.budget);
     if (!res.achete) continue;
     sim.budget -= res.prixPaye;
-    xp.achat += XP_ACHAT_BROCANTEUR;
-    gainXP += XP_ACHAT_BROCANTEUR;
+    const multAchat = multiplicateurXPRarete(item.objet.rarete, false);
+    xp.achat += XP_ACHAT_BROCANTEUR * multAchat;
+    gainXP += XP_ACHAT_BROCANTEUR * multAchat;
     if (res.negoReussie) {
       xp.negoAchat += XP_NEGO_BROCANTEUR;
       gainXP += XP_NEGO_BROCANTEUR;
@@ -462,8 +464,10 @@ function joueJourVente(
     if (!res.vendu || !ev) continue;
     for (const it of ev.panier) vendusIds.add(it.objet.id);
     sim.budget += res.prixObtenu;
-    xp.vente += XP_VENTE_BROCANTEUR;
-    gainXP += XP_VENTE_BROCANTEUR;
+    // Approximation : le panier simulé porte 1 objet représentatif.
+    const multVente = multiplicateurXPRarete(ev.panier[0]?.objet.rarete ?? "commun", false);
+    xp.vente += XP_VENTE_BROCANTEUR * multVente;
+    gainXP += XP_VENTE_BROCANTEUR * multVente;
     if (res.achatDirect) {
       xp.justePrix += XP_JUSTE_PRIX;
       gainXP += XP_JUSTE_PRIX;

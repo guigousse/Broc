@@ -47,6 +47,7 @@ import {
   XP_QUETE_PRINCIPALE,
   XP_QUETE_QUOTIDIENNE,
   XP_RESTAURATION_ETAPE,
+  multiplicateurXPRarete,
 } from "@/lib/xp";
 import {
   aGenInfluence,
@@ -1233,7 +1234,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ...next,
           brocanteur: appliquerGainXPBrocanteur(
             next.brocanteur,
-            XP_RESTAURATION_ETAPE,
+            XP_RESTAURATION_ETAPE *
+              multiplicateurXPRarete(
+                objet.rarete,
+                !!getTemplate(objet.templateId)?.unique,
+              ),
           ),
         };
       });
@@ -1265,7 +1270,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ...next,
           brocanteur: appliquerGainXPBrocanteur(
             next.brocanteur,
-            XP_RESTAURATION_ETAPE,
+            XP_RESTAURATION_ETAPE *
+              multiplicateurXPRarete(
+                objet.rarete,
+                !!getTemplate(objet.templateId)?.unique,
+              ),
           ),
         };
       });

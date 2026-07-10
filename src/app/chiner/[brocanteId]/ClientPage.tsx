@@ -35,6 +35,7 @@ import { indexJourSemaine } from "@/lib/meteo";
 import { useXpFloats, XpFloatsVue } from "@/components/mobile/XpFloats";
 import {
   XP_ACHAT_BROCANTEUR,
+  multiplicateurXPRarete,
   XP_DECOUVERTE_COLLECTION,
   XP_NEGO_BROCANTEUR,
 } from "@/lib/xp";
@@ -246,7 +247,13 @@ export default function SessionChinePage() {
       setXpBrocanteurSession((prev) => prev + XP_DECOUVERTE_COLLECTION);
       pousserXp(XP_DECOUVERTE_COLLECTION);
     }
-    gagnerXPLocal(XP_ACHAT_BROCANTEUR);
+    gagnerXPLocal(
+      XP_ACHAT_BROCANTEUR *
+        multiplicateurXPRarete(
+          it.objet.rarete,
+          !!getTemplate(it.objet.templateId)?.unique,
+        ),
+    );
     setItem(it.id, { statut: "achete" });
     setAchats((prev) => [
       ...prev,

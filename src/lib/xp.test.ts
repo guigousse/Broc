@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  multiplicateurXPRarete,
   appliquerGainXPBrocanteur,
   detailProgressionBrocanteur,
   emptyBrocanteur,
@@ -117,5 +118,15 @@ describe("detailProgressionBrocanteur", () => {
 describe("états initiaux Brocanteur", () => {
   it("emptyBrocanteur : tout à zéro", () => {
     expect(emptyBrocanteur()).toEqual({ xp: 0, niveau: 0, pointsDisponibles: 0 });
+  });
+});
+
+describe("multiplicateurXPRarete", () => {
+  it("commun ×1, rare ×2, légendaire ×5, unique ×5", () => {
+    expect(multiplicateurXPRarete("commun")).toBe(1);
+    expect(multiplicateurXPRarete("rare")).toBe(2);
+    expect(multiplicateurXPRarete("legendaire")).toBe(5);
+    expect(multiplicateurXPRarete("commun", true)).toBe(5);
+    expect(multiplicateurXPRarete("rare", true)).toBe(5);
   });
 });

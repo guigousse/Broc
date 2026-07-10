@@ -1,4 +1,4 @@
-import type { BrocanteurState } from "@/types/game";
+import type { BrocanteurState, Rarete } from "@/types/game";
 
 export type { BrocanteurState };
 
@@ -12,9 +12,11 @@ export type { BrocanteurState };
  * ≈ 21 XP/j régulier · 14 casual · 36 hardcore) : N30 (dernier atout)
  * ≈ 6-8 h de jeu, puis la QUEUE quadratique (+C·(N−30)² par niveau après
  * le coude N30) fait grimper la facture jusqu'à ~689 XP pour N99→100
- * (≈ 2 journées d'énergie pleines). N100 ≈ 307 h de jeu hardcore
- * (~1,4 an calendaire) / 415 h régulier — objectif de prestige, validé
- * le 2026-07-10. Sonde : calibration.probe.test.ts (describe.skip).
+ * (≈ 2 journées d'énergie pleines). Avec le multiplicateur de rareté
+ * (rare ×2, légendaire/unique ×5 sur achat/vente/restauration), la sonde
+ * mesure N100 ≈ 272 h de jeu hardcore (~1,3 an calendaire) / 399 h
+ * régulier — objectif de prestige, validé le 2026-07-10.
+ * Sonde : calibration.probe.test.ts (describe.skip).
  */
 export const XP_BROCANTEUR_PALIER_1 = 100;
 export const XP_BROCANTEUR_PENTE = 1;
@@ -88,6 +90,17 @@ export function detailProgressionBrocanteur(b: BrocanteurState): {
   const dansNiveau = Math.max(0, b.xp - seuilCourant);
   const manquant = Math.max(0, requisNiveau - dansNiveau);
   return { dansNiveau, requisNiveau, manquant };
+}
+
+/**
+ * Multiplicateur d'XP selon la rareté de l'objet manipulé (achat, vente,
+ * restauration) : commun ×1, rare ×2, légendaire ×5 — un unique vaut
+ * toujours ×5 quelle que soit sa rareté nominale. Décision 2026-07-10.
+ */
+export function multiplicateurXPRarete(rarete: Rarete, unique = false): number {
+  if (unique || rarete === "legendaire") return 5;
+  if (rarete === "rare") return 2;
+  return 1;
 }
 
 /* === Gains d'XP Brocanteur par action (rapport §07) ==================== */

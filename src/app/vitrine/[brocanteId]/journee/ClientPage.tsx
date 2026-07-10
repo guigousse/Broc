@@ -38,10 +38,12 @@ import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
 import { getBrocanteById, fraisEntree } from "@/data/brocantes";
 import { useXpFloats, XpFloatsVue } from "@/components/mobile/XpFloats";
+import { getTemplate } from "@/data/objetTemplates";
 import {
   XP_JUSTE_PRIX,
   XP_NEGO_BROCANTEUR,
   XP_VENTE_BROCANTEUR,
+  multiplicateurXPRarete,
 } from "@/lib/xp";
 import {
   aGenBonneReputation,
@@ -587,9 +589,15 @@ export default function VitrineJourneePage() {
       prixAchat: p.objet.prixAchat ?? null,
     }));
     setVentesEffectuees((prev) => [...prev, ...nouvelles]);
-    // XP par objet vendu, par catégorie
-    for (let i = 0; i < ev.panier.length; i++) {
-      gagnerXPLocal(XP_VENTE_BROCANTEUR);
+    // XP par objet vendu, pondérée par la rareté (unique = ×5).
+    for (const p of ev.panier) {
+      gagnerXPLocal(
+        XP_VENTE_BROCANTEUR *
+          multiplicateurXPRarete(
+            p.objet.rarete,
+            !!getTemplate(p.objet.templateId)?.unique,
+          ),
+      );
     }
   };
 
