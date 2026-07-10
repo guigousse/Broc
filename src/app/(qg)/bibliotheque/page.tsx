@@ -570,7 +570,7 @@ function PalierOverlay({
       {/* Titre encadré, centré et aligné sur la largeur de l'image. */}
       <div
         style={{
-          width: "min(220px, 60vw)",
+          width: "min(330px, 85vw)",
           margin: "0 auto",
           padding: "8px 10px",
           border: "1px solid var(--brass-500)",
@@ -590,7 +590,7 @@ function PalierOverlay({
       <div
         style={{
           position: "relative",
-          width: "min(220px, 60vw)",
+          width: "min(330px, 85vw)",
           margin: "0 auto",
           aspectRatio: "1/1",
           background: "var(--paper-300)",
@@ -622,10 +622,30 @@ function PalierOverlay({
         />
       </div>
 
+          {/* Description encadrée, sous l'image. */}
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontStyle: "italic",
+              fontSize: 16.5,
+              color: "var(--ink-700)",
+              margin: 0,
+              lineHeight: 1.4,
+              padding: "10px 12px",
+              border: "1px solid var(--brass-500)",
+              background: "var(--paper-100)",
+              width: "min(330px, 85vw)",
+              boxSizing: "border-box",
+            }}
+          >
+            {descriptionCompetence(comp, locale)}
+          </p>
         </div>
       </div>
 
-      {/* Panneau bas : monte de l'écran (même langage que les tiroirs). */}
+      {/* Panneau bas : monte de l'écran (même langage que les tiroirs).
+          Rien à afficher pour une verrouillée → pas de panneau. */}
+      {!isVerrouillee && (
       <div
         style={{
           background: "var(--paper-200)",
@@ -639,22 +659,6 @@ function PalierOverlay({
           animation: "broc-slide-up 200ms ease",
         }}
       >
-      <p
-        style={{
-          fontFamily: "var(--font-serif)",
-          fontStyle: "italic",
-          fontSize: 14,
-          color: "var(--ink-700)",
-          margin: 0,
-          lineHeight: 1.4,
-          padding: "10px 12px",
-          border: "1px solid var(--brass-500)",
-          background: "var(--paper-100)",
-        }}
-      >
-        {descriptionCompetence(comp, locale)}
-      </p>
-
       {isDebloquee ? (
         <div
           style={{
@@ -694,6 +698,7 @@ function PalierOverlay({
         </button>
       )}
       </div>
+      )}
     </div>
   );
 }
