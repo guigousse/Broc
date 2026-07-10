@@ -4,15 +4,13 @@ import type { CSSProperties } from "react";
 import type { CategorieObjet, Objet } from "@/types/game";
 import { StockageItemRow } from "@/components/mobile/StockageItemRow";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import type { AtelierStatus, CollectionStatus } from "@/lib/atelier";
+import type { CollectionStatus } from "@/lib/atelier";
 
 interface InventoryGridProps {
   objets: Objet[];
   categoriesConnues: ReadonlySet<CategorieObjet>;
   onTapObjet: (objet: Objet) => void;
-  onEnvoyerAtelier: (objet: Objet) => void;
   onEnvoyerCollection: (objet: Objet) => void;
-  atelierStatus: (objet: Objet) => AtelierStatus;
   collectionStatus: (objet: Objet) => CollectionStatus;
 }
 
@@ -30,9 +28,7 @@ export function InventoryGrid({
   objets,
   categoriesConnues,
   onTapObjet,
-  onEnvoyerAtelier,
   onEnvoyerCollection,
-  atelierStatus,
   collectionStatus,
 }: InventoryGridProps) {
   const { d } = useLangue();
@@ -74,10 +70,8 @@ export function InventoryGrid({
             key={o.id}
             objet={o}
             valeurConnue={valeurConnue}
-            atelier={atelierStatus(o)}
             collection={collectionStatus(o)}
             onTap={onTapObjet}
-            onEnvoyerAtelier={onEnvoyerAtelier}
             onEnvoyerCollection={onEnvoyerCollection}
             isLast={i === objets.length - 1}
           />

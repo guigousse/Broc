@@ -1,13 +1,7 @@
 "use client";
 
-import {
-  memo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type PointerEvent,
-} from "react";
-import { Album, Anvil, ArrowRight } from "lucide-react";
+import { memo, useRef, type CSSProperties } from "react";
+import { Album, ArrowRight } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { StarRow } from "@/components/ui/StarRow";
@@ -24,52 +18,16 @@ import type { Objet } from "@/types/game";
 interface StockageItemRowProps {
   objet: Objet;
   valeurConnue: boolean;
-  atelier: { disponible: boolean; raison?: string };
   collection: { disponible: boolean; necessiteConfirmation: boolean };
   onTap: (objet: Objet) => void;
-  onEnvoyerAtelier: (objet: Objet) => void;
   onEnvoyerCollection: (objet: Objet) => void;
   isLast: boolean;
 }
-
-// Une seule action en swipe-reveal (atelier) : l'envoi collection a son
-// bouton permanent à droite de la fiche.
-const ACTIONS_WIDTH = 56;
-// Seuil d'ouverture = moitié de la zone d'action (le drag est clampé à
-// -ACTIONS_WIDTH : un seuil supérieur rendrait l'ouverture impossible).
-const SNAP_THRESHOLD = ACTIONS_WIDTH / 2;
-const TAP_THRESHOLD = 8;
 
 const wrap: CSSProperties = {
   position: "relative",
   overflow: "hidden",
 };
-
-const actions: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  display: "flex",
-  justifyContent: "flex-end",
-};
-
-const actionBtn = (
-  bg: string,
-  enabled: boolean,
-): CSSProperties => ({
-  width: 56,
-  height: "100%",
-  border: "none",
-  background: enabled ? bg : "var(--paper-500)",
-  color: enabled ? "var(--paper-100)" : "var(--ink-500)",
-  display: "grid",
-  placeItems: "center",
-  cursor: enabled ? "pointer" : "not-allowed",
-  opacity: enabled ? 1 : 0.55,
-  fontFamily: "var(--font-mono)",
-  fontSize: 10,
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-});
 
 const item: CSSProperties = {
   display: "grid",
@@ -78,7 +36,7 @@ const item: CSSProperties = {
   alignItems: "center",
   padding: "12px 12px",
   background: "var(--paper-100)",
-  touchAction: "pan-y",
+  cursor: "pointer",
 };
 
 // 67 = ancien 56 agrandi de 20 % (retour visuel fenêtre flottante).
@@ -124,72 +82,12 @@ const arrowBadge: CSSProperties = {
 function StockageItemRowBase({
   objet,
   valeurConnue,
-  atelier,
   collection,
   onTap,
-  onEnvoyerAtelier,
   onEnvoyerCollection,
   isLast,
 }: StockageItemRowProps) {
   const { d, tr, locale } = useLangue();
-  const [dragX, setDragX] = useState(0);
-  const [snapped, setSnapped] = useState<"open" | "closed">("closed");
-  const [dragging, setDragging] = useState(false);
-  const startRef = useRef<{ x: number; y: number } | null>(null);
-  const movedRef = useRef(false);
-  const axisLockedRef = useRef<"h" | "v" | null>(null);
-
-  const baseX = snapped === "open" ? -ACTIONS_WIDTH : 0;
-  const translateX = baseX + dragX;
-
-  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    startRef.current = { x: e.clientX, y: e.clientY };
-    movedRef.current = false;
-    axisLockedRef.current = null;
-    setDragging(true);
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-  };
-
-  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    if (!startRef.current) return;
-    const dx = e.clientX - startRef.current.x;
-    const dy = e.clientY - startRef.current.y;
-    if (!axisLockedRef.current) {
-      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
-        axisLockedRef.current = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
-      }
-    }
-    if (axisLockedRef.current !== "h") return;
-    movedRef.current = true;
-    const clamped = Math.max(-ACTIONS_WIDTH - baseX, Math.min(-baseX, dx));
-    setDragX(clamped);
-  };
-
-  const onPointerUp = (_e: PointerEvent<HTMLDivElement>) => {
-    if (!startRef.current) {
-      setDragging(false);
-      return;
-    }
-    const finalDelta = dragX;
-    const wasVerticalScroll = axisLockedRef.current === "v";
-    setDragging(false);
-    setDragX(0);
-    startRef.current = null;
-    // Si l'utilisateur a scrollé verticalement, ne pas déclencher le tap
-    if (wasVerticalScroll) {
-      axisLockedRef.current = null;
-      return;
-    }
-    if (!movedRef.current || axisLockedRef.current !== "h") {
-      if (Math.abs(finalDelta) < TAP_THRESHOLD) {
-        onTap(objet);
-      }
-      return;
-    }
-    const totalX = baseX + finalDelta;
-    if (totalX < -SNAP_THRESHOLD) setSnapped("open");
-    else setSnapped("closed");
-  };
 
   const isUnique = !!getTemplate(objet.templateId)?.unique;
   const rarityColors = getRarityColors(objet.rarete, isUnique);
@@ -207,56 +105,21 @@ function StockageItemRowBase({
     });
   };
 
-  const handleAtelier = () => {
-    if (!atelier.disponible) return;
-    animateToTab("/atelier");
-    onEnvoyerAtelier(objet);
-    setSnapped("closed");
-  };
-
   const handleCollection = () => {
     if (!collection.disponible) return;
     animateToTab("/collection");
     onEnvoyerCollection(objet);
-    setSnapped("closed");
   };
 
   return (
     <div
-      data-pager-swipe-ignore="1"
       className="broc-list-row"
       style={{
         ...wrap,
         borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",
       }}
     >
-      <div style={actions} aria-hidden>
-        <button
-          type="button"
-          style={actionBtn("var(--brass-600)", atelier.disponible)}
-          onClick={handleAtelier}
-          disabled={!atelier.disponible}
-          aria-label={d.inventaire.envoyerAtelier}
-        >
-          <span style={iconWithPlus}>
-            <Anvil size={22} strokeWidth={1.5} />
-            <span style={arrowBadge}>
-              <ArrowRight size={12} strokeWidth={2.4} />
-            </span>
-          </span>
-        </button>
-      </div>
-      <div
-        style={{
-          ...item,
-          transform: `translateX(${translateX}px)`,
-          transition: dragging ? "none" : "transform 180ms ease",
-        }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-      >
+      <div style={item} onClick={() => onTap(objet)}>
         <div ref={thumbRef} style={thumbBase}>
           <ItemSticker
             templateId={objet.templateId}
@@ -329,13 +192,10 @@ function StockageItemRowBase({
             </span>
           </div>
         </div>
-        {/* stopPropagation : ne déclenche ni le tap de la fiche (détail)
-            ni le tracking du swipe-reveal. */}
+        {/* stopPropagation : ne déclenche pas le tap de la fiche (détail). */}
         <button
           type="button"
           style={collectionInlineBtn(collection.disponible)}
-          onPointerDown={(e) => e.stopPropagation()}
-          onPointerUp={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             handleCollection();
@@ -369,10 +229,7 @@ export const StockageItemRow = memo(
     prev.valeurConnue === next.valeurConnue &&
     prev.isLast === next.isLast &&
     prev.onTap === next.onTap &&
-    prev.onEnvoyerAtelier === next.onEnvoyerAtelier &&
     prev.onEnvoyerCollection === next.onEnvoyerCollection &&
-    prev.atelier.disponible === next.atelier.disponible &&
-    prev.atelier.raison === next.atelier.raison &&
     prev.collection.disponible === next.collection.disponible &&
     prev.collection.necessiteConfirmation ===
       next.collection.necessiteConfirmation,

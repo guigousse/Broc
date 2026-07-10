@@ -17,11 +17,7 @@ import { getCapaciteStockage, totalEnStock } from "@/lib/stockage";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { UpgradeButton } from "@/components/mobile/UpgradeButton";
 import { aConnaisseurVitrine } from "@/lib/competences";
-import {
-  atelierStatusPourObjet,
-  collectionStatusPourObjet,
-  prochaineEtatCible,
-} from "@/lib/atelier";
+import { collectionStatusPourObjet } from "@/lib/atelier";
 import { getBrocanteById } from "@/data/brocantes";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomBrocante, nomObjet, nomStockageTier } from "@/lib/i18n/contenu";
@@ -42,7 +38,6 @@ function StockagePageInner() {
     state,
     isHydrated,
     mettreEnVitrine,
-    restaurerObjet,
     donnerACollection,
     definirPrixVenteSouhaite,
     ameliorerStockage,
@@ -91,37 +86,12 @@ function StockagePageInner() {
   // Callbacks stabilisés (useCallback) pour que les StockageItemRow mémoïsées
   // ne re-rendent pas quand seul l'état local de la page change (flash,
   // overlay ouvert, filtre…).
-  const atelierStatus = useCallback(
-    (o: Objet) =>
-      state ? atelierStatusPourObjet(state, o, d) : { disponible: false },
-    [state, d],
-  );
   const collectionStatus = useCallback(
     (o: Objet) =>
       state
         ? collectionStatusPourObjet(state, o)
         : { disponible: false, necessiteConfirmation: false },
     [state],
-  );
-
-  const envoyerAtelier = useCallback(
-    (o: Objet) => {
-      const cible = prochaineEtatCible(o.etat);
-      if (!cible) return;
-      const res = restaurerObjet(o.id, cible);
-      if (res.ok)
-        setFlash(
-          tr(d.inventaire.flashEnvoyeAtelier, { nom: nomObjet(o, locale) }),
-        );
-      else
-        setFlash(
-          tr(d.inventaire.impossibleRaison, {
-            raison: res.raison ?? d.inventaire.conditionNonRemplie,
-          }),
-        );
-      setTimeout(() => setFlash(null), 2500);
-    },
-    [restaurerObjet, d, tr, locale],
   );
 
   const envoyerCollection = useCallback(
@@ -297,9 +267,7 @@ function StockagePageInner() {
           objets={objetsFiltres}
           categoriesConnues={categoriesConnuesVitrine}
           onTapObjet={setObjetOuvert}
-          onEnvoyerAtelier={envoyerAtelier}
           onEnvoyerCollection={envoyerCollection}
-          atelierStatus={atelierStatus}
           collectionStatus={collectionStatus}
         />
       </FloatingRoomOverlay>
