@@ -34,7 +34,7 @@ function paliersThematiques(cat: CategorieObjet): OverlayCompetences["paliers"] 
     },
     [`cat.${cat}.reparer.3`]: {
       nom: `Master — ${c}`,
-      description: `You can raise pieces to pristine and cut all ${c} restoration times by 40%.`,
+      description: `You can raise pieces to pristine and cut all ${c} restoration times by 30 min.`,
     },
     [`cat.${cat}.connaisseur.1`]: {
       nom: `Watcher — ${c}`,

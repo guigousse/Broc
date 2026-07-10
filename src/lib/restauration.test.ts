@@ -32,9 +32,12 @@ describe("dureeRestaurationMs", () => {
     expect(dureeRestaurationMs(s, CAT, "Très bon")).toBe(4 * H);
   });
 
-  it("Maître Réparer applique le facteur 0,6", () => {
+  it("Maître Réparer réduit la durée de 30 min", () => {
+    expect(dureeRestaurationMs(stateMaitre(), CAT, "Mauvais")).toBe(
+      1 * H - 30 * 60 * 1000,
+    );
     expect(dureeRestaurationMs(stateMaitre(), CAT, "Bon")).toBe(
-      Math.round(2 * H * 0.6),
+      2 * H - 30 * 60 * 1000,
     );
   });
 });

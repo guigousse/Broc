@@ -508,6 +508,31 @@ function PalierTile({
   );
 }
 
+
+/**
+ * Rend une description en mettant les chiffres clés en gras (nombres,
+ * pourcentages, durées, multiplicateurs) — split par groupe capturant :
+ * les indices impairs sont les tokens numériques.
+ */
+function DescriptionChiffree({ texte }: { texte: string }) {
+  const parts = texte.split(
+    /((?:×\s?)?[+±]?\d[\d\s.,]*(?:%|min\b|h\b|€)?)/gu,
+  );
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <strong key={i} style={{ fontStyle: "normal" }}>
+            {part}
+          </strong>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
 /**
  * Fiche compétence plein écran : image dans son cadre, flottante au centre
  * (titre encadré au-dessus), + panneau qui monte du bas de l'écran
@@ -638,7 +663,7 @@ function PalierOverlay({
               boxSizing: "border-box",
             }}
           >
-            {descriptionCompetence(comp, locale)}
+            <DescriptionChiffree texte={descriptionCompetence(comp, locale)} />
           </p>
         </div>
       </div>

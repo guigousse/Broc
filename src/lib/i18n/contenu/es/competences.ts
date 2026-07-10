@@ -34,7 +34,7 @@ function paliersThematiques(cat: CategorieObjet): OverlayCompetences["paliers"] 
     },
     [`cat.${cat}.reparer.3`]: {
       nom: `Maestro — ${c}`,
-      description: `Consigues elevar las piezas a impecable y reduces todos los tiempos de restauración « ${c} » un 40 %.`,
+      description: `Consigues elevar las piezas a impecable y reduces todos los tiempos de restauración « ${c} » en 30 min.`,
     },
     [`cat.${cat}.connaisseur.1`]: {
       nom: `Vigía — ${c}`,

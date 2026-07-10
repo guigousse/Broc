@@ -160,7 +160,7 @@ function brancheReparer(cat: CategorieObjet): PalierDef[] {
     },
     {
       nom: `Maître — ${cat}`,
-      description: `Vous parvenez à élever les pièces au pristin état et réduisez toutes les durées de restauration « ${cat} » de 40 %.`,
+      description: `Vous parvenez à élever les pièces au pristin état et réduisez toutes les durées de restauration « ${cat} » de 30 min.`,
     },
   ]);
 }

@@ -9,8 +9,8 @@ export const DUREE_RESTAURATION_MS: Record<EtatObjet, number> = {
   "Pristin état": 0, // non restaurable
 };
 
-/** Facteur appliqué à la durée si la catégorie a le palier « Maître Réparer ». */
-export const MAITRE_REPARER_FACTEUR = 0.6;
+/** Réduction plate (ms) si la catégorie a le palier « Maître Réparer ». */
+export const MAITRE_REPARER_REDUCTION_MS = 30 * 60 * 1000;
 
 /** Fenêtre (avant la fin) pendant laquelle on peut terminer via pub. */
 export const FENETRE_PUB_MS = 30 * 60 * 1000;
@@ -26,7 +26,7 @@ export function dureeRestaurationMs(
 ): number {
   const base = DUREE_RESTAURATION_MS[etatDepart];
   return aMaitreReparer(state, cat)
-    ? Math.round(base * MAITRE_REPARER_FACTEUR)
+    ? Math.max(0, base - MAITRE_REPARER_REDUCTION_MS)
     : base;
 }
 
