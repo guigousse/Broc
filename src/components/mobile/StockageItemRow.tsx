@@ -182,17 +182,18 @@ function StockageItemRowBase({
                 color="var(--brass-700)"
               />
             </span>
-            {/* Valeur à droite du logo de thème — libère la colonne de
-                droite pour le bouton collection permanent. */}
-            <span
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 13,
-                color: "var(--forest-800)",
-              }}
-            >
-              {valeurConnue ? `${Math.round(objet.prixReferenceReel)} €` : "?"}
-            </span>
+          </div>
+          {/* Prix du marché sous la ligne état + thème ; « ? € » tant que
+              la compétence connaisseur n'est pas débloquée. */}
+          <div
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 13,
+              color: "var(--forest-800)",
+              marginTop: 4,
+            }}
+          >
+            {valeurConnue ? `${Math.round(objet.prixReferenceReel)} €` : "? €"}
           </div>
         </div>
         {/* Déjà donné à l'identique (même état) : pas de bouton. Sinon,
