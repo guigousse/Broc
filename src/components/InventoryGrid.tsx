@@ -18,17 +18,12 @@ interface InventoryGridProps {
 
 const card: CSSProperties = {
   position: "relative",
-  border: "1px solid var(--brass-500)",
   background: "var(--paper-100)",
-  // Padding interne pour que les rows ne touchent ni les bords ni le filet
-  // intérieur dessiné par le boxShadow (3px) — on laisse 6px de marge.
-  padding: "6px 6px",
-  // Le boxShadow inset reste devant car il appartient à l'élément parent qui
-  // empile au-dessus des descendants statiques ; pour garantir la priorité on
-  // ne fait pas dépasser les enfants via overflow: hidden.
+  // Pas de cadre propre : le panneau de la fenêtre flottante (FloatingRoom-
+  // Overlay) fournit déjà la carte — un second liseré ferait une double
+  // ligne. Seules les lignes séparatrices entre items (borderBottom des
+  // rows) structurent la liste.
   overflow: "hidden",
-  boxShadow:
-    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-500)",
 };
 
 export function InventoryGrid({

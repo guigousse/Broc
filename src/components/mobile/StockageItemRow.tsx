@@ -69,7 +69,7 @@ const actionBtn = (
 
 const item: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "56px 1fr auto",
+  gridTemplateColumns: "67px 1fr auto",
   gap: 10,
   alignItems: "center",
   padding: "12px 12px",
@@ -77,9 +77,10 @@ const item: CSSProperties = {
   touchAction: "pan-y",
 };
 
+// 67 = ancien 56 agrandi de 20 % (retour visuel fenêtre flottante).
 const thumbBase: CSSProperties = {
-  width: 56,
-  height: 56,
+  width: 67,
+  height: 67,
   display: "grid",
   placeItems: "center",
 };
