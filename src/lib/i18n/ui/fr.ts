@@ -449,7 +449,6 @@ export const fr = {
     itemsParLigne: "Items par ligne",
   },
   bibliotheque: {
-    consultationGrimoire: "— consultation du grimoire…",
     titre: "Compétences",
     arbresAriaLabel: "Arbres de compétences",
     niveauAbrege: "N{n}",

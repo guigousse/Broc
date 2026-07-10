@@ -1,14 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { MobileLayout } from "@/components/mobile/MobileLayout";
-import { MobileHeader } from "@/components/mobile/MobileHeader";
-import { StickyTop } from "@/components/mobile/StickyTop";
+import { FloatingRoomOverlay } from "@/components/mobile/floating-room/FloatingRoomOverlay";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { TreePicker } from "@/components/mobile/TreePicker";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
-import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { useToast } from "@/components/ui/Toast";
 import { useGame } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
@@ -42,7 +38,6 @@ import type {
 } from "@/types/game";
 
 export default function CompetencesPage() {
-  const router = useRouter();
   const { state, isHydrated, debloquerCompetence } = useGame();
   const { toast } = useToast();
   const { d, tr, locale } = useLangue();
@@ -50,18 +45,14 @@ export default function CompetencesPage() {
   const [palierActif, setPalierActif] = useState<CompetenceDef | null>(null);
   const [parcoursOuvert, setParcoursOuvert] = useState(false);
 
-  useEffect(() => {
-    if (isHydrated && !state) router.replace("/");
-  }, [isHydrated, state, router]);
-
   // When user switches tree, close any open detail sheet
   useEffect(() => {
     setPalierActif(null);
   }, [tree]);
 
-  if (!isHydrated || !state) {
-    return <SkeletonScreen label={d.bibliotheque.consultationGrimoire} />;
-  }
+  // Le layout (qg) gate le rendu (redirect + écran d'attente) : ce garde
+  // ne sert qu'au narrowing TypeScript.
+  if (!isHydrated || !state) return null;
 
   const meta = getTreeMeta(tree);
   const treeDef = getTreeDef(tree);
@@ -86,10 +77,9 @@ export default function CompetencesPage() {
 
   return (
     <>
-      <MobileLayout
-        header={<MobileHeader budget={state.budget} />}
-        stickyTop={
-          <StickyTop>
+      <FloatingRoomOverlay
+        bande={
+          <>
             <PageHeaderBar title={d.bibliotheque.titre} />
             <div style={{ marginTop: 4 }}>
               <TreePicker
@@ -219,7 +209,7 @@ export default function CompetencesPage() {
                 ? `${tr(d.sheets.prochainNiv, { n: prochain.niveau })} ${titreDeblocage(prochain, locale)} ▸`
                 : d.bibliotheque.parcoursDeblocages}
             </button>
-          </StickyTop>
+          </>
         }
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -286,7 +276,7 @@ export default function CompetencesPage() {
             );
           })}
         </div>
-      </MobileLayout>
+      </FloatingRoomOverlay>
 
       <BottomSheet
         open={palierActif !== null}

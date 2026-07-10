@@ -84,7 +84,12 @@ function computeDirection(
  * elles — sinon le panorama perdrait sa position de scroll et sauterait
  * pendant la transition bureau ↔ stockage.
  */
-const QG_GROUP = new Set<string>(["/bureau", "/stockage", "/atelier"]);
+const QG_GROUP = new Set<string>([
+  "/bureau",
+  "/stockage",
+  "/atelier",
+  "/bibliotheque",
+]);
 
 function pageKeyForPathname(pathname: string): string {
   return QG_GROUP.has(pathname) ? "_qg" : pathname;

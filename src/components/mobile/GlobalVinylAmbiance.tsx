@@ -14,14 +14,19 @@ import { audioManager } from "@/lib/audio/audioManager";
  * du panorama continue derrière l'overlay, donc elles sont traitées
  * comme le panorama.
  *
- * Hors du groupe (qg) (chiner, vitrine, biblio…), on étouffe et on
+ * Hors du groupe (qg) (chiner, vitrine…), on étouffe et on
  * baisse pour donner l'impression d'entendre la musique de loin —
  * sans interrompre la lecture. Détail :
  *  - chiner / vitrine     : franchement lointain (mur extérieur)
  *  - autres                : niveau "à distance" générique
  */
 
-const PANORAMA_PATHS = new Set<string>(["/bureau", "/stockage", "/atelier"]);
+const PANORAMA_PATHS = new Set<string>([
+  "/bureau",
+  "/stockage",
+  "/atelier",
+  "/bibliotheque",
+]);
 
 interface Ambiance {
   volume: number;
@@ -38,7 +43,7 @@ function ambianceForPathname(pathname: string): Ambiance | null {
     // musique du local "porte" encore correctement).
     return { volume: 0.32, lowpassHz: 700 };
   }
-  // /, /bibliotheque, /collection, autres : à distance générique
+  // /, /collection, autres : à distance générique
   return { volume: 0.22, lowpassHz: 700 };
 }
 

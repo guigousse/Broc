@@ -445,7 +445,6 @@ export const es: DictionnaireUI = {
     itemsParLigne: "Objetos por fila",
   },
   bibliotheque: {
-    consultationGrimoire: "— consultando el grimorio…",
     titre: "Habilidades",
     arbresAriaLabel: "Árboles de habilidades",
     niveauAbrege: "N{n}",
