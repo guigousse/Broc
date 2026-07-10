@@ -449,7 +449,7 @@ export const en: DictionnaireUI = {
     niveauAbrege: "L{n}",
     niveauCaption: "Lvl.",
     ptsCaption: "Pts",
-    xpProgression: "{dansNiveau} / {requisNiveau} XP — {manquant} to go",
+    xpProgression: "{dansNiveau} / {requisNiveau} XP",
     voirParcoursAria: "View the unlock path",
     parcoursDeblocages: "Unlock path ▸",
     competenceAcquiseBanniere: "Skill acquired ✓",

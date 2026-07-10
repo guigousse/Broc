@@ -454,7 +454,7 @@ export const fr = {
     niveauAbrege: "N{n}",
     niveauCaption: "Niv.",
     ptsCaption: "Pts",
-    xpProgression: "{dansNiveau} / {requisNiveau} XP — encore {manquant}",
+    xpProgression: "{dansNiveau} / {requisNiveau} XP",
     voirParcoursAria: "Voir le parcours des déblocages",
     parcoursDeblocages: "Parcours des déblocages ▸",
     competenceAcquiseBanniere: "Compétence acquise ✓",

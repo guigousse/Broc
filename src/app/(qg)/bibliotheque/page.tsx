@@ -58,7 +58,7 @@ export default function CompetencesPage() {
   const treeDef = getTreeDef(tree);
   const xpProgress = progressionNiveauBrocanteur(state.brocanteur);
   const prochain = prochainDeblocage(state.brocanteur.niveau);
-  const { dansNiveau, requisNiveau, manquant } = detailProgressionBrocanteur(
+  const { dansNiveau, requisNiveau } = detailProgressionBrocanteur(
     state.brocanteur,
   );
 
@@ -126,6 +126,7 @@ export default function CompetencesPage() {
                 display: "flex",
                 alignItems: "center",
                 gap: 12,
+
               }}
             >
               <div style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>
@@ -143,21 +144,39 @@ export default function CompetencesPage() {
                   {d.bibliotheque.niveauCaption}
                 </span>
               </div>
-              <div
-                style={{
-                  flex: 1,
-                  height: 8,
-                  background: "var(--paper-300)",
-                  border: "1px solid var(--brass-500)",
-                }}
-              >
+              {/* Colonne centrale : barre épaisse + « x / y XP » centré sous
+                  la barre (aligné sur sa largeur). */}
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    height: "100%",
-                    background: "var(--brass-700)",
-                    width: `${Math.round(xpProgress * 100)}%`,
+                    height: 16,
+                    background: "var(--paper-300)",
+                    border: "1px solid var(--brass-500)",
                   }}
-                />
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      background: "var(--brass-700)",
+                      width: `${Math.round(xpProgress * 100)}%`,
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 9.5,
+                    color: "var(--brass-700)",
+                    letterSpacing: "0.04em",
+                    textAlign: "center",
+                    marginTop: 3,
+                  }}
+                >
+                  {tr(d.bibliotheque.xpProgression, {
+                    dansNiveau: dansNiveau.toLocaleString(locale),
+                    requisNiveau: requisNiveau.toLocaleString(locale),
+                  })}
+                </div>
               </div>
               <div
                 style={{
@@ -184,22 +203,6 @@ export default function CompetencesPage() {
                   {d.bibliotheque.ptsCaption}
                 </span>
               </div>
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 9.5,
-                color: "var(--brass-700)",
-                letterSpacing: "0.04em",
-                padding: "4px 2px 0",
-                textAlign: "right",
-              }}
-            >
-              {tr(d.bibliotheque.xpProgression, {
-                dansNiveau: dansNiveau.toLocaleString(locale),
-                requisNiveau: requisNiveau.toLocaleString(locale),
-                manquant: manquant.toLocaleString(locale),
-              })}
             </div>
             {/* Le bouton reste visible même sans prochain déblocage (niveau ≥ 20) : le Parcours sert aussi de récapitulatif. */}
             <button
