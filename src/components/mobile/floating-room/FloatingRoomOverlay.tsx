@@ -54,7 +54,10 @@ const bandeStyle: CSSProperties = {
 
 const panneauStyle: CSSProperties = {
   ...carte,
-  flex: 1,
+  // Le panneau épouse la hauteur de son contenu (pas de grand blanc quand
+  // il y a peu d'items) ; au-delà de la place disponible, il rétrécit
+  // (flex-shrink) et son contenu scrolle.
+  flex: "0 1 auto",
   minHeight: 0,
   overflowY: "auto",
   WebkitOverflowScrolling: "touch",
