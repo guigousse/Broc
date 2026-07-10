@@ -67,6 +67,11 @@ describe("migrerSauvegarde — anciens champs manquants", () => {
     expect(migrerSauvegarde(state).niveauAtelier).toBe(2);
   });
 
+  it("conserve niveauAtelier=0 (nouvelle économie des slots)", () => {
+    const state = createMockGameState({ niveauAtelier: 0 });
+    expect(migrerSauvegarde(state).niveauAtelier).toBe(0);
+  });
+
   it("fallback niveauStockage selon total stocké si valeur manquante", () => {
     const incomplete = {
       ...createMockGameState(),

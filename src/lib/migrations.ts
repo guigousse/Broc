@@ -543,11 +543,12 @@ function appliquerMigrations(loaded: GameState): GameState {
     influenceUtilisee: loaded.influenceUtilisee ?? false,
     dernierLoyer: loaded.dernierLoyer ?? null,
     courriers: courriersFinaux,
-    niveauAtelier:
-      (loaded as Partial<GameState>).niveauAtelier === 2 ||
-      (loaded as Partial<GameState>).niveauAtelier === 3
-        ? (loaded as Partial<GameState>).niveauAtelier!
-        : 1,
+    niveauAtelier: (() => {
+      // 0 = nouvelle économie (slots achetés) ; 2/3 = acquis conservés.
+      // 1, absent ou invalide → 1 (slot gratuit des sauvegardes historiques).
+      const v = (loaded as Partial<GameState>).niveauAtelier;
+      return v === 0 || v === 2 || v === 3 ? v : 1;
+    })(),
     niveauStockage: (() => {
       // `v` peut venir d'une vieille sauvegarde et valoir 4 (Entrepôt supprimé).
       const v = (loaded as { niveauStockage?: number }).niveauStockage;

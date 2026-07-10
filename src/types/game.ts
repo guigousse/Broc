@@ -295,8 +295,8 @@ export interface GameState {
   dernierLoyer: { jour: number; montant: number; tierNom: string } | null;
   /** Lettres reçues (narratives, événements, programmées…). */
   courriers: Courrier[];
-  /** Niveau de l'atelier (1, 2 ou 3). Nombre de slots = niveau. Par défaut 1. */
-  niveauAtelier: 1 | 2 | 3;
+  /** Niveau de l'atelier (0 à 3). Nombre de slots = niveau. Nouvelle partie à 0. */
+  niveauAtelier: 0 | 1 | 2 | 3;
   /** Niveau du stockage (1 à 4). Détermine capacité et loyer. */
   niveauStockage: 1 | 2 | 3;
   /** Niveau du camion (1 à 4). Détermine la capacité du coffre. Défaut 1. */

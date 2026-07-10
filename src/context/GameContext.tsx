@@ -550,7 +550,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       influenceUtilisee: false,
       dernierLoyer: null,
       courriers: [creerLettreMamanDebut(INITIAL_JOUR)],
-      niveauAtelier: 1,
+      niveauAtelier: 0,
       niveauStockage: 1,
       niveauCamion: 1,
       piecesAmelioration: emptyPiecesAmelioration(),
