@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronRight } from "lucide-react";
 import { FloatingRoomOverlay } from "@/components/mobile/floating-room/FloatingRoomOverlay";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { TreePicker } from "@/components/mobile/TreePicker";
@@ -131,52 +132,48 @@ export default function CompetencesPage() {
             >
               <div style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>
                 {tr(d.bibliotheque.niveauAbrege, { n: state.brocanteur.niveau })}
+              </div>
+              {/* Barre épaisse avec « x / y XP » incrusté au centre. Le
+                  texte chevauche remplissage laiton ET fond papier : encre
+                  sombre + halo papier pour rester lisible sur les deux. */}
+              <div
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  position: "relative",
+                  height: 18,
+                  background: "var(--paper-300)",
+                  border: "1px solid var(--brass-500)",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    background: "var(--brass-700)",
+                    width: `${Math.round(xpProgress * 100)}%`,
+                  }}
+                />
                 <span
                   style={{
-                    display: "block",
+                    position: "absolute",
+                    inset: 0,
+                    display: "grid",
+                    placeItems: "center",
                     fontFamily: "var(--font-mono)",
-                    fontSize: 8.5,
-                    color: "var(--brass-700)",
-                    letterSpacing: "0.16em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {d.bibliotheque.niveauCaption}
-                </span>
-              </div>
-              {/* Colonne centrale : barre épaisse + « x / y XP » centré sous
-                  la barre (aligné sur sa largeur). */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    height: 16,
-                    background: "var(--paper-300)",
-                    border: "1px solid var(--brass-500)",
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "100%",
-                      background: "var(--brass-700)",
-                      width: `${Math.round(xpProgress * 100)}%`,
-                    }}
-                  />
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 9.5,
-                    color: "var(--brass-700)",
-                    letterSpacing: "0.04em",
-                    textAlign: "center",
-                    marginTop: 3,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.06em",
+                    color: "var(--forest-800)",
+                    textShadow:
+                      "0 0 3px var(--paper-100), 0 0 5px var(--paper-100)",
+                    pointerEvents: "none",
                   }}
                 >
                   {tr(d.bibliotheque.xpProgression, {
                     dansNiveau: dansNiveau.toLocaleString(locale),
                     requisNiveau: requisNiveau.toLocaleString(locale),
                   })}
-                </div>
+                </span>
               </div>
               <div
                 style={{
@@ -186,7 +183,7 @@ export default function CompetencesPage() {
                     state.brocanteur.pointsDisponibles > 0
                       ? "var(--vermillion-600)"
                       : "var(--ink-500)",
-                  textAlign: "right",
+                  textAlign: "center",
                 }}
               >
                 {state.brocanteur.pointsDisponibles}
@@ -204,28 +201,74 @@ export default function CompetencesPage() {
                 </span>
               </div>
             </div>
-            {/* Le bouton reste visible même sans prochain déblocage (niveau ≥ 20) : le Parcours sert aussi de récapitulatif. */}
+            {/* Prochain palier : bannière cliquable (reste visible même sans
+                prochain déblocage — le Parcours sert aussi de récapitulatif). */}
             <button
               type="button"
               onClick={() => setParcoursOuvert(true)}
               aria-label={d.bibliotheque.voirParcoursAria}
               style={{
-                display: "block",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
                 width: "100%",
-                textAlign: "left",
-                background: "transparent",
-                border: "none",
+                marginTop: 8,
+                padding: "8px 10px",
+                background: "var(--paper-200)",
+                border: "1px solid var(--brass-500)",
                 cursor: "pointer",
-                fontFamily: "var(--font-mono)",
-                fontSize: 9.5,
-                color: "var(--brass-700)",
-                letterSpacing: "0.06em",
-                padding: "4px 2px 0",
+                textAlign: "left",
               }}
             >
-              {prochain
-                ? `${tr(d.sheets.prochainNiv, { n: prochain.niveau })} ${titreDeblocage(prochain, locale)} ▸`
-                : d.bibliotheque.parcoursDeblocages}
+              <span style={{ minWidth: 0 }}>
+                {prochain ? (
+                  <>
+                    <span
+                      style={{
+                        display: "block",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 8.5,
+                        letterSpacing: "0.16em",
+                        textTransform: "uppercase",
+                        color: "var(--brass-700)",
+                      }}
+                    >
+                      {tr(d.sheets.prochainNiv, { n: prochain.niveau })}
+                    </span>
+                    <span
+                      style={{
+                        display: "block",
+                        fontFamily: "var(--font-display)",
+                        fontSize: 12,
+                        color: "var(--forest-800)",
+                        fontWeight: 700,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {titreDeblocage(prochain, locale)}
+                    </span>
+                  </>
+                ) : (
+                  <span
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: 12,
+                      color: "var(--forest-800)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {d.bibliotheque.parcoursDeblocages}
+                  </span>
+                )}
+              </span>
+              <ChevronRight
+                size={18}
+                strokeWidth={1.8}
+                color="var(--brass-700)"
+              />
             </button>
           </div>
         }

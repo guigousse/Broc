@@ -446,8 +446,7 @@ export const en: DictionnaireUI = {
   bibliotheque: {
     titre: "Skills",
     arbresAriaLabel: "Skill trees",
-    niveauAbrege: "L{n}",
-    niveauCaption: "Lvl.",
+    niveauAbrege: "L.{n}",
     ptsCaption: "Pts",
     xpProgression: "{dansNiveau} / {requisNiveau} XP",
     voirParcoursAria: "View the unlock path",

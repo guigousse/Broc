@@ -451,8 +451,7 @@ export const fr = {
   bibliotheque: {
     titre: "Compétences",
     arbresAriaLabel: "Arbres de compétences",
-    niveauAbrege: "N{n}",
-    niveauCaption: "Niv.",
+    niveauAbrege: "N.{n}",
     ptsCaption: "Pts",
     xpProgression: "{dansNiveau} / {requisNiveau} XP",
     voirParcoursAria: "Voir le parcours des déblocages",
