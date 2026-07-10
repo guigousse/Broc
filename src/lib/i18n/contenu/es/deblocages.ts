@@ -15,6 +15,7 @@ export const DEBLOCAGES_ES: Record<string, string> = {
   "Active 🧹 La Fouille": "Activa 🧹 El Rebusco",
   "Accès aux belles foires (T3)": "Acceso a las grandes ferias (T3)",
   "Camion niveau 2 à l'achat": "Camión nivel 2 disponible para comprar",
+  "Paliers 2 des compétences": "Rango 2 de las habilidades",
   "Paliers 3 des compétences": "Rango 3 de las habilidades",
   "Active 🎩 Le Boniment": "Activa 🎩 El Camelo",
   "Énergie max +1 (= 7)": "Energía máxima +1 (= 7)",

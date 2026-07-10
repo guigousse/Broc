@@ -20,13 +20,13 @@ export const CATEGORIES_THEMATIQUES: CategorieObjet[] = CATEGORIES;
 // PATTERNS DE PALIERS — modèles réutilisés pour générer les branches
 // =====================================================================
 
-export const NIVEAU_BROCANTEUR_PALIER_2_GENERAL = 5;
-export const NIVEAU_BROCANTEUR_PALIER_3 = 12;
+export const NIVEAU_BROCANTEUR_PALIER_2 = 10;
+export const NIVEAU_BROCANTEUR_PALIER_3 = 30;
 
 /** Coût et niveau de Brocanteur par défaut pour les paliers 1/2/3 (arbres thématiques). */
 const PALIER_DEFAULTS = [
   { coutPoints: 1, niveauBrocanteurRequis: 0 },
-  { coutPoints: 2, niveauBrocanteurRequis: 0 },
+  { coutPoints: 2, niveauBrocanteurRequis: NIVEAU_BROCANTEUR_PALIER_2 },
   { coutPoints: 3, niveauBrocanteurRequis: NIVEAU_BROCANTEUR_PALIER_3 },
 ] as const;
 
@@ -245,7 +245,6 @@ export const TREES: CompetenceTreeDef[] = [
 export const ALL_TREE_IDS: CompetenceTreeId[] = TREES.map((t) => t.id);
 
 function expandTree(tree: CompetenceTreeDef): CompetenceDef[] {
-  const estGeneral = tree.type === "general";
   return tree.branches.flatMap((b) =>
     b.paliers.map((p) => ({
       id: `${tree.id}.${b.id}.${p.numero}`,
@@ -255,9 +254,9 @@ function expandTree(tree: CompetenceTreeDef): CompetenceDef[] {
       nom: p.nom,
       description: p.description,
       coutPoints: p.coutPoints,
-      niveauBrocanteurRequis: estGeneral
-        ? [0, NIVEAU_BROCANTEUR_PALIER_2_GENERAL, NIVEAU_BROCANTEUR_PALIER_3][p.numero - 1] ?? 0
-        : p.niveauBrocanteurRequis,
+      // Mêmes seuils partout depuis 2026-07-10 : T2 au niveau 10, T3 au 30
+      // (PALIER_DEFAULTS) — plus de cas particulier pour l'arbre général.
+      niveauBrocanteurRequis: p.niveauBrocanteurRequis,
       prerequis:
         p.numero === 1 ? [] : [`${tree.id}.${b.id}.${p.numero - 1}`],
       placeholder: p.placeholder,

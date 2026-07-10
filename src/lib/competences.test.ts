@@ -181,14 +181,14 @@ describe("etatCompetence v2 — pool global (paliers gatés par points + niveau 
     expect(etatCompetence(p2, [p1.id], ctx())).toBe("disponible");
   });
 
-  it("palier 3 : exige palier 2 + Brocanteur N12", () => {
-    expect(etatCompetence(p3, [p1.id, p2.id], ctx({ niveauBrocanteur: 11 }))).toBe("verrouillee");
-    expect(etatCompetence(p3, [p1.id, p2.id], ctx({ niveauBrocanteur: 12 }))).toBe("disponible");
+  it("palier 3 : exige palier 2 + Brocanteur N30", () => {
+    expect(etatCompetence(p3, [p1.id, p2.id], ctx({ niveauBrocanteur: 29 }))).toBe("verrouillee");
+    expect(etatCompetence(p3, [p1.id, p2.id], ctx({ niveauBrocanteur: 30 }))).toBe("disponible");
   });
 
-  it("général palier 3 : Brocanteur N12", () => {
-    expect(etatCompetence(gen3, ["general.negociation.1", "general.negociation.2"], ctx({ niveauBrocanteur: 12 }))).toBe("disponible");
-    expect(etatCompetence(gen3, ["general.negociation.1", "general.negociation.2"], ctx({ niveauBrocanteur: 11 }))).toBe("verrouillee");
+  it("général palier 3 : Brocanteur N30", () => {
+    expect(etatCompetence(gen3, ["general.negociation.1", "general.negociation.2"], ctx({ niveauBrocanteur: 30 }))).toBe("disponible");
+    expect(etatCompetence(gen3, ["general.negociation.1", "general.negociation.2"], ctx({ niveauBrocanteur: 29 }))).toBe("verrouillee");
   });
 
   it("déjà débloquée prime sur tout", () => {

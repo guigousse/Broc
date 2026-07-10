@@ -15,6 +15,7 @@ export const DEBLOCAGES_EN: Record<string, string> = {
   "Active 🧹 La Fouille": "Active 🧹 The Rummage",
   "Accès aux belles foires (T3)": "Access to grand fairs (T3)",
   "Camion niveau 2 à l'achat": "Truck level 2 available to buy",
+  "Paliers 2 des compétences": "Tier 2 of skills",
   "Paliers 3 des compétences": "Tier 3 of skills",
   "Active 🎩 Le Boniment": "Active 🎩 The Pitch",
   "Énergie max +1 (= 7)": "Max energy +1 (= 7)",

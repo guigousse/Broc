@@ -27,8 +27,10 @@ describe("ParcoursSheet", () => {
     const rowN9 = screen.getByTestId("parcours-row-9");
     expect(rowN9.getAttribute("data-etat")).toBe("prochain");
 
-    const rowN10 = screen.getByTestId("parcours-row-10");
-    expect(rowN10.getAttribute("data-etat")).toBe("a-venir");
+    // Deux déblocages au niveau 10 (brocantes T3 + paliers 2 des compétences).
+    const rowsN10 = screen.getAllByTestId("parcours-row-10");
+    expect(rowsN10.length).toBe(2);
+    for (const r of rowsN10) expect(r.getAttribute("data-etat")).toBe("a-venir");
 
     // Une seule ligne "prochain" dans toute la liste.
     const toutesLesLignes = screen.getAllByTestId(/^parcours-row-/);
