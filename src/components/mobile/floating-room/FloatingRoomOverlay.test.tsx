@@ -54,4 +54,27 @@ describe("FloatingRoomOverlay", () => {
       ).toBe(false);
     }
   });
+
+  it("rend le bloc milieu entre bande et panneau quand fourni", () => {
+    const { container } = render(
+      <FloatingRoomOverlay bande={<div>B</div>} milieu={<div>MILIEU</div>}>
+        <div>P</div>
+      </FloatingRoomOverlay>,
+    );
+    expect(screen.getByText("MILIEU")).toBeTruthy();
+    const wrap = container.querySelector('[data-floating-room="1"]') as HTMLElement;
+    // Ordre des blocs : bande, milieu, panneau.
+    const texts = Array.from(wrap.children).map((c) => c.textContent);
+    expect(texts).toEqual(["B", "MILIEU", "P"]);
+  });
+
+  it("ne rend rien de plus sans milieu", () => {
+    const { container } = render(
+      <FloatingRoomOverlay bande={<div>B</div>}>
+        <div>P</div>
+      </FloatingRoomOverlay>,
+    );
+    const wrap = container.querySelector('[data-floating-room="1"]') as HTMLElement;
+    expect(wrap.children.length).toBe(2);
+  });
 });

@@ -52,6 +52,14 @@ const bandeStyle: CSSProperties = {
   animation: "broc-float-bande-in 320ms ease-out",
 };
 
+const milieuStyle: CSSProperties = {
+  ...carte,
+  flexShrink: 0,
+  padding: "10px",
+  // Fondu simple : le milieu apparaît entre les deux blocs qui glissent.
+  animation: "broc-fade-in 320ms ease-out",
+};
+
 const panneauStyle: CSSProperties = {
   ...carte,
   // Le panneau épouse la hauteur de son contenu (pas de grand blanc quand
@@ -68,17 +76,21 @@ const panneauStyle: CSSProperties = {
 interface FloatingRoomOverlayProps {
   /** Carte haute (titre, actions, filtres). Glisse depuis le haut. */
   bande: ReactNode;
+  /** Bloc carte optionnel entre bande et panneau (ex. slots d'atelier). */
+  milieu?: ReactNode;
   /** Panneau bas (contenu scrollable). Monte depuis le bas. */
   children: ReactNode;
 }
 
 export function FloatingRoomOverlay({
   bande,
+  milieu,
   children,
 }: FloatingRoomOverlayProps) {
   return (
     <div style={wrap} data-floating-room="1">
       <div style={bandeStyle}>{bande}</div>
+      {milieu !== undefined && <div style={milieuStyle}>{milieu}</div>}
       <div style={panneauStyle}>{children}</div>
     </div>
   );
