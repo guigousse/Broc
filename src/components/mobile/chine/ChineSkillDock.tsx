@@ -41,7 +41,7 @@ export function ChineSkillDock({ skills }: { skills: DockSkill[] }) {
 function SkillCircle({ skill }: { skill: DockSkill }) {
   const [imgKo, setImgKo] = useState(false);
   const epuise = !skill.verrouille && skill.restants <= 0;
-  const inerte = epuise || skill.desactive || skill.actif;
+  const inerte = epuise || !!skill.desactive || !!skill.actif;
   return (
     <button
       type="button"
