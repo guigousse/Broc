@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Lock } from "lucide-react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomCompetence } from "@/lib/i18n/contenu";
@@ -42,7 +43,10 @@ interface PersonaInfoOverlayProps {
 
 export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
   const { d, tr, locale } = useLangue();
-  return (
+  // Rendu au body : échappe au stacking context de la sheet (position: fixed,
+  // zIndex 41) qui confinerait sinon le zIndex 60 en dessous du dock (zIndex
+  // 50, contexte racine) — au-dessus du dock, sous le picker Lot garni (70).
+  return createPortal(
     <div style={scrim} onClick={onClose} role="presentation">
       <div
         style={card}
@@ -103,7 +107,8 @@ export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
           </div>
         </PalierRow>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

@@ -85,7 +85,7 @@ import type {
 } from "@/types/game";
 
 const TICK_MS = 100;
-// Active de vente 📣 La Criée (N17) : fait défiler 3 clients coup sur coup,
+// Active de vente 📣 La Criée (N30) : fait défiler 3 clients coup sur coup,
 // à intervalle fixe qui ignore l'intervalle normal ET le multiplicateur météo.
 const CRIEE_NB_CLIENTS = 3;
 const CRIEE_INTERVALLE_SEC = 1;
@@ -185,7 +185,7 @@ export default function VitrineJourneePage() {
   const [ventesEffectuees, setVentesEffectuees] = useState<VenteHistorique[]>([]);
   const [fancyClientApparu, setFancyClientApparu] = useState(false);
   const [revelationFaite, setRevelationFaite] = useState(false);
-  /** Le Lot garni (N7) : mini-picker ouvert pour choisir le 2e objet à ajouter au panier. */
+  /** Le Lot garni (N10) : mini-picker ouvert pour choisir le 2e objet à ajouter au panier. */
   const [lotGarniOuvert, setLotGarniOuvert] = useState(false);
   const [bravoTout, setBravoTout] = useState(false);
   /** XP de Brocanteur gagnée localement durant la session. */
@@ -261,7 +261,7 @@ export default function VitrineJourneePage() {
   const clientActuelRef = useRef<ClientEvent | null>(null);
   clientActuelRef.current = clientActuel;
 
-  // Active de vente 📣 La Criée (N17) : nombre de clients restants à faire
+  // Active de vente 📣 La Criée (N30) : nombre de clients restants à faire
   // défiler « coup sur coup » une fois déclenchée (cf. bloc de spawn du tick).
   const crieeRestantsRef = useRef(0);
 
@@ -630,6 +630,10 @@ export default function VitrineJourneePage() {
   };
 
   const encaisserVente = (ev: ClientEvent, prixFinal: number) => {
+    // Le rideau est tombé pendant le délai d'encaissement (600 ms après un
+    // « conclu ») : la journée est déjà enregistrée et la vitrine vidée —
+    // encaisser créditerait un bilan fantôme sans toucher au budget. On annule.
+    if (journeeTermineeRef.current) return;
     vendreDeVitrine(
       ev.panier.map((p) => p.objet.id),
       prixFinal,
