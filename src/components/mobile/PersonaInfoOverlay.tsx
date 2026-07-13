@@ -145,6 +145,11 @@ const scrim: CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   padding: 24,
+  // Rendu sous le topDecoration de BottomSheet (pointerEvents: "none") :
+  // sans ré-activation explicite, tous les clics traversent l'overlay et
+  // atterrissent sur le scrim de la sheet → la visite client est fermée
+  // et la vente perdue.
+  pointerEvents: "auto",
 };
 
 const card: CSSProperties = {
