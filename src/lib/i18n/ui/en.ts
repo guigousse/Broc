@@ -293,7 +293,6 @@ export const en: DictionnaireUI = {
     journalEcoule: "Nothing left to sell — stall completely sold out!",
     panierUnique: "“{nom}”",
     panierPluriel: "{n} items",
-    baisserRideau: "Pull down the shutter",
     lotGarniChoisirTitre: "🧺 Lot garni — add an item",
     lotGarniAucunAutre: "Nothing else to offer.",
     prixDemandeLabel: "Asking price",

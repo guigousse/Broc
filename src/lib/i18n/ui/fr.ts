@@ -296,7 +296,6 @@ export const fr = {
     journalEcoule: "Plus rien à vendre — étal totalement écoulé !",
     panierUnique: "« {nom} »",
     panierPluriel: "{n} objets",
-    baisserRideau: "Baisser le rideau",
     lotGarniChoisirTitre: "🧺 Lot garni — ajouter un objet",
     lotGarniAucunAutre: "Plus rien d'autre à proposer.",
     prixDemandeLabel: "Prix demandé",

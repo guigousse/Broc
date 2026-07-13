@@ -293,7 +293,6 @@ export const es: DictionnaireUI = {
     journalEcoule: "Nada más que vender — ¡puesto totalmente agotado!",
     panierUnique: "«{nom}»",
     panierPluriel: "{n} objetos",
-    baisserRideau: "Bajar la persiana",
     lotGarniChoisirTitre: "🧺 Lot garni — añadir un objeto",
     lotGarniAucunAutre: "Nada más que ofrecer.",
     prixDemandeLabel: "Precio pedido",

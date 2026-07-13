@@ -10,10 +10,9 @@ import {
   type CSSProperties,
 } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { DoorOpen } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
-import { ActionFab } from "@/components/mobile/ActionFab";
-import { Button } from "@/components/ui/Button";
-import { DecoDivider } from "@/components/ui/DecoDivider";
+import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { ItemCard } from "@/components/ui/ItemCard";
 import { SessionSummary } from "@/components/SessionSummary";
 import { useGame } from "@/context/GameContext";
@@ -22,6 +21,7 @@ import {
   DEFAULT_MODIFIERS,
   JOURNEE_DUREE_SECONDES,
   ajouterAuPanier,
+  appliquerBoniment,
   bourseDe,
   genererClientEvent,
   personaDepuisClient,
@@ -31,7 +31,10 @@ import {
   type VitrineModifiers,
 } from "@/lib/vitrine";
 import { ouvrirNegociation } from "@/lib/negociation";
-import { activeDebloquee, usagesRestants } from "@/lib/actives";
+import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
+import { audioManager } from "@/lib/audio/audioManager";
+import { getBrocanteImageUrl } from "@/lib/brocanteImages";
+import { useToast } from "@/components/ui/Toast";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import type { NegociationState } from "@/types/game";
@@ -115,6 +118,7 @@ export default function VitrineJourneePage() {
   } = useGame();
   const { d, tr, locale } = useLangue();
   const { startCrowd, stopCrowd } = useSettings();
+  const { toast } = useToast();
 
   /**
    * Nom affiché d'un client. La célébrité (archetypeId "celebrite") persiste son
@@ -657,6 +661,20 @@ export default function VitrineJourneePage() {
     setLotGarniOuvert(false);
   };
 
+  /** Le Boniment (N20) : tentative de closing sur l'offre courante du joueur,
+   *  déclenchée depuis le dock. Le sheet se resynchronise via sa prop `nego`. */
+  const jouerBoniment = () => {
+    const ev = clientActuelRef.current;
+    if (!ev || !negoVente || negoVente.statut !== "en_cours") return;
+    if (!utiliserActive("boniment")) return;
+    const next = appliquerBoniment(negoVente, offreJoueur);
+    setNegoVente(next);
+    if (next.statut === "conclu") {
+      audioManager.playCash();
+      setTimeout(() => encaisserVente(ev, next.prixAdverseCourant), 600);
+    }
+  };
+
   const handleFermerEnAvance = () => {
     ajouterJournal({
       heure: heureCourante(),
@@ -681,6 +699,65 @@ export default function VitrineJourneePage() {
         (o) => !clientActuel.panier.some((p) => p.objet.id === o.objet.id),
       )
     : [];
+
+  /** Les 3 atouts de vente, dans l'ordre de déblocage (cercles du header bas). */
+  const dockSkills = (): DockSkill[] => {
+    const niveau = state.brocanteur.niveau;
+    const commun = (id: Exclude<ActiveId, "diplomate">, emoji: string) => {
+      const verrouille = !activeDebloquee(state, id);
+      const nom = libelleActive(id, d);
+      const restants = usagesRestants(state.activesUtilisees, id, state.jourActuel, niveau);
+      return {
+        id,
+        nom,
+        imageSrc: `/competences/atout.${id}.webp`,
+        emojiFallback: emoji,
+        verrouille,
+        niveauRequis: NIVEAU_ACTIVES[id],
+        restants,
+        ariaLabel: verrouille
+          ? tr(d.chine.atoutVerrouilleAria, { nom, niveau: NIVEAU_ACTIVES[id] })
+          : tr(d.chine.atoutAria, { nom, restants }),
+        onActivate: () => {
+          if (verrouille) {
+            toast(tr(d.chine.atoutVerrouilleToast, { nom, niveau: NIVEAU_ACTIVES[id] }), { type: "info" });
+          }
+        },
+      };
+    };
+
+    const lotGarniSkill = commun("lotGarni", "🧺");
+    const bonimentSkill = commun("boniment", "🎩");
+    const crieeSkill = commun("criee", "📣");
+    const negoEnCours =
+      clientActuel?.mode === "negociation" && negoVente?.statut === "en_cours";
+    return [
+      {
+        ...lotGarniSkill,
+        desactive:
+          !negoEnCours ||
+          (clientActuel?.panier.length ?? 0) >= 2 ||
+          objetsAjoutablesLotGarni.length === 0,
+        onActivate: lotGarniSkill.verrouille
+          ? lotGarniSkill.onActivate
+          : () => setLotGarniOuvert(true),
+      },
+      {
+        ...bonimentSkill,
+        desactive: !negoEnCours,
+        onActivate: bonimentSkill.verrouille ? bonimentSkill.onActivate : jouerBoniment,
+      },
+      {
+        ...crieeSkill,
+        desactive:
+          !!clientActuel ||
+          tempsRestant < CRIEE_INTERVALLE_SEC * CRIEE_NB_CLIENTS,
+        onActivate: crieeSkill.verrouille ? crieeSkill.onActivate : jouerCriee,
+      },
+    ];
+  };
+
+  const brocanteBg = brocante ? getBrocanteImageUrl(brocante.id) : null;
 
   if (journeeFinie) {
     return (
@@ -720,7 +797,8 @@ export default function VitrineJourneePage() {
   return (
     <div
       style={{
-        minHeight: "100dvh",
+        height: "100dvh",
+        overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         background: "var(--paper-100)",
@@ -729,16 +807,34 @@ export default function VitrineJourneePage() {
       <MobileHeader budget={state.budget} />
       <XpFloatsVue floats={floats} />
 
-      <main
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "12px 12px calc(80px + var(--safe-bottom))",
-          display: "flex",
-          flexDirection: "column",
-          gap: 14,
-        }}
-      >
+      <main style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
+        {brocanteBg && (
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 0,
+              backgroundImage: `linear-gradient(rgba(15,30,22,0.42), rgba(15,30,22,0.42)), url("${brocanteBg}")`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "blur(7px)",
+              transform: "scale(1.08)",
+            }}
+          />
+        )}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            height: "100%",
+            overflowY: "auto",
+            padding: "12px 12px 16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+          }}
+        >
         {/* Horloge */}
         <section
           style={{
@@ -762,27 +858,6 @@ export default function VitrineJourneePage() {
             {tr(d.vente.enTeteVitrine, { heure: heureCourante() })}
           </div>
           <Horloge tempsRestant={tempsRestant} progress={progress} />
-          {activeDebloquee(state, "criee") && (
-            <div style={{ marginTop: 8 }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={jouerCriee}
-                disabled={
-                  !!clientActuel ||
-                  tempsRestant < CRIEE_INTERVALLE_SEC * CRIEE_NB_CLIENTS ||
-                  usagesRestants(state.activesUtilisees, "criee", state.jourActuel, state.brocanteur.niveau) === 0
-                }
-              >
-                {`📣 ${libelleActive("criee", d)} (${usagesRestants(
-                  state.activesUtilisees,
-                  "criee",
-                  state.jourActuel,
-                  state.brocanteur.niveau,
-                )})`}
-              </Button>
-            </div>
-          )}
         </section>
 
         {/* Articles sur l'étal */}
@@ -792,7 +867,8 @@ export default function VitrineJourneePage() {
               textAlign: "center",
               fontFamily: "var(--font-serif)",
               fontStyle: "italic",
-              color: "var(--ink-500)",
+              color: "var(--paper-100)",
+              textShadow: "0 1px 4px rgba(0,0,0,0.65)",
               padding: "16px 0",
             }}
           >
@@ -905,17 +981,48 @@ export default function VitrineJourneePage() {
             </ul>
           )}
         </section>
+        </div>
       </main>
 
-      <ActionFab
-        buttons={[
-          {
-            label: d.vente.baisserRideau,
-            variant: "secondary",
-            onClick: handleFermerEnAvance,
-          },
-        ]}
-      />
+      {/* Header bas partagé : Sortir + dock d'atouts (zIndex 50 : reste
+          visible et actionnable au-dessus de la sheet de négociation). */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 50,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "var(--forest-800)",
+          borderTop: "3px solid var(--brass-500)",
+          padding: "8px 16px calc(8px + var(--safe-bottom))",
+        }}
+      >
+        <button
+          type="button"
+          aria-label={d.chine.sortir}
+          onClick={handleFermerEnAvance}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: "var(--brass-300)",
+            fontFamily: "var(--font-mono)",
+            fontSize: "clamp(10px, 2.6vw, 12px)",
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            padding: 0,
+          }}
+        >
+          <DoorOpen size={26} strokeWidth={2} />
+          {d.chine.sortir}
+        </button>
+
+        <SkillDock skills={dockSkills()} />
+      </div>
 
       {clientActuel && !journeeFinie && (
         <NegociationSheet
@@ -1005,6 +1112,7 @@ export default function VitrineJourneePage() {
           }
           offreJoueur={offreJoueur}
           onChangeOffre={setOffreJoueur}
+          bottomOffset="calc(71px + var(--safe-bottom))"
         />
       )}
 
@@ -1155,51 +1263,6 @@ function ArticleSurEtal({
         </div>
       }
     />
-  );
-}
-
-function FinDeJournee({
-  ventes,
-  onRetour,
-}: {
-  ventes: number;
-  onRetour: () => void;
-}) {
-  const { d, tr } = useLangue();
-  return (
-    <div style={{ marginTop: 24, textAlign: "center" }}>
-      <DecoDivider />
-      <p
-        style={{
-          fontFamily: "var(--font-serif)",
-          fontStyle: "italic",
-          fontSize: 17,
-          color: "var(--ink-700)",
-          margin: "18px 0 8px",
-        }}
-      >
-        {ventes === 0
-          ? d.vente.journeeSansVente
-          : ventes === 1
-          ? d.vente.journeeUneVente
-          : tr(d.vente.journeeVentesInscrites, { n: ventes })}
-      </p>
-      <p
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 10.5,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--brass-700)",
-          marginBottom: 18,
-        }}
-      >
-        {d.vente.invendusRetour}
-      </p>
-      <Button variant="primary" size="lg" onClick={onRetour}>
-        {d.vente.rentrerQg}
-      </Button>
-    </div>
   );
 }
 
