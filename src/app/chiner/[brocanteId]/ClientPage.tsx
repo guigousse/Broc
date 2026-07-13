@@ -422,14 +422,6 @@ export default function SessionChinePage() {
                   setNegoOuverte(null);
                 }}
                 onAcheterDirect={() => handleAcheter(item.id)}
-                tchatche={
-                  activeDebloquee(state, "tchatche")
-                    ? {
-                        restantes: usagesRestants(state.activesUtilisees, "tchatche", state.jourActuel, state.brocanteur.niveau),
-                        consommer: () => utiliserActive("tchatche"),
-                      }
-                    : undefined
-                }
               />
             )}
           />

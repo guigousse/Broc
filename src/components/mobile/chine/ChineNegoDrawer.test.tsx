@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { ChineNegoDrawer } from "./ChineNegoDrawer";
 import { createMockObjet } from "@/lib/__test-fixtures__/gameState";
+import { relancerNegociation } from "@/lib/negociation";
 import type { NegociationState, NegoPersona, ObjetEnVente } from "@/types/game";
 
 afterEach(cleanup);
@@ -44,13 +45,9 @@ function makeItem(negociation: NegociationState | null): ObjetEnVente {
   };
 }
 
-function renderDrawer(
-  item: ObjetEnVente,
-  consommer: () => boolean,
-  restantes = 2,
-) {
+function renderDrawer(item: ObjetEnVente) {
   const onUpdateNego = vi.fn();
-  render(
+  const vue = render(
     <ChineNegoDrawer
       item={item}
       budget={1000}
@@ -61,56 +58,46 @@ function renderDrawer(
       onUpdateNego={onUpdateNego}
       onConclu={() => {}}
       onAcheterDirect={() => {}}
-      tchatche={{ restantes, consommer }}
     />,
   );
-  return { onUpdateNego };
+  return { onUpdateNego, vue };
 }
 
-describe("ChineNegoDrawer — La Tchatche (N15)", () => {
-  it("ne consomme pas le quota sur une négo « conclu » (le bouton n'apparaît même pas)", () => {
-    const consommer = vi.fn(() => true);
-    const item = makeItem(makeNego({ statut: "conclu" }));
-    renderDrawer(item, consommer);
-
-    expect(screen.queryByText(/La Tchatche/)).toBeNull();
-    expect(consommer).not.toHaveBeenCalled();
+describe("ChineNegoDrawer — Tchatche déplacée dans le dock", () => {
+  it("n'affiche plus de bouton Tchatche sur une négo fâchée", () => {
+    renderDrawer(makeItem(makeNego({ statut: "fache" })));
+    expect(screen.queryByText(/Tchatche/)).toBeNull();
   });
 
-  it("sur une négo « fache », consomme le quota et rouvre la négo", () => {
-    const consommer = vi.fn(() => true);
-    const item = makeItem(makeNego({ statut: "fache" }));
-    const { onUpdateNego } = renderDrawer(item, consommer);
-
-    const btn = screen.getByText(/La Tchatche/);
-    fireEvent.click(btn);
-
-    expect(consommer).toHaveBeenCalledTimes(1);
-    expect(onUpdateNego).toHaveBeenCalledTimes(1);
-    expect(onUpdateNego.mock.calls[0][0].statut).toBe("en_cours");
+  it("n'affiche plus de bouton Tchatche sur un refus poli", () => {
+    renderDrawer(makeItem(makeNego({ statut: "refus_poli" })));
+    expect(screen.queryByText(/Tchatche/)).toBeNull();
   });
+});
 
-  it("si consommer() renvoie false (quota épuisé côté état global), la négo reste inchangée", () => {
-    const consommer = vi.fn(() => false);
-    const item = makeItem(makeNego({ statut: "fache" }));
-    const { onUpdateNego } = renderDrawer(item, consommer);
+describe("ChineNegoDrawer — resynchronisation externe", () => {
+  it("reflète une relance venue de l'extérieur (dock) : la négo redevient jouable", () => {
+    const fache = makeNego({ statut: "fache" });
+    const item = makeItem(fache);
+    const { vue } = renderDrawer(item);
+    // Fâché : pas de bouton Proposer.
+    expect(screen.queryByText(/Proposer/)).toBeNull();
 
-    const btn = screen.getByText(/La Tchatche/);
-    fireEvent.click(btn);
-
-    expect(consommer).toHaveBeenCalledTimes(1);
-    expect(onUpdateNego).not.toHaveBeenCalled();
-  });
-
-  it("restantes à 0 : le bouton reste affiché mais désactivé, pas caché", () => {
-    const consommer = vi.fn(() => true);
-    const item = makeItem(makeNego({ statut: "fache" }));
-    renderDrawer(item, consommer, 0);
-
-    const btn = screen.getByText(/La Tchatche/) as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-
-    fireEvent.click(btn);
-    expect(consommer).not.toHaveBeenCalled();
+    // Le dock relance : nouvel objet negociation (référence différente).
+    const relance = relancerNegociation(fache);
+    vue.rerender(
+      <ChineNegoDrawer
+        item={{ ...item, negociation: relance }}
+        budget={1000}
+        plein={false}
+        expanded={true}
+        onExpand={() => {}}
+        onCollapse={() => {}}
+        onUpdateNego={() => {}}
+        onConclu={() => {}}
+        onAcheterDirect={() => {}}
+      />,
+    );
+    expect(screen.getByText(/Proposer/)).toBeTruthy();
   });
 });

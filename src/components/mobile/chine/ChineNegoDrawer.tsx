@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { NegoBar } from "@/components/mobile/NegoBar";
 import { HumeurGauge } from "@/components/mobile/HumeurGauge";
-import { proposerOffre, ouvrirNegociation, relancerNegociation } from "@/lib/negociation";
+import { proposerOffre, ouvrirNegociation } from "@/lib/negociation";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomVendeur, texteNego } from "@/lib/i18n/contenu";
-import { libelleActive } from "@/lib/i18n/libelles";
 import type { NegociationState, ObjetEnVente } from "@/types/game";
 
 /**
@@ -30,7 +29,6 @@ export function ChineNegoDrawer({
   onUpdateNego,
   onConclu,
   onAcheterDirect,
-  tchatche,
 }: {
   item: ObjetEnVente;
   budget: number;
@@ -43,8 +41,6 @@ export function ChineNegoDrawer({
   onUpdateNego: (nego: NegociationState) => void;
   onConclu: (prixFinal: number) => void;
   onAcheterDirect: () => void;
-  /** Active de chine « La Tchatche » (N15) : rouvre une négo fâchée/refusée. */
-  tchatche?: { restantes: number; consommer: () => boolean };
 }) {
   const { d, tr, locale } = useLangue();
   const { prixVendeur, statut, persona } = item;
@@ -62,6 +58,16 @@ export function ChineNegoDrawer({
     Math.max(1, Math.round(prixVendeur * 0.25)),
   );
 
+  // Resynchronise quand la négo change de l'EXTÉRIEUR (relance Tchatche depuis
+  // le dock). Garde anti-boucle : onUpdateNego republie l'objet localNego
+  // lui-même (même référence), donc seule une écriture externe déclenche.
+  useEffect(() => {
+    if (item.negociation && item.negociation !== localNego) {
+      setLocalNego(item.negociation);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.negociation]);
+
   const enCours = localNego.statut === "en_cours";
   const estFache =
     localNego.statut === "fache" || localNego.humeur >= HUMEUR_FACHE_SEUIL;
@@ -76,20 +82,6 @@ export function ChineNegoDrawer({
       audioManager.playCash();
       setTimeout(() => onConclu(offreJoueur), 600);
     }
-  };
-
-  const handleRelancer = () => {
-    if (!tchatche) return;
-    // relancerNegociation renvoie l'état INCHANGÉ (identité) si le statut
-    // n'est ni "fache" ni "refus_poli" — notamment "conclu" (achat raté sur
-    // budget après une négo conclue, drawer refermé puis rouvert). On calcule
-    // AVANT de consommer : sinon le quota persistant de La Tchatche est brûlé
-    // pour un effet nul.
-    const next = relancerNegociation(localNego);
-    if (next === localNego) return;
-    if (!tchatche.consommer()) return;
-    setLocalNego(next);
-    onUpdateNego(next);
   };
 
   return (
@@ -116,7 +108,7 @@ export function ChineNegoDrawer({
               </button>
               <button
                 type="button"
-                style={btn(acheterDisabled)}
+                style={{ ...btn(acheterDisabled), flex: 1.3 }}
                 disabled={acheterDisabled}
                 onClick={onAcheterDirect}
               >
@@ -145,25 +137,13 @@ export function ChineNegoDrawer({
           />
           <div style={negoBtnRow}>
             {localNego.statut === "refus_poli" ? (
-              <>
-                {tchatche && (
-                  <button
-                    type="button"
-                    style={btnSecondaryState(tchatche.restantes === 0)}
-                    disabled={tchatche.restantes === 0}
-                    onClick={handleRelancer}
-                  >
-                    💬 {libelleActive("tchatche", d)} ({tchatche.restantes})
-                  </button>
-                )}
-                <button
-                  type="button"
-                  style={tchatche ? btnPrimary : { ...btnPrimary, gridColumn: "1 / -1" }}
-                  onClick={() => onConclu(localNego.prixAdverseCourant)}
-                >
-                  {tr(d.chine.acheterPrixAffiche, { prix: localNego.prixAdverseCourant })}
-                </button>
-              </>
+              <button
+                type="button"
+                style={{ ...btnPrimary, gridColumn: "1 / -1" }}
+                onClick={() => onConclu(localNego.prixAdverseCourant)}
+              >
+                {tr(d.chine.acheterPrixAffiche, { prix: localNego.prixAdverseCourant })}
+              </button>
             ) : enCours ? (
               <>
                 <button type="button" style={btnSecondary} onClick={onCollapse}>
@@ -177,32 +157,15 @@ export function ChineNegoDrawer({
               </>
             ) : (
               // Couvre "fache" ET "conclu" (drawer refermé puis rouvert après
-              // un achat raté sur budget). La Tchatche ne rouvre que "fache" —
-              // sur "conclu" le bouton ne doit pas apparaître (quota épuisé →
-              // désactivé, mais toujours affiché avec son compteur).
-              <>
-                {localNego.statut === "fache" && tchatche && (
-                  <button
-                    type="button"
-                    style={btnSecondaryState(tchatche.restantes === 0)}
-                    disabled={tchatche.restantes === 0}
-                    onClick={handleRelancer}
-                  >
-                    💬 {libelleActive("tchatche", d)} ({tchatche.restantes})
-                  </button>
-                )}
-                <button
-                  type="button"
-                  style={
-                    localNego.statut === "fache" && tchatche
-                      ? { ...btnSecondary, gridColumn: "2 / 3" }
-                      : { ...btnSecondary, gridColumn: "1 / -1" }
-                  }
-                  onClick={onCollapse}
-                >
-                  {d.commun.fermer}
-                </button>
-              </>
+              // un achat raté sur budget). La relance fâché/refus vit dans le
+              // dock de compétences (La Tchatche).
+              <button
+                type="button"
+                style={{ ...btnSecondary, gridColumn: "1 / -1" }}
+                onClick={onCollapse}
+              >
+                {d.commun.fermer}
+              </button>
             )}
           </div>
         </div>
@@ -326,8 +289,7 @@ const btnBase: CSSProperties = {
   border: "2px solid var(--brass-600)",
   fontFamily: "var(--font-display)",
   fontWeight: 700,
-  fontSize: 15,
-  whiteSpace: "nowrap",
+  fontSize: "clamp(12px, 3.4vw, 15px)",
   textAlign: "center",
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8), 0 1px 2px rgba(40,25,5,0.18)",
   cursor: "pointer",
