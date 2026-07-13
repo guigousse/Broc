@@ -7,12 +7,10 @@ import { HumeurGauge } from "@/components/mobile/HumeurGauge";
 import { PersonaAvatar } from "@/components/mobile/PersonaAvatar";
 import type { PersonaInfo } from "@/components/mobile/PersonaInfoOverlay";
 import { ouvrirNegociation } from "@/lib/negociation";
-import { appliquerBoniment } from "@/lib/vitrine";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { texteNego } from "@/lib/i18n/contenu";
-import { libelleActive } from "@/lib/i18n/libelles";
 import type { NegoMode, NegoPersona, NegociationState } from "@/types/game";
 
 interface NegociationSheetProps {
@@ -51,14 +49,11 @@ interface NegociationSheetProps {
     onAccepter: () => void;
     onRefuser: () => void;
   };
-  /** Active de vente « Le Boniment » (N13) : closing sur l'offre courante du
-   *  joueur. Le sheet calcule lui-même le nouvel état via `appliquerBoniment`
-   *  (même pattern que « La Tchatche » en chine) et le propage. */
-  boniment?: { restantes: number; consommer: () => boolean };
-  /** Active de vente « Le Lot garni » (N7) : ajoute un 2e objet au panier.
-   *  La mutation (panier + prix) touche aussi l'état client côté page —
-   *  c'est donc le parent qui l'effectue ; le sheet ne fait qu'ouvrir le picker. */
-  lotGarni?: { restantes: number; onOuvrir: () => void };
+  /** Offre courante du joueur — contrôlée par la page (le dock Boniment en dépend). */
+  offreJoueur: number;
+  onChangeOffre: (offre: number) => void;
+  /** Pass-through vers BottomSheet : laisse le dock d'atouts visible sous la sheet. */
+  bottomOffset?: string;
 }
 
 export function NegociationSheet({
@@ -79,8 +74,9 @@ export function NegociationSheet({
   illustrationSrc,
   illustrationFacheSrc,
   venteDirecte,
-  boniment,
-  lotGarni,
+  offreJoueur,
+  onChangeOffre,
+  bottomOffset,
 }: NegociationSheetProps) {
   const { d, tr, locale } = useLangue();
   const [localNego, setLocalNego] = useState<NegociationState>(
@@ -94,19 +90,6 @@ export function NegociationSheet({
       );
     }
   }, [open, nego, mode, prixDepartAdverse, cibleSecrete]);
-
-  // Position de départ du curseur joueur :
-  // achat → 25 % de l'échelle (proposition basse neutre)
-  // vente → bord droit (prix demandé), on défend son prix
-  const offreInitialeJoueur =
-    mode === "achat"
-      ? Math.max(1, Math.round(echelleMax * 0.25))
-      : echelleMax;
-
-  const [offreJoueur, setOffreJoueur] = useState<number>(offreInitialeJoueur);
-  useEffect(() => {
-    if (open) setOffreJoueur(offreInitialeJoueur);
-  }, [open, offreInitialeJoueur]);
 
   const enCours = localNego.statut === "en_cours";
 
@@ -133,20 +116,6 @@ export function NegociationSheet({
     }
   };
 
-  const handleBoniment = () => {
-    if (!boniment || !boniment.consommer()) return;
-    const next = appliquerBoniment(localNego, offreJoueur);
-    setLocalNego(next);
-    onUpdateNego(next);
-
-    if (next.statut === "conclu") {
-      audioManager.playCash();
-      setTimeout(() => {
-        onConclu(next.prixAdverseCourant);
-      }, 600);
-    }
-  };
-
   const handleAbandonner = () => {
     onClose();
   };
@@ -167,6 +136,7 @@ export function NegociationSheet({
       open={open}
       onClose={onClose}
       title={title}
+      bottomOffset={bottomOffset}
       topDecoration={
         <PersonaAvatar
           message={bubbleMessage}
@@ -209,34 +179,10 @@ export function NegociationSheet({
             prixJoueur={offreJoueur}
             minJoueur={minJoueur}
             maxJoueur={maxJoueur}
-            onChangeJoueur={setOffreJoueur}
+            onChangeJoueur={onChangeOffre}
             readOnly={!enCours}
           />
           <HumeurGauge humeur={localNego.humeur} />
-          {enCours && (lotGarni || boniment) && (
-            <div style={activeBtnRowStyle}>
-              {lotGarni && (
-                <button
-                  type="button"
-                  style={btnActiveState(lotGarni.restantes === 0)}
-                  disabled={lotGarni.restantes === 0}
-                  onClick={lotGarni.onOuvrir}
-                >
-                  🧺 {libelleActive("lotGarni", d)} ({lotGarni.restantes})
-                </button>
-              )}
-              {boniment && (
-                <button
-                  type="button"
-                  style={btnActiveState(boniment.restantes === 0)}
-                  disabled={boniment.restantes === 0}
-                  onClick={handleBoniment}
-                >
-                  🎩 {libelleActive("boniment", d)} ({boniment.restantes})
-                </button>
-              )}
-            </div>
-          )}
           <div style={btnRowStyle}>
             {localNego.statut === "refus_poli" && mode === "achat" ? (
               <button
@@ -340,37 +286,6 @@ const btnRowStyle: CSSProperties = {
   gap: 6,
   marginTop: 10,
 };
-
-const activeBtnRowStyle: CSSProperties = {
-  display: "flex",
-  gap: 6,
-  marginTop: 10,
-  flexWrap: "wrap",
-};
-
-const btnActive: CSSProperties = {
-  padding: "6px 10px",
-  fontFamily: "var(--font-display)",
-  fontSize: 10,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  background: "var(--paper-100)",
-  color: "var(--forest-800)",
-  border: "1.5px dashed var(--brass-700)",
-  cursor: "pointer",
-  lineHeight: 1.15,
-  flex: "1 1 auto",
-};
-
-/** Variante désactivée (quota d'active épuisé) : bouton toujours visible,
- *  mais grisé — reprend le pattern disabled de Flair/Fouille (opacité ~0.45). */
-function btnActiveState(disabled: boolean): CSSProperties {
-  return {
-    ...btnActive,
-    opacity: disabled ? 0.45 : 1,
-    cursor: disabled ? "not-allowed" : "pointer",
-  };
-}
 
 const btnPrimary: CSSProperties = {
   padding: "8px 6px",

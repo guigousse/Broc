@@ -175,6 +175,8 @@ export default function VitrineJourneePage() {
   const [clientActuel, setClientActuel] = useState<ClientEvent | null>(null);
   const [journal, setJournal] = useState<EntreeJournal[]>([]);
   const [negoVente, setNegoVente] = useState<NegociationState | null>(null);
+  /** Offre courante du joueur dans la négo (liftée : le dock Boniment en dépend). */
+  const [offreJoueur, setOffreJoueur] = useState(0);
   const [journeeFinie, setJourneeFinie] = useState(false);
   const [ventesEffectuees, setVentesEffectuees] = useState<VenteHistorique[]>([]);
   const [fancyClientApparu, setFancyClientApparu] = useState(false);
@@ -314,6 +316,7 @@ export default function VitrineJourneePage() {
     );
     setClientActuel(evNext);
     setNegoVente(negoNext);
+    setOffreJoueur(evNext.prixDemande);
     setLotGarniOuvert(false);
   };
 
@@ -467,6 +470,7 @@ export default function VitrineJourneePage() {
             if (ev.fancy) setFancyClientApparu(true);
             if (forceCelebrite) celebriteApparueRef.current = true;
             setClientActuel(ev);
+            setOffreJoueur(ev.prixDemande);
             setRevelationFaite(false);
             if (ev.mode === "negociation") {
               setNegoVente(ouvrirNegociation("vente", ev.offreInitiale, ev.prixMax));
@@ -999,36 +1003,8 @@ export default function VitrineJourneePage() {
                 }
               : undefined
           }
-          boniment={
-            clientActuel.mode === "negociation" &&
-            activeDebloquee(state, "boniment")
-              ? {
-                  restantes: usagesRestants(
-                    state.activesUtilisees,
-                    "boniment",
-                    state.jourActuel,
-                    state.brocanteur.niveau,
-                  ),
-                  consommer: () => utiliserActive("boniment"),
-                }
-              : undefined
-          }
-          lotGarni={
-            clientActuel.mode === "negociation" &&
-            activeDebloquee(state, "lotGarni") &&
-            clientActuel.panier.length < 2 &&
-            objetsAjoutablesLotGarni.length > 0
-              ? {
-                  restantes: usagesRestants(
-                    state.activesUtilisees,
-                    "lotGarni",
-                    state.jourActuel,
-                    state.brocanteur.niveau,
-                  ),
-                  onOuvrir: () => setLotGarniOuvert(true),
-                }
-              : undefined
-          }
+          offreJoueur={offreJoueur}
+          onChangeOffre={setOffreJoueur}
         />
       )}
 
