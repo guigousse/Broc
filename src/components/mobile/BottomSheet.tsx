@@ -24,6 +24,12 @@ interface BottomSheetProps {
    * le bouton Fermer reste accessible en haut à droite.
    */
   topDecoration?: ReactNode;
+  /**
+   * Décalage du bord bas (longueur CSS), pour laisser visible une barre fixe
+   * sous la sheet (ex : dock d'atouts du mode vente). Le safe-area est censé
+   * être géré par la barre en dessous — le paddingBottom retombe à 16px.
+   */
+  bottomOffset?: string;
 }
 
 const scrimStyle: CSSProperties = {
@@ -34,11 +40,11 @@ const scrimStyle: CSSProperties = {
   animation: "broc-fade-in 160ms ease",
 };
 
-const sheetWrap = (maxHeightPct: number): CSSProperties => ({
+const sheetWrap = (maxHeightPct: number, bottomOffset?: string): CSSProperties => ({
   position: "fixed",
   left: 0,
   right: 0,
-  bottom: 0,
+  bottom: bottomOffset ?? 0,
   zIndex: 41,
   background: "var(--paper-200)",
   borderTop: "2px solid var(--forest-800)",
@@ -47,7 +53,7 @@ const sheetWrap = (maxHeightPct: number): CSSProperties => ({
   maxHeight: `${maxHeightPct}%`,
   display: "flex",
   flexDirection: "column",
-  paddingBottom: "calc(16px + var(--safe-bottom))",
+  paddingBottom: bottomOffset ? 16 : "calc(16px + var(--safe-bottom))",
   animation: "broc-slide-up 200ms ease",
   touchAction: "none",
 });
@@ -81,6 +87,7 @@ export function BottomSheet({
   children,
   maxHeightPct = 88,
   topDecoration,
+  bottomOffset,
 }: BottomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -157,7 +164,7 @@ export function BottomSheet({
       <div style={scrimStyle} onClick={onClose} aria-hidden />
       <div
         ref={sheetRef}
-        style={{ ...sheetWrap(maxHeightPct), ...dragStyle }}
+        style={{ ...sheetWrap(maxHeightPct, bottomOffset), ...dragStyle }}
         role="dialog"
         aria-modal="true"
       >
