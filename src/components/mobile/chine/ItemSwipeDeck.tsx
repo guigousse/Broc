@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent,
   type ReactNode,
 } from "react";
@@ -13,7 +14,6 @@ import { ChineMystereDrawer } from "./ChineMystereDrawer";
 import { sonsRevelation } from "@/lib/chine/revelationSons";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleActive } from "@/lib/i18n/libelles";
 import type { ObjetEnVente } from "@/types/game";
 
 const SWIPE_SEUIL_PX = 40;
@@ -26,9 +26,7 @@ export function ItemSwipeDeck({
   onQuitter,
   renderNegoDrawer,
   onNavigate,
-  fouilleDebloquee,
-  fouilleRestants,
-  onFouille,
+  renderDock,
 }: {
   slides: ChineSlide[];
   plein: boolean;
@@ -39,14 +37,10 @@ export function ItemSwipeDeck({
   renderNegoDrawer?: (item: ObjetEnVente) => ReactNode;
   /** Appelé à chaque changement de carte (replie la négo en cours). */
   onNavigate?: () => void;
-  /** La Fouille (N9) : compétence active débloquée (contrôle la visibilité du bouton par carte). */
-  fouilleDebloquee?: boolean;
-  /** Usages restants de la Fouille pour aujourd'hui. */
-  fouilleRestants?: number;
-  /** Déclenche le remplacement de la carte courante. */
-  onFouille?: (item: ObjetEnVente) => void;
+  /** Dock de compétences rendu à droite du bouton Sortir (reçoit la carte courante). */
+  renderDock?: (currentItem: ObjetEnVente | null) => ReactNode;
 }) {
-  const { d, tr } = useLangue();
+  const { d } = useLangue();
   const [index, setIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -180,6 +174,31 @@ export function ItemSwipeDeck({
         </div>
       </div>
 
+      {/* Navigation ◀ 1/6 ▶ sous l'image, position stable entre les slides. */}
+      <div style={navRow}>
+        <button
+          type="button"
+          aria-label={d.chine.precedent}
+          onClick={() => go(-1)}
+          disabled={clampedIdx === 0}
+          style={navBtn(clampedIdx === 0)}
+        >
+          <ChevronLeft size={26} />
+        </button>
+        <span style={navCompteur}>
+          {clampedIdx + 1} / {slides.length}
+        </span>
+        <button
+          type="button"
+          aria-label={d.sheets.suivant}
+          onClick={() => go(1)}
+          disabled={clampedIdx === slides.length - 1}
+          style={navBtn(clampedIdx === slides.length - 1)}
+        >
+          <ChevronRight size={26} />
+        </button>
+      </div>
+
       {currentSlide?.kind === "mystere" && (
         <div key="mystere-drawer" style={{ animation: "broc-fade-in 500ms ease" }}>
           <ChineMystereDrawer
@@ -247,59 +266,36 @@ export function ItemSwipeDeck({
           {d.chine.sortir}
         </button>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {currentItem &&
-            fouilleDebloquee &&
-            currentItem.statut !== "achete" &&
-            currentItem.negociation?.statut !== "en_cours" && (
-              <button
-                type="button"
-                aria-label={tr(d.chine.fouilleAriaLabel, { nom: libelleActive("fouille", d) })}
-                onClick={() => onFouille?.(currentItem)}
-                disabled={!fouilleRestants}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "transparent",
-                  border: "1.5px solid var(--brass-500)",
-                  borderRadius: 8,
-                  color: "var(--brass-300)",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "clamp(10px, 2.6vw, 12px)",
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  padding: "4px 8px",
-                  cursor: fouilleRestants ? "pointer" : "default",
-                  opacity: fouilleRestants ? 1 : 0.4,
-                }}
-              >
-                🧹 Fouille ({fouilleRestants ?? 0})
-              </button>
-            )}
-          <button
-            type="button"
-            aria-label={d.chine.precedent}
-            onClick={() => go(-1)}
-            disabled={clampedIdx === 0}
-            style={{ background: "transparent", border: "none", cursor: clampedIdx === 0 ? "default" : "pointer", color: "var(--brass-300)", opacity: clampedIdx === 0 ? 0.3 : 1, padding: 0 }}
-          >
-            <ChevronLeft size={28} />
-          </button>
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--brass-700)", minWidth: 48, textAlign: "center" }}>
-            {clampedIdx + 1} / {slides.length}
-          </span>
-          <button
-            type="button"
-            aria-label={d.sheets.suivant}
-            onClick={() => go(1)}
-            disabled={clampedIdx === slides.length - 1}
-            style={{ background: "transparent", border: "none", cursor: clampedIdx === slides.length - 1 ? "default" : "pointer", color: "var(--brass-300)", opacity: clampedIdx === slides.length - 1 ? 0.3 : 1, padding: 0 }}
-          >
-            <ChevronRight size={28} />
-          </button>
-        </div>
+        {renderDock?.(currentItem)}
       </div>
     </div>
   );
 }
+
+/** Barre ◀ 1/6 ▶ sous l'image (au-dessus du tiroir vendeur). */
+const navRow: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 14,
+  padding: "2px 0 6px",
+};
+
+const navBtn = (disabled: boolean): CSSProperties => ({
+  background: "transparent",
+  border: "none",
+  cursor: disabled ? "default" : "pointer",
+  color: "var(--brass-300)",
+  opacity: disabled ? 0.3 : 1,
+  padding: 0,
+  filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))",
+});
+
+const navCompteur: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  color: "var(--paper-100)",
+  textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+  minWidth: 48,
+  textAlign: "center",
+};

@@ -334,13 +334,3 @@ const btnSecondary: CSSProperties = {
   color: "var(--forest-800)",
   gridColumn: "1 / 2",
 };
-
-/** Variante désactivée (quota d'active épuisé) : bouton toujours visible,
- *  mais grisé — reprend le pattern disabled de Flair/Fouille (opacité ~0.45). */
-function btnSecondaryState(disabled: boolean): CSSProperties {
-  return {
-    ...btnSecondary,
-    opacity: disabled ? 0.45 : 1,
-    cursor: disabled ? "not-allowed" : "pointer",
-  };
-}

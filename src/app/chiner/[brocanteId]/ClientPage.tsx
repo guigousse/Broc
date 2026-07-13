@@ -26,7 +26,9 @@ import {
   estDebloquee,
 } from "@/lib/deblocage";
 import { genererRemplacement, genererSession, uniquesExclusDuChinage } from "@/lib/chine";
-import { activeDebloquee, usagesRestants } from "@/lib/actives";
+import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
+import { ChineSkillDock, type DockSkill } from "@/components/mobile/chine/ChineSkillDock";
+import { relancerNegociation } from "@/lib/negociation";
 import { aConnaisseurChinage } from "@/lib/competences";
 import { energieCourante } from "@/lib/energie";
 import { placeRestante, stockageEstPlein } from "@/lib/stockage";
@@ -224,6 +226,17 @@ export default function SessionChinePage() {
     setItems((prev) => (prev ? prev.map((x) => (x.id === it.id ? remplacement : x)) : prev));
   };
 
+  /** La Tchatche (N25) : rouvre la négo fâchée/refusée de la carte courante. */
+  const jouerTchatche = (it: ObjetEnVente) => {
+    if (!it.negociation) return;
+    // Calcule AVANT de consommer : relancerNegociation renvoie l'état inchangé
+    // (identité) hors "fache"/"refus_poli" — ne pas brûler le quota pour rien.
+    const next = relancerNegociation(it.negociation);
+    if (next === it.negociation) return;
+    if (!utiliserActive("tchatche")) return;
+    setItem(it.id, { negociation: next });
+  };
+
   /** Achat au prix affiché (bouton direct). */
   const handleAcheter = (id: string) => {
     const it = items.find((x) => x.id === id);
@@ -314,6 +327,63 @@ export default function SessionChinePage() {
     );
   }
 
+  /** Les 3 atouts du chinage, dans l'ordre de déblocage (cercles du header bas). */
+  const dockSkills = (currentItem: ObjetEnVente | null): DockSkill[] => {
+    const niveau = state.brocanteur.niveau;
+    const commun = (id: Exclude<ActiveId, "diplomate">, emoji: string) => {
+      const verrouille = !activeDebloquee(state, id);
+      const nom = libelleActive(id, d);
+      const restants = usagesRestants(state.activesUtilisees, id, state.jourActuel, niveau);
+      return {
+        id,
+        nom,
+        imageSrc: `/competences/atout.${id}.webp`,
+        emojiFallback: emoji,
+        verrouille,
+        niveauRequis: NIVEAU_ACTIVES[id],
+        restants,
+        ariaLabel: verrouille
+          ? tr(d.chine.atoutVerrouilleAria, { nom, niveau: NIVEAU_ACTIVES[id] })
+          : tr(d.chine.atoutAria, { nom, restants }),
+        onActivate: () => {
+          if (verrouille) {
+            toast(tr(d.chine.atoutVerrouilleToast, { nom, niveau: NIVEAU_ACTIVES[id] }), { type: "info" });
+          }
+        },
+      };
+    };
+
+    const flair = commun("flair", "🔍");
+    const fouille = commun("fouille", "🧹");
+    const tchatche = commun("tchatche", "💬");
+    const negoStatut = currentItem?.negociation?.statut;
+    return [
+      {
+        ...flair,
+        actif: flairActif,
+        ariaLabel: flairActif ? tr(d.chine.atoutActifAria, { nom: flair.nom }) : flair.ariaLabel,
+        onActivate: flair.verrouille ? flair.onActivate : jouerFlair,
+      },
+      {
+        ...fouille,
+        desactive:
+          !currentItem ||
+          currentItem.statut === "achete" ||
+          currentItem.negociation?.statut === "en_cours",
+        onActivate: fouille.verrouille
+          ? fouille.onActivate
+          : () => currentItem && jouerFouille(currentItem),
+      },
+      {
+        ...tchatche,
+        desactive: negoStatut !== "fache" && negoStatut !== "refus_poli",
+        onActivate: tchatche.verrouille
+          ? tchatche.onActivate
+          : () => currentItem && jouerTchatche(currentItem),
+      },
+    ];
+  };
+
   return (
     <div
       style={{
@@ -326,47 +396,6 @@ export default function SessionChinePage() {
     >
       <MobileHeader budget={state.budget} />
       <XpFloatsVue floats={floats} />
-      {activeDebloquee(state, "flair") && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            padding: "6px 14px",
-            background: "var(--forest-800)",
-            borderBottom: "1px solid var(--brass-700)",
-          }}
-        >
-          <button
-            type="button"
-            onClick={jouerFlair}
-            disabled={flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel, state.brocanteur.niveau) <= 0}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "transparent",
-              border: "1.5px solid var(--brass-500)",
-              borderRadius: 8,
-              color: "var(--brass-300)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "clamp(10px, 2.6vw, 12px)",
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              padding: "4px 10px",
-              cursor:
-                flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel, state.brocanteur.niveau) <= 0
-                  ? "default"
-                  : "pointer",
-              opacity:
-                flairActif || usagesRestants(state.activesUtilisees, "flair", state.jourActuel, state.brocanteur.niveau) <= 0
-                  ? 0.4
-                  : 1,
-            }}
-          >
-            🔍 {libelleActive("flair", d)} ({usagesRestants(state.activesUtilisees, "flair", state.jourActuel, state.brocanteur.niveau)})
-          </button>
-        </div>
-      )}
       <main
         style={{
           flex: 1,
@@ -401,9 +430,7 @@ export default function SessionChinePage() {
             onOuvrirBoite={() => setBoiteOuverte(true)}
             onQuitter={handleRentrer}
             onNavigate={() => setNegoOuverte(null)}
-            fouilleDebloquee={activeDebloquee(state, "fouille")}
-            fouilleRestants={usagesRestants(state.activesUtilisees, "fouille", state.jourActuel, state.brocanteur.niveau)}
-            onFouille={jouerFouille}
+            renderDock={(currentItem) => <ChineSkillDock skills={dockSkills(currentItem)} />}
             renderNegoDrawer={(item) => (
               <ChineNegoDrawer
                 key={item.id}
