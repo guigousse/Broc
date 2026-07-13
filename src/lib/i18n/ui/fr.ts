@@ -269,6 +269,11 @@ export const fr = {
     prixMaxLabel: "Prix max : {valeur}",
     fourchetteLabel: "entre {min} et {max} €",
     humeur: "Humeur",
+    atoutAria: "{nom} — {restants} usage(s) restant(s)",
+    atoutActifAria: "{nom} — déjà actif",
+    atoutVerrouilleAria: "{nom} — verrouillé, se débloque au niveau {niveau}",
+    atoutVerrouilleToast: "{nom} — se débloque au niveau {niveau}",
+    dejaPossedeAria: "Déjà possédé dans la collection",
   },
   vente: {
     celebrite: "Célébrité",

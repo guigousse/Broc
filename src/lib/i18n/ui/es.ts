@@ -266,6 +266,11 @@ export const es: DictionnaireUI = {
     prixMaxLabel: "Precio máx.: {valeur}",
     fourchetteLabel: "entre {min} y {max} €",
     humeur: "Humor",
+    atoutAria: "{nom} — {restants} uso(s) restante(s)",
+    atoutActifAria: "{nom} — ya activo",
+    atoutVerrouilleAria: "{nom} — bloqueado, se desbloquea en el nivel {niveau}",
+    atoutVerrouilleToast: "{nom} — se desbloquea en el nivel {niveau}",
+    dejaPossedeAria: "Ya poseído en la colección",
   },
   vente: {
     celebrite: "Celebridad",
