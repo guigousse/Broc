@@ -46,6 +46,7 @@ const slide: ChineSlide = {
   item: makeItem(),
   estRareOuPlus: false,
   coteConnue: false,
+  dejaPossede: false,
 };
 
 describe("bascule des noms d'objets", () => {

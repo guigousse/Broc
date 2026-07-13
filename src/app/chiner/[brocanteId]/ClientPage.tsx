@@ -13,6 +13,7 @@ import {
 import { ItemSwipeDeck } from "@/components/mobile/chine/ItemSwipeDeck";
 import type { ChineSlide } from "@/components/mobile/chine/ChineSlide";
 import { getTemplate } from "@/data/objetTemplates";
+import { templateDejaPossede } from "@/lib/collection";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/components/ui/Toast";
@@ -170,6 +171,7 @@ export default function SessionChinePage() {
         item: it,
         estRareOuPlus: estRareOuPlus(it),
         coteConnue: flairActif || (state ? aConnaisseurChinage(state, it.objet.categorie) : false),
+        dejaPossede: state ? templateDejaPossede(state.collection, it.objet.templateId) : false,
       });
     }
     return liste;
@@ -239,9 +241,7 @@ export default function SessionChinePage() {
     ajouterObjet({ ...it.objet, prixAchat: prix });
     // Aligne l'accumulateur d'affichage sur le +10 de découverte crédité
     // atomiquement par le GameContext (première possession du template).
-    const estDecouverte = !Object.values(state.collection).some((slots) =>
-      slots.some((s) => s.templateId === it.objet.templateId && s.dejaPossede),
-    );
+    const estDecouverte = !templateDejaPossede(state.collection, it.objet.templateId);
     marquerDejaPossedeTemplate(it.objet.templateId);
     if (estDecouverte) {
       setXpBrocanteurSession((prev) => prev + XP_DECOUVERTE_COLLECTION);

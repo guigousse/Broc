@@ -7,6 +7,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+import { Album, Check } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { StarRow } from "@/components/ui/StarRow";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
@@ -81,6 +82,8 @@ export type ChineSlide =
       estRareOuPlus: boolean;
       /** Connaisseur 3 débloqué pour cette catégorie : la cote (valeur de référence) est révélée. */
       coteConnue: boolean;
+      /** Le template a déjà été possédé au moins une fois : badge collection ✓. */
+      dejaPossede: boolean;
     }
   | { kind: "mystere" };
 
@@ -124,36 +127,32 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <ScaleToFit>
         <div style={stickerBox}>
-          {/* Sticker die-cut, comme la collection. */}
-          <div style={stickerImg}>
-            <ItemSticker
-              templateId={objet.templateId}
-              categorie={objet.categorie}
-              fill
-              tilt={false}
-              variant={acquis ? "grise" : "normal"}
-              thumb
-              eager
-              outlinePx={3}
-            />
-          </div>
-
           <div style={titre}>{nomObjet(objet, locale)}</div>
 
           <div style={infoRow}>
             <div style={infoCol}>
-              <StarRow
-                filled={etoileCount(objet.etat)}
-                color={rarity.outer}
-                size={20}
-                gap={3}
-                dropShadow
-                emptyFill="rgba(255,243,213,0.35)"
-                display="flex"
-                aria-label={tr(d.chine.etatAriaLabel, {
-                  etat: libelleEtat(objet.etat, d),
-                })}
-              />
+              <div style={etatLigne}>
+                <StarRow
+                  filled={etoileCount(objet.etat)}
+                  color={rarity.outer}
+                  size={20}
+                  gap={3}
+                  dropShadow
+                  emptyFill="rgba(255,243,213,0.35)"
+                  display="flex"
+                  aria-label={tr(d.chine.etatAriaLabel, {
+                    etat: libelleEtat(objet.etat, d),
+                  })}
+                />
+                {slide.dejaPossede && (
+                  <span role="img" aria-label={d.chine.dejaPossedeAria} style={badgeCollection}>
+                    <Album size={13} strokeWidth={2.2} />
+                    <span style={badgeCheck}>
+                      <Check size={8} strokeWidth={4} />
+                    </span>
+                  </span>
+                )}
+              </div>
               <div style={categorieLigne}>
                 <CategorieIcon categorie={objet.categorie} size={15} color="var(--paper-100)" />
                 <span>{libelleCategorie(objet.categorie, d)}</span>
@@ -167,6 +166,20 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Sticker die-cut, comme la collection. */}
+          <div style={stickerImg}>
+            <ItemSticker
+              templateId={objet.templateId}
+              categorie={objet.categorie}
+              fill
+              tilt={false}
+              variant={acquis ? "grise" : "normal"}
+              thumb
+              eager
+              outlinePx={3}
+            />
           </div>
         </div>
       </ScaleToFit>
@@ -250,4 +263,40 @@ const coteLigne: CSSProperties = {
   letterSpacing: "0.04em",
   color: "var(--brass-700)",
   textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+};
+
+/** Étoiles d'état + badge collection sur la même ligne. */
+const etatLigne: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+};
+
+/** Badge collection : logo Album + ✓ en médaillon, l'objet est déjà possédé. */
+const badgeCollection: CSSProperties = {
+  position: "relative",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 24,
+  height: 24,
+  borderRadius: "50%",
+  border: "1.5px solid var(--brass-300)",
+  background: "rgba(15,30,22,0.55)",
+  color: "var(--paper-100)",
+};
+
+/** Coche verte en médaillon bas-droite du badge. */
+const badgeCheck: CSSProperties = {
+  position: "absolute",
+  right: -4,
+  bottom: -4,
+  width: 13,
+  height: 13,
+  borderRadius: "50%",
+  background: "var(--brass-300)",
+  color: "var(--forest-800)",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
