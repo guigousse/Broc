@@ -248,7 +248,6 @@ export const fr = {
     rienAChiner: "— rien à chiner ici —",
     quitterBrocanteAriaLabel: "Quitter la brocante",
     sortir: "Sortir",
-    fouilleAriaLabel: "{nom} — chercher un autre objet",
     precedent: "Précédent",
     altVendeur: "Vendeur",
     acquisStatut: "— Acquis —",

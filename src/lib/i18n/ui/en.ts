@@ -245,7 +245,6 @@ export const en: DictionnaireUI = {
     rienAChiner: "— nothing to pick here —",
     quitterBrocanteAriaLabel: "Leave the flea market",
     sortir: "Leave",
-    fouilleAriaLabel: "{nom} — search for another item",
     precedent: "Previous",
     altVendeur: "Seller",
     acquisStatut: "— Acquired —",

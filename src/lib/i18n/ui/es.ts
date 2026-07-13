@@ -245,7 +245,6 @@ export const es: DictionnaireUI = {
     rienAChiner: "— nada que rebuscar aquí —",
     quitterBrocanteAriaLabel: "Salir del mercadillo",
     sortir: "Salir",
-    fouilleAriaLabel: "{nom} — buscar otro objeto",
     precedent: "Anterior",
     altVendeur: "Vendedor",
     acquisStatut: "— Adquirido —",

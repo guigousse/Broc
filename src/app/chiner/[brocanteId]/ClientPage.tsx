@@ -211,7 +211,7 @@ export default function SessionChinePage() {
     if (utiliserActive("flair")) setFlairActif(true);
   };
 
-  /** La Fouille (N9) : remplace l'objet ciblé par un nouveau tirage. */
+  /** La Fouille (N15) : remplace l'objet ciblé par un nouveau tirage. */
   const jouerFouille = (it: ObjetEnVente) => {
     if (!items) return;
     if (!utiliserActive("fouille")) return;
@@ -228,6 +228,8 @@ export default function SessionChinePage() {
 
   /** La Tchatche (N25) : rouvre la négo fâchée/refusée de la carte courante. */
   const jouerTchatche = (it: ObjetEnVente) => {
+    // Objet déjà acquis : relance sans objet, ne pas brûler le quota.
+    if (it.statut === "achete") return;
     if (!it.negociation) return;
     // Calcule AVANT de consommer : relancerNegociation renvoie l'état inchangé
     // (identité) hors "fache"/"refus_poli" — ne pas brûler le quota pour rien.
@@ -376,7 +378,9 @@ export default function SessionChinePage() {
       },
       {
         ...tchatche,
-        desactive: negoStatut !== "fache" && negoStatut !== "refus_poli",
+        desactive:
+          currentItem?.statut === "achete" ||
+          (negoStatut !== "fache" && negoStatut !== "refus_poli"),
         onActivate: tchatche.verrouille
           ? tchatche.onActivate
           : () => currentItem && jouerTchatche(currentItem),
