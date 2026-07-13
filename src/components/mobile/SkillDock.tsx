@@ -3,7 +3,7 @@
 import { useState, type CSSProperties } from "react";
 import { Lock } from "lucide-react";
 
-/** Un atout du dock du header bas du mode chinage. */
+/** Un atout du dock du header bas (partagé chinage/vente). */
 export type DockSkill = {
   id: string;
   nom: string;
@@ -24,11 +24,11 @@ export type DockSkill = {
 };
 
 /**
- * Dock de compétences « jeu vidéo » du header bas : un cercle par atout,
+ * Dock de compétences « jeu vidéo » du header bas (partagé chinage/vente) : un cercle par atout,
  * grisé + cadenas si pas encore débloqué, pastille d'usages restants sinon.
  * Un cercle verrouillé reste cliquable : le parent affiche le niveau requis.
  */
-export function ChineSkillDock({ skills }: { skills: DockSkill[] }) {
+export function SkillDock({ skills }: { skills: DockSkill[] }) {
   return (
     <div style={dockRow}>
       {skills.map((s) => (

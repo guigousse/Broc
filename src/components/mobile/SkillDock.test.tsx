@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { ChineSkillDock, type DockSkill } from "./ChineSkillDock";
+import { SkillDock, type DockSkill } from "./SkillDock";
 
 afterEach(cleanup);
 
@@ -20,10 +20,10 @@ function makeSkill(patch: Partial<DockSkill> = {}): DockSkill {
   };
 }
 
-describe("ChineSkillDock", () => {
+describe("SkillDock", () => {
   it("affiche un cercle par atout avec la pastille d'usages restants", () => {
     render(
-      <ChineSkillDock
+      <SkillDock
         skills={[
           makeSkill(),
           makeSkill({ id: "fouille", nom: "La Fouille", restants: 1, ariaLabel: "La Fouille — 1 usage(s) restant(s)" }),
@@ -38,7 +38,7 @@ describe("ChineSkillDock", () => {
   it("verrouillé : pastille de niveau requis et clic transmis (toast côté parent)", () => {
     const onActivate = vi.fn();
     render(
-      <ChineSkillDock
+      <SkillDock
         skills={[makeSkill({ id: "tchatche", verrouille: true, niveauRequis: 25, onActivate, ariaLabel: "La Tchatche — verrouillé, se débloque au niveau 25" })]}
       />,
     );
@@ -49,21 +49,21 @@ describe("ChineSkillDock", () => {
 
   it("épuisé (0 usage restant) : le bouton est désactivé", () => {
     const onActivate = vi.fn();
-    render(<ChineSkillDock skills={[makeSkill({ restants: 0, onActivate })]} />);
+    render(<SkillDock skills={[makeSkill({ restants: 0, onActivate })]} />);
     fireEvent.click(screen.getByRole("button"));
     expect(onActivate).not.toHaveBeenCalled();
   });
 
   it("désactivé par le contexte (Tchatche hors négo fâchée) : pas d'activation", () => {
     const onActivate = vi.fn();
-    render(<ChineSkillDock skills={[makeSkill({ id: "tchatche", desactive: true, onActivate })]} />);
+    render(<SkillDock skills={[makeSkill({ id: "tchatche", desactive: true, onActivate })]} />);
     fireEvent.click(screen.getByRole("button"));
     expect(onActivate).not.toHaveBeenCalled();
   });
 
   it("actif (Flair déjà joué) : plus cliquable", () => {
     const onActivate = vi.fn();
-    render(<ChineSkillDock skills={[makeSkill({ actif: true, onActivate })]} />);
+    render(<SkillDock skills={[makeSkill({ actif: true, onActivate })]} />);
     fireEvent.click(screen.getByRole("button"));
     expect(onActivate).not.toHaveBeenCalled();
   });

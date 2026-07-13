@@ -27,7 +27,7 @@ import {
 } from "@/lib/deblocage";
 import { genererRemplacement, genererSession, uniquesExclusDuChinage } from "@/lib/chine";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
-import { ChineSkillDock, type DockSkill } from "@/components/mobile/chine/ChineSkillDock";
+import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { relancerNegociation } from "@/lib/negociation";
 import { aConnaisseurChinage } from "@/lib/competences";
 import { energieCourante } from "@/lib/energie";
@@ -434,7 +434,7 @@ export default function SessionChinePage() {
             onOuvrirBoite={() => setBoiteOuverte(true)}
             onQuitter={handleRentrer}
             onNavigate={() => setNegoOuverte(null)}
-            renderDock={(currentItem) => <ChineSkillDock skills={dockSkills(currentItem)} />}
+            renderDock={(currentItem) => <SkillDock skills={dockSkills(currentItem)} />}
             renderNegoDrawer={(item) => (
               <ChineNegoDrawer
                 key={item.id}
