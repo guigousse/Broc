@@ -239,3 +239,16 @@ export function collectionComplete(
   const p = progressionGlobale(collection);
   return p.donnees === p.total && p.total > 0;
 }
+
+/**
+ * Vrai si le template a déjà été possédé au moins une fois (achat,
+ * restauration…), même revendu depuis. Pilote le badge collection ✓ du chinage.
+ */
+export function templateDejaPossede(
+  collection: Record<CategorieObjet, CollectionSlot[]>,
+  templateId: string,
+): boolean {
+  return Object.values(collection).some((slots) =>
+    slots.some((s) => s.templateId === templateId && s.dejaPossede),
+  );
+}

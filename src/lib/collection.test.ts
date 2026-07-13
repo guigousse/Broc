@@ -11,6 +11,7 @@ import {
   progressionCategorie,
   progressionGlobale,
   retirerDonation,
+  templateDejaPossede,
   valeurParCategorie,
   valeurTotale,
 } from "./collection";
@@ -284,5 +285,29 @@ describe("immutabilité", () => {
     const snapshot = JSON.stringify(col);
     marquerVu(col, "t1");
     expect(JSON.stringify(col)).toBe(snapshot);
+  });
+});
+
+describe("templateDejaPossede", () => {
+  it("faux sur une collection initiale, vrai une fois le slot marqué dejaPossede", () => {
+    const collection = initCollection();
+    const premierSlot = Object.values(collection).flat()[0];
+    expect(templateDejaPossede(collection, premierSlot.templateId)).toBe(false);
+
+    const marquee = Object.fromEntries(
+      Object.entries(collection).map(([cat, slots]) => [
+        cat,
+        slots.map((s) =>
+          s.templateId === premierSlot.templateId
+            ? { ...s, dejaPossede: true }
+            : s,
+        ),
+      ]),
+    ) as typeof collection;
+    expect(templateDejaPossede(marquee, premierSlot.templateId)).toBe(true);
+  });
+
+  it("faux pour un templateId inconnu", () => {
+    expect(templateDejaPossede(initCollection(), "template-inexistant")).toBe(false);
   });
 });
