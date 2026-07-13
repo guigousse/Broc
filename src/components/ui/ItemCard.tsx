@@ -45,7 +45,6 @@ function ItemCardBase({
       style={{
         background: "var(--paper-100)",
         border: `1.5px solid ${colors.outer}`,
-        boxShadow: `inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px ${colors.inner}`,
         padding: 6,
         display: "flex",
         flexDirection: "column",
@@ -106,7 +105,7 @@ function ItemCardBase({
             borderRadius: "50%",
             background: "var(--paper-100)",
             border: `1.2px solid ${colors.outer}`,
-            boxShadow: `inset 0 0 0 1px var(--paper-100), inset 0 0 0 2px ${colors.inner}, 0 1px 2px rgba(0,0,0,0.25)`,
+            boxShadow: `0 1px 2px rgba(0,0,0,0.25)`,
             display: "grid",
             placeItems: "center",
             pointerEvents: "none",
