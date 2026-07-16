@@ -344,4 +344,38 @@ describe("appliquerRecuperation", () => {
     const next = appliquerRecuperation(s, "o1", 999999)!;
     expect(next.inventaireJoueur.find((x) => x.id === "o2")).toEqual(o2);
   });
+
+  it("trace la restauration accomplie (timestamp + état final)", () => {
+    const o = createMockObjet({
+      id: "o1",
+      etat: "Bon",
+      enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 5 },
+    });
+    const s = createMockGameState({ inventaireJoueur: [o], jourActuel: 5 });
+    const next = appliquerRecuperation(s, "o1", 999999);
+    expect(next?.restaurations).toHaveLength(1);
+    expect(next?.restaurations?.[0]).toEqual({
+      timestamp: 999999,
+      etatFinal: next!.inventaireJoueur.find((x) => x.id === "o1")!.etat,
+    });
+  });
+
+  it("borne la trace des restaurations à 100 entrées", () => {
+    const o = createMockObjet({
+      id: "o1",
+      etat: "Bon",
+      enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 5 },
+    });
+    const charge = createMockGameState({
+      inventaireJoueur: [o],
+      jourActuel: 5,
+      restaurations: Array.from({ length: 100 }, (_, i) => ({
+        timestamp: i,
+        etatFinal: "Bon" as const,
+      })),
+    });
+    const next = appliquerRecuperation(charge, "o1", 999999);
+    expect(next?.restaurations).toHaveLength(100);
+    expect(next?.restaurations?.[99]?.timestamp).toBe(999999);
+  });
 });
