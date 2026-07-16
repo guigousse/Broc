@@ -113,7 +113,7 @@ export const en: DictionnaireUI = {
     prochaineEnergieDans: "Next ⚡ in {temps}",
     pubEnCours: "Ad playing…",
     pubEpuisee: "No more ads today — come back tomorrow",
-    regarderPub: "Watch an ad — +1 ⚡",
+    regarderPub: "Watch an ad — +1",
     ameliorerVersNiveau: "Upgrade to LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
     xpGagne: "+{n} XP",

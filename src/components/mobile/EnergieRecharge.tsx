@@ -27,12 +27,12 @@ function formatMMSS(totalSec: number): string {
 
 const MACHINE_IMG = "/qg/machine-energie.webp";
 
-/** Zones posées sur l'illustration, en % de la carte (mesurées sur l'image générée). */
-const ZONE_CADRAN = { cx: 47.7, cy: 23.6, r: 11 };
+/** Zones posées sur l'illustration, en % de la carte (calibrées sur le rendu). */
+const ZONE_CADRAN = { cx: 50.1, cy: 24.2, r: 12 };
 /** Pastille compteur n/5 + minuteur, sous le cadran. */
-const ZONE_COMPTEUR_TOP = 36;
-/** Plaque-bouton pub, posée sur les portes du bas de la machine. */
-const ZONE_PLAQUE = { left: 14, top: 66, width: 52, height: 9 };
+const ZONE_COMPTEUR_TOP = 40;
+/** Cartel-bouton pub, posé sur les portes du bas de la machine. */
+const ZONE_PLAQUE = { left: 10, top: 66, width: 62, height: 11 };
 /** Le levier peint (colonne droite) : zone de tap redondante vers la même action. */
 const ZONE_LEVIER = { left: 70, top: 34, width: 20, height: 32 };
 
@@ -87,7 +87,7 @@ const compteurStyle: CSSProperties = {
   transform: "translateX(-50%)",
   padding: "6px 14px",
   borderRadius: 12,
-  background: "rgba(15,30,22,0.62)",
+  background: "var(--forest-800)",
   border: "1px solid var(--brass-700)",
   textAlign: "center",
   color: "var(--brass-300)",
@@ -97,31 +97,50 @@ const compteurStyle: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
+/** Cartel laiton « étiquette de musée » — même famille que ScenePlaquesBar. */
 const plaqueBtnStyle = (indisponible: boolean): CSSProperties => ({
   position: "absolute",
   left: `${ZONE_PLAQUE.left}%`,
   top: `${ZONE_PLAQUE.top}%`,
   width: `${ZONE_PLAQUE.width}%`,
   height: `${ZONE_PLAQUE.height}%`,
-  borderRadius: 8,
-  border: "2px solid var(--brass-700)",
-  boxShadow: indisponible
-    ? "inset 0 1px 0 rgba(255,255,255,0.08), 0 3px 10px rgba(0,0,0,0.5)"
-    : "inset 0 1px 0 rgba(255,235,180,0.55), 0 3px 10px rgba(0,0,0,0.5), 0 0 14px rgba(214,178,94,0.35)",
+  borderRadius: 4,
+  border: indisponible ? "1px solid #4a3a23" : "1px solid #6b4e25",
   background: indisponible
-    ? "linear-gradient(180deg, rgba(38,52,42,0.92), rgba(20,32,25,0.92))"
-    : "linear-gradient(180deg, #d6b25e, #b08c3c)",
-  color: indisponible ? "var(--brass-700)" : "var(--forest-900)",
+    ? "linear-gradient(180deg, #bcae93 0%, #978769 50%, #756749 100%)"
+    : "linear-gradient(180deg, #f0d18b 0%, #d4ad60 45%, #b48a3e 100%)",
+  boxShadow: indisponible
+    ? "inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.3), 0 2px 5px rgba(20,12,0,0.4)"
+    : "inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(0,0,0,0.25), 0 0 14px rgba(220,170,60,0.6), 0 3px 8px rgba(20,12,0,0.45)",
+  filter: indisponible ? "saturate(0.5) brightness(0.85)" : "none",
+  color: "#3a2410",
   fontFamily: "var(--font-display)",
   fontWeight: 700,
-  fontSize: "clamp(11px, 3.2vw, 13px)",
-  letterSpacing: "0.04em",
+  fontSize: "clamp(12px, 3.4vw, 14px)",
+  letterSpacing: "0.05em",
+  lineHeight: 1.15,
+  textAlign: "center",
+  textShadow: indisponible ? "0 1px 0 rgba(255,255,255,0.18)" : "0 1px 0 rgba(255,235,180,0.5)",
   cursor: indisponible ? "not-allowed" : "pointer",
+  WebkitTapHighlightColor: "transparent",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: 6,
-  padding: "0 8px",
+  gap: 4,
+  padding: "0 14px",
+});
+
+/** Rivets latéraux du cartel (décor). */
+const rivetStyle = (side: "left" | "right"): CSSProperties => ({
+  position: "absolute",
+  top: "50%",
+  [side]: 5,
+  width: 5,
+  height: 5,
+  borderRadius: "50%",
+  background: "radial-gradient(circle at 30% 30%, #f6e3b2, #6b4e25 80%)",
+  transform: "translateY(-50%)",
+  boxShadow: "inset 0 1px 1px rgba(0,0,0,0.55)",
 });
 
 /** Zone de tap invisible sur le levier peint (redondante : cachée de l'a11y). */
@@ -273,18 +292,31 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* La plaque laiton : LE bouton pub (accessible). */}
+        {/* Le cartel laiton : LE bouton pub (accessible). */}
         <button
           onClick={regarderPub}
           disabled={pubIndisponible}
           style={plaqueBtnStyle(pubIndisponible)}
         >
-          <Zap size={14} />
+          <span aria-hidden style={rivetStyle("left")} />
           {enCours
             ? d.chrome.pubEnCours
             : pubsRestantes <= 0
               ? d.chrome.pubEpuisee
-              : d.chrome.regarderPub}
+              : (
+                  <span
+                    style={{
+                      whiteSpace: "nowrap",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    {d.chrome.regarderPub}
+                    <Zap size={16} strokeWidth={2.5} aria-hidden />
+                  </span>
+                )}
+          <span aria-hidden style={rivetStyle("right")} />
         </button>
 
         {/* Le levier peint : zone de tap redondante, invisible pour l'a11y. */}
