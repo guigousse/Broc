@@ -135,6 +135,7 @@ export const fr = {
     decor: "Décor du QG",
     porteEntree: "Porte d'entrée",
     carnetSessions: "Carnet — dernières sessions",
+    grandPere: "Parler à Grand-père",
     lettreNonLue: "{n} lettre non lue",
     lettresNonLues: "{n} lettres non lues",
     carnetCommandeAucune: "Carnet de commande — aucune mission",

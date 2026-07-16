@@ -42,10 +42,12 @@ import { QgPortemanteau } from "@/components/mobile/qg/QgPortemanteau";
 import { QgCalendrier } from "@/components/mobile/qg/QgCalendrier";
 import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
+import { QgGrandPere } from "@/components/mobile/qg/QgGrandPere";
 import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
 import { GazetteSheet } from "@/components/mobile/GazetteSheet";
+import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
 import { CahierDeCompteOverlay } from "@/components/mobile/qg/overlays/CahierDeCompteOverlay";
@@ -56,10 +58,13 @@ import { GramophoneSheet } from "@/components/mobile/qg/sheets/GramophoneSheet";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { CATEGORIES } from "@/data/categories";
+import { AMBIANCE_GRAND_PERE, GRAND_PERE_PORTRAITS, type DialogueSequence } from "@/data/dialogues";
 import { VITRINE_PREP_ID } from "@/lib/vitrinePrep";
 import { stockageEstPlein } from "@/lib/stockage";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
+import { nomExpediteur } from "@/lib/i18n/contenu";
+import { tutorielActif } from "@/lib/tutoriel";
 import {
   aConnaisseurTendance,
   aGenBulletinMeteo,
@@ -79,7 +84,7 @@ const GRAMO_SESSION_KEY = "broc.gramo.session";
 
 function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { d } = useLangue();
+  const { d, locale } = useLangue();
   const {
     state,
     isHydrated,
@@ -119,6 +124,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
+  const [dialogueQg, setDialogueQg] = useState<DialogueSequence | null>(null);
 
   // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
@@ -409,6 +415,18 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                     setCarnetNotesOuvert(true);
                   }}
                 />
+                <QgGrandPere
+                  aDialogue={false}
+                  onTap={() => {
+                    if (tutorielActif(state)) return;
+                    playClick();
+                    setDialogueQg(
+                      AMBIANCE_GRAND_PERE[
+                        state.jourActuel % AMBIANCE_GRAND_PERE.length
+                      ],
+                    );
+                  }}
+                />
               </>
             )}
             {showQgZone(1) && (
@@ -627,6 +645,13 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         }
         onRerollMeteo={() => rerollMeteo()}
         onRerollCelebrite={() => rerollCelebrite()}
+      />
+
+      <DialogueOverlay
+        sequence={dialogueQg}
+        nom={nomExpediteur("grand-pere", locale)}
+        portraits={GRAND_PERE_PORTRAITS}
+        onFini={() => setDialogueQg(null)}
       />
 
       {editEnabled && <QgEditPanel />}

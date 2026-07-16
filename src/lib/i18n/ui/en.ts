@@ -132,6 +132,7 @@ export const en: DictionnaireUI = {
     decor: "HQ backdrop",
     porteEntree: "Front door",
     carnetSessions: "Notebook — recent sessions",
+    grandPere: "Talk to Grandpa",
     lettreNonLue: "{n} unread letter",
     lettresNonLues: "{n} unread letters",
     carnetCommandeAucune: "Notebook — no quests",

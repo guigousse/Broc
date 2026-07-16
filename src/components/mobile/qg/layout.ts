@@ -33,6 +33,7 @@ export const QG_LAYOUT = {
     gramophone: { left: 245.7, bottom: 30.3, width: 17.0 },
     portemanteau: { left: 172.7, bottom: 15.4, width: 23.4 },
     calendrier: { left: 109.6, bottom: 54.3, width: 11.8 },
+    grandPere: { left: 8.0, bottom: 10.0, width: 24.0 },
   },
 } as const;
 

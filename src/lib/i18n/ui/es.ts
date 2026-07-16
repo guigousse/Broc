@@ -132,6 +132,7 @@ export const es: DictionnaireUI = {
     decor: "Decorado del cuartel",
     porteEntree: "Puerta de entrada",
     carnetSessions: "Cuaderno — sesiones recientes",
+    grandPere: "Hablar con el abuelo",
     lettreNonLue: "{n} carta sin leer",
     lettresNonLues: "{n} cartas sin leer",
     carnetCommandeAucune: "Cuaderno — sin misiones",
