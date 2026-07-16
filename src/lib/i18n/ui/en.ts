@@ -617,6 +617,7 @@ export const en: DictionnaireUI = {
       valeurCollectionCategorie:
         "Unlocked when your “{categorie}” collection reaches {montant} €",
       niveau: "Picker level {niveau} required",
+      chapitrePrincipal: "Story chapter {ordre} completed",
     },
     court: {
       disponible: "Available",
@@ -627,6 +628,7 @@ export const en: DictionnaireUI = {
       valeurCollection: "Collection: {actuel}/{montant} €",
       valeurCollectionCategorie: "{categorie}: {actuel}/{montant} €",
       niveau: "Level {niveau} (you: L{actuel})",
+      chapitrePrincipal: "Story: {actuel}/{ordre}",
     },
   },
   notifs: {

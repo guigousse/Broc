@@ -620,6 +620,7 @@ export const es: DictionnaireUI = {
       valeurCollectionCategorie:
         "Desbloqueado cuando tu colección « {categorie} » alcanza {montant} €",
       niveau: "Nivel de rebuscador {niveau} requerido",
+      chapitrePrincipal: "Capítulo {ordre} de la historia terminado",
     },
     court: {
       disponible: "Disponible",
@@ -630,6 +631,7 @@ export const es: DictionnaireUI = {
       valeurCollection: "Colección: {actuel}/{montant} €",
       valeurCollectionCategorie: "{categorie}: {actuel}/{montant} €",
       niveau: "Nivel {niveau} (tú: N{actuel})",
+      chapitrePrincipal: "Historia: {actuel}/{ordre}",
     },
   },
   notifs: {

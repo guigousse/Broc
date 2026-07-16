@@ -236,7 +236,7 @@ export interface RunResult {
 
 type StateLike = Pick<
   GameState,
-  "jourActuel" | "budget" | "historique" | "collection" | "brocanteur"
+  "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
 >;
 
 interface SimState {
@@ -255,6 +255,10 @@ function stateLike(sim: SimState): StateLike {
     historique: [] as GameState["historique"],
     collection: sim.collection,
     brocanteur: sim.brocanteur,
+    // Le simulateur ne modélise pas la trame principale : aucune brocante ne
+    // dépend (encore) d'une condition `chapitrePrincipal`, donc un tableau
+    // vide est un placeholder sûr pour satisfaire le type de evaluerCondition.
+    missions: [] as GameState["missions"],
   };
 }
 

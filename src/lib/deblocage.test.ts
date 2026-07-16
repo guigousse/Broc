@@ -319,6 +319,16 @@ describe("evaluerCondition (exporté)", () => {
   });
 });
 
+describe("condition chapitrePrincipal", () => {
+  it("chapitrePrincipal : vrai si la mission du chapitre trame_chN est livrée", () => {
+    const state = createMockGameState({
+      missions: [{ courrierId: "trame_ch4", statut: "livree", jourResolution: 3 }],
+    });
+    expect(evaluerCondition({ type: "chapitrePrincipal", ordre: 4 }, state)).toBe(true);
+    expect(evaluerCondition({ type: "chapitrePrincipal", ordre: 8 }, state)).toBe(false);
+  });
+});
+
 function fabriqueState(patch: { niveau: number }) {
   return createMockGameState({
     brocanteur: { xp: 0, niveau: patch.niveau, pointsDisponibles: 0 },
