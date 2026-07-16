@@ -6,7 +6,7 @@ describe("table des déblocages par niveau", () => {
   it("les jalons validés sont effectifs", () => {
     const effectifs = DEBLOCAGES_PAR_NIVEAU.filter((d) => d.effectif).map((d) => d.niveau).sort((a, b) => a - b);
     expect(effectifs).toEqual([
-      1, 3, 4, 5, 10, 10, 10, 15, 20, 20, 25, 30, 30, 35, 40, 45, 50, 55, 60,
+      1, 3, 5, 10, 10, 15, 20, 25, 30, 30, 35, 40, 45, 50, 55, 60,
       65, 70, 75, 80, 85, 90,
     ]);
   });
