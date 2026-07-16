@@ -808,6 +808,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   /** Fait avancer le tutoriel vers une étape donnée (idempotent si déjà atteinte/dépassée). */
   const avancerTutoriel = useCallback((vers: TutorielEtape) => {
+    // "termine" ne doit jamais être atteint via avancerTutoriel : ça
+    // court-circuiterait appliquerFinTutoriel (perte silencieuse de la
+    // lettre de Maman + du chapitre 1). Passer par terminerTutoriel().
+    if (vers === "termine") return;
     setState((prev) => {
       if (!prev || prev.tutorielEtape === "termine") return prev;
       const iCourante = ETAPES_TUTORIEL.indexOf(prev.tutorielEtape);

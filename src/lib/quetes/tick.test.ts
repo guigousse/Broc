@@ -9,4 +9,16 @@ describe("tickQuetes", () => {
     expect(out.courriers.some((c) => c.id === "principale_ch1")).toBe(true);
     expect(out.missions.some((m) => m.courrierId === "principale_ch1" && m.statut === "active")).toBe(true);
   });
+
+  it("ne débloque rien tant que le tutoriel guidé n'est pas terminé (arc différé à la conclusion)", () => {
+    const state = createMockGameState({
+      tutorielEtape: "premier-achat",
+      courriers: [],
+      missions: [],
+    });
+    const out = tickQuetes(state, 1);
+    expect(out.courriers).toEqual(state.courriers);
+    expect(out.missions).toEqual(state.missions);
+    expect(out.courriers.some((c) => c.id === "principale_ch1")).toBe(false);
+  });
 });

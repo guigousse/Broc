@@ -41,6 +41,7 @@ import { placeRestante, stockageEstPlein } from "@/lib/stockage";
 import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
 import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
+import { tutorielActif } from "@/lib/tutoriel";
 import { useXpFloats, XpFloatsVue } from "@/components/mobile/XpFloats";
 import {
   XP_ACHAT_BROCANTEUR,
@@ -163,9 +164,14 @@ export default function SessionChinePage() {
       }
       // Vendeur mystère : tirage à probabilité décroissante (1/10, puis ÷2 par
       // boîte déjà réclamée aujourd'hui). N'apparaît que s'il reste de la place
-      // (jamais de pub gâchée).
+      // (jamais de pub gâchée), et jamais pendant le tutoriel guidé (pas de
+      // distraction pub/récompense sur la première session encadrée).
       const nReclamees = nbBoitesReclamees(state, state.jourActuel);
-      if (placeRestante(state) >= 1 && tenterApparition(nReclamees)) {
+      if (
+        !tutorielActif(state) &&
+        placeRestante(state) >= 1 &&
+        tenterApparition(nReclamees)
+      ) {
         setVendeurPresent(true);
       }
     }

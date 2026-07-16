@@ -394,7 +394,15 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // l'étape courante (porte, grand-père) réagissent au tap — tous les
   // autres objets du QG sont verrouillés pour ne pas distraire le joueur.
   const tutoActif = tutorielActif(state);
-  const portePermise = etape === "aller-chiner" || etape === "preparer-etal";
+  // Widened au-delà de "aller-chiner"/"preparer-etal" : un joueur qui sort de
+  // la brocante sans rien acheter (étape reste "premier-achat") ou termine
+  // une journée d'étal sans vente (étape reste "premiere-vente") doit
+  // pouvoir rouvrir la porte pour réessayer — sinon soft-lock au bureau.
+  const portePermise =
+    etape === "aller-chiner" ||
+    etape === "premier-achat" ||
+    etape === "preparer-etal" ||
+    etape === "premiere-vente";
 
   // Virtualisation : monte un objet si sa zone est à distance ≤ 1 de la zone
   // active (index 0..2). bureau/porte/repos = 0/1/2.
@@ -570,8 +578,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         }}
         vitrineActive={!!state.vitrine}
         chinerDesactive={stockageEstPlein(state)}
-        tutoChiner={etape === "aller-chiner"}
-        tutoEtaler={etape === "preparer-etal"}
+        tutoChiner={etape === "aller-chiner" || etape === "premier-achat"}
+        tutoEtaler={etape === "preparer-etal" || etape === "premiere-vente"}
         onChiner={() => {
           playDoorClose();
           setPorteOuverte(false);
