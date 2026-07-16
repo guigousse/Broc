@@ -77,27 +77,6 @@ export const SEQUENCES_TUTORIEL: Record<string, DialogueSequence> = {
   },
 };
 
-/** Petites phrases quand on tape le grand-père hors tutoriel (rotation par jour). */
-export const AMBIANCE_GRAND_PERE: DialogueSequence[] = [
-  {
-    id: "amb_gp_fauteuil",
-    lignes: [{ humeur: "souriant", texte: "Ce fauteuil et moi, on a le même âge. Lui, il grince moins." }],
-  },
-  {
-    id: "amb_gp_objets",
-    lignes: [{ humeur: "songeur", texte: "Chaque objet attend quelqu'un. Notre métier, c'est de les présenter." }],
-  },
-  {
-    id: "amb_gp_grandmere",
-    lignes: [{ humeur: "rieur", texte: "De mon temps, on négociait dès le petit-déjeuner. Ta grand-mère gagnait toujours." }],
-  },
-  {
-    id: "amb_gp_fier",
-    lignes: [{ humeur: "emu", texte: "Je suis fier de toi, tu sais. Je ne le dirai qu'une fois, alors profites-en." }],
-  },
-];
-
 export const TOUTES_SEQUENCES: DialogueSequence[] = [
   ...Object.values(SEQUENCES_TUTORIEL),
-  ...AMBIANCE_GRAND_PERE,
 ];

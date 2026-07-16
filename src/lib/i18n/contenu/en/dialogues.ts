@@ -29,8 +29,4 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "Here: my order book. People write down what they're looking for — check it often.",
     "And the postman came by: a letter from your mother, I believe. Off to work now… I'll be in my armchair if you need me.",
   ],
-  amb_gp_fauteuil: ["This armchair and I are the same age. It creaks less."],
-  amb_gp_objets: ["Every object is waiting for someone. Our trade is introducing them."],
-  amb_gp_grandmere: ["In my day, we haggled at breakfast. Your grandmother always won."],
-  amb_gp_fier: ["I'm proud of you, you know. I'll only say it once, so make the most of it."],
 };

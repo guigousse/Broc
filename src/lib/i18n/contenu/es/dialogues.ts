@@ -29,8 +29,4 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Toma: mi cuaderno de encargos. La gente apunta lo que busca — míralo a menudo.",
     "Y ha pasado el cartero: una carta de tu madre, creo. A trabajar… estaré en mi sillón si me necesitas.",
   ],
-  amb_gp_fauteuil: ["Este sillón y yo tenemos la misma edad. Él cruje menos."],
-  amb_gp_objets: ["Cada objeto espera a alguien. Nuestro oficio es presentarlos."],
-  amb_gp_grandmere: ["En mis tiempos se regateaba en el desayuno. Tu abuela siempre ganaba."],
-  amb_gp_fier: ["Estoy orgulloso de ti, ¿sabes? Solo lo diré una vez, así que aprovéchalo."],
 };

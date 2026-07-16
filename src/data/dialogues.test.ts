@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  AMBIANCE_GRAND_PERE,
   GRAND_PERE_PORTRAITS,
   SEQUENCES_TUTORIEL,
   TOUTES_SEQUENCES,
@@ -35,6 +34,5 @@ describe("dialogues (données FR)", () => {
     for (const id of attendues) {
       expect(SEQUENCES_TUTORIEL[id]?.id).toBe(id);
     }
-    expect(AMBIANCE_GRAND_PERE.length).toBeGreaterThanOrEqual(3);
   });
 });

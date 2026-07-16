@@ -7,28 +7,8 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 /**
  * Pastille du grand-père, fixe en bas à gauche de l'écran (hors panorama).
  * N'apparaît que lorsqu'il a quelque chose à dire (bulle « ! ») ; le tap
- * ouvre le dialogue. SP2 : les chapitres de la trame s'accrocheront ici.
+ * ouvre le dialogue. SP2 : les chapitres de la trame s'accrochent ici.
  */
-
-const CLE_AMBIANCE_JOUR = "broc.gp-ambiance.jour";
-
-/** Dernier jour de jeu où la phrase d'ambiance a été écoutée (UX, hors save). */
-export function getJourAmbianceVue(): number | null {
-  try {
-    const v = window.localStorage.getItem(CLE_AMBIANCE_JOUR);
-    return v === null ? null : Number(v);
-  } catch {
-    return null;
-  }
-}
-
-export function setJourAmbianceVue(jour: number): void {
-  try {
-    window.localStorage.setItem(CLE_AMBIANCE_JOUR, String(jour));
-  } catch {
-    // localStorage indisponible : la pastille restera visible, sans gravité.
-  }
-}
 
 const wrap: CSSProperties = {
   position: "fixed",
