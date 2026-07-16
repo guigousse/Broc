@@ -4,7 +4,8 @@ import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
 import { emptyBrocanteur, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
-import { chapitrePret } from "@/lib/quetes/principales";
+import { chapitrePret, courrierDeChapitre } from "@/lib/quetes/principales";
+import { chapitreParId } from "@/data/quetesPrincipales";
 import * as courrierModule from "@/lib/courrier";
 
 describe("migrerEtat", () => {
@@ -835,5 +836,53 @@ describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-v
   it("v12→v13 : partie fraîche (niveau 1, rien de livré) ⇒ aucun chapitre trame injecté", () => {
     const migre = migrate(saveV12({}));
     expect(migre.missions.some((m) => m.courrierId.startsWith("trame_ch"))).toBe(false);
+  });
+});
+
+/** Fabrique une save "v13" (déjà migrée, schéma courant). */
+function saveV13(patch: Partial<GameState> = {}): GameState {
+  return { ...createMockGameState(patch), version: 13 };
+}
+
+describe("migration v13 — back-fill gaté (ne rejoue pas à chaque chargement d'une save déjà v13)", () => {
+  it("save v13 avec trame_ch3 ACTIVE + niveau ≥ T3 ⇒ aucune injection de trame_ch4..8, ch3 intacte", () => {
+    const ch3 = chapitreParId("trame_ch3")!;
+    const courrierCh3 = courrierDeChapitre(ch3, 5);
+    const save = saveV13({
+      brocanteur: { ...br, niveau: 12 }, // ≥ NIVEAU_BROCANTES_T3 (10)
+      courriers: [courrierCh3],
+      missions: [{ courrierId: "trame_ch3", statut: "active", timestampAcceptation: 1000 }],
+    });
+    const migre = migrate(save);
+
+    // La mission ch3 en cours n'est pas écrasée par un back-fill "livree".
+    const missionCh3 = migre.missions.find((m) => m.courrierId === "trame_ch3");
+    expect(missionCh3?.statut).toBe("active");
+    // Aucun chapitre suivant n'a été force-livré alors que ch3 est toujours en cours.
+    for (let n = 4; n <= 8; n++) {
+      expect(migre.missions.some((m) => m.courrierId === `trame_ch${n}`)).toBe(false);
+      expect(migre.courriers.some((c) => c.id === `trame_ch${n}`)).toBe(false);
+    }
+  });
+
+  it("save v13 fraîche (aucune entrée trame, niveau 5) ⇒ aucune injection", () => {
+    const save = saveV13({ brocanteur: { ...br, niveau: 5 } }); // ≥ NIVEAU_BROCANTES_T2 (mais save déjà v13)
+    const migre = migrate(save);
+    expect(migre.missions.some((m) => m.courrierId.startsWith("trame_ch"))).toBe(false);
+    expect(migre.courriers.some((c) => c.id.startsWith("trame_ch"))).toBe(false);
+  });
+
+  it("idempotence : re-migrer le résultat d'une migration v12→v13 ne change rien (mêmes missions/courriers trame)", () => {
+    const save = saveV12({ brocanteur: { ...br, niveau: 12 } }); // ≥ NIVEAU_BROCANTES_T3
+    const migreUneFois = migrate(save);
+    const migreDeuxFois = migrate(migreUneFois);
+
+    const trameIds = (s: GameState) =>
+      s.missions.filter((m) => m.courrierId.startsWith("trame_ch")).map((m) => m.courrierId).sort();
+    expect(trameIds(migreDeuxFois)).toEqual(trameIds(migreUneFois));
+    expect(migreDeuxFois.missions).toEqual(migreUneFois.missions);
+    expect(
+      migreDeuxFois.courriers.filter((c) => c.id.startsWith("trame_ch")),
+    ).toEqual(migreUneFois.courriers.filter((c) => c.id.startsWith("trame_ch")));
   });
 });

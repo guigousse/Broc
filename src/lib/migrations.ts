@@ -485,17 +485,25 @@ function appliquerMigrations(loaded: GameState): GameState {
   const missionsFinales: GameState["missions"] = missionsExistantes;
 
   // v13 : trame 12 chapitres. Mapping "jamais re-verrouiller un tier" — pour
-  // toute save ≤ v12, les chapitres `trame_chN` déjà « acquis » sous les
-  // anciennes règles (niveau ou ancien arc `principale_*`) sont injectés
-  // livrés (courrier lu + mission `livree`), SANS récompense rétroactive
-  // (ni ledger, ni XP, ni points bonus — cf. `courrierDeChapitre`, qui ne
-  // passe pas par `accepterChapitre`) :
+  // toute save ≤ v12 (STRICTEMENT antérieure à v13 — cf. `dejaV13` ci-dessous),
+  // les chapitres `trame_chN` déjà « acquis » sous les anciennes règles
+  // (niveau ou ancien arc `principale_*`) sont injectés livrés (courrier lu +
+  // mission `livree`), SANS récompense rétroactive (ni ledger, ni XP, ni
+  // points bonus — cf. `courrierDeChapitre`, qui ne passe pas par
+  // `accepterChapitre`) :
   //  - niveau (anciens seuils) : ≥T2 ⇒ ch4, ≥T3 ⇒ ch8, ≥T4 ⇒ ch10
   //  - anciens chapitres livrés : ch1⇒1, ch2⇒4, ch3⇒8, ch4⇒10, ch5⇒11
-  // On prend le max des deux sources. Idempotent : un `trame_chN` déjà
-  // présent (courrier OU mission — y compris un save déjà en v13) n'est
-  // jamais réinjecté. Les anciens courriers/missions `principale_*` sont
-  // conservés tels quels (archive).
+  // On prend le max des deux sources. Les anciens courriers/missions
+  // `principale_*` sont conservés tels quels (archive).
+  //
+  // Gating par version ENTRANTE (`loaded.version`, lu avant migration — cf.
+  // `dejaV9` plus haut, même principe) : ce back-fill ne doit tourner qu'une
+  // fois, au moment précis où une save franchit le seuil v12→v13. Sans ce
+  // garde, `appliquerMigrations` étant une passe monolithique rejouée à CHAQUE
+  // chargement, une save déjà en v13 avec une trame en cours (ex. `trame_ch3`
+  // active) ou fraîchement créée verrait ses chapitres suivants forcés
+  // « livrés » d'après le seul niveau du joueur — sautant l'histoire en cours.
+  const dejaV13 = typeof loaded.version === "number" && loaded.version >= 13;
   const ANCIENS_CHAPITRES_VERS_ORDRE_TRAME: Record<string, number> = {
     principale_ch1: 1,
     principale_ch2: 4,
@@ -503,31 +511,33 @@ function appliquerMigrations(loaded: GameState): GameState {
     principale_ch4: 10,
     principale_ch5: 11,
   };
-  let maxOrdreTrame = 0;
-  const niveauFinalTrame = brocanteurConverti.niveau;
-  if (niveauFinalTrame >= NIVEAU_BROCANTES_T2) maxOrdreTrame = 4;
-  if (niveauFinalTrame >= NIVEAU_BROCANTES_T3) maxOrdreTrame = 8;
-  if (niveauFinalTrame >= NIVEAU_BROCANTES_T4) maxOrdreTrame = 10;
-  for (const m of missionsExistantes) {
-    const ordre = ANCIENS_CHAPITRES_VERS_ORDRE_TRAME[m.courrierId];
-    if (m.statut === "livree" && ordre) {
-      maxOrdreTrame = Math.max(maxOrdreTrame, ordre);
-    }
-  }
-  const trameDejaPresente = new Set([
-    ...courriersFinaux.map((c) => c.id),
-    ...missionsFinales.map((m) => m.courrierId),
-  ]);
   let courriersAvecTrame = courriersFinaux;
   let missionsAvecTrame = missionsFinales;
-  for (let ordre = 1; ordre <= maxOrdreTrame; ordre++) {
-    const ch = chapitreParOrdre(ordre);
-    if (!ch || trameDejaPresente.has(ch.id)) continue;
-    courriersAvecTrame = [...courriersAvecTrame, courrierDeChapitre(ch, jourCourant)];
-    missionsAvecTrame = [
-      ...missionsAvecTrame,
-      { courrierId: ch.id, statut: "livree", jourResolution: jourCourant },
-    ];
+  if (!dejaV13) {
+    let maxOrdreTrame = 0;
+    const niveauFinalTrame = brocanteurConverti.niveau;
+    if (niveauFinalTrame >= NIVEAU_BROCANTES_T2) maxOrdreTrame = 4;
+    if (niveauFinalTrame >= NIVEAU_BROCANTES_T3) maxOrdreTrame = 8;
+    if (niveauFinalTrame >= NIVEAU_BROCANTES_T4) maxOrdreTrame = 10;
+    for (const m of missionsExistantes) {
+      const ordre = ANCIENS_CHAPITRES_VERS_ORDRE_TRAME[m.courrierId];
+      if (m.statut === "livree" && ordre) {
+        maxOrdreTrame = Math.max(maxOrdreTrame, ordre);
+      }
+    }
+    const trameDejaPresente = new Set([
+      ...courriersFinaux.map((c) => c.id),
+      ...missionsFinales.map((m) => m.courrierId),
+    ]);
+    for (let ordre = 1; ordre <= maxOrdreTrame; ordre++) {
+      const ch = chapitreParOrdre(ordre);
+      if (!ch || trameDejaPresente.has(ch.id)) continue;
+      courriersAvecTrame = [...courriersAvecTrame, courrierDeChapitre(ch, jourCourant)];
+      missionsAvecTrame = [
+        ...missionsAvecTrame,
+        { courrierId: ch.id, statut: "livree", jourResolution: jourCourant },
+      ];
+    }
   }
 
   // `competenceTrees` (arbres) n'existe plus dans le schéma (v10) : on l'exclut
