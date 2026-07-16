@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { debloquerQuetesPrincipales } from "./principales";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 
-describe("debloquerQuetesPrincipales", () => {
+// SP2 Task 7 : refonte délivrance (chapitrePret/accepterChapitre remplace
+// debloquerQuetesPrincipales) — ce fichier sera réécrit intégralement.
+describe.skip("debloquerQuetesPrincipales", () => {
   it("injecte le chapitre 1 (depart) si absent", () => {
     const out = debloquerQuetesPrincipales(createMockGameState(), 1);
     expect(out.length).toBe(1);

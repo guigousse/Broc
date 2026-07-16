@@ -38,8 +38,8 @@ describe("tutoriel", () => {
     expect(fin.courriers.some((c) => c.id === ID_LETTRE_MAMAN_DEBUT)).toBe(true);
     expect(fin.declencheursDeclenches).toContain(ID_LETTRE_MAMAN_DEBUT);
     // Chapitre 1 de l'arc principal amorcé (condition "depart")
-    expect(fin.courriers.some((c) => c.id === "principale_ch1")).toBe(true);
-    expect(fin.missions.some((m) => m.courrierId === "principale_ch1")).toBe(true);
+    expect(fin.courriers.some((c) => c.id === "trame_ch1")).toBe(true);
+    expect(fin.missions.some((m) => m.courrierId === "trame_ch1")).toBe(true);
   });
 
   it("appliquerFinTutoriel est idempotent sur un state déjà terminé", () => {

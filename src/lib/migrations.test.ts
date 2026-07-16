@@ -242,10 +242,10 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     const migrated = migrerSauvegarde(state);
     expect(migrated.grandLivre).toEqual([]);
     // L'amorce de l'arc principal (chapitre 1) est injectée au chargement.
-    expect(migrated.courriers.some((c) => c.id === "principale_ch1")).toBe(true);
+    expect(migrated.courriers.some((c) => c.id === "trame_ch1")).toBe(true);
     expect(
       migrated.missions.some(
-        (m) => m.courrierId === "principale_ch1" && m.statut === "active",
+        (m) => m.courrierId === "trame_ch1" && m.statut === "active",
       ),
     ).toBe(true);
   });
@@ -791,7 +791,7 @@ describe("migration tutoriel (v12)", () => {
     const migre = migrerSauvegarde(loaded);
     expect(migre.tutorielEtape).toBe("premier-achat");
     expect(migre.courriers.some((c) => c.id === ID_LETTRE_MAMAN_DEBUT)).toBe(false);
-    expect(migre.courriers.some((c) => c.id === "principale_ch1")).toBe(false);
+    expect(migre.courriers.some((c) => c.id === "trame_ch1")).toBe(false);
   });
 
   it("normalise une étape inconnue à 'termine'", () => {
