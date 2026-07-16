@@ -4,6 +4,7 @@ import { SettingsProvider } from "@/context/SettingsContext";
 import { LangueProvider } from "@/lib/i18n/LangueContext";
 import { TabBar } from "@/components/mobile/TabBar";
 import { LevelUpOverlay } from "@/components/mobile/LevelUpOverlay";
+import { TutorielBanniere } from "@/components/mobile/tutoriel/TutorielBanniere";
 import { SwipePager } from "@/components/mobile/SwipePager";
 import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -64,6 +65,7 @@ export default function RootLayout({
                 <SwipePager>{children}</SwipePager>
                 <TabBar />
                 <LevelUpOverlay />
+                <TutorielBanniere />
                 <GlobalVinylAmbiance />
               </GameProvider>
             </ToastProvider>

@@ -160,6 +160,19 @@ export const en: DictionnaireUI = {
     ouvrirCollection: "Open the collection",
     slotLibre: "free",
   },
+  tutoriel: {
+    passer: "Skip tutorial",
+    confirmerPasser: "Sure? Tap again",
+    instructions: {
+      "accueil": "Listen to your grandfather…",
+      "aller-chiner": "Go through the door, pick “Pick”, then the Neighborhood Yard Sale.",
+      "premier-achat": "Pick an item and buy it — haggle if you dare!",
+      "rentrer": "Leave the flea market and head back to the shop.",
+      "preparer-etal": "Go through the door again and pick “Set up stall” to prepare your stall.",
+      "premiere-vente": "Sell an item to a customer, then close the stall.",
+      "conclusion": "Listen to your grandfather…",
+    },
+  },
   sheets: {
     objetRecherche: "Item wanted:",
     objetsRecherches: "Items wanted:",

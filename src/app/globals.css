@@ -1288,3 +1288,19 @@ nav[aria-label="Navigation principale"] :focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .chine-slide { animation: none !important; }
 }
+
+/* Tutoriel : halo pulsé sur l'élément que le joueur doit toucher. */
+@keyframes tuto-pulse-kf {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.85); }
+  50% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
+}
+.tuto-pulse {
+  animation: tuto-pulse-kf 1.6s ease-in-out infinite;
+  border-radius: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tuto-pulse {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.85);
+  }
+}

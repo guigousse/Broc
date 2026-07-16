@@ -9,6 +9,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import { estPret } from "@/lib/restauration";
+import { tutorielActif } from "@/lib/tutoriel";
 import type { GameState } from "@/types/game";
 
 /** Clé d'onglet — sert à retrouver le libellé traduit dans `d.chrome.onglets`. */
@@ -156,6 +157,8 @@ export function TabBar() {
 
   if (!isHydrated) return null;
   if (!isTabBarRoute(pathname)) return null;
+  // Tutoriel guidé : navigation libre coupée — la bannière et les dialogues guident.
+  if (state && tutorielActif(state)) return null;
 
   // Onglets masqués (onboarding progressif) : filtrés selon l'état courant.
   // `state` null (pré-hydratation du state du jeu) → aucun masque appliqué,

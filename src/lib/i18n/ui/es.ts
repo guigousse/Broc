@@ -160,6 +160,19 @@ export const es: DictionnaireUI = {
     ouvrirCollection: "Abrir la colección",
     slotLibre: "libre",
   },
+  tutoriel: {
+    passer: "Saltar tutorial",
+    confirmerPasser: "¿Seguro? Toca otra vez",
+    instructions: {
+      "accueil": "Escucha a tu abuelo…",
+      "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",
+      "premier-achat": "Elige un objeto y cómpralo — ¡regatea si te atreves!",
+      "rentrer": "Sal del mercadillo y vuelve a la tienda.",
+      "preparer-etal": "Vuelve a cruzar la puerta y elige «Montar puesto» para preparar tu vitrina.",
+      "premiere-vente": "Véndele un objeto a un cliente y cierra el puesto.",
+      "conclusion": "Escucha a tu abuelo…",
+    },
+  },
   sheets: {
     objetRecherche: "Objeto buscado:",
     objetsRecherches: "Objetos buscados:",

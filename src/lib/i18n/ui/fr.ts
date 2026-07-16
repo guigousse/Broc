@@ -163,6 +163,19 @@ export const fr = {
     ouvrirCollection: "Ouvrir la collection",
     slotLibre: "libre",
   },
+  tutoriel: {
+    passer: "Passer le tutoriel",
+    confirmerPasser: "Sûr ? Touche encore",
+    instructions: {
+      "accueil": "Écoute ton grand-père…",
+      "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",
+      "premier-achat": "Choisis un objet et achète-le — négocie si tu l'oses !",
+      "rentrer": "Sors de la brocante et rentre à la boutique.",
+      "preparer-etal": "Repasse la porte et choisis « Étaler » pour préparer ta vitrine.",
+      "premiere-vente": "Vends un objet à un client, puis referme l'étal.",
+      "conclusion": "Écoute ton grand-père…",
+    },
+  },
   sheets: {
     objetRecherche: "Objet recherché :",
     objetsRecherches: "Objets recherchés :",
