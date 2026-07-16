@@ -77,6 +77,7 @@ import {
 } from "@/lib/competences";
 import { vinylAudioUrl, vinylHasAudio } from "@/data/vinylesAudio";
 import { estMissionLivrable } from "@/lib/missions";
+import { chapitrePret } from "@/lib/quetes/principales";
 import type { CategorieObjet, CollectionSlot } from "@/types/game";
 import {
   volumeVinylForPos,
@@ -100,7 +101,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     rerollMeteo,
     rerollCelebrite,
   } = useGame();
-  const { avancerTutoriel, terminerTutoriel } = useGameActions();
+  const { avancerTutoriel, terminerTutoriel, accepterChapitrePrincipal } = useGameActions();
   const {
     playClick,
     playPaper,
@@ -130,6 +131,12 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
   const [dialogueQg, setDialogueQg] = useState<DialogueSequence | null>(null);
+  // Chapitre de la trame prêt à être délivré (pastille du grand-père,
+  // Task 9) : `null` si aucun n'est dû. `dialogueChapitreId` mémorise le
+  // chapitre en cours de délivrance le temps du dialogue, pour l'accepter
+  // (créer la mission) à sa fin — cf. onFini du DialogueOverlay ci-dessous.
+  const chPret = state ? chapitrePret(state) : null;
+  const [dialogueChapitreId, setDialogueChapitreId] = useState<string | null>(null);
 
   // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
@@ -679,15 +686,28 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         onRerollCelebrite={() => rerollCelebrite()}
       />
 
-      {/* SP2 : la pastille s'allumera quand un dialogue de chapitre attendra. */}
-      <GrandPereBadge visible={false} onTap={() => {}} />
+      {/* Pastille du grand-père : s'allume quand un chapitre de la trame est
+          prêt à être délivré (chapitrePret), masquée pendant tout autre
+          dialogue (tutoriel) pour ne pas se superposer. */}
+      <GrandPereBadge
+        visible={!!chPret && !dialogueQg}
+        onTap={() => {
+          if (!chPret) return;
+          playClick();
+          setDialogueChapitreId(chPret.id);
+          setDialogueQg({ id: `dlg_${chPret.id}`, lignes: chPret.dialogue });
+        }}
+      />
       <DialogueOverlay
         sequence={dialogueQg}
         nom={nomExpediteur("grand-pere", locale)}
         portraits={GRAND_PERE_PORTRAITS}
         onFini={() => {
           setDialogueQg(null);
-          if (etape === "accueil") avancerTutoriel("aller-chiner");
+          if (dialogueChapitreId) {
+            accepterChapitrePrincipal(dialogueChapitreId);
+            setDialogueChapitreId(null);
+          } else if (etape === "accueil") avancerTutoriel("aller-chiner");
           else if (etape === "rentrer") avancerTutoriel("preparer-etal");
           else if (etape === "conclusion") terminerTutoriel();
         }}

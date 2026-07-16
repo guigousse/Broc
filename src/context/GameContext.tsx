@@ -36,6 +36,7 @@ import { getCompetence } from "@/data/competences";
 import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
 import { expireMissions, injecterLettreInvitationSiDue } from "@/lib/courrier";
 import { chapitreParId } from "@/data/quetesPrincipales";
+import { accepterChapitre } from "@/lib/quetes/principales";
 import { prochainLundi } from "@/lib/calendrier";
 import {
   appliquerGainXPBrocanteur,
@@ -218,6 +219,8 @@ interface GameActionsValue {
   retirerDeCollection: (templateId: string) => { ok: boolean; raison?: string };
   /** Livre une mission : retire l'objet ciblé de l'inventaire et crédite la récompense. */
   livrerMission: (courrierId: string) => { ok: boolean; raison?: string };
+  /** Accepte un chapitre de la trame principale (dialogue de délivrance du grand-père, pastille QG). */
+  accepterChapitrePrincipal: (chapitreId: string) => void;
   acheterGazette: () => { ok: boolean; raison?: string };
   marquerBossDebloqueVu: () => void;
   /** Avance `niveauVu` d'UN niveau (clampé à `brocanteur.niveau`) — célébration séquentielle des level-up. */
@@ -1585,6 +1588,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  /** Accepte un chapitre de la trame principale : crée le courrier + la mission
+   *  associée (cf. `accepterChapitre`), déclenché en fin de dialogue avec le
+   *  grand-père (pastille QG, Task 9). */
+  const accepterChapitrePrincipal = useCallback(
+    (chapitreId: string): void => {
+      const now = tempsConfiance() ?? Date.now();
+      setState((prev) => (prev ? accepterChapitre(prev, chapitreId, now) : prev));
+    },
+    [tempsConfiance],
+  );
+
   const acheterGazette = useCallback((): { ok: boolean; raison?: string } => {
     const current = stateRef.current;
     if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
@@ -1676,6 +1690,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       acheterGazette,
       payerFraisBrocante,
       livrerMission,
+      accepterChapitrePrincipal,
       marquerBossDebloqueVu,
       marquerNiveauVu,
       rerollMeteo,
@@ -1727,6 +1742,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       acheterGazette,
       payerFraisBrocante,
       livrerMission,
+      accepterChapitrePrincipal,
       marquerBossDebloqueVu,
       marquerNiveauVu,
       rerollMeteo,
