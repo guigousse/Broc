@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  missionLivrable,
   objectifsDeMission,
   progressionObjectif,
 } from "./objectifs";
@@ -86,5 +87,17 @@ describe("progressionObjectif", () => {
     const sansTs: MissionResolution = { courrierId: "x", statut: "active" };
     expect(progressionObjectif({ type: "ventesCumulees", montant: 300 }, state, sansTs, 4).actuel).toBe(0);
     expect(progressionObjectif({ type: "ventesCumulees", montant: 300 }, state, sansTs, 3).actuel).toBe(120);
+  });
+});
+
+describe("missionLivrable", () => {
+  it("narrative (aucun objectif) : livrable immédiatement", () => {
+    expect(missionLivrable(payloadBase, reso, createMockGameState({}), 1)).toBe(true);
+  });
+  it("mixte : exige cibles possédées ET objectifs non-objet atteints", () => {
+    const p = { ...payloadBase, objectifs: [{ type: "ventesCumulees" as const, montant: 300 }] };
+    const state = createMockGameState({ historique: [venteSession(2000, [{ prixVente: 350, prixAchat: 10 }])] });
+    expect(missionLivrable(p, reso, state, 1)).toBe(true);
+    expect(missionLivrable(p, reso, createMockGameState({}), 1)).toBe(false);
   });
 });

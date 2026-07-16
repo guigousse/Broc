@@ -1,6 +1,6 @@
 import { ETATS_ORDRE } from "@/lib/etat";
 import { valeurTotale } from "@/lib/collection";
-import { progressionMission } from "@/lib/missions";
+import { estMissionLivrable, progressionMission } from "@/lib/missions";
 import type {
   CourrierPayloadMission,
   GameState,
@@ -79,4 +79,17 @@ export function progressionObjectif(
       return { actuel, cible: obj.niveau, atteint: actuel >= obj.niveau };
     }
   }
+}
+
+/** Livrabilité complète : cibles objets (machinerie historique) + objectifs non-objet. */
+export function missionLivrable(
+  payload: CourrierPayloadMission,
+  reso: MissionResolution,
+  state: GameState,
+  jourRecu: number,
+): boolean {
+  if (!estMissionLivrable(payload, state.inventaireJoueur)) return false;
+  return objectifsDeMission(payload)
+    .filter((o) => o.type !== "objet")
+    .every((o) => progressionObjectif(o, state, reso, jourRecu).atteint);
 }

@@ -30,6 +30,7 @@ import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
 import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
 import { indicesAConsommerPourLivraison } from "@/lib/missions";
+import { missionLivrable } from "@/lib/quetes/objectifs";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
 import { getCompetence } from "@/data/competences";
 import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
@@ -1490,6 +1491,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const reso = current.missions.find((m) => m.courrierId === courrierId);
       if (!reso || reso.statut !== "active") {
         return { ok: false, raison: raisonLocalisee("missionNonActive") };
+      }
+      if (!missionLivrable(courrier.payload, reso, current, courrier.jourRecu)) {
+        return { ok: false, raison: raisonLocalisee("objetsRequisManquants") };
       }
       const { recompense } = courrier.payload;
       const aRetirer = indicesAConsommerPourLivraison(
