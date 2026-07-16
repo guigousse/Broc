@@ -4,11 +4,13 @@ import { type CSSProperties } from "react";
 import { getTemplate } from "@/data/objetTemplates";
 import { getExpediteur } from "@/data/expediteursCourrier";
 import { progressionMission } from "@/lib/missions";
+import { objectifsDeMission, progressionObjectif, missionLivrable } from "@/lib/quetes/objectifs";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
 import { corpsCourrier, nomTemplate, nomExpediteur, personnaliteExpediteur, titreCourrier } from "@/lib/i18n/contenu";
-import type { Courrier, GameState } from "@/types/game";
+import type { DictionnaireUI } from "@/lib/i18n/ui";
+import type { Courrier, GameState, ObjectifMission } from "@/types/game";
 
 interface Props {
   courrier: Courrier;
@@ -29,6 +31,33 @@ const avatar: CSSProperties = {
   display: "grid", placeItems: "center", color: "#6e1f1f",
   fontFamily: "var(--font-display)", fontSize: 16, overflow: "hidden",
 };
+const ligneObjectif: CSSProperties = {
+  display: "flex", alignItems: "center", justifyContent: "space-between",
+  padding: "5px 0", borderBottom: "1px dashed rgba(110,31,31,0.18)", fontSize: 12, color: "#2b2418",
+};
+
+/** Libellé localisé d'un objectif de chapitre (hors cibles "objet", déjà
+ *  rendues via `cibles`). `restauration` interpole l'état minimum requis. */
+function libelleObjectif(
+  o: ObjectifMission,
+  d: DictionnaireUI,
+  tr: (gabarit: string, params?: Record<string, string | number>) => string,
+): string {
+  switch (o.type) {
+    case "ventesCumulees":
+      return d.carnet.objectifs.ventesCumulees;
+    case "profitVente":
+      return d.carnet.objectifs.profitVente;
+    case "restauration":
+      return tr(d.carnet.objectifs.restauration, { etat: libelleEtat(o.etatMin, d) });
+    case "valeurCollection":
+      return d.carnet.objectifs.valeurCollection;
+    case "niveau":
+      return d.carnet.objectifs.niveau;
+    case "objet":
+      return "";
+  }
+}
 
 export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Props) {
   const { locale, d, tr } = useLangue();
@@ -37,6 +66,8 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
   const exp = getExpediteur(p.expediteurId);
   const nomExp = exp ? nomExpediteur(p.expediteurId, locale) : null;
   const prog = progressionMission(p, state.inventaireJoueur);
+  const reso = state.missions.find((m) => m.courrierId === courrier.id);
+  const livrable = reso ? missionLivrable(p, reso, state, courrier.jourRecu) : false;
   const jLimite = p.jourLimite;
   const jRestants = jLimite !== undefined ? Math.max(0, jLimite - state.jourActuel) : null;
 
@@ -56,7 +87,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
           </span>
         </span>
         <span style={{ textAlign: "right", flex: "0 0 auto" }}>
-          {prog.livrable ? (
+          {livrable ? (
             <span style={{ display: "inline-block", background: "#2c5e3f", color: "#f4e9cd", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 10 }}>{d.carnet.pret}</span>
           ) : (
             <>
@@ -96,20 +127,31 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
               </div>
             );
           })}
+          {objectifsDeMission(p).filter((o) => o.type !== "objet").map((o, i) => {
+            const progObj = progressionObjectif(o, state, reso ?? { courrierId: courrier.id, statut: "active" }, courrier.jourRecu);
+            return (
+              <div key={i} style={ligneObjectif}>
+                <span>{libelleObjectif(o, d, tr)}</span>
+                <span style={{ fontWeight: 700, color: progObj.atteint ? "#2c5e3f" : "#7a6a44" }}>
+                  {progObj.actuel}/{progObj.cible}{o.type !== "niveau" && o.type !== "restauration" ? " €" : ""}
+                </span>
+              </div>
+            );
+          })}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
             <span style={{ fontSize: 12, color: "#4a3f28" }}>{d.carnet.recompenseLabel} <b style={{ color: "#8a6d2e" }}>+{p.recompense.argent} €</b></span>
             <button
               type="button"
               onClick={onLivrer}
-              disabled={!prog.livrable}
+              disabled={!livrable}
               style={{
-                background: prog.livrable ? "#6e1f1f" : "#b3a06a", color: "#f4e9cd", border: "none",
+                background: livrable ? "#6e1f1f" : "#b3a06a", color: "#f4e9cd", border: "none",
                 borderRadius: 6, padding: "8px 16px", fontFamily: "var(--font-display)", fontSize: 11,
-                letterSpacing: "0.14em", textTransform: "uppercase", cursor: prog.livrable ? "pointer" : "default",
-                opacity: prog.livrable ? 1 : 0.6,
+                letterSpacing: "0.14em", textTransform: "uppercase", cursor: livrable ? "pointer" : "default",
+                opacity: livrable ? 1 : 0.6,
               }}
             >
-              {prog.livrable ? d.carnet.livrer : tr(d.carnet.livrerProgress, { rempli: prog.remplies, total: prog.total })}
+              {livrable ? d.carnet.livrer : tr(d.carnet.livrerProgress, { rempli: prog.remplies, total: prog.total })}
             </button>
           </div>
         </div>

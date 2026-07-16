@@ -30,6 +30,7 @@ describe("CommandeRow", () => {
   it("montre le bouton Livrer actif quand toutes les cibles sont réunies", () => {
     const state: GameState = createMockGameState({
       inventaireJoueur: [createMockObjet({ templateId: "ma.lampe_petrole_ancienne", etat: "Très bon", categorie: "Maison" })],
+      missions: [{ courrierId: "m1", statut: "active" }],
     });
     render(<CommandeRow courrier={courrierMission()} state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}} />);
     const btn = screen.getByRole("button", { name: /Livrer/ }) as HTMLButtonElement;
@@ -37,9 +38,29 @@ describe("CommandeRow", () => {
   });
 
   it("grise Livrer si une cible manque", () => {
-    const state = createMockGameState({ inventaireJoueur: [] });
+    const state = createMockGameState({
+      inventaireJoueur: [],
+      missions: [{ courrierId: "m1", statut: "active" }],
+    });
     render(<CommandeRow courrier={courrierMission()} state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}} />);
     const btn = screen.getByRole("button", { name: /Livrer/ }) as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
+  });
+
+  it("affiche la progression d'un objectif ventesCumulees et gate le bouton Livrer", () => {
+    const courrier: Courrier = {
+      id: "m2", type: "mission", jourRecu: 1, lu: true,
+      payload: {
+        type: "mission", categorie: "principale", expediteurId: "maman",
+        titre: "Un pactole pour la mairie", corps: ["Fais rentrer des sous."],
+        cibles: [],
+        objectifs: [{ type: "ventesCumulees", montant: 300 }],
+        recompense: { argent: 50 },
+      },
+    };
+    const state = createMockGameState({ missions: [{ courrierId: "m2", statut: "active" }] });
+    render(<CommandeRow courrier={courrier} state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}} />);
+    expect(screen.getByText(/0\/300/)).toBeTruthy();
+    expect(screen.queryByText("Prêt ✓")).toBeNull();
   });
 });

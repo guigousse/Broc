@@ -527,6 +527,13 @@ export const es: DictionnaireUI = {
     recompenseLabel: "Recompensa",
     livrer: "Entregar",
     livrerProgress: "Entregar ({rempli}/{total})",
+    objectifs: {
+      ventesCumulees: "Ventas acumuladas",
+      profitVente: "Mejor beneficio en una venta",
+      restauration: "Restaurar un objeto ({etat} mín.)",
+      valeurCollection: "Valor de la colección",
+      niveau: "Nivel de chamarilero",
+    },
   },
   ledger: {
     loyer: "Alquiler · {tier}",
