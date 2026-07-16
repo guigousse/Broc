@@ -21,6 +21,7 @@ import {
   type Objet,
   type ObjetEnVitrine,
   type Session,
+  type TutorielEtape,
 } from "@/types/game";
 import { getCamion } from "@/data/camion";
 import { createStarterInventory } from "@/data/starterInventory";
@@ -32,11 +33,7 @@ import { indicesAConsommerPourLivraison } from "@/lib/missions";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
 import { getCompetence } from "@/data/competences";
 import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
-import {
-  ID_LETTRE_MAMAN_DEBUT,
-  creerLettreMamanDebut,
-  expireMissions,
-} from "@/lib/courrier";
+import { expireMissions } from "@/lib/courrier";
 import { prochainLundi } from "@/lib/calendrier";
 import {
   appliquerGainXPBrocanteur,
@@ -65,6 +62,7 @@ import {
 import { stockageEstPlein } from "@/lib/stockage";
 import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
+import { appliquerFinTutoriel, ETAPES_TUTORIEL } from "@/lib/tutoriel";
 import { synchroniserNotifsQuetes } from "@/lib/notifications/quetesNotif";
 import {
   initCollection,
@@ -160,6 +158,10 @@ interface GameActionsValue {
    * supprimerait la partie qu'on est justement en train de quitter.
    */
   detacherPartie: () => void;
+  /** Fait avancer le tutoriel vers une étape donnée (idempotent si déjà atteinte/dépassée). */
+  avancerTutoriel: (vers: TutorielEtape) => void;
+  /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
+  terminerTutoriel: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
   /** Ré-attribue le coffre courant (mode prep) à une vraie brocante, sans perdre les objets/prix/positions. */
   attribuerVitrineABrocante: (brocanteId: string) => void;
@@ -549,14 +551,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       celebriteActuelle: tirerCelebrite(),
       influenceUtilisee: false,
       dernierLoyer: null,
-      courriers: [creerLettreMamanDebut(INITIAL_JOUR)],
+      courriers: [],
       niveauAtelier: 0,
       niveauStockage: 1,
       niveauCamion: 1,
       piecesAmelioration: emptyPiecesAmelioration(),
       chatSurFauteuil: false,
       passagesSansChat: 0,
-      declencheursDeclenches: [ID_LETTRE_MAMAN_DEBUT],
+      declencheursDeclenches: [],
       grandLivre: [],
       missions: [],
       quetesPeriodiques: {
@@ -565,10 +567,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       },
       energie: ENERGIE_MAX,
       energieDerniereMaj: Date.now(),
+      tutorielEtape: "accueil",
     };
-    // Amorce de l'arc principal (chapitre 1) à la création.
-    const tick = tickQuetes(initial, initial.jourActuel);
-    setState({ ...initial, courriers: tick.courriers, missions: tick.missions });
+    setState(initial);
     router.push("/bureau");
   }, [router]);
 
@@ -804,6 +805,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // bascule de slot pour que l'effet d'auto-save (gardé sur state null) ne
   // puisse plus écrire.
   const detacherPartie = useCallback(() => setState(null), []);
+
+  /** Fait avancer le tutoriel vers une étape donnée (idempotent si déjà atteinte/dépassée). */
+  const avancerTutoriel = useCallback((vers: TutorielEtape) => {
+    setState((prev) => {
+      if (!prev || prev.tutorielEtape === "termine") return prev;
+      const iCourante = ETAPES_TUTORIEL.indexOf(prev.tutorielEtape);
+      const iCible = ETAPES_TUTORIEL.indexOf(vers);
+      if (iCible <= iCourante) return prev;
+      return { ...prev, tutorielEtape: vers };
+    });
+  }, []);
+
+  /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
+  const terminerTutoriel = useCallback(() => {
+    setState((prev) => (prev ? appliquerFinTutoriel(prev) : prev));
+  }, []);
 
   const attribuerVitrineABrocante = useCallback((brocanteId: string) => {
     setState((prev) => {
@@ -1606,6 +1623,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       avancerJour,
       reset,
       detacherPartie,
+      avancerTutoriel,
+      terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
       mettreEnVitrine,
@@ -1655,6 +1674,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       avancerJour,
       reset,
       detacherPartie,
+      avancerTutoriel,
+      terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
       mettreEnVitrine,
