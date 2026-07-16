@@ -178,3 +178,28 @@ describe("EnergieRecharge — bandeau d'alerte", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });
+
+describe("EnergieRecharge — alerte réactive à l'énergie", () => {
+  it("alerte + énergie 0 : le cartel pulse (halo) pour attirer l'attention", () => {
+    mockState = {
+      energie: 0,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} alerte="Pas assez d'énergie !" />);
+    const btn = screen.getByRole("button", { name: /regarder une pub/i });
+    expect(btn.style.animation).toContain("broc-cartel-pulse");
+  });
+
+  it("alerte + énergie > 0 : le bandeau disparaît et le cartel ne pulse plus", () => {
+    mockState = {
+      energie: 1,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} alerte="Pas assez d'énergie !" />);
+    expect(screen.queryByRole("alert")).toBeNull();
+    const btn = screen.getByRole("button", { name: /regarder une pub/i });
+    expect(btn.style.animation).not.toContain("broc-cartel-pulse");
+  });
+});

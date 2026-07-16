@@ -56,9 +56,29 @@ const overlayStyle: CSSProperties = {
   zIndex: 50,
   background: "rgba(0,0,0,0.6)",
   display: "flex",
+  flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
   padding: 20,
+};
+
+/** Bandeau d'alerte AU-DESSUS de la fenêtre machine (mode « sortie refusée »). */
+const alerteBandeauStyle: CSSProperties = {
+  width: "100%",
+  maxWidth: 340,
+  marginBottom: 12,
+  padding: "9px 12px",
+  borderRadius: 6,
+  background: "var(--vermillion-600)",
+  border: "1px solid rgba(0,0,0,0.35)",
+  boxShadow: "0 3px 10px rgba(0,0,0,0.45)",
+  color: "var(--paper-100)",
+  fontFamily: "var(--font-display)",
+  fontWeight: 700,
+  fontSize: "clamp(12px, 3.4vw, 14px)",
+  letterSpacing: "0.04em",
+  textAlign: "center",
+  animation: "broc-shake 240ms linear 2",
 };
 
 const carteStyle = (tremble: boolean): CSSProperties => ({
@@ -102,7 +122,7 @@ const compteurStyle: CSSProperties = {
 };
 
 /** Cartel laiton « étiquette de musée » — même famille que ScenePlaquesBar. */
-const plaqueBtnStyle = (indisponible: boolean): CSSProperties => ({
+const plaqueBtnStyle = (indisponible: boolean, pulse: boolean): CSSProperties => ({
   position: "absolute",
   left: `${ZONE_PLAQUE.left}%`,
   top: `${ZONE_PLAQUE.top}%`,
@@ -132,6 +152,8 @@ const plaqueBtnStyle = (indisponible: boolean): CSSProperties => ({
   justifyContent: "center",
   gap: 4,
   padding: "0 14px",
+  // Mode alerte : pulsation + halo doré pour attirer l'œil sur la recharge.
+  animation: pulse ? "broc-cartel-pulse 1.1s ease-in-out infinite" : undefined,
 });
 
 /** Rivets latéraux du cartel (décor). */
@@ -248,9 +270,18 @@ export function EnergieRecharge({
   const graduations = Array.from({ length: energieMax + 1 }, (_, i) =>
     angleAiguille(i, energieMax),
   );
+  // L'alerte ne vit que tant que l'énergie est à zéro : dès la première
+  // recharge, le bandeau disparaît et le cartel cesse de pulser.
+  const alerteActive = !!alerte && energie < 1;
 
   return (
     <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true">
+      {/* Bandeau d'alerte AU-DESSUS de la fenêtre machine. */}
+      {alerteActive && (
+        <div role="alert" style={alerteBandeauStyle} onClick={(e) => e.stopPropagation()}>
+          {alerte}
+        </div>
+      )}
       <div style={carteStyle(enCours || salve)} onClick={(e) => e.stopPropagation()}>
         {/* La machine du savant fou — l'illustration EST la carte. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -288,34 +319,6 @@ export function EnergieRecharge({
         >
           <X size={18} />
         </button>
-
-        {/* Bandeau d'alerte contextuel (action bloquée faute d'énergie). */}
-        {alerte && (
-          <div
-            role="alert"
-            style={{
-              position: "absolute",
-              top: 12,
-              left: "8%",
-              right: "18%",
-              zIndex: 2,
-              padding: "7px 10px",
-              borderRadius: 6,
-              background: "var(--vermillion-600)",
-              border: "1px solid rgba(0,0,0,0.35)",
-              boxShadow: "0 3px 10px rgba(0,0,0,0.45)",
-              color: "var(--paper-100)",
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: "clamp(11px, 3.2vw, 13px)",
-              letterSpacing: "0.04em",
-              textAlign: "center",
-              animation: "broc-shake 240ms linear 2",
-            }}
-          >
-            {alerte}
-          </div>
-        )}
 
         {/* Galvanomètre posé sur le cadran vide de l'illustration. */}
         <div style={cadranStyle}>
@@ -385,7 +388,7 @@ export function EnergieRecharge({
           onClick={regarderPub}
           disabled={pubIndisponible}
           aria-label={!pubIndisponible ? d.chrome.regarderPub : undefined}
-          style={plaqueBtnStyle(pubIndisponible)}
+          style={plaqueBtnStyle(pubIndisponible, alerteActive && !pubIndisponible)}
         >
           <span aria-hidden style={rivetStyle("left")} />
           {enCours || salve
