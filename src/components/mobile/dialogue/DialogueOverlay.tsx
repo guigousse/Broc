@@ -104,7 +104,7 @@ export function DialogueOverlay({
   };
 
   return createPortal(
-    <button type="button" style={scrim} onClick={avancer} aria-label="Continuer">
+    <button type="button" style={scrim} onClick={avancer}>
       <div style={carte}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={portraits[ligne.humeur]} alt="" draggable={false} style={portraitStyle} />
@@ -116,6 +116,18 @@ export function DialogueOverlay({
           </div>
         </div>
       </div>
+      <span
+        style={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          overflow: "hidden",
+          clipPath: "inset(50%)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Continuer
+      </span>
     </button>,
     document.body,
   );
