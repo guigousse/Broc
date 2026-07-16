@@ -91,7 +91,8 @@ describe("EnergieRecharge — galvanomètre", () => {
       brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
     };
     render(<EnergieRecharge onClose={() => {}} />);
-    expect(screen.getByText(/au maximum/i)).toBeTruthy();
+    // « au maximum » apparaît dans la pastille ET sur le cartel désactivé.
+    expect(screen.getAllByText(/au maximum/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/dans \d{2}:\d{2}/i)).toBeNull();
   });
 });
@@ -136,5 +137,18 @@ describe("EnergieRecharge — salve finale après la pub", () => {
     unmount(); // fermeture pendant la salve
     expect(crediterEnergiePub).toHaveBeenCalledOnce();
     vi.useRealTimers();
+  });
+});
+
+describe("EnergieRecharge — énergie pleine", () => {
+  it("à 5/5 le bouton pub est désactivé (pub jamais gaspillée)", () => {
+    mockState = {
+      energie: 5,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} />);
+    const btn = screen.getByRole("button", { name: /au maximum/i });
+    expect((btn as HTMLButtonElement).disabled).toBe(true);
   });
 });

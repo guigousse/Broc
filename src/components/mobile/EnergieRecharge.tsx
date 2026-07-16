@@ -213,10 +213,11 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
   const energie = energieCourante(state, now, energieMax);
   const restantSec = secondesAvantProchaine(state, now, energieMax);
   const pubsRestantes = pubsEnergieRestantes(state.pubsEnergie, now);
-  // Quota épuisé : on bloque AVANT de lancer la pub (jamais de pub gâchée).
-  // Bloqué aussi pendant la salve finale : un 2e visionnage lancé à ce moment
-  // écraserait le crédit en attente du premier.
-  const pubIndisponible = enCours || salve || pubsRestantes <= 0;
+  // Quota épuisé OU énergie déjà pleine : on bloque AVANT de lancer la pub
+  // (jamais de pub gâchée). Bloqué aussi pendant la salve finale : un 2e
+  // visionnage lancé à ce moment écraserait le crédit en attente du premier.
+  const energiePleine = energie >= energieMax;
+  const pubIndisponible = enCours || salve || energiePleine || pubsRestantes <= 0;
 
   const regarderPub = async () => {
     if (pubIndisponible) return;
@@ -346,15 +347,17 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
         <button
           onClick={regarderPub}
           disabled={pubIndisponible}
-          aria-label={!enCours && !salve && pubsRestantes > 0 ? d.chrome.regarderPub : undefined}
+          aria-label={!pubIndisponible ? d.chrome.regarderPub : undefined}
           style={plaqueBtnStyle(pubIndisponible)}
         >
           <span aria-hidden style={rivetStyle("left")} />
           {enCours || salve
             ? d.chrome.pubEnCours
-            : pubsRestantes <= 0
-              ? d.chrome.pubEpuisee
-              : (
+            : energiePleine
+              ? d.chrome.energieAuMaximum
+              : pubsRestantes <= 0
+                ? d.chrome.pubEpuisee
+                : (
                   <span
                     aria-hidden
                     style={{
