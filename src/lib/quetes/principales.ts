@@ -1,12 +1,45 @@
 import { creerCourrierMission } from "@/lib/courrier";
+import { appendLedger } from "@/lib/grandLivre";
 import {
-  calculerBrocantesDebloqueesParTier,
-  evaluerCondition,
-} from "@/lib/deblocage";
-import { QUETES_PRINCIPALES, type ChapitrePrincipal } from "@/data/quetesPrincipales";
-import type { Courrier, GameState } from "@/types/game";
+  appliquerGainXPBrocanteur,
+  POINTS_BONUS_CHAPITRE,
+  XP_QUETE_PRINCIPALE,
+} from "@/lib/xp";
+import { calculerBrocantesDebloqueesParTier, evaluerCondition } from "@/lib/deblocage";
+import { QUETES_PRINCIPALES, chapitreParId, type ChapitrePrincipal } from "@/data/quetesPrincipales";
+import type { Courrier, GameState, MissionResolution } from "@/types/game";
 
-function enCourrier(ch: ChapitrePrincipal, jour: number): Courrier {
+/**
+ * Prochain chapitre de la trame délivrable par le grand-père (pastille « ! »
+ * du QG, câblée en Task 9), ou `null` si aucun n'est dû pour l'instant.
+ *
+ * Règles : `null` tant que le tutoriel guidé n'est pas terminé ; sinon, on
+ * cherche — dans l'ordre — le premier chapitre pas encore présent (aucun
+ * courrier créé) dont le chapitre précédent est livré ET dont la condition
+ * propre est remplie. La trame avance un chapitre à la fois : dès qu'un
+ * chapitre est accepté (`accepterChapitre`), il devient « présent » et ne
+ * peut plus être reproposé, même si un chapitre ultérieur devenait éligible.
+ */
+export function chapitrePret(state: GameState): ChapitrePrincipal | null {
+  if (state.tutorielEtape !== "termine") return null;
+  const presents = new Set(state.courriers.map((c) => c.id));
+  const livres = new Set(
+    state.missions.filter((m) => m.statut === "livree").map((m) => m.courrierId),
+  );
+  const parTier = calculerBrocantesDebloqueesParTier(state);
+  const chapitres = [...QUETES_PRINCIPALES].sort((a, b) => a.ordre - b.ordre);
+
+  for (const ch of chapitres) {
+    if (presents.has(ch.id)) continue; // déjà délivré → on avance au suivant
+    const precedent = chapitres.find((c) => c.ordre === ch.ordre - 1);
+    if (precedent && !livres.has(precedent.id)) return null; // précédent pas encore livré
+    return evaluerCondition(ch.condition, state, parTier) ? ch : null;
+  }
+  return null; // les 12 chapitres sont déjà délivrés
+}
+
+/** Construit le Courrier (marqué lu) porté par un chapitre de la trame. */
+function courrierDeChapitre(ch: ChapitrePrincipal, jour: number): Courrier {
   return {
     ...creerCourrierMission({
       id: ch.id,
@@ -17,6 +50,7 @@ function enCourrier(ch: ChapitrePrincipal, jour: number): Courrier {
       categorie: "principale",
       cibles: ch.payload.cibles,
       recompense: ch.payload.recompense,
+      objectifs: ch.payload.objectifs,
       ...(ch.payload.conserverCibles ? { conserverCibles: true } : {}),
     }),
     lu: true,
@@ -24,24 +58,63 @@ function enCourrier(ch: ChapitrePrincipal, jour: number): Courrier {
 }
 
 /**
- * Injecte le prochain chapitre principal si sa condition est remplie et que le
- * chapitre précédent est livré. Retourne les courriers à ajouter (0 ou 1).
- * Idempotent : ne réinjecte jamais un chapitre déjà présent.
+ * Accepte un chapitre de la trame (déclenché en fin du dialogue de
+ * délivrance avec le grand-père) : crée le courrier (marqué lu) et la
+ * mission associée avec `timestampAcceptation` (borne basse des objectifs
+ * cumulatifs, ex. ventes réalisées APRÈS acceptation).
+ *
+ * Un chapitre narratif (`payload.objectifs` vide, ex. l'invitation ou la
+ * remise des clés) est livré immédiatement : ledger `mission_recompense`,
+ * XP `XP_QUETE_PRINCIPALE` et bonus `POINTS_BONUS_CHAPITRE`. (La lettre
+ * d'invitation éventuelle — `ch.invitationTier` — sera injectée en Task 8
+ * via `creerLettreInvitation`.)
+ *
+ * Pur et idempotent : si le chapitre est inconnu ou déjà présent (courrier
+ * existant), le state est renvoyé tel quel (même référence).
  */
-export function debloquerQuetesPrincipales(state: GameState, jour: number): Courrier[] {
-  const presents = new Set(state.courriers.map((c) => c.id));
-  const livrees = new Set(
-    state.missions.filter((m) => m.statut === "livree").map((m) => m.courrierId),
-  );
-  const parTier = calculerBrocantesDebloqueesParTier(state);
-  const chapitres = [...QUETES_PRINCIPALES].sort((a, b) => a.ordre - b.ordre);
+export function accepterChapitre(
+  state: GameState,
+  chapitreId: string,
+  timestamp: number,
+): GameState {
+  const ch = chapitreParId(chapitreId);
+  if (!ch || state.courriers.some((c) => c.id === ch.id)) return state;
 
-  for (const ch of chapitres) {
-    if (presents.has(ch.id)) continue; // déjà injecté → on s'arrête à la première lacune
-    const precedent = chapitres.find((c) => c.ordre === ch.ordre - 1);
-    if (precedent && !livrees.has(precedent.id)) return []; // précédent pas encore livré
-    if (!evaluerCondition(ch.condition, state, parTier)) return []; // condition non remplie
-    return [enCourrier(ch, jour)];
+  const courrier = courrierDeChapitre(ch, state.jourActuel);
+  const narratif = ch.payload.objectifs.length === 0;
+  const mission: MissionResolution = {
+    courrierId: ch.id,
+    statut: narratif ? "livree" : "active",
+    timestampAcceptation: timestamp,
+    ...(narratif ? { jourResolution: state.jourActuel } : {}),
+  };
+
+  let next: GameState = {
+    ...state,
+    courriers: [...state.courriers, courrier],
+    missions: [...state.missions, mission],
+  };
+
+  if (narratif) {
+    next = appendLedger(next, {
+      jour: next.jourActuel,
+      kind: "mission_recompense",
+      designation: `Mission · ${ch.payload.titre}`,
+      recette: ch.payload.recompense.argent,
+      depense: 0,
+      courrierId: ch.id,
+      params: { courrierId: ch.id, templateIds: [] },
+    });
+    const avecXP = appliquerGainXPBrocanteur(next.brocanteur, XP_QUETE_PRINCIPALE);
+    next = {
+      ...next,
+      brocanteur: {
+        ...avecXP,
+        pointsDisponibles: avecXP.pointsDisponibles + POINTS_BONUS_CHAPITRE,
+      },
+    };
+    // Lettre d'invitation (ch.invitationTier) : branchée en Task 8.
   }
-  return [];
+
+  return next;
 }

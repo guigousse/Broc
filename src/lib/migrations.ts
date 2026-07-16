@@ -26,7 +26,6 @@ import {
   injecterLettreMamanSiAbsente,
   migrerCourriers,
 } from "@/lib/courrier";
-import { debloquerQuetesPrincipales } from "@/lib/quetes/principales";
 import { tirerMeteoSemaine } from "@/lib/meteo";
 import { genererTendances } from "@/lib/tendances";
 import { ALL_TEMPLATES } from "@/data/objetTemplates";
@@ -433,12 +432,11 @@ function appliquerMigrations(loaded: GameState): GameState {
     declencheursAjoutes: [...apresMaman.declencheursAjoutes],
   };
 
-  // Niveau de Brocanteur : calculé ici (avant l'amorce des quêtes principales)
-  // car `debloquerQuetesPrincipales` évalue le déblocage de TOUTES les
-  // brocantes (double gate T2-T4 par `niveau`), qui a donc besoin d'un
-  // `brocanteur.niveau` déjà défini — le brut `loaded.brocanteur` peut être
-  // absent (vieille save). Seul `pointsDisponibles` (bonus chapitres livrés)
-  // est finalisé plus tard, une fois `missionsFinales` connu.
+  // Niveau de Brocanteur : calculé ici, réutilisé par `niveauVu` et par le
+  // refund legacy (< v9) plus bas, qui a besoin d'un `brocanteur.niveau` déjà
+  // défini — le brut `loaded.brocanteur` peut être absent (vieille save).
+  // Seul `pointsDisponibles` (bonus chapitres livrés) est finalisé plus tard,
+  // une fois `missionsFinales` connu.
   const dejaV9 = typeof loaded.version === "number" && loaded.version >= 9;
   const brocanteurCharge = (loaded as Partial<GameState>).brocanteur;
   const brocanteurBienForme =
@@ -470,35 +468,14 @@ function appliquerMigrations(loaded: GameState): GameState {
   const brocanteurConverti =
     brocanteurFinalV9 ?? appliquerGainXPBrocanteur(emptyBrocanteur(), totalXP);
 
-  // Amorce de l'arc principal au chargement : on injecte le prochain chapitre
-  // dû (chapitre 1 pour une partie naissante) ainsi que sa résolution active.
   const missionsExistantes: GameState["missions"] = (
     Array.isArray(loaded.missions) ? loaded.missions : []
   ).filter((m) => !idsSecondairesSupprimes.has(m.courrierId));
-  // Tant qu'un tutoriel est en cours, aucun chapitre n'est amorcé (cf. drapeau
-  // `tutorielFini` posé plus haut) : `appliquerFinTutoriel` s'en charge.
-  const amorce = tutorielFini
-    ? debloquerQuetesPrincipales(
-        {
-          ...(loaded as GameState),
-          // Les conditions de déblocage lisent collection/historique/budget/jour :
-          // on s'appuie sur les valeurs migrées, pas sur le brut `loaded`.
-          jourActuel: jourCourant,
-          budget: loaded.budget ?? 0,
-          historique,
-          collection,
-          courriers: apresInjection.courriers,
-          missions: missionsExistantes,
-          brocanteur: brocanteurConverti,
-        },
-        jourCourant,
-      )
-    : [];
-  const courriersFinaux = [...apresInjection.courriers, ...amorce];
-  const missionsFinales: GameState["missions"] = [
-    ...missionsExistantes,
-    ...amorce.map((c) => ({ courrierId: c.id, statut: "active" as const })),
-  ];
+  // Depuis SP2 : plus d'amorce de chapitre au chargement — la trame est
+  // délivrée en dialogue (`accepterChapitre`, cf. src/lib/quetes/principales.ts) ;
+  // `chapitrePret(state)` (calculé à la volée) désigne le prochain chapitre dû.
+  const courriersFinaux = apresInjection.courriers;
+  const missionsFinales: GameState["missions"] = missionsExistantes;
 
   // `competenceTrees` (arbres) n'existe plus dans le schéma (v10) : on l'exclut
   // explicitement du spread pour qu'une vieille save qui le portait encore ne

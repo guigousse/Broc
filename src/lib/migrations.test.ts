@@ -4,7 +4,8 @@ import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
 import { emptyBrocanteur, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
-import * as principalesModule from "@/lib/quetes/principales";
+import { chapitrePret } from "@/lib/quetes/principales";
+import * as courrierModule from "@/lib/courrier";
 
 describe("migrerEtat", () => {
   it("conserve les états valides", () => {
@@ -178,18 +179,18 @@ describe("migrerSauvegarde — filet de sécurité en cas d'exception", () => {
 });
 
 describe("migrerSauvegarde — filet de sécurité minimal (lifeboat brocanteur)", () => {
-  // `appliquerMigrations` appelle `debloquerQuetesPrincipales` (import réel de
-  // @/lib/quetes/principales) vers la fin de son traitement. On la fait
-  // exploser une fois pour simuler un échec de migration inattendu SANS
-  // passer par une exception levée pendant `remapTemplateIds` (qui tourne
-  // hors du try : un getter piégé sur le save lui-même y exploserait avant
-  // même d'atteindre le try/catch, ce qui ne teste pas le bon chemin).
+  // `appliquerMigrations` appelle `injecterLettreMamanSiAbsente` (import réel
+  // de @/lib/courrier) vers le début de son traitement (tutoriel terminé). On
+  // la fait exploser une fois pour simuler un échec de migration inattendu
+  // SANS passer par une exception levée pendant `remapTemplateIds` (qui
+  // tourne hors du try : un getter piégé sur le save lui-même y exploserait
+  // avant même d'atteindre le try/catch, ce qui ne teste pas le bon chemin).
   it("garantit brocanteur/competencesDebloquees même si la migration explose sur un save qui en est dépourvu", () => {
     const errorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
     const spy = vi
-      .spyOn(principalesModule, "debloquerQuetesPrincipales")
+      .spyOn(courrierModule, "injecterLettreMamanSiAbsente")
       .mockImplementationOnce(() => {
         throw new Error("boom — échec simulé de migration");
       });
@@ -210,7 +211,7 @@ describe("migrerSauvegarde — filet de sécurité minimal (lifeboat brocanteur)
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
     const spy = vi
-      .spyOn(principalesModule, "debloquerQuetesPrincipales")
+      .spyOn(courrierModule, "injecterLettreMamanSiAbsente")
       .mockImplementationOnce(() => {
         throw new Error("boom — échec simulé de migration");
       });
@@ -241,13 +242,10 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     const state = createMockGameState({ historique: [], budget: 500 });
     const migrated = migrerSauvegarde(state);
     expect(migrated.grandLivre).toEqual([]);
-    // L'amorce de l'arc principal (chapitre 1) est injectée au chargement.
-    expect(migrated.courriers.some((c) => c.id === "trame_ch1")).toBe(true);
-    expect(
-      migrated.missions.some(
-        (m) => m.courrierId === "trame_ch1" && m.statut === "active",
-      ),
-    ).toBe(true);
+    // Depuis SP2 : plus d'amorce de chapitre au chargement — la trame est
+    // délivrée en dialogue ; `chapitrePret` désigne bien le chapitre 1 comme dû.
+    expect(migrated.courriers.some((c) => c.id === "trame_ch1")).toBe(false);
+    expect(chapitrePret(migrated)?.id).toBe("trame_ch1");
   });
 
   it("reconstruit grandLivre depuis l'historique des sessions", () => {

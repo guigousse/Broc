@@ -670,8 +670,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       );
       const baseAvecMissions: GameState = { ...base, missions: missionsApresExpiration };
 
-      // Tick des quêtes : déblocage de l'arc principal uniquement (les commandes
-      // quotidiennes/hebdomadaires sont gérées en temps réel via le settle).
+      // Tick des quêtes : passthrough depuis SP2 (la trame est délivrée en
+      // dialogue via accepterChapitre ; les commandes quotidiennes/hebdomadaires
+      // restent gérées en temps réel via le settle). Conservé comme point
+      // d'accroche pour de futurs ticks de quêtes.
       const tick = tickQuetes(baseAvecMissions, nouveauJour);
       const baseAvecQuetes: GameState = {
         ...baseAvecMissions,

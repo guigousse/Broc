@@ -5,6 +5,7 @@ import type {
   MissionCategorie,
   MissionCible,
   MissionResolution,
+  ObjectifMission,
 } from "@/types/game";
 
 /** ID stable du déclencheur « lettre starter de Maman ». */
@@ -79,6 +80,8 @@ export function creerCourrierMission(args: {
   conserverCibles?: boolean;
   gabaritId?: string;
   gabaritParams?: CourrierGabaritParams;
+  /** Objectifs génériques (SP2 trame). Cf. `CourrierPayloadMission.objectifs`. */
+  objectifs?: ObjectifMission[];
 }): Courrier {
   const payload: CourrierPayloadMission = {
     type: "mission",
@@ -92,6 +95,7 @@ export function creerCourrierMission(args: {
     ...(args.conserverCibles ? { conserverCibles: true } : {}),
     ...(args.gabaritId !== undefined ? { gabaritId: args.gabaritId } : {}),
     ...(args.gabaritParams !== undefined ? { gabaritParams: args.gabaritParams } : {}),
+    ...(args.objectifs !== undefined ? { objectifs: args.objectifs } : {}),
   };
   return {
     id: args.id,
