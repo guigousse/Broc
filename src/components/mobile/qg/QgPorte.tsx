@@ -7,11 +7,14 @@ import { useQgObjetStyle } from "./QgScene";
 
 interface QgPorteProps {
   onTap: () => void;
+  /** Tutoriel : met la porte en surbrillance (pulsation) quand elle est
+   * l'action attendue de l'étape courante. */
+  pulse?: boolean;
 }
 
 // La porte est déjà peinte dans le fond ; on garde seulement une zone
 // invisible cliquable, dimensionnée par un aspect-ratio porte standard.
-export function QgPorte({ onTap }: QgPorteProps) {
+export function QgPorte({ onTap, pulse = false }: QgPorteProps) {
   const style = useQgObjetStyle("porte");
   const { d } = useLangue();
 
@@ -28,6 +31,7 @@ export function QgPorte({ onTap }: QgPorteProps) {
       type="button"
       onClick={onTap}
       aria-label={d.qg.porteEntree}
+      className={pulse ? "tuto-pulse" : undefined}
       style={{
         ...style,
         aspectRatio: "2 / 7",
