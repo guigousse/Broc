@@ -1295,12 +1295,46 @@ nav[aria-label="Navigation principale"] :focus-visible,
   50% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
 }
 .tuto-pulse {
+  position: relative;
   animation: tuto-pulse-kf 1.6s ease-in-out infinite;
   border-radius: 12px;
+}
+/* Main pointeuse gravée à gauche de la cible (pointe vers la droite).
+   translate/scale (propriétés individuelles) pour que le va-et-vient et le
+   miroir ne se marchent pas dessus. */
+@keyframes tuto-main-kf {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 8px 0; }
+}
+.tuto-pulse::after {
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: calc(50% - 18px);
+  width: 88px;
+  height: 36px;
+  margin-right: 8px;
+  background: url("/tutoriel/main-pointeuse.webp") no-repeat center / contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+  animation: tuto-main-kf 1.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+/* Variante pour les cibles collées au bord gauche : main à droite, en miroir
+   (le translate positif devient un va-et-vient vers la cible). */
+.tuto-pulse-droite::after {
+  right: auto;
+  left: 100%;
+  margin-right: 0;
+  margin-left: 8px;
+  scale: -1 1;
 }
 @media (prefers-reduced-motion: reduce) {
   .tuto-pulse {
     animation: none;
     box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.85);
+  }
+  .tuto-pulse::after {
+    animation: none;
   }
 }

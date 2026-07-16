@@ -1029,7 +1029,7 @@ export default function VitrineJourneePage() {
           type="button"
           aria-label={d.chine.sortir}
           onClick={handleFermerEnAvance}
-          className={etape === "conclusion" ? "tuto-pulse" : undefined}
+          className={etape === "conclusion" ? "tuto-pulse tuto-pulse-droite" : undefined}
           style={{
             display: "inline-flex",
             alignItems: "center",
