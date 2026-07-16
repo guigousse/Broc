@@ -38,6 +38,13 @@ import {
   emptyBrocanteur,
   POINTS_BONUS_CHAPITRE,
 } from "@/lib/xp";
+import {
+  NIVEAU_BROCANTES_T2,
+  NIVEAU_BROCANTES_T3,
+  NIVEAU_BROCANTES_T4,
+} from "@/data/brocantes";
+import { chapitreParOrdre } from "@/data/quetesPrincipales";
+import { courrierDeChapitre } from "@/lib/quetes/principales";
 
 /**
  * Remappe en profondeur tout ancien templateId (avant l'harmonisation des noms
@@ -90,7 +97,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -477,6 +484,52 @@ function appliquerMigrations(loaded: GameState): GameState {
   const courriersFinaux = apresInjection.courriers;
   const missionsFinales: GameState["missions"] = missionsExistantes;
 
+  // v13 : trame 12 chapitres. Mapping "jamais re-verrouiller un tier" — pour
+  // toute save ≤ v12, les chapitres `trame_chN` déjà « acquis » sous les
+  // anciennes règles (niveau ou ancien arc `principale_*`) sont injectés
+  // livrés (courrier lu + mission `livree`), SANS récompense rétroactive
+  // (ni ledger, ni XP, ni points bonus — cf. `courrierDeChapitre`, qui ne
+  // passe pas par `accepterChapitre`) :
+  //  - niveau (anciens seuils) : ≥T2 ⇒ ch4, ≥T3 ⇒ ch8, ≥T4 ⇒ ch10
+  //  - anciens chapitres livrés : ch1⇒1, ch2⇒4, ch3⇒8, ch4⇒10, ch5⇒11
+  // On prend le max des deux sources. Idempotent : un `trame_chN` déjà
+  // présent (courrier OU mission — y compris un save déjà en v13) n'est
+  // jamais réinjecté. Les anciens courriers/missions `principale_*` sont
+  // conservés tels quels (archive).
+  const ANCIENS_CHAPITRES_VERS_ORDRE_TRAME: Record<string, number> = {
+    principale_ch1: 1,
+    principale_ch2: 4,
+    principale_ch3: 8,
+    principale_ch4: 10,
+    principale_ch5: 11,
+  };
+  let maxOrdreTrame = 0;
+  const niveauFinalTrame = brocanteurConverti.niveau;
+  if (niveauFinalTrame >= NIVEAU_BROCANTES_T2) maxOrdreTrame = 4;
+  if (niveauFinalTrame >= NIVEAU_BROCANTES_T3) maxOrdreTrame = 8;
+  if (niveauFinalTrame >= NIVEAU_BROCANTES_T4) maxOrdreTrame = 10;
+  for (const m of missionsExistantes) {
+    const ordre = ANCIENS_CHAPITRES_VERS_ORDRE_TRAME[m.courrierId];
+    if (m.statut === "livree" && ordre) {
+      maxOrdreTrame = Math.max(maxOrdreTrame, ordre);
+    }
+  }
+  const trameDejaPresente = new Set([
+    ...courriersFinaux.map((c) => c.id),
+    ...missionsFinales.map((m) => m.courrierId),
+  ]);
+  let courriersAvecTrame = courriersFinaux;
+  let missionsAvecTrame = missionsFinales;
+  for (let ordre = 1; ordre <= maxOrdreTrame; ordre++) {
+    const ch = chapitreParOrdre(ordre);
+    if (!ch || trameDejaPresente.has(ch.id)) continue;
+    courriersAvecTrame = [...courriersAvecTrame, courrierDeChapitre(ch, jourCourant)];
+    missionsAvecTrame = [
+      ...missionsAvecTrame,
+      { courrierId: ch.id, statut: "livree", jourResolution: jourCourant },
+    ];
+  }
+
   // `competenceTrees` (arbres) n'existe plus dans le schéma (v10) : on l'exclut
   // explicitement du spread pour qu'une vieille save qui le portait encore ne
   // le voie pas traverser tel quel dans l'état migré (cf. fallback `arbresLegacy`
@@ -543,7 +596,7 @@ function appliquerMigrations(loaded: GameState): GameState {
         : tirerCelebrite(),
     influenceUtilisee: loaded.influenceUtilisee ?? false,
     dernierLoyer: loaded.dernierLoyer ?? null,
-    courriers: courriersFinaux,
+    courriers: courriersAvecTrame,
     niveauAtelier: (() => {
       // 0 = nouvelle économie (slots achetés) ; 2/3 = acquis conservés.
       // 1, absent ou invalide → 1 (slot gratuit des sauvegardes historiques).
@@ -598,7 +651,7 @@ function appliquerMigrations(loaded: GameState): GameState {
       if (Array.isArray(existing) && existing.length > 0) return existing;
       return reconstruireGrandLivre(historique, loaded.budget ?? 0);
     })(),
-    missions: missionsFinales,
+    missions: missionsAvecTrame,
     quetesPeriodiques: loaded.quetesPeriodiques ?? {
       quotidien: { cle: "", courrierIds: [] },
       hebdo: { cle: "", courrierIds: [] },

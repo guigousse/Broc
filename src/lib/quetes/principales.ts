@@ -38,8 +38,14 @@ export function chapitrePret(state: GameState): ChapitrePrincipal | null {
   return null; // les 12 chapitres sont déjà délivrés
 }
 
-/** Construit le Courrier (marqué lu) porté par un chapitre de la trame. */
-function courrierDeChapitre(ch: ChapitrePrincipal, jour: number): Courrier {
+/**
+ * Construit le Courrier (marqué lu) porté par un chapitre de la trame.
+ * Exporté pour la migration v13 (`src/lib/migrations.ts`), qui l'utilise pour
+ * injecter les chapitres déjà « acquis » sous les anciennes règles (niveau ou
+ * ancien arc `principale_*`), sans passer par `accepterChapitre` (pas de
+ * récompense rétroactive : ni ledger, ni XP, ni points bonus).
+ */
+export function courrierDeChapitre(ch: ChapitrePrincipal, jour: number): Courrier {
   return {
     ...creerCourrierMission({
       id: ch.id,

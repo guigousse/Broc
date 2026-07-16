@@ -292,8 +292,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 12", () => {
-    expect(SAVE_VERSION).toBe(12);
+  it("SAVE_VERSION incrémenté à 13", () => {
+    expect(SAVE_VERSION).toBe(13);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -726,8 +726,8 @@ describe("migration v10 — suppression de competenceTrees", () => {
 });
 
 describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
-  it("SAVE_VERSION vaut 12", () => {
-    expect(SAVE_VERSION).toBe(12);
+  it("SAVE_VERSION vaut 13", () => {
+    expect(SAVE_VERSION).toBe(13);
   });
 
   it("une save v10 avec le champ legacy le perd, brocanteur intact", () => {
@@ -798,5 +798,42 @@ describe("migration tutoriel (v12)", () => {
       tutorielEtape: "etape-fantome",
     } as unknown as GameState;
     expect(migrerSauvegarde(loaded).tutorielEtape).toBe("termine");
+  });
+});
+
+/** Fabrique une save "v12" (schéma courant avant la trame v13). */
+function saveV12(patch: Partial<GameState> = {}): GameState {
+  return { ...createMockGameState(patch), version: 12 };
+}
+
+const migrate = migrerSauvegarde;
+const br = emptyBrocanteur();
+
+describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-verrouiller un tier)", () => {
+  it("SAVE_VERSION incrémenté à 13", () => {
+    expect(SAVE_VERSION).toBe(13);
+  });
+
+  it("v12→v13 : niveau ≥ T3 ⇒ trame_ch1..8 livrés (tier 3 reste ouvert)", () => {
+    const save = saveV12({ brocanteur: { ...br, niveau: 12 } }); // ≥ NIVEAU_BROCANTES_T3 (10)
+    const migre = migrate(save);
+    for (let n = 1; n <= 8; n++) {
+      expect(migre.missions.find((m) => m.courrierId === `trame_ch${n}`)?.statut).toBe("livree");
+      expect(migre.courriers.some((c) => c.id === `trame_ch${n}`)).toBe(true);
+    }
+    expect(migre.missions.some((m) => m.courrierId === "trame_ch9")).toBe(false);
+  });
+
+  it("v12→v13 : ancien principale_ch5 livré ⇒ trame_ch1..11 livrés", () => {
+    const save = saveV12({
+      missions: [{ courrierId: "principale_ch5", statut: "livree", jourResolution: 9 }],
+    });
+    const migre = migrate(save);
+    expect(migre.missions.find((m) => m.courrierId === "trame_ch11")?.statut).toBe("livree");
+  });
+
+  it("v12→v13 : partie fraîche (niveau 1, rien de livré) ⇒ aucun chapitre trame injecté", () => {
+    const migre = migrate(saveV12({}));
+    expect(migre.missions.some((m) => m.courrierId.startsWith("trame_ch"))).toBe(false);
   });
 });
