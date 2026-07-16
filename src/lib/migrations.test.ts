@@ -294,8 +294,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 11", () => {
-    expect(SAVE_VERSION).toBe(11);
+  it("SAVE_VERSION incrémenté à 12", () => {
+    expect(SAVE_VERSION).toBe(12);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -728,8 +728,8 @@ describe("migration v10 — suppression de competenceTrees", () => {
 });
 
 describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
-  it("SAVE_VERSION vaut 11", () => {
-    expect(SAVE_VERSION).toBe(11);
+  it("SAVE_VERSION vaut 12", () => {
+    expect(SAVE_VERSION).toBe(12);
   });
 
   it("une save v10 avec le champ legacy le perd, brocanteur intact", () => {
@@ -767,5 +767,38 @@ describe("migration — clamp énergie (max fixe à 5)", () => {
     const state = createMockGameState({ energie: 7 });
     state.brocanteur.niveau = 14;
     expect(migrerSauvegarde(state).energie).toBe(5);
+  });
+});
+
+describe("migration tutoriel (v12)", () => {
+  it("backfill à 'termine' pour une save sans champ (et injecte Maman comme avant)", () => {
+    const loaded = {
+      ...createMockGameState({ courriers: [], declencheursDeclenches: [] }),
+      tutorielEtape: undefined,
+    } as unknown as GameState;
+    const migre = migrerSauvegarde(loaded);
+    expect(migre.tutorielEtape).toBe("termine");
+    expect(migre.courriers.some((c) => c.id === ID_LETTRE_MAMAN_DEBUT)).toBe(true);
+  });
+
+  it("préserve une étape en cours et n'injecte NI Maman NI le chapitre 1", () => {
+    const loaded = createMockGameState({
+      tutorielEtape: "premier-achat",
+      courriers: [],
+      declencheursDeclenches: [],
+      missions: [],
+    });
+    const migre = migrerSauvegarde(loaded);
+    expect(migre.tutorielEtape).toBe("premier-achat");
+    expect(migre.courriers.some((c) => c.id === ID_LETTRE_MAMAN_DEBUT)).toBe(false);
+    expect(migre.courriers.some((c) => c.id === "principale_ch1")).toBe(false);
+  });
+
+  it("normalise une étape inconnue à 'termine'", () => {
+    const loaded = {
+      ...createMockGameState(),
+      tutorielEtape: "etape-fantome",
+    } as unknown as GameState;
+    expect(migrerSauvegarde(loaded).tutorielEtape).toBe("termine");
   });
 });
