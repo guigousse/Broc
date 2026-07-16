@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Zap } from "lucide-react";
+import { MonitorPlay, X, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
@@ -11,6 +11,7 @@ import {
   secondesAvantProchaine,
 } from "@/lib/energie";
 import { getAdProvider } from "@/lib/ads/adProvider";
+import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 
 /** Course de l'aiguille du galvanomètre : -60° (0 ⚡) → +60° (max), clampée. */
@@ -31,8 +32,8 @@ const MACHINE_IMG = "/qg/machine-energie.webp";
 const ZONE_CADRAN = { cx: 50.1, cy: 24.2, r: 12 };
 /** Pastille compteur n/5 + minuteur, sous le cadran. */
 const ZONE_COMPTEUR_TOP = 40;
-/** Cartel-bouton pub, posé sur les portes du bas de la machine. */
-const ZONE_PLAQUE = { left: 10, top: 66, width: 62, height: 11 };
+/** Cartel-bouton pub, centré sur les portes du bas de la machine. */
+const ZONE_PLAQUE = { left: 27, top: 66, width: 46, height: 11 };
 /** Le levier peint (colonne droite) : zone de tap redondante vers la même action. */
 const ZONE_LEVIER = { left: 70, top: 34, width: 20, height: 32 };
 
@@ -191,6 +192,7 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
       if (rewarded) {
         crediterEnergiePub();
         setEtincelles(true);
+        void audioManager.playRecharge();
       }
     } finally {
       setEnCours(false);
@@ -281,9 +283,21 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
 
         {/* Compteur n/max + minuteur, sous le cadran. */}
         <div style={compteurStyle}>
-          <div style={{ fontSize: 22, fontWeight: 700 }}>
-            <Zap size={16} strokeWidth={2.5} style={{ verticalAlign: "-2px" }} /> {energie}
-            <span style={{ opacity: 0.6 }}>/{energieMax}</span>
+          <div
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 5,
+            }}
+          >
+            <span>
+              {energie}
+              <span style={{ opacity: 0.6 }}>/{energieMax}</span>
+            </span>
+            <Zap size={17} strokeWidth={2.5} />
           </div>
           <div style={{ fontSize: 11, marginTop: 2 }}>
             {restantSec === null
@@ -292,10 +306,12 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Le cartel laiton : LE bouton pub (accessible). */}
+        {/* Le cartel laiton : LE bouton pub (accessible). Le libellé visuel est
+            une icône de visionnage ; le nom accessible reste la chaîne i18n. */}
         <button
           onClick={regarderPub}
           disabled={pubIndisponible}
+          aria-label={!enCours && pubsRestantes > 0 ? d.chrome.regarderPub : undefined}
           style={plaqueBtnStyle(pubIndisponible)}
         >
           <span aria-hidden style={rivetStyle("left")} />
@@ -305,15 +321,17 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
               ? d.chrome.pubEpuisee
               : (
                   <span
+                    aria-hidden
                     style={{
                       whiteSpace: "nowrap",
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: 4,
+                      gap: 6,
                     }}
                   >
-                    {d.chrome.regarderPub}
-                    <Zap size={16} strokeWidth={2.5} aria-hidden />
+                    <MonitorPlay size={22} strokeWidth={2.2} />
+                    {"+1"}
+                    <Zap size={16} strokeWidth={2.5} />
                   </span>
                 )}
           <span aria-hidden style={rivetStyle("right")} />
