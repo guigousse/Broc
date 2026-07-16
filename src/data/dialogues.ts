@@ -16,7 +16,7 @@ export interface DialogueSequence {
   lignes: DialogueLigne[];
 }
 
-/** Portraits par humeur (assets provisoires en Task 12, définitifs à générer). */
+/** Portraits par humeur. */
 export const GRAND_PERE_PORTRAITS: Record<HumeurPnj, string> = {
   souriant: "/personas/grand-pere/souriant.webp",
   emu: "/personas/grand-pere/emu.webp",
