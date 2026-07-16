@@ -15,7 +15,7 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { ItemCard } from "@/components/ui/ItemCard";
 import { SessionSummary } from "@/components/SessionSummary";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import {
   DEFAULT_MODIFIERS,
@@ -37,6 +37,12 @@ import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import { useToast } from "@/components/ui/Toast";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
+import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
+import {
+  GRAND_PERE_PORTRAITS,
+  SEQUENCES_TUTORIEL,
+  type DialogueSequence,
+} from "@/data/dialogues";
 import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
 import { getBrocanteById, fraisEntree } from "@/data/brocantes";
@@ -73,6 +79,7 @@ import {
   ambianceClient,
   nomArchetypeClient,
   nomCelebrite,
+  nomExpediteur,
 } from "@/lib/i18n/contenu";
 import type { Locale } from "@/lib/i18n/locales";
 import type {
@@ -116,6 +123,7 @@ export default function VitrineJourneePage() {
     marquerVuTemplate,
     utiliserActive,
   } = useGame();
+  const { avancerTutoriel } = useGameActions();
   const { d, tr, locale } = useLangue();
   const { startCrowd, stopCrowd } = useSettings();
   const { toast } = useToast();
@@ -190,6 +198,9 @@ export default function VitrineJourneePage() {
   const [bravoTout, setBravoTout] = useState(false);
   /** XP de Brocanteur gagnée localement durant la session. */
   const [xpBrocanteurSession, setXpBrocanteurSession] = useState(0);
+  /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
+  const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
+  const etape = state?.tutorielEtape;
 
   const { floats, pousserXp } = useXpFloats();
 
@@ -564,6 +575,13 @@ export default function VitrineJourneePage() {
     }
   }, [state, isHydrated, journeeFinie, tempsRestant, terminerJournee, ajouterJournal, heureCourante, d]);
 
+  // Entrée de journée pendant le tutoriel : le grand-père présente la vente.
+  useEffect(() => {
+    if (etape === "preparer-etal") {
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_entree);
+    }
+  }, [etape]);
+
   if (!isHydrated || !state) {
     return (
       <main
@@ -625,6 +643,9 @@ export default function VitrineJourneePage() {
       }),
       ton: "vente",
     });
+    if (etape === "premiere-vente") {
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_faite);
+    }
     setClientActuel(null);
     setLotGarniOuvert(false);
   };
@@ -649,6 +670,9 @@ export default function VitrineJourneePage() {
       }),
       ton: "vente",
     });
+    if (etape === "premiere-vente") {
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_faite);
+    }
     setClientActuel(null);
     setNegoVente(null);
     setLotGarniOuvert(false);
@@ -1005,6 +1029,7 @@ export default function VitrineJourneePage() {
           type="button"
           aria-label={d.chine.sortir}
           onClick={handleFermerEnAvance}
+          className={etape === "conclusion" ? "tuto-pulse" : undefined}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -1159,6 +1184,17 @@ export default function VitrineJourneePage() {
           </div>
         </div>
       )}
+
+      <DialogueOverlay
+        sequence={dialogueTuto}
+        nom={nomExpediteur("grand-pere", locale)}
+        portraits={GRAND_PERE_PORTRAITS}
+        onFini={() => {
+          setDialogueTuto(null);
+          if (etape === "preparer-etal") avancerTutoriel("premiere-vente");
+          else if (etape === "premiere-vente") avancerTutoriel("conclusion");
+        }}
+      />
     </div>
   );
 }
