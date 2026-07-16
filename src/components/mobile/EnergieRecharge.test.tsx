@@ -1,8 +1,15 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { EnergieRecharge, angleAiguille } from "./EnergieRecharge";
 import { PUBS_ENERGIE_MAX_PAR_JOUR } from "@/lib/energie";
+
+vi.mock("@/lib/ads/adProvider", () => ({
+  getAdProvider: () => ({ showRewardedAd: async () => ({ rewarded: true }) }),
+}));
+vi.mock("@/lib/audio/audioManager", () => ({
+  audioManager: { playRecharge: vi.fn().mockResolvedValue(undefined) },
+}));
 
 afterEach(cleanup);
 
@@ -86,5 +93,48 @@ describe("EnergieRecharge — galvanomètre", () => {
     render(<EnergieRecharge onClose={() => {}} />);
     expect(screen.getByText(/au maximum/i)).toBeTruthy();
     expect(screen.queryByText(/dans \d{2}:\d{2}/i)).toBeNull();
+  });
+});
+
+describe("EnergieRecharge — salve finale après la pub", () => {
+  it("le crédit +1 ⚡ part à la FIN de la salve de tremblement (~600 ms), pas avant", async () => {
+    vi.useFakeTimers();
+    crediterEnergiePub.mockClear();
+    mockState = {
+      energie: 2,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: /regarder une pub/i }));
+    // La pub (stub mocké) se résout tout de suite : salve en cours, pas encore de crédit.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    expect(crediterEnergiePub).not.toHaveBeenCalled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+    expect(crediterEnergiePub).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
+
+  it("modale fermée pendant la salve : la récompense est créditée quand même", async () => {
+    vi.useFakeTimers();
+    crediterEnergiePub.mockClear();
+    mockState = {
+      energie: 2,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    const { unmount } = render(<EnergieRecharge onClose={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: /regarder une pub/i }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    expect(crediterEnergiePub).not.toHaveBeenCalled();
+    unmount(); // fermeture pendant la salve
+    expect(crediterEnergiePub).toHaveBeenCalledOnce();
+    vi.useRealTimers();
   });
 });

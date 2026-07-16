@@ -1,7 +1,7 @@
 "use client";
 
 import { MonitorPlay, X, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import {
@@ -36,6 +36,9 @@ const ZONE_COMPTEUR_TOP = 40;
 const ZONE_PLAQUE = { left: 27, top: 66, width: 46, height: 11 };
 /** Le levier peint (colonne droite) : zone de tap redondante vers la même action. */
 const ZONE_LEVIER = { left: 70, top: 34, width: 20, height: 32 };
+
+/** Durée de la salve de tremblement APRÈS la pub, avant le crédit + étincelles + son. */
+const SALVE_FINALE_MS = 600;
 
 /** Décalages des étincelles (précalculés : pas de Math.random au rendu). */
 const ETINCELLES: ReadonlyArray<{ dx: number; dy: number; delai: number }> = [
@@ -158,8 +161,11 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
   const { state } = useGame();
   const { tempsConfiance, crediterEnergiePub } = useGameActions();
   const [enCours, setEnCours] = useState(false);
+  const [salve, setSalve] = useState(false);
   const [etincelles, setEtincelles] = useState(false);
   const [, force] = useState(0);
+  /** Récompense obtenue mais pas encore créditée (la salve la retient ~600 ms). */
+  const creditEnAttente = useRef(false);
   const { d, tr } = useLangue();
 
   // Tick local 1 s pour le minuteur (sans réécrire le state global).
@@ -175,6 +181,32 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
     return () => window.clearTimeout(id);
   }, [etincelles]);
 
+  // Fin de la salve post-pub : crédit +1 ⚡ (bond d'aiguille) + étincelles + son.
+  useEffect(() => {
+    if (!salve) return;
+    const id = window.setTimeout(() => {
+      setSalve(false);
+      if (creditEnAttente.current) {
+        creditEnAttente.current = false;
+        crediterEnergiePub();
+        setEtincelles(true);
+        void audioManager.playRecharge();
+      }
+    }, SALVE_FINALE_MS);
+    return () => window.clearTimeout(id);
+  }, [salve, crediterEnergiePub]);
+
+  // Filet : modale fermée pendant la salve → la récompense est créditée quand même.
+  useEffect(
+    () => () => {
+      if (creditEnAttente.current) {
+        creditEnAttente.current = false;
+        crediterEnergiePub();
+      }
+    },
+    [crediterEnergiePub],
+  );
+
   if (!state) return null;
   const now = tempsConfiance() ?? Date.now();
   const energieMax = ENERGIE_MAX;
@@ -182,7 +214,9 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
   const restantSec = secondesAvantProchaine(state, now, energieMax);
   const pubsRestantes = pubsEnergieRestantes(state.pubsEnergie, now);
   // Quota épuisé : on bloque AVANT de lancer la pub (jamais de pub gâchée).
-  const pubIndisponible = enCours || pubsRestantes <= 0;
+  // Bloqué aussi pendant la salve finale : un 2e visionnage lancé à ce moment
+  // écraserait le crédit en attente du premier.
+  const pubIndisponible = enCours || salve || pubsRestantes <= 0;
 
   const regarderPub = async () => {
     if (pubIndisponible) return;
@@ -190,9 +224,10 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
     try {
       const { rewarded } = await getAdProvider().showRewardedAd();
       if (rewarded) {
-        crediterEnergiePub();
-        setEtincelles(true);
-        void audioManager.playRecharge();
+        // Le tremblement continue en salve finale ; le crédit, les étincelles
+        // et le son partent ensemble à la fin de la salve.
+        creditEnAttente.current = true;
+        setSalve(true);
       }
     } finally {
       setEnCours(false);
@@ -206,7 +241,7 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
 
   return (
     <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true">
-      <div style={carteStyle(enCours)} onClick={(e) => e.stopPropagation()}>
+      <div style={carteStyle(enCours || salve)} onClick={(e) => e.stopPropagation()}>
         {/* La machine du savant fou — l'illustration EST la carte. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -311,11 +346,11 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
         <button
           onClick={regarderPub}
           disabled={pubIndisponible}
-          aria-label={!enCours && pubsRestantes > 0 ? d.chrome.regarderPub : undefined}
+          aria-label={!enCours && !salve && pubsRestantes > 0 ? d.chrome.regarderPub : undefined}
           style={plaqueBtnStyle(pubIndisponible)}
         >
           <span aria-hidden style={rivetStyle("left")} />
-          {enCours
+          {enCours || salve
             ? d.chrome.pubEnCours
             : pubsRestantes <= 0
               ? d.chrome.pubEpuisee
