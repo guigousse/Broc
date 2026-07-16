@@ -16,6 +16,8 @@ interface BrocanteFrameProps {
   selected: boolean;
   debloquee: boolean;
   onSelect: (id: string) => void;
+  /** Tutoriel : main pointeuse sur ce cadre (miroir — le cadre tuto est près du bord gauche). */
+  tutoMain?: boolean;
 }
 
 const buttonReset: CSSProperties = {
@@ -97,6 +99,7 @@ export function BrocanteFrame({
   selected,
   debloquee,
   onSelect,
+  tutoMain = false,
 }: BrocanteFrameProps) {
   const imageUrl = getBrocanteImageUrl(brocante.id);
   const { locale } = useLangue();
@@ -111,6 +114,7 @@ export function BrocanteFrame({
       aria-label={nomBrocante(brocante, locale)}
       aria-pressed={selected}
       aria-disabled={!debloquee}
+      className={tutoMain ? "tuto-main tuto-main-droite" : undefined}
       style={{ ...frameOuter(coord, selected), pointerEvents }}
     >
       <div style={paintingWrap}>

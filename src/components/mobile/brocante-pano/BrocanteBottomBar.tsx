@@ -9,6 +9,8 @@ interface BrocanteBottomBarProps {
   onContinuer: () => void;
   /** Vrai si le bouton « Continuer » doit être actif (brocante débloquée + budget OK). */
   continuerActif: boolean;
+  /** Tutoriel : main pointeuse sur « Continuer » (une fois la brocante sélectionnée). */
+  tutoMainContinuer?: boolean;
 }
 
 const wrapStyle: CSSProperties = {
@@ -70,6 +72,7 @@ export function BrocanteBottomBar({
   onBack,
   onContinuer,
   continuerActif,
+  tutoMainContinuer = false,
 }: BrocanteBottomBarProps) {
   const { d } = useLangue();
   return (
@@ -83,6 +86,7 @@ export function BrocanteBottomBar({
         type="button"
         onClick={onContinuer}
         disabled={!continuerActif}
+        className={tutoMainContinuer ? "tuto-main" : undefined}
         style={continuerBtn(continuerActif)}
         aria-label={d.menu.continuer}
       >

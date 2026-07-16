@@ -15,6 +15,8 @@ interface BrocanteSceneProps {
   selectedId: string | null;
   debloqueesIds: Set<string>;
   onSelect: (id: string) => void;
+  /** Tutoriel : id du cadre à désigner avec la main pointeuse (null = aucun). */
+  tutoMainId?: string | null;
 }
 
 // Dégradés de stub par tier (utilisés tant que `scene-tier-{n}.webp`
@@ -80,6 +82,7 @@ export function BrocanteScene({
   selectedId,
   debloqueesIds,
   onSelect,
+  tutoMainId = null,
 }: BrocanteSceneProps) {
   const { d, tr } = useLangue();
   const frames = SCENE_FRAMES[tier];
@@ -106,6 +109,7 @@ export function BrocanteScene({
               selected={selectedId === b.id}
               debloquee={debloqueesIds.has(b.id)}
               onSelect={onSelect}
+              tutoMain={tutoMainId === b.id}
             />
           );
         })}

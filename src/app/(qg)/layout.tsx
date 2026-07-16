@@ -466,7 +466,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             {showQgZone(1) && (
               <>
                 <QgPorte
-                  pulse={portePermise}
+                  pulse={portePermise && !porteOuverte}
                   onTap={() => {
                     if (tutoActif && !portePermise) return;
                     playDoorOpen();

@@ -54,6 +54,8 @@ interface NegociationSheetProps {
   onChangeOffre: (offre: number) => void;
   /** Pass-through vers BottomSheet : laisse le dock d'atouts visible sous la sheet. */
   bottomOffset?: string;
+  /** Tutoriel (première vente) : main pointeuse sur le curseur joueur. */
+  tutoMainJoueur?: boolean;
 }
 
 export function NegociationSheet({
@@ -77,6 +79,7 @@ export function NegociationSheet({
   offreJoueur,
   onChangeOffre,
   bottomOffset,
+  tutoMainJoueur = false,
 }: NegociationSheetProps) {
   const { d, tr, locale } = useLangue();
   const [localNego, setLocalNego] = useState<NegociationState>(
@@ -181,6 +184,7 @@ export function NegociationSheet({
             maxJoueur={maxJoueur}
             onChangeJoueur={onChangeOffre}
             readOnly={!enCours}
+            tutoMainJoueur={tutoMainJoueur}
           />
           <HumeurGauge humeur={localNego.humeur} />
           <div style={btnRowStyle}>

@@ -157,6 +157,7 @@ export default function VitrinePrepPage() {
               viderVitrine();
               router.push("/bureau");
             }}
+            tuto={state.tutorielEtape === "preparer-etal"}
           />
         ) : (
           <CoffrePricing
@@ -167,6 +168,7 @@ export default function VitrinePrepPage() {
             validerLabel={d.vente.choisirBrocante}
             validerActif={coffre.length > 0}
             categoriesConnues={categoriesConnuesVitrine}
+            tutoMainValider={state.tutorielEtape === "preparer-etal"}
           />
         )}
       </main>

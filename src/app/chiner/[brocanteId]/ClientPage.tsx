@@ -481,6 +481,7 @@ export default function SessionChinePage() {
                   setNegoOuverte(null);
                 }}
                 onAcheterDirect={() => handleAcheter(item.id)}
+                tutoGuide={etape === "premier-achat" && item.statut !== "achete"}
               />
             )}
           />

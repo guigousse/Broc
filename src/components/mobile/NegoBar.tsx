@@ -20,6 +20,8 @@ interface NegoBarProps {
   onChangeJoueur: (prix: number) => void;
   /** Désactive le drag (négo terminée). */
   readOnly?: boolean;
+  /** Tutoriel : main pointeuse sur le curseur joueur (ignorée si readOnly). */
+  tutoMainJoueur?: boolean;
 }
 
 const COLOR_JOUEUR = "var(--nego-joueur)";
@@ -34,6 +36,7 @@ export function NegoBar({
   maxJoueur,
   onChangeJoueur,
   readOnly = false,
+  tutoMainJoueur = false,
 }: NegoBarProps) {
   const { d } = useLangue();
   const trackRef = useRef<HTMLDivElement>(null);
@@ -100,6 +103,7 @@ export function NegoBar({
         </div>
         <div
           onPointerDown={startDrag}
+          className={tutoMainJoueur && !readOnly ? "tuto-main" : undefined}
           style={{
             ...cursorStyle,
             left: `${pctJoueur}%`,

@@ -1295,18 +1295,21 @@ nav[aria-label="Navigation principale"] :focus-visible,
   50% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
 }
 .tuto-pulse {
-  position: relative;
   animation: tuto-pulse-kf 1.6s ease-in-out infinite;
   border-radius: 12px;
 }
-/* Main pointeuse gravée à gauche de la cible (pointe vers la droite).
+/* Main pointeuse gravée à gauche de la cible (pointe vers la droite) —
+   indépendante du halo : une cible peut avoir l'un, l'autre ou les deux.
    translate/scale (propriétés individuelles) pour que le va-et-vient et le
    miroir ne se marchent pas dessus. */
 @keyframes tuto-main-kf {
   0%, 100% { translate: 0 0; }
   50% { translate: 8px 0; }
 }
-.tuto-pulse::after {
+.tuto-main {
+  position: relative;
+}
+.tuto-main::after {
   content: "";
   position: absolute;
   right: 100%;
@@ -1322,7 +1325,7 @@ nav[aria-label="Navigation principale"] :focus-visible,
 }
 /* Variante pour les cibles collées au bord gauche : main à droite, en miroir
    (le translate positif devient un va-et-vient vers la cible). */
-.tuto-pulse-droite::after {
+.tuto-main-droite::after {
   right: auto;
   left: 100%;
   margin-right: 0;
@@ -1334,7 +1337,7 @@ nav[aria-label="Navigation principale"] :focus-visible,
     animation: none;
     box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.85);
   }
-  .tuto-pulse::after {
+  .tuto-main::after {
     animation: none;
   }
 }

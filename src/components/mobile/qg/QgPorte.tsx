@@ -31,7 +31,7 @@ export function QgPorte({ onTap, pulse = false }: QgPorteProps) {
       type="button"
       onClick={onTap}
       aria-label={d.qg.porteEntree}
-      className={pulse ? "tuto-pulse" : undefined}
+      className={pulse ? "tuto-main" : undefined}
       style={{
         ...style,
         aspectRatio: "2 / 7",

@@ -15,6 +15,7 @@ import {
   vitrineEstEnPrep,
 } from "@/lib/vitrinePrep";
 import { useGameActions } from "@/context/GameContext";
+import { tutorielActif } from "@/lib/tutoriel";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { BrocanteScene } from "./BrocanteScene";
 import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
@@ -195,6 +196,7 @@ export function BrocantePanorama({
     [state],
   );
 
+  const tutoActif = tutorielActif(state);
   const selected = selectedId ? brocantesById.get(selectedId) ?? null : null;
   const selectedDebloquee = selected ? debloqueesIds.has(selected.id) : false;
   const selectedPeutEntrer = selected
@@ -247,6 +249,11 @@ export function BrocantePanorama({
                 selectedId={selectedId}
                 debloqueesIds={debloqueesIds}
                 onSelect={setSelectedId}
+                tutoMainId={
+                  // Tutoriel : une seule main à la fois — le cadre tant que
+                  // rien n'est sélectionné, puis c'est Continuer qui la porte.
+                  tutoActif && !selected ? brocantes[0]?.id ?? null : null
+                }
               />
               {idx < TIERS.length - 1 && <BrocanteTransition />}
             </Fragment>
@@ -273,6 +280,7 @@ export function BrocantePanorama({
         onBack={onBack}
         onContinuer={onContinuer}
         continuerActif={continuerActif}
+        tutoMainContinuer={tutoActif && continuerActif}
       />
       <CadreEditToggle />
       <ScenesEditPanel currentTier={currentTier} />

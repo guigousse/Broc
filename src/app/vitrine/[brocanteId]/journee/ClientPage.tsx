@@ -1029,7 +1029,7 @@ export default function VitrineJourneePage() {
           type="button"
           aria-label={d.chine.sortir}
           onClick={handleFermerEnAvance}
-          className={etape === "conclusion" ? "tuto-pulse tuto-pulse-droite" : undefined}
+          className={etape === "conclusion" ? "tuto-pulse tuto-main tuto-main-droite" : undefined}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -1056,6 +1056,7 @@ export default function VitrineJourneePage() {
         <NegociationSheet
           open={true}
           onClose={() => terminerVisiteClient(clientActuel)}
+          tutoMainJoueur={etape === "premiere-vente"}
           mode="vente"
           persona={personaDepuisClient(clientActuel.persona)}
           echelleMax={clientActuel.prixDemande}

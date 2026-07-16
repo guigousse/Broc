@@ -29,6 +29,7 @@ export function ChineNegoDrawer({
   onUpdateNego,
   onConclu,
   onAcheterDirect,
+  tutoGuide = false,
 }: {
   item: ObjetEnVente;
   budget: number;
@@ -41,6 +42,8 @@ export function ChineNegoDrawer({
   onUpdateNego: (nego: NegociationState) => void;
   onConclu: (prixFinal: number) => void;
   onAcheterDirect: () => void;
+  /** Tutoriel (premier achat) : main pointeuse sur « Négocier » puis sur le curseur. */
+  tutoGuide?: boolean;
 }) {
   const { d, tr, locale } = useLangue();
   const { prixVendeur, statut, persona } = item;
@@ -103,7 +106,12 @@ export function ChineNegoDrawer({
             <span style={statutTexte("var(--vermillion-600)")}>{d.qg.stockagePlein}</span>
           ) : (
             <div style={peekBtnRow}>
-              <button type="button" style={btn(false)} onClick={onExpand}>
+              <button
+                type="button"
+                className={tutoGuide ? "tuto-main" : undefined}
+                style={btn(false)}
+                onClick={onExpand}
+              >
                 {d.chine.negocier}
               </button>
               <button
@@ -134,6 +142,7 @@ export function ChineNegoDrawer({
             maxJoueur={localNego.prixAdverseCourant}
             onChangeJoueur={setOffreJoueur}
             readOnly={!enCours}
+            tutoMainJoueur={tutoGuide && expanded}
           />
           <div style={negoBtnRow}>
             {localNego.statut === "refus_poli" ? (

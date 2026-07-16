@@ -252,7 +252,7 @@ export function ItemSwipeDeck({
           type="button"
           aria-label={d.chine.quitterBrocanteAriaLabel}
           onClick={onQuitter}
-          className={pulseSortir ? "tuto-pulse tuto-pulse-droite" : undefined}
+          className={pulseSortir ? "tuto-pulse tuto-main tuto-main-droite" : undefined}
           style={{
             display: "inline-flex",
             alignItems: "center",
