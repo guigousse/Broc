@@ -261,6 +261,22 @@ export interface LedgerEntry {
   params?: LedgerParams;
 }
 
+/**
+ * Étapes du tutoriel guidé (SP1 trame scénaristique). Linéaire :
+ * accueil → aller-chiner → premier-achat → rentrer → preparer-etal
+ * → premiere-vente → conclusion → termine.
+ * "termine" = tutoriel fini ou sauté (état des saves antérieures à v12).
+ */
+export type TutorielEtape =
+  | "accueil"
+  | "aller-chiner"
+  | "premier-achat"
+  | "rentrer"
+  | "preparer-etal"
+  | "premiere-vente"
+  | "conclusion"
+  | "termine";
+
 export interface GameState {
   /** Version du schéma de sauvegarde (cf. SAVE_VERSION dans lib/migrations). Absente sur les vieux saves. */
   version?: number;
@@ -309,6 +325,8 @@ export interface GameState {
   passagesSansChat: number;
   /** IDs des déclencheurs de courrier déjà résolus (anti-respawn pour programmés/one-shots). */
   declencheursDeclenches: string[];
+  /** Étape courante du tutoriel guidé ("termine" hors tutoriel). */
+  tutorielEtape: TutorielEtape;
   /** Grand livre — journal de toutes les transactions de budget. */
   grandLivre: LedgerEntry[];
   /** Résolutions de mission (1 par Courrier de type mission lu). */

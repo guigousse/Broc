@@ -52,6 +52,7 @@ export function createMockGameState(patch: Partial<GameState> = {}): GameState {
     chatSurFauteuil: false,
     passagesSansChat: 0,
     declencheursDeclenches: [],
+    tutorielEtape: "termine",
     grandLivre: [],
     missions: [],
     quetesPeriodiques: {
