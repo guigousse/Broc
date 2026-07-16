@@ -28,7 +28,7 @@ export const EXPEDITEURS: Record<string, ExpediteurDef> = {
   "grand-pere": {
     id: "grand-pere",
     nom: "Grand-père",
-    personnalite: "Antiquaire disparu",
+    personnalite: "Antiquaire retraité",
     relation: "Grand-père",
     avatar: "/personas/commanditaires/grand-pere.webp",
     signature: "À toi de jouer, petit.\nGrand-père",
@@ -64,6 +64,13 @@ export const EXPEDITEURS: Record<string, ExpediteurDef> = {
     domaine: "Objets d'art",
     avatar: "/personas/commanditaires/art.webp",
     signature: "Bien à vous,\nPaul-Henry",
+  },
+  organisateurs: {
+    id: "organisateurs",
+    nom: "Les Organisateurs",
+    personnalite: "Comité des brocantes",
+    relation: "Organisateurs",
+    signature: "Au plaisir de vous y croiser,\nLes Organisateurs",
   },
 };
 

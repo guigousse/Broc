@@ -34,7 +34,8 @@ import { missionLivrable } from "@/lib/quetes/objectifs";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
 import { getCompetence } from "@/data/competences";
 import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
-import { expireMissions } from "@/lib/courrier";
+import { expireMissions, injecterLettreInvitationSiDue } from "@/lib/courrier";
+import { chapitreParId } from "@/data/quetesPrincipales";
 import { prochainLundi } from "@/lib/calendrier";
 import {
   appliquerGainXPBrocanteur,
@@ -1562,8 +1563,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
                   avecXP.pointsDisponibles + POINTS_BONUS_CHAPITRE,
               }
             : avecXP;
+        // Chapitre de la trame portant une invitation (ex. ch4/ch8, à
+        // objectifs → livrés ici, contrairement aux chapitres narratifs
+        // injectés directement dans `accepterChapitre`) : la lettre des
+        // Organisateurs est ajoutée dès la livraison réelle de la mission.
+        const courriers = injecterLettreInvitationSiDue(
+          credited.courriers,
+          chapitreParId(courrierId)?.invitationTier,
+          prev.jourActuel,
+        );
         return {
           ...credited,
+          courriers,
           inventaireJoueur: invMaj,
           missions: missionsMaj,
           brocanteur,

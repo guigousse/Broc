@@ -11,7 +11,7 @@ import type { VendeurArchetypeId } from "@/types/game";
  * - `vendeurs` : clé = `VendeurArchetypeId`, uniquement les 10 non-commanditaires.
  *   Les 4 commanditaires (joueur/setdesigner/modeuse/esthete) NE sont PAS dupliqués :
  *   ils se résolvent via l'expéditeur correspondant (source unique du courrier).
- * - `expediteurs` : clé = `ExpediteurDef.id` (6). Signatures : garder les `\n`.
+ * - `expediteurs` : clé = `ExpediteurDef.id` (7). Signatures : garder les `\n`.
  *
  * Noms propres à gouaille : adaptation légère qui conserve la saveur.
  */
@@ -278,7 +278,7 @@ export const PERSONNAGES_EN: OverlayPersonnages = {
     },
     "grand-pere": {
       nom: "Grandpa",
-      personnalite: "Late antiquarian",
+      personnalite: "Retired antiquarian",
       relation: "Grandfather",
       signature: "Your move now, kid.\nGrandpa",
     },
@@ -301,6 +301,12 @@ export const PERSONNAGES_EN: OverlayPersonnages = {
       nom: "Paul-Henry",
       personnalite: "Art collector",
       signature: "Yours truly,\nPaul-Henry",
+    },
+    organisateurs: {
+      nom: "The Organisers",
+      personnalite: "Flea-market committee",
+      relation: "Organisers",
+      signature: "Looking forward to seeing you there,\nThe Organisers",
     },
   },
 };

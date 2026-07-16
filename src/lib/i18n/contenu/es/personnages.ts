@@ -257,7 +257,7 @@ export const PERSONNAGES_ES: OverlayPersonnages = {
     },
     "grand-pere": {
       nom: "Abuelo",
-      personnalite: "Anticuario desaparecido",
+      personnalite: "Anticuario jubilado",
       relation: "Abuelo",
       signature: "Ahora te toca a ti, pequeño.\nAbuelo",
     },
@@ -280,6 +280,12 @@ export const PERSONNAGES_ES: OverlayPersonnages = {
       nom: "Paul-Henry",
       personnalite: "Coleccionista de arte",
       signature: "Un cordial saludo,\nPaul-Henry",
+    },
+    organisateurs: {
+      nom: "Los Organizadores",
+      personnalite: "Comité de mercadillos",
+      relation: "Organizadores",
+      signature: "Será un placer coincidir con usted allí,\nLos Organizadores",
     },
   },
 };

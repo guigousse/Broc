@@ -146,4 +146,16 @@ describe("accepterChapitre", () => {
       avecXPAttendu.pointsDisponibles + POINTS_BONUS_CHAPITRE,
     );
   });
+
+  it("livraison narrative de trame_ch10 : injecte l'invitation tier 4", () => {
+    const state = stateAvecChapitresLivres(9);
+    const next = accepterChapitre(state, "trame_ch10", 99);
+    expect(next.courriers.some((c) => c.id === "invitation_tier4")).toBe(true);
+  });
+
+  it("chapitre à objectifs (ch4, invitationTier 2) : mission active, pas d'invitation avant livraison", () => {
+    const state = stateAvecChapitresLivres(3);
+    const next = accepterChapitre(state, "trame_ch4", 1);
+    expect(next.courriers.some((c) => c.id === "invitation_tier2")).toBe(false);
+  });
 });

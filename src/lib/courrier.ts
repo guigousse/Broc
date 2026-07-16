@@ -1,3 +1,4 @@
+import { INVITATIONS_ORGANISATEURS } from "@/data/invitationsOrganisateurs";
 import type {
   Courrier,
   CourrierGabaritParams,
@@ -31,6 +32,47 @@ export function creerLettreMamanDebut(jour: number): Courrier {
       recompense: { argent: 150 },
     },
   };
+}
+
+/**
+ * Lettre d'invitation de fin d'acte (tier 2 : marchés ★★, tier 3 : salons ★★★,
+ * tier 4 : Grand Salon des Antiquaires), expédiée par les Organisateurs.
+ * Purement narrative (sans récompense) : le déblocage réel est porté par la
+ * condition `chapitrePrincipal` (cf. `src/lib/deblocage.ts`). Id stable
+ * `invitation_tier{N}` pour une idempotence simple côté appelants.
+ */
+export function creerLettreInvitation(tier: 2 | 3 | 4, jour: number): Courrier {
+  const { titre, corps } = INVITATIONS_ORGANISATEURS[tier];
+  return {
+    id: `invitation_tier${tier}`,
+    type: "lettre",
+    jourRecu: jour,
+    lu: false,
+    payload: {
+      type: "lettre",
+      expediteurId: "organisateurs",
+      titre,
+      corps,
+    },
+  };
+}
+
+/**
+ * Ajoute la lettre d'invitation du `tier` donné aux `courriers` si elle n'y
+ * est pas déjà (idempotent), sans effet si `tier` est `undefined` (chapitre
+ * sans invitation — retourne alors `courriers` tel quel, même référence).
+ * Utilisé par `accepterChapitre` (chapitres narratifs, ex. ch10) et par
+ * `GameContext.livrerMission` (chapitres à objectifs, ex. ch4/ch8).
+ */
+export function injecterLettreInvitationSiDue(
+  courriers: Courrier[],
+  tier: 2 | 3 | 4 | undefined,
+  jour: number,
+): Courrier[] {
+  if (tier === undefined) return courriers;
+  const id = `invitation_tier${tier}`;
+  if (courriers.some((c) => c.id === id)) return courriers;
+  return [...courriers, creerLettreInvitation(tier, jour)];
 }
 
 /**

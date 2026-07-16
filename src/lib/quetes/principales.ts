@@ -1,4 +1,4 @@
-import { creerCourrierMission } from "@/lib/courrier";
+import { creerCourrierMission, injecterLettreInvitationSiDue } from "@/lib/courrier";
 import { appendLedger } from "@/lib/grandLivre";
 import {
   appliquerGainXPBrocanteur,
@@ -65,9 +65,11 @@ function courrierDeChapitre(ch: ChapitrePrincipal, jour: number): Courrier {
  *
  * Un chapitre narratif (`payload.objectifs` vide, ex. l'invitation ou la
  * remise des clés) est livré immédiatement : ledger `mission_recompense`,
- * XP `XP_QUETE_PRINCIPALE` et bonus `POINTS_BONUS_CHAPITRE`. (La lettre
- * d'invitation éventuelle — `ch.invitationTier` — sera injectée en Task 8
- * via `creerLettreInvitation`.)
+ * XP `XP_QUETE_PRINCIPALE` et bonus `POINTS_BONUS_CHAPITRE`. Si `ch.invitationTier`
+ * est défini (ex. ch10), la lettre d'invitation correspondante est injectée
+ * dans la foulée (cf. `injecterLettreInvitationSiDue`). Pour les chapitres à
+ * objectifs qui portent aussi une invitation (ex. ch4, ch8), l'injection a
+ * lieu à la livraison réelle de la mission, dans `GameContext.livrerMission`.
  *
  * Pur et idempotent : si le chapitre est inconnu ou déjà présent (courrier
  * existant), le state est renvoyé tel quel (même référence).
@@ -112,8 +114,8 @@ export function accepterChapitre(
         ...avecXP,
         pointsDisponibles: avecXP.pointsDisponibles + POINTS_BONUS_CHAPITRE,
       },
+      courriers: injecterLettreInvitationSiDue(next.courriers, ch.invitationTier, next.jourActuel),
     };
-    // Lettre d'invitation (ch.invitationTier) : branchée en Task 8.
   }
 
   return next;

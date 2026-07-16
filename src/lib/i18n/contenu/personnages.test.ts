@@ -26,7 +26,7 @@ const VENDEUR_ARCH_IDS = Object.keys(NOM_VENDEUR); // 14
 const VENDEUR_NON_COMMANDITAIRE_IDS = VENDEUR_ARCH_IDS.filter(
   (id) => !COMMANDITAIRES.includes(id),
 ); // 10
-const EXPEDITEUR_IDS = Object.keys(EXPEDITEURS); // 6
+const EXPEDITEUR_IDS = Object.keys(EXPEDITEURS); // 7
 
 describe.each([
   ["EN", PERSONNAGES_EN],
@@ -60,7 +60,7 @@ describe.each([
       orphelins(VENDEUR_NON_COMMANDITAIRE_IDS, overlay.vendeurs),
     ).toEqual([]));
 
-  test("6 expéditeurs complets", () =>
+  test("7 expéditeurs complets", () =>
     expect(manquants(EXPEDITEUR_IDS, overlay.expediteurs)).toEqual([]));
   test("expéditeurs sans orphelin", () =>
     expect(orphelins(EXPEDITEUR_IDS, overlay.expediteurs)).toEqual([]));
