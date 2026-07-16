@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { EnergieRecharge } from "./EnergieRecharge";
+import { EnergieRecharge, angleAiguille } from "./EnergieRecharge";
 import { PUBS_ENERGIE_MAX_PAR_JOUR } from "@/lib/energie";
 
 afterEach(cleanup);
@@ -49,5 +49,42 @@ describe("EnergieRecharge — plafond quotidien de pubs", () => {
     render(<EnergieRecharge onClose={() => {}} />);
     const btn = screen.getByRole("button", { name: /plus de pub aujourd'hui/i });
     expect((btn as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe("angleAiguille", () => {
+  it("course -60° (0 ⚡) → +60° (max), linéaire et clampée", () => {
+    expect(angleAiguille(0, 5)).toBe(-60);
+    expect(angleAiguille(5, 5)).toBe(60);
+    expect(angleAiguille(2.5, 5)).toBe(0);
+    expect(angleAiguille(7, 5)).toBe(60); // clamp haut
+    expect(angleAiguille(-1, 5)).toBe(-60); // clamp bas
+    expect(angleAiguille(3, 0)).toBe(-60); // max invalide → repos
+  });
+});
+
+describe("EnergieRecharge — galvanomètre", () => {
+  it("l'aiguille est rendue, tournée selon l'énergie courante", () => {
+    mockState = {
+      energie: 2,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} />);
+    const aiguille = screen.getByTestId("aiguille-energie");
+    expect(aiguille.getAttribute("transform")).toBe(
+      `rotate(${angleAiguille(2, 5)})`,
+    );
+  });
+
+  it("énergie pleine : affiche « au maximum » (pas de minuteur)", () => {
+    mockState = {
+      energie: 5,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} />);
+    expect(screen.getByText(/au maximum/i)).toBeTruthy();
+    expect(screen.queryByText(/dans \d{2}:\d{2}/i)).toBeNull();
   });
 });
