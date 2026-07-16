@@ -12,7 +12,7 @@ export const BOITE_MYSTERE_IMAGE = "/items/boite-mystere.webp";
 export const BOITE_MYSTERE_OUVERTE_IMAGE = "/items/boite-mystere-ouverte.webp";
 
 /** Probabilité d'apparition de la 1ʳᵉ boîte du jour (par entrée en brocante). */
-export const CHANCE_APPARITION_BASE = 0.1;
+export const CHANCE_APPARITION_BASE = 0.2;
 
 /** Poids de tirage par rareté dans la boîte (boostés vs chinage normal). */
 export const POIDS_RARETE_BOITE: Record<Rarete, number> = {

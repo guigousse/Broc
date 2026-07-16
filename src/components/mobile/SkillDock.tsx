@@ -27,6 +27,8 @@ export type DockSkill = {
  * Dock de compétences « jeu vidéo » du header bas (partagé chinage/vente) : un cercle par atout,
  * grisé + cadenas si pas encore débloqué, pastille d'usages restants sinon.
  * Un cercle verrouillé reste cliquable : le parent affiche le niveau requis.
+ * Positionné en absolu : les cercles flottent au-devant du header, leur centre
+ * aligné sur la ligne laiton supérieure — le parent doit être `position: relative`.
  */
 export function SkillDock({ skills }: { skills: DockSkill[] }) {
   return (
@@ -51,7 +53,7 @@ function SkillCircle({ skill }: { skill: DockSkill }) {
       style={circleBtn(skill.verrouille, !skill.verrouille && inerte, !!skill.actif)}
     >
       {imgKo ? (
-        <span style={{ fontSize: 22, filter: skill.verrouille ? "grayscale(1)" : "none" }}>
+        <span style={{ fontSize: 28, filter: skill.verrouille ? "grayscale(1)" : "none" }}>
           {skill.emojiFallback}
         </span>
       ) : (
@@ -65,7 +67,7 @@ function SkillCircle({ skill }: { skill: DockSkill }) {
       )}
       {skill.verrouille && (
         <span style={lockOverlay}>
-          <Lock size={16} strokeWidth={2.5} />
+          <Lock size={20} strokeWidth={2.5} />
         </span>
       )}
       <span style={pastille}>
@@ -76,6 +78,12 @@ function SkillCircle({ skill }: { skill: DockSkill }) {
 }
 
 const dockRow: CSSProperties = {
+  // Flotte au-devant du header : centre des cercles sur la ligne laiton
+  // supérieure (bordure 3px → son centre est 1.5px au-dessus du padding-box).
+  position: "absolute",
+  top: -1.5,
+  right: 16,
+  transform: "translateY(-50%)",
   display: "flex",
   alignItems: "center",
   gap: 12,
@@ -87,8 +95,8 @@ const circleBtn = (
   actif: boolean,
 ): CSSProperties => ({
   position: "relative",
-  width: 52,
-  height: 52,
+  width: 64,
+  height: 64,
   borderRadius: "50%",
   border: `2px solid ${actif ? "var(--brass-300)" : "var(--brass-500)"}`,
   background: "var(--forest-800)",
@@ -128,15 +136,15 @@ const pastille: CSSProperties = {
   position: "absolute",
   right: -4,
   bottom: -4,
-  minWidth: 18,
-  height: 18,
+  minWidth: 20,
+  height: 20,
   padding: "0 4px",
   borderRadius: 999,
   background: "var(--brass-500)",
   border: "1.5px solid var(--forest-800)",
   color: "var(--forest-800)",
   fontFamily: "var(--font-mono)",
-  fontSize: 10,
+  fontSize: 11,
   fontWeight: 700,
   display: "inline-flex",
   alignItems: "center",

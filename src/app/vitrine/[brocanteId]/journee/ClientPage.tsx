@@ -784,7 +784,6 @@ export default function VitrineJourneePage() {
               ? d.vente.journeeSansVente
               : undefined
         }
-        bravo={bravoTout}
         items={ventesEffectuees.map((v) => ({
           templateId: v.templateId,
           nom: v.nom,
@@ -1116,7 +1115,7 @@ export default function VitrineJourneePage() {
           }
           offreJoueur={offreJoueur}
           onChangeOffre={setOffreJoueur}
-          bottomOffset="calc(71px + var(--safe-bottom))"
+          bottomOffset="calc(76px + var(--safe-bottom))"
         />
       )}
 

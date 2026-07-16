@@ -24,8 +24,6 @@ interface SessionSummaryProps {
   xpGagne: Record<CompetenceTreeId, number>;
   /** XP de Brocanteur gagnée pendant la session (sessions courantes, pool global). */
   xpBrocanteur?: number;
-  /** Si vente : afficher un grand "Bravo!" quand toute la vitrine est écoulée. */
-  bravo?: boolean;
   /** Libellé du bouton de retour. Défaut : "Rentrer au QG". */
   retourLabel?: string;
   /** Si vrai, le panel XP affiche "Aucune expérience enregistrée pour cette
@@ -42,7 +40,6 @@ export function SessionSummary({
   items,
   xpGagne,
   xpBrocanteur,
-  bravo = false,
   retourLabel,
   xpReplayMode = false,
   onRetour,
@@ -74,28 +71,12 @@ export function SessionSummary({
       >
         <Panel
           eyebrow={
-            bravo
-              ? d.vente.bilanEyebrowBravo
-              : type === "chinage"
-                ? d.vente.bilanEyebrowChinage
-                : d.vente.bilanEyebrowVente
+            type === "chinage"
+              ? d.vente.bilanEyebrowChinage
+              : d.vente.bilanEyebrowVente
           }
           title={titre}
         >
-          {bravo && (
-            <p
-              style={{
-                textAlign: "center",
-                fontFamily: "var(--font-serif)",
-                fontStyle: "italic",
-                fontSize: 17,
-                color: "var(--forest-700)",
-                margin: "0 0 14px",
-              }}
-            >
-              {d.vente.bilanBravoTexte}
-            </p>
-          )}
           {sousTitre && (
             <p
               style={{
@@ -111,7 +92,8 @@ export function SessionSummary({
             </p>
           )}
 
-          <DecoDivider />
+          {/* Séparateur seulement sous un sous-titre : le Panel a déjà le sien sous le titre. */}
+          {sousTitre && <DecoDivider />}
 
           {items.length === 0 ? (
             <p
