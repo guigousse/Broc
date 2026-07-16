@@ -61,6 +61,19 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+// Régression (tourne par défaut, PAS gatée SIMULATION=1 — coût ~1 run court) :
+// le gate `chapitrePrincipal` (brocantes.ts, tier 2/3/4) dépend de
+// `state.missions` contenant un chapitre trame livré. `stateLike()` doit donc
+// stubber les missions comme livrées, sinon aucun tier > 1 n'est jamais
+// atteignable dans la simulation (cf. bug de la revue finale SP2).
+describe("stateLike / gate chapitrePrincipal", () => {
+  it("un profil hardcore sur 60 jours débloque un tier > 1 (le gate chapitrePrincipal ne bloque pas indéfiniment)", () => {
+    const run = withSeededRandom(777, () => runSimulation(PROFILES.hardcore, 777, 60));
+    const tierMaxAtteint = Math.max(...run.days.map((d) => d.tierMax));
+    expect(tierMaxAtteint).toBeGreaterThan(1);
+  });
+});
+
 describe.runIf(SIM)("simulation de la courbe de niveau", () => {
   it(
     "génère les métriques 1-7 et écrit le rapport (JSON + Markdown)",

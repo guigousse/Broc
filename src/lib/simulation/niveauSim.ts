@@ -48,6 +48,7 @@ import type { ClientPersonnage } from "@/data/clients";
 import { genererPoolClients } from "@/data/clients";
 import { METEO_INTERVALLE_MULT } from "@/data/meteos";
 import { BROCANTES, brocantesParTier, fraisEntree } from "@/data/brocantes";
+import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
 import {
   genererRemplacement,
   genererSession,
@@ -248,6 +249,18 @@ interface SimState {
   templatesVusGlobal: Set<string>;
 }
 
+// Les 12 chapitres de la trame principale, stubés "livrés" dès le départ :
+// plusieurs brocantes (tier 2/3/4, cf. data/brocantes.ts) sont gatées par une
+// condition `chapitrePrincipal`, et le simulateur ne modélise pas le rythme
+// réel de livraison des chapitres (seul leur gain d'XP forfaitaire est
+// injecté, cf. `joursChapitres`). On approxime « l'histoire est toujours en
+// avance sur l'économie » : les conditions économiques (valeurCollection,
+// brocantesDebloquees, etc.) restent les seules gates réellement simulées.
+const MISSIONS_TRAME_LIVREE: GameState["missions"] = QUETES_PRINCIPALES.map((c) => ({
+  courrierId: c.id,
+  statut: "livree",
+}));
+
 function stateLike(sim: SimState): StateLike {
   return {
     jourActuel: sim.jour,
@@ -255,10 +268,7 @@ function stateLike(sim: SimState): StateLike {
     historique: [] as GameState["historique"],
     collection: sim.collection,
     brocanteur: sim.brocanteur,
-    // Le simulateur ne modélise pas la trame principale : aucune brocante ne
-    // dépend (encore) d'une condition `chapitrePrincipal`, donc un tableau
-    // vide est un placeholder sûr pour satisfaire le type de evaluerCondition.
-    missions: [] as GameState["missions"],
+    missions: MISSIONS_TRAME_LIVREE,
   };
 }
 
