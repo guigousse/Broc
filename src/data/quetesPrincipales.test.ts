@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { QUETES_PRINCIPALES, chapitreParOrdre } from "./quetesPrincipales";
 import { BROCANTES } from "./brocantes";
-import { getTemplate } from "./objetTemplates";
+import { getTemplate, poolPourTier } from "./objetTemplates";
 
 describe("trame principale (squelette SP2)", () => {
   it("12 chapitres, ordres 1..12 uniques, ids trame_chN", () => {
@@ -42,6 +42,24 @@ describe("trame principale (squelette SP2)", () => {
     for (const t of ["ma.lampe_petrole_ancienne", "ma.pichet_faience_emaillee"]) {
       expect(exclusifsSup.has(t)).toBe(false);
       expect(getTemplate(t)?.unique).toBeFalsy();
+    }
+  });
+  it("chaque cible-objet (hors uniques) est trouvable dans le pool du tier de l'acte de son chapitre", () => {
+    // Garantie de la spec trame : les objets-cibles sont garantis trouvables
+    // dans le tier de l'acte du chapitre qui les demande (acte 1→tier 1,
+    // acte 2→tier 2, acte 3→tier 3), sinon soft-lock (ex. lampe ch1 classée
+    // tier 2 par le découpage en terciles de prix avant clamp).
+    for (const c of QUETES_PRINCIPALES) {
+      for (const objectif of c.payload.objectifs) {
+        if (objectif.type !== "objet") continue;
+        const tpl = getTemplate(objectif.templateId);
+        if (tpl?.unique) continue;
+        const pool = poolPourTier(c.acte as 1 | 2 | 3);
+        expect(
+          pool.some((t) => t.templateId === objectif.templateId),
+          `${c.id} : ${objectif.templateId} introuvable dans poolPourTier(${c.acte})`,
+        ).toBe(true);
+      }
     }
   });
 });
