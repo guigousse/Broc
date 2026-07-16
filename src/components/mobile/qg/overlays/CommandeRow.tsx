@@ -68,6 +68,16 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
   const prog = progressionMission(p, state.inventaireJoueur);
   const reso = state.missions.find((m) => m.courrierId === courrier.id);
   const livrable = reso ? missionLivrable(p, reso, state, courrier.jourRecu) : false;
+  // Progression agrégée sur TOUS les objectifs (cibles objets + objectifs non-objet),
+  // pas seulement les cibles objets (`progressionMission`) : pour les chapitres sans
+  // cible (ex. ventesCumulees), `prog.total` vaut 0 et donnerait un faux "0/0" /
+  // une barre à largeur NaN%.
+  const resoPourObjectifs = reso ?? { courrierId: courrier.id, statut: "active" as const };
+  const objectifsTous = objectifsDeMission(p);
+  const totalObjectifs = objectifsTous.length;
+  const rempliesObjectifs = objectifsTous.filter(
+    (o) => progressionObjectif(o, state, resoPourObjectifs, courrier.jourRecu).atteint,
+  ).length;
   const jLimite = p.jourLimite;
   const jRestants = jLimite !== undefined ? Math.max(0, jLimite - state.jourActuel) : null;
 
@@ -91,10 +101,12 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
             <span style={{ display: "inline-block", background: "#2c5e3f", color: "#f4e9cd", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 10 }}>{d.carnet.pret}</span>
           ) : (
             <>
-              <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#8a6d2e", fontSize: 13 }}>{prog.remplies}/{prog.total}</span>
-              <span style={{ display: "block", width: 46, height: 5, background: "#e3d7b6", borderRadius: 3, marginTop: 3, overflow: "hidden" }}>
-                <span style={{ display: "block", width: `${(prog.remplies / prog.total) * 100}%`, height: "100%", background: "#c8a24a" }} />
-              </span>
+              <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#8a6d2e", fontSize: 13 }}>{rempliesObjectifs}/{totalObjectifs}</span>
+              {totalObjectifs > 0 && (
+                <span style={{ display: "block", width: 46, height: 5, background: "#e3d7b6", borderRadius: 3, marginTop: 3, overflow: "hidden" }}>
+                  <span style={{ display: "block", width: `${(rempliesObjectifs / totalObjectifs) * 100}%`, height: "100%", background: "#c8a24a" }} />
+                </span>
+              )}
             </>
           )}
           {jRestants !== null && (
@@ -151,7 +163,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
                 opacity: livrable ? 1 : 0.6,
               }}
             >
-              {livrable ? d.carnet.livrer : tr(d.carnet.livrerProgress, { rempli: prog.remplies, total: prog.total })}
+              {livrable ? d.carnet.livrer : tr(d.carnet.livrerProgress, { rempli: rempliesObjectifs, total: totalObjectifs })}
             </button>
           </div>
         </div>
