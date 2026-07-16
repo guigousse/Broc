@@ -152,3 +152,29 @@ describe("EnergieRecharge — énergie pleine", () => {
     expect((btn as HTMLButtonElement).disabled).toBe(true);
   });
 });
+
+describe("EnergieRecharge — bandeau d'alerte", () => {
+  it("affiche le message d'alerte quand la prop `alerte` est fournie", () => {
+    mockState = {
+      energie: 0,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(
+      <EnergieRecharge onClose={() => {}} alerte="Pas assez d'énergie pour cette sortie !" />,
+    );
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Pas assez d'énergie",
+    );
+  });
+
+  it("sans la prop : aucun bandeau", () => {
+    mockState = {
+      energie: 0,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} />);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+});

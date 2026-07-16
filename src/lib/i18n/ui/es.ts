@@ -114,6 +114,7 @@ export const es: DictionnaireUI = {
     pubEnCours: "Anuncio en curso…",
     pubEpuisee: "Sin más anuncios hoy — vuelve mañana",
     regarderPub: "Ver un anuncio — +1",
+    energieInsuffisante: "¡No tienes energía suficiente para esta salida!",
     ameliorerVersNiveau: "Mejorar a LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
     xpGagne: "+{n} XP",

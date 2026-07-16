@@ -157,7 +157,16 @@ const levierTapStyle = (indisponible: boolean): CSSProperties => ({
   cursor: indisponible ? "default" : "pointer",
 });
 
-export function EnergieRecharge({ onClose }: { onClose: () => void }) {
+export function EnergieRecharge({
+  onClose,
+  alerte,
+}: {
+  onClose: () => void;
+  /** Message d'alerte contextuel (ex : « Pas assez d'énergie pour cette sortie ! »)
+   *  affiché en bandeau sur la machine — utilisé quand la modale pope suite à
+   *  une action bloquée par le manque d'énergie. */
+  alerte?: string;
+}) {
   const { state } = useGame();
   const { tempsConfiance, crediterEnergiePub } = useGameActions();
   const [enCours, setEnCours] = useState(false);
@@ -279,6 +288,34 @@ export function EnergieRecharge({ onClose }: { onClose: () => void }) {
         >
           <X size={18} />
         </button>
+
+        {/* Bandeau d'alerte contextuel (action bloquée faute d'énergie). */}
+        {alerte && (
+          <div
+            role="alert"
+            style={{
+              position: "absolute",
+              top: 12,
+              left: "8%",
+              right: "18%",
+              zIndex: 2,
+              padding: "7px 10px",
+              borderRadius: 6,
+              background: "var(--vermillion-600)",
+              border: "1px solid rgba(0,0,0,0.35)",
+              boxShadow: "0 3px 10px rgba(0,0,0,0.45)",
+              color: "var(--paper-100)",
+              fontFamily: "var(--font-display)",
+              fontWeight: 700,
+              fontSize: "clamp(11px, 3.2vw, 13px)",
+              letterSpacing: "0.04em",
+              textAlign: "center",
+              animation: "broc-shake 240ms linear 2",
+            }}
+          >
+            {alerte}
+          </div>
+        )}
 
         {/* Galvanomètre posé sur le cadran vide de l'illustration. */}
         <div style={cadranStyle}>

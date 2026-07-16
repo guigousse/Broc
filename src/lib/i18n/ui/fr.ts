@@ -117,6 +117,7 @@ export const fr = {
     pubEnCours: "Pub en cours…",
     pubEpuisee: "Plus de pub aujourd'hui — reviens demain",
     regarderPub: "Regarder une pub — +1",
+    energieInsuffisante: "Pas assez d'énergie pour cette sortie !",
     ameliorerVersNiveau: "Améliorer vers LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
     xpGagne: "+{n} XP",
