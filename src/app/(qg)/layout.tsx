@@ -42,7 +42,11 @@ import { QgPortemanteau } from "@/components/mobile/qg/QgPortemanteau";
 import { QgCalendrier } from "@/components/mobile/qg/QgCalendrier";
 import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
-import { QgGrandPere } from "@/components/mobile/qg/QgGrandPere";
+import {
+  GrandPereBadge,
+  getJourAmbianceVue,
+  setJourAmbianceVue,
+} from "@/components/mobile/qg/GrandPereBadge";
 import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
@@ -131,6 +135,12 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
   const [dialogueQg, setDialogueQg] = useState<DialogueSequence | null>(null);
+  // Jour de jeu où la phrase d'ambiance du grand-père a été écoutée (localStorage,
+  // hors save) — pilote l'apparition de sa pastille en bas d'écran.
+  const [jourAmbianceVue, setJourAmbianceVueState] = useState<number | null>(null);
+  useEffect(() => {
+    setJourAmbianceVueState(getJourAmbianceVue());
+  }, []);
 
   // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
@@ -449,18 +459,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                     setCarnetNotesOuvert(true);
                   }}
                 />
-                <QgGrandPere
-                  aDialogue={false}
-                  onTap={() => {
-                    if (tutorielActif(state)) return;
-                    playClick();
-                    setDialogueQg(
-                      AMBIANCE_GRAND_PERE[
-                        state.jourActuel % AMBIANCE_GRAND_PERE.length
-                      ],
-                    );
-                  }}
-                />
               </>
             )}
             {showQgZone(1) && (
@@ -692,6 +690,21 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         onRerollCelebrite={() => rerollCelebrite()}
       />
 
+      <GrandPereBadge
+        visible={
+          !tutorielActif(state) &&
+          !dialogueQg &&
+          jourAmbianceVue !== state.jourActuel
+        }
+        onTap={() => {
+          playClick();
+          setJourAmbianceVue(state.jourActuel);
+          setJourAmbianceVueState(state.jourActuel);
+          setDialogueQg(
+            AMBIANCE_GRAND_PERE[state.jourActuel % AMBIANCE_GRAND_PERE.length],
+          );
+        }}
+      />
       <DialogueOverlay
         sequence={dialogueQg}
         nom={nomExpediteur("grand-pere", locale)}
