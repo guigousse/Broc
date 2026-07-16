@@ -14,11 +14,17 @@ import { ItemSwipeDeck } from "@/components/mobile/chine/ItemSwipeDeck";
 import type { ChineSlide } from "@/components/mobile/chine/ChineSlide";
 import { getTemplate } from "@/data/objetTemplates";
 import { templateDejaPossede } from "@/lib/collection";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/components/ui/Toast";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { nomBrocante } from "@/lib/i18n/contenu";
+import { nomBrocante, nomExpediteur } from "@/lib/i18n/contenu";
+import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
+import {
+  GRAND_PERE_PORTRAITS,
+  SEQUENCES_TUTORIEL,
+  type DialogueSequence,
+} from "@/data/dialogues";
 import { libelleActive } from "@/lib/i18n/libelles";
 import { fraisEntree, getBrocanteById } from "@/data/brocantes";
 import {
@@ -62,6 +68,7 @@ export default function SessionChinePage() {
     consommerEnergie,
     utiliserActive,
   } = useGame();
+  const { avancerTutoriel } = useGameActions();
   const { startCrowd, stopCrowd } = useSettings();
   const { toast } = useToast();
   const { d, tr, locale } = useLangue();
@@ -96,6 +103,10 @@ export default function SessionChinePage() {
   const [boiteReclamee, setBoiteReclamee] = useState(false);
   /** Le Flair (N5) : révèle la cote pour toute la session une fois activé (portée session, pas de persistance). */
   const [flairActif, setFlairActif] = useState(false);
+  /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
+  const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
+
+  const etape = state?.tutorielEtape;
 
   const { floats, pousserXp } = useXpFloats();
 
@@ -159,6 +170,13 @@ export default function SessionChinePage() {
       }
     }
   }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast, d, tr]);
+
+  // Entrée de session pendant le tutoriel : le grand-père présente la chine.
+  useEffect(() => {
+    if (etape === "aller-chiner") {
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_chine_entree);
+    }
+  }, [etape]);
 
   const estRareOuPlus = (it: ObjetEnVente): boolean =>
     it.objet.rarete !== "commun" ||
@@ -282,6 +300,9 @@ export default function SessionChinePage() {
       },
     ]);
     toast(tr(d.chine.acquisPour, { prix }), { type: "succes" });
+    if (etape === "premier-achat") {
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_achat_fait);
+    }
   };
 
   const handleRentrer = () => {
@@ -433,6 +454,7 @@ export default function SessionChinePage() {
             boiteReclamee={boiteReclamee}
             onOuvrirBoite={() => setBoiteOuverte(true)}
             onQuitter={handleRentrer}
+            pulseSortir={etape === "rentrer"}
             onNavigate={() => setNegoOuverte(null)}
             renderDock={(currentItem) => <SkillDock skills={dockSkills(currentItem)} />}
             renderNegoDrawer={(item) => (
@@ -469,6 +491,17 @@ export default function SessionChinePage() {
           }}
         />
       )}
+
+      <DialogueOverlay
+        sequence={dialogueTuto}
+        nom={nomExpediteur("grand-pere", locale)}
+        portraits={GRAND_PERE_PORTRAITS}
+        onFini={() => {
+          setDialogueTuto(null);
+          if (etape === "aller-chiner") avancerTutoriel("premier-achat");
+          else if (etape === "premier-achat") avancerTutoriel("rentrer");
+        }}
+      />
     </div>
   );
 }
