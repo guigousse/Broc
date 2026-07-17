@@ -850,6 +850,15 @@ class AudioManager {
 
   /** Arrêt complet du gramophone : musique, loop, timers en attente. */
   stopGramophone(): void {
+    // Annule aussi un fondu de sortie en attente : sans ça, son timer
+    // fantôme réinvoquerait stopGramophone puis écraserait le volume du
+    // bus après coup. Le bus est ramené à sa cible de route courante
+    // (ambianceVolume) — jamais laissé sur une rampe vers zéro.
+    if (this.fadeOutTimer !== undefined) {
+      window.clearTimeout(this.fadeOutTimer);
+      this.fadeOutTimer = undefined;
+      this.setVinylAmbianceVolume(this.ambianceVolume);
+    }
     this.gramoTimers.forEach((t) => window.clearTimeout(t));
     this.gramoTimers = [];
     this.stopVinyl();
@@ -863,12 +872,14 @@ class AudioManager {
 
   /**
    * Fondu de sortie du bus gramophone ENTIER (musique + crépitement) sur
-   * `durationMs`, puis arrêt complet (stopGramophone) et bus restauré à 1 —
-   * on ne laisse jamais un bus à zéro pour l'écran suivant. Sûr à appeler
-   * si rien ne joue (arrêt immédiat, pas de rampe). Un nouvel appel pendant
-   * un fondu REMPLACE la rampe en cours (skip de l'intro : 1800 → 300 ms).
-   * Utilisé par les départs en partie de l'écran titre, synchronisé avec la
-   * fermeture d'iris (spec 2026-07-17-jazz-titre-fondu-design.md).
+   * `durationMs`, puis arrêt complet (stopGramophone) et bus ramené à sa cible
+   * de route courante (ambianceVolume ; 1 sur le titre) — on ne laisse jamais
+   * un bus à zéro pour l'écran suivant. Un stopGramophone() externe pendant le
+   * fondu annule proprement le timer. Sûr à appeler si rien ne joue (arrêt
+   * immédiat, pas de rampe). Un nouvel appel pendant un fondu REMPLACE la rampe
+   * en cours (skip de l'intro : 1800 → 300 ms). Utilisé par les départs en
+   * partie de l'écran titre, synchronisé avec la fermeture d'iris
+   * (spec 2026-07-17-jazz-titre-fondu-design.md).
    */
   fadeOutVinylBus(durationMs: number): void {
     if (this.fadeOutTimer !== undefined) {
@@ -889,7 +900,7 @@ class AudioManager {
     this.fadeOutTimer = window.setTimeout(() => {
       this.fadeOutTimer = undefined;
       this.stopGramophone();
-      this.setVinylAmbianceVolume(1);
+      this.setVinylAmbianceVolume(this.ambianceVolume);
     }, durationMs);
   }
 
