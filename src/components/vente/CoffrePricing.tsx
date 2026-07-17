@@ -24,6 +24,8 @@ interface Props {
   validerActif?: boolean;
   /** Catégories pour lesquelles Connaisseur 2 est débloqué (valeur de référence visible). */
   categoriesConnues: ReadonlySet<CategorieObjet>;
+  /** Tutoriel : main pointeuse sur le bouton de validation. */
+  tutoMainValider?: boolean;
 }
 
 export function CoffrePricing({
@@ -34,6 +36,7 @@ export function CoffrePricing({
   validerLabel,
   validerActif,
   categoriesConnues,
+  tutoMainValider = false,
 }: Props) {
   const { d, tr, locale } = useLangue();
   const peut = validerActif ?? coffre.length > 0;
@@ -173,6 +176,7 @@ export function CoffrePricing({
           type="button"
           disabled={!peut}
           onClick={onValider}
+          className={tutoMainValider && peut ? "tuto-main" : undefined}
           style={{
             flex: 2,
             padding: 10,

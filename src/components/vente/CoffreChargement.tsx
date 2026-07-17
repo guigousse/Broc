@@ -50,6 +50,8 @@ interface Props {
   onSetNiveauDev?: (n: NiveauCamion) => void;
   onValider: () => void;
   onAnnuler: () => void;
+  /** Tutoriel : main pointeuse sur le carrousel (coffre vide) puis sur Valider. */
+  tuto?: boolean;
 }
 
 function buildSolidMask(size: number): Uint8Array {
@@ -229,7 +231,11 @@ export function CoffreChargement(p: Props) {
         onRotate={p.onRotate}
         onRetour={p.onRetirer}
       />
-      <CarrouselStock stock={p.stock} onPickUp={handlePickUp} />
+      <CarrouselStock
+        stock={p.stock}
+        onPickUp={handlePickUp}
+        tutoMain={p.tuto === true && p.coffre.length === 0}
+      />
       {/* Spacer pour libérer la zone occupée par la barre fixed du bas
           (même hauteur que la TabBar du QG). */}
       <div
@@ -298,6 +304,7 @@ export function CoffreChargement(p: Props) {
           type="button"
           disabled={!peutValider || closing}
           onClick={handleValider}
+          className={p.tuto && peutValider && !closing ? "tuto-main" : undefined}
           style={{
             flex: 2,
             height: "calc(100% - 8px)",

@@ -23,6 +23,9 @@ import { COURRIER_EN } from "./en/courrier";
 import { COURRIER_ES } from "./es/courrier";
 import { QUETES_GABARITS_EN } from "./en/quetesGabarits";
 import { QUETES_GABARITS_ES } from "./es/quetesGabarits";
+import type { DialogueSequence } from "@/data/dialogues";
+import { DIALOGUES_EN } from "./en/dialogues";
+import { DIALOGUES_ES } from "./es/dialogues";
 import { libelleEtat } from "@/lib/i18n/libelles";
 import { DICTIONNAIRES } from "@/lib/i18n/ui";
 import type { EtatObjet, MissionCible } from "@/types/game";
@@ -349,6 +352,27 @@ export function nomCelebrite(nomFr: string, locale: Locale): string {
     if (trad) return trad;
   }
   return nomFr;
+}
+
+/* ------------------------------------------------------------------ */
+/* Dialogues tutoriel + ambiance (séquences stables)                   */
+/* ------------------------------------------------------------------ */
+
+const DIALOGUES_OVERLAY: Record<"en" | "es", Record<string, string[]>> = {
+  en: DIALOGUES_EN,
+  es: DIALOGUES_ES,
+};
+
+/** Lignes d'une séquence de dialogue dans la locale demandée (repli FR). */
+export function lignesDialogue(
+  seq: DialogueSequence,
+  locale: Locale,
+): string[] {
+  if (locale !== "fr") {
+    const trad = DIALOGUES_OVERLAY[locale][seq.id];
+    if (trad && trad.length === seq.lignes.length) return trad;
+  }
+  return seq.lignes.map((l) => l.texte);
 }
 
 /* ------------------------------------------------------------------ */

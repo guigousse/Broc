@@ -36,6 +36,7 @@ function etat(niveau: number): GameState {
   return {
     brocanteur: { niveau, xp: 0, pointsDisponibles: 0 },
     inventaireJoueur: [],
+    tutorielEtape: "termine",
   } as unknown as GameState;
 }
 

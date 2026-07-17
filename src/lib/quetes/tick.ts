@@ -10,6 +10,11 @@ export function tickQuetes(
   state: GameState,
   jour: number,
 ): { courriers: Courrier[]; missions: MissionResolution[] } {
+  // Tutoriel en cours : l'arc principal est différé à la conclusion
+  // (appliquerFinTutoriel passe l'étape à "termine" AVANT de tick).
+  if (state.tutorielEtape !== "termine") {
+    return { courriers: state.courriers, missions: state.missions };
+  }
   const nouveaux = debloquerQuetesPrincipales(state, jour);
   if (nouveaux.length === 0) {
     return { courriers: state.courriers, missions: state.missions };

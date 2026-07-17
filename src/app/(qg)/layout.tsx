@@ -42,10 +42,12 @@ import { QgPortemanteau } from "@/components/mobile/qg/QgPortemanteau";
 import { QgCalendrier } from "@/components/mobile/qg/QgCalendrier";
 import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
+import { GrandPereBadge } from "@/components/mobile/qg/GrandPereBadge";
 import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
 import { GazetteSheet } from "@/components/mobile/GazetteSheet";
+import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
 import { CahierDeCompteOverlay } from "@/components/mobile/qg/overlays/CahierDeCompteOverlay";
@@ -53,15 +55,22 @@ import { CarnetNotesOverlay } from "@/components/mobile/qg/overlays/CarnetNotesO
 import { CourrierSheet } from "@/components/mobile/qg/sheets/CourrierSheet";
 import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { GramophoneSheet } from "@/components/mobile/qg/sheets/GramophoneSheet";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { CATEGORIES } from "@/data/categories";
+import {
+  GRAND_PERE_PORTRAITS,
+  SEQUENCES_TUTORIEL,
+  type DialogueSequence,
+} from "@/data/dialogues";
 import { VITRINE_PREP_ID } from "@/lib/vitrinePrep";
 import { stockageEstPlein } from "@/lib/stockage";
 import { energieCourante } from "@/lib/energie";
 import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
+import { nomExpediteur } from "@/lib/i18n/contenu";
+import { tutorielActif } from "@/lib/tutoriel";
 import {
   aConnaisseurTendance,
   aGenBulletinMeteo,
@@ -81,7 +90,7 @@ const GRAMO_SESSION_KEY = "broc.gramo.session";
 
 function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { d } = useLangue();
+  const { d, locale } = useLangue();
   const {
     state,
     isHydrated,
@@ -93,6 +102,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     rerollMeteo,
     rerollCelebrite,
   } = useGame();
+  const { avancerTutoriel, terminerTutoriel } = useGameActions();
   const {
     playClick,
     playPaper,
@@ -123,6 +133,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
+  const [dialogueQg, setDialogueQg] = useState<DialogueSequence | null>(null);
 
   // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
@@ -349,6 +360,18 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const etape = state?.tutorielEtape;
+
+  // Dialogues automatiques du tutoriel au bureau. Un seul déclenchement par
+  // étape : l'étape n'avance qu'à la fin du dialogue (onFini), et l'effet ne
+  // rouvre pas si un dialogue est déjà affiché.
+  useEffect(() => {
+    if (dialogueQg) return;
+    if (etape === "accueil") setDialogueQg(SEQUENCES_TUTORIEL.tuto_accueil);
+    else if (etape === "rentrer") setDialogueQg(SEQUENCES_TUTORIEL.tuto_retour);
+    else if (etape === "conclusion") setDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
+  }, [etape, dialogueQg]);
+
   if (!isHydrated || !state) {
     return (
       <main
@@ -369,6 +392,20 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   const nbCourriersNonLus = state.courriers.filter((c) => !c.lu).length;
+
+  // Tant que le tutoriel guidé est en cours, seuls les objets prescrits par
+  // l'étape courante (porte, grand-père) réagissent au tap — tous les
+  // autres objets du QG sont verrouillés pour ne pas distraire le joueur.
+  const tutoActif = tutorielActif(state);
+  // Widened au-delà de "aller-chiner"/"preparer-etal" : un joueur qui sort de
+  // la brocante sans rien acheter (étape reste "premier-achat") ou termine
+  // une journée d'étal sans vente (étape reste "premiere-vente") doit
+  // pouvoir rouvrir la porte pour réessayer — sinon soft-lock au bureau.
+  const portePermise =
+    etape === "aller-chiner" ||
+    etape === "premier-achat" ||
+    etape === "preparer-etal" ||
+    etape === "premiere-vente";
 
   // Virtualisation : monte un objet si sa zone est à distance ≤ 1 de la zone
   // active (index 0..2). bureau/porte/repos = 0/1/2.
@@ -401,6 +438,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
               <>
                 <QgCarnet
                   onTap={() => {
+                    if (tutoActif) return;
                     playClick();
                     setCarnetOuvert(true);
                   }}
@@ -409,6 +447,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                   nbActives={missionsCounters.actives}
                   nbLivrables={missionsCounters.livrables}
                   onTap={() => {
+                    if (tutoActif) return;
                     playClick();
                     setCarnetNotesOuvert(true);
                   }}
@@ -418,7 +457,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             {showQgZone(1) && (
               <>
                 <QgPorte
+                  pulse={portePermise && !porteOuverte}
                   onTap={() => {
+                    if (tutoActif && !portePermise) return;
                     playDoorOpen();
                     setPorteOuverte(true);
                   }}
@@ -426,6 +467,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                 <QgCourrier
                   nbNonLus={nbCourriersNonLus}
                   onTap={() => {
+                    if (tutoActif) return;
                     playPaper();
                     setCourrierOuvert(true);
                   }}
@@ -433,11 +475,15 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                 <QgPortemanteau />
                 <QgCalendrier
                   jourActuel={state.jourActuel}
-                  onTap={() => setCalendrierOuvert(true)}
+                  onTap={() => {
+                    if (tutoActif) return;
+                    setCalendrierOuvert(true);
+                  }}
                 />
                 <QgPorteRevues
                   gazetteAchetee={state.gazetteAchetee}
                   onTap={() => {
+                    if (tutoActif) return;
                     playNewspaper();
                     setGazetteOuverte(true);
                   }}
@@ -449,6 +495,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                 <QgFauteuil
                   chat={state.chatSurFauteuil}
                   onTap={() => {
+                    if (tutoActif) return;
                     if (state.chatSurFauteuil) startCatPurr();
                     else playClick();
                     setConfirmPasser(true);
@@ -456,6 +503,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                 />
                 <QgGramophone
                   onTap={() => {
+                    if (tutoActif) return;
                     playClick();
                     setGramophoneOuvert(true);
                   }}
@@ -521,6 +569,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         }}
         vitrineActive={!!state.vitrine}
         chinerDesactive={stockageEstPlein(state)}
+        tutoChiner={etape === "aller-chiner" || etape === "premier-achat"}
+        tutoEtaler={etape === "preparer-etal" || etape === "premiere-vente"}
         onChiner={() => {
           playDoorClose();
           setPorteOuverte(false);
@@ -650,6 +700,20 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         }
         onRerollMeteo={() => rerollMeteo()}
         onRerollCelebrite={() => rerollCelebrite()}
+      />
+
+      {/* SP2 : la pastille s'allumera quand un dialogue de chapitre attendra. */}
+      <GrandPereBadge visible={false} onTap={() => {}} />
+      <DialogueOverlay
+        sequence={dialogueQg}
+        nom={nomExpediteur("grand-pere", locale)}
+        portraits={GRAND_PERE_PORTRAITS}
+        onFini={() => {
+          setDialogueQg(null);
+          if (etape === "accueil") avancerTutoriel("aller-chiner");
+          else if (etape === "rentrer") avancerTutoriel("preparer-etal");
+          else if (etape === "conclusion") terminerTutoriel();
+        }}
       />
 
       {editEnabled && <QgEditPanel />}

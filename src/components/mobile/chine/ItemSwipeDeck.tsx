@@ -27,6 +27,7 @@ export function ItemSwipeDeck({
   renderNegoDrawer,
   onNavigate,
   renderDock,
+  pulseSortir,
 }: {
   slides: ChineSlide[];
   plein: boolean;
@@ -39,6 +40,8 @@ export function ItemSwipeDeck({
   onNavigate?: () => void;
   /** Dock de compétences rendu à droite du bouton Sortir (reçoit la carte courante). */
   renderDock?: (currentItem: ObjetEnVente | null) => ReactNode;
+  /** Tutoriel : fait pulser le bouton Sortir pour guider le joueur vers la sortie. */
+  pulseSortir?: boolean;
 }) {
   const { d } = useLangue();
   const [index, setIndex] = useState(0);
@@ -235,6 +238,8 @@ export function ItemSwipeDeck({
 
       <div
         style={{
+          // relative : ancre le SkillDock absolu (cercles flottants sur la ligne laiton)
+          position: "relative",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -247,6 +252,7 @@ export function ItemSwipeDeck({
           type="button"
           aria-label={d.chine.quitterBrocanteAriaLabel}
           onClick={onQuitter}
+          className={pulseSortir ? "tuto-pulse tuto-main tuto-main-droite" : undefined}
           style={{
             display: "inline-flex",
             alignItems: "center",

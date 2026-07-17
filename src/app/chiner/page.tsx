@@ -10,6 +10,7 @@ import { useGame } from "@/context/GameContext";
 import { BROCANTES } from "@/data/brocantes";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { tutorielActif } from "@/lib/tutoriel";
 
 export default function ChinerListePage() {
   const router = useRouter();
@@ -32,10 +33,15 @@ export default function ChinerListePage() {
     return <SkeletonScreen label={d.chine.preparationHalles} />;
   }
 
+  const tutoActif = tutorielActif(state);
+  const brocantesVisibles = tutoActif
+    ? BROCANTES.filter((b) => b.id === "vide-grenier-quartier")
+    : BROCANTES;
+
   return (
     <MobileLayout header={<MobileHeader budget={state.budget} />} fillContent>
       <BrocantePanorama
-        brocantes={BROCANTES}
+        brocantes={brocantesVisibles}
         state={state}
         debloqueesIds={debloqueesIds}
         destination="chiner"

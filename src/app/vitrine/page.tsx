@@ -10,6 +10,7 @@ import { useGame } from "@/context/GameContext";
 import { BROCANTES } from "@/data/brocantes";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { tutorielActif } from "@/lib/tutoriel";
 
 export default function VitrineListePage() {
   const router = useRouter();
@@ -30,6 +31,11 @@ export default function VitrineListePage() {
 
   if (!isHydrated || !state) return null;
 
+  const tutoActif = tutorielActif(state);
+  const brocantesVisibles = tutoActif
+    ? BROCANTES.filter((b) => b.id === "vide-grenier-quartier")
+    : BROCANTES;
+
   return (
     <MobileLayout
       header={<MobileHeader budget={state.budget} />}
@@ -37,7 +43,7 @@ export default function VitrineListePage() {
       fillContent
     >
       <BrocantePanorama
-        brocantes={BROCANTES}
+        brocantes={brocantesVisibles}
         state={state}
         debloqueesIds={debloqueesIds}
         destination="vitrine"

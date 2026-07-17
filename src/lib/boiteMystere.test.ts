@@ -23,9 +23,9 @@ describe("chanceApparition", () => {
 
 describe("tenterApparition", () => {
   it("réussit quand le tirage est sous le seuil", () => {
-    expect(tenterApparition(0, () => 0.05)).toBe(true); // 0.05 < 0.10
-    expect(tenterApparition(0, () => 0.5)).toBe(false); // 0.5 >= 0.10
-    expect(tenterApparition(1, () => 0.06)).toBe(false); // 0.06 >= 0.05
+    expect(tenterApparition(0, () => 0.05)).toBe(true); // 0.05 < 0.20
+    expect(tenterApparition(0, () => 0.5)).toBe(false); // 0.5 >= 0.20
+    expect(tenterApparition(1, () => 0.12)).toBe(false); // 0.12 >= 0.10
   });
 });
 

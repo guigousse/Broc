@@ -4,6 +4,7 @@ import {
   type EtatObjet,
   type GameState,
   type ObjetEnVitrine,
+  type TutorielEtape,
   type VitrineActive,
 } from "@/types/game";
 import {
@@ -14,6 +15,7 @@ import {
 import { COMPETENCES, getCompetence } from "@/data/competences";
 import { prochainLundi } from "@/lib/calendrier";
 import { tirerCelebrite } from "@/lib/celebrite";
+import { ETAPES_TUTORIEL } from "@/lib/tutoriel";
 import {
   donnerObjet as donnerObjetFn,
   initCollection,
@@ -89,7 +91,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -172,13 +174,17 @@ function assurerFiletSecuriteMinimal(save: GameState): GameState {
     typeof (b as { niveau?: unknown }).niveau === "number" &&
     typeof (b as { pointsDisponibles?: unknown }).pointsDisponibles === "number";
   const competencesValide = Array.isArray(save.competencesDebloquees);
+  const tutorielEtapeValide =
+    typeof save.tutorielEtape === "string" &&
+    (ETAPES_TUTORIEL as readonly string[]).includes(save.tutorielEtape);
 
-  if (brocanteurValide && competencesValide) return save;
+  if (brocanteurValide && competencesValide && tutorielEtapeValide) return save;
 
   return {
     ...save,
     brocanteur: brocanteurValide ? save.brocanteur : emptyBrocanteur(),
     competencesDebloquees: competencesValide ? save.competencesDebloquees : [],
+    tutorielEtape: tutorielEtapeValide ? save.tutorielEtape : "termine",
   };
 }
 
@@ -404,11 +410,24 @@ function appliquerMigrations(loaded: GameState): GameState {
       )
     : [];
   const jourCourant = loaded.jourActuel ?? INITIAL_JOUR;
-  const apresMaman = injecterLettreMamanSiAbsente(
-    courriersMigrés,
-    declencheursLoaded,
-    jourCourant,
-  );
+
+  // Tutoriel (v12) : les saves antérieures ont déjà joué — "termine".
+  // Une valeur inconnue (save corrompue/future) est aussi normalisée.
+  const tutorielEtape: TutorielEtape = (() => {
+    const v = (loaded as Partial<GameState>).tutorielEtape;
+    return typeof v === "string" &&
+      (ETAPES_TUTORIEL as readonly string[]).includes(v)
+      ? (v as TutorielEtape)
+      : "termine";
+  })();
+  const tutorielFini = tutorielEtape === "termine";
+
+  // Tant qu'un tutoriel est en cours, la migration ne doit ni injecter la
+  // lettre de Maman ni amorcer l'arc principal : `appliquerFinTutoriel`
+  // (src/lib/tutoriel.ts) s'en charge à la fin du tutoriel.
+  const apresMaman = tutorielFini
+    ? injecterLettreMamanSiAbsente(courriersMigrés, declencheursLoaded, jourCourant)
+    : { courriers: courriersMigrés, declencheursAjoutes: [] as string[] };
   const apresInjection = {
     courriers: apresMaman.courriers,
     declencheursAjoutes: [...apresMaman.declencheursAjoutes],
@@ -456,21 +475,25 @@ function appliquerMigrations(loaded: GameState): GameState {
   const missionsExistantes: GameState["missions"] = (
     Array.isArray(loaded.missions) ? loaded.missions : []
   ).filter((m) => !idsSecondairesSupprimes.has(m.courrierId));
-  const amorce = debloquerQuetesPrincipales(
-    {
-      ...(loaded as GameState),
-      // Les conditions de déblocage lisent collection/historique/budget/jour :
-      // on s'appuie sur les valeurs migrées, pas sur le brut `loaded`.
-      jourActuel: jourCourant,
-      budget: loaded.budget ?? 0,
-      historique,
-      collection,
-      courriers: apresInjection.courriers,
-      missions: missionsExistantes,
-      brocanteur: brocanteurConverti,
-    },
-    jourCourant,
-  );
+  // Tant qu'un tutoriel est en cours, aucun chapitre n'est amorcé (cf. drapeau
+  // `tutorielFini` posé plus haut) : `appliquerFinTutoriel` s'en charge.
+  const amorce = tutorielFini
+    ? debloquerQuetesPrincipales(
+        {
+          ...(loaded as GameState),
+          // Les conditions de déblocage lisent collection/historique/budget/jour :
+          // on s'appuie sur les valeurs migrées, pas sur le brut `loaded`.
+          jourActuel: jourCourant,
+          budget: loaded.budget ?? 0,
+          historique,
+          collection,
+          courriers: apresInjection.courriers,
+          missions: missionsExistantes,
+          brocanteur: brocanteurConverti,
+        },
+        jourCourant,
+      )
+    : [];
   const courriersFinaux = [...apresInjection.courriers, ...amorce];
   const missionsFinales: GameState["missions"] = [
     ...missionsExistantes,
@@ -496,6 +519,7 @@ function appliquerMigrations(loaded: GameState): GameState {
 
   return {
     ...loadedSansChampsSupprimes,
+    tutorielEtape,
     inventaireJoueur: inventaire,
     vitrine: vitrineActuelle,
     historique,

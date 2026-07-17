@@ -14,11 +14,17 @@ import { ItemSwipeDeck } from "@/components/mobile/chine/ItemSwipeDeck";
 import type { ChineSlide } from "@/components/mobile/chine/ChineSlide";
 import { getTemplate } from "@/data/objetTemplates";
 import { templateDejaPossede } from "@/lib/collection";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/components/ui/Toast";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { nomBrocante } from "@/lib/i18n/contenu";
+import { nomBrocante, nomExpediteur } from "@/lib/i18n/contenu";
+import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
+import {
+  GRAND_PERE_PORTRAITS,
+  SEQUENCES_TUTORIEL,
+  type DialogueSequence,
+} from "@/data/dialogues";
 import { libelleActive } from "@/lib/i18n/libelles";
 import { fraisEntree, getBrocanteById } from "@/data/brocantes";
 import {
@@ -35,6 +41,7 @@ import { placeRestante, stockageEstPlein } from "@/lib/stockage";
 import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
 import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
+import { tutorielActif } from "@/lib/tutoriel";
 import { useXpFloats, XpFloatsVue } from "@/components/mobile/XpFloats";
 import {
   XP_ACHAT_BROCANTEUR,
@@ -62,6 +69,7 @@ export default function SessionChinePage() {
     consommerEnergie,
     utiliserActive,
   } = useGame();
+  const { avancerTutoriel } = useGameActions();
   const { startCrowd, stopCrowd } = useSettings();
   const { toast } = useToast();
   const { d, tr, locale } = useLangue();
@@ -96,6 +104,10 @@ export default function SessionChinePage() {
   const [boiteReclamee, setBoiteReclamee] = useState(false);
   /** Le Flair (N5) : révèle la cote pour toute la session une fois activé (portée session, pas de persistance). */
   const [flairActif, setFlairActif] = useState(false);
+  /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
+  const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
+
+  const etape = state?.tutorielEtape;
 
   const { floats, pousserXp } = useXpFloats();
 
@@ -152,13 +164,25 @@ export default function SessionChinePage() {
       }
       // Vendeur mystère : tirage à probabilité décroissante (1/10, puis ÷2 par
       // boîte déjà réclamée aujourd'hui). N'apparaît que s'il reste de la place
-      // (jamais de pub gâchée).
+      // (jamais de pub gâchée), et jamais pendant le tutoriel guidé (pas de
+      // distraction pub/récompense sur la première session encadrée).
       const nReclamees = nbBoitesReclamees(state, state.jourActuel);
-      if (placeRestante(state) >= 1 && tenterApparition(nReclamees)) {
+      if (
+        !tutorielActif(state) &&
+        placeRestante(state) >= 1 &&
+        tenterApparition(nReclamees)
+      ) {
         setVendeurPresent(true);
       }
     }
   }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast, d, tr]);
+
+  // Entrée de session pendant le tutoriel : le grand-père présente la chine.
+  useEffect(() => {
+    if (etape === "aller-chiner") {
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_chine_entree);
+    }
+  }, [etape]);
 
   const estRareOuPlus = (it: ObjetEnVente): boolean =>
     it.objet.rarete !== "commun" ||
@@ -282,6 +306,9 @@ export default function SessionChinePage() {
       },
     ]);
     toast(tr(d.chine.acquisPour, { prix }), { type: "succes" });
+    if (etape === "premier-achat") {
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_achat_fait);
+    }
   };
 
   const handleRentrer = () => {
@@ -433,6 +460,7 @@ export default function SessionChinePage() {
             boiteReclamee={boiteReclamee}
             onOuvrirBoite={() => setBoiteOuverte(true)}
             onQuitter={handleRentrer}
+            pulseSortir={etape === "rentrer"}
             onNavigate={() => setNegoOuverte(null)}
             renderDock={(currentItem) => <SkillDock skills={dockSkills(currentItem)} />}
             renderNegoDrawer={(item) => (
@@ -453,6 +481,7 @@ export default function SessionChinePage() {
                   setNegoOuverte(null);
                 }}
                 onAcheterDirect={() => handleAcheter(item.id)}
+                tutoGuide={etape === "premier-achat" && item.statut !== "achete"}
               />
             )}
           />
@@ -469,6 +498,17 @@ export default function SessionChinePage() {
           }}
         />
       )}
+
+      <DialogueOverlay
+        sequence={dialogueTuto}
+        nom={nomExpediteur("grand-pere", locale)}
+        portraits={GRAND_PERE_PORTRAITS}
+        onFini={() => {
+          setDialogueTuto(null);
+          if (etape === "aller-chiner") avancerTutoriel("premier-achat");
+          else if (etape === "premier-achat") avancerTutoriel("rentrer");
+        }}
+      />
     </div>
   );
 }

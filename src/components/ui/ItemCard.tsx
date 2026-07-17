@@ -100,8 +100,8 @@ function ItemCardBase({
             position: "absolute",
             top: 4,
             right: 4,
-            width: 22,
-            height: 22,
+            width: 26,
+            height: 26,
             borderRadius: "50%",
             background: "var(--paper-100)",
             border: `1.2px solid ${colors.outer}`,
@@ -116,7 +116,7 @@ function ItemCardBase({
         >
           <CategorieIcon
             categorie={categorie}
-            size={11}
+            size={13}
             strokeWidth={1.4}
             color="var(--forest-800)"
           />
