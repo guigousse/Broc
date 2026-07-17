@@ -50,6 +50,7 @@ class AudioManager {
   private vinylGain?: GainNode;
   private vinylEndedHandler?: () => void;
   private gramoTimers: number[] = [];
+  private fadeOutTimer?: number;
   // Bus "ambiance gramophone" : un gain + lowpass partagés par la musique
   // ET le crépitement (needle). Permet d'étouffer/atténuer l'ensemble du
   // gramophone selon la pièce (proche = clair/fort, lointain = sourd/bas).
@@ -853,6 +854,43 @@ class AudioManager {
     this.gramoTimers = [];
     this.stopVinyl();
     this.stopNeedle();
+  }
+
+  /** Vrai si un vinyle est chargé et en lecture (non mis en pause). */
+  vinylEnLecture(): boolean {
+    return !!this.vinylAudio && !this.vinylAudio.paused;
+  }
+
+  /**
+   * Fondu de sortie du bus gramophone ENTIER (musique + crépitement) sur
+   * `durationMs`, puis arrêt complet (stopGramophone) et bus restauré à 1 —
+   * on ne laisse jamais un bus à zéro pour l'écran suivant. Sûr à appeler
+   * si rien ne joue (arrêt immédiat, pas de rampe). Un nouvel appel pendant
+   * un fondu REMPLACE la rampe en cours (skip de l'intro : 1800 → 300 ms).
+   * Utilisé par les départs en partie de l'écran titre, synchronisé avec la
+   * fermeture d'iris (spec 2026-07-17-jazz-titre-fondu-design.md).
+   */
+  fadeOutVinylBus(durationMs: number): void {
+    if (this.fadeOutTimer !== undefined) {
+      window.clearTimeout(this.fadeOutTimer);
+      this.fadeOutTimer = undefined;
+    }
+    if (!this.ctx || !this.vinylAmbianceGain) {
+      // Rien n'a jamais joué (bus jamais créé) : coupe ce qui pourrait
+      // rester (timers gramophone) et n'installe aucune rampe.
+      this.stopGramophone();
+      return;
+    }
+    const now = this.ctx.currentTime;
+    const gain = this.vinylAmbianceGain.gain;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    gain.linearRampToValueAtTime(0, now + durationMs / 1000);
+    this.fadeOutTimer = window.setTimeout(() => {
+      this.fadeOutTimer = undefined;
+      this.stopGramophone();
+      this.setVinylAmbianceVolume(1);
+    }, durationMs);
   }
 
   loadPersisted(): AudioPrefs {
