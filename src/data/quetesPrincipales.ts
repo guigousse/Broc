@@ -213,14 +213,17 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     condition: { type: "depart" },
     // Décision 2026-07-17 : mission de maîtrise placée en late game (venue du
     // ch7) — au seuil du Grand Salon, le palier Réparer 3 est atteignable.
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "songeur", texte: "Il y a l'ouvrage propre, et il y a l'ouvrage de maître. J'ai vu peu de gens franchir ce pas." },
-      { humeur: "souriant", texte: "Restaure-moi un objet jusqu'au Pristin état. Le Grand Salon ne mérite rien de moins." },
+      { humeur: "songeur", texte: "Il y a l'ouvrage propre, et il y a l'ouvrage de maître. Cinquante ans d'établi, et je compte sur une main ceux qui ont franchi ce pas." },
+      { humeur: "emu", texte: "Un objet remis à neuf, c'est une vie qu'on prolonge. La mienne s'est usée à ça — et je ne regrette rien." },
+      { humeur: "souriant", texte: "Prends ton temps, choisis ta pièce, et rends-la parfaite. Le Grand Salon ne mérite rien de moins. Toi non plus." },
     ],
     payload: {
       titre: "Pièce de maître",
-      corps: ["Restaurer un objet jusqu'à l'état Pristin état."], // SP3 : texte provisoire
+      corps: [
+        "Restaurer un objet jusqu'à l'état **Pristin état**.",
+        "« Un objet remis à neuf, c'est une vie qu'on prolonge. »",
+      ],
       cibles: [],
       objectifs: [{ type: "restauration", etatMin: "Pristin état" }],
       recompense: { argent: 260 },
@@ -232,14 +235,18 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     acte: 3,
     condition: { type: "depart" },
     invitationTier: 4,
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "songeur", texte: "Une lettre est arrivée pour toi. Le Grand Salon des Antiquaires… Ils t'invitent." },
-      { humeur: "emu", texte: "J'y ai rêvé toute ma vie sans jamais y entrer. Vas-y, petit. Pour nous deux." },
+      { humeur: "songeur", texte: "Assieds-toi. Il est temps que je te raconte la fin — ou le début, c'est selon." },
+      { humeur: "emu", texte: "Les bijoux de la reine. Cinquante ans que je les cherche. J'ai vu passer leur trace dans trois ventes, deux inventaires, un mensonge. Chaque fois, trop tard." },
+      { humeur: "emu", texte: "C'est pour eux que j'ai raté des dimanches, des anniversaires… le pichet de ta grand-mère. Un rêve, ça éclaire — mais ça brûle aussi, quand on le tient trop près." },
+      { humeur: "souriant", texte: "Le Grand Salon des Antiquaires t'ouvre ses portes — les organisateurs t'écriront. C'est là que tout s'arrête, ou que tout s'achève. Vas-y pour moi." },
     ],
     payload: {
       titre: "L'invitation",
-      corps: ["Le Grand Salon des Antiquaires t'ouvre ses portes."], // SP3 : texte provisoire
+      corps: [
+        "Le grand-père a tout raconté : cinquante ans de quête, et le Grand Salon comme dernière piste.",
+        "« C'est là que tout s'arrête, ou que tout s'achève. »",
+      ],
       cibles: [],
       objectifs: [],
       recompense: { argent: 150 },
@@ -250,14 +257,16 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     ordre: 11,
     acte: 3,
     condition: { type: "depart" },
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "emu", texte: "Les bijoux de la reine. Ta grand-mère en parlait comme d'un conte — je pensais qu'ils n'existaient plus." },
-      { humeur: "songeur", texte: "Si tu les trouves un jour, rapporte-les-moi. Rien qu'une fois, avant la fin de l'histoire." },
+      { humeur: "songeur", texte: "Ils sont là, quelque part, entre les vitrines du Grand Salon. Je le sens comme on sent l'orage." },
+      { humeur: "souriant", texte: "Je ne viens pas. C'est ton regard qu'il faut, plus le mien. Trouve-les — et garde-les. Ils sont à toi. Le rêve, lui, m'appartient encore un peu." },
     ],
     payload: {
       titre: "Les bijoux de la reine",
-      corps: ["Retrouver les bijoux de la reine."], // SP3 : texte provisoire
+      corps: [
+        "Acquérir **les bijoux de la reine** au Grand Salon. Ils resteront dans ta collection.",
+        "« Cinquante ans que je les cherche. À toi de tendre la main. »",
+      ],
       cibles: [{ templateId: "uniq.mo.bijou_marie_antoinette" }],
       objectifs: [{ type: "objet", templateId: "uniq.mo.bijou_marie_antoinette" }],
       recompense: { argent: 500 },
@@ -269,14 +278,18 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     ordre: 12,
     acte: 3,
     condition: { type: "depart" },
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "emu", texte: "Ces bijoux entre tes mains… c'est comme si ta grand-mère te souriait, elle aussi." },
-      { humeur: "souriant", texte: "La boutique est à toi, pour de bon, maintenant. Les clés, le carnet, tout. Je suis fier de toi." },
+      { humeur: "emu", texte: "Alors c'est vrai. Ils existent. Là, dans ta vitrine… Laisse-moi les regarder encore un peu." },
+      { humeur: "rieur", texte: "Ta grand-mère dirait que le bleu du pichet leur allait mieux. Elle aurait raison, comme toujours." },
+      { humeur: "songeur", texte: "Mon rêve est accompli — pas comme je l'imaginais : mieux. C'est toi qui l'as fini. Une histoire n'appartient jamais à celui qui la commence, tu sais." },
+      { humeur: "souriant", texte: "Tiens : les clés. Toutes. Moi, j'ai un train demain — Venise d'abord, ensuite on verra. Je t'écrirai. Prends soin de la boutique… elle a toujours pris soin de nous." },
     ],
     payload: {
       titre: "La remise des clés",
-      corps: ["Le grand-père te remet officiellement les clés de la boutique."], // SP3 : texte provisoire
+      corps: [
+        "La boutique est à toi. Le grand-père part en voyage — il écrira.",
+        "« Une histoire n'appartient jamais à celui qui la commence. »",
+      ],
       cibles: [],
       objectifs: [],
       recompense: { argent: 500 },
