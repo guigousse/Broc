@@ -6,24 +6,23 @@ import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { CreditsModal } from "@/components/mobile/CreditsModal";
 import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
+import { IrisFermeture } from "@/components/mobile/IrisTransition";
 import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { audioManager } from "@/lib/audio/audioManager";
+import {
+  PORTE_CX_PCT,
+  PORTE_CY_PCT,
+  pointPorteEcran,
+  poserFlagIris,
+} from "@/lib/transitionIris";
 import {
   changerSlotActif,
   premierSlotLibre,
   slotActif,
   type NumeroSlot,
 } from "@/lib/storage/slots";
-
-/**
- * Centre mesuré de la porte d'entrée sur `facade-accueil.webp` (même mesure
- * que `IntroPorte`) : cx ≈ 51 %, cy ≈ 66 %. Réutilisé ici pour l'`object-position`
- * du fond plein écran, afin que la porte reste visible dans un cadrage 9:16.
- */
-const DOOR_CX_PCT = 51;
-const DOOR_CY_PCT = 66;
 
 /**
  * Bouton du menu d'accueil : même habillage que les boutons Chiner/Étaler
@@ -175,6 +174,19 @@ export default function TitleScreen() {
   const slotCibleRef = useRef<NumeroSlot | null>(null);
   const facadeRef = useTiltParallax(14);
 
+  // Fermeture d'iris en cours : point d'ancrage (la porte à l'écran) et
+  // action à jouer une fois l'écran noir. L'overlay IrisFermeture bloque
+  // toute interaction pendant la fermeture (pointer-events + z-index).
+  const [iris, setIris] = useState<{
+    x: number;
+    y: number;
+    apresNoir: () => void;
+  } | null>(null);
+
+  const lancerIrisVers = (apresNoir: () => void) => {
+    setIris({ ...pointPorteEcran(facadeRef.current), apresNoir });
+  };
+
   // Même ambiance de rue que le QG (respecte la préférence sonore, no-op si
   // déjà lancée). Sur iOS le contexte audio reste suspendu jusqu'au premier
   // geste : le son démarre alors, via l'unlock global de l'audioManager.
@@ -225,8 +237,14 @@ export default function TitleScreen() {
   };
 
   const onContinuer = () => {
+    if (!aSauvegarde || iris) return;
     playClick();
-    if (aSauvegarde) window.location.href = "/bureau";
+    lancerIrisVers(() => {
+      // Le flag déclenche la réouverture d'iris côté bureau (IrisArrivee) ;
+      // le rechargement dur se déroule entièrement sous le noir.
+      poserFlagIris();
+      window.location.href = "/bureau";
+    });
   };
 
   const onReglages = () => {
@@ -273,7 +291,7 @@ export default function TitleScreen() {
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          objectPosition: `${DOOR_CX_PCT}% ${DOOR_CY_PCT}%`,
+          objectPosition: `${PORTE_CX_PCT}% ${PORTE_CY_PCT}%`,
           display: "block",
           transform: "scale(1.08)",
           willChange: "transform",
@@ -402,6 +420,8 @@ export default function TitleScreen() {
         onAvantSuppressionActive={reset}
         onAvantBascule={detacherPartie}
       />
+
+      {iris && <IrisFermeture cx={iris.x} cy={iris.y} onNoir={iris.apresNoir} />}
     </main>
   );
 }
