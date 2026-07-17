@@ -83,7 +83,7 @@ export function DialogueOverlay({
   portraits,
   onFini,
 }: DialogueOverlayProps) {
-  const { locale } = useLangue();
+  const { locale, d } = useLangue();
   const [index, setIndex] = useState(0);
 
   // Nouvelle séquence → repartir de la première ligne.
@@ -126,7 +126,7 @@ export function DialogueOverlay({
           whiteSpace: "nowrap",
         }}
       >
-        Continuer
+        {d.menu.continuer}
       </span>
     </button>,
     document.body,

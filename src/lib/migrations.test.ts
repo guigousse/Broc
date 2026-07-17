@@ -837,6 +837,20 @@ describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-v
     const migre = migrate(saveV12({}));
     expect(migre.missions.some((m) => m.courrierId.startsWith("trame_ch"))).toBe(false);
   });
+
+  it("v12→v13 : une ancienne mission principale_* ACTIVE est close (expiree), la livrée reste livrée", () => {
+    const save = saveV12({
+      missions: [
+        { courrierId: "principale_ch2", statut: "active" },
+        { courrierId: "principale_ch1", statut: "livree", jourResolution: 3 },
+      ],
+    });
+    const migre = migrate(save);
+    const ch2 = migre.missions.find((m) => m.courrierId === "principale_ch2");
+    expect(ch2?.statut).toBe("expiree");
+    expect(ch2?.jourResolution).toBe(save.jourActuel);
+    expect(migre.missions.find((m) => m.courrierId === "principale_ch1")?.statut).toBe("livree");
+  });
 });
 
 /** Fabrique une save "v13" (déjà migrée, schéma courant). */

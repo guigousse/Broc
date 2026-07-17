@@ -621,6 +621,7 @@ export const fr = {
     missionIntrouvable: "Mission introuvable.",
     missionNonActive: "Mission non active.",
     objetsRequisManquants: "Objets requis manquants dans l'inventaire.",
+    objectifsNonAtteints: "Objectifs pas encore atteints.",
     editionDejaAchetee: "Édition déjà achetée.",
     budgetInsuffisantGazette: "Budget insuffisant ({prix} € requis).",
     // Statuts d'atelier/démantèlement (atelier.ts, affichés dans gérer stockage/atelier).

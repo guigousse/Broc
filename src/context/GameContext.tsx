@@ -1499,7 +1499,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return { ok: false, raison: raisonLocalisee("missionNonActive") };
       }
       if (!missionLivrable(courrier.payload, reso, current, courrier.jourRecu)) {
-        return { ok: false, raison: raisonLocalisee("objetsRequisManquants") };
+        return { ok: false, raison: raisonLocalisee("objectifsNonAtteints") };
       }
       const { recompense } = courrier.payload;
       const aRetirer = indicesAConsommerPourLivraison(

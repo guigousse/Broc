@@ -603,6 +603,7 @@ export const es: DictionnaireUI = {
     missionIntrouvable: "Misión no encontrada.",
     missionNonActive: "Misión no activa.",
     objetsRequisManquants: "Faltan objetos requeridos en el inventario.",
+    objectifsNonAtteints: "Objetivos aún no alcanzados.",
     editionDejaAchetee: "Edición ya comprada.",
     budgetInsuffisantGazette: "Presupuesto insuficiente ({prix} € requeridos).",
     dejaEnCours: "Ya en curso.",

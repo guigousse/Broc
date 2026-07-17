@@ -514,6 +514,17 @@ function appliquerMigrations(loaded: GameState): GameState {
   let courriersAvecTrame = courriersFinaux;
   let missionsAvecTrame = missionsFinales;
   if (!dejaV13) {
+    // Ancien arc `principale_*` : la trame le remplace. Toute mission ACTIVE
+    // sous ce nom est close (`expiree`, jourResolution = jour courant de la
+    // migration) — pas d'objectif orphelin dans le carnet ; les missions déjà
+    // `livree` restent `livree` (elles alimentent le mapping niveau→trame
+    // ci-dessous). Le courrier associé n'est pas touché, il reste en archive.
+    missionsAvecTrame = missionsAvecTrame.map((m) =>
+      m.courrierId.startsWith("principale_") && m.statut === "active"
+        ? { ...m, statut: "expiree" as const, jourResolution: jourCourant }
+        : m,
+    );
+
     let maxOrdreTrame = 0;
     const niveauFinalTrame = brocanteurConverti.niveau;
     if (niveauFinalTrame >= NIVEAU_BROCANTES_T2) maxOrdreTrame = 4;
