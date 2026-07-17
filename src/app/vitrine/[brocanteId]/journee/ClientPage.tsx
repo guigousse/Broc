@@ -563,7 +563,15 @@ export default function VitrineJourneePage() {
       isHydrated &&
       state &&
       (state.vitrine?.objets.length ?? 0) === 0 &&
-      tempsRestant < JOURNEE_DUREE_SECONDES
+      tempsRestant < JOURNEE_DUREE_SECONDES &&
+      // Tutoriel : si l'unique objet vient d'être vendu, ne PAS clore la
+      // journée avant que le dialogue « première vente » soit joué et que
+      // l'étape soit passée à « conclusion » — sinon le bilan court-circuite
+      // le tuto et le joueur doit refaire une vente (défaillance device
+      // 2026-07-17). L'effet se re-déclenche à chaque tick de tempsRestant,
+      // donc la clôture reprend dès la fin du dialogue.
+      etape !== "premiere-vente" &&
+      !dialogueTuto
     ) {
       setBravoTout(true);
       ajouterJournal({
@@ -573,7 +581,7 @@ export default function VitrineJourneePage() {
       });
       terminerJournee();
     }
-  }, [state, isHydrated, journeeFinie, tempsRestant, terminerJournee, ajouterJournal, heureCourante, d]);
+  }, [state, isHydrated, journeeFinie, tempsRestant, terminerJournee, ajouterJournal, heureCourante, d, etape, dialogueTuto]);
 
   // Entrée de journée pendant le tutoriel : le grand-père présente la vente.
   useEffect(() => {
