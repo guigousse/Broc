@@ -51,7 +51,7 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Ahora te toca a ti. Haz cantar la caja registradora: 300 € en ventas, y te cuento lo que pasó después.",
   ],
   dlg_trame_ch3: [
-    "Mírales. Tiemblan, ahora. Estas manos han encolado, lijado, barnizado durante cincuenta años.",
+    "Míralas. Tiemblan, ahora. Estas manos han encolado, lijado, barnizado durante cincuenta años.",
     "Toma mis herramientas. Son tuyas — el mazo tiene su historia, te la contaré un día.",
     "Encuentra una pieza dañada y devuélvele su forma. La primera vez que un objeto revive entre tus dedos… ya verás.",
   ],
