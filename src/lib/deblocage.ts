@@ -6,6 +6,7 @@ import type {
 } from "@/types/game";
 import { valeurTotale, valeurParCategorie } from "@/lib/collection";
 import { brocantesParTier } from "@/data/brocantes";
+import { chapitreParOrdre } from "@/data/quetesPrincipales";
 import { tr, type DictionnaireUI } from "@/lib/i18n/ui";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 
@@ -45,6 +46,8 @@ export function descriptionCondition(
       });
     case "niveau":
       return tr(L.niveau, { niveau: c.niveau });
+    case "chapitrePrincipal":
+      return tr(L.chapitrePrincipal, { ordre: c.ordre });
     case "ET":
       return c.conditions.map((cc) => descriptionCondition(cc, d)).join(" + ");
   }
@@ -86,7 +89,10 @@ export function decrireConditions(
  */
 export function descriptionConditionCourte(
   c: ConditionDeblocage,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
+  state: Pick<
+    GameState,
+    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+  >,
   d: DictionnaireUI,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): string {
@@ -131,6 +137,12 @@ export function descriptionConditionCourte(
         niveau: c.niveau,
         actuel: state.brocanteur?.niveau ?? 0,
       });
+    case "chapitrePrincipal": {
+      const livres = state.missions.filter(
+        (m) => m.statut === "livree" && m.courrierId.startsWith("trame_ch"),
+      ).length;
+      return tr(C.chapitrePrincipal, { actuel: livres, ordre: c.ordre });
+    }
     case "ET":
       return c.conditions
         .map((cc) => descriptionConditionCourte(cc, state, d, parTier))
@@ -141,7 +153,10 @@ export function descriptionConditionCourte(
 /** Liste les conditions de déblocage atomiques (déplie le ET). */
 export function decrireConditionsCourtes(
   brocante: Brocante,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
+  state: Pick<
+    GameState,
+    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+  >,
   d: DictionnaireUI,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): string[] {
@@ -162,7 +177,10 @@ export interface ConditionInfo {
 
 export function listerConditionsAvecEtat(
   brocante: Brocante,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
+  state: Pick<
+    GameState,
+    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+  >,
   d: DictionnaireUI,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): ConditionInfo[] {
@@ -181,7 +199,10 @@ export function listerConditionsAvecEtat(
  * dont la condition référence d'autres brocantes.
  */
 export function calculerBrocantesDebloqueesParTier(
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
+  state: Pick<
+    GameState,
+    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+  >,
 ): Map<1 | 2 | 3 | 4, Set<string>> {
   const m = new Map<1 | 2 | 3 | 4, Set<string>>([
     [1, new Set()],
@@ -199,7 +220,10 @@ export function calculerBrocantesDebloqueesParTier(
 
 export function estDebloquee(
   brocante: Brocante,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
+  state: Pick<
+    GameState,
+    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+  >,
   brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): boolean {
   return evaluerCondition(
@@ -211,7 +235,10 @@ export function estDebloquee(
 
 export function evaluerCondition(
   c: ConditionDeblocage,
-  state: Pick<GameState, "jourActuel" | "budget" | "historique" | "collection" | "brocanteur">,
+  state: Pick<
+    GameState,
+    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+  >,
   brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): boolean {
   switch (c.type) {
@@ -235,6 +262,13 @@ export function evaluerCondition(
       // Défensif : un save passé par le filet de sécurité de migration peut
       // manquer `brocanteur` (cf. migrations.ts → assurerFiletSecuriteMinimal).
       return (state.brocanteur?.niveau ?? 0) >= c.niveau;
+    case "chapitrePrincipal": {
+      const ch = chapitreParOrdre(c.ordre);
+      return (
+        !!ch &&
+        state.missions.some((m) => m.courrierId === ch.id && m.statut === "livree")
+      );
+    }
     case "ET":
       return c.conditions.every((cc) =>
         evaluerCondition(cc, state, brocantesDebloqueesParTier),

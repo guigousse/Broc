@@ -1,29 +1,17 @@
 import type { Courrier, GameState, MissionResolution } from "@/types/game";
-import { debloquerQuetesPrincipales } from "./principales";
 
 /**
- * Tick quotidien des quêtes : débloque le chapitre principal dû. (Les commandes
- * quotidiennes/hebdomadaires sont gérées en TEMPS RÉEL via settleQuetesPeriodiques,
- * plus par jour de jeu.)
+ * Tick quotidien des quêtes : depuis SP2, les chapitres de la trame sont
+ * délivrés EN DIALOGUE (`accepterChapitre`, déclenché par l'UI du grand-père
+ * quand `chapitrePret(state)` désigne un chapitre — cf. `src/lib/quetes/principales.ts`),
+ * plus au passage de jour. Ce tick devient donc un passthrough : conservé
+ * comme point d'accroche pour de futurs ticks quotidiens de quêtes (les
+ * commandes quotidiennes/hebdomadaires restent gérées en TEMPS RÉEL via
+ * `settleQuetesPeriodiques`).
  */
 export function tickQuetes(
   state: GameState,
-  jour: number,
+  _jour: number,
 ): { courriers: Courrier[]; missions: MissionResolution[] } {
-  // Tutoriel en cours : l'arc principal est différé à la conclusion
-  // (appliquerFinTutoriel passe l'étape à "termine" AVANT de tick).
-  if (state.tutorielEtape !== "termine") {
-    return { courriers: state.courriers, missions: state.missions };
-  }
-  const nouveaux = debloquerQuetesPrincipales(state, jour);
-  if (nouveaux.length === 0) {
-    return { courriers: state.courriers, missions: state.missions };
-  }
-  return {
-    courriers: [...state.courriers, ...nouveaux],
-    missions: [
-      ...state.missions,
-      ...nouveaux.map((c) => ({ courrierId: c.id, statut: "active" as const })),
-    ],
-  };
+  return { courriers: state.courriers, missions: state.missions };
 }

@@ -4,7 +4,9 @@ import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
 import { emptyBrocanteur, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
-import * as principalesModule from "@/lib/quetes/principales";
+import { chapitrePret, courrierDeChapitre } from "@/lib/quetes/principales";
+import { chapitreParId } from "@/data/quetesPrincipales";
+import * as courrierModule from "@/lib/courrier";
 
 describe("migrerEtat", () => {
   it("conserve les états valides", () => {
@@ -178,18 +180,18 @@ describe("migrerSauvegarde — filet de sécurité en cas d'exception", () => {
 });
 
 describe("migrerSauvegarde — filet de sécurité minimal (lifeboat brocanteur)", () => {
-  // `appliquerMigrations` appelle `debloquerQuetesPrincipales` (import réel de
-  // @/lib/quetes/principales) vers la fin de son traitement. On la fait
-  // exploser une fois pour simuler un échec de migration inattendu SANS
-  // passer par une exception levée pendant `remapTemplateIds` (qui tourne
-  // hors du try : un getter piégé sur le save lui-même y exploserait avant
-  // même d'atteindre le try/catch, ce qui ne teste pas le bon chemin).
+  // `appliquerMigrations` appelle `injecterLettreMamanSiAbsente` (import réel
+  // de @/lib/courrier) vers le début de son traitement (tutoriel terminé). On
+  // la fait exploser une fois pour simuler un échec de migration inattendu
+  // SANS passer par une exception levée pendant `remapTemplateIds` (qui
+  // tourne hors du try : un getter piégé sur le save lui-même y exploserait
+  // avant même d'atteindre le try/catch, ce qui ne teste pas le bon chemin).
   it("garantit brocanteur/competencesDebloquees même si la migration explose sur un save qui en est dépourvu", () => {
     const errorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
     const spy = vi
-      .spyOn(principalesModule, "debloquerQuetesPrincipales")
+      .spyOn(courrierModule, "injecterLettreMamanSiAbsente")
       .mockImplementationOnce(() => {
         throw new Error("boom — échec simulé de migration");
       });
@@ -210,7 +212,7 @@ describe("migrerSauvegarde — filet de sécurité minimal (lifeboat brocanteur)
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
     const spy = vi
-      .spyOn(principalesModule, "debloquerQuetesPrincipales")
+      .spyOn(courrierModule, "injecterLettreMamanSiAbsente")
       .mockImplementationOnce(() => {
         throw new Error("boom — échec simulé de migration");
       });
@@ -241,13 +243,10 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     const state = createMockGameState({ historique: [], budget: 500 });
     const migrated = migrerSauvegarde(state);
     expect(migrated.grandLivre).toEqual([]);
-    // L'amorce de l'arc principal (chapitre 1) est injectée au chargement.
-    expect(migrated.courriers.some((c) => c.id === "principale_ch1")).toBe(true);
-    expect(
-      migrated.missions.some(
-        (m) => m.courrierId === "principale_ch1" && m.statut === "active",
-      ),
-    ).toBe(true);
+    // Depuis SP2 : plus d'amorce de chapitre au chargement — la trame est
+    // délivrée en dialogue ; `chapitrePret` désigne bien le chapitre 1 comme dû.
+    expect(migrated.courriers.some((c) => c.id === "trame_ch1")).toBe(false);
+    expect(chapitrePret(migrated)?.id).toBe("trame_ch1");
   });
 
   it("reconstruit grandLivre depuis l'historique des sessions", () => {
@@ -294,8 +293,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 12", () => {
-    expect(SAVE_VERSION).toBe(12);
+  it("SAVE_VERSION incrémenté à 13", () => {
+    expect(SAVE_VERSION).toBe(13);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -728,8 +727,8 @@ describe("migration v10 — suppression de competenceTrees", () => {
 });
 
 describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
-  it("SAVE_VERSION vaut 12", () => {
-    expect(SAVE_VERSION).toBe(12);
+  it("SAVE_VERSION vaut 13", () => {
+    expect(SAVE_VERSION).toBe(13);
   });
 
   it("une save v10 avec le champ legacy le perd, brocanteur intact", () => {
@@ -791,7 +790,7 @@ describe("migration tutoriel (v12)", () => {
     const migre = migrerSauvegarde(loaded);
     expect(migre.tutorielEtape).toBe("premier-achat");
     expect(migre.courriers.some((c) => c.id === ID_LETTRE_MAMAN_DEBUT)).toBe(false);
-    expect(migre.courriers.some((c) => c.id === "principale_ch1")).toBe(false);
+    expect(migre.courriers.some((c) => c.id === "trame_ch1")).toBe(false);
   });
 
   it("normalise une étape inconnue à 'termine'", () => {
@@ -800,5 +799,90 @@ describe("migration tutoriel (v12)", () => {
       tutorielEtape: "etape-fantome",
     } as unknown as GameState;
     expect(migrerSauvegarde(loaded).tutorielEtape).toBe("termine");
+  });
+});
+
+/** Fabrique une save "v12" (schéma courant avant la trame v13). */
+function saveV12(patch: Partial<GameState> = {}): GameState {
+  return { ...createMockGameState(patch), version: 12 };
+}
+
+const migrate = migrerSauvegarde;
+const br = emptyBrocanteur();
+
+describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-verrouiller un tier)", () => {
+  it("SAVE_VERSION incrémenté à 13", () => {
+    expect(SAVE_VERSION).toBe(13);
+  });
+
+  it("v12→v13 : niveau ≥ T3 ⇒ trame_ch1..8 livrés (tier 3 reste ouvert)", () => {
+    const save = saveV12({ brocanteur: { ...br, niveau: 12 } }); // ≥ NIVEAU_BROCANTES_T3 (10)
+    const migre = migrate(save);
+    for (let n = 1; n <= 8; n++) {
+      expect(migre.missions.find((m) => m.courrierId === `trame_ch${n}`)?.statut).toBe("livree");
+      expect(migre.courriers.some((c) => c.id === `trame_ch${n}`)).toBe(true);
+    }
+    expect(migre.missions.some((m) => m.courrierId === "trame_ch9")).toBe(false);
+  });
+
+  it("v12→v13 : ancien principale_ch5 livré ⇒ trame_ch1..11 livrés", () => {
+    const save = saveV12({
+      missions: [{ courrierId: "principale_ch5", statut: "livree", jourResolution: 9 }],
+    });
+    const migre = migrate(save);
+    expect(migre.missions.find((m) => m.courrierId === "trame_ch11")?.statut).toBe("livree");
+  });
+
+  it("v12→v13 : partie fraîche (niveau 1, rien de livré) ⇒ aucun chapitre trame injecté", () => {
+    const migre = migrate(saveV12({}));
+    expect(migre.missions.some((m) => m.courrierId.startsWith("trame_ch"))).toBe(false);
+  });
+});
+
+/** Fabrique une save "v13" (déjà migrée, schéma courant). */
+function saveV13(patch: Partial<GameState> = {}): GameState {
+  return { ...createMockGameState(patch), version: 13 };
+}
+
+describe("migration v13 — back-fill gaté (ne rejoue pas à chaque chargement d'une save déjà v13)", () => {
+  it("save v13 avec trame_ch3 ACTIVE + niveau ≥ T3 ⇒ aucune injection de trame_ch4..8, ch3 intacte", () => {
+    const ch3 = chapitreParId("trame_ch3")!;
+    const courrierCh3 = courrierDeChapitre(ch3, 5);
+    const save = saveV13({
+      brocanteur: { ...br, niveau: 12 }, // ≥ NIVEAU_BROCANTES_T3 (10)
+      courriers: [courrierCh3],
+      missions: [{ courrierId: "trame_ch3", statut: "active", timestampAcceptation: 1000 }],
+    });
+    const migre = migrate(save);
+
+    // La mission ch3 en cours n'est pas écrasée par un back-fill "livree".
+    const missionCh3 = migre.missions.find((m) => m.courrierId === "trame_ch3");
+    expect(missionCh3?.statut).toBe("active");
+    // Aucun chapitre suivant n'a été force-livré alors que ch3 est toujours en cours.
+    for (let n = 4; n <= 8; n++) {
+      expect(migre.missions.some((m) => m.courrierId === `trame_ch${n}`)).toBe(false);
+      expect(migre.courriers.some((c) => c.id === `trame_ch${n}`)).toBe(false);
+    }
+  });
+
+  it("save v13 fraîche (aucune entrée trame, niveau 5) ⇒ aucune injection", () => {
+    const save = saveV13({ brocanteur: { ...br, niveau: 5 } }); // ≥ NIVEAU_BROCANTES_T2 (mais save déjà v13)
+    const migre = migrate(save);
+    expect(migre.missions.some((m) => m.courrierId.startsWith("trame_ch"))).toBe(false);
+    expect(migre.courriers.some((c) => c.id.startsWith("trame_ch"))).toBe(false);
+  });
+
+  it("idempotence : re-migrer le résultat d'une migration v12→v13 ne change rien (mêmes missions/courriers trame)", () => {
+    const save = saveV12({ brocanteur: { ...br, niveau: 12 } }); // ≥ NIVEAU_BROCANTES_T3
+    const migreUneFois = migrate(save);
+    const migreDeuxFois = migrate(migreUneFois);
+
+    const trameIds = (s: GameState) =>
+      s.missions.filter((m) => m.courrierId.startsWith("trame_ch")).map((m) => m.courrierId).sort();
+    expect(trameIds(migreDeuxFois)).toEqual(trameIds(migreUneFois));
+    expect(migreDeuxFois.missions).toEqual(migreUneFois.missions);
+    expect(
+      migreDeuxFois.courriers.filter((c) => c.id.startsWith("trame_ch")),
+    ).toEqual(migreUneFois.courriers.filter((c) => c.id.startsWith("trame_ch")));
   });
 });

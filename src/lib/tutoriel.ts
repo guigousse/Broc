@@ -1,6 +1,5 @@
 import type { GameState, TutorielEtape } from "@/types/game";
 import { injecterLettreMamanSiAbsente } from "@/lib/courrier";
-import { tickQuetes } from "@/lib/quetes/tick";
 
 /** Ordre linéaire des étapes du tutoriel guidé. */
 export const ETAPES_TUTORIEL: readonly TutorielEtape[] = [
@@ -27,8 +26,10 @@ export function etapeSuivante(etape: TutorielEtape): TutorielEtape {
 
 /**
  * Clôt le tutoriel (fin normale OU bouton « Passer ») : injecte la lettre de
- * Maman (différée depuis la création de partie), amorce l'arc principal
- * (chapitre 1, condition "depart") et passe l'étape à "termine".
+ * Maman (différée depuis la création de partie) et passe l'étape à
+ * "termine". Depuis SP2, l'arc principal n'est plus amorcé ici : une fois
+ * l'étape à "termine", `chapitrePret(state)` désigne le chapitre 1 (condition
+ * "depart") et sa délivrance se fait en dialogue (`accepterChapitre`).
  * Pur et idempotent.
  */
 export function appliquerFinTutoriel(state: GameState): GameState {
@@ -38,7 +39,7 @@ export function appliquerFinTutoriel(state: GameState): GameState {
     state.declencheursDeclenches,
     state.jourActuel,
   );
-  const base: GameState = {
+  return {
     ...state,
     tutorielEtape: "termine",
     courriers: inj.courriers,
@@ -47,6 +48,4 @@ export function appliquerFinTutoriel(state: GameState): GameState {
       ...inj.declencheursAjoutes,
     ],
   };
-  const tick = tickQuetes(base, base.jourActuel);
-  return { ...base, courriers: tick.courriers, missions: tick.missions };
 }

@@ -534,6 +534,15 @@ export const fr = {
     recompenseLabel: "Récompense",
     livrer: "Livrer",
     livrerProgress: "Livrer ({rempli}/{total})",
+    // Libellés des objectifs de chapitre (SP2 trame) : chaque type non-"objet"
+    // affiche une ligne de progression dédiée dans le carnet.
+    objectifs: {
+      ventesCumulees: "Ventes cumulées",
+      profitVente: "Meilleur profit sur une vente",
+      restauration: "Restaurer un objet ({etat} min.)",
+      valeurCollection: "Valeur de la collection",
+      niveau: "Niveau de brocanteur",
+    },
   },
   // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les
   // `params` structurés (LedgerEntry.params). Reproduisent EXACTEMENT les chaînes
@@ -639,6 +648,7 @@ export const fr = {
       valeurCollectionCategorie:
         "Débloqué quand votre collection « {categorie} » atteint {montant} €",
       niveau: "Niveau de Brocanteur {niveau} requis",
+      chapitrePrincipal: "Chapitre {ordre} de l'histoire terminé",
     },
     court: {
       disponible: "Disponible",
@@ -649,6 +659,7 @@ export const fr = {
       valeurCollection: "Collection : {actuel}/{montant} €",
       valeurCollectionCategorie: "{categorie} : {actuel}/{montant} €",
       niveau: "Niveau {niveau} (vous : N{actuel})",
+      chapitrePrincipal: "Histoire : {actuel}/{ordre}",
     },
   },
   // Notifications locales (index.ts/energieNotif/quetesNotif/rappelRetour/

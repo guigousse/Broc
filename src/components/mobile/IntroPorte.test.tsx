@@ -1,85 +1,94 @@
 // @vitest-environment jsdom
 /**
- * `IntroPorte` — intro « zoom sur la porte » jouée à la nouvelle partie.
- * Séquence pilotée par setTimeout (contemplation → zoom → fondu → onFini),
- * skippable par tap, et court-circuitée si `prefers-reduced-motion`.
+ * IntroPorte version iris : contemplation (600 ms) → fermeture d'iris sur la
+ * porte → flag de réouverture posé → onFini. Le zoom ×4 a disparu. Le skip
+ * (tap) termine immédiatement en posant aussi le flag : l'arrivée au bureau
+ * joue la réouverture dans tous les cas.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { IntroPorte } from "./IntroPorte";
+import { lireFlagIris } from "@/lib/transitionIris";
 
-function mockMatchMedia(matches: boolean) {
-  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })) as unknown as typeof window.matchMedia;
-}
+vi.mock("@/lib/i18n/LangueContext", () => ({
+  useLangue: () => ({ d: { qg: { passerIntroAria: "Passer l'introduction" } } }),
+}));
+
+let irisOnNoir: (() => void) | null = null;
+let irisBloqueInteractions: boolean | undefined;
+vi.mock("@/components/mobile/IrisTransition", () => ({
+  IrisFermeture: ({
+    onNoir,
+    bloqueInteractions,
+  }: {
+    onNoir: () => void;
+    bloqueInteractions?: boolean;
+  }) => {
+    irisOnNoir = onNoir;
+    irisBloqueInteractions = bloqueInteractions;
+    return <div data-testid="iris-fermeture" />;
+  },
+}));
 
 beforeEach(() => {
+  sessionStorage.clear();
+  irisOnNoir = null;
+  irisBloqueInteractions = undefined;
   vi.useFakeTimers();
-  mockMatchMedia(false);
 });
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
-  // @ts-expect-error - retire le mock entre les tests
-  delete window.matchMedia;
+  vi.clearAllMocks();
 });
 
-describe("IntroPorte", () => {
-  it("appelle onFini une seule fois après la séquence complète (~3.3s)", () => {
+describe("IntroPorte — contemplation puis iris (plus de zoom)", () => {
+  it("contemplation d'abord : pas d'iris avant 600 ms", () => {
+    render(<IntroPorte onFini={vi.fn()} />);
+    expect(screen.queryByTestId("iris-fermeture")).toBeNull();
+    act(() => vi.advanceTimersByTime(600));
+    expect(screen.getByTestId("iris-fermeture")).toBeTruthy();
+
+    // Le skip doit rester vivant pendant l'iris : IntroPorte désactive le
+    // blocage d'interactions de l'overlay.
+    expect(irisBloqueInteractions).toBe(false);
+  });
+
+  it("au noir de l'iris : pose le flag de réouverture PUIS onFini", () => {
     const onFini = vi.fn();
     render(<IntroPorte onFini={onFini} />);
+    act(() => vi.advanceTimersByTime(600));
+    expect(lireFlagIris()).toBe(false);
 
-    // Avant la fin de la séquence : pas encore appelé.
-    vi.advanceTimersByTime(3299);
-    expect(onFini).not.toHaveBeenCalled();
+    act(() => irisOnNoir!());
 
-    vi.advanceTimersByTime(1);
-    expect(onFini).toHaveBeenCalledTimes(1);
-
-    // Le temps continue de s'écouler sans nouvel appel (garde finiRef).
-    vi.advanceTimersByTime(5000);
+    expect(lireFlagIris()).toBe(true);
     expect(onFini).toHaveBeenCalledTimes(1);
   });
 
-  it("un tap n'importe où saute l'intro instantanément (onFini une seule fois, timers nettoyés)", () => {
+  it("le tap de skip pose aussi le flag et termine immédiatement", () => {
     const onFini = vi.fn();
     render(<IntroPorte onFini={onFini} />);
 
-    const tapLayer = screen.getByLabelText("Passer l'introduction");
-    fireEvent.pointerDown(tapLayer);
-    expect(onFini).toHaveBeenCalledTimes(1);
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "Passer l'introduction" }),
+    );
 
-    // Les timers en attente ont été nettoyés : pas de second appel.
-    vi.advanceTimersByTime(10000);
+    expect(lireFlagIris()).toBe(true);
     expect(onFini).toHaveBeenCalledTimes(1);
   });
 
-  it("prefers-reduced-motion : court-circuite vers un fondu simple (~400ms) puis onFini", () => {
-    mockMatchMedia(true);
+  it("onFini n'est jamais doublé (skip pendant l'iris puis onNoir)", () => {
     const onFini = vi.fn();
     render(<IntroPorte onFini={onFini} />);
+    act(() => vi.advanceTimersByTime(600));
 
-    vi.advanceTimersByTime(399);
-    expect(onFini).not.toHaveBeenCalled();
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "Passer l'introduction" }),
+    );
+    act(() => irisOnNoir!());
 
-    vi.advanceTimersByTime(1);
     expect(onFini).toHaveBeenCalledTimes(1);
-  });
-
-  it("le démontage avant la fin de la séquence nettoie les timers (pas d'appel après unmount)", () => {
-    const onFini = vi.fn();
-    const { unmount } = render(<IntroPorte onFini={onFini} />);
-    unmount();
-    vi.advanceTimersByTime(10000);
-    expect(onFini).not.toHaveBeenCalled();
   });
 });

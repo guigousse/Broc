@@ -6,6 +6,7 @@ import {
   tutorielActif,
 } from "./tutoriel";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
+import { chapitrePret } from "./quetes/principales";
 import { createMockGameState } from "./__test-fixtures__/gameState";
 
 describe("tutoriel", () => {
@@ -26,7 +27,7 @@ describe("tutoriel", () => {
     expect(ETAPES_TUTORIEL[ETAPES_TUTORIEL.length - 1]).toBe("termine");
   });
 
-  it("appliquerFinTutoriel injecte la lettre de Maman, amorce le ch.1 et passe à 'termine'", () => {
+  it("appliquerFinTutoriel injecte la lettre de Maman et passe à 'termine' (chapitre 1 délivrable en dialogue, pas injecté)", () => {
     const state = createMockGameState({
       tutorielEtape: "conclusion",
       courriers: [],
@@ -37,9 +38,10 @@ describe("tutoriel", () => {
     expect(fin.tutorielEtape).toBe("termine");
     expect(fin.courriers.some((c) => c.id === ID_LETTRE_MAMAN_DEBUT)).toBe(true);
     expect(fin.declencheursDeclenches).toContain(ID_LETTRE_MAMAN_DEBUT);
-    // Chapitre 1 de l'arc principal amorcé (condition "depart")
-    expect(fin.courriers.some((c) => c.id === "principale_ch1")).toBe(true);
-    expect(fin.missions.some((m) => m.courrierId === "principale_ch1")).toBe(true);
+    // Depuis SP2 : plus d'injection auto du chapitre 1, il est délivré en
+    // dialogue — mais chapitrePret le désigne bien comme dû (condition "depart").
+    expect(fin.courriers.some((c) => c.id === "trame_ch1")).toBe(false);
+    expect(chapitrePret(fin)?.id).toBe("trame_ch1");
   });
 
   it("appliquerFinTutoriel est idempotent sur un state déjà terminé", () => {

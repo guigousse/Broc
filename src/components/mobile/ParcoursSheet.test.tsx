@@ -24,10 +24,10 @@ describe("ParcoursSheet", () => {
     const rowN5 = screen.getByTestId("parcours-row-5");
     expect(rowN5.getAttribute("data-etat")).toBe("atteint");
 
-    // Prochain niveau après 8 = 10 (T3 + paliers 2 + Lot garni : 3 lignes,
+    // Prochain niveau après 8 = 10 (paliers 2 + Lot garni : 2 lignes,
     // toutes marquées « prochain » — une seule pastille dans la timeline).
     const rowsN10 = screen.getAllByTestId("parcours-row-10");
-    expect(rowsN10.length).toBe(3);
+    expect(rowsN10.length).toBe(2);
     for (const r of rowsN10) expect(r.getAttribute("data-etat")).toBe("prochain");
 
     const rowN15 = screen.getByTestId("parcours-row-15");

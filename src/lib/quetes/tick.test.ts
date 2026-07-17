@@ -3,22 +3,23 @@ import { tickQuetes } from "./tick";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 
 describe("tickQuetes", () => {
-  it("ajoute le chapitre 1 et crée sa résolution active", () => {
-    const state = createMockGameState();
+  // Depuis SP2 : les chapitres de la trame sont délivrés en dialogue
+  // (accepterChapitre), plus au tick — cf. src/lib/quetes/principales.ts.
+  it("passthrough : renvoie courriers/missions inchangés (tutoriel terminé)", () => {
+    const state = createMockGameState({ tutorielEtape: "termine" });
     const out = tickQuetes(state, 1);
-    expect(out.courriers.some((c) => c.id === "principale_ch1")).toBe(true);
-    expect(out.missions.some((m) => m.courrierId === "principale_ch1" && m.statut === "active")).toBe(true);
+    expect(out.courriers).toBe(state.courriers);
+    expect(out.missions).toBe(state.missions);
   });
 
-  it("ne débloque rien tant que le tutoriel guidé n'est pas terminé (arc différé à la conclusion)", () => {
+  it("passthrough : renvoie courriers/missions inchangés (tutoriel en cours)", () => {
     const state = createMockGameState({
       tutorielEtape: "premier-achat",
       courriers: [],
       missions: [],
     });
     const out = tickQuetes(state, 1);
-    expect(out.courriers).toEqual(state.courriers);
-    expect(out.missions).toEqual(state.missions);
-    expect(out.courriers.some((c) => c.id === "principale_ch1")).toBe(false);
+    expect(out.courriers).toBe(state.courriers);
+    expect(out.missions).toBe(state.missions);
   });
 });

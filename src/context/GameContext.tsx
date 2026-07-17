@@ -30,10 +30,13 @@ import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
 import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
 import { indicesAConsommerPourLivraison } from "@/lib/missions";
+import { missionLivrable } from "@/lib/quetes/objectifs";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
 import { getCompetence } from "@/data/competences";
 import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
-import { expireMissions } from "@/lib/courrier";
+import { expireMissions, injecterLettreInvitationSiDue } from "@/lib/courrier";
+import { chapitreParId } from "@/data/quetesPrincipales";
+import { accepterChapitre } from "@/lib/quetes/principales";
 import { prochainLundi } from "@/lib/calendrier";
 import {
   appliquerGainXPBrocanteur,
@@ -216,6 +219,8 @@ interface GameActionsValue {
   retirerDeCollection: (templateId: string) => { ok: boolean; raison?: string };
   /** Livre une mission : retire l'objet ciblé de l'inventaire et crédite la récompense. */
   livrerMission: (courrierId: string) => { ok: boolean; raison?: string };
+  /** Accepte un chapitre de la trame principale (dialogue de délivrance du grand-père, pastille QG). */
+  accepterChapitrePrincipal: (chapitreId: string) => void;
   acheterGazette: () => { ok: boolean; raison?: string };
   marquerBossDebloqueVu: () => void;
   /** Avance `niveauVu` d'UN niveau (clampé à `brocanteur.niveau`) — célébration séquentielle des level-up. */
@@ -669,8 +674,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       );
       const baseAvecMissions: GameState = { ...base, missions: missionsApresExpiration };
 
-      // Tick des quêtes : déblocage de l'arc principal uniquement (les commandes
-      // quotidiennes/hebdomadaires sont gérées en temps réel via le settle).
+      // Tick des quêtes : passthrough depuis SP2 (la trame est délivrée en
+      // dialogue via accepterChapitre ; les commandes quotidiennes/hebdomadaires
+      // restent gérées en temps réel via le settle). Conservé comme point
+      // d'accroche pour de futurs ticks de quêtes.
       const tick = tickQuetes(baseAvecMissions, nouveauJour);
       const baseAvecQuetes: GameState = {
         ...baseAvecMissions,
@@ -1491,6 +1498,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!reso || reso.statut !== "active") {
         return { ok: false, raison: raisonLocalisee("missionNonActive") };
       }
+      if (!missionLivrable(courrier.payload, reso, current, courrier.jourRecu)) {
+        return { ok: false, raison: raisonLocalisee("objetsRequisManquants") };
+      }
       const { recompense } = courrier.payload;
       const aRetirer = indicesAConsommerPourLivraison(
         courrier.payload,
@@ -1556,8 +1566,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
                   avecXP.pointsDisponibles + POINTS_BONUS_CHAPITRE,
               }
             : avecXP;
+        // Chapitre de la trame portant une invitation (ex. ch4/ch8, à
+        // objectifs → livrés ici, contrairement aux chapitres narratifs
+        // injectés directement dans `accepterChapitre`) : la lettre des
+        // Organisateurs est ajoutée dès la livraison réelle de la mission.
+        const courriers = injecterLettreInvitationSiDue(
+          credited.courriers,
+          chapitreParId(courrierId)?.invitationTier,
+          prev.jourActuel,
+        );
         return {
           ...credited,
+          courriers,
           inventaireJoueur: invMaj,
           missions: missionsMaj,
           brocanteur,
@@ -1566,6 +1586,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     },
     [],
+  );
+
+  /** Accepte un chapitre de la trame principale : crée le courrier + la mission
+   *  associée (cf. `accepterChapitre`), déclenché en fin de dialogue avec le
+   *  grand-père (pastille QG, Task 9). */
+  const accepterChapitrePrincipal = useCallback(
+    (chapitreId: string): void => {
+      const now = tempsConfiance() ?? Date.now();
+      setState((prev) => (prev ? accepterChapitre(prev, chapitreId, now) : prev));
+    },
+    [tempsConfiance],
   );
 
   const acheterGazette = useCallback((): { ok: boolean; raison?: string } => {
@@ -1659,6 +1690,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       acheterGazette,
       payerFraisBrocante,
       livrerMission,
+      accepterChapitrePrincipal,
       marquerBossDebloqueVu,
       marquerNiveauVu,
       rerollMeteo,
@@ -1710,6 +1742,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       acheterGazette,
       payerFraisBrocante,
       livrerMission,
+      accepterChapitrePrincipal,
       marquerBossDebloqueVu,
       marquerNiveauVu,
       rerollMeteo,

@@ -1,10 +1,5 @@
 import type { Brocante, BrocanteTier } from "@/types/game";
 
-/** Double gate (D1) : niveau de Brocanteur requis en plus des conditions économiques. */
-export const NIVEAU_BROCANTES_T2 = 4;
-export const NIVEAU_BROCANTES_T3 = 10;
-export const NIVEAU_BROCANTES_T4 = 20;
-
 /**
  * Droit d'entrée payé à chaque session (chinage OU vente), par tier.
  */
@@ -104,7 +99,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T2 },
+        { type: "chapitrePrincipal", ordre: 4 },
         { type: "valeurCollection", montant: 150 },
         { type: "brocantesDebloquees", tier: 1, nombre: 3 },
       ],
@@ -123,7 +118,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T2 },
+        { type: "chapitrePrincipal", ordre: 4 },
         { type: "valeurCollection", montant: 250 },
         { type: "valeurCollectionCategorie", categorie: "Maison", montant: 80 },
       ],
@@ -143,7 +138,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T2 },
+        { type: "chapitrePrincipal", ordre: 4 },
         { type: "valeurCollection", montant: 220 },
         { type: "valeurCollectionCategorie", categorie: "Musique", montant: 80 },
       ],
@@ -163,7 +158,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T2 },
+        { type: "chapitrePrincipal", ordre: 4 },
         { type: "valeurCollection", montant: 200 },
         { type: "valeurCollectionCategorie", categorie: "Bricolage", montant: 60 },
       ],
@@ -183,7 +178,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T2 },
+        { type: "chapitrePrincipal", ordre: 4 },
         { type: "valeurCollection", montant: 300 },
         { type: "valeurCollectionCategorie", categorie: "Maison", montant: 100 },
       ],
@@ -215,7 +210,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T3 },
+        { type: "chapitrePrincipal", ordre: 8 },
         { type: "valeurCollection", montant: 800 },
         { type: "brocantesDebloquees", tier: 2, nombre: 4 },
       ],
@@ -239,7 +234,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T3 },
+        { type: "chapitrePrincipal", ordre: 8 },
         { type: "valeurCollection", montant: 1500 },
         { type: "brocantesDebloquees", tier: 2, nombre: 5 },
       ],
@@ -263,7 +258,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T3 },
+        { type: "chapitrePrincipal", ordre: 8 },
         { type: "valeurCollection", montant: 1200 },
         { type: "valeurCollectionCategorie", categorie: "Mode", montant: 400 },
       ],
@@ -287,7 +282,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T3 },
+        { type: "chapitrePrincipal", ordre: 8 },
         { type: "valeurCollection", montant: 1400 },
         { type: "valeurCollectionCategorie", categorie: "Musique", montant: 500 },
       ],
@@ -311,7 +306,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T3 },
+        { type: "chapitrePrincipal", ordre: 8 },
         { type: "valeurCollection", montant: 1600 },
         { type: "valeurCollectionCategorie", categorie: "Maison", montant: 600 },
       ],
@@ -335,7 +330,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T3 },
+        { type: "chapitrePrincipal", ordre: 8 },
         { type: "valeurCollection", montant: 1400 },
         { type: "valeurCollectionCategorie", categorie: "Objets d'art", montant: 350 },
       ],
@@ -367,7 +362,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "niveau", niveau: NIVEAU_BROCANTES_T4 },
+        { type: "chapitrePrincipal", ordre: 10 },
         { type: "valeurCollection", montant: 5000 },
         { type: "brocantesDebloquees", tier: 3, nombre: 5 },
       ],
@@ -382,3 +377,8 @@ export function getBrocanteById(id: string): Brocante | undefined {
 export function brocantesParTier(tier: 1 | 2 | 3 | 4): Brocante[] {
   return BROCANTES.filter((b) => b.tier === tier);
 }
+
+/** Legacy : seuils v12, utilisés par la migration de saves uniquement. */
+export const NIVEAU_BROCANTES_T2 = 4;
+export const NIVEAU_BROCANTES_T3 = 10;
+export const NIVEAU_BROCANTES_T4 = 20;

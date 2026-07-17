@@ -47,7 +47,7 @@ l'acte** (à vérifier/ajuster par chapitre au moment du plan ; renforcer `attei
 |---|-------|----------|----------------|
 | 1 | La lampe de mon atelier | Chiner : lampe à pétrole, état Bon min | Première allusion au regret d'une vie |
 | 2 | Vendre, c'est vivre | Ventes cumulées ≥ 300 € | Souvenir de sa première vente, ratée |
-| 3 | Les mains d'or | Restaurer un objet à l'état Très bon | Il confie ses outils ; ses mains tremblent |
+| 3 | Les mains d'or | Restaurer un objet à l'état Bon *(baissé depuis « Très bon » le 2026-07-17 — Très bon exigeait Réparer 2/N10)* | Il confie ses outils ; ses mains tremblent |
 | 4 | Le pichet de ta grand-mère | Chiner : pichet en faïence | Première mention concrète des bijoux |
 
 → Livraison du ch. 4 : **lettre d'invitation des organisateurs, tier 2 débloqué.**
@@ -58,7 +58,7 @@ l'acte** (à vérifier/ajuster par chapitre au moment du plan ; renforcer `attei
 |---|-------|----------|----------------|
 | 5 | Un nom qui circule | Atteindre le niveau X (valeur fixée au plan SP3, sur la courbe de niveaux actuelle) | Les marchands parlent de toi |
 | 6 | Le flair | Profit ≥ 100 € sur une seule vente | Le jour où il a laissé filer une pièce à 10× sa valeur |
-| 7 | Pièce de maître | Restaurer un objet à l'état Comme neuf | « Un objet remis à neuf, c'est une vie qu'on prolonge » |
+| 7 | Une vitrine digne de ce nom | Valeur de collection ≥ 1 500 € *(déplacé depuis le ch. 9 le 2026-07-17 — « Pièce de maître » exigeait Réparer 3/N30, reporté en late game)* | La collection prend forme |
 | 8 | Le beau monde | Chiner : gravure, état Très bon | Les rumeurs sur les bijoux circulent chez les collectionneurs |
 
 → Livraison du ch. 8 : **invitation des organisateurs, tier 3 débloqué.**
@@ -67,7 +67,7 @@ l'acte** (à vérifier/ajuster par chapitre au moment du plan ; renforcer `attei
 
 | # | Titre | Objectif | Note narrative |
 |---|-------|----------|----------------|
-| 9 | Une vitrine digne de ce nom | Valeur de collection ≥ 5 000 € | Se préparer pour le Grand Salon |
+| 9 | Pièce de maître | Restaurer un objet à l'état Comme neuf *(échangé avec le ch. 7 le 2026-07-17)* | « Un objet remis à neuf, c'est une vie qu'on prolonge » — se préparer pour le Grand Salon |
 | 10 | L'invitation | Sans objectif (`cibles: []`, comme l'actuel ch. 4) : chapitre purement narratif, livré dès l'acceptation | Il raconte tout : 50 ans de quête, son échec. **Invitation au Grand Salon des Antiquaires (tier 4)** |
 | 11 | Les bijoux de la reine | Chiner : `uniq.mo.bijou_marie_antoinette` (le joueur le garde) | Trouvés au Grand Salon |
 | 12 | La remise des clés | Purement narratif | Il contemple les bijoux, remet les clés, annonce son voyage. Récompense généreuse + épilogue |

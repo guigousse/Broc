@@ -528,6 +528,13 @@ export const es: DictionnaireUI = {
     recompenseLabel: "Recompensa",
     livrer: "Entregar",
     livrerProgress: "Entregar ({rempli}/{total})",
+    objectifs: {
+      ventesCumulees: "Ventas acumuladas",
+      profitVente: "Mejor beneficio en una venta",
+      restauration: "Restaurar un objeto ({etat} mín.)",
+      valeurCollection: "Valor de la colección",
+      niveau: "Nivel de chamarilero",
+    },
   },
   ledger: {
     loyer: "Alquiler · {tier}",
@@ -621,6 +628,7 @@ export const es: DictionnaireUI = {
       valeurCollectionCategorie:
         "Desbloqueado cuando tu colección « {categorie} » alcanza {montant} €",
       niveau: "Nivel de rebuscador {niveau} requerido",
+      chapitrePrincipal: "Capítulo {ordre} de la historia terminado",
     },
     court: {
       disponible: "Disponible",
@@ -631,6 +639,7 @@ export const es: DictionnaireUI = {
       valeurCollection: "Colección: {actuel}/{montant} €",
       valeurCollectionCategorie: "{categorie}: {actuel}/{montant} €",
       niveau: "Nivel {niveau} (tú: N{actuel})",
+      chapitrePrincipal: "Historia: {actuel}/{ordre}",
     },
   },
   notifs: {

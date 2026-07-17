@@ -1,4 +1,3 @@
-import { NIVEAU_BROCANTES_T2, NIVEAU_BROCANTES_T3, NIVEAU_BROCANTES_T4 } from "@/data/brocantes";
 import {
   NIVEAU_BROCANTEUR_PALIER_2,
   NIVEAU_BROCANTEUR_PALIER_3,
@@ -39,10 +38,7 @@ const ATOUTS: ReadonlyArray<{ id: keyof typeof NIVEAU_ACTIVES; titre: string }> 
 const ENTREES: readonly DeblocageNiveau[] = [
   { niveau: 1, titre: "Ouverture de l'écran Compétences (+1 point)", famille: "jalon", effectif: true },
   { niveau: NIVEAU_QUETES_PERIODIQUES, titre: "Quêtes quotidiennes et hebdomadaires", famille: "contenu", effectif: true },
-  { niveau: NIVEAU_BROCANTES_T2, titre: "Accès aux brocantes de quartier (T2)", famille: "economie", effectif: true },
-  { niveau: NIVEAU_BROCANTES_T3, titre: "Accès aux belles foires (T3)", famille: "jalon", effectif: true },
   { niveau: NIVEAU_BROCANTEUR_PALIER_2, titre: "Paliers 2 des compétences", famille: "jalon", effectif: true },
-  { niveau: NIVEAU_BROCANTES_T4, titre: "Accès au Grand Salon (T4)", famille: "jalon", effectif: true },
   { niveau: NIVEAU_BROCANTEUR_PALIER_3, titre: "Paliers 3 des compétences", famille: "jalon", effectif: true },
   // Échelle des atouts : déblocage N5→30, 2ᵉ usage N35→60, 3ᵉ N65→90.
   ...ATOUTS.map((a) => ({

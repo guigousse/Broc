@@ -4,9 +4,11 @@ import {
   ID_LETTRE_MAMAN_DEBUT,
   ID_MISSIONS_TEST,
   creerCourrierMission,
+  creerLettreInvitation,
   creerLettreMamanDebut,
   creerMissionsTest,
   expireMissions,
+  injecterLettreInvitationSiDue,
   injecterLettreMamanSiAbsente,
   migrerCourriers,
 } from "./courrier";
@@ -36,6 +38,65 @@ describe("creerLettreMamanDebut", () => {
     } else {
       expect.fail("payload should be a 'lettre'");
     }
+  });
+});
+
+describe("creerLettreInvitation", () => {
+  it("creerLettreInvitation : lettre non lue des organisateurs, id stable", () => {
+    const c = creerLettreInvitation(2, 5);
+    expect(c.id).toBe("invitation_tier2");
+    expect(c.lu).toBe(false);
+    expect(c.jourRecu).toBe(5);
+    expect(c.type).toBe("lettre");
+    if (c.payload.type === "lettre") {
+      expect(c.payload.expediteurId).toBe("organisateurs");
+      expect(c.payload.titre).toBeTruthy();
+      expect(Array.isArray(c.payload.corps)).toBe(true);
+      expect(c.payload.recompense).toBeUndefined();
+    } else {
+      expect.fail("payload should be a 'lettre'");
+    }
+  });
+
+  it("id stable par tier (3 et 4)", () => {
+    expect(creerLettreInvitation(3, 1).id).toBe("invitation_tier3");
+    expect(creerLettreInvitation(4, 1).id).toBe("invitation_tier4");
+  });
+
+  it("titre/corps distincts par tier (textes provisoires SP3)", () => {
+    const t2 = creerLettreInvitation(2, 1);
+    const t4 = creerLettreInvitation(4, 1);
+    if (t2.payload.type === "lettre" && t4.payload.type === "lettre") {
+      expect(t2.payload.titre).not.toBe(t4.payload.titre);
+    }
+  });
+});
+
+describe("injecterLettreInvitationSiDue", () => {
+  it("ajoute la lettre du tier si absente", () => {
+    const res = injecterLettreInvitationSiDue([], 2, 5);
+    expect(res.length).toBe(1);
+    expect(res[0].id).toBe("invitation_tier2");
+  });
+
+  it("n'ajoute rien si tier absent (chapitre sans invitation)", () => {
+    const courriers = [creerLettreMamanDebut(1)];
+    expect(injecterLettreInvitationSiDue(courriers, undefined, 5)).toBe(courriers);
+  });
+
+  it("idempotent : n'ajoute pas de doublon si la lettre est déjà présente", () => {
+    const existante = creerLettreInvitation(2, 1);
+    const res = injecterLettreInvitationSiDue([existante], 2, 5);
+    expect(res).toEqual([existante]);
+    expect(res.length).toBe(1);
+  });
+
+  it("préserve les courriers existants quand on injecte", () => {
+    const autre = creerLettreMamanDebut(1);
+    const res = injecterLettreInvitationSiDue([autre], 3, 7);
+    expect(res.length).toBe(2);
+    expect(res[0]).toBe(autre);
+    expect(res[1].id).toBe("invitation_tier3");
   });
 });
 

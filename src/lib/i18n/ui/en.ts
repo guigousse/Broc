@@ -527,6 +527,13 @@ export const en: DictionnaireUI = {
     recompenseLabel: "Reward",
     livrer: "Deliver",
     livrerProgress: "Deliver ({rempli}/{total})",
+    objectifs: {
+      ventesCumulees: "Total sales",
+      profitVente: "Best profit on one sale",
+      restauration: "Restore an item ({etat} min.)",
+      valeurCollection: "Collection value",
+      niveau: "Broker level",
+    },
   },
   ledger: {
     loyer: "Rent · {tier}",
@@ -618,6 +625,7 @@ export const en: DictionnaireUI = {
       valeurCollectionCategorie:
         "Unlocked when your “{categorie}” collection reaches {montant} €",
       niveau: "Picker level {niveau} required",
+      chapitrePrincipal: "Story chapter {ordre} completed",
     },
     court: {
       disponible: "Available",
@@ -628,6 +636,7 @@ export const en: DictionnaireUI = {
       valeurCollection: "Collection: {actuel}/{montant} €",
       valeurCollectionCategorie: "{categorie}: {actuel}/{montant} €",
       niveau: "Level {niveau} (you: L{actuel})",
+      chapitrePrincipal: "Story: {actuel}/{ordre}",
     },
   },
   notifs: {

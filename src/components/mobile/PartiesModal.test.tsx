@@ -11,6 +11,10 @@
  * C'est la même clé (`href`/`reload`) que le code de prod assigne
  * (`src/app/page.tsx`, `ErrorScreen.tsx`), donc aucune indirection dans le
  * composant : le test observe directement les effets réels.
+ *
+ * La modal ne navigue plus elle-même pour lancer une partie : « Lancer la
+ * partie » délègue au parent via `onLancer(slot)`. L'iris de transition et
+ * l'ordre détacher/bascule/navigation sont testés dans `page.test.tsx`.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
@@ -66,7 +70,7 @@ function ligne(numero: number) {
 describe("PartiesModal — fermée", () => {
   it("open=false : ne rend rien", () => {
     const { container } = render(
-      <PartiesModal open={false} onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />,
+      <PartiesModal open={false} onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />,
     );
     expect(container.firstChild).toBeNull();
   });
@@ -76,7 +80,7 @@ describe("PartiesModal — mode gestion, liste", () => {
   it("liste les 3 slots : occupés avec résumé + nom, vide avec message dédié", () => {
     seedOccupe(1, { nom: "Ma brocante", jour: 5, niveau: 3, budget: 1234 });
     seedOccupe(2, { jour: 2, niveau: 1, budget: 500 });
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
 
     const l1 = ligne(1);
     expect(within(l1).getByText("Ma brocante")).toBeTruthy();
@@ -99,7 +103,7 @@ describe("PartiesModal — mode gestion, liste", () => {
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
     changerSlotActif(2);
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
 
     expect(within(ligne(2)).getByText("Active")).toBeTruthy();
     expect(within(ligne(1)).queryByText("Active")).toBeNull();
@@ -111,20 +115,29 @@ describe("PartiesModal — mode gestion, liste", () => {
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     vi.setSystemTime(new Date(2026, 0, 1, 10, 5, 0));
 
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
 
     expect(within(ligne(1)).getByText(/il y a 5 min/)).toBeTruthy();
   });
 });
 
 describe("PartiesModal — sélection + Lancer la partie", () => {
-  it("« Lancer la partie » est grisé sans sélection, puis lance le slot choisi", () => {
+  it("« Lancer la partie » est grisé sans sélection, puis appelle onLancer(slot choisi)", () => {
     const location = mockLocation();
+    const onLancer = vi.fn();
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
     changerSlotActif(1);
 
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(
+      <PartiesModal
+        open
+        onClose={vi.fn()}
+        mode="gestion"
+        onNouvellePartie={vi.fn()}
+        onLancer={onLancer}
+      />,
+    );
 
     const lancer = screen.getByRole("button", { name: "Lancer la partie" });
     expect(lancer).toHaveProperty("disabled", true);
@@ -133,14 +146,17 @@ describe("PartiesModal — sélection + Lancer la partie", () => {
     expect(lancer).toHaveProperty("disabled", false);
 
     fireEvent.click(lancer);
-    expect(chargerIndex().actif).toBe(2);
-    expect(location.href).toBe("/bureau");
+    expect(onLancer).toHaveBeenCalledWith(2);
+    // La modal ne bascule NI ne navigue elle-même : tout est délégué au
+    // parent, qui orchestre l'iris (voir page.test.tsx).
+    expect(chargerIndex().actif).toBe(1);
+    expect(location.href).toBe("");
   });
 
   it("la surbrillance suit le slot cliqué (aria-pressed)", () => {
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
 
     const carte1 = screen.getByRole("button", { name: "Choisir l'emplacement 1" });
     const carte2 = screen.getByRole("button", { name: "Choisir l'emplacement 2" });
@@ -154,55 +170,12 @@ describe("PartiesModal — sélection + Lancer la partie", () => {
     expect(carte2.getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("Lancer appelle onAvantBascule AVANT changerSlotActif (détachement avant la bascule)", () => {
-    const location = mockLocation();
-    seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
-    seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
-    changerSlotActif(1);
-    const appels: string[] = [];
-    const onAvantBascule = vi.fn(() => {
-      appels.push(`avant:${chargerIndex().actif}`);
-    });
-
-    render(
-      <PartiesModal
-        open
-        onClose={vi.fn()}
-        mode="gestion"
-        onNouvellePartie={vi.fn()}
-        onAvantBascule={onAvantBascule}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Choisir l'emplacement 2" }));
-    fireEvent.click(screen.getByRole("button", { name: "Lancer la partie" }));
-
-    expect(onAvantBascule).toHaveBeenCalledTimes(1);
-    // L'actif storage était encore 1 au moment de l'appel : la callback a
-    // bien couru AVANT `changerSlotActif`, pas après.
-    expect(appels).toEqual(["avant:1"]);
-    expect(chargerIndex().actif).toBe(2);
-    expect(location.href).toBe("/bureau");
-  });
-
-  it("onAvantBascule absent (prop optionnelle) : Lancer reste sans erreur", () => {
-    const location = mockLocation();
-    seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
-    changerSlotActif(1);
-
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Choisir l'emplacement 1" }));
-    expect(() =>
-      fireEvent.click(screen.getByRole("button", { name: "Lancer la partie" })),
-    ).not.toThrow();
-    expect(location.href).toBe("/bureau");
-  });
 });
 
 describe("PartiesModal — Renommer", () => {
   it("Enter dans le champ inline persiste via renommerSlot et rafraîchit la ligne", () => {
     seedOccupe(1, { nom: "Ancien nom", jour: 1, niveau: 1, budget: 0 });
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
 
     fireEvent.click(within(ligne(1)).getByRole("button", { name: "Renommer" }));
     const input = within(ligne(1)).getByRole("textbox");
@@ -216,7 +189,7 @@ describe("PartiesModal — Renommer", () => {
 
   it("le blur du champ commit aussi le renommage", () => {
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
 
     fireEvent.click(within(ligne(1)).getByRole("button", { name: "Renommer" }));
     const input = within(ligne(1)).getByRole("textbox");
@@ -231,7 +204,7 @@ describe("PartiesModal — Renommer", () => {
 describe("PartiesModal — Supprimer", () => {
   it("exige une confirmation : Annuler ne supprime rien", () => {
     seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
 
     fireEvent.click(within(ligne(2)).getByRole("button", { name: "Supprimer" }));
     const dialogue = screen.getByRole("dialog", { name: /Supprimer/ });
@@ -247,7 +220,7 @@ describe("PartiesModal — Supprimer", () => {
     seedOccupe(2, { jour: 1, niveau: 1, budget: 0 });
     changerSlotActif(1);
 
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
     fireEvent.click(within(ligne(2)).getByRole("button", { name: "Supprimer" }));
     const dialogue = screen.getByRole("dialog", { name: /Supprimer/ });
     fireEvent.click(within(dialogue).getByRole("button", { name: "Supprimer" }));
@@ -262,7 +235,7 @@ describe("PartiesModal — Supprimer", () => {
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     changerSlotActif(1);
 
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
     fireEvent.click(within(ligne(1)).getByRole("button", { name: "Supprimer" }));
     const dialogue = screen.getByRole("dialog", { name: /Supprimer/ });
     fireEvent.click(within(dialogue).getByRole("button", { name: "Supprimer" }));
@@ -285,7 +258,7 @@ describe("PartiesModal — Supprimer", () => {
         open
         onClose={vi.fn()}
         mode="gestion"
-        onNouvellePartie={vi.fn()}
+        onNouvellePartie={vi.fn()} onLancer={vi.fn()}
         onAvantSuppressionActive={onAvantSuppressionActive}
       />,
     );
@@ -312,7 +285,7 @@ describe("PartiesModal — Supprimer", () => {
         open
         onClose={vi.fn()}
         mode="gestion"
-        onNouvellePartie={vi.fn()}
+        onNouvellePartie={vi.fn()} onLancer={vi.fn()}
         onAvantSuppressionActive={onAvantSuppressionActive}
       />,
     );
@@ -335,7 +308,7 @@ describe("PartiesModal — Supprimer", () => {
         open
         onClose={vi.fn()}
         mode="gestion"
-        onNouvellePartie={vi.fn()}
+        onNouvellePartie={vi.fn()} onLancer={vi.fn()}
         onAvantSuppressionActive={onAvantSuppressionActive}
       />,
     );
@@ -365,7 +338,7 @@ describe("PartiesModal — Supprimer", () => {
         open
         onClose={vi.fn()}
         mode="gestion"
-        onNouvellePartie={vi.fn()}
+        onNouvellePartie={vi.fn()} onLancer={vi.fn()}
         onAvantSuppressionActive={onAvantSuppressionActive}
       />,
     );
@@ -384,7 +357,7 @@ describe("PartiesModal — Supprimer", () => {
     seedOccupe(1, { jour: 1, niveau: 1, budget: 0 });
     changerSlotActif(1);
 
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
     fireEvent.click(within(ligne(1)).getByRole("button", { name: "Supprimer" }));
     const dialogue = screen.getByRole("dialog", { name: /Supprimer/ });
     expect(() =>
@@ -398,7 +371,7 @@ describe("PartiesModal — slot vide", () => {
   it("le « + » appelle onNouvellePartie(n) directement, sans confirmation", () => {
     const onNouvellePartie = vi.fn();
     render(
-      <PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={onNouvellePartie} />,
+      <PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={onNouvellePartie} onLancer={vi.fn()} />,
     );
 
     fireEvent.click(
@@ -420,7 +393,7 @@ describe("PartiesModal — mode choisir-ecrasement", () => {
         open
         onClose={vi.fn()}
         mode="choisir-ecrasement"
-        onNouvellePartie={vi.fn()}
+        onNouvellePartie={vi.fn()} onLancer={vi.fn()}
       />,
     );
 
@@ -440,7 +413,7 @@ describe("PartiesModal — mode choisir-ecrasement", () => {
         open
         onClose={vi.fn()}
         mode="choisir-ecrasement"
-        onNouvellePartie={onNouvellePartie}
+        onNouvellePartie={onNouvellePartie} onLancer={vi.fn()}
       />,
     );
 
@@ -459,7 +432,7 @@ describe("PartiesModal — mode choisir-ecrasement", () => {
         open
         onClose={vi.fn()}
         mode="choisir-ecrasement"
-        onNouvellePartie={onNouvellePartie}
+        onNouvellePartie={onNouvellePartie} onLancer={vi.fn()}
       />,
     );
 
@@ -478,7 +451,7 @@ describe("PartiesModal — mode choisir-ecrasement", () => {
         open
         onClose={vi.fn()}
         mode="choisir-ecrasement"
-        onNouvellePartie={onNouvellePartie}
+        onNouvellePartie={onNouvellePartie} onLancer={vi.fn()}
       />,
     );
 
@@ -499,7 +472,7 @@ describe("PartiesModal — occupation dérivée de l'index OU de la clé", () =>
     );
     localStorage.setItem(CLE_INDEX, "not-valid-json{");
 
-    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
 
     const l1 = ligne(1);
     // Nom fallback « Partie N » : l'index corrompu n'a pas de MetaSlot à lire.
@@ -515,13 +488,13 @@ describe("PartiesModal — occupation dérivée de l'index OU de la clé", () =>
 describe("PartiesModal — rechargement à l'ouverture", () => {
   it("l'état local est rechargé quand open passe de false à true", () => {
     const { rerender } = render(
-      <PartiesModal open={false} onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />,
+      <PartiesModal open={false} onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />,
     );
 
     seedOccupe(1, { nom: "Apparue après coup", jour: 1, niveau: 1, budget: 0 });
 
     rerender(
-      <PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} />,
+      <PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />,
     );
 
     expect(within(ligne(1)).getByText("Apparue après coup")).toBeTruthy();
@@ -531,7 +504,7 @@ describe("PartiesModal — rechargement à l'ouverture", () => {
 describe("PartiesModal — fermeture", () => {
   it("le bouton Fermer appelle onClose", () => {
     const onClose = vi.fn();
-    render(<PartiesModal open onClose={onClose} mode="gestion" onNouvellePartie={vi.fn()} />);
+    render(<PartiesModal open onClose={onClose} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Fermer" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });

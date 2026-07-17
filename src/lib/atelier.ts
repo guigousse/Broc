@@ -152,9 +152,11 @@ export function rendementDemantelement(o: Objet): number {
 
 /**
  * Applique la fin de restauration d'un objet : mute son état vers `etatCible`,
- * recalcule son prix de référence, et efface `enRestauration`. Retourne null si
- * l'objet n'existe pas, n'est pas en restauration, ou si la restauration n'est
- * pas encore terminée (`now < finMs`). `now` = temps de confiance (epoch ms).
+ * recalcule son prix de référence, et efface `enRestauration`. Trace la
+ * restauration accomplie dans `state.restaurations` (bornée aux 100 dernières),
+ * consommé par `progressionObjectif` pour l'objectif "restauration". Retourne
+ * null si l'objet n'existe pas, n'est pas en restauration, ou si la restauration
+ * n'est pas encore terminée (`now < finMs`). `now` = temps de confiance (epoch ms).
  *
  * Helper pur — appelé par GameContext.
  */
@@ -181,7 +183,11 @@ export function appliquerRecuperation(
         }
       : o,
   );
-  return { ...state, inventaireJoueur: inv };
+  const restaurations = [
+    ...(state.restaurations ?? []),
+    { timestamp: now, etatFinal: cible },
+  ].slice(-100);
+  return { ...state, inventaireJoueur: inv, restaurations };
 }
 
 /** Calcule si un objet peut être démantelé (en stock, hors restauration, hors vitrine). */

@@ -2,6 +2,7 @@ import type { CategorieObjet, Rarete, TailleObjet } from "@/types/game";
 import { LEGENDAIRES } from "@/data/legendaires";
 import { UNIQUES } from "@/data/uniques";
 import { TAILLES_OVERRIDE } from "@/data/objetTemplatesTailles";
+import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
 
 export interface ObjetTemplate {
   templateId: string;
@@ -519,6 +520,23 @@ const TIER_MIN_PAR_TEMPLATE: Map<string, 1 | 2 | 3> = (() => {
       const tier: 1 | 2 | 3 = i < seuil1 ? 1 : i < seuil2 ? 2 : 3;
       map.set(t.templateId, tier);
     });
+  }
+  // Garantie de la spec trame : les objets-cibles des chapitres principaux
+  // doivent être trouvables dans le tier de l'acte qui les demande, sinon
+  // soft-lock (ex. la lampe du ch1 classée tier 2 par le découpage en
+  // terciles de prix ci-dessus, alors que le tier 2 est gaté par le ch4).
+  // On clampe donc leur tier minimum au tier de l'acte (1/2/3) — seulement
+  // pour les templates présents dans la map (donc dans POOL_CHINAGE) : les
+  // uniques (ex. bijou du ch11) ne sont pas dans POOL_CHINAGE et restent
+  // boss-only via `poolExclusif`.
+  for (const chapitre of QUETES_PRINCIPALES) {
+    for (const objectif of chapitre.payload.objectifs) {
+      if (objectif.type !== "objet") continue;
+      const actuel = map.get(objectif.templateId);
+      if (actuel === undefined) continue;
+      const acte = chapitre.acte;
+      map.set(objectif.templateId, Math.min(actuel, acte) as 1 | 2 | 3);
+    }
   }
   return map;
 })();

@@ -26,7 +26,6 @@ import {
   injecterLettreMamanSiAbsente,
   migrerCourriers,
 } from "@/lib/courrier";
-import { debloquerQuetesPrincipales } from "@/lib/quetes/principales";
 import { tirerMeteoSemaine } from "@/lib/meteo";
 import { genererTendances } from "@/lib/tendances";
 import { ALL_TEMPLATES } from "@/data/objetTemplates";
@@ -39,6 +38,13 @@ import {
   emptyBrocanteur,
   POINTS_BONUS_CHAPITRE,
 } from "@/lib/xp";
+import {
+  NIVEAU_BROCANTES_T2,
+  NIVEAU_BROCANTES_T3,
+  NIVEAU_BROCANTES_T4,
+} from "@/data/brocantes";
+import { chapitreParOrdre } from "@/data/quetesPrincipales";
+import { courrierDeChapitre } from "@/lib/quetes/principales";
 
 /**
  * Remappe en profondeur tout ancien templateId (avant l'harmonisation des noms
@@ -91,7 +97,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -433,12 +439,11 @@ function appliquerMigrations(loaded: GameState): GameState {
     declencheursAjoutes: [...apresMaman.declencheursAjoutes],
   };
 
-  // Niveau de Brocanteur : calculé ici (avant l'amorce des quêtes principales)
-  // car `debloquerQuetesPrincipales` évalue le déblocage de TOUTES les
-  // brocantes (double gate T2-T4 par `niveau`), qui a donc besoin d'un
-  // `brocanteur.niveau` déjà défini — le brut `loaded.brocanteur` peut être
-  // absent (vieille save). Seul `pointsDisponibles` (bonus chapitres livrés)
-  // est finalisé plus tard, une fois `missionsFinales` connu.
+  // Niveau de Brocanteur : calculé ici, réutilisé par `niveauVu` et par le
+  // refund legacy (< v9) plus bas, qui a besoin d'un `brocanteur.niveau` déjà
+  // défini — le brut `loaded.brocanteur` peut être absent (vieille save).
+  // Seul `pointsDisponibles` (bonus chapitres livrés) est finalisé plus tard,
+  // une fois `missionsFinales` connu.
   const dejaV9 = typeof loaded.version === "number" && loaded.version >= 9;
   const brocanteurCharge = (loaded as Partial<GameState>).brocanteur;
   const brocanteurBienForme =
@@ -470,35 +475,70 @@ function appliquerMigrations(loaded: GameState): GameState {
   const brocanteurConverti =
     brocanteurFinalV9 ?? appliquerGainXPBrocanteur(emptyBrocanteur(), totalXP);
 
-  // Amorce de l'arc principal au chargement : on injecte le prochain chapitre
-  // dû (chapitre 1 pour une partie naissante) ainsi que sa résolution active.
   const missionsExistantes: GameState["missions"] = (
     Array.isArray(loaded.missions) ? loaded.missions : []
   ).filter((m) => !idsSecondairesSupprimes.has(m.courrierId));
-  // Tant qu'un tutoriel est en cours, aucun chapitre n'est amorcé (cf. drapeau
-  // `tutorielFini` posé plus haut) : `appliquerFinTutoriel` s'en charge.
-  const amorce = tutorielFini
-    ? debloquerQuetesPrincipales(
-        {
-          ...(loaded as GameState),
-          // Les conditions de déblocage lisent collection/historique/budget/jour :
-          // on s'appuie sur les valeurs migrées, pas sur le brut `loaded`.
-          jourActuel: jourCourant,
-          budget: loaded.budget ?? 0,
-          historique,
-          collection,
-          courriers: apresInjection.courriers,
-          missions: missionsExistantes,
-          brocanteur: brocanteurConverti,
-        },
-        jourCourant,
-      )
-    : [];
-  const courriersFinaux = [...apresInjection.courriers, ...amorce];
-  const missionsFinales: GameState["missions"] = [
-    ...missionsExistantes,
-    ...amorce.map((c) => ({ courrierId: c.id, statut: "active" as const })),
-  ];
+  // Depuis SP2 : plus d'amorce de chapitre au chargement — la trame est
+  // délivrée en dialogue (`accepterChapitre`, cf. src/lib/quetes/principales.ts) ;
+  // `chapitrePret(state)` (calculé à la volée) désigne le prochain chapitre dû.
+  const courriersFinaux = apresInjection.courriers;
+  const missionsFinales: GameState["missions"] = missionsExistantes;
+
+  // v13 : trame 12 chapitres. Mapping "jamais re-verrouiller un tier" — pour
+  // toute save ≤ v12 (STRICTEMENT antérieure à v13 — cf. `dejaV13` ci-dessous),
+  // les chapitres `trame_chN` déjà « acquis » sous les anciennes règles
+  // (niveau ou ancien arc `principale_*`) sont injectés livrés (courrier lu +
+  // mission `livree`), SANS récompense rétroactive (ni ledger, ni XP, ni
+  // points bonus — cf. `courrierDeChapitre`, qui ne passe pas par
+  // `accepterChapitre`) :
+  //  - niveau (anciens seuils) : ≥T2 ⇒ ch4, ≥T3 ⇒ ch8, ≥T4 ⇒ ch10
+  //  - anciens chapitres livrés : ch1⇒1, ch2⇒4, ch3⇒8, ch4⇒10, ch5⇒11
+  // On prend le max des deux sources. Les anciens courriers/missions
+  // `principale_*` sont conservés tels quels (archive).
+  //
+  // Gating par version ENTRANTE (`loaded.version`, lu avant migration — cf.
+  // `dejaV9` plus haut, même principe) : ce back-fill ne doit tourner qu'une
+  // fois, au moment précis où une save franchit le seuil v12→v13. Sans ce
+  // garde, `appliquerMigrations` étant une passe monolithique rejouée à CHAQUE
+  // chargement, une save déjà en v13 avec une trame en cours (ex. `trame_ch3`
+  // active) ou fraîchement créée verrait ses chapitres suivants forcés
+  // « livrés » d'après le seul niveau du joueur — sautant l'histoire en cours.
+  const dejaV13 = typeof loaded.version === "number" && loaded.version >= 13;
+  const ANCIENS_CHAPITRES_VERS_ORDRE_TRAME: Record<string, number> = {
+    principale_ch1: 1,
+    principale_ch2: 4,
+    principale_ch3: 8,
+    principale_ch4: 10,
+    principale_ch5: 11,
+  };
+  let courriersAvecTrame = courriersFinaux;
+  let missionsAvecTrame = missionsFinales;
+  if (!dejaV13) {
+    let maxOrdreTrame = 0;
+    const niveauFinalTrame = brocanteurConverti.niveau;
+    if (niveauFinalTrame >= NIVEAU_BROCANTES_T2) maxOrdreTrame = 4;
+    if (niveauFinalTrame >= NIVEAU_BROCANTES_T3) maxOrdreTrame = 8;
+    if (niveauFinalTrame >= NIVEAU_BROCANTES_T4) maxOrdreTrame = 10;
+    for (const m of missionsExistantes) {
+      const ordre = ANCIENS_CHAPITRES_VERS_ORDRE_TRAME[m.courrierId];
+      if (m.statut === "livree" && ordre) {
+        maxOrdreTrame = Math.max(maxOrdreTrame, ordre);
+      }
+    }
+    const trameDejaPresente = new Set([
+      ...courriersFinaux.map((c) => c.id),
+      ...missionsFinales.map((m) => m.courrierId),
+    ]);
+    for (let ordre = 1; ordre <= maxOrdreTrame; ordre++) {
+      const ch = chapitreParOrdre(ordre);
+      if (!ch || trameDejaPresente.has(ch.id)) continue;
+      courriersAvecTrame = [...courriersAvecTrame, courrierDeChapitre(ch, jourCourant)];
+      missionsAvecTrame = [
+        ...missionsAvecTrame,
+        { courrierId: ch.id, statut: "livree", jourResolution: jourCourant },
+      ];
+    }
+  }
 
   // `competenceTrees` (arbres) n'existe plus dans le schéma (v10) : on l'exclut
   // explicitement du spread pour qu'une vieille save qui le portait encore ne
@@ -566,7 +606,7 @@ function appliquerMigrations(loaded: GameState): GameState {
         : tirerCelebrite(),
     influenceUtilisee: loaded.influenceUtilisee ?? false,
     dernierLoyer: loaded.dernierLoyer ?? null,
-    courriers: courriersFinaux,
+    courriers: courriersAvecTrame,
     niveauAtelier: (() => {
       // 0 = nouvelle économie (slots achetés) ; 2/3 = acquis conservés.
       // 1, absent ou invalide → 1 (slot gratuit des sauvegardes historiques).
@@ -621,7 +661,7 @@ function appliquerMigrations(loaded: GameState): GameState {
       if (Array.isArray(existing) && existing.length > 0) return existing;
       return reconstruireGrandLivre(historique, loaded.budget ?? 0);
     })(),
-    missions: missionsFinales,
+    missions: missionsAvecTrame,
     quetesPeriodiques: loaded.quetesPeriodiques ?? {
       quotidien: { cle: "", courrierIds: [] },
       hebdo: { cle: "", courrierIds: [] },

@@ -143,6 +143,22 @@ export interface MissionCible {
   etatMin?: EtatObjet;
 }
 
+/** Objectif de mission générique (SP2 trame). La variante "objet" reflète les
+ *  `cibles` historiques ; les autres se mesurent depuis l'état/l'historique. */
+export type ObjectifMission =
+  | { type: "objet"; templateId: string; etatMin?: EtatObjet }
+  | { type: "ventesCumulees"; montant: number }
+  | { type: "profitVente"; montant: number }
+  | { type: "restauration"; etatMin: EtatObjet }
+  | { type: "valeurCollection"; montant: number }
+  | { type: "niveau"; niveau: number };
+
+/** Restauration terminée (trace pour les objectifs "restauration"). */
+export interface RestaurationAccomplie {
+  timestamp: number;
+  etatFinal: EtatObjet;
+}
+
 /** Mission reçue par lettre : fournir un ou plusieurs objets contre récompense. */
 export interface CourrierPayloadMission {
   type: "mission";
@@ -153,6 +169,12 @@ export interface CourrierPayloadMission {
   corps: string[];
   /** Objets demandés (1 ou plusieurs). */
   cibles: MissionCible[];
+  /**
+   * ADDITIF (SP2) : objectifs génériques. Convention : les entrées `type:"objet"`
+   * DOIVENT refléter `cibles` (même ordre) — la livraison d'objets continue de
+   * passer par `cibles`. Absent ⇒ mission historique, objectifs dérivés des cibles.
+   */
+  objectifs?: ObjectifMission[];
   /** Si défini, mission expirée si `jourActuel > jourLimite`. */
   jourLimite?: number;
   recompense: { argent: number };
@@ -197,6 +219,8 @@ export interface MissionResolution {
   statut: MissionStatut;
   /** Jour de livraison (statut=livree) ou d'expiration (statut=expiree). */
   jourResolution?: number;
+  /** ADDITIF (SP2) : instant d'acceptation — borne basse des objectifs cumulatifs. */
+  timestampAcceptation?: number;
 }
 
 /* === Grand livre (journal de toutes les transactions de budget) ======= */
@@ -331,6 +355,8 @@ export interface GameState {
   grandLivre: LedgerEntry[];
   /** Résolutions de mission (1 par Courrier de type mission lu). */
   missions: MissionResolution[];
+  /** ADDITIF (SP2) : restaurations terminées (bornées aux 100 dernières). */
+  restaurations?: RestaurationAccomplie[];
   /** Lots de commandes périodiques en cours (quotidien / hebdo). */
   quetesPeriodiques: {
     quotidien: LotPeriodique;
@@ -465,6 +491,7 @@ export type ConditionDeblocage =
   | { type: "valeurCollection"; montant: number }
   | { type: "valeurCollectionCategorie"; categorie: CategorieObjet; montant: number }
   | { type: "niveau"; niveau: number }
+  | { type: "chapitrePrincipal"; ordre: number }
   | { type: "ET"; conditions: ConditionDeblocage[] };
 
 export type BrocanteTier = 1 | 2 | 3 | 4;
