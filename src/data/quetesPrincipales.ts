@@ -136,7 +136,7 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
       ],
       cibles: [],
       objectifs: [{ type: "niveau", niveau: 8 }],
-      recompense: { argent: 150 },
+      recompense: { argent: 180 },
     },
   },
   {
@@ -157,7 +157,7 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
       ],
       cibles: [],
       objectifs: [{ type: "profitVente", montant: 100 }],
-      recompense: { argent: 170 },
+      recompense: { argent: 200 },
     },
   },
   {
@@ -181,7 +181,7 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
       ],
       cibles: [],
       objectifs: [{ type: "valeurCollection", montant: 1500 }],
-      recompense: { argent: 190 },
+      recompense: { argent: 220 },
     },
   },
   {
@@ -203,7 +203,7 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
       ],
       cibles: [{ templateId: "art.gravure_jouy_paris", etatMin: "Très bon" }],
       objectifs: [{ type: "objet", templateId: "art.gravure_jouy_paris", etatMin: "Très bon" }],
-      recompense: { argent: 220 },
+      recompense: { argent: 260 },
     },
   },
   {
@@ -226,7 +226,7 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
       ],
       cibles: [],
       objectifs: [{ type: "restauration", etatMin: "Pristin état" }],
-      recompense: { argent: 260 },
+      recompense: { argent: 320 },
     },
   },
   {
@@ -249,7 +249,7 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
       ],
       cibles: [],
       objectifs: [],
-      recompense: { argent: 150 },
+      recompense: { argent: 200 },
     },
   },
   {
@@ -269,7 +269,7 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
       ],
       cibles: [{ templateId: "uniq.mo.bijou_marie_antoinette" }],
       objectifs: [{ type: "objet", templateId: "uniq.mo.bijou_marie_antoinette" }],
-      recompense: { argent: 500 },
+      recompense: { argent: 600 },
       conserverCibles: true,
     },
   },
@@ -292,7 +292,7 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
       ],
       cibles: [],
       objectifs: [],
-      recompense: { argent: 500 },
+      recompense: { argent: 800 },
     },
   },
 ];

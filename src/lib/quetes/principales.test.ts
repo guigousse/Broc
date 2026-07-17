@@ -135,7 +135,7 @@ describe("accepterChapitre", () => {
       timestampAcceptation: 99,
       jourResolution: state.jourActuel,
     });
-    expect(next.budget).toBe(state.budget + 150);
+    expect(next.budget).toBe(state.budget + 200);
     expect(next.grandLivre.some((e) => e.kind === "mission_recompense" && e.courrierId === "trame_ch10")).toBe(true);
     const avecXPAttendu = appliquerGainXPBrocanteur(
       state.brocanteur,
