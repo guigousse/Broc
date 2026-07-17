@@ -71,7 +71,8 @@ contrôleur global n'étouffe plus le titre. Les autres routes gardent leur comp
   bus gramophone (musique + crépitement ensemble) vers 0 sur `durationMs`, puis à
   l'échéance : arrêt propre (`stopGramophone()` + `stopNeedle()`) et gain du bus restauré à
   1 (l'entrée au bureau remet déjà volume/lowpass, mais on ne laisse pas un bus à zéro).
-  Idempotente / sûre si rien ne joue. Exposée via `SettingsContext`.
+  Idempotente / sûre si rien ne joue. Appelée directement sur `audioManager` (pattern
+  existant de `page.tsx` pour l'ambiance) — pas d'indirection SettingsContext.
 - Déclenchement :
   - **Continuer / slot** (`src/app/page.tsx`) : `fadeOutVinylBus(DUREE_FERMETURE_MS)` au
     moment de `lancerIrisVers(...)` — le fondu suit exactement la fermeture ; au noir, le
