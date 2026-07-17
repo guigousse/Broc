@@ -56,7 +56,7 @@ l'acte** (à vérifier/ajuster par chapitre au moment du plan ; renforcer `attei
 
 | # | Titre | Objectif | Récompense | Note narrative |
 |---|-------|----------|---|----------------|
-| 5 | Un nom qui circule | Atteindre le niveau 8 *(confirmé au simulateur le 2026-07-17 : jour médian d'atteinte N8 = J4-J5 sur les 3 profils, largement avant J25)* | 180 € | Les marchands parlent de toi |
+| 5 | Un nom qui circule | Atteindre le niveau 8 *(confirmé au simulateur le 2026-07-17 : jour médian d'atteinte N8 = J4 sur les 3 profils, largement avant J25)* | 180 € | Les marchands parlent de toi |
 | 6 | Le flair | Profit ≥ 100 € sur une seule vente | 200 € | Le jour où il a laissé filer une pièce à 10× sa valeur |
 | 7 | Une vitrine digne de ce nom | Valeur de collection ≥ 1 500 € *(déplacé depuis le ch. 9 le 2026-07-17 — « Pièce de maître » exigeait Réparer 3/N30, reporté en late game)* | 220 € | La collection prend forme |
 | 8 | Le beau monde | Chiner : gravure, état Très bon | 260 € | Les rumeurs sur les bijoux circulent chez les collectionneurs |
