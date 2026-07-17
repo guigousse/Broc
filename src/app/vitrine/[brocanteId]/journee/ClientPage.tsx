@@ -362,6 +362,13 @@ export default function VitrineJourneePage() {
       return;
     }
     if (state.vitrine.objets.length === 0) {
+      // Tutoriel « première vente » : si l'unique objet vient d'être vendu,
+      // NE PAS clore ici — le dialogue du grand-père doit se jouer et faire
+      // passer l'étape à « conclusion » (défaillance device 2026-07-17, 2e
+      // site : le gate du seul effet « bravo tout vendu » ne suffisait pas,
+      // ce chemin-ci clôturait avant lui). L'effet se re-déclenche à la fin
+      // du dialogue (deps etape/dialogueTuto) et clôture alors normalement.
+      if (etape === "premiere-vente" || dialogueTuto) return;
       // Vitrine vide : si la journée a démarré (standSnapshot posé), c'est que
       // tout a été vendu — on clôture pour afficher le résumé. Sinon (arrivée
       // sur la page sans préparation), on renvoie à la prépa.
@@ -371,7 +378,7 @@ export default function VitrineJourneePage() {
         router.replace(`/vitrine/${brocante.id}`);
       }
     }
-  }, [isHydrated, state, router, journeeFinie, brocante]);
+  }, [isHydrated, state, router, journeeFinie, brocante, etape, dialogueTuto]);
 
   const ajouterJournal = useCallback((entree: Omit<EntreeJournal, "id">) => {
     setJournal((prev) => [
