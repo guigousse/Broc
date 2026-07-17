@@ -11,11 +11,15 @@ import { useGame } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { audioManager } from "@/lib/audio/audioManager";
+import { demarrerMusiqueTitre } from "@/lib/audio/titreJazz";
 import {
+  DUREE_FADE_REDUIT_MS,
+  DUREE_FERMETURE_MS,
   PORTE_CX_PCT,
   PORTE_CY_PCT,
   pointPorteEcran,
   poserFlagIris,
+  prefersReducedMotion,
 } from "@/lib/transitionIris";
 import {
   changerSlotActif,
@@ -184,15 +188,33 @@ export default function TitleScreen() {
   } | null>(null);
 
   const lancerIrisVers = (apresNoir: () => void) => {
+    // La musique du titre suit exactement la fermeture de l'iris (fondu de
+    // même durée) ; au noir, le rechargement dur coupe ce qui reste.
+    audioManager.fadeOutVinylBus(
+      prefersReducedMotion() ? DUREE_FADE_REDUIT_MS : DUREE_FERMETURE_MS,
+    );
     setIris({ ...pointPorteEcran(facadeRef.current), apresNoir });
   };
 
-  // Même ambiance de rue que le QG (respecte la préférence sonore, no-op si
-  // déjà lancée). Sur iOS le contexte audio reste suspendu jusqu'au premier
-  // geste : le son démarre alors, via l'unlock global de l'audioManager.
-  // Pas de stop au démontage : le panorama reprend la même boucle à l'entrée.
+  // Ambiance de rue (comme le QG, reprise telle quelle au bureau) + jazz du
+  // titre : crépitement puis les 3 vinyles en boucle (cf. titreJazz).
+  // L'autoplay peut être refusé avant le premier geste (iOS/desktop) : on
+  // retente au premier pointerdown si rien ne joue encore. Au démontage on
+  // n'arrête que l'ENCHAÎNEMENT — la coupure du son est le travail du fondu
+  // des départs en partie (lancerIrisVers / IntroPorte).
   useEffect(() => {
     void audioManager.startAmbience();
+    let arreter = demarrerMusiqueTitre(audioManager);
+    const relance = () => {
+      if (audioManager.vinylEnLecture()) return;
+      arreter();
+      arreter = demarrerMusiqueTitre(audioManager);
+    };
+    window.addEventListener("pointerdown", relance, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", relance);
+      arreter();
+    };
   }, []);
 
   const onIntroFinie = () => {
