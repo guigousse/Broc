@@ -4,6 +4,7 @@ import { INVITATIONS_ORGANISATEURS } from "@/data/invitationsOrganisateurs";
 import { CARTES_POSTALES } from "@/data/cartesPostales";
 import { creerLettreMamanDebut, ID_LETTRE_MAMAN_DEBUT } from "@/lib/courrier";
 import { COURRIER_EN } from "@/lib/i18n/contenu/en/courrier";
+import { COURRIER_ES } from "@/lib/i18n/contenu/es/courrier";
 import { corpsCourrier, manquants, orphelins, titreCourrier } from "@/lib/i18n/contenu";
 
 const IDS = [
@@ -14,12 +15,10 @@ const IDS = [
 ];
 
 // SP3 Task 7 : chapitres (trame_ch1..12), invitations (invitation_tier2/3/4)
-// et cartes postales (carte_postale_1..5) traduits EN. ES reste à faire en
-// Task 8 : on ne réactive donc que la ligne EN du describe.each pour ne pas
-// faire échouer la parité ES avant sa traduction.
+// et cartes postales (carte_postale_1..5) traduits EN. SP3 Task 8 : idem ES.
 describe.each([
   ["EN", COURRIER_EN],
-  // SP3 Task 8 : ré-ajouter la ligne ES
+  ["ES", COURRIER_ES],
 ] as const)("overlay courrier %s", (_, ov) => {
   test("complétude + zéro orphelin", () => {
     expect(manquants(IDS, ov)).toEqual([]);

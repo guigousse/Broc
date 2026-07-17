@@ -17,8 +17,7 @@ const IDS_TRAME = QUETES_PRINCIPALES.map((ch) => `dlg_${ch.id}`);
 
 describe.each([
   ["EN", DIALOGUES_EN, [...IDS_TUTORIEL, ...IDS_TRAME]],
-  // SP3 Task 8 : ajouter IDS_TRAME à la ligne ES une fois les 12 dialogues traduits
-  ["ES", DIALOGUES_ES, IDS_TUTORIEL],
+  ["ES", DIALOGUES_ES, [...IDS_TUTORIEL, ...IDS_TRAME]],
 ] as const)("overlay dialogues %s", (_nom, overlay, ids) => {
   it("couvre toutes les séquences, sans orphelin", () => {
     expect(manquants([...ids], overlay)).toEqual([]);
