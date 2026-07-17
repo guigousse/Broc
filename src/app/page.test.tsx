@@ -44,8 +44,9 @@ vi.mock("@/context/GameContext", () => ({
   useGameActions: () => ({ reset }),
 }));
 
+const playClick = vi.fn();
 vi.mock("@/context/SettingsContext", () => ({
-  useSettings: () => ({ playClick: vi.fn() }),
+  useSettings: () => ({ playClick }),
 }));
 
 let introOnFini: (() => void) | null = null;
@@ -145,6 +146,9 @@ describe("TitleScreen — Continuer avec transition iris", () => {
     fireEvent.click(screen.getByText("Continuer"));
     fireEvent.click(screen.getByText("Continuer"));
 
+    // Le garde `if (!aSauvegarde || iris) return;` court-circuite AVANT
+    // playClick : sans lui, ce spy compterait 2 appels.
+    expect(playClick).toHaveBeenCalledTimes(1);
     expect(screen.getAllByTestId("iris-fermeture")).toHaveLength(1);
   });
 });
