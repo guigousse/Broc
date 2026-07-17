@@ -247,6 +247,23 @@ export default function TitleScreen() {
     });
   };
 
+  const onLancerSlot = (n: NumeroSlot) => {
+    if (iris) return;
+    playClick();
+    setPartiesModal(null);
+    lancerIrisVers(() => {
+      // Ordre CRITIQUE (même course que l'ancien onJouer de PartiesModal) :
+      // pendant la fermeture (~900 ms), le GameContext de cet écran reste
+      // monté sur l'ANCIEN slot actif — la bascule n'a lieu qu'au noir,
+      // détachement d'abord, navigation aussitôt après, pour qu'aucun tick
+      // d'auto-sauvegarde ne puisse écrire dans le slot fraîchement activé.
+      detacherPartie();
+      changerSlotActif(n);
+      poserFlagIris();
+      window.location.href = "/bureau";
+    });
+  };
+
   const onReglages = () => {
     playClick();
     setReglagesOuverts(true);
@@ -418,7 +435,7 @@ export default function TitleScreen() {
         mode={partiesModal ?? "gestion"}
         onNouvellePartie={demarrerSurSlot}
         onAvantSuppressionActive={reset}
-        onAvantBascule={detacherPartie}
+        onLancer={onLancerSlot}
       />
 
       {iris && <IrisFermeture cx={iris.x} cy={iris.y} onNoir={iris.apresNoir} />}

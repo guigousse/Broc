@@ -7,7 +7,6 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import {
-  changerSlotActif,
   chargerIndex,
   renommerSlot,
   resumeSlot,
@@ -35,17 +34,13 @@ interface PartiesModalProps {
    */
   onAvantSuppressionActive?: () => void;
   /**
-   * Appelé SYNCHRONE juste avant `changerSlotActif(n)` dans `onJouer`. Sert à
-   * détacher l'état en mémoire du `GameContext` (voir `detacherPartie()`)
-   * AVANT la bascule : sans ça, entre le changement d'emplacement actif en
-   * storage et le rechargement effectif de la page (`window.location.href`),
-   * le tick d'auto-sauvegarde de CET écran (toujours monté, toujours branché
-   * sur l'ANCIEN state) peut se glisser dans cette fenêtre et réécrire
-   * l'ancienne partie dans la clé du slot qu'on vient d'activer — perte
-   * silencieuse et définitive de la partie choisie. Même famille de course
-   * que `onAvantSuppressionActive` et que la bascule différée de l'intro.
+   * « Lancer la partie » sur le slot choisi. La modal ne bascule NI ne
+   * navigue elle-même : le parent (écran titre) orchestre la fermeture
+   * d'iris puis, au noir, détacher → changerSlotActif → navigation —
+   * même protection contre la course d'auto-sauvegarde que l'ancien
+   * onJouer (voir onLancerSlot dans src/app/page.tsx).
    */
-  onAvantBascule?: () => void;
+  onLancer: (slot: NumeroSlot) => void;
 }
 
 const NUMEROS_SLOTS: readonly NumeroSlot[] = [1, 2, 3];
@@ -349,7 +344,7 @@ export function PartiesModal({
   mode,
   onNouvellePartie,
   onAvantSuppressionActive,
-  onAvantBascule,
+  onLancer,
 }: PartiesModalProps) {
   const [index, setIndex] = useState<IndexSlots | null>(null);
   const [slotChoisi, setSlotChoisi] = useState<NumeroSlot | null>(null);
@@ -377,14 +372,6 @@ export function PartiesModal({
   if (!open || index === null) return null;
 
   const rafraichir = () => setIndex(chargerIndex());
-
-  const onJouer = (n: NumeroSlot) => {
-    // Détache l'état en mémoire AVANT la bascule : voir la doc de
-    // `onAvantBascule` sur la course avec le tick d'auto-sauvegarde.
-    onAvantBascule?.();
-    changerSlotActif(n);
-    window.location.href = "/bureau";
-  };
 
   const onDebuterRenommage = (n: NumeroSlot, nomActuel: string | null) => {
     setRenommage(n);
@@ -605,7 +592,7 @@ export function PartiesModal({
             type="button"
             disabled={slotChoisi === null}
             onClick={() => {
-              if (slotChoisi !== null) onJouer(slotChoisi);
+              if (slotChoisi !== null) onLancer(slotChoisi);
             }}
             style={slotChoisi === null ? btnLancerDesactive : btnLancer}
           >

@@ -14,9 +14,10 @@
  * /bureau.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import TitleScreen from "./page";
 import { lireFlagIris } from "@/lib/transitionIris";
+import type { NumeroSlot } from "@/lib/storage/slots";
 
 afterEach(() => {
   cleanup();
@@ -62,6 +63,14 @@ vi.mock("@/components/mobile/IrisTransition", () => ({
   IrisFermeture: ({ onNoir }: { onNoir: () => void }) => {
     irisOnNoir = onNoir;
     return <div data-testid="iris-fermeture" />;
+  },
+}));
+
+let partiesOnLancer: ((n: NumeroSlot) => void) | null = null;
+vi.mock("@/components/mobile/PartiesModal", () => ({
+  PartiesModal: ({ onLancer }: { onLancer: (n: NumeroSlot) => void }) => {
+    partiesOnLancer = onLancer;
+    return null;
   },
 }));
 
@@ -150,5 +159,30 @@ describe("TitleScreen — Continuer avec transition iris", () => {
     // playClick : sans lui, ce spy compterait 2 appels.
     expect(playClick).toHaveBeenCalledTimes(1);
     expect(screen.getAllByTestId("iris-fermeture")).toHaveLength(1);
+  });
+});
+
+describe("TitleScreen — lancement d'un slot via la modal Parties", () => {
+  it("onLancer : iris d'abord ; au noir, détacher → bascule → flag → navigation", () => {
+    const location = mockLocation();
+    render(<TitleScreen />);
+
+    act(() => partiesOnLancer!(2));
+
+    expect(screen.getByTestId("iris-fermeture")).toBeTruthy();
+    expect(changerSlotActif).not.toHaveBeenCalled();
+    expect(location.href).toBe("");
+
+    irisOnNoir!();
+
+    expect(detacherPartie).toHaveBeenCalledTimes(1);
+    expect(changerSlotActif).toHaveBeenCalledWith(2);
+    // Détachement STRICTEMENT avant la bascule : même course d'auto-
+    // sauvegarde que l'ancien onJouer de PartiesModal.
+    expect(detacherPartie.mock.invocationCallOrder[0]).toBeLessThan(
+      changerSlotActif.mock.invocationCallOrder[0],
+    );
+    expect(lireFlagIris()).toBe(true);
+    expect(location.href).toBe("/bureau");
   });
 });
