@@ -17,11 +17,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import TitleScreen from "./page";
 import { lireFlagIris } from "@/lib/transitionIris";
+import { audioManager } from "@/lib/audio/audioManager";
+import { DUREE_FERMETURE_MS } from "@/lib/transitionIris";
 import type { NumeroSlot } from "@/lib/storage/slots";
+
+const demarrerMusiqueTitre = vi.fn((_l: unknown) => vi.fn());
+vi.mock("@/lib/audio/titreJazz", () => ({
+  demarrerMusiqueTitre: (l: unknown) => demarrerMusiqueTitre(l),
+}));
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.restoreAllMocks();
   mockState = null;
 });
 
@@ -184,5 +192,40 @@ describe("TitleScreen — lancement d'un slot via la modal Parties", () => {
     );
     expect(lireFlagIris()).toBe(true);
     expect(location.href).toBe("/bureau");
+  });
+});
+
+describe("TitleScreen — musique jazz du titre", () => {
+  it("démarre la playlist au montage", () => {
+    render(<TitleScreen />);
+    expect(demarrerMusiqueTitre).toHaveBeenCalledTimes(1);
+    expect(demarrerMusiqueTitre).toHaveBeenCalledWith(audioManager);
+  });
+
+  it("Continuer : fondu du bus gramophone sur la durée de fermeture de l'iris", () => {
+    const fade = vi
+      .spyOn(audioManager, "fadeOutVinylBus")
+      .mockImplementation(() => {});
+    mockLocation();
+    mockState = { jourActuel: 1 };
+    render(<TitleScreen />);
+
+    fireEvent.click(screen.getByText("Continuer"));
+
+    expect(fade).toHaveBeenCalledTimes(1);
+    expect(fade).toHaveBeenCalledWith(DUREE_FERMETURE_MS);
+  });
+
+  it("lancement d'un slot : même fondu synchronisé", () => {
+    const fade = vi
+      .spyOn(audioManager, "fadeOutVinylBus")
+      .mockImplementation(() => {});
+    mockLocation();
+    render(<TitleScreen />);
+
+    act(() => partiesOnLancer!(2));
+
+    expect(fade).toHaveBeenCalledTimes(1);
+    expect(fade).toHaveBeenCalledWith(DUREE_FERMETURE_MS);
   });
 });

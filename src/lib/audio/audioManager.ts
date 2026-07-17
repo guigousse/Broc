@@ -50,6 +50,7 @@ class AudioManager {
   private vinylGain?: GainNode;
   private vinylEndedHandler?: () => void;
   private gramoTimers: number[] = [];
+  private fadeOutTimer?: number;
   // Bus "ambiance gramophone" : un gain + lowpass partagés par la musique
   // ET le crépitement (needle). Permet d'étouffer/atténuer l'ensemble du
   // gramophone selon la pièce (proche = clair/fort, lointain = sourd/bas).
@@ -649,6 +650,10 @@ class AudioManager {
   /** Volume global du bus gramophone (musique + crépitement). 0..1. */
   setVinylAmbianceVolume(v: number): void {
     this.ambianceVolume = Math.max(0, Math.min(1, v));
+    // Un fondu de sortie en vol possède le gain : on n'écrase pas sa rampe.
+    // La cible de route vient d'être mise à jour ci-dessus et sera appliquée
+    // à la fin (ou à l'annulation) du fondu.
+    if (this.fadeOutTimer !== undefined) return;
     if (!this.ctx || !this.vinylAmbianceGain) return;
     const now = this.ctx.currentTime;
     this.vinylAmbianceGain.gain.cancelScheduledValues(now);
@@ -844,6 +849,9 @@ class AudioManager {
     if (!this.prefs.musique) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
+    // Un fondu de sortie en vol tuerait la chanson fraîchement lancée à son
+    // échéance (même classe de bug que stopGramophone) : on l'annule.
+    this.annulerFadeOut();
     // Annule toute séquence en cours (musique précédente, timers).
     this.gramoTimers.forEach((t) => window.clearTimeout(t));
     this.gramoTimers = [];
@@ -860,12 +868,64 @@ class AudioManager {
     this.gramoTimers.push(t);
   }
 
+  /** Annule un fondu de sortie en attente et rend au bus sa cible de route. */
+  private annulerFadeOut(): void {
+    if (this.fadeOutTimer === undefined) return;
+    window.clearTimeout(this.fadeOutTimer);
+    this.fadeOutTimer = undefined;
+    this.setVinylAmbianceVolume(this.ambianceVolume);
+  }
+
   /** Arrêt complet du gramophone : musique, loop, timers en attente. */
   stopGramophone(): void {
+    // Annule aussi un fondu de sortie en attente : sans ça, son timer
+    // fantôme réinvoquerait stopGramophone puis écraserait le volume du
+    // bus après coup. Le bus est ramené à sa cible de route courante
+    // (ambianceVolume) — jamais laissé sur une rampe vers zéro.
+    this.annulerFadeOut();
     this.gramoTimers.forEach((t) => window.clearTimeout(t));
     this.gramoTimers = [];
     this.stopVinyl();
     this.stopNeedle();
+  }
+
+  /** Vrai si un vinyle est chargé et en lecture (non mis en pause). */
+  vinylEnLecture(): boolean {
+    return !!this.vinylAudio && !this.vinylAudio.paused;
+  }
+
+  /**
+   * Fondu de sortie du bus gramophone ENTIER (musique + crépitement) sur
+   * `durationMs`, puis arrêt complet (stopGramophone) et bus ramené à sa cible
+   * de route courante (ambianceVolume ; 1 sur le titre) — on ne laisse jamais
+   * un bus à zéro pour l'écran suivant. Un stopGramophone() externe pendant le
+   * fondu annule proprement le timer. Sûr à appeler si rien ne joue (arrêt
+   * immédiat, pas de rampe). Un nouvel appel pendant un fondu REMPLACE la rampe
+   * en cours (skip de l'intro : 1800 → 300 ms). Utilisé par les départs en
+   * partie de l'écran titre, synchronisé avec la fermeture d'iris
+   * (spec 2026-07-17-jazz-titre-fondu-design.md).
+   */
+  fadeOutVinylBus(durationMs: number): void {
+    if (this.fadeOutTimer !== undefined) {
+      window.clearTimeout(this.fadeOutTimer);
+      this.fadeOutTimer = undefined;
+    }
+    if (!this.ctx || !this.vinylAmbianceGain) {
+      // Rien n'a jamais joué (bus jamais créé) : coupe ce qui pourrait
+      // rester (timers gramophone) et n'installe aucune rampe.
+      this.stopGramophone();
+      return;
+    }
+    const now = this.ctx.currentTime;
+    const gain = this.vinylAmbianceGain.gain;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    gain.linearRampToValueAtTime(0, now + durationMs / 1000);
+    this.fadeOutTimer = window.setTimeout(() => {
+      this.fadeOutTimer = undefined;
+      this.stopGramophone();
+      this.setVinylAmbianceVolume(this.ambianceVolume);
+    }, durationMs);
   }
 
   loadPersisted(): AudioPrefs {
