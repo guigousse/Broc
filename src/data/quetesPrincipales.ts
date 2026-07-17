@@ -69,16 +69,19 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     ordre: 3,
     acte: 1,
     condition: { type: "depart" },
+    // Décision 2026-07-17 : seuil baissé « Très bon » → « Bon » (Très bon
+    // exigeait Réparer 2 ⇒ niveau 10 — mur d'XP en acte I ; « Bon » ne
+    // demande que Réparer 1, accessible dès le début).
     // SP3 : texte provisoire
     dialogue: [
       { humeur: "songeur", texte: "Mes mains tremblent trop pour l'établi, maintenant. Prends mes outils." },
-      { humeur: "souriant", texte: "Restaure-moi un objet — qu'il ressorte Très bon. Tu verras, ça rend fier." },
+      { humeur: "souriant", texte: "Restaure-moi un objet abîmé — qu'il ressorte présentable. Tu verras, ça rend fier." },
     ],
     payload: {
       titre: "Les mains d'or",
-      corps: ["Restaurer un objet jusqu'à l'état Très bon."], // SP3 : texte provisoire
+      corps: ["Restaurer un objet jusqu'à l'état Bon."], // SP3 : texte provisoire
       cibles: [],
-      objectifs: [{ type: "restauration", etatMin: "Très bon" }],
+      objectifs: [{ type: "restauration", etatMin: "Bon" }],
       recompense: { argent: 100 },
     },
   },

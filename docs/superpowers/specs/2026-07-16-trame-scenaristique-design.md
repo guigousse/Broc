@@ -47,7 +47,7 @@ l'acte** (à vérifier/ajuster par chapitre au moment du plan ; renforcer `attei
 |---|-------|----------|----------------|
 | 1 | La lampe de mon atelier | Chiner : lampe à pétrole, état Bon min | Première allusion au regret d'une vie |
 | 2 | Vendre, c'est vivre | Ventes cumulées ≥ 300 € | Souvenir de sa première vente, ratée |
-| 3 | Les mains d'or | Restaurer un objet à l'état Très bon | Il confie ses outils ; ses mains tremblent |
+| 3 | Les mains d'or | Restaurer un objet à l'état Bon *(baissé depuis « Très bon » le 2026-07-17 — Très bon exigeait Réparer 2/N10)* | Il confie ses outils ; ses mains tremblent |
 | 4 | Le pichet de ta grand-mère | Chiner : pichet en faïence | Première mention concrète des bijoux |
 
 → Livraison du ch. 4 : **lettre d'invitation des organisateurs, tier 2 débloqué.**
