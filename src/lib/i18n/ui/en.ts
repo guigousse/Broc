@@ -134,6 +134,7 @@ export const en: DictionnaireUI = {
     porteEntree: "Front door",
     carnetSessions: "Notebook — recent sessions",
     grandPere: "Talk to Grandpa",
+    colis: "Grandpa's parcel",
     lettreNonLue: "{n} unread letter",
     lettresNonLues: "{n} unread letters",
     carnetCommandeAucune: "Notebook — no quests",
@@ -165,11 +166,14 @@ export const en: DictionnaireUI = {
   tutoriel: {
     passer: "Skip tutorial",
     confirmerPasser: "Sure? Tap again",
+    colisTitre: "Grandpa's parcel",
+    colisRecuperer: "Collect",
     instructions: {
       "accueil": "Listen to your grandfather…",
       "aller-chiner": "Go through the door, choose “Pick”, then the Neighborhood Yard Sale.",
       "premier-achat": "Pick an item and buy it — haggle if you dare!",
       "rentrer": "Leave the flea market and head back to the shop.",
+      "ouvrir-colis": "Open Grandpa's parcel by the door.",
       "preparer-etal": "Go through the door again and choose “Set up stall” to get your window ready.",
       "premiere-vente": "Sell an item to a customer, then close the stall.",
       "conclusion": "Listen to your grandfather…",

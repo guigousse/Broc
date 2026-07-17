@@ -44,6 +44,9 @@ import { QgCalendrier } from "@/components/mobile/qg/QgCalendrier";
 import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
 import { GrandPereBadge } from "@/components/mobile/qg/GrandPereBadge";
+import { QgColis } from "@/components/mobile/qg/QgColis";
+import { ColisOverlay } from "@/components/mobile/qg/overlays/ColisOverlay";
+import { COLIS_TUTORIEL_TAILLE } from "@/data/starterInventory";
 import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
@@ -81,7 +84,7 @@ import {
 import { vinylAudioUrl, vinylHasAudio } from "@/data/vinylesAudio";
 import { estMissionLivrable } from "@/lib/missions";
 import { chapitrePret } from "@/lib/quetes/principales";
-import type { CategorieObjet, CollectionSlot } from "@/types/game";
+import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 import {
   volumeVinylForPos,
   fireplaceVolumeForPos,
@@ -104,7 +107,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     rerollMeteo,
     rerollCelebrite,
   } = useGame();
-  const { avancerTutoriel, terminerTutoriel, accepterChapitrePrincipal } = useGameActions();
+  const { avancerTutoriel, terminerTutoriel, accepterChapitrePrincipal, ouvrirObjetColis } =
+    useGameActions();
   const {
     playClick,
     playPaper,
@@ -142,6 +146,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // (créer la mission) à sa fin — cf. onFini du DialogueOverlay ci-dessous.
   const chPret = state ? chapitrePret(state) : null;
   const [dialogueChapitreId, setDialogueChapitreId] = useState<string | null>(null);
+  // Cérémonie du colis du tutoriel (étape ouvrir-colis) : objet en cours de
+  // révélation + son rang (1-based). null = overlay fermé.
+  const [objetColis, setObjetColis] = useState<Objet | null>(null);
+  const [numeroColis, setNumeroColis] = useState(0);
 
   // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
@@ -472,6 +480,18 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                     setPorteOuverte(true);
                   }}
                 />
+                {etape === "ouvrir-colis" && (
+                  <QgColis
+                    onTap={() => {
+                      playClick();
+                      const premier = ouvrirObjetColis();
+                      if (premier) {
+                        setNumeroColis((state?.colisTutorielLivres ?? 0) + 1);
+                        setObjetColis(premier);
+                      }
+                    }}
+                  />
+                )}
                 <QgCourrier
                   nbNonLus={nbCourriersNonLus}
                   onTap={() => {
@@ -713,6 +733,21 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
       {/* Pastille du grand-père : s'allume quand un chapitre de la trame est
           prêt à être délivré (chapitrePret), masquée pendant tout autre
           dialogue (tutoriel) pour ne pas se superposer. */}
+      <ColisOverlay
+        objet={objetColis}
+        numero={numeroColis}
+        total={COLIS_TUTORIEL_TAILLE}
+        onRecuperer={() => {
+          const suivant = ouvrirObjetColis();
+          if (suivant) {
+            setNumeroColis((state?.colisTutorielLivres ?? 0) + 1);
+            setObjetColis(suivant);
+          } else {
+            setObjetColis(null);
+            avancerTutoriel("preparer-etal");
+          }
+        }}
+      />
       <GrandPereBadge
         visible={!!chPret && !dialogueQg}
         onTap={() => {
@@ -732,7 +767,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             accepterChapitrePrincipal(dialogueChapitreId);
             setDialogueChapitreId(null);
           } else if (etape === "accueil") avancerTutoriel("aller-chiner");
-          else if (etape === "rentrer") avancerTutoriel("preparer-etal");
+          else if (etape === "rentrer") avancerTutoriel("ouvrir-colis");
           else if (etape === "conclusion") terminerTutoriel();
         }}
       />

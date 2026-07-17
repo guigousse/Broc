@@ -51,7 +51,8 @@ export const SEQUENCES_TUTORIEL: Record<string, DialogueSequence> = {
   tuto_retour: {
     id: "tuto_retour",
     lignes: [
-      { humeur: "souriant", texte: "Chiner, c'est le plaisir. Vendre, c'est le métier. Repasse la porte — et cette fois, on étale." },
+      { humeur: "souriant", texte: "Chiner, c'est le plaisir. Vendre, c'est le métier. Mais on ne tient pas un étal avec une seule trouvaille…" },
+      { humeur: "rieur", texte: "Alors je t'ai préparé un colis : quelques pièces de la boutique pour garnir ta première vitrine. Il t'attend devant la porte — ouvre-le !" },
     ],
   },
   tuto_vente_entree: {

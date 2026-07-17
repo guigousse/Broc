@@ -293,8 +293,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 13", () => {
-    expect(SAVE_VERSION).toBe(13);
+  it("SAVE_VERSION incrémenté à 14", () => {
+    expect(SAVE_VERSION).toBe(14);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -727,8 +727,8 @@ describe("migration v10 — suppression de competenceTrees", () => {
 });
 
 describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
-  it("SAVE_VERSION vaut 13", () => {
-    expect(SAVE_VERSION).toBe(13);
+  it("SAVE_VERSION vaut 14", () => {
+    expect(SAVE_VERSION).toBe(14);
   });
 
   it("une save v10 avec le champ legacy le perd, brocanteur intact", () => {
@@ -811,8 +811,22 @@ const migrate = migrerSauvegarde;
 const br = emptyBrocanteur();
 
 describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-verrouiller un tier)", () => {
-  it("SAVE_VERSION incrémenté à 13", () => {
-    expect(SAVE_VERSION).toBe(13);
+  it("SAVE_VERSION incrémenté à 14", () => {
+    expect(SAVE_VERSION).toBe(14);
+  });
+
+  it("v14 : save antérieure (stock donné à la création) ⇒ colis considéré livré", () => {
+    const migre = migrerSauvegarde({ ...saveV12(), version: 13 });
+    expect(migre.colisTutorielLivres).toBe(5);
+  });
+
+  it("v14 : save déjà v14 ⇒ compteur de colis conservé", () => {
+    const migre = migrerSauvegarde({
+      ...saveV12(),
+      version: 14,
+      colisTutorielLivres: 2,
+    });
+    expect(migre.colisTutorielLivres).toBe(2);
   });
 
   it("v12→v13 : niveau ≥ T3 ⇒ trame_ch1..8 livrés (tier 3 reste ouvert)", () => {

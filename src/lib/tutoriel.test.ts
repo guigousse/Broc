@@ -48,4 +48,34 @@ describe("tutoriel", () => {
     const state = createMockGameState({ tutorielEtape: "termine" });
     expect(appliquerFinTutoriel(state)).toBe(state);
   });
+
+  it("« Passer » livre le restant du colis : 5 objets (4 communs + 1 rare) sur une partie fraîche", () => {
+    const state = createMockGameState({
+      tutorielEtape: "accueil",
+      inventaireJoueur: [],
+      colisTutorielLivres: 0,
+      courriers: [],
+      declencheursDeclenches: [],
+      missions: [],
+    });
+    const fin = appliquerFinTutoriel(state);
+    expect(fin.inventaireJoueur).toHaveLength(5);
+    expect(fin.inventaireJoueur.filter((o) => o.rarete === "commun")).toHaveLength(4);
+    expect(fin.inventaireJoueur.filter((o) => o.rarete === "rare")).toHaveLength(1);
+    expect(fin.colisTutorielLivres).toBe(5);
+  });
+
+  it("« Passer » après un colis entièrement récupéré ne double pas les objets", () => {
+    const state = createMockGameState({
+      tutorielEtape: "preparer-etal",
+      colisTutorielLivres: 5,
+      courriers: [],
+      declencheursDeclenches: [],
+      missions: [],
+    });
+    const avant = state.inventaireJoueur.length;
+    const fin = appliquerFinTutoriel(state);
+    expect(fin.inventaireJoueur).toHaveLength(avant);
+    expect(fin.colisTutorielLivres).toBe(5);
+  });
 });

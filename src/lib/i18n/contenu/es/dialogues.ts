@@ -25,7 +25,8 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Venga, volvamos. Sal por la salida, con tu tesoro bajo el brazo.",
   ],
   tuto_retour: [
-    "Rebuscar es el placer. Vender es el oficio. Vuelve a cruzar la puerta — y esta vez, montamos el puesto.",
+    "Rebuscar es el placer. Vender es el oficio. Pero un puesto no se monta con un solo hallazgo…",
+    "Así que te he preparado un paquete: algunas piezas de la tienda para llenar tu primer escaparate. Te espera junto a la puerta — ¡ábrelo!",
   ],
   tuto_vente_entree: [
     "Los clientes vendrán. Escúchalos, déjalos hablar… y nunca bajes tu precio demasiado rápido.",

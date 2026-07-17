@@ -16,6 +16,7 @@ import { COMPETENCES, getCompetence } from "@/data/competences";
 import { prochainLundi } from "@/lib/calendrier";
 import { tirerCelebrite } from "@/lib/celebrite";
 import { ETAPES_TUTORIEL } from "@/lib/tutoriel";
+import { COLIS_TUTORIEL_TAILLE } from "@/data/starterInventory";
 import {
   donnerObjet as donnerObjetFn,
   initCollection,
@@ -97,7 +98,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -428,6 +429,15 @@ function appliquerMigrations(loaded: GameState): GameState {
   })();
   const tutorielFini = tutorielEtape === "termine";
 
+  // v14 : colis du tutoriel. Les saves antérieures ont reçu leur stock
+  // initial À LA CRÉATION → le colis est considéré entièrement livré (sinon
+  // le joueur recevrait 5 objets en double à l'étape ouvrir-colis ou au
+  // « Passer »). Les saves ≥ v14 gardent leur compteur tel quel.
+  const dejaV14 = typeof loaded.version === "number" && loaded.version >= 14;
+  const colisTutorielLivres = dejaV14
+    ? (loaded as Partial<GameState>).colisTutorielLivres ?? 0
+    : COLIS_TUTORIEL_TAILLE;
+
   // Tant qu'un tutoriel est en cours, la migration ne doit ni injecter la
   // lettre de Maman ni amorcer l'arc principal : `appliquerFinTutoriel`
   // (src/lib/tutoriel.ts) s'en charge à la fin du tutoriel.
@@ -571,6 +581,7 @@ function appliquerMigrations(loaded: GameState): GameState {
   return {
     ...loadedSansChampsSupprimes,
     tutorielEtape,
+    colisTutorielLivres,
     inventaireJoueur: inventaire,
     vitrine: vitrineActuelle,
     historique,

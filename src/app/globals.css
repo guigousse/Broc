@@ -1357,6 +1357,20 @@ nav[aria-label="Navigation principale"] :focus-visible,
   margin-left: 8px;
   scale: -1 1;
 }
+/* Cérémonie du colis du tutoriel : l'objet apparaît en grossissant. */
+@keyframes colis-pop-kf {
+  0% { scale: 0.2; opacity: 0; }
+  70% { scale: 1.06; opacity: 1; }
+  100% { scale: 1; opacity: 1; }
+}
+.colis-pop {
+  animation: colis-pop-kf 450ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .colis-pop {
+    animation: none;
+  }
+}
 /* Tutoriel : flèches pulsantes de part et d'autre du curseur de négociation
    (retour device 2026-07-17 — remplace la main sur le slider : le geste
    attendu est un glisser gauche/droite, pas un tap). */

@@ -25,7 +25,8 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "Come on, let's head home. Out through the exit, treasure under your arm.",
   ],
   tuto_retour: [
-    "Hunting is the pleasure. Selling is the trade. Go through the door again — and this time, we set up a stall.",
+    "Hunting is the pleasure. Selling is the trade. But you can't run a stall on a single find…",
+    "So I've packed you a parcel: a few pieces from the shop to fill your first window. It's waiting by the door — open it!",
   ],
   tuto_vente_entree: [
     "The customers will come. Listen to them, let them talk… and never drop your price too fast.",

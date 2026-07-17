@@ -137,6 +137,7 @@ export const fr = {
     porteEntree: "Porte d'entrée",
     carnetSessions: "Carnet — dernières sessions",
     grandPere: "Parler à Grand-père",
+    colis: "Colis du grand-père",
     lettreNonLue: "{n} lettre non lue",
     lettresNonLues: "{n} lettres non lues",
     carnetCommandeAucune: "Carnet de commande — aucune mission",
@@ -168,11 +169,14 @@ export const fr = {
   tutoriel: {
     passer: "Passer le tutoriel",
     confirmerPasser: "Sûr ? Touche encore",
+    colisTitre: "Le colis du grand-père",
+    colisRecuperer: "Récupérer",
     instructions: {
       "accueil": "Écoute ton grand-père…",
       "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",
       "premier-achat": "Choisis un objet et achète-le — négocie si tu l'oses !",
       "rentrer": "Sors de la brocante et rentre à la boutique.",
+      "ouvrir-colis": "Ouvre le colis du grand-père, devant la porte.",
       "preparer-etal": "Repasse la porte et choisis « Étaler » pour préparer ta vitrine.",
       "premiere-vente": "Vends un objet à un client, puis referme l'étal.",
       "conclusion": "Écoute ton grand-père…",

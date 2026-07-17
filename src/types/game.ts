@@ -287,8 +287,8 @@ export interface LedgerEntry {
 
 /**
  * Étapes du tutoriel guidé (SP1 trame scénaristique). Linéaire :
- * accueil → aller-chiner → premier-achat → rentrer → preparer-etal
- * → premiere-vente → conclusion → termine.
+ * accueil → aller-chiner → premier-achat → rentrer → ouvrir-colis
+ * → preparer-etal → premiere-vente → conclusion → termine.
  * "termine" = tutoriel fini ou sauté (état des saves antérieures à v12).
  */
 export type TutorielEtape =
@@ -296,6 +296,7 @@ export type TutorielEtape =
   | "aller-chiner"
   | "premier-achat"
   | "rentrer"
+  | "ouvrir-colis"
   | "preparer-etal"
   | "premiere-vente"
   | "conclusion"
@@ -357,6 +358,12 @@ export interface GameState {
   missions: MissionResolution[];
   /** ADDITIF (SP2) : restaurations terminées (bornées aux 100 dernières). */
   restaurations?: RestaurationAccomplie[];
+  /**
+   * ADDITIF (v14) : nombre d'objets du colis du tutoriel déjà récupérés
+   * (0..COLIS_TUTORIEL_TAILLE). Absent (saves < v14) ⇒ stock initial donné
+   * à la création, la migration pose 5.
+   */
+  colisTutorielLivres?: number;
   /** Lots de commandes périodiques en cours (quotidien / hebdo). */
   quetesPeriodiques: {
     quotidien: LotPeriodique;

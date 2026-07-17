@@ -134,6 +134,7 @@ export const es: DictionnaireUI = {
     porteEntree: "Puerta de entrada",
     carnetSessions: "Cuaderno — sesiones recientes",
     grandPere: "Hablar con el abuelo",
+    colis: "Paquete del abuelo",
     lettreNonLue: "{n} carta sin leer",
     lettresNonLues: "{n} cartas sin leer",
     carnetCommandeAucune: "Cuaderno — sin misiones",
@@ -165,11 +166,14 @@ export const es: DictionnaireUI = {
   tutoriel: {
     passer: "Saltar tutorial",
     confirmerPasser: "¿Seguro? Toca otra vez",
+    colisTitre: "El paquete del abuelo",
+    colisRecuperer: "Recoger",
     instructions: {
       "accueil": "Escucha a tu abuelo…",
       "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",
       "premier-achat": "Elige un objeto y cómpralo — ¡regatea si te atreves!",
       "rentrer": "Sal del mercadillo y vuelve a la tienda.",
+      "ouvrir-colis": "Abre el paquete del abuelo, junto a la puerta.",
       "preparer-etal": "Vuelve a cruzar la puerta y elige «Montar puesto» para preparar tu vitrina.",
       "premiere-vente": "Véndele un objeto a un cliente y cierra el puesto.",
       "conclusion": "Escucha a tu abuelo…",

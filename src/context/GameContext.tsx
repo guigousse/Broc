@@ -24,7 +24,10 @@ import {
   type TutorielEtape,
 } from "@/types/game";
 import { getCamion } from "@/data/camion";
-import { createStarterInventory } from "@/data/starterInventory";
+import {
+  COLIS_TUTORIEL_TAILLE,
+  objetColisTutoriel,
+} from "@/data/starterInventory";
 import { createGameRepository } from "@/lib/storage/createGameRepository";
 import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
 import { useToastSafe } from "@/components/ui/Toast";
@@ -163,6 +166,8 @@ interface GameActionsValue {
   detacherPartie: () => void;
   /** Fait avancer le tutoriel vers une étape donnée (idempotent si déjà atteinte/dépassée). */
   avancerTutoriel: (vers: TutorielEtape) => void;
+  /** Tire et livre l'objet suivant du colis du tutoriel (null si épuisé). */
+  ouvrirObjetColis: () => Objet | null;
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
   terminerTutoriel: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
@@ -540,7 +545,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       version: SAVE_VERSION,
       budget: INITIAL_BUDGET,
       jourActuel: INITIAL_JOUR,
-      inventaireJoueur: createStarterInventory(),
+      // Le stock initial arrive via le colis du tutoriel (étape ouvrir-colis)
+      // ou d'un coup au « Passer le tutoriel » — plus à la création (v14).
+      inventaireJoueur: [],
+      colisTutorielLivres: 0,
       vitrine: null,
       historique: [],
       tendances: genererTendances(),
@@ -829,6 +837,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
+  /**
+   * Tire l'objet suivant du colis du tutoriel, l'ajoute à l'inventaire et
+   * retourne l'objet (pour la cérémonie d'ouverture). null si le colis est
+   * vide (5 objets déjà livrés) ou sans partie.
+   */
+  const ouvrirObjetColis = useCallback((): Objet | null => {
+    const current = stateRef.current;
+    if (!current) return null;
+    const livres = current.colisTutorielLivres ?? 0;
+    if (livres >= COLIS_TUTORIEL_TAILLE) return null;
+    const objet = objetColisTutoriel(
+      livres,
+      current.inventaireJoueur.map((o) => o.templateId),
+    );
+    setState((prev) => {
+      if (!prev) return prev;
+      const l = prev.colisTutorielLivres ?? 0;
+      if (l >= COLIS_TUTORIEL_TAILLE) return prev;
+      return {
+        ...prev,
+        inventaireJoueur: [...prev.inventaireJoueur, objet],
+        colisTutorielLivres: l + 1,
+      };
+    });
+    return objet;
+  }, []);
+
   const terminerTutoriel = useCallback(() => {
     setState((prev) => (prev ? appliquerFinTutoriel(prev) : prev));
   }, []);
@@ -1659,6 +1694,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       reset,
       detacherPartie,
       avancerTutoriel,
+      ouvrirObjetColis,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
@@ -1711,6 +1747,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       reset,
       detacherPartie,
       avancerTutoriel,
+      ouvrirObjetColis,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
