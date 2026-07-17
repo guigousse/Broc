@@ -142,16 +142,19 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     ordre: 7,
     acte: 2,
     condition: { type: "depart" },
+    // Décision 2026-07-17 : « Pièce de maître » (Pristin état ⇒ Réparer 3 ⇒
+    // niveau 30) déplacée en late game (ch9) ; la préparation de vitrine
+    // redescend ici avec un montant d'acte II (provisoire, équilibrage SP3).
     // SP3 : texte provisoire
     dialogue: [
-      { humeur: "songeur", texte: "Il y a l'ouvrage propre, et il y a l'ouvrage de maître. J'ai vu peu de gens franchir ce pas." },
-      { humeur: "souriant", texte: "Restaure-moi un objet jusqu'au Pristin état. Là, tu seras un maître." },
+      { humeur: "emu", texte: "Regarde ce que tu as bâti. Une vraie collection prend forme, tu sais." },
+      { humeur: "souriant", texte: "Continue : 1500 € de valeur en vitrine, et les beaux salons te regarderont autrement." },
     ],
     payload: {
-      titre: "Pièce de maître",
-      corps: ["Restaurer un objet jusqu'à l'état Pristin état."], // SP3 : texte provisoire
+      titre: "Une vitrine digne de ce nom",
+      corps: ["Atteindre 1500 € de valeur de collection."], // SP3 : texte provisoire
       cibles: [],
-      objectifs: [{ type: "restauration", etatMin: "Pristin état" }],
+      objectifs: [{ type: "valeurCollection", montant: 1500 }],
       recompense: { argent: 190 },
     },
   },
@@ -179,16 +182,18 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     ordre: 9,
     acte: 3,
     condition: { type: "depart" },
+    // Décision 2026-07-17 : mission de maîtrise placée en late game (venue du
+    // ch7) — au seuil du Grand Salon, le palier Réparer 3 est atteignable.
     // SP3 : texte provisoire
     dialogue: [
-      { humeur: "emu", texte: "Regarde ce que tu as bâti. Une vraie collection, digne d'une vitrine." },
-      { humeur: "souriant", texte: "Encore un effort : 5000 € de valeur en collection, et ce sera officiel." },
+      { humeur: "songeur", texte: "Il y a l'ouvrage propre, et il y a l'ouvrage de maître. J'ai vu peu de gens franchir ce pas." },
+      { humeur: "souriant", texte: "Restaure-moi un objet jusqu'au Pristin état. Le Grand Salon ne mérite rien de moins." },
     ],
     payload: {
-      titre: "Une vitrine digne de ce nom",
-      corps: ["Atteindre 5000 € de valeur de collection."], // SP3 : texte provisoire
+      titre: "Pièce de maître",
+      corps: ["Restaurer un objet jusqu'à l'état Pristin état."], // SP3 : texte provisoire
       cibles: [],
-      objectifs: [{ type: "valeurCollection", montant: 5000 }],
+      objectifs: [{ type: "restauration", etatMin: "Pristin état" }],
       recompense: { argent: 260 },
     },
   },
