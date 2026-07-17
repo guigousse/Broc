@@ -674,10 +674,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       );
       const baseAvecMissions: GameState = { ...base, missions: missionsApresExpiration };
 
-      // Tick des quêtes : passthrough depuis SP2 (la trame est délivrée en
-      // dialogue via accepterChapitre ; les commandes quotidiennes/hebdomadaires
-      // restent gérées en temps réel via le settle). Conservé comme point
-      // d'accroche pour de futurs ticks de quêtes.
+      // Tick des quêtes : injecte les cartes postales de l'épilogue (une tous
+      // les 6 jours après la livraison de trame_ch12). La trame elle-même est
+      // délivrée en dialogue via accepterChapitre ; les commandes quotidiennes/
+      // hebdomadaires restent gérées en temps réel via le settle.
       const tick = tickQuetes(baseAvecMissions, nouveauJour);
       const baseAvecQuetes: GameState = {
         ...baseAvecMissions,
