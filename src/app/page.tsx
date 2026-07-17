@@ -275,7 +275,7 @@ export default function TitleScreen() {
     setPartiesModal(null);
     lancerIrisVers(() => {
       // Ordre CRITIQUE (même course que l'ancien onJouer de PartiesModal) :
-      // pendant la fermeture (~900 ms), le GameContext de cet écran reste
+      // pendant la fermeture (DUREE_FERMETURE_MS), le GameContext de cet écran reste
       // monté sur l'ANCIEN slot actif — la bascule n'a lieu qu'au noir,
       // détachement d'abord, navigation aussitôt après, pour qu'aucun tick
       // d'auto-sauvegarde ne puisse écrire dans le slot fraîchement activé.

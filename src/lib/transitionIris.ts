@@ -12,8 +12,8 @@
  * racine (src/app/layout.tsx) — garder les deux synchronisées.
  */
 
-export const DUREE_FERMETURE_MS = 900;
-export const DUREE_OUVERTURE_MS = 700;
+export const DUREE_FERMETURE_MS = 1800;
+export const DUREE_OUVERTURE_MS = 1400;
 export const NOIR_MIN_MS = 250;
 export const TIMEOUT_PRECHARGEMENT_MS = 4000;
 export const DUREE_FADE_REDUIT_MS = 400;

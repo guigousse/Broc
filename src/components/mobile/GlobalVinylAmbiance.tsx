@@ -35,6 +35,9 @@ interface Ambiance {
 
 function ambianceForPathname(pathname: string): Ambiance | null {
   if (PANORAMA_PATHS.has(pathname)) return null; // panorama drives itself
+  // L'écran titre pilote lui-même sa musique jazz — pleine, sans lowpass
+  // (cf. demarrerMusiqueTitre) : le contrôleur global ne l'étouffe plus.
+  if (pathname === "/") return null;
   if (
     pathname.startsWith("/chiner") ||
     pathname.startsWith("/vitrine")
@@ -43,7 +46,7 @@ function ambianceForPathname(pathname: string): Ambiance | null {
     // musique du local "porte" encore correctement).
     return { volume: 0.32, lowpassHz: 700 };
   }
-  // /, /collection, autres : à distance générique
+  // /collection, autres : à distance générique
   return { volume: 0.22, lowpassHz: 700 };
 }
 
