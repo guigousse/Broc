@@ -62,4 +62,16 @@ describe("trame principale (squelette SP2)", () => {
       }
     }
   });
+  it("plus aucun texte provisoire dans l'arc", async () => {
+    const fs = await import("node:fs/promises");
+    const src = await fs.readFile("src/data/quetesPrincipales.ts", "utf8");
+    expect(src).not.toContain("SP3 : texte provisoire");
+  });
+  it("chaque chapitre a un dialogue de 2 à 5 lignes et un corps de 2 paragraphes min", () => {
+    for (const c of QUETES_PRINCIPALES) {
+      expect(c.dialogue.length).toBeGreaterThanOrEqual(2);
+      expect(c.dialogue.length).toBeLessThanOrEqual(5);
+      expect(c.payload.corps.length).toBeGreaterThanOrEqual(2);
+    }
+  });
 });

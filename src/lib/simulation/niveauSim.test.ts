@@ -211,8 +211,8 @@ describe.runIf(SIM)("simulation de la courbe de niveau", () => {
 
       const outDir = path.resolve(__dirname, "../../../docs/equilibrage");
       fs.mkdirSync(outDir, { recursive: true });
-      const jsonPath = path.join(outDir, "simulation-niveau-2026-07-06.json");
-      const mdPath = path.join(outDir, "simulation-niveau-2026-07-06.md");
+      const jsonPath = path.join(outDir, "simulation-niveau-2026-07-17.json");
+      const mdPath = path.join(outDir, "simulation-niveau-2026-07-17.md");
 
       fs.writeFileSync(jsonPath, JSON.stringify(rapport, null, 2), "utf-8");
       fs.writeFileSync(mdPath, buildMarkdown(rapport, fouille, lotGarni), "utf-8");
@@ -237,7 +237,7 @@ function buildMarkdown(
   lotGarni: ReturnType<typeof runLotGarniMicroSim>,
 ): string {
   const lignes: string[] = [];
-  lignes.push("# Simulation de la courbe de Niveau de Brocanteur — 2026-07-06");
+  lignes.push("# Simulation de la courbe de Niveau de Brocanteur — 2026-07-17");
   lignes.push("");
   lignes.push(
     "Simulateur branché sur les vrais modules du jeu (`src/lib/simulation/niveauSim.ts`), " +

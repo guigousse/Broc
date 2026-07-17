@@ -43,34 +43,34 @@ l'acte** (à vérifier/ajuster par chapitre au moment du plan ; renforcer `attei
 
 ### Acte I — L'apprentissage *(tier 1)*
 
-| # | Titre | Objectif | Note narrative |
-|---|-------|----------|----------------|
-| 1 | La lampe de mon atelier | Chiner : lampe à pétrole, état Bon min | Première allusion au regret d'une vie |
-| 2 | Vendre, c'est vivre | Ventes cumulées ≥ 300 € | Souvenir de sa première vente, ratée |
-| 3 | Les mains d'or | Restaurer un objet à l'état Bon *(baissé depuis « Très bon » le 2026-07-17 — Très bon exigeait Réparer 2/N10)* | Il confie ses outils ; ses mains tremblent |
-| 4 | Le pichet de ta grand-mère | Chiner : pichet en faïence | Première mention concrète des bijoux |
+| # | Titre | Objectif | Récompense | Note narrative |
+|---|-------|----------|---|----------------|
+| 1 | La lampe de mon atelier | Chiner : lampe à pétrole, état Bon min | 60 € | Première allusion au regret d'une vie |
+| 2 | Vendre, c'est vivre | Ventes cumulées ≥ 300 € | 80 € | Souvenir de sa première vente, ratée |
+| 3 | Les mains d'or | Restaurer un objet à l'état Bon *(baissé depuis « Très bon » le 2026-07-17 — Très bon exigeait Réparer 2/N10)* | 100 € | Il confie ses outils ; ses mains tremblent |
+| 4 | Le pichet de ta grand-mère | Chiner : pichet en faïence | 120 € | Première mention concrète des bijoux |
 
 → Livraison du ch. 4 : **lettre d'invitation des organisateurs, tier 2 débloqué.**
 
 ### Acte II — Se faire un nom *(tier 2)*
 
-| # | Titre | Objectif | Note narrative |
-|---|-------|----------|----------------|
-| 5 | Un nom qui circule | Atteindre le niveau X (valeur fixée au plan SP3, sur la courbe de niveaux actuelle) | Les marchands parlent de toi |
-| 6 | Le flair | Profit ≥ 100 € sur une seule vente | Le jour où il a laissé filer une pièce à 10× sa valeur |
-| 7 | Une vitrine digne de ce nom | Valeur de collection ≥ 1 500 € *(déplacé depuis le ch. 9 le 2026-07-17 — « Pièce de maître » exigeait Réparer 3/N30, reporté en late game)* | La collection prend forme |
-| 8 | Le beau monde | Chiner : gravure, état Très bon | Les rumeurs sur les bijoux circulent chez les collectionneurs |
+| # | Titre | Objectif | Récompense | Note narrative |
+|---|-------|----------|---|----------------|
+| 5 | Un nom qui circule | Atteindre le niveau 8 *(confirmé au simulateur le 2026-07-17 : jour médian d'atteinte N8 = J4 sur les 3 profils, largement avant J25)* | 180 € | Les marchands parlent de toi |
+| 6 | Le flair | Profit ≥ 100 € sur une seule vente | 200 € | Le jour où il a laissé filer une pièce à 10× sa valeur |
+| 7 | Une vitrine digne de ce nom | Valeur de collection ≥ 1 500 € *(déplacé depuis le ch. 9 le 2026-07-17 — « Pièce de maître » exigeait Réparer 3/N30, reporté en late game)* | 220 € | La collection prend forme |
+| 8 | Le beau monde | Chiner : gravure, état Très bon | 260 € | Les rumeurs sur les bijoux circulent chez les collectionneurs |
 
 → Livraison du ch. 8 : **invitation des organisateurs, tier 3 débloqué.**
 
 ### Acte III — Le rêve *(tier 3 → 4)*
 
-| # | Titre | Objectif | Note narrative |
-|---|-------|----------|----------------|
-| 9 | Pièce de maître | Restaurer un objet à l'état Comme neuf *(échangé avec le ch. 7 le 2026-07-17)* | « Un objet remis à neuf, c'est une vie qu'on prolonge » — se préparer pour le Grand Salon |
-| 10 | L'invitation | Sans objectif (`cibles: []`, comme l'actuel ch. 4) : chapitre purement narratif, livré dès l'acceptation | Il raconte tout : 50 ans de quête, son échec. **Invitation au Grand Salon des Antiquaires (tier 4)** |
-| 11 | Les bijoux de la reine | Chiner : `uniq.mo.bijou_marie_antoinette` (le joueur le garde) | Trouvés au Grand Salon |
-| 12 | La remise des clés | Purement narratif | Il contemple les bijoux, remet les clés, annonce son voyage. Récompense généreuse + épilogue |
+| # | Titre | Objectif | Récompense | Note narrative |
+|---|-------|----------|---|----------------|
+| 9 | Pièce de maître | Restaurer un objet à l'état Comme neuf *(échangé avec le ch. 7 le 2026-07-17)* | 320 € | « Un objet remis à neuf, c'est une vie qu'on prolonge » — se préparer pour le Grand Salon |
+| 10 | L'invitation | Sans objectif (`cibles: []`, comme l'actuel ch. 4) : chapitre purement narratif, livré dès l'acceptation | 200 € | Il raconte tout : 50 ans de quête, son échec. **Invitation au Grand Salon des Antiquaires (tier 4)** |
+| 11 | Les bijoux de la reine | Chiner : `uniq.mo.bijou_marie_antoinette` (le joueur le garde) | 600 € | Trouvés au Grand Salon |
+| 12 | La remise des clés | Purement narratif | 800 € | Il contemple les bijoux, remet les clés, annonce son voyage. Récompense généreuse + épilogue |
 
 ### Épilogue
 

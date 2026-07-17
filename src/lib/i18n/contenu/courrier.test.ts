@@ -1,16 +1,25 @@
 import { describe, expect, test } from "vitest";
 import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
+import { INVITATIONS_ORGANISATEURS } from "@/data/invitationsOrganisateurs";
+import { CARTES_POSTALES } from "@/data/cartesPostales";
 import { creerLettreMamanDebut, ID_LETTRE_MAMAN_DEBUT } from "@/lib/courrier";
 import { COURRIER_EN } from "@/lib/i18n/contenu/en/courrier";
 import { COURRIER_ES } from "@/lib/i18n/contenu/es/courrier";
 import { corpsCourrier, manquants, orphelins, titreCourrier } from "@/lib/i18n/contenu";
 
-const IDS = [ID_LETTRE_MAMAN_DEBUT, ...QUETES_PRINCIPALES.map((c) => c.id)];
+const IDS = [
+  ID_LETTRE_MAMAN_DEBUT,
+  ...QUETES_PRINCIPALES.map((c) => c.id),
+  ...([2, 3, 4] as const).map((tier) => `invitation_tier${tier}`),
+  ...CARTES_POSTALES.map((c) => c.id),
+];
 
-// SP2 Task 4 : squelette 12 chapitres trame_ch1..12 en textes FR provisoires
-// (SP3). Les overlays EN/ES du CONTENU des chapitres (corps) sont refaits en
-// SP3 — cf. docs/superpowers/plans/2026-07-16-sp2-trame-mecanique.md (l.13).
-describe.skip.each([["EN", COURRIER_EN], ["ES", COURRIER_ES]] as const)("overlay courrier %s", (_, ov) => {
+// SP3 Task 7 : chapitres (trame_ch1..12), invitations (invitation_tier2/3/4)
+// et cartes postales (carte_postale_1..5) traduits EN. SP3 Task 8 : idem ES.
+describe.each([
+  ["EN", COURRIER_EN],
+  ["ES", COURRIER_ES],
+] as const)("overlay courrier %s", (_, ov) => {
   test("complétude + zéro orphelin", () => {
     expect(manquants(IDS, ov)).toEqual([]);
     expect(orphelins(IDS, ov)).toEqual([]);
@@ -20,6 +29,14 @@ describe.skip.each([["EN", COURRIER_EN], ["ES", COURRIER_ES]] as const)("overlay
     expect(ov[ID_LETTRE_MAMAN_DEBUT].corps.length).toBe(maman.payload.corps.length);
     for (const ch of QUETES_PRINCIPALES) {
       expect(ov[ch.id].corps.length).toBe(ch.payload.corps.length);
+    }
+    for (const tier of [2, 3, 4] as const) {
+      expect(ov[`invitation_tier${tier}`].corps.length).toBe(
+        INVITATIONS_ORGANISATEURS[tier].corps.length,
+      );
+    }
+    for (const carte of CARTES_POSTALES) {
+      expect(ov[carte.id].corps.length).toBe(carte.corps.length);
     }
   });
 });

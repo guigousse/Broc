@@ -63,7 +63,7 @@ describe("creerLettreInvitation", () => {
     expect(creerLettreInvitation(4, 1).id).toBe("invitation_tier4");
   });
 
-  it("titre/corps distincts par tier (textes provisoires SP3)", () => {
+  it("titre/corps distincts par tier", () => {
     const t2 = creerLettreInvitation(2, 1);
     const t4 = creerLettreInvitation(4, 1);
     if (t2.payload.type === "lettre" && t4.payload.type === "lettre") {

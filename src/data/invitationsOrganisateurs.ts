@@ -1,19 +1,25 @@
 /** Lettres d'invitation de fin d'acte. Purement narratives (le déblocage réel
- *  est la condition chapitrePrincipal). SP3 : textes provisoires. */
+ *  est la condition chapitrePrincipal). */
 export const INVITATIONS_ORGANISATEURS: Record<2 | 3 | 4, { titre: string; corps: string[] }> = {
   2: {
-    titre: "Invitation — les marchés de la ville", // SP3 : texte provisoire
+    titre: "Invitation aux marchés de la ville",
     corps: [
-      "Votre étal fait parler de lui.",
-      "Les marchés ★★ de la ville vous ouvrent leurs portes. Présentez cette lettre à l'entrée.",
+      "Votre étal ne passe plus inaperçu : plusieurs de nos exposants nous ont parlé de vous.",
+      "Les **marchés ★★ de la ville** vous sont désormais ouverts. Présentez-vous à l'entrée — votre nom suffira.",
     ],
   },
   3: {
-    titre: "Invitation — les salons", // SP3 : texte provisoire
-    corps: ["Votre réputation vous précède.", "Les salons ★★★ seront honorés de votre visite."],
+    titre: "Invitation aux salons",
+    corps: [
+      "Votre réputation vous précède — c'est une chose rare, et nous savons la reconnaître.",
+      "Les **salons ★★★** seront honorés de votre visite. Tenue correcte appréciée, œil aiguisé exigé.",
+    ],
   },
   4: {
-    titre: "Invitation — le Grand Salon des Antiquaires", // SP3 : texte provisoire
-    corps: ["Le Grand Salon des Antiquaires vous convie à sa prochaine édition.", "Peu y entrent. Encore moins y reviennent."],
+    titre: "Le Grand Salon des Antiquaires",
+    corps: [
+      "Peu de noms entrent au **Grand Salon**. Le vôtre vient d'y être inscrit.",
+      "Nous vous attendons. Certains y cherchent des trésors ; les plus sages y trouvent des histoires.",
+    ],
   },
 };

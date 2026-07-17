@@ -1,23 +1,36 @@
 import { describe, expect, it } from "vitest";
 import { TOUTES_SEQUENCES } from "@/data/dialogues";
+import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
 import { lignesDialogue, manquants, orphelins } from "./index";
 import { DIALOGUES_EN } from "./en/dialogues";
 import { DIALOGUES_ES } from "./es/dialogues";
 
-const IDS = TOUTES_SEQUENCES.map((s) => s.id);
+const IDS_TUTORIEL = TOUTES_SEQUENCES.map((s) => s.id);
+
+// SP3 Task 7 : dialogues de délivrance des 12 chapitres de la trame
+// (`dlg_trame_chN`). Construits ad hoc par le layout QG (`{ id: `dlg_${ch.id}`,
+// lignes: ch.dialogue }`, cf. `src/app/(qg)/layout.tsx`) et résolus par
+// `lignesDialogue()` — PAS enregistrés dans `TOUTES_SEQUENCES` (registre
+// propre au tutoriel), donc traités à part ici pour ne pas gonfler ce
+// registre avec des séquences synthétiques.
+const IDS_TRAME = QUETES_PRINCIPALES.map((ch) => `dlg_${ch.id}`);
 
 describe.each([
-  ["EN", DIALOGUES_EN],
-  ["ES", DIALOGUES_ES],
-] as const)("overlay dialogues %s", (_nom, overlay) => {
+  ["EN", DIALOGUES_EN, [...IDS_TUTORIEL, ...IDS_TRAME]],
+  ["ES", DIALOGUES_ES, [...IDS_TUTORIEL, ...IDS_TRAME]],
+] as const)("overlay dialogues %s", (_nom, overlay, ids) => {
   it("couvre toutes les séquences, sans orphelin", () => {
-    expect(manquants(IDS, overlay)).toEqual([]);
-    expect(orphelins(IDS, overlay)).toEqual([]);
+    expect(manquants([...ids], overlay)).toEqual([]);
+    expect(orphelins([...ids], overlay)).toEqual([]);
   });
 
   it("a le même nombre de lignes que le FR", () => {
     for (const s of TOUTES_SEQUENCES) {
       expect(overlay[s.id]).toHaveLength(s.lignes.length);
+    }
+    for (const ch of QUETES_PRINCIPALES) {
+      const cle = `dlg_${ch.id}`;
+      if (overlay[cle]) expect(overlay[cle]).toHaveLength(ch.dialogue.length);
     }
   });
 });

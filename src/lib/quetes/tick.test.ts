@@ -23,3 +23,35 @@ describe("tickQuetes", () => {
     expect(out.missions).toBe(state.missions);
   });
 });
+
+describe("cartes postales (épilogue)", () => {
+  const finTrame = (jourResolution: number) => createMockGameState({
+    tutorielEtape: "termine",
+    missions: [{ courrierId: "trame_ch12", statut: "livree", jourResolution }],
+  });
+  it("rien avant l'intervalle", () => {
+    const t = tickQuetes(finTrame(10), 15);
+    expect(t.courriers.some((c) => c.id.startsWith("carte_postale"))).toBe(false);
+  });
+  it("injecte la carte 1 à J+6, non lue, expéditeur grand-père", () => {
+    const t = tickQuetes(finTrame(10), 16);
+    const carte = t.courriers.find((c) => c.id === "carte_postale_1");
+    expect(carte).toBeDefined();
+    expect(carte?.lu).toBe(false);
+  });
+  it("une seule carte par tick, idempotent, s'arrête à 5", () => {
+    let state = finTrame(0);
+    for (let jour = 1; jour <= 60; jour++) {
+      const t = tickQuetes({ ...state, jourActuel: jour }, jour);
+      state = { ...state, courriers: t.courriers, missions: t.missions };
+    }
+    const cartes = state.courriers.filter((c) => c.id.startsWith("carte_postale"));
+    expect(cartes.map((c) => c.id).sort()).toEqual(
+      ["carte_postale_1", "carte_postale_2", "carte_postale_3", "carte_postale_4", "carte_postale_5"],
+    );
+  });
+  it("rien si la trame n'est pas finie", () => {
+    const t = tickQuetes(createMockGameState({ tutorielEtape: "termine" }), 50);
+    expect(t.courriers.some((c) => c.id.startsWith("carte_postale"))).toBe(false);
+  });
+});
