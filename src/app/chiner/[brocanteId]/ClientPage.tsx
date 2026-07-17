@@ -158,7 +158,6 @@ export default function SessionChinePage() {
         uniquesExclusDuChinage(state),
       );
       setItems(session);
-      toast(tr(d.chine.droitEntreePaye, { frais }), { type: "info" });
       for (const it of session) {
         marquerVuTemplate(it.objet.templateId);
       }

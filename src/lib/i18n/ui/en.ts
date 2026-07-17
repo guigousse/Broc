@@ -230,7 +230,6 @@ export const en: DictionnaireUI = {
     installationEtals: "— setting up the stalls…",
     plusEnergieToast:
       "No more energy — wait for it to recharge or watch an ad.",
-    droitEntreePaye: "Entry fee paid: {frais} €.",
     caisseRefuse: "The till refuses — insufficient funds.",
     aucuneBrocanteTier: "No flea market in this tier.",
     roleCarrousel: "carousel",
@@ -302,8 +301,6 @@ export const en: DictionnaireUI = {
     ouvrirEtal: "Open the stall · {prix} €",
     enTeteVitrine: "Stall · {heure}",
     etalVide: "Your stall is empty. Passers-by keep walking.",
-    journalDeBord: "— Logbook —",
-    journalVide: "Nothing has happened yet.",
     journalAchete: "{nom} buys {panier} for {prix} €.",
     journalAccepte: "{nom} accepts {panier} for {prix} €.",
     journalEloigne: "{nom} walks away without buying anything.",

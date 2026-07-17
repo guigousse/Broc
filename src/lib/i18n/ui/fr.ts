@@ -233,7 +233,6 @@ export const fr = {
     installationEtals: "— installation des étals…",
     plusEnergieToast:
       "Plus d'énergie — attends la recharge ou regarde une pub.",
-    droitEntreePaye: "Droit d'entrée payé : {frais} €.",
     caisseRefuse: "La caisse refuse — fonds insuffisants.",
     aucuneBrocanteTier: "Aucune brocante dans ce tier.",
     roleCarrousel: "carrousel",
@@ -305,8 +304,6 @@ export const fr = {
     ouvrirEtal: "Ouvrir l'étal · {prix} €",
     enTeteVitrine: "Vitrine · {heure}",
     etalVide: "Votre étal est vide. Les badauds passent leur chemin.",
-    journalDeBord: "— Journal de bord —",
-    journalVide: "Rien n'est encore arrivé.",
     journalAchete: "{nom} achète {panier} pour {prix} €.",
     journalAccepte: "{nom} accepte {panier} à {prix} €.",
     journalEloigne: "{nom} s'éloigne sans rien acheter.",

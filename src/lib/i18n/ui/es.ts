@@ -230,7 +230,6 @@ export const es: DictionnaireUI = {
     installationEtals: "— instalando los puestos…",
     plusEnergieToast:
       "Sin energía — espera a que se recargue o mira un anuncio.",
-    droitEntreePaye: "Entrada pagada: {frais} €.",
     caisseRefuse: "La caja se niega — fondos insuficientes.",
     aucuneBrocanteTier: "Ningún mercadillo en este tier.",
     roleCarrousel: "carrusel",
@@ -302,8 +301,6 @@ export const es: DictionnaireUI = {
     ouvrirEtal: "Abrir el puesto · {prix} €",
     enTeteVitrine: "Puesto · {heure}",
     etalVide: "Tu puesto está vacío. Los curiosos siguen su camino.",
-    journalDeBord: "— Diario de a bordo —",
-    journalVide: "Todavía no ha pasado nada.",
     journalAchete: "{nom} compra {panier} por {prix} €.",
     journalAccepte: "{nom} acepta {panier} por {prix} €.",
     journalEloigne: "{nom} se aleja sin comprar nada.",
