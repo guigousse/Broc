@@ -33,14 +33,18 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     ordre: 1,
     acte: 1,
     condition: { type: "depart" },
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "songeur", texte: "Ma vieille lampe d'atelier… quarante ans qu'elle a éclairé mes trouvailles. Elle me manque." },
-      { humeur: "souriant", texte: "Retrouve-m'en une — état correct, hein. Tu la verras sûrement dans un vide-grenier." },
+      { humeur: "songeur", texte: "Quarante ans que ma vieille lampe à pétrole a éclairé l'établi. Je l'ai cassée un soir de maladresse… mes mains, déjà." },
+      { humeur: "emu", texte: "Chaque trouvaille passait sous sa lumière avant de rejoindre la vitrine. C'est bête, un vieil homme qui s'attache à une lampe, hein ?" },
+      { humeur: "souriant", texte: "On en croise encore dans les vide-greniers, en état correct si on cherche bien. Rapporte-m'en une, tu veux ?" },
+      { humeur: "rieur", texte: "Et négocie ! Si tu la paies plein pot, je le saurai. Je sais toujours." },
     ],
     payload: {
       titre: "La lampe de mon atelier",
-      corps: ["Retrouver une lampe à pétrole en bon état pour le grand-père."], // SP3 : texte provisoire
+      corps: [
+        "Retrouver une **lampe à pétrole ancienne** en bon état.",
+        "« Quarante ans qu'elle a éclairé mes trouvailles. Une boutique sans sa lampe, c'est une histoire sans lumière. »",
+      ],
       cibles: [{ templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" }],
       objectifs: [{ type: "objet", templateId: "ma.lampe_petrole_ancienne", etatMin: "Bon" }],
       recompense: { argent: 60 },
@@ -51,14 +55,17 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     ordre: 2,
     acte: 1,
     condition: { type: "depart" },
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "emu", texte: "Ma toute première vente, je l'ai ratée. Le client est parti en riant." },
-      { humeur: "souriant", texte: "Toi, tu feras mieux. Montre-moi : 300 € de ventes, et on en reparle." },
+      { humeur: "emu", texte: "Ma première vente, je l'ai ratée. Un miroir piqué, un client pressé… j'ai bafouillé, il est parti. J'ai pleuré derrière le rideau, tu sais." },
+      { humeur: "songeur", texte: "Le lendemain, ta grand-mère m'a dit : « Recommence. » J'ai vendu un cadre à deux francs. Le plus beau jour de ma vie de marchand." },
+      { humeur: "souriant", texte: "À toi maintenant. Fais chanter le tiroir-caisse : 300 € de ventes, et je te raconte la suite." },
     ],
     payload: {
       titre: "Vendre, c'est vivre",
-      corps: ["Cumuler 300 € de ventes depuis l'acceptation."], // SP3 : texte provisoire
+      corps: [
+        "Cumuler **300 €** de ventes depuis l'acceptation.",
+        "« Chiner, c'est le plaisir. Vendre, c'est le métier. Et le métier, ça s'apprend en vendant. »",
+      ],
       cibles: [],
       objectifs: [{ type: "ventesCumulees", montant: 300 }],
       recompense: { argent: 80 },
@@ -72,14 +79,17 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     // Décision 2026-07-17 : seuil baissé « Très bon » → « Bon » (Très bon
     // exigeait Réparer 2 ⇒ niveau 10 — mur d'XP en acte I ; « Bon » ne
     // demande que Réparer 1, accessible dès le début).
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "songeur", texte: "Mes mains tremblent trop pour l'établi, maintenant. Prends mes outils." },
-      { humeur: "souriant", texte: "Restaure-moi un objet abîmé — qu'il ressorte présentable. Tu verras, ça rend fier." },
+      { humeur: "songeur", texte: "Regarde-les. Elles tremblent, maintenant. Ces mains ont recollé, poncé, verni pendant cinquante ans." },
+      { humeur: "emu", texte: "Prends mes outils. Ils sont à toi — le maillet a son histoire, je te la raconterai un jour." },
+      { humeur: "souriant", texte: "Trouve une pièce abîmée et rends-lui figure. La première fois qu'un objet revit entre tes doigts… tu verras." },
     ],
     payload: {
       titre: "Les mains d'or",
-      corps: ["Restaurer un objet jusqu'à l'état Bon."], // SP3 : texte provisoire
+      corps: [
+        "Restaurer un objet jusqu'à l'état **Bon**.",
+        "« Un objet abîmé, c'est une histoire qui bégaie. Répare-la. »",
+      ],
       cibles: [],
       objectifs: [{ type: "restauration", etatMin: "Bon" }],
       recompense: { argent: 100 },
@@ -91,14 +101,18 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     acte: 1,
     condition: { type: "depart" },
     invitationTier: 2,
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "emu", texte: "Ta grand-mère avait un pichet en faïence, bleu, ébréché au bec. Je l'ai vendu un jour de dèche… je le regrette encore." },
-      { humeur: "songeur", texte: "Elle disait qu'un jour je lui offrirais les bijoux d'une reine. Retrouve-moi d'abord ce pichet, tu veux ?" },
+      { humeur: "emu", texte: "Ta grand-mère avait un pichet en faïence, bleu, ébréché au bec. Il trônait sur le buffet, toujours plein de fleurs des champs." },
+      { humeur: "songeur", texte: "Un hiver difficile, je l'ai vendu. Elle n'a rien dit. C'est ce silence-là que je n'ai jamais su réparer." },
+      { humeur: "songeur", texte: "Elle rêvait que je lui offre les bijoux d'une reine, un jour. Moi, je n'ai même pas su lui garder son pichet." },
+      { humeur: "souriant", texte: "On en trouve des pareils dans les vide-greniers. Retrouve-le-moi. Enfin… retrouve-le-lui." },
     ],
     payload: {
       titre: "Le pichet de ta grand-mère",
-      corps: ["Retrouver un pichet en faïence émaillée."], // SP3 : texte provisoire
+      corps: [
+        "Retrouver un **pichet en faïence émaillée**.",
+        "« Je l'ai vendu un hiver de dèche. Certains regrets ont la forme d'un pichet bleu. »",
+      ],
       cibles: [{ templateId: "ma.pichet_faience_emaillee" }],
       objectifs: [{ type: "objet", templateId: "ma.pichet_faience_emaillee" }],
       recompense: { argent: 120 },
