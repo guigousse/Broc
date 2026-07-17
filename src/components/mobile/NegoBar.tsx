@@ -103,7 +103,7 @@ export function NegoBar({
         </div>
         <div
           onPointerDown={startDrag}
-          className={tutoMainJoueur && !readOnly ? "tuto-main" : undefined}
+          className={tutoMainJoueur && !readOnly ? "tuto-fleches" : undefined}
           style={{
             ...cursorStyle,
             left: `${pctJoueur}%`,
