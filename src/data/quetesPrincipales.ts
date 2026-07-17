@@ -23,7 +23,7 @@ export interface ChapitrePrincipal {
 
 /**
  * Trame principale (SP2) : le grand-père, vivant, confie 12 chapitres en
- * 3 actes. Fil rouge : les bijoux de la reine. Textes provisoires (SP3).
+ * 3 actes. Fil rouge : les bijoux de la reine. Textes définitifs (SP3).
  * Ids STABLES `trame_chN` (i18n + saves) — préfixe distinct de l'ancien arc
  * `principale_*` pour éviter toute collision en migration.
  */
