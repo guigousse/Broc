@@ -66,6 +66,8 @@ import {
 } from "@/data/dialogues";
 import { VITRINE_PREP_ID } from "@/lib/vitrinePrep";
 import { stockageEstPlein } from "@/lib/stockage";
+import { energieCourante } from "@/lib/energie";
+import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import { nomExpediteur } from "@/lib/i18n/contenu";
@@ -123,6 +125,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // Sheets QG.
   const [gazetteOuverte, setGazetteOuverte] = useState(false);
   const [porteOuverte, setPorteOuverte] = useState(false);
+  /** Machine à énergie popée avec bandeau : Chiner/Étaler cliqué sans énergie. */
+  const [alerteEnergie, setAlerteEnergie] = useState(false);
   const [confirmPasser, setConfirmPasser] = useState(false);
   const [carnetOuvert, setCarnetOuvert] = useState(false);
   const [carnetNotesOuvert, setCarnetNotesOuvert] = useState(false);
@@ -578,6 +582,11 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         onChiner={() => {
           playDoorClose();
           setPorteOuverte(false);
+          // Pas d'énergie → la machine pope avec le bandeau d'alerte.
+          if (energieCourante(state, tempsConfiance() ?? Date.now()) < 1) {
+            setAlerteEnergie(true);
+            return;
+          }
           router.push("/chiner");
         }}
         onVitrine={() => {
@@ -589,12 +598,26 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           //   - vitrine en prep (ou pas de vitrine) → /vitrine/prep.
           const v = state.vitrine;
           if (v && v.brocanteId !== VITRINE_PREP_ID) {
+            // Journée déjà commencée (énergie déjà consommée) : jamais bloquée.
             router.push(`/vitrine/${v.brocanteId}/journee`);
-          } else {
-            router.push("/vitrine/prep");
+            return;
           }
+          // Pas d'énergie → la machine pope avec le bandeau d'alerte.
+          if (energieCourante(state, tempsConfiance() ?? Date.now()) < 1) {
+            setAlerteEnergie(true);
+            return;
+          }
+          router.push("/vitrine/prep");
         }}
       />
+
+      {/* Machine à énergie popée en alerte (sortie refusée faute d'énergie). */}
+      {alerteEnergie && (
+        <EnergieRecharge
+          onClose={() => setAlerteEnergie(false)}
+          alerte={d.chrome.energieInsuffisante}
+        />
+      )}
 
       <PasserConfirmSheet
         open={confirmPasser}
