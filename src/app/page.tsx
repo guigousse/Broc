@@ -219,7 +219,8 @@ export default function TitleScreen() {
 
   const onIntroFinie = () => {
     // La bascule de slot est DIFFÉRÉE jusqu'ici (et pas faite en amont dans
-    // `demarrerSurSlot`) : pendant les ~3,3 s de l'intro, le GameContext de
+    // `demarrerSurSlot`) : pendant les ~2,4 s de l'intro (600 ms de
+    // contemplation + 1 800 ms d'iris), le GameContext de
     // cet écran-titre reste monté sur l'ANCIEN slot actif, avec son tick
     // (/60 s) et ses handlers focus/visibilitychange toujours vivants. Si le
     // slot actif changeait avant la fin de l'intro, un de ces déclencheurs

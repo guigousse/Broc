@@ -637,6 +637,10 @@ class AudioManager {
   /** Volume global du bus gramophone (musique + crépitement). 0..1. */
   setVinylAmbianceVolume(v: number): void {
     this.ambianceVolume = Math.max(0, Math.min(1, v));
+    // Un fondu de sortie en vol possède le gain : on n'écrase pas sa rampe.
+    // La cible de route vient d'être mise à jour ci-dessus et sera appliquée
+    // à la fin (ou à l'annulation) du fondu.
+    if (this.fadeOutTimer !== undefined) return;
     if (!this.ctx || !this.vinylAmbianceGain) return;
     const now = this.ctx.currentTime;
     this.vinylAmbianceGain.gain.cancelScheduledValues(now);
@@ -832,6 +836,9 @@ class AudioManager {
     if (!this.prefs.musique) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
+    // Un fondu de sortie en vol tuerait la chanson fraîchement lancée à son
+    // échéance (même classe de bug que stopGramophone) : on l'annule.
+    this.annulerFadeOut();
     // Annule toute séquence en cours (musique précédente, timers).
     this.gramoTimers.forEach((t) => window.clearTimeout(t));
     this.gramoTimers = [];
@@ -848,17 +855,21 @@ class AudioManager {
     this.gramoTimers.push(t);
   }
 
+  /** Annule un fondu de sortie en attente et rend au bus sa cible de route. */
+  private annulerFadeOut(): void {
+    if (this.fadeOutTimer === undefined) return;
+    window.clearTimeout(this.fadeOutTimer);
+    this.fadeOutTimer = undefined;
+    this.setVinylAmbianceVolume(this.ambianceVolume);
+  }
+
   /** Arrêt complet du gramophone : musique, loop, timers en attente. */
   stopGramophone(): void {
     // Annule aussi un fondu de sortie en attente : sans ça, son timer
     // fantôme réinvoquerait stopGramophone puis écraserait le volume du
     // bus après coup. Le bus est ramené à sa cible de route courante
     // (ambianceVolume) — jamais laissé sur une rampe vers zéro.
-    if (this.fadeOutTimer !== undefined) {
-      window.clearTimeout(this.fadeOutTimer);
-      this.fadeOutTimer = undefined;
-      this.setVinylAmbianceVolume(this.ambianceVolume);
-    }
+    this.annulerFadeOut();
     this.gramoTimers.forEach((t) => window.clearTimeout(t));
     this.gramoTimers = [];
     this.stopVinyl();
