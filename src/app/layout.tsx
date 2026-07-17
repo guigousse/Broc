@@ -58,6 +58,23 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body style={{ minHeight: "100dvh", overflowX: "hidden" }}>
+        {/* Voile noir pré-hydratation de la transition iris : si on arrive d'un
+            « Continuer »/« Lancer » (flag sessionStorage posé juste avant le
+            window.location.href), couvre l'écran dès le parsing HTML — bien avant
+            React — pour que le rechargement dur se déroule entièrement sous le
+            noir. Retiré par IrisArrivee sitôt son overlay monté ; auto-retrait à
+            6 s en filet de sécurité (page d'erreur, layout (qg) jamais monté),
+            qui purge AUSSI le flag : une hydratation anormalement lente (> 6 s)
+            se termine sans iris (dégradation propre), et le voile ne sera plus
+            jamais rejoué au chargement suivant.
+            Clé du flag dupliquée en dur depuis src/lib/transitionIris.ts ;
+            couleur = --forest-900 en dur (CSS pas forcément chargées ici). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              '(function(){try{if(sessionStorage.getItem("broc.transition-iris")!=="1")return;var d=document.createElement("div");d.id="broc-iris-preboot";d.style.cssText="position:fixed;inset:0;z-index:9999;background:#0f1f18";document.body.appendChild(d);setTimeout(function(){try{sessionStorage.removeItem("broc.transition-iris");}catch(err){}var v=document.getElementById("broc-iris-preboot");if(v)v.remove();},6000);}catch(e){}})();',
+          }}
+        />
         <LangueProvider>
           <SettingsProvider>
             <ToastProvider>

@@ -8,37 +8,30 @@ import {
   type JSX,
 } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { IrisFermeture } from "@/components/mobile/IrisTransition";
+import {
+  DUREE_FADE_REDUIT_MS,
+  PORTE_CX_PCT,
+  PORTE_CY_PCT,
+  pointPorteEcran,
+  poserFlagIris,
+  prefersReducedMotion,
+} from "@/lib/transitionIris";
 
 /**
- * Intro « zoom sur la porte » — jouée au lancement d'une nouvelle partie.
- * Séquence CSS pure (transitions sur transform/opacity), pas de vidéo :
- * cadré large sur la façade → zoom sur la porte → fondu au noir → onFini().
- *
- * Centre mesuré de la porte (cf. docs/art/facade-maison.webp, mesure par
- * échantillonnage sharp .extract + .stats() : rectangle brun chaud sombre
- * ~190×470px, luminance ≈108 contre ≈136-143 pour les piliers en pierre de
- * taille de part et d'autre) : cx ≈ 51 %, cy ≈ 66 % de l'image.
+ * Intro « iris sur la porte » — jouée au lancement d'une nouvelle partie.
+ * Cadré large sur la façade (contemplation) → fermeture d'iris centrée sur
+ * la porte → onFini(). La réouverture se joue côté bureau (IrisArrivee),
+ * déclenchée par le flag sessionStorage posé ici — même transition que
+ * « Continuer » et que le lancement d'un slot. Spec :
+ * docs/superpowers/specs/2026-07-17-transition-iris-design.md.
  */
-const DOOR_CX_PCT = 51;
-const DOOR_CY_PCT = 66;
-const ZOOM_SCALE = 4;
-
 const DUREE_CONTEMPLATION_MS = 600;
-const DUREE_ZOOM_MS = 2200;
-const DUREE_FONDU_MS = 500;
-const DUREE_FADE_REDUIT_MS = 400;
 
-type Phase = "contemplation" | "zoom" | "fondu" | "fade-reduit";
+type Phase = "contemplation" | "iris" | "fade-reduit";
 
 interface IntroPorteProps {
   onFini: () => void;
-}
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-    return false;
-  }
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 const conteneurStyle: CSSProperties = {
@@ -56,32 +49,26 @@ const imgWrapperStyle: CSSProperties = {
   overflow: "hidden",
 };
 
-function imgStyle(phase: Phase, reduit: boolean): CSSProperties {
-  const zoome = phase === "zoom" || phase === "fondu";
-  return {
-    position: "absolute",
-    inset: 0,
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    objectPosition: `${DOOR_CX_PCT}% ${DOOR_CY_PCT}%`,
-    transformOrigin: `${DOOR_CX_PCT}% ${DOOR_CY_PCT}%`,
-    transform: zoome && !reduit ? `scale(${ZOOM_SCALE})` : "scale(1)",
-    transition: reduit ? "none" : `transform ${DUREE_ZOOM_MS}ms ease-in-out`,
-    display: "block",
-    userSelect: "none",
-  };
-}
+const imgStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  // Même cadrage que l'écran titre : la porte (51 % / 66 % de l'image) est
+  // ainsi à 51 % / 66 % de la boîte rendue — ce que lit pointPorteEcran.
+  objectPosition: `${PORTE_CX_PCT}% ${PORTE_CY_PCT}%`,
+  display: "block",
+  userSelect: "none",
+};
 
-function scrimStyle(phase: Phase, reduit: boolean): CSSProperties {
-  const visible = phase === "fondu" || phase === "fade-reduit";
-  const duree = reduit ? DUREE_FADE_REDUIT_MS : DUREE_FONDU_MS;
+function scrimStyle(visible: boolean): CSSProperties {
   return {
     position: "absolute",
     inset: 0,
     backgroundColor: "var(--forest-900)",
     opacity: visible ? 1 : 0,
-    transition: `opacity ${duree}ms ease`,
+    transition: `opacity ${DUREE_FADE_REDUIT_MS}ms ease`,
     pointerEvents: "none",
   };
 }
@@ -99,7 +86,13 @@ const tapLayerStyle: CSSProperties = {
 export function IntroPorte({ onFini }: IntroPorteProps): JSX.Element {
   const { d } = useLangue();
   const [reduit] = useState(prefersReducedMotion);
-  const [phase, setPhase] = useState<Phase>(reduit ? "fade-reduit" : "contemplation");
+  const [phase, setPhase] = useState<Phase>(
+    reduit ? "fade-reduit" : "contemplation",
+  );
+  const [pointIris, setPointIris] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+  const imgRef = useRef<HTMLImageElement | null>(null);
   const finiRef = useRef(false);
   const onFiniRef = useRef(onFini);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -108,9 +101,14 @@ export function IntroPorte({ onFini }: IntroPorteProps): JSX.Element {
     onFiniRef.current = onFini;
   }, [onFini]);
 
+  // Pose le flag de réouverture AVANT de rendre la main : l'arrivée au
+  // bureau (router.push de nouvellePartie) jouera l'iris d'ouverture,
+  // exactement comme « Continuer ». Vaut aussi pour le skip et le mode
+  // reduced-motion (fondu à la place du cercle, géré par IrisArrivee).
   const declencherFin = () => {
     if (finiRef.current) return;
     finiRef.current = true;
+    poserFlagIris();
     onFiniRef.current();
   };
 
@@ -122,12 +120,13 @@ export function IntroPorte({ onFini }: IntroPorteProps): JSX.Element {
     if (reduit) {
       schedule(declencherFin, DUREE_FADE_REDUIT_MS);
     } else {
-      schedule(() => setPhase("zoom"), DUREE_CONTEMPLATION_MS);
-      schedule(() => setPhase("fondu"), DUREE_CONTEMPLATION_MS + DUREE_ZOOM_MS);
-      schedule(
-        declencherFin,
-        DUREE_CONTEMPLATION_MS + DUREE_ZOOM_MS + DUREE_FONDU_MS,
-      );
+      // La fermeture est déléguée à IrisFermeture (rendue en phase "iris"),
+      // qui rappelle declencherFin via onNoir — pas de timer de fin ici.
+      // Le point porte est mesuré au moment du basculement de phase.
+      schedule(() => {
+        setPointIris(pointPorteEcran(imgRef.current));
+        setPhase("iris");
+      }, DUREE_CONTEMPLATION_MS);
     }
 
     return () => {
@@ -147,13 +146,22 @@ export function IntroPorte({ onFini }: IntroPorteProps): JSX.Element {
     <div style={conteneurStyle} role="presentation">
       <div style={imgWrapperStyle}>
         <img
+          ref={imgRef}
           src="/qg/facade-accueil.webp"
           alt=""
-          style={imgStyle(phase, reduit)}
+          style={imgStyle}
           draggable={false}
         />
       </div>
-      <div aria-hidden style={scrimStyle(phase, reduit)} />
+      {reduit && <div aria-hidden style={scrimStyle(phase === "fade-reduit")} />}
+      {phase === "iris" && pointIris && (
+        <IrisFermeture
+          cx={pointIris.x}
+          cy={pointIris.y}
+          onNoir={declencherFin}
+          bloqueInteractions={false}
+        />
+      )}
       <button
         type="button"
         style={tapLayerStyle}
