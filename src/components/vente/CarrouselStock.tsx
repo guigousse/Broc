@@ -7,14 +7,26 @@ import { ItemEnCarrousel } from "./ItemEnCarrousel";
 
 interface Props {
   stock: Objet[];
-  onPickUp: (objetId: string, clientX: number, clientY: number) => void;
+  /** Tap simple : ajout automatique au centre du coffre. */
+  onTap: (objetId: string) => void;
+  /** Drag (maintien ou tirer vertical) : l'objet suit le doigt. */
+  onDragStart: (objetId: string, clientX: number, clientY: number) => void;
+  onDragMove: (clientX: number, clientY: number) => void;
+  onDragEnd: (clientX: number, clientY: number) => void;
   /** Tutoriel : main pointeuse sur le premier objet du carrousel (miroir — bord gauche). */
   tutoMain?: boolean;
 }
 
 const ITEM_WIDTH = 76;
 
-export function CarrouselStock({ stock, onPickUp, tutoMain = false }: Props) {
+export function CarrouselStock({
+  stock,
+  onTap,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+  tutoMain = false,
+}: Props) {
   const { d, locale } = useLangue();
   if (stock.length === 0) {
     return (
@@ -64,7 +76,13 @@ export function CarrouselStock({ stock, onPickUp, tutoMain = false }: Props) {
           className={tutoMain && i === 0 ? "tuto-main tuto-main-droite" : undefined}
           style={{ flex: `0 0 ${ITEM_WIDTH}px`, width: ITEM_WIDTH }}
         >
-          <ItemEnCarrousel objet={o} onDragToCoffre={onPickUp} />
+          <ItemEnCarrousel
+            objet={o}
+            onTap={onTap}
+            onDragStart={onDragStart}
+            onDragMove={onDragMove}
+            onDragEnd={onDragEnd}
+          />
         </div>
       ))}
     </div>

@@ -13,11 +13,23 @@ import { nomObjet } from "@/lib/i18n/contenu";
 
 interface Props {
   objet: Objet;
-  onDragToCoffre: (objetId: string, clientX: number, clientY: number) => void;
+  /** Tap simple : l'objet est ajouté automatiquement au centre du coffre. */
+  onTap: (objetId: string) => void;
+  /** Début de drag (maintien ou tirer vertical) : l'objet suit le doigt. */
+  onDragStart: (objetId: string, clientX: number, clientY: number) => void;
+  onDragMove: (clientX: number, clientY: number) => void;
+  /** Fin de drag : le parent décide (dans le coffre → dépose, sinon annule). */
+  onDragEnd: (clientX: number, clientY: number) => void;
 }
 
+/** Maintien sans bouger au-delà de ce délai → le drag démarre. */
+const HOLD_MS = 200;
+/** En deçà de ce déplacement au relâcher : simple tap. */
+const TAP_SLOP = 8;
+/** Tirer vertical au-delà de ce seuil → drag immédiat (sans attendre le hold). */
 const VERTICAL_THRESHOLD = 10;
-const PICKUP_THRESHOLD = 8;
+/** Déplacement horizontal franc avant le hold → scroll du carrousel, pas un drag. */
+const SCROLL_SLOP = 12;
 
 interface CornerLProps {
   position: "tl" | "tr" | "bl" | "br";
@@ -47,55 +59,92 @@ function CornerL({ position, color }: CornerLProps) {
   );
 }
 
-export function ItemEnCarrousel({ objet, onDragToCoffre }: Props) {
+export function ItemEnCarrousel({ objet, onTap, onDragStart, onDragMove, onDragEnd }: Props) {
   const { d, tr, locale } = useLangue();
   const tpl = getTemplate(objet.templateId);
   const taille = tpl ? tailleDe(tpl) : "S";
   const colors = getRarityColors(objet.rarete, !!tpl?.unique);
   const filledStars = etoileCount(objet.etat);
 
-  const startRef = useRef<{
-    x: number;
-    y: number;
-    captured: boolean;
-  } | null>(null);
+  // Geste (retour device 2026-07-17) : tap = ajout au centre ; maintien
+  // (HOLD_MS sans bouger) OU tirer vertical = l'objet suit le doigt.
+  // Un déplacement horizontal franc avant le hold = scroll du carrousel.
+  const startRef = useRef<{ x: number; y: number } | null>(null);
+  const dernierRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const dragRef = useRef(false);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const annulerHold = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  };
+
+  const demarrerDrag = (el: HTMLDivElement, pointerId: number, x: number, y: number) => {
+    annulerHold();
+    dragRef.current = true;
+    try {
+      el.setPointerCapture(pointerId);
+    } catch {
+      // ignore (jsdom / pointeur déjà relâché)
+    }
+    onDragStart(objet.id, x, y);
+  };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    startRef.current = { x: e.clientX, y: e.clientY, captured: false };
+    startRef.current = { x: e.clientX, y: e.clientY };
+    dernierRef.current = { x: e.clientX, y: e.clientY };
+    dragRef.current = false;
+    const el = e.currentTarget;
+    const pointerId = e.pointerId;
+    annulerHold();
+    holdTimerRef.current = setTimeout(() => {
+      holdTimerRef.current = null;
+      if (startRef.current && !dragRef.current) {
+        demarrerDrag(el, pointerId, dernierRef.current.x, dernierRef.current.y);
+      }
+    }, HOLD_MS);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    dernierRef.current = { x: e.clientX, y: e.clientY };
+    if (dragRef.current) {
+      onDragMove(e.clientX, e.clientY);
+      return;
+    }
     if (!startRef.current) return;
     const dx = e.clientX - startRef.current.x;
     const dy = e.clientY - startRef.current.y;
-    if (
-      !startRef.current.captured &&
-      Math.abs(dy) > VERTICAL_THRESHOLD &&
-      Math.abs(dy) > Math.abs(dx)
-    ) {
-      try {
-        e.currentTarget.setPointerCapture(e.pointerId);
-      } catch {
-        // ignore
-      }
-      startRef.current.captured = true;
+    if (Math.abs(dy) > VERTICAL_THRESHOLD && Math.abs(dy) > Math.abs(dx)) {
+      demarrerDrag(e.currentTarget, e.pointerId, e.clientX, e.clientY);
+    } else if (Math.abs(dx) > SCROLL_SLOP) {
+      // Scroll horizontal du carrousel : on laisse le pan-x natif faire.
+      annulerHold();
+      startRef.current = null;
     }
   };
 
   const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    annulerHold();
     const s = startRef.current;
     startRef.current = null;
-    if (!s) return;
-    if (s.captured) {
+    if (dragRef.current) {
+      dragRef.current = false;
       try {
         e.currentTarget.releasePointerCapture(e.pointerId);
       } catch {
         // ignore
       }
+      // pointercancel (scroll natif qui reprend la main) : coords hors coffre
+      // → le parent annule la dépose, c'est le comportement voulu.
+      onDragEnd(e.clientX, e.clientY);
+      return;
     }
+    if (!s) return;
     const moved = Math.hypot(e.clientX - s.x, e.clientY - s.y);
-    if (s.captured && moved > PICKUP_THRESHOLD) {
-      onDragToCoffre(objet.id, e.clientX, e.clientY);
+    if (e.type === "pointerup" && moved <= TAP_SLOP) {
+      onTap(objet.id);
     }
   };
 
@@ -112,6 +161,10 @@ export function ItemEnCarrousel({ objet, onDragToCoffre }: Props) {
     touchAction: "pan-x",
     cursor: "grab",
     overflow: "hidden",
+    // Maintien sans menu contextuel ni sélection (long-press iOS).
+    userSelect: "none",
+    WebkitUserSelect: "none",
+    WebkitTouchCallout: "none",
   };
 
   // Image rétrécie à 80 % pour respirer dans le filet intérieur, comme la

@@ -147,9 +147,54 @@ export function CoffreChargement(p: Props) {
     return computeOverlapsPixel(items, trunkMask);
   }, [p.coffre, camion.capacitePlaces, maskTick, trunkMask]);
 
-  const handlePickUp = (objetId: string) => {
+  // Ajout depuis le carrousel (retour device 2026-07-17) : tap simple →
+  // centre du coffre ; maintien/tirer → l'objet suit le doigt (fantôme) et
+  // se dépose là où on le lâche (relâché hors du coffre → annulé).
+  const conteneurCoffreRef = useRef<HTMLDivElement | null>(null);
+  const [dragObjet, setDragObjet] = useState<{ id: string; x: number; y: number } | null>(null);
+  const dragIdRef = useRef<string | null>(null);
+
+  const handleTap = (objetId: string) => {
     p.onAjouter(objetId, 0.5, 0.5);
   };
+
+  const handleDragStart = (objetId: string, x: number, y: number) => {
+    dragIdRef.current = objetId;
+    setDragObjet({ id: objetId, x, y });
+  };
+
+  const handleDragMove = (x: number, y: number) => {
+    setDragObjet((d) => (d ? { ...d, x, y } : d));
+  };
+
+  const handleDragEnd = (x: number, y: number) => {
+    const id = dragIdRef.current;
+    dragIdRef.current = null;
+    setDragObjet(null);
+    if (!id) return;
+    const rect = conteneurCoffreRef.current?.getBoundingClientRect();
+    if (
+      rect &&
+      x >= rect.left &&
+      x <= rect.right &&
+      y >= rect.top &&
+      y <= rect.bottom
+    ) {
+      const px = Math.max(0.05, Math.min(0.95, (x - rect.left) / rect.width));
+      const py = Math.max(0.05, Math.min(0.95, (y - rect.top) / rect.height));
+      p.onAjouter(id, px, py);
+    }
+  };
+
+  // Pendant le drag : bloque le scroll natif (carrousel/page) — sans quoi
+  // iOS reprend la main sur les mouvements horizontaux et coupe le geste.
+  const dragEnCours = dragObjet !== null;
+  useEffect(() => {
+    if (!dragEnCours) return;
+    const bloque = (ev: TouchEvent) => ev.preventDefault();
+    document.addEventListener("touchmove", bloque, { passive: false });
+    return () => document.removeEventListener("touchmove", bloque);
+  }, [dragEnCours]);
 
   const handleValider = () => {
     if (closing) return;
@@ -230,12 +275,55 @@ export function CoffreChargement(p: Props) {
         onMove={p.onMove}
         onRotate={p.onRotate}
         onRetour={p.onRetirer}
+        conteneurRef={conteneurCoffreRef}
       />
       <CarrouselStock
         stock={p.stock}
-        onPickUp={handlePickUp}
+        onTap={handleTap}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
         tutoMain={p.tuto === true && p.coffre.length === 0}
       />
+      {/* Fantôme de drag : l'objet suit le doigt, à la taille qu'il aura
+          dans le coffre. */}
+      {dragObjet &&
+        (() => {
+          const obj = p.stock.find((o) => o.id === dragObjet.id);
+          if (!obj) return null;
+          const tplDrag = getTemplate(obj.templateId);
+          const tailleDrag = tplDrag ? tailleDe(tplDrag) : "S";
+          const largeurCoffre =
+            conteneurCoffreRef.current?.getBoundingClientRect().width ?? 280;
+          const cote = getScaleCoffre(tailleDrag, camion.capacitePlaces) * largeurCoffre;
+          const src = getItemImageUrl(obj.templateId);
+          return (
+            <div
+              aria-hidden
+              style={{
+                position: "fixed",
+                left: dragObjet.x,
+                top: dragObjet.y,
+                width: cote,
+                height: cote,
+                translate: "-50% -50%",
+                pointerEvents: "none",
+                zIndex: 200,
+                filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.45))",
+              }}
+            >
+              {src ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={src}
+                  alt=""
+                  draggable={false}
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                />
+              ) : null}
+            </div>
+          );
+        })()}
       {/* Spacer pour libérer la zone occupée par la barre fixed du bas
           (même hauteur que la TabBar du QG). */}
       <div

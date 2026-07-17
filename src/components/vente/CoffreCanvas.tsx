@@ -19,6 +19,9 @@ interface Props {
   onMove: (objetId: string, posX: number, posY: number) => void;
   onRotate: (objetId: string, angle: number) => void;
   onRetour: (objetId: string) => void;
+  /** Expose le conteneur du coffre (mapping client → posX/posY 0..1) au
+   *  parent — sert au drop des objets tirés depuis le carrousel. */
+  conteneurRef?: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 interface PointerInfo {
@@ -40,6 +43,7 @@ export function CoffreCanvas({
   onMove,
   onRotate,
   onRetour,
+  conteneurRef,
 }: Props) {
   const camion = getCamion(niveauCamion);
   const assets = getCoffreAssets(camion.visuelId);
@@ -209,7 +213,10 @@ export function CoffreCanvas({
     >
       {/* Conteneur du camion — positionné en absolu, centré à (garageX, garageY). */}
       <div
-        ref={ref}
+        ref={(el) => {
+          ref.current = el;
+          if (conteneurRef) conteneurRef.current = el;
+        }}
         onPointerDown={handlePointerDown}
         style={{
           position: "absolute",
