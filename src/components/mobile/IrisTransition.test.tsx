@@ -46,6 +46,16 @@ describe("IrisFermeture", () => {
     await act(() => vi.advanceTimersByTimeAsync(200));
     expect(onNoir).toHaveBeenCalledTimes(1);
   });
+
+  it("pointer-events : bloque par défaut, laisse passer avec bloqueInteractions={false}", () => {
+    const a = render(<IrisFermeture cx={10} cy={10} onNoir={vi.fn()} />);
+    expect((a.container.firstChild as HTMLElement).style.pointerEvents).toBe("auto");
+    a.unmount();
+    const b = render(
+      <IrisFermeture cx={10} cy={10} onNoir={vi.fn()} bloqueInteractions={false} />,
+    );
+    expect((b.container.firstChild as HTMLElement).style.pointerEvents).toBe("none");
+  });
 });
 
 describe("IrisArrivee", () => {

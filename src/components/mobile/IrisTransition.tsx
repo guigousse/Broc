@@ -88,9 +88,20 @@ interface IrisFermetureProps {
   cy: number;
   /** Appelé une fois l'écran entièrement noir. */
   onNoir: () => void;
+  /**
+   * Par défaut l'overlay bloque toute interaction pendant la fermeture
+   * (voulu sur l'écran titre). IntroPorte le désactive pour garder son
+   * tap-pour-passer vivant pendant l'iris (« skip conservé »).
+   */
+  bloqueInteractions?: boolean;
 }
 
-export function IrisFermeture({ cx, cy, onNoir }: IrisFermetureProps): JSX.Element {
+export function IrisFermeture({
+  cx,
+  cy,
+  onNoir,
+  bloqueInteractions = true,
+}: IrisFermetureProps): JSX.Element {
   const [reduit] = useState(prefersReducedMotion);
   const [diametreOuvert] = useState(() => diametreCouvrant(cx, cy));
   const [ferme, setFerme] = useState(false);
@@ -117,7 +128,13 @@ export function IrisFermeture({ cx, cy, onNoir }: IrisFermetureProps): JSX.Eleme
   }, [reduit]);
 
   return (
-    <div style={conteneurStyle} aria-hidden>
+    <div
+      style={{
+        ...conteneurStyle,
+        pointerEvents: bloqueInteractions ? "auto" : "none",
+      }}
+      aria-hidden
+    >
       {reduit ? (
         <div style={voileStyle(ferme)} />
       ) : (

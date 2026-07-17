@@ -159,6 +159,7 @@ export function IntroPorte({ onFini }: IntroPorteProps): JSX.Element {
           cx={pointIris.x}
           cy={pointIris.y}
           onNoir={declencherFin}
+          bloqueInteractions={false}
         />
       )}
       <button

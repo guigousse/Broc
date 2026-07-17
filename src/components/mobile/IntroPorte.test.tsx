@@ -15,9 +15,17 @@ vi.mock("@/lib/i18n/LangueContext", () => ({
 }));
 
 let irisOnNoir: (() => void) | null = null;
+let irisBloqueInteractions: boolean | undefined;
 vi.mock("@/components/mobile/IrisTransition", () => ({
-  IrisFermeture: ({ onNoir }: { onNoir: () => void }) => {
+  IrisFermeture: ({
+    onNoir,
+    bloqueInteractions,
+  }: {
+    onNoir: () => void;
+    bloqueInteractions?: boolean;
+  }) => {
     irisOnNoir = onNoir;
+    irisBloqueInteractions = bloqueInteractions;
     return <div data-testid="iris-fermeture" />;
   },
 }));
@@ -25,6 +33,7 @@ vi.mock("@/components/mobile/IrisTransition", () => ({
 beforeEach(() => {
   sessionStorage.clear();
   irisOnNoir = null;
+  irisBloqueInteractions = undefined;
   vi.useFakeTimers();
 });
 
@@ -40,6 +49,10 @@ describe("IntroPorte — contemplation puis iris (plus de zoom)", () => {
     expect(screen.queryByTestId("iris-fermeture")).toBeNull();
     act(() => vi.advanceTimersByTime(600));
     expect(screen.getByTestId("iris-fermeture")).toBeTruthy();
+
+    // Le skip doit rester vivant pendant l'iris : IntroPorte désactive le
+    // blocage d'interactions de l'overlay.
+    expect(irisBloqueInteractions).toBe(false);
   });
 
   it("au noir de l'iris : pose le flag de réouverture PUIS onFini", () => {
