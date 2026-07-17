@@ -347,6 +347,19 @@ class AudioManager {
     src.start();
   }
 
+  /** Recharge d'énergie (machine du savant fou) : plasma électrique. */
+  async playRecharge(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/recharge.m4a");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   async playRepair(): Promise<void> {
     if (!this.prefs.effets) return;
     this.ensureCtx();
