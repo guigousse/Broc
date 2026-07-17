@@ -28,6 +28,7 @@ import {
   safeLocalStorageSet,
 } from "@/lib/storage/safeLocalStorage";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
+import { IrisArrivee } from "@/components/mobile/IrisTransition";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import {
   UnifiedPanorama,
@@ -724,8 +725,16 @@ export default function QgLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Suspense fallback={null}>
-      <QgLayoutInner>{children}</QgLayoutInner>
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <QgLayoutInner>{children}</QgLayoutInner>
+      </Suspense>
+      {/* Réouverture d'iris à l'arrivée (flag posé par Continuer, le
+          lancement d'un slot ou l'intro de nouvelle partie) : montée HORS
+          de QgLayoutInner pour couvrir aussi son early-return « ouverture
+          du local… » pendant l'hydratation, et ne dépendre d'aucun état de
+          jeu. Sans flag (refresh, lien direct), ne rend rien. */}
+      <IrisArrivee imageSrc="/qg/fond-cabinet.webp" />
+    </>
   );
 }
