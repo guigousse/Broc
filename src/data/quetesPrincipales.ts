@@ -123,14 +123,17 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     ordre: 5,
     acte: 2,
     condition: { type: "depart" },
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "souriant", texte: "On commence à parler de toi, dans le milieu. Ça me fait chaud au cœur." },
-      { humeur: "songeur", texte: "Continue à apprendre le métier — un bon niveau, et les portes s'ouvriront d'elles-mêmes." },
+      { humeur: "rieur", texte: "On m'a parlé de toi au café, ce matin ! « Le petit de la boutique », qu'ils disent. Ils disaient pareil de moi, en 1975." },
+      { humeur: "songeur", texte: "Dans ce métier, ton nom vaut plus que ta caisse. Il se gagne lentement, aux étals, une poignée de main à la fois." },
+      { humeur: "souriant", texte: "Continue de chiner, de vendre, d'apprendre. Quand les marchés murmureront ton nom, je le saurai avant toi." },
     ],
     payload: {
       titre: "Un nom qui circule",
-      corps: ["Atteindre le niveau 8."], // SP3 : texte provisoire
+      corps: [
+        "Atteindre le **niveau 8** de brocanteur.",
+        "« Ton nom vaut plus que ta caisse. Fais-le circuler. »",
+      ],
       cibles: [],
       objectifs: [{ type: "niveau", niveau: 8 }],
       recompense: { argent: 150 },
@@ -141,14 +144,17 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     ordre: 6,
     acte: 2,
     condition: { type: "depart" },
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "rieur", texte: "Le flair, ça ne s'apprend pas dans les livres. Ça se prouve, sur l'étal." },
-      { humeur: "souriant", texte: "Fais-moi 100 € de profit sur une vente, et je saurai que tu l'as, ce flair." },
+      { humeur: "songeur", texte: "Un jour, j'ai laissé filer une tabatière en argent pour trois sous. Revendue dix fois son prix la semaine d'après, sous mes yeux." },
+      { humeur: "emu", texte: "Je n'ai pas dormi de la nuit. Pas pour l'argent — pour n'avoir pas su voir." },
+      { humeur: "souriant", texte: "Le flair, ça se forge. Fais-moi un joli coup : cent euros de mieux sur une seule vente, et je croirai que tu as l'œil." },
     ],
     payload: {
       titre: "Le flair",
-      corps: ["Réaliser 100 € de profit sur une vente."], // SP3 : texte provisoire
+      corps: [
+        "Réaliser un profit d'au moins **100 €** sur une seule vente.",
+        "« Acheter juste, vendre juste. Entre les deux, il y a l'œil. »",
+      ],
       cibles: [],
       objectifs: [{ type: "profitVente", montant: 100 }],
       recompense: { argent: 170 },
@@ -162,14 +168,17 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     // Décision 2026-07-17 : « Pièce de maître » (Pristin état ⇒ Réparer 3 ⇒
     // niveau 30) déplacée en late game (ch9) ; la préparation de vitrine
     // redescend ici avec un montant d'acte II (provisoire, équilibrage SP3).
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "emu", texte: "Regarde ce que tu as bâti. Une vraie collection prend forme, tu sais." },
-      { humeur: "souriant", texte: "Continue : 1500 € de valeur en vitrine, et les beaux salons te regarderont autrement." },
+      { humeur: "souriant", texte: "J'ai fait le tour de ta collection ce matin, pendant que tu dormais. Permets — vieille habitude." },
+      { humeur: "emu", texte: "Il y a du goût, là-dedans. Du vrai. Ta grand-mère aurait déplacé deux ou trois choses, mais elle aurait souri." },
+      { humeur: "songeur", texte: "Étoffe-la encore. Une collection, c'est un visage : il faut qu'on te reconnaisse au premier regard." },
     ],
     payload: {
       titre: "Une vitrine digne de ce nom",
-      corps: ["Atteindre 1500 € de valeur de collection."], // SP3 : texte provisoire
+      corps: [
+        "Atteindre **1 500 €** de valeur de collection.",
+        "« Une collection, c'est un visage. Fais que le tien soit inoubliable. »",
+      ],
       cibles: [],
       objectifs: [{ type: "valeurCollection", montant: 1500 }],
       recompense: { argent: 190 },
@@ -181,14 +190,17 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     acte: 2,
     condition: { type: "depart" },
     invitationTier: 3,
-    // SP3 : texte provisoire
     dialogue: [
-      { humeur: "songeur", texte: "Le beau monde ne s'émeut que devant l'irréprochable. J'ai appris ça à mes dépens." },
-      { humeur: "souriant", texte: "Trouve-moi une gravure « Vue de Paris » en très bon état, et tu auras ta place là-haut." },
+      { humeur: "songeur", texte: "Chez les collectionneurs, on murmure de nouveau sur les bijoux de la reine. Les rumeurs reviennent toujours par les salons." },
+      { humeur: "souriant", texte: "Pour y entrer, il faut montrer patte blanche. Une belle gravure, impeccable — voilà qui ouvre les portes feutrées." },
+      { humeur: "emu", texte: "J'ai passé trente ans à guetter ces murmures. Toi, tu vas t'asseoir à leur table." },
     ],
     payload: {
       titre: "Le beau monde",
-      corps: ["Retrouver une gravure 'Vue de Paris' Jouy en très bon état."], // SP3 : texte provisoire
+      corps: [
+        "Retrouver une **gravure « Vue de Paris »** en très bon état.",
+        "« Là-haut, on ne pardonne pas l'à-peu-près. Impeccable, tu m'entends. »",
+      ],
       cibles: [{ templateId: "art.gravure_jouy_paris", etatMin: "Très bon" }],
       objectifs: [{ type: "objet", templateId: "art.gravure_jouy_paris", etatMin: "Très bon" }],
       recompense: { argent: 220 },

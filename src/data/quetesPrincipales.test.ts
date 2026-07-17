@@ -68,10 +68,10 @@ describe("trame principale (squelette SP2)", () => {
     const src = await fs.readFile("src/data/quetesPrincipales.ts", "utf8");
     expect(src).not.toContain("SP3 : texte provisoire");
   });
-  it("chaque chapitre (acte I défini) a un dialogue de 2 à 5 lignes et un corps de 2 paragraphes min", () => {
-    // Limitation : SP3 Task 1 remplit ch1-4 ; on l'applique à l'acte I pour maintenant.
-    // Évoluera en Task 3+ pour vérifier aussi les actes II et III.
-    for (const c of QUETES_PRINCIPALES.filter((c) => c.acte === 1)) {
+  it("chaque chapitre (acte I & II définis) a un dialogue de 2 à 5 lignes et un corps de 2 paragraphes min", () => {
+    // SP3 Task 1 remplit ch1-4, Task 2 remplit ch5-8 ; on l'applique aux actes I-II.
+    // Évoluera en Task 3+ pour vérifier aussi l'acte III.
+    for (const c of QUETES_PRINCIPALES.filter((c) => c.acte <= 2)) {
       expect(c.dialogue.length).toBeGreaterThanOrEqual(2);
       expect(c.dialogue.length).toBeLessThanOrEqual(5);
       expect(c.payload.corps.length).toBeGreaterThanOrEqual(2);
