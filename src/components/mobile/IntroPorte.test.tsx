@@ -8,7 +8,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { IntroPorte } from "./IntroPorte";
-import { lireFlagIris } from "@/lib/transitionIris";
+import { lireFlagIris, DUREE_FERMETURE_MS } from "@/lib/transitionIris";
+import { audioManager } from "@/lib/audio/audioManager";
 
 vi.mock("@/lib/i18n/LangueContext", () => ({
   useLangue: () => ({ d: { qg: { passerIntroAria: "Passer l'introduction" } } }),
@@ -34,6 +35,7 @@ beforeEach(() => {
   sessionStorage.clear();
   irisOnNoir = null;
   irisBloqueInteractions = undefined;
+  vi.spyOn(audioManager, "fadeOutVinylBus").mockImplementation(() => {});
   vi.useFakeTimers();
 });
 
@@ -41,6 +43,7 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe("IntroPorte — contemplation puis iris (plus de zoom)", () => {
@@ -90,5 +93,26 @@ describe("IntroPorte — contemplation puis iris (plus de zoom)", () => {
     act(() => irisOnNoir!());
 
     expect(onFini).toHaveBeenCalledTimes(1);
+  });
+
+  it("au passage en phase iris : fondu musical de la durée de la fermeture", () => {
+    render(<IntroPorte onFini={vi.fn()} />);
+    expect(audioManager.fadeOutVinylBus).not.toHaveBeenCalled();
+
+    act(() => vi.advanceTimersByTime(600));
+
+    expect(audioManager.fadeOutVinylBus).toHaveBeenCalledTimes(1);
+    expect(audioManager.fadeOutVinylBus).toHaveBeenCalledWith(DUREE_FERMETURE_MS);
+  });
+
+  it("le skip remplace le fondu par une coupure express (300 ms)", () => {
+    render(<IntroPorte onFini={vi.fn()} />);
+
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "Passer l'introduction" }),
+    );
+
+    expect(audioManager.fadeOutVinylBus).toHaveBeenCalledTimes(1);
+    expect(audioManager.fadeOutVinylBus).toHaveBeenCalledWith(300);
   });
 });

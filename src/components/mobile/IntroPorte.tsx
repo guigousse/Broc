@@ -11,12 +11,14 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { IrisFermeture } from "@/components/mobile/IrisTransition";
 import {
   DUREE_FADE_REDUIT_MS,
+  DUREE_FERMETURE_MS,
   PORTE_CX_PCT,
   PORTE_CY_PCT,
   pointPorteEcran,
   poserFlagIris,
   prefersReducedMotion,
 } from "@/lib/transitionIris";
+import { audioManager } from "@/lib/audio/audioManager";
 
 /**
  * Intro « iris sur la porte » — jouée au lancement d'une nouvelle partie.
@@ -27,6 +29,8 @@ import {
  * docs/superpowers/specs/2026-07-17-transition-iris-design.md.
  */
 const DUREE_CONTEMPLATION_MS = 600;
+/** Coupure express de la musique quand le joueur passe l'intro. */
+const DUREE_FADE_SKIP_MS = 300;
 
 type Phase = "contemplation" | "iris" | "fade-reduit";
 
@@ -118,12 +122,16 @@ export function IntroPorte({ onFini }: IntroPorteProps): JSX.Element {
     };
 
     if (reduit) {
+      // Fondu musical aligné sur le fondu visuel reduced-motion.
+      audioManager.fadeOutVinylBus(DUREE_FADE_REDUIT_MS);
       schedule(declencherFin, DUREE_FADE_REDUIT_MS);
     } else {
       // La fermeture est déléguée à IrisFermeture (rendue en phase "iris"),
       // qui rappelle declencherFin via onNoir — pas de timer de fin ici.
-      // Le point porte est mesuré au moment du basculement de phase.
+      // Le point porte est mesuré au moment du basculement de phase, et le
+      // fondu musical suit exactement la fermeture qui démarre.
       schedule(() => {
+        audioManager.fadeOutVinylBus(DUREE_FERMETURE_MS);
         setPointIris(pointPorteEcran(imgRef.current));
         setPhase("iris");
       }, DUREE_CONTEMPLATION_MS);
@@ -139,6 +147,9 @@ export function IntroPorte({ onFini }: IntroPorteProps): JSX.Element {
   const onSkip = () => {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
+    // Un fondu 1800 ms éventuellement en cours est remplacé par la rampe
+    // express (fadeOutVinylBus ré-appelable, cf. audioManager).
+    audioManager.fadeOutVinylBus(DUREE_FADE_SKIP_MS);
     declencherFin();
   };
 
