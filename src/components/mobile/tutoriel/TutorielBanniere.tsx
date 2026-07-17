@@ -7,7 +7,9 @@ import { tutorielActif } from "@/lib/tutoriel";
 
 const wrap: CSSProperties = {
   position: "fixed",
-  top: "calc(var(--safe-top, 0px) + 8px)",
+  // Sous le header du haut (retour device 2026-07-17) : safe-area + hauteur
+  // du MobileHeader + marge, pour ne plus chevaucher BROC/énergie/caisse.
+  top: "calc(var(--safe-top, 0px) + var(--mobile-header-h) + 8px)",
   left: 12,
   right: 12,
   zIndex: 90,

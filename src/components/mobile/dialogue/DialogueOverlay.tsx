@@ -32,26 +32,34 @@ const scrim: CSSProperties = {
   textAlign: "inherit",
 };
 
-const carte: CSSProperties = {
+/* Retour device 2026-07-17 : le portrait est un cercle SÉPARÉ de la bulle —
+   rangée avatar + bulle, alignée en bas, chacun avec son propre cadre. */
+const rangee: CSSProperties = {
   margin: "0 12px calc(16px + var(--safe-bottom, 0px))",
+  display: "flex",
+  gap: 10,
+  alignItems: "flex-end",
+};
+
+const carte: CSSProperties = {
+  flex: 1,
+  minWidth: 0,
   padding: "14px 16px 12px",
-  borderRadius: 4,
+  borderRadius: 14,
   background: "linear-gradient(135deg, #f6ecd2 0%, #f1e4c0 55%, #e7d6a8 100%)",
   border: "1px solid #b89c5e",
   boxShadow: "inset 0 0 28px rgba(120,90,40,0.18), 0 6px 16px rgba(0,0,0,0.35)",
-  display: "flex",
-  gap: 12,
-  alignItems: "flex-start",
 };
 
 const portraitStyle: CSSProperties = {
-  width: 72,
-  height: 72,
+  width: 84,
+  height: 84,
   borderRadius: "50%",
   border: "2px solid #b89c5e",
   objectFit: "cover",
   flexShrink: 0,
   background: "#e7d6a8",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
 };
 
 const nomStyle: CSSProperties = {
@@ -105,10 +113,10 @@ export function DialogueOverlay({
 
   return createPortal(
     <button type="button" style={scrim} onClick={avancer}>
-      <div style={carte}>
+      <div style={rangee}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={portraits[ligne.humeur]} alt="" draggable={false} style={portraitStyle} />
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={carte}>
           <div style={nomStyle}>{nom}</div>
           <div style={texteStyle}>{texte}</div>
           <div style={suiteStyle} aria-hidden>

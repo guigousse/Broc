@@ -6,11 +6,14 @@
  * `useGame`) et `next/navigation`, comme LevelUpOverlay.test.tsx.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { TabBar } from "./TabBar";
 import type { GameState } from "@/types/game";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  pushMock.mockClear();
+});
 
 let mockPathname = "/bureau";
 let mockGameStateValue: { state: GameState | null; isHydrated: boolean } = {
@@ -18,9 +21,11 @@ let mockGameStateValue: { state: GameState | null; isHydrated: boolean } = {
   isHydrated: false,
 };
 
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
+
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname,
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: pushMock }),
 }));
 
 vi.mock("@/context/GameContext", () => ({
@@ -63,5 +68,19 @@ describe("TabBar — onboarding Bibliothèque", () => {
     render(<TabBar />);
     expect(screen.getByText("Biblio.")).toBeTruthy();
     expect(screen.getAllByRole("button")).toHaveLength(5);
+  });
+
+  it("tutoriel en cours : la barre reste visible mais la navigation est inerte", () => {
+    mockPathname = "/bureau";
+    const state = { ...etat(1), tutorielEtape: "accueil" } as unknown as GameState;
+    mockGameStateValue = { state, isHydrated: true };
+    render(<TabBar />);
+    expect(screen.getByRole("navigation")).toBeTruthy();
+    const nonActif = screen
+      .getAllByRole("button")
+      .find((b) => b.getAttribute("aria-current") === null);
+    expect(nonActif).toBeTruthy();
+    fireEvent.click(nonActif!);
+    expect(pushMock).not.toHaveBeenCalled();
   });
 });

@@ -1357,6 +1357,21 @@ nav[aria-label="Navigation principale"] :focus-visible,
   margin-left: 8px;
   scale: -1 1;
 }
+/* Variante au-dessus de la cible : main tournée à 90° (doigt vers le bas),
+   centrée horizontalement, va-et-vient vertical vers la cible. */
+@keyframes tuto-main-haut-kf {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 8px; }
+}
+.tuto-main-haut::after {
+  right: auto;
+  left: calc(50% - 44px);
+  top: auto;
+  bottom: calc(100% + 26px);
+  margin-right: 0;
+  rotate: 90deg;
+  animation: tuto-main-haut-kf 1.6s ease-in-out infinite;
+}
 @media (prefers-reduced-motion: reduce) {
   .tuto-pulse {
     animation: none;

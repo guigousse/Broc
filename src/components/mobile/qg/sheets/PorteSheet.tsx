@@ -53,7 +53,7 @@ export function PorteSheet({
           </span>
         )}
         <span
-          className={tutoChiner ? "tuto-pulse tuto-main" : undefined}
+          className={tutoChiner ? "tuto-pulse tuto-main tuto-main-haut" : undefined}
           style={{ display: "inline-block", borderRadius: 12 }}
         >
           <FloatingActionButton
@@ -66,7 +66,7 @@ export function PorteSheet({
         </span>
       </div>
       <span
-        className={tutoEtaler ? "tuto-pulse tuto-main" : undefined}
+        className={tutoEtaler ? "tuto-pulse tuto-main tuto-main-haut" : undefined}
         style={{ display: "inline-block", borderRadius: 12 }}
       >
         <FloatingActionButton

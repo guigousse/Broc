@@ -157,8 +157,10 @@ export function TabBar() {
 
   if (!isHydrated) return null;
   if (!isTabBarRoute(pathname)) return null;
-  // Tutoriel guidé : navigation libre coupée — la bannière et les dialogues guident.
-  if (state && tutorielActif(state)) return null;
+  // Tutoriel guidé : la barre reste VISIBLE dès le début (retour device
+  // 2026-07-17) mais la navigation libre est coupée — taps inertes, la
+  // bannière et les dialogues guident.
+  const tutoEnCours = !!(state && tutorielActif(state));
 
   // Onglets masqués (onboarding progressif) : filtrés selon l'état courant.
   // `state` null (pré-hydratation du state du jeu) → aucun masque appliqué,
@@ -192,6 +194,7 @@ export function TabBar() {
             aria-current={active ? "page" : undefined}
             aria-label={libelleAria(tab.cle, d)}
             onClick={() => {
+              if (tutoEnCours) return;
               playClick();
               if (!active) {
                 if (typeof navigator !== "undefined" && navigator.vibrate) {
