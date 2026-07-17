@@ -168,6 +168,16 @@ export function TabBar() {
   // qui, une fois hydraté, l'aura bien débloqué.
   const visibleTabs = TAB_ORDER.filter((t) => !state || !t.masque?.(state));
 
+  // Mini-tuto vinyles (cadeau d'anniversaire) : main pointeuse au-dessus de
+  // l'onglet vers lequel guider — Stockage pour ranger le vinyle, Bureau pour
+  // revenir au gramophone. Jamais sur l'onglet déjà actif.
+  const mainMiniTuto = (tabPath: string): boolean => {
+    const mt = state?.miniTutoVinyle;
+    if (mt === "ajouter") return tabPath === "/stockage" && pathname !== "/stockage";
+    if (mt === "ecouter") return tabPath === "/bureau" && pathname !== "/bureau";
+    return false;
+  };
+
   const activeIdx = findActiveTabIndex(pathname);
   const activeTab = activeIdx >= 0 ? TAB_ORDER[activeIdx] : null;
   const now = tempsConfiance() ?? Date.now();
@@ -193,6 +203,7 @@ export function TabBar() {
             type="button"
             aria-current={active ? "page" : undefined}
             aria-label={libelleAria(tab.cle, d)}
+            className={mainMiniTuto(tab.path) ? "tuto-main tuto-main-haut" : undefined}
             onClick={() => {
               if (tutoEnCours) return;
               playClick();

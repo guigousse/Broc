@@ -22,6 +22,8 @@ interface StockageItemRowProps {
   collection: CollectionStatus;
   onTap: (objet: Objet) => void;
   onEnvoyerCollection: (objet: Objet) => void;
+  /** Mini-tuto vinyles : main pointeuse sur le bouton Collection de cette ligne. */
+  guideVinyle?: boolean;
   isLast: boolean;
 }
 
@@ -86,6 +88,7 @@ function StockageItemRowBase({
   collection,
   onTap,
   onEnvoyerCollection,
+  guideVinyle = false,
   isLast,
 }: StockageItemRowProps) {
   const { d, tr, locale } = useLangue();
@@ -208,6 +211,9 @@ function StockageItemRowBase({
         ) : (
           <button
             type="button"
+            className={
+              guideVinyle ? "tuto-main" : undefined
+            }
             style={collectionInlineBtn(collection.disponible)}
             onClick={(e) => {
               e.stopPropagation();
@@ -252,6 +258,7 @@ export const StockageItemRow = memo(
     prev.isLast === next.isLast &&
     prev.onTap === next.onTap &&
     prev.onEnvoyerCollection === next.onEnvoyerCollection &&
+    prev.guideVinyle === next.guideVinyle &&
     prev.collection.disponible === next.collection.disponible &&
     prev.collection.dejaIdentique === next.collection.dejaIdentique &&
     prev.collection.necessiteConfirmation ===

@@ -34,6 +34,7 @@ export const QG_LAYOUT = {
     portemanteau: { left: 172.7, bottom: 15.4, width: 23.4 },
     calendrier: { left: 109.6, bottom: 54.3, width: 11.8 },
     colis: { left: 138.5, bottom: 10.5, width: 13.5 },
+    cadeau: { left: 125.0, bottom: 10.0, width: 11.0 },
   },
 } as const;
 

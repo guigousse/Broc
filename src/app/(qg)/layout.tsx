@@ -45,8 +45,10 @@ import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
 import { GrandPereBadge } from "@/components/mobile/qg/GrandPereBadge";
 import { QgColis } from "@/components/mobile/qg/QgColis";
+import { QgCadeau } from "@/components/mobile/qg/QgCadeau";
 import { ColisOverlay } from "@/components/mobile/qg/overlays/ColisOverlay";
 import { COLIS_TUTORIEL_TAILLE } from "@/data/starterInventory";
+import { cadeauAnniversaireVisible } from "@/lib/anniversaire";
 import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
@@ -64,6 +66,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { CATEGORIES } from "@/data/categories";
 import {
   GRAND_PERE_PORTRAITS,
+  SEQUENCES_ANNIVERSAIRE,
   SEQUENCES_TUTORIEL,
   type DialogueSequence,
 } from "@/data/dialogues";
@@ -107,8 +110,14 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     rerollMeteo,
     rerollCelebrite,
   } = useGame();
-  const { avancerTutoriel, terminerTutoriel, accepterChapitrePrincipal, ouvrirObjetColis } =
-    useGameActions();
+  const {
+    avancerTutoriel,
+    terminerTutoriel,
+    accepterChapitrePrincipal,
+    ouvrirObjetColis,
+    ouvrirCadeauAnniversaire,
+    terminerMiniTutoVinyle,
+  } = useGameActions();
   const {
     playClick,
     playPaper,
@@ -150,6 +159,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // révélation + son rang (1-based). null = overlay fermé.
   const [objetColis, setObjetColis] = useState<Objet | null>(null);
   const [numeroColis, setNumeroColis] = useState(0);
+  // Cadeau d'anniversaire (11 juin) : objet en cours de révélation.
+  const [objetCadeau, setObjetCadeau] = useState<Objet | null>(null);
 
   // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
@@ -307,6 +318,11 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
       playGramophoneSong(vinylAudioUrl(vinyles[0].templateId), () =>
         handleNext(),
       );
+      // Mini-tuto vinyles : la musique démarre → clôture + rappel du grand-père.
+      if (state?.miniTutoVinyle === "ecouter") {
+        terminerMiniTutoVinyle();
+        setDialogueQg(SEQUENCES_ANNIVERSAIRE.anniv_fin);
+      }
       return;
     }
     if (vinyleEnLecture) {
@@ -324,6 +340,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     pauseVinyl,
     resumeVinyl,
     handleNext,
+    state?.miniTutoVinyle,
+    terminerMiniTutoVinyle,
   ]);
 
   const handleSelectVinyle = useCallback(
@@ -334,8 +352,12 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
       playGramophoneSong(vinylAudioUrl(vinyles[idx].templateId), () =>
         handleNext(),
       );
+      if (state?.miniTutoVinyle === "ecouter") {
+        terminerMiniTutoVinyle();
+        setDialogueQg(SEQUENCES_ANNIVERSAIRE.anniv_fin);
+      }
     },
-    [vinyles, playGramophoneSong, handleNext],
+    [vinyles, playGramophoneSong, handleNext, state?.miniTutoVinyle, terminerMiniTutoVinyle],
   );
 
   const categoriesConnuesTendance = useMemo(() => {
@@ -492,6 +514,15 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                     }}
                   />
                 )}
+                {state && cadeauAnniversaireVisible(state) && (
+                  <QgCadeau
+                    onTap={() => {
+                      playClick();
+                      const vinyle = ouvrirCadeauAnniversaire();
+                      if (vinyle) setObjetCadeau(vinyle);
+                    }}
+                  />
+                )}
                 <QgCourrier
                   nbNonLus={nbCourriersNonLus}
                   onTap={() => {
@@ -530,6 +561,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                   }}
                 />
                 <QgGramophone
+                  guide={state?.miniTutoVinyle === "ecouter"}
                   onTap={() => {
                     if (tutoActif) return;
                     playClick();
@@ -733,6 +765,16 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
       {/* Pastille du grand-père : s'allume quand un chapitre de la trame est
           prêt à être délivré (chapitrePret), masquée pendant tout autre
           dialogue (tutoriel) pour ne pas se superposer. */}
+      <ColisOverlay
+        objet={objetCadeau}
+        numero={1}
+        total={1}
+        titre={d.tutoriel.cadeauTitre}
+        onRecuperer={() => {
+          setObjetCadeau(null);
+          setDialogueQg(SEQUENCES_ANNIVERSAIRE.anniv_cadeau);
+        }}
+      />
       <ColisOverlay
         objet={objetColis}
         numero={numeroColis}

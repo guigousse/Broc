@@ -103,4 +103,13 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "My dream is fulfilled — not the way I imagined it: better. You're the one who finished it. A story never belongs to the one who begins it, you know.",
     "Here: the keys. All of them. I've got a train tomorrow — Venice first, then we'll see. I'll write to you. Take care of the shop… it's always taken care of us.",
   ],
+  anniv_cadeau: [
+    "Happy birthday, little one! Your mother never forgets the date — and she knows how to choose.",
+    "A jazz record! Head to Storage and add it to your collection — a shelved vinyl is a song earned.",
+    "Then come back to the office: the gramophone will make it sing.",
+  ],
+  anniv_fin: [
+    "Ah, that swing! It makes me forty years younger.",
+    "Other records are sleeping out there in the flea markets. Never hesitate to add them to your collection — every disc is a song waiting to be discovered.",
+  ],
 };

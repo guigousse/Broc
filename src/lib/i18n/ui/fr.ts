@@ -138,6 +138,7 @@ export const fr = {
     carnetSessions: "Carnet — dernières sessions",
     grandPere: "Parler à Grand-père",
     colis: "Colis du grand-père",
+    cadeau: "Cadeau d'anniversaire",
     lettreNonLue: "{n} lettre non lue",
     lettresNonLues: "{n} lettres non lues",
     carnetCommandeAucune: "Carnet de commande — aucune mission",
@@ -170,6 +171,7 @@ export const fr = {
     passer: "Passer le tutoriel",
     confirmerPasser: "Sûr ? Touche encore",
     colisTitre: "Le colis du grand-père",
+    cadeauTitre: "Joyeux anniversaire !",
     colisRecuperer: "Récupérer",
     instructions: {
       "accueil": "Écoute ton grand-père…",

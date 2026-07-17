@@ -135,6 +135,7 @@ export const es: DictionnaireUI = {
     carnetSessions: "Cuaderno — sesiones recientes",
     grandPere: "Hablar con el abuelo",
     colis: "Paquete del abuelo",
+    cadeau: "Regalo de cumpleaños",
     lettreNonLue: "{n} carta sin leer",
     lettresNonLues: "{n} cartas sin leer",
     carnetCommandeAucune: "Cuaderno — sin misiones",
@@ -167,6 +168,7 @@ export const es: DictionnaireUI = {
     passer: "Saltar tutorial",
     confirmerPasser: "¿Seguro? Toca otra vez",
     colisTitre: "El paquete del abuelo",
+    cadeauTitre: "¡Feliz cumpleaños!",
     colisRecuperer: "Recoger",
     instructions: {
       "accueil": "Escucha a tu abuelo…",

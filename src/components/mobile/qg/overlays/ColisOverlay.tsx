@@ -16,9 +16,12 @@ import { nomObjet } from "@/lib/i18n/contenu";
 interface ColisOverlayProps {
   /** Objet en cours de révélation (null = overlay fermé). */
   objet: Objet | null;
-  /** Rang de l'objet dans le colis (1-based) et taille du colis. */
+  /** Rang de l'objet dans le colis (1-based) et taille du colis.
+   *  total <= 1 : le compteur est masqué (cadeau à objet unique). */
   numero: number;
   total: number;
+  /** Titre de la cérémonie. Défaut : « Le colis du grand-père ». */
+  titre?: string;
   /** « Récupérer » tapé : le vol vers Stockage est joué, au parent de révéler
    *  le suivant ou de clore la cérémonie. */
   onRecuperer: () => void;
@@ -104,7 +107,7 @@ const btnRecuperer: CSSProperties = {
  * « Récupérer » l'envoie voler vers l'onglet Stockage (son d'ajout
  * existant via flyToTab) puis le parent révèle le suivant.
  */
-export function ColisOverlay({ objet, numero, total, onRecuperer }: ColisOverlayProps) {
+export function ColisOverlay({ objet, numero, total, titre, onRecuperer }: ColisOverlayProps) {
   const { d, tr, locale } = useLangue();
   const stickerRef = useRef<HTMLDivElement>(null);
   if (!objet || typeof document === "undefined") return null;
@@ -126,8 +129,8 @@ export function ColisOverlay({ objet, numero, total, onRecuperer }: ColisOverlay
   };
 
   return createPortal(
-    <div style={scrim} role="dialog" aria-modal="true" aria-label={d.tutoriel.colisTitre}>
-      <div style={titreColis}>{d.tutoriel.colisTitre}</div>
+    <div style={scrim} role="dialog" aria-modal="true" aria-label={titre ?? d.tutoriel.colisTitre}>
+      <div style={titreColis}>{titre ?? d.tutoriel.colisTitre}</div>
       {/* key = objet.id : relance l'animation d'apparition à chaque objet. */}
       <div
         key={objet.id}
@@ -159,7 +162,11 @@ export function ColisOverlay({ objet, numero, total, onRecuperer }: ColisOverlay
           <span style={etatLabel}>{libelleEtat(objet.etat, d)}</span>
         </div>
       </div>
-      <div style={compteur}>{numero}/{total}</div>
+      {total > 1 && (
+        <div style={compteur}>
+          {numero}/{total}
+        </div>
+      )}
       <button type="button" style={btnRecuperer} onClick={recuperer}>
         {d.tutoriel.colisRecuperer}
       </button>

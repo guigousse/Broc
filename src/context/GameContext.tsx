@@ -28,6 +28,12 @@ import {
   COLIS_TUTORIEL_TAILLE,
   objetColisTutoriel,
 } from "@/data/starterInventory";
+import {
+  cadeauAnniversaireVisible,
+  estVinyle,
+  ID_DECLENCHEUR_CADEAU,
+  objetCadeauAnniversaire,
+} from "@/lib/anniversaire";
 import { createGameRepository } from "@/lib/storage/createGameRepository";
 import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
 import { useToastSafe } from "@/components/ui/Toast";
@@ -168,6 +174,10 @@ interface GameActionsValue {
   avancerTutoriel: (vers: TutorielEtape) => void;
   /** Tire et livre l'objet suivant du colis du tutoriel (null si épuisé). */
   ouvrirObjetColis: () => Objet | null;
+  /** Ouvre le cadeau d'anniversaire (vinyle de jazz) ; null si déjà récupéré. */
+  ouvrirCadeauAnniversaire: () => Objet | null;
+  /** Clôt le mini-tuto des vinyles (musique lancée). */
+  terminerMiniTutoVinyle: () => void;
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
   terminerTutoriel: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
@@ -864,6 +874,39 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return objet;
   }, []);
 
+  /**
+   * Ouvre le cadeau d'anniversaire (11 juin) : ajoute le vinyle de jazz à
+   * l'inventaire, pose le déclencheur one-shot et lance le mini-tuto des
+   * vinyles. Retourne l'objet (cérémonie), ou null si déjà récupéré.
+   */
+  const ouvrirCadeauAnniversaire = useCallback((): Objet | null => {
+    const current = stateRef.current;
+    if (!current || !cadeauAnniversaireVisible(current)) return null;
+    const objet = objetCadeauAnniversaire();
+    setState((prev) => {
+      if (!prev || !cadeauAnniversaireVisible(prev)) return prev;
+      return {
+        ...prev,
+        inventaireJoueur: [...prev.inventaireJoueur, objet],
+        declencheursDeclenches: [
+          ...prev.declencheursDeclenches,
+          ID_DECLENCHEUR_CADEAU,
+        ],
+        miniTutoVinyle: "ajouter" as const,
+      };
+    });
+    return objet;
+  }, []);
+
+  /** Clôt le mini-tuto des vinyles (la musique a été lancée). */
+  const terminerMiniTutoVinyle = useCallback(() => {
+    setState((prev) =>
+      prev && prev.miniTutoVinyle === "ecouter"
+        ? { ...prev, miniTutoVinyle: "termine" as const }
+        : prev,
+    );
+  }, []);
+
   const terminerTutoriel = useCallback(() => {
     setState((prev) => (prev ? appliquerFinTutoriel(prev) : prev));
   }, []);
@@ -1424,6 +1467,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ...prev,
           inventaireJoueur: nouvelInventaire,
           collection: nouvelleCollection,
+          // Mini-tuto vinyles : le vinyle rejoint la collection → on guide
+          // maintenant vers le gramophone.
+          ...(prev.miniTutoVinyle === "ajouter" &&
+          estVinyle(objetCourant.templateId)
+            ? { miniTutoVinyle: "ecouter" as const }
+            : {}),
         };
       });
       return { ok: true };
@@ -1695,6 +1744,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       detacherPartie,
       avancerTutoriel,
       ouvrirObjetColis,
+      ouvrirCadeauAnniversaire,
+      terminerMiniTutoVinyle,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
@@ -1748,6 +1799,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       detacherPartie,
       avancerTutoriel,
       ouvrirObjetColis,
+      ouvrirCadeauAnniversaire,
+      terminerMiniTutoVinyle,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,

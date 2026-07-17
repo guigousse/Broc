@@ -103,4 +103,13 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Mi sueño se ha cumplido — no como lo imaginaba: mejor. Eres tú quien lo ha terminado. Una historia nunca pertenece a quien la empieza, ¿sabes?",
     "Toma: las llaves. Todas. Yo tengo un tren mañana — Venecia primero, luego ya veremos. Te escribiré. Cuida la tienda… ella siempre ha cuidado de nosotros.",
   ],
+  anniv_cadeau: [
+    "¡Feliz cumpleaños, pequeño! Tu madre nunca olvida la fecha — y sabe elegir.",
+    "¡Un disco de jazz! Ve al Almacén y añádelo a tu colección — un vinilo guardado es una música ganada.",
+    "Luego vuelve al despacho: el gramófono sabrá hacerlo cantar.",
+  ],
+  anniv_fin: [
+    "¡Ah, ese swing! Me quita cuarenta años de encima.",
+    "Otros vinilos duermen en los mercadillos. No dudes en añadirlos a tu colección — cada disco es una música por descubrir.",
+  ],
 };

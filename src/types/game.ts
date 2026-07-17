@@ -364,6 +364,12 @@ export interface GameState {
    * à la création, la migration pose 5.
    */
   colisTutorielLivres?: number;
+  /**
+   * ADDITIF : mini-tutoriel des vinyles (cadeau d'anniversaire du 11 juin).
+   * "ajouter" = guider vers Stockage → Collection ; "ecouter" = guider vers
+   * le gramophone ; "termine" ou absent = rien à guider.
+   */
+  miniTutoVinyle?: "ajouter" | "ecouter" | "termine";
   /** Lots de commandes périodiques en cours (quotidien / hebdo). */
   quetesPeriodiques: {
     quotidien: LotPeriodique;

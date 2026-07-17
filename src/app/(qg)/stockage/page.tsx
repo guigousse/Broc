@@ -254,6 +254,7 @@ function StockagePageInner() {
           categoriesConnues={categoriesConnuesVitrine}
           onTapObjet={setObjetOuvert}
           onEnvoyerCollection={envoyerCollection}
+          mainVinyles={state?.miniTutoVinyle === "ajouter"}
           collectionStatus={collectionStatus}
         />
       </FloatingRoomOverlay>

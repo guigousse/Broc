@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import type { CategorieObjet, Objet } from "@/types/game";
 import { StockageItemRow } from "@/components/mobile/StockageItemRow";
+import { estVinyle } from "@/lib/anniversaire";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { CollectionStatus } from "@/lib/atelier";
 
@@ -11,6 +12,8 @@ interface InventoryGridProps {
   categoriesConnues: ReadonlySet<CategorieObjet>;
   onTapObjet: (objet: Objet) => void;
   onEnvoyerCollection: (objet: Objet) => void;
+  /** Mini-tuto vinyles : main pointeuse sur le bouton Collection des vinyles. */
+  mainVinyles?: boolean;
   collectionStatus: (objet: Objet) => CollectionStatus;
 }
 
@@ -29,6 +32,7 @@ export function InventoryGrid({
   categoriesConnues,
   onTapObjet,
   onEnvoyerCollection,
+  mainVinyles = false,
   collectionStatus,
 }: InventoryGridProps) {
   const { d } = useLangue();
@@ -73,6 +77,7 @@ export function InventoryGrid({
             collection={collectionStatus(o)}
             onTap={onTapObjet}
             onEnvoyerCollection={onEnvoyerCollection}
+            guideVinyle={mainVinyles && estVinyle(o.templateId)}
             isLast={i === objets.length - 1}
           />
         );

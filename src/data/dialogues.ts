@@ -78,6 +78,26 @@ export const SEQUENCES_TUTORIEL: Record<string, DialogueSequence> = {
   },
 };
 
+/** Événement d'anniversaire (11 juin) : mini-tuto des vinyles. */
+export const SEQUENCES_ANNIVERSAIRE: Record<string, DialogueSequence> = {
+  anniv_cadeau: {
+    id: "anniv_cadeau",
+    lignes: [
+      { humeur: "emu", texte: "Joyeux anniversaire, petit ! Ta mère n'oublie jamais la date — et elle sait choisir." },
+      { humeur: "souriant", texte: "Un 33 tours de jazz ! File au Stockage l'ajouter à ta collection — un vinyle rangé, c'est une musique gagnée." },
+      { humeur: "songeur", texte: "Ensuite, reviens au bureau : le gramophone saura le faire chanter." },
+    ],
+  },
+  anniv_fin: {
+    id: "anniv_fin",
+    lignes: [
+      { humeur: "rieur", texte: "Ah, ce swing ! Ça me rajeunit de quarante ans." },
+      { humeur: "souriant", texte: "D'autres vinyles dorment dans les brocantes. N'hésite jamais à les ajouter à ta collection — chaque disque est une musique à découvrir." },
+    ],
+  },
+};
+
 export const TOUTES_SEQUENCES: DialogueSequence[] = [
   ...Object.values(SEQUENCES_TUTORIEL),
+  ...Object.values(SEQUENCES_ANNIVERSAIRE),
 ];

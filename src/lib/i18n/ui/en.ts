@@ -135,6 +135,7 @@ export const en: DictionnaireUI = {
     carnetSessions: "Notebook — recent sessions",
     grandPere: "Talk to Grandpa",
     colis: "Grandpa's parcel",
+    cadeau: "Birthday present",
     lettreNonLue: "{n} unread letter",
     lettresNonLues: "{n} unread letters",
     carnetCommandeAucune: "Notebook — no quests",
@@ -167,6 +168,7 @@ export const en: DictionnaireUI = {
     passer: "Skip tutorial",
     confirmerPasser: "Sure? Tap again",
     colisTitre: "Grandpa's parcel",
+    cadeauTitre: "Happy birthday!",
     colisRecuperer: "Collect",
     instructions: {
       "accueil": "Listen to your grandfather…",
