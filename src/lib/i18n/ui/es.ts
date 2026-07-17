@@ -232,7 +232,6 @@ export const es: DictionnaireUI = {
       "Sin energía — espera a que se recargue o mira un anuncio.",
     droitEntreePaye: "Entrada pagada: {frais} €.",
     caisseRefuse: "La caja se niega — fondos insuficientes.",
-    acquisPour: "Adquirido por {prix} €. Anotado en el cuaderno.",
     aucuneBrocanteTier: "Ningún mercadillo en este tier.",
     roleCarrousel: "carrusel",
     roleSlide: "diapositiva",

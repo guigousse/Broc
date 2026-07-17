@@ -232,7 +232,6 @@ export const en: DictionnaireUI = {
       "No more energy — wait for it to recharge or watch an ad.",
     droitEntreePaye: "Entry fee paid: {frais} €.",
     caisseRefuse: "The till refuses — insufficient funds.",
-    acquisPour: "Acquired for {prix} €. Noted in the notebook.",
     aucuneBrocanteTier: "No flea market in this tier.",
     roleCarrousel: "carousel",
     roleSlide: "slide",

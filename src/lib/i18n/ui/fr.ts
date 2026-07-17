@@ -235,7 +235,6 @@ export const fr = {
       "Plus d'énergie — attends la recharge ou regarde une pub.",
     droitEntreePaye: "Droit d'entrée payé : {frais} €.",
     caisseRefuse: "La caisse refuse — fonds insuffisants.",
-    acquisPour: "Acquis pour {prix} €. Noté dans le carnet.",
     aucuneBrocanteTier: "Aucune brocante dans ce tier.",
     roleCarrousel: "carrousel",
     roleSlide: "slide",

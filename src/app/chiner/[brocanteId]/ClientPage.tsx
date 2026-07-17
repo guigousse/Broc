@@ -305,7 +305,6 @@ export default function SessionChinePage() {
         prixPaye: prix,
       },
     ]);
-    toast(tr(d.chine.acquisPour, { prix }), { type: "succes" });
     if (etape === "premier-achat") {
       setDialogueTuto(SEQUENCES_TUTORIEL.tuto_achat_fait);
     }
