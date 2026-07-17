@@ -25,9 +25,9 @@ export function creerLettreMamanDebut(jour: number): Courrier {
       titre: "Pour bien démarrer",
       corps: [
         "Mon cher enfant,",
-        "Je sais que tu te lances dans cette nouvelle aventure de chineur, et je suis si fière de toi. Le marché aux puces est un monde merveilleux mais exigeant — sois patient, observe, apprends.",
-        "Je glisse dans cette enveloppe **150 €** pour t'aider à démarrer. Achète-toi un bel objet pour ta première vitrine, ou garde-les pour les jours plus difficiles.",
-        "Pense à venir me voir quand tu auras un moment.",
+        "Alors ça y est : ton grand-père t'a confié la boutique ! Marcel ne me l'a dit qu'après, évidemment — tu le connais. Je crois qu'il n'a jamais été aussi fier, même s'il bougonnera si tu le lui répètes.",
+        "Je glisse **150 €** dans l'enveloppe pour t'aider à démarrer. Offre-toi une belle pièce pour ta vitrine, ou garde-les pour les jours creux.",
+        "Veille un peu sur lui, veux-tu ? Et viens me voir quand tu auras une minute.",
       ],
       recompense: { argent: 150 },
     },
