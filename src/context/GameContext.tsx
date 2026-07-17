@@ -882,9 +882,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const ouvrirCadeauAnniversaire = useCallback((): Objet | null => {
     const current = stateRef.current;
     if (!current || !cadeauAnniversaireVisible(current)) return null;
-    // Stockage plein : le paquet RESTE devant la porte (le déclencheur n'est
-    // posé qu'à la récupération effective) — l'appelant affiche la raison.
-    if (stockageEstPlein(current)) return null;
     const objet = objetCadeauAnniversaire();
     setState((prev) => {
       if (!prev || !cadeauAnniversaireVisible(prev)) return prev;

@@ -44,7 +44,6 @@ import { QgCalendrier } from "@/components/mobile/qg/QgCalendrier";
 import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
 import { GrandPereBadge } from "@/components/mobile/qg/GrandPereBadge";
-import { useToast } from "@/components/ui/Toast";
 import { QgColis } from "@/components/mobile/qg/QgColis";
 import { QgCadeau } from "@/components/mobile/qg/QgCadeau";
 import { ColisOverlay } from "@/components/mobile/qg/overlays/ColisOverlay";
@@ -100,7 +99,6 @@ const GRAMO_SESSION_KEY = "broc.gramo.session";
 function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { d, locale } = useLangue();
-  const { toast } = useToast();
   const {
     state,
     isHydrated,
@@ -522,10 +520,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                       playClick();
                       const vinyle = ouvrirCadeauAnniversaire();
                       if (vinyle) setObjetCadeau(vinyle);
-                      // Stockage plein : le paquet reste — on explique pourquoi.
-                      else if (state && stockageEstPlein(state)) {
-                        toast(d.raisons.stockagePlein, { type: "info" });
-                      }
                     }}
                   />
                 )}
