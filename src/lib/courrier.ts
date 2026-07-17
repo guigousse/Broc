@@ -1,3 +1,4 @@
+import { CARTES_POSTALES } from "@/data/cartesPostales";
 import { INVITATIONS_ORGANISATEURS } from "@/data/invitationsOrganisateurs";
 import type {
   Courrier,
@@ -51,6 +52,26 @@ export function creerLettreInvitation(tier: 2 | 3 | 4, jour: number): Courrier {
     payload: {
       type: "lettre",
       expediteurId: "organisateurs",
+      titre,
+      corps,
+    },
+  };
+}
+
+/**
+ * Crée la carte postale d'épilogue `index` (1-based, cf. `CARTES_POSTALES`),
+ * expédiée par le grand-père. Purement narrative (sans récompense).
+ */
+export function creerCartePostale(index: number, jour: number): Courrier {
+  const { id, titre, corps } = CARTES_POSTALES[index - 1];
+  return {
+    id,
+    type: "lettre",
+    jourRecu: jour,
+    lu: false,
+    payload: {
+      type: "lettre",
+      expediteurId: "grand-pere",
       titre,
       corps,
     },
