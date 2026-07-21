@@ -1413,7 +1413,10 @@ nav[aria-label="Navigation principale"] :focus-visible,
 }
 .tuto-main-haut::after {
   right: auto;
-  left: calc(50% - 44px);
+  /* -49px et non -44px (demi-boîte) : la pointe de l'index est excentrée
+     dans l'image (doigt en haut) — après rotate 90°, elle tombe ~5px à
+     droite du centre de la boîte. Le décalage la remet pile sur la cible. */
+  left: calc(50% - 49px);
   top: auto;
   bottom: calc(100% + 26px);
   margin-right: 0;

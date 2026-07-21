@@ -178,6 +178,10 @@ export function TabBar() {
     return false;
   };
 
+  // Une main est-elle affichée ? La fenêtre flottante du stockage (zIndex 35)
+  // passerait sinon devant la main qui déborde au-dessus de la nav (zIndex 30).
+  const mainAffichee = visibleTabs.some((t) => mainMiniTuto(t.path));
+
   const activeIdx = findActiveTabIndex(pathname);
   const activeTab = activeIdx >= 0 ? TAB_ORDER[activeIdx] : null;
   const now = tempsConfiance() ?? Date.now();
@@ -190,6 +194,7 @@ export function TabBar() {
       aria-label={d.chrome.navigationPrincipale}
       style={{
         ...wrapStyle,
+        ...(mainAffichee ? { zIndex: 40 } : null),
         gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)`,
       }}
     >

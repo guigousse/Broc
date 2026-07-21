@@ -84,3 +84,32 @@ describe("TabBar — onboarding Bibliothèque", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 });
+
+describe("TabBar — mini-tuto vinyle (main pointeuse)", () => {
+  function etatMiniTuto(mt: "ajouter" | "ecouter"): GameState {
+    return {
+      brocanteur: { niveau: 1, xp: 0, pointsDisponibles: 0 },
+      inventaireJoueur: [],
+      tutorielEtape: "termine",
+      miniTutoVinyle: mt,
+    } as unknown as GameState;
+  }
+
+  it("nav en zIndex 40 + main sur Bureau quand ecouter hors /bureau", () => {
+    mockPathname = "/stockage";
+    mockGameStateValue = { state: etatMiniTuto("ecouter"), isHydrated: true };
+    render(<TabBar />);
+    const nav = screen.getByRole("navigation");
+    expect(nav.style.zIndex).toBe("40");
+    const bureau = screen.getAllByRole("button").find((b) => b.className.includes("tuto-main"));
+    expect(bureau?.textContent).toContain("Bureau");
+  });
+
+  it("nav en zIndex 30 sans main (ecouter, déjà sur /bureau)", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = { state: etatMiniTuto("ecouter"), isHydrated: true };
+    render(<TabBar />);
+    expect(screen.getByRole("navigation").style.zIndex).toBe("30");
+    expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+});
