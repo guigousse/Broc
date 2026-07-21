@@ -8,6 +8,7 @@ import {
 } from "react";
 import { FloatingActionButton } from "@/components/mobile/qg/FloatingActionButton";
 import { getExpediteur } from "@/data/expediteursCourrier";
+import { cartePostaleParId } from "@/data/cartesPostales";
 import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
@@ -15,6 +16,7 @@ import { corpsCourrier, nomTemplate, signatureExpediteur, titreCourrier } from "
 import type { Locale } from "@/lib/i18n/locales";
 import type { DictionnaireUI, tr as TrFn } from "@/lib/i18n/ui";
 import type { Courrier } from "@/types/game";
+import { CartePostaleView } from "./CartePostaleView";
 
 interface CourrierSheetProps {
   open: boolean;
@@ -307,6 +309,8 @@ export function CourrierSheet({
   const recompenseArgent =
     courant.payload.type === "lettre" ? courant.payload.recompense?.argent : null;
   const estMission = courant.payload.type === "mission";
+  const carte =
+    courant.payload.type === "lettre" ? cartePostaleParId(courant.id) : undefined;
 
   const handleValider = () => {
     if (recompenseArgent) {
@@ -330,11 +334,15 @@ export function CourrierSheet({
           ✕
         </button>
         <div style={scrollArea}>
-          <article style={lettreCard}>
-            {courant.payload.type === "mission"
-              ? renderMission(courant, d, tr, locale)
-              : renderLettre(courant, locale)}
-          </article>
+          {carte ? (
+            <CartePostaleView key={courant.id} courrier={courant} carte={carte} />
+          ) : (
+            <article style={lettreCard}>
+              {courant.payload.type === "mission"
+                ? renderMission(courant, d, tr, locale)
+                : renderLettre(courant, locale)}
+            </article>
+          )}
           <div style={actionBtnWrap}>
             <FloatingActionButton onClick={handleValider} minWidth={220}>
               {estMission
