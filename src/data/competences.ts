@@ -23,11 +23,11 @@ export const CATEGORIES_THEMATIQUES: CategorieObjet[] = CATEGORIES;
 export const NIVEAU_BROCANTEUR_PALIER_2 = 10;
 export const NIVEAU_BROCANTEUR_PALIER_3 = 30;
 
-/** Coût et niveau de Brocanteur par défaut pour les paliers 1/2/3 (arbres thématiques). */
+/** Coût (1 pt partout — refonte 2026-07-21) et niveau de Brocanteur requis par palier. */
 const PALIER_DEFAULTS = [
   { coutPoints: 1, niveauBrocanteurRequis: 0 },
-  { coutPoints: 2, niveauBrocanteurRequis: NIVEAU_BROCANTEUR_PALIER_2 },
-  { coutPoints: 3, niveauBrocanteurRequis: NIVEAU_BROCANTEUR_PALIER_3 },
+  { coutPoints: 1, niveauBrocanteurRequis: NIVEAU_BROCANTEUR_PALIER_2 },
+  { coutPoints: 1, niveauBrocanteurRequis: NIVEAU_BROCANTEUR_PALIER_3 },
 ] as const;
 
 function definirPaliers(
@@ -330,4 +330,20 @@ export function getTreeMeta(treeId: CompetenceTreeId): TreeMeta {
 export function visuelCompetence(comp: CompetenceDef): string {
   const prefixe = comp.treeId === TREE_GENERAL ? "general" : "theme";
   return `/competences/${prefixe}.${comp.brancheId}.${comp.palierNumero}.webp`;
+}
+
+/** Coût total de l'arbre entier — plafond des points gagnables « à vie ». */
+export const COUT_TOTAL_COMPETENCES = TREES.reduce(
+  (acc, t) =>
+    acc +
+    t.branches.reduce(
+      (a, b) => a + b.paliers.reduce((s, p) => s + p.coutPoints, 0),
+      0,
+    ),
+  0,
+);
+
+/** Somme des coûts des compétences débloquées (= points dépensés). */
+export function pointsDepensesCompetences(ids: readonly string[]): number {
+  return ids.reduce((acc, id) => acc + (getCompetence(id)?.coutPoints ?? 0), 0);
 }
