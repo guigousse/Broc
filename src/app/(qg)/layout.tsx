@@ -734,6 +734,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
       <GramophoneSheet
         open={gramophoneOuvert}
         onClose={() => setGramophoneOuvert(false)}
+        guide={state?.miniTutoVinyle === "ecouter"}
         vinyles={vinyles}
         vinyleCourantIdx={vinyleCourantIdx}
         enLecture={vinyleEnLecture}

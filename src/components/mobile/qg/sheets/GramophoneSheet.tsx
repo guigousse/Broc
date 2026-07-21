@@ -19,6 +19,8 @@ interface GramophoneSheetProps {
   onSelect: (idx: number) => void;
   onPlayPause: () => void;
   onNext: () => void;
+  /** Mini-tuto vinyles : main pointeuse sur la première vignette. */
+  guide?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -236,6 +238,7 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
     onSelect,
     onPlayPause,
     onNext,
+    guide = false,
   } = props;
   const { d, locale } = useLangue();
 
@@ -348,7 +351,9 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                 {d.sheets.trouvezVendeurs}
               </div>
             ) : (
-              <div style={bandeWrap}>
+              // Pendant le guidage : overflow visible pour ne pas rogner la
+              // main (un seul vinyle à ce stade, aucun scroll nécessaire).
+              <div style={guide ? { ...bandeWrap, overflowX: "visible" } : bandeWrap}>
                 {vinyles.map((v, idx) => {
                   const actif = idx === vinyleCourantIdx;
                   const nomVinyle = nomObjet(v, locale);
@@ -356,6 +361,7 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                     <button
                       key={v.templateId}
                       type="button"
+                      className={guide && idx === 0 ? "tuto-main tuto-main-haut" : undefined}
                       onClick={() => onSelect(idx)}
                       title={nomVinyle}
                       aria-label={nomVinyle}

@@ -18,7 +18,9 @@ export function QgGramophone({ onTap, guide = false }: QgGramophoneProps) {
       type="button"
       onClick={onTap}
       aria-label={d.qg.gramophone}
-      style={style}
+      // Pendant le guidage : passe devant le chat baladeur (zIndex 2, rendu
+      // après dans le DOM) pour que la main pointeuse reste visible.
+      style={guide ? { ...style, zIndex: 3 } : style}
     >
       <img
         src="/qg/gramophone.webp"
