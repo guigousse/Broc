@@ -227,27 +227,35 @@ function normaliserMissionPayload(c: Courrier): Courrier {
  * débloquée), puis écrête pour que les points « à vie » (disponibles +
  * dépensés au nouveau barème) ne dépassent jamais `COUT_TOTAL_COMPETENCES`.
  *
- * `skipRefund` couvre deux cas où le remboursement ne doit PAS s'appliquer :
- *  - la save est déjà passée par v15 (le remboursement a déjà été versé une
- *    fois — idempotence, cf. `dejaV15` dans `appliquerMigrations`) ;
- *  - la save est antérieure à v9 (`!dejaV9`) : son `pointsDisponibles` n'est
- *    pas un solde accumulé au fil du jeu, il est intégralement RECALCULÉ à
- *    chaque chargement (cf. bloc `< v9` plus bas, `niveau + bonus − dépenses`)
- *    à partir de `getCompetence(id)?.coutPoints`, qui vaut déjà 1 pour tous
- *    les paliers depuis la présente refonte des coûts — ce recalcul reflète
- *    donc déjà le nouveau barème. Un remboursement par-dessus compterait
- *    l'écart une seconde fois (sur-crédit).
+ * Deux étapes à la portée bien distincte :
+ *  - le REMBOURSEMENT est gaté par `sansRemboursement`, vrai dans deux cas :
+ *    · la save est déjà passée par v15 (le remboursement a déjà été versé
+ *      une fois — idempotence, cf. `dejaV15` dans `appliquerMigrations`) ;
+ *    · la save est antérieure à v9 (`!dejaV9`) : son `pointsDisponibles`
+ *      n'est pas un solde accumulé au fil du jeu, il est intégralement
+ *      RECALCULÉ à chaque chargement (cf. bloc `< v9` plus bas,
+ *      `niveau + bonus − dépenses`) à partir de `getCompetence(id)?.coutPoints`,
+ *      qui vaut déjà 1 pour tous les paliers depuis la présente refonte —
+ *      ce recalcul reflète donc déjà le nouveau barème. Un remboursement
+ *      par-dessus compterait l'écart une seconde fois (sur-crédit).
+ *  - l'ÉCRÊTAGE, lui, est INCONDITIONNEL : il doit toujours tourner, y
+ *    compris pour les saves `< v9` sans remboursement, car leur recalcul
+ *    legacy (`niveau + bonus − dépenses`) n'a qu'un plancher (`Math.max(0, …)`)
+ *    et aucun plafond — un niveau élevé peut donc y produire un
+ *    `pointsDisponibles` qui dépasse `COUT_TOTAL_COMPETENCES`, violant
+ *    l'invariant global si on ne le clampe pas ici.
  */
 function appliquerRefonteCoutsV15(
   brocanteur: BrocanteurState,
   competencesDebloquees: readonly string[],
-  skipRefund: boolean,
+  sansRemboursement: boolean,
 ): BrocanteurState {
-  if (skipRefund) return brocanteur;
-  const remboursement = competencesDebloquees.reduce((acc, id) => {
-    const c = getCompetence(id);
-    return acc + (c ? c.palierNumero - 1 : 0);
-  }, 0);
+  const remboursement = sansRemboursement
+    ? 0
+    : competencesDebloquees.reduce((acc, id) => {
+        const c = getCompetence(id);
+        return acc + (c ? c.palierNumero - 1 : 0);
+      }, 0);
   const plafondDisponibles = Math.max(
     0,
     COUT_TOTAL_COMPETENCES - pointsDepensesCompetences(competencesDebloquees),
@@ -779,8 +787,9 @@ function appliquerMigrations(loaded: GameState): GameState {
         };
       })(),
       competencesDebloquees,
-      // Skip si déjà remboursée (idempotence) OU si la save est < v9 : son
-      // `pointsDisponibles` vient d'être recalculé ci-dessus au NOUVEAU
+      // Skip du REMBOURSEMENT (pas de l'écrêtage, toujours actif dans le
+      // helper) si déjà remboursée (idempotence) OU si la save est < v9 :
+      // son `pointsDisponibles` vient d'être recalculé ci-dessus au NOUVEAU
       // barème (`getCompetence().coutPoints` vaut 1 partout) — cf. le
       // commentaire de `appliquerRefonteCoutsV15` pour le détail du
       // sur-crédit que produirait un remboursement dans ce cas.

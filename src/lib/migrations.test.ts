@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { GameState } from "@/types/game";
 import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
-import { COUT_TOTAL_COMPETENCES } from "@/data/competences";
+import { COUT_TOTAL_COMPETENCES, pointsDepensesCompetences } from "@/data/competences";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
 import { emptyBrocanteur, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
@@ -987,5 +987,47 @@ describe("v15 — refonte des coûts de compétences (1 pt)", () => {
     // niveau (10) + bonus chapitres livrés (0) − dépenses au nouveau barème (3 × 1 = 3) = 7.
     // Sans le garde <v9, le remboursement (0+1+2=3) porterait ce total à 10.
     expect(out.brocanteur.pointsDisponibles).toBe(7);
+  });
+
+  it("l'écrêtage s'applique MÊME sans remboursement (< v9, niveau et chapitres livrés élevés)", () => {
+    // Régression : le recalcul legacy `< v9` (niveau + bonus chapitres −
+    // dépenses) n'a qu'un plancher (Math.max(0, …)), aucun plafond. Une save
+    // pré-v9 avec un niveau élevé et beaucoup de chapitres principaux livrés
+    // peut donc produire un `pointsDisponibles` qui dépasse
+    // `COUT_TOTAL_COMPETENCES` — l'écrêtage de `appliquerRefonteCoutsV15`
+    // doit tourner pour TOUTE save (contrairement au remboursement, lui
+    // gaté), sans quoi l'invariant global (disponibles + dépensés ≤
+    // COUT_TOTAL_COMPETENCES) est violé.
+    const chapitres = Array.from({ length: 12 }, (_, i) => i + 1);
+    const save = fabriqueSaveV7({
+      courriers: chapitres.map((n) => ({
+        id: `chap${n}`,
+        type: "mission",
+        jourRecu: 1,
+        lu: true,
+        payload: {
+          type: "mission",
+          categorie: "principale",
+          expediteurId: "maman",
+          titre: `Chapitre ${n}`,
+          corps: [],
+          cibles: [],
+          recompense: { argent: 0 },
+        },
+      })),
+      missions: chapitres.map((n) => ({ courrierId: `chap${n}`, statut: "livree" })),
+    });
+    (save as unknown as Record<string, unknown>).competenceTrees = {
+      general: { xp: xpRequisPourNiveauBrocanteur(85), niveau: 85, pointsDisponibles: 0 },
+    };
+    save.competencesDebloquees = [];
+    const out = migrerSauvegarde(save);
+    expect(out.brocanteur.niveau).toBe(85);
+    // Sans écrêtage : 85 + 2×12 − 0 = 109, largement au-dessus de 96.
+    expect(out.brocanteur.pointsDisponibles).toBe(COUT_TOTAL_COMPETENCES);
+    expect(
+      out.brocanteur.pointsDisponibles +
+        pointsDepensesCompetences(out.competencesDebloquees),
+    ).toBeLessThanOrEqual(COUT_TOTAL_COMPETENCES);
   });
 });
