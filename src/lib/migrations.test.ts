@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { GameState } from "@/types/game";
 import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
+import { COUT_TOTAL_COMPETENCES } from "@/data/competences";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
 import { emptyBrocanteur, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
@@ -293,8 +294,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 14", () => {
-    expect(SAVE_VERSION).toBe(14);
+  it("SAVE_VERSION incrémenté à 15", () => {
+    expect(SAVE_VERSION).toBe(15);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -548,12 +549,13 @@ describe("migration v9 — refund du pool global", () => {
     const save = fabriqueSaveV7();
     // 1100 XP d'arbres → niveau Brocanteur 10 (seuil N10=1045, N11=1150,5)
     (save as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 1100, niveau: 11, pointsDisponibles: 4 } };
-    // 2 paliers achetés : reparer.1 (1 pt) + reparer.2 (2 pts) = 3 pts dépensés
+    // 2 paliers achetés : reparer.1 (1 pt) + reparer.2 (1 pt, refonte v15 —
+    // chaque palier coûte 1 pt) = 2 pts dépensés
     save.competencesDebloquees = ["cat.Musique.reparer.1", "cat.Musique.reparer.2"];
     const migre = migrerSauvegarde(save);
     expect(migre.version).toBe(SAVE_VERSION);
     expect(migre.brocanteur.niveau).toBe(10);
-    expect(migre.brocanteur.pointsDisponibles).toBe(7); // 10 + 0 − 3
+    expect(migre.brocanteur.pointsDisponibles).toBe(8); // 10 + 0 − 2
     expect(migre.competencesDebloquees).toEqual(["cat.Musique.reparer.1", "cat.Musique.reparer.2"]);
   });
 
@@ -727,8 +729,8 @@ describe("migration v10 — suppression de competenceTrees", () => {
 });
 
 describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
-  it("SAVE_VERSION vaut 14", () => {
-    expect(SAVE_VERSION).toBe(14);
+  it("SAVE_VERSION vaut 15", () => {
+    expect(SAVE_VERSION).toBe(15);
   });
 
   it("une save v10 avec le champ legacy le perd, brocanteur intact", () => {
@@ -811,8 +813,8 @@ const migrate = migrerSauvegarde;
 const br = emptyBrocanteur();
 
 describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-verrouiller un tier)", () => {
-  it("SAVE_VERSION incrémenté à 14", () => {
-    expect(SAVE_VERSION).toBe(14);
+  it("SAVE_VERSION incrémenté à 15", () => {
+    expect(SAVE_VERSION).toBe(15);
   });
 
   it("v14 : save antérieure (stock donné à la création) ⇒ colis considéré livré", () => {
@@ -912,5 +914,78 @@ describe("migration v13 — back-fill gaté (ne rejoue pas à chaque chargement 
     expect(
       migreDeuxFois.courriers.filter((c) => c.id.startsWith("trame_ch")),
     ).toEqual(migreUneFois.courriers.filter((c) => c.id.startsWith("trame_ch")));
+  });
+});
+
+/** Fabrique une save "v14" (schéma courant avant la refonte des coûts v15). */
+function saveV14(patch: Partial<GameState> = {}): GameState {
+  return { ...createMockGameState(patch), version: 14 };
+}
+
+/** Fabrique une save "v15" (déjà migrée, schéma courant). */
+function saveV15(patch: Partial<GameState> = {}): GameState {
+  return { ...createMockGameState(patch), version: 15 };
+}
+
+describe("v15 — refonte des coûts de compétences (1 pt)", () => {
+  it("SAVE_VERSION incrémenté à 15", () => {
+    expect(SAVE_VERSION).toBe(15);
+  });
+
+  it("rembourse l'écart de l'ancien barème (P1 +0, P2 +1, P3 +2)", () => {
+    const save = saveV14({
+      brocanteur: { xp: 5000, niveau: 20, pointsDisponibles: 5 },
+      competencesDebloquees: [
+        "general.negociation.1", // ancien coût 1 → +0
+        "general.negociation.2", // ancien coût 2 → +1
+        "general.negociation.3", // ancien coût 3 → +2
+      ],
+    });
+    const out = migrerSauvegarde(save);
+    expect(out.brocanteur.pointsDisponibles).toBe(8); // 5 + 3
+  });
+
+  it("écrête pour que disponibles + dépensés ≤ COUT_TOTAL_COMPETENCES", () => {
+    const save = saveV14({
+      brocanteur: { xp: 5000, niveau: 20, pointsDisponibles: COUT_TOTAL_COMPETENCES - 1 },
+      competencesDebloquees: ["general.negociation.1", "general.negociation.2"],
+    });
+    const out = migrerSauvegarde(save);
+    // dépensés (nouveau barème) = 2 → disponibles plafonnés à 94
+    expect(out.brocanteur.pointsDisponibles).toBe(COUT_TOTAL_COMPETENCES - 2);
+  });
+
+  it("idempotente : une save déjà v15 n'est pas re-remboursée", () => {
+    const save = saveV15({
+      brocanteur: { xp: 5000, niveau: 20, pointsDisponibles: 5 },
+      competencesDebloquees: ["general.negociation.2"],
+    });
+    const out = migrerSauvegarde(save);
+    expect(out.brocanteur.pointsDisponibles).toBe(5);
+  });
+
+  it("une save < v9 n'est PAS remboursée : son pointsDisponibles est déjà recalculé au nouveau barème", () => {
+    // Save pré-v9 (`fabriqueSaveV7` : pas de `brocanteur`, version 7) : le
+    // niveau est reconstitué depuis les arbres legacy `competenceTrees`, et
+    // `pointsDisponibles` est intégralement RECALCULÉ au chargement à partir
+    // de niveau + bonus chapitres − dépenses, avec `getCompetence().coutPoints`
+    // qui vaut déjà 1 pour tous les paliers (refonte des coûts) — ce recalcul
+    // reflète donc déjà le nouveau barème. Un remboursement par-dessus
+    // sur-créditerait le joueur (cf. `appliquerRefonteCoutsV15`).
+    const save = fabriqueSaveV7({
+      competencesDebloquees: [
+        "general.negociation.1",
+        "general.negociation.2",
+        "general.negociation.3",
+      ],
+    });
+    (save as unknown as Record<string, unknown>).competenceTrees = {
+      general: { xp: 1100, niveau: 11, pointsDisponibles: 4 },
+    };
+    const out = migrerSauvegarde(save);
+    expect(out.brocanteur.niveau).toBe(10); // 1100 XP → N10 (seuil N10=1045)
+    // niveau (10) + bonus chapitres livrés (0) − dépenses au nouveau barème (3 × 1 = 3) = 7.
+    // Sans le garde <v9, le remboursement (0+1+2=3) porterait ce total à 10.
+    expect(out.brocanteur.pointsDisponibles).toBe(7);
   });
 });

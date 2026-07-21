@@ -1,5 +1,6 @@
 import {
   INITIAL_JOUR,
+  type BrocanteurState,
   type Courrier,
   type EtatObjet,
   type GameState,
@@ -12,7 +13,12 @@ import {
   emptyPiecesAmelioration,
   migrerCategorie,
 } from "@/data/categories";
-import { COMPETENCES, getCompetence } from "@/data/competences";
+import {
+  COMPETENCES,
+  COUT_TOTAL_COMPETENCES,
+  getCompetence,
+  pointsDepensesCompetences,
+} from "@/data/competences";
 import { prochainLundi } from "@/lib/calendrier";
 import { tirerCelebrite } from "@/lib/celebrite";
 import { ETAPES_TUTORIEL } from "@/lib/tutoriel";
@@ -98,7 +104,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -212,6 +218,47 @@ function normaliserMissionPayload(c: Courrier): Courrier {
   const next = { ...p, categorie: (p.categorie as string) ?? "quotidienne", cibles };
   delete (next as { cible?: unknown }).cible;
   return { ...c, payload: next as Courrier["payload"] };
+}
+
+/**
+ * v15 — refonte des coûts de compétences : chaque palier coûte désormais
+ * 1 pt (ancien barème : coût = numéro du palier, soit 1/2/3). Rembourse
+ * l'écart payé sous l'ancien barème (`palierNumero - 1` par compétence
+ * débloquée), puis écrête pour que les points « à vie » (disponibles +
+ * dépensés au nouveau barème) ne dépassent jamais `COUT_TOTAL_COMPETENCES`.
+ *
+ * `skipRefund` couvre deux cas où le remboursement ne doit PAS s'appliquer :
+ *  - la save est déjà passée par v15 (le remboursement a déjà été versé une
+ *    fois — idempotence, cf. `dejaV15` dans `appliquerMigrations`) ;
+ *  - la save est antérieure à v9 (`!dejaV9`) : son `pointsDisponibles` n'est
+ *    pas un solde accumulé au fil du jeu, il est intégralement RECALCULÉ à
+ *    chaque chargement (cf. bloc `< v9` plus bas, `niveau + bonus − dépenses`)
+ *    à partir de `getCompetence(id)?.coutPoints`, qui vaut déjà 1 pour tous
+ *    les paliers depuis la présente refonte des coûts — ce recalcul reflète
+ *    donc déjà le nouveau barème. Un remboursement par-dessus compterait
+ *    l'écart une seconde fois (sur-crédit).
+ */
+function appliquerRefonteCoutsV15(
+  brocanteur: BrocanteurState,
+  competencesDebloquees: readonly string[],
+  skipRefund: boolean,
+): BrocanteurState {
+  if (skipRefund) return brocanteur;
+  const remboursement = competencesDebloquees.reduce((acc, id) => {
+    const c = getCompetence(id);
+    return acc + (c ? c.palierNumero - 1 : 0);
+  }, 0);
+  const plafondDisponibles = Math.max(
+    0,
+    COUT_TOTAL_COMPETENCES - pointsDepensesCompetences(competencesDebloquees),
+  );
+  return {
+    ...brocanteur,
+    pointsDisponibles: Math.min(
+      brocanteur.pointsDisponibles + remboursement,
+      plafondDisponibles,
+    ),
+  };
 }
 
 function appliquerMigrations(loaded: GameState): GameState {
@@ -514,6 +561,12 @@ function appliquerMigrations(loaded: GameState): GameState {
   // active) ou fraîchement créée verrait ses chapitres suivants forcés
   // « livrés » d'après le seul niveau du joueur — sautant l'histoire en cours.
   const dejaV13 = typeof loaded.version === "number" && loaded.version >= 13;
+  // v15 — gate par version ENTRANTE (même principe que `dejaV9`/`dejaV13`
+  // ci-dessus) : le remboursement de l'ancien barème de compétences
+  // (cf. `appliquerRefonteCoutsV15` plus haut) ne doit être versé qu'une
+  // seule fois, au passage v14 → v15. Utilisé plus bas, au moment
+  // d'assembler le `brocanteur` final.
+  const dejaV15 = typeof loaded.version === "number" && loaded.version >= 15;
   const ANCIENS_CHAPITRES_VERS_ORDRE_TRAME: Record<string, number> = {
     principale_ch1: 1,
     principale_ch2: 4,
@@ -702,28 +755,37 @@ function appliquerMigrations(loaded: GameState): GameState {
       typeof (loaded as Partial<GameState>).energieDerniereMaj === "number"
         ? (loaded as GameState).energieDerniereMaj
         : Date.now(),
-    brocanteur: (() => {
-      // `brocanteurFinalV9`/`brocanteurConverti` sont calculés plus haut (avant
-      // l'amorce des quêtes principales, cf. commentaire associé).
-      if (brocanteurFinalV9) return brocanteurFinalV9;
-      // < v9 : refund du pool = niveau + bonus chapitres − points déjà dépensés.
-      const chapitresLivres = missionsFinales.filter((m) => {
-        if (m.statut !== "livree") return false;
-        const c = courriersFinaux.find((cc) => cc.id === m.courrierId);
-        return c?.payload.type === "mission" && c.payload.categorie === "principale";
-      }).length;
-      const pointsDepenses = competencesDebloquees.reduce(
-        (acc, id) => acc + (getCompetence(id)?.coutPoints ?? 0),
-        0,
-      );
-      return {
-        ...brocanteurConverti,
-        pointsDisponibles: Math.max(
+    brocanteur: appliquerRefonteCoutsV15(
+      (() => {
+        // `brocanteurFinalV9`/`brocanteurConverti` sont calculés plus haut (avant
+        // l'amorce des quêtes principales, cf. commentaire associé).
+        if (brocanteurFinalV9) return brocanteurFinalV9;
+        // < v9 : refund du pool = niveau + bonus chapitres − points déjà dépensés.
+        const chapitresLivres = missionsFinales.filter((m) => {
+          if (m.statut !== "livree") return false;
+          const c = courriersFinaux.find((cc) => cc.id === m.courrierId);
+          return c?.payload.type === "mission" && c.payload.categorie === "principale";
+        }).length;
+        const pointsDepenses = competencesDebloquees.reduce(
+          (acc, id) => acc + (getCompetence(id)?.coutPoints ?? 0),
           0,
-          brocanteurConverti.niveau + POINTS_BONUS_CHAPITRE * chapitresLivres - pointsDepenses,
-        ),
-      };
-    })(),
+        );
+        return {
+          ...brocanteurConverti,
+          pointsDisponibles: Math.max(
+            0,
+            brocanteurConverti.niveau + POINTS_BONUS_CHAPITRE * chapitresLivres - pointsDepenses,
+          ),
+        };
+      })(),
+      competencesDebloquees,
+      // Skip si déjà remboursée (idempotence) OU si la save est < v9 : son
+      // `pointsDisponibles` vient d'être recalculé ci-dessus au NOUVEAU
+      // barème (`getCompetence().coutPoints` vaut 1 partout) — cf. le
+      // commentaire de `appliquerRefonteCoutsV15` pour le détail du
+      // sur-crédit que produirait un remboursement dans ce cas.
+      dejaV15 || !dejaV9,
+    ),
     activesUtilisees: (() => {
       const a = (loaded as Partial<GameState>).activesUtilisees;
       if (!a || typeof a !== "object") return undefined;
