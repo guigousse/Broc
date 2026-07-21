@@ -1423,12 +1423,29 @@ nav[aria-label="Navigation principale"] :focus-visible,
   rotate: 90deg;
   animation: tuto-main-haut-kf 1.6s ease-in-out infinite;
 }
+/* Mini-tuto vinyles : main flottante au bord droit du panorama bureau,
+   pointe vers la droite pour inviter à swiper vers la zone repos
+   (gramophone). Élément réel (pas un ::after) rendu par le layout QG. */
+.tuto-main-swipe {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 88px;
+  height: 36px;
+  margin-top: -18px;
+  background: url("/tutoriel/main-pointeuse.webp") no-repeat center / contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+  animation: tuto-main-kf 1.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 6;
+}
 @media (prefers-reduced-motion: reduce) {
   .tuto-pulse {
     animation: none;
     box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.85);
   }
   .tuto-main::after,
+  .tuto-main-swipe,
   .tuto-fleches::before,
   .tuto-fleches::after {
     animation: none;

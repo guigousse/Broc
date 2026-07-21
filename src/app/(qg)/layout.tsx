@@ -48,7 +48,7 @@ import { QgColis } from "@/components/mobile/qg/QgColis";
 import { QgCadeau } from "@/components/mobile/qg/QgCadeau";
 import { ColisOverlay } from "@/components/mobile/qg/overlays/ColisOverlay";
 import { COLIS_TUTORIEL_TAILLE } from "@/data/starterInventory";
-import { cadeauAnniversaireVisible } from "@/lib/anniversaire";
+import { cadeauAnniversaireVisible, doigtSwipeVersGramophone } from "@/lib/anniversaire";
 import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
@@ -612,6 +612,12 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
               />
             ))}
           </div>
+
+          {/* Mini-tuto vinyles : invite à swiper vers la droite (gramophone
+              en zone repos) tant qu'on n'y est pas. zIndex 6 > dots (5). */}
+          {state && doigtSwipeVersGramophone(state.miniTutoVinyle, zoneActive) && (
+            <div className="tuto-main-swipe" aria-hidden />
+          )}
         </div>
       </MobileLayout>
 

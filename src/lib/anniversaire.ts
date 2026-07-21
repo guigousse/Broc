@@ -54,3 +54,16 @@ export function objetCadeauAnniversaire(): Objet {
     prixReferenceReel: tpl.prixRefBase,
   };
 }
+
+/**
+ * Doigt de swipe du mini-tuto vinyles : en arrivant sur le bureau on
+ * atterrit zone « porte » (1) alors que le gramophone est en zone
+ * « repos » (2) — la main flottante pointe vers la droite tant que la
+ * zone repos n'est pas atteinte (correct aussi depuis la zone 0).
+ */
+export function doigtSwipeVersGramophone(
+  miniTuto: GameState["miniTutoVinyle"],
+  zoneActive: number,
+): boolean {
+  return miniTuto === "ecouter" && zoneActive !== 2;
+}

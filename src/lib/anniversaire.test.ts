@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cadeauAnniversaireVisible,
+  doigtSwipeVersGramophone,
   estVinyle,
   ID_DECLENCHEUR_CADEAU,
   JOUR_ANNIVERSAIRE,
@@ -44,5 +45,19 @@ describe("cadeau d'anniversaire (11 juin = jour 6)", () => {
     expect(estVinyle("mus.vinyle_swing")).toBe(true);
     expect(estVinyle("mus.33tours_jazz_2")).toBe(true);
     expect(estVinyle("ma.lampe_petrole_ancienne")).toBe(false);
+  });
+});
+
+describe("doigtSwipeVersGramophone", () => {
+  it("visible en zones bureau/porte quand le mini-tuto guide vers l'écoute", () => {
+    expect(doigtSwipeVersGramophone("ecouter", 0)).toBe(true);
+    expect(doigtSwipeVersGramophone("ecouter", 1)).toBe(true);
+  });
+  it("absent en zone repos (la main du gramophone prend le relais)", () => {
+    expect(doigtSwipeVersGramophone("ecouter", 2)).toBe(false);
+  });
+  it("absent hors étape ecouter", () => {
+    expect(doigtSwipeVersGramophone("ajouter", 1)).toBe(false);
+    expect(doigtSwipeVersGramophone(undefined, 1)).toBe(false);
   });
 });
