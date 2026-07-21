@@ -209,7 +209,7 @@ export const en: DictionnaireUI = {
     niveauN: "Level {n}",
     parcoursAriaLabel: "Picker's path",
     nivAbrege: "Lvl. {n}",
-    chaqueNiveauPoint: "Each level: +1 skill point",
+    chaqueNiveauPoint: "Each level: +1 skill point, as long as skills remain to unlock",
     niveauAtteintAriaLabel: "Level {n} reached",
     eyebrowNiveauBrocanteur: "— picker level —",
     niveauNCelebration: "Level {n}!",

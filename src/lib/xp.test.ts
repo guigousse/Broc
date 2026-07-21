@@ -4,9 +4,12 @@ import {
   appliquerGainXPBrocanteur,
   detailProgressionBrocanteur,
   emptyBrocanteur,
+  pointsOctroyables,
+  POINTS_BONUS_CHAPITRE,
   progressionNiveauBrocanteur,
   xpRequisPourNiveauBrocanteur,
 } from "./xp";
+import { COUT_TOTAL_COMPETENCES } from "@/data/competences";
 
 const freshBrocanteur = () => ({ xp: 0, niveau: 0, pointsDisponibles: 0 });
 
@@ -67,7 +70,10 @@ describe("appliquerGainXPBrocanteur", () => {
   it("plafond : l'XP au-delà du niveau 100 ne fait plus monter", () => {
     const res = appliquerGainXPBrocanteur(freshBrocanteur(), 1_000_000);
     expect(res.niveau).toBe(100);
-    expect(res.pointsDisponibles).toBe(100);
+    // Plafond « à vie » (Task 2) : sans compétence débloquée (pointsDepenses
+    // par défaut à 0), le total octroyable ne dépasse jamais
+    // COUT_TOTAL_COMPETENCES, même en 100 niveaux gagnés d'un coup.
+    expect(res.pointsDisponibles).toBe(96);
   });
 
   it("conserve les points déjà présents", () => {
@@ -128,5 +134,39 @@ describe("multiplicateurXPRarete", () => {
     expect(multiplicateurXPRarete("legendaire")).toBe(5);
     expect(multiplicateurXPRarete("commun", true)).toBe(5);
     expect(multiplicateurXPRarete("rare", true)).toBe(5);
+  });
+});
+
+describe("plafond de points à vie (COUT_TOTAL_COMPETENCES)", () => {
+  it("écrête l'octroi par niveau : octroi partiel puis nul", () => {
+    // À 1 pt du plafond (disponibles 1 + dépensés 94 = 95), franchir 2 niveaux
+    // n'octroie qu'1 point.
+    const b = { xp: xpRequisPourNiveauBrocanteur(50), niveau: 50, pointsDisponibles: 1 };
+    const gain = xpRequisPourNiveauBrocanteur(52) - b.xp;
+    const apres = appliquerGainXPBrocanteur(b, gain, COUT_TOTAL_COMPETENCES - 2);
+    expect(apres.niveau).toBe(52);
+    expect(apres.pointsDisponibles).toBe(2);
+  });
+
+  it("XP et niveaux continuent après le plafond, points constants", () => {
+    const b = { xp: xpRequisPourNiveauBrocanteur(60), niveau: 60, pointsDisponibles: 0 };
+    const gain = xpRequisPourNiveauBrocanteur(62) - b.xp;
+    const apres = appliquerGainXPBrocanteur(b, gain, COUT_TOTAL_COMPETENCES);
+    expect(apres.niveau).toBe(62);
+    expect(apres.pointsDisponibles).toBe(0);
+    expect(apres.xp).toBe(b.xp + gain);
+  });
+
+  it("sans 3ᵉ argument, comportement historique (plafond loin)", () => {
+    const b = { xp: 0, niveau: 0, pointsDisponibles: 0 };
+    const apres = appliquerGainXPBrocanteur(b, xpRequisPourNiveauBrocanteur(3));
+    expect(apres.pointsDisponibles).toBe(3);
+  });
+
+  it("pointsOctroyables clampe le bonus de chapitre", () => {
+    const b = { xp: 0, niveau: 0, pointsDisponibles: 0 };
+    expect(pointsOctroyables(b, COUT_TOTAL_COMPETENCES - 1, POINTS_BONUS_CHAPITRE)).toBe(1);
+    expect(pointsOctroyables(b, COUT_TOTAL_COMPETENCES, POINTS_BONUS_CHAPITRE)).toBe(0);
+    expect(pointsOctroyables(b, 0, POINTS_BONUS_CHAPITRE)).toBe(POINTS_BONUS_CHAPITRE);
   });
 });

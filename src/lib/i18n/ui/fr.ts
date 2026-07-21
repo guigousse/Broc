@@ -212,7 +212,7 @@ export const fr = {
     niveauN: "Niveau {n}",
     parcoursAriaLabel: "Parcours du brocanteur",
     nivAbrege: "Niv. {n}",
-    chaqueNiveauPoint: "Chaque niveau : +1 point de compétence",
+    chaqueNiveauPoint: "Chaque niveau : +1 point de compétence, tant qu'il reste des compétences à débloquer",
     niveauAtteintAriaLabel: "Niveau {n} atteint",
     eyebrowNiveauBrocanteur: "— niveau de brocanteur —",
     niveauNCelebration: "Niveau {n} !",

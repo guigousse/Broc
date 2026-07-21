@@ -41,7 +41,10 @@ import { appendLedger } from "@/lib/grandLivre";
 import { indicesAConsommerPourLivraison } from "@/lib/missions";
 import { missionLivrable } from "@/lib/quetes/objectifs";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
-import { getCompetence } from "@/data/competences";
+import {
+  getCompetence,
+  pointsDepensesCompetences,
+} from "@/data/competences";
 import { CATEGORIES, emptyPiecesAmelioration } from "@/data/categories";
 import { expireMissions, injecterLettreInvitationSiDue } from "@/lib/courrier";
 import { chapitreParId } from "@/data/quetesPrincipales";
@@ -50,6 +53,7 @@ import { prochainLundi } from "@/lib/calendrier";
 import {
   appliquerGainXPBrocanteur,
   emptyBrocanteur,
+  pointsOctroyables,
   POINTS_BONUS_CHAPITRE,
   XP_DECOUVERTE_COLLECTION,
   XP_QUETE_HEBDO,
@@ -1315,7 +1319,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!prev) return prev;
       return {
         ...prev,
-        brocanteur: appliquerGainXPBrocanteur(prev.brocanteur, montant),
+        brocanteur: appliquerGainXPBrocanteur(
+          prev.brocanteur,
+          montant,
+          pointsDepensesCompetences(prev.competencesDebloquees),
+        ),
       };
     });
   }, []);
@@ -1345,6 +1353,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 objet.rarete,
                 !!getTemplate(objet.templateId)?.unique,
               ),
+            pointsDepensesCompetences(prev.competencesDebloquees),
           ),
         };
       });
@@ -1381,6 +1390,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 objet.rarete,
                 !!getTemplate(objet.templateId)?.unique,
               ),
+            pointsDepensesCompetences(prev.competencesDebloquees),
           ),
         };
       });
@@ -1421,7 +1431,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (dejaConnu) return next;
       return {
         ...next,
-        brocanteur: appliquerGainXPBrocanteur(next.brocanteur, XP_DECOUVERTE_COLLECTION),
+        brocanteur: appliquerGainXPBrocanteur(
+          next.brocanteur,
+          XP_DECOUVERTE_COLLECTION,
+          pointsDepensesCompetences(prev.competencesDebloquees),
+        ),
       };
     });
   }, []);
@@ -1639,7 +1653,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
             templateIds: templateIdsMission,
           },
         });
-        const avecXP = appliquerGainXPBrocanteur(credited.brocanteur, xpMission);
+        const avecXP = appliquerGainXPBrocanteur(
+          credited.brocanteur,
+          xpMission,
+          pointsDepensesCompetences(credited.competencesDebloquees),
+        );
         // Bonus de points de compétence par chapitre livré (décision D4),
         // appliqué APRÈS le gain d'XP pour ne pas écraser les points de level-up.
         const brocanteur =
@@ -1647,7 +1665,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ? {
                 ...avecXP,
                 pointsDisponibles:
-                  avecXP.pointsDisponibles + POINTS_BONUS_CHAPITRE,
+                  avecXP.pointsDisponibles +
+                  pointsOctroyables(
+                    avecXP,
+                    pointsDepensesCompetences(credited.competencesDebloquees),
+                    POINTS_BONUS_CHAPITRE,
+                  ),
               }
             : avecXP;
         // Chapitre de la trame portant une invitation (ex. ch4/ch8, à

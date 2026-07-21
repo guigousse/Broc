@@ -209,7 +209,7 @@ export const es: DictionnaireUI = {
     niveauN: "Nivel {n}",
     parcoursAriaLabel: "Camino del rebuscador",
     nivAbrege: "Niv. {n}",
-    chaqueNiveauPoint: "Cada nivel: +1 punto de habilidad",
+    chaqueNiveauPoint: "Cada nivel: +1 punto de habilidad, mientras queden habilidades por desbloquear",
     niveauAtteintAriaLabel: "Nivel {n} alcanzado",
     eyebrowNiveauBrocanteur: "— nivel de rebuscador —",
     niveauNCelebration: "¡Nivel {n}!",

@@ -1,4 +1,5 @@
 import type { BrocanteurState, Rarete } from "@/types/game";
+import { COUT_TOTAL_COMPETENCES } from "@/data/competences";
 
 export type { BrocanteurState };
 
@@ -46,9 +47,25 @@ export const POINTS_PAR_NIVEAU = 1;
 /** Points bonus à la livraison d'un chapitre de mission principale (D4). */
 export const POINTS_BONUS_CHAPITRE = 2;
 
+/**
+ * Points encore octroyables avant le plafond « à vie » : la somme
+ * disponibles + dépensés ne dépasse jamais le coût total de l'arbre —
+ * une fois tout payable, on ne gagne plus rien (le niveau, lui, continue).
+ */
+export function pointsOctroyables(
+  b: BrocanteurState,
+  pointsDepenses: number,
+  demande: number,
+): number {
+  const gagnesAVie = b.pointsDisponibles + pointsDepenses;
+  return Math.max(0, Math.min(demande, COUT_TOTAL_COMPETENCES - gagnesAVie));
+}
+
 export function appliquerGainXPBrocanteur(
   b: BrocanteurState,
   gain: number,
+  /** Points déjà dépensés (Σ coûts des compétences débloquées) — sert au plafond à vie. */
+  pointsDepenses = 0,
 ): BrocanteurState {
   if (gain <= 0) return b;
   const nouveauXP = b.xp + gain;
@@ -59,7 +76,11 @@ export function appliquerGainXPBrocanteur(
     nouveauXP >= xpRequisPourNiveauBrocanteur(niveau + 1)
   ) {
     niveau += 1;
-    pointsDisponibles += POINTS_PAR_NIVEAU;
+    pointsDisponibles += pointsOctroyables(
+      { xp: nouveauXP, niveau, pointsDisponibles },
+      pointsDepenses,
+      POINTS_PAR_NIVEAU,
+    );
   }
   return { xp: nouveauXP, niveau, pointsDisponibles };
 }

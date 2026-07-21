@@ -2,9 +2,11 @@ import { creerCourrierMission, injecterLettreInvitationSiDue } from "@/lib/courr
 import { appendLedger } from "@/lib/grandLivre";
 import {
   appliquerGainXPBrocanteur,
+  pointsOctroyables,
   POINTS_BONUS_CHAPITRE,
   XP_QUETE_PRINCIPALE,
 } from "@/lib/xp";
+import { pointsDepensesCompetences } from "@/data/competences";
 import { calculerBrocantesDebloqueesParTier, evaluerCondition } from "@/lib/deblocage";
 import { QUETES_PRINCIPALES, chapitreParId, type ChapitrePrincipal } from "@/data/quetesPrincipales";
 import type { Courrier, GameState, MissionResolution } from "@/types/game";
@@ -113,12 +115,22 @@ export function accepterChapitre(
       courrierId: ch.id,
       params: { courrierId: ch.id, templateIds: [] },
     });
-    const avecXP = appliquerGainXPBrocanteur(next.brocanteur, XP_QUETE_PRINCIPALE);
+    const avecXP = appliquerGainXPBrocanteur(
+      next.brocanteur,
+      XP_QUETE_PRINCIPALE,
+      pointsDepensesCompetences(next.competencesDebloquees),
+    );
     next = {
       ...next,
       brocanteur: {
         ...avecXP,
-        pointsDisponibles: avecXP.pointsDisponibles + POINTS_BONUS_CHAPITRE,
+        pointsDisponibles:
+          avecXP.pointsDisponibles +
+          pointsOctroyables(
+            avecXP,
+            pointsDepensesCompetences(next.competencesDebloquees),
+            POINTS_BONUS_CHAPITRE,
+          ),
       },
       courriers: injecterLettreInvitationSiDue(next.courriers, ch.invitationTier, next.jourActuel),
     };
