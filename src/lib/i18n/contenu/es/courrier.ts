@@ -168,11 +168,11 @@ export const COURRIER_ES: Record<string, { titre: string; corps: string[] }> = {
     ],
   },
   carte_postale_5: {
-    titre: "Postal sin sello",
+    titre: "Postal de Atenas",
     corps: [
-      "Por todas partes me preguntan qué buscaba, corriendo así detrás de las joyas de una reina. Respondo: nada — ya lo tenía todo, encima de una tienda de chamarilero.",
-      "El tren vuelve a partir. Todavía no sé hacia dónde, y así está bien.",
-      "Hasta pronto, pequeño. — Abuelo",
+      "Desde la terraza donde te escribo se ven la Acrópolis y la ropa tendida del vecino, a partes iguales. He recorrido medio mundo persiguiendo las joyas de una reina — y es aquí, delante de un café demasiado dulce, donde dejé de correr.",
+      "Me quedo. Hay una tiendecita en alquiler al pie de la colina, con el sitio justo para un banco de trabajo y dos sillas. Ya lo teníamos todo, ¿sabes? — a mí solo me faltaba un lugar donde saberlo.",
+      "Ven a verme cuando la tienda te deje respirar. — Abuelo",
     ],
   },
 };

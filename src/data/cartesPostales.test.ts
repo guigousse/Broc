@@ -16,15 +16,15 @@ describe("cartesPostales (données)", () => {
     }
   });
 
-  it("cartes 1-4 : cachet + couleur de timbre ; carte 5 : ni l'un ni l'autre", () => {
-    for (const c of CARTES_POSTALES.slice(0, 4)) {
+  it("les 5 cartes ont cachet + couleur de timbre (ATHINA pour la 5ᵉ)", () => {
+    for (const c of CARTES_POSTALES) {
       expect(c.cachet, c.id).toBeTruthy();
       expect(c.couleurTimbre, c.id).toMatch(/^#/);
     }
     const carte5 = CARTES_POSTALES[4];
     expect(carte5.id).toBe("carte_postale_5");
-    expect(carte5.cachet).toBeUndefined();
-    expect(carte5.couleurTimbre).toBeUndefined();
+    expect(carte5.titre).toBe("Carte d'Athènes");
+    expect(carte5.cachet).toBe("ATHINA");
   });
 
   it("cartePostaleParId retrouve une carte, undefined sinon", () => {

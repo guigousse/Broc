@@ -67,12 +67,14 @@ export const CARTES_POSTALES: ReadonlyArray<CartePostale> = [
   },
   {
     id: "carte_postale_5",
-    titre: "Carte sans timbre",
-    illustration: "/cartes-postales/sans-timbre.webp",
+    titre: "Carte d'Athènes",
+    illustration: "/cartes-postales/athenes.webp",
+    cachet: "ATHINA",
+    couleurTimbre: "#3d6e8f",
     corps: [
-      "On me demande partout ce que je cherchais, à courir ainsi après les bijoux d'une reine. Je réponds : rien — j'avais déjà tout, au-dessus d'une boutique de brocante.",
-      "Le train repart. Je ne sais pas encore vers où, et c'est très bien ainsi.",
-      "À bientôt, petit. — Grand-père",
+      "Depuis la terrasse où je t'écris, on voit l'Acropole et le linge du voisin, à égalité. J'ai visité la moitié du monde en courant après les bijoux d'une reine — et c'est ici, devant un café trop sucré, que j'ai cessé de courir.",
+      "Je reste. Il y a une échoppe à louer au pied de la colline, juste la place pour un établi et deux chaises. On avait déjà tout, tu sais — moi, il me manquait juste un endroit où le savoir.",
+      "Viens me voir quand la boutique te laissera respirer. — Grand-père",
     ],
   },
 ];

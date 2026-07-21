@@ -168,11 +168,11 @@ export const COURRIER_EN: Record<string, { titre: string; corps: string[] }> = {
     ],
   },
   carte_postale_5: {
-    titre: "Postcard with no stamp",
+    titre: "Postcard from Athens",
     corps: [
-      "Everywhere I go, people ask what I was looking for, chasing after a queen's jewels like that. I answer: nothing — I already had everything, above a flea-market shop.",
-      "The train's leaving again. I don't know where to yet, and that's just fine.",
-      "See you soon, little one. — Grandpa",
+      "From the terrace where I'm writing you, you can see the Acropolis and the neighbor's laundry, on equal footing. I've crossed half the world chasing a queen's jewels — and it's here, in front of an over-sweet coffee, that I stopped running.",
+      "I'm staying. There's a little shop for rent at the foot of the hill, just enough room for a workbench and two chairs. We already had everything, you know — all I was missing was a place to know it.",
+      "Come see me when the shop lets you breathe. — Grandpa",
     ],
   },
 };
