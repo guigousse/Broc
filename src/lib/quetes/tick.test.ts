@@ -30,11 +30,11 @@ describe("cartes postales (épilogue)", () => {
     missions: [{ courrierId: "trame_ch12", statut: "livree", jourResolution }],
   });
   it("rien avant l'intervalle", () => {
-    const t = tickQuetes(finTrame(10), 15);
+    const t = tickQuetes(finTrame(10), 19);
     expect(t.courriers.some((c) => c.id.startsWith("carte_postale"))).toBe(false);
   });
-  it("injecte la carte 1 à J+6, non lue, expéditeur grand-père", () => {
-    const t = tickQuetes(finTrame(10), 16);
+  it("injecte la carte 1 à J+10, non lue, expéditeur grand-père", () => {
+    const t = tickQuetes(finTrame(10), 20);
     const carte = t.courriers.find((c) => c.id === "carte_postale_1");
     expect(carte).toBeDefined();
     expect(carte?.lu).toBe(false);
