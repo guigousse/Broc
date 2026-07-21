@@ -1,6 +1,6 @@
 # Prompts — illustrations des cartes postales de l'épilogue
 
-Cible : `public/cartes-postales/{venise,lisbonne,marrakech,kyoto,sans-timbre}.webp`,
+Cible : `public/cartes-postales/{venise,lisbonne,marrakech,kyoto,athenes}.webp`,
 **paysage 3:2, 1200×800** (le recto de `CartePostaleView` recadre en
 `objectFit: cover` — toute image non-3:2 sera rognée).
 
@@ -76,22 +76,25 @@ matcha green (#7d9a6a), dark clay, one restrained touch of gold. Soft paper
 lantern light.
 ```
 
-## 5. sans-timbre.webp — Carte sans timbre
+## 5. athenes.webp — Carte d'Athènes
 
 ```
-SCENE: A small countryside railway platform at dawn, seen from the platform
-edge. A vintage steam train pulls away into rolling open fields, its smoke
-trailing into a pale sky — destination unknown, no signs, no station name.
-On the empty platform remain a leather suitcase and a hat resting on a
-bench. The elderly traveler leans out of the last carriage window, seen
-from behind, waving. Accent colors: dawn gold, soft grey-green fields,
-warm brown carriage wood. Mood: peaceful, unhurried, slightly wistful.
+SCENE: Athens in golden morning light, a shaded café terrace in the Plaka
+district. In the distance the Acropolis on its rocky hill — and, strung
+between the nearest houses, the neighbor's laundry sharing the sky with it,
+on equal footing. The elderly traveler sits at a small marble café table,
+seen from behind, a tiny Greek coffee cup before him. At the foot of the
+hill nearby, a modest little shop with wooden shutters ajar, a workbench
+glimpsed inside. Accent colors: Aegean blue (#3d6e8f), warm marble whites,
+one discreet bougainvillea. Mood: settled, serene — the end of a journey,
+not a stop.
 ```
 
 ## Critères de validation
 
 - Aquarelle assumée, pas de rendu 3D/photo ni de contours noirs durs.
-- Aucun lettrage, cadre, timbre ou légende dans l'image → régénérer sinon.
+- Aucun lettrage (alphabet latin OU grec, enseignes comprises), cadre,
+  timbre ou légende dans l'image → régénérer sinon.
 - Le grand-père : petit dans la scène, de dos, chapeau — jamais de visage.
 - Les teintes d'accent font écho à `couleurTimbre` de chaque carte
   (`src/data/cartesPostales.ts`) : la vignette du timbre et le recto restent
