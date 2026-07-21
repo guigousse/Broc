@@ -13,8 +13,8 @@ import { BROCANTES_EN } from "./en/brocantes";
 import { BROCANTES_ES } from "./es/brocantes";
 import { COMPETENCES_EN } from "./en/competences";
 import { COMPETENCES_ES } from "./es/competences";
-import { DEBLOCAGES_EN } from "./en/deblocages";
-import { DEBLOCAGES_ES } from "./es/deblocages";
+import { DEBLOCAGES_EN, DEBLOCAGES_DESC_EN } from "./en/deblocages";
+import { DEBLOCAGES_ES, DEBLOCAGES_DESC_ES } from "./es/deblocages";
 import { PERSONNAGES_EN, type OverlayPersonnages } from "./en/personnages";
 import { PERSONNAGES_ES } from "./es/personnages";
 import { DIVERS_EN } from "./en/divers";
@@ -195,6 +195,19 @@ export function titreDeblocage(dep: { titre: string }, locale: Locale): string {
     if (trad) return trad;
   }
   return dep.titre;
+}
+
+const DEBLOCAGES_DESC_OVERLAY = { en: DEBLOCAGES_DESC_EN, es: DEBLOCAGES_DESC_ES } as const;
+
+export function descriptionDeblocage(
+  dep: { titre: string; description: string },
+  locale: Locale,
+): string {
+  if (locale !== "fr") {
+    const trad = DEBLOCAGES_DESC_OVERLAY[locale][dep.titre];
+    if (trad) return trad;
+  }
+  return dep.description;
 }
 
 /* ------------------------------------------------------------------ */
