@@ -228,21 +228,11 @@ function Timbre({ teinte, cachet }: { teinte: string; cachet: string }) {
 export function CartePostaleView({ courrier, carte }: CartePostaleViewProps) {
   const { d, locale } = useLangue();
   const [verso, setVerso] = useState(false);
-  // Le verso n'est monté qu'après le premier retournement (jamais démonté
-  // ensuite, pour garder l'animation de retour fluide) : évite de dupliquer
-  // le titre (recto en fallback + en-tête verso) tant que la carte n'a
-  // jamais été retournée.
-  const [dejaRetournee, setDejaRetournee] = useState(false);
   const [imgKo, setImgKo] = useState(false);
 
   const titre = titreCourrier(courrier, locale);
   const corps = corpsCourrier(courrier, locale);
-  const basculer = () =>
-    setVerso((v) => {
-      const suivant = !v;
-      if (suivant) setDejaRetournee(true);
-      return suivant;
-    });
+  const basculer = () => setVerso((v) => !v);
 
   return (
     <div
@@ -263,7 +253,9 @@ export function CartePostaleView({ courrier, carte }: CartePostaleViewProps) {
       <div style={interne(verso)}>
         <div style={face}>
           {imgKo ? (
-            <div style={fallbackRecto}>{titre}</div>
+            <div data-testid="recto-fallback" style={fallbackRecto}>
+              {titre}
+            </div>
           ) : (
             <img
               src={carte.illustration}
@@ -274,21 +266,19 @@ export function CartePostaleView({ courrier, carte }: CartePostaleViewProps) {
           )}
           {!verso && <div style={indice}>{d.sheets.toucherPourRetourner}</div>}
         </div>
-        {(verso || dejaRetournee) && (
-          <div style={faceVerso}>
-            <div style={enTeteVerso}>
-              <h3 style={titreVerso}>{titre}</h3>
-              {carte.cachet && (
-                <Timbre teinte={carte.couleurTimbre ?? "#8a7443"} cachet={carte.cachet} />
-              )}
-            </div>
-            {corps.map((para, i) => (
-              <p key={i} style={i === corps.length - 1 ? corpsSignature : corpsVerso}>
-                {para}
-              </p>
-            ))}
+        <div style={faceVerso}>
+          <div style={enTeteVerso}>
+            <h3 style={titreVerso}>{titre}</h3>
+            {carte.cachet && (
+              <Timbre teinte={carte.couleurTimbre ?? "#8a7443"} cachet={carte.cachet} />
+            )}
           </div>
-        )}
+          {corps.map((para, i) => (
+            <p key={i} style={i === corps.length - 1 ? corpsSignature : corpsVerso}>
+              {para}
+            </p>
+          ))}
+        </div>
       </div>
     </div>
   );

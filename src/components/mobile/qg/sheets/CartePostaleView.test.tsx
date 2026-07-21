@@ -20,6 +20,9 @@ describe("CartePostaleView", () => {
     expect(racine.getAttribute("aria-pressed")).toBe("false");
     expect(screen.getByAltText("Carte de Venise")).toBeTruthy();
     expect(screen.getByText("Touchez pour retourner")).toBeTruthy();
+    // Le verso reste lisible (lecteur d'écran) même côté recto : présent dans
+    // le DOM avant tout retournement, pas seulement après un tap.
+    expect(screen.getByText(/lagune/)).toBeTruthy();
   });
 
   it("tap → verso (texte + timbre VENEZIA), second tap → recto", async () => {
@@ -47,6 +50,6 @@ describe("CartePostaleView", () => {
     render(<CartePostaleView courrier={courrier1} carte={carte1} />);
     fireEvent.error(screen.getByAltText("Carte de Venise"));
     expect(screen.queryByAltText("Carte de Venise")).toBeNull();
-    expect(screen.getByText("Carte de Venise")).toBeTruthy();
+    expect(screen.getByTestId("recto-fallback").textContent).toBe("Carte de Venise");
   });
 });
