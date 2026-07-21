@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties } from "react";
-import { DEBLOCAGES_PAR_NIVEAU } from "@/data/deblocagesNiveau";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { DEBLOCAGES_PAR_NIVEAU, type DeblocageNiveau } from "@/data/deblocagesNiveau";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { titreDeblocage } from "@/lib/i18n/contenu";
+import { titreDeblocage, descriptionDeblocage } from "@/lib/i18n/contenu";
 
 interface ParcoursSheetProps {
   open: boolean;
@@ -115,7 +115,7 @@ const groupeRow: CSSProperties = {
 };
 
 const railCol: CSSProperties = {
-  width: 52,
+  width: 64,
   flexShrink: 0,
   display: "flex",
   flexDirection: "column",
@@ -135,13 +135,13 @@ function segment(plein: boolean, visible: boolean): CSSProperties {
 
 function pastille(etat: EtatNiveau): CSSProperties {
   const base: CSSProperties = {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     display: "grid",
     placeItems: "center",
     fontFamily: "var(--font-display)",
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: 700,
     flexShrink: 0,
     boxShadow: "0 1px 3px rgba(40,25,5,0.25)",
@@ -156,10 +156,10 @@ function pastille(etat: EtatNiveau): CSSProperties {
   if (etat === "prochain")
     return {
       ...base,
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      fontSize: 13,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      fontSize: 15,
       background: "var(--paper-100)",
       border: "2px solid var(--vermillion-600)",
       color: "var(--vermillion-600)",
@@ -195,6 +195,51 @@ function titreLigne(etat: EtatNiveau): CSSProperties {
   };
 }
 
+const ficheScrim: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(15,30,22,0.45)",
+  zIndex: 60,
+};
+
+const ficheCarte: CSSProperties = {
+  position: "fixed",
+  left: "50%",
+  top: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "min(88vw, 360px)",
+  background: "var(--paper-100)",
+  border: "2px solid var(--brass-500)",
+  boxShadow: "0 12px 26px rgba(0,0,0,0.4)",
+  padding: "16px 16px 14px",
+  zIndex: 61,
+};
+
+const ficheTitre: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 16,
+  color: "var(--ink-900)",
+  margin: "0 24px 6px 0",
+  lineHeight: 1.25,
+};
+
+const ficheMeta: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--brass-700)",
+  marginBottom: 10,
+};
+
+const ficheDescription: CSSProperties = {
+  fontFamily: "var(--font-serif)",
+  fontSize: 13.5,
+  lineHeight: 1.45,
+  color: "var(--forest-800)",
+  margin: 0,
+};
+
 /* ------------------------------------------------------------------ */
 /* Composant                                                           */
 /* ------------------------------------------------------------------ */
@@ -202,11 +247,15 @@ function titreLigne(etat: EtatNiveau): CSSProperties {
 export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
   const { d, tr, locale } = useLangue();
   const prochainRef = useRef<HTMLDivElement>(null);
+  const [fiche, setFiche] = useState<{ dep: DeblocageNiveau; etat: EtatNiveau } | null>(null);
 
   // À l'ouverture, centre la liste sur le prochain palier : le joueur voit
   // immédiatement où il en est.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setFiche(null);
+      return;
+    }
     // scrollIntoView optionnel : absent de jsdom (tests).
     prochainRef.current?.scrollIntoView?.({ block: "center" });
   }, [open]);
@@ -282,14 +331,24 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
                   </div>
                   <div style={contenuCol(etat)}>
                     {deps.map((dep) => (
-                      <div
+                      <button
                         key={`${dep.niveau}-${dep.titre}`}
+                        type="button"
                         data-testid={`parcours-row-${dep.niveau}`}
                         data-etat={etat}
-                        style={titreLigne(etat)}
+                        style={{
+                          ...titreLigne(etat),
+                          background: "transparent",
+                          border: "none",
+                          padding: 0,
+                          textAlign: "left",
+                          cursor: "pointer",
+                          width: "100%",
+                        }}
+                        onClick={() => setFiche({ dep, etat })}
                       >
                         {titreDeblocage(dep, locale)}
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -299,6 +358,27 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
           <div style={footnote}>{d.sheets.chaqueNiveauPoint}</div>
         </div>
       </div>
+      {fiche && (
+        <>
+          <div style={ficheScrim} onClick={() => setFiche(null)} aria-hidden />
+          <div role="dialog" aria-modal="true" aria-label={titreDeblocage(fiche.dep, locale)} style={ficheCarte}>
+            <button
+              type="button"
+              style={closeIconBtn}
+              onClick={() => setFiche(null)}
+              aria-label={d.sheets.fermerFiche}
+            >
+              ✕
+            </button>
+            <h3 style={ficheTitre}>{titreDeblocage(fiche.dep, locale)}</h3>
+            <div style={ficheMeta}>
+              {tr(d.sheets.nivAbrege, { n: fiche.dep.niveau })} ·{" "}
+              <span>{fiche.etat === "atteint" ? d.sheets.ficheDebloque : d.sheets.ficheAVenir}</span>
+            </div>
+            <p style={ficheDescription}>{descriptionDeblocage(fiche.dep, locale)}</p>
+          </div>
+        </>
+      )}
     </>
   );
 }

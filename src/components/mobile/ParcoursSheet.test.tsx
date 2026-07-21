@@ -6,6 +6,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { ParcoursSheet } from "./ParcoursSheet";
 
 afterEach(cleanup);
@@ -40,5 +41,24 @@ describe("ParcoursSheet", () => {
     expect(
       screen.getByText(/Chaque niveau : \+1 point de compétence/),
     ).toBeTruthy();
+  });
+});
+
+describe("ParcoursSheet — fiche de déblocage", () => {
+  it("tap sur une ligne → fiche avec description et statut débloqué", async () => {
+    const user = userEvent.setup();
+    render(<ParcoursSheet open onClose={vi.fn()} niveau={6} />);
+    await user.click(screen.getByTestId("parcours-row-5")); // Le Flair (N5, atteint)
+    expect(screen.getByText(/révèle la cote/)).toBeTruthy();
+    expect(screen.getByText("Débloqué ✓")).toBeTruthy();
+  });
+
+  it("déblocage futur → statut À venir, fermeture par ✕", async () => {
+    const user = userEvent.setup();
+    render(<ParcoursSheet open onClose={vi.fn()} niveau={6} />);
+    await user.click(screen.getAllByTestId("parcours-row-30")[0]); // Paliers 3 + Criée (N30)
+    expect(screen.getByText("À venir")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Fermer la fiche" }));
+    expect(screen.queryByText("À venir")).toBeNull();
   });
 });
