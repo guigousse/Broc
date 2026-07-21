@@ -107,6 +107,18 @@ const scrollArea: CSSProperties = {
   alignItems: "center",
 };
 
+// Centre verticalement la lettre quand elle est plus courte que la zone
+// visible (margins auto symétriques) ; une lettre plus longue reprend le
+// flux normal et scrolle — ce que justifyContent: "center" casserait
+// (haut du contenu rogné par l'overflow).
+const contenuCentre: CSSProperties = {
+  margin: "auto 0",
+  width: "100%",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+};
+
 const lettreCard: CSSProperties = {
   position: "relative",
   width: "100%",
@@ -334,23 +346,25 @@ export function CourrierSheet({
           ✕
         </button>
         <div style={scrollArea}>
-          {carte ? (
-            <CartePostaleView key={courant.id} courrier={courant} carte={carte} />
-          ) : (
-            <article style={lettreCard}>
-              {courant.payload.type === "mission"
-                ? renderMission(courant, d, tr, locale)
-                : renderLettre(courant, locale)}
-            </article>
-          )}
-          <div style={actionBtnWrap}>
-            <FloatingActionButton onClick={handleValider} minWidth={220}>
-              {estMission
-                ? d.sheets.accepterMission
-                : recompenseArgent
-                  ? tr(d.sheets.recupererMontant, { montant: recompenseArgent })
-                  : d.sheets.compris}
-            </FloatingActionButton>
+          <div style={contenuCentre}>
+            {carte ? (
+              <CartePostaleView key={courant.id} courrier={courant} carte={carte} />
+            ) : (
+              <article style={lettreCard}>
+                {courant.payload.type === "mission"
+                  ? renderMission(courant, d, tr, locale)
+                  : renderLettre(courant, locale)}
+              </article>
+            )}
+            <div style={actionBtnWrap}>
+              <FloatingActionButton onClick={handleValider} minWidth={220}>
+                {estMission
+                  ? d.sheets.accepterMission
+                  : recompenseArgent
+                    ? tr(d.sheets.recupererMontant, { montant: recompenseArgent })
+                    : d.sheets.compris}
+              </FloatingActionButton>
+            </div>
           </div>
         </div>
       </div>
