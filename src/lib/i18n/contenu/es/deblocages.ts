@@ -1,5 +1,5 @@
 /**
- * Overlay ES des déblocages de nivel (spec i18n §2, SP3). Clé = titre FR canonique
+ * Overlay ES des déblocages de niveau (spec i18n §2, SP3). Clé = titre FR canonique
  * de `src/data/deblocagesNiveau.ts` (pas d'id en data). Résolu À L'AFFICHAGE, fallback FR.
  * Les emojis des actives sont conservés à l'identique.
  */
@@ -33,8 +33,8 @@ export const DEBLOCAGES_DESC_ES: Record<string, string> = {
     "La biblioteca abre la pantalla de Habilidades: gasta tus puntos (1 por nivel) para afinar el oficio.",
   "Quêtes quotidiennes et hebdomadaires":
     "El correo trae encargos: uno diario y otro semanal más ambicioso, recompensados con dinero.",
-  "Paliers 2 des compétences": "El nivel 2 de todas las ramas de habilidades pasa a estar disponible.",
-  "Paliers 3 des compétences": "El nivel 3 — la cima de cada rama — pasa a estar disponible.",
+  "Paliers 2 des compétences": "El rango 2 de todas las ramas de habilidades pasa a estar disponible.",
+  "Paliers 3 des compétences": "El rango 3 — la cima de cada rama — pasa a estar disponible.",
   "Atout 🔍 Le Flair":
     "En la rebusca: revela el valor real de todos los objetos del puesto durante el resto de la visita. Un uso al día.",
   "Atout 🧺 Le Lot garni":

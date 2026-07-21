@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import { useGame } from "@/context/GameContext";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
+  COUT_TOTAL_COMPETENCES,
+  pointsDepensesCompetences,
+} from "@/data/competences";
+import {
   deblocagesPourNiveau,
   prochainDeblocage,
   type FamilleDeblocage,
@@ -124,10 +128,18 @@ export function LevelUpOverlay() {
     if (niveauACelebrer !== null && !enSession) audioManager.playLevelUp();
   }, [niveauACelebrer, enSession]);
 
-  if (niveauACelebrer === null || enSession) return null;
+  if (!state || niveauACelebrer === null || enSession) return null;
 
   const deblocages = deblocagesPourNiveau(niveauACelebrer);
   const prochain = prochainDeblocage(niveauACelebrer);
+  // Plafond « à vie » atteint (points dispo + déjà dépensés) : le niveau qui
+  // franchit le plafond n'accorde plus réellement de point. Note : ceci masque
+  // aussi la ligne pour le niveau qui octroie le tout dernier point (le calcul
+  // ne distingue pas « ce niveau precis a été plafonné » — compromis accepté).
+  const plafondCompetencesAtteint =
+    state.brocanteur.pointsDisponibles +
+      pointsDepensesCompetences(state.competencesDebloquees) >=
+    COUT_TOTAL_COMPETENCES;
 
   return (
     <div
@@ -141,7 +153,9 @@ export function LevelUpOverlay() {
         <div style={titre}>
           {tr(d.sheets.niveauNCelebration, { n: niveauACelebrer })}
         </div>
-        <div style={sousTitre}>{d.sheets.plusUnPointCompetence}</div>
+        {!plafondCompetencesAtteint && (
+          <div style={sousTitre}>{d.sheets.plusUnPointCompetence}</div>
+        )}
         {deblocages.map((dep) => (
           <div key={dep.titre} style={ligneDeblocage}>
             <span style={chipFamille(dep.famille)}>

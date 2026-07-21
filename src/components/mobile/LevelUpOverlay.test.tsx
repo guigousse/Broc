@@ -27,8 +27,28 @@ vi.mock("@/lib/audio/audioManager", () => ({
   audioManager: { playLevelUp: (...args: unknown[]) => playLevelUp(...args) },
 }));
 
-function etat(niveauVu: number, niveau: number) {
-  return { niveauVu, brocanteur: { niveau, xp: 0, pointsDisponibles: 0 } };
+// Plafond fictif simple (10) pour isoler le test de la vraie valeur (96) ;
+// on garde le reste du module réel (deblocagesNiveau.ts en dépend).
+vi.mock("@/data/competences", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/data/competences")>();
+  return {
+    ...actual,
+    COUT_TOTAL_COMPETENCES: 10,
+    pointsDepensesCompetences: (ids: readonly string[]) => ids.length,
+  };
+});
+
+function etat(
+  niveauVu: number,
+  niveau: number,
+  pointsDisponibles = 0,
+  competencesDebloquees: string[] = [],
+) {
+  return {
+    niveauVu,
+    brocanteur: { niveau, xp: 0, pointsDisponibles },
+    competencesDebloquees,
+  };
 }
 
 describe("LevelUpOverlay", () => {
@@ -76,5 +96,21 @@ describe("LevelUpOverlay", () => {
     render(<LevelUpOverlay />);
     expect(screen.getByText("Niveau 4 !")).toBeTruthy();
     expect(screen.queryByText("Niveau 5 !")).toBeNull();
+  });
+
+  it("sous le plafond de compétences : « +1 point » affiché", () => {
+    // Plafond mocké à 10 ; 3 dispo + 4 dépensés = 7 < 10.
+    mockState = etat(0, 1, 3, ["a", "b", "c", "d"]);
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    expect(screen.getByText(/point de compétence/)).toBeTruthy();
+  });
+
+  it("plafond de compétences atteint : « +1 point » masqué", () => {
+    // Plafond mocké à 10 ; 6 dispo + 4 dépensés = 10 >= 10.
+    mockState = etat(0, 1, 6, ["a", "b", "c", "d"]);
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    expect(screen.queryByText(/point de compétence/)).toBeNull();
   });
 });
