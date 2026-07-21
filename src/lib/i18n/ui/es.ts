@@ -190,6 +190,8 @@ export const es: DictionnaireUI = {
     accepterMission: "Aceptar la misión",
     recupererMontant: "Reclamar {montant} €",
     compris: "Entendido",
+    retournerCarte: "Girar la postal",
+    toucherPourRetourner: "Toca para girar",
     pause: "Pausa",
     lecture: "Reproducir",
     suivant: "Siguiente",

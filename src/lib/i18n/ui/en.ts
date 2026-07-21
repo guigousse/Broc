@@ -190,6 +190,8 @@ export const en: DictionnaireUI = {
     accepterMission: "Accept the quest",
     recupererMontant: "Claim {montant} €",
     compris: "Got it",
+    retournerCarte: "Flip the postcard",
+    toucherPourRetourner: "Tap to flip",
     pause: "Pause",
     lecture: "Play",
     suivant: "Next",

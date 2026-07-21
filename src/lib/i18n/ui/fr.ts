@@ -193,6 +193,8 @@ export const fr = {
     accepterMission: "Accepter la mission",
     recupererMontant: "Récupérer {montant} €",
     compris: "Compris",
+    retournerCarte: "Retourner la carte postale",
+    toucherPourRetourner: "Touchez pour retourner",
     pause: "Pause",
     lecture: "Lecture",
     suivant: "Suivant",
