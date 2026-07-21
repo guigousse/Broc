@@ -17,6 +17,7 @@
     "gen:qg": "node scripts/generate-qg-images.mjs",
     "gen:competences": "node scripts/generate-competences.mjs",
     "gen:atelier": "node scripts/generate-atelier-images.mjs",
+    "gen:cartes-postales": "node scripts/generate-cartes-postales.mjs",
     "opt:images": "node scripts/optimize-item-images.mjs",
     "gen:webp": "node scripts/generate-webp.mjs",
     "gen:thumbs": "node scripts/generate-item-thumbs.mjs",
