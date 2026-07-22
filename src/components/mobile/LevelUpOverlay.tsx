@@ -125,7 +125,7 @@ export function LevelUpOverlay() {
     state && state.brocanteur.niveau > state.niveauVu ? state.niveauVu + 1 : null;
 
   useEffect(() => {
-    if (niveauACelebrer !== null && !enSession) audioManager.playLevelUp();
+    if (niveauACelebrer !== null && !enSession) void audioManager.playLevelUp();
   }, [niveauACelebrer, enSession]);
 
   if (!state || niveauACelebrer === null || enSession) return null;

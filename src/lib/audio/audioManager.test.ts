@@ -423,18 +423,20 @@ describe("audioManager — effets et préférences", () => {
     expect(FakeAudioContext.instances).toHaveLength(0);
   });
 
-  it("playLevelUp joue une fanfare de 4 notes montantes", async () => {
+  it("playLevelUp charge /sounds/level-up.mp3 et lance la source", async () => {
     const { audioManager } = await freshManager();
-    audioManager.playLevelUp();
+    await audioManager.playLevelUp();
+    expect(fetchMock).toHaveBeenCalledWith("/sounds/level-up.mp3");
     const ctx = FakeAudioContext.instances[0];
-    expect(ctx.oscillators).toHaveLength(4);
+    expect(ctx.bufferSources).toHaveLength(1);
+    expect(ctx.bufferSources[0].start).toHaveBeenCalled();
   });
 
   it("playLevelUp est muet quand la préférence effets est désactivée", async () => {
     const { audioManager } = await freshManager();
     audioManager.setPref("effets", false);
-    audioManager.playLevelUp();
-    expect(FakeAudioContext.instances).toHaveLength(0);
+    await audioManager.playLevelUp();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("playCash respecte la préférence effets désactivée (aucun fetch)", async () => {

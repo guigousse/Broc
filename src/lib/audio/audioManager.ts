@@ -294,29 +294,17 @@ class AudioManager {
     });
   }
 
-  /** Fanfare de level-up : arpège majeur montant C5-E5-G5-C6, triangle, ~0,9 s. Placeholder synthé. */
-  playLevelUp(): void {
+  /** Fanfare de level-up : /sounds/level-up.mp3 (~1,7 s). */
+  async playLevelUp(): Promise<void> {
     if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
-    const ctx = this.ctx;
-    const master = this.master;
-    const notes = [523.25, 659.25, 783.99, 1046.5];
-    const t0 = ctx.currentTime;
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "triangle";
-      const t = t0 + i * 0.11;
-      osc.frequency.setValueAtTime(freq, t);
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(i === notes.length - 1 ? 0.3 : 0.22, t + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + (i === notes.length - 1 ? 0.55 : 0.28));
-      osc.connect(gain);
-      gain.connect(master);
-      osc.start(t);
-      osc.stop(t + (i === notes.length - 1 ? 0.6 : 0.32));
-    });
+    const buf = await this.loadBuffer("/sounds/level-up.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
   }
 
   /** Vendeur mystère : deux notes feutrées à intervalle intrigant, longue traîne. */
