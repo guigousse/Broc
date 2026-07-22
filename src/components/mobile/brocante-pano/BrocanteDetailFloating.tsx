@@ -9,6 +9,7 @@ import type { ConditionInfo } from "@/lib/deblocage";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { descriptionBrocante, nomBrocante } from "@/lib/i18n/contenu";
 import { CATEGORY_ICONS } from "./categoryIcons";
+import { CornerOrnament } from "@/components/mobile/CornerOrnament";
 
 interface BrocanteDetailFloatingProps {
   brocante: Brocante;
@@ -158,48 +159,6 @@ const themeCachetStyle: CSSProperties = {
     "0 2px 4px rgba(20,12,0,0.45), inset 0 1px 0 rgba(255,235,180,0.45)",
   flexShrink: 0,
 };
-
-// Ornements de coin Art Déco.
-const cornerOrnamentBase: CSSProperties = {
-  position: "absolute",
-  width: 18,
-  height: 18,
-  pointerEvents: "none",
-  color: "var(--brass-500)",
-};
-
-function CornerOrnament({
-  position,
-}: {
-  position: "tl" | "tr" | "bl" | "br";
-}) {
-  const rotation = {
-    tl: 0,
-    tr: 90,
-    br: 180,
-    bl: 270,
-  }[position];
-  const placement: CSSProperties = {
-    ...cornerOrnamentBase,
-    ...(position === "tl" || position === "tr" ? { top: 6 } : { bottom: 6 }),
-    ...(position === "tl" || position === "bl" ? { left: 6 } : { right: 6 }),
-    transform: `rotate(${rotation}deg)`,
-  };
-  return (
-    <svg viewBox="0 0 18 18" style={placement} aria-hidden>
-      {/* Petit motif déco "stairstep" + point */}
-      <path
-        d="M2 16 L2 12 L6 12 L6 8 L10 8 L10 4 L16 4"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
-      <circle cx="2" cy="16" r="1.3" fill="currentColor" />
-    </svg>
-  );
-}
 
 const conditionsListStyle: CSSProperties = {
   listStyle: "none",

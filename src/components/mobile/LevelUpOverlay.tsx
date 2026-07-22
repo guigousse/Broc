@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useGame } from "@/context/GameContext";
 import { audioManager } from "@/lib/audio/audioManager";
@@ -15,6 +15,7 @@ import {
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { titreDeblocage, descriptionDeblocage } from "@/lib/i18n/contenu";
+import { CornerOrnament } from "@/components/mobile/CornerOrnament";
 
 /** Sépare le premier emoji d'un titre d'atout localisé (« Atout 🔍 Le Flair »). */
 function extraireEmoji(titre: string): { emoji: string | null; texte: string } {
@@ -36,77 +37,55 @@ const scrim: CSSProperties = {
   padding: 16,
 };
 
-const carte: CSSProperties = {
-  background: "var(--paper-100)",
-  border: "3px solid var(--brass-500)",
-  padding: 20,
-  maxWidth: 320,
+/** Le certificat : papier ancien, double filet doré, ornements de coins. */
+const certificat: CSSProperties = {
+  position: "relative",
+  background:
+    "radial-gradient(circle at 50% 18%, #fbf6ea 0%, var(--paper-100) 60%, #efe6d2 100%)",
+  borderRadius: 6,
+  border: "1px solid var(--brass-700)",
+  boxShadow:
+    "inset 0 0 0 3px var(--paper-100), inset 0 0 0 4px var(--brass-500), 0 12px 30px rgba(20,12,0,0.55)",
+  padding: "26px 22px 24px",
+  maxWidth: 340,
   width: "100%",
   boxSizing: "border-box",
   textAlign: "center",
-};
-
-const colonne: CSSProperties = {
-  width: "100%",
-  maxWidth: 320,
   display: "flex",
   flexDirection: "column",
-  alignItems: "stretch",
-  gap: 18,
+  alignItems: "center",
+  gap: 10,
 };
 
-const blocTitre: CSSProperties = {
-  textAlign: "center",
-};
-
-const eyebrowSombre: CSSProperties = {
+const eyebrowCertificat: CSSProperties = {
   fontFamily: "var(--font-mono)",
   textTransform: "uppercase",
   letterSpacing: "0.14em",
-  fontSize: 11,
-  color: "var(--brass-500)",
-  marginBottom: 8,
+  fontSize: 10.5,
+  color: "var(--brass-700)",
 };
 
 const titreGeant: CSSProperties = {
   fontFamily: "var(--font-display)",
-  fontSize: "clamp(40px, 14vw, 60px)",
+  fontSize: "clamp(34px, 11vw, 48px)",
   lineHeight: 1.05,
-  color: "var(--brass-300)",
-  textShadow: "0 0 28px rgba(224, 178, 92, 0.45)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 12,
+  color: "var(--brass-600)",
+  textShadow: "0 1px 0 rgba(255,255,255,0.6), 0 0 18px rgba(224,178,92,0.35)",
+  whiteSpace: "nowrap",
 };
 
-const ornement: CSSProperties = {
-  fontSize: "0.4em",
-  color: "var(--brass-500)",
-  textShadow: "none",
-};
+const ligneWrap: CSSProperties = { width: "100%" };
 
 const sousTitre: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: 12,
-  color: "var(--ink-500)",
-  marginBottom: 14,
+  color: "var(--ink-700)",
 };
 
 const ligneDeblocage: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: 12,
   color: "var(--ink-700)",
-  textAlign: "left",
-  marginBottom: 6,
-};
-
-const blocAtout: CSSProperties = {
-  border: "1px solid var(--brass-500)",
-  background: "var(--paper-300)",
-  padding: "12px 10px",
-  marginBottom: 10,
-  textAlign: "center",
 };
 
 const atoutEmoji: CSSProperties = {
@@ -135,9 +114,43 @@ const atoutDescription: CSSProperties = {
 const lignProchain: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: 11,
-  color: "var(--ink-300)",
-  marginTop: 10,
-  marginBottom: 14,
+  color: "var(--ink-500)",
+};
+
+// Filet doré séparateur avec losange central — décline le goldRuleStyle
+// de la carte flottante des brocantes.
+const filetRow: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  width: "78%",
+  margin: "2px auto 10px",
+};
+const filetGauche: CSSProperties = {
+  flex: 1,
+  height: 1,
+  background: "linear-gradient(90deg, transparent, var(--brass-500))",
+};
+const filetDroit: CSSProperties = {
+  flex: 1,
+  height: 1,
+  background: "linear-gradient(90deg, var(--brass-500), transparent)",
+};
+const filetLosange: CSSProperties = {
+  color: "var(--brass-500)",
+  fontSize: 8,
+  lineHeight: 1,
+};
+
+const cachetImg: CSSProperties = {
+  position: "absolute",
+  right: -14,
+  bottom: -18,
+  width: 88,
+  height: 88,
+  transform: "rotate(-12deg)",
+  filter: "drop-shadow(0 4px 8px rgba(20,12,0,0.4))",
+  pointerEvents: "none",
 };
 
 const btnContinuer: CSSProperties = {
@@ -152,6 +165,16 @@ const btnContinuer: CSSProperties = {
   border: "1px solid var(--brass-500)",
   cursor: "pointer",
 };
+
+function FiletOr() {
+  return (
+    <div style={filetRow} aria-hidden="true">
+      <span style={filetGauche} />
+      <span style={filetLosange}>◆</span>
+      <span style={filetDroit} />
+    </div>
+  );
+}
 
 export function LevelUpOverlay() {
   const { state, marquerNiveauVu } = useGame();
@@ -178,6 +201,57 @@ export function LevelUpOverlay() {
       pointsDepensesCompetences(state.competencesDebloquees) >=
     COUT_TOTAL_COMPETENCES;
 
+  // Mentions du certificat, dans l'ordre d'apparition (cascade).
+  const lignes: { key: string; contenu: ReactNode }[] = [];
+  if (!plafondCompetencesAtteint) {
+    lignes.push({
+      key: "point",
+      contenu: <div style={sousTitre}>{d.sheets.plusUnPointCompetence}</div>,
+    });
+  }
+  for (const dep of deblocages) {
+    const titreLocal = titreDeblocage(dep, locale);
+    if (dep.famille === "active") {
+      const { emoji, texte } = extraireEmoji(titreLocal);
+      lignes.push({
+        key: dep.titre,
+        contenu: (
+          <div data-testid="levelup-atout">
+            {emoji && (
+              <span style={atoutEmoji} aria-hidden="true">
+                {emoji}
+              </span>
+            )}
+            <div style={atoutTitre}>{texte}</div>
+            <p style={atoutDescription}>{descriptionDeblocage(dep, locale)}</p>
+          </div>
+        ),
+      });
+    } else {
+      lignes.push({
+        key: dep.titre,
+        contenu: <div style={ligneDeblocage}>{titreLocal}</div>,
+      });
+    }
+  }
+  if (prochain) {
+    lignes.push({
+      key: "prochain",
+      contenu: (
+        <div style={lignProchain}>
+          {tr(d.sheets.prochainNiv, { n: prochain.niveau })}{" "}
+          {titreDeblocage(prochain, locale)}
+        </div>
+      ),
+    });
+  }
+
+  // Chronologie : certificat → cascade des mentions → slam du cachet
+  // (+ shake du certificat à l'impact) → bouton Continuer.
+  const delaiBase = 0.45;
+  const delaiCachet = delaiBase + lignes.length * 0.12 + 0.15;
+  const delaiBouton = delaiCachet + 0.45;
+
   return (
     <div
       style={scrim}
@@ -185,55 +259,46 @@ export function LevelUpOverlay() {
       aria-modal="true"
       aria-label={tr(d.sheets.niveauAtteintAriaLabel, { n: niveauACelebrer })}
     >
-      <div style={colonne}>
-        <div className="broc-levelup-titre" style={blocTitre}>
-          <div style={eyebrowSombre}>{d.sheets.eyebrowNiveauBrocanteur}</div>
-          <div style={titreGeant}>
-            <span style={ornement} aria-hidden="true">
-              ✦
-            </span>
-            <span>{tr(d.sheets.niveauNCelebration, { n: niveauACelebrer })}</span>
-            <span style={ornement} aria-hidden="true">
-              ✦
-            </span>
+      <div
+        className="broc-levelup-certificat"
+        style={{
+          ...certificat,
+          ["--shake-delay" as string]: `${delaiCachet + 0.22}s`,
+        }}
+      >
+        <CornerOrnament position="tl" />
+        <CornerOrnament position="tr" />
+        <CornerOrnament position="bl" />
+        <CornerOrnament position="br" />
+        <div style={eyebrowCertificat}>{d.sheets.eyebrowCertificat}</div>
+        <div style={titreGeant}>
+          {tr(d.sheets.niveauNCelebration, { n: niveauACelebrer })}
+        </div>
+        {lignes.map((l, i) => (
+          <div
+            key={l.key}
+            className="broc-levelup-ligne"
+            style={{ ...ligneWrap, animationDelay: `${delaiBase + i * 0.12}s` }}
+          >
+            <FiletOr />
+            {l.contenu}
           </div>
-        </div>
-        <div className="broc-levelup-carte" style={carte}>
-          {!plafondCompetencesAtteint && (
-            <div style={sousTitre}>{d.sheets.plusUnPointCompetence}</div>
-          )}
-          {deblocages.map((dep) => {
-            const titreLocal = titreDeblocage(dep, locale);
-            if (dep.famille === "active") {
-              const { emoji, texte } = extraireEmoji(titreLocal);
-              return (
-                <div key={dep.titre} style={blocAtout} data-testid="levelup-atout">
-                  {emoji && (
-                    <span style={atoutEmoji} aria-hidden="true">
-                      {emoji}
-                    </span>
-                  )}
-                  <div style={atoutTitre}>{texte}</div>
-                  <p style={atoutDescription}>{descriptionDeblocage(dep, locale)}</p>
-                </div>
-              );
-            }
-            return (
-              <div key={dep.titre} style={ligneDeblocage}>
-                {titreLocal}
-              </div>
-            );
-          })}
-          {prochain && (
-            <div style={lignProchain}>
-              {tr(d.sheets.prochainNiv, { n: prochain.niveau })}{" "}
-              {titreDeblocage(prochain, locale)}
-            </div>
-          )}
-          <button type="button" style={btnContinuer} onClick={marquerNiveauVu}>
-            {d.menu.continuer}
-          </button>
-        </div>
+        ))}
+        <button
+          type="button"
+          className="broc-levelup-ligne"
+          style={{ ...btnContinuer, animationDelay: `${delaiBouton}s` }}
+          onClick={marquerNiveauVu}
+        >
+          {d.menu.continuer}
+        </button>
+        <img
+          src="/ui/cachet-cire.webp"
+          alt=""
+          data-testid="levelup-cachet"
+          className="broc-levelup-cachet"
+          style={{ ...cachetImg, animationDelay: `${delaiCachet}s` }}
+        />
       </div>
     </div>
   );

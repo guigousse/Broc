@@ -63,7 +63,7 @@ describe("LevelUpOverlay", () => {
     mockState = etat(0, 1);
     mockPathname = "/bureau";
     render(<LevelUpOverlay />);
-    expect(screen.getByText("Niveau 1 !")).toBeTruthy();
+    expect(screen.getByText("Niveau 1")).toBeTruthy();
     // deblocagesPourNiveau(1) = "Ouverture de l'écran Compétences (+1 point)" (famille jalon)
     expect(screen.getByText(/Ouverture de l'écran Compétences/)).toBeTruthy();
     // prochainDeblocage(1) = niveau 2, "L'Atelier vous tend les bras"
@@ -94,8 +94,8 @@ describe("LevelUpOverlay", () => {
     mockState = etat(3, 5);
     mockPathname = "/bureau";
     render(<LevelUpOverlay />);
-    expect(screen.getByText("Niveau 4 !")).toBeTruthy();
-    expect(screen.queryByText("Niveau 5 !")).toBeNull();
+    expect(screen.getByText("Niveau 4")).toBeTruthy();
+    expect(screen.queryByText("Niveau 5")).toBeNull();
   });
 
   it("sous le plafond de compétences : « +1 point » affiché", () => {
@@ -136,14 +136,20 @@ describe("LevelUpOverlay", () => {
     expect(screen.queryByText("Jalon")).toBeNull();
   });
 
-  it("titre détaché de la carte : bloc .broc-levelup-titre sans bouton, carte .broc-levelup-carte avec bouton", () => {
+  it("certificat unique : titre ET bouton dans .broc-levelup-certificat, cachet présent", () => {
     mockState = etat(0, 1);
     mockPathname = "/bureau";
     render(<LevelUpOverlay />);
-    const blocTitre = screen.getByText("Niveau 1 !").closest(".broc-levelup-titre");
-    expect(blocTitre).toBeTruthy();
-    expect(blocTitre!.querySelector("button")).toBeNull();
-    const bouton = screen.getByRole("button", { name: "Continuer" });
-    expect(bouton.closest(".broc-levelup-carte")).toBeTruthy();
+    const certificat = screen.getByText("Niveau 1").closest(".broc-levelup-certificat");
+    expect(certificat).toBeTruthy();
+    expect(certificat!.querySelector("button")).toBeTruthy();
+    expect(screen.getByTestId("levelup-cachet").getAttribute("alt")).toBe("");
+  });
+
+  it("eyebrow « Certificat de brocanteur » affiché", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    expect(screen.getByText("— Certificat de brocanteur —")).toBeTruthy();
   });
 });
