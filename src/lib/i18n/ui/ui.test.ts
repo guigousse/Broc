@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
+import { el } from "@/lib/i18n/ui/el";
 
 describe("dictionnaires UI", () => {
   it("les trois locales existent et divergent réellement", () => {
     expect(DICTIONNAIRES.fr.menu.nouvellePartie).toBe("Nouvelle partie");
     expect(DICTIONNAIRES.en.menu.nouvellePartie).toBe("New game");
     expect(DICTIONNAIRES.es.menu.nouvellePartie).toBe("Nueva partida");
+    expect(el.menu.nouvellePartie).toBe("Νέα παρτίδα");
   });
 
   it("tr interpole les paramètres {x}", () => {
@@ -53,6 +55,7 @@ describe("dictionnaires UI", () => {
 
     compare(DICTIONNAIRES.fr, DICTIONNAIRES.en, "en", "");
     compare(DICTIONNAIRES.fr, DICTIONNAIRES.es, "es", "");
+    compare(DICTIONNAIRES.fr, el, "el", "");
     expect(derives).toEqual([]);
   });
 });
