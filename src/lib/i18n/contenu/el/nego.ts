@@ -16,7 +16,7 @@ export const NEGO_EL: Record<CleMessageNego, string[]> = {
   contreVendeur: [
     "« Άντε, σου κάνω μια μικρή χάρη, {prix} €… »",
     "« Χμ. Ας πούμε {prix} €. »",
-    "« {prix} € και δεν ξαναμιλάμε. »",
+    "« {prix} € και δεν το συζητάμε άλλο. »",
     "« Μπορώ να κατέβω στα {prix} €, αυτό είναι το καλύτερό μου. »",
   ],
   contreClient: [

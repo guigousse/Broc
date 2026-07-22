@@ -23,7 +23,7 @@ export const QUETES_GABARITS_EL: Record<
   "generique#0": {
     titre: "Αναζητείται: {objets}",
     corps: [
-      "Γεια σας,",
+      "Γεια σου,",
       "Ψάχνω {objets}{etat}. Αν το βρεις, δώσε μου σημάδι — πληρώνω καλά.",
     ],
   },
@@ -37,7 +37,7 @@ export const QUETES_GABARITS_EL: Record<
   "jeux-video#1": {
     titre: "Για τη ρετρό βιτρίνα",
     corps: [
-      "Χαίρετε,",
+      "Γεια σου,",
       "Φτιάχνω μια βιτρίνα και χρειάζομαι {objets}{etat}. Βασίζομαι πάνω σου!",
     ],
   },
