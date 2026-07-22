@@ -40,6 +40,12 @@ describe("GramophoneSheet — guidage mini-tuto", () => {
     expect(tuile?.tagName).toBe("BUTTON");
   });
 
+  it("guide : la vignette guidée est en overflow visible (sinon la main ::after est rognée)", () => {
+    renderSheet(true);
+    const tuile = document.querySelector<HTMLButtonElement>(".tuto-main.tuto-main-haut");
+    expect(tuile?.style.overflow).toBe("visible");
+  });
+
   it("sans guide : aucune main", () => {
     renderSheet(false);
     expect(document.querySelector(".tuto-main")).toBeNull();

@@ -365,7 +365,13 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                       onClick={() => onSelect(idx)}
                       title={nomVinyle}
                       aria-label={nomVinyle}
-                      style={vinylTileStyle(v, actif)}
+                      // Pendant le guidage : overflow visible sur la tuile aussi,
+                      // sinon son ::after (la main) est rogné par overflow:hidden.
+                      style={
+                        guide && idx === 0
+                          ? { ...vinylTileStyle(v, actif), overflow: "visible" }
+                          : vinylTileStyle(v, actif)
+                      }
                     >
                       <ItemImage
                         templateId={v.templateId}
