@@ -212,8 +212,8 @@ export const el: DictionnaireUI = {
     chaqueNiveauPoint:
       "Κάθε επίπεδο: +1 πόντος δεξιότητας, όσο απομένουν δεξιότητες για ξεκλείδωμα",
     niveauAtteintAriaLabel: "Επίπεδο {n} επιτεύχθηκε",
-    eyebrowNiveauBrocanteur: "— επίπεδο παλιατζή —",
-    niveauNCelebration: "Επίπεδο {n}!",
+    eyebrowCertificat: "— Πιστοποιητικό παλιατζή —",
+    niveauNCelebration: "Επίπεδο {n}",
     plusUnPointCompetence: "+1 πόντος δεξιότητας",
     prochainNiv: "Επόμενο — Επ. {n}:",
     toastStockagePlein:

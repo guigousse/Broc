@@ -207,8 +207,8 @@ export const es: DictionnaireUI = {
     fermerFiche: "Cerrar la ficha",
     chaqueNiveauPoint: "Cada nivel: +1 punto de habilidad, mientras queden habilidades por desbloquear",
     niveauAtteintAriaLabel: "Nivel {n} alcanzado",
-    eyebrowNiveauBrocanteur: "— nivel de rebuscador —",
-    niveauNCelebration: "¡Nivel {n}!",
+    eyebrowCertificat: "— Certificado de rebuscador —",
+    niveauNCelebration: "Nivel {n}",
     plusUnPointCompetence: "+1 punto de habilidad",
     prochainNiv: "Siguiente — Niv. {n}:",
     toastStockagePlein:

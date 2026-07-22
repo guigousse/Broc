@@ -207,8 +207,8 @@ export const en: DictionnaireUI = {
     fermerFiche: "Close details",
     chaqueNiveauPoint: "Each level: +1 skill point, as long as skills remain to unlock",
     niveauAtteintAriaLabel: "Level {n} reached",
-    eyebrowNiveauBrocanteur: "— picker level —",
-    niveauNCelebration: "Level {n}!",
+    eyebrowCertificat: "— Picker's certificate —",
+    niveauNCelebration: "Level {n}",
     plusUnPointCompetence: "+1 skill point",
     prochainNiv: "Next — Lvl. {n}:",
     toastStockagePlein:

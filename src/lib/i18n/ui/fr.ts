@@ -210,8 +210,8 @@ export const fr = {
     fermerFiche: "Fermer la fiche",
     chaqueNiveauPoint: "Chaque niveau : +1 point de compétence, tant qu'il reste des compétences à débloquer",
     niveauAtteintAriaLabel: "Niveau {n} atteint",
-    eyebrowNiveauBrocanteur: "— niveau de brocanteur —",
-    niveauNCelebration: "Niveau {n} !",
+    eyebrowCertificat: "— Certificat de brocanteur —",
+    niveauNCelebration: "Niveau {n}",
     plusUnPointCompetence: "+1 point de compétence",
     prochainNiv: "Prochain — Niv. {n} :",
     toastStockagePlein:
