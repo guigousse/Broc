@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { ALL_TEMPLATES, getTemplate } from "@/data/objetTemplates";
 import { OBJETS_EN } from "@/lib/i18n/contenu/en/objets";
 import { OBJETS_ES } from "@/lib/i18n/contenu/es/objets";
+import { OBJETS_EL } from "@/lib/i18n/contenu/el/objets";
 import { manquants, nomObjet, nomTemplate, orphelins } from "@/lib/i18n/contenu";
 
 const IDS = ALL_TEMPLATES.map((t) => t.templateId);
@@ -9,6 +10,7 @@ const IDS = ALL_TEMPLATES.map((t) => t.templateId);
 describe.each([
   ["EN", OBJETS_EN],
   ["ES", OBJETS_ES],
+  ["EL", OBJETS_EL],
 ] as const)("overlay objets %s", (_, overlay) => {
   test("complétude : chaque templateId a son nom", () => {
     expect(manquants(IDS, overlay)).toEqual([]);
