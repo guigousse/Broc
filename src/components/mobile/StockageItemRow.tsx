@@ -8,7 +8,7 @@ import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
 import { getTemplate } from "@/data/objetTemplates";
-import { getItemImageUrl } from "@/lib/itemImages";
+import { getItemThumbUrl } from "@/lib/itemImages";
 import { flyToTab } from "@/lib/flyAnimation";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
@@ -102,7 +102,7 @@ function StockageItemRowBase({
     if (!el) return;
     flyToTab({
       fromRect: el.getBoundingClientRect(),
-      imageUrl: getItemImageUrl(objet.templateId),
+      imageUrl: getItemThumbUrl(objet.templateId),
       fallbackBg: rarityColors.thumbBg,
       borderColor: rarityColors.outer,
       targetSelector: `[data-fly-target="${tabPath}"]`,

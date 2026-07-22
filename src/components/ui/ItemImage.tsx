@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, type CSSProperties } from "react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
-import { getItemImageUrl } from "@/lib/itemImages";
+import { getItemImageUrl, getItemThumbUrl } from "@/lib/itemImages";
 import type { CategorieObjet } from "@/types/game";
 
 interface ItemImageProps {
@@ -30,6 +30,13 @@ interface ItemImageProps {
   sizes?: string;
   /** Charger en priorité (above-the-fold, overlay détail…). */
   priority?: boolean;
+  /**
+   * Plein format (~500-1600 px) au lieu de la vignette 384 px. À réserver aux
+   * visuels « héros » (un seul objet affiché en grand) : dans les listes/
+   * grilles, décoder le plein format fait exploser la mémoire sous iOS
+   * (le WebView recharge la page). Cf. `getItemThumbUrl`.
+   */
+  fullSize?: boolean;
 }
 
 const wrapper: CSSProperties = {
@@ -53,8 +60,11 @@ export function ItemImage({
   padded = false,
   sizes = DEFAULT_SIZES,
   priority = false,
+  fullSize = false,
 }: ItemImageProps) {
-  const src = getItemImageUrl(templateId);
+  const src = fullSize
+    ? getItemImageUrl(templateId)
+    : getItemThumbUrl(templateId);
   const [loaded, setLoaded] = useState(false);
 
   if (!src) {

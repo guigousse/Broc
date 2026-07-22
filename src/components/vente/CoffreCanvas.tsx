@@ -64,6 +64,22 @@ export function CoffreCanvas({
   const objetsRef = useRef(objets);
   objetsRef.current = objets;
 
+  // Position/rotation visuelles du drag en cours : état LOCAL au canvas, mis à
+  // jour à la fréquence du doigt. Le commit vers le parent (onMove/onRotate →
+  // setState global + auto-save) est throttlé pendant le geste puis flushé au
+  // relâcher : commiter chaque pointermove (60-120 Hz) re-rendait toute la
+  // page et re-sérialisait l'état à chaque frame. Le throttle garde
+  // l'indicateur de chevauchement (calculé par le parent) vivant pendant le drag.
+  const [dragVisu, setDragVisu] = useState<{
+    x?: number;
+    y?: number;
+    rot?: number;
+  } | null>(null);
+  const dragVisuRef = useRef<typeof dragVisu>(null);
+  dragVisuRef.current = dragVisu;
+  const dernierCommitRef = useRef(0);
+  const COMMIT_MS = 100;
+
   const hitTest = (clientX: number, clientY: number): string | null => {
     if (!ref.current) return null;
     const rect = ref.current.getBoundingClientRect();
@@ -100,7 +116,9 @@ export function CoffreCanvas({
         const ov = id ? objetsRef.current.find((o) => o.objet.id === id) : null;
         pinchRef.current = {
           startAngle: angleBetween(p1, p2),
-          startRotation: ov?.rotation ?? 0,
+          // La rotation visuelle locale prime : l'état global peut être en
+          // retard d'une fenêtre de throttle (re-pincement dans le même geste).
+          startRotation: dragVisuRef.current?.rot ?? ov?.rotation ?? 0,
           otherId: e.pointerId,
         };
         e.preventDefault();
@@ -119,16 +137,25 @@ export function CoffreCanvas({
         if (!p1 || !p2) return;
         const a = angleBetween(p1, p2);
         const delta = a - pinchRef.current.startAngle;
-        onRotate(id, pinchRef.current.startRotation + delta);
+        const rot = pinchRef.current.startRotation + delta;
+        setDragVisu((v) => ({ ...v, rot }));
+        if (performance.now() - dernierCommitRef.current >= COMMIT_MS) {
+          dernierCommitRef.current = performance.now();
+          onRotate(id, rot);
+        }
         return;
       }
 
       if (e.pointerId !== dragPointerId.current) return;
       if (!ref.current) return;
       const rect = ref.current.getBoundingClientRect();
-      const px = (e.clientX - rect.left) / rect.width;
-      const py = (e.clientY - rect.top) / rect.height;
-      onMove(id, Math.max(0, Math.min(1, px)), Math.max(0, Math.min(1, py)));
+      const px = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const py = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+      setDragVisu((v) => ({ ...v, x: px, y: py }));
+      if (performance.now() - dernierCommitRef.current >= COMMIT_MS) {
+        dernierCommitRef.current = performance.now();
+        onMove(id, px, py);
+      }
     };
 
     const handleUp = (e: PointerEvent) => {
@@ -155,6 +182,14 @@ export function CoffreCanvas({
         dragPointerId.current = null;
         pinchRef.current = null;
         pointers.current.clear();
+        // Flush final : commit de la dernière position/rotation visuelle
+        // (le throttle a pu sauter les derniers pointermove).
+        const v = dragVisuRef.current;
+        if (id && insideRect && v) {
+          if (v.x !== undefined && v.y !== undefined) onMove(id, v.x, v.y);
+          if (v.rot !== undefined) onRotate(id, v.rot);
+        }
+        setDragVisu(null);
         setSelectedId(null);
         if (id && !insideRect) onRetour(id);
       }
@@ -277,14 +312,26 @@ export function CoffreCanvas({
         {!closing &&
           objets.map((ov) => {
             const w = ref.current?.getBoundingClientRect().width ?? 280;
+            const actif = selectedId === ov.objet.id;
+            // Pendant le drag, la position/rotation visuelle locale prime sur
+            // l'état global (commité seulement au throttle + au relâcher).
+            const ovAffiche =
+              actif && dragVisu
+                ? {
+                    ...ov,
+                    posX: dragVisu.x ?? ov.posX,
+                    posY: dragVisu.y ?? ov.posY,
+                    rotation: dragVisu.rot ?? ov.rotation,
+                  }
+                : ov;
             return (
               <ItemDansCoffre
                 key={ov.objet.id}
-                ov={ov}
+                ov={ovAffiche}
                 capacitePlaces={camion.capacitePlaces}
                 cotePixelsX={w}
                 cotePixelsY={w / camion.aspectRatio}
-                active={selectedId === ov.objet.id}
+                active={actif}
                 overlap={overlaps.has(ov.objet.id)}
               />
             );

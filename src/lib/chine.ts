@@ -221,7 +221,9 @@ export function genererSession(
 
   // Brocantes spécialisées : force au moins QUOTA_SPECIALISATION d'items du thème.
   const spe = brocante?.specialisation;
-  const quotaSpe = spe ? Math.ceil(taille * QUOTA_SPECIALISATION) : 0;
+  // Sur la taille EFFECTIVE : une célébrité gonfle la session (×1,5), le quota
+  // doit suivre pour tenir la garantie de ≥ 50 % d'items du thème.
+  const quotaSpe = spe ? Math.ceil(tailleEffective * QUOTA_SPECIALISATION) : 0;
   const poolCommunSpe = spe
     ? poolGenerique.filter((t) => t.categorie === spe)
     : [];

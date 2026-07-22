@@ -12,6 +12,12 @@ export const localGameRepository: GameRepository = {
     try {
       return JSON.parse(raw) as GameState;
     } catch {
+      // Save présente mais illisible (JSON tronqué — kill pendant une
+      // écriture ?). On distingue ce cas de « pas de save » pour le
+      // diagnostic : l'UI, elle, verra null (Continuer grisé).
+      console.warn(
+        `[localGameRepository] Sauvegarde illisible (parse KO, ${raw.length} caractères) — traitée comme absente.`,
+      );
       return null;
     }
   },

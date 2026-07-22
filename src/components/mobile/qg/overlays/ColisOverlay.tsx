@@ -6,7 +6,7 @@ import type { Objet } from "@/types/game";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { StarRow } from "@/components/ui/StarRow";
 import { flyToTab } from "@/lib/flyAnimation";
-import { getItemImageUrl } from "@/lib/itemImages";
+import { getItemThumbUrl } from "@/lib/itemImages";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -119,7 +119,7 @@ export function ColisOverlay({ objet, numero, total, titre, onRecuperer }: Colis
     if (el) {
       flyToTab({
         fromRect: el.getBoundingClientRect(),
-        imageUrl: getItemImageUrl(objet.templateId),
+        imageUrl: getItemThumbUrl(objet.templateId),
         fallbackBg: rarity.thumbBg,
         borderColor: rarity.outer,
         targetSelector: `[data-fly-target="/stockage"]`,

@@ -48,6 +48,12 @@ interface FakeBiquad extends FakeNode {
 class FakeAudioContext {
   static instances: FakeAudioContext[] = [];
   currentTime = 0;
+  // "running" par défaut : le manager retente un resume() sur tout état ≠
+  // "running" (couvre "suspended" ET "interrupted" WebKit).
+  state: AudioContextState = "running";
+  resume = vi.fn(async () => {
+    this.state = "running";
+  });
   destination = { connect: vi.fn(), disconnect: vi.fn() };
   gains: FakeGain[] = [];
   oscillators: FakeOscillator[] = [];

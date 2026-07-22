@@ -28,7 +28,7 @@ import { ItemSticker } from "@/components/ui/ItemSticker";
 import type { EtatObjet, Objet } from "@/types/game";
 import { audioManager } from "@/lib/audio/audioManager";
 import { getRarityColors } from "@/lib/rarityColors";
-import { getItemImageUrl } from "@/lib/itemImages";
+import { getItemThumbUrl } from "@/lib/itemImages";
 import { getTemplate } from "@/data/objetTemplates";
 import { getAdProvider } from "@/lib/ads/adProvider";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -273,7 +273,7 @@ export default function AtelierPage() {
           transition:
             "left 620ms cubic-bezier(0.55,0,0.45,1), top 620ms cubic-bezier(0.45,0,0.55,1), width 620ms ease-in, height 620ms ease-in, opacity 620ms ease-in",
         });
-        const imgUrl = getItemImageUrl(objet.templateId);
+        const imgUrl = getItemThumbUrl(objet.templateId);
         if (imgUrl) {
           clone.style.backgroundImage = `url(${imgUrl})`;
           clone.style.backgroundSize = "cover";
@@ -803,6 +803,7 @@ export default function AtelierPage() {
                 tilt={false}
                 variant="normal"
                 eager
+                thumb
               />
             </div>
             <div

@@ -75,9 +75,11 @@ class AudioManager {
   ensureCtx(): void {
     if (typeof window === "undefined") return;
     if (this.ctx) {
-      // iOS (Safari / WKWebView) : le contexte peut rester/repasser "suspended"
-      // tant qu'aucun geste utilisateur ne l'a débloqué. On retente un resume.
-      if (this.ctx.state === "suspended") void this.ctx.resume();
+      // iOS (Safari / WKWebView) : le contexte peut rester/repasser "suspended",
+      // ou "interrupted" (état WebKit non standard, hors du type TS) après un
+      // passage en arrière-plan pendant une lecture. Tout état ≠ "running"
+      // mérite un resume.
+      if (this.ctx.state !== "running") void this.ctx.resume();
       return;
     }
     const Ctx =
@@ -101,11 +103,19 @@ class AudioManager {
     if (typeof window.addEventListener !== "function") return;
     this.unlockInstalled = true;
     const unlock = () => {
-      if (this.ctx && this.ctx.state === "suspended") void this.ctx.resume();
+      // ≠ "running" : couvre "suspended" ET "interrupted" (WebKit, après
+      // passage en arrière-plan — sinon plus aucun son jusqu'au redémarrage).
+      if (this.ctx && this.ctx.state !== "running") void this.ctx.resume();
     };
     for (const ev of ["pointerdown", "touchend", "keydown"] as const) {
       window.addEventListener(ev, unlock, { passive: true });
     }
+    // Retour au premier plan : iOS ne re-passe pas toujours le contexte à
+    // "running" tout seul après une interruption — on retente sans attendre
+    // le prochain geste utilisateur.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") unlock();
+    });
   }
 
   setVolume(v: number): void {

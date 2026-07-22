@@ -110,6 +110,23 @@ describe("genererSession — brocante spécialisée", () => {
     ).length;
     expect(enMusique).toBeGreaterThanOrEqual(Math.ceil(items.length * 0.5));
   });
+
+  it("respecte le quota de 50% aussi quand une célébrité gonfle la session", () => {
+    const broc = createMockBrocante({
+      id: "broc-spe-celeb",
+      specialisation: "Musique",
+      taillePool: 12,
+      tier: 2,
+    });
+    const celeb = { brocanteId: "broc-spe-celeb", nom: "La Comtesse", jourSemaine: 0 };
+    for (let run = 0; run < 5; run++) {
+      const items = genererSession(12, [], broc, celeb);
+      const enMusique = items.filter(
+        (i) => i.objet.categorie === "Musique",
+      ).length;
+      expect(enMusique).toBeGreaterThanOrEqual(Math.ceil(items.length * 0.5));
+    }
+  });
 });
 
 describe("genererSession — déterminisme du statut initial", () => {

@@ -360,6 +360,18 @@ describe("appliquerRecuperation", () => {
     });
   });
 
+  it("trace au timestamp réel fourni (fin immédiate via pub : finMs est dans le futur)", () => {
+    const o = createMockObjet({
+      id: "o1",
+      etat: "Bon",
+      enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 999999 },
+    });
+    const s = createMockGameState({ inventaireJoueur: [o], jourActuel: 5 });
+    // Complétion forcée avec now = finMs, mais tracée au moment réel (1234).
+    const next = appliquerRecuperation(s, "o1", 999999, 1234);
+    expect(next?.restaurations?.[0]?.timestamp).toBe(1234);
+  });
+
   it("borne la trace des restaurations à 100 entrées", () => {
     const o = createMockObjet({
       id: "o1",

@@ -14,7 +14,7 @@ import {
   type PixelItem,
   type TrunkMask,
 } from "@/lib/coffre";
-import { getItemImageUrl } from "@/lib/itemImages";
+import { getItemThumbUrl } from "@/lib/itemImages";
 import { getCoffreAssets } from "@/lib/coffreAssets";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -73,7 +73,7 @@ export function CoffreChargement(p: Props) {
   useEffect(() => {
     let cancelled = false;
     const tasks = p.coffre
-      .map((ov) => getItemImageUrl(ov.objet.templateId))
+      .map((ov) => getItemThumbUrl(ov.objet.templateId))
       .filter((src): src is string => !!src)
       .filter((src) => !getCachedMask(maskKey(src, MASK_SIZE, 0)));
     if (tasks.length === 0) return;
@@ -130,7 +130,7 @@ export function CoffreChargement(p: Props) {
       if (!tpl) continue;
       const taille = tailleDe(tpl);
       const scale = getScaleCoffre(taille, camion.capacitePlaces);
-      const src = getItemImageUrl(ov.objet.templateId);
+      const src = getItemThumbUrl(ov.objet.templateId);
       let mask: Uint8Array | undefined;
       if (src) mask = getCachedMask(maskKey(src, MASK_SIZE, 0));
       if (!mask) mask = buildSolidMask(MASK_SIZE);
@@ -296,7 +296,7 @@ export function CoffreChargement(p: Props) {
           const largeurCoffre =
             conteneurCoffreRef.current?.getBoundingClientRect().width ?? 280;
           const cote = getScaleCoffre(tailleDrag, camion.capacitePlaces) * largeurCoffre;
-          const src = getItemImageUrl(obj.templateId);
+          const src = getItemThumbUrl(obj.templateId);
           return (
             <div
               aria-hidden

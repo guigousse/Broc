@@ -306,18 +306,42 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isHydrated || !state) return;
-    gameRepository.save(state).then((ok) => {
-      if (!ok && !saveEnEchecRef.current) {
-        saveEnEchecRef.current = true;
-        toast(
-          "Sauvegarde impossible — stockage plein ou indisponible. Ta progression risque d'être perdue.",
-          { type: "erreur" },
-        );
-      } else if (ok && saveEnEchecRef.current) {
-        saveEnEchecRef.current = false;
-        toast("Sauvegarde rétablie.", { type: "succes" });
-      }
-    });
+    const doSave = () => {
+      gameRepository.save(state).then((ok) => {
+        if (!ok && !saveEnEchecRef.current) {
+          saveEnEchecRef.current = true;
+          toast(
+            "Sauvegarde impossible — stockage plein ou indisponible. Ta progression risque d'être perdue.",
+            { type: "erreur" },
+          );
+        } else if (ok && saveEnEchecRef.current) {
+          saveEnEchecRef.current = false;
+          toast("Sauvegarde rétablie.", { type: "succes" });
+        }
+      });
+    };
+    // Debounce (trailing edge via cleanup) : évite un JSON.stringify de TOUT
+    // l'état à chaque mutation (drag d'objet, ticks…). Le timer en attente est
+    // annulé au changement d'état suivant comme à la bascule de slot
+    // (detacherPartie → state null → cleanup), donc jamais d'écriture d'un
+    // état périmé dans le mauvais slot.
+    const timer = window.setTimeout(doSave, 400);
+    // Flush immédiat au passage en arrière-plan : sur iOS l'app peut être
+    // suspendue (voire tuée) avant l'échéance du debounce.
+    const flush = () => {
+      window.clearTimeout(timer);
+      doSave();
+    };
+    const onVisibilite = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    document.addEventListener("visibilitychange", onVisibilite);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibilite);
+      window.removeEventListener("pagehide", flush);
+    };
   }, [state, isHydrated, toast]);
 
   const ancreRef = useRef<AncreTemps | null>(null);
@@ -418,6 +442,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (t !== null) {
         // Temps de confiance obtenu : corrige l'ancre (mono inchangée → pas de saut).
         ancreRef.current = poserAncre(t, performance.now());
+      } else if (ancreRef.current) {
+        // Hors-ligne / timeapi muet. Sur iOS, `performance.now()` NE PROGRESSE
+        // PAS pendant la suspension profonde du device : après une nuit en
+        // poche, le temps extrapolé est resté figé et l'énergie/les minuteries
+        // semblent bloquées. Si l'horloge murale a pris de l'avance sur le
+        // temps extrapolé, on ré-ancre sur Date.now() — même dégradation
+        // gracieuse qu'au cold start (l'anti-recul de settleEnergie neutralise
+        // un éventuel recul d'horloge).
+        const extrapole = tempsConfianceCourant(
+          ancreRef.current,
+          performance.now(),
+        );
+        if (Date.now() > extrapole) {
+          ancreRef.current = poserAncre(Date.now(), performance.now());
+        }
       }
       rafraichirEnergie();
       rafraichirQuetes();
@@ -1108,16 +1147,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
    * synchrone, on persiste immédiatement pour ne pas perdre le compteur.
    */
   const sauverTempsVitrine = useCallback((tempsRestantSec: number) => {
-    const prev = stateRef.current;
-    if (!prev?.vitrine) return;
-    if (prev.vitrine.tempsRestantSec === tempsRestantSec) return;
-    const next: GameState = {
-      ...prev,
-      vitrine: { ...prev.vitrine, tempsRestantSec },
-    };
-    stateRef.current = next;
-    setState(next);
-    void gameRepository.save(next);
+    const current = stateRef.current;
+    if (!current?.vitrine) return;
+    if (current.vitrine.tempsRestantSec === tempsRestantSec) return;
+    // Persistance synchrone immédiate depuis le dernier état COMMITÉ : filet
+    // pour la suspension iOS (l'effet d'auto-save post-commit peut ne jamais
+    // tourner). Peut manquer une mutation encore en attente dans la même
+    // frame — l'auto-save la réécrira au commit suivant.
+    void gameRepository.save({
+      ...current,
+      vitrine: { ...current.vitrine, tempsRestantSec },
+    });
+    // Forme updater (PAS valeur) : ne doit jamais écraser une mutation en
+    // attente posée dans la même frame (ex. vente conclue juste avant le
+    // passage en arrière-plan).
+    setState((prev) =>
+      prev?.vitrine && prev.vitrine.tempsRestantSec !== tempsRestantSec
+        ? { ...prev, vitrine: { ...prev.vitrine, tempsRestantSec } }
+        : prev,
+    );
   }, []);
 
   const enregistrerSession = useCallback((session: Session) => {
@@ -1213,7 +1261,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (usagesRestants(current.activesUtilisees, id, current.jourActuel, current.brocanteur.niveau) <= 0) return false;
     setState((prev) => {
       if (!prev) return prev;
-      const next = consommerActive(prev.activesUtilisees, id, prev.jourActuel, current.brocanteur.niveau);
+      const next = consommerActive(prev.activesUtilisees, id, prev.jourActuel, prev.brocanteur.niveau);
       if (!next) return prev;
       return { ...prev, activesUtilisees: next };
     });
@@ -1378,8 +1426,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const fin = objet.enRestauration.finMs;
       setState((prev) => {
         if (!prev) return prev;
-        // Forcer la complétion : on applique avec now = finMs (>= finMs).
-        const next = appliquerRecuperation(prev, objetId, fin);
+        // Forcer la complétion : on applique avec now = finMs (>= finMs), mais
+        // on trace au temps réel — finMs peut être 30 min dans le futur.
+        const next = appliquerRecuperation(prev, objetId, fin, Math.min(now, fin));
         if (!next) return prev;
         return {
           ...next,
@@ -1607,17 +1656,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!aRetirer) {
         return { ok: false, raison: raisonLocalisee("objetsRequisManquants") };
       }
-      const titreMission = courrier.payload.titre;
-      // Capturés hors closure (le narrowing de `courrier.payload` en mission ne
-      // survit pas dans le callback de setState) : servent aux params ADDITIFS.
-      const gabaritIdMission = courrier.payload.gabaritId;
-      const etatMinMission = courrier.payload.gabaritParams?.etatMin;
-      const templateIdsMission = courrier.payload.cibles.map((c) => c.templateId);
+      // Const nommée APRÈS le guard : capture le narrowing mission de
+      // `courrier.payload` pour la closure de setState.
+      const payloadMission = courrier.payload;
+      const titreMission = payloadMission.titre;
+      const gabaritIdMission = payloadMission.gabaritId;
+      const etatMinMission = payloadMission.gabaritParams?.etatMin;
+      const templateIdsMission = payloadMission.cibles.map((c) => c.templateId);
       // Certaines missions (finale de l'arc principal) valident à la possession
       // sans consommer l'objet : le joueur garde la pièce.
-      const conserver = courrier.payload.conserverCibles === true;
-      const aRetirerSet = new Set(conserver ? [] : aRetirer);
-      const categorieMission = courrier.payload.categorie;
+      const conserver = payloadMission.conserverCibles === true;
+      const categorieMission = payloadMission.categorie;
       const xpMission =
         categorieMission === "principale"
           ? XP_QUETE_PRINCIPALE
@@ -1628,6 +1677,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (!prev) return prev;
         const resoPrev = prev.missions.find((m) => m.courrierId === courrierId);
         if (!resoPrev || resoPrev.statut !== "active") return prev;
+        // Recalcule les indices sur PREV : si l'inventaire a bougé entre le
+        // pré-check et l'updater, les indices pré-calculés seraient décalés
+        // et retireraient les mauvais objets.
+        const aRetirerPrev = conserver
+          ? []
+          : indicesAConsommerPourLivraison(payloadMission, prev.inventaireJoueur);
+        if (aRetirerPrev === null) return prev;
+        const aRetirerSet = new Set(aRetirerPrev);
         const invMaj = conserver
           ? prev.inventaireJoueur
           : prev.inventaireJoueur.filter((_, i) => !aRetirerSet.has(i));

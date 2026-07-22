@@ -164,6 +164,11 @@ export function appliquerRecuperation(
   state: GameState,
   objetId: string,
   now: number,
+  // Timestamp de la trace `state.restaurations`. Par défaut `now`, mais la fin
+  // immédiate via pub force `now = finMs` (potentiellement 30 min dans le
+  // futur) : elle passe ici le temps réel pour ne pas horodater dans le futur
+  // (sinon un objectif de chapitre accepté APRÈS la restauration la compterait).
+  traceTimestamp: number = now,
 ): GameState | null {
   const objet = state.inventaireJoueur.find((o) => o.id === objetId);
   if (!objet || !objet.enRestauration) return null;
@@ -185,7 +190,7 @@ export function appliquerRecuperation(
   );
   const restaurations = [
     ...(state.restaurations ?? []),
-    { timestamp: now, etatFinal: cible },
+    { timestamp: traceTimestamp, etatFinal: cible },
   ].slice(-100);
   return { ...state, inventaireJoueur: inv, restaurations };
 }

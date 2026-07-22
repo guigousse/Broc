@@ -2,9 +2,34 @@ import { describe, it, expect } from "vitest";
 import {
   bboxOverlap,
   capaciteSuffit,
+  containRect,
   placesUtilisees,
 } from "@/lib/coffre";
 import type { TailleObjet } from "@/types/game";
+
+describe("containRect — géométrie du masque alpha = géométrie du rendu", () => {
+  it("image carrée : remplit le carré", () => {
+    expect(containRect(500, 500, 48)).toEqual({ dw: 48, dh: 48 });
+  });
+
+  it("image haute (livre 375×545) : largeur réduite au ratio, pas étirée", () => {
+    const { dw, dh } = containRect(375, 545, 48);
+    expect(dh).toBe(48);
+    expect(dw).toBeCloseTo(48 * (375 / 545), 5);
+    // Le bug d'origine : dw valait 48 (étirement) → masque ~45 % trop large.
+    expect(dw).toBeLessThan(48);
+  });
+
+  it("image large : hauteur réduite au ratio", () => {
+    const { dw, dh } = containRect(800, 400, 48);
+    expect(dw).toBe(48);
+    expect(dh).toBe(24);
+  });
+
+  it("dimensions invalides : retombe sur le carré plein", () => {
+    expect(containRect(0, 545, 48)).toEqual({ dw: 48, dh: 48 });
+  });
+});
 
 describe("bboxOverlap", () => {
   it("rectangles disjoints", () => {

@@ -133,7 +133,7 @@ export function SessionSummary({
                         : "none",
                   }}
                 >
-                  <ItemSticker templateId={it.templateId} categorie={it.categorie} />
+                  <ItemSticker templateId={it.templateId} categorie={it.categorie} thumb />
                   <span
                     style={{
                       fontFamily: "var(--font-display)",

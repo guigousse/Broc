@@ -91,7 +91,28 @@ export function cacheMask(key: string, bits: Uint8Array): void {
 }
 
 /**
+ * Rectangle de dessin « contain » centré d'une image `naturalW × naturalH`
+ * dans un carré `size × size` : mêmes proportions que le rendu à l'écran
+ * (`ItemImage fit="contain"`). Retourne des demi-dimensions centrées (le
+ * canvas du masque est translaté au centre).
+ */
+export function containRect(
+  naturalW: number,
+  naturalH: number,
+  size: number,
+): { dw: number; dh: number } {
+  if (naturalW <= 0 || naturalH <= 0) return { dw: size, dh: size };
+  const ratio = naturalW / naturalH;
+  return ratio >= 1
+    ? { dw: size, dh: size / ratio }
+    : { dw: size * ratio, dh: size };
+}
+
+/**
  * Calcule le masque alpha d'une image rendue à `size × size` avec rotation.
+ * L'image est dessinée en « contain » (comme à l'écran) — PAS étirée en
+ * carré : un masque étiré serait plus large/haut que le visuel et créerait
+ * de faux chevauchements (ex. livre 375×545 → masque 45 % trop large).
  * Renvoie une Uint8Array indexée [y*size + x].
  */
 export async function buildAlphaMask(
@@ -114,7 +135,8 @@ export async function buildAlphaMask(
   const ctx = canvas.getContext("2d")!;
   ctx.translate(size / 2, size / 2);
   ctx.rotate((rotation * Math.PI) / 180);
-  ctx.drawImage(img, -size / 2, -size / 2, size, size);
+  const { dw, dh } = containRect(img.naturalWidth, img.naturalHeight, size);
+  ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
   const data = ctx.getImageData(0, 0, size, size).data;
 
   const bits = new Uint8Array(size * size);

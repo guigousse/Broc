@@ -106,14 +106,15 @@ function adversePushVers(
   cible: number,
   elanPct: number,
 ): number {
+  // Arrondi VERS la cible + concession minimale de 1 € : sur les petits prix,
+  // un arrondi au plus proche recollait au prix courant et figeait la
+  // négociation (le vendeur « concédait » le même prix à chaque tour).
   if (mode === "achat") {
-    return Math.round(
-      Math.max(cible, prixCourant - (prixCourant - cible) * elanPct),
-    );
+    const brut = prixCourant - (prixCourant - cible) * elanPct;
+    return Math.max(cible, Math.min(prixCourant - 1, Math.floor(brut)));
   }
-  return Math.round(
-    Math.min(cible, prixCourant + (cible - prixCourant) * elanPct),
-  );
+  const brut = prixCourant + (cible - prixCourant) * elanPct;
+  return Math.min(cible, Math.max(prixCourant + 1, Math.ceil(brut)));
 }
 
 /** Vrai si l'offre du joueur rejoint le prix adverse (condition d'accord). */

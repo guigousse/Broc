@@ -171,7 +171,18 @@ export function chargerIndex(): IndexSlots {
   if (typeof window === "undefined") return indexParDefaut();
 
   if (indexExiste()) {
-    return lireIndexBrut() ?? indexParDefaut();
+    const index = lireIndexBrut();
+    if (index === null) {
+      // Cas ANORMAL : la clé existe mais est illisible (écriture interrompue ?).
+      // La retombée sur le défaut ramène silencieusement sur le slot 1 — un
+      // joueur dont la partie vit dans le slot 2/3 verrait « sa partie
+      // disparaître ». On trace pour le diagnostic device.
+      console.warn(
+        "[slots] Index des emplacements présent mais illisible — retombée sur le défaut (slot 1 actif).",
+      );
+      return indexParDefaut();
+    }
+    return index;
   }
 
   tenterMigrationLegacy();

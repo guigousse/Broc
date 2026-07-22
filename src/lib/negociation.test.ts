@@ -173,6 +173,31 @@ describe("proposerOffre — contre-offre", () => {
   });
 });
 
+describe("proposerOffre — petits prix (l'arrondi ne doit jamais figer la négo)", () => {
+  it("achat : à 5 € (cible 4), la concession avance malgré l'arrondi", () => {
+    const n = ouvrirNegociation("achat", 5, 4);
+    // elan 0.2 → concession brute 0,2 € : Math.round recollait à 5 € et la
+    // négociation ne bougeait plus jamais. Attendu : le prix descend à 4 €,
+    // l'offre 4 € s'aligne → accord.
+    const res = proposerOffre(n, persona({ elanPct: 0.2 }), 4);
+    expect(res.statut).toBe("conclu");
+    expect(res.prixAdverseCourant).toBe(4);
+  });
+
+  it("vente : à 5 € (cible 6), la concession avance malgré l'arrondi", () => {
+    const n = ouvrirNegociation("vente", 5, 6);
+    const res = proposerOffre(n, persona({ elanPct: 0.2 }), 6);
+    expect(res.statut).toBe("conclu");
+    expect(res.prixAdverseCourant).toBe(6);
+  });
+
+  it("achat : le prix adverse bouge d'au moins 1 € tant que la cible n'est pas atteinte", () => {
+    const n = ouvrirNegociation("achat", 8, 4);
+    const res = proposerOffre(n, persona({ elanPct: 0.05 }), 7);
+    expect(res.prixAdverseCourant).toBeLessThanOrEqual(7);
+  });
+});
+
 describe("proposerOffre — accord par alignement", () => {
   it("achat : si l'adverse descend en-dessous de l'offre, accord à l'offre", () => {
     const n = ouvrirNegociation("achat", 100, 60);
