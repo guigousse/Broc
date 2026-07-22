@@ -4,7 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { X } from "lucide-react";
 import { useSettings, type TailleFonte } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { LOCALES, LOCALE_LABELS } from "@/lib/i18n/locales";
+import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n/locales";
 import type { AudioPrefs } from "@/lib/audio/audioManager";
 import {
   demanderPermission,
@@ -105,6 +105,34 @@ const segBtn = (active: boolean, disabled = false): CSSProperties => ({
   cursor: disabled ? "not-allowed" : "pointer",
   opacity: disabled ? 0.4 : 1,
 });
+
+const selectWrap: CSSProperties = { position: "relative" };
+
+const selectLangue: CSSProperties = {
+  width: "100%",
+  padding: "10px 36px 10px 12px",
+  fontFamily: "var(--font-display)",
+  fontSize: 11,
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+  border: "1px solid var(--brass-500)",
+  borderRadius: 6,
+  background: "var(--paper-100)",
+  color: "var(--ink-700)",
+  appearance: "none",
+  WebkitAppearance: "none",
+  cursor: "pointer",
+};
+
+const chevron: CSSProperties = {
+  position: "absolute",
+  right: 12,
+  top: "50%",
+  transform: "translateY(-50%)",
+  pointerEvents: "none",
+  color: "var(--ink-700)",
+  fontSize: 10,
+};
 
 const togglesRow: CSSProperties = {
   display: "flex",
@@ -265,20 +293,23 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
 
         <section style={carte} aria-label={d.reglages.langue}>
           <h3 style={sectionTitle}>{d.reglages.langue}</h3>
-          <div style={{ display: "flex", gap: 8 }}>
-            {LOCALES.map((l) => (
-              <button
-                key={l}
-                type="button"
-                onClick={() => {
-                  playClick();
-                  setLocale(l);
-                }}
-                style={segBtn(locale === l)}
-              >
-                {LOCALE_LABELS[l]}
-              </button>
-            ))}
+          <div style={selectWrap}>
+            <select
+              value={locale}
+              onChange={(e) => {
+                playClick();
+                setLocale(e.target.value as Locale);
+              }}
+              aria-label={d.reglages.langue}
+              style={selectLangue}
+            >
+              {LOCALES.map((l) => (
+                <option key={l} value={l}>
+                  {LOCALE_LABELS[l]}
+                </option>
+              ))}
+            </select>
+            <span aria-hidden style={chevron}>▾</span>
           </div>
         </section>
 
