@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 const MAJ = "22 juin 2026";
-const CONTACT = "guillaume.fenard@gmail.com";
+const CONTACT = "pepite.admin@gmail.com";
 const EDITEUR = "Guillaume Fenard";
 
 export default function MentionsLegalesPage() {
