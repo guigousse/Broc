@@ -4,10 +4,12 @@ import { CATEGORIES } from "@/data/categories";
 import { DEBLOCAGES_PAR_NIVEAU } from "@/data/deblocagesNiveau";
 import { COMPETENCES_EN, CAT_EN } from "@/lib/i18n/contenu/en/competences";
 import { COMPETENCES_ES, CAT_ES } from "@/lib/i18n/contenu/es/competences";
+import { COMPETENCES_EL } from "@/lib/i18n/contenu/el/competences";
 import { DICTIONNAIRES } from "@/lib/i18n/ui";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { DEBLOCAGES_EN } from "@/lib/i18n/contenu/en/deblocages";
 import { DEBLOCAGES_ES } from "@/lib/i18n/contenu/es/deblocages";
+import { DEBLOCAGES_EL } from "@/lib/i18n/contenu/el/deblocages";
 import {
   descriptionBranche,
   descriptionCompetence,
@@ -33,6 +35,7 @@ const DEBLOCAGE_TITRES = DEBLOCAGES_PAR_NIVEAU.map((d) => d.titre);
 describe.each([
   ["EN", COMPETENCES_EN],
   ["ES", COMPETENCES_ES],
+  ["EL", COMPETENCES_EL],
 ] as const)("overlay compétences %s", (_, ov) => {
   test("arbres complets", () => expect(manquants(TREE_IDS, ov.arbres)).toEqual([]));
   test("arbres zéro orphelin", () => expect(orphelins(TREE_IDS, ov.arbres)).toEqual([]));
@@ -56,6 +59,7 @@ describe.each([
 describe.each([
   ["EN", DEBLOCAGES_EN],
   ["ES", DEBLOCAGES_ES],
+  ["EL", DEBLOCAGES_EL],
 ] as const)("overlay déblocages %s", (_, ov) => {
   test("complétude", () => expect(manquants(DEBLOCAGE_TITRES, ov)).toEqual([]));
   test("zéro orphelin", () => expect(orphelins(DEBLOCAGE_TITRES, ov)).toEqual([]));

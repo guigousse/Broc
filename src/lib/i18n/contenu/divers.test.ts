@@ -4,6 +4,7 @@ import { STOCKAGE_TIERS } from "@/data/stockage";
 import { CELEBRITES } from "@/data/celebrites";
 import { DIVERS_EN } from "@/lib/i18n/contenu/en/divers";
 import { DIVERS_ES } from "@/lib/i18n/contenu/es/divers";
+import { DIVERS_EL } from "@/lib/i18n/contenu/el/divers";
 import {
   manquants,
   nomCamion,
@@ -15,7 +16,7 @@ import {
 const VISUELS = CAMIONS.map((c) => c.visuelId);
 const NIVEAUX = STOCKAGE_TIERS.map((t) => String(t.niveau));
 
-describe.each([["EN", DIVERS_EN], ["ES", DIVERS_ES]] as const)(
+describe.each([["EN", DIVERS_EN], ["ES", DIVERS_ES], ["EL", DIVERS_EL]] as const)(
   "overlay divers %s",
   (_, overlay) => {
     test("camions complets", () => expect(manquants(VISUELS, overlay.camions)).toEqual([]));
