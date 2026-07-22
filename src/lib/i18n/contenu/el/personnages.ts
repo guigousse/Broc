@@ -133,7 +133,7 @@ export const PERSONNAGES_EL: OverlayPersonnages = {
       ambiance: "Λοξοκοιτάζει τα κομμάτια χωρίς να καταδέχεται να τα αγγίξει.",
     },
     "snob_bourgeois.2": {
-      nom: "Ο πρεσβύτερος Aristide",
+      nom: "Ο γηραιός Aristide",
       ambiance: "Αρνείται ευγενικά ό,τι μοιάζει χυδαίο.",
     },
     "touriste_perdu.0": {

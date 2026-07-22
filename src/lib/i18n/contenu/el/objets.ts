@@ -398,7 +398,7 @@ export const OBJETS_EL: Record<string, string> = {
   "br.balance_romaine_fonte": "Παλιά χυτοσίδηρη ρωμαϊκή ζυγαριά",
 
   // ===== LÉGENDAIRES =====
-  "leg.mus.violon_de_maitre_cremonais_1715": "Βιολί μαέστρου από την Κρεμόνα (1715)",
+  "leg.mus.violon_de_maitre_cremonais_1715": "Βιολί μάστορα από την Κρεμόνα (1715)",
   "leg.mus.piano_a_queue_de_concert_1900": "Πιάνο ουρά συναυλιών (1900)",
   "leg.mus.guitare_de_legende_de_johny_perdrix_jouee_a_l": "Θρυλική κιθάρα του Johny Perdrix, παιγμένη ανάποδα (με προέλευση)",
   "leg.jx.cartouche_stadium_events": "Υπερσπάνια κασέτα παιχνιδιού αθλητικών 8-bit",
