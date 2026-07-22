@@ -11,21 +11,20 @@ import {
 import {
   deblocagesPourNiveau,
   prochainDeblocage,
-  type FamilleDeblocage,
 } from "@/data/deblocagesNiveau";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleFamille } from "@/lib/i18n/libelles";
-import { titreDeblocage } from "@/lib/i18n/contenu";
+import { titreDeblocage, descriptionDeblocage } from "@/lib/i18n/contenu";
 
-/** Couleur par famille de déblocage (style UI, réutilisé par ParcoursSheet). */
-export const COULEUR_FAMILLE: Record<FamilleDeblocage, string> = {
-  jalon: "var(--brass-700)",
-  contenu: "var(--forest-600)",
-  economie: "var(--patina-500)",
-  confort: "var(--velvet-700)",
-  active: "var(--vermillion-600)",
-};
+/** Sépare le premier emoji d'un titre d'atout localisé (« Atout 🔍 Le Flair »). */
+function extraireEmoji(titre: string): { emoji: string | null; texte: string } {
+  const m = titre.match(/\p{Extended_Pictographic}/u);
+  if (!m) return { emoji: null, texte: titre };
+  return {
+    emoji: m[0],
+    texte: titre.replace(m[0], "").replace(/\s{2,}/g, " ").trim(),
+  };
+}
 
 const scrim: CSSProperties = {
   position: "fixed",
@@ -100,24 +99,38 @@ const ligneDeblocage: CSSProperties = {
   color: "var(--ink-700)",
   textAlign: "left",
   marginBottom: 6,
-  display: "flex",
-  alignItems: "baseline",
-  gap: 6,
 };
 
-/** Style de puce famille, réutilisé par ParcoursSheet. */
-export function chipFamille(famille: FamilleDeblocage): CSSProperties {
-  return {
-    fontFamily: "var(--font-mono)",
-    fontSize: 9.5,
-    textTransform: "uppercase",
-    letterSpacing: "0.08em",
-    color: COULEUR_FAMILLE[famille],
-    border: `1px solid ${COULEUR_FAMILLE[famille]}`,
-    padding: "1px 5px",
-    flexShrink: 0,
-  };
-}
+const blocAtout: CSSProperties = {
+  border: "1px solid var(--brass-500)",
+  background: "var(--paper-300)",
+  padding: "12px 10px",
+  marginBottom: 10,
+  textAlign: "center",
+};
+
+const atoutEmoji: CSSProperties = {
+  fontSize: 40,
+  lineHeight: 1.1,
+  display: "block",
+  marginBottom: 6,
+};
+
+const atoutTitre: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 17,
+  color: "var(--ink-900)",
+  marginBottom: 6,
+  lineHeight: 1.25,
+};
+
+const atoutDescription: CSSProperties = {
+  fontFamily: "var(--font-serif)",
+  fontSize: 13,
+  lineHeight: 1.45,
+  color: "var(--forest-800)",
+  margin: 0,
+};
 
 const lignProchain: CSSProperties = {
   fontFamily: "var(--font-mono)",
@@ -189,14 +202,28 @@ export function LevelUpOverlay() {
           {!plafondCompetencesAtteint && (
             <div style={sousTitre}>{d.sheets.plusUnPointCompetence}</div>
           )}
-          {deblocages.map((dep) => (
-            <div key={dep.titre} style={ligneDeblocage}>
-              <span style={chipFamille(dep.famille)}>
-                {libelleFamille(dep.famille, d)}
-              </span>
-              <span>{titreDeblocage(dep, locale)}</span>
-            </div>
-          ))}
+          {deblocages.map((dep) => {
+            const titreLocal = titreDeblocage(dep, locale);
+            if (dep.famille === "active") {
+              const { emoji, texte } = extraireEmoji(titreLocal);
+              return (
+                <div key={dep.titre} style={blocAtout} data-testid="levelup-atout">
+                  {emoji && (
+                    <span style={atoutEmoji} aria-hidden="true">
+                      {emoji}
+                    </span>
+                  )}
+                  <div style={atoutTitre}>{texte}</div>
+                  <p style={atoutDescription}>{descriptionDeblocage(dep, locale)}</p>
+                </div>
+              );
+            }
+            return (
+              <div key={dep.titre} style={ligneDeblocage}>
+                {titreLocal}
+              </div>
+            );
+          })}
           {prochain && (
             <div style={lignProchain}>
               {tr(d.sheets.prochainNiv, { n: prochain.niveau })}{" "}

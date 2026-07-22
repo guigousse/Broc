@@ -114,6 +114,28 @@ describe("LevelUpOverlay", () => {
     expect(screen.queryByText(/point de compétence/)).toBeNull();
   });
 
+  it("atout débloqué (N5, Le Flair) : bloc grand format avec emoji géant et description", () => {
+    mockState = etat(4, 5);
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    // Titre sans l'emoji inline (l'emoji est extrait dans son propre bloc).
+    expect(screen.getByText("Atout Le Flair")).toBeTruthy();
+    expect(screen.getByText(/révèle la cote de tous les objets/)).toBeTruthy();
+    const bloc = screen.getByText("Atout Le Flair").closest("[data-testid='levelup-atout']");
+    expect(bloc).toBeTruthy();
+    expect(bloc!.textContent).toContain("🔍");
+  });
+
+  it("niveau sans atout (N1) : ligne simple, pas de bloc atout ni pill de famille", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    expect(screen.getByText(/Ouverture de l'écran Compétences/)).toBeTruthy();
+    expect(screen.queryByTestId("levelup-atout")).toBeNull();
+    // La pill de famille a disparu.
+    expect(screen.queryByText("Jalon")).toBeNull();
+  });
+
   it("titre détaché de la carte : bloc .broc-levelup-titre sans bouton, carte .broc-levelup-carte avec bouton", () => {
     mockState = etat(0, 1);
     mockPathname = "/bureau";
