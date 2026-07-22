@@ -995,28 +995,49 @@ nav[aria-label="Navigation principale"] :focus-visible,
   from { transform: translateY(110%); }
   to { transform: translateY(0); }
 }
-/* Level up : le titre claque (zoom 3x→1x avec overshoot), la carte de
-   déblocages suit en fondu décalé (~1 s, invisible avant grâce à backwards). */
-@keyframes broc-levelup-slam {
-  0% { transform: scale(3); opacity: 0; }
-  70% { transform: scale(0.95); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+/* Level up « certificat » : le document entre (fade + montée), les mentions
+   apparaissent en cascade (delay inline par ligne), puis le cachet de cire
+   s'écrase (scale 2.6→1) et fait trembler le certificat (--shake-delay).
+   Le shake anime `translate` (propriété distincte) pour ne pas entrer en
+   conflit avec le `transform` de l'entrée. */
+@keyframes broc-levelup-certificat-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes broc-levelup-carte-in {
-  from { opacity: 0; transform: translateY(14px); }
+@keyframes broc-levelup-certificat-shake {
+  0%, 100% { translate: 0 0; }
+  25% { translate: 2px 1px; }
+  50% { translate: -2px -1px; }
+  75% { translate: 1px 2px; }
+}
+@keyframes broc-levelup-ligne-in {
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.broc-levelup-titre {
-  animation: broc-levelup-slam 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+@keyframes broc-levelup-cachet-slam {
+  0% { opacity: 0; transform: rotate(-30deg) scale(2.6); }
+  60% { opacity: 1; transform: rotate(-10deg) scale(0.92); }
+  100% { opacity: 1; transform: rotate(-12deg) scale(1); }
 }
-.broc-levelup-carte {
-  animation: broc-levelup-carte-in 450ms ease-out 1s backwards;
+.broc-levelup-certificat {
+  animation:
+    broc-levelup-certificat-in 400ms ease-out both,
+    broc-levelup-certificat-shake 220ms linear var(--shake-delay, 1.2s) 1;
+}
+.broc-levelup-ligne {
+  /* animation-delay inline (cascade calculée en JS) */
+  animation: broc-levelup-ligne-in 350ms ease-out both;
+}
+.broc-levelup-cachet {
+  /* animation-delay inline (après la cascade) */
+  animation: broc-levelup-cachet-slam 340ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
 }
 /* Le bloc reduced-motion global écrase les durées mais pas animation-delay :
-   sans ceci la carte resterait invisible ~1 s. */
+   sans ceci lignes et cachet resteraient invisibles pendant leur delay. */
 @media (prefers-reduced-motion: reduce) {
-  .broc-levelup-titre,
-  .broc-levelup-carte {
+  .broc-levelup-certificat,
+  .broc-levelup-ligne,
+  .broc-levelup-cachet {
     animation: none !important;
   }
 }
