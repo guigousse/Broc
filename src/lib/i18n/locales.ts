@@ -4,15 +4,19 @@ import {
 } from "@/lib/storage/safeLocalStorage";
 
 /** Langues jouables. Le français est la langue canonique du contenu. */
-export type Locale = "fr" | "en" | "es";
+export type Locale = "fr" | "en" | "es" | "el";
 
-export const LOCALES: readonly Locale[] = ["fr", "en", "es"];
+/** Langues overlay (tout sauf le FR canonique) — à étendre = 1 seule ligne ici. */
+export type LocaleTraduite = Exclude<Locale, "fr">;
+
+export const LOCALES: readonly Locale[] = ["fr", "en", "es", "el"];
 
 /** Autonymes affichés dans le sélecteur (identiques dans toutes les langues). */
 export const LOCALE_LABELS: Record<Locale, string> = {
   fr: "Français",
   en: "English",
   es: "Español",
+  el: "Ελληνικά",
 };
 
 const CLE = "projet-broc:langue:v1";
@@ -22,7 +26,7 @@ interface LanguePref {
 }
 
 function estLocale(v: unknown): v is Locale {
-  return v === "fr" || v === "en" || v === "es";
+  return v === "fr" || v === "en" || v === "es" || v === "el";
 }
 
 /**
@@ -36,6 +40,7 @@ export function detecterLocale(): Locale {
     typeof navigator !== "undefined" ? navigator.language.toLowerCase() : "";
   if (nav.startsWith("fr")) return "fr";
   if (nav.startsWith("es")) return "es";
+  if (nav.startsWith("el")) return "el";
   return "en";
 }
 

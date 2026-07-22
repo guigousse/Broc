@@ -1,31 +1,41 @@
-import type { Locale } from "@/lib/i18n/locales";
+import type { Locale, LocaleTraduite } from "@/lib/i18n/locales";
 import type { CleMessageNego, MessageNego, VendeurArchetypeId } from "@/types/game";
 import { tr } from "@/lib/i18n/ui";
 import { POOLS_NEGO_FR } from "@/lib/negociation";
 import { NEGO_EN } from "./en/nego";
 import { NEGO_ES } from "./es/nego";
+import { NEGO_EL } from "./el/nego";
 import { getTemplate } from "@/data/objetTemplates";
 import { NOM_ARCHETYPE, NOM_VENDEUR, getNomVendeur } from "@/lib/personas";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
 import { OBJETS_EN } from "./en/objets";
 import { OBJETS_ES } from "./es/objets";
+import { OBJETS_EL } from "./el/objets";
 import { BROCANTES_EN } from "./en/brocantes";
 import { BROCANTES_ES } from "./es/brocantes";
+import { BROCANTES_EL } from "./el/brocantes";
 import { COMPETENCES_EN } from "./en/competences";
 import { COMPETENCES_ES } from "./es/competences";
+import { COMPETENCES_EL } from "./el/competences";
 import { DEBLOCAGES_EN, DEBLOCAGES_DESC_EN } from "./en/deblocages";
 import { DEBLOCAGES_ES, DEBLOCAGES_DESC_ES } from "./es/deblocages";
+import { DEBLOCAGES_EL, DEBLOCAGES_DESC_EL } from "./el/deblocages";
 import { PERSONNAGES_EN, type OverlayPersonnages } from "./en/personnages";
 import { PERSONNAGES_ES } from "./es/personnages";
+import { PERSONNAGES_EL } from "./el/personnages";
 import { DIVERS_EN } from "./en/divers";
 import { DIVERS_ES } from "./es/divers";
+import { DIVERS_EL } from "./el/divers";
 import { COURRIER_EN } from "./en/courrier";
 import { COURRIER_ES } from "./es/courrier";
+import { COURRIER_EL } from "./el/courrier";
 import { QUETES_GABARITS_EN } from "./en/quetesGabarits";
 import { QUETES_GABARITS_ES } from "./es/quetesGabarits";
+import { QUETES_GABARITS_EL } from "./el/quetesGabarits";
 import type { DialogueSequence } from "@/data/dialogues";
 import { DIALOGUES_EN } from "./en/dialogues";
 import { DIALOGUES_ES } from "./es/dialogues";
+import { DIALOGUES_EL } from "./el/dialogues";
 import { libelleEtat } from "@/lib/i18n/libelles";
 import { DICTIONNAIRES } from "@/lib/i18n/ui";
 import type { EtatObjet, MissionCible } from "@/types/game";
@@ -39,12 +49,13 @@ export interface OverlayCompetences {
 
 /**
  * Overlays de contenu (spec i18n §2) : le français de `src/data/` est
- * canonique, EN/ES sont des Record<Id, …> résolus À L'AFFICHAGE.
+ * canonique, les autres langues sont des Record<Id, …> résolus À L'AFFICHAGE.
  * Fallback FR si entrée absente — jamais de crash, jamais d'écriture en save.
  */
-const OBJETS: Record<"en" | "es", Record<string, string>> = {
+const OBJETS: Record<LocaleTraduite, Record<string, string>> = {
   en: OBJETS_EN,
   es: OBJETS_ES,
+  el: OBJETS_EL,
 };
 
 /** Nom localisé d'un template d'objet. Id inconnu → id brut (marqueur repérable). */
@@ -74,11 +85,12 @@ export function nomObjet(
 }
 
 const BROCANTES_OVERLAY: Record<
-  "en" | "es",
+  LocaleTraduite,
   Record<string, { nom: string; description: string }>
 > = {
   en: BROCANTES_EN,
   es: BROCANTES_ES,
+  el: BROCANTES_EL,
 };
 
 /** Nom localisé d'une brocante. Id absent de l'overlay → nom FR passé en argument. */
@@ -106,9 +118,10 @@ export function descriptionBrocante(
 /* Compétences : arbres, branches, paliers (overlay imbriqué)          */
 /* ------------------------------------------------------------------ */
 
-const COMPETENCES_OVERLAY: Record<"en" | "es", OverlayCompetences> = {
+const COMPETENCES_OVERLAY: Record<LocaleTraduite, OverlayCompetences> = {
   en: COMPETENCES_EN,
   es: COMPETENCES_ES,
+  el: COMPETENCES_EL,
 };
 
 /** Nom localisé d'un arbre. Id absent de l'overlay → nom FR passé en argument. */
@@ -183,9 +196,10 @@ export function descriptionCompetence(
 /* Déblocages de niveau (overlay Record<titreFR, string>)             */
 /* ------------------------------------------------------------------ */
 
-const DEBLOCAGES_OVERLAY: Record<"en" | "es", Record<string, string>> = {
+const DEBLOCAGES_OVERLAY: Record<LocaleTraduite, Record<string, string>> = {
   en: DEBLOCAGES_EN,
   es: DEBLOCAGES_ES,
+  el: DEBLOCAGES_EL,
 };
 
 /** Titre localisé d'un déblocage. Clé = titre FR canonique ; fallback FR. */
@@ -197,7 +211,11 @@ export function titreDeblocage(dep: { titre: string }, locale: Locale): string {
   return dep.titre;
 }
 
-const DEBLOCAGES_DESC_OVERLAY = { en: DEBLOCAGES_DESC_EN, es: DEBLOCAGES_DESC_ES } as const;
+const DEBLOCAGES_DESC_OVERLAY = {
+  en: DEBLOCAGES_DESC_EN,
+  es: DEBLOCAGES_DESC_ES,
+  el: DEBLOCAGES_DESC_EL,
+} as const;
 
 export function descriptionDeblocage(
   dep: { titre: string; description: string },
@@ -214,9 +232,10 @@ export function descriptionDeblocage(
 /* Personnages : clients (vente), vendeurs (chine), expéditeurs        */
 /* ------------------------------------------------------------------ */
 
-const PERSONNAGES_OVERLAY: Record<"en" | "es", OverlayPersonnages> = {
+const PERSONNAGES_OVERLAY: Record<LocaleTraduite, OverlayPersonnages> = {
   en: PERSONNAGES_EN,
   es: PERSONNAGES_ES,
+  el: PERSONNAGES_EL,
 };
 
 /**
@@ -329,11 +348,12 @@ export function signatureExpediteur(id: string, locale: Locale): string {
 /* ------------------------------------------------------------------ */
 
 const DIVERS_OVERLAY: Record<
-  "en" | "es",
+  LocaleTraduite,
   { camions: Record<string, string>; stockage: Record<string, string>; celebrites: Record<string, string> }
 > = {
   en: DIVERS_EN,
   es: DIVERS_ES,
+  el: DIVERS_EL,
 };
 
 /** Nom localisé d'un camion. Clé = `visuelId` ; `visuelId` absent → nom FR passé en argument. */
@@ -371,9 +391,10 @@ export function nomCelebrite(nomFr: string, locale: Locale): string {
 /* Dialogues tutoriel + ambiance (séquences stables)                   */
 /* ------------------------------------------------------------------ */
 
-const DIALOGUES_OVERLAY: Record<"en" | "es", Record<string, string[]>> = {
+const DIALOGUES_OVERLAY: Record<LocaleTraduite, Record<string, string[]>> = {
   en: DIALOGUES_EN,
   es: DIALOGUES_ES,
+  el: DIALOGUES_EL,
 };
 
 /** Lignes d'une séquence de dialogue dans la locale demandée (repli FR). */
@@ -393,21 +414,23 @@ export function lignesDialogue(
 /* ------------------------------------------------------------------ */
 
 const COURRIER_OVERLAY: Record<
-  "en" | "es",
+  LocaleTraduite,
   Record<string, { titre: string; corps: string[] }>
 > = {
   en: COURRIER_EN,
   es: COURRIER_ES,
+  el: COURRIER_EL,
 };
 
 /* --- Quêtes périodiques : régénération par gabarit persisté (SP4) --- */
 
 const QUETES_GABARITS_OVERLAY: Record<
-  "en" | "es",
+  LocaleTraduite,
   Record<string, { titre: string; corps: string[] }>
 > = {
   en: QUETES_GABARITS_EN,
   es: QUETES_GABARITS_ES,
+  el: QUETES_GABARITS_EL,
 };
 
 /**
@@ -416,10 +439,10 @@ const QUETES_GABARITS_OVERLAY: Record<
  * dans `quetes/textes.ts` ; ici on ne traite que les locales à régénérer.
  */
 const MISE_EN_FORME_GABARIT: Record<
-  "en" | "es",
+  LocaleTraduite,
   {
-    objets: (cibles: MissionCible[], locale: "en" | "es") => string;
-    etat: (etatMin: EtatObjet | undefined, locale: "en" | "es") => string;
+    objets: (cibles: MissionCible[], locale: LocaleTraduite) => string;
+    etat: (etatMin: EtatObjet | undefined, locale: LocaleTraduite) => string;
   }
 > = {
   en: {
@@ -433,6 +456,12 @@ const MISE_EN_FORME_GABARIT: Record<
       cibles.map((c) => `« ${nomTemplate(c.templateId, locale)} »`).join(", "),
     etat: (etatMin, locale) =>
       etatMin ? ` (estado mín.: ${libelleEtat(etatMin, DICTIONNAIRES[locale])})` : "",
+  },
+  el: {
+    objets: (cibles, locale) =>
+      cibles.map((c) => `« ${nomTemplate(c.templateId, locale)} »`).join(", "),
+    etat: (etatMin, locale) =>
+      etatMin ? ` (ελάχ. κατάσταση: ${libelleEtat(etatMin, DICTIONNAIRES[locale])})` : "",
   },
 };
 
@@ -456,7 +485,7 @@ function resoudreGabaritCore(
   gabaritId: string | undefined,
   cibles: MissionCible[],
   etatMin: EtatObjet | undefined,
-  locale: "en" | "es",
+  locale: LocaleTraduite,
 ): { titre: string; corps: string[] } | null {
   if (!gabaritId) return null;
   const sep = gabaritId.lastIndexOf("#");
@@ -486,7 +515,7 @@ function resoudreGabaritCore(
  */
 function resoudreGabarit(
   payload: PayloadCourrier,
-  locale: "en" | "es",
+  locale: LocaleTraduite,
 ): { titre: string; corps: string[] } | null {
   return resoudreGabaritCore(
     payload.gabaritId,
@@ -553,11 +582,12 @@ export function corpsCourrier(
 /* Négociation : répliques structurées (MessageNego) → texte localisé   */
 /* ------------------------------------------------------------------ */
 
-/** Pools de répliques par langue. FR = `POOLS_NEGO_FR` (source), EN/ES overlays. */
+/** Pools de répliques par langue. FR = `POOLS_NEGO_FR` (source), autres langues en overlay. */
 const POOLS_NEGO: Record<Locale, Record<CleMessageNego, string[]>> = {
   fr: POOLS_NEGO_FR,
   en: NEGO_EN,
   es: NEGO_ES,
+  el: NEGO_EL,
 };
 
 /**

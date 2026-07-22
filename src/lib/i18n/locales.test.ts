@@ -15,8 +15,8 @@ describe("locales — détection et persistance", () => {
     vi.unstubAllGlobals();
   });
 
-  it("expose exactement fr/en/es", () => {
-    expect([...LOCALES]).toEqual(["fr", "en", "es"]);
+  it("expose exactement fr/en/es/el", () => {
+    expect([...LOCALES]).toEqual(["fr", "en", "es", "el"]);
   });
 
   it("préférence persistée prioritaire sur la langue du navigateur", () => {
@@ -34,6 +34,8 @@ describe("locales — détection et persistance", () => {
     expect(detecterLocale()).toBe("en");
     vi.stubGlobal("navigator", { language: "en-GB" });
     expect(detecterLocale()).toBe("en");
+    vi.stubGlobal("navigator", { language: "el-GR" });
+    expect(detecterLocale()).toBe("el");
   });
 
   it("une préférence corrompue retombe sur la détection navigateur", () => {
@@ -46,6 +48,12 @@ describe("locales — détection et persistance", () => {
     vi.stubGlobal("navigator", { language: "fr-FR" });
     persisterLocale("en");
     expect(detecterLocale()).toBe("en");
+  });
+
+  it("persisterLocale('el') relu par detecterLocale", () => {
+    vi.stubGlobal("navigator", { language: "fr-FR" });
+    persisterLocale("el");
+    expect(detecterLocale()).toBe("el");
   });
 });
 

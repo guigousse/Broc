@@ -4,7 +4,7 @@ import { CATEGORIES } from "@/data/categories";
 import { DEBLOCAGES_PAR_NIVEAU } from "@/data/deblocagesNiveau";
 import { COMPETENCES_EN, CAT_EN } from "@/lib/i18n/contenu/en/competences";
 import { COMPETENCES_ES, CAT_ES } from "@/lib/i18n/contenu/es/competences";
-import { COMPETENCES_EL } from "@/lib/i18n/contenu/el/competences";
+import { COMPETENCES_EL, CAT_EL } from "@/lib/i18n/contenu/el/competences";
 import { DICTIONNAIRES } from "@/lib/i18n/ui";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { DEBLOCAGES_EN } from "@/lib/i18n/contenu/en/deblocages";
@@ -107,6 +107,7 @@ test("ids general.presentation.1/2/3 (câblés en dur par PersonaInfoOverlay) ex
 describe.each([
   ["EN", CAT_EN, DICTIONNAIRES.en],
   ["ES", CAT_ES, DICTIONNAIRES.es],
+  ["EL", CAT_EL, DICTIONNAIRES.el],
 ] as const)("table catégories %s = dico UI", (_, cat, dico) => {
   test("libellés identiques au dictionnaire UI", () => {
     for (const c of CATEGORIES) {

@@ -2,6 +2,7 @@ import type { Locale } from "@/lib/i18n/locales";
 import { fr } from "./fr";
 import { en } from "./en";
 import { es } from "./es";
+import { el } from "./el";
 
 /**
  * Forme du dictionnaire : celle du français, valeurs relâchées en `string`
@@ -12,7 +13,7 @@ type DeepStrings<T> = {
 };
 export type DictionnaireUI = DeepStrings<typeof fr>;
 
-export const DICTIONNAIRES: Record<Locale, DictionnaireUI> = { fr, en, es };
+export const DICTIONNAIRES: Record<Locale, DictionnaireUI> = { fr, en, es, el };
 
 /**
  * Interpolation `{param}`. Un paramètre absent laisse le marqueur visible —
