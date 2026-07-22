@@ -4,6 +4,7 @@ import { NOM_ARCHETYPE, NOM_VENDEUR } from "@/lib/personas";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
 import { PERSONNAGES_EN } from "@/lib/i18n/contenu/en/personnages";
 import { PERSONNAGES_ES } from "@/lib/i18n/contenu/es/personnages";
+import { PERSONNAGES_EL } from "@/lib/i18n/contenu/el/personnages";
 import {
   manquants,
   orphelins,
@@ -31,6 +32,7 @@ const EXPEDITEUR_IDS = Object.keys(EXPEDITEURS); // 7
 describe.each([
   ["EN", PERSONNAGES_EN],
   ["ES", PERSONNAGES_ES],
+  ["EL", PERSONNAGES_EL],
 ] as const)("overlay personnages %s", (_, overlay) => {
   test("archétypes clients complets", () =>
     expect(manquants(ARCH_CLIENT_IDS, overlay.archetypesClient)).toEqual([]));

@@ -4,6 +4,7 @@ import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
 import { lignesDialogue, manquants, orphelins } from "./index";
 import { DIALOGUES_EN } from "./en/dialogues";
 import { DIALOGUES_ES } from "./es/dialogues";
+import { DIALOGUES_EL } from "./el/dialogues";
 
 const IDS_TUTORIEL = TOUTES_SEQUENCES.map((s) => s.id);
 
@@ -18,6 +19,7 @@ const IDS_TRAME = QUETES_PRINCIPALES.map((ch) => `dlg_${ch.id}`);
 describe.each([
   ["EN", DIALOGUES_EN, [...IDS_TUTORIEL, ...IDS_TRAME]],
   ["ES", DIALOGUES_ES, [...IDS_TUTORIEL, ...IDS_TRAME]],
+  ["EL", DIALOGUES_EL, [...IDS_TUTORIEL, ...IDS_TRAME]],
 ] as const)("overlay dialogues %s", (_nom, overlay, ids) => {
   it("couvre toutes les séquences, sans orphelin", () => {
     expect(manquants([...ids], overlay)).toEqual([]);
