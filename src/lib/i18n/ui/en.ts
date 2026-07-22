@@ -87,13 +87,6 @@ export const en: DictionnaireUI = {
     objetsArt: "Fine art",
     bricolage: "DIY & Tools",
   },
-  familles: {
-    jalon: "Milestone",
-    contenu: "Content",
-    economie: "Economy",
-    confort: "Comfort",
-    active: "Active skill",
-  },
   chrome: {
     onglets: {
       collection: "Collection",

@@ -1,6 +1,5 @@
 import { describe, expect, it, test } from "vitest";
 import { CATEGORIES } from "@/data/categories";
-import { DEBLOCAGES_PAR_NIVEAU } from "@/data/deblocagesNiveau";
 import { DICTIONNAIRES } from "@/lib/i18n/ui";
 import { DEBLOCAGES_EN } from "@/lib/i18n/contenu/en/deblocages";
 import type { ActiveId } from "@/lib/actives";
@@ -8,7 +7,6 @@ import {
   libelleActive,
   libelleCategorie,
   libelleEtat,
-  libelleFamille,
   libelleJourSemaine,
   libelleRarete,
 } from "@/lib/i18n/libelles";
@@ -48,17 +46,6 @@ describe("libelles état / rareté", () => {
     expect(libelleRarete("legendaire", DICTIONNAIRES.en)).toBe("legendary");
     expect(libelleRarete("rare", DICTIONNAIRES.es)).toBe("raro");
   });
-});
-
-test("libelleFamille couvre les 5 familles dans les 3 langues", () => {
-  const familles = [...new Set(DEBLOCAGES_PAR_NIVEAU.map((d) => d.famille))];
-  for (const locale of ["fr", "en", "es"] as const) {
-    for (const f of familles) {
-      expect(libelleFamille(f, DICTIONNAIRES[locale]).trim()).not.toBe("");
-    }
-  }
-  expect(libelleFamille("active", DICTIONNAIRES.en)).toBe("Active skill");
-  expect(libelleFamille("jalon", DICTIONNAIRES.es)).toBe("Hito");
 });
 
 describe("libelleActive", () => {

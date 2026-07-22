@@ -87,13 +87,6 @@ export const el: DictionnaireUI = {
     objetsArt: "Έργα τέχνης",
     bricolage: "Μερεμέτια & Εργαλεία",
   },
-  familles: {
-    jalon: "Ορόσημο",
-    contenu: "Περιεχόμενο",
-    economie: "Οικονομία",
-    confort: "Άνεση",
-    active: "Ενεργή",
-  },
   chrome: {
     onglets: {
       collection: "Συλλογή",

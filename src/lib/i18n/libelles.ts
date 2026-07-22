@@ -5,7 +5,6 @@ import type {
   LedgerEntry,
   Rarete,
 } from "@/types/game";
-import type { FamilleDeblocage } from "@/data/deblocagesNiveau";
 import type { ActiveId } from "@/lib/actives";
 import type { Locale } from "@/lib/i18n/locales";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
@@ -59,22 +58,6 @@ export function libelleCategorie(cat: CategorieObjet, d: DictionnaireUI): string
       return d.categories.objetsArt;
     case "Bricolage":
       return d.categories.bricolage;
-  }
-}
-
-/** Libellé localisé d'une famille de déblocage (union fermée de 5). */
-export function libelleFamille(f: FamilleDeblocage, d: DictionnaireUI): string {
-  switch (f) {
-    case "jalon":
-      return d.familles.jalon;
-    case "contenu":
-      return d.familles.contenu;
-    case "economie":
-      return d.familles.economie;
-    case "confort":
-      return d.familles.confort;
-    case "active":
-      return d.familles.active;
   }
 }
 

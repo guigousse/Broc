@@ -90,13 +90,6 @@ export const fr = {
     objetsArt: "Objets d'art",
     bricolage: "Bricolage",
   },
-  familles: {
-    jalon: "Jalon",
-    contenu: "Contenu",
-    economie: "Économie",
-    confort: "Confort",
-    active: "Active",
-  },
   chrome: {
     onglets: {
       collection: "Collection",

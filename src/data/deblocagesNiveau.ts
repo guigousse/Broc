@@ -7,15 +7,6 @@ import { NIVEAU_ACTIVES, NIVEAU_USAGE_2, NIVEAU_USAGE_3 } from "@/lib/actives";
 
 export type FamilleDeblocage = "jalon" | "contenu" | "economie" | "confort" | "active";
 
-/** Libellé humain de chaque famille de déblocage (donnée pure, UI-agnostique). */
-export const LIBELLE_FAMILLE: Record<FamilleDeblocage, string> = {
-  jalon: "Jalon",
-  contenu: "Contenu",
-  economie: "Économie",
-  confort: "Confort",
-  active: "Active",
-};
-
 export interface DeblocageNiveau {
   niveau: number;
   titre: string;
