@@ -113,4 +113,15 @@ describe("LevelUpOverlay", () => {
     render(<LevelUpOverlay />);
     expect(screen.queryByText(/point de compétence/)).toBeNull();
   });
+
+  it("titre détaché de la carte : bloc .broc-levelup-titre sans bouton, carte .broc-levelup-carte avec bouton", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    const blocTitre = screen.getByText("Niveau 1 !").closest(".broc-levelup-titre");
+    expect(blocTitre).toBeTruthy();
+    expect(blocTitre!.querySelector("button")).toBeNull();
+    const bouton = screen.getByRole("button", { name: "Continuer" });
+    expect(bouton.closest(".broc-levelup-carte")).toBeTruthy();
+  });
 });

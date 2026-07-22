@@ -47,20 +47,44 @@ const carte: CSSProperties = {
   textAlign: "center",
 };
 
-const eyebrow: CSSProperties = {
+const colonne: CSSProperties = {
+  width: "100%",
+  maxWidth: 320,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "stretch",
+  gap: 18,
+};
+
+const blocTitre: CSSProperties = {
+  textAlign: "center",
+};
+
+const eyebrowSombre: CSSProperties = {
   fontFamily: "var(--font-mono)",
   textTransform: "uppercase",
   letterSpacing: "0.14em",
   fontSize: 11,
-  color: "var(--brass-700)",
-  marginBottom: 6,
+  color: "var(--brass-500)",
+  marginBottom: 8,
 };
 
-const titre: CSSProperties = {
+const titreGeant: CSSProperties = {
   fontFamily: "var(--font-display)",
-  fontSize: 28,
-  color: "var(--ink-900)",
-  marginBottom: 10,
+  fontSize: "clamp(40px, 14vw, 60px)",
+  lineHeight: 1.05,
+  color: "var(--brass-300)",
+  textShadow: "0 0 28px rgba(224, 178, 92, 0.45)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 12,
+};
+
+const ornement: CSSProperties = {
+  fontSize: "0.4em",
+  color: "var(--brass-500)",
+  textShadow: "none",
 };
 
 const sousTitre: CSSProperties = {
@@ -148,31 +172,41 @@ export function LevelUpOverlay() {
       aria-modal="true"
       aria-label={tr(d.sheets.niveauAtteintAriaLabel, { n: niveauACelebrer })}
     >
-      <div style={carte}>
-        <div style={eyebrow}>{d.sheets.eyebrowNiveauBrocanteur}</div>
-        <div style={titre}>
-          {tr(d.sheets.niveauNCelebration, { n: niveauACelebrer })}
-        </div>
-        {!plafondCompetencesAtteint && (
-          <div style={sousTitre}>{d.sheets.plusUnPointCompetence}</div>
-        )}
-        {deblocages.map((dep) => (
-          <div key={dep.titre} style={ligneDeblocage}>
-            <span style={chipFamille(dep.famille)}>
-              {libelleFamille(dep.famille, d)}
+      <div style={colonne}>
+        <div className="broc-levelup-titre" style={blocTitre}>
+          <div style={eyebrowSombre}>{d.sheets.eyebrowNiveauBrocanteur}</div>
+          <div style={titreGeant}>
+            <span style={ornement} aria-hidden="true">
+              ✦
             </span>
-            <span>{titreDeblocage(dep, locale)}</span>
+            <span>{tr(d.sheets.niveauNCelebration, { n: niveauACelebrer })}</span>
+            <span style={ornement} aria-hidden="true">
+              ✦
+            </span>
           </div>
-        ))}
-        {prochain && (
-          <div style={lignProchain}>
-            {tr(d.sheets.prochainNiv, { n: prochain.niveau })}{" "}
-            {titreDeblocage(prochain, locale)}
-          </div>
-        )}
-        <button type="button" style={btnContinuer} onClick={marquerNiveauVu}>
-          {d.menu.continuer}
-        </button>
+        </div>
+        <div className="broc-levelup-carte" style={carte}>
+          {!plafondCompetencesAtteint && (
+            <div style={sousTitre}>{d.sheets.plusUnPointCompetence}</div>
+          )}
+          {deblocages.map((dep) => (
+            <div key={dep.titre} style={ligneDeblocage}>
+              <span style={chipFamille(dep.famille)}>
+                {libelleFamille(dep.famille, d)}
+              </span>
+              <span>{titreDeblocage(dep, locale)}</span>
+            </div>
+          ))}
+          {prochain && (
+            <div style={lignProchain}>
+              {tr(d.sheets.prochainNiv, { n: prochain.niveau })}{" "}
+              {titreDeblocage(prochain, locale)}
+            </div>
+          )}
+          <button type="button" style={btnContinuer} onClick={marquerNiveauVu}>
+            {d.menu.continuer}
+          </button>
+        </div>
       </div>
     </div>
   );
