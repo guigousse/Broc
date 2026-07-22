@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { POOLS_NEGO_FR } from "@/lib/negociation";
 import { NEGO_EN } from "@/lib/i18n/contenu/en/nego";
 import { NEGO_ES } from "@/lib/i18n/contenu/es/nego";
+import { NEGO_EL } from "@/lib/i18n/contenu/el/nego";
 import { texteNego } from "@/lib/i18n/contenu";
 
 const CLES = Object.keys(POOLS_NEGO_FR) as (keyof typeof POOLS_NEGO_FR)[];
@@ -11,7 +12,11 @@ const placeholders = (s: string) => s.match(/\{\w+\}/g) ?? [];
 const autorises = (cle: keyof typeof POOLS_NEGO_FR) =>
   new Set(POOLS_NEGO_FR[cle].flatMap(placeholders));
 
-describe.each([["EN", NEGO_EN], ["ES", NEGO_ES]] as const)("pools négo %s", (_, pool) => {
+describe.each([
+  ["EN", NEGO_EN],
+  ["ES", NEGO_ES],
+  ["EL", NEGO_EL],
+] as const)("pools négo %s", (_, pool) => {
   test("mêmes clés que le FR, aucun pool vide", () => {
     expect(Object.keys(pool).sort()).toEqual([...CLES].sort());
     for (const cle of CLES) expect(pool[cle].length).toBeGreaterThan(0);

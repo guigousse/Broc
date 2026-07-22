@@ -5,6 +5,7 @@ import { CARTES_POSTALES } from "@/data/cartesPostales";
 import { creerLettreMamanDebut, ID_LETTRE_MAMAN_DEBUT } from "@/lib/courrier";
 import { COURRIER_EN } from "@/lib/i18n/contenu/en/courrier";
 import { COURRIER_ES } from "@/lib/i18n/contenu/es/courrier";
+import { COURRIER_EL } from "@/lib/i18n/contenu/el/courrier";
 import { corpsCourrier, manquants, orphelins, titreCourrier } from "@/lib/i18n/contenu";
 
 const IDS = [
@@ -16,9 +17,11 @@ const IDS = [
 
 // SP3 Task 7 : chapitres (trame_ch1..12), invitations (invitation_tier2/3/4)
 // et cartes postales (carte_postale_1..5) traduits EN. SP3 Task 8 : idem ES.
+// Ajout grec task 3 : idem EL.
 describe.each([
   ["EN", COURRIER_EN],
   ["ES", COURRIER_ES],
+  ["EL", COURRIER_EL],
 ] as const)("overlay courrier %s", (_, ov) => {
   test("complétude + zéro orphelin", () => {
     expect(manquants(IDS, ov)).toEqual([]);

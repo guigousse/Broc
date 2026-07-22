@@ -1,11 +1,16 @@
 import { describe, expect, test } from "vitest";
 import { QUETES_GABARITS_EN } from "@/lib/i18n/contenu/en/quetesGabarits";
 import { QUETES_GABARITS_ES } from "@/lib/i18n/contenu/es/quetesGabarits";
+import { QUETES_GABARITS_EL } from "@/lib/i18n/contenu/el/quetesGabarits";
 import { titreCourrier, corpsCourrier } from "@/lib/i18n/contenu";
 
 const CLES = ["generique", "jeux-video", "set-designer", "mode", "art"];
 
-describe.each([["EN", QUETES_GABARITS_EN], ["ES", QUETES_GABARITS_ES]] as const)(
+describe.each([
+  ["EN", QUETES_GABARITS_EN],
+  ["ES", QUETES_GABARITS_ES],
+  ["EL", QUETES_GABARITS_EL],
+] as const)(
   "gabarits périodiques %s", (_, ov) => {
     test("chaque clé a ≥1 variante indexée depuis #0, placeholders {objets} présents", () => {
       for (const cle of CLES) {
