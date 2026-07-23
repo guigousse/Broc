@@ -17,6 +17,9 @@ private let AD_UNIT_ID = "ca-app-pub-3940256099942544/1712485313"
 @objc(BrocAdmobBridge) public class BrocAdmobBridge: NSObject {
   @objc public static let shared = BrocAdmobBridge()
 
+  // Invariant : les callbacks du SDK GMA (load/present/delegate) arrivent
+  // tous sur le main thread — l'état ci-dessous (finEnAttente, rewardedAd)
+  // n'est donc touché que depuis ce thread, sans synchronisation additionnelle.
   private var rewardedAd: RewardedAd?
   private var finEnAttente: ((Bool, String?) -> Void)?
   private var recompenseGagnee = false

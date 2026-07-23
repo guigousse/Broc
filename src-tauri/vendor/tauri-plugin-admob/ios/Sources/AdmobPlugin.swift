@@ -16,8 +16,9 @@ class AdmobPlugin: Plugin {
 
   @objc public func initialize(_ invoke: Invoke) throws {
     guard let pont = pont() else {
-      // Pont absent (ne devrait pas arriver dans l'app packagée) : no-op.
-      invoke.resolve()
+      // Pont absent (ne devrait pas arriver dans l'app packagée) ; reject →
+      // toast erreurPub côté jeu, symptôme diagnosticable.
+      invoke.reject("Pont AdMob absent")
       return
     }
     let fin: @convention(block) () -> Void = { invoke.resolve() }
@@ -26,7 +27,9 @@ class AdmobPlugin: Plugin {
 
   @objc public func showRewardedAd(_ invoke: Invoke) throws {
     guard let pont = pont() else {
-      invoke.resolve(["rewarded": false])
+      // Pont absent (ne devrait pas arriver dans l'app packagée) ; reject →
+      // toast erreurPub côté jeu, symptôme diagnosticable.
+      invoke.reject("Pont AdMob absent")
       return
     }
     let fin: @convention(block) (Bool, String?) -> Void = { rewarded, erreur in

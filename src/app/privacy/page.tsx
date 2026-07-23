@@ -86,8 +86,12 @@ export default function PrivacyPage() {
         données de diagnostic publicitaire. Au premier lancement, un formulaire
         de consentement (RGPD) vous permet d’accepter ou de refuser les
         publicités personnalisées ; en cas de refus, des publicités non
-        personnalisées sont affichées. Vous pouvez modifier ce choix à tout
-        moment (voir la{" "}
+        personnalisées sont affichées. Ce choix n’est pas modifiable
+        directement en jeu à ce jour ; pour le retirer, supprimez puis
+        réinstallez l’application (le formulaire de consentement sera
+        représenté au premier lancement). Les publicités restent dans tous
+        les cas facultatives et à votre seule initiative. Pour en savoir plus
+        sur les pratiques de Google en la matière, consultez la{" "}
         <a
           href="https://policies.google.com/privacy"
           style={link}
@@ -96,7 +100,7 @@ export default function PrivacyPage() {
         >
           politique de confidentialité de Google
         </a>
-        ).
+        .
       </p>
 
       <h2 style={h2}>5. Enfants</h2>
@@ -181,8 +185,11 @@ export default function PrivacyPage() {
         “Allow app to track your activity?” prompt), your IP address, and
         advertising diagnostic data. On first launch, a consent form (GDPR)
         lets you accept or decline personalized ads; if declined,
-        non-personalized ads are shown instead. You can change this choice at
-        any time (see{" "}
+        non-personalized ads are shown instead. This choice cannot currently
+        be changed directly in the app; to withdraw it, delete and reinstall
+        the app (the consent form will be shown again on first launch). Ads
+        remain optional either way and only ever play at your own request.
+        For details on Google’s practices in this area, see{" "}
         <a
           href="https://policies.google.com/privacy"
           style={link}
@@ -191,7 +198,7 @@ export default function PrivacyPage() {
         >
           Google’s privacy policy
         </a>
-        ).
+        .
       </p>
 
       <h2 style={h2}>5. Children</h2>

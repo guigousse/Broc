@@ -9,7 +9,14 @@ import type { AdProvider, AdResult } from "./adProvider";
 export function adMobDisponible(): boolean {
   if (typeof window === "undefined") return false;
   if (!("__TAURI_INTERNALS__" in window)) return false;
-  return /iPhone|iPad|iPod/.test(window.navigator.userAgent);
+  // iPadOS 13+ : WKWebView se présente par défaut avec un UA desktop
+  // « Macintosh » sans « iPad » — on le distingue d'un vrai Mac (dev
+  // desktop Tauri) par le tactile (maxTouchPoints > 1).
+  const ua = window.navigator.userAgent;
+  return (
+    /iPhone|iPad|iPod/.test(ua) ||
+    (/Macintosh/.test(ua) && window.navigator.maxTouchPoints > 1)
+  );
 }
 
 export class AdMobAdProvider implements AdProvider {

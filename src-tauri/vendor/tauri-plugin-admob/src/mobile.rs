@@ -20,6 +20,9 @@ pub struct Admob<R: Runtime>(PluginHandle<R>);
 
 impl<R: Runtime> Admob<R> {
     pub fn initialize(&self) -> crate::Result<()> {
+        // Bloque un worker async pendant toute la durée du parcours natif
+        // (formulaire UMP potentiellement long) — pattern standard des
+        // plugins Tauri mobiles, le pool absorbe.
         self.0
             .run_mobile_plugin("initialize", serde_json::json!({}))
             .map_err(Into::into)

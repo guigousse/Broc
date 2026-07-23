@@ -8,6 +8,9 @@ vi.mock("@tauri-apps/api/core", () => ({
   invoke: (...args: unknown[]) => invokeMock(...args),
 }));
 
+// Capturé au chargement du fichier pour restauration exacte dans afterEach.
+const uaOrigine = window.navigator.userAgent;
+
 function simulerTauriIos() {
   (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
   Object.defineProperty(window.navigator, "userAgent", {
@@ -30,6 +33,10 @@ beforeEach(() => {
 
 afterEach(() => {
   delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
+  Object.defineProperty(window.navigator, "userAgent", {
+    value: uaOrigine,
+    configurable: true,
+  });
 });
 
 describe("adMobDisponible", () => {
@@ -42,6 +49,41 @@ describe("adMobDisponible", () => {
     simulerTauriIos();
     const { adMob } = await chargerFrais();
     expect(adMob.adMobDisponible()).toBe(true);
+  });
+
+  it("vrai sous Tauri avec UA desktop « Macintosh » + tactile (iPadOS 13+ WKWebView)", async () => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    Object.defineProperty(window.navigator, "userAgent", {
+      value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+      configurable: true,
+    });
+    Object.defineProperty(window.navigator, "maxTouchPoints", {
+      value: 5,
+      configurable: true,
+    });
+    try {
+      const { adMob } = await chargerFrais();
+      expect(adMob.adMobDisponible()).toBe(true);
+    } finally {
+      Object.defineProperty(window.navigator, "maxTouchPoints", {
+        value: 0,
+        configurable: true,
+      });
+    }
+  });
+
+  it("faux sous Tauri avec UA desktop « Macintosh » sans tactile (vrai Mac dev)", async () => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    Object.defineProperty(window.navigator, "userAgent", {
+      value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+      configurable: true,
+    });
+    Object.defineProperty(window.navigator, "maxTouchPoints", {
+      value: 0,
+      configurable: true,
+    });
+    const { adMob } = await chargerFrais();
+    expect(adMob.adMobDisponible()).toBe(false);
   });
 });
 

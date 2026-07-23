@@ -94,8 +94,8 @@ export default function AtelierPage() {
     return () => window.clearInterval(id);
   }, []);
   const [flash, setFlash] = useState<string | null>(null);
-  // Accélération via pub récompensée (même provider que l'énergie). Le StubAdProvider
-  // simule la pub et accorde la récompense ; sera remplacé par AdMob à terme.
+  // Accélération via pub récompensée (même provider que l'énergie). AdMob
+  // natif sous Tauri iOS, stub en dev web/desktop (cf. getAdProvider).
   const [pubEnCours, setPubEnCours] = useState(false);
   const accelererViaPub = async (objetId: string) => {
     if (pubEnCours) return;
