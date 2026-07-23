@@ -41,6 +41,12 @@ private let AD_UNIT_ID = "ca-app-pub-3940256099942544/1712485313"
         fin(false, "SDK non initialisé")
         return
       }
+      guard self.finEnAttente == nil else {
+        // Une pub est déjà à l'écran : refus immédiat plutôt qu'écraser la
+        // completion en attente (elle ne serait jamais rappelée).
+        fin(false, "Pub déjà en cours")
+        return
+      }
       if let pub = self.rewardedAd {
         self.presenter(pub: pub, fin: fin)
       } else {
