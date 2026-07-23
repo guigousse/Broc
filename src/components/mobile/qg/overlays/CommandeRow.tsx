@@ -72,7 +72,7 @@ const apercuObjectif: CSSProperties = {
 };
 const ligneObjectif: CSSProperties = {
   display: "flex", alignItems: "center", justifyContent: "space-between",
-  padding: "5px 0", borderBottom: "1px dashed rgba(110,31,31,0.18)", fontSize: 12, color: "#2b2418",
+  padding: "6px 0", borderBottom: "1px dashed rgba(110,31,31,0.18)", fontSize: 14, color: "#2b2418",
 };
 
 /** Libellé localisé d'un objectif de chapitre (hors cibles "objet", déjà
@@ -183,24 +183,24 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
       {ouvert && (
         <div style={{ padding: "4px 14px 14px", background: "rgba(255,250,235,0.45)", borderTop: "1px dashed rgba(110,31,31,0.25)" }}>
           {corpsCourrier(courrier, locale).map((para, i) => (
-            <p key={i} style={{ fontStyle: "italic", color: "#4a3f28", fontSize: 12, margin: "6px 0" }}>{para}</p>
+            <p key={i} style={{ fontStyle: "italic", color: "#4a3f28", fontSize: 14, lineHeight: 1.45, margin: "8px 0" }}>{para}</p>
           ))}
-          <div style={{ fontFamily: "var(--font-display)", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6e1f1f", margin: "8px 0 4px" }}>
+          <div style={{ fontFamily: "var(--font-display)", fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6e1f1f", margin: "10px 0 4px" }}>
             {tr(d.carnet.objetsDemandes, { rempli: prog.remplies, total: prog.total })}
           </div>
           {p.cibles.map((cible, i) => {
             const tpl = getTemplate(cible.templateId);
             const ok = prog.ciblesRemplies[i];
             return (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px dashed rgba(110,31,31,0.18)", opacity: ok ? 1 : 0.7 }}>
-                <span style={{ width: 30, height: 30, flex: "0 0 auto" }}>
-                  <ItemImage templateId={cible.templateId} categorie={tpl?.categorie ?? "Maison"} alt="" fallbackIconSize={20} />
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: "1px dashed rgba(110,31,31,0.18)", opacity: ok ? 1 : 0.7 }}>
+                <span style={{ width: 52, height: 52, flex: "0 0 auto" }}>
+                  <ItemImage templateId={cible.templateId} categorie={tpl?.categorie ?? "Maison"} alt="" fallbackIconSize={30} />
                 </span>
-                <span style={{ flex: 1, fontSize: 12, color: "#2b2418" }}>
+                <span style={{ flex: 1, fontSize: 14, color: "#2b2418" }}>
                   {nomTemplate(cible.templateId, locale)}
-                  {cible.etatMin ? <span style={{ display: "block", fontSize: 10, color: "#8a7a52" }}>{tr(d.carnet.etatMin, { etat: libelleEtat(cible.etatMin, d) })}</span> : null}
+                  {cible.etatMin ? <span style={{ display: "block", fontSize: 12, color: "#8a7a52" }}>{tr(d.carnet.etatMin, { etat: libelleEtat(cible.etatMin, d) })}</span> : null}
                 </span>
-                <span style={{ color: ok ? "#2c5e3f" : "#b3a06a", fontWeight: 700 }}>{ok ? "✓" : "○"}</span>
+                <span style={{ color: ok ? "#2c5e3f" : "#b3a06a", fontWeight: 700, fontSize: 16 }}>{ok ? "✓" : "○"}</span>
               </div>
             );
           })}
@@ -216,7 +216,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
             );
           })}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
-            <span style={{ fontSize: 12, color: "#4a3f28" }}>{d.carnet.recompenseLabel} <b style={{ color: "#8a6d2e" }}>+{p.recompense.argent} €</b></span>
+            <span style={{ fontSize: 14, color: "#4a3f28" }}>{d.carnet.recompenseLabel} <b style={{ color: "#8a6d2e" }}>+{p.recompense.argent} €</b></span>
             <button
               type="button"
               onClick={onLivrer}
