@@ -27,8 +27,8 @@ export type DockSkill = {
  * Dock de compétences « jeu vidéo » du header bas (partagé chinage/vente) : un cercle par atout,
  * grisé + cadenas si pas encore débloqué, pastille d'usages restants sinon.
  * Un cercle verrouillé reste cliquable : le parent affiche le niveau requis.
- * Positionné en absolu : les cercles flottent au-devant du header, leur centre
- * aligné sur la ligne laiton supérieure — le parent doit être `position: relative`.
+ * Rangé dans le flux du header bas, à droite de « Sortir » — le bandeau
+ * s'élève à la hauteur des cercles.
  */
 export function SkillDock({ skills }: { skills: DockSkill[] }) {
   return (
@@ -78,12 +78,6 @@ function SkillCircle({ skill }: { skill: DockSkill }) {
 }
 
 const dockRow: CSSProperties = {
-  // Flotte au-devant du header : centre des cercles sur la ligne laiton
-  // supérieure (bordure 3px → son centre est 1.5px au-dessus du padding-box).
-  position: "absolute",
-  top: -1.5,
-  right: 16,
-  transform: "translateY(-50%)",
   display: "flex",
   alignItems: "center",
   gap: 12,

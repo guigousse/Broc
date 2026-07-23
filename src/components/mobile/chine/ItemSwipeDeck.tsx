@@ -238,8 +238,6 @@ export function ItemSwipeDeck({
 
       <div
         style={{
-          // relative : ancre le SkillDock absolu (cercles flottants sur la ligne laiton)
-          position: "relative",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
