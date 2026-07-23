@@ -791,22 +791,28 @@ private let AD_UNIT_ID = "ca-app-pub-3940256099942544/1712485313"
         return
       }
       guard self.finEnAttente == nil else {
-        // Une pub est déjà à l'écran : refus immédiat plutôt qu'écraser la
-        // completion en attente (elle ne serait jamais rappelée).
+        // Une pub est déjà en cours (affichée OU en chargement) : refus
+        // immédiat plutôt qu'écraser la completion en attente (elle ne
+        // serait jamais rappelée).
         fin(false, "Pub déjà en cours")
         return
       }
+      // Réservation SYNCHRONE : ferme la fenêtre de course pendant le
+      // chargement réseau du chemin sans pub préchargée. Toute sortie
+      // d'échec doit libérer la réservation.
+      self.finEnAttente = fin
       if let pub = self.rewardedAd {
-        self.presenter(pub: pub, fin: fin)
+        self.presenter(pub: pub)
       } else {
         // Pas de pub préchargée (hors-ligne au boot, no-fill…) : tentative à
         // la demande — le SDK gère son propre timeout réseau.
         RewardedAd.load(with: AD_UNIT_ID, request: Request()) { pub, erreur in
           guard let pub else {
+            self.finEnAttente = nil
             fin(false, erreur?.localizedDescription ?? "Aucune pub disponible")
             return
           }
-          self.presenter(pub: pub, fin: fin)
+          self.presenter(pub: pub)
         }
       }
     }
@@ -846,12 +852,13 @@ private let AD_UNIT_ID = "ca-app-pub-3940256099942544/1712485313"
     }
   }
 
-  private func presenter(pub: RewardedAd, fin: @escaping (Bool, String?) -> Void) {
+  // Précondition : `finEnAttente` a été réservée par `montrerRewarded`.
+  private func presenter(pub: RewardedAd) {
     guard let racine = rootViewController() else {
-      fin(false, "Pas de view controller racine")
+      finEnAttente?(false, "Pas de view controller racine")
+      finEnAttente = nil
       return
     }
-    finEnAttente = fin
     recompenseGagnee = false
     pub.fullScreenContentDelegate = self
     rewardedAd = nil
