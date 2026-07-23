@@ -60,7 +60,8 @@ describe("CommandeRow", () => {
     };
     const state = createMockGameState({ missions: [{ courrierId: "m2", statut: "active" }] });
     render(<CommandeRow courrier={courrier} state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}} />);
-    expect(screen.getByText(/0\/300/)).toBeTruthy();
+    // Présent deux fois : aperçu sur la carte fermée + ligne du détail déplié.
+    expect(screen.getAllByText(/0\/300/).length).toBeGreaterThan(0);
     expect(screen.queryByText("Prêt ✓")).toBeNull();
   });
 
