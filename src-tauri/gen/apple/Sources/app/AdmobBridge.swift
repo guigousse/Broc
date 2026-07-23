@@ -10,9 +10,10 @@ import AppTrackingTransparency
 // le plugin via NSClassFromString("BrocAdmobBridge").
 // API SDK v12 (noms Swift : MobileAds/RewardedAd/Request,
 // ConsentInformation/ConsentForm — PAS les anciens GAD*/UMP*).
-// Bloc de TEST officiel Google jusqu'à la bascule de lancement (Task 11) ;
-// le GADApplicationIdentifier du plist est, lui, déjà le vrai (exigence Google).
-private let AD_UNIT_ID = "ca-app-pub-3940256099942544/1712485313"
+// Bloc rewarded de PRODUCTION (validation device faite le 2026-07-24 avec le
+// bloc de test officiel Google "ca-app-pub-3940256099942544/1712485313" —
+// à remettre pour tout débogage : cliquer ses propres vraies pubs = ban AdMob).
+private let AD_UNIT_ID = "ca-app-pub-6928338731034491/5859004325"
 
 @objc(BrocAdmobBridge) public class BrocAdmobBridge: NSObject {
   @objc public static let shared = BrocAdmobBridge()
