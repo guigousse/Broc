@@ -14,7 +14,6 @@
 		31585529C029A01BE249A285 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E81BD6B453D87B7F7B1597B /* CoreGraphics.framework */; };
 		324A1E9A4258E7911D4DAC39 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FACFFCB6E3743955F72464C /* Security.framework */; };
 		395BC1200A94F6CC2547E79B /* marteau.wav in Resources */ = {isa = PBXBuildFile; fileRef = CBA21C1C233371505C254077 /* marteau.wav */; };
-		43A911CC7519D8B02022B431 /* libapp.a in Resources */ = {isa = PBXBuildFile; fileRef = CF6D0D875A4424E51CE7BF3F /* libapp.a */; };
 		53C692BEA95281FEFB5547B5 /* regen.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7BFCE97A775A38944E36A90E /* regen.wav */; };
 		53CDD0ACFBE8BDF1550B2E53 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 682535EEFE1DA20BE07B123C /* main.mm */; };
 		5C516481BCA83A182C2BCC94 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 3842AE2A64FB9933D0400EA4 /* assets */; };
@@ -23,7 +22,6 @@
 		836D84C5F07860664DAF79C8 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8F57162F5CC7AEDD55F173D /* WebKit.framework */; };
 		9D59FB167BB4E699DA17D1E9 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04B56F58E2E44DDE1D67E7B7 /* MetalKit.framework */; };
 		B11FD2A75DDDC1696831DE96 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A301FE25045035A2BBEEE6A9 /* InfoPlist.strings */; };
-		C035876B2CBF946AA4D70D38 /* libapp.a in Resources */ = {isa = PBXBuildFile; fileRef = D047DEEBAEDBFEFD1943D4CF /* libapp.a */; };
 		C6BD59C055C986EA4A77FDA2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AF1DE57E7D9CF13BB2E0E038 /* Assets.xcassets */; };
 		C869023DDFE275D42F3FBF29 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 39EEC6A55698228E08917A52 /* libapp.a */; };
 		E68F6CFDAED6503ABB4044A5 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1209BFDECB28E00189B168 /* Metal.framework */; };
@@ -50,8 +48,6 @@
 		AF1DE57E7D9CF13BB2E0E038 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CBA21C1C233371505C254077 /* marteau.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = marteau.wav; sourceTree = "<group>"; };
 		CE1209BFDECB28E00189B168 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		CF6D0D875A4424E51CE7BF3F /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
-		D047DEEBAEDBFEFD1943D4CF /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		D8F57162F5CC7AEDD55F173D /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		F3673D372C5ABDD1AD6E7067 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		FBC720DFA1D01F55B0A32344 /* app_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = app_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -77,14 +73,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0C32539E578BFA0B4E3C6CD1 /* release */ = {
-			isa = PBXGroup;
-			children = (
-				D047DEEBAEDBFEFD1943D4CF /* libapp.a */,
-			);
-			path = release;
-			sourceTree = "<group>";
-		};
 		1BBF8C620E54F8C028CA130C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -122,22 +110,6 @@
 			path = bindings;
 			sourceTree = "<group>";
 		};
-		4CFC6D84136112A1C1B28B65 /* debug */ = {
-			isa = PBXGroup;
-			children = (
-				CF6D0D875A4424E51CE7BF3F /* libapp.a */,
-			);
-			path = debug;
-			sourceTree = "<group>";
-		};
-		70DD658F1D4B0FED51A79854 /* arm64 */ = {
-			isa = PBXGroup;
-			children = (
-				0C32539E578BFA0B4E3C6CD1 /* release */,
-			);
-			path = arm64;
-			sourceTree = "<group>";
-		};
 		78CBE3E5873199C0066F12DF /* Sources */ = {
 			isa = PBXGroup;
 			children = (
@@ -171,19 +143,9 @@
 			);
 			sourceTree = "<group>";
 		};
-		A3865682E6140DE0E08BBF68 /* x86_64 */ = {
-			isa = PBXGroup;
-			children = (
-				4CFC6D84136112A1C1B28B65 /* debug */,
-			);
-			path = x86_64;
-			sourceTree = "<group>";
-		};
 		BAFB695BB8415511FEC74542 /* Externals */ = {
 			isa = PBXGroup;
 			children = (
-				70DD658F1D4B0FED51A79854 /* arm64 */,
-				A3865682E6140DE0E08BBF68 /* x86_64 */,
 			);
 			path = Externals;
 			sourceTree = "<group>";
@@ -279,8 +241,6 @@
 				7D87F6EC40C50AD84C7CBA19 /* InfoPlist.strings in Resources */,
 				3036F7131E55779ABF15BD58 /* LaunchScreen.storyboard in Resources */,
 				5C516481BCA83A182C2BCC94 /* assets in Resources */,
-				C035876B2CBF946AA4D70D38 /* libapp.a in Resources */,
-				43A911CC7519D8B02022B431 /* libapp.a in Resources */,
 				395BC1200A94F6CC2547E79B /* marteau.wav in Resources */,
 				53C692BEA95281FEFB5547B5 /* regen.wav in Resources */,
 			);
