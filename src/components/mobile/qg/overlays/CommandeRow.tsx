@@ -66,6 +66,11 @@ const apercuPlus: CSSProperties = {
   background: "#eadfc0", border: "1px solid rgba(110,31,31,0.25)",
   borderRadius: 4, padding: "2px 5px",
 };
+/* Récompense affichée en bas à gauche de l'aperçu, sur la ligne des vignettes. */
+const apercuRecompense: CSSProperties = {
+  fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
+  color: "#8a6d2e", marginRight: 4, whiteSpace: "nowrap",
+};
 const apercuObjectif: CSSProperties = {
   display: "block", fontFamily: "var(--font-mono)", fontSize: 10,
   color: "#7a6438", marginTop: "auto", paddingTop: 8,
@@ -140,6 +145,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
           </span>
           {p.cibles.length > 0 ? (
             <span style={apercuRow}>
+              <span style={apercuRecompense}>+{p.recompense.argent} €</span>
               {p.cibles.slice(0, 4).map((cible, i) => {
                 const tpl = getTemplate(cible.templateId);
                 const ok = prog.ciblesRemplies[i];
@@ -156,6 +162,8 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
             </span>
           ) : premierObjectifNonObjet && progPremierObjectif ? (
             <span style={apercuObjectif}>
+              <span style={apercuRecompense}>+{p.recompense.argent} €</span>
+              {" · "}
               {libelleObjectif(premierObjectifNonObjet, d, tr)} · {progPremierObjectif.actuel}/{progPremierObjectif.cible}
               {premierObjectifNonObjet.type !== "niveau" && premierObjectifNonObjet.type !== "restauration" ? " €" : ""}
             </span>
