@@ -93,3 +93,25 @@ export function missionLivrable(
     .filter((o) => o.type !== "objet")
     .every((o) => progressionObjectif(o, state, reso, jourRecu).atteint);
 }
+
+/**
+ * Missions actives réellement livrables (cibles ET objectifs), avec leur
+ * commanditaire — source des pastilles de livrables du QG et du compteur
+ * « n livrable(s) » du registre. ⚠ Pas `estMissionLivrable` seul : une
+ * mission sans cible objet (ex. chapitre « 300 € de ventes ») serait
+ * vacuously livrable et la pastille resterait allumée en permanence.
+ */
+export function missionsLivrables(
+  state: GameState,
+): { courrierId: string; expediteurId: string }[] {
+  const out: { courrierId: string; expediteurId: string }[] = [];
+  for (const m of state.missions) {
+    if (m.statut !== "active") continue;
+    const c = state.courriers.find((cc) => cc.id === m.courrierId);
+    if (!c || c.payload.type !== "mission") continue;
+    if (missionLivrable(c.payload, m, state, c.jourRecu)) {
+      out.push({ courrierId: m.courrierId, expediteurId: c.payload.expediteurId });
+    }
+  }
+  return out;
+}

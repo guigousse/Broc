@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   missionLivrable,
+  missionsLivrables,
   objectifsDeMission,
   progressionObjectif,
 } from "./objectifs";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
-import type { CourrierPayloadMission, MissionResolution, SessionVente } from "@/types/game";
+import type { Courrier, CourrierPayloadMission, MissionResolution, SessionVente } from "@/types/game";
 
 const payloadBase: CourrierPayloadMission = {
   type: "mission", categorie: "principale", expediteurId: "grand-pere",
@@ -87,6 +88,38 @@ describe("progressionObjectif", () => {
     const sansTs: MissionResolution = { courrierId: "x", statut: "active" };
     expect(progressionObjectif({ type: "ventesCumulees", montant: 300 }, state, sansTs, 4).actuel).toBe(0);
     expect(progressionObjectif({ type: "ventesCumulees", montant: 300 }, state, sansTs, 3).actuel).toBe(120);
+  });
+});
+
+describe("missionsLivrables", () => {
+  const courrierCh2: Courrier = {
+    id: "trame_ch2", type: "mission", jourRecu: 1, lu: true,
+    payload: { ...payloadBase, objectifs: [{ type: "ventesCumulees", montant: 300 }] },
+  };
+
+  it("mission à objectif seul NON atteint : pas livrable (régression badge grand-père)", () => {
+    const state = createMockGameState({
+      courriers: [courrierCh2],
+      missions: [{ courrierId: "trame_ch2", statut: "active", timestampAcceptation: 1000 }],
+    });
+    expect(missionsLivrables(state)).toEqual([]);
+  });
+
+  it("objectif atteint : livrable avec l'expéditeur ; mission livrée exclue", () => {
+    const state = createMockGameState({
+      courriers: [courrierCh2],
+      missions: [{ courrierId: "trame_ch2", statut: "active", timestampAcceptation: 1000 }],
+      historique: [venteSession(2000, [{ prixVente: 350, prixAchat: 10 }])],
+    });
+    expect(missionsLivrables(state)).toEqual([
+      { courrierId: "trame_ch2", expediteurId: "grand-pere" },
+    ]);
+    const livree = createMockGameState({
+      courriers: [courrierCh2],
+      missions: [{ courrierId: "trame_ch2", statut: "livree", timestampAcceptation: 1000 }],
+      historique: [venteSession(2000, [{ prixVente: 350, prixAchat: 10 }])],
+    });
+    expect(missionsLivrables(livree)).toEqual([]);
   });
 });
 

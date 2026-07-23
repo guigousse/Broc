@@ -84,7 +84,7 @@ import {
   aGenInfluence,
 } from "@/lib/competences";
 import { vinylAudioUrl, vinylHasAudio } from "@/data/vinylesAudio";
-import { estMissionLivrable } from "@/lib/missions";
+import { missionsLivrables } from "@/lib/quetes/objectifs";
 import { chapitrePret } from "@/lib/quetes/principales";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 import {
@@ -252,19 +252,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   }, [state]);
 
   /** Missions actives livrables → pastilles commanditaires en bas à gauche. */
-  const missionsLivrables = useMemo(() => {
-    if (!state) return [];
-    const out: { courrierId: string; expediteurId: string }[] = [];
-    for (const m of state.missions) {
-      if (m.statut !== "active") continue;
-      const c = state.courriers.find((cc) => cc.id === m.courrierId);
-      if (!c || c.payload.type !== "mission") continue;
-      if (estMissionLivrable(c.payload, state.inventaireJoueur)) {
-        out.push({ courrierId: m.courrierId, expediteurId: c.payload.expediteurId });
-      }
-    }
-    return out;
-  }, [state]);
+  const livrables = useMemo(
+    () => (state ? missionsLivrables(state) : []),
+    [state],
+  );
 
   const vinyleCourantIdxRef = useRef<number | null>(null);
   useEffect(() => {
@@ -810,7 +801,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
       />
       {!tutoActif && !dialogueQg && (
         <LivrablesBadges
-          livrables={missionsLivrables}
+          livrables={livrables}
           sureleves={!!chPret}
           onTap={(courrierId) => {
             playClick();

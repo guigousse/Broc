@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { estMissionLivrable } from "@/lib/missions";
+import { missionsLivrables } from "@/lib/quetes/objectifs";
 import { SessionSummary, type SummaryItem } from "@/components/SessionSummary";
 import { getBrocanteById } from "@/data/brocantes";
 import { nomBrocante } from "@/lib/i18n/contenu";
@@ -196,14 +196,9 @@ export function RegistreOverlay({
   const { d, tr, locale } = useLangue();
   const [replayOf, setReplayOf] = useState<Session | null>(null);
 
-  const nbLivrables = useMemo(() => {
-    const byId = new Map(state.courriers.map((c) => [c.id, c]));
-    return state.missions.filter((m) => {
-      if (m.statut !== "active") return false;
-      const c = byId.get(m.courrierId);
-      return c?.payload.type === "mission" && estMissionLivrable(c.payload, state.inventaireJoueur);
-    }).length;
-  }, [state.missions, state.courriers, state.inventaireJoueur]);
+  // Livrabilité complète (cibles + objectifs) — même source que les
+  // pastilles du QG, sinon une mission à objectif seul gonflerait le compteur.
+  const nbLivrables = useMemo(() => missionsLivrables(state).length, [state]);
 
   useEffect(() => {
     if (!open) return;
