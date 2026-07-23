@@ -50,7 +50,7 @@ const stage: CSSProperties = {
 
 const colonne: CSSProperties = {
   width: "100%",
-  maxWidth: 420,
+  maxWidth: 520,
   height: "100%",
   display: "flex",
   flexDirection: "column",
