@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Données locales et service d’heure utilisé par Broc.",
 };
 
-const MAJ = "17 juillet 2026";
+const MAJ = "23 juillet 2026";
 const CONTACT = "pepite.admin@gmail.com";
 const EDITEUR = "Guillaume Fenard";
 
@@ -63,29 +63,46 @@ export default function PrivacyPage() {
         informations réseau.
       </p>
 
-      <h2 style={h2}>3. Aucun suivi publicitaire ou analytique</h2>
+      <h2 style={h2}>3. Aucun suivi analytique</h2>
       <p>
-        L’application ne contient actuellement aucun outil de mesure d’audience,
-        aucun traceur publicitaire, aucun SDK publicitaire et aucun bouton de
-        réseau social. Les polices, images et sons sont intégrés à l’application.
-        Broc reste jouable hors ligne ; si le service d’heure est indisponible,
-        l’application utilise l’horloge de l’appareil.
+        L’application ne contient aucun outil de mesure d’audience ni aucun
+        bouton de réseau social. Les polices, images et sons sont intégrés à
+        l’application. Broc reste jouable hors ligne (hors visionnage de
+        publicités et interrogation du service d’heure) ; si le service d’heure
+        est indisponible, l’application utilise l’horloge de l’appareil.
       </p>
 
-      <h2 style={h2}>4. Achats intégrés et publicité</h2>
+      <h2 style={h2}>4. Achats intégrés et publicités</h2>
+      <p>Cette version de l’application ne propose aucun achat intégré.</p>
       <p>
-        Cette version de l’application ne propose aucun achat intégré et
-        n’affiche aucune publicité fournie par un tiers. Certaines récompenses
-        publicitaires peuvent être simulées localement pendant le développement,
-        sans diffusion de publicité ni transmission de données à un réseau
-        publicitaire.
+        <strong>Publicités.</strong> L’application affiche des publicités
+        récompensées, uniquement lorsque vous choisissez d’en regarder une pour
+        obtenir un bonus en jeu. Elles sont fournies par Google AdMob. À cette
+        fin, Google peut collecter des identifiants d’appareil (dont
+        l’identifiant publicitaire, avec votre accord via la popup iOS
+        « Autoriser l’app à suivre vos activités ? »), votre adresse IP et des
+        données de diagnostic publicitaire. Au premier lancement, un formulaire
+        de consentement (RGPD) vous permet d’accepter ou de refuser les
+        publicités personnalisées ; en cas de refus, des publicités non
+        personnalisées sont affichées. Vous pouvez modifier ce choix à tout
+        moment (voir la{" "}
+        <a
+          href="https://policies.google.com/privacy"
+          style={link}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          politique de confidentialité de Google
+        </a>
+        ).
       </p>
 
       <h2 style={h2}>5. Enfants</h2>
       <p>
-        Broc ne demande ni compte, ni nom, ni adresse électronique et ne diffuse
-        pas de publicité tierce. L’utilisation limitée du service d’heure est la
-        même pour tous les joueurs.
+        Broc ne demande ni compte, ni nom, ni adresse électronique. Les
+        publicités décrites à la section 4, fournies par Google AdMob, sont
+        soumises au même formulaire de consentement pour tous les joueurs, quel
+        que soit leur âge déclaré.
       </p>
 
       <h2 style={h2}>6. Suppression de vos données</h2>
@@ -142,27 +159,42 @@ export default function PrivacyPage() {
         such as your IP address, request time and network information.
       </p>
 
-      <h2 style={h2}>3. No advertising or analytics tracking</h2>
+      <h2 style={h2}>3. No analytics tracking</h2>
       <p>
-        The app currently contains no analytics tool, advertising tracker,
-        advertising SDK or social-media widget. Fonts, images and sounds are
-        bundled with the app. Broc remains playable offline; if the time service
-        is unavailable, the app falls back to the device clock.
+        The app contains no analytics tool and no social-media widget. Fonts,
+        images and sounds are bundled with the app. Broc remains playable
+        offline (except for watching ads or querying the time service); if the
+        time service is unavailable, the app falls back to the device clock.
       </p>
 
       <h2 style={h2}>4. In-app purchases and advertising</h2>
+      <p>This version has no in-app purchases.</p>
       <p>
-        This version has no in-app purchases and displays no third-party
-        advertising. Advertising rewards may be simulated locally during
-        development, without displaying an advertisement or sending data to an
-        advertising network.
+        <strong>Advertising.</strong> The app displays rewarded ads, only when
+        you choose to watch one for an in-game bonus. They are provided by
+        Google AdMob. For this purpose, Google may collect device identifiers
+        (including the advertising identifier, with your consent via the iOS
+        “Allow app to track your activity?” prompt), your IP address, and
+        advertising diagnostic data. On first launch, a consent form (GDPR)
+        lets you accept or decline personalized ads; if declined,
+        non-personalized ads are shown instead. You can change this choice at
+        any time (see{" "}
+        <a
+          href="https://policies.google.com/privacy"
+          style={link}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Google’s privacy policy
+        </a>
+        ).
       </p>
 
       <h2 style={h2}>5. Children</h2>
       <p>
-        Broc asks for no account, name or email address and displays no
-        third-party advertising. The limited use of the time service is the same
-        for every player.
+        Broc asks for no account, name or email address. The ads described in
+        section 4, provided by Google AdMob, are subject to the same consent
+        form for every player, regardless of any stated age.
       </p>
 
       <h2 style={h2}>6. Deleting your data</h2>
