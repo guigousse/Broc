@@ -182,6 +182,7 @@ interface GameActionsValue {
   ouvrirCadeauAnniversaire: () => Objet | null;
   /** Clôt le mini-tuto des vinyles (musique lancée). */
   terminerMiniTutoVinyle: () => void;
+  terminerMiniTutoCarnet: () => void;
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
   terminerTutoriel: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
@@ -946,6 +947,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) =>
       prev && prev.miniTutoVinyle === "ecouter"
         ? { ...prev, miniTutoVinyle: "termine" as const }
+        : prev,
+    );
+  }, []);
+
+  /** Clôt le mini-tuto du carnet de commandes (le registre a été ouvert). */
+  const terminerMiniTutoCarnet = useCallback(() => {
+    setState((prev) =>
+      prev && prev.miniTutoCarnet === "ouvrir"
+        ? { ...prev, miniTutoCarnet: "termine" as const }
         : prev,
     );
   }, []);
@@ -1826,6 +1836,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ouvrirObjetColis,
       ouvrirCadeauAnniversaire,
       terminerMiniTutoVinyle,
+      terminerMiniTutoCarnet,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
@@ -1881,6 +1892,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ouvrirObjetColis,
       ouvrirCadeauAnniversaire,
       terminerMiniTutoVinyle,
+      terminerMiniTutoCarnet,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,

@@ -1485,6 +1485,13 @@ nav[aria-label="Navigation principale"] :focus-visible,
   pointer-events: none;
   z-index: 6;
 }
+/* Mini-tuto carnet : même main au bord gauche, en miroir, pointe vers la
+   gauche pour inviter à rejoindre la zone gauche du bureau (livre de compte). */
+.tuto-main-swipe-gauche {
+  right: auto;
+  left: 12px;
+  scale: -1 1;
+}
 @media (prefers-reduced-motion: reduce) {
   .tuto-pulse {
     animation: none;

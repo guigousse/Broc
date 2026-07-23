@@ -370,6 +370,13 @@ export interface GameState {
    * le gramophone ; "termine" ou absent = rien à guider.
    */
   miniTutoVinyle?: "ajouter" | "ecouter" | "termine";
+  /**
+   * ADDITIF : mini-tutoriel du carnet de commandes, posé à la fin du
+   * tutoriel (le grand-père vient d'en parler). "ouvrir" = guider vers la
+   * zone gauche du bureau puis le livre de compte ; "termine" ou absent
+   * (saves antérieures) = rien à guider.
+   */
+  miniTutoCarnet?: "ouvrir" | "termine";
   /** Lots de commandes périodiques en cours (quotidien / hebdo). */
   quetesPeriodiques: {
     quotidien: LotPeriodique;

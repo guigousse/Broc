@@ -66,5 +66,20 @@ export function appliquerFinTutoriel(state: GameState): GameState {
       ...state.declencheursDeclenches,
       ...inj.declencheursAjoutes,
     ],
+    // Le grand-père vient de parler du carnet de commandes : le mini-tuto
+    // guide vers la zone gauche du bureau puis le livre de compte.
+    miniTutoCarnet: "ouvrir",
   };
+}
+
+/**
+ * Doigt de swipe du mini-tuto carnet : le livre de compte est en zone
+ * gauche (0) du panorama — la main flottante pointe vers la gauche tant que
+ * cette zone n'est pas atteinte.
+ */
+export function doigtSwipeVersCarnet(
+  miniTuto: GameState["miniTutoCarnet"],
+  zoneActive: number,
+): boolean {
+  return miniTuto === "ouvrir" && zoneActive !== 0;
 }

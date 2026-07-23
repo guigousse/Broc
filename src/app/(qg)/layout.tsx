@@ -76,7 +76,7 @@ import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import { nomExpediteur } from "@/lib/i18n/contenu";
-import { tutorielActif } from "@/lib/tutoriel";
+import { tutorielActif, doigtSwipeVersCarnet } from "@/lib/tutoriel";
 import {
   aConnaisseurTendance,
   aGenBulletinMeteo,
@@ -116,6 +116,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     ouvrirObjetColis,
     ouvrirCadeauAnniversaire,
     terminerMiniTutoVinyle,
+    terminerMiniTutoCarnet,
   } = useGameActions();
   const {
     playClick,
@@ -477,9 +478,11 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             {showQgZone(0) && (
               <>
                 <QgCarnet
+                  tutoMain={state.miniTutoCarnet === "ouvrir" && !dialogueQg}
                   onTap={() => {
                     if (tutoActif) return;
                     playClick();
+                    terminerMiniTutoCarnet();
                     setRegistreOuvert("commandes");
                   }}
                 />
@@ -610,6 +613,12 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
               en zone repos) tant qu'on n'y est pas. zIndex 6 > dots (5). */}
           {state && doigtSwipeVersGramophone(state.miniTutoVinyle, zoneActive) && (
             <div className="tuto-main-swipe" aria-hidden />
+          )}
+
+          {/* Mini-tuto carnet : invite à rejoindre la zone gauche (livre de
+              compte) après la conclusion du tutoriel. */}
+          {state && !dialogueQg && doigtSwipeVersCarnet(state.miniTutoCarnet, zoneActive) && (
+            <div className="tuto-main-swipe tuto-main-swipe-gauche" aria-hidden />
           )}
         </div>
       </MobileLayout>

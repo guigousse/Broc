@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ETAPES_TUTORIEL,
   appliquerFinTutoriel,
+  doigtSwipeVersCarnet,
   etapeSuivante,
   tutorielActif,
 } from "./tutoriel";
@@ -42,6 +43,15 @@ describe("tutoriel", () => {
     // dialogue — mais chapitrePret le désigne bien comme dû (condition "depart").
     expect(fin.courriers.some((c) => c.id === "trame_ch1")).toBe(false);
     expect(chapitrePret(fin)?.id).toBe("trame_ch1");
+    // Mini-tuto carnet armé (le grand-père vient d'en parler).
+    expect(fin.miniTutoCarnet).toBe("ouvrir");
+  });
+
+  it("doigtSwipeVersCarnet pointe tant que la zone gauche (0) n'est pas atteinte", () => {
+    expect(doigtSwipeVersCarnet("ouvrir", 1)).toBe(true);
+    expect(doigtSwipeVersCarnet("ouvrir", 0)).toBe(false);
+    expect(doigtSwipeVersCarnet("termine", 1)).toBe(false);
+    expect(doigtSwipeVersCarnet(undefined, 1)).toBe(false);
   });
 
   it("appliquerFinTutoriel est idempotent sur un state déjà terminé", () => {
