@@ -66,10 +66,10 @@ const apercuPlus: CSSProperties = {
   background: "#eadfc0", border: "1px solid rgba(110,31,31,0.25)",
   borderRadius: 4, padding: "2px 5px",
 };
-/* Récompense affichée en bas à gauche de l'aperçu, sur la ligne des vignettes. */
+/* Récompense justifiée à droite de la ligne des vignettes d'aperçu. */
 const apercuRecompense: CSSProperties = {
   fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
-  color: "#8a6d2e", marginRight: 4, whiteSpace: "nowrap",
+  color: "#8a6d2e", marginLeft: "auto", whiteSpace: "nowrap",
 };
 const apercuObjectif: CSSProperties = {
   display: "block", fontFamily: "var(--font-mono)", fontSize: 10,
@@ -145,7 +145,6 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
           </span>
           {p.cibles.length > 0 ? (
             <span style={apercuRow}>
-              <span style={apercuRecompense}>+{p.recompense.argent} €</span>
               {p.cibles.slice(0, 4).map((cible, i) => {
                 const tpl = getTemplate(cible.templateId);
                 const ok = prog.ciblesRemplies[i];
@@ -159,13 +158,15 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
               {p.cibles.length > 4 && (
                 <span style={apercuPlus} data-testid="apercu-plus">+{p.cibles.length - 4}</span>
               )}
+              <span style={apercuRecompense}>{d.carnet.recompenseLabel} +{p.recompense.argent} €</span>
             </span>
           ) : premierObjectifNonObjet && progPremierObjectif ? (
-            <span style={apercuObjectif}>
-              <span style={apercuRecompense}>+{p.recompense.argent} €</span>
-              {" · "}
-              {libelleObjectif(premierObjectifNonObjet, d, tr)} · {progPremierObjectif.actuel}/{progPremierObjectif.cible}
-              {premierObjectifNonObjet.type !== "niveau" && premierObjectifNonObjet.type !== "restauration" ? " €" : ""}
+            <span style={{ ...apercuObjectif, display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span>
+                {libelleObjectif(premierObjectifNonObjet, d, tr)} · {progPremierObjectif.actuel}/{progPremierObjectif.cible}
+                {premierObjectifNonObjet.type !== "niveau" && premierObjectifNonObjet.type !== "restauration" ? " €" : ""}
+              </span>
+              <span style={apercuRecompense}>{d.carnet.recompenseLabel} +{p.recompense.argent} €</span>
             </span>
           ) : null}
         </span>
