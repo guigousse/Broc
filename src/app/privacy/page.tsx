@@ -44,11 +44,13 @@ export default function PrivacyPage() {
 
       <h2 style={h2}>1. Données traitées</h2>
       <p>
-        Broc ne demande aucun compte, aucune inscription et ne collecte aucune
-        donnée personnelle. Votre progression (argent, collection, réglages,
-        sauvegarde) est enregistrée <strong>localement</strong> sur votre
-        appareil (stockage local du système) et n’est jamais envoyée sur un
-        serveur ni partagée.
+        Broc ne demande aucun compte ni inscription et ne collecte directement
+        aucune donnée personnelle. Votre progression (argent, collection,
+        réglages, sauvegarde) est enregistrée <strong>localement</strong> sur
+        votre appareil (stockage local du système) et n’est jamais envoyée sur
+        un serveur ni partagée. Seules les publicités facultatives (voir
+        section 4, « Publicités ») impliquent une collecte de données par
+        Google AdMob.
       </p>
 
       <h2 style={h2}>2. Service d’heure utilisé</h2>
@@ -143,10 +145,12 @@ export default function PrivacyPage() {
 
       <h2 style={h2}>1. Data we process</h2>
       <p>
-        Broc requires no account or sign-up and collects no personal data. Your
-        progress (money, collection, settings, save file) is stored{" "}
-        <strong>locally</strong> on your device (system local storage) and is
-        never uploaded to a server or shared.
+        Broc requires no account or sign-up and does not directly collect any
+        personal data. Your progress (money, collection, settings, save file)
+        is stored <strong>locally</strong> on your device (system local
+        storage) and is never uploaded to a server or shared. Only the
+        optional ads (see section 4, “Advertising”) involve data collection by
+        Google AdMob.
       </p>
 
       <h2 style={h2}>2. Time service</h2>
