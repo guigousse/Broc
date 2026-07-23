@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Mentions légales de l'application Broc.",
 };
 
-const MAJ = "22 juin 2026";
+const MAJ = "23 juillet 2026";
 const CONTACT = "pepite.admin@gmail.com";
 const EDITEUR = "Guillaume Fenard";
 
@@ -66,9 +66,18 @@ export default function MentionsLegalesPage() {
         réelles serait fortuite.
       </p>
 
+      <h2 style={h2}>Prestataire publicitaire</h2>
+      <p>
+        Les publicités récompensées affichées dans l’application sont fournies
+        par Google AdMob, exploité par Google Ireland Limited, Gordon House,
+        Barrow Street, Dublin 4, Irlande (pour l’Union européenne).
+      </p>
+
       <h2 style={h2}>Données personnelles</h2>
       <p>
-        Broc ne collecte aucune donnée personnelle. Voir la{" "}
+        Broc ne collecte pas directement de données personnelles. Le
+        prestataire publicitaire mentionné ci-dessus peut toutefois traiter
+        certaines données dans le cadre des publicités récompensées. Voir la{" "}
         <Link href="/privacy" style={link}>
           politique de confidentialité
         </Link>
@@ -111,9 +120,18 @@ export default function MentionsLegalesPage() {
         to real brands, works or people would be coincidental.
       </p>
 
+      <h2 style={h2}>Advertising provider</h2>
+      <p>
+        The rewarded ads shown in the app are provided by Google AdMob,
+        operated by Google Ireland Limited, Gordon House, Barrow Street, Dublin
+        4, Ireland (for the European Union).
+      </p>
+
       <h2 style={h2}>Personal data</h2>
       <p>
-        Broc collects no personal data. See the{" "}
+        Broc does not directly collect personal data. The advertising provider
+        mentioned above may however process certain data as part of rewarded
+        ads. See the{" "}
         <Link href="/privacy" style={link}>
           privacy policy
         </Link>

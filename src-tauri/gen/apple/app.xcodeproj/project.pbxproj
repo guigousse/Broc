@@ -7,17 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01362D93A3467931ED139AAB /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 398A3066F83395926F1CFA77 /* InfoPlist.strings */; };
+		1292DFBC353451F01E5A0900 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = C3E7547077015B6A28EEEA71 /* GoogleMobileAds */; };
 		299814393FFBF154FAD94CA8 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3673D372C5ABDD1AD6E7067 /* QuartzCore.framework */; };
 		3036F7131E55779ABF15BD58 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 02B7F8347F94B067E6B27396 /* LaunchScreen.storyboard */; };
 		31585529C029A01BE249A285 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E81BD6B453D87B7F7B1597B /* CoreGraphics.framework */; };
 		324A1E9A4258E7911D4DAC39 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FACFFCB6E3743955F72464C /* Security.framework */; };
+		395BC1200A94F6CC2547E79B /* marteau.wav in Resources */ = {isa = PBXBuildFile; fileRef = CBA21C1C233371505C254077 /* marteau.wav */; };
+		53C692BEA95281FEFB5547B5 /* regen.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7BFCE97A775A38944E36A90E /* regen.wav */; };
 		53CDD0ACFBE8BDF1550B2E53 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 682535EEFE1DA20BE07B123C /* main.mm */; };
 		5C516481BCA83A182C2BCC94 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 3842AE2A64FB9933D0400EA4 /* assets */; };
+		5EF5E7EB7511ADD5014B2E45 /* AdmobBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E56B32EE64BE2250441125D /* AdmobBridge.swift */; };
 		618672DC8A5E0605441C9935 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E2B15F176E4B041AE33EEEA /* UIKit.framework */; };
+		7D87F6EC40C50AD84C7CBA19 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7C6F483578C526896D3BE02D /* InfoPlist.strings */; };
 		836D84C5F07860664DAF79C8 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8F57162F5CC7AEDD55F173D /* WebKit.framework */; };
 		9D59FB167BB4E699DA17D1E9 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04B56F58E2E44DDE1D67E7B7 /* MetalKit.framework */; };
-		B502686EE7E8F3D734F50CF2 /* marteau.wav in Resources */ = {isa = PBXBuildFile; fileRef = F4996875F2C75E93BB9397A4 /* marteau.wav */; };
-		98EA62E4530676944D065300 /* regen.wav in Resources */ = {isa = PBXBuildFile; fileRef = C690B121473E5FD206EA67CC /* regen.wav */; };
+		B11FD2A75DDDC1696831DE96 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A301FE25045035A2BBEEE6A9 /* InfoPlist.strings */; };
 		C6BD59C055C986EA4A77FDA2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AF1DE57E7D9CF13BB2E0E038 /* Assets.xcassets */; };
 		C869023DDFE275D42F3FBF29 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 39EEC6A55698228E08917A52 /* libapp.a */; };
 		E68F6CFDAED6503ABB4044A5 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1209BFDECB28E00189B168 /* Metal.framework */; };
@@ -33,13 +38,17 @@
 		1E81BD6B453D87B7F7B1597B /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		306B9C1792E7B1C53FA262A6 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		3842AE2A64FB9933D0400EA4 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
+		398A3066F83395926F1CFA77 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = el.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		39EEC6A55698228E08917A52 /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		4E56B32EE64BE2250441125D /* AdmobBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdmobBridge.swift; sourceTree = "<group>"; };
 		682535EEFE1DA20BE07B123C /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		7BFCE97A775A38944E36A90E /* regen.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = regen.wav; sourceTree = "<group>"; };
+		7C6F483578C526896D3BE02D /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		81E326B61ED92E1D1EECF952 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		F4996875F2C75E93BB9397A4 /* marteau.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = marteau.wav; sourceTree = "<group>"; };
-		C690B121473E5FD206EA67CC /* regen.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = regen.wav; sourceTree = "<group>"; };
 		9FACFFCB6E3743955F72464C /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		A301FE25045035A2BBEEE6A9 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		AF1DE57E7D9CF13BB2E0E038 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CBA21C1C233371505C254077 /* marteau.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = marteau.wav; sourceTree = "<group>"; };
 		CE1209BFDECB28E00189B168 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		D8F57162F5CC7AEDD55F173D /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		F3673D372C5ABDD1AD6E7067 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -51,6 +60,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1292DFBC353451F01E5A0900 /* GoogleMobileAds in Frameworks */,
 				C869023DDFE275D42F3FBF29 /* libapp.a in Frameworks */,
 				31585529C029A01BE249A285 /* CoreGraphics.framework in Frameworks */,
 				E68F6CFDAED6503ABB4044A5 /* Metal.framework in Frameworks */,
@@ -85,8 +95,11 @@
 			children = (
 				007E478DB8BC37A788C4730F /* app_iOS.entitlements */,
 				81E326B61ED92E1D1EECF952 /* Info.plist */,
-				F4996875F2C75E93BB9397A4 /* marteau.wav */,
-				C690B121473E5FD206EA67CC /* regen.wav */,
+				398A3066F83395926F1CFA77 /* InfoPlist.strings */,
+				A301FE25045035A2BBEEE6A9 /* InfoPlist.strings */,
+				7C6F483578C526896D3BE02D /* InfoPlist.strings */,
+				CBA21C1C233371505C254077 /* marteau.wav */,
+				7BFCE97A775A38944E36A90E /* regen.wav */,
 			);
 			path = app_iOS;
 			sourceTree = "<group>";
@@ -150,6 +163,7 @@
 		FB1C68C0357A1866B3D27465 /* app */ = {
 			isa = PBXGroup;
 			children = (
+				4E56B32EE64BE2250441125D /* AdmobBridge.swift */,
 				682535EEFE1DA20BE07B123C /* main.mm */,
 				329C38BE5E8B40354375D0D0 /* bindings */,
 			);
@@ -174,6 +188,7 @@
 			);
 			name = app_iOS;
 			packageProductDependencies = (
+				C3E7547077015B6A28EEEA71 /* GoogleMobileAds */,
 			);
 			productName = app_iOS;
 			productReference = FBC720DFA1D01F55B0A32344 /* app_iOS.app */;
@@ -188,6 +203,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					E86255CB8A1836C0BF0C0E14 = {
+						DevelopmentTeam = 9D78779LKL;
+					};
 				};
 			};
 			buildConfigurationList = B302E784349268C93E6F0A36 /* Build configuration list for PBXProject "app" */;
@@ -195,10 +213,16 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
+				el,
 				en,
+				es,
+				fr,
 			);
 			mainGroup = 87648061424F20D5D4871E9E;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D64D498E19FD60C2E38B8367 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EE72B6AC647386A11F795E44 /* Products */;
 			projectDirPath = "";
@@ -215,10 +239,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				C6BD59C055C986EA4A77FDA2 /* Assets.xcassets in Resources */,
+				01362D93A3467931ED139AAB /* InfoPlist.strings in Resources */,
+				B11FD2A75DDDC1696831DE96 /* InfoPlist.strings in Resources */,
+				7D87F6EC40C50AD84C7CBA19 /* InfoPlist.strings in Resources */,
 				3036F7131E55779ABF15BD58 /* LaunchScreen.storyboard in Resources */,
 				5C516481BCA83A182C2BCC94 /* assets in Resources */,
-				B502686EE7E8F3D734F50CF2 /* marteau.wav in Resources */,
-				98EA62E4530676944D065300 /* regen.wav in Resources */,
+				395BC1200A94F6CC2547E79B /* marteau.wav in Resources */,
+				53C692BEA95281FEFB5547B5 /* regen.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -253,6 +280,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5EF5E7EB7511ADD5014B2E45 /* AdmobBridge.swift in Sources */,
 				53CDD0ACFBE8BDF1550B2E53 /* main.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -271,6 +299,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = app_iOS/app_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 9D78779LKL;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -285,11 +314,10 @@
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.guigousse.broc;
-				PRODUCT_NAME = "Broc";
+				PRODUCT_NAME = Broc;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64  x86_64";
-				DEVELOPMENT_TEAM = "9D78779LKL";
 			};
 			name = release;
 		};
@@ -360,6 +388,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = app_iOS/app_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 9D78779LKL;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -374,11 +403,10 @@
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.guigousse.broc;
-				PRODUCT_NAME = "Broc";
+				PRODUCT_NAME = Broc;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64  x86_64";
-				DEVELOPMENT_TEAM = "9D78779LKL";
 			};
 			name = debug;
 		};
@@ -467,6 +495,25 @@
 			defaultConfigurationName = debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D64D498E19FD60C2E38B8367 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C3E7547077015B6A28EEEA71 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D64D498E19FD60C2E38B8367 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A9B1B09F1872768368ACECE2 /* Project object */;
 }

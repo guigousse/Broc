@@ -11,6 +11,7 @@ import {
   secondesAvantProchaine,
 } from "@/lib/energie";
 import { getAdProvider } from "@/lib/ads/adProvider";
+import { useToastSafe } from "@/components/ui/Toast";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 
@@ -198,6 +199,7 @@ export function EnergieRecharge({
   /** Récompense obtenue mais pas encore créditée (la salve la retient ~600 ms). */
   const creditEnAttente = useRef(false);
   const { d, tr } = useLangue();
+  const { toast } = useToastSafe();
 
   // Tick local 1 s pour le minuteur (sans réécrire le state global).
   useEffect(() => {
@@ -261,6 +263,8 @@ export function EnergieRecharge({
         creditEnAttente.current = true;
         setSalve(true);
       }
+    } catch {
+      toast(d.sheets.erreurPub, { type: "erreur" });
     } finally {
       setEnCours(false);
     }

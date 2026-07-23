@@ -1,3 +1,5 @@
+import { AdMobAdProvider, adMobDisponible } from "./adMobProvider";
+
 export interface AdResult {
   /** true si la pub a été visionnée jusqu'au bout (récompense due). */
   rewarded: boolean;
@@ -17,9 +19,12 @@ export class StubAdProvider implements AdProvider {
   }
 }
 
-// Singleton injectable — swap futur vers AdMobAdProvider (Tauri natif) ici uniquement.
+// Singleton injectable — AdMob natif sous Tauri iOS, stub partout ailleurs
+// (web Safari, simulateur, dev desktop).
 let instance: AdProvider | null = null;
 export function getAdProvider(): AdProvider {
-  if (!instance) instance = new StubAdProvider();
+  if (!instance) {
+    instance = adMobDisponible() ? new AdMobAdProvider() : new StubAdProvider();
+  }
   return instance;
 }
