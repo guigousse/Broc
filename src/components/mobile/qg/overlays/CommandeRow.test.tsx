@@ -64,6 +64,41 @@ describe("CommandeRow", () => {
     expect(screen.queryByText("Prêt ✓")).toBeNull();
   });
 
+  it("carte fermée : une vignette d'aperçu par cible, avec plafond 4 + jeton +n", () => {
+    const courrier: Courrier = {
+      id: "m4", type: "mission", jourRecu: 1, lu: true,
+      payload: {
+        type: "mission", categorie: "principale", expediteurId: "maman",
+        titre: "La grande rafle", corps: ["Tout me trouver."],
+        cibles: [
+          { templateId: "a" }, { templateId: "b" }, { templateId: "c" },
+          { templateId: "d" }, { templateId: "e" }, { templateId: "f" },
+        ],
+        recompense: { argent: 10 },
+      },
+    };
+    const state = createMockGameState({ missions: [{ courrierId: "m4", statut: "active" }] });
+    render(<CommandeRow courrier={courrier} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
+    expect(screen.getAllByTestId("apercu-cible").length).toBe(4);
+    expect(screen.getByTestId("apercu-plus").textContent).toBe("+2");
+  });
+
+  it("carte fermée sans cible objet : l'aperçu affiche l'objectif à la place des vignettes", () => {
+    const courrier: Courrier = {
+      id: "m5", type: "mission", jourRecu: 1, lu: true,
+      payload: {
+        type: "mission", categorie: "principale", expediteurId: "maman",
+        titre: "Pactole", corps: ["Des sous."],
+        cibles: [], objectifs: [{ type: "ventesCumulees", montant: 300 }],
+        recompense: { argent: 10 },
+      },
+    };
+    const state = createMockGameState({ missions: [{ courrierId: "m5", statut: "active" }] });
+    render(<CommandeRow courrier={courrier} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
+    expect(screen.queryAllByTestId("apercu-cible").length).toBe(0);
+    expect(screen.getByText(/Ventes cumulées/)).toBeTruthy();
+  });
+
   it("en-tête replié : agrège la progression sur tous les objectifs pour une mission sans cible objet (pas de 0/0)", () => {
     const courrier: Courrier = {
       id: "m3", type: "mission", jourRecu: 1, lu: true,

@@ -20,16 +20,46 @@ interface Props {
   onLivrer: () => void;
 }
 
+const carte: CSSProperties = {
+  background: "rgba(255,250,235,0.6)",
+  border: "1px solid rgba(110,31,31,0.35)",
+  borderRadius: 6,
+  margin: "8px 0",
+  overflow: "hidden",
+};
 const row: CSSProperties = {
-  display: "flex", alignItems: "center", gap: 10, width: "100%",
-  padding: "10px 12px", background: "transparent", border: "none",
-  borderBottom: "1px solid rgba(110,31,31,0.18)", cursor: "pointer", textAlign: "left",
+  display: "flex", alignItems: "flex-start", gap: 12, width: "100%",
+  padding: "12px 12px 10px", background: "transparent", border: "none",
+  cursor: "pointer", textAlign: "left",
 };
 const avatar: CSSProperties = {
-  width: 42, height: 42, borderRadius: "50%", flex: "0 0 auto",
-  border: "2px solid #c8a24a", objectFit: "cover", objectPosition: "top center", background: "#d9c79a",
+  width: 64, height: 64, borderRadius: 12, flex: "0 0 auto",
+  border: "2px solid #c8a24a", boxShadow: "inset 0 0 0 2px #f4e9cd",
+  objectFit: "cover", objectPosition: "top center", background: "#d9c79a",
   display: "grid", placeItems: "center", color: "#6e1f1f",
-  fontFamily: "var(--font-display)", fontSize: 16, overflow: "hidden",
+  fontFamily: "var(--font-display)", fontSize: 24, overflow: "hidden",
+};
+const apercuRow: CSSProperties = {
+  display: "flex", alignItems: "center", gap: 6, marginTop: 8, flexWrap: "wrap",
+};
+const apercuVignette: CSSProperties = {
+  position: "relative", width: 30, height: 30,
+  background: "#fdf8ec", border: "1px solid rgba(110,31,31,0.25)", borderRadius: 4,
+};
+const apercuBadge = (ok: boolean): CSSProperties => ({
+  position: "absolute", top: -5, right: -5, width: 13, height: 13,
+  borderRadius: 7, display: "grid", placeItems: "center",
+  fontSize: 8, fontWeight: 700, color: "#f4e9cd",
+  background: ok ? "#2c5e3f" : "#b3a06a",
+});
+const apercuPlus: CSSProperties = {
+  fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#7a6438",
+  background: "#eadfc0", border: "1px solid rgba(110,31,31,0.25)",
+  borderRadius: 4, padding: "2px 5px",
+};
+const apercuObjectif: CSSProperties = {
+  display: "block", fontFamily: "var(--font-mono)", fontSize: 10,
+  color: "#7a6438", marginTop: 8,
 };
 const ligneObjectif: CSSProperties = {
   display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -80,9 +110,13 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
   ).length;
   const jLimite = p.jourLimite;
   const jRestants = jLimite !== undefined ? Math.max(0, jLimite - state.jourActuel) : null;
+  const premierObjectifNonObjet = objectifsTous.find((o) => o.type !== "objet") ?? null;
+  const progPremierObjectif = premierObjectifNonObjet
+    ? progressionObjectif(premierObjectifNonObjet, state, resoPourObjectifs, courrier.jourRecu)
+    : null;
 
   return (
-    <div>
+    <div style={carte}>
       <button type="button" style={row} onClick={onToggle} aria-expanded={ouvert}>
         {exp?.avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -91,10 +125,32 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
           <span style={avatar}>{nomExp?.[0] ?? "?"}</span>
         )}
         <span style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 13, color: "#1a1308" }}>{titreCourrier(courrier, locale)}</span>
+          <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 15, color: "#1a1308", lineHeight: 1.25 }}>{titreCourrier(courrier, locale)}</span>
           <span style={{ display: "block", fontFamily: "var(--font-serif)", fontSize: 11, color: "#7a6a44" }}>
             {exp ? `${nomExp} · ${personnaliteExpediteur(p.expediteurId, locale)}` : ""}
           </span>
+          {p.cibles.length > 0 ? (
+            <span style={apercuRow}>
+              {p.cibles.slice(0, 4).map((cible, i) => {
+                const tpl = getTemplate(cible.templateId);
+                const ok = prog.ciblesRemplies[i];
+                return (
+                  <span key={i} style={apercuVignette} data-testid="apercu-cible">
+                    <ItemImage templateId={cible.templateId} categorie={tpl?.categorie ?? "Maison"} alt="" fallbackIconSize={18} />
+                    <span style={apercuBadge(!!ok)} aria-hidden>{ok ? "✓" : "○"}</span>
+                  </span>
+                );
+              })}
+              {p.cibles.length > 4 && (
+                <span style={apercuPlus} data-testid="apercu-plus">+{p.cibles.length - 4}</span>
+              )}
+            </span>
+          ) : premierObjectifNonObjet && progPremierObjectif ? (
+            <span style={apercuObjectif}>
+              {libelleObjectif(premierObjectifNonObjet, d, tr)} · {progPremierObjectif.actuel}/{progPremierObjectif.cible}
+              {premierObjectifNonObjet.type !== "niveau" && premierObjectifNonObjet.type !== "restauration" ? " €" : ""}
+            </span>
+          ) : null}
         </span>
         <span style={{ textAlign: "right", flex: "0 0 auto" }}>
           {livrable ? (
@@ -116,7 +172,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
       </button>
 
       {ouvert && (
-        <div style={{ padding: "4px 14px 14px", background: "rgba(255,250,235,0.45)", borderBottom: "1px solid rgba(110,31,31,0.18)" }}>
+        <div style={{ padding: "4px 14px 14px", background: "rgba(255,250,235,0.45)", borderTop: "1px dashed rgba(110,31,31,0.25)" }}>
           {corpsCourrier(courrier, locale).map((para, i) => (
             <p key={i} style={{ fontStyle: "italic", color: "#4a3f28", fontSize: 12, margin: "6px 0" }}>{para}</p>
           ))}
