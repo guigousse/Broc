@@ -29,14 +29,25 @@ function formatRestant(ms: number): string {
 
 const sectionLabel: CSSProperties = {
   fontFamily: "var(--font-display)",
-  fontSize: 10,
-  letterSpacing: "0.22em",
+  fontSize: 14,
+  fontWeight: 700,
+  letterSpacing: "0.18em",
   textTransform: "uppercase",
   color: "#6e1f1f",
   textAlign: "center",
-  padding: "10px 0 6px",
+  padding: "12px 0 6px",
   borderTop: "1px dotted rgba(110,31,31,0.35)",
   marginTop: 10,
+};
+
+/* En-tête de section repliable (bouton pleine largeur, chevron à droite). */
+const sectionToggle: CSSProperties = {
+  ...sectionLabel,
+  background: "none",
+  border: "none",
+  borderTop: "1px dotted rgba(110,31,31,0.35)",
+  width: "100%",
+  cursor: "pointer",
 };
 
 const sectionSousLabel: CSSProperties = {
@@ -77,6 +88,16 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance }: Ongl
   const { locale, d, tr } = useLangue();
   const [ouvertId, setOuvertId] = useState<string | null>(null);
   const [termineesVisibles, setTermineesVisibles] = useState(false);
+  /** Sections repliées (toutes dépliées par défaut). */
+  const [sectionsRepliees, setSectionsRepliees] = useState<Set<string>>(new Set());
+
+  const toggleSection = (cle: string) =>
+    setSectionsRepliees((prev) => {
+      const next = new Set(prev);
+      if (next.has(cle)) next.delete(cle);
+      else next.add(cle);
+      return next;
+    });
   const [, tick] = useState(0);
   const byId = useMemo(() => new Map(state.courriers.map((c) => [c.id, c])), [state.courriers]);
 
@@ -138,26 +159,38 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance }: Ongl
   const resteQuotidien = prochainMinuitLocalMs(now) - now;
   const resteHebdo = prochainLundiLocalMs(now) - now;
 
-  const renderSection = (label: string, liste: MissionResolution[], sousLabel?: string) => {
+  const renderSection = (cle: string, label: string, liste: MissionResolution[], sousLabel?: string) => {
     if (liste.length === 0) return null;
+    const repliee = sectionsRepliees.has(cle);
     return (
       <>
-        <div style={sectionLabel}>{label}</div>
-        {sousLabel ? <div style={sectionSousLabel}>{sousLabel}</div> : null}
-        {liste.map((m) => {
-          const c = byId.get(m.courrierId);
-          if (!c) return null;
-          return (
-            <CommandeRow
-              key={m.courrierId}
-              courrier={c}
-              state={state}
-              ouvert={ouvertId === m.courrierId}
-              onToggle={() => setOuvertId((id) => (id === m.courrierId ? null : m.courrierId))}
-              onLivrer={() => onLivrerMission(m.courrierId)}
-            />
-          );
-        })}
+        <button
+          type="button"
+          style={sectionToggle}
+          onClick={() => toggleSection(cle)}
+          aria-expanded={!repliee}
+        >
+          {label} {repliee ? "▸" : "▾"}
+        </button>
+        {!repliee && (
+          <>
+            {sousLabel ? <div style={sectionSousLabel}>{sousLabel}</div> : null}
+            {liste.map((m) => {
+              const c = byId.get(m.courrierId);
+              if (!c) return null;
+              return (
+                <CommandeRow
+                  key={m.courrierId}
+                  courrier={c}
+                  state={state}
+                  ouvert={ouvertId === m.courrierId}
+                  onToggle={() => setOuvertId((id) => (id === m.courrierId ? null : m.courrierId))}
+                  onLivrer={() => onLivrerMission(m.courrierId)}
+                />
+              );
+            })}
+          </>
+        )}
       </>
     );
   };
@@ -172,13 +205,15 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance }: Ongl
 
   return (
     <>
-      {renderSection(d.carnet.sectionPrincipales, principales)}
+      {renderSection("principales", d.carnet.sectionPrincipales, principales)}
       {renderSection(
+        "quotidiennes",
         d.carnet.sectionQuotidiennes,
         quotidiennes,
         tr(d.carnet.renouvellement, { t: formatRestant(resteQuotidien) }),
       )}
       {renderSection(
+        "hebdomadaires",
         d.carnet.sectionHebdomadaires,
         hebdomadaires,
         tr(d.carnet.renouvellement, { t: formatRestant(resteHebdo) }),
