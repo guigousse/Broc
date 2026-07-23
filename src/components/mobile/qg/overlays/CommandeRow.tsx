@@ -8,7 +8,7 @@ import { objectifsDeMission, progressionObjectif, missionLivrable } from "@/lib/
 import { ItemImage } from "@/components/ui/ItemImage";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
-import { corpsCourrier, nomTemplate, nomExpediteur, personnaliteExpediteur, titreCourrier } from "@/lib/i18n/contenu";
+import { corpsCourrier, nomTemplate, nomExpediteur, titreCourrier } from "@/lib/i18n/contenu";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import type { Courrier, GameState, ObjectifMission } from "@/types/game";
 
@@ -136,7 +136,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
         <span style={blocCentral}>
           <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 15, color: "#1a1308", lineHeight: 1.25 }}>{titreCourrier(courrier, locale)}</span>
           <span style={{ display: "block", fontFamily: "var(--font-serif)", fontSize: 11, color: "#7a6a44" }}>
-            {exp ? `${nomExp} · ${personnaliteExpediteur(p.expediteurId, locale)}` : ""}
+            {nomExp ?? ""}
           </span>
           {p.cibles.length > 0 ? (
             <span style={apercuRow}>
