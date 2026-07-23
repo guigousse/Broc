@@ -13,6 +13,8 @@ interface OngletCommandesProps {
   onLivrerMission: (courrierId: string) => { ok: boolean; raison?: string };
   /** Temps de confiance (epoch ms) ; `Date.now()` à défaut. */
   tempsConfiance?: () => number | null;
+  /** Commande dépliée d'office (badge livrable tapé) + scroll jusqu'à elle. */
+  ouvertInitialId?: string | null;
 }
 
 function formatRestant(ms: number): string {
@@ -84,9 +86,9 @@ function trierActives(
 
 /* ─── Onglet Commandes (contenu scrollable du registre) ─── */
 
-export function OngletCommandes({ state, onLivrerMission, tempsConfiance }: OngletCommandesProps) {
+export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvertInitialId }: OngletCommandesProps) {
   const { locale, d, tr } = useLangue();
-  const [ouvertId, setOuvertId] = useState<string | null>(null);
+  const [ouvertId, setOuvertId] = useState<string | null>(ouvertInitialId ?? null);
   const [termineesVisibles, setTermineesVisibles] = useState(false);
   /** Sections repliées (toutes dépliées par défaut). */
   const [sectionsRepliees, setSectionsRepliees] = useState<Set<string>>(new Set());
@@ -105,6 +107,16 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance }: Ongl
     const id = window.setInterval(() => tick((n) => n + 1), 1000);
     return () => window.clearInterval(id);
   }, []);
+
+  // Badge livrable tapé : amener la commande visée dans la zone visible.
+  // (Recherche via dataset — CSS.escape et scrollIntoView absents de jsdom.)
+  useEffect(() => {
+    if (!ouvertInitialId) return;
+    const el = Array.from(document.querySelectorAll<HTMLElement>("[data-commande-id]")).find(
+      (n) => n.dataset.commandeId === ouvertInitialId,
+    );
+    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "start" });
+  }, [ouvertInitialId]);
 
   const actives = useMemo(() => state.missions.filter((m) => m.statut === "active"), [state.missions]);
 
@@ -179,14 +191,15 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance }: Ongl
               const c = byId.get(m.courrierId);
               if (!c) return null;
               return (
-                <CommandeRow
-                  key={m.courrierId}
-                  courrier={c}
-                  state={state}
-                  ouvert={ouvertId === m.courrierId}
-                  onToggle={() => setOuvertId((id) => (id === m.courrierId ? null : m.courrierId))}
-                  onLivrer={() => onLivrerMission(m.courrierId)}
-                />
+                <div key={m.courrierId} data-commande-id={m.courrierId}>
+                  <CommandeRow
+                    courrier={c}
+                    state={state}
+                    ouvert={ouvertId === m.courrierId}
+                    onToggle={() => setOuvertId((id) => (id === m.courrierId ? null : m.courrierId))}
+                    onLivrer={() => onLivrerMission(m.courrierId)}
+                  />
+                </div>
               );
             })}
           </>

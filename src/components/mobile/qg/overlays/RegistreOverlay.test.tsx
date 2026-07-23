@@ -43,6 +43,11 @@ describe("RegistreOverlay", () => {
     expect(screen.queryByText("Quête A")).toBeNull();
   });
 
+  it("missionInitialeId : la commande visée s'ouvre d'office", () => {
+    render(<RegistreOverlay open onglet="commandes" onOngletChange={() => {}} state={withMissions()} onClose={() => {}} onLivrerMission={() => ({ ok: true })} missionInitialeId="p1" />);
+    expect(screen.getAllByText(/Objets demandés/).length).toBe(1);
+  });
+
   it("clic sur l'onglet inactif → onOngletChange", () => {
     const onChange = vi.fn();
     render(<RegistreOverlay open onglet="commandes" onOngletChange={onChange} state={withMissions()} onClose={() => {}} onLivrerMission={() => ({ ok: true })} />);

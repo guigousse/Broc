@@ -21,6 +21,8 @@ interface RegistreOverlayProps {
   onLivrerMission: (courrierId: string) => { ok: boolean; raison?: string };
   /** Temps de confiance (epoch ms) ; `Date.now()` à défaut. */
   tempsConfiance?: () => number | null;
+  /** Commande à ouvrir (accordéon + scroll) à l'ouverture de l'onglet Commandes. */
+  missionInitialeId?: string | null;
 }
 
 /* ─── styles ─── */
@@ -118,19 +120,6 @@ const closeBtn: CSSProperties = {
   zIndex: 2,
 };
 
-const ruban: CSSProperties = {
-  position: "absolute",
-  top: -6,
-  left: "70%",
-  width: 18,
-  height: 40,
-  background: "linear-gradient(180deg, #c43030 0%, #911f1f 100%)",
-  borderRadius: "0 0 3px 3px",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
-  zIndex: 1,
-  pointerEvents: "none",
-};
-
 const enTete: CSSProperties = {
   padding: "18px 20px 10px",
   textAlign: "center",
@@ -202,6 +191,7 @@ export function RegistreOverlay({
   state,
   onLivrerMission,
   tempsConfiance,
+  missionInitialeId,
 }: RegistreOverlayProps) {
   const { d, tr, locale } = useLangue();
   const [replayOf, setReplayOf] = useState<Session | null>(null);
@@ -297,7 +287,6 @@ export function RegistreOverlay({
             </button>
           </div>
           <div style={carnetChassis}>
-            {onglet === "commandes" && <div style={ruban} aria-hidden />}
             <button type="button" style={closeBtn} onClick={onClose} aria-label={d.carnet.fermer}>✕</button>
             <div style={enTete}>
               {onglet === "commandes" ? (
@@ -319,7 +308,7 @@ export function RegistreOverlay({
             </div>
             <div style={contenu}>
               {onglet === "commandes" ? (
-                <OngletCommandes state={state} onLivrerMission={onLivrerMission} tempsConfiance={tempsConfiance} />
+                <OngletCommandes state={state} onLivrerMission={onLivrerMission} tempsConfiance={tempsConfiance} ouvertInitialId={missionInitialeId ?? null} />
               ) : (
                 <OngletComptes state={state} onReplay={setReplayOf} />
               )}

@@ -35,7 +35,7 @@ import {
   UNIFIED_ZONE_ORDER,
 } from "@/components/mobile/panorama/UnifiedPanorama";
 import { QgCarnet } from "@/components/mobile/qg/QgCarnet";
-import { QgCarnetNotes } from "@/components/mobile/qg/QgCarnetNotes";
+import { LivrablesBadges } from "@/components/mobile/qg/LivrablesBadges";
 import { QgPorteRevues } from "@/components/mobile/qg/QgPorteRevues";
 import { QgPorte } from "@/components/mobile/qg/QgPorte";
 import { QgCourrier } from "@/components/mobile/qg/QgCourrier";
@@ -142,6 +142,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const [confirmPasser, setConfirmPasser] = useState(false);
   /** Registre unifié (Commandes/Comptes) : null = fermé, sinon onglet actif. */
   const [registreOuvert, setRegistreOuvert] = useState<OngletRegistre | null>(null);
+  /** Commande à déplier d'office dans le registre (badge livrable tapé). */
+  const [missionCibleId, setMissionCibleId] = useState<string | null>(null);
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
@@ -248,18 +250,19 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     );
   }, [state]);
 
-  const missionsCounters = useMemo(() => {
-    let actives = 0;
-    let livrables = 0;
-    if (!state) return { actives, livrables };
+  /** Missions actives livrables → pastilles commanditaires en bas à gauche. */
+  const missionsLivrables = useMemo(() => {
+    if (!state) return [];
+    const out: { courrierId: string; expediteurId: string }[] = [];
     for (const m of state.missions) {
       if (m.statut !== "active") continue;
       const c = state.courriers.find((cc) => cc.id === m.courrierId);
       if (!c || c.payload.type !== "mission") continue;
-      if (estMissionLivrable(c.payload, state.inventaireJoueur)) livrables += 1;
-      else actives += 1;
+      if (estMissionLivrable(c.payload, state.inventaireJoueur)) {
+        out.push({ courrierId: m.courrierId, expediteurId: c.payload.expediteurId });
+      }
     }
-    return { actives, livrables };
+    return out;
   }, [state]);
 
   const vinyleCourantIdxRef = useRef<number | null>(null);
@@ -477,15 +480,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                   onTap={() => {
                     if (tutoActif) return;
                     playClick();
-                    setRegistreOuvert("comptes");
-                  }}
-                />
-                <QgCarnetNotes
-                  nbActives={missionsCounters.actives}
-                  nbLivrables={missionsCounters.livrables}
-                  onTap={() => {
-                    if (tutoActif) return;
-                    playClick();
                     setRegistreOuvert("commandes");
                   }}
                 />
@@ -694,10 +688,14 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         open={registreOuvert !== null}
         onglet={registreOuvert ?? "commandes"}
         onOngletChange={setRegistreOuvert}
-        onClose={() => setRegistreOuvert(null)}
+        onClose={() => {
+          setRegistreOuvert(null);
+          setMissionCibleId(null);
+        }}
         state={state}
         onLivrerMission={(id) => livrerMission(id)}
         tempsConfiance={tempsConfiance}
+        missionInitialeId={missionCibleId}
       />
 
       <CalendrierSheet
@@ -801,6 +799,17 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           setDialogueQg({ id: `dlg_${chPret.id}`, lignes: chPret.dialogue });
         }}
       />
+      {!tutoActif && !dialogueQg && (
+        <LivrablesBadges
+          livrables={missionsLivrables}
+          sureleves={!!chPret}
+          onTap={(courrierId) => {
+            playClick();
+            setMissionCibleId(courrierId);
+            setRegistreOuvert("commandes");
+          }}
+        />
+      )}
       <DialogueOverlay
         sequence={dialogueQg}
         nom={nomExpediteur("grand-pere", locale)}
