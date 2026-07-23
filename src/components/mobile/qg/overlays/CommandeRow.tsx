@@ -41,17 +41,24 @@ const avatar: CSSProperties = {
   display: "grid", placeItems: "center", color: "#6e1f1f",
   fontFamily: "var(--font-display)", fontSize: 32, overflow: "hidden",
 };
+/* Colonne centrale : hauteur calée sur l'avatar (92px) — le titre s'aligne
+ * sur le haut de la photo, les vignettes (marginTop auto) sur son bas. */
+const blocCentral: CSSProperties = {
+  flex: 1, minWidth: 0, minHeight: 92,
+  display: "flex", flexDirection: "column",
+};
 const apercuRow: CSSProperties = {
-  display: "flex", alignItems: "center", gap: 6, marginTop: 8, flexWrap: "wrap",
+  display: "flex", alignItems: "center", gap: 6, marginTop: "auto",
+  paddingTop: 8, flexWrap: "wrap",
 };
 const apercuVignette: CSSProperties = {
-  position: "relative", width: 30, height: 30,
+  position: "relative", width: 44, height: 44,
   background: "#fdf8ec", border: "1px solid rgba(110,31,31,0.25)", borderRadius: 4,
 };
 const apercuBadge = (ok: boolean): CSSProperties => ({
-  position: "absolute", top: -5, right: -5, width: 13, height: 13,
-  borderRadius: 7, display: "grid", placeItems: "center",
-  fontSize: 8, fontWeight: 700, color: "#f4e9cd",
+  position: "absolute", top: -6, right: -6, width: 15, height: 15,
+  borderRadius: 8, display: "grid", placeItems: "center",
+  fontSize: 9, fontWeight: 700, color: "#f4e9cd",
   background: ok ? "#2c5e3f" : "#b3a06a",
 });
 const apercuPlus: CSSProperties = {
@@ -61,7 +68,7 @@ const apercuPlus: CSSProperties = {
 };
 const apercuObjectif: CSSProperties = {
   display: "block", fontFamily: "var(--font-mono)", fontSize: 10,
-  color: "#7a6438", marginTop: 8,
+  color: "#7a6438", marginTop: "auto", paddingTop: 8,
 };
 const ligneObjectif: CSSProperties = {
   display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -126,7 +133,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
         ) : (
           <span style={avatar}>{nomExp?.[0] ?? "?"}</span>
         )}
-        <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={blocCentral}>
           <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 15, color: "#1a1308", lineHeight: 1.25 }}>{titreCourrier(courrier, locale)}</span>
           <span style={{ display: "block", fontFamily: "var(--font-serif)", fontSize: 11, color: "#7a6a44" }}>
             {exp ? `${nomExp} · ${personnaliteExpediteur(p.expediteurId, locale)}` : ""}
@@ -138,7 +145,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
                 const ok = prog.ciblesRemplies[i];
                 return (
                   <span key={i} style={apercuVignette} data-testid="apercu-cible">
-                    <ItemImage templateId={cible.templateId} categorie={tpl?.categorie ?? "Maison"} alt="" fallbackIconSize={18} />
+                    <ItemImage templateId={cible.templateId} categorie={tpl?.categorie ?? "Maison"} alt="" fallbackIconSize={26} />
                     <span style={apercuBadge(!!ok)} aria-hidden>{ok ? "✓" : "○"}</span>
                   </span>
                 );
