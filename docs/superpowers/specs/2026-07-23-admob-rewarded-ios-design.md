@@ -6,7 +6,11 @@
 
 Les trois points de pub récompensée (boîte mystère, recharge d'énergie, accélération d'atelier) reposent sur `StubAdProvider` : « Regarder une pub » affiche « Pub en cours… » 800 ms puis accorde le gain sans pub — inacceptable en review Apple. Décision : intégrer de vraies rewarded ads Google AdMob dans la 1.0, posture standard **UMP (consentement RGPD) + ATT**, pubs personnalisées si consentement, non personnalisées sinon.
 
-État côté compte : compte AdMob créé, app **non enregistrée** (App ID et bloc rewarded à créer — action Guillaume, en parallèle du dev).
+État côté compte : app enregistrée dans AdMob le 2026-07-23 :
+- App ID AdMob : `ca-app-pub-6928338731034491~1504112334` (→ `GADApplicationIdentifier`)
+- Bloc rewarded : `ca-app-pub-6928338731034491/5859004325` (→ vrais IDs, branchés seulement à l'étape 4)
+
+Reste côté console (action Guillaume) : message de consentement UMP+ATT, liaison App Store Connect ↔ AdMob (possible après publication), `app-ads.txt`, App Privacy.
 
 Contrainte structurante : **aucun build iOS local possible** (Mac 2018/macOS 14). Toute itération native passe par GitHub Actions + TestFlight → front-loader le risque d'intégration SDK.
 
