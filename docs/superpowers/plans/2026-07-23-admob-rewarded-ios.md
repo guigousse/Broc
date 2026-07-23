@@ -1065,6 +1065,7 @@ TestFlight de validation.
 - [ ] Mettre l'app en arrière-plan pendant une pub, revenir → pas de blocage (la pub reprend ou se ferme proprement).
 - [ ] Relancer l'app : PAS de re-prompt UMP/ATT ; une pub est disponible rapidement (préchargement).
 - [ ] Supprimer/réinstaller l'app : le parcours de consentement revient (stockage local purgé).
+- [ ] **iPad** (ou simulateur iPad via scripts/ios-sim.sh) : une VRAIE pub de test s'affiche — vérifie le fix de détection UA desktop WKWebView (Macintosh + maxTouchPoints) ; le stub « fausse pub » ne doit jamais apparaître sur device.
 
 Si un point échoue : retour Tasks 5-7 avec le symptôme précis (logs via console Xcode du Mac si besoin).
 
