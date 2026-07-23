@@ -729,70 +729,78 @@ git commit -m "feat(admob): AdMobAdProvider TS branché dans getAdProvider (Taur
 
 ### Task 6: Swift — logique complète (UMP + ATT + load/show/reload)
 
+> **RÉVISÉ après le spike CI** : `swift build` (swift-rs) ne résout pas les
+> xcframeworks binaires SPM (tauri#13332, confirmé sur CI). Architecture en
+> pont : le plugin vendoré (`AdmobPlugin.swift`, DÉJÀ FINAL depuis le fix du
+> spike — ne pas le retoucher) transfère au runtime vers la classe
+> `BrocAdmobBridge` du target app via `NSClassFromString` et les sélecteurs
+> `initialiser:` / `montrerRewarded:` (blocs `() -> Void` et
+> `(Bool, String?) -> Void`). Cette tâche remplit le pont.
+
 **Files:**
-- Modify: `src-tauri/vendor/tauri-plugin-admob/ios/Sources/AdmobPlugin.swift` (remplacement complet)
+- Modify: `src-tauri/gen/apple/Sources/app/AdmobBridge.swift` (remplacement complet du squelette du spike)
 
 **Interfaces:**
-- Consumes: signatures `initialize(_:)` / `showRewardedAd(_:)` du squelette (Task 2) — inchangées.
-- Produces: résolution `["rewarded": Bool]` ; rejet (`invoke.reject`) sur échec technique — mappé en exception côté TS (contrat Task 5).
+- Consumes: sélecteurs `initialiser(_:)` / `montrerRewarded(_:)` appelés par le plugin — signatures `@objc` INCHANGÉES (classe `@objc(BrocAdmobBridge)`, singleton `@objc static let shared`).
+- Produces: `montrerRewarded` appelle `fin(rewarded, nil)` en succès (rewarded=false si fermeture anticipée) et `fin(false, message)` sur échec technique — le plugin mappe message → `invoke.reject` → exception côté TS (contrat Task 5).
 
-- [ ] **Step 1 : remplacer AdmobPlugin.swift**
+- [ ] **Step 1 : remplacer AdmobBridge.swift**
 
 ```swift
-import SwiftRs
-import Tauri
+import Foundation
 import UIKit
-import WebKit
 import GoogleMobileAds
 import UserMessagingPlatform
 import AppTrackingTransparency
 
-// Rewarded ads AdMob. API SDK v12 (noms Swift : MobileAds/RewardedAd/Request,
+// Pont AdMob côté app : SEUL endroit autorisé à importer le SDK Google
+// (compilé par Xcode, qui résout le xcframework SPM — le paquet swift-rs du
+// plugin vendoré ne le peut pas, cf. AdmobPlugin.swift). Joint au runtime par
+// le plugin via NSClassFromString("BrocAdmobBridge").
+// API SDK v12 (noms Swift : MobileAds/RewardedAd/Request,
 // ConsentInformation/ConsentForm — PAS les anciens GAD*/UMP*).
-// Bloc de TEST officiel Google jusqu'à la bascule de lancement (cf. plan
-// 2026-07-23, Task 11) ; le GADApplicationIdentifier du plist est, lui,
-// déjà le vrai (exigence Google).
+// Bloc de TEST officiel Google jusqu'à la bascule de lancement (Task 11) ;
+// le GADApplicationIdentifier du plist est, lui, déjà le vrai (exigence Google).
 private let AD_UNIT_ID = "ca-app-pub-3940256099942544/1712485313"
 
-class AdmobPlugin: Plugin {
+@objc(BrocAdmobBridge) public class BrocAdmobBridge: NSObject {
+  @objc public static let shared = BrocAdmobBridge()
+
   private var rewardedAd: RewardedAd?
-  private var pendingInvoke: Invoke?
+  private var finEnAttente: ((Bool, String?) -> Void)?
   private var recompenseGagnee = false
   private var sdkPret = false
 
-  // MARK: - Commandes
+  // MARK: - Entrées du pont (sélecteurs appelés par le plugin vendoré)
 
-  @objc public func initialize(_ invoke: Invoke) throws {
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
+  @objc public func initialiser(_ fin: @escaping () -> Void) {
+    DispatchQueue.main.async {
       self.parcoursConsentement {
         MobileAds.shared.start()
         self.sdkPret = true
         self.prechargerPub()
-        invoke.resolve()
+        fin()
       }
     }
   }
 
-  @objc public func showRewardedAd(_ invoke: Invoke) throws {
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
+  @objc public func montrerRewarded(_ fin: @escaping (Bool, String?) -> Void) {
+    DispatchQueue.main.async {
       guard self.sdkPret else {
-        invoke.reject("SDK non initialisé")
+        fin(false, "SDK non initialisé")
         return
       }
       if let pub = self.rewardedAd {
-        self.presenter(pub: pub, invoke: invoke)
+        self.presenter(pub: pub, fin: fin)
       } else {
         // Pas de pub préchargée (hors-ligne au boot, no-fill…) : tentative à
         // la demande — le SDK gère son propre timeout réseau.
-        RewardedAd.load(with: AD_UNIT_ID, request: Request()) { [weak self] pub, erreur in
-          guard let self else { return }
+        RewardedAd.load(with: AD_UNIT_ID, request: Request()) { pub, erreur in
           guard let pub else {
-            invoke.reject(erreur?.localizedDescription ?? "Aucune pub disponible")
+            fin(false, erreur?.localizedDescription ?? "Aucune pub disponible")
             return
           }
-          self.presenter(pub: pub, invoke: invoke)
+          self.presenter(pub: pub, fin: fin)
         }
       }
     }
@@ -803,13 +811,13 @@ class AdmobPlugin: Plugin {
   private func parcoursConsentement(fin: @escaping () -> Void) {
     let params = RequestParameters()
     params.isTaggedForUnderAgeOfConsent = false
-    ConsentInformation.shared.requestConsentInfoUpdate(with: params) { [weak self] erreur in
+    ConsentInformation.shared.requestConsentInfoUpdate(with: params) { erreur in
       guard erreur == nil else {
         // Hors-ligne : on continue sans bloquer, les pubs échoueront proprement.
         fin()
         return
       }
-      ConsentForm.loadAndPresentIfRequired(from: self?.rootViewController()) { _ in
+      ConsentForm.loadAndPresentIfRequired(from: self.rootViewController()) { _ in
         // ATT après le formulaire UMP : l'ordre évite deux popups d'affilée
         // sans contexte. Idempotent (iOS ne re-prompt jamais une fois décidé).
         if #available(iOS 14, *) {
@@ -832,12 +840,12 @@ class AdmobPlugin: Plugin {
     }
   }
 
-  private func presenter(pub: RewardedAd, invoke: Invoke) {
+  private func presenter(pub: RewardedAd, fin: @escaping (Bool, String?) -> Void) {
     guard let racine = rootViewController() else {
-      invoke.reject("Pas de view controller racine")
+      fin(false, "Pas de view controller racine")
       return
     }
-    pendingInvoke = invoke
+    finEnAttente = fin
     recompenseGagnee = false
     pub.fullScreenContentDelegate = self
     rewardedAd = nil
@@ -857,12 +865,12 @@ class AdmobPlugin: Plugin {
 
 // MARK: - FullScreenContentDelegate
 
-extension AdmobPlugin: FullScreenContentDelegate {
-  // La résolution se fait à la FERMETURE (pas au gain) : le jeu ne doit
-  // reprendre la main qu'une fois la pub disparue de l'écran.
+extension BrocAdmobBridge: FullScreenContentDelegate {
+  // La réponse part à la FERMETURE (pas au gain) : le jeu ne doit reprendre
+  // la main qu'une fois la pub disparue de l'écran.
   public func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
-    pendingInvoke?.resolve(["rewarded": recompenseGagnee])
-    pendingInvoke = nil
+    finEnAttente?(recompenseGagnee, nil)
+    finEnAttente = nil
     prechargerPub()
   }
 
@@ -870,29 +878,30 @@ extension AdmobPlugin: FullScreenContentDelegate {
     _ ad: FullScreenPresentingAd,
     didFailToPresentFullScreenContentWithError error: Error
   ) {
-    pendingInvoke?.reject(error.localizedDescription)
-    pendingInvoke = nil
+    finEnAttente?(false, error.localizedDescription)
+    finEnAttente = nil
     prechargerPub()
   }
-}
-
-@_cdecl("init_plugin_admob")
-func initPluginAdmob() -> Plugin {
-  return AdmobPlugin()
 }
 ```
 
 - [ ] **Step 2 : relire contre le contrat**
 
-Relire le fichier en vérifiant : (1) chaque chemin de `showRewardedAd` finit par
-exactement UN resolve/reject (pas de double résolution : `presenter` transfère
+Relire le fichier en vérifiant : (1) chaque chemin de `montrerRewarded` finit
+par exactement UN appel de `fin` (pas de double appel : `presenter` transfère
 la responsabilité au delegate) ; (2) `rewardedAd = nil` avant présentation (une
-pub Google ne se présente qu'une fois) ; (3) tout se passe sur le main thread.
+pub Google ne se présente qu'une fois) ; (3) tout se passe sur le main thread ;
+(4) les signatures `@objc` (`initialiser:`, `montrerRewarded:`) et
+`@objc(BrocAdmobBridge)`/`shared` sont STRICTEMENT identiques au squelette du
+spike — le plugin vendoré les résout par nom au runtime, un renommage casse le
+pont silencieusement. Puis `cd src-tauri/gen/apple && xcodegen generate` (le
+fichier existait déjà, la régénération doit être un no-op — vérifier
+`git status` du pbxproj).
 
 - [ ] **Step 3 : commit + push + run CI**
 
 ```bash
-git add src-tauri/vendor/tauri-plugin-admob && git commit -m "feat(admob): logique Swift complète (UMP+ATT, load/show/reload, delegate)"
+git add src-tauri/gen/apple && git commit -m "feat(admob): logique Swift complète dans le pont app (UMP+ATT, load/show/reload, delegate)"
 git push && gh workflow run ios-testflight.yml --ref feat/admob
 gh run watch $(gh run list --workflow=ios-testflight.yml --limit 1 --json databaseId -q '.[0].databaseId') --exit-status
 ```
@@ -1051,11 +1060,11 @@ Si un point échoue : retour Tasks 5-7 avec le symptôme précis (logs via conso
 ### Task 11: Bascule vrais IDs + soumission
 
 **Files:**
-- Modify: `src-tauri/vendor/tauri-plugin-admob/ios/Sources/AdmobPlugin.swift` (constante `AD_UNIT_ID`)
+- Modify: `src-tauri/gen/apple/Sources/app/AdmobBridge.swift` (constante `AD_UNIT_ID`)
 
 - [ ] **Step 1 : brancher le vrai bloc**
 
-Dans `AdmobPlugin.swift`, remplacer la valeur de `AD_UNIT_ID` par
+Dans `AdmobBridge.swift`, remplacer la valeur de `AD_UNIT_ID` par
 `ca-app-pub-6928338731034491/5859004325` et adapter le commentaire (garder la
 mention du bloc de test officiel en référence pour les futurs débogages).
 
