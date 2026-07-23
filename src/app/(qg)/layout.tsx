@@ -56,8 +56,7 @@ import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
-import { CahierDeCompteOverlay } from "@/components/mobile/qg/overlays/CahierDeCompteOverlay";
-import { CarnetNotesOverlay } from "@/components/mobile/qg/overlays/CarnetNotesOverlay";
+import { RegistreOverlay, type OngletRegistre } from "@/components/mobile/qg/overlays/RegistreOverlay";
 import { CourrierSheet } from "@/components/mobile/qg/sheets/CourrierSheet";
 import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { GramophoneSheet } from "@/components/mobile/qg/sheets/GramophoneSheet";
@@ -141,8 +140,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   /** Machine à énergie popée avec bandeau : Chiner/Étaler cliqué sans énergie. */
   const [alerteEnergie, setAlerteEnergie] = useState(false);
   const [confirmPasser, setConfirmPasser] = useState(false);
-  const [carnetOuvert, setCarnetOuvert] = useState(false);
-  const [carnetNotesOuvert, setCarnetNotesOuvert] = useState(false);
+  /** Registre unifié (Commandes/Comptes) : null = fermé, sinon onglet actif. */
+  const [registreOuvert, setRegistreOuvert] = useState<OngletRegistre | null>(null);
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
@@ -478,7 +477,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                   onTap={() => {
                     if (tutoActif) return;
                     playClick();
-                    setCarnetOuvert(true);
+                    setRegistreOuvert("comptes");
                   }}
                 />
                 <QgCarnetNotes
@@ -487,7 +486,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                   onTap={() => {
                     if (tutoActif) return;
                     playClick();
-                    setCarnetNotesOuvert(true);
+                    setRegistreOuvert("commandes");
                   }}
                 />
               </>
@@ -691,15 +690,11 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         bloque={state.chatSurFauteuil}
       />
 
-      <CahierDeCompteOverlay
-        open={carnetOuvert}
-        onClose={() => setCarnetOuvert(false)}
-        state={state}
-      />
-
-      <CarnetNotesOverlay
-        open={carnetNotesOuvert}
-        onClose={() => setCarnetNotesOuvert(false)}
+      <RegistreOverlay
+        open={registreOuvert !== null}
+        onglet={registreOuvert ?? "commandes"}
+        onOngletChange={setRegistreOuvert}
+        onClose={() => setRegistreOuvert(null)}
         state={state}
         onLivrerMission={(id) => livrerMission(id)}
         tempsConfiance={tempsConfiance}

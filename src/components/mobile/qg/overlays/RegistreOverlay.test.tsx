@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
-import { CarnetNotesOverlay } from "./CarnetNotesOverlay";
+import { RegistreOverlay } from "./RegistreOverlay";
 import type { GameState } from "@/types/game";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 
@@ -20,9 +20,9 @@ function withMissions(): GameState {
   return s;
 }
 
-describe("CarnetNotesOverlay", () => {
-  it("affiche les sections principales et quotidiennes", () => {
-    render(<CarnetNotesOverlay open state={withMissions()} onClose={() => {}} onLivrerMission={() => ({ ok: true })} />);
+describe("RegistreOverlay", () => {
+  it("onglet commandes : sections principales et quotidiennes", () => {
+    render(<RegistreOverlay open onglet="commandes" onOngletChange={() => {}} state={withMissions()} onClose={() => {}} onLivrerMission={() => ({ ok: true })} />);
     expect(screen.getByText(/principales/i)).toBeTruthy();
     expect(screen.getByText(/quotidiennes/i)).toBeTruthy();
     expect(screen.getByText("Quête A")).toBeTruthy();
@@ -30,10 +30,23 @@ describe("CarnetNotesOverlay", () => {
   });
 
   it("n'ouvre qu'un détail à la fois", () => {
-    render(<CarnetNotesOverlay open state={withMissions()} onClose={() => {}} onLivrerMission={() => ({ ok: true })} />);
+    render(<RegistreOverlay open onglet="commandes" onOngletChange={() => {}} state={withMissions()} onClose={() => {}} onLivrerMission={() => ({ ok: true })} />);
     fireEvent.click(screen.getByText("Quête A"));
     expect(screen.getAllByText(/Objets demandés/).length).toBe(1);
     fireEvent.click(screen.getByText("Quête B"));
     expect(screen.getAllByText(/Objets demandés/).length).toBe(1); // A refermée
+  });
+
+  it("onglet comptes : titre Cahier, pas de quêtes", () => {
+    render(<RegistreOverlay open onglet="comptes" onOngletChange={() => {}} state={withMissions()} onClose={() => {}} onLivrerMission={() => ({ ok: true })} />);
+    expect(screen.getByText("Cahier de Compte")).toBeTruthy();
+    expect(screen.queryByText("Quête A")).toBeNull();
+  });
+
+  it("clic sur l'onglet inactif → onOngletChange", () => {
+    const onChange = vi.fn();
+    render(<RegistreOverlay open onglet="commandes" onOngletChange={onChange} state={withMissions()} onClose={() => {}} onLivrerMission={() => ({ ok: true })} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Comptes" }));
+    expect(onChange).toHaveBeenCalledWith("comptes");
   });
 });
