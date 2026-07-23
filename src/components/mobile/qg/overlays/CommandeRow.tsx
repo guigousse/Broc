@@ -27,17 +27,19 @@ const carte: CSSProperties = {
   margin: "8px 0",
   overflow: "hidden",
 };
+/* alignItems flex-end : le bas de l'avatar est aligné avec le bas de la
+ * dernière ligne du bloc central (la rangée de vignettes d'items). */
 const row: CSSProperties = {
-  display: "flex", alignItems: "flex-start", gap: 12, width: "100%",
+  display: "flex", alignItems: "flex-end", gap: 12, width: "100%",
   padding: "12px 12px 10px", background: "transparent", border: "none",
   cursor: "pointer", textAlign: "left",
 };
 const avatar: CSSProperties = {
-  width: 64, height: 64, borderRadius: 12, flex: "0 0 auto",
+  width: 92, height: 92, borderRadius: 14, flex: "0 0 auto",
   border: "2px solid #c8a24a", boxShadow: "inset 0 0 0 2px #f4e9cd",
   objectFit: "cover", objectPosition: "top center", background: "#d9c79a",
   display: "grid", placeItems: "center", color: "#6e1f1f",
-  fontFamily: "var(--font-display)", fontSize: 24, overflow: "hidden",
+  fontFamily: "var(--font-display)", fontSize: 32, overflow: "hidden",
 };
 const apercuRow: CSSProperties = {
   display: "flex", alignItems: "center", gap: 6, marginTop: 8, flexWrap: "wrap",
@@ -152,7 +154,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
             </span>
           ) : null}
         </span>
-        <span style={{ textAlign: "right", flex: "0 0 auto" }}>
+        <span style={{ textAlign: "right", flex: "0 0 auto", alignSelf: "flex-start" }}>
           {livrable ? (
             <span style={{ display: "inline-block", background: "#2c5e3f", color: "#f4e9cd", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 10 }}>{d.carnet.pret}</span>
           ) : (

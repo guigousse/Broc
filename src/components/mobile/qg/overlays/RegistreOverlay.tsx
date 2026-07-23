@@ -33,19 +33,25 @@ const scrim: CSSProperties = {
   animation: "broc-fade-in 160ms ease",
 };
 
+/* La fenêtre est ancrée entre le header supérieur et la TabBar : onglets
+ * compris, rien ne chevauche le chrome, et la hauteur est identique quel que
+ * soit l'onglet actif (le châssis remplit tout l'espace disponible). */
 const stage: CSSProperties = {
   position: "fixed",
-  inset: 0,
+  top: "calc(var(--safe-top) + var(--mobile-header-h) + 8px)",
+  left: 0,
+  right: 0,
+  bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom) + 8px)",
   zIndex: 51,
-  display: "grid",
-  placeItems: "center",
-  padding: "max(16px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom))",
+  display: "flex",
+  justifyContent: "center",
+  padding: "0 12px",
 };
 
 const colonne: CSSProperties = {
   width: "100%",
   maxWidth: 420,
-  maxHeight: "88dvh",
+  height: "100%",
   display: "flex",
   flexDirection: "column",
 };
