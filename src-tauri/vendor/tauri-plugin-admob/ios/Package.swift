@@ -13,17 +13,13 @@ let package = Package(
       targets: ["tauri-plugin-admob"])
   ],
   dependencies: [
-    .package(name: "Tauri", path: "../.tauri/tauri-api"),
-    .package(
-      url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git",
-      from: "12.0.0")
+    .package(name: "Tauri", path: "../.tauri/tauri-api")
   ],
   targets: [
     .target(
       name: "tauri-plugin-admob",
       dependencies: [
-        .byName(name: "Tauri"),
-        .product(name: "GoogleMobileAds", package: "swift-package-manager-google-mobile-ads")
+        .byName(name: "Tauri")
       ],
       path: "Sources")
   ]
