@@ -486,6 +486,10 @@ export const es: DictionnaireUI = {
       "¡Se anuncia a {nom} en {brocante} el {jour}! Espera mucha afluencia y bolsas bien llenas.",
     celebriteBrocanteInconnue: "un mercadillo",
   },
+  registre: {
+    ongletCommandes: "Pedidos",
+    ongletComptes: "Cuentas",
+  },
   cahier: {
     marcheDuJour: "Mercado del día",
     marcheDuJourN: "Mercado del día D{n}",

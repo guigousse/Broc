@@ -491,6 +491,10 @@ export const el: DictionnaireUI = {
       "{nom} έχει ανακοινωθεί στο {brocante} στις {jour}. Περίμενε μεγάλη προσέλευση και γεμάτα πορτοφόλια!",
     celebriteBrocanteInconnue: "ένα παζάρι",
   },
+  registre: {
+    ongletCommandes: "Παραγγελίες",
+    ongletComptes: "Λογαριασμοί",
+  },
   cahier: {
     marcheDuJour: "Αγορά της ημέρας",
     marcheDuJourN: "Αγορά της ημέρας Η{n}",

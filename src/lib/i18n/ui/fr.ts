@@ -490,6 +490,11 @@ export const fr = {
       "{nom} est annoncé(e) à {brocante} le {jour}. Attendez-vous à une forte affluence et à de grosses bourses !",
     celebriteBrocanteInconnue: "une brocante",
   },
+  // Registre unifié (QG) : onglets Commandes / Comptes.
+  registre: {
+    ongletCommandes: "Commandes",
+    ongletComptes: "Comptes",
+  },
   cahier: {
     marcheDuJour: "Marché du jour",
     marcheDuJourN: "Marché du jour J{n}",
