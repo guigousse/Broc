@@ -7,6 +7,7 @@ import { LevelUpOverlay } from "@/components/mobile/LevelUpOverlay";
 import { TutorielBanniere } from "@/components/mobile/tutoriel/TutorielBanniere";
 import { SwipePager } from "@/components/mobile/SwipePager";
 import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
+import { AdMobBootstrap } from "@/components/mobile/AdMobBootstrap";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -84,6 +85,7 @@ export default function RootLayout({
                 <LevelUpOverlay />
                 <TutorielBanniere />
                 <GlobalVinylAmbiance />
+                <AdMobBootstrap />
               </GameProvider>
             </ToastProvider>
           </SettingsProvider>
