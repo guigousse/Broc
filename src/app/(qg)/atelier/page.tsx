@@ -31,6 +31,7 @@ import { getRarityColors } from "@/lib/rarityColors";
 import { getItemThumbUrl } from "@/lib/itemImages";
 import { getTemplate } from "@/data/objetTemplates";
 import { getAdProvider } from "@/lib/ads/adProvider";
+import { useToast } from "@/components/ui/Toast";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
@@ -75,6 +76,7 @@ function btnSheet(
 
 export default function AtelierPage() {
   const { d, tr, locale } = useLangue();
+  const { toast } = useToast();
   const {
     state,
     isHydrated,
@@ -101,6 +103,8 @@ export default function AtelierPage() {
     try {
       const { rewarded } = await getAdProvider().showRewardedAd();
       if (rewarded) terminerRestaurationImmediate(objetId);
+    } catch {
+      toast(d.sheets.erreurPub, { type: "erreur" });
     } finally {
       setPubEnCours(false);
     }
