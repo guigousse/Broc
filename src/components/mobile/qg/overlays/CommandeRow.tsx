@@ -30,6 +30,7 @@ const carte: CSSProperties = {
 /* alignItems flex-end : le bas de l'avatar est aligné avec le bas de la
  * dernière ligne du bloc central (la rangée de vignettes d'items). */
 const row: CSSProperties = {
+  position: "relative",
   display: "flex", alignItems: "flex-end", gap: 12, width: "100%",
   padding: "12px 12px 10px", background: "transparent", border: "none",
   cursor: "pointer", textAlign: "left",
@@ -66,10 +67,11 @@ const apercuPlus: CSSProperties = {
   background: "#eadfc0", border: "1px solid rgba(110,31,31,0.25)",
   borderRadius: 4, padding: "2px 5px",
 };
-/* Récompense justifiée à droite de la ligne des vignettes d'aperçu. */
+/* Récompense collée au bord droit de la carte, sur la ligne des vignettes. */
 const apercuRecompense: CSSProperties = {
-  fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
-  color: "#8a6d2e", marginLeft: "auto", whiteSpace: "nowrap",
+  position: "absolute", right: 12, bottom: 14,
+  fontFamily: "var(--font-serif)", fontSize: 13,
+  color: "#1a1308", whiteSpace: "nowrap",
 };
 const apercuObjectif: CSSProperties = {
   display: "block", fontFamily: "var(--font-mono)", fontSize: 10,
@@ -158,15 +160,11 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
               {p.cibles.length > 4 && (
                 <span style={apercuPlus} data-testid="apercu-plus">+{p.cibles.length - 4}</span>
               )}
-              <span style={apercuRecompense}>{d.carnet.recompenseLabel} +{p.recompense.argent} €</span>
             </span>
           ) : premierObjectifNonObjet && progPremierObjectif ? (
-            <span style={{ ...apercuObjectif, display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span>
-                {libelleObjectif(premierObjectifNonObjet, d, tr)} · {progPremierObjectif.actuel}/{progPremierObjectif.cible}
-                {premierObjectifNonObjet.type !== "niveau" && premierObjectifNonObjet.type !== "restauration" ? " €" : ""}
-              </span>
-              <span style={apercuRecompense}>{d.carnet.recompenseLabel} +{p.recompense.argent} €</span>
+            <span style={apercuObjectif}>
+              {libelleObjectif(premierObjectifNonObjet, d, tr)} · {progPremierObjectif.actuel}/{progPremierObjectif.cible}
+              {premierObjectifNonObjet.type !== "niveau" && premierObjectifNonObjet.type !== "restauration" ? " €" : ""}
             </span>
           ) : null}
         </span>
@@ -186,6 +184,9 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
           {jRestants !== null && (
             <span style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: 9, marginTop: 2, color: jRestants <= 3 ? "#a31f1f" : "#8a7a52" }}>J−{jRestants}</span>
           )}
+        </span>
+        <span style={apercuRecompense}>
+          {d.carnet.recompenseLabel} : +{p.recompense.argent} €
         </span>
       </button>
 
