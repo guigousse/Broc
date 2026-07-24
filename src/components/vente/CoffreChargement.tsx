@@ -21,9 +21,10 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { CoffreCanvas } from "./CoffreCanvas";
 import { CarrouselStock } from "./CarrouselStock";
 import { DevPanel } from "./DevPanel";
+import { OUTILS_DEV } from "@/lib/outilsDev";
 
 // Dev only — affiche le panneau dev (switcher + sliders position/scale).
-const DEV_PANEL = true;
+const DEV_PANEL = OUTILS_DEV;
 
 const MASK_SIZE = 48;
 const TRUNK_MASK_SIZE = 256;

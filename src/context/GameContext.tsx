@@ -1075,7 +1075,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Dev-only : set direct du niveau sans coût ni vérification d'adjacence.
-  // Utilisé par le bouton de switch dans ChargementHeader pour tester les visuels.
+  // Utilisé par le DevPanel du coffre (dev uniquement) pour tester les visuels.
   const setNiveauCamionDev = useCallback((niveau: NiveauCamion) => {
     setState((prev) => (prev ? { ...prev, niveauCamion: niveau } : prev));
   }, []);
