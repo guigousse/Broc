@@ -80,6 +80,10 @@ const CLIENT_ARCHETYPES_ILLUSTRES = [
 
 const CLIENTS_ILLUSTRES = new Set<string>(CLIENT_ARCHETYPES_ILLUSTRES);
 
+/** Silhouette noire : client dont le persona n'est pas encore révélé
+ *  (compétence Lecteur d'âmes non débloquée). */
+export const CLIENT_SILHOUETTE = "/personas/clients/client-inconnu.webp";
+
 /** Illustration d'un acheteur, ou undefined (célébrité, archétype inconnu →
  *  silhouette). */
 export function getClientIllustration(archetypeId: string): string | undefined {
