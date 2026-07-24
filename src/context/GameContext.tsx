@@ -612,6 +612,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       brocanteur: emptyBrocanteur(),
       collection: initCollection(),
       gazetteAchetee: false,
+      tutoGazette: "aFaire",
+      gazetteRefusee: false,
       bossDebloqueSeen: false,
       niveauVu: 0,
       meteoSemaine: tirerMeteoSemaine(),

@@ -377,6 +377,18 @@ export interface GameState {
    * (saves antérieures) = rien à guider.
    */
   miniTutoCarnet?: "ouvrir" | "termine";
+  /**
+   * ADDITIF (v16) : mini-tuto de la Gazette. "aFaire" ou absent = pas encore
+   * fait — le journal offert apparaît au sol dès qu'une compétence gazette
+   * est débloquée (cf. aAccesGazette) ; "faite" = tuto terminé, cycle
+   * hebdomadaire d'achat actif.
+   */
+  tutoGazette?: "aFaire" | "faite";
+  /**
+   * ADDITIF (v16) : édition de la semaine refusée (lundi). Reset à false au
+   * refresh hebdo de la Gazette. Absent = false.
+   */
+  gazetteRefusee?: boolean;
   /** Lots de commandes périodiques en cours (quotidien / hebdo). */
   quetesPeriodiques: {
     quotidien: LotPeriodique;

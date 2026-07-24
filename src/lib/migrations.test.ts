@@ -1031,3 +1031,25 @@ describe("v15 — refonte des coûts de compétences (1 pt)", () => {
     ).toBeLessThanOrEqual(COUT_TOTAL_COMPETENCES);
   });
 });
+
+describe("migrerSauvegarde — v16 champs gazette", () => {
+  it("pose tutoGazette='aFaire' et gazetteRefusee=false sur une save antérieure", () => {
+    const fresh = createMockGameState();
+    delete (fresh as Partial<GameState>).tutoGazette;
+    delete (fresh as Partial<GameState>).gazetteRefusee;
+    const migrated = migrerSauvegarde(fresh);
+    expect(migrated.tutoGazette).toBe("aFaire");
+    expect(migrated.gazetteRefusee).toBe(false);
+    expect(migrated.version).toBe(SAVE_VERSION);
+  });
+
+  it("préserve tutoGazette='faite' et gazetteRefusee=true déjà en save", () => {
+    const fresh = createMockGameState({
+      tutoGazette: "faite",
+      gazetteRefusee: true,
+    });
+    const migrated = migrerSauvegarde(fresh);
+    expect(migrated.tutoGazette).toBe("faite");
+    expect(migrated.gazetteRefusee).toBe(true);
+  });
+});

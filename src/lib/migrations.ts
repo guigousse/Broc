@@ -104,7 +104,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -664,6 +664,9 @@ function appliquerMigrations(loaded: GameState): GameState {
     competencesDebloquees,
     collection,
     gazetteAchetee: loaded.gazetteAchetee ?? false,
+    // v16 — circuit d'acquisition de la gazette (tuto + achat du lundi).
+    tutoGazette: (loaded as Partial<GameState>).tutoGazette ?? "aFaire",
+    gazetteRefusee: (loaded as Partial<GameState>).gazetteRefusee ?? false,
     bossDebloqueSeen: loaded.bossDebloqueSeen ?? false,
     niveauVu: (() => {
       // `brocanteurConverti.niveau` (calculé plus haut, avant l'amorce des
