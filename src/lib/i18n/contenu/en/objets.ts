@@ -5,8 +5,8 @@
  */
 export const OBJETS_EN: Record<string, string> = {
   // ===== MUSIQUE — communs =====
-  "mus.vinyle_le_mur_des_flamants_roses": "'The Brick Wall' record by the Pink Flamingos",
-  "mus.vinyle_grand_max_des_combines": "'Big Max' record by the Schemers",
+  "mus.vinyle_des_loups_des_steppes_bark_to_be_free": "'Bark to Be Free' record by the Steppe Wolves",
+  "mus.vinyle_grand_max_des_combines": "Babylone record — 'Sur mon île'",
   "mus.33tours_jazz_1": "LP by an unknown jazz band",
   "mus.coffret_cd_grunge_beatitude": "Grunge CD box set — 'Beatitude'",
   "mus.harmonica_chromatique_de_bluesman": "Bluesman's chromatic harmonica",
@@ -14,10 +14,10 @@ export const OBJETS_EN: Record<string, string> = {
   "mus.vinyle_victor_de_la_brasse_bibelot": "Victor de la Brasse record — 'Trinket'",
   "mus.vinyle_paul_nazamour_demain_enfin": "Paul Nazamour record — 'Tomorrow at Last'",
   "mus.vinyle_judith_loiseau_oui_je_regrette_tout": "Judith Loiseau record — 'Yes, I Regret Everything'",
-  "mus.vinyle_des_scarabees_passage_cloute": "The Scarabs' record — 'Zebra Crossing'",
-  "mus.vinyle_des_trolling_sons_bet_it_heal": "The Trolling Sons' record — 'Bet it Heal'",
-  "mus.vinyle_du_david_bah_oui_comete": "David Bah Oui record — 'Comet'",
-  "mus.vinyle_du_led_guirlande_escalator_du_paradis": "Led Garland record — 'Escalator to Heaven'",
+  "mus.vinyle_des_scarabees_passage_cloute": "The Scarabs' record — 'Bet it Heal'",
+  "mus.vinyle_des_trolling_sons_bet_it_heal": "The Trolling Sons' record — 'Unsatisfying'",
+  "mus.vinyle_du_david_bah_oui_comete": "David's record — 'Bah oui'",
+  "mus.vinyle_free_robot_des_punkbot": "'Free Robot' record by PunkBot",
   "mus.33tours_jazz_2": "Jazz LP (II)",
   "mus.33tours_jazz_3": "Jazz LP (III)",
   "mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle": "The Mystic Redhead record — 'So Be She'",
@@ -48,7 +48,7 @@ export const OBJETS_EN: Record<string, string> = {
 
   // ===== MUSIQUE — rares =====
   "mus.guitare_classique_ancienne": "Old classical guitar",
-  "mus.vinyle_des_scarabees_dedicace_album_solo": "Signed Scarabs record (solo album)",
+  "mus.vinyle_collector_de_vagabond_horizon_celeste": "Collector's Vagabond record — 'Celestial Horizon'",
   "mus.test_pressing_des_trolling_sons": "Trolling Sons test pressing",
   "mus.guitare_electrique_a_corps_plein_modele_legend": "Solid-body electric guitar, legend model (1980s)",
   "mus.guitare_electrique_a_trois_micros_solid_body_1": "Three-pickup solid-body electric guitar (1970s)",

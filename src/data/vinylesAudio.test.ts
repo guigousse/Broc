@@ -8,6 +8,6 @@ describe("vinylesAudio — les 3 jazz de l'écran titre", () => {
     "mus.33tours_jazz_3",
   ])("%s a un audio jouable, hébergé en local", (id) => {
     expect(vinylHasAudio(id)).toBe(true);
-    expect(vinylAudioUrl(id)).toBe(`/sounds/vinyles/${id}.mp3`);
+    expect(vinylAudioUrl(id)).toBe(`/sounds/vinyles/${id}.m4a`);
   });
 });

@@ -684,7 +684,7 @@ class AudioManager {
   /**
    * Démarre la lecture d'un vinyle. L'URL est résolue par le caller
    * (typiquement via `vinylAudioUrl(templateId)` qui regarde la table
-   * `VINYLE_AUDIO_URLS` puis fallback `/sounds/vinyles/{templateId}.mp3`).
+   * `VINYLE_AUDIO_URLS` puis fallback `/sounds/vinyles/{templateId}.m4a`).
    * Si absent, lecture silencieuse mais `onEnded` jamais appelé.
    */
   async playVinyl(url: string, onEnded?: () => void): Promise<void> {

@@ -42,7 +42,7 @@ describe("demarrerMusiqueTitre", () => {
       "ambianceVolume:1",
       "lowpass:20000",
       "startNeedle",
-      "play:/sounds/vinyles/mus.33tours_jazz_1.mp3",
+      "play:/sounds/vinyles/mus.33tours_jazz_1.m4a",
     ]);
   });
 
@@ -53,10 +53,10 @@ describe("demarrerMusiqueTitre", () => {
     finsDeMorceau[1]();
     finsDeMorceau[2]();
     expect(appels.filter((a) => a.startsWith("play:"))).toEqual([
-      "play:/sounds/vinyles/mus.33tours_jazz_1.mp3",
-      "play:/sounds/vinyles/mus.33tours_jazz_2.mp3",
-      "play:/sounds/vinyles/mus.33tours_jazz_3.mp3",
-      "play:/sounds/vinyles/mus.33tours_jazz_1.mp3",
+      "play:/sounds/vinyles/mus.33tours_jazz_1.m4a",
+      "play:/sounds/vinyles/mus.33tours_jazz_2.m4a",
+      "play:/sounds/vinyles/mus.33tours_jazz_3.m4a",
+      "play:/sounds/vinyles/mus.33tours_jazz_1.m4a",
     ]);
   });
 

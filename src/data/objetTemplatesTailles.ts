@@ -29,7 +29,7 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "mus.k7_audio_mixtape_90s": "XS",
   "mus.baladeur_a_cassette_annees_80": "XS",
   // Vinyles : pochette 33T → XS
-  "mus.vinyle_le_mur_des_flamants_roses": "XS",
+  "mus.vinyle_des_loups_des_steppes_bark_to_be_free": "XS",
   "mus.vinyle_grand_max_des_combines": "XS",
   "mus.33tours_jazz_1": "XS",
   "mus.vinyle_stevranos_vive_la_fet_a": "XS",
@@ -39,7 +39,7 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "mus.vinyle_des_scarabees_passage_cloute": "XS",
   "mus.vinyle_des_trolling_sons_bet_it_heal": "XS",
   "mus.vinyle_du_david_bah_oui_comete": "XS",
-  "mus.vinyle_du_led_guirlande_escalator_du_paradis": "XS",
+  "mus.vinyle_free_robot_des_punkbot": "XS",
   "mus.33tours_jazz_2": "XS",
   "mus.33tours_jazz_3": "XS",
   "mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle": "XS",
@@ -52,7 +52,7 @@ export const TAILLES_OVERRIDE: Record<string, TailleObjet> = {
   "mus.vinyle_classique_incontournable_classique": "XS",
   "mus.vinyle_miguel_pavane_la_zizanie": "XS",
   "mus.vinyle_whale_song_son_terrestre_n1": "XS",
-  "mus.vinyle_des_scarabees_dedicace_album_solo": "XS",
+  "mus.vinyle_collector_de_vagabond_horizon_celeste": "XS",
   "mus.test_pressing_des_trolling_sons": "XS",
   // Moyens
   "mus.radio_cassette_annees_80": "S",
