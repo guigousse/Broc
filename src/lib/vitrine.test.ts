@@ -161,6 +161,92 @@ describe("genererClientEvent — mode négociation (prix trop cher)", () => {
     expect(ev!.offreInitiale).toBeGreaterThanOrEqual(1);
     expect(ev!.offreInitiale).toBeLessThanOrEqual(ev!.prixMax);
   });
+
+  it("l'offre « trop cher » est basse : 0,75 × prixMax pour un client mou (durete 0)", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1, durete: 0 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 150,
+      }),
+    ];
+    // facteur (0.5 → prixMax 100), départ (0.9 → reste), fourchette.
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.5)
+      .mockReturnValueOnce(0.9)
+      .mockReturnValue(0.5);
+    const ev = genererClientEvent(c, vitrine);
+    expect(ev).not.toBeNull();
+    expect(ev!.offreInitiale).toBe(Math.round(ev!.prixMax * 0.75));
+  });
+
+  it("l'offre « trop cher » est plancher : 0,55 × prixMax pour un client dur (durete 1)", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1, durete: 1 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 150,
+      }),
+    ];
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.5)
+      .mockReturnValueOnce(0.9)
+      .mockReturnValue(0.5);
+    const ev = genererClientEvent(c, vitrine);
+    expect(ev).not.toBeNull();
+    expect(ev!.offreInitiale).toBe(Math.round(ev!.prixMax * 0.55));
+  });
+
+  it("départ sec : la surcote fait passer le client (ratio 1,5 → p = 0,24)", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1, durete: 0.5 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 150, // ratio 1,5 → p = (1,5 − 1,2) × 0,8 = 0,24
+      }),
+    ];
+    // facteur (0.5 → prixMax 100), puis tirage de départ 0.1 < 0.24 → il passe.
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.5)
+      .mockReturnValueOnce(0.1);
+    expect(genererClientEvent(c, vitrine)).toBeNull();
+  });
+
+  it("prix honnête + client modeste : offre honnête (0,85–0,95), jamais de départ sec", () => {
+    // prixVente 110 sur ref 100 → surcote objective 1,1 ≤ 1,25 : pas de
+    // punition, même si le plafond personnel du client (70) est écrasé.
+    const c = createMockClient({ appetitMin: 0.6, appetitMax: 0.8, durete: 0.5 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 110,
+      }),
+    ];
+    // facteur (0.5 → 0.7 → prixMax 70) puis tirages bas : ne doit PAS fuir.
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.5)
+      .mockReturnValue(0.01);
+    const ev = genererClientEvent(c, vitrine);
+    expect(ev).not.toBeNull();
+    expect(ev!.mode).toBe("negociation");
+    expect(ev!.offreInitiale).toBe(Math.round(ev!.prixMax * 0.9));
+  });
+
+  it("pas de départ sec sous le seuil de surcote (ratio ≤ 1,2)", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1, durete: 0.5 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 110, // ratio 1,1 → branche négo normale, aucun tirage de départ
+      }),
+    ];
+    // facteur (0.5), offre négo (0.5), fourchette — même avec un tirage bas,
+    // le client reste : la branche normale ne fait jamais fuir.
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.5)
+      .mockReturnValue(0.01);
+    expect(genererClientEvent(c, vitrine)).not.toBeNull();
+  });
 });
 
 describe("genererClientEvent — invariants généraux", () => {
