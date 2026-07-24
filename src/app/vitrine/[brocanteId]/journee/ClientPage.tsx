@@ -31,6 +31,8 @@ import {
   type VitrineModifiers,
 } from "@/lib/vitrine";
 import { ouvrirNegociation } from "@/lib/negociation";
+import { temperamentDe } from "@/data/temperaments";
+import { getClientIllustration } from "@/lib/personaIllustrations";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
 import { audioManager } from "@/lib/audio/audioManager";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
@@ -495,7 +497,14 @@ export default function VitrineJourneePage() {
             setOffreJoueur(ev.prixDemande);
             setRevelationFaite(false);
             if (ev.mode === "negociation") {
-              setNegoVente(ouvrirNegociation("vente", ev.offreInitiale, ev.prixMax));
+              setNegoVente(
+                ouvrirNegociation(
+                  "vente",
+                  ev.offreInitiale,
+                  ev.prixMax,
+                  temperamentDe(ev.persona.archetypeId),
+                ),
+              );
             } else {
               setNegoVente(null);
             }
@@ -989,6 +998,7 @@ export default function VitrineJourneePage() {
           tutoMainJoueur={etape === "premiere-vente"}
           mode="vente"
           persona={personaDepuisClient(clientActuel.persona)}
+          illustrationSrc={getClientIllustration(clientActuel.persona.archetypeId)}
           echelleMax={clientActuel.prixDemande}
           cibleSecrete={clientActuel.prixMax}
           prixDepartAdverse={
