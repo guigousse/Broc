@@ -294,8 +294,8 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 15", () => {
-    expect(SAVE_VERSION).toBe(15);
+  it("SAVE_VERSION incrémenté à 16", () => {
+    expect(SAVE_VERSION).toBe(16);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -729,8 +729,8 @@ describe("migration v10 — suppression de competenceTrees", () => {
 });
 
 describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
-  it("SAVE_VERSION vaut 15", () => {
-    expect(SAVE_VERSION).toBe(15);
+  it("SAVE_VERSION vaut 16", () => {
+    expect(SAVE_VERSION).toBe(16);
   });
 
   it("une save v10 avec le champ legacy le perd, brocanteur intact", () => {
@@ -813,8 +813,8 @@ const migrate = migrerSauvegarde;
 const br = emptyBrocanteur();
 
 describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-verrouiller un tier)", () => {
-  it("SAVE_VERSION incrémenté à 15", () => {
-    expect(SAVE_VERSION).toBe(15);
+  it("SAVE_VERSION incrémenté à 16", () => {
+    expect(SAVE_VERSION).toBe(16);
   });
 
   it("v14 : save antérieure (stock donné à la création) ⇒ colis considéré livré", () => {
@@ -928,8 +928,8 @@ function saveV15(patch: Partial<GameState> = {}): GameState {
 }
 
 describe("v15 — refonte des coûts de compétences (1 pt)", () => {
-  it("SAVE_VERSION incrémenté à 15", () => {
-    expect(SAVE_VERSION).toBe(15);
+  it("SAVE_VERSION incrémenté à 16", () => {
+    expect(SAVE_VERSION).toBe(16);
   });
 
   it("rembourse l'écart de l'ancien barème (P1 +0, P2 +1, P3 +2)", () => {
