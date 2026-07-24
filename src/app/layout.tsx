@@ -48,7 +48,11 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   viewportFit: "cover",
-  interactiveWidget: "resizes-content",
+  // ⚠ JAMAIS interactiveWidget: "resizes-content" ici : propriété pensée pour
+  // Chrome/Android, mal interprétée par WKWebView qui retranche alors les
+  // safe areas du viewport de layout (877→778 sur iPhone 16 Pro) → bande
+  // vide sous la page, sur simulateur comme sur device (bug TestFlight du
+  // 2026-07-24, mesuré via innerHeight/visualViewport).
 };
 
 export default function RootLayout({
