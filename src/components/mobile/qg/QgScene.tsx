@@ -71,11 +71,17 @@ export function QgScene({ children }: QgSceneProps) {
 /** Hook pour positionner un objet à ses coordonnées effectives (base + override). */
 export function useQgObjetStyle(key: QgObjetKey): CSSProperties {
   const { left, bottom, width } = useQgObjet(key);
+  // Coordonnées authorées en vw dans un repère « panorama = panoramaWidth vw ».
+  // On les exprime en % de la largeur de la scène : identique au rendu vw
+  // historique (scène = panoramaWidth vw), mais indépendant de la taille réelle
+  // de la scène — indispensable depuis que la scène est dimensionnée par sa
+  // hauteur (les objets restent ancrés à l'image sur iPad comme sur téléphone).
+  const pct = (vw: number) => (vw / QG_LAYOUT.panoramaWidth) * 100;
   return {
     position: "absolute",
-    left: `${left}vw`,
+    left: `${pct(left)}%`,
     bottom: `${bottom}%`,
-    width: `${width}vw`,
+    width: `${pct(width)}%`,
     height: "auto",
     pointerEvents: "auto",
     cursor: "pointer",
