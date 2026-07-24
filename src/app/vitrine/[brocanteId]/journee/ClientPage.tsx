@@ -227,6 +227,10 @@ export default function VitrineJourneePage() {
       ? state.celebriteActuelle
       : null;
   const tempsRestantRef = useRef(JOURNEE_DUREE_SECONDES);
+  /** Compte à rebours à la précision du tick (100 ms), hors état React : le
+   *  `setTempsRestant` n'est déclenché qu'au changement de seconde entière —
+   *  1 re-render/s au lieu de 10 pour un composant de cette taille. */
+  const tempsPrecisRef = useRef(JOURNEE_DUREE_SECONDES);
   /** Restauration du temps restant persisté : effectuée une seule fois, dès que
    *  l'état est hydraté. Sans ce ref, l'initialiseur `useState` capturerait
    *  `state === null` (avant hydratation) et resterait bloqué à la durée pleine
@@ -240,6 +244,7 @@ export default function VitrineJourneePage() {
     if (typeof saved === "number" && saved < JOURNEE_DUREE_SECONDES) {
       setTempsRestant(saved);
       tempsRestantRef.current = saved;
+      tempsPrecisRef.current = saved;
     }
   }, [isHydrated, state]);
   /** Garde synchrone — empêche que terminerJournee s'exécute plus d'une fois. */
@@ -448,11 +453,14 @@ export default function VitrineJourneePage() {
       // En pause si un client est devant nous
       if (clientActuelRef.current) return;
 
-      // Updater pur : ni écriture de ref, ni effet de bord (setTimeout) ici —
-      // la synchro de tempsRestantRef et le déclenchement de fin de journée
-      // sont délégués à des useEffect dédiés ci-dessous, réagissant au
+      // Décompte à la précision du tick sur une ref ; l'état React (et donc
+      // le re-render) n'est touché qu'au changement de seconde entière. La
+      // synchro de tempsRestantRef et le déclenchement de fin de journée
+      // restent délégués aux useEffect dédiés ci-dessous, réagissant au
       // changement de `tempsRestant`.
-      setTempsRestant((t) => Math.max(0, t - TICK_MS / 1000));
+      tempsPrecisRef.current = Math.max(0, tempsPrecisRef.current - TICK_MS / 1000);
+      const secondeEntiere = Math.ceil(tempsPrecisRef.current);
+      setTempsRestant((t) => (t === secondeEntiere ? t : secondeEntiere));
 
       // Décrémente le compte à rebours du prochain client en JS pur (ref, pas
       // de useState) : le spawn ci-dessous déclenche des setState externes

@@ -41,7 +41,8 @@ const labelStyle: CSSProperties = {
   fontWeight: 700,
   letterSpacing: "0.18em",
   textTransform: "uppercase",
-  color: "var(--brass-700)",
+  // brass-300 (7,6:1 sur forest-800) — brass-700 mesurait 2,7:1, sous AA.
+  color: "var(--brass-300)",
   lineHeight: 1,
 };
 
