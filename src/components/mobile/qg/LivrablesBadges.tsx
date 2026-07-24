@@ -26,10 +26,10 @@ const pile: CSSProperties = {
 
 const badge = (i: number): CSSProperties => ({
   position: "relative",
-  width: 56,
-  height: 56,
+  width: 95,
+  height: 95,
   padding: 0,
-  marginLeft: i > 0 ? -20 : 0,
+  marginLeft: i > 0 ? -34 : 0,
   zIndex: 40 - i, // le premier au-dessus, les suivants glissés dessous
   borderRadius: "50%",
   border: "2px solid #b89c5e",
@@ -56,23 +56,23 @@ const initiale: CSSProperties = {
   display: "grid",
   placeItems: "center",
   fontFamily: "var(--font-display)",
-  fontSize: 22,
+  fontSize: 38,
   color: "#6e1f1f",
 };
 
 const coche: CSSProperties = {
   position: "absolute",
-  top: -4,
-  right: -4,
-  width: 22,
-  height: 22,
+  top: -6,
+  right: -6,
+  width: 38,
+  height: 38,
   borderRadius: "50%",
   background: "#2c5e3f",
   border: "2px solid #b89c5e",
   color: "#f4e9cd",
   fontFamily: "var(--font-display)",
   fontWeight: 700,
-  fontSize: 12,
+  fontSize: 21,
   display: "grid",
   placeItems: "center",
 };
@@ -93,7 +93,7 @@ export function LivrablesBadges({
     <div
       style={{
         ...pile,
-        bottom: `calc(var(--mobile-tabbar-h) + var(--safe-bottom) + ${sureleves ? 80 : 12}px)`,
+        bottom: `calc(var(--mobile-tabbar-h) + var(--safe-bottom) + ${sureleves ? 119 : 12}px)`,
       }}
     >
       {livrables.map((l, i) => {
