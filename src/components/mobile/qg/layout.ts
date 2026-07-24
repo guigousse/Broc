@@ -41,3 +41,14 @@ export const QG_LAYOUT = {
 } as const;
 
 export type QgObjetKey = keyof typeof QG_LAYOUT.objets;
+
+/**
+ * Convertit une coordonnée horizontale authorée en vw (repère « panorama =
+ * panoramaWidth vw ») en POURCENTAGE de la largeur de la scène. Indispensable
+ * depuis que la scène est dimensionnée par sa hauteur (cf. UnifiedPanorama) :
+ * un `left`/`width` en vw brut se décale sur les écrans larges (la scène n'y
+ * fait plus panoramaWidth vw). Tous les objets QG doivent passer par ici.
+ */
+export function qgPct(vw: number): number {
+  return (vw / QG_LAYOUT.panoramaWidth) * 100;
+}

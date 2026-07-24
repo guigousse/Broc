@@ -1,6 +1,7 @@
 "use client";
 
 import { useQgObjet } from "./dev/QgEditContext";
+import { qgPct } from "./layout";
 
 export function QgPortemanteau() {
   const { left, bottom, width } = useQgObjet("portemanteau");
@@ -8,9 +9,9 @@ export function QgPortemanteau() {
     <div
       style={{
         position: "absolute",
-        left: `${left}vw`,
+        left: `${qgPct(left)}%`,
         bottom: `${bottom}%`,
-        width: `${width}vw`,
+        width: `${qgPct(width)}%`,
         pointerEvents: "none",
       }}
       aria-hidden

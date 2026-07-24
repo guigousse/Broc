@@ -7,6 +7,7 @@ import {
   type ChatBaladeurId,
 } from "@/lib/chatBaladeur";
 import { useChatBaladeurCoord, useQgEditContext } from "./dev/QgEditContext";
+import { qgPct } from "./layout";
 
 interface QgChatBaladeurProps {
   jourActuel: number;
@@ -21,9 +22,9 @@ function ChatSprite({ id }: { id: ChatBaladeurId }) {
   const { left, bottom, width } = useChatBaladeurCoord(id);
   const style: CSSProperties = {
     position: "absolute",
-    left: `${left}vw`,
+    left: `${qgPct(left)}%`,
     bottom: `${bottom}%`,
-    width: `${width}vw`,
+    width: `${qgPct(width)}%`,
     height: "auto",
     pointerEvents: "none",
     userSelect: "none",
