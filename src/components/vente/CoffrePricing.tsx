@@ -149,6 +149,8 @@ export function CoffrePricing({
         style={{
           position: "sticky",
           bottom: 0,
+          // Au-dessus du contenu scrollé (pastilles de prix comprises).
+          zIndex: 1,
           padding: "10px 14px calc(10px + var(--safe-bottom))",
           background: "var(--paper-100)",
           borderTop: "1px solid var(--brass-500)",

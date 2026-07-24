@@ -225,6 +225,11 @@ const track: CSSProperties = {
   position: "relative",
   flex: 1,
   height: 64,
+  // Confine les z-index des pastilles (1..3) à la piste : sans ça, `position:
+  // relative` seul ne crée pas de contexte d'empilement et le z:3 de la
+  // poignée de vente « fuit » dans le contexte parent, passant DEVANT le footer
+  // sticky (z auto) quand on scrolle la liste de tarification.
+  isolation: "isolate",
 };
 
 const line: CSSProperties = {
