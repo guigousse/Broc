@@ -97,7 +97,23 @@ export const SEQUENCES_ANNIVERSAIRE: Record<string, DialogueSequence> = {
   },
 };
 
+/** Mini-tuto de la Gazette : première édition offerte par le grand-père. */
+export const SEQUENCES_GAZETTE: Record<string, DialogueSequence> = {
+  gazette_tuto: {
+    id: "gazette_tuto",
+    lignes: [
+      { humeur: "souriant", texte: "Ah, tu l'as trouvée ! La Gazette des Chineurs — cinquante ans que je la lis chaque lundi. Celle-ci, c'est moi qui te l'offre." },
+      { humeur: "songeur", texte: "Regarde la rubrique des tendances : elle te dit quelles catégories ont la cote cette semaine. Plus tu deviens connaisseur, plus elle t'en révèle." },
+      { humeur: "souriant", texte: "Le bulletin météo, lui, annonce le temps sur les brocantes — et l'affluence qui va avec. Il se lira avec la compétence « Bulletin météo »." },
+      { humeur: "songeur", texte: "Le carnet mondain murmure quelle célébrité visitera quelle brocante… Des affaires en or — pour qui a la compétence « Carnet mondain »." },
+      { humeur: "rieur", texte: "Et avec de l'« Influence », tu pourras même faire réécrire un article qui ne te plaît pas. Ah, la presse…" },
+      { humeur: "souriant", texte: "Dès lundi prochain, le kiosque la déposera devant la porte. Quelques pièces bien investies, crois-moi. Je pose celle-ci sur le coin du bureau." },
+    ],
+  },
+};
+
 export const TOUTES_SEQUENCES: DialogueSequence[] = [
   ...Object.values(SEQUENCES_TUTORIEL),
   ...Object.values(SEQUENCES_ANNIVERSAIRE),
+  ...Object.values(SEQUENCES_GAZETTE),
 ];

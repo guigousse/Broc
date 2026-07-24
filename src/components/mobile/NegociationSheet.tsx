@@ -7,6 +7,7 @@ import { HumeurGauge } from "@/components/mobile/HumeurGauge";
 import { PersonaAvatar } from "@/components/mobile/PersonaAvatar";
 import type { PersonaInfo } from "@/components/mobile/PersonaInfoOverlay";
 import { ouvrirNegociation } from "@/lib/negociation";
+import { temperamentDe } from "@/data/temperaments";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -83,16 +84,28 @@ export function NegociationSheet({
 }: NegociationSheetProps) {
   const { d, tr, locale } = useLangue();
   const [localNego, setLocalNego] = useState<NegociationState>(
-    nego ?? ouvrirNegociation(mode, prixDepartAdverse, cibleSecrete),
+    nego ??
+      ouvrirNegociation(
+        mode,
+        prixDepartAdverse,
+        cibleSecrete,
+        temperamentDe(persona.archetype),
+      ),
   );
 
   useEffect(() => {
     if (open) {
       setLocalNego(
-        nego ?? ouvrirNegociation(mode, prixDepartAdverse, cibleSecrete),
+        nego ??
+          ouvrirNegociation(
+            mode,
+            prixDepartAdverse,
+            cibleSecrete,
+            temperamentDe(persona.archetype),
+          ),
       );
     }
-  }, [open, nego, mode, prixDepartAdverse, cibleSecrete]);
+  }, [open, nego, mode, prixDepartAdverse, cibleSecrete, persona.archetype]);
 
   const enCours = localNego.statut === "en_cours";
 

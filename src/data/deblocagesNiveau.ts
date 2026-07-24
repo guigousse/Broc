@@ -20,7 +20,7 @@ export interface DeblocageNiveau {
 /** Libellés FR canoniques des 6 atouts (clés des overlays en/es). */
 const ATOUTS: ReadonlyArray<{ id: keyof typeof NIVEAU_ACTIVES; titre: string; desc: string }> = [
   { id: "flair", titre: "Atout 🔍 Le Flair",
-    desc: "En chine : révèle la cote de tous les objets de l'étal pour le reste de la visite. Un usage par jour." },
+    desc: "En chine : révèle la cote de l'objet affiché. Un usage par jour." },
   { id: "lotGarni", titre: "Atout 🧺 Le Lot garni",
     desc: "En pleine négociation à l'étal : ajoute un second objet au panier du client, le prix du lot est renégocié d'un bloc. Un usage par jour." },
   { id: "fouille", titre: "Atout 🧹 La Fouille",

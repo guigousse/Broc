@@ -52,3 +52,50 @@ export function getVendeurIllustration(archetype: string): string | undefined {
 export function getVendeurIllustrationFache(archetype: string): string | undefined {
   return VENDEUR_ILLUSTRATION_FACHE_MAP[archetype as VendeurArchetypeId];
 }
+
+/* ------------------------------------------------------------------ */
+/* Acheteurs (archétypes clients de la vente)                          */
+/* ------------------------------------------------------------------ */
+
+/** Archétypes clients illustrés — clés = `ClientArchetype.id` (clients.ts).
+ *  Assets générés par `npm run gen:clients` dans public/personas/clients/. */
+const CLIENT_ARCHETYPES_ILLUSTRES = [
+  "retraite_chineur",
+  "passionnee_artdeco",
+  "brocanteur_concurrent",
+  "collectionneur_musique",
+  "gamer_nostalgique",
+  "bibliophile",
+  "bricoleur_dimanche",
+  "etudiant_fauche",
+  "snob_bourgeois",
+  "touriste_perdu",
+  "famille_dimanche",
+  "decorateur",
+  "amateur_vintage",
+  "notable_curieux",
+  "opportuniste",
+  "galeriste",
+] as const;
+
+const CLIENTS_ILLUSTRES = new Set<string>(CLIENT_ARCHETYPES_ILLUSTRES);
+
+/** Silhouette noire : client dont le persona n'est pas encore révélé
+ *  (compétence Lecteur d'âmes non débloquée). */
+export const CLIENT_SILHOUETTE = "/personas/clients/client-inconnu.webp";
+
+/** Illustration d'un acheteur, ou undefined (célébrité, archétype inconnu →
+ *  silhouette). */
+export function getClientIllustration(archetypeId: string): string | undefined {
+  return CLIENTS_ILLUSTRES.has(archetypeId)
+    ? `/personas/clients/client-${archetypeId}.webp`
+    : undefined;
+}
+
+/** Variante fâchée d'un acheteur — générée en image-to-image depuis le
+ *  portrait calme (`gen:clients --fache`) pour garder le même personnage. */
+export function getClientIllustrationFache(archetypeId: string): string | undefined {
+  return CLIENTS_ILLUSTRES.has(archetypeId)
+    ? `/personas/clients/client-${archetypeId}-fache.webp`
+    : undefined;
+}

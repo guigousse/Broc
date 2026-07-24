@@ -31,6 +31,12 @@ import {
   type VitrineModifiers,
 } from "@/lib/vitrine";
 import { ouvrirNegociation } from "@/lib/negociation";
+import { temperamentDe } from "@/data/temperaments";
+import {
+  CLIENT_SILHOUETTE,
+  getClientIllustration,
+  getClientIllustrationFache,
+} from "@/lib/personaIllustrations";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
 import { audioManager } from "@/lib/audio/audioManager";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
@@ -495,7 +501,14 @@ export default function VitrineJourneePage() {
             setOffreJoueur(ev.prixDemande);
             setRevelationFaite(false);
             if (ev.mode === "negociation") {
-              setNegoVente(ouvrirNegociation("vente", ev.offreInitiale, ev.prixMax));
+              setNegoVente(
+                ouvrirNegociation(
+                  "vente",
+                  ev.offreInitiale,
+                  ev.prixMax,
+                  temperamentDe(ev.persona.archetypeId),
+                ),
+              );
             } else {
               setNegoVente(null);
             }
@@ -836,6 +849,14 @@ export default function VitrineJourneePage() {
     );
   }
 
+  /* Persona révélé : compétence Lecteur d'âmes, ou célébrité (toujours à
+     visage découvert). Sinon le client reste anonyme : nom générique et
+     silhouette noire à la place du portrait d'archétype. */
+  const personaRevele =
+    clientActuel !== null &&
+    ((modifiersRef.current?.revelePersona ?? false) ||
+      clientActuel.persona.archetypeId === "celebrite");
+
   return (
     <div
       style={{
@@ -989,6 +1010,16 @@ export default function VitrineJourneePage() {
           tutoMainJoueur={etape === "premiere-vente"}
           mode="vente"
           persona={personaDepuisClient(clientActuel.persona)}
+          illustrationSrc={
+            personaRevele
+              ? getClientIllustration(clientActuel.persona.archetypeId)
+              : CLIENT_SILHOUETTE
+          }
+          illustrationFacheSrc={
+            personaRevele
+              ? getClientIllustrationFache(clientActuel.persona.archetypeId)
+              : undefined
+          }
           echelleMax={clientActuel.prixDemande}
           cibleSecrete={clientActuel.prixMax}
           prixDepartAdverse={
@@ -998,8 +1029,7 @@ export default function VitrineJourneePage() {
           }
           nego={clientActuel.mode === "negociation" ? negoVente : null}
           nomAffiche={
-            modifiersRef.current?.revelePersona ||
-            clientActuel.persona.archetypeId === "celebrite"
+            personaRevele
               ? nomAfficheClient(clientActuel.persona)
               : d.vente.clientInconnu
           }

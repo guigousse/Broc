@@ -377,6 +377,18 @@ export interface GameState {
    * (saves antérieures) = rien à guider.
    */
   miniTutoCarnet?: "ouvrir" | "termine";
+  /**
+   * ADDITIF (v16) : mini-tuto de la Gazette. "aFaire" ou absent = pas encore
+   * fait — le journal offert apparaît au sol dès qu'une compétence gazette
+   * est débloquée (cf. aAccesGazette) ; "faite" = tuto terminé, cycle
+   * hebdomadaire d'achat actif.
+   */
+  tutoGazette?: "aFaire" | "faite";
+  /**
+   * ADDITIF (v16) : édition de la semaine refusée (lundi). Reset à false au
+   * refresh hebdo de la Gazette. Absent = false.
+   */
+  gazetteRefusee?: boolean;
   /** Lots de commandes périodiques en cours (quotidien / hebdo). */
   quetesPeriodiques: {
     quotidien: LotPeriodique;
@@ -568,6 +580,19 @@ export type VendeurArchetypeId =
 /** Sens de la négociation. */
 export type NegoMode = "achat" | "vente";
 
+/**
+ * Tempérament de dialogue d'un persona (vendeur OU acheteur). Regroupe les
+ * archétypes en familles de ton pour colorer les répliques de négociation
+ * (mapping dans `src/data/temperaments.ts`, pools dans `negociation.ts`).
+ */
+export type Temperament =
+  | "bourru"
+  | "chaleureux"
+  | "radin"
+  | "raffine"
+  | "bavard"
+  | "passionne";
+
 /** Persona générique commun aux deux modes. */
 export interface NegoPersona {
   /** Identifiant de l'archétype source (vendeur ou client). */
@@ -610,6 +635,9 @@ export interface MessageNego {
   /** Index de variante tiré au moment de l'événement (modulo la taille du pool par langue). */
   variante: number;
   params?: { prix?: number; cibleSecrete?: number };
+  /** Tempérament du persona : la réplique est tirée du pool coloré s'il
+   *  existe pour cette clé, sinon du pool générique. */
+  temperament?: Temperament;
 }
 
 /** État persistant d'une négociation en cours. */
@@ -623,6 +651,9 @@ export interface NegociationState {
   derniereOffreJoueur: number | null;
   statut: NegoStatut;
   message: MessageNego;
+  /** Tempérament du persona, figé à l'ouverture — colore toutes les répliques
+   *  de la négo. Jamais en save (`NegociationState` vit en useState). */
+  temperament?: Temperament;
 }
 
 export type TailleObjet = "XS" | "S" | "M" | "L" | "XL";

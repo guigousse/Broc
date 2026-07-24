@@ -48,10 +48,6 @@ interface GazetteSheetProps {
   revelerMeteo: boolean;
   celebrite: CelebriteEvenement | null;
   revelerCelebrite: boolean;
-  achetee: boolean;
-  onAcheter: () => void;
-  budget: number;
-  prixGazette: number;
   /** Influence (compétence Vision 3) disponible et pas encore consommée aujourd'hui. */
   influenceDisponible: boolean;
   /** Relance la météo de la semaine via l'Influence. */
@@ -329,10 +325,6 @@ export function GazetteSheet(props: GazetteSheetProps) {
     revelerMeteo,
     celebrite,
     revelerCelebrite,
-    achetee,
-    onAcheter,
-    budget,
-    prixGazette,
     influenceDisponible,
     onRerollMeteo,
     onRerollCelebrite,
@@ -360,11 +352,6 @@ export function GazetteSheet(props: GazetteSheetProps) {
   const tendanceParCategorie = new Map(
     tendances.map((t) => [t.categorie, t.delta] as const),
   );
-
-  // Floutage si non achetée — applique à toutes les sections de contenu.
-  const lockedBlur: CSSProperties = !achetee
-    ? { filter: "blur(6px)", opacity: 0.45, pointerEvents: "none" }
-    : {};
 
   return (
     <>
@@ -395,8 +382,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
             {/* Espace réservé au titre gravé dans le PNG */}
             <div style={titleSpacer} />
 
-            {/* Contenu floutable selon achat */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", ...lockedBlur }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
               {/* ============== Carnet mondain ============== */}
               <h3 style={sectionTitle}>Carnet mondain</h3>
               {revelerCelebrite && celebrite ? (
@@ -590,43 +576,6 @@ export function GazetteSheet(props: GazetteSheetProps) {
                 </p>
               )}
             </div>
-
-            {/* CTA d'achat : visible uniquement si non achetée */}
-            {!achetee && (
-              <div
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  bottom: "4%",
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
-                <button
-                  type="button"
-                  disabled={budget < prixGazette}
-                  onClick={onAcheter}
-                  style={{
-                    padding: "3% 6%",
-                    background:
-                      budget < prixGazette
-                        ? "var(--paper-500)"
-                        : "var(--forest-800)",
-                    color: "var(--brass-300)",
-                    border: "1px solid var(--brass-500)",
-                    fontFamily: "var(--font-display)",
-                    fontSize: "3.4cqw",
-                    letterSpacing: "0.16em",
-                    textTransform: "uppercase",
-                    cursor: budget < prixGazette ? "not-allowed" : "pointer",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
-                  }}
-                >
-                  {tr(d.sheets.acheterGazette, { prix: prixGazette })}
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

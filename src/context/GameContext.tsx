@@ -242,6 +242,12 @@ interface GameActionsValue {
   /** Accepte un chapitre de la trame principale (dialogue de délivrance du grand-père, pastille QG). */
   accepterChapitrePrincipal: (chapitreId: string) => void;
   acheterGazette: () => { ok: boolean; raison?: string };
+  /** Gazette offerte par le grand-père (tuto) : marque l'édition achetée sans débit. */
+  ouvrirGazetteOfferte: () => void;
+  /** Fin du mini-tuto gazette (fermeture de la sheet guidée). */
+  terminerTutoGazette: () => void;
+  /** Refus explicite de l'édition du lundi. */
+  refuserGazette: () => void;
   marquerBossDebloqueVu: () => void;
   /** Avance `niveauVu` d'UN niveau (clampé à `brocanteur.niveau`) — célébration séquentielle des level-up. */
   marquerNiveauVu: () => void;
@@ -612,6 +618,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       brocanteur: emptyBrocanteur(),
       collection: initCollection(),
       gazetteAchetee: false,
+      tutoGazette: "aFaire",
+      gazetteRefusee: false,
       bossDebloqueSeen: false,
       niveauVu: 0,
       meteoSemaine: tirerMeteoSemaine(),
@@ -720,6 +728,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ? prochainLundi(nouveauJour + 1)
           : prev.prochainRafraichissementTendances,
         gazetteAchetee: refresh ? false : prev.gazetteAchetee,
+        gazetteRefusee: refresh ? false : (prev.gazetteRefusee ?? false),
         meteoSemaine: refresh ? tirerMeteoSemaine() : prev.meteoSemaine,
         celebriteActuelle: refresh ? tirerCelebrite() : prev.celebriteActuelle,
         influenceUtilisee: refresh ? false : prev.influenceUtilisee,
@@ -1798,6 +1807,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  const ouvrirGazetteOfferte = useCallback(() => {
+    setState((prev) => {
+      if (!prev || prev.gazetteAchetee) return prev;
+      return { ...prev, gazetteAchetee: true };
+    });
+  }, []);
+
+  const terminerTutoGazette = useCallback(() => {
+    setState((prev) =>
+      prev && prev.tutoGazette !== "faite"
+        ? { ...prev, tutoGazette: "faite" }
+        : prev,
+    );
+  }, []);
+
+  const refuserGazette = useCallback(() => {
+    setState((prev) =>
+      prev && !prev.gazetteRefusee ? { ...prev, gazetteRefusee: true } : prev,
+    );
+  }, []);
+
   const payerFraisBrocante = useCallback(
     (brocanteId: string, brocanteNom: string, montant: number) => {
       if (montant <= 0) return;
@@ -1866,6 +1896,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       donnerACollection,
       retirerDeCollection,
       acheterGazette,
+      ouvrirGazetteOfferte,
+      terminerTutoGazette,
+      refuserGazette,
       payerFraisBrocante,
       livrerMission,
       accepterChapitrePrincipal,
@@ -1922,6 +1955,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       donnerACollection,
       retirerDeCollection,
       acheterGazette,
+      ouvrirGazetteOfferte,
+      terminerTutoGazette,
+      refuserGazette,
       payerFraisBrocante,
       livrerMission,
       accepterChapitrePrincipal,

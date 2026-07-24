@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { NegoBar } from "@/components/mobile/NegoBar";
 import { HumeurGauge } from "@/components/mobile/HumeurGauge";
 import { proposerOffre, ouvrirNegociation } from "@/lib/negociation";
+import { temperamentDe } from "@/data/temperaments";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -55,7 +56,12 @@ export function ChineNegoDrawer({
   const [localNego, setLocalNego] = useState<NegociationState>(
     () =>
       item.negociation ??
-      ouvrirNegociation("achat", prixVendeur, item.prixMinAccept),
+      ouvrirNegociation(
+        "achat",
+        prixVendeur,
+        item.prixMinAccept,
+        temperamentDe(persona.archetype),
+      ),
   );
   const [offreJoueur, setOffreJoueur] = useState<number>(
     Math.max(1, Math.round(prixVendeur * 0.25)),
@@ -97,11 +103,17 @@ export function ChineNegoDrawer({
         )}
         <div style={rightZone}>
           {expanded ? (
-            <div style={bubble}>{texteNego(localNego.message, locale)}</div>
+            <div style={bubble}>
+              <span style={bubbleTailOuter} aria-hidden />
+              <span style={bubbleTailInner} aria-hidden />
+              {texteNego(localNego.message, locale)}
+            </div>
           ) : acquis ? (
             <span style={statutTexte("var(--brass-700)")}>{d.chine.acquisStatut}</span>
           ) : facheInitial ? (
-            <span style={statutTexte("var(--vermillion-600)")}>{d.chine.vendeurFache}</span>
+            /* Visuel porté par le tampon « Vendeur fâché » sur le sticker ;
+               on ne garde ici que l'annonce pour les lecteurs d'écran. */
+            <span style={srOnly}>{d.chine.vendeurFache}</span>
           ) : plein ? (
             <span style={statutTexte("var(--vermillion-600)")}>{d.qg.stockagePlein}</span>
           ) : (
@@ -228,18 +240,46 @@ const peekBtnRow: CSSProperties = {
   marginBottom: 10,
 };
 
+/* Bulle de dialogue du vendeur : cadre arrondi + pointe vers son portrait
+   (à gauche), même langage visuel que la bulle de vente (PersonaAvatar). */
 const bubble: CSSProperties = {
+  position: "relative",
   flex: 1,
   marginBottom: 8,
-  padding: "10px 12px",
+  padding: "12px 14px",
   background: "var(--paper-100)",
   border: "1px solid var(--brass-500)",
-  borderRadius: 8,
+  borderRadius: 14,
+  boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
   fontFamily: "var(--font-serif)",
   fontStyle: "italic",
-  fontSize: 13,
+  fontSize: 16,
   color: "var(--ink-700)",
-  lineHeight: 1.4,
+  lineHeight: 1.35,
+};
+
+const bubbleTailOuter: CSSProperties = {
+  position: "absolute",
+  left: -9,
+  top: "50%",
+  width: 0,
+  height: 0,
+  borderTop: "9px solid transparent",
+  borderBottom: "9px solid transparent",
+  borderRight: "9px solid var(--brass-500)",
+  transform: "translateY(-50%)",
+};
+
+const bubbleTailInner: CSSProperties = {
+  position: "absolute",
+  left: -7,
+  top: "50%",
+  width: 0,
+  height: 0,
+  borderTop: "8px solid transparent",
+  borderBottom: "8px solid transparent",
+  borderRight: "8px solid var(--paper-100)",
+  transform: "translateY(-50%)",
 };
 
 /** Bandeau nom pleine largeur, coins hauts arrondis (ancienne fiche). */
@@ -267,6 +307,16 @@ const statutTexte = (color: string): CSSProperties => ({
   fontSize: 14,
   fontFamily: "var(--font-display)",
 });
+
+/** Texte présent pour les lecteurs d'écran mais invisible à l'écran. */
+const srOnly: CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  overflow: "hidden",
+  clipPath: "inset(50%)",
+  whiteSpace: "nowrap",
+};
 
 /** Section négo repliable — anime la remontée (max-height 0 → ouvert). */
 const accordionOuter = (expanded: boolean): CSSProperties => ({

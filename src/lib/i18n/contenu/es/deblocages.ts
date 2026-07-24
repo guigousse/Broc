@@ -36,7 +36,7 @@ export const DEBLOCAGES_DESC_ES: Record<string, string> = {
   "Paliers 2 des compétences": "El rango 2 de todas las ramas de habilidades pasa a estar disponible.",
   "Paliers 3 des compétences": "El rango 3 — la cima de cada rama — pasa a estar disponible.",
   "Atout 🔍 Le Flair":
-    "En la rebusca: revela el valor real de todos los objetos del puesto durante el resto de la visita. Un uso al día.",
+    "En la rebusca: revela el valor real del objeto mostrado. Un uso al día.",
   "Atout 🧺 Le Lot garni":
     "En plena negociación en tu puesto: añade un segundo objeto al lote del cliente, el precio se renegocia en bloque. Un uso al día.",
   "Atout 🧹 La Fouille":
