@@ -1040,6 +1040,11 @@ html, body {
 html {
   height: 100%;
   overscroll-behavior: none;
+  /* Fond racine = vert du chrome (header/tabbar). Filet de sécurité : si une
+     safe-area (bas surtout, sur device réel) n'est pas couverte par le contenu,
+     elle se fond dans le header/la barre d'onglets au lieu d'afficher le blanc
+     par défaut du webview (bande blanche constatée iPhone 12 TestFlight). */
+  background: var(--forest-800);
 }
 body {
   height: 100%;
