@@ -284,7 +284,7 @@ const bubbleTailInner: CSSProperties = {
 
 /** Bandeau nom pleine largeur, coins hauts arrondis (ancienne fiche). */
 const namePlate: CSSProperties = {
-  padding: "12px 16px",
+  padding: "9px 16px",
   background:
     "linear-gradient(180deg, var(--brass-300) 0%, var(--brass-500) 50%, var(--brass-300) 100%)",
   borderBottom: "2px solid var(--brass-700)",
@@ -328,10 +328,12 @@ const accordionOuter = (expanded: boolean): CSSProperties => ({
 
 const accordionInner: CSSProperties = {
   background: "var(--paper-200)",
-  padding: "12px 16px",
+  // Resserré (padding + gap) pour rapprocher jauge d'humeur ↔ curseurs de prix
+  // ↔ boutons, et rendre de la hauteur à l'objet pendant la négo.
+  padding: "8px 16px 10px",
   display: "flex",
   flexDirection: "column",
-  gap: 10,
+  gap: 6,
 };
 
 /** Fond blanc marbré (veinage subtil via dégradés superposés). */

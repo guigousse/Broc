@@ -68,8 +68,11 @@ export function HumeurGauge({ humeur }: HumeurGaugeProps) {
 }
 
 const wrapStyle: CSSProperties = {
-  marginTop: 22,
-  padding: "8px 14px 8px",
+  // Resserré : le médaillon smiley déborde de ~10 px au-dessus du rail, on
+  // garde juste ce qu'il faut (14) au lieu de 22, pour rapprocher la jauge du
+  // bandeau nom et libérer de la hauteur pour l'objet en négo.
+  marginTop: 14,
+  padding: "6px 14px 4px",
 };
 
 const trackStyle: CSSProperties = {
