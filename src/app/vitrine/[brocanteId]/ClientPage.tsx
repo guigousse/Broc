@@ -139,7 +139,7 @@ export default function VitrineBrocantePage() {
   };
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", background: "var(--paper-100)" }}>
+    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden", background: "var(--paper-100)" }}>
       <MobileHeader budget={state.budget} />
       <main style={{ flex: 1, overflowY: "auto" }}>
         {etape === "packing" ? (

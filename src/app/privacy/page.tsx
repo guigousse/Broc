@@ -15,6 +15,11 @@ export default function PrivacyPage() {
   return (
     <main
       style={{
+        // Body verrouillé (globals.css) : la page scrolle elle-même.
+        height: "100dvh",
+        overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
+        overscrollBehavior: "contain",
         maxWidth: 760,
         margin: "0 auto",
         padding: "48px 24px 96px",

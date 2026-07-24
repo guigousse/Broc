@@ -15,10 +15,14 @@ interface MobileLayoutProps {
   fillContent?: boolean;
 }
 
+/* Le body est verrouillé (position: fixed, cf. globals.css) : le scroll
+   vertical se fait dans le <main> ci-dessous, header et stickyTop restent
+   toujours visibles. */
 const outerStyle: CSSProperties = {
-  minHeight: "100dvh",
+  height: "100dvh",
   display: "flex",
   flexDirection: "column",
+  overflow: "hidden",
   background: "var(--paper-100)",
 };
 
@@ -37,6 +41,9 @@ export function MobileLayout({
         style={{
           flex: 1,
           minHeight: 0,
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "contain",
           display: fillContent ? "flex" : undefined,
           flexDirection: fillContent ? "column" : undefined,
           padding: fillContent
