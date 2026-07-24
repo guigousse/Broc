@@ -36,7 +36,10 @@ import {
 } from "@/components/mobile/panorama/UnifiedPanorama";
 import { QgCarnet } from "@/components/mobile/qg/QgCarnet";
 import { LivrablesBadges } from "@/components/mobile/qg/LivrablesBadges";
-import { QgPorteRevues } from "@/components/mobile/qg/QgPorteRevues";
+import { QgJournalSol } from "@/components/mobile/qg/QgJournalSol";
+import { QgJournalBureau } from "@/components/mobile/qg/QgJournalBureau";
+import { GazetteAchatModale } from "@/components/mobile/qg/GazetteAchatModale";
+import { journalSolMode } from "@/lib/gazette";
 import { QgPorte } from "@/components/mobile/qg/QgPorte";
 import { QgCourrier } from "@/components/mobile/qg/QgCourrier";
 import { QgPortemanteau } from "@/components/mobile/qg/QgPortemanteau";
@@ -66,6 +69,7 @@ import { CATEGORIES } from "@/data/categories";
 import {
   GRAND_PERE_PORTRAITS,
   SEQUENCES_ANNIVERSAIRE,
+  SEQUENCES_GAZETTE,
   SEQUENCES_TUTORIEL,
   type DialogueSequence,
 } from "@/data/dialogues";
@@ -102,6 +106,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     state,
     isHydrated,
     acheterGazette,
+    ouvrirGazetteOfferte,
+    terminerTutoGazette,
+    refuserGazette,
     marquerCourrierLu,
     livrerMission,
     avancerJour,
@@ -137,6 +144,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
 
   // Sheets QG.
   const [gazetteOuverte, setGazetteOuverte] = useState(false);
+  const [gazetteModaleOuverte, setGazetteModaleOuverte] = useState(false);
+  const [tutoGazetteEnCours, setTutoGazetteEnCours] = useState(false);
   const [porteOuverte, setPorteOuverte] = useState(false);
   /** Machine à énergie popée avec bandeau : Chiner/Étaler cliqué sans énergie. */
   const [alerteEnergie, setAlerteEnergie] = useState(false);
@@ -429,6 +438,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // l'étape courante (porte, grand-père) réagissent au tap — tous les
   // autres objets du QG sont verrouillés pour ne pas distraire le joueur.
   const tutoActif = tutorielActif(state);
+  const modeJournalSol = journalSolMode(state);
   // Widened au-delà de "aller-chiner"/"preparer-etal" : un joueur qui sort de
   // la brocante sans rien acheter (étape reste "premier-achat") ou termine
   // une journée d'étal sans vente (étape reste "premiere-vente") doit
@@ -477,6 +487,15 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                     setRegistreOuvert("commandes");
                   }}
                 />
+                {state.gazetteAchetee && (
+                  <QgJournalBureau
+                    onTap={() => {
+                      if (tutoActif) return;
+                      playNewspaper();
+                      setGazetteOuverte(true);
+                    }}
+                  />
+                )}
               </>
             )}
             {showQgZone(1) && (
@@ -489,6 +508,23 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                     setPorteOuverte(true);
                   }}
                 />
+                {modeJournalSol && (
+                  <QgJournalSol
+                    mode={modeJournalSol}
+                    onTap={() => {
+                      if (tutoActif) return;
+                      playNewspaper();
+                      if (modeJournalSol === "tuto") {
+                        ouvrirGazetteOfferte();
+                        setTutoGazetteEnCours(true);
+                        setGazetteOuverte(true);
+                        setDialogueQg(SEQUENCES_GAZETTE.gazette_tuto);
+                      } else {
+                        setGazetteModaleOuverte(true);
+                      }
+                    }}
+                  />
+                )}
                 {etape === "ouvrir-colis" && (
                   <QgColis
                     onTap={() => {
@@ -524,14 +560,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                   onTap={() => {
                     if (tutoActif) return;
                     setCalendrierOuvert(true);
-                  }}
-                />
-                <QgPorteRevues
-                  gazetteAchetee={state.gazetteAchetee}
-                  onTap={() => {
-                    if (tutoActif) return;
-                    playNewspaper();
-                    setGazetteOuverte(true);
                   }}
                 />
               </>
@@ -738,7 +766,16 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
 
       <GazetteSheet
         open={gazetteOuverte}
-        onClose={() => setGazetteOuverte(false)}
+        onClose={() => {
+          // Tuto en cours : le DialogueOverlay (z-index 120) couvre déjà la
+          // sheet ; ce garde bloque aussi la fermeture par Escape.
+          if (dialogueQg) return;
+          if (tutoGazetteEnCours) {
+            setTutoGazetteEnCours(false);
+            terminerTutoGazette();
+          }
+          setGazetteOuverte(false);
+        }}
         jourActuel={state.jourActuel}
         tendances={state.tendances}
         categoriesConnues={categoriesConnuesTendance}
@@ -756,6 +793,25 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         }
         onRerollMeteo={() => rerollMeteo()}
         onRerollCelebrite={() => rerollCelebrite()}
+      />
+
+      <GazetteAchatModale
+        open={gazetteModaleOuverte}
+        prix={PRIX_GAZETTE}
+        budget={state.budget}
+        onAcheter={() => {
+          const res = acheterGazette();
+          setGazetteModaleOuverte(false);
+          if (res.ok) {
+            playNewspaper();
+            setGazetteOuverte(true);
+          }
+        }}
+        onRefuser={() => {
+          refuserGazette();
+          setGazetteModaleOuverte(false);
+        }}
+        onClose={() => setGazetteModaleOuverte(false)}
       />
 
       {/* Pastille du grand-père : s'allume quand un chapitre de la trame est
