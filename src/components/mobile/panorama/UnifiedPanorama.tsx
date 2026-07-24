@@ -52,8 +52,14 @@ const snapAnchorStyle: CSSProperties = {
 const sceneStyle: CSSProperties = {
   position: "relative",
   width: `${UNIFIED_PANORAMA_WIDTH_VW}vw`,
-  // Hauteur proportionnée à l'aspect de l'image bureau (2752:1536).
+  // Hauteur proportionnée à l'aspect de l'image bureau (2752:1536)…
   height: `calc(${UNIFIED_PANORAMA_WIDTH_VW}vw * 1536 / 2752)`,
+  // …mais jamais plus courte que le conteneur : sinon, avec l'alignement
+  // flex-end, une image plus courte que la zone disponible laissait une bande
+  // verte (forest-800 du conteneur) sous le trait laiton du header — visible
+  // sur les écrans « courts » type iPhone 11 Pro Max. min-height comble l'écart
+  // (l'img en objectFit:cover remplit alors la scène étirée).
+  minHeight: "100%",
   flexShrink: 0,
 };
 
