@@ -14,26 +14,6 @@ import {
   DEFAULT_AUDIO_PREFS,
   type AudioPrefs,
 } from "@/lib/audio/audioManager";
-import {
-  safeLocalStorageGet,
-  safeLocalStorageSet,
-} from "@/lib/storage/safeLocalStorage";
-
-export type TailleFonte = "petit" | "normal" | "grand";
-
-const FONT_SCALE: Record<TailleFonte, string> = {
-  petit: "0.9",
-  normal: "1",
-  grand: "1.15",
-};
-
-const DISPLAY_KEY = "projet-broc:display:v1";
-
-interface DisplayPrefs {
-  tailleFonte: TailleFonte;
-}
-
-const DEFAULT_DISPLAY: DisplayPrefs = { tailleFonte: "normal" };
 
 interface SettingsValue {
   audioPrefs: AudioPrefs;
@@ -64,36 +44,17 @@ interface SettingsValue {
   setVinylAmbianceLowpass: (hz: number) => void;
   startNeedle: () => void;
   stopNeedle: () => void;
-  tailleFonte: TailleFonte;
-  setTailleFonte: (t: TailleFonte) => void;
 }
 
 const SettingsContext = createContext<SettingsValue | null>(null);
 
-function loadDisplay(): DisplayPrefs {
-  const parsed = safeLocalStorageGet<Partial<DisplayPrefs>>(DISPLAY_KEY, {});
-  return { ...DEFAULT_DISPLAY, ...parsed };
-}
-
-function persistDisplay(p: DisplayPrefs): void {
-  safeLocalStorageSet(DISPLAY_KEY, p);
-}
-
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [audioPrefs, setAudioPrefs] = useState<AudioPrefs>(DEFAULT_AUDIO_PREFS);
-  const [tailleFonte, setTailleFonteState] = useState<TailleFonte>("normal");
 
   useEffect(() => {
     const persistedAudio = audioManager.loadPersisted();
     audioManager.hydrate(persistedAudio);
     setAudioPrefs({ ...persistedAudio });
-
-    const display = loadDisplay();
-    setTailleFonteState(display.tailleFonte);
-    document.documentElement.style.setProperty(
-      "--font-scale",
-      FONT_SCALE[display.tailleFonte],
-    );
   }, []);
 
   const setAudioPref = useCallback(
@@ -167,12 +128,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
   const stopNeedle = useCallback(() => audioManager.stopNeedle(), []);
 
-  const setTailleFonte = useCallback((t: TailleFonte) => {
-    setTailleFonteState(t);
-    document.documentElement.style.setProperty("--font-scale", FONT_SCALE[t]);
-    persistDisplay({ tailleFonte: t });
-  }, []);
-
   const value = useMemo<SettingsValue>(
     () => ({
       audioPrefs,
@@ -199,8 +154,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setVinylAmbianceLowpass,
       startNeedle,
       stopNeedle,
-      tailleFonte,
-      setTailleFonte,
     }),
     [
       audioPrefs,
@@ -227,8 +180,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setVinylAmbianceLowpass,
       startNeedle,
       stopNeedle,
-      tailleFonte,
-      setTailleFonte,
     ],
   );
 

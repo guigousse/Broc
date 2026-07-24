@@ -780,13 +780,11 @@
   --font-serif:   var(--font-serif);
   --font-mono:    var(--font-mono);
 
-  /* User-adjustable font scale (Réglages) */
-  --font-scale: 1;
 }
 
 /* Base */
 html {
-  font-size: calc(16px * var(--font-scale));
+  font-size: 16px;
 }
 html, body {
   background: var(--bg);

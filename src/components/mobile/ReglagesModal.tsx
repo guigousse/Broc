@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { X } from "lucide-react";
-import { useSettings, type TailleFonte } from "@/context/SettingsContext";
+import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n/locales";
 import type { AudioPrefs } from "@/lib/audio/audioManager";
@@ -189,8 +189,6 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
     setAudioPref,
     setVolume,
     playClick,
-    tailleFonte,
-    setTailleFonte,
   } = useSettings();
   const { locale, setLocale, d, tr } = useLangue();
 
@@ -201,21 +199,10 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
     setAudioPref(k, !audioPrefs[k]);
   };
 
-  const onTaille = (t: TailleFonte) => {
-    playClick();
-    setTailleFonte(t);
-  };
-
   const onFermer = () => {
     playClick();
     onClose();
   };
-
-  const tailles: { id: TailleFonte; nom: string }[] = [
-    { id: "petit", nom: d.reglages.petit },
-    { id: "normal", nom: d.reglages.normal },
-    { id: "grand", nom: d.reglages.grand },
-  ];
 
   return (
     <div role="dialog" aria-modal="true" aria-label={d.reglages.titre} style={wrap}>
@@ -270,24 +257,6 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
               on={audioPrefs.ambiance}
               onToggle={() => onToggleAudio("ambiance")}
             />
-          </div>
-        </section>
-
-        <section style={carte} aria-label={d.reglages.affichage}>
-          <h3 style={sectionTitle}>{d.reglages.affichage}</h3>
-
-          <div style={rowLabel}>{d.reglages.taillePolice}</div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {tailles.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => onTaille(t.id)}
-                style={segBtn(tailleFonte === t.id)}
-              >
-                {t.nom}
-              </button>
-            ))}
           </div>
         </section>
 
