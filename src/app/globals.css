@@ -1026,19 +1026,24 @@ html, body {
 
 /* ============================================================
    Verrou viewport (iOS WKWebView)
-   Le body est figé aux dimensions du viewport : c'est la seule
-   parade fiable au rebond élastique (rubber band) sur iOS. Tout
-   scroll passe par des conteneurs internes (overflow-y: auto) —
-   MobileLayout, sheets, overlays. Aucune page ne doit compter
-   sur le scroll du body.
+   Le body est clampé à 100 % du viewport avec overflow hidden :
+   son contenu ne dépasse jamais, la scrollView native n'a rien à
+   faire rebondir (rubber band). Tout scroll passe par des
+   conteneurs internes (overflow-y: auto) — MobileLayout, sheets,
+   overlays. Aucune page ne doit compter sur le scroll du body.
+   ⚠ Surtout PAS `position: fixed` ni `height: 100%` sur le body :
+   dans le WKWebView Tauri, le « layout viewport » (référence de
+   fixed et des %) est plus court que l'écran → bande vide sous la
+   page (constaté simulateur ET TestFlight). Seul `100dvh` mesure
+   le vrai écran ; le % reste en repli pour les vieux moteurs.
    ============================================================ */
 html {
   height: 100%;
   overscroll-behavior: none;
 }
 body {
-  position: fixed;
-  inset: 0;
+  height: 100%;
+  height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
