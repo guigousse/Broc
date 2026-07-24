@@ -54,7 +54,7 @@ export interface ClientPersonnage {
 // 15 ARCHÉTYPES — chacun avec une "personnalité mécanique" cohérente
 // ======================================================================
 
-const ARCHETYPES: ClientArchetype[] = [
+export const ARCHETYPES: ClientArchetype[] = [
   {
     id: "retraite_chineur",
     nom: "Retraité chineur",

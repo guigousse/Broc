@@ -1,10 +1,10 @@
 import type { Locale, LocaleTraduite } from "@/lib/i18n/locales";
-import type { CleMessageNego, MessageNego, VendeurArchetypeId } from "@/types/game";
+import type { CleMessageNego, MessageNego, Temperament, VendeurArchetypeId } from "@/types/game";
 import { tr } from "@/lib/i18n/ui";
-import { POOLS_NEGO_FR } from "@/lib/negociation";
-import { NEGO_EN } from "./en/nego";
-import { NEGO_ES } from "./es/nego";
-import { NEGO_EL } from "./el/nego";
+import { POOLS_NEGO_FR, POOLS_NEGO_TEMPERAMENT_FR } from "@/lib/negociation";
+import { NEGO_EN, NEGO_TEMPERAMENT_EN } from "./en/nego";
+import { NEGO_ES, NEGO_TEMPERAMENT_ES } from "./es/nego";
+import { NEGO_EL, NEGO_TEMPERAMENT_EL } from "./el/nego";
 import { getTemplate } from "@/data/objetTemplates";
 import { NOM_ARCHETYPE, NOM_VENDEUR, getNomVendeur } from "@/lib/personas";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
@@ -590,14 +590,30 @@ const POOLS_NEGO: Record<Locale, Record<CleMessageNego, string[]>> = {
   el: NEGO_EL,
 };
 
+/** Pools colorés par tempérament et par langue (mêmes overlays que POOLS_NEGO). */
+const POOLS_NEGO_TEMPERAMENT: Record<
+  Locale,
+  Partial<Record<Temperament, Partial<Record<CleMessageNego, string[]>>>>
+> = {
+  fr: POOLS_NEGO_TEMPERAMENT_FR,
+  en: NEGO_TEMPERAMENT_EN,
+  es: NEGO_TEMPERAMENT_ES,
+  el: NEGO_TEMPERAMENT_EL,
+};
+
 /**
  * Résout un `MessageNego` en texte affichable dans la langue demandée :
- * lookup du pool par locale + clé, modulo sur la variante (les pools peuvent
- * avoir des tailles différentes selon la langue), puis interpolation des
- * `params` via `tr()`. Aucune écriture en save — appelé uniquement à l'affichage.
+ * pool coloré du tempérament si le message en porte un et que la langue le
+ * fournit pour cette clé, sinon pool générique de la langue ; modulo sur la
+ * variante (les pools peuvent avoir des tailles différentes selon la langue),
+ * puis interpolation des `params` via `tr()`. Aucune écriture en save —
+ * appelé uniquement à l'affichage.
  */
 export function texteNego(msg: MessageNego, locale: Locale): string {
-  const pool = POOLS_NEGO[locale][msg.cle];
+  const poolColore = msg.temperament
+    ? POOLS_NEGO_TEMPERAMENT[locale][msg.temperament]?.[msg.cle]
+    : undefined;
+  const pool = poolColore ?? POOLS_NEGO[locale][msg.cle];
   const gabarit = pool[msg.variante % pool.length];
   return tr(gabarit, msg.params);
 }

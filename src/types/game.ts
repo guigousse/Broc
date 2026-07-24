@@ -568,6 +568,19 @@ export type VendeurArchetypeId =
 /** Sens de la négociation. */
 export type NegoMode = "achat" | "vente";
 
+/**
+ * Tempérament de dialogue d'un persona (vendeur OU acheteur). Regroupe les
+ * archétypes en familles de ton pour colorer les répliques de négociation
+ * (mapping dans `src/data/temperaments.ts`, pools dans `negociation.ts`).
+ */
+export type Temperament =
+  | "bourru"
+  | "chaleureux"
+  | "radin"
+  | "raffine"
+  | "bavard"
+  | "passionne";
+
 /** Persona générique commun aux deux modes. */
 export interface NegoPersona {
   /** Identifiant de l'archétype source (vendeur ou client). */
@@ -610,6 +623,9 @@ export interface MessageNego {
   /** Index de variante tiré au moment de l'événement (modulo la taille du pool par langue). */
   variante: number;
   params?: { prix?: number; cibleSecrete?: number };
+  /** Tempérament du persona : la réplique est tirée du pool coloré s'il
+   *  existe pour cette clé, sinon du pool générique. */
+  temperament?: Temperament;
 }
 
 /** État persistant d'une négociation en cours. */
@@ -623,6 +639,9 @@ export interface NegociationState {
   derniereOffreJoueur: number | null;
   statut: NegoStatut;
   message: MessageNego;
+  /** Tempérament du persona, figé à l'ouverture — colore toutes les répliques
+   *  de la négo. Jamais en save (`NegociationState` vit en useState). */
+  temperament?: Temperament;
 }
 
 export type TailleObjet = "XS" | "S" | "M" | "L" | "XL";

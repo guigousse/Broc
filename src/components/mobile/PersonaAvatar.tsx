@@ -135,10 +135,10 @@ const bubbleWrap: CSSProperties = {
   position: "relative",
   display: "inline-block",
   maxWidth: "70%",
-  padding: "8px 12px",
+  padding: "10px 14px",
   background: "var(--paper-100)",
   border: "1px solid var(--brass-500)",
-  borderRadius: 8,
+  borderRadius: 14,
   boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
   pointerEvents: "auto",
 };
@@ -170,9 +170,9 @@ const tailInner: CSSProperties = {
 const bubbleText: CSSProperties = {
   fontFamily: "var(--font-serif)",
   fontStyle: "italic",
-  fontSize: 13,
+  fontSize: 16,
   color: "var(--ink-700)",
-  lineHeight: 1.4,
+  lineHeight: 1.35,
   whiteSpace: "pre-wrap",
   wordBreak: "break-word",
 };

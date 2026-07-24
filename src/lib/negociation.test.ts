@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NegoPersona, NegociationState } from "@/types/game";
-import { HUMEUR_RELANCE, ouvrirNegociation, proposerOffre, relancerNegociation } from "./negociation";
+import { HUMEUR_RELANCE, POOLS_NEGO_FR, ouvrirNegociation, proposerOffre, relancerNegociation } from "./negociation";
 import { texteNego } from "@/lib/i18n/contenu";
 
 function persona(patch: Partial<NegoPersona> = {}): NegoPersona {
@@ -41,7 +41,7 @@ describe("ouvrirNegociation", () => {
     expect(n.derniereOffreJoueur).toBeNull();
     expect(n.statut).toBe("en_cours");
     expect(n.message.cle).toBe("ouvertureAchat");
-    expect(texteNego(n.message, "fr")).toMatch(/curseur/);
+    expect(POOLS_NEGO_FR.ouvertureAchat).toContain(texteNego(n.message, "fr"));
   });
 
   it("crée un état initial valide en mode vente", () => {
@@ -261,7 +261,7 @@ describe("relancerNegociation (La Tchatche)", () => {
     expect(r.humeur).toBe(HUMEUR_RELANCE);
     expect(r.prixAdverseCourant).toBe(80); // le prix courant ne bouge pas
     expect(r.message.cle).toBe("relance");
-    expect(texteNego(r.message, "fr")).toContain("écoute");
+    expect(POOLS_NEGO_FR.relance).toContain(texteNego(r.message, "fr"));
   });
   it("rouvre aussi un refus poli", () => {
     expect(relancerNegociation({ ...base, statut: "refus_poli" }).statut).toBe("en_cours");

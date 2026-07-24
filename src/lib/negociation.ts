@@ -4,6 +4,7 @@ import type {
   NegoMode,
   NegoPersona,
   NegociationState,
+  Temperament,
 } from "@/types/game";
 
 /**
@@ -19,36 +20,53 @@ import type {
  * HORS de l'ensemble FR de la clé.
  */
 export const POOLS_NEGO_FR: Record<CleMessageNego, string[]> = {
-  ouvertureAchat: ["Faites glisser votre curseur pour proposer un prix."],
+  ouvertureAchat: [
+    "« Bonjour ! Approchez, regardez donc. »",
+    "« Bienvenue ! Tout est à vendre, ou presque. »",
+    "« Bonjour… elle vous a tapé dans l'œil, hein ? »",
+  ],
   ouvertureVente: ["Le client vous a fait une offre. À vous de répondre."],
   contreVendeur: [
     "« Bon, allez, je vous fais un petit geste… »",
     "« Hmm. Disons {prix} €. »",
     "« {prix} € et on en parle plus. »",
     "« Je peux descendre à {prix} €, c'est mon mieux. »",
+    "« Vous savez discuter, vous… {prix} €. »",
+    "« Allez, {prix} €, on coupe la poire en deux. »",
   ],
   contreClient: [
     "« Je peux monter un peu : {prix} €. »",
     "« {prix} €, et c'est ma proposition honnête. »",
     "« Bon, allez, {prix} € si vous me l'enveloppez. »",
+    "« On dit {prix} € et on se serre la main ? »",
+    "« {prix} €, dernière rallonge. »",
   ],
   refusPoliVendeur: [
     "« Bon, je vais ranger. Mais c'est dommage. »",
     "« Tant pis, à une prochaine fois. »",
+    "« Non, je remballe. La journée est longue. »",
   ],
   refusPoliClient: [
     "« Tant pis, je vais voir ailleurs. »",
     "« Je passerai mon tour, merci. »",
+    "« Une autre fois, peut-être. »",
   ],
   fache: [
     "« Vous vous moquez de moi ! »",
     "« Vous abusez de ma patience. »",
+    "« À ce prix-là, c'est de l'insulte ! »",
+    "« On ne me la fait pas. Bonne journée ! »",
   ],
   accord: [
     "Marché conclu à {prix} €.",
     "Vendu à {prix} €.",
+    "Affaire conclue : {prix} €.",
+    "Tope là — {prix} €.",
   ],
-  relance: ["« Bon… allez, je vous écoute une dernière fois. »"],
+  relance: [
+    "« Bon… allez, je vous écoute une dernière fois. »",
+    "« Une dernière proposition. La bonne, cette fois. »",
+  ],
   diplomate: [
     "« Mon plafond, c'est {cibleSecrete} €. Une dernière fois, je vous écoute. »",
   ],
@@ -58,16 +76,242 @@ export const POOLS_NEGO_FR: Record<CleMessageNego, string[]> = {
 };
 
 /**
+ * Pools FR colorés par tempérament (voir `src/data/temperaments.ts` pour le
+ * mapping archétype → tempérament). Seules les situations « à personnalité »
+ * sont couvertes — accueil (ouvertureAchat), contre-offres, refus, colère,
+ * accord, relance. L'ouverture vente (consigne UI) et les répliques d'atouts
+ * (diplomate, boniment, lot garni) restent génériques. Une clé absente d'un
+ * tempérament retombe sur `POOLS_NEGO_FR`. Overlays EN/ES/EL :
+ * `NEGO_TEMPERAMENT_*` dans `src/lib/i18n/contenu/{en,es,el}/nego.ts`
+ * (fallback par langue au rendu).
+ */
+export const POOLS_NEGO_TEMPERAMENT_FR: Record<
+  Temperament,
+  Partial<Record<CleMessageNego, string[]>>
+> = {
+  bourru: {
+    ouvertureAchat: [
+      "« Quoi ? Ah, bonjour. On regarde avec les yeux, pas avec les mains. »",
+      "« B'jour. C'est pas un musée ici, c'est à vendre. »",
+    ],
+    contreVendeur: [
+      "« {prix} €. Et estimez-vous heureux. »",
+      "« Pff… {prix} €, dernier carat. »",
+      "« J'ai pas que ça à faire. {prix} €, à prendre ou à laisser. »",
+    ],
+    contreClient: [
+      "« {prix} €. C'est déjà trop payé. »",
+      "« Je monte à {prix} €, et uniquement parce qu'il va pleuvoir. »",
+      "« {prix} €. Discutez encore et je m'en vais. »",
+    ],
+    refusPoliVendeur: [
+      "« C'est terminé. Circulez. »",
+      "« Non. Rangez votre monnaie, moi je range mon étal. »",
+    ],
+    refusPoliClient: [
+      "« Bah. Gardez-le, votre machin. »",
+      "« J'en voulais pas tant que ça, de toute façon. »",
+    ],
+    fache: [
+      "« Non mais vous m'avez bien regardé ?! »",
+      "« Du vent ! On ne traite pas avec les rigolos. »",
+    ],
+    accord: [
+      "« {prix} €, marché conclu. Et pas de réclamation. »",
+      "« Bon. {prix} €, tope là, qu'on en finisse. »",
+    ],
+    relance: ["« Grmph… Bon. Une dernière offre, et la bonne. »"],
+  },
+  chaleureux: {
+    ouvertureAchat: [
+      "« Bonjour, bonjour ! Approchez, faites comme chez vous. »",
+      "« Ah, une bonne tête ! Bienvenue, regardez tout ce que vous voulez. »",
+    ],
+    contreVendeur: [
+      "« Allez, pour vous : {prix} €, parce que vous avez une bonne tête. »",
+      "« On va s'arranger… disons {prix} €, ça vous va ? »",
+      "« {prix} €, et je vous raconte son histoire en prime. »",
+    ],
+    contreClient: [
+      "« Je peux aller jusqu'à {prix} €, sans me fâcher avec ma tirelire. »",
+      "« {prix} €, et vous me faites bien plaisir. »",
+      "« Allez, {prix} €, ça me rappelle tellement de souvenirs… »",
+    ],
+    refusPoliVendeur: [
+      "« Ce sera non, mais revenez me voir, hein ? »",
+      "« Une autre fois peut-être, sans rancune. »",
+    ],
+    refusPoliClient: [
+      "« Tant pis pour moi… il était bien joli pourtant. »",
+      "« Je vais réfléchir encore un peu, merci du fond du cœur. »",
+    ],
+    fache: [
+      "« Oh… là, vous me faites de la peine. »",
+      "« Quand même ! Je vous croyais plus gentil que ça. »",
+    ],
+    accord: [
+      "« {prix} €, et voilà ! Prenez-en bien soin, promis ? »",
+      "« Adjugé pour {prix} € — vous faites une affaire, et moi un heureux. »",
+    ],
+    relance: ["« Allez, je ne sais pas dire non… je vous écoute, une dernière fois. »"],
+  },
+  radin: {
+    ouvertureAchat: [
+      "« Bonjour. Je préviens tout de suite : ici, rien n'est donné. »",
+      "« Bonjour… vous tombez bien, tout doit partir. Enfin, au bon prix. »",
+    ],
+    contreVendeur: [
+      "« {prix} €… et je perds déjà de l'argent, je vous jure. »",
+      "« Bon, {prix} €, mais c'est bien parce que la journée est morte. »",
+      "« {prix} €. En dessous, je le garde pour ma belle-sœur. »",
+    ],
+    contreClient: [
+      "« {prix} €, et je saute un déjeuner cette semaine. »",
+      "« Je racle les fonds de poche : {prix} €. »",
+      "« {prix} €, c'est tout ce que j'ai — j'ai compté deux fois. »",
+    ],
+    refusPoliVendeur: [
+      "« À ce prix-là, je préfère le garder, ça ne prend pas de place. »",
+      "« Non non, ça vaudra plus cher l'année prochaine. »",
+    ],
+    refusPoliClient: [
+      "« Trop cher pour moi, tant pis. »",
+      "« Mon banquier me tuerait. Je passe. »",
+    ],
+    fache: [
+      "« Vous voulez ma ruine ?! »",
+      "« Et puis quoi encore, mes économies avec ? »",
+    ],
+    accord: [
+      "« {prix} €… bon. Mais vous m'arrachez le bras. »",
+      "« Va pour {prix} €, et on ne dit à personne que j'ai cédé. »",
+    ],
+    relance: ["« Attendez… j'ai refait mes comptes. Je vous écoute. »"],
+  },
+  raffine: {
+    ouvertureAchat: [
+      "« Bienvenue. Vous avez l'œil, je le vois déjà. »",
+      "« Bonjour. Prenez le temps — les belles choses le méritent. »",
+    ],
+    contreVendeur: [
+      "« Cette pièce a une provenance, cela se paie : {prix} €. »",
+      "« {prix} €. C'est le prix du goût, cher ami. »",
+      "« Disons {prix} €, et vous emportez un fragment d'histoire. »",
+    ],
+    contreClient: [
+      "« {prix} €, pas un de plus — j'ai l'œil pour la juste valeur. »",
+      "« Je consens à {prix} €, pour l'amour de l'objet. »",
+      "« {prix} €. Au-delà, ce serait de la spéculation. »",
+    ],
+    refusPoliVendeur: [
+      "« Elle attendra un amateur éclairé. Bonne journée. »",
+      "« Nous ne parlons visiblement pas la même langue. Sans rancune. »",
+    ],
+    refusPoliClient: [
+      "« Cette pièce ne mérite pas ce tarif, hélas. »",
+      "« Je m'incline — mon budget a ses principes. »",
+    ],
+    fache: [
+      "« C'est une insulte au bon goût ! »",
+      "« On ne marchande pas ainsi une pièce pareille. Adieu. »",
+    ],
+    accord: [
+      "« {prix} €. Excellent choix, vous avez l'œil. »",
+      "« Affaire conclue à {prix} € — elle sera parfaite chez vous. »",
+    ],
+    relance: ["« Soit. L'élégance commande d'écouter une dernière proposition. »"],
+  },
+  bavard: {
+    ouvertureAchat: [
+      "« Ah, bonjour ! Justement je disais à mon voisin d'étal — enfin, approchez ! »",
+      "« Bienvenue, bienvenue ! Chaque pièce ici a une histoire, demandez-moi ! »",
+    ],
+    contreVendeur: [
+      "« {prix} € ! Et je vous jure, ma cousine m'en offrait le double — enfin bref, {prix} €. »",
+      "« Alors écoutez, entre nous : {prix} €, et c'est un secret. »",
+      "« {prix} €, et je vous raconte où je l'ai déniché — histoire incroyable ! »",
+    ],
+    contreClient: [
+      "« {prix} €, et pourtant on dit que je paie toujours trop — enfin, {prix} € ! »",
+      "« Bon, entre gens qui savent discuter : {prix} €. »",
+      "« {prix} €, et croyez-moi, j'en ai vu passer, des étals ! »",
+    ],
+    refusPoliVendeur: [
+      "« Bon, tant pis ! Mais restez donc, je vous raconte comment je l'ai eu… »",
+      "« On n'est pas d'accord, mais c'était un plaisir de bavarder ! »",
+    ],
+    refusPoliClient: [
+      "« Tant pis ! De toute façon ma voiture est déjà pleine, si vous saviez… »",
+      "« Je passe — mais quel plaisir de discuter, vraiment ! »",
+    ],
+    fache: [
+      "« Alors là, je reste sans voix. Et croyez-moi, c'est rare ! »",
+      "« Vous fâcheriez un moulin à paroles — c'est dire ! »",
+    ],
+    accord: [
+      "« {prix} €, adjugé ! Et cette histoire se racontera, croyez-moi. »",
+      "« Tope là, {prix} € ! Vous verrez, tout le marché en parlera. »",
+    ],
+    relance: ["« Bon, bon… je ne sais pas me taire, alors je vous écoute encore. »"],
+  },
+  passionne: {
+    ouvertureAchat: [
+      "« Bonjour ! Tout ici a été choisi avec amour, croyez-moi. »",
+      "« Bienvenue… ah, je vois que vous regardez la plus belle pièce. »",
+    ],
+    contreVendeur: [
+      "« {prix} €… c'est une pièce que je connais par cœur, elle les vaut. »",
+      "« Pour quelqu'un qui saura l'apprécier : {prix} €. »",
+      "« {prix} €. Tenez, regardez cet état — introuvable ailleurs. »",
+    ],
+    contreClient: [
+      "« {prix} € ! Elle me manque depuis des années, celle-là. »",
+      "« Je monte à {prix} €, le cœur a ses raisons. »",
+      "« {prix} €… ma collection la réclame, soyez chic. »",
+    ],
+    refusPoliVendeur: [
+      "« Alors elle restera avec moi. On ne brade pas ce qu'on aime. »",
+      "« Tant pis. Elle trouvera son connaisseur. »",
+    ],
+    refusPoliClient: [
+      "« Le cœur y était, pas le portefeuille. Dommage. »",
+      "« Elle m'aurait comblé… mais pas à ce prix. Tant pis. »",
+    ],
+    fache: [
+      "« On ne parle pas ainsi d'une pièce pareille ! »",
+      "« Vous n'avez donc aucun respect pour la belle ouvrage ?! »",
+    ],
+    accord: [
+      "« {prix} € — elle part en de bonnes mains, ça me console. »",
+      "« Marché conclu à {prix} €. Vous tenez un petit trésor, vous savez. »",
+    ],
+    relance: ["« Pour elle, je veux bien tendre l'oreille une dernière fois. »"],
+  },
+};
+
+/**
  * Construit un `MessageNego` : tire une variante dans le pool FR (le modulo au
  * rendu absorbe les tailles de pool différentes entre langues) et fige les
  * paramètres d'interpolation. Ne résout PAS le texte (fait à l'affichage).
+ * Avec `temperament`, la variante est tirée dans le pool coloré si la clé y
+ * existe (le tempérament est alors embarqué dans le message pour le rendu).
  */
 export function pickMessage(
   cle: CleMessageNego,
   params?: { prix?: number; cibleSecrete?: number },
+  temperament?: Temperament,
 ): MessageNego {
-  const variante = Math.floor(Math.random() * POOLS_NEGO_FR[cle].length);
-  return params ? { cle, variante, params } : { cle, variante };
+  const poolColore = temperament
+    ? POOLS_NEGO_TEMPERAMENT_FR[temperament][cle]
+    : undefined;
+  const pool = poolColore ?? POOLS_NEGO_FR[cle];
+  const variante = Math.floor(Math.random() * pool.length);
+  return {
+    cle,
+    variante,
+    ...(params ? { params } : {}),
+    ...(poolColore ? { temperament } : {}),
+  };
 }
 
 /**
@@ -82,6 +326,7 @@ export function ouvrirNegociation(
   mode: NegoMode,
   prixDepartAdverse: number,
   cibleSecrete: number,
+  temperament?: Temperament,
 ): NegociationState {
   return {
     mode,
@@ -91,7 +336,12 @@ export function ouvrirNegociation(
     cibleSecrete,
     derniereOffreJoueur: null,
     statut: "en_cours",
-    message: pickMessage(mode === "achat" ? "ouvertureAchat" : "ouvertureVente"),
+    message: pickMessage(
+      mode === "achat" ? "ouvertureAchat" : "ouvertureVente",
+      undefined,
+      temperament,
+    ),
+    ...(temperament ? { temperament } : {}),
   };
 }
 
@@ -179,7 +429,7 @@ export function proposerOffre(
       humeur: Math.min(nego.humeur, 0.3),
       derniereOffreJoueur: offre,
       statut: "conclu",
-      message: pickMessage("accord", { prix: offre }),
+      message: pickMessage("accord", { prix: offre }, nego.temperament),
     };
   }
 
@@ -202,7 +452,7 @@ export function proposerOffre(
       humeur: 1,
       derniereOffreJoueur: offre,
       statut: "fache",
-      message: pickMessage("fache"),
+      message: pickMessage("fache", undefined, nego.temperament),
     };
   }
 
@@ -218,7 +468,7 @@ export function proposerOffre(
         humeur: 1,
         derniereOffreJoueur: offre,
         statut: "fache",
-        message: pickMessage("fache"),
+        message: pickMessage("fache", undefined, nego.temperament),
       };
     }
     const refusCle: CleMessageNego =
@@ -229,7 +479,7 @@ export function proposerOffre(
       humeur,
       derniereOffreJoueur: offre,
       statut: "refus_poli",
-      message: pickMessage(refusCle),
+      message: pickMessage(refusCle, undefined, nego.temperament),
     };
   }
 
@@ -243,7 +493,7 @@ export function proposerOffre(
       humeur: Math.max(humeur, 0.8),
       derniereOffreJoueur: offre,
       statut: "refus_poli",
-      message: pickMessage(refusCle),
+      message: pickMessage(refusCle, undefined, nego.temperament),
     };
   }
 
@@ -268,7 +518,7 @@ export function proposerOffre(
       prixAdverseCourant: offre,
       derniereOffreJoueur: offre,
       statut: "conclu",
-      message: pickMessage("accord", { prix: offre }),
+      message: pickMessage("accord", { prix: offre }, nego.temperament),
     };
   }
 
@@ -281,7 +531,7 @@ export function proposerOffre(
     prixAdverseCourant: nouveauPrix,
     derniereOffreJoueur: offre,
     statut: "en_cours",
-    message: pickMessage(contreCle, { prix: nouveauPrix }),
+    message: pickMessage(contreCle, { prix: nouveauPrix }, nego.temperament),
   };
 }
 
@@ -294,6 +544,6 @@ export function relancerNegociation(nego: NegociationState): NegociationState {
     ...nego,
     statut: "en_cours",
     humeur: HUMEUR_RELANCE,
-    message: pickMessage("relance"),
+    message: pickMessage("relance", undefined, nego.temperament),
   };
 }
