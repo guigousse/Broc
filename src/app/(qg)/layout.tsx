@@ -751,10 +751,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         revelerMeteo={aGenBulletinMeteo(state)}
         celebrite={state.celebriteActuelle}
         revelerCelebrite={aGenCarnetMondain(state)}
-        achetee={state.gazetteAchetee}
-        onAcheter={() => acheterGazette()}
-        budget={state.budget}
-        prixGazette={PRIX_GAZETTE}
         influenceDisponible={
           aGenInfluence(state) && !state.influenceUtilisee && state.gazetteAchetee
         }
