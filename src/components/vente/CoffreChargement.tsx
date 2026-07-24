@@ -21,11 +21,12 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { CoffreCanvas } from "./CoffreCanvas";
 import { CarrouselStock } from "./CarrouselStock";
 import { DevPanel } from "./DevPanel";
+import { OUTILS_DEV } from "@/lib/outilsDev";
 
 // Dev only — panneau dev (switcher camion + sliders position/scale). Verrouillé
-// hors développement : jamais visible dans un build de prod / TestFlight / App
-// Store (l'export statique est bâti en NODE_ENV=production).
-const DEV_PANEL = process.env.NODE_ENV === "development";
+// hors développement par OUTILS_DEV : jamais visible en prod / TestFlight /
+// App Store (constante repliée à false à la compilation, code éliminé).
+const DEV_PANEL = OUTILS_DEV;
 
 const MASK_SIZE = 48;
 const TRUNK_MASK_SIZE = 256;

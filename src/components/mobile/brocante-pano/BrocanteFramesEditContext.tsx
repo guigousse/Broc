@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { FrameCoord } from "./brocantePanoramaLayout";
+import { OUTILS_DEV } from "@/lib/outilsDev";
 
 export type FrameOverride = Partial<
   Pick<FrameCoord, "left" | "top" | "width" | "height">
@@ -51,6 +52,9 @@ export function BrocanteFramesEditProvider({ children }: { children: ReactNode }
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Prod : l'éditeur n'existe pas — ni le query param ni une clé
+    // localStorage résiduelle (session de calage passée) ne doivent l'activer.
+    if (!OUTILS_DEV) return;
     const params = new URLSearchParams(window.location.search);
     const q = params.get("cadreedit");
     if (q === "1") {
@@ -80,6 +84,9 @@ export function BrocanteFramesEditProvider({ children }: { children: ReactNode }
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Prod : des overrides résiduels d'une session de calage ne doivent pas
+    // déplacer les cadres — seules les coords committées font foi.
+    if (!OUTILS_DEV) return;
     try {
       const raw = window.localStorage.getItem(LS_KEY);
       if (raw) setOverrides(JSON.parse(raw));
@@ -90,6 +97,7 @@ export function BrocanteFramesEditProvider({ children }: { children: ReactNode }
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!OUTILS_DEV) return;
     try {
       window.localStorage.setItem(LS_KEY, JSON.stringify(overrides));
     } catch {
