@@ -19,10 +19,17 @@ import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { ObjetEnVente } from "@/types/game";
 
+// Agrandissement max du sticker au-delà de sa taille naturelle. Les images
+// objets sont en 470 px : la taille de base (≈224 px) × 2 reste sous la
+// résolution native (≈448 px) → net. Permet de remplir l'espace sur les
+// grands écrans (iPad) au lieu de laisser l'objet minuscule et centré.
+const SCALE_MAX = 2;
+
 /**
- * Met à l'échelle son contenu (taille naturelle fixe) pour qu'il tienne
- * toujours dans la zone disponible — qui rétrécit quand le tiroir de négo
- * s'ouvre. L'objet reste donc visible entre le header et la bulle du vendeur.
+ * Met à l'échelle son contenu (taille naturelle fixe) pour qu'il occupe au
+ * mieux la zone disponible — qui rétrécit quand le tiroir de négo s'ouvre.
+ * Réduit pour tenir (petit écran / tiroir ouvert) ET agrandit jusqu'à
+ * SCALE_MAX pour remplir (grand écran), toujours borné par l'espace réel.
  */
 function ScaleToFit({ children }: { children: ReactNode }) {
   const outerRef = useRef<HTMLDivElement>(null);
@@ -46,7 +53,7 @@ function ScaleToFit({ children }: { children: ReactNode }) {
       const natH = inner.offsetHeight;
       const natW = inner.offsetWidth;
       if (!natH || !natW) return;
-      setScale(Math.min(1, availH / natH, availW / natW));
+      setScale(Math.min(SCALE_MAX, availH / natH, availW / natW));
     };
     compute();
     const ro = new ResizeObserver(compute);
