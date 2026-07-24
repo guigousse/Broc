@@ -3,7 +3,7 @@
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { QG_LAYOUT, type QgObjetKey } from "./layout";
+import { QG_LAYOUT, qgPct, type QgObjetKey } from "./layout";
 import { useQgObjet, useQgEditContext } from "./dev/QgEditContext";
 import { QgEditOverlay } from "./dev/QgEditOverlay";
 
@@ -71,11 +71,14 @@ export function QgScene({ children }: QgSceneProps) {
 /** Hook pour positionner un objet à ses coordonnées effectives (base + override). */
 export function useQgObjetStyle(key: QgObjetKey): CSSProperties {
   const { left, bottom, width } = useQgObjet(key);
+  // Coordonnées authorées en vw → % de la largeur de la scène (cf. qgPct) :
+  // indispensable depuis que la scène est dimensionnée par sa hauteur, pour que
+  // les objets restent ancrés à l'image sur iPad comme sur téléphone.
   return {
     position: "absolute",
-    left: `${left}vw`,
+    left: `${qgPct(left)}%`,
     bottom: `${bottom}%`,
-    width: `${width}vw`,
+    width: `${qgPct(width)}%`,
     height: "auto",
     pointerEvents: "auto",
     cursor: "pointer",

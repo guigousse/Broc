@@ -26,3 +26,10 @@ public/brocantes/*.png
 public/brocantes/scenes/*.png
 public/qg/*.png
 public/atelier/*.png
+scripts/save-demo.json
+scripts/save-demo.err
+
+# Artefacts générés Xcode/Tauri (régénérés au build)
+src-tauri/gen/apple/app.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+src-tauri/vendor/tauri-plugin-admob/.tauri/
+src-tauri/vendor/tauri-plugin-admob/ios/Package.resolved

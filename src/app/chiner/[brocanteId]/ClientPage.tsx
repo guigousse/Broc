@@ -473,6 +473,7 @@ export default function SessionChinePage() {
             onQuitter={handleRentrer}
             pulseSortir={etape === "rentrer"}
             onNavigate={() => setNegoOuverte(null)}
+            negoOuverte={negoOuverte !== null}
             renderDock={(currentItem) => <SkillDock skills={dockSkills(currentItem)} />}
             renderNegoDrawer={(item) => (
               <ChineNegoDrawer

@@ -28,6 +28,7 @@ export function ItemSwipeDeck({
   onNavigate,
   renderDock,
   pulseSortir,
+  negoOuverte = false,
 }: {
   slides: ChineSlide[];
   plein: boolean;
@@ -42,6 +43,8 @@ export function ItemSwipeDeck({
   renderDock?: (currentItem: ObjetEnVente | null) => ReactNode;
   /** Tutoriel : fait pulser le bouton Sortir pour guider le joueur vers la sortie. */
   pulseSortir?: boolean;
+  /** Négo dépliée : masque la barre ◀ n/N ▶ pour laisser plus de place à l'objet. */
+  negoOuverte?: boolean;
 }) {
   const { d } = useLangue();
   const [index, setIndex] = useState(0);
@@ -177,8 +180,9 @@ export function ItemSwipeDeck({
         </div>
       </div>
 
-      {/* Navigation ◀ 1/6 ▶ sous l'image, position stable entre les slides. */}
-      <div style={navRow}>
+      {/* Navigation ◀ 1/6 ▶ sous l'image — masquée en négo dépliée pour rendre
+          la place à l'objet (on négocie un objet à la fois). */}
+      <div style={{ ...navRow, display: negoOuverte ? "none" : navRow.display }}>
         <button
           type="button"
           aria-label={d.chine.precedent}

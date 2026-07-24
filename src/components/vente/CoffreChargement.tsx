@@ -23,7 +23,9 @@ import { CarrouselStock } from "./CarrouselStock";
 import { DevPanel } from "./DevPanel";
 import { OUTILS_DEV } from "@/lib/outilsDev";
 
-// Dev only — affiche le panneau dev (switcher + sliders position/scale).
+// Dev only — panneau dev (switcher camion + sliders position/scale). Verrouillé
+// hors développement par OUTILS_DEV : jamais visible en prod / TestFlight /
+// App Store (constante repliée à false à la compilation, code éliminé).
 const DEV_PANEL = OUTILS_DEV;
 
 const MASK_SIZE = 48;

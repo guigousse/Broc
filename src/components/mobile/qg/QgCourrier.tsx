@@ -4,6 +4,7 @@ import { useEffect, type CSSProperties } from "react";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { useQgObjet } from "./dev/QgEditContext";
+import { qgPct } from "./layout";
 
 interface QgCourrierProps {
   nbNonLus: number;
@@ -40,9 +41,9 @@ export function QgCourrier({ nbNonLus, onTap }: QgCourrierProps) {
       )}
       style={{
         position: "absolute",
-        left: `${left}vw`,
+        left: `${qgPct(left)}%`,
         bottom: `${bottom}%`,
-        width: `${width}vw`,
+        width: `${qgPct(width)}%`,
         background: "transparent",
         border: "none",
         padding: 0,

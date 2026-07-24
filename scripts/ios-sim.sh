@@ -8,10 +8,17 @@
 #        npm run tauri ios dev "iPhone 16 Pro"
 #      → compile le .app simulateur (SUCCÈS) puis échoue sur l'archive
 #        (erreur attendue, ignore-la). Le .app est prêt dans DerivedData.
-#   2. RUN (fréquent, itération front) :
+#   2. RUN (fréquent) :
 #        ./scripts/ios-sim.sh "iPad Pro 13-inch (M4)"
-#      → installe le dernier .app construit + lance sur le simu choisi.
-#        Le front se recharge à chaud (webview → http://localhost:3000).
+#      → sert l'export statique out/ sur :3000, installe le dernier .app
+#        construit + lance sur le simu choisi.
+#
+# ⚠ NE PAS servir `next dev` au webview : dans WKWebView les chunks du
+#   serveur de dev Next 16/Turbopack ne terminent jamais de charger
+#   (0/24, requêtes pendantes sans erreur) → page rendue mais React
+#   jamais hydraté, boutons morts. Diagnostiqué le 2026-07-24. Le webview
+#   doit recevoir l'export statique (`npm run build` → out/), comme en prod.
+#   Après un changement de front : relancer `npm run build` puis ce script.
 #
 # Usage : ./scripts/ios-sim.sh ["Nom du simulateur"]   (défaut : iPhone 16 Pro)
 set -euo pipefail
@@ -29,13 +36,19 @@ if [ -z "${APP:-}" ]; then
 fi
 echo "📦 App : $APP"
 
-# Serveur de dev Next (le webview charge http://localhost:3000).
-if ! curl -s -o /dev/null --max-time 2 http://localhost:3000; then
-  echo "▶︎ Démarrage du serveur de dev (npm run dev)…"
-  ( npm run dev > /tmp/next-dev.log 2>&1 & )
-  until curl -s -o /dev/null --max-time 2 http://localhost:3000; do sleep 1; done
+# Export statique servi sur :3000 (voir l'avertissement en tête de script).
+if [ ! -f out/index.html ]; then
+  echo "❌ out/index.html introuvable. Construis l'export d'abord :  npm run build"
+  exit 1
 fi
-echo "✅ Serveur de dev prêt (localhost:3000)"
+if ! curl -s -o /dev/null --max-time 2 http://localhost:3000; then
+  echo "▶︎ Serveur statique sur out/ (npx serve)…"
+  ( npx serve out -l 3000 > /tmp/serve-out.log 2>&1 & )
+  until curl -s -o /dev/null --max-time 2 http://localhost:3000; do sleep 1; done
+else
+  echo "ℹ︎ Un serveur écoute déjà sur :3000 — vérifie que c'est bien out/ (pas next dev)."
+fi
+echo "✅ Serveur prêt (localhost:3000)"
 
 # Boot + install + launch.
 open -a Simulator || true
