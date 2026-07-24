@@ -144,7 +144,7 @@ export const OLD_TO_NEW_TEMPLATE_ID: Record<string, string> = {
   "mus.vinyle_aznavour_emmenez": "mus.vinyle_paul_nazamour_demain_enfin",
   "mus.vinyle_balavoine_aziza": "mus.vinyle_miguel_pavane_la_zizanie",
   "mus.vinyle_beatles_abbey_road": "mus.vinyle_des_scarabees_passage_cloute",
-  "mus.vinyle_beatles_dedicace": "mus.vinyle_des_scarabees_dedicace_album_solo",
+  "mus.vinyle_beatles_dedicace": "mus.vinyle_collector_de_vagabond_horizon_celeste",
   "mus.vinyle_bowie_ziggy": "mus.vinyle_du_david_bah_oui_comete",
   "mus.vinyle_brassens_jeanne": "mus.vinyle_victor_de_la_brasse_bibelot",
   "mus.vinyle_brel_amsterdam": "mus.vinyle_stevranos_vive_la_fet_a",
@@ -157,14 +157,14 @@ export const OLD_TO_NEW_TEMPLATE_ID: Record<string, string> = {
   "mus.vinyle_indochine_aventurier": "mus.33tours_jazz_3",
   "mus.vinyle_mylene_farmer_ainsi": "mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle",
   "mus.vinyle_piaf_non": "mus.vinyle_judith_loiseau_oui_je_regrette_tout",
-  "mus.vinyle_pink_floyd_wall": "mus.vinyle_le_mur_des_flamants_roses",
+  "mus.vinyle_pink_floyd_wall": "mus.vinyle_des_loups_des_steppes_bark_to_be_free",
   "mus.vinyle_renaud_morgane": "mus.vinyle_renaut_megane_sans_toit",
   "mus.vinyle_sardou_lacs": "mus.vinyle_les_pates_carbonnara_michele_sardaigna",
   "mus.vinyle_souchon_foule": "mus.vinyle_whale_song_son_terrestre_n1",
   "mus.vinyle_stones_let_bleed": "mus.vinyle_des_trolling_sons_bet_it_heal",
   "mus.vinyle_stones_test_pressing": "mus.test_pressing_des_trolling_sons",
   "mus.vinyle_telephone_dure_limite": "mus.vinyle_grand_max_des_combines",
-  "mus.vinyle_zeppelin_iv": "mus.vinyle_du_led_guirlande_escalator_du_paradis",
+  "mus.vinyle_zeppelin_iv": "mus.vinyle_free_robot_des_punkbot",
   "mus.walkman_sony_wm": "mus.baladeur_a_cassette_annees_80",
   "uniq.jx.console_pong_1972": "uniq.jx.prototype_de_la_toute_premiere_console_de_jeu",
 
@@ -174,4 +174,20 @@ export const OLD_TO_NEW_TEMPLATE_ID: Record<string, string> = {
   "mus.vinyle_du_ryan_sober_blonde_ou_brune": "mus.33tours_jazz_2",
   // (2026-06-24) le vinyle « New Wave — L'Explorateur » devient un 3e 33 tours de jazz.
   "mus.vinyle_new_wave_l_explorateur": "mus.33tours_jazz_3",
+
+  // (2026-07-23) le vinyle « Led Guirlande — Escalator du Paradis » est remplacé
+  // par « Free Robot » des PunkBot (piste originale disponible). NB : l'entrée
+  // historique mus.vinyle_zeppelin_iv ci-dessus pointe directement vers le
+  // nouvel id (le remap n'est pas chaîné).
+  "mus.vinyle_du_led_guirlande_escalator_du_paradis": "mus.vinyle_free_robot_des_punkbot",
+  // (2026-07-23) le vinyle « Le Mur » des Flamants Roses est remplacé par
+  // « Bark to Be Free » des Loups des Steppes (piste originale disponible).
+  // L'entrée historique mus.vinyle_pink_floyd_wall ci-dessus pointe
+  // directement vers le nouvel id (le remap n'est pas chaîné).
+  "mus.vinyle_le_mur_des_flamants_roses": "mus.vinyle_des_loups_des_steppes_bark_to_be_free",
+  // (2026-07-24) le vinyle « des Scarabées dédicacé (album solo) » est remplacé
+  // par le collector « Horizon Céleste » de Vagabond (piste originale
+  // disponible). L'entrée historique mus.vinyle_beatles_dedicace ci-dessus
+  // pointe directement vers le nouvel id (le remap n'est pas chaîné).
+  "mus.vinyle_des_scarabees_dedicace_album_solo": "mus.vinyle_collector_de_vagabond_horizon_celeste",
 };

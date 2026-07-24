@@ -37,8 +37,8 @@ function section(
 // MUSIQUE — 40 communs + 12 rares
 // ============================================================
 const MUSIQUE_C: Row[] = [
-  ["mus.vinyle_le_mur_des_flamants_roses", "Vinyle 'Le Mur' des Flamants Roses", 45],
-  ["mus.vinyle_grand_max_des_combines", "Vinyle 'Grand Max' des Combinés", 20],
+  ["mus.vinyle_des_loups_des_steppes_bark_to_be_free", "Vinyle des Loups des Steppes — 'Bark to Be Free'", 45],
+  ["mus.vinyle_grand_max_des_combines", "Vinyle Babylone — 'Sur mon île'", 20],
   ["mus.33tours_jazz_1", "33 tours de jazz inconnu", 8],
   ["mus.coffret_cd_grunge_beatitude", "Coffret CD grunge 'Béatitude'", 18],
   ["mus.harmonica_chromatique_de_bluesman", "Harmonica chromatique de bluesman", 35],
@@ -46,10 +46,10 @@ const MUSIQUE_C: Row[] = [
   ["mus.vinyle_victor_de_la_brasse_bibelot", "Vinyle Victor de la Brasse 'Bibelot'", 24],
   ["mus.vinyle_paul_nazamour_demain_enfin", "Vinyle Paul Nazamour 'Demain enfin'", 18],
   ["mus.vinyle_judith_loiseau_oui_je_regrette_tout", "Vinyle Judith Loiseau 'Oui, je regrette tout'", 28],
-  ["mus.vinyle_des_scarabees_passage_cloute", "Vinyle des Scarabées — 'Passage Clouté'", 55],
-  ["mus.vinyle_des_trolling_sons_bet_it_heal", "Vinyle des Trolling Sons — 'Bet it Heal'", 50],
-  ["mus.vinyle_du_david_bah_oui_comete", "Vinyle du David Bah Oui — 'Comète'", 60],
-  ["mus.vinyle_du_led_guirlande_escalator_du_paradis", "Vinyle du Led Guirlande — Escalator du Paradis", 45],
+  ["mus.vinyle_des_scarabees_passage_cloute", "Vinyle des Scarabées — 'Bet it Heal'", 55],
+  ["mus.vinyle_des_trolling_sons_bet_it_heal", "Vinyle des Trolling Sons — 'Unsatisfying'", 50],
+  ["mus.vinyle_du_david_bah_oui_comete", "Vinyle du David — 'Bah oui'", 60],
+  ["mus.vinyle_free_robot_des_punkbot", "Vinyle 'Free Robot' des PunkBot", 45],
   ["mus.33tours_jazz_2", "33 tours de jazz (II)", 40],
   ["mus.33tours_jazz_3", "33 tours de jazz (III)", 24],
   ["mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle", "Vinyle de la Rousse Mystique — 'Ainsi soit-elle'", 26],
@@ -81,7 +81,7 @@ const MUSIQUE_C: Row[] = [
 
 const MUSIQUE_R: Row[] = [
   ["mus.guitare_classique_ancienne", "Vieille guitare classique", 120],
-  ["mus.vinyle_des_scarabees_dedicace_album_solo", "Vinyle des Scarabées dédicacé (album solo)", 280],
+  ["mus.vinyle_collector_de_vagabond_horizon_celeste", "Vinyle collector de Vagabond — 'Horizon Céleste'", 280],
   ["mus.test_pressing_des_trolling_sons", "Test pressing des Trolling Sons", 200],
   ["mus.guitare_electrique_a_corps_plein_modele_legend", "Guitare électrique à corps plein, modèle légende (1980s)", 450],
   ["mus.guitare_electrique_a_trois_micros_solid_body_1", "Guitare électrique à trois micros, solid body (1970s)", 380],

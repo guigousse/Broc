@@ -19,7 +19,7 @@ export const ITEMS_WITH_IMAGE: ReadonlySet<string> = new Set<string>([
   "ma.tabouret_bois_patine",
 
   // Musique — communs
-  "mus.vinyle_le_mur_des_flamants_roses",
+  "mus.vinyle_des_loups_des_steppes_bark_to_be_free",
   "mus.vinyle_grand_max_des_combines",
   "mus.33tours_jazz_1",
   "mus.coffret_cd_grunge_beatitude",
@@ -31,7 +31,7 @@ export const ITEMS_WITH_IMAGE: ReadonlySet<string> = new Set<string>([
   "mus.vinyle_des_scarabees_passage_cloute",
   "mus.vinyle_des_trolling_sons_bet_it_heal",
   "mus.vinyle_du_david_bah_oui_comete",
-  "mus.vinyle_du_led_guirlande_escalator_du_paradis",
+  "mus.vinyle_free_robot_des_punkbot",
   "mus.33tours_jazz_2",
   "mus.33tours_jazz_3",
   "mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle",
@@ -62,7 +62,7 @@ export const ITEMS_WITH_IMAGE: ReadonlySet<string> = new Set<string>([
 
   // Musique — rares
   "mus.guitare_classique_ancienne",
-  "mus.vinyle_des_scarabees_dedicace_album_solo",
+  "mus.vinyle_collector_de_vagabond_horizon_celeste",
   "mus.test_pressing_des_trolling_sons",
   "mus.guitare_electrique_a_corps_plein_modele_legend",
   "mus.guitare_electrique_a_trois_micros_solid_body_1",

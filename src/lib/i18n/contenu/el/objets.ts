@@ -6,8 +6,8 @@
  */
 export const OBJETS_EL: Record<string, string> = {
   // ===== MUSIQUE — communs =====
-  "mus.vinyle_le_mur_des_flamants_roses": "Βινύλιο «Ο Τούβλινος Τοίχος» των Ροζ Φλαμίνγκο",
-  "mus.vinyle_grand_max_des_combines": "Βινύλιο «Grand Max» των Κομπιναδόρων",
+  "mus.vinyle_des_loups_des_steppes_bark_to_be_free": "Βινύλιο «Bark to Be Free» των Λύκων της Στέπας",
+  "mus.vinyle_grand_max_des_combines": "Βινύλιο των Babylone — «Sur mon île»",
   "mus.33tours_jazz_1": "Δίσκος 33 στροφών τζαζ από άγνωστο συγκρότημα",
   "mus.coffret_cd_grunge_beatitude": "Κουτί CD grunge — «Μακαριότητα»",
   "mus.harmonica_chromatique_de_bluesman": "Χρωματική φυσαρμόνικα μπλουζμάν",
@@ -15,10 +15,10 @@ export const OBJETS_EL: Record<string, string> = {
   "mus.vinyle_victor_de_la_brasse_bibelot": "Βινύλιο Victor de la Brasse — «Μπιχλιμπίδι»",
   "mus.vinyle_paul_nazamour_demain_enfin": "Βινύλιο Paul Nazamour — «Επιτέλους αύριο»",
   "mus.vinyle_judith_loiseau_oui_je_regrette_tout": "Βινύλιο Judith Loiseau — «Ναι, τα μετανιώνω όλα»",
-  "mus.vinyle_des_scarabees_passage_cloute": "Βινύλιο των Σκαραβαίων — «Διάβαση Πεζών»",
-  "mus.vinyle_des_trolling_sons_bet_it_heal": "Βινύλιο των Trolling Sons — «Bet it Heal»",
-  "mus.vinyle_du_david_bah_oui_comete": "Βινύλιο του David Bah Oui — «Κομήτης»",
-  "mus.vinyle_du_led_guirlande_escalator_du_paradis": "Βινύλιο των Led Γιρλάντα — «Η Κυλιόμενη Σκάλα του Παραδείσου»",
+  "mus.vinyle_des_scarabees_passage_cloute": "Βινύλιο των Σκαραβαίων — «Bet it Heal»",
+  "mus.vinyle_des_trolling_sons_bet_it_heal": "Βινύλιο των Trolling Sons — «Unsatisfying»",
+  "mus.vinyle_du_david_bah_oui_comete": "Βινύλιο του David — «Bah oui»",
+  "mus.vinyle_free_robot_des_punkbot": "Βινύλιο «Free Robot» των PunkBot",
   "mus.33tours_jazz_2": "Δίσκος 33 στροφών τζαζ (II)",
   "mus.33tours_jazz_3": "Δίσκος 33 στροφών τζαζ (III)",
   "mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle": "Βινύλιο της Μυστηριώδους Κοκκινομάλλας — «Έτσι να 'ναι»",
@@ -49,7 +49,7 @@ export const OBJETS_EL: Record<string, string> = {
 
   // ===== MUSIQUE — rares =====
   "mus.guitare_classique_ancienne": "Παλιά κλασική κιθάρα",
-  "mus.vinyle_des_scarabees_dedicace_album_solo": "Βινύλιο των Σκαραβαίων με αφιέρωση (σόλο άλμπουμ)",
+  "mus.vinyle_collector_de_vagabond_horizon_celeste": "Συλλεκτικό βινύλιο των Vagabond — «Ουράνιος Ορίζοντας»",
   "mus.test_pressing_des_trolling_sons": "Δοκιμαστική πρεσαρισμένη έκδοση των Trolling Sons",
   "mus.guitare_electrique_a_corps_plein_modele_legend": "Ηλεκτρική κιθάρα συμπαγούς σώματος, μοντέλο θρύλος (δεκαετία '80)",
   "mus.guitare_electrique_a_trois_micros_solid_body_1": "Ηλεκτρική κιθάρα συμπαγούς σώματος με τρία μικρόφωνα (δεκαετία '70)",

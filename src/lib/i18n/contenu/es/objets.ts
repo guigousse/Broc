@@ -6,8 +6,8 @@
  */
 export const OBJETS_ES: Record<string, string> = {
   // ===== MUSIQUE — communs =====
-  "mus.vinyle_le_mur_des_flamants_roses": "Vinilo 'El Muro' de los Flamencos Rosas",
-  "mus.vinyle_grand_max_des_combines": "Vinilo 'Gran Max' de los Trapaceros",
+  "mus.vinyle_des_loups_des_steppes_bark_to_be_free": "Vinilo 'Bark to Be Free' de Los Lobos de la Estepa",
+  "mus.vinyle_grand_max_des_combines": "Vinilo de Babylone — 'Sur mon île'",
   "mus.33tours_jazz_1": "LP de un grupo de jazz desconocido",
   "mus.coffret_cd_grunge_beatitude": "Caja de CD grunge — 'Beatitud'",
   "mus.harmonica_chromatique_de_bluesman": "Armónica cromática de bluesman",
@@ -15,10 +15,10 @@ export const OBJETS_ES: Record<string, string> = {
   "mus.vinyle_victor_de_la_brasse_bibelot": "Vinilo de Victor de la Brasse — 'Baratija'",
   "mus.vinyle_paul_nazamour_demain_enfin": "Vinilo de Paul Nazamour — 'Mañana por fin'",
   "mus.vinyle_judith_loiseau_oui_je_regrette_tout": "Vinilo de Judith Loiseau — 'Sí, lo lamento todo'",
-  "mus.vinyle_des_scarabees_passage_cloute": "Vinilo de Los Escarabajos — 'Paso de cebra'",
-  "mus.vinyle_des_trolling_sons_bet_it_heal": "Vinilo de los Trolling Sons — 'Bet it Heal'",
-  "mus.vinyle_du_david_bah_oui_comete": "Vinilo de David Bah Oui — 'Cometa'",
-  "mus.vinyle_du_led_guirlande_escalator_du_paradis": "Vinilo de Led Guirnalda — 'Escalator al paraíso'",
+  "mus.vinyle_des_scarabees_passage_cloute": "Vinilo de Los Escarabajos — 'Bet it Heal'",
+  "mus.vinyle_des_trolling_sons_bet_it_heal": "Vinilo de los Trolling Sons — 'Unsatisfying'",
+  "mus.vinyle_du_david_bah_oui_comete": "Vinilo de David — 'Bah oui'",
+  "mus.vinyle_free_robot_des_punkbot": "Vinilo 'Free Robot' de PunkBot",
   "mus.33tours_jazz_2": "LP de jazz (II)",
   "mus.33tours_jazz_3": "LP de jazz (III)",
   "mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle": "Vinilo de la Pelirroja Mística — 'Así sea ella'",
@@ -49,7 +49,7 @@ export const OBJETS_ES: Record<string, string> = {
 
   // ===== MUSIQUE — rares =====
   "mus.guitare_classique_ancienne": "Vieja guitarra clásica",
-  "mus.vinyle_des_scarabees_dedicace_album_solo": "Vinilo de Los Escarabajos firmado (álbum en solitario)",
+  "mus.vinyle_collector_de_vagabond_horizon_celeste": "Vinilo de coleccionista de Vagabond — 'Horizonte celeste'",
   "mus.test_pressing_des_trolling_sons": "Prueba de prensaje de los Trolling Sons",
   "mus.guitare_electrique_a_corps_plein_modele_legend": "Guitarra eléctrica de cuerpo sólido, modelo legendario (años 80)",
   "mus.guitare_electrique_a_trois_micros_solid_body_1": "Guitarra eléctrica de cuerpo sólido con tres pastillas (años 70)",

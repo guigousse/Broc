@@ -10,16 +10,16 @@
 "description": "a small patinated wooden stool, four turned legs, weathered natural wood finish with subtle nicks and faded paint traces, simple farmhouse design, three-quarter view"
 },
 {
-"templateId": "mus.vinyle_le_mur_des_flamants_roses",
+"templateId": "mus.vinyle_des_loups_des_steppes_bark_to_be_free",
 "rarete": "commun",
-"description": "a surreal wall of pale bricks under a stormy sky with a small pink flamingo, minimalist conceptual album illustration",
+"description": "a defiant dog howling skyward and breaking free from its chain leash on a hilltop, stormy sky with distant silhouetted bomber planes, 1970s protest hard rock album cover, bold high-contrast poster style in red black and cream",
 "ref": "vinyl",
 "slot": "album cover"
 },
 {
 "templateId": "mus.vinyle_grand_max_des_combines",
 "rarete": "commun",
-"description": "a bold graphic illustration of vintage telephone handsets crackling with electric energy, gritty French rock poster style",
+"description": "a bold graphic illustration of a small tropical island with palm trees at golden sunset over the sea, red gold and green rasta color scheme, vintage 1970s reggae album art style, hand-painted look",
 "ref": "vinyl",
 "slot": "album cover"
 },
@@ -92,9 +92,9 @@
 "slot": "album cover"
 },
 {
-"templateId": "mus.vinyle_du_led_guirlande_escalator_du_paradis",
+"templateId": "mus.vinyle_free_robot_des_punkbot",
 "rarete": "commun",
-"description": "a long shining escalator rising up through clouds into a bright golden sky towards the heavens, surreal dreamlike album cover, warm celestial light",
+"description": "a chrome-helmeted robot breaking free from glowing chains, arms raised triumphantly against a neon grid horizon, retro-futuristic electronic music album cover, vibrant purple and cyan lights",
 "ref": "vinyl",
 "slot": "album cover"
 },
@@ -271,9 +271,9 @@
 "description": "an old classical acoustic guitar with nylon strings, varnished spruce top and worn wood, three-quarter view"
 },
 {
-"templateId": "mus.vinyle_des_scarabees_dedicace_album_solo",
+"templateId": "mus.vinyle_collector_de_vagabond_horizon_celeste",
 "rarete": "rare",
-"description": "a plain elegant solo album cover with a small beetle emblem and a handwritten ink signature across the corner",
+"description": "a lone hooded wanderer walking a long straight road toward a surreal glowing horizon where the night sky splits into luminous spectral color bands, vast starfield above, minimalist dreamlike progressive rock album cover, deep blues and violets",
 "ref": "vinyl",
 "slot": "album cover"
 },
