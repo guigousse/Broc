@@ -234,6 +234,219 @@ export default function PrivacyPage() {
         .
       </p>
 
+      <hr style={{ margin: "56px 0", border: "none", borderTop: "1px solid #cdbf9a" }} />
+
+      {/* ====================== ESPAÑOL ====================== */}
+      <h1 style={{ fontFamily: "'Cinzel', serif", fontSize: 30, marginBottom: 4 }}>
+        Política de privacidad
+      </h1>
+      <p style={{ opacity: 0.7, marginTop: 0 }}>Broc — última actualización: {MAJ}</p>
+
+      <p>
+        <strong>En resumen: tu progreso permanece en tu dispositivo.</strong> El
+        juego realiza no obstante una petición de red limitada a un servicio de
+        hora, descrita a continuación.
+      </p>
+
+      <h2 style={h2}>1. Datos tratados</h2>
+      <p>
+        Broc no requiere cuenta ni registro y no recopila directamente ningún
+        dato personal. Tu progreso (dinero, colección, ajustes, partida
+        guardada) se almacena <strong>localmente</strong> en tu dispositivo
+        (almacenamiento local del sistema) y nunca se envía a un servidor ni se
+        comparte. Solo los anuncios opcionales (ver sección 4, «Publicidad»)
+        implican una recopilación de datos por parte de Google AdMob.
+      </p>
+
+      <h2 style={h2}>2. Servicio de hora</h2>
+      <p>
+        Para limitar la manipulación del reloj del dispositivo y calcular
+        ciertos plazos del juego, Broc consulta el servicio de terceros{" "}
+        <strong>timeapi.io</strong>. La petición solicita únicamente la hora
+        UTC: Broc no envía ninguna partida guardada, ningún identificador de
+        jugador ni información sobre tu progreso. Como en cualquier conexión a
+        Internet, el proveedor del servicio puede no obstante recibir datos
+        técnicos como tu dirección IP, la fecha de la petición e información de
+        red.
+      </p>
+
+      <h2 style={h2}>3. Sin seguimiento analítico</h2>
+      <p>
+        La aplicación no contiene ninguna herramienta de medición de audiencia
+        ni botones de redes sociales. Las fuentes, imágenes y sonidos están
+        integrados en la aplicación. Broc se puede jugar sin conexión (salvo el
+        visionado de anuncios y la consulta del servicio de hora); si el
+        servicio de hora no está disponible, la aplicación utiliza el reloj del
+        dispositivo.
+      </p>
+
+      <h2 style={h2}>4. Compras integradas y publicidad</h2>
+      <p>Esta versión de la aplicación no ofrece ninguna compra integrada.</p>
+      <p>
+        <strong>Publicidad.</strong> La aplicación muestra anuncios
+        recompensados, únicamente cuando eliges ver uno para obtener una
+        bonificación en el juego. Los proporciona Google AdMob. Para ello,
+        Google puede recopilar identificadores del dispositivo (incluido el
+        identificador publicitario, con tu consentimiento mediante el aviso de
+        iOS «¿Permitir que la app rastree tu actividad?»), tu dirección IP y
+        datos de diagnóstico publicitario. En el primer arranque, un formulario
+        de consentimiento (RGPD) te permite aceptar o rechazar los anuncios
+        personalizados; en caso de rechazo, se muestran anuncios no
+        personalizados. Esta elección no puede modificarse directamente en el
+        juego por ahora; para retirarla, elimina y vuelve a instalar la
+        aplicación (el formulario de consentimiento se mostrará de nuevo en el
+        primer arranque). Los anuncios son en todo caso opcionales y solo se
+        reproducen a petición tuya. Para más información sobre las prácticas de
+        Google en la materia, consulta la{" "}
+        <a
+          href="https://policies.google.com/privacy"
+          style={link}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          política de privacidad de Google
+        </a>
+        .
+      </p>
+
+      <h2 style={h2}>5. Menores</h2>
+      <p>
+        Broc no pide cuenta, nombre ni dirección de correo electrónico. Los
+        anuncios descritos en la sección 4, proporcionados por Google AdMob,
+        están sujetos al mismo formulario de consentimiento para todos los
+        jugadores, sea cual sea la edad declarada.
+      </p>
+
+      <h2 style={h2}>6. Eliminación de tus datos</h2>
+      <p>
+        Todos los datos están en tu dispositivo. Puedes borrarlos en cualquier
+        momento mediante «Reiniciar la partida» en los ajustes del juego, o
+        desinstalando la aplicación.
+      </p>
+
+      <h2 style={h2}>7. Modificaciones</h2>
+      <p>
+        Esta política puede actualizarse; la fecha en la parte superior de la
+        página indica la última versión.
+      </p>
+
+      <h2 style={h2}>8. Contacto</h2>
+      <p>
+        Editor: {EDITEUR}. Para cualquier pregunta:{" "}
+        <a href={`mailto:${CONTACT}`} style={link}>
+          {CONTACT}
+        </a>
+        .
+      </p>
+
+      <hr style={{ margin: "56px 0", border: "none", borderTop: "1px solid #cdbf9a" }} />
+
+      {/* ====================== ΕΛΛΗΝΙΚΑ ====================== */}
+      <h1 style={{ fontFamily: "'Cinzel', serif", fontSize: 30, marginBottom: 4 }}>
+        Πολιτική απορρήτου
+      </h1>
+      <p style={{ opacity: 0.7, marginTop: 0 }}>Broc — τελευταία ενημέρωση: {MAJ}</p>
+
+      <p>
+        <strong>Εν συντομία: η πρόοδός σας παραμένει στη συσκευή σας.</strong>{" "}
+        Το παιχνίδι πραγματοποιεί ωστόσο ένα περιορισμένο αίτημα δικτύου προς
+        μια υπηρεσία ώρας, όπως περιγράφεται παρακάτω.
+      </p>
+
+      <h2 style={h2}>1. Δεδομένα που επεξεργαζόμαστε</h2>
+      <p>
+        Το Broc δεν απαιτεί λογαριασμό ή εγγραφή και δεν συλλέγει άμεσα κανένα
+        προσωπικό δεδομένο. Η πρόοδός σας (χρήματα, συλλογή, ρυθμίσεις,
+        αποθηκευμένο παιχνίδι) αποθηκεύεται <strong>τοπικά</strong> στη συσκευή
+        σας (τοπικός χώρος αποθήκευσης του συστήματος) και δεν αποστέλλεται
+        ποτέ σε διακομιστή ούτε κοινοποιείται. Μόνο οι προαιρετικές διαφημίσεις
+        (βλ. ενότητα 4, «Διαφημίσεις») συνεπάγονται συλλογή δεδομένων από την
+        Google AdMob.
+      </p>
+
+      <h2 style={h2}>2. Υπηρεσία ώρας</h2>
+      <p>
+        Για να περιοριστεί η χειραγώγηση του ρολογιού της συσκευής και να
+        υπολογιστούν ορισμένες προθεσμίες του παιχνιδιού, το Broc συμβουλεύεται
+        την υπηρεσία τρίτων <strong>timeapi.io</strong>. Το αίτημα ζητά μόνο
+        την ώρα UTC: το Broc δεν αποστέλλει κανένα αποθηκευμένο παιχνίδι,
+        κανένα αναγνωριστικό παίκτη και καμία πληροφορία για την πρόοδό σας.
+        Όπως σε κάθε σύνδεση στο Διαδίκτυο, ο πάροχος της υπηρεσίας ενδέχεται
+        ωστόσο να λάβει τεχνικά δεδομένα όπως τη διεύθυνση IP σας, την
+        ημερομηνία του αιτήματος και πληροφορίες δικτύου.
+      </p>
+
+      <h2 style={h2}>3. Χωρίς αναλυτική παρακολούθηση</h2>
+      <p>
+        Η εφαρμογή δεν περιέχει κανένα εργαλείο μέτρησης επισκεψιμότητας ούτε
+        κουμπιά κοινωνικών δικτύων. Οι γραμματοσειρές, οι εικόνες και οι ήχοι
+        είναι ενσωματωμένοι στην εφαρμογή. Το Broc παίζεται και εκτός σύνδεσης
+        (εκτός από την προβολή διαφημίσεων και το αίτημα προς την υπηρεσία
+        ώρας)· εάν η υπηρεσία ώρας δεν είναι διαθέσιμη, η εφαρμογή
+        χρησιμοποιεί το ρολόι της συσκευής.
+      </p>
+
+      <h2 style={h2}>4. Αγορές εντός εφαρμογής και διαφημίσεις</h2>
+      <p>Αυτή η έκδοση της εφαρμογής δεν προσφέρει καμία αγορά εντός εφαρμογής.</p>
+      <p>
+        <strong>Διαφημίσεις.</strong> Η εφαρμογή εμφανίζει διαφημίσεις με
+        επιβράβευση, μόνο όταν επιλέγετε να παρακολουθήσετε μία για να λάβετε
+        ένα μπόνους στο παιχνίδι. Παρέχονται από την Google AdMob. Για τον
+        σκοπό αυτό, η Google ενδέχεται να συλλέξει αναγνωριστικά συσκευής
+        (συμπεριλαμβανομένου του διαφημιστικού αναγνωριστικού, με τη
+        συγκατάθεσή σας μέσω του μηνύματος iOS «Να επιτρέπεται στην εφαρμογή
+        να παρακολουθεί τη δραστηριότητά σας;»), τη διεύθυνση IP σας και
+        διαγνωστικά δεδομένα διαφήμισης. Κατά την πρώτη εκκίνηση, μια φόρμα
+        συγκατάθεσης (ΓΚΠΔ) σάς επιτρέπει να αποδεχθείτε ή να απορρίψετε τις
+        εξατομικευμένες διαφημίσεις· σε περίπτωση άρνησης, εμφανίζονται μη
+        εξατομικευμένες διαφημίσεις. Αυτή η επιλογή δεν μπορεί προς το παρόν
+        να τροποποιηθεί απευθείας μέσα στο παιχνίδι· για να την αποσύρετε,
+        διαγράψτε και επανεγκαταστήστε την εφαρμογή (η φόρμα συγκατάθεσης θα
+        εμφανιστεί ξανά κατά την πρώτη εκκίνηση). Οι διαφημίσεις παραμένουν
+        σε κάθε περίπτωση προαιρετικές και προβάλλονται μόνο με δική σας
+        πρωτοβουλία. Για περισσότερες πληροφορίες σχετικά με τις πρακτικές της
+        Google, συμβουλευτείτε την{" "}
+        <a
+          href="https://policies.google.com/privacy"
+          style={link}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          πολιτική απορρήτου της Google
+        </a>
+        .
+      </p>
+
+      <h2 style={h2}>5. Παιδιά</h2>
+      <p>
+        Το Broc δεν ζητά λογαριασμό, όνομα ή διεύθυνση ηλεκτρονικού
+        ταχυδρομείου. Οι διαφημίσεις που περιγράφονται στην ενότητα 4,
+        παρεχόμενες από την Google AdMob, υπόκεινται στην ίδια φόρμα
+        συγκατάθεσης για όλους τους παίκτες, ανεξαρτήτως δηλωμένης ηλικίας.
+      </p>
+
+      <h2 style={h2}>6. Διαγραφή των δεδομένων σας</h2>
+      <p>
+        Όλα τα δεδομένα βρίσκονται στη συσκευή σας. Μπορείτε να τα διαγράψετε
+        ανά πάσα στιγμή μέσω της επιλογής «Επαναφορά παιχνιδιού» στις ρυθμίσεις
+        του παιχνιδιού, ή απεγκαθιστώντας την εφαρμογή.
+      </p>
+
+      <h2 style={h2}>7. Τροποποιήσεις</h2>
+      <p>
+        Αυτή η πολιτική ενδέχεται να ενημερωθεί· η ημερομηνία στην κορυφή της
+        σελίδας υποδεικνύει την τελευταία έκδοση.
+      </p>
+
+      <h2 style={h2}>8. Επικοινωνία</h2>
+      <p>
+        Εκδότης: {EDITEUR}. Για κάθε ερώτηση:{" "}
+        <a href={`mailto:${CONTACT}`} style={link}>
+          {CONTACT}
+        </a>
+        .
+      </p>
+
       <p style={{ marginTop: 48 }}>
         <Link href="/mentions-legales" style={link}>
           Mentions légales / Legal notice
