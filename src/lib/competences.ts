@@ -104,6 +104,22 @@ export function aConnaisseurChinage(
   return aCompetence(`${catTreeId(cat)}.connaisseur.3`, state.competencesDebloquees);
 }
 
+/**
+ * Vrai dès qu'au moins une compétence liée à la Gazette est débloquée :
+ * un « Veilleur » (Connaisseur palier 1, id `cat.<Cat>.connaisseur.1`)
+ * ou un palier de « Vision du marché » (`general.vision.*`).
+ * Pilote toute la visibilité de la gazette (journal au sol / bureau).
+ */
+export function aAccesGazette(
+  state: Pick<GameState, "competencesDebloquees">,
+): boolean {
+  return state.competencesDebloquees.some(
+    (id) =>
+      id.endsWith(".connaisseur.1") ||
+      id.startsWith(`${TREE_GENERAL}.vision.`),
+  );
+}
+
 /** Réparer palier 3 (Maître) : accès au Pristin et durées de restauration réduites de 40 %. */
 export function aMaitreReparer(
   state: GameState,
