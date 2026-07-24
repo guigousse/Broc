@@ -915,9 +915,36 @@ html, body {
   }
 }
 
-html, body {
-  overscroll-behavior-y: none;
+/* ============================================================
+   Verrou viewport (iOS WKWebView)
+   Le body est figé aux dimensions du viewport : c'est la seule
+   parade fiable au rebond élastique (rubber band) sur iOS. Tout
+   scroll passe par des conteneurs internes (overflow-y: auto) —
+   MobileLayout, sheets, overlays. Aucune page ne doit compter
+   sur le scroll du body.
+   ============================================================ */
+html {
+  height: 100%;
+  overscroll-behavior: none;
+}
+body {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
+  /* Jeu : pas de sélection de texte ni de menu contextuel iOS
+     (Copier/Chercher/Traduire) au toucher long. Réactivé plus
+     bas sur les champs de saisie. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* ============================================================

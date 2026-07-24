@@ -310,7 +310,7 @@ export default function TitleScreen() {
     <main
       style={{
         position: "relative",
-        minHeight: "100dvh",
+        height: "100dvh",
         width: "100%",
         backgroundColor: "var(--forest-900)",
         display: "flex",
@@ -386,7 +386,14 @@ export default function TitleScreen() {
             "max(40px, var(--safe-top)) 24px max(28px, var(--safe-bottom))",
         }}
       >
-        <div style={{ textAlign: "center", maxWidth: 720, margin: "0 auto" }}>
+        <div
+          style={{
+            textAlign: "center",
+            maxWidth: 720,
+            // Respiration sous la barre de statut iOS.
+            margin: "18px auto 0",
+          }}
+        >
           <h1
             style={{
               fontFamily: "var(--font-broc-title)",
