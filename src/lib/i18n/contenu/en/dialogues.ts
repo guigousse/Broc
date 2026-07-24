@@ -112,4 +112,12 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "Ah, that swing! It makes me forty years younger.",
     "Other records are sleeping out there in the flea markets. Never hesitate to add them to your collection — every disc is a song waiting to be discovered.",
   ],
+  gazette_tuto: [
+    "Ah, you found it! The Bargain Hunters' Gazette — fifty years I've read it every Monday. This one's on me.",
+    "Look at the trends column: it tells you which categories are hot this week. The more of a connoisseur you become, the more it reveals.",
+    "The weather report announces the weather at the flea markets — and the crowds that come with it. You'll read it with the “Weather report” skill.",
+    "The society column whispers which celebrity will visit which market… Golden deals — for those with the “Society column” skill.",
+    "And with some “Influence”, you can even have an article you don't like rewritten. Ah, the press…",
+    "From next Monday, the kiosk will drop it at your door. A few coins well spent, believe me. I'll leave this one on the corner of the desk.",
+  ],
 };
