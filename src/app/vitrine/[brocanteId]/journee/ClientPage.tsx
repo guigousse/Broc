@@ -32,7 +32,10 @@ import {
 } from "@/lib/vitrine";
 import { ouvrirNegociation } from "@/lib/negociation";
 import { temperamentDe } from "@/data/temperaments";
-import { getClientIllustration } from "@/lib/personaIllustrations";
+import {
+  getClientIllustration,
+  getClientIllustrationFache,
+} from "@/lib/personaIllustrations";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
 import { audioManager } from "@/lib/audio/audioManager";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
@@ -999,6 +1002,9 @@ export default function VitrineJourneePage() {
           mode="vente"
           persona={personaDepuisClient(clientActuel.persona)}
           illustrationSrc={getClientIllustration(clientActuel.persona.archetypeId)}
+          illustrationFacheSrc={getClientIllustrationFache(
+            clientActuel.persona.archetypeId,
+          )}
           echelleMax={clientActuel.prixDemande}
           cibleSecrete={clientActuel.prixMax}
           prixDepartAdverse={

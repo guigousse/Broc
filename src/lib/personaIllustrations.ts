@@ -81,11 +81,17 @@ const CLIENT_ARCHETYPES_ILLUSTRES = [
 const CLIENTS_ILLUSTRES = new Set<string>(CLIENT_ARCHETYPES_ILLUSTRES);
 
 /** Illustration d'un acheteur, ou undefined (célébrité, archétype inconnu →
- *  silhouette). Pas de variante fâchée : les portraits sont générés à
- *  l'unité et deux rendus successifs ne donnent pas le même personnage —
- *  le portrait calme reste affiché quelle que soit l'humeur. */
+ *  silhouette). */
 export function getClientIllustration(archetypeId: string): string | undefined {
   return CLIENTS_ILLUSTRES.has(archetypeId)
     ? `/personas/clients/client-${archetypeId}.webp`
+    : undefined;
+}
+
+/** Variante fâchée d'un acheteur — générée en image-to-image depuis le
+ *  portrait calme (`gen:clients --fache`) pour garder le même personnage. */
+export function getClientIllustrationFache(archetypeId: string): string | undefined {
+  return CLIENTS_ILLUSTRES.has(archetypeId)
+    ? `/personas/clients/client-${archetypeId}-fache.webp`
     : undefined;
 }

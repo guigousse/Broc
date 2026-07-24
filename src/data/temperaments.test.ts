@@ -6,7 +6,10 @@ import {
 } from "@/data/temperaments";
 import { ARCHETYPES } from "@/data/clients";
 import { NOM_ARCHETYPE } from "@/lib/personas";
-import { getClientIllustration } from "@/lib/personaIllustrations";
+import {
+  getClientIllustration,
+  getClientIllustrationFache,
+} from "@/lib/personaIllustrations";
 
 describe("mapping archétype → tempérament", () => {
   // Vendeurs : le Record typé sur VendeurArchetypeId force déjà la
@@ -31,15 +34,19 @@ describe("mapping archétype → tempérament", () => {
 });
 
 describe("illustrations des acheteurs", () => {
-  test("chaque archétype de clients.ts a son illustration mappée", () => {
+  test("chaque archétype de clients.ts a ses illustrations calme + fâchée mappées", () => {
     for (const a of ARCHETYPES) {
       expect(getClientIllustration(a.id), a.id).toBe(
         `/personas/clients/client-${a.id}.webp`,
+      );
+      expect(getClientIllustrationFache(a.id), a.id).toBe(
+        `/personas/clients/client-${a.id}-fache.webp`,
       );
     }
   });
 
   test("célébrité / archétype inconnu → pas d'illustration (silhouette)", () => {
     expect(getClientIllustration("celebrite")).toBeUndefined();
+    expect(getClientIllustrationFache("celebrite")).toBeUndefined();
   });
 });
