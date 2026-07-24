@@ -113,8 +113,8 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Otros vinilos duermen en los mercadillos. No dudes en añadirlos a tu colección — cada disco es una música por descubrir.",
   ],
   gazette_tuto: [
-    "¡Ah, la has encontrado! La Gaceta de los Chamarileros — cincuenta años leyéndola cada lunes. Esta te la regalo yo.",
-    "Mira la sección de tendencias: te dice qué categorías están de moda esta semana. Cuanto más entendido seas, más te revela.",
+    "¡Ah, la has encontrado! La Gaceta de los Rebuscadores — cincuenta años leyéndola cada lunes. Esta te la regalo yo.",
+    "Mira la sección de tendencias: te dice qué categorías están de moda esta semana. Cuanto más conocedor te vuelvas, más te revela.",
     "El parte meteorológico anuncia el clima en los mercadillos — y la afluencia que trae consigo. Lo leerás con la habilidad «Parte meteorológico».",
     "Los ecos de sociedad susurran qué celebridad visitará qué mercadillo… Negocios de oro — para quien tiene «Ecos de sociedad».",
     "Y con algo de «Influencia», hasta podrás hacer reescribir un artículo que no te guste. Ay, la prensa…",

@@ -113,7 +113,7 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "Other records are sleeping out there in the flea markets. Never hesitate to add them to your collection — every disc is a song waiting to be discovered.",
   ],
   gazette_tuto: [
-    "Ah, you found it! The Bargain Hunters' Gazette — fifty years I've read it every Monday. This one's on me.",
+    "Ah, you found it! The Pickers' Gazette — fifty years I've read it every Monday. This one's on me.",
     "Look at the trends column: it tells you which categories are hot this week. The more of a connoisseur you become, the more it reveals.",
     "The weather report announces the weather at the flea markets — and the crowds that come with it. You'll read it with the “Weather report” skill.",
     "The society column whispers which celebrity will visit which market… Golden deals — for those with the “Society column” skill.",
