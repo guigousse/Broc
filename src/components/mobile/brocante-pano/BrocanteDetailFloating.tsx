@@ -237,10 +237,10 @@ export function BrocanteDetailFloating({
           <span
             style={metaItemsStyle}
             aria-label={tr(d.chine.bourseMoyenneClientsAria, {
-              valeur: bourseMoyenne(brocante.tier),
+              valeur: bourseMoyenne(brocante),
             })}
           >
-            {tr(d.chine.bourseMoyLabel, { valeur: bourseMoyenne(brocante.tier) })}
+            {tr(d.chine.bourseMoyLabel, { valeur: bourseMoyenne(brocante) })}
           </span>
         )}
         <span

@@ -11,6 +11,7 @@ import {
   appliquerBoniment,
   bourseDe,
   bourseMoyenne,
+  calculerPrixMax,
   classeBourse,
   genererClientEvent,
   personaDepuisClient,
@@ -24,7 +25,7 @@ import {
   createMockClient,
   createMockObjetEnVitrine,
 } from "./__test-fixtures__/gameState";
-import type { NegociationState } from "@/types/game";
+import type { Brocante, NegociationState } from "@/types/game";
 
 beforeEach(() => {
   // Fige Math.random à 0.5 par défaut (milieu de plage).
@@ -506,19 +507,81 @@ describe("calculerPrixMax — la Passion perce le plafond de bourse", () => {
 });
 
 describe("bourseMoyenne — affichage par brocante", () => {
-  it("croît avec le tier (les grosses bourses n'arrivent qu'en tiers 3)", () => {
-    expect(bourseMoyenne(1)).toBeLessThan(bourseMoyenne(3));
-    expect(bourseMoyenne(2)).toBeLessThanOrEqual(bourseMoyenne(3));
+  const broc = (tier: 1 | 2 | 3 | 4, facteurBourse = 1) => ({
+    tier,
+    facteurBourse,
   });
 
-  it("les tiers 3 et 4 partagent le même vivier de clients", () => {
-    expect(bourseMoyenne(3)).toBe(bourseMoyenne(4));
+  it("croît avec le tier (les grosses bourses n'arrivent qu'en tiers 3)", () => {
+    expect(bourseMoyenne(broc(1))).toBeLessThan(bourseMoyenne(broc(3)));
+    expect(bourseMoyenne(broc(2))).toBeLessThanOrEqual(bourseMoyenne(broc(3)));
+  });
+
+  it("à vivier égal, le standing du lieu (facteurBourse) fait la différence", () => {
+    expect(bourseMoyenne(broc(3, 3))).toBeGreaterThan(bourseMoyenne(broc(3, 2.2)));
+    expect(bourseMoyenne(broc(4, 5))).toBeGreaterThan(bourseMoyenne(broc(3, 3)));
   });
 
   it("vaut la moyenne des bourses des personas éligibles au tier", () => {
     // Tier 1 : retraite (petite 80), étudiant (petite 80), touriste (grosse 2000),
     // famille (moyenne 300), opportuniste (moyenne 300) → 2760 / 5 = 552.
-    expect(bourseMoyenne(1)).toBe(552);
+    expect(bourseMoyenne(broc(1))).toBe(552);
+  });
+});
+
+describe("facteurBourse — standing du lieu appliqué aux plafonds", () => {
+  const brocanteRiche = {
+    tier: 4,
+    facteurBourse: 5,
+  } as unknown as Brocante;
+
+  it("multiplie le plafond de classe dans calculerPrixMax", () => {
+    // Persona à très gros appétit : le brut dépasse largement la bourse,
+    // c'est donc le plafond (bourse × facteur) qui décide.
+    const c = createMockClient({ appetitMin: 10, appetitMax: 10 }); // grosse (2000)
+    const panier = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 5000 },
+        prixVente: 5000,
+      }),
+    ];
+    const sans = calculerPrixMax(panier, c, [], DEFAULT_MODIFIERS);
+    const avec = calculerPrixMax(panier, c, [], DEFAULT_MODIFIERS, brocanteRiche);
+    expect(sans).toBe(2000);
+    expect(avec).toBe(10000);
+  });
+
+  it("ne multiplie PAS une bourse explicite (célébrité)", () => {
+    const celebrite = createMockClient({
+      appetitMin: 10,
+      appetitMax: 10,
+      bourseMax: 6000,
+    });
+    const panier = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 5000 },
+        prixVente: 5000,
+      }),
+    ];
+    expect(
+      calculerPrixMax(panier, celebrite, [], DEFAULT_MODIFIERS, brocanteRiche),
+    ).toBe(6000);
+  });
+
+  it("étend le pré-filtre d'intérêt : un légendaire devient accessible en tier 4", () => {
+    const c = createMockClient({ appetitMin: 1.5, appetitMax: 1.5 }); // grosse
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 6000 },
+        prixVente: 5000, // > min(9000, 2000) × 1,6 = 3200 sans facteur
+      }),
+    ];
+    expect(genererClientEvent(c, vitrine, [], DEFAULT_MODIFIERS)).toBeNull();
+    expect(
+      genererClientEvent(c, vitrine, [], DEFAULT_MODIFIERS, {
+        brocante: brocanteRiche,
+      }),
+    ).not.toBeNull();
   });
 });
 

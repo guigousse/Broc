@@ -113,20 +113,31 @@ export const BOURSE_PAR_CLASSE: Record<ClasseBourse, number> = {
   grosse: 2000,
 };
 
-/** Bourse d'un persona : plafond explicite (célébrité) ou celui de sa classe. */
-export function bourseDe(persona: ClientPersonnage): number {
-  return persona.bourseMax ?? BOURSE_PAR_CLASSE[classeBourse(persona)];
+/**
+ * Bourse d'un persona : plafond explicite (célébrité) ou celui de sa classe,
+ * multiplié par le standing du lieu (`facteurBourse` de la brocante). Les
+ * bourses explicites ne sont PAS multipliées : la célébrité reste la même
+ * baleine partout.
+ */
+export function bourseDe(persona: ClientPersonnage, facteurBourse = 1): number {
+  if (persona.bourseMax != null) return persona.bourseMax;
+  return Math.round(BOURSE_PAR_CLASSE[classeBourse(persona)] * facteurBourse);
 }
 
 /**
- * Bourse moyenne des clients susceptibles de visiter une brocante de ce tier
- * (vivier filtré par `tierMin`, comme `genererPoolClients`). Affichée au choix
- * de la brocante en mode vente.
+ * Bourse moyenne des clients susceptibles de visiter cette brocante (vivier
+ * filtré par `tierMin`, comme `genererPoolClients`, pondéré par le standing
+ * du lieu). Affichée au choix de la brocante en mode vente.
  */
-export function bourseMoyenne(tier: 1 | 2 | 3 | 4): number {
-  const eligibles = ALL_PERSONNAGES.filter((p) => p.tierMin <= tier);
+export function bourseMoyenne(
+  brocante: Pick<Brocante, "tier" | "facteurBourse">,
+): number {
+  const eligibles = ALL_PERSONNAGES.filter((p) => p.tierMin <= brocante.tier);
   if (eligibles.length === 0) return 0;
-  const total = eligibles.reduce((s, p) => s + bourseDe(p), 0);
+  const total = eligibles.reduce(
+    (s, p) => s + bourseDe(p, brocante.facteurBourse),
+    0,
+  );
   return Math.round(total / eligibles.length);
 }
 
@@ -217,7 +228,9 @@ export function calculerPrixMax(
     const b = modifiers.bonusPassionParCategorie.get(x.objet.categorie) ?? 0;
     if (b > passionMax) passionMax = b;
   }
-  const plafond = Math.round(bourseDe(persona) * (1 + passionMax));
+  const plafond = Math.round(
+    bourseDe(persona, brocante?.facteurBourse ?? 1) * (1 + passionMax),
+  );
   return Math.max(1, Math.min(Math.round(brut * modBundle), plafond));
 }
 
@@ -247,10 +260,13 @@ export function genererClientEvent(
 
   // Pré-filtre : le client n'envisage que les objets dont le prix affiché reste
   // dans une fourchette plausible pour sa bourse. Au-delà, il passe son chemin.
+  const facteurBourse = options.brocante?.facteurBourse ?? 1;
   const accessibles = vitrine.filter((it) => {
     const plafondClient =
-      Math.min(it.objet.prixReferenceReel * persona.appetitMax, bourseDe(persona)) *
-      SEUIL_INTERET_ACHETEUR;
+      Math.min(
+        it.objet.prixReferenceReel * persona.appetitMax,
+        bourseDe(persona, facteurBourse),
+      ) * SEUIL_INTERET_ACHETEUR;
     return it.prixVente <= plafondClient;
   });
   if (accessibles.length === 0) return null;

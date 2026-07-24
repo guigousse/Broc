@@ -29,6 +29,7 @@ export const BROCANTES: Brocante[] = [
     etoiles: 1,
     taillePool: 6,
     poolExclusif: [],
+    facteurBourse: 0.9,
     conditionDeblocage: { type: "depart" },
   },
   {
@@ -41,6 +42,7 @@ export const BROCANTES: Brocante[] = [
     etoiles: 1,
     taillePool: 8,
     poolExclusif: [],
+    facteurBourse: 1.0,
     conditionDeblocage: { type: "valeurCollection", montant: 30 },
   },
   {
@@ -54,6 +56,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Livres & Papeterie",
     taillePool: 7,
     poolExclusif: [],
+    facteurBourse: 1.0,
     conditionDeblocage: { type: "valeurCollectionCategorie", categorie: "Livres & Papeterie", montant: 20 },
   },
   {
@@ -67,6 +70,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Mode",
     taillePool: 7,
     poolExclusif: [],
+    facteurBourse: 1.1,
     conditionDeblocage: { type: "valeurCollectionCategorie", categorie: "Mode", montant: 30 },
   },
   {
@@ -80,6 +84,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Jeux & Loisirs",
     taillePool: 7,
     poolExclusif: [],
+    facteurBourse: 1.1,
     conditionDeblocage: { type: "valeurCollectionCategorie", categorie: "Jeux & Loisirs", montant: 40 },
   },
 
@@ -96,6 +101,7 @@ export const BROCANTES: Brocante[] = [
     etoiles: 2,
     taillePool: 9,
     poolExclusif: [],
+    facteurBourse: 1.4,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -115,6 +121,7 @@ export const BROCANTES: Brocante[] = [
     etoiles: 2,
     taillePool: 10,
     poolExclusif: [],
+    facteurBourse: 1.8,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -135,6 +142,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Musique",
     taillePool: 8,
     poolExclusif: [],
+    facteurBourse: 1.5,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -155,6 +163,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Bricolage",
     taillePool: 8,
     poolExclusif: [],
+    facteurBourse: 1.5,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -175,6 +184,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Maison",
     taillePool: 9,
     poolExclusif: [],
+    facteurBourse: 1.6,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -207,6 +217,7 @@ export const BROCANTES: Brocante[] = [
       "leg.lv.gutenberg_feuillet",
       "leg.lv.manuscrit_enlumine_xve",
     ],
+    facteurBourse: 2.2,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -231,6 +242,7 @@ export const BROCANTES: Brocante[] = [
       "leg.br.coffret_d_outils_de_compagnon",
       "leg.br.tour_a_metaux_d_orfevre_de_prestige_xixe",
     ],
+    facteurBourse: 3.0,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -255,6 +267,7 @@ export const BROCANTES: Brocante[] = [
       "leg.mo.robe_ridor_new_look_1955",
       "leg.mo.birkin_himalaya",
     ],
+    facteurBourse: 2.5,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -279,6 +292,7 @@ export const BROCANTES: Brocante[] = [
       "leg.mus.piano_a_queue_de_concert_1900",
       "leg.mus.guitare_de_legende_de_johny_perdrix_jouee_a_l",
     ],
+    facteurBourse: 2.5,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -303,6 +317,7 @@ export const BROCANTES: Brocante[] = [
       "leg.ma.tapis_savonnerie_xviie",
       "leg.ma.pendule_louis_xiv_boulle",
     ],
+    facteurBourse: 2.7,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -327,6 +342,7 @@ export const BROCANTES: Brocante[] = [
       "leg.art.dessin_fauviste_aux_gouaches_decoupees_etude",
       "leg.art.toile_onirique_de_chacal_etude",
     ],
+    facteurBourse: 3.0,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -359,6 +375,7 @@ export const BROCANTES: Brocante[] = [
       "uniq.art.toile_monet_inedite",
       "uniq.br.coffre_outils_louis_xiv",
     ],
+    facteurBourse: 5.0,
     conditionDeblocage: {
       type: "ET",
       conditions: [

@@ -548,6 +548,14 @@ export interface Brocante {
   specialisation?: CategorieObjet;
   /** Pool d'objets exclusifs à cette brocante (rares et légendaires propres). */
   poolExclusif: string[]; // liste de templateId
+  /**
+   * Standing du lieu : multiplicateur appliqué au plafond de bourse PAR
+   * CLASSE des clients en mode vente (les bourses explicites — célébrité —
+   * ne sont pas multipliées). Crescendo au sein d'un tier et paliers
+   * marqués entre tiers ; le tier 4 doit permettre d'écouler les
+   * légendaires hauts et le bijou de la finale (~8 500 € de base).
+   */
+  facteurBourse: number;
   conditionDeblocage: ConditionDeblocage;
 }
 
