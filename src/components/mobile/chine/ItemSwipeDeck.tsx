@@ -293,6 +293,11 @@ const navBtn = (disabled: boolean): CSSProperties => ({
   opacity: disabled ? 0.3 : 1,
   padding: 0,
   filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))",
+  minWidth: "var(--tap-min)",
+  minHeight: "var(--tap-min)",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
 const navCompteur: CSSProperties = {

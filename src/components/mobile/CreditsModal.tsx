@@ -46,10 +46,11 @@ const closeBtn: CSSProperties = {
   background: "transparent",
   border: "1px solid var(--brass-500)",
   color: "var(--brass-300)",
-  padding: 6,
   cursor: "pointer",
   display: "grid",
   placeItems: "center",
+  minWidth: "var(--tap-min)",
+  minHeight: "var(--tap-min)",
 };
 
 const carte: CSSProperties = {

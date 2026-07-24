@@ -101,21 +101,40 @@ export function NegoBar({
             {d.vente.labelAdverse}
           </span>
         </div>
+        {/* Enveloppe de drag 56 px (cible tactile) autour du curseur visuel
+            de 36 px : centres alignés (30 px sous le haut de la piste). */}
         <div
           onPointerDown={startDrag}
           className={tutoMainJoueur && !readOnly ? "tuto-fleches" : undefined}
           style={{
-            ...cursorStyle,
+            position: "absolute",
+            top: 2,
             left: `${pctJoueur}%`,
-            background: COLOR_JOUEUR,
-            color: "white",
+            width: 56,
+            height: 56,
+            transform: "translateX(-50%)",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             cursor: readOnly ? "default" : "grab",
             touchAction: "none",
             zIndex: 2,
           }}
         >
-          {prixJoueur}€
-          <span style={labelStyle}>{d.vente.labelJoueur}</span>
+          <div
+            style={{
+              ...cursorStyle,
+              position: "relative",
+              top: 0,
+              transform: "none",
+              background: COLOR_JOUEUR,
+              color: "white",
+            }}
+          >
+            {prixJoueur}€
+            <span style={labelStyle}>{d.vente.labelJoueur}</span>
+          </div>
         </div>
       </div>
     </div>
