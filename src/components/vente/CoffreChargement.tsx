@@ -22,8 +22,10 @@ import { CoffreCanvas } from "./CoffreCanvas";
 import { CarrouselStock } from "./CarrouselStock";
 import { DevPanel } from "./DevPanel";
 
-// Dev only — affiche le panneau dev (switcher + sliders position/scale).
-const DEV_PANEL = true;
+// Dev only — panneau dev (switcher camion + sliders position/scale). Verrouillé
+// hors développement : jamais visible dans un build de prod / TestFlight / App
+// Store (l'export statique est bâti en NODE_ENV=production).
+const DEV_PANEL = process.env.NODE_ENV === "development";
 
 const MASK_SIZE = 48;
 const TRUNK_MASK_SIZE = 256;
