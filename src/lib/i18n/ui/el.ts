@@ -140,7 +140,7 @@ export const el: DictionnaireUI = {
     porteRevuesAcheter: "Περιοδικοθήκη — αγόρασε την Εφημερίδα",
     journalSolOffert: "Εφημερίδα — δώρο του παππού",
     journalSolAcheter: "Η Γκαζέτα της Δευτέρας — αγορά ή άρνηση",
-    journalBureauLire: "Εφημερίδα — διαβάστε τη Γκαζέτα",
+    journalBureauLire: "Εφημερίδα — διάβασε τη Γκαζέτα",
     gazetteModaleTitre: "Η Εφημερίδα των Παλιατζήδων",
     gazetteModaleTexte: "Η έκδοση της εβδομάδας μόλις κυκλοφόρησε.",
     gazetteModaleRefuser: "Άρνηση",

@@ -79,8 +79,13 @@ export function GazetteAchatModale({
   if (!open || typeof document === "undefined") return null;
   const insuffisant = budget < prix;
   return createPortal(
-    <div style={scrim} onClick={onClose} role="dialog" aria-modal="true">
-      <div style={carte} onClick={(e) => e.stopPropagation()}>
+    <div style={scrim} onClick={onClose} role="presentation">
+      <div
+        style={carte}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
         <h2 style={titre}>{d.qg.gazetteModaleTitre}</h2>
         <p style={texte}>{d.qg.gazetteModaleTexte}</p>
         <div style={rangeeBoutons}>
