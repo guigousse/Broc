@@ -269,6 +269,7 @@ export const el: DictionnaireUI = {
     altVendeur: "Πωλητής",
     acquisStatut: "— Αποκτήθηκε —",
     vendeurFache: "Θυμωμένος πωλητής",
+    tamponVendu: "Πουλήθηκε",
     negocier: "Παζάρεμα",
     acheterPrix: "Αγορά {prix} €",
     laisserTomber: "Παράτα το",

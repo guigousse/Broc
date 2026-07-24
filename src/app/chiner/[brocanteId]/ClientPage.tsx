@@ -102,8 +102,8 @@ export default function SessionChinePage() {
   const [boiteOuverte, setBoiteOuverte] = useState(false);
   /** Vrai une fois la boîte mystère réclamée dans cette session (masque le bouton pub). */
   const [boiteReclamee, setBoiteReclamee] = useState(false);
-  /** Le Flair (N5) : révèle la cote pour toute la session une fois activé (portée session, pas de persistance). */
-  const [flairActif, setFlairActif] = useState(false);
+  /** Le Flair (N5) : ids des objets dont la cote a été révélée (un objet par usage, portée session). */
+  const [flairIds, setFlairIds] = useState<ReadonlySet<string>>(new Set());
   /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
   const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
 
@@ -195,13 +195,13 @@ export default function SessionChinePage() {
         kind: "item",
         item: it,
         estRareOuPlus: estRareOuPlus(it),
-        coteConnue: flairActif || (state ? aConnaisseurChinage(state, it.objet.categorie) : false),
+        coteConnue: flairIds.has(it.id) || (state ? aConnaisseurChinage(state, it.objet.categorie) : false),
         dejaPossede: state ? templateDejaPossede(state.collection, it.objet.templateId) : false,
       });
     }
     return liste;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vendeurPresent, items, state, flairActif]);
+  }, [vendeurPresent, items, state, flairIds]);
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (
@@ -229,9 +229,11 @@ export default function SessionChinePage() {
       prev ? prev.map((it) => (it.id === id ? { ...it, ...patch } : it)) : prev,
     );
 
-  /** Le Flair (N5) : révèle la cote de tout l'étal pour le reste de la session. */
-  const jouerFlair = () => {
-    if (utiliserActive("flair")) setFlairActif(true);
+  /** Le Flair (N5) : révèle la cote de l'objet affiché (un usage par objet). */
+  const jouerFlair = (it: ObjetEnVente) => {
+    if (utiliserActive("flair")) {
+      setFlairIds((prev) => new Set(prev).add(it.id));
+    }
   };
 
   /** La Fouille (N15) : remplace l'objet ciblé par un nouveau tirage. */
@@ -384,12 +386,23 @@ export default function SessionChinePage() {
     const fouille = commun("fouille", "🧹");
     const tchatche = commun("tchatche", "💬");
     const negoStatut = currentItem?.negociation?.statut;
+    const flairJoueSurCourant = currentItem ? flairIds.has(currentItem.id) : false;
+    const coteCouranteVisible =
+      flairJoueSurCourant ||
+      (currentItem ? aConnaisseurChinage(state, currentItem.objet.categorie) : false);
     return [
       {
         ...flair,
-        actif: flairActif,
-        ariaLabel: flairActif ? tr(d.chine.atoutActifAria, { nom: flair.nom }) : flair.ariaLabel,
-        onActivate: flair.verrouille ? flair.onActivate : jouerFlair,
+        actif: flairJoueSurCourant,
+        // Grisé si aucun objet affiché ou si sa cote est déjà visible
+        // (Flair déjà joué dessus, ou Connaisseur 3) : pas d'usage gâché.
+        desactive: !currentItem || coteCouranteVisible,
+        ariaLabel: flairJoueSurCourant
+          ? tr(d.chine.atoutActifAria, { nom: flair.nom })
+          : flair.ariaLabel,
+        onActivate: flair.verrouille
+          ? flair.onActivate
+          : () => currentItem && jouerFlair(currentItem),
       },
       {
         ...fouille,

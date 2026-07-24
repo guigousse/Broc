@@ -264,6 +264,7 @@ export const es: DictionnaireUI = {
     altVendeur: "Vendedor",
     acquisStatut: "— Adquirido —",
     vendeurFache: "Vendedor enfadado",
+    tamponVendu: "Vendido",
     negocier: "Regatear",
     acheterPrix: "Comprar por {prix} €",
     laisserTomber: "Abandonar",

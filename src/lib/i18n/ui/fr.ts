@@ -267,6 +267,7 @@ export const fr = {
     altVendeur: "Vendeur",
     acquisStatut: "— Acquis —",
     vendeurFache: "Vendeur fâché",
+    tamponVendu: "Vendu",
     negocier: "Négocier",
     acheterPrix: "Acheter {prix} €",
     laisserTomber: "Laisser tomber",

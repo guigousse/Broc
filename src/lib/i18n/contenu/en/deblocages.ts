@@ -36,7 +36,7 @@ export const DEBLOCAGES_DESC_EN: Record<string, string> = {
   "Paliers 2 des compétences": "Tier 2 of every skill branch becomes purchasable.",
   "Paliers 3 des compétences": "Tier 3 — the top of every branch — becomes purchasable.",
   "Atout 🔍 Le Flair":
-    "While hunting: reveals the true value of every item on the stall for the rest of the visit. One use per day.",
+    "While hunting: reveals the true value of the item on display. One use per day.",
   "Atout 🧺 Le Lot garni":
     "Mid-negotiation at your stand: adds a second item to the customer's bundle, the lot's price is renegotiated as one. One use per day.",
   "Atout 🧹 La Fouille":

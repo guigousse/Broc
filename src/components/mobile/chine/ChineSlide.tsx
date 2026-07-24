@@ -121,6 +121,7 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
   const { item } = slide;
   const { objet, prixVendeur, statut } = item;
   const acquis = statut === "achete";
+  const vendeurFache = !acquis && item.negociation?.statut === "fache";
   const rarity = getRarityColors(objet.rarete);
 
   return (
@@ -161,8 +162,17 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
             <div style={prixCol}>
               <div style={prixLigne}>{prixVendeur} €</div>
               {slide.coteConnue && (
-                <div style={coteLigne}>
-                  {tr(d.chine.coteLabel, { valeur: objet.prixReferenceReel })}
+                <div
+                  style={loupeBox}
+                  role="img"
+                  aria-label={tr(d.chine.coteLabel, {
+                    valeur: objet.prixReferenceReel,
+                  })}
+                >
+                  <span style={loupeLentille}>
+                    {objet.prixReferenceReel}€
+                  </span>
+                  <span style={loupeManche} aria-hidden />
                 </div>
               )}
             </div>
@@ -175,11 +185,25 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
               categorie={objet.categorie}
               fill
               tilt={false}
-              variant={acquis ? "grise" : "normal"}
+              variant={acquis || vendeurFache ? "grise" : "normal"}
               thumb
               eager
               outlinePx={3}
             />
+            {/* Tampon encreur en diagonale : VENDU (vert) ou VENDEUR FÂCHÉ
+                (rouge). Le statut est déjà annoncé textuellement dans le
+                tiroir de négo → décoratif pour les lecteurs d'écran. */}
+            {(acquis || vendeurFache) && (
+              <div style={tamponBox} aria-hidden>
+                <span
+                  style={tampon(
+                    acquis ? "var(--forest-600)" : "var(--vermillion-500)",
+                  )}
+                >
+                  {acquis ? d.chine.tamponVendu : d.chine.vendeurFache}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </ScaleToFit>
@@ -195,9 +219,38 @@ const stickerBox: CSSProperties = {
 };
 
 const stickerImg: CSSProperties = {
+  position: "relative",
   width: "min(224px, 60vw)",
   aspectRatio: "1 / 1",
 };
+
+/** Calque centrant le tampon sur le sticker, sans gêner les gestes. */
+const tamponBox: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  pointerEvents: "none",
+  zIndex: 2,
+};
+
+/** Tampon encreur : cadre + texte de la couleur d'encre, posé en diagonale. */
+const tampon = (encre: string): CSSProperties => ({
+  transform: "rotate(-18deg)",
+  border: `3px solid ${encre}`,
+  borderRadius: 8,
+  padding: "4px 14px",
+  fontFamily: "var(--font-display)",
+  fontWeight: 800,
+  fontSize: 20,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+  color: encre,
+  background: "rgba(250,243,224,0.62)",
+  boxShadow: "0 1px 6px rgba(0,0,0,0.35)",
+});
 
 const titre: CSSProperties = {
   fontFamily: "var(--font-display)",
@@ -237,12 +290,12 @@ const categorieLigne: CSSProperties = {
   textShadow: "0 1px 3px rgba(0,0,0,0.6)",
 };
 
-/** Colonne prix à droite, occupant la double hauteur (état + catégorie). */
+/** Prix à gauche, loupe de cote (si connue) à sa droite. */
 const prixCol: CSSProperties = {
   display: "flex",
-  flexDirection: "column",
+  flexDirection: "row",
   alignItems: "center",
-  gap: 2,
+  gap: 12,
 };
 
 /** Prix vendeur affiché. */
@@ -256,13 +309,46 @@ const prixLigne: CSSProperties = {
   textShadow: "0 1px 4px rgba(0,0,0,0.65)",
 };
 
-/** Cote (valeur de référence) — Connaisseur 3. Mono, plus discret que le prix. */
-const coteLigne: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 10,
-  letterSpacing: "0.04em",
-  color: "var(--brass-700)",
+/* Cote (valeur de référence) — atout Flair 🔍 ou Connaisseur 3.
+   Affichée dans une loupe : lentille cerclée + manche incliné. */
+const loupeBox: CSSProperties = {
+  position: "relative",
+  // Réserve la place du manche pour ne pas décentrer la lentille.
+  marginRight: 8,
+  marginBottom: 6,
+};
+
+const loupeLentille: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 42,
+  height: 42,
+  borderRadius: "50%",
+  border: "3px solid var(--brass-300)",
+  background: "rgba(15,30,22,0.5)",
+  boxShadow: "0 1px 4px rgba(0,0,0,0.45)",
+  fontFamily: "var(--font-display)",
+  fontWeight: 700,
+  fontSize: 14,
+  color: "var(--brass-300)",
   textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+};
+
+/* Manche de la loupe. Son sommet est ancré SUR le bord de la lentille au
+   point à 45° bas-droite (≈ (35, 35) pour un cercle de 42 px), puis la
+   barre pivote de -45° autour de ce sommet pour partir vers le bas-droite. */
+const loupeManche: CSSProperties = {
+  position: "absolute",
+  right: 5,
+  bottom: -7,
+  width: 4,
+  height: 15,
+  borderRadius: 2,
+  background: "var(--brass-300)",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.45)",
+  transform: "rotate(-45deg)",
+  transformOrigin: "top center",
 };
 
 /** Étoiles d'état + badge collection sur la même ligne. */

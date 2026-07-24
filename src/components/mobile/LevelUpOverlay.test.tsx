@@ -120,7 +120,7 @@ describe("LevelUpOverlay", () => {
     render(<LevelUpOverlay />);
     // Titre sans l'emoji inline (l'emoji est extrait dans son propre bloc).
     expect(screen.getByText("Atout Le Flair")).toBeTruthy();
-    expect(screen.getByText(/révèle la cote de tous les objets/)).toBeTruthy();
+    expect(screen.getByText(/révèle la cote de l'objet affiché/)).toBeTruthy();
     const bloc = screen.getByText("Atout Le Flair").closest("[data-testid='levelup-atout']");
     expect(bloc).toBeTruthy();
     expect(bloc!.textContent).toContain("🔍");
