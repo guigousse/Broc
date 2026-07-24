@@ -180,9 +180,6 @@ export const CHANCE_EXCLUSIF_PAR_SESSION: Record<1 | 2 | 3 | 4, number> = {
   4: 0.80,
 };
 
-/** Part minimale d'items de la catégorie de spécialisation (brocantes spécialisées). */
-const QUOTA_SPECIALISATION = 0.5;
-
 /**
  * Pool générique (hors poolExclusif) d'une brocante, filtré par tier. Source
  * unique partagée entre `genererSession` et `genererRemplacement` (La Fouille) —
@@ -219,21 +216,20 @@ export function genererSession(
   // Pool générique filtré par tier (1⭐ → 1/3, 2⭐ → 2/3, 3⭐+ → tout).
   const poolGenerique = poolGeneriquePour(brocante);
 
-  // Brocantes spécialisées : force au moins QUOTA_SPECIALISATION d'items du thème.
+  // Bourses à thème : l'étal du vendeur est 100 % dans le thème (l'ancien
+  // quota de ≥ 50 % est remplacé par une restriction totale — en
+  // contrepartie, le joueur y vend son thème avec un bonus d'attrait).
   const spe = brocante?.specialisation;
-  // Sur la taille EFFECTIVE : une célébrité gonfle la session (×1,5), le quota
-  // doit suivre pour tenir la garantie de ≥ 50 % d'items du thème.
-  const quotaSpe = spe ? Math.ceil(tailleEffective * QUOTA_SPECIALISATION) : 0;
-  const poolCommunSpe = spe
+  const poolTirage = spe
     ? poolGenerique.filter((t) => t.categorie === spe)
-    : [];
-  const poolExclusifSpe = spe
+    : poolGenerique;
+  const exclusifsTirage = spe
     ? exclusifs.filter((t) => t.categorie === spe)
-    : [];
+    : exclusifs;
 
   // Un seul emplacement exclusif par session, tiré une fois pour toutes.
   let exclusifsRestants =
-    exclusifs.length > 0 &&
+    exclusifsTirage.length > 0 &&
     Math.random() < CHANCE_EXCLUSIF_PAR_SESSION[brocante?.tier ?? 1]
       ? 1
       : 0;
@@ -241,27 +237,17 @@ export function genererSession(
   while (items.length < tailleEffective && attempts < maxAttempts) {
     attempts += 1;
 
-    const compteSpe = spe
-      ? items.filter((it) => it.objet.categorie === spe).length
-      : 0;
     const restant = tailleEffective - items.length;
-    const manqueSpe = Math.max(0, quotaSpe - compteSpe);
-    const forcerSpe = spe !== undefined && manqueSpe >= restant;
 
     // L'emplacement exclusif se place uniformément dans la session :
     // probabilité = restants / emplacements encore à remplir.
     const tenterExclusif =
       exclusifsRestants > 0 && Math.random() < exclusifsRestants / restant;
 
-    let pool: readonly ObjetTemplate[];
-    let poolEstExclusif = false;
-    if (forcerSpe) {
-      poolEstExclusif = tenterExclusif && poolExclusifSpe.length > 0;
-      pool = poolEstExclusif ? poolExclusifSpe : poolCommunSpe;
-    } else {
-      poolEstExclusif = tenterExclusif;
-      pool = poolEstExclusif ? exclusifs : poolGenerique;
-    }
+    const poolEstExclusif = tenterExclusif;
+    const pool: readonly ObjetTemplate[] = poolEstExclusif
+      ? exclusifsTirage
+      : poolTirage;
     if (pool.length === 0) continue;
 
     const t = tirerTemplatePondere(pool, celebritePresente, brocante?.tier ?? 1);
@@ -299,7 +285,10 @@ export function genererRemplacement(
       .map((it) => it.objet.templateId),
   );
   const pool = poolGeneriquePour(brocante).filter(
-    (t) => !exclus?.has(t.templateId),
+    (t) =>
+      !exclus?.has(t.templateId) &&
+      // Bourse à thème : la Fouille reste dans le thème, comme l'étal.
+      (!brocante?.specialisation || t.categorie === brocante.specialisation),
   );
   for (let essai = 0; essai < 50; essai++) {
     const t = tirerTemplatePondere(pool, celebritePresente, tier);

@@ -256,6 +256,8 @@ export const el: DictionnaireUI = {
     entreeAria: "Είσοδος: {prix} ευρώ και 1 ενέργεια",
     entreeLabel: "Είσοδος",
     themeAria: "Θέμα: {theme}",
+    coffreHorsTheme:
+      "Θεματική αγορά: εδώ εκτίθενται μόνο αντικείμενα {categorie} (+10% ελκυστικότητα στο θέμα).",
     actionsBrocanteAria: "Ενέργειες παζαριού",
     navigationParTierAria: "Πλοήγηση ανά tier",
     tier4Aria: "Tier 4 — Σαλόνι Αντικερών",

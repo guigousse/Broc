@@ -98,33 +98,43 @@ describe("genererSession — pas de doublons rares/légendaires", () => {
 });
 
 describe("genererSession — brocante spécialisée", () => {
-  it("respecte le quota d'au moins 50% d'items de la catégorie spécialisée", () => {
+  it("ne propose QUE des items de la catégorie du thème", () => {
     const broc = createMockBrocante({
       specialisation: "Musique",
-      taillePool: 10,
+      taillePool: 6,
       tier: 2,
     });
-    const items = genererSession(10, [], broc);
-    const enMusique = items.filter(
-      (i) => i.objet.categorie === "Musique",
-    ).length;
-    expect(enMusique).toBeGreaterThanOrEqual(Math.ceil(items.length * 0.5));
+    for (let run = 0; run < 5; run++) {
+      const items = genererSession(6, [], broc);
+      expect(items.length).toBeGreaterThan(0);
+      expect(items.every((i) => i.objet.categorie === "Musique")).toBe(true);
+    }
   });
 
-  it("respecte le quota de 50% aussi quand une célébrité gonfle la session", () => {
+  it("reste 100 % thème quand une célébrité gonfle la session", () => {
     const broc = createMockBrocante({
       id: "broc-spe-celeb",
       specialisation: "Musique",
-      taillePool: 12,
+      taillePool: 6,
       tier: 2,
     });
     const celeb = { brocanteId: "broc-spe-celeb", nom: "La Comtesse", jourSemaine: 0 };
     for (let run = 0; run < 5; run++) {
-      const items = genererSession(12, [], broc, celeb);
-      const enMusique = items.filter(
-        (i) => i.objet.categorie === "Musique",
-      ).length;
-      expect(enMusique).toBeGreaterThanOrEqual(Math.ceil(items.length * 0.5));
+      const items = genererSession(6, [], broc, celeb);
+      expect(items.every((i) => i.objet.categorie === "Musique")).toBe(true);
+    }
+  });
+
+  it("la Fouille ne remplace que par un objet du thème", () => {
+    const broc = createMockBrocante({
+      specialisation: "Musique",
+      taillePool: 6,
+      tier: 2,
+    });
+    const items = genererSession(6, [], broc);
+    for (let run = 0; run < 10; run++) {
+      const remplacement = genererRemplacement(items[0], items, [], broc);
+      expect(remplacement.objet.categorie).toBe("Musique");
     }
   });
 });

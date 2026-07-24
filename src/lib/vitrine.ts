@@ -141,6 +141,21 @@ export function bourseMoyenne(
   return Math.round(total / eligibles.length);
 }
 
+/**
+ * Vrai si tous les objets exposés appartiennent au thème de la brocante
+ * (toujours vrai pour une brocante générale). Une bourse à thème n'accepte
+ * que des objets de sa catégorie sur l'étal — en contrepartie, le bonus
+ * d'attrait `BONUS_SPECIALISATION_CLIENT` s'applique à tout l'étal.
+ */
+export function coffreCompatibleTheme(
+  objets: readonly ObjetEnVitrine[],
+  brocante: Pick<Brocante, "specialisation">,
+): boolean {
+  const spe = brocante.specialisation;
+  if (!spe) return true;
+  return objets.every((o) => o.objet.categorie === spe);
+}
+
 const CHANCE_MULTI = 0.2;
 /**
  * Modificateur appliqué au `prixMax` quand le client prend ≥ 2 objets : il veut

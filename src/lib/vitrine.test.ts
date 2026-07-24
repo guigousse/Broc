@@ -10,6 +10,7 @@ import {
   ajouterAuPanier,
   appliquerBoniment,
   bourseDe,
+  coffreCompatibleTheme,
   bourseMoyenne,
   calculerPrixMax,
   classeBourse,
@@ -526,6 +527,37 @@ describe("bourseMoyenne — affichage par brocante", () => {
     // Tier 1 : retraite (petite 80), étudiant (petite 80), touriste (grosse 2000),
     // famille (moyenne 300), opportuniste (moyenne 300) → 2760 / 5 = 552.
     expect(bourseMoyenne(broc(1))).toBe(552);
+  });
+});
+
+describe("coffreCompatibleTheme — bourses à thème", () => {
+  const musique = createMockObjetEnVitrine({
+    objet: { prixReferenceReel: 50, categorie: "Musique" },
+    prixVente: 50,
+  });
+  const mode = createMockObjetEnVitrine({
+    objet: { prixReferenceReel: 50, categorie: "Mode" },
+    prixVente: 50,
+  });
+
+  it("toujours vrai pour une brocante générale", () => {
+    expect(coffreCompatibleTheme([musique, mode], {})).toBe(true);
+  });
+
+  it("vrai si tous les objets sont du thème", () => {
+    expect(
+      coffreCompatibleTheme([musique], { specialisation: "Musique" }),
+    ).toBe(true);
+  });
+
+  it("faux dès qu'un objet est hors thème", () => {
+    expect(
+      coffreCompatibleTheme([musique, mode], { specialisation: "Musique" }),
+    ).toBe(false);
+  });
+
+  it("vrai sur coffre vide (rien d'interdit à exposer)", () => {
+    expect(coffreCompatibleTheme([], { specialisation: "Musique" })).toBe(true);
   });
 });
 

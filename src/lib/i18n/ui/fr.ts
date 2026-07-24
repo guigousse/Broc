@@ -254,6 +254,8 @@ export const fr = {
     entreeAria: "Entrée : {prix} euros et 1 énergie",
     entreeLabel: "Entrée",
     themeAria: "Thème : {theme}",
+    coffreHorsTheme:
+      "Bourse à thème : seuls les objets {categorie} peuvent être exposés ici (+10 % d'attrait sur le thème).",
     actionsBrocanteAria: "Actions brocante",
     navigationParTierAria: "Navigation par tier",
     tier4Aria: "Tier 4 — Salon des Antiquaires",

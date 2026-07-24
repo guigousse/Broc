@@ -8,6 +8,7 @@ import { bourseMoyenne } from "@/lib/vitrine";
 import type { ConditionInfo } from "@/lib/deblocage";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { descriptionBrocante, nomBrocante } from "@/lib/i18n/contenu";
+import { libelleCategorie } from "@/lib/i18n/libelles";
 import { CATEGORY_ICONS } from "./categoryIcons";
 import { CornerOrnament } from "@/components/mobile/CornerOrnament";
 
@@ -20,6 +21,9 @@ interface BrocanteDetailFloatingProps {
   conditions: ConditionInfo[];
   /** Contexte : chinage (nb d'objets à chiner) ou vente (bourse moyenne des clients). */
   destination: "chiner" | "vitrine";
+  /** Vente sur bourse à thème : le coffre contient des objets hors thème
+   *  (bloque Continuer, un message explique la règle et sa contrepartie). */
+  coffreHorsTheme?: boolean;
 }
 
 const cardStyle: CSSProperties = {
@@ -191,6 +195,7 @@ export function BrocanteDetailFloating({
   peutEntrer,
   conditions,
   destination,
+  coffreHorsTheme = false,
 }: BrocanteDetailFloatingProps) {
   const { d, tr, locale } = useLangue();
   const ThemeIcon = brocante.specialisation
@@ -261,6 +266,23 @@ export function BrocanteDetailFloating({
           </div>
         )}
       </div>
+      {coffreHorsTheme && brocante.specialisation && (
+        <p style={horsThemeStyle} role="alert">
+          {tr(d.chine.coffreHorsTheme, {
+            categorie: libelleCategorie(brocante.specialisation, d),
+          })}
+        </p>
+      )}
     </aside>
   );
 }
+
+const horsThemeStyle: CSSProperties = {
+  margin: "8px 0 0",
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  letterSpacing: "0.06em",
+  fontWeight: 700,
+  textAlign: "center",
+  color: "var(--vermillion-600)",
+};

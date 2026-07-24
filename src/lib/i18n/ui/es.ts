@@ -251,6 +251,8 @@ export const es: DictionnaireUI = {
     entreeAria: "Entrada: {prix} euros y 1 energía",
     entreeLabel: "Entrada",
     themeAria: "Tema: {theme}",
+    coffreHorsTheme:
+      "Feria temática: aquí solo se pueden exponer objetos de {categorie} (+10 % de atractivo en el tema).",
     actionsBrocanteAria: "Acciones del mercadillo",
     navigationParTierAria: "Navegación por tier",
     tier4Aria: "Tier 4 — Salón de Anticuarios",
