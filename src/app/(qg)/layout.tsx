@@ -77,6 +77,7 @@ import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import { nomExpediteur } from "@/lib/i18n/contenu";
 import { tutorielActif, doigtSwipeVersCarnet } from "@/lib/tutoriel";
+import { OUTILS_DEV } from "@/lib/outilsDev";
 import {
   aConnaisseurTendance,
   aGenBulletinMeteo,
@@ -371,10 +372,13 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // Tous les hooks du composant DOIVENT précéder ce return (rules-of-hooks,
   // désormais vérifié par `npm run lint:hooks`).
   const [editEnabled, setEditEnabled] = useState(
-    () => process.env.NEXT_PUBLIC_QG_EDIT === "1",
+    () => OUTILS_DEV && process.env.NEXT_PUBLIC_QG_EDIT === "1",
   );
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Prod : le mode édition du QG n'existe pas — ni ?qgedit=1 ni une clé
+    // localStorage résiduelle ne doivent l'activer sur l'appareil d'un joueur.
+    if (!OUTILS_DEV) return;
     const params = new URLSearchParams(window.location.search);
     const q = params.get("qgedit");
     if (q === "1") {

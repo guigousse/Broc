@@ -16,6 +16,7 @@ import {
 } from "@/lib/vitrinePrep";
 import { useGameActions } from "@/context/GameContext";
 import { tutorielActif } from "@/lib/tutoriel";
+import { OUTILS_DEV } from "@/lib/outilsDev";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { BrocanteScene } from "./BrocanteScene";
 import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
@@ -282,8 +283,8 @@ export function BrocantePanorama({
         continuerActif={continuerActif}
         tutoMainContinuer={tutoActif && continuerActif}
       />
-      <CadreEditToggle />
-      <ScenesEditPanel currentTier={currentTier} />
+      {OUTILS_DEV && <CadreEditToggle />}
+      {OUTILS_DEV && <ScenesEditPanel currentTier={currentTier} />}
     </BrocanteFramesEditProvider>
   );
 }
