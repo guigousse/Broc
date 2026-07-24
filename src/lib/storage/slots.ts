@@ -246,13 +246,24 @@ function slotOccupePlusRecent(
 }
 
 /**
- * Efface la clé de save d'un slot et met son entrée d'index à null, en
- * mutant `index` en place. Partagé par `supprimerSlot` et `viderSlotActif`,
- * qui ne diffèrent que sur le devenir de `index.actif`.
+ * Clé de la copie de secours d'un slot (double-buffer d'écriture de
+ * `localGameRepository`). Déclarée ici pour que l'effacement d'un slot
+ * emporte toujours sa copie — sinon une vieille copie orpheline pourrait
+ * être « restaurée » dans un slot réutilisé.
+ */
+export function cleBackup(n: NumeroSlot): string {
+  return `${cleSlot(n)}:backup`;
+}
+
+/**
+ * Efface la clé de save d'un slot (et sa copie de secours) et met son entrée
+ * d'index à null, en mutant `index` en place. Partagé par `supprimerSlot` et
+ * `viderSlotActif`, qui ne diffèrent que sur le devenir de `index.actif`.
  */
 function effacerCleEtEntree(index: IndexSlots, n: NumeroSlot): void {
   try {
     window.localStorage.removeItem(cleSlot(n));
+    window.localStorage.removeItem(cleBackup(n));
   } catch {
     // Le pire cas : la clé de save reste orpheline, mais l'index est quand
     // même mis à jour pour refléter l'intention (slot considéré vide).

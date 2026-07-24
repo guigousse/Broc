@@ -4,6 +4,7 @@ import {
   CLE_INDEX,
   changerSlotActif,
   chargerIndex,
+  cleBackup,
   cleSlot,
   premierSlotLibre,
   renommerSlot,
@@ -178,6 +179,26 @@ describe("opérations", () => {
     expect(idx.actif).toBe(1);
     expect(idx.slots[2]).toBeNull();
     expect(localStorage.getItem(cleSlot(2))).toBeNull();
+  });
+
+  it("supprimerSlot emporte aussi la copie de secours du slot", () => {
+    localStorage.setItem(cleSlot(2), '{"budget":1}');
+    localStorage.setItem(cleBackup(2), '{"budget":1}');
+    localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 1,
+        slots: {
+          1: { nom: null, derniereSession: 100 },
+          2: { nom: null, derniereSession: 200 },
+          3: null,
+        },
+      }),
+    );
+
+    supprimerSlot(2);
+
+    expect(localStorage.getItem(cleBackup(2))).toBeNull();
   });
 
   it("supprimerSlot de l'actif : bascule sur le slot occupé le plus récent", () => {

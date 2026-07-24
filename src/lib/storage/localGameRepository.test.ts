@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { localGameRepository } from "./localGameRepository";
+import { cleBackup, localGameRepository } from "./localGameRepository";
 import { createMockGameState } from "../__test-fixtures__/gameState";
 import { CLE_INDEX, cleSlot } from "./slots";
 import type { IndexSlots } from "./slots";
@@ -86,6 +86,67 @@ describe("localGameRepository — load", () => {
     expect(loaded?.budget).toBe(999);
     expect(window.localStorage.getItem(cleSlot(1))).toBeTruthy();
     expect(window.localStorage.getItem(CLE_LEGACY)).toBeNull();
+  });
+});
+
+describe("localGameRepository — copie de secours (double-buffer)", () => {
+  it("save écrit aussi la copie de secours du slot actif", async () => {
+    const state = createMockGameState({ budget: 55 });
+    await localGameRepository.save(state);
+    const raw = window.localStorage.getItem(cleBackup(1));
+    expect(raw).toBeTruthy();
+    expect(JSON.parse(raw!).budget).toBe(55);
+  });
+
+  it("restaure la copie de secours si le slot actif est corrompu", async () => {
+    window.localStorage.setItem(cleSlot(1), "json-tronque{{{");
+    window.localStorage.setItem(
+      cleBackup(1),
+      JSON.stringify(createMockGameState({ budget: 888 })),
+    );
+    const loaded = await localGameRepository.load();
+    expect(loaded?.budget).toBe(888);
+    // Le slot principal est réparé à partir de la copie.
+    expect(JSON.parse(window.localStorage.getItem(cleSlot(1))!).budget).toBe(
+      888,
+    );
+  });
+
+  it("une copie de secours corrompue n'empêche pas de lire le slot principal", async () => {
+    window.localStorage.setItem(
+      cleSlot(1),
+      JSON.stringify(createMockGameState({ budget: 12 })),
+    );
+    window.localStorage.setItem(cleBackup(1), "aussi-tronque{");
+    expect((await localGameRepository.load())?.budget).toBe(12);
+  });
+
+  it("retourne null si slot ET copie sont corrompus", async () => {
+    window.localStorage.setItem(cleSlot(1), "corrompu{");
+    window.localStorage.setItem(cleBackup(1), "corrompu-aussi{");
+    expect(await localGameRepository.load()).toBeNull();
+  });
+
+  it("l'échec d'écriture de la copie n'empêche pas la sauvegarde principale", async () => {
+    const original = window.localStorage.setItem.bind(window.localStorage);
+    const spy = vi
+      .spyOn(window.localStorage, "setItem")
+      .mockImplementation((k: string, v: string) => {
+        if (k === cleBackup(1)) throw new Error("quota dépassé");
+        original(k, v);
+      });
+
+    const ok = await localGameRepository.save(createMockGameState({ budget: 9 }));
+
+    spy.mockRestore();
+    expect(ok).toBe(true);
+    expect((await localGameRepository.load())?.budget).toBe(9);
+  });
+
+  it("clear supprime aussi la copie de secours", async () => {
+    await localGameRepository.save(createMockGameState());
+    await localGameRepository.clear();
+    expect(window.localStorage.getItem(cleBackup(1))).toBeNull();
   });
 });
 

@@ -53,13 +53,20 @@ export function descriptionCondition(
   }
 }
 
-/** Compte les ventes d'une catégorie donnée à travers l'historique. */
+/**
+ * Compte les ventes d'une catégorie : lit le compteur cumulatif
+ * `ventesParCategorie` (l'historique est plafonné depuis la v17, un
+ * recomptage des sessions sous-estimerait). Fallback sur l'historique pour
+ * les états d'avant migration (tests, simulateur).
+ */
 function compterVentesCategorie(
-  historique: GameState["historique"],
+  state: Pick<GameState, "historique" | "ventesParCategorie">,
   cat: CategorieObjet,
 ): number {
+  const agg = state.ventesParCategorie?.[cat];
+  if (typeof agg === "number") return agg;
   let n = 0;
-  for (const s of historique) {
+  for (const s of state.historique) {
     if (s.type !== "vente") continue;
     for (const v of s.ventes) {
       if (v.categorie === cat) n += 1;
@@ -91,7 +98,13 @@ export function descriptionConditionCourte(
   c: ConditionDeblocage,
   state: Pick<
     GameState,
-    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+    | "jourActuel"
+    | "budget"
+    | "historique"
+    | "ventesParCategorie"
+    | "collection"
+    | "brocanteur"
+    | "missions"
   >,
   d: DictionnaireUI,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
@@ -105,7 +118,7 @@ export function descriptionConditionCourte(
     case "budget":
       return tr(C.budget, { actuel: state.budget, montant: c.montant });
     case "ventesCategorie": {
-      const n = compterVentesCategorie(state.historique, c.categorie);
+      const n = compterVentesCategorie(state, c.categorie);
       return tr(C.ventesCategorie, {
         categorie: libelleCategorie(c.categorie, d),
         n,
@@ -155,7 +168,13 @@ export function decrireConditionsCourtes(
   brocante: Brocante,
   state: Pick<
     GameState,
-    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+    | "jourActuel"
+    | "budget"
+    | "historique"
+    | "ventesParCategorie"
+    | "collection"
+    | "brocanteur"
+    | "missions"
   >,
   d: DictionnaireUI,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
@@ -179,7 +198,13 @@ export function listerConditionsAvecEtat(
   brocante: Brocante,
   state: Pick<
     GameState,
-    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+    | "jourActuel"
+    | "budget"
+    | "historique"
+    | "ventesParCategorie"
+    | "collection"
+    | "brocanteur"
+    | "missions"
   >,
   d: DictionnaireUI,
   parTier?: Map<1 | 2 | 3 | 4, Set<string>>,
@@ -201,7 +226,13 @@ export function listerConditionsAvecEtat(
 export function calculerBrocantesDebloqueesParTier(
   state: Pick<
     GameState,
-    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+    | "jourActuel"
+    | "budget"
+    | "historique"
+    | "ventesParCategorie"
+    | "collection"
+    | "brocanteur"
+    | "missions"
   >,
 ): Map<1 | 2 | 3 | 4, Set<string>> {
   const m = new Map<1 | 2 | 3 | 4, Set<string>>([
@@ -222,7 +253,13 @@ export function estDebloquee(
   brocante: Brocante,
   state: Pick<
     GameState,
-    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+    | "jourActuel"
+    | "budget"
+    | "historique"
+    | "ventesParCategorie"
+    | "collection"
+    | "brocanteur"
+    | "missions"
   >,
   brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): boolean {
@@ -237,7 +274,13 @@ export function evaluerCondition(
   c: ConditionDeblocage,
   state: Pick<
     GameState,
-    "jourActuel" | "budget" | "historique" | "collection" | "brocanteur" | "missions"
+    | "jourActuel"
+    | "budget"
+    | "historique"
+    | "ventesParCategorie"
+    | "collection"
+    | "brocanteur"
+    | "missions"
   >,
   brocantesDebloqueesParTier?: Map<1 | 2 | 3 | 4, Set<string>>,
 ): boolean {
@@ -249,7 +292,7 @@ export function evaluerCondition(
     case "budget":
       return state.budget >= c.montant;
     case "ventesCategorie":
-      return compterVentesCategorie(state.historique, c.categorie) >= c.nombre;
+      return compterVentesCategorie(state, c.categorie) >= c.nombre;
     case "brocantesDebloquees": {
       const set = brocantesDebloqueesParTier?.get(c.tier);
       return (set?.size ?? 0) >= c.nombre;
