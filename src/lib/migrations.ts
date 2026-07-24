@@ -37,7 +37,8 @@ import { tirerMeteoSemaine } from "@/lib/meteo";
 import { genererTendances } from "@/lib/tendances";
 import { ALL_TEMPLATES } from "@/data/objetTemplates";
 import { OLD_TO_NEW_TEMPLATE_ID } from "@/data/templateIdRenames";
-import { reconstruireGrandLivre } from "./grandLivre";
+import { MAX_GRAND_LIVRE, reconstruireGrandLivre } from "./grandLivre";
+import { MAX_HISTORIQUE, compterVentesParCategorie } from "./sessions";
 import { ENERGIE_MAX } from "@/lib/energie";
 import { ACTIVE_IDS, type ActiveId, type ActivesUtilisees } from "@/lib/actives";
 import {
@@ -104,7 +105,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -645,7 +646,15 @@ function appliquerMigrations(loaded: GameState): GameState {
     colisTutorielLivres,
     inventaireJoueur: inventaire,
     vitrine: vitrineActuelle,
-    historique,
+    // v17 — historique plafonné. Le compteur `ventesParCategorie` (ci-dessous)
+    // est calculé sur l'historique COMPLET avant ce cap : rien n'est perdu
+    // pour les conditions de déblocage.
+    historique: historique.slice(0, MAX_HISTORIQUE),
+    ventesParCategorie: (() => {
+      const existing = (loaded as Partial<GameState>).ventesParCategorie;
+      if (existing && typeof existing === "object") return existing;
+      return compterVentesParCategorie(historique);
+    })(),
     tendances:
       loaded.tendances && loaded.tendances.length > 0 && !categoriesObsolètes
         ? loaded.tendances
@@ -743,9 +752,14 @@ function appliquerMigrations(loaded: GameState): GameState {
       new Set([...declencheursLoaded, ...apresInjection.declencheursAjoutes]),
     ),
     grandLivre: (() => {
+      // v17 — plafonné aux MAX_GRAND_LIVRE entrées les plus récentes.
       const existing = (loaded as Partial<GameState>).grandLivre;
-      if (Array.isArray(existing) && existing.length > 0) return existing;
-      return reconstruireGrandLivre(historique, loaded.budget ?? 0);
+      if (Array.isArray(existing) && existing.length > 0) {
+        return existing.slice(-MAX_GRAND_LIVRE);
+      }
+      return reconstruireGrandLivre(historique, loaded.budget ?? 0).slice(
+        -MAX_GRAND_LIVRE,
+      );
     })(),
     missions: missionsAvecTrame,
     quetesPeriodiques: loaded.quetesPeriodiques ?? {

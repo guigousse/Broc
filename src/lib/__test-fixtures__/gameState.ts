@@ -138,6 +138,7 @@ export function createMockBrocante(patch: Partial<Brocante> = {}): Brocante {
     tier: 1,
     etoiles: 1,
     poolExclusif: [],
+    facteurBourse: 1,
     conditionDeblocage: { type: "depart" },
   };
   return { ...base, ...patch };

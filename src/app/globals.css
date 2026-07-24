@@ -631,6 +631,117 @@
 }
 
 /* ============================================================
+   COUVERTURE GRECQUE (EL) — aucune police display/manuscrite du
+   jeu ne couvre U+0370-03FF/U+1F00-1FFF : sans ces alias, les
+   titres EL retombent sur Georgia système (perte d'identité).
+   Les glyphes grecs piochent dans GFS Didot (Didone grecque
+   classique — display) et EB Garamond (serif + « manuscrit »
+   via l'italique) SOUS LES MÊMES NOMS DE FAMILLE : le latin ne
+   change pas, aucun composant à toucher.
+   font-weight en plage large : GFS Didot n'existe qu'en 400 ;
+   sans plage, un titre bold sauterait l'alias vers Georgia.
+   ============================================================ */
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/gfs-didot-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/gfs-didot-greek-ext.woff2') format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+@font-face {
+  font-family: 'Verve Shadow';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/gfs-didot-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Verve Shadow';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/gfs-didot-greek-ext.woff2') format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/eb-garamond-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/eb-garamond-greek-ext.woff2') format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/eb-garamond-italic-greek.woff') format('woff');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/eb-garamond-italic-greek-ext.woff') format('woff');
+  unicode-range: U+1F00-1FFF;
+}
+/* Caveat & Arcane Nine (manuscrit) : l'italique d'EB Garamond joue le
+   rôle « écrit à la main » en grec — déclarée en font-style normal car
+   ces familles sont demandées en normal. */
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/eb-garamond-italic-greek.woff') format('woff');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/eb-garamond-italic-greek-ext.woff') format('woff');
+  unicode-range: U+1F00-1FFF;
+}
+@font-face {
+  font-family: 'Arcane Nine';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/eb-garamond-italic-greek.woff') format('woff');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Arcane Nine';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/google/eb-garamond-italic-greek-ext.woff') format('woff');
+  unicode-range: U+1F00-1FFF;
+}
+
+/* ============================================================
    BROC — NÉO-ART DÉCO VINTAGE DESIGN TOKENS
    ============================================================ */
 :root {
@@ -780,13 +891,11 @@
   --font-serif:   var(--font-serif);
   --font-mono:    var(--font-mono);
 
-  /* User-adjustable font scale (Réglages) */
-  --font-scale: 1;
 }
 
 /* Base */
 html {
-  font-size: calc(16px * var(--font-scale));
+  font-size: 16px;
 }
 html, body {
   background: var(--bg);
@@ -981,6 +1090,15 @@ nav[aria-label="Navigation principale"] :focus-visible,
   }
 }
 
+/* EL : libellés +40 à +170 % vs FR, aggravés par l'uppercase et le
+   letter-spacing large (0.12-0.28em) posé en style inline partout —
+   d'où le !important, seul moyen de l'écraser depuis le CSS. Un
+   espacement uniforme resserré évite les débordements de chips,
+   onglets et bandeaux sans toucher aux 148 occurrences. */
+:lang(el) * {
+  letter-spacing: 0.05em !important;
+}
+
 /* Masque la barre de scroll horizontale du panorama QG sur WebKit. */
 [data-qg-panorama]::-webkit-scrollbar {
   display: none;
@@ -999,6 +1117,9 @@ nav[aria-label="Navigation principale"] :focus-visible,
     z-index: 9999; padding: 40px;
     text-align: center;
   }
+  :lang(en) body::before { content: "Rotate your phone to portrait"; }
+  :lang(es) body::before { content: "Gira tu teléfono en vertical"; }
+  :lang(el) body::before { content: "Γυρίστε το τηλέφωνο σε κατακόρυφη θέση"; }
 }
 
 @keyframes broc-fade-in {

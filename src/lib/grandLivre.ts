@@ -41,6 +41,14 @@ export interface AppendLedgerOptions {
  * Pousse une entrée dans `state.grandLivre` et (par défaut) applique
  * recette/depense au budget. Retourne un nouveau state (pur).
  */
+/**
+ * Plafond du grand livre persisté : sans cap, chaque transaction grossit la
+ * save pour toujours (stringify complet à chaque auto-save, quota localStorage
+ * ~10 Mo WKWebView). Le carnet de comptes n'affiche de toute façon que les
+ * journées récentes.
+ */
+export const MAX_GRAND_LIVRE = 500;
+
 export function appendLedger(
   state: GameState,
   partial: AppendLedgerPartial,
@@ -58,7 +66,7 @@ export function appendLedger(
   return {
     ...state,
     budget: newBudget,
-    grandLivre: [...state.grandLivre, entry],
+    grandLivre: [...state.grandLivre, entry].slice(-MAX_GRAND_LIVRE),
   };
 }
 

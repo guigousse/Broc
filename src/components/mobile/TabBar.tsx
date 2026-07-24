@@ -126,6 +126,7 @@ const tabBtn: CSSProperties = {
   color: "var(--brass-300)",
   padding: "2px 0",
   minWidth: 0,
+  minHeight: "var(--tap-min)",
   textAlign: "center",
 };
 

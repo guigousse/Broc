@@ -113,21 +113,47 @@ export const BOURSE_PAR_CLASSE: Record<ClasseBourse, number> = {
   grosse: 2000,
 };
 
-/** Bourse d'un persona : plafond explicite (célébrité) ou celui de sa classe. */
-export function bourseDe(persona: ClientPersonnage): number {
-  return persona.bourseMax ?? BOURSE_PAR_CLASSE[classeBourse(persona)];
+/**
+ * Bourse d'un persona : plafond explicite (célébrité) ou celui de sa classe,
+ * multiplié par le standing du lieu (`facteurBourse` de la brocante). Les
+ * bourses explicites ne sont PAS multipliées : la célébrité reste la même
+ * baleine partout.
+ */
+export function bourseDe(persona: ClientPersonnage, facteurBourse = 1): number {
+  if (persona.bourseMax != null) return persona.bourseMax;
+  return Math.round(BOURSE_PAR_CLASSE[classeBourse(persona)] * facteurBourse);
 }
 
 /**
- * Bourse moyenne des clients susceptibles de visiter une brocante de ce tier
- * (vivier filtré par `tierMin`, comme `genererPoolClients`). Affichée au choix
- * de la brocante en mode vente.
+ * Bourse moyenne des clients susceptibles de visiter cette brocante (vivier
+ * filtré par `tierMin`, comme `genererPoolClients`, pondéré par le standing
+ * du lieu). Affichée au choix de la brocante en mode vente.
  */
-export function bourseMoyenne(tier: 1 | 2 | 3 | 4): number {
-  const eligibles = ALL_PERSONNAGES.filter((p) => p.tierMin <= tier);
+export function bourseMoyenne(
+  brocante: Pick<Brocante, "tier" | "facteurBourse">,
+): number {
+  const eligibles = ALL_PERSONNAGES.filter((p) => p.tierMin <= brocante.tier);
   if (eligibles.length === 0) return 0;
-  const total = eligibles.reduce((s, p) => s + bourseDe(p), 0);
+  const total = eligibles.reduce(
+    (s, p) => s + bourseDe(p, brocante.facteurBourse),
+    0,
+  );
   return Math.round(total / eligibles.length);
+}
+
+/**
+ * Vrai si tous les objets exposés appartiennent au thème de la brocante
+ * (toujours vrai pour une brocante générale). Une bourse à thème n'accepte
+ * que des objets de sa catégorie sur l'étal — en contrepartie, le bonus
+ * d'attrait `BONUS_SPECIALISATION_CLIENT` s'applique à tout l'étal.
+ */
+export function coffreCompatibleTheme(
+  objets: readonly ObjetEnVitrine[],
+  brocante: Pick<Brocante, "specialisation">,
+): boolean {
+  const spe = brocante.specialisation;
+  if (!spe) return true;
+  return objets.every((o) => o.objet.categorie === spe);
 }
 
 const CHANCE_MULTI = 0.2;
@@ -140,11 +166,24 @@ const BONUS_BUNDLE = 0.10;
 /** Seuil sous lequel un client achète sans rechigner. */
 const SEUIL_ACHAT_DIRECT = 1.0;
 /**
- * Quand le prix demandé dépasse le seuil de colère, l'offre est calée
- * près du vrai plafond du client (offre honnête, pas un lowball gratuit).
- * Valeur en % de `prixMax` ; modulée par `durete`.
+ * Deux lectures de « trop cher » coexistent :
+ * — un client modeste face à un prix honnête (proche de la référence) fait
+ *   une offre honnête près de son plafond (0,85–0,95, comportement d'origine) ;
+ * — un prix objectivement gonflé (> SEUIL_SURCOTE_OBJECTIVE × la référence du
+ *   panier) est puni : ancrage bas 0,55 (dur) → 0,75 (mou) + risque de départ
+ *   sec. Surcoter ne permet donc plus de scanner les plafonds secrets sans
+ *   risque, sans pénaliser les ventes à prix juste aux petites bourses.
  */
-const OFFRE_TROP_CHER = 0.95;
+const OFFRE_HONNETE = 0.95;
+const SEUIL_SURCOTE_OBJECTIVE = 1.25;
+const OFFRE_SURCOTE_BASE = 0.55;
+const OFFRE_SURCOTE_SPAN = 0.2;
+/**
+ * Départ sec sur surcote objective : p = (ratio vs plafond − seuil) × PENTE,
+ * plafonnée pour qu'une journée ne soit jamais totalement silencieuse.
+ */
+const DEPART_SURCOTE_PENTE = 0.8;
+const DEPART_SURCOTE_MAX = 0.85;
 /**
  * Tolérance d'accessibilité : pour qu'un client envisage un objet, son prix
  * affiché doit être ≤ (prixRef × appetitMax × tolérance). Au-delà, il passe
@@ -204,7 +243,9 @@ export function calculerPrixMax(
     const b = modifiers.bonusPassionParCategorie.get(x.objet.categorie) ?? 0;
     if (b > passionMax) passionMax = b;
   }
-  const plafond = Math.round(bourseDe(persona) * (1 + passionMax));
+  const plafond = Math.round(
+    bourseDe(persona, brocante?.facteurBourse ?? 1) * (1 + passionMax),
+  );
   return Math.max(1, Math.min(Math.round(brut * modBundle), plafond));
 }
 
@@ -234,10 +275,13 @@ export function genererClientEvent(
 
   // Pré-filtre : le client n'envisage que les objets dont le prix affiché reste
   // dans une fourchette plausible pour sa bourse. Au-delà, il passe son chemin.
+  const facteurBourse = options.brocante?.facteurBourse ?? 1;
   const accessibles = vitrine.filter((it) => {
     const plafondClient =
-      Math.min(it.objet.prixReferenceReel * persona.appetitMax, bourseDe(persona)) *
-      SEUIL_INTERET_ACHETEUR;
+      Math.min(
+        it.objet.prixReferenceReel * persona.appetitMax,
+        bourseDe(persona, facteurBourse),
+      ) * SEUIL_INTERET_ACHETEUR;
     return it.prixVente <= plafondClient;
   });
   if (accessibles.length === 0) return null;
@@ -279,12 +323,27 @@ export function genererClientEvent(
     const offre = prixMax * (bas + Math.random() * (haut - bas));
     offreInitiale = Math.max(1, Math.round(offre));
   } else {
-    mode = "negociation";
-    // Branche "trop cher" : le client offre près de son vrai plafond.
-    // Plus dur → un peu en dessous, plus mou → quasi à `prixMax`.
-    // Range : 0.85 (durete 1) → 0.95 (durete 0).
-    const ratio = OFFRE_TROP_CHER - persona.durete * 0.10;
-    offreInitiale = Math.max(1, Math.round(prixMax * ratio));
+    const refPanier = panier.reduce((s, x) => s + x.objet.prixReferenceReel, 0);
+    const surcoteObjective = prixDemande / Math.max(1, refPanier);
+    if (surcoteObjective > SEUIL_SURCOTE_OBJECTIVE) {
+      // Prix objectivement gonflé : risque de départ sec croissant avec la
+      // surcote, et s'il s'arrête, ancrage bas — punir le scan de plafond.
+      const ratioPlafond = prixDemande / Math.max(1, prixMax);
+      const pDepart = Math.min(
+        DEPART_SURCOTE_MAX,
+        (ratioPlafond - SEUIL_NEGO_NORMALE) * DEPART_SURCOTE_PENTE,
+      );
+      if (Math.random() < pDepart) return null;
+      mode = "negociation";
+      const ratio = OFFRE_SURCOTE_BASE + (1 - persona.durete) * OFFRE_SURCOTE_SPAN;
+      offreInitiale = Math.max(1, Math.round(prixMax * ratio));
+    } else {
+      // Prix honnête mais hors de sa bourse : offre honnête près de son
+      // plafond. Plus dur → un peu en dessous. Range : 0.85 → 0.95.
+      mode = "negociation";
+      const ratio = OFFRE_HONNETE - persona.durete * 0.10;
+      offreInitiale = Math.max(1, Math.round(prixMax * ratio));
+    }
   }
 
   let boostCat = 0;

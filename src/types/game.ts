@@ -311,6 +311,13 @@ export interface GameState {
   /** Vitrine active : objets exposés dans une brocante donnée. null = aucune vitrine ouverte. */
   vitrine: VitrineActive | null;
   historique: Session[];
+  /**
+   * Compteur cumulatif des ventes par catégorie, alimenté à chaque session de
+   * vente (lib/sessions). `historique` étant plafonné (MAX_HISTORIQUE), les
+   * conditions de déblocage `ventesCategorie` lisent ce compteur — jamais un
+   * recomptage des sessions. Absent sur les saves < v17 (rempli en migration).
+   */
+  ventesParCategorie?: Partial<Record<CategorieObjet, number>>;
   tendances: Tendance[];
   /** Tendances pré-générées pour la prochaine édition (révélées par Veille). */
   prochainesTendances: Tendance[];
@@ -541,6 +548,14 @@ export interface Brocante {
   specialisation?: CategorieObjet;
   /** Pool d'objets exclusifs à cette brocante (rares et légendaires propres). */
   poolExclusif: string[]; // liste de templateId
+  /**
+   * Standing du lieu : multiplicateur appliqué au plafond de bourse PAR
+   * CLASSE des clients en mode vente (les bourses explicites — célébrité —
+   * ne sont pas multipliées). Crescendo au sein d'un tier et paliers
+   * marqués entre tiers ; le tier 4 doit permettre d'écouler les
+   * légendaires hauts et le bijou de la finale (~8 500 € de base).
+   */
+  facteurBourse: number;
   conditionDeblocage: ConditionDeblocage;
 }
 

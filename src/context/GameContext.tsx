@@ -38,6 +38,7 @@ import { createGameRepository } from "@/lib/storage/createGameRepository";
 import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
 import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
+import { ajouterSession } from "@/lib/sessions";
 import { indicesAConsommerPourLivraison } from "@/lib/missions";
 import { missionLivrable } from "@/lib/quetes/objectifs";
 import { PERIODE_TENDANCES_JOURS, PRIX_GAZETTE, genererTendances } from "@/lib/tendances";
@@ -611,6 +612,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       colisTutorielLivres: 0,
       vitrine: null,
       historique: [],
+      ventesParCategorie: {},
       tendances: genererTendances(),
       prochainesTendances: genererTendances(),
       prochainRafraichissementTendances: prochainLundi(INITIAL_JOUR + 1),
@@ -1190,10 +1192,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const enregistrerSession = useCallback((session: Session) => {
     setState((prev) => {
       if (!prev) return prev;
-      const withSession = {
-        ...prev,
-        historique: [session, ...prev.historique],
-      };
+      // Historique plafonné + compteur cumulatif de ventes (lib/sessions).
+      const withSession = ajouterSession(prev, session);
       // Push une entrée ledger informative (le budget a déjà été muté pendant
       // la journée par ajusterBudget / vendreDeVitrine — applyBudget=false).
       if (session.type === "chinage") {

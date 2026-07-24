@@ -739,6 +739,7 @@ export function runFouilleMicroSim(trials = 1000): FouilleMicroSimResult {
     tier: 3,
     etoiles: 3,
     poolExclusif: [],
+    facteurBourse: 1,
     conditionDeblocage: { type: "depart" },
   };
   let raresBase = 0;

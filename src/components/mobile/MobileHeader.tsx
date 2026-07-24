@@ -41,7 +41,8 @@ const labelStyle: CSSProperties = {
   fontWeight: 700,
   letterSpacing: "0.18em",
   textTransform: "uppercase",
-  color: "var(--brass-700)",
+  // brass-300 (7,6:1 sur forest-800) — brass-700 mesurait 2,7:1, sous AA.
+  color: "var(--brass-300)",
   lineHeight: 1,
 };
 
@@ -170,20 +171,35 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
                 onClick={() => setRechargeOuverte(true)}
                 aria-label={d.chrome.rechargerEnergie}
                 style={{
+                  // Zone de tap 44 pt (marges négatives compensées : le
+                  // cercle visuel reste 18 px, la cible tactile non).
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  width: 18,
-                  height: 18,
-                  borderRadius: 9,
-                  border: "1.5px solid var(--brass-500)",
+                  width: 44,
+                  height: 44,
+                  margin: -13,
+                  border: "none",
                   background: "transparent",
-                  color: "var(--brass-300)",
                   cursor: "pointer",
                   padding: 0,
                 }}
               >
-                <Plus size={12} strokeWidth={3} />
+                <span
+                  aria-hidden
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 18,
+                    height: 18,
+                    borderRadius: 9,
+                    border: "1.5px solid var(--brass-500)",
+                    color: "var(--brass-300)",
+                  }}
+                >
+                  <Plus size={12} strokeWidth={3} />
+                </span>
               </button>
             )}
             <Zap size={15} strokeWidth={2.5} aria-hidden />

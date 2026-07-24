@@ -15,6 +15,7 @@ const brocante: Brocante = {
   etoiles: 1,
   taillePool: 6,
   poolExclusif: [],
+  facteurBourse: 1,
   conditionDeblocage: { type: "depart" },
 };
 

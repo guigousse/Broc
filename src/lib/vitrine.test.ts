@@ -10,7 +10,9 @@ import {
   ajouterAuPanier,
   appliquerBoniment,
   bourseDe,
+  coffreCompatibleTheme,
   bourseMoyenne,
+  calculerPrixMax,
   classeBourse,
   genererClientEvent,
   personaDepuisClient,
@@ -24,7 +26,7 @@ import {
   createMockClient,
   createMockObjetEnVitrine,
 } from "./__test-fixtures__/gameState";
-import type { NegociationState } from "@/types/game";
+import type { Brocante, NegociationState } from "@/types/game";
 
 beforeEach(() => {
   // Fige Math.random à 0.5 par défaut (milieu de plage).
@@ -160,6 +162,92 @@ describe("genererClientEvent — mode négociation (prix trop cher)", () => {
     // Offre clamp à >= 1 et proche du prixMax
     expect(ev!.offreInitiale).toBeGreaterThanOrEqual(1);
     expect(ev!.offreInitiale).toBeLessThanOrEqual(ev!.prixMax);
+  });
+
+  it("l'offre « trop cher » est basse : 0,75 × prixMax pour un client mou (durete 0)", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1, durete: 0 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 150,
+      }),
+    ];
+    // facteur (0.5 → prixMax 100), départ (0.9 → reste), fourchette.
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.5)
+      .mockReturnValueOnce(0.9)
+      .mockReturnValue(0.5);
+    const ev = genererClientEvent(c, vitrine);
+    expect(ev).not.toBeNull();
+    expect(ev!.offreInitiale).toBe(Math.round(ev!.prixMax * 0.75));
+  });
+
+  it("l'offre « trop cher » est plancher : 0,55 × prixMax pour un client dur (durete 1)", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1, durete: 1 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 150,
+      }),
+    ];
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.5)
+      .mockReturnValueOnce(0.9)
+      .mockReturnValue(0.5);
+    const ev = genererClientEvent(c, vitrine);
+    expect(ev).not.toBeNull();
+    expect(ev!.offreInitiale).toBe(Math.round(ev!.prixMax * 0.55));
+  });
+
+  it("départ sec : la surcote fait passer le client (ratio 1,5 → p = 0,24)", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1, durete: 0.5 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 150, // ratio 1,5 → p = (1,5 − 1,2) × 0,8 = 0,24
+      }),
+    ];
+    // facteur (0.5 → prixMax 100), puis tirage de départ 0.1 < 0.24 → il passe.
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.5)
+      .mockReturnValueOnce(0.1);
+    expect(genererClientEvent(c, vitrine)).toBeNull();
+  });
+
+  it("prix honnête + client modeste : offre honnête (0,85–0,95), jamais de départ sec", () => {
+    // prixVente 110 sur ref 100 → surcote objective 1,1 ≤ 1,25 : pas de
+    // punition, même si le plafond personnel du client (70) est écrasé.
+    const c = createMockClient({ appetitMin: 0.6, appetitMax: 0.8, durete: 0.5 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 110,
+      }),
+    ];
+    // facteur (0.5 → 0.7 → prixMax 70) puis tirages bas : ne doit PAS fuir.
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.5)
+      .mockReturnValue(0.01);
+    const ev = genererClientEvent(c, vitrine);
+    expect(ev).not.toBeNull();
+    expect(ev!.mode).toBe("negociation");
+    expect(ev!.offreInitiale).toBe(Math.round(ev!.prixMax * 0.9));
+  });
+
+  it("pas de départ sec sous le seuil de surcote (ratio ≤ 1,2)", () => {
+    const c = createMockClient({ appetitMin: 1, appetitMax: 1, durete: 0.5 });
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 100 },
+        prixVente: 110, // ratio 1,1 → branche négo normale, aucun tirage de départ
+      }),
+    ];
+    // facteur (0.5), offre négo (0.5), fourchette — même avec un tirage bas,
+    // le client reste : la branche normale ne fait jamais fuir.
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.5)
+      .mockReturnValue(0.01);
+    expect(genererClientEvent(c, vitrine)).not.toBeNull();
   });
 });
 
@@ -420,19 +508,112 @@ describe("calculerPrixMax — la Passion perce le plafond de bourse", () => {
 });
 
 describe("bourseMoyenne — affichage par brocante", () => {
-  it("croît avec le tier (les grosses bourses n'arrivent qu'en tiers 3)", () => {
-    expect(bourseMoyenne(1)).toBeLessThan(bourseMoyenne(3));
-    expect(bourseMoyenne(2)).toBeLessThanOrEqual(bourseMoyenne(3));
+  const broc = (tier: 1 | 2 | 3 | 4, facteurBourse = 1) => ({
+    tier,
+    facteurBourse,
   });
 
-  it("les tiers 3 et 4 partagent le même vivier de clients", () => {
-    expect(bourseMoyenne(3)).toBe(bourseMoyenne(4));
+  it("croît avec le tier (les grosses bourses n'arrivent qu'en tiers 3)", () => {
+    expect(bourseMoyenne(broc(1))).toBeLessThan(bourseMoyenne(broc(3)));
+    expect(bourseMoyenne(broc(2))).toBeLessThanOrEqual(bourseMoyenne(broc(3)));
+  });
+
+  it("à vivier égal, le standing du lieu (facteurBourse) fait la différence", () => {
+    expect(bourseMoyenne(broc(3, 3))).toBeGreaterThan(bourseMoyenne(broc(3, 2.2)));
+    expect(bourseMoyenne(broc(4, 5))).toBeGreaterThan(bourseMoyenne(broc(3, 3)));
   });
 
   it("vaut la moyenne des bourses des personas éligibles au tier", () => {
     // Tier 1 : retraite (petite 80), étudiant (petite 80), touriste (grosse 2000),
     // famille (moyenne 300), opportuniste (moyenne 300) → 2760 / 5 = 552.
-    expect(bourseMoyenne(1)).toBe(552);
+    expect(bourseMoyenne(broc(1))).toBe(552);
+  });
+});
+
+describe("coffreCompatibleTheme — bourses à thème", () => {
+  const musique = createMockObjetEnVitrine({
+    objet: { prixReferenceReel: 50, categorie: "Musique" },
+    prixVente: 50,
+  });
+  const mode = createMockObjetEnVitrine({
+    objet: { prixReferenceReel: 50, categorie: "Mode" },
+    prixVente: 50,
+  });
+
+  it("toujours vrai pour une brocante générale", () => {
+    expect(coffreCompatibleTheme([musique, mode], {})).toBe(true);
+  });
+
+  it("vrai si tous les objets sont du thème", () => {
+    expect(
+      coffreCompatibleTheme([musique], { specialisation: "Musique" }),
+    ).toBe(true);
+  });
+
+  it("faux dès qu'un objet est hors thème", () => {
+    expect(
+      coffreCompatibleTheme([musique, mode], { specialisation: "Musique" }),
+    ).toBe(false);
+  });
+
+  it("vrai sur coffre vide (rien d'interdit à exposer)", () => {
+    expect(coffreCompatibleTheme([], { specialisation: "Musique" })).toBe(true);
+  });
+});
+
+describe("facteurBourse — standing du lieu appliqué aux plafonds", () => {
+  const brocanteRiche = {
+    tier: 4,
+    facteurBourse: 5,
+  } as unknown as Brocante;
+
+  it("multiplie le plafond de classe dans calculerPrixMax", () => {
+    // Persona à très gros appétit : le brut dépasse largement la bourse,
+    // c'est donc le plafond (bourse × facteur) qui décide.
+    const c = createMockClient({ appetitMin: 10, appetitMax: 10 }); // grosse (2000)
+    const panier = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 5000 },
+        prixVente: 5000,
+      }),
+    ];
+    const sans = calculerPrixMax(panier, c, [], DEFAULT_MODIFIERS);
+    const avec = calculerPrixMax(panier, c, [], DEFAULT_MODIFIERS, brocanteRiche);
+    expect(sans).toBe(2000);
+    expect(avec).toBe(10000);
+  });
+
+  it("ne multiplie PAS une bourse explicite (célébrité)", () => {
+    const celebrite = createMockClient({
+      appetitMin: 10,
+      appetitMax: 10,
+      bourseMax: 6000,
+    });
+    const panier = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 5000 },
+        prixVente: 5000,
+      }),
+    ];
+    expect(
+      calculerPrixMax(panier, celebrite, [], DEFAULT_MODIFIERS, brocanteRiche),
+    ).toBe(6000);
+  });
+
+  it("étend le pré-filtre d'intérêt : un légendaire devient accessible en tier 4", () => {
+    const c = createMockClient({ appetitMin: 1.5, appetitMax: 1.5 }); // grosse
+    const vitrine = [
+      createMockObjetEnVitrine({
+        objet: { prixReferenceReel: 6000 },
+        prixVente: 5000, // > min(9000, 2000) × 1,6 = 3200 sans facteur
+      }),
+    ];
+    expect(genererClientEvent(c, vitrine, [], DEFAULT_MODIFIERS)).toBeNull();
+    expect(
+      genererClientEvent(c, vitrine, [], DEFAULT_MODIFIERS, {
+        brocante: brocanteRiche,
+      }),
+    ).not.toBeNull();
   });
 });
 

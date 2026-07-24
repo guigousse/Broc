@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Brocante, BrocanteTier, GameState } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import { energieCourante } from "@/lib/energie";
+import { coffreCompatibleTheme } from "@/lib/vitrine";
 import {
   calculerBrocantesDebloqueesParTier,
   listerConditionsAvecEtat,
@@ -204,11 +205,22 @@ export function BrocantePanorama({
     ? state.budget >= fraisEntree(selected) &&
       energieCourante(state, tempsConfiance() ?? Date.now()) >= 1
     : false;
+  // Bourse à thème (vente) : le coffre ne doit contenir que des objets du
+  // thème — sinon Continuer est bloqué et la carte explique la règle.
+  const coffreHorsTheme =
+    destination === "vitrine" && selected
+      ? !coffreCompatibleTheme(state.vitrine?.objets ?? [], selected)
+      : false;
   const selectedConditions =
     selected && !selectedDebloquee
       ? listerConditionsAvecEtat(selected, state, d, parTier)
       : [];
-  const continuerActif = !!(selected && selectedDebloquee && selectedPeutEntrer);
+  const continuerActif = !!(
+    selected &&
+    selectedDebloquee &&
+    selectedPeutEntrer &&
+    !coffreHorsTheme
+  );
 
   const onContinuer = useCallback(() => {
     if (!selected || !continuerActif) return;
@@ -273,6 +285,7 @@ export function BrocantePanorama({
               peutEntrer={selectedPeutEntrer}
               conditions={selectedConditions}
               destination={destination}
+              coffreHorsTheme={coffreHorsTheme}
             />
           </div>
         )}

@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { GameState } from "@/types/game";
 import { migrerEtat, migrerSauvegarde, SAVE_VERSION } from "./migrations";
+import { MAX_GRAND_LIVRE } from "./grandLivre";
+import { MAX_HISTORIQUE } from "./sessions";
 import { COUT_TOTAL_COMPETENCES, pointsDepensesCompetences } from "@/data/competences";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
@@ -294,8 +296,87 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 16", () => {
-    expect(SAVE_VERSION).toBe(16);
+  it("SAVE_VERSION incrémenté à 17", () => {
+    expect(SAVE_VERSION).toBe(17);
+  });
+
+  it("v17 — plafonne l'historique à MAX_HISTORIQUE sessions", () => {
+    const sessions = Array.from({ length: MAX_HISTORIQUE + 40 }, (_, i) => ({
+      id: `s${i}`,
+      type: "chinage" as const,
+      jour: i + 1,
+      timestamp: i,
+      brocanteId: "b",
+      brocanteNom: "B",
+      achats: [],
+      xpGagne: {},
+    }));
+    const state = createMockGameState({ historique: sessions });
+    const migrated = migrerSauvegarde(state);
+    expect(migrated.historique).toHaveLength(MAX_HISTORIQUE);
+    // Les plus récentes (en tête) sont conservées.
+    expect(migrated.historique[0].id).toBe("s0");
+  });
+
+  it("v17 — plafonne le grand livre aux MAX_GRAND_LIVRE entrées les plus récentes", () => {
+    const entries = Array.from({ length: MAX_GRAND_LIVRE + 60 }, (_, i) => ({
+      id: `e${i}`,
+      timestamp: i,
+      jour: 1,
+      kind: "gazette" as const,
+      designation: `G${i}`,
+      recette: 0,
+      depense: 1,
+      soldeApres: 0,
+    }));
+    const state = createMockGameState({ grandLivre: entries });
+    const migrated = migrerSauvegarde(state);
+    expect(migrated.grandLivre).toHaveLength(MAX_GRAND_LIVRE);
+    // Le ledger est chronologique (append en queue) : la queue est conservée.
+    expect(migrated.grandLivre[migrated.grandLivre.length - 1].id).toBe(
+      `e${MAX_GRAND_LIVRE + 59}`,
+    );
+  });
+
+  it("v17 — initialise ventesParCategorie depuis l'historique COMPLET avant cap", () => {
+    const venteBricolage = (i: number) => ({
+      id: `v${i}`,
+      type: "vente" as const,
+      jour: i + 1,
+      timestamp: i,
+      niveauCamion: 1 as const,
+      loyer: 0,
+      ventes: [
+        {
+          nom: "Bidule",
+          templateId: "legacy.bidule",
+          categorie: "Bricolage" as const,
+          etat: "Bon" as const,
+          prixReferenceReel: 100,
+          prixVente: 80,
+          prixAchat: 30,
+        },
+      ],
+      invendus: 0,
+      xpGagne: {},
+    });
+    const sessions = Array.from({ length: MAX_HISTORIQUE + 20 }, (_, i) =>
+      venteBricolage(i),
+    );
+    const state = createMockGameState({ historique: sessions });
+    delete (state as Partial<GameState>).ventesParCategorie;
+    const migrated = migrerSauvegarde(state);
+    // Le compteur voit les 120 ventes, pas seulement les 100 conservées.
+    expect(migrated.ventesParCategorie?.Bricolage).toBe(MAX_HISTORIQUE + 20);
+  });
+
+  it("v17 — conserve un ventesParCategorie existant sans le recalculer", () => {
+    const state = createMockGameState({
+      historique: [],
+      ventesParCategorie: { Bricolage: 7 },
+    });
+    const migrated = migrerSauvegarde(state);
+    expect(migrated.ventesParCategorie?.Bricolage).toBe(7);
   });
 
   it("pose des défauts énergie sur un vieux save sans ces champs", () => {
@@ -730,7 +811,7 @@ describe("migration v10 — suppression de competenceTrees", () => {
 
 describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
   it("SAVE_VERSION vaut 16", () => {
-    expect(SAVE_VERSION).toBe(16);
+    expect(SAVE_VERSION).toBe(17);
   });
 
   it("une save v10 avec le champ legacy le perd, brocanteur intact", () => {
@@ -813,8 +894,8 @@ const migrate = migrerSauvegarde;
 const br = emptyBrocanteur();
 
 describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-verrouiller un tier)", () => {
-  it("SAVE_VERSION incrémenté à 16", () => {
-    expect(SAVE_VERSION).toBe(16);
+  it("SAVE_VERSION incrémenté à 17", () => {
+    expect(SAVE_VERSION).toBe(17);
   });
 
   it("v14 : save antérieure (stock donné à la création) ⇒ colis considéré livré", () => {
@@ -928,8 +1009,8 @@ function saveV15(patch: Partial<GameState> = {}): GameState {
 }
 
 describe("v15 — refonte des coûts de compétences (1 pt)", () => {
-  it("SAVE_VERSION incrémenté à 16", () => {
-    expect(SAVE_VERSION).toBe(16);
+  it("SAVE_VERSION incrémenté à 17", () => {
+    expect(SAVE_VERSION).toBe(17);
   });
 
   it("rembourse l'écart de l'ancien barème (P1 +0, P2 +1, P3 +2)", () => {

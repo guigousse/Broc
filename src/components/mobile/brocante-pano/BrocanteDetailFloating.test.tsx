@@ -16,6 +16,7 @@ const brocante: Brocante = {
   etoiles: 1,
   taillePool: 6,
   poolExclusif: [],
+  facteurBourse: 1,
   conditionDeblocage: { type: "depart" },
 };
 
@@ -45,7 +46,7 @@ describe("BrocanteDetailFloating — méta selon la destination", () => {
       />,
     );
     expect(screen.queryByText(/6 items/i)).toBeNull();
-    const attendu = bourseMoyenne(brocante.tier);
+    const attendu = bourseMoyenne(brocante);
     expect(screen.getByText(new RegExp(`${attendu}`))).toBeTruthy();
     expect(screen.getByText(/bourse/i)).toBeTruthy();
   });
