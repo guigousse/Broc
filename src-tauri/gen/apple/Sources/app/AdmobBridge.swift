@@ -47,26 +47,37 @@ private let AD_UNIT_ID = "ca-app-pub-6928338731034491/5859004325"
   // Rend le viewport web plein écran (896 pt) au lieu de 818 : par défaut le
   // WKWebView Tauri (contentInsetAdjustmentBehavior=.automatic) retranche les
   // safe areas du layout viewport → 100dvh=818, le contenu n'atteint pas les
-  // bords → bande claire. On passe en .never ; la page déjà chargée ne
-  // recalcule pas seule, on force le reflow (toggle de frame) PUIS on émet un
-  // événement `resize` pour que TOUT le layout (y compris les éléments fixes
-  // comme le panorama et les ResizeObserver) se recale. Le CSS gère les safe
-  // areas via env() ; on réinjecte aussi --safe-* depuis le système au cas où
-  // .never remettrait env() à 0. Idempotent.
+  // bords → bande claire.
+  //
+  // FILET DE SÉCURITÉ UNIQUEMENT depuis le 2026-07-25 : `.never` est désormais
+  // posé dès le lancement du processus, avant le premier paint (voir main.mm).
+  // Cette méthode-ci n'est appelée qu'au boot d'AdMob, donc APRÈS l'hydratation
+  // React — d'où la garde `dejaCorrige` : forcer un reflow à ce moment-là
+  // produirait exactement le saut d'écran qu'on cherche à supprimer. On ne
+  // reflowe donc que si le viewport était encore fautif (main.mm neutralisé,
+  // webview recréée…). La réinjection de --safe-* reste inconditionnelle : elle
+  // est idempotente et couvre le cas où `.never` remettrait env() à 0.
   private func viewportPleinEcran() {
     guard let root = rootViewController()?.view else { return }
     let insets = root.safeAreaInsets
     for wv in webviews(dans: root) {
-      wv.scrollView.contentInsetAdjustmentBehavior = .never
-      let f = wv.frame
-      wv.frame = f.insetBy(dx: 0, dy: 1)
-      wv.frame = f
+      let dejaCorrige = wv.scrollView.contentInsetAdjustmentBehavior == .never
+      if !dejaCorrige {
+        wv.scrollView.contentInsetAdjustmentBehavior = .never
+        // La page déjà chargée ne recalcule pas seule : reflow forcé (toggle
+        // de frame) puis événement `resize` pour recaler TOUT le layout (y
+        // compris les éléments fixes comme le panorama et les ResizeObserver).
+        let f = wv.frame
+        wv.frame = f.insetBy(dx: 0, dy: 1)
+        wv.frame = f
+      }
       let js = String(
         format:
           "(function(){var s=document.documentElement.style;"
           + "s.setProperty('--safe-top','%.0fpx');s.setProperty('--safe-bottom','%.0fpx');"
-          + "window.dispatchEvent(new Event('resize'));})();",
-        insets.top, insets.bottom)
+          + "%@})();",
+        insets.top, insets.bottom,
+        dejaCorrige ? "" : "window.dispatchEvent(new Event('resize'));")
       wv.evaluateJavaScript(js, completionHandler: nil)
     }
   }
