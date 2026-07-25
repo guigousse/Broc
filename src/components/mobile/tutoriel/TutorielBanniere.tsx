@@ -5,19 +5,7 @@ import { usePathname } from "next/navigation";
 import { useGameActions, useGameStateOnly } from "@/context/GameContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { tutorielActif } from "@/lib/tutoriel";
-
-/** Routes DE LA PARTIE : la bannière n'existe que là (retour device
- *  2026-07-17 — elle s'affichait aussi sur l'écran titre, la save du slot
- *  actif restant chargée dans le contexte). */
-const ROUTES_PARTIE = [
-  "/bureau",
-  "/stockage",
-  "/atelier",
-  "/collection",
-  "/bibliotheque",
-  "/chiner",
-  "/vitrine",
-];
+import { estRoutePartie } from "@/lib/routesPartie";
 
 const wrap: CSSProperties = {
   position: "fixed",
@@ -69,7 +57,7 @@ export function TutorielBanniere() {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
 
-  if (!ROUTES_PARTIE.some((p) => pathname.startsWith(p))) return null;
+  if (!estRoutePartie(pathname)) return null;
   if (!state || !tutorielActif(state)) return null;
   const etape = state.tutorielEtape as Exclude<
     typeof state.tutorielEtape,
