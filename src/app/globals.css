@@ -1346,7 +1346,11 @@ nav[aria-label="Navigation principale"] :focus-visible,
 /* Ligne d'item du bilan : s'efface derrière son sticker envolé, puis
    s'effondre pour que les suivantes remontent. La durée doit rester
    alignée sur EFFACEMENT_LIGNE_MS (lib/bilan/ceremonie.ts). On anime
-   max-height plutôt que height, car height: auto ne s'interpole pas. */
+   max-height plutôt que height, car height: auto ne s'interpole pas.
+   La borne de 140px doit rester au-dessus de la hauteur réelle d'une
+   ligne (sticker 60 + padding, davantage si le nom enveloppe en grec
+   ou en espagnol) : une ligne plus haute que la borne se rabattrait
+   d'un coup avant de s'effondrer. */
 @keyframes broc-bilan-ligne-out {
   0% { opacity: 1; transform: translateX(0); max-height: 140px; }
   40% { opacity: 0; transform: translateX(10px); max-height: 140px; }

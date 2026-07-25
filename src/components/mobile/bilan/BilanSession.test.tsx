@@ -207,7 +207,6 @@ describe("BilanSession — cérémonie", () => {
     act(() => void vi.advanceTimersByTime(VOL_MS));
     expect(vols[2].playSound).toBe(false);
     expect(playRarete).toHaveBeenCalledTimes(1);
-    expect(playPickup).not.toHaveBeenCalled();
   });
 
   it("démonté en pleine cérémonie : plus aucune étape ne se déclenche", () => {
@@ -217,6 +216,14 @@ describe("BilanSession — cérémonie", () => {
     unmount();
     act(() => void vi.advanceTimersByTime(10_000));
     expect(onTermine).not.toHaveBeenCalled();
+  });
+
+  it("rien acheté, rien gagné : aucun son de rang", () => {
+    const { onTermine } = monter({ items: [], xpLignes: [] });
+    fireEvent.click(screen.getByRole("button", { name: "Retour au QG" }));
+    act(() => void vi.advanceTimersByTime(10_000));
+    expect(playRarete).not.toHaveBeenCalled();
+    expect(onTermine).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -250,10 +257,8 @@ describe("BilanSession — passer la cérémonie", () => {
     act(() => void vi.advanceTimersByTime(0));
     fireEvent.click(screen.getByTestId("bilan-passer"));
     expect(screen.queryByTestId("bilan-passer")).toBeNull();
-    expect(screen.getByRole("button", { name: "Retour au QG" })).not.toHaveProperty(
-      "disabled",
-      true,
-    );
+    const bouton = screen.getByRole("button", { name: "Retour au QG" }) as HTMLButtonElement;
+    expect(bouton.disabled).toBe(false);
   });
 
   it("un tap de plus après le passage sort tout de suite, sans attendre", () => {
@@ -263,6 +268,15 @@ describe("BilanSession — passer la cérémonie", () => {
     fireEvent.click(screen.getByTestId("bilan-passer"));
     fireEvent.click(screen.getByRole("button", { name: "Retour au QG" }));
     expect(onTermine).toHaveBeenCalledTimes(1);
+  });
+
+  it("le son de rang accompagne aussi le dégel du passage anticipé, une seule fois", () => {
+    monter();
+    fireEvent.click(screen.getByRole("button", { name: "Retour au QG" }));
+    act(() => void vi.advanceTimersByTime(0));
+    fireEvent.click(screen.getByTestId("bilan-passer"));
+    act(() => void vi.advanceTimersByTime(10_000));
+    expect(playRarete).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -97,7 +97,12 @@ export function BilanSession({
   const termineRef = useRef(false);
   /** Tenu à jour : le minuteur de sortie ne doit pas rappeler une closure périmée. */
   const onTermineRef = useRef(onTermine);
-  onTermineRef.current = onTermine;
+  /** Le dégel (et son accent sonore) n'a lieu qu'une fois, quel que soit le chemin. */
+  const degelFaitRef = useRef(false);
+
+  useEffect(() => {
+    onTermineRef.current = onTermine;
+  });
 
   const purgerTimeouts = () => {
     for (const t of timeoutsRef.current) clearTimeout(t);
@@ -110,6 +115,15 @@ export function BilanSession({
     if (termineRef.current) return;
     termineRef.current = true;
     onTermineRef.current();
+  };
+
+  /** Rend sa vraie valeur à la barre de niveau. Le son de rang n'accompagne
+   *  le dégel que s'il y avait effectivement de l'XP à gagner. */
+  const degeler = () => {
+    if (degelFaitRef.current) return;
+    degelFaitRef.current = true;
+    if (fige.lignes.length > 0) audioManager.playRarete();
+    degelerXpAffichage();
   };
 
   const volerItem = (index: number) => {
@@ -161,8 +175,7 @@ export function BilanSession({
         volerPastille();
         break;
       case "degel":
-        audioManager.playRarete();
-        degelerXpAffichage();
+        degeler();
         break;
       case "sortie":
         terminer();
@@ -177,7 +190,7 @@ export function BilanSession({
     setItemsAtterris(fige.items.length);
     setLignesVisibles(fige.lignes.length);
     setPastilleVisible(fige.lignes.length > 0);
-    degelerXpAffichage();
+    degeler();
   };
 
   const lancer = () => {
