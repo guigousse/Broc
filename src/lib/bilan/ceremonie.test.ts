@@ -74,4 +74,14 @@ describe("phasesCeremonie", () => {
     const dates = phasesCeremonie(4, 3).map((e) => e.at);
     expect(dates).toEqual([...dates].sort((a, b) => a - b));
   });
+
+  it("des achats sans XP : le dégel tombe sur le dernier atterrissage, après lui", () => {
+    const etapes = phasesCeremonie(2, 0);
+    const dernierAtterrissage = etapes.findIndex(
+      (e) => e.etape.type === "atterrissageItem" && e.etape.index === 1,
+    );
+    const degel = etapes.findIndex((e) => e.etape.type === "degel");
+    expect(etapes[dernierAtterrissage].at).toBe(etapes[degel].at);
+    expect(degel).toBeGreaterThan(dernierAtterrissage);
+  });
 });
