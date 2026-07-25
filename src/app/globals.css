@@ -1343,6 +1343,29 @@ nav[aria-label="Navigation principale"] :focus-visible,
   100% { opacity: 0; transform: translateY(-14px); }
 }
 
+/* Ligne d'item du bilan : s'efface derrière son sticker envolé, puis
+   s'effondre pour que les suivantes remontent. La durée doit rester
+   alignée sur EFFACEMENT_LIGNE_MS (lib/bilan/ceremonie.ts). */
+@keyframes broc-bilan-ligne-out {
+  0% { opacity: 1; transform: translateX(0); }
+  40% { opacity: 0; transform: translateX(10px); }
+  100% {
+    opacity: 0;
+    transform: translateX(10px);
+    height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom-width: 0;
+  }
+}
+
+/* Apparition d'une ligne du décompte XP et de la pastille de total. */
+@keyframes broc-bilan-pop {
+  0% { opacity: 0; transform: scale(0.88); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
 /* Pulsation douce de l'état "prêt à récupérer" sur un slot atelier. */
 @keyframes broc-slot-ready-pulse {
   0%, 100% {
