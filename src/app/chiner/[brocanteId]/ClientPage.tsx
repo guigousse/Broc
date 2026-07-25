@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { SessionSummary } from "@/components/SessionSummary";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { ChineNegoDrawer } from "@/components/mobile/chine/ChineNegoDrawer";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
@@ -37,12 +36,13 @@ import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { relancerNegociation } from "@/lib/negociation";
 import { aConnaisseurChinage } from "@/lib/competences";
 import { energieCourante } from "@/lib/energie";
-import { placeRestante, stockageEstPlein } from "@/lib/stockage";
+import { getCapaciteStockage, placeRestante, stockageEstPlein, totalEnStock } from "@/lib/stockage";
 import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
 import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import { tutorielActif } from "@/lib/tutoriel";
-import { useXpFloats, XpFloatsVue } from "@/components/mobile/XpFloats";
+import { BilanSession, type LigneXp } from "@/components/mobile/bilan/BilanSession";
+import { degelerXpAffichage, gelerXpAffichage } from "@/lib/xpAffichageGele";
 import {
   XP_ACHAT_BROCANTEUR,
   multiplicateurXPRarete,
@@ -92,8 +92,15 @@ export default function SessionChinePage() {
   const entreePayeeRef = useRef(false);
   /** Affiche le résumé de session avant retour au QG. */
   const [resumeOuvert, setResumeOuvert] = useState(false);
-  /** XP de Brocanteur gagnée localement durant la session. */
-  const [xpBrocanteurSession, setXpBrocanteurSession] = useState(0);
+  /** XP de Brocanteur gagnée durant la session, ventilée par source pour le
+   *  décompte du bilan. Le total part dans l'historique de session. */
+  const [xpSession, setXpSession] = useState({
+    achats: 0,
+    decouvertes: 0,
+    negociations: 0,
+  });
+  /** Occupation du stockage à l'entrée : le bilan fait monter le compteur. */
+  const stockageDepartRef = useRef({ occupe: 0, capacite: 0 });
   /** ID de l'objet dont la négociation est ouverte dans le BottomSheet. */
   const [negoOuverte, setNegoOuverte] = useState<string | null>(null);
   /** Le vendeur mystère est-il présent dans cette session (tiré à l'entrée) ? */
@@ -109,12 +116,17 @@ export default function SessionChinePage() {
 
   const etape = state?.tutorielEtape;
 
-  const { floats, pousserXp } = useXpFloats();
+  /** Compte l'XP pour le décompte du bilan, sans la créditer (cas des +10 de
+   *  découverte, déjà crédités atomiquement par le GameContext). */
+  const compterXp = (cle: keyof typeof xpSession, montant: number) => {
+    setXpSession((prev) => ({ ...prev, [cle]: prev[cle] + montant }));
+  };
 
-  const gagnerXPLocal = (montant: number) => {
+  /** Crédite l'XP immédiatement ET la compte pour le bilan. L'affichage de la
+   *  barre est gelé : elle ne bougera qu'à la cérémonie. */
+  const gagnerXPLocal = (cle: keyof typeof xpSession, montant: number) => {
     gagnerXPBrocanteur(montant);
-    setXpBrocanteurSession((prev) => prev + montant);
-    pousserXp(montant);
+    compterXp(cle, montant);
   };
 
   useEffect(() => {
@@ -141,6 +153,11 @@ export default function SessionChinePage() {
         return router.replace(`/chiner?raison=energie&id=${brocante.id}`);
       }
       entreePayeeRef.current = true;
+      gelerXpAffichage(state.brocanteur);
+      stockageDepartRef.current = {
+        occupe: totalEnStock(state),
+        capacite: getCapaciteStockage(state),
+      };
       payerFraisBrocante(brocante.id, brocante.nom, frais);
       consommerEnergie(1);
       const jourSemaine = indexJourSemaine(state.jourActuel);
@@ -175,6 +192,10 @@ export default function SessionChinePage() {
       }
     }
   }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast, d, tr]);
+
+  // Filet : quel que soit le chemin de sortie (retour arrière, navigation
+  // directe, remontée après kill), la barre XP ne reste jamais gelée.
+  useEffect(() => () => degelerXpAffichage(), []);
 
   // Entrée de session pendant le tutoriel : le grand-père présente la chine.
   useEffect(() => {
@@ -284,10 +305,10 @@ export default function SessionChinePage() {
     const estDecouverte = !templateDejaPossede(state.collection, it.objet.templateId);
     marquerDejaPossedeTemplate(it.objet.templateId);
     if (estDecouverte) {
-      setXpBrocanteurSession((prev) => prev + XP_DECOUVERTE_COLLECTION);
-      pousserXp(XP_DECOUVERTE_COLLECTION);
+      compterXp("decouvertes", XP_DECOUVERTE_COLLECTION);
     }
     gagnerXPLocal(
+      "achats",
       XP_ACHAT_BROCANTEUR *
         multiplicateurXPRarete(
           it.objet.rarete,
@@ -315,6 +336,7 @@ export default function SessionChinePage() {
     setResumeOuvert(true);
   };
 
+  /** Fin de cérémonie de bilan : enregistre la session, avance le jour, sort. */
   const handleRetourQg = () => {
     if (sessionEnregistreeRef.current) {
       router.push("/bureau");
@@ -331,30 +353,18 @@ export default function SessionChinePage() {
         brocanteNom: brocante.nom,
         achats,
         xpGagne: {},
-        xpBrocanteur: xpBrocanteurSession,
+        xpBrocanteur: xpSession.achats + xpSession.decouvertes + xpSession.negociations,
       });
     }
     avancerJour();
     router.push("/bureau");
   };
 
-  if (resumeOuvert) {
-    return (
-      <SessionSummary
-        type="chinage"
-        titre={nomBrocante(brocante, locale)}
-        items={achats.map((a) => ({
-          templateId: a.templateId,
-          nom: a.nom,
-          categorie: a.categorie,
-          prix: a.prixPaye,
-        }))}
-        xpGagne={{}}
-        xpBrocanteur={xpBrocanteurSession}
-        onRetour={handleRetourQg}
-      />
-    );
-  }
+  const lignesXpBilan: LigneXp[] = [
+    { cle: "achats", montant: xpSession.achats },
+    { cle: "decouvertes", montant: xpSession.decouvertes },
+    { cle: "negociations", montant: xpSession.negociations },
+  ];
 
   /** Les 3 atouts du chinage, dans l'ordre de déblocage (cercles du header bas). */
   const dockSkills = (currentItem: ObjetEnVente | null): DockSkill[] => {
@@ -437,7 +447,6 @@ export default function SessionChinePage() {
       }}
     >
       <MobileHeader budget={state.budget} />
-      <XpFloatsVue floats={floats} />
       <main
         style={{
           flex: 1,
@@ -465,38 +474,54 @@ export default function SessionChinePage() {
           />
         )}
         <div style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}>
-          <ItemSwipeDeck
-            slides={slides}
-            plein={plein}
-            boiteReclamee={boiteReclamee}
-            onOuvrirBoite={() => setBoiteOuverte(true)}
-            onQuitter={handleRentrer}
-            pulseSortir={etape === "rentrer"}
-            onNavigate={() => setNegoOuverte(null)}
-            negoOuverte={negoOuverte !== null}
-            renderDock={(currentItem) => <SkillDock skills={dockSkills(currentItem)} />}
-            renderNegoDrawer={(item) => (
-              <ChineNegoDrawer
-                key={item.id}
-                item={item}
-                budget={state.budget}
-                plein={plein}
-                expanded={negoOuverte === item.id}
-                illustrationSrc={getVendeurIllustration(item.persona.archetype)}
-                illustrationFacheSrc={getVendeurIllustrationFache(item.persona.archetype)}
-                onExpand={() => setNegoOuverte(item.id)}
-                onCollapse={() => setNegoOuverte(null)}
-                onUpdateNego={(nego) => setItem(item.id, { negociation: nego })}
-                onConclu={(prixFinal) => {
-                  handleAchatAuPrix(item, prixFinal);
-                  gagnerXPLocal(XP_NEGO_BROCANTEUR);
-                  setNegoOuverte(null);
-                }}
-                onAcheterDirect={() => handleAcheter(item.id)}
-                tutoGuide={etape === "premier-achat" && item.statut !== "achete"}
-              />
-            )}
-          />
+          {resumeOuvert ? (
+            <BilanSession
+              titre={nomBrocante(brocante, locale)}
+              items={achats.map((a) => ({
+                templateId: a.templateId,
+                nom: a.nom,
+                categorie: a.categorie,
+                prix: a.prixPaye,
+              }))}
+              xpLignes={lignesXpBilan}
+              cibleVolItems='[data-fly-target="stockage-bilan"]'
+              stockageDepart={stockageDepartRef.current}
+              onTermine={handleRetourQg}
+            />
+          ) : (
+            <ItemSwipeDeck
+              slides={slides}
+              plein={plein}
+              boiteReclamee={boiteReclamee}
+              onOuvrirBoite={() => setBoiteOuverte(true)}
+              onQuitter={handleRentrer}
+              pulseSortir={etape === "rentrer"}
+              onNavigate={() => setNegoOuverte(null)}
+              negoOuverte={negoOuverte !== null}
+              renderDock={(currentItem) => <SkillDock skills={dockSkills(currentItem)} />}
+              renderNegoDrawer={(item) => (
+                <ChineNegoDrawer
+                  key={item.id}
+                  item={item}
+                  budget={state.budget}
+                  plein={plein}
+                  expanded={negoOuverte === item.id}
+                  illustrationSrc={getVendeurIllustration(item.persona.archetype)}
+                  illustrationFacheSrc={getVendeurIllustrationFache(item.persona.archetype)}
+                  onExpand={() => setNegoOuverte(item.id)}
+                  onCollapse={() => setNegoOuverte(null)}
+                  onUpdateNego={(nego) => setItem(item.id, { negociation: nego })}
+                  onConclu={(prixFinal) => {
+                    handleAchatAuPrix(item, prixFinal);
+                    gagnerXPLocal("negociations", XP_NEGO_BROCANTEUR);
+                    setNegoOuverte(null);
+                  }}
+                  onAcheterDirect={() => handleAcheter(item.id)}
+                  tutoGuide={etape === "premier-achat" && item.statut !== "achete"}
+                />
+              )}
+            />
+          )}
         </div>
       </main>
 
