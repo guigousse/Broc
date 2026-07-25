@@ -355,6 +355,20 @@ export const es: DictionnaireUI = {
     pastilleVente: "venta",
     camionNiveauAria: "Camión nivel {n}",
   },
+  bilan: {
+    titreChinage: "Balance de la rebusca",
+    pochesVides: "Con las manos vacías.",
+    unObjetTotal: "1 objeto · −{total} €",
+    nObjetsTotal: "{n} objetos · −{total} €",
+    xpEyebrow: "— experiencia —",
+    xpAchats: "Compras",
+    xpDecouvertes: "Descubrimientos",
+    xpNegociations: "Regateos",
+    xpTotal: "+{n} XP",
+    retourQg: "Volver al cuartel",
+    retourQgAria: "Volver al cuartel",
+    stockageAria: "Almacén: {occupe} de {capacite}",
+  },
   inventaire: {
     // — stockage —
     loyerHebdo: "alquiler {n} €/sem",

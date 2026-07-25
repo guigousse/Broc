@@ -360,6 +360,20 @@ export const el: DictionnaireUI = {
     pastilleVente: "πώληση",
     camionNiveauAria: "Φορτηγό επίπεδο {n}",
   },
+  bilan: {
+    titreChinage: "Απολογισμός ψαξίματος",
+    pochesVides: "Με άδεια χέρια.",
+    unObjetTotal: "1 αντικείμενο · −{total} €",
+    nObjetsTotal: "{n} αντικείμενα · −{total} €",
+    xpEyebrow: "— εμπειρία —",
+    xpAchats: "Αγορές",
+    xpDecouvertes: "Ανακαλύψεις",
+    xpNegociations: "Παζάρια",
+    xpTotal: "+{n} XP",
+    retourQg: "Επιστροφή στο αρχηγείο",
+    retourQgAria: "Επιστροφή στο αρχηγείο",
+    stockageAria: "Αποθήκη: {occupe} από {capacite}",
+  },
   inventaire: {
     // — stockage —
     loyerHebdo: "ενοίκιο {n} €/εβδ",

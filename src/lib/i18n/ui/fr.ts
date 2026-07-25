@@ -358,6 +358,20 @@ export const fr = {
     pastilleVente: "vente",
     camionNiveauAria: "Camion niveau {n}",
   },
+  bilan: {
+    titreChinage: "Bilan de chinage",
+    pochesVides: "Les poches vides.",
+    unObjetTotal: "1 objet · −{total} €",
+    nObjetsTotal: "{n} objets · −{total} €",
+    xpEyebrow: "— expérience —",
+    xpAchats: "Achats",
+    xpDecouvertes: "Découvertes",
+    xpNegociations: "Négociations",
+    xpTotal: "+{n} XP",
+    retourQg: "Retour au QG",
+    retourQgAria: "Retour au QG",
+    stockageAria: "Stockage : {occupe} sur {capacite}",
+  },
   inventaire: {
     // — stockage —
     loyerHebdo: "loyer {n} €/sem",
