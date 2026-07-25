@@ -137,11 +137,17 @@ sort vers le QG.
 ### `BilanSession`
 
 ```ts
+interface BilanItem {
+  templateId: string;
+  nom: string;
+  categorie: CategorieObjet;
+  prix: number;
+}
+
 interface BilanSessionProps {
-  type: "chinage" | "vente";
   /** Nom localisé de la brocante. */
   titre: string;
-  items: SummaryItem[];            // { templateId, nom, categorie, prix }
+  items: BilanItem[];
   /** Lignes de gain, dans l'ordre d'affichage ; les montants nuls sont ignorés. */
   xpLignes: ReadonlyArray<{ cle: "achats" | "decouvertes" | "negociations"; montant: number }>;
   /** Sélecteur de la cible du vol des items. */
@@ -153,15 +159,18 @@ interface BilanSessionProps {
 }
 ```
 
-Le composant est agnostique du chinage : la vente s'y branchera en passant
-`type="vente"`, ses ventes en `items` et une autre `cibleVolItems` (la caisse du header
-haut), sans réécriture.
+La structure est celle de n'importe quelle session : la vente s'y branchera en passant ses
+ventes en `items` et une autre `cibleVolItems` (la caisse du header haut). Ce qui lui
+manquera alors — le libellé du cadre et le signe des montants — sera ajouté à ce
+moment-là plutôt que codé à l'avance : aucun `type: "chinage" | "vente"` tant qu'un seul
+mode l'utilise.
 
 ### `ceremonie.ts`
 
-Fonction pure `phasesCeremonie(nbItems, nbLignesXp, reduit)` renvoyant la liste datée des
-étapes (`{ at: number; etape: … }`), consommée par un `useEffect` à base de `setTimeout`
-dans `BilanSession`. Le minutage est ainsi testable sans DOM, et les constantes
+Fonction pure `phasesCeremonie(nbItems, nbLignesXp)` renvoyant la liste datée des étapes
+(`{ at: number; etape: … }`, triée), consommée par un `useEffect` à base de `setTimeout`
+dans `BilanSession`. Le mouvement réduit court-circuite en amont (l'état final est posé
+sans consulter le minutage). Le minutage est ainsi testable sans DOM, et les constantes
 (`DECALAGE_ITEM_MS = 220`, `VOL_MS = 620`, `EFFACEMENT_LIGNE_MS = 260`,
 `CASCADE_XP_MS = 180`, `POP_PASTILLE_MS = 300`, `RESPIRATION_MS = 350`,
 `PAUSE_FINALE_MS = 700`) vivent en un seul endroit.
