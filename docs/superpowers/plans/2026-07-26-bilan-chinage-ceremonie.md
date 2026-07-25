@@ -1059,9 +1059,11 @@ vi.mock("@/lib/i18n/LangueContext", () => ({
   }),
 }));
 
+// Les templateId sont volontairement absents du catalogue : `nomObjet` retombe
+// alors sur le `nom` fourni, ce qui rend les assertions lisibles.
 const ITEMS = [
-  { templateId: "chaise-thonet", nom: "Chaise Thonet", categorie: "Mobilier" as const, prix: 45 },
-  { templateId: "poste-tsf", nom: "Poste TSF", categorie: "Électronique" as const, prix: 80 },
+  { templateId: "chaise-thonet", nom: "Chaise Thonet", categorie: "Maison" as const, prix: 45 },
+  { templateId: "poste-tsf", nom: "Poste TSF", categorie: "Musique" as const, prix: 80 },
 ];
 
 const XP = [
@@ -1455,7 +1457,10 @@ export function BilanSession({
 
   return (
     <div style={colonne}>
-      {/* Capteur de tap « passer » : n'existe que pendant la cérémonie animée. */}
+      {/* Capteur de tap « passer » : couvre tout le calque, barre du bas
+          comprise (« un tap n'importe où »), et n'existe que pendant la
+          cérémonie animée — le bouton Retour au QG est de toute façon
+          désactivé à ce moment-là. */}
       {lance && !pretASortir && (
         <button
           type="button"
@@ -1560,7 +1565,7 @@ const colonne: CSSProperties = {
   height: "100%",
 };
 
-/** Capteur plein écran du tap « passer », sous la barre du bas (z-index 1). */
+/** Capteur plein calque du tap « passer », au-dessus du contenu et de la barre. */
 const capteurPassage: CSSProperties = {
   position: "absolute",
   inset: 0,
@@ -2018,13 +2023,16 @@ Supprimer la ligne `<XpFloatsVue floats={floats} />` du JSX.
 Ajouter, à côté des autres effets de montage du composant :
 
 ```ts
+  /** Garde : la barre est gelée une seule fois, sur l'état d'entrée de session. */
+  const barreGeleeRef = useRef(false);
+
   // La barre XP ne progresse pas pendant la vente : elle rattrape au retour
   // au QG (la vente n'a pas encore sa cérémonie de bilan).
   useEffect(() => {
-    if (!state) return;
+    if (!state || barreGeleeRef.current) return;
+    barreGeleeRef.current = true;
     gelerXpAffichage(state.brocanteur);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!!state]);
+  }, [state]);
 
   useEffect(() => () => degelerXpAffichage(), []);
 ```
