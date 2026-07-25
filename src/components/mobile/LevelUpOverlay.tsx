@@ -13,6 +13,7 @@ import {
   prochainDeblocage,
 } from "@/data/deblocagesNiveau";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
+import { estRoutePartie } from "@/lib/routesPartie";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { titreDeblocage, descriptionDeblocage } from "@/lib/i18n/contenu";
 import { CornerOrnament } from "@/components/mobile/CornerOrnament";
@@ -181,14 +182,18 @@ export function LevelUpOverlay() {
   const pathname = usePathname();
   const { d, tr, locale } = useLangue();
   const enSession = ROUTES_SESSION_PREFIXES.some((p) => pathname?.startsWith(p));
+  // Hors partie (écran titre, mentions légales…), la save du slot actif reste
+  // chargée dans le contexte : sans cette garde le certificat se déroulerait
+  // par-dessus le menu principal (retour device 2026-07-25).
+  const affichable = estRoutePartie(pathname) && !enSession;
   const niveauACelebrer =
     state && state.brocanteur.niveau > state.niveauVu ? state.niveauVu + 1 : null;
 
   useEffect(() => {
-    if (niveauACelebrer !== null && !enSession) void audioManager.playLevelUp();
-  }, [niveauACelebrer, enSession]);
+    if (niveauACelebrer !== null && affichable) void audioManager.playLevelUp();
+  }, [niveauACelebrer, affichable]);
 
-  if (!state || niveauACelebrer === null || enSession) return null;
+  if (!state || niveauACelebrer === null || !affichable) return null;
 
   const deblocages = deblocagesPourNiveau(niveauACelebrer);
   const prochain = prochainDeblocage(niveauACelebrer);

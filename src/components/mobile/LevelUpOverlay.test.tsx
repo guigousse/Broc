@@ -90,6 +90,22 @@ describe("LevelUpOverlay", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("écran titre : pathname / → null et pas de son, même avec un niveau en attente", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/";
+    playLevelUp.mockClear();
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+    expect(playLevelUp).not.toHaveBeenCalled();
+  });
+
+  it("pages légales hors partie : pathname /mentions-legales → null", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/mentions-legales";
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+  });
+
   it("multi-niveaux : célèbre niveauVu+1, pas le niveau final", () => {
     mockState = etat(3, 5);
     mockPathname = "/bureau";
