@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import WebKit
 import GoogleMobileAds
 import UserMessagingPlatform
 import AppTrackingTransparency
@@ -30,6 +31,10 @@ private let AD_UNIT_ID = "ca-app-pub-6928338731034491/5859004325"
 
   @objc public func initialiser(_ fin: @escaping () -> Void) {
     DispatchQueue.main.async {
+      self.viewportPleinEcran()
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+        self.viewportPleinEcran()
+      }
       self.parcoursConsentement {
         MobileAds.shared.start()
         self.sdkPret = true
@@ -37,6 +42,40 @@ private let AD_UNIT_ID = "ca-app-pub-6928338731034491/5859004325"
         fin()
       }
     }
+  }
+
+  // Rend le viewport web plein écran (896 pt) au lieu de 818 : par défaut le
+  // WKWebView Tauri (contentInsetAdjustmentBehavior=.automatic) retranche les
+  // safe areas du layout viewport → 100dvh=818, le contenu n'atteint pas les
+  // bords → bande claire. On passe en .never ; la page déjà chargée ne
+  // recalcule pas seule, on force le reflow (toggle de frame) PUIS on émet un
+  // événement `resize` pour que TOUT le layout (y compris les éléments fixes
+  // comme le panorama et les ResizeObserver) se recale. Le CSS gère les safe
+  // areas via env() ; on réinjecte aussi --safe-* depuis le système au cas où
+  // .never remettrait env() à 0. Idempotent.
+  private func viewportPleinEcran() {
+    guard let root = rootViewController()?.view else { return }
+    let insets = root.safeAreaInsets
+    for wv in webviews(dans: root) {
+      wv.scrollView.contentInsetAdjustmentBehavior = .never
+      let f = wv.frame
+      wv.frame = f.insetBy(dx: 0, dy: 1)
+      wv.frame = f
+      let js = String(
+        format:
+          "(function(){var s=document.documentElement.style;"
+          + "s.setProperty('--safe-top','%.0fpx');s.setProperty('--safe-bottom','%.0fpx');"
+          + "window.dispatchEvent(new Event('resize'));})();",
+        insets.top, insets.bottom)
+      wv.evaluateJavaScript(js, completionHandler: nil)
+    }
+  }
+
+  private func webviews(dans vue: UIView) -> [WKWebView] {
+    var out: [WKWebView] = []
+    if let wv = vue as? WKWebView { out.append(wv) }
+    for sub in vue.subviews { out.append(contentsOf: webviews(dans: sub)) }
+    return out
   }
 
   @objc public func montrerRewarded(_ fin: @escaping (Bool, String?) -> Void) {

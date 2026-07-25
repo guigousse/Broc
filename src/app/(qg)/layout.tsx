@@ -473,7 +473,12 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             top: "calc(var(--safe-top) + var(--mobile-header-h))",
             left: 0,
             right: 0,
-            bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
+            // Le panorama s'étend jusqu'au HAUT de la barre d'onglets. Sa base
+            // dépasse volontairement de --safe-bottom sous ce point : la TabBar
+            // (opaque, z-index 30) recouvre ce chevauchement, ce qui garantit
+            // qu'aucun espace résiduel n'apparaît entre l'image et la barre,
+            // même si le repositionnement du viewport laisse un léger décalage.
+            bottom: "var(--mobile-tabbar-h)",
             background: "var(--forest-800)",
             overflow: "hidden",
           }}
