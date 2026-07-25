@@ -17,10 +17,10 @@ import {
   VOL_MS,
 } from "@/lib/bilan/ceremonie";
 
-const vols: { cible: string }[] = [];
+const vols: { cible: string; playSound?: boolean }[] = [];
 vi.mock("@/lib/flyAnimation", () => ({
-  flyToTab: (opts: { targetSelector: string }) => {
-    vols.push({ cible: opts.targetSelector });
+  flyToTab: (opts: { targetSelector: string; playSound?: boolean }) => {
+    vols.push({ cible: opts.targetSelector, playSound: opts.playSound });
   },
 }));
 
@@ -35,8 +35,9 @@ vi.mock("@/lib/transitionIris", () => ({
 }));
 
 const playPickup = vi.fn();
+const playRarete = vi.fn();
 vi.mock("@/lib/audio/audioManager", () => ({
-  audioManager: { playPickup: () => playPickup(), playRarete: () => {} },
+  audioManager: { playPickup: () => playPickup(), playRarete: () => playRarete() },
 }));
 
 vi.mock("@/lib/i18n/LangueContext", () => ({
@@ -80,7 +81,7 @@ const XP = [
 
 function monter(patch: Partial<Parameters<typeof BilanSession>[0]> = {}) {
   const onTermine = vi.fn();
-  render(
+  const { unmount } = render(
     <BilanSession
       titre="Brocante de Sarlat"
       items={ITEMS}
@@ -91,7 +92,7 @@ function monter(patch: Partial<Parameters<typeof BilanSession>[0]> = {}) {
       {...patch}
     />,
   );
-  return { onTermine };
+  return { onTermine, unmount };
 }
 
 beforeEach(() => {
@@ -99,6 +100,7 @@ beforeEach(() => {
   vols.length = 0;
   degel.mockClear();
   playPickup.mockClear();
+  playRarete.mockClear();
   motionReduite = false;
 });
 
@@ -190,6 +192,32 @@ describe("BilanSession — cérémonie", () => {
     act(() => void vi.advanceTimersByTime(0));
     expect(vols).toHaveLength(1);
   });
+
+  it("le son de la pastille n'est pas celui de l'ajout d'objet", () => {
+    monter();
+    fireEvent.click(screen.getByRole("button", { name: "Retour au QG" }));
+    // Avances fractionnées : la pastille (setPastilleVisible) doit être
+    // commitée — donc `refPastille` attaché — avant que le minuteur du
+    // "volPastille" ne s'exécute et lise cette ref. Un unique gros bond
+    // batcherait les deux mises à jour dans le même act() et laisserait
+    // la ref à null (React 19 + timers fake synchrones).
+    const jusquaPastille = DECALAGE_ITEM_MS + VOL_MS + 2 * CASCADE_XP_MS;
+    act(() => void vi.advanceTimersByTime(jusquaPastille));
+    act(() => void vi.advanceTimersByTime(POP_PASTILLE_MS + RESPIRATION_MS));
+    act(() => void vi.advanceTimersByTime(VOL_MS));
+    expect(vols[2].playSound).toBe(false);
+    expect(playRarete).toHaveBeenCalledTimes(1);
+    expect(playPickup).not.toHaveBeenCalled();
+  });
+
+  it("démonté en pleine cérémonie : plus aucune étape ne se déclenche", () => {
+    const { onTermine, unmount } = monter();
+    fireEvent.click(screen.getByRole("button", { name: "Retour au QG" }));
+    act(() => void vi.advanceTimersByTime(DECALAGE_ITEM_MS));
+    unmount();
+    act(() => void vi.advanceTimersByTime(10_000));
+    expect(onTermine).not.toHaveBeenCalled();
+  });
 });
 
 describe("BilanSession — passer la cérémonie", () => {
@@ -214,6 +242,27 @@ describe("BilanSession — passer la cérémonie", () => {
     fireEvent.click(screen.getByTestId("bilan-passer"));
     act(() => void vi.advanceTimersByTime(5000));
     expect(vols).toHaveLength(avant);
+  });
+
+  it("après le passage, le capteur disparaît et le bouton redevient actif", () => {
+    monter();
+    fireEvent.click(screen.getByRole("button", { name: "Retour au QG" }));
+    act(() => void vi.advanceTimersByTime(0));
+    fireEvent.click(screen.getByTestId("bilan-passer"));
+    expect(screen.queryByTestId("bilan-passer")).toBeNull();
+    expect(screen.getByRole("button", { name: "Retour au QG" })).not.toHaveProperty(
+      "disabled",
+      true,
+    );
+  });
+
+  it("un tap de plus après le passage sort tout de suite, sans attendre", () => {
+    const { onTermine } = monter();
+    fireEvent.click(screen.getByRole("button", { name: "Retour au QG" }));
+    act(() => void vi.advanceTimersByTime(0));
+    fireEvent.click(screen.getByTestId("bilan-passer"));
+    fireEvent.click(screen.getByRole("button", { name: "Retour au QG" }));
+    expect(onTermine).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -16,3 +16,14 @@ if (typeof globalThis.ResizeObserver === "undefined") {
   globalThis.ResizeObserver =
     ResizeObserverStub as unknown as typeof ResizeObserver;
 }
+
+/**
+ * jsdom n'implémente pas `Element.prototype.scrollTo` (seulement
+ * `window.scrollTo`). Plusieurs composants remettent une zone défilante à
+ * zéro au montage (ex. `BilanSession`) : on fournit un stub no-op pour que
+ * l'appel ne jette pas en environnement de test, où il n'y a de toute façon
+ * pas de layout réel à faire défiler.
+ */
+if (typeof Element !== "undefined" && !Element.prototype.scrollTo) {
+  Element.prototype.scrollTo = function scrollTo() {};
+}

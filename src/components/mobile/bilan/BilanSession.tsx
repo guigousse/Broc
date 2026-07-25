@@ -70,9 +70,16 @@ export function BilanSession({
 }: BilanSessionProps) {
   const { d, tr, locale } = useLangue();
 
-  const lignes = xpLignes.filter((l) => l.montant > 0);
-  const totalPrix = items.reduce((s, it) => s + it.prix, 0);
-  const totalXp = lignes.reduce((s, l) => s + l.montant, 0);
+  // Le bilan s'ouvre sur une session terminée : ses données ne bougent plus.
+  // On les fige au montage pour que la frise (calée sur ces longueurs) ne
+  // puisse pas se désynchroniser d'un re-rendu du parent.
+  const [fige] = useState(() => ({
+    items,
+    lignes: xpLignes.filter((l) => l.montant > 0),
+  }));
+
+  const totalPrix = fige.items.reduce((s, it) => s + it.prix, 0);
+  const totalXp = fige.lignes.reduce((s, l) => s + l.montant, 0);
 
   const [lance, setLance] = useState(false);
   const [itemsPartis, setItemsPartis] = useState(0);
@@ -82,11 +89,15 @@ export function BilanSession({
   /** Mouvement réduit : l'état final est posé, le tap suivant sort. */
   const [pretASortir, setPretASortir] = useState(false);
 
-  const refsItems = useRef<Map<number, HTMLLIElement | null>>(new Map());
+  const refsItems = useRef<Map<number, HTMLSpanElement | null>>(new Map());
   const refPastille = useRef<HTMLSpanElement>(null);
+  const refZone = useRef<HTMLDivElement>(null);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   /** Garde : `onTermine` ne doit partir qu'une fois. */
   const termineRef = useRef(false);
+  /** Tenu à jour : le minuteur de sortie ne doit pas rappeler une closure périmée. */
+  const onTermineRef = useRef(onTermine);
+  onTermineRef.current = onTermine;
 
   const purgerTimeouts = () => {
     for (const t of timeoutsRef.current) clearTimeout(t);
@@ -98,12 +109,12 @@ export function BilanSession({
   const terminer = () => {
     if (termineRef.current) return;
     termineRef.current = true;
-    onTermine();
+    onTermineRef.current();
   };
 
   const volerItem = (index: number) => {
     const el = refsItems.current.get(index);
-    const item = items[index];
+    const item = fige.items[index];
     if (!el || !item) return;
     const template = getTemplate(item.templateId);
     const rarity = getRarityColors(template?.rarete ?? "commun", template?.unique === true);
@@ -125,10 +136,10 @@ export function BilanSession({
       fallbackBg: "var(--brass-500)",
       borderColor: "var(--brass-700)",
       targetSelector: CIBLE_XP,
-      // Son distinct de l'ajout au stockage : on ne range rien, on gagne un rang.
+      // Son distinct de l'ajout au stockage : on ne range rien, on gagne un rang
+      // (joué à l'atterrissage, cf. case "degel" — pas au décollage).
       playSound: false,
     });
-    audioManager.playRarete();
   };
 
   const appliquer = (etape: EtapeCeremonie) => {
@@ -150,6 +161,7 @@ export function BilanSession({
         volerPastille();
         break;
       case "degel":
+        audioManager.playRarete();
         degelerXpAffichage();
         break;
       case "sortie":
@@ -161,29 +173,32 @@ export function BilanSession({
   /** Pose l'état final d'un coup (passage de cérémonie, mouvement réduit). */
   const poserEtatFinal = () => {
     purgerTimeouts();
-    setItemsPartis(items.length);
-    setItemsAtterris(items.length);
-    setLignesVisibles(lignes.length);
-    setPastilleVisible(lignes.length > 0);
+    setItemsPartis(fige.items.length);
+    setItemsAtterris(fige.items.length);
+    setLignesVisibles(fige.lignes.length);
+    setPastilleVisible(fige.lignes.length > 0);
     degelerXpAffichage();
   };
 
   const lancer = () => {
+    // Les lignes hors champ enverraient leurs clones depuis l'extérieur de l'écran.
+    refZone.current?.scrollTo({ top: 0 });
     if (lance) return;
     setLance(true);
     if (prefersReducedMotion()) {
       poserEtatFinal();
-      if (items.length > 0) audioManager.playPickup();
+      if (fige.items.length > 0) audioManager.playPickup();
       setPretASortir(true);
       return;
     }
-    for (const { at, etape } of phasesCeremonie(items.length, lignes.length)) {
+    for (const { at, etape } of phasesCeremonie(fige.items.length, fige.lignes.length)) {
       timeoutsRef.current.push(setTimeout(() => appliquer(etape), at));
     }
   };
 
   const passer = () => {
     poserEtatFinal();
+    setPretASortir(true);
     timeoutsRef.current.push(setTimeout(terminer, SORTIE_APRES_PASSAGE_MS));
   };
 
@@ -193,11 +208,11 @@ export function BilanSession({
   };
 
   const mention =
-    items.length === 0
+    fige.items.length === 0
       ? d.bilan.pochesVides
-      : items.length === 1
+      : fige.items.length === 1
         ? tr(d.bilan.unObjetTotal, { total: totalPrix })
-        : tr(d.bilan.nObjetsTotal, { n: items.length, total: totalPrix });
+        : tr(d.bilan.nObjetsTotal, { n: fige.items.length, total: totalPrix });
 
   const libelleLigne: Record<SourceXp, string> = {
     achats: d.bilan.xpAchats,
@@ -227,17 +242,14 @@ export function BilanSession({
         />
       )}
 
-      <div style={zoneDefilante}>
+      <div ref={refZone} style={zoneDefilante}>
         <CadreBilan titre={d.bilan.titreChinage} sousTitre={titre} mention={mention} />
 
-        {items.length > 0 && (
+        {fige.items.length > 0 && (
           <ul style={liste}>
-            {items.map((it, i) => (
+            {fige.items.map((it, i) => (
               <li
                 key={`${it.templateId}-${i}`}
-                ref={(el) => {
-                  refsItems.current.set(i, el);
-                }}
                 style={{
                   ...ligneItem,
                   animation:
@@ -246,7 +258,14 @@ export function BilanSession({
                       : undefined,
                 }}
               >
-                <ItemSticker templateId={it.templateId} categorie={it.categorie} thumb />
+                <span
+                  ref={(el) => {
+                    refsItems.current.set(i, el);
+                  }}
+                  style={{ display: "inline-flex" }}
+                >
+                  <ItemSticker templateId={it.templateId} categorie={it.categorie} thumb />
+                </span>
                 <span style={nomItem}>{nomObjet(it, locale)}</span>
                 <span style={prixItem}>−{it.prix} €</span>
               </li>
@@ -258,7 +277,7 @@ export function BilanSession({
           <div style={blocXp}>
             <div style={eyebrowXp}>{d.bilan.xpEyebrow}</div>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {lignes.slice(0, lignesVisibles).map((l) => (
+              {fige.lignes.slice(0, lignesVisibles).map((l) => (
                 <li
                   key={l.cle}
                   style={{ ...ligneXp, animation: `broc-bilan-pop ${POP_PASTILLE_MS}ms ease-out` }}
@@ -298,6 +317,7 @@ export function BilanSession({
         droite={
           <span
             data-fly-target="stockage-bilan"
+            role="img"
             aria-label={tr(d.bilan.stockageAria, {
               occupe,
               capacite: stockageDepart.capacite,
