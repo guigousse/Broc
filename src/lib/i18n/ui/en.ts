@@ -297,6 +297,8 @@ export const en: DictionnaireUI = {
     etapeTarification: "2 — Pricing",
     etapeChoixBrocante: "3 — Choose the flea market",
     concession: "Dealership",
+    retourMagasin: "Back to the shop",
+    ameliorerVehicule: "Upgrade the vehicle",
     placesCompte: "{n} slots",
     acheterVehicule: "Buy · {prix} €",
     manqueSomme: "You are {somme} € short",

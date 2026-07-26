@@ -302,6 +302,8 @@ export const el: DictionnaireUI = {
     etapeTarification: "2 — Τιμολόγηση",
     etapeChoixBrocante: "3 — Επιλογή παζαριού",
     concession: "Αντιπροσωπεία",
+    retourMagasin: "Επιστροφή στο μαγαζί",
+    ameliorerVehicule: "Αναβάθμιση του οχήματος",
     placesCompte: "{n} θέσεις",
     acheterVehicule: "Αγορά · {prix} €",
     manqueSomme: "Σου λείπουν {somme} €",

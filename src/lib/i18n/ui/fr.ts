@@ -300,6 +300,8 @@ export const fr = {
     etapeTarification: "2 — Tarification",
     etapeChoixBrocante: "3 — Choix de la brocante",
     concession: "Concession",
+    retourMagasin: "Retour au magasin",
+    ameliorerVehicule: "Améliorer le véhicule",
     placesCompte: "{n} places",
     acheterVehicule: "Acheter · {prix} €",
     manqueSomme: "Il vous manque {somme} €",
