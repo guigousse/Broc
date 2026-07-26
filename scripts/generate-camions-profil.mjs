@@ -130,6 +130,27 @@ async function loadReferenceImage(refId) {
   }
 }
 
+// Tolérance de cohérence entre les 4 coins échantillonnés, mesurée avec la
+// même distance R+G+B que le chroma-key. Sur un fond magenta correctement
+// peint, les 4 coins sont quasi identiques (bruit de compression seul).
+// Volontairement plus large que CHROMA_TOLERANCE (120) car son rôle n'est
+// pas de séparer fond et sujet mais de détecter un fond qui n'est PAS
+// uniforme (dégradé, ombre portée, bordure "sticker", ou un coin qui mord
+// sur le sujet) — un défaut déjà observé sur une génération précédente de
+// cette même série (fond noir + bordure blanche sur un des trois véhicules).
+const CORNER_CONSISTENCY_TOLERANCE = 150;
+
+// Fourchette plausible de la proportion de pixels rendus transparents par le
+// chroma-key, mesurée sur le webp final (après rognage). Bornes calées sur
+// les mesures réelles des trois assets de cette série (24 %, 37 %, 39 %),
+// avec une marge confortable de part et d'autre pour absorber la variation
+// normale de silhouette (fourgon plus trapu qu'une berline, cadrage plus ou
+// moins serré) sans laisser passer les deux dérives redoutées : « presque
+// rien retiré » (fond mal keyé) ou « presque tout retiré » (sujet effacé
+// avec le fond).
+const MIN_TRANSPARENT_RATIO = 0.12;
+const MAX_TRANSPARENT_RATIO = 0.6;
+
 /**
  * Chroma-key en mémoire : détoure le fond magenta d'un buffer d'image et
  * recadre aux bornes du sujet, sans jamais écrire de PNG sur disque (le
@@ -147,11 +168,19 @@ async function loadReferenceImage(refId) {
  * que sur la valeur nominale — comparer à #FF00FF littéral ne détourait
  * aucun pixel en pratique.
  *
+ * Deux garde-fous font échouer bruyamment cette fonction plutôt que de
+ * laisser passer un détourage silencieusement raté : la cohérence des 4
+ * coins échantillonnés, et la plausibilité de la proportion détourée. Un
+ * webp valide mais mutilé (sujet amputé, fond resté opaque) est pire qu'une
+ * erreur explicite — voir le constat qui motive ces gardes en tête de
+ * fichier / rapport de tâche.
+ *
  * @param {Buffer} buffer image brute reçue de Gemini
- * @param {number} tolerance somme des écarts absolus R+G+B tolérée
+ * @param {number} tolerance somme des écarts absolus R+G+B tolérée pour le chroma-key
+ * @param {string} id identifiant de l'asset, pour nommer l'erreur le cas échéant
  * @returns {Promise<{ webp: Buffer, pxKeyed: number }>}
  */
-async function detourerMagenta(buffer, tolerance = 60) {
+async function detourerMagenta(buffer, tolerance, id) {
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
     .raw()
@@ -167,16 +196,34 @@ async function detourerMagenta(buffer, tolerance = 60) {
     [inset, height - 1 - inset],
     [width - 1 - inset, height - 1 - inset],
   ];
-  let sr = 0, sg = 0, sb = 0;
-  for (const [x, y] of coins) {
+  const echantillons = coins.map(([x, y]) => {
     const i = (y * width + x) * 4;
-    sr += data[i];
-    sg += data[i + 1];
-    sb += data[i + 2];
+    return [data[i], data[i + 1], data[i + 2]];
+  });
+
+  // Garde 1 — cohérence des coins : un fond uniforme donne 4 échantillons
+  // quasi identiques. Un écart important signifie que la prémisse (fond
+  // uniforme dans les coins) est fausse — inutile de continuer.
+  let ecartMax = 0;
+  for (let a = 0; a < echantillons.length; a++) {
+    for (let b = a + 1; b < echantillons.length; b++) {
+      const [r1, g1, b1] = echantillons[a];
+      const [r2, g2, b2] = echantillons[b];
+      const dist = Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
+      if (dist > ecartMax) ecartMax = dist;
+    }
   }
-  const tr = sr / coins.length;
-  const tg = sg / coins.length;
-  const tb = sb / coins.length;
+  if (ecartMax > CORNER_CONSISTENCY_TOLERANCE) {
+    throw new Error(
+      `"${id}" : coins incohérents (écart max ${ecartMax} > ${CORNER_CONSISTENCY_TOLERANCE}) — ` +
+        `couleurs mesurées : ${echantillons.map((c) => `(${c.join(",")})`).join(", ")}. ` +
+        `Le fond n'est probablement pas uniforme (ombre, dégradé, bordure, ou sujet débordant dans un coin).`,
+    );
+  }
+
+  const tr = echantillons.reduce((s, c) => s + c[0], 0) / echantillons.length;
+  const tg = echantillons.reduce((s, c) => s + c[1], 0) / echantillons.length;
+  const tb = echantillons.reduce((s, c) => s + c[2], 0) / echantillons.length;
 
   let pxKeyed = 0;
   for (let i = 0; i < data.length; i += 4) {
@@ -192,32 +239,75 @@ async function detourerMagenta(buffer, tolerance = 60) {
 
   // Dé-spill : constaté à l'usage sur les vitres (surfaces réfléchissantes),
   // qui attrapent une pointe de magenta réfléchi du fond — le classique
-  // « spill » de chroma-key. Pour tout pixel resté opaque où le rouge ET le
-  // bleu dépassent le vert (signature d'une teinte magenta/rose), on retire
-  // proportionnellement l'essentiel de cet excès plutôt que de clipper net,
-  // pour une transition douce vers un gris neutre.
+  // « spill » de chroma-key. Restreint aux pixels à la fois teintés
+  // rose/magenta (rouge ET bleu au-dessus du vert) ET raisonnablement
+  // proches de la couleur de fond mesurée : sans cette seconde condition, la
+  // même formule désaturerait n'importe quelle carrosserie bordeaux ou tout
+  // reflet rosé légitime, qui n'ont rien à voir avec une contamination de
+  // fond. Le seuil ci-dessous est délibérément plus large que la tolérance
+  // du chroma-key (le spill est un mélange optique dilué, donc plus loin de
+  // la cible que les pixels déjà détourés) mais reste borné : une carrosserie
+  // franchement colorée (bordeaux, etc.) est mesurée à plusieurs centaines
+  // d'écart du magenta de fond, largement au-delà de ce seuil.
   const DESPILL_SUPPRESSION = 0.85; // fraction de l'excès retirée
+  const DESPILL_TOLERANCE = tolerance * 2; // ex. 240 pour un chroma-key à 120
   for (let i = 0; i < data.length; i += 4) {
     if (data[i + 3] === 0) continue; // déjà transparent, rien à corriger
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
-    if (r > g && b > g) {
+    const distFond = Math.abs(r - tr) + Math.abs(g - tg) + Math.abs(b - tb);
+    if (r > g && b > g && distFond <= DESPILL_TOLERANCE) {
       data[i] = Math.round(r - (r - g) * DESPILL_SUPPRESSION);
       data[i + 2] = Math.round(b - (b - g) * DESPILL_SUPPRESSION);
     }
   }
 
-  const webp = await sharp(data, {
+  // Rognage aux bornes du sujet (le bouton fait ~50 px de côté). Fait à part
+  // (buffer brut intermédiaire) plutôt que chaîné directement vers `.webp()`
+  // : la garde 2 a besoin de mesurer la transparence APRÈS rognage, sur
+  // l'image telle qu'elle sera réellement livrée — c'est cette mesure-là
+  // (24 %, 37 %, 39 % sur les trois assets de cette série) qui a servi à
+  // calibrer MIN/MAX_TRANSPARENT_RATIO, pas la proportion sur le canevas
+  // brut avant rognage (qui inclut une large marge de fond sans rapport
+  // avec le sujet).
+  const { data: dataRognee, info: infoRognee } = await sharp(data, {
     raw: { width, height, channels: 4 },
   })
-    .trim() // recadre aux bornes du sujet (le bouton fait ~50 px de côté)
+    .trim()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  // Garde 2 — plausibilité du détourage : un webp valide mais dont le fond
+  // n'a presque pas été retiré (fond mal keyé) ou dont le sujet a presque
+  // entièrement disparu avec le fond (sur-détourage) est un échec silencieux
+  // qu'il faut refuser explicitement plutôt que livrer.
+  let pxTransparents = 0;
+  for (let i = 3; i < dataRognee.length; i += 4) {
+    if (dataRognee[i] === 0) pxTransparents++;
+  }
+  const ratioTransparent =
+    pxTransparents / (infoRognee.width * infoRognee.height);
+  if (
+    ratioTransparent < MIN_TRANSPARENT_RATIO ||
+    ratioTransparent > MAX_TRANSPARENT_RATIO
+  ) {
+    throw new Error(
+      `"${id}" : détourage implausible (${(ratioTransparent * 100).toFixed(1)}% de pixels transparents après rognage, ` +
+        `attendu entre ${MIN_TRANSPARENT_RATIO * 100}% et ${MAX_TRANSPARENT_RATIO * 100}%).`,
+    );
+  }
+
+  const webp = await sharp(dataRognee, {
+    raw: { width: infoRognee.width, height: infoRognee.height, channels: 4 },
+  })
     .webp({ quality: WEBP_QUALITY })
     .toBuffer();
   return { webp, pxKeyed };
 }
 
 async function main() {
+  await fs.mkdir(OUTPUT_DIR, { recursive: true });
   const config = JSON.parse(await fs.readFile(CONFIG_PATH, "utf8"));
   const todo = onlyIds.length
     ? config.filter((c) => onlyIds.includes(c.id))
@@ -283,6 +373,7 @@ async function main() {
           const { webp, pxKeyed } = await detourerMagenta(
             buf,
             CHROMA_TOLERANCE,
+            item.id,
           );
           await fs.writeFile(outPath, webp);
           const { size } = await fs.stat(outPath);
