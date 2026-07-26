@@ -19,8 +19,12 @@
 export const RELEVE_FERMETURE_MS = 600;
 /** Temps mort entre le coffre fermé et le premier mètre parcouru. */
 export const RELEVE_ATTENTE_MS = 500;
-/** Éloignement de l'ancien véhicule (et, symétriquement, retour du nouveau). */
-export const RELEVE_TRAJET_MS = 2600;
+/**
+ * Éloignement de l'ancien véhicule (et, symétriquement, retour du nouveau).
+ * Aligné sur DEPART_DURATION_MS du départ en brocante : à l'écran, c'est
+ * littéralement le même trajet.
+ */
+export const RELEVE_TRAJET_MS = 3500;
 /** Garage vide entre les deux véhicules. */
 export const RELEVE_ENTREDEUX_MS = 450;
 /** Ouverture du coffre du nouveau véhicule, une fois rangé. */
