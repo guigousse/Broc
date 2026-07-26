@@ -76,9 +76,11 @@ La barre d'actions passe de deux à trois enfants :
 
 « Valider » perd son `flex: 2` : c'est le prix des trois libellés, et ça protège le grec.
 
-Le bouton central est rendu quand `prochainCamion !== null && p.tuto !== true`. **Il ne disparaît pas pendant `closing`** — le faire disparaître au moment où le joueur tape « Valider » ferait sauter la mise en page pendant que la voiture s'en va. Il reste en place avec `inerte={closing}`.
+Le bouton central est rendu quand `p.tuto !== true`. **Le tutoriel est le seul cas où il disparaît.**
 
-C'est une déviation assumée par rapport au garde `panneauVisible` de la version précédente, qui incluait `closing` : la pancarte murale pouvait disparaître sans conséquence de mise en page, un enfant de la barre non.
+C'est une déviation assumée par rapport au garde `panneauVisible` de la version précédente, qui incluait `closing` : la pancarte murale pouvait disparaître sans conséquence de mise en page, un enfant de la barre non. Faire disparaître le bouton au moment où le joueur tape « Valider » ferait sauter la mise en page pendant que la voiture s'en va — il reste donc en place avec `inerte={closing}`.
+
+**Correction issue de la revue finale.** Le garde d'origine était `prochainCamion !== null && p.tuto !== true`, et il rouvrait le même défaut par une autre porte : à l'achat du dernier palier, `prochainCamion` tombe à `null` dès `RELEVE_BASCULE_MS` (300 ms), donc le bouton se démontait **en pleine relève** et les deux voisins s'élargissaient d'un coup pendant que le bandeau était encore à l'écran. Au palier maximum le bouton reste donc monté, montrant le véhicule possédé, mais grisé, `disabled` et **sans clé à molette** — l'icône promettrait une amélioration qui n'existe plus. C'est un trophée. La prop `ameliorable` le lui dit ; il ne le déduit pas.
 
 Le reste de `CoffreChargement` est inchangé : l'état `sheetOuverte`, le garde dérivé `open={sheetOuverte && !closing}` sur la fiche, le garde `closing || releveRafRef.current !== null` sur `handleValider`, et toute la relève.
 
@@ -98,8 +100,13 @@ Ajoutées :
 
 | Clé | FR | EN | ES | EL |
 |---|---|---|---|---|
-| `retourMagasin` | `Retour au magasin` | `Back to the shop` | `Volver a la tienda` | `Επιστροφή στο μαγαζί` |
-| `ameliorerVehicule` | `Améliorer le véhicule` | `Upgrade the vehicle` | `Mejorar el vehículo` | `Αναβάθμιση του οχήματος` |
+| `vente.ameliorerVehicule` | `Améliorer le véhicule` | `Upgrade the vehicle` | `Mejorar el vehículo` | `Αναβάθμιση του οχήματος` |
+| `vente.vehiculeAuMaximum` | `Véhicule au niveau maximum` | `Vehicle at maximum level` | `Vehículo al nivel máximo` | `Όχημα στο μέγιστο επίπεδο` |
+| `commun.retour` | `Retour` | `Back` | `Volver` | `Επιστροφή` |
+
+**Correction issue de la revue finale.** Cette section prévoyait `retourMagasin` (« Retour au magasin ») pour le bouton de gauche. La revue a montré que le libellé était **faux dans un des deux flux** : l'écran est monté par deux pages, et si `vitrine/prep/page.tsx` revient bien au bureau, `vitrine/[brocanteId]/ClientPage.tsx` revient sur `/vitrine`, la liste des brocantes. Un libellé qui nomme une destination ne peut pas être juste des deux côtés — l'ancien `d.commun.annuler` ne l'était que parce qu'il n'en nommait aucune. Le bouton porte donc `d.commun.retour`, neutre. Cela règle au passage une collision de vocabulaire : le français disait « magasin » là où tout le reste du jeu dit « boutique », et les traductions EN/ES/EL reproduisaient mot pour mot la clé existante `d.bilan.rentrerBoutique`.
+
+Les deux clés `vehiculeAuMaximum` et `commun.retour` ne figuraient pas dans la conception initiale ; elles viennent des correctifs ci-dessus.
 
 Conservées et toujours consommées : `placesCompte`, `acheterVehicule`, `manqueSomme` (la fiche), `vehiculeAcquis` (le bandeau de relève).
 
