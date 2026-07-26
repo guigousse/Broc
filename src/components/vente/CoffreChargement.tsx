@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { DoorOpen } from "lucide-react";
 import type { NiveauCamion, Objet, ObjetEnVitrine } from "@/types/game";
 import { getCamion, getProchainCamion, getScaleCoffre } from "@/data/camion";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
@@ -38,6 +40,27 @@ import { OUTILS_DEV } from "@/lib/outilsDev";
 // hors développement par OUTILS_DEV : jamais visible en prod / TestFlight /
 // App Store (constante repliée à false à la compilation, code éliminé).
 const DEV_PANEL = OUTILS_DEV;
+
+/**
+ * Bouton « quitter les lieux » de la barre du bas, repris à l'identique de la
+ * sortie du bilan de brocante (`boutonQg` dans `BilanSession`) : porte ouverte
+ * + libellé, sans cadre. Même geste, même apparence d'un écran à l'autre.
+ */
+const boutonPorte: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  flex: "0 0 auto",
+  background: "transparent",
+  border: "none",
+  padding: 0,
+  color: "var(--brass-300)",
+  fontFamily: "var(--font-mono)",
+  fontSize: "clamp(10px, 2.6vw, 12px)",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
 
 const MASK_SIZE = 48;
 const TRUNK_MASK_SIZE = 256;
@@ -501,6 +524,9 @@ export function CoffreChargement(p: Props) {
           boxShadow: "0 -1px 0 var(--brass-300), 0 -8px 16px rgba(0,0,0,0.2)",
           display: "flex",
           alignItems: "center",
+          // Retour collé à gauche, chargement collé à droite, la voiture au
+          // milieu prend la place qui reste.
+          justifyContent: "space-between",
           gap: 8,
           zIndex: 50,
         }}
@@ -523,24 +549,20 @@ export function CoffreChargement(p: Props) {
             {d.vente.reorganiserCoffre}
           </p>
         )}
+        {/* Même bouton que la sortie du bilan de brocante (porte + libellé,
+            sans cadre) : c'est la même action de quitter les lieux, elle doit
+            se reconnaître d'un écran à l'autre. */}
         <button
           type="button"
           onClick={p.onAnnuler}
           disabled={closing}
           style={{
-            flex: 1,
-            height: "calc(100% - 8px)",
-            border: "1px solid var(--brass-500)",
-            background: "transparent",
-            color: "var(--brass-300)",
-            fontFamily: "var(--font-display)",
-            fontSize: 11,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
+            ...boutonPorte,
             opacity: closing ? 0.4 : 1,
             cursor: closing ? "not-allowed" : "pointer",
           }}
         >
+          <DoorOpen size={26} strokeWidth={2} />
           {d.commun.retour}
         </button>
         {concessionVisible && (
@@ -558,8 +580,12 @@ export function CoffreChargement(p: Props) {
           onClick={handleValider}
           className={p.tuto && peutValider && !closing ? "tuto-main" : undefined}
           style={{
-            flex: 1,
+            // Largeur au plus juste : la voiture au centre prend la place,
+            // les deux libellés se rangent contre les bords.
+            flex: "0 0 auto",
             height: "calc(100% - 8px)",
+            padding: "0 14px",
+            whiteSpace: "nowrap",
             border: "1px solid var(--brass-500)",
             background:
               peutValider && !closing ? "var(--brass-500)" : "transparent",

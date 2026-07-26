@@ -345,7 +345,7 @@ export const el: DictionnaireUI = {
     labelJoueur: "Εσύ",
     reorganiserCoffre: "Αναδιάταξε την καρότσα — κάποια αντικείμενα δεν χωράνε.",
     fermetureEnCours: "Κλείσιμο…",
-    validerChargement: "Επιβεβαίωση φόρτωσης",
+    validerChargement: "Φόρτωση",
     bilanEyebrowChinage: "— απολογισμός ψαξίματος —",
     bilanEyebrowVente: "— απολογισμός της ημέρας —",
     bilanChinageVide: "Γύρισες με άδεια χέρια.",

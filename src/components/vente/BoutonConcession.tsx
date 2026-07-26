@@ -33,13 +33,15 @@ const boutonStyle = (
   ameliorable: boolean,
 ): CSSProperties => ({
   position: "relative",
-  // Carré : la largeur suit la hauteur de la barre, pour que le véhicule
-  // garde ses proportions quelle que soit la largeur de l'écran.
-  width: "calc(var(--mobile-tabbar-h) - 8px)",
-  height: "calc(100% - 8px)",
+  // Pas de cadre : la voiture EST le bouton. Elle occupe toute la hauteur de
+  // la barre, et sa largeur suit son propre format (les profils sont en ~2,4:1)
+  // pour qu'elle reste lisible à cette taille.
+  height: "100%",
+  width: "calc(var(--mobile-tabbar-h) * 2.4)",
+  maxWidth: "48%",
   flex: "0 0 auto",
-  padding: 4,
-  border: "1px solid var(--brass-500)",
+  padding: 0,
+  border: "none",
   background: "transparent",
   cursor: inerte || !ameliorable ? "not-allowed" : "pointer",
   // Palier max : grisaille totale et permanente (trophée), volontairement
@@ -57,18 +59,27 @@ const vehiculeStyle: CSSProperties = {
 };
 
 const cleStyle: CSSProperties = {
+  // Centrée sur l'image : sans cadre, un coin n'accroche plus le regard.
   position: "absolute",
-  right: 1,
-  bottom: 1,
+  inset: 0,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  width: 18,
-  height: 18,
+  color: "var(--brass-300)",
+  // La pastille sombre garde la clé lisible sur une carrosserie claire.
+  filter: "drop-shadow(0 1px 3px rgba(15,30,22,0.9))",
+  pointerEvents: "none",
+};
+
+const pastilleStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 26,
+  height: 26,
   borderRadius: "50%",
   background: "var(--forest-800)",
-  color: "var(--brass-300)",
-  pointerEvents: "none",
+  border: "1px solid var(--brass-500)",
 };
 
 /**
@@ -102,7 +113,9 @@ export function BoutonConcession(p: BoutonConcessionProps) {
         // Palier max : la clé disparaît — elle promettrait une amélioration
         // qui n'existe plus. Le véhicule seul reste, en trophée.
         <span style={cleStyle} aria-hidden>
-          <Wrench size={11} strokeWidth={2.4} />
+          <span style={pastilleStyle}>
+            <Wrench size={15} strokeWidth={2.4} />
+          </span>
         </span>
       )}
     </button>

@@ -340,7 +340,7 @@ export const en: DictionnaireUI = {
     labelJoueur: "You",
     reorganiserCoffre: "Rearrange the trunk — some items don't fit.",
     fermetureEnCours: "Closing…",
-    validerChargement: "Confirm loading",
+    validerChargement: "Load",
     bilanEyebrowChinage: "— picking summary —",
     bilanEyebrowVente: "— day summary —",
     bilanChinageVide: "You came back empty-handed.",

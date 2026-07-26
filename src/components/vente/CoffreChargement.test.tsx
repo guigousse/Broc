@@ -129,7 +129,7 @@ describe("CoffreChargement — concession", () => {
 
       // Fiche ouverte : « Valider » reste tapable (barre d'actions au-dessus
       // du scrim/corps de la sheet) et déclenche le départ de la voiture.
-      fireEvent.click(screen.getByRole("button", { name: "Valider le chargement" }));
+      fireEvent.click(screen.getByRole("button", { name: "Charger" }));
 
       // La fiche disparaît (open dérivé de sheetOuverte && !closing).
       expect(screen.queryByRole("dialog")).toBeNull();
@@ -254,7 +254,7 @@ describe("CoffreChargement — concession", () => {
       // Valider dans cette fenêtre ne doit RIEN déclencher — sinon le tween
       // de départ capturerait la géométrie de l'ancien véhicule (Finding
       // I1).
-      fireEvent.click(screen.getByRole("button", { name: "Valider le chargement" }));
+      fireEvent.click(screen.getByRole("button", { name: "Charger" }));
 
       // Même en avançant bien au-delà de toute la séquence de fermeture +
       // attente + tween, rien ne s'est enclenché : preuve que le clic
@@ -274,7 +274,7 @@ describe("CoffreChargement — concession", () => {
       // redevient opérant : le second clic engage bien la fermeture puis
       // le départ jusqu'à onValider — sans quoi le correctif troquerait un
       // défaut cosmétique contre un blocage permanent.
-      fireEvent.click(screen.getByRole("button", { name: "Valider le chargement" }));
+      fireEvent.click(screen.getByRole("button", { name: "Charger" }));
       act(() => {
         vi.advanceTimersByTime(8000);
       });

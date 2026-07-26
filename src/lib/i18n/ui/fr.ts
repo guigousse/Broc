@@ -343,7 +343,7 @@ export const fr = {
     labelJoueur: "Vous",
     reorganiserCoffre: "Réarrangez le coffre — certains objets ne tiennent pas.",
     fermetureEnCours: "Fermeture…",
-    validerChargement: "Valider le chargement",
+    validerChargement: "Charger",
     bilanEyebrowChinage: "— bilan de chinage —",
     bilanEyebrowVente: "— bilan de la journée —",
     bilanChinageVide: "Vous êtes rentré les mains vides.",
