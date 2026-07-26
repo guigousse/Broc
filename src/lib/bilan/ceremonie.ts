@@ -17,10 +17,8 @@ export const EFFACEMENT_LIGNE_MS = 260;
 export const CASCADE_XP_MS = 180;
 /** Apparition de la pastille de total XP. */
 export const POP_PASTILLE_MS = 300;
-/** Respiration entre la pastille composée et son envol. */
-export const RESPIRATION_MS = 350;
 /** Pause après la mise à jour de la barre, avant de quitter la session. */
-export const PAUSE_FINALE_MS = 700;
+export const PAUSE_FINALE_MS = 1000;
 /** Délai avant sortie quand le joueur passe la cérémonie d'un tap. */
 export const SORTIE_APRES_PASSAGE_MS = 400;
 
@@ -47,11 +45,14 @@ export interface EtapeDatee {
 }
 
 /**
- * Construit la frise de la cérémonie. `nbLignesXp` ne compte que les lignes
- * réellement affichées (montants non nuls) : à 0, il n'y a ni décompte ni
- * pastille, on dégèle et on sort.
+ * Acte 1 — « Continuer » : les objets s'envolent vers le stockage, puis le
+ * décompte d'expérience se compose et sa pastille apparaît. La frise s'arrête
+ * là : c'est au joueur de déclencher l'acte 2.
+ *
+ * `nbLignesXp` ne compte que les lignes réellement affichées (montants non
+ * nuls) : à 0, la frise se réduit aux envols.
  */
-export function phasesCeremonie(nbItems: number, nbLignesXp: number): EtapeDatee[] {
+export function phasesEnvoiItems(nbItems: number, nbLignesXp: number): EtapeDatee[] {
   const etapes: EtapeDatee[] = [];
 
   for (let i = 0; i < nbItems; i++) {
@@ -63,22 +64,33 @@ export function phasesCeremonie(nbItems: number, nbLignesXp: number): EtapeDatee
   // Le décompte démarre quand le dernier sticker s'est posé.
   const finItems = nbItems > 0 ? (nbItems - 1) * DECALAGE_ITEM_MS + VOL_MS : 0;
 
-  let degel: number;
   if (nbLignesXp > 0) {
     for (let j = 0; j < nbLignesXp; j++) {
       etapes.push({ at: finItems + j * CASCADE_XP_MS, etape: { type: "ligneXp", index: j } });
     }
-    const pastille = finItems + nbLignesXp * CASCADE_XP_MS;
-    etapes.push({ at: pastille, etape: { type: "pastille" } });
-    const volPastille = pastille + POP_PASTILLE_MS + RESPIRATION_MS;
-    etapes.push({ at: volPastille, etape: { type: "volPastille" } });
-    degel = volPastille + VOL_MS;
-  } else {
-    degel = finItems;
+    etapes.push({
+      at: finItems + nbLignesXp * CASCADE_XP_MS,
+      etape: { type: "pastille" },
+    });
   }
 
+  return etapes.sort((a, b) => a.at - b.at);
+}
+
+/**
+ * Acte 2 — « Rentrer à la boutique » : la pastille part vers la barre de
+ * niveau, qui reprend sa vraie valeur à l'atterrissage, puis on quitte la
+ * session après une pause pour laisser voir la progression.
+ *
+ * Sans pastille (aucune XP gagnée), il n'y a rien à envoyer : on dégèle — sans
+ * effet visible — et on sort, pour que le bouton tienne sa promesse quoi qu'il
+ * arrive.
+ */
+export function phasesEnvoiXp(avecPastille: boolean): EtapeDatee[] {
+  const degel = avecPastille ? VOL_MS : 0;
+  const etapes: EtapeDatee[] = [];
+  if (avecPastille) etapes.push({ at: 0, etape: { type: "volPastille" } });
   etapes.push({ at: degel, etape: { type: "degel" } });
   etapes.push({ at: degel + PAUSE_FINALE_MS, etape: { type: "sortie" } });
-
-  return etapes.sort((a, b) => a.at - b.at);
+  return etapes;
 }

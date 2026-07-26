@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { DoorOpen, Package } from "lucide-react";
+import { ArrowRight, DoorOpen, Package } from "lucide-react";
 import { BarreBasSession } from "@/components/mobile/BarreBasSession";
 import { CadreBilan } from "@/components/mobile/bilan/CadreBilan";
 import { ItemSticker } from "@/components/ui/ItemSticker";
@@ -12,7 +12,8 @@ import {
   EFFACEMENT_LIGNE_MS,
   POP_PASTILLE_MS,
   SORTIE_APRES_PASSAGE_MS,
-  phasesCeremonie,
+  phasesEnvoiItems,
+  phasesEnvoiXp,
   type EtapeCeremonie,
 } from "@/lib/bilan/ceremonie";
 import { flyToTab } from "@/lib/flyAnimation";
@@ -56,6 +57,16 @@ export interface BilanSessionProps {
 const CIBLE_XP = '[data-fly-target="xp-header"]';
 
 /**
+ * Étapes du bilan, avancées par le joueur — jamais enchaînées toutes seules :
+ * il lit son bilan, puis déclenche chaque acte quand il veut.
+ *
+ * `attente` → « Continuer » → `acte1` (envol des objets, décompte qui se
+ * compose) → `pretActe2` → « Rentrer à la boutique » → `acte2` (envol de la
+ * pastille, barre qui progresse) → sortie.
+ */
+type PhaseBilan = "attente" | "acte1" | "pretActe2" | "acte2";
+
+/**
  * Bilan de fin de session, joué DANS la session : les deux headers et le fond
  * de brocante flouté restent en place, les objets achetés s'envolent un à un
  * vers le stockage, puis le décompte d'expérience part rejoindre la barre de
@@ -82,13 +93,18 @@ export function BilanSession({
   const totalPrix = fige.items.reduce((s, it) => s + it.prix, 0);
   const totalXp = fige.lignes.reduce((s, l) => s + l.montant, 0);
 
-  const [lance, setLance] = useState(false);
+  /** Rien à montrer : le premier acte n'aurait aucun contenu, on ouvre
+   *  directement sur « Rentrer à la boutique ». */
+  const [phase, setPhase] = useState<PhaseBilan>(() =>
+    fige.items.length === 0 && fige.lignes.length === 0 ? "pretActe2" : "attente",
+  );
   const [itemsPartis, setItemsPartis] = useState(0);
   const [itemsAtterris, setItemsAtterris] = useState(0);
   const [lignesVisibles, setLignesVisibles] = useState(0);
   const [pastilleVisible, setPastilleVisible] = useState(false);
-  /** Mouvement réduit : l'état final est posé, le tap suivant sort. */
-  const [pretASortir, setPretASortir] = useState(false);
+
+  /** Un acte est en cours : le bouton est inerte et un tap passe l'animation. */
+  const enAnimation = phase === "acte1" || phase === "acte2";
 
   const refsItems = useRef<Map<number, HTMLSpanElement | null>>(new Map());
   const refPastille = useRef<HTMLSpanElement>(null);
@@ -185,45 +201,70 @@ export function BilanSession({
     }
   };
 
-  /** Pose l'état final d'un coup (passage de cérémonie, mouvement réduit). */
-  const poserEtatFinal = (avecSon = true) => {
+  /** Pose d'un coup l'état de fin d'acte 1 : tout est rangé, tout est compté. */
+  const poserFinActe1 = () => {
     purgerTimeouts();
     setItemsPartis(fige.items.length);
     setItemsAtterris(fige.items.length);
     setLignesVisibles(fige.lignes.length);
     setPastilleVisible(fige.lignes.length > 0);
-    degeler(avecSon);
   };
 
-  const lancer = () => {
-    if (lance) return;
+  /** Acte 1 : « Continuer » — les objets partent, le décompte se compose. */
+  const lancerActe1 = () => {
     // Les lignes hors champ enverraient leurs clones depuis l'extérieur de l'écran.
     refZone.current?.scrollTo({ top: 0 });
-    setLance(true);
     if (prefersReducedMotion()) {
-      poserEtatFinal(false);
-      // Un seul accent sonore dans ce mode : l'ajout au stockage s'il y a eu
-      // des achats, sinon le gain de rang s'il y a eu de l'XP.
+      poserFinActe1();
       if (fige.items.length > 0) audioManager.playPickup();
-      else if (fige.lignes.length > 0) audioManager.playRarete();
-      setPretASortir(true);
+      setPhase("pretActe2");
       return;
     }
-    for (const { at, etape } of phasesCeremonie(fige.items.length, fige.lignes.length)) {
+    setPhase("acte1");
+    const frise = phasesEnvoiItems(fige.items.length, fige.lignes.length);
+    for (const { at, etape } of frise) {
+      timeoutsRef.current.push(setTimeout(() => appliquer(etape), at));
+    }
+    const fin = frise.length > 0 ? frise[frise.length - 1].at : 0;
+    timeoutsRef.current.push(setTimeout(() => setPhase("pretActe2"), fin));
+  };
+
+  /** Acte 2 : « Rentrer à la boutique » — la pastille rejoint la barre. */
+  const lancerActe2 = () => {
+    const avecPastille = fige.lignes.length > 0;
+    if (prefersReducedMotion()) {
+      purgerTimeouts();
+      degeler();
+      terminer();
+      return;
+    }
+    setPhase("acte2");
+    for (const { at, etape } of phasesEnvoiXp(avecPastille)) {
       timeoutsRef.current.push(setTimeout(() => appliquer(etape), at));
     }
   };
 
+  /** Tap pendant une animation : on saute à la fin de l'acte en cours. */
   const passer = () => {
-    poserEtatFinal();
-    setPretASortir(true);
+    if (phase === "acte1") {
+      poserFinActe1();
+      setPhase("pretActe2");
+      return;
+    }
+    purgerTimeouts();
+    degeler();
     timeoutsRef.current.push(setTimeout(terminer, SORTIE_APRES_PASSAGE_MS));
   };
 
-  const boutonRetour = () => {
-    if (!lance) return lancer();
-    if (pretASortir) return terminer();
+  const boutonPrincipal = () => {
+    if (phase === "attente") return lancerActe1();
+    if (phase === "pretActe2") return lancerActe2();
   };
+
+  // Le libellé ne bascule qu'une fois l'acte 1 terminé : pendant l'animation
+  // il annoncerait la suite avant qu'elle soit jouable.
+  const avantActe2 = phase === "attente" || phase === "acte1";
+  const libelleBouton = avantActe2 ? d.bilan.continuer : d.bilan.rentrerBoutique;
 
   const mention =
     fige.items.length === 0
@@ -249,8 +290,7 @@ export function BilanSession({
           le header (« un tap n'importe où »), et notamment neutraliser le bouton
           de recharge d'énergie — une pub lancée en pleine cérémonie verrait sa
           récompense perdue par la navigation de fin. */}
-      {lance &&
-        !pretASortir &&
+      {enAnimation &&
         typeof document !== "undefined" &&
         createPortal(
           <button
@@ -329,13 +369,17 @@ export function BilanSession({
         gauche={
           <button
             type="button"
-            aria-label={d.bilan.retourQg}
-            onClick={boutonRetour}
-            disabled={lance && !pretASortir}
-            style={{ ...boutonQg, opacity: lance && !pretASortir ? 0.45 : 1 }}
+            aria-label={libelleBouton}
+            onClick={boutonPrincipal}
+            disabled={enAnimation}
+            style={{ ...boutonQg, opacity: enAnimation ? 0.45 : 1 }}
           >
-            <DoorOpen size={26} strokeWidth={2} />
-            {d.bilan.retourQg}
+            {avantActe2 ? (
+              <ArrowRight size={26} strokeWidth={2} />
+            ) : (
+              <DoorOpen size={26} strokeWidth={2} />
+            )}
+            {libelleBouton}
           </button>
         }
         droite={
@@ -419,12 +463,20 @@ const nomItem: CSSProperties = {
   textShadow: "0 1px 3px rgba(0,0,0,0.65)",
 };
 
+/** Petite étiquette de prix, comme un cartel épinglé sur l'objet : le vermillon
+ *  sur papier reste franc, alors que posé sur la photo floutée de la brocante
+ *  il se noyait dans les verts (retour device 2026-07-26). */
 const prixItem: CSSProperties = {
+  justifySelf: "end",
   fontFamily: "var(--font-display)",
   fontWeight: 700,
-  fontSize: 16,
+  fontSize: 15,
   color: "var(--vermillion-600)",
-  textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+  background: "rgba(247,244,238,0.95)",
+  border: "1px solid var(--brass-500)",
+  padding: "3px 9px",
+  whiteSpace: "nowrap",
+  boxShadow: "0 2px 6px rgba(15,30,22,0.4)",
 };
 
 const blocXp: CSSProperties = {

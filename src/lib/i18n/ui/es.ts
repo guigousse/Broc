@@ -364,7 +364,8 @@ export const es: DictionnaireUI = {
     xpDecouvertes: "Descubrimientos",
     xpNegociations: "Regateos",
     xpTotal: "+{n} XP",
-    retourQg: "Volver al cuartel",
+    continuer: "Continuar",
+    rentrerBoutique: "Volver a la tienda",
     stockageAria: "Almacén: {occupe} de {capacite}",
   },
   inventaire: {
