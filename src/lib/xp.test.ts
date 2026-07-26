@@ -8,40 +8,53 @@ import {
   POINTS_BONUS_CHAPITRE,
   progressionNiveauBrocanteur,
   xpRequisPourNiveauBrocanteur,
+  xpDuNiveauBrocanteur,
+  XP_COUDE_NIVEAU,
+  XP_CIBLE_AU_COUDE,
 } from "./xp";
 import { COUT_TOTAL_COMPETENCES } from "@/data/competences";
 
 const freshBrocanteur = () => ({ xp: 0, niveau: 0, pointsDisponibles: 0 });
 
-describe("xpRequisPourNiveauBrocanteur — courbe quasi plate 0,5N²+99,5N (échelle 100 niveaux, 2026-07-10)", () => {
-  it("seuils cumulés post-aplatissement", () => {
+describe("xpRequisPourNiveauBrocanteur — courbe log 100→250 au coude N30 (2026-07-26)", () => {
+  it("seuils cumulés", () => {
     expect(xpRequisPourNiveauBrocanteur(0)).toBe(0);
     expect(xpRequisPourNiveauBrocanteur(1)).toBe(100);
-    expect(xpRequisPourNiveauBrocanteur(2)).toBe(201);
-    expect(xpRequisPourNiveauBrocanteur(3)).toBe(303);
-    expect(xpRequisPourNiveauBrocanteur(5)).toBe(510);
-    expect(xpRequisPourNiveauBrocanteur(10)).toBe(1045);
-    expect(xpRequisPourNiveauBrocanteur(20)).toBe(2190);
-    expect(xpRequisPourNiveauBrocanteur(30)).toBe(3435);
+    expect(xpRequisPourNiveauBrocanteur(2)).toBe(231);
+    expect(xpRequisPourNiveauBrocanteur(5)).toBe(711);
+    expect(xpRequisPourNiveauBrocanteur(10)).toBe(1667);
+    expect(xpRequisPourNiveauBrocanteur(20)).toBe(3867);
+    expect(xpRequisPourNiveauBrocanteur(30)).toBe(6292);
   });
 
-  it("l'incrément vaut N + 99 jusqu'au coude (N ≤ 30)", () => {
-    for (const n of [1, 2, 5, 10, 25, 30]) {
-      expect(
-        xpRequisPourNiveauBrocanteur(n) - xpRequisPourNiveauBrocanteur(n - 1),
-      ).toBe(n + 99);
+  it("les deux ancres de la courbe : 100 XP au niveau 1, 250 au coude", () => {
+    expect(xpDuNiveauBrocanteur(1)).toBe(100);
+    expect(xpDuNiveauBrocanteur(XP_COUDE_NIVEAU)).toBe(XP_CIBLE_AU_COUDE);
+  });
+
+  it("le coût de chaque niveau croît, mais de moins en moins vite", () => {
+    // Concavité : c'est ce qui rend le début franc et la suite exigeante
+    // sans jamais donner l'impression d'un mur.
+    for (let n = 2; n <= XP_COUDE_NIVEAU; n++) {
+      const croissance = xpDuNiveauBrocanteur(n) - xpDuNiveauBrocanteur(n - 1);
+      expect(croissance).toBeGreaterThan(0);
+      if (n > 2) {
+        const precedente =
+          xpDuNiveauBrocanteur(n - 1) - xpDuNiveauBrocanteur(n - 2);
+        // +1 de tolérance : les coûts sont arrondis à l'entier, deux
+        // incréments voisins peuvent donc se croiser d'une unité.
+        expect(croissance).toBeLessThanOrEqual(precedente + 1);
+      }
     }
   });
 
-  it("queue quadratique après le coude : N99→100 ≈ 689 XP", () => {
-    // ΔXP(100) = 199 + 0,1·70² = 689 (±1 d'arrondi de la forme fermée).
+  it("queue quadratique après le coude : N100 ≈ 793 XP", () => {
     const delta =
       xpRequisPourNiveauBrocanteur(100) - xpRequisPourNiveauBrocanteur(99);
-    expect(Math.abs(delta - 689)).toBeLessThanOrEqual(1);
-    // Cumul N100 ≈ 26 630 (14 950 de base + 11 680 de queue).
-    expect(xpRequisPourNiveauBrocanteur(100)).toBe(26630);
-    // Le coude ne change rien avant N30.
-    expect(xpRequisPourNiveauBrocanteur(30)).toBe(3435);
+    expect(Math.abs(delta - 793)).toBeLessThanOrEqual(1);
+    expect(xpRequisPourNiveauBrocanteur(100)).toBe(37721);
+    // La queue ne touche rien avant le coude.
+    expect(xpDuNiveauBrocanteur(30)).toBe(250);
   });
 
   it("niveaux négatifs traités comme 0", () => {
@@ -60,11 +73,11 @@ describe("appliquerGainXPBrocanteur", () => {
     expect(res).toEqual({ xp: 100, niveau: 1, pointsDisponibles: 1 });
   });
 
-  it("multi-level-up en un seul gain (480 XP → niveau 4, 4 points)", () => {
-    // Cumuls : N1 100 · N2 201 · N3 303 · N4 406 · N5 510.
-    const res = appliquerGainXPBrocanteur(freshBrocanteur(), 480);
-    expect(res.niveau).toBe(4);
-    expect(res.pointsDisponibles).toBe(4);
+  it("multi-level-up en un seul gain (711 XP → niveau 5, 5 points)", () => {
+    // Cumuls : N1 100 · N2 231 · N3 379 · N4 540 · N5 711.
+    const res = appliquerGainXPBrocanteur(freshBrocanteur(), 711);
+    expect(res.niveau).toBe(5);
+    expect(res.pointsDisponibles).toBe(5);
   });
 
   it("plafond : l'XP au-delà du niveau 100 ne fait plus monter", () => {
@@ -94,8 +107,8 @@ describe("appliquerGainXPBrocanteur", () => {
 describe("progressionNiveauBrocanteur", () => {
   it("0 juste après un level-up, 0.5 à mi-chemin", () => {
     expect(progressionNiveauBrocanteur({ xp: 100, niveau: 1, pointsDisponibles: 0 })).toBe(0);
-    // niveau 1 → 2 : seuils 100 → 201, span 101 ; 100+50,5=150,5 → 0.5
-    expect(progressionNiveauBrocanteur({ xp: 150.5, niveau: 1, pointsDisponibles: 0 })).toBe(0.5);
+    // niveau 1 → 2 : seuils 100 → 231, span 131 ; 100+65,5=165,5 → 0.5
+    expect(progressionNiveauBrocanteur({ xp: 165.5, niveau: 1, pointsDisponibles: 0 })).toBe(0.5);
   });
 });
 
@@ -108,16 +121,16 @@ describe("detailProgressionBrocanteur", () => {
     });
   });
 
-  it("mi-niveau (xp 150, niveau 1) : seuil(1)=100, seuil(2)=201", () => {
+  it("mi-niveau (xp 150, niveau 1) : seuil(1)=100, seuil(2)=231", () => {
     expect(
       detailProgressionBrocanteur({ xp: 150, niveau: 1, pointsDisponibles: 0 }),
-    ).toEqual({ dansNiveau: 50, requisNiveau: 101, manquant: 51 });
+    ).toEqual({ dansNiveau: 50, requisNiveau: 131, manquant: 81 });
   });
 
   it("pile au seuil (xp === seuil(n)) : dansNiveau à 0", () => {
     expect(
       detailProgressionBrocanteur({ xp: 100, niveau: 1, pointsDisponibles: 0 }),
-    ).toEqual({ dansNiveau: 0, requisNiveau: 101, manquant: 101 });
+    ).toEqual({ dansNiveau: 0, requisNiveau: 131, manquant: 131 });
   });
 });
 

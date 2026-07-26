@@ -211,8 +211,13 @@ describe.runIf(SIM)("simulation de la courbe de niveau", () => {
 
       const outDir = path.resolve(__dirname, "../../../docs/equilibrage");
       fs.mkdirSync(outDir, { recursive: true });
-      const jsonPath = path.join(outDir, "simulation-niveau-2026-07-17.json");
-      const mdPath = path.join(outDir, "simulation-niveau-2026-07-17.md");
+      // Daté du jour de la mesure : un rapport par calibration, les anciens
+      // restent consultables pour comparer avant/après (SIM_DATE pour rejouer
+      // une mesure sous un nom précis).
+      const jour =
+        process.env.SIM_DATE ?? new Date().toISOString().slice(0, 10);
+      const jsonPath = path.join(outDir, `simulation-niveau-${jour}.json`);
+      const mdPath = path.join(outDir, `simulation-niveau-${jour}.md`);
 
       fs.writeFileSync(jsonPath, JSON.stringify(rapport, null, 2), "utf-8");
       fs.writeFileSync(mdPath, buildMarkdown(rapport, fouille, lotGarni), "utf-8");
