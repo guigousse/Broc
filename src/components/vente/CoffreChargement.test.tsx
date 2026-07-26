@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { CoffreChargement } from "./CoffreChargement";
+import { createMockObjetEnVitrine } from "@/lib/__test-fixtures__/gameState";
 
 afterEach(cleanup);
 
@@ -61,5 +62,45 @@ describe("CoffreChargement — concession", () => {
     expect(screen.getByText("Il vous manque 160 €")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
     expect(props.onUpgrade).not.toHaveBeenCalled();
+  });
+
+  it("tap sur Valider (voiture qui part) : la pancarte ET la fiche disparaissent", () => {
+    // Un objet centré, sans chevauchement (trunkMask reste null en jsdom →
+    // computeOverlapsPixel retombe sur les bornes [0,1]), pour que
+    // peutValider soit vrai et que « Valider » soit tapable.
+    const coffre = [
+      {
+        ...createMockObjetEnVitrine({
+          objet: { templateId: "mus.33tours_jazz_1", categorie: "Musique" },
+        }),
+        posX: 0.5,
+        posY: 0.5,
+      },
+    ];
+    try {
+      vi.useFakeTimers();
+      poser({ coffre });
+
+      // Ouvre la pancarte, puis la fiche de concession.
+      fireEvent.click(screen.getByText("Concession"));
+      expect(screen.getByRole("dialog")).toBeTruthy();
+
+      // Fiche ouverte : « Valider » reste tapable (barre d'actions au-dessus
+      // du scrim/corps de la sheet) et déclenche le départ de la voiture.
+      fireEvent.click(screen.getByRole("button", { name: "Valider le chargement" }));
+
+      // La pancarte disparaît (panneauVisible retombe sur !closing) et la
+      // fiche aussi (open dérivé de sheetOuverte && !closing).
+      expect(screen.queryByText("Concession")).toBeNull();
+      expect(screen.queryByRole("dialog")).toBeNull();
+
+      // Laisse l'animation de départ (sons + tween + rAF) aller à son terme
+      // pour ne laisser aucun minuteur en suspens à la fin du test.
+      act(() => {
+        vi.advanceTimersByTime(6000);
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

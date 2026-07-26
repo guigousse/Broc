@@ -348,7 +348,13 @@ export function CoffreChargement(p: Props) {
         })()}
       {prochainCamion && (
         <ConcessionSheet
-          open={sheetOuverte}
+          // La barre d'actions du bas (zIndex 50) passe au-dessus du scrim
+          // et du corps de la ConcessionSheet (zIndex 40/41 dans
+          // BottomSheet) : « Valider » reste tapable fiche ouverte. On
+          // dérive donc l'ouverture du même garde que le panneau plutôt
+          // que de compter sur un onClose/onAcheter manuel à chaque
+          // chemin de sortie (ex. handleValider ne fermait pas la fiche).
+          open={sheetOuverte && !closing}
           onClose={() => setSheetOuverte(false)}
           actuel={camion}
           prochain={prochainCamion}
