@@ -7,7 +7,8 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { ENERGIE_MAX, energieCourante } from "@/lib/energie";
-import { progressionNiveauBrocanteur } from "@/lib/xp";
+import { emptyBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
+import { useXpAffiche } from "@/lib/xpAffichageGele";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { EnergieRecharge } from "./EnergieRecharge";
@@ -85,12 +86,20 @@ const xpFillStyle: CSSProperties = {
   transition: "width 300ms ease",
 };
 
+/** Repli quand aucune partie n'est chargée : le hook doit être appelé
+ *  inconditionnellement, il lui faut donc toujours une valeur. */
+const BROCANTEUR_REPLI = emptyBrocanteur();
+
 export function MobileHeader({ budget }: MobileHeaderProps) {
   const { state } = useGame();
   const { tempsConfiance } = useGameActions();
   const [rechargeOuverte, setRechargeOuverte] = useState(false);
   const pathname = usePathname();
   const { d, tr, locale } = useLangue();
+
+  // Pendant une session, la barre est figée sur un instantané : elle ne
+  // progresse qu'à la cérémonie de bilan (envol de la pastille XP).
+  const brocanteurAffiche = useXpAffiche(state?.brocanteur ?? BROCANTEUR_REPLI);
 
   const energieMax = ENERGIE_MAX;
   const energie = state
@@ -106,16 +115,16 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   const enSession = ROUTES_SESSION_PREFIXES.some((p) => pathname?.startsWith(p));
   const xpNavigationBloquee = enSession || (state ? state.brocanteur.niveau < 1 : true);
   const xpLabel = state
-    ? tr(d.chrome.niveauBrocanteur, { n: state.brocanteur.niveau })
+    ? tr(d.chrome.niveauBrocanteur, { n: brocanteurAffiche.niveau })
     : undefined;
   const xpContenu = state ? (
     <>
-      <span style={xpNiveauStyle}>N{state.brocanteur.niveau}</span>
+      <span style={xpNiveauStyle}>N{brocanteurAffiche.niveau}</span>
       <span style={xpTrackStyle}>
         <span
           style={{
             ...xpFillStyle,
-            width: `${Math.round(progressionNiveauBrocanteur(state.brocanteur) * 100)}%`,
+            width: `${Math.round(progressionNiveauBrocanteur(brocanteurAffiche) * 100)}%`,
           }}
         />
       </span>

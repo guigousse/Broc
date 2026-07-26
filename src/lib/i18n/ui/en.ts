@@ -105,7 +105,6 @@ export const en: DictionnaireUI = {
     energieInsuffisante: "Not enough energy for this outing!",
     ameliorerVersNiveau: "Upgrade to LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
-    xpGagne: "+{n} XP",
     errorTitre: "Oops, a little hiccup…",
     errorCorps:
       "An unexpected error occurred. Your game is saved — a simple reload usually does the trick.",
@@ -354,6 +353,19 @@ export const en: DictionnaireUI = {
     pastilleAchat: "purchase",
     pastilleVente: "sale",
     camionNiveauAria: "Truck level {n}",
+  },
+  bilan: {
+    titreChinage: "Picking summary",
+    pochesVides: "Empty-handed.",
+    unObjetTotal: "1 item · −{total} €",
+    nObjetsTotal: "{n} items · −{total} €",
+    xpEyebrow: "— experience —",
+    xpAchats: "Purchases",
+    xpDecouvertes: "Discoveries",
+    xpNegociations: "Haggling",
+    xpTotal: "+{n} XP",
+    retourQg: "Back to HQ",
+    stockageAria: "Storage: {occupe} of {capacite}",
   },
   inventaire: {
     // — stockage —

@@ -1335,12 +1335,32 @@ nav[aria-label="Navigation principale"] :focus-visible,
   transform-origin: center;
 }
 
-/* Float « +XP » en session (chinage, vente) : monte puis s'efface. */
-@keyframes broc-xp-float {
-  0% { opacity: 0; transform: translateY(6px); }
-  15% { opacity: 1; transform: translateY(0); }
-  70% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-14px); }
+/* Ligne d'item du bilan : s'efface derrière son sticker envolé, puis
+   s'effondre pour que les suivantes remontent. La durée doit rester
+   alignée sur EFFACEMENT_LIGNE_MS (lib/bilan/ceremonie.ts). On anime
+   max-height plutôt que height, car height: auto ne s'interpole pas.
+   La borne de 140px doit rester au-dessus de la hauteur réelle d'une
+   ligne (sticker 60 + padding, davantage si le nom enveloppe en grec
+   ou en espagnol) : une ligne plus haute que la borne se rabattrait
+   d'un coup avant de s'effondrer. */
+@keyframes broc-bilan-ligne-out {
+  0% { opacity: 1; transform: translateX(0); max-height: 140px; }
+  40% { opacity: 0; transform: translateX(10px); max-height: 140px; }
+  100% {
+    opacity: 0;
+    transform: translateX(10px);
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom-width: 0;
+  }
+}
+
+/* Apparition d'une ligne du décompte XP et de la pastille de total. */
+@keyframes broc-bilan-pop {
+  0% { opacity: 0; transform: scale(0.88); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 /* Pulsation douce de l'état "prêt à récupérer" sur un slot atelier. */

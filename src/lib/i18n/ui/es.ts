@@ -105,7 +105,6 @@ export const es: DictionnaireUI = {
     energieInsuffisante: "¡No tienes energía suficiente para esta salida!",
     ameliorerVersNiveau: "Mejorar a LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
-    xpGagne: "+{n} XP",
     errorTitre: "Vaya, un pequeño contratiempo…",
     errorCorps:
       "Se ha producido un error inesperado. Tu partida está guardada — recargar suele bastar.",
@@ -354,6 +353,19 @@ export const es: DictionnaireUI = {
     pastilleAchat: "compra",
     pastilleVente: "venta",
     camionNiveauAria: "Camión nivel {n}",
+  },
+  bilan: {
+    titreChinage: "Balance de la rebusca",
+    pochesVides: "Con las manos vacías.",
+    unObjetTotal: "1 objeto · −{total} €",
+    nObjetsTotal: "{n} objetos · −{total} €",
+    xpEyebrow: "— experiencia —",
+    xpAchats: "Compras",
+    xpDecouvertes: "Descubrimientos",
+    xpNegociations: "Regateos",
+    xpTotal: "+{n} XP",
+    retourQg: "Volver al cuartel",
+    stockageAria: "Almacén: {occupe} de {capacite}",
   },
   inventaire: {
     // — stockage —

@@ -14,6 +14,7 @@ import { ChineMystereDrawer } from "./ChineMystereDrawer";
 import { sonsRevelation } from "@/lib/chine/revelationSons";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { BarreBasSession } from "@/components/mobile/BarreBasSession";
 import type { ObjetEnVente } from "@/types/game";
 
 const SWIPE_SEUIL_PX = 40;
@@ -240,42 +241,34 @@ export function ItemSwipeDeck({
         </div>
       )}
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          background: "var(--forest-800)",
-          borderTop: "3px solid var(--brass-500)",
-          padding: "8px 16px calc(8px + var(--safe-bottom))",
-        }}
-      >
-        <button
-          type="button"
-          aria-label={d.chine.quitterBrocanteAriaLabel}
-          onClick={onQuitter}
-          className={pulseSortir ? "tuto-pulse tuto-main tuto-main-droite" : undefined}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--brass-300)",
-            fontFamily: "var(--font-mono)",
-            fontSize: "clamp(10px, 2.6vw, 12px)",
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            padding: 0,
-          }}
-        >
-          <DoorOpen size={26} strokeWidth={2} />
-          {d.chine.sortir}
-        </button>
-
-        {renderDock?.(currentItem)}
-      </div>
+      <BarreBasSession
+        gauche={
+          <button
+            type="button"
+            aria-label={d.chine.quitterBrocanteAriaLabel}
+            onClick={onQuitter}
+            className={pulseSortir ? "tuto-pulse tuto-main tuto-main-droite" : undefined}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--brass-300)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "clamp(10px, 2.6vw, 12px)",
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              padding: 0,
+            }}
+          >
+            <DoorOpen size={26} strokeWidth={2} />
+            {d.chine.sortir}
+          </button>
+        }
+        droite={renderDock?.(currentItem)}
+      />
     </div>
   );
 }

@@ -6,10 +6,14 @@
  * `LevelUpOverlay.test.tsx` : useGame()/useGameActions() + next/navigation.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { MobileHeader } from "./MobileHeader";
+import { degelerXpAffichage, gelerXpAffichage } from "@/lib/xpAffichageGele";
 
-afterEach(cleanup);
+afterEach(() => {
+  degelerXpAffichage();
+  cleanup();
+});
 
 let mockState: Record<string, unknown> | null = null;
 let mockPathname = "/bureau";
@@ -27,7 +31,7 @@ function etat(niveau: number) {
   return {
     energie: 5,
     energieDerniereMaj: Date.now(),
-    brocanteur: { niveau, xp: 0 },
+    brocanteur: { niveau, xp: 0, pointsDisponibles: 0 },
   };
 }
 
@@ -56,5 +60,25 @@ describe("MobileHeader — puce XP", () => {
     const puce = screen.getByLabelText("Niveau de Brocanteur 0");
     expect(puce.tagName).toBe("SPAN");
     expect(screen.queryByRole("link", { name: "Niveau de Brocanteur 0" })).toBeNull();
+  });
+});
+
+describe("MobileHeader — gel de la barre XP", () => {
+  it("gelé : le niveau affiché est celui de l'instantané, pas celui de l'état", () => {
+    mockState = etat(5);
+    mockPathname = "/chiner/xxx";
+    gelerXpAffichage({ niveau: 3, xp: 120, pointsDisponibles: 0 });
+    render(<MobileHeader budget={0} />);
+    expect(screen.getByLabelText("Niveau de Brocanteur 3")).toBeTruthy();
+  });
+
+  it("dégelé : le niveau réel est de nouveau affiché", () => {
+    mockState = etat(5);
+    mockPathname = "/chiner/xxx";
+    gelerXpAffichage({ niveau: 3, xp: 120, pointsDisponibles: 0 });
+    const { rerender } = render(<MobileHeader budget={0} />);
+    act(() => degelerXpAffichage());
+    rerender(<MobileHeader budget={0} />);
+    expect(screen.getByLabelText("Niveau de Brocanteur 5")).toBeTruthy();
   });
 });

@@ -105,7 +105,6 @@ export const el: DictionnaireUI = {
     energieInsuffisante: "Δεν έχεις αρκετή ενέργεια για αυτή την έξοδο!",
     ameliorerVersNiveau: "Αναβάθμιση σε LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
-    xpGagne: "+{n} XP",
     errorTitre: "Ουπς, κάτι σκάλωσε…",
     errorCorps:
       "Παρουσιάστηκε ένα απρόοπτο σφάλμα. Η παρτίδα σου είναι αποθηκευμένη — συνήθως αρκεί μια απλή επαναφόρτωση.",
@@ -359,6 +358,19 @@ export const el: DictionnaireUI = {
     pastilleAchat: "αγορά",
     pastilleVente: "πώληση",
     camionNiveauAria: "Φορτηγό επίπεδο {n}",
+  },
+  bilan: {
+    titreChinage: "Απολογισμός ψαξίματος",
+    pochesVides: "Με άδεια χέρια.",
+    unObjetTotal: "1 αντικείμενο · −{total} €",
+    nObjetsTotal: "{n} αντικείμενα · −{total} €",
+    xpEyebrow: "— εμπειρία —",
+    xpAchats: "Αγορές",
+    xpDecouvertes: "Ανακαλύψεις",
+    xpNegociations: "Παζάρια",
+    xpTotal: "+{n} XP",
+    retourQg: "Επιστροφή στο αρχηγείο",
+    stockageAria: "Αποθήκη: {occupe} από {capacite}",
   },
   inventaire: {
     // — stockage —
