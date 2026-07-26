@@ -308,7 +308,6 @@ export const el: DictionnaireUI = {
     coffreMoyen: "Μεσαίο πορτμπαγκάζ",
     coffreGrand: "Μεγάλο πορτμπαγκάζ",
     acheterVehicule: "Αγορά · {prix} €",
-    manqueSomme: "Σου λείπουν {somme} €",
     vehiculeAcquis: "{nom} — {n} θέσεις",
     preparationCoffre: "— προετοιμασία της καρότσας…",
     preparationEtal: "— προετοιμασία του πάγκου…",

@@ -76,11 +76,13 @@ describe("ConcessionSheet", () => {
     expect(onAcheter).toHaveBeenCalledTimes(1);
   });
 
-  it("sous le prix : bouton bloqué et somme manquante annoncée", () => {
+  it("sous le prix : bouton bloqué, sans reproche sur la somme manquante", () => {
     const onAcheter = poser(160);
     const bouton = screen.getByRole("button", { name: "Acheter · 200 €" });
     expect(bouton.hasAttribute("disabled")).toBe(true);
-    expect(screen.getByText("Il vous manque 40 €")).toBeTruthy();
+    // Le bouton grisé porte déjà le prix : rappeler ce qui manque n'ajoutait
+    // rien et sonnait comme un reproche.
+    expect(screen.queryByText(/manque/i)).toBeNull();
     fireEvent.click(bouton);
     expect(onAcheter).not.toHaveBeenCalled();
   });

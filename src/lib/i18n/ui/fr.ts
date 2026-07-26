@@ -306,7 +306,6 @@ export const fr = {
     coffreMoyen: "Coffre moyen",
     coffreGrand: "Grand coffre",
     acheterVehicule: "Acheter · {prix} €",
-    manqueSomme: "Il vous manque {somme} €",
     vehiculeAcquis: "{nom} — {n} places",
     preparationCoffre: "— préparation du coffre…",
     preparationEtal: "— préparation de l'étal…",

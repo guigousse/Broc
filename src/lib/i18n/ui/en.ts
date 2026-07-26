@@ -303,7 +303,6 @@ export const en: DictionnaireUI = {
     coffreMoyen: "Medium boot",
     coffreGrand: "Large boot",
     acheterVehicule: "Buy · {prix} €",
-    manqueSomme: "You are {somme} € short",
     vehiculeAcquis: "{nom} — {n} slots",
     preparationCoffre: "— prepping the trunk…",
     preparationEtal: "— getting the stall ready…",

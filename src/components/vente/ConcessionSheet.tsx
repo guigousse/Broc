@@ -81,14 +81,6 @@ const boutonStyle = (peut: boolean): CSSProperties => ({
   opacity: peut ? 1 : 0.5,
 });
 
-const manqueStyle: CSSProperties = {
-  fontFamily: "var(--font-serif)",
-  fontStyle: "italic",
-  fontSize: 12,
-  color: "var(--vermillion-600)",
-  margin: 0,
-};
-
 /** Libellé de la taille de coffre visée. */
 const LIBELLE_TAILLE: Record<TailleCoffre, keyof DictionnaireUI["vente"]> = {
   petit: "coffrePetit",
@@ -106,7 +98,6 @@ export function ConcessionSheet(p: ConcessionSheetProps) {
 
   const prix = p.prochain.prixUpgradeVersCeNiveau ?? 0;
   const peut = p.budget >= prix;
-  const manque = prix - p.budget;
   const profilActuel = getCoffreAssets(p.actuel.visuelId)?.profil ?? null;
   const profilProchain = getCoffreAssets(p.prochain.visuelId)?.profil ?? null;
 
@@ -162,8 +153,6 @@ export function ConcessionSheet(p: ConcessionSheetProps) {
         >
           {tr(d.vente.acheterVehicule, { prix })}
         </button>
-
-        {!peut && <p style={manqueStyle}>{tr(d.vente.manqueSomme, { somme: manque })}</p>}
       </div>
     </BottomSheet>
   );

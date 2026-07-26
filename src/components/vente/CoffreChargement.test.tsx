@@ -6,8 +6,7 @@ import { createMockObjetEnVitrine } from "@/lib/__test-fixtures__/gameState";
 import {
   RELEVE_BASCULE_MS,
   RELEVE_DUREE_MS,
-  RELEVE_FONDU_SORTIE_MS,
-  RELEVE_PAUSE_MS,
+  RELEVE_ENTREDEUX_MS,
 } from "@/lib/releveVehicule";
 
 afterEach(cleanup);
@@ -96,7 +95,9 @@ describe("CoffreChargement — concession", () => {
     const bouton = screen.getByRole("button", { name: "Améliorer le véhicule" });
     expect(bouton.hasAttribute("disabled")).toBe(false);
     fireEvent.click(bouton);
-    expect(screen.getByText("Il vous manque 160 €")).toBeTruthy();
+    // La fiche s'ouvre bel et bien — c'est tout l'intérêt de laisser le
+    // bouton tapable sans budget : on peut venir regarder.
+    expect(screen.getByRole("dialog")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
     expect(props.onUpgrade).not.toHaveBeenCalled();
   });
@@ -167,9 +168,10 @@ describe("CoffreChargement — concession", () => {
       fireEvent.click(screen.getByRole("button", { name: "Améliorer le véhicule" }));
       fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
 
-      // Le bandeau n'apparaît qu'après le fondu de sortie + la pause.
+      // Le bandeau n'apparaît qu'au retour du nouveau véhicule, une fois
+      // l'ancien sorti du cadre.
       act(() => {
-        vi.advanceTimersByTime(RELEVE_FONDU_SORTIE_MS + RELEVE_PAUSE_MS);
+        vi.advanceTimersByTime(RELEVE_BASCULE_MS + RELEVE_ENTREDEUX_MS);
       });
 
       const bandeau = screen.getByRole("button", { name: "Break — 16 places" });

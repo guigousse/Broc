@@ -22,12 +22,14 @@ import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomCamion } from "@/lib/i18n/contenu";
 import {
+  RELEVE_ARRIVEE_MS,
   RELEVE_BASCULE_MS,
   RELEVE_DUREE_MS,
-  RELEVE_FONDU_ENTREE_MS,
-  RELEVE_FONDU_SORTIE_MS,
-  RELEVE_PAUSE_MS,
-  opaciteReleve,
+  RELEVE_ENTREDEUX_MS,
+  RELEVE_FERMETURE_MS,
+  RELEVE_TRAJET_MS,
+  etatReleve,
+  type Geometrie,
 } from "@/lib/releveVehicule";
 import { CoffreCanvas } from "./CoffreCanvas";
 import { BoutonConcession } from "./BoutonConcession";
@@ -107,6 +109,10 @@ export function CoffreChargement(p: Props) {
   const [closing, setClosing] = useState(false);
   const [sheetOuverte, setSheetOuverte] = useState(false);
   const [bandeauReleve, setBandeauReleve] = useState<string | null>(null);
+  // Position/échelle pilotées par la relève ; `null` hors séquence.
+  const [releveOverride, setReleveOverride] = useState<Geometrie | null>(null);
+  // Le coffre reste clos tant que le véhicule roule, aller comme retour.
+  const [releveCoffreFerme, setReleveCoffreFerme] = useState(false);
   const releveRafRef = useRef<number | null>(null);
   const releveTimersRef = useRef<number[]>([]);
 
@@ -246,44 +252,78 @@ export function CoffreChargement(p: Props) {
     for (const id of releveTimersRef.current) window.clearTimeout(id);
     releveTimersRef.current = [];
     setTruckOpacity(1);
+    setReleveOverride(null);
+    setReleveCoffreFerme(false);
     setBandeauReleve(null);
   }, []);
 
   /**
-   * Relève du véhicule. `onUpgrade` n'est PAS appelé au clic mais à
-   * RELEVE_BASCULE_MS, quand l'opacité est nulle : sinon l'état basculerait
-   * tout de suite et c'est le nouveau véhicule qu'on verrait s'effacer.
+   * Relève du véhicule : l'ancien ferme son coffre et s'en va comme s'il
+   * partait en brocante, puis le nouveau revient du fond en marche arrière et
+   * ouvre son coffre — la même scène jouée à l'envers, sons compris.
+   *
+   * `onUpgrade` n'est PAS appelé au clic mais à RELEVE_BASCULE_MS, quand le
+   * garage est vide : sinon l'état basculerait tout de suite et c'est le
+   * nouveau véhicule qu'on verrait s'éloigner.
    */
   const lancerReleve = useCallback(
-    (niveauCible: NiveauCamion, nom: string, places: number) => {
+    (
+      niveauCible: NiveauCamion,
+      nom: string,
+      places: number,
+      ancien: Geometrie,
+      nouveau: Geometrie,
+    ) => {
       // Une relève qui démarre coupe d'abord celle qui tournerait encore
       // (double-tap sur Acheter, fiche rouverte pendant la relève) :
-      // sans ça, la boucle rAF précédente continue à piloter l'opacité en
+      // sans ça, la boucle rAF précédente continue à piloter la scène en
       // roue libre, hors de tout contrôle, en plus d'empiler ses minuteurs.
       arreterReleve();
       const debut = performance.now();
 
+      void audioManager.playCoffreFerme();
+
       releveTimersRef.current.push(
+        // Le moteur démarre quand le coffre est clos, comme au départ réel.
+        window.setTimeout(
+          () => void audioManager.playDepartVoiture(RELEVE_TRAJET_MS),
+          RELEVE_FERMETURE_MS,
+        ),
         window.setTimeout(() => p.onUpgrade(niveauCible), RELEVE_BASCULE_MS),
-        window.setTimeout(() => {
-          setBandeauReleve(tr(d.vente.vehiculeAcquis, { nom, n: places }));
-          void audioManager.playDepartVoiture(RELEVE_FONDU_ENTREE_MS);
-        }, RELEVE_FONDU_SORTIE_MS + RELEVE_PAUSE_MS),
+        // Retour : le même son à l'envers, une voiture qui approche.
+        window.setTimeout(
+          () => {
+            setBandeauReleve(tr(d.vente.vehiculeAcquis, { nom, n: places }));
+            void audioManager.playDepartVoiture(RELEVE_TRAJET_MS, true);
+          },
+          RELEVE_BASCULE_MS + RELEVE_ENTREDEUX_MS,
+        ),
+        // Rangé : le coffre s'ouvre — le son de fermeture retourné.
+        window.setTimeout(
+          () => void audioManager.playCoffreOuvre(),
+          RELEVE_ARRIVEE_MS,
+        ),
         window.setTimeout(() => {
           setBandeauReleve(null);
-          // Séquence allée à son terme sans saut : les trois minuteurs
-          // ci-dessus ont déjà tous été honorés, plus rien à annuler.
+          // Séquence allée à son terme sans saut : les minuteurs ci-dessus
+          // ont déjà tous été honorés, plus rien à annuler.
           releveTimersRef.current = [];
         }, RELEVE_DUREE_MS + 600),
       );
 
       const tick = (now: number) => {
         const t = now - debut;
-        setTruckOpacity(opaciteReleve(t));
+        const etat = etatReleve(t, ancien, nouveau);
+        setReleveOverride(etat.geometrie);
+        setTruckOpacity(etat.opacite);
+        setReleveCoffreFerme(etat.coffreFerme);
         if (t < RELEVE_DUREE_MS) {
           releveRafRef.current = requestAnimationFrame(tick);
         } else {
           releveRafRef.current = null;
+          setReleveOverride(null);
+          setReleveCoffreFerme(false);
+          setTruckOpacity(1);
         }
       };
       releveRafRef.current = requestAnimationFrame(tick);
@@ -379,8 +419,11 @@ export function CoffreChargement(p: Props) {
         niveauCamion={p.niveauCamion}
         objets={p.coffre}
         overlaps={overlaps}
-        closing={closing}
-        devOverride={departOverride ?? currentOverride}
+        // Le coffre est clos, et les objets masqués, aussi bien pendant le
+        // départ en brocante que pendant la relève : le véhicule ne roule
+        // jamais coffre ouvert.
+        closing={closing || releveCoffreFerme}
+        devOverride={releveOverride ?? departOverride ?? currentOverride}
         truckOpacity={truckOpacity}
         onMove={p.onMove}
         onRotate={p.onRotate}
@@ -449,10 +492,19 @@ export function CoffreChargement(p: Props) {
           budget={p.budget}
           onAcheter={() => {
             setSheetOuverte(false);
+            // Chaque modèle a sa place et son échelle propres sur le fond :
+            // l'aller part de celles du véhicule vendu, le retour vise
+            // celles du véhicule acheté.
             lancerReleve(
               prochainCamion.niveau,
               nomCamion(prochainCamion, locale),
               prochainCamion.capacitePlaces,
+              { x: camion.garageX, y: camion.garageY, scale: camion.garageScale },
+              {
+                x: prochainCamion.garageX,
+                y: prochainCamion.garageY,
+                scale: prochainCamion.garageScale,
+              },
             );
           }}
         />

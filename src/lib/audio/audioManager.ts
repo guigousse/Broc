@@ -449,14 +449,36 @@ class AudioManager {
   }
 
   /**
-   * Démarrage et départ de la voiture. Lu jusqu'à `durationMs`, avec un
-   * fondu de sortie sur la dernière seconde pour simuler l'éloignement final.
+   * Coffre qui s'ouvre : le son de fermeture joué à l'envers. Le geste étant
+   * l'exact inverse, l'inversion du tampon suffit — pas d'asset supplémentaire.
+   * Le tampon retourné est mis en cache après la première inversion.
    */
-  async playDepartVoiture(durationMs: number): Promise<void> {
+  async playCoffreOuvre(): Promise<void> {
     if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
-    const buf = await this.loadBuffer("/sounds/depart-voiture.mp3");
+    const buf = await this.loadBufferInverse("/sounds/coffre-ferme.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
+  /**
+   * Démarrage et départ de la voiture. Lu jusqu'à `durationMs`, avec un
+   * fondu de sortie sur la dernière seconde pour simuler l'éloignement final.
+   *
+   * `inverse` lit le tampon à l'envers et échange les fondus : le son décrit
+   * alors une voiture qui approche puis se range, et non qui s'éloigne.
+   */
+  async playDepartVoiture(durationMs: number, inverse = false): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = inverse
+      ? await this.loadBufferInverse("/sounds/depart-voiture.mp3")
+      : await this.loadBuffer("/sounds/depart-voiture.mp3");
     if (!buf) return;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
@@ -466,12 +488,45 @@ class AudioManager {
     gain.connect(this.master);
     const now = this.ctx.currentTime;
     const end = now + durationMs / 1000;
-    const fadeStart = Math.max(now, end - 1);
-    gain.gain.setValueAtTime(1, now);
-    gain.gain.setValueAtTime(1, fadeStart);
-    gain.gain.linearRampToValueAtTime(0, end);
+    if (inverse) {
+      // Arrivée : la voiture surgit du fond, le son monte au lieu de mourir.
+      const fadeEnd = Math.min(end, now + 1);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(1, fadeEnd);
+    } else {
+      const fadeStart = Math.max(now, end - 1);
+      gain.gain.setValueAtTime(1, now);
+      gain.gain.setValueAtTime(1, fadeStart);
+      gain.gain.linearRampToValueAtTime(0, end);
+    }
     src.start();
     src.stop(end);
+  }
+
+  /**
+   * Charge un son et en renvoie une copie lue à l'envers. Mise en cache sous
+   * une clé dérivée, pour ne pas payer l'inversion à chaque lecture.
+   */
+  private async loadBufferInverse(url: string): Promise<AudioBuffer | null> {
+    const cle = `${url}#inverse`;
+    const dejaLa = this.buffers.get(cle);
+    if (dejaLa) return dejaLa;
+
+    const source = await this.loadBuffer(url);
+    if (!source || !this.ctx) return null;
+
+    const copie = this.ctx.createBuffer(
+      source.numberOfChannels,
+      source.length,
+      source.sampleRate,
+    );
+    for (let canal = 0; canal < source.numberOfChannels; canal++) {
+      const echantillons = Float32Array.from(source.getChannelData(canal));
+      echantillons.reverse();
+      copie.copyToChannel(echantillons, canal);
+    }
+    this.buffers.set(cle, copie);
+    return copie;
   }
 
   async startCrowd(): Promise<void> {
