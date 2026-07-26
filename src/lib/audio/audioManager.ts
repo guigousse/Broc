@@ -30,6 +30,13 @@ interface AudioPrefsLegacy {
 
 const STORAGE_KEY = "projet-broc:audio:v1";
 
+/**
+ * Vitesse de lecture du coffre qui s'ouvre (le son de fermeture retourné).
+ * Sous 1, le battant se relève lentement et sonne plus grave — un coffre
+ * qu'on ouvre n'a pas la sécheresse d'un coffre qu'on claque.
+ */
+const COFFRE_OUVRE_VITESSE = 0.6;
+
 type WindowAudio = typeof window & { webkitAudioContext?: typeof AudioContext };
 
 class AudioManager {
@@ -452,6 +459,9 @@ class AudioManager {
    * Coffre qui s'ouvre : le son de fermeture joué à l'envers. Le geste étant
    * l'exact inverse, l'inversion du tampon suffit — pas d'asset supplémentaire.
    * Le tampon retourné est mis en cache après la première inversion.
+   *
+   * Ralenti : une fermeture est un geste sec, une ouverture est plus posée.
+   * Le `playbackRate` abaisse aussi la hauteur, ce qui pèse le battant.
    */
   async playCoffreOuvre(): Promise<void> {
     if (!this.prefs.effets) return;
@@ -461,6 +471,7 @@ class AudioManager {
     if (!buf) return;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
+    src.playbackRate.value = COFFRE_OUVRE_VITESSE;
     src.connect(this.master);
     src.start();
   }
