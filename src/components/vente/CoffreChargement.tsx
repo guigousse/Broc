@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { NiveauCamion, Objet, ObjetEnVitrine } from "@/types/game";
-import { getCamion, getScaleCoffre } from "@/data/camion";
+import { getCamion, getProchainCamion, getScaleCoffre } from "@/data/camion";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
 import {
   buildAlphaMask,
@@ -19,6 +19,8 @@ import { getCoffreAssets } from "@/lib/coffreAssets";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { CoffreCanvas } from "./CoffreCanvas";
+import { PanneauGarage } from "./PanneauGarage";
+import { ConcessionSheet } from "./ConcessionSheet";
 import { CarrouselStock } from "./CarrouselStock";
 import { DevPanel } from "./DevPanel";
 import { OUTILS_DEV } from "@/lib/outilsDev";
@@ -71,6 +73,7 @@ export function CoffreChargement(p: Props) {
   const [maskTick, setMaskTick] = useState(0);
   const [trunkMask, setTrunkMask] = useState<TrunkMask | null>(null);
   const [closing, setClosing] = useState(false);
+  const [sheetOuverte, setSheetOuverte] = useState(false);
 
   // Pré-chargement des alpha-masks des items présents.
   useEffect(() => {
@@ -253,6 +256,13 @@ export function CoffreChargement(p: Props) {
 
   const peutValider = p.coffre.length > 0 && overlaps.size === 0;
 
+  const prochainCamion = getProchainCamion(p.niveauCamion);
+  const prixProchain = prochainCamion?.prixUpgradeVersCeNiveau ?? 0;
+  // Le panneau se retire dans trois cas : plus de palier, voiture en train de
+  // partir, et tutoriel en cours — la main de guidage désigne déjà le
+  // carrousel puis Valider, un second appel du regard brouillerait la leçon.
+  const panneauVisible = prochainCamion !== null && !closing && p.tuto !== true;
+
   return (
     <>
       {DEV_PANEL && p.onSetNiveauDev && (
@@ -279,6 +289,15 @@ export function CoffreChargement(p: Props) {
         onRotate={p.onRotate}
         onRetour={p.onRetirer}
         conteneurRef={conteneurCoffreRef}
+        panneau={
+          panneauVisible ? (
+            <PanneauGarage
+              prochain={prochainCamion}
+              peutPayer={p.budget >= prixProchain}
+              onOuvrir={() => setSheetOuverte(true)}
+            />
+          ) : null
+        }
       />
       <CarrouselStock
         stock={p.stock}
@@ -327,6 +346,19 @@ export function CoffreChargement(p: Props) {
             </div>
           );
         })()}
+      {prochainCamion && (
+        <ConcessionSheet
+          open={sheetOuverte}
+          onClose={() => setSheetOuverte(false)}
+          actuel={camion}
+          prochain={prochainCamion}
+          budget={p.budget}
+          onAcheter={() => {
+            setSheetOuverte(false);
+            p.onUpgrade(prochainCamion.niveau);
+          }}
+        />
+      )}
       {/* Spacer pour libérer la zone occupée par la barre fixed du bas
           (même hauteur que la TabBar du QG). */}
       <div

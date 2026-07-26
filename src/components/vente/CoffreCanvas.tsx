@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
 import { getCamion, getScaleCoffre } from "@/data/camion";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
@@ -22,6 +22,12 @@ interface Props {
   /** Expose le conteneur du coffre (mapping client → posX/posY 0..1) au
    *  parent — sert au drop des objets tirés depuis le carrousel. */
   conteneurRef?: React.MutableRefObject<HTMLDivElement | null>;
+  /**
+   * Slot rendu dans le conteneur du garage, au-dessus du fond et hors du
+   * conteneur du camion (donc non soumis à l'opacité ni aux gestes de celui-ci).
+   * Sert au panneau de concession.
+   */
+  panneau?: ReactNode;
 }
 
 interface PointerInfo {
@@ -44,6 +50,7 @@ export function CoffreCanvas({
   onRotate,
   onRetour,
   conteneurRef,
+  panneau,
 }: Props) {
   const camion = getCamion(niveauCamion);
   const assets = getCoffreAssets(camion.visuelId);
@@ -246,6 +253,7 @@ export function CoffreCanvas({
         boxShadow: "0 1px 0 var(--brass-300)",
       }}
     >
+      {panneau}
       {/* Conteneur du camion — positionné en absolu, centré à (garageX, garageY). */}
       <div
         ref={(el) => {
