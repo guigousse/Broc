@@ -299,7 +299,6 @@ export const fr = {
     etapePrepCoffre: "1 — Préparation du coffre",
     etapeTarification: "2 — Tarification",
     etapeChoixBrocante: "3 — Choix de la brocante",
-    concession: "Concession",
     retourMagasin: "Retour au magasin",
     ameliorerVehicule: "Améliorer le véhicule",
     placesCompte: "{n} places",

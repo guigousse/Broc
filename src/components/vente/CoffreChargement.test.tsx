@@ -38,27 +38,32 @@ function poser(over: Partial<Parameters<typeof CoffreChargement>[0]> = {}) {
 }
 
 describe("CoffreChargement — concession", () => {
-  it("affiche le panneau du palier suivant au niveau 1", () => {
+  it("affiche le bouton de concession au niveau 1", () => {
     poser();
-    expect(screen.getByText("Concession")).toBeTruthy();
-    expect(screen.getByText("Break")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Améliorer le véhicule" }),
+    ).toBeTruthy();
   });
 
   it("aucun panneau au niveau max", () => {
     poser({ niveauCamion: 3 });
-    expect(screen.queryByText("Concession")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Améliorer le véhicule" }),
+    ).toBeNull();
   });
 
   it("aucun panneau pendant le tutoriel de préparation d'étal", () => {
     poser({ tuto: true });
-    expect(screen.queryByText("Concession")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Améliorer le véhicule" }),
+    ).toBeNull();
   });
 
   it("le tap ouvre la fiche, l'achat appelle onUpgrade avec le palier suivant", () => {
     vi.useFakeTimers();
     try {
       const props = poser();
-      fireEvent.click(screen.getByText("Concession"));
+      fireEvent.click(screen.getByRole("button", { name: "Améliorer le véhicule" }));
       fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
       // L'échange est différé jusqu'à ce que le véhicule soit invisible.
       expect(props.onUpgrade).not.toHaveBeenCalled();
@@ -72,13 +77,13 @@ describe("CoffreChargement — concession", () => {
 
   it("budget insuffisant : la fiche s'ouvre mais l'achat reste bloqué", () => {
     const props = poser({ budget: 40 });
-    fireEvent.click(screen.getByText("Concession"));
+    fireEvent.click(screen.getByRole("button", { name: "Améliorer le véhicule" }));
     expect(screen.getByText("Il vous manque 160 €")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
     expect(props.onUpgrade).not.toHaveBeenCalled();
   });
 
-  it("tap sur Valider (voiture qui part) : la pancarte ET la fiche disparaissent", () => {
+  it("tap sur Valider : la fiche disparaît, le bouton reste mais devient inerte", () => {
     // Un objet centré, sans chevauchement (trunkMask reste null en jsdom →
     // computeOverlapsPixel retombe sur les bornes [0,1]), pour que
     // peutValider soit vrai et que « Valider » soit tapable.
@@ -95,18 +100,28 @@ describe("CoffreChargement — concession", () => {
       vi.useFakeTimers();
       poser({ coffre });
 
-      // Ouvre la pancarte, puis la fiche de concession.
-      fireEvent.click(screen.getByText("Concession"));
+      const avant = screen.getByRole("button", {
+        name: "Améliorer le véhicule",
+      });
+      expect(avant.hasAttribute("disabled")).toBe(false);
+
+      // Ouvre la fiche de concession.
+      fireEvent.click(avant);
       expect(screen.getByRole("dialog")).toBeTruthy();
 
       // Fiche ouverte : « Valider » reste tapable (barre d'actions au-dessus
       // du scrim/corps de la sheet) et déclenche le départ de la voiture.
       fireEvent.click(screen.getByRole("button", { name: "Valider le chargement" }));
 
-      // La pancarte disparaît (panneauVisible retombe sur !closing) et la
-      // fiche aussi (open dérivé de sheetOuverte && !closing).
-      expect(screen.queryByText("Concession")).toBeNull();
+      // La fiche disparaît (open dérivé de sheetOuverte && !closing).
       expect(screen.queryByRole("dialog")).toBeNull();
+
+      // Le bouton, lui, RESTE monté : le faire disparaître ferait sauter la
+      // mise en page pendant le départ. Il devient seulement inerte.
+      const apres = screen.getByRole("button", {
+        name: "Améliorer le véhicule",
+      });
+      expect(apres.hasAttribute("disabled")).toBe(true);
 
       // Laisse l'animation de départ (sons + tween + rAF) aller à son terme
       // pour ne laisser aucun minuteur en suspens à la fin du test.
@@ -131,7 +146,7 @@ describe("CoffreChargement — concession", () => {
     vi.useFakeTimers();
     try {
       poser();
-      fireEvent.click(screen.getByText("Concession"));
+      fireEvent.click(screen.getByRole("button", { name: "Améliorer le véhicule" }));
       fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
 
       // Le bandeau n'apparaît qu'après le fondu de sortie + la pause.
@@ -171,13 +186,13 @@ describe("CoffreChargement — concession", () => {
       const props = poser();
 
       // Premier achat : arme une première relève (minuteurs + boucle rAF).
-      fireEvent.click(screen.getByText("Concession"));
+      fireEvent.click(screen.getByRole("button", { name: "Améliorer le véhicule" }));
       fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
 
       // La pancarte ne dépend que de niveauCamion (figé dans ce test) : elle
       // reste affichée pendant la relève, comme en jeu réel — on peut donc
       // la retaper et relancer un second achat avant la fin du premier.
-      fireEvent.click(screen.getByText("Concession"));
+      fireEvent.click(screen.getByRole("button", { name: "Améliorer le véhicule" }));
       fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
 
       act(() => {
@@ -214,7 +229,7 @@ describe("CoffreChargement — concession", () => {
     vi.useFakeTimers();
     try {
       const props = poser({ coffre });
-      fireEvent.click(screen.getByText("Concession"));
+      fireEvent.click(screen.getByRole("button", { name: "Améliorer le véhicule" }));
       fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
 
       // La relève vient de démarrer (releveRafRef armé) : un tap sur

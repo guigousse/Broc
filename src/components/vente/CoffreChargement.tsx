@@ -28,7 +28,7 @@ import {
   opaciteReleve,
 } from "@/lib/releveVehicule";
 import { CoffreCanvas } from "./CoffreCanvas";
-import { PanneauGarage } from "./PanneauGarage";
+import { BoutonConcession } from "./BoutonConcession";
 import { ConcessionSheet } from "./ConcessionSheet";
 import { CarrouselStock } from "./CarrouselStock";
 import { DevPanel } from "./DevPanel";
@@ -328,10 +328,12 @@ export function CoffreChargement(p: Props) {
 
   const prochainCamion = getProchainCamion(p.niveauCamion);
   const prixProchain = prochainCamion?.prixUpgradeVersCeNiveau ?? 0;
-  // Le panneau se retire dans trois cas : plus de palier, voiture en train de
-  // partir, et tutoriel en cours — la main de guidage désigne déjà le
-  // carrousel puis Valider, un second appel du regard brouillerait la leçon.
-  const panneauVisible = prochainCamion !== null && !closing && p.tuto !== true;
+  // Le bouton se retire quand il n'y a plus de palier et pendant le tutoriel
+  // — la main de guidage désigne déjà le carrousel puis Valider, un second
+  // appel du regard brouillerait la leçon. Il reste en place pendant `closing`
+  // en revanche : faire disparaître un enfant de la barre au moment où le
+  // joueur tape « Valider » ferait sauter la mise en page.
+  const concessionVisible = prochainCamion !== null && p.tuto !== true;
 
   return (
     <>
@@ -359,15 +361,6 @@ export function CoffreChargement(p: Props) {
         onRotate={p.onRotate}
         onRetour={p.onRetirer}
         conteneurRef={conteneurCoffreRef}
-        panneau={
-          panneauVisible ? (
-            <PanneauGarage
-              prochain={prochainCamion}
-              peutPayer={p.budget >= prixProchain}
-              onOuvrir={() => setSheetOuverte(true)}
-            />
-          ) : null
-        }
       />
       <CarrouselStock
         stock={p.stock}
@@ -546,15 +539,23 @@ export function CoffreChargement(p: Props) {
             cursor: closing ? "not-allowed" : "pointer",
           }}
         >
-          {d.commun.annuler}
+          {d.vente.retourMagasin}
         </button>
+        {concessionVisible && (
+          <BoutonConcession
+            actuel={camion}
+            peutPayer={p.budget >= prixProchain}
+            inerte={closing}
+            onOuvrir={() => setSheetOuverte(true)}
+          />
+        )}
         <button
           type="button"
           disabled={!peutValider || closing}
           onClick={handleValider}
           className={p.tuto && peutValider && !closing ? "tuto-main" : undefined}
           style={{
-            flex: 2,
+            flex: 1,
             height: "calc(100% - 8px)",
             border: "1px solid var(--brass-500)",
             background:

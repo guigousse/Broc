@@ -296,7 +296,6 @@ export const es: DictionnaireUI = {
     etapePrepCoffre: "1 — Preparación del baúl",
     etapeTarification: "2 — Precios",
     etapeChoixBrocante: "3 — Elegir el mercadillo",
-    concession: "Concesionario",
     retourMagasin: "Volver a la tienda",
     ameliorerVehicule: "Mejorar el vehículo",
     placesCompte: "{n} plazas",

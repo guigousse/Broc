@@ -296,7 +296,6 @@ export const en: DictionnaireUI = {
     etapePrepCoffre: "1 — Loading the trunk",
     etapeTarification: "2 — Pricing",
     etapeChoixBrocante: "3 — Choose the flea market",
-    concession: "Dealership",
     retourMagasin: "Back to the shop",
     ameliorerVehicule: "Upgrade the vehicle",
     placesCompte: "{n} slots",
