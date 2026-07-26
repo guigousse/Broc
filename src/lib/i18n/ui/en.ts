@@ -381,7 +381,6 @@ export const en: DictionnaireUI = {
   },
   inventaire: {
     // — stockage —
-    loyerHebdo: "rent {n} €/wk",
     max: "MAX",
     impossible: "Not possible",
     impossibleRaison: "Not possible: {raison}",

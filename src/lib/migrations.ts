@@ -700,7 +700,6 @@ function appliquerMigrations(loaded: GameState): GameState {
         ? loaded.celebriteActuelle
         : tirerCelebrite(),
     influenceUtilisee: loaded.influenceUtilisee ?? false,
-    dernierLoyer: loaded.dernierLoyer ?? null,
     courriers: courriersAvecTrame,
     niveauAtelier: (() => {
       // 0 = nouvelle économie (slots achetés) ; 2/3 = acquis conservés.

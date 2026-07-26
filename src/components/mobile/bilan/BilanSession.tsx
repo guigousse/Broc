@@ -174,9 +174,9 @@ export function BilanSession({
     degelFaitRef.current = true;
     if (avecSon && fige.lignes.length > 0) audioManager.playRarete();
     degelerXpAffichage();
-    // La caisse reprend elle aussi sa vraie valeur : sur un jour de loyer, le
-    // prélèvement hebdomadaire (appliqué à l'avancée du jour, avant le bilan)
-    // apparaît ici, en même temps que la barre de niveau se cale.
+    // La caisse reprend elle aussi sa vraie valeur. Elle a normalement déjà
+    // atteint ce montant en encaissant chaque vente : le dégel ne fait que
+    // rendre la main à l'état réel, sans saut visible.
     degelerBudgetAffichage();
   };
 

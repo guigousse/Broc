@@ -384,7 +384,6 @@ export const fr = {
   },
   inventaire: {
     // — stockage —
-    loyerHebdo: "loyer {n} €/sem",
     max: "MAX",
     impossible: "Impossible",
     impossibleRaison: "Impossible : {raison}",

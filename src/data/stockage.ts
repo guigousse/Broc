@@ -2,13 +2,12 @@ export interface StockageTier {
   niveau: 1 | 2 | 3;
   nom: string;
   capaciteMax: number;
-  loyerHebdo: number;
 }
 
 export const STOCKAGE_TIERS: readonly StockageTier[] = [
-  { niveau: 1, nom: "Garage", capaciteMax: 10, loyerHebdo: 0 },
-  { niveau: 2, nom: "Cave", capaciteMax: 25, loyerHebdo: 0 },
-  { niveau: 3, nom: "Hangar", capaciteMax: 50, loyerHebdo: 0 },
+  { niveau: 1, nom: "Garage", capaciteMax: 10 },
+  { niveau: 2, nom: "Cave", capaciteMax: 25 },
+  { niveau: 3, nom: "Hangar", capaciteMax: 50 },
 ];
 
 export interface StockageUpgrade {

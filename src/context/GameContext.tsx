@@ -71,11 +71,7 @@ import {
 } from "@/lib/competences";
 import { tirerMeteo, tirerMeteoSemaine, indexJourSemaine } from "@/lib/meteo";
 import { tirerCelebrite } from "@/lib/celebrite";
-import {
-  getProchaineUpgradeStockage,
-  getStockageTier,
-  getStockageTierParNiveau,
-} from "@/data/stockage";
+import { getProchaineUpgradeStockage, getStockageTier } from "@/data/stockage";
 import { stockageEstPlein } from "@/lib/stockage";
 import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
@@ -627,7 +623,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       meteoSemaine: tirerMeteoSemaine(),
       celebriteActuelle: tirerCelebrite(),
       influenceUtilisee: false,
-      dernierLoyer: null,
       courriers: [],
       niveauAtelier: 0,
       niveauStockage: 1,
@@ -709,17 +704,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const prochainesTendances = refresh
         ? genererTendances()
         : prev.prochainesTendances;
-      // Loyer hebdomadaire : prélevé à la fin de chaque semaine (refresh Gazette).
-      const tierStockage = refresh ? getStockageTierParNiveau(prev.niveauStockage) : null;
-      const dernierLoyer = tierStockage
-        ? {
-            jour: nouveauJour,
-            montant: tierStockage.loyerHebdo,
-            tierNom: tierStockage.nom,
-          }
-        : prev.dernierLoyer;
-
-      // Base state (sans encore appliquer le loyer)
       const base: GameState = {
         ...prev,
         jourActuel: nouveauJour,
@@ -734,7 +718,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         meteoSemaine: refresh ? tirerMeteoSemaine() : prev.meteoSemaine,
         celebriteActuelle: refresh ? tirerCelebrite() : prev.celebriteActuelle,
         influenceUtilisee: refresh ? false : prev.influenceUtilisee,
-        dernierLoyer,
         chatSurFauteuil,
         passagesSansChat,
       };
@@ -758,17 +741,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         missions: tick.missions,
       };
 
-      // Loyer (si refresh hebdo)
-      if (tierStockage) {
-        return appendLedger(baseAvecQuetes, {
-          jour: nouveauJour,
-          kind: "loyer",
-          designation: `Loyer · ${tierStockage.nom}`,
-          recette: 0,
-          depense: tierStockage.loyerHebdo,
-          params: { niveau: tierStockage.niveau },
-        });
-      }
       return baseAvecQuetes;
     });
   }, []);
