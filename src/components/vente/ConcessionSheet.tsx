@@ -1,10 +1,12 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import type { CamionConfig } from "@/data/camion";
+import { ArrowRight } from "lucide-react";
+import type { CamionConfig, TailleCoffre } from "@/data/camion";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { getCoffreAssets } from "@/lib/coffreAssets";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import type { DictionnaireUI } from "@/lib/i18n/ui";
 import { nomCamion } from "@/lib/i18n/contenu";
 
 export interface ConcessionSheetProps {
@@ -23,28 +25,45 @@ const corpsStyle: CSSProperties = {
   gap: 12,
 };
 
-const vignetteStyle: CSSProperties = {
-  width: "78%",
-  maxWidth: 300,
-  aspectRatio: "4 / 3",
-  objectFit: "contain",
-};
-
+/** Rangée « véhicule actuel → véhicule visé », les deux vus de profil. */
 const comparatifStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: 10,
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  color: "var(--ink-500)",
+  gap: 8,
+  width: "100%",
 };
 
-const gainStyle: CSSProperties = {
+const vignetteStyle: CSSProperties = {
+  flex: "1 1 0",
+  minWidth: 0,
+  maxWidth: 150,
+  aspectRatio: "2.3 / 1",
+  objectFit: "contain",
+};
+
+/** Colonne centrale : la taille visée, puis la flèche juste dessous. */
+const passageStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 2,
+  flex: "0 0 auto",
+};
+
+const tailleVisee: CSSProperties = {
   fontFamily: "var(--font-display)",
-  fontSize: 15,
+  fontSize: 11,
   letterSpacing: "0.08em",
+  textTransform: "uppercase",
   color: "var(--forest-800)",
+  textAlign: "center",
+  whiteSpace: "nowrap",
+};
+
+const flecheStyle: CSSProperties = {
+  display: "flex",
+  color: "var(--brass-700)",
 };
 
 const boutonStyle = (peut: boolean): CSSProperties => ({
@@ -70,8 +89,16 @@ const manqueStyle: CSSProperties = {
   margin: 0,
 };
 
+/** Libellé de la taille de coffre visée. */
+const LIBELLE_TAILLE: Record<TailleCoffre, keyof DictionnaireUI["vente"]> = {
+  petit: "coffrePetit",
+  moyen: "coffreMoyen",
+  grand: "coffreGrand",
+};
+
 /**
- * Fiche du véhicule suivant : visuel, comparatif de capacité, prix et achat.
+ * Fiche du véhicule suivant : les deux véhicules de profil de part et d'autre
+ * d'une flèche, la taille de coffre visée au-dessus, puis le prix et l'achat.
  * Décide seule de l'état de son bouton à partir du budget reçu.
  */
 export function ConcessionSheet(p: ConcessionSheetProps) {
@@ -80,8 +107,8 @@ export function ConcessionSheet(p: ConcessionSheetProps) {
   const prix = p.prochain.prixUpgradeVersCeNiveau ?? 0;
   const peut = p.budget >= prix;
   const manque = prix - p.budget;
-  const gain = p.prochain.capacitePlaces - p.actuel.capacitePlaces;
-  const visuel = getCoffreAssets(p.prochain.visuelId)?.ferme ?? null;
+  const profilActuel = getCoffreAssets(p.actuel.visuelId)?.profil ?? null;
+  const profilProchain = getCoffreAssets(p.prochain.visuelId)?.profil ?? null;
 
   return (
     <BottomSheet
@@ -93,18 +120,39 @@ export function ConcessionSheet(p: ConcessionSheetProps) {
       bottomOffset="calc(var(--mobile-tabbar-h) + var(--safe-bottom))"
     >
       <div style={corpsStyle}>
-        {visuel && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={visuel} alt="" draggable={false} style={vignetteStyle} />
-        )}
-
         <div style={comparatifStyle}>
-          <span>{tr(d.vente.placesCompte, { n: p.actuel.capacitePlaces })}</span>
-          <span aria-hidden>→</span>
-          <span>{tr(d.vente.placesCompte, { n: p.prochain.capacitePlaces })}</span>
-        </div>
+          {profilActuel && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profilActuel}
+              alt={nomCamion(p.actuel, locale)}
+              draggable={false}
+              style={vignetteStyle}
+            />
+          )}
 
-        <span style={gainStyle}>+{tr(d.vente.placesCompte, { n: gain })}</span>
+          <span style={passageStyle}>
+            {/* La taille visée plutôt qu'un nombre de places : le rapport
+                entre `capacitePlaces` et ce qui tient vraiment n'est pas
+                linéaire, un chiffre exact induirait en erreur. */}
+            <span style={tailleVisee}>
+              {d.vente[LIBELLE_TAILLE[p.prochain.tailleCoffre]]}
+            </span>
+            <span style={flecheStyle} aria-hidden>
+              <ArrowRight size={22} strokeWidth={2} />
+            </span>
+          </span>
+
+          {profilProchain && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profilProchain}
+              alt={nomCamion(p.prochain, locale)}
+              draggable={false}
+              style={vignetteStyle}
+            />
+          )}
+        </div>
 
         <button
           type="button"

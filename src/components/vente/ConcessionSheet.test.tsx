@@ -6,16 +6,22 @@ import { CAMIONS } from "@/data/camion";
 
 afterEach(cleanup);
 
-const ROGERS = CAMIONS[0]; // 9 places
-const BREAK = CAMIONS[1]; // 16 places, 200 €
+const ROGERS = CAMIONS[0]; // coffre petit
+const BREAK = CAMIONS[1]; // coffre moyen, 200 €
+const UTILITAIRE = CAMIONS[2]; // coffre grand, 500 €
 
-function poser(budget: number, onAcheter = vi.fn()) {
+function poser(
+  budget: number,
+  onAcheter = vi.fn(),
+  actuel = ROGERS,
+  prochain = BREAK,
+) {
   render(
     <ConcessionSheet
       open
       onClose={() => {}}
-      actuel={ROGERS}
-      prochain={BREAK}
+      actuel={actuel}
+      prochain={prochain}
       budget={budget}
       onAcheter={onAcheter}
     />,
@@ -24,11 +30,42 @@ function poser(budget: number, onAcheter = vi.fn()) {
 }
 
 describe("ConcessionSheet", () => {
-  it("montre le comparatif de capacité et le gain", () => {
+  it("montre les deux véhicules de profil, l'actuel puis le visé", () => {
+    const { container } = render(
+      <ConcessionSheet
+        open
+        onClose={() => {}}
+        actuel={ROGERS}
+        prochain={BREAK}
+        budget={500}
+        onAcheter={() => {}}
+      />,
+    );
+    const srcs = [...container.querySelectorAll("img")].map((i) =>
+      i.getAttribute("src"),
+    );
+    expect(srcs).toEqual([
+      "/coffre/rogers-profil.webp",
+      "/coffre/break-profil.webp",
+    ]);
+  });
+
+  it("annonce la taille de coffre VISÉE, pas celle qu'on possède", () => {
     poser(500);
-    expect(screen.getByText("9 places")).toBeTruthy();
-    expect(screen.getByText("16 places")).toBeTruthy();
-    expect(screen.getByText("+7 places")).toBeTruthy();
+    expect(screen.getByText("Coffre moyen")).toBeTruthy();
+    // La taille actuelle n'est pas affichée : c'est ce qu'on obtient qui
+    // intéresse le joueur, et les deux profils disent déjà le reste.
+    expect(screen.queryByText("Petit coffre")).toBeNull();
+  });
+
+  it("le palier suivant change le libellé de taille", () => {
+    poser(500, vi.fn(), BREAK, UTILITAIRE);
+    expect(screen.getByText("Grand coffre")).toBeTruthy();
+  });
+
+  it("n'annonce plus de nombre de places : le rapport n'est pas linéaire", () => {
+    poser(500);
+    expect(screen.queryByText(/places/)).toBeNull();
   });
 
   it("au budget exact : bouton actif, achat transmis", () => {
