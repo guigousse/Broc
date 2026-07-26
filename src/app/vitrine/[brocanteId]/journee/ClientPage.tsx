@@ -1276,7 +1276,11 @@ function Horloge({
             inset: 0,
             width: `${progress}%`,
             background: "var(--forest-700)",
-            transition: "width 100ms linear",
+            // La largeur ne change qu'au changement de seconde entière (le
+            // tick de 100 ms ne re-rend pas la page). La transition doit donc
+            // couvrir toute la seconde : la barre glisse alors sans à-coups,
+            // au lieu de bondir en 100 ms puis d'attendre 900 ms.
+            transition: "width 1s linear",
           }}
         />
       </div>
