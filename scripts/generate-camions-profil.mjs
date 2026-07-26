@@ -61,15 +61,34 @@ await loadDotEnv();
 
 // Style des assets de véhicules déjà en place (rogers/break/utilitaire) —
 // volontairement différent du brief Art Déco du QG.
+//
+// Gemini n'encode pas de canal alpha : lui demander un fond transparent le
+// pousse à peindre un damier de transparence en pixels opaques. On génère
+// donc sur un aplat magenta pur, retiré ensuite par chroma-key (voir
+// `detourerMagenta` plus bas) — aucune carrosserie d'époque, chrome ou pneu
+// ne s'approche de ce magenta, une tolérance généreuse ne mord pas le sujet.
+//
+// Constat en pratique : le modèle refuse le verre (vitres) rendu plat et
+// glisse une réflexion rose/magenta dedans, malgré l'interdiction explicite.
+// D'où l'insistance ci-dessous sur les vitres et l'ombre portée.
 const STYLE_BRIEF = [
   "Clean vector-style illustration of a single vehicle, in the style of a game asset sheet.",
   "Thin dark ink outlines, flat colour fills with soft cel shading, muted and slightly desaturated palette.",
-  "Fully transparent background, crisp clean edges around the subject for compositing.",
-  "No ground shadow, no scenery, no background elements, no text, no captions, no watermark.",
+  "Solid uniform pure magenta background (#FF00FF), filling the entire frame edge to edge. The background must be a single flat colour with no gradient, no texture, no checkerboard, no shadow, no vignette. The vehicle must not contain any magenta or pink tones anywhere, INCLUDING inside the windows.",
+  "Windows and windscreen must be rendered as plain flat tinted grey-blue glass, at most one subtle light-grey highlight streak — absolutely no magenta or pink reflection, tint or colour bleed inside the glass.",
+  "No ground shadow, no contact shadow, no shadow ellipse beneath the vehicle, no scenery, no text, no captions, no watermark. The vehicle floats on the flat magenta background with no shadow of any kind.",
 ].join(" ");
 
 const REFERENCE_INTRO =
-  "Reference image (first image, attached): the SAME vehicle, seen from the rear. Match its exact body colour, trim colour, wheel design, era, proportions, line weight and rendering style. Output the same vehicle seen in strict side profile, isolated on a transparent background — do NOT redraw the rear view.";
+  "Reference image (first image, attached): the SAME vehicle, seen from the rear. Match its exact body colour, trim colour, wheel design, era, proportions, line weight and rendering style. Output the same vehicle seen in strict side profile, isolated on a solid uniform pure magenta background (#FF00FF) — do NOT redraw the rear view.";
+
+// Tolérance du chroma-key (somme des écarts absolus R+G+B, comme dans
+// `chromaKey()` de generate-qg-images.mjs). Le modèle ne restitue jamais
+// l'exact #FF00FF demandé (dérive de rendu vers une teinte fuchsia
+// légèrement différente à chaque génération) : voir `detourerMagenta`, qui
+// mesure la couleur réellement peinte plutôt que de comparer à cette valeur
+// nominale.
+const CHROMA_TOLERANCE = 120;
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 if (!apiKey) {
@@ -109,6 +128,93 @@ async function loadReferenceImage(refId) {
       `référence "${refId}.webp" introuvable dans ${OUTPUT_DIR}. Cause: ${err.message ?? err}`,
     );
   }
+}
+
+/**
+ * Chroma-key en mémoire : détoure le fond magenta d'un buffer d'image et
+ * recadre aux bornes du sujet, sans jamais écrire de PNG sur disque (le
+ * brief interdit tout PNG résiduel dans `public/`).
+ *
+ * Porté depuis `chromaKey()` de generate-qg-images.mjs (même métrique de
+ * distance R+G+B), qui opère sur un fichier PNG ; ici on reste en buffer
+ * du début à la fin.
+ *
+ * Le modèle ne restitue jamais l'exact #FF00FF demandé au prompt (dérive
+ * vers une teinte fuchsia légèrement différente à chaque génération), mais
+ * peint bien un aplat rigoureusement uniforme comme demandé. On mesure donc
+ * la couleur réellement peinte aux 4 coins de l'image (zone de marge
+ * garantie par le prompt) et on chroma-key sur cette cible mesurée plutôt
+ * que sur la valeur nominale — comparer à #FF00FF littéral ne détourait
+ * aucun pixel en pratique.
+ *
+ * @param {Buffer} buffer image brute reçue de Gemini
+ * @param {number} tolerance somme des écarts absolus R+G+B tolérée
+ * @returns {Promise<{ webp: Buffer, pxKeyed: number }>}
+ */
+async function detourerMagenta(buffer, tolerance = 60) {
+  const { data, info } = await sharp(buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width, height } = info;
+
+  // Couleur de fond mesurée aux 4 coins (à 2 px du bord, hors ligne de
+  // détourage), moyennée pour lisser le bruit de compression.
+  const inset = 2;
+  const coins = [
+    [inset, inset],
+    [width - 1 - inset, inset],
+    [inset, height - 1 - inset],
+    [width - 1 - inset, height - 1 - inset],
+  ];
+  let sr = 0, sg = 0, sb = 0;
+  for (const [x, y] of coins) {
+    const i = (y * width + x) * 4;
+    sr += data[i];
+    sg += data[i + 1];
+    sb += data[i + 2];
+  }
+  const tr = sr / coins.length;
+  const tg = sg / coins.length;
+  const tb = sb / coins.length;
+
+  let pxKeyed = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const dist = Math.abs(r - tr) + Math.abs(g - tg) + Math.abs(b - tb);
+    if (dist <= tolerance) {
+      data[i + 3] = 0; // alpha → 0
+      pxKeyed++;
+    }
+  }
+
+  // Dé-spill : constaté à l'usage sur les vitres (surfaces réfléchissantes),
+  // qui attrapent une pointe de magenta réfléchi du fond — le classique
+  // « spill » de chroma-key. Pour tout pixel resté opaque où le rouge ET le
+  // bleu dépassent le vert (signature d'une teinte magenta/rose), on retire
+  // proportionnellement l'essentiel de cet excès plutôt que de clipper net,
+  // pour une transition douce vers un gris neutre.
+  const DESPILL_SUPPRESSION = 0.85; // fraction de l'excès retirée
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] === 0) continue; // déjà transparent, rien à corriger
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    if (r > g && b > g) {
+      data[i] = Math.round(r - (r - g) * DESPILL_SUPPRESSION);
+      data[i + 2] = Math.round(b - (b - g) * DESPILL_SUPPRESSION);
+    }
+  }
+
+  const webp = await sharp(data, {
+    raw: { width, height, channels: 4 },
+  })
+    .trim() // recadre aux bornes du sujet (le bouton fait ~50 px de côté)
+    .webp({ quality: WEBP_QUALITY })
+    .toBuffer();
+  return { webp, pxKeyed };
 }
 
 async function main() {
@@ -174,9 +280,15 @@ async function main() {
       for (const part of parts) {
         if (part.inlineData?.data) {
           const buf = Buffer.from(part.inlineData.data, "base64");
-          await sharp(buf).webp({ quality: WEBP_QUALITY }).toFile(outPath);
+          const { webp, pxKeyed } = await detourerMagenta(
+            buf,
+            CHROMA_TOLERANCE,
+          );
+          await fs.writeFile(outPath, webp);
           const { size } = await fs.stat(outPath);
-          console.log(`✅  ${filename} (${Math.round(size / 1024)} kB)`);
+          console.log(
+            `✅  ${filename} (${Math.round(size / 1024)} kB, ${pxKeyed} px détourés)`,
+          );
           saved = true;
           ok++;
           break;
