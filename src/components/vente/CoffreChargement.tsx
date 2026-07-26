@@ -234,7 +234,7 @@ export function CoffreChargement(p: Props) {
   const lancerReleve = useCallback(
     (niveauCible: NiveauCamion, nom: string, places: number) => {
       // Une relève qui démarre coupe d'abord celle qui tournerait encore
-      // (double-tap sur Acheter, pancarte rouverte pendant la relève) :
+      // (double-tap sur Acheter, fiche rouverte pendant la relève) :
       // sans ça, la boucle rAF précédente continue à piloter l'opacité en
       // roue libre, hors de tout contrôle, en plus d'empiler ses minuteurs.
       arreterReleve();
@@ -328,12 +328,14 @@ export function CoffreChargement(p: Props) {
 
   const prochainCamion = getProchainCamion(p.niveauCamion);
   const prixProchain = prochainCamion?.prixUpgradeVersCeNiveau ?? 0;
-  // Le bouton se retire quand il n'y a plus de palier et pendant le tutoriel
-  // — la main de guidage désigne déjà le carrousel puis Valider, un second
-  // appel du regard brouillerait la leçon. Il reste en place pendant `closing`
-  // en revanche : faire disparaître un enfant de la barre au moment où le
-  // joueur tape « Valider » ferait sauter la mise en page.
-  const concessionVisible = prochainCamion !== null && p.tuto !== true;
+  // Le bouton se retire seulement pendant le tutoriel — la main de guidage
+  // désigne déjà le carrousel puis Valider, un second appel du regard
+  // brouillerait la leçon. Au palier max, en revanche, il RESTE monté (montre
+  // le véhicule possédé, grisé, sans clé à molette) : le faire disparaître au
+  // moment même où le dernier palier est acheté ferait sauter la barre
+  // pendant que la relève tourne encore — exactement le saut de mise en page
+  // que `closing` reste monté évite déjà côté « Valider ».
+  const concessionVisible = p.tuto !== true;
 
   return (
     <>
@@ -414,7 +416,7 @@ export function CoffreChargement(p: Props) {
           // La barre d'actions du bas (zIndex 50) passe au-dessus du scrim
           // et du corps de la ConcessionSheet (zIndex 40/41 dans
           // BottomSheet) : « Valider » reste tapable fiche ouverte. On
-          // dérive donc l'ouverture du même garde que le panneau plutôt
+          // dérive donc l'ouverture du même garde que la fiche plutôt
           // que de compter sur un onClose/onAcheter manuel à chaque
           // chemin de sortie (ex. handleValider ne fermait pas la fiche).
           open={sheetOuverte && !closing}
@@ -539,11 +541,12 @@ export function CoffreChargement(p: Props) {
             cursor: closing ? "not-allowed" : "pointer",
           }}
         >
-          {d.vente.retourMagasin}
+          {d.commun.retour}
         </button>
         {concessionVisible && (
           <BoutonConcession
             actuel={camion}
+            ameliorable={prochainCamion !== null}
             peutPayer={p.budget >= prixProchain}
             inerte={closing}
             onOuvrir={() => setSheetOuverte(true)}

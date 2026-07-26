@@ -5,6 +5,7 @@ export const en: DictionnaireUI = {
     fermer: "Close",
     annuler: "Cancel",
     confirmer: "Confirm",
+    retour: "Back",
     ariaCategorie: "Category: {categorie}",
   },
   menu: {
@@ -296,8 +297,8 @@ export const en: DictionnaireUI = {
     etapePrepCoffre: "1 — Loading the trunk",
     etapeTarification: "2 — Pricing",
     etapeChoixBrocante: "3 — Choose the flea market",
-    retourMagasin: "Back to the shop",
     ameliorerVehicule: "Upgrade the vehicle",
+    vehiculeAuMaximum: "Vehicle at maximum level",
     placesCompte: "{n} slots",
     acheterVehicule: "Buy · {prix} €",
     manqueSomme: "You are {somme} € short",

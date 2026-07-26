@@ -5,6 +5,7 @@ export const el: DictionnaireUI = {
     fermer: "Κλείσιμο",
     annuler: "Ακύρωση",
     confirmer: "Επιβεβαίωση",
+    retour: "Επιστροφή",
     ariaCategorie: "Κατηγορία: {categorie}",
   },
   menu: {
@@ -301,8 +302,8 @@ export const el: DictionnaireUI = {
     etapePrepCoffre: "1 — Προετοιμασία της καρότσας",
     etapeTarification: "2 — Τιμολόγηση",
     etapeChoixBrocante: "3 — Επιλογή παζαριού",
-    retourMagasin: "Επιστροφή στο μαγαζί",
     ameliorerVehicule: "Αναβάθμιση του οχήματος",
+    vehiculeAuMaximum: "Όχημα στο μέγιστο επίπεδο",
     placesCompte: "{n} θέσεις",
     acheterVehicule: "Αγορά · {prix} €",
     manqueSomme: "Σου λείπουν {somme} €",

@@ -45,17 +45,30 @@ describe("CoffreChargement — concession", () => {
     ).toBeTruthy();
   });
 
-  it("aucun panneau au niveau max", () => {
+  it("palier max : le bouton reste présent mais devient un trophée inerte", () => {
+    // Achat du dernier palier : le bouton ne se démonte plus en pleine
+    // relève (la barre sauterait), il reste monté et montre le véhicule
+    // possédé, grisé, sans clé à molette.
     poser({ niveauCamion: 3 });
-    expect(
-      screen.queryByRole("button", { name: "Améliorer le véhicule" }),
-    ).toBeNull();
+    const bouton = screen.getByRole("button", {
+      name: "Véhicule au niveau maximum",
+    });
+    expect(bouton.hasAttribute("disabled")).toBe(true);
+    // Pas de clé à molette : elle promettrait une amélioration qui n'existe
+    // plus.
+    expect(bouton.querySelector("svg")).toBeNull();
+    // Un bouton disabled ignore le clic nativement : la fiche ne s'ouvre pas.
+    fireEvent.click(bouton);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("aucun panneau pendant le tutoriel de préparation d'étal", () => {
+  it("le bouton de concession disparaît pendant le tutoriel de préparation d'étal", () => {
     poser({ tuto: true });
     expect(
       screen.queryByRole("button", { name: "Améliorer le véhicule" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Véhicule au niveau maximum" }),
     ).toBeNull();
   });
 
@@ -77,7 +90,12 @@ describe("CoffreChargement — concession", () => {
 
   it("budget insuffisant : la fiche s'ouvre mais l'achat reste bloqué", () => {
     const props = poser({ budget: 40 });
-    fireEvent.click(screen.getByRole("button", { name: "Améliorer le véhicule" }));
+    // Palier intermédiaire sans budget : le bouton reste tapable (grisé,
+    // pas désactivé) — ne pas confondre avec l'état « palier max », lui
+    // réellement inerte.
+    const bouton = screen.getByRole("button", { name: "Améliorer le véhicule" });
+    expect(bouton.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(bouton);
     expect(screen.getByText("Il vous manque 160 €")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
     expect(props.onUpgrade).not.toHaveBeenCalled();
@@ -189,9 +207,9 @@ describe("CoffreChargement — concession", () => {
       fireEvent.click(screen.getByRole("button", { name: "Améliorer le véhicule" }));
       fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
 
-      // La pancarte ne dépend que de niveauCamion (figé dans ce test) : elle
-      // reste affichée pendant la relève, comme en jeu réel — on peut donc
-      // la retaper et relancer un second achat avant la fin du premier.
+      // Le bouton ne dépend que de niveauCamion (figé dans ce test) : il
+      // reste affiché pendant la relève, comme en jeu réel — on peut donc
+      // le retaper et relancer un second achat avant la fin du premier.
       fireEvent.click(screen.getByRole("button", { name: "Améliorer le véhicule" }));
       fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
 
@@ -264,5 +282,14 @@ describe("CoffreChargement — concession", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("CoffreChargement — bouton de gauche", () => {
+  it("porte un libellé neutre (pas de destination nommée : deux pages différentes reviennent ici)", () => {
+    const props = poser();
+    const bouton = screen.getByRole("button", { name: "Retour" });
+    fireEvent.click(bouton);
+    expect(props.onAnnuler).toHaveBeenCalledTimes(1);
   });
 });

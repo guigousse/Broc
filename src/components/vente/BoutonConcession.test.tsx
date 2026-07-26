@@ -14,6 +14,7 @@ describe("BoutonConcession", () => {
     const { container } = render(
       <BoutonConcession
         actuel={ROGERS}
+        ameliorable
         peutPayer
         inerte={false}
         onOuvrir={() => {}}
@@ -28,6 +29,7 @@ describe("BoutonConcession", () => {
     render(
       <BoutonConcession
         actuel={ROGERS}
+        ameliorable
         peutPayer
         inerte={false}
         onOuvrir={() => {}}
@@ -43,6 +45,7 @@ describe("BoutonConcession", () => {
     render(
       <BoutonConcession
         actuel={ROGERS}
+        ameliorable
         peutPayer={false}
         inerte={false}
         onOuvrir={onOuvrir}
@@ -60,6 +63,7 @@ describe("BoutonConcession", () => {
     render(
       <BoutonConcession
         actuel={ROGERS}
+        ameliorable
         peutPayer
         inerte
         onOuvrir={onOuvrir}
@@ -75,11 +79,70 @@ describe("BoutonConcession", () => {
     render(
       <BoutonConcession
         actuel={ROGERS}
+        ameliorable
         peutPayer
         inerte={false}
         onOuvrir={() => {}}
       />,
     );
     expect(Number(screen.getByRole("button").style.opacity)).toBe(1);
+  });
+
+  it("palier max (ameliorable=false) : trophée grisé, sans clé, non déclenchable", () => {
+    const onOuvrir = vi.fn();
+    const { container } = render(
+      <BoutonConcession
+        actuel={ROGERS}
+        ameliorable={false}
+        peutPayer
+        inerte={false}
+        onOuvrir={onOuvrir}
+      />,
+    );
+    const bouton = screen.getByRole("button", {
+      name: "Véhicule au niveau maximum",
+    });
+    expect(bouton.hasAttribute("disabled")).toBe(true);
+    // Pas de clé à molette : elle promettrait une amélioration qui n'existe
+    // plus.
+    expect(container.querySelector("svg")).toBeNull();
+    fireEvent.click(bouton);
+    expect(onOuvrir).not.toHaveBeenCalled();
+  });
+
+  it("palier max : grisaille distincte de l'état « budget insuffisant »", () => {
+    // Les deux états ne doivent pas se ressembler au point de se confondre :
+    // le manque de budget reste tapable et peu grisé, le trophée est
+    // inerte et totalement désaturé.
+    const { container: sansBudget } = render(
+      <BoutonConcession
+        actuel={ROGERS}
+        ameliorable
+        peutPayer={false}
+        inerte={false}
+        onOuvrir={() => {}}
+      />,
+    );
+    const boutonSansBudget = sansBudget.querySelector("button")!;
+
+    cleanup();
+
+    const { container: max } = render(
+      <BoutonConcession
+        actuel={ROGERS}
+        ameliorable={false}
+        peutPayer
+        inerte={false}
+        onOuvrir={() => {}}
+      />,
+    );
+    const boutonMax = max.querySelector("button")!;
+
+    expect(boutonSansBudget.style.filter).not.toBe(boutonMax.style.filter);
+    expect(Number(boutonSansBudget.style.opacity)).not.toBe(
+      Number(boutonMax.style.opacity),
+    );
+    expect(boutonMax.hasAttribute("disabled")).toBe(true);
+    expect(boutonSansBudget.hasAttribute("disabled")).toBe(false);
   });
 });

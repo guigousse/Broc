@@ -8,6 +8,7 @@ export const fr = {
     fermer: "Fermer",
     annuler: "Annuler",
     confirmer: "Confirmer",
+    retour: "Retour",
     ariaCategorie: "Catégorie : {categorie}",
   },
   menu: {
@@ -299,8 +300,8 @@ export const fr = {
     etapePrepCoffre: "1 — Préparation du coffre",
     etapeTarification: "2 — Tarification",
     etapeChoixBrocante: "3 — Choix de la brocante",
-    retourMagasin: "Retour au magasin",
     ameliorerVehicule: "Améliorer le véhicule",
+    vehiculeAuMaximum: "Véhicule au niveau maximum",
     placesCompte: "{n} places",
     acheterVehicule: "Acheter · {prix} €",
     manqueSomme: "Il vous manque {somme} €",
