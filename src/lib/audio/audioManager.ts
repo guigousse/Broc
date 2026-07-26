@@ -2,6 +2,7 @@ import {
   safeLocalStorageGet,
   safeLocalStorageSet,
 } from "@/lib/storage/safeLocalStorage";
+import { inverserEtRogner } from "@/lib/audio/inverserSon";
 
 export interface AudioPrefs {
   volume: number;
@@ -515,8 +516,15 @@ class AudioManager {
   }
 
   /**
-   * Charge un son et en renvoie une copie lue à l'envers. Mise en cache sous
-   * une clé dérivée, pour ne pas payer l'inversion à chaque lecture.
+   * Charge un son et en renvoie une copie lue à l'envers, amorce silencieuse
+   * rognée. Mise en cache sous une clé dérivée, pour ne pas payer l'inversion
+   * à chaque lecture.
+   *
+   * Le rognage est la pièce importante : un son de fermeture, de moteur ou de
+   * porte finit presque toujours par une queue de silence ou de réverbération.
+   * Retournée, cette queue devient une amorce muette, et le son paraît
+   * démarrer en retard alors qu'il a bien été déclenché à l'heure — d'autant
+   * plus s'il est ralenti par la suite.
    */
   private async loadBufferInverse(url: string): Promise<AudioBuffer | null> {
     const cle = `${url}#inverse`;
@@ -526,15 +534,19 @@ class AudioManager {
     const source = await this.loadBuffer(url);
     if (!source || !this.ctx) return null;
 
+    const source_canaux: Float32Array[] = [];
+    for (let canal = 0; canal < source.numberOfChannels; canal++) {
+      source_canaux.push(source.getChannelData(canal));
+    }
+
+    const { canaux } = inverserEtRogner(source_canaux);
     const copie = this.ctx.createBuffer(
       source.numberOfChannels,
-      source.length,
+      canaux[0].length,
       source.sampleRate,
     );
-    for (let canal = 0; canal < source.numberOfChannels; canal++) {
-      const echantillons = Float32Array.from(source.getChannelData(canal));
-      echantillons.reverse();
-      copie.copyToChannel(echantillons, canal);
+    for (let canal = 0; canal < canaux.length; canal++) {
+      copie.copyToChannel(canaux[canal], canal);
     }
     this.buffers.set(cle, copie);
     return copie;
