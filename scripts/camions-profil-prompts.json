@@ -1,0 +1,17 @@
+[
+  {
+    "id": "rogers-profil",
+    "reference": "rogers-ferme",
+    "description": "The SAME vehicle as in the reference image, seen in STRICT SIDE PROFILE (exact 90-degree side view, facing right). A small vintage French estate car, pale grey-blue bodywork, cream bumpers, thin chrome trim. Both wheels fully visible and resting on an invisible ground line. The whole vehicle fits inside the frame with a small even margin on all sides. Keep the reference's exact body colour, trim colour, wheel design, era and line weight — this must read as the same car turned sideways, not a similar one."
+  },
+  {
+    "id": "break-profil",
+    "reference": "break-ferme",
+    "description": "The SAME vehicle as in the reference image, seen in STRICT SIDE PROFILE (exact 90-degree side view, facing right). A vintage estate wagon, longer than a small city car, with a long side window line and a squared rear. Both wheels fully visible and resting on an invisible ground line. The whole vehicle fits inside the frame with a small even margin on all sides. Keep the reference's exact body colour, trim colour, wheel design, era and line weight — this must read as the same car turned sideways, not a similar one."
+  },
+  {
+    "id": "utilitaire-profil",
+    "reference": "utilitaire-ferme",
+    "description": "The SAME vehicle as in the reference image, seen in STRICT SIDE PROFILE (exact 90-degree side view, facing right). A vintage panel van with a tall boxy cargo body and a short bonnet. Both wheels fully visible and resting on an invisible ground line. The whole vehicle fits inside the frame with a small even margin on all sides. Keep the reference's exact body colour, trim colour, wheel design, era and line weight — this must read as the same van turned sideways, not a similar one."
+  }
+]
