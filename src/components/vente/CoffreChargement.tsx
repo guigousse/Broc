@@ -269,7 +269,10 @@ export function CoffreChargement(p: Props) {
   );
 
   const handleValider = () => {
-    if (closing) return;
+    // Le tween de départ capture la géométrie du véhicule au clic (camion
+    // courant) : le déclencher pendant une relève le ferait partir de
+    // l'ancien véhicule alors que l'état bascule déjà vers le nouveau.
+    if (closing || releveRafRef.current !== null) return;
     setClosing(true);
     void audioManager.playCoffreFerme();
     // Le bruit du moteur démarre à la fin de la fermeture du coffre

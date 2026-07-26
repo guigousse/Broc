@@ -196,4 +196,58 @@ describe("CoffreChargement — concession", () => {
       erreurs.mockRestore();
     }
   });
+
+  it("« Valider » pendant la relève ne relance pas le tween de départ ; il redevient opérant une fois la relève terminée", () => {
+    // Un objet centré, sans chevauchement, pour que peutValider soit vrai
+    // et que « Valider » reste cliquable (non disabled) pendant tout le
+    // scénario — c'est bien le garde applicatif qu'on veut exercer, pas
+    // l'attribut disabled du bouton.
+    const coffre = [
+      {
+        ...createMockObjetEnVitrine({
+          objet: { templateId: "mus.33tours_jazz_1", categorie: "Musique" },
+        }),
+        posX: 0.5,
+        posY: 0.5,
+      },
+    ];
+    vi.useFakeTimers();
+    try {
+      const props = poser({ coffre });
+      fireEvent.click(screen.getByText("Concession"));
+      fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
+
+      // La relève vient de démarrer (releveRafRef armé) : un tap sur
+      // Valider dans cette fenêtre ne doit RIEN déclencher — sinon le tween
+      // de départ capturerait la géométrie de l'ancien véhicule (Finding
+      // I1).
+      fireEvent.click(screen.getByRole("button", { name: "Valider le chargement" }));
+
+      // Même en avançant bien au-delà de toute la séquence de fermeture +
+      // attente + tween, rien ne s'est enclenché : preuve que le clic
+      // bloqué n'a armé aucun minuteur.
+      act(() => {
+        vi.advanceTimersByTime(8000);
+      });
+      expect(props.onValider).not.toHaveBeenCalled();
+
+      // La relève, elle, est bien allée à son terme (onUpgrade appelé une
+      // seule fois, bandeau disparu) : le clic bloqué ne l'a pas perturbée.
+      expect(props.onUpgrade).toHaveBeenCalledTimes(1);
+      expect(props.onUpgrade).toHaveBeenCalledWith(2);
+      expect(screen.queryByRole("button", { name: "Break — 16 places" })).toBeNull();
+
+      // La relève terminée (releveRafRef retombé à null), « Valider »
+      // redevient opérant : le second clic engage bien la fermeture puis
+      // le départ jusqu'à onValider — sans quoi le correctif troquerait un
+      // défaut cosmétique contre un blocage permanent.
+      fireEvent.click(screen.getByRole("button", { name: "Valider le chargement" }));
+      act(() => {
+        vi.advanceTimersByTime(8000);
+      });
+      expect(props.onValider).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
