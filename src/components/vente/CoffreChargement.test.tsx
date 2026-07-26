@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { CoffreChargement } from "./CoffreChargement";
 import { createMockObjetEnVitrine } from "@/lib/__test-fixtures__/gameState";
+import { RELEVE_BASCULE_MS } from "@/lib/releveVehicule";
 
 afterEach(cleanup);
 
@@ -49,11 +50,19 @@ describe("CoffreChargement — concession", () => {
   });
 
   it("le tap ouvre la fiche, l'achat appelle onUpgrade avec le palier suivant", () => {
-    const props = poser();
-    fireEvent.click(screen.getByText("Concession"));
-    fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
-    expect(props.onUpgrade).toHaveBeenCalledTimes(1);
-    expect(props.onUpgrade).toHaveBeenCalledWith(2);
+    vi.useFakeTimers();
+    try {
+      const props = poser();
+      fireEvent.click(screen.getByText("Concession"));
+      fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
+      // L'échange est différé jusqu'à ce que le véhicule soit invisible.
+      expect(props.onUpgrade).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(RELEVE_BASCULE_MS);
+      expect(props.onUpgrade).toHaveBeenCalledTimes(1);
+      expect(props.onUpgrade).toHaveBeenCalledWith(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("budget insuffisant : la fiche s'ouvre mais l'achat reste bloqué", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { NiveauCamion, Objet, ObjetEnVitrine } from "@/types/game";
 import { getCamion, getProchainCamion, getScaleCoffre } from "@/data/camion";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
@@ -18,6 +18,15 @@ import { getItemThumbUrl } from "@/lib/itemImages";
 import { getCoffreAssets } from "@/lib/coffreAssets";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomCamion } from "@/lib/i18n/contenu";
+import {
+  RELEVE_BASCULE_MS,
+  RELEVE_DUREE_MS,
+  RELEVE_FONDU_ENTREE_MS,
+  RELEVE_FONDU_SORTIE_MS,
+  RELEVE_PAUSE_MS,
+  opaciteReleve,
+} from "@/lib/releveVehicule";
 import { CoffreCanvas } from "./CoffreCanvas";
 import { PanneauGarage } from "./PanneauGarage";
 import { ConcessionSheet } from "./ConcessionSheet";
@@ -66,7 +75,7 @@ function buildSolidMask(size: number): Uint8Array {
 }
 
 export function CoffreChargement(p: Props) {
-  const { d } = useLangue();
+  const { d, tr, locale } = useLangue();
   const camion = getCamion(p.niveauCamion);
   const assets = getCoffreAssets(camion.visuelId);
 
@@ -74,6 +83,9 @@ export function CoffreChargement(p: Props) {
   const [trunkMask, setTrunkMask] = useState<TrunkMask | null>(null);
   const [closing, setClosing] = useState(false);
   const [sheetOuverte, setSheetOuverte] = useState(false);
+  const [bandeauReleve, setBandeauReleve] = useState<string | null>(null);
+  const releveRafRef = useRef<number | null>(null);
+  const releveTimersRef = useRef<number[]>([]);
 
   // Pré-chargement des alpha-masks des items présents.
   useEffect(() => {
@@ -202,6 +214,50 @@ export function CoffreChargement(p: Props) {
     return () => document.removeEventListener("touchmove", bloque);
   }, [dragEnCours]);
 
+  /** Coupe la séquence en cours et rétablit l'état final. */
+  const arreterReleve = useCallback(() => {
+    if (releveRafRef.current !== null) {
+      cancelAnimationFrame(releveRafRef.current);
+      releveRafRef.current = null;
+    }
+    for (const id of releveTimersRef.current) window.clearTimeout(id);
+    releveTimersRef.current = [];
+    setTruckOpacity(1);
+    setBandeauReleve(null);
+  }, []);
+
+  /**
+   * Relève du véhicule. `onUpgrade` n'est PAS appelé au clic mais à
+   * RELEVE_BASCULE_MS, quand l'opacité est nulle : sinon l'état basculerait
+   * tout de suite et c'est le nouveau véhicule qu'on verrait s'effacer.
+   */
+  const lancerReleve = useCallback(
+    (niveauCible: NiveauCamion, nom: string, places: number) => {
+      const debut = performance.now();
+
+      releveTimersRef.current.push(
+        window.setTimeout(() => p.onUpgrade(niveauCible), RELEVE_BASCULE_MS),
+        window.setTimeout(() => {
+          setBandeauReleve(tr(d.vente.vehiculeAcquis, { nom, n: places }));
+          void audioManager.playDepartVoiture(RELEVE_FONDU_ENTREE_MS);
+        }, RELEVE_FONDU_SORTIE_MS + RELEVE_PAUSE_MS),
+        window.setTimeout(() => setBandeauReleve(null), RELEVE_DUREE_MS + 600),
+      );
+
+      const tick = (now: number) => {
+        const t = now - debut;
+        setTruckOpacity(opaciteReleve(t));
+        if (t < RELEVE_DUREE_MS) {
+          releveRafRef.current = requestAnimationFrame(tick);
+        } else {
+          releveRafRef.current = null;
+        }
+      };
+      releveRafRef.current = requestAnimationFrame(tick);
+    },
+    [p.onUpgrade, d, tr],
+  );
+
   const handleValider = () => {
     if (closing) return;
     setClosing(true);
@@ -250,8 +306,9 @@ export function CoffreChargement(p: Props) {
         cancelAnimationFrame(departRafRef.current);
         departRafRef.current = null;
       }
+      arreterReleve();
     },
-    [],
+    [arreterReleve],
   );
 
   const peutValider = p.coffre.length > 0 && overlaps.size === 0;
@@ -361,9 +418,45 @@ export function CoffreChargement(p: Props) {
           budget={p.budget}
           onAcheter={() => {
             setSheetOuverte(false);
-            p.onUpgrade(prochainCamion.niveau);
+            lancerReleve(
+              prochainCamion.niveau,
+              nomCamion(prochainCamion, locale),
+              prochainCamion.capacitePlaces,
+            );
           }}
         />
+      )}
+      {bandeauReleve && (
+        <div
+          onClick={arreterReleve}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 60,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            // Transparent : la relève reste visible, mais un tap n'importe où
+            // la saute.
+            background: "transparent",
+          }}
+        >
+          <span
+            style={{
+              padding: "8px 16px",
+              background: "rgba(15,30,22,0.85)",
+              border: "1px solid var(--brass-500)",
+              borderRadius: 3,
+              color: "var(--brass-100)",
+              fontFamily: "var(--font-display)",
+              fontSize: 13,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+            }}
+          >
+            {bandeauReleve}
+          </span>
+        </div>
       )}
       {/* Spacer pour libérer la zone occupée par la barre fixed du bas
           (même hauteur que la TabBar du QG). */}
