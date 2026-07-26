@@ -1,0 +1,89 @@
+"use client";
+
+import type { CSSProperties } from "react";
+import { Wrench } from "lucide-react";
+import type { CamionConfig } from "@/data/camion";
+import { getCoffreAssets } from "@/lib/coffreAssets";
+import { useLangue } from "@/lib/i18n/LangueContext";
+
+export interface BoutonConcessionProps {
+  /** Véhicule possédé — c'est lui qu'on montre, pas le palier suivant. */
+  actuel: CamionConfig;
+  /**
+   * Le budget couvre-t-il le prochain palier ? Grise SANS désactiver :
+   * consulter ce qu'on ne peut pas encore s'offrir entretient l'envie,
+   * là où un bouton mort n'expliquerait rien.
+   */
+  peutPayer: boolean;
+  /** Séquence de départ en cours : estompé et inopérant. */
+  inerte: boolean;
+  onOuvrir: () => void;
+}
+
+const boutonStyle = (peutPayer: boolean, inerte: boolean): CSSProperties => ({
+  position: "relative",
+  // Carré : la largeur suit la hauteur de la barre, pour que le véhicule
+  // garde ses proportions quelle que soit la largeur de l'écran.
+  width: "calc(var(--mobile-tabbar-h) - 8px)",
+  height: "calc(100% - 8px)",
+  flex: "0 0 auto",
+  padding: 4,
+  border: "1px solid var(--brass-500)",
+  background: "transparent",
+  cursor: inerte ? "not-allowed" : "pointer",
+  opacity: inerte ? 0.4 : peutPayer ? 1 : 0.55,
+  filter: peutPayer ? undefined : "grayscale(0.7)",
+});
+
+const vehiculeStyle: CSSProperties = {
+  width: "100%",
+  height: "100%",
+  objectFit: "contain",
+  pointerEvents: "none",
+};
+
+const cleStyle: CSSProperties = {
+  position: "absolute",
+  right: 1,
+  bottom: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 18,
+  height: 18,
+  borderRadius: "50%",
+  background: "var(--forest-800)",
+  color: "var(--brass-300)",
+  pointerEvents: "none",
+};
+
+/**
+ * Bouton central de la barre d'actions du chargement : le véhicule possédé
+ * vu de profil, une clé à molette par-dessus. Purement présentationnel — il
+ * ne connaît ni le GameState, ni le budget brut, ni l'achat.
+ */
+export function BoutonConcession(p: BoutonConcessionProps) {
+  const { d } = useLangue();
+  const visuel = getCoffreAssets(p.actuel.visuelId)?.profil ?? null;
+
+  return (
+    <button
+      type="button"
+      disabled={p.inerte}
+      onClick={p.onOuvrir}
+      // Exception assumée à la règle « pas d'aria-label quand le contenu
+      // nomme le bouton » : ici il n'y a aucun texte, seulement une image
+      // et une icône. Sans label, VoiceOver annonce « bouton » et rien d'autre.
+      aria-label={d.vente.ameliorerVehicule}
+      style={boutonStyle(p.peutPayer, p.inerte)}
+    >
+      {visuel && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={visuel} alt="" draggable={false} style={vehiculeStyle} />
+      )}
+      <span style={cleStyle} aria-hidden>
+        <Wrench size={11} strokeWidth={2.4} />
+      </span>
+    </button>
+  );
+}
