@@ -7,11 +7,14 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { tutorielActif } from "@/lib/tutoriel";
 import { estRoutePartie } from "@/lib/routesPartie";
 
+/** Gouttière au-dessus de la bannière (cf. `top`) et en dessous d'elle. */
+const GOUTTIERE_PX = 8;
+
 const wrap: CSSProperties = {
   position: "fixed",
   // Sous le header du haut (retour device 2026-07-17) : safe-area + hauteur
   // du MobileHeader + marge, pour ne plus chevaucher BROC/énergie/caisse.
-  top: "calc(var(--safe-top, 0px) + var(--mobile-header-h) + 8px)",
+  top: `calc(var(--safe-top, 0px) + var(--mobile-header-h) + ${GOUTTIERE_PX}px)`,
   left: 12,
   right: 12,
   zIndex: 90,
@@ -52,13 +55,43 @@ export function TutorielBanniere() {
   const { d } = useLangue();
   const [confirme, setConfirme] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const visible =
+    estRoutePartie(pathname) && !!state && tutorielActif(state);
+  const etapeCourante = state?.tutorielEtape;
 
   useEffect(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
 
-  if (!estRoutePartie(pathname)) return null;
-  if (!state || !tutorielActif(state)) return null;
+  // La bannière est un calque flottant : sans réserve, elle recouvrirait le
+  // premier élément de chaque écran (retour device 2026-07-26, titre du bilan
+  // de chinage masqué). Elle publie donc sa hauteur réelle — gouttières
+  // comprises — que les zones de contenu ajoutent à leur marge haute. Mesurée
+  // plutôt que codée en dur : le texte enveloppe sur deux lignes en grec.
+  useEffect(() => {
+    const racine = document.documentElement;
+    const el = wrapRef.current;
+    if (!el) {
+      racine.style.removeProperty("--tuto-banniere-h");
+      return;
+    }
+    const publier = () =>
+      racine.style.setProperty(
+        "--tuto-banniere-h",
+        `${el.offsetHeight + 2 * GOUTTIERE_PX}px`,
+      );
+    publier();
+    const observateur = new ResizeObserver(publier);
+    observateur.observe(el);
+    return () => {
+      observateur.disconnect();
+      racine.style.removeProperty("--tuto-banniere-h");
+    };
+  }, [visible, etapeCourante, confirme, d]);
+
+  if (!visible || !state) return null;
   const etape = state.tutorielEtape as Exclude<
     typeof state.tutorielEtape,
     "termine"
@@ -74,7 +107,7 @@ export function TutorielBanniere() {
   };
 
   return (
-    <div style={wrap} role="status">
+    <div ref={wrapRef} style={wrap} role="status">
       <span style={texteStyle}>{d.tutoriel.instructions[etape]}</span>
       <button type="button" style={passerStyle} onClick={onPasser}>
         {confirme ? d.tutoriel.confirmerPasser : d.tutoriel.passer}

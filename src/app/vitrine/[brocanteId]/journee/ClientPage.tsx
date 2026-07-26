@@ -902,7 +902,17 @@ export default function VitrineJourneePage() {
     >
       <MobileHeader budget={state.budget} />
 
-      <main style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
+      <main
+        style={{
+          flex: 1,
+          minHeight: 0,
+          position: "relative",
+          overflow: "hidden",
+          // Réserve la place de la bannière de tutoriel (0 hors tutoriel) : le
+          // fond flouté, en `inset: 0`, occupe aussi cette bande.
+          paddingTop: "var(--tuto-banniere-h, 0px)",
+        }}
+      >
         {brocanteBg && (
           <div
             aria-hidden

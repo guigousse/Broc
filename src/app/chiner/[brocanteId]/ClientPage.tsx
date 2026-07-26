@@ -468,6 +468,9 @@ export default function SessionChinePage() {
           position: "relative",
           overflow: "hidden",
           background: "var(--paper-100)",
+          // Réserve la place de la bannière de tutoriel (0 hors tutoriel) : le
+          // fond flouté, en `inset: 0`, occupe aussi cette bande.
+          paddingTop: "var(--tuto-banniere-h, 0px)",
         }}
       >
         {brocanteBg && (
