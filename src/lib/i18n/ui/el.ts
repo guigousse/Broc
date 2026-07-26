@@ -372,6 +372,17 @@ export const el: DictionnaireUI = {
     continuer: "Συνέχεια",
     rentrerBoutique: "Επιστροφή στο μαγαζί",
     stockageAria: "Αποθήκη: {occupe} από {capacite}",
+    // — bilan de vente —
+    titreVente: "Απολογισμός ημέρας",
+    rienVendu: "Καμία πώληση σήμερα.",
+    unObjetVendu: "1 αντικείμενο · +{total} €",
+    nObjetsVendus: "{n} αντικείμενα · +{total} €",
+    beneficeTotal: "κέρδος {montant} €",
+    venteAchatVente: "αγορά {achat} € · πώληση {vente} €",
+    venteSansAchat: "πώληση {vente} € · χωρίς τιμή αγοράς",
+    xpVentes: "Πωλήσεις",
+    xpJustePrix: "Δίκαιη τιμή",
+    recetteAria: "Έσοδα: {montant} €",
   },
   inventaire: {
     // — stockage —

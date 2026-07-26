@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, DoorOpen, Package } from "lucide-react";
+import { ArrowRight, Coins, DoorOpen, Package } from "lucide-react";
 import { BarreBasSession } from "@/components/mobile/BarreBasSession";
 import { CadreBilan } from "@/components/mobile/bilan/CadreBilan";
 import { ItemSticker } from "@/components/ui/ItemSticker";
@@ -25,22 +25,39 @@ import { prefersReducedMotion } from "@/lib/transitionIris";
 import { degelerXpAffichage } from "@/lib/xpAffichageGele";
 import type { CategorieObjet } from "@/types/game";
 
+export type ModeBilan = "chinage" | "vente";
+
 export interface BilanItem {
   templateId: string;
   nom: string;
   categorie: CategorieObjet;
-  /** Prix payé (chinage) — affiché en négatif. */
+  /** Chinage : prix payé. Vente : prix de vente. */
   prix: number;
+  /** Vente : prix d'achat de l'objet. Nul pour le stock initial (cadeau) —
+   *  l'objet n'a rien coûté, son bénéfice vaut alors son prix de vente. */
+  prixAchat?: number | null;
 }
 
-export type SourceXp = "achats" | "decouvertes" | "negociations";
+export type SourceXp =
+  | "achats"
+  | "decouvertes"
+  | "negociations"
+  | "ventes"
+  | "justePrix";
 
 export interface LigneXp {
   cle: SourceXp;
   montant: number;
 }
 
+/** Ce que suit le compteur de la barre du bas pendant l'envol des objets :
+ *  la place prise au stockage (chinage) ou la recette encaissée (vente). */
+export type CompteurBilan =
+  | { kind: "stockage"; occupe: number; capacite: number }
+  | { kind: "recette" };
+
 export interface BilanSessionProps {
+  mode: ModeBilan;
   /** Nom localisé de la brocante. */
   titre: string;
   items: BilanItem[];
@@ -48,10 +65,20 @@ export interface BilanSessionProps {
   xpLignes: ReadonlyArray<LigneXp>;
   /** Sélecteur CSS de la cible du vol des items. */
   cibleVolItems: string;
-  /** Occupation du stockage à l'entrée de session (le compteur monte pendant la cérémonie). */
-  stockageDepart: { occupe: number; capacite: number };
+  compteur: CompteurBilan;
   /** Fin de cérémonie : au parent d'enregistrer la session et de quitter. */
   onTermine: () => void;
+}
+
+/** Bénéfice d'un objet vendu. Sans prix d'achat connu (cadeau, stock initial),
+ *  l'objet n'a rien coûté : tout son prix de vente est du bénéfice. */
+export function beneficeItem(it: BilanItem): number {
+  return it.prix - (it.prixAchat ?? 0);
+}
+
+/** Montant signé, avec le vrai signe moins typographique. */
+function signe(n: number): string {
+  return n < 0 ? `−${Math.abs(n)}` : `+${n}`;
 }
 
 const CIBLE_XP = '[data-fly-target="xp-header"]';
@@ -73,11 +100,12 @@ type PhaseBilan = "attente" | "acte1" | "pretActe2" | "acte2";
  * niveau — qui ne progresse qu'à cet instant (cf. `xpAffichageGele`).
  */
 export function BilanSession({
+  mode,
   titre,
   items,
   xpLignes,
   cibleVolItems,
-  stockageDepart,
+  compteur,
   onTermine,
 }: BilanSessionProps) {
   const { d, tr, locale } = useLangue();
@@ -266,23 +294,44 @@ export function BilanSession({
   const avantActe2 = phase === "attente" || phase === "acte1";
   const libelleBouton = avantActe2 ? d.bilan.continuer : d.bilan.rentrerBoutique;
 
+  const nb = fige.items.length;
   const mention =
-    fige.items.length === 0
-      ? d.bilan.pochesVides
-      : fige.items.length === 1
-        ? tr(d.bilan.unObjetTotal, { total: totalPrix })
-        : tr(d.bilan.nObjetsTotal, { n: fige.items.length, total: totalPrix });
+    mode === "chinage"
+      ? nb === 0
+        ? d.bilan.pochesVides
+        : nb === 1
+          ? tr(d.bilan.unObjetTotal, { total: totalPrix })
+          : tr(d.bilan.nObjetsTotal, { n: nb, total: totalPrix })
+      : nb === 0
+        ? d.bilan.rienVendu
+        : nb === 1
+          ? tr(d.bilan.unObjetVendu, { total: totalPrix })
+          : tr(d.bilan.nObjetsVendus, { n: nb, total: totalPrix });
+
+  // Le bénéfice de la journée : c'est lui qu'on retient d'un étal, pas la
+  // recette brute. Réservé à la vente, où le prix d'achat est connu.
+  const beneficeTotal = fige.items.reduce((s, it) => s + beneficeItem(it), 0);
+  const mentionSecondaire =
+    mode === "vente" && nb > 0
+      ? tr(d.bilan.beneficeTotal, { montant: signe(beneficeTotal) })
+      : undefined;
 
   const libelleLigne: Record<SourceXp, string> = {
     achats: d.bilan.xpAchats,
     decouvertes: d.bilan.xpDecouvertes,
     negociations: d.bilan.xpNegociations,
+    ventes: d.bilan.xpVentes,
+    justePrix: d.bilan.xpJustePrix,
   };
 
-  const occupe = Math.min(
-    stockageDepart.occupe + itemsAtterris,
-    stockageDepart.capacite,
-  );
+  /** Recette encaissée par les objets déjà posés dans la caisse. */
+  const recetteAtterrie = fige.items
+    .slice(0, itemsAtterris)
+    .reduce((s, it) => s + it.prix, 0);
+  const occupe =
+    compteur.kind === "stockage"
+      ? Math.min(compteur.occupe + itemsAtterris, compteur.capacite)
+      : 0;
 
   return (
     <div style={colonne}>
@@ -305,7 +354,12 @@ export function BilanSession({
         )}
 
       <div style={enTete}>
-        <CadreBilan titre={d.bilan.titreChinage} sousTitre={titre} mention={mention} />
+        <CadreBilan
+          titre={mode === "chinage" ? d.bilan.titreChinage : d.bilan.titreVente}
+          sousTitre={titre}
+          mention={mention}
+          mentionSecondaire={mentionSecondaire}
+        />
       </div>
 
       <div ref={refZone} style={zoneDefilante}>
@@ -330,8 +384,36 @@ export function BilanSession({
                 >
                   <ItemSticker templateId={it.templateId} categorie={it.categorie} thumb />
                 </span>
-                <span style={nomItem}>{nomObjet(it, locale)}</span>
-                <span style={prixItem}>−{it.prix} €</span>
+                {mode === "chinage" ? (
+                  <span style={nomItem}>{nomObjet(it, locale)}</span>
+                ) : (
+                  <span style={blocNomVente}>
+                    <span style={nomItem}>{nomObjet(it, locale)}</span>
+                    <span style={detailPrix}>
+                      {it.prixAchat != null
+                        ? tr(d.bilan.venteAchatVente, {
+                            achat: it.prixAchat,
+                            vente: it.prix,
+                          })
+                        : tr(d.bilan.venteSansAchat, { vente: it.prix })}
+                    </span>
+                  </span>
+                )}
+                {mode === "chinage" ? (
+                  <span style={prixItem}>−{it.prix} €</span>
+                ) : (
+                  <span
+                    style={{
+                      ...prixItem,
+                      color:
+                        beneficeItem(it) < 0
+                          ? "var(--vermillion-600)"
+                          : "var(--forest-700)",
+                    }}
+                  >
+                    {signe(beneficeItem(it))} €
+                  </span>
+                )}
               </li>
             ))}
           </ul>
@@ -383,18 +465,28 @@ export function BilanSession({
           </button>
         }
         droite={
-          <span
-            data-fly-target="stockage-bilan"
-            role="img"
-            aria-label={tr(d.bilan.stockageAria, {
-              occupe,
-              capacite: stockageDepart.capacite,
-            })}
-            style={jauge}
-          >
-            <Package size={22} strokeWidth={2} aria-hidden />
-            {occupe}/{stockageDepart.capacite}
-          </span>
+          compteur.kind === "stockage" ? (
+            <span
+              data-fly-target="stockage-bilan"
+              role="img"
+              aria-label={tr(d.bilan.stockageAria, {
+                occupe,
+                capacite: compteur.capacite,
+              })}
+              style={jauge}
+            >
+              <Package size={22} strokeWidth={2} aria-hidden />
+              {occupe}/{compteur.capacite}
+            </span>
+          ) : (
+            <span
+              role="img"
+              aria-label={tr(d.bilan.recetteAria, { montant: recetteAtterrie })}
+              style={jauge}
+            >
+              <Coins size={22} strokeWidth={2} aria-hidden />+{recetteAtterrie} €
+            </span>
+          )
         }
       />
     </div>
@@ -451,6 +543,21 @@ const ligneItem: CSSProperties = {
   padding: "10px 4px",
   borderBottom: "1px dotted rgba(247,244,238,0.35)",
   overflow: "hidden",
+};
+
+/** Vente : le nom, et sous lui le détail achat/vente qui justifie le bénéfice. */
+const blocNomVente: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 3,
+  minWidth: 0,
+};
+
+const detailPrix: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  color: "var(--paper-200)",
+  textShadow: "0 1px 3px rgba(0,0,0,0.65)",
 };
 
 const nomItem: CSSProperties = {

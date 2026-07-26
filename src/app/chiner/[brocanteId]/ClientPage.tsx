@@ -374,6 +374,7 @@ export default function SessionChinePage() {
    *  achats du total courant, ce qui laisse en place l'objet éventuellement
    *  tiré d'une boîte mystère pendant la session. */
   const stockageDepart = {
+    kind: "stockage" as const,
     occupe: Math.max(0, totalEnStock(state) - achats.length),
     capacite: getCapaciteStockage(state),
   };
@@ -491,6 +492,7 @@ export default function SessionChinePage() {
         <div style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}>
           {resumeOuvert ? (
             <BilanSession
+              mode="chinage"
               titre={nomBrocante(brocante, locale)}
               items={achats.map((a) => ({
                 templateId: a.templateId,
@@ -500,7 +502,7 @@ export default function SessionChinePage() {
               }))}
               xpLignes={lignesXpBilan}
               cibleVolItems='[data-fly-target="stockage-bilan"]'
-              stockageDepart={stockageDepart}
+              compteur={stockageDepart}
               onTermine={handleRetourQg}
             />
           ) : (

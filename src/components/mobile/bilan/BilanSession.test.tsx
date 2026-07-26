@@ -57,6 +57,16 @@ vi.mock("@/lib/i18n/LangueContext", () => ({
         continuer: "Continuer",
         rentrerBoutique: "Rentrer à la boutique",
         stockageAria: "Stockage : {occupe} sur {capacite}",
+        titreVente: "Bilan de journée",
+        rienVendu: "Aucune vente aujourd'hui.",
+        unObjetVendu: "1 objet · +{total} €",
+        nObjetsVendus: "{n} objets · +{total} €",
+        beneficeTotal: "bénéfice {montant} €",
+        venteAchatVente: "achat {achat} € · vente {vente} €",
+        venteSansAchat: "vente {vente} € · sans prix d'achat",
+        xpVentes: "Ventes",
+        xpJustePrix: "Juste prix",
+        recetteAria: "Recette : {montant} €",
       },
     },
     tr: (modele: string, vars: Record<string, string | number>) =>
@@ -86,11 +96,12 @@ function monter(patch: Partial<Parameters<typeof BilanSession>[0]> = {}) {
   const onTermine = vi.fn();
   const { unmount } = render(
     <BilanSession
+      mode="chinage"
       titre="Brocante de Sarlat"
       items={ITEMS}
       xpLignes={XP}
       cibleVolItems='[data-fly-target="stockage-bilan"]'
-      stockageDepart={{ occupe: 8, capacite: 12 }}
+      compteur={{ kind: "stockage", occupe: 8, capacite: 12 }}
       onTermine={onTermine}
       {...patch}
     />,
@@ -231,11 +242,12 @@ describe("BilanSession — acte 2 : « Rentrer à la boutique »", () => {
     const onTermine = vi.fn();
     render(
       <BilanSession
+        mode="chinage"
         titre="Brocante de Sarlat"
         items={ITEMS}
         xpLignes={XP}
         cibleVolItems='[data-fly-target="stockage-bilan"]'
-        stockageDepart={{ occupe: 8, capacite: 12 }}
+        compteur={{ kind: "stockage", occupe: 8, capacite: 12 }}
         onTermine={onTermine}
       />,
     );
@@ -295,11 +307,12 @@ describe("BilanSession — passer une animation", () => {
     const onTermine = vi.fn();
     render(
       <BilanSession
+        mode="chinage"
         titre="Brocante de Sarlat"
         items={ITEMS}
         xpLignes={XP}
         cibleVolItems='[data-fly-target="stockage-bilan"]'
-        stockageDepart={{ occupe: 8, capacite: 12 }}
+        compteur={{ kind: "stockage", occupe: 8, capacite: 12 }}
         onTermine={onTermine}
       />,
     );
@@ -362,5 +375,72 @@ describe("BilanSession — pastille non commitée", () => {
     act(() => void vi.advanceTimersByTime(PAUSE_FINALE_MS));
     expect(degel).toHaveBeenCalledTimes(1);
     expect(onTermine).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("BilanSession — mode vente", () => {
+  const VENTES = [
+    // Revendue plus cher : bénéfice positif.
+    { templateId: "chaise-thonet", nom: "Chaise Thonet", categorie: "Maison" as const, prix: 120, prixAchat: 45 },
+    // Bradée : bénéfice négatif.
+    { templateId: "poste-tsf", nom: "Poste TSF", categorie: "Musique" as const, prix: 60, prixAchat: 80 },
+    // Cadeau du grand-père : sans prix d'achat, tout est bénéfice.
+    { templateId: "veste-jean", nom: "Veste en jean", categorie: "Mode" as const, prix: 30, prixAchat: null },
+  ];
+
+  function monterVente(patch: Record<string, unknown> = {}) {
+    const onTermine = vi.fn();
+    render(
+      <BilanSession
+        mode="vente"
+        titre="Vide-grenier du quartier"
+        items={VENTES}
+        xpLignes={[{ cle: "ventes", montant: 40 }]}
+        cibleVolItems='[data-fly-target="caisse-header"]'
+        compteur={{ kind: "recette" }}
+        onTermine={onTermine}
+        {...patch}
+      />,
+    );
+    return { onTermine };
+  }
+
+  it("chaque objet affiche son achat, sa vente et son bénéfice", () => {
+    monterVente();
+    expect(screen.getByText("achat 45 € · vente 120 €")).toBeTruthy();
+    expect(screen.getByText("+75 €")).toBeTruthy();
+    expect(screen.getByText("achat 80 € · vente 60 €")).toBeTruthy();
+    expect(screen.getByText("−20 €")).toBeTruthy();
+  });
+
+  it("sans prix d'achat connu, le prix de vente est tout le bénéfice", () => {
+    monterVente();
+    expect(screen.getByText("vente 30 € · sans prix d'achat")).toBeTruthy();
+    expect(screen.getByText("+30 €")).toBeTruthy();
+  });
+
+  it("le cadre annonce la recette puis le bénéfice de la journée", () => {
+    monterVente();
+    expect(screen.getByText("Bilan de journée")).toBeTruthy();
+    expect(screen.getByText("3 objets · +210 €")).toBeTruthy();
+    // 75 − 20 + 30
+    expect(screen.getByText("bénéfice +85 €")).toBeTruthy();
+  });
+
+  it("aucune vente : la mention le dit et le bénéfice disparaît", () => {
+    monterVente({ items: [] });
+    expect(screen.getByText("Aucune vente aujourd'hui.")).toBeTruthy();
+    expect(screen.queryByText(/bénéfice/)).toBeNull();
+  });
+
+  it("les objets vendus s'envolent vers la caisse, la recette monte", () => {
+    monterVente();
+    expect(screen.getByText("+0 €")).toBeTruthy();
+    fireEvent.click(bouton("Continuer"));
+    act(() => void vi.advanceTimersByTime(VOL_MS));
+    expect(vols[0].cible).toBe('[data-fly-target="caisse-header"]');
+    expect(screen.getByText("+120 €")).toBeTruthy();
+    act(() => void vi.advanceTimersByTime(DECALAGE_ITEM_MS));
+    expect(screen.getByText("+180 €")).toBeTruthy();
   });
 });

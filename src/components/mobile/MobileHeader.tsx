@@ -216,7 +216,9 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
             <span style={{ color: "var(--brass-700)" }}>/{energieMax}</span>
           </strong>
         </div>
-        <div style={{ textAlign: "right", ...labelStyle }}>
+        {/* data-fly-target : cible des objets vendus dans le bilan de vente,
+            comme le stockage l'est pour les objets chinés. */}
+        <div style={{ textAlign: "right", ...labelStyle }} data-fly-target="caisse-header">
           {d.chrome.caisse}
           <strong style={valueStyle}>
             {tr(d.chrome.montantEuros, { valeur: budget.toLocaleString(locale) })}

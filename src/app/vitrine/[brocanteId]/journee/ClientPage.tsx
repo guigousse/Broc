@@ -14,7 +14,7 @@ import { DoorOpen } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { ItemCard } from "@/components/ui/ItemCard";
-import { SessionSummary } from "@/components/SessionSummary";
+import { BilanSession, type LigneXp } from "@/components/mobile/bilan/BilanSession";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import {
@@ -86,6 +86,7 @@ import {
   nomArchetypeClient,
   nomCelebrite,
   nomExpediteur,
+  nomBrocante,
 } from "@/lib/i18n/contenu";
 import type { Locale } from "@/lib/i18n/locales";
 import type {
@@ -203,15 +204,22 @@ export default function VitrineJourneePage() {
   /** Le Lot garni (N10) : mini-picker ouvert pour choisir le 2e objet à ajouter au panier. */
   const [lotGarniOuvert, setLotGarniOuvert] = useState(false);
   const [bravoTout, setBravoTout] = useState(false);
-  /** XP de Brocanteur gagnée localement durant la session. */
-  const [xpBrocanteurSession, setXpBrocanteurSession] = useState(0);
+  /** XP de Brocanteur gagnée durant la session, ventilée par source pour le
+   *  décompte du bilan. Le total part dans l'historique de session. */
+  const [xpSession, setXpSession] = useState({
+    ventes: 0,
+    justePrix: 0,
+    negociations: 0,
+  });
   /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
   const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
   const etape = state?.tutorielEtape;
 
-  const gagnerXPLocal = (montant: number) => {
+  /** Crédite l'XP immédiatement ET la compte pour le bilan. L'affichage de la
+   *  barre est gelé : elle ne bougera qu'à la cérémonie. */
+  const gagnerXPLocal = (cle: keyof typeof xpSession, montant: number) => {
     gagnerXPBrocanteur(montant);
-    setXpBrocanteurSession((prev) => prev + montant);
+    setXpSession((prev) => ({ ...prev, [cle]: prev[cle] + montant }));
   };
 
   /** Garde : la barre est gelée une seule fois, sur l'état d'entrée de session. */
@@ -449,7 +457,7 @@ export default function VitrineJourneePage() {
         ventes: ventesEffectuees,
         invendus: tailleInvendus,
         xpGagne: {},
-        xpBrocanteur: xpBrocanteurSession,
+        xpBrocanteur: xpSession.ventes + xpSession.justePrix + xpSession.negociations,
       });
     }
 
@@ -462,7 +470,7 @@ export default function VitrineJourneePage() {
     enregistrerSession,
     state,
     ventesEffectuees,
-    xpBrocanteurSession,
+    xpSession,
   ]);
   terminerJourneeRef.current = terminerJournee;
 
@@ -679,6 +687,7 @@ export default function VitrineJourneePage() {
     // XP par objet vendu, pondérée par la rareté (unique = ×5).
     for (const p of ev.panier) {
       gagnerXPLocal(
+        "ventes",
         XP_VENTE_BROCANTEUR *
           multiplicateurXPRarete(
             p.objet.rarete,
@@ -694,7 +703,7 @@ export default function VitrineJourneePage() {
       ev.prixDemande,
     );
     enregistrerVentes(ev, ev.prixDemande);
-    gagnerXPLocal(XP_JUSTE_PRIX);
+    gagnerXPLocal("justePrix", XP_JUSTE_PRIX);
     ajouterJournal({
       heure: heureCourante(),
       texte: tr(d.vente.journalAchete, {
@@ -721,7 +730,7 @@ export default function VitrineJourneePage() {
       prixFinal,
     );
     enregistrerVentes(ev, prixFinal);
-    gagnerXPLocal(XP_NEGO_BROCANTEUR);
+    gagnerXPLocal("negociations", XP_NEGO_BROCANTEUR);
     ajouterJournal({
       heure: heureCourante(),
       texte: tr(d.vente.journalAccepte, {
@@ -848,39 +857,11 @@ export default function VitrineJourneePage() {
 
   const brocanteBg = brocante ? getBrocanteImageUrl(brocante.id) : null;
 
-  if (journeeFinie) {
-    return (
-      <SessionSummary
-        type="vente"
-        titre={
-          bravoTout
-            ? d.vente.bravoEtalVide
-            : tr(
-                totalVentes > 1
-                  ? d.vente.titreJourneeVentes
-                  : d.vente.titreJourneeUneVente,
-                { n: totalVentes },
-              )
-        }
-        sousTitre={
-          bravoTout
-            ? undefined
-            : totalVentes === 0
-              ? d.vente.journeeSansVente
-              : undefined
-        }
-        items={ventesEffectuees.map((v) => ({
-          templateId: v.templateId,
-          nom: v.nom,
-          categorie: v.categorie,
-          prix: v.prixVente,
-        }))}
-        xpGagne={{}}
-        xpBrocanteur={xpBrocanteurSession}
-        onRetour={handleRetourQg}
-      />
-    );
-  }
+  const lignesXpBilan: LigneXp[] = [
+    { cle: "ventes", montant: xpSession.ventes },
+    { cle: "justePrix", montant: xpSession.justePrix },
+    { cle: "negociations", montant: xpSession.negociations },
+  ];
 
   /* Persona révélé : compétence Lecteur d'âmes, ou célébrité (toujours à
      visage découvert). Sinon le client reste anonyme : nom générique et
@@ -928,6 +909,25 @@ export default function VitrineJourneePage() {
             }}
           />
         )}
+        {journeeFinie ? (
+          <div style={{ position: "relative", zIndex: 1, height: "100%" }}>
+            <BilanSession
+              mode="vente"
+              titre={brocante ? nomBrocante(brocante, locale) : ""}
+              items={ventesEffectuees.map((v) => ({
+                templateId: v.templateId,
+                nom: v.nom,
+                categorie: v.categorie,
+                prix: v.prixVente,
+                prixAchat: v.prixAchat,
+              }))}
+              xpLignes={lignesXpBilan}
+              cibleVolItems='[data-fly-target="caisse-header"]'
+              compteur={{ kind: "recette" }}
+              onTermine={handleRetourQg}
+            />
+          </div>
+        ) : (
         <div
           style={{
             position: "relative",
@@ -1002,10 +1002,13 @@ export default function VitrineJourneePage() {
         )}
 
         </div>
+        )}
       </main>
 
       {/* Header bas partagé : Sortir + dock d'atouts (zIndex 50 : reste
-          visible et actionnable au-dessus de la sheet de négociation). */}
+          visible et actionnable au-dessus de la sheet de négociation).
+          Le bilan apporte le sien, avec ses propres commandes. */}
+      {!journeeFinie && (
       <div
         style={{
           position: "relative",
@@ -1044,6 +1047,7 @@ export default function VitrineJourneePage() {
 
         <SkillDock skills={dockSkills()} />
       </div>
+      )}
 
       {clientActuel && !journeeFinie && (
         <NegociationSheet

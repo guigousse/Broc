@@ -367,6 +367,17 @@ export const en: DictionnaireUI = {
     continuer: "Continue",
     rentrerBoutique: "Back to the shop",
     stockageAria: "Storage: {occupe} of {capacite}",
+    // — bilan de vente —
+    titreVente: "Day's summary",
+    rienVendu: "No sales today.",
+    unObjetVendu: "1 item · +{total} €",
+    nObjetsVendus: "{n} items · +{total} €",
+    beneficeTotal: "profit {montant} €",
+    venteAchatVente: "bought {achat} € · sold {vente} €",
+    venteSansAchat: "sold {vente} € · no purchase price",
+    xpVentes: "Sales",
+    xpJustePrix: "Fair price",
+    recetteAria: "Takings: {montant} €",
   },
   inventaire: {
     // — stockage —
