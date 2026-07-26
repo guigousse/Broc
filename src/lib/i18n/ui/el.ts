@@ -488,7 +488,6 @@ export const el: DictionnaireUI = {
     tous: "Όλα",
     filtreParCategorie: "Φίλτρο ανά κατηγορία",
     nouveautes: "Νέα",
-    itemsParLigne: "Αντικείμενα ανά σειρά",
   },
   bibliotheque: {
     titre: "Δεξιότητες",

@@ -483,7 +483,6 @@ export const es: DictionnaireUI = {
     tous: "Todos",
     filtreParCategorie: "Filtro por categoría",
     nouveautes: "Novedades",
-    itemsParLigne: "Objetos por fila",
   },
   bibliotheque: {
     titre: "Habilidades",

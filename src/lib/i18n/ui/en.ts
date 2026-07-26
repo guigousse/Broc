@@ -482,7 +482,6 @@ export const en: DictionnaireUI = {
     tous: "All",
     filtreParCategorie: "Filter by category",
     nouveautes: "New items",
-    itemsParLigne: "Items per row",
   },
   bibliotheque: {
     titre: "Skills",

@@ -487,7 +487,6 @@ export const fr = {
     tous: "Tous",
     filtreParCategorie: "Filtre par catégorie",
     nouveautes: "Nouveautés",
-    itemsParLigne: "Items par ligne",
   },
   bibliotheque: {
     titre: "Compétences",
