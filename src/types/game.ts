@@ -339,8 +339,6 @@ export interface GameState {
   celebriteActuelle: CelebriteEvenement | null;
   /** Vrai si le joueur a utilisé son reroll (météo ou célébrité) sur l'édition courante. */
   influenceUtilisee: boolean;
-  /** Dernier loyer prélevé (utile pour l'UI). null = pas encore prélevé. */
-  dernierLoyer: { jour: number; montant: number; tierNom: string } | null;
   /** Lettres reçues (narratives, événements, programmées…). */
   courriers: Courrier[];
   /** Niveau de l'atelier (0 à 3). Nombre de slots = niveau. Nouvelle partie à 0. */

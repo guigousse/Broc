@@ -14,7 +14,7 @@ import { DoorOpen } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { ItemCard } from "@/components/ui/ItemCard";
-import { SessionSummary } from "@/components/SessionSummary";
+import { BilanSession, type LigneXp } from "@/components/mobile/bilan/BilanSession";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import {
@@ -52,7 +52,12 @@ import {
 import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
 import { getBrocanteById, fraisEntree } from "@/data/brocantes";
-import { degelerXpAffichage, gelerXpAffichage } from "@/lib/xpAffichageGele";
+import {
+  degelerBudgetAffichage,
+  degelerXpAffichage,
+  gelerBudgetAffichage,
+  gelerXpAffichage,
+} from "@/lib/affichageGele";
 import { getTemplate } from "@/data/objetTemplates";
 import {
   XP_JUSTE_PRIX,
@@ -86,6 +91,7 @@ import {
   nomArchetypeClient,
   nomCelebrite,
   nomExpediteur,
+  nomBrocante,
 } from "@/lib/i18n/contenu";
 import type { Locale } from "@/lib/i18n/locales";
 import type {
@@ -203,15 +209,22 @@ export default function VitrineJourneePage() {
   /** Le Lot garni (N10) : mini-picker ouvert pour choisir le 2e objet à ajouter au panier. */
   const [lotGarniOuvert, setLotGarniOuvert] = useState(false);
   const [bravoTout, setBravoTout] = useState(false);
-  /** XP de Brocanteur gagnée localement durant la session. */
-  const [xpBrocanteurSession, setXpBrocanteurSession] = useState(0);
+  /** XP de Brocanteur gagnée durant la session, ventilée par source pour le
+   *  décompte du bilan. Le total part dans l'historique de session. */
+  const [xpSession, setXpSession] = useState({
+    ventes: 0,
+    justePrix: 0,
+    negociations: 0,
+  });
   /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
   const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
   const etape = state?.tutorielEtape;
 
-  const gagnerXPLocal = (montant: number) => {
+  /** Crédite l'XP immédiatement ET la compte pour le bilan. L'affichage de la
+   *  barre est gelé : elle ne bougera qu'à la cérémonie. */
+  const gagnerXPLocal = (cle: keyof typeof xpSession, montant: number) => {
     gagnerXPBrocanteur(montant);
-    setXpBrocanteurSession((prev) => prev + montant);
+    setXpSession((prev) => ({ ...prev, [cle]: prev[cle] + montant }));
   };
 
   /** Garde : la barre est gelée une seule fois, sur l'état d'entrée de session. */
@@ -222,14 +235,18 @@ export default function VitrineJourneePage() {
    *  c'est l'effet de montage juste après qui réarme le gel à chaque
    *  (re)montage, cf. même remède sur src/app/chiner/[brocanteId]/ClientPage.tsx. */
   const instantaneXpRef = useRef<BrocanteurState | null>(null);
+  /** Caisse à l'ouverture de la journée, même traitement que la barre XP. */
+  const budgetOuvertureRef = useRef<number | null>(null);
 
-  // La barre XP ne progresse pas pendant la vente : elle rattrape au retour
-  // au QG (la vente n'a pas encore sa cérémonie de bilan).
+  // Ni la barre XP ni la caisse ne bougent pendant la vente : tout se pose au
+  // bilan, chaque prix de vente venant s'ajouter à la caisse en direct.
   useEffect(() => {
     if (!state || barreGeleeRef.current) return;
     barreGeleeRef.current = true;
     instantaneXpRef.current = state.brocanteur;
+    budgetOuvertureRef.current = state.budget;
     gelerXpAffichage(state.brocanteur);
+    gelerBudgetAffichage(state.budget);
   }, [state]);
 
   // Filet : réarme le gel à chaque (re)montage (survit au double montage
@@ -237,7 +254,13 @@ export default function VitrineJourneePage() {
   // chemin (retour QG, navigation arrière, démontage).
   useEffect(() => {
     if (instantaneXpRef.current) gelerXpAffichage(instantaneXpRef.current);
-    return () => degelerXpAffichage();
+    if (budgetOuvertureRef.current !== null) {
+      gelerBudgetAffichage(budgetOuvertureRef.current);
+    }
+    return () => {
+      degelerXpAffichage();
+      degelerBudgetAffichage();
+    };
   }, []);
 
   const fancyClientApparuRef = useRef(false);
@@ -449,7 +472,7 @@ export default function VitrineJourneePage() {
         ventes: ventesEffectuees,
         invendus: tailleInvendus,
         xpGagne: {},
-        xpBrocanteur: xpBrocanteurSession,
+        xpBrocanteur: xpSession.ventes + xpSession.justePrix + xpSession.negociations,
       });
     }
 
@@ -462,7 +485,7 @@ export default function VitrineJourneePage() {
     enregistrerSession,
     state,
     ventesEffectuees,
-    xpBrocanteurSession,
+    xpSession,
   ]);
   terminerJourneeRef.current = terminerJournee;
 
@@ -679,6 +702,7 @@ export default function VitrineJourneePage() {
     // XP par objet vendu, pondérée par la rareté (unique = ×5).
     for (const p of ev.panier) {
       gagnerXPLocal(
+        "ventes",
         XP_VENTE_BROCANTEUR *
           multiplicateurXPRarete(
             p.objet.rarete,
@@ -694,7 +718,7 @@ export default function VitrineJourneePage() {
       ev.prixDemande,
     );
     enregistrerVentes(ev, ev.prixDemande);
-    gagnerXPLocal(XP_JUSTE_PRIX);
+    gagnerXPLocal("justePrix", XP_JUSTE_PRIX);
     ajouterJournal({
       heure: heureCourante(),
       texte: tr(d.vente.journalAchete, {
@@ -721,7 +745,7 @@ export default function VitrineJourneePage() {
       prixFinal,
     );
     enregistrerVentes(ev, prixFinal);
-    gagnerXPLocal(XP_NEGO_BROCANTEUR);
+    gagnerXPLocal("negociations", XP_NEGO_BROCANTEUR);
     ajouterJournal({
       heure: heureCourante(),
       texte: tr(d.vente.journalAccepte, {
@@ -848,39 +872,11 @@ export default function VitrineJourneePage() {
 
   const brocanteBg = brocante ? getBrocanteImageUrl(brocante.id) : null;
 
-  if (journeeFinie) {
-    return (
-      <SessionSummary
-        type="vente"
-        titre={
-          bravoTout
-            ? d.vente.bravoEtalVide
-            : tr(
-                totalVentes > 1
-                  ? d.vente.titreJourneeVentes
-                  : d.vente.titreJourneeUneVente,
-                { n: totalVentes },
-              )
-        }
-        sousTitre={
-          bravoTout
-            ? undefined
-            : totalVentes === 0
-              ? d.vente.journeeSansVente
-              : undefined
-        }
-        items={ventesEffectuees.map((v) => ({
-          templateId: v.templateId,
-          nom: v.nom,
-          categorie: v.categorie,
-          prix: v.prixVente,
-        }))}
-        xpGagne={{}}
-        xpBrocanteur={xpBrocanteurSession}
-        onRetour={handleRetourQg}
-      />
-    );
-  }
+  const lignesXpBilan: LigneXp[] = [
+    { cle: "ventes", montant: xpSession.ventes },
+    { cle: "justePrix", montant: xpSession.justePrix },
+    { cle: "negociations", montant: xpSession.negociations },
+  ];
 
   /* Persona révélé : compétence Lecteur d'âmes, ou célébrité (toujours à
      visage découvert). Sinon le client reste anonyme : nom générique et
@@ -902,7 +898,17 @@ export default function VitrineJourneePage() {
     >
       <MobileHeader budget={state.budget} />
 
-      <main style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
+      <main
+        style={{
+          flex: 1,
+          minHeight: 0,
+          position: "relative",
+          overflow: "hidden",
+          // Réserve la place de la bannière de tutoriel (0 hors tutoriel) : le
+          // fond flouté, en `inset: 0`, occupe aussi cette bande.
+          paddingTop: "var(--tuto-banniere-h, 0px)",
+        }}
+      >
         {brocanteBg && (
           <div
             aria-hidden
@@ -918,6 +924,25 @@ export default function VitrineJourneePage() {
             }}
           />
         )}
+        {journeeFinie ? (
+          <div style={{ position: "relative", zIndex: 1, height: "100%" }}>
+            <BilanSession
+              mode="vente"
+              titre={brocante ? nomBrocante(brocante, locale) : ""}
+              items={ventesEffectuees.map((v) => ({
+                templateId: v.templateId,
+                nom: v.nom,
+                categorie: v.categorie,
+                prix: v.prixVente,
+                prixAchat: v.prixAchat,
+              }))}
+              xpLignes={lignesXpBilan}
+              cibleVolItems='[data-fly-target="caisse-header"]'
+              compteur={{ kind: "recette" }}
+              onTermine={handleRetourQg}
+            />
+          </div>
+        ) : (
         <div
           style={{
             position: "relative",
@@ -992,10 +1017,13 @@ export default function VitrineJourneePage() {
         )}
 
         </div>
+        )}
       </main>
 
       {/* Header bas partagé : Sortir + dock d'atouts (zIndex 50 : reste
-          visible et actionnable au-dessus de la sheet de négociation). */}
+          visible et actionnable au-dessus de la sheet de négociation).
+          Le bilan apporte le sien, avec ses propres commandes. */}
+      {!journeeFinie && (
       <div
         style={{
           position: "relative",
@@ -1034,6 +1062,7 @@ export default function VitrineJourneePage() {
 
         <SkillDock skills={dockSkills()} />
       </div>
+      )}
 
       {clientActuel && !journeeFinie && (
         <NegociationSheet
@@ -1247,7 +1276,11 @@ function Horloge({
             inset: 0,
             width: `${progress}%`,
             background: "var(--forest-700)",
-            transition: "width 100ms linear",
+            // La largeur ne change qu'au changement de seconde entière (le
+            // tick de 100 ms ne re-rend pas la page). La transition doit donc
+            // couvrir toute la seconde : la barre glisse alors sans à-coups,
+            // au lieu de bondir en 100 ms puis d'attendre 900 ms.
+            transition: "width 1s linear",
           }}
         />
       </div>

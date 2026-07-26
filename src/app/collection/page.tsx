@@ -8,8 +8,6 @@ import { StickyTop } from "@/components/mobile/StickyTop";
 import { CategoriePicker } from "@/components/mobile/CategoriePicker";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { CollectionGrid } from "@/components/CollectionGrid";
-import { ColonnesSlider } from "@/components/mobile/ColonnesSlider";
-import { useColonnesCollection } from "@/lib/useColonnesCollection";
 import { CollectionDetailOverlay } from "@/components/mobile/CollectionDetailOverlay";
 import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -24,6 +22,14 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
+
+/**
+ * Réserve basse du <main> défilant (barre d'onglets + safe area). La planche
+ * de bois s'y étend, compensée par une marge négative de même valeur — donc à
+ * hauteur de défilement inchangée : sans ça, la texture s'arrêtait sous la
+ * dernière étagère et laissait une bande claire jusqu'à la barre d'onglets.
+ */
+const RESERVE_BAS = "calc(var(--mobile-tabbar-h) + var(--safe-bottom))";
 
 export default function CollectionPage() {
   const router = useRouter();
@@ -40,7 +46,6 @@ export default function CollectionPage() {
   const [slotActif, setSlotActif] = useState<CollectionSlot | null>(null);
   const [pickerOuvert, setPickerOuvert] = useState(false);
   const [objetADonner, setObjetADonner] = useState<Objet | null>(null);
-  const [colonnes, setColonnes] = useColonnesCollection();
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -120,7 +125,6 @@ export default function CollectionPage() {
   return (
   <>
     <MobileLayout
-      scrollPaddingBottom={56}
       header={<MobileHeader budget={state.budget} />}
       stickyTop={
         <StickyTop>
@@ -165,14 +169,14 @@ export default function CollectionPage() {
       <div
         style={{
           // Pleine largeur : annule le padding 12px du <main> du MobileLayout.
-          margin: "-12px -12px 0",
-          padding: "12px 0 4px",
+          // En bas, le bois recouvre la réserve du <main> (cf. RESERVE_BAS).
+          margin: `-12px -12px calc(-1 * (${RESERVE_BAS}))`,
+          padding: `12px 0 calc(4px + ${RESERVE_BAS})`,
           background: "var(--wood-light)",
         }}
       >
         <CollectionGrid
           slots={slotsFiltres}
-          colonnes={colonnes}
           enStockIds={enStockIds}
           onTap={(s) => {
             if (s.vu && s.vuDansCollection === false) {
@@ -183,7 +187,6 @@ export default function CollectionPage() {
         />
       </div>
     </MobileLayout>
-    <ColonnesSlider value={colonnes} onChange={setColonnes} />
     <CollectionDetailOverlay
       open={slotActif !== null && !pickerOuvert}
       onClose={() => setSlotActif(null)}

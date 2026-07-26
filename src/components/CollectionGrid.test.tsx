@@ -38,6 +38,7 @@ vi.mock("@/components/ui/ItemSticker", () => ({
 afterEach(() => {
   cleanup();
   stickerRenders.length = 0;
+  document.body.innerHTML = "";
 });
 
 function makeSlot(overrides: Partial<CollectionSlot> = {}): CollectionSlot {
@@ -215,8 +216,11 @@ describe("CollectionGrid", () => {
     expect(screen.queryByLabelText("Nouvellement découvert")).toBeNull();
   });
 
-  it("étagères : une planche par rangée (3 slots, colonnes=3 → 1 planche)", () => {
+  it("par défaut : 5 items par ligne (le réglage de zoom n'existe plus)", () => {
     render(<CollectionGrid slots={slots} />);
+    const rangee = screen.getAllByRole("button")[0].parentElement as HTMLElement;
+    expect(rangee.style.gridTemplateColumns).toBe("repeat(5, minmax(0, 1fr))");
+    // 3 slots tiennent donc sur une seule rangée → une seule planche.
     expect(screen.getAllByTestId("planche")).toHaveLength(1);
   });
 
@@ -240,6 +244,42 @@ describe("CollectionGrid", () => {
     expect(rangee.style.gridTemplateColumns).toBe("repeat(5, minmax(0, 1fr))");
     expect(rangee.style.boxSizing).toBe("border-box");
     expect(screen.getAllByTestId("planche")).toHaveLength(1);
+  });
+
+  /**
+   * Régression : le body du jeu est verrouillé (position: fixed), `window` ne
+   * défile jamais. Branchée sur le scroll de la fenêtre, la virtualisation
+   * restait figée à l'offset 0 et la collection s'arrêtait net au bout de
+   * quelques rangées en catégorie « Tout ».
+   */
+  describe("virtualisation", () => {
+    const beaucoup: CollectionSlot[] = Array.from({ length: 60 }, (_, i) =>
+      makeSlot({ templateId: `t${i}`, nom: `Objet ${i}` }),
+    );
+
+    /** Conteneur défilant rattaché au body, comme le <main> du MobileLayout. */
+    function monterDansScroller() {
+      const scroller = document.createElement("div");
+      scroller.style.overflowY = "auto";
+      const interieur = document.createElement("div");
+      scroller.appendChild(interieur);
+      document.body.appendChild(scroller);
+      return { scroller, interieur };
+    }
+
+    it("écoute le défilement du conteneur, pas celui de la fenêtre", () => {
+      const { scroller, interieur } = monterDansScroller();
+      const surConteneur = vi.spyOn(scroller, "addEventListener");
+      render(<CollectionGrid slots={beaucoup} colonnes={1} />, {
+        container: interieur,
+      });
+      expect(surConteneur.mock.calls.map((c) => c[0])).toContain("scroll");
+    });
+
+    it("sans ancêtre défilant, rend toutes les rangées (aucune troncature)", () => {
+      render(<CollectionGrid slots={beaucoup} colonnes={1} />);
+      expect(screen.getAllByRole("button")).toHaveLength(beaucoup.length);
+    });
   });
 
   it("étagères : planche et espaces proportionnels au zoom", () => {

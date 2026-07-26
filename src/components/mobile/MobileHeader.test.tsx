@@ -8,7 +8,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { MobileHeader } from "./MobileHeader";
-import { degelerXpAffichage, gelerXpAffichage } from "@/lib/xpAffichageGele";
+import { degelerXpAffichage, gelerXpAffichage } from "@/lib/affichageGele";
 
 afterEach(() => {
   degelerXpAffichage();

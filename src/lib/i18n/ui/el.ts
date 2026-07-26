@@ -369,12 +369,23 @@ export const el: DictionnaireUI = {
     xpDecouvertes: "Ανακαλύψεις",
     xpNegociations: "Παζάρια",
     xpTotal: "+{n} XP",
-    retourQg: "Επιστροφή στο αρχηγείο",
+    continuer: "Συνέχεια",
+    rentrerBoutique: "Επιστροφή στο μαγαζί",
     stockageAria: "Αποθήκη: {occupe} από {capacite}",
+    // — bilan de vente —
+    titreVente: "Απολογισμός ημέρας",
+    rienVendu: "Καμία πώληση σήμερα.",
+    unObjetVendu: "1 αντικείμενο · +{total} €",
+    nObjetsVendus: "{n} αντικείμενα · +{total} €",
+    beneficeTotal: "κέρδος {montant} €",
+    venteAchatVente: "αγορά {achat} € · πώληση {vente} €",
+    venteSansAchat: "πώληση {vente} € · χωρίς τιμή αγοράς",
+    xpVentes: "Πωλήσεις",
+    xpJustePrix: "Δίκαιη τιμή",
+    recetteAria: "Έσοδα: {montant} €",
   },
   inventaire: {
     // — stockage —
-    loyerHebdo: "ενοίκιο {n} €/εβδ",
     max: "MAX",
     impossible: "Αδύνατο",
     impossibleRaison: "Αδύνατο: {raison}",
@@ -477,7 +488,6 @@ export const el: DictionnaireUI = {
     tous: "Όλα",
     filtreParCategorie: "Φίλτρο ανά κατηγορία",
     nouveautes: "Νέα",
-    itemsParLigne: "Αντικείμενα ανά σειρά",
   },
   bibliotheque: {
     titre: "Δεξιότητες",

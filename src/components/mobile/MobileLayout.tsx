@@ -46,9 +46,11 @@ export function MobileLayout({
           overscrollBehavior: "contain",
           display: fillContent ? "flex" : undefined,
           flexDirection: fillContent ? "column" : undefined,
+          // `--tuto-banniere-h` : réserve la place de la bannière de tutoriel
+          // (calque flottant sous le header) tant qu'elle est affichée, 0 sinon.
           padding: fillContent
-            ? `0 0 calc(var(--mobile-tabbar-h) + var(--safe-bottom))`
-            : `12px 12px calc(${scrollPaddingBottom}px + var(--mobile-tabbar-h) + var(--safe-bottom))`,
+            ? `var(--tuto-banniere-h, 0px) 0 calc(var(--mobile-tabbar-h) + var(--safe-bottom))`
+            : `calc(12px + var(--tuto-banniere-h, 0px)) 12px calc(${scrollPaddingBottom}px + var(--mobile-tabbar-h) + var(--safe-bottom))`,
         }}
       >
         {children}

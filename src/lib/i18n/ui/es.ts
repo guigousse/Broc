@@ -364,12 +364,23 @@ export const es: DictionnaireUI = {
     xpDecouvertes: "Descubrimientos",
     xpNegociations: "Regateos",
     xpTotal: "+{n} XP",
-    retourQg: "Volver al cuartel",
+    continuer: "Continuar",
+    rentrerBoutique: "Volver a la tienda",
     stockageAria: "Almacén: {occupe} de {capacite}",
+    // — bilan de vente —
+    titreVente: "Balance del día",
+    rienVendu: "Ninguna venta hoy.",
+    unObjetVendu: "1 objeto · +{total} €",
+    nObjetsVendus: "{n} objetos · +{total} €",
+    beneficeTotal: "beneficio {montant} €",
+    venteAchatVente: "compra {achat} € · venta {vente} €",
+    venteSansAchat: "venta {vente} € · sin precio de compra",
+    xpVentes: "Ventas",
+    xpJustePrix: "Precio justo",
+    recetteAria: "Ingresos: {montant} €",
   },
   inventaire: {
     // — stockage —
-    loyerHebdo: "alquiler {n} €/sem",
     max: "MAX",
     impossible: "Imposible",
     impossibleRaison: "Imposible: {raison}",
@@ -472,7 +483,6 @@ export const es: DictionnaireUI = {
     tous: "Todos",
     filtreParCategorie: "Filtro por categoría",
     nouveautes: "Novedades",
-    itemsParLigne: "Objetos por fila",
   },
   bibliotheque: {
     titre: "Habilidades",

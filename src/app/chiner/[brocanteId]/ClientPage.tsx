@@ -42,7 +42,7 @@ import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import { tutorielActif } from "@/lib/tutoriel";
 import { BilanSession, type LigneXp } from "@/components/mobile/bilan/BilanSession";
-import { degelerXpAffichage, gelerXpAffichage } from "@/lib/xpAffichageGele";
+import { degelerXpAffichage, gelerXpAffichage } from "@/lib/affichageGele";
 import {
   XP_ACHAT_BROCANTEUR,
   multiplicateurXPRarete,
@@ -374,6 +374,7 @@ export default function SessionChinePage() {
    *  achats du total courant, ce qui laisse en place l'objet éventuellement
    *  tiré d'une boîte mystère pendant la session. */
   const stockageDepart = {
+    kind: "stockage" as const,
     occupe: Math.max(0, totalEnStock(state) - achats.length),
     capacite: getCapaciteStockage(state),
   };
@@ -468,6 +469,9 @@ export default function SessionChinePage() {
           position: "relative",
           overflow: "hidden",
           background: "var(--paper-100)",
+          // Réserve la place de la bannière de tutoriel (0 hors tutoriel) : le
+          // fond flouté, en `inset: 0`, occupe aussi cette bande.
+          paddingTop: "var(--tuto-banniere-h, 0px)",
         }}
       >
         {brocanteBg && (
@@ -488,6 +492,7 @@ export default function SessionChinePage() {
         <div style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}>
           {resumeOuvert ? (
             <BilanSession
+              mode="chinage"
               titre={nomBrocante(brocante, locale)}
               items={achats.map((a) => ({
                 templateId: a.templateId,
@@ -497,7 +502,7 @@ export default function SessionChinePage() {
               }))}
               xpLignes={lignesXpBilan}
               cibleVolItems='[data-fly-target="stockage-bilan"]'
-              stockageDepart={stockageDepart}
+              compteur={stockageDepart}
               onTermine={handleRetourQg}
             />
           ) : (

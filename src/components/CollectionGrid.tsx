@@ -9,7 +9,11 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import {
+  decalageDansParentDefilant,
+  trouverParentDefilant,
+} from "@/lib/parentDefilant";
 import { ItemSticker, type StickerVariant } from "@/components/ui/ItemSticker";
 import { prefetchThumbs, thumbUrlsForSlots } from "@/lib/prefetchThumbs";
 import { StarRow } from "@/components/ui/StarRow";
@@ -18,15 +22,18 @@ import { etoileCount } from "@/lib/etat";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
-import type { Colonnes } from "@/lib/useColonnesCollection";
 import type { CollectionSlot } from "@/types/game";
+
+/** Items par ligne. La page Collection s'en tient au défaut (5). */
+export type Colonnes = 1 | 2 | 3 | 4 | 5;
+
+const COLONNES_PAR_DEFAUT: Colonnes = 5;
 
 interface CollectionGridProps {
   slots: CollectionSlot[];
   onTap?: (slot: CollectionSlot) => void;
   /** TemplateIds présents dans l'inventaire du joueur (badge "+"). */
   enStockIds?: ReadonlySet<string>;
-  /** Items par ligne (réglé par le slider de zoom). */
   colonnes?: Colonnes;
 }
 
@@ -178,11 +185,47 @@ const CollectionCell = memo(function CollectionCell({
   );
 });
 
+interface RangeeProps {
+  rangee: CollectionSlot[];
+  colonnes: Colonnes;
+  planche: CSSProperties;
+  onTap: (slot: CollectionSlot) => void;
+  enStockIds?: ReadonlySet<string>;
+}
+
+/** Une rangée d'items posée sur sa planche d'étagère. */
+function Rangee({ rangee, colonnes, planche, onTap, enStockIds }: RangeeProps) {
+  return (
+    <>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${colonnes}, minmax(0, 1fr))`,
+          gap: "var(--gutter)",
+          padding: "0 var(--gutter)",
+          boxSizing: "border-box",
+        }}
+      >
+        {rangee.map((s) => (
+          <CollectionCell
+            key={s.templateId}
+            slot={s}
+            onTap={onTap}
+            enStock={enStockIds?.has(s.templateId) ?? false}
+          />
+        ))}
+      </div>
+      {/* Planche d'étagère sous la rangée */}
+      <div aria-hidden data-testid="planche" style={planche} />
+    </>
+  );
+}
+
 export function CollectionGrid({
   slots,
   onTap,
   enStockIds,
-  colonnes = 3,
+  colonnes = COLONNES_PAR_DEFAUT,
 }: CollectionGridProps) {
   // Wrapper stable (pattern latest-ref) : même si le parent passe une arrow
   // function inline recréée à chaque render, les cellules mémoïsées gardent
@@ -211,11 +254,28 @@ export function CollectionGrid({
   // La grille rend potentiellement tout le catalogue (centaines d'items).
   // Sans fenêtrage, chaque image se décode en mémoire et le coût des filtres
   // CSS s'accumule → saccades et, sous iOS, rechargement du WebView. On ne
-  // monte donc que les rangées visibles (le document scrolle au niveau window).
+  // monte donc que les rangées visibles.
+  //
+  // Le fenêtrage suit le CONTENEUR défilant (le <main> du MobileLayout), pas
+  // `window` : le body du jeu est verrouillé (position: fixed, cf. globals.css)
+  // et la fenêtre ne défile jamais. Branché sur window, le virtualiseur restait
+  // à l'offset 0 et la collection s'arrêtait après quelques rangées.
   const parentRef = useRef<HTMLDivElement>(null);
+  // `undefined` = pas encore résolu (avant le premier layout effect),
+  // `null` = aucun ancêtre défilant → rien à fenêtrer, on rend tout.
+  const [scrollEl, setScrollEl] = useState<HTMLElement | null | undefined>(
+    undefined,
+  );
   const [scrollMargin, setScrollMargin] = useState(0);
+
   useLayoutEffect(() => {
-    const top = parentRef.current?.offsetTop ?? 0;
+    if (parentRef.current) setScrollEl(trouverParentDefilant(parentRef.current));
+  }, []);
+
+  useLayoutEffect(() => {
+    const el = parentRef.current;
+    if (!el || !scrollEl) return;
+    const top = decalageDansParentDefilant(el, scrollEl);
     setScrollMargin((prev) => (prev !== top ? top : prev));
   });
 
@@ -229,8 +289,9 @@ export function CollectionGrid({
     return Math.round(cell + espacePlanche);
   }, [colonnes]);
 
-  const virtualizer = useWindowVirtualizer({
+  const virtualizer = useVirtualizer({
     count: rangees.length,
+    getScrollElement: () => scrollEl ?? null,
     estimateSize: estimateRow,
     overscan: 8,
     scrollMargin,
@@ -242,6 +303,25 @@ export function CollectionGrid({
     virtualizer.measure();
   }, [colonnes, virtualizer]);
 
+  // Aucun conteneur défilant (hors MobileLayout, tests) : pas de repère pour
+  // fenêtrer — on rend la grille entière plutôt que de la tronquer.
+  if (scrollEl === null) {
+    return (
+      <div ref={parentRef}>
+        {rangees.map((rangee) => (
+          <Rangee
+            key={rangee[0].templateId}
+            rangee={rangee}
+            colonnes={colonnes}
+            planche={planche}
+            onTap={stableOnTap}
+            enStockIds={enStockIds}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div ref={parentRef}>
       <div
@@ -251,44 +331,28 @@ export function CollectionGrid({
           height: virtualizer.getTotalSize(),
         }}
       >
-        {virtualizer.getVirtualItems().map((item) => {
-          const rangee = rangees[item.index];
-          return (
-            <div
-              key={item.key}
-              data-index={item.index}
-              ref={virtualizer.measureElement}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                transform: `translateY(${item.start - scrollMargin}px)`,
-              }}
-            >
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: `repeat(${colonnes}, minmax(0, 1fr))`,
-                  gap: "var(--gutter)",
-                  padding: "0 var(--gutter)",
-                  boxSizing: "border-box",
-                }}
-              >
-                {rangee.map((s) => (
-                  <CollectionCell
-                    key={s.templateId}
-                    slot={s}
-                    onTap={stableOnTap}
-                    enStock={enStockIds?.has(s.templateId) ?? false}
-                  />
-                ))}
-              </div>
-              {/* Planche d'étagère sous la rangée */}
-              <div aria-hidden data-testid="planche" style={planche} />
-            </div>
-          );
-        })}
+        {virtualizer.getVirtualItems().map((item) => (
+          <div
+            key={item.key}
+            data-index={item.index}
+            ref={virtualizer.measureElement}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              transform: `translateY(${item.start - scrollMargin}px)`,
+            }}
+          >
+            <Rangee
+              rangee={rangees[item.index]}
+              colonnes={colonnes}
+              planche={planche}
+              onTap={stableOnTap}
+              enStockIds={enStockIds}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

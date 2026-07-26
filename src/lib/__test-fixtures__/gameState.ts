@@ -43,7 +43,6 @@ export function createMockGameState(patch: Partial<GameState> = {}): GameState {
     meteoSemaine: [],
     celebriteActuelle: null,
     influenceUtilisee: false,
-    dernierLoyer: null,
     courriers: [],
     niveauAtelier: 1,
     niveauStockage: 1,

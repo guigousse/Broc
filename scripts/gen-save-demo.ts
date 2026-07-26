@@ -140,7 +140,6 @@ const state: GameState = {
   meteoSemaine: tirerMeteoSemaine(),
   celebriteActuelle: tirerCelebrite(),
   influenceUtilisee: false,
-  dernierLoyer: null,
   courriers: [],
   niveauAtelier: 3,
   niveauStockage: 3,

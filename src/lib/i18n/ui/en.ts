@@ -364,12 +364,23 @@ export const en: DictionnaireUI = {
     xpDecouvertes: "Discoveries",
     xpNegociations: "Haggling",
     xpTotal: "+{n} XP",
-    retourQg: "Back to HQ",
+    continuer: "Continue",
+    rentrerBoutique: "Back to the shop",
     stockageAria: "Storage: {occupe} of {capacite}",
+    // — bilan de vente —
+    titreVente: "Day's summary",
+    rienVendu: "No sales today.",
+    unObjetVendu: "1 item · +{total} €",
+    nObjetsVendus: "{n} items · +{total} €",
+    beneficeTotal: "profit {montant} €",
+    venteAchatVente: "bought {achat} € · sold {vente} €",
+    venteSansAchat: "sold {vente} € · no purchase price",
+    xpVentes: "Sales",
+    xpJustePrix: "Fair price",
+    recetteAria: "Takings: {montant} €",
   },
   inventaire: {
     // — stockage —
-    loyerHebdo: "rent {n} €/wk",
     max: "MAX",
     impossible: "Not possible",
     impossibleRaison: "Not possible: {raison}",
@@ -471,7 +482,6 @@ export const en: DictionnaireUI = {
     tous: "All",
     filtreParCategorie: "Filter by category",
     nouveautes: "New items",
-    itemsParLigne: "Items per row",
   },
   bibliotheque: {
     titre: "Skills",

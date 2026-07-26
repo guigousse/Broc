@@ -612,9 +612,9 @@ describe("migration v8 — Niveau de Brocanteur", () => {
       "cat.Musique": { xp: 350, niveau: 3, pointsDisponibles: 1 },
     };
     const migre = migrerSauvegarde(save);
-    // 150 + 350 = 500 XP → courbe 0,5N²+99,5N : niveau 4 (seuil 406), pas 5 (510)
-    // Refund v9 : pool = niveau + 2×chapitres livrés (0) − points dépensés (0) = 4
-    expect(migre.brocanteur).toEqual({ xp: 500, niveau: 4, pointsDisponibles: 4 });
+    // 150 + 350 = 500 XP → courbe log : niveau 3 (seuil N3=379), pas 4 (540)
+    // Refund v9 : pool = niveau + 2×chapitres livrés (0) − points dépensés (0) = 3
+    expect(migre.brocanteur).toEqual({ xp: 500, niveau: 3, pointsDisponibles: 3 });
     expect(migre.version).toBe(SAVE_VERSION);
   });
 
@@ -628,15 +628,15 @@ describe("migration v8 — Niveau de Brocanteur", () => {
 describe("migration v9 — refund du pool global", () => {
   it("pool = niveau + 2×chapitres livrés − points dépensés, clampé à 0", () => {
     const save = fabriqueSaveV7();
-    // 1100 XP d'arbres → niveau Brocanteur 10 (seuil N10=1045, N11=1150,5)
+    // 1100 XP d'arbres → niveau Brocanteur 7 (seuils N7=1076, N8=1268)
     (save as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 1100, niveau: 11, pointsDisponibles: 4 } };
     // 2 paliers achetés : reparer.1 (1 pt) + reparer.2 (1 pt, refonte v15 —
     // chaque palier coûte 1 pt) = 2 pts dépensés
     save.competencesDebloquees = ["cat.Musique.reparer.1", "cat.Musique.reparer.2"];
     const migre = migrerSauvegarde(save);
     expect(migre.version).toBe(SAVE_VERSION);
-    expect(migre.brocanteur.niveau).toBe(10);
-    expect(migre.brocanteur.pointsDisponibles).toBe(8); // 10 + 0 − 2
+    expect(migre.brocanteur.niveau).toBe(7);
+    expect(migre.brocanteur.pointsDisponibles).toBe(5); // 7 + 0 − 2
     expect(migre.competencesDebloquees).toEqual(["cat.Musique.reparer.1", "cat.Musique.reparer.2"]);
   });
 
@@ -688,11 +688,11 @@ describe("migration v9 — durcissement du fallback XP", () => {
   it("v9 malformée (pointsDisponibles NaN) : l'XP valide est préservée", () => {
     const save = {
       ...migrerSauvegarde(fabriqueSaveV7()),
-      brocanteur: { xp: 1100, niveau: 10, pointsDisponibles: NaN },
+      brocanteur: { xp: 1100, niveau: 7, pointsDisponibles: NaN },
     };
     const m = migrerSauvegarde(save);
     expect(m.brocanteur.xp).toBe(1100);
-    expect(m.brocanteur.niveau).toBe(10);
+    expect(m.brocanteur.niveau).toBe(7);
   });
 
   it("la migration ne mute pas son argument", () => {
@@ -805,7 +805,7 @@ describe("migration v10 — suppression de competenceTrees", () => {
     const save = fabriqueSaveV7();
     (save as unknown as Record<string, unknown>).competenceTrees = { general: { xp: 1100, niveau: 11, pointsDisponibles: 4 } };
     const migre = migrerSauvegarde(save);
-    expect(migre.brocanteur.niveau).toBe(10); // 1100 XP → N10 (0,5n²+99,5n : seuil N10=1045)
+    expect(migre.brocanteur.niveau).toBe(7); // 1100 XP → N7 (courbe log : seuil N7=1076)
   });
 });
 
@@ -1064,10 +1064,10 @@ describe("v15 — refonte des coûts de compétences (1 pt)", () => {
       general: { xp: 1100, niveau: 11, pointsDisponibles: 4 },
     };
     const out = migrerSauvegarde(save);
-    expect(out.brocanteur.niveau).toBe(10); // 1100 XP → N10 (seuil N10=1045)
-    // niveau (10) + bonus chapitres livrés (0) − dépenses au nouveau barème (3 × 1 = 3) = 7.
-    // Sans le garde <v9, le remboursement (0+1+2=3) porterait ce total à 10.
-    expect(out.brocanteur.pointsDisponibles).toBe(7);
+    expect(out.brocanteur.niveau).toBe(7); // 1100 XP → N7 (courbe log : seuil N7=1076)
+    // niveau (7) + bonus chapitres livrés (0) − dépenses au nouveau barème (3 × 1 = 3) = 4.
+    // Sans le garde <v9, le remboursement (0+1+2=3) porterait ce total à 7.
+    expect(out.brocanteur.pointsDisponibles).toBe(4);
   });
 
   it("l'écrêtage s'applique MÊME sans remboursement (< v9, niveau et chapitres livrés élevés)", () => {

@@ -367,12 +367,23 @@ export const fr = {
     xpDecouvertes: "Découvertes",
     xpNegociations: "Négociations",
     xpTotal: "+{n} XP",
-    retourQg: "Retour au QG",
+    continuer: "Continuer",
+    rentrerBoutique: "Rentrer à la boutique",
     stockageAria: "Stockage : {occupe} sur {capacite}",
+    // — bilan de vente —
+    titreVente: "Bilan de journée",
+    rienVendu: "Aucune vente aujourd'hui.",
+    unObjetVendu: "1 objet · +{total} €",
+    nObjetsVendus: "{n} objets · +{total} €",
+    beneficeTotal: "bénéfice {montant} €",
+    venteAchatVente: "achat {achat} € · vente {vente} €",
+    venteSansAchat: "vente {vente} € · sans prix d'achat",
+    xpVentes: "Ventes",
+    xpJustePrix: "Juste prix",
+    recetteAria: "Recette : {montant} €",
   },
   inventaire: {
     // — stockage —
-    loyerHebdo: "loyer {n} €/sem",
     max: "MAX",
     impossible: "Impossible",
     impossibleRaison: "Impossible : {raison}",
@@ -476,7 +487,6 @@ export const fr = {
     tous: "Tous",
     filtreParCategorie: "Filtre par catégorie",
     nouveautes: "Nouveautés",
-    itemsParLigne: "Items par ligne",
   },
   bibliotheque: {
     titre: "Compétences",

@@ -56,6 +56,17 @@ const mentionStyle: CSSProperties = {
   color: "var(--ink-500)",
 };
 
+/** Le chiffre qui compte (bénéfice d'une journée de vente) : plus haut que la
+ *  mention courante, dans la teinte forêt des gains. */
+const mentionForteStyle: CSSProperties = {
+  margin: "8px 0 0",
+  fontFamily: "var(--font-display)",
+  fontWeight: 700,
+  fontSize: 17,
+  letterSpacing: "0.06em",
+  color: "var(--forest-700)",
+};
+
 /**
  * Cadre art déco du bilan de session : éventails de chevrons dans les angles
  * hauts, double filet laiton, losange central. Il reste fixe pendant toute la
@@ -65,10 +76,13 @@ export function CadreBilan({
   titre,
   sousTitre,
   mention,
+  mentionSecondaire,
 }: {
   titre: string;
   sousTitre: string;
   mention: string;
+  /** Second chiffre mis en avant (le bénéfice d'une journée de vente). */
+  mentionSecondaire?: string;
 }) {
   return (
     <section style={cadre}>
@@ -90,6 +104,7 @@ export function CadreBilan({
       </div>
       <p style={sousTitreStyle}>{sousTitre}</p>
       <p style={mentionStyle}>{mention}</p>
+      {mentionSecondaire && <p style={mentionForteStyle}>{mentionSecondaire}</p>}
     </section>
   );
 }

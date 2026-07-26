@@ -166,18 +166,6 @@ function StockagePageInner() {
                   >
                     {nomStockageTier(tier, locale)} {totalEnStock(state)}/{capacite}
                   </div>
-                  {tier.loyerHebdo > 0 && (
-                    <div
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 9,
-                        color: "var(--ink-500)",
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      {tr(d.inventaire.loyerHebdo, { n: tier.loyerHebdo })}
-                    </div>
-                  )}
                 </div>
               }
               right={(() => {
