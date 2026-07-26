@@ -370,7 +370,6 @@ export const el: DictionnaireUI = {
     xpNegociations: "Παζάρια",
     xpTotal: "+{n} XP",
     retourQg: "Επιστροφή στο αρχηγείο",
-    retourQgAria: "Επιστροφή στο αρχηγείο",
     stockageAria: "Αποθήκη: {occupe} από {capacite}",
   },
   inventaire: {

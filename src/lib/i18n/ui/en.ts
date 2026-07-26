@@ -357,15 +357,14 @@ export const en: DictionnaireUI = {
   bilan: {
     titreChinage: "Picking summary",
     pochesVides: "Empty-handed.",
-    unObjetTotal: "1 item · −€{total}",
-    nObjetsTotal: "{n} items · −€{total}",
+    unObjetTotal: "1 item · −{total} €",
+    nObjetsTotal: "{n} items · −{total} €",
     xpEyebrow: "— experience —",
     xpAchats: "Purchases",
     xpDecouvertes: "Discoveries",
     xpNegociations: "Haggling",
     xpTotal: "+{n} XP",
     retourQg: "Back to HQ",
-    retourQgAria: "Back to HQ",
     stockageAria: "Storage: {occupe} of {capacite}",
   },
   inventaire: {

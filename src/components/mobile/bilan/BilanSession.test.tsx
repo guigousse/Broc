@@ -300,4 +300,12 @@ describe("BilanSession — mouvement réduit", () => {
     fireEvent.click(bouton);
     expect(onTermine).toHaveBeenCalledTimes(1);
   });
+
+  it("un seul son : pas de superposition ajout + rang", () => {
+    motionReduite = true;
+    monter();
+    fireEvent.click(screen.getByRole("button", { name: "Retour au QG" }));
+    expect(playPickup).toHaveBeenCalledTimes(1);
+    expect(playRarete).not.toHaveBeenCalled();
+  });
 });

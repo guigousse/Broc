@@ -368,7 +368,6 @@ export const fr = {
     xpNegociations: "Négociations",
     xpTotal: "+{n} XP",
     retourQg: "Retour au QG",
-    retourQgAria: "Retour au QG",
     stockageAria: "Stockage : {occupe} sur {capacite}",
   },
   inventaire: {

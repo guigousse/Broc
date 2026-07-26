@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { DoorOpen, Package } from "lucide-react";
 import { BarreBasSession } from "@/components/mobile/BarreBasSession";
 import { CadreBilan } from "@/components/mobile/bilan/CadreBilan";
@@ -118,11 +119,12 @@ export function BilanSession({
   };
 
   /** Rend sa vraie valeur à la barre de niveau. Le son de rang n'accompagne
-   *  le dégel que s'il y avait effectivement de l'XP à gagner. */
-  const degeler = () => {
+   *  le dégel que s'il y avait effectivement de l'XP à gagner, et seulement
+   *  si l'appelant ne joue pas déjà un son (mouvement réduit). */
+  const degeler = (avecSon = true) => {
     if (degelFaitRef.current) return;
     degelFaitRef.current = true;
-    if (fige.lignes.length > 0) audioManager.playRarete();
+    if (avecSon && fige.lignes.length > 0) audioManager.playRarete();
     degelerXpAffichage();
   };
 
@@ -184,23 +186,26 @@ export function BilanSession({
   };
 
   /** Pose l'état final d'un coup (passage de cérémonie, mouvement réduit). */
-  const poserEtatFinal = () => {
+  const poserEtatFinal = (avecSon = true) => {
     purgerTimeouts();
     setItemsPartis(fige.items.length);
     setItemsAtterris(fige.items.length);
     setLignesVisibles(fige.lignes.length);
     setPastilleVisible(fige.lignes.length > 0);
-    degeler();
+    degeler(avecSon);
   };
 
   const lancer = () => {
+    if (lance) return;
     // Les lignes hors champ enverraient leurs clones depuis l'extérieur de l'écran.
     refZone.current?.scrollTo({ top: 0 });
-    if (lance) return;
     setLance(true);
     if (prefersReducedMotion()) {
-      poserEtatFinal();
+      poserEtatFinal(false);
+      // Un seul accent sonore dans ce mode : l'ajout au stockage s'il y a eu
+      // des achats, sinon le gain de rang s'il y a eu de l'XP.
       if (fige.items.length > 0) audioManager.playPickup();
+      else if (fige.lignes.length > 0) audioManager.playRarete();
       setPretASortir(true);
       return;
     }
@@ -240,24 +245,30 @@ export function BilanSession({
 
   return (
     <div style={colonne}>
-      {/* Capteur de tap « passer » : couvre tout le calque, barre du bas
-          comprise (« un tap n'importe où »), et n'existe que pendant la
-          cérémonie animée — le bouton Retour au QG est de toute façon
-          désactivé à ce moment-là. */}
-      {lance && !pretASortir && (
-        <button
-          type="button"
-          data-testid="bilan-passer"
-          aria-hidden
-          tabIndex={-1}
-          onClick={passer}
-          style={capteurPassage}
-        />
-      )}
+      {/* Capteur de tap « passer » : porté sur document.body pour couvrir aussi
+          le header (« un tap n'importe où »), et notamment neutraliser le bouton
+          de recharge d'énergie — une pub lancée en pleine cérémonie verrait sa
+          récompense perdue par la navigation de fin. */}
+      {lance &&
+        !pretASortir &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <button
+            type="button"
+            data-testid="bilan-passer"
+            aria-hidden
+            tabIndex={-1}
+            onClick={passer}
+            style={capteurPassage}
+          />,
+          document.body,
+        )}
+
+      <div style={enTete}>
+        <CadreBilan titre={d.bilan.titreChinage} sousTitre={titre} mention={mention} />
+      </div>
 
       <div ref={refZone} style={zoneDefilante}>
-        <CadreBilan titre={d.bilan.titreChinage} sousTitre={titre} mention={mention} />
-
         {fige.items.length > 0 && (
           <ul style={liste}>
             {fige.items.map((it, i) => (
@@ -318,7 +329,7 @@ export function BilanSession({
         gauche={
           <button
             type="button"
-            aria-label={d.bilan.retourQgAria}
+            aria-label={d.bilan.retourQg}
             onClick={boutonRetour}
             disabled={lance && !pretASortir}
             style={{ ...boutonQg, opacity: lance && !pretASortir ? 0.45 : 1 }}
@@ -353,15 +364,22 @@ const colonne: CSSProperties = {
   height: "100%",
 };
 
-/** Capteur plein calque du tap « passer », au-dessus du contenu et de la barre. */
+/** Capteur du tap « passer » : porté sur document.body, au-dessus du header
+ *  (z-index 30) mais sous les overlays modaux du jeu (z-index 110+). */
 const capteurPassage: CSSProperties = {
-  position: "absolute",
+  position: "fixed",
   inset: 0,
-  zIndex: 1,
+  zIndex: 40,
   background: "transparent",
   border: "none",
   padding: 0,
   cursor: "pointer",
+};
+
+/** Le cadre est hors flux défilant : il reste l'ancrage visuel pendant que la
+ *  liste se vide (cf. spécification). */
+const enTete: CSSProperties = {
+  padding: "18px 16px 0",
 };
 
 const zoneDefilante: CSSProperties = {
@@ -369,7 +387,7 @@ const zoneDefilante: CSSProperties = {
   minHeight: 0,
   overflowY: "auto",
   WebkitOverflowScrolling: "touch",
-  padding: "18px 16px 24px",
+  padding: "14px 16px 24px",
   display: "flex",
   flexDirection: "column",
   gap: 14,
