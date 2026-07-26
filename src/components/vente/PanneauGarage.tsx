@@ -80,7 +80,6 @@ export function PanneauGarage(p: PanneauGarageProps) {
       type="button"
       onClick={p.onOuvrir}
       style={panneauStyle(p.peutPayer)}
-      aria-label={tr(d.vente.acheterVehicule, { prix })}
     >
       <span style={surtitreStyle}>{d.vente.concession}</span>
       <span style={nomStyle}>{nomCamion(p.prochain, locale)}</span>
