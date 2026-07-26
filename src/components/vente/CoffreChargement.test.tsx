@@ -3,7 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { CoffreChargement } from "./CoffreChargement";
 import { createMockObjetEnVitrine } from "@/lib/__test-fixtures__/gameState";
-import { RELEVE_BASCULE_MS } from "@/lib/releveVehicule";
+import {
+  RELEVE_BASCULE_MS,
+  RELEVE_DUREE_MS,
+  RELEVE_FONDU_SORTIE_MS,
+  RELEVE_PAUSE_MS,
+} from "@/lib/releveVehicule";
 
 afterEach(cleanup);
 
@@ -110,6 +115,85 @@ describe("CoffreChargement — concession", () => {
       });
     } finally {
       vi.useRealTimers();
+    }
+  });
+
+  it("le calque plein écran de la relève ne capte plus les gestes ; le bandeau devient la cible du saut", () => {
+    // NB (limite jsdom) : jsdom ne fait ni hit-testing ni `pointer-events` —
+    // un clic simulé atteint toujours l'élément visé, quelle que soit la
+    // pile de calques. On ne peut donc pas reproduire ici « un tap sur
+    // Valider traverse le calque » ; on vérifie ce qui EST vérifiable : la
+    // configuration pointerEvents qui produit ce comportement (calque
+    // transparent, bandeau opaque aux pointeurs), et que le bandeau
+    // lui-même déclenche bien le saut de séquence. La preuve par le geste
+    // réel (tap sur « Valider » pendant la relève) revient à la recette
+    // device.
+    vi.useFakeTimers();
+    try {
+      poser();
+      fireEvent.click(screen.getByText("Concession"));
+      fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
+
+      // Le bandeau n'apparaît qu'après le fondu de sortie + la pause.
+      act(() => {
+        vi.advanceTimersByTime(RELEVE_FONDU_SORTIE_MS + RELEVE_PAUSE_MS);
+      });
+
+      const bandeau = screen.getByRole("button", { name: "Break — 16 places" });
+      const calque = bandeau.parentElement as HTMLElement;
+
+      expect(calque.style.pointerEvents).toBe("none");
+      expect(bandeau.style.pointerEvents).toBe("auto");
+
+      // Le tap sur le bandeau lui-même saute bien la séquence.
+      fireEvent.click(bandeau);
+      expect(screen.queryByRole("button", { name: "Break — 16 places" })).toBeNull();
+
+      // Ne laisse aucun minuteur en suspens à la fin du test.
+      act(() => {
+        vi.advanceTimersByTime(RELEVE_DUREE_MS + 600);
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("deux achats coup sur coup ne laissent vivre qu'une seule relève (pas de boucle rAF orpheline)", () => {
+    // Angle honnêtement vérifiable en jsdom (pas d'accès direct à la boucle
+    // rAF interne) : si la première séquence n'était pas coupée avant que
+    // la seconde démarre, ses propres minuteurs arriveraient à échéance en
+    // même temps que ceux de la seconde et `onUpgrade` serait appelé deux
+    // fois. On vérifie aussi que la séquence se termine proprement (bandeau
+    // disparu, aucun avertissement React) et pas dans un état orphelin.
+    vi.useFakeTimers();
+    const erreurs = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const props = poser();
+
+      // Premier achat : arme une première relève (minuteurs + boucle rAF).
+      fireEvent.click(screen.getByText("Concession"));
+      fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
+
+      // La pancarte ne dépend que de niveauCamion (figé dans ce test) : elle
+      // reste affichée pendant la relève, comme en jeu réel — on peut donc
+      // la retaper et relancer un second achat avant la fin du premier.
+      fireEvent.click(screen.getByText("Concession"));
+      fireEvent.click(screen.getByRole("button", { name: "Acheter · 200 €" }));
+
+      act(() => {
+        vi.advanceTimersByTime(RELEVE_BASCULE_MS);
+      });
+      expect(props.onUpgrade).toHaveBeenCalledTimes(1);
+
+      // Va jusqu'au bout : le bandeau finit par disparaître proprement.
+      act(() => {
+        vi.advanceTimersByTime(RELEVE_DUREE_MS + 600);
+      });
+      expect(screen.queryByRole("button", { name: "Break — 16 places" })).toBeNull();
+      expect(erreurs).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+      erreurs.mockRestore();
     }
   });
 });

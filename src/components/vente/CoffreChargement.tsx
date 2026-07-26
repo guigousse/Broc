@@ -233,6 +233,11 @@ export function CoffreChargement(p: Props) {
    */
   const lancerReleve = useCallback(
     (niveauCible: NiveauCamion, nom: string, places: number) => {
+      // Une relève qui démarre coupe d'abord celle qui tournerait encore
+      // (double-tap sur Acheter, pancarte rouverte pendant la relève) :
+      // sans ça, la boucle rAF précédente continue à piloter l'opacité en
+      // roue libre, hors de tout contrôle, en plus d'empiler ses minuteurs.
+      arreterReleve();
       const debut = performance.now();
 
       releveTimersRef.current.push(
@@ -241,7 +246,12 @@ export function CoffreChargement(p: Props) {
           setBandeauReleve(tr(d.vente.vehiculeAcquis, { nom, n: places }));
           void audioManager.playDepartVoiture(RELEVE_FONDU_ENTREE_MS);
         }, RELEVE_FONDU_SORTIE_MS + RELEVE_PAUSE_MS),
-        window.setTimeout(() => setBandeauReleve(null), RELEVE_DUREE_MS + 600),
+        window.setTimeout(() => {
+          setBandeauReleve(null);
+          // Séquence allée à son terme sans saut : les trois minuteurs
+          // ci-dessus ont déjà tous été honorés, plus rien à annuler.
+          releveTimersRef.current = [];
+        }, RELEVE_DUREE_MS + 600),
       );
 
       const tick = (now: number) => {
@@ -255,7 +265,7 @@ export function CoffreChargement(p: Props) {
       };
       releveRafRef.current = requestAnimationFrame(tick);
     },
-    [p.onUpgrade, d, tr],
+    [arreterReleve, p.onUpgrade, d, tr],
   );
 
   const handleValider = () => {
@@ -428,7 +438,6 @@ export function CoffreChargement(p: Props) {
       )}
       {bandeauReleve && (
         <div
-          onClick={arreterReleve}
           style={{
             position: "fixed",
             inset: 0,
@@ -436,13 +445,27 @@ export function CoffreChargement(p: Props) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            // Transparent : la relève reste visible, mais un tap n'importe où
-            // la saute.
+            // Calque transparent aux pointeurs : sans ça il passe au-dessus
+            // de la barre d'actions (zIndex 50) et avale « Valider » ainsi
+            // que le drag des objets déjà chargés pendant toute la relève.
+            // Seul le bandeau lui-même (ci-dessous) redevient une cible.
+            pointerEvents: "none",
             background: "transparent",
           }}
         >
-          <span
+          {/* Le libellé (« Break — 16 places », etc.) nomme déjà le bouton :
+              pas d'aria-label, qui l'écraserait et l'appauvrirait. */}
+          <button
+            type="button"
+            onClick={arreterReleve}
             style={{
+              pointerEvents: "auto",
+              cursor: "pointer",
+              // Neutralise le rendu natif d'un <button>.
+              appearance: "none",
+              WebkitAppearance: "none",
+              font: "inherit",
+              margin: 0,
               padding: "8px 16px",
               background: "rgba(15,30,22,0.85)",
               border: "1px solid var(--brass-500)",
@@ -455,7 +478,7 @@ export function CoffreChargement(p: Props) {
             }}
           >
             {bandeauReleve}
-          </span>
+          </button>
         </div>
       )}
       {/* Spacer pour libérer la zone occupée par la barre fixed du bas
