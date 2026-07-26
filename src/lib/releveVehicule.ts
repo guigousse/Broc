@@ -9,16 +9,22 @@
  * coûterait plus qu'elle ne rapporte.
  */
 
+// Le rythme est volontairement posé : c'est le seul moment où le joueur voit
+// son véhicule remplacé, et le trajet est calé sur celui du départ en
+// brocante (3 500 ms) dont cette séquence est la citation. Pour accélérer ou
+// ralentir l'ensemble, c'est RELEVE_TRAJET_MS qu'il faut toucher — tout le
+// reste est proportionné autour.
+
 /** Fermeture du coffre avant le départ (durée du fondu ouvert → fermé). */
-export const RELEVE_FERMETURE_MS = 500;
+export const RELEVE_FERMETURE_MS = 600;
 /** Temps mort entre le coffre fermé et le premier mètre parcouru. */
-export const RELEVE_ATTENTE_MS = 350;
+export const RELEVE_ATTENTE_MS = 500;
 /** Éloignement de l'ancien véhicule (et, symétriquement, retour du nouveau). */
-export const RELEVE_TRAJET_MS = 1600;
+export const RELEVE_TRAJET_MS = 2600;
 /** Garage vide entre les deux véhicules. */
-export const RELEVE_ENTREDEUX_MS = 300;
+export const RELEVE_ENTREDEUX_MS = 450;
 /** Ouverture du coffre du nouveau véhicule, une fois rangé. */
-export const RELEVE_OUVERTURE_MS = 500;
+export const RELEVE_OUVERTURE_MS = 700;
 
 /**
  * Instant où le véhicule a quitté le cadre — c'est là que l'état bascule sur

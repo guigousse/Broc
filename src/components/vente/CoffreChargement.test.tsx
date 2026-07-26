@@ -258,11 +258,12 @@ describe("CoffreChargement — concession", () => {
       // I1).
       fireEvent.click(screen.getByRole("button", { name: "Charger" }));
 
-      // Même en avançant bien au-delà de toute la séquence de fermeture +
-      // attente + tween, rien ne s'est enclenché : preuve que le clic
-      // bloqué n'a armé aucun minuteur.
+      // Même en avançant bien au-delà de toute la séquence, rien ne s'est
+      // enclenché : preuve que le clic bloqué n'a armé aucun minuteur. La
+      // borne est dérivée des constantes — en dur, elle pourrirait au
+      // premier changement de rythme de la relève.
       act(() => {
-        vi.advanceTimersByTime(8000);
+        vi.advanceTimersByTime(RELEVE_DUREE_MS + 2000);
       });
       expect(props.onValider).not.toHaveBeenCalled();
 
@@ -278,7 +279,7 @@ describe("CoffreChargement — concession", () => {
       // défaut cosmétique contre un blocage permanent.
       fireEvent.click(screen.getByRole("button", { name: "Charger" }));
       act(() => {
-        vi.advanceTimersByTime(8000);
+        vi.advanceTimersByTime(RELEVE_DUREE_MS + 2000);
       });
       expect(props.onValider).toHaveBeenCalledTimes(1);
     } finally {
