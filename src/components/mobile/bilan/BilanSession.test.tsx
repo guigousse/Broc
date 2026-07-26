@@ -55,7 +55,6 @@ vi.mock("@/lib/i18n/LangueContext", () => ({
         xpNegociations: "Négociations",
         xpTotal: "+{n} XP",
         retourQg: "Retour au QG",
-        retourQgAria: "Retour au QG",
         stockageAria: "Stockage : {occupe} sur {capacite}",
       },
     },
@@ -216,6 +215,9 @@ describe("BilanSession — cérémonie", () => {
     unmount();
     act(() => void vi.advanceTimersByTime(10_000));
     expect(onTermine).not.toHaveBeenCalled();
+    // Le capteur est porté sur document.body : resté orphelin, il bloquerait
+    // toute l'interface, pas seulement le bilan.
+    expect(document.querySelector('[data-testid="bilan-passer"]')).toBeNull();
   });
 
   it("rien acheté, rien gagné : aucun son de rang", () => {
