@@ -15,6 +15,7 @@ describe("BoutonConcession", () => {
       <BoutonConcession
         actuel={ROGERS}
         ameliorable
+        prix={200}
         peutPayer
         inerte={false}
         onOuvrir={() => {}}
@@ -30,6 +31,7 @@ describe("BoutonConcession", () => {
       <BoutonConcession
         actuel={ROGERS}
         ameliorable
+        prix={200}
         peutPayer
         inerte={false}
         onOuvrir={() => {}}
@@ -40,12 +42,27 @@ describe("BoutonConcession", () => {
     ).toBeTruthy();
   });
 
-  it("grisé sans budget, mais toujours tapable", () => {
-    const onOuvrir = vi.fn();
+  it("affiche le prix du palier suivant sur l'étiquette", () => {
     render(
       <BoutonConcession
         actuel={ROGERS}
         ameliorable
+        prix={500}
+        peutPayer
+        inerte={false}
+        onOuvrir={() => {}}
+      />,
+    );
+    expect(screen.getByText("500 €")).toBeTruthy();
+  });
+
+  it("sans budget : étiquette ternie, mais bouton toujours tapable", () => {
+    const onOuvrir = vi.fn();
+    const { container } = render(
+      <BoutonConcession
+        actuel={ROGERS}
+        ameliorable
+        prix={200}
         peutPayer={false}
         inerte={false}
         onOuvrir={onOuvrir}
@@ -53,17 +70,44 @@ describe("BoutonConcession", () => {
     );
     const bouton = screen.getByRole("button");
     expect(bouton.hasAttribute("disabled")).toBe(false);
-    expect(Number(bouton.style.opacity)).toBeLessThan(1);
     fireEvent.click(bouton);
     expect(onOuvrir).toHaveBeenCalledTimes(1);
+
+    // C'est l'étiquette qui porte le manque de budget, pas la voiture.
+    const etiquette = screen.getByText("200 €");
+    expect(etiquette.style.color).toBe("var(--ink-300)");
+    expect(container.querySelector("img")).toBeTruthy();
   });
 
-  it("inerte : désactivé et non déclenchable", () => {
+  it("la voiture n'est jamais désaturée, quel que soit l'état", () => {
+    const etats = [
+      { ameliorable: true, peutPayer: true, inerte: false },
+      { ameliorable: true, peutPayer: false, inerte: false },
+      { ameliorable: false, peutPayer: true, inerte: false },
+      { ameliorable: true, peutPayer: true, inerte: true },
+    ];
+    for (const etat of etats) {
+      const { container } = render(
+        <BoutonConcession
+          actuel={ROGERS}
+          prix={200}
+          onOuvrir={() => {}}
+          {...etat}
+        />,
+      );
+      const bouton = container.querySelector("button")!;
+      expect(bouton.style.filter).toBe("");
+      cleanup();
+    }
+  });
+
+  it("inerte : désactivé, non déclenchable, et estompé comme ses voisins", () => {
     const onOuvrir = vi.fn();
     render(
       <BoutonConcession
         actuel={ROGERS}
         ameliorable
+        prix={200}
         peutPayer
         inerte
         onOuvrir={onOuvrir}
@@ -71,6 +115,7 @@ describe("BoutonConcession", () => {
     );
     const bouton = screen.getByRole("button");
     expect(bouton.hasAttribute("disabled")).toBe(true);
+    expect(Number(bouton.style.opacity)).toBeLessThan(1);
     fireEvent.click(bouton);
     expect(onOuvrir).not.toHaveBeenCalled();
   });
@@ -80,6 +125,7 @@ describe("BoutonConcession", () => {
       <BoutonConcession
         actuel={ROGERS}
         ameliorable
+        prix={200}
         peutPayer
         inerte={false}
         onOuvrir={() => {}}
@@ -88,12 +134,13 @@ describe("BoutonConcession", () => {
     expect(Number(screen.getByRole("button").style.opacity)).toBe(1);
   });
 
-  it("palier max (ameliorable=false) : trophée grisé, sans clé, non déclenchable", () => {
+  it("palier max : voiture seule en couleur, sans étiquette, non déclenchable", () => {
     const onOuvrir = vi.fn();
     const { container } = render(
       <BoutonConcession
         actuel={ROGERS}
         ameliorable={false}
+        prix={0}
         peutPayer
         inerte={false}
         onOuvrir={onOuvrir}
@@ -103,46 +150,13 @@ describe("BoutonConcession", () => {
       name: "Véhicule au niveau maximum",
     });
     expect(bouton.hasAttribute("disabled")).toBe(true);
-    // Pas de clé à molette : elle promettrait une amélioration qui n'existe
-    // plus.
+    // Ni flèche ni prix : ils annonceraient un achat qui n'existe plus. C'est
+    // cette absence — et non un grisage — qui distingue le trophée de l'état
+    // « budget insuffisant », lequel garde son étiquette.
     expect(container.querySelector("svg")).toBeNull();
+    expect(screen.queryByText(/€/)).toBeNull();
+    expect(container.querySelector("img")).toBeTruthy();
     fireEvent.click(bouton);
     expect(onOuvrir).not.toHaveBeenCalled();
-  });
-
-  it("palier max : grisaille distincte de l'état « budget insuffisant »", () => {
-    // Les deux états ne doivent pas se ressembler au point de se confondre :
-    // le manque de budget reste tapable et peu grisé, le trophée est
-    // inerte et totalement désaturé.
-    const { container: sansBudget } = render(
-      <BoutonConcession
-        actuel={ROGERS}
-        ameliorable
-        peutPayer={false}
-        inerte={false}
-        onOuvrir={() => {}}
-      />,
-    );
-    const boutonSansBudget = sansBudget.querySelector("button")!;
-
-    cleanup();
-
-    const { container: max } = render(
-      <BoutonConcession
-        actuel={ROGERS}
-        ameliorable={false}
-        peutPayer
-        inerte={false}
-        onOuvrir={() => {}}
-      />,
-    );
-    const boutonMax = max.querySelector("button")!;
-
-    expect(boutonSansBudget.style.filter).not.toBe(boutonMax.style.filter);
-    expect(Number(boutonSansBudget.style.opacity)).not.toBe(
-      Number(boutonMax.style.opacity),
-    );
-    expect(boutonMax.hasAttribute("disabled")).toBe(true);
-    expect(boutonSansBudget.hasAttribute("disabled")).toBe(false);
   });
 });

@@ -569,6 +569,7 @@ export function CoffreChargement(p: Props) {
           <BoutonConcession
             actuel={camion}
             ameliorable={prochainCamion !== null}
+            prix={prixProchain}
             peutPayer={p.budget >= prixProchain}
             inerte={closing}
             onOuvrir={() => setSheetOuverte(true)}
