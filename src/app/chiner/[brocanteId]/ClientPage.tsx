@@ -49,7 +49,7 @@ import {
   XP_DECOUVERTE_COLLECTION,
   XP_NEGO_BROCANTEUR,
 } from "@/lib/xp";
-import type { AchatHistorique, ObjetEnVente } from "@/types/game";
+import type { AchatHistorique, BrocanteurState, ObjetEnVente } from "@/types/game";
 
 export default function SessionChinePage() {
   const router = useRouter();
@@ -99,8 +99,10 @@ export default function SessionChinePage() {
     decouvertes: 0,
     negociations: 0,
   });
-  /** Occupation du stockage à l'entrée : le bilan fait monter le compteur. */
-  const stockageDepartRef = useRef({ occupe: 0, capacite: 0 });
+  /** Instantané de la barre XP pris à l'entrée. Conservé en ref parce que le
+   *  double montage de StrictMode dégèle au nettoyage sans repasser par le
+   *  bloc d'entrée (gardé par `entreePayeeRef`) : l'effet de montage le rejoue. */
+  const instantaneXpRef = useRef<BrocanteurState | null>(null);
   /** ID de l'objet dont la négociation est ouverte dans le BottomSheet. */
   const [negoOuverte, setNegoOuverte] = useState<string | null>(null);
   /** Le vendeur mystère est-il présent dans cette session (tiré à l'entrée) ? */
@@ -153,11 +155,8 @@ export default function SessionChinePage() {
         return router.replace(`/chiner?raison=energie&id=${brocante.id}`);
       }
       entreePayeeRef.current = true;
+      instantaneXpRef.current = state.brocanteur;
       gelerXpAffichage(state.brocanteur);
-      stockageDepartRef.current = {
-        occupe: totalEnStock(state),
-        capacite: getCapaciteStockage(state),
-      };
       payerFraisBrocante(brocante.id, brocante.nom, frais);
       consommerEnergie(1);
       const jourSemaine = indexJourSemaine(state.jourActuel);
@@ -194,8 +193,12 @@ export default function SessionChinePage() {
   }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast, d, tr]);
 
   // Filet : quel que soit le chemin de sortie (retour arrière, navigation
-  // directe, remontée après kill), la barre XP ne reste jamais gelée.
-  useEffect(() => () => degelerXpAffichage(), []);
+  // directe, remontée après kill), la barre XP ne reste jamais gelée. Le gel
+  // est réarmé ici pour survivre au double montage de StrictMode.
+  useEffect(() => {
+    if (instantaneXpRef.current) gelerXpAffichage(instantaneXpRef.current);
+    return () => degelerXpAffichage();
+  }, []);
 
   // Entrée de session pendant le tutoriel : le grand-père présente la chine.
   useEffect(() => {
@@ -293,10 +296,10 @@ export default function SessionChinePage() {
   };
 
   /** Achat à un prix personnalisé (depuis la négo ou le bouton direct). */
-  const handleAchatAuPrix = (it: ObjetEnVente, prix: number) => {
+  const handleAchatAuPrix = (it: ObjetEnVente, prix: number): boolean => {
     if (state.budget < prix) {
       toast(d.chine.caisseRefuse, { type: "erreur" });
-      return;
+      return false;
     }
     ajusterBudget(-prix);
     ajouterObjet({ ...it.objet, prixAchat: prix });
@@ -330,6 +333,7 @@ export default function SessionChinePage() {
     if (etape === "premier-achat") {
       setDialogueTuto(SEQUENCES_TUTORIEL.tuto_achat_fait);
     }
+    return true;
   };
 
   const handleRentrer = () => {
@@ -365,6 +369,14 @@ export default function SessionChinePage() {
     { cle: "decouvertes", montant: xpSession.decouvertes },
     { cle: "negociations", montant: xpSession.negociations },
   ];
+
+  /** Occupation du stockage AVANT les achats de la session : on retranche les
+   *  achats du total courant, ce qui laisse en place l'objet éventuellement
+   *  tiré d'une boîte mystère pendant la session. */
+  const stockageDepart = {
+    occupe: Math.max(0, totalEnStock(state) - achats.length),
+    capacite: getCapaciteStockage(state),
+  };
 
   /** Les 3 atouts du chinage, dans l'ordre de déblocage (cercles du header bas). */
   const dockSkills = (currentItem: ObjetEnVente | null): DockSkill[] => {
@@ -485,7 +497,7 @@ export default function SessionChinePage() {
               }))}
               xpLignes={lignesXpBilan}
               cibleVolItems='[data-fly-target="stockage-bilan"]'
-              stockageDepart={stockageDepartRef.current}
+              stockageDepart={stockageDepart}
               onTermine={handleRetourQg}
             />
           ) : (
@@ -512,8 +524,9 @@ export default function SessionChinePage() {
                   onCollapse={() => setNegoOuverte(null)}
                   onUpdateNego={(nego) => setItem(item.id, { negociation: nego })}
                   onConclu={(prixFinal) => {
-                    handleAchatAuPrix(item, prixFinal);
-                    gagnerXPLocal("negociations", XP_NEGO_BROCANTEUR);
+                    if (handleAchatAuPrix(item, prixFinal)) {
+                      gagnerXPLocal("negociations", XP_NEGO_BROCANTEUR);
+                    }
                     setNegoOuverte(null);
                   }}
                   onAcheterDirect={() => handleAcheter(item.id)}
