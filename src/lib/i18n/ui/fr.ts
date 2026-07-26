@@ -108,7 +108,6 @@ export const fr = {
     energieInsuffisante: "Pas assez d'énergie pour cette sortie !",
     ameliorerVersNiveau: "Améliorer vers LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
-    xpGagne: "+{n} XP",
     errorTitre: "Oups, un grain de sable…",
     errorCorps:
       "Une erreur inattendue s’est produite. Ta partie est sauvegardée — un simple rechargement suffit le plus souvent.",

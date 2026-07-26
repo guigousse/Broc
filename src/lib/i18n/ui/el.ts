@@ -105,7 +105,6 @@ export const el: DictionnaireUI = {
     energieInsuffisante: "Δεν έχεις αρκετή ενέργεια για αυτή την έξοδο!",
     ameliorerVersNiveau: "Αναβάθμιση σε LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
-    xpGagne: "+{n} XP",
     errorTitre: "Ουπς, κάτι σκάλωσε…",
     errorCorps:
       "Παρουσιάστηκε ένα απρόοπτο σφάλμα. Η παρτίδα σου είναι αποθηκευμένη — συνήθως αρκεί μια απλή επαναφόρτωση.",

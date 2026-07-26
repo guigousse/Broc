@@ -105,7 +105,6 @@ export const es: DictionnaireUI = {
     energieInsuffisante: "¡No tienes energía suficiente para esta salida!",
     ameliorerVersNiveau: "Mejorar a LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
-    xpGagne: "+{n} XP",
     errorTitre: "Vaya, un pequeño contratiempo…",
     errorCorps:
       "Se ha producido un error inesperado. Tu partida está guardada — recargar suele bastar.",

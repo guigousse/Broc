@@ -52,7 +52,7 @@ import {
 import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
 import { getBrocanteById, fraisEntree } from "@/data/brocantes";
-import { useXpFloats, XpFloatsVue } from "@/components/mobile/XpFloats";
+import { degelerXpAffichage, gelerXpAffichage } from "@/lib/xpAffichageGele";
 import { getTemplate } from "@/data/objetTemplates";
 import {
   XP_JUSTE_PRIX,
@@ -89,6 +89,7 @@ import {
 } from "@/lib/i18n/contenu";
 import type { Locale } from "@/lib/i18n/locales";
 import type {
+  BrocanteurState,
   CategorieObjet,
   EtatObjet,
   NiveauCamion,
@@ -208,13 +209,37 @@ export default function VitrineJourneePage() {
   const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
   const etape = state?.tutorielEtape;
 
-  const { floats, pousserXp } = useXpFloats();
-
   const gagnerXPLocal = (montant: number) => {
     gagnerXPBrocanteur(montant);
     setXpBrocanteurSession((prev) => prev + montant);
-    pousserXp(montant);
   };
+
+  /** Garde : la barre est gelée une seule fois, sur l'état d'entrée de session. */
+  const barreGeleeRef = useRef(false);
+  /** Instantané de la barre XP pris à l'entrée en vente. Conservé en ref : le
+   *  double montage StrictMode (create → cleanup → create) dégèle au nettoyage
+   *  sans repasser par le bloc de gel ci-dessous (gardé par `barreGeleeRef`) —
+   *  c'est l'effet de montage juste après qui réarme le gel à chaque
+   *  (re)montage, cf. même remède sur src/app/chiner/[brocanteId]/ClientPage.tsx. */
+  const instantaneXpRef = useRef<BrocanteurState | null>(null);
+
+  // La barre XP ne progresse pas pendant la vente : elle rattrape au retour
+  // au QG (la vente n'a pas encore sa cérémonie de bilan).
+  useEffect(() => {
+    if (!state || barreGeleeRef.current) return;
+    barreGeleeRef.current = true;
+    instantaneXpRef.current = state.brocanteur;
+    gelerXpAffichage(state.brocanteur);
+  }, [state]);
+
+  // Filet : réarme le gel à chaque (re)montage (survit au double montage
+  // StrictMode) et dégèle systématiquement à la sortie, quel que soit le
+  // chemin (retour QG, navigation arrière, démontage).
+  useEffect(() => {
+    if (instantaneXpRef.current) gelerXpAffichage(instantaneXpRef.current);
+    return () => degelerXpAffichage();
+  }, []);
+
   const fancyClientApparuRef = useRef(false);
   fancyClientApparuRef.current = fancyClientApparu;
   const celebriteApparueRef = useRef(false);
@@ -876,7 +901,6 @@ export default function VitrineJourneePage() {
       }}
     >
       <MobileHeader budget={state.budget} />
-      <XpFloatsVue floats={floats} />
 
       <main style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
         {brocanteBg && (
