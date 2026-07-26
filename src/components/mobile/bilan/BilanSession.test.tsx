@@ -25,8 +25,12 @@ vi.mock("@/lib/flyAnimation", () => ({
 }));
 
 const degel = vi.fn();
-vi.mock("@/lib/xpAffichageGele", () => ({
+const degelBudget = vi.fn();
+const supplements: number[] = [];
+vi.mock("@/lib/affichageGele", () => ({
   degelerXpAffichage: () => degel(),
+  degelerBudgetAffichage: () => degelBudget(),
+  poserSupplementBudget: (montant: number) => supplements.push(montant),
 }));
 
 let motionReduite = false;
@@ -36,8 +40,16 @@ vi.mock("@/lib/transitionIris", () => ({
 
 const playPickup = vi.fn();
 const playRarete = vi.fn();
+const playCash = vi.fn();
 vi.mock("@/lib/audio/audioManager", () => ({
-  audioManager: { playPickup: () => playPickup(), playRarete: () => playRarete() },
+  audioManager: {
+    playPickup: () => playPickup(),
+    playRarete: () => playRarete(),
+    playCash: () => {
+      playCash();
+      return Promise.resolve();
+    },
+  },
 }));
 
 vi.mock("@/lib/i18n/LangueContext", () => ({
@@ -116,6 +128,9 @@ beforeEach(() => {
   vi.useFakeTimers();
   vols.length = 0;
   degel.mockClear();
+  degelBudget.mockClear();
+  supplements.length = 0;
+  playCash.mockClear();
   playPickup.mockClear();
   playRarete.mockClear();
   motionReduite = false;
@@ -442,5 +457,71 @@ describe("BilanSession — mode vente", () => {
     expect(screen.getByText("+120 €")).toBeTruthy();
     act(() => void vi.advanceTimersByTime(DECALAGE_ITEM_MS));
     expect(screen.getByText("+180 €")).toBeTruthy();
+  });
+});
+
+describe("BilanSession — la caisse encaisse en direct", () => {
+  const VENTES = [
+    { templateId: "chaise-thonet", nom: "Chaise Thonet", categorie: "Maison" as const, prix: 120, prixAchat: 45 },
+    { templateId: "poste-tsf", nom: "Poste TSF", categorie: "Musique" as const, prix: 60, prixAchat: 80 },
+  ];
+
+  function monterVente() {
+    const onTermine = vi.fn();
+    render(
+      <BilanSession
+        mode="vente"
+        titre="Vide-grenier du quartier"
+        items={VENTES}
+        xpLignes={[{ cle: "ventes", montant: 40 }]}
+        cibleVolItems='[data-fly-target="caisse-header"]'
+        compteur={{ kind: "recette" }}
+        onTermine={onTermine}
+      />,
+    );
+    return { onTermine };
+  }
+
+  it("chaque atterrissage pose le cumul encaissé, pas un delta", () => {
+    monterVente();
+    fireEvent.click(bouton("Continuer"));
+    act(() => void vi.advanceTimersByTime(VOL_MS));
+    expect(supplements).toEqual([120]);
+    act(() => void vi.advanceTimersByTime(DECALAGE_ITEM_MS));
+    expect(supplements).toEqual([120, 180]);
+  });
+
+  it("l'argent qui atterrit sonne comme de l'argent, pas comme un rangement", () => {
+    monterVente();
+    fireEvent.click(bouton("Continuer"));
+    act(() => void vi.advanceTimersByTime(VOL_MS));
+    expect(playCash).toHaveBeenCalledTimes(1);
+    expect(playPickup).not.toHaveBeenCalled();
+  });
+
+  it("passer la cérémonie encaisse tout d'un coup", () => {
+    monterVente();
+    fireEvent.click(bouton("Continuer"));
+    act(() => void vi.advanceTimersByTime(0));
+    fireEvent.click(screen.getByTestId("bilan-passer"));
+    expect(supplements[supplements.length - 1]).toBe(180);
+  });
+
+  it("le dégel rend la caisse à sa vraie valeur", () => {
+    monterVente();
+    fireEvent.click(bouton("Continuer"));
+    act(() => void vi.advanceTimersByTime(FIN_ACTE_1));
+    expect(degelBudget).not.toHaveBeenCalled();
+    fireEvent.click(bouton("Rentrer à la boutique"));
+    act(() => void vi.advanceTimersByTime(VOL_MS));
+    expect(degelBudget).toHaveBeenCalledTimes(1);
+  });
+
+  it("en chinage, la caisse n'est jamais touchée", () => {
+    monter();
+    fireEvent.click(bouton("Continuer"));
+    act(() => void vi.advanceTimersByTime(10_000));
+    expect(supplements).toEqual([]);
+    expect(playCash).not.toHaveBeenCalled();
   });
 });

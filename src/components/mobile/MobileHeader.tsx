@@ -8,7 +8,7 @@ import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { ENERGIE_MAX, energieCourante } from "@/lib/energie";
 import { emptyBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
-import { useXpAffiche } from "@/lib/xpAffichageGele";
+import { useBudgetAffiche, useXpAffiche } from "@/lib/affichageGele";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { EnergieRecharge } from "./EnergieRecharge";
@@ -100,6 +100,9 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   // Pendant une session, la barre est figée sur un instantané : elle ne
   // progresse qu'à la cérémonie de bilan (envol de la pastille XP).
   const brocanteurAffiche = useXpAffiche(state?.brocanteur ?? BROCANTEUR_REPLI);
+  // Idem pour la caisse pendant une journée de vente : elle n'encaisse qu'au
+  // bilan, quand chaque prix de vente vient s'y poser.
+  const budgetAffiche = useBudgetAffiche(budget);
 
   const energieMax = ENERGIE_MAX;
   const energie = state
@@ -221,7 +224,9 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
         <div style={{ textAlign: "right", ...labelStyle }} data-fly-target="caisse-header">
           {d.chrome.caisse}
           <strong style={valueStyle}>
-            {tr(d.chrome.montantEuros, { valeur: budget.toLocaleString(locale) })}
+            {tr(d.chrome.montantEuros, {
+              valeur: budgetAffiche.toLocaleString(locale),
+            })}
           </strong>
         </div>
       </div>

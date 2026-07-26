@@ -52,7 +52,12 @@ import {
 import type { NegociationState } from "@/types/game";
 import { genererPoolClients, type ClientPersonnage } from "@/data/clients";
 import { getBrocanteById, fraisEntree } from "@/data/brocantes";
-import { degelerXpAffichage, gelerXpAffichage } from "@/lib/xpAffichageGele";
+import {
+  degelerBudgetAffichage,
+  degelerXpAffichage,
+  gelerBudgetAffichage,
+  gelerXpAffichage,
+} from "@/lib/affichageGele";
 import { getTemplate } from "@/data/objetTemplates";
 import {
   XP_JUSTE_PRIX,
@@ -230,14 +235,18 @@ export default function VitrineJourneePage() {
    *  c'est l'effet de montage juste après qui réarme le gel à chaque
    *  (re)montage, cf. même remède sur src/app/chiner/[brocanteId]/ClientPage.tsx. */
   const instantaneXpRef = useRef<BrocanteurState | null>(null);
+  /** Caisse à l'ouverture de la journée, même traitement que la barre XP. */
+  const budgetOuvertureRef = useRef<number | null>(null);
 
-  // La barre XP ne progresse pas pendant la vente : elle rattrape au retour
-  // au QG (la vente n'a pas encore sa cérémonie de bilan).
+  // Ni la barre XP ni la caisse ne bougent pendant la vente : tout se pose au
+  // bilan, chaque prix de vente venant s'ajouter à la caisse en direct.
   useEffect(() => {
     if (!state || barreGeleeRef.current) return;
     barreGeleeRef.current = true;
     instantaneXpRef.current = state.brocanteur;
+    budgetOuvertureRef.current = state.budget;
     gelerXpAffichage(state.brocanteur);
+    gelerBudgetAffichage(state.budget);
   }, [state]);
 
   // Filet : réarme le gel à chaque (re)montage (survit au double montage
@@ -245,7 +254,13 @@ export default function VitrineJourneePage() {
   // chemin (retour QG, navigation arrière, démontage).
   useEffect(() => {
     if (instantaneXpRef.current) gelerXpAffichage(instantaneXpRef.current);
-    return () => degelerXpAffichage();
+    if (budgetOuvertureRef.current !== null) {
+      gelerBudgetAffichage(budgetOuvertureRef.current);
+    }
+    return () => {
+      degelerXpAffichage();
+      degelerBudgetAffichage();
+    };
   }, []);
 
   const fancyClientApparuRef = useRef(false);

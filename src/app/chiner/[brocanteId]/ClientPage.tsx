@@ -42,7 +42,7 @@ import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import { tutorielActif } from "@/lib/tutoriel";
 import { BilanSession, type LigneXp } from "@/components/mobile/bilan/BilanSession";
-import { degelerXpAffichage, gelerXpAffichage } from "@/lib/xpAffichageGele";
+import { degelerXpAffichage, gelerXpAffichage } from "@/lib/affichageGele";
 import {
   XP_ACHAT_BROCANTEUR,
   multiplicateurXPRarete,

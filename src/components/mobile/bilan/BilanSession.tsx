@@ -22,7 +22,11 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { getItemThumbUrl } from "@/lib/itemImages";
 import { getRarityColors } from "@/lib/rarityColors";
 import { prefersReducedMotion } from "@/lib/transitionIris";
-import { degelerXpAffichage } from "@/lib/xpAffichageGele";
+import {
+  degelerBudgetAffichage,
+  degelerXpAffichage,
+  poserSupplementBudget,
+} from "@/lib/affichageGele";
 import type { CategorieObjet } from "@/types/game";
 
 export type ModeBilan = "chinage" | "vente";
@@ -170,12 +174,30 @@ export function BilanSession({
     degelFaitRef.current = true;
     if (avecSon && fige.lignes.length > 0) audioManager.playRarete();
     degelerXpAffichage();
+    // La caisse reprend elle aussi sa vraie valeur : sur un jour de loyer, le
+    // prélèvement hebdomadaire (appliqué à l'avancée du jour, avant le bilan)
+    // apparaît ici, en même temps que la barre de niveau se cale.
+    degelerBudgetAffichage();
   };
 
   const volerItem = (index: number) => {
     const el = refsItems.current.get(index);
     const item = fige.items[index];
     if (!el || !item) return;
+    if (mode === "vente") {
+      // Vente : c'est l'argent qui part vers la caisse, pas l'objet — il a
+      // quitté le stock, il ne va nulle part. Le son d'encaissement est joué
+      // à l'atterrissage (cf. « atterrissageItem »).
+      flyToTab({
+        fromRect: el.getBoundingClientRect(),
+        imageUrl: null,
+        fallbackBg: "var(--paper-100)",
+        borderColor: "var(--brass-500)",
+        targetSelector: cibleVolItems,
+        playSound: false,
+      });
+      return;
+    }
     const template = getTemplate(item.templateId);
     const rarity = getRarityColors(template?.rarete ?? "commun", template?.unique === true);
     flyToTab({
@@ -185,6 +207,17 @@ export function BilanSession({
       borderColor: rarity.outer,
       targetSelector: cibleVolItems,
     });
+  };
+
+  /** Recette cumulée des `n` premiers objets — l'ordre de la liste est celui
+   *  des envols, donc ce cumul suit exactement ce qui a atterri. */
+  const recetteJusqua = (n: number) =>
+    fige.items.slice(0, n).reduce((s, it) => s + it.prix, 0);
+
+  /** Vente : chaque atterrissage pose l'argent dans la caisse du header. */
+  const encaisser = (nbAtterris: number) => {
+    if (mode !== "vente") return;
+    poserSupplementBudget(recetteJusqua(nbAtterris));
   };
 
   const volerPastille = () => {
@@ -210,6 +243,8 @@ export function BilanSession({
         break;
       case "atterrissageItem":
         setItemsAtterris(etape.index + 1);
+        encaisser(etape.index + 1);
+        if (mode === "vente") void audioManager.playCash();
         break;
       case "ligneXp":
         setLignesVisibles(etape.index + 1);
@@ -234,6 +269,7 @@ export function BilanSession({
     purgerTimeouts();
     setItemsPartis(fige.items.length);
     setItemsAtterris(fige.items.length);
+    encaisser(fige.items.length);
     setLignesVisibles(fige.lignes.length);
     setPastilleVisible(fige.lignes.length > 0);
   };
@@ -376,10 +412,17 @@ export function BilanSession({
                       : undefined,
                 }}
               >
+                {/* La ref porte la source du vol : le sticker en chinage
+                    (l'objet rejoint le stockage), l'étiquette en vente
+                    (l'argent rejoint la caisse). */}
                 <span
-                  ref={(el) => {
-                    refsItems.current.set(i, el);
-                  }}
+                  ref={
+                    mode === "chinage"
+                      ? (el) => {
+                          refsItems.current.set(i, el);
+                        }
+                      : undefined
+                  }
                   style={{ display: "inline-flex" }}
                 >
                   <ItemSticker templateId={it.templateId} categorie={it.categorie} thumb />
@@ -403,6 +446,9 @@ export function BilanSession({
                   <span style={prixItem}>−{it.prix} €</span>
                 ) : (
                   <span
+                    ref={(el) => {
+                      refsItems.current.set(i, el);
+                    }}
                     style={{
                       ...prixItem,
                       color:
