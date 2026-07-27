@@ -2,6 +2,7 @@ import {
   safeLocalStorageGet,
   safeLocalStorageSet,
 } from "@/lib/storage/safeLocalStorage";
+import { inverserEtRogner } from "@/lib/audio/inverserSon";
 
 export interface AudioPrefs {
   volume: number;
@@ -29,6 +30,13 @@ interface AudioPrefsLegacy {
 }
 
 const STORAGE_KEY = "projet-broc:audio:v1";
+
+/**
+ * Vitesse de lecture du coffre qui s'ouvre (le son de fermeture retourné).
+ * Sous 1, le battant se relève lentement et sonne plus grave — un coffre
+ * qu'on ouvre n'a pas la sécheresse d'un coffre qu'on claque.
+ */
+const COFFRE_OUVRE_VITESSE = 0.6;
 
 type WindowAudio = typeof window & { webkitAudioContext?: typeof AudioContext };
 
@@ -449,14 +457,40 @@ class AudioManager {
   }
 
   /**
-   * Démarrage et départ de la voiture. Lu jusqu'à `durationMs`, avec un
-   * fondu de sortie sur la dernière seconde pour simuler l'éloignement final.
+   * Coffre qui s'ouvre : le son de fermeture joué à l'envers. Le geste étant
+   * l'exact inverse, l'inversion du tampon suffit — pas d'asset supplémentaire.
+   * Le tampon retourné est mis en cache après la première inversion.
+   *
+   * Ralenti : une fermeture est un geste sec, une ouverture est plus posée.
+   * Le `playbackRate` abaisse aussi la hauteur, ce qui pèse le battant.
    */
-  async playDepartVoiture(durationMs: number): Promise<void> {
+  async playCoffreOuvre(): Promise<void> {
     if (!this.prefs.effets) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
-    const buf = await this.loadBuffer("/sounds/depart-voiture.mp3");
+    const buf = await this.loadBufferInverse("/sounds/coffre-ferme.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = COFFRE_OUVRE_VITESSE;
+    src.connect(this.master);
+    src.start();
+  }
+
+  /**
+   * Démarrage et départ de la voiture. Lu jusqu'à `durationMs`, avec un
+   * fondu de sortie sur la dernière seconde pour simuler l'éloignement final.
+   *
+   * `inverse` lit le tampon à l'envers et échange les fondus : le son décrit
+   * alors une voiture qui approche puis se range, et non qui s'éloigne.
+   */
+  async playDepartVoiture(durationMs: number, inverse = false): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = inverse
+      ? await this.loadBufferInverse("/sounds/depart-voiture.mp3")
+      : await this.loadBuffer("/sounds/depart-voiture.mp3");
     if (!buf) return;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
@@ -466,12 +500,56 @@ class AudioManager {
     gain.connect(this.master);
     const now = this.ctx.currentTime;
     const end = now + durationMs / 1000;
-    const fadeStart = Math.max(now, end - 1);
-    gain.gain.setValueAtTime(1, now);
-    gain.gain.setValueAtTime(1, fadeStart);
-    gain.gain.linearRampToValueAtTime(0, end);
+    if (inverse) {
+      // Arrivée : la voiture surgit du fond, le son monte au lieu de mourir.
+      const fadeEnd = Math.min(end, now + 1);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(1, fadeEnd);
+    } else {
+      const fadeStart = Math.max(now, end - 1);
+      gain.gain.setValueAtTime(1, now);
+      gain.gain.setValueAtTime(1, fadeStart);
+      gain.gain.linearRampToValueAtTime(0, end);
+    }
     src.start();
     src.stop(end);
+  }
+
+  /**
+   * Charge un son et en renvoie une copie lue à l'envers, amorce silencieuse
+   * rognée. Mise en cache sous une clé dérivée, pour ne pas payer l'inversion
+   * à chaque lecture.
+   *
+   * Le rognage est la pièce importante : un son de fermeture, de moteur ou de
+   * porte finit presque toujours par une queue de silence ou de réverbération.
+   * Retournée, cette queue devient une amorce muette, et le son paraît
+   * démarrer en retard alors qu'il a bien été déclenché à l'heure — d'autant
+   * plus s'il est ralenti par la suite.
+   */
+  private async loadBufferInverse(url: string): Promise<AudioBuffer | null> {
+    const cle = `${url}#inverse`;
+    const dejaLa = this.buffers.get(cle);
+    if (dejaLa) return dejaLa;
+
+    const source = await this.loadBuffer(url);
+    if (!source || !this.ctx) return null;
+
+    const source_canaux: Float32Array[] = [];
+    for (let canal = 0; canal < source.numberOfChannels; canal++) {
+      source_canaux.push(source.getChannelData(canal));
+    }
+
+    const { canaux } = inverserEtRogner(source_canaux);
+    const copie = this.ctx.createBuffer(
+      source.numberOfChannels,
+      canaux[0].length,
+      source.sampleRate,
+    );
+    for (let canal = 0; canal < canaux.length; canal++) {
+      copie.copyToChannel(canaux[canal], canal);
+    }
+    this.buffers.set(cle, copie);
+    return copie;
   }
 
   async startCrowd(): Promise<void> {

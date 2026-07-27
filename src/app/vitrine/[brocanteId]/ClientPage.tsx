@@ -160,6 +160,7 @@ export default function VitrineBrocantePage() {
             onSetNiveauDev={setNiveauCamionDev}
             onValider={() => setEtape("pricing")}
             onAnnuler={() => { viderVitrine(); router.push("/vitrine"); }}
+            tuto={state.tutorielEtape === "preparer-etal"}
           />
         ) : (
           <CoffrePricing

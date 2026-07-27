@@ -37,10 +37,11 @@ export const DIALOGUES_EN: Record<string, string[]> = {
   ],
   tuto_conclusion: [
     "You have the eye, and the hands… all you're missing is the years. The shop is in good hands.",
-    "Here: my order book. People write down what they're looking for — check it often.",
+    "Here: my order book. People write down what they're looking for. Go on, open it — I've something to put in it, as it happens.",
     "And the postman came by: a letter from your mother, I believe. Off to work now… I'll be in my armchair if you need me.",
   ],
   dlg_trame_ch1: [
+    "Ah, you're opening it… Then write, lad. The very first line shall be mine.",
     "Forty years my old oil lamp lit up the workbench. I broke it one clumsy evening — my hands, already.",
     "Every find passed under its light before joining the window display. Silly, isn't it, an old man growing fond of a lamp?",
     "You still come across them at flea markets, in decent shape if you look hard enough. Bring me one back, would you?",

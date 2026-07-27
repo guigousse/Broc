@@ -1,11 +1,21 @@
 import type { NiveauCamion, TailleObjet } from "@/types/game";
 import { PLACES_PAR_TAILLE } from "@/types/game";
 
+/**
+ * Taille de coffre annoncée au joueur. Volontairement qualitative : le rapport
+ * entre `capacitePlaces` et le nombre d'objets qui tiennent réellement n'est
+ * pas linéaire (les objets rétrécissent aussi quand le coffre grandit, cf.
+ * `getScaleCoffre`), donc un chiffre exact induirait en erreur.
+ */
+export type TailleCoffre = "petit" | "moyen" | "grand";
+
 export interface CamionConfig {
   niveau: NiveauCamion;
   nom: string;
   /** Identifiant des assets visuels (ouvert/fermé/masque) — voir `coffreAssets`. */
   visuelId: string;
+  /** Taille de coffre annoncée dans la fiche de concession. */
+  tailleCoffre: TailleCoffre;
   /** Ratio largeur/hauteur du visuel du coffre (utilisé pour aspect-ratio CSS). */
   aspectRatio: number;
   /** Position horizontale du centre du camion sur le fond garage (0..1). */
@@ -23,19 +33,19 @@ export const GARAGE_ASPECT_RATIO = 1536 / 2752;
 
 export const CAMIONS: readonly CamionConfig[] = [
   {
-    niveau: 1, nom: "Rogers", visuelId: "rogers",
+    niveau: 1, nom: "Rogers", visuelId: "rogers", tailleCoffre: "petit",
     aspectRatio: 1408 / 1358,
     garageX: 0.5, garageY: 0.680, garageScale: 0.820,
     capacitePlaces: 9, prixUpgradeVersCeNiveau: null,
   },
   {
-    niveau: 2, nom: "Break", visuelId: "break",
+    niveau: 2, nom: "Break", visuelId: "break", tailleCoffre: "moyen",
     aspectRatio: 1718 / 1456,
     garageX: 0.5, garageY: 0.705, garageScale: 0.975,
     capacitePlaces: 16, prixUpgradeVersCeNiveau: 200,
   },
   {
-    niveau: 3, nom: "Utilitaire", visuelId: "utilitaire",
+    niveau: 3, nom: "Utilitaire", visuelId: "utilitaire", tailleCoffre: "grand",
     aspectRatio: 1269 / 1343,
     garageX: 0.5, garageY: 0.635, garageScale: 0.990,
     capacitePlaces: 25, prixUpgradeVersCeNiveau: 500,

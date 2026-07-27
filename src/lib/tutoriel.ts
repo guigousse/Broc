@@ -83,3 +83,18 @@ export function doigtSwipeVersCarnet(
 ): boolean {
   return miniTuto === "ouvrir" && zoneActive !== 0;
 }
+
+/**
+ * Vrai quand l'ouverture du carnet doit délivrer le chapitre du grand-père.
+ * Fin du tutoriel : la main flottante guide jusqu'au carnet, et c'est son
+ * ouverture — pas la pastille du bureau — qui déclenche le dialogue de la
+ * lampe, dont la commande vient s'inscrire dans la page restée ouverte.
+ * Le type du 2e paramètre est écrit en littéral plutôt qu'importé du
+ * composant `RegistreOverlay` : `src/lib` ne dépend pas de l'UI.
+ */
+export function chapitreDuCarnetDu(
+  miniTuto: GameState["miniTutoCarnet"],
+  registreOuvert: "commandes" | "comptes" | null,
+): boolean {
+  return miniTuto === "ouvrir" && registreOuvert === "commandes";
+}

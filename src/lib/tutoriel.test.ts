@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ETAPES_TUTORIEL,
   appliquerFinTutoriel,
+  chapitreDuCarnetDu,
   doigtSwipeVersCarnet,
   etapeSuivante,
   tutorielActif,
@@ -52,6 +53,16 @@ describe("tutoriel", () => {
     expect(doigtSwipeVersCarnet("ouvrir", 0)).toBe(false);
     expect(doigtSwipeVersCarnet("termine", 1)).toBe(false);
     expect(doigtSwipeVersCarnet(undefined, 1)).toBe(false);
+  });
+
+  it("chapitreDuCarnetDu n'arme le chapitre qu'à l'ouverture de l'onglet Commandes pendant le mini-tuto", () => {
+    expect(chapitreDuCarnetDu("ouvrir", "commandes")).toBe(true);
+    // Mini-tuto déjà consommé : l'ouverture du carnet ne délivre plus rien.
+    expect(chapitreDuCarnetDu("termine", "commandes")).toBe(false);
+    expect(chapitreDuCarnetDu(undefined, "commandes")).toBe(false);
+    // Autre onglet, ou registre fermé : rien.
+    expect(chapitreDuCarnetDu("ouvrir", "comptes")).toBe(false);
+    expect(chapitreDuCarnetDu("ouvrir", null)).toBe(false);
   });
 
   it("appliquerFinTutoriel est idempotent sur un state déjà terminé", () => {

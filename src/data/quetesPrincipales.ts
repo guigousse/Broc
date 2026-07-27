@@ -34,6 +34,7 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     acte: 1,
     condition: { type: "depart" },
     dialogue: [
+      { humeur: "souriant", texte: "Ah, tu l'ouvres… Alors écris, petit. La toute première ligne sera pour moi." },
       { humeur: "songeur", texte: "Quarante ans que ma vieille lampe à pétrole a éclairé l'établi. Je l'ai cassée un soir de maladresse… mes mains, déjà." },
       { humeur: "emu", texte: "Chaque trouvaille passait sous sa lumière avant de rejoindre la vitrine. C'est bête, un vieil homme qui s'attache à une lampe, hein ?" },
       { humeur: "souriant", texte: "On en croise encore dans les vide-greniers, en état correct si on cherche bien. Rapporte-m'en une, tu veux ?" },

@@ -2,7 +2,7 @@
  * URL des assets visuels par niveau de camion (key = `CamionConfig.visuelId`).
  *
  * Convention dossier : `public/coffre/{visuelId}-{etat}.webp` où `etat` est
- * `ouvert`, `ferme` ou `mask`.
+ * `ouvert`, `ferme`, `mask` ou `profil`.
  *
  * Si un visuel n'est pas listé, l'UI tombe sur un fallback générique (carré).
  */
@@ -13,6 +13,8 @@ export interface CoffreAssets {
   mask: string;
   /** Masque dilaté de 20 px (offset autour du contenant) — sert au clip CSS. */
   maskExpanded: string;
+  /** Véhicule vu de profil, détouré — sert au bouton de concession. */
+  profil: string;
 }
 
 export const COFFRE_ASSETS: Record<string, CoffreAssets> = {
@@ -21,18 +23,21 @@ export const COFFRE_ASSETS: Record<string, CoffreAssets> = {
     ferme: "/coffre/rogers-ferme.webp",
     mask: "/coffre/rogers-mask.webp",
     maskExpanded: "/coffre/rogers-mask-expanded.webp",
+    profil: "/coffre/rogers-profil.webp",
   },
   break: {
     ouvert: "/coffre/break-ouvert.webp",
     ferme: "/coffre/break-ferme.webp",
     mask: "/coffre/break-mask.webp",
     maskExpanded: "/coffre/break-mask-expanded.webp",
+    profil: "/coffre/break-profil.webp",
   },
   utilitaire: {
     ouvert: "/coffre/utilitaire-ouvert.webp",
     ferme: "/coffre/utilitaire-ferme.webp",
     mask: "/coffre/utilitaire-mask.webp",
     maskExpanded: "/coffre/utilitaire-mask-expanded.webp",
+    profil: "/coffre/utilitaire-profil.webp",
   },
 };
 
