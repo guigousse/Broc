@@ -18,6 +18,51 @@ export function nomPrise(id, plan, take) {
   return `${id}-p${plan}-take${take}.mp4`;
 }
 
+/**
+ * Réserve atomiquement le prochain numéro de prise disponible.
+ *
+ * `prochainTake` ne fait qu'une estimation à partir d'un instantané du
+ * dossier (`readdir`) : entre cette lecture et le premier octet écrit,
+ * plusieurs minutes s'écoulent (l'appel Veo). Si deux exécutions tournent
+ * en même temps sur le même épisode/plan, les deux liraient le même
+ * instantané et calculeraient le même `takeN` — la seconde écraserait alors
+ * la vidéo déjà payée par la première.
+ *
+ * Ici, chaque numéro candidat est soumis à `tryReserver`, qui doit
+ * effectuer une réservation *atomique* côté appelant (typiquement créer un
+ * fichier avec le drapeau d'exclusion `wx`, qui échoue si le nom existe
+ * déjà) et rendre `true`/`false` selon que la réservation a réussi. En cas
+ * d'échec on passe au numéro suivant : une exécution concurrente qui a déjà
+ * pris ce numéro ne peut donc jamais se le faire souffler, et inversement.
+ */
+export async function reserverPrise({ fichiers, prefixe, tryReserver }) {
+  let take = prochainTake(fichiers, prefixe);
+  for (;;) {
+    const reserve = await tryReserver(take);
+    if (reserve) return take;
+    take += 1;
+  }
+}
+
+export function nomJournalRaccord(id) {
+  return `${id}-raccord.json`;
+}
+
+/**
+ * Valide et extrait la prise du plan 1 dont provient une image de raccord,
+ * à partir du contenu déjà parsé de son journal (`nomJournalRaccord`).
+ * Rend une erreur parlante plutôt qu'un `undefined` silencieux : la
+ * filiation du raccord doit toujours être traçable, sans quoi la Task 8 ne
+ * peut pas vérifier que le plan 2 monté correspond bien au plan 1 dont il
+ * est issu.
+ */
+export function extraireSourceRaccord(journal) {
+  if (!journal || typeof journal.prise !== "string" || !journal.prise) {
+    throw new Error("champ « prise » manquant ou invalide dans le journal de raccord");
+  }
+  return journal.prise;
+}
+
 export async function attendreOperation({ ai, operation, dormir, journaliser }) {
   let courante = operation;
   let tours = 0;

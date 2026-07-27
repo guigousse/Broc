@@ -32,7 +32,13 @@ import {
   trouverImageReference,
 } from "./reels/images.mjs";
 import { promptEtal, promptPlan1, promptPlan2 } from "./reels/prompts.mjs";
-import { genererVideo, nomPrise, prochainTake } from "./reels/video.mjs";
+import {
+  extraireSourceRaccord,
+  genererVideo,
+  nomJournalRaccord,
+  nomPrise,
+  reserverPrise,
+} from "./reels/video.mjs";
 
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -163,6 +169,29 @@ function cheminRaccord(episodeId) {
   return path.join(CHEMINS.masters, `${episodeId}-raccord.png`);
 }
 
+/** Journal de filiation du raccord : de quelle prise du plan 1 il provient.
+ *  `<id>-raccord.png` est un chemin fixe, écrasé à chaque régénération du
+ *  plan 1 — sans ce journal à côté, deux prises de plan 2 issues de deux
+ *  prises différentes du plan 1 seraient indiscernables au montage. */
+function cheminRaccordJournal(episodeId) {
+  return path.join(CHEMINS.masters, nomJournalRaccord(episodeId));
+}
+
+/** Lit et valide la filiation du raccord (voir `cheminRaccordJournal`) ;
+ *  jette un message actionnable si elle est absente ou corrompue plutôt que
+ *  de laisser le plan 2 partir avec une provenance inconnue. */
+async function lireSourceRaccord(episodeId) {
+  const chemin = cheminRaccordJournal(episodeId);
+  try {
+    const brut = JSON.parse(await fsp.readFile(chemin, "utf8"));
+    return extraireSourceRaccord(brut);
+  } catch {
+    throw new Error(
+      `filiation du raccord introuvable ou invalide (${path.basename(chemin)}) : régénère le plan 1 (« --video ${episodeId} --plan=1 »)`,
+    );
+  }
+}
+
 function mimeTypeDepuisExtension(chemin) {
   const extension = path.extname(chemin).slice(1).toLowerCase();
   const connue = EXTENSIONS_REFERENCE.find((e) => e.extension === extension);
@@ -235,17 +264,67 @@ async function imageDepart({ chemin, mimeType }) {
   return { imageBytes: buf.toString("base64"), mimeType };
 }
 
-async function genererPlan({ episode, contenu, args, ai, plan, image }) {
+/**
+ * Tente de réserver atomiquement le take `n` du plan en créant son journal
+ * `.json` avec le drapeau d'exclusion `wx` : la création échoue (`EEXIST`)
+ * si une autre exécution a déjà pris ce numéro, ce qui est exactement le
+ * signal dont `reserverPrise` a besoin pour passer au suivant plutôt que
+ * d'écraser une prise déjà payée par cette exécution concurrente.
+ */
+async function tryReserverPrise({ episode, plan, n, journalBase }) {
+  const cheminJournal = path.join(CHEMINS.sorties, nomPrise(episode.id, plan, n)).replace(
+    /\.mp4$/,
+    ".json",
+  );
+  try {
+    await fsp.writeFile(
+      cheminJournal,
+      JSON.stringify(
+        { ...journalBase, take: n, statut: "réservé — génération en cours", date: new Date().toISOString() },
+        null,
+        2,
+      ),
+      { flag: "wx" },
+    );
+    return true;
+  } catch (err) {
+    if (err.code === "EEXIST") return false;
+    throw err;
+  }
+}
+
+async function genererPlan({ episode, contenu, args, ai, plan, image, raccordSource }) {
   await fsp.mkdir(CHEMINS.sorties, { recursive: true });
   const blocs = { decor: contenu.decor, camera: contenu.camera, ambiance: contenu.ambiance };
   const prompt = plan === 1 ? promptPlan1(episode, blocs) : promptPlan2(episode, blocs);
   const model = MODELES.video[args.palier];
   if (!model) throw new Error(`palier « ${args.palier} » inconnu : lite, fast ou pro`);
 
-  const fichiers = await fsp.readdir(CHEMINS.sorties);
-  const take = prochainTake(fichiers, `${episode.id}-p${plan}`);
+  const journalBase = {
+    episode: episode.id,
+    plan,
+    model,
+    definition: args.definition,
+    secondes: DUREES.plan,
+    cout: coutClip({ palier: args.palier, definition: args.definition }),
+    imageDepart: path.basename(image.chemin),
+    ...(raccordSource ? { priseSourceRaccord: raccordSource } : {}),
+    prompt,
+  };
+
+  // Réservation atomique du numéro de prise, AVANT l'appel payant : voir
+  // `tryReserverPrise` et `reserverPrise` (video.mjs). C'est ce qui empêche
+  // deux exécutions concurrentes de calculer le même takeN et de s'écraser
+  // l'une l'autre.
+  const take = await reserverPrise({
+    fichiers: await fsp.readdir(CHEMINS.sorties),
+    prefixe: `${episode.id}-p${plan}`,
+    tryReserver: (n) => tryReserverPrise({ episode, plan, n, journalBase }),
+  });
+
   const nom = nomPrise(episode.id, plan, take);
   const sortie = path.join(CHEMINS.sorties, nom);
+  const cheminJournal = sortie.replace(/\.mp4$/, ".json");
 
   console.log(`🎬  ${nom} — ${model} ${args.definition}, ${DUREES.plan} s`);
   const video = await genererVideo({
@@ -258,25 +337,29 @@ async function genererPlan({ episode, contenu, args, ai, plan, image }) {
     journaliser: (m) => console.log(`   ${m}`),
   });
 
-  await ai.files.download({ file: video, downloadPath: sortie });
+  // La vidéo est payée à cet instant précis. On note son URI tout de suite,
+  // avant même de tenter le téléchargement : si celui-ci plante, l'appel
+  // facturé reste retrouvable dans ce journal plutôt que perdu.
+  const journalPaye = {
+    ...journalBase,
+    take,
+    uri: video.uri,
+    statut: "payé — téléchargement en cours",
+    date: new Date().toISOString(),
+  };
+  await fsp.writeFile(cheminJournal, JSON.stringify(journalPaye, null, 2));
+
+  try {
+    await ai.files.download({ file: video, downloadPath: sortie });
+  } catch (err) {
+    throw new Error(
+      `vidéo déjà payée mais téléchargement échoué (uri : ${video.uri}, voir ${path.basename(cheminJournal)}) : ${err.message ?? err}`,
+    );
+  }
+
   await fsp.writeFile(
-    sortie.replace(/\.mp4$/, ".json"),
-    JSON.stringify(
-      {
-        episode: episode.id,
-        plan,
-        take,
-        model,
-        definition: args.definition,
-        secondes: DUREES.plan,
-        cout: coutClip({ palier: args.palier, definition: args.definition }),
-        imageDepart: path.basename(image.chemin),
-        prompt,
-        date: new Date().toISOString(),
-      },
-      null,
-      2,
-    ),
+    cheminJournal,
+    JSON.stringify({ ...journalPaye, statut: "ok", date: new Date().toISOString() }, null, 2),
   );
   console.log(`✅  ${sortie}`);
   return sortie;
@@ -304,7 +387,14 @@ async function etapeVideo(episode, contenu, args, ai) {
     const p1 = await genererPlan({ episode, contenu, args, ai, plan: 1, image: etal });
     console.log(`🔗  extraction de l'image de raccord…`);
     await executer("ffmpeg", commandeDerniereFrame(p1, raccord));
-    console.log(`✅  ${raccord}`);
+    // La filiation est écrite juste à côté : `raccord.png` est un chemin
+    // fixe, écrasé à chaque régénération du plan 1, donc sans ce journal la
+    // prise de plan 1 dont il provient serait perdue dès la prise suivante.
+    await fsp.writeFile(
+      cheminRaccordJournal(episode.id),
+      JSON.stringify({ episode: episode.id, prise: path.basename(p1), date: new Date().toISOString() }, null, 2),
+    );
+    console.log(`✅  ${raccord} (source : ${path.basename(p1)})`);
   }
 
   if (plans.includes(2)) {
@@ -313,6 +403,7 @@ async function etapeVideo(episode, contenu, args, ai) {
         `image de raccord absente : génère d'abord le plan 1 (« --video ${episode.id} --plan=1 »)`,
       );
     }
+    const raccordSource = await lireSourceRaccord(episode.id);
     await genererPlan({
       episode,
       contenu,
@@ -320,6 +411,7 @@ async function etapeVideo(episode, contenu, args, ai) {
       ai,
       plan: 2,
       image: { chemin: raccord, mimeType: "image/png" },
+      raccordSource,
     });
   }
 }

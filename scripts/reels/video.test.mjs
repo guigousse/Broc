@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { attendreOperation, genererVideo, nomPrise, prochainTake } from "./video.mjs";
+import {
+  attendreOperation,
+  extraireSourceRaccord,
+  genererVideo,
+  nomJournalRaccord,
+  nomPrise,
+  prochainTake,
+  reserverPrise,
+} from "./video.mjs";
 
 describe("prochainTake", () => {
   it("part de 1 quand rien n'existe", () => {
@@ -19,6 +27,63 @@ describe("prochainTake", () => {
 describe("nomPrise", () => {
   it("compose le nom de fichier d'une prise", () => {
     expect(nomPrise("ep01", 2, 3)).toBe("ep01-p2-take3.mp4");
+  });
+});
+
+describe("reserverPrise", () => {
+  it("prend le premier numéro estimé quand la réservation réussit du premier coup", async () => {
+    const tryReserver = vi.fn().mockResolvedValue(true);
+    const take = await reserverPrise({ fichiers: [], prefixe: "ep01-p1", tryReserver });
+    expect(take).toBe(1);
+    expect(tryReserver).toHaveBeenCalledTimes(1);
+    expect(tryReserver).toHaveBeenCalledWith(1);
+  });
+
+  it("part de la plus haute prise existante, pas de zéro", async () => {
+    const fichiers = ["ep01-p1-take1.mp4", "ep01-p1-take3.mp4"];
+    const tryReserver = vi.fn().mockResolvedValue(true);
+    const take = await reserverPrise({ fichiers, prefixe: "ep01-p1", tryReserver });
+    expect(take).toBe(4);
+    expect(tryReserver).toHaveBeenCalledWith(4);
+  });
+
+  it("passe au numéro suivant si une exécution concurrente a déjà pris le créneau", async () => {
+    const tryReserver = vi
+      .fn()
+      .mockResolvedValueOnce(false) // take 1 déjà réservé par un autre process
+      .mockResolvedValueOnce(false) // take 2 aussi
+      .mockResolvedValueOnce(true); // take 3 libre
+    const take = await reserverPrise({ fichiers: [], prefixe: "ep01-p1", tryReserver });
+    expect(take).toBe(3);
+    expect(tryReserver).toHaveBeenNthCalledWith(1, 1);
+    expect(tryReserver).toHaveBeenNthCalledWith(2, 2);
+    expect(tryReserver).toHaveBeenNthCalledWith(3, 3);
+  });
+});
+
+describe("nomJournalRaccord", () => {
+  it("compose le nom du journal de raccord d'un épisode", () => {
+    expect(nomJournalRaccord("ep01-aquarelle")).toBe("ep01-aquarelle-raccord.json");
+  });
+});
+
+describe("extraireSourceRaccord", () => {
+  it("rend la prise source quand le journal est valide", () => {
+    expect(extraireSourceRaccord({ prise: "ep01-aquarelle-p1-take2.mp4" })).toBe(
+      "ep01-aquarelle-p1-take2.mp4",
+    );
+  });
+
+  it("jette quand le champ prise est absent", () => {
+    expect(() => extraireSourceRaccord({})).toThrow(/prise/i);
+  });
+
+  it("jette quand le journal lui-même est absent", () => {
+    expect(() => extraireSourceRaccord(undefined)).toThrow(/prise/i);
+  });
+
+  it("jette quand le champ prise n'est pas une chaîne", () => {
+    expect(() => extraireSourceRaccord({ prise: 42 })).toThrow(/prise/i);
   });
 });
 
