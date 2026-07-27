@@ -32,7 +32,7 @@ export function analyserCsv(texte) {
       continue;
     }
 
-    if (c === '"') {
+    if (c === '"' && cellule === "") {
       entreGuillemets = true;
     } else if (c === ";") {
       cellules.push(cellule);

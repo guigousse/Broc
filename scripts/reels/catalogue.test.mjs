@@ -37,10 +37,26 @@ describe("analyserCsv", () => {
     expect(lignes).toHaveLength(2);
     expect(lignes[1][0]).toBe("br.marteau_menuisier");
   });
+
+  it("traite un guillemet en milieu de cellule comme un caractère littéral", () => {
+    const texte = `${ENTETE}\nvinyle_12"pouces;autre`;
+    const lignes = analyserCsv(texte);
+    expect(lignes).toHaveLength(2);
+    expect(lignes[1][0]).toBe('vinyle_12"pouces');
+    expect(lignes[1][1]).toBe('autre');
+  });
+
+  it("rejette un guillemet ouvert en milieu de cellule qui mangerait le séparateur", () => {
+    const texte = `${ENTETE}\nab"cd;c`;
+    const lignes = analyserCsv(texte);
+    expect(lignes).toHaveLength(2);
+    expect(lignes[1][0]).toBe('ab"cd');
+    expect(lignes[1][1]).toBe('c');
+  });
 });
 
 describe("chargerCatalogue", () => {
-  const texte = `﻿${ENTETE}\nart.aquarelle_marine_xixe;Aquarelle marine du XIXe;Objets d'art;commun;;2;11;21;35;49`;
+  const texte = "﻿" + ENTETE + "\nart.aquarelle_marine_xixe;Aquarelle marine du XIXe;Objets d'art;commun;;2;11;21;35;49";
 
   it("indexe les objets par templateId", () => {
     const catalogue = chargerCatalogue(texte);
