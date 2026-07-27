@@ -439,8 +439,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   }, [state?.miniTutoCarnet, registreOuvert, chPret, terminerMiniTutoCarnet]);
 
   // Battement avant le dialogue armé ci-dessus : le joueur voit d'abord la
-  // page vide du carnet. Dépendance unique dont l'identité ne change que sur un set délibéré : le
-  // minuteur survit aux re-rendus du layout et n'est annulé qu'au démontage.
+  // page vide du carnet. Dépendance unique dont l'identité ne change que sur
+  // un set délibéré : le minuteur survit aux re-rendus du layout et n'est
+  // annulé qu'au démontage.
   useEffect(() => {
     if (!chapitreEnAttente) return;
     const t = window.setTimeout(() => {
