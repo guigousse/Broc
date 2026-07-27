@@ -431,14 +431,16 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!chapitreDuCarnetDu(state?.miniTutoCarnet, registreOuvert)) return;
     terminerMiniTutoCarnet();
+    // Le mini-tuto est clos quoi qu'il arrive : pas de chapitre dû (save où il
+    // a déjà été accepté sous l'ancien flux) ⇒ la pastille reprend la main.
     if (!chPret) return;
     setDialogueChapitreId(chPret.id);
     setChapitreEnAttente({ id: `dlg_${chPret.id}`, lignes: chPret.dialogue });
   }, [state?.miniTutoCarnet, registreOuvert, chPret, terminerMiniTutoCarnet]);
 
   // Battement avant le dialogue armé ci-dessus : le joueur voit d'abord la
-  // page vide du carnet. Dépendance unique et stable → sûr sous StrictMode
-  // (le double montage annule puis réarme le minuteur).
+  // page vide du carnet. Dépendance unique dont l'identité ne change que sur un set délibéré : le
+  // minuteur survit aux re-rendus du layout et n'est annulé qu'au démontage.
   useEffect(() => {
     if (!chapitreEnAttente) return;
     const t = window.setTimeout(() => {

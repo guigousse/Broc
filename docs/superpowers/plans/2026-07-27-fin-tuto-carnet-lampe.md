@@ -572,7 +572,10 @@ Nouvelle partie → jouer le tutoriel jusqu'à la conclusion, puis vérifier dan
 4. Le dialogue de la lampe démarre par-dessus le carnet, portrait du grand-père visible, carnet lisible derrière.
 5. Fin du dialogue → « La lampe de mon atelier » apparaît dans le carnet resté ouvert, **dépliée**, objectif visible.
 6. Fermer le carnet, le rouvrir : la commande est toujours là, la pastille « ! » du grand-père reste éteinte (chapitre 2 pas encore dû).
-7. Mettre l'app en arrière-plan pendant l'étape 3 puis revenir : la séquence ne se bloque pas (soit le dialogue se joue, soit le carnet reste utilisable et la commande est délivrable par la pastille au rechargement).
+7. Tuer l'app pendant le battement d'une demi-seconde (entre le tap sur le carnet et le démarrage du dialogue), puis relancer : la pastille « ! » doit être **allumée** au retour (le mini-tuto est persisté à « terminé », le chapitre reste dû, le dialogue armé est perdu avec la mémoire) — le chapitre reste donc délivrable par le grand-père, sans blocage.
+8. Charger une **sauvegarde créée avant ce changement**, en plein mini-tuto du carnet : la pastille doit être éteinte et le carnet doit être le seul chemin vers la lampe.
+9. Charger une sauvegarde où le chapitre 1 a **déjà été accepté** sous l'ancien flux : ouvrir le carnet ne rejoue aucun dialogue, la main flottante disparaît, la commande n'est pas dupliquée.
+10. Faire délivrer le **chapitre 2** par la pastille au bureau, carnet fermé, puis ouvrir le carnet : sa commande sera dépliée et scrollée d'office (changement de comportement assumé, hérité du même câblage) — vérifier que ça ne surprend pas.
 
 ---
 
