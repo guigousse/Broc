@@ -24,7 +24,16 @@ import { parserArgs } from "./reels/cli.mjs";
 import { CHEMINS, DUREES, MODELES } from "./reels/config.mjs";
 import { coutClip, coutEpisode, coutImage, formaterDollars } from "./reels/couts.mjs";
 import { resoudreEpisode } from "./reels/episode.mjs";
-import { commandeDerniereFrame, executer, verifierFfmpeg } from "./reels/ffmpeg.mjs";
+import {
+  commandeAssemblage,
+  commandeCarteFin,
+  commandeConcat,
+  commandeDerniereFrame,
+  commandeHabillage,
+  commandeSon,
+  executer,
+  verifierFfmpeg,
+} from "./reels/ffmpeg.mjs";
 import {
   EXTENSIONS_REFERENCE,
   genererImage,
@@ -429,6 +438,131 @@ async function etapeVideo(episode, contenu, args, ai) {
   }
 }
 
+const SIGNATURE = "Broc — Chaque objet a une histoire.";
+const CTA = "Bientôt sur l'App Store";
+
+/** Premier mp3 déposé dans marketing/reels/musique/, ou null. */
+async function premierMp3() {
+  try {
+    const fichiers = await fsp.readdir(CHEMINS.musique);
+    const mp3 = fichiers.filter((n) => n.toLowerCase().endsWith(".mp3")).sort()[0];
+    return mp3 ? path.join(CHEMINS.musique, mp3) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Prise retenue : celle demandée en argument, sinon la plus récente. */
+async function priseRetenue(episode, plan, demandee) {
+  const fichiers = await fsp.readdir(CHEMINS.sorties);
+  const motif = new RegExp(`^${episode.id}-p${plan}-take(\\d+)\\.mp4$`);
+  const prises = fichiers
+    .map((nom) => ({ nom, take: Number(nom.match(motif)?.[1]) }))
+    .filter((p) => Number.isInteger(p.take));
+  if (!prises.length) {
+    throw new Error(`aucune prise pour le plan ${plan} de ${episode.id} : lance « --video ${episode.id} »`);
+  }
+  const choisie = demandee
+    ? prises.find((p) => p.take === demandee)
+    : prises.sort((a, b) => b.take - a.take)[0];
+  if (!choisie) throw new Error(`prise ${demandee} introuvable pour le plan ${plan} de ${episode.id}`);
+  return { chemin: path.join(CHEMINS.sorties, choisie.nom), nom: choisie.nom, take: choisie.take };
+}
+
+/**
+ * Le plan 2 doit descendre de la prise du plan 1 retenue.
+ *
+ * Le brief initial comparait `imageDepart` du journal du plan 2 au chemin
+ * fixe `<id>-raccord.png` — trop faible : ce fichier est écrasé à chaque
+ * régénération du plan 1, donc son seul nom ne garantit rien sur SA
+ * provenance au moment du montage (c'est exactement pour ça que le plan 1
+ * take3, rejeté, a laissé `raccord.png` pointer vers lui après coup). Le
+ * vrai signal est `priseSourceRaccord`, écrit dans le journal de CHAQUE
+ * prise de plan 2 au moment de sa génération (voir `genererPlan` /
+ * `raccordSource` dans `etapeVideo`) : le nom exact du mp4 du plan 1 dont
+ * l'image de départ a été extraite. On le compare à la prise 1 réellement
+ * retenue pour ce montage, pas à un chemin partagé et mutable.
+ */
+async function verifierRaccord(episode, prise1, prise2) {
+  const journal = JSON.parse(
+    await fsp.readFile(prise2.chemin.replace(/\.mp4$/, ".json"), "utf8"),
+  );
+  if (journal.priseSourceRaccord !== prise1.nom) {
+    throw new Error(
+      `la prise ${prise2.take} du plan 2 de ${episode.id} descend de ${
+        journal.priseSourceRaccord ?? "une source inconnue"
+      }, pas de la prise ${prise1.take} du plan 1 (${prise1.nom}) — impossible de garantir le raccord`,
+    );
+  }
+  console.log(`🔗  raccord : plan 1 take ${prise1.take} → plan 2 take ${prise2.take}`);
+}
+
+async function etapeMontage(episode, args) {
+  await verifierFfmpeg();
+  const prise1 = await priseRetenue(episode, 1, args.take1);
+  const prise2 = await priseRetenue(episode, 2, args.take2);
+  await verifierRaccord(episode, prise1, prise2);
+
+  const tmp = (suffixe) => path.join(CHEMINS.sorties, `.${episode.id}-${suffixe}.mp4`);
+  const joint = tmp("joint");
+  const habille = tmp("habille");
+  const sonorise = tmp("sonorise");
+  const carte = tmp("carte");
+  const finale = path.join(CHEMINS.sorties, `${episode.id}.mp4`);
+
+  console.log("🎞️   assemblage des deux plans…");
+  await executer("ffmpeg", commandeAssemblage({ p1: prise1.chemin, p2: prise2.chemin, sortie: joint }));
+
+  console.log("✍️   accroche et sous-titres…");
+  await executer(
+    "ffmpeg",
+    commandeHabillage({
+      entree: joint,
+      sortie: habille,
+      accroche: episode.accroche,
+      sousTitres: [
+        { texte: episode.plan1.demande, debut: 2, fin: 5 },
+        { texte: episode.plan1.prix, debut: 5, fin: 8 },
+        { texte: episode.plan2.replique, debut: 10, fin: 15.8 },
+      ],
+    }),
+  );
+
+  const lit = await premierMp3();
+  console.log(lit ? `🎵  lit musical : ${path.basename(lit)}` : "🔉  fondu de sortie…");
+  await executer(
+    "ffmpeg",
+    commandeSon({
+      entree: habille,
+      musique: lit,
+      sortie: sonorise,
+      duree: DUREES.plan * DUREES.plans,
+    }),
+  );
+
+  console.log("🃏  carte de fin…");
+  await executer(
+    "ffmpeg",
+    commandeCarteFin({
+      icone: CHEMINS.icone,
+      chute: episode.chute,
+      signature: SIGNATURE,
+      cta: CTA,
+      sortie: carte,
+    }),
+  );
+
+  const liste = path.join(CHEMINS.sorties, `.${episode.id}-liste.txt`);
+  await fsp.writeFile(liste, `file '${sonorise}'\nfile '${carte}'\n`);
+  console.log("🔗  concaténation finale…");
+  await executer("ffmpeg", commandeConcat({ liste, sortie: finale }));
+
+  for (const jetable of [joint, habille, sonorise, carte, liste]) {
+    await fsp.rm(jetable, { force: true });
+  }
+  console.log(`✅  ${finale}`);
+}
+
 /**
  * Actions qui entraîneraient réellement un appel facturé si l'exécution se
  * poursuivait : une image déjà présente est sautée sans coût (sauf
@@ -551,12 +685,7 @@ async function main() {
   for (const episode of episodes) {
     if (args.etapes.includes("frame")) await etapeFrame(episode, contenu, args, ai);
     if (args.etapes.includes("video")) await etapeVideo(episode, contenu, args, ai);
-  }
-
-  const restantes = args.etapes.filter((e) => e !== "frame" && e !== "video");
-  if (restantes.length) {
-    console.error(`Étapes non encore disponibles : ${restantes.join(", ")}`);
-    process.exit(1);
+    if (args.etapes.includes("montage")) await etapeMontage(episode, args);
   }
 }
 
