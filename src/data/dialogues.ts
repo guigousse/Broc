@@ -72,7 +72,7 @@ export const SEQUENCES_TUTORIEL: Record<string, DialogueSequence> = {
     id: "tuto_conclusion",
     lignes: [
       { humeur: "emu", texte: "Tu as l'œil, et la main… il ne te manque que les années. La boutique est entre de bonnes mains." },
-      { humeur: "souriant", texte: "Tiens : mon carnet de commandes. Les gens y notent ce qu'ils cherchent — regarde-le souvent." },
+      { humeur: "souriant", texte: "Tiens : mon carnet de commandes. Les gens y notent ce qu'ils cherchent. Ouvre-le donc — j'ai justement quelque chose à y inscrire." },
       { humeur: "songeur", texte: "Et le facteur est passé : une lettre de ta mère, je crois. Allez, au travail… je reste dans mon fauteuil, si tu as besoin de moi." },
     ],
   },

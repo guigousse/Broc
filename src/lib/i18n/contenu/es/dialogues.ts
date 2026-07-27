@@ -37,10 +37,11 @@ export const DIALOGUES_ES: Record<string, string[]> = {
   ],
   tuto_conclusion: [
     "Tienes el ojo, y la mano… solo te faltan los años. La tienda queda en buenas manos.",
-    "Toma: mi cuaderno de encargos. La gente apunta lo que busca — míralo a menudo.",
+    "Toma: mi cuaderno de encargos. La gente apunta lo que busca. Ábrelo, anda — justo tengo algo que apuntar en él.",
     "Y ha pasado el cartero: una carta de tu madre, creo. A trabajar… estaré en mi sillón si me necesitas.",
   ],
   dlg_trame_ch1: [
+    "Ah, lo abres… Pues escribe, muchacho. La primerísima línea será para mí.",
     "Cuarenta años que mi viejo quinqué alumbró el banco de trabajo. Lo rompí una noche de torpeza… mis manos, ya entonces.",
     "Cada hallazgo pasaba bajo su luz antes de llegar al escaparate. Es una tontería, un viejo que se encariña con una lámpara, ¿eh?",
     "Todavía se encuentran en los mercadillos, en buen estado si buscas bien. Tráeme uno, ¿quieres?",
