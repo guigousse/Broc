@@ -24,7 +24,12 @@ import { parserArgs } from "./reels/cli.mjs";
 import { CHEMINS, MODELES } from "./reels/config.mjs";
 import { coutEpisode, coutImage, formaterDollars } from "./reels/couts.mjs";
 import { resoudreEpisode } from "./reels/episode.mjs";
-import { genererImage, partsAvecImages } from "./reels/images.mjs";
+import {
+  EXTENSIONS_REFERENCE,
+  genererImage,
+  partsAvecImages,
+  trouverImageReference,
+} from "./reels/images.mjs";
 import { promptEtal, promptPlan1, promptPlan2 } from "./reels/prompts.mjs";
 
 async function chargerDotEnv() {
@@ -103,12 +108,38 @@ const INTRO_ETAL = [
   "The following attached images are the objects to place on the table.",
 ].join(" ");
 
+// `etapeMaster` écrit toujours ici, en PNG.
 function cheminMaster() {
   return path.join(CHEMINS.masters, "_master-etal.png");
 }
 
 function cheminFrame(episodeId) {
   return path.join(CHEMINS.masters, `${episodeId}-etal.png`);
+}
+
+/**
+ * Recherche l'image de référence déjà présente, quelle que soit son
+ * extension (PNG produit par le pipeline, ou JPEG/JPG/WEBP si le
+ * propriétaire l'a retouchée et réexportée à la main — Aperçu, par
+ * exemple, exporte en JPEG). Rend `{ chemin, mimeType }` du premier
+ * candidat trouvé, ou `undefined` si aucun n'existe.
+ */
+function trouverMaster() {
+  let noms;
+  try {
+    noms = fs.readdirSync(CHEMINS.masters);
+  } catch {
+    noms = [];
+  }
+  const trouve = trouverImageReference("_master-etal", noms);
+  if (!trouve) return undefined;
+  return { chemin: path.join(CHEMINS.masters, trouve.nom), mimeType: trouve.mimeType };
+}
+
+function mimeTypeDepuisExtension(chemin) {
+  const extension = path.extname(chemin).slice(1).toLowerCase();
+  const connue = EXTENSIONS_REFERENCE.find((e) => e.extension === extension);
+  return connue?.mimeType ?? "image/png";
 }
 
 /** Aperçu de --master : montre le prompt et le coût, sans jamais construire
@@ -123,15 +154,15 @@ function afficherDryRunMaster(contenu) {
 
 async function lireImage(chemin) {
   const buf = await fsp.readFile(chemin);
-  const mimeType = chemin.endsWith(".webp") ? "image/webp" : "image/png";
-  return { mimeType, data: buf.toString("base64") };
+  return { mimeType: mimeTypeDepuisExtension(chemin), data: buf.toString("base64") };
 }
 
 async function etapeMaster(contenu, args, ai) {
   await fsp.mkdir(CHEMINS.masters, { recursive: true });
   const sortie = cheminMaster();
-  if (!args.force && fs.existsSync(sortie)) {
-    console.log(`⏭️  _master-etal.png déjà présent (--force pour regénérer)`);
+  const existant = trouverMaster();
+  if (!args.force && existant) {
+    console.log(`⏭️  ${path.basename(existant.chemin)} déjà présent (--force pour regénérer)`);
     return;
   }
   console.log(`🎨  master — génération…`);
@@ -146,8 +177,8 @@ async function etapeMaster(contenu, args, ai) {
 
 async function etapeFrame(episode, contenu, args, ai) {
   await fsp.mkdir(CHEMINS.masters, { recursive: true });
-  const master = cheminMaster();
-  if (!fs.existsSync(master)) {
+  const master = trouverMaster();
+  if (!master) {
     throw new Error(`image de référence absente : lance d'abord « npm run gen:reels -- --master »`);
   }
   const sortie = cheminFrame(episode.id);
@@ -156,7 +187,7 @@ async function etapeFrame(episode, contenu, args, ai) {
     return;
   }
 
-  const images = [await lireImage(master)];
+  const images = [await lireImage(master.chemin)];
   for (const item of episode.items) images.push(await lireImage(item.fichier));
 
   const blocs = { decor: contenu.decor, camera: contenu.camera, ambiance: contenu.ambiance };
@@ -180,7 +211,7 @@ async function etapeFrame(episode, contenu, args, ai) {
  */
 function actionsFacturees(args, etapesEpisode, episodes) {
   const actions = [];
-  if (args.etapes.includes("master") && (args.force || !fs.existsSync(cheminMaster()))) {
+  if (args.etapes.includes("master") && (args.force || !trouverMaster())) {
     actions.push({ label: "master — image de référence", cout: coutImage("pro") });
   }
   if (etapesEpisode.includes("frame")) {

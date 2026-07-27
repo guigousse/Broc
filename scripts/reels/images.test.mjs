@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { extraireImage, genererImage, partsAvecImages } from "./images.mjs";
+import { extraireImage, genererImage, partsAvecImages, trouverImageReference } from "./images.mjs";
 
 const PNG_B64 = Buffer.from("faux-png").toString("base64");
 
@@ -33,6 +33,41 @@ describe("extraireImage", () => {
     expect(() => extraireImage({ candidates: [{ content: { parts: [{ text: "refus" }] } }] })).toThrow(
       /image/i,
     );
+  });
+});
+
+describe("trouverImageReference", () => {
+  it("préfère le png quand plusieurs extensions sont présentes", () => {
+    expect(
+      trouverImageReference("_master-etal", ["_master-etal.png", "_master-etal.jpeg"]),
+    ).toEqual({ nom: "_master-etal.png", mimeType: "image/png" });
+  });
+
+  it("accepte le jpeg exporté depuis Aperçu quand le png est absent", () => {
+    expect(trouverImageReference("_master-etal", ["_master-etal.jpeg"])).toEqual({
+      nom: "_master-etal.jpeg",
+      mimeType: "image/jpeg",
+    });
+  });
+
+  it("accepte le jpg", () => {
+    expect(trouverImageReference("_master-etal", ["_master-etal.jpg"])).toEqual({
+      nom: "_master-etal.jpg",
+      mimeType: "image/jpeg",
+    });
+  });
+
+  it("accepte le webp", () => {
+    expect(trouverImageReference("_master-etal", ["_master-etal.webp"])).toEqual({
+      nom: "_master-etal.webp",
+      mimeType: "image/webp",
+    });
+  });
+
+  it("rend undefined si aucune extension connue n'est présente", () => {
+    expect(
+      trouverImageReference("_master-etal", ["_master-etal.gif", "autre-chose.png"]),
+    ).toBeUndefined();
   });
 });
 
