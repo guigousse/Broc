@@ -39,6 +39,18 @@ describe("promptEtal", () => {
   it("exige que l'espace du visiteur reste vide", () => {
     expect(promptEtal(episode, blocs)).toMatch(/empty|no person/i);
   });
+
+  it("exige que les objets plats soient posés à plat, face visible", () => {
+    const p = promptEtal(episode, blocs);
+    expect(p).toMatch(/LIES FLAT/);
+    expect(p).toMatch(/face up/);
+  });
+
+  it("désigne la première image jointe comme référence colorimétrique", () => {
+    const p = promptEtal(episode, blocs);
+    expect(p).toMatch(/colour reference/);
+    expect(p).toMatch(/sage-green/);
+  });
 });
 
 describe("promptPlan1", () => {

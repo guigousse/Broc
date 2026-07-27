@@ -26,7 +26,11 @@ export function promptEtal(episode, blocs) {
     "GOODS ON THE TABLE — the attached reference images show, in order, the exact objects to lay out on the cloth. Reproduce each of them faithfully in the illustration style of the scene: same shapes, same colours, same proportions. Arrange them naturally across the table top, slightly overlapping, as a real stallholder would, with the first one placed most prominently and fully visible.",
     liste,
     "",
+    "Anything flat LIES FLAT on the cloth, face up, so that a visitor standing at the table reads it at a glance: a framed picture, a plate, a book, an open box of postcards, a folded fabric. Only objects that naturally stand on their own — a lamp, a vase, a clock, a birdcage — remain upright.",
+    "",
     "The standing space just beyond the table must stay completely EMPTY: no person, no silhouette, no object there. Nothing must be added in the top street band either.",
+    "",
+    "COLOUR — the first attached image is also the colour reference for this whole series. The finished picture must share its exact palette and colour temperature, as if both had been painted in one sitting with the same box of paints: the same sage-green and cream stripes on the cloth, the same olive foliage, the same restrained wood browns, the same cream ground and pale stone façade. Each object keeps its own local colours.",
   ].join("\n");
 }
 
