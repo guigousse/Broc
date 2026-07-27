@@ -67,11 +67,11 @@ describe("promptPlan1", () => {
     expect(p).toContain("Vous en voulez combien ?");
   });
 
-  it("place la réponse du vendeur en voix hors champ", () => {
+  it("place la réponse du vendeur en voix venant de derrière la caméra", () => {
     const p = promptPlan1(episode, blocs);
     expect(p).toContain("Quarante euros.");
-    expect(p).toMatch(/off-screen|off screen/i);
-    expect(p).toMatch(/never (appears|enters)/i);
+    expect(p).toMatch(/behind the camera/i);
+    expect(p).toMatch(/only person/i);
   });
 });
 
@@ -102,5 +102,16 @@ describe("promptPlan2", () => {
   it("décrit un départ quand le dénouement est repart", () => {
     const p = promptPlan2({ ...episode, plan2: { denouement: "repart", action: "she puts it down", replique: "Je vais réfléchir." } }, blocs);
     expect(p).toMatch(/walks (away|out of frame)|leaves/i);
+  });
+
+  it("affirme que la visiteuse reste la seule personne à l'image", () => {
+    expect(promptPlan2(episode, blocs)).toMatch(/only person/i);
+  });
+});
+
+describe("aucune mention du vendeur dans les prompts vidéo", () => {
+  it("ne nomme jamais le stallholder, ni dans promptPlan1 ni dans promptPlan2", () => {
+    expect(promptPlan1(episode, blocs)).not.toMatch(/stallholder/i);
+    expect(promptPlan2(episode, blocs)).not.toMatch(/stallholder/i);
   });
 });

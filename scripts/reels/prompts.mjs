@@ -39,10 +39,10 @@ export function promptPlan1(episode, blocs) {
     "Animate the attached image. It is the first frame and the framing must never change.",
     blocs.camera,
     "",
-    `ACTION: a visitor walks up to the stall and stops behind the table — ${episode.acheteur}. ${episode.plan1.action}. She looks up towards the camera and speaks to the stallholder.`,
+    `ACTION: a visitor walks up to the stall and stops behind the table — ${episode.acheteur}. ${episode.plan1.action}. She looks up towards the camera and speaks.`,
     "",
     `DIALOGUE — the visitor says, in French, looking at the camera: "${episode.plan1.demande}"`,
-    `Then the stallholder answers, in French: "${episode.plan1.prix}" — this reply is an OFF-SCREEN voice coming from behind the camera. The stallholder never appears, never enters the frame; no character on screen speaks that line and no mouth moves for it.`,
+    `A second voice answers her in French: "${episode.plan1.prix}". It comes from the viewer's own position, behind the camera. The visitor remains the only person in the picture.`,
     "",
     blocs.ambiance,
   ].join("\n");
@@ -56,7 +56,7 @@ export function promptPlan2(episode, blocs) {
     `ACTION: ${SQUELETTES[episode.plan2.denouement]} ${episode.plan2.action}.`,
     "",
     `DIALOGUE — the visitor says, in French, looking at the camera: "${episode.plan2.replique}"`,
-    "The stallholder does not answer and never appears in frame.",
+    "The visitor remains the only person in the picture.",
     "",
     blocs.ambiance,
   ].join("\n");
