@@ -15,13 +15,14 @@
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
+import readline from "node:readline/promises";
 
 import { GoogleGenAI } from "@google/genai";
 
 import { chargerCatalogue } from "./reels/catalogue.mjs";
 import { parserArgs } from "./reels/cli.mjs";
 import { CHEMINS, MODELES } from "./reels/config.mjs";
-import { coutEpisode, formaterDollars } from "./reels/couts.mjs";
+import { coutEpisode, coutImage, formaterDollars } from "./reels/couts.mjs";
 import { resoudreEpisode } from "./reels/episode.mjs";
 import { genererImage, partsAvecImages } from "./reels/images.mjs";
 import { promptEtal, promptPlan1, promptPlan2 } from "./reels/prompts.mjs";
@@ -102,6 +103,24 @@ const INTRO_ETAL = [
   "The following attached images are the objects to place on the table.",
 ].join(" ");
 
+function cheminMaster() {
+  return path.join(CHEMINS.masters, "_master-etal.png");
+}
+
+function cheminFrame(episodeId) {
+  return path.join(CHEMINS.masters, `${episodeId}-etal.png`);
+}
+
+/** Aperçu de --master : montre le prompt et le coût, sans jamais construire
+ *  de client Gemini ni écrire de fichier. */
+function afficherDryRunMaster(contenu) {
+  console.log(`\n════ master ════`);
+  console.log(`\n— prompt —\n${INTRO_MASTER}\n\n${contenu.decor}`);
+  console.log(
+    `\n— coût image estimé — ${MODELES.image.pro} : ${formaterDollars(coutImage("pro"))}`,
+  );
+}
+
 async function lireImage(chemin) {
   const buf = await fsp.readFile(chemin);
   const mimeType = chemin.endsWith(".webp") ? "image/webp" : "image/png";
@@ -110,7 +129,7 @@ async function lireImage(chemin) {
 
 async function etapeMaster(contenu, args, ai) {
   await fsp.mkdir(CHEMINS.masters, { recursive: true });
-  const sortie = path.join(CHEMINS.masters, "_master-etal.png");
+  const sortie = cheminMaster();
   if (!args.force && fs.existsSync(sortie)) {
     console.log(`⏭️  _master-etal.png déjà présent (--force pour regénérer)`);
     return;
@@ -127,11 +146,11 @@ async function etapeMaster(contenu, args, ai) {
 
 async function etapeFrame(episode, contenu, args, ai) {
   await fsp.mkdir(CHEMINS.masters, { recursive: true });
-  const master = path.join(CHEMINS.masters, "_master-etal.png");
+  const master = cheminMaster();
   if (!fs.existsSync(master)) {
     throw new Error(`image de référence absente : lance d'abord « npm run gen:reels -- --master »`);
   }
-  const sortie = path.join(CHEMINS.masters, `${episode.id}-etal.png`);
+  const sortie = cheminFrame(episode.id);
   if (!args.force && fs.existsSync(sortie)) {
     console.log(`⏭️  ${episode.id}-etal.png déjà présent (--force pour regénérer)`);
     return;
@@ -153,6 +172,49 @@ async function etapeFrame(episode, contenu, args, ai) {
   console.log(`✅  ${sortie} (${Math.round(buf.length / 1024)} kB)`);
 }
 
+/**
+ * Actions qui entraîneraient réellement un appel facturé si l'exécution se
+ * poursuivait : une image déjà présente est sautée sans coût (sauf
+ * --force), elle ne compte donc pas ici. Sert de base à la confirmation
+ * demandée avant le premier appel API payant d'une exécution.
+ */
+function actionsFacturees(args, etapesEpisode, episodes) {
+  const actions = [];
+  if (args.etapes.includes("master") && (args.force || !fs.existsSync(cheminMaster()))) {
+    actions.push({ label: "master — image de référence", cout: coutImage("pro") });
+  }
+  if (etapesEpisode.includes("frame")) {
+    for (const episode of episodes) {
+      if (args.force || !fs.existsSync(cheminFrame(episode.id))) {
+        actions.push({ label: `${episode.id} — composition de l'étal`, cout: coutImage("pro") });
+      }
+    }
+  }
+  return actions;
+}
+
+async function confirmer(question) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const reponse = await rl.question(question);
+    return /^(o|oui|y|yes)$/i.test(reponse.trim());
+  } finally {
+    rl.close();
+  }
+}
+
+/** N'affiche et ne demande confirmation que s'il y a réellement un appel
+ *  facturé à venir ; --yes saute la question mais pas l'affichage du coût. */
+async function demanderConfirmation(actions, args) {
+  if (!actions.length) return true;
+  const total = actions.reduce((somme, a) => somme + a.cout, 0);
+  console.log(`\n— appel(s) facturé(s) à venir —`);
+  for (const a of actions) console.log(`  ${a.label} (${formaterDollars(a.cout)})`);
+  console.log(`— coût total estimé — ${formaterDollars(total)}`);
+  if (args.yes) return true;
+  return confirmer("Continuer ? [o/N] ");
+}
+
 function clientGemini() {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) {
@@ -167,6 +229,13 @@ async function main() {
   await chargerDotEnv();
 
   const contenu = await chargerContenu();
+
+  // --master --dry-run doit rester gratuit : il court-circuite avant même
+  // de toucher au catalogue, donc avant tout client Gemini.
+  if (args.etapes.includes("master") && args.dryRun) {
+    afficherDryRunMaster(contenu);
+    return;
+  }
 
   // L'étape master régénère l'image de référence commune à la série : elle
   // ne concerne aucun épisode. On ne résout le catalogue et les épisodes
@@ -190,6 +259,14 @@ async function main() {
       for (const episode of episodes) afficherDryRun(episode, contenu, args);
       return;
     }
+  }
+
+  // Aucune étape payante ne démarre sans confirmation explicite (ou --yes) :
+  // on affiche ce qui va être généré et son coût avant le premier appel API.
+  const actions = actionsFacturees(args, etapesEpisode, episodes);
+  if (!(await demanderConfirmation(actions, args))) {
+    console.log("Annulé — aucun appel facturé.");
+    return;
   }
 
   const ai = clientGemini();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coutClip, coutEpisode, formaterDollars } from "./couts.mjs";
+import { coutClip, coutEpisode, coutImage, formaterDollars } from "./couts.mjs";
 
 describe("coutClip", () => {
   it("chiffre un plan de 8 s en lite 720p", () => {
@@ -26,6 +26,20 @@ describe("coutClip", () => {
 describe("coutEpisode", () => {
   it("compte les deux plans", () => {
     expect(coutEpisode({ palier: "fast", definition: "1080p", plans: 2 })).toBeCloseTo(1.92, 5);
+  });
+});
+
+describe("coutImage", () => {
+  it("chiffre une image pro", () => {
+    expect(coutImage("pro")).toBeCloseTo(0.134, 5);
+  });
+
+  it("chiffre une image flash", () => {
+    expect(coutImage("flash")).toBeCloseTo(0.039, 5);
+  });
+
+  it("refuse un palier inconnu en le nommant", () => {
+    expect(() => coutImage("ultra")).toThrow(/ultra/);
   });
 });
 

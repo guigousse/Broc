@@ -1,5 +1,5 @@
 /** Estimation des coûts de génération. Module pur. */
-import { DUREES, TARIFS } from "./config.mjs";
+import { DUREES, TARIFS, TARIFS_IMAGE } from "./config.mjs";
 
 export function coutClip({ palier, definition, secondes = DUREES.plan }) {
   const grille = TARIFS[palier];
@@ -17,6 +17,14 @@ export function coutClip({ palier, definition, secondes = DUREES.plan }) {
 
 export function coutEpisode({ palier, definition, plans = DUREES.plans }) {
   return coutClip({ palier, definition }) * plans;
+}
+
+export function coutImage(palier) {
+  const tarif = TARIFS_IMAGE[palier];
+  if (tarif === undefined) {
+    throw new Error(`palier image « ${palier} » inconnu : attendu ${Object.keys(TARIFS_IMAGE).join(", ")}`);
+  }
+  return tarif;
 }
 
 export function formaterDollars(montant) {
