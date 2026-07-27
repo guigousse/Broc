@@ -34,15 +34,25 @@ export function promptEtal(episode, blocs) {
   ].join("\n");
 }
 
+const REACTION_PAR_DEFAUT =
+  "her eyebrows go up and her eyes widen — she is visibly taken aback by the price, and lets a small silence hang";
+
 export function promptPlan1(episode, blocs) {
+  const reaction = episode.plan1.reaction ?? REACTION_PAR_DEFAUT;
+
   return [
     "Animate the attached image. It is the first frame and the framing must never change.",
     blocs.camera,
     "",
-    `ACTION: a visitor walks up to the stall and stops behind the table — ${episode.acheteur}. ${episode.plan1.action}. She looks up towards the camera and speaks.`,
+    `AT 0-1 s: the visitor — ${episode.acheteur} — is already standing on the far side of the table, holding the item, examining it. ${episode.plan1.action}.`,
     "",
-    `DIALOGUE — the visitor says, in French, looking at the camera: "${episode.plan1.demande}"`,
-    `A second voice answers her in French: "${episode.plan1.prix}". It comes from the viewer's own position, behind the camera. The visitor remains the only person in the picture.`,
+    `AT 1-4 s: she looks up at the camera and asks her question, speaking slowly and clearly, with the unhurried delivery of someone genuinely curious. She finishes her sentence and waits. DIALOGUE — the visitor says, in French, looking at the camera: "${episode.plan1.demande}"`,
+    "",
+    `AT 4-6 s: a second voice answers her from behind the camera, from the viewer's own position, belonging to no one visible. It states the price, calmly and audibly, in French: "${episode.plan1.prix}"`,
+    "",
+    `AT 6-8 s: ${reaction}.`,
+    "",
+    "Do not rush any of the dialogue: each line has its own beat, with a short pause of silence between them. The visitor remains the only person in the picture.",
     "",
     blocs.ambiance,
   ].join("\n");

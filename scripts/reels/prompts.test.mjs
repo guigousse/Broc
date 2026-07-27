@@ -73,6 +73,32 @@ describe("promptPlan1", () => {
     expect(p).toMatch(/behind the camera/i);
     expect(p).toMatch(/only person/i);
   });
+
+  it("découpe le plan en repères temporels explicites", () => {
+    const p = promptPlan1(episode, blocs);
+    expect(p).toMatch(/0-1 s/);
+    expect(p).toMatch(/1-4 s/);
+    expect(p).toMatch(/4-6 s/);
+    expect(p).toMatch(/6-8 s/);
+  });
+
+  it("demande un débit de parole lent et posé", () => {
+    const p = promptPlan1(episode, blocs);
+    expect(p).toMatch(/slowly/);
+  });
+
+  it("utilise la réaction écrite dans l'épisode quand elle est fournie", () => {
+    const p = promptPlan1(
+      { ...episode, plan1: { ...episode.plan1, reaction: "elle recule d'un pas, stupéfaite" } },
+      blocs,
+    );
+    expect(p).toContain("elle recule d'un pas, stupéfaite");
+  });
+
+  it("retombe sur une réaction par défaut quand plan1.reaction est absente", () => {
+    const p = promptPlan1(episode, blocs);
+    expect(p).toMatch(/taken aback by the price/);
+  });
 });
 
 describe("promptPlan2", () => {

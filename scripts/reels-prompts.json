@@ -17,7 +17,8 @@
       "plan1": {
         "action": "she steps up to the table, picks up the marine watercolour with both hands and tilts it towards the light to read the signature",
         "demande": "Elle est signée, celle-là… vous en voulez combien ?",
-        "prix": "Quarante euros."
+        "prix": "Quarante euros.",
+        "reaction": "she blinks, her eyebrows shoot up and she lets out a small astonished breath — the price is far more than she expected"
       },
       "plan2": {
         "denouement": "marchande",

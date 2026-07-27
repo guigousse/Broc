@@ -116,6 +116,14 @@ describe("resoudreEpisode", () => {
     expect(r.chute).toBe("");
   });
 
+  it("propage un champ reaction optionnel de plan1 jusqu'à l'épisode résolu", () => {
+    const r = resoudreEpisode(
+      brut({ plan1: { action: "she picks it up", demande: "Vous en voulez combien ?", prix: "Quarante euros.", reaction: "elle écarquille les yeux" } }),
+      { catalogue, personas, fichierExiste: toutExiste },
+    );
+    expect(r.plan1.reaction).toBe("elle écarquille les yeux");
+  });
+
   it("refuse un dénouement inconnu", () => {
     const ko = brut({ plan2: { denouement: "hesite", action: "…", replique: "…" } });
     expect(() => resoudreEpisode(ko, { catalogue, personas, fichierExiste: toutExiste })).toThrow(
