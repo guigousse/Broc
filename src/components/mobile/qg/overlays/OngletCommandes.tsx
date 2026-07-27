@@ -108,10 +108,13 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
     return () => window.clearInterval(id);
   }, []);
 
-  // Badge livrable tapé : amener la commande visée dans la zone visible.
-  // (Recherche via dataset — CSS.escape et scrollIntoView absents de jsdom.)
+  // Commande visée (badge livrable tapé, ou commande que le grand-père vient
+  // d'inscrire dans le carnet resté ouvert) : la déplier et l'amener dans la
+  // zone visible. `ouvertId` étant initialisé au seul montage, la resynchro
+  // ici est ce qui couvre le cas « le carnet était déjà ouvert ».
   useEffect(() => {
     if (!ouvertInitialId) return;
+    setOuvertId(ouvertInitialId);
     const el = Array.from(document.querySelectorAll<HTMLElement>("[data-commande-id]")).find(
       (n) => n.dataset.commandeId === ouvertInitialId,
     );
