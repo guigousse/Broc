@@ -21,9 +21,10 @@ import { GoogleGenAI } from "@google/genai";
 
 import { chargerCatalogue } from "./reels/catalogue.mjs";
 import { parserArgs } from "./reels/cli.mjs";
-import { CHEMINS, MODELES } from "./reels/config.mjs";
-import { coutEpisode, coutImage, formaterDollars } from "./reels/couts.mjs";
+import { CHEMINS, DUREES, MODELES } from "./reels/config.mjs";
+import { coutClip, coutEpisode, coutImage, formaterDollars } from "./reels/couts.mjs";
 import { resoudreEpisode } from "./reels/episode.mjs";
+import { commandeDerniereFrame, executer, verifierFfmpeg } from "./reels/ffmpeg.mjs";
 import {
   EXTENSIONS_REFERENCE,
   genererImage,
@@ -31,6 +32,9 @@ import {
   trouverImageReference,
 } from "./reels/images.mjs";
 import { promptEtal, promptPlan1, promptPlan2 } from "./reels/prompts.mjs";
+import { genererVideo, nomPrise, prochainTake } from "./reels/video.mjs";
+
+const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function chargerDotEnv() {
   try {
@@ -136,6 +140,29 @@ function trouverMaster() {
   return { chemin: path.join(CHEMINS.masters, trouve.nom), mimeType: trouve.mimeType };
 }
 
+/**
+ * Même tolérance d'extension que `trouverMaster`, appliquée à l'étal d'un
+ * épisode précis : lui aussi peut avoir été retouché à la main par le
+ * propriétaire (recadrage, export JPEG depuis Aperçu) après génération.
+ */
+function trouverEtal(episodeId) {
+  let noms;
+  try {
+    noms = fs.readdirSync(CHEMINS.masters);
+  } catch {
+    noms = [];
+  }
+  const trouve = trouverImageReference(`${episodeId}-etal`, noms);
+  if (!trouve) return undefined;
+  return { chemin: path.join(CHEMINS.masters, trouve.nom), mimeType: trouve.mimeType };
+}
+
+/** L'image de raccord, elle, est toujours écrite par notre propre appel
+ *  ffmpeg (voir `etapeVideo`) : son extension ne varie jamais. */
+function cheminRaccord(episodeId) {
+  return path.join(CHEMINS.masters, `${episodeId}-raccord.png`);
+}
+
 function mimeTypeDepuisExtension(chemin) {
   const extension = path.extname(chemin).slice(1).toLowerCase();
   const connue = EXTENSIONS_REFERENCE.find((e) => e.extension === extension);
@@ -203,6 +230,100 @@ async function etapeFrame(episode, contenu, args, ai) {
   console.log(`✅  ${sortie} (${Math.round(buf.length / 1024)} kB)`);
 }
 
+async function imageDepart({ chemin, mimeType }) {
+  const buf = await fsp.readFile(chemin);
+  return { imageBytes: buf.toString("base64"), mimeType };
+}
+
+async function genererPlan({ episode, contenu, args, ai, plan, image }) {
+  await fsp.mkdir(CHEMINS.sorties, { recursive: true });
+  const blocs = { decor: contenu.decor, camera: contenu.camera, ambiance: contenu.ambiance };
+  const prompt = plan === 1 ? promptPlan1(episode, blocs) : promptPlan2(episode, blocs);
+  const model = MODELES.video[args.palier];
+  if (!model) throw new Error(`palier « ${args.palier} » inconnu : lite, fast ou pro`);
+
+  const fichiers = await fsp.readdir(CHEMINS.sorties);
+  const take = prochainTake(fichiers, `${episode.id}-p${plan}`);
+  const nom = nomPrise(episode.id, plan, take);
+  const sortie = path.join(CHEMINS.sorties, nom);
+
+  console.log(`🎬  ${nom} — ${model} ${args.definition}, ${DUREES.plan} s`);
+  const video = await genererVideo({
+    ai,
+    model,
+    prompt,
+    image: await imageDepart(image),
+    definition: args.definition,
+    dormir,
+    journaliser: (m) => console.log(`   ${m}`),
+  });
+
+  await ai.files.download({ file: video, downloadPath: sortie });
+  await fsp.writeFile(
+    sortie.replace(/\.mp4$/, ".json"),
+    JSON.stringify(
+      {
+        episode: episode.id,
+        plan,
+        take,
+        model,
+        definition: args.definition,
+        secondes: DUREES.plan,
+        cout: coutClip({ palier: args.palier, definition: args.definition }),
+        imageDepart: path.basename(image.chemin),
+        prompt,
+        date: new Date().toISOString(),
+      },
+      null,
+      2,
+    ),
+  );
+  console.log(`✅  ${sortie}`);
+  return sortie;
+}
+
+/**
+ * Anime l'étal en deux plans de 8 s. Le plan 2 ne part jamais du prompt :
+ * il part de la dernière image du plan 1 (extraite par ffmpeg), pour que le
+ * raccord soit un vrai raccord — même caméra, mêmes pixels de part et
+ * d'autre de la coupe. La confirmation de dépense est déjà passée par le
+ * garde-fou unique de `main` (voir `actionsFacturees`) : cette fonction ne
+ * redemande rien, elle vérifie seulement les préalables gratuits (ffmpeg
+ * installé, images sources présentes) avant le premier appel réseau.
+ */
+async function etapeVideo(episode, contenu, args, ai) {
+  await verifierFfmpeg();
+  const raccord = cheminRaccord(episode.id);
+  const plans = args.plan ? [args.plan] : [1, 2];
+
+  if (plans.includes(1)) {
+    const etal = trouverEtal(episode.id);
+    if (!etal) {
+      throw new Error(`étal absent : lance d'abord « npm run gen:reels -- --frame ${episode.id} »`);
+    }
+    const p1 = await genererPlan({ episode, contenu, args, ai, plan: 1, image: etal });
+    console.log(`🔗  extraction de l'image de raccord…`);
+    await executer("ffmpeg", commandeDerniereFrame(p1, raccord));
+    console.log(`✅  ${raccord}`);
+  }
+
+  if (plans.includes(2)) {
+    if (!fs.existsSync(raccord)) {
+      throw new Error(
+        `image de raccord absente : génère d'abord le plan 1 (« --video ${episode.id} --plan=1 »)`,
+      );
+    }
+    await genererPlan({
+      episode,
+      contenu,
+      args,
+      ai,
+      plan: 2,
+      image: { chemin: raccord, mimeType: "image/png" },
+    });
+  }
+}
+
 /**
  * Actions qui entraîneraient réellement un appel facturé si l'exécution se
  * poursuivait : une image déjà présente est sautée sans coût (sauf
@@ -218,6 +339,21 @@ function actionsFacturees(args, etapesEpisode, episodes) {
     for (const episode of episodes) {
       if (args.force || !fs.existsSync(cheminFrame(episode.id))) {
         actions.push({ label: `${episode.id} — composition de l'étal`, cout: coutImage("pro") });
+      }
+    }
+  }
+  // La vidéo, elle, n'a jamais de fichier à sauter : un take payé n'est
+  // jamais écrasé (voir `etapeVideo`), donc chaque plan demandé se
+  // traduit forcément par un nouvel appel facturé.
+  if (etapesEpisode.includes("video")) {
+    const plans = args.plan ? [args.plan] : [1, 2];
+    const cout = coutClip({ palier: args.palier, definition: args.definition });
+    for (const episode of episodes) {
+      for (const plan of plans) {
+        actions.push({
+          label: `${episode.id} — plan ${plan} vidéo (${args.palier} ${args.definition})`,
+          cout,
+        });
       }
     }
   }
@@ -309,9 +445,10 @@ async function main() {
 
   for (const episode of episodes) {
     if (args.etapes.includes("frame")) await etapeFrame(episode, contenu, args, ai);
+    if (args.etapes.includes("video")) await etapeVideo(episode, contenu, args, ai);
   }
 
-  const restantes = args.etapes.filter((e) => e !== "frame");
+  const restantes = args.etapes.filter((e) => e !== "frame" && e !== "video");
   if (restantes.length) {
     console.error(`Étapes non encore disponibles : ${restantes.join(", ")}`);
     process.exit(1);
