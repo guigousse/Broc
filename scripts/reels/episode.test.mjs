@@ -107,6 +107,15 @@ describe("resoudreEpisode", () => {
     expect(r.chute).toBe("Et vous, vous auriez cédé ?");
   });
 
+  it("préserve une chute vide telle quelle", () => {
+    const r = resoudreEpisode(brut({ chute: "" }), {
+      catalogue,
+      personas,
+      fichierExiste: toutExiste,
+    });
+    expect(r.chute).toBe("");
+  });
+
   it("refuse un dénouement inconnu", () => {
     const ko = brut({ plan2: { denouement: "hesite", action: "…", replique: "…" } });
     expect(() => resoudreEpisode(ko, { catalogue, personas, fichierExiste: toutExiste })).toThrow(

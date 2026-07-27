@@ -24,7 +24,7 @@ function resoudreItem(id, { catalogue, fichierExiste }) {
 }
 
 function resoudreChute(brut, vedette) {
-  if (brut.chute && brut.chute !== "auto") return brut.chute;
+  if (brut.chute !== undefined && brut.chute !== "auto") return brut.chute;
   if (brut.plan2.denouement === "achete") {
     return `Valeur réelle : ${vedette.prixTresBon} €`;
   }
