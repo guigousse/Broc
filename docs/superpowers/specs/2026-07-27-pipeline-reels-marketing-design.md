@@ -46,12 +46,41 @@ champ `reference` de `scripts/generate-brocante-scenes.mjs`.
 Vérifiés disponibles sur la clé `GEMINI_API_KEY` du `.env` (2026-07-27) :
 
 - **Image** : `gemini-3-pro-image` (défaut), `gemini-2.5-flash-image` (rapide).
-- **Vidéo** : `veo-3.1-fast-generate-preview` (défaut), `veo-3.1-generate-preview`
-  (prise finale), `veo-3.1-lite-generate-preview`.
+- **Vidéo** : `veo-3.1-lite-generate-preview` (défaut), `veo-3.1-fast-generate-preview`
+  (prise finale), `veo-3.1-generate-preview` (exceptionnel).
 
 L'appel vidéo est asynchrone : `ai.models.generateVideos()` rend une opération à
 sonder jusqu'à complétion, puis le fichier est téléchargé. Le script gère
 l'attente avec un compte-rendu de progression.
+
+### Tarifs et stratégie de paliers
+
+Relevés sur la page de tarification Google le 2026-07-27, par seconde de vidéo,
+audio inclus :
+
+| Palier | 720p | 1080p | Un plan de 8 s en 1080p | Un épisode (2 plans) |
+|---|---|---|---|---|
+| Lite | 0,05 $ | 0,08 $ | 0,64 $ | ≈ 1,30 $ |
+| Fast | 0,10 $ | 0,12 $ | 0,96 $ | ≈ 1,90 $ |
+| Standard | 0,40 $ | 0,40 $ | 3,20 $ | ≈ 6,40 $ |
+
+Images : 0,134 $ par étal composé en `gemini-3-pro-image`, 0,039 $ en
+`gemini-2.5-flash-image`. Négligeable — dix essais de cadrage coûtent moins qu'une
+seconde de Veo Standard.
+
+**Stratégie en deux temps, qui est la raison d'être des paliers :**
+
+1. **Brouillon en Lite 720p** — 0,40 $ le plan. C'est là qu'on juge si le chineur
+   fait le bon geste, si la réplique tombe bien, si le raccord tient. Cinq essais
+   coûtent deux euros.
+2. **Prise finale en Fast 1080p** — uniquement une fois l'action validée.
+
+Le Standard reste disponible mais n'est pas un défaut : à 3,20 $ le plan, il ne se
+justifie que pour un épisode dont on sait déjà qu'il performe.
+
+Le script affiche donc systématiquement palier, définition et coût estimé avant de
+lancer, et rappelle en fin de course le cumul dépensé pour l'épisode (lu dans les
+journaux de prises).
 
 ## Le plan fixe
 
@@ -205,7 +234,8 @@ npm run gen:reels -- --montage ep01  assemble, habille et exporte
 npm run gen:reels -- ep01            enchaîne frame → video → montage
 ```
 
-Drapeaux : `--force` (regénérer une image existante), `--model=pro|fast|lite`,
+Drapeaux : `--force` (regénérer une image existante), `--model=lite|fast|pro`
+(défaut `lite`), `--hd` (1080p, sinon 720p),
 `--plan=1|2` (ne rejouer qu'un seul plan), `--take1=N --take2=N` (choisir les
 prises à monter, la plus récente par défaut), `--yes` (sauter la confirmation
 payante), `--dry-run` (afficher les prompts résolus et le coût estimé sans
@@ -221,8 +251,9 @@ relancer, regarder l'image. Tant que le cadre n'est pas bon, rien n'est dépens�
 - Avant les appels Veo, le script affiche modèle, nombre de plans, durée totale et
   coût estimé, puis demande confirmation (sauf `--yes`). Un épisode complet =
   **deux clips payés**.
-- Le tarif à la seconde est une constante en tête de script, à caler sur la page
-  de tarification Google. Le palier par défaut est le moins cher.
+- La grille tarifaire est une table de constantes en tête de script (palier ×
+  définition), datée, à recaler si Google change ses prix. Le palier par défaut est
+  Lite 720p, le moins cher.
 - **Une prise payée n'est jamais écrasée** : une relance écrit
   `ep01-p1-take2.mp4`, `take3`… `--force` ne s'applique qu'aux images.
 - Chaque prise dépose un `ep01-p1-takeN.json` : prompt exact, modèle, date,
