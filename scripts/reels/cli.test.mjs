@@ -48,4 +48,12 @@ describe("parserArgs", () => {
   it("refuse un plan autre que 1 ou 2", () => {
     expect(() => parserArgs(["--plan=3"])).toThrow(/plan/i);
   });
+
+  it("refuse un drapeau inconnu en le nommant", () => {
+    expect(() => parserArgs(["--dryrun", "ep01"])).toThrow(/--dryrun/);
+  });
+
+  it("accepte toujours un drapeau connu", () => {
+    expect(() => parserArgs(["--dry-run", "--hd", "--model=fast", "ep01"])).not.toThrow();
+  });
 });

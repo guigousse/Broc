@@ -81,20 +81,28 @@ function afficherDryRun(episode, contenu, args) {
 async function main() {
   const args = parserArgs(process.argv.slice(2));
   await chargerDotEnv();
-  const { contenu, catalogue, personas } = await chargerContexte();
 
-  const bruts = episodesDemandes(contenu, args.ids);
-  const episodes = bruts.map((brut) =>
-    resoudreEpisode(brut, {
-      catalogue,
-      personas,
-      fichierExiste: (chemin) => fs.existsSync(chemin),
-    }),
-  );
+  // L'étape master régénère l'image de référence commune à la série : elle
+  // ne concerne aucun épisode. On ne résout le catalogue et les épisodes
+  // que pour les étapes qui en dépendent réellement (frame/video/montage).
+  const etapesEpisode = args.etapes.filter((e) => e !== "master");
 
-  if (args.dryRun) {
-    for (const episode of episodes) afficherDryRun(episode, contenu, args);
-    return;
+  if (etapesEpisode.length > 0) {
+    const { contenu, catalogue, personas } = await chargerContexte();
+
+    const bruts = episodesDemandes(contenu, args.ids);
+    const episodes = bruts.map((brut) =>
+      resoudreEpisode(brut, {
+        catalogue,
+        personas,
+        fichierExiste: (chemin) => fs.existsSync(chemin),
+      }),
+    );
+
+    if (args.dryRun) {
+      for (const episode of episodes) afficherDryRun(episode, contenu, args);
+      return;
+    }
   }
 
   console.error(
