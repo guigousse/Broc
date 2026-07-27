@@ -62,7 +62,7 @@ Le `clamp` est le seul réglage à bouger si le rendu device demande un personna
 
 Le style existe en `const namePlate` locale dans `ChineNegoDrawer.tsx` (dégradé laiton 3 arrêts, double ombre `inset`, `--font-display` capitales `letter-spacing: .18em`, couleur `--forest-800`). Il part dans un module partagé :
 
-`src/components/mobile/ui/namePlate.ts`
+`src/components/ui/namePlate.ts` — le répertoire existe déjà et rassemble les briques visuelles partagées (`BrassCorners`, `Panel`, `DecoDivider`…) ; `src/components/mobile/ui/` n'existe pas.
 
 ```ts
 export function namePlateStyle(radius: string): CSSProperties
