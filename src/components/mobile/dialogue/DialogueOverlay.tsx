@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { DialogueSequence, HumeurPnj } from "@/data/dialogues";
 import { lignesDialogue } from "@/lib/i18n/contenu";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { namePlateStyle } from "@/components/ui/namePlate";
 
 interface DialogueOverlayProps {
   /** Séquence à jouer, ou null (rien n'est rendu). */
@@ -32,43 +33,44 @@ const scrim: CSSProperties = {
   textAlign: "inherit",
 };
 
-/* Retour device 2026-07-17 : le portrait est un cercle SÉPARÉ de la bulle —
-   rangée avatar + bulle, alignée en bas, chacun avec son propre cadre. */
-const rangee: CSSProperties = {
+/* Retour device 2026-07-17 : le portrait est un cercle SÉPARÉ de la bulle.
+   Révisé 2026-07-27 : le médaillon rognait le détourage de l'illustration et
+   volait ~94 px à la bulle. Le portrait devient une image détourée en grand,
+   posée sur le bandeau nom — même langage que le vendeur du tiroir de chinage
+   (ChineNegoDrawer) — et la bulle prend toute la largeur, marge 12px. */
+const colonne: CSSProperties = {
   margin: "0 12px calc(16px + var(--safe-bottom, 0px))",
   display: "flex",
-  gap: 10,
-  alignItems: "flex-end",
+  flexDirection: "column",
 };
 
+/* Seul réglage à bouger si le personnage doit grandir ou rétrécir sur device.
+   Les portraits du grand-père sont carrés (420×420) : à 190px de haut, il
+   occupe 190px de large. */
+const portraitStyle: CSSProperties = {
+  alignSelf: "flex-start",
+  marginLeft: 8,
+  height: "clamp(140px, 20vh, 190px)",
+  width: "auto",
+  objectFit: "contain",
+  display: "block",
+  filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.45))",
+};
+
+/* overflow:hidden — le bandeau est à coins droits et se fait rogner par la
+   carte : un seul rayon à maintenir. */
 const carte: CSSProperties = {
-  flex: 1,
-  minWidth: 0,
-  padding: "14px 16px 12px",
   borderRadius: 14,
+  overflow: "hidden",
   background: "linear-gradient(135deg, #f6ecd2 0%, #f1e4c0 55%, #e7d6a8 100%)",
   border: "1px solid #b89c5e",
   boxShadow: "inset 0 0 28px rgba(120,90,40,0.18), 0 6px 16px rgba(0,0,0,0.35)",
 };
 
-const portraitStyle: CSSProperties = {
-  width: 84,
-  height: 84,
-  borderRadius: "50%",
-  border: "2px solid #b89c5e",
-  objectFit: "cover",
-  flexShrink: 0,
-  background: "#e7d6a8",
-  boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
-};
+const bandeau = namePlateStyle("0");
 
-const nomStyle: CSSProperties = {
-  fontFamily: "var(--font-display)",
-  fontSize: 12,
-  textTransform: "uppercase",
-  letterSpacing: "0.10em",
-  color: "var(--ink-700)",
-  marginBottom: 4,
+const corps: CSSProperties = {
+  padding: "14px 16px 12px",
 };
 
 const texteStyle: CSSProperties = {
@@ -113,14 +115,16 @@ export function DialogueOverlay({
 
   return createPortal(
     <button type="button" style={scrim} onClick={avancer}>
-      <div style={rangee}>
+      <div style={colonne}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={portraits[ligne.humeur]} alt="" draggable={false} style={portraitStyle} />
         <div style={carte}>
-          <div style={nomStyle}>{nom}</div>
-          <div style={texteStyle}>{texte}</div>
-          <div style={suiteStyle} aria-hidden>
-            {derniere ? "✦" : "▼"}
+          <div style={bandeau}>{nom}</div>
+          <div style={corps}>
+            <div style={texteStyle}>{texte}</div>
+            <div style={suiteStyle} aria-hidden>
+              {derniere ? "✦" : "▼"}
+            </div>
           </div>
         </div>
       </div>
