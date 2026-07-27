@@ -80,7 +80,7 @@ import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import { nomExpediteur } from "@/lib/i18n/contenu";
-import { tutorielActif, doigtSwipeVersCarnet } from "@/lib/tutoriel";
+import { tutorielActif, chapitreDuCarnetDu, doigtSwipeVersCarnet } from "@/lib/tutoriel";
 import { OUTILS_DEV } from "@/lib/outilsDev";
 import {
   aConnaisseurTendance,
@@ -167,6 +167,11 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // (créer la mission) à sa fin — cf. onFini du DialogueOverlay ci-dessous.
   const chPret = state ? chapitrePret(state) : null;
   const [dialogueChapitreId, setDialogueChapitreId] = useState<string | null>(null);
+  // Dialogue du chapitre armé par l'ouverture du carnet (fin du tutoriel) :
+  // il est joué après un court battement, le temps que le joueur voie la page
+  // vide se poser. Stocké à part de `dialogueQg` pour que le minuteur vive
+  // dans son propre effet — cf. les deux effets plus bas.
+  const [chapitreEnAttente, setChapitreEnAttente] = useState<DialogueSequence | null>(null);
   // Cérémonie du colis du tutoriel (étape ouvrir-colis) : objet en cours de
   // révélation + son rang (1-based). null = overlay fermé.
   const [objetColis, setObjetColis] = useState<Objet | null>(null);
@@ -417,6 +422,32 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     else if (etape === "conclusion") setDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
   }, [etape, dialogueQg]);
 
+  // Fin du tutoriel : la main a guidé jusqu'au carnet. Son ouverture clôt le
+  // mini-tuto ET arme le premier chapitre de la trame (la lampe du grand-père),
+  // qui se joue par-dessus le carnet resté ouvert — la commande s'y inscrit à
+  // la fin du dialogue. Aucun minuteur ici : `terminerMiniTutoCarnet()` change
+  // les dépendances de cet effet, son cleanup tuerait le minuteur avant qu'il
+  // ne tire.
+  useEffect(() => {
+    if (!chapitreDuCarnetDu(state?.miniTutoCarnet, registreOuvert)) return;
+    terminerMiniTutoCarnet();
+    if (!chPret) return;
+    setDialogueChapitreId(chPret.id);
+    setChapitreEnAttente({ id: `dlg_${chPret.id}`, lignes: chPret.dialogue });
+  }, [state?.miniTutoCarnet, registreOuvert, chPret, terminerMiniTutoCarnet]);
+
+  // Battement avant le dialogue armé ci-dessus : le joueur voit d'abord la
+  // page vide du carnet. Dépendance unique et stable → sûr sous StrictMode
+  // (le double montage annule puis réarme le minuteur).
+  useEffect(() => {
+    if (!chapitreEnAttente) return;
+    const t = window.setTimeout(() => {
+      setDialogueQg(chapitreEnAttente);
+      setChapitreEnAttente(null);
+    }, 500);
+    return () => window.clearTimeout(t);
+  }, [chapitreEnAttente]);
+
   if (!isHydrated || !state) {
     return (
       <main
@@ -492,7 +523,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                   onTap={() => {
                     if (tutoActif) return;
                     playClick();
-                    terminerMiniTutoCarnet();
                     setRegistreOuvert("commandes");
                   }}
                 />
@@ -852,7 +882,15 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         }}
       />
       <GrandPereBadge
-        visible={!!chPret && !dialogueQg}
+        visible={
+          !!chPret &&
+          !dialogueQg &&
+          // Chapitre 1 réservé au carnet tant que le mini-tuto de fin de
+          // tutoriel n'est pas consommé, puis pendant tout le temps où son
+          // dialogue est armé/joué : un seul chemin de délivrance.
+          state.miniTutoCarnet !== "ouvrir" &&
+          !dialogueChapitreId
+        }
         onTap={() => {
           if (!chPret) return;
           playClick();
@@ -879,6 +917,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           setDialogueQg(null);
           if (dialogueChapitreId) {
             accepterChapitrePrincipal(dialogueChapitreId);
+            // Le carnet peut être ouvert derrière le dialogue (fin du
+            // tutoriel) : la commande neuve s'y affiche dépliée. Sinon la
+            // cible est simplement prête pour la prochaine ouverture.
+            setMissionCibleId(dialogueChapitreId);
             setDialogueChapitreId(null);
           } else if (etape === "accueil") avancerTutoriel("aller-chiner");
           else if (etape === "rentrer") avancerTutoriel("ouvrir-colis");
