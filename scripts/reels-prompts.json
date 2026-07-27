@@ -1,0 +1,30 @@
+{
+  "decor": "Vintage Art Déco illustration in a museum catalog style, the same visual language as the rest of the game: elegant sepia ink line-art with soft forest-green colour wash on warm cream parchment, warm sepia / forest green / brass / warm wood palette, subtle paper grain across the whole image, soft directional light, no neon, no high-saturation colour. PORTRAIT 9:16 vertical canvas, bleeding edge to edge on all four sides, no border, no vignette, no frame, no text, no watermark, no UI element. SUBJECT: a first-person view from BEHIND a flea-market stall, as seen by the stallholder standing at their own table. Composition, bottom to top: the bottom 25 % is the near edge of the trestle table seen in three-quarter high angle — a faded striped cloth, a small open cash tin, and the stallholder's own shoulders and forearms entering the frame as dark out-of-focus silhouettes in the two bottom corners; the next 45 % is the table top where the goods for sale are laid out on the cloth; the next 20 % is EMPTY STANDING SPACE just beyond the table, at chest height, where a visitor will later stand; the top 10 % is the street of the flea market — neighbouring stalls, plane trees, plain Haussmann-style façades, a few distant strollers. The empty standing space beyond the table must be left clear of any person and any object.",
+  "camera": "The camera is LOCKED OFF on a tripod: absolutely no pan, no tilt, no zoom, no dolly, no handheld shake, no re-framing, no rack focus, no cut. The framing is identical for the whole shot and identical to the input image. The stallholder is never seen: their forearms stay motionless in the bottom corners and they never step into frame. Keep the exact same illustration style, palette, line quality and paper grain as the input image. Do not add text, captions, subtitles, logos or UI elements to the picture.",
+  "ambiance": "Ambient sound bed, constant and identical throughout: the muffled hubbub of a Sunday neighbourhood flea market — distant chatter, footsteps on gravel, a bicycle bell far away, occasional clink of coins. Low, steady, no music, no sudden change in density or level.",
+  "episodes": [
+    {
+      "id": "ep01-aquarelle",
+      "items": [
+        "art.aquarelle_marine_xixe",
+        "mus.violon_atelier_mirecourt",
+        "lv.cartes_postales_anciennes"
+      ],
+      "vedette": "art.aquarelle_marine_xixe",
+      "acheteur": "a French woman in her thirties, faded denim jacket, loose bun, round glasses, canvas tote bag on her shoulder, curious and friendly",
+      "fond": "autumn morning, low raking light, two strollers passing in the distance",
+      "accroche": "Elle vaut combien, à votre avis ?",
+      "plan1": {
+        "action": "she steps up to the table, picks up the marine watercolour with both hands and tilts it towards the light to read the signature",
+        "demande": "Elle est signée, celle-là… vous en voulez combien ?",
+        "prix": "Quarante euros."
+      },
+      "plan2": {
+        "denouement": "marchande",
+        "action": "she lays the watercolour back down on the cloth, folds her arms and tilts her head with a half-smile",
+        "replique": "Vingt-cinq, et je la prends tout de suite."
+      },
+      "chute": "auto"
+    }
+  ]
+}
