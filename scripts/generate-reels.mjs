@@ -327,19 +327,32 @@ async function genererPlan({ episode, contenu, args, ai, plan, image, raccordSou
   const cheminJournal = sortie.replace(/\.mp4$/, ".json");
 
   console.log(`🎬  ${nom} — ${model} ${args.definition}, ${DUREES.plan} s`);
-  const video = await genererVideo({
-    ai,
-    model,
-    prompt,
-    image: await imageDepart(image),
-    definition: args.definition,
-    dormir,
-    journaliser: (m) => console.log(`   ${m}`),
-  });
+  let video;
+  try {
+    video = await genererVideo({
+      ai,
+      model,
+      prompt,
+      image: await imageDepart(image),
+      definition: args.definition,
+      dormir,
+      journaliser: (m) => console.log(`   ${m}`),
+    });
+  } catch (err) {
+    // Aucune URI n'a été rendue : rien n'a été facturé sur ce créneau (que
+    // l'échec vienne d'un paramètre rejeté avant l'appel, d'un quota ou
+    // d'une panne Veo). On libère donc la réservation pour ne pas brûler ce
+    // numéro de prise pour rien — sinon la prochaine tentative repartirait
+    // sur le take suivant alors que celui-ci n'a jamais existé.
+    await fsp.rm(cheminJournal, { force: true }).catch(() => {});
+    throw err;
+  }
 
-  // La vidéo est payée à cet instant précis. On note son URI tout de suite,
-  // avant même de tenter le téléchargement : si celui-ci plante, l'appel
-  // facturé reste retrouvable dans ce journal plutôt que perdu.
+  // À partir d'ici, `video.uri` existe : l'appel est payé. On note l'URI
+  // tout de suite, avant même de tenter le téléchargement : si celui-ci
+  // plante, l'appel facturé reste retrouvable dans ce journal plutôt que
+  // perdu — et on ne supprime plus jamais ce journal (voir le catch
+  // ci-dessus, qui ne s'applique qu'avant ce point).
   const journalPaye = {
     ...journalBase,
     take,

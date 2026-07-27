@@ -88,8 +88,16 @@ export async function genererVideo({ ai, model, prompt, image, definition, dormi
       resolution: definition,
       numberOfVideos: 1,
       durationSeconds: DUREES.plan,
-      generateAudio: true,
-      personGeneration: "allow_all",
+      // Pas de `generateAudio` : ce drapeau n'existe que côté Gemini
+      // Enterprise Agent Platform (Vertex) et fait rejeter la requête (avant
+      // toute facturation) en mode Gemini Developer API — confirmé le
+      // 2026-07-27 par un essai réel. Veo 3.x produit son audio nativement,
+      // sans qu'il soit besoin de le demander.
+      // `personGeneration: "allow_adult"` et non `"allow_all"` : on part
+      // toujours d'une image (étal ou raccord), jamais d'un simple texte —
+      // or en mode image-to-video, seul `"allow_adult"` est accepté par
+      // l'API Developer (`"allow_all"` n'est valable qu'en texte→vidéo).
+      personGeneration: "allow_adult",
     },
   });
 

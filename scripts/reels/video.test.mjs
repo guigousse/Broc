@@ -120,7 +120,7 @@ describe("attendreOperation", () => {
 });
 
 describe("genererVideo", () => {
-  it("passe l'image de départ, l'aspect vertical et l'audio", async () => {
+  it("passe l'image de départ et l'aspect vertical, sans generateAudio, en allow_adult", async () => {
     const generateVideos = vi.fn().mockResolvedValue({
       done: true,
       response: { generatedVideos: [{ video: { uri: "u" } }] },
@@ -136,6 +136,11 @@ describe("genererVideo", () => {
     });
 
     expect(video.uri).toBe("u");
+    // `generateAudio` n'existe pas côté Gemini Developer API (Veo 3.x
+    // produit son audio nativement) : un essai réel du 2026-07-27 l'a
+    // confirmé, la requête était rejetée avant toute facturation. On part
+    // toujours d'une image (étal ou raccord), donc `personGeneration` doit
+    // être `"allow_adult"` : `"allow_all"` n'est accepté qu'en texte→vidéo.
     expect(generateVideos).toHaveBeenCalledWith({
       model: "veo-3.1-lite-generate-preview",
       prompt: "PROMPT",
@@ -145,8 +150,7 @@ describe("genererVideo", () => {
         resolution: "720p",
         numberOfVideos: 1,
         durationSeconds: 8,
-        generateAudio: true,
-        personGeneration: "allow_all",
+        personGeneration: "allow_adult",
       },
     });
   });
