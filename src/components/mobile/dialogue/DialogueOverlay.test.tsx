@@ -65,9 +65,9 @@ describe("DialogueOverlay", () => {
     );
     // Accname = tout le texte du bouton (portrait alt vide + carte + le
     // libellé masqué) : on vérifie juste que "Continue" (EN, mot entier)
-    // y apparaît, pas "Continuer" (FR, laissé par un test précédent).
+    // y apparaît. Le \b reste volontairement défensif, pour ne pas matcher
+    // un mot plus long qui contiendrait "continue" comme sous-chaîne.
     expect(screen.getByRole("button", { name: /\bcontinue\b/i })).toBeTruthy();
     localStorage.clear();
-    cleanup();
   });
 });

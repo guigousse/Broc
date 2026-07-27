@@ -45,8 +45,9 @@ const colonne: CSSProperties = {
 };
 
 /* Seul réglage à bouger si le personnage doit grandir ou rétrécir sur device.
-   Les portraits du grand-père sont carrés (420×420) : à 190px de haut, il
-   occupe 190px de large. */
+   Les portraits du grand-père sont carrés, mais de côté variable : de 319px
+   (songeur) à 446px (emu). À 190px de haut, songeur est la source la plus
+   agrandie — le premier candidat si le rendu paraît mou. */
 const portraitStyle: CSSProperties = {
   alignSelf: "flex-start",
   marginLeft: 8,
@@ -62,6 +63,10 @@ const portraitStyle: CSSProperties = {
 const carte: CSSProperties = {
   borderRadius: 14,
   overflow: "hidden",
+  // flexShrink:0 — avec overflow:hidden, min-height:auto ne joue plus (Flexbox
+  // §4.5) : sans ce verrou, un écran court écraserait la carte au lieu de
+  // déborder, rognant silencieusement le texte du dialogue.
+  flexShrink: 0,
   background: "linear-gradient(135deg, #f6ecd2 0%, #f1e4c0 55%, #e7d6a8 100%)",
   border: "1px solid #b89c5e",
   boxShadow: "inset 0 0 28px rgba(120,90,40,0.18), 0 6px 16px rgba(0,0,0,0.35)",

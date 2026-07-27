@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 /**
- * Bandeau nom en laiton, coins hauts arrondis — l'identité visuelle commune
+ * Bandeau nom en laiton, rayon paramétrable — l'identité visuelle commune
  * aux personnages qui parlent : vendeur du tiroir de chinage, grand-père des
  * dialogues de trame.
  *
@@ -9,7 +9,7 @@ import type { CSSProperties } from "react";
  * "12px 12px 0 0" ; le dialogue passe "0" car sa carte, en `overflow: hidden`,
  * rogne déjà le bandeau à son propre rayon.
  */
-export function namePlateStyle(radius: string): CSSProperties {
+export function namePlateStyle(radius: CSSProperties["borderRadius"]): CSSProperties {
   return {
     padding: "9px 16px",
     background:
