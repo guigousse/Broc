@@ -12,12 +12,12 @@ describe("amorçage du localStorage", () => {
   });
 
   it("fixe la langue demandée", () => {
-    expect(scriptAmorce(SAVE, "el")).toContain('{"locale":"el"}');
-    expect(scriptAmorce(SAVE, "es")).toContain('{"locale":"es"}');
+    expect(scriptAmorce(SAVE, "el")).toContain('\\"locale\\":\\"el\\"');
+    expect(scriptAmorce(SAVE, "es")).toContain('\\"locale\\":\\"es\\"');
   });
 
   it("désigne le slot 1 comme actif", () => {
-    expect(scriptAmorce(SAVE, "fr")).toContain('"actif":1');
+    expect(scriptAmorce(SAVE, "fr")).toContain('\\"actif\\":1');
   });
 
   it("produit du JavaScript syntaxiquement valide", () => {
@@ -31,5 +31,27 @@ describe("amorçage du localStorage", () => {
 
   it("refuse une langue hors des quatre", () => {
     expect(() => scriptAmorce(SAVE, "de")).toThrow(/de/);
+  });
+
+  it("stocke les slots et langue comme des chaînes JSON parsables", () => {
+    const js = scriptAmorce(SAVE, "el");
+    const storage = {};
+    // Faux localStorage qui applique String() comme le vrai.
+    const fakeStorage = {
+      setItem: (cle, val) => {
+        storage[cle] = String(val);
+      },
+    };
+    // Exécute le script avec le faux localStorage.
+    new Function("localStorage", js)(fakeStorage);
+    // Vérifie que chaque clé contient du JSON parsable.
+    expect(() => JSON.parse(storage["projet-broc:slots:v1"])).not.toThrow();
+    expect(() => JSON.parse(storage["projet-broc:langue:v1"])).not.toThrow();
+    // Vérifie le contenu réel.
+    const slots = JSON.parse(storage["projet-broc:slots:v1"]);
+    expect(slots.actif).toBe(1);
+    expect(slots.slots[1].nom).toBe("Démo App Store");
+    const langue = JSON.parse(storage["projet-broc:langue:v1"]);
+    expect(langue.locale).toBe("el");
   });
 });

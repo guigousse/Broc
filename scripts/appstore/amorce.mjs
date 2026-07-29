@@ -24,8 +24,8 @@ export function scriptAmorce(saveJson, langue) {
     `  var s = ${JSON.stringify(saveJson)};`,
     '  localStorage.setItem("projet-broc:slot:1:v1", s);',
     '  localStorage.setItem("projet-broc:slot:1:v1:backup", s);',
-    `  localStorage.setItem("projet-broc:slots:v1", ${JSON.stringify(index)});`,
-    `  localStorage.setItem("projet-broc:langue:v1", ${JSON.stringify({ locale: langue })});`,
+    `  localStorage.setItem("projet-broc:slots:v1", ${JSON.stringify(JSON.stringify(index))});`,
+    `  localStorage.setItem("projet-broc:langue:v1", ${JSON.stringify(JSON.stringify({ locale: langue }))});`,
     "} catch (e) {}",
   ].join("\n");
 }
