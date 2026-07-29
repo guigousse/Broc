@@ -28,6 +28,7 @@ public/qg/*.png
 public/atelier/*.png
 scripts/save-demo.json
 scripts/save-demo.err
+marketing/appstore/.captures/
 
 # Artefacts générés Xcode/Tauri (régénérés au build)
 src-tauri/gen/apple/app.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/

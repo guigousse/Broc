@@ -20,29 +20,39 @@ const MIME = {
   ".wav": "audio/wav",
 };
 
+async function existe(chemin) {
+  try {
+    return await fs.stat(chemin);
+  } catch {
+    return null;
+  }
+}
+
 async function resoudre(racine, urlPath) {
   const encoded = urlPath.split("?")[0];
   const decode = decodeURIComponent(encoded);
   const cible = path.resolve(racine, "." + decode);
   // Barrière anti-remontée : tout ce qui sort de la racine est refusé.
   if (cible !== racine && !cible.startsWith(racine + path.sep)) return null;
-  try {
-    const st = await fs.stat(cible);
-    if (st.isDirectory()) {
-      // Passer le chemin encodé (pas le décodé) pour éviter double décodage.
-      return resoudre(racine, encoded.replace(/\/$/, "") + "/index.html");
-    }
-    return cible;
-  } catch {
-    // L'export statique de Next écrit /route/index.html ; on tente aussi .html.
-    try {
-      const alt = cible + ".html";
-      await fs.stat(alt);
-      return alt;
-    } catch {
-      return null;
-    }
+
+  const st = await existe(cible);
+  if (st?.isDirectory()) {
+    const index = path.join(cible, "index.html");
+    if (await existe(index)) return index;
+    // L'export statique de Next (Turbopack, App Router) écrit parfois
+    // <route>.html en frère du dossier de payload RSC (<route>/*.txt) plutôt
+    // qu'un index.html dedans : le dossier existe sans jamais contenir de
+    // page. On retente donc le fichier .html au même niveau que le dossier.
+    const soeur = cible + ".html";
+    if (await existe(soeur)) return soeur;
+    return null;
   }
+  if (st) return cible;
+
+  // Le dossier n'existe pas non plus : on tente le fichier .html correspondant.
+  const alt = cible + ".html";
+  if (await existe(alt)) return alt;
+  return null;
 }
 
 /** Démarre le serveur sur un port libre et renvoie son URL. */

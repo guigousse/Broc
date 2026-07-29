@@ -15,6 +15,7 @@ import type {
   CollectionSlot,
   EtatObjet,
   GameState,
+  MissionResolution,
   Objet,
   ObjetEnVitrine,
 } from "@/types/game";
@@ -30,6 +31,7 @@ import { emptyPiecesAmelioration } from "@/data/categories";
 import { xpRequisPourNiveauBrocanteur } from "@/lib/xp";
 import { OBJET_TEMPLATES, LEGENDAIRES } from "@/data/objetTemplates";
 import { UNIQUES } from "@/data/uniques";
+import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
 
 const NIVEAU_CIBLE = 75;
 // Horodatage figé (le script tourne hors app ; on ne veut pas Date.now()
@@ -116,6 +118,15 @@ const inventaire: Objet[] = POOL.slice(10, 14).map((t, i) =>
   objetDe(t.templateId, "Bon", 100 + i),
 );
 
+// --- Trame principale : les 12 chapitres livrés -------------------------
+// Un niveau 75 a forcément terminé le fil rouge. Nécessaire notamment pour
+// débloquer marche-saint-ouen (tier 2), dont la condition exige le chapitre 4.
+const missions: MissionResolution[] = QUETES_PRINCIPALES.map((ch, i) => ({
+  courrierId: ch.id,
+  statut: "livree",
+  jourResolution: 5 + i * 6,
+}));
+
 const brocanteId = "marche-saint-ouen";
 const state: GameState = {
   version: SAVE_VERSION,
@@ -149,7 +160,7 @@ const state: GameState = {
   passagesSansChat: 0,
   declencheursDeclenches: [],
   grandLivre: [],
-  missions: [],
+  missions,
   quetesPeriodiques: {
     quotidien: { cle: "", courrierIds: [] },
     hebdo: { cle: "", courrierIds: [] },

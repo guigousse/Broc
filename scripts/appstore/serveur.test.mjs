@@ -17,6 +17,17 @@ beforeAll(async () => {
   await fs.mkdir(path.join(racine, "sous"));
   await fs.writeFile(path.join(racine, "sous", "index.html"), "<h1>sous</h1>");
   await fs.writeFile(path.join(racine, "a.css"), "body{}");
+  // Export Next 16 (Turbopack, App Router) : un dossier de payload RSC sans
+  // index.html, avec le HTML de la route en fichier frère du même nom.
+  await fs.mkdir(path.join(racine, "route-dynamique"));
+  await fs.writeFile(
+    path.join(racine, "route-dynamique", "__next._full.txt"),
+    "payload rsc",
+  );
+  await fs.writeFile(
+    path.join(racine, "route-dynamique.html"),
+    "<h1>dynamique</h1>",
+  );
   // Fichier au-dessus de la racine servie (pour tester la barrière).
   await fs.writeFile(path.join(parent, "secret.txt"), "interdit");
   serveur = await demarrerServeur(racine);
@@ -38,6 +49,12 @@ describe("serveur statique de l'export", () => {
     const r = await fetch(serveur.url + "/sous");
     expect(r.status).toBe(200);
     expect(await r.text()).toContain("sous");
+  });
+
+  it("sert le .html frère quand le dossier de route ne contient pas d'index.html (export Next 16)", async () => {
+    const r = await fetch(serveur.url + "/route-dynamique");
+    expect(r.status).toBe(200);
+    expect(await r.text()).toContain("dynamique");
   });
 
   it("sert un fichier avec le bon type MIME", async () => {
