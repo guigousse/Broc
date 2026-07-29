@@ -114,9 +114,14 @@ Sur iPad, la grille passe à 5 × 4 : les quatre portraits supplémentaires sont
 
 ## Les textes
 
-Titres et bulle sont les seuls éléments qui changent entre les langues.
 **Les versions EN, ES et EL sont à valider** — ce sont des propositions, pas des
 traductions littérales.
+
+L'écran de jeu capturé doit lui aussi être dans la langue du visuel : un titre
+anglais au-dessus d'une interface française serait incohérent. La capture est
+donc refaite pour chaque langue, en écrivant la clé `projet-broc:langue:v1`
+(valeur `{"locale":"<langue>"}`) dans le `localStorage` en même temps que la
+sauvegarde de démo. Cela porte le total à **40 captures** et non 10.
 
 | # | FR | EN | ES | EL |
 |---|---|---|---|---|
@@ -132,16 +137,21 @@ Bulle du visuel 5 :
 |---|---|---|---|
 | Méfie-toi de celui qui sourit le plus | Beware the one who smiles the most | Desconfía del que más sonríe | Να φυλάγεσαι απ' αυτόν που χαμογελάει πιο πολύ |
 
-### Contrainte typographique sur le grec
+### Typographie et grec
 
-**Cinzel ne contient aucun glyphe grec.** Les `@font-face` du projet ne la
-déclarent qu'en `latin` et `latin-ext` ; seule EB Garamond dispose des fichiers
-grecs (`public/fonts/google/eb-garamond-greek*.woff2`). Caveat a le même
-problème.
+Le fichier de fontes Cinzel ne contient aucun glyphe grec, mais **le projet a
+déjà résolu le problème** : `globals.css` déclare, sous le nom de famille
+`Cinzel`, deux `@font-face` supplémentaires pointant sur GFS Didot avec la plage
+Unicode grecque (`U+0370-03FF` et `U+1F00-1FFF`). Le même mécanisme existe pour
+`Caveat`, servie en grec par l'italique d'EB Garamond, et pour
+`Cormorant Garamond`. Demander « Cinzel » suffit donc : le grec bascule seul sur
+la fonte de substitution, sans aucun cas particulier.
 
-Les visuels EL utilisent donc **EB Garamond** pour les titres et pour la bulle.
-Le reste du gabarit est identique. Sans cela, les titres grecs tomberaient sur
-la police système et casseraient l'identité de la série.
+Le gabarit n'embarque donc pas sa propre liste de fontes. Il **extrait les blocs
+`@font-face` de `src/app/globals.css`** pour les familles dont il a besoin
+(`Cinzel`, `Caveat`) et réécrit les URL `/fonts/google/…` en chemins absolus.
+Conséquence : la typographie des visuels reste par construction identique à
+celle du jeu, y compris si les fontes changent un jour.
 
 ## Le pipeline
 
@@ -162,9 +172,21 @@ dépôt (Node ESM, `sharp` et `playwright` déjà en dépendances).
 5. Injecter la save avant hydratation via `page.addInitScript`, en écrivant les
    trois clés que `seed-demo-sim.sh` utilise déjà :
    `projet-broc:slot:1:v1`, `projet-broc:slot:1:v1:backup`,
-   `projet-broc:slots:v1`.
+   `projet-broc:slots:v1`, plus `projet-broc:langue:v1` pour la langue.
 6. Naviguer vers chaque route, attendre un sélecteur stable propre à l'écran,
    puis `page.screenshot()`.
+
+Les sélecteurs d'attente sont choisis **indépendants de la langue** : ils visent
+des chemins d'images (`img[src*="/items/"]`, `img[src*="/personas/clients/"]`,
+`img[src*="/items/thumbs/"]`) plutôt que du texte traduit. Aucune modification
+du code de l'application n'est nécessaire.
+
+Le visuel 2 demande une interaction : ouvrir le tiroir de négociation en
+cliquant le bouton `Négocier`, dont le libellé est traduit (`Négocier`,
+`Haggle`, `Regatear`, `Παζάρεμα`). Ces quatre libellés sont recopiés dans le
+module de textes du pipeline, et un test les compare aux fichiers
+`src/lib/i18n/ui/<langue>.ts` pour qu'un renommage dans le jeu casse le test
+plutôt que la capture.
 
 Le repli, si l'export statique refuse de tourner dans un Chromium nu, est de
 faire pointer le script sur `next dev` — le contrat du script ne change pas.
