@@ -12,21 +12,45 @@ function valeur(argv, nom) {
   return trouve ? trouve.slice(prefixe.length) : undefined;
 }
 
-function liste(argv, nom, connus, etiquette) {
+function convertirNombre(s) {
+  const n = Number(s);
+  if (isNaN(n)) {
+    throw new Error(`non numérique`);
+  }
+  return n;
+}
+
+function liste(argv, nom, connus, etiquette, convertir = String) {
   const brut = valeur(argv, nom);
   if (brut === undefined) return [...connus];
-  const demandes = brut.split(",").map((s) => s.trim()).filter(Boolean);
+
+  const brutes = brut.split(",").map((s) => s.trim()).filter(Boolean);
+  if (brutes.length === 0) {
+    throw new Error(`${etiquette} vide : au moins une valeur requise`);
+  }
+
+  const demandes = brutes.map((s) => {
+    try {
+      return convertir(s);
+    } catch {
+      throw new Error(`${etiquette} « ${s} » invalide : attendu ${connus.join(", ")}`);
+    }
+  });
+
   for (const d of demandes) {
     if (!connus.includes(d)) {
       throw new Error(`${etiquette} « ${d} » inconnu : attendu ${connus.join(", ")}`);
     }
   }
+
   return connus.filter((c) => demandes.includes(c));
 }
 
 function verifierDrapeauxConnus(argv) {
   for (const a of argv) {
-    if (!a.startsWith("--")) continue;
+    if (!a.startsWith("--")) {
+      throw new Error(`argument « ${a} » inconnu : attendu un drapeau (--...)`);
+    }
     if (DRAPEAUX_BOOLEENS.includes(a)) continue;
     const eq = a.indexOf("=");
     if (eq > 2 && CLES_VALEUR.includes(a.slice(2, eq))) continue;
@@ -37,20 +61,16 @@ function verifierDrapeauxConnus(argv) {
 
 export function parserArgs(argv) {
   verifierDrapeauxConnus(argv);
-  const brutVisuels = valeur(argv, "only");
-  let visuels = [...NUMEROS];
-  if (brutVisuels !== undefined) {
-    const demandes = brutVisuels.split(",").map((s) => Number(s.trim()));
-    for (const d of demandes) {
-      if (!NUMEROS.includes(d)) {
-        throw new Error(`visuel « ${d} » inconnu : attendu ${NUMEROS.join(", ")}`);
-      }
-    }
-    visuels = NUMEROS.filter((n) => demandes.includes(n));
-  }
+
+  const langues = liste(argv, "lang", LANGUES, "langue");
+  const appareils = liste(argv, "device", APPAREILS_CONNUS, "appareil");
+  const visuelsBruts = liste(argv, "only", NUMEROS, "visuel", convertirNombre);
+  // Trier explicitement les numéros de visuels en ordre croissant
+  const visuels = [...visuelsBruts].sort((a, b) => a - b);
+
   return {
-    langues: liste(argv, "lang", LANGUES, "langue"),
-    appareils: liste(argv, "device", APPAREILS_CONNUS, "appareil"),
+    langues,
+    appareils,
     visuels,
     sauterCapture: argv.includes("--skip-capture"),
     aide: argv.includes("--help"),
