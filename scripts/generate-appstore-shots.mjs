@@ -30,6 +30,7 @@ Visuels App Store — 5 visuels × 2 appareils × 4 langues.
   --lang=fr,en      langues à produire      (défaut : les 4)
   --device=iphone   appareils à produire    (défaut : iphone,ipad)
   --only=1,5        visuels à produire      (défaut : 1..5)
+  --seed=N          graine du RNG du jeu    (défaut : fixe, cf. cli.mjs)
   --skip-capture    réutilise les captures déjà présentes
   --help            affiche ceci
 `;
@@ -52,10 +53,15 @@ async function main() {
   }
 
   // Sauvegarde de démo régénérée à chaque fois : elle doit rester valide
-  // vis-à-vis de la version courante des migrations.
+  // vis-à-vis de la version courante des migrations. APPSTORE_SEED : ce
+  // script tourne dans un process Node séparé du navigateur Playwright, il
+  // a donc besoin de sa propre graine (voir le commentaire en tête de
+  // gen-save-demo.ts) pour que tendances/météo/célébrité du jour soient
+  // reproductibles elles aussi.
   log("🧱 Génération de la sauvegarde de démo…");
   const saveJson = execFileSync("npx", ["tsx", "scripts/gen-save-demo.ts"], {
     cwd: CHEMINS.racine, encoding: "utf8", maxBuffer: 64 * 1024 * 1024,
+    env: { ...process.env, APPSTORE_SEED: String(args.graine) },
   });
   JSON.parse(saveJson); // valide
   await fs.writeFile(CHEMINS.saveDemo, saveJson);
@@ -85,7 +91,7 @@ async function main() {
         if (serveur) {
           captures = await capturerEcrans({
             navigateur, baseUrl: serveur.url, langue, appareil, visuels,
-            saveJson, dossier: CHEMINS.captures, log,
+            saveJson, dossier: CHEMINS.captures, graine: args.graine, log,
           });
         } else {
           for (const v of visuels.filter((x) => x.route)) {

@@ -1,6 +1,6 @@
 /** Capture des écrans réels du jeu avec Playwright. */
 import path from "node:path";
-import { scriptAmorce } from "./amorce.mjs";
+import { scriptAmorce, scriptGraine } from "./amorce.mjs";
 import { BROCANTE_DEMO } from "./config.mjs";
 import { LIBELLE_NEGOCIER } from "./textes.mjs";
 
@@ -10,8 +10,14 @@ const REPOS_MS = 1200;
 /**
  * Le vendeur mystère apparaît en tête de pile selon un tirage aléatoire
  * (probabilité décroissante, cf. `lib/boiteMystere`) : sa carte n'a pas de
- * bouton Négocier. Une nouvelle navigation relance un tirage indépendant —
- * quelques tentatives suffisent donc à retomber sur une carte d'objet.
+ * bouton Négocier. Depuis la graine fixe (scriptGraine), une nouvelle
+ * navigation ne relance PLUS un tirage indépendant : le RNG est réinitialisé
+ * à l'identique à chaque page, donc le résultat est déterministe pour une
+ * graine donnée — soit toutes les tentatives réussissent (celle-ci ne
+ * boucle jamais), soit elles échouent toutes de la même façon. La boucle
+ * reste utile : elle fait échouer vite et clairement, avec un message qui
+ * dit quoi faire (changer de graine via --seed), plutôt que de laisser
+ * passer une capture sans bouton Négocier.
  */
 const ESSAIS_NEGO_MAX = 6;
 
@@ -28,7 +34,7 @@ function zoneSecurite(appareil) {
 }
 
 export async function capturerEcrans({
-  navigateur, baseUrl, langue, appareil, visuels, saveJson, dossier, log = () => {},
+  navigateur, baseUrl, langue, appareil, visuels, saveJson, dossier, graine, log = () => {},
 }) {
   const contexte = await navigateur.newContext({
     viewport: appareil.viewport,
@@ -38,6 +44,9 @@ export async function capturerEcrans({
     locale: langue,
     reducedMotion: "reduce",
   });
+  // Avant toute autre chose : fige Math.random pour que le contenu tiré
+  // (objet, vendeur, humeur…) soit reproductible et identique entre langues.
+  await contexte.addInitScript(scriptGraine(graine));
   await contexte.addInitScript(scriptAmorce(saveJson, langue));
   // En style inline sur <html> : prime sur toute règle de feuille de style,
   // quel que soit l'ordre de chargement (contrairement à une règle :root
@@ -93,7 +102,7 @@ export async function capturerEcrans({
       if (!ouvert) {
         throw new Error(
           `${visuel.cle} : le vendeur mystère est tombé en tête ${essaisMax} fois de suite, ` +
-            "aucune carte à négocier n'a pu être capturée",
+            "aucune carte à négocier n'a pu être capturée — essaie une autre graine (--seed=...)",
         );
       }
     }

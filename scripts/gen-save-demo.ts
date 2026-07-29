@@ -32,6 +32,29 @@ import { xpRequisPourNiveauBrocanteur } from "@/lib/xp";
 import { OBJET_TEMPLATES, LEGENDAIRES } from "@/data/objetTemplates";
 import { UNIQUES } from "@/data/uniques";
 import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
+import { GRAINE_DEFAUT } from "./appstore/cli.mjs";
+
+// --- Graine du RNG (reproductibilité inter-exécutions) ------------------
+// Ce script tourne dans un process Node séparé du navigateur Playwright :
+// l'injection de scriptGraine() (amorce.mjs) ne le couvre pas. Or
+// genererTendances()/tirerMeteoSemaine()/tirerCelebrite() ci-dessous
+// utilisent Math.random — sans ce correctif, la save de démo change à
+// chaque exécution (tendances de prix, célébrité du jour) même à graine
+// fixe côté navigateur, et la reproductibilité globale du pipeline en
+// pâtit. scripts/generate-appstore-shots.mjs fixe APPSTORE_SEED avant
+// d'invoquer ce script ; en usage manuel (`npx tsx scripts/gen-save-demo.ts
+// > ...`), la graine par défaut du pipeline s'applique.
+const GRAINE = Number(process.env.APPSTORE_SEED ?? GRAINE_DEFAUT);
+{
+  let a = GRAINE | 0;
+  Math.random = function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 const NIVEAU_CIBLE = 75;
 // Horodatage figé (le script tourne hors app ; on ne veut pas Date.now()

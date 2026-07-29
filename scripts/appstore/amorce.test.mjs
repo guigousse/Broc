@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { scriptAmorce } from "./amorce.mjs";
+import { scriptAmorce, scriptGraine } from "./amorce.mjs";
 
 const SAVE = JSON.stringify({ version: 17, budget: 8420 });
 
@@ -53,5 +53,54 @@ describe("amorçage du localStorage", () => {
     expect(slots.slots[1].nom).toBe("Démo App Store");
     const langue = JSON.parse(storage["projet-broc:langue:v1"]);
     expect(langue.locale).toBe("el");
+  });
+});
+
+describe("graine du générateur pseudo-aléatoire", () => {
+  it("produit du JavaScript syntaxiquement valide", () => {
+    expect(() => new Function(scriptGraine(42))).not.toThrow();
+  });
+
+  it("refuse une graine non finie", () => {
+    expect(() => scriptGraine(NaN)).toThrow(/graine invalide/);
+    expect(() => scriptGraine(Infinity)).toThrow(/graine invalide/);
+  });
+
+  it("remplace Math.random par une fonction", () => {
+    // Objet local isolé : ne touche jamais le Math global du process de test.
+    const contexte = { Math: { imul: Math.imul } };
+    new Function("Math", `${scriptGraine(1)}\nreturn Math;`)(contexte.Math);
+    expect(typeof contexte.Math.random).toBe("function");
+  });
+
+  it("produit toujours la même séquence pour une même graine", () => {
+    const sequence = (graine) => {
+      const contexte = { Math: { imul: Math.imul } };
+      new Function("Math", `${scriptGraine(graine)}\nreturn Math;`)(contexte.Math);
+      const rng = contexte.Math.random;
+      return [rng(), rng(), rng(), rng()];
+    };
+    expect(sequence(12345)).toEqual(sequence(12345));
+  });
+
+  it("produit une séquence différente pour deux graines différentes", () => {
+    const sequence = (graine) => {
+      const contexte = { Math: { imul: Math.imul } };
+      new Function("Math", `${scriptGraine(graine)}\nreturn Math;`)(contexte.Math);
+      const rng = contexte.Math.random;
+      return [rng(), rng(), rng(), rng()];
+    };
+    expect(sequence(1)).not.toEqual(sequence(2));
+  });
+
+  it("produit des valeurs dans [0, 1)", () => {
+    const contexte = { Math: { imul: Math.imul } };
+    new Function("Math", `${scriptGraine(7)}\nreturn Math;`)(contexte.Math);
+    const rng = contexte.Math.random;
+    for (let i = 0; i < 50; i++) {
+      const v = rng();
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(1);
+    }
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parserArgs } from "./cli.mjs";
+import { GRAINE_DEFAUT, parserArgs } from "./cli.mjs";
 
 describe("ligne de commande des visuels App Store", () => {
   it("produit tout par défaut", () => {
@@ -9,6 +9,7 @@ describe("ligne de commande des visuels App Store", () => {
     expect(a.visuels).toEqual([1, 2, 3, 4, 5]);
     expect(a.sauterCapture).toBe(false);
     expect(a.aide).toBe(false);
+    expect(a.graine).toBe(GRAINE_DEFAUT);
   });
 
   it("restreint les langues", () => {
@@ -70,5 +71,14 @@ describe("ligne de commande des visuels App Store", () => {
 
   it("rejette un argument positionnel", () => {
     expect(() => parserArgs(["abc"])).toThrow(/argument/);
+  });
+
+  it("accepte une graine explicite", () => {
+    expect(parserArgs(["--seed=1"]).graine).toBe(1);
+    expect(parserArgs(["--seed=987654321"]).graine).toBe(987654321);
+  });
+
+  it("rejette une graine non numérique", () => {
+    expect(() => parserArgs(["--seed=abc"])).toThrow(/graine.*non numérique/);
   });
 });
