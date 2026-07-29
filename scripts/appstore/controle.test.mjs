@@ -15,6 +15,7 @@ beforeAll(async () => {
   await sharp({ create: { ...fond.create, width: 1000 } }).png().toFile(f("petit.png"));
   await sharp({ create: { ...fond.create, channels: 4, background: "#1e120880" } })
     .png().toFile(f("alpha.png"));
+  await sharp(fond).toColorspace("b-w").png().toFile(f("non-srgb.png"));
 });
 
 afterAll(async () => { await fs.rm(dossier, { recursive: true, force: true }); });
@@ -45,6 +46,12 @@ describe("contrôle des visuels produits", () => {
     const r = await controlerFichier(f("fantome.png"), ATTENDU);
     expect(r.ok).toBe(false);
     expect(r.problemes.join(" ")).toMatch(/introuvable/i);
+  });
+
+  it("refuse un espace colorimétrique non-sRGB", async () => {
+    const r = await controlerFichier(f("non-srgb.png"), ATTENDU);
+    expect(r.ok).toBe(false);
+    expect(r.problemes.join(" ")).toMatch(/srgb|espace|colorim/i);
   });
 
   it("résume en comptant les fichiers en défaut", () => {
