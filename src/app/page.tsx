@@ -364,19 +364,6 @@ export default function TitleScreen() {
       />
 
       <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: `repeating-conic-gradient(
-            from 0deg at 50% 10%,
-            rgba(197,160,89,0.09) 0deg 4deg,
-            rgba(0,0,0,0) 4deg 12deg
-          )`,
-          pointerEvents: "none",
-        }}
-      />
-      <div
         style={{
           position: "relative",
           flex: 1,
