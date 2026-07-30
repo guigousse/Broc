@@ -1,13 +1,17 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { MonitorPlay } from "lucide-react";
+import { CartelPub } from "@/components/ui/CartelPub";
+import { namePlateStyle } from "@/components/ui/namePlate";
 import { VENDEUR_MYSTERE_ILLUSTRATION } from "@/lib/boiteMystere";
 import { useLangue } from "@/lib/i18n/LangueContext";
 
 /**
  * Tiroir du vendeur mystère — même structure que ChineNegoDrawer (perso qui
- * flotte + bandeau nom pleine largeur), mais habillage « luxe » vert + laiton
- * et une seule action : regarder une pub pour ouvrir la boîte.
+ * flotte + bandeau nom pleine largeur), et désormais le même bandeau laiton :
+ * c'est le costume vert du personnage qui le distingue, pas l'interface. Une
+ * seule action, portée par le cartel de visionnage commun à tout le jeu.
  */
 export function ChineMystereDrawer({
   plein,
@@ -26,18 +30,23 @@ export function ChineMystereDrawer({
         <img src={VENDEUR_MYSTERE_ILLUSTRATION} alt={d.chine.vendeurMystere} style={vendeurImg} />
         <div style={rightZone}>
           {boiteReclamee ? (
-            <span style={statutTexte}>{d.chine.boiteDejaOuverte}</span>
+            <span style={statutTexte("var(--brass-700)")}>{d.chine.boiteDejaOuverte}</span>
           ) : plein ? (
-            <span style={statutTexte}>{d.qg.stockagePlein}</span>
+            <span style={statutTexte("var(--vermillion-600)")}>{d.qg.stockagePlein}</span>
           ) : (
-            <button type="button" style={btnLuxe} onClick={onOuvrirBoite}>
-              {d.sheets.regarderPubPourOuvrir}
-            </button>
+            <CartelPub
+              onClick={onOuvrirBoite}
+              ariaLabel={d.sheets.regarderPubPourOuvrir}
+              style={{ width: "100%", marginBottom: 10, padding: "10px 18px", gap: 8 }}
+            >
+              <MonitorPlay size={26} strokeWidth={2.2} aria-hidden />
+              {d.sheets.pourOuvrirLaBoite}
+            </CartelPub>
           )}
         </div>
       </div>
 
-      <div style={namePlateLuxe}>{d.chine.vendeurMystere}</div>
+      <div style={namePlate}>{d.chine.vendeurMystere}</div>
     </div>
   );
 }
@@ -73,46 +82,14 @@ const rightZone: CSSProperties = {
   alignItems: "flex-end",
 };
 
-const statutTexte: CSSProperties = {
+/** Même statut que le tiroir de négo : laiton foncé pour un fait acquis,
+ *  vermillon pour un blocage. */
+const statutTexte = (color: string): CSSProperties => ({
   marginBottom: 10,
-  color: "var(--brass-300)",
+  color,
   fontSize: 14,
   fontFamily: "var(--font-display)",
-  textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-};
+});
 
-/** Bouton luxe : vert profond + liseré laiton. */
-const btnLuxe: CSSProperties = {
-  marginBottom: 10,
-  padding: "11px 20px",
-  borderRadius: 10,
-  border: "2px solid var(--brass-500)",
-  background: "linear-gradient(180deg, var(--forest-700) 0%, var(--forest-900) 100%)",
-  color: "var(--brass-300)",
-  fontFamily: "var(--font-display)",
-  fontWeight: 700,
-  fontSize: 14,
-  lineHeight: 1.2,
-  textAlign: "center",
-  textShadow: "0 1px 2px rgba(0,0,0,0.45)",
-  boxShadow: "inset 0 0 0 1px rgba(212,175,95,0.35)",
-  cursor: "pointer",
-};
-
-/** Bandeau nom « luxe » : vert profond, liseré laiton, texte laiton. */
-const namePlateLuxe: CSSProperties = {
-  padding: "12px 16px",
-  background: "linear-gradient(180deg, var(--forest-700) 0%, var(--forest-900) 100%)",
-  borderTop: "2px solid var(--brass-500)",
-  borderBottom: "2px solid var(--brass-700)",
-  boxShadow: "inset 0 0 0 2px rgba(212,175,95,0.28)",
-  borderRadius: "12px 12px 0 0",
-  textAlign: "center",
-  fontFamily: "var(--font-display)",
-  fontWeight: 700,
-  fontSize: 18,
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
-  color: "var(--brass-300)",
-  textShadow: "0 1px 3px rgba(0,0,0,0.55)",
-};
+/** Le bandeau des vendeurs, sans exception — même appel que ChineNegoDrawer. */
+const namePlate = namePlateStyle("12px 12px 0 0");

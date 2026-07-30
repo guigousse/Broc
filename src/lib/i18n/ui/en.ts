@@ -225,6 +225,7 @@ export const en: DictionnaireUI = {
       "A sealed box… no one knows what it hides. Watch an ad to open it.",
     ouverture: "Opening…",
     regarderPubPourOuvrir: "Watch an ad to open",
+    pourOuvrirLaBoite: "To open the box",
     boiteSouvre: "The box is opening…",
   },
   chine: {

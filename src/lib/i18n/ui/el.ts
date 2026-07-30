@@ -230,6 +230,7 @@ export const el: DictionnaireUI = {
       "Ένα σφραγισμένο κουτί… κανείς δεν ξέρει τι κρύβει. Δες μια διαφήμιση για να το ανοίξεις.",
     ouverture: "Άνοιγμα…",
     regarderPubPourOuvrir: "Δες μια διαφήμιση για να ανοίξεις",
+    pourOuvrirLaBoite: "Για να ανοίξεις το κουτί",
     boiteSouvre: "Το κουτί ανοίγει…",
   },
   chine: {

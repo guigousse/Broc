@@ -228,6 +228,7 @@ export const fr = {
       "Une boîte scellée… personne ne sait ce qu'elle cache. Regarde une pub pour l'ouvrir.",
     ouverture: "Ouverture…",
     regarderPubPourOuvrir: "Regarder une pub pour ouvrir",
+    pourOuvrirLaBoite: "Pour ouvrir la boîte",
     boiteSouvre: "La boîte s'ouvre…",
   },
   chine: {
