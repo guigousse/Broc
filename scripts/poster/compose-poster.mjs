@@ -37,19 +37,16 @@ async function dataUri(filePath) {
 }
 
 async function main() {
-  const [illustration, wordmark, divider, grain, badge, globalsCss] =
-    await Promise.all([
-      dataUri(path.join(POSTER_DIR, "candidats", `illustration-${illuNum}.png`)),
-      dataUri(path.join(PUBLIC_DIR, "assets", "broc-wordmark-light.svg")),
-      dataUri(path.join(PUBLIC_DIR, "assets", "deco-divider.svg")),
-      dataUri(path.join(PUBLIC_DIR, "assets", "paper-grain.svg")),
-      dataUri(path.join(POSTER_DIR, "badge-app-store-fr.svg")),
-      fs.readFile(path.join(PROJECT_ROOT, "src", "app", "globals.css"), "utf8"),
-    ]);
+  const [illustration, divider, grain, globalsCss] = await Promise.all([
+    dataUri(path.join(POSTER_DIR, "candidats", `illustration-${illuNum}.png`)),
+    dataUri(path.join(PUBLIC_DIR, "assets", "deco-divider.svg")),
+    dataUri(path.join(PUBLIC_DIR, "assets", "paper-grain.svg")),
+    fs.readFile(path.join(PROJECT_ROOT, "src", "app", "globals.css"), "utf8"),
+  ]);
 
   const fontFaces = await chargerFontFaceCss(
     globalsCss,
-    ["Cinzel", "Cormorant Garamond"],
+    ["Cinzel", "Verve Shadow"],
     PUBLIC_DIR,
   );
 
@@ -81,14 +78,14 @@ ${fontFaces}
   opacity: 0.28; mix-blend-mode: multiply; pointer-events: none;
 }
 .haut {
-  position: absolute; top: 56px; left: 0; right: 0;
-  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  position: absolute; top: 64px; left: 0; right: 0;
+  display: flex; flex-direction: column; align-items: center;
 }
-.wordmark { width: 560px; filter: drop-shadow(0 4px 14px rgba(24, 17, 10, 0.55)); }
-.surtitre {
-  font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic;
-  font-size: 34px; color: #F1E3BF; letter-spacing: 0.06em;
-  text-shadow: 0 2px 8px rgba(24, 17, 10, 0.7);
+/* Même habillage que le titre de l'écran titre de l'appli (page.tsx). */
+.titre {
+  font-family: 'Verve Shadow', 'Cinzel', Georgia, serif; font-weight: 400;
+  font-size: 190px; letter-spacing: 0.04em; line-height: 1;
+  color: #FBF7EE; text-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
 }
 .bas {
   position: absolute; bottom: 50px; left: 0; right: 0;
@@ -101,7 +98,13 @@ ${fontFaces}
   text-shadow: 0 2px 6px rgba(24, 17, 10, 0.9), 0 0 24px rgba(24, 17, 10, 0.7);
 }
 .divider { width: 420px; }
-.badge { height: 78px; filter: drop-shadow(0 3px 10px rgba(24, 17, 10, 0.6)); }
+.dispo {
+  font-family: 'Cinzel', Georgia, serif; font-weight: 600;
+  font-size: 33px; color: #F1E3BF; letter-spacing: 0.09em;
+  padding: 18px 40px; border: 2px solid #C5A059; border-radius: 999px;
+  background: rgba(24, 17, 10, 0.35);
+  text-shadow: 0 2px 6px rgba(24, 17, 10, 0.9);
+}
 </style></head>
 <body>
   <div class="affiche">
@@ -110,13 +113,12 @@ ${fontFaces}
     <div class="voile-bas"></div>
     <img class="grain" src="${grain}" alt="">
     <div class="haut">
-      <div class="surtitre">Le grenier de votre grand-père vous attend…</div>
-      <img class="wordmark" src="${wordmark}" alt="BROC">
+      <div class="titre">Broc</div>
     </div>
     <div class="bas">
       <div class="accroche">Chinez. Négociez.<br>Collectionnez.</div>
       <img class="divider" src="${divider}" alt="">
-      <img class="badge" src="${badge}" alt="Télécharger dans l'App Store">
+      <div class="dispo">Disponible gratuitement dans l&rsquo;App&nbsp;Store</div>
     </div>
   </div>
 </body></html>`;
