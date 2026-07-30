@@ -50,4 +50,9 @@ describe("OngletCommandes", () => {
     const ligne = screen.getByRole("button", { name: /La lampe de mon atelier/ });
     expect(ligne.getAttribute("aria-expanded")).toBe("true");
   });
+
+  it("en-tête de section : libellé + compte (n)", () => {
+    render(<OngletCommandes state={stateAvecLampe()} onLivrerMission={livrer} />);
+    expect(screen.getByRole("button", { name: /Commandes principales \(1\)/ })).toBeTruthy();
+  });
 });

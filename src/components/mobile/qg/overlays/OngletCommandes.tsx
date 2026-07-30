@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { CalendarDays, CalendarRange, FolderOpen } from "lucide-react";
 import { estMissionLivrable } from "@/lib/missions";
 import { prochainMinuitLocalMs, prochainLundiLocalMs } from "@/lib/quetes/periode";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -29,28 +30,28 @@ function formatRestant(ms: number): string {
 
 /* ─── styles ─── */
 
-const sectionLabel: CSSProperties = {
+/* En-tête de section repliable, alignée à gauche (icône, libellé (n), chevron à droite). */
+const sectionToggle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  width: "100%",
   fontFamily: "var(--font-display)",
   fontSize: 14,
   fontWeight: 700,
-  letterSpacing: "0.18em",
+  letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: "#6e1f1f",
-  textAlign: "center",
-  padding: "12px 0 6px",
-  borderTop: "1px dotted rgba(110,31,31,0.35)",
-  marginTop: 10,
-};
-
-/* En-tête de section repliable (bouton pleine largeur, chevron à droite). */
-const sectionToggle: CSSProperties = {
-  ...sectionLabel,
+  textAlign: "left",
+  padding: "14px 2px 6px",
+  marginTop: 6,
   background: "none",
   border: "none",
   borderTop: "1px dotted rgba(110,31,31,0.35)",
-  width: "100%",
   cursor: "pointer",
 };
+
+const sectionChevron: CSSProperties = { marginLeft: "auto", fontSize: 12, color: "#8a6d2e" };
 
 const sectionSousLabel: CSSProperties = {
   fontFamily: "var(--font-mono)",
@@ -58,8 +59,8 @@ const sectionSousLabel: CSSProperties = {
   letterSpacing: "0.12em",
   textTransform: "uppercase",
   color: "#7a6438",
-  textAlign: "center",
-  padding: "0 0 6px",
+  textAlign: "left",
+  padding: "0 2px 6px",
 };
 
 /* ─── tri des missions actives ─── */
@@ -174,7 +175,13 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
   const resteQuotidien = prochainMinuitLocalMs(now) - now;
   const resteHebdo = prochainLundiLocalMs(now) - now;
 
-  const renderSection = (cle: string, label: string, liste: MissionResolution[], sousLabel?: string) => {
+  const renderSection = (
+    cle: string,
+    icone: ReactNode,
+    label: string,
+    liste: MissionResolution[],
+    sousLabel?: string,
+  ) => {
     if (liste.length === 0) return null;
     const repliee = sectionsRepliees.has(cle);
     return (
@@ -185,7 +192,9 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
           onClick={() => toggleSection(cle)}
           aria-expanded={!repliee}
         >
-          {label} {repliee ? "▸" : "▾"}
+          {icone}
+          <span>{label} ({liste.length})</span>
+          <span style={sectionChevron} aria-hidden>{repliee ? "▸" : "▾"}</span>
         </button>
         {!repliee && (
           <>
@@ -221,15 +230,17 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
 
   return (
     <>
-      {renderSection("principales", d.carnet.sectionPrincipales, principales)}
+      {renderSection("principales", <FolderOpen size={15} aria-hidden />, d.carnet.sectionPrincipales, principales)}
       {renderSection(
         "quotidiennes",
+        <CalendarDays size={15} aria-hidden />,
         d.carnet.sectionQuotidiennes,
         quotidiennes,
         tr(d.carnet.renouvellement, { t: formatRestant(resteQuotidien) }),
       )}
       {renderSection(
         "hebdomadaires",
+        <CalendarRange size={15} aria-hidden />,
         d.carnet.sectionHebdomadaires,
         hebdomadaires,
         tr(d.carnet.renouvellement, { t: formatRestant(resteHebdo) }),
@@ -239,9 +250,11 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
           <button
             type="button"
             onClick={() => setTermineesVisibles((v) => !v)}
-            style={{ ...sectionLabel, background: "none", border: "none", width: "100%", cursor: "pointer" }}
+            style={sectionToggle}
+            aria-expanded={termineesVisibles}
           >
-            {d.carnet.terminees} {termineesVisibles ? "▾" : "▸"}
+            <span>{d.carnet.terminees}</span>
+            <span style={sectionChevron} aria-hidden>{termineesVisibles ? "▾" : "▸"}</span>
           </button>
           {termineesVisibles &&
             terminees.map((m) => {
