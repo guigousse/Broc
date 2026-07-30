@@ -9,6 +9,8 @@ import { ItemImage } from "@/components/ui/ItemImage";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
 import { corpsCourrier, nomTemplate, nomExpediteur, titreCourrier } from "@/lib/i18n/contenu";
+import { recompenseEffective } from "@/lib/recompenses";
+import { RecompenseJetons } from "@/components/mobile/qg/RecompenseJetons";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import type { Courrier, GameState, ObjectifMission } from "@/types/game";
 
@@ -18,6 +20,7 @@ interface Props {
   ouvert: boolean;
   onToggle: () => void;
   onLivrer: () => void;
+  enCeremonie?: boolean;
 }
 
 const carte: CSSProperties = {
@@ -27,11 +30,9 @@ const carte: CSSProperties = {
   margin: "8px 0",
   overflow: "hidden",
 };
-/* alignItems flex-end : le bas de l'avatar est aligné avec le bas de la
- * dernière ligne du bloc central (la rangée de vignettes d'items). */
 const row: CSSProperties = {
   position: "relative",
-  display: "flex", alignItems: "flex-end", gap: 12, width: "100%",
+  display: "flex", alignItems: "stretch", gap: 12, width: "100%",
   padding: "12px 12px 10px", background: "transparent", border: "none",
   cursor: "pointer", textAlign: "left",
 };
@@ -67,12 +68,6 @@ const apercuPlus: CSSProperties = {
   background: "#eadfc0", border: "1px solid rgba(110,31,31,0.25)",
   borderRadius: 4, padding: "2px 5px",
 };
-/* Récompense collée au bord droit de la carte, sur la ligne des vignettes. */
-const apercuRecompense: CSSProperties = {
-  position: "absolute", right: 12, bottom: 14,
-  fontFamily: "var(--font-serif)", fontSize: 13,
-  color: "#1a1308", whiteSpace: "nowrap",
-};
 const apercuObjectif: CSSProperties = {
   display: "block", fontFamily: "var(--font-mono)", fontSize: 10,
   color: "#7a6438", marginTop: "auto", paddingTop: 8,
@@ -80,6 +75,30 @@ const apercuObjectif: CSSProperties = {
 const ligneObjectif: CSSProperties = {
   display: "flex", alignItems: "center", justifyContent: "space-between",
   padding: "6px 0", borderBottom: "1px dashed rgba(110,31,31,0.18)", fontSize: 14, color: "#2b2418",
+};
+const pastilleEcheance = (urgent: boolean): CSSProperties => ({
+  position: "absolute", top: 10, right: 12,
+  fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700,
+  color: urgent ? "#f4e9cd" : "#8a7a52",
+  background: urgent ? "#a31f1f" : "transparent",
+  border: urgent ? "none" : "1px solid rgba(138,122,82,0.5)",
+  borderRadius: 9, padding: "1px 7px",
+});
+const barreWrap: CSSProperties = {
+  display: "flex", alignItems: "center", gap: 8, marginTop: "auto", paddingTop: 8,
+};
+const barreFond: CSSProperties = {
+  flex: 1, height: 7, background: "#e3d7b6", borderRadius: 4, overflow: "hidden",
+  boxShadow: "inset 0 1px 2px rgba(110,31,31,0.18)",
+};
+const barreRemplissage = (pct: number): CSSProperties => ({
+  display: "block", width: `${pct}%`, height: "100%",
+  background: "linear-gradient(180deg, #d9b45e, #c8a24a)",
+  transition: "width 300ms ease",
+});
+const compteurStyle: CSSProperties = {
+  fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
+  color: "#8a6d2e", whiteSpace: "nowrap",
 };
 
 /** Libellé localisé d'un objectif de chapitre (hors cibles "objet", déjà
@@ -105,7 +124,7 @@ function libelleObjectif(
   }
 }
 
-export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Props) {
+export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer, enCeremonie = false }: Props) {
   const { locale, d, tr } = useLangue();
   if (courrier.payload.type !== "mission") return null;
   const p = courrier.payload;
@@ -114,6 +133,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
   const prog = progressionMission(p, state.inventaireJoueur);
   const reso = state.missions.find((m) => m.courrierId === courrier.id);
   const livrable = reso ? missionLivrable(p, reso, state, courrier.jourRecu) : false;
+  const rEff = recompenseEffective(p);
   // Progression agrégée sur TOUS les objectifs (cibles objets + objectifs non-objet),
   // pas seulement les cibles objets (`progressionMission`) : pour les chapitres sans
   // cible (ex. ventesCumulees), `prog.total` vaut 0 et donnerait un faux "0/0" /
@@ -130,6 +150,10 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
   const progPremierObjectif = premierObjectifNonObjet
     ? progressionObjectif(premierObjectifNonObjet, state, resoPourObjectifs, courrier.jourRecu)
     : null;
+  // Progression affichée : agrégat « remplies / total » sur tous les objectifs
+  // (mêmes garde-fous 0/0-NaN qu'avant — cf. resoPourObjectifs ci-dessus).
+  const pct = totalObjectifs > 0 ? (rempliesObjectifs / totalObjectifs) * 100 : 0;
+  const compteur = `${rempliesObjectifs}/${totalObjectifs}`;
 
   return (
     <div style={carte}>
@@ -141,7 +165,9 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
           <span style={avatar}>{nomExp?.[0] ?? "?"}</span>
         )}
         <span style={blocCentral}>
-          <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 15, color: "#1a1308", lineHeight: 1.25 }}>{titreCourrier(courrier, locale)}</span>
+          <span style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 15, color: "#1a1308", lineHeight: 1.25, paddingRight: jRestants !== null ? 44 : 0 }}>
+            {titreCourrier(courrier, locale)}
+          </span>
           <span style={{ display: "block", fontFamily: "var(--font-serif)", fontSize: 11, color: "#7a6a44" }}>
             {nomExp ?? ""}
           </span>
@@ -161,34 +187,26 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
                 <span style={apercuPlus} data-testid="apercu-plus">+{p.cibles.length - 4}</span>
               )}
             </span>
-          ) : premierObjectifNonObjet && progPremierObjectif ? (
-            <span style={apercuObjectif}>
-              {libelleObjectif(premierObjectifNonObjet, d, tr)} · {progPremierObjectif.actuel}/{progPremierObjectif.cible}
-              {premierObjectifNonObjet.type !== "niveau" && premierObjectifNonObjet.type !== "restauration" ? " €" : ""}
-            </span>
+          ) : premierObjectifNonObjet ? (
+            <span style={apercuObjectif}>{libelleObjectif(premierObjectifNonObjet, d, tr)}</span>
           ) : null}
+          <span style={barreWrap}>
+            <span style={barreFond}>
+              <span data-testid="progression-barre" style={barreRemplissage(pct)} />
+            </span>
+            <span data-testid="progression-compteur" style={compteurStyle}>{compteur}</span>
+          </span>
         </span>
-        <span style={{ textAlign: "right", flex: "0 0 auto", alignSelf: "flex-start" }}>
-          {livrable ? (
-            <span style={{ display: "inline-block", background: "#2c5e3f", color: "#f4e9cd", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 10 }}>{d.carnet.pret}</span>
-          ) : (
-            <>
-              <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#8a6d2e", fontSize: 13 }}>{rempliesObjectifs}/{totalObjectifs}</span>
-              {totalObjectifs > 0 && (
-                <span style={{ display: "block", width: 46, height: 5, background: "#e3d7b6", borderRadius: 3, marginTop: 3, overflow: "hidden" }}>
-                  <span style={{ display: "block", width: `${(rempliesObjectifs / totalObjectifs) * 100}%`, height: "100%", background: "#c8a24a" }} />
-                </span>
-              )}
-            </>
-          )}
-          {jRestants !== null && (
-            <span style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: 9, marginTop: 2, color: jRestants <= 3 ? "#a31f1f" : "#8a7a52" }}>J−{jRestants}</span>
-          )}
-        </span>
-        <span style={apercuRecompense}>
-          {d.carnet.recompenseLabel} : +{p.recompense.argent} €
-        </span>
+        {jRestants !== null && (
+          <span style={pastilleEcheance(jRestants <= 3)}>J−{jRestants}</span>
+        )}
       </button>
+      <RecompenseJetons
+        recompense={rEff}
+        variante="bandeau"
+        label={livrable ? d.carnet.pret : d.carnet.recompenseLabel}
+        allume={livrable || enCeremonie}
+      />
 
       {ouvert && (
         <div style={{ padding: "4px 14px 14px", background: "rgba(255,250,235,0.45)", borderTop: "1px dashed rgba(110,31,31,0.25)" }}>
@@ -225,8 +243,9 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer }: Pro
               </div>
             );
           })}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
-            <span style={{ fontSize: 14, color: "#4a3f28" }}>{d.carnet.recompenseLabel} <b style={{ color: "#8a6d2e" }}>+{p.recompense.argent} €</b></span>
+          <RecompenseJetons recompense={rEff} variante="bandeau"
+            label={d.carnet.recompenseLabel} allume={livrable} />
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
             <button
               type="button"
               onClick={onLivrer}

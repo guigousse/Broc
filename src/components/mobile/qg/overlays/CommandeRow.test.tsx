@@ -100,7 +100,7 @@ describe("CommandeRow", () => {
     expect(screen.getByText(/Ventes cumulées/)).toBeTruthy();
   });
 
-  it("en-tête replié : agrège la progression sur tous les objectifs pour une mission sans cible objet (pas de 0/0)", () => {
+  it("en-tête replié : progression agrégée via data-testid, sans 0/0 ni NaN", () => {
     const courrier: Courrier = {
       id: "m3", type: "mission", jourRecu: 1, lu: true,
       payload: {
@@ -113,12 +113,33 @@ describe("CommandeRow", () => {
     };
     const state = createMockGameState({ missions: [{ courrierId: "m3", statut: "active" }] });
     render(<CommandeRow courrier={courrier} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
-    // Pas de 0/0 : un seul objectif (ventesCumulees), aucun rempli.
-    expect(screen.getByText("0/1")).toBeTruthy();
-    expect(screen.queryByText("0/0")).toBeNull();
-    // Pas de barre à largeur NaN%.
-    const barre = document.querySelector('span[style*="width"][style*="background: rgb(200, 162, 74)"]') as HTMLElement | null;
-    expect(barre?.style.width ?? "").not.toContain("NaN");
-    expect(screen.queryByText("Prêt ✓")).toBeNull();
+    expect(screen.getByTestId("progression-compteur").textContent).toBe("0/1");
+    expect((screen.getByTestId("progression-barre") as HTMLElement).style.width).not.toContain("NaN");
+  });
+
+  it("bandeau récompense : jetons argent + xp (défaut de catégorie) sur carte fermée", () => {
+    const state = createMockGameState({ missions: [{ courrierId: "m1", statut: "active" }] });
+    render(<CommandeRow courrier={courrierMission()} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
+    expect(screen.getByTestId("jeton-argent").textContent).toContain("+90 €");
+    expect(screen.getByTestId("jeton-xp").textContent).toContain("+100 XP"); // principale
+    expect(screen.queryByTestId("jeton-energie")).toBeNull();
+  });
+
+  it("commande livrable : le bandeau passe en PRÊT ✓ (plus de badge isolé)", () => {
+    const state: GameState = createMockGameState({
+      inventaireJoueur: [createMockObjet({ templateId: "ma.lampe_petrole_ancienne", etat: "Très bon", categorie: "Maison" })],
+      missions: [{ courrierId: "m1", statut: "active" }],
+    });
+    render(<CommandeRow courrier={courrierMission()} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
+    expect(screen.getByText("Prêt ✓")).toBeTruthy();
+    expect(screen.getByTestId("jeton-argent")).toBeTruthy();
+  });
+
+  it("échéance : pastille J−n", () => {
+    const c = courrierMission();
+    (c.payload as Extract<Courrier["payload"], { type: "mission" }>).jourLimite = 5;
+    const state = createMockGameState({ jourActuel: 1, missions: [{ courrierId: "m1", statut: "active" }] });
+    render(<CommandeRow courrier={c} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
+    expect(screen.getByText("J−4")).toBeTruthy();
   });
 });
