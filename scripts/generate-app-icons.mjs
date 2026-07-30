@@ -34,7 +34,8 @@ const OG_BG = "#1a3326";
 const TARGETS = [
   { out: "public/icon-192.png", size: 192 },
   { out: "public/icon-512.png", size: 512 },
-  { out: "public/icon-1024.png", size: 1024 },
+  // pas de 1024 dans public/ : rien ne le référence et il partait tel quel
+  // dans out/ (2 Mo). Le 1024 de l'App Store vient de l'appiconset Xcode.
   { out: "public/apple-touch-icon.png", size: 180 },
   { out: "public/assets/broc-logo.png", size: 512 },
   { out: "src/app/icon.png", size: 32 },
