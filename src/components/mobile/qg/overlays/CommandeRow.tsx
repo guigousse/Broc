@@ -21,6 +21,8 @@ interface Props {
   onToggle: () => void;
   onLivrer: () => void;
   enCeremonie?: boolean;
+  /** Cérémonie d'une AUTRE commande en cours : bouton Livrer grisé (tap refusé). */
+  livrerVerrouille?: boolean;
 }
 
 const carte: CSSProperties = {
@@ -124,7 +126,10 @@ function libelleObjectif(
   }
 }
 
-export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer, enCeremonie = false }: Props) {
+export function CommandeRow({
+  courrier, state, ouvert, onToggle, onLivrer,
+  enCeremonie = false, livrerVerrouille = false,
+}: Props) {
   const { locale, d, tr } = useLangue();
   if (courrier.payload.type !== "mission") return null;
   const p = courrier.payload;
@@ -133,6 +138,14 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer, enCer
   const prog = progressionMission(p, state.inventaireJoueur);
   const reso = state.missions.find((m) => m.courrierId === courrier.id);
   const livrable = reso ? missionLivrable(p, reso, state, courrier.jourRecu) : false;
+  /**
+   * Cérémonie en cours : le state est DÉJÀ post-livraison (objets consommés,
+   * mission « livree »), donc tous les calculs de progression ci-dessous
+   * retomberaient à zéro — badges ○, barre vide, « Prêt ✓ » → « Récompense »,
+   * bouton « Livrer (0/1) » grisé — pile à l'instant du payoff. On force donc
+   * l'affichage « accompli » tant que la carte est maintenue à l'écran.
+   */
+  const accompli = enCeremonie;
   const rEff = recompenseEffective(p);
   // Progression agrégée sur TOUS les objectifs (cibles objets + objectifs non-objet),
   // pas seulement les cibles objets (`progressionMission`) : pour les chapitres sans
@@ -155,12 +168,18 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer, enCer
   // « remplies / total » (mêmes garde-fous 0/0-NaN qu'avant).
   const objectifChiffre =
     p.cibles.length === 0 && objectifsTous.length === 1 ? premierObjectifNonObjet : null;
-  const pct = objectifChiffre && progPremierObjectif
+  const pct = accompli
+    ? 100
+    : objectifChiffre && progPremierObjectif
     ? Math.min(100, (progPremierObjectif.actuel / Math.max(1, progPremierObjectif.cible)) * 100)
     : totalObjectifs > 0 ? (rempliesObjectifs / totalObjectifs) * 100 : 0;
   const compteur = objectifChiffre && progPremierObjectif
-    ? `${progPremierObjectif.actuel} / ${progPremierObjectif.cible}${objectifChiffre.type !== "niveau" && objectifChiffre.type !== "restauration" ? " €" : ""}`
-    : `${rempliesObjectifs}/${totalObjectifs}`;
+    ? `${accompli ? progPremierObjectif.cible : progPremierObjectif.actuel} / ${progPremierObjectif.cible}${objectifChiffre.type !== "niveau" && objectifChiffre.type !== "restauration" ? " €" : ""}`
+    : `${accompli ? totalObjectifs : rempliesObjectifs}/${totalObjectifs}`;
+  /** Libellé/état du bandeau : livrable, ou maintenu « accompli » en cérémonie. */
+  const bandeauPret = livrable || accompli;
+  /** Le bouton Livrer n'accepte le tap que hors cérémonie (la sienne ou une autre). */
+  const boutonActif = livrable && !accompli && !livrerVerrouille;
 
   return (
     <div style={carte}>
@@ -182,7 +201,7 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer, enCer
             <span style={apercuRow}>
               {p.cibles.slice(0, 4).map((cible, i) => {
                 const tpl = getTemplate(cible.templateId);
-                const ok = prog.ciblesRemplies[i];
+                const ok = accompli || prog.ciblesRemplies[i];
                 return (
                   <span key={i} style={apercuVignette} data-testid="apercu-cible">
                     <ItemImage templateId={cible.templateId} categorie={tpl?.categorie ?? "Maison"} alt="" fallbackIconSize={26} />
@@ -211,8 +230,8 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer, enCer
       <RecompenseJetons
         recompense={rEff}
         variante="bandeau"
-        label={livrable ? d.carnet.pret : d.carnet.recompenseLabel}
-        allume={livrable || enCeremonie}
+        label={bandeauPret ? d.carnet.pret : d.carnet.recompenseLabel}
+        allume={bandeauPret}
       />
 
       {ouvert && (
@@ -221,11 +240,11 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer, enCer
             <p key={i} style={{ fontStyle: "italic", color: "#4a3f28", fontSize: 14, lineHeight: 1.45, margin: "8px 0" }}>{para}</p>
           ))}
           <div style={{ fontFamily: "var(--font-display)", fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6e1f1f", margin: "10px 0 4px" }}>
-            {tr(d.carnet.objetsDemandes, { rempli: prog.remplies, total: prog.total })}
+            {tr(d.carnet.objetsDemandes, { rempli: accompli ? prog.total : prog.remplies, total: prog.total })}
           </div>
           {p.cibles.map((cible, i) => {
             const tpl = getTemplate(cible.templateId);
-            const ok = prog.ciblesRemplies[i];
+            const ok = accompli || prog.ciblesRemplies[i];
             return (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: "1px dashed rgba(110,31,31,0.18)", opacity: ok ? 1 : 0.7 }}>
                 <span style={{ width: 52, height: 52, flex: "0 0 auto" }}>
@@ -241,30 +260,35 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer, enCer
           })}
           {objectifsDeMission(p).filter((o) => o.type !== "objet").map((o, i) => {
             const progObj = progressionObjectif(o, state, reso ?? { courrierId: courrier.id, statut: "active" }, courrier.jourRecu);
+            const atteint = accompli || progObj.atteint;
             return (
               <div key={i} style={ligneObjectif}>
                 <span>{libelleObjectif(o, d, tr)}</span>
-                <span style={{ fontWeight: 700, color: progObj.atteint ? "#2c5e3f" : "#7a6a44" }}>
-                  {progObj.actuel}/{progObj.cible}{o.type !== "niveau" && o.type !== "restauration" ? " €" : ""}
+                <span style={{ fontWeight: 700, color: atteint ? "#2c5e3f" : "#7a6a44" }}>
+                  {accompli ? progObj.cible : progObj.actuel}/{progObj.cible}{o.type !== "niveau" && o.type !== "restauration" ? " €" : ""}
                 </span>
               </div>
             );
           })}
           <RecompenseJetons recompense={rEff} variante="bandeau"
-            label={d.carnet.recompenseLabel} allume={livrable} />
+            label={bandeauPret ? d.carnet.pret : d.carnet.recompenseLabel} allume={bandeauPret} />
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
             <button
               type="button"
               onClick={onLivrer}
-              disabled={!livrable}
+              disabled={!boutonActif}
               style={{
-                background: livrable ? "#6e1f1f" : "#b3a06a", color: "#f4e9cd", border: "none",
+                background: accompli ? "#2c5e3f" : boutonActif ? "#6e1f1f" : "#b3a06a", color: "#f4e9cd", border: "none",
                 borderRadius: 6, padding: "8px 16px", fontFamily: "var(--font-display)", fontSize: 11,
-                letterSpacing: "0.14em", textTransform: "uppercase", cursor: livrable ? "pointer" : "default",
-                opacity: livrable ? 1 : 0.6,
+                letterSpacing: "0.14em", textTransform: "uppercase", cursor: boutonActif ? "pointer" : "default",
+                opacity: accompli || boutonActif ? 1 : 0.6,
               }}
             >
-              {livrable ? d.carnet.livrer : tr(d.carnet.livrerProgress, { rempli: rempliesObjectifs, total: totalObjectifs })}
+              {accompli
+                ? d.carnet.pret
+                : livrable
+                ? d.carnet.livrer
+                : tr(d.carnet.livrerProgress, { rempli: rempliesObjectifs, total: totalObjectifs })}
             </button>
           </div>
         </div>

@@ -244,9 +244,14 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
     };
     const res = onLivrerMission(courrierId);
     if (!res.ok) return;
-    gelerXpAffichage(avant.brocanteur);
-    gelerBudgetAffichage(avant.budget);
-    gelerEnergieAffichage(avant.energie);
+    // On ne gèle QUE les compteurs dont le jeton va voler : `phasesLivraison`
+    // n'émet d'atterrissage — donc de dégel — que pour les gains non nuls, et un
+    // gain nul est le cas courant (aucune quête ne donne d'énergie aujourd'hui,
+    // et `argent: 0` est légal). Geler sans dégel prévu figerait le compteur
+    // pour toute la partie.
+    if (rEff.xp > 0) gelerXpAffichage(avant.brocanteur);
+    if (rEff.argent > 0) gelerBudgetAffichage(avant.budget);
+    if (rEff.energie > 0) gelerEnergieAffichage(avant.energie);
     setCeremonieId(courrierId);
 
     // Les timers de la cérémonie précédente ont tous tiré (le garde-fou
@@ -256,8 +261,14 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
     for (const { at, etape } of phasesLivraison(rEff)) {
       const t = window.setTimeout(() => {
         if (etape.type === "envol") {
-          const jeton = racine?.querySelector<HTMLElement>(`[data-jeton="${etape.jeton}"]`) ?? null;
-          if (jeton) jeton.style.visibility = "hidden";
+          // Carte dépliée = DEUX bandeaux de récompense, donc deux jumeaux par
+          // jeton : masquer les deux, sinon le jeton du détail reste visible
+          // pendant que son clone s'envole.
+          const jumeaux = racine
+            ? Array.from(racine.querySelectorAll<HTMLElement>(`[data-jeton="${etape.jeton}"]`))
+            : [];
+          for (const j of jumeaux) j.style.visibility = "hidden";
+          const jeton = jumeaux[0] ?? null;
           flyToTab({
             fromRect: (jeton ?? racine ?? document.body).getBoundingClientRect(),
             imageUrl: null,
@@ -270,6 +281,12 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
           else if (etape.jeton === "energie") degelerEnergieAffichage();
           else degelerBudgetAffichage();
         } else {
+          // Filet : quoi qu'il arrive, aucun compteur ne reste gelé après la
+          // cérémonie (les dégels sont idempotents et sans effet si rien n'est
+          // gelé). Double ceinture avec le gel conditionnel ci-dessus.
+          degelerXpAffichage();
+          degelerBudgetAffichage();
+          degelerEnergieAffichage();
           // La carte se fond / se rétracte avant de quitter la liste.
           const el = document.querySelector<HTMLElement>(`[data-commande-id="${courrierId}"]`);
           if (el) {
@@ -325,6 +342,9 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
                     onToggle={() => setOuvertId((id) => (id === m.courrierId ? null : m.courrierId))}
                     onLivrer={() => lancerLivraison(m.courrierId)}
                     enCeremonie={ceremonieId === m.courrierId}
+                    // Cérémonie d'une AUTRE commande en cours : `lancerLivraison`
+                    // refuserait le tap en silence — mieux vaut griser le bouton.
+                    livrerVerrouille={ceremonieId !== null && ceremonieId !== m.courrierId}
                   />
                 </div>
               );
