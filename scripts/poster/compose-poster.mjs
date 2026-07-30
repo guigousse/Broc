@@ -37,10 +37,11 @@ async function dataUri(filePath) {
 }
 
 async function main() {
-  const [illustration, divider, grain, globalsCss] = await Promise.all([
+  const [illustration, divider, grain, badge, globalsCss] = await Promise.all([
     dataUri(path.join(POSTER_DIR, "candidats", `illustration-${illuNum}.png`)),
     dataUri(path.join(PUBLIC_DIR, "assets", "deco-divider.svg")),
     dataUri(path.join(PUBLIC_DIR, "assets", "paper-grain.svg")),
+    dataUri(path.join(POSTER_DIR, "badge-app-store-fr.svg")),
     fs.readFile(path.join(PROJECT_ROOT, "src", "app", "globals.css"), "utf8"),
   ]);
 
@@ -100,11 +101,10 @@ ${fontFaces}
 .divider { width: 420px; }
 .dispo {
   font-family: 'Cinzel', Georgia, serif; font-weight: 600;
-  font-size: 33px; color: #F1E3BF; letter-spacing: 0.09em;
-  padding: 18px 40px; border: 2px solid #C5A059; border-radius: 999px;
-  background: rgba(24, 17, 10, 0.35);
+  font-size: 32px; color: #F1E3BF; letter-spacing: 0.09em;
   text-shadow: 0 2px 6px rgba(24, 17, 10, 0.9);
 }
+.badge { height: 78px; filter: drop-shadow(0 3px 10px rgba(24, 17, 10, 0.6)); }
 </style></head>
 <body>
   <div class="affiche">
@@ -118,7 +118,8 @@ ${fontFaces}
     <div class="bas">
       <div class="accroche">Chinez. Négociez.<br>Collectionnez.</div>
       <img class="divider" src="${divider}" alt="">
-      <div class="dispo">Disponible gratuitement dans l&rsquo;App&nbsp;Store</div>
+      <div class="dispo">Disponible gratuitement</div>
+      <img class="badge" src="${badge}" alt="Télécharger dans l'App Store">
     </div>
   </div>
 </body></html>`;
