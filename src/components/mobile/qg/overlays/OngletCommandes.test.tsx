@@ -352,7 +352,9 @@ describe("OngletCommandes", () => {
       });
       rerender(vue(courant));
 
-      // Le carnet n'ouvre qu'un détail à la fois : on déplie B pour voir son bouton.
+      // Le bouton Livrer de B est déjà visible carte fermée (barre hors accordéon) :
+      // ce clic ne sert plus qu'à replier A, dont la cérémonie est en cours — gardé
+      // pour vérifier que ce repli ne casse pas le verrouillage de B.
       // Ancrage en début de nom : le bouton Livrer de B porte désormais un nom
       // accessible « Livrer : Commande B » qui contiendrait aussi "Commande B".
       act(() => {

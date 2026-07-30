@@ -171,6 +171,37 @@ describe("CommandeRow", () => {
     expect(screen.getAllByRole("button", { name: /^Livrer/ }).length).toBe(1);
   });
 
+  it("panneau déplié, commande à cibles seules : la dernière ligne n'a plus de filet orphelin", () => {
+    const state: GameState = createMockGameState({
+      inventaireJoueur: [],
+      missions: [{ courrierId: "m1", statut: "active" }],
+    });
+    render(<CommandeRow courrier={courrierMission()} state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}} />);
+    const lignesCible = screen.getAllByTestId("ligne-cible");
+    const derniere = lignesCible[lignesCible.length - 1] as HTMLElement;
+    expect(derniere.style.borderBottomStyle).toBe("none");
+    expect(screen.queryAllByTestId("ligne-objectif").length).toBe(0);
+  });
+
+  it("panneau déplié, commande avec objectif non-objet : le dernier objectif perd son filet, pas la cible", () => {
+    const courrier: Courrier = {
+      id: "m6", type: "mission", jourRecu: 1, lu: true,
+      payload: {
+        type: "mission", categorie: "principale", expediteurId: "maman",
+        titre: "Chine et progresse", corps: ["Vends et monte en niveau."],
+        cibles: [{ templateId: "ma.lampe_petrole_ancienne" }],
+        objectifs: [{ type: "niveau", niveau: 5 }],
+        recompense: { argent: 90 },
+      },
+    };
+    const state = createMockGameState({ missions: [{ courrierId: "m6", statut: "active" }] });
+    render(<CommandeRow courrier={courrier} state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}} />);
+    const lignesCible = screen.getAllByTestId("ligne-cible");
+    const lignesObjectif = screen.getAllByTestId("ligne-objectif");
+    expect(lignesCible[lignesCible.length - 1].style.borderBottomStyle).toBe("dashed");
+    expect(lignesObjectif[lignesObjectif.length - 1].style.borderBottomStyle).toBe("none");
+  });
+
   it("cérémonie en cours : bouton Prêt ✓ verrouillé, hors du panneau déplié", () => {
     const state: GameState = createMockGameState({
       inventaireJoueur: [],

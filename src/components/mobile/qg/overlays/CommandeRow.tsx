@@ -172,6 +172,9 @@ export function CommandeRow({
   const resoPourObjectifs = reso ?? { courrierId: courrier.id, statut: "active" as const };
   const objectifsTous = objectifsDeMission(p);
   const totalObjectifs = objectifsTous.length;
+  // Objectifs non-objet effectivement rendus en lignes dans le panneau déplié
+  // (les cibles "objet" sont déjà rendues via `cibles` ci-dessous).
+  const objectifsAffiches = objectifsTous.filter((o) => o.type !== "objet");
   const rempliesObjectifs = objectifsTous.filter(
     (o) => progressionObjectif(o, state, resoPourObjectifs, courrier.jourRecu).atteint,
   ).length;
@@ -274,11 +277,15 @@ export function CommandeRow({
           <div style={{ fontFamily: "var(--font-display)", fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6e1f1f", margin: "10px 0 4px" }}>
             {tr(d.carnet.objetsDemandes, { rempli: accompli ? prog.total : prog.remplies, total: prog.total })}
           </div>
+          {/* Filet en pointillés : sépare les lignes entre elles, donc absent sur
+           *  la toute dernière ligne rendue (sinon il surplombe le padding vide
+           *  qui suit — cibles puis objectifs, l'ordre de rendu ci-dessous). */}
           {p.cibles.map((cible, i) => {
             const tpl = getTemplate(cible.templateId);
             const ok = accompli || prog.ciblesRemplies[i];
+            const derniereLigne = i === p.cibles.length - 1 && objectifsAffiches.length === 0;
             return (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: "1px dashed rgba(110,31,31,0.18)", opacity: ok ? 1 : 0.7 }}>
+              <div key={i} data-testid="ligne-cible" style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: derniereLigne ? "none" : "1px dashed rgba(110,31,31,0.18)", opacity: ok ? 1 : 0.7 }}>
                 <span style={{ width: 52, height: 52, flex: "0 0 auto" }}>
                   <ItemImage templateId={cible.templateId} categorie={tpl?.categorie ?? "Maison"} alt="" fallbackIconSize={30} />
                 </span>
@@ -290,11 +297,12 @@ export function CommandeRow({
               </div>
             );
           })}
-          {objectifsDeMission(p).filter((o) => o.type !== "objet").map((o, i) => {
+          {objectifsAffiches.map((o, i) => {
             const progObj = progressionObjectif(o, state, reso ?? { courrierId: courrier.id, statut: "active" }, courrier.jourRecu);
             const atteint = accompli || progObj.atteint;
+            const derniereLigne = i === objectifsAffiches.length - 1;
             return (
-              <div key={i} style={ligneObjectif}>
+              <div key={i} data-testid="ligne-objectif" style={derniereLigne ? { ...ligneObjectif, borderBottom: "none" } : ligneObjectif}>
                 <span>{libelleObjectif(o, d, tr)}</span>
                 <span style={{ fontWeight: 700, color: atteint ? "#2c5e3f" : "#7a6a44" }}>
                   {accompli ? progObj.cible : progObj.actuel}/{progObj.cible}{o.type !== "niveau" && o.type !== "restauration" ? " €" : ""}
