@@ -12,6 +12,11 @@ import type { CSSProperties, ReactNode } from "react";
  * découpage que `namePlate.ts`) : `style` est fusionné après le style de base,
  * ce qui permet à la machine à énergie de rester en positionnement absolu sur
  * son illustration pendant que le tiroir de chinage passe une largeur pleine.
+ *
+ * Un cousin non-publicitaire de cette même plaque laiton vit dans
+ * `ScenePlaquesBar` (sélecteur de tier) : ce n'est pas ce module (pas de
+ * visionnage pub), donc pas de fusion, mais la palette et les ombres y sont
+ * dupliquées à l'identique — toute retouche du laiton doit passer par les deux.
  */
 export function CartelPub({
   indisponible = false,
@@ -26,7 +31,22 @@ export function CartelPub({
   onClick?: () => void;
   /** Omis, le nom accessible vient du contenu (cas des états d'indisponibilité). */
   ariaLabel?: string;
-  style?: CSSProperties;
+  /** Mise en page uniquement — l'apparence (couleurs, ombres…) reste au module. */
+  style?: Pick<
+    CSSProperties,
+    | "position"
+    | "left"
+    | "top"
+    | "right"
+    | "bottom"
+    | "width"
+    | "height"
+    | "margin"
+    | "marginBottom"
+    | "padding"
+    | "gap"
+    | "flex"
+  >;
   children?: ReactNode;
 }) {
   return (

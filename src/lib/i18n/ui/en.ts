@@ -224,8 +224,8 @@ export const en: DictionnaireUI = {
     boiteDescription:
       "Nobody has ever seen what's inside. Me included, come to think of it.",
     ouverture: "Opening…",
-    regarderPubPourOuvrir: "Watch an ad to open",
     pourOuvrirLaBoite: "To open the box",
+    pourOuvrirLaBoiteA11y: "To open the box: watch an ad",
     boiteSouvre: "The box is opening…",
   },
   chine: {

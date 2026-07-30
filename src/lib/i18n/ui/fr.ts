@@ -227,8 +227,8 @@ export const fr = {
     boiteDescription:
       "Personne n'a jamais vu ce qu'il y a là-dedans. Moi non plus, d'ailleurs.",
     ouverture: "Ouverture…",
-    regarderPubPourOuvrir: "Regarder une pub pour ouvrir",
     pourOuvrirLaBoite: "Pour ouvrir la boîte",
+    pourOuvrirLaBoiteA11y: "Pour ouvrir la boîte : regarder une pub",
     boiteSouvre: "La boîte s'ouvre…",
   },
   chine: {

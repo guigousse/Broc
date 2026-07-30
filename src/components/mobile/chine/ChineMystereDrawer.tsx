@@ -36,7 +36,7 @@ export function ChineMystereDrawer({
           ) : (
             <CartelPub
               onClick={onOuvrirBoite}
-              ariaLabel={d.sheets.regarderPubPourOuvrir}
+              ariaLabel={d.sheets.pourOuvrirLaBoiteA11y}
               style={{ width: "100%", marginBottom: 10, padding: "10px 18px", gap: 8 }}
             >
               <MonitorPlay size={26} strokeWidth={2.2} aria-hidden />

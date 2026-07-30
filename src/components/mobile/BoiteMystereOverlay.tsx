@@ -293,7 +293,7 @@ export function BoiteMystereOverlay({
             <CartelPub
               onClick={ouvrir}
               indisponible={enCours}
-              ariaLabel={enCours ? undefined : d.sheets.regarderPubPourOuvrir}
+              ariaLabel={enCours ? undefined : d.sheets.pourOuvrirLaBoiteA11y}
               style={{ width: "100%", padding: "12px 18px", gap: 8 }}
             >
               {enCours ? (

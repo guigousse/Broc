@@ -229,8 +229,8 @@ export const el: DictionnaireUI = {
     boiteDescription:
       "Κανείς δεν έχει δει ποτέ τι κρύβει. Ούτε κι εγώ, βασικά.",
     ouverture: "Άνοιγμα…",
-    regarderPubPourOuvrir: "Δες μια διαφήμιση για να ανοίξεις",
     pourOuvrirLaBoite: "Για να ανοίξεις το κουτί",
+    pourOuvrirLaBoiteA11y: "Για να ανοίξεις το κουτί: δες μια διαφήμιση",
     boiteSouvre: "Το κουτί ανοίγει…",
   },
   chine: {
