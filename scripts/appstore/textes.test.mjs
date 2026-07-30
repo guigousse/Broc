@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { CHEMINS, LANGUES, VISUELS } from "./config.mjs";
-import { BULLE, LIBELLE_NEGOCIER, MEDAILLON_PLUS, PORTRAITS_GALERIE, TITRES } from "./textes.mjs";
+import { BULLE, LIBELLE_NEGOCIER, LIBELLE_SUIVANT, MEDAILLON_PLUS, PORTRAITS_GALERIE, TITRES } from "./textes.mjs";
 
 describe("textes des visuels App Store", () => {
   it("donne un titre non vide pour chaque visuel et chaque langue", () => {
@@ -79,6 +79,19 @@ describe("textes des visuels App Store", () => {
       const trouve = src.match(/^\s*negocier:\s*"([^"]+)"/m);
       expect(trouve, `pas de clé negocier dans ${l}.ts`).toBeTruthy();
       expect(LIBELLE_NEGOCIER[l]).toBe(trouve[1]);
+    }
+  });
+
+  // Garde : `--carte=N` clique la flèche « suivant », dont le libellé
+  // accessible vient lui aussi du jeu (`d.sheets.suivant`).
+  it("reprend exactement le libellé « Suivant » de chaque fichier i18n", () => {
+    for (const l of LANGUES) {
+      const src = fs.readFileSync(
+        path.join(CHEMINS.racine, `src/lib/i18n/ui/${l}.ts`), "utf8",
+      );
+      const trouve = src.match(/^\s*suivant:\s*"([^"]+)"/m);
+      expect(trouve, `pas de clé suivant dans ${l}.ts`).toBeTruthy();
+      expect(LIBELLE_SUIVANT[l]).toBe(trouve[1]);
     }
   });
 });

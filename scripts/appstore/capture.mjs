@@ -1,8 +1,8 @@
 /** Capture des écrans réels du jeu avec Playwright. */
 import path from "node:path";
 import { scriptAmorce, scriptGraine } from "./amorce.mjs";
-import { BROCANTE_DEMO } from "./config.mjs";
-import { LIBELLE_NEGOCIER } from "./textes.mjs";
+
+import { LIBELLE_NEGOCIER, LIBELLE_SUIVANT } from "./textes.mjs";
 
 /** Laisse retomber les animations d'entrée avant de déclencher. */
 const REPOS_MS = 1200;
@@ -37,8 +37,29 @@ function zoneSecurite(appareil) {
     : { top: 24, bottom: 20 }; // iPad, pas d'île mais coins arrondis + geste
 }
 
+/**
+ * Avance de `rang` crans dans le carrousel de chinage. Le jeu met rarement une
+ * pièce de valeur en tête de pile : c'est le seul moyen de choisir l'objet mis
+ * en vitrine, là où changer de graine ne fait qu'en retirer un autre au sort.
+ * La flèche se désactive en fin de paquet — on s'arrête alors plutôt que de
+ * cliquer dans le vide, et on signale le rang réellement atteint.
+ */
+async function avancerCarrousel(page, langue, rang) {
+  if (rang <= 0) return 0;
+  const suivant = page.getByRole("button", {
+    name: new RegExp(`^${LIBELLE_SUIVANT[langue]}$`, "i"),
+  });
+  for (let i = 0; i < rang; i++) {
+    if ((await suivant.count()) === 0 || (await suivant.first().isDisabled())) return i;
+    await suivant.first().click();
+    await page.waitForTimeout(250);
+  }
+  return rang;
+}
+
 export async function capturerEcrans({
-  navigateur, baseUrl, langue, appareil, visuels, saveJson, dossier, graine, log = () => {},
+  navigateur, baseUrl, langue, appareil, visuels, saveJson, dossier, graine,
+  carte = null, log = () => {},
 }) {
   const contexte = await navigateur.newContext({
     viewport: appareil.viewport,
@@ -75,9 +96,16 @@ export async function capturerEcrans({
 
       for (let tentative = 1; tentative <= essaisMax && !ouvert; tentative++) {
         const page = await contexte.newPage();
-        const url = baseUrl + visuel.route(BROCANTE_DEMO);
+        const url = baseUrl + visuel.route();
         await page.goto(url, { waitUntil: "networkidle" });
         await page.waitForSelector(visuel.ancre, { timeout: 20000 });
+
+        // Sans effet hors du chinage : les autres écrans n'ont pas de flèche.
+        const rang = carte ?? visuel.carte ?? 0;
+        const atteint = await avancerCarrousel(page, langue, rang);
+        if (atteint < rang) {
+          log(`  ⚠ ${visuel.cle} : carte ${rang} demandée, ${atteint} atteinte (fin du paquet)`);
+        }
 
         if (visuel.ouvrirNego) {
           const bouton = page.getByRole("button", {

@@ -21,8 +21,18 @@ export const CHEMINS = {
 
 export const LANGUES = ["fr", "en", "es", "el"];
 
-/** La brocante armée par scripts/gen-save-demo.ts (stand garni). */
+/** La brocante armée par scripts/gen-save-demo.ts (stand garni) — visuel 3. */
 export const BROCANTE_DEMO = "marche-saint-ouen";
+
+/**
+ * Brocante des visuels de chinage (1 et 2). Le stock d'une session est tiré
+ * selon `MIX_RARETE_PAR_TIER` (src/lib/chine.ts) : un palier 2 ne sort que du
+ * commun — les dix cartes des Grandes Puces valent de 4 à 29 €, ce qui dessert
+ * la promesse « dénichez des trésors ». La Grande Foire aux Antiquités est de
+ * palier 3, avec un pool exclusif de légendaires et un décor plus cossu.
+ * Elle est débloquée dans la save de démo (chapitre 8 livré, niveau 75).
+ */
+export const BROCANTE_CHINE = "foire-chatou";
 
 export const APPAREILS = {
   iphone: {
@@ -88,17 +98,24 @@ export const APPAREILS = {
 export const VISUELS = [
   {
     n: 1, cle: "chiner", expression: "souriant", ouvrirNego: false,
-    route: (b) => `/chiner/${b}`,
+    route: () => `/chiner/${BROCANTE_CHINE}`,
     ancre: 'img[src*="/items/"]',
+    // Feuillet original de la Bible de Gutenberg, 4595 € — le légendaire du
+    // pool exclusif de la Grande Foire. Seule carte du paquet qui tienne la
+    // promesse du titre ; les neuf autres plafonnent à 51 €.
+    carte: 1,
   },
   {
     n: 2, cle: "negocier", expression: "rieur", ouvrirNego: true,
-    route: (b) => `/chiner/${b}`,
+    route: () => `/chiner/${BROCANTE_CHINE}`,
     ancre: 'img[src*="/personas/vendeur-"]',
+    // Vase en verre moulé Laluck, 51 € — un entre-deux entre le trésor et la
+    // babiole, plus représentatif d'une négociation ordinaire que le Gutenberg.
+    carte: 5,
   },
   {
     n: 3, cle: "vendre", expression: "emu", ouvrirNego: false,
-    route: (b) => `/vitrine/${b}/journee`,
+    route: () => `/vitrine/${BROCANTE_DEMO}/journee`,
     ancre: 'img[src*="/personas/clients/"]',
   },
   {

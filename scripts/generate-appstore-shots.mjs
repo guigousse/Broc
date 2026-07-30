@@ -34,6 +34,8 @@ Visuels App Store — 5 visuels × 2 appareils × 4 langues.
   --device=iphone   appareils à produire    (défaut : iphone,ipad)
   --only=1,5        visuels à produire      (défaut : 1..5)
   --seed=N          graine du RNG du jeu    (défaut : fixe, cf. cli.mjs)
+  --carte=N         rang de la carte à capturer dans le carrousel de chinage
+                    (défaut : 0, la première ; sans effet hors chinage)
   --skip-capture    réutilise les captures déjà présentes
   --help            affiche ceci
 `;
@@ -92,7 +94,8 @@ async function main() {
         if (serveur) {
           captures = await capturerEcrans({
             navigateur, baseUrl: serveur.url, langue, appareil, visuels,
-            saveJson, dossier: CHEMINS.captures, graine: args.graine, log,
+            saveJson, dossier: CHEMINS.captures, graine: args.graine,
+            carte: args.carte, log,
           });
         } else {
           for (const v of visuels.filter((x) => x.route)) {

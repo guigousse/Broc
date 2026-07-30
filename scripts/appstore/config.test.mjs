@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { APPAREILS, BROCANTE_DEMO, CHEMINS, LANGUES, VISUELS } from "./config.mjs";
+import { APPAREILS, BROCANTE_CHINE, BROCANTE_DEMO, CHEMINS, LANGUES, VISUELS } from "./config.mjs";
 
 describe("config des visuels App Store", () => {
   it("écrit ses sorties sous marketing/, jamais sous public/", () => {
@@ -52,8 +52,12 @@ describe("config des visuels App Store", () => {
   });
 
   it("route sur la brocante armée dans la sauvegarde de démo", () => {
+    // La vitrine est celle armée par gen-save-demo.ts ; le chinage se fait sur
+    // une brocante de palier 3, dont le stock sort du commun.
     expect(BROCANTE_DEMO).toBe("marche-saint-ouen");
-    expect(VISUELS[0].route(BROCANTE_DEMO)).toBe("/chiner/marche-saint-ouen");
-    expect(VISUELS[2].route(BROCANTE_DEMO)).toBe("/vitrine/marche-saint-ouen/journee");
+    expect(BROCANTE_CHINE).toBe("foire-chatou");
+    expect(VISUELS[0].route()).toBe("/chiner/foire-chatou");
+    expect(VISUELS[1].route()).toBe("/chiner/foire-chatou");
+    expect(VISUELS[2].route()).toBe("/vitrine/marche-saint-ouen/journee");
   });
 });

@@ -2,7 +2,7 @@
 import { APPAREILS, LANGUES, VISUELS } from "./config.mjs";
 
 const DRAPEAUX_BOOLEENS = ["--skip-capture", "--help"];
-const CLES_VALEUR = ["lang", "device", "only", "seed"];
+const CLES_VALEUR = ["lang", "device", "only", "seed", "carte"];
 const NUMEROS = VISUELS.map((v) => v.n);
 const APPAREILS_CONNUS = Object.keys(APPAREILS);
 
@@ -91,12 +91,22 @@ export function parserArgs(argv) {
   // Trier explicitement les numéros de visuels en ordre croissant
   const visuels = [...visuelsBruts].sort((a, b) => a - b);
   const graine = nombre(argv, "seed", "graine", GRAINE_DEFAUT);
+  // Rang de la carte à capturer dans le carrousel de chinage. Le jeu met
+  // rarement une pièce de valeur en tête de pile : changer de graine ne fait
+  // que retirer une carte au sort parmi les plus communes, alors qu'avancer
+  // dans le paquet permet de choisir l'objet mis en vitrine.
+  // null = pas de surcharge : chaque visuel garde son propre rang (config.mjs).
+  const carte = nombre(argv, "carte", "carte", null);
+  if (carte !== null && carte < 0) {
+    throw new Error(`carte « ${carte} » négatif : le rang part de 0`);
+  }
 
   return {
     langues,
     appareils,
     visuels,
     graine,
+    carte,
     sauterCapture: argv.includes("--skip-capture"),
     aide: argv.includes("--help"),
   };

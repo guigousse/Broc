@@ -57,6 +57,18 @@ export const LIBELLE_NEGOCIER = {
 };
 
 /**
+ * Libellé accessible de la flèche « suivant » du carrousel de chinage
+ * (`d.sheets.suivant`), utilisée par `--carte=N` pour avancer dans le paquet.
+ * Même garde que LIBELLE_NEGOCIER : un test le compare aux fichiers i18n.
+ */
+export const LIBELLE_SUIVANT = {
+  fr: "Suivant",
+  en: "Next",
+  es: "Siguiente",
+  el: "Επόμενο",
+};
+
+/**
  * Portraits de la galerie du visuel 5, dans l'ordre de lecture.
  * Les 15 premiers alimentent la grille 4×4 de l'iPhone ; les 19 alimentent la
  * grille 5×4 de l'iPad. La dernière case est toujours le médaillon « et + ».

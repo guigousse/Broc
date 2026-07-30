@@ -89,4 +89,22 @@ describe("ligne de commande des visuels App Store", () => {
   it("rejette une graine non entière", () => {
     expect(() => parserArgs(["--seed=1.5"])).toThrow(/graine.*entier/);
   });
+
+  it("ne surcharge pas le rang de carte par défaut", () => {
+    // null (et non 0) : chaque visuel garde le rang défini dans config.mjs.
+    expect(parserArgs([]).carte).toBeNull();
+  });
+
+  it("accepte un rang de carte explicite", () => {
+    expect(parserArgs(["--carte=3"]).carte).toBe(3);
+  });
+
+  it("rejette un rang de carte négatif", () => {
+    expect(() => parserArgs(["--carte=-1"])).toThrow(/carte.*négatif/);
+  });
+
+  it("rejette un rang de carte non entier ou vide", () => {
+    expect(() => parserArgs(["--carte=2.5"])).toThrow(/carte.*entier/);
+    expect(() => parserArgs(["--carte="])).toThrow(/carte vide/);
+  });
 });
