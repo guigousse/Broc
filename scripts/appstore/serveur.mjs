@@ -66,7 +66,14 @@ export async function demarrerServeur(dossier) {
         return;
       }
       const type = MIME[path.extname(fichier).toLowerCase()] ?? "application/octet-stream";
-      res.writeHead(200, { "Content-Type": type, "Cache-Control": "no-store" });
+      // "no-cache" (revalidation systématique) et non "no-store" : la page
+      // collection demande la même image plusieurs fois en concurrence
+      // (next/image émet des doublons d'URL pour ses variantes de résolution
+      // même en mode unoptimized) — "no-store" empêche Chromium de fusionner
+      // ces requêtes identiques en vol, ce qui bloque définitivement le
+      // chargement au-delà des ~6 connexions concurrentes (networkidle
+      // n'est alors jamais atteint). Constaté et reproduit sur /collection.
+      res.writeHead(200, { "Content-Type": type, "Cache-Control": "no-cache" });
       res.end(await fs.readFile(fichier));
     } catch (err) {
       // Erreur fs inattendue (permissions, etc). Ne pas crasher le serveur.
