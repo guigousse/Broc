@@ -117,6 +117,15 @@ export function construireHtml({
   const pointeBord = Math.round(bulleFont * 0.14);
   const cases = grille.colonnes * grille.lignes;
   const portraits = portraitsDataUri.slice(0, cases - 1);
+  // Fonte du médaillon « et + » : dérivée de la largeur de CELLULE, pas de
+  // la largeur du visuel (L). La grille occupe 90 % de L (left/right: 5%)
+  // avec un espacement entre cases ; sur iPad (5 colonnes) une cellule est
+  // bien plus étroite, en proportion de L, que sur iPhone (4 colonnes) — une
+  // fonte en fraction de L y débordait donc du cercle (« AND + » rogné).
+  const gouttiere = px(0.032);
+  const celluleLargeur = (0.9 * L - (grille.colonnes - 1) * gouttiere) / grille.colonnes;
+  const plusFont = Math.round(celluleLargeur * 0.25);
+  const plusPad = Math.round(plusFont * 0.15);
 
   const corpsGalerie = `
     <div class="grille">
@@ -134,8 +143,9 @@ export function construireHtml({
           <div class="barre-accueil"></div>
         </div>
       </div>
-      <div class="bouton mute"></div><div class="bouton up"></div>
-      <div class="bouton dn"></div><div class="bouton pwr"></div>
+      ${appareil.chassis.volumeSepare
+        ? '<div class="bouton mute"></div><div class="bouton up"></div><div class="bouton dn"></div><div class="bouton pwr"></div>'
+        : '<div class="bouton volume"></div><div class="bouton pwr"></div>'}
     </div>`;
 
   return `<!doctype html>
@@ -150,11 +160,12 @@ body {
 }
 .halo { position: absolute; inset: 0;
   background: radial-gradient(75% 55% at 50% 40%, rgba(255,210,140,.17), transparent 70%); }
-.titre { position: absolute; top: ${px(appareil.titreHaut, H)}px; left: 6%; right: 6%;
-  text-align: center; font-family: 'Cinzel', Georgia, serif; font-weight: 700;
+.titre-bloc { position: absolute; top: ${px(appareil.titreHaut, H)}px; left: 6%; right: 6%;
+  text-align: center; }
+.titre { font-family: 'Cinzel', Georgia, serif; font-weight: 700;
   font-size: ${px(appareil.titreRatio)}px; line-height: 1.08; color: #f8ead0;
   text-shadow: 0 ${px(0.002)}px ${px(0.01)}px rgba(0,0,0,.55); }
-.filet { position: absolute; top: ${px(appareil.filetHaut, H)}px; left: 33%; right: 33%;
+.filet { margin: ${px(appareil.filetEcart, H)}px auto 0; width: ${px(0.34)}px;
   height: 2px; background: linear-gradient(90deg, transparent, #cfa863, transparent); }
 .chassis { position: absolute; left: 50%; transform: translateX(-50%);
   top: ${px(appareil.chassis.haut, H)}px;
@@ -174,10 +185,11 @@ body {
   border-radius: 999px; z-index: 3; }
 .bouton { position: absolute; width: ${px(0.002)}px; border-radius: 2px;
   background: linear-gradient(180deg,#b4ada2,#5d5952); }
-.mute { left: -${px(0.0015)}px; top: 15%; height: 4%; }
-.up   { left: -${px(0.0015)}px; top: 23%; height: 7%; }
-.dn   { left: -${px(0.0015)}px; top: 32%; height: 7%; }
-.pwr  { right: -${px(0.0015)}px; top: 26%; height: 10%; }
+.mute   { left: -${px(0.0015)}px; top: 15%; height: 4%; }
+.up     { left: -${px(0.0015)}px; top: 23%; height: 7%; }
+.dn     { left: -${px(0.0015)}px; top: 32%; height: 7%; }
+.volume { left: -${px(0.0015)}px; top: 23%; height: 16%; }
+.pwr    { right: -${px(0.0015)}px; top: 26%; height: 10%; }
 .grand-pere { position: absolute; bottom: -3%; left: -10%;
   width: ${px(appareil.gpLargeur)}px;
   filter: drop-shadow(0 ${px(0.011)}px ${px(0.018)}px rgba(0,0,0,.75)); }
@@ -190,7 +202,7 @@ body {
 .plus { display: flex; align-items: center; justify-content: center; border-style: dashed;
   background: radial-gradient(circle at 50% 40%, #4a3116, #241505); }
 .plus span { font-family: 'Cinzel', Georgia, serif; font-weight: 700;
-  font-size: ${px(0.05)}px; color: #f0d9a8; }
+  font-size: ${plusFont}px; color: #f0d9a8; white-space: nowrap; padding: 0 ${plusPad}px; }
 .bulle { position: absolute; right: 8%; bottom: 11%; width: 50%;
   background: #FBF7EE; border: ${px(0.004)}px solid #C5A059; border-radius: ${px(0.011)}px;
   padding: ${px(0.026)}px ${px(0.03)}px; text-align: center;
@@ -207,8 +219,10 @@ body {
 </style></head>
 <body>
   <div class="halo"></div>
-  <div class="titre">${esc(TITRES[visuel.cle][langue])}</div>
-  <div class="filet"></div>
+  <div class="titre-bloc">
+    <div class="titre">${esc(TITRES[visuel.cle][langue])}</div>
+    <div class="filet"></div>
+  </div>
   ${galerie ? corpsGalerie : corpsChassis}
   <img class="grand-pere" src="${grandPereDataUri}" alt="">
 </body></html>`;

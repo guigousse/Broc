@@ -45,9 +45,17 @@ export const APPAREILS = {
     chassis: {
       mode: "largeur", valeur: 0.70, haut: 0.18, ratioEcran: 1242 / 2688, island: true,
       rayon: 0.12, cadre: 0.012, lunette: 0.028,
+      // iPhone : bouton silence isolé + volume haut/bas séparés + veille.
+      volumeSepare: true,
     },
     titreHaut: 0.042,
-    filetHaut: 0.154,
+    // Espace entre le bas du bloc de titre (quel que soit son nombre de
+    // lignes) et le filet doré, en fraction de la hauteur de sortie. Le
+    // filet suit désormais le titre en flux normal (gabarit.mjs) : cette
+    // valeur ne fixe plus une position absolue, seulement un écart constant
+    // — un titre à trois lignes pousse le filet plus bas au lieu d'être
+    // traversé par lui.
+    filetEcart: 0.021,
   },
   ipad: {
     id: "ipad-13",
@@ -65,9 +73,15 @@ export const APPAREILS = {
     chassis: {
       mode: "hauteur", valeur: 0.60, haut: 0.17, ratioEcran: 2064 / 2752, island: false,
       rayon: 0.045, cadre: 0.010, lunette: 0.022,
+      // iPad : pas de bouton silence, un seul rocker de volume + veille —
+      // le châssis dessinait à tort les 4 boutons du gabarit iPhone.
+      volumeSepare: false,
     },
     titreHaut: 0.040,
-    filetHaut: 0.130,
+    // Voir le commentaire sur iphone.filetEcart : même logique, l'ancienne
+    // valeur fixe (filetHaut: 0.130) ne laissait que ~2px de marge sur un
+    // titre à deux lignes — un piège identique, juste pas encore déclenché.
+    filetEcart: 0.021,
   },
 };
 

@@ -88,8 +88,15 @@ export async function capturerEcrans({
             await page.close();
             continue;
           }
+          // NB : `visuel.ancre` (img[src*="/personas/vendeur-"]) est déjà
+          // présente avant même ce clic — ChineNegoDrawer.tsx la rend hors
+          // du ternaire `expanded` — donc la réattendre ne prouve rien sur
+          // l'ouverture du tiroir. Le bouton cliqué, lui, ne survit qu'au
+          // repli (peekBtnRow bascule sur la bulle de dialogue une fois
+          // `expanded` vrai) : sa disparition est la preuve que l'accordéon
+          // s'est bien ouvert, contrairement au délai fixe qui suit.
           await bouton.first().click();
-          await page.waitForSelector(visuel.ancre, { timeout: 20000 });
+          await bouton.first().waitFor({ state: "detached", timeout: 20000 });
         }
 
         await page.evaluate(() => document.fonts.ready);

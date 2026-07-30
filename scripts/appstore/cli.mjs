@@ -56,9 +56,15 @@ function liste(argv, nom, connus, etiquette, convertir = String) {
 function nombre(argv, nom, etiquette, defaut) {
   const brut = valeur(argv, nom);
   if (brut === undefined) return defaut;
+  if (brut.trim() === "") {
+    throw new Error(`${etiquette} vide : un entier est requis`);
+  }
   const n = Number(brut);
-  if (!Number.isFinite(n)) {
+  if (isNaN(n)) {
     throw new Error(`${etiquette} « ${brut} » non numérique`);
+  }
+  if (!Number.isInteger(n)) {
+    throw new Error(`${etiquette} « ${brut} » doit être un entier`);
   }
   return n;
 }

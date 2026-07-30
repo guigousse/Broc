@@ -81,4 +81,12 @@ describe("ligne de commande des visuels App Store", () => {
   it("rejette une graine non numérique", () => {
     expect(() => parserArgs(["--seed=abc"])).toThrow(/graine.*non numérique/);
   });
+
+  it("rejette une graine vide plutôt que de silencieusement valoir 0", () => {
+    expect(() => parserArgs(["--seed="])).toThrow(/graine vide/);
+  });
+
+  it("rejette une graine non entière", () => {
+    expect(() => parserArgs(["--seed=1.5"])).toThrow(/graine.*entier/);
+  });
 });

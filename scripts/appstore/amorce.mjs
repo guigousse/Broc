@@ -34,12 +34,18 @@ export function scriptAmorce(saveJson, langue) {
  * Source JavaScript à injecter avant hydratation (`page.addInitScript`) :
  * remplace `Math.random` par un générateur déterministe à graine (mulberry32).
  *
- * Tout le tirage aléatoire du jeu (objet proposé, vendeur, humeur, apparition
- * du vendeur mystère…) passe par `Math.random` — aucun appel à
- * `crypto.getRandomValues` sur ces chemins. En figeant la graine, une même
- * exécution du pipeline produit le même contenu quelle que soit la langue ou
- * l'appareil : sans ce correctif, les quatre langues d'un même visuel
- * afficheraient quatre objets différents sur le même emplacement de capture.
+ * Tout le tirage qui décide ce qui s'AFFICHE (objet proposé, vendeur, humeur,
+ * apparition du vendeur mystère…) passe par `Math.random`, que ce correctif
+ * fige. `src/lib/chine.ts` appelle bien `crypto.randomUUID()` sur ces mêmes
+ * chemins (voir `instancier` dans chine.ts) — donc l'affirmation « aucun appel à
+ * crypto.getRandomValues » serait fausse au sens strict. Mais ces UUID ne
+ * servent qu'à identifier les objets en interne (clé `id`) : ils ne sont
+ * jamais affichés ni comparés d'une capture à l'autre, donc les laisser
+ * imprévisibles ne casse pas la reproductibilité visuelle recherchée ici.
+ * En figeant la graine, une même exécution du pipeline produit le même
+ * contenu quelle que soit la langue ou l'appareil : sans ce correctif, les
+ * quatre langues d'un même visuel afficheraient quatre objets différents sur
+ * le même emplacement de capture.
  *
  * Duplique volontairement l'algorithme de `mulberry32.mjs` (implémentation
  * canonique, utilisée côté Node par gen-save-demo.ts) : cette source doit

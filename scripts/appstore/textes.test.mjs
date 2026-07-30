@@ -17,6 +17,36 @@ describe("textes des visuels App Store", () => {
     for (const l of LANGUES) expect(TITRES.personnages[l]).toContain("31");
   });
 
+  // Garde : le chiffre « 31 » du titre n'était vérifié que contre lui-même
+  // (une chaîne recopiée dans TITRES), jamais contre les portraits qui
+  // existent réellement sur le disque — un ajout/retrait de personnage
+  // pouvait faire mentir la fiche App Store sans qu'aucun test ne bronche.
+  it("le chiffre annoncé correspond aux portraits présents sous public/personas", () => {
+    function compterPortraits(dossier) {
+      let n = 0;
+      for (const entree of fs.readdirSync(dossier, { withFileTypes: true })) {
+        if (entree.isDirectory()) {
+          // Portraits du grand-père lui-même (joueur), pas un personnage
+          // qu'on rencontre en jeu — déjà exclu de PORTRAITS_GALERIE.
+          if (entree.name === "grand-pere") continue;
+          n += compterPortraits(path.join(dossier, entree.name));
+          continue;
+        }
+        if (!/\.(webp|png|jpe?g)$/i.test(entree.name)) continue;
+        if (entree.name.includes("-fache")) continue;
+        if (entree.name === "vendeur-mystere.webp") continue;
+        if (entree.name === "client-inconnu.webp") continue;
+        n++;
+      }
+      return n;
+    }
+
+    const compte = compterPortraits(CHEMINS.personas);
+    for (const l of LANGUES) {
+      expect(TITRES.personnages[l], l).toContain(String(compte));
+    }
+  });
+
   it("donne une bulle et un libellé « et + » dans chaque langue", () => {
     for (const l of LANGUES) {
       expect(BULLE[l]).toBeTruthy();

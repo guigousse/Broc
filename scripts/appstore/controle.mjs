@@ -19,7 +19,10 @@ export async function controlerFichier(chemin, attendu) {
     );
   }
   if (meta.hasAlpha) problemes.push("canal alpha présent (transparence refusée par Apple)");
-  if (meta.space && meta.space !== "srgb") problemes.push(`espace ${meta.space}, attendu srgb`);
+  // Un espace absent/illisible n'est pas une preuve de sRGB : c'est le
+  // dernier filet avant App Store Connect, un `meta.space` manquant doit
+  // être signalé comme les autres, pas laissé passer silencieusement.
+  if (meta.space !== "srgb") problemes.push(`espace ${meta.space ?? "inconnu"}, attendu srgb`);
   return { fichier: chemin, ok: problemes.length === 0, problemes };
 }
 
