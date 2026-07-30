@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { OngletCommandes } from "./OngletCommandes";
 import { courrierDeChapitre } from "@/lib/quetes/principales";
 import { chapitreParId } from "@/data/quetesPrincipales";
@@ -346,8 +346,9 @@ describe("OngletCommandes", () => {
       );
       const { rerender } = render(vue(courant));
 
+      const carteA = document.querySelector<HTMLElement>('[data-commande-id="cmd_a"]')!;
       act(() => {
-        fireEvent.click(screen.getByRole("button", { name: "Livrer" }));
+        fireEvent.click(within(carteA).getByRole("button", { name: "Livrer" }));
       });
       rerender(vue(courant));
 

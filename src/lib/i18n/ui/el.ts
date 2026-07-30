@@ -579,7 +579,6 @@ export const el: DictionnaireUI = {
     jetonEnergie: "+{n} ⚡",
     recompenseAria: "Ανταμοιβή: {argent} €, {xp} XP, {energie} ενέργεια",
     livrer: "Παράδοση",
-    livrerProgress: "Παράδοση ({rempli}/{total})",
     // Libellés des objectifs de chapitre (SP2 trame) : chaque type non-"objet"
     // affiche une ligne de progression dédiée dans le carnet.
     objectifs: {

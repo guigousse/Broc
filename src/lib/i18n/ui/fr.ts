@@ -580,7 +580,6 @@ export const fr = {
     jetonEnergie: "+{n} ⚡",
     recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie",
     livrer: "Livrer",
-    livrerProgress: "Livrer ({rempli}/{total})",
     // Libellés des objectifs de chapitre (SP2 trame) : chaque type non-"objet"
     // affiche une ligne de progression dédiée dans le carnet.
     objectifs: {

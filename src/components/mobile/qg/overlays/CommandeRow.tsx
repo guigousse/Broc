@@ -35,7 +35,7 @@ const carte: CSSProperties = {
 const row: CSSProperties = {
   position: "relative",
   display: "flex", alignItems: "stretch", gap: 12, width: "100%",
-  padding: "12px 12px 10px", background: "transparent", border: "none",
+  padding: "12px 12px 8px", background: "transparent", border: "none",
   cursor: "pointer", textAlign: "left",
 };
 const avatar: CSSProperties = {
@@ -86,11 +86,14 @@ const pastilleEcheance = (urgent: boolean): CSSProperties => ({
   border: urgent ? "none" : "1px solid rgba(138,122,82,0.5)",
   borderRadius: 9, padding: "1px 7px",
 });
-const barreWrap: CSSProperties = {
-  display: "flex", alignItems: "center", gap: 8, marginTop: "auto", paddingTop: 8,
+/* Ligne de progression : hors du toggle accordéon (un bouton ne peut pas en
+ * contenir un autre), donc pleine largeur sous l'avatar. */
+const barreLigne: CSSProperties = {
+  display: "flex", alignItems: "center", gap: 10, padding: "0 12px 10px",
 };
 const barreFond: CSSProperties = {
-  flex: 1, height: 7, background: "#e3d7b6", borderRadius: 4, overflow: "hidden",
+  position: "relative",
+  flex: 1, height: 18, background: "#e3d7b6", borderRadius: 9, overflow: "hidden",
   boxShadow: "inset 0 1px 2px rgba(110,31,31,0.18)",
 };
 const barreRemplissage = (pct: number): CSSProperties => ({
@@ -98,10 +101,25 @@ const barreRemplissage = (pct: number): CSSProperties => ({
   background: "linear-gradient(180deg, #d9b45e, #c8a24a)",
   transition: "width 300ms ease",
 });
+/* Compteur en surimpression, centré : le halo crème le garde lisible aussi
+ * bien sur l'or du remplissage que sur le fond vide. */
 const compteurStyle: CSSProperties = {
-  fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
-  color: "#8a6d2e", whiteSpace: "nowrap",
+  position: "absolute", inset: 0,
+  display: "grid", placeItems: "center",
+  fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700,
+  letterSpacing: "0.04em", color: "#6e1f1f", whiteSpace: "nowrap",
+  textShadow: "0 1px 0 rgba(255,250,235,0.85)",
+  pointerEvents: "none",
 };
+const boutonLivrer = (accompli: boolean, actif: boolean): CSSProperties => ({
+  flex: "0 0 auto",
+  background: accompli ? "#2c5e3f" : actif ? "#6e1f1f" : "#b3a06a",
+  color: "#f4e9cd", border: "none", borderRadius: 6, padding: "6px 14px",
+  fontFamily: "var(--font-display)", fontSize: 11,
+  letterSpacing: "0.14em", textTransform: "uppercase",
+  cursor: actif ? "pointer" : "default",
+  opacity: accompli || actif ? 1 : 0.6,
+});
 
 /** Libellé localisé d'un objectif de chapitre (hors cibles "objet", déjà
  *  rendues via `cibles`). `restauration` interpole l'état minimum requis. */
@@ -216,17 +234,27 @@ export function CommandeRow({
           ) : premierObjectifNonObjet ? (
             <span style={apercuObjectif}>{libelleObjectif(premierObjectifNonObjet, d, tr)}</span>
           ) : null}
-          <span style={barreWrap}>
-            <span style={barreFond}>
-              <span data-testid="progression-barre" style={barreRemplissage(pct)} />
-            </span>
-            <span data-testid="progression-compteur" style={compteurStyle}>{compteur}</span>
-          </span>
         </span>
         {jRestants !== null && (
           <span style={pastilleEcheance(jRestants <= 3)}>J−{jRestants}</span>
         )}
       </button>
+      <div style={barreLigne}>
+        <span style={barreFond}>
+          <span data-testid="progression-barre" style={barreRemplissage(pct)} />
+          <span data-testid="progression-compteur" style={compteurStyle}>{compteur}</span>
+        </span>
+        {(livrable || accompli) && (
+          <button
+            type="button"
+            onClick={onLivrer}
+            disabled={!boutonActif}
+            style={boutonLivrer(accompli, boutonActif)}
+          >
+            {accompli ? d.carnet.pret : d.carnet.livrer}
+          </button>
+        )}
+      </div>
       <RecompenseJetons
         recompense={rEff}
         variante="bandeau"
@@ -270,25 +298,6 @@ export function CommandeRow({
               </div>
             );
           })}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
-            <button
-              type="button"
-              onClick={onLivrer}
-              disabled={!boutonActif}
-              style={{
-                background: accompli ? "#2c5e3f" : boutonActif ? "#6e1f1f" : "#b3a06a", color: "#f4e9cd", border: "none",
-                borderRadius: 6, padding: "8px 16px", fontFamily: "var(--font-display)", fontSize: 11,
-                letterSpacing: "0.14em", textTransform: "uppercase", cursor: boutonActif ? "pointer" : "default",
-                opacity: accompli || boutonActif ? 1 : 0.6,
-              }}
-            >
-              {accompli
-                ? d.carnet.pret
-                : livrable
-                ? d.carnet.livrer
-                : tr(d.carnet.livrerProgress, { rempli: rempliesObjectifs, total: totalObjectifs })}
-            </button>
-          </div>
         </div>
       )}
     </div>

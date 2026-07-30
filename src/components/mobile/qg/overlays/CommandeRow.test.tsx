@@ -37,14 +37,13 @@ describe("CommandeRow", () => {
     expect(btn.disabled).toBe(false);
   });
 
-  it("grise Livrer si une cible manque", () => {
+  it("n'affiche aucun bouton Livrer si une cible manque", () => {
     const state = createMockGameState({
       inventaireJoueur: [],
       missions: [{ courrierId: "m1", statut: "active" }],
     });
     render(<CommandeRow courrier={courrierMission()} state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}} />);
-    const btn = screen.getByRole("button", { name: /Livrer/ }) as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: /Livrer/ })).toBeNull();
   });
 
   it("affiche la progression d'un objectif ventesCumulees et gate le bouton Livrer", () => {
@@ -151,5 +150,35 @@ describe("CommandeRow", () => {
     const state = createMockGameState({ jourActuel: 1, missions: [{ courrierId: "m1", statut: "active" }] });
     render(<CommandeRow courrier={c} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
     expect(screen.getByText("J−4")).toBeTruthy();
+  });
+
+  it("carte fermée et livrable : le bouton Livrer est là, actif", () => {
+    const state: GameState = createMockGameState({
+      inventaireJoueur: [createMockObjet({ templateId: "ma.lampe_petrole_ancienne", etat: "Très bon", categorie: "Maison" })],
+      missions: [{ courrierId: "m1", statut: "active" }],
+    });
+    render(<CommandeRow courrier={courrierMission()} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
+    const btn = screen.getByRole("button", { name: "Livrer" }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+  });
+
+  it("carte dépliée et livrable : un seul bouton Livrer (plus celui du détail)", () => {
+    const state: GameState = createMockGameState({
+      inventaireJoueur: [createMockObjet({ templateId: "ma.lampe_petrole_ancienne", etat: "Très bon", categorie: "Maison" })],
+      missions: [{ courrierId: "m1", statut: "active" }],
+    });
+    render(<CommandeRow courrier={courrierMission()} state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}} />);
+    expect(screen.getAllByRole("button", { name: "Livrer" }).length).toBe(1);
+  });
+
+  it("cérémonie en cours : bouton Prêt ✓ verrouillé, hors du panneau déplié", () => {
+    const state: GameState = createMockGameState({
+      inventaireJoueur: [],
+      missions: [{ courrierId: "m1", statut: "livree", jourResolution: 1 }],
+    });
+    render(<CommandeRow courrier={courrierMission()} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} enCeremonie />);
+    const btn = screen.getByRole("button", { name: "Prêt ✓" }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(screen.getByTestId("progression-compteur").textContent).toBe("1/1");
   });
 });

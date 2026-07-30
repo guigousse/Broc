@@ -571,7 +571,6 @@ export const en: DictionnaireUI = {
     jetonEnergie: "+{n} ⚡",
     recompenseAria: "Reward: {argent} €, {xp} XP, {energie} energy",
     livrer: "Deliver",
-    livrerProgress: "Deliver ({rempli}/{total})",
     objectifs: {
       ventesCumulees: "Total sales",
       profitVente: "Best profit on one sale",
