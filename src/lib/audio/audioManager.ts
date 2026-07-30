@@ -38,6 +38,17 @@ const STORAGE_KEY = "projet-broc:audio:v1";
  */
 const COFFRE_OUVRE_VITESSE = 0.6;
 
+/** Détonation d'un bouquet de feu d'artifice (écran de level-up). */
+export const SON_EXPLOSION = "/sounds/explosion.mp3";
+
+/**
+ * Position de la détonation DANS le fichier, mesurée sur l'échantillon
+ * définitif (crête à 36 ms, montée à partir de 30 ms). Pour que le bang tombe
+ * pile sur l'éclat à l'écran, l'appelant déclenche la lecture d'autant en
+ * avance — divisé par la `vitesse` de lecture, qui étire ou comprime ce délai.
+ */
+export const PIC_EXPLOSION_S = 0.035;
+
 type WindowAudio = typeof window & { webkitAudioContext?: typeof AudioContext };
 
 class AudioManager {
@@ -356,6 +367,33 @@ class AudioManager {
       osc.start(t0);
       osc.stop(t0 + dur + 0.02);
     });
+  }
+
+  /**
+   * Détonation d'un bouquet de feu d'artifice (level-up) :
+   * /sounds/explosion.mp3 (0,8 s).
+   *
+   * `force` (0-1) fait décroître les bouquets secondaires, `vitesse` décale
+   * légèrement la hauteur — quatre bouquets rejouant l'échantillon à
+   * l'identique s'entendraient comme un bug.
+   *
+   * Précharger avant de jouer : le `await` sur le tampon décalerait la
+   * première détonation et casserait la synchro avec l'éclat à l'écran.
+   */
+  async playExplosion(force = 1, vitesse = 1): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer(SON_EXPLOSION);
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = vitesse;
+    const gain = this.ctx.createGain();
+    gain.gain.value = force;
+    src.connect(gain);
+    gain.connect(this.master);
+    src.start();
   }
 
   /** Fanfare de level-up : /sounds/level-up.mp3 (~1,7 s). */

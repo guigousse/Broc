@@ -786,6 +786,9 @@
   /* Rouge d'urgence (calendrier, alertes) — variante sombre du vermillion. */
   --red-urgent: #A32A2A;
   --red-urgent-strong: #B03030;
+  /* Rouge d'alerte SUR FOND SOMBRE (jauge d'énergie à zéro dans le header) :
+     le vermillion ne mesure que 2,8:1 sur forest-800, celui-ci 5,1:1. */
+  --red-signal-300: #E8836F;
 
   /* Gradients récurrents */
   /* Jauge d'humeur client : contentement → neutre → colère (teintes patina/brass/vermillion). */
@@ -1143,49 +1146,57 @@ nav[aria-label="Navigation principale"] :focus-visible,
   from { transform: translateY(110%); }
   to { transform: translateY(0); }
 }
-/* Level up « certificat » : le document entre (fade + montée), les mentions
-   apparaissent en cascade (delay inline par ligne), puis le cachet de cire
-   s'écrase (scale 2.6→1) et fait trembler le certificat (--shake-delay).
-   Le shake anime `translate` (propriété distincte) pour ne pas entrer en
-   conflit avec le `transform` de l'entrée. */
-@keyframes broc-levelup-certificat-in {
+/* Level up, en deux temps : d'abord le chiffre seul qui grossit (son +
+   confettis), et seulement ~1 s plus tard l'encadré des récompenses qui monte,
+   ses mentions apparaissant en cascade (delay inline par ligne). */
+@keyframes broc-levelup-titre-in {
+  0% { opacity: 0; transform: scale(0.25); }
+  55% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes broc-levelup-carte-in {
   from { opacity: 0; transform: translateY(18px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes broc-levelup-certificat-shake {
-  0%, 100% { translate: 0 0; }
-  25% { translate: 2px 1px; }
-  50% { translate: -2px -1px; }
-  75% { translate: 1px 2px; }
 }
 @keyframes broc-levelup-ligne-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes broc-levelup-cachet-slam {
-  0% { opacity: 0; transform: rotate(-30deg) scale(2.6); }
-  60% { opacity: 1; transform: rotate(-10deg) scale(0.92); }
-  100% { opacity: 1; transform: rotate(-12deg) scale(1); }
+/* Feu d'artifice : chaque étincelle reçoit son vecteur (--cx/--cy), son
+   orientation (--cr) et son delay en inline. La rotation est CONSTANTE d'un
+   bout à l'autre — le grand axe reste aligné sur le rayon, c'est ce qui fait
+   « étincelle qui file » plutôt que « confetti qui culbute ». Elle s'étire en
+   partant (scaleY) puis se raccourcit en s'éteignant. */
+@keyframes broc-levelup-etincelle {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(var(--cr)) scaleY(0.35); }
+  10% { opacity: 1; transform: translate3d(calc(var(--cx) * 0.22), calc(var(--cy) * 0.22), 0) rotate(var(--cr)) scaleY(1.15); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--cx), var(--cy), 0) rotate(var(--cr)) scaleY(0.55); }
 }
-.broc-levelup-certificat {
-  animation:
-    broc-levelup-certificat-in 400ms ease-out both,
-    broc-levelup-certificat-shake 220ms linear var(--shake-delay, 1.2s) 1;
+.broc-levelup-titre {
+  /* animation-delay inline (temps mort avant la montée du chiffre) */
+  animation: broc-levelup-titre-in 700ms cubic-bezier(0.22, 0.9, 0.3, 1.08) both;
+}
+.broc-levelup-carte {
+  /* animation-delay inline (après le temps fort du chiffre) */
+  animation: broc-levelup-carte-in 450ms ease-out both;
 }
 .broc-levelup-ligne {
   /* animation-delay inline (cascade calculée en JS) */
   animation: broc-levelup-ligne-in 350ms ease-out both;
 }
-.broc-levelup-cachet {
-  /* animation-delay inline (après la cascade) */
-  animation: broc-levelup-cachet-slam 340ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+.broc-levelup-etincelle {
+  /* animation-delay inline (un bouquet après l'autre) */
+  animation: broc-levelup-etincelle 1100ms cubic-bezier(0.1, 0.75, 0.25, 1) both;
 }
 /* Le bloc reduced-motion global écrase les durées mais pas animation-delay :
-   sans ceci lignes et cachet resteraient invisibles pendant leur delay. */
+   sans ceci titre, carte et lignes resteraient invisibles pendant leur delay.
+   Le feu d'artifice, lui, n'est pas rendu du tout (garde JS) : figé il
+   empilerait ses étincelles sur les points de tir. */
 @media (prefers-reduced-motion: reduce) {
-  .broc-levelup-certificat,
-  .broc-levelup-ligne,
-  .broc-levelup-cachet {
+  .broc-levelup-titre,
+  .broc-levelup-carte,
+  .broc-levelup-ligne {
     animation: none !important;
   }
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Plus } from "lucide-react";
+import { Zap } from "lucide-react";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
@@ -28,12 +28,26 @@ const wrapStyle: CSSProperties = {
 
 const innerStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "auto 1fr auto auto",
+  // Colonnes latérales de même flexibilité : le bloc NIVEAU, seul au milieu,
+  // tombe donc au centre de la page. Elles ne s'écartent de l'égalité que si
+  // la droite (énergie + caisse) déborde — la caisse peut grossir de « 8 € »
+  // à « 128 450 € » : le niveau glisse alors du minimum nécessaire plutôt
+  // que de pousser la caisse hors de l'écran.
+  gridTemplateColumns: "1fr auto 1fr",
   alignItems: "center",
-  gap: 12,
+  gap: 10,
   padding: "8px 14px",
   height: "var(--mobile-header-h)",
   boxSizing: "border-box",
+};
+
+/** Énergie + caisse. L'énergie occupe tout le reste et s'y centre : elle est
+ *  donc à mi-chemin du bloc niveau et de la caisse, elle-même en bout de
+ *  ligne. */
+const droiteStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
 };
 
 const labelStyle: CSSProperties = {
@@ -54,21 +68,36 @@ const valueStyle: CSSProperties = {
   fontSize: "clamp(13px, 3.8vw, 16px)",
   color: "var(--brass-300)",
   marginTop: 2,
+  // Une caisse à quatre chiffres ne doit jamais casser en deux lignes : c'est
+  // l'énergie (flex: 1) qui cède de la place, pas le montant.
+  whiteSpace: "nowrap",
 };
 
 const xpBlocStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
+  ...labelStyle,
+  display: "block",
+  textAlign: "center",
   justifySelf: "center",
   minWidth: 0,
   textDecoration: "none",
 };
 
+/** Ligne « 3 ▮▮▮▯▯ » sous le libellé NIVEAU. */
+const xpLigneStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  marginTop: 2,
+};
+
+/** Même police et même taille que l'énergie et la caisse (valueStyle). */
 const xpNiveauStyle: CSSProperties = {
   fontFamily: "var(--font-display)",
-  fontSize: 13,
-  color: "var(--paper-100)",
+  fontWeight: 700,
+  fontSize: "clamp(13px, 3.8vw, 16px)",
+  color: "var(--brass-300)",
+  lineHeight: 1,
 };
 
 const xpTrackStyle: CSSProperties = {
@@ -111,7 +140,17 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   // Affichage figé pendant la cérémonie de livraison (jeton ⚡ en vol) ; le
   // droit de recharger reste calculé sur la vraie énergie, jamais l'affichage.
   const energieAffichee = useEnergieAffiche(energie);
-  const peutRecharger = energie < energieMax;
+
+  // Codage couleur de la jauge : plein → tout en laiton clair ; entamé → le
+  // numérateur seul s'assombrit (laiton 500, 5,5:1 : brass-700 tomberait à
+  // 2,7:1, sous AA) ; à sec → « 0/5 » et l'éclair passent au rouge.
+  const aSec = energieAffichee <= 0;
+  const couleurReste = aSec ? "var(--red-signal-300)" : "var(--brass-300)";
+  const couleurEnergie = aSec
+    ? "var(--red-signal-300)"
+    : energieAffichee >= energieMax
+      ? "var(--brass-300)"
+      : "var(--brass-500)";
 
   // La puce XP ne doit pas naviguer pendant une session (chinage/vitrine) : un
   // mistap ferait sortir de la session et re-paierait le droit d'entrée +
@@ -125,14 +164,17 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
     : undefined;
   const xpContenu = state ? (
     <>
-      <span style={xpNiveauStyle}>N{brocanteurAffiche.niveau}</span>
-      <span style={xpTrackStyle}>
-        <span
-          style={{
-            ...xpFillStyle,
-            width: `${Math.round(progressionNiveauBrocanteur(brocanteurAffiche) * 100)}%`,
-          }}
-        />
+      {d.chrome.niveau}
+      <span style={xpLigneStyle}>
+        <span style={xpNiveauStyle}>{brocanteurAffiche.niveau}</span>
+        <span style={xpTrackStyle}>
+          <span
+            style={{
+              ...xpFillStyle,
+              width: `${Math.round(progressionNiveauBrocanteur(brocanteurAffiche) * 100)}%`,
+            }}
+          />
+        </span>
       </span>
     </>
   ) : null;
@@ -170,72 +212,57 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
         ) : (
           <span />
         )}
-        <div style={{ textAlign: "center", ...labelStyle }}>
-          {d.chrome.energie}
-          <strong
+        <div style={droiteStyle}>
+          {/* Plus de bouton « + » séparé : le bloc énergie entier ouvre la
+              recharge, plein ou non (elle sait dire « énergie au maximum »). */}
+          <button
+            type="button"
+            onClick={() => setRechargeOuverte(true)}
+            aria-label={d.chrome.rechargerEnergie}
             style={{
-              ...valueStyle,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 4,
+              ...labelStyle,
+              flex: 1,
+              textAlign: "center",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              // Marges négatives compensées : la cible tactile déborde du
+              // texte sans décaler la grille.
+              padding: "8px 10px",
+              margin: "-8px 0",
             }}
           >
-            {peutRecharger && (
-              <button
-                onClick={() => setRechargeOuverte(true)}
-                aria-label={d.chrome.rechargerEnergie}
-                style={{
-                  // Zone de tap 44 pt (marges négatives compensées : le
-                  // cercle visuel reste 18 px, la cible tactile non).
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 44,
-                  height: 44,
-                  margin: -13,
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  padding: 0,
-                }}
-              >
-                <span
-                  aria-hidden
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: 18,
-                    height: 18,
-                    borderRadius: 9,
-                    border: "1.5px solid var(--brass-500)",
-                    color: "var(--brass-300)",
-                  }}
-                >
-                  <Plus size={12} strokeWidth={3} />
-                </span>
-              </button>
-            )}
-            <span
-              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+            {d.chrome.energie}
+            <strong
+              style={{
+                ...valueStyle,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 4,
+              }}
               data-fly-target="energie-header"
             >
-              <Zap size={15} strokeWidth={2.5} aria-hidden />
-              {energieAffichee}
-              <span style={{ color: "var(--brass-700)" }}>/{energieMax}</span>
-            </span>
-          </strong>
-        </div>
-        {/* data-fly-target : cible des objets vendus dans le bilan de vente,
-            comme le stockage l'est pour les objets chinés. */}
-        <div style={{ textAlign: "right", ...labelStyle }} data-fly-target="caisse-header">
-          {d.chrome.caisse}
-          <strong style={valueStyle}>
-            {tr(d.chrome.montantEuros, {
-              valeur: budgetAffiche.toLocaleString(locale),
-            })}
-          </strong>
+              <span style={{ display: "inline-flex", alignItems: "center" }}>
+                <span style={{ color: couleurEnergie }}>{energieAffichee}</span>
+                <span style={{ color: couleurReste }}>/{energieMax}</span>
+              </span>
+              <Zap size={15} strokeWidth={2.5} color={couleurReste} aria-hidden />
+            </strong>
+          </button>
+          {/* data-fly-target : cible des objets vendus dans le bilan de vente,
+              comme le stockage l'est pour les objets chinés. */}
+          <div
+            style={{ textAlign: "right", flexShrink: 0, ...labelStyle }}
+            data-fly-target="caisse-header"
+          >
+            {d.chrome.caisse}
+            <strong style={valueStyle}>
+              {tr(d.chrome.montantEuros, {
+                valeur: budgetAffiche.toLocaleString(locale),
+              })}
+            </strong>
+          </div>
         </div>
       </div>
 

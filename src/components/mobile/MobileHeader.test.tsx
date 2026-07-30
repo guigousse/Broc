@@ -27,12 +27,18 @@ vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname,
 }));
 
-function etat(niveau: number) {
+function etat(niveau: number, energie = 5) {
   return {
-    energie: 5,
+    energie,
     energieDerniereMaj: Date.now(),
     brocanteur: { niveau, xp: 0, pointsDisponibles: 0 },
   };
+}
+
+/** Le `<span>` qui porte le numérateur de la jauge (« 3 » dans « 3/5 »). */
+function numerateurEnergie() {
+  const jauge = document.querySelector("[data-fly-target='energie-header']");
+  return jauge!.querySelector("span > span") as HTMLElement;
 }
 
 describe("MobileHeader — puce XP", () => {
@@ -60,6 +66,60 @@ describe("MobileHeader — puce XP", () => {
     const puce = screen.getByLabelText("Niveau de Brocanteur 0");
     expect(puce.tagName).toBe("SPAN");
     expect(screen.queryByRole("link", { name: "Niveau de Brocanteur 0" })).toBeNull();
+  });
+});
+
+describe("MobileHeader — bloc niveau", () => {
+  it("le libellé « Niveau » surmonte la barre, le chiffre seul la précède", () => {
+    mockState = etat(4);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} />);
+    const bloc = screen.getByLabelText("Niveau de Brocanteur 4");
+    expect(bloc.textContent).toBe("Niveau4");
+    // Plus de préfixe « N » : le libellé au-dessus dit déjà de quoi il s'agit.
+    expect(bloc.textContent).not.toContain("N4");
+  });
+});
+
+describe("MobileHeader — jauge d'énergie", () => {
+  it("aucun bouton « + » : le bloc énergie entier ouvre la recharge, même à plein", () => {
+    mockState = etat(3, 5);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} />);
+    const boutons = screen.getAllByRole("button", { name: "Recharger l'énergie" });
+    expect(boutons).toHaveLength(1);
+    expect(boutons[0].textContent).toContain("5/5");
+    expect(boutons[0].textContent).toContain("Énergie");
+  });
+
+  it("entamée : le bloc reste cliquable et le numérateur s'assombrit", () => {
+    mockState = etat(3, 2);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} />);
+    expect(screen.getByRole("button", { name: "Recharger l'énergie" })).toBeTruthy();
+    expect(numerateurEnergie().style.color).toBe("var(--brass-500)");
+  });
+
+  it("pleine : numérateur et dénominateur portent la même couleur", () => {
+    mockState = etat(3, 5);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} />);
+    const numerateur = numerateurEnergie();
+    expect(numerateur.style.color).toBe("var(--brass-300)");
+    expect((numerateur.nextElementSibling as HTMLElement).style.color).toBe(
+      "var(--brass-300)",
+    );
+  });
+
+  it("à sec : « 0/5 » passe entièrement au rouge", () => {
+    mockState = etat(3, 0);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} />);
+    const numerateur = numerateurEnergie();
+    expect(numerateur.style.color).toBe("var(--red-signal-300)");
+    expect((numerateur.nextElementSibling as HTMLElement).style.color).toBe(
+      "var(--red-signal-300)",
+    );
   });
 });
 

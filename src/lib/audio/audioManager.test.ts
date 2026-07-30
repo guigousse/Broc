@@ -36,6 +36,7 @@ interface FakeOscillator extends FakeNode {
 interface FakeBufferSource extends FakeNode {
   buffer: unknown;
   loop: boolean;
+  playbackRate: FakeParam;
   start: ReturnType<typeof vi.fn>;
   stop: ReturnType<typeof vi.fn>;
 }
@@ -91,6 +92,7 @@ class FakeAudioContext {
     const s: FakeBufferSource = {
       buffer: null,
       loop: false,
+      playbackRate: createFakeParam(1),
       connect: vi.fn(),
       disconnect: vi.fn(),
       start: vi.fn(),
@@ -405,6 +407,32 @@ describe("audioManager — effets et préférences", () => {
     audioManager.playRarete();
     const ctx = FakeAudioContext.instances[0];
     expect(ctx.oscillators).toHaveLength(3);
+  });
+
+  it("playExplosion charge /sounds/explosion.mp3 et lance la source", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playExplosion();
+    expect(fetchMock).toHaveBeenCalledWith("/sounds/explosion.mp3");
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(1);
+    expect(ctx.bufferSources[0].start).toHaveBeenCalled();
+  });
+
+  it("playExplosion : `force` règle le gain, `vitesse` la hauteur", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playExplosion(0.6, 1.14);
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources[0].playbackRate.value).toBeCloseTo(1.14, 5);
+    expect(ctx.gains.at(-1)!.gain.value).toBeCloseTo(0.6, 5);
+  });
+
+  it("playExplosion est muet quand la préférence effets est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    await audioManager.playExplosion();
+    // Muet au point de ne pas même aller chercher le fichier.
+    expect(fetchMock).not.toHaveBeenCalledWith("/sounds/explosion.mp3");
+    expect(FakeAudioContext.instances).toHaveLength(0);
   });
 
   it("playMystere joue 2 notes quand effets est actif", async () => {

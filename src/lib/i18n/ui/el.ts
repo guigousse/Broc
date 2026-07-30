@@ -97,6 +97,7 @@ export const el: DictionnaireUI = {
     caisse: "Ταμείο",
     rechargerEnergie: "Επαναφόρτιση ενέργειας",
     montantEuros: "{valeur} €",
+    niveau: "Επίπεδο",
     niveauBrocanteur: "Επίπεδο Παλιατζή {n}",
     energieAuMaximum: "Η ενέργεια είναι στο μέγιστο.",
     prochaineEnergieDans: "Επόμενη ⚡ σε {temps}",
@@ -212,9 +213,10 @@ export const el: DictionnaireUI = {
     chaqueNiveauPoint:
       "Κάθε επίπεδο: +1 πόντος δεξιότητας, όσο απομένουν δεξιότητες για ξεκλείδωμα",
     niveauAtteintAriaLabel: "Επίπεδο {n} επιτεύχθηκε",
-    eyebrowCertificat: "— Πιστοποιητικό παλιατζή —",
     niveauNCelebration: "Επίπεδο {n}",
     plusUnPointCompetence: "+1 πόντος δεξιότητας",
+    sectionRecompenses: "Ανταμοιβές",
+    sectionAVenir: "Προσεχώς",
     prochainNiv: "Επόμενο — Επ. {n}:",
     toastStockagePlein:
       "Η αποθήκη είναι γεμάτη — κάνε χώρο πριν ανοίξεις το κουτί.",
