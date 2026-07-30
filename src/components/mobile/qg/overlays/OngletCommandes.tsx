@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { CalendarDays, CalendarRange, FolderOpen } from "lucide-react";
 import { estMissionLivrable } from "@/lib/missions";
 import { prochainMinuitLocalMs, prochainLundiLocalMs } from "@/lib/quetes/periode";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomTemplate, titreCourrier } from "@/lib/i18n/contenu";
+import { CIBLES_VOL, phasesLivraison, type JetonVol } from "@/lib/quetes/ceremonieLivraison";
+import { recompenseEffective } from "@/lib/recompenses";
+import { energieCourante } from "@/lib/energie";
+import { flyToTab } from "@/lib/flyAnimation";
+import {
+  degelerBudgetAffichage,
+  degelerEnergieAffichage,
+  degelerXpAffichage,
+  gelerBudgetAffichage,
+  gelerEnergieAffichage,
+  gelerXpAffichage,
+} from "@/lib/affichageGele";
 import { CommandeRow } from "./CommandeRow";
 import type { Courrier, GameState, MissionResolution } from "@/types/game";
 
@@ -52,6 +64,16 @@ const sectionToggle: CSSProperties = {
 };
 
 const sectionChevron: CSSProperties = { marginLeft: "auto", fontSize: 12, color: "#8a6d2e" };
+
+/** Fond du clone en vol, au teint du jeton (cf. JETON_STYLES de RecompenseJetons). */
+const FONDS_JETON: Record<JetonVol, string> = {
+  argent: "radial-gradient(circle at 35% 30%, #b03030, #6e1f1f)",
+  xp: "radial-gradient(circle at 35% 30%, #efe3c0, #c8a24a)",
+  energie: "radial-gradient(circle at 35% 30%, #4a8a63, #2c5e3f)",
+};
+
+/** Durée du fondu de retrait de la carte livrée, en ms. */
+const FONDU_SORTIE_MS = 300;
 
 const sectionSousLabel: CSSProperties = {
   fontFamily: "var(--font-mono)",
@@ -102,12 +124,30 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
       return next;
     });
   const [, tick] = useState(0);
+  /** Commande dont la cérémonie de livraison est en cours (carte maintenue). */
+  const [ceremonieId, setCeremonieId] = useState<string | null>(null);
+  /** Timers de la cérémonie en cours (annulés au démontage). */
+  const timersRef = useRef<number[]>([]);
   const byId = useMemo(() => new Map(state.courriers.map((c) => [c.id, c])), [state.courriers]);
 
   useEffect(() => {
     const id = window.setInterval(() => tick((n) => n + 1), 1000);
     return () => window.clearInterval(id);
   }, []);
+
+  // Démontage (carnet refermé) en pleine cérémonie : couper les timers et
+  // rendre leurs vraies valeurs aux compteurs du header, sinon ils resteraient
+  // figés pour toute la partie.
+  useEffect(
+    () => () => {
+      timersRef.current.forEach((t) => window.clearTimeout(t));
+      timersRef.current = [];
+      degelerXpAffichage();
+      degelerBudgetAffichage();
+      degelerEnergieAffichage();
+    },
+    [],
+  );
 
   // Commande visée (badge livrable tapé, ou commande que le grand-père vient
   // d'inscrire dans le carnet resté ouvert) : la déplier et l'amener dans la
@@ -122,7 +162,12 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
     if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "start" });
   }, [ouvertInitialId]);
 
-  const actives = useMemo(() => state.missions.filter((m) => m.statut === "active"), [state.missions]);
+  // La commande en cérémonie est déjà « livree » dans le state : on la garde
+  // parmi les actives le temps que les jetons rejoignent le header.
+  const actives = useMemo(
+    () => state.missions.filter((m) => m.statut === "active" || m.courrierId === ceremonieId),
+    [state.missions, ceremonieId],
+  );
 
   const principales = useMemo(
     () =>
@@ -166,14 +211,83 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
   const terminees = useMemo(
     () =>
       [...state.missions]
-        .filter((m) => m.statut !== "active")
+        // Pas la commande en cérémonie : elle est encore rendue au-dessus, en
+        // actives — elle ne doit pas figurer deux fois dans le carnet.
+        .filter((m) => m.statut !== "active" && m.courrierId !== ceremonieId)
         .sort((a, b) => (b.jourResolution ?? 0) - (a.jourResolution ?? 0)),
-    [state.missions],
+    [state.missions, ceremonieId],
   );
 
   const now = tempsConfiance?.() ?? Date.now();
   const resteQuotidien = prochainMinuitLocalMs(now) - now;
   const resteHebdo = prochainLundiLocalMs(now) - now;
+
+  /**
+   * Cérémonie de livraison — déclenchée UNIQUEMENT par le tap sur « Livrer »,
+   * jamais depuis un effet (StrictMode monterait deux fois et enverrait les
+   * jetons en double).
+   *
+   * L'ordre est : capture des valeurs d'AVANT → livraison réelle (le state est
+   * crédité tout de suite, rien n'est perdu si l'app meurt) → gel de
+   * l'affichage des trois compteurs → frise de vols, chaque atterrissage
+   * dégelant son compteur → retrait de la carte en fondu.
+   */
+  const lancerLivraison = (courrierId: string) => {
+    const courrier = byId.get(courrierId);
+    if (!courrier || courrier.payload.type !== "mission" || ceremonieId) return;
+    const rEff = recompenseEffective(courrier.payload);
+    const maintenant = tempsConfiance?.() ?? Date.now();
+    const avant = {
+      brocanteur: state.brocanteur,
+      budget: state.budget,
+      energie: energieCourante(state, maintenant),
+    };
+    const res = onLivrerMission(courrierId);
+    if (!res.ok) return;
+    gelerXpAffichage(avant.brocanteur);
+    gelerBudgetAffichage(avant.budget);
+    gelerEnergieAffichage(avant.energie);
+    setCeremonieId(courrierId);
+
+    // Les timers de la cérémonie précédente ont tous tiré (le garde-fou
+    // `ceremonieId` interdit le chevauchement) : la liste peut repartir à vide.
+    timersRef.current = [];
+    const racine = document.querySelector(`[data-commande-id="${courrierId}"]`);
+    for (const { at, etape } of phasesLivraison(rEff)) {
+      const t = window.setTimeout(() => {
+        if (etape.type === "envol") {
+          const jeton = racine?.querySelector<HTMLElement>(`[data-jeton="${etape.jeton}"]`) ?? null;
+          if (jeton) jeton.style.visibility = "hidden";
+          flyToTab({
+            fromRect: (jeton ?? racine ?? document.body).getBoundingClientRect(),
+            imageUrl: null,
+            fallbackBg: FONDS_JETON[etape.jeton],
+            borderColor: "#c8a24a",
+            targetSelector: CIBLES_VOL[etape.jeton],
+          });
+        } else if (etape.type === "atterrissage") {
+          if (etape.jeton === "xp") degelerXpAffichage();
+          else if (etape.jeton === "energie") degelerEnergieAffichage();
+          else degelerBudgetAffichage();
+        } else {
+          // La carte se fond / se rétracte avant de quitter la liste.
+          const el = document.querySelector<HTMLElement>(`[data-commande-id="${courrierId}"]`);
+          if (el) {
+            el.style.transition = `opacity ${FONDU_SORTIE_MS}ms ease, max-height ${FONDU_SORTIE_MS}ms ease`;
+            el.style.overflow = "hidden";
+            el.style.maxHeight = `${el.offsetHeight}px`;
+            requestAnimationFrame(() => {
+              el.style.opacity = "0";
+              el.style.maxHeight = "0";
+            });
+          }
+          const tFin = window.setTimeout(() => setCeremonieId(null), FONDU_SORTIE_MS + 20);
+          timersRef.current.push(tFin);
+        }
+      }, at);
+      timersRef.current.push(t);
+    }
+  };
 
   const renderSection = (
     cle: string,
@@ -209,7 +323,8 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
                     state={state}
                     ouvert={ouvertId === m.courrierId}
                     onToggle={() => setOuvertId((id) => (id === m.courrierId ? null : m.courrierId))}
-                    onLivrer={() => onLivrerMission(m.courrierId)}
+                    onLivrer={() => lancerLivraison(m.courrierId)}
+                    enCeremonie={ceremonieId === m.courrierId}
                   />
                 </div>
               );
