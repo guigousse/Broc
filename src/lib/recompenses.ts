@@ -31,6 +31,10 @@ export function xpParDefaut(categorie: MissionCategorie): number {
       return XP_QUETE_HEBDO;
     case "quotidienne":
       return XP_QUETE_QUOTIDIENNE;
+    default:
+      // Catégorie inconnue (ex. vieille save non purgée) : défaut sûr plutôt
+      // qu'un `undefined` qui NaN-poisonnerait `b.xp + undefined` en save.
+      return XP_QUETE_QUOTIDIENNE;
   }
 }
 

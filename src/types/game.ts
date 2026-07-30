@@ -406,7 +406,10 @@ export interface GameState {
     quotidien: LotPeriodique;
     hebdo: LotPeriodique;
   };
-  /** Énergie courante (0..ENERGIE_MAX). Démarre pleine. */
+  /** Énergie courante (0..ENERGIE_MAX en temps normal, mais peut déborder
+   *  jusqu'à ENERGIE_PLAFOND (10) via une récompense de commande avec
+   *  `energie` explicite — cf. lib/recompenses.appliquerRecompense).
+   *  Démarre pleine. */
   energie: number;
   /** Ancre du dernier calcul d'énergie : timestamp de TEMPS DE CONFIANCE (epoch ms),
    *  jamais l'horloge brute du device (cf. lib/temps). */

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { appliquerRecompense, recompenseEffective, xpParDefaut } from "./recompenses";
 import { XP_QUETE_HEBDO, XP_QUETE_PRINCIPALE, XP_QUETE_QUOTIDIENNE } from "@/lib/xp";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
-import type { CourrierPayloadMission } from "@/types/game";
+import type { CourrierPayloadMission, MissionCategorie } from "@/types/game";
 
 function mission(patch: Partial<CourrierPayloadMission> = {}): CourrierPayloadMission {
   return {
@@ -17,6 +17,10 @@ describe("xpParDefaut", () => {
     expect(xpParDefaut("quotidienne")).toBe(XP_QUETE_QUOTIDIENNE);
     expect(xpParDefaut("hebdomadaire")).toBe(XP_QUETE_HEBDO);
     expect(xpParDefaut("principale")).toBe(XP_QUETE_PRINCIPALE);
+  });
+
+  it("catégorie inconnue (vieille save non purgée) : défaut sûr plutôt qu'undefined", () => {
+    expect(xpParDefaut("mensuelle" as MissionCategorie)).toBe(25);
   });
 });
 
@@ -34,6 +38,12 @@ describe("recompenseEffective", () => {
   it("énergie absente → 0, explicite → conservée", () => {
     expect(recompenseEffective(mission()).energie).toBe(0);
     expect(recompenseEffective(mission({ recompense: { argent: 30, energie: 2 } })).energie).toBe(2);
+  });
+
+  it("catégorie inconnue : pas de NaN (défaut sûr, pas d'undefined)", () => {
+    const r = recompenseEffective(mission({ categorie: "mensuelle" as MissionCategorie }));
+    expect(r).toEqual({ argent: 30, xp: 25, energie: 0 });
+    expect(Number.isNaN(r.xp)).toBe(false);
   });
 });
 
@@ -68,9 +78,13 @@ describe("appliquerRecompense", () => {
     expect(next.energie).toBe(10);
   });
 
-  it("gain d'énergie nul : la jauge settle mais ne bouge pas", () => {
+  it("gain d'énergie nul : le settle est volontairement SAUTÉ (energie ET energieDerniereMaj inchangés)", () => {
+    // energieDerniereMaj ancienne : si le settle avait lieu, `now` (10 000)
+    // la ferait avancer. On vérifie qu'elle ne bouge PAS — preuve que
+    // `appliquerRecompense` court-circuite bien le settle quand energie === 0.
     const s = createMockGameState({ energie: 3, energieDerniereMaj: 0 });
-    const next = appliquerRecompense(s, { argent: 10, xp: 10, energie: 0 }, LEDGER, 0);
+    const next = appliquerRecompense(s, { argent: 10, xp: 10, energie: 0 }, LEDGER, 10_000);
     expect(next.energie).toBe(3);
+    expect(next.energieDerniereMaj).toBe(0);
   });
 });

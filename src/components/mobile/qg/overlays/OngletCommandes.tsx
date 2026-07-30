@@ -91,14 +91,18 @@ function trierActives(
   missions: MissionResolution[],
   byId: Map<string, Courrier>,
   inv: GameState["inventaireJoueur"],
+  /** Commande en cours de cérémonie : traitée comme rang 0 (livrable) même si
+   *  elle est déjà « livree » côté state — sinon elle dégringole dans la
+   *  liste pendant l'envol des jetons, sous les yeux du joueur. */
+  ceremonieId?: string | null,
 ) {
   return [...missions].sort((a, b) => {
     const ca = byId.get(a.courrierId);
     const cb = byId.get(b.courrierId);
     const pa = ca?.payload.type === "mission" ? ca.payload : null;
     const pb = cb?.payload.type === "mission" ? cb.payload : null;
-    const lva = pa && estMissionLivrable(pa, inv) ? 0 : 1;
-    const lvb = pb && estMissionLivrable(pb, inv) ? 0 : 1;
+    const lva = a.courrierId === ceremonieId || (pa && estMissionLivrable(pa, inv)) ? 0 : 1;
+    const lvb = b.courrierId === ceremonieId || (pb && estMissionLivrable(pb, inv)) ? 0 : 1;
     if (lva !== lvb) return lva - lvb; // livrables d'abord
     const ja = pa?.jourLimite ?? Infinity;
     const jb = pb?.jourLimite ?? Infinity;
@@ -178,8 +182,9 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
         }),
         byId,
         state.inventaireJoueur,
+        ceremonieId,
       ),
-    [actives, byId, state.inventaireJoueur],
+    [actives, byId, state.inventaireJoueur, ceremonieId],
   );
 
   const quotidiennes = useMemo(
@@ -191,8 +196,9 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
         }),
         byId,
         state.inventaireJoueur,
+        ceremonieId,
       ),
-    [actives, byId, state.inventaireJoueur],
+    [actives, byId, state.inventaireJoueur, ceremonieId],
   );
 
   const hebdomadaires = useMemo(
@@ -204,8 +210,9 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
         }),
         byId,
         state.inventaireJoueur,
+        ceremonieId,
       ),
-    [actives, byId, state.inventaireJoueur],
+    [actives, byId, state.inventaireJoueur, ceremonieId],
   );
 
   const terminees = useMemo(

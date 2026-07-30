@@ -227,6 +227,51 @@ describe("OngletCommandes", () => {
     }
   });
 
+  it("démontage en pleine cérémonie : les compteurs sont dégelés par le cleanup du composant lui-même", () => {
+    vi.useFakeTimers();
+    try {
+      // Deux arbres de rendu SÉPARÉS : `unmount()` ci-dessous ne doit couper
+      // que celui d'OngletCommandes, en laissant les sondes en place pour
+      // constater l'effet du cleanup (l'`afterEach` global, qui dégèle
+      // systématiquement, ne doit pas être ce qui rend ce test vert).
+      let courant = stateLampeLivrable();
+      const onLivrerMission = vi.fn((id: string) => {
+        expect(id).toBe("trame_ch1");
+        courant = stateApresLivraison();
+        return { ok: true };
+      });
+      const onglet = render(
+        <OngletCommandes state={courant} onLivrerMission={onLivrerMission} ouvertInitialId="trame_ch1" />,
+      );
+      const sondes = render(<Sondes state={courant} />);
+
+      act(() => {
+        fireEvent.click(screen.getByRole("button", { name: "Livrer" }));
+      });
+      expect(onLivrerMission).toHaveBeenCalledTimes(1);
+      onglet.rerender(
+        <OngletCommandes state={courant} onLivrerMission={onLivrerMission} ouvertInitialId="trame_ch1" />,
+      );
+      sondes.rerender(<Sondes state={courant} />);
+
+      // Cérémonie en cours : caisse et XP gelés sur les valeurs d'AVANT versement.
+      expect(txt("sonde-budget")).toBe("1000");
+      expect(txt("sonde-xp")).toBe("0");
+
+      // Le carnet se referme (démontage) EN PLEINE cérémonie, bien avant que
+      // les jetons n'aient fini leur vol.
+      onglet.unmount();
+
+      // Assertion faite ICI, avant l'`afterEach` global : c'est le cleanup
+      // au démontage du composant qui doit avoir dégelé les compteurs.
+      expect(txt("sonde-budget")).toBe("1060");
+      expect(txt("sonde-xp")).toBe("100");
+      expect(txt("sonde-energie")).toBe(String(ENERGIE_SENTINELLE));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("échec de livraison : pas de cérémonie, la carte reste active", () => {
     vi.useFakeTimers();
     try {
