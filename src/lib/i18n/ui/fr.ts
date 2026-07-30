@@ -580,6 +580,10 @@ export const fr = {
     jetonEnergie: "+{n} ⚡",
     recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie",
     livrer: "Livrer",
+    // Nom accessible du bouton Livrer/Prêt ✓ : plusieurs cartes livrables
+    // coexistent à l'écran avec un libellé visible identique (WCAG 2.5.3),
+    // {action} reprend le libellé visible (livrer/pret), {titre} distingue.
+    livrerA11y: "{action} : {titre}",
     // Libellés des objectifs de chapitre (SP2 trame) : chaque type non-"objet"
     // affiche une ligne de progression dédiée dans le carnet.
     objectifs: {

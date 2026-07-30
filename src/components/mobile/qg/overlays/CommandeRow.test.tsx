@@ -158,7 +158,7 @@ describe("CommandeRow", () => {
       missions: [{ courrierId: "m1", statut: "active" }],
     });
     render(<CommandeRow courrier={courrierMission()} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
-    const btn = screen.getByRole("button", { name: "Livrer" }) as HTMLButtonElement;
+    const btn = screen.getByRole("button", { name: /^Livrer/ }) as HTMLButtonElement;
     expect(btn.disabled).toBe(false);
   });
 
@@ -168,7 +168,7 @@ describe("CommandeRow", () => {
       missions: [{ courrierId: "m1", statut: "active" }],
     });
     render(<CommandeRow courrier={courrierMission()} state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}} />);
-    expect(screen.getAllByRole("button", { name: "Livrer" }).length).toBe(1);
+    expect(screen.getAllByRole("button", { name: /^Livrer/ }).length).toBe(1);
   });
 
   it("cérémonie en cours : bouton Prêt ✓ verrouillé, hors du panneau déplié", () => {
@@ -177,7 +177,7 @@ describe("CommandeRow", () => {
       missions: [{ courrierId: "m1", statut: "livree", jourResolution: 1 }],
     });
     render(<CommandeRow courrier={courrierMission()} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} enCeremonie />);
-    const btn = screen.getByRole("button", { name: "Prêt ✓" }) as HTMLButtonElement;
+    const btn = screen.getByRole("button", { name: /^Prêt ✓/ }) as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
     expect(screen.getByTestId("progression-compteur").textContent).toBe("1/1");
   });

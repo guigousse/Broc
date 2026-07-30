@@ -176,7 +176,7 @@ describe("OngletCommandes", () => {
       const { rerender } = render(vue(courant));
 
       act(() => {
-        fireEvent.click(screen.getByRole("button", { name: "Livrer" }));
+        fireEvent.click(screen.getByRole("button", { name: /^Livrer/ }));
       });
       expect(onLivrerMission).toHaveBeenCalledTimes(1);
 
@@ -195,8 +195,8 @@ describe("OngletCommandes", () => {
 
       // La carte reste « accomplie » alors que le state est déjà vidé de la lampe.
       expect(screen.getByTestId("progression-compteur").textContent).toBe("1/1");
-      expect(screen.getByRole("button", { name: "Prêt ✓" })).toBeTruthy();
-      expect((screen.getByRole("button", { name: "Prêt ✓" }) as HTMLButtonElement).disabled).toBe(true);
+      expect(screen.getByRole("button", { name: /^Prêt ✓/ })).toBeTruthy();
+      expect((screen.getByRole("button", { name: /^Prêt ✓/ }) as HTMLButtonElement).disabled).toBe(true);
       expect(screen.queryByRole("button", { name: /^Livrer/ })).toBeNull();
 
       // Le jeton XP s'est posé, pas encore celui de l'argent (départ décalé).
@@ -246,7 +246,7 @@ describe("OngletCommandes", () => {
       const sondes = render(<Sondes state={courant} />);
 
       act(() => {
-        fireEvent.click(screen.getByRole("button", { name: "Livrer" }));
+        fireEvent.click(screen.getByRole("button", { name: /^Livrer/ }));
       });
       expect(onLivrerMission).toHaveBeenCalledTimes(1);
       onglet.rerender(
@@ -287,7 +287,7 @@ describe("OngletCommandes", () => {
       );
 
       act(() => {
-        fireEvent.click(screen.getByRole("button", { name: "Livrer" }));
+        fireEvent.click(screen.getByRole("button", { name: /^Livrer/ }));
       });
       expect(onLivrerMission).toHaveBeenCalledTimes(1);
 
@@ -301,7 +301,7 @@ describe("OngletCommandes", () => {
         vi.advanceTimersByTime(3000);
       });
       expect(screen.getByText("La lampe de mon atelier")).toBeTruthy();
-      expect(screen.getByRole("button", { name: "Livrer" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: /^Livrer/ })).toBeTruthy();
       expect(txt("sonde-budget")).toBe("9999");
     } finally {
       vi.useRealTimers();
@@ -348,15 +348,17 @@ describe("OngletCommandes", () => {
 
       const carteA = document.querySelector<HTMLElement>('[data-commande-id="cmd_a"]')!;
       act(() => {
-        fireEvent.click(within(carteA).getByRole("button", { name: "Livrer" }));
+        fireEvent.click(within(carteA).getByRole("button", { name: /^Livrer/ }));
       });
       rerender(vue(courant));
 
       // Le carnet n'ouvre qu'un détail à la fois : on déplie B pour voir son bouton.
+      // Ancrage en début de nom : le bouton Livrer de B porte désormais un nom
+      // accessible « Livrer : Commande B » qui contiendrait aussi "Commande B".
       act(() => {
-        fireEvent.click(screen.getByRole("button", { name: /Commande B/ }));
+        fireEvent.click(screen.getByRole("button", { name: /^Commande B/ }));
       });
-      const btnB = screen.getByRole("button", { name: "Livrer" }) as HTMLButtonElement;
+      const btnB = screen.getByRole("button", { name: /^Livrer/ }) as HTMLButtonElement;
       expect(btnB.disabled).toBe(true);
       // Le tap est refusé : aucune seconde livraison.
       act(() => {
@@ -368,9 +370,38 @@ describe("OngletCommandes", () => {
       act(() => {
         vi.advanceTimersByTime(DECALAGE_VOL_MS + VOL_MS + SORTIE_APRES_DERNIER_MS + 1000);
       });
-      expect((screen.getByRole("button", { name: "Livrer" }) as HTMLButtonElement).disabled).toBe(false);
+      expect((screen.getByRole("button", { name: /^Livrer/ }) as HTMLButtonElement).disabled).toBe(false);
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("deux commandes livrables : les boutons Livrer ont des noms accessibles distincts", () => {
+    const cA = courrierLampe("cmd_a", "Commande A");
+    const cB = courrierLampe("cmd_b", "Commande B");
+    const lampe = () =>
+      createMockObjet({
+        templateId: "ma.lampe_petrole_ancienne",
+        categorie: "Maison",
+        etat: "Très bon",
+      });
+    const state = createMockGameState({
+      courriers: [cA, cB],
+      missions: [
+        { courrierId: "cmd_a", statut: "active" },
+        { courrierId: "cmd_b", statut: "active" },
+      ],
+      inventaireJoueur: [lampe(), lampe()],
+    });
+    render(<OngletCommandes state={state} onLivrerMission={livrer} />);
+    const boutons = screen.getAllByRole("button", { name: /^Livrer/ });
+    expect(boutons.length).toBe(2);
+    const noms = boutons.map((b) => b.getAttribute("aria-label"));
+    // Deux boutons visuellement identiques (« Livrer ») doivent porter des noms
+    // accessibles distincts : un lecteur d'écran ne doit pas entendre
+    // « Livrer, Livrer » sans savoir laquelle carte il active.
+    expect(new Set(noms).size).toBe(2);
+    expect(noms.some((n) => n?.includes("Commande A"))).toBe(true);
+    expect(noms.some((n) => n?.includes("Commande B"))).toBe(true);
   });
 });

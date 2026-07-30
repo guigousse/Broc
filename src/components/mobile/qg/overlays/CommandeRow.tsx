@@ -250,6 +250,10 @@ export function CommandeRow({
             onClick={onLivrer}
             disabled={!boutonActif}
             style={boutonLivrer(accompli, boutonActif)}
+            aria-label={tr(d.carnet.livrerA11y, {
+              action: accompli ? d.carnet.pret : d.carnet.livrer,
+              titre: titreCourrier(courrier, locale),
+            })}
           >
             {accompli ? d.carnet.pret : d.carnet.livrer}
           </button>
