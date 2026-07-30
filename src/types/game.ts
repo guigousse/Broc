@@ -177,7 +177,10 @@ export interface CourrierPayloadMission {
   objectifs?: ObjectifMission[];
   /** Si défini, mission expirée si `jourActuel > jourLimite`. */
   jourLimite?: number;
-  recompense: { argent: number };
+  /** Récompense de livraison. `xp` absent → constante de catégorie
+   *  (XP_QUETE_*, cf. lib/recompenses). `energie` absent → 0 ; peut faire
+   *  déborder la jauge au-delà d'ENERGIE_MAX (borné par ENERGIE_PLAFOND). */
+  recompense: { argent: number; xp?: number; energie?: number };
   /** Si vrai, la livraison ne consomme PAS les objets ciblés (le joueur les
    *  garde). Utilisé par la finale de l'arc principal (« Les bijoux de la reine »). */
   conserverCibles?: boolean;
