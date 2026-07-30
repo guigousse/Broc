@@ -8,7 +8,7 @@ import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { ENERGIE_MAX, energieCourante } from "@/lib/energie";
 import { emptyBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
-import { useBudgetAffiche, useXpAffiche } from "@/lib/affichageGele";
+import { useBudgetAffiche, useEnergieAffiche, useXpAffiche } from "@/lib/affichageGele";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { EnergieRecharge } from "./EnergieRecharge";
@@ -108,6 +108,9 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   const energie = state
     ? energieCourante(state, tempsConfiance() ?? Date.now(), energieMax)
     : ENERGIE_MAX;
+  // Affichage figé pendant la cérémonie de livraison (jeton ⚡ en vol) ; le
+  // droit de recharger reste calculé sur la vraie énergie, jamais l'affichage.
+  const energieAffichee = useEnergieAffiche(energie);
   const peutRecharger = energie < energieMax;
 
   // La puce XP ne doit pas naviguer pendant une session (chinage/vitrine) : un
@@ -214,9 +217,14 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
                 </span>
               </button>
             )}
-            <Zap size={15} strokeWidth={2.5} aria-hidden />
-            {energie}
-            <span style={{ color: "var(--brass-700)" }}>/{energieMax}</span>
+            <span
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+              data-fly-target="energie-header"
+            >
+              <Zap size={15} strokeWidth={2.5} aria-hidden />
+              {energieAffichee}
+              <span style={{ color: "var(--brass-700)" }}>/{energieMax}</span>
+            </span>
           </strong>
         </div>
         {/* data-fly-target : cible des objets vendus dans le bilan de vente,
