@@ -196,16 +196,24 @@ export function libelleLedger(
       return courrier ? titreCourrier(courrier, locale) : e.designation;
     }
     case "mission_recompense": {
-      const courrier = courriers.find((c) => c.id === p.courrierId);
-      if (courrier) {
-        return tr(d.ledger.missionRecompense, { titre: titreCourrier(courrier, locale) });
-      }
-      // Courrier purgé (lots périodiques) : régénère le titre depuis le gabarit
-      // persisté dans les params ; sinon fallback designation FR historisée.
-      const titreRegen = titreDepuisGabarit(p.gabaritId, p.templateIds, p.etatMin, locale);
-      return titreRegen
-        ? tr(d.ledger.missionRecompense, { titre: titreRegen })
-        : e.designation;
+      const base = (() => {
+        const courrier = courriers.find((c) => c.id === p.courrierId);
+        if (courrier) {
+          return tr(d.ledger.missionRecompense, { titre: titreCourrier(courrier, locale) });
+        }
+        // Courrier purgé (lots périodiques) : régénère le titre depuis le gabarit
+        // persisté dans les params ; sinon fallback designation FR historisée.
+        const titreRegen = titreDepuisGabarit(p.gabaritId, p.templateIds, p.etatMin, locale);
+        return titreRegen
+          ? tr(d.ledger.missionRecompense, { titre: titreRegen })
+          : e.designation;
+      })();
+      // Suffixe « +N XP · +N ⚡ » : gains non monétaires versés à la livraison
+      // (SP4 récompenses), absents des vieilles écritures.
+      const suffixes: string[] = [];
+      if (p.xp) suffixes.push(tr(d.carnet.jetonXp, { n: p.xp }));
+      if (p.energie) suffixes.push(tr(d.carnet.jetonEnergie, { n: p.energie }));
+      return suffixes.length > 0 ? `${base} · ${suffixes.join(" · ")}` : base;
     }
   }
 }
