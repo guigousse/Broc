@@ -29,17 +29,17 @@ describe("config des visuels App Store", () => {
     expect(APPAREILS.ipad.grille).toEqual({ colonnes: 5, lignes: 4 });
   });
 
-  it("décrit cinq visuels, seul le dernier sans route ni ancre", () => {
-    expect(VISUELS).toHaveLength(5);
+  it("décrit six visuels, seul le dernier sans route ni ancre", () => {
+    expect(VISUELS).toHaveLength(6);
     expect(VISUELS.map((v) => v.cle)).toEqual([
-      "chiner", "negocier", "vendre", "collection", "personnages",
+      "chiner", "negocier", "vendre", "collection", "musiques", "personnages",
     ]);
-    for (const v of VISUELS.slice(0, 4)) {
+    for (const v of VISUELS.slice(0, 5)) {
       expect(typeof v.route).toBe("function");
       expect(v.ancre).toMatch(/^img\[src\*=/);
     }
-    expect(VISUELS[4].route).toBeNull();
-    expect(VISUELS[4].ancre).toBeNull();
+    expect(VISUELS[5].route).toBeNull();
+    expect(VISUELS[5].ancre).toBeNull();
   });
 
   it("n'ouvre le tiroir de négociation que sur le visuel 2", () => {

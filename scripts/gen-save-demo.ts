@@ -98,6 +98,15 @@ function objetDe(id: string, etat: EtatObjet, idx: number): Objet {
 // Templates forcés à « vu » : la pastille « Nouveau » du chinage déborde de
 // l'écran quand le nom tient sur deux lignes (cf. visuels App Store).
 const DEJA_VUS = new Set(["leg.lv.gutenberg_feuillet"]);
+// Vinyles forcés dans la collection : le gramophone du bureau ne joue que les
+// disques POSSÉDÉS (donation non nulle). Sans eux la discothèque n'affiche
+// que trois pochettes, ce qui vend mal les 24 morceaux originaux du jeu.
+const DONS_FORCES = new Set([
+  "mus.vinyle_des_loups_des_steppes_bark_to_be_free",
+  "mus.vinyle_free_robot_des_punkbot",
+  "mus.vinyle_collector_de_vagabond_horizon_celeste",
+  "mus.vinyle_de_la_rousse_mystique_ainsi_soit_elle",
+]);
 const ETATS_DEMO: EtatObjet[] = ["Bon", "Très bon", "Pristin état"];
 const collection = initCollection();
 for (const cat of Object.keys(collection) as CategorieObjet[]) {
@@ -105,7 +114,7 @@ for (const cat of Object.keys(collection) as CategorieObjet[]) {
   const nDonnes = Math.round(slots.length * 0.25);
   const nVus = Math.round(slots.length * 0.12); // frange grisée en plus
   collection[cat] = slots.map((s, i): CollectionSlot => {
-    if (i < nDonnes) {
+    if (i < nDonnes || DONS_FORCES.has(s.templateId)) {
       const etat = ETATS_DEMO[i % ETATS_DEMO.length];
       const valeurBase = valeurRef(s.templateId);
       const prime = etat === "Pristin état" ? 1.6 : etat === "Très bon" ? 1.3 : 1;

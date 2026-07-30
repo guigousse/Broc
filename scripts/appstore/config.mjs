@@ -116,7 +116,12 @@ export const VISUELS = [
   {
     n: 3, cle: "vendre", expression: "emu", ouvrirNego: false,
     route: () => `/vitrine/${BROCANTE_DEMO}/journee`,
-    ancre: 'img[src*="/personas/clients/"]',
+    // L'étal ouvert, sans acheteur : la grille des objets en vente se lit
+    // beaucoup mieux qu'une négociation qui la recouvre à moitié. On attend
+    // donc les vignettes d'objets, pas un client — et on déclenche vite,
+    // avant que le premier acheteur n'entre en scène.
+    ancre: 'img[src*="/items/"]',
+    repos: 400,
   },
   {
     n: 4, cle: "collection", expression: "songeur", ouvrirNego: false,
@@ -124,7 +129,15 @@ export const VISUELS = [
     ancre: 'img[src*="/items/thumbs/"]',
   },
   {
-    n: 5, cle: "personnages", expression: "souriant", ouvrirNego: false,
+    n: 5, cle: "musiques", expression: "emu", ouvrirNego: false,
+    // Le gramophone du bureau : 24 morceaux originaux, jouables une fois le
+    // vinyle possédé. Il faut le taper pour ouvrir la discothèque.
+    route: () => "/bureau",
+    ancre: 'img[src*="/qg/"]',
+    ouvrirGramophone: true,
+  },
+  {
+    n: 6, cle: "personnages", expression: "souriant", ouvrirNego: false,
     route: null,
     ancre: null,
   },

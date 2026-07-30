@@ -25,11 +25,17 @@ export const TITRES = {
     es: "Completa tu colección",
     el: "Ολοκληρώστε τη συλλογή σας",
   },
+  musiques: {
+    fr: "24 musiques à découvrir",
+    en: "24 tracks to discover",
+    es: "24 músicas por descubrir",
+    el: "24 κομμάτια για ανακάλυψη",
+  },
   personnages: {
-    fr: "31 personnages uniques à rencontrer",
-    en: "31 unique characters to meet",
-    es: "31 personajes únicos por conocer",
-    el: "31 μοναδικοί χαρακτήρες",
+    fr: "31 personnages à rencontrer",
+    en: "31 characters to meet",
+    es: "31 personajes por conocer",
+    el: "31 χαρακτήρες να γνωρίσετε",
   },
 };
 
@@ -54,6 +60,17 @@ export const LIBELLE_NEGOCIER = {
   en: "Haggle",
   es: "Regatear",
   el: "Παζάρεμα",
+};
+
+/**
+ * Libellé accessible du gramophone du bureau (`d.qg.gramophone`), cliqué pour
+ * ouvrir la discothèque. Même garde i18n que LIBELLE_NEGOCIER.
+ */
+export const LIBELLE_GRAMOPHONE = {
+  fr: "Gramophone — choisir un vinyle",
+  en: "Gramophone — choose a record",
+  es: "Gramófono — elegir un vinilo",
+  el: "Γραμμόφωνο — επίλεξε δίσκο",
 };
 
 /**

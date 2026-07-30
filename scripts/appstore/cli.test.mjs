@@ -6,7 +6,7 @@ describe("ligne de commande des visuels App Store", () => {
     const a = parserArgs([]);
     expect(a.langues).toEqual(["fr", "en", "es", "el"]);
     expect(a.appareils).toEqual(["iphone", "ipad"]);
-    expect(a.visuels).toEqual([1, 2, 3, 4, 5]);
+    expect(a.visuels).toEqual([1, 2, 3, 4, 5, 6]);
     expect(a.sauterCapture).toBe(false);
     expect(a.aide).toBe(false);
     expect(a.graine).toBe(GRAINE_DEFAUT);

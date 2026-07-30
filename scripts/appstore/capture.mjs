@@ -2,7 +2,7 @@
 import path from "node:path";
 import { scriptAmorce, scriptGraine } from "./amorce.mjs";
 
-import { LIBELLE_NEGOCIER, LIBELLE_SUIVANT } from "./textes.mjs";
+import { LIBELLE_GRAMOPHONE, LIBELLE_NEGOCIER, LIBELLE_SUIVANT } from "./textes.mjs";
 
 /** Laisse retomber les animations d'entrée avant de déclencher. */
 const REPOS_MS = 1200;
@@ -107,6 +107,17 @@ export async function capturerEcrans({
           log(`  ⚠ ${visuel.cle} : carte ${rang} demandée, ${atteint} atteinte (fin du paquet)`);
         }
 
+        if (visuel.ouvrirGramophone) {
+          // La discothèque est une feuille modale : on la déclenche en tapant
+          // le gramophone, puis on attend les pochettes des vinyles possédés —
+          // preuve que la feuille est ouverte ET peuplée, pas seulement montée.
+          await page
+            .getByRole("button", { name: new RegExp(LIBELLE_GRAMOPHONE[langue], "i") })
+            .first()
+            .click();
+          await page.waitForSelector('img[src*="/items/"]', { timeout: 20000 });
+        }
+
         if (visuel.ouvrirNego) {
           const bouton = page.getByRole("button", {
             name: new RegExp(LIBELLE_NEGOCIER[langue], "i"),
@@ -128,7 +139,7 @@ export async function capturerEcrans({
         }
 
         await page.evaluate(() => document.fonts.ready);
-        await page.waitForTimeout(REPOS_MS);
+        await page.waitForTimeout(visuel.repos ?? REPOS_MS);
 
         const fichier = path.join(dossier, `${langue}-${appareil.id}-${visuel.cle}.png`);
         await page.screenshot({ path: fichier, type: "png" });

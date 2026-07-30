@@ -22,7 +22,7 @@ const base = (n, appareil = "iphone") => ({
   langue: "fr",
   appareil: APPAREILS[appareil],
   fontFaceCss: "",
-  captureDataUri: n === 5 ? null : FAUX,
+  captureDataUri: n === 6 ? null : FAUX,
   grandPereDataUri: FAUX,
   portraitsDataUri: Array.from({ length: 19 }, () => FAUX),
 });
@@ -90,15 +90,15 @@ describe("gabarit des visuels", () => {
   });
 
   it("insère la capture et le grand-père sur les visuels 1 à 4", () => {
-    for (const n of [1, 2, 3, 4]) {
+    for (const n of [1, 2, 3, 4, 5]) {
       const html = construireHtml(base(n));
       expect(html).toContain('class="chassis"');
       expect(html.match(/data:image\/webp;base64,AAAA/g).length).toBeGreaterThanOrEqual(2);
     }
   });
 
-  it("ne met ni châssis ni capture sur le visuel 5", () => {
-    const html = construireHtml(base(5));
+  it("ne met ni châssis ni capture sur le visuel 6", () => {
+    const html = construireHtml(base(6));
     expect(html).not.toContain('class="chassis"');
     expect(html).toContain('class="grille"');
   });
@@ -109,8 +109,8 @@ describe("gabarit des visuels", () => {
   });
 
   it("remplit 16 cases sur iPhone et 20 sur iPad, la dernière étant « et + »", () => {
-    const tel = construireHtml(base(5, "iphone"));
-    const tab = construireHtml(base(5, "ipad"));
+    const tel = construireHtml(base(6, "iphone"));
+    const tab = construireHtml(base(6, "ipad"));
     expect(tel.match(/class="case/g)).toHaveLength(16);
     expect(tab.match(/class="case/g)).toHaveLength(20);
     for (const html of [tel, tab]) {
@@ -119,9 +119,9 @@ describe("gabarit des visuels", () => {
     }
   });
 
-  it("n'affiche la bulle que sur le visuel 5", () => {
-    expect(construireHtml(base(5))).toContain(BULLE.fr);
-    for (const n of [1, 2, 3, 4]) {
+  it("n'affiche la bulle que sur le visuel 6", () => {
+    expect(construireHtml(base(6))).toContain(BULLE.fr);
+    for (const n of [1, 2, 3, 4, 5]) {
       expect(construireHtml(base(n))).not.toContain(BULLE.fr);
     }
   });
