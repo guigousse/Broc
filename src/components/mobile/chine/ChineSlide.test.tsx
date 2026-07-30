@@ -30,13 +30,14 @@ function makeItem(): ObjetEnVente {
   };
 }
 
-function makeSlide(dejaPossede: boolean): ChineSlide {
+function makeSlide(dejaPossede: boolean, estNouveau = false): ChineSlide {
   return {
     kind: "item",
     item: makeItem(),
     estRareOuPlus: false,
     coteConnue: false,
     dejaPossede,
+    estNouveau,
   };
 }
 
@@ -53,5 +54,30 @@ describe("ChineSlideVue — badge collection", () => {
     expect(
       screen.queryByLabelText("Déjà possédé dans la collection"),
     ).toBeNull();
+  });
+});
+
+describe("ChineSlideVue — découverte", () => {
+  it("affiche la pill « Nouveau » sur un template jamais croisé", () => {
+    render(<ChineSlideVue slide={makeSlide(false, true)} />);
+    expect(screen.getByText("Nouveau")).toBeTruthy();
+  });
+
+  it("pas de pill sur un template déjà croisé", () => {
+    render(<ChineSlideVue slide={makeSlide(false, false)} />);
+    expect(screen.queryByText("Nouveau")).toBeNull();
+  });
+
+  it("la pill porte la classe de pulsation", () => {
+    render(<ChineSlideVue slide={makeSlide(false, true)} />);
+    expect(
+      screen.getByText("Nouveau").classList.contains("broc-pill-nouveau"),
+    ).toBe(true);
+  });
+
+  it("la pill expose la couleur de halo de la rareté", () => {
+    render(<ChineSlideVue slide={makeSlide(false, true)} />);
+    const pill = screen.getByText("Nouveau") as HTMLElement;
+    expect(pill.style.getPropertyValue("--pill-halo")).not.toBe("");
   });
 });

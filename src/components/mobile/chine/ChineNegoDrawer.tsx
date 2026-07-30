@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { NegoBar } from "@/components/mobile/NegoBar";
 import { HumeurGauge } from "@/components/mobile/HumeurGauge";
+import { namePlateStyle } from "@/components/ui/namePlate";
 import { proposerOffre, ouvrirNegociation } from "@/lib/negociation";
 import { temperamentDe } from "@/data/temperaments";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
@@ -283,23 +284,7 @@ const bubbleTailInner: CSSProperties = {
 };
 
 /** Bandeau nom pleine largeur, coins hauts arrondis (ancienne fiche). */
-const namePlate: CSSProperties = {
-  padding: "9px 16px",
-  background:
-    "linear-gradient(180deg, var(--brass-300) 0%, var(--brass-500) 50%, var(--brass-300) 100%)",
-  borderBottom: "2px solid var(--brass-700)",
-  boxShadow:
-    "inset 0 0 0 2px rgba(255,243,213,0.5), inset 0 -3px 0 0 rgba(0,0,0,0.06)",
-  borderRadius: "12px 12px 0 0",
-  textAlign: "center",
-  fontFamily: "var(--font-display)",
-  fontWeight: 700,
-  fontSize: 18,
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
-  color: "var(--forest-800)",
-  textShadow: "0 1px 0 rgba(255,243,213,0.6)",
-};
+const namePlate = namePlateStyle("12px 12px 0 0");
 
 const statutTexte = (color: string): CSSProperties => ({
   marginBottom: 10,

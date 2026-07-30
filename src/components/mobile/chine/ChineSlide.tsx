@@ -12,7 +12,7 @@ import { ItemSticker } from "@/components/ui/ItemSticker";
 import { StarRow } from "@/components/ui/StarRow";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { etoileCount } from "@/lib/etat";
-import { getRarityColors } from "@/lib/rarityColors";
+import { getRarityColors, type RarityColors } from "@/lib/rarityColors";
 import { BOITE_MYSTERE_IMAGE } from "@/lib/boiteMystere";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
@@ -91,6 +91,12 @@ export type ChineSlide =
       coteConnue: boolean;
       /** Le template a déjà été possédé au moins une fois : badge collection ✓. */
       dejaPossede: boolean;
+      /**
+       * Le template n'avait jamais été croisé avant cette carte : rayons de
+       * découverte + pill « Nouveau ». Calculé par la page de chinage AVANT
+       * que la session ne soit marquée vue en bloc.
+       */
+      estNouveau: boolean;
     }
   | { kind: "mystere" };
 
@@ -135,7 +141,24 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <ScaleToFit>
         <div style={stickerBox}>
-          <div style={titre}>{nomObjet(objet, locale)}</div>
+          {/* Le bloc titre est en `position: relative` pour ancrer la pill :
+              son centre se pose exactement sur le coin inférieur droit du
+              texte (translate 50%/50% depuis right/bottom 0). Le bloc épouse
+              le texte — sauf nom sur deux lignes, où la dernière ligne étant
+              centrée, la pill se cale sur le coin du bloc. */}
+          <div style={titre}>
+            {nomObjet(objet, locale)}
+            {slide.estNouveau && (
+              <span style={pillAncrage}>
+                <span
+                  className="broc-pill-nouveau"
+                  style={pillNouveau(rarity)}
+                >
+                  {d.chine.nouveauPill}
+                </span>
+              </span>
+            )}
+          </div>
 
           <div style={infoRow}>
             <div style={infoCol}>
@@ -260,6 +283,7 @@ const tampon = (encre: string): CSSProperties => ({
 });
 
 const titre: CSSProperties = {
+  position: "relative",
   fontFamily: "var(--font-display)",
   fontWeight: 700,
   fontSize: 17,
@@ -270,6 +294,42 @@ const titre: CSSProperties = {
   textShadow: "0 1px 4px rgba(0,0,0,0.65)",
   lineHeight: 1.15,
 };
+
+/**
+ * Ancrage de la pill : son CENTRE tombe sur le coin inférieur droit du texte.
+ * Le positionnement est isolé ici pour que la pulsation, portée par la pill
+ * elle-même, s'exerce autour de son propre centre sans la faire dériver.
+ */
+const pillAncrage: CSSProperties = {
+  position: "absolute",
+  right: 0,
+  bottom: 0,
+  transform: "translate(50%, 50%)",
+  display: "inline-flex",
+};
+
+/**
+ * Pill « Nouveau » aux couleurs de la rareté, en médaillon sur le nom. Elle
+ * bat en continu (cf. .broc-pill-nouveau) : c'est elle, désormais, qui porte
+ * seule la fête de la découverte.
+ */
+const pillNouveau = (rarity: RarityColors): CSSProperties => ({
+  // Couleur du halo lâché à chaque battement, lue par la keyframe.
+  ["--pill-halo" as string]: rarity.accent,
+  padding: "2px 7px",
+  borderRadius: 999,
+  background: rarity.outer,
+  border: `1px solid ${rarity.accent}`,
+  color: rarity.thumbIcon,
+  fontFamily: "var(--font-display)",
+  fontWeight: 800,
+  fontSize: 9,
+  letterSpacing: "0.12em",
+  lineHeight: 1.3,
+  whiteSpace: "nowrap",
+  textShadow: "none",
+  boxShadow: "0 1px 5px rgba(0,0,0,0.45)",
+});
 
 const infoRow: CSSProperties = {
   display: "flex",

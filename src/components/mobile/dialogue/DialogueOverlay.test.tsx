@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DialogueOverlay } from "./DialogueOverlay";
@@ -9,6 +9,8 @@ import { LangueProvider } from "@/lib/i18n/LangueContext";
 const seq = SEQUENCES_TUTORIEL.tuto_achat_fait; // 2 lignes
 
 describe("DialogueOverlay", () => {
+  afterEach(cleanup);
+
   it("ne rend rien quand sequence est null", () => {
     const { container } = render(
       <DialogueOverlay sequence={null} nom="Grand-père" portraits={GRAND_PERE_PORTRAITS} onFini={vi.fn()} />,
@@ -30,6 +32,30 @@ describe("DialogueOverlay", () => {
     expect(onFini).toHaveBeenCalledTimes(1);
   });
 
+  it("le portrait suit l'humeur de la ligne courante", async () => {
+    const user = userEvent.setup();
+    render(
+      <DialogueOverlay sequence={seq} nom="Grand-père" portraits={GRAND_PERE_PORTRAITS} onFini={vi.fn()} />,
+    );
+    const srcPortrait = () =>
+      document.body.querySelector("img")?.getAttribute("src");
+
+    expect(seq.lignes[0].humeur).toBe("rieur");
+    expect(srcPortrait()).toBe(GRAND_PERE_PORTRAITS.rieur);
+
+    await user.click(screen.getByRole("button", { name: /continuer/i }));
+
+    expect(seq.lignes[1].humeur).toBe("souriant");
+    expect(srcPortrait()).toBe(GRAND_PERE_PORTRAITS.souriant);
+  });
+
+  it("affiche le nom du PNJ dans la carte", () => {
+    render(
+      <DialogueOverlay sequence={seq} nom="Grand-père" portraits={GRAND_PERE_PORTRAITS} onFini={vi.fn()} />,
+    );
+    expect(screen.getByText("Grand-père")).toBeTruthy();
+  });
+
   it("le bouton d'avancement porte l'accname localisé", () => {
     localStorage.setItem("projet-broc:langue:v1", JSON.stringify({ locale: "en" }));
     render(
@@ -39,9 +65,9 @@ describe("DialogueOverlay", () => {
     );
     // Accname = tout le texte du bouton (portrait alt vide + carte + le
     // libellé masqué) : on vérifie juste que "Continue" (EN, mot entier)
-    // y apparaît, pas "Continuer" (FR, laissé par un test précédent).
+    // y apparaît. Le \b reste volontairement défensif, pour ne pas matcher
+    // un mot plus long qui contiendrait "continue" comme sous-chaîne.
     expect(screen.getByRole("button", { name: /\bcontinue\b/i })).toBeTruthy();
     localStorage.clear();
-    cleanup();
   });
 });

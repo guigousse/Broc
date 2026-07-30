@@ -16,6 +16,15 @@ import { DICTIONNAIRES } from "@/lib/i18n/ui";
 
 export { notificationsDisponibles };
 
+/**
+ * Numéro de la dernière demande émise (planification OU annulation). Chaque
+ * demande capture le sien : si le compteur a bougé pendant ses `await`, c'est
+ * qu'une demande plus récente l'a supplantée et elle ne doit plus rien poser.
+ * Sans ce garde-fou, une échéance calculée sur un état déjà périmé pouvait
+ * gagner la course et faire sonner « énergie pleine » avant l'heure.
+ */
+let sequence = 0;
+
 /** Demande/contrôle la permission (idempotent). Alias métier du cœur. */
 export async function assurerPermission(): Promise<boolean> {
   return demanderPermission();
@@ -30,6 +39,7 @@ export async function planifierPleinEnergie(
   atMs: number,
   locale: Locale,
 ): Promise<void> {
+  const mien = ++sequence;
   const d = DICTIONNAIRES[locale].notifs.energie;
   await programmer({
     id: NOTIF_IDS.ENERGIE_PLEINE,
@@ -37,10 +47,14 @@ export async function planifierPleinEnergie(
     body: d.corps,
     sound: "regen.wav",
     atMs,
+    estObsolete: () => sequence !== mien,
   });
 }
 
 /** Annule la notif « énergie pleine » programmée (si présente). */
 export async function annulerPleinEnergie(): Promise<void> {
+  // Périme toute planification encore en vol : l'énergie est pleine (ou la
+  // partie n'est plus la même), aucune échéance calculée avant ne vaut plus.
+  sequence++;
   await annuler([NOTIF_IDS.ENERGIE_PLEINE]);
 }

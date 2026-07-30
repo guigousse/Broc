@@ -275,6 +275,62 @@ class AudioManager {
     osc.stop(now + 0.16);
   }
 
+  /**
+   * Découverte (objet jamais croisé) : cloche douce qui s'ouvre en quinte,
+   * puis trois éclats cristallins qui montent — pensé pour respirer sur toute
+   * la durée des rayons (~2,6 s) sans écraser l'arpège de rareté, avec lequel
+   * il se superpose sur un rare inédit : registre plus grave au départ,
+   * attaque plus lente, et les éclats tombent APRÈS la fin de l'arpège.
+   */
+  playDecouverte(): void {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const ctx = this.ctx;
+    const master = this.master;
+    const now = ctx.currentTime;
+
+    // Corps de cloche : fondamentale G4 + quinte D5 qui s'ouvre dessus.
+    const cloche = [
+      { freq: 392.0, retard: 0, gain: 0.2, dur: 1.5 },
+      { freq: 587.33, retard: 0.12, gain: 0.16, dur: 1.4 },
+    ];
+    for (const { freq, retard, gain: g, dur } of cloche) {
+      const t0 = now + retard;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      // Attaque volontairement molle (60 ms) : une cloche qui s'ouvre, pas un clic.
+      gain.gain.linearRampToValueAtTime(g, t0 + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.05);
+    }
+
+    // Éclats : D6 F#6 A6, égrenés pendant que les rayons enflent.
+    const eclats = [1174.66, 1479.98, 1760.0];
+    const stepMs = 190;
+    eclats.forEach((freq, i) => {
+      const t0 = now + 0.42 + (i * stepMs) / 1000;
+      const dur = 0.5;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.11, t0 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.03);
+    });
+  }
+
   /** Rareté (rare/lég./unique) : petit arpège cristallin ascendant, superposable. */
   playRarete(): void {
     if (!this.prefs.effets) return;

@@ -12,7 +12,7 @@ import {
 import { ItemSwipeDeck } from "@/components/mobile/chine/ItemSwipeDeck";
 import type { ChineSlide } from "@/components/mobile/chine/ChineSlide";
 import { getTemplate } from "@/data/objetTemplates";
-import { templateDejaPossede } from "@/lib/collection";
+import { templateDejaPossede, templateVu } from "@/lib/collection";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/components/ui/Toast";
@@ -115,8 +115,26 @@ export default function SessionChinePage() {
   const [flairIds, setFlairIds] = useState<ReadonlySet<string>>(new Set());
   /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
   const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
+  /** Ids des objets à fêter (rayons + pill « Nouveau »). Voir `noterDecouverte`. */
+  const decouvertesRef = useRef<Set<string>>(new Set());
+  /** Templates déjà fêtés : un doublon dans la session ne se fête qu'une fois. */
+  const templatesFetesRef = useRef<Set<string>>(new Set());
 
   const etape = state?.tutorielEtape;
+
+  /**
+   * Retient qu'un objet est une découverte (template jamais croisé), à
+   * appeler IMPÉRATIVEMENT avant `marquerVuTemplate` : celui-ci marque toute
+   * la session vue d'un coup, ce qui effacerait la nouveauté avant même le
+   * premier rendu. Idempotent, et dédoublonné par template.
+   */
+  const noterDecouverte = (it: ObjetEnVente) => {
+    if (!state) return;
+    if (templatesFetesRef.current.has(it.objet.templateId)) return;
+    if (templateVu(state.collection, it.objet.templateId)) return;
+    templatesFetesRef.current.add(it.objet.templateId);
+    decouvertesRef.current.add(it.id);
+  };
 
   /** Compte l'XP pour le décompte du bilan, sans la créditer (cas des +10 de
    *  découverte, déjà crédités atomiquement par le GameContext). */
@@ -174,6 +192,11 @@ export default function SessionChinePage() {
         uniquesExclusDuChinage(state),
       );
       setItems(session);
+      // Ordre CRITIQUE : la nouveauté se lit sur la collection ENCORE
+      // intacte ; la marque « vu » de toute la session vient juste après.
+      for (const it of session) {
+        noterDecouverte(it);
+      }
       for (const it of session) {
         marquerVuTemplate(it.objet.templateId);
       }
@@ -221,6 +244,7 @@ export default function SessionChinePage() {
         estRareOuPlus: estRareOuPlus(it),
         coteConnue: flairIds.has(it.id) || (state ? aConnaisseurChinage(state, it.objet.categorie) : false),
         dejaPossede: state ? templateDejaPossede(state.collection, it.objet.templateId) : false,
+        estNouveau: decouvertesRef.current.has(it.id),
       });
     }
     return liste;
@@ -272,6 +296,9 @@ export default function SessionChinePage() {
       state.celebriteActuelle,
       uniquesExclusDuChinage(state),
     );
+    // Le tirage de remplacement peut sortir un template inédit : il mérite
+    // ses rayons au même titre qu'un objet de la session initiale.
+    noterDecouverte(remplacement);
     setItems((prev) => (prev ? prev.map((x) => (x.id === it.id ? remplacement : x)) : prev));
   };
 

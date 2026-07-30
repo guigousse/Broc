@@ -252,3 +252,18 @@ export function templateDejaPossede(
     slots.some((s) => s.templateId === templateId && s.dejaPossede),
   );
 }
+
+/**
+ * Vrai si le template a déjà été croisé (vu en chinage / en vente / possédé).
+ * Pilote la découverte du chinage : les rayons + la pill « Nouveau » ne se
+ * jouent que sur un template ENCORE inconnu — d'où l'appel obligatoirement
+ * fait AVANT `marquerVuTemplate`, qui marque toute la session d'un coup.
+ */
+export function templateVu(
+  collection: Record<CategorieObjet, CollectionSlot[]>,
+  templateId: string,
+): boolean {
+  return Object.values(collection).some((slots) =>
+    slots.some((s) => s.templateId === templateId && s.vu),
+  );
+}

@@ -21,6 +21,13 @@ export interface NotifSpec {
    * Omis = silencieux sur iOS.
    */
   sound?: string;
+  /**
+   * Verrou d'ordre, relu JUSTE avant l'envoi. `programmer()` traverse plusieurs
+   * `await` (imports dynamiques, IPC d'annulation) : sans ce verrou, une
+   * exécution partie d'un état PÉRIMÉ peut commiter son échéance après une
+   * exécution plus récente et faire partir la notif au mauvais moment.
+   */
+  estObsolete?: () => boolean;
 }
 
 /** Vrai uniquement sous runtime Tauri (internals injectés par Tauri). */
@@ -67,6 +74,10 @@ export async function programmer(spec: NotifSpec): Promise<void> {
       "@tauri-apps/plugin-notification"
     );
     await cancel([spec.id]).catch(() => {});
+    // Dernier point de contrôle : si une échéance plus récente est passée
+    // pendant les await ci-dessus, on s'arrête ici (elle a déjà posé la sienne,
+    // ou va le faire — l'ancienne ne doit surtout pas la recouvrir).
+    if (spec.estObsolete?.()) return;
     sendNotification({
       id: spec.id,
       title: spec.title,

@@ -12,6 +12,7 @@ import {
   progressionGlobale,
   retirerDonation,
   templateDejaPossede,
+  templateVu,
   valeurParCategorie,
   valeurTotale,
 } from "./collection";
@@ -309,5 +310,27 @@ describe("templateDejaPossede", () => {
 
   it("faux pour un templateId inconnu", () => {
     expect(templateDejaPossede(initCollection(), "template-inexistant")).toBe(false);
+  });
+});
+
+describe("templateVu", () => {
+  it("faux sur une collection initiale, vrai une fois le slot marqué vu", () => {
+    const collection = initCollection();
+    const premierSlot = Object.values(collection).flat()[0];
+    expect(templateVu(collection, premierSlot.templateId)).toBe(false);
+
+    const marquee = marquerVu(collection, premierSlot.templateId);
+    expect(templateVu(marquee, premierSlot.templateId)).toBe(true);
+  });
+
+  it("vrai dès que le template est possédé (marquerDejaPossede marque aussi vu)", () => {
+    const collection = initCollection();
+    const premierSlot = Object.values(collection).flat()[0];
+    const marquee = marquerDejaPossede(collection, premierSlot.templateId);
+    expect(templateVu(marquee, premierSlot.templateId)).toBe(true);
+  });
+
+  it("faux pour un templateId inconnu", () => {
+    expect(templateVu(initCollection(), "template-inexistant")).toBe(false);
   });
 });

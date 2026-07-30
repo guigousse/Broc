@@ -1599,3 +1599,34 @@ nav[aria-label="Navigation principale"] :focus-visible,
     animation: none;
   }
 }
+
+/* ============================================================
+   Chinage — pill « Nouveau » (objet jamais croisé)
+   La pill respire et lâche un halo qui s'écarte puis s'éteint. Le halo est
+   tiré de --pill-halo, posée en style inline à la couleur de la rareté.
+   ⚠ `scale` est la propriété INDIVIDUELLE, et non un `transform: scale()` :
+   le `transform` de la pill sert déjà à la caler sur le coin du texte, et
+   une animation dessus déplacerait la pill à chaque battement.
+   ============================================================ */
+@keyframes broc-pill-nouveau {
+  0% {
+    scale: 1;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45), 0 0 0 0 var(--pill-halo);
+  }
+  55% {
+    scale: 1.12;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45), 0 0 0 7px transparent;
+  }
+  100% {
+    scale: 1;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45), 0 0 0 0 transparent;
+  }
+}
+.broc-pill-nouveau {
+  animation: broc-pill-nouveau 2s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .broc-pill-nouveau {
+    animation: none;
+  }
+}

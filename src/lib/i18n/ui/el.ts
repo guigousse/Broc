@@ -295,6 +295,7 @@ export const el: DictionnaireUI = {
     atoutVerrouilleAria: "{nom} — κλειδωμένο, ξεκλειδώνει στο επίπεδο {niveau}",
     atoutVerrouilleToast: "{nom} — ξεκλειδώνει στο επίπεδο {niveau}",
     dejaPossedeAria: "Ήδη στη συλλογή",
+    nouveauPill: "Νέο",
   },
   vente: {
     celebrite: "Διασημότητα",

@@ -414,12 +414,24 @@ describe("audioManager — effets et préférences", () => {
     expect(ctx.oscillators).toHaveLength(2);
   });
 
+  it("playDecouverte joue la cloche (2 notes) et ses 3 éclats", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playDecouverte();
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.oscillators).toHaveLength(5);
+    for (const osc of ctx.oscillators) {
+      expect(osc.start).toHaveBeenCalled();
+      expect(osc.stop).toHaveBeenCalled();
+    }
+  });
+
   it("les sons de chinage sont muets quand la préférence effets est désactivée", async () => {
     const { audioManager } = await freshManager();
     audioManager.setPref("effets", false);
     audioManager.playApparition();
     audioManager.playRarete();
     audioManager.playMystere();
+    audioManager.playDecouverte();
     expect(FakeAudioContext.instances).toHaveLength(0);
   });
 

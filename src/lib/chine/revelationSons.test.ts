@@ -19,4 +19,20 @@ describe("sonsRevelation", () => {
       "mystere",
     ]);
   });
+  it("commun jamais croisé → apparition + découverte", () => {
+    expect(
+      sonsRevelation({ kind: "item", estRareOuPlus: false, estNouveau: true }),
+    ).toEqual(["apparition", "decouverte"]);
+  });
+  it("rare jamais croisé → les deux sons se cumulent", () => {
+    expect(
+      sonsRevelation({ kind: "item", estRareOuPlus: true, estNouveau: true }),
+    ).toEqual(["apparition", "rarete", "decouverte"]);
+  });
+  it("vendeur mystère ne joue jamais la découverte", () => {
+    expect(sonsRevelation({ kind: "mystere", estNouveau: true })).toEqual([
+      "apparition",
+      "mystere",
+    ]);
+  });
 });

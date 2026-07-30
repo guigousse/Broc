@@ -55,8 +55,8 @@ export function ItemSwipeDeck({
   const [ghost, setGhost] = useState<{ item: ObjetEnVente; key: number } | null>(
     null,
   );
-  const seenRef = useRef<Set<number>>(new Set());
-  const lastSonIndexRef = useRef<number>(-1);
+  const seenRef = useRef<Set<string>>(new Set());
+  const lastSonCleRef = useRef<string | null>(null);
   const startXRef = useRef<number | null>(null);
   const prevItemRef = useRef<ObjetEnVente | null>(null);
   const ghostKeyRef = useRef(0);
@@ -67,20 +67,26 @@ export function ItemSwipeDeck({
     currentSlide?.kind === "item" ? currentSlide.item : null;
 
   // Sons de swipe : l'apparition (« whoup ») rejoue à CHAQUE changement de
-  // carte ; la rareté et le mystère ne se déclenchent qu'à la PREMIÈRE
-  // apparition d'un index. Le garde sur l'index évite que les updates de négo
-  // (qui changent la ref `slides`) rejouent le son sans avoir bougé.
+  // carte ; rareté, mystère et découverte ne se déclenchent qu'à la PREMIÈRE
+  // apparition d'une carte. Les gardes portent sur l'IDENTITÉ de la carte et
+  // non sur son index : les updates de négo (qui changent la ref `slides`)
+  // ne rejouent donc rien, tandis qu'un remplacement par la Fouille — autre
+  // objet au même index — se révèle bien comme la carte neuve qu'il est.
   useEffect(() => {
     if (slides.length === 0) return;
     const i = Math.min(index, slides.length - 1);
-    if (i === lastSonIndexRef.current) return;
-    lastSonIndexRef.current = i;
-    const premiereFois = !seenRef.current.has(i);
-    seenRef.current.add(i);
-    for (const son of sonsRevelation(slides[i])) {
+    const slide = slides[i];
+    const cle = slide.kind === "mystere" ? "mystere" : slide.item.id;
+    if (cle === lastSonCleRef.current) return;
+    lastSonCleRef.current = cle;
+    const premiereFois = !seenRef.current.has(cle);
+    seenRef.current.add(cle);
+    for (const son of sonsRevelation(slide)) {
       if (son === "apparition") audioManager.playApparition();
       else if (premiereFois && son === "rarete") audioManager.playRarete();
       else if (premiereFois && son === "mystere") audioManager.playMystere();
+      else if (premiereFois && son === "decouverte")
+        audioManager.playDecouverte();
     }
   }, [index, slides]);
 
@@ -173,8 +179,14 @@ export function ItemSwipeDeck({
             willChange: "transform",
           }}
         >
-          {slides.map((s, i) => (
-            <div key={i} style={{ flex: "0 0 100%", minWidth: 0, height: "100%" }}>
+          {/* Clé par identité d'objet, et non par index : la Fouille remplace
+              un objet en place, et le remontage qui s'ensuit rend bien la
+              carte de remplacement pour ce qu'elle est — une AUTRE carte. */}
+          {slides.map((s) => (
+            <div
+              key={s.kind === "mystere" ? "mystere" : s.item.id}
+              style={{ flex: "0 0 100%", minWidth: 0, height: "100%" }}
+            >
               <ChineSlideVue slide={s} />
             </div>
           ))}

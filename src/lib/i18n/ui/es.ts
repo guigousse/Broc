@@ -290,6 +290,7 @@ export const es: DictionnaireUI = {
     atoutVerrouilleAria: "{nom} — bloqueado, se desbloquea en el nivel {niveau}",
     atoutVerrouilleToast: "{nom} — se desbloquea en el nivel {niveau}",
     dejaPossedeAria: "Ya poseído en la colección",
+    nouveauPill: "Nuevo",
   },
   vente: {
     celebrite: "Celebridad",
