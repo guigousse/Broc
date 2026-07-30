@@ -8,8 +8,10 @@ import {
   libelleCategorie,
   libelleEtat,
   libelleJourSemaine,
+  libelleLedger,
   libelleRarete,
 } from "@/lib/i18n/libelles";
+import type { LedgerEntry } from "@/types/game";
 
 const ACTIVE_IDS: ActiveId[] = [
   "flair",
@@ -93,5 +95,28 @@ describe("libelleJourSemaine", () => {
     expect(libelleJourSemaine(0, DICTIONNAIRES.fr)).toBe("Lun");
     expect(libelleJourSemaine(2, DICTIONNAIRES.es)).toBe("Mié");
     expect(libelleJourSemaine(6, DICTIONNAIRES.en)).toBe("Sun");
+  });
+});
+
+const d = DICTIONNAIRES.fr;
+
+function entree(params?: LedgerEntry["params"]): LedgerEntry {
+  return {
+    id: "e1", jour: 3, timestamp: 0, kind: "mission_recompense",
+    designation: "Mission · Le coffre rétro", recette: 90, depense: 0,
+    soldeApres: 100, params,
+  };
+}
+
+describe("libelleLedger — mission_recompense", () => {
+  it("suffixe +XP/+⚡ quand les params portent les gains", () => {
+    const l = libelleLedger(entree({ courrierId: "x", xp: 100, energie: 2 }), d, "fr", []);
+    expect(l).toContain("+100 XP");
+    expect(l).toContain("+2 ⚡");
+  });
+
+  it("écriture historique sans gains : libellé inchangé, sans suffixe", () => {
+    const l = libelleLedger(entree({ courrierId: "x" }), d, "fr", []);
+    expect(l).not.toContain("XP");
   });
 });

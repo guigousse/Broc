@@ -16,7 +16,8 @@ export interface ChapitrePrincipal {
     corps: string[];
     cibles: MissionCible[];
     objectifs: ObjectifMission[];
-    recompense: { argent: number };
+    /** `xp`/`energie` absents ⇒ défauts de catégorie / 0 (cf. lib/recompenses). */
+    recompense: { argent: number; xp?: number; energie?: number };
     conserverCibles?: boolean;
   };
 }

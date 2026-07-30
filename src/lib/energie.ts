@@ -2,6 +2,10 @@ import type { GameState } from "@/types/game";
 
 /** Énergie maximale — FIXE (décision 2026-07-10 : plus de bonus de niveau). */
 export const ENERGIE_MAX = 5;
+/** Plafond ABSOLU de la jauge : les récompenses de commandes peuvent faire
+ *  déborder au-delà d'ENERGIE_MAX (ex. 7/5), jamais au-delà de ce plafond.
+ *  La recharge par le temps et la pub restent bornées à ENERGIE_MAX. */
+export const ENERGIE_PLAFOND = 10;
 export const RECHARGE_INTERVAL_MS = 30 * 60 * 1000; // 30 min
 export const ENERGIE_PAR_PUB = 1;
 
@@ -27,9 +31,11 @@ export function settleEnergie(
   if (now < energieDerniereMaj) {
     return { energie, energieDerniereMaj: now };
   }
-  // Déjà plein : pas de banque de temps, l'ancre suit `now`.
+  // Déjà plein (ou en débordement de récompense) : pas de banque de temps ni
+  // de recharge, l'ancre suit `now`. On PRÉSERVE la valeur : la rabattre à
+  // `max` effacerait un débordement gagné en livrant une commande.
   if (energie >= energieMax) {
-    return { energie: energieMax, energieDerniereMaj: now };
+    return { energie, energieDerniereMaj: now };
   }
   const gagne = Math.floor((now - energieDerniereMaj) / RECHARGE_INTERVAL_MS);
   if (gagne <= 0) {

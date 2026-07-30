@@ -177,7 +177,10 @@ export interface CourrierPayloadMission {
   objectifs?: ObjectifMission[];
   /** Si défini, mission expirée si `jourActuel > jourLimite`. */
   jourLimite?: number;
-  recompense: { argent: number };
+  /** Récompense de livraison. `xp` absent → constante de catégorie
+   *  (XP_QUETE_*, cf. lib/recompenses). `energie` absent → 0 ; peut faire
+   *  déborder la jauge au-delà d'ENERGIE_MAX (borné par ENERGIE_PLAFOND). */
+  recompense: { argent: number; xp?: number; energie?: number };
   /** Si vrai, la livraison ne consomme PAS les objets ciblés (le joueur les
    *  garde). Utilisé par la finale de l'arc principal (« Les bijoux de la reine »). */
   conserverCibles?: boolean;
@@ -261,6 +264,10 @@ export interface LedgerParams {
   gabaritId?: string;
   etatMin?: EtatObjet;
   templateIds?: string[];
+  /** mission_recompense : gains non monétaires versés à la livraison, pour le
+   *  rendu du grand livre (suffixe « +25 XP · +2 ⚡ »). ADDITIF. */
+  xp?: number;
+  energie?: number;
 }
 
 export interface LedgerEntry {
@@ -399,7 +406,10 @@ export interface GameState {
     quotidien: LotPeriodique;
     hebdo: LotPeriodique;
   };
-  /** Énergie courante (0..ENERGIE_MAX). Démarre pleine. */
+  /** Énergie courante (0..ENERGIE_MAX en temps normal, mais peut déborder
+   *  jusqu'à ENERGIE_PLAFOND (10) via une récompense de commande avec
+   *  `energie` explicite — cf. lib/recompenses.appliquerRecompense).
+   *  Démarre pleine. */
   energie: number;
   /** Ancre du dernier calcul d'énergie : timestamp de TEMPS DE CONFIANCE (epoch ms),
    *  jamais l'horloge brute du device (cf. lib/temps). */

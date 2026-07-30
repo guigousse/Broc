@@ -1,12 +1,7 @@
 import { creerCourrierMission, injecterLettreInvitationSiDue } from "@/lib/courrier";
-import { appendLedger } from "@/lib/grandLivre";
-import {
-  appliquerGainXPBrocanteur,
-  pointsOctroyables,
-  POINTS_BONUS_CHAPITRE,
-  XP_QUETE_PRINCIPALE,
-} from "@/lib/xp";
+import { pointsOctroyables, POINTS_BONUS_CHAPITRE } from "@/lib/xp";
 import { pointsDepensesCompetences } from "@/data/competences";
+import { appliquerRecompense, recompenseEffective } from "@/lib/recompenses";
 import { calculerBrocantesDebloqueesParTier, evaluerCondition } from "@/lib/deblocage";
 import { QUETES_PRINCIPALES, chapitreParId, type ChapitrePrincipal } from "@/data/quetesPrincipales";
 import type { Courrier, GameState, MissionResolution } from "@/types/game";
@@ -72,9 +67,12 @@ export function courrierDeChapitre(ch: ChapitrePrincipal, jour: number): Courrie
  * cumulatifs, ex. ventes réalisées APRÈS acceptation).
  *
  * Un chapitre narratif (`payload.objectifs` vide, ex. l'invitation ou la
- * remise des clés) est livré immédiatement : ledger `mission_recompense`,
- * XP `XP_QUETE_PRINCIPALE` et bonus `POINTS_BONUS_CHAPITRE`. Si `ch.invitationTier`
- * est défini (ex. ch10), la lettre d'invitation correspondante est injectée
+ * remise des clés) est livré immédiatement : versement délégué à
+ * `recompenseEffective`/`appliquerRecompense` (ledger `mission_recompense`,
+ * XP — `XP_QUETE_PRINCIPALE` par défaut, ou `payload.recompense.xp` explicite
+ * — et énergie éventuelle), plus le bonus `POINTS_BONUS_CHAPITRE` propre à la
+ * trame. Si `ch.invitationTier` est défini (ex. ch10), la lettre d'invitation
+ * correspondante est injectée
  * dans la foulée (cf. `injecterLettreInvitationSiDue`). Pour les chapitres à
  * objectifs qui portent aussi une invitation (ex. ch4, ch8), l'injection a
  * lieu à la livraison réelle de la mission, dans `GameContext.livrerMission`.
@@ -105,21 +103,17 @@ export function accepterChapitre(
     missions: [...state.missions, mission],
   };
 
-  if (narratif) {
-    next = appendLedger(next, {
-      jour: next.jourActuel,
-      kind: "mission_recompense",
-      designation: `Mission · ${ch.payload.titre}`,
-      recette: ch.payload.recompense.argent,
-      depense: 0,
-      courrierId: ch.id,
-      params: { courrierId: ch.id, templateIds: [] },
-    });
-    const avecXP = appliquerGainXPBrocanteur(
-      next.brocanteur,
-      XP_QUETE_PRINCIPALE,
-      pointsDepensesCompetences(next.competencesDebloquees),
+  if (narratif && courrier.payload.type === "mission") {
+    // Délègue à la source unique de vérité du versement (cf. lib/recompenses)
+    // au lieu de dupliquer XP en dur / oublier l'énergie explicite.
+    const r = recompenseEffective(courrier.payload);
+    next = appliquerRecompense(
+      next,
+      r,
+      { designation: `Mission · ${ch.payload.titre}`, courrierId: ch.id, templateIds: [] },
+      timestamp,
     );
+    const avecXP = next.brocanteur;
     next = {
       ...next,
       brocanteur: {

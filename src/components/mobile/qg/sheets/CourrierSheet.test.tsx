@@ -7,6 +7,24 @@ import { CourrierSheet } from "./CourrierSheet";
 import { creerCartePostale, creerLettreMamanDebut } from "@/lib/courrier";
 import type { Courrier } from "@/types/game";
 
+function creerCourrierMissionAvecGains(): Courrier {
+  return {
+    id: "mission-1",
+    type: "mission",
+    jourRecu: 1,
+    lu: false,
+    payload: {
+      type: "mission",
+      categorie: "principale",
+      expediteurId: "maman",
+      titre: "Le coffre rétro",
+      corps: ["Un petit mot."],
+      cibles: [{ templateId: "coffre" }],
+      recompense: { argent: 90, energie: 1 },
+    },
+  };
+}
+
 vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({ playClick: vi.fn(), playCash: vi.fn() }),
 }));
@@ -76,5 +94,19 @@ describe("CourrierSheet — cartes postales", () => {
       screen.getByTestId("carte-postale").getAttribute("aria-pressed"),
     ).toBe("false");
     expect(screen.getByText("Touchez pour retourner")).toBeTruthy();
+  });
+
+  it("mission : la ligne récompense affiche les jetons xp/énergie", () => {
+    render(
+      <CourrierSheet
+        open
+        onClose={vi.fn()}
+        courriers={[creerCourrierMissionAvecGains()]}
+        onMarquerLu={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId("jeton-argent").textContent).toContain("+90 €");
+    expect(screen.getByTestId("jeton-xp").textContent).toContain("+100 XP");
+    expect(screen.getByTestId("jeton-energie").textContent).toContain("+1 ⚡");
   });
 });
