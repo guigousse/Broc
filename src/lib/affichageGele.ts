@@ -99,3 +99,32 @@ export function useBudgetAffiche(reel: number): number {
   const gele = useSyncExternalStore(souscrire, lireBudget, lireBudgetServeur);
   return gele ?? reel;
 }
+
+/** Énergie affichée figée pendant la cérémonie de livraison (jeton ⚡ en vol). */
+let energieGelee: number | null = null;
+
+function lireEnergie(): number | null {
+  return energieGelee;
+}
+function lireEnergieServeur(): number | null {
+  return null;
+}
+
+/** Fige l'affichage de l'énergie du header sur cette valeur. Idempotent. */
+export function gelerEnergieAffichage(valeur: number): void {
+  energieGelee = valeur;
+  notifier();
+}
+
+/** Rend l'énergie affichée à sa valeur réelle. Sans effet si rien n'est gelé. */
+export function degelerEnergieAffichage(): void {
+  if (energieGelee === null) return;
+  energieGelee = null;
+  notifier();
+}
+
+/** Renvoie l'énergie figée tant que le gel dure, la valeur réelle sinon. */
+export function useEnergieAffiche(reel: number): number {
+  const gele = useSyncExternalStore(souscrire, lireEnergie, lireEnergieServeur);
+  return gele ?? reel;
+}

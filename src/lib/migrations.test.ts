@@ -844,11 +844,23 @@ describe("niveauVu (célébration de level-up)", () => {
   });
 });
 
-describe("migration — clamp énergie (max fixe à 5)", () => {
-  it("une save ex-N14 avec 7 d'énergie est ramenée à 5", () => {
-    const state = createMockGameState({ energie: 7 });
+describe("migration — clamp énergie (plafond à 10 depuis 2026-07-30)", () => {
+  it("une save avec 14 d'énergie (au-delà du plafond) est ramenée à 10", () => {
+    const state = createMockGameState({ energie: 14 });
     state.brocanteur.niveau = 14;
-    expect(migrerSauvegarde(state).energie).toBe(5);
+    expect(migrerSauvegarde(state).energie).toBe(10);
+  });
+
+  it("énergie 7 (débordement de récompense) : préservée au chargement", () => {
+    const state = createMockGameState({ energie: 7 });
+    const chargee = migrerSauvegarde(state);
+    expect(chargee.energie).toBe(7);
+  });
+
+  it("énergie 12 (au-delà du plafond) : rabattue à ENERGIE_PLAFOND", () => {
+    const state = createMockGameState({ energie: 12 });
+    const chargee = migrerSauvegarde(state);
+    expect(chargee.energie).toBe(10);
   });
 });
 

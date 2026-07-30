@@ -39,7 +39,7 @@ import { ALL_TEMPLATES } from "@/data/objetTemplates";
 import { OLD_TO_NEW_TEMPLATE_ID } from "@/data/templateIdRenames";
 import { MAX_GRAND_LIVRE, reconstruireGrandLivre } from "./grandLivre";
 import { MAX_HISTORIQUE, compterVentesParCategorie } from "./sessions";
-import { ENERGIE_MAX } from "@/lib/energie";
+import { ENERGIE_MAX, ENERGIE_PLAFOND } from "@/lib/energie";
 import { ACTIVE_IDS, type ActiveId, type ActivesUtilisees } from "@/lib/actives";
 import {
   appliquerGainXPBrocanteur,
@@ -766,14 +766,17 @@ function appliquerMigrations(loaded: GameState): GameState {
       hebdo: { cle: "", courrierIds: [] },
     },
     energie: (() => {
-      // Énergie max FIXE à 5 depuis 2026-07-10 : les sauvegardes qui
-      // avaient 6-7 (ex-bonus N8/N14) sont plafonnées au chargement.
-      const max = ENERGIE_MAX;
+      // Plafond de chargement = ENERGIE_PLAFOND (10) : depuis 2026-07-30 les
+      // commandes peuvent faire déborder la jauge au-delà d'ENERGIE_MAX (5),
+      // un débordement sauvé la veille doit survivre à la réouverture. Le
+      // défaut d'une save SANS champ énergie reste ENERGIE_MAX (5) : l'absence
+      // du champ n'est pas un débordement à préserver, juste une jauge neuve.
+      const max = ENERGIE_PLAFOND;
       const v = (loaded as Partial<GameState>).energie;
       if (typeof v === "number" && Number.isFinite(v)) {
         return Math.max(0, Math.min(max, Math.floor(v)));
       }
-      return max;
+      return ENERGIE_MAX;
     })(),
     energieDerniereMaj:
       typeof (loaded as Partial<GameState>).energieDerniereMaj === "number"

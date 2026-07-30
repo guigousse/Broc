@@ -139,7 +139,8 @@ export function creerCourrierMission(args: {
   categorie: MissionCategorie;
   cibles: MissionCible[];
   jourLimite?: number;
-  recompense: { argent: number };
+  /** `xp`/`energie` absents ⇒ défauts de catégorie / 0 (cf. lib/recompenses). */
+  recompense: { argent: number; xp?: number; energie?: number };
   conserverCibles?: boolean;
   gabaritId?: string;
   gabaritParams?: CourrierGabaritParams;

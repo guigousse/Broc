@@ -571,6 +571,10 @@ export const el: DictionnaireUI = {
     objetsDemandes: "Ζητούμενα αντικείμενα ({rempli}/{total})",
     etatMin: "ελάχ. κατάσταση: {etat}",
     recompenseLabel: "Ανταμοιβή",
+    jetonArgent: "+{n} €",
+    jetonXp: "+{n} XP",
+    jetonEnergie: "+{n} ⚡",
+    recompenseAria: "Ανταμοιβή: {argent} €, {xp} XP, {energie} ενέργεια",
     livrer: "Παράδοση",
     livrerProgress: "Παράδοση ({rempli}/{total})",
     // Libellés des objectifs de chapitre (SP2 trame) : chaque type non-"objet"
