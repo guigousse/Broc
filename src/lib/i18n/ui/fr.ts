@@ -293,6 +293,7 @@ export const fr = {
     atoutVerrouilleAria: "{nom} — verrouillé, se débloque au niveau {niveau}",
     atoutVerrouilleToast: "{nom} — se débloque au niveau {niveau}",
     dejaPossedeAria: "Déjà possédé dans la collection",
+    nouveauPill: "Nouveau",
   },
   vente: {
     celebrite: "Célébrité",
