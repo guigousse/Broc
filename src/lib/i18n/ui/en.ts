@@ -222,7 +222,7 @@ export const en: DictionnaireUI = {
     ajouteAuStock: "Added to your storage.",
     parfait: "Great!",
     boiteDescription:
-      "A sealed box… no one knows what it hides. Watch an ad to open it.",
+      "Nobody has ever seen what's inside. Me included, come to think of it.",
     ouverture: "Opening…",
     regarderPubPourOuvrir: "Watch an ad to open",
     pourOuvrirLaBoite: "To open the box",

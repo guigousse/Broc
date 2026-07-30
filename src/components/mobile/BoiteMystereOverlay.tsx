@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Gift, X } from "lucide-react";
+import { MonitorPlay, X } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import { useToast } from "@/components/ui/Toast";
 import { getAdProvider } from "@/lib/ads/adProvider";
@@ -14,6 +14,7 @@ import {
 import { stockageEstPlein } from "@/lib/stockage";
 import { ItemCard } from "@/components/ui/ItemCard";
 import { ItemSticker } from "@/components/ui/ItemSticker";
+import { CartelPub } from "@/components/ui/CartelPub";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { Brocante, Objet } from "@/types/game";
@@ -289,14 +290,21 @@ export function BoiteMystereOverlay({
             <p style={{ fontSize: 13, color: "var(--brass-200)", margin: "0 0 16px" }}>
               {d.sheets.boiteDescription}
             </p>
-            <button
+            <CartelPub
               onClick={ouvrir}
-              disabled={enCours}
-              style={boutonStyle(enCours)}
+              indisponible={enCours}
+              ariaLabel={enCours ? undefined : d.sheets.regarderPubPourOuvrir}
+              style={{ width: "100%", padding: "12px 18px", gap: 8 }}
             >
-              <Gift size={16} />
-              {enCours ? d.sheets.ouverture : d.sheets.regarderPubPourOuvrir}
-            </button>
+              {enCours ? (
+                d.sheets.ouverture
+              ) : (
+                <>
+                  <MonitorPlay size={26} strokeWidth={2.2} aria-hidden />
+                  {d.sheets.pourOuvrirLaBoite}
+                </>
+              )}
+            </CartelPub>
           </>
         )}
       </div>

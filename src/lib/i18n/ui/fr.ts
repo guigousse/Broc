@@ -225,7 +225,7 @@ export const fr = {
     ajouteAuStock: "Ajouté à ton stock.",
     parfait: "Parfait !",
     boiteDescription:
-      "Une boîte scellée… personne ne sait ce qu'elle cache. Regarde une pub pour l'ouvrir.",
+      "Personne n'a jamais vu ce qu'il y a là-dedans. Moi non plus, d'ailleurs.",
     ouverture: "Ouverture…",
     regarderPubPourOuvrir: "Regarder une pub pour ouvrir",
     pourOuvrirLaBoite: "Pour ouvrir la boîte",

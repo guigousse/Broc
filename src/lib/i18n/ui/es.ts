@@ -222,7 +222,7 @@ export const es: DictionnaireUI = {
     ajouteAuStock: "Añadido a tu almacén.",
     parfait: "¡Perfecto!",
     boiteDescription:
-      "Una caja sellada… nadie sabe qué esconde. Mira un anuncio para abrirla.",
+      "Nadie ha visto jamás lo que hay dentro. Yo tampoco, la verdad.",
     ouverture: "Abriendo…",
     regarderPubPourOuvrir: "Ver un anuncio para abrir",
     pourOuvrirLaBoite: "Para abrir la caja",
