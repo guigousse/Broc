@@ -355,7 +355,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // retombent alors sur Date.now() comme base gracieuse.
   const tempsConfiance = useCallback((): number | null => {
     if (!ancreRef.current) return null;
-    return tempsConfianceCourant(ancreRef.current, performance.now());
+    return tempsConfianceCourant(
+      ancreRef.current,
+      performance.now(),
+      Date.now(),
+    );
   }, []);
 
   const rafraichirEnergie = useCallback(() => {
@@ -429,39 +433,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Temps effectif & recharge — dégradation gracieuse :
-  // 1) Base immédiate sur l'horloge du device, ancrée à `performance.now()`
-  //    (monotone) → l'énergie se recharge TOUJOURS, même hors-ligne, et changer
-  //    l'heure système en cours de session n'a aucun effet (anti-recul via settle).
+  // 1) Base immédiate sur l'horloge du device, ancrée à `performance.now()` ET
+  //    à `Date.now()` → l'énergie se recharge TOUJOURS, même hors-ligne. Le gel
+  //    de `performance.now()` pendant la veille profonde iOS est absorbé par
+  //    `tempsConfianceCourant` (max des deux deltas) : plus besoin d'attendre un
+  //    événement de reprise pour que l'horloge reparte juste.
   // 2) Quand le temps de confiance réseau répond, on REPOSE l'ancre dessus →
   //    corrige le décalage et neutralise une avance d'horloge faite avant le lancement.
   useEffect(() => {
     if (!isHydrated) return;
     let actif = true;
     if (!ancreRef.current) {
-      ancreRef.current = poserAncre(Date.now(), performance.now());
+      ancreRef.current = poserAncre(Date.now(), performance.now(), Date.now());
     }
     const sync = async () => {
       const t = await getTimeSource().maintenant();
       if (!actif) return;
       if (t !== null) {
-        // Temps de confiance obtenu : corrige l'ancre (mono inchangée → pas de saut).
-        ancreRef.current = poserAncre(t, performance.now());
-      } else if (ancreRef.current) {
-        // Hors-ligne / timeapi muet. Sur iOS, `performance.now()` NE PROGRESSE
-        // PAS pendant la suspension profonde du device : après une nuit en
-        // poche, le temps extrapolé est resté figé et l'énergie/les minuteries
-        // semblent bloquées. Si l'horloge murale a pris de l'avance sur le
-        // temps extrapolé, on ré-ancre sur Date.now() — même dégradation
-        // gracieuse qu'au cold start (l'anti-recul de settleEnergie neutralise
-        // un éventuel recul d'horloge).
-        const extrapole = tempsConfianceCourant(
-          ancreRef.current,
-          performance.now(),
-        );
-        if (Date.now() > extrapole) {
-          ancreRef.current = poserAncre(Date.now(), performance.now());
-        }
+        // Temps de confiance obtenu : corrige l'ancre (deltas remis à zéro).
+        ancreRef.current = poserAncre(t, performance.now(), Date.now());
       }
+      // Hors-ligne / timeapi muet : rien à faire, l'extrapolation suit déjà
+      // l'horloge murale quand le monotone est en retard (veille).
       rafraichirEnergie();
       rafraichirQuetes();
     };
@@ -469,6 +462,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const onFocus = () => sync();
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
+    // Filet iOS : au réveil, `visibilitychange → visible` n'est pas garanti
+    // (même raison que pour le rappel de retour, plus bas).
+    window.addEventListener("pageshow", onFocus);
     const syncTimer = window.setInterval(sync, 10 * 60 * 1000); // re-sync /10 min
     const tickTimer = window.setInterval(() => {
       rafraichirEnergie();
@@ -478,6 +474,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       actif = false;
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener("pageshow", onFocus);
       window.clearInterval(syncTimer);
       window.clearInterval(tickTimer);
     };
@@ -490,34 +487,64 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const energie = state?.energie;
   const energieDerniereMaj = state?.energieDerniereMaj;
   const niveauBrocanteur = state?.brocanteur.niveau;
-  useEffect(() => {
-    if (
-      !isHydrated ||
-      energie === undefined ||
-      energieDerniereMaj === undefined ||
-      niveauBrocanteur === undefined ||
-      !notificationsDisponibles()
-    ) {
+  // `locale` par ref : la langue est capturée À L'ENVOI, sans que changer de
+  // langue ait besoin de relancer la synchro.
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
+
+  // Source unique de vérité pour l'échéance. Repart TOUJOURS de `stateRef`
+  // (l'état le plus frais) plutôt que d'un instantané figé dans une closure, et
+  // décide « pleine ou pas » APRÈS settle — `state.energie` peut avoir jusqu'à
+  // une minute de retard (le settle périodique tourne toutes les 60 s).
+  const synchroniserNotifEnergie = useCallback(async () => {
+    const courant = stateRef.current;
+    if (!courant || !notificationsDisponibles()) return;
+    const reste = secondesAvantPlein(
+      courant,
+      tempsConfiance() ?? Date.now(),
+      ENERGIE_MAX,
+    );
+    if (reste === null) {
+      await annulerPleinEnergie();
       return;
     }
-    const snap = { energie, energieDerniereMaj };
-    const max = ENERGIE_MAX;
-    let annule = false;
-    (async () => {
-      if (energie >= max) {
-        await annulerPleinEnergie();
-        return;
-      }
-      const ok = await assurerPermission();
-      if (annule || !ok) return;
-      const reste = secondesAvantPlein(snap, tempsConfiance() ?? Date.now(), max);
-      if (reste === null) return;
-      await planifierPleinEnergie(Date.now() + reste * 1000, locale);
-    })();
-    return () => {
-      annule = true;
+    if (!(await assurerPermission())) return;
+    // `reste` est un DÉLAI (calculé en temps de confiance) qu'on repose sur
+    // l'horloge murale : c'est elle que le planificateur de l'OS utilise.
+    await planifierPleinEnergie(Date.now() + reste * 1000, localeRef.current);
+  }, [tempsConfiance]);
+
+  useEffect(() => {
+    if (!isHydrated || energie === undefined) return;
+    void synchroniserNotifEnergie();
+    // energie/energieDerniereMaj/niveauBrocanteur/locale : déclencheurs. La
+    // valeur lue est celle de `stateRef` au moment de l'exécution.
+  }, [
+    isHydrated,
+    energie,
+    energieDerniereMaj,
+    niveauBrocanteur,
+    locale,
+    synchroniserNotifEnergie,
+  ]);
+
+  // Dernière chance avant que l'OS ne gèle la webview : l'échéance qui va
+  // réellement sonner est celle posée ici. Sans ce filet, une dépense d'énergie
+  // juste avant la sortie laissait en place l'échéance précédente — trop tôt —
+  // si sa reprogrammation (asynchrone) n'avait pas eu le temps d'aboutir.
+  useEffect(() => {
+    if (!isHydrated) return;
+    const surSortie = () => void synchroniserNotifEnergie();
+    const surVisibilite = () => {
+      if (document.visibilityState === "hidden") surSortie();
     };
-  }, [isHydrated, energie, energieDerniereMaj, niveauBrocanteur, tempsConfiance, locale]);
+    document.addEventListener("visibilitychange", surVisibilite);
+    window.addEventListener("pagehide", surSortie);
+    return () => {
+      document.removeEventListener("visibilitychange", surVisibilite);
+      window.removeEventListener("pagehide", surSortie);
+    };
+  }, [isHydrated, synchroniserNotifEnergie]);
 
   // Rappel de retour : programme la série J+1/J+3/J+7 quand l'app passe en
   // arrière-plan, l'annule à la réouverture. No-op hors Tauri ou si la
