@@ -563,6 +563,10 @@ export const es: DictionnaireUI = {
     objetsDemandes: "Objetos pedidos ({rempli}/{total})",
     etatMin: "estado mín.: {etat}",
     recompenseLabel: "Recompensa",
+    jetonArgent: "+{n} €",
+    jetonXp: "+{n} XP",
+    jetonEnergie: "+{n} ⚡",
+    recompenseAria: "Recompensa: {argent} €, {xp} XP, {energia} energía",
     livrer: "Entregar",
     livrerProgress: "Entregar ({rempli}/{total})",
     objectifs: {
