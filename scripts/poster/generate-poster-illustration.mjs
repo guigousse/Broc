@@ -10,6 +10,7 @@
  *
  * Usage :
  *   node scripts/poster/generate-poster-illustration.mjs            # 3 candidats
+ *   node scripts/poster/generate-poster-illustration.mjs --variante=bleu|rouge
  *   node scripts/poster/generate-poster-illustration.mjs --count=5
  *   node scripts/poster/generate-poster-illustration.mjs --force
  */
@@ -33,14 +34,60 @@ const STYLE_REF = path.join(
   "disquaire-independant.webp",
 );
 
-/** Items du jeu posés sur l'étal, avec leur description pour ancrer le prompt. */
-const ITEM_REFS = [
-  ["mus.tourne_disque_a_courroie_vintage.webp", "a vintage belt-drive turntable"],
-  ["mus.33tours_jazz_1.webp", "a jazz vinyl record sleeve"],
-  ["ma.lampe_bureau_artdeco.webp", "an Art Déco desk lamp"],
-  ["ma.horloge_carillon_westminster.webp", "a Westminster chime mantel clock"],
-  ["ma.miroir_dore_fronton.webp", "a gilded mirror with a carved fronton"],
-].map(([file, label]) => [path.join(PROJECT_ROOT, "public", "items", file), label]);
+/**
+ * Variantes de l'affiche : chacune a ses items du jeu (posés sur l'étal,
+ * avec leur description pour ancrer le prompt), son ambiance lumineuse et
+ * son préfixe de fichier de sortie.
+ */
+const VARIANTES = {
+  aube: {
+    prefixe: "illustration",
+    items: [
+      ["mus.tourne_disque_a_courroie_vintage.webp", "a vintage belt-drive turntable"],
+      ["mus.33tours_jazz_1.webp", "a jazz vinyl record sleeve"],
+      ["ma.lampe_bureau_artdeco.webp", "an Art Déco desk lamp"],
+      ["ma.horloge_carillon_westminster.webp", "a Westminster chime mantel clock"],
+      ["ma.miroir_dore_fronton.webp", "a gilded mirror with a carved fronton"],
+    ],
+    ambiance: [
+      "Warm golden early-morning light rakes across the stall from the side,",
+      "long soft shadows, gentle glints on the brass.",
+    ].join(" "),
+  },
+  bleu: {
+    prefixe: "illustration-bleu",
+    items: [
+      ["mus.33tours_jazz_2.webp", "a jazz vinyl record sleeve"],
+      ["ma.boite_musique_ancienne.webp", "an antique music box"],
+      ["ma.lampe_petrole_ancienne.webp", "an old kerosene lamp, lit"],
+      ["ma.candelabre_argent_5branches.webp", "a five-branch silver candelabra"],
+      ["ma.miroir_psyche.webp", "a tilting cheval mirror"],
+    ],
+    ambiance: [
+      "Blue-hour dusk: the whole scene bathes in cool blue-grey twilight tones,",
+      "with the lit kerosene lamp and candles as warm glowing accents.",
+      "The overall color grading leans clearly toward blue.",
+    ].join(" "),
+  },
+  rouge: {
+    prefixe: "illustration-rouge",
+    items: [
+      ["mus.33tours_jazz_3.webp", "a jazz vinyl record sleeve"],
+      [
+        "br.machine_a_coudre_en_fonte_a_pedale_xixe.webp",
+        "a cast-iron treadle sewing machine — leave its plaques and decals blank, without any lettering",
+      ],
+      ["art.vase_art_deco_bebert_germain.webp", "an Art Déco ceramic vase"],
+      ["art.bronze_petite_danseuse.webp", "a small bronze ballerina statuette"],
+      ["ma.bougeoirs_laiton_louisxv.webp", "a pair of Louis XV brass candlesticks"],
+    ],
+    ambiance: [
+      "Blazing sunset: the whole scene bathes in warm red-amber light, a low",
+      "crimson sun flares behind the stalls, deep russet shadows.",
+      "The overall color grading leans clearly toward red.",
+    ].join(" "),
+  },
+};
 
 const STYLE_INTRO = [
   "First attached image: STYLE reference only.",
@@ -62,11 +109,9 @@ const SCENE_PROMPT = [
   "supporting objects (stacked old books, a small brass candlestick, framed",
   "engravings leaning against a crate).",
   "The stall and its objects occupy the LOWER TWO-THIRDS of the canvas.",
-  "The TOP THIRD of the canvas is a calm, quiet background — pale warm morning",
-  "sky over soft out-of-focus market silhouettes — kept visually empty because a",
-  "title will be overlaid there later.",
-  "Warm golden early-morning light rakes across the stall from the side, long",
-  "soft shadows, gentle glints on the brass.",
+  "The TOP THIRD of the canvas is a calm, quiet background — a soft sky over",
+  "out-of-focus market silhouettes — kept visually empty because a title will",
+  "be overlaid there later.",
   "The image bleeds edge to edge on all four sides.",
   "No people, no text, no watermark.",
 ].join(" ");
@@ -105,6 +150,15 @@ const args = process.argv.slice(2);
 const force = args.includes("--force");
 const countArg = args.find((a) => a.startsWith("--count="));
 const count = countArg ? Number(countArg.slice("--count=".length)) : 3;
+const varianteArg = args.find((a) => a.startsWith("--variante="));
+const varianteKey = varianteArg ? varianteArg.slice("--variante=".length) : "aube";
+const variante = VARIANTES[varianteKey];
+if (!variante) {
+  console.error(
+    `❌ --variante="${varianteKey}" inconnue. Valeurs : ${Object.keys(VARIANTES).join(" | ")}`,
+  );
+  process.exit(1);
+}
 
 async function inlineImage(filePath) {
   const buf = await fs.readFile(filePath);
@@ -116,27 +170,28 @@ async function main() {
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
 
   const parts = [{ text: STYLE_INTRO }, await inlineImage(STYLE_REF), { text: ITEMS_INTRO }];
-  for (const [file, label] of ITEM_REFS) {
+  for (const [file, label] of variante.items) {
     parts.push({ text: `Object: ${label}.` });
-    parts.push(await inlineImage(file));
+    parts.push(await inlineImage(path.join(PROJECT_ROOT, "public", "items", file)));
   }
-  parts.push({ text: SCENE_PROMPT });
+  parts.push({ text: `${SCENE_PROMPT} ${variante.ambiance}` });
 
   const ai = new GoogleGenAI({ apiKey });
   let ok = 0;
 
   for (let i = 1; i <= count; i++) {
-    const outPath = path.join(OUTPUT_DIR, `illustration-${i}.png`);
+    const nom = `${variante.prefixe}-${i}.png`;
+    const outPath = path.join(OUTPUT_DIR, nom);
     if (!force) {
       try {
         await fs.access(outPath);
-        console.log(`⏭️  illustration-${i}.png déjà présent (--force pour regénérer)`);
+        console.log(`⏭️  ${nom} déjà présent (--force pour regénérer)`);
         continue;
       } catch {
         // absent → à générer
       }
     }
-    console.log(`🎨  candidat ${i}/${count} — génération (${MODEL}, 4:5, 2K)…`);
+    console.log(`🎨  ${varianteKey} ${i}/${count} — génération (${MODEL}, 4:5, 2K)…`);
     try {
       const response = await ai.models.generateContent({
         model: MODEL,
@@ -151,7 +206,7 @@ async function main() {
       }
       const buf = Buffer.from(imagePart.inlineData.data, "base64");
       await fs.writeFile(outPath, buf);
-      console.log(`✅  illustration-${i}.png (${Math.round(buf.length / 1024)} kB)`);
+      console.log(`✅  ${nom} (${Math.round(buf.length / 1024)} kB)`);
       ok++;
     } catch (err) {
       console.error(`❌  candidat ${i} : ${err.message ?? err}`);

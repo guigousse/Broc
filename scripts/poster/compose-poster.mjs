@@ -8,12 +8,15 @@
  * Usage :
  *   node scripts/poster/compose-poster.mjs                 # candidat 1
  *   node scripts/poster/compose-poster.mjs --illustration=2
+ *   node scripts/poster/compose-poster.mjs --variante=bleu --illustration=2
+ *   node scripts/poster/compose-poster.mjs --variante=bleu --rogner=4   # ôte 4 %/bord
  */
 
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import sharp from "sharp";
 import { chargerFontFaceCss } from "../appstore/polices.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,6 +30,27 @@ const HAUTEUR = 1350;
 const args = process.argv.slice(2);
 const illuArg = args.find((a) => a.startsWith("--illustration="));
 const illuNum = illuArg ? illuArg.slice("--illustration=".length) : "1";
+const varianteArg = args.find((a) => a.startsWith("--variante="));
+const varianteKey = varianteArg ? varianteArg.slice("--variante=".length) : "aube";
+// Mêmes préfixes que generate-poster-illustration.mjs ; l'habillage, lui,
+// est strictement identique d'une variante à l'autre.
+const VARIANTES = {
+  aube: { prefixe: "illustration", sortie: "broc-teasing-fr.png" },
+  bleu: { prefixe: "illustration-bleu", sortie: "broc-teasing-fr-bleu.png" },
+  rouge: { prefixe: "illustration-rouge", sortie: "broc-teasing-fr-rouge.png" },
+};
+const variante = VARIANTES[varianteKey];
+if (!variante) {
+  console.error(
+    `❌ --variante="${varianteKey}" inconnue. Valeurs : ${Object.keys(VARIANTES).join(" | ")}`,
+  );
+  process.exit(1);
+}
+
+const rognerArg = args.find((a) => a.startsWith("--rogner="));
+// Pourcentage de marge à rogner sur chaque bord de l'illustration (certains
+// candidats Gemini arrivent avec un liseré de parchemin autour).
+const rognerPct = rognerArg ? Number(rognerArg.slice("--rogner=".length)) : 0;
 
 const MIMES = { png: "image/png", webp: "image/webp", svg: "image/svg+xml" };
 
@@ -36,9 +60,24 @@ async function dataUri(filePath) {
   return `data:${MIMES[ext]};base64,${buf.toString("base64")}`;
 }
 
+async function dataUriIllustration(filePath) {
+  if (!rognerPct) return dataUri(filePath);
+  const image = sharp(filePath);
+  const { width, height } = await image.metadata();
+  const dx = Math.round((width * rognerPct) / 100);
+  const dy = Math.round((height * rognerPct) / 100);
+  const buf = await image
+    .extract({ left: dx, top: dy, width: width - 2 * dx, height: height - 2 * dy })
+    .png()
+    .toBuffer();
+  return `data:image/png;base64,${buf.toString("base64")}`;
+}
+
 async function main() {
   const [illustration, divider, grain, badge, globalsCss] = await Promise.all([
-    dataUri(path.join(POSTER_DIR, "candidats", `illustration-${illuNum}.png`)),
+    dataUriIllustration(
+      path.join(POSTER_DIR, "candidats", `${variante.prefixe}-${illuNum}.png`),
+    ),
     dataUri(path.join(PUBLIC_DIR, "assets", "deco-divider.svg")),
     dataUri(path.join(PUBLIC_DIR, "assets", "paper-grain.svg")),
     dataUri(path.join(POSTER_DIR, "badge-app-store-fr.svg")),
@@ -131,10 +170,12 @@ ${fontFaces}
   });
   await page.setContent(html, { waitUntil: "networkidle" });
   await page.evaluate(() => document.fonts.ready);
-  const outPath = path.join(POSTER_DIR, "broc-teasing-fr.png");
+  const outPath = path.join(POSTER_DIR, variante.sortie);
   await page.screenshot({ path: outPath });
   await browser.close();
-  console.log(`✅  ${path.relative(PROJECT_ROOT, outPath)} (2160×2700, candidat ${illuNum})`);
+  console.log(
+    `✅  ${path.relative(PROJECT_ROOT, outPath)} (2160×2700, ${varianteKey}, candidat ${illuNum})`,
+  );
 }
 
 main().catch((err) => {
