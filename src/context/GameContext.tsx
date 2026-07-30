@@ -38,6 +38,7 @@ import { createGameRepository } from "@/lib/storage/createGameRepository";
 import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
 import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
+import { appliquerRecompense, recompenseEffective } from "@/lib/recompenses";
 import { ajouterSession } from "@/lib/sessions";
 import { indicesAConsommerPourLivraison } from "@/lib/missions";
 import { missionLivrable } from "@/lib/quetes/objectifs";
@@ -57,9 +58,6 @@ import {
   pointsOctroyables,
   POINTS_BONUS_CHAPITRE,
   XP_DECOUVERTE_COLLECTION,
-  XP_QUETE_HEBDO,
-  XP_QUETE_PRINCIPALE,
-  XP_QUETE_QUOTIDIENNE,
   XP_RESTAURATION_ETAPE,
   multiplicateurXPRarete,
 } from "@/lib/xp";
@@ -1639,7 +1637,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!missionLivrable(courrier.payload, reso, current, courrier.jourRecu)) {
         return { ok: false, raison: raisonLocalisee("objectifsNonAtteints") };
       }
-      const { recompense } = courrier.payload;
       const aRetirer = indicesAConsommerPourLivraison(
         courrier.payload,
         current.inventaireJoueur,
@@ -1658,12 +1655,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // sans consommer l'objet : le joueur garde la pièce.
       const conserver = payloadMission.conserverCibles === true;
       const categorieMission = payloadMission.categorie;
-      const xpMission =
-        categorieMission === "principale"
-          ? XP_QUETE_PRINCIPALE
-          : categorieMission === "hebdomadaire"
-            ? XP_QUETE_HEBDO
-            : XP_QUETE_QUOTIDIENNE;
+      const now = tempsConfiance() ?? Date.now();
+      const rEff = recompenseEffective(payloadMission);
       setState((prev) => {
         if (!prev) return prev;
         const resoPrev = prev.missions.find((m) => m.courrierId === courrierId);
@@ -1684,28 +1677,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ? { ...m, statut: "livree" as const, jourResolution: prev.jourActuel }
             : m,
         );
-        const credited = appendLedger(prev, {
-          jour: prev.jourActuel,
-          kind: "mission_recompense",
-          designation: `Mission · ${titreMission}`,
-          recette: recompense.argent,
-          depense: 0,
-          courrierId,
-          // Params ADDITIFS : `courrierId` sert le rendu localisé tant que le
-          // courrier existe ; `gabaritId`/`etatMin`/`templateIds` permettent de
-          // régénérer le titre après purge du lot périodique (i18n SP4).
-          params: {
+        const credited = appliquerRecompense(
+          prev,
+          rEff,
+          {
+            designation: `Mission · ${titreMission}`,
             courrierId,
             gabaritId: gabaritIdMission,
             etatMin: etatMinMission,
             templateIds: templateIdsMission,
           },
-        });
-        const avecXP = appliquerGainXPBrocanteur(
-          credited.brocanteur,
-          xpMission,
-          pointsDepensesCompetences(credited.competencesDebloquees),
+          now,
         );
+        const avecXP = credited.brocanteur;
         // Bonus de points de compétence par chapitre livré (décision D4),
         // appliqué APRÈS le gain d'XP pour ne pas écraser les points de level-up.
         const brocanteur =
@@ -1740,7 +1724,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
       return { ok: true };
     },
-    [],
+    [tempsConfiance],
   );
 
   /** Accepte un chapitre de la trame principale : crée le courrier + la mission

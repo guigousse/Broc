@@ -264,6 +264,10 @@ export interface LedgerParams {
   gabaritId?: string;
   etatMin?: EtatObjet;
   templateIds?: string[];
+  /** mission_recompense : gains non monétaires versés à la livraison, pour le
+   *  rendu du grand livre (suffixe « +25 XP · +2 ⚡ »). ADDITIF. */
+  xp?: number;
+  energie?: number;
 }
 
 export interface LedgerEntry {
