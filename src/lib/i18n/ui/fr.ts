@@ -570,6 +570,11 @@ export const fr = {
     objetsDemandes: "Objets demandés ({rempli}/{total})",
     etatMin: "état min : {etat}",
     recompenseLabel: "Récompense",
+    // Jetons de gains (bandeau récompense, lettre, grand livre).
+    jetonArgent: "+{n} €",
+    jetonXp: "+{n} XP",
+    jetonEnergie: "+{n} ⚡",
+    recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie",
     livrer: "Livrer",
     livrerProgress: "Livrer ({rempli}/{total})",
     // Libellés des objectifs de chapitre (SP2 trame) : chaque type non-"objet"

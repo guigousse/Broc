@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   ENERGIE_MAX,
+  ENERGIE_PLAFOND,
   PUBS_ENERGIE_MAX_PAR_JOUR,
   RECHARGE_INTERVAL_MS,
   enregistrerPubEnergie,
@@ -151,5 +152,29 @@ describe("pubs énergie — plafond quotidien", () => {
     // et l'enregistrement du lendemain ouvre bien un nouveau compteur
     const apres = enregistrerPubEnergie(pubs, LENDEMAIN);
     expect(pubsEnergieRestantes(apres, LENDEMAIN)).toBe(PUBS_ENERGIE_MAX_PAR_JOUR - 1);
+  });
+});
+
+describe("débordement (récompenses de commandes)", () => {
+  it("settleEnergie préserve une énergie au-dessus du max sans la rabattre", () => {
+    const r = settleEnergie({ energie: 7, energieDerniereMaj: 1000 }, 10 * 60 * 60 * 1000);
+    expect(r.energie).toBe(7);
+  });
+
+  it("au-dessus du max : pas de recharge, l'ancre suit now", () => {
+    const now = 5 * RECHARGE_INTERVAL_MS;
+    const r = settleEnergie({ energie: 6, energieDerniereMaj: 0 }, now);
+    expect(r.energie).toBe(6);
+    expect(r.energieDerniereMaj).toBe(now);
+  });
+
+  it("exactement au max : comportement inchangé (ancre suit now, valeur = max)", () => {
+    const now = 3 * RECHARGE_INTERVAL_MS;
+    const r = settleEnergie({ energie: 5, energieDerniereMaj: 0 }, now);
+    expect(r).toEqual({ energie: 5, energieDerniereMaj: now });
+  });
+
+  it("ENERGIE_PLAFOND vaut 10", () => {
+    expect(ENERGIE_PLAFOND).toBe(10);
   });
 });

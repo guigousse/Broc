@@ -15,6 +15,8 @@ import { libelleEtat } from "@/lib/i18n/libelles";
 import { corpsCourrier, nomTemplate, signatureExpediteur, titreCourrier } from "@/lib/i18n/contenu";
 import type { Locale } from "@/lib/i18n/locales";
 import type { DictionnaireUI, tr as TrFn } from "@/lib/i18n/ui";
+import { recompenseEffective } from "@/lib/recompenses";
+import { RecompenseJetons } from "@/components/mobile/qg/RecompenseJetons";
 import type { Courrier } from "@/types/game";
 import { CartePostaleView } from "./CartePostaleView";
 
@@ -252,8 +254,9 @@ function renderMission(
             })
             .join(", ")}
         </div>
-        <div>
-          <strong>{d.sheets.recompenseLabel}</strong> +{p.recompense.argent} €
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <strong>{d.sheets.recompenseLabel}</strong>
+          <RecompenseJetons recompense={recompenseEffective(p)} variante="ligne" />
         </div>
         {p.jourLimite !== undefined && (
           <div>
