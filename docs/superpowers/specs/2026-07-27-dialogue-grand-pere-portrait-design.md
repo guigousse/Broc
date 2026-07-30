@@ -16,7 +16,7 @@ Les modes chinage et vente montrent déjà leurs personnages de la bonne façon 
 
 **Change :** la mise en page interne de `src/components/mobile/dialogue/DialogueOverlay.tsx`, et l'extraction du style de bandeau-nom aujourd'hui local à `ChineNegoDrawer`.
 
-**Ne change pas :** l'API du composant (`sequence`, `nom`, `portraits`, `onFini`), la mécanique d'avancement au tap, le portail vers `document.body`, le `z-index` 120, le scrim, l'accessibilité (bouton unique + libellé masqué), les trois appelants (`(qg)/layout.tsx`, `chiner/[brocanteId]/ClientPage.tsx`, `vitrine/[brocanteId]/journee/ClientPage.tsx`), les données de `src/data/dialogues.ts`, les traductions.
+**Ne change pas :** l'API du composant (`sequence`, `nom`, `portraits`, `onFini`), la mécanique d'avancement au tap, le portail vers `document.body`, le `z-index` 120, le scrim, l'accessibilité (bouton unique + libellé masqué), les trois appelants (`(qg)/layout.tsx`, `chiner/[brocanteId]/ClientPage.tsx`, `vitrine/[brocanteId]/journee/ClientPage.tsx`), les données de `src/data/dialogues.ts`, les traductions. `GrandPereBadge` (la pastille circulaire du QG qui *ouvre* le dialogue) garde délibérément son médaillon `object-fit: cover` : c'est une affordance de bouton, pas la mise en scène du personnage — seul l'overlay, où le grand-père parle, adopte le portrait détouré en grand.
 
 **Hors périmètre :** régénérer les portraits, ajouter des humeurs, animer l'apparition du personnage, changer les textes.
 
@@ -89,7 +89,9 @@ Filet complet avant de conclure : `npx vitest run` + `npx eslint src` (`npm run 
 
 **Le liseré de détourage — risque principal.** Le cercle `object-fit: cover` masque aujourd'hui les bords des portraits. Détourés sur le scrim sombre, tout résidu de matte clair autour du personnage devient visible. Les quatre fichiers portent bien `hasAlpha: yes`, mais un alpha présent peut être propre *ou* border un halo — cela ne se voit qu'au rendu. **Point n°1 de la recette device.** Si un liseré apparaît, le correctif est une repasse des quatre `.webp`, pas du CSS.
 
-**Portraits carrés.** `/personas/grand-pere/*.webp` sont en 420×420 (les vendeurs sont en 263×332). À 190 px de haut, le portrait fait 190 px de large — plus massif que ce que le ratio vendeur laisse attendre. Se règle par le `clamp`.
+**Portraits carrés.** `/personas/grand-pere/*.webp` sont carrés, mais de côté variable — mesuré via `sips` : `souriant` et `rieur` 420×420, `emu` 446×446, `songeur` 319×319 (les vendeurs sont en 263×332). Carré ou non, à 190 px de haut le portrait fait 190 px de large — plus massif que ce que le ratio vendeur laisse attendre. Se règle par le `clamp`.
+
+**Définition à la borne haute du `clamp`.** À 190 px CSS sur un écran @3×, il faut 570 px de source. `songeur`, à 319 px, est agrandi ×1,79 — le plus exposé des quatre. L'ancien médaillon de 84 px n'exigeait que 252 px device, sous les 319 de `songeur` : le manque de définition y était invisible et peut le devenir maintenant. Si le rendu est mou, le correctif est une régénération de l'asset `songeur.webp`, pas du CSS.
 
 **Écrans courts.** Portrait + bulle de quatre lignes + `safe-bottom` remontent haut, la colonne étant ancrée en bas. La borne haute du `clamp` (190 px) sert de garde-fou. À vérifier sur la plus longue réplique du tutoriel (`tuto_accueil`, ligne 2).
 

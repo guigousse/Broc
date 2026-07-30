@@ -375,6 +375,10 @@ Les quatre fichiers portent bien `hasAlpha: yes` (vérifié via `sips`), mais un
 
 Si un liseré apparaît : le correctif est une **repasse des quatre `.webp`**, pas du CSS. Ne pas tenter de le masquer avec une ombre ou un `filter`.
 
+- [ ] **Step 2bis : Point n°1bis — la netteté, en particulier `songeur`**
+
+Les quatre portraits ne sont pas tous en 420×420 : `souriant` et `rieur` sont 420×420, `emu` 446×446, `songeur` seulement 319×319 (mesuré via `sips`). À la borne haute du `clamp` (190 px CSS) sur un écran @3×, il faut 570 px de source — `songeur` est agrandi ×1,79, le plus exposé des quatre. Regarder spécifiquement `songeur` sur les répliques où il apparaît : si le rendu paraît mou, le correctif est une régénération de l'asset, pas un réglage de CSS.
+
 - [ ] **Step 3: Point n°2 — la hauteur sur écran court**
 
 Ouvrir `tuto_accueil` et avancer jusqu'à la **ligne 2** (« Cinquante ans que je tiens cette boutique… »), la plus longue du tutoriel. La colonne est ancrée en bas : portrait + bulle de quatre lignes + `safe-bottom` remontent haut. Vérifier que le portrait n'est pas coupé en haut de l'écran.
@@ -396,6 +400,14 @@ Le bandeau est en capitales avec `letter-spacing: .18em`. Vérifier que le nom d
 - [ ] **Step 6: Point n°5 — non-régression du chinage**
 
 Ouvrir un tiroir de négociation en chinage et confirmer à l'œil que le bandeau-nom du vendeur est **identique à avant** l'extraction de la tâche 1.
+
+- [ ] **Step 7: Point n°6 — la transition entre deux répliques**
+
+Le `src` de l'`<img>` change à chaque tap et aucun préchargement des quatre `.webp` n'existe. Invisible à 84 px (ancien médaillon), potentiellement voyant à 190 px avec un `drop-shadow` à repeindre — le projet a un historique de pièges de repaint sous WKWebView. Avancer dans une séquence à plusieurs lignes et observer si un flash ou un à-coup apparaît au changement d'humeur.
+
+- [ ] **Step 8: Point n°7 — le bandeau en grec, comportement attendu**
+
+Le bandeau n'a pas de `whiteSpace: nowrap` : en grec, un nom plus long passera à **deux lignes** plutôt que de se rogner ou déborder. C'est le comportement voulu, pas un bug — à ne pas remonter comme régression pendant la recette des quatre langues (Step 5).
 
 ---
 
