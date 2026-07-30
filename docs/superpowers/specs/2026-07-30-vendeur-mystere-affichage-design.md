@@ -52,7 +52,7 @@ export function CartelPub({
   indisponible,   // grisé + désaturé + curseur interdit
   pulse,          // halo doré pulsant (mode alerte de la machine)
   onClick,
-  ariaLabel,      // nom accessible ; toujours renseigné
+  ariaLabel,      // nom accessible ; optionnel — omis, le nom vient du contenu
   style,          // positionnement/dimensions, à la charge de l'appelant
   children,
 }: { … }): JSX.Element
