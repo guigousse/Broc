@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { scriptAmorce, scriptGraine } from "./amorce.mjs";
+import { mulberry32 } from "./mulberry32.mjs";
+
+/** Exécute la source de scriptGraine() dans une sandbox isolée du Math global. */
+function sequenceInjectee(graine, n) {
+  const contexte = { Math: { imul: Math.imul } };
+  new Function("Math", `${scriptGraine(graine)}\nreturn Math;`)(contexte.Math);
+  const rng = contexte.Math.random;
+  return Array.from({ length: n }, () => rng());
+}
 
 const SAVE = JSON.stringify({ version: 17, budget: 8420 });
 
@@ -74,33 +83,30 @@ describe("graine du générateur pseudo-aléatoire", () => {
   });
 
   it("produit toujours la même séquence pour une même graine", () => {
-    const sequence = (graine) => {
-      const contexte = { Math: { imul: Math.imul } };
-      new Function("Math", `${scriptGraine(graine)}\nreturn Math;`)(contexte.Math);
-      const rng = contexte.Math.random;
-      return [rng(), rng(), rng(), rng()];
-    };
-    expect(sequence(12345)).toEqual(sequence(12345));
+    expect(sequenceInjectee(12345, 4)).toEqual(sequenceInjectee(12345, 4));
   });
 
   it("produit une séquence différente pour deux graines différentes", () => {
-    const sequence = (graine) => {
-      const contexte = { Math: { imul: Math.imul } };
-      new Function("Math", `${scriptGraine(graine)}\nreturn Math;`)(contexte.Math);
-      const rng = contexte.Math.random;
-      return [rng(), rng(), rng(), rng()];
-    };
-    expect(sequence(1)).not.toEqual(sequence(2));
+    expect(sequenceInjectee(1, 4)).not.toEqual(sequenceInjectee(2, 4));
   });
 
   it("produit des valeurs dans [0, 1)", () => {
-    const contexte = { Math: { imul: Math.imul } };
-    new Function("Math", `${scriptGraine(7)}\nreturn Math;`)(contexte.Math);
-    const rng = contexte.Math.random;
-    for (let i = 0; i < 50; i++) {
-      const v = rng();
+    for (const v of sequenceInjectee(7, 50)) {
       expect(v).toBeGreaterThanOrEqual(0);
       expect(v).toBeLessThan(1);
+    }
+  });
+
+  // La source injectée dans le navigateur (scriptGraine) et l'implémentation
+  // canonique côté Node (mulberry32.mjs, utilisée par gen-save-demo.ts) sont
+  // deux copies du même algorithme — l'injection Playwright ne peut pas
+  // importer un module. Ce test verrouille leur équivalence : si l'une des
+  // deux dérive sans l'autre, la garantie « même graine, même contenu » se
+  // casserait en silence, sans qu'aucun autre test ne le voie.
+  it("produit exactement la même séquence que l'implémentation canonique mulberry32", () => {
+    for (const graine of [0, 1, 42, 424242, 987654321]) {
+      const attendu = Array.from({ length: 10 }, mulberry32(graine));
+      expect(sequenceInjectee(graine, 10)).toEqual(attendu);
     }
   });
 });

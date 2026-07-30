@@ -40,6 +40,12 @@ export function scriptAmorce(saveJson, langue) {
  * exécution du pipeline produit le même contenu quelle que soit la langue ou
  * l'appareil : sans ce correctif, les quatre langues d'un même visuel
  * afficheraient quatre objets différents sur le même emplacement de capture.
+ *
+ * Duplique volontairement l'algorithme de `mulberry32.mjs` (implémentation
+ * canonique, utilisée côté Node par gen-save-demo.ts) : cette source doit
+ * rester une chaîne JS autonome, sans import, pour être injectable telle
+ * quelle dans la page — un test croisé (amorce.test.mjs) verrouille
+ * l'équivalence des deux copies.
  */
 export function scriptGraine(graine) {
   if (!Number.isFinite(graine)) {
