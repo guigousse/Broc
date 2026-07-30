@@ -128,6 +128,13 @@ describe("CommandeRow", () => {
     expect(screen.getByTestId("progression-compteur").textContent).toBe("0/1");
   });
 
+  it("carte dépliée : un seul bandeau de récompense (plus de doublon)", () => {
+    const state = createMockGameState({ missions: [{ courrierId: "m1", statut: "active" }] });
+    render(<CommandeRow courrier={courrierMission()} state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}} />);
+    expect(screen.getAllByTestId("jeton-argent").length).toBe(1);
+    expect(screen.getAllByTestId("jeton-xp").length).toBe(1);
+  });
+
   it("commande livrable : le bandeau passe en PRÊT ✓ (plus de badge isolé)", () => {
     const state: GameState = createMockGameState({
       inventaireJoueur: [createMockObjet({ templateId: "ma.lampe_petrole_ancienne", etat: "Très bon", categorie: "Maison" })],

@@ -268,9 +268,9 @@ export function OngletCommandes({ state, onLivrerMission, tempsConfiance, ouvert
     for (const { at, etape } of phasesLivraison(rEff)) {
       const t = window.setTimeout(() => {
         if (etape.type === "envol") {
-          // Carte dépliée = DEUX bandeaux de récompense, donc deux jumeaux par
-          // jeton : masquer les deux, sinon le jeton du détail reste visible
-          // pendant que son clone s'envole.
+          // Un seul bandeau par carte depuis la refonte, mais on masque toutes
+          // les occurrences du jeton : le clone qui s'envole ne doit jamais
+          // cohabiter avec son original.
           const jumeaux = racine
             ? Array.from(racine.querySelectorAll<HTMLElement>(`[data-jeton="${etape.jeton}"]`))
             : [];

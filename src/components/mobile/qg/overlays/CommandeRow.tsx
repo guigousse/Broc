@@ -270,8 +270,6 @@ export function CommandeRow({
               </div>
             );
           })}
-          <RecompenseJetons recompense={rEff} variante="bandeau"
-            label={bandeauPret ? d.carnet.pret : d.carnet.recompenseLabel} allume={bandeauPret} />
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
             <button
               type="button"
