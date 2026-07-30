@@ -198,7 +198,12 @@ body {
 .case { position: relative; aspect-ratio: 1; border-radius: 50%; overflow: hidden;
   border: ${px(0.005)}px solid #cfa863; background: #2a1a0c;
   box-shadow: 0 ${px(0.004)}px ${px(0.01)}px rgba(0,0,0,.6); }
-.portrait { width: 134%; margin-left: -17%; margin-top: -10%; display: block; }
+/* Les portraits n'ont pas tous le même format (340x393, 512x512, 320x304...) :
+   un recadrage fixe en pourcentage coupait la tête des plus hauts. object-fit
+   cover normalise le rapport de forme, et object-position vers le haut garde
+   le visage dans le cercle quel que soit le cadrage d'origine. */
+.portrait { width: 100%; height: 100%; object-fit: cover; object-position: 50% 8%;
+  display: block; }
 .plus { display: flex; align-items: center; justify-content: center; border-style: dashed;
   background: radial-gradient(circle at 50% 40%, #4a3116, #241505); }
 .plus span { font-family: 'Cinzel', Georgia, serif; font-weight: 700;
