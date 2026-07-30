@@ -26,10 +26,14 @@ const ESSAIS_NEGO_MAX = 6;
  * headless ne les simule jamais (toujours 0) : sans ce correctif, l'en-tête
  * du jeu se colle en haut de l'écran, exactement là où le gabarit dessine
  * l'île dynamique du châssis — qui vient alors recouvrir le niveau affiché.
+ * iPhone : 59 pt est la valeur réelle de `safe-area-inset-top` sur les
+ * appareils à Dynamic Island (mesurée sur iPhone 15 Pro) — un peu plus que
+ * l'île elle-même, pour qu'elle flotte avec de la marge au-dessus de
+ * l'en-tête plutôt qu'au ras de son bord.
  */
 function zoneSecurite(appareil) {
   return appareil.chassis.island
-    ? { top: 54, bottom: 34 } // iPhone à île dynamique
+    ? { top: 59, bottom: 34 } // iPhone à île dynamique
     : { top: 24, bottom: 20 }; // iPad, pas d'île mais coins arrondis + geste
 }
 

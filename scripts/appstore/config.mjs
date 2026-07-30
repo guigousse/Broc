@@ -35,8 +35,17 @@ export const APPAREILS = {
     titreRatio: 0.091,
     bulleRatio: 0.071,
     gpLargeur: 0.52,
-    // Le châssis iPhone est dimensionné par sa LARGEUR.
-    chassis: { mode: "largeur", valeur: 0.70, haut: 0.18, ratioEcran: 1242 / 2688, island: true },
+    // Le châssis iPhone est dimensionné par sa LARGEUR. `rayon`, `cadre` et
+    // `lunette` sont des fractions de la largeur du châssis (pas de L) :
+    // rayon ~12 % donne les coins arrondis d'un iPhone récent (mesuré sur
+    // les gabarits Apple, ~55 pt sur 430 pt de large) ; `cadre` est la
+    // tranche métallique (fine) ; `lunette` est le bord noir plein entre le
+    // cadre et la dalle — c'est lui qui manquait, l'écran touchait presque
+    // le cadre directement.
+    chassis: {
+      mode: "largeur", valeur: 0.70, haut: 0.18, ratioEcran: 1242 / 2688, island: true,
+      rayon: 0.12, cadre: 0.012, lunette: 0.028,
+    },
     titreHaut: 0.042,
     filetHaut: 0.154,
   },
@@ -51,7 +60,12 @@ export const APPAREILS = {
     gpLargeur: 0.40,
     // Le châssis iPad est dimensionné par sa HAUTEUR — à 70 % de largeur il
     // déborderait, le format étant bien moins allongé (0,750 contre 0,462).
-    chassis: { mode: "hauteur", valeur: 0.60, haut: 0.17, ratioEcran: 2064 / 2752, island: false },
+    // `rayon` nettement plus faible que sur iPhone : coins d'iPad, moins
+    // arrondis en proportion de la largeur du châssis.
+    chassis: {
+      mode: "hauteur", valeur: 0.60, haut: 0.17, ratioEcran: 2064 / 2752, island: false,
+      rayon: 0.045, cadre: 0.010, lunette: 0.022,
+    },
     titreHaut: 0.040,
     filetHaut: 0.130,
   },

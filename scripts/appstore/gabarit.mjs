@@ -2,14 +2,40 @@
 import { BULLE, MEDAILLON_PLUS, TITRES } from "./textes.mjs";
 
 const BLOC_FONT_FACE = /@font-face\s*\{[^}]*\}/g;
+const URL_POLICE = /url\((['"]?)(\/fonts\/[^'")]+)\1\)/g;
+const PLAGE_POIDS = /font-weight:\s*(\d+)\s+(\d+)\s*;/;
+// Poids réellement utilisés par le gabarit (titre et « et + » en 700, bulle
+// en 400) — dupliquer sur ces quatre valeurs couvre tout, y compris si un
+// futur réglage change de poids.
+const POIDS_DISCRETS = [400, 500, 600, 700];
 
 /**
- * Extrait de `globals.css` les blocs @font-face des familles demandées et
- * réécrit leurs URL en absolu. Les replis grecs sont déclarés SOUS le nom de
- * la famille latine (Cinzel → GFS Didot, Caveat → EB Garamond italique) : les
- * garder suffit à couvrir le grec, sans cas particulier ailleurs.
+ * Les replis grecs (GFS Didot, EB Garamond italique) déclarent un seul bloc
+ * couvrant `font-weight: 100 900`, quand les blocs latins en déclarent un
+ * par poids discret (400/500/600/700). Chromium (constaté en 149 headless)
+ * choisit le meilleur poids **avant** de regarder `unicode-range` : face à
+ * un texte grec en 700, il élit le bloc latin 700 — qui ne couvre pourtant
+ * pas le grec — plutôt que le bloc grec à plage large, et le grec retombe
+ * en silence sur le serif système. Dupliquer chaque bloc à plage de poids
+ * en un bloc par poids discret élimine l'écart de spécificité : à poids
+ * égal, la comparaison se fait enfin sur `unicode-range`, et le bon bloc
+ * gagne.
  */
-export function extraireFontFace(css, familles, baseUrl) {
+function eclaterPlagesDePoids(blocs) {
+  return blocs.flatMap((b) => {
+    const m = b.match(PLAGE_POIDS);
+    if (!m) return [b];
+    return POIDS_DISCRETS.map((p) => b.replace(PLAGE_POIDS, `font-weight: ${p};`));
+  });
+}
+
+/**
+ * Filtre les blocs `@font-face` de `globals.css` sur les familles demandées.
+ * Les replis grecs sont déclarés SOUS le nom de la famille latine
+ * (Cinzel → GFS Didot, Caveat → EB Garamond italique) : les garder suffit à
+ * couvrir le grec, sans cas particulier ailleurs.
+ */
+function blocsGardes(css, familles) {
   const blocs = css.match(BLOC_FONT_FACE) ?? [];
   const gardes = blocs.filter((b) => {
     const m = b.match(/font-family:\s*['"]([^'"]+)['"]/);
@@ -18,8 +44,34 @@ export function extraireFontFace(css, familles, baseUrl) {
   if (gardes.length === 0) {
     throw new Error(`aucun @font-face trouvé pour ${familles.join(", ")}`);
   }
-  return gardes
-    .map((b) => b.replace(/url\((['"]?)\/fonts\//g, `url($1${baseUrl}/fonts/`))
+  return eclaterPlagesDePoids(gardes);
+}
+
+/**
+ * Chemins `/fonts/…` référencés par les blocs `@font-face` des familles
+ * demandées, dédupliqués. Sert à savoir quels fichiers charger avant
+ * d'appeler `extraireFontFace`.
+ */
+export function cheminsPolices(css, familles) {
+  const chemins = new Set();
+  for (const b of blocsGardes(css, familles)) {
+    for (const m of b.matchAll(URL_POLICE)) chemins.add(m[2]);
+  }
+  return [...chemins];
+}
+
+/**
+ * Extrait de `globals.css` les blocs @font-face des familles demandées et
+ * réécrit leurs URL via `resoudre` (chemin `/fonts/…` → URL finale — une URI
+ * `data:` en base64 en pratique). Embarquer les octets évite toute requête
+ * réseau : `rendu.mjs` compose la page avec `page.setContent()`, qui place le
+ * document sur l'origine `about:blank`, où Chromium refuse les sous-
+ * ressources `file://` — une police demandée puis refusée retombe sur le
+ * repli serif du navigateur, en silence.
+ */
+export function extraireFontFace(css, familles, resoudre) {
+  return blocsGardes(css, familles)
+    .map((b) => b.replace(URL_POLICE, (_, q, chemin) => `url(${q}${resoudre(chemin)}${q})`))
     .join("\n");
 }
 
@@ -46,7 +98,23 @@ export function construireHtml({
   const H = sortie.height;
   const px = (frac, base = L) => Math.round(base * frac);
   const geo = geometrieChassis(appareil);
+  // Rayons imbriqués (cadre métallique puis lunette noire) : chaque couche
+  // interne perd l'épaisseur de la couche qui la contient, comme sur un
+  // vrai boîtier — sinon les coins de l'écran ne suivent pas ceux du
+  // châssis et l'effet « rectangle générique » revient par un autre biais.
+  const rayonChassis = Math.round(geo.largeur * appareil.chassis.rayon);
+  const cadre = Math.round(geo.largeur * appareil.chassis.cadre);
+  const lunette = Math.round(geo.largeur * appareil.chassis.lunette);
+  const rayonCoque = Math.max(0, rayonChassis - cadre);
+  const rayonEcran = Math.max(0, rayonCoque - lunette);
   const galerie = visuel.cle === "personnages";
+  // Pointe de la bulle (visuel 5) : un triangle large et bas, pas la petite
+  // pointe symétrique d'origine — il doit désigner la tête du grand-père,
+  // qui est nettement plus bas et à gauche, pas juste « à côté ».
+  const bulleFont = px(appareil.bulleRatio);
+  const pointeHauteur = Math.round(bulleFont * 0.65);
+  const pointePortee = Math.round(bulleFont * 1.15);
+  const pointeBord = Math.round(bulleFont * 0.14);
   const cases = grille.colonnes * grille.lignes;
   const portraits = portraitsDataUri.slice(0, cases - 1);
 
@@ -91,16 +159,16 @@ body {
 .chassis { position: absolute; left: 50%; transform: translateX(-50%);
   top: ${px(appareil.chassis.haut, H)}px;
   width: ${geo.largeur}px; height: ${geo.hauteur}px;
-  padding: ${px(0.0035)}px; border-radius: ${px(0.022)}px;
+  padding: ${cadre}px; border-radius: ${rayonChassis}px;
   background: linear-gradient(150deg,#e8e3da 0%,#8d867c 22%,#4c4841 46%,#b8b1a6 64%,#5a564f 82%,#ddd7cd 100%);
   box-shadow: 0 ${px(0.018)}px ${px(0.03)}px rgba(0,0,0,.65); }
 .coque { width: 100%; height: 100%; background: #0a0a0a;
-  border-radius: ${px(0.019)}px; padding: ${px(0.0016)}px; }
+  border-radius: ${rayonCoque}px; padding: ${lunette}px; }
 .ecran { position: relative; width: 100%; height: 100%; overflow: hidden;
-  border-radius: ${px(0.017)}px; background: #1d1206; }
+  border-radius: ${rayonEcran}px; background: #1d1206; }
 .capture { width: 100%; height: 100%; object-fit: cover; display: block; }
-.island { position: absolute; top: 1.9%; left: 50%; transform: translateX(-50%);
-  width: 30%; height: 2.1%; background: #000; border-radius: 999px; z-index: 3; }
+.island { position: absolute; top: 1.6%; left: 50%; transform: translateX(-50%);
+  width: 28%; height: 1.7%; background: #000; border-radius: 999px; z-index: 3; }
 .barre-accueil { position: absolute; bottom: .9%; left: 50%; transform: translateX(-50%);
   width: 32%; height: ${px(0.0025)}px; background: rgba(251,247,238,.85);
   border-radius: 999px; z-index: 3; }
@@ -123,18 +191,19 @@ body {
   background: radial-gradient(circle at 50% 40%, #4a3116, #241505); }
 .plus span { font-family: 'Cinzel', Georgia, serif; font-weight: 700;
   font-size: ${px(0.05)}px; color: #f0d9a8; }
-.bulle { position: absolute; right: 4%; bottom: 13%; width: 56%;
+.bulle { position: absolute; right: 8%; bottom: 11%; width: 50%;
   background: #FBF7EE; border: ${px(0.004)}px solid #C5A059; border-radius: ${px(0.011)}px;
   padding: ${px(0.026)}px ${px(0.03)}px; text-align: center;
-  font-family: 'Caveat', cursive; font-size: ${px(appareil.bulleRatio)}px;
+  font-family: 'Caveat', cursive; font-size: ${bulleFont}px;
   line-height: 1.15; color: #3b2a16;
   box-shadow: 0 ${px(0.008)}px ${px(0.018)}px rgba(0,0,0,.55); }
-.bulle::before { content: ''; position: absolute; left: -${px(0.013)}px; bottom: ${px(0.03)}px;
-  border-top: ${px(0.008)}px solid transparent; border-bottom: ${px(0.008)}px solid transparent;
-  border-right: ${px(0.013)}px solid #C5A059; }
-.bulle::after { content: ''; position: absolute; left: -${px(0.0095)}px; bottom: ${px(0.032)}px;
-  border-top: ${px(0.006)}px solid transparent; border-bottom: ${px(0.006)}px solid transparent;
-  border-right: ${px(0.0105)}px solid #FBF7EE; }
+.bulle::before, .bulle::after { content: ''; position: absolute; right: 84%;
+  clip-path: polygon(55% 0, 100% 0, 0 100%); }
+.bulle::before { bottom: -${pointeHauteur - pointeBord}px;
+  width: ${pointePortee}px; height: ${pointeHauteur}px; background: #C5A059; }
+.bulle::after { right: calc(84% - ${pointeBord}px); bottom: -${pointeHauteur - 3 * pointeBord}px;
+  width: ${pointePortee - 2 * pointeBord}px; height: ${pointeHauteur - 2 * pointeBord}px;
+  background: #FBF7EE; }
 </style></head>
 <body>
   <div class="halo"></div>

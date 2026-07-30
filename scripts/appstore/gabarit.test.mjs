@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { APPAREILS, VISUELS } from "./config.mjs";
 import { BULLE, TITRES } from "./textes.mjs";
-import { construireHtml, extraireFontFace } from "./gabarit.mjs";
+import { cheminsPolices, construireHtml, extraireFontFace } from "./gabarit.mjs";
+
+/** Résolveur de test : une URI `data:` bidon, dérivée du chemin, sans I/O. */
+const resoudreBidon = (chemin) => `data:font/woff2;base64,FAUX(${chemin})`;
 
 const CSS = `
 @font-face { font-family: 'Cinzel'; src: url(/fonts/google/g05.woff2) format('woff2');
@@ -26,26 +29,41 @@ const base = (n, appareil = "iphone") => ({
 
 describe("extraction des @font-face du jeu", () => {
   it("garde les familles demandées et écarte les autres", () => {
-    const css = extraireFontFace(CSS, ["Cinzel", "Caveat"], "file:///app/public");
+    const css = extraireFontFace(CSS, ["Cinzel", "Caveat"], resoudreBidon);
     expect(css).toContain("Cinzel");
     expect(css).toContain("Caveat");
     expect(css).not.toContain("Courier Prime");
   });
 
   it("conserve le repli grec déclaré sous le nom Cinzel", () => {
-    const css = extraireFontFace(CSS, ["Cinzel"], "file:///app/public");
+    const css = extraireFontFace(CSS, ["Cinzel"], resoudreBidon);
     expect(css).toContain("gfs-didot-greek.woff2");
     expect(css).toContain("U+0370-0377");
   });
 
-  it("réécrit les URL en absolu, avec ou sans guillemets", () => {
-    const css = extraireFontFace(CSS, ["Cinzel"], "file:///app/public");
-    expect(css).toContain("url(file:///app/public/fonts/google/g05.woff2)");
-    expect(css).toContain("url('file:///app/public/fonts/google/gfs-didot-greek.woff2')");
+  it("réécrit les URL via le résolveur fourni, avec ou sans guillemets", () => {
+    const css = extraireFontFace(CSS, ["Cinzel"], resoudreBidon);
+    expect(css).toContain("url(data:font/woff2;base64,FAUX(/fonts/google/g05.woff2))");
+    expect(css).toContain("url('data:font/woff2;base64,FAUX(/fonts/google/gfs-didot-greek.woff2)')");
   });
 
   it("lève si aucune famille ne correspond", () => {
-    expect(() => extraireFontFace(CSS, ["Helvetica"], "file:///x")).toThrow(/Helvetica/);
+    expect(() => extraireFontFace(CSS, ["Helvetica"], resoudreBidon)).toThrow(/Helvetica/);
+  });
+});
+
+describe("chemins de police à précharger", () => {
+  it("liste, dédupliqués, les chemins /fonts/… des familles demandées", () => {
+    const chemins = cheminsPolices(CSS, ["Cinzel"]);
+    expect(chemins).toEqual([
+      "/fonts/google/g05.woff2",
+      "/fonts/google/gfs-didot-greek.woff2",
+    ]);
+  });
+
+  it("n'inclut pas les chemins des familles écartées", () => {
+    const chemins = cheminsPolices(CSS, ["Cinzel"]);
+    expect(chemins).not.toContain("/fonts/google/g03.woff2");
   });
 });
 

@@ -19,10 +19,13 @@ import { capturerEcrans } from "./appstore/capture.mjs";
 import { parserArgs } from "./appstore/cli.mjs";
 import { APPAREILS, CHEMINS, VISUELS } from "./appstore/config.mjs";
 import { controlerFichier, resumerControles } from "./appstore/controle.mjs";
-import { construireHtml, extraireFontFace } from "./appstore/gabarit.mjs";
+import { construireHtml } from "./appstore/gabarit.mjs";
+import { chargerFontFaceCss } from "./appstore/polices.mjs";
 import { rendreVisuel } from "./appstore/rendu.mjs";
 import { demarrerServeur } from "./appstore/serveur.mjs";
 import { PORTRAITS_GALERIE } from "./appstore/textes.mjs";
+
+const FAMILLES_GABARIT = ["Cinzel", "Caveat"];
 
 const AIDE = `
 Visuels App Store — 5 visuels × 2 appareils × 4 langues.
@@ -69,9 +72,7 @@ async function main() {
   await fs.mkdir(CHEMINS.captures, { recursive: true });
 
   const css = await fs.readFile(CHEMINS.globalsCss, "utf8");
-  const fontFaceCss = extraireFontFace(
-    css, ["Cinzel", "Caveat"], `file://${CHEMINS.fonts}`,
-  );
+  const fontFaceCss = await chargerFontFaceCss(css, FAMILLES_GABARIT, CHEMINS.fonts);
 
   const portraitsDataUri = await Promise.all(
     PORTRAITS_GALERIE.map((p) => dataUri(path.join(CHEMINS.personas, p))),
