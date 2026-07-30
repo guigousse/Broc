@@ -39,6 +39,7 @@ import { xpRequisPourNiveauBrocanteur } from "@/lib/xp";
 import { OBJET_TEMPLATES, LEGENDAIRES } from "@/data/objetTemplates";
 import { UNIQUES } from "@/data/uniques";
 import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
+import { competencesParTree, TREE_GENERAL } from "@/data/competences";
 import { mulberry32 } from "./appstore/mulberry32.mjs";
 
 // --- Graine du RNG (reproductibilité inter-exécutions, optionnelle) -----
@@ -94,6 +95,9 @@ function objetDe(id: string, etat: EtatObjet, idx: number): Objet {
 // Les 1ers slots (triés commun→rare→légendaire) deviennent « donnés » (sticker
 // couleur + étoiles) ; une frange suivante reste « vue » (grisée) pour un
 // dégradé de progression réaliste. Le reste : silhouette.
+// Templates forcés à « vu » : la pastille « Nouveau » du chinage déborde de
+// l'écran quand le nom tient sur deux lignes (cf. visuels App Store).
+const DEJA_VUS = new Set(["leg.lv.gutenberg_feuillet"]);
 const ETATS_DEMO: EtatObjet[] = ["Bon", "Très bon", "Pristin état"];
 const collection = initCollection();
 for (const cat of Object.keys(collection) as CategorieObjet[]) {
@@ -113,7 +117,7 @@ for (const cat of Object.keys(collection) as CategorieObjet[]) {
         donation: { etat, valeur: Math.round(valeurBase * prime), valeurBase },
       };
     }
-    if (i < nDonnes + nVus) {
+    if (i < nDonnes + nVus || DEJA_VUS.has(s.templateId)) {
       return { ...s, vu: true, dejaPossede: true, vuDansCollection: true };
     }
     return s;
@@ -150,6 +154,13 @@ const missions: MissionResolution[] = QUETES_PRINCIPALES.map((ch, i) => ({
   jourResolution: 5 + i * 6,
 }));
 
+// --- Compétences : l'arbre général en entier ------------------------------
+// Un niveau 75 sans aucune compétence est incohérent, et prive la démo de
+// mécaniques visibles — « Lecteur d'âmes » (general.presentation.1) est ce qui
+// révèle le nom et l'ambiance de l'acheteur : sans lui, l'étal n'affiche que
+// « Un inconnu » et une silhouette noire.
+const competencesDebloquees = competencesParTree(TREE_GENERAL).map((c) => c.id);
+
 const brocanteId = "marche-saint-ouen";
 const state: GameState = {
   version: SAVE_VERSION,
@@ -163,7 +174,7 @@ const state: GameState = {
   tendances: genererTendances(),
   prochainesTendances: genererTendances(),
   prochainRafraichissementTendances: prochainLundi(INITIAL_JOUR + 1),
-  competencesDebloquees: [],
+  competencesDebloquees,
   brocanteur: { xp, niveau: NIVEAU_CIBLE, pointsDisponibles: 0 },
   collection,
   gazetteAchetee: true,
