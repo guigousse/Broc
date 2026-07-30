@@ -21,6 +21,8 @@
     "gen:clients": "node scripts/generate-client-personas.mjs",
     "gen:camions": "node scripts/generate-camions-profil.mjs",
     "gen:reels": "node scripts/generate-reels.mjs",
+    "gen:gp-hd": "node scripts/generate-grand-pere-hd.mjs",
+    "gen:appstore": "node scripts/generate-appstore-shots.mjs",
     "opt:images": "node scripts/optimize-item-images.mjs",
     "gen:webp": "node scripts/generate-webp.mjs",
     "gen:thumbs": "node scripts/generate-item-thumbs.mjs",

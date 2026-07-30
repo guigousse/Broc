@@ -9,12 +9,20 @@
  *
  * Utilise les VRAIES fonctions/données du jeu (pas de JSON à la main) : la save
  * reste valide vis-à-vis de la version courante et des migrations.
+ *
+ * Variable d'environnement APPSTORE_SEED (optionnelle) : si définie, fige
+ * Math.random (mulberry32) pour que tendances/météo/célébrité du jour soient
+ * reproductibles — utilisé par le pipeline des visuels App Store
+ * (generate-appstore-shots.mjs). Si absente (cas historique, notamment
+ * scripts/seed-demo-sim.sh), le comportement reste inchangé : tirage aléatoire
+ * réel à chaque exécution.
  */
 import type {
   CategorieObjet,
   CollectionSlot,
   EtatObjet,
   GameState,
+  MissionResolution,
   Objet,
   ObjetEnVitrine,
 } from "@/types/game";
@@ -30,6 +38,23 @@ import { emptyPiecesAmelioration } from "@/data/categories";
 import { xpRequisPourNiveauBrocanteur } from "@/lib/xp";
 import { OBJET_TEMPLATES, LEGENDAIRES } from "@/data/objetTemplates";
 import { UNIQUES } from "@/data/uniques";
+import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
+import { mulberry32 } from "./appstore/mulberry32.mjs";
+
+// --- Graine du RNG (reproductibilité inter-exécutions, optionnelle) -----
+// Ce script tourne dans un process Node séparé du navigateur Playwright :
+// l'injection de scriptGraine() (amorce.mjs) ne le couvre pas. Or
+// genererTendances()/tirerMeteoSemaine()/tirerCelebrite() ci-dessous
+// utilisent Math.random. scripts/generate-appstore-shots.mjs fixe
+// APPSTORE_SEED avant d'invoquer ce script, pour que la save de démo soit
+// reproductible d'une exécution à l'autre (tendances de prix, célébrité du
+// jour). SANS cette variable — c'est le cas de scripts/seed-demo-sim.sh, un
+// usage préexistant et partagé — Math.random n'est PAS touché : le
+// comportement historique (tirage aléatoire réel à chaque exécution) est
+// préservé à l'identique.
+if (process.env.APPSTORE_SEED !== undefined) {
+  Math.random = mulberry32(Number(process.env.APPSTORE_SEED));
+}
 
 const NIVEAU_CIBLE = 75;
 // Horodatage figé (le script tourne hors app ; on ne veut pas Date.now()
@@ -116,6 +141,15 @@ const inventaire: Objet[] = POOL.slice(10, 14).map((t, i) =>
   objetDe(t.templateId, "Bon", 100 + i),
 );
 
+// --- Trame principale : les 12 chapitres livrés -------------------------
+// Un niveau 75 a forcément terminé le fil rouge. Nécessaire notamment pour
+// débloquer marche-saint-ouen (tier 2), dont la condition exige le chapitre 4.
+const missions: MissionResolution[] = QUETES_PRINCIPALES.map((ch, i) => ({
+  courrierId: ch.id,
+  statut: "livree",
+  jourResolution: 5 + i * 6,
+}));
+
 const brocanteId = "marche-saint-ouen";
 const state: GameState = {
   version: SAVE_VERSION,
@@ -149,7 +183,7 @@ const state: GameState = {
   passagesSansChat: 0,
   declencheursDeclenches: [],
   grandLivre: [],
-  missions: [],
+  missions,
   quetesPeriodiques: {
     quotidien: { cle: "", courrierIds: [] },
     hebdo: { cle: "", courrierIds: [] },

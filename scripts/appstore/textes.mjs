@@ -1,0 +1,84 @@
+/** Textes affichés sur les visuels App Store. Module pur. */
+
+export const TITRES = {
+  chiner: {
+    fr: "Dénichez des trésors oubliés",
+    en: "Uncover forgotten treasures",
+    es: "Descubre tesoros olvidados",
+    el: "Ανακαλύψτε ξεχασμένους θησαυρούς",
+  },
+  negocier: {
+    fr: "Négociez chaque euro",
+    en: "Haggle for every euro",
+    es: "Regatea hasta el último euro",
+    el: "Παζαρέψτε για κάθε ευρώ",
+  },
+  vendre: {
+    fr: "Tenez votre propre stand",
+    en: "Run your own stall",
+    es: "Monta tu propio puesto",
+    el: "Στήστε τον δικό σας πάγκο",
+  },
+  collection: {
+    fr: "Complétez votre collection",
+    en: "Complete your collection",
+    es: "Completa tu colección",
+    el: "Ολοκληρώστε τη συλλογή σας",
+  },
+  personnages: {
+    fr: "31 personnages uniques à rencontrer",
+    en: "31 unique characters to meet",
+    es: "31 personajes únicos por conocer",
+    el: "31 μοναδικοί χαρακτήρες",
+  },
+};
+
+/** Réplique du grand-père, visuel 5 uniquement. */
+export const BULLE = {
+  fr: "Méfie-toi de celui qui sourit le plus",
+  en: "Beware the one who smiles the most",
+  es: "Desconfía del que más sonríe",
+  el: "Να φυλάγεσαι απ' αυτόν που χαμογελάει πιο πολύ",
+};
+
+/** Seizième (ou vingtième) médaillon de la galerie. */
+export const MEDAILLON_PLUS = { fr: "et +", en: "and +", es: "y +", el: "και +" };
+
+/**
+ * Libellé du bouton qui ouvre le tiroir de négociation. Recopié depuis
+ * src/lib/i18n/ui/<langue>.ts — un test compare les deux, pour qu'un renommage
+ * dans le jeu casse la suite de tests plutôt que la capture.
+ */
+export const LIBELLE_NEGOCIER = {
+  fr: "Négocier",
+  en: "Haggle",
+  es: "Regatear",
+  el: "Παζάρεμα",
+};
+
+/**
+ * Portraits de la galerie du visuel 5, dans l'ordre de lecture.
+ * Les 15 premiers alimentent la grille 4×4 de l'iPhone ; les 19 alimentent la
+ * grille 5×4 de l'iPad. La dernière case est toujours le médaillon « et + ».
+ */
+export const PORTRAITS_GALERIE = [
+  "vendeur-antiquaire.webp",
+  "vendeur-bonimenteur.webp",
+  "vendeur-disquaire.webp",
+  "vendeur-grincheux.webp",
+  "vendeur-malin.webp",
+  "vendeur-naif.webp",
+  "vendeur-pipelette.webp",
+  "vendeur-videcave.webp",
+  "vendeur-bonhomme.webp",
+  "clients/client-galeriste.webp",
+  "clients/client-bibliophile.webp",
+  "clients/client-snob_bourgeois.webp",
+  "clients/client-gamer_nostalgique.webp",
+  "clients/client-passionnee_artdeco.webp",
+  "commanditaires/mode.webp",
+  "clients/client-retraite_chineur.webp",
+  "clients/client-touriste_perdu.webp",
+  "vendeur-mamie.webp",
+  "commanditaires/art.webp",
+];
