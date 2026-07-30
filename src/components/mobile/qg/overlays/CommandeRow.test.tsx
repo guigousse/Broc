@@ -113,7 +113,7 @@ describe("CommandeRow", () => {
     };
     const state = createMockGameState({ missions: [{ courrierId: "m3", statut: "active" }] });
     render(<CommandeRow courrier={courrier} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
-    expect(screen.getByTestId("progression-compteur").textContent).toBe("0/1");
+    expect(screen.getByTestId("progression-compteur").textContent).toBe("0 / 300 €");
     expect((screen.getByTestId("progression-barre") as HTMLElement).style.width).not.toContain("NaN");
   });
 
@@ -123,6 +123,9 @@ describe("CommandeRow", () => {
     expect(screen.getByTestId("jeton-argent").textContent).toContain("+90 €");
     expect(screen.getByTestId("jeton-xp").textContent).toContain("+100 XP"); // principale
     expect(screen.queryByTestId("jeton-energie")).toBeNull();
+    // Agrégat remplies/total avec une CIBLE objet unique (pas d'objectif chiffré) :
+    // aucun objet en inventaire, donc "0/1".
+    expect(screen.getByTestId("progression-compteur").textContent).toBe("0/1");
   });
 
   it("commande livrable : le bandeau passe en PRÊT ✓ (plus de badge isolé)", () => {

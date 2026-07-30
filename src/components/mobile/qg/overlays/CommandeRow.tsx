@@ -150,10 +150,17 @@ export function CommandeRow({ courrier, state, ouvert, onToggle, onLivrer, enCer
   const progPremierObjectif = premierObjectifNonObjet
     ? progressionObjectif(premierObjectifNonObjet, state, resoPourObjectifs, courrier.jourRecu)
     : null;
-  // Progression affichée : agrégat « remplies / total » sur tous les objectifs
-  // (mêmes garde-fous 0/0-NaN qu'avant — cf. resoPourObjectifs ci-dessus).
-  const pct = totalObjectifs > 0 ? (rempliesObjectifs / totalObjectifs) * 100 : 0;
-  const compteur = `${rempliesObjectifs}/${totalObjectifs}`;
+  // Progression affichée : objectif chiffré unique (aucune cible objet, un
+  // seul objectif non-objet) → « actuel / cible € » fin-grain ; sinon agrégat
+  // « remplies / total » (mêmes garde-fous 0/0-NaN qu'avant).
+  const objectifChiffre =
+    p.cibles.length === 0 && objectifsTous.length === 1 ? premierObjectifNonObjet : null;
+  const pct = objectifChiffre && progPremierObjectif
+    ? Math.min(100, (progPremierObjectif.actuel / Math.max(1, progPremierObjectif.cible)) * 100)
+    : totalObjectifs > 0 ? (rempliesObjectifs / totalObjectifs) * 100 : 0;
+  const compteur = objectifChiffre && progPremierObjectif
+    ? `${progPremierObjectif.actuel} / ${progPremierObjectif.cible}${objectifChiffre.type !== "niveau" && objectifChiffre.type !== "restauration" ? " €" : ""}`
+    : `${rempliesObjectifs}/${totalObjectifs}`;
 
   return (
     <div style={carte}>
