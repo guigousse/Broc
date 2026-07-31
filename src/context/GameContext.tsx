@@ -128,6 +128,7 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
 import { localeCourante } from "@/lib/i18n/locales";
 import { libelleCategorie } from "@/lib/i18n/libelles";
+import { slotActif, type NumeroSlot } from "@/lib/storage/slots";
 
 const gameRepository = createGameRepository();
 
@@ -289,6 +290,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   stateRef.current = state;
   // Évite de spammer le toast : on n'alerte qu'à la bascule succès→échec.
   const saveEnEchecRef = useRef(false);
+  // Slot auquel appartient l'état en mémoire (posé à l'hydratation et à
+  // `nouvellePartie`). Le repository résout le slot cible au moment de
+  // l'ÉCRITURE (`slotActif()`) : si l'index a basculé entre-temps (lancement
+  // d'une autre partie au titre — `detacherPartie` n'est commité par React
+  // qu'après coup, alors que pagehide/le debounce peuvent tirer avant),
+  // sauvegarder écraserait la partie du slot fraîchement activé avec
+  // l'ancienne. Toute écriture est donc gardée sur cette appartenance.
+  const slotEtatRef = useRef<NumeroSlot | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -298,6 +307,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const migrated: GameState | null = loaded
         ? migrerSauvegarde(loaded)
         : null;
+      slotEtatRef.current = slotActif();
       setState(migrated);
       setIsHydrated(true);
     });
@@ -309,6 +319,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isHydrated || !state) return;
     const doSave = () => {
+      // L'état n'appartient plus au slot actif (bascule de partie en cours) :
+      // écrire maintenant détruirait la save du nouveau slot. On abandonne —
+      // cet état est de toute façon en train d'être détaché.
+      if (slotActif() !== slotEtatRef.current) return;
       gameRepository.save(state).then((ok) => {
         if (!ok && !saveEnEchecRef.current) {
           saveEnEchecRef.current = true;
@@ -512,6 +526,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
     await planifierPleinEnergie(Date.now() + reste * 1000, localeRef.current);
   }, [tempsConfiance]);
 
+  // Notif « Objet restauré » : une notif par objet en restauration, à son
+  // échéance. Repart TOUJOURS de `stateRef` (l'état le plus frais).
+  const synchroniserNotifsRestau = useCallback(() => {
+    // `finMs` est en TEMPS DE CONFIANCE, mais le planificateur OS programme sur
+    // l'HORLOGE MURALE. On convertit chaque échéance en horloge murale (comme la
+    // notif énergie), sinon la notif tomberait au mauvais moment réel si l'horloge
+    // de l'appareil dérive du temps réseau (y compris une triche d'horloge).
+    const ecart = (tempsConfiance() ?? Date.now()) - Date.now(); // confiance - mural
+    const objets = (stateRef.current?.inventaireJoueur ?? [])
+      .filter((o) => o.enRestauration)
+      .map((o) => ({
+        templateId: o.templateId,
+        nom: o.nom,
+        finMs: o.enRestauration!.finMs - ecart,
+      }));
+    void synchroniserNotifsRestauration(objets, Date.now(), localeRef.current);
+  }, [tempsConfiance]);
+
   useEffect(() => {
     if (!isHydrated || energie === undefined) return;
     void synchroniserNotifEnergie();
@@ -526,13 +558,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     synchroniserNotifEnergie,
   ]);
 
-  // Dernière chance avant que l'OS ne gèle la webview : l'échéance qui va
-  // réellement sonner est celle posée ici. Sans ce filet, une dépense d'énergie
-  // juste avant la sortie laissait en place l'échéance précédente — trop tôt —
-  // si sa reprogrammation (asynchrone) n'avait pas eu le temps d'aboutir.
+  // Dernière chance avant que l'OS ne gèle la webview : les échéances qui vont
+  // réellement sonner sont celles posées ici — énergie ET restauration. Pour
+  // l'énergie : une dépense juste avant la sortie laissait en place l'échéance
+  // précédente — trop tôt — si sa reprogrammation (asynchrone) n'avait pas eu
+  // le temps d'aboutir. Pour la restauration : l'écart confiance/mural capturé
+  // à la programmation initiale se périme à chaque repose de l'ancre de temps
+  // (sync réseau au lancement/focus/10 min) — sans recalage ici, la notif
+  // sonnait avec l'avance de la correction d'horloge alors que l'app affichait
+  // encore du temps restant.
   useEffect(() => {
     if (!isHydrated) return;
-    const surSortie = () => void synchroniserNotifEnergie();
+    const surSortie = () => {
+      void synchroniserNotifEnergie();
+      synchroniserNotifsRestau();
+    };
     const surVisibilite = () => {
       if (document.visibilityState === "hidden") surSortie();
     };
@@ -542,7 +582,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("visibilitychange", surVisibilite);
       window.removeEventListener("pagehide", surSortie);
     };
-  }, [isHydrated, synchroniserNotifEnergie]);
+  }, [isHydrated, synchroniserNotifEnergie, synchroniserNotifsRestau]);
 
   // Rappel de retour : programme la série J+1/J+3/J+7 quand l'app passe en
   // arrière-plan, l'annule à la réouverture. No-op hors Tauri ou si la
@@ -576,8 +616,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // naturelle (retour au premier plan) — dégradation douce acceptable.
   }, [isHydrated, locale]);
 
-  // Notif « Objet restauré » : (re)programme une notif par objet en restauration
-  // à son échéance, à chaque changement de l'ensemble. No-op hors Tauri / sans
+  // Notif « Objet restauré » : (re)programme à chaque changement de l'ensemble
+  // (et de langue — textes localisés au scheduling). No-op hors Tauri / sans
   // permission. Clé de dépendance = ids+finMs sérialisés (relance sur changement).
   const restauKey = (state?.inventaireJoueur ?? [])
     .filter((o) => o.enRestauration)
@@ -585,20 +625,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     .join("|");
   useEffect(() => {
     if (!isHydrated) return;
-    // `finMs` est en TEMPS DE CONFIANCE, mais le planificateur OS programme sur
-    // l'HORLOGE MURALE. On convertit chaque échéance en horloge murale (comme la
-    // notif énergie), sinon la notif tomberait au mauvais moment réel si l'horloge
-    // de l'appareil dérive du temps réseau (y compris une triche d'horloge).
-    const ecart = (tempsConfiance() ?? Date.now()) - Date.now(); // confiance - mural
-    const objets = (stateRef.current?.inventaireJoueur ?? [])
-      .filter((o) => o.enRestauration)
-      .map((o) => ({
-        templateId: o.templateId,
-        nom: o.nom,
-        finMs: o.enRestauration!.finMs - ecart,
-      }));
-    void synchroniserNotifsRestauration(objets, Date.now(), locale);
-  }, [isHydrated, restauKey, tempsConfiance, locale]);
+    synchroniserNotifsRestau();
+  }, [isHydrated, restauKey, locale, synchroniserNotifsRestau]);
 
   // Notifs « Nouvelles quêtes » (8h, décalées du reset minuit) + rappel du soir
   // (19h) si le lot du jour/de la semaine a encore une mission active. Relancée
@@ -666,6 +694,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       energieDerniereMaj: Date.now(),
       tutorielEtape: "accueil",
     };
+    // La partie fraîche appartient au slot actif du moment (l'écran titre a
+    // déjà basculé l'index avant d'appeler `nouvellePartie`).
+    slotEtatRef.current = slotActif();
     setState(initial);
     router.push("/bureau");
   }, [router]);
@@ -874,14 +905,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const reset = useCallback(() => {
+    // Appartenance détachée SYNCHRONE : setState(null) n'est que programmé,
+    // et le pagehide d'un reload immédiat peut tirer avant le commit — sans
+    // ça, le flush réécrirait la save qu'on vient de supprimer (résurrection,
+    // slotActif() inchangé donc la garde d'appartenance seule ne voit rien).
+    slotEtatRef.current = null;
     setState(null);
     gameRepository.clear();
   }, []);
 
   // Détache l'état en mémoire sans toucher au storage — utilisé avant une
   // bascule de slot pour que l'effet d'auto-save (gardé sur state null) ne
-  // puisse plus écrire.
-  const detacherPartie = useCallback(() => setState(null), []);
+  // puisse plus écrire. L'appartenance est coupée synchronement (même raison
+  // que dans `reset` : les listeners du flush survivent jusqu'au commit).
+  const detacherPartie = useCallback(() => {
+    slotEtatRef.current = null;
+    setState(null);
+  }, []);
 
   /** Fait avancer le tutoriel vers une étape donnée (idempotent si déjà atteinte/dépassée). */
   const avancerTutoriel = useCallback((vers: TutorielEtape) => {
@@ -1168,6 +1208,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const current = stateRef.current;
     if (!current?.vitrine) return;
     if (current.vitrine.tempsRestantSec === tempsRestantSec) return;
+    // Même garde d'appartenance que l'auto-save : jamais d'écriture d'un
+    // état dans un slot qui n'est plus le sien.
+    if (slotActif() !== slotEtatRef.current) return;
     // Persistance synchrone immédiate depuis le dernier état COMMITÉ : filet
     // pour la suspension iOS (l'effet d'auto-save post-commit peut ne jamais
     // tourner). Peut manquer une mutation encore en attente dans la même

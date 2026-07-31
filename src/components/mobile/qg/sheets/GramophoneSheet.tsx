@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import { Play, Pause, SkipForward, ExternalLink } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
-import { vinylSunoPageUrl } from "@/data/vinylesAudio";
-import { getRarityColors } from "@/lib/rarityColors";
-import { getTemplate } from "@/data/objetTemplates";
+import { nombreVinylesEcoutables, vinylSunoPageUrl } from "@/data/vinylesAudio";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomObjet } from "@/lib/i18n/contenu";
+import { getItemThumbUrl } from "@/lib/itemImages";
 import type { CollectionSlot } from "@/types/game";
 
 interface GramophoneSheetProps {
@@ -135,6 +139,14 @@ const titreVinyle: CSSProperties = {
   minHeight: 18,
 };
 
+/** Ligne sous le titre : lien Suno (si présent) + compteur x/y. */
+const sousTitreLigne: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 10,
+};
+
 const sunoLink: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -149,6 +161,15 @@ const sunoLink: CSSProperties = {
   textDecoration: "none",
 };
 
+/** Compteur vinyles débloqués / écoutables. */
+const compteurVinyles: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  letterSpacing: "0.12em",
+  color: "var(--brass-300)",
+  opacity: 0.75,
+};
+
 /** Section basse : bande de vinyles, fond bois sombre. */
 const sectionVinyles: CSSProperties = {
   background:
@@ -158,34 +179,73 @@ const sectionVinyles: CSSProperties = {
   padding: "10px 12px",
 };
 
+/** Taille des tuiles ; la sélectionnée est ~30 % plus grande. */
+const TILE = 96;
+const TILE_ACTIVE = 125;
+
 const bandeWrap: CSSProperties = {
   display: "flex",
+  // La tuile sélectionnée est plus grande : les autres se centrent dessus.
+  alignItems: "center",
+  // Hauteur réservée sur la grande tuile : pendant la transition de
+  // sélection, l'ancienne rétrécit pendant que la nouvelle grandit et le
+  // max passe sous TILE_ACTIVE — sans réserve, la bande rebondit.
+  minHeight: TILE_ACTIVE,
   gap: 8,
   overflowX: "auto",
   WebkitOverflowScrolling: "touch",
-  paddingBottom: 4,
   scrollbarWidth: "none",
 };
 
 const tileBase: CSSProperties = {
-  flex: "0 0 64px",
-  height: 64,
-  borderRadius: 4,
+  position: "relative",
+  // Pochette nue, sans cadre de rareté : les visuels des vinyles sont des
+  // pochettes carrées, l'anneau de sélection épouse donc leurs bords.
+  borderRadius: 10,
   overflow: "hidden",
+  border: "none",
+  background: "transparent",
   cursor: "pointer",
   padding: 0,
+  transition: "flex-basis 160ms ease, height 160ms ease",
 };
 
-function vinylTileStyle(
-  vinyl: CollectionSlot,
-  actif: boolean,
-): CSSProperties {
-  const tpl = getTemplate(vinyl.templateId);
-  const colors = getRarityColors(vinyl.rarete, !!tpl?.unique);
+/** Disque central en rotation pendant la lecture : recadrage circulaire du
+ * centre de la pochette (80 % de la tuile). L'image intérieure fait
+ * 100/80 = 125 % du cercle, soit exactement la taille de la tuile : le
+ * recadrage est donc parfaitement aligné sur la pochette en dessous, et
+ * seule sa rotation le rend visible. */
+const disqueSpin: CSSProperties = {
+  position: "absolute",
+  left: "10%",
+  top: "10%",
+  width: "80%",
+  height: "80%",
+  borderRadius: "50%",
+  overflow: "hidden",
+  boxShadow: "0 0 0 2px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.4)",
+  // Rotation lente et paisible (un vrai 33 tours serait ~1,8 s/tour).
+  animation: "broc-vinyle-spin 4s linear infinite",
+  pointerEvents: "none",
+};
+
+const disqueImg: CSSProperties = {
+  position: "absolute",
+  width: "125%",
+  height: "125%",
+  left: "-12.5%",
+  top: "-12.5%",
+  // Le preflight Tailwind clampe `img { max-width: 100%; height: auto }` :
+  // sans ce déblocage, l'image interne est écrasée à la taille du cercle.
+  maxWidth: "none",
+};
+
+function vinylTileStyle(actif: boolean): CSSProperties {
+  const taille = actif ? TILE_ACTIVE : TILE;
   return {
     ...tileBase,
-    border: `1px solid ${colors.outer}`,
-    background: colors.thumbBg,
+    flex: `0 0 ${taille}px`,
+    height: taille,
     ...(actif
       ? { boxShadow: "0 0 0 2px var(--brass-300)" }
       : null),
@@ -204,7 +264,8 @@ const emptyMsg: CSSProperties = {
 
 const closeBtn: CSSProperties = {
   position: "absolute",
-  top: 16,
+  // Sous le header haut du QG (le sheet couvre tout l'écran, header compris).
+  top: "calc(var(--safe-top) + var(--mobile-header-h) + 12px)",
   right: 16,
   width: 36,
   height: 36,
@@ -241,6 +302,54 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
     guide = false,
   } = props;
   const { d, locale } = useLangue();
+
+  /* Fermeture au tap sur les zones transparentes de l'image gramophone :
+   * on échantillonne le canal alpha du webp via un canvas hors écran
+   * (construit paresseusement au premier tap, une seule fois). Fail-open :
+   * si l'échantillonnage est impossible (canvas indisponible, image pas
+   * chargée…), le tap ferme — comportement du scrim qui entoure l'image. */
+  const gramoImgRef = useRef<HTMLImageElement | null>(null);
+  const alphaCtxRef = useRef<CanvasRenderingContext2D | null | undefined>(
+    undefined,
+  );
+
+  function tapGramo(e: ReactMouseEvent<HTMLDivElement>) {
+    let alpha = 0;
+    const img = gramoImgRef.current;
+    if (img?.complete && img.naturalWidth > 0) {
+      if (alphaCtxRef.current === undefined) {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        try {
+          ctx?.drawImage(img, 0, 0);
+          alphaCtxRef.current = ctx;
+        } catch {
+          alphaCtxRef.current = null;
+        }
+      }
+      const ctx = alphaCtxRef.current;
+      if (ctx) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        // L'img remplit exactement le bloc (même ratio 303/510) : simple
+        // mise à l'échelle des coordonnées vers les pixels naturels.
+        const x = Math.floor(
+          ((e.clientX - rect.left) / rect.width) * img.naturalWidth,
+        );
+        const y = Math.floor(
+          ((e.clientY - rect.top) / rect.height) * img.naturalHeight,
+        );
+        try {
+          alpha = ctx.getImageData(x, y, 1, 1).data[3];
+        } catch {
+          alpha = 0;
+        }
+      }
+    }
+    // Seuil bas : les pixels du liseré adouci restent "pleins".
+    if (alpha < 32) onClose();
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -298,8 +407,9 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
             )}
           </button>
 
-          <div style={gramoBlock}>
+          <div style={gramoBlock} data-gramo-block onClick={tapGramo}>
             <img
+              ref={gramoImgRef}
               src="/qg/gramophoeface.webp"
               alt=""
               style={gramoImg}
@@ -330,17 +440,22 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                 ? affichageTitreVinyle(nomObjet(vinyleCourant, locale))
                 : "—"}
             </div>
-            {sunoUrl && (
-              <a
-                href={sunoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={sunoLink}
-              >
-                <ExternalLink size={11} strokeWidth={1.8} />
-                {d.sheets.ajouterSurSuno}
-              </a>
-            )}
+            <div style={sousTitreLigne}>
+              {sunoUrl && (
+                <a
+                  href={sunoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={sunoLink}
+                >
+                  <ExternalLink size={11} strokeWidth={1.8} />
+                  {d.sheets.ajouterSurSuno}
+                </a>
+              )}
+              <span style={compteurVinyles}>
+                {vinyles.length} / {nombreVinylesEcoutables()}
+              </span>
+            </div>
           </div>
 
           <div style={sectionVinyles}>
@@ -357,6 +472,8 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                 {vinyles.map((v, idx) => {
                   const actif = idx === vinyleCourantIdx;
                   const nomVinyle = nomObjet(v, locale);
+                  const disqueUrl =
+                    actif && enLecture ? getItemThumbUrl(v.templateId) : null;
                   return (
                     <button
                       key={v.templateId}
@@ -365,12 +482,12 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                       onClick={() => onSelect(idx)}
                       title={nomVinyle}
                       aria-label={nomVinyle}
-                      // Pendant le guidage : overflow visible sur la tuile aussi,
-                      // sinon son ::after (la main) est rogné par overflow:hidden.
+                      // Pendant le guidage : overflow visible sur la tuile,
+                      // sinon son ::after (la main) est rogné.
                       style={
                         guide && idx === 0
-                          ? { ...vinylTileStyle(v, actif), overflow: "visible" }
-                          : vinylTileStyle(v, actif)
+                          ? { ...vinylTileStyle(actif), overflow: "visible" }
+                          : vinylTileStyle(actif)
                       }
                     >
                       <ItemImage
@@ -378,8 +495,17 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                         categorie="Musique"
                         fit="contain"
                         fallbackIconSize={28}
-                        padded
                       />
+                      {disqueUrl && (
+                        <span aria-hidden data-disque-spin style={disqueSpin}>
+                          <img
+                            src={disqueUrl}
+                            alt=""
+                            style={disqueImg}
+                            draggable={false}
+                          />
+                        </span>
+                      )}
                     </button>
                   );
                 })}
