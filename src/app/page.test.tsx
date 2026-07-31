@@ -35,7 +35,6 @@ afterEach(() => {
 
 beforeEach(() => {
   sessionStorage.clear();
-  repriseATraiter = false;
 });
 
 const nouvellePartie = vi.fn();
@@ -83,30 +82,14 @@ vi.mock("@/components/mobile/PartiesModal", () => ({
   },
 }));
 
-function mockLocation(search = "") {
-  const location = { href: "", search, replace: vi.fn() };
+function mockLocation() {
+  const location = { href: "" };
   Object.defineProperty(window, "location", {
     configurable: true,
     value: location,
   });
   return location;
 }
-
-// Reprise directe au lancement : contrôlée par test (défaut : déjà traitée,
-// comme un retour au menu en cours de session — les tests historiques
-// décrivent ce cas-là).
-let repriseATraiter = false;
-vi.mock("@/lib/repriseBoot", () => ({
-  doitTraiterReprise: () => repriseATraiter,
-  marquerRepriseTraitee: () => {
-    repriseATraiter = false;
-  },
-}));
-
-const routerReplace = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: routerReplace, push: vi.fn() }),
-}));
 
 const changerSlotActif = vi.fn();
 const premierSlotLibre = vi.fn(() => 2 as const);
@@ -244,54 +227,5 @@ describe("TitleScreen — musique jazz du titre", () => {
 
     expect(fade).toHaveBeenCalledTimes(1);
     expect(fade).toHaveBeenCalledWith(DUREE_FERMETURE_MS);
-  });
-});
-
-describe("TitleScreen — reprise directe au lancement à froid", () => {
-  it("avec une partie active : navigation DOUCE vers /bureau, sans musique du titre", () => {
-    repriseATraiter = true;
-    mockState = { jourActuel: 3 };
-    mockLocation();
-
-    render(<TitleScreen />);
-
-    // router.replace (même contexte JS) et surtout PAS une navigation dure :
-    // un rechargement recréerait un module frais et le retour au menu
-    // re-redirigerait vers le bureau (menu inatteignable, constaté en E2E).
-    expect(routerReplace).toHaveBeenCalledWith("/bureau");
-    expect(demarrerMusiqueTitre).not.toHaveBeenCalled();
-  });
-
-  it("sans sauvegarde : on reste au menu et la musique démarre", () => {
-    repriseATraiter = true;
-    mockState = null;
-    mockLocation();
-
-    render(<TitleScreen />);
-
-    expect(routerReplace).not.toHaveBeenCalled();
-    expect(demarrerMusiqueTitre).toHaveBeenCalled();
-  });
-
-  it("« /?menu » (retour d'ErrorScreen) : pas de reprise malgré la partie active", () => {
-    repriseATraiter = true;
-    mockState = { jourActuel: 3 };
-    mockLocation("?menu");
-
-    render(<TitleScreen />);
-
-    expect(routerReplace).not.toHaveBeenCalled();
-    expect(demarrerMusiqueTitre).toHaveBeenCalled();
-  });
-
-  it("retour au menu en cours de session (reprise déjà traitée) : pas de navigation", () => {
-    repriseATraiter = false;
-    mockState = { jourActuel: 3 };
-    mockLocation();
-
-    render(<TitleScreen />);
-
-    expect(routerReplace).not.toHaveBeenCalled();
-    expect(demarrerMusiqueTitre).toHaveBeenCalled();
   });
 });

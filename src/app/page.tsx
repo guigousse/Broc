@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { FolderOpen, Info, Play, Plus, Settings } from "lucide-react";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { CreditsModal } from "@/components/mobile/CreditsModal";
@@ -28,10 +27,6 @@ import {
   slotActif,
   type NumeroSlot,
 } from "@/lib/storage/slots";
-import {
-  doitTraiterReprise,
-  marquerRepriseTraitee,
-} from "@/lib/repriseBoot";
 
 /**
  * Bouton du menu d'accueil : même habillage que les boutons Chiner/Étaler
@@ -169,7 +164,6 @@ function useTiltParallax(maxPx: number) {
 
 export default function TitleScreen() {
   const { nouvellePartie, state, isHydrated, reset, detacherPartie } = useGame();
-  const router = useRouter();
   const { playClick } = useSettings();
   const { d } = useLangue();
   const [reglagesOuverts, setReglagesOuverts] = useState(false);
@@ -193,26 +187,6 @@ export default function TitleScreen() {
     apresNoir: () => void;
   } | null>(null);
 
-  // Reprise directe : au lancement à froid (contexte JS frais démarré sur
-  // « / »), s'il existe une partie dans le slot actif, on repart sur son
-  // bureau — le menu n'est montré qu'aux retours volontaires (Link "/" du
-  // header, même contexte JS, reprise déjà réglée) et après un ErrorScreen
-  // ("/?menu", anti-boucle de crash). Aucune bascule de slot : on navigue
-  // vers la partie DÉJÀ active, en navigation DOUCE (router.replace, comme
-  // `nouvellePartie`) — une navigation dure recréerait un contexte frais et
-  // le prochain retour au menu re-redirigerait (menu inatteignable).
-  const [auMenu, setAuMenu] = useState(() => !doitTraiterReprise());
-  useEffect(() => {
-    if (auMenu || !isHydrated) return;
-    marquerRepriseTraitee();
-    const veutMenu = (window.location.search ?? "").includes("menu");
-    if (state !== null && !veutMenu) {
-      router.replace("/bureau");
-      return;
-    }
-    setAuMenu(true);
-  }, [auMenu, isHydrated, state, router]);
-
   const lancerIrisVers = (apresNoir: () => void) => {
     // La musique du titre suit exactement la fermeture de l'iris (fondu de
     // même durée) ; au noir, le rechargement dur coupe ce qui reste.
@@ -228,10 +202,7 @@ export default function TitleScreen() {
   // retente au premier pointerdown si rien ne joue encore. Au démontage on
   // n'arrête que l'ENCHAÎNEMENT — la coupure du son est le travail du fondu
   // des départs en partie (lancerIrisVers / IntroPorte).
-  // Gatée sur `auMenu` : pendant la décision de reprise (lancement à froid),
-  // ne pas démarrer le jazz du titre — il jouerait par-dessus le bureau.
   useEffect(() => {
-    if (!auMenu) return;
     void audioManager.startAmbience();
     let arreter = demarrerMusiqueTitre(audioManager);
     const relance = () => {
@@ -244,7 +215,7 @@ export default function TitleScreen() {
       window.removeEventListener("pointerdown", relance);
       arreter();
     };
-  }, [auMenu]);
+  }, []);
 
   const onIntroFinie = () => {
     // La bascule de slot est DIFFÉRÉE jusqu'ici (et pas faite en amont dans
