@@ -891,14 +891,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const reset = useCallback(() => {
+    // Appartenance détachée SYNCHRONE : setState(null) n'est que programmé,
+    // et le pagehide d'un reload immédiat peut tirer avant le commit — sans
+    // ça, le flush réécrirait la save qu'on vient de supprimer (résurrection,
+    // slotActif() inchangé donc la garde d'appartenance seule ne voit rien).
+    slotEtatRef.current = null;
     setState(null);
     gameRepository.clear();
   }, []);
 
   // Détache l'état en mémoire sans toucher au storage — utilisé avant une
   // bascule de slot pour que l'effet d'auto-save (gardé sur state null) ne
-  // puisse plus écrire.
-  const detacherPartie = useCallback(() => setState(null), []);
+  // puisse plus écrire. L'appartenance est coupée synchronement (même raison
+  // que dans `reset` : les listeners du flush survivent jusqu'au commit).
+  const detacherPartie = useCallback(() => {
+    slotEtatRef.current = null;
+    setState(null);
+  }, []);
 
   /** Fait avancer le tutoriel vers une étape donnée (idempotent si déjà atteinte/dépassée). */
   const avancerTutoriel = useCallback((vers: TutorielEtape) => {

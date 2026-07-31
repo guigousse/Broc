@@ -18,6 +18,7 @@ import {
   cleBackup,
   cleSlot,
   CLE_INDEX,
+  supprimerSlot,
 } from "@/lib/storage/slots";
 import type { GameState } from "@/types/game";
 
@@ -110,6 +111,40 @@ describe("GameContext — la save ne s'écrit que dans son propre slot", () => {
     // Le slot 2 doit rester intact (budget 222), clé principale ET backup.
     expect(budgetDuSlot(2)).toBe(222);
     expect(window.localStorage.getItem(cleBackup(2))).toBeNull();
+  });
+
+  it("suppression du dernier slot occupé : pagehide ne ressuscite pas la save", async () => {
+    const template = await genererSaveValide();
+    // Un seul slot occupé (le 1, actif) : sa suppression ne peut rebasculer
+    // l'actif nulle part — slotActif() reste 1, la garde d'appartenance seule
+    // ne suffit donc pas.
+    const save1 = JSON.parse(template) as GameState;
+    save1.budget = 111;
+    window.localStorage.setItem(cleSlot(1), JSON.stringify(save1));
+    window.localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 1,
+        slots: { 1: { nom: null, derniereSession: 1000 }, 2: null, 3: null },
+      }),
+    );
+
+    const { result } = renderHook(() => useGame(), { wrapper });
+    await waitFor(() => expect(result.current.state).not.toBeNull());
+
+    // Séquence réelle de `onSupprimerConfirme` (PartiesModal) quand le slot
+    // supprimé est l'actif : reset() puis supprimerSlot puis reload — et le
+    // pagehide du reload peut tirer avant que React ne commite le state null
+    // de reset(). Dans act(), le commit n'a lieu qu'à la sortie du bloc :
+    // les listeners du flush sont encore vivants au dispatch, comme en vrai.
+    act(() => {
+      result.current.reset();
+      supprimerSlot(1);
+      window.dispatchEvent(new Event("pagehide"));
+    });
+
+    expect(window.localStorage.getItem(cleSlot(1))).toBeNull();
+    expect(window.localStorage.getItem(cleBackup(1))).toBeNull();
   });
 
   it("pagehide sans bascule : le flush écrit bien dans son propre slot", async () => {
