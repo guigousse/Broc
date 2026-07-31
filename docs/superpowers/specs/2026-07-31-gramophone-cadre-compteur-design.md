@@ -34,10 +34,11 @@ disques ronds — l'anneau circulaire ne suit donc pas les bords du visuel.
 
 4. **Disque central en rotation pendant la lecture** (ajout 2026-07-31).
    Sur la vignette sélectionnée, quand la musique joue, un recadrage
-   circulaire du centre de la pochette (62 % de la tuile) tourne sur
-   lui-même (~1,8 s/tour ≈ 33 tours/min, keyframe `broc-vinyle-spin`).
-   L'image intérieure fait 100/62 de son cercle → recadrage aligné au
-   pixel sur la pochette dessous, seule la rotation le rend visible.
+   circulaire du centre de la pochette (80 % de la tuile, ajusté depuis
+   62 % après recette) tourne sur lui-même (4 s/tour, ralenti depuis
+   1,8 s ; keyframe `broc-vinyle-spin`). L'image intérieure fait 100/80
+   de son cercle → recadrage aligné au pixel sur la pochette dessous,
+   seule la rotation le rend visible.
    Rien n'est affiché en pause ni si le template n'a pas d'image.
 
 ## Contraintes
