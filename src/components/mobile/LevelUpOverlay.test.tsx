@@ -5,7 +5,7 @@
  * contexte, `next/navigation` et `audioManager` (pas besoin du vrai provider).
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { LevelUpOverlay } from "./LevelUpOverlay";
 
 afterEach(cleanup);
@@ -179,16 +179,31 @@ describe("LevelUpOverlay", () => {
     expect(screen.queryByText(/point de compétence/)).toBeNull();
   });
 
-  it("atout débloqué (N5, Le Flair) : bloc grand format avec emoji géant et description", () => {
+  it("atout débloqué (N5, Le Flair) : bloc grand format avec médaillon et description", () => {
     mockState = etat(4, 5);
     mockPathname = "/bureau";
     render(<LevelUpOverlay />);
-    // Titre sans l'emoji inline (l'emoji est extrait dans son propre bloc).
+    // Titre sans l'emoji inline (remplacé par le médaillon).
     expect(screen.getByText("Atout Le Flair")).toBeTruthy();
     expect(screen.getByText(/révèle la cote de l'objet affiché/)).toBeTruthy();
     const bloc = screen.getByText("Atout Le Flair").closest("[data-testid='levelup-atout']");
     expect(bloc).toBeTruthy();
-    expect(bloc!.textContent).toContain("🔍");
+    const img = bloc!.querySelector("img");
+    expect(img?.getAttribute("src")).toBe("/competences/atout.flair.webp");
+    // Jamais grisé dans la célébration.
+    expect(img!.style.filter).toBe("none");
+    expect(bloc!.textContent).not.toContain("🔍");
+    // Déblocage initial : pas de badge +1.
+    expect(within(bloc as HTMLElement).queryByText("+1")).toBeNull();
+  });
+
+  it("palier 2ᵉ usage (N35, Le Flair) : médaillon avec badge +1", () => {
+    mockState = etat(34, 35);
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    const bloc = screen.getByTestId("levelup-atout");
+    expect(bloc.querySelector("img")?.getAttribute("src")).toBe("/competences/atout.flair.webp");
+    expect(bloc.textContent).toContain("+1");
   });
 
   it("niveau sans atout (N1) : ligne simple, pas de bloc atout ni pill de famille", () => {
@@ -226,7 +241,9 @@ describe("LevelUpOverlay", () => {
     const { container } = render(<LevelUpOverlay />);
     const carte = container.querySelector(".broc-levelup-carte")!;
     // 3 mentions : +1 point, l'atout Le Flair, le palier à venir.
-    const puces = carte.querySelectorAll("[aria-hidden='true'][style*='50%']");
+    // (width: 9px cible le point de puce, distinct du médaillon 44 px qui
+    // partage lui aussi aria-hidden + border-radius: 50%.)
+    const puces = carte.querySelectorAll("[aria-hidden='true'][style*='width: 9px']");
     expect(puces.length).toBe(3);
     expect(
       screen
