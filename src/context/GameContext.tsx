@@ -128,6 +128,7 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
 import { localeCourante } from "@/lib/i18n/locales";
 import { libelleCategorie } from "@/lib/i18n/libelles";
+import { slotActif, type NumeroSlot } from "@/lib/storage/slots";
 
 const gameRepository = createGameRepository();
 
@@ -289,6 +290,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   stateRef.current = state;
   // Évite de spammer le toast : on n'alerte qu'à la bascule succès→échec.
   const saveEnEchecRef = useRef(false);
+  // Slot auquel appartient l'état en mémoire (posé à l'hydratation et à
+  // `nouvellePartie`). Le repository résout le slot cible au moment de
+  // l'ÉCRITURE (`slotActif()`) : si l'index a basculé entre-temps (lancement
+  // d'une autre partie au titre — `detacherPartie` n'est commité par React
+  // qu'après coup, alors que pagehide/le debounce peuvent tirer avant),
+  // sauvegarder écraserait la partie du slot fraîchement activé avec
+  // l'ancienne. Toute écriture est donc gardée sur cette appartenance.
+  const slotEtatRef = useRef<NumeroSlot | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -298,6 +307,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const migrated: GameState | null = loaded
         ? migrerSauvegarde(loaded)
         : null;
+      slotEtatRef.current = slotActif();
       setState(migrated);
       setIsHydrated(true);
     });
@@ -309,6 +319,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isHydrated || !state) return;
     const doSave = () => {
+      // L'état n'appartient plus au slot actif (bascule de partie en cours) :
+      // écrire maintenant détruirait la save du nouveau slot. On abandonne —
+      // cet état est de toute façon en train d'être détaché.
+      if (slotActif() !== slotEtatRef.current) return;
       gameRepository.save(state).then((ok) => {
         if (!ok && !saveEnEchecRef.current) {
           saveEnEchecRef.current = true;
@@ -666,6 +680,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       energieDerniereMaj: Date.now(),
       tutorielEtape: "accueil",
     };
+    // La partie fraîche appartient au slot actif du moment (l'écran titre a
+    // déjà basculé l'index avant d'appeler `nouvellePartie`).
+    slotEtatRef.current = slotActif();
     setState(initial);
     router.push("/bureau");
   }, [router]);
@@ -1168,6 +1185,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const current = stateRef.current;
     if (!current?.vitrine) return;
     if (current.vitrine.tempsRestantSec === tempsRestantSec) return;
+    // Même garde d'appartenance que l'auto-save : jamais d'écriture d'un
+    // état dans un slot qui n'est plus le sien.
+    if (slotActif() !== slotEtatRef.current) return;
     // Persistance synchrone immédiate depuis le dernier état COMMITÉ : filet
     // pour la suspension iOS (l'effet d'auto-save post-commit peut ne jamais
     // tourner). Peut manquer une mutation encore en attente dans la même
