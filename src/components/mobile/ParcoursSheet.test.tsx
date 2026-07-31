@@ -42,6 +42,30 @@ describe("ParcoursSheet", () => {
       screen.getByText(/Chaque niveau : \+1 point de compétence/),
     ).toBeTruthy();
   });
+
+  it("ligne d'atout : médaillon affiché, emoji retiré du titre", () => {
+    render(<ParcoursSheet open onClose={vi.fn()} niveau={8} />);
+    const rowN5 = screen.getByTestId("parcours-row-5"); // Le Flair, atteint
+    expect(rowN5.querySelector("img")?.getAttribute("src")).toBe("/competences/atout.flair.webp");
+    expect(rowN5.querySelector("img")!.style.filter).toBe("none");
+    expect(rowN5.textContent).not.toContain("🔍");
+
+    const rowN15 = screen.getByTestId("parcours-row-15"); // La Fouille, à venir
+    expect(rowN15.querySelector("img")?.getAttribute("src")).toBe("/competences/atout.fouille.webp");
+    expect(rowN15.querySelector("img")!.style.filter).toBe("grayscale(1) brightness(0.55)");
+  });
+
+  it("ligne 2ᵉ usage (N35) : même médaillon avec badge +1", () => {
+    render(<ParcoursSheet open onClose={vi.fn()} niveau={8} />);
+    const rowN35 = screen.getByTestId("parcours-row-35"); // Flair — 2ᵉ usage
+    expect(rowN35.querySelector("img")?.getAttribute("src")).toBe("/competences/atout.flair.webp");
+    expect(rowN35.textContent).toContain("+1");
+  });
+
+  it("ligne non-atout (N3) : pas de médaillon", () => {
+    render(<ParcoursSheet open onClose={vi.fn()} niveau={8} />);
+    expect(screen.getByTestId("parcours-row-3").querySelector("img")).toBeNull();
+  });
 });
 
 describe("ParcoursSheet — fiche de déblocage", () => {
@@ -60,5 +84,16 @@ describe("ParcoursSheet — fiche de déblocage", () => {
     expect(screen.getByText("À venir")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Fermer la fiche" }));
     expect(screen.queryByText("À venir")).toBeNull();
+  });
+
+  it("fiche d'un atout à venir : grand médaillon grisé, titre sans emoji", async () => {
+    const user = userEvent.setup();
+    render(<ParcoursSheet open onClose={vi.fn()} niveau={6} />);
+    await user.click(screen.getByTestId("parcours-row-15")); // La Fouille, à venir
+    const fiche = screen.getByRole("dialog", { name: /Atout La Fouille/ });
+    const img = fiche.querySelector("img");
+    expect(img?.getAttribute("src")).toBe("/competences/atout.fouille.webp");
+    expect(img!.style.filter).toBe("grayscale(1) brightness(0.55)");
+    expect(fiche.textContent).not.toContain("🧹");
   });
 });

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { DEBLOCAGES_PAR_NIVEAU, type DeblocageNiveau } from "@/data/deblocagesNiveau";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { titreDeblocage, descriptionDeblocage } from "@/lib/i18n/contenu";
+import { MedaillonAtout } from "@/components/mobile/MedaillonAtout";
+import { extraireEmoji } from "@/lib/emoji";
 
 interface ParcoursSheetProps {
   open: boolean;
@@ -330,26 +332,43 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
                     />
                   </div>
                   <div style={contenuCol(etat)}>
-                    {deps.map((dep) => (
-                      <button
-                        key={`${dep.niveau}-${dep.titre}`}
-                        type="button"
-                        data-testid={`parcours-row-${dep.niveau}`}
-                        data-etat={etat}
-                        style={{
-                          ...titreLigne(etat),
-                          background: "transparent",
-                          border: "none",
-                          padding: 0,
-                          textAlign: "left",
-                          cursor: "pointer",
-                          width: "100%",
-                        }}
-                        onClick={() => setFiche({ dep, etat })}
-                      >
-                        {titreDeblocage(dep, locale)}
-                      </button>
-                    ))}
+                    {deps.map((dep) => {
+                      const brut = titreDeblocage(dep, locale);
+                      const { emoji, texte } = extraireEmoji(brut);
+                      const affiche = dep.activeId ? texte : brut;
+                      return (
+                        <button
+                          key={`${dep.niveau}-${dep.titre}`}
+                          type="button"
+                          data-testid={`parcours-row-${dep.niveau}`}
+                          data-etat={etat}
+                          style={{
+                            ...titreLigne(etat),
+                            background: "transparent",
+                            border: "none",
+                            padding: 0,
+                            textAlign: "left",
+                            cursor: "pointer",
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                          onClick={() => setFiche({ dep, etat })}
+                        >
+                          {dep.activeId && (
+                            <MedaillonAtout
+                              activeId={dep.activeId}
+                              taille={32}
+                              grise={etat === "a-venir"}
+                              bonusUsage={dep.usageSupplementaire}
+                              emojiFallback={emoji ?? "✨"}
+                            />
+                          )}
+                          <span>{affiche}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -358,27 +377,43 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
           <div style={footnote}>{d.sheets.chaqueNiveauPoint}</div>
         </div>
       </div>
-      {fiche && (
-        <>
-          <div style={ficheScrim} onClick={() => setFiche(null)} aria-hidden />
-          <div role="dialog" aria-modal="true" aria-label={titreDeblocage(fiche.dep, locale)} style={ficheCarte}>
-            <button
-              type="button"
-              style={closeIconBtn}
-              onClick={() => setFiche(null)}
-              aria-label={d.sheets.fermerFiche}
-            >
-              ✕
-            </button>
-            <h3 style={ficheTitre}>{titreDeblocage(fiche.dep, locale)}</h3>
-            <div style={ficheMeta}>
-              {tr(d.sheets.nivAbrege, { n: fiche.dep.niveau })} ·{" "}
-              <span>{fiche.etat === "atteint" ? d.sheets.ficheDebloque : d.sheets.ficheAVenir}</span>
+      {fiche && (() => {
+        const brut = titreDeblocage(fiche.dep, locale);
+        const { emoji, texte } = extraireEmoji(brut);
+        const titreFiche = fiche.dep.activeId ? texte : brut;
+        return (
+          <>
+            <div style={ficheScrim} onClick={() => setFiche(null)} aria-hidden />
+            <div role="dialog" aria-modal="true" aria-label={titreFiche} style={ficheCarte}>
+              <button
+                type="button"
+                style={closeIconBtn}
+                onClick={() => setFiche(null)}
+                aria-label={d.sheets.fermerFiche}
+              >
+                ✕
+              </button>
+              {fiche.dep.activeId && (
+                <div style={{ display: "flex", justifyContent: "center", margin: "2px 0 10px" }}>
+                  <MedaillonAtout
+                    activeId={fiche.dep.activeId}
+                    taille={96}
+                    grise={fiche.etat === "a-venir"}
+                    bonusUsage={fiche.dep.usageSupplementaire}
+                    emojiFallback={emoji ?? "✨"}
+                  />
+                </div>
+              )}
+              <h3 style={ficheTitre}>{titreFiche}</h3>
+              <div style={ficheMeta}>
+                {tr(d.sheets.nivAbrege, { n: fiche.dep.niveau })} ·{" "}
+                <span>{fiche.etat === "atteint" ? d.sheets.ficheDebloque : d.sheets.ficheAVenir}</span>
+              </div>
+              <p style={ficheDescription}>{descriptionDeblocage(fiche.dep, locale)}</p>
             </div>
-            <p style={ficheDescription}>{descriptionDeblocage(fiche.dep, locale)}</p>
-          </div>
-        </>
-      )}
+          </>
+        );
+      })()}
     </>
   );
 }
