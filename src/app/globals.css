@@ -1133,6 +1133,11 @@ nav[aria-label="Navigation principale"] :focus-visible,
   from { opacity: 1; }
   to { opacity: 0; }
 }
+/* Gramophone : le centre de la pochette sélectionnée tourne en lecture. */
+@keyframes broc-vinyle-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 /* Fenêtre flottante des pièces (stockage…) : la bande sort de sous le
    header (glisse vers le bas), le panneau sort de la TabBar (monte).
    Le -110%/110% dépasse 100% pour compenser gap/padding (hors champ complet).

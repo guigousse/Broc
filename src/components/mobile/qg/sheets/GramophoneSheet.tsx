@@ -6,6 +6,7 @@ import { ItemImage } from "@/components/ui/ItemImage";
 import { nombreVinylesEcoutables, vinylSunoPageUrl } from "@/data/vinylesAudio";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomObjet } from "@/lib/i18n/contenu";
+import { getItemThumbUrl } from "@/lib/itemImages";
 import type { CollectionSlot } from "@/types/game";
 
 interface GramophoneSheetProps {
@@ -192,6 +193,7 @@ const bandeWrap: CSSProperties = {
 };
 
 const tileBase: CSSProperties = {
+  position: "relative",
   // Pochette nue, sans cadre de rareté : les visuels des vinyles sont des
   // pochettes carrées, l'anneau de sélection épouse donc leurs bords.
   borderRadius: 10,
@@ -201,6 +203,33 @@ const tileBase: CSSProperties = {
   cursor: "pointer",
   padding: 0,
   transition: "flex-basis 160ms ease, height 160ms ease",
+};
+
+/** Disque central en rotation pendant la lecture : recadrage circulaire du
+ * centre de la pochette (62 % de la tuile). L'image intérieure fait
+ * 100/62 ≈ 161,3 % du cercle, soit exactement la taille de la tuile : le
+ * recadrage est donc parfaitement aligné sur la pochette en dessous, et
+ * seule sa rotation le rend visible. */
+const disqueSpin: CSSProperties = {
+  position: "absolute",
+  left: "19%",
+  top: "19%",
+  width: "62%",
+  height: "62%",
+  borderRadius: "50%",
+  overflow: "hidden",
+  boxShadow: "0 0 0 2px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.4)",
+  // ~1,8 s/tour ≈ 33 tours/min, comme un vrai 33 tours.
+  animation: "broc-vinyle-spin 1.8s linear infinite",
+  pointerEvents: "none",
+};
+
+const disqueImg: CSSProperties = {
+  position: "absolute",
+  width: "161.3%",
+  height: "161.3%",
+  left: "-30.65%",
+  top: "-30.65%",
 };
 
 function vinylTileStyle(actif: boolean): CSSProperties {
@@ -385,6 +414,8 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                 {vinyles.map((v, idx) => {
                   const actif = idx === vinyleCourantIdx;
                   const nomVinyle = nomObjet(v, locale);
+                  const disqueUrl =
+                    actif && enLecture ? getItemThumbUrl(v.templateId) : null;
                   return (
                     <button
                       key={v.templateId}
@@ -407,6 +438,16 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                         fit="contain"
                         fallbackIconSize={28}
                       />
+                      {disqueUrl && (
+                        <span aria-hidden data-disque-spin style={disqueSpin}>
+                          <img
+                            src={disqueUrl}
+                            alt=""
+                            style={disqueImg}
+                            draggable={false}
+                          />
+                        </span>
+                      )}
                     </button>
                   );
                 })}

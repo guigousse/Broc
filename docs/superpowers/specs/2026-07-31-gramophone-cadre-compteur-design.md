@@ -32,6 +32,14 @@ disques ronds — l'anneau circulaire ne suit donc pas les bords du visuel.
    différence ; les autres restent à 96 px, centrées verticalement
    (`align-items: center` sur la bande), transition douce 160 ms.
 
+4. **Disque central en rotation pendant la lecture** (ajout 2026-07-31).
+   Sur la vignette sélectionnée, quand la musique joue, un recadrage
+   circulaire du centre de la pochette (62 % de la tuile) tourne sur
+   lui-même (~1,8 s/tour ≈ 33 tours/min, keyframe `broc-vinyle-spin`).
+   L'image intérieure fait 100/62 de son cercle → recadrage aligné au
+   pixel sur la pochette dessous, seule la rotation le rend visible.
+   Rien n'est affiché en pause ni si le template n'a pas d'image.
+
 ## Contraintes
 
 - Mini-tuto vinyles : la tuile guidée doit garder `overflow: visible`

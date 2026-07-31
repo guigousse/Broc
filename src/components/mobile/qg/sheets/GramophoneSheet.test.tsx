@@ -92,6 +92,42 @@ describe("GramophoneSheet — compteur et cadre", () => {
     expect(active.style.flexBasis).toBe("125px");
   });
 
+  it("en lecture : le centre de la pochette sélectionnée tourne", () => {
+    render(
+      <GramophoneSheet
+        open
+        onClose={vi.fn()}
+        vinyles={[vinyle]}
+        vinyleCourantIdx={0}
+        enLecture
+        onSelect={vi.fn()}
+        onPlayPause={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+    const disque = document.querySelector<HTMLElement>(
+      "button[title] [data-disque-spin]",
+    );
+    expect(disque).not.toBeNull();
+    expect(disque?.style.animation).toContain("broc-vinyle-spin");
+  });
+
+  it("en pause : pas de disque en rotation", () => {
+    render(
+      <GramophoneSheet
+        open
+        onClose={vi.fn()}
+        vinyles={[vinyle]}
+        vinyleCourantIdx={0}
+        enLecture={false}
+        onSelect={vi.fn()}
+        onPlayPause={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+    expect(document.querySelector("[data-disque-spin]")).toBeNull();
+  });
+
   it("la bande réserve une hauteur constante (celle de la grande tuile)", () => {
     renderSheet(false);
     const tuile = document.querySelector<HTMLButtonElement>("button[title]");
