@@ -206,30 +206,30 @@ const tileBase: CSSProperties = {
 };
 
 /** Disque central en rotation pendant la lecture : recadrage circulaire du
- * centre de la pochette (62 % de la tuile). L'image intérieure fait
- * 100/62 ≈ 161,3 % du cercle, soit exactement la taille de la tuile : le
+ * centre de la pochette (80 % de la tuile). L'image intérieure fait
+ * 100/80 = 125 % du cercle, soit exactement la taille de la tuile : le
  * recadrage est donc parfaitement aligné sur la pochette en dessous, et
  * seule sa rotation le rend visible. */
 const disqueSpin: CSSProperties = {
   position: "absolute",
-  left: "19%",
-  top: "19%",
-  width: "62%",
-  height: "62%",
+  left: "10%",
+  top: "10%",
+  width: "80%",
+  height: "80%",
   borderRadius: "50%",
   overflow: "hidden",
   boxShadow: "0 0 0 2px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.4)",
-  // ~1,8 s/tour ≈ 33 tours/min, comme un vrai 33 tours.
-  animation: "broc-vinyle-spin 1.8s linear infinite",
+  // Rotation lente et paisible (un vrai 33 tours serait ~1,8 s/tour).
+  animation: "broc-vinyle-spin 4s linear infinite",
   pointerEvents: "none",
 };
 
 const disqueImg: CSSProperties = {
   position: "absolute",
-  width: "161.3%",
-  height: "161.3%",
-  left: "-30.65%",
-  top: "-30.65%",
+  width: "125%",
+  height: "125%",
+  left: "-12.5%",
+  top: "-12.5%",
   // Le preflight Tailwind clampe `img { max-width: 100%; height: auto }` :
   // sans ce déblocage, l'image interne est écrasée à la taille du cercle.
   maxWidth: "none",
