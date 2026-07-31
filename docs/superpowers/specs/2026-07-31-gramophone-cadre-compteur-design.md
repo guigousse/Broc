@@ -41,6 +41,13 @@ disques ronds — l'anneau circulaire ne suit donc pas les bords du visuel.
    seule la rotation le rend visible.
    Rien n'est affiché en pause ni si le template n'a pas d'image.
 
+5. **Fermeture élargie + croix sous le header** (ajout 2026-08-01). Un
+   tap sur les zones transparentes de l'image gramophone ferme le sheet
+   (échantillonnage du canal alpha via canvas hors écran, construit au
+   premier tap ; seuil alpha < 32 ; fail-open si canvas indisponible —
+   cohérent avec le scrim). La croix descend sous le header haut :
+   `top: calc(var(--safe-top) + var(--mobile-header-h) + 12px)`.
+
 ## Contraintes
 
 - Mini-tuto vinyles : la tuile guidée doit garder `overflow: visible`

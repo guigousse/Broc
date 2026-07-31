@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import { Play, Pause, SkipForward, ExternalLink } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { nombreVinylesEcoutables, vinylSunoPageUrl } from "@/data/vinylesAudio";
@@ -259,7 +264,8 @@ const emptyMsg: CSSProperties = {
 
 const closeBtn: CSSProperties = {
   position: "absolute",
-  top: 16,
+  // Sous le header haut du QG (le sheet couvre tout l'écran, header compris).
+  top: "calc(var(--safe-top) + var(--mobile-header-h) + 12px)",
   right: 16,
   width: 36,
   height: 36,
@@ -296,6 +302,54 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
     guide = false,
   } = props;
   const { d, locale } = useLangue();
+
+  /* Fermeture au tap sur les zones transparentes de l'image gramophone :
+   * on échantillonne le canal alpha du webp via un canvas hors écran
+   * (construit paresseusement au premier tap, une seule fois). Fail-open :
+   * si l'échantillonnage est impossible (canvas indisponible, image pas
+   * chargée…), le tap ferme — comportement du scrim qui entoure l'image. */
+  const gramoImgRef = useRef<HTMLImageElement | null>(null);
+  const alphaCtxRef = useRef<CanvasRenderingContext2D | null | undefined>(
+    undefined,
+  );
+
+  function tapGramo(e: ReactMouseEvent<HTMLDivElement>) {
+    let alpha = 0;
+    const img = gramoImgRef.current;
+    if (img?.complete && img.naturalWidth > 0) {
+      if (alphaCtxRef.current === undefined) {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        try {
+          ctx?.drawImage(img, 0, 0);
+          alphaCtxRef.current = ctx;
+        } catch {
+          alphaCtxRef.current = null;
+        }
+      }
+      const ctx = alphaCtxRef.current;
+      if (ctx) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        // L'img remplit exactement le bloc (même ratio 303/510) : simple
+        // mise à l'échelle des coordonnées vers les pixels naturels.
+        const x = Math.floor(
+          ((e.clientX - rect.left) / rect.width) * img.naturalWidth,
+        );
+        const y = Math.floor(
+          ((e.clientY - rect.top) / rect.height) * img.naturalHeight,
+        );
+        try {
+          alpha = ctx.getImageData(x, y, 1, 1).data[3];
+        } catch {
+          alpha = 0;
+        }
+      }
+    }
+    // Seuil bas : les pixels du liseré adouci restent "pleins".
+    if (alpha < 32) onClose();
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -353,8 +407,9 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
             )}
           </button>
 
-          <div style={gramoBlock}>
+          <div style={gramoBlock} data-gramo-block onClick={tapGramo}>
             <img
+              ref={gramoImgRef}
               src="/qg/gramophoeface.webp"
               alt=""
               style={gramoImg}

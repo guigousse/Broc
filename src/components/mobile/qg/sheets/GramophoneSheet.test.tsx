@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GramophoneSheet } from "./GramophoneSheet";
 import { nombreVinylesEcoutables } from "@/data/vinylesAudio";
 import type { CollectionSlot } from "@/types/game";
@@ -138,5 +138,37 @@ describe("GramophoneSheet — compteur et cadre", () => {
     // Sans hauteur réservée, la bande rebondit pendant la transition de
     // taille entre deux vignettes.
     expect(tuile?.parentElement?.style.minHeight).toBe("125px");
+  });
+});
+
+describe("GramophoneSheet — fermeture", () => {
+  it("un tap sur la zone du gramophone ferme quand l'alpha est indisponible (fail-open)", () => {
+    const onClose = vi.fn();
+    render(
+      <GramophoneSheet
+        open
+        onClose={onClose}
+        vinyles={[vinyle]}
+        vinyleCourantIdx={null}
+        enLecture={false}
+        onSelect={vi.fn()}
+        onPlayPause={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+    const zone = document.querySelector("[data-gramo-block]");
+    expect(zone).not.toBeNull();
+    // jsdom n'a pas de canvas : l'échantillonnage alpha échoue et le tap
+    // doit fermer (fail-open, cohérent avec le scrim).
+    fireEvent.click(zone!);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("la croix de fermeture est sous le header haut", () => {
+    renderSheet(false);
+    const croix = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Fermer"]',
+    );
+    expect(croix?.style.top).toContain("--mobile-header-h");
   });
 });
