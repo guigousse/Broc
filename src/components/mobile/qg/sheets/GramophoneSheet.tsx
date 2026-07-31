@@ -3,9 +3,7 @@
 import { useEffect, type CSSProperties } from "react";
 import { Play, Pause, SkipForward, ExternalLink } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
-import { vinylSunoPageUrl } from "@/data/vinylesAudio";
-import { getRarityColors } from "@/lib/rarityColors";
-import { getTemplate } from "@/data/objetTemplates";
+import { nombreVinylesEcoutables, vinylSunoPageUrl } from "@/data/vinylesAudio";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { CollectionSlot } from "@/types/game";
@@ -135,6 +133,14 @@ const titreVinyle: CSSProperties = {
   minHeight: 18,
 };
 
+/** Ligne sous le titre : lien Suno (si présent) + compteur x/y. */
+const sousTitreLigne: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 10,
+};
+
 const sunoLink: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -147,6 +153,15 @@ const sunoLink: CSSProperties = {
   color: "var(--brass-300)",
   opacity: 0.75,
   textDecoration: "none",
+};
+
+/** Compteur vinyles débloqués / écoutables. */
+const compteurVinyles: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  letterSpacing: "0.12em",
+  color: "var(--brass-300)",
+  opacity: 0.75,
 };
 
 /** Section basse : bande de vinyles, fond bois sombre. */
@@ -168,24 +183,21 @@ const bandeWrap: CSSProperties = {
 };
 
 const tileBase: CSSProperties = {
-  flex: "0 0 64px",
-  height: 64,
-  borderRadius: 4,
+  flex: "0 0 96px",
+  height: 96,
+  // Pochette nue, sans cadre de rareté : les visuels des vinyles sont des
+  // pochettes carrées, l'anneau de sélection épouse donc leurs bords.
+  borderRadius: 10,
   overflow: "hidden",
+  border: "none",
+  background: "transparent",
   cursor: "pointer",
   padding: 0,
 };
 
-function vinylTileStyle(
-  vinyl: CollectionSlot,
-  actif: boolean,
-): CSSProperties {
-  const tpl = getTemplate(vinyl.templateId);
-  const colors = getRarityColors(vinyl.rarete, !!tpl?.unique);
+function vinylTileStyle(actif: boolean): CSSProperties {
   return {
     ...tileBase,
-    border: `1px solid ${colors.outer}`,
-    background: colors.thumbBg,
     ...(actif
       ? { boxShadow: "0 0 0 2px var(--brass-300)" }
       : null),
@@ -330,17 +342,22 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                 ? affichageTitreVinyle(nomObjet(vinyleCourant, locale))
                 : "—"}
             </div>
-            {sunoUrl && (
-              <a
-                href={sunoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={sunoLink}
-              >
-                <ExternalLink size={11} strokeWidth={1.8} />
-                {d.sheets.ajouterSurSuno}
-              </a>
-            )}
+            <div style={sousTitreLigne}>
+              {sunoUrl && (
+                <a
+                  href={sunoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={sunoLink}
+                >
+                  <ExternalLink size={11} strokeWidth={1.8} />
+                  {d.sheets.ajouterSurSuno}
+                </a>
+              )}
+              <span style={compteurVinyles}>
+                {vinyles.length} / {nombreVinylesEcoutables()}
+              </span>
+            </div>
           </div>
 
           <div style={sectionVinyles}>
@@ -365,12 +382,12 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                       onClick={() => onSelect(idx)}
                       title={nomVinyle}
                       aria-label={nomVinyle}
-                      // Pendant le guidage : overflow visible sur la tuile aussi,
-                      // sinon son ::after (la main) est rogné par overflow:hidden.
+                      // Pendant le guidage : overflow visible sur la tuile,
+                      // sinon son ::after (la main) est rogné.
                       style={
                         guide && idx === 0
-                          ? { ...vinylTileStyle(v, actif), overflow: "visible" }
-                          : vinylTileStyle(v, actif)
+                          ? { ...vinylTileStyle(actif), overflow: "visible" }
+                          : vinylTileStyle(actif)
                       }
                     >
                       <ItemImage
@@ -378,7 +395,6 @@ export function GramophoneSheet(props: GramophoneSheetProps) {
                         categorie="Musique"
                         fit="contain"
                         fallbackIconSize={28}
-                        padded
                       />
                     </button>
                   );

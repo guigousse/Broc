@@ -47,6 +47,11 @@ export function vinylHasAudio(templateId: string): boolean {
   return templateId in VINYLE_AUDIO_URLS;
 }
 
+/** Nombre total de vinyles écoutables au gramophone. */
+export function nombreVinylesEcoutables(): number {
+  return Object.keys(VINYLE_AUDIO_URLS).length;
+}
+
 /**
  * URL de la page Suno (pour ajout en favori, partage, etc.) — dérivée du
  * CDN URL si c'est bien un fichier `cdn1.suno.ai/<uuid>.mp3`. Retourne

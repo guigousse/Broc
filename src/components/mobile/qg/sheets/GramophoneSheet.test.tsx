@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { GramophoneSheet } from "./GramophoneSheet";
+import { nombreVinylesEcoutables } from "@/data/vinylesAudio";
 import type { CollectionSlot } from "@/types/game";
 
 vi.mock("@/components/ui/ItemImage", () => ({
@@ -40,14 +41,28 @@ describe("GramophoneSheet — guidage mini-tuto", () => {
     expect(tuile?.tagName).toBe("BUTTON");
   });
 
-  it("guide : la vignette guidée est en overflow visible (sinon la main ::after est rognée)", () => {
+  it("guide : la vignette guidée ne rogne pas la main ::after (pas d'overflow hidden)", () => {
     renderSheet(true);
     const tuile = document.querySelector<HTMLButtonElement>(".tuto-main.tuto-main-haut");
-    expect(tuile?.style.overflow).toBe("visible");
+    expect(tuile?.style.overflow).not.toBe("hidden");
   });
 
   it("sans guide : aucune main", () => {
     renderSheet(false);
     expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+});
+
+describe("GramophoneSheet — compteur et cadre", () => {
+  it("affiche le compteur débloqués / écoutables", () => {
+    const { getByText } = renderSheet(false);
+    expect(getByText(`1 / ${nombreVinylesEcoutables()}`)).toBeTruthy();
+  });
+
+  it("la vignette est carrée (pas de rognage rond de la pochette)", () => {
+    renderSheet(false);
+    // Seules les tuiles de la bande portent un attribut `title`.
+    const tuile = document.querySelector<HTMLButtonElement>("button[title]");
+    expect(tuile?.style.borderRadius).not.toBe("50%");
   });
 });
