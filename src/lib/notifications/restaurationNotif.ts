@@ -42,15 +42,27 @@ export function notifsRestauration(
     }));
 }
 
+/**
+ * Numéro de la dernière synchronisation demandée. Chaque exécution capture le
+ * sien : si le compteur a bougé pendant ses `await`, une exécution plus
+ * récente l'a supplantée et elle ne doit plus rien poser — sinon une échéance
+ * calculée sur un état périmé peut recouvrir la fraîche et faire sonner la
+ * notif au mauvais moment (même verrou que la notif énergie).
+ */
+let sequence = 0;
+
 /** Annule la plage puis (re)programme. No-op si permission non accordée. */
 export async function synchroniserNotifsRestauration(
   objets: ObjetEnRestau[],
   now: number,
   locale: Locale,
 ): Promise<void> {
+  const mien = ++sequence;
   await annuler([...NOTIF_IDS.RESTAURATION]);
+  if (sequence !== mien) return;
   if (!(await permissionAccordee())) return;
   for (const spec of notifsRestauration(objets, now, locale)) {
-    await programmer(spec);
+    if (sequence !== mien) return;
+    await programmer({ ...spec, estObsolete: () => sequence !== mien });
   }
 }
