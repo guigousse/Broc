@@ -3,7 +3,7 @@ import {
   NIVEAU_BROCANTEUR_PALIER_3,
 } from "@/data/competences";
 import { NIVEAU_QUETES_PERIODIQUES } from "@/lib/quetes/settlePeriodiques";
-import { NIVEAU_ACTIVES, NIVEAU_USAGE_2, NIVEAU_USAGE_3 } from "@/lib/actives";
+import { NIVEAU_ACTIVES, NIVEAU_USAGE_2, NIVEAU_USAGE_3, type ActiveId } from "@/lib/actives";
 
 export type FamilleDeblocage = "jalon" | "contenu" | "economie" | "confort" | "active";
 
@@ -14,6 +14,10 @@ export interface DeblocageNiveau {
   famille: FamilleDeblocage;
   /** true si le gate est réellement appliqué par le code (sinon ligne informative pour l'UI du plan 4). */
   effectif: boolean;
+  /** Id d'atout (famille active) : source du médaillon côté UI. « diplomate » n'a pas de médaillon. */
+  activeId?: Exclude<ActiveId, "diplomate">;
+  /** Palier « +1 usage/jour » (2ᵉ/3ᵉ) : badge +1 sur le médaillon. */
+  usageSupplementaire?: boolean;
 }
 
 /** Source de vérité du plan de déblocage (rapport §08). Seuls les jalons validés (D1/D3/actives) sont effectifs. */
@@ -48,15 +52,15 @@ const ENTREES: readonly DeblocageNiveau[] = [
   // Échelle des atouts : déblocage N5→30, 2ᵉ usage N35→60, 3ᵉ N65→90.
   ...ATOUTS.map((a) => ({
     niveau: NIVEAU_ACTIVES[a.id], titre: a.titre, famille: "active" as const, effectif: true,
-    description: a.desc,
+    activeId: a.id, description: a.desc,
   })),
   ...ATOUTS.map((a) => ({
     niveau: NIVEAU_USAGE_2[a.id], titre: `${a.titre} — 2ᵉ usage par jour`, famille: "active" as const, effectif: true,
-    description: DESC_USAGE_2,
+    activeId: a.id, usageSupplementaire: true, description: DESC_USAGE_2,
   })),
   ...ATOUTS.map((a) => ({
     niveau: NIVEAU_USAGE_3[a.id], titre: `${a.titre} — 3ᵉ usage par jour`, famille: "active" as const, effectif: true,
-    description: DESC_USAGE_3,
+    activeId: a.id, usageSupplementaire: true, description: DESC_USAGE_3,
   })),
 ];
 

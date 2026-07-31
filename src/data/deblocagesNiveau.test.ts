@@ -36,4 +36,33 @@ describe("table des déblocages par niveau", () => {
     ].sort((a, b) => a - b);
     expect(parNiveau).toEqual(attendus);
   });
+
+  it("chaque ligne famille active porte son activeId (source du médaillon)", () => {
+    const actives = DEBLOCAGES_PAR_NIVEAU.filter((d) => d.famille === "active");
+    expect(actives).toHaveLength(18);
+    for (const d of actives) expect(d.activeId).toBeTruthy();
+    // 6 atouts × 3 occurrences (déblocage, 2ᵉ, 3ᵉ usage).
+    const parId = new Map<string, number>();
+    for (const d of actives) parId.set(d.activeId!, (parId.get(d.activeId!) ?? 0) + 1);
+    expect([...parId.values()]).toEqual([3, 3, 3, 3, 3, 3]);
+  });
+
+  it("usageSupplementaire marque exactement les paliers 2ᵉ/3ᵉ usage", () => {
+    const bonus = DEBLOCAGES_PAR_NIVEAU.filter((d) => d.usageSupplementaire);
+    expect(bonus).toHaveLength(12);
+    const niveauxBonus = bonus.map((d) => d.niveau).sort((a, b) => a - b);
+    const attendus = [
+      ...Object.values(NIVEAU_USAGE_2),
+      ...Object.values(NIVEAU_USAGE_3),
+    ].sort((a, b) => a - b);
+    expect(niveauxBonus).toEqual(attendus);
+    // Les déblocages initiaux (N5-30) n'ont pas le drapeau.
+    for (const d of DEBLOCAGES_PAR_NIVEAU.filter((x) => x.famille === "active" && !x.usageSupplementaire)) {
+      expect(Object.values(NIVEAU_USAGE_2)).not.toContain(d.niveau);
+    }
+    // Et aucune ligne hors famille active ne le porte.
+    for (const d of DEBLOCAGES_PAR_NIVEAU.filter((x) => x.famille !== "active")) {
+      expect(d.usageSupplementaire).toBeUndefined();
+    }
+  });
 });

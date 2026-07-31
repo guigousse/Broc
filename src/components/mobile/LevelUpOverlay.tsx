@@ -21,16 +21,8 @@ import { estRoutePartie } from "@/lib/routesPartie";
 import { prefersReducedMotion } from "@/lib/transitionIris";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { titreDeblocage, descriptionDeblocage } from "@/lib/i18n/contenu";
-
-/** Sépare le premier emoji d'un titre d'atout localisé (« Atout 🔍 Le Flair »). */
-function extraireEmoji(titre: string): { emoji: string | null; texte: string } {
-  const m = titre.match(/\p{Extended_Pictographic}/u);
-  if (!m) return { emoji: null, texte: titre };
-  return {
-    emoji: m[0],
-    texte: titre.replace(m[0], "").replace(/\s{2,}/g, " ").trim(),
-  };
-}
+import { extraireEmoji } from "@/lib/emoji";
+import { MedaillonAtout } from "@/components/mobile/MedaillonAtout";
 
 // ── Chronologie (secondes) ────────────────────────────────────────────────
 // Deux temps : le chiffre seul (son + feu d'artifice), puis l'encadré des
@@ -241,14 +233,9 @@ const ligneDeblocage: CSSProperties = {
 
 const atoutEnTete: CSSProperties = {
   display: "flex",
-  alignItems: "baseline",
+  alignItems: "center",
   gap: 8,
   marginBottom: 4,
-};
-
-const atoutEmoji: CSSProperties = {
-  fontSize: 22,
-  lineHeight: 1.1,
 };
 
 const atoutTitre: CSSProperties = {
@@ -399,10 +386,13 @@ export function LevelUpOverlay() {
           <Puce>
             <div data-testid="levelup-atout">
               <div style={atoutEnTete}>
-                {emoji && (
-                  <span style={atoutEmoji} aria-hidden="true">
-                    {emoji}
-                  </span>
+                {dep.activeId && (
+                  <MedaillonAtout
+                    activeId={dep.activeId}
+                    taille={44}
+                    bonusUsage={dep.usageSupplementaire}
+                    emojiFallback={emoji ?? "✨"}
+                  />
                 )}
                 <span style={atoutTitre}>{texte}</span>
               </div>
