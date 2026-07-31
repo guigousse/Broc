@@ -25,7 +25,9 @@ export function ErrorScreen({
     } catch {
       // ignore
     }
-    window.location.href = "/";
+    // "?menu" : ne pas laisser la reprise directe renvoyer vers le bureau
+    // d'une partie qui vient (peut-être) d'échouer — anti-boucle de crash.
+    window.location.href = "/?menu";
   }
 
   return (
