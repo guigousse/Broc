@@ -173,20 +173,23 @@ const sectionVinyles: CSSProperties = {
   padding: "10px 12px",
 };
 
+/** Taille des tuiles ; la sélectionnée est ~30 % plus grande. */
+const TILE = 96;
+const TILE_ACTIVE = 125;
+
 const bandeWrap: CSSProperties = {
   display: "flex",
   // La tuile sélectionnée est plus grande : les autres se centrent dessus.
   alignItems: "center",
+  // Hauteur réservée sur la grande tuile : pendant la transition de
+  // sélection, l'ancienne rétrécit pendant que la nouvelle grandit et le
+  // max passe sous TILE_ACTIVE — sans réserve, la bande rebondit.
+  minHeight: TILE_ACTIVE,
   gap: 8,
   overflowX: "auto",
   WebkitOverflowScrolling: "touch",
-  paddingBottom: 4,
   scrollbarWidth: "none",
 };
-
-/** Taille des tuiles ; la sélectionnée est ~30 % plus grande. */
-const TILE = 96;
-const TILE_ACTIVE = 125;
 
 const tileBase: CSSProperties = {
   // Pochette nue, sans cadre de rareté : les visuels des vinyles sont des

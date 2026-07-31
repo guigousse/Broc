@@ -91,4 +91,12 @@ describe("GramophoneSheet — compteur et cadre", () => {
     expect(parseInt(inactive.style.height, 10)).toBe(96);
     expect(active.style.flexBasis).toBe("125px");
   });
+
+  it("la bande réserve une hauteur constante (celle de la grande tuile)", () => {
+    renderSheet(false);
+    const tuile = document.querySelector<HTMLButtonElement>("button[title]");
+    // Sans hauteur réservée, la bande rebondit pendant la transition de
+    // taille entre deux vignettes.
+    expect(tuile?.parentElement?.style.minHeight).toBe("125px");
+  });
 });
