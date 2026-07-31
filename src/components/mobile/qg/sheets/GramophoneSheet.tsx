@@ -230,6 +230,9 @@ const disqueImg: CSSProperties = {
   height: "161.3%",
   left: "-30.65%",
   top: "-30.65%",
+  // Le preflight Tailwind clampe `img { max-width: 100%; height: auto }` :
+  // sans ce déblocage, l'image interne est écrasée à la taille du cercle.
+  maxWidth: "none",
 };
 
 function vinylTileStyle(actif: boolean): CSSProperties {

@@ -110,6 +110,10 @@ describe("GramophoneSheet — compteur et cadre", () => {
     );
     expect(disque).not.toBeNull();
     expect(disque?.style.animation).toContain("broc-vinyle-spin");
+    // Le preflight Tailwind clampe les img à max-width 100% : sans ce
+    // déblocage, le recadrage central est écrasé dans le cercle.
+    const img = disque?.querySelector("img");
+    expect(img?.style.maxWidth).toBe("none");
   });
 
   it("en pause : pas de disque en rotation", () => {
