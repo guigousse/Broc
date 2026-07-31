@@ -65,4 +65,30 @@ describe("GramophoneSheet — compteur et cadre", () => {
     const tuile = document.querySelector<HTMLButtonElement>("button[title]");
     expect(tuile?.style.borderRadius).not.toBe("50%");
   });
+
+  it("la vignette sélectionnée est ~30 % plus grande que les autres", () => {
+    const autre = {
+      templateId: "mus.33tours_jazz_2",
+      rarete: "commun",
+      etat: "Très bon",
+    } as unknown as CollectionSlot;
+    render(
+      <GramophoneSheet
+        open
+        onClose={vi.fn()}
+        vinyles={[vinyle, autre]}
+        vinyleCourantIdx={0}
+        enLecture={false}
+        onSelect={vi.fn()}
+        onPlayPause={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+    const tuiles = document.querySelectorAll<HTMLButtonElement>("button[title]");
+    expect(tuiles).toHaveLength(2);
+    const [active, inactive] = [tuiles[0], tuiles[1]];
+    expect(parseInt(active.style.height, 10)).toBe(125);
+    expect(parseInt(inactive.style.height, 10)).toBe(96);
+    expect(active.style.flexBasis).toBe("125px");
+  });
 });

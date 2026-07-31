@@ -27,6 +27,11 @@ disques ronds — l'anneau circulaire ne suit donc pas les bords du visuel.
    et cohabite avec le lien Suno quand celui-ci existe (actuellement
    jamais : pistes locales).
 
+3. **Vignette sélectionnée agrandie** (ajout 2026-07-31). La tuile
+   sélectionnée passe à 125 px (~+30 % vs 96 px) pour marquer la
+   différence ; les autres restent à 96 px, centrées verticalement
+   (`align-items: center` sur la bande), transition douce 160 ms.
+
 ## Contraintes
 
 - Mini-tuto vinyles : la tuile guidée doit garder `overflow: visible`

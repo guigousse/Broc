@@ -175,6 +175,8 @@ const sectionVinyles: CSSProperties = {
 
 const bandeWrap: CSSProperties = {
   display: "flex",
+  // La tuile sélectionnée est plus grande : les autres se centrent dessus.
+  alignItems: "center",
   gap: 8,
   overflowX: "auto",
   WebkitOverflowScrolling: "touch",
@@ -182,9 +184,11 @@ const bandeWrap: CSSProperties = {
   scrollbarWidth: "none",
 };
 
+/** Taille des tuiles ; la sélectionnée est ~30 % plus grande. */
+const TILE = 96;
+const TILE_ACTIVE = 125;
+
 const tileBase: CSSProperties = {
-  flex: "0 0 96px",
-  height: 96,
   // Pochette nue, sans cadre de rareté : les visuels des vinyles sont des
   // pochettes carrées, l'anneau de sélection épouse donc leurs bords.
   borderRadius: 10,
@@ -193,11 +197,15 @@ const tileBase: CSSProperties = {
   background: "transparent",
   cursor: "pointer",
   padding: 0,
+  transition: "flex-basis 160ms ease, height 160ms ease",
 };
 
 function vinylTileStyle(actif: boolean): CSSProperties {
+  const taille = actif ? TILE_ACTIVE : TILE;
   return {
     ...tileBase,
+    flex: `0 0 ${taille}px`,
+    height: taille,
     ...(actif
       ? { boxShadow: "0 0 0 2px var(--brass-300)" }
       : null),
