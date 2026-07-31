@@ -334,8 +334,8 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
                   <div style={contenuCol(etat)}>
                     {deps.map((dep) => {
                       const brut = titreDeblocage(dep, locale);
-                      const { emoji, texte } = extraireEmoji(brut);
-                      const affiche = dep.activeId ? texte : brut;
+                      const detail = dep.activeId ? extraireEmoji(brut) : null;
+                      const affiche = detail?.texte ?? brut;
                       return (
                         <button
                           key={`${dep.niveau}-${dep.titre}`}
@@ -362,7 +362,7 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
                               taille={32}
                               grise={etat === "a-venir"}
                               bonusUsage={dep.usageSupplementaire}
-                              emojiFallback={emoji ?? "✨"}
+                              emojiFallback={detail?.emoji ?? "✨"}
                             />
                           )}
                           <span>{affiche}</span>
@@ -379,8 +379,8 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
       </div>
       {fiche && (() => {
         const brut = titreDeblocage(fiche.dep, locale);
-        const { emoji, texte } = extraireEmoji(brut);
-        const titreFiche = fiche.dep.activeId ? texte : brut;
+        const detail = fiche.dep.activeId ? extraireEmoji(brut) : null;
+        const titreFiche = detail?.texte ?? brut;
         return (
           <>
             <div style={ficheScrim} onClick={() => setFiche(null)} aria-hidden />
@@ -400,7 +400,7 @@ export function ParcoursSheet({ open, onClose, niveau }: ParcoursSheetProps) {
                     taille={96}
                     grise={fiche.etat === "a-venir"}
                     bonusUsage={fiche.dep.usageSupplementaire}
-                    emojiFallback={emoji ?? "✨"}
+                    emojiFallback={detail?.emoji ?? "✨"}
                   />
                 </div>
               )}

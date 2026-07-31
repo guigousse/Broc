@@ -4,7 +4,8 @@ import { useState, type CSSProperties } from "react";
 import type { ActiveId } from "@/lib/actives";
 
 export interface MedaillonAtoutProps {
-  activeId: ActiveId;
+  /** « diplomate » n'a pas de webp médaillon : exclu par le type. */
+  activeId: Exclude<ActiveId, "diplomate">;
   /** Diamètre en px (32 timeline du parcours, 44 level-up, 96 fiche). */
   taille: number;
   /** Filtre du dock verrouillé — réservé au parcours « à venir ». */

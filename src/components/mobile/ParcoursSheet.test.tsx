@@ -96,4 +96,15 @@ describe("ParcoursSheet — fiche de déblocage", () => {
     expect(img!.style.filter).toBe("grayscale(1) brightness(0.55)");
     expect(fiche.textContent).not.toContain("🧹");
   });
+
+  it("fiche d'un atout atteint : grand médaillon en couleur, titre sans emoji", async () => {
+    const user = userEvent.setup();
+    render(<ParcoursSheet open onClose={vi.fn()} niveau={8} />);
+    await user.click(screen.getByTestId("parcours-row-5")); // Le Flair, atteint
+    const fiche = screen.getByRole("dialog", { name: /Atout Le Flair/ });
+    const img = fiche.querySelector("img");
+    expect(img?.getAttribute("src")).toBe("/competences/atout.flair.webp");
+    expect(img!.style.filter).toBe("none");
+    expect(fiche.textContent).not.toContain("🔍");
+  });
 });

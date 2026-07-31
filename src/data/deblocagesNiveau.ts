@@ -14,8 +14,8 @@ export interface DeblocageNiveau {
   famille: FamilleDeblocage;
   /** true si le gate est réellement appliqué par le code (sinon ligne informative pour l'UI du plan 4). */
   effectif: boolean;
-  /** Id d'atout (famille active) : source du médaillon côté UI. */
-  activeId?: ActiveId;
+  /** Id d'atout (famille active) : source du médaillon côté UI. « diplomate » n'a pas de médaillon. */
+  activeId?: Exclude<ActiveId, "diplomate">;
   /** Palier « +1 usage/jour » (2ᵉ/3ᵉ) : badge +1 sur le médaillon. */
   usageSupplementaire?: boolean;
 }
