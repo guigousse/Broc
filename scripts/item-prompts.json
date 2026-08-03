@@ -347,7 +347,7 @@
 {
 "templateId": "uniq.mus.violon_paganini",
 "rarete": "legendaire",
-"description": "the legendary 'Il Cannone' Paganini violin (Guarneri del Gesù 1743), deep reddish-brown varnish, highly detailed scroll and f-holes, museum display piece, side view"
+"description": "the legendary 'Il Cannone' Paganini violin (Guarneri del Gesu 1743), deep reddish-brown varnish, black ebony fingerboard, tailpiece and chinrest, highly detailed scroll and f-holes, shown perfectly front-facing with the full instrument upright, museum display piece"
 },
 {
 "templateId": "jx.cartouche_le_plombier_sauteur_8_bit",
@@ -376,7 +376,7 @@
 {
 "templateId": "jx.risk_1992",
 "rarete": "commun",
-"description": "a vintage 1992 'Risk' strategy board game box, world map illustration on lid, slight three-quarter view, worn cardboard"
+"description": "a vintage 1992 strategy board game box titled 'KRISE' in bold serif letters on the lid, over a world map illustration dotted with small army figurines, slight three-quarter view, worn cardboard corners"
 },
 {
 "templateId": "jx.cartouche_la_legende_de_solda_8_bit",
@@ -465,7 +465,7 @@
 {
 "templateId": "jx.jeu_solda_flute_temporelle_aventure_3d_64_bit",
 "rarete": "commun",
-"description": "a vintage Nintendo 64 game cartridge in original box, featuring a young hero artwork on the cover, three-quarter view"
+"description": "a vintage 64-bit era video game cardboard box, slight three-quarter view, cover artwork showing a young elf-like hero in a green tunic holding a small flute, fictional stylized title 'SOLDA' across the cover, a plain geometric '64' emblem in the corner, worn cardboard edges"
 },
 {
 "templateId": "jx.lot_de_cartes_l_assemblee_des_mages",
@@ -756,7 +756,7 @@
 {
 "templateId": "br.enclume_petit_modele",
 "rarete": "commun",
-"description": "a small workbench-sized blacksmith anvil with horn and flat working surface, side view"
+"description": "a small workbench-sized blacksmith anvil with horn and flat working surface, plain forged steel body with smooth blank sides, side view"
 },
 {
 "templateId": "br.etau_de_table_regulier",
@@ -791,7 +791,7 @@
 {
 "templateId": "br.varlope_chene",
 "rarete": "commun",
-"description": "an antique oak jointer plane with long wooden body and iron blade, side view"
+"description": "a long antique French varlope jointer plane carved from a single block of oak, warm honey-brown wood grain, turned wooden front knob and shaped rear handle in the same oak, iron blade and wooden wedge protruding at the center, side view"
 },
 {
 "templateId": "br.rabot_metallique_n4_d_ebeniste",
@@ -951,7 +951,7 @@
 {
 "templateId": "mo.robe_70s_disco",
 "rarete": "commun",
-"description": "a 1970s disco dress with sequined fabric and flared sleeves, displayed on a slim mannequin bust, three-quarter view, no face"
+"description": "a 1970s disco dress with densely sequined shimmering fabric and wide flared sleeves, displayed on a headless armless tailor's dress form on a simple wooden stand, front view"
 },
 {
 "templateId": "mo.robe_80s_epaulettes",
@@ -1131,7 +1131,7 @@
 {
 "templateId": "mo.portefeuille_polis_futton",
 "rarete": "commun",
-"description": "a luxury monogrammed canvas wallet with leather edges, closed flat, top-down view"
+"description": "a luxury beige canvas wallet closed flat, top-down view, canvas printed with a repeating pattern of interlocked 'PF' initials alternating with small four-petal flower motifs, dark leather trim edges"
 },
 {
 "templateId": "mo.sac_a_main_cancel",
@@ -1151,7 +1151,7 @@
 {
 "templateId": "mo.sac_chaine",
 "rarete": "rare",
-"description": "a luxury quilted black leather handbag with gold chain strap and turn-lock, three-quarter view, no copyrighted logo"
+"description": "a quilted black leather handbag with diamond stitching, gold chain shoulder strap, and a plain rectangular gold turn-lock clasp, three-quarter view"
 },
 {
 "templateId": "mo.sac_cedrine_tempome",
@@ -1166,7 +1166,7 @@
 {
 "templateId": "mo.tailleur_chaine_annees_70",
 "rarete": "rare",
-"description": "a 1970s haute couture two-piece tweed lady's suit with trim detail and gold buttons, on a slim mannequin bust, three-quarter view, no face"
+"description": "a 1970s haute couture two-piece tweed lady's suit with braided trim and plain round gold buttons, displayed on a headless tailor's dress form, front view"
 },
 {
 "templateId": "mo.chemise_ridor",
@@ -1805,12 +1805,12 @@
 {
 "templateId": "ma.statuette_africaine_bois",
 "rarete": "commun",
-"description": "a small carved African-style wooden statuette of a stylized elongated standing figure, side view"
+"description": "a small carved African-style wooden statuette of a stylized elongated standing figure, front view facing the viewer, visible chisel marks and dark patina"
 },
 {
 "templateId": "ma.service_the_faience",
 "rarete": "commun",
-"description": "a vintage white faience tea set with floral pattern: teapot, cups, saucers and sugar bowl neatly arranged, top-down view"
+"description": "a vintage white faience tea set with floral pattern: teapot, two cups on saucers and a sugar bowl neatly arranged, top-down three-quarter view, plain glazed surfaces"
 },
 {
 "templateId": "ma.verres_a_pied_lot6",
@@ -1835,7 +1835,7 @@
 {
 "templateId": "ma.service_porcelaine_limoges",
 "rarete": "commun",
-"description": "a partial fine porcelain dinner service with delicate floral motif and gold rim: plates stacked, top-down three-quarter view"
+"description": "a neat stack of fine Limoges porcelain dinner plates with delicate floral motif and gold rim, slight elevated three-quarter view, the top plate fully painted with its floral center visible"
 },
 {
 "templateId": "ma.plat_faience_olympe",
@@ -1870,7 +1870,7 @@
 {
 "templateId": "ma.menagere_en_metal_argente_24_pieces",
 "rarete": "commun",
-"description": "a set of silver-plated flatware neatly arranged in an open velvet-lined wooden case, top-down view"
+"description": "a silver-plated flatware set of 24 pieces neatly arranged in rows in an open velvet-lined wooden case, the whole open case seen from directly above and fully visible with background margin around it, every utensil complete from handle to tip"
 },
 {
 "templateId": "ma.service_the_chinois",
@@ -1895,12 +1895,12 @@
 {
 "templateId": "ma.horloge_carillon_westminster",
 "rarete": "commun",
-"description": "a vintage Westminster chime mantel clock in dark wood case with Roman numeral dial, side view"
+"description": "a vintage Westminster chime mantel clock in a dark wood case with arched top and Roman numeral dial, shown perfectly front-facing, dial centered and facing the viewer"
 },
 {
 "templateId": "ma.pendule_marbre_xixe",
 "rarete": "commun",
-"description": "a 19th-century black marble mantel clock with gilded bronze figures on top, side view"
+"description": "a 19th-century black marble mantel clock with gilded bronze allegorical figures on top, shown perfectly front-facing, white dial centered and facing the viewer"
 },
 {
 "templateId": "ma.pendule_voyage_laiton",
@@ -1915,7 +1915,7 @@
 {
 "templateId": "ma.miroir_baroque_petit",
 "rarete": "commun",
-"description": "a small ornate baroque-style gilded wall mirror with curling foliate frame, top-down view"
+"description": "a small ornate baroque gilded wall mirror with curling foliate frame, front view, the mirror glass rendered as a pale silvery surface with a soft diagonal sheen"
 },
 {
 "templateId": "ma.gueridon_salon",
@@ -1970,7 +1970,7 @@
 {
 "templateId": "ma.service_cafe_faience",
 "rarete": "commun",
-"description": "a vintage white faience coffee service for six: coffee pot, cups, saucers and milk jug, top-down three-quarter view"
+"description": "a vintage white faience coffee service neatly arranged on a flat surface: tall coffee pot in the center, two cups on their saucers in front, small milk jug at the side, gentle three-quarter view, every piece resting naturally on the ground plane"
 },
 {
 "templateId": "ma.saladier_verre_boheme",
@@ -2035,7 +2035,7 @@
 {
 "templateId": "ma.pendule_d_horloger_braguette_signee",
 "rarete": "rare",
-"description": "a signed antique 19th-century pendule mantel clock with refined gilt bronze case and enamel dial, side view"
+"description": "a signed antique 19th-century mantel clock with refined gilt bronze case and white enamel dial, shown perfectly front-facing, dial centered and facing the viewer"
 },
 {
 "templateId": "ma.candelabre_argent_5branches",
@@ -2045,7 +2045,7 @@
 {
 "templateId": "ma.menagere_en_argent_massif_36_pieces",
 "rarete": "rare",
-"description": "a luxury silver flatware set of 36 pieces neatly arranged in an open mahogany case lined with velvet, top-down view"
+"description": "a luxury sterling silver flatware set of 36 pieces (forks, spoons, knives) neatly arranged in rows in an open mahogany presentation case lined with dark green velvet, the whole open case seen from directly above and fully visible with background margin around it"
 },
 {
 "templateId": "ma.bibliotheque_louis_philippe",
@@ -2065,7 +2065,7 @@
 {
 "templateId": "leg.ma.pendule_louis_xiv_boulle",
 "rarete": "legendaire",
-"description": "a Louis XIV Boulle marquetry pendulum clock with tortoiseshell and brass inlay, ornate gilt bronze mounts and figural top, side view, museum piece"
+"description": "a Louis XIV Boulle marquetry pendulum clock with tortoiseshell and brass inlay, ornate gilt bronze mounts and figural top, shown perfectly front-facing with the enamel dial centered and facing the viewer, soft even lighting, museum piece"
 },
 {
 "templateId": "uniq.ma.vase_ming_dynasty",
