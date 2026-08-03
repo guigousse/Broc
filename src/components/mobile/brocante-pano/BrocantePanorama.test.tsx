@@ -8,21 +8,29 @@ import type { GameState } from "@/types/game";
 // jsdom n'implémente pas requestAnimationFrame — polyfill minimal.
 globalThis.requestAnimationFrame ??= (cb) => setTimeout(() => cb(0), 0) as unknown as number;
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
 // BrocantePanorama consomme `useGameActions` pour attribuerVitrineABrocante,
-// ajusterBudget, consommerEnergie et tempsConfiance. On stub : aucun test ne
-// déclenche le flow d'attribution. `tempsConfiance` renvoie null → les sites
-// retombent sur Date.now() (base gracieuse) ; minimalState a energie: 5.
+// ajusterBudget, consommerEnergie et tempsConfiance. Espions hoistés et
+// partagés : le test du double-tap compte les débits. `tempsConfiance`
+// renvoie null → les sites retombent sur Date.now() (base gracieuse) ;
+// minimalState a energie: 5.
+const { ajusterBudgetMock, consommerEnergieMock } = vi.hoisted(() => ({
+  ajusterBudgetMock: vi.fn(),
+  consommerEnergieMock: vi.fn(),
+}));
 vi.mock("@/context/GameContext", () => ({
   useGameActions: () => ({
     attribuerVitrineABrocante: vi.fn(),
-    ajusterBudget: vi.fn(),
-    consommerEnergie: vi.fn(),
+    ajusterBudget: ajusterBudgetMock,
+    consommerEnergie: consommerEnergieMock,
     tempsConfiance: () => null,
   }),
 }));
@@ -108,6 +116,29 @@ describe("BrocantePanorama", () => {
     expect(screen.getByText(/collection : 0\/30 €/i)).toBeTruthy();
     const continuer = screen.getByRole("button", { name: /continuer/i }) as HTMLButtonElement;
     expect(continuer.disabled).toBe(true);
+  });
+
+  /**
+   * Audit 2026-08-03 (H2) : `onContinuer` (destination vitrine) débitait
+   * frais d'entrée + énergie AVANT `router.push`, sans idempotence — un
+   * double-tap pendant les ~280 ms de la navigation payait deux fois.
+   */
+  it("vitrine : un double-tap sur Continuer ne débite frais et énergie qu'une fois", () => {
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES}
+        state={minimalState}
+        debloqueesIds={new Set(["vide-grenier-quartier"])}
+        destination="vitrine"
+        onBack={noop}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /vide-grenier du quartier/i }));
+    const continuer = screen.getByRole("button", { name: /continuer/i });
+    fireEvent.click(continuer);
+    fireEvent.click(continuer);
+    expect(ajusterBudgetMock).toHaveBeenCalledTimes(1);
+    expect(consommerEnergieMock).toHaveBeenCalledTimes(1);
   });
 
   it("appelle onBack au clic sur Retour", () => {

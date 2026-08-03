@@ -222,8 +222,15 @@ export function BrocantePanorama({
     !coffreHorsTheme
   );
 
+  // Idempotence du départ : frais d'entrée et énergie sont débités AVANT la
+  // navigation — un double-tap pendant les ~280 ms du push paierait deux fois.
+  // Le composant se démonte à l'arrivée, le verrou n'a jamais à se rouvrir.
+  const departEngageRef = useRef(false);
+
   const onContinuer = useCallback(() => {
     if (!selected || !continuerActif) return;
+    if (departEngageRef.current) return;
+    departEngageRef.current = true;
     // Mémorise le tier choisi pour les prochaines visites (chiner ou vitrine).
     setDernierTierVisite(selected.tier);
     if (destination === "vitrine") {
