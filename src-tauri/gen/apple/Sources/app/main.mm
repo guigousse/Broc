@@ -37,13 +37,6 @@ static const NSTimeInterval BROC_PERIODE_S = 1.0 / 60.0;
 /// Durée du guet, large de côté : au-delà, la webview est forcément née.
 static const NSTimeInterval BROC_FENETRE_S = 5.0;
 
-/// Un reflow forcé tous les N ticks (≈ 10 Hz). Poser `.never` est gratuit et se
-/// fait à chaque tick ; le reflow, lui, invalide le layout de la page — à 60 Hz
-/// pendant le chargement + l'hydratation il coûterait cher pour rien. 10 Hz est
-/// largement assez dense pour tomber avant le premier paint (qui arrive après le
-/// chargement du bundle), et assez lâche pour ne pas gêner l'hydratation.
-static const int BROC_TICKS_PAR_REFLOW = 6;
-
 /// `--forest-800`, la couleur du header et de la barre d'onglets (= themeColor).
 static UIColor *broc_fond_chrome(void) {
   return [UIColor colorWithRed:0x1a / 255.0
@@ -76,13 +69,15 @@ static UIView *broc_vue_racine(void) {
   return repli;
 }
 
-static void broc_appliquer_viewport_plein_ecran(BOOL avec_reflow) {
+static void broc_appliquer_viewport_plein_ecran(void) {
   UIView *racine = broc_vue_racine();
   if (racine == nil) return;
   NSMutableArray<WKWebView *> *webviews = [NSMutableArray array];
   broc_collecter_webviews(racine, webviews);
   UIColor *fond = broc_fond_chrome();
   for (WKWebView *wv in webviews) {
+    BOOL transition = wv.scrollView.contentInsetAdjustmentBehavior !=
+                      UIScrollViewContentInsetAdjustmentNever;
     wv.scrollView.contentInsetAdjustmentBehavior =
         UIScrollViewContentInsetAdjustmentNever;
     // Défense en profondeur : toute zone que la page ne peint pas (safe area,
@@ -100,8 +95,11 @@ static void broc_appliquer_viewport_plein_ecran(BOOL avec_reflow) {
     // bas en permanence ». Le correctif de 65755cd fonctionnait grâce à ce
     // toggle ; a33bfe9 l'avait rendu conditionnel (garde `dejaCorrige`), donc
     // mort — d'où la bande devenue permanente au lieu du simple saut.
-    // Ici il est joué AVANT le premier paint, donc invisible.
-    if (avec_reflow) {
+    // Ici il est joué AVANT le premier paint, donc invisible — et UNE SEULE
+    // fois, apparié dans le même tick à la pose de `.never` : rejoué sur une
+    // page déjà peinte, il la ferait sursauter (bande qui rebondit en bas,
+    // symptôme du 2026-08-03).
+    if (transition) {
       CGRect f = wv.frame;
       wv.frame = CGRectInset(f, 0, 1);
       wv.frame = f;
@@ -118,9 +116,7 @@ static void broc_installer_correctif_viewport(void) {
     [NSTimer scheduledTimerWithTimeInterval:BROC_PERIODE_S
                                     repeats:YES
                                       block:^(NSTimer *minuteur) {
-                                        BOOL reflow =
-                                            (tick % BROC_TICKS_PAR_REFLOW) == 0;
-                                        broc_appliquer_viewport_plein_ecran(reflow);
+                                        broc_appliquer_viewport_plein_ecran();
                                         tick += 1;
                                         if (tick * BROC_PERIODE_S >=
                                             BROC_FENETRE_S) {
