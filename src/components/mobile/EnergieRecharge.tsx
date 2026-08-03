@@ -15,6 +15,8 @@ import { useToastSafe } from "@/components/ui/Toast";
 import { CartelPub } from "@/components/ui/CartelPub";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { useEnergieInfinie, definirEnergieInfinie } from "@/lib/iap/energieInfinie";
+import { getIapProvider } from "@/lib/iap/iapProvider";
 
 /** Course de l'aiguille du galvanomètre : -60° (0 ⚡) → +60° (max), clampée. */
 export function angleAiguille(energie: number, max: number): number {
@@ -153,6 +155,24 @@ export function EnergieRecharge({
   const creditEnAttente = useRef(false);
   const { d, tr } = useLangue();
   const { toast } = useToastSafe();
+  const infinie = useEnergieInfinie();
+  const [prix, setPrix] = useState<string | null>(null);
+  const [achatEnCours, setAchatEnCours] = useState(false);
+
+  // Prix localisé au montage — non-acheteur seulement (StoreKit / stub).
+  useEffect(() => {
+    if (infinie) return;
+    let annule = false;
+    getIapProvider()
+      .obtenirPrix()
+      .then((p) => {
+        if (!annule) setPrix(p);
+      })
+      .catch(() => {}); // hors-ligne : le bouton reste sans prix, l'achat re-tentera
+    return () => {
+      annule = true;
+    };
+  }, [infinie]);
 
   // Tick local 1 s pour le minuteur (sans réécrire le state global).
   useEffect(() => {
@@ -223,7 +243,29 @@ export function EnergieRecharge({
     }
   };
 
-  const angle = angleAiguille(energie, energieMax);
+  const acheterEnergieInfinie = async () => {
+    if (achatEnCours) return;
+    setAchatEnCours(true);
+    try {
+      const statut = await getIapProvider().acheter();
+      if (statut === "achete") {
+        // Unique écrivain du drapeau ; GameContext cale la jauge via l'événement.
+        definirEnergieInfinie(true);
+        setEtincelles(true);
+        void audioManager.playRecharge();
+        toast(d.chrome.achatReussi, { type: "succes" });
+      } else if (statut === "pending") {
+        toast(d.chrome.achatEnAttente);
+      }
+      // "annule" : silence (fermeture volontaire du sheet Apple).
+    } catch {
+      toast(d.chrome.erreurAchat, { type: "erreur" });
+    } finally {
+      setAchatEnCours(false);
+    }
+  };
+
+  const angle = angleAiguille(infinie ? energieMax : energie, energieMax);
   const graduations = Array.from({ length: energieMax + 1 }, (_, i) =>
     angleAiguille(i, energieMax),
   );
@@ -326,59 +368,71 @@ export function EnergieRecharge({
               gap: 5,
             }}
           >
-            <span>
-              {energie}
-              <span style={{ opacity: 0.6 }}>/{energieMax}</span>
-            </span>
+            {infinie ? (
+              <span>∞</span>
+            ) : (
+              <span>
+                {energie}
+                <span style={{ opacity: 0.6 }}>/{energieMax}</span>
+              </span>
+            )}
             <Zap size={17} strokeWidth={2.5} />
           </div>
           <div style={{ fontSize: 11, marginTop: 2 }}>
-            {restantSec === null
-              ? d.chrome.energieAuMaximum
-              : tr(d.chrome.prochaineEnergieDans, { temps: formatMMSS(restantSec) })}
+            {infinie
+              ? d.chrome.energieInfinie
+              : restantSec === null
+                ? d.chrome.energieAuMaximum
+                : tr(d.chrome.prochaineEnergieDans, { temps: formatMMSS(restantSec) })}
           </div>
         </div>
 
         {/* Le cartel laiton : LE bouton pub (accessible). Le libellé visuel est
-            une icône de visionnage ; le nom accessible reste la chaîne i18n. */}
-        <CartelPub
-          onClick={regarderPub}
-          indisponible={pubIndisponible}
-          pulse={alerteActive && !pubIndisponible}
-          ariaLabel={!pubIndisponible ? d.chrome.regarderPub : undefined}
-          style={{
-            position: "absolute",
-            left: `${ZONE_PLAQUE.left}%`,
-            top: `${ZONE_PLAQUE.top}%`,
-            width: `${ZONE_PLAQUE.width}%`,
-            height: `${ZONE_PLAQUE.height}%`,
-          }}
-        >
-          {enCours || salve
-            ? d.chrome.pubEnCours
-            : energiePleine
-              ? d.chrome.energieAuMaximum
-              : pubsRestantes <= 0
-                ? d.chrome.pubEpuisee
-                : (
-                  <span
-                    aria-hidden
-                    style={{
-                      whiteSpace: "nowrap",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <MonitorPlay size={22} strokeWidth={2.2} />
-                    {"+1"}
-                    <Zap size={16} strokeWidth={2.5} />
-                  </span>
-                )}
-        </CartelPub>
+            une icône de visionnage ; le nom accessible reste la chaîne i18n.
+            Absent en mode énergie infinie : plus rien à regarder pour recharger. */}
+        {!infinie && (
+          <CartelPub
+            onClick={regarderPub}
+            indisponible={pubIndisponible}
+            pulse={alerteActive && !pubIndisponible}
+            ariaLabel={!pubIndisponible ? d.chrome.regarderPub : undefined}
+            style={{
+              position: "absolute",
+              left: `${ZONE_PLAQUE.left}%`,
+              top: `${ZONE_PLAQUE.top}%`,
+              width: `${ZONE_PLAQUE.width}%`,
+              height: `${ZONE_PLAQUE.height}%`,
+            }}
+          >
+            {enCours || salve
+              ? d.chrome.pubEnCours
+              : energiePleine
+                ? d.chrome.energieAuMaximum
+                : pubsRestantes <= 0
+                  ? d.chrome.pubEpuisee
+                  : (
+                    <span
+                      aria-hidden
+                      style={{
+                        whiteSpace: "nowrap",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <MonitorPlay size={22} strokeWidth={2.2} />
+                      {"+1"}
+                      <Zap size={16} strokeWidth={2.5} />
+                    </span>
+                  )}
+          </CartelPub>
+        )}
 
-        {/* Le levier peint : zone de tap redondante, invisible pour l'a11y. */}
-        <div aria-hidden style={levierTapStyle(pubIndisponible)} onClick={regarderPub} />
+        {/* Le levier peint : zone de tap redondante, invisible pour l'a11y.
+            Absent en mode énergie infinie (rien à créditer). */}
+        {!infinie && (
+          <div aria-hidden style={levierTapStyle(pubIndisponible)} onClick={regarderPub} />
+        )}
 
         {/* Gerbe d'étincelles à la récompense (au niveau du cadran). */}
         {etincelles &&
@@ -403,6 +457,38 @@ export function EnergieRecharge({
             </span>
           ))}
       </div>
+
+      {/* Bouton d'achat « Énergie infinie » — sous la carte machine. Achat
+          non-consommable unique : disparaît dès que le drapeau est actif. */}
+      {!infinie && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            void acheterEnergieInfinie();
+          }}
+          disabled={achatEnCours}
+          style={{
+            marginTop: 12,
+            width: "100%",
+            maxWidth: 340,
+            padding: "12px 16px",
+            borderRadius: 10,
+            background: "linear-gradient(180deg, var(--brass-300), var(--brass-500))",
+            border: "2px solid var(--brass-700)",
+            color: "var(--forest-800)",
+            fontFamily: "var(--font-display)",
+            fontWeight: 700,
+            fontSize: "clamp(13px, 3.8vw, 15px)",
+            letterSpacing: "0.03em",
+            cursor: achatEnCours ? "default" : "pointer",
+            opacity: achatEnCours ? 0.6 : 1,
+            boxShadow: "0 6px 18px rgba(0,0,0,0.4)",
+          }}
+        >
+          {tr(d.chrome.acheterEnergieInfinie, { prix: prix ?? "…" })}
+        </button>
+      )}
     </div>
   );
 }

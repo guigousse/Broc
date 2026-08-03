@@ -1,14 +1,21 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { EnergieRecharge, angleAiguille } from "./EnergieRecharge";
 import { PUBS_ENERGIE_MAX_PAR_JOUR } from "@/lib/energie";
+import { definirEnergieInfinie, energieInfinieActive } from "@/lib/iap/energieInfinie";
 
 vi.mock("@/lib/ads/adProvider", () => ({
   getAdProvider: () => ({ showRewardedAd: async () => ({ rewarded: true }) }),
 }));
 vi.mock("@/lib/audio/audioManager", () => ({
   audioManager: { playRecharge: vi.fn().mockResolvedValue(undefined) },
+}));
+vi.mock("@/lib/iap/iapProvider", () => ({
+  getIapProvider: () => ({
+    obtenirPrix: async () => "3,99 €",
+    acheter: async () => "achete",
+  }),
 }));
 
 afterEach(cleanup);
@@ -201,5 +208,52 @@ describe("EnergieRecharge — alerte réactive à l'énergie", () => {
     expect(screen.queryByRole("alert")).toBeNull();
     const btn = screen.getByRole("button", { name: /regarder une pub/i });
     expect(btn.style.animation).not.toContain("broc-cartel-pulse");
+  });
+});
+
+describe("EnergieRecharge — achat énergie infinie", () => {
+  afterEach(() => {
+    // Le drapeau vit en localStorage (hors save) : on le remet à zéro pour
+    // ne pas polluer les tests suivants du fichier.
+    definirEnergieInfinie(false);
+  });
+
+  it("non-acheteur : le bouton d'achat affiche le prix du stub", async () => {
+    mockState = {
+      energie: 2,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} />);
+    expect(
+      await screen.findByRole("button", { name: /Énergie infinie — 3,99 €/ }),
+    ).toBeTruthy();
+  });
+
+  it("l'achat pose le drapeau et bascule la machine en ∞", async () => {
+    mockState = {
+      energie: 2,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} />);
+    fireEvent.click(await screen.findByRole("button", { name: /Énergie infinie/ }));
+    await waitFor(() => expect(energieInfinieActive()).toBe(true));
+    expect(await screen.findByText("∞")).toBeTruthy();
+  });
+
+  it("acheteur : ni bouton d'achat, ni cartel pub, compteur en ∞", async () => {
+    mockState = {
+      energie: 2,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    definirEnergieInfinie(true);
+    render(<EnergieRecharge onClose={() => {}} />);
+    expect(
+      screen.queryByRole("button", { name: /Énergie infinie —/ }),
+    ).toBeNull();
+    expect(screen.queryByLabelText(/Regarder une pub/)).toBeNull();
+    expect(screen.getByText("∞")).toBeTruthy();
   });
 });
