@@ -11,6 +11,7 @@ import { emptyBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
 import { useBudgetAffiche, useEnergieAffiche, useXpAffiche } from "@/lib/affichageGele";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { useEnergieInfinie } from "@/lib/iap/energieInfinie";
 import { EnergieRecharge } from "./EnergieRecharge";
 
 interface MobileHeaderProps {
@@ -125,6 +126,9 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
   const [rechargeOuverte, setRechargeOuverte] = useState(false);
   const pathname = usePathname();
   const { d, tr, locale } = useLangue();
+  // Achat IAP « Énergie infinie » — drapeau device : la jauge affiche ∞ et
+  // ignore les couleurs d'alerte basse (toujours au max en mode infini).
+  const energieInfinie = useEnergieInfinie();
 
   // Pendant une session, la barre est figée sur un instantané : elle ne
   // progresse qu'à la cérémonie de bilan (envol de la pastille XP).
@@ -243,10 +247,16 @@ export function MobileHeader({ budget }: MobileHeaderProps) {
               }}
               data-fly-target="energie-header"
             >
-              <span style={{ display: "inline-flex", alignItems: "center" }}>
-                <span style={{ color: couleurEnergie }}>{energieAffichee}</span>
-                <span style={{ color: couleurReste }}>/{energieMax}</span>
-              </span>
+              {energieInfinie ? (
+                <span style={{ color: couleurReste }} aria-label={d.chrome.energieInfinie}>
+                  ∞
+                </span>
+              ) : (
+                <span style={{ display: "inline-flex", alignItems: "center" }}>
+                  <span style={{ color: couleurEnergie }}>{energieAffichee}</span>
+                  <span style={{ color: couleurReste }}>/{energieMax}</span>
+                </span>
+              )}
               <Zap size={15} strokeWidth={2.5} color={couleurReste} aria-hidden />
             </strong>
           </button>
