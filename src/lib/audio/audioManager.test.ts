@@ -681,4 +681,19 @@ describe("audioManager — gramophone", () => {
     expect(gain.gain.setValueAtTime).toHaveBeenCalledWith(1, 2);
     expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 3);
   });
+
+  /**
+   * Audit 2026-08-03 (H3) : le cache d'AudioBuffer n'avait aucune éviction.
+   * depart-voiture.mp3 décodé pèse ~23 Mo de PCM (le double avec la copie
+   * inversée du garage) pour un one-shot rare — il ne doit pas rester en
+   * cache à vie dans la WKWebView (jetsam iOS). Preuve par le re-fetch :
+   * un second appel doit re-télécharger le fichier.
+   */
+  it("playDepartVoiture évince le tampon du cache après lancement", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playDepartVoiture(3000);
+    await audioManager.playDepartVoiture(3000);
+    const urls = fetchMock.mock.calls.map((c) => c[0] as string);
+    expect(urls.filter((u) => u === "/sounds/depart-voiture.mp3")).toHaveLength(2);
+  });
 });

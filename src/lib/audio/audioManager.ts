@@ -657,6 +657,12 @@ class AudioManager {
     }
     src.start();
     src.stop(end);
+    // Éviction immédiate : ~23 Mo de PCM décodé (59 s), le double avec la
+    // copie inversée du garage, pour un one-shot rare — le laisser en cache
+    // à vie exposait la WKWebView au jetsam iOS (audit 2026-08-03). La
+    // source en cours de lecture garde sa propre référence au tampon.
+    this.buffers.delete("/sounds/depart-voiture.mp3");
+    this.buffers.delete("/sounds/depart-voiture.mp3#inverse");
   }
 
   /**
