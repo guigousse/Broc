@@ -92,6 +92,7 @@ function buildPrompt(desc) {
     "STRICTLY NO real-world brand names, band names or logos anywhere — any patch, badge, pin or print must be generic or invented, ideally without readable text at all.",
     "Placed on a SOLID FLAT PURE MAGENTA background (#FF00FF), absolutely uniform — NO shadow on the background, NO gradient, NO texture, no text, no watermark, no frame.",
     "Subject centered, occupying ~85% of the frame height. Strict square 1:1 aspect ratio.",
+    "The waist-up crop is CUT OFF by the bottom edge of the frame: the torso runs all the way down to the bottom border and is sliced by it in a clean straight horizontal line — no fade-out, no rounded bust shape, nothing floating above the bottom edge.",
   ].join(" ");
 }
 
@@ -145,6 +146,42 @@ async function chromaKeyMagenta(pngPath) {
   await sharp(data, {
     raw: { width: info.width, height: info.height, channels: ch },
   })
+    .png()
+    .toFile(tmp);
+  await fs.rename(tmp, pngPath);
+}
+
+/**
+ * Redresse le bas du portrait : coupe à la dernière ligne où le sujet fait
+ * ≥ 55 % de sa largeur max (supprime fondu et marge flottante), pour que le
+ * bas s'aligne parfaitement sur le bandeau du nom en négo.
+ */
+async function straightenBottom(pngPath) {
+  const { data, info } = await sharp(pngPath)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = info;
+  const rows = new Array(height).fill(0);
+  for (let y = 0; y < height; y++) {
+    let n = 0;
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * channels + 3] > 16) n++;
+    }
+    rows[y] = n;
+  }
+  const seuil = Math.max(...rows) * 0.55;
+  let cible = height - 1;
+  for (let y = height - 1; y >= 0; y--) {
+    if (rows[y] >= seuil) {
+      cible = y;
+      break;
+    }
+  }
+  if (cible >= height - 1) return;
+  const tmp = pngPath + ".tmp.png";
+  await sharp(pngPath)
+    .extract({ left: 0, top: 0, width, height: cible + 1 })
     .png()
     .toFile(tmp);
   await fs.rename(tmp, pngPath);
@@ -220,6 +257,7 @@ async function main() {
       const png = path.join(OUTPUT_DIR, `${base}.png`);
       await fs.writeFile(png, buf);
       await chromaKeyMagenta(png);
+      await straightenBottom(png);
       await toWebp(png);
       await fs.unlink(png);
       ok += 1;

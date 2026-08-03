@@ -31,8 +31,8 @@ export const PERSONNAGES_ES: OverlayPersonnages = {
       ambiance: "Cuenta cada céntimo mirando por encima de las gafas.",
     },
     "retraite_chineur.1": {
-      nom: "Señora Rivoire",
-      ambiance: 'Siempre pregunta "¿es su último precio?".',
+      nom: "Abuela Odette",
+      ambiance: "Rebusca tan rápido como vende — con un ojo en el reloj.",
     },
     "retraite_chineur.2": {
       nom: "Pierre del barrio",
@@ -47,16 +47,16 @@ export const PERSONNAGES_ES: OverlayPersonnages = {
       ambiance: "Fotografía con discreción las piezas que le gustan.",
     },
     "passionnee_artdeco.2": {
-      nom: "Señora Renaud",
-      ambiance: "Acaricia la madera labrada con dedo entendido.",
+      nom: "Señora Vasseur",
+      ambiance: "La anticuaria de reconocimiento: su ojo lo tasa todo.",
     },
     "brocanteur_concurrent.0": {
       nom: "Maxime del rastro",
       ambiance: "Nunca sonríe, siempre ofrece un 30 % menos.",
     },
     "brocanteur_concurrent.1": {
-      nom: "Hugo el revendedor",
-      ambiance: "Se sabe tu puesto y tus precios de memoria.",
+      nom: "Anatole el Truco",
+      ambiance: "Compra a un tercio lo que revenderá al doble.",
     },
     "brocanteur_concurrent.2": {
       nom: 'Jean-Claude "el precio"',
@@ -71,16 +71,16 @@ export const PERSONNAGES_ES: OverlayPersonnages = {
       ambiance: "Siempre se va con dos o tres discos bajo el brazo.",
     },
     "collectionneur_musique.2": {
-      nom: "Vinilo Vincent",
-      ambiance: "Conoce todas las prensas, todos los sellos.",
+      nom: "Barnabé 33-Vueltas",
+      ambiance: "El discófilo llena su cajón, prensaje a prensaje.",
     },
     "gamer_nostalgique.0": {
       nom: "Léo el retro",
       ambiance: "Se enternece ante cada cartucho de su infancia.",
     },
     "gamer_nostalgique.1": {
-      nom: "Thomas el píxel",
-      ambiance: "Comprueba el estado de los mandos y suspira de gusto.",
+      nom: "El Jugador del Mercadillo",
+      ambiance: "Rastrea el cartucho que falta en su estantería.",
     },
     "gamer_nostalgique.2": {
       nom: "Marina la geek",
@@ -103,8 +103,8 @@ export const PERSONNAGES_ES: OverlayPersonnages = {
       ambiance: "Huele el serrín a tres metros.",
     },
     "bricoleur_dimanche.1": {
-      nom: "Patrice el del taladro",
-      ambiance: "Siempre pregunta si todavía funciona.",
+      nom: "Dédé el Tirantes",
+      ambiance: "Sopesa los mangos de las herramientas como experto bonachón.",
     },
     "bricoleur_dimanche.2": {
       nom: "Jacques el de los alicates",
@@ -119,8 +119,8 @@ export const PERSONNAGES_ES: OverlayPersonnages = {
       ambiance: "Regatea como si le fuera la vida en ello.",
     },
     "etudiant_fauche.2": {
-      nom: "Yanis el bohemio",
-      ambiance: "Lo quiere todo, puede pagar una décima parte.",
+      nom: "Lucienito",
+      ambiance: "Ahorró tres semanas para un capricho.",
     },
     "snob_bourgeois.0": {
       nom: "Charles-Henri de B.",
@@ -159,8 +159,8 @@ export const PERSONNAGES_ES: OverlayPersonnages = {
       ambiance: "Rara vez se van con las manos vacías si hay juguetes.",
     },
     "decorateur.0": {
-      nom: "Sylvain el diseñador",
-      ambiance: "Ya imagina la pieza en un loft de Lyon.",
+      nom: "Clara",
+      ambiance: "Detecta la pieza que hará su próximo decorado.",
     },
     "decorateur.1": {
       nom: "Bérénice la decoradora",
@@ -171,15 +171,15 @@ export const PERSONNAGES_ES: OverlayPersonnages = {
       ambiance: "Busca carácter para sus obras.",
     },
     "amateur_vintage.0": {
-      nom: "Inès la rockabilly",
-      ambiance: "Busca una cazadora de cuero y un single de 45.",
+      nom: "Arianne",
+      ambiance: "La modista caza la pieza setentera que la inspirará.",
     },
     "amateur_vintage.1": {
       nom: "Théo el mod",
       ambiance: "Marca el pie al ritmo de una melodía que suena en su cabeza.",
     },
     "amateur_vintage.2": {
-      nom: "Clara en vaqueros",
+      nom: "Chloé en vaqueros",
       ambiance: "Se prueba de todo, se va con dos piezas.",
     },
     "notable_curieux.0": {
@@ -207,8 +207,8 @@ export const PERSONNAGES_ES: OverlayPersonnages = {
       ambiance: "Siempre sorprende con un precio bajísimo… que cuela.",
     },
     "galeriste.0": {
-      nom: "Aurélien de Saint-Germain",
-      ambiance: "Rodea la pieza y murmura en italiano.",
+      nom: "Paul-Henry",
+      ambiance: "El esteta busca una pieza digna de su colección.",
     },
     "galeriste.1": {
       nom: "Señora Vermeer",

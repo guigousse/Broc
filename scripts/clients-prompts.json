@@ -4,67 +4,231 @@
     "desc": "a completely featureless SOLID BLACK silhouette of an anonymous average adult, waist-up — one flat matte near-black (#1a1a1a) shape with a very subtle watercolor edge, absolutely NO facial features, NO clothing details, NO texture inside the shape, just the clean outline of a head and shoulders — with a single large elegant cream-colored (#F5EFE0) question mark « ? » painted at the center of the head, serif style, clearly readable"
   },
   {
-    "id": "retraite_chineur",
+    "id": "retraite_chineur-0",
     "desc": "an elderly French retired man in his 70s, flat wool cap, beige knitted cardigan over a plaid shirt, canvas tote bag on his shoulder, warm knowing smile, round cheeks"
   },
   {
-    "id": "passionnee_artdeco",
+    "id": "passionnee_artdeco-0",
     "desc": "an elegant French woman in her 50s passionate about Art Deco, sleek dark bob haircut, geometric gold-and-black earrings, emerald green 1920s-inspired coat with a fan-pattern brooch, refined confident smile"
   },
   {
-    "id": "brocanteur_concurrent",
+    "id": "brocanteur_concurrent-0",
     "desc": "a rival French flea-market dealer in his 50s, worn brown leather jacket over a rumpled shirt, stubble, appraising squinted eyes, small notebook and pencil in his breast pocket, sly competitive smirk"
   },
   {
-    "id": "collectionneur_musique",
+    "id": "collectionneur_musique-0",
     "desc": "a Black French vinyl record collector in his 40s of Caribbean descent, short dreadlocks with a few grey strands, faded band t-shirt under a corduroy blazer, headphones resting around his neck, a vinyl record tucked under one arm, enthusiastic grin"
   },
   {
-    "id": "gamer_nostalgique",
+    "id": "gamer_nostalgique-0",
     "desc": "a nostalgic French gamer in his early 30s of Maghrebi descent, dark curly hair, rectangular glasses, open zip hoodie over a retro pixel-art t-shirt, holding an old game cartridge, excited smile"
   },
   {
-    "id": "bibliophile",
+    "id": "bibliophile-0",
     "desc": "a French bibliophile woman in her 60s of Vietnamese descent, small round glasses, grey-streaked hair in a loose chignon, mustard-yellow cardigan with a shawl, clutching an old leather-bound book to her chest, gentle absorbed smile"
   },
   {
-    "id": "bricoleur_dimanche",
+    "id": "bricoleur_dimanche-0",
     "desc": "a French weekend handyman in his 50s, thick mustache, red-and-black checked flannel overshirt, folding ruler and screwdriver poking out of a chest pocket, sturdy build, cheerful practical grin"
   },
   {
-    "id": "etudiant_fauche",
+    "id": "etudiant_fauche-0",
     "desc": "a broke French student in his early 20s, knitted beanie, oversized second-hand denim jacket with sewn patches, backpack strap across the chest, sheepish hopeful smile, hands in pockets"
   },
   {
-    "id": "snob_bourgeois",
+    "id": "snob_bourgeois-0",
     "desc": "a haughty French bourgeois man in his 60s, navy double-breasted blazer with a silk pocket square, paisley ascot, silver swept-back hair, chin lifted, condescending pursed smile"
   },
   {
-    "id": "touriste_perdu",
+    "id": "touriste_perdu-0",
     "desc": "a lost cheerful tourist in his 40s, bucket hat, camera on a strap around his neck, loud flowery shirt under a light windbreaker, unfolded paper map in one hand, wide bewildered smile"
   },
   {
-    "id": "famille_dimanche",
+    "id": "famille_dimanche-0",
     "desc": "a young Black French father in his 30s on a Sunday stroll, short afro fade and neat beard, small laughing toddler sitting on his shoulders holding his hair, casual sweater with rolled sleeves, relaxed happy expression"
   },
   {
-    "id": "decorateur",
+    "id": "decorateur-1",
     "desc": "a chic French interior designer woman in her 30s of North African descent, dark wavy hair in a sleek ponytail, oversized glasses pushed up on her head, structured cream blazer, fabric swatches and a rolled magazine in one hand, assessing stylish smile"
   },
   {
-    "id": "amateur_vintage",
+    "id": "amateur_vintage-1",
     "desc": "a French vintage-loving hipster man in his 30s, curled mustache, denim jacket over a knitted vest, round amber sunglasses hanging on his collar, enamel pins, laid-back approving nod"
   },
   {
-    "id": "notable_curieux",
+    "id": "notable_curieux-0",
     "desc": "a distinguished curious French notable in his 60s, three-piece charcoal suit with a pocket-watch chain, neat white beard, one eyebrow raised with intrigued interest, hands clasped on a cane handle"
   },
   {
-    "id": "opportuniste",
+    "id": "opportuniste-0",
     "desc": "a sharp-eyed French opportunist bargain-hunter in his 40s, tilted flat cap, long coat with deep bulging pockets, lean face, quick darting eyes, thin knowing grin"
   },
   {
-    "id": "galeriste",
+    "id": "galeriste-1",
     "desc": "a Black French art gallery owner woman in her 40s, all-black tailored outfit, bold red statement glasses, short natural coils haircut, discreet gold necklace, cool evaluating half-smile"
+  },
+  {
+    "id": "retraite_chineur-2",
+    "desc": "a talkative French retiree man in his late 60s, bald head with white side hair, olive zip-up jacket over a striped polo shirt, folded newspaper under one arm, cheerful open grin mid-chat"
+  },
+  {
+    "id": "passionnee_artdeco-1",
+    "desc": "a French woman in her late 30s passionate about Art Deco, auburn finger-wave hairstyle, round tortoiseshell glasses, mustard-yellow coat with a scarab brooch, small camera held discreetly in one hand, curious half-smile"
+  },
+  {
+    "id": "brocanteur_concurrent-2",
+    "desc": "a seasoned French flea-market dealer in his 60s, slicked-back grey hair, reading glasses pushed up on his forehead, brown tweed blazer, thick auction catalog tucked under one arm, know-it-all smirk"
+  },
+  {
+    "id": "collectionneur_musique-1",
+    "desc": "a French woman vinyl collector in her 30s, wavy chestnut hair under a red bandana, denim jacket dotted with generic enamel pins, hugging a blank record sleeve against her chest, delighted smile"
+  },
+  {
+    "id": "gamer_nostalgique-2",
+    "desc": "a French geek woman in her early 30s, dark hair in a high bun with a pencil stuck through it, big round glasses, mustard cardigan over a plain tee with a tiny pixel-heart motif, canvas tote full of vintage game boxes whose covers show ONLY abstract invented artwork with NO text and NO titles, enthusiastic smile"
+  },
+  {
+    "id": "bibliophile-1",
+    "desc": "a French literature professor man in his 60s, neatly trimmed white beard, brown corduroy jacket with elbow patches, half-moon reading glasses, worn leather satchel and an old clothbound book in hand, absorbed scholarly expression"
+  },
+  {
+    "id": "bibliophile-2",
+    "desc": "a young French woman in her late 20s who loves fine stationery, honey-blonde braid over one shoulder, sage-green blouse, fountain pen tucked behind her ear, holding a cloth-bound notebook, dreamy soft smile"
+  },
+  {
+    "id": "bricoleur_dimanche-2",
+    "desc": "a meticulous French handyman in his 60s, thin grey hair, wire-rimmed glasses, khaki multi-pocket work vest full of small tools, jeweler's loupe hanging from a cord around his neck, thin precise smile of inspection"
+  },
+  {
+    "id": "etudiant_fauche-1",
+    "desc": "a broke French student woman in her early 20s, messy bun with a few dyed purple strands, oversized thrifted khaki parka, frayed canvas tote with book corners poking out, determined bargaining pout"
+  },
+  {
+    "id": "snob_bourgeois-1",
+    "desc": "a haughty French bourgeois woman in her 50s, impeccable ash-blond bob, silk printed scarf, structured cream coat with gold buttons, small handbag on her forearm, one eyebrow raised, appraising down her nose"
+  },
+  {
+    "id": "snob_bourgeois-2",
+    "desc": "a stiff elderly French bourgeois man in his late 70s, white hair combed back, monocle on a fine chain, dark grey overcoat with a velvet collar, cane with a silver knob, politely disdainful expression"
+  },
+  {
+    "id": "touriste_perdu-1",
+    "desc": "a cheerful Italian tourist woman in her 40s, large sunglasses pushed up into her dark hair, bright coral trench coat, unfolded city map and phone in her hands, delighted wide-eyed smile"
+  },
+  {
+    "id": "touriste_perdu-2",
+    "desc": "a cheerful Japanese tourist couple in their 30s standing side by side, the man with a camera on a neck strap and a beige windbreaker, the woman with a straw sun hat and a pastel backpack, both smiling brightly"
+  },
+  {
+    "id": "famille_dimanche-1",
+    "desc": "a French mother in her 30s with her 7-year-old son, she wearing a striped breton top under a light denim jacket with a soft patient smile, the boy in a yellow raincoat tugging her hand and pointing excitedly at something"
+  },
+  {
+    "id": "famille_dimanche-2",
+    "desc": "a French couple of young parents in their 30s, the father carrying a sleeping baby in a chest carrier, the mother holding a canvas tote overflowing with small wooden toys, both looking amused and happily tired"
+  },
+  {
+    "id": "decorateur-2",
+    "desc": "a French renovation contractor man in his 50s, short grey hair, rolled-sleeve checked shirt under a work gilet, folding wooden ruler in one hand, paint-flecked chinos, warm practical smile"
+  },
+  {
+    "id": "amateur_vintage-2",
+    "desc": "a French vintage-loving woman in her late 20s, light-brown shag haircut with curtain bangs, double-denim outfit over a mustard turtleneck, round amber sunglasses hooked on her collar, easygoing grin"
+  },
+  {
+    "id": "notable_curieux-1",
+    "desc": "a courteous French country doctor man in his 50s, neatly trimmed dark beard, bow tie under a camel overcoat, old leather doctor's bag in hand, gold-rimmed glasses, benevolent curious expression"
+  },
+  {
+    "id": "notable_curieux-2",
+    "desc": "an aristocratic elderly French lady in her 70s, upswept white hair, pearl choker, deep green brocade coat, discreet lorgnette held in one gloved hand, amused benevolent expression"
+  },
+  {
+    "id": "opportuniste-1",
+    "desc": "a sharp-eyed French bargain-hunter woman in her 40s of Maghrebi descent, dark hair in a low ponytail, khaki utility jacket with many pockets, small notebook and pencil in hand, piercing knowing gaze with a half-smile"
+  },
+  {
+    "id": "opportuniste-2",
+    "desc": "a wiry quick French bargain-hunter man in his 30s, short gelled hair, grey hooded jacket under a dark vest, phone in hand as if checking prices, quick sly smile"
+  },
+  {
+    "id": "galeriste-2",
+    "desc": "a French art gallery owner man in his 40s, short dark hair with grey temples, navy suit with no tie and an open white collar, jeweler's loupe hanging from a cord around his neck, warm professional smile"
+  },
+  {
+    "id": "celebrite-couturier_parisien",
+    "desc": "a flamboyant fictional Parisian haute-couture designer man in his 50s, silver hair swept back, black turtleneck under a white tailored jacket draped over his shoulders, measuring tape around his neck, dramatic proud expression"
+  },
+  {
+    "id": "celebrite-icone_cinema_60s",
+    "desc": "a fictional 1960s French cinema icon woman in her 70s with a heart-shaped face, copper-red curled updo, white cat-eye sunglasses pushed down her nose, faux-leopard coat with a silk scarf, glamorous knowing smile"
+  },
+  {
+    "id": "celebrite-antiquaire_rive_gauche",
+    "desc": "a famous fictional Left-Bank antiques dealer man in his 60s, impeccable grey three-piece suit with a pocket-watch chain, silk cravat, small magnifying glass in hand, refined appraising look"
+  },
+  {
+    "id": "celebrite-heritiere_mondaine",
+    "desc": "a fictional young socialite heiress in her early 30s, sleek dark ponytail, oversized pearl earrings, pastel pink tweed jacket, tiny fluffy dog peeking out of the handbag on her arm, radiant confident smile"
+  },
+  {
+    "id": "celebrite-collectionneur_excentrique",
+    "desc": "an eccentric fictional collector man in his 60s, wild grey hair, mismatched purple velvet jacket over a paisley waistcoat, several antique brooches pinned to the lapel, monocle, gleeful conspiratorial grin"
+  },
+  {
+    "id": "celebrite-mme_de_saint_marceaux",
+    "desc": "a distinguished fictional French salon hostess in her 60s, elegant grey chignon, high lace collar under a plum velvet jacket, cameo brooch, gracious cultured smile"
+  },
+  {
+    "id": "celebrite-duc_de_brissac",
+    "desc": "a fictional French duke in his 70s, white mustache, refined hunting tweeds with a silk pocket square, signet ring, upright aristocratic bearing, benevolent commanding look"
+  },
+  {
+    "id": "celebrite-comte_de_castiglione",
+    "desc": "a fictional Italian count in his 50s, slicked dark hair with grey temples, midnight-blue velvet evening jacket, thin mustache, red carnation boutonniere, charming sly smile"
+  },
+  {
+    "id": "celebrite-marquis_d_hautpoul",
+    "desc": "a fictional French marquis in his 60s, silver goatee, burgundy brocade waistcoat under a dark frock coat, walking stick with a pale rounded knob, amused haughty expression"
+  },
+  {
+    "id": "celebrite-ambassadeur_belgique",
+    "desc": "a fictional ambassador in his 60s, neat side-parted grey hair, formal black diplomatic suit with a discreet honorific ribbon on the lapel, striped tie, courteous diplomatic smile"
+  },
+  {
+    "id": "celebrite-commissaire_priseur",
+    "desc": "a fictional auctioneer man in his 50s, round glasses, dark suit with a bow tie, small wooden gavel held in one hand, catalog tucked under the other arm, brisk theatrical expression"
+  },
+  {
+    "id": "celebrite-expert_petit_palais",
+    "desc": "a fictional museum art expert man in his 40s, tortoiseshell glasses, tweed jacket with a knitted tie, white cotton gloves delicately holding a small ornate picture frame, focused scholarly enthusiasm"
+  },
+  {
+    "id": "celebrite-magnat_du_luxe",
+    "desc": "a fictional luxury-industry magnate man in his 60s, perfectly groomed silver hair, charcoal double-breasted suit, discreet silk scarf, composed powerful smile"
+  },
+  {
+    "id": "celebrite-actrice_nouvelle_vague",
+    "desc": "a fictional French New-Wave actress in her 60s, tousled dark bob with a black headband, breton striped top under a trench coat draped over her shoulders, black eyeliner, mysterious half-smile"
+  },
+  {
+    "id": "celebrite-diva_opera",
+    "desc": "a fictional retired opera diva in her 70s, dramatic upswept auburn hair, feather boa over a deep green gown, long gloves, layered necklaces, one theatrical hand raised, magnificent expression"
+  },
+  {
+    "id": "celebrite-mecene_discret",
+    "desc": "a fictional discreet art patron man in his 50s, quiet elegance, navy cashmere overcoat and scarf, plain round glasses, hands clasped, gentle reserved smile"
+  },
+  {
+    "id": "celebrite-baronne_de_villemorin",
+    "desc": "a fictional French baroness in her 60s, silver waves under a small pillbox hat with a short veil, plush faux-fur collar coat, gloved hands resting on a beaded clutch, poised gracious expression"
+  },
+  {
+    "id": "celebrite-lady_westmorland",
+    "desc": "a fictional elderly English aristocrat lady in her 70s with a long angular face and prominent nose, auburn-grey hair in a loose low bun, half-moon reading glasses on a chain, tartan cape over a tweed suit, double pearl necklace, warm mischievous smile"
+  },
+  {
+    "id": "celebrite-baron_de_r",
+    "desc": "a mysterious fictional baron in his 50s, dark slicked-back hair, black overcoat with upturned collar, leather gloves, silver-tipped cane, enigmatic thin smile"
   }
 ]

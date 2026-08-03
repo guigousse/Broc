@@ -16,11 +16,13 @@ interface PersonaAvatarProps {
   info: PersonaInfo;
   /** Illustration PNG du personnage. Si absent, fallback SVG schématique. */
   illustrationSrc?: string;
+  /** Aura dorée animée derrière le portrait (apparition d'une célébrité). */
+  aura?: boolean;
 }
 
 const AVATAR_SIZE = 138;
 
-export function PersonaAvatar({ message, info, illustrationSrc }: PersonaAvatarProps) {
+export function PersonaAvatar({ message, info, illustrationSrc, aura }: PersonaAvatarProps) {
   const { d } = useLangue();
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [illustrationFailed, setIllustrationFailed] = useState(false);
@@ -29,6 +31,7 @@ export function PersonaAvatar({ message, info, illustrationSrc }: PersonaAvatarP
     <>
       <div style={rowStyle}>
         <div style={avatarWrap}>
+          {aura && <div style={auraStyle} data-testid="aura-celebrite" aria-hidden />}
           {showIllustration ? (
             <Image
               src={illustrationSrc}
@@ -98,6 +101,19 @@ const avatarWrap: CSSProperties = {
   width: AVATAR_SIZE,
   height: AVATAR_SIZE,
   pointerEvents: "auto",
+};
+
+/* Halo doré derrière le portrait de célébrité : deux nappes radiales (cœur
+   chaud + voile large), animées en respiration douce. */
+const auraStyle: CSSProperties = {
+  position: "absolute",
+  inset: -18,
+  borderRadius: "50%",
+  background:
+    "radial-gradient(circle at 50% 42%, rgba(255,223,128,0.85) 0%, rgba(255,196,64,0.45) 38%, rgba(255,180,40,0.18) 62%, rgba(255,180,40,0) 78%)",
+  filter: "blur(2px)",
+  animation: "broc-celebrite-aura 2.4s ease-in-out infinite",
+  pointerEvents: "none",
 };
 
 const svgStyle: CSSProperties = {

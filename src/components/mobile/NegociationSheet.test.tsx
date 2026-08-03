@@ -16,7 +16,10 @@ const persona: NegoPersona = {
   sangFroid: 0.25,
 };
 
-function renderSheet(offreJoueur: number) {
+function renderSheet(
+  offreJoueur: number,
+  extra: { celebrite?: boolean; nomAffiche?: string } = {},
+) {
   return render(
     <NegociationSheet
       open
@@ -33,6 +36,7 @@ function renderSheet(offreJoueur: number) {
       personaInfo={{ revelePersona: false, releveBourse: false, oeilAiguise: false }}
       offreJoueur={offreJoueur}
       onChangeOffre={() => {}}
+      {...extra}
     />,
   );
 }
@@ -47,5 +51,20 @@ describe("NegociationSheet — offre contrôlée, atouts déplacés dans le dock
     renderSheet(80);
     expect(screen.queryByText(/Lot garni/)).toBeNull();
     expect(screen.queryByText(/Boniment/)).toBeNull();
+  });
+});
+
+describe("NegociationSheet — mini-happening célébrité", () => {
+  it("client ordinaire : ni aura, ni bandeau étoilé", () => {
+    renderSheet(80, { nomAffiche: "Monsieur Durand" });
+    expect(screen.queryByTestId("aura-celebrite")).toBeNull();
+    expect(screen.getByText("Monsieur Durand")).toBeTruthy();
+    expect(screen.queryByText(/✦/)).toBeNull();
+  });
+
+  it("célébrité : aura autour du portrait et bandeau luxueux étoilé", () => {
+    renderSheet(80, { celebrite: true, nomAffiche: "Lady Westmorland" });
+    expect(screen.getByTestId("aura-celebrite")).toBeTruthy();
+    expect(screen.getByText("✦ Lady Westmorland ✦")).toBeTruthy();
   });
 });

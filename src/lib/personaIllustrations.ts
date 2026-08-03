@@ -58,7 +58,9 @@ export function getVendeurIllustrationFache(archetype: string): string | undefin
 /* ------------------------------------------------------------------ */
 
 /** Archétypes clients illustrés — clés = `ClientArchetype.id` (clients.ts).
- *  Assets générés par `npm run gen:clients` dans public/personas/clients/. */
+ *  Chaque archétype compte 3 personnages (`<archetypeId>.0/.1/.2`), chacun
+ *  avec son propre portrait `client-<archetypeId>-<i>.webp` généré par
+ *  `npm run gen:clients` dans public/personas/clients/. */
 const CLIENT_ARCHETYPES_ILLUSTRES = [
   "retraite_chineur",
   "passionnee_artdeco",
@@ -80,22 +82,140 @@ const CLIENT_ARCHETYPES_ILLUSTRES = [
 
 const CLIENTS_ILLUSTRES = new Set<string>(CLIENT_ARCHETYPES_ILLUSTRES);
 
+/** Casting croisé : ces acheteurs SONT des personnages déjà connus ailleurs
+ *  (vendeurs du chinage, commanditaires du courrier) — même nom, même
+ *  portrait. Clés = `ClientPersonnage.id`. */
+const CLIENT_ILLUSTRATION_CROISEES: Record<
+  string,
+  { calme: string; fache: string }
+> = {
+  // Mamie Odette (vendeuse « mamie ») chine aussi chez les retraités.
+  "retraite_chineur.1": {
+    calme: "/personas/vendeur-mamie.webp",
+    fache: "/personas/vendeur-mamie-fache.webp",
+  },
+  // Madame Vasseur (antiquaire) en repérage Art Déco.
+  "passionnee_artdeco.2": {
+    calme: "/personas/vendeur-antiquaire.webp",
+    fache: "/personas/vendeur-antiquaire-fache.webp",
+  },
+  // Anatole la Combine (malin) rachète pour revendre.
+  "brocanteur_concurrent.1": {
+    calme: "/personas/vendeur-malin.webp",
+    fache: "/personas/vendeur-malin-fache.webp",
+  },
+  // Barnabé 33-Tours (disquaire) complète son bac.
+  "collectionneur_musique.2": {
+    calme: "/personas/vendeur-disquaire.webp",
+    fache: "/personas/vendeur-disquaire-fache.webp",
+  },
+  // Le Joueur du Vide-grenier (commanditaire jeux vidéo).
+  "gamer_nostalgique.1": {
+    calme: "/personas/commanditaires/jeux-video.webp",
+    fache: "/personas/commanditaires/jeux-video-fache.webp",
+  },
+  // Dédé la Bretelle (bonhomme) refait son établi.
+  "bricoleur_dimanche.1": {
+    calme: "/personas/vendeur-bonhomme.webp",
+    fache: "/personas/vendeur-bonhomme-fache.webp",
+  },
+  // P'tit Lucien (naïf) dépense ses économies.
+  "etudiant_fauche.2": {
+    calme: "/personas/vendeur-naif.webp",
+    fache: "/personas/vendeur-naif-fache.webp",
+  },
+  // Clara (commanditaire set designer) meuble ses décors.
+  "decorateur.0": {
+    calme: "/personas/commanditaires/set-designer.webp",
+    fache: "/personas/commanditaires/set-designer-fache.webp",
+  },
+  // Arianne (commanditaire mode) chasse le vintage.
+  "amateur_vintage.0": {
+    calme: "/personas/commanditaires/mode.webp",
+    fache: "/personas/commanditaires/mode-fache.webp",
+  },
+  // Paul-Henry (commanditaire art) achète pour sa collection.
+  "galeriste.0": {
+    calme: "/personas/commanditaires/art.webp",
+    fache: "/personas/commanditaires/art-fache.webp",
+  },
+};
+
+/** Célébrités du carnet mondain : nom FR canonique (data/celebrites.ts,
+ *  persisté tel quel en save) → slug de fichier
+ *  `client-celebrite-<slug>[-fache].webp`. Générées par `gen:clients`. */
+const CELEBRITE_SLUGS: Record<string, string> = {
+  "un grand couturier parisien": "couturier_parisien",
+  "une icône du cinéma des années 60": "icone_cinema_60s",
+  "un célèbre antiquaire de la rive gauche": "antiquaire_rive_gauche",
+  "une héritière mondaine": "heritiere_mondaine",
+  "un collectionneur excentrique": "collectionneur_excentrique",
+  "Madame de Saint-Marceaux": "mme_de_saint_marceaux",
+  "Le Duc de Brissac": "duc_de_brissac",
+  "Le Comte de Castiglione": "comte_de_castiglione",
+  "Le Marquis d'Hautpoul": "marquis_d_hautpoul",
+  "L'Ambassadeur de Belgique": "ambassadeur_belgique",
+  "Le commissaire-priseur de l'Hôtel des Ventes": "commissaire_priseur",
+  "L'expert du Petit Palais": "expert_petit_palais",
+  "un magnat de l'industrie du luxe": "magnat_du_luxe",
+  "une actrice de la Nouvelle Vague": "actrice_nouvelle_vague",
+  "une diva de l'opéra à la retraite": "diva_opera",
+  "un mécène discret": "mecene_discret",
+  "La Baronne de Villemorin": "baronne_de_villemorin",
+  "Lady Westmorland": "lady_westmorland",
+  "Le Baron de R.": "baron_de_r",
+};
+
+/** Slug d'une célébrité depuis un id de personnage
+ *  `celebrite.<brocanteId>.<jourSemaine>.<nom>` (le nom peut contenir des
+ *  points, les ids de brocante n'en contiennent pas). */
+function slugCelebrite(personnageId: string): string | undefined {
+  if (!personnageId.startsWith("celebrite.")) return undefined;
+  const nom = personnageId.split(".").slice(3).join(".");
+  return CELEBRITE_SLUGS[nom];
+}
+
 /** Silhouette noire : client dont le persona n'est pas encore révélé
  *  (compétence Lecteur d'âmes non débloquée). */
 export const CLIENT_SILHOUETTE = "/personas/clients/client-inconnu.webp";
 
-/** Illustration d'un acheteur, ou undefined (célébrité, archétype inconnu →
- *  silhouette). */
-export function getClientIllustration(archetypeId: string): string | undefined {
-  return CLIENTS_ILLUSTRES.has(archetypeId)
-    ? `/personas/clients/client-${archetypeId}.webp`
+/** `"retraite_chineur.1"` → `"retraite_chineur"`, ou null si l'id n'est pas
+ *  de la forme `<archetypeIllustré>.<index>`. */
+function decomposerPersonnageId(
+  personnageId: string,
+): { archetypeId: string; index: string } | null {
+  const sep = personnageId.lastIndexOf(".");
+  if (sep < 0) return null;
+  const archetypeId = personnageId.slice(0, sep);
+  const index = personnageId.slice(sep + 1);
+  if (!CLIENTS_ILLUSTRES.has(archetypeId) || !/^\d+$/.test(index)) return null;
+  return { archetypeId, index };
+}
+
+/** Illustration d'un acheteur, ou undefined (célébrité, personnage inconnu →
+ *  silhouette). Prend l'id du PERSONNAGE (`ClientPersonnage.id`, ex.
+ *  `"bibliophile.1"`) : chaque nom a son portrait. */
+export function getClientIllustration(personnageId: string): string | undefined {
+  const croisee = CLIENT_ILLUSTRATION_CROISEES[personnageId];
+  if (croisee) return croisee.calme;
+  const celebrite = slugCelebrite(personnageId);
+  if (celebrite) return `/personas/clients/client-celebrite-${celebrite}.webp`;
+  const dec = decomposerPersonnageId(personnageId);
+  return dec
+    ? `/personas/clients/client-${dec.archetypeId}-${dec.index}.webp`
     : undefined;
 }
 
 /** Variante fâchée d'un acheteur — générée en image-to-image depuis le
  *  portrait calme (`gen:clients --fache`) pour garder le même personnage. */
-export function getClientIllustrationFache(archetypeId: string): string | undefined {
-  return CLIENTS_ILLUSTRES.has(archetypeId)
-    ? `/personas/clients/client-${archetypeId}-fache.webp`
+export function getClientIllustrationFache(personnageId: string): string | undefined {
+  const croisee = CLIENT_ILLUSTRATION_CROISEES[personnageId];
+  if (croisee) return croisee.fache;
+  const celebrite = slugCelebrite(personnageId);
+  if (celebrite)
+    return `/personas/clients/client-celebrite-${celebrite}-fache.webp`;
+  const dec = decomposerPersonnageId(personnageId);
+  return dec
+    ? `/personas/clients/client-${dec.archetypeId}-${dec.index}-fache.webp`
     : undefined;
 }

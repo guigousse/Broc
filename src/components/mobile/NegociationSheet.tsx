@@ -57,6 +57,9 @@ interface NegociationSheetProps {
   bottomOffset?: string;
   /** Tutoriel (première vente) : main pointeuse sur le curseur joueur. */
   tutoMainJoueur?: boolean;
+  /** Mini-happening célébrité : aura dorée autour du portrait, carillon
+   *  d'apparition et bandeau de nom luxueux. */
+  celebrite?: boolean;
 }
 
 export function NegociationSheet({
@@ -81,6 +84,7 @@ export function NegociationSheet({
   onChangeOffre,
   bottomOffset,
   tutoMainJoueur = false,
+  celebrite = false,
 }: NegociationSheetProps) {
   const { d, tr, locale } = useLangue();
   const [localNego, setLocalNego] = useState<NegociationState>(
@@ -106,6 +110,11 @@ export function NegociationSheet({
       );
     }
   }, [open, nego, mode, prixDepartAdverse, cibleSecrete, persona.archetype]);
+
+  // Carillon d'apparition de la célébrité : une fois par ouverture de sheet.
+  useEffect(() => {
+    if (open && celebrite) audioManager.playCelebrite();
+  }, [open, celebrite]);
 
   const enCours = localNego.statut === "en_cours";
 
@@ -158,12 +167,15 @@ export function NegociationSheet({
           message={bubbleMessage}
           info={personaInfo}
           illustrationSrc={illustrationCourante}
+          aura={celebrite}
         />
       }
     >
       {nomAffiche && (
-        <div style={artDecoFrame}>
-          <span style={artDecoText}>{nomAffiche}</span>
+        <div style={celebrite ? artDecoFrameLuxe : artDecoFrame}>
+          <span style={celebrite ? artDecoTextLuxe : artDecoText}>
+            {celebrite ? `✦ ${nomAffiche} ✦` : nomAffiche}
+          </span>
         </div>
       )}
       <div style={contentPadStyle}>
@@ -273,6 +285,23 @@ const artDecoText: CSSProperties = {
   textShadow: "0 1px 0 rgba(255,243,213,0.6)",
   position: "relative",
   zIndex: 1,
+};
+
+/* Variante luxe du bandeau (célébrité) : or profond, double filet crème,
+   lueur chaude — plus riche que le laiton des clients ordinaires. */
+const artDecoFrameLuxe: CSSProperties = {
+  ...artDecoFrame,
+  background:
+    "linear-gradient(180deg, #f6d98a 0%, #e0aa3e 35%, #c98f1f 50%, #e0aa3e 65%, #f6d98a 100%)",
+  borderBottom: "2px solid #8a5f10",
+  boxShadow:
+    "inset 0 0 0 2px rgba(255,248,224,0.85), inset 0 0 0 5px rgba(138,95,16,0.35), inset 0 -3px 0 0 rgba(0,0,0,0.08), 0 0 14px rgba(240,190,80,0.55)",
+};
+
+const artDecoTextLuxe: CSSProperties = {
+  ...artDecoText,
+  color: "#4a3305",
+  textShadow: "0 1px 0 rgba(255,248,224,0.9), 0 0 8px rgba(255,226,150,0.6)",
 };
 
 const contentPadStyle: CSSProperties = {

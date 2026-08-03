@@ -13,8 +13,8 @@ describe("textes des visuels App Store", () => {
     }
   });
 
-  it("annonce 31 personnages dans les quatre langues", () => {
-    for (const l of LANGUES) expect(TITRES.personnages[l]).toContain("31");
+  it("annonce 72 personnages dans les quatre langues", () => {
+    for (const l of LANGUES) expect(TITRES.personnages[l]).toContain("72");
   });
 
   // Garde : le chiffre « 31 » du titre n'était vérifié que contre lui-même

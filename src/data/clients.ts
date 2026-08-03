@@ -304,27 +304,27 @@ function makePersonnages(
 export const ALL_PERSONNAGES: ClientPersonnage[] = [
   ...makePersonnages(ARCHETYPES[0], [
     { nom: "Monsieur Durand", ambiance: "Compte chaque sou en regardant par-dessus ses lunettes." },
-    { nom: "Madame Rivoire", ambiance: "Demande systématiquement « c'est votre dernier prix ? »." },
+    { nom: "Mamie Odette", ambiance: "Chine aussi vite qu'elle vend — un œil sur sa montre." },
     { nom: "Pierre du quartier", ambiance: "Vient surtout pour bavarder, achète peu." },
   ]),
   ...makePersonnages(ARCHETYPES[1], [
     { nom: "Léonie de Tourcoing", ambiance: "S'exclame doucement devant chaque belle patine." },
     { nom: "Camille Mercier", ambiance: "Photographie discrètement les pièces qui l'intéressent." },
-    { nom: "Madame Renaud", ambiance: "Caresse le bois ouvragé d'un doigt connaisseur." },
+    { nom: "Madame Vasseur", ambiance: "L'antiquaire en repérage — son œil évalue tout." },
   ]),
   ...makePersonnages(ARCHETYPES[2], [
     { nom: "Maxime du puçier", ambiance: "Ne sourit jamais, propose toujours 30 % en dessous." },
-    { nom: "Hugo le revendeur", ambiance: "Connaît votre stand et vos prix par cœur." },
+    { nom: "Anatole la Combine", ambiance: "Achète au tiers ce qu'il revendra au double." },
     { nom: "Jean-Claude « la cote »", ambiance: "Cite des ventes aux enchères pour justifier ses lowballs." },
   ]),
   ...makePersonnages(ARCHETYPES[3], [
     { nom: "Bertrand le mélomane", ambiance: "Renifle chaque pochette de vinyle avec respect." },
     { nom: "Sophie 33-tours", ambiance: "Repart toujours avec deux ou trois disques sous le bras." },
-    { nom: "Vinyle Vincent", ambiance: "Connaît tous les pressages, tous les labels." },
+    { nom: "Barnabé 33-Tours", ambiance: "Le disquaire garnit son bac, pressage après pressage." },
   ]),
   ...makePersonnages(ARCHETYPES[4], [
     { nom: "Léo le rétro", ambiance: "S'attendrit devant chaque cartouche d'enfance." },
-    { nom: "Thomas le pixel", ambiance: "Vérifie l'état des manettes, soupire de bonheur." },
+    { nom: "Le Joueur du Vide-grenier", ambiance: "Traque la cartouche qui manque à son étagère." },
     { nom: "Marina la geek", ambiance: "Cherche un cadeau pour son frère collectionneur." },
   ]),
   ...makePersonnages(ARCHETYPES[5], [
@@ -334,13 +334,13 @@ export const ALL_PERSONNAGES: ClientPersonnage[] = [
   ]),
   ...makePersonnages(ARCHETYPES[6], [
     { nom: "Marcel le bricoleur", ambiance: "Sent l'odeur de la sciure depuis trois mètres." },
-    { nom: "Patrice à la perceuse", ambiance: "Demande systématiquement si ça marche encore." },
+    { nom: "Dédé la Bretelle", ambiance: "Soupèse les manches d'outils en connaisseur débonnaire." },
     { nom: "Jacques aux pinces", ambiance: "Inspecte chaque outil comme un chirurgien." },
   ]),
   ...makePersonnages(ARCHETYPES[7], [
     { nom: "Théo en stage", ambiance: "Regarde longuement, tâte ses poches, repose." },
     { nom: "Anaïs sans le sou", ambiance: "Négocie comme s'il y avait sa vie en jeu." },
-    { nom: "Yanis le bohème", ambiance: "Veut tout, peut s'offrir un dixième." },
+    { nom: "P'tit Lucien", ambiance: "A économisé trois semaines pour un coup de cœur." },
   ]),
   ...makePersonnages(ARCHETYPES[8], [
     { nom: "Charles-Henri de B.", ambiance: "Ne salue pas le commerçant, examine du bout des doigts." },
@@ -358,14 +358,14 @@ export const ALL_PERSONNAGES: ClientPersonnage[] = [
     { nom: "Les Garnier", ambiance: "Partent rarement les mains vides quand il y a du jouet." },
   ]),
   ...makePersonnages(ARCHETYPES[11], [
-    { nom: "Sylvain le designer", ambiance: "Visualise déjà la pièce dans un loft à Lyon." },
+    { nom: "Clara", ambiance: "Repère la pièce qui fera son prochain décor." },
     { nom: "Bérénice la déco", ambiance: "Snape, prend ses cotes, repart avec." },
     { nom: "Olivier rénovateur", ambiance: "Cherche du caractère pour ses chantiers." },
   ]),
   ...makePersonnages(ARCHETYPES[12], [
-    { nom: "Inès la rockabilly", ambiance: "Cherche une veste en cuir et un 45-tours." },
+    { nom: "Arianne", ambiance: "La designeuse chasse la pièce 70s qui l'inspirera." },
     { nom: "Théo le mod", ambiance: "Tape du pied sur un Téléphone qui tourne dans sa tête." },
-    { nom: "Clara en jean", ambiance: "Essaie tout, repart avec deux pièces." },
+    { nom: "Chloé en jean", ambiance: "Essaie tout, repart avec deux pièces." },
   ]),
   ...makePersonnages(ARCHETYPES[13], [
     { nom: "Maître Lefèvre", ambiance: "Politesse exquise, portefeuille discret mais profond." },
@@ -378,7 +378,7 @@ export const ALL_PERSONNAGES: ClientPersonnage[] = [
     { nom: "Vincent du Marché", ambiance: "Surprend toujours par un prix très bas… qui passe." },
   ]),
   ...makePersonnages(ARCHETYPES[15], [
-    { nom: "Aurélien de Saint-Germain", ambiance: "Tourne autour de la pièce, marmonne en italien." },
+    { nom: "Paul-Henry", ambiance: "L'esthète cherche une pièce digne de sa collection." },
     { nom: "Madame Vermeer", ambiance: "Sort une loupe de poche et examine la signature." },
     { nom: "Pascal le galeriste", ambiance: "Parle pedigree, provenance, certificats." },
   ]),

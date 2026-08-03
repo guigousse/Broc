@@ -4,7 +4,8 @@ import {
   TEMPERAMENT_VENDEURS,
   temperamentDe,
 } from "@/data/temperaments";
-import { ARCHETYPES } from "@/data/clients";
+import { ALL_PERSONNAGES, ARCHETYPES } from "@/data/clients";
+import { CELEBRITES } from "@/data/celebrites";
 import { NOM_ARCHETYPE } from "@/lib/personas";
 import {
   getClientIllustration,
@@ -34,19 +35,59 @@ describe("mapping archétype → tempérament", () => {
 });
 
 describe("illustrations des acheteurs", () => {
-  test("chaque archétype de clients.ts a ses illustrations calme + fâchée mappées", () => {
-    for (const a of ARCHETYPES) {
-      expect(getClientIllustration(a.id), a.id).toBe(
-        `/personas/clients/client-${a.id}.webp`,
-      );
-      expect(getClientIllustrationFache(a.id), a.id).toBe(
-        `/personas/clients/client-${a.id}-fache.webp`,
+  test("chaque personnage de clients.ts a ses illustrations calme + fâchée mappées", () => {
+    for (const p of ALL_PERSONNAGES) {
+      const calme = getClientIllustration(p.id);
+      const fache = getClientIllustrationFache(p.id);
+      expect(calme, p.id).toBeDefined();
+      expect(fache, p.id).toBeDefined();
+      expect(fache, p.id).not.toBe(calme);
+    }
+  });
+
+  test("personnage sans casting croisé → portrait dédié client-<archetype>-<i>", () => {
+    expect(getClientIllustration("bibliophile.1")).toBe(
+      "/personas/clients/client-bibliophile-1.webp",
+    );
+    expect(getClientIllustrationFache("bibliophile.1")).toBe(
+      "/personas/clients/client-bibliophile-1-fache.webp",
+    );
+  });
+
+  test("casting croisé : les personnages partagés pointent sur leur portrait d'origine", () => {
+    // Mamie Odette vend au chinage ET chine en vente : même visage partout.
+    expect(getClientIllustration("retraite_chineur.1")).toBe(
+      "/personas/vendeur-mamie.webp",
+    );
+    expect(getClientIllustrationFache("retraite_chineur.1")).toBe(
+      "/personas/vendeur-mamie-fache.webp",
+    );
+    // Clara, commanditaire set designer, achète comme décoratrice.
+    expect(getClientIllustration("decorateur.0")).toBe(
+      "/personas/commanditaires/set-designer.webp",
+    );
+    expect(getClientIllustrationFache("decorateur.0")).toBe(
+      "/personas/commanditaires/set-designer-fache.webp",
+    );
+  });
+
+  test("chaque célébrité du carnet mondain a ses illustrations calme + fâchée", () => {
+    for (const nom of CELEBRITES) {
+      const id = `celebrite.marche-saint-ouen.3.${nom}`;
+      const calme = getClientIllustration(id);
+      expect(calme, nom).toMatch(/^\/personas\/clients\/client-celebrite-/);
+      expect(getClientIllustrationFache(id), nom).toBe(
+        calme!.replace(".webp", "-fache.webp"),
       );
     }
   });
 
-  test("célébrité / archétype inconnu → pas d'illustration (silhouette)", () => {
+  test("célébrité hors pool / personnage inconnu → pas d'illustration (silhouette)", () => {
     expect(getClientIllustration("celebrite")).toBeUndefined();
     expect(getClientIllustrationFache("celebrite")).toBeUndefined();
+    expect(
+      getClientIllustration("celebrite.paris_marche.3.Brigitte Marceau"),
+    ).toBeUndefined();
+    expect(getClientIllustration("retraite_chineur")).toBeUndefined();
   });
 });

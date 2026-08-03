@@ -1125,6 +1125,11 @@ nav[aria-label="Navigation principale"] :focus-visible,
   :lang(el) body::before { content: "Γυρίστε το τηλέφωνο σε κατακόρυφη θέση"; }
 }
 
+/* Aura dorée de célébrité (négo) : halo qui respire derrière le portrait. */
+@keyframes broc-celebrite-aura {
+  0%, 100% { opacity: 0.55; transform: scale(0.96); }
+  50% { opacity: 0.9; transform: scale(1.05); }
+}
 @keyframes broc-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }

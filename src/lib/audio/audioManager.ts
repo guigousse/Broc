@@ -436,6 +436,56 @@ class AudioManager {
     });
   }
 
+  /** Apparition d'une célébrité : arpège cristallin ascendant façon carillon,
+   *  puis traîne scintillante (deux aigus détunés qui s'éteignent lentement). */
+  playCelebrite(): void {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const ctx = this.ctx;
+    const master = this.master;
+    const now = ctx.currentTime;
+    // C6 → E6 → G6 → C7 : montée « clinquante » rapide.
+    const notes = [1046.5, 1318.5, 1568.0, 2093.0];
+    const stepMs = 90;
+    notes.forEach((freq, i) => {
+      const t0 = now + (i * stepMs) / 1000;
+      const dur = 0.55;
+      // Fondamentale claire + partiel brillant à l'octave : timbre de clochette.
+      for (const [mult, vol, type] of [
+        [1, 0.09, "sine"],
+        [2, 0.035, "triangle"],
+      ] as const) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq * mult, t0);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.05);
+      }
+    });
+    // Traîne : shimmer aigu légèrement détuné qui s'évanouit.
+    const tFin = now + (notes.length * stepMs) / 1000;
+    for (const freq of [2093.0, 2103.0]) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, tFin);
+      gain.gain.setValueAtTime(0, tFin);
+      gain.gain.linearRampToValueAtTime(0.03, tFin + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, tFin + 1.3);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(tFin);
+      osc.stop(tFin + 1.4);
+    }
+  }
+
   async playCash(): Promise<void> {
     if (!this.prefs.effets) return;
     this.ensureCtx();

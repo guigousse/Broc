@@ -1071,14 +1071,15 @@ export default function VitrineJourneePage() {
           tutoMainJoueur={etape === "premiere-vente"}
           mode="vente"
           persona={personaDepuisClient(clientActuel.persona)}
+          celebrite={clientActuel.persona.archetypeId === "celebrite"}
           illustrationSrc={
             personaRevele
-              ? getClientIllustration(clientActuel.persona.archetypeId)
+              ? getClientIllustration(clientActuel.persona.id)
               : CLIENT_SILHOUETTE
           }
           illustrationFacheSrc={
             personaRevele
-              ? getClientIllustrationFache(clientActuel.persona.archetypeId)
+              ? getClientIllustrationFache(clientActuel.persona.id)
               : undefined
           }
           echelleMax={clientActuel.prixDemande}

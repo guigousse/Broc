@@ -33,8 +33,8 @@ export const PERSONNAGES_EL: OverlayPersonnages = {
       ambiance: "Μετράει κάθε δεκάρα κοιτώντας πάνω από τα γυαλιά του.",
     },
     "retraite_chineur.1": {
-      nom: "Κυρία Rivoire",
-      ambiance: "Ρωτάει πάντα: «Αυτή είναι η τελευταία σας τιμή;»",
+      nom: "Γιαγιά Odette",
+      ambiance: "Ψωνίζει όσο γρήγορα πουλά — με το ένα μάτι στο ρολόι.",
     },
     "retraite_chineur.2": {
       nom: "Ο Pierre της γειτονιάς",
@@ -49,16 +49,16 @@ export const PERSONNAGES_EL: OverlayPersonnages = {
       ambiance: "Φωτογραφίζει διακριτικά τα κομμάτια που της αρέσουν.",
     },
     "passionnee_artdeco.2": {
-      nom: "Κυρία Renaud",
-      ambiance: "Χαϊδεύει το σκαλισμένο ξύλο με δάχτυλο γνώστη.",
+      nom: "Κυρία Vasseur",
+      ambiance: "Η αντικέρισσα σε αποστολή αναγνώρισης — το μάτι της τα εκτιμά όλα.",
     },
     "brocanteur_concurrent.0": {
       nom: "Ο Maxime της παλιατζούρας",
       ambiance: "Δεν χαμογελάει ποτέ, προσφέρει πάντα 30% λιγότερα.",
     },
     "brocanteur_concurrent.1": {
-      nom: "Ο Hugo ο μεταπωλητής",
-      ambiance: "Ξέρει τον πάγκο σας και τις τιμές σας απ' έξω.",
+      nom: "Anatole η Κομπίνα",
+      ambiance: "Αγοράζει στο ένα τρίτο ό,τι θα μεταπωλήσει στο διπλάσιο.",
     },
     "brocanteur_concurrent.2": {
       nom: "Jean-Claude «η αγοραία τιμή»",
@@ -73,16 +73,16 @@ export const PERSONNAGES_EL: OverlayPersonnages = {
       ambiance: "Φεύγει πάντα με δύο τρεις δίσκους στη μασχάλη.",
     },
     "collectionneur_musique.2": {
-      nom: "Βινύλιο Vincent",
-      ambiance: "Ξέρει όλες τις εκδόσεις, όλες τις δισκογραφικές.",
+      nom: "Barnabé 33-Στροφών",
+      ambiance: "Ο δισκοπώλης γεμίζει το καφάσι του, έκδοση την έκδοση.",
     },
     "gamer_nostalgique.0": {
       nom: "Ο Léo ο retro",
       ambiance: "Συγκινείται μπροστά σε κάθε κασέτα παιχνιδιού της παιδικής του ηλικίας.",
     },
     "gamer_nostalgique.1": {
-      nom: "Ο Thomas το pixel",
-      ambiance: "Ελέγχει την κατάσταση των χειριστηρίων, αναστενάζει από ευτυχία.",
+      nom: "Ο Παίκτης του Παζαριού",
+      ambiance: "Κυνηγά την κασέτα που λείπει από το ράφι του.",
     },
     "gamer_nostalgique.2": {
       nom: "Η Marina η geek",
@@ -105,8 +105,8 @@ export const PERSONNAGES_EL: OverlayPersonnages = {
       ambiance: "Μυρίζει το πριονίδι από τρία μέτρα μακριά.",
     },
     "bricoleur_dimanche.1": {
-      nom: "Ο Patrice με το τρυπάνι",
-      ambiance: "Ρωτάει πάντα αν ακόμα λειτουργεί.",
+      nom: "Dédé οι Τιράντες",
+      ambiance: "Ζυγίζει τις λαβές των εργαλείων σαν καλόβολος γνώστης.",
     },
     "bricoleur_dimanche.2": {
       nom: "Ο Jacques με την πένσα",
@@ -121,8 +121,8 @@ export const PERSONNAGES_EL: OverlayPersonnages = {
       ambiance: "Παζαρεύει λες και παίζεται η ζωή της.",
     },
     "etudiant_fauche.2": {
-      nom: "Ο Yanis ο μποέμ",
-      ambiance: "Θέλει τα πάντα, μπορεί να πάρει μόνο το ένα δέκατο.",
+      nom: "Ο Μικρός Lucien",
+      ambiance: "Μάζευε τρεις εβδομάδες για ένα κομμάτι που αγάπησε.",
     },
     "snob_bourgeois.0": {
       nom: "Charles-Henri de B.",
@@ -161,8 +161,8 @@ export const PERSONNAGES_EL: OverlayPersonnages = {
       ambiance: "Σπάνια φεύγουν με άδεια χέρια όταν υπάρχουν παιχνίδια.",
     },
     "decorateur.0": {
-      nom: "Ο Sylvain ο σχεδιαστής",
-      ambiance: "Ήδη φαντάζεται το κομμάτι σε ένα loft στη Λυών.",
+      nom: "Clara",
+      ambiance: "Εντοπίζει το κομμάτι που θα φτιάξει το επόμενο σκηνικό της.",
     },
     "decorateur.1": {
       nom: "Η Bérénice η ντεκορατέρ",
@@ -173,15 +173,15 @@ export const PERSONNAGES_EL: OverlayPersonnages = {
       ambiance: "Ψάχνει χαρακτήρα για τα έργα του.",
     },
     "amateur_vintage.0": {
-      nom: "Η Inès η rockabilly",
-      ambiance: "Ψάχνει ένα δερμάτινο μπουφάν και έναν δίσκο 45 στροφών.",
+      nom: "Arianne",
+      ambiance: "Η σχεδιάστρια μόδας κυνηγά το κομμάτι των 70s που θα την εμπνεύσει.",
     },
     "amateur_vintage.1": {
       nom: "Ο Théo ο mod",
       ambiance: "Χτυπάει το πόδι του σε έναν σκοπό που παίζει στο μυαλό του.",
     },
     "amateur_vintage.2": {
-      nom: "Η Clara με τα τζιν",
+      nom: "Η Chloé με τα τζιν",
       ambiance: "Δοκιμάζει τα πάντα, φεύγει με δύο κομμάτια.",
     },
     "notable_curieux.0": {
@@ -209,8 +209,8 @@ export const PERSONNAGES_EL: OverlayPersonnages = {
       ambiance: "Σε εκπλήσσει πάντα με μια πολύ χαμηλή τιμή… που περνάει.",
     },
     "galeriste.0": {
-      nom: "Ο Aurélien από το Saint-Germain",
-      ambiance: "Γυρίζει γύρω από το κομμάτι, μουρμουρίζει στα ιταλικά.",
+      nom: "Paul-Henry",
+      ambiance: "Ο αισθητής ψάχνει ένα κομμάτι αντάξιο της συλλογής του.",
     },
     "galeriste.1": {
       nom: "Κυρία Vermeer",
