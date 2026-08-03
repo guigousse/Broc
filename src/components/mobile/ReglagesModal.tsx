@@ -12,6 +12,9 @@ import {
   permissionAccordee,
 } from "@/lib/notifications";
 import { notifsActives, setNotifsActives } from "@/lib/notifications/prefs";
+import { definirEnergieInfinie } from "@/lib/iap/energieInfinie";
+import { getIapProvider } from "@/lib/iap/iapProvider";
+import { useToastSafe } from "@/components/ui/Toast";
 
 interface ReglagesModalProps {
   open: boolean;
@@ -283,6 +286,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
         </section>
 
         <SectionNotifications />
+        <SectionAchats />
       </div>
     </div>
   );
@@ -353,6 +357,46 @@ function SectionNotifications() {
           {d.reglages.permissionAccordee}
         </div>
       ) : null}
+    </section>
+  );
+}
+
+/** Restauration du non-consommable « Énergie infinie » — bouton exigé par
+ *  Apple. Toujours visible : en dev/web le stub relit le drapeau local. */
+function SectionAchats() {
+  const { d } = useLangue();
+  const { toast } = useToastSafe();
+  const [enCours, setEnCours] = useState(false);
+
+  const restaurer = async () => {
+    if (enCours) return;
+    setEnCours(true);
+    try {
+      const actif = await getIapProvider().restaurer();
+      definirEnergieInfinie(actif);
+      if (actif) {
+        toast(d.reglages.achatsRestaures, { type: "succes" });
+      } else {
+        toast(d.reglages.rienARestaurer);
+      }
+    } catch {
+      toast(d.chrome.erreurAchat, { type: "erreur" });
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  return (
+    <section style={carte} aria-label={d.reglages.achats}>
+      <h3 style={sectionTitle}>{d.reglages.achats}</h3>
+      <button
+        type="button"
+        onClick={() => void restaurer()}
+        disabled={enCours}
+        style={segBtn(true, enCours)}
+      >
+        {enCours ? d.reglages.restaurationEnCours : d.reglages.restaurerAchats}
+      </button>
     </section>
   );
 }
