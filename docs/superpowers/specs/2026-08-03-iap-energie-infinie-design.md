@@ -25,9 +25,12 @@ Périmètre volontairement restreint (décision Guillaume en brainstorming) :
 
 ## Architecture
 
-### 1. Pont natif StoreKit 2 — `StoreKitBridge.swift`
+### 1. Pont natif StoreKit 2 — plugin Tauri vendoré `tauri-plugin-iap`
 
-À côté d'`AdmobBridge.swift`, même mécanique de messages webview↔natif. Trois opérations :
+Miroir de `tauri-plugin-admob` (Rust + Swift). Contrairement à AdMob, **le Swift vit
+directement dans le plugin** (`ios/Sources/IapPlugin.swift`) : StoreKit est un framework
+système, importable sous swift-rs — le détour `NSClassFromString`/gen-apple n'existait que
+pour le xcframework Google. Opérations :
 
 - **`verifierEntitlement()`** — au lancement, parcourt `Transaction.currentEntitlements`
   (validation cryptographique on-device, fonctionne hors-ligne) et répond
