@@ -34,4 +34,7 @@ marketing/appstore/.captures/
 src-tauri/gen/apple/app.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
 src-tauri/vendor/tauri-plugin-admob/.tauri/
 src-tauri/vendor/tauri-plugin-admob/ios/Package.resolved
+src-tauri/vendor/tauri-plugin-iap/.tauri/
+src-tauri/vendor/tauri-plugin-iap/ios/Package.resolved
+src-tauri/vendor/tauri-plugin-iap/ios/.build/
 marketing/appstore/.planches/
