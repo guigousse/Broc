@@ -678,6 +678,10 @@ export const el: DictionnaireUI = {
     nonRestaurable: "Δεν αποκαθίσταται.",
     competenceReparerManquanteSimple: "Λείπει η δεξιότητα Επισκευή.",
     objetIntrouvableStock: "Το αντικείμενο δεν βρέθηκε στην αποθήκη.",
+    // Auto-save (GameContext) : seul avertissement de perte de progression.
+    sauvegardeImpossible:
+      "Η αποθήκευση απέτυχε — ο χώρος είναι γεμάτος ή μη διαθέσιμος. Η πρόοδός σου κινδυνεύει να χαθεί.",
+    sauvegardeRetablie: "Η αποθήκευση αποκαταστάθηκε.",
   },
   // Conditions de déblocage des brocantes (deblocage.ts) : rendues à l'affichage
   // (panorama). `long` = description complète, `court` = avec progression.

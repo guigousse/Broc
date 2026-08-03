@@ -45,13 +45,13 @@ function makeItem(negociation: NegociationState | null): ObjetEnVente {
   };
 }
 
-function renderDrawer(item: ObjetEnVente) {
+function renderDrawer(item: ObjetEnVente, plein = false) {
   const onUpdateNego = vi.fn();
   const vue = render(
     <ChineNegoDrawer
       item={item}
       budget={1000}
-      plein={false}
+      plein={plein}
       expanded={true}
       onExpand={() => {}}
       onCollapse={() => {}}
@@ -72,6 +72,33 @@ describe("ChineNegoDrawer — Tchatche déplacée dans le dock", () => {
   it("n'affiche plus de bouton Tchatche sur un refus poli", () => {
     renderDrawer(makeItem(makeNego({ statut: "refus_poli" })));
     expect(screen.queryByText(/Tchatche/)).toBeNull();
+  });
+});
+
+/**
+ * Audit 2026-08-03 (H1, volet UI) : stockage plein, la garde n'existait que
+ * sur la vue REPLIÉE — le tiroir déplié laissait conclure une négo
+ * (Proposer/Accepter, achat après refus poli) vers un achat voué à l'échec.
+ */
+describe("ChineNegoDrawer — tiroir déplié, stockage plein", () => {
+  it("négo en cours : Proposer désactivé, Laisser tomber toujours actif", () => {
+    renderDrawer(makeItem(makeNego({ statut: "en_cours" })), true);
+    const proposer = screen.getByText(/Proposer/).closest("button") as HTMLButtonElement;
+    expect(proposer.disabled).toBe(true);
+    const laisser = screen.getByText(/Laisser tomber/).closest("button") as HTMLButtonElement;
+    expect(laisser.disabled).toBe(false);
+  });
+
+  it("refus poli : « Acheter au prix affiché » désactivé quand plein", () => {
+    renderDrawer(makeItem(makeNego({ statut: "refus_poli" })), true);
+    const acheter = screen.getByText(/Acheter au prix affiché/).closest("button") as HTMLButtonElement;
+    expect(acheter.disabled).toBe(true);
+  });
+
+  it("non-régression : stockage non plein, les deux boutons restent actifs", () => {
+    renderDrawer(makeItem(makeNego({ statut: "en_cours" })), false);
+    const proposer = screen.getByText(/Proposer/).closest("button") as HTMLButtonElement;
+    expect(proposer.disabled).toBe(false);
   });
 });
 

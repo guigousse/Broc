@@ -679,6 +679,10 @@ export const fr = {
     nonRestaurable: "Non restaurable.",
     competenceReparerManquanteSimple: "Compétence Réparer manquante.",
     objetIntrouvableStock: "Objet introuvable en stock.",
+    // Auto-save (GameContext) : seul avertissement de perte de progression.
+    sauvegardeImpossible:
+      "Sauvegarde impossible — stockage plein ou indisponible. Ta progression risque d'être perdue.",
+    sauvegardeRetablie: "Sauvegarde rétablie.",
   },
   // Conditions de déblocage des brocantes (deblocage.ts) : rendues à l'affichage
   // (panorama). `long` = description complète, `court` = avec progression.

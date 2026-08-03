@@ -57,8 +57,7 @@ export default function SessionChinePage() {
   const {
     state,
     isHydrated,
-    ajouterObjet,
-    ajusterBudget,
+    acheterObjet,
     avancerJour,
     enregistrerSession,
     gagnerXPBrocanteur,
@@ -328,8 +327,14 @@ export default function SessionChinePage() {
       toast(d.chine.caisseRefuse, { type: "erreur" });
       return false;
     }
-    ajusterBudget(-prix);
-    ajouterObjet({ ...it.objet, prixAchat: prix });
+    // Achat atomique : débit + livraison dans le même updater. Couvre le cas
+    // que le pré-check UI ne voit pas (stockage rempli par une boîte mystère
+    // pendant la session, négo conclue depuis le tiroir déplié…).
+    const res = acheterObjet({ ...it.objet, prixAchat: prix }, prix);
+    if (!res.ok) {
+      toast(res.raison ?? d.chine.caisseRefuse, { type: "erreur" });
+      return false;
+    }
     // Aligne l'accumulateur d'affichage sur le +10 de découverte crédité
     // atomiquement par le GameContext (première possession du template).
     const estDecouverte = !templateDejaPossede(state.collection, it.objet.templateId);

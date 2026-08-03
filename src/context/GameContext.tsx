@@ -158,6 +158,13 @@ interface GameStateValue {
 interface GameActionsValue {
   nouvellePartie: () => void;
   ajouterObjet: (objet: Objet) => void;
+  /**
+   * Achat atomique : budget ET place de stockage vérifiés dans le MÊME
+   * updater. Remplace le couple `ajusterBudget(-prix)` + `ajouterObjet`,
+   * qui pouvait débiter sans livrer quand le stockage était plein
+   * (audit 2026-08-03, H1).
+   */
+  acheterObjet: (objet: Objet, prix: number) => { ok: boolean; raison?: string };
   retirerObjet: (id: string) => void;
   ajusterBudget: (delta: number) => void;
   avancerJour: (nbJours?: number, volontaire?: boolean) => void;
@@ -326,13 +333,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       gameRepository.save(state).then((ok) => {
         if (!ok && !saveEnEchecRef.current) {
           saveEnEchecRef.current = true;
-          toast(
-            "Sauvegarde impossible — stockage plein ou indisponible. Ta progression risque d'être perdue.",
-            { type: "erreur" },
-          );
+          toast(raisonLocalisee("sauvegardeImpossible"), { type: "erreur" });
         } else if (ok && saveEnEchecRef.current) {
           saveEnEchecRef.current = false;
-          toast("Sauvegarde rétablie.", { type: "succes" });
+          toast(raisonLocalisee("sauvegardeRetablie"), { type: "succes" });
         }
       });
     };
@@ -708,6 +712,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return { ...prev, inventaireJoueur: [...prev.inventaireJoueur, objet] };
     });
   }, []);
+
+  // Pré-check sur stateRef.current puis re-check dans l'updater (même
+  // discipline que debloquerCompetence) : le retour ne promet que ce que
+  // l'updater re-vérifie — jamais de débit sans ajout, ni l'inverse.
+  const acheterObjet = useCallback(
+    (objet: Objet, prix: number): { ok: boolean; raison?: string } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
+      if (current.budget < prix)
+        return {
+          ok: false,
+          raison: raisonLocalisee("ilManqueEuros", { n: prix - current.budget }),
+        };
+      if (stockageEstPlein(current))
+        return { ok: false, raison: raisonLocalisee("stockagePlein") };
+      setState((prev) => {
+        if (!prev) return prev;
+        if (prev.budget < prix || stockageEstPlein(prev)) return prev;
+        return {
+          ...prev,
+          budget: prev.budget - prix,
+          inventaireJoueur: [...prev.inventaireJoueur, objet],
+        };
+      });
+      return { ok: true };
+    },
+    [],
+  );
 
   const retirerObjet = useCallback((id: string) => {
     setState((prev) =>
@@ -1883,6 +1915,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     () => ({
       nouvellePartie,
       ajouterObjet,
+      acheterObjet,
       retirerObjet,
       ajusterBudget,
       avancerJour,
@@ -1942,6 +1975,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [
       nouvellePartie,
       ajouterObjet,
+      acheterObjet,
       retirerObjet,
       ajusterBudget,
       avancerJour,

@@ -161,7 +161,8 @@ export function ChineNegoDrawer({
             {localNego.statut === "refus_poli" ? (
               <button
                 type="button"
-                style={{ ...btnPrimary, gridColumn: "1 / -1" }}
+                style={{ ...btnPrimaryDisablable(plein), gridColumn: "1 / -1" }}
+                disabled={plein}
                 onClick={() => onConclu(localNego.prixAdverseCourant)}
               >
                 {tr(d.chine.acheterPrixAffiche, { prix: localNego.prixAdverseCourant })}
@@ -171,7 +172,14 @@ export function ChineNegoDrawer({
                 <button type="button" style={btnSecondary} onClick={onCollapse}>
                   {d.chine.laisserTomber}
                 </button>
-                <button type="button" style={btnPrimary} onClick={handleProposer}>
+                {/* Stockage plein : tout chemin qui peut conclure la négo est
+                    coupé — l'achat échouerait (garde atomique acheterObjet). */}
+                <button
+                  type="button"
+                  style={btnPrimaryDisablable(plein)}
+                  disabled={plein}
+                  onClick={handleProposer}
+                >
                   {offreJoueur >= localNego.prixAdverseCourant
                     ? tr(d.chine.accepterPrix, { prix: offreJoueur })
                     : tr(d.chine.proposerPrix, { prix: offreJoueur })}
@@ -373,6 +381,12 @@ const btnPrimary: CSSProperties = {
   gridColumn: "2 / 3",
   lineHeight: 1.15,
 };
+
+const btnPrimaryDisablable = (disabled: boolean): CSSProperties => ({
+  ...btnPrimary,
+  opacity: disabled ? 0.55 : 1,
+  cursor: disabled ? "not-allowed" : "pointer",
+});
 
 const btnSecondary: CSSProperties = {
   ...btnPrimary,
