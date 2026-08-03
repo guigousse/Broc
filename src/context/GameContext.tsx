@@ -124,6 +124,10 @@ import {
 } from "@/lib/temps/horloge";
 import { getTimeSource } from "@/lib/temps/timeSource";
 import { appliquerReclamation } from "@/lib/boiteMystere";
+import {
+  EVENEMENT_ENERGIE_INFINIE,
+  energieInfinieActive,
+} from "@/lib/iap/energieInfinie";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
 import { localeCourante } from "@/lib/i18n/locales";
@@ -401,6 +405,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const consommerEnergie = useCallback(
     (n: number) => {
+      // Achat « Énergie infinie » : le débit est coupé (drapeau device, hors save).
+      if (energieInfinieActive()) return;
       setState((prev) => {
         if (!prev) return prev;
         const now = tempsConfiance() ?? Date.now();
@@ -495,6 +501,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
       window.clearInterval(tickTimer);
     };
   }, [isHydrated, rafraichirEnergie, rafraichirQuetes]);
+
+  // Achat « Énergie infinie » : toute partie (même une vieille save à jauge
+  // basse chargée après l'achat) est calée à ENERGIE_MAX — les portes
+  // « energie >= coût » passent immédiatement, et comme le débit est coupé la
+  // jauge n'en redescend plus. Déclenché au chargement ET à l'achat (événement).
+  const estChargee = state !== null;
+  useEffect(() => {
+    const remplir = () => {
+      if (!energieInfinieActive()) return;
+      setState((prev) => {
+        if (!prev || prev.energie >= ENERGIE_MAX) return prev;
+        const now = tempsConfiance() ?? Date.now();
+        return { ...prev, energie: ENERGIE_MAX, energieDerniereMaj: now };
+      });
+    };
+    remplir();
+    window.addEventListener(EVENEMENT_ENERGIE_INFINIE, remplir);
+    return () => window.removeEventListener(EVENEMENT_ENERGIE_INFINIE, remplir);
+  }, [estChargee, tempsConfiance]);
 
   // Notification « énergie pleine » : (re)planifie une notif système à l'instant
   // où l'énergie atteindra 5/5, et l'annule quand elle est pleine. La permission
