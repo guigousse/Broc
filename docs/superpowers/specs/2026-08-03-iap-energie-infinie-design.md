@@ -58,7 +58,10 @@ en localStorage (via `safeLocalStorage`), servant de cache d'affichage au boot, 
 à chaque lancement** par la réponse StoreKit (source de vérité). Conséquences :
 
 - aucune migration de save (SAVE_VERSION intact) ;
-- l'achat vaut pour les 3 emplacements de sauvegarde ;
+- **l'achat vaut pour TOUTES les parties : les 3 emplacements de sauvegarde existants
+  ET toute nouvelle partie créée ensuite** (exigence Guillaume 2026-08-03) — garanti
+  par construction, puisque le gating se fait à l'exécution dans GameContext à partir
+  du drapeau device, jamais à partir d'une donnée stockée dans la save ;
 - insensible aux écrasements/chargements de slots ;
 - un remboursement Apple fait retomber le drapeau au lancement suivant.
 
