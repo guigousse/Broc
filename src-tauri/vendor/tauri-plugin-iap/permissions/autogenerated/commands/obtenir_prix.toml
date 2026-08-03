@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-obtenir-prix"
+description = "Enables the obtenir_prix command without any pre-configured scope."
+commands.allow = ["obtenir_prix"]
+
+[[permission]]
+identifier = "deny-obtenir-prix"
+description = "Denies the obtenir_prix command without any pre-configured scope."
+commands.deny = ["obtenir_prix"]

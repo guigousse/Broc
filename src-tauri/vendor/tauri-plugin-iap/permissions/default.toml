@@ -1,0 +1,8 @@
+[default]
+description = "Permissions par défaut du plugin IAP : entitlement, prix, achat et restauration."
+permissions = [
+  "allow-verifier-entitlement",
+  "allow-obtenir-prix",
+  "allow-acheter",
+  "allow-restaurer",
+]
