@@ -20,6 +20,7 @@ import { useSettings } from "@/context/SettingsContext";
 import {
   DEFAULT_MODIFIERS,
   JOURNEE_DUREE_SECONDES,
+  BRADERIE_INTERVALLE_MULT,
   ajouterAuPanier,
   appliquerBoniment,
   bourseDe,
@@ -80,6 +81,7 @@ import {
 import { CATEGORIES } from "@/data/categories";
 import { METEO_INTERVALLE_MULT } from "@/data/meteos";
 import { indexJourSemaine, meteoDuJour } from "@/lib/meteo";
+import { estGrandeBraderie } from "@/lib/evenements";
 import { buildCelebritePersonnage } from "@/lib/celebrite";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI, tr } from "@/lib/i18n/ui";
@@ -172,7 +174,8 @@ export default function VitrineJourneePage() {
       bonusToleranceNego: bonusToleranceNegoGeneral(state),
       intervalleMultiplier:
         (aGenPresentationSoignee(state) ? 0.75 : 1) *
-        METEO_INTERVALLE_MULT[meteoDuJour(state)],
+        METEO_INTERVALLE_MULT[meteoDuJour(state)] *
+        (brocante && estGrandeBraderie(brocante) ? BRADERIE_INTERVALLE_MULT : 1),
       revelePersona: aGenLecteurAmes(state),
       releveBourse: aGenEstimateurBourse(state),
       oeilAiguise: aGenOeilAiguise(state),

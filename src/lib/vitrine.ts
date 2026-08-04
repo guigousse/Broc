@@ -490,6 +490,9 @@ export const JOURNEE_DUREE_SECONDES = 90;
 export const CLIENT_INTERVALLE_MIN_SEC = 8;
 export const CLIENT_INTERVALLE_MAX_SEC = 14;
 
+/** Braderie : la foule des grands jours — clients plus rapprochés. */
+export const BRADERIE_INTERVALLE_MULT = 0.7;
+
 export function prochainIntervalleClient(
   intervalleMultiplier: number = 1,
 ): number {

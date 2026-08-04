@@ -19,9 +19,12 @@ import {
   prochainIntervalleClient,
   proposerOffreVente,
   type VitrineModifiers,
+  BRADERIE_INTERVALLE_MULT,
 } from "./vitrine";
+import { estGrandeBraderie } from "./evenements";
 import { ouvrirNegociation } from "./negociation";
 import { texteNego } from "@/lib/i18n/contenu";
+import { getBrocanteById } from "@/data/brocantes";
 import {
   createMockClient,
   createMockObjetEnVitrine,
@@ -727,5 +730,22 @@ describe("calculerFourchettePrixMax (Œil aiguisé)", () => {
       ),
     );
     expect(mins.size).toBeGreaterThan(10);
+  });
+});
+
+describe("BRADERIE_INTERVALLE_MULT (Effets braderie côté vente)", () => {
+  it("BRADERIE_INTERVALLE_MULT accélère les arrivées de clients", () => {
+    expect(BRADERIE_INTERVALLE_MULT).toBeLessThan(1);
+    for (let i = 0; i < 50; i++) {
+      const it = prochainIntervalleClient(BRADERIE_INTERVALLE_MULT);
+      expect(it).toBeLessThanOrEqual(CLIENT_INTERVALLE_MAX_SEC * BRADERIE_INTERVALLE_MULT);
+      expect(it).toBeGreaterThanOrEqual(CLIENT_INTERVALLE_MIN_SEC * BRADERIE_INTERVALLE_MULT);
+    }
+  });
+
+  it("bourse moyenne braderie gonflée par le facteurBourse 1.5", () => {
+    const braderie = getBrocanteById("grande-braderie")!;
+    const boss = getBrocanteById("salon-antiquaires-drouot")!;
+    expect(bourseMoyenne(braderie)).toBeGreaterThan(bourseMoyenne({ ...boss, facteurBourse: 1 }));
   });
 });
