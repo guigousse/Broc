@@ -113,6 +113,10 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "Ah, that swing! It makes me forty years younger.",
     "Other records are sleeping out there in the flea markets. Never hesitate to add them to your collection — every disc is a song waiting to be discovered.",
   ],
+  anniv_cadeau_recurrent: [
+    "Happy birthday, kid! Your mother never forgets the date — this year again, the postman arrived whistling.",
+    "Another record for your collection! Go add it in Storage — the gramophone is waiting for it.",
+  ],
   gazette_tuto: [
     "Ah, you found it! The Pickers' Gazette — fifty years I've read it every Monday. This one's on me.",
     "Look at the trends column: it tells you which categories are hot this week. The more of a connoisseur you become, the more it reveals.",

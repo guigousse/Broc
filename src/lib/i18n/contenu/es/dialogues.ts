@@ -113,6 +113,10 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "¡Ah, ese swing! Me quita cuarenta años de encima.",
     "Otros vinilos duermen en los mercadillos. No dudes en añadirlos a tu colección — cada disco es una música por descubrir.",
   ],
+  anniv_cadeau_recurrent: [
+    "¡Feliz cumpleaños, muchacho! Tu madre nunca olvida la fecha — este año el cartero llegó silbando otra vez.",
+    "¡Otro disco para tu colección! Ve a añadirlo al Almacén — el gramófono lo está esperando.",
+  ],
   gazette_tuto: [
     "¡Ah, la has encontrado! La Gaceta de los Rebuscadores — cincuenta años leyéndola cada lunes. Esta te la regalo yo.",
     "Mira la sección de tendencias: te dice qué categorías están de moda esta semana. Cuanto más conocedor te vuelvas, más te revela.",
