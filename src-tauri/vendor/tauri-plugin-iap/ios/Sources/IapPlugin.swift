@@ -13,8 +13,10 @@ private let PRODUCT_ID = "com.guigousse.broc.energie_infinie"
 class IapPlugin: Plugin {
   // Écouteur de fond : transactions abouties hors du flux d'achat (Ask to Buy
   // approuvé plus tard, achat interrompu, restauration système). On se
-  // contente de finish() — l'état est relu par verifierEntitlement au prochain
-  // boot / à l'ouverture de la machine à énergie.
+  // contente de finish() — l'état est relu par verifierEntitlement, côté JS,
+  // au boot ET au retour au premier plan (IapBootstrap, visibilitychange) :
+  // la webview reste vivante sur iOS, donc un simple mount ne suffirait pas
+  // à voir arriver une transaction validée pendant que l'app était masquée.
   private var ecouteur: Any?
 
   public override func load(webview: WKWebView) {
