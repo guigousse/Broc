@@ -40,6 +40,8 @@ const ZONE_COMPTEUR_TOP = 40;
 const ZONE_PLAQUE = { left: 27, top: 66, width: 46, height: 11 };
 /** Le levier peint (colonne droite) : zone de tap redondante vers la même action. */
 const ZONE_LEVIER = { left: 70, top: 34, width: 20, height: 32 };
+/** Bouton d'achat « Énergie infinie », juste sous le cartel pub (sur les portes). */
+const ZONE_ACHAT = { left: 20, top: 79.5, width: 60, height: 11 };
 
 /** Durée de la salve de tremblement APRÈS la pub, avant le crédit + étincelles + son. */
 const SALVE_FINALE_MS = 600;
@@ -124,6 +126,34 @@ const compteurStyle: CSSProperties = {
   pointerEvents: "none",
   whiteSpace: "nowrap",
 };
+
+/** Bouton premium : verre sombre électrique, liseré et libellé néon bleuté. */
+const boutonAchatStyle = (enCours: boolean): CSSProperties => ({
+  position: "absolute",
+  left: `${ZONE_ACHAT.left}%`,
+  top: `${ZONE_ACHAT.top}%`,
+  width: `${ZONE_ACHAT.width}%`,
+  height: `${ZONE_ACHAT.height}%`,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "0 10px",
+  borderRadius: 10,
+  background: "linear-gradient(180deg, rgba(10,30,48,0.92), rgba(4,12,20,0.95))",
+  border: "1.5px solid rgba(89,215,255,0.85)",
+  boxShadow: enCours
+    ? "0 0 6px rgba(89,215,255,0.3), inset 0 0 8px rgba(89,215,255,0.15)"
+    : "0 0 10px rgba(89,215,255,0.55), 0 0 26px rgba(56,160,255,0.35), inset 0 0 10px rgba(89,215,255,0.22)",
+  color: "#aef4ff",
+  textShadow: "0 0 5px rgba(140,235,255,0.95), 0 0 14px rgba(70,190,255,0.65)",
+  fontFamily: "var(--font-display)",
+  fontWeight: 700,
+  fontSize: "clamp(12px, 3.4vw, 14px)",
+  letterSpacing: "0.04em",
+  whiteSpace: "nowrap",
+  cursor: enCours ? "default" : "pointer",
+  opacity: enCours ? 0.55 : 1,
+});
 
 /** Zone de tap invisible sur le levier peint (redondante : cachée de l'a11y). */
 const levierTapStyle = (indisponible: boolean): CSSProperties => ({
@@ -436,6 +466,22 @@ export function EnergieRecharge({
           <div aria-hidden style={levierTapStyle(pubIndisponible)} onClick={regarderPub} />
         )}
 
+        {/* Bouton d'achat « Énergie infinie » — juste sous le cartel pub.
+            Achat non-consommable unique : disparaît dès que le drapeau est actif. */}
+        {!infinie && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void acheterEnergieInfinie();
+            }}
+            disabled={achatEnCours}
+            style={boutonAchatStyle(achatEnCours)}
+          >
+            {tr(d.chrome.acheterEnergieInfinie, { prix: prix ?? "…" })}
+          </button>
+        )}
+
         {/* Gerbe d'étincelles à la récompense (au niveau du cadran). */}
         {etincelles &&
           ETINCELLES.map((e, i) => (
@@ -460,37 +506,6 @@ export function EnergieRecharge({
           ))}
       </div>
 
-      {/* Bouton d'achat « Énergie infinie » — sous la carte machine. Achat
-          non-consommable unique : disparaît dès que le drapeau est actif. */}
-      {!infinie && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            void acheterEnergieInfinie();
-          }}
-          disabled={achatEnCours}
-          style={{
-            marginTop: 12,
-            width: "100%",
-            maxWidth: 340,
-            padding: "12px 16px",
-            borderRadius: 10,
-            background: "linear-gradient(180deg, var(--brass-300), var(--brass-500))",
-            border: "2px solid var(--brass-700)",
-            color: "var(--forest-800)",
-            fontFamily: "var(--font-display)",
-            fontWeight: 700,
-            fontSize: "clamp(13px, 3.8vw, 15px)",
-            letterSpacing: "0.03em",
-            cursor: achatEnCours ? "default" : "pointer",
-            opacity: achatEnCours ? 0.6 : 1,
-            boxShadow: "0 6px 18px rgba(0,0,0,0.4)",
-          }}
-        >
-          {tr(d.chrome.acheterEnergieInfinie, { prix: prix ?? "…" })}
-        </button>
-      )}
     </div>
   );
 }
