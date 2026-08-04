@@ -1,15 +1,19 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { EnergieRecharge, angleAiguille } from "./EnergieRecharge";
+import { EnergieRecharge, angleAiguille, CELEBRATION, MACHINE_IMG_INFINIE } from "./EnergieRecharge";
 import { PUBS_ENERGIE_MAX_PAR_JOUR } from "@/lib/energie";
 import { definirEnergieInfinie, energieInfinieActive } from "@/lib/iap/energieInfinie";
+import { audioManager } from "@/lib/audio/audioManager";
 
 vi.mock("@/lib/ads/adProvider", () => ({
   getAdProvider: () => ({ showRewardedAd: async () => ({ rewarded: true }) }),
 }));
 vi.mock("@/lib/audio/audioManager", () => ({
-  audioManager: { playRecharge: vi.fn().mockResolvedValue(undefined) },
+  audioManager: {
+    playRecharge: vi.fn().mockResolvedValue(undefined),
+    playEclair: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 vi.mock("@/lib/iap/iapProvider", () => ({
   getIapProvider: () => ({
@@ -239,7 +243,54 @@ describe("EnergieRecharge — achat énergie infinie", () => {
     render(<EnergieRecharge onClose={() => {}} />);
     fireEvent.click(await screen.findByRole("button", { name: /Énergie infinie/ }));
     await waitFor(() => expect(energieInfinieActive()).toBe(true));
-    expect(await screen.findByText("∞")).toBeTruthy();
+    // La pastille compteur ∞ disparaît : c'est l'image qui porte le cadran ∞.
+    await waitFor(
+      () => expect(document.querySelector(`img[src="${MACHINE_IMG_INFINIE}"]`)).not.toBeNull(),
+      { timeout: 2000 },
+    );
+  });
+
+  it("l'achat joue éclair+recharge et swap l'image pendant le flash", async () => {
+    vi.useFakeTimers();
+    const spyEclair = vi.spyOn(audioManager, "playEclair").mockResolvedValue();
+    const spyRecharge = vi.spyOn(audioManager, "playRecharge").mockResolvedValue();
+    spyEclair.mockClear();
+    spyRecharge.mockClear();
+    mockState = {
+      energie: 2,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Énergie infinie/ }));
+      // Laisse la promesse d'achat (mockée, résolue immédiatement) se dérouler.
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(spyEclair).toHaveBeenCalledTimes(1);
+    expect(spyRecharge).toHaveBeenCalledTimes(1);
+    // avant le pic du flash : image d'origine encore affichée
+    expect(document.querySelector(`img[src="${MACHINE_IMG_INFINIE}"]`)).toBeNull();
+    await act(() => vi.advanceTimersByTimeAsync(CELEBRATION.swapMs));
+    expect(document.querySelector(`img[src="${MACHINE_IMG_INFINIE}"]`)).not.toBeNull();
+    await act(() => vi.advanceTimersByTimeAsync(CELEBRATION.dureeMs));
+    vi.useRealTimers();
+  });
+
+  it("acheteur qui rouvre : machine ∞ directe, sans flash ni son ni pastille", () => {
+    definirEnergieInfinie(true);
+    const spyEclair = vi.spyOn(audioManager, "playEclair").mockResolvedValue();
+    spyEclair.mockClear();
+    mockState = {
+      energie: 2,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} />);
+    expect(document.querySelector(`img[src="${MACHINE_IMG_INFINIE}"]`)).not.toBeNull();
+    expect(screen.queryByText("∞")).toBeNull(); // plus de pastille compteur
+    expect(spyEclair).not.toHaveBeenCalled();
   });
 
   it("acheteur : ni bouton d'achat, ni cartel pub, compteur en ∞", async () => {
@@ -254,6 +305,6 @@ describe("EnergieRecharge — achat énergie infinie", () => {
       screen.queryByRole("button", { name: /Énergie infinie —/ }),
     ).toBeNull();
     expect(screen.queryByLabelText(/Regarder une pub/)).toBeNull();
-    expect(screen.getByText("∞")).toBeTruthy();
+    expect(document.querySelector(`img[src="${MACHINE_IMG_INFINIE}"]`)).not.toBeNull();
   });
 });

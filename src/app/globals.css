@@ -1333,6 +1333,17 @@ nav[aria-label="Navigation principale"] :focus-visible,
   from { opacity: 1; transform: translate(0, 0) scale(1); }
   to { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4); }
 }
+/* Célébration d'achat « Énergie infinie » : trois éclairs de flash, synchro son. */
+@keyframes broc-flash-eclair {
+  0% { opacity: 0; }
+  6% { opacity: 0.95; }
+  12% { opacity: 0.15; }
+  23% { opacity: 0.5; }
+  32% { opacity: 0.05; }
+  47% { opacity: 0.3; }
+  60% { opacity: 0; }
+  100% { opacity: 0; }
+}
 @keyframes broc-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.04); }

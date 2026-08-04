@@ -31,6 +31,9 @@ function formatMMSS(totalSec: number): string {
 }
 
 const MACHINE_IMG = "/qg/machine-energie.webp";
+export const MACHINE_IMG_INFINIE = "/qg/machine-energie-infinie.webp";
+/** Timings de la célébration d'achat — le flash n°1 pique à swapMs. */
+export const CELEBRATION = { swapMs: 90, dureeMs: 1500 } as const;
 
 /** Zones posées sur l'illustration, en % de la carte (calibrées sur le rendu). */
 const ZONE_CADRAN = { cx: 50.1, cy: 24.2, r: 12 };
@@ -188,6 +191,20 @@ export function EnergieRecharge({
   const infinie = useEnergieInfinie();
   const [prix, setPrix] = useState<string | null>(null);
   const [achatEnCours, setAchatEnCours] = useState(false);
+  /** Célébration d'achat : flash + machine encore en habillage normal pendant swapMs. */
+  const [celebration, setCelebration] = useState(false);
+  const [imageInfinie, setImageInfinie] = useState(false);
+  const timerSwap = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const timerFin = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Nettoyage des timers de célébration au démontage.
+  useEffect(
+    () => () => {
+      if (timerSwap.current) clearTimeout(timerSwap.current);
+      if (timerFin.current) clearTimeout(timerFin.current);
+    },
+    [],
+  );
 
   // Prix localisé au montage — non-acheteur seulement (StoreKit / stub).
   useEffect(() => {
@@ -283,8 +300,13 @@ export function EnergieRecharge({
       if (statut === "achete") {
         // Unique écrivain du drapeau ; GameContext cale la jauge via l'événement.
         definirEnergieInfinie(true);
+        setCelebration(true);
         setEtincelles(true);
+        // Synchro son/flash : tout part dans le même tick.
+        void audioManager.playEclair();
         void audioManager.playRecharge();
+        timerSwap.current = setTimeout(() => setImageInfinie(true), CELEBRATION.swapMs);
+        timerFin.current = setTimeout(() => setCelebration(false), CELEBRATION.dureeMs);
         toast(d.chrome.achatReussi, { type: "succes" });
       } else if (statut === "pending") {
         toast(d.chrome.achatEnAttente);
@@ -304,6 +326,9 @@ export function EnergieRecharge({
   // L'alerte ne vit que tant que l'énergie est à zéro : dès la première
   // recharge, le bandeau disparaît et le cartel cesse de pulser.
   const alerteActive = !!alerte && energie < 1;
+  // Acheteur qui rouvre (infinie vrai, célébration fausse) → image ∞ directe.
+  // Achat en cours (infinie vrai, célébration vraie) → image d'origine jusqu'au swap.
+  const machineSrc = infinie && (imageInfinie || !celebration) ? MACHINE_IMG_INFINIE : MACHINE_IMG;
 
   return (
     <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true">
@@ -317,7 +342,7 @@ export function EnergieRecharge({
         {/* La machine du savant fou — l'illustration EST la carte. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={MACHINE_IMG}
+          src={machineSrc}
           alt=""
           style={{
             position: "absolute",
@@ -327,6 +352,23 @@ export function EnergieRecharge({
             objectFit: "cover",
           }}
         />
+
+        {/* Voile de flash de la célébration d'achat : trois éclairs, synchro son. */}
+        {celebration && (
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              zIndex: 5,
+              background:
+                "radial-gradient(circle at 50% 30%, rgba(210,240,255,1), rgba(120,190,255,0.9))",
+              opacity: 0,
+              animation: `broc-flash-eclair ${CELEBRATION.dureeMs}ms linear both`,
+            }}
+          />
+        )}
 
         <button
           onClick={onClose}
@@ -351,73 +393,73 @@ export function EnergieRecharge({
           <X size={18} />
         </button>
 
-        {/* Galvanomètre posé sur le cadran vide de l'illustration. */}
-        <div style={cadranStyle}>
-          <svg viewBox="-50 -50 100 100" style={{ width: "100%", height: "100%" }}>
-            {/* Graduations 0→max le long de l'arc de course. */}
-            {graduations.map((a, i) => (
-              <g key={i} transform={`rotate(${a})`}>
+        {/* Galvanomètre posé sur le cadran vide de l'illustration.
+            Absent en mode énergie infinie : le cadran ∞ est peint dans l'image. */}
+        {!infinie && (
+          <div style={cadranStyle}>
+            <svg viewBox="-50 -50 100 100" style={{ width: "100%", height: "100%" }}>
+              {/* Graduations 0→max le long de l'arc de course. */}
+              {graduations.map((a, i) => (
+                <g key={i} transform={`rotate(${a})`}>
+                  <line
+                    x1={0}
+                    y1={-40}
+                    x2={0}
+                    y2={i === 0 || i === graduations.length - 1 ? -31 : -34}
+                    stroke="var(--forest-800)"
+                    strokeWidth={i === graduations.length - 1 ? 3 : 2}
+                    strokeLinecap="round"
+                  />
+                </g>
+              ))}
+              {/* Aiguille — transition ressort quand l'énergie monte. */}
+              <g
+                data-testid="aiguille-energie"
+                transform={`rotate(${angle})`}
+                style={{ transition: "transform 600ms cubic-bezier(0.2, 1.6, 0.4, 1)" }}
+              >
                 <line
                   x1={0}
-                  y1={-40}
+                  y1={8}
                   x2={0}
-                  y2={i === 0 || i === graduations.length - 1 ? -31 : -34}
-                  stroke="var(--forest-800)"
-                  strokeWidth={i === graduations.length - 1 ? 3 : 2}
+                  y2={-36}
+                  stroke="var(--vermillion-600)"
+                  strokeWidth={3}
                   strokeLinecap="round"
                 />
               </g>
-            ))}
-            {/* Aiguille — transition ressort quand l'énergie monte. */}
-            <g
-              data-testid="aiguille-energie"
-              transform={`rotate(${angle})`}
-              style={{ transition: "transform 600ms cubic-bezier(0.2, 1.6, 0.4, 1)" }}
-            >
-              <line
-                x1={0}
-                y1={8}
-                x2={0}
-                y2={-36}
-                stroke="var(--vermillion-600)"
-                strokeWidth={3}
-                strokeLinecap="round"
-              />
-            </g>
-            <circle r={5} fill="var(--brass-500)" stroke="var(--forest-800)" strokeWidth={1.5} />
-          </svg>
-        </div>
+              <circle r={5} fill="var(--brass-500)" stroke="var(--forest-800)" strokeWidth={1.5} />
+            </svg>
+          </div>
+        )}
 
-        {/* Compteur n/max + minuteur, sous le cadran. */}
-        <div style={compteurStyle}>
-          <div
-            style={{
-              fontSize: 22,
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 5,
-            }}
-          >
-            {infinie ? (
-              <span>∞</span>
-            ) : (
+        {/* Compteur n/max + minuteur, sous le cadran.
+            Absent en mode énergie infinie : l'image porte le ∞. */}
+        {!infinie && (
+          <div style={compteurStyle}>
+            <div
+              style={{
+                fontSize: 22,
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 5,
+              }}
+            >
               <span>
                 {energie}
                 <span style={{ opacity: 0.6 }}>/{energieMax}</span>
               </span>
-            )}
-            <Zap size={17} strokeWidth={2.5} />
-          </div>
-          <div style={{ fontSize: 11, marginTop: 2 }}>
-            {infinie
-              ? d.chrome.energieInfinie
-              : restantSec === null
+              <Zap size={17} strokeWidth={2.5} />
+            </div>
+            <div style={{ fontSize: 11, marginTop: 2 }}>
+              {restantSec === null
                 ? d.chrome.energieAuMaximum
                 : tr(d.chrome.prochaineEnergieDans, { temps: formatMMSS(restantSec) })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Le cartel laiton : LE bouton pub (accessible). Le libellé visuel est
             une icône de visionnage ; le nom accessible reste la chaîne i18n.
