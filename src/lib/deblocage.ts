@@ -9,6 +9,7 @@ import { brocantesParTier } from "@/data/brocantes";
 import { chapitreParOrdre } from "@/data/quetesPrincipales";
 import { tr, type DictionnaireUI } from "@/lib/i18n/ui";
 import { libelleCategorie } from "@/lib/i18n/libelles";
+import { estJourBraderie } from "@/lib/evenements";
 
 /**
  * Description complète et localisée d'une condition de déblocage (SP4 i18n).
@@ -48,6 +49,8 @@ export function descriptionCondition(
       return tr(L.niveau, { niveau: c.niveau });
     case "chapitrePrincipal":
       return tr(L.chapitrePrincipal, { ordre: c.ordre });
+    case "braderie":
+      return d.chine.conditionBraderie;
     case "ET":
       return c.conditions.map((cc) => descriptionCondition(cc, d)).join(" + ");
   }
@@ -156,6 +159,8 @@ export function descriptionConditionCourte(
       ).length;
       return tr(C.chapitrePrincipal, { actuel: livres, ordre: c.ordre });
     }
+    case "braderie":
+      return d.chine.conditionBraderie;
     case "ET":
       return c.conditions
         .map((cc) => descriptionConditionCourte(cc, state, d, parTier))
@@ -312,6 +317,8 @@ export function evaluerCondition(
         state.missions.some((m) => m.courrierId === ch.id && m.statut === "livree")
       );
     }
+    case "braderie":
+      return estJourBraderie(state.jourActuel);
     case "ET":
       return c.conditions.every((cc) =>
         evaluerCondition(cc, state, brocantesDebloqueesParTier),

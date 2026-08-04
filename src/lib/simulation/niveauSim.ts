@@ -81,6 +81,7 @@ import {
 } from "@/lib/xp";
 import { ENERGIE_MAX, RECHARGE_INTERVAL_MS } from "@/lib/energie";
 import { calculerBrocantesDebloqueesParTier, evaluerCondition } from "@/lib/deblocage";
+import { ID_GRANDE_BRADERIE } from "@/lib/evenements";
 import { NIVEAU_ACTIVES, quotaActives, type ActiveId } from "@/lib/actives";
 import { ouvrirNegociation, proposerOffre } from "@/lib/negociation";
 import { donnerObjet, initCollection, valeurTotale } from "@/lib/collection";
@@ -274,6 +275,28 @@ function stateLike(sim: SimState): StateLike {
 
 function atomicConditions(c: ConditionDeblocage): ConditionDeblocage[] {
   return c.type === "ET" ? c.conditions : [c];
+}
+
+/**
+ * La simulation ne modélise pas les événements calendaires (à l'instar des
+ * célébrités et tendances de marché — cf. limites d'honnêteté en tête de
+ * fichier) : `sim.jour` est un compteur linéaire qui traverse malgré tout le
+ * week-end de Grande Braderie tôt dans une partie simulée, bien avant que le
+ * boss tier 4 ne soit réellement atteignable. Sans ce filtre, la braderie se
+ * ferait passer pour un déblocage tier 4 légitime ces deux jours-là et
+ * fausserait `brocanteCourante` (choisie à la place du boss), `tierMax`
+ * (rapporté à 4 sans progression réelle) et les `gateEvents` (faux
+ * déblocage/reblocage tier 4). On la retire donc systématiquement de
+ * l'ensemble « débloquées » utilisé par la simulation.
+ */
+function sansEvenements(
+  parTier: Map<1 | 2 | 3 | 4, Set<string>>,
+): Map<1 | 2 | 3 | 4, Set<string>> {
+  const t4 = parTier.get(4);
+  if (!t4 || !t4.has(ID_GRANDE_BRADERIE)) return parTier;
+  const filtre = new Set(t4);
+  filtre.delete(ID_GRANDE_BRADERIE);
+  return new Map(parTier).set(4, filtre);
 }
 
 /** Choisit la brocante "courante" pour le chinage/la vente : la plus prestigieuse
@@ -549,7 +572,9 @@ export function runSimulation(
   const gateEvents: GateEvent[] = [];
   const joursChap = joursChapitres(profile, totalDays);
 
-  let debloqueesAvant = calculerBrocantesDebloqueesParTier(stateLike(sim));
+  let debloqueesAvant = sansEvenements(
+    calculerBrocantesDebloqueesParTier(stateLike(sim)),
+  );
 
   for (let jour = 1; jour <= totalDays; jour++) {
     sim.jour = jour;
@@ -584,7 +609,9 @@ export function runSimulation(
     sim.brocanteur = appliquerGainXPBrocanteur(sim.brocanteur, gainXPJour);
 
     const finJourStateLike = stateLike(sim);
-    const debloqueesFinJour = calculerBrocantesDebloqueesParTier(finJourStateLike);
+    const debloqueesFinJour = sansEvenements(
+      calculerBrocantesDebloqueesParTier(finJourStateLike),
+    );
 
     // Détection des déblocages du jour + facteur bloquant (niveau vs éco),
     // évalué sur l'état de DÉBUT de journée (juste avant que la condition

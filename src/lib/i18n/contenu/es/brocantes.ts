@@ -94,4 +94,9 @@ export const BROCANTES_ES: Record<string, { nom: string; description: string }> 
     description:
       "El sanctasanctórum. Los mayores coleccionistas se cruzan aquí, y las piezas únicas hacen su última aparición.",
   },
+  "grande-braderie": {
+    nom: "La Gran Braderie",
+    description:
+      "Dos días de locura: kilómetros de puestos, precios regalados y la multitud de los grandes días. La cita del año para todo chamarilero.",
+  },
 };

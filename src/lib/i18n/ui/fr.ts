@@ -307,6 +307,7 @@ export const fr = {
     atoutVerrouilleToast: "{nom} — se débloque au niveau {niveau}",
     dejaPossedeAria: "Déjà possédé dans la collection",
     nouveauPill: "Nouveau",
+    conditionBraderie: "Ouvert uniquement le premier week-end de septembre",
   },
   vente: {
     celebrite: "Célébrité",

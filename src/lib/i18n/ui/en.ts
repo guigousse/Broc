@@ -304,6 +304,7 @@ export const en: DictionnaireUI = {
     atoutVerrouilleToast: "{nom} — unlocks at level {niveau}",
     dejaPossedeAria: "Already owned in the collection",
     nouveauPill: "New",
+    conditionBraderie: "Open only on the first weekend of September",
   },
   vente: {
     celebrite: "Celebrity",

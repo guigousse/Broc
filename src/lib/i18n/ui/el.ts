@@ -309,6 +309,7 @@ export const el: DictionnaireUI = {
     atoutVerrouilleToast: "{nom} — ξεκλειδώνει στο επίπεδο {niveau}",
     dejaPossedeAria: "Ήδη στη συλλογή",
     nouveauPill: "Νέο",
+    conditionBraderie: "Ανοιχτά μόνο το πρώτο σαββατοκύριακο του Σεπτεμβρίου",
   },
   vente: {
     celebrite: "Διασημότητα",
