@@ -697,3 +697,41 @@ describe("audioManager — gramophone", () => {
     expect(urls.filter((u) => u === "/sounds/depart-voiture.mp3")).toHaveLength(2);
   });
 });
+
+/* ------------------------------------------------------------------ */
+/* playEclair — coup de tonnerre de l'achat énergie infinie             */
+/* ------------------------------------------------------------------ */
+
+describe("audioManager — playEclair (achat énergie infinie)", () => {
+  beforeEach(stubBrowserGlobals);
+
+  it("playEclair charge /sounds/eclair.mp3 et lance la source", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playEclair();
+    expect(fetchMock).toHaveBeenCalledWith("/sounds/eclair.mp3");
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(1);
+    expect(ctx.bufferSources[0].start).toHaveBeenCalled();
+  });
+
+  it("playEclair est muet quand la préférence effets est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    await audioManager.playEclair();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  /**
+   * One-shot unique par vie d'app (achat « énergie infinie ») : même motif
+   * d'éviction que depart-voiture (audit H3, ligne ~692 ci-dessus). Preuve
+   * par le re-fetch : un second appel doit re-télécharger le fichier, signe
+   * que le tampon n'est pas resté en cache après la première lecture.
+   */
+  it("playEclair évince le tampon du cache après lancement", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playEclair();
+    await audioManager.playEclair();
+    const urls = fetchMock.mock.calls.map((c) => c[0] as string);
+    expect(urls.filter((u) => u === "/sounds/eclair.mp3")).toHaveLength(2);
+  });
+});

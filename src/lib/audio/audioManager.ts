@@ -498,6 +498,22 @@ class AudioManager {
     src.start();
   }
 
+  /** Coup de tonnerre de l'achat « Énergie infinie » — one-shot unique par vie
+   *  d'app : le tampon est évincé sitôt la lecture lancée (motif depart-voiture,
+   *  audit H3) ; la source en cours de lecture garde sa propre référence. */
+  async playEclair(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/eclair.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+    this.buffers.delete("/sounds/eclair.mp3");
+  }
+
   /** Recharge d'énergie (machine du savant fou) : plasma électrique. */
   async playRecharge(): Promise<void> {
     if (!this.prefs.effets) return;
