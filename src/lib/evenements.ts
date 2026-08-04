@@ -36,3 +36,11 @@ export function prochaineBraderie(jour: number): number {
   const samedi = samediBraderie(annee);
   return jour <= samedi + 1 ? samedi : samediBraderie(annee + 1);
 }
+
+/** Filtre d'affichage des listes : la braderie n'apparaît que ses jours. */
+export function brocantesVisiblesAuJour<T extends Pick<Brocante, "id">>(
+  brocantes: readonly T[],
+  jour: number,
+): T[] {
+  return brocantes.filter((b) => !estGrandeBraderie(b) || estJourBraderie(jour));
+}

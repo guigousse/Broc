@@ -156,6 +156,25 @@ describe("BrocantePanorama", () => {
     expect(onBack).toHaveBeenCalled();
   });
 
+  /**
+   * Task 8 : le cadre de la braderie (événement) porte un badge « Événement »
+   * — les autres cadres n'en portent pas. Toutes les scènes (tiers 1-4) sont
+   * montées simultanément (scroll horizontal), donc le badge est cherchable
+   * sans avoir à scroller dans ce test.
+   */
+  it("affiche le badge Événement sur le cadre de la braderie et nulle part ailleurs", () => {
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES}
+        state={minimalState}
+        debloqueesIds={new Set(["vide-grenier-quartier"])}
+        destination="chiner"
+        onBack={noop}
+      />,
+    );
+    expect(screen.getAllByText("Événement")).toHaveLength(1);
+  });
+
   it("réinitialise la sélection au snap vers un autre tier", async () => {
     render(
       <BrocantePanorama

@@ -308,6 +308,7 @@ export const fr = {
     dejaPossedeAria: "Déjà possédé dans la collection",
     nouveauPill: "Nouveau",
     conditionBraderie: "Ouvert uniquement le premier week-end de septembre",
+    badgeEvenement: "Événement",
   },
   vente: {
     celebrite: "Célébrité",

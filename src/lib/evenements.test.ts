@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ID_GRANDE_BRADERIE,
+  brocantesVisiblesAuJour,
   estGrandeBraderie,
   estJourBraderie,
   prochaineBraderie,
@@ -65,5 +66,16 @@ describe("estGrandeBraderie", () => {
   it("matche uniquement l'id de la braderie", () => {
     expect(estGrandeBraderie({ id: ID_GRANDE_BRADERIE })).toBe(true);
     expect(estGrandeBraderie({ id: "vide-grenier-quartier" })).toBe(false);
+  });
+});
+
+describe("brocantesVisiblesAuJour", () => {
+  it("brocantesVisiblesAuJour masque la braderie hors braderie", () => {
+    const liste = [{ id: "vide-grenier-quartier" }, { id: ID_GRANDE_BRADERIE }];
+    expect(brocantesVisiblesAuJour(liste, 92).map((b) => b.id)).toEqual(["vide-grenier-quartier"]);
+    expect(brocantesVisiblesAuJour(liste, 93).map((b) => b.id)).toEqual([
+      "vide-grenier-quartier",
+      ID_GRANDE_BRADERIE,
+    ]);
   });
 });

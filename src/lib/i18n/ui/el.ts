@@ -310,6 +310,7 @@ export const el: DictionnaireUI = {
     dejaPossedeAria: "Ήδη στη συλλογή",
     nouveauPill: "Νέο",
     conditionBraderie: "Ανοιχτά μόνο το πρώτο σαββατοκύριακο του Σεπτεμβρίου",
+    badgeEvenement: "Εκδήλωση",
   },
   vente: {
     celebrite: "Διασημότητα",

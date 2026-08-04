@@ -27,6 +27,10 @@ export const TIER_1_FRAMES: FrameCoord[] = [
   { id: "bouquinerie-plein-air",     left: "65.00%", top: "24.00%", width: "29.33%", height: "16.74%" },
   { id: "vide-dressing-centre",      left: "48.00%", top: "42.00%", width: "30.79%", height: "16.47%" },
   { id: "brocante-club-jeux",        left: "18.00%", top: "42.00%", width: "28.00%", height: "20.00%" },
+  // Braderie (événement) : cadre supplémentaire, visible sur la scène tier 1
+  // pour tous — la mécanique (tier 4) reste portée par la brocante elle-même.
+  // Position initiale, ajustée visuellement en Task 10.
+  { id: "grande-braderie",           left: "37.00%", top: "3.00%",  width: "30.00%", height: "16.00%" },
 ];
 
 // Tier 2 — 5 brocantes (coords ajustées via l'outil dev).

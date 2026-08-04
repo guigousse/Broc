@@ -305,6 +305,7 @@ export const es: DictionnaireUI = {
     dejaPossedeAria: "Ya poseído en la colección",
     nouveauPill: "Nuevo",
     conditionBraderie: "Abierto solo el primer fin de semana de septiembre",
+    badgeEvenement: "Evento",
   },
   vente: {
     celebrite: "Celebridad",
