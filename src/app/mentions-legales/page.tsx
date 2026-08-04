@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Mentions légales de l'application Broc.",
 };
 
-const MAJ = "23 juillet 2026";
+const MAJ = "4 août 2026";
 const CONTACT = "pepite.admin@gmail.com";
 const EDITEUR = "Guillaume Fenard";
 
@@ -78,6 +78,16 @@ export default function MentionsLegalesPage() {
         Barrow Street, Dublin 4, Irlande (pour l’Union européenne).
       </p>
 
+      <h2 style={h2}>Achats intégrés</h2>
+      <p>
+        L’achat intégré proposé dans l’application est vendu et encaissé par
+        Apple via l’App Store (Apple Distribution International Ltd., Hollyhill
+        Industrial Estate, Cork, Irlande, pour l’Union européenne). La
+        transaction est régie par les conditions générales des services
+        multimédias Apple ; les demandes de remboursement s’effectuent auprès
+        d’Apple.
+      </p>
+
       <h2 style={h2}>Données personnelles</h2>
       <p>
         Broc ne collecte pas directement de données personnelles. Le
@@ -130,6 +140,15 @@ export default function MentionsLegalesPage() {
         The rewarded ads shown in the app are provided by Google AdMob,
         operated by Google Ireland Limited, Gordon House, Barrow Street, Dublin
         4, Ireland (for the European Union).
+      </p>
+
+      <h2 style={h2}>In-app purchases</h2>
+      <p>
+        The in-app purchase offered in the app is sold and collected by Apple
+        through the App Store (Apple Distribution International Ltd., Hollyhill
+        Industrial Estate, Cork, Ireland, for the European Union). The
+        transaction is governed by the Apple Media Services terms; refund
+        requests are made to Apple.
       </p>
 
       <h2 style={h2}>Personal data</h2>

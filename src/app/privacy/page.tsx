@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Données locales et service d’heure utilisé par Broc.",
 };
 
-const MAJ = "23 juillet 2026";
+const MAJ = "4 août 2026";
 const CONTACT = "pepite.admin@gmail.com";
 const EDITEUR = "Guillaume Fenard";
 
@@ -80,7 +80,16 @@ export default function PrivacyPage() {
       </p>
 
       <h2 style={h2}>4. Achats intégrés et publicités</h2>
-      <p>Cette version de l’application ne propose aucun achat intégré.</p>
+      <p>
+        <strong>Achat intégré.</strong> L’application propose un achat intégré
+        unique et facultatif (« Énergie infinie »). Le paiement est traité
+        exclusivement par Apple via l’App Store : Broc n’accède à aucune donnée
+        bancaire et ne collecte aucune information de paiement. Le déblocage est
+        enregistré localement sur votre appareil et reste associé à votre compte
+        Apple, ce qui permet de le restaurer (« Restaurer les achats » dans les
+        réglages) après une réinstallation ou un changement d’appareil. Les
+        remboursements sont gérés par Apple selon ses conditions.
+      </p>
       <p>
         <strong>Publicités.</strong> L’application affiche des publicités
         récompensées, uniquement lorsque vous choisissez d’en regarder une pour
@@ -181,7 +190,15 @@ export default function PrivacyPage() {
       </p>
 
       <h2 style={h2}>4. In-app purchases and advertising</h2>
-      <p>This version has no in-app purchases.</p>
+      <p>
+        <strong>In-app purchase.</strong> The app offers a single, optional
+        in-app purchase (“Unlimited energy”). Payment is processed exclusively
+        by Apple through the App Store: Broc never accesses any banking data and
+        collects no payment information. The unlock is stored locally on your
+        device and remains linked to your Apple account, so it can be restored
+        (“Restore purchases” in the settings) after reinstalling the app or
+        switching devices. Refunds are handled by Apple under its terms.
+      </p>
       <p>
         <strong>Advertising.</strong> The app displays rewarded ads, only when
         you choose to watch one for an in-game bonus. They are provided by
@@ -281,7 +298,16 @@ export default function PrivacyPage() {
       </p>
 
       <h2 style={h2}>4. Compras integradas y publicidad</h2>
-      <p>Esta versión de la aplicación no ofrece ninguna compra integrada.</p>
+      <p>
+        <strong>Compra integrada.</strong> La aplicación ofrece una única compra
+        integrada opcional («Energía infinita»). El pago lo procesa
+        exclusivamente Apple a través del App Store: Broc no accede a ningún
+        dato bancario ni recopila información de pago. El desbloqueo se guarda
+        localmente en tu dispositivo y queda vinculado a tu cuenta de Apple, lo
+        que permite restaurarlo («Restaurar compras» en los ajustes) tras
+        reinstalar la aplicación o cambiar de dispositivo. Los reembolsos los
+        gestiona Apple según sus condiciones.
+      </p>
       <p>
         <strong>Publicidad.</strong> La aplicación muestra anuncios
         recompensados, únicamente cuando eliges ver uno para obtener una
@@ -387,7 +413,17 @@ export default function PrivacyPage() {
       </p>
 
       <h2 style={h2}>4. Αγορές εντός εφαρμογής και διαφημίσεις</h2>
-      <p>Αυτή η έκδοση της εφαρμογής δεν προσφέρει καμία αγορά εντός εφαρμογής.</p>
+      <p>
+        <strong>Αγορά εντός εφαρμογής.</strong> Η εφαρμογή προσφέρει μία
+        μοναδική προαιρετική αγορά εντός εφαρμογής («Άπειρη ενέργεια»). Η
+        πληρωμή διεκπεραιώνεται αποκλειστικά από την Apple μέσω του App Store:
+        το Broc δεν έχει πρόσβαση σε τραπεζικά δεδομένα και δεν συλλέγει καμία
+        πληροφορία πληρωμής. Το ξεκλείδωμα αποθηκεύεται τοπικά στη συσκευή σας
+        και παραμένει συνδεδεμένο με τον λογαριασμό σας Apple, ώστε να μπορεί
+        να επαναφερθεί («Επαναφορά αγορών» στις ρυθμίσεις) μετά από
+        επανεγκατάσταση ή αλλαγή συσκευής. Οι επιστροφές χρημάτων
+        διεκπεραιώνονται από την Apple σύμφωνα με τους όρους της.
+      </p>
       <p>
         <strong>Διαφημίσεις.</strong> Η εφαρμογή εμφανίζει διαφημίσεις με
         επιβράβευση, μόνο όταν επιλέγετε να παρακολουθήσετε μία για να λάβετε
