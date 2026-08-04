@@ -295,6 +295,9 @@ export function EnergieRecharge({
   const acheterEnergieInfinie = async () => {
     if (achatEnCours) return;
     setAchatEnCours(true);
+    // Précharge l'image ∞ dès le lancement de l'achat : le sheet Apple laisse
+    // plusieurs secondes, largement de quoi décoder le webp avant le swap.
+    new Image().src = MACHINE_IMG_INFINIE;
     try {
       const statut = await getIapProvider().acheter();
       if (statut === "achete") {
