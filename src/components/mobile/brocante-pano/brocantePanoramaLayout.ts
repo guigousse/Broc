@@ -29,8 +29,12 @@ export const TIER_1_FRAMES: FrameCoord[] = [
   { id: "brocante-club-jeux",        left: "18.00%", top: "42.00%", width: "28.00%", height: "20.00%" },
   // Braderie (événement) : cadre supplémentaire, visible sur la scène tier 1
   // pour tous — la mécanique (tier 4) reste portée par la brocante elle-même.
-  // Position initiale, ajustée visuellement en Task 10.
-  { id: "grande-braderie",           left: "37.00%", top: "3.00%",  width: "30.00%", height: "16.00%" },
+  // Coords ajustées en Task 10 (mesure Playwright) : à top 3 % le badge
+  // « Événement » (qui déborde de -0.5em au-dessus du cadre) passait sous la
+  // barre des plaquettes de tier (★/★★/★★★), partiellement masqué. Remonté à
+  // 6.5 % avec une hauteur réduite à 13.5 % pour rester sous
+  // marche-aux-puces-dimanche (top 21 %) sans chevauchement.
+  { id: "grande-braderie",           left: "37.00%", top: "6.50%",  width: "30.00%", height: "13.50%" },
 ];
 
 // Tier 2 — 5 brocantes (coords ajustées via l'outil dev).

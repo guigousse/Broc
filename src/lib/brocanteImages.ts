@@ -23,6 +23,7 @@ export const BROCANTES_WITH_IMAGE: ReadonlySet<string> = new Set<string>([
   "galerie-arts-decoratifs",
   "galerie-tableaux-sculptures",
   "salon-antiquaires-drouot",
+  "grande-braderie",
 ]);
 
 /**
