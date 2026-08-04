@@ -31,6 +31,7 @@ import {
   estDebloquee,
 } from "@/lib/deblocage";
 import { genererRemplacement, genererSession, uniquesExclusDuChinage } from "@/lib/chine";
+import { vinylesCadeauxExclus } from "@/lib/anniversaire";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
 import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { relancerNegociation } from "@/lib/negociation";
@@ -188,7 +189,7 @@ export default function SessionChinePage() {
         state.tendances,
         brocante,
         celebriteAujourdhui,
-        uniquesExclusDuChinage(state),
+        new Set([...uniquesExclusDuChinage(state), ...vinylesCadeauxExclus(state)]),
       );
       setItems(session);
       // Ordre CRITIQUE : la nouveauté se lit sur la collection ENCORE
@@ -293,7 +294,7 @@ export default function SessionChinePage() {
       state.tendances,
       brocante,
       state.celebriteActuelle,
-      uniquesExclusDuChinage(state),
+      new Set([...uniquesExclusDuChinage(state), ...vinylesCadeauxExclus(state)]),
     );
     // Le tirage de remplacement peut sortir un template inédit : il mérite
     // ses rayons au même titre qu'un objet de la session initiale.

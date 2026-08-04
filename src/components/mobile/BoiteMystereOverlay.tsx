@@ -12,6 +12,8 @@ import {
   BOITE_MYSTERE_OUVERTE_IMAGE,
 } from "@/lib/boiteMystere";
 import { stockageEstPlein } from "@/lib/stockage";
+import { uniquesExclusDuChinage } from "@/lib/chine";
+import { vinylesCadeauxExclus } from "@/lib/anniversaire";
 import { ItemCard } from "@/components/ui/ItemCard";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { CartelPub } from "@/components/ui/CartelPub";
@@ -122,7 +124,11 @@ export function BoiteMystereOverlay({
     try {
       const { rewarded } = await getAdProvider().showRewardedAd();
       if (!rewarded) return; // pub non terminée : la boîte reste ouvrable
-      const gagne = tirerContenuBoite(brocante);
+      const exclus = new Set([
+        ...uniquesExclusDuChinage(state),
+        ...vinylesCadeauxExclus(state),
+      ]);
+      const gagne = tirerContenuBoite(brocante, Math.random, exclus);
       if (!reclamerBoiteMystere(gagne)) {
         toast(d.sheets.toastStockagePlein, {
           type: "info",

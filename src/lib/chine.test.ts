@@ -16,6 +16,7 @@ import {
   createMockSlot,
 } from "./__test-fixtures__/gameState";
 import { UNIQUES } from "@/data/uniques";
+import { vinylesCadeauxExclus, VINYLES_CADEAU_PAR_ANNEE } from "@/lib/anniversaire";
 import type { CollectionSlot, Courrier, GameState } from "@/types/game";
 
 describe("constantes exportées", () => {
@@ -365,6 +366,18 @@ describe("genererSession — exclusion des uniques déjà possédés", () => {
     for (let s = 0; s < 30; s++) items.push(...genererSession(12, [], boss, null));
     const uniquesProposes = items.filter((it) => TOUS_LES_UNIQUES.includes(it.objet.templateId));
     expect(uniquesProposes.length).toBeGreaterThan(0);
+  });
+});
+
+describe("genererSession — exclusion des vinyles cadeau non offerts (non-régression)", () => {
+  it("les vinyles cadeau exclus ne sortent jamais en session (paramètre exclus déjà supporté)", () => {
+    const exclus = vinylesCadeauxExclus({ declencheursDeclenches: [] });
+    for (let i = 0; i < 50; i++) {
+      const session = genererSession(12, [], undefined, undefined, exclus);
+      for (const it of session) {
+        expect(VINYLES_CADEAU_PAR_ANNEE).not.toContain(it.objet.templateId);
+      }
+    }
   });
 });
 

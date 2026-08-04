@@ -79,8 +79,10 @@ function tirerTemplateBoite(
 export function tirerContenuBoite(
   brocante: Pick<Brocante, "tier">,
   rng: () => number = Math.random,
+  /** Templates à ne jamais tirer (ex. vinyles cadeau pas encore offerts). */
+  exclus?: ReadonlySet<string>,
 ): Objet {
-  const pool = poolPourTier(brocante.tier);
+  const pool = poolPourTier(brocante.tier).filter((t) => !exclus?.has(t.templateId));
   const template = tirerTemplateBoite(pool, rng);
   const etat = tirerEtatBoite(rng);
   const prixReferenceReel = Math.max(

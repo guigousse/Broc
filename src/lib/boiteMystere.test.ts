@@ -11,6 +11,7 @@ import {
 } from "./boiteMystere";
 import { FACTEUR_ETAT } from "./etat";
 import { poolPourTier, getTemplate } from "@/data/objetTemplates";
+import { VINYLES_CADEAU_PAR_ANNEE } from "./anniversaire";
 import type { GameState, Objet } from "@/types/game";
 
 describe("chanceApparition", () => {
@@ -78,6 +79,14 @@ describe("tirerContenuBoite", () => {
     expect(counts.commun).toBeGreaterThan(counts.rare);
     expect(counts.rare).toBeGreaterThan(counts.legendaire);
     expect(counts.legendaire).toBeGreaterThan(0);
+  });
+
+  it("n'inclut jamais un vinyle cadeau exclu (tant qu'il n'a pas été offert)", () => {
+    const exclus = new Set<string>(VINYLES_CADEAU_PAR_ANNEE);
+    for (let k = 0; k < 500; k++) {
+      const o = tirerContenuBoite({ tier: 3 }, Math.random, exclus);
+      expect(exclus.has(o.templateId)).toBe(false);
+    }
   });
 });
 

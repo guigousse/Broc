@@ -213,8 +213,12 @@ export function genererSession(
     .map((id) => getTemplate(id))
     .filter((t): t is ObjetTemplate => t !== undefined && !exclus?.has(t.templateId));
 
-  // Pool générique filtré par tier (1⭐ → 1/3, 2⭐ → 2/3, 3⭐+ → tout).
-  const poolGenerique = poolGeneriquePour(brocante);
+  // Pool générique filtré par tier (1⭐ → 1/3, 2⭐ → 2/3, 3⭐+ → tout), puis
+  // par exclus (ex. vinyles cadeau pas encore offerts — le pool générique
+  // les contient au même titre que n'importe quel autre disque).
+  const poolGenerique = poolGeneriquePour(brocante).filter(
+    (t) => !exclus?.has(t.templateId),
+  );
 
   // Bourses à thème : l'étal du vendeur est 100 % dans le thème (l'ancien
   // quota de ≥ 50 % est remplacé par une restriction totale — en
