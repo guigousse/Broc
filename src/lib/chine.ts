@@ -8,11 +8,15 @@ import type { Brocante, CelebriteEvenement } from "@/types/game";
 import { UNIQUES } from "@/data/uniques";
 import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
 import { modificateurTendance } from "@/lib/tendances";
+import { estGrandeBraderie } from "@/lib/evenements";
 import {
   tirerPersonaVendeur,
   calculerPrixMinAcceptDepuisPersona,
   getAffiniteCategorie,
 } from "@/lib/personas";
+
+/** Braderie : rabais appliqué au prix affiché par tous les vendeurs. */
+export const RABAIS_BRADERIE = 0.7;
 
 /**
  * Quand une célébrité visite la brocante : multiplicateur appliqué aux poids
@@ -89,9 +93,10 @@ function instancier(
   const modSpec =
     brocante?.specialisation === template.categorie ? BONUS_SPECIALISATION : 1;
   const surcote = persona.archetype === "bonimenteur" ? SURCOTE_BONIMENTEUR : 1;
+  const rabais = brocante && estGrandeBraderie(brocante) ? RABAIS_BRADERIE : 1;
   const prixVendeur = Math.max(
     1,
-    Math.round(prixReferenceReel * facteurVendeur * modTend * modSpec * surcote),
+    Math.round(prixReferenceReel * facteurVendeur * modTend * modSpec * surcote * rabais),
   );
   const prixMinAccept = calculerPrixMinAcceptDepuisPersona(persona, prixVendeur);
 
@@ -199,6 +204,7 @@ export function genererSession(
 ): ObjetEnVente[] {
   const celebritePresente =
     !!brocante && !!celebrite && celebrite.brocanteId === brocante.id;
+  const braderie = !!brocante && estGrandeBraderie(brocante);
   const tailleEffective = celebritePresente
     ? Math.round(taille * CELEBRITE_BOOST_TAILLE)
     : taille;
@@ -254,7 +260,7 @@ export function genererSession(
       : poolTirage;
     if (pool.length === 0) continue;
 
-    const t = tirerTemplatePondere(pool, celebritePresente, brocante?.tier ?? 1);
+    const t = tirerTemplatePondere(pool, celebritePresente || braderie, brocante?.tier ?? 1);
     // Pas de doublon pour rares et légendaires
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
     dejaTires.add(t.templateId);
@@ -281,6 +287,7 @@ export function genererRemplacement(
   const tier = brocante?.tier ?? 1;
   const celebritePresente =
     !!brocante && !!celebrite && celebrite.brocanteId === brocante.id;
+  const braderie = !!brocante && estGrandeBraderie(brocante);
   // Pas de doublon rare/légendaire avec le reste de l'étal (aRemplacer exclu :
   // c'est justement la place qu'on libère).
   const dejaTires = new Set(
@@ -295,7 +302,7 @@ export function genererRemplacement(
       (!brocante?.specialisation || t.categorie === brocante.specialisation),
   );
   for (let essai = 0; essai < 50; essai++) {
-    const t = tirerTemplatePondere(pool, celebritePresente, tier);
+    const t = tirerTemplatePondere(pool, celebritePresente || braderie, tier);
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
     return instancier(t, tendances, tier, brocante);
   }

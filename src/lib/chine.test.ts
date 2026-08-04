@@ -16,8 +16,9 @@ import {
   createMockSlot,
 } from "./__test-fixtures__/gameState";
 import { UNIQUES } from "@/data/uniques";
+import { getBrocanteById } from "@/data/brocantes";
 import { vinylesCadeauxExclus, VINYLES_CADEAU_PAR_ANNEE } from "@/lib/anniversaire";
-import type { CollectionSlot, Courrier, GameState } from "@/types/game";
+import type { Brocante, CollectionSlot, Courrier, GameState } from "@/types/game";
 
 describe("constantes exportées", () => {
   it("SEUIL_COLERE_VENDEUR est dans (0, 1)", () => {
@@ -467,6 +468,44 @@ describe("genererSession — taux de rares effectifs", () => {
   it("célébrité présente : la part de rares double (boost ×2 conservé)", () => {
     const part = partRares(2, 9, true);
     expect(part).toBeGreaterThanOrEqual(0.16);
+  });
+});
+
+describe("genererSession — braderie : prix cassés et raretés dopées", () => {
+  const BOSS = getBrocanteById("salon-antiquaires-drouot")!;
+  const BRADERIE = getBrocanteById("grande-braderie")!;
+
+  function prixMoyenRelatif(brocante: Brocante): number {
+    let somme = 0;
+    let n = 0;
+    for (let i = 0; i < 300; i++) {
+      for (const it of genererSession(10, [], brocante)) {
+        somme += it.prixVendeur / it.objet.prixReferenceReel;
+        n += 1;
+      }
+    }
+    return somme / n;
+  }
+
+  it("braderie : prix vendeurs nettement plus bas qu'au boss (rabais 0.7)", () => {
+    const ratio = prixMoyenRelatif(BRADERIE) / prixMoyenRelatif(BOSS);
+    expect(ratio).toBeGreaterThan(0.6);
+    expect(ratio).toBeLessThan(0.8);
+  });
+
+  it("braderie : proportion de non-communs supérieure au boss (boost raretés)", () => {
+    const partRares = (brocante: Brocante) => {
+      let rares = 0;
+      let n = 0;
+      for (let i = 0; i < 300; i++) {
+        for (const it of genererSession(10, [], brocante)) {
+          if (it.objet.rarete !== "commun") rares += 1;
+          n += 1;
+        }
+      }
+      return rares / n;
+    };
+    expect(partRares(BRADERIE)).toBeGreaterThan(partRares(BOSS) * 1.3);
   });
 });
 
