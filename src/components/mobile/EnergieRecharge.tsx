@@ -175,10 +175,12 @@ export function EnergieRecharge({
   }, [infinie]);
 
   // Tick local 1 s pour le minuteur (sans réécrire le state global).
+  // Inutile en mode énergie infinie : le minuteur cède la place au libellé ∞.
   useEffect(() => {
+    if (infinie) return;
     const id = window.setInterval(() => force((n) => n + 1), 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [infinie]);
 
   // Coupe la gerbe d'étincelles après l'animation.
   useEffect(() => {
