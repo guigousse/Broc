@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { METEO_ICON } from "@/data/meteos";
 import { getBrocanteById } from "@/data/brocantes";
+import { estJourBraderie, prochaineBraderie } from "@/lib/evenements";
 import { nomBrocante, nomCelebrite, nomCompetence } from "@/lib/i18n/contenu";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleJourSemaine } from "@/lib/i18n/libelles";
@@ -383,6 +384,29 @@ export function GazetteSheet(props: GazetteSheetProps) {
             <div style={titleSpacer} />
 
             <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              {/* ============== Grande Braderie (calculé à l'affichage) ============== */}
+              {prochaineBraderie(jourActuel) - jourActuel <= 7 && (
+                <>
+                  <h3 style={sectionTitle}>{d.gazette.braderieTitre}</h3>
+                  <p
+                    style={{
+                      margin: 0,
+                      padding: "0.5% 2% 1%",
+                      fontFamily: "var(--font-serif)",
+                      fontStyle: "italic",
+                      fontSize: "3cqw",
+                      lineHeight: 1.35,
+                      color: "var(--ink-700)",
+                    }}
+                  >
+                    {estJourBraderie(jourActuel)
+                      ? d.gazette.braderieEnCours
+                      : d.gazette.braderieAnnonce}
+                  </p>
+                  <SeparateurArtDeco />
+                </>
+              )}
+
               {/* ============== Carnet mondain ============== */}
               <h3 style={sectionTitle}>Carnet mondain</h3>
               {revelerCelebrite && celebrite ? (

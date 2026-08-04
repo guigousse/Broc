@@ -2,6 +2,7 @@
 
 import { useEffect, type CSSProperties } from "react";
 import { infosMois, jourForDate } from "@/lib/calendrier";
+import { estJourBraderie } from "@/lib/evenements";
 import { METEO_ICON } from "@/data/meteos";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleJourSemaine, libelleMois } from "@/lib/i18n/libelles";
@@ -239,6 +240,18 @@ const circleCelebrite: CSSProperties = {
   pointerEvents: "none",
 };
 
+const carreBraderie: CSSProperties = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "2em",
+  height: "2em",
+  border: "1.5px dashed var(--brass-500)",
+  borderRadius: "3px",
+  zIndex: 0,
+};
+
 const meteoIconStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -292,6 +305,7 @@ export function CalendrierSheet({
         variant: "passe" | "futur" | "today";
         meteo?: Meteo;
         celebrite?: boolean;
+        braderie?: boolean;
       };
 
   const cells: Cell[] = [];
@@ -319,8 +333,17 @@ export function CalendrierSheet({
 
     const celebrite =
       typeof jourCelebrite === "number" && jourCelebrite === jourCell;
+    const braderie = estJourBraderie(jourCell);
 
-    cells.push({ key: `d${n}`, empty: false, num: n, variant, meteo, celebrite });
+    cells.push({
+      key: `d${n}`,
+      empty: false,
+      num: n,
+      variant,
+      meteo,
+      celebrite,
+      braderie,
+    });
   }
   while (cells.length % 7 !== 0) {
     cells.push({ key: `t${cells.length}`, empty: true });
@@ -361,6 +384,9 @@ export function CalendrierSheet({
                   return (
                     <div key={c.key} style={cellJour}>
                       <span style={numWrap}>
+                        {c.braderie && (
+                          <span style={carreBraderie} aria-hidden />
+                        )}
                         {c.celebrite && (
                           <span style={circleCelebrite} aria-hidden />
                         )}

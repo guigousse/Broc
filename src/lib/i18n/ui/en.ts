@@ -533,6 +533,11 @@ export const en: DictionnaireUI = {
     celebriteAnnonce:
       "{nom} is expected at {brocante} on {jour}. Brace for crowds and heavy purses!",
     celebriteBrocanteInconnue: "a flea market",
+    braderieTitre: "The Grand Braderie",
+    braderieAnnonce:
+      "The first weekend of September is coming: the Grand Braderie is setting up its stalls! Two days of slashed prices — expect the biggest crowds of the year.",
+    braderieEnCours:
+      "The Grand Braderie is in full swing! Stalls as far as the eye can see, slashed prices and record crowds — it's this weekend or never.",
   },
   registre: {
     ongletCommandes: "Orders",
