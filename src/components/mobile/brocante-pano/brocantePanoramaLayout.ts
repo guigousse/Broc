@@ -5,7 +5,16 @@
  * 100vw × full-height). À ajuster à l'œil après intégration des fonds.
  */
 
-import type { BrocanteTier } from "@/types/game";
+import type { Brocante, BrocanteTier } from "@/types/game";
+import { ID_GRANDE_BRADERIE, estGrandeBraderie } from "@/lib/evenements";
+
+/** Scènes du panorama : les 4 tiers + la scène événement (braderie). */
+export type SceneId = BrocanteTier | "evenement";
+
+/** Scène d'affichage d'une brocante (la braderie vit sur la scène événement). */
+export function sceneDeBrocante(b: Pick<Brocante, "id" | "tier">): SceneId {
+  return estGrandeBraderie(b) ? "evenement" : b.tier;
+}
 
 export interface FrameCoord {
   /** id de la brocante (cf. src/data/brocantes.ts). */
@@ -27,14 +36,6 @@ export const TIER_1_FRAMES: FrameCoord[] = [
   { id: "bouquinerie-plein-air",     left: "65.00%", top: "24.00%", width: "29.33%", height: "16.74%" },
   { id: "vide-dressing-centre",      left: "48.00%", top: "42.00%", width: "30.79%", height: "16.47%" },
   { id: "brocante-club-jeux",        left: "18.00%", top: "42.00%", width: "28.00%", height: "20.00%" },
-  // Braderie (événement) : cadre supplémentaire, visible sur la scène tier 1
-  // pour tous — la mécanique (tier 4) reste portée par la brocante elle-même.
-  // Coords ajustées en Task 10 (mesure Playwright) : à top 3 % le badge
-  // « Événement » (qui déborde de -0.5em au-dessus du cadre) passait sous la
-  // barre des plaquettes de tier (★/★★/★★★), partiellement masqué. Remonté à
-  // 6.5 % avec une hauteur réduite à 13.5 % pour rester sous
-  // marche-aux-puces-dimanche (top 21 %) sans chevauchement.
-  { id: "grande-braderie",           left: "37.00%", top: "6.50%",  width: "30.00%", height: "13.50%" },
 ];
 
 // Tier 2 — 5 brocantes (coords ajustées via l'outil dev).
@@ -61,9 +62,15 @@ export const TIER_4_FRAMES: FrameCoord[] = [
   { id: "salon-antiquaires-drouot", left: "18.75%", top: "21.17%", width: "61.64%", height: "36.84%" },
 ];
 
-export const SCENE_FRAMES: Record<BrocanteTier, FrameCoord[]> = {
+/** Cadre unique de la scène événement : la braderie, en grand, centrée. */
+export const EVENEMENT_FRAMES: FrameCoord[] = [
+  { id: ID_GRANDE_BRADERIE, left: "25.00%", top: "18.00%", width: "50.00%", height: "26.00%" },
+];
+
+export const SCENE_FRAMES: Record<SceneId, FrameCoord[]> = {
   1: TIER_1_FRAMES,
   2: TIER_2_FRAMES,
   3: TIER_3_FRAMES,
   4: TIER_4_FRAMES,
+  evenement: EVENEMENT_FRAMES,
 };

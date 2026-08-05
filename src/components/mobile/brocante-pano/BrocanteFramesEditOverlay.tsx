@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as RPE } from "react";
-import type { BrocanteTier } from "@/types/game";
-import { SCENE_FRAMES } from "./brocantePanoramaLayout";
+import { SCENE_FRAMES, type SceneId } from "./brocantePanoramaLayout";
 import { applyOverride, useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
 
 interface EditOverlayProps {
-  tier: BrocanteTier;
+  sceneId: SceneId;
   /** Référence vers le `<section>` de la scène, utilisée pour convertir px → %. */
   sceneRef: React.RefObject<HTMLElement | null>;
 }
@@ -64,7 +63,7 @@ const moveHandleStyle: CSSProperties = {
   pointerEvents: "auto",
 };
 
-export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) {
+export function BrocanteFramesEditOverlay({ sceneId, sceneRef }: EditOverlayProps) {
   const { enabled, overrides, setOverride } = useBrocanteFramesEdit();
   const [op, setOp] = useState<Op | null>(null);
   const opRef = useRef<Op | null>(null);
@@ -131,7 +130,7 @@ export function BrocanteFramesEditOverlay({ tier, sceneRef }: EditOverlayProps) 
 
   if (!enabled) return null;
 
-  const frames = SCENE_FRAMES[tier];
+  const frames = SCENE_FRAMES[sceneId];
 
   return (
     <>

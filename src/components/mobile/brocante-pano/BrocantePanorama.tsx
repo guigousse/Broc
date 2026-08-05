@@ -19,6 +19,7 @@ import { useGameActions } from "@/context/GameContext";
 import { tutorielActif } from "@/lib/tutoriel";
 import { OUTILS_DEV } from "@/lib/outilsDev";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { ID_GRANDE_BRADERIE } from "@/lib/evenements";
 import { BrocanteScene } from "./BrocanteScene";
 import { BrocanteTransition, TRANSITION_WIDTH_PX } from "./BrocanteTransition";
 import { BrocanteDetailFloating } from "./BrocanteDetailFloating";
@@ -27,6 +28,7 @@ import { BrocanteFramesEditProvider } from "./BrocanteFramesEditContext";
 import { CadreEditToggle } from "./CadreEditToggle";
 import { ScenePlaquesBar } from "./ScenePlaquesBar";
 import { ScenesEditPanel } from "./ScenesEditPanel";
+import { sceneDeBrocante, type SceneId } from "./brocantePanoramaLayout";
 
 interface BrocantePanoramaProps {
   brocantes: Brocante[];
@@ -37,8 +39,6 @@ interface BrocantePanoramaProps {
   /** Positionne la barre de plaques (tiers) en bas plutôt qu'en haut. */
   plaquesEnBas?: boolean;
 }
-
-const TIERS: BrocanteTier[] = [1, 2, 3, 4];
 
 const wrapperStyle: CSSProperties = {
   position: "relative",
@@ -90,13 +90,21 @@ export function BrocantePanorama({
     useGameActions();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [currentTier, setCurrentTier] = useState<BrocanteTier>(1);
+  const [currentScene, setCurrentScene] = useState<SceneId>(1);
 
   const brocantesById = useMemo(() => {
     const m = new Map<string, Brocante>();
     for (const b of brocantes) m.set(b.id, b);
     return m;
   }, [brocantes]);
+
+  // La scène événement n'existe que si la braderie fait partie de la liste
+  // fournie (elle n'apparaît que ses jours — cf. brocantesVisiblesAuJour).
+  const braderiePresente = brocantesById.has(ID_GRANDE_BRADERIE);
+  const scenes: SceneId[] = useMemo(
+    () => (braderiePresente ? [1, 2, 3, 4, "evenement"] : [1, 2, 3, 4]),
+    [braderiePresente],
+  );
 
   // Tier le plus haut où au moins une brocante est débloquée.
   const maxUnlockedTier: BrocanteTier = useMemo(() => {
@@ -127,26 +135,28 @@ export function BrocantePanorama({
     const dernier = getDernierTierVisite();
     const cible: BrocanteTier =
       dernier !== null && dernier <= maxUnlockedTier ? dernier : maxUnlockedTier;
-    const idx = TIERS.indexOf(cible);
+    // La scène événement n'est jamais la cible du scroll initial : `cible`
+    // reste un tier (1-4), donc toujours présent dans `scenes`.
+    const idx = scenes.indexOf(cible);
     if (idx > 0) {
       el.scrollLeft = tierOffsetPx(idx, el.clientWidth);
     }
-    setCurrentTier(cible);
+    setCurrentScene(cible);
     didInitRef.current = true;
-  }, [maxUnlockedTier, tierOffsetPx]);
+  }, [maxUnlockedTier, scenes, tierOffsetPx]);
 
   // Smooth scroll programmatique vers une scène (tap sur un cartel).
-  const goToTier = useCallback(
-    (t: BrocanteTier) => {
+  const goToScene = useCallback(
+    (s: SceneId) => {
       const el = scrollerRef.current;
       if (!el) return;
-      const idx = TIERS.indexOf(t);
+      const idx = scenes.indexOf(s);
       el.scrollTo({
         left: tierOffsetPx(idx, el.clientWidth),
         behavior: "smooth",
       });
     },
-    [tierOffsetPx],
+    [scenes, tierOffsetPx],
   );
 
   const selectedIdRef = useRef<string | null>(null);
@@ -168,19 +178,19 @@ export function BrocantePanorama({
         if (cw <= 0) return;
         let bestIdx = 0;
         let bestDist = Infinity;
-        for (let i = 0; i < TIERS.length; i++) {
+        for (let i = 0; i < scenes.length; i++) {
           const d = Math.abs(el.scrollLeft - tierOffsetPx(i, cw));
           if (d < bestDist) {
             bestDist = d;
             bestIdx = i;
           }
         }
-        const tierAtScroll = TIERS[bestIdx];
-        setCurrentTier((prev) => (prev === tierAtScroll ? prev : tierAtScroll));
+        const sceneAtScroll = scenes[bestIdx];
+        setCurrentScene((prev) => (prev === sceneAtScroll ? prev : sceneAtScroll));
         const currentSelectedId = selectedIdRef.current;
         if (currentSelectedId) {
           const sel = brocantesById.get(currentSelectedId);
-          if (sel && sel.tier !== tierAtScroll) setSelectedId(null);
+          if (sel && sceneDeBrocante(sel) !== sceneAtScroll) setSelectedId(null);
         }
       });
     };
@@ -189,7 +199,7 @@ export function BrocantePanorama({
       el.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
     };
-  }, [brocantesById, tierOffsetPx]);
+  }, [brocantesById, scenes, tierOffsetPx]);
 
   // Recompute la cascade tier-par-tier — nécessaire pour afficher la
   // progression "X/Y brocantes ★★" dans les conditions.
@@ -231,7 +241,9 @@ export function BrocantePanorama({
     if (!selected || !continuerActif) return;
     if (departEngageRef.current) return;
     departEngageRef.current = true;
-    // Mémorise le tier choisi pour les prochaines visites (chiner ou vitrine).
+    // Mémorise le tier choisi pour les prochaines visites (chiner ou vitrine)
+    // — même pour la braderie (tier 4) : la scène événement n'est jamais la
+    // cible du scroll initial, donc sans conséquence sur la reprise.
     setDernierTierVisite(selected.tier);
     if (destination === "vitrine") {
       // Nouveau flow : packing + pricing déjà faits en prep. Ici on ré-attribue
@@ -261,10 +273,10 @@ export function BrocantePanorama({
     <BrocanteFramesEditProvider>
       <div style={wrapperStyle}>
         <div ref={scrollerRef} style={scrollerStyle} aria-label={d.chine.panoramaBrocantesAria}>
-          {TIERS.map((tier, idx) => (
-            <Fragment key={tier}>
+          {scenes.map((sceneId, idx) => (
+            <Fragment key={sceneId}>
               <BrocanteScene
-                tier={tier}
+                sceneId={sceneId}
                 brocantesById={brocantesById}
                 selectedId={selectedId}
                 debloqueesIds={debloqueesIds}
@@ -275,13 +287,14 @@ export function BrocantePanorama({
                   tutoActif && !selected ? brocantes[0]?.id ?? null : null
                 }
               />
-              {idx < TIERS.length - 1 && <BrocanteTransition />}
+              {idx < scenes.length - 1 && <BrocanteTransition />}
             </Fragment>
           ))}
         </div>
         <ScenePlaquesBar
-          currentTier={currentTier}
-          onTierClick={goToTier}
+          currentScene={currentScene}
+          onSceneClick={goToScene}
+          evenementVisible={braderiePresente}
           position={plaquesEnBas ? "bottom" : "top"}
         />
         {selected && (
@@ -304,7 +317,7 @@ export function BrocantePanorama({
         tutoMainContinuer={tutoActif && continuerActif}
       />
       {OUTILS_DEV && <CadreEditToggle />}
-      {OUTILS_DEV && <ScenesEditPanel currentTier={currentTier} />}
+      {OUTILS_DEV && <ScenesEditPanel currentScene={currentScene} />}
     </BrocanteFramesEditProvider>
   );
 }

@@ -1,13 +1,16 @@
 "use client";
 
-import { Crown } from "lucide-react";
+import { Crown, Megaphone } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { BrocanteTier } from "@/types/game";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import type { SceneId } from "./brocantePanoramaLayout";
 
 interface ScenePlaquesBarProps {
-  currentTier: BrocanteTier;
-  onTierClick: (t: BrocanteTier) => void;
+  currentScene: SceneId;
+  onSceneClick: (s: SceneId) => void;
+  /** La braderie est-elle présente dans la liste → 5ᵉ plaque Événement. */
+  evenementVisible: boolean;
   /** Place la barre en haut (défaut) ou en bas de la zone panorama. */
   position?: "top" | "bottom";
 }
@@ -81,6 +84,14 @@ const starsStyle = (active: boolean): CSSProperties => ({
     : "0 1px 0 rgba(255,255,255,0.18)",
 });
 
+// Surcharge de `plaqueStyle` pour la plaque Événement : même cartel, plus
+// l'aura dorée pulsante (l'animation elle-même est déclarée dans le
+// `<style>` inline ci-dessous — jamais dans globals.css, cf. piège connu).
+const plaqueEvenementStyle = (active: boolean): CSSProperties => ({
+  ...plaqueStyle(active),
+  animation: "aura-evenement 1.6s ease-in-out infinite",
+});
+
 function plaqueLabel(tier: BrocanteTier, active: boolean) {
   if (tier === 4) {
     return (
@@ -100,8 +111,9 @@ function plaqueLabel(tier: BrocanteTier, active: boolean) {
 }
 
 export function ScenePlaquesBar({
-  currentTier,
-  onTierClick,
+  currentScene,
+  onSceneClick,
+  evenementVisible,
   position = "top",
 }: ScenePlaquesBarProps) {
   const { d, tr } = useLangue();
@@ -111,13 +123,20 @@ export function ScenePlaquesBar({
       : tr(d.chine.tierEtoilesAria, { tier, etoiles: "★".repeat(tier) });
   return (
     <div style={barStyle(position)} aria-label={d.chine.navigationParTierAria}>
+      {evenementVisible && (
+        // Aura dorée pulsante — inline pour éviter le piège du globals.css périmé.
+        <style>{`@keyframes aura-evenement {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 0 10px rgba(240,185,70,0.55), 0 3px 8px rgba(20,12,0,0.45); }
+  50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 0 22px rgba(255,205,90,0.95), 0 3px 8px rgba(20,12,0,0.45); }
+}`}</style>
+      )}
       {TIERS.map((t) => {
-        const active = t === currentTier;
+        const active = t === currentScene;
         return (
           <button
             key={t}
             type="button"
-            onClick={() => onTierClick(t)}
+            onClick={() => onSceneClick(t)}
             aria-label={ariaLabel(t)}
             aria-current={active ? "true" : "false"}
             style={plaqueStyle(active)}
@@ -128,6 +147,23 @@ export function ScenePlaquesBar({
           </button>
         );
       })}
+      {evenementVisible && (
+        <button
+          type="button"
+          onClick={() => onSceneClick("evenement")}
+          aria-label={d.chine.badgeEvenement}
+          aria-current={currentScene === "evenement" ? "true" : "false"}
+          style={plaqueEvenementStyle(currentScene === "evenement")}
+        >
+          <span aria-hidden style={rivetStyle(currentScene === "evenement", "left")} />
+          <Megaphone
+            size={18}
+            strokeWidth={2}
+            color={currentScene === "evenement" ? "#3a2410" : "#2c2018"}
+          />
+          <span aria-hidden style={rivetStyle(currentScene === "evenement", "right")} />
+        </button>
+      )}
     </div>
   );
 }

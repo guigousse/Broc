@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { BrocantePanorama } from "./BrocantePanorama";
+import { TIER_1_FRAMES, SCENE_FRAMES } from "./brocantePanoramaLayout";
 import { BROCANTES } from "@/data/brocantes";
 import type { GameState } from "@/types/game";
 
@@ -201,5 +202,39 @@ describe("BrocantePanorama", () => {
 
     // Plus de heading visible → la sélection a été réinitialisée.
     expect(screen.queryByRole("heading", { name: /vide-grenier du quartier/i })).toBeNull();
+  });
+
+  /**
+   * Task 3 : la braderie a sa propre scène ("evenement") — son cadre quitte
+   * TIER_1_FRAMES et la 5ᵉ plaque (Megaphone) n'apparaît que si elle est
+   * présente dans la liste de brocantes.
+   */
+  it("avec la braderie : 5 plaques (dont Événement) et cadre braderie hors scène 1", () => {
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES}
+        state={minimalState}
+        debloqueesIds={new Set(["vide-grenier-quartier"])}
+        destination="chiner"
+        onBack={noop}
+      />,
+    );
+    expect(screen.getAllByRole("button", { name: /événement/i }).length).toBeGreaterThanOrEqual(1);
+    // Le cadre braderie n'est plus dans TIER_1_FRAMES :
+    expect(TIER_1_FRAMES.some((f) => f.id === "grande-braderie")).toBe(false);
+    expect(SCENE_FRAMES.evenement.some((f) => f.id === "grande-braderie")).toBe(true);
+  });
+
+  it("sans la braderie : 4 plaques, pas de plaque Événement", () => {
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES.filter((b) => b.id !== "grande-braderie")}
+        state={minimalState}
+        debloqueesIds={new Set(["vide-grenier-quartier"])}
+        destination="chiner"
+        onBack={noop}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /événement/i })).toBeNull();
   });
 });
