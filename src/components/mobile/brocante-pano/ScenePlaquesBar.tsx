@@ -111,6 +111,7 @@ const plaqueEvenementStyle = (active: boolean): CSSProperties => ({
 const conteneurEvenementStyle: CSSProperties = {
   position: "relative",
   display: "flex",
+  marginTop: 10, // léger décrochage sous la rangée des tiers (+ rowGap 8)
   pointerEvents: "none", // le bouton réactive (comme barStyle)
 };
 
