@@ -2,7 +2,7 @@ import type { EtatObjet, GameState, Objet } from "@/types/game";
 import { getTemplate } from "@/data/objetTemplates";
 import { VINYLE_AUDIO_URLS } from "@/data/vinylesAudio";
 import { ANNEE_DEBUT, jourForDate } from "@/lib/calendrier";
-import { FACTEUR_ETAT } from "@/lib/chine";
+import { FACTEUR_ETAT } from "@/lib/etat";
 
 /**
  * Événement d'anniversaire du joueur : chaque 11 juin ingame (jour 6 la
@@ -18,9 +18,6 @@ export const JOUR_ANNIVERSAIRE = 6;
 
 /** Déclencheur one-shot posé à la récupération du cadeau de l'année 1. */
 export const ID_DECLENCHEUR_CADEAU = "cadeau_anniversaire";
-
-/** Le vinyle offert par Maman la première année. */
-export const TEMPLATE_VINYLE_CADEAU = "mus.33tours_jazz_1";
 
 /** Préfixes des templates « vinyle » (jouables au gramophone une fois en collection). */
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
@@ -39,6 +36,9 @@ export const VINYLES_CADEAU_PAR_ANNEE = [
   "mus.vinyle_whale_song_son_terrestre_n1",
   "mus.vinyle_free_robot_des_punkbot",
 ] as const;
+
+/** Le vinyle offert par Maman la première année. */
+export const TEMPLATE_VINYLE_CADEAU = VINYLES_CADEAU_PAR_ANNEE[0];
 
 /** Année 1 garde son id historique (saves existantes). */
 export function idDeclencheurCadeau(annee: number): string {

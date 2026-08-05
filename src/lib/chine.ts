@@ -28,7 +28,7 @@ const CELEBRITE_BOOST_TAILLE = 1.5;
 
 // Pristin état est rare en chinage — il faut le créer en atelier.
 const ETATS: readonly EtatObjet[] = ["Mauvais", "Bon", "Très bon"];
-export const FACTEUR_ETAT: Record<EtatObjet, number> = {
+const FACTEUR_ETAT: Record<EtatObjet, number> = {
   Mauvais: 0.3,
   Bon: 0.6,
   "Très bon": 1,
