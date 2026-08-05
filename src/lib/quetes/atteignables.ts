@@ -1,6 +1,7 @@
 import { BROCANTES } from "@/data/brocantes";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
 import { ID_GRANDE_BRADERIE } from "@/lib/evenements";
+import { vinylesCadeauxExclus } from "@/lib/anniversaire";
 import {
   getTemplate,
   poolPourTier,
@@ -31,7 +32,11 @@ export function objetsAtteignables(state: GameState): ObjetTemplate[] {
       if (t) parTemplateId.set(t.templateId, t);
     }
   }
+  // Les vinyles cadeau d'anniversaire non encore offerts sont exclus de tous
+  // les tirages de chine (cf. vinylesCadeauxExclus) : une quête ne doit donc
+  // jamais les cibler tant qu'ils restent inaccessibles.
+  const exclus = vinylesCadeauxExclus(state);
   return [...parTemplateId.values()].filter(
-    (t) => !t.unique && t.rarete !== "legendaire",
+    (t) => !t.unique && t.rarete !== "legendaire" && !exclus.has(t.templateId),
   );
 }
