@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { BrocantePanorama } from "./BrocantePanorama";
+import { TRANSITION_WIDTH_PX } from "./BrocanteTransition";
 import { TIER_1_FRAMES, SCENE_FRAMES } from "./brocantePanoramaLayout";
 import { BROCANTES } from "@/data/brocantes";
 import type { GameState } from "@/types/game";
@@ -193,7 +194,9 @@ describe("BrocantePanorama", () => {
     const scroller = document.querySelector('[aria-label="Panorama des brocantes"]') as HTMLDivElement;
     expect(scroller).toBeTruthy();
     Object.defineProperty(scroller, "clientWidth", { configurable: true, value: 400 });
-    scroller.scrollLeft = 400;
+    // La braderie est dans BROCANTES → scènes = [evenement, 1, 2, 3, 4].
+    // On snappe sur l'index 2 (tier 2) : offset exact = idx × (largeur + filler).
+    scroller.scrollLeft = 2 * (400 + TRANSITION_WIDTH_PX);
     fireEvent.scroll(scroller);
 
     await new Promise<void>((resolve) =>

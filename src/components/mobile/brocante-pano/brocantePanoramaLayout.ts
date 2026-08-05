@@ -64,7 +64,7 @@ export const TIER_4_FRAMES: FrameCoord[] = [
 
 /** Cadre unique de la scène événement : la braderie, en grand, centrée. */
 export const EVENEMENT_FRAMES: FrameCoord[] = [
-  { id: ID_GRANDE_BRADERIE, left: "25.00%", top: "18.00%", width: "50.00%", height: "26.00%" },
+  { id: ID_GRANDE_BRADERIE, left: "15.00%", top: "25.00%", width: "70.00%", height: "35.00%" },
 ];
 
 export const SCENE_FRAMES: Record<SceneId, FrameCoord[]> = {

@@ -102,7 +102,7 @@ export function BrocantePanorama({
   // fournie (elle n'apparaît que ses jours — cf. brocantesVisiblesAuJour).
   const braderiePresente = brocantesById.has(ID_GRANDE_BRADERIE);
   const scenes: SceneId[] = useMemo(
-    () => (braderiePresente ? [1, 2, 3, 4, "evenement"] : [1, 2, 3, 4]),
+    () => (braderiePresente ? ["evenement", 1, 2, 3, 4] : [1, 2, 3, 4]),
     [braderiePresente],
   );
 

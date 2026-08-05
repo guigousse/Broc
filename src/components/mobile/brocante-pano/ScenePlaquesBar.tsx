@@ -130,23 +130,7 @@ export function ScenePlaquesBar({
   50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 0 22px rgba(255,205,90,0.95), 0 3px 8px rgba(20,12,0,0.45); }
 }`}</style>
       )}
-      {TIERS.map((t) => {
-        const active = t === currentScene;
-        return (
-          <button
-            key={t}
-            type="button"
-            onClick={() => onSceneClick(t)}
-            aria-label={ariaLabel(t)}
-            aria-current={active ? "true" : "false"}
-            style={plaqueStyle(active)}
-          >
-            <span aria-hidden style={rivetStyle(active, "left")} />
-            {plaqueLabel(t, active)}
-            <span aria-hidden style={rivetStyle(active, "right")} />
-          </button>
-        );
-      })}
+      {/* La plaque événement ouvre la barre (la scène est en tête du scroller). */}
       {evenementVisible && (
         <button
           type="button"
@@ -164,6 +148,23 @@ export function ScenePlaquesBar({
           <span aria-hidden style={rivetStyle(currentScene === "evenement", "right")} />
         </button>
       )}
+      {TIERS.map((t) => {
+        const active = t === currentScene;
+        return (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onSceneClick(t)}
+            aria-label={ariaLabel(t)}
+            aria-current={active ? "true" : "false"}
+            style={plaqueStyle(active)}
+          >
+            <span aria-hidden style={rivetStyle(active, "left")} />
+            {plaqueLabel(t, active)}
+            <span aria-hidden style={rivetStyle(active, "right")} />
+          </button>
+        );
+      })}
     </div>
   );
 }
