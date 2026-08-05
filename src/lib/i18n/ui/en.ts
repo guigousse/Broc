@@ -538,6 +538,8 @@ export const en: DictionnaireUI = {
       "The first weekend of September is coming: the Grand Braderie is setting up its stalls! Two days of slashed prices — expect the biggest crowds of the year.",
     braderieEnCours:
       "The Grand Braderie is in full swing! Stalls as far as the eye can see, slashed prices and record crowds — it's this weekend or never.",
+    pageSuivanteAria: "Next page",
+    pagePrecedenteAria: "Previous page",
   },
   registre: {
     ongletCommandes: "Orders",

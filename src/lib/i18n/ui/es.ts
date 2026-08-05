@@ -539,6 +539,8 @@ export const es: DictionnaireUI = {
       "Se acerca el primer fin de semana de septiembre: ¡la Gran Braderie monta sus puestos! Dos días de precios regalados — esperen la multitud de los grandes días.",
     braderieEnCours:
       "¡La Gran Braderie está en pleno apogeo! Puestos hasta donde alcanza la vista, precios regalados y multitud récord — es este fin de semana o nunca.",
+    pageSuivanteAria: "Página siguiente",
+    pagePrecedenteAria: "Página anterior",
   },
   registre: {
     ongletCommandes: "Pedidos",

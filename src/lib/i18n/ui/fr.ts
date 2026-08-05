@@ -543,6 +543,8 @@ export const fr = {
       "Le premier week-end de septembre approche : la Grande Braderie dresse ses étals ! Deux jours de prix sacrifiés — attendez-vous à la foule des grands jours.",
     braderieEnCours:
       "La Grande Braderie bat son plein ! Étals à perte de vue, prix sacrifiés et foule record — c'est ce week-end ou jamais.",
+    pageSuivanteAria: "Page suivante",
+    pagePrecedenteAria: "Page précédente",
   },
   // Registre unifié (QG) : onglets Commandes / Comptes.
   registre: {
