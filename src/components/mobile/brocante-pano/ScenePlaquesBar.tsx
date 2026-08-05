@@ -92,6 +92,55 @@ const plaqueEvenementStyle = (active: boolean): CSSProperties => ({
   animation: "aura-evenement 1.6s ease-in-out infinite",
 });
 
+/**
+ * Conteneur de la plaque Événement : porte le slot flex du cartel et sert
+ * d'ancre aux étincelles. Elles vivent en FRÈRES du bouton (pas dedans) :
+ * la plaque inactive applique `filter: saturate/brightness` qui ternirait
+ * tout enfant — hors du bouton, l'or scintille à pleine intensité.
+ */
+const conteneurEvenementStyle: CSSProperties = {
+  position: "relative",
+  flex: "0 1 80px",
+  display: "flex",
+  pointerEvents: "none", // le bouton réactive (comme barStyle)
+};
+
+/**
+ * Étincelles dorées qui émanent de la plaque Événement : ✦ absolus autour
+ * du cartel, chacun avec sa taille, sa position et son déphasage — le cycle
+ * scintille-evenement (opacité + échelle) les fait clignoter en quinconce.
+ * Décoratif pur (aria-hidden).
+ */
+const ETINCELLES: readonly {
+  top: string;
+  left: string;
+  size: number;
+  delay: number;
+  duree: number;
+}[] = [
+  { top: "-11px", left: "-8px", size: 15, delay: 0, duree: 1.5 },
+  { top: "-13px", left: "60%", size: 11, delay: 0.45, duree: 1.9 },
+  { top: "36%", left: "calc(100% - 3px)", size: 16, delay: 0.9, duree: 1.6 },
+  { top: "calc(100% - 4px)", left: "16%", size: 11, delay: 1.25, duree: 2.1 },
+  { top: "calc(100% - 8px)", left: "calc(100% - 10px)", size: 13, delay: 0.65, duree: 1.7 },
+  { top: "26%", left: "-13px", size: 10, delay: 1.6, duree: 1.8 },
+];
+
+const etincelleStyle = (e: (typeof ETINCELLES)[number]): CSSProperties => ({
+  position: "absolute",
+  top: e.top,
+  left: e.left,
+  fontSize: e.size,
+  lineHeight: 1,
+  color: "#ffe28a",
+  textShadow:
+    "0 0 4px rgba(255,215,100,1), 0 0 10px rgba(255,200,70,0.85), 0 0 18px rgba(255,180,50,0.5)",
+  pointerEvents: "none",
+  zIndex: 2,
+  opacity: 0,
+  animation: `scintille-evenement ${e.duree}s ease-in-out ${e.delay}s infinite`,
+});
+
 function plaqueLabel(tier: BrocanteTier, active: boolean) {
   if (tier === 4) {
     return (
@@ -128,25 +177,40 @@ export function ScenePlaquesBar({
         <style>{`@keyframes aura-evenement {
   0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 0 10px rgba(240,185,70,0.55), 0 3px 8px rgba(20,12,0,0.45); }
   50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 0 22px rgba(255,205,90,0.95), 0 3px 8px rgba(20,12,0,0.45); }
+}
+@keyframes scintille-evenement {
+  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  45% { opacity: 1; transform: scale(1) rotate(20deg); }
+  60% { opacity: 0.85; transform: scale(0.85) rotate(28deg); }
 }`}</style>
       )}
       {/* La plaque événement ouvre la barre (la scène est en tête du scroller). */}
       {evenementVisible && (
-        <button
-          type="button"
-          onClick={() => onSceneClick("evenement")}
-          aria-label={d.chine.badgeEvenement}
-          aria-current={currentScene === "evenement" ? "true" : "false"}
-          style={plaqueEvenementStyle(currentScene === "evenement")}
-        >
-          <span aria-hidden style={rivetStyle(currentScene === "evenement", "left")} />
-          <Megaphone
-            size={18}
-            strokeWidth={2}
-            color={currentScene === "evenement" ? "#3a2410" : "#2c2018"}
-          />
-          <span aria-hidden style={rivetStyle(currentScene === "evenement", "right")} />
-        </button>
+        <span style={conteneurEvenementStyle}>
+          <button
+            type="button"
+            onClick={() => onSceneClick("evenement")}
+            aria-label={d.chine.badgeEvenement}
+            aria-current={currentScene === "evenement" ? "true" : "false"}
+            style={{
+              ...plaqueEvenementStyle(currentScene === "evenement"),
+              flex: "1 1 auto", // le conteneur porte déjà le slot 0 1 80px
+            }}
+          >
+            <span aria-hidden style={rivetStyle(currentScene === "evenement", "left")} />
+            <Megaphone
+              size={18}
+              strokeWidth={2}
+              color={currentScene === "evenement" ? "#3a2410" : "#2c2018"}
+            />
+            <span aria-hidden style={rivetStyle(currentScene === "evenement", "right")} />
+          </button>
+          {ETINCELLES.map((e, i) => (
+            <span key={i} aria-hidden style={etincelleStyle(e)}>
+              ✦
+            </span>
+          ))}
+        </span>
       )}
       {TIERS.map((t) => {
         const active = t === currentScene;
