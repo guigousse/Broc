@@ -17,18 +17,28 @@ interface ScenePlaquesBarProps {
 
 const TIERS: BrocanteTier[] = [1, 2, 3, 4];
 
+// La barre empile deux rangées : les 4 plaques de tier, puis (jours de
+// braderie) la plaque Événement seule, centrée et un peu plus grande.
 const barStyle = (position: "top" | "bottom"): CSSProperties => ({
   position: "absolute",
   left: 0,
   right: 0,
   ...(position === "bottom" ? { bottom: 8 } : { top: 8 }),
   display: "flex",
-  justifyContent: "center",
-  gap: 10,
+  flexDirection: "column",
+  alignItems: "center",
+  rowGap: 8,
   padding: "0 12px",
   zIndex: 25,
   pointerEvents: "none", // les boutons réactivent
 });
+
+const rangeeTiersStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "center",
+  gap: 10,
+  width: "100%",
+};
 
 /**
  * Cartel laiton style étiquette de musée : rectangle aux coins arrondis,
@@ -100,9 +110,16 @@ const plaqueEvenementStyle = (active: boolean): CSSProperties => ({
  */
 const conteneurEvenementStyle: CSSProperties = {
   position: "relative",
-  flex: "0 1 80px",
   display: "flex",
   pointerEvents: "none", // le bouton réactive (comme barStyle)
+};
+
+/** La plaque Événement est un cran plus grande que les cartels de tier. */
+const plaqueEvenementTaille: CSSProperties = {
+  flex: "0 0 auto",
+  height: 38,
+  minWidth: 104,
+  padding: "0 24px",
 };
 
 /**
@@ -184,7 +201,26 @@ export function ScenePlaquesBar({
   60% { opacity: 0.85; transform: scale(0.85) rotate(28deg); }
 }`}</style>
       )}
-      {/* La plaque événement ouvre la barre (la scène est en tête du scroller). */}
+      <div style={rangeeTiersStyle}>
+        {TIERS.map((t) => {
+          const active = t === currentScene;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => onSceneClick(t)}
+              aria-label={ariaLabel(t)}
+              aria-current={active ? "true" : "false"}
+              style={plaqueStyle(active)}
+            >
+              <span aria-hidden style={rivetStyle(active, "left")} />
+              {plaqueLabel(t, active)}
+              <span aria-hidden style={rivetStyle(active, "right")} />
+            </button>
+          );
+        })}
+      </div>
+      {/* Rangée dédiée sous les tiers : la plaque Événement, centrée, plus grande. */}
       {evenementVisible && (
         <span style={conteneurEvenementStyle}>
           <button
@@ -194,12 +230,12 @@ export function ScenePlaquesBar({
             aria-current={currentScene === "evenement" ? "true" : "false"}
             style={{
               ...plaqueEvenementStyle(currentScene === "evenement"),
-              flex: "1 1 auto", // le conteneur porte déjà le slot 0 1 80px
+              ...plaqueEvenementTaille,
             }}
           >
             <span aria-hidden style={rivetStyle(currentScene === "evenement", "left")} />
             <Megaphone
-              size={18}
+              size={22}
               strokeWidth={2}
               color={currentScene === "evenement" ? "#3a2410" : "#2c2018"}
             />
@@ -212,23 +248,6 @@ export function ScenePlaquesBar({
           ))}
         </span>
       )}
-      {TIERS.map((t) => {
-        const active = t === currentScene;
-        return (
-          <button
-            key={t}
-            type="button"
-            onClick={() => onSceneClick(t)}
-            aria-label={ariaLabel(t)}
-            aria-current={active ? "true" : "false"}
-            style={plaqueStyle(active)}
-          >
-            <span aria-hidden style={rivetStyle(active, "left")} />
-            {plaqueLabel(t, active)}
-            <span aria-hidden style={rivetStyle(active, "right")} />
-          </button>
-        );
-      })}
     </div>
   );
 }
