@@ -125,12 +125,16 @@ export function BrocanteFrame({
   const { enabled: editing } = useBrocanteFramesEdit();
   const onClickHandler = editing ? undefined : () => onSelect(brocante.id);
   const pointerEvents: CSSProperties["pointerEvents"] = editing ? "none" : "auto";
+  const nom = nomBrocante(brocante, locale);
+  const ariaLabel = estGrandeBraderie(brocante)
+    ? `${d.chine.badgeEvenement} — ${nom}`
+    : nom;
 
   return (
     <button
       type="button"
       onClick={onClickHandler}
-      aria-label={nomBrocante(brocante, locale)}
+      aria-label={ariaLabel}
       aria-pressed={selected}
       aria-disabled={!debloquee}
       className={tutoMain ? "tuto-main tuto-main-droite" : undefined}
