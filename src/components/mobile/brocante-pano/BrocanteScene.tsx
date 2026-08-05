@@ -19,8 +19,9 @@ interface BrocanteSceneProps {
   tutoMainId?: string | null;
 }
 
-// Dégradés de stub par scène (utilisés tant que `scene-tier-{n}.webp` /
-// `scene-evenement.webp` n'est pas généré — cette dernière arrive en Task 4).
+// Dégradés de stub par scène : filet visuel si `scene-tier-{n}.webp` /
+// `scene-evenement.webp` venait à manquer (404) — tous les fonds sont
+// aujourd'hui générés (`gen:scenes`), cf. `public/brocantes/scenes/`.
 const STUB_GRADIENT: Record<SceneId, string> = {
   1: "linear-gradient(180deg, #c9d3c2 0%, #8a9a82 60%, #5c6b58 100%)",
   2: "linear-gradient(180deg, #b8a382 0%, #8a6f4a 60%, #5b4527 100%)",

@@ -167,6 +167,14 @@ const titleSpacer: CSSProperties = {
 
 const corps: CSSProperties = {
   flex: 1,
+  // Sans ce `minHeight: 0`, le quirk flexbox de « taille minimale
+  // automatique » empêche `corps` de rétrécir sous la hauteur intrinsèque de
+  // son contenu (couche visible) — il grandit alors avec le texte au lieu de
+  // se caler sur l'espace qui lui est vraiment alloué. Résultat : la lecture
+  // JS de `corpsEl.clientHeight` (base du calcul de pagination) renvoyait une
+  // hauteur gonflée par le contenu du premier rendu au lieu de l'espace
+  // réellement disponible dans le papier → pagination sous-évaluée, débord.
+  minHeight: 0,
   display: "flex",
   flexDirection: "column",
   position: "relative",
@@ -183,6 +191,18 @@ const coucheMesure: CSSProperties = {
   visibility: "hidden",
   pointerEvents: "none",
   overflow: "hidden",
+};
+
+/**
+ * Style du wrapper de mesure PAR SECTION : flex column (et non un bloc par
+ * défaut) pour reproduire fidèlement le comportement de marges de la couche
+ * visible (items flex directs de `corps`, pas de fusion de marges entre
+ * voisins ni d'échappement de la marge du premier/dernier enfant hors du
+ * wrapper). Un simple `<div>` bloc sous-évalue `offsetHeight` ici.
+ */
+const coucheMesureSection: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
 };
 
 const coucheVisible: CSSProperties = {
@@ -726,11 +746,18 @@ export function GazetteSheet(props: GazetteSheetProps) {
                   sert uniquement à lire leur hauteur réelle avant pagination. */}
               <div style={coucheMesure} aria-hidden>
                 {sections.map((s, i) => (
+                  // display:flex column (et pas un simple bloc) : la couche
+                  // visible rend les enfants de chaque section comme des
+                  // items flex directs de `corps` (Fragment aplati), où les
+                  // marges NE FUSIONNENT PAS entre voisins. Un wrapper bloc
+                  // ici sous-évaluerait la hauteur réelle (marges fusionnées
+                  // entre titre/séparateur), causant un débord non détecté.
                   <div
                     key={s.key}
                     ref={(el) => {
                       mesureRefs.current[i] = el;
                     }}
+                    style={coucheMesureSection}
                   >
                     {s.node}
                   </div>
