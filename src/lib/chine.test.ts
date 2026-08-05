@@ -510,8 +510,8 @@ describe("genererSession — braderie : prix cassés et raretés dopées", () =>
     // sa propre part de non-communs de base (~28.8 % « propre » → ~34.2 % empirique),
     // si bien que le ratio réel braderie/boss plafonne à ~1,29, juste sous le seuil de 1,3 —
     // un effet de population, pas du bruit d'échantillonnage. On vérifie donc une marge
-    // absolue : l'écart réel (~10 points) laisse une marge de +5 points, soit ~9 écarts-types
-    // au-dessus du bruit à 300 itérations (SE ≈ 0,9 pt), largement stable.
+    // absolue : l'écart réel (~10 points) laisse une marge de +5 points, une marge large
+    // (~4 écarts-types de la différence de deux proportions à 300 itérations), stable.
     expect(partRares(BRADERIE)).toBeGreaterThan(partRares(BOSS) + 0.05);
   });
 });
