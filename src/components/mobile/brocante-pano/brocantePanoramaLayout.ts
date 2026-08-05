@@ -59,7 +59,7 @@ export const TIER_3_FRAMES: FrameCoord[] = [
 
 // Tier 4 — 1 cadre central monumental.
 export const TIER_4_FRAMES: FrameCoord[] = [
-  { id: "salon-antiquaires-drouot", left: "18.75%", top: "21.17%", width: "61.64%", height: "36.84%" },
+  { id: "salon-antiquaires-drouot", left: "19.00%", top: "17.00%", width: "62.00%", height: "41.00%" },
 ];
 
 /** Cadre unique de la scène événement : la braderie, en grand, centrée. */
