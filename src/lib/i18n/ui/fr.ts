@@ -261,6 +261,7 @@ export const fr = {
     choisissezBrocante: "Choisissez une brocante",
     panoramaBrocantesAria: "Panorama des brocantes",
     sceneTierAria: "Scène tier {tier}",
+    sceneEvenementAria: "Scène événement — Grande Braderie",
     taillePoolItems: "{n} items",
     bourseMoyenneClientsAria: "Bourse moyenne des clients : {valeur} euros",
     bourseMoyLabel: "Bourse moy. {valeur} €",
@@ -545,6 +546,7 @@ export const fr = {
       "La Grande Braderie bat son plein ! Étals à perte de vue, prix sacrifiés et foule record — c'est ce week-end ou jamais.",
     pageSuivanteAria: "Page suivante",
     pagePrecedenteAria: "Page précédente",
+    pageIndicateurAria: "Page {page} sur {total}",
   },
   // Registre unifié (QG) : onglets Commandes / Comptes.
   registre: {

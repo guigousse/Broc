@@ -102,7 +102,11 @@ export function BrocanteScene({
     <section
       style={sceneStyle}
       data-brocante-scene={sceneId}
-      aria-label={tr(d.chine.sceneTierAria, { tier: sceneId })}
+      aria-label={
+        sceneId === "evenement"
+          ? d.chine.sceneEvenementAria
+          : tr(d.chine.sceneTierAria, { tier: sceneId })
+      }
     >
       <div ref={sceneRef} style={sceneInnerStyle(sceneId)}>
         {frames.map((coord) => {

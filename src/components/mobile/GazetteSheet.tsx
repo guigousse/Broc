@@ -23,7 +23,7 @@ import {
 import { METEO_ICON } from "@/data/meteos";
 import { getBrocanteById } from "@/data/brocantes";
 import { estJourBraderie, prochaineBraderie } from "@/lib/evenements";
-import { paginerSections } from "@/lib/gazettePagination";
+import { indicesValides, paginerSections } from "@/lib/gazettePagination";
 import { nomBrocante, nomCelebrite, nomCompetence } from "@/lib/i18n/contenu";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleJourSemaine } from "@/lib/i18n/libelles";
@@ -210,8 +210,13 @@ const coucheVisible: CSSProperties = {
   flexDirection: "column",
 };
 
-/** Coin de page corné : triangle papier replié, cliquable, ombré. */
-const coinCorne = (cote: "droit" | "gauche"): CSSProperties => ({
+/**
+ * Coin de page corné, cliquable, ombré. Cible tactile carrée PLEINE (le
+ * `<button>` n'est jamais clippé — un `clip-path` sur l'élément cliquable
+ * réduit le hit-testing au triangle visuel, ~15 px utiles en moins) ; le
+ * triangle plié n'est que le rendu visuel, porté par un `<span>` enfant.
+ */
+const coinCorneBouton = (cote: "droit" | "gauche"): CSSProperties => ({
   position: "absolute",
   bottom: "1.5%",
   [cote === "droit" ? "right" : "left"]: "1.5%",
@@ -221,7 +226,14 @@ const coinCorne = (cote: "droit" | "gauche"): CSSProperties => ({
   border: "none",
   cursor: "pointer",
   background: "transparent",
-  // Triangle plié : dégradé du papier vers son ombre.
+  zIndex: 4,
+});
+
+/** Rendu visuel du coin corné : triangle papier replié, dégradé vers son ombre. */
+const coinCorneVisuel = (cote: "droit" | "gauche"): CSSProperties => ({
+  display: "block",
+  width: "100%",
+  height: "100%",
   clipPath:
     cote === "droit"
       ? "polygon(100% 0, 100% 100%, 0 100%)"
@@ -230,7 +242,6 @@ const coinCorne = (cote: "droit" | "gauche"): CSSProperties => ({
     cote === "droit"
       ? "linear-gradient(315deg, #d8cdb4 0%, #efe7d2 45%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0) 60%)"
       : "linear-gradient(45deg, #d8cdb4 0%, #efe7d2 45%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0) 60%)",
-  zIndex: 4,
 });
 
 const indicateurPageStyle: CSSProperties = {
@@ -710,7 +721,11 @@ export function GazetteSheet(props: GazetteSheetProps) {
 
   if (!open) return null;
 
-  const pageCourante = pages[pageIndex] ?? [];
+  // Garde : la sheet reste montée à travers les changements de jour, et le
+  // `useLayoutEffect` de repagination ne tourne qu'APRÈS ce rendu — si la
+  // composition s'est réduite entre-temps (ex. l'encart braderie a disparu),
+  // `pages[pageIndex]` peut encore contenir des indices hors bornes.
+  const pageCourante = indicesValides(pages[pageIndex] ?? [], sections.length);
 
   return (
     <>
@@ -780,18 +795,29 @@ export function GazetteSheet(props: GazetteSheetProps) {
                   type="button"
                   onClick={() => setPageIndex((p) => p + 1)}
                   aria-label={d.gazette.pageSuivanteAria}
-                  style={coinCorne("droit")}
-                />
+                  style={coinCorneBouton("droit")}
+                >
+                  <span aria-hidden style={coinCorneVisuel("droit")} />
+                </button>
               )}
               {pageIndex > 0 && (
                 <button
                   type="button"
                   onClick={() => setPageIndex((p) => p - 1)}
                   aria-label={d.gazette.pagePrecedenteAria}
-                  style={coinCorne("gauche")}
-                />
+                  style={coinCorneBouton("gauche")}
+                >
+                  <span aria-hidden style={coinCorneVisuel("gauche")} />
+                </button>
               )}
-              <span aria-hidden style={indicateurPageStyle}>
+              <span
+                aria-live="polite"
+                aria-label={tr(d.gazette.pageIndicateurAria, {
+                  page: String(pageIndex + 1),
+                  total: String(pages.length),
+                })}
+                style={indicateurPageStyle}
+              >
                 {pageIndex + 1}/{pages.length}
               </span>
             </>

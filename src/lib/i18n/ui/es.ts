@@ -258,6 +258,7 @@ export const es: DictionnaireUI = {
     choisissezBrocante: "Elige un mercadillo",
     panoramaBrocantesAria: "Panorama de los mercadillos",
     sceneTierAria: "Escena del tier {tier}",
+    sceneEvenementAria: "Escena de evento — Gran Braderie",
     taillePoolItems: "{n} objetos",
     bourseMoyenneClientsAria: "Cartera media de los clientes: {valeur} euros",
     bourseMoyLabel: "Cartera media {valeur} €",
@@ -541,6 +542,7 @@ export const es: DictionnaireUI = {
       "¡La Gran Braderie está en pleno apogeo! Puestos hasta donde alcanza la vista, precios regalados y multitud récord — es este fin de semana o nunca.",
     pageSuivanteAria: "Página siguiente",
     pagePrecedenteAria: "Página anterior",
+    pageIndicateurAria: "Página {page} de {total}",
   },
   registre: {
     ongletCommandes: "Pedidos",

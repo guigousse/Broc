@@ -263,6 +263,7 @@ export const el: DictionnaireUI = {
     choisissezBrocante: "Επίλεξε ένα παζάρι",
     panoramaBrocantesAria: "Πανόραμα παζαριών",
     sceneTierAria: "Σκηνή tier {tier}",
+    sceneEvenementAria: "Σκηνή εκδήλωσης — Μεγάλη Μπραντερί",
     taillePoolItems: "{n} αντικείμενα",
     bourseMoyenneClientsAria: "Μέσο πορτοφόλι πελατών: {valeur} ευρώ",
     bourseMoyLabel: "Μέσο πορτ. {valeur} €",
@@ -546,6 +547,7 @@ export const el: DictionnaireUI = {
       "Η Μεγάλη Μπραντερί είναι στο αποκορύφωμά της! Πάγκοι ως εκεί που φτάνει το μάτι, τιμές-σοκ και πλήθος-ρεκόρ — φέτος είναι αυτό το σαββατοκύριακο ή ποτέ.",
     pageSuivanteAria: "Επόμενη σελίδα",
     pagePrecedenteAria: "Προηγούμενη σελίδα",
+    pageIndicateurAria: "Σελίδα {page} από {total}",
   },
   registre: {
     ongletCommandes: "Παραγγελίες",

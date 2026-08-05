@@ -258,6 +258,7 @@ export const en: DictionnaireUI = {
     choisissezBrocante: "Choose a flea market",
     panoramaBrocantesAria: "Flea market panorama",
     sceneTierAria: "Tier {tier} scene",
+    sceneEvenementAria: "Event scene — Grand Braderie",
     taillePoolItems: "{n} items",
     bourseMoyenneClientsAria: "Average customer wallet: {valeur} euros",
     bourseMoyLabel: "Avg. wallet {valeur} €",
@@ -540,6 +541,7 @@ export const en: DictionnaireUI = {
       "The Grand Braderie is in full swing! Stalls as far as the eye can see, slashed prices and record crowds — it's this weekend or never.",
     pageSuivanteAria: "Next page",
     pagePrecedenteAria: "Previous page",
+    pageIndicateurAria: "Page {page} of {total}",
   },
   registre: {
     ongletCommandes: "Orders",

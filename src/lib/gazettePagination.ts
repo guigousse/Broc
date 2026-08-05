@@ -28,3 +28,14 @@ export function paginerSections(
   pages.push(courante);
   return pages;
 }
+
+/**
+ * Filtre les indices d'une page devenus obsolètes (section disparue depuis la
+ * dernière pagination — ex. l'encart braderie qui s'efface). Sert de garde
+ * entre deux rendus : la sheet reste montée à travers les changements de jour
+ * et `pages`/`pageIndex` peuvent référencer une composition périmée avant que
+ * le `useLayoutEffect` de repagination n'ait tourné.
+ */
+export function indicesValides(page: number[], nbSections: number): number[] {
+  return page.filter((i) => i < nbSections);
+}
