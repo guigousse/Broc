@@ -2,6 +2,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { BrocantePanorama } from "./BrocantePanorama";
+import { TRANSITION_WIDTH_PX } from "./BrocanteTransition";
+import { TIER_1_FRAMES, SCENE_FRAMES } from "./brocantePanoramaLayout";
 import { BROCANTES } from "@/data/brocantes";
 import type { GameState } from "@/types/game";
 
@@ -156,6 +158,25 @@ describe("BrocantePanorama", () => {
     expect(onBack).toHaveBeenCalled();
   });
 
+  /**
+   * Task 8 : le cadre de la braderie (événement) porte un badge « Événement »
+   * — les autres cadres n'en portent pas. Toutes les scènes (tiers 1-4) sont
+   * montées simultanément (scroll horizontal), donc le badge est cherchable
+   * sans avoir à scroller dans ce test.
+   */
+  it("affiche le badge Événement sur le cadre de la braderie et nulle part ailleurs", () => {
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES}
+        state={minimalState}
+        debloqueesIds={new Set(["vide-grenier-quartier"])}
+        destination="chiner"
+        onBack={noop}
+      />,
+    );
+    expect(screen.getAllByText("Événement")).toHaveLength(1);
+  });
+
   it("réinitialise la sélection au snap vers un autre tier", async () => {
     render(
       <BrocantePanorama
@@ -173,7 +194,9 @@ describe("BrocantePanorama", () => {
     const scroller = document.querySelector('[aria-label="Panorama des brocantes"]') as HTMLDivElement;
     expect(scroller).toBeTruthy();
     Object.defineProperty(scroller, "clientWidth", { configurable: true, value: 400 });
-    scroller.scrollLeft = 400;
+    // La braderie est dans BROCANTES → scènes = [evenement, 1, 2, 3, 4].
+    // On snappe sur l'index 2 (tier 2) : offset exact = idx × (largeur + filler).
+    scroller.scrollLeft = 2 * (400 + TRANSITION_WIDTH_PX);
     fireEvent.scroll(scroller);
 
     await new Promise<void>((resolve) =>
@@ -182,5 +205,39 @@ describe("BrocantePanorama", () => {
 
     // Plus de heading visible → la sélection a été réinitialisée.
     expect(screen.queryByRole("heading", { name: /vide-grenier du quartier/i })).toBeNull();
+  });
+
+  /**
+   * Task 3 : la braderie a sa propre scène ("evenement") — son cadre quitte
+   * TIER_1_FRAMES et la 5ᵉ plaque (Megaphone) n'apparaît que si elle est
+   * présente dans la liste de brocantes.
+   */
+  it("avec la braderie : 5 plaques (dont Événement) et cadre braderie hors scène 1", () => {
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES}
+        state={minimalState}
+        debloqueesIds={new Set(["vide-grenier-quartier"])}
+        destination="chiner"
+        onBack={noop}
+      />,
+    );
+    expect(screen.getAllByRole("button", { name: /événement/i }).length).toBeGreaterThanOrEqual(1);
+    // Le cadre braderie n'est plus dans TIER_1_FRAMES :
+    expect(TIER_1_FRAMES.some((f) => f.id === "grande-braderie")).toBe(false);
+    expect(SCENE_FRAMES.evenement.some((f) => f.id === "grande-braderie")).toBe(true);
+  });
+
+  it("sans la braderie : 4 plaques, pas de plaque Événement", () => {
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES.filter((b) => b.id !== "grande-braderie")}
+        state={minimalState}
+        debloqueesIds={new Set(["vide-grenier-quartier"])}
+        destination="chiner"
+        onBack={noop}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /événement/i })).toBeNull();
   });
 });

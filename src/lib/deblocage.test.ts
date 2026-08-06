@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CategorieObjet, ConditionDeblocage, Session } from "@/types/game";
-import { getBrocanteById } from "@/data/brocantes";
+import { fraisEntree, getBrocanteById } from "@/data/brocantes";
+import { samediBraderie } from "@/lib/evenements";
 import {
   calculerBrocantesDebloqueesParTier,
   descriptionCondition,
@@ -348,5 +349,38 @@ describe("condition niveau (double gate)", () => {
     expect(
       evaluerCondition({ type: "niveau", niveau: 4 }, stateSansBrocanteur),
     ).toBe(false);
+  });
+});
+
+describe("condition braderie", () => {
+  it("vraie les 2 jours de la Grande Braderie, fausse sinon", () => {
+    const samedi = samediBraderie(1924);
+    const c = { type: "braderie" } as const;
+    expect(
+      evaluerCondition(c, createMockGameState({ jourActuel: samedi })),
+    ).toBe(true);
+    expect(
+      evaluerCondition(c, createMockGameState({ jourActuel: samedi + 1 })),
+    ).toBe(true);
+    expect(
+      evaluerCondition(c, createMockGameState({ jourActuel: samedi - 1 })),
+    ).toBe(false);
+    expect(
+      evaluerCondition(c, createMockGameState({ jourActuel: samedi + 2 })),
+    ).toBe(false);
+  });
+
+  it("décrit la condition (longue et courte)", () => {
+    expect(desc({ type: "braderie" })).toMatch(/septembre/i);
+  });
+});
+
+describe("la grande braderie (données)", () => {
+  it("existe, tier 4, entrée à 10", () => {
+    const b = getBrocanteById("grande-braderie")!;
+    expect(b).toBeDefined();
+    expect(b.tier).toBe(4);
+    expect(fraisEntree(b)).toBe(10);
+    expect(b.conditionDeblocage).toEqual({ type: "braderie" });
   });
 });

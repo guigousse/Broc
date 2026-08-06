@@ -94,4 +94,9 @@ export const BROCANTES_EN: Record<string, { nom: string; description: string }> 
     description:
       "The holy of holies. The greatest collectors cross paths here, and unique pieces make their final appearance.",
   },
+  "grande-braderie": {
+    nom: "The Grand Braderie",
+    description:
+      "Two days of madness: miles of stalls, slashed prices and the biggest crowds of the year. The rendezvous no bargain-hunter misses.",
+  },
 };

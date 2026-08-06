@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   calculerFourchettePrixMax,
   BONIMENT_MARGE,
+  BONIMENT_MARGE_ROUTINE,
+  DIPLOMATE_MARGE,
+  margeBoniment,
   BONUS_SPECIALISATION_CLIENT,
   BOURSE_PAR_CLASSE,
   CLIENT_INTERVALLE_MAX_SEC,
@@ -19,9 +22,12 @@ import {
   prochainIntervalleClient,
   proposerOffreVente,
   type VitrineModifiers,
+  BRADERIE_INTERVALLE_MULT,
 } from "./vitrine";
+import { estGrandeBraderie } from "./evenements";
 import { ouvrirNegociation } from "./negociation";
 import { texteNego } from "@/lib/i18n/contenu";
+import { getBrocanteById } from "@/data/brocantes";
 import {
   createMockClient,
   createMockObjetEnVitrine,
@@ -44,7 +50,6 @@ describe("constantes", () => {
 
   it("DEFAULT_MODIFIERS expose tous les flags neutres", () => {
     expect(DEFAULT_MODIFIERS.bonusToleranceNego).toBe(0);
-    expect(DEFAULT_MODIFIERS.bonusToleranceParCategorie.size).toBe(0);
     expect(DEFAULT_MODIFIERS.intervalleMultiplier).toBe(1);
     expect(DEFAULT_MODIFIERS.revelePersona).toBe(false);
     expect(DEFAULT_MODIFIERS.releveBourse).toBe(false);
@@ -298,7 +303,7 @@ describe("genererClientEvent — invariants généraux", () => {
 });
 
 describe("genererClientEvent — formule de toleranceBoost à la génération", () => {
-  it("additionne le bonus général et le MAX (pas la somme) des bonus catégoriels du panier", () => {
+  it("reprend le bonus général de tolérance (seule source depuis la refonte Marchandage)", () => {
     // chanceMulti: 1 force un panier à 2 objets (Math.random figé à 0.5 par le
     // beforeEach global, < 1 → veutDeux toujours vrai ; shuffle Fisher-Yates
     // neutre à 0.5 sur un tableau à 2 éléments → ordre préservé).
@@ -316,15 +321,11 @@ describe("genererClientEvent — formule de toleranceBoost à la génération", 
     const modifiers: VitrineModifiers = {
       ...DEFAULT_MODIFIERS,
       bonusToleranceNego: 0.2,
-      bonusToleranceParCategorie: new Map([
-        ["Musique", 0.1],
-        ["Mode", 0.3],
-      ]),
     };
     const ev = genererClientEvent(c, vitrine, [], modifiers);
     expect(ev).not.toBeNull();
     expect(ev!.panier).toHaveLength(2);
-    expect(ev!.toleranceBoost).toBeCloseTo(0.2 + 0.3);
+    expect(ev!.toleranceBoost).toBeCloseTo(0.2);
   });
 });
 
@@ -371,6 +372,46 @@ describe("proposerOffreVente — Diplomate transforme fache en en_cours", () => 
     });
     expect(res.statut).toBe("fache");
     expect(res.diplomatieDeclenchee).toBeFalsy();
+  });
+});
+
+describe("proposerOffreVente — après révélation Diplomate (plafond révélé)", () => {
+  it("DIPLOMATE_MARGE vaut 1.10", () => {
+    expect(DIPLOMATE_MARGE).toBe(1.10);
+  });
+
+  it("accepte la dernière offre jusqu'à 110 % du plafond révélé", () => {
+    const nego = ouvrirNegociation("vente", 50, 90);
+    const client = createMockClient({ tolerancePct: 0.1 });
+    const modifiers = { ...DEFAULT_MODIFIERS, diplomate: true };
+    // Plafond révélé 90 → accepté jusqu'à round(90 × 1.10) = 99.
+    const res = proposerOffreVente(nego, client, 99, modifiers, {
+      revelationDejaFaite: true,
+      plafondRevele: true,
+    });
+    expect(res.statut).toBe("conclu");
+    expect(res.prixAdverseCourant).toBe(99);
+  });
+
+  it("au-delà de 110 %, le flux normal reprend (fâcherie possible, définitive)", () => {
+    const nego = ouvrirNegociation("vente", 50, 90);
+    const client = createMockClient({ tolerancePct: 0.1 });
+    const modifiers = { ...DEFAULT_MODIFIERS, diplomate: true };
+    // 100 > 99 : hors marge — et 100 ≫ 50 × 1.1, donc insultant → fache.
+    const res = proposerOffreVente(nego, client, 100, modifiers, {
+      revelationDejaFaite: true,
+      plafondRevele: true,
+    });
+    expect(res.statut).toBe("fache");
+  });
+
+  it("sans plafondRevele, une offre au-dessus du plafond n'est pas absorbée", () => {
+    const nego = ouvrirNegociation("vente", 50, 90);
+    const client = createMockClient({ tolerancePct: 0.1 });
+    const res = proposerOffreVente(nego, client, 99, DEFAULT_MODIFIERS, {
+      revelationDejaFaite: true,
+    });
+    expect(res.statut).not.toBe("conclu");
   });
 });
 
@@ -633,8 +674,19 @@ describe("appliquerBoniment (Le Boniment)", () => {
     message: { cle: "ouvertureVente", variante: 0 },
   };
 
-  it("BONIMENT_MARGE vaut 1.15", () => {
+  it("marges : 1.05 en routine, 1.15 dès le 2e usage quotidien (N50)", () => {
     expect(BONIMENT_MARGE).toBe(1.15);
+    expect(BONIMENT_MARGE_ROUTINE).toBe(1.05);
+    expect(margeBoniment(49)).toBe(1.05);
+    expect(margeBoniment(50)).toBe(1.15);
+  });
+
+  it("avec la marge routine, conclut à 105 % mais plus à 106 %", () => {
+    // cibleSecrete 100 : seuil = round(100 × 1.05) = 105.
+    expect(appliquerBoniment(nego, 105, BONIMENT_MARGE_ROUTINE).statut).toBe("conclu");
+    const r = appliquerBoniment(nego, 106, BONIMENT_MARGE_ROUTINE);
+    expect(r.statut).toBe("en_cours");
+    expect(r.prixAdverseCourant).toBe(100);
   });
 
   it("conclut si l'offre ≤ 115 % du prix max", () => {
@@ -727,5 +779,22 @@ describe("calculerFourchettePrixMax (Œil aiguisé)", () => {
       ),
     );
     expect(mins.size).toBeGreaterThan(10);
+  });
+});
+
+describe("BRADERIE_INTERVALLE_MULT (Effets braderie côté vente)", () => {
+  it("BRADERIE_INTERVALLE_MULT accélère les arrivées de clients", () => {
+    expect(BRADERIE_INTERVALLE_MULT).toBeLessThan(1);
+    for (let i = 0; i < 50; i++) {
+      const it = prochainIntervalleClient(BRADERIE_INTERVALLE_MULT);
+      expect(it).toBeLessThanOrEqual(CLIENT_INTERVALLE_MAX_SEC * BRADERIE_INTERVALLE_MULT);
+      expect(it).toBeGreaterThanOrEqual(CLIENT_INTERVALLE_MIN_SEC * BRADERIE_INTERVALLE_MULT);
+    }
+  });
+
+  it("bourse moyenne braderie gonflée par le facteurBourse 1.5", () => {
+    const braderie = getBrocanteById("grande-braderie")!;
+    const boss = getBrocanteById("salon-antiquaires-drouot")!;
+    expect(bourseMoyenne(braderie)).toBeGreaterThan(bourseMoyenne({ ...boss, facteurBourse: 1 }));
   });
 });

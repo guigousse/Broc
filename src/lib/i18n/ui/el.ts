@@ -263,6 +263,7 @@ export const el: DictionnaireUI = {
     choisissezBrocante: "Επίλεξε ένα παζάρι",
     panoramaBrocantesAria: "Πανόραμα παζαριών",
     sceneTierAria: "Σκηνή tier {tier}",
+    sceneEvenementAria: "Σκηνή εκδήλωσης — Μεγάλη Μπραντερί",
     taillePoolItems: "{n} αντικείμενα",
     bourseMoyenneClientsAria: "Μέσο πορτοφόλι πελατών: {valeur} ευρώ",
     bourseMoyLabel: "Μέσο πορτ. {valeur} €",
@@ -279,6 +280,9 @@ export const el: DictionnaireUI = {
     semaineEnCours: "Τρέχουσα εβδομάδα",
     etatAriaLabel: "Κατάσταση: {etat}",
     coteLabel: "αξία {valeur} €",
+    plancherLabel: "κατώτατη {valeur} €",
+    aimeLabel: "Αγαπά: {cats}",
+    boudeLabel: "Αποφεύγει: {cats}",
     rienAChiner: "— τίποτα για ψάξιμο εδώ —",
     quitterBrocanteAriaLabel: "Έξοδος από το παζάρι",
     sortir: "Έξοδος",
@@ -309,6 +313,8 @@ export const el: DictionnaireUI = {
     atoutVerrouilleToast: "{nom} — ξεκλειδώνει στο επίπεδο {niveau}",
     dejaPossedeAria: "Ήδη στη συλλογή",
     nouveauPill: "Νέο",
+    conditionBraderie: "Ανοιχτά μόνο το πρώτο σαββατοκύριακο του Σεπτεμβρίου",
+    badgeEvenement: "Εκδήλωση",
   },
   vente: {
     celebrite: "Διασημότητα",
@@ -537,6 +543,14 @@ export const el: DictionnaireUI = {
     celebriteAnnonce:
       "{nom} έχει ανακοινωθεί στο {brocante} στις {jour}. Περίμενε μεγάλη προσέλευση και γεμάτα πορτοφόλια!",
     celebriteBrocanteInconnue: "ένα παζάρι",
+    braderieTitre: "Η Μεγάλη Μπραντερί",
+    braderieAnnonce:
+      "Πλησιάζει το πρώτο σαββατοκύριακο του Σεπτεμβρίου: η Μεγάλη Μπραντερί στήνει τους πάγκους της! Δύο μέρες με τιμές-σοκ — περιμένετε το μεγαλύτερο πλήθος της χρονιάς.",
+    braderieEnCours:
+      "Η Μεγάλη Μπραντερί είναι στο αποκορύφωμά της! Πάγκοι ως εκεί που φτάνει το μάτι, τιμές-σοκ και πλήθος-ρεκόρ — φέτος είναι αυτό το σαββατοκύριακο ή ποτέ.",
+    pageSuivanteAria: "Επόμενη σελίδα",
+    pagePrecedenteAria: "Προηγούμενη σελίδα",
+    pageIndicateurAria: "Σελίδα {page} από {total}",
   },
   registre: {
     ongletCommandes: "Παραγγελίες",

@@ -50,27 +50,27 @@ function paliersThematiques(cat: CategorieObjet): OverlayCompetences["paliers"] 
     },
     [`cat.${cat}.passion.1`]: {
       nom: `Aficionado — ${c}`,
-      description: `Los clientes pagan un +10 % por los objetos « ${c} ».`,
+      description: `Los clientes pagan un +5 % por los objetos « ${c} ».`,
     },
     [`cat.${cat}.passion.2`]: {
       nom: `Apasionado — ${c}`,
-      description: `Los clientes pagan un +20 % por los objetos « ${c} » (reemplaza a Aficionado).`,
+      description: `Los clientes pagan un +10 % por los objetos « ${c} » (reemplaza a Aficionado).`,
     },
     [`cat.${cat}.passion.3`]: {
       nom: `Forofo — ${c}`,
-      description: `Los clientes pagan un +30 % por los objetos « ${c} » (reemplaza a Apasionado).`,
+      description: `Los clientes pagan un +20 % por los objetos « ${c} » (reemplaza a Apasionado).`,
     },
-    [`cat.${cat}.oeil_aiguise.1`]: {
-      nom: `Labia ágil — ${c}`,
-      description: `Cuando un cliente regatea un objeto « ${c} », tolera contraofertas un +10 % más codiciosas.`,
+    [`cat.${cat}.marchandage.1`]: {
+      nom: `Regateador — ${c}`,
+      description: `Al chinear, el precio mínimo de los vendedores baja 4 puntos de % (de su precio anunciado) en los objetos « ${c} ».`,
     },
-    [`cat.${cat}.oeil_aiguise.2`]: {
-      nom: `Labia — ${c}`,
-      description: `Cuando un cliente regatea un objeto « ${c} », tolera contraofertas un +20 % más codiciosas (reemplaza a Labia ágil).`,
+    [`cat.${cat}.marchandage.2`]: {
+      nom: `Fino regateador — ${c}`,
+      description: `Al chinear, el precio mínimo de los vendedores baja 8 puntos de % (de su precio anunciado) en los objetos « ${c} » (reemplaza a Regateador).`,
     },
-    [`cat.${cat}.oeil_aiguise.3`]: {
-      nom: `Pico de oro — ${c}`,
-      description: `Cuando un cliente regatea un objeto « ${c} », tolera contraofertas un +30 % más codiciosas (reemplaza a Labia).`,
+    [`cat.${cat}.marchandage.3`]: {
+      nom: `Rey del regateo — ${c}`,
+      description: `Al chinear, el precio mínimo de los vendedores baja 12 puntos de % (de su precio anunciado) en los objetos « ${c} » (reemplaza a Fino regateador).`,
     },
   };
 }
@@ -85,7 +85,7 @@ function branchesThematiques(cat: CategorieObjet): OverlayCompetences["branches"
     [`cat.${cat}/reparer`]: { nom: "Reparar" },
     [`cat.${cat}/connaisseur`]: { nom: "Conocedor" },
     [`cat.${cat}/passion`]: { nom: "Pasión" },
-    [`cat.${cat}/oeil_aiguise`]: { nom: "Ojo agudo" },
+    [`cat.${cat}/marchandage`]: { nom: "Regateo" },
   };
 }
 
@@ -121,7 +121,7 @@ export const COMPETENCES_ES: OverlayCompetences = {
     "general.negociation.3": {
       nom: "Diplomático",
       description:
-        "En vez de marcharse enfadado, el cliente te suelta su precio máximo exacto y te deja una última contraoferta (1 vez al día).",
+        "En vez de marcharse enfadado, el cliente te suelta su precio máximo exacto y te deja una última contraoferta — aceptada hasta el 110 % de ese tope (1 vez al día).",
     },
     "general.charisme.1": {
       nom: "Puesto cuidado",
@@ -145,7 +145,7 @@ export const COMPETENCES_ES: OverlayCompetences = {
     "general.presentation.2": {
       nom: "Tasador de bolsas",
       description:
-        "Se muestra la cartera del cliente — el dinero que lleva encima — en la ficha de negociación.",
+        "Se muestra la cartera del cliente — el dinero que lleva encima — en la ficha de negociación, junto con las categorías que le gustan y las que evita.",
     },
     "general.presentation.3": {
       nom: "Ojo agudo",

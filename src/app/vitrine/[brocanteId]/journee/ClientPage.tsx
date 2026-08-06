@@ -20,8 +20,10 @@ import { useSettings } from "@/context/SettingsContext";
 import {
   DEFAULT_MODIFIERS,
   JOURNEE_DUREE_SECONDES,
+  BRADERIE_INTERVALLE_MULT,
   ajouterAuPanier,
   appliquerBoniment,
+  margeBoniment,
   bourseDe,
   genererClientEvent,
   personaDepuisClient,
@@ -74,12 +76,12 @@ import {
   aGenPresentationSoignee,
   aGenStandRenomme,
   bonusPassionCategorie,
-  bonusToleranceCategorie,
   bonusToleranceNegoGeneral,
 } from "@/lib/competences";
 import { CATEGORIES } from "@/data/categories";
 import { METEO_INTERVALLE_MULT } from "@/data/meteos";
 import { indexJourSemaine, meteoDuJour } from "@/lib/meteo";
+import { estGrandeBraderie } from "@/lib/evenements";
 import { buildCelebritePersonnage } from "@/lib/celebrite";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI, tr } from "@/lib/i18n/ui";
@@ -159,20 +161,17 @@ export default function VitrineJourneePage() {
   const modifiersRef = useRef<VitrineModifiers | null>(null);
   if (state && modifiersRef.current === null) {
     const bonusPassionParCategorie = new Map<CategorieObjet, number>();
-    const bonusToleranceParCategorie = new Map<CategorieObjet, number>();
     for (const c of CATEGORIES) {
       const p = bonusPassionCategorie(state, c);
       if (p > 0) bonusPassionParCategorie.set(c, p);
-      const t = bonusToleranceCategorie(state, c);
-      if (t > 0) bonusToleranceParCategorie.set(c, t);
     }
     modifiersRef.current = {
       bonusPassionParCategorie,
-      bonusToleranceParCategorie,
       bonusToleranceNego: bonusToleranceNegoGeneral(state),
       intervalleMultiplier:
         (aGenPresentationSoignee(state) ? 0.75 : 1) *
-        METEO_INTERVALLE_MULT[meteoDuJour(state)],
+        METEO_INTERVALLE_MULT[meteoDuJour(state)] *
+        (brocante && estGrandeBraderie(brocante) ? BRADERIE_INTERVALLE_MULT : 1),
       revelePersona: aGenLecteurAmes(state),
       releveBourse: aGenEstimateurBourse(state),
       oeilAiguise: aGenOeilAiguise(state),
@@ -206,6 +205,9 @@ export default function VitrineJourneePage() {
   const [ventesEffectuees, setVentesEffectuees] = useState<VenteHistorique[]>([]);
   const [fancyClientApparu, setFancyClientApparu] = useState(false);
   const [revelationFaite, setRevelationFaite] = useState(false);
+  // Miroir pour `handleOffreVente` (useCallback) — même motif que tendancesRef.
+  const revelationFaiteRef = useRef(revelationFaite);
+  revelationFaiteRef.current = revelationFaite;
   /** Le Lot garni (N10) : mini-picker ouvert pour choisir le 2e objet à ajouter au panier. */
   const [lotGarniOuvert, setLotGarniOuvert] = useState(false);
   const [bravoTout, setBravoTout] = useState(false);
@@ -355,6 +357,9 @@ export default function VitrineJourneePage() {
       const next = proposerOffreVente(nego, ev.persona, offre, mods, {
         revelationDejaFaite: !diplomatieDispo,
         toleranceBoost: ev.toleranceBoost,
+        // Diplomate : le plafond de CE client a été révélé → sa dernière
+        // offre est acceptée jusqu'à 110 % du plafond (DIPLOMATE_MARGE).
+        plafondRevele: revelationFaiteRef.current,
       });
       if (next.diplomatieDeclenchee) {
         utiliserActive("diplomate");
@@ -780,7 +785,11 @@ export default function VitrineJourneePage() {
     const ev = clientActuelRef.current;
     if (!ev || !negoVente || negoVente.statut !== "en_cours") return;
     if (!utiliserActive("boniment")) return;
-    const next = appliquerBoniment(negoVente, offreJoueur);
+    const next = appliquerBoniment(
+      negoVente,
+      offreJoueur,
+      margeBoniment(state?.brocanteur.niveau ?? 0),
+    );
     setNegoVente(next);
     if (next.statut === "conclu") {
       audioManager.playCash();
@@ -1110,6 +1119,8 @@ export default function VitrineJourneePage() {
                 ? d.vente.celebriteAmbiance
                 : ambianceClient(clientActuel.persona, locale),
             bourse: bourseDe(clientActuel.persona, brocante?.facteurBourse ?? 1),
+            categoriesPreferees: clientActuel.persona.categoriesPreferees,
+            categoriesEvitees: clientActuel.persona.categoriesEvitees,
             // Œil aiguisé ne révèle plus qu'une fourchette ; le prix exact
             // n'apparaît que via la révélation Diplomate.
             fourchettePrixMax: clientActuel.fourchettePrixMax,

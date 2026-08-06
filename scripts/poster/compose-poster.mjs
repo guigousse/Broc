@@ -74,13 +74,14 @@ async function dataUriIllustration(filePath) {
 }
 
 async function main() {
-  const [illustration, divider, grain, badge, globalsCss] = await Promise.all([
+  const [illustration, divider, grain, badge, badgePlay, globalsCss] = await Promise.all([
     dataUriIllustration(
       path.join(POSTER_DIR, "candidats", `${variante.prefixe}-${illuNum}.png`),
     ),
     dataUri(path.join(PUBLIC_DIR, "assets", "deco-divider.svg")),
     dataUri(path.join(PUBLIC_DIR, "assets", "paper-grain.svg")),
     dataUri(path.join(POSTER_DIR, "badge-app-store-fr.svg")),
+    dataUri(path.join(POSTER_DIR, "badge-google-play-fr.png")),
     fs.readFile(path.join(PROJECT_ROOT, "src", "app", "globals.css"), "utf8"),
   ]);
 
@@ -144,6 +145,18 @@ ${fontFaces}
   text-shadow: 0 2px 6px rgba(24, 17, 10, 0.9);
 }
 .badge { height: 78px; filter: drop-shadow(0 3px 10px rgba(24, 17, 10, 0.6)); }
+.badges { display: flex; align-items: flex-end; gap: 44px; }
+.play { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.bientot {
+  font-family: 'Cinzel', Georgia, serif; font-weight: 600;
+  font-size: 22px; color: #D9C9A6; letter-spacing: 0.08em;
+  text-shadow: 0 2px 6px rgba(24, 17, 10, 0.9);
+}
+/* Badge Google Play en couleurs (consignes de marque Google : badge non
+   altéré) ; le « Bientôt disponible » au-dessus porte seul le teasing. */
+.badge-play {
+  filter: drop-shadow(0 3px 10px rgba(24, 17, 10, 0.6));
+}
 </style></head>
 <body>
   <div class="affiche">
@@ -158,7 +171,13 @@ ${fontFaces}
       <div class="accroche">Chinez. Négociez.<br>Collectionnez.</div>
       <img class="divider" src="${divider}" alt="">
       <div class="dispo">Disponible gratuitement</div>
-      <img class="badge" src="${badge}" alt="Télécharger dans l'App Store">
+      <div class="badges">
+        <img class="badge" src="${badge}" alt="Télécharger dans l'App Store">
+        <div class="play">
+          <div class="bientot">Bientôt disponible</div>
+          <img class="badge badge-play" src="${badgePlay}" alt="Bientôt sur Google Play">
+        </div>
+      </div>
     </div>
   </div>
 </body></html>`;

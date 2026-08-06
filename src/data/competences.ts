@@ -73,7 +73,7 @@ const TREE_GENERAL_DEF: CompetenceTreeDef = {
         {
           nom: "Diplomate",
           description:
-            "Au lieu de partir fâché, le client vous lâche son prix max exact et vous laisse une dernière contre-offre (1 fois par journée).",
+            "Au lieu de partir fâché, le client vous lâche son prix max exact et vous laisse une dernière contre-offre — acceptée jusqu'à 110 % de ce plafond (1 fois par journée).",
         },
       ]),
     },
@@ -111,7 +111,7 @@ const TREE_GENERAL_DEF: CompetenceTreeDef = {
         {
           nom: "Estimateur de bourse",
           description:
-            "La bourse du client — l'argent qu'il a en poche — s'affiche dans la fiche de négociation.",
+            "La bourse du client — l'argent qu'il a en poche — s'affiche dans la fiche de négociation, avec les catégories qu'il aime et celles qu'il boude.",
         },
         {
           nom: "Œil aiguisé",
@@ -187,32 +187,32 @@ function branchePassion(cat: CategorieObjet): PalierDef[] {
   return definirPaliers([
     {
       nom: `Amateur — ${cat}`,
-      description: `Les clients paient +10 % pour les objets « ${cat} ».`,
+      description: `Les clients paient +5 % pour les objets « ${cat} ».`,
     },
     {
       nom: `Passionné — ${cat}`,
-      description: `Les clients paient +20 % pour les objets « ${cat} » (remplace Amateur).`,
+      description: `Les clients paient +10 % pour les objets « ${cat} » (remplace Amateur).`,
     },
     {
       nom: `Mordu — ${cat}`,
-      description: `Les clients paient +30 % pour les objets « ${cat} » (remplace Passionné).`,
+      description: `Les clients paient +20 % pour les objets « ${cat} » (remplace Passionné).`,
     },
   ]);
 }
 
-function brancheOeilAiguise(cat: CategorieObjet): PalierDef[] {
+function brancheMarchandage(cat: CategorieObjet): PalierDef[] {
   return definirPaliers([
     {
-      nom: `Verbe agile — ${cat}`,
-      description: `Quand un client négocie un objet « ${cat} », il tolère des contre-offres +10 % plus gourmandes.`,
+      nom: `Marchandeur — ${cat}`,
+      description: `En chine, le prix plancher des vendeurs baisse de 4 points de % (de leur prix affiché) sur les objets « ${cat} ».`,
     },
     {
-      nom: `Verbe haut — ${cat}`,
-      description: `Quand un client négocie un objet « ${cat} », il tolère des contre-offres +20 % plus gourmandes (remplace Verbe agile).`,
+      nom: `Fin marchandeur — ${cat}`,
+      description: `En chine, le prix plancher des vendeurs baisse de 8 points de % (de leur prix affiché) sur les objets « ${cat} » (remplace Marchandeur).`,
     },
     {
-      nom: `Verbe d'or — ${cat}`,
-      description: `Quand un client négocie un objet « ${cat} », il tolère des contre-offres +30 % plus gourmandes (remplace Verbe haut).`,
+      nom: `Roi du marchandage — ${cat}`,
+      description: `En chine, le prix plancher des vendeurs baisse de 12 points de % (de leur prix affiché) sur les objets « ${cat} » (remplace Fin marchandeur).`,
     },
   ]);
 }
@@ -229,7 +229,7 @@ function buildCategoryTree(cat: CategorieObjet): CompetenceTreeDef {
       { id: "reparer", nom: "Réparer", paliers: brancheReparer(cat) },
       { id: "connaisseur", nom: "Connaisseur", paliers: brancheConnaisseur(cat) },
       { id: "passion", nom: "Passion", paliers: branchePassion(cat) },
-      { id: "oeil_aiguise", nom: "Œil aiguisé", paliers: brancheOeilAiguise(cat) },
+      { id: "marchandage", nom: "Marchandage", paliers: brancheMarchandage(cat) },
     ],
   };
 }

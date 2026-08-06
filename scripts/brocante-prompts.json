@@ -15,5 +15,6 @@
   { "id": "salon-violon-ancien", "description": "an antique violin specialist salon scene, several violins hanging on cream walls, a single violin on a green velvet stand in the foreground, refined musical atmosphere" },
   { "id": "galerie-arts-decoratifs", "description": "an Art Déco decorative arts gallery interior, geometric patterned floors, gilded screens, lacquered chinese cabinets, sleek 1925 Paris exposition aesthetic" },
   { "id": "galerie-tableaux-sculptures", "description": "a fine art gallery interior with framed oil paintings on cream walls and bronze sculptures on white pedestals, polished hardwood floor, soft museum lighting" },
-  { "id": "salon-antiquaires-drouot", "description": "the grand Drouot Paris auction house main hall, ornate Art Déco interior with marble columns, chandeliers, rows of bidders facing an auctioneer's podium, very prestigious atmosphere" }
+  { "id": "salon-antiquaires-drouot", "description": "the grand Drouot Paris auction house main hall, ornate Art Déco interior with marble columns, chandeliers, rows of bidders facing an auctioneer's podium, very prestigious atmosphere" },
+  { "id": "grande-braderie", "description": "a giant festive street flea-market, endless rows of stalls with bunting and banners stretching down a grand avenue, bargain price signs, dense joyful crowd, late-summer golden light" }
 ]

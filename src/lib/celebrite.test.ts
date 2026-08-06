@@ -29,6 +29,7 @@ describe("tirerCelebrite", () => {
     for (let i = 0; i < 50; i++) {
       const c = tirerCelebrite();
       expect(boss.has(c.brocanteId)).toBe(false);
+      expect(c.brocanteId).not.toBe("grande-braderie");
     }
   });
 

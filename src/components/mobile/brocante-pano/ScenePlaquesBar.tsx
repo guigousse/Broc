@@ -1,31 +1,44 @@
 "use client";
 
-import { Crown } from "lucide-react";
+import { Crown, Megaphone } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { BrocanteTier } from "@/types/game";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import type { SceneId } from "./brocantePanoramaLayout";
 
 interface ScenePlaquesBarProps {
-  currentTier: BrocanteTier;
-  onTierClick: (t: BrocanteTier) => void;
+  currentScene: SceneId;
+  onSceneClick: (s: SceneId) => void;
+  /** La braderie est-elle présente dans la liste → 5ᵉ plaque Événement. */
+  evenementVisible: boolean;
   /** Place la barre en haut (défaut) ou en bas de la zone panorama. */
   position?: "top" | "bottom";
 }
 
 const TIERS: BrocanteTier[] = [1, 2, 3, 4];
 
+// La barre empile deux rangées : les 4 plaques de tier, puis (jours de
+// braderie) la plaque Événement seule, centrée et un peu plus grande.
 const barStyle = (position: "top" | "bottom"): CSSProperties => ({
   position: "absolute",
   left: 0,
   right: 0,
   ...(position === "bottom" ? { bottom: 8 } : { top: 8 }),
   display: "flex",
-  justifyContent: "center",
-  gap: 10,
+  flexDirection: "column",
+  alignItems: "center",
+  rowGap: 8,
   padding: "0 12px",
   zIndex: 25,
   pointerEvents: "none", // les boutons réactivent
 });
+
+const rangeeTiersStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "center",
+  gap: 10,
+  width: "100%",
+};
 
 /**
  * Cartel laiton style étiquette de musée : rectangle aux coins arrondis,
@@ -81,6 +94,71 @@ const starsStyle = (active: boolean): CSSProperties => ({
     : "0 1px 0 rgba(255,255,255,0.18)",
 });
 
+// Surcharge de `plaqueStyle` pour la plaque Événement : même cartel, plus
+// l'aura dorée pulsante (l'animation elle-même est déclarée dans le
+// `<style>` inline ci-dessous — jamais dans globals.css, cf. piège connu).
+const plaqueEvenementStyle = (active: boolean): CSSProperties => ({
+  ...plaqueStyle(active),
+  animation: "aura-evenement 1.6s ease-in-out infinite",
+});
+
+/**
+ * Conteneur de la plaque Événement : porte le slot flex du cartel et sert
+ * d'ancre aux étincelles. Elles vivent en FRÈRES du bouton (pas dedans) :
+ * la plaque inactive applique `filter: saturate/brightness` qui ternirait
+ * tout enfant — hors du bouton, l'or scintille à pleine intensité.
+ */
+const conteneurEvenementStyle: CSSProperties = {
+  position: "relative",
+  display: "flex",
+  marginTop: 10, // léger décrochage sous la rangée des tiers (+ rowGap 8)
+  pointerEvents: "none", // le bouton réactive (comme barStyle)
+};
+
+/** La plaque Événement est un cran plus grande que les cartels de tier. */
+const plaqueEvenementTaille: CSSProperties = {
+  flex: "0 0 auto",
+  height: 38,
+  minWidth: 104,
+  padding: "0 24px",
+};
+
+/**
+ * Étincelles dorées qui émanent de la plaque Événement : ✦ absolus autour
+ * du cartel, chacun avec sa taille, sa position et son déphasage — le cycle
+ * scintille-evenement (opacité + échelle) les fait clignoter en quinconce.
+ * Décoratif pur (aria-hidden).
+ */
+const ETINCELLES: readonly {
+  top: string;
+  left: string;
+  size: number;
+  delay: number;
+  duree: number;
+}[] = [
+  { top: "-11px", left: "-8px", size: 15, delay: 0, duree: 1.5 },
+  { top: "-13px", left: "60%", size: 11, delay: 0.45, duree: 1.9 },
+  { top: "36%", left: "calc(100% - 3px)", size: 16, delay: 0.9, duree: 1.6 },
+  { top: "calc(100% - 4px)", left: "16%", size: 11, delay: 1.25, duree: 2.1 },
+  { top: "calc(100% - 8px)", left: "calc(100% - 10px)", size: 13, delay: 0.65, duree: 1.7 },
+  { top: "26%", left: "-13px", size: 10, delay: 1.6, duree: 1.8 },
+];
+
+const etincelleStyle = (e: (typeof ETINCELLES)[number]): CSSProperties => ({
+  position: "absolute",
+  top: e.top,
+  left: e.left,
+  fontSize: e.size,
+  lineHeight: 1,
+  color: "#ffe28a",
+  textShadow:
+    "0 0 4px rgba(255,215,100,1), 0 0 10px rgba(255,200,70,0.85), 0 0 18px rgba(255,180,50,0.5)",
+  pointerEvents: "none",
+  zIndex: 2,
+  opacity: 0,
+  animation: `scintille-evenement ${e.duree}s ease-in-out ${e.delay}s infinite`,
+});
+
 function plaqueLabel(tier: BrocanteTier, active: boolean) {
   if (tier === 4) {
     return (
@@ -100,8 +178,9 @@ function plaqueLabel(tier: BrocanteTier, active: boolean) {
 }
 
 export function ScenePlaquesBar({
-  currentTier,
-  onTierClick,
+  currentScene,
+  onSceneClick,
+  evenementVisible,
   position = "top",
 }: ScenePlaquesBarProps) {
   const { d, tr } = useLangue();
@@ -111,23 +190,65 @@ export function ScenePlaquesBar({
       : tr(d.chine.tierEtoilesAria, { tier, etoiles: "★".repeat(tier) });
   return (
     <div style={barStyle(position)} aria-label={d.chine.navigationParTierAria}>
-      {TIERS.map((t) => {
-        const active = t === currentTier;
-        return (
+      {evenementVisible && (
+        // Aura dorée pulsante — inline pour éviter le piège du globals.css périmé.
+        <style>{`@keyframes aura-evenement {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 0 10px rgba(240,185,70,0.55), 0 3px 8px rgba(20,12,0,0.45); }
+  50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 0 22px rgba(255,205,90,0.95), 0 3px 8px rgba(20,12,0,0.45); }
+}
+@keyframes scintille-evenement {
+  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  45% { opacity: 1; transform: scale(1) rotate(20deg); }
+  60% { opacity: 0.85; transform: scale(0.85) rotate(28deg); }
+}`}</style>
+      )}
+      <div style={rangeeTiersStyle}>
+        {TIERS.map((t) => {
+          const active = t === currentScene;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => onSceneClick(t)}
+              aria-label={ariaLabel(t)}
+              aria-current={active ? "true" : "false"}
+              style={plaqueStyle(active)}
+            >
+              <span aria-hidden style={rivetStyle(active, "left")} />
+              {plaqueLabel(t, active)}
+              <span aria-hidden style={rivetStyle(active, "right")} />
+            </button>
+          );
+        })}
+      </div>
+      {/* Rangée dédiée sous les tiers : la plaque Événement, centrée, plus grande. */}
+      {evenementVisible && (
+        <span style={conteneurEvenementStyle}>
           <button
-            key={t}
             type="button"
-            onClick={() => onTierClick(t)}
-            aria-label={ariaLabel(t)}
-            aria-current={active ? "true" : "false"}
-            style={plaqueStyle(active)}
+            onClick={() => onSceneClick("evenement")}
+            aria-label={d.chine.badgeEvenement}
+            aria-current={currentScene === "evenement" ? "true" : "false"}
+            style={{
+              ...plaqueEvenementStyle(currentScene === "evenement"),
+              ...plaqueEvenementTaille,
+            }}
           >
-            <span aria-hidden style={rivetStyle(active, "left")} />
-            {plaqueLabel(t, active)}
-            <span aria-hidden style={rivetStyle(active, "right")} />
+            <span aria-hidden style={rivetStyle(currentScene === "evenement", "left")} />
+            <Megaphone
+              size={22}
+              strokeWidth={2}
+              color={currentScene === "evenement" ? "#3a2410" : "#2c2018"}
+            />
+            <span aria-hidden style={rivetStyle(currentScene === "evenement", "right")} />
           </button>
-        );
-      })}
+          {ETINCELLES.map((e, i) => (
+            <span key={i} aria-hidden style={etincelleStyle(e)}>
+              ✦
+            </span>
+          ))}
+        </span>
+      )}
     </div>
   );
 }

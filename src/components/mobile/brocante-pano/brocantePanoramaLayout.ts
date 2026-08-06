@@ -5,7 +5,16 @@
  * 100vw × full-height). À ajuster à l'œil après intégration des fonds.
  */
 
-import type { BrocanteTier } from "@/types/game";
+import type { Brocante, BrocanteTier } from "@/types/game";
+import { ID_GRANDE_BRADERIE, estGrandeBraderie } from "@/lib/evenements";
+
+/** Scènes du panorama : les 4 tiers + la scène événement (braderie). */
+export type SceneId = BrocanteTier | "evenement";
+
+/** Scène d'affichage d'une brocante (la braderie vit sur la scène événement). */
+export function sceneDeBrocante(b: Pick<Brocante, "id" | "tier">): SceneId {
+  return estGrandeBraderie(b) ? "evenement" : b.tier;
+}
 
 export interface FrameCoord {
   /** id de la brocante (cf. src/data/brocantes.ts). */
@@ -50,12 +59,18 @@ export const TIER_3_FRAMES: FrameCoord[] = [
 
 // Tier 4 — 1 cadre central monumental.
 export const TIER_4_FRAMES: FrameCoord[] = [
-  { id: "salon-antiquaires-drouot", left: "18.75%", top: "21.17%", width: "61.64%", height: "36.84%" },
+  { id: "salon-antiquaires-drouot", left: "19.00%", top: "17.00%", width: "62.00%", height: "41.00%" },
 ];
 
-export const SCENE_FRAMES: Record<BrocanteTier, FrameCoord[]> = {
+/** Cadre unique de la scène événement : la braderie, en grand, centrée. */
+export const EVENEMENT_FRAMES: FrameCoord[] = [
+  { id: ID_GRANDE_BRADERIE, left: "15.00%", top: "25.00%", width: "70.00%", height: "35.00%" },
+];
+
+export const SCENE_FRAMES: Record<SceneId, FrameCoord[]> = {
   1: TIER_1_FRAMES,
   2: TIER_2_FRAMES,
   3: TIER_3_FRAMES,
   4: TIER_4_FRAMES,
+  evenement: EVENEMENT_FRAMES,
 };

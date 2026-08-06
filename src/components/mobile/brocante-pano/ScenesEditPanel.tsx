@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import type { BrocanteTier } from "@/types/game";
-import { SCENE_FRAMES } from "./brocantePanoramaLayout";
+import { SCENE_FRAMES, type SceneId } from "./brocantePanoramaLayout";
 import { applyOverride, useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
 
 interface ScenesEditPanelProps {
-  /** Tier actuellement visible (utilisé pour cibler l'export JSON). */
-  currentTier: BrocanteTier;
+  /** Scène actuellement visible (utilisée pour cibler l'export JSON) — un
+   * tier (1-4) ou "evenement" (la scène dédiée de la braderie). */
+  currentScene: SceneId;
 }
 
 const panelStyle: CSSProperties = {
@@ -43,14 +43,14 @@ const btnStyle: CSSProperties = {
   fontWeight: 700,
 };
 
-export function ScenesEditPanel({ currentTier }: ScenesEditPanelProps) {
+export function ScenesEditPanel({ currentScene }: ScenesEditPanelProps) {
   const { enabled, overrides, setEnabled, resetAll } = useBrocanteFramesEdit();
   const [copied, setCopied] = useState(false);
 
   if (!enabled) return null;
 
   const exportJson = () => {
-    const frames = SCENE_FRAMES[currentTier];
+    const frames = SCENE_FRAMES[currentScene];
     const result = frames.map((f) => applyOverride(f, overrides[f.id]));
     const text = JSON.stringify(result, null, 2);
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -68,7 +68,7 @@ export function ScenesEditPanel({ currentTier }: ScenesEditPanelProps) {
 
   return (
     <div style={panelStyle}>
-      <div style={{ fontWeight: 700 }}>Édition cadres · tier {currentTier}</div>
+      <div style={{ fontWeight: 700 }}>Édition cadres · scène {currentScene}</div>
       <div style={{ color: "var(--brass-700)", fontSize: 9 }}>
         Drag = déplacer · Coins = redimensionner · Snap 1 %
       </div>

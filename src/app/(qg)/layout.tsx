@@ -176,8 +176,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // révélation + son rang (1-based). null = overlay fermé.
   const [objetColis, setObjetColis] = useState<Objet | null>(null);
   const [numeroColis, setNumeroColis] = useState(0);
-  // Cadeau d'anniversaire (11 juin) : objet en cours de révélation.
-  const [objetCadeau, setObjetCadeau] = useState<Objet | null>(null);
+  // Cadeau d'anniversaire (11 juin) : objet en cours de révélation + son année.
+  const [objetCadeau, setObjetCadeau] = useState<{ objet: Objet; annee: number } | null>(null);
 
   // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
@@ -583,8 +583,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                   <QgCadeau
                     onTap={() => {
                       playClick();
-                      const vinyle = ouvrirCadeauAnniversaire();
-                      if (vinyle) setObjetCadeau(vinyle);
+                      const res = ouvrirCadeauAnniversaire();
+                      if (res) setObjetCadeau(res);
                     }}
                   />
                 )}
@@ -860,13 +860,18 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           prêt à être délivré (chapitrePret), masquée pendant tout autre
           dialogue (tutoriel) pour ne pas se superposer. */}
       <ColisOverlay
-        objet={objetCadeau}
+        objet={objetCadeau?.objet ?? null}
         numero={1}
         total={1}
         titre={d.tutoriel.cadeauTitre}
         onRecuperer={() => {
+          const annee = objetCadeau?.annee ?? 1;
           setObjetCadeau(null);
-          setDialogueQg(SEQUENCES_ANNIVERSAIRE.anniv_cadeau);
+          setDialogueQg(
+            annee === 1
+              ? SEQUENCES_ANNIVERSAIRE.anniv_cadeau
+              : SEQUENCES_ANNIVERSAIRE.anniv_cadeau_recurrent,
+          );
         }}
       />
       <ColisOverlay

@@ -12,6 +12,7 @@ export const FRAIS_ENTREE: Record<BrocanteTier, number> = {
 
 export function fraisEntree(brocante: Brocante): number {
   if (brocante.id === "vide-grenier-quartier") return 0;
+  if (brocante.id === "grande-braderie") return 10;
   return FRAIS_ENTREE[brocante.tier];
 }
 
@@ -384,6 +385,25 @@ export const BROCANTES: Brocante[] = [
         { type: "brocantesDebloquees", tier: 3, nombre: 5 },
       ],
     },
+  },
+
+  // ============================================================
+  // ÉVÉNEMENT — La Grande Braderie (premier week-end de septembre du jeu)
+  // Entrée PERMANENTE (les routes statiques sont pré-rendues depuis ce
+  // tableau) ; visible et débloquée uniquement via la condition "braderie".
+  // ============================================================
+  {
+    id: "grande-braderie",
+    nom: "La Grande Braderie",
+    description:
+      "Deux jours de folie : des kilomètres d'étals, des prix sacrifiés et la foule des grands jours. Le rendez-vous de l'année pour tous les chineurs.",
+    ambiance: "Dense",
+    tier: 4,
+    etoiles: 4,
+    taillePool: 18,
+    poolExclusif: [],
+    facteurBourse: 1.5,
+    conditionDeblocage: { type: "braderie" },
   },
 ];
 

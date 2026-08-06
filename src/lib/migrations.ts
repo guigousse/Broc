@@ -105,7 +105,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -346,13 +346,25 @@ function appliquerMigrations(loaded: GameState): GameState {
     };
   });
 
+  // v18 — la branche thématique « Œil aiguisé » (`cat.*.oeil_aiguise.*`,
+  // tolérance de négo vente) est remplacée par « Marchandage ». Ses ids sont
+  // retirés ICI, AVANT la purge générique — sinon `idsObsoletes` déclencherait
+  // le reset TOTAL des compétences. Le remboursement est versé plus bas
+  // (`remboursementV18`), au moment d'assembler le brocanteur final.
+  const RX_OEIL_AIGUISE_LEGACY = /^cat\..+\.oeil_aiguise\.([123])$/;
+  const idsMarchandageLegacy = (loaded.competencesDebloquees ?? []).filter(
+    (id) => RX_OEIL_AIGUISE_LEGACY.test(id),
+  );
+  const sansMarchandageLegacy = (loaded.competencesDebloquees ?? []).filter(
+    (id) => !RX_OEIL_AIGUISE_LEGACY.test(id),
+  );
+
   // Purge les compétences débloquées dont l'ID n'existe plus dans le catalogue.
   const validIds = new Set(COMPETENCES.map((c) => c.id));
-  const competencesValides = (loaded.competencesDebloquees ?? []).filter((id) =>
+  const competencesValides = sansMarchandageLegacy.filter((id) =>
     validIds.has(id),
   );
-  const idsObsoletes =
-    (loaded.competencesDebloquees ?? []).length !== competencesValides.length;
+  const idsObsoletes = sansMarchandageLegacy.length !== competencesValides.length;
 
   // Si schéma cat obsolète OU IDs de comp obsolètes, on reset les compétences débloquées.
   const resetCompetences = categoriesObsolètes || idsObsoletes;
@@ -576,6 +588,23 @@ function appliquerMigrations(loaded: GameState): GameState {
   // seule fois, au passage v14 → v15. Utilisé plus bas, au moment
   // d'assembler le `brocanteur` final.
   const dejaV15 = typeof loaded.version === "number" && loaded.version >= 15;
+  // v18 — remboursement de la branche « Œil aiguisé » retirée (cf. le strip
+  // AVANT la purge générique, plus haut), au barème effectivement PAYÉ :
+  //  · v9-14 : ancien barème (coût = numéro du palier, 1/2/3) ;
+  //  · v15-17 : 1 pt par palier (refonte v15) ;
+  //  · < v9 : 0 — le recalc legacy (`niveau + bonus − dépenses`) repart de la
+  //    liste déjà expurgée, un remboursement compterait l'écart deux fois ;
+  //  · ≥ v18 : 0 (idempotence — les ids n'existent plus dans ces saves).
+  // Versé sur le brocanteur AVANT `appliquerRefonteCoutsV15`, dont l'écrêtage
+  // inconditionnel garantit l'invariant disponibles + dépensés ≤ 96.
+  const dejaV18 = typeof loaded.version === "number" && loaded.version >= 18;
+  const remboursementV18 =
+    !dejaV9 || dejaV18
+      ? 0
+      : idsMarchandageLegacy.reduce((acc, id) => {
+          const palier = Number(RX_OEIL_AIGUISE_LEGACY.exec(id)?.[1] ?? "0");
+          return acc + (dejaV15 ? 1 : palier);
+        }, 0);
   const ANCIENS_CHAPITRES_VERS_ORDRE_TRAME: Record<string, number> = {
     principale_ch1: 1,
     principale_ch2: 4,
@@ -786,7 +815,15 @@ function appliquerMigrations(loaded: GameState): GameState {
       (() => {
         // `brocanteurFinalV9`/`brocanteurConverti` sont calculés plus haut (avant
         // l'amorce des quêtes principales, cf. commentaire associé).
-        if (brocanteurFinalV9) return brocanteurFinalV9;
+        // v18 : le remboursement de la branche « Œil aiguisé » retirée est
+        // versé ici (saves v9+ uniquement, cf. `remboursementV18`) — l'écrêtage
+        // de `appliquerRefonteCoutsV15` le borne juste en dessous.
+        if (brocanteurFinalV9)
+          return {
+            ...brocanteurFinalV9,
+            pointsDisponibles:
+              brocanteurFinalV9.pointsDisponibles + remboursementV18,
+          };
         // < v9 : refund du pool = niveau + bonus chapitres − points déjà dépensés.
         const chapitresLivres = missionsFinales.filter((m) => {
           if (m.statut !== "livree") return false;
