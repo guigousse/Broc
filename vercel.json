@@ -1,7 +1,8 @@
 {
   "framework": null,
-  "buildCommand": "next build",
-  "outputDirectory": "out",
+  "installCommand": "",
+  "buildCommand": "",
+  "outputDirectory": "site",
   "cleanUrls": true,
   "trailingSlash": false
 }
