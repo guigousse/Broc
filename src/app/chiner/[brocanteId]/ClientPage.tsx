@@ -123,6 +123,9 @@ export default function SessionChinePage() {
   const [boiteReclamee, setBoiteReclamee] = useState(false);
   /** Le Flair (N5) : ids des objets dont la cote a été révélée (un objet par usage, portée session). */
   const [flairIds, setFlairIds] = useState<ReadonlySet<string>>(new Set());
+  /** Le Flair v2 : ids des objets dont le PLANCHER vendeur a été révélé
+   *  (2e mode, quand la cote est déjà connue — un objet par usage). */
+  const [flairPlancherIds, setFlairPlancherIds] = useState<ReadonlySet<string>>(new Set());
   /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
   const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
   /** Ids des objets à fêter (rayons + pill « Nouveau »). Voir `noterDecouverte`. */
@@ -254,6 +257,14 @@ export default function SessionChinePage() {
         item: it,
         estRareOuPlus: estRareOuPlus(it),
         coteConnue: flairIds.has(it.id) || (state ? aConnaisseurChinage(state, it.objet.categorie) : false),
+        plancherRevele:
+          flairPlancherIds.has(it.id) && state
+            ? prixMinAvecMarchandage(
+                it.prixVendeur,
+                it.prixMinAccept,
+                bonusMarchandageCategorie(state, it.objet.categorie),
+              )
+            : undefined,
         dejaPossede: state ? templateDejaPossede(state.collection, it.objet.templateId) : false,
         estNouveau: decouvertesRef.current.has(it.id),
       });
@@ -263,7 +274,7 @@ export default function SessionChinePage() {
     }
     return liste;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vendeurPosition, items, state, flairIds]);
+  }, [vendeurPosition, items, state, flairIds, flairPlancherIds]);
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (
@@ -291,10 +302,21 @@ export default function SessionChinePage() {
       prev ? prev.map((it) => (it.id === id ? { ...it, ...patch } : it)) : prev,
     );
 
-  /** Le Flair (N5) : révèle la cote de l'objet affiché (un usage par objet). */
+  /** Le Flair (N5) : révèle la cote de l'objet affiché (un usage par objet).
+   *  v2 : si la cote est déjà connue (Connaisseur 3 ou Flair déjà joué),
+   *  révèle à la place le prix PLANCHER du vendeur. */
   const jouerFlair = (it: ObjetEnVente) => {
+    const coteConnue =
+      flairIds.has(it.id) || aConnaisseurChinage(state, it.objet.categorie);
+    if (!coteConnue) {
+      if (utiliserActive("flair")) {
+        setFlairIds((prev) => new Set(prev).add(it.id));
+      }
+      return;
+    }
+    if (flairPlancherIds.has(it.id)) return;
     if (utiliserActive("flair")) {
-      setFlairIds((prev) => new Set(prev).add(it.id));
+      setFlairPlancherIds((prev) => new Set(prev).add(it.id));
     }
   };
 
@@ -457,17 +479,21 @@ export default function SessionChinePage() {
     const tchatche = commun("tchatche", "💬");
     const negoStatut = currentItem?.negociation?.statut;
     const flairJoueSurCourant = currentItem ? flairIds.has(currentItem.id) : false;
+    const plancherJoueSurCourant = currentItem
+      ? flairPlancherIds.has(currentItem.id)
+      : false;
     const coteCouranteVisible =
       flairJoueSurCourant ||
       (currentItem ? aConnaisseurChinage(state, currentItem.objet.categorie) : false);
+    // v2 : cote déjà visible → le Flair révèle le PLANCHER du vendeur.
+    // Épuisé (grisé) seulement quand cote ET plancher sont connus.
+    const flairEpuiseSurCourant = coteCouranteVisible && plancherJoueSurCourant;
     return [
       {
         ...flair,
-        actif: flairJoueSurCourant,
-        // Grisé si aucun objet affiché ou si sa cote est déjà visible
-        // (Flair déjà joué dessus, ou Connaisseur 3) : pas d'usage gâché.
-        desactive: !currentItem || coteCouranteVisible,
-        ariaLabel: flairJoueSurCourant
+        actif: flairJoueSurCourant || plancherJoueSurCourant,
+        desactive: !currentItem || flairEpuiseSurCourant,
+        ariaLabel: flairEpuiseSurCourant
           ? tr(d.chine.atoutActifAria, { nom: flair.nom })
           : flair.ariaLabel,
         onActivate: flair.verrouille

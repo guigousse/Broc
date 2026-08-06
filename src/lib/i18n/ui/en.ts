@@ -275,6 +275,7 @@ export const en: DictionnaireUI = {
     semaineEnCours: "Current week",
     etatAriaLabel: "Condition: {etat}",
     coteLabel: "market value {valeur} €",
+    plancherLabel: "floor {valeur} €",
     rienAChiner: "— nothing to pick here —",
     quitterBrocanteAriaLabel: "Leave the flea market",
     sortir: "Leave",

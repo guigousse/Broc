@@ -81,3 +81,19 @@ describe("ChineSlideVue — découverte", () => {
     expect(pill.style.getPropertyValue("--pill-halo")).not.toBe("");
   });
 });
+
+describe("ChineSlideVue — plancher révélé (Le Flair v2)", () => {
+  it("affiche le plancher du vendeur quand plancherRevele est fourni", () => {
+    const slide: ChineSlide = {
+      ...(makeSlide(false) as Extract<ChineSlide, { kind: "item" }>),
+      plancherRevele: 55,
+    };
+    render(<ChineSlideVue slide={slide} />);
+    expect(screen.getByText(/plancher 55 €/i)).toBeTruthy();
+  });
+
+  it("n'affiche rien sans plancherRevele", () => {
+    render(<ChineSlideVue slide={makeSlide(false)} />);
+    expect(screen.queryByText(/plancher/i)).toBeNull();
+  });
+});

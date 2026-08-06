@@ -89,6 +89,9 @@ export type ChineSlide =
       estRareOuPlus: boolean;
       /** Connaisseur 3 débloqué pour cette catégorie : la cote (valeur de référence) est révélée. */
       coteConnue: boolean;
+      /** Le Flair v2 (cote déjà connue) : prix plancher du vendeur révélé —
+       *  valeur EFFECTIVE, bonus Marchandage déjà appliqué. Absent sinon. */
+      plancherRevele?: number;
       /** Le template a déjà été possédé au moins une fois : badge collection ✓. */
       dejaPossede: boolean;
       /**
@@ -203,6 +206,11 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
                     {objet.prixReferenceReel}€
                   </span>
                   <span style={loupeManche} aria-hidden />
+                </div>
+              )}
+              {slide.plancherRevele !== undefined && (
+                <div style={plancherLigne}>
+                  {tr(d.chine.plancherLabel, { valeur: slide.plancherRevele })}
                 </div>
               )}
             </div>
@@ -400,6 +408,21 @@ const loupeLentille: CSSProperties = {
   fontSize: 14,
   color: "var(--brass-300)",
   textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+};
+
+/* Plancher du vendeur (Le Flair v2) — petit tampon sous la loupe. */
+const plancherLigne: CSSProperties = {
+  marginBottom: 4,
+  padding: "2px 8px",
+  borderRadius: 8,
+  border: "1.5px dashed var(--brass-300)",
+  background: "rgba(15,30,22,0.5)",
+  fontFamily: "var(--font-display)",
+  fontWeight: 700,
+  fontSize: 12,
+  color: "var(--brass-300)",
+  textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+  whiteSpace: "nowrap",
 };
 
 /* Manche de la loupe. Son sommet est ancré SUR le bord de la lentille au

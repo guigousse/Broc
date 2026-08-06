@@ -278,6 +278,7 @@ export const fr = {
     semaineEnCours: "Semaine en cours",
     etatAriaLabel: "État : {etat}",
     coteLabel: "cote {valeur} €",
+    plancherLabel: "plancher {valeur} €",
     rienAChiner: "— rien à chiner ici —",
     quitterBrocanteAriaLabel: "Quitter la brocante",
     sortir: "Sortir",

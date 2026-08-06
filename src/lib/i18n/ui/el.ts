@@ -280,6 +280,7 @@ export const el: DictionnaireUI = {
     semaineEnCours: "Τρέχουσα εβδομάδα",
     etatAriaLabel: "Κατάσταση: {etat}",
     coteLabel: "αξία {valeur} €",
+    plancherLabel: "κατώτατη {valeur} €",
     rienAChiner: "— τίποτα για ψάξιμο εδώ —",
     quitterBrocanteAriaLabel: "Έξοδος από το παζάρι",
     sortir: "Έξοδος",
