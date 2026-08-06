@@ -38,7 +38,12 @@ import { relancerNegociation } from "@/lib/negociation";
 import { aConnaisseurChinage } from "@/lib/competences";
 import { energieCourante } from "@/lib/energie";
 import { getCapaciteStockage, placeRestante, stockageEstPlein, totalEnStock } from "@/lib/stockage";
-import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
+import {
+  insererSlideMystere,
+  nbBoitesReclamees,
+  tenterApparition,
+  tirerPositionVendeur,
+} from "@/lib/boiteMystere";
 import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import { tutorielActif } from "@/lib/tutoriel";
@@ -105,8 +110,8 @@ export default function SessionChinePage() {
   const instantaneXpRef = useRef<BrocanteurState | null>(null);
   /** ID de l'objet dont la négociation est ouverte dans le BottomSheet. */
   const [negoOuverte, setNegoOuverte] = useState<string | null>(null);
-  /** Le vendeur mystère est-il présent dans cette session (tiré à l'entrée) ? */
-  const [vendeurPresent, setVendeurPresent] = useState(false);
+  /** Position du vendeur mystère dans le deck (tirée à l'entrée), null si absent. */
+  const [vendeurPosition, setVendeurPosition] = useState<number | null>(null);
   /** La modale de la boîte mystère est-elle ouverte ? */
   const [boiteOuverte, setBoiteOuverte] = useState(false);
   /** Vrai une fois la boîte mystère réclamée dans cette session (masque le bouton pub). */
@@ -210,7 +215,9 @@ export default function SessionChinePage() {
         placeRestante(state) >= 1 &&
         tenterApparition(nReclamees)
       ) {
-        setVendeurPresent(true);
+        // Position tirée une fois pour toute la session : premier, entre
+        // deux objets, ou dernier — l'effet de surprise au fil du deck.
+        setVendeurPosition(tirerPositionVendeur(session.length));
       }
     }
   }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast, d, tr]);
@@ -236,7 +243,6 @@ export default function SessionChinePage() {
 
   const slides: ChineSlide[] = useMemo(() => {
     const liste: ChineSlide[] = [];
-    if (vendeurPresent) liste.push({ kind: "mystere" });
     for (const it of (items ?? []).filter((x) => x.statut !== "refuse")) {
       liste.push({
         kind: "item",
@@ -247,9 +253,12 @@ export default function SessionChinePage() {
         estNouveau: decouvertesRef.current.has(it.id),
       });
     }
+    if (vendeurPosition !== null) {
+      return insererSlideMystere(liste, { kind: "mystere" }, vendeurPosition);
+    }
     return liste;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vendeurPresent, items, state, flairIds]);
+  }, [vendeurPosition, items, state, flairIds]);
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (

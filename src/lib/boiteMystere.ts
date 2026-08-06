@@ -48,6 +48,30 @@ export function tenterApparition(n: number, rng: () => number = Math.random): bo
   return rng() < chanceApparition(n);
 }
 
+/**
+ * Position d'insertion de la slide vendeur dans le deck : entier uniforme
+ * dans [0, nbItems] (avant le 1ᵉʳ objet, entre deux, ou après le dernier).
+ */
+export function tirerPositionVendeur(
+  nbItems: number,
+  rng: () => number = Math.random,
+): number {
+  return Math.floor(rng() * (nbItems + 1));
+}
+
+/**
+ * Insère la slide vendeur à la position tirée, clampée à la fin si la liste
+ * a rétréci depuis le tirage (objets refusés). Ne mute pas `liste`.
+ */
+export function insererSlideMystere<T>(
+  liste: readonly T[],
+  slideMystere: T,
+  position: number,
+): T[] {
+  const i = Math.min(position, liste.length);
+  return [...liste.slice(0, i), slideMystere, ...liste.slice(i)];
+}
+
 function tirerEtatBoite(rng: () => number): EtatObjet {
   const total = DISTRIB_ETAT_BOITE.reduce((s, e) => s + e.poids, 0);
   let r = rng() * total;

@@ -3,6 +3,8 @@ import {
   CHANCE_APPARITION_BASE,
   chanceApparition,
   tenterApparition,
+  tirerPositionVendeur,
+  insererSlideMystere,
   nbBoitesReclamees,
   tirerContenuBoite,
   appliquerReclamation,
@@ -27,6 +29,40 @@ describe("tenterApparition", () => {
     expect(tenterApparition(0, () => 0.05)).toBe(true); // 0.05 < 0.20
     expect(tenterApparition(0, () => 0.5)).toBe(false); // 0.5 >= 0.20
     expect(tenterApparition(1, () => 0.12)).toBe(false); // 0.12 >= 0.10
+  });
+});
+
+describe("tirerPositionVendeur", () => {
+  it("couvre uniformément les N+1 positions, bornes incluses", () => {
+    // 6 objets → positions 0..6. rng juste sous 1 → dernière position.
+    expect(tirerPositionVendeur(6, () => 0)).toBe(0);
+    expect(tirerPositionVendeur(6, () => 0.999999)).toBe(6);
+    // Milieu de plage : 0.5 * 7 = 3.5 → position 3 (entre deux objets).
+    expect(tirerPositionVendeur(6, () => 0.5)).toBe(3);
+  });
+
+  it("renvoie 0 quand la session est vide", () => {
+    expect(tirerPositionVendeur(0, () => 0.99)).toBe(0);
+  });
+});
+
+describe("insererSlideMystere", () => {
+  it("insère la slide à la position tirée", () => {
+    expect(insererSlideMystere(["a", "b", "c"], "M", 0)).toEqual(["M", "a", "b", "c"]);
+    expect(insererSlideMystere(["a", "b", "c"], "M", 2)).toEqual(["a", "b", "M", "c"]);
+    expect(insererSlideMystere(["a", "b", "c"], "M", 3)).toEqual(["a", "b", "c", "M"]);
+  });
+
+  it("clampe quand la liste a rétréci sous la position tirée", () => {
+    // Des objets refusés ont raccourci la liste : la slide reste en fin.
+    expect(insererSlideMystere(["a"], "M", 3)).toEqual(["a", "M"]);
+    expect(insererSlideMystere([], "M", 2)).toEqual(["M"]);
+  });
+
+  it("ne mute pas la liste d'origine", () => {
+    const liste = ["a", "b"];
+    insererSlideMystere(liste, "M", 1);
+    expect(liste).toEqual(["a", "b"]);
   });
 });
 
