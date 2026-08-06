@@ -5,13 +5,15 @@
     python3 scripts/site/gen-pages-legales.py
 Extrait le <main> autonome de chaque page (styles inline, aucun script Next)
 et l'enveloppe dans une coquille statique minimale. Le lien « Retour au jeu »
-devient « Retour à l'accueil » : sur le site, « / » est la vitrine, pas le jeu.
+devient « Retour à l'accueil » (sur le site, « / » est la vitrine, pas le jeu)
+et le contact public du site est broc.le.jeu@gmail.com (l'app garde le sien).
 """
 import pathlib
 import re
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 SUBS = [
+    ("pepite.admin@gmail.com", "broc.le.jeu@gmail.com"),
     ("Retour au jeu", "Retour à l’accueil"),
     ("Back to the game", "Back to the home page"),
     ("Volver al juego", "Volver al inicio"),
