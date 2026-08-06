@@ -60,17 +60,17 @@ function paliersThematiques(cat: CategorieObjet): OverlayCompetences["paliers"] 
       nom: `Fanatic — ${c}`,
       description: `Customers pay +20% for ${c} items (replaces Devotee).`,
     },
-    [`cat.${cat}.oeil_aiguise.1`]: {
-      nom: `Nimble tongue — ${c}`,
-      description: `When a customer haggles over a ${c} item, they tolerate counteroffers +10% greedier.`,
+    [`cat.${cat}.marchandage.1`]: {
+      nom: `Bargainer — ${c}`,
+      description: `While picking, sellers' floor price drops by 4 percentage points (of their asking price) on ${c} items.`,
     },
-    [`cat.${cat}.oeil_aiguise.2`]: {
-      nom: `Silver tongue — ${c}`,
-      description: `When a customer haggles over a ${c} item, they tolerate counteroffers +20% greedier (replaces Nimble tongue).`,
+    [`cat.${cat}.marchandage.2`]: {
+      nom: `Shrewd bargainer — ${c}`,
+      description: `While picking, sellers' floor price drops by 8 percentage points (of their asking price) on ${c} items (replaces Bargainer).`,
     },
-    [`cat.${cat}.oeil_aiguise.3`]: {
-      nom: `Golden tongue — ${c}`,
-      description: `When a customer haggles over a ${c} item, they tolerate counteroffers +30% greedier (replaces Silver tongue).`,
+    [`cat.${cat}.marchandage.3`]: {
+      nom: `Bargain king — ${c}`,
+      description: `While picking, sellers' floor price drops by 12 percentage points (of their asking price) on ${c} items (replaces Shrewd bargainer).`,
     },
   };
 }
@@ -85,7 +85,7 @@ function branchesThematiques(cat: CategorieObjet): OverlayCompetences["branches"
     [`cat.${cat}/reparer`]: { nom: "Repair" },
     [`cat.${cat}/connaisseur`]: { nom: "Connoisseur" },
     [`cat.${cat}/passion`]: { nom: "Passion" },
-    [`cat.${cat}/oeil_aiguise`]: { nom: "Keen eye" },
+    [`cat.${cat}/marchandage`]: { nom: "Bargaining" },
   };
 }
 

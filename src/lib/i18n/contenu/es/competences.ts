@@ -60,17 +60,17 @@ function paliersThematiques(cat: CategorieObjet): OverlayCompetences["paliers"] 
       nom: `Forofo — ${c}`,
       description: `Los clientes pagan un +20 % por los objetos « ${c} » (reemplaza a Apasionado).`,
     },
-    [`cat.${cat}.oeil_aiguise.1`]: {
-      nom: `Labia ágil — ${c}`,
-      description: `Cuando un cliente regatea un objeto « ${c} », tolera contraofertas un +10 % más codiciosas.`,
+    [`cat.${cat}.marchandage.1`]: {
+      nom: `Regateador — ${c}`,
+      description: `Al chinear, el precio mínimo de los vendedores baja 4 puntos de % (de su precio anunciado) en los objetos « ${c} ».`,
     },
-    [`cat.${cat}.oeil_aiguise.2`]: {
-      nom: `Labia — ${c}`,
-      description: `Cuando un cliente regatea un objeto « ${c} », tolera contraofertas un +20 % más codiciosas (reemplaza a Labia ágil).`,
+    [`cat.${cat}.marchandage.2`]: {
+      nom: `Fino regateador — ${c}`,
+      description: `Al chinear, el precio mínimo de los vendedores baja 8 puntos de % (de su precio anunciado) en los objetos « ${c} » (reemplaza a Regateador).`,
     },
-    [`cat.${cat}.oeil_aiguise.3`]: {
-      nom: `Pico de oro — ${c}`,
-      description: `Cuando un cliente regatea un objeto « ${c} », tolera contraofertas un +30 % más codiciosas (reemplaza a Labia).`,
+    [`cat.${cat}.marchandage.3`]: {
+      nom: `Rey del regateo — ${c}`,
+      description: `Al chinear, el precio mínimo de los vendedores baja 12 puntos de % (de su precio anunciado) en los objetos « ${c} » (reemplaza a Fino regateador).`,
     },
   };
 }
@@ -85,7 +85,7 @@ function branchesThematiques(cat: CategorieObjet): OverlayCompetences["branches"
     [`cat.${cat}/reparer`]: { nom: "Reparar" },
     [`cat.${cat}/connaisseur`]: { nom: "Conocedor" },
     [`cat.${cat}/passion`]: { nom: "Pasión" },
-    [`cat.${cat}/oeil_aiguise`]: { nom: "Ojo agudo" },
+    [`cat.${cat}/marchandage`]: { nom: "Regateo" },
   };
 }
 
