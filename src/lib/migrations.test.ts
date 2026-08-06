@@ -296,9 +296,6 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 17", () => {
-    expect(SAVE_VERSION).toBe(17);
-  });
 
   it("v17 — plafonne l'historique à MAX_HISTORIQUE sessions", () => {
     const sessions = Array.from({ length: MAX_HISTORIQUE + 40 }, (_, i) => ({
@@ -810,9 +807,6 @@ describe("migration v10 — suppression de competenceTrees", () => {
 });
 
 describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
-  it("SAVE_VERSION vaut 16", () => {
-    expect(SAVE_VERSION).toBe(17);
-  });
 
   it("une save v10 avec le champ legacy le perd, brocanteur intact", () => {
     const v10 = migrerAvecVersion(fabriqueSaveV7(), 10);
@@ -906,9 +900,6 @@ const migrate = migrerSauvegarde;
 const br = emptyBrocanteur();
 
 describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-verrouiller un tier)", () => {
-  it("SAVE_VERSION incrémenté à 17", () => {
-    expect(SAVE_VERSION).toBe(17);
-  });
 
   it("v14 : save antérieure (stock donné à la création) ⇒ colis considéré livré", () => {
     const migre = migrerSauvegarde({ ...saveV12(), version: 13 });
@@ -1021,10 +1012,6 @@ function saveV15(patch: Partial<GameState> = {}): GameState {
 }
 
 describe("v15 — refonte des coûts de compétences (1 pt)", () => {
-  it("SAVE_VERSION incrémenté à 17", () => {
-    expect(SAVE_VERSION).toBe(17);
-  });
-
   it("rembourse l'écart de l'ancien barème (P1 +0, P2 +1, P3 +2)", () => {
     const save = saveV14({
       brocanteur: { xp: 5000, niveau: 20, pointsDisponibles: 5 },
@@ -1144,5 +1131,99 @@ describe("migrerSauvegarde — v16 champs gazette", () => {
     const migrated = migrerSauvegarde(fresh);
     expect(migrated.tutoGazette).toBe("faite");
     expect(migrated.gazetteRefusee).toBe(true);
+  });
+});
+
+/** Fabrique une save "v17" (schéma courant avant la refonte Marchandage v18). */
+function saveV17(patch: Partial<GameState> = {}): GameState {
+  return { ...createMockGameState(patch), version: 17 };
+}
+
+describe("v18 — la branche thématique « Œil aiguisé » devient Marchandage", () => {
+  it("SAVE_VERSION incrémenté à 18", () => {
+    expect(SAVE_VERSION).toBe(18);
+  });
+
+  it("retire les ids legacy, rembourse 1 pt chacun, SANS reset des autres compétences (save v17)", () => {
+    const save = saveV17({
+      brocanteur: { xp: 5000, niveau: 40, pointsDisponibles: 5 },
+      competencesDebloquees: [
+        "general.negociation.1",
+        "cat.Musique.oeil_aiguise.1",
+        "cat.Musique.oeil_aiguise.2",
+        "cat.Mode.oeil_aiguise.1",
+      ],
+    });
+    const out = migrerSauvegarde(save);
+    // Les ids legacy disparaissent ; la compétence valide SURVIT (pas de
+    // reset générique déclenché par `idsObsoletes`).
+    expect(out.competencesDebloquees).toEqual(["general.negociation.1"]);
+    expect(out.brocanteur.pointsDisponibles).toBe(8); // 5 + 3 × 1 pt
+    expect(out.version).toBe(SAVE_VERSION);
+  });
+
+  it("save v14 : rembourse au barème payé à l'époque (1/2/3 par palier)", () => {
+    const save = saveV14({
+      brocanteur: { xp: 5000, niveau: 40, pointsDisponibles: 0 },
+      competencesDebloquees: [
+        "cat.Musique.oeil_aiguise.1",
+        "cat.Musique.oeil_aiguise.2",
+        "cat.Musique.oeil_aiguise.3",
+      ],
+    });
+    const out = migrerSauvegarde(save);
+    expect(out.competencesDebloquees).toEqual([]);
+    // Ancien barème v9-14 : 1 + 2 + 3 = 6 pts payés, intégralement rendus.
+    expect(out.brocanteur.pointsDisponibles).toBe(6);
+  });
+
+  it("idempotente : une save déjà v18 n'est pas re-créditée", () => {
+    const save = {
+      ...createMockGameState({
+        brocanteur: { xp: 5000, niveau: 40, pointsDisponibles: 5 },
+        competencesDebloquees: ["general.negociation.1"],
+      }),
+      version: 18,
+    };
+    const out = migrerSauvegarde(save);
+    expect(out.brocanteur.pointsDisponibles).toBe(5);
+  });
+
+  it("écrêtage : disponibles + dépensés ≤ COUT_TOTAL_COMPETENCES même après remboursement", () => {
+    const save = saveV17({
+      brocanteur: {
+        xp: 5000,
+        niveau: 40,
+        pointsDisponibles: COUT_TOTAL_COMPETENCES - 1,
+      },
+      competencesDebloquees: [
+        "general.negociation.1",
+        "cat.Musique.oeil_aiguise.1",
+      ],
+    });
+    const out = migrerSauvegarde(save);
+    // Dépensés après retrait = 1 → plafond disponibles = 95 ; 95 + 1 → écrêté à 95.
+    expect(out.brocanteur.pointsDisponibles).toBe(COUT_TOTAL_COMPETENCES - 1);
+    expect(
+      out.brocanteur.pointsDisponibles +
+        pointsDepensesCompetences(out.competencesDebloquees),
+    ).toBeLessThanOrEqual(COUT_TOTAL_COMPETENCES);
+  });
+
+  it("une save < v9 n'est PAS re-créditée : son pointsDisponibles est recalculé sur la liste expurgée", () => {
+    const save = fabriqueSaveV7({
+      competencesDebloquees: [
+        "general.negociation.1",
+        "cat.Musique.oeil_aiguise.1",
+      ],
+    });
+    (save as unknown as Record<string, unknown>).competenceTrees = {
+      general: { xp: 1100, niveau: 11, pointsDisponibles: 4 },
+    };
+    const out = migrerSauvegarde(save);
+    expect(out.competencesDebloquees).toEqual(["general.negociation.1"]);
+    // niveau (7) + bonus chapitres (0) − dépenses sur la liste EXPURGÉE (1) = 6.
+    // Un remboursement par-dessus compterait l'id retiré deux fois.
+    expect(out.brocanteur.pointsDisponibles).toBe(6);
   });
 });
