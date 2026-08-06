@@ -43,7 +43,7 @@
       outline-offset: 4px;
       border-radius: 2px;
     }
-    img { max-width: 100%; display: block; }
+    img { max-width: 100%; height: auto; display: block; }
 
     /* ——— Héros ——— */
     .hero {
@@ -210,11 +210,34 @@
       .bac-rail figure, .bac-rail figure:hover { transform: none; transition: none; }
     }
     .bac-rail img {
+      width: 100%;
+      height: auto;
       border-radius: 14px;
       border: 1px solid rgba(201, 163, 74, .55);
       box-shadow: 0 10px 28px rgba(0, 0, 0, .5);
       background: var(--bouteille-sombre);
     }
+    .bac-cadre { position: relative; }
+    .bac-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 1px solid rgba(201, 163, 74, .7);
+      background: rgba(24, 16, 9, .72);
+      color: var(--or-clair);
+      font-size: 26px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background .2s ease, color .2s ease;
+    }
+    .bac-btn:hover { background: rgba(201, 163, 74, .9); color: var(--encre); }
+    .bac-btn-prec { left: clamp(8px, 2vw, 28px); }
+    .bac-btn-suiv { right: clamp(8px, 2vw, 28px); }
+    @media (max-width: 640px) { .bac-btn { width: 40px; height: 40px; font-size: 22px; } }
     .bac-indice {
       font-family: "DM Mono", "Courier Prime", monospace;
       font-size: 13px;
@@ -348,6 +371,9 @@
   <section class="bac">
     <h2 data-i18n="bacT">Fouillez le bac</h2>
     <p class="bac-sous" data-i18n="bacSub">Six aperçus du jeu, à faire défiler comme des cadres chinés.</p>
+    <div class="bac-cadre">
+    <button class="bac-btn bac-btn-prec" type="button" aria-controls="bac" aria-label="Capture précédente" data-dir="-1">‹</button>
+    <button class="bac-btn bac-btn-suiv" type="button" aria-controls="bac" aria-label="Capture suivante" data-dir="1">›</button>
     <div class="bac-rail" id="bac">
       <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/01-chiner.webp" alt="Écran de chine : un feuillet rare proposé par une vendeuse" data-shot="01-chiner"></figure>
       <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/02-negocier.webp" alt="Négociation avec un vendeur au tempérament bien trempé" data-shot="02-negocier"></figure>
@@ -355,6 +381,7 @@
       <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/04-collection.webp" alt="Étagères de collection garnies de trouvailles" data-shot="04-collection"></figure>
       <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/05-musiques.webp" alt="Le gramophone et les vinyles à écouter" data-shot="05-musiques"></figure>
       <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/06-personnages.webp" alt="Les personnages hauts en couleur de la brocante" data-shot="06-personnages"></figure>
+    </div>
     </div>
     <p class="bac-indice" data-i18n="bacHint">→ faire défiler</p>
   </section>
@@ -372,7 +399,7 @@
     <nav>
       <a href="/mentions-legales" data-i18n="fLegal">Mentions légales</a>
       <a href="/privacy" data-i18n="fPrivacy">Politique de confidentialité</a>
-      <a href="mailto:pepite.admin@gmail.com" data-i18n="fContact">Nous écrire</a>
+      <a href="mailto:broc.le.jeu@gmail.com" data-i18n="fContact">Nous écrire</a>
     </nav>
     <p class="mention" data-i18n="fMade">© 2026 Guillaume Fenard · BROC est un jeu indépendant conçu en France.</p>
   </footer>
@@ -390,6 +417,17 @@
   </script>
 
   <script>
+    (function () {
+      var rail = document.getElementById("bac");
+      var reduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      document.querySelectorAll(".bac-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var fig = rail.querySelector("figure");
+          var pas = fig.getBoundingClientRect().width + (parseFloat(getComputedStyle(rail).gap) || 24);
+          rail.scrollBy({ left: pas * Number(btn.dataset.dir), behavior: reduit ? "auto" : "smooth" });
+        });
+      });
+    })();
     (function () {
       var T = {
         en: {
