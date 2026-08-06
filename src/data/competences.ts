@@ -73,7 +73,7 @@ const TREE_GENERAL_DEF: CompetenceTreeDef = {
         {
           nom: "Diplomate",
           description:
-            "Au lieu de partir fâché, le client vous lâche son prix max exact et vous laisse une dernière contre-offre (1 fois par journée).",
+            "Au lieu de partir fâché, le client vous lâche son prix max exact et vous laisse une dernière contre-offre — acceptée jusqu'à 110 % de ce plafond (1 fois par journée).",
         },
       ]),
     },

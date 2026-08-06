@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   calculerFourchettePrixMax,
   BONIMENT_MARGE,
+  BONIMENT_MARGE_ROUTINE,
+  DIPLOMATE_MARGE,
+  margeBoniment,
   BONUS_SPECIALISATION_CLIENT,
   BOURSE_PAR_CLASSE,
   CLIENT_INTERVALLE_MAX_SEC,
@@ -372,6 +375,46 @@ describe("proposerOffreVente — Diplomate transforme fache en en_cours", () => 
   });
 });
 
+describe("proposerOffreVente — après révélation Diplomate (plafond révélé)", () => {
+  it("DIPLOMATE_MARGE vaut 1.10", () => {
+    expect(DIPLOMATE_MARGE).toBe(1.10);
+  });
+
+  it("accepte la dernière offre jusqu'à 110 % du plafond révélé", () => {
+    const nego = ouvrirNegociation("vente", 50, 90);
+    const client = createMockClient({ tolerancePct: 0.1 });
+    const modifiers = { ...DEFAULT_MODIFIERS, diplomate: true };
+    // Plafond révélé 90 → accepté jusqu'à round(90 × 1.10) = 99.
+    const res = proposerOffreVente(nego, client, 99, modifiers, {
+      revelationDejaFaite: true,
+      plafondRevele: true,
+    });
+    expect(res.statut).toBe("conclu");
+    expect(res.prixAdverseCourant).toBe(99);
+  });
+
+  it("au-delà de 110 %, le flux normal reprend (fâcherie possible, définitive)", () => {
+    const nego = ouvrirNegociation("vente", 50, 90);
+    const client = createMockClient({ tolerancePct: 0.1 });
+    const modifiers = { ...DEFAULT_MODIFIERS, diplomate: true };
+    // 100 > 99 : hors marge — et 100 ≫ 50 × 1.1, donc insultant → fache.
+    const res = proposerOffreVente(nego, client, 100, modifiers, {
+      revelationDejaFaite: true,
+      plafondRevele: true,
+    });
+    expect(res.statut).toBe("fache");
+  });
+
+  it("sans plafondRevele, une offre au-dessus du plafond n'est pas absorbée", () => {
+    const nego = ouvrirNegociation("vente", 50, 90);
+    const client = createMockClient({ tolerancePct: 0.1 });
+    const res = proposerOffreVente(nego, client, 99, DEFAULT_MODIFIERS, {
+      revelationDejaFaite: true,
+    });
+    expect(res.statut).not.toBe("conclu");
+  });
+});
+
 describe("proposerOffreVente — boost de tolérance (Verbe haut/d'or)", () => {
   it("une contre-offre insultante sans boost passe avec +40 %", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.99);
@@ -631,8 +674,19 @@ describe("appliquerBoniment (Le Boniment)", () => {
     message: { cle: "ouvertureVente", variante: 0 },
   };
 
-  it("BONIMENT_MARGE vaut 1.15", () => {
+  it("marges : 1.05 en routine, 1.15 dès le 2e usage quotidien (N50)", () => {
     expect(BONIMENT_MARGE).toBe(1.15);
+    expect(BONIMENT_MARGE_ROUTINE).toBe(1.05);
+    expect(margeBoniment(49)).toBe(1.05);
+    expect(margeBoniment(50)).toBe(1.15);
+  });
+
+  it("avec la marge routine, conclut à 105 % mais plus à 106 %", () => {
+    // cibleSecrete 100 : seuil = round(100 × 1.05) = 105.
+    expect(appliquerBoniment(nego, 105, BONIMENT_MARGE_ROUTINE).statut).toBe("conclu");
+    const r = appliquerBoniment(nego, 106, BONIMENT_MARGE_ROUTINE);
+    expect(r.statut).toBe("en_cours");
+    expect(r.prixAdverseCourant).toBe(100);
   });
 
   it("conclut si l'offre ≤ 115 % du prix max", () => {

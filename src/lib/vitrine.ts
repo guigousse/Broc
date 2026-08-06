@@ -7,6 +7,7 @@ import type {
   Tendance,
 } from "@/types/game";
 import { ALL_PERSONNAGES, type ClientPersonnage } from "@/data/clients";
+import { NIVEAU_USAGE_2 } from "@/lib/actives";
 import { modificateurTendance } from "@/lib/tendances";
 import { pickMessage, proposerOffre } from "@/lib/negociation";
 
@@ -382,13 +383,44 @@ export type NegociationVenteResult = NegociationState & {
   diplomatieDeclenchee?: boolean;
 };
 
+/**
+ * Diplomate : une fois le plafond révélé, le client accepte la dernière offre
+ * jusqu'à 110 % de ce plafond — il connaît le chiffre, le joueur peut pousser
+ * un peu. (Décision audit 2026-08-06 : la compétence payante ne doit pas être
+ * dominée par l'atout gratuit Boniment.)
+ */
+export const DIPLOMATE_MARGE = 1.10;
+
 export function proposerOffreVente(
   nego: NegociationState,
   client: ClientPersonnage,
   contreOffre: number,
   modifiers: VitrineModifiers = DEFAULT_MODIFIERS,
-  options: { revelationDejaFaite?: boolean; toleranceBoost?: number } = {},
+  options: {
+    revelationDejaFaite?: boolean;
+    toleranceBoost?: number;
+    /** Vrai UNIQUEMENT pour le client dont le plafond a été révélé par
+     *  Diplomate (état par client côté page) : son offre est acceptée
+     *  jusqu'à `DIPLOMATE_MARGE × cibleSecrete`. */
+    plafondRevele?: boolean;
+  } = {},
 ): NegociationVenteResult {
+  if (
+    options.plafondRevele &&
+    nego.statut === "en_cours" &&
+    contreOffre <= Math.round(nego.cibleSecrete * DIPLOMATE_MARGE)
+  ) {
+    return {
+      ...nego,
+      tour: nego.tour + 1,
+      humeur: Math.min(nego.humeur, 0.3),
+      prixAdverseCourant: contreOffre,
+      derniereOffreJoueur: contreOffre,
+      statut: "conclu",
+      message: pickMessage("accord", { prix: contreOffre }, nego.temperament),
+    };
+  }
+
   const base = personaDepuisClient(client);
   const boost = options.toleranceBoost ?? 0;
   const persona = boost > 0 ? { ...base, tolerancePct: base.tolerancePct * (1 + boost) } : base;
@@ -414,21 +446,30 @@ export function proposerOffreVente(
   return next;
 }
 
-/** Le Boniment (N13) : closing — le client accepte jusqu'à 115 % de son plafond, sinon il abat son plafond. */
+/** Le Boniment (N20) : closing — marge pleine dès le 2e usage quotidien (N50). */
 export const BONIMENT_MARGE = 1.15;
+/** Marge de closing avant N50 (décision audit 2026-08-06 : l'atout gratuit
+ *  ne doit pas dominer Diplomate, compétence payante, sur son propre terrain). */
+export const BONIMENT_MARGE_ROUTINE = 1.05;
+
+/** Marge de Boniment selon le niveau : 105 % avant N50, 115 % ensuite. */
+export function margeBoniment(niveau: number): number {
+  return niveau >= NIVEAU_USAGE_2.boniment ? BONIMENT_MARGE : BONIMENT_MARGE_ROUTINE;
+}
 
 /**
  * Le Boniment : coup de closing en fin de négo. Si l'offre du joueur reste
- * sous 115 % du plafond secret du client, il l'accepte tel quel (le montant
- * conclu, c'est l'offre du joueur). Sinon il abat sa dernière carte : son
- * vrai plafond, sans se fâcher (la négo reste ouverte pour un dernier tour).
+ * sous `marge` × le plafond secret du client, il l'accepte tel quel (le
+ * montant conclu, c'est l'offre du joueur). Sinon il abat sa dernière carte :
+ * son vrai plafond, sans se fâcher (la négo reste ouverte pour un dernier tour).
  */
 export function appliquerBoniment(
   nego: NegociationState,
   offreJoueur: number,
+  marge: number = BONIMENT_MARGE,
 ): NegociationState {
   if (nego.mode !== "vente" || nego.statut !== "en_cours") return nego;
-  if (offreJoueur <= Math.round(nego.cibleSecrete * BONIMENT_MARGE)) {
+  if (offreJoueur <= Math.round(nego.cibleSecrete * marge)) {
     return {
       ...nego,
       statut: "conclu",

@@ -119,7 +119,7 @@ export const COMPETENCES_EN: OverlayCompetences = {
     "general.negociation.3": {
       nom: "Diplomat",
       description:
-        "Instead of storming off, the customer reveals their exact max price and grants you one last counteroffer (once per day).",
+        "Instead of storming off, the customer reveals their exact max price and grants you one last counteroffer — accepted up to 110% of that ceiling (once per day).",
     },
     "general.charisme.1": {
       nom: "Neat display",

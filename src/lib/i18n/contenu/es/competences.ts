@@ -121,7 +121,7 @@ export const COMPETENCES_ES: OverlayCompetences = {
     "general.negociation.3": {
       nom: "Diplomático",
       description:
-        "En vez de marcharse enfadado, el cliente te suelta su precio máximo exacto y te deja una última contraoferta (1 vez al día).",
+        "En vez de marcharse enfadado, el cliente te suelta su precio máximo exacto y te deja una última contraoferta — aceptada hasta el 110 % de ese tope (1 vez al día).",
     },
     "general.charisme.1": {
       nom: "Puesto cuidado",

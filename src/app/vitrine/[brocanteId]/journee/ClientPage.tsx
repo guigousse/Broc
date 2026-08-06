@@ -23,6 +23,7 @@ import {
   BRADERIE_INTERVALLE_MULT,
   ajouterAuPanier,
   appliquerBoniment,
+  margeBoniment,
   bourseDe,
   genererClientEvent,
   personaDepuisClient,
@@ -204,6 +205,9 @@ export default function VitrineJourneePage() {
   const [ventesEffectuees, setVentesEffectuees] = useState<VenteHistorique[]>([]);
   const [fancyClientApparu, setFancyClientApparu] = useState(false);
   const [revelationFaite, setRevelationFaite] = useState(false);
+  // Miroir pour `handleOffreVente` (useCallback) — même motif que tendancesRef.
+  const revelationFaiteRef = useRef(revelationFaite);
+  revelationFaiteRef.current = revelationFaite;
   /** Le Lot garni (N10) : mini-picker ouvert pour choisir le 2e objet à ajouter au panier. */
   const [lotGarniOuvert, setLotGarniOuvert] = useState(false);
   const [bravoTout, setBravoTout] = useState(false);
@@ -353,6 +357,9 @@ export default function VitrineJourneePage() {
       const next = proposerOffreVente(nego, ev.persona, offre, mods, {
         revelationDejaFaite: !diplomatieDispo,
         toleranceBoost: ev.toleranceBoost,
+        // Diplomate : le plafond de CE client a été révélé → sa dernière
+        // offre est acceptée jusqu'à 110 % du plafond (DIPLOMATE_MARGE).
+        plafondRevele: revelationFaiteRef.current,
       });
       if (next.diplomatieDeclenchee) {
         utiliserActive("diplomate");
@@ -778,7 +785,11 @@ export default function VitrineJourneePage() {
     const ev = clientActuelRef.current;
     if (!ev || !negoVente || negoVente.statut !== "en_cours") return;
     if (!utiliserActive("boniment")) return;
-    const next = appliquerBoniment(negoVente, offreJoueur);
+    const next = appliquerBoniment(
+      negoVente,
+      offreJoueur,
+      margeBoniment(state?.brocanteur.niveau ?? 0),
+    );
     setNegoVente(next);
     if (next.statut === "conclu") {
       audioManager.playCash();
