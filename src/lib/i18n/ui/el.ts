@@ -281,6 +281,8 @@ export const el: DictionnaireUI = {
     etatAriaLabel: "Κατάσταση: {etat}",
     coteLabel: "αξία {valeur} €",
     plancherLabel: "κατώτατη {valeur} €",
+    aimeLabel: "Αγαπά: {cats}",
+    boudeLabel: "Αποφεύγει: {cats}",
     rienAChiner: "— τίποτα για ψάξιμο εδώ —",
     quitterBrocanteAriaLabel: "Έξοδος από το παζάρι",
     sortir: "Έξοδος",

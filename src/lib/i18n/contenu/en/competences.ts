@@ -142,7 +142,7 @@ export const COMPETENCES_EN: OverlayCompetences = {
     },
     "general.presentation.2": {
       nom: "Purse appraiser",
-      description: "The customer's wallet — the money they carry — is shown in the negotiation card.",
+      description: "The customer's wallet — the money they carry — is shown in the negotiation card, along with the categories they love and the ones they shun.",
     },
     "general.presentation.3": {
       nom: "Keen eye",

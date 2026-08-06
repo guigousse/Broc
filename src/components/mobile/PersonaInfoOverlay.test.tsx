@@ -27,3 +27,33 @@ describe("PersonaInfoOverlay", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 });
+
+describe("PersonaInfoOverlay — goûts du client (Estimateur de bourse enrichi)", () => {
+  it("affiche les catégories aimées et boudées quand la bourse est révélée", () => {
+    const avecGouts: PersonaInfo = {
+      revelePersona: false,
+      releveBourse: true,
+      oeilAiguise: false,
+      bourse: 300,
+      categoriesPreferees: ["Musique", "Mode"],
+      categoriesEvitees: ["Bricolage"],
+    };
+    render(<PersonaInfoOverlay info={avecGouts} onClose={() => {}} />);
+    expect(screen.getByText(/Aime : Musique, Mode/)).toBeTruthy();
+    expect(screen.getByText(/Boude : Bricolage/)).toBeTruthy();
+  });
+
+  it("masque les lignes de goûts quand les listes sont vides", () => {
+    const sansGouts: PersonaInfo = {
+      revelePersona: false,
+      releveBourse: true,
+      oeilAiguise: false,
+      bourse: 300,
+      categoriesPreferees: [],
+      categoriesEvitees: [],
+    };
+    render(<PersonaInfoOverlay info={sansGouts} onClose={() => {}} />);
+    expect(screen.queryByText(/Aime :/)).toBeNull();
+    expect(screen.queryByText(/Boude :/)).toBeNull();
+  });
+});

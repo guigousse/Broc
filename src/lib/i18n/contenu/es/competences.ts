@@ -145,7 +145,7 @@ export const COMPETENCES_ES: OverlayCompetences = {
     "general.presentation.2": {
       nom: "Tasador de bolsas",
       description:
-        "Se muestra la cartera del cliente — el dinero que lleva encima — en la ficha de negociación.",
+        "Se muestra la cartera del cliente — el dinero que lleva encima — en la ficha de negociación, junto con las categorías que le gustan y las que evita.",
     },
     "general.presentation.3": {
       nom: "Ojo agudo",

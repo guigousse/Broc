@@ -1119,6 +1119,8 @@ export default function VitrineJourneePage() {
                 ? d.vente.celebriteAmbiance
                 : ambianceClient(clientActuel.persona, locale),
             bourse: bourseDe(clientActuel.persona, brocante?.facteurBourse ?? 1),
+            categoriesPreferees: clientActuel.persona.categoriesPreferees,
+            categoriesEvitees: clientActuel.persona.categoriesEvitees,
             // Œil aiguisé ne révèle plus qu'une fourchette ; le prix exact
             // n'apparaît que via la révélation Diplomate.
             fourchettePrixMax: clientActuel.fourchettePrixMax,

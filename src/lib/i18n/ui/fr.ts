@@ -279,6 +279,8 @@ export const fr = {
     etatAriaLabel: "État : {etat}",
     coteLabel: "cote {valeur} €",
     plancherLabel: "plancher {valeur} €",
+    aimeLabel: "Aime : {cats}",
+    boudeLabel: "Boude : {cats}",
     rienAChiner: "— rien à chiner ici —",
     quitterBrocanteAriaLabel: "Quitter la brocante",
     sortir: "Sortir",
