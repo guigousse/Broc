@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { CompetenceDef, CompetenceId, GameState } from "@/types/game";
 import {
   aCompetence,
+  aSpecialisteCategorie,
+  bonusPassionCategorie,
   bonusToleranceCategorie,
   bonusToleranceNegoGeneral,
   contexteDepuisState,
@@ -193,6 +195,72 @@ describe("etatCompetence v2 — pool global (paliers gatés par points + niveau 
 
   it("déjà débloquée prime sur tout", () => {
     expect(etatCompetence(p3, [p1.id, p2.id, p3.id], ctx({ pointsDisponibles: 0, niveauBrocanteur: 0 }))).toBe("debloquee");
+  });
+});
+
+describe("bonusPassionCategorie — Passion", () => {
+  it("retourne 0 sans compétence débloquée", () => {
+    expect(bonusPassionCategorie(stateAvec([]), "Musique")).toBe(0);
+  });
+
+  it("retourne 0.05 au palier 1", () => {
+    expect(
+      bonusPassionCategorie(
+        stateAvec(["cat.Musique.passion.1" as CompetenceId]),
+        "Musique",
+      ),
+    ).toBe(0.05);
+  });
+
+  it("retourne 0.10 au palier 2 (écrase le palier 1)", () => {
+    expect(
+      bonusPassionCategorie(
+        stateAvec([
+          "cat.Musique.passion.1" as CompetenceId,
+          "cat.Musique.passion.2" as CompetenceId,
+        ]),
+        "Musique",
+      ),
+    ).toBe(0.10);
+  });
+
+  it("retourne 0.20 au palier 3 (écrase les paliers inférieurs)", () => {
+    expect(
+      bonusPassionCategorie(
+        stateAvec([
+          "cat.Musique.passion.1" as CompetenceId,
+          "cat.Musique.passion.2" as CompetenceId,
+          "cat.Musique.passion.3" as CompetenceId,
+        ]),
+        "Musique",
+      ),
+    ).toBe(0.20);
+  });
+
+  it("ne déborde pas sur une autre catégorie", () => {
+    expect(
+      bonusPassionCategorie(
+        stateAvec(["cat.Musique.passion.3" as CompetenceId]),
+        "Mode",
+      ),
+    ).toBe(0);
+  });
+});
+
+describe("aSpecialisteCategorie — compat palier ≥ 2", () => {
+  it("faux au palier 1, vrai dès le palier 2", () => {
+    expect(
+      aSpecialisteCategorie(
+        stateAvec(["cat.Musique.passion.1" as CompetenceId]),
+        "Musique",
+      ),
+    ).toBe(false);
+    expect(
+      aSpecialisteCategorie(
+        stateAvec(["cat.Musique.passion.2" as CompetenceId]),
+        "Musique",
+      ),
+    ).toBe(true);
   });
 });
 

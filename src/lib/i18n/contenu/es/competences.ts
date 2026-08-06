@@ -50,15 +50,15 @@ function paliersThematiques(cat: CategorieObjet): OverlayCompetences["paliers"] 
     },
     [`cat.${cat}.passion.1`]: {
       nom: `Aficionado — ${c}`,
-      description: `Los clientes pagan un +10 % por los objetos « ${c} ».`,
+      description: `Los clientes pagan un +5 % por los objetos « ${c} ».`,
     },
     [`cat.${cat}.passion.2`]: {
       nom: `Apasionado — ${c}`,
-      description: `Los clientes pagan un +20 % por los objetos « ${c} » (reemplaza a Aficionado).`,
+      description: `Los clientes pagan un +10 % por los objetos « ${c} » (reemplaza a Aficionado).`,
     },
     [`cat.${cat}.passion.3`]: {
       nom: `Forofo — ${c}`,
-      description: `Los clientes pagan un +30 % por los objetos « ${c} » (reemplaza a Apasionado).`,
+      description: `Los clientes pagan un +20 % por los objetos « ${c} » (reemplaza a Apasionado).`,
     },
     [`cat.${cat}.oeil_aiguise.1`]: {
       nom: `Labia ágil — ${c}`,

@@ -187,15 +187,15 @@ function branchePassion(cat: CategorieObjet): PalierDef[] {
   return definirPaliers([
     {
       nom: `Amateur — ${cat}`,
-      description: `Les clients paient +10 % pour les objets « ${cat} ».`,
+      description: `Les clients paient +5 % pour les objets « ${cat} ».`,
     },
     {
       nom: `Passionné — ${cat}`,
-      description: `Les clients paient +20 % pour les objets « ${cat} » (remplace Amateur).`,
+      description: `Les clients paient +10 % pour les objets « ${cat} » (remplace Amateur).`,
     },
     {
       nom: `Mordu — ${cat}`,
-      description: `Les clients paient +30 % pour les objets « ${cat} » (remplace Passionné).`,
+      description: `Les clients paient +20 % pour les objets « ${cat} » (remplace Passionné).`,
     },
   ]);
 }

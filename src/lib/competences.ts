@@ -131,7 +131,7 @@ export function aMaitreReparer(
 
 /**
  * Bonus d'appétit catégoriel cumulatif (Passion 1/2/3).
- * 0.10 / 0.20 / 0.30 selon le palier max débloqué (palier plus haut écrase).
+ * 0.05 / 0.10 / 0.20 selon le palier max débloqué (palier plus haut écrase).
  * Retourne 0 si aucun palier de Passion débloqué pour cette catégorie.
  */
 export function bonusPassionCategorie(
@@ -139,9 +139,9 @@ export function bonusPassionCategorie(
   cat: CategorieObjet,
 ): number {
   const t = catTreeId(cat);
-  if (aCompetence(`${t}.passion.3`, state.competencesDebloquees)) return 0.30;
-  if (aCompetence(`${t}.passion.2`, state.competencesDebloquees)) return 0.20;
-  if (aCompetence(`${t}.passion.1`, state.competencesDebloquees)) return 0.10;
+  if (aCompetence(`${t}.passion.3`, state.competencesDebloquees)) return 0.20;
+  if (aCompetence(`${t}.passion.2`, state.competencesDebloquees)) return 0.10;
+  if (aCompetence(`${t}.passion.1`, state.competencesDebloquees)) return 0.05;
   return 0;
 }
 
@@ -150,7 +150,7 @@ export function aSpecialisteCategorie(
   state: GameState,
   cat: CategorieObjet,
 ): boolean {
-  return bonusPassionCategorie(state, cat) >= 0.20;
+  return bonusPassionCategorie(state, cat) >= 0.10;
 }
 
 export const BONUS_TOLERANCE_VERBE_HAUT = 0.20;

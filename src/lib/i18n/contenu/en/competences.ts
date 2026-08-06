@@ -50,15 +50,15 @@ function paliersThematiques(cat: CategorieObjet): OverlayCompetences["paliers"] 
     },
     [`cat.${cat}.passion.1`]: {
       nom: `Enthusiast — ${c}`,
-      description: `Customers pay +10% for ${c} items.`,
+      description: `Customers pay +5% for ${c} items.`,
     },
     [`cat.${cat}.passion.2`]: {
       nom: `Devotee — ${c}`,
-      description: `Customers pay +20% for ${c} items (replaces Enthusiast).`,
+      description: `Customers pay +10% for ${c} items (replaces Enthusiast).`,
     },
     [`cat.${cat}.passion.3`]: {
       nom: `Fanatic — ${c}`,
-      description: `Customers pay +30% for ${c} items (replaces Devotee).`,
+      description: `Customers pay +20% for ${c} items (replaces Devotee).`,
     },
     [`cat.${cat}.oeil_aiguise.1`]: {
       nom: `Nimble tongue — ${c}`,
