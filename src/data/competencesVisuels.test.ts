@@ -10,7 +10,7 @@ import {
 import { CATEGORIES } from "@/data/categories";
 
 const BRANCHES_GENERAL = ["negociation", "charisme", "presentation", "vision"];
-const BRANCHES_THEME = ["reparer", "connaisseur", "passion", "oeil_aiguise"];
+const BRANCHES_THEME = ["reparer", "connaisseur", "passion", "marchandage"];
 const PALIERS = [1, 2, 3];
 
 export const IDS_ATTENDUS = [

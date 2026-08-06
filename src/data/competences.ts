@@ -200,19 +200,19 @@ function branchePassion(cat: CategorieObjet): PalierDef[] {
   ]);
 }
 
-function brancheOeilAiguise(cat: CategorieObjet): PalierDef[] {
+function brancheMarchandage(cat: CategorieObjet): PalierDef[] {
   return definirPaliers([
     {
-      nom: `Verbe agile — ${cat}`,
-      description: `Quand un client négocie un objet « ${cat} », il tolère des contre-offres +10 % plus gourmandes.`,
+      nom: `Marchandeur — ${cat}`,
+      description: `En chine, le prix plancher des vendeurs baisse de 4 points de % (de leur prix affiché) sur les objets « ${cat} ».`,
     },
     {
-      nom: `Verbe haut — ${cat}`,
-      description: `Quand un client négocie un objet « ${cat} », il tolère des contre-offres +20 % plus gourmandes (remplace Verbe agile).`,
+      nom: `Fin marchandeur — ${cat}`,
+      description: `En chine, le prix plancher des vendeurs baisse de 8 points de % (de leur prix affiché) sur les objets « ${cat} » (remplace Marchandeur).`,
     },
     {
-      nom: `Verbe d'or — ${cat}`,
-      description: `Quand un client négocie un objet « ${cat} », il tolère des contre-offres +30 % plus gourmandes (remplace Verbe haut).`,
+      nom: `Roi du marchandage — ${cat}`,
+      description: `En chine, le prix plancher des vendeurs baisse de 12 points de % (de leur prix affiché) sur les objets « ${cat} » (remplace Fin marchandeur).`,
     },
   ]);
 }
@@ -229,7 +229,7 @@ function buildCategoryTree(cat: CategorieObjet): CompetenceTreeDef {
       { id: "reparer", nom: "Réparer", paliers: brancheReparer(cat) },
       { id: "connaisseur", nom: "Connaisseur", paliers: brancheConnaisseur(cat) },
       { id: "passion", nom: "Passion", paliers: branchePassion(cat) },
-      { id: "oeil_aiguise", nom: "Œil aiguisé", paliers: brancheOeilAiguise(cat) },
+      { id: "marchandage", nom: "Marchandage", paliers: brancheMarchandage(cat) },
     ],
   };
 }

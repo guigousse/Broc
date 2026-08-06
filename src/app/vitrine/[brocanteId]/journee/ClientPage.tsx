@@ -75,7 +75,6 @@ import {
   aGenPresentationSoignee,
   aGenStandRenomme,
   bonusPassionCategorie,
-  bonusToleranceCategorie,
   bonusToleranceNegoGeneral,
 } from "@/lib/competences";
 import { CATEGORIES } from "@/data/categories";
@@ -161,16 +160,12 @@ export default function VitrineJourneePage() {
   const modifiersRef = useRef<VitrineModifiers | null>(null);
   if (state && modifiersRef.current === null) {
     const bonusPassionParCategorie = new Map<CategorieObjet, number>();
-    const bonusToleranceParCategorie = new Map<CategorieObjet, number>();
     for (const c of CATEGORIES) {
       const p = bonusPassionCategorie(state, c);
       if (p > 0) bonusPassionParCategorie.set(c, p);
-      const t = bonusToleranceCategorie(state, c);
-      if (t > 0) bonusToleranceParCategorie.set(c, t);
     }
     modifiersRef.current = {
       bonusPassionParCategorie,
-      bonusToleranceParCategorie,
       bonusToleranceNego: bonusToleranceNegoGeneral(state),
       intervalleMultiplier:
         (aGenPresentationSoignee(state) ? 0.75 : 1) *

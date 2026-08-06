@@ -155,7 +155,6 @@ export function aSpecialisteCategorie(
 
 export const BONUS_TOLERANCE_VERBE_HAUT = 0.20;
 export const BONUS_TOLERANCE_VERBE_DOR = 0.40;
-export const BONUS_TOLERANCE_CATEGORIE = [0.10, 0.20, 0.30] as const;
 
 /** Bonus général de tolérance de négociation (Verbe d'or écrase Verbe haut). */
 export function bonusToleranceNegoGeneral(state: GameState): number {
@@ -164,15 +163,21 @@ export function bonusToleranceNegoGeneral(state: GameState): number {
   return 0;
 }
 
-/** Bonus catégoriel de tolérance (Œil aiguisé 1/2/3 — le plus haut écrase). */
-export function bonusToleranceCategorie(
+/**
+ * Baisse du prix plancher des vendeurs en chine (Marchandage 1/2/3 — le plus
+ * haut écrase), en points de % du prix affiché. Appliquée à l'ouverture de la
+ * négociation d'achat (cf. `prixMinAvecMarchandage` dans lib/chine.ts).
+ */
+export const BONUS_MARCHANDAGE = [0.04, 0.08, 0.12] as const;
+
+export function bonusMarchandageCategorie(
   state: GameState,
   cat: CategorieObjet,
 ): number {
   const t = catTreeId(cat);
-  if (aCompetence(`${t}.oeil_aiguise.3`, state.competencesDebloquees)) return BONUS_TOLERANCE_CATEGORIE[2];
-  if (aCompetence(`${t}.oeil_aiguise.2`, state.competencesDebloquees)) return BONUS_TOLERANCE_CATEGORIE[1];
-  if (aCompetence(`${t}.oeil_aiguise.1`, state.competencesDebloquees)) return BONUS_TOLERANCE_CATEGORIE[0];
+  if (aCompetence(`${t}.marchandage.3`, state.competencesDebloquees)) return BONUS_MARCHANDAGE[2];
+  if (aCompetence(`${t}.marchandage.2`, state.competencesDebloquees)) return BONUS_MARCHANDAGE[1];
+  if (aCompetence(`${t}.marchandage.1`, state.competencesDebloquees)) return BONUS_MARCHANDAGE[0];
   return 0;
 }
 

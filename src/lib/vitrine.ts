@@ -19,8 +19,6 @@ export const BONUS_SPECIALISATION_CLIENT = 1.1;
 export interface VitrineModifiers {
   /** Bonus d'appétit catégoriel (Passion 1/2/3 cumulé via valeurs max), par catégorie. */
   bonusPassionParCategorie: Map<CategorieObjet, number>;
-  /** Bonus catégoriel de tolérance de négociation (Œil aiguisé 1/2/3), par catégorie. */
-  bonusToleranceParCategorie: Map<CategorieObjet, number>;
   /** Bonus général de tolérance de négociation (Verbe haut / Verbe d'or). */
   bonusToleranceNego: number;
   /** Multiplicateur de l'intervalle entre clients (Présentation soignée → 0.75). */
@@ -41,7 +39,6 @@ export interface VitrineModifiers {
 
 export const DEFAULT_MODIFIERS: VitrineModifiers = {
   bonusPassionParCategorie: new Map(),
-  bonusToleranceParCategorie: new Map(),
   bonusToleranceNego: 0,
   intervalleMultiplier: 1,
   revelePersona: false,
@@ -69,7 +66,7 @@ export interface ClientEvent {
   mode: "achat-direct" | "negociation";
   /** Vrai si le client a été boosté (Stand renommé). */
   fancy?: boolean;
-  /** Bonus de tolérance de négociation (général + max catégoriel du panier). */
+  /** Bonus de tolérance de négociation (Verbe haut / Verbe d'or général). */
   toleranceBoost: number;
   /** Fourchette « Œil aiguisé » : contient prixMax, largeur 20 %, prix
    *  jamais pile au centre. Calculée UNE fois (stable pour le client). */
@@ -346,12 +343,7 @@ export function genererClientEvent(
     }
   }
 
-  let boostCat = 0;
-  for (const it of panier) {
-    const b = modifiers.bonusToleranceParCategorie.get(it.objet.categorie) ?? 0;
-    if (b > boostCat) boostCat = b;
-  }
-  const toleranceBoost = modifiers.bonusToleranceNego + boostCat;
+  const toleranceBoost = modifiers.bonusToleranceNego;
 
   return {
     id: crypto.randomUUID(),

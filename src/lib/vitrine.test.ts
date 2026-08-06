@@ -47,7 +47,6 @@ describe("constantes", () => {
 
   it("DEFAULT_MODIFIERS expose tous les flags neutres", () => {
     expect(DEFAULT_MODIFIERS.bonusToleranceNego).toBe(0);
-    expect(DEFAULT_MODIFIERS.bonusToleranceParCategorie.size).toBe(0);
     expect(DEFAULT_MODIFIERS.intervalleMultiplier).toBe(1);
     expect(DEFAULT_MODIFIERS.revelePersona).toBe(false);
     expect(DEFAULT_MODIFIERS.releveBourse).toBe(false);
@@ -301,7 +300,7 @@ describe("genererClientEvent — invariants généraux", () => {
 });
 
 describe("genererClientEvent — formule de toleranceBoost à la génération", () => {
-  it("additionne le bonus général et le MAX (pas la somme) des bonus catégoriels du panier", () => {
+  it("reprend le bonus général de tolérance (seule source depuis la refonte Marchandage)", () => {
     // chanceMulti: 1 force un panier à 2 objets (Math.random figé à 0.5 par le
     // beforeEach global, < 1 → veutDeux toujours vrai ; shuffle Fisher-Yates
     // neutre à 0.5 sur un tableau à 2 éléments → ordre préservé).
@@ -319,15 +318,11 @@ describe("genererClientEvent — formule de toleranceBoost à la génération", 
     const modifiers: VitrineModifiers = {
       ...DEFAULT_MODIFIERS,
       bonusToleranceNego: 0.2,
-      bonusToleranceParCategorie: new Map([
-        ["Musique", 0.1],
-        ["Mode", 0.3],
-      ]),
     };
     const ev = genererClientEvent(c, vitrine, [], modifiers);
     expect(ev).not.toBeNull();
     expect(ev!.panier).toHaveLength(2);
-    expect(ev!.toleranceBoost).toBeCloseTo(0.2 + 0.3);
+    expect(ev!.toleranceBoost).toBeCloseTo(0.2);
   });
 });
 
