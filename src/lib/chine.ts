@@ -311,6 +311,21 @@ export function genererRemplacement(
   return instancier(pickRandom(communs), tendances, tier, brocante);
 }
 
+/**
+ * Marchandage (branche thématique) : abaisse le prix plancher du vendeur de
+ * `bonus` points de % de son prix AFFICHÉ (0.04 / 0.08 / 0.12 selon le palier,
+ * cf. `bonusMarchandageCategorie`). Appliqué à l'OUVERTURE de la négociation
+ * d'achat — jamais dans `instancier()`, qui n'a pas accès au state.
+ */
+export function prixMinAvecMarchandage(
+  prixVendeur: number,
+  prixMinAccept: number,
+  bonus: number,
+): number {
+  if (bonus <= 0) return prixMinAccept;
+  return Math.max(1, prixMinAccept - Math.round(prixVendeur * bonus));
+}
+
 /* === Unicité effective des objets uniques ============================== */
 
 /** Templates ciblés par l'arc principal (le ch. 5 vise l'unique de la finale). */

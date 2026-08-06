@@ -7,6 +7,7 @@ import {
   SURCOTE_BONIMENTEUR,
   genererRemplacement,
   genererSession,
+  prixMinAvecMarchandage,
   uniquesExclusDuChinage,
 } from "./chine";
 import {
@@ -619,5 +620,28 @@ describe("genererRemplacement (La Fouille)", () => {
       const r = genererRemplacement(session[0], session, [], brocT3, null, exclus);
       expect(r.objet.templateId).not.toBe(TEMPLATE_GENERIQUE_EXCLU);
     }
+  });
+});
+
+describe("prixMinAvecMarchandage — Marchandage à l'ouverture de la négo", () => {
+  it("bonus 0 → plancher inchangé", () => {
+    expect(prixMinAvecMarchandage(100, 85, 0)).toBe(85);
+  });
+
+  it("réduit le plancher de bonus × prix affiché (points de %)", () => {
+    // Vendeur affiche 100 €, plancher 85 € : Roi du marchandage (−12 pts) → 73 €.
+    expect(prixMinAvecMarchandage(100, 85, 0.12)).toBe(73);
+    // Marchandeur (−4 pts) → 81 €.
+    expect(prixMinAvecMarchandage(100, 85, 0.04)).toBe(81);
+  });
+
+  it("arrondit la réduction au plus proche", () => {
+    // 37 × 0.08 = 2.96 → 3 ; 33 − 3 = 30.
+    expect(prixMinAvecMarchandage(37, 33, 0.08)).toBe(30);
+  });
+
+  it("ne descend jamais sous 1 €", () => {
+    // 20 × 0.12 = 2.4 → 2 ; 1 − 2 = −1 → clampé à 1.
+    expect(prixMinAvecMarchandage(20, 1, 0.12)).toBe(1);
   });
 });

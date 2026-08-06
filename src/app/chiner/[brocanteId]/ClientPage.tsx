@@ -30,12 +30,17 @@ import {
   calculerBrocantesDebloqueesParTier,
   estDebloquee,
 } from "@/lib/deblocage";
-import { genererRemplacement, genererSession, uniquesExclusDuChinage } from "@/lib/chine";
+import {
+  genererRemplacement,
+  genererSession,
+  prixMinAvecMarchandage,
+  uniquesExclusDuChinage,
+} from "@/lib/chine";
 import { vinylesCadeauxExclus } from "@/lib/anniversaire";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
 import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { relancerNegociation } from "@/lib/negociation";
-import { aConnaisseurChinage } from "@/lib/competences";
+import { aConnaisseurChinage, bonusMarchandageCategorie } from "@/lib/competences";
 import { energieCourante } from "@/lib/energie";
 import { getCapaciteStockage, placeRestante, stockageEstPlein, totalEnStock } from "@/lib/stockage";
 import {
@@ -564,6 +569,11 @@ export default function SessionChinePage() {
                   item={item}
                   budget={state.budget}
                   plein={plein}
+                  prixMinEffectif={prixMinAvecMarchandage(
+                    item.prixVendeur,
+                    item.prixMinAccept,
+                    bonusMarchandageCategorie(state, item.objet.categorie),
+                  )}
                   expanded={negoOuverte === item.id}
                   illustrationSrc={getVendeurIllustration(item.persona.archetype)}
                   illustrationFacheSrc={getVendeurIllustrationFache(item.persona.archetype)}
