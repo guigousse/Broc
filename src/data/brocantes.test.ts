@@ -62,7 +62,7 @@ describe("gates des brocantes (SP2)", () => {
   });
 
   it("chaque brocante de tier N>1 exige le chapitre d'invitation du tier", () => {
-    const ordreParTier = { 2: 4, 3: 8, 4: 10 } as const;
+    const ordreParTier = { 2: 4, 3: 8, 4: 13 } as const;
     // La Grande Braderie est l'exception volontaire : événement calendaire
     // (cf. condition "braderie"), pas gatée par la progression de l'histoire.
     for (const b of BROCANTES.filter((b) => b.tier > 1 && b.id !== "grande-braderie")) {

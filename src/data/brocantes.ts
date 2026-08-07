@@ -380,7 +380,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "chapitrePrincipal", ordre: 10 },
+        { type: "chapitrePrincipal", ordre: 13 },
         { type: "valeurCollection", montant: 5000 },
         { type: "brocantesDebloquees", tier: 3, nombre: 5 },
       ],
