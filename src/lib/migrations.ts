@@ -569,8 +569,12 @@ function appliquerMigrations(loaded: GameState): GameState {
   // mission `livree`), SANS récompense rétroactive (ni ledger, ni XP, ni
   // points bonus — cf. `courrierDeChapitre`, qui ne passe pas par
   // `accepterChapitre`) :
-  //  - niveau (anciens seuils) : ≥T2 ⇒ ch4, ≥T3 ⇒ ch8, ≥T4 ⇒ ch10
-  //  - anciens chapitres livrés : ch1⇒1, ch2⇒4, ch3⇒8, ch4⇒10, ch5⇒11
+  //  - niveau (anciens seuils) : ≥T2 ⇒ ordre 4, ≥T3 ⇒ ordre 8, ≥T4 ⇒ ordre 13
+  //  - anciens chapitres livrés : ch1⇒1, ch2⇒4, ch3⇒8, ch4⇒13, ch5⇒14
+  // (ordres 13/14 = « L'invitation »/« Les bijoux » depuis l'extension 4 actes
+  // du 2026-08-07 — les ordres suivent le reséquencement pour ne jamais
+  // re-verrouiller le Grand Salon, quitte à injecter aussi les chapitres
+  // intermédiaires ajoutés depuis.)
   // On prend le max des deux sources. Les anciens courriers/missions
   // `principale_*` sont conservés tels quels (archive).
   //
@@ -609,8 +613,8 @@ function appliquerMigrations(loaded: GameState): GameState {
     principale_ch1: 1,
     principale_ch2: 4,
     principale_ch3: 8,
-    principale_ch4: 10,
-    principale_ch5: 11,
+    principale_ch4: 13,
+    principale_ch5: 14,
   };
   let courriersAvecTrame = courriersFinaux;
   let missionsAvecTrame = missionsFinales;
@@ -630,7 +634,7 @@ function appliquerMigrations(loaded: GameState): GameState {
     const niveauFinalTrame = brocanteurConverti.niveau;
     if (niveauFinalTrame >= NIVEAU_BROCANTES_T2) maxOrdreTrame = 4;
     if (niveauFinalTrame >= NIVEAU_BROCANTES_T3) maxOrdreTrame = 8;
-    if (niveauFinalTrame >= NIVEAU_BROCANTES_T4) maxOrdreTrame = 10;
+    if (niveauFinalTrame >= NIVEAU_BROCANTES_T4) maxOrdreTrame = 13;
     for (const m of missionsExistantes) {
       const ordre = ANCIENS_CHAPITRES_VERS_ORDRE_TRAME[m.courrierId];
       if (m.statut === "livree" && ordre) {

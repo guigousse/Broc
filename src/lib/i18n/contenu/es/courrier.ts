@@ -61,7 +61,7 @@ export const COURRIER_ES: Record<string, { titre: string; corps: string[] }> = {
   trame_ch5: {
     titre: "Un nombre que circula",
     corps: [
-      "Alcanzar el **nivel 8** de chamarilero.",
+      "Alcanzar el **nivel 30** de chamarilero.",
       "«Tu nombre vale más que tu caja. Hazlo circular.»",
     ],
   },
@@ -112,6 +112,34 @@ export const COURRIER_ES: Record<string, { titre: string; corps: string[] }> = {
     corps: [
       "La tienda es tuya ahora. El abuelo se va de viaje — escribirá.",
       "«Una historia nunca pertenece a quien la empieza.»",
+    ],
+  },
+  trame_salons: {
+    titre: "Chamarilero entre chamarileros",
+    corps: [
+      "Acumular **3 000 €** de ventas desde la aceptación.",
+      "«Un buen golpe lo da cualquiera. Un chamarilero es una caja que canta todas las noches.»",
+    ],
+  },
+  trame_grand_coup: {
+    titre: "El gran golpe",
+    corps: [
+      "Lograr un beneficio de al menos **300 €** en una sola venta.",
+      "«El ojo se forja en los puestos. Pero se templa en los salones.»",
+    ],
+  },
+  trame_antichambre: {
+    titre: "La antesala",
+    corps: [
+      "Alcanzar **5 000 €** de valor de colección.",
+      "«El Gran Salón no lee tarjetas de visita. Mira las vitrinas.»",
+    ],
+  },
+  trame_heritage: {
+    titre: "Que viva la tienda",
+    corps: [
+      "Acumular **2 000 €** de ventas desde la aceptación.",
+      "«Una vitrina no es un mausoleo. Vende, muchacho: así respira una tienda.»",
     ],
   },
   invitation_tier2: {

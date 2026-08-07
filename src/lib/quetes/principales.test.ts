@@ -6,6 +6,7 @@ import {
   POINTS_BONUS_CHAPITRE,
   XP_QUETE_PRINCIPALE,
 } from "@/lib/xp";
+import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
 import type { Courrier, GameState, MissionResolution } from "@/types/game";
 
 /**
@@ -35,14 +36,13 @@ function missionLivree(courrierId: string, jourResolution = 2): MissionResolutio
   return { courrierId, statut: "livree", jourResolution };
 }
 
-/** Fixture : état où trame_ch1..chN sont livrés (précédents de `chapitreId`). */
+/** Fixture : état où les `nb` premiers chapitres (par ordre) sont livrés. */
 function stateAvecChapitresLivres(nb: number, patch: Partial<GameState> = {}): GameState {
-  const courriers = Array.from({ length: nb }, (_, i) =>
-    courrierChapitreMinimal(`trame_ch${i + 1}`),
-  );
-  const missions = Array.from({ length: nb }, (_, i) =>
-    missionLivree(`trame_ch${i + 1}`),
-  );
+  const chapitres = [...QUETES_PRINCIPALES]
+    .sort((a, b) => a.ordre - b.ordre)
+    .slice(0, nb);
+  const courriers = chapitres.map((ch) => courrierChapitreMinimal(ch.id));
+  const missions = chapitres.map((ch) => missionLivree(ch.id));
   return createMockGameState({
     tutorielEtape: "termine",
     courriers,
@@ -74,8 +74,8 @@ describe("chapitrePret", () => {
     expect(chapitrePret(state)?.id).toBe("trame_ch2");
   });
 
-  it("ne propose rien si déjà 12/12 chapitres livrés", () => {
-    const state = stateAvecChapitresLivres(12);
+  it("ne propose rien si déjà 16/16 chapitres livrés", () => {
+    const state = stateAvecChapitresLivres(16);
     expect(chapitrePret(state)).toBeNull();
   });
 });
@@ -126,7 +126,7 @@ describe("accepterChapitre", () => {
   });
 
   it("chapitre narratif (ch10) : livré immédiatement, récompense créditée + XP", () => {
-    const state = stateAvecChapitresLivres(9, { budget: 1000 });
+    const state = stateAvecChapitresLivres(12, { budget: 1000 });
     const next = accepterChapitre(state, "trame_ch10", 99);
 
     const mission = next.missions.find((m) => m.courrierId === "trame_ch10");
@@ -135,7 +135,7 @@ describe("accepterChapitre", () => {
       timestampAcceptation: 99,
       jourResolution: state.jourActuel,
     });
-    expect(next.budget).toBe(state.budget + 200);
+    expect(next.budget).toBe(state.budget + 450);
     expect(next.grandLivre.some((e) => e.kind === "mission_recompense" && e.courrierId === "trame_ch10")).toBe(true);
     const avecXPAttendu = appliquerGainXPBrocanteur(
       state.brocanteur,
@@ -148,7 +148,7 @@ describe("accepterChapitre", () => {
   });
 
   it("livraison narrative de trame_ch10 : injecte l'invitation tier 4", () => {
-    const state = stateAvecChapitresLivres(9);
+    const state = stateAvecChapitresLivres(12);
     const next = accepterChapitre(state, "trame_ch10", 99);
     expect(next.courriers.some((c) => c.id === "invitation_tier4")).toBe(true);
   });

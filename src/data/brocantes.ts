@@ -30,7 +30,7 @@ export const BROCANTES: Brocante[] = [
     etoiles: 1,
     taillePool: 6,
     poolExclusif: [],
-    facteurBourse: 0.9,
+    facteurBourse: 0.45,
     conditionDeblocage: { type: "depart" },
   },
   {
@@ -43,7 +43,7 @@ export const BROCANTES: Brocante[] = [
     etoiles: 1,
     taillePool: 8,
     poolExclusif: [],
-    facteurBourse: 1.0,
+    facteurBourse: 0.55,
     conditionDeblocage: { type: "valeurCollection", montant: 30 },
   },
   {
@@ -57,7 +57,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Livres & Papeterie",
     taillePool: 6,
     poolExclusif: [],
-    facteurBourse: 1.0,
+    facteurBourse: 0.62,
     conditionDeblocage: { type: "valeurCollectionCategorie", categorie: "Livres & Papeterie", montant: 20 },
   },
   {
@@ -71,7 +71,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Mode",
     taillePool: 6,
     poolExclusif: [],
-    facteurBourse: 1.1,
+    facteurBourse: 0.7,
     conditionDeblocage: { type: "valeurCollectionCategorie", categorie: "Mode", montant: 30 },
   },
   {
@@ -85,7 +85,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Jeux & Loisirs",
     taillePool: 6,
     poolExclusif: [],
-    facteurBourse: 1.1,
+    facteurBourse: 0.78,
     conditionDeblocage: { type: "valeurCollectionCategorie", categorie: "Jeux & Loisirs", montant: 40 },
   },
 
@@ -143,7 +143,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Musique",
     taillePool: 6,
     poolExclusif: [],
-    facteurBourse: 1.5,
+    facteurBourse: 1.6,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -185,7 +185,7 @@ export const BROCANTES: Brocante[] = [
     specialisation: "Maison",
     taillePool: 6,
     poolExclusif: [],
-    facteurBourse: 1.6,
+    facteurBourse: 1.9,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -293,7 +293,7 @@ export const BROCANTES: Brocante[] = [
       "leg.mus.piano_a_queue_de_concert_1900",
       "leg.mus.guitare_de_legende_de_johny_perdrix_jouee_a_l",
     ],
-    facteurBourse: 2.5,
+    facteurBourse: 2.6,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -318,7 +318,7 @@ export const BROCANTES: Brocante[] = [
       "leg.ma.tapis_savonnerie_xviie",
       "leg.ma.pendule_louis_xiv_boulle",
     ],
-    facteurBourse: 2.7,
+    facteurBourse: 3.2,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -343,7 +343,7 @@ export const BROCANTES: Brocante[] = [
       "leg.art.dessin_fauviste_aux_gouaches_decoupees_etude",
       "leg.art.toile_onirique_de_chacal_etude",
     ],
-    facteurBourse: 3.0,
+    facteurBourse: 2.8,
     conditionDeblocage: {
       type: "ET",
       conditions: [
@@ -380,7 +380,7 @@ export const BROCANTES: Brocante[] = [
     conditionDeblocage: {
       type: "ET",
       conditions: [
-        { type: "chapitrePrincipal", ordre: 10 },
+        { type: "chapitrePrincipal", ordre: 13 },
         { type: "valeurCollection", montant: 5000 },
         { type: "brocantesDebloquees", tier: 3, nombre: 5 },
       ],

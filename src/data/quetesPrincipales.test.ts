@@ -4,11 +4,24 @@ import { BROCANTES } from "./brocantes";
 import { getTemplate, poolPourTier } from "./objetTemplates";
 
 describe("trame principale (squelette SP2)", () => {
-  it("12 chapitres, ordres 1..12 uniques, ids trame_chN", () => {
-    expect(QUETES_PRINCIPALES).toHaveLength(12);
+  it("16 chapitres, ordres 1..16 uniques, ids stables", () => {
+    expect(QUETES_PRINCIPALES).toHaveLength(16);
     const ordres = QUETES_PRINCIPALES.map((c) => c.ordre).sort((a, b) => a - b);
-    expect(ordres).toEqual(Array.from({ length: 12 }, (_, i) => i + 1));
-    for (const c of QUETES_PRINCIPALES) expect(c.id).toBe(`trame_ch${c.ordre}`);
+    expect(ordres).toEqual(Array.from({ length: 16 }, (_, i) => i + 1));
+    // Les 12 ids historiques `trame_chN` restent présents (saves + i18n),
+    // même si leur `ordre` a bougé (extension 4 actes 2026-08-07).
+    const ids = new Set(QUETES_PRINCIPALES.map((c) => c.id));
+    expect(ids.size).toBe(16);
+    for (let n = 1; n <= 12; n++) expect(ids.has(`trame_ch${n}`)).toBe(true);
+  });
+  it("4 actes de 4 chapitres, actes croissants le long de l'ordre", () => {
+    const parOrdre = [...QUETES_PRINCIPALES].sort((a, b) => a.ordre - b.ordre);
+    expect(parOrdre.map((c) => c.acte)).toEqual([1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4]);
+  });
+  it("« Les bijoux de la reine » est la 2ᵉ mission de l'acte 4", () => {
+    const acte4 = [...QUETES_PRINCIPALES].filter((c) => c.acte === 4).sort((a, b) => a.ordre - b.ordre);
+    expect(acte4[1]?.id).toBe("trame_ch11");
+    expect(acte4[1]?.payload.titre).toBe("Les bijoux de la reine");
   });
   it("les cibles reflètent exactement les objectifs de type objet", () => {
     for (const c of QUETES_PRINCIPALES) {
@@ -24,16 +37,16 @@ describe("trame principale (squelette SP2)", () => {
       for (const cible of c.payload.cibles) expect(getTemplate(cible.templateId)).toBeDefined();
     }
   });
-  it("invitations : ch4→tier2, ch8→tier3, ch10→tier4, uniques", () => {
+  it("invitations : ordre 4→tier2, 8→tier3, 13→tier4, uniques", () => {
     expect(chapitreParOrdre(4)?.invitationTier).toBe(2);
     expect(chapitreParOrdre(8)?.invitationTier).toBe(3);
-    expect(chapitreParOrdre(10)?.invitationTier).toBe(4);
-    expect(QUETES_PRINCIPALES.filter((c) => c.invitationTier).map((c) => c.ordre)).toEqual([4, 8, 10]);
+    expect(chapitreParOrdre(13)?.invitationTier).toBe(4);
+    expect(QUETES_PRINCIPALES.filter((c) => c.invitationTier).map((c) => c.ordre)).toEqual([4, 8, 13]);
   });
-  it("chapitres narratifs (10, 12) : aucun objectif ; ch11 conserve ses cibles", () => {
-    expect(chapitreParOrdre(10)?.payload.objectifs).toEqual([]);
-    expect(chapitreParOrdre(12)?.payload.objectifs).toEqual([]);
-    expect(chapitreParOrdre(11)?.payload.conserverCibles).toBe(true);
+  it("chapitres narratifs (13, 16) : aucun objectif ; les bijoux (14) conservent leurs cibles", () => {
+    expect(chapitreParOrdre(13)?.payload.objectifs).toEqual([]);
+    expect(chapitreParOrdre(16)?.payload.objectifs).toEqual([]);
+    expect(chapitreParOrdre(14)?.payload.conserverCibles).toBe(true);
   });
   it("les objets-cibles de l'acte I existent dans les pools atteignables du tier 1", () => {
     // Garantie de trouvabilité (spec) : lampe (ch1) et pichet (ch4) doivent être

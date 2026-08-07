@@ -4,7 +4,7 @@ import type { DialogueLigne } from "@/data/dialogues";
 export interface ChapitrePrincipal {
   id: string;
   ordre: number;
-  acte: 1 | 2 | 3;
+  acte: 1 | 2 | 3 | 4;
   /** Condition d'apparition EN PLUS de « chapitre précédent livré ». */
   condition: ConditionDeblocage;
   /** Dialogue de délivrance (grand-père, pastille QG). SP3 : textes définitifs. */
@@ -23,10 +23,14 @@ export interface ChapitrePrincipal {
 }
 
 /**
- * Trame principale (SP2) : le grand-père, vivant, confie 12 chapitres en
- * 3 actes. Fil rouge : les bijoux de la reine. Textes définitifs (SP3).
- * Ids STABLES `trame_chN` (i18n + saves) — préfixe distinct de l'ancien arc
- * `principale_*` pour éviter toute collision en migration.
+ * Trame principale (SP2) : le grand-père, vivant, confie 16 chapitres en
+ * 4 actes. Fil rouge : les bijoux de la reine. Textes définitifs (SP3).
+ * Ids STABLES (i18n + saves) — préfixe distinct de l'ancien arc
+ * `principale_*` pour éviter toute collision en migration. Les 12 chapitres
+ * d'origine gardent leurs ids `trame_chN` historiques même quand leur `ordre`
+ * a changé (extension 2026-08-07 : 4 missions insérées + acte 4) ; les
+ * chapitres ajoutés portent des ids descriptifs (`trame_salons`, …) pour ne
+ * jamais entrer en collision avec la numérotation d'origine.
  */
 export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
   {
@@ -133,11 +137,11 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     payload: {
       titre: "Un nom qui circule",
       corps: [
-        "Atteindre le **niveau 8** de brocanteur.",
+        "Atteindre le **niveau 30** de brocanteur.",
         "« Ton nom vaut plus que ta caisse. Fais-le circuler. »",
       ],
       cibles: [],
-      objectifs: [{ type: "niveau", niveau: 8 }],
+      objectifs: [{ type: "niveau", niveau: 30 }],
       recompense: { argent: 180 },
     },
   },
@@ -209,8 +213,29 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     },
   },
   {
-    id: "trame_ch9",
+    id: "trame_salons",
     ordre: 9,
+    acte: 3,
+    condition: { type: "depart" },
+    dialogue: [
+      { humeur: "songeur", texte: "Les salons, petit, c'est un autre pays. On y parle plus bas, on y compte plus vite. Ma première fois, j'ai gardé les mains dans les poches toute la journée — de peur qu'on les voie trembler." },
+      { humeur: "souriant", texte: "Un beau coup, tout le monde peut en faire un. Ce qui fait un marchand, c'est le tiroir-caisse qui chante tous les soirs. La régularité, voilà la vraie élégance." },
+      { humeur: "rieur", texte: "Trois mille euros de ventes. Fais-les chanter — et là-haut, on retiendra ton nom sans que tu aies à le donner." },
+    ],
+    payload: {
+      titre: "Marchand parmi les marchands",
+      corps: [
+        "Cumuler **3 000 €** de ventes depuis l'acceptation.",
+        "« Un beau coup, tout le monde peut en faire un. Un marchand, c'est un tiroir-caisse qui chante tous les soirs. »",
+      ],
+      cibles: [],
+      objectifs: [{ type: "ventesCumulees", montant: 3000 }],
+      recompense: { argent: 280 },
+    },
+  },
+  {
+    id: "trame_ch9",
+    ordre: 10,
     acte: 3,
     condition: { type: "depart" },
     // Décision 2026-07-17 : mission de maîtrise placée en late game (venue du
@@ -232,9 +257,51 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     },
   },
   {
-    id: "trame_ch10",
-    ordre: 10,
+    id: "trame_grand_coup",
+    ordre: 11,
     acte: 3,
+    condition: { type: "depart" },
+    dialogue: [
+      { humeur: "songeur", texte: "Tu te souviens de ma tabatière en argent ? Celle que j'ai laissée filer pour trois sous. J'y pense encore, certains soirs d'hiver." },
+      { humeur: "souriant", texte: "Dans les salons, la revanche a une autre saveur. Les pièces y sont plus belles, les yeux plus affûtés — et l'erreur des autres y vaut de l'or." },
+      { humeur: "emu", texte: "Fais-le pour moi : trois cents euros de mieux sur une seule vente. La tabatière sera vengée, et je dormirai enfin tranquille." },
+    ],
+    payload: {
+      titre: "Le grand coup",
+      corps: [
+        "Réaliser un profit d'au moins **300 €** sur une seule vente.",
+        "« L'œil, ça se forge aux étals. Mais c'est dans les salons qu'on le trempe. »",
+      ],
+      cibles: [],
+      objectifs: [{ type: "profitVente", montant: 300 }],
+      recompense: { argent: 360 },
+    },
+  },
+  {
+    id: "trame_antichambre",
+    ordre: 12,
+    acte: 3,
+    condition: { type: "depart" },
+    dialogue: [
+      { humeur: "songeur", texte: "Les murmures reprennent, petit. Les bijoux de la reine — on en reparle dans les salons, à mots couverts, comme toujours." },
+      { humeur: "emu", texte: "Cinquante ans que je guette cette rumeur. Chaque fois, elle s'éteint. Cette fois… cette fois je crois qu'elle brûle encore." },
+      { humeur: "souriant", texte: "Le Grand Salon n'ouvre qu'aux vitrines qui parlent d'elles-mêmes. Cinq mille euros de collection — et l'on t'ouvrira des portes que je n'ai fait qu'entrevoir." },
+    ],
+    payload: {
+      titre: "L'antichambre",
+      corps: [
+        "Atteindre **5 000 €** de valeur de collection.",
+        "« Le Grand Salon n'écoute pas les cartes de visite. Il regarde les vitrines. »",
+      ],
+      cibles: [],
+      objectifs: [{ type: "valeurCollection", montant: 5000 }],
+      recompense: { argent: 400 },
+    },
+  },
+  {
+    id: "trame_ch10",
+    ordre: 13,
+    acte: 4,
     condition: { type: "depart" },
     invitationTier: 4,
     dialogue: [
@@ -251,13 +318,13 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
       ],
       cibles: [],
       objectifs: [],
-      recompense: { argent: 200 },
+      recompense: { argent: 450 },
     },
   },
   {
     id: "trame_ch11",
-    ordre: 11,
-    acte: 3,
+    ordre: 14,
+    acte: 4,
     condition: { type: "depart" },
     dialogue: [
       { humeur: "songeur", texte: "Ils sont là, quelque part, entre les vitrines du Grand Salon. Je le sens comme on sent l'orage." },
@@ -276,12 +343,33 @@ export const QUETES_PRINCIPALES: ChapitrePrincipal[] = [
     },
   },
   {
-    id: "trame_ch12",
-    ordre: 12,
-    acte: 3,
+    id: "trame_heritage",
+    ordre: 15,
+    acte: 4,
     condition: { type: "depart" },
     dialogue: [
-      { humeur: "emu", texte: "Alors c'est vrai. Ils existent. Là, dans ta vitrine… Laisse-moi les regarder encore un peu." },
+      { humeur: "emu", texte: "Alors c'est vrai. Ils existent. Je suis passé dix fois devant ta vitrine ce matin — et dix fois j'ai oublié ce que je venais y chercher." },
+      { humeur: "songeur", texte: "Mais un rêve accompli ne paie pas le loyer, et une vitrine n'est pas un mausolée. La boutique doit vivre — après moi, après les bijoux, après tout ça." },
+      { humeur: "souriant", texte: "Montre-moi que le métier continue : deux mille euros de ventes. Après quoi… j'ai une valise à faire, je crois." },
+    ],
+    payload: {
+      titre: "Que la boutique vive",
+      corps: [
+        "Cumuler **2 000 €** de ventes depuis l'acceptation.",
+        "« Une vitrine n'est pas un mausolée. Vends, petit — c'est comme ça qu'une boutique respire. »",
+      ],
+      cibles: [],
+      objectifs: [{ type: "ventesCumulees", montant: 2000 }],
+      recompense: { argent: 700 },
+    },
+  },
+  {
+    id: "trame_ch12",
+    ordre: 16,
+    acte: 4,
+    condition: { type: "depart" },
+    dialogue: [
+      { humeur: "emu", texte: "Laisse-moi les regarder encore un peu, avant de partir. On ne se lasse pas d'un rêve — même accompli." },
       { humeur: "rieur", texte: "Ta grand-mère dirait que le bleu du pichet leur allait mieux. Elle aurait raison, comme toujours." },
       { humeur: "songeur", texte: "Mon rêve est accompli — pas comme je l'imaginais : mieux. C'est toi qui l'as fini. Une histoire n'appartient jamais à celui qui la commence, tu sais." },
       { humeur: "souriant", texte: "Tiens : les clés. Toutes. Moi, j'ai un train demain — Venise d'abord, ensuite on verra. Je t'écrirai. Prends soin de la boutique… elle a toujours pris soin de nous." },

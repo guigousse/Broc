@@ -61,7 +61,7 @@ export const COURRIER_EN: Record<string, { titre: string; corps: string[] }> = {
   trame_ch5: {
     titre: "A name that travels",
     corps: [
-      "Reach **level 8** as a flea-market dealer.",
+      "Reach **level 30** as a flea-market dealer.",
       "“Your name is worth more than your till. Make it travel.”",
     ],
   },
@@ -112,6 +112,34 @@ export const COURRIER_EN: Record<string, { titre: string; corps: string[] }> = {
     corps: [
       "The shop is yours now. Grandpa is off travelling — he'll write.",
       "“A story never belongs to the one who begins it.”",
+    ],
+  },
+  trame_salons: {
+    titre: "A dealer among dealers",
+    corps: [
+      "Accumulate **€3,000** in sales from acceptance.",
+      "“Anyone can pull off one fine coup. A dealer is a till that sings every night.”",
+    ],
+  },
+  trame_grand_coup: {
+    titre: "The big score",
+    corps: [
+      "Make a profit of at least **€300** on a single sale.",
+      "“The eye is forged at the stalls. But it's in the salons that it gets tempered.”",
+    ],
+  },
+  trame_antichambre: {
+    titre: "The antechamber",
+    corps: [
+      "Reach **€5,000** in collection value.",
+      "“The Grand Salon doesn't read calling cards. It looks at showcases.”",
+    ],
+  },
+  trame_heritage: {
+    titre: "May the shop live on",
+    corps: [
+      "Accumulate **€2,000** in sales from acceptance.",
+      "“A showcase is not a mausoleum. Sell, kid — that's how a shop breathes.”",
     ],
   },
   invitation_tier2: {
