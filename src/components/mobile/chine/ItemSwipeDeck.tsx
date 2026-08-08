@@ -111,6 +111,18 @@ export function ItemSwipeDeck({
     }
   }, [currentItem]);
 
+  // Le tutoriel scripté verrouille le deck via `indexImpose` sans jamais
+  // passer par `go()` (qui early-return pendant le verrouillage) : sans
+  // cette resynchronisation, l'état interne `index` reste figé à sa valeur
+  // d'avant le script (0) pendant toute la session scriptée. Deux effets de
+  // bord sinon : l'effet des sons ci-dessus (basé sur `index`, pas
+  // `clampedIdx`) ne rejoue plus rien après la 1ère carte imposée, et le
+  // déverrouillage (indexImpose → null, à "chine-sortir") ferait retomber
+  // brutalement le deck sur la carte 0 au lieu de la dernière imposée.
+  useEffect(() => {
+    if (indexImpose !== null) setIndex(indexImpose);
+  }, [indexImpose]);
+
   const go = (delta: number) => {
     if (indexImpose !== null) return;
     const next = Math.min(slides.length - 1, Math.max(0, index + delta));
