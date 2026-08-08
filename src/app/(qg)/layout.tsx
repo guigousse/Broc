@@ -183,6 +183,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const [numeroColis, setNumeroColis] = useState(0);
   // Cadeau d'anniversaire (11 juin) : objet en cours de révélation.
   const [objetCadeau, setObjetCadeau] = useState<Objet | null>(null);
+  // Cérémonie du colis en cours de lancement (dialogue tuto_colis_cadeau
+  // joué avant l'ouverture du premier objet) — cf. onTap du QgColis plus bas
+  // et le onFini du DialogueOverlay qui ouvre le premier objet à sa clôture.
+  const [colisCadeauEnCours, setColisCadeauEnCours] = useState(false);
 
   // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
@@ -418,14 +422,28 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const etape = state?.tutorielEtape;
 
   // Dialogues automatiques du tutoriel au bureau. Un seul déclenchement par
-  // étape : l'étape n'avance qu'à la fin du dialogue (onFini), et l'effet ne
-  // rouvre pas si un dialogue est déjà affiché.
+  // étape en principe (l'étape n'avance qu'à la fin du dialogue, onFini, et
+  // l'effet ne rouvre pas si un dialogue est déjà affiché) — MAIS certaines
+  // étapes (collection-envoyer) ne font PAS avancer l'étape à leur onFini :
+  // sans garde, l'effet rejouerait le dialogue en boucle dès qu'il se ferme.
+  // `dialoguesQgJouesRef` protège contre ce cas — un id ne joue qu'une fois
+  // par montage. Un remount (nouvelle session) le réinitialise, ce qui est
+  // sans conséquence : l'étape aura déjà avancé pour les dialogues qui
+  // avancent, et les autres sont des moments uniques de la vie de la save.
+  const dialoguesQgJouesRef = useRef<Set<string>>(new Set());
+  const jouerDialogueQg = useCallback((seq: DialogueSequence) => {
+    if (dialoguesQgJouesRef.current.has(seq.id)) return;
+    dialoguesQgJouesRef.current.add(seq.id);
+    setDialogueQg(seq);
+  }, []);
   useEffect(() => {
     if (dialogueQg) return;
-    if (etape === "accueil") setDialogueQg(SEQUENCES_TUTORIEL.tuto_accueil);
-    else if (etape === "chine-sortir") setDialogueQg(SEQUENCES_TUTORIEL.tuto_retour);
-    else if (etape === "conclusion") setDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
-  }, [etape, dialogueQg]);
+    if (etape === "accueil") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_accueil);
+    else if (etape === "chine-sortir") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_retour);
+    else if (etape === "collection-envoyer") {
+      jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_peluche_collection);
+    } else if (etape === "conclusion") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
+  }, [etape, dialogueQg, jouerDialogueQg]);
 
   // Fin du tutoriel : la main a guidé jusqu'au carnet. Son ouverture clôt le
   // mini-tuto ET arme le premier chapitre de la trame (la lampe du grand-père),
@@ -582,6 +600,18 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                   <QgColis
                     onTap={() => {
                       playClick();
+                      // Premier tap (aucun objet encore retiré) : le grand-père
+                      // présente le colis avant qu'on l'ouvre — une seule fois,
+                      // le garde du ref empêche toute relecture au même montage.
+                      if (
+                        (state?.colisTutorielLivres ?? 0) === 0 &&
+                        !dialoguesQgJouesRef.current.has("tuto_colis_cadeau")
+                      ) {
+                        dialoguesQgJouesRef.current.add("tuto_colis_cadeau");
+                        setColisCadeauEnCours(true);
+                        setDialogueQg(SEQUENCES_TUTORIEL.tuto_colis_cadeau);
+                        return;
+                      }
                       const premier = ouvrirObjetColis();
                       if (premier) {
                         setNumeroColis((state?.colisTutorielLivres ?? 0) + 1);
@@ -947,6 +977,13 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             // cible est simplement prête pour la prochaine ouverture.
             setMissionCibleId(dialogueChapitreId);
             setDialogueChapitreId(null);
+          } else if (colisCadeauEnCours) {
+            setColisCadeauEnCours(false);
+            const premier = ouvrirObjetColis();
+            if (premier) {
+              setNumeroColis(1);
+              setObjetColis(premier);
+            }
           } else if (etape === "accueil") avancerTutoriel("aller-chiner");
           else if (etape === "chine-sortir") avancerTutoriel("stockage-ouvrir");
           else if (etape === "conclusion") terminerTutoriel();
