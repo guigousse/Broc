@@ -17,16 +17,54 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Empecemos por el principio: el mercadillo. La puerta está ahí — sígueme.",
   ],
   tuto_chine_entree: [
-    "Ah, el olor de las cosas viejas por la mañana… Mira los puestos: desliza de un objeto a otro, tómate tu tiempo.",
-    "Cuando un objeto te hable, regatea — o cómpralo al precio marcado si el corazón te lo pide. Venga, elige uno.",
+    "Ah, el olor de las cosas viejas por la mañana… Hoy te guío yo: cuatro objetos, cuatro lecciones.",
+    "Mira ese tocadiscos. Bonito, ¿eh? Despliega «Regatear» y ofrécele cuatro perras — a ver qué pasa.",
   ],
-  tuto_achat_fait: [
-    "¡Bien hecho! Tu abuela habría regateado dos céntimos más, pero es un comienzo.",
-    "Venga, volvamos. Sal por la salida, con tu tesoro bajo el brazo.",
+  tuto_nego_echec_avant: [
+    "Venga, atrévete: desliza el cursor hasta abajo del todo y haz la oferta. En el peor de los casos, gruñe.",
+  ],
+  tuto_nego_echec_apres: [
+    "¡Y ahí lo tienes, ofendido! Una oferta demasiado baja es como pisotearle el jardín: cada vendedor tiene su límite… y su carácter.",
+    "Con la experiencia — niveles, habilidades, el ojo que se afina — sabrás hasta dónde bajar sin ofender a nadie.",
+    "Le pasa a los mejores. Venga, siguiente puesto: te enseño lo contrario.",
+  ],
+  tuto_achat_direct_avant: [
+    "Esta jarra de cristal… a este precio, es un chollo. A veces no se regatea: se tienden los billetes antes de que lo haga otro.",
+  ],
+  tuto_achat_direct_apres: [
+    "Bien. Reconocer un buen chollo a la primera ya es parte del oficio.",
+  ],
+  tuto_nego_un_avant: [
+    "¡Un mando Vibraduo! Los coleccionistas se vuelven locos por ellos. Esta vez, regatea de verdad: quédate en la zona del cursor, ni muy bajo ni muy alto.",
+  ],
+  tuto_nego_un_apres: [
+    "¡Tu primer regateo logrado! ¿Has visto el ir y venir? Tú subes, él baja… y os encontráis en el medio.",
+  ],
+  tuto_nego_deux_avant: [
+    "Oh… un peluche de mohair. Tu abuela tenía uno igual en su sillón. Regatéamelo con cariño, ¿quieres?",
+  ],
+  tuto_nego_deux_apres: [
+    "¡Regateado como un maestro! Cuídalo bien, a ese… tengo mi propia idea sobre su futuro.",
+  ],
+  tuto_chine_sortir: [
+    "Ya hemos gastado bastante por hoy — guarda algo de dinero para después. Échale un vistazo a los últimos puestos si quieres, y luego sal por la salida.",
   ],
   tuto_retour: [
-    "Rebuscar es el placer. Vender es el oficio. Pero un puesto no se monta con un solo hallazgo…",
-    "Así que te he preparado un paquete: algunas piezas de la tienda para llenar tu primer escaparate. Te espera junto a la puerta — ¡ábrelo!",
+    "¡Tres hallazgos de una vez! Pero un vendedor que amontona es un vendedor que pierde. Cada cosa en su lugar.",
+    "Abre el Almacén, ahí abajo — te enseño la trastienda.",
+  ],
+  tuto_peluche_collection: [
+    "El peluche… No lo vendas, a ese. Hay objetos que se guardan — eso es una colección.",
+    "Mándalo a tu colección: toca su botoncito, ahí.",
+  ],
+  tuto_collection_lecon: [
+    "¿Ves esa cifra? El valor de tu colección. Es ella la que hace tu reputación de vendedor.",
+    "Y mira: el Mercadillo del domingo ya te abre sus puertas. ¡Empiezan a hablar de ti, chaval!",
+    "Ahora, la venta. Vuelve al despacho — la puerta nos espera.",
+  ],
+  tuto_colis_cadeau: [
+    "Una última cosa. Este paquete es de mi parte: algunas piezas de la tienda para que empieces.",
+    "Tienes el ojo, tienes la mano… el resto vendrá solo. Ábrelo, ¡y a trabajar!",
   ],
   tuto_vente_entree: [
     "Los clientes vendrán. Escúchalos, déjalos hablar… y nunca bajes tu precio demasiado rápido.",

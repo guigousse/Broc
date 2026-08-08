@@ -6,7 +6,7 @@ import { DialogueOverlay } from "./DialogueOverlay";
 import { GRAND_PERE_PORTRAITS, SEQUENCES_TUTORIEL } from "@/data/dialogues";
 import { LangueProvider } from "@/lib/i18n/LangueContext";
 
-const seq = SEQUENCES_TUTORIEL.tuto_achat_fait; // 2 lignes
+const seq = SEQUENCES_TUTORIEL.tuto_retour; // 2 lignes (tuto_achat_fait supprimé, Task 5)
 
 describe("DialogueOverlay", () => {
   afterEach(cleanup);
@@ -40,13 +40,13 @@ describe("DialogueOverlay", () => {
     const srcPortrait = () =>
       document.body.querySelector("img")?.getAttribute("src");
 
-    expect(seq.lignes[0].humeur).toBe("rieur");
-    expect(srcPortrait()).toBe(GRAND_PERE_PORTRAITS.rieur);
+    expect(seq.lignes[0].humeur).toBe("souriant");
+    expect(srcPortrait()).toBe(GRAND_PERE_PORTRAITS.souriant);
 
     await user.click(screen.getByRole("button", { name: /continuer/i }));
 
-    expect(seq.lignes[1].humeur).toBe("souriant");
-    expect(srcPortrait()).toBe(GRAND_PERE_PORTRAITS.souriant);
+    expect(seq.lignes[1].humeur).toBe("songeur");
+    expect(srcPortrait()).toBe(GRAND_PERE_PORTRAITS.songeur);
   });
 
   it("affiche le nom du PNJ dans la carte", () => {

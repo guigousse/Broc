@@ -17,16 +17,54 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "Let's start at the beginning: the flea market. The door's right there — follow me.",
   ],
   tuto_chine_entree: [
-    "Ah, the smell of old things in the early morning… Look at the stalls: swipe from one item to the next, take your time.",
-    "When an object speaks to you, haggle — or buy it at the asking price if your heart says so. Go on, pick one.",
+    "Ah, the smell of old things in the early morning… Today I'm the guide: four objects, four lessons.",
+    "Look at that turntable. Pretty, eh? Open “Haggle” and offer him next to nothing — let's see what happens.",
   ],
-  tuto_achat_fait: [
-    "Well done! Your grandmother would have haggled two pennies more, but it's a start.",
-    "Come on, let's head home. Out through the exit, treasure under your arm.",
+  tuto_nego_echec_avant: [
+    "Go on, dare: slide the cursor right down and make the offer. Worst case, he growls.",
+  ],
+  tuto_nego_echec_apres: [
+    "There — he's miffed! An offer that low is like trampling his flowerbeds: every seller has a threshold… and a temper.",
+    "With experience — levels, skills, a sharper eye — you'll know how low you can go without ruffling anyone.",
+    "It happens to the best of us. Next stall: let me show you the opposite.",
+  ],
+  tuto_achat_direct_avant: [
+    "That crystal carafe… at this price, it's a steal. Sometimes you don't haggle: you hand over the notes before someone else does.",
+  ],
+  tuto_achat_direct_apres: [
+    "Good. Spotting a bargain at first glance — that's the trade already.",
+  ],
+  tuto_nego_un_avant: [
+    "A Vibraduo controller! Collectors adore these. This time, haggle for real: stay inside the slider's zone — not too low, not too high.",
+  ],
+  tuto_nego_un_apres: [
+    "Your first successful haggle! Did you see the back-and-forth? You climb, he comes down… and you meet in the middle.",
+  ],
+  tuto_nego_deux_avant: [
+    "Oh… a mohair teddy bear. Your grandmother had the very same on her armchair. Haggle it for me nicely, will you?",
+  ],
+  tuto_nego_deux_apres: [
+    "Haggled like a pro! Take good care of that one… I have a little idea about its future.",
+  ],
+  tuto_chine_sortir: [
+    "We've spent enough for today — keep some coins for what's next. Browse the last stalls if you like, then take the exit.",
   ],
   tuto_retour: [
-    "Hunting is the pleasure. Selling is the trade. But you can't run a stall on a single find…",
-    "So I've packed you a parcel: a few pieces from the shop to fill your first window. It's waiting by the door — open it!",
+    "Three finds in one trip! But a dealer who piles things up is a dealer who loses them. A place for everything.",
+    "Open the Storage, down there — let me show you around the back room.",
+  ],
+  tuto_peluche_collection: [
+    "The teddy bear… Don't sell that one. Some objects are for keeping — that's what a collection is.",
+    "Send it to your collection: tap its little button, right there.",
+  ],
+  tuto_collection_lecon: [
+    "See that number? The value of your collection. That's what builds your reputation as a dealer.",
+    "And look: the Sunday flea market is already opening its doors to you. People are starting to talk, kid!",
+    "Now, selling. Back to the office — the door awaits.",
+  ],
+  tuto_colis_cadeau: [
+    "One last thing. This parcel is from me: a few pieces from the shop to get you started.",
+    "You have the eye, you have the hands… the rest will come. Open it, and to work!",
   ],
   tuto_vente_entree: [
     "The customers will come. Listen to them, let them talk… and never drop your price too fast.",

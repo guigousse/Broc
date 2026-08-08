@@ -363,7 +363,10 @@ export default function SessionChinePage() {
       },
     ]);
     if (etape === "chine-nego-echec") {
-      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_achat_fait);
+      // Temporaire (Task 5) : tuto_achat_fait supprimé, tuto_nego_echec_apres
+      // couvre déjà exactement ce cas (échec de négo). Task 7 rebranche cette
+      // page sur le script à 4 objets et retire cette étape ad hoc.
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_nego_echec_apres);
     }
     return true;
   };
