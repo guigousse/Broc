@@ -1,6 +1,9 @@
 import type { GameState, TutorielEtape } from "@/types/game";
 import { injecterLettreMamanSiAbsente } from "@/lib/courrier";
 import { COLIS_TUTORIEL_TAILLE } from "@/data/starterInventory";
+import {
+  SESSION_TUTORIEL, PELUCHE_TEMPLATE_ID, type ObjetScenario,
+} from "@/data/tutorielScenario";
 
 /** Ordre linéaire des étapes du tutoriel guidé (v2, brocante scriptée). */
 export const ETAPES_TUTORIEL: readonly TutorielEtape[] = [
@@ -106,4 +109,59 @@ export function chapitreDuCarnetDu(
   registreOuvert: "commandes" | "comptes" | null,
 ): boolean {
   return miniTuto === "ouvrir" && registreOuvert === "commandes";
+}
+
+/* === Scénario brocante scriptée ====================================== */
+
+/** Étapes de chine scriptée, dans l'ordre du deck (index = objet du scénario). */
+const ETAPES_CHINE_SCRIPTEE: readonly TutorielEtape[] = [
+  "chine-nego-echec", "chine-achat-direct", "chine-nego-un", "chine-nego-deux",
+];
+
+export function indexObjetScenario(etape: TutorielEtape): 0 | 1 | 2 | 3 | null {
+  const i = ETAPES_CHINE_SCRIPTEE.indexOf(etape);
+  return i === -1 ? null : (i as 0 | 1 | 2 | 3);
+}
+
+export function scenarioDeLEtape(etape: TutorielEtape): ObjetScenario | null {
+  const i = indexObjetScenario(etape);
+  return i === null ? null : SESSION_TUTORIEL[i];
+}
+
+/** Deck verrouillé sur la carte active pendant les 4 étapes scriptées. */
+export function deckVerrouille(etape: TutorielEtape): boolean {
+  return indexObjetScenario(etape) !== null;
+}
+
+/**
+ * Onglet de TabBar autorisé (et pointé par la main) pendant le tutoriel.
+ * null = aucun onglet permis (comportement historique : taps inertes).
+ */
+export function ongletTutorielPermis(
+  etape: TutorielEtape,
+): "/stockage" | "/collection" | "/bureau" | null {
+  switch (etape) {
+    case "stockage-ouvrir":
+    case "stockage-focus":
+    case "collection-envoyer":
+      return "/stockage";
+    case "collection-lecon":
+      return "/collection";
+    case "preparer-etal":
+      return "/bureau";
+    default:
+      return null;
+  }
+}
+
+/**
+ * Pendant le tutoriel, seule la peluche désignée par le grand-père peut
+ * rejoindre la collection — et uniquement à l'étape dédiée.
+ */
+export function donCollectionPermis(
+  etape: TutorielEtape,
+  templateId: string,
+): boolean {
+  if (etape === "termine") return true;
+  return etape === "collection-envoyer" && templateId === PELUCHE_TEMPLATE_ID;
 }
