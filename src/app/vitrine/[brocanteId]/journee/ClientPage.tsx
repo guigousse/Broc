@@ -1214,7 +1214,7 @@ export default function VitrineJourneePage() {
         portraits={GRAND_PERE_PORTRAITS}
         onFini={() => {
           setDialogueTuto(null);
-          if (etape === "preparer-etal") avancerTutoriel("premiere-vente");
+          if (etape === "coffre-trace-deux") avancerTutoriel("premiere-vente");
           else if (etape === "premiere-vente") avancerTutoriel("conclusion");
         }}
       />
