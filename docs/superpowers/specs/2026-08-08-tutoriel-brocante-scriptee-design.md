@@ -130,6 +130,23 @@ donc pleinement actif en partie neuve.
   grand-père : on a assez dépensé), main pulse sur « Sortir ». Bilan de session puis
   retour bureau, inchangés.
 
+### Les interventions du grand-père (avant / après chaque objet)
+
+Chaque objet scripté est **encadré** par le grand-père via `DialogueOverlay` : une
+consigne avant le geste, un débrief après. C'est lui qui porte les leçons — les
+bulles du `TutorielCoach` restent courtes et factuelles.
+
+| Étape | Avant (consigne) | Après (débrief) |
+|---|---|---|
+| `chine-nego-echec` | « Ce tourne-disque… tente ta chance, propose-lui trois fois rien, on verra bien. » | **La leçon d'échec** : pourquoi ça n'a pas marché (offre vexante, chaque vendeur a son seuil et son tempérament), et qu'**avec l'expérience** — niveaux, compétences, l'œil qui se fait — négocier deviendra bien plus facile. Dédramatise : ça arrive aux meilleurs. |
+| `chine-achat-direct` | La carafe est à prix honnête : parfois on ne négocie pas, on tend les billets avant qu'un autre ne le fasse. | Confirme le réflexe : reconnaître une bonne affaire, c'est déjà du métier. |
+| `chine-nego-un` | Guide la zone d'offre raisonnable (assez bas pour gratter, pas assez pour vexer). | Félicite la première négo réussie, nomme ce qui s'est joué (l'aller-retour, la concession du vendeur). |
+| `chine-nego-deux` | S'attendrit sur la peluche (elle lui rappelle quelque chose), pousse à la négocier. | Salue le joueur (« négocié comme un chef ») et glisse qu'il faudra en prendre soin — amorce de la mise en collection. |
+| `chine-sortir` | — | « On a assez dépensé pour aujourd'hui » : invite à sortir, garde des sous pour la suite. |
+
+Ces séquences s'ajoutent à `SEQUENCES_TUTORIEL` (`src/data/dialogues.ts`) avec les
+portraits existants (souriant / songeur / rieur…), déclinées dans les 4 langues.
+
 ### Négos garanties (bornes du curseur)
 
 - `NegoBar` expose déjà `minJoueur`/`maxJoueur` — le script borne la plage par étape.
