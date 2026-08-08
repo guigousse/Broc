@@ -174,6 +174,7 @@ export const es: DictionnaireUI = {
     colisTitre: "El paquete del abuelo",
     cadeauTitre: "¡Feliz cumpleaños!",
     colisRecuperer: "Recoger",
+    coachContinuer: "Toca para continuar",
     instructions: {
       "accueil": "Escucha a tu abuelo…",
       "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",

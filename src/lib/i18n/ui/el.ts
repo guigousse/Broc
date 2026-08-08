@@ -174,6 +174,7 @@ export const el: DictionnaireUI = {
     colisTitre: "Το δέμα του παππού",
     cadeauTitre: "Χρόνια πολλά!",
     colisRecuperer: "Παραλαβή",
+    coachContinuer: "Άγγιξε για να συνεχίσεις",
     instructions: {
       "accueil": "Άκου τον παππού σου…",
       "aller-chiner":

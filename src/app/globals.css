@@ -1619,6 +1619,12 @@ nav[aria-label="Navigation principale"] :focus-visible,
   left: 12px;
   scale: -1 1;
 }
+/* TutorielCoach : la découpe glisse d'une cible à la suivante — transition
+   sur le rect (top/left/width/height) plutôt qu'un cross-fade, pour que le
+   voile suive visuellement l'attention. */
+.coach-decoupe {
+  transition: all 260ms ease;
+}
 @media (prefers-reduced-motion: reduce) {
   .tuto-pulse {
     animation: none;
@@ -1629,6 +1635,9 @@ nav[aria-label="Navigation principale"] :focus-visible,
   .tuto-fleches::before,
   .tuto-fleches::after {
     animation: none;
+  }
+  .coach-decoupe {
+    transition: none;
   }
 }
 

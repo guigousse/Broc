@@ -177,6 +177,7 @@ export const fr = {
     colisTitre: "Le colis du grand-père",
     cadeauTitre: "Joyeux anniversaire !",
     colisRecuperer: "Récupérer",
+    coachContinuer: "Touche pour continuer",
     instructions: {
       "accueil": "Écoute ton grand-père…",
       "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",
