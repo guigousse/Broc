@@ -175,6 +175,14 @@ export const en: DictionnaireUI = {
     cadeauTitre: "Happy birthday!",
     colisRecuperer: "Collect",
     coachContinuer: "Tap to continue",
+    coachStockageCapacite:
+      "Your reserve: the Garage, 10 spots. Every find lands here after the flea market.",
+    coachStockageCategories:
+      "Filter by category to find your way once the reserve fills up.",
+    coachStockageObjet:
+      "Each row shows the item's condition — and its button to send it to your collection.",
+    coachStockageAmelioration:
+      "Later, you'll be able to expand it: cellar, then warehouse.",
     instructions: {
       "accueil": "Listen to your grandfather…",
       "aller-chiner": "Go through the door, choose “Pick”, then the Neighborhood Yard Sale.",

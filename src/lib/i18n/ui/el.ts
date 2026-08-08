@@ -175,6 +175,14 @@ export const el: DictionnaireUI = {
     cadeauTitre: "Χρόνια πολλά!",
     colisRecuperer: "Παραλαβή",
     coachContinuer: "Άγγιξε για να συνεχίσεις",
+    coachStockageCapacite:
+      "Το απόθεμά σου: το Γκαράζ, 10 θέσεις. Κάθε εύρημα καταλήγει εδώ μετά το παζάρι.",
+    coachStockageCategories:
+      "Φιλτράρισμα ανά κατηγορία για να βρίσκεσαι εύκολα όταν γεμίσει το απόθεμα.",
+    coachStockageObjet:
+      "Κάθε γραμμή δείχνει την κατάσταση του αντικειμένου — και το κουμπί για να το στείλεις στη συλλογή.",
+    coachStockageAmelioration:
+      "Αργότερα θα μπορείς να το επεκτείνεις: υπόγειο, μετά αποθήκη.",
     instructions: {
       "accueil": "Άκου τον παππού σου…",
       "aller-chiner":

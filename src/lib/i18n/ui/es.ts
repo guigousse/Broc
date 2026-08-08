@@ -175,6 +175,14 @@ export const es: DictionnaireUI = {
     cadeauTitre: "¡Feliz cumpleaños!",
     colisRecuperer: "Recoger",
     coachContinuer: "Toca para continuar",
+    coachStockageCapacite:
+      "Tu reserva: el Garaje, 10 plazas. Cada hallazgo llega aquí después del mercadillo.",
+    coachStockageCategories:
+      "Filtra por categoría para orientarte cuando la reserva se llene.",
+    coachStockageObjet:
+      "Cada fila muestra el estado del objeto, y su botón para enviarlo a la colección.",
+    coachStockageAmelioration:
+      "Más adelante podrás ampliarlo: sótano, luego nave.",
     instructions: {
       "accueil": "Escucha a tu abuelo…",
       "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",

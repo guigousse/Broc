@@ -178,6 +178,14 @@ export const fr = {
     cadeauTitre: "Joyeux anniversaire !",
     colisRecuperer: "Récupérer",
     coachContinuer: "Touche pour continuer",
+    coachStockageCapacite:
+      "Ta réserve : le Garage, 10 places. Chaque trouvaille y arrive après la brocante.",
+    coachStockageCategories:
+      "Filtre par catégorie pour t'y retrouver quand la réserve se remplit.",
+    coachStockageObjet:
+      "Chaque ligne montre l'état de l'objet — et son bouton pour l'envoyer en collection.",
+    coachStockageAmelioration:
+      "Plus tard, tu pourras agrandir : cave, puis hangar.",
     instructions: {
       "accueil": "Écoute ton grand-père…",
       "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",
