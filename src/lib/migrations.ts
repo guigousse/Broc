@@ -105,7 +105,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -346,13 +346,25 @@ function appliquerMigrations(loaded: GameState): GameState {
     };
   });
 
+  // v18 — la branche thématique « Œil aiguisé » (`cat.*.oeil_aiguise.*`,
+  // tolérance de négo vente) est remplacée par « Marchandage ». Ses ids sont
+  // retirés ICI, AVANT la purge générique — sinon `idsObsoletes` déclencherait
+  // le reset TOTAL des compétences. Le remboursement est versé plus bas
+  // (`remboursementV18`), au moment d'assembler le brocanteur final.
+  const RX_OEIL_AIGUISE_LEGACY = /^cat\..+\.oeil_aiguise\.([123])$/;
+  const idsMarchandageLegacy = (loaded.competencesDebloquees ?? []).filter(
+    (id) => RX_OEIL_AIGUISE_LEGACY.test(id),
+  );
+  const sansMarchandageLegacy = (loaded.competencesDebloquees ?? []).filter(
+    (id) => !RX_OEIL_AIGUISE_LEGACY.test(id),
+  );
+
   // Purge les compétences débloquées dont l'ID n'existe plus dans le catalogue.
   const validIds = new Set(COMPETENCES.map((c) => c.id));
-  const competencesValides = (loaded.competencesDebloquees ?? []).filter((id) =>
+  const competencesValides = sansMarchandageLegacy.filter((id) =>
     validIds.has(id),
   );
-  const idsObsoletes =
-    (loaded.competencesDebloquees ?? []).length !== competencesValides.length;
+  const idsObsoletes = sansMarchandageLegacy.length !== competencesValides.length;
 
   // Si schéma cat obsolète OU IDs de comp obsolètes, on reset les compétences débloquées.
   const resetCompetences = categoriesObsolètes || idsObsoletes;
@@ -486,16 +498,18 @@ function appliquerMigrations(loaded: GameState): GameState {
   // v18 (tutoriel brocante scriptée) : certaines étapes existent à l'identique
   // dans l'ancien ET le nouveau flux (ex. "preparer-etal") — la normalisation
   // ci-dessus ne peut donc pas les distinguer par simple appartenance à
-  // `ETAPES_TUTORIEL`. Une save < v18 encore en cours (ni "accueil" ni
-  // "termine") vient forcément de l'ancien flux : ses préconditions (colis,
-  // inventaire, objets manette/carafe) ne correspondent pas à ce que le
-  // nouveau flux attend à cette étape (ex. coffre-trace-un exige une manette
-  // que ce joueur n'a jamais reçue → Valider bloqué à vie). On fast-forward
-  // directement à "termine" plutôt que de laisser une étape piégée.
-  const saveLegacyAvantV18 =
-    typeof loaded.version === "number" && loaded.version < 18;
+  // `ETAPES_TUTORIEL`. Une save < v19 encore en cours (ni "accueil" ni
+  // "termine") vient forcément de l'ancien flux — v18 comprise : la refonte
+  // Marchandage (v18) a précédé le tutoriel v2 (v19). Ses préconditions
+  // (colis, inventaire, objets manette/carafe) ne correspondent pas à ce que
+  // le nouveau flux attend à cette étape (ex. coffre-trace-un exige une
+  // manette que ce joueur n'a jamais reçue → Valider bloqué à vie). On
+  // fast-forward directement à "termine" plutôt que de laisser une étape
+  // piégée.
+  const saveLegacyAvantV19 =
+    typeof loaded.version === "number" && loaded.version < 19;
   const tutorielEtape: TutorielEtape =
-    saveLegacyAvantV18 &&
+    saveLegacyAvantV19 &&
     tutorielEtapeNormalisee !== "accueil" &&
     tutorielEtapeNormalisee !== "termine"
       ? "termine"
@@ -574,8 +588,12 @@ function appliquerMigrations(loaded: GameState): GameState {
   // mission `livree`), SANS récompense rétroactive (ni ledger, ni XP, ni
   // points bonus — cf. `courrierDeChapitre`, qui ne passe pas par
   // `accepterChapitre`) :
-  //  - niveau (anciens seuils) : ≥T2 ⇒ ch4, ≥T3 ⇒ ch8, ≥T4 ⇒ ch10
-  //  - anciens chapitres livrés : ch1⇒1, ch2⇒4, ch3⇒8, ch4⇒10, ch5⇒11
+  //  - niveau (anciens seuils) : ≥T2 ⇒ ordre 4, ≥T3 ⇒ ordre 8, ≥T4 ⇒ ordre 13
+  //  - anciens chapitres livrés : ch1⇒1, ch2⇒4, ch3⇒8, ch4⇒13, ch5⇒14
+  // (ordres 13/14 = « L'invitation »/« Les bijoux » depuis l'extension 4 actes
+  // du 2026-08-07 — les ordres suivent le reséquencement pour ne jamais
+  // re-verrouiller le Grand Salon, quitte à injecter aussi les chapitres
+  // intermédiaires ajoutés depuis.)
   // On prend le max des deux sources. Les anciens courriers/missions
   // `principale_*` sont conservés tels quels (archive).
   //
@@ -593,12 +611,29 @@ function appliquerMigrations(loaded: GameState): GameState {
   // seule fois, au passage v14 → v15. Utilisé plus bas, au moment
   // d'assembler le `brocanteur` final.
   const dejaV15 = typeof loaded.version === "number" && loaded.version >= 15;
+  // v18 — remboursement de la branche « Œil aiguisé » retirée (cf. le strip
+  // AVANT la purge générique, plus haut), au barème effectivement PAYÉ :
+  //  · v9-14 : ancien barème (coût = numéro du palier, 1/2/3) ;
+  //  · v15-17 : 1 pt par palier (refonte v15) ;
+  //  · < v9 : 0 — le recalc legacy (`niveau + bonus − dépenses`) repart de la
+  //    liste déjà expurgée, un remboursement compterait l'écart deux fois ;
+  //  · ≥ v18 : 0 (idempotence — les ids n'existent plus dans ces saves).
+  // Versé sur le brocanteur AVANT `appliquerRefonteCoutsV15`, dont l'écrêtage
+  // inconditionnel garantit l'invariant disponibles + dépensés ≤ 96.
+  const dejaV18 = typeof loaded.version === "number" && loaded.version >= 18;
+  const remboursementV18 =
+    !dejaV9 || dejaV18
+      ? 0
+      : idsMarchandageLegacy.reduce((acc, id) => {
+          const palier = Number(RX_OEIL_AIGUISE_LEGACY.exec(id)?.[1] ?? "0");
+          return acc + (dejaV15 ? 1 : palier);
+        }, 0);
   const ANCIENS_CHAPITRES_VERS_ORDRE_TRAME: Record<string, number> = {
     principale_ch1: 1,
     principale_ch2: 4,
     principale_ch3: 8,
-    principale_ch4: 10,
-    principale_ch5: 11,
+    principale_ch4: 13,
+    principale_ch5: 14,
   };
   let courriersAvecTrame = courriersFinaux;
   let missionsAvecTrame = missionsFinales;
@@ -618,7 +653,7 @@ function appliquerMigrations(loaded: GameState): GameState {
     const niveauFinalTrame = brocanteurConverti.niveau;
     if (niveauFinalTrame >= NIVEAU_BROCANTES_T2) maxOrdreTrame = 4;
     if (niveauFinalTrame >= NIVEAU_BROCANTES_T3) maxOrdreTrame = 8;
-    if (niveauFinalTrame >= NIVEAU_BROCANTES_T4) maxOrdreTrame = 10;
+    if (niveauFinalTrame >= NIVEAU_BROCANTES_T4) maxOrdreTrame = 13;
     for (const m of missionsExistantes) {
       const ordre = ANCIENS_CHAPITRES_VERS_ORDRE_TRAME[m.courrierId];
       if (m.statut === "livree" && ordre) {
@@ -803,7 +838,15 @@ function appliquerMigrations(loaded: GameState): GameState {
       (() => {
         // `brocanteurFinalV9`/`brocanteurConverti` sont calculés plus haut (avant
         // l'amorce des quêtes principales, cf. commentaire associé).
-        if (brocanteurFinalV9) return brocanteurFinalV9;
+        // v18 : le remboursement de la branche « Œil aiguisé » retirée est
+        // versé ici (saves v9+ uniquement, cf. `remboursementV18`) — l'écrêtage
+        // de `appliquerRefonteCoutsV15` le borne juste en dessous.
+        if (brocanteurFinalV9)
+          return {
+            ...brocanteurFinalV9,
+            pointsDisponibles:
+              brocanteurFinalV9.pointsDisponibles + remboursementV18,
+          };
         // < v9 : refund du pool = niveau + bonus chapitres − points déjà dépensés.
         const chapitresLivres = missionsFinales.filter((m) => {
           if (m.statut !== "livree") return false;

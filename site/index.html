@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BROC — Chinez. Négociez. Collectionnez.</title>
+  <meta name="description" content="Le jeu de brocante où chaque objet a une histoire. Chinez, négociez, collectionnez — gratuit sur iPhone et iPad.">
+  <meta name="apple-itunes-app" content="app-id=6784023113">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta property="og:title" content="BROC — Chinez. Négociez. Collectionnez.">
+  <meta property="og:description" content="Le jeu de brocante où chaque objet a une histoire. Gratuit sur iPhone et iPad.">
+  <meta property="og:image" content="https://project-5yn6d.vercel.app/assets/og.jpg">
+  <meta property="og:url" content="https://project-5yn6d.vercel.app/">
+  <meta property="og:type" content="website">
+  <link rel="preload" href="/assets/fonts/g05.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/g15.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/fonts.css">
+  <style>
+    :root {
+      --encre: #181009;
+      --bouteille: #1e3527;
+      --bouteille-sombre: #16281e;
+      --creme: #f3ead8;
+      --creme-douce: #e6d9bd;
+      --or: #c9a34a;
+      --or-clair: #e9d8a6;
+      --sepia: #8a6b45;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--encre);
+      color: var(--creme);
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 20px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--or-clair);
+      outline-offset: 4px;
+      border-radius: 2px;
+    }
+    img { max-width: 100%; height: auto; display: block; }
+
+    /* ——— Héros ——— */
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden;
+      text-align: center;
+    }
+    .hero-bg, .hero-bg img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .hero-bg img { object-fit: cover; object-position: 50% 62%; }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(24,16,9,0) 42%, rgba(24,16,9,.62) 76%, var(--encre) 100%);
+      pointer-events: none;
+    }
+    .hero > :not(.hero-bg) { position: relative; z-index: 1; }
+    .hero-haut { padding-top: clamp(28px, 6svh, 64px); }
+    .hero-haut svg {
+      width: min(430px, 80vw);
+      height: auto;
+      filter: drop-shadow(0 2px 10px rgba(58, 42, 18, .35));
+    }
+    .hero-bas {
+      padding: 0 24px calc(clamp(28px, 6svh, 56px));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .tagline {
+      font-family: Cinzel, "Cormorant Garamond", serif;
+      font-weight: 600;
+      font-size: clamp(21px, 4.6vw, 34px);
+      letter-spacing: .06em;
+      color: var(--creme);
+      text-shadow: 0 1px 3px rgba(24, 16, 9, .8), 0 0 24px rgba(24, 16, 9, .45);
+    }
+    .sous-tagline {
+      max-width: 34em;
+      font-size: clamp(17px, 2.4vw, 21px);
+      color: var(--creme-douce);
+      text-shadow: 0 1px 3px rgba(24, 16, 9, .85);
+    }
+    .badge { display: inline-block; margin-top: 6px; }
+    .badge img { height: 56px; width: auto; }
+
+    /* Mobile : le ciel est clair derrière le wordmark → version encre sépia */
+    @media (max-width: 899px) {
+      .hero-haut svg { filter: none; }
+      .hero-haut svg [fill="#F1E3BF"] { fill: #4f3d18; }
+      .hero-haut svg [fill="#D9C07A"] { fill: #6d5526; }
+      .hero-haut svg [fill="url(#brass-l)"] { fill: #6d5526; }
+      .hero-haut svg [stroke="#D9C07A"] { stroke: #6d5526; }
+      .hero-haut svg [stroke="#B08838"] { stroke: #4f3d18; }
+    }
+
+    /* Desktop : texte à gauche, la scène de l'étal dégagée à droite */
+    @media (min-width: 900px) {
+      .hero {
+        justify-content: center;
+        align-items: flex-start;
+        gap: 10px;
+        padding-left: clamp(48px, 8vw, 130px);
+        text-align: left;
+      }
+      .hero-haut { padding-top: 0; }
+      .hero-haut svg { width: min(430px, 34vw); }
+      .hero-bas { padding: 14px 0 0; align-items: flex-start; }
+      .sous-tagline { max-width: 24em; }
+      .hero-bg img { object-position: 88% 60%; }
+      .hero::after {
+        background:
+          linear-gradient(90deg, rgba(24,16,9,.96) 4%, rgba(24,16,9,.72) 34%, rgba(24,16,9,0) 66%),
+          linear-gradient(180deg, rgba(24,16,9,0) 82%, var(--encre) 100%);
+      }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .hero-haut, .hero-bas { animation: lever 1.1s ease-out both; }
+      .hero-bas { animation-delay: .25s; }
+      @keyframes lever {
+        from { opacity: 0; transform: translateY(14px); }
+        to { opacity: 1; transform: none; }
+      }
+    }
+
+    /* ——— Les trois verbes ——— */
+    .verbes {
+      position: relative;
+      background: linear-gradient(180deg, var(--encre), var(--bouteille-sombre) 18%, var(--bouteille) 50%, var(--bouteille-sombre) 100%);
+      padding: clamp(56px, 10vw, 96px) 24px;
+    }
+    .verbes-grille {
+      max-width: 1020px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(28px, 5vw, 64px);
+      text-align: center;
+    }
+    @media (max-width: 720px) { .verbes-grille { grid-template-columns: 1fr; max-width: 26em; } }
+    .verbe h2 {
+      font-family: Cinzel, serif;
+      font-weight: 700;
+      font-size: clamp(19px, 2.2vw, 23px);
+      letter-spacing: .22em;
+      color: var(--or-clair);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .verbe p { color: var(--creme-douce); font-size: clamp(18px, 2vw, 21px); }
+    .filet { width: 120px; margin: 0 auto clamp(36px, 6vw, 56px); display: block; opacity: .9; }
+
+    /* ——— Le bac à trouvailles ——— */
+    .bac {
+      background: var(--encre);
+      padding: clamp(56px, 9vw, 88px) 0 clamp(48px, 7vw, 72px);
+      text-align: center;
+    }
+    .bac h2 {
+      font-family: Cinzel, serif;
+      font-weight: 700;
+      font-size: clamp(24px, 3.4vw, 34px);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--or);
+    }
+    .bac-sous {
+      color: var(--sepia);
+      margin: 10px 24px 0;
+      font-size: clamp(17px, 2vw, 20px);
+    }
+    .bac-rail {
+      display: flex;
+      gap: clamp(18px, 3vw, 30px);
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding: clamp(30px, 4vw, 44px) max(24px, calc(50vw - 560px)) 22px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--sepia) transparent;
+    }
+    .bac-rail figure {
+      scroll-snap-align: center;
+      flex: 0 0 auto;
+      width: clamp(210px, 56vw, 260px);
+      transform: rotate(-1.6deg);
+      transition: transform .25s ease;
+    }
+    .bac-rail figure:nth-child(2n) { transform: rotate(1.4deg) translateY(8px); }
+    .bac-rail figure:hover { transform: rotate(0) translateY(-2px); }
+    @media (prefers-reduced-motion: reduce) {
+      .bac-rail figure, .bac-rail figure:hover { transform: none; transition: none; }
+    }
+    .bac-rail img {
+      width: 100%;
+      height: auto;
+      border-radius: 14px;
+      border: 1px solid rgba(201, 163, 74, .55);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .5);
+      background: var(--bouteille-sombre);
+    }
+    .bac-cadre { position: relative; }
+    .bac-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 1px solid rgba(201, 163, 74, .7);
+      background: rgba(24, 16, 9, .72);
+      color: var(--or-clair);
+      font-size: 26px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background .2s ease, color .2s ease;
+    }
+    .bac-btn:hover { background: rgba(201, 163, 74, .9); color: var(--encre); }
+    .bac-btn-prec { left: clamp(8px, 2vw, 28px); }
+    .bac-btn-suiv { right: clamp(8px, 2vw, 28px); }
+    @media (max-width: 640px) { .bac-btn { width: 40px; height: 40px; font-size: 22px; } }
+    .bac-indice {
+      font-family: "DM Mono", "Courier Prime", monospace;
+      font-size: 13px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--sepia);
+    }
+
+    /* ——— Appel final ——— */
+    .fin {
+      background: linear-gradient(180deg, var(--encre), #241809 60%, #2c1e0c 100%);
+      text-align: center;
+      padding: clamp(48px, 8vw, 80px) 24px clamp(56px, 9vw, 88px);
+    }
+    .fin img.icone {
+      width: 96px;
+      border-radius: 22px;
+      margin: 0 auto 18px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .55), 0 0 0 1px rgba(201, 163, 74, .4);
+    }
+    .fin h2 {
+      font-family: Cinzel, serif;
+      font-weight: 700;
+      font-size: clamp(22px, 3vw, 30px);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--or-clair);
+      margin-bottom: 6px;
+    }
+    .fin p { color: var(--creme-douce); margin-bottom: 20px; }
+
+    /* ——— Pied de page ——— */
+    footer {
+      background: var(--creme);
+      color: #2b2418;
+      text-align: center;
+      padding: 36px 24px 44px;
+    }
+    footer nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px 28px;
+      font-family: Cinzel, serif;
+      font-size: 15px;
+      letter-spacing: .08em;
+    }
+    footer nav a { color: #5a4a24; text-decoration: none; border-bottom: 1px solid rgba(90, 74, 36, .35); }
+    footer nav a:hover { border-bottom-color: #5a4a24; }
+    .mention {
+      margin-top: 18px;
+      font-size: 16px;
+      color: #6b5a2e;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="hero-bg" aria-hidden="true">
+      <picture>
+        <source media="(max-width: 640px)" srcset="/assets/hero-900.webp">
+        <img src="/assets/hero-1600.webp" alt="" fetchpriority="high">
+      </picture>
+    </div>
+
+    <div class="hero-haut">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" role="img" aria-label="BROC">
+        <defs>
+          <linearGradient id="brass-l" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#F1E3BF"></stop>
+            <stop offset="0.5" stop-color="#D9C07A"></stop>
+            <stop offset="1" stop-color="#8A6A26"></stop>
+          </linearGradient>
+        </defs>
+        <g fill="url(#brass-l)" stroke="#B08838" stroke-width="0.75">
+          <g transform="translate(300 40)">
+            <rect x="-1" y="-32" width="2" height="22"></rect>
+            <g transform="rotate(20)"><rect x="-1" y="-32" width="2" height="18"></rect></g>
+            <g transform="rotate(-20)"><rect x="-1" y="-32" width="2" height="18"></rect></g>
+            <g transform="rotate(40)"><rect x="-1" y="-32" width="2" height="14"></rect></g>
+            <g transform="rotate(-40)"><rect x="-1" y="-32" width="2" height="14"></rect></g>
+            <g transform="rotate(60)"><rect x="-1" y="-32" width="2" height="10"></rect></g>
+            <g transform="rotate(-60)"><rect x="-1" y="-32" width="2" height="10"></rect></g>
+            <circle r="4"></circle>
+          </g>
+        </g>
+        <g stroke="#D9C07A" fill="none">
+          <line x1="60" y1="60" x2="540" y2="60" stroke-width="1.2"></line>
+          <line x1="60" y1="64" x2="540" y2="64" stroke-width="0.6"></line>
+          <line x1="60" y1="180" x2="540" y2="180" stroke-width="1.2"></line>
+          <line x1="60" y1="176" x2="540" y2="176" stroke-width="0.6"></line>
+        </g>
+        <g font-family="Cinzel, serif" font-weight="700" font-size="92" letter-spacing="14" text-anchor="middle" fill="#F1E3BF">
+          <text x="300" y="148">BROC</text>
+        </g>
+        <g font-family="Courier Prime, monospace" font-size="11" letter-spacing="6" text-anchor="middle" fill="#D9C07A">
+          <text x="300" y="200">— EST. EN BROCANTE —</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="hero-bas">
+      <p class="tagline" data-i18n="tagline">Chinez. Négociez. Collectionnez.</p>
+      <p class="sous-tagline" data-i18n="sub">Le jeu de brocante où chaque objet a une histoire. Gratuit sur iPhone et iPad.</p>
+      <a class="badge" href="https://apps.apple.com/app/id6784023113">
+        <img id="badge-img" src="/assets/badge-fr.svg" alt="Télécharger dans l’App Store" data-i18n-alt="badgeAlt">
+      </a>
+    </div>
+  </header>
+
+  <section class="verbes">
+    <img class="filet" src="/assets/deco-divider.svg" alt="">
+    <div class="verbes-grille">
+      <div class="verbe">
+        <h2 data-i18n="v1t">Chiner</h2>
+        <p data-i18n="v1p">Levez-vous à l’aube, fouillez les étals et repérez la perle sous la poussière.</p>
+      </div>
+      <div class="verbe">
+        <h2 data-i18n="v2t">Négocier</h2>
+        <p data-i18n="v2p">Chaque vendeur a son tempérament&nbsp;: discutez le prix sans froisser personne.</p>
+      </div>
+      <div class="verbe">
+        <h2 data-i18n="v3t">Collectionner</h2>
+        <p data-i18n="v3p">Restaurez vos trouvailles, garnissez vos étagères, revendez au bon moment.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="bac">
+    <h2 data-i18n="bacT">Fouillez le bac</h2>
+    <p class="bac-sous" data-i18n="bacSub">Six aperçus du jeu, à faire défiler comme des cadres chinés.</p>
+    <div class="bac-cadre">
+    <button class="bac-btn bac-btn-prec" type="button" aria-controls="bac" aria-label="Capture précédente" data-dir="-1">‹</button>
+    <button class="bac-btn bac-btn-suiv" type="button" aria-controls="bac" aria-label="Capture suivante" data-dir="1">›</button>
+    <div class="bac-rail" id="bac">
+      <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/01-chiner.webp" alt="Écran de chine : un feuillet rare proposé par une vendeuse" data-shot="01-chiner"></figure>
+      <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/02-negocier.webp" alt="Négociation avec un vendeur au tempérament bien trempé" data-shot="02-negocier"></figure>
+      <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/03-vendre.webp" alt="Votre étal de vente à la brocante" data-shot="03-vendre"></figure>
+      <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/04-collection.webp" alt="Étagères de collection garnies de trouvailles" data-shot="04-collection"></figure>
+      <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/05-musiques.webp" alt="Le gramophone et les vinyles à écouter" data-shot="05-musiques"></figure>
+      <figure><img loading="lazy" width="560" height="1212" src="/assets/shots/fr/06-personnages.webp" alt="Les personnages hauts en couleur de la brocante" data-shot="06-personnages"></figure>
+    </div>
+    </div>
+    <p class="bac-indice" data-i18n="bacHint">→ faire défiler</p>
+  </section>
+
+  <section class="fin">
+    <img class="icone" src="/assets/icon-120.webp" alt="" width="120" height="120">
+    <h2 data-i18n="ctaT">La brocante vous attend</h2>
+    <p data-i18n="ctaP">Gratuit sur iPhone et iPad.</p>
+    <a class="badge" href="https://apps.apple.com/app/id6784023113">
+      <img class="badge-suiveur" src="/assets/badge-fr.svg" alt="Télécharger dans l’App Store" data-i18n-alt="badgeAlt">
+    </a>
+  </section>
+
+  <footer>
+    <nav>
+      <a href="/mentions-legales" data-i18n="fLegal">Mentions légales</a>
+      <a href="/privacy" data-i18n="fPrivacy">Politique de confidentialité</a>
+      <a href="mailto:broc.le.jeu@gmail.com" data-i18n="fContact">Nous écrire</a>
+    </nav>
+    <p class="mention" data-i18n="fMade">© 2026 Guillaume Fenard · BROC est un jeu indépendant conçu en France.</p>
+  </footer>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    "name": "Broc: Flea Market Game",
+    "operatingSystem": "iOS",
+    "applicationCategory": "GameApplication",
+    "url": "https://apps.apple.com/app/id6784023113",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+  }
+  </script>
+
+  <script>
+    (function () {
+      var rail = document.getElementById("bac");
+      var reduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      document.querySelectorAll(".bac-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var fig = rail.querySelector("figure");
+          var pas = fig.getBoundingClientRect().width + (parseFloat(getComputedStyle(rail).gap) || 24);
+          rail.scrollBy({ left: pas * Number(btn.dataset.dir), behavior: reduit ? "auto" : "smooth" });
+        });
+      });
+    })();
+    (function () {
+      var T = {
+        en: {
+          tagline: "Hunt. Haggle. Collect.",
+          sub: "The flea-market game where every find tells a story. Free on iPhone and iPad.",
+          badgeAlt: "Download on the App Store",
+          v1t: "Hunt", v1p: "Rise at dawn, comb the stalls and spot the gem beneath the dust.",
+          v2t: "Haggle", v2p: "Every seller has a temper: talk the price down without ruffling feathers.",
+          v3t: "Collect", v3p: "Restore your finds, fill your shelves, resell at just the right time.",
+          bacT: "Dig through the crate",
+          bacSub: "Six glimpses of the game — flip through them like frames at a flea market.",
+          bacHint: "→ scroll",
+          ctaT: "The flea market awaits", ctaP: "Free on iPhone and iPad.",
+          fLegal: "Legal notice", fPrivacy: "Privacy policy", fContact: "Get in touch",
+          fMade: "© 2026 Guillaume Fenard · BROC is an indie game made in France."
+        },
+        es: {
+          tagline: "Rebusca. Regatea. Colecciona.",
+          sub: "El juego de mercadillo donde cada hallazgo cuenta una historia. Gratis en iPhone y iPad.",
+          badgeAlt: "Descárgalo en el App Store",
+          v1t: "Rebuscar", v1p: "Madruga, recorre los puestos y distingue la joya bajo el polvo.",
+          v2t: "Regatear", v2p: "Cada vendedor tiene su carácter: discute el precio sin ofender a nadie.",
+          v3t: "Coleccionar", v3p: "Restaura tus hallazgos, llena tus estanterías y revende en el momento justo.",
+          bacT: "Rebusca en la caja",
+          bacSub: "Seis vistazos al juego, para hojear como cuadros de mercadillo.",
+          bacHint: "→ desliza",
+          ctaT: "El mercadillo te espera", ctaP: "Gratis en iPhone y iPad.",
+          fLegal: "Aviso legal", fPrivacy: "Política de privacidad", fContact: "Escríbenos",
+          fMade: "© 2026 Guillaume Fenard · BROC es un juego independiente hecho en Francia."
+        },
+        el: {
+          tagline: "Ψάξτε. Παζαρέψτε. Συλλέξτε.",
+          sub: "Το παιχνίδι του παζαριού όπου κάθε εύρημα κρύβει μια ιστορία. Δωρεάν σε iPhone και iPad.",
+          badgeAlt: "Διαθέσιμο στο App Store",
+          v1t: "Ψάξιμο", v1p: "Ξυπνήστε την αυγή, ψάξτε τους πάγκους και βρείτε το διαμάντι κάτω από τη σκόνη.",
+          v2t: "Παζάρι", v2p: "Κάθε πωλητής έχει τον χαρακτήρα του: κατεβάστε την τιμή χωρίς να προσβάλετε κανέναν.",
+          v3t: "Συλλογή", v3p: "Αναπαλαιώστε τα ευρήματά σας, γεμίστε τα ράφια σας, μεταπωλήστε την κατάλληλη στιγμή.",
+          bacT: "Ψάξτε στο κιβώτιο",
+          bacSub: "Έξι ματιές στο παιχνίδι — ξεφυλλίστε τις σαν κορνίζες σε παζάρι.",
+          bacHint: "→ σύρετε",
+          ctaT: "Το παζάρι σας περιμένει", ctaP: "Δωρεάν σε iPhone και iPad.",
+          fLegal: "Νομικές πληροφορίες", fPrivacy: "Πολιτική απορρήτου", fContact: "Επικοινωνία",
+          fMade: "© 2026 Guillaume Fenard · Το BROC είναι ανεξάρτητο παιχνίδι φτιαγμένο στη Γαλλία."
+        }
+      };
+      var langs = navigator.languages || [navigator.language || "fr"];
+      var lang = "en";
+      for (var i = 0; i < langs.length; i++) {
+        var l = String(langs[i]).slice(0, 2).toLowerCase();
+        if (l === "fr" || T[l]) { lang = l; break; }
+      }
+      if (lang === "fr") return;
+      var d = T[lang];
+      document.documentElement.lang = lang;
+      document.querySelectorAll("[data-i18n]").forEach(function (el) {
+        var v = d[el.getAttribute("data-i18n")];
+        if (v) el.textContent = v;
+      });
+      document.querySelectorAll("[data-i18n-alt]").forEach(function (el) {
+        var v = d[el.getAttribute("data-i18n-alt")];
+        if (v) el.alt = v;
+      });
+      document.querySelectorAll("img[src^='/assets/badge-']").forEach(function (el) {
+        el.src = "/assets/badge-" + lang + ".svg";
+      });
+      document.querySelectorAll("img[data-shot]").forEach(function (el) {
+        el.src = "/assets/shots/" + lang + "/" + el.getAttribute("data-shot") + ".webp";
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 import { BROCANTES } from "@/data/brocantes";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
+import { ID_GRANDE_BRADERIE } from "@/lib/evenements";
+import { vinylesCadeauxExclus } from "@/lib/anniversaire";
 import {
   getTemplate,
   poolPourTier,
@@ -19,6 +21,10 @@ export function objetsAtteignables(state: GameState): ObjetTemplate[] {
 
   const parTemplateId = new Map<string, ObjetTemplate>();
   for (const b of BROCANTES) {
+    // La braderie (2 jours/an) ne doit pas rendre son pool « atteignable »
+    // pour la génération de quêtes : les cibles deviendraient introuvables
+    // le reste de l'année.
+    if (b.id === ID_GRANDE_BRADERIE) continue;
     if (!idsDebloquees.has(b.id)) continue;
     for (const t of poolPourTier(b.tier)) parTemplateId.set(t.templateId, t);
     for (const exclId of b.poolExclusif) {
@@ -26,7 +32,11 @@ export function objetsAtteignables(state: GameState): ObjetTemplate[] {
       if (t) parTemplateId.set(t.templateId, t);
     }
   }
+  // Les vinyles cadeau d'anniversaire non encore offerts sont exclus de tous
+  // les tirages de chine (cf. vinylesCadeauxExclus) : une quête ne doit donc
+  // jamais les cibler tant qu'ils restent inaccessibles.
+  const exclus = vinylesCadeauxExclus(state);
   return [...parTemplateId.values()].filter(
-    (t) => !t.unique && t.rarete !== "legendaire",
+    (t) => !t.unique && t.rarete !== "legendaire" && !exclus.has(t.templateId),
   );
 }

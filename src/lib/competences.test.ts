@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { CompetenceDef, CompetenceId, GameState } from "@/types/game";
 import {
   aCompetence,
-  bonusToleranceCategorie,
+  aSpecialisteCategorie,
+  bonusPassionCategorie,
+  bonusMarchandageCategorie,
   bonusToleranceNegoGeneral,
   contexteDepuisState,
   etatCompetence,
@@ -196,43 +198,118 @@ describe("etatCompetence v2 — pool global (paliers gatés par points + niveau 
   });
 });
 
-describe("bonusToleranceCategorie — Œil aiguisé", () => {
+describe("bonusPassionCategorie — Passion", () => {
   it("retourne 0 sans compétence débloquée", () => {
-    expect(bonusToleranceCategorie(stateAvec([]), "Musique")).toBe(0);
+    expect(bonusPassionCategorie(stateAvec([]), "Musique")).toBe(0);
   });
 
-  it("retourne 0.10 au palier 1", () => {
+  it("retourne 0.05 au palier 1", () => {
     expect(
-      bonusToleranceCategorie(
-        stateAvec(["cat.Musique.oeil_aiguise.1" as CompetenceId]),
+      bonusPassionCategorie(
+        stateAvec(["cat.Musique.passion.1" as CompetenceId]),
+        "Musique",
+      ),
+    ).toBe(0.05);
+  });
+
+  it("retourne 0.10 au palier 2 (écrase le palier 1)", () => {
+    expect(
+      bonusPassionCategorie(
+        stateAvec([
+          "cat.Musique.passion.1" as CompetenceId,
+          "cat.Musique.passion.2" as CompetenceId,
+        ]),
         "Musique",
       ),
     ).toBe(0.10);
   });
 
-  it("retourne 0.20 au palier 2 (écrase le palier 1)", () => {
+  it("retourne 0.20 au palier 3 (écrase les paliers inférieurs)", () => {
     expect(
-      bonusToleranceCategorie(
+      bonusPassionCategorie(
         stateAvec([
-          "cat.Musique.oeil_aiguise.1" as CompetenceId,
-          "cat.Musique.oeil_aiguise.2" as CompetenceId,
+          "cat.Musique.passion.1" as CompetenceId,
+          "cat.Musique.passion.2" as CompetenceId,
+          "cat.Musique.passion.3" as CompetenceId,
         ]),
         "Musique",
       ),
     ).toBe(0.20);
   });
 
-  it("retourne 0.30 au palier 3 (écrase les paliers inférieurs)", () => {
+  it("ne déborde pas sur une autre catégorie", () => {
     expect(
-      bonusToleranceCategorie(
+      bonusPassionCategorie(
+        stateAvec(["cat.Musique.passion.3" as CompetenceId]),
+        "Mode",
+      ),
+    ).toBe(0);
+  });
+});
+
+describe("aSpecialisteCategorie — compat palier ≥ 2", () => {
+  it("faux au palier 1, vrai dès le palier 2", () => {
+    expect(
+      aSpecialisteCategorie(
+        stateAvec(["cat.Musique.passion.1" as CompetenceId]),
+        "Musique",
+      ),
+    ).toBe(false);
+    expect(
+      aSpecialisteCategorie(
+        stateAvec(["cat.Musique.passion.2" as CompetenceId]),
+        "Musique",
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("bonusMarchandageCategorie — Marchandage", () => {
+  it("retourne 0 sans compétence débloquée", () => {
+    expect(bonusMarchandageCategorie(stateAvec([]), "Musique")).toBe(0);
+  });
+
+  it("retourne 0.04 au palier 1", () => {
+    expect(
+      bonusMarchandageCategorie(
+        stateAvec(["cat.Musique.marchandage.1" as CompetenceId]),
+        "Musique",
+      ),
+    ).toBe(0.04);
+  });
+
+  it("retourne 0.08 au palier 2 (écrase le palier 1)", () => {
+    expect(
+      bonusMarchandageCategorie(
         stateAvec([
-          "cat.Musique.oeil_aiguise.1" as CompetenceId,
-          "cat.Musique.oeil_aiguise.2" as CompetenceId,
-          "cat.Musique.oeil_aiguise.3" as CompetenceId,
+          "cat.Musique.marchandage.1" as CompetenceId,
+          "cat.Musique.marchandage.2" as CompetenceId,
         ]),
         "Musique",
       ),
-    ).toBe(0.30);
+    ).toBe(0.08);
+  });
+
+  it("retourne 0.12 au palier 3 (écrase les paliers inférieurs)", () => {
+    expect(
+      bonusMarchandageCategorie(
+        stateAvec([
+          "cat.Musique.marchandage.1" as CompetenceId,
+          "cat.Musique.marchandage.2" as CompetenceId,
+          "cat.Musique.marchandage.3" as CompetenceId,
+        ]),
+        "Musique",
+      ),
+    ).toBe(0.12);
+  });
+
+  it("ne déborde pas sur une autre catégorie", () => {
+    expect(
+      bonusMarchandageCategorie(
+        stateAvec(["cat.Musique.marchandage.3" as CompetenceId]),
+        "Mode",
+      ),
+    ).toBe(0);
   });
 });
 

@@ -281,6 +281,7 @@ export const es: DictionnaireUI = {
     choisissezBrocante: "Elige un mercadillo",
     panoramaBrocantesAria: "Panorama de los mercadillos",
     sceneTierAria: "Escena del tier {tier}",
+    sceneEvenementAria: "Escena de evento — Gran Braderie",
     taillePoolItems: "{n} objetos",
     bourseMoyenneClientsAria: "Cartera media de los clientes: {valeur} euros",
     bourseMoyLabel: "Cartera media {valeur} €",
@@ -297,6 +298,9 @@ export const es: DictionnaireUI = {
     semaineEnCours: "Semana en curso",
     etatAriaLabel: "Estado: {etat}",
     coteLabel: "cotización {valeur} €",
+    plancherLabel: "mínimo {valeur} €",
+    aimeLabel: "Le gusta: {cats}",
+    boudeLabel: "Evita: {cats}",
     rienAChiner: "— nada que rebuscar aquí —",
     quitterBrocanteAriaLabel: "Salir del mercadillo",
     sortir: "Salir",
@@ -327,6 +331,8 @@ export const es: DictionnaireUI = {
     atoutVerrouilleToast: "{nom} — se desbloquea en el nivel {niveau}",
     dejaPossedeAria: "Ya poseído en la colección",
     nouveauPill: "Nuevo",
+    conditionBraderie: "Abierto solo el primer fin de semana de septiembre",
+    badgeEvenement: "Evento",
   },
   vente: {
     celebrite: "Celebridad",
@@ -555,6 +561,14 @@ export const es: DictionnaireUI = {
     celebriteAnnonce:
       "¡Se anuncia a {nom} en {brocante} el {jour}! Espera mucha afluencia y bolsas bien llenas.",
     celebriteBrocanteInconnue: "un mercadillo",
+    braderieTitre: "La Gran Braderie",
+    braderieAnnonce:
+      "Se acerca el primer fin de semana de septiembre: ¡la Gran Braderie monta sus puestos! Dos días de precios regalados — esperen la multitud de los grandes días.",
+    braderieEnCours:
+      "¡La Gran Braderie está en pleno apogeo! Puestos hasta donde alcanza la vista, precios regalados y multitud récord — es este fin de semana o nunca.",
+    pageSuivanteAria: "Página siguiente",
+    pagePrecedenteAria: "Página anterior",
+    pageIndicateurAria: "Página {page} de {total}",
   },
   registre: {
     ongletCommandes: "Pedidos",

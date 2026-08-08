@@ -126,6 +126,11 @@ const illustrationStyle: CSSProperties = {
   width: AVATAR_SIZE,
   height: AVATAR_SIZE,
   objectFit: "contain",
+  // Ancrage en bas : les variantes calme/fâchée d'un même persona sont
+  // coupées à des hauteurs différentes ; centrées, la plus courte « saute »
+  // vers le haut au changement d'humeur. Le bas du sujet est l'ancre commune
+  // (cf. straightenBottom dans generate-client-personas.mjs).
+  objectPosition: "center bottom",
   filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.25))",
 };
 

@@ -25,5 +25,11 @@
     "tier": 4,
     "reference": "scene-tier-1",
     "description": "Same wall view as the reference, but for THE GRAND SALON DES ANTIQUAIRES DE DROUOT — the most prestigious auction salon. Replace the WALL with deep CRIMSON-RED DAMASK WALLPAPER with subtle gold-leaf floral flock pattern, plus a richly gilded moulded chair rail at mid-height (chair rail does not invade the central area). Replace the FLOOR with polished CREAMY MARBLE, thin grey veining, mirror-like. Replace the CEILING / cornice with an extremely ornate GILDED CROWN MOULDING and a hint of crystal chandelier crown barely entering the frame from above. Lighting: warm golden chandelier light, soft reflections on the marble. Keep the same camera, same horizon, same proportions — only the materials and ornamentation change. The bulk of the central wall area must remain visually empty."
+  },
+  {
+    "id": "scene-evenement",
+    "kind": "scene",
+    "reference": "scene-tier-1",
+    "description": "Same wall view as the reference, but for a FESTIVE GRAND CHARITY BAZAAR HALL decked out for a special end-of-summer fair day. Replace the WALL with warm cream-and-gold festive fabric drapery (softly gathered bunting swags) running along the picture rail near the TOP EDGE ONLY, with small triangular paper fanions in warm gold, brass, and forest-green pinned just below the cornice — all decoration strictly confined to a narrow band near the top edge, well clear of the central wall area. Below the bunting band, the wall itself stays a plain warm cream plaster, unobstructed. Replace the FLOOR with the same scratched light-oak parquet as the reference, sun-warmed. Replace the CEILING / cornice with the same modest plaster cornice as the reference, but with a few paper garlands looping along it near the edges. Lighting: golden late-summer afternoon light streaming in low and warm, celebratory glow, a few soft dust-mote highlights. Keep the same camera, same horizon, same proportions — only the materials, the festive trim near the edges, and the lighting change. The bulk of the central wall area must remain visually empty and uncluttered, exactly like the reference."
   }
 ]

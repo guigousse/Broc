@@ -281,6 +281,7 @@ export const en: DictionnaireUI = {
     choisissezBrocante: "Choose a flea market",
     panoramaBrocantesAria: "Flea market panorama",
     sceneTierAria: "Tier {tier} scene",
+    sceneEvenementAria: "Event scene — Grand Braderie",
     taillePoolItems: "{n} items",
     bourseMoyenneClientsAria: "Average customer wallet: {valeur} euros",
     bourseMoyLabel: "Avg. wallet {valeur} €",
@@ -297,6 +298,9 @@ export const en: DictionnaireUI = {
     semaineEnCours: "Current week",
     etatAriaLabel: "Condition: {etat}",
     coteLabel: "market value {valeur} €",
+    plancherLabel: "floor {valeur} €",
+    aimeLabel: "Loves: {cats}",
+    boudeLabel: "Shuns: {cats}",
     rienAChiner: "— nothing to pick here —",
     quitterBrocanteAriaLabel: "Leave the flea market",
     sortir: "Leave",
@@ -327,6 +331,8 @@ export const en: DictionnaireUI = {
     atoutVerrouilleToast: "{nom} — unlocks at level {niveau}",
     dejaPossedeAria: "Already owned in the collection",
     nouveauPill: "New",
+    conditionBraderie: "Open only on the first weekend of September",
+    badgeEvenement: "Event",
   },
   vente: {
     celebrite: "Celebrity",
@@ -554,6 +560,14 @@ export const en: DictionnaireUI = {
     celebriteAnnonce:
       "{nom} is expected at {brocante} on {jour}. Brace for crowds and heavy purses!",
     celebriteBrocanteInconnue: "a flea market",
+    braderieTitre: "The Grand Braderie",
+    braderieAnnonce:
+      "The first weekend of September is coming: the Grand Braderie is setting up its stalls! Two days of slashed prices — expect the biggest crowds of the year.",
+    braderieEnCours:
+      "The Grand Braderie is in full swing! Stalls as far as the eye can see, slashed prices and record crowds — it's this weekend or never.",
+    pageSuivanteAria: "Next page",
+    pagePrecedenteAria: "Previous page",
+    pageIndicateurAria: "Page {page} of {total}",
   },
   registre: {
     ongletCommandes: "Orders",

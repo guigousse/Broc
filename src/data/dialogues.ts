@@ -166,6 +166,13 @@ export const SEQUENCES_ANNIVERSAIRE: Record<string, DialogueSequence> = {
       { humeur: "souriant", texte: "D'autres vinyles dorment dans les brocantes. N'hésite jamais à les ajouter à ta collection — chaque disque est une musique à découvrir." },
     ],
   },
+  anniv_cadeau_recurrent: {
+    id: "anniv_cadeau_recurrent",
+    lignes: [
+      { humeur: "emu", texte: "Joyeux anniversaire, petit ! Ta mère n'oublie jamais la date — cette année encore, le facteur est arrivé en sifflotant." },
+      { humeur: "souriant", texte: "Encore un disque pour ta collection ! File l'ajouter au Stockage — le gramophone n'attend que lui." },
+    ],
+  },
 };
 
 /** Mini-tuto de la Gazette : première édition offerte par le grand-père. */

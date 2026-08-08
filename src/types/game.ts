@@ -551,6 +551,8 @@ export type ConditionDeblocage =
   | { type: "valeurCollectionCategorie"; categorie: CategorieObjet; montant: number }
   | { type: "niveau"; niveau: number }
   | { type: "chapitrePrincipal"; ordre: number }
+  /** Ouvert uniquement les jours de Grande Braderie (cf. lib/evenements). */
+  | { type: "braderie" }
   | { type: "ET"; conditions: ConditionDeblocage[] };
 
 export type BrocanteTier = 1 | 2 | 3 | 4;

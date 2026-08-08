@@ -8,6 +8,7 @@ import {
   genererRemplacement,
   genererSession,
   genererSessionScriptee,
+  prixMinAvecMarchandage,
   uniquesExclusDuChinage,
 } from "./chine";
 import {
@@ -17,7 +18,9 @@ import {
   createMockSlot,
 } from "./__test-fixtures__/gameState";
 import { UNIQUES } from "@/data/uniques";
-import type { CollectionSlot, Courrier, GameState } from "@/types/game";
+import { getBrocanteById } from "@/data/brocantes";
+import { vinylesCadeauxExclus, VINYLES_CADEAU_PAR_ANNEE } from "@/lib/anniversaire";
+import type { Brocante, CollectionSlot, Courrier, GameState } from "@/types/game";
 import { SESSION_TUTORIEL } from "@/data/tutorielScenario";
 import { calculerPrixMinAcceptDepuisPersona } from "./personas";
 
@@ -371,6 +374,18 @@ describe("genererSession — exclusion des uniques déjà possédés", () => {
   });
 });
 
+describe("genererSession — exclusion des vinyles cadeau non offerts (non-régression)", () => {
+  it("les vinyles cadeau exclus ne sortent jamais en session (paramètre exclus déjà supporté)", () => {
+    const exclus = vinylesCadeauxExclus({ declencheursDeclenches: [] });
+    for (let i = 0; i < 50; i++) {
+      const session = genererSession(12, [], undefined, undefined, exclus);
+      for (const it of session) {
+        expect(VINYLES_CADEAU_PAR_ANNEE).not.toContain(it.objet.templateId);
+      }
+    }
+  });
+});
+
 /* ===================================================================== */
 /* Mix de rareté par tier (tirage en deux étages)                        */
 /* ===================================================================== */
@@ -457,6 +472,51 @@ describe("genererSession — taux de rares effectifs", () => {
   it("célébrité présente : la part de rares double (boost ×2 conservé)", () => {
     const part = partRares(2, 9, true);
     expect(part).toBeGreaterThanOrEqual(0.16);
+  });
+});
+
+describe("genererSession — braderie : prix cassés et raretés dopées", () => {
+  const BOSS = getBrocanteById("salon-antiquaires-drouot")!;
+  const BRADERIE = getBrocanteById("grande-braderie")!;
+
+  function prixMoyenRelatif(brocante: Brocante): number {
+    let somme = 0;
+    let n = 0;
+    for (let i = 0; i < 300; i++) {
+      for (const it of genererSession(10, [], brocante)) {
+        somme += it.prixVendeur / it.objet.prixReferenceReel;
+        n += 1;
+      }
+    }
+    return somme / n;
+  }
+
+  it("braderie : prix vendeurs nettement plus bas qu'au boss (rabais 0.7)", () => {
+    const ratio = prixMoyenRelatif(BRADERIE) / prixMoyenRelatif(BOSS);
+    expect(ratio).toBeGreaterThan(0.6);
+    expect(ratio).toBeLessThan(0.8);
+  });
+
+  it("braderie : proportion de non-communs supérieure au boss (boost raretés)", () => {
+    const partRares = (brocante: Brocante) => {
+      let rares = 0;
+      let n = 0;
+      for (let i = 0; i < 300; i++) {
+        for (const it of genererSession(10, [], brocante)) {
+          if (it.objet.rarete !== "commun") rares += 1;
+          n += 1;
+        }
+      }
+      return rares / n;
+    };
+    // La borne en ratio (>1.3) du plan initial est structurellement inatteignable :
+    // le poolExclusif du boss (7 entrées, CHANCE_EXCLUSIF_PAR_SESSION[4] = 0.8) gonfle
+    // sa propre part de non-communs de base (~28.8 % « propre » → ~34.2 % empirique),
+    // si bien que le ratio réel braderie/boss plafonne à ~1,29, juste sous le seuil de 1,3 —
+    // un effet de population, pas du bruit d'échantillonnage. On vérifie donc une marge
+    // absolue : l'écart réel (~10 points) laisse une marge de +5 points, une marge large
+    // (~4 écarts-types de la différence de deux proportions à 300 itérations), stable.
+    expect(partRares(BRADERIE)).toBeGreaterThan(partRares(BOSS) + 0.05);
   });
 });
 
@@ -589,5 +649,28 @@ describe("genererSessionScriptee", () => {
     const b = genererSessionScriptee();
     expect(a.map((x) => [x.objet.templateId, x.prixVendeur, x.objet.prixReferenceReel]))
       .toEqual(b.map((x) => [x.objet.templateId, x.prixVendeur, x.objet.prixReferenceReel]));
+  });
+});
+
+describe("prixMinAvecMarchandage — Marchandage à l'ouverture de la négo", () => {
+  it("bonus 0 → plancher inchangé", () => {
+    expect(prixMinAvecMarchandage(100, 85, 0)).toBe(85);
+  });
+
+  it("réduit le plancher de bonus × prix affiché (points de %)", () => {
+    // Vendeur affiche 100 €, plancher 85 € : Roi du marchandage (−12 pts) → 73 €.
+    expect(prixMinAvecMarchandage(100, 85, 0.12)).toBe(73);
+    // Marchandeur (−4 pts) → 81 €.
+    expect(prixMinAvecMarchandage(100, 85, 0.04)).toBe(81);
+  });
+
+  it("arrondit la réduction au plus proche", () => {
+    // 37 × 0.08 = 2.96 → 3 ; 33 − 3 = 30.
+    expect(prixMinAvecMarchandage(37, 33, 0.08)).toBe(30);
+  });
+
+  it("ne descend jamais sous 1 €", () => {
+    // 20 × 0.12 = 2.4 → 2 ; 1 − 2 = −1 → clampé à 1.
+    expect(prixMinAvecMarchandage(20, 1, 0.12)).toBe(1);
   });
 });

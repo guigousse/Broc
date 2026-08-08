@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import { Lock } from "lucide-react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomCompetence } from "@/lib/i18n/contenu";
+import { libelleCategorie } from "@/lib/i18n/libelles";
+import type { CategorieObjet } from "@/types/game";
 
 /**
  * Les trois paliers de l'arbre Présentation (ids statiques générés par
@@ -26,6 +28,10 @@ export interface PersonaInfo {
   ambiance?: string;
   /** Bourse du client en € — l'argent en poche (révélée par Estimateur de bourse). */
   bourse?: number;
+  /** Catégories que le client paie plus cher (révélées par Estimateur de bourse). */
+  categoriesPreferees?: readonly CategorieObjet[];
+  /** Catégories que le client boude (révélées par Estimateur de bourse). */
+  categoriesEvitees?: readonly CategorieObjet[];
   /** Fourchette du prix max (révélée par Œil aiguisé — jamais centrée). */
   fourchettePrixMax?: { min: number; max: number };
   /** Prix max exact (révélation Diplomate uniquement). */
@@ -86,6 +92,24 @@ export function PersonaInfoOverlay({ info, onClose }: PersonaInfoOverlayProps) {
               valeur: info.bourse !== undefined ? `${Math.round(info.bourse)} €` : "—",
             })}
           </div>
+          {info.categoriesPreferees && info.categoriesPreferees.length > 0 && (
+            <div style={lineGouts}>
+              {tr(d.chine.aimeLabel, {
+                cats: info.categoriesPreferees
+                  .map((c) => libelleCategorie(c, d))
+                  .join(", "),
+              })}
+            </div>
+          )}
+          {info.categoriesEvitees && info.categoriesEvitees.length > 0 && (
+            <div style={lineGouts}>
+              {tr(d.chine.boudeLabel, {
+                cats: info.categoriesEvitees
+                  .map((c) => libelleCategorie(c, d))
+                  .join(", "),
+              })}
+            </div>
+          )}
         </PalierRow>
         <PalierRow
           title={nomCompetence(PALIERS_PRESENTATION.oeilAiguise, locale)}
@@ -235,6 +259,13 @@ const lineSub: CSSProperties = {
   letterSpacing: "0.24em",
   textTransform: "uppercase",
   color: "var(--brass-700)",
+  marginTop: 4,
+};
+
+const lineGouts: CSSProperties = {
+  fontFamily: "var(--font-serif)",
+  fontSize: 12,
+  color: "var(--ink-500)",
   marginTop: 4,
 };
 

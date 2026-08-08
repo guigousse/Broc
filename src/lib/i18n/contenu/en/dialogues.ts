@@ -137,10 +137,30 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "I'm not coming. It's your eye that's needed now, not mine. Find them — and keep them. They're yours. The dream, though… that still belongs a little to me.",
   ],
   dlg_trame_ch12: [
-    "So it's true. They exist. Right there, in your window… Let me look at them a little longer.",
+    "Let me look at them a little longer, before I go. You never tire of a dream — even a fulfilled one.",
     "Your grandmother would say the blue of the pitcher suited them better. She'd be right, as always.",
     "My dream is fulfilled — not the way I imagined it: better. You're the one who finished it. A story never belongs to the one who begins it, you know.",
     "Here: the keys. All of them. I've got a train tomorrow — Venice first, then we'll see. I'll write to you. Take care of the shop… it's always taken care of us.",
+  ],
+  dlg_trame_salons: [
+    "The salons, kid — they're another country. People speak lower there, and count faster. My first time, I kept my hands in my pockets all day — for fear they'd be seen trembling.",
+    "Anyone can pull off one fine coup. What makes a dealer is the till that sings every night. Regularity — that's true elegance.",
+    "Three thousand euros in sales. Make them sing — and up there, they'll remember your name without you ever giving it.",
+  ],
+  dlg_trame_grand_coup: [
+    "Do you remember my silver snuffbox? The one I let slip for pennies. I still think about it, some winter nights.",
+    "In the salons, revenge has another flavour. The pieces are finer, the eyes sharper — and other people's mistakes are worth gold there.",
+    "Do it for me: three hundred euros clear on a single sale. The snuffbox will be avenged, and I'll finally sleep easy.",
+  ],
+  dlg_trame_antichambre: [
+    "The whispers are back, kid. The Queen's jewels — they're talking about them again in the salons, under their breath, as always.",
+    "Fifty years I've been listening for that rumour. Every time, it dies out. This time… this time I believe it's still burning.",
+    "The Grand Salon only opens to showcases that speak for themselves. Five thousand euros of collection — and doors will open for you that I only ever glimpsed.",
+  ],
+  dlg_trame_heritage: [
+    "So it's true. They exist. I walked past your showcase ten times this morning — and ten times I forgot what I'd come for.",
+    "But a fulfilled dream doesn't pay the rent, and a showcase is not a mausoleum. The shop must live on — after me, after the jewels, after all of it.",
+    "Show me the trade goes on: two thousand euros in sales. After which… I have a suitcase to pack, I believe.",
   ],
   anniv_cadeau: [
     "Happy birthday, little one! Your mother never forgets the date — and she knows how to choose.",
@@ -150,6 +170,10 @@ export const DIALOGUES_EN: Record<string, string[]> = {
   anniv_fin: [
     "Ah, that swing! It makes me forty years younger.",
     "Other records are sleeping out there in the flea markets. Never hesitate to add them to your collection — every disc is a song waiting to be discovered.",
+  ],
+  anniv_cadeau_recurrent: [
+    "Happy birthday, kid! Your mother never forgets the date — this year again, the postman arrived whistling.",
+    "Another record for your collection! Go add it in Storage — the gramophone is waiting for it.",
   ],
   gazette_tuto: [
     "Ah, you found it! The Pickers' Gazette — fifty years I've read it every Monday. This one's on me.",

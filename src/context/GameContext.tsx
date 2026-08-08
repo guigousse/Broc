@@ -30,8 +30,9 @@ import {
 } from "@/data/starterInventory";
 import {
   cadeauAnniversaireVisible,
+  cadeauEnAttente,
   estVinyle,
-  ID_DECLENCHEUR_CADEAU,
+  idDeclencheurCadeau,
   objetCadeauAnniversaire,
 } from "@/lib/anniversaire";
 import { createGameRepository } from "@/lib/storage/createGameRepository";
@@ -185,8 +186,8 @@ interface GameActionsValue {
   avancerTutoriel: (vers: TutorielEtape) => void;
   /** Tire et livre l'objet suivant du colis du tutoriel (null si épuisé). */
   ouvrirObjetColis: () => Objet | null;
-  /** Ouvre le cadeau d'anniversaire (vinyle de jazz) ; null si déjà récupéré. */
-  ouvrirCadeauAnniversaire: () => Objet | null;
+  /** Ouvre le cadeau d'anniversaire en attente (année la plus ancienne) ; null si rien en attente. */
+  ouvrirCadeauAnniversaire: () => { objet: Objet; annee: number } | null;
   /** Clôt le mini-tuto des vinyles (musique lancée). */
   terminerMiniTutoVinyle: () => void;
   terminerMiniTutoCarnet: () => void;
@@ -1024,27 +1025,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Ouvre le cadeau d'anniversaire (11 juin) : ajoute le vinyle de jazz à
-   * l'inventaire, pose le déclencheur one-shot et lance le mini-tuto des
-   * vinyles. Retourne l'objet (cérémonie), ou null si déjà récupéré.
+   * Ouvre le cadeau d'anniversaire en attente (le plus ancien) : ajoute le
+   * vinyle de l'année au stockage, pose le déclencheur de l'année, et lance
+   * le mini-tuto des vinyles UNIQUEMENT l'année 1. Null si rien en attente.
    */
-  const ouvrirCadeauAnniversaire = useCallback((): Objet | null => {
+  const ouvrirCadeauAnniversaire = useCallback((): { objet: Objet; annee: number } | null => {
     const current = stateRef.current;
-    if (!current || !cadeauAnniversaireVisible(current)) return null;
-    const objet = objetCadeauAnniversaire();
+    if (!current) return null;
+    const annee = cadeauEnAttente(current);
+    if (annee === null) return null;
+    const objet = objetCadeauAnniversaire(annee, current);
     setState((prev) => {
-      if (!prev || !cadeauAnniversaireVisible(prev)) return prev;
+      if (!prev || cadeauEnAttente(prev) !== annee) return prev;
       return {
         ...prev,
         inventaireJoueur: [...prev.inventaireJoueur, objet],
         declencheursDeclenches: [
           ...prev.declencheursDeclenches,
-          ID_DECLENCHEUR_CADEAU,
+          idDeclencheurCadeau(annee),
         ],
-        miniTutoVinyle: "ajouter" as const,
+        ...(annee === 1 ? { miniTutoVinyle: "ajouter" as const } : {}),
       };
     });
-    return objet;
+    return { objet, annee };
   }, []);
 
   /** Clôt le mini-tuto des vinyles (la musique a été lancée). */

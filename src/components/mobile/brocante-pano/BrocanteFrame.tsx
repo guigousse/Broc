@@ -5,6 +5,7 @@ import { Lock, Store } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { Brocante } from "@/types/game";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
+import { estGrandeBraderie } from "@/lib/evenements";
 import type { FrameCoord } from "./brocantePanoramaLayout";
 import { useBrocanteFramesEdit } from "./BrocanteFramesEditContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -93,6 +94,24 @@ const lockBubbleStyle: CSSProperties = {
   color: "var(--brass-300)",
 };
 
+// Badge « Événement » (braderie) au-dessus du cadre.
+const badgeEvenementStyle: CSSProperties = {
+  position: "absolute",
+  top: "-0.5em",
+  left: "50%",
+  transform: "translateX(-50%)",
+  zIndex: 3,
+  padding: "0.15em 0.6em",
+  background: "var(--brass-500)",
+  color: "var(--ink-900)",
+  fontSize: "0.62rem",
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  borderRadius: "2px",
+  whiteSpace: "nowrap",
+};
+
 export function BrocanteFrame({
   brocante,
   coord,
@@ -102,21 +121,30 @@ export function BrocanteFrame({
   tutoMain = false,
 }: BrocanteFrameProps) {
   const imageUrl = getBrocanteImageUrl(brocante.id);
-  const { locale } = useLangue();
+  const { d, locale } = useLangue();
   const { enabled: editing } = useBrocanteFramesEdit();
   const onClickHandler = editing ? undefined : () => onSelect(brocante.id);
   const pointerEvents: CSSProperties["pointerEvents"] = editing ? "none" : "auto";
+  const nom = nomBrocante(brocante, locale);
+  const ariaLabel = estGrandeBraderie(brocante)
+    ? `${d.chine.badgeEvenement} — ${nom}`
+    : nom;
 
   return (
     <button
       type="button"
       onClick={onClickHandler}
-      aria-label={nomBrocante(brocante, locale)}
+      aria-label={ariaLabel}
       aria-pressed={selected}
       aria-disabled={!debloquee}
       className={tutoMain ? "tuto-main tuto-main-droite" : undefined}
       style={{ ...frameOuter(coord, selected), pointerEvents }}
     >
+      {estGrandeBraderie(brocante) && (
+        <span style={badgeEvenementStyle} aria-hidden>
+          {d.chine.badgeEvenement}
+        </span>
+      )}
       <div style={paintingWrap}>
         {imageUrl ? (
           <Image

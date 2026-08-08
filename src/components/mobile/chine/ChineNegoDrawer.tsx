@@ -32,6 +32,7 @@ export function ChineNegoDrawer({
   onUpdateNego,
   onConclu,
   onAcheterDirect,
+  prixMinEffectif,
   tutoGuide = false,
   scriptTuto = null,
 }: {
@@ -46,6 +47,8 @@ export function ChineNegoDrawer({
   onUpdateNego: (nego: NegociationState) => void;
   onConclu: (prixFinal: number) => void;
   onAcheterDirect: () => void;
+  /** Plancher vendeur effectif (Marchandage appliqué) — item.prixMinAccept sinon. */
+  prixMinEffectif?: number;
   /** Tutoriel (premier achat) : main pointeuse sur « Négocier » puis sur le curseur. */
   tutoGuide?: boolean;
   /** Tutoriel scripté : impose le chemin (négo bloquée/forcée, achat direct
@@ -70,7 +73,7 @@ export function ChineNegoDrawer({
       ouvrirNegociation(
         "achat",
         prixVendeur,
-        item.prixMinAccept,
+        prixMinEffectif ?? item.prixMinAccept,
         temperamentDe(persona.archetype),
       ),
   );

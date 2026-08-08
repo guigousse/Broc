@@ -16,11 +16,15 @@ import { UNIQUES } from "@/data/uniques";
 import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
 import { SESSION_TUTORIEL } from "@/data/tutorielScenario";
 import { modificateurTendance } from "@/lib/tendances";
+import { estGrandeBraderie } from "@/lib/evenements";
 import {
   tirerPersonaVendeur,
   calculerPrixMinAcceptDepuisPersona,
   getAffiniteCategorie,
 } from "@/lib/personas";
+
+/** Braderie : rabais appliqué au prix affiché par tous les vendeurs. */
+export const RABAIS_BRADERIE = 0.7;
 
 /**
  * Quand une célébrité visite la brocante : multiplicateur appliqué aux poids
@@ -105,11 +109,14 @@ function instancier(
   const modSpec =
     brocante?.specialisation === template.categorie ? BONUS_SPECIALISATION : 1;
   const surcote = persona.archetype === "bonimenteur" ? SURCOTE_BONIMENTEUR : 1;
+  const rabais = brocante && estGrandeBraderie(brocante) ? RABAIS_BRADERIE : 1;
   const prixVendeur =
     opts?.prixVendeur ??
     Math.max(
       1,
-      Math.round(prixReferenceReel * facteurVendeur * modTend * modSpec * surcote),
+      Math.round(
+        prixReferenceReel * facteurVendeur * modTend * modSpec * surcote * rabais,
+      ),
     );
   const prixMinAccept = calculerPrixMinAcceptDepuisPersona(persona, prixVendeur);
 
@@ -235,6 +242,7 @@ export function genererSession(
 ): ObjetEnVente[] {
   const celebritePresente =
     !!brocante && !!celebrite && celebrite.brocanteId === brocante.id;
+  const braderie = !!brocante && estGrandeBraderie(brocante);
   const tailleEffective = celebritePresente
     ? Math.round(taille * CELEBRITE_BOOST_TAILLE)
     : taille;
@@ -249,8 +257,12 @@ export function genererSession(
     .map((id) => getTemplate(id))
     .filter((t): t is ObjetTemplate => t !== undefined && !exclus?.has(t.templateId));
 
-  // Pool générique filtré par tier (1⭐ → 1/3, 2⭐ → 2/3, 3⭐+ → tout).
-  const poolGenerique = poolGeneriquePour(brocante);
+  // Pool générique filtré par tier (1⭐ → 1/3, 2⭐ → 2/3, 3⭐+ → tout), puis
+  // par exclus (ex. vinyles cadeau pas encore offerts — le pool générique
+  // les contient au même titre que n'importe quel autre disque).
+  const poolGenerique = poolGeneriquePour(brocante).filter(
+    (t) => !exclus?.has(t.templateId),
+  );
 
   // Bourses à thème : l'étal du vendeur est 100 % dans le thème (l'ancien
   // quota de ≥ 50 % est remplacé par une restriction totale — en
@@ -286,7 +298,7 @@ export function genererSession(
       : poolTirage;
     if (pool.length === 0) continue;
 
-    const t = tirerTemplatePondere(pool, celebritePresente, brocante?.tier ?? 1);
+    const t = tirerTemplatePondere(pool, celebritePresente || braderie, brocante?.tier ?? 1);
     // Pas de doublon pour rares et légendaires
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
     dejaTires.add(t.templateId);
@@ -313,6 +325,7 @@ export function genererRemplacement(
   const tier = brocante?.tier ?? 1;
   const celebritePresente =
     !!brocante && !!celebrite && celebrite.brocanteId === brocante.id;
+  const braderie = !!brocante && estGrandeBraderie(brocante);
   // Pas de doublon rare/légendaire avec le reste de l'étal (aRemplacer exclu :
   // c'est justement la place qu'on libère).
   const dejaTires = new Set(
@@ -327,13 +340,28 @@ export function genererRemplacement(
       (!brocante?.specialisation || t.categorie === brocante.specialisation),
   );
   for (let essai = 0; essai < 50; essai++) {
-    const t = tirerTemplatePondere(pool, celebritePresente, tier);
+    const t = tirerTemplatePondere(pool, celebritePresente || braderie, tier);
     if (t.rarete !== "commun" && dejaTires.has(t.templateId)) continue;
     return instancier(t, tendances, tier, brocante);
   }
   // Filet : un commun quelconque du pool (le pool contient toujours des communs).
   const communs = pool.filter((t) => t.rarete === "commun");
   return instancier(pickRandom(communs), tendances, tier, brocante);
+}
+
+/**
+ * Marchandage (branche thématique) : abaisse le prix plancher du vendeur de
+ * `bonus` points de % de son prix AFFICHÉ (0.04 / 0.08 / 0.12 selon le palier,
+ * cf. `bonusMarchandageCategorie`). Appliqué à l'OUVERTURE de la négociation
+ * d'achat — jamais dans `instancier()`, qui n'a pas accès au state.
+ */
+export function prixMinAvecMarchandage(
+  prixVendeur: number,
+  prixMinAccept: number,
+  bonus: number,
+): number {
+  if (bonus <= 0) return prixMinAccept;
+  return Math.max(1, prixMinAccept - Math.round(prixVendeur * bonus));
 }
 
 /* === Unicité effective des objets uniques ============================== */

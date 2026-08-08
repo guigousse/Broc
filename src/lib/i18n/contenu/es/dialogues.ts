@@ -137,10 +137,30 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Yo no voy. Es tu mirada la que hace falta, ya no la mía. Encuéntralas — y guárdalas. Son tuyas. El sueño, en cambio, todavía me pertenece un poco.",
   ],
   dlg_trame_ch12: [
-    "Así que es verdad. Existen. Ahí, en tu escaparate… Déjame mirarlas un poco más.",
+    "Déjame mirarlas un poco más, antes de irme. Uno no se cansa de un sueño — ni siquiera cumplido.",
     "Tu abuela diría que el azul de la jarra les sentaba mejor. Tendría razón, como siempre.",
     "Mi sueño se ha cumplido — no como lo imaginaba: mejor. Eres tú quien lo ha terminado. Una historia nunca pertenece a quien la empieza, ¿sabes?",
     "Toma: las llaves. Todas. Yo tengo un tren mañana — Venecia primero, luego ya veremos. Te escribiré. Cuida la tienda… ella siempre ha cuidado de nosotros.",
+  ],
+  dlg_trame_salons: [
+    "Los salones, muchacho, son otro país. Allí se habla más bajo y se cuenta más rápido. Mi primera vez, pasé el día con las manos en los bolsillos — por miedo a que las vieran temblar.",
+    "Un buen golpe lo da cualquiera. Lo que hace a un chamarilero es la caja que canta todas las noches. La regularidad: esa es la verdadera elegancia.",
+    "Tres mil euros de ventas. Hazlos cantar — y allá arriba recordarán tu nombre sin que tengas que darlo.",
+  ],
+  dlg_trame_grand_coup: [
+    "¿Te acuerdas de mi tabaquera de plata? La que dejé escapar por cuatro perras. Aún pienso en ella, algunas noches de invierno.",
+    "En los salones, la revancha sabe distinto. Las piezas son más bellas, los ojos más afilados — y el error ajeno vale oro.",
+    "Hazlo por mí: trescientos euros de más en una sola venta. La tabaquera quedará vengada, y por fin dormiré tranquilo.",
+  ],
+  dlg_trame_antichambre: [
+    "Vuelven los rumores, muchacho. Las joyas de la reina — se habla de ellas otra vez en los salones, a media voz, como siempre.",
+    "Cincuenta años llevo acechando ese rumor. Cada vez se apaga. Esta vez… esta vez creo que aún arde.",
+    "El Gran Salón solo se abre a las vitrinas que hablan por sí solas. Cinco mil euros de colección — y se te abrirán puertas que yo apenas llegué a entrever.",
+  ],
+  dlg_trame_heritage: [
+    "Así que es verdad. Existen. Esta mañana he pasado diez veces por delante de tu vitrina — y diez veces he olvidado qué venía a buscar.",
+    "Pero un sueño cumplido no paga el alquiler, y una vitrina no es un mausoleo. La tienda debe vivir — después de mí, después de las joyas, después de todo esto.",
+    "Demuéstrame que el oficio continúa: dos mil euros de ventas. Después… creo que tengo una maleta que hacer.",
   ],
   anniv_cadeau: [
     "¡Feliz cumpleaños, pequeño! Tu madre nunca olvida la fecha — y sabe elegir.",
@@ -150,6 +170,10 @@ export const DIALOGUES_ES: Record<string, string[]> = {
   anniv_fin: [
     "¡Ah, ese swing! Me quita cuarenta años de encima.",
     "Otros vinilos duermen en los mercadillos. No dudes en añadirlos a tu colección — cada disco es una música por descubrir.",
+  ],
+  anniv_cadeau_recurrent: [
+    "¡Feliz cumpleaños, muchacho! Tu madre nunca olvida la fecha — este año el cartero llegó silbando otra vez.",
+    "¡Otro disco para tu colección! Ve a añadirlo al Almacén — el gramófono lo está esperando.",
   ],
   gazette_tuto: [
     "¡Ah, la has encontrado! La Gaceta de los Rebuscadores — cincuenta años leyéndola cada lunes. Esta te la regalo yo.",

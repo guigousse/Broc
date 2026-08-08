@@ -9,6 +9,7 @@ import { BrocantePanorama } from "@/components/mobile/brocante-pano/BrocantePano
 import { useGame } from "@/context/GameContext";
 import { BROCANTES } from "@/data/brocantes";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
+import { brocantesVisiblesAuJour } from "@/lib/evenements";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { tutorielActif } from "@/lib/tutoriel";
 
@@ -34,7 +35,7 @@ export default function VitrineListePage() {
   const tutoActif = tutorielActif(state);
   const brocantesVisibles = tutoActif
     ? BROCANTES.filter((b) => b.id === "vide-grenier-quartier")
-    : BROCANTES;
+    : brocantesVisiblesAuJour(BROCANTES, state.jourActuel);
 
   return (
     <MobileLayout

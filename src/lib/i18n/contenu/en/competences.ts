@@ -50,27 +50,27 @@ function paliersThematiques(cat: CategorieObjet): OverlayCompetences["paliers"] 
     },
     [`cat.${cat}.passion.1`]: {
       nom: `Enthusiast — ${c}`,
-      description: `Customers pay +10% for ${c} items.`,
+      description: `Customers pay +5% for ${c} items.`,
     },
     [`cat.${cat}.passion.2`]: {
       nom: `Devotee — ${c}`,
-      description: `Customers pay +20% for ${c} items (replaces Enthusiast).`,
+      description: `Customers pay +10% for ${c} items (replaces Enthusiast).`,
     },
     [`cat.${cat}.passion.3`]: {
       nom: `Fanatic — ${c}`,
-      description: `Customers pay +30% for ${c} items (replaces Devotee).`,
+      description: `Customers pay +20% for ${c} items (replaces Devotee).`,
     },
-    [`cat.${cat}.oeil_aiguise.1`]: {
-      nom: `Nimble tongue — ${c}`,
-      description: `When a customer haggles over a ${c} item, they tolerate counteroffers +10% greedier.`,
+    [`cat.${cat}.marchandage.1`]: {
+      nom: `Bargainer — ${c}`,
+      description: `While picking, sellers' floor price drops by 4 percentage points (of their asking price) on ${c} items.`,
     },
-    [`cat.${cat}.oeil_aiguise.2`]: {
-      nom: `Silver tongue — ${c}`,
-      description: `When a customer haggles over a ${c} item, they tolerate counteroffers +20% greedier (replaces Nimble tongue).`,
+    [`cat.${cat}.marchandage.2`]: {
+      nom: `Shrewd bargainer — ${c}`,
+      description: `While picking, sellers' floor price drops by 8 percentage points (of their asking price) on ${c} items (replaces Bargainer).`,
     },
-    [`cat.${cat}.oeil_aiguise.3`]: {
-      nom: `Golden tongue — ${c}`,
-      description: `When a customer haggles over a ${c} item, they tolerate counteroffers +30% greedier (replaces Silver tongue).`,
+    [`cat.${cat}.marchandage.3`]: {
+      nom: `Bargain king — ${c}`,
+      description: `While picking, sellers' floor price drops by 12 percentage points (of their asking price) on ${c} items (replaces Shrewd bargainer).`,
     },
   };
 }
@@ -85,7 +85,7 @@ function branchesThematiques(cat: CategorieObjet): OverlayCompetences["branches"
     [`cat.${cat}/reparer`]: { nom: "Repair" },
     [`cat.${cat}/connaisseur`]: { nom: "Connoisseur" },
     [`cat.${cat}/passion`]: { nom: "Passion" },
-    [`cat.${cat}/oeil_aiguise`]: { nom: "Keen eye" },
+    [`cat.${cat}/marchandage`]: { nom: "Bargaining" },
   };
 }
 
@@ -119,7 +119,7 @@ export const COMPETENCES_EN: OverlayCompetences = {
     "general.negociation.3": {
       nom: "Diplomat",
       description:
-        "Instead of storming off, the customer reveals their exact max price and grants you one last counteroffer (once per day).",
+        "Instead of storming off, the customer reveals their exact max price and grants you one last counteroffer — accepted up to 110% of that ceiling (once per day).",
     },
     "general.charisme.1": {
       nom: "Neat display",
@@ -142,7 +142,7 @@ export const COMPETENCES_EN: OverlayCompetences = {
     },
     "general.presentation.2": {
       nom: "Purse appraiser",
-      description: "The customer's wallet — the money they carry — is shown in the negotiation card.",
+      description: "The customer's wallet — the money they carry — is shown in the negotiation card, along with the categories they love and the ones they shun.",
     },
     "general.presentation.3": {
       nom: "Keen eye",

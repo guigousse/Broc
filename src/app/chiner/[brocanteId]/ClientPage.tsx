@@ -34,15 +34,22 @@ import {
   genererRemplacement,
   genererSession,
   genererSessionScriptee,
+  prixMinAvecMarchandage,
   uniquesExclusDuChinage,
 } from "@/lib/chine";
+import { vinylesCadeauxExclus } from "@/lib/anniversaire";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
 import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { relancerNegociation } from "@/lib/negociation";
-import { aConnaisseurChinage } from "@/lib/competences";
+import { aConnaisseurChinage, bonusMarchandageCategorie } from "@/lib/competences";
 import { energieCourante } from "@/lib/energie";
 import { getCapaciteStockage, placeRestante, stockageEstPlein, totalEnStock } from "@/lib/stockage";
-import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
+import {
+  insererSlideMystere,
+  nbBoitesReclamees,
+  tenterApparition,
+  tirerPositionVendeur,
+} from "@/lib/boiteMystere";
 import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import { indexObjetScenario, scenarioDeLEtape, tutorielActif } from "@/lib/tutoriel";
@@ -115,14 +122,17 @@ export default function SessionChinePage() {
   const instantaneXpRef = useRef<BrocanteurState | null>(null);
   /** ID de l'objet dont la négociation est ouverte dans le BottomSheet. */
   const [negoOuverte, setNegoOuverte] = useState<string | null>(null);
-  /** Le vendeur mystère est-il présent dans cette session (tiré à l'entrée) ? */
-  const [vendeurPresent, setVendeurPresent] = useState(false);
+  /** Position du vendeur mystère dans le deck (tirée à l'entrée), null si absent. */
+  const [vendeurPosition, setVendeurPosition] = useState<number | null>(null);
   /** La modale de la boîte mystère est-elle ouverte ? */
   const [boiteOuverte, setBoiteOuverte] = useState(false);
   /** Vrai une fois la boîte mystère réclamée dans cette session (masque le bouton pub). */
   const [boiteReclamee, setBoiteReclamee] = useState(false);
   /** Le Flair (N5) : ids des objets dont la cote a été révélée (un objet par usage, portée session). */
   const [flairIds, setFlairIds] = useState<ReadonlySet<string>>(new Set());
+  /** Le Flair v2 : ids des objets dont le PLANCHER vendeur a été révélé
+   *  (2e mode, quand la cote est déjà connue — un objet par usage). */
+  const [flairPlancherIds, setFlairPlancherIds] = useState<ReadonlySet<string>>(new Set());
   /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
   const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
   /** Ids des objets à fêter (rayons + pill « Nouveau »). Voir `noterDecouverte`. */
@@ -201,7 +211,7 @@ export default function SessionChinePage() {
             state.tendances,
             brocante,
             celebriteAujourdhui,
-            uniquesExclusDuChinage(state),
+            new Set([...uniquesExclusDuChinage(state), ...vinylesCadeauxExclus(state)]),
           );
       // Reprise après sortie anticipée : le joueur peut être ressorti de la
       // brocante en cours de script (dos, kill…) et revenir plus tard —
@@ -236,7 +246,9 @@ export default function SessionChinePage() {
         placeRestante(state) >= 1 &&
         tenterApparition(nReclamees)
       ) {
-        setVendeurPresent(true);
+        // Position tirée une fois pour toute la session : premier, entre
+        // deux objets, ou dernier — l'effet de surprise au fil du deck.
+        setVendeurPosition(tirerPositionVendeur(session.length));
       }
     }
   }, [isHydrated, state, brocante, router, items, payerFraisBrocante, tempsConfiance, consommerEnergie, toast, d, tr]);
@@ -282,20 +294,30 @@ export default function SessionChinePage() {
 
   const slides: ChineSlide[] = useMemo(() => {
     const liste: ChineSlide[] = [];
-    if (vendeurPresent) liste.push({ kind: "mystere" });
     for (const it of (items ?? []).filter((x) => x.statut !== "refuse")) {
       liste.push({
         kind: "item",
         item: it,
         estRareOuPlus: estRareOuPlus(it),
         coteConnue: flairIds.has(it.id) || (state ? aConnaisseurChinage(state, it.objet.categorie) : false),
+        plancherRevele:
+          flairPlancherIds.has(it.id) && state
+            ? prixMinAvecMarchandage(
+                it.prixVendeur,
+                it.prixMinAccept,
+                bonusMarchandageCategorie(state, it.objet.categorie),
+              )
+            : undefined,
         dejaPossede: state ? templateDejaPossede(state.collection, it.objet.templateId) : false,
         estNouveau: decouvertesRef.current.has(it.id),
       });
     }
+    if (vendeurPosition !== null) {
+      return insererSlideMystere(liste, { kind: "mystere" }, vendeurPosition);
+    }
     return liste;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vendeurPresent, items, state, flairIds]);
+  }, [vendeurPosition, items, state, flairIds, flairPlancherIds]);
 
   /** Objet du scénario imposé à l'étape courante (null hors script). */
   const scnActif = etape ? scenarioDeLEtape(etape) : null;
@@ -336,10 +358,21 @@ export default function SessionChinePage() {
       prev ? prev.map((it) => (it.id === id ? { ...it, ...patch } : it)) : prev,
     );
 
-  /** Le Flair (N5) : révèle la cote de l'objet affiché (un usage par objet). */
+  /** Le Flair (N5) : révèle la cote de l'objet affiché (un usage par objet).
+   *  v2 : si la cote est déjà connue (Connaisseur 3 ou Flair déjà joué),
+   *  révèle à la place le prix PLANCHER du vendeur. */
   const jouerFlair = (it: ObjetEnVente) => {
+    const coteConnue =
+      flairIds.has(it.id) || aConnaisseurChinage(state, it.objet.categorie);
+    if (!coteConnue) {
+      if (utiliserActive("flair")) {
+        setFlairIds((prev) => new Set(prev).add(it.id));
+      }
+      return;
+    }
+    if (flairPlancherIds.has(it.id)) return;
     if (utiliserActive("flair")) {
-      setFlairIds((prev) => new Set(prev).add(it.id));
+      setFlairPlancherIds((prev) => new Set(prev).add(it.id));
     }
   };
 
@@ -353,7 +386,7 @@ export default function SessionChinePage() {
       state.tendances,
       brocante,
       state.celebriteActuelle,
-      uniquesExclusDuChinage(state),
+      new Set([...uniquesExclusDuChinage(state), ...vinylesCadeauxExclus(state)]),
     );
     // Le tirage de remplacement peut sortir un template inédit : il mérite
     // ses rayons au même titre qu'un objet de la session initiale.
@@ -511,17 +544,21 @@ export default function SessionChinePage() {
     const tchatche = commun("tchatche", "💬");
     const negoStatut = currentItem?.negociation?.statut;
     const flairJoueSurCourant = currentItem ? flairIds.has(currentItem.id) : false;
+    const plancherJoueSurCourant = currentItem
+      ? flairPlancherIds.has(currentItem.id)
+      : false;
     const coteCouranteVisible =
       flairJoueSurCourant ||
       (currentItem ? aConnaisseurChinage(state, currentItem.objet.categorie) : false);
+    // v2 : cote déjà visible → le Flair révèle le PLANCHER du vendeur.
+    // Épuisé (grisé) seulement quand cote ET plancher sont connus.
+    const flairEpuiseSurCourant = coteCouranteVisible && plancherJoueSurCourant;
     return [
       {
         ...flair,
-        actif: flairJoueSurCourant,
-        // Grisé si aucun objet affiché ou si sa cote est déjà visible
-        // (Flair déjà joué dessus, ou Connaisseur 3) : pas d'usage gâché.
-        desactive: !currentItem || coteCouranteVisible,
-        ariaLabel: flairJoueSurCourant
+        actif: flairJoueSurCourant || plancherJoueSurCourant,
+        desactive: !currentItem || flairEpuiseSurCourant,
+        ariaLabel: flairEpuiseSurCourant
           ? tr(d.chine.atoutActifAria, { nom: flair.nom })
           : flair.ariaLabel,
         onActivate: flair.verrouille
@@ -643,6 +680,11 @@ export default function SessionChinePage() {
                   item={item}
                   budget={state.budget}
                   plein={plein}
+                  prixMinEffectif={prixMinAvecMarchandage(
+                    item.prixVendeur,
+                    item.prixMinAccept,
+                    bonusMarchandageCategorie(state, item.objet.categorie),
+                  )}
                   expanded={negoOuverte === item.id}
                   illustrationSrc={getVendeurIllustration(item.persona.archetype)}
                   illustrationFacheSrc={getVendeurIllustrationFache(item.persona.archetype)}

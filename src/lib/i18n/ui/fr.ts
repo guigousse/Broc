@@ -284,6 +284,7 @@ export const fr = {
     choisissezBrocante: "Choisissez une brocante",
     panoramaBrocantesAria: "Panorama des brocantes",
     sceneTierAria: "Scène tier {tier}",
+    sceneEvenementAria: "Scène événement — Grande Braderie",
     taillePoolItems: "{n} items",
     bourseMoyenneClientsAria: "Bourse moyenne des clients : {valeur} euros",
     bourseMoyLabel: "Bourse moy. {valeur} €",
@@ -300,6 +301,9 @@ export const fr = {
     semaineEnCours: "Semaine en cours",
     etatAriaLabel: "État : {etat}",
     coteLabel: "cote {valeur} €",
+    plancherLabel: "plancher {valeur} €",
+    aimeLabel: "Aime : {cats}",
+    boudeLabel: "Boude : {cats}",
     rienAChiner: "— rien à chiner ici —",
     quitterBrocanteAriaLabel: "Quitter la brocante",
     sortir: "Sortir",
@@ -330,6 +334,8 @@ export const fr = {
     atoutVerrouilleToast: "{nom} — se débloque au niveau {niveau}",
     dejaPossedeAria: "Déjà possédé dans la collection",
     nouveauPill: "Nouveau",
+    conditionBraderie: "Ouvert uniquement le premier week-end de septembre",
+    badgeEvenement: "Événement",
   },
   vente: {
     celebrite: "Célébrité",
@@ -559,6 +565,14 @@ export const fr = {
     celebriteAnnonce:
       "{nom} est annoncé(e) à {brocante} le {jour}. Attendez-vous à une forte affluence et à de grosses bourses !",
     celebriteBrocanteInconnue: "une brocante",
+    braderieTitre: "La Grande Braderie",
+    braderieAnnonce:
+      "Le premier week-end de septembre approche : la Grande Braderie dresse ses étals ! Deux jours de prix sacrifiés — attendez-vous à la foule des grands jours.",
+    braderieEnCours:
+      "La Grande Braderie bat son plein ! Étals à perte de vue, prix sacrifiés et foule record — c'est ce week-end ou jamais.",
+    pageSuivanteAria: "Page suivante",
+    pagePrecedenteAria: "Page précédente",
+    pageIndicateurAria: "Page {page} sur {total}",
   },
   // Registre unifié (QG) : onglets Commandes / Comptes.
   registre: {
