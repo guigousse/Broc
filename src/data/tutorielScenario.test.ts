@@ -9,6 +9,8 @@ import {
   ongletTutorielPermis, scenarioDeLEtape,
 } from "@/lib/tutoriel";
 import { ITEMS_WITH_IMAGE } from "@/lib/itemImages";
+import { ALEA_NEGO_SCRIPTEE, ouvrirNegociation, proposerOffre } from "@/lib/negociation";
+import { genererSessionScriptee } from "@/lib/chine";
 
 describe("SESSION_TUTORIEL", () => {
   it("contient 6 objets aux templates connus, illustrés, sans doublon", () => {
@@ -101,5 +103,40 @@ describe("helpers d'étape", () => {
     expect(donCollectionPermis("collection-envoyer", "ma.carafe_cristal_taille")).toBe(false);
     expect(donCollectionPermis("stockage-focus", PELUCHE_TEMPLATE_ID)).toBe(false);
     expect(donCollectionPermis("termine", "ma.carafe_cristal_taille")).toBe(true);
+  });
+});
+
+describe("garanties de négo du scénario", () => {
+  it("objet 1 : TOUTE offre bornée fâche le vendeur au tour 1", () => {
+    const s = SESSION_TUTORIEL[0];
+    const it = genererSessionScriptee()[0];
+    for (let offre = s.bornesOffre!.min; offre <= s.bornesOffre!.max; offre++) {
+      const nego = proposerOffre(
+        ouvrirNegociation("achat", it.prixVendeur, it.prixMinAccept),
+        s.persona, offre, ALEA_NEGO_SCRIPTEE,
+      );
+      expect(nego.statut, `offre ${offre}`).toBe("fache");
+    }
+  });
+  it.each([[2], [3]])("objet %d : aucune suite d'offres bornées ne peut échouer", (idx) => {
+    const s = SESSION_TUTORIEL[idx];
+    const it = genererSessionScriptee()[idx];
+    // Pire stratégie pour l'accord : offrir la borne MIN à chaque tour
+    // (une offre plus haute conclut plus tôt). La trajectoire adverse est
+    // déterministe : il suffit de la dérouler.
+    let nego = ouvrirNegociation("achat", it.prixVendeur, it.prixMinAccept);
+    let tours = 0;
+    while (nego.statut === "en_cours" && tours < 10) {
+      nego = proposerOffre(nego, s.persona, s.bornesOffre!.min, ALEA_NEGO_SCRIPTEE);
+      tours++;
+      expect(["en_cours", "conclu"], `tour ${tours}`).toContain(nego.statut);
+    }
+    expect(nego.statut).toBe("conclu");
+    expect(tours).toBeLessThanOrEqual(s.persona.patience);
+    // Et l'insulte est impossible sur TOUTE la plage au prix adverse le plus
+    // haut (tour 1) — les prix suivants ne font que baisser le seuil.
+    expect(s.bornesOffre!.min).toBeGreaterThanOrEqual(
+      it.prixVendeur * (1 - s.persona.tolerancePct),
+    );
   });
 });
