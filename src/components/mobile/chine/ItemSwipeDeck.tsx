@@ -30,6 +30,7 @@ export function ItemSwipeDeck({
   renderDock,
   pulseSortir,
   negoOuverte = false,
+  indexImpose = null,
 }: {
   slides: ChineSlide[];
   plein: boolean;
@@ -46,6 +47,8 @@ export function ItemSwipeDeck({
   pulseSortir?: boolean;
   /** Négo dépliée : masque la barre ◀ n/N ▶ pour laisser plus de place à l'objet. */
   negoOuverte?: boolean;
+  /** Tutoriel scripté : verrouille le deck sur cette carte (swipe et nav inertes). */
+  indexImpose?: number | null;
 }) {
   const { d } = useLangue();
   const [index, setIndex] = useState(0);
@@ -61,7 +64,8 @@ export function ItemSwipeDeck({
   const prevItemRef = useRef<ObjetEnVente | null>(null);
   const ghostKeyRef = useRef(0);
 
-  const clampedIdx = slides.length ? Math.min(index, slides.length - 1) : 0;
+  const clampedIdx =
+    indexImpose ?? (slides.length ? Math.min(index, slides.length - 1) : 0);
   const currentSlide = slides.length ? slides[clampedIdx] : null;
   const currentItem =
     currentSlide?.kind === "item" ? currentSlide.item : null;
@@ -107,7 +111,20 @@ export function ItemSwipeDeck({
     }
   }, [currentItem]);
 
+  // Le tutoriel scripté verrouille le deck via `indexImpose` sans jamais
+  // passer par `go()` (qui early-return pendant le verrouillage) : sans
+  // cette resynchronisation, l'état interne `index` reste figé à sa valeur
+  // d'avant le script (0) pendant toute la session scriptée. Deux effets de
+  // bord sinon : l'effet des sons ci-dessus (basé sur `index`, pas
+  // `clampedIdx`) ne rejoue plus rien après la 1ère carte imposée, et le
+  // déverrouillage (indexImpose → null, à "chine-sortir") ferait retomber
+  // brutalement le deck sur la carte 0 au lieu de la dernière imposée.
+  useEffect(() => {
+    if (indexImpose !== null) setIndex(indexImpose);
+  }, [indexImpose]);
+
   const go = (delta: number) => {
+    if (indexImpose !== null) return;
     const next = Math.min(slides.length - 1, Math.max(0, index + delta));
     if (next === index) return;
     onNavigate?.();
@@ -115,6 +132,7 @@ export function ItemSwipeDeck({
   };
 
   const onPointerDown = (e: PointerEvent) => {
+    if (indexImpose !== null) return;
     startXRef.current = e.clientX;
     setDragging(true);
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -200,8 +218,8 @@ export function ItemSwipeDeck({
           type="button"
           aria-label={d.chine.precedent}
           onClick={() => go(-1)}
-          disabled={clampedIdx === 0}
-          style={navBtn(clampedIdx === 0)}
+          disabled={indexImpose !== null || clampedIdx === 0}
+          style={navBtn(indexImpose !== null || clampedIdx === 0)}
         >
           <ChevronLeft size={26} />
         </button>
@@ -212,8 +230,8 @@ export function ItemSwipeDeck({
           type="button"
           aria-label={d.sheets.suivant}
           onClick={() => go(1)}
-          disabled={clampedIdx === slides.length - 1}
-          style={navBtn(clampedIdx === slides.length - 1)}
+          disabled={indexImpose !== null || clampedIdx === slides.length - 1}
+          style={navBtn(indexImpose !== null || clampedIdx === slides.length - 1)}
         >
           <ChevronRight size={26} />
         </button>

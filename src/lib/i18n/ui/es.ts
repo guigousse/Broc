@@ -174,13 +174,36 @@ export const es: DictionnaireUI = {
     colisTitre: "El paquete del abuelo",
     cadeauTitre: "¡Feliz cumpleaños!",
     colisRecuperer: "Recoger",
+    coachContinuer: "Toca para continuar",
+    coachStockageCapacite:
+      "Tu reserva: el Garaje, 10 plazas. Cada hallazgo llega aquí después del mercadillo.",
+    coachStockageCategories:
+      "Filtra por categoría para orientarte cuando la reserva se llene.",
+    coachStockageObjet:
+      "Cada fila muestra el estado del objeto, y su botón para enviarlo a la colección.",
+    coachStockageAmelioration:
+      "Más adelante podrás ampliarlo: sótano, luego nave.",
+    coachCollectionCase:
+      "El peluche ya tiene su lugar: ya no se vende, se exhibe.",
+    coachCollectionValeur:
+      "El valor de tu colección crece con cada donación.",
+    coachCollectionDeblocage:
+      "Ese valor desbloquea nuevos mercadillos, y construye tu reputación.",
     instructions: {
       "accueil": "Escucha a tu abuelo…",
       "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",
-      "premier-achat": "Elige un objeto y cómpralo — ¡regatea si te atreves!",
-      "rentrer": "Sal del mercadillo y vuelve a la tienda.",
-      "ouvrir-colis": "Abre el paquete del abuelo, junto a la puerta.",
+      "chine-nego-echec": "Despliega «Negociar» e intenta una oferta muy baja, a ver qué pasa.",
+      "chine-achat-direct": "Esa jarra tiene un precio justo: cómprala al precio marcado.",
+      "chine-nego-un": "Negocia el mando — propón un precio con el deslizador.",
+      "chine-nego-deux": "Negocia el peluche — ya le vas pillando el truco.",
+      "chine-sortir": "Echa un vistazo a los últimos puestos si quieres, y luego sal del mercadillo.",
+      "stockage-ouvrir": "Abre el Almacén desde la barra inferior.",
+      "stockage-focus": "Echa un vistazo a tu almacén — toca para continuar.",
+      "collection-envoyer": "Envía el peluche de mohair a tu colección.",
+      "collection-lecon": "Abre la Colección desde la barra inferior.",
       "preparer-etal": "Vuelve a cruzar la puerta y elige «Montar puesto» para preparar tu vitrina.",
+      "coffre-trace-un": "Coge el primer objeto y colócalo sobre su silueta.",
+      "coffre-trace-deux": "Un dedo para mover, otro para girar: coloca el objeto sobre su silueta.",
       "premiere-vente": "Véndele un objeto a un cliente y cierra el puesto.",
       "conclusion": "Escucha a tu abuelo…",
     },

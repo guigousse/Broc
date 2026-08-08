@@ -3,6 +3,7 @@ import {
   ETAPES_TUTORIEL,
   appliquerFinTutoriel,
   chapitreDuCarnetDu,
+  colisEnAttente,
   doigtSwipeVersCarnet,
   etapeSuivante,
   tutorielActif,
@@ -69,34 +70,82 @@ describe("tutoriel", () => {
     const state = createMockGameState({ tutorielEtape: "termine" });
     expect(appliquerFinTutoriel(state)).toBe(state);
   });
+});
 
-  it("« Passer » livre le restant du colis : 5 objets (4 communs + 1 rare) sur une partie fraîche", () => {
-    const state = createMockGameState({
-      tutorielEtape: "accueil",
-      inventaireJoueur: [],
-      colisTutorielLivres: 0,
-      courriers: [],
-      declencheursDeclenches: [],
-      missions: [],
-    });
-    const fin = appliquerFinTutoriel(state);
-    expect(fin.inventaireJoueur).toHaveLength(5);
-    expect(fin.inventaireJoueur.filter((o) => o.rarete === "commun")).toHaveLength(4);
-    expect(fin.inventaireJoueur.filter((o) => o.rarete === "rare")).toHaveLength(1);
-    expect(fin.colisTutorielLivres).toBe(5);
+describe("étapes v2", () => {
+  it("ordonne les 17 étapes du nouveau flux", () => {
+    expect(ETAPES_TUTORIEL).toEqual([
+      "accueil", "aller-chiner",
+      "chine-nego-echec", "chine-achat-direct", "chine-nego-un",
+      "chine-nego-deux", "chine-sortir",
+      "stockage-ouvrir", "stockage-focus",
+      "collection-envoyer", "collection-lecon",
+      "preparer-etal", "coffre-trace-un", "coffre-trace-deux",
+      "premiere-vente", "conclusion", "termine",
+    ]);
   });
 
-  it("« Passer » après un colis entièrement récupéré ne double pas les objets", () => {
-    const state = createMockGameState({
-      tutorielEtape: "preparer-etal",
-      colisTutorielLivres: 5,
-      courriers: [],
-      declencheursDeclenches: [],
-      missions: [],
+  it("etapeSuivante enchaîne chine-nego-deux → chine-sortir", () => {
+    expect(etapeSuivante("chine-nego-deux")).toBe("chine-sortir");
+  });
+});
+
+describe("appliquerFinTutoriel (v2)", () => {
+  it("ne livre PLUS le colis (inventaire inchangé, compteur intact)", () => {
+    const s = createMockGameState({
+      tutorielEtape: "accueil",
+      colisTutorielLivres: 0,
     });
-    const avant = state.inventaireJoueur.length;
-    const fin = appliquerFinTutoriel(state);
-    expect(fin.inventaireJoueur).toHaveLength(avant);
-    expect(fin.colisTutorielLivres).toBe(5);
+    const fin = appliquerFinTutoriel(s);
+    expect(fin.tutorielEtape).toBe("termine");
+    expect(fin.inventaireJoueur).toHaveLength(s.inventaireJoueur.length);
+    expect(fin.colisTutorielLivres).toBe(0);
+    expect(fin.miniTutoCarnet).toBe("ouvrir");
+  });
+});
+
+describe("colisEnAttente", () => {
+  it("faux tant que le tutoriel court ou que le carnet n'est pas consommé", () => {
+    expect(
+      colisEnAttente({
+        tutorielEtape: "accueil",
+        miniTutoCarnet: undefined,
+        colisTutorielLivres: 0,
+      }),
+    ).toBe(false);
+    expect(
+      colisEnAttente({
+        tutorielEtape: "termine",
+        miniTutoCarnet: "ouvrir",
+        colisTutorielLivres: 0,
+      }),
+    ).toBe(false);
+  });
+
+  it("vrai après le carnet tant que le colis n'est pas vidé", () => {
+    expect(
+      colisEnAttente({
+        tutorielEtape: "termine",
+        miniTutoCarnet: "termine",
+        colisTutorielLivres: 3,
+      }),
+    ).toBe(true);
+    expect(
+      colisEnAttente({
+        tutorielEtape: "termine",
+        miniTutoCarnet: "termine",
+        colisTutorielLivres: 5,
+      }),
+    ).toBe(false);
+  });
+
+  it("vrai pour une vieille save sans miniTutoCarnet et colis entamé", () => {
+    expect(
+      colisEnAttente({
+        tutorielEtape: "termine",
+        miniTutoCarnet: undefined,
+        colisTutorielLivres: 2,
+      }),
+    ).toBe(true);
   });
 });

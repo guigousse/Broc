@@ -177,13 +177,36 @@ export const fr = {
     colisTitre: "Le colis du grand-père",
     cadeauTitre: "Joyeux anniversaire !",
     colisRecuperer: "Récupérer",
+    coachContinuer: "Touche pour continuer",
+    coachStockageCapacite:
+      "Ta réserve : le Garage, 10 places. Chaque trouvaille y arrive après la brocante.",
+    coachStockageCategories:
+      "Filtre par catégorie pour t'y retrouver quand la réserve se remplit.",
+    coachStockageObjet:
+      "Chaque ligne montre l'état de l'objet — et son bouton pour l'envoyer en collection.",
+    coachStockageAmelioration:
+      "Plus tard, tu pourras agrandir : cave, puis hangar.",
+    coachCollectionCase:
+      "La peluche a rejoint sa case : elle ne se vend plus, elle se montre.",
+    coachCollectionValeur:
+      "La valeur de ta collection grandit à chaque donation.",
+    coachCollectionDeblocage:
+      "Cette valeur débloque de nouvelles brocantes — et fait ta réputation.",
     instructions: {
       "accueil": "Écoute ton grand-père…",
       "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",
-      "premier-achat": "Choisis un objet et achète-le — négocie si tu l'oses !",
-      "rentrer": "Sors de la brocante et rentre à la boutique.",
-      "ouvrir-colis": "Ouvre le colis du grand-père, devant la porte.",
+      "chine-nego-echec": "Déplie « Négocier » et tente une offre très basse, pour voir.",
+      "chine-achat-direct": "Cette carafe est à prix honnête : achète-la au prix affiché.",
+      "chine-nego-un": "Négocie la manette — propose un prix avec le curseur.",
+      "chine-nego-deux": "Négocie la peluche — tu commences à avoir le coup de main.",
+      "chine-sortir": "Regarde les derniers étals si tu veux, puis sors de la brocante.",
+      "stockage-ouvrir": "Ouvre le Stockage depuis la barre du bas.",
+      "stockage-focus": "Fais le tour de ton stockage — touche pour continuer.",
+      "collection-envoyer": "Envoie la peluche mohair dans ta collection.",
+      "collection-lecon": "Ouvre la Collection depuis la barre du bas.",
       "preparer-etal": "Repasse la porte et choisis « Étaler » pour préparer ta vitrine.",
+      "coffre-trace-un": "Prends le premier objet et pose-le sur son emplacement.",
+      "coffre-trace-deux": "Un doigt pour déplacer, un second pour tourner : pose l'objet sur sa trace.",
       "premiere-vente": "Vends un objet à un client, puis referme l'étal.",
       "conclusion": "Écoute ton grand-père…",
     },

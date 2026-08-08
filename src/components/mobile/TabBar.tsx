@@ -9,7 +9,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import { estPret } from "@/lib/restauration";
-import { tutorielActif } from "@/lib/tutoriel";
+import { ongletTutorielPermis, tutorielActif } from "@/lib/tutoriel";
 import type { GameState } from "@/types/game";
 
 /** Clé d'onglet — sert à retrouver le libellé traduit dans `d.chrome.onglets`. */
@@ -163,6 +163,12 @@ export function TabBar() {
   // bannière et les dialogues guident.
   const tutoEnCours = !!(state && tutorielActif(state));
 
+  // Tutoriel guidé v2 (brocante scriptée) : certaines étapes autorisent un
+  // seul onglet (Stockage, Collection, Bureau) — les autres restent inertes.
+  // `null` = aucun onglet permis (comportement historique, ex. pendant la
+  // chine ou une négociation en cours).
+  const ongletPermis = state ? ongletTutorielPermis(state.tutorielEtape) : null;
+
   // Onglets masqués (onboarding progressif) : filtrés selon l'état courant.
   // `state` null (pré-hydratation du state du jeu) → aucun masque appliqué,
   // pour ne pas faire clignoter la disparition d'un onglet chez un joueur
@@ -179,9 +185,18 @@ export function TabBar() {
     return false;
   };
 
+  // Main de guidage généralisée : celle du tutoriel scripté (ongletPermis)
+  // prend le relais de mainMiniTuto — jamais sur l'onglet déjà actif.
+  const mainTuto = (tabPath: string): boolean => {
+    if (ongletPermis && tabPath === ongletPermis && pathname !== ongletPermis) {
+      return true;
+    }
+    return mainMiniTuto(tabPath);
+  };
+
   // Une main est-elle affichée ? La fenêtre flottante du stockage (zIndex 35)
   // passerait sinon devant la main qui déborde au-dessus de la nav (zIndex 30).
-  const mainAffichee = visibleTabs.some((t) => mainMiniTuto(t.path));
+  const mainAffichee = visibleTabs.some((t) => mainTuto(t.path));
 
   const activeIdx = findActiveTabIndex(pathname);
   const activeTab = activeIdx >= 0 ? TAB_ORDER[activeIdx] : null;
@@ -209,9 +224,9 @@ export function TabBar() {
             type="button"
             aria-current={active ? "page" : undefined}
             aria-label={libelleAria(tab.cle, d)}
-            className={mainMiniTuto(tab.path) ? "tuto-main tuto-main-haut" : undefined}
+            className={mainTuto(tab.path) ? "tuto-main tuto-main-haut" : undefined}
             onClick={() => {
-              if (tutoEnCours) return;
+              if (tutoEnCours && tab.path !== ongletPermis) return;
               playClick();
               if (!active) {
                 if (typeof navigator !== "undefined" && navigator.vibrate) {

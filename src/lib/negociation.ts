@@ -409,6 +409,13 @@ function distanceVersInsulte(
 }
 
 /**
+ * Source d'aléa pour les négos scriptées du tutoriel : renvoie 1, donc la
+ * fin probabiliste (étape 3) ne se déclenche jamais — seuls l'insulte,
+ * la patience et l'accord décident. Les scénarios deviennent prouvables.
+ */
+export const ALEA_NEGO_SCRIPTEE = (): number => 1;
+
+/**
  * Fonction pure : prend l'état + persona + offre joueur, renvoie le nouvel état.
  * Aucun side-effect.
  */
@@ -416,6 +423,7 @@ export function proposerOffre(
   nego: NegociationState,
   persona: NegoPersona,
   offre: number,
+  alea: () => number = Math.random,
 ): NegociationState {
   if (nego.statut !== "en_cours") return nego;
   const tour = nego.tour + 1;
@@ -460,7 +468,7 @@ export function proposerOffre(
   // élevée (rouge), plus la probabilité tend vers 1. Le sangFroid atténue.
   // Humeur élevée → fache ; humeur moyenne → refus poli.
   const chanceFin = Math.pow(humeur, 1.5) * (1 - persona.sangFroid * 0.5);
-  if (Math.random() < chanceFin) {
+  if (alea() < chanceFin) {
     if (humeur >= 0.6) {
       return {
         ...nego,

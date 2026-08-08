@@ -871,13 +871,13 @@ describe("migration tutoriel (v12)", () => {
 
   it("préserve une étape en cours et n'injecte NI Maman NI le chapitre 1", () => {
     const loaded = createMockGameState({
-      tutorielEtape: "premier-achat",
+      tutorielEtape: "aller-chiner",
       courriers: [],
       declencheursDeclenches: [],
       missions: [],
     });
     const migre = migrerSauvegarde(loaded);
-    expect(migre.tutorielEtape).toBe("premier-achat");
+    expect(migre.tutorielEtape).toBe("aller-chiner");
     expect(migre.courriers.some((c) => c.id === ID_LETTRE_MAMAN_DEBUT)).toBe(false);
     expect(migre.courriers.some((c) => c.id === "trame_ch1")).toBe(false);
   });
@@ -1140,8 +1140,8 @@ function saveV17(patch: Partial<GameState> = {}): GameState {
 }
 
 describe("v18 — la branche thématique « Œil aiguisé » devient Marchandage", () => {
-  it("SAVE_VERSION incrémenté à 18", () => {
-    expect(SAVE_VERSION).toBe(18);
+  it("SAVE_VERSION incrémenté à 19 (v18 Marchandage + v19 tutoriel v2)", () => {
+    expect(SAVE_VERSION).toBe(19);
   });
 
   it("retire les ids legacy, rembourse 1 pt chacun, SANS reset des autres compétences (save v17)", () => {
@@ -1225,5 +1225,51 @@ describe("v18 — la branche thématique « Œil aiguisé » devient Marchandage
     // niveau (7) + bonus chapitres (0) − dépenses sur la liste EXPURGÉE (1) = 6.
     // Un remboursement par-dessus compterait l'id retiré deux fois.
     expect(out.brocanteur.pointsDisponibles).toBe(6);
+  });
+});
+
+describe("migrerSauvegarde — v19 étapes v2 du tutoriel", () => {
+  it("normalise les étapes de l'ancien tutoriel disparues vers termine", () => {
+    const s = { ...createMockGameState(), tutorielEtape: "premier-achat" };
+    const m = migrerSauvegarde(s as unknown as GameState);
+    expect(m.tutorielEtape).toBe("termine");
+  });
+
+  it("conserve les étapes v2 en cours", () => {
+    const s = {
+      ...createMockGameState(),
+      version: SAVE_VERSION,
+      tutorielEtape: "chine-nego-un",
+    };
+    expect(migrerSauvegarde(s as GameState).tutorielEtape).toBe("chine-nego-un");
+  });
+
+  it("fast-forwarde une save v17 en cours d'ancien tuto (étape partagée) vers termine", () => {
+    const s = {
+      ...createMockGameState(),
+      version: 17,
+      tutorielEtape: "preparer-etal",
+    };
+    const m = migrerSauvegarde(s as unknown as GameState);
+    expect(m.tutorielEtape).toBe("termine");
+  });
+
+  it("fast-forwarde aussi une save v18 (build Marchandage, tuto encore ancien)", () => {
+    const s = {
+      ...createMockGameState(),
+      version: 18,
+      tutorielEtape: "preparer-etal",
+    };
+    const m = migrerSauvegarde(s as unknown as GameState);
+    expect(m.tutorielEtape).toBe("termine");
+  });
+
+  it("conserve accueil sur une save v17", () => {
+    const s = {
+      ...createMockGameState(),
+      version: 17,
+      tutorielEtape: "accueil",
+    };
+    expect(migrerSauvegarde(s as unknown as GameState).tutorielEtape).toBe("accueil");
   });
 });

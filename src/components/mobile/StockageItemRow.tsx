@@ -24,6 +24,13 @@ interface StockageItemRowProps {
   onEnvoyerCollection: (objet: Objet) => void;
   /** Mini-tuto vinyles : main pointeuse sur le bouton Collection de cette ligne. */
   guideVinyle?: boolean;
+  /**
+   * Tutoriel (visite du stockage) : main pointeuse depuis le dessus sur le
+   * bouton Collection de cette ligne (la peluche désignée). Distincte de
+   * `guideVinyle` (main latérale) : le sens diffère car le libellé (prix +
+   * état) occupe déjà la gauche du bouton.
+   */
+  guideCollection?: boolean;
   isLast: boolean;
 }
 
@@ -31,6 +38,12 @@ const wrap: CSSProperties = {
   position: "relative",
   overflow: "hidden",
 };
+
+/* Piège overflow (tutoriel) : la main "tuto-main-haut" déborde au-dessus du
+   bouton — si `wrap` reste en overflow:hidden pendant le guidage, la main
+   est rognée par sa propre ligne avant même d'atteindre le conteneur de la
+   grille. Overflow visible tant que cette ligne porte la main. */
+const wrapGuide: CSSProperties = { ...wrap, overflow: "visible" };
 
 const item: CSSProperties = {
   display: "grid",
@@ -89,6 +102,7 @@ function StockageItemRowBase({
   onTap,
   onEnvoyerCollection,
   guideVinyle = false,
+  guideCollection = false,
   isLast,
 }: StockageItemRowProps) {
   const { d, tr, locale } = useLangue();
@@ -121,7 +135,7 @@ function StockageItemRowBase({
     <div
       className="broc-list-row"
       style={{
-        ...wrap,
+        ...(guideCollection ? wrapGuide : wrap),
         borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",
       }}
     >
@@ -212,9 +226,20 @@ function StockageItemRowBase({
           <button
             type="button"
             className={
-              guideVinyle ? "tuto-main" : undefined
+              guideCollection
+                ? "tuto-main tuto-main-haut"
+                : guideVinyle
+                  ? "tuto-main"
+                  : undefined
             }
-            style={collectionInlineBtn(collection.disponible)}
+            style={
+              guideCollection
+                ? // La fenêtre flottante du stockage est à zIndex 35 : sans
+                  // élévation, la main pourrait se retrouver masquée par un
+                  // élément voisin porté au même niveau. On la pose au-dessus.
+                  { ...collectionInlineBtn(collection.disponible), position: "relative", zIndex: 36 }
+                : collectionInlineBtn(collection.disponible)
+            }
             onClick={(e) => {
               e.stopPropagation();
               handleCollection();
@@ -259,6 +284,7 @@ export const StockageItemRow = memo(
     prev.onTap === next.onTap &&
     prev.onEnvoyerCollection === next.onEnvoyerCollection &&
     prev.guideVinyle === next.guideVinyle &&
+    prev.guideCollection === next.guideCollection &&
     prev.collection.disponible === next.collection.disponible &&
     prev.collection.dejaIdentique === next.collection.dejaIdentique &&
     prev.collection.necessiteConfirmation ===

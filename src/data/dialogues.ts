@@ -37,22 +37,93 @@ export const SEQUENCES_TUTORIEL: Record<string, DialogueSequence> = {
   tuto_chine_entree: {
     id: "tuto_chine_entree",
     lignes: [
-      { humeur: "souriant", texte: "Ah, l'odeur des vieilleries au petit matin… Regarde les étals : glisse d'un objet à l'autre, prends ton temps." },
-      { humeur: "songeur", texte: "Quand un objet te parle, négocie — ou achète-le au prix affiché si le cœur t'en dit. Vas-y, choisis-en un." },
+      { humeur: "souriant", texte: "Ah, l'odeur des vieilleries au petit matin… Aujourd'hui, c'est moi qui guide : quatre objets, quatre leçons." },
+      { humeur: "songeur", texte: "Regarde ce tourne-disque. Joli, hein ? Déplie « Négocier » et propose-lui trois fois rien — on verra bien ce que ça donne." },
     ],
   },
-  tuto_achat_fait: {
-    id: "tuto_achat_fait",
+  tuto_nego_echec_avant: {
+    id: "tuto_nego_echec_avant",
     lignes: [
-      { humeur: "rieur", texte: "Bien joué ! Ta grand-mère aurait marchandé deux sous de moins, mais c'est un début." },
-      { humeur: "souriant", texte: "Allez, on rentre. Passe par la sortie, ton trésor sous le bras." },
+      { humeur: "rieur", texte: "Vas-y, ose : glisse le curseur tout en bas et propose. Au pire, il grogne." },
+    ],
+  },
+  tuto_nego_echec_apres: {
+    id: "tuto_nego_echec_apres",
+    lignes: [
+      { humeur: "rieur", texte: "Et voilà, il est vexé ! Une offre trop basse, c'est comme marcher sur ses plates-bandes : chaque vendeur a son seuil… et son caractère." },
+      { humeur: "songeur", texte: "Avec l'expérience — des niveaux, des compétences, l'œil qui se fait — tu sauras jusqu'où descendre sans froisser personne." },
+      { humeur: "souriant", texte: "Ça arrive aux meilleurs. Allez, carte suivante : je te montre l'inverse." },
+    ],
+  },
+  tuto_achat_direct_avant: {
+    id: "tuto_achat_direct_avant",
+    lignes: [
+      { humeur: "songeur", texte: "Cette carafe en cristal… à ce prix, c'est une affaire. Parfois on ne négocie pas : on tend les billets avant qu'un autre le fasse." },
+    ],
+  },
+  tuto_achat_direct_apres: {
+    id: "tuto_achat_direct_apres",
+    lignes: [
+      { humeur: "souriant", texte: "Bien. Reconnaître une bonne affaire au premier coup d'œil, c'est déjà du métier." },
+    ],
+  },
+  tuto_nego_un_avant: {
+    id: "tuto_nego_un_avant",
+    lignes: [
+      { humeur: "souriant", texte: "Une manette Vibraduo ! Les collectionneurs en raffolent. Cette fois, négocie pour de vrai : reste dans la zone du curseur, ni trop bas, ni trop haut." },
+    ],
+  },
+  tuto_nego_un_apres: {
+    id: "tuto_nego_un_apres",
+    lignes: [
+      { humeur: "rieur", texte: "Ta première négo ! Tu as vu l'aller-retour ? Toi qui montes, lui qui descend… et on se retrouve au milieu." },
+    ],
+  },
+  tuto_nego_deux_avant: {
+    id: "tuto_nego_deux_avant",
+    lignes: [
+      { humeur: "emu", texte: "Oh… une peluche en mohair. Ta grand-mère avait la même sur son fauteuil. Négocie-la-moi gentiment, tu veux ?" },
+    ],
+  },
+  tuto_nego_deux_apres: {
+    id: "tuto_nego_deux_apres",
+    lignes: [
+      { humeur: "souriant", texte: "Négocié comme un chef ! Prends-en soin, de celle-là… j'ai ma petite idée sur son avenir." },
+    ],
+  },
+  tuto_chine_sortir: {
+    id: "tuto_chine_sortir",
+    lignes: [
+      { humeur: "souriant", texte: "On a assez dépensé pour aujourd'hui — garde des sous pour la suite. Jette un œil aux derniers étals si tu veux, puis passe la sortie." },
     ],
   },
   tuto_retour: {
     id: "tuto_retour",
     lignes: [
-      { humeur: "souriant", texte: "Chiner, c'est le plaisir. Vendre, c'est le métier. Mais on ne tient pas un étal avec une seule trouvaille…" },
-      { humeur: "rieur", texte: "Alors je t'ai préparé un colis : quelques pièces de la boutique pour garnir ta première vitrine. Il t'attend devant la porte — ouvre-le !" },
+      { humeur: "souriant", texte: "Trois trouvailles d'un coup ! Mais un brocanteur qui empile, c'est un brocanteur qui perd. Chaque chose à sa place." },
+      { humeur: "songeur", texte: "Ouvre le Stockage, en bas — je te fais visiter la réserve." },
+    ],
+  },
+  tuto_peluche_collection: {
+    id: "tuto_peluche_collection",
+    lignes: [
+      { humeur: "emu", texte: "La peluche… Ne la vends pas, celle-là. Il y a des objets qu'on garde — c'est ça, une collection." },
+      { humeur: "souriant", texte: "Envoie-la dans ta collection : touche son petit bouton, là." },
+    ],
+  },
+  tuto_collection_lecon: {
+    id: "tuto_collection_lecon",
+    lignes: [
+      { humeur: "souriant", texte: "Tu vois ce chiffre ? La valeur de ta collection. C'est elle qui fait ta réputation de brocanteur." },
+      { humeur: "rieur", texte: "Et regarde : le Marché aux puces du dimanche t'ouvre déjà ses portes. On commence à parler de toi, petit !" },
+      { humeur: "songeur", texte: "Maintenant, la vente. Retourne au bureau — la porte nous attend." },
+    ],
+  },
+  tuto_colis_cadeau: {
+    id: "tuto_colis_cadeau",
+    lignes: [
+      { humeur: "emu", texte: "Une dernière chose. Ce colis, c'est de ma part : quelques pièces de la boutique pour te lancer." },
+      { humeur: "souriant", texte: "Tu as l'œil, tu as la main… le reste viendra tout seul. Ouvre-le, et au travail !" },
     ],
   },
   tuto_vente_entree: {

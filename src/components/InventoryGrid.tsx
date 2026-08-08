@@ -14,18 +14,28 @@ interface InventoryGridProps {
   onEnvoyerCollection: (objet: Objet) => void;
   /** Mini-tuto vinyles : main pointeuse sur le bouton Collection des vinyles. */
   mainVinyles?: boolean;
+  /**
+   * Tutoriel (visite du stockage) : templateId de l'unique objet dont le
+   * bouton Collection doit porter la main pointeuse (main-haut, depuis le
+   * dessus) — la peluche désignée par le grand-père. `null`/`undefined` :
+   * aucune main.
+   */
+  mainTemplateId?: string | null;
   collectionStatus: (objet: Objet) => CollectionStatus;
 }
 
-const card: CSSProperties = {
+const card = (overflowVisible: boolean): CSSProperties => ({
   position: "relative",
   background: "var(--paper-100)",
   // Pas de cadre propre : le panneau de la fenêtre flottante (FloatingRoom-
   // Overlay) fournit déjà la carte — un second liseré ferait une double
   // ligne. Seules les lignes séparatrices entre items (borderBottom des
   // rows) structurent la liste.
-  overflow: "hidden",
-};
+  // Piège z-index/overflow (tutoriel) : la main-haut du guidage stockage
+  // déborde au-dessus de sa ligne — si on la laisse rognée par ce
+  // conteneur, elle disparaît. Overflow visible tant qu'une ligne guide.
+  overflow: overflowVisible ? "visible" : "hidden",
+});
 
 export function InventoryGrid({
   objets,
@@ -33,6 +43,7 @@ export function InventoryGrid({
   onTapObjet,
   onEnvoyerCollection,
   mainVinyles = false,
+  mainTemplateId = null,
   collectionStatus,
 }: InventoryGridProps) {
   const { d } = useLangue();
@@ -65,8 +76,11 @@ export function InventoryGrid({
     );
   }
 
+  const guideCollectionActif =
+    mainTemplateId != null && objets.some((o) => o.templateId === mainTemplateId);
+
   return (
-    <div style={card}>
+    <div style={card(guideCollectionActif)}>
       {objets.map((o, i) => {
         const valeurConnue = categoriesConnues.has(o.categorie);
         return (
@@ -78,6 +92,9 @@ export function InventoryGrid({
             onTap={onTapObjet}
             onEnvoyerCollection={onEnvoyerCollection}
             guideVinyle={mainVinyles && estVinyle(o.templateId)}
+            guideCollection={
+              mainTemplateId != null && o.templateId === mainTemplateId
+            }
             isLast={i === objets.length - 1}
           />
         );

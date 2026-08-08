@@ -105,7 +105,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -488,13 +488,32 @@ function appliquerMigrations(loaded: GameState): GameState {
 
   // Tutoriel (v12) : les saves antérieures ont déjà joué — "termine".
   // Une valeur inconnue (save corrompue/future) est aussi normalisée.
-  const tutorielEtape: TutorielEtape = (() => {
+  const tutorielEtapeNormalisee: TutorielEtape = (() => {
     const v = (loaded as Partial<GameState>).tutorielEtape;
     return typeof v === "string" &&
       (ETAPES_TUTORIEL as readonly string[]).includes(v)
       ? (v as TutorielEtape)
       : "termine";
   })();
+  // v18 (tutoriel brocante scriptée) : certaines étapes existent à l'identique
+  // dans l'ancien ET le nouveau flux (ex. "preparer-etal") — la normalisation
+  // ci-dessus ne peut donc pas les distinguer par simple appartenance à
+  // `ETAPES_TUTORIEL`. Une save < v19 encore en cours (ni "accueil" ni
+  // "termine") vient forcément de l'ancien flux — v18 comprise : la refonte
+  // Marchandage (v18) a précédé le tutoriel v2 (v19). Ses préconditions
+  // (colis, inventaire, objets manette/carafe) ne correspondent pas à ce que
+  // le nouveau flux attend à cette étape (ex. coffre-trace-un exige une
+  // manette que ce joueur n'a jamais reçue → Valider bloqué à vie). On
+  // fast-forward directement à "termine" plutôt que de laisser une étape
+  // piégée.
+  const saveLegacyAvantV19 =
+    typeof loaded.version === "number" && loaded.version < 19;
+  const tutorielEtape: TutorielEtape =
+    saveLegacyAvantV19 &&
+    tutorielEtapeNormalisee !== "accueil" &&
+    tutorielEtapeNormalisee !== "termine"
+      ? "termine"
+      : tutorielEtapeNormalisee;
   const tutorielFini = tutorielEtape === "termine";
 
   // v14 : colis du tutoriel. Les saves antérieures ont reçu leur stock

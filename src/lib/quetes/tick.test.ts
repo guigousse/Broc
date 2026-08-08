@@ -14,7 +14,7 @@ describe("tickQuetes", () => {
 
   it("passthrough : renvoie courriers/missions inchangés (tutoriel en cours)", () => {
     const state = createMockGameState({
-      tutorielEtape: "premier-achat",
+      tutorielEtape: "aller-chiner",
       courriers: [],
       missions: [],
     });

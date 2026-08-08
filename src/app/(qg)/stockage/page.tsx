@@ -1,13 +1,14 @@
 "use client";
 
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FloatingRoomOverlay } from "@/components/mobile/floating-room/FloatingRoomOverlay";
 import { CategoriePicker } from "@/components/mobile/CategoriePicker";
 import { InventoryGrid } from "@/components/InventoryGrid";
 import { ObjetDetailOverlay } from "@/components/mobile/ObjetDetailOverlay";
 import { ConfirmReplaceModal } from "@/components/mobile/ConfirmReplaceModal";
-import { useGame } from "@/context/GameContext";
+import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
+import { useGame, useGameActions } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import {
   getProchaineUpgradeStockage,
@@ -18,6 +19,8 @@ import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { UpgradeButton } from "@/components/mobile/UpgradeButton";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { collectionStatusPourObjet } from "@/lib/atelier";
+import { donCollectionPermis } from "@/lib/tutoriel";
+import { PELUCHE_TEMPLATE_ID } from "@/data/tutorielScenario";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomObjet, nomStockageTier } from "@/lib/i18n/contenu";
 import type { CategorieObjet, EtatObjet, Objet } from "@/types/game";
@@ -39,6 +42,13 @@ function StockagePageInner() {
     donnerACollection,
     ameliorerStockage,
   } = useGame();
+  const { avancerTutoriel } = useGameActions();
+  const etape = state?.tutorielEtape;
+  // Visite guidée du stockage (tutoriel v2) : l'arrivée sur la page depuis
+  // la TabBar déclenche le coach en 4 temps (cf. Step 1 du brief T10).
+  useEffect(() => {
+    if (etape === "stockage-ouvrir") avancerTutoriel("stockage-focus");
+  }, [etape, avancerTutoriel]);
   // Pré-filtre optionnel depuis ?cat= (deep-link de catégorie).
   // Garde une valeur seulement si la catégorie est valide.
   const initialFiltre = useMemo<CategorieObjet | null>(() => {
@@ -94,6 +104,9 @@ function StockagePageInner() {
   const envoyerCollection = useCallback(
     (o: Objet) => {
       if (!state) return;
+      // Tutoriel : seule la peluche désignée peut rejoindre la collection,
+      // et uniquement à l'étape dédiée — les autres boutons restent inertes.
+      if (!donCollectionPermis(state.tutorielEtape, o.templateId)) return;
       const status = collectionStatusPourObjet(state, o);
       if (!status.disponible && !status.necessiteConfirmation) return;
       if (status.necessiteConfirmation && status.ancienneDonation) {
@@ -101,11 +114,13 @@ function StockagePageInner() {
         return;
       }
       const res = donnerACollection(o.id);
-      if (res.ok)
+      if (res.ok) {
         setFlash(
           tr(d.inventaire.flashAjouteCollection, { nom: nomObjet(o, locale) }),
         );
-      else
+        if (state.tutorielEtape === "collection-envoyer")
+          avancerTutoriel("collection-lecon");
+      } else
         setFlash(
           tr(d.inventaire.impossibleRaison, {
             raison: res.raison ?? d.inventaire.conditionNonRemplie,
@@ -113,7 +128,7 @@ function StockagePageInner() {
         );
       setTimeout(() => setFlash(null), 2500);
     },
-    [state, donnerACollection, d, tr, locale],
+    [state, donnerACollection, d, tr, locale, avancerTutoriel],
   );
 
   // Le layout (qg) gate le rendu (redirect + écran d'attente) : ce garde
@@ -145,6 +160,7 @@ function StockagePageInner() {
               title={d.chrome.onglets.stockage}
               left={
                 <div
+                  data-tuto-coach="stockage-capacite"
                   style={{
                     display: "flex",
                     flexDirection: "column",
@@ -168,46 +184,52 @@ function StockagePageInner() {
                   </div>
                 </div>
               }
-              right={(() => {
-                const up = getProchaineUpgradeStockage(state.niveauStockage);
-                if (!up) {
-                  return (
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 10,
-                        letterSpacing: "0.14em",
-                        textTransform: "uppercase",
-                        color: "var(--brass-700)",
-                        padding: "6px 10px",
-                      }}
-                    >
-                      {d.inventaire.max}
-                    </span>
-                  );
-                }
-                return (
-                  <UpgradeButton
-                    niveauCible={up.niveauCible}
-                    cout={up.cout}
-                    peut={state.budget >= up.cout}
-                    onUpgrade={() => {
-                      const res = ameliorerStockage();
-                      if (!res.ok)
-                        setFlash(res.raison ?? d.inventaire.impossible);
-                      else
-                        setFlash(
-                          tr(d.inventaire.stockageAmeliore, {
-                            niveau: up.niveauCible,
-                          }),
-                        );
-                      setTimeout(() => setFlash(null), 2500);
-                    }}
-                  />
-                );
-              })()}
+              right={
+                <div data-tuto-coach="stockage-amelioration">
+                  {(() => {
+                    const up = getProchaineUpgradeStockage(
+                      state.niveauStockage,
+                    );
+                    if (!up) {
+                      return (
+                        <span
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            fontSize: 10,
+                            letterSpacing: "0.14em",
+                            textTransform: "uppercase",
+                            color: "var(--brass-700)",
+                            padding: "6px 10px",
+                          }}
+                        >
+                          {d.inventaire.max}
+                        </span>
+                      );
+                    }
+                    return (
+                      <UpgradeButton
+                        niveauCible={up.niveauCible}
+                        cout={up.cout}
+                        peut={state.budget >= up.cout}
+                        onUpgrade={() => {
+                          const res = ameliorerStockage();
+                          if (!res.ok)
+                            setFlash(res.raison ?? d.inventaire.impossible);
+                          else
+                            setFlash(
+                              tr(d.inventaire.stockageAmeliore, {
+                                niveau: up.niveauCible,
+                              }),
+                            );
+                          setTimeout(() => setFlash(null), 2500);
+                        }}
+                      />
+                    );
+                  })()}
+                </div>
+              }
             />
-            <div style={{ marginTop: 4 }}>
+            <div data-tuto-coach="stockage-categories" style={{ marginTop: 4 }}>
               <CategoriePicker
                 selection={filtre}
                 onChange={setFiltre}
@@ -237,15 +259,30 @@ function StockagePageInner() {
             {flash}
           </div>
         )}
-        <InventoryGrid
-          objets={objetsFiltres}
-          categoriesConnues={categoriesConnuesVitrine}
-          onTapObjet={setObjetOuvert}
-          onEnvoyerCollection={envoyerCollection}
-          mainVinyles={state?.miniTutoVinyle === "ajouter"}
-          collectionStatus={collectionStatus}
-        />
+        <div data-tuto-coach="stockage-objet">
+          <InventoryGrid
+            objets={objetsFiltres}
+            categoriesConnues={categoriesConnuesVitrine}
+            onTapObjet={setObjetOuvert}
+            onEnvoyerCollection={envoyerCollection}
+            mainVinyles={state?.miniTutoVinyle === "ajouter"}
+            mainTemplateId={etape === "collection-envoyer" ? PELUCHE_TEMPLATE_ID : null}
+            collectionStatus={collectionStatus}
+          />
+        </div>
       </FloatingRoomOverlay>
+
+      {etape === "stockage-focus" && (
+        <TutorielCoach
+          etapes={[
+            { cible: "stockage-capacite", texte: d.tutoriel.coachStockageCapacite },
+            { cible: "stockage-categories", texte: d.tutoriel.coachStockageCategories },
+            { cible: "stockage-objet", texte: d.tutoriel.coachStockageObjet },
+            { cible: "stockage-amelioration", texte: d.tutoriel.coachStockageAmelioration },
+          ]}
+          onFini={() => avancerTutoriel("collection-envoyer")}
+        />
+      )}
 
       <ObjetDetailOverlay
         objet={objetOuvert}

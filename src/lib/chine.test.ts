@@ -7,6 +7,7 @@ import {
   SURCOTE_BONIMENTEUR,
   genererRemplacement,
   genererSession,
+  genererSessionScriptee,
   prixMinAvecMarchandage,
   uniquesExclusDuChinage,
 } from "./chine";
@@ -20,6 +21,8 @@ import { UNIQUES } from "@/data/uniques";
 import { getBrocanteById } from "@/data/brocantes";
 import { vinylesCadeauxExclus, VINYLES_CADEAU_PAR_ANNEE } from "@/lib/anniversaire";
 import type { Brocante, CollectionSlot, Courrier, GameState } from "@/types/game";
+import { SESSION_TUTORIEL } from "@/data/tutorielScenario";
+import { calculerPrixMinAcceptDepuisPersona } from "./personas";
 
 describe("constantes exportées", () => {
   it("SEUIL_COLERE_VENDEUR est dans (0, 1)", () => {
@@ -620,6 +623,32 @@ describe("genererRemplacement (La Fouille)", () => {
       const r = genererRemplacement(session[0], session, [], brocT3, null, exclus);
       expect(r.objet.templateId).not.toBe(TEMPLATE_GENERIQUE_EXCLU);
     }
+  });
+});
+
+describe("genererSessionScriptee", () => {
+  it("produit les 6 objets du scénario, dans l'ordre, aux valeurs forcées", () => {
+    const session = genererSessionScriptee();
+    expect(session).toHaveLength(6);
+    session.forEach((it, i) => {
+      const s = SESSION_TUTORIEL[i];
+      expect(it.objet.templateId).toBe(s.templateId);
+      expect(it.objet.etat).toBe(s.etat);
+      expect(it.prixVendeur).toBe(s.prixVendeur);
+      expect(it.prixAffiche).toBe(true);
+      expect(it.persona).toEqual(s.persona);
+      expect(it.prixMinAccept).toBe(
+        calculerPrixMinAcceptDepuisPersona(s.persona, s.prixVendeur),
+      );
+      expect(it.statut).toBe("disponible");
+      expect(it.negociation).toBeNull();
+    });
+  });
+  it("est reproductible (mêmes valeurs à chaque appel, hors ids)", () => {
+    const a = genererSessionScriptee();
+    const b = genererSessionScriptee();
+    expect(a.map((x) => [x.objet.templateId, x.prixVendeur, x.objet.prixReferenceReel]))
+      .toEqual(b.map((x) => [x.objet.templateId, x.prixVendeur, x.objet.prixReferenceReel]));
   });
 });
 

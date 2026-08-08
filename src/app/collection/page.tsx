@@ -13,14 +13,17 @@ import { DonationPickerSheet } from "@/components/mobile/DonationPickerSheet";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { useToast } from "@/components/ui/Toast";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import { stockageEstPlein } from "@/lib/stockage";
 import { valeurDonation } from "@/lib/collection";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
-import { nomObjet } from "@/lib/i18n/contenu";
+import { nomObjet, nomExpediteur } from "@/lib/i18n/contenu";
+import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
+import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
+import { SEQUENCES_TUTORIEL, GRAND_PERE_PORTRAITS } from "@/data/dialogues";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 /**
@@ -41,11 +44,14 @@ export default function CollectionPage() {
     retirerDeCollection,
     marquerVuDansCollection,
   } = useGame();
+  const { avancerTutoriel } = useGameActions();
   const { toast } = useToast();
   const [filtre, setFiltre] = useState<CategorieObjet | null>(null);
   const [slotActif, setSlotActif] = useState<CollectionSlot | null>(null);
   const [pickerOuvert, setPickerOuvert] = useState(false);
   const [objetADonner, setObjetADonner] = useState<Objet | null>(null);
+  const [coachFini, setCoachFini] = useState(false);
+  const etape = state?.tutorielEtape;
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -133,6 +139,7 @@ export default function CollectionPage() {
             align="center"
             right={
               <div
+                data-tuto-coach="collection-valeur"
                 style={{
                   fontFamily: "var(--font-display)",
                   fontSize: 12,
@@ -187,6 +194,24 @@ export default function CollectionPage() {
         />
       </div>
     </MobileLayout>
+    {etape === "collection-lecon" && !coachFini && (
+      <TutorielCoach
+        etapes={[
+          { cible: "collection-case", texte: d.tutoriel.coachCollectionCase },
+          { cible: "collection-valeur", texte: d.tutoriel.coachCollectionValeur },
+          { cible: null, texte: d.tutoriel.coachCollectionDeblocage },
+        ]}
+        onFini={() => setCoachFini(true)}
+      />
+    )}
+    {etape === "collection-lecon" && coachFini && (
+      <DialogueOverlay
+        sequence={SEQUENCES_TUTORIEL.tuto_collection_lecon}
+        nom={nomExpediteur("grand-pere", locale)}
+        portraits={GRAND_PERE_PORTRAITS}
+        onFini={() => avancerTutoriel("preparer-etal")}
+      />
+    )}
     <CollectionDetailOverlay
       open={slotActif !== null && !pickerOuvert}
       onClose={() => setSlotActif(null)}

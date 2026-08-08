@@ -174,13 +174,36 @@ export const en: DictionnaireUI = {
     colisTitre: "Grandpa's parcel",
     cadeauTitre: "Happy birthday!",
     colisRecuperer: "Collect",
+    coachContinuer: "Tap to continue",
+    coachStockageCapacite:
+      "Your reserve: the Garage, 10 spots. Every find lands here after the flea market.",
+    coachStockageCategories:
+      "Filter by category to find your way once the reserve fills up.",
+    coachStockageObjet:
+      "Each row shows the item's condition — and its button to send it to your collection.",
+    coachStockageAmelioration:
+      "Later, you'll be able to expand it: cellar, then warehouse.",
+    coachCollectionCase:
+      "The teddy bear found its spot: it's not for sale anymore, it's on display.",
+    coachCollectionValeur:
+      "Your collection's value grows with every donation.",
+    coachCollectionDeblocage:
+      "That value unlocks new flea markets — and builds your reputation.",
     instructions: {
       "accueil": "Listen to your grandfather…",
       "aller-chiner": "Go through the door, choose “Pick”, then the Neighborhood Yard Sale.",
-      "premier-achat": "Pick an item and buy it — haggle if you dare!",
-      "rentrer": "Leave the flea market and head back to the shop.",
-      "ouvrir-colis": "Open Grandpa's parcel by the door.",
+      "chine-nego-echec": "Open “Haggle” and try a very low offer — just to see.",
+      "chine-achat-direct": "That carafe is fairly priced: buy it at the asking price.",
+      "chine-nego-un": "Haggle for the controller — make an offer with the slider.",
+      "chine-nego-deux": "Haggle for the teddy bear — you're getting the knack.",
+      "chine-sortir": "Browse the last stalls if you like, then leave the flea market.",
+      "stockage-ouvrir": "Open Storage from the bottom bar.",
+      "stockage-focus": "Take a tour of your storage — tap to continue.",
+      "collection-envoyer": "Send the mohair teddy bear to your collection.",
+      "collection-lecon": "Open the Collection from the bottom bar.",
       "preparer-etal": "Go through the door again and choose “Set up stall” to get your window ready.",
+      "coffre-trace-un": "Pick up the first item and set it on its outline.",
+      "coffre-trace-deux": "One finger to move, a second to rotate: set the item on its outline.",
       "premiere-vente": "Sell an item to a customer, then close the stall.",
       "conclusion": "Listen to your grandfather…",
     },

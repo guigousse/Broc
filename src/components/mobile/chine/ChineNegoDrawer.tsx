@@ -4,13 +4,14 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { NegoBar } from "@/components/mobile/NegoBar";
 import { HumeurGauge } from "@/components/mobile/HumeurGauge";
 import { namePlateStyle } from "@/components/ui/namePlate";
-import { proposerOffre, ouvrirNegociation } from "@/lib/negociation";
+import { proposerOffre, ouvrirNegociation, ALEA_NEGO_SCRIPTEE } from "@/lib/negociation";
 import { temperamentDe } from "@/data/temperaments";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomVendeur, texteNego } from "@/lib/i18n/contenu";
 import type { NegociationState, ObjetEnVente } from "@/types/game";
+import type { RoleScenario } from "@/data/tutorielScenario";
 
 /**
  * Tiroir de négociation en bas de la carte de chine — reprend l'allure de la
@@ -33,6 +34,7 @@ export function ChineNegoDrawer({
   onAcheterDirect,
   prixMinEffectif,
   tutoGuide = false,
+  scriptTuto = null,
 }: {
   item: ObjetEnVente;
   budget: number;
@@ -49,6 +51,9 @@ export function ChineNegoDrawer({
   prixMinEffectif?: number;
   /** Tutoriel (premier achat) : main pointeuse sur « Négocier » puis sur le curseur. */
   tutoGuide?: boolean;
+  /** Tutoriel scripté : impose le chemin (négo bloquée/forcée, achat direct
+   *  bloqué/forcé) et borne l'offre initiale + le curseur joueur. */
+  scriptTuto?: { role: RoleScenario; bornes?: { min: number; max: number } } | null;
 }) {
   const { d, tr, locale } = useLangue();
   const { prixVendeur, statut, persona } = item;
@@ -56,6 +61,11 @@ export function ChineNegoDrawer({
   const facheInitial = item.negociation?.statut === "fache";
   const tropCher = budget < prixVendeur;
   const acheterDisabled = acquis || tropCher || plein;
+
+  const roleTuto = scriptTuto?.role ?? null;
+  const bornes = scriptTuto?.bornes ?? null;
+  const negocierBloque = roleTuto === "achat-direct" || roleTuto === "decor";
+  const acheterBloqueTuto = roleTuto !== null && roleTuto !== "achat-direct";
 
   const [localNego, setLocalNego] = useState<NegociationState>(
     () =>
@@ -67,8 +77,11 @@ export function ChineNegoDrawer({
         temperamentDe(persona.archetype),
       ),
   );
-  const [offreJoueur, setOffreJoueur] = useState<number>(
-    Math.max(1, Math.round(prixVendeur * 0.25)),
+  const [offreJoueur, setOffreJoueur] = useState<number>(() =>
+    Math.min(
+      bornes?.max ?? Infinity,
+      Math.max(bornes?.min ?? 1, Math.round(prixVendeur * 0.25)),
+    ),
   );
 
   // Resynchronise quand la négo change de l'EXTÉRIEUR (relance Tchatche depuis
@@ -88,7 +101,12 @@ export function ChineNegoDrawer({
     estFache && illustrationFacheSrc ? illustrationFacheSrc : illustrationSrc;
 
   const handleProposer = () => {
-    const next = proposerOffre(localNego, persona, offreJoueur);
+    const next = proposerOffre(
+      localNego,
+      persona,
+      offreJoueur,
+      scriptTuto ? ALEA_NEGO_SCRIPTEE : undefined,
+    );
     setLocalNego(next);
     onUpdateNego(next);
     if (next.statut === "conclu") {
@@ -124,16 +142,20 @@ export function ChineNegoDrawer({
             <div style={peekBtnRow}>
               <button
                 type="button"
-                className={tutoGuide ? "tuto-main" : undefined}
-                style={btn(false)}
+                className={tutoGuide && !negocierBloque ? "tuto-main" : undefined}
+                style={btn(negocierBloque)}
+                disabled={negocierBloque}
                 onClick={onExpand}
               >
                 {d.chine.negocier}
               </button>
               <button
                 type="button"
-                style={{ ...btn(acheterDisabled), flex: 1.3 }}
-                disabled={acheterDisabled}
+                className={
+                  tutoGuide && roleTuto === "achat-direct" ? "tuto-main" : undefined
+                }
+                style={{ ...btn(acheterDisabled || acheterBloqueTuto), flex: 1.3 }}
+                disabled={acheterDisabled || acheterBloqueTuto}
                 onClick={onAcheterDirect}
               >
                 {tr(d.chine.acheterPrix, { prix: prixVendeur })}
@@ -154,8 +176,8 @@ export function ChineNegoDrawer({
             echelleMax={prixVendeur}
             prixAdverse={localNego.prixAdverseCourant}
             prixJoueur={offreJoueur}
-            minJoueur={1}
-            maxJoueur={localNego.prixAdverseCourant}
+            minJoueur={bornes?.min ?? 1}
+            maxJoueur={Math.min(bornes?.max ?? Infinity, localNego.prixAdverseCourant)}
             onChangeJoueur={setOffreJoueur}
             readOnly={!enCours}
             tutoMainJoueur={tutoGuide && expanded}

@@ -293,18 +293,30 @@ export interface LedgerEntry {
 }
 
 /**
- * Étapes du tutoriel guidé (SP1 trame scénaristique). Linéaire :
- * accueil → aller-chiner → premier-achat → rentrer → ouvrir-colis
- * → preparer-etal → premiere-vente → conclusion → termine.
- * "termine" = tutoriel fini ou sauté (état des saves antérieures à v12).
+ * Étapes du tutoriel guidé, brocante scriptée (v2, 17 valeurs). Linéaire :
+ * accueil → aller-chiner → chine-nego-echec → chine-achat-direct →
+ * chine-nego-un → chine-nego-deux → chine-sortir → stockage-ouvrir →
+ * stockage-focus → collection-envoyer → collection-lecon → preparer-etal →
+ * coffre-trace-un → coffre-trace-deux → premiere-vente → conclusion →
+ * termine. "termine" = tutoriel fini ou sauté (état des saves antérieures
+ * à v12) ; le colis du grand-père n'est plus une étape de ce flux, il
+ * apparaît en post-tutoriel (cf. `colisEnAttente` dans lib/tutoriel).
  */
 export type TutorielEtape =
   | "accueil"
   | "aller-chiner"
-  | "premier-achat"
-  | "rentrer"
-  | "ouvrir-colis"
+  | "chine-nego-echec"
+  | "chine-achat-direct"
+  | "chine-nego-un"
+  | "chine-nego-deux"
+  | "chine-sortir"
+  | "stockage-ouvrir"
+  | "stockage-focus"
+  | "collection-envoyer"
+  | "collection-lecon"
   | "preparer-etal"
+  | "coffre-trace-un"
+  | "coffre-trace-deux"
   | "premiere-vente"
   | "conclusion"
   | "termine";

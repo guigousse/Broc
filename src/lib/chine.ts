@@ -1,4 +1,11 @@
-import type { EtatObjet, GameState, ObjetEnVente, Rarete, Tendance } from "@/types/game";
+import type {
+  EtatObjet,
+  GameState,
+  NegoPersona,
+  ObjetEnVente,
+  Rarete,
+  Tendance,
+} from "@/types/game";
 import {
   getTemplate,
   poolPourTier,
@@ -7,6 +14,7 @@ import {
 import type { Brocante, CelebriteEvenement } from "@/types/game";
 import { UNIQUES } from "@/data/uniques";
 import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
+import { SESSION_TUTORIEL } from "@/data/tutorielScenario";
 import { modificateurTendance } from "@/lib/tendances";
 import { estGrandeBraderie } from "@/lib/evenements";
 import {
@@ -70,18 +78,26 @@ export const BONUS_SPECIALISATION = 1.1;
 /** Surcote du bonimenteur : son prix affiché est gonflé, sa vraie cote est en dessous. */
 export const SURCOTE_BONIMENTEUR = 1.35;
 
+interface OptionsInstance {
+  etat?: EtatObjet;
+  prixVendeur?: number;
+  prixAffiche?: boolean;
+  persona?: NegoPersona;
+}
+
 function instancier(
   template: ObjetTemplate,
   tendances: readonly Tendance[],
   tier: 1 | 2 | 3 | 4 = 1,
   brocante?: Brocante,
+  opts?: OptionsInstance,
 ): ObjetEnVente {
-  const etat = pickRandom(ETATS);
+  const etat = opts?.etat ?? pickRandom(ETATS);
   const prixReferenceReel = Math.max(
     1,
     Math.round(template.prixRefBase * FACTEUR_ETAT[etat]),
   );
-  const persona = tirerPersonaVendeur(brocante, template.categorie);
+  const persona = opts?.persona ?? tirerPersonaVendeur(brocante, template.categorie);
   const affinite = getAffiniteCategorie(persona.archetype);
   // Un spécialiste connaît la cote de sa catégorie : il ne brade jamais.
   const facteurCoteMin =
@@ -94,10 +110,14 @@ function instancier(
     brocante?.specialisation === template.categorie ? BONUS_SPECIALISATION : 1;
   const surcote = persona.archetype === "bonimenteur" ? SURCOTE_BONIMENTEUR : 1;
   const rabais = brocante && estGrandeBraderie(brocante) ? RABAIS_BRADERIE : 1;
-  const prixVendeur = Math.max(
-    1,
-    Math.round(prixReferenceReel * facteurVendeur * modTend * modSpec * surcote * rabais),
-  );
+  const prixVendeur =
+    opts?.prixVendeur ??
+    Math.max(
+      1,
+      Math.round(
+        prixReferenceReel * facteurVendeur * modTend * modSpec * surcote * rabais,
+      ),
+    );
   const prixMinAccept = calculerPrixMinAcceptDepuisPersona(persona, prixVendeur);
 
   return {
@@ -112,13 +132,31 @@ function instancier(
       rarete: template.rarete,
     },
     prixVendeur,
-    prixAffiche: Math.random() > 0.4,
+    prixAffiche: opts?.prixAffiche ?? Math.random() > 0.4,
     prixMinAccept,
     negociationsTentees: 0,
     statut: "disponible",
     persona,
     negociation: null,
   };
+}
+
+/**
+ * Session de chinage du tutoriel : les 6 objets du scénario déclaratif,
+ * dans l'ordre, tout forcé (état, prix, persona). Déterministe — la
+ * session se reconstruit à l'identique si le joueur sort et revient.
+ */
+export function genererSessionScriptee(): ObjetEnVente[] {
+  return SESSION_TUTORIEL.map((s) => {
+    const t = getTemplate(s.templateId);
+    if (!t) throw new Error(`[tutoriel] template inconnu : ${s.templateId}`);
+    return instancier(t, [], 1, undefined, {
+      etat: s.etat,
+      prixVendeur: s.prixVendeur,
+      prixAffiche: true,
+      persona: s.persona,
+    });
+  });
 }
 
 /**

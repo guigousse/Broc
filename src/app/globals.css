@@ -1619,6 +1619,63 @@ nav[aria-label="Navigation principale"] :focus-visible,
   left: 12px;
   scale: -1 1;
 }
+/* TutorielCoach : la découpe glisse d'une cible à la suivante — transition
+   sur le rect (top/left/width/height) plutôt qu'un cross-fade, pour que le
+   voile suive visuellement l'attention. */
+.coach-decoupe {
+  transition: all 260ms ease;
+}
+/* Coffre à traces : silhouette pointillée indiquant où poser l'objet. */
+@keyframes broc-trace-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.trace-fantome {
+  animation: broc-trace-pulse 1.6s ease-in-out infinite;
+}
+
+/* Coffre à traces (2ᵉ trace) : hint pédagogique « un doigt déplace, deux
+   doigts tournent » — groupe objet fantôme + main A qui glisse (phase 1,
+   0-40 %), puis pivote de 0 à 40° une fois la main B arrivée (phase 2,
+   40-100 %). Pause immobile 90-100 % avant que la boucle ne reparte (saut
+   volontaire, comme une démo animée qui se réinitialise). */
+@keyframes broc-rotation-hint {
+  0% {
+    translate: -16px 0;
+    rotate: 0deg;
+  }
+  40% {
+    translate: 16px 0;
+    rotate: 0deg;
+  }
+  90%,
+  100% {
+    translate: 16px 0;
+    rotate: 40deg;
+  }
+}
+.broc-rotation-hint {
+  animation: broc-rotation-hint 3.2s ease-in-out infinite;
+}
+/* Main B — invisible en phase 1, rejoint en fondu au début de la phase 2. */
+@keyframes broc-rotation-hint-main2 {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  55%,
+  100% {
+    opacity: 1;
+  }
+}
+.broc-rotation-hint-main2 {
+  animation: broc-rotation-hint-main2 3.2s ease-in-out infinite;
+}
 @media (prefers-reduced-motion: reduce) {
   .tuto-pulse {
     animation: none;
@@ -1628,6 +1685,20 @@ nav[aria-label="Navigation principale"] :focus-visible,
   .tuto-main-swipe,
   .tuto-fleches::before,
   .tuto-fleches::after {
+    animation: none;
+  }
+  .coach-decoupe {
+    transition: none;
+  }
+  .trace-fantome {
+    animation: none;
+    opacity: 0.85;
+  }
+  .broc-rotation-hint,
+  .broc-rotation-hint-main2 {
+    /* Image parlante figée : objet + les deux mains posées, sans mouvement
+       (main B visible par défaut sans l'animation qui la faisait apparaître
+       en fondu ; le groupe reste à sa position de repos, non pivoté). */
     animation: none;
   }
 }

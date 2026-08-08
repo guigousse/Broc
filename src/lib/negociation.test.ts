@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NegoPersona, NegociationState } from "@/types/game";
-import { HUMEUR_RELANCE, POOLS_NEGO_FR, ouvrirNegociation, proposerOffre, relancerNegociation } from "./negociation";
+import { ALEA_NEGO_SCRIPTEE, HUMEUR_RELANCE, POOLS_NEGO_FR, ouvrirNegociation, proposerOffre, relancerNegociation } from "./negociation";
 import { texteNego } from "@/lib/i18n/contenu";
 
 function persona(patch: Partial<NegoPersona> = {}): NegoPersona {
@@ -293,5 +293,22 @@ describe("proposerOffre — invariants", () => {
     const snapshot = JSON.stringify(n);
     proposerOffre(n, persona(), 85);
     expect(JSON.stringify(n)).toBe(snapshot);
+  });
+});
+
+describe("proposerOffre — aléa injectable", () => {
+  it("avec ALEA_NEGO_SCRIPTEE, jamais de fin probabiliste (fache/refus hors insulte/patience)", () => {
+    let nego = ouvrirNegociation("achat", 58, 41);
+    // offre non insultante, répétée : seuls "en_cours" puis accord/patience possibles
+    for (let i = 0; i < 3 && nego.statut === "en_cours"; i++) {
+      nego = proposerOffre(
+        nego,
+        persona({ margePct: 0.3, elanPct: 0.85, patience: 4, tolerancePct: 0.55, sangFroid: 0.5 }),
+        41,
+        ALEA_NEGO_SCRIPTEE,
+      );
+      expect(["en_cours", "conclu"]).toContain(nego.statut);
+    }
+    expect(nego.statut).toBe("conclu");
   });
 });

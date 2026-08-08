@@ -666,7 +666,7 @@ export default function VitrineJourneePage() {
 
   // Entrée de journée pendant le tutoriel : le grand-père présente la vente.
   useEffect(() => {
-    if (etape === "preparer-etal") {
+    if (etape === "coffre-trace-deux") {
       setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_entree);
     }
   }, [etape]);
@@ -1225,7 +1225,7 @@ export default function VitrineJourneePage() {
         portraits={GRAND_PERE_PORTRAITS}
         onFini={() => {
           setDialogueTuto(null);
-          if (etape === "preparer-etal") avancerTutoriel("premiere-vente");
+          if (etape === "coffre-trace-deux") avancerTutoriel("premiere-vente");
           else if (etape === "premiere-vente") avancerTutoriel("conclusion");
         }}
       />

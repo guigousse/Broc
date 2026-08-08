@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { EtapeBandeau } from "@/components/vente/EtapeBandeau";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import { CoffreChargement } from "@/components/vente/CoffreChargement";
 import { CoffrePricing } from "@/components/vente/CoffrePricing";
 import { VITRINE_PREP_ID, vitrineEstEnPrep } from "@/lib/vitrinePrep";
@@ -12,6 +12,9 @@ import { CATEGORIES } from "@/data/categories";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { prixSuggere } from "@/lib/prixSuggere";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { traceAPoser, estSurTrace, tracesToutesPosees } from "@/lib/coffreTuto";
+import { TRACES_TUTORIEL } from "@/data/tutorielScenario";
+import { audioManager } from "@/lib/audio/audioManager";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 // Prix par défaut = prix du marché (curseur de tarification centré sur la valeur).
@@ -39,9 +42,28 @@ export default function VitrinePrepPage() {
     acheterCamion,
     setNiveauCamionDev,
   } = useGame();
+  const { avancerTutoriel } = useGameActions();
   const { d } = useLangue();
 
   const [etape, setEtape] = useState<"packing" | "pricing">("packing");
+
+  // Coffre à traces : latch anti-spam — mémorise le dernier objet aimanté
+  // (id + templateId de la trace visée) pour ne pas rejouer le snap/le son
+  // à chaque commit throttlé alors que l'objet est déjà exactement posé
+  // (le canvas continue d'émettre des onMove/onRotate tout le temps que le
+  // doigt reste dans le disque de tolérance). Effacé dès que l'objet sort
+  // du disque, pour permettre un nouveau snap+son s'il y retourne plus tard.
+  const derniereTraceValideeRef = useRef<{ objetId: string; templateId: string } | null>(
+    null,
+  );
+
+  // Arrivée dans la prep pendant le tutoriel v2 : la leçon de tarification
+  // (« preparer-etal ») est terminée, on bascule directement sur la leçon
+  // du coffre à traces (première trace = la manette).
+  const tutorielEtape = state?.tutorielEtape;
+  useEffect(() => {
+    if (tutorielEtape === "preparer-etal") avancerTutoriel("coffre-trace-un");
+  }, [tutorielEtape, avancerTutoriel]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -60,6 +82,16 @@ export default function VitrinePrepPage() {
   }, [isHydrated, state, router, ouvrirVitrine]);
 
   const coffre: ObjetEnVitrine[] = state?.vitrine?.objets ?? [];
+  // Coffre à traces (tutoriel v2) : trace pointillée de l'étape courante —
+  // la PREMIÈRE trace exigée par l'étape encore non posée dans le coffre
+  // actuel (`traceAPoser`, PAS `traceActive` : ce dernier est une fonction
+  // pure de l'étape seule et resterait bloqué sur la trace 2 même si la
+  // trace 1 a été délogée depuis — désynchronisé du gate ci-dessous, qui
+  // EST cumulatif). `null` hors étapes coffre ou quand tout est posé.
+  const trace = tutorielEtape ? traceAPoser(tutorielEtape, coffre) : null;
+  const validerBloque = state
+    ? !tracesToutesPosees(state.tutorielEtape, coffre)
+    : false;
   const stock = useMemo(() => {
     if (!state) return [];
     const ids = new Set(coffre.map((o) => o.objet.id));
@@ -94,6 +126,59 @@ export default function VitrinePrepPage() {
     );
   }
 
+  /**
+   * Coffre à traces (tutoriel v2) : dès que l'objet visé par la trace
+   * affichée (`trace`, dérivée de `traceAPoser` — donc déjà « la bonne »
+   * pour l'étape ET l'état actuel du coffre) entre dans les tolérances
+   * (position ET angle), il s'aimante exactement sur la trace et fait
+   * avancer l'étape (seulement depuis coffre-trace-un : à coffre-trace-deux
+   * il n'y a plus d'étape suivante à atteindre ici — la suite se joue dans
+   * journee/ClientPage.tsx). `templateId` est fourni par l'appelant plutôt
+   * que relu dans `coffre` : `handleAjouter` appelle ceci juste après
+   * `mettreEnVitrine`, un setState dont l'effet n'est pas encore visible
+   * dans le `coffre` fermé par ce render (le lookup y échouerait toujours,
+   * laissant le dépôt direct sur le fantôme — tap OU drag-and-drop depuis le
+   * carrousel — sans snap/son/avancement, alors que `tracesToutesPosees`,
+   * lui, verrait l'objet dès le prochain render et débloquerait Valider
+   * sans que l'étape n'ait avancé).
+   *
+   * Latch anti-spam (`derniereTraceValideeRef`) : tant que l'objet reste
+   * dans le disque de la MÊME trace, on ne réapplique ni le snap ni le son
+   * (le canvas commet des onMove/onRotate en continu pendant tout le
+   * geste) ; le latch est levé dès que l'objet sort du disque OU que la
+   * trace affichée change de templateId, pour rester réarmable.
+   */
+  const verifierTrace = (
+    objetId: string,
+    templateId: string,
+    x: number,
+    y: number,
+    rot: number,
+  ): boolean => {
+    if (!trace || templateId !== trace.templateId) {
+      if (derniereTraceValideeRef.current?.objetId === objetId) {
+        derniereTraceValideeRef.current = null;
+      }
+      return false;
+    }
+    if (!estSurTrace({ posX: x, posY: y, rotation: rot }, trace)) {
+      if (derniereTraceValideeRef.current?.objetId === objetId) {
+        derniereTraceValideeRef.current = null;
+      }
+      return false;
+    }
+    const dejaAimante = derniereTraceValideeRef.current?.objetId === objetId;
+    if (!dejaAimante) {
+      ajusterPositionVitrine(objetId, trace.posX, trace.posY, trace.rotation);
+      void audioManager.playCoffreOuvre();
+      derniereTraceValideeRef.current = { objetId, templateId: trace.templateId };
+      if (state.tutorielEtape === "coffre-trace-un") {
+        avancerTutoriel("coffre-trace-deux");
+      }
+    }
+    return true;
+  };
+
   const handleAjouter = (objetId: string, posX: number, posY: number) => {
     const obj = state.inventaireJoueur.find((o) => o.id === objetId);
     if (!obj) return;
@@ -103,12 +188,19 @@ export default function VitrinePrepPage() {
       SUGGESTION_FACTEUR,
     );
     mettreEnVitrine(objetId, prix, posX, posY, 0);
+    // templateId connu via l'inventaire (pas via `coffre`, périmé ici — cf.
+    // le commentaire de `verifierTrace`) : couvre le dépôt direct depuis le
+    // carrousel (tap au centre OU drag-and-drop lâché pile sur le fantôme).
+    verifierTrace(objetId, obj.templateId, posX, posY, 0);
   };
 
   const handleRotate = (objetId: string, angle: number) => {
     const ov = coffre.find((o) => o.objet.id === objetId);
     if (!ov) return;
     const norm = ((angle % 360) + 360) % 360;
+    if (verifierTrace(objetId, ov.objet.templateId, ov.posX ?? 0.5, ov.posY ?? 0.5, norm)) {
+      return;
+    }
     ajusterPositionVitrine(objetId, ov.posX ?? 0.5, ov.posY ?? 0.5, norm);
   };
 
@@ -147,6 +239,7 @@ export default function VitrinePrepPage() {
             onMove={(id, x, y) => {
               const ov = coffre.find((o) => o.objet.id === id);
               if (!ov) return;
+              if (verifierTrace(id, ov.objet.templateId, x, y, ov.rotation ?? 0)) return;
               ajusterPositionVitrine(id, x, y, ov.rotation ?? 0);
             }}
             onRotate={handleRotate}
@@ -158,7 +251,18 @@ export default function VitrinePrepPage() {
               viderVitrine();
               router.push("/bureau");
             }}
-            tuto={state.tutorielEtape === "preparer-etal"}
+            tuto={
+              state.tutorielEtape === "coffre-trace-un" ||
+              state.tutorielEtape === "coffre-trace-deux"
+            }
+            trace={trace}
+            validerBloque={validerBloque}
+            mainTemplateId={trace?.templateId ?? null}
+            rotationHint={
+              state.tutorielEtape === "coffre-trace-deux" &&
+              validerBloque &&
+              trace?.templateId === TRACES_TUTORIEL[1].templateId
+            }
           />
         ) : (
           <CoffrePricing
@@ -169,7 +273,7 @@ export default function VitrinePrepPage() {
             validerLabel={d.vente.choisirBrocante}
             validerActif={coffre.length > 0}
             categoriesConnues={categoriesConnuesVitrine}
-            tutoMainValider={state.tutorielEtape === "preparer-etal"}
+            tutoMainValider={state.tutorielEtape === "coffre-trace-deux"}
           />
         )}
       </main>
