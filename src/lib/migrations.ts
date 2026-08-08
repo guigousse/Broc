@@ -476,13 +476,30 @@ function appliquerMigrations(loaded: GameState): GameState {
 
   // Tutoriel (v12) : les saves antérieures ont déjà joué — "termine".
   // Une valeur inconnue (save corrompue/future) est aussi normalisée.
-  const tutorielEtape: TutorielEtape = (() => {
+  const tutorielEtapeNormalisee: TutorielEtape = (() => {
     const v = (loaded as Partial<GameState>).tutorielEtape;
     return typeof v === "string" &&
       (ETAPES_TUTORIEL as readonly string[]).includes(v)
       ? (v as TutorielEtape)
       : "termine";
   })();
+  // v18 (tutoriel brocante scriptée) : certaines étapes existent à l'identique
+  // dans l'ancien ET le nouveau flux (ex. "preparer-etal") — la normalisation
+  // ci-dessus ne peut donc pas les distinguer par simple appartenance à
+  // `ETAPES_TUTORIEL`. Une save < v18 encore en cours (ni "accueil" ni
+  // "termine") vient forcément de l'ancien flux : ses préconditions (colis,
+  // inventaire, objets manette/carafe) ne correspondent pas à ce que le
+  // nouveau flux attend à cette étape (ex. coffre-trace-un exige une manette
+  // que ce joueur n'a jamais reçue → Valider bloqué à vie). On fast-forward
+  // directement à "termine" plutôt que de laisser une étape piégée.
+  const saveLegacyAvantV18 =
+    typeof loaded.version === "number" && loaded.version < 18;
+  const tutorielEtape: TutorielEtape =
+    saveLegacyAvantV18 &&
+    tutorielEtapeNormalisee !== "accueil" &&
+    tutorielEtapeNormalisee !== "termine"
+      ? "termine"
+      : tutorielEtapeNormalisee;
   const tutorielFini = tutorielEtape === "termine";
 
   // v14 : colis du tutoriel. Les saves antérieures ont reçu leur stock

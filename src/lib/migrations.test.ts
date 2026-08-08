@@ -296,7 +296,7 @@ describe("migrerSauvegarde — grand livre & missions", () => {
     expect(migrated.grandLivre).toEqual([existantEntry]);
   });
 
-  it("SAVE_VERSION incrémenté à 17", () => {
+  it("pose version = SAVE_VERSION sur l'état migré", () => {
     expect(SAVE_VERSION).toBe(18);
   });
 
@@ -810,7 +810,7 @@ describe("migration v10 — suppression de competenceTrees", () => {
 });
 
 describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
-  it("SAVE_VERSION vaut 16", () => {
+  it("pose version = SAVE_VERSION sur l'état migré", () => {
     expect(SAVE_VERSION).toBe(18);
   });
 
@@ -906,7 +906,7 @@ const migrate = migrerSauvegarde;
 const br = emptyBrocanteur();
 
 describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-verrouiller un tier)", () => {
-  it("SAVE_VERSION incrémenté à 17", () => {
+  it("pose version = SAVE_VERSION sur l'état migré", () => {
     expect(SAVE_VERSION).toBe(18);
   });
 
@@ -1021,7 +1021,7 @@ function saveV15(patch: Partial<GameState> = {}): GameState {
 }
 
 describe("v15 — refonte des coûts de compétences (1 pt)", () => {
-  it("SAVE_VERSION incrémenté à 17", () => {
+  it("pose version = SAVE_VERSION sur l'état migré", () => {
     expect(SAVE_VERSION).toBe(18);
   });
 
@@ -1161,5 +1161,24 @@ describe("migrerSauvegarde — v18 étapes v2 du tutoriel", () => {
       tutorielEtape: "chine-nego-un",
     };
     expect(migrerSauvegarde(s as GameState).tutorielEtape).toBe("chine-nego-un");
+  });
+
+  it("fast-forwarde une save v17 en cours d'ancien tuto (étape partagée) vers termine", () => {
+    const s = {
+      ...createMockGameState(),
+      version: 17,
+      tutorielEtape: "preparer-etal",
+    };
+    const m = migrerSauvegarde(s as unknown as GameState);
+    expect(m.tutorielEtape).toBe("termine");
+  });
+
+  it("conserve accueil sur une save v17", () => {
+    const s = {
+      ...createMockGameState(),
+      version: 17,
+      tutorielEtape: "accueil",
+    };
+    expect(migrerSauvegarde(s as unknown as GameState).tutorielEtape).toBe("accueil");
   });
 });

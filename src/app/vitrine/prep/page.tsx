@@ -13,6 +13,7 @@ import { aConnaisseurVitrine } from "@/lib/competences";
 import { prixSuggere } from "@/lib/prixSuggere";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { traceAPoser, estSurTrace, tracesToutesPosees } from "@/lib/coffreTuto";
+import { TRACES_TUTORIEL } from "@/data/tutorielScenario";
 import { audioManager } from "@/lib/audio/audioManager";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
@@ -257,7 +258,11 @@ export default function VitrinePrepPage() {
             trace={trace}
             validerBloque={validerBloque}
             mainTemplateId={trace?.templateId ?? null}
-            rotationHint={state.tutorielEtape === "coffre-trace-deux" && validerBloque}
+            rotationHint={
+              state.tutorielEtape === "coffre-trace-deux" &&
+              validerBloque &&
+              trace?.templateId === TRACES_TUTORIEL[1].templateId
+            }
           />
         ) : (
           <CoffrePricing

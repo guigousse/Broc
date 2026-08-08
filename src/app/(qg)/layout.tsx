@@ -969,7 +969,15 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         nom={nomExpediteur("grand-pere", locale)}
         portraits={GRAND_PERE_PORTRAITS}
         onFini={() => {
+          // Capturé avant `setDialogueQg(null)` : un dialogue de chapitre
+          // différé peut avoir remplacé `tuto_colis_cadeau` pendant que
+          // `colisCadeauEnCours` était encore armé (branche `dialogueChapitreId`
+          // ci-dessous prioritaire) — sans ce contrôle sur l'id réellement
+          // joué, le flag resterait vrai et une clôture ULTÉRIEURE d'un
+          // dialogue sans rapport rouvrirait le colis par erreur.
+          const idDialogueJoue = dialogueQg?.id;
           setDialogueQg(null);
+          setColisCadeauEnCours(false);
           if (dialogueChapitreId) {
             accepterChapitrePrincipal(dialogueChapitreId);
             // Le carnet peut être ouvert derrière le dialogue (fin du
@@ -977,8 +985,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             // cible est simplement prête pour la prochaine ouverture.
             setMissionCibleId(dialogueChapitreId);
             setDialogueChapitreId(null);
-          } else if (colisCadeauEnCours) {
-            setColisCadeauEnCours(false);
+          } else if (colisCadeauEnCours && idDialogueJoue === "tuto_colis_cadeau") {
             const premier = ouvrirObjetColis();
             if (premier) {
               setNumeroColis(1);
