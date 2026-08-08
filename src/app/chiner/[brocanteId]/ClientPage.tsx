@@ -30,7 +30,12 @@ import {
   calculerBrocantesDebloqueesParTier,
   estDebloquee,
 } from "@/lib/deblocage";
-import { genererRemplacement, genererSession, uniquesExclusDuChinage } from "@/lib/chine";
+import {
+  genererRemplacement,
+  genererSession,
+  genererSessionScriptee,
+  uniquesExclusDuChinage,
+} from "@/lib/chine";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
 import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { relancerNegociation } from "@/lib/negociation";
@@ -40,7 +45,8 @@ import { getCapaciteStockage, placeRestante, stockageEstPlein, totalEnStock } fr
 import { nbBoitesReclamees, tenterApparition } from "@/lib/boiteMystere";
 import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
-import { tutorielActif } from "@/lib/tutoriel";
+import { indexObjetScenario, scenarioDeLEtape, tutorielActif } from "@/lib/tutoriel";
+import { SESSION_TUTORIEL } from "@/data/tutorielScenario";
 import { BilanSession, type LigneXp } from "@/components/mobile/bilan/BilanSession";
 import { degelerXpAffichage, gelerXpAffichage } from "@/lib/affichageGele";
 import {
@@ -49,7 +55,12 @@ import {
   XP_DECOUVERTE_COLLECTION,
   XP_NEGO_BROCANTEUR,
 } from "@/lib/xp";
-import type { AchatHistorique, BrocanteurState, ObjetEnVente } from "@/types/game";
+import type {
+  AchatHistorique,
+  BrocanteurState,
+  ObjetEnVente,
+  TutorielEtape,
+} from "@/types/game";
 
 export default function SessionChinePage() {
   const router = useRouter();
@@ -183,13 +194,29 @@ export default function SessionChinePage() {
         state.celebriteActuelle.jourSemaine === jourSemaine
           ? state.celebriteActuelle
           : null;
-      const session = genererSession(
-        brocante.taillePool,
-        state.tendances,
-        brocante,
-        celebriteAujourdhui,
-        uniquesExclusDuChinage(state),
-      );
+      const session = tutorielActif(state)
+        ? genererSessionScriptee()
+        : genererSession(
+            brocante.taillePool,
+            state.tendances,
+            brocante,
+            celebriteAujourdhui,
+            uniquesExclusDuChinage(state),
+          );
+      // Reprise après sortie anticipée : le joueur peut être ressorti de la
+      // brocante en cours de script (dos, kill…) et revenir plus tard —
+      // l'étape courante est alors déjà en avance sur "aller-chiner". On
+      // rejoue l'état des objets déjà scriptés (achetés/refusés) avant de
+      // les afficher, pour ne pas rouvrir une négo déjà tranchée.
+      if (tutorielActif(state)) {
+        const i = indexObjetScenario(state.tutorielEtape);
+        const borne = i ?? (state.tutorielEtape === "chine-sortir" ? 4 : 0);
+        const possedes = new Set(state.inventaireJoueur.map((o) => o.templateId));
+        for (let k = 0; k < borne; k++) {
+          const it = session[k];
+          it.statut = possedes.has(it.objet.templateId) ? "achete" : "refuse";
+        }
+      }
       setItems(session);
       // Ordre CRITIQUE : la nouveauté se lit sur la collection ENCORE
       // intacte ; la marque « vu » de toute la session vient juste après.
@@ -222,12 +249,32 @@ export default function SessionChinePage() {
     return () => degelerXpAffichage();
   }, []);
 
-  // Entrée de session pendant le tutoriel : le grand-père présente la chine.
+  /** Chaque séquence « avant » du script ne doit être jouée qu'une fois
+   *  (StrictMode, retours en arrière de `etape` impossibles mais gardé par
+   *  sécurité). */
+  const dialoguesJouesRef = useRef<Set<string>>(new Set());
+  /** Étape vers laquelle avancer une fois le débrief « après » refermé (posé
+   *  par les débriefs de négo/achat ci-dessous, consommé par `onFini`). */
+  const dialogueApresRef = useRef<TutorielEtape | null>(null);
+
+  // Dialogue « avant » par étape scriptée : le grand-père présente chaque
+  // carte avant que le joueur n'agisse.
   useEffect(() => {
-    if (etape === "aller-chiner") {
-      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_chine_entree);
+    if (!etape || dialogueTuto) return;
+    const AVANT: Partial<Record<TutorielEtape, DialogueSequence>> = {
+      "aller-chiner": SEQUENCES_TUTORIEL.tuto_chine_entree,
+      "chine-nego-echec": SEQUENCES_TUTORIEL.tuto_nego_echec_avant,
+      "chine-achat-direct": SEQUENCES_TUTORIEL.tuto_achat_direct_avant,
+      "chine-nego-un": SEQUENCES_TUTORIEL.tuto_nego_un_avant,
+      "chine-nego-deux": SEQUENCES_TUTORIEL.tuto_nego_deux_avant,
+      "chine-sortir": SEQUENCES_TUTORIEL.tuto_chine_sortir,
+    };
+    const seq = AVANT[etape];
+    if (seq && !dialoguesJouesRef.current.has(seq.id)) {
+      dialoguesJouesRef.current.add(seq.id);
+      setDialogueTuto(seq);
     }
-  }, [etape]);
+  }, [etape, dialogueTuto]);
 
   const estRareOuPlus = (it: ObjetEnVente): boolean =>
     it.objet.rarete !== "commun" ||
@@ -249,6 +296,19 @@ export default function SessionChinePage() {
     return liste;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendeurPresent, items, state, flairIds]);
+
+  /** Objet du scénario imposé à l'étape courante (null hors script). */
+  const scnActif = etape ? scenarioDeLEtape(etape) : null;
+  /** Verrouille le deck sur la carte scriptée : cherchée par identité de
+   *  template (les slides filtrent les "refuse", l'index brut du scénario ne
+   *  correspond plus forcément à celui du deck affiché). */
+  const indexImpose = useMemo(() => {
+    if (!scnActif) return null;
+    const i = slides.findIndex(
+      (s) => s.kind === "item" && s.item.objet.templateId === scnActif.templateId,
+    );
+    return i === -1 ? null : i;
+  }, [slides, scnActif]);
 
   if (!isHydrated || !state || !brocante || items === null) {
     return (
@@ -362,11 +422,17 @@ export default function SessionChinePage() {
         prixPaye: prix,
       },
     ]);
-    if (etape === "chine-nego-echec") {
-      // Temporaire (Task 5) : tuto_achat_fait supprimé, tuto_nego_echec_apres
-      // couvre déjà exactement ce cas (échec de négo). Task 7 rebranche cette
-      // page sur le script à 4 objets et retire cette étape ad hoc.
-      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_nego_echec_apres);
+    // Débrief du grand-père après l'achat scripté (échec de négo mis à part,
+    // géré par `onUpdateNego` ci-dessous car il ne passe pas par un achat).
+    const APRES: Partial<Record<TutorielEtape, { seq: DialogueSequence; vers: TutorielEtape }>> = {
+      "chine-achat-direct": { seq: SEQUENCES_TUTORIEL.tuto_achat_direct_apres, vers: "chine-nego-un" },
+      "chine-nego-un": { seq: SEQUENCES_TUTORIEL.tuto_nego_un_apres, vers: "chine-nego-deux" },
+      "chine-nego-deux": { seq: SEQUENCES_TUTORIEL.tuto_nego_deux_apres, vers: "chine-sortir" },
+    };
+    const suite = etape ? APRES[etape] : undefined;
+    if (suite) {
+      dialogueApresRef.current = suite.vers;
+      setDialogueTuto(suite.seq);
     }
     return true;
   };
@@ -484,6 +550,25 @@ export default function SessionChinePage() {
     ];
   };
 
+  /**
+   * Rôle scripté de la carte `it`, à passer au tiroir de négo. `null` hors
+   * tutoriel ou pour un objet hors script (objets non listés dans
+   * `SESSION_TUTORIEL` — ne peut pas arriver en session scriptée, mais le
+   * type reste défensif). Hors de la carte active pendant le script (radio,
+   * lampe, et les cartes déjà scriptées mais pas encore achetées) : rien ne
+   * s'achète, le grand-père a dit stop — sauf l'objet déjà acheté, qu'on
+   * laisse en lecture (le drawer affiche alors son statut "acquis").
+   */
+  const scriptTutoPour = (it: ObjetEnVente) => {
+    if (!tutorielActif(state)) return null;
+    const scn = SESSION_TUTORIEL.find((s) => s.templateId === it.objet.templateId);
+    if (!scn) return null;
+    if (scnActif && scn === scnActif) {
+      return { role: scn.role, bornes: scn.bornesOffre };
+    }
+    return it.statut === "achete" ? null : ({ role: "decor" } as const);
+  };
+
   return (
     <div
       style={{
@@ -550,6 +635,7 @@ export default function SessionChinePage() {
               pulseSortir={etape === "chine-sortir"}
               onNavigate={() => setNegoOuverte(null)}
               negoOuverte={negoOuverte !== null}
+              indexImpose={indexImpose}
               renderDock={(currentItem) => <SkillDock skills={dockSkills(currentItem)} />}
               renderNegoDrawer={(item) => (
                 <ChineNegoDrawer
@@ -562,7 +648,26 @@ export default function SessionChinePage() {
                   illustrationFacheSrc={getVendeurIllustrationFache(item.persona.archetype)}
                   onExpand={() => setNegoOuverte(item.id)}
                   onCollapse={() => setNegoOuverte(null)}
-                  onUpdateNego={(nego) => setItem(item.id, { negociation: nego })}
+                  onUpdateNego={(nego) => {
+                    setItem(item.id, { negociation: nego });
+                    if (
+                      etape === "chine-nego-echec" &&
+                      nego.statut === "fache" &&
+                      item.statut !== "refuse"
+                    ) {
+                      // L'objet est perdu : il disparaît du deck après un
+                      // battement, le temps de voir le tampon « fâché »,
+                      // puis le grand-père débriefe. Le garde `!== "refuse"`
+                      // empêche un second déclenchement (le tiroir republie
+                      // le même statut "fache" au cross-fade du fantôme).
+                      window.setTimeout(() => {
+                        setItem(item.id, { statut: "refuse" });
+                        setNegoOuverte(null);
+                        dialogueApresRef.current = "chine-achat-direct";
+                        setDialogueTuto(SEQUENCES_TUTORIEL.tuto_nego_echec_apres);
+                      }, 900);
+                    }
+                  }}
                   onConclu={(prixFinal) => {
                     if (handleAchatAuPrix(item, prixFinal)) {
                       gagnerXPLocal("negociations", XP_NEGO_BROCANTEUR);
@@ -570,7 +675,12 @@ export default function SessionChinePage() {
                     setNegoOuverte(null);
                   }}
                   onAcheterDirect={() => handleAcheter(item.id)}
-                  tutoGuide={etape === "chine-nego-echec" && item.statut !== "achete"}
+                  tutoGuide={
+                    scnActif !== null &&
+                    item.objet.templateId === scnActif.templateId &&
+                    item.statut !== "achete"
+                  }
+                  scriptTuto={scriptTutoPour(item)}
                 />
               )}
             />
@@ -596,7 +706,11 @@ export default function SessionChinePage() {
         onFini={() => {
           setDialogueTuto(null);
           if (etape === "aller-chiner") avancerTutoriel("chine-nego-echec");
-          else if (etape === "chine-nego-echec") avancerTutoriel("chine-sortir");
+          else if (dialogueApresRef.current) {
+            const vers = dialogueApresRef.current;
+            dialogueApresRef.current = null;
+            avancerTutoriel(vers);
+          }
         }}
       />
     </div>
