@@ -16,8 +16,10 @@ Rendre les premières minutes du jeu beaucoup plus guidées et déterministes :
 3. La préparation de l'étal enseigne le placement dans le coffre par **traces
    fantômes**, la seconde trace étant pivotée pour enseigner la **rotation à deux
    doigts** (animation pédagogique dédiée).
-4. Le **colis du grand-père disparaît** du parcours : les 3 achats du joueur le
-   remplacent.
+4. Le **colis du grand-père sort du chemin critique** : il n'est plus l'étape
+   d'approvisionnement du tutoriel (les 3 achats du joueur la remplacent) mais un
+   **cadeau de départ et d'encouragement**, livré à la fin de la première session de
+   vente, après la séquence du carnet de commandes (chapitre 1).
 
 ## Architecture retenue (approche « scénario déclaratif »)
 
@@ -50,7 +52,9 @@ minces, conformément à l'audit du 2026-08-03.
   `avancerTutoriel("termine")` reste un no-op (passer par `terminerTutoriel()`).
 - **Fail-open absolu** : toute save douteuse est normalisée à `termine` ; « Passer le
   tutoriel » reste disponible à chaque étape et `appliquerFinTutoriel` livre tout ce
-  qui manque (lettre de Maman, reliquat de colis des vieilles saves).
+  qui manque (lettre de Maman, mini-tuto carnet). Le colis n'est **plus** livré en
+  bloc par `appliquerFinTutoriel` : sa livraison passe par le `QgColis` post-tutoriel
+  (sinon double livraison), qui reste atteignable même en sautant le tutoriel.
 - `portePermise` couvre toutes les étapes de chine et d'étal : sortir en cours de
   script reste possible et rejouable (anti-soft-lock).
 - Boîte mystère / vendeur mystère toujours désactivés pendant le tutoriel.
@@ -79,6 +83,18 @@ conclusion → termine   (inchangé — lettre de Maman, mini-tuto carnet, chapi
 
 Les étapes `premier-achat`, `rentrer`, `ouvrir-colis` disparaissent (voir Migration).
 
+### Le colis, cadeau de fin de tutoriel
+
+Le colis du grand-père n'est plus une étape du tutoriel : il devient un **cadeau de
+départ et d'encouragement**. Séquencement post-tutoriel : conclusion → lettre de
+Maman → mini-tuto carnet (l'ouverture du carnet déclenche le chapitre 1, la lampe à
+pétrole) → **le colis apparaît alors au bureau** (`QgColis`), accompagné d'une courte
+réplique du grand-père (il te lance, à toi de jouer). Déclencheur :
+`tutorielEtape === "termine"` ∧ `miniTutoCarnet === "termine"` ∧
+`colisTutorielLivres < COLIS_TUTORIEL_TAILLE`. Le contenu (4 communs + 1 rare en
+final) et la mécanique d'ouverture ×5 sont inchangés ; `colisTutorielLivres` reste
+donc pleinement actif en partie neuve.
+
 ## Section chine — la brocante scriptée
 
 ### Les 6 objets, dans l'ordre du deck
@@ -87,7 +103,7 @@ Les étapes `premier-achat`, `rentrer`, `ouvrir-colis` disparaissent (voir Migra
 |---|---|---|---|---|
 | 1 | Tourne-disque à courroie vintage (`mus.tourne_disque_a_courroie_vintage`) | 90 € | perdu | négo bornée trop basse → vendeur fâché |
 | 2 | Carafe en cristal taillé (`ma.carafe_cristal_taille`) | 35 € | acheté | achat direct au prix affiché |
-| 3 | **Manette Vibraduo** (`jx.manette_vibraduo`, **nouveau template**) | ~45 € | acheté | négo réussie |
+| 3 | Manette Vibraduo (`jx.manette_vibraduo`) | 18 € | acheté | négo réussie |
 | 4 | Ours en peluche mohair (`jx.ours_en_peluche_mohair_recent`) | 65 € | acheté | négo réussie → ira en collection |
 | 5 | Radio-cassette années 80 (`mus.radio_cassette_annees_80`) | 30 € | décor | non achetable |
 | 6 | Lampe baladeuse d'atelier (`br.lampe_baladeuse_atelier`) | 18 € | décor | non achetable |
@@ -100,9 +116,10 @@ Les étapes `premier-achat`, `rentrer`, `ouvrir-colis` disparaissent (voir Migra
   chapitre 1).
 - L'état de la peluche est **« Très bon »** pour garantir le franchissement du seuil
   de déblocage (voir leçon de collection).
-- Vérifier à l'implémentation que les 5 templates existants ont une illustration
-  (`ITEMS_WITH_IMAGE`) ; générer celle de la manette Vibraduo (pipeline Gemini
-  habituel, marque fictive, pièges de détourage connus).
+- Les 6 templates existent déjà au catalogue, manette Vibraduo comprise
+  (`jx.manette_vibraduo`, illustration présente dans `ITEMS_WITH_IMAGE`) — aucun
+  template ni asset à créer ; vérifier à l'implémentation que les 5 autres ont bien
+  leur illustration.
 
 ### Guidage du deck
 
@@ -123,9 +140,9 @@ Les étapes `premier-achat`, `rentrer`, `ouvrir-colis` disparaissent (voir Migra
   vendeur scriptés (cible secrète, tolérance, tours) choisis pour que `conclu` tombe
   en 2-3 échanges. **Test de force brute** : aucune séquence d'offres dans les bornes
   ne peut aboutir à `fache` ou `refus_poli`.
-- Budget : les 3 achats coûtent ~110 € au total (35 + manette négociée + peluche
-  négociée) ; vérifier que le budget initial de `nouvellePartie()` couvre large,
-  l'ajuster sinon.
+- Budget : les 3 achats coûtent ~95 € au total (carafe 35 + manette ~14 négociée +
+  peluche ~50 négociée) ; vérifier que le budget initial de `nouvellePartie()`
+  couvre large, l'ajuster sinon.
 
 ### Cas limites
 
@@ -178,9 +195,12 @@ Les étapes `premier-achat`, `rentrer`, `ouvrir-colis` disparaissent (voir Migra
 - **`SAVE_VERSION` 18 → 19.**
 - Saves en cours d'ancien tutoriel : `accueil` reste `accueil` ; toute autre étape
   d'ancien tuto (`aller-chiner` … `conclusion`) → `appliquerFinTutoriel` (fail-open :
-  lettre de Maman + reliquat de colis livrés, personne de bloqué).
-- `colisTutorielLivres` conservé pour compatibilité mais plus alimenté en partie
-  neuve ; `QgColis` et l'étape `ouvrir-colis` retirés du parcours.
+  lettre de Maman livrée, personne de bloqué ; le reliquat de colis reste ouvrable
+  via le `QgColis` post-tutoriel).
+- L'étape `ouvrir-colis` disparaît du type, mais `colisTutorielLivres` et `QgColis`
+  restent actifs : le colis est désormais livré en post-tutoriel (voir « Le colis,
+  cadeau de fin de tutoriel »). Les vieilles saves qui avaient déjà entamé le colis
+  gardent leur compteur.
 - Mettre à jour le test qui fige `SAVE_VERSION` en dur (`migrations.test.ts`).
 
 ## i18n
