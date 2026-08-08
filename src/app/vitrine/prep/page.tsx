@@ -257,6 +257,7 @@ export default function VitrinePrepPage() {
             trace={trace}
             validerBloque={validerBloque}
             mainTemplateId={trace?.templateId ?? null}
+            rotationHint={state.tutorielEtape === "coffre-trace-deux" && validerBloque}
           />
         ) : (
           <CoffrePricing

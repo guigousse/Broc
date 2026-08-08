@@ -33,6 +33,7 @@ import {
   type Geometrie,
 } from "@/lib/releveVehicule";
 import { CoffreCanvas } from "./CoffreCanvas";
+import { RotationHint } from "./RotationHint";
 import { BoutonConcession } from "./BoutonConcession";
 import { ConcessionSheet } from "./ConcessionSheet";
 import { CarrouselStock } from "./CarrouselStock";
@@ -100,6 +101,9 @@ interface Props {
   /** Tutoriel — coffre à traces : la main du carrousel désigne l'objet dont
    *  le templateId correspond (au lieu du premier objet, index 0). */
   mainTemplateId?: string | null;
+  /** Tutoriel — coffre à traces, 2ᵉ trace : hint pédagogique décoratif
+   *  « un doigt déplace, deux doigts tournent » superposé au canvas. */
+  rotationHint?: boolean;
 }
 
 function buildSolidMask(size: number): Uint8Array {
@@ -425,22 +429,25 @@ export function CoffreChargement(p: Props) {
           }
         />
       )}
-      <CoffreCanvas
-        niveauCamion={p.niveauCamion}
-        objets={p.coffre}
-        overlaps={overlaps}
-        // Le coffre est clos, et les objets masqués, aussi bien pendant le
-        // départ en brocante que pendant la relève : le véhicule ne roule
-        // jamais coffre ouvert.
-        closing={closing || releveCoffreFerme}
-        devOverride={releveOverride ?? departOverride ?? currentOverride}
-        truckOpacity={truckOpacity}
-        onMove={p.onMove}
-        onRotate={p.onRotate}
-        onRetour={p.onRetirer}
-        conteneurRef={conteneurCoffreRef}
-        trace={p.trace}
-      />
+      <div style={{ position: "relative" }}>
+        <CoffreCanvas
+          niveauCamion={p.niveauCamion}
+          objets={p.coffre}
+          overlaps={overlaps}
+          // Le coffre est clos, et les objets masqués, aussi bien pendant le
+          // départ en brocante que pendant la relève : le véhicule ne roule
+          // jamais coffre ouvert.
+          closing={closing || releveCoffreFerme}
+          devOverride={releveOverride ?? departOverride ?? currentOverride}
+          truckOpacity={truckOpacity}
+          onMove={p.onMove}
+          onRotate={p.onRotate}
+          onRetour={p.onRetirer}
+          conteneurRef={conteneurCoffreRef}
+          trace={p.trace}
+        />
+        <RotationHint actif={p.rotationHint === true && !closing} />
+      </div>
       <CarrouselStock
         stock={p.stock}
         onTap={handleTap}
