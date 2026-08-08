@@ -297,7 +297,7 @@ describe("migrerSauvegarde — grand livre & missions", () => {
   });
 
   it("SAVE_VERSION incrémenté à 17", () => {
-    expect(SAVE_VERSION).toBe(17);
+    expect(SAVE_VERSION).toBe(18);
   });
 
   it("v17 — plafonne l'historique à MAX_HISTORIQUE sessions", () => {
@@ -811,7 +811,7 @@ describe("migration v10 — suppression de competenceTrees", () => {
 
 describe("migration v11 — suppression du compteur de transactions par catégorie (décision 2026-07-06 : paliers gatés par points + niveau seulement)", () => {
   it("SAVE_VERSION vaut 16", () => {
-    expect(SAVE_VERSION).toBe(17);
+    expect(SAVE_VERSION).toBe(18);
   });
 
   it("une save v10 avec le champ legacy le perd, brocanteur intact", () => {
@@ -877,13 +877,13 @@ describe("migration tutoriel (v12)", () => {
 
   it("préserve une étape en cours et n'injecte NI Maman NI le chapitre 1", () => {
     const loaded = createMockGameState({
-      tutorielEtape: "premier-achat",
+      tutorielEtape: "aller-chiner",
       courriers: [],
       declencheursDeclenches: [],
       missions: [],
     });
     const migre = migrerSauvegarde(loaded);
-    expect(migre.tutorielEtape).toBe("premier-achat");
+    expect(migre.tutorielEtape).toBe("aller-chiner");
     expect(migre.courriers.some((c) => c.id === ID_LETTRE_MAMAN_DEBUT)).toBe(false);
     expect(migre.courriers.some((c) => c.id === "trame_ch1")).toBe(false);
   });
@@ -907,7 +907,7 @@ const br = emptyBrocanteur();
 
 describe("migration v13 — mapping ancien arc/niveau vers la trame (jamais re-verrouiller un tier)", () => {
   it("SAVE_VERSION incrémenté à 17", () => {
-    expect(SAVE_VERSION).toBe(17);
+    expect(SAVE_VERSION).toBe(18);
   });
 
   it("v14 : save antérieure (stock donné à la création) ⇒ colis considéré livré", () => {
@@ -1022,7 +1022,7 @@ function saveV15(patch: Partial<GameState> = {}): GameState {
 
 describe("v15 — refonte des coûts de compétences (1 pt)", () => {
   it("SAVE_VERSION incrémenté à 17", () => {
-    expect(SAVE_VERSION).toBe(17);
+    expect(SAVE_VERSION).toBe(18);
   });
 
   it("rembourse l'écart de l'ancien barème (P1 +0, P2 +1, P3 +2)", () => {
@@ -1144,5 +1144,22 @@ describe("migrerSauvegarde — v16 champs gazette", () => {
     const migrated = migrerSauvegarde(fresh);
     expect(migrated.tutoGazette).toBe("faite");
     expect(migrated.gazetteRefusee).toBe(true);
+  });
+});
+
+describe("migrerSauvegarde — v18 étapes v2 du tutoriel", () => {
+  it("normalise les étapes de l'ancien tutoriel disparues vers termine", () => {
+    const s = { ...createMockGameState(), tutorielEtape: "premier-achat" };
+    const m = migrerSauvegarde(s as unknown as GameState);
+    expect(m.tutorielEtape).toBe("termine");
+  });
+
+  it("conserve les étapes v2 en cours", () => {
+    const s = {
+      ...createMockGameState(),
+      version: SAVE_VERSION,
+      tutorielEtape: "chine-nego-un",
+    };
+    expect(migrerSauvegarde(s as GameState).tutorielEtape).toBe("chine-nego-un");
   });
 });

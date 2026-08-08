@@ -1,18 +1,23 @@
-import type { GameState, Objet, TutorielEtape } from "@/types/game";
+import type { GameState, TutorielEtape } from "@/types/game";
 import { injecterLettreMamanSiAbsente } from "@/lib/courrier";
-import {
-  COLIS_TUTORIEL_TAILLE,
-  objetColisTutoriel,
-} from "@/data/starterInventory";
+import { COLIS_TUTORIEL_TAILLE } from "@/data/starterInventory";
 
-/** Ordre linéaire des étapes du tutoriel guidé. */
+/** Ordre linéaire des étapes du tutoriel guidé (v2, brocante scriptée). */
 export const ETAPES_TUTORIEL: readonly TutorielEtape[] = [
   "accueil",
   "aller-chiner",
-  "premier-achat",
-  "rentrer",
-  "ouvrir-colis",
+  "chine-nego-echec",
+  "chine-achat-direct",
+  "chine-nego-un",
+  "chine-nego-deux",
+  "chine-sortir",
+  "stockage-ouvrir",
+  "stockage-focus",
+  "collection-envoyer",
+  "collection-lecon",
   "preparer-etal",
+  "coffre-trace-un",
+  "coffre-trace-deux",
   "premiere-vente",
   "conclusion",
   "termine",
@@ -31,11 +36,12 @@ export function etapeSuivante(etape: TutorielEtape): TutorielEtape {
 
 /**
  * Clôt le tutoriel (fin normale OU bouton « Passer ») : injecte la lettre de
- * Maman (différée depuis la création de partie), livre les objets du colis
- * pas encore récupérés (« Passer » ne prive jamais du stock initial) et
- * passe l'étape à "termine". Depuis SP2, l'arc principal n'est plus amorcé
- * ici : une fois l'étape à "termine", `chapitrePret(state)` désigne le
- * chapitre 1 (condition "depart") et sa délivrance se fait en dialogue
+ * Maman (différée depuis la création de partie) et passe l'étape à
+ * "termine". Depuis la brocante scriptée (v2), le colis du grand-père
+ * n'est plus livré ici — il apparaît en post-tutoriel (cf. `colisEnAttente`
+ * ci-dessous). Depuis SP2, l'arc principal n'est plus amorcé ici non plus :
+ * une fois l'étape à "termine", `chapitrePret(state)` désigne le chapitre 1
+ * (condition "depart") et sa délivrance se fait en dialogue
  * (`accepterChapitre`). Idempotent.
  */
 export function appliquerFinTutoriel(state: GameState): GameState {
@@ -45,22 +51,9 @@ export function appliquerFinTutoriel(state: GameState): GameState {
     state.declencheursDeclenches,
     state.jourActuel,
   );
-  // Colis du tutoriel : livre le restant (rien si déjà tout récupéré).
-  const livres = state.colisTutorielLivres ?? 0;
-  const manquants: Objet[] = [];
-  for (let i = livres; i < COLIS_TUTORIEL_TAILLE; i++) {
-    manquants.push(
-      objetColisTutoriel(i, [
-        ...state.inventaireJoueur.map((o) => o.templateId),
-        ...manquants.map((o) => o.templateId),
-      ]),
-    );
-  }
   return {
     ...state,
     tutorielEtape: "termine",
-    inventaireJoueur: [...state.inventaireJoueur, ...manquants],
-    colisTutorielLivres: COLIS_TUTORIEL_TAILLE,
     courriers: inj.courriers,
     declencheursDeclenches: [
       ...state.declencheursDeclenches,
@@ -70,6 +63,22 @@ export function appliquerFinTutoriel(state: GameState): GameState {
     // guide vers la zone gauche du bureau puis le livre de compte.
     miniTutoCarnet: "ouvrir",
   };
+}
+
+/**
+ * Le colis du grand-père est un cadeau de fin de tutoriel : il apparaît au
+ * bureau une fois le tutoriel clos ET la séquence du carnet consommée
+ * (miniTutoCarnet ≠ "ouvrir" — absent sur les vieilles saves = consommé),
+ * tant qu'il reste des objets à retirer.
+ */
+export function colisEnAttente(
+  state: Pick<GameState, "tutorielEtape" | "miniTutoCarnet" | "colisTutorielLivres">,
+): boolean {
+  return (
+    state.tutorielEtape === "termine" &&
+    state.miniTutoCarnet !== "ouvrir" &&
+    (state.colisTutorielLivres ?? 0) < COLIS_TUTORIEL_TAILLE
+  );
 }
 
 /**

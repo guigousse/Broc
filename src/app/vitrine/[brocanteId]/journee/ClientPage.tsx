@@ -661,7 +661,7 @@ export default function VitrineJourneePage() {
 
   // Entrée de journée pendant le tutoriel : le grand-père présente la vente.
   useEffect(() => {
-    if (etape === "preparer-etal") {
+    if (etape === "coffre-trace-deux") {
       setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_entree);
     }
   }, [etape]);

@@ -105,7 +105,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",

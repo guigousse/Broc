@@ -80,7 +80,12 @@ import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
 import { nomExpediteur } from "@/lib/i18n/contenu";
-import { tutorielActif, chapitreDuCarnetDu, doigtSwipeVersCarnet } from "@/lib/tutoriel";
+import {
+  tutorielActif,
+  chapitreDuCarnetDu,
+  colisEnAttente,
+  doigtSwipeVersCarnet,
+} from "@/lib/tutoriel";
 import { OUTILS_DEV } from "@/lib/outilsDev";
 import {
   aConnaisseurTendance,
@@ -172,8 +177,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // vide se poser. Stocké à part de `dialogueQg` pour que le minuteur vive
   // dans son propre effet — cf. les deux effets plus bas.
   const [chapitreEnAttente, setChapitreEnAttente] = useState<DialogueSequence | null>(null);
-  // Cérémonie du colis du tutoriel (étape ouvrir-colis) : objet en cours de
-  // révélation + son rang (1-based). null = overlay fermé.
+  // Cérémonie du colis du tutoriel (post-tutoriel, cf. colisEnAttente) :
+  // objet en cours de révélation + son rang (1-based). null = overlay fermé.
   const [objetColis, setObjetColis] = useState<Objet | null>(null);
   const [numeroColis, setNumeroColis] = useState(0);
   // Cadeau d'anniversaire (11 juin) : objet en cours de révélation.
@@ -418,7 +423,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (dialogueQg) return;
     if (etape === "accueil") setDialogueQg(SEQUENCES_TUTORIEL.tuto_accueil);
-    else if (etape === "rentrer") setDialogueQg(SEQUENCES_TUTORIEL.tuto_retour);
+    else if (etape === "chine-sortir") setDialogueQg(SEQUENCES_TUTORIEL.tuto_retour);
     else if (etape === "conclusion") setDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
   }, [etape, dialogueQg]);
 
@@ -478,13 +483,19 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const tutoActif = tutorielActif(state);
   const modeJournalSol = journalSolMode(state);
   // Widened au-delà de "aller-chiner"/"preparer-etal" : un joueur qui sort de
-  // la brocante sans rien acheter (étape reste "premier-achat") ou termine
-  // une journée d'étal sans vente (étape reste "premiere-vente") doit
-  // pouvoir rouvrir la porte pour réessayer — sinon soft-lock au bureau.
+  // la brocante sans terminer toutes les étapes de chine, ou termine une
+  // journée d'étal sans vente (étape reste "premiere-vente"), doit pouvoir
+  // rouvrir la porte pour réessayer — sinon soft-lock au bureau.
   const portePermise =
     etape === "aller-chiner" ||
-    etape === "premier-achat" ||
+    etape === "chine-nego-echec" ||
+    etape === "chine-achat-direct" ||
+    etape === "chine-nego-un" ||
+    etape === "chine-nego-deux" ||
+    etape === "chine-sortir" ||
     etape === "preparer-etal" ||
+    etape === "coffre-trace-un" ||
+    etape === "coffre-trace-deux" ||
     etape === "premiere-vente";
 
   // Virtualisation : monte un objet si sa zone est à distance ≤ 1 de la zone
@@ -567,7 +578,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                     }}
                   />
                 )}
-                {etape === "ouvrir-colis" && (
+                {colisEnAttente(state) && !dialogueQg && (
                   <QgColis
                     onTap={() => {
                       playClick();
@@ -698,8 +709,20 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         }}
         vitrineActive={!!state.vitrine}
         chinerDesactive={stockageEstPlein(state)}
-        tutoChiner={etape === "aller-chiner" || etape === "premier-achat"}
-        tutoEtaler={etape === "preparer-etal" || etape === "premiere-vente"}
+        tutoChiner={
+          etape === "aller-chiner" ||
+          etape === "chine-nego-echec" ||
+          etape === "chine-achat-direct" ||
+          etape === "chine-nego-un" ||
+          etape === "chine-nego-deux" ||
+          etape === "chine-sortir"
+        }
+        tutoEtaler={
+          etape === "preparer-etal" ||
+          etape === "coffre-trace-un" ||
+          etape === "coffre-trace-deux" ||
+          etape === "premiere-vente"
+        }
         onChiner={() => {
           playDoorClose();
           setPorteOuverte(false);
@@ -880,7 +903,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             setObjetColis(suivant);
           } else {
             setObjetColis(null);
-            avancerTutoriel("preparer-etal");
           }
         }}
       />
@@ -926,7 +948,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             setMissionCibleId(dialogueChapitreId);
             setDialogueChapitreId(null);
           } else if (etape === "accueil") avancerTutoriel("aller-chiner");
-          else if (etape === "rentrer") avancerTutoriel("ouvrir-colis");
+          else if (etape === "chine-sortir") avancerTutoriel("stockage-ouvrir");
           else if (etape === "conclusion") terminerTutoriel();
         }}
       />

@@ -362,7 +362,7 @@ export default function SessionChinePage() {
         prixPaye: prix,
       },
     ]);
-    if (etape === "premier-achat") {
+    if (etape === "chine-nego-echec") {
       setDialogueTuto(SEQUENCES_TUTORIEL.tuto_achat_fait);
     }
     return true;
@@ -544,7 +544,7 @@ export default function SessionChinePage() {
               boiteReclamee={boiteReclamee}
               onOuvrirBoite={() => setBoiteOuverte(true)}
               onQuitter={handleRentrer}
-              pulseSortir={etape === "rentrer"}
+              pulseSortir={etape === "chine-sortir"}
               onNavigate={() => setNegoOuverte(null)}
               negoOuverte={negoOuverte !== null}
               renderDock={(currentItem) => <SkillDock skills={dockSkills(currentItem)} />}
@@ -567,7 +567,7 @@ export default function SessionChinePage() {
                     setNegoOuverte(null);
                   }}
                   onAcheterDirect={() => handleAcheter(item.id)}
-                  tutoGuide={etape === "premier-achat" && item.statut !== "achete"}
+                  tutoGuide={etape === "chine-nego-echec" && item.statut !== "achete"}
                 />
               )}
             />
@@ -592,8 +592,8 @@ export default function SessionChinePage() {
         portraits={GRAND_PERE_PORTRAITS}
         onFini={() => {
           setDialogueTuto(null);
-          if (etape === "aller-chiner") avancerTutoriel("premier-achat");
-          else if (etape === "premier-achat") avancerTutoriel("rentrer");
+          if (etape === "aller-chiner") avancerTutoriel("chine-nego-echec");
+          else if (etape === "chine-nego-echec") avancerTutoriel("chine-sortir");
         }}
       />
     </div>
