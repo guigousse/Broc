@@ -117,7 +117,12 @@ export function TutorielCoach({ etapes, onFini }: TutorielCoachProps) {
       window.removeEventListener("resize", mesurer);
       window.removeEventListener("scroll", mesurer, true);
     };
-  }, [cible]);
+    // `idx` (et pas seulement `cible`) est dans les deps : deux étapes
+    // consécutives peuvent viser la MÊME cible (plusieurs bulles sur le même
+    // élément) — sans `idx`, la transition entre elles ne re-mesurerait
+    // rien, réutilisant le rect de l'étape précédente jusqu'à un
+    // resize/scroll fortuit.
+  }, [idx, cible]);
 
   if (!etape || typeof document === "undefined") return null;
 
