@@ -183,6 +183,12 @@ export const en: DictionnaireUI = {
       "Each row shows the item's condition — and its button to send it to your collection.",
     coachStockageAmelioration:
       "Later, you'll be able to expand it: cellar, then warehouse.",
+    coachCollectionCase:
+      "The teddy bear found its spot: it's not for sale anymore, it's on display.",
+    coachCollectionValeur:
+      "Your collection's value grows with every donation.",
+    coachCollectionDeblocage:
+      "That value unlocks new flea markets — and builds your reputation.",
     instructions: {
       "accueil": "Listen to your grandfather…",
       "aller-chiner": "Go through the door, choose “Pick”, then the Neighborhood Yard Sale.",

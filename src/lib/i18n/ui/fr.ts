@@ -186,6 +186,12 @@ export const fr = {
       "Chaque ligne montre l'état de l'objet — et son bouton pour l'envoyer en collection.",
     coachStockageAmelioration:
       "Plus tard, tu pourras agrandir : cave, puis hangar.",
+    coachCollectionCase:
+      "La peluche a rejoint sa case : elle ne se vend plus, elle se montre.",
+    coachCollectionValeur:
+      "La valeur de ta collection grandit à chaque donation.",
+    coachCollectionDeblocage:
+      "Cette valeur débloque de nouvelles brocantes — et fait ta réputation.",
     instructions: {
       "accueil": "Écoute ton grand-père…",
       "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",

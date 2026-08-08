@@ -14,6 +14,7 @@ import {
   decalageDansParentDefilant,
   trouverParentDefilant,
 } from "@/lib/parentDefilant";
+import { PELUCHE_TEMPLATE_ID } from "@/data/tutorielScenario";
 import { ItemSticker, type StickerVariant } from "@/components/ui/ItemSticker";
 import { prefetchThumbs, thumbUrlsForSlots } from "@/lib/prefetchThumbs";
 import { StarRow } from "@/components/ui/StarRow";
@@ -140,6 +141,9 @@ const CollectionCell = memo(function CollectionCell({
       disabled={isSilhouette}
       aria-label={isSilhouette ? d.inventaire.pieceInconnue : nomObjet(s, locale)}
       style={cellStyle}
+      data-tuto-coach={
+        s.templateId === PELUCHE_TEMPLATE_ID ? "collection-case" : undefined
+      }
     >
       <ItemSticker
         templateId={s.templateId}

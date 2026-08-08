@@ -183,6 +183,12 @@ export const es: DictionnaireUI = {
       "Cada fila muestra el estado del objeto, y su botón para enviarlo a la colección.",
     coachStockageAmelioration:
       "Más adelante podrás ampliarlo: sótano, luego nave.",
+    coachCollectionCase:
+      "El peluche ya tiene su lugar: ya no se vende, se exhibe.",
+    coachCollectionValeur:
+      "El valor de tu colección crece con cada donación.",
+    coachCollectionDeblocage:
+      "Ese valor desbloquea nuevos mercadillos, y construye tu reputación.",
     instructions: {
       "accueil": "Escucha a tu abuelo…",
       "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",
