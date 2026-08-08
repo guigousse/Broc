@@ -44,3 +44,32 @@ export function tracesToutesPosees(
   }
   return true;
 }
+
+/**
+ * Trace à afficher/aimanter pour l'étape courante : la PREMIÈRE trace exigée
+ * par l'étape qui n'est PAS encore posée dans le coffre actuel — contrairement
+ * à `traceActive`, qui n'est fonction que de l'étape et reste bloquée sur la
+ * trace 2 (carafe) une fois `coffre-trace-deux` atteinte, MÊME si la trace 1
+ * (manette) a depuis été délogée (drag qui continue après l'avancement
+ * d'étape, sortie/rentrée dans la prep, etc.).
+ *
+ * `tracesToutesPosees` est cumulative (les deux traces comptent dès l'étape
+ * deux) alors que `traceActive` est une fonction pure de l'étape seule : le
+ * couple pouvait diverger — Valider se débloque, ou se rebloque, sans que le
+ * fantôme/la main affichée pointe vers l'objet réellement manquant.
+ * `traceAPoser` aligne l'affichage sur le même critère que le gate.
+ */
+export function traceAPoser(
+  etape: TutorielEtape,
+  coffre: readonly ObjetEnVitrine[],
+): TraceScenario | null {
+  if (etape === "coffre-trace-un") {
+    return poseeDans(coffre, TRACES_TUTORIEL[0]) ? null : TRACES_TUTORIEL[0];
+  }
+  if (etape === "coffre-trace-deux") {
+    if (!poseeDans(coffre, TRACES_TUTORIEL[0])) return TRACES_TUTORIEL[0];
+    if (!poseeDans(coffre, TRACES_TUTORIEL[1])) return TRACES_TUTORIEL[1];
+    return null;
+  }
+  return null;
+}

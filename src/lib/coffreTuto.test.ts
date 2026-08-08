@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estSurTrace, traceActive, tracesToutesPosees } from "./coffreTuto";
+import { estSurTrace, traceActive, traceAPoser, tracesToutesPosees } from "./coffreTuto";
 import { TRACES_TUTORIEL } from "@/data/tutorielScenario";
 
 const t0 = TRACES_TUTORIEL[0]; // manette, rotation 0
@@ -42,5 +42,34 @@ describe("tracesToutesPosees", () => {
   });
   it("hors étapes coffre : vrai (ne bloque jamais Valider)", () => {
     expect(tracesToutesPosees("termine", [] as never)).toBe(true);
+  });
+});
+
+describe("traceAPoser", () => {
+  const ovManette = { objet: { templateId: "jx.manette_vibraduo" }, posX: t0.posX, posY: t0.posY, rotation: 0 };
+  const ovCarafe = { objet: { templateId: "ma.carafe_cristal_taille" }, posX: t1.posX, posY: t1.posY, rotation: 40 };
+
+  it("étape un : la trace 1 tant qu'elle n'est pas posée, sinon null", () => {
+    expect(traceAPoser("coffre-trace-un", [] as never)).toBe(t0);
+    expect(traceAPoser("coffre-trace-un", [ovManette] as never)).toBeNull();
+  });
+
+  it("étape deux : retombe sur la trace 1 si elle n'est plus posée (délogée)", () => {
+    // Manette absente/délogée malgré l'étape déjà avancée à coffre-trace-deux.
+    expect(traceAPoser("coffre-trace-deux", [] as never)).toBe(t0);
+    expect(traceAPoser("coffre-trace-deux", [{ ...ovManette, posX: 0.5, posY: 0.5 }] as never)).toBe(t0);
+  });
+
+  it("étape deux : la trace 2 quand la trace 1 est posée mais pas la 2", () => {
+    expect(traceAPoser("coffre-trace-deux", [ovManette] as never)).toBe(t1);
+  });
+
+  it("étape deux : null quand les deux traces sont posées", () => {
+    expect(traceAPoser("coffre-trace-deux", [ovManette, ovCarafe] as never)).toBeNull();
+  });
+
+  it("hors étapes coffre : null", () => {
+    expect(traceAPoser("preparer-etal", [] as never)).toBeNull();
+    expect(traceAPoser("termine", [] as never)).toBeNull();
   });
 });
