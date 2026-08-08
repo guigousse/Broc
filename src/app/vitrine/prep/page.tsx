@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { EtapeBandeau } from "@/components/vente/EtapeBandeau";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import { CoffreChargement } from "@/components/vente/CoffreChargement";
 import { CoffrePricing } from "@/components/vente/CoffrePricing";
 import { VITRINE_PREP_ID, vitrineEstEnPrep } from "@/lib/vitrinePrep";
@@ -12,6 +12,8 @@ import { CATEGORIES } from "@/data/categories";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { prixSuggere } from "@/lib/prixSuggere";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { traceActive, estSurTrace, tracesToutesPosees } from "@/lib/coffreTuto";
+import { audioManager } from "@/lib/audio/audioManager";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 // Prix par défaut = prix du marché (curseur de tarification centré sur la valeur).
@@ -39,9 +41,18 @@ export default function VitrinePrepPage() {
     acheterCamion,
     setNiveauCamionDev,
   } = useGame();
+  const { avancerTutoriel } = useGameActions();
   const { d } = useLangue();
 
   const [etape, setEtape] = useState<"packing" | "pricing">("packing");
+
+  // Arrivée dans la prep pendant le tutoriel v2 : la leçon de tarification
+  // (« preparer-etal ») est terminée, on bascule directement sur la leçon
+  // du coffre à traces (première trace = la manette).
+  const tutorielEtape = state?.tutorielEtape;
+  useEffect(() => {
+    if (tutorielEtape === "preparer-etal") avancerTutoriel("coffre-trace-un");
+  }, [tutorielEtape, avancerTutoriel]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -60,6 +71,13 @@ export default function VitrinePrepPage() {
   }, [isHydrated, state, router, ouvrirVitrine]);
 
   const coffre: ObjetEnVitrine[] = state?.vitrine?.objets ?? [];
+  // Coffre à traces (tutoriel v2) : trace pointillée de l'étape courante
+  // (null hors étapes coffre) et gate du bouton Valider tant qu'elle n'est
+  // pas satisfaite — fail-open (`true`) hors tutoriel.
+  const trace = tutorielEtape ? traceActive(tutorielEtape) : null;
+  const validerBloque = state
+    ? !tracesToutesPosees(state.tutorielEtape, coffre)
+    : false;
   const stock = useMemo(() => {
     if (!state) return [];
     const ids = new Set(coffre.map((o) => o.objet.id));
@@ -103,13 +121,42 @@ export default function VitrinePrepPage() {
       SUGGESTION_FACTEUR,
     );
     mettreEnVitrine(objetId, prix, posX, posY, 0);
+    verifierTrace(objetId, posX, posY, 0);
   };
 
   const handleRotate = (objetId: string, angle: number) => {
     const ov = coffre.find((o) => o.objet.id === objetId);
     if (!ov) return;
     const norm = ((angle % 360) + 360) % 360;
+    if (verifierTrace(objetId, ov.posX ?? 0.5, ov.posY ?? 0.5, norm)) return;
     ajusterPositionVitrine(objetId, ov.posX ?? 0.5, ov.posY ?? 0.5, norm);
+  };
+
+  /**
+   * Coffre à traces (tutoriel v2) : dès que l'objet visé par la trace de
+   * l'étape courante entre dans les tolérances (position ET angle), il
+   * s'aimante exactement sur la trace, joue le son du coffre et fait avancer
+   * l'étape. Idempotent : `avancerTutoriel` ne recule ni ne répète, et un
+   * second appel (le flush au relâcher, après un snap déjà commis pendant le
+   * throttle) ne fait que re-poser l'objet au même endroit — cosmétiquement
+   * inerte, sans double effet de bord notable côté joueur.
+   */
+  const verifierTrace = (
+    objetId: string,
+    x: number,
+    y: number,
+    rot: number,
+  ): boolean => {
+    if (!trace) return false;
+    const ov = coffre.find((o) => o.objet.id === objetId);
+    if (!ov || ov.objet.templateId !== trace.templateId) return false;
+    if (!estSurTrace({ posX: x, posY: y, rotation: rot }, trace)) return false;
+    ajusterPositionVitrine(objetId, trace.posX, trace.posY, trace.rotation);
+    void audioManager.playCoffreOuvre();
+    if (state.tutorielEtape === "coffre-trace-un") {
+      avancerTutoriel("coffre-trace-deux");
+    }
+    return true;
   };
 
   return (
@@ -147,6 +194,7 @@ export default function VitrinePrepPage() {
             onMove={(id, x, y) => {
               const ov = coffre.find((o) => o.objet.id === id);
               if (!ov) return;
+              if (verifierTrace(id, x, y, ov.rotation ?? 0)) return;
               ajusterPositionVitrine(id, x, y, ov.rotation ?? 0);
             }}
             onRotate={handleRotate}
@@ -158,7 +206,13 @@ export default function VitrinePrepPage() {
               viderVitrine();
               router.push("/bureau");
             }}
-            tuto={state.tutorielEtape === "preparer-etal"}
+            tuto={
+              state.tutorielEtape === "coffre-trace-un" ||
+              state.tutorielEtape === "coffre-trace-deux"
+            }
+            trace={trace}
+            validerBloque={validerBloque}
+            mainTemplateId={trace?.templateId ?? null}
           />
         ) : (
           <CoffrePricing
@@ -169,7 +223,7 @@ export default function VitrinePrepPage() {
             validerLabel={d.vente.choisirBrocante}
             validerActif={coffre.length > 0}
             categoriesConnues={categoriesConnuesVitrine}
-            tutoMainValider={state.tutorielEtape === "preparer-etal"}
+            tutoMainValider={state.tutorielEtape === "coffre-trace-deux"}
           />
         )}
       </main>

@@ -15,6 +15,10 @@ interface Props {
   onDragEnd: (clientX: number, clientY: number) => void;
   /** Tutoriel : main pointeuse sur le premier objet du carrousel (miroir — bord gauche). */
   tutoMain?: boolean;
+  /** Tutoriel v2 (coffre à traces) : la main se pose sur l'objet dont le
+   *  templateId correspond, plutôt que sur le premier de la liste. Remplace
+   *  `tutoMain` quand fourni ; `tutoMain` reste pour compat (autres écrans). */
+  mainTemplateId?: string | null;
 }
 
 const ITEM_WIDTH = 76;
@@ -26,6 +30,7 @@ export function CarrouselStock({
   onDragMove,
   onDragEnd,
   tutoMain = false,
+  mainTemplateId = null,
 }: Props) {
   const { d, locale } = useLangue();
   if (stock.length === 0) {
@@ -73,7 +78,11 @@ export function CarrouselStock({
       {tri.map((o, i) => (
         <div
           key={o.id}
-          className={tutoMain && i === 0 ? "tuto-main tuto-main-droite" : undefined}
+          className={
+            (mainTemplateId ? o.templateId === mainTemplateId : tutoMain && i === 0)
+              ? "tuto-main tuto-main-droite"
+              : undefined
+          }
           style={{ flex: `0 0 ${ITEM_WIDTH}px`, width: ITEM_WIDTH }}
         >
           <ItemEnCarrousel

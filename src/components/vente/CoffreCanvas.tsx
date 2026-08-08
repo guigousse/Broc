@@ -5,6 +5,8 @@ import type { NiveauCamion, ObjetEnVitrine } from "@/types/game";
 import { getCamion, getScaleCoffre } from "@/data/camion";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
 import { getCoffreAssets } from "@/lib/coffreAssets";
+import { getItemThumbUrl } from "@/lib/itemImages";
+import type { TraceScenario } from "@/data/tutorielScenario";
 import { ItemDansCoffre } from "./ItemDansCoffre";
 
 interface Props {
@@ -22,6 +24,8 @@ interface Props {
   /** Expose le conteneur du coffre (mapping client → posX/posY 0..1) au
    *  parent — sert au drop des objets tirés depuis le carrousel. */
   conteneurRef?: React.MutableRefObject<HTMLDivElement | null>;
+  /** Tutoriel : silhouette pointillée indiquant où poser l'objet en cours. */
+  trace?: TraceScenario | null;
 }
 
 interface PointerInfo {
@@ -44,6 +48,7 @@ export function CoffreCanvas({
   onRotate,
   onRetour,
   conteneurRef,
+  trace,
 }: Props) {
   const camion = getCamion(niveauCamion);
   const assets = getCoffreAssets(camion.visuelId);
@@ -309,6 +314,51 @@ export function CoffreCanvas({
             }}
           />
         )}
+        {trace &&
+          !closing &&
+          (() => {
+            const tpl = getTemplate(trace.templateId);
+            if (!tpl) return null;
+            const scale = getScaleCoffre(tailleDe(tpl), camion.capacitePlaces);
+            const w = ref.current?.getBoundingClientRect().width ?? 280;
+            const sizePx = scale * w;
+            const src = getItemThumbUrl(trace.templateId);
+            return (
+              <div
+                aria-hidden
+                className="trace-fantome"
+                style={{
+                  position: "absolute",
+                  left: `${trace.posX * w - sizePx / 2}px`,
+                  top: `${trace.posY * (w / camion.aspectRatio) - sizePx / 2}px`,
+                  width: sizePx,
+                  height: sizePx,
+                  transform: `rotate(${trace.rotation}deg)`,
+                  border: "2px dashed var(--brass-300)",
+                  borderRadius: 8,
+                  zIndex: 1,
+                  pointerEvents: "none",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                {src && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={src}
+                    alt=""
+                    style={{
+                      width: "88%",
+                      height: "88%",
+                      objectFit: "contain",
+                      filter: "brightness(0)",
+                      opacity: 0.35,
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })()}
         {!closing &&
           objets.map((ov) => {
             const w = ref.current?.getBoundingClientRect().width ?? 280;

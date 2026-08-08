@@ -18,6 +18,7 @@ import {
 } from "@/lib/coffre";
 import { getItemThumbUrl } from "@/lib/itemImages";
 import { getCoffreAssets } from "@/lib/coffreAssets";
+import type { TraceScenario } from "@/data/tutorielScenario";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomCamion } from "@/lib/i18n/contenu";
@@ -91,6 +92,14 @@ interface Props {
   onAnnuler: () => void;
   /** Tutoriel : main pointeuse sur le carrousel (coffre vide) puis sur Valider. */
   tuto?: boolean;
+  /** Tutoriel — coffre à traces : silhouette pointillée de l'étape courante. */
+  trace?: TraceScenario | null;
+  /** Tutoriel — coffre à traces : bloque Valider tant que les traces exigées
+   *  ne sont pas toutes posées, même si le coffre n'a pas de chevauchement. */
+  validerBloque?: boolean;
+  /** Tutoriel — coffre à traces : la main du carrousel désigne l'objet dont
+   *  le templateId correspond (au lieu du premier objet, index 0). */
+  mainTemplateId?: string | null;
 }
 
 function buildSolidMask(size: number): Uint8Array {
@@ -387,7 +396,8 @@ export function CoffreChargement(p: Props) {
     [arreterReleve],
   );
 
-  const peutValider = p.coffre.length > 0 && overlaps.size === 0;
+  const peutValider =
+    p.coffre.length > 0 && overlaps.size === 0 && p.validerBloque !== true;
 
   const prochainCamion = getProchainCamion(p.niveauCamion);
   const prixProchain = prochainCamion?.prixUpgradeVersCeNiveau ?? 0;
@@ -429,6 +439,7 @@ export function CoffreChargement(p: Props) {
         onRotate={p.onRotate}
         onRetour={p.onRetirer}
         conteneurRef={conteneurCoffreRef}
+        trace={p.trace}
       />
       <CarrouselStock
         stock={p.stock}
@@ -437,6 +448,7 @@ export function CoffreChargement(p: Props) {
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
         tutoMain={p.tuto === true && p.coffre.length === 0}
+        mainTemplateId={p.mainTemplateId ?? null}
       />
       {/* Fantôme de drag : l'objet suit le doigt, à la taille qu'il aura
           dans le coffre. */}

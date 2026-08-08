@@ -1625,6 +1625,19 @@ nav[aria-label="Navigation principale"] :focus-visible,
 .coach-decoupe {
   transition: all 260ms ease;
 }
+/* Coffre à traces : silhouette pointillée indiquant où poser l'objet. */
+@keyframes broc-trace-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.trace-fantome {
+  animation: broc-trace-pulse 1.6s ease-in-out infinite;
+}
 @media (prefers-reduced-motion: reduce) {
   .tuto-pulse {
     animation: none;
@@ -1638,6 +1651,10 @@ nav[aria-label="Navigation principale"] :focus-visible,
   }
   .coach-decoupe {
     transition: none;
+  }
+  .trace-fantome {
+    animation: none;
+    opacity: 0.85;
   }
 }
 
