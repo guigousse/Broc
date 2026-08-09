@@ -126,10 +126,61 @@ export const SEQUENCES_TUTORIEL: Record<string, DialogueSequence> = {
       { humeur: "souriant", texte: "Ouvre-le — il t'attend devant la porte." },
     ],
   },
+  tuto_prix_avant: {
+    id: "tuto_prix_avant",
+    lignes: [
+      { humeur: "songeur", texte: "Le prix, c'est la moitié du métier. Trop haut, personne ne s'arrête ; trop bas, tu travailles pour rien." },
+      { humeur: "souriant", texte: "J'ai déjà étiqueté mes pièces. Pour la manette et la carafe, glisse le curseur sur le prix que je t'indique — une petite marge, sous la cote : ça part vite." },
+    ],
+  },
+  tuto_prix_apres: {
+    id: "tuto_prix_apres",
+    lignes: [
+      { humeur: "rieur", texte: "Voilà des étiquettes honnêtes. En route — les clients n'attendent pas." },
+    ],
+  },
   tuto_vente_entree: {
     id: "tuto_vente_entree",
     lignes: [
-      { humeur: "songeur", texte: "Les clients vont venir. Écoute-les, laisse-les parler… et ne lâche jamais ton prix trop vite." },
+      { humeur: "souriant", texte: "Bel étal ! Je reste avec toi pour cette première — et ça tombe bien : ici, je connais tout le monde." },
+      { humeur: "songeur", texte: "Trois visages vont passer. Écoute-les, et souviens-toi : c'est TOI qui tiens le prix." },
+    ],
+  },
+  tuto_vente_refus_avant: {
+    id: "tuto_vente_refus_avant",
+    lignes: [
+      { humeur: "songeur", texte: "Tiens, Maxime du puçier… Il propose toujours trois fois rien. Écoute son offre — et n'aie pas peur de le laisser filer." },
+    ],
+  },
+  tuto_vente_refus_apres: {
+    id: "tuto_vente_refus_apres",
+    lignes: [
+      { humeur: "rieur", texte: "Et voilà. Refuser une mauvaise vente, c'est déjà gagner. La carafe trouvera preneur — au juste prix." },
+    ],
+  },
+  tuto_vente_directe_avant: {
+    id: "tuto_vente_directe_avant",
+    lignes: [
+      { humeur: "souriant", texte: "Ah, Léo ! Un ami — et un fou de vieilles manettes. À prix juste, il ne discutera même pas." },
+    ],
+  },
+  tuto_vente_directe_apres: {
+    id: "tuto_vente_directe_apres",
+    lignes: [
+      { humeur: "rieur", texte: "Tu vois ? Un prix honnête se vend tout seul. Le tiroir-caisse chante déjà." },
+    ],
+  },
+  tuto_vente_nego_avant: {
+    id: "tuto_vente_nego_avant",
+    lignes: [
+      { humeur: "souriant", texte: "Bérénice, la décoratrice. Elle va marchander, c'est plus fort qu'elle… Tiens ton prix : elle montera." },
+    ],
+  },
+  tuto_vente_nego_apres: {
+    id: "tuto_vente_nego_apres",
+    lignes: [
+      { humeur: "emu", texte: "Ta première vraie négociation de vente. Tu as tenu bon — je n'ai plus grand-chose à t'apprendre." },
+      { humeur: "souriant", texte: "Referme l'étal quand tu veux, et rentrons. J'ai encore deux mots à te dire à la maison." },
     ],
   },
   tuto_vente_faite: {

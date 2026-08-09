@@ -35,7 +35,12 @@ describe("dialogues (données FR)", () => {
       "tuto_nego_deux_avant", "tuto_nego_deux_apres",
       "tuto_chine_sortir", "tuto_retour",
       "tuto_peluche_collection", "tuto_collection_lecon", "tuto_colis_avant",
-      "tuto_vente_entree", "tuto_vente_faite", "tuto_conclusion",
+      "tuto_prix_avant", "tuto_prix_apres",
+      "tuto_vente_entree",
+      "tuto_vente_refus_avant", "tuto_vente_refus_apres",
+      "tuto_vente_directe_avant", "tuto_vente_directe_apres",
+      "tuto_vente_nego_avant", "tuto_vente_nego_apres",
+      "tuto_vente_faite", "tuto_conclusion",
     ];
     for (const id of attendues) {
       expect(SEQUENCES_TUTORIEL[id]?.id).toBe(id);

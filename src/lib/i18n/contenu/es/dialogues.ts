@@ -66,8 +66,35 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Antes de ir a vender, toma: un paquete de mi parte. Algunas piezas de la tienda para llenar tu primer puesto.",
     "Ábrelo — te espera junto a la puerta.",
   ],
+  tuto_prix_avant: [
+    "El precio es la mitad del oficio. Muy alto, nadie se detiene; muy bajo, trabajas para nada.",
+    "Ya he puesto las etiquetas a mis piezas. Para el mando y la jarra, desliza el cursor hasta el precio que te indico — un pequeño margen, por debajo de la cotización: así se vende rápido.",
+  ],
+  tuto_prix_apres: [
+    "Ahí tienes etiquetas honestas. En marcha — los clientes no esperan.",
+  ],
   tuto_vente_entree: [
-    "Los clientes vendrán. Escúchalos, déjalos hablar… y nunca bajes tu precio demasiado rápido.",
+    "¡Bonito puesto! Me quedo contigo para esta primera vez — y suerte la tuya: por aquí conozco a todo el mundo.",
+    "Van a pasar tres caras. Escúchalas, y recuerda: el precio lo llevas TÚ.",
+  ],
+  tuto_vente_refus_avant: [
+    "Mira, Maxime, el del rastro… Siempre ofrece tres perras. Escucha su oferta — y no temas dejarlo marchar.",
+  ],
+  tuto_vente_refus_apres: [
+    "Y ya está. Rechazar una mala venta ya es ganar. La jarra encontrará comprador — al precio justo.",
+  ],
+  tuto_vente_directe_avant: [
+    "¡Ah, Léo! Un amigo — y loco por los mandos viejos. A precio justo, ni siquiera discutirá.",
+  ],
+  tuto_vente_directe_apres: [
+    "¿Ves? Un precio honesto se vende solo. La caja registradora ya canta.",
+  ],
+  tuto_vente_nego_avant: [
+    "Bérénice, la decoradora. Va a regatear, no puede evitarlo… Mantén tu precio: ella subirá.",
+  ],
+  tuto_vente_nego_apres: [
+    "Tu primera negociación de venta de verdad. Has aguantado — ya no tengo mucho más que enseñarte.",
+    "Cierra el puesto cuando quieras, y volvamos. Todavía tengo un par de palabras que decirte en casa.",
   ],
   tuto_vente_faite: [
     "¡Y ahí está tu primera venta! El canto de la caja registradora — nunca se olvida.",
