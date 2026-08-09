@@ -16,6 +16,7 @@ import { traceAPoser, estSurTrace, tracesToutesPosees } from "@/lib/coffreTuto";
 import {
   PREFILL_COFFRE_TUTORIEL,
   PRIX_CONSEILLES_TUTORIEL,
+  TEMPLATES_VERROUILLES_TUTORIEL,
   TRACES_TUTORIEL,
 } from "@/data/tutorielScenario";
 import { tutorielActif } from "@/lib/tutoriel";
@@ -134,16 +135,27 @@ export default function VitrinePrepPage() {
     );
   }, [state, coffre]);
 
-  // Coffre Tetris (tutoriel v3) : ids des objets du préfill effectivement
+  // Coffre Tetris (tutoriel v3) : ids des objets du préfill EFFECTIVEMENT
   // présents dans le coffre — verrouillés (drag/rotation/retrait inertes).
   // Dérivé du coffre courant (pas juste du préfill) : un objet retiré du
   // coffre par un chemin détourné (dev tools, ancienne save) ne resterait
   // pas verrouillé sur un fantôme absent.
+  //
+  // `TEMPLATES_VERROUILLES_TUTORIEL` (tutorielScenario.ts) couvre le préfill
+  // ET la manette (trace 0, posée par la démo du grand-père, Task 8) — revue
+  // Task 8 : sans ce verrou, un tap malencontreux sur la carafe (qui
+  // atterrit au centre 0.5/0.5, tout près de la trace manette 0.47/0.49)
+  // pouvait déloger la manette du coffre ; délogée, elle devient injoignable
+  // (exclue du carrousel par `ajoutsAutorisesTemplateIds` ci-dessous, et plus
+  // aucun chemin ne la repose) — cul-de-sac irrécupérable, Valider mort.
+  // Verrouiller la manette dès qu'elle est dans le coffre ferme cette
+  // fenêtre : elle devient aussi immuable que le préfill, jamais délogeable.
   const verrouillesIds = useMemo(() => {
     if (!state || !tutorielActif(state)) return new Set<string>();
-    const templates = new Set(PREFILL_COFFRE_TUTORIEL.map((p) => p.templateId));
     return new Set(
-      coffre.filter((ov) => templates.has(ov.objet.templateId)).map((ov) => ov.objet.id),
+      coffre
+        .filter((ov) => TEMPLATES_VERROUILLES_TUTORIEL.has(ov.objet.templateId))
+        .map((ov) => ov.objet.id),
     );
   }, [state, coffre]);
 
@@ -177,14 +189,44 @@ export default function VitrinePrepPage() {
   // milieu de la démo : la manette n'a alors jamais quitté l'inventaire
   // (le dépôt réel ne se joue qu'à la toute fin, dans `onTerminee`), donc la
   // démo se remonte et rejoue depuis le début.
+  //
+  // `state.vitrine` non-null est AUSSI une condition de montage (pas
+  // seulement une garde interne à `onTerminee`, cf. plus bas) : au premier
+  // rendu du tutoriel, `state.vitrine` peut encore être `null` (l'effet
+  // `ouvrirVitrine` n'a pas encore commité) — démarrer la démo malgré tout
+  // mesurerait ses rects avec succès (le conteneur du coffre se monte que la
+  // vitrine existe ou non) et jouerait les 3,7 s jusqu'au bout, mais
+  // `mettreEnVitrine` no-opperait silencieusement (pas de `prev.vitrine`) :
+  // la manette resterait en stock alors que l'étape aurait déjà avancé à
+  // `coffre-trace-deux` — cul-de-sac (revue Task 8, même famille que le
+  // verrou ci-dessus). Attendre que `state.vitrine` existe avant de créer
+  // `demoManette` ferme cette fenêtre à la racine : la démo ne démarre
+  // jamais tant que le dépôt réel ne peut pas réussir.
   const manetteEnStock = useMemo(
     () => !!state?.inventaireJoueur.some((o) => o.templateId === MANETTE_TEMPLATE_ID),
     [state],
   );
   const demoManette = useMemo(() => {
-    if (!state || tutorielEtape !== "coffre-trace-un" || !manetteEnStock) return null;
+    if (
+      !state ||
+      !state.vitrine ||
+      tutorielEtape !== "coffre-trace-un" ||
+      !manetteEnStock
+    ) {
+      return null;
+    }
     return {
       onTerminee: () => {
+        // Garde défensive (ceinture-bretelles avec le garde de montage
+        // ci-dessus) : si la vitrine a malgré tout disparu entre la mesure
+        // et la fin de la démo, on n'avance PAS — un demi-état (étape
+        // avancée sans dépôt réel) serait exactement le cul-de-sac visé par
+        // la revue. Ne rien faire ici laisse `demoManette` non-null au
+        // prochain rendu (rien n'a changé côté état) : la démo, déjà
+        // terminée visuellement, ne se rejoue pas seule — mais ce cas ne
+        // devrait jamais survenir en pratique, `state.vitrine` ne redevient
+        // jamais `null` une fois ouvert.
+        if (!state.vitrine) return;
         const manette = state.inventaireJoueur.find(
           (o) => o.templateId === MANETTE_TEMPLATE_ID,
         );

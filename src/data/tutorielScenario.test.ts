@@ -8,7 +8,7 @@ import { getClientIllustration } from "@/lib/personaIllustrations";
 import {
   acheteurDeLEtape, COLIS_TUTORIEL_SCRIPTE, PELUCHE_TEMPLATE_ID, personnageScenario,
   PREFILL_COFFRE_TUTORIEL, PRIX_CONSEILLES_TUTORIEL, SESSION_TUTORIEL, SESSION_VENTE_TUTORIEL,
-  TOLERANCE_PRIX_CONSEILLE, TRACES_TUTORIEL,
+  TEMPLATES_VERROUILLES_TUTORIEL, TOLERANCE_PRIX_CONSEILLE, TRACES_TUTORIEL,
 } from "./tutorielScenario";
 import {
   deckVerrouille, donCollectionPermis, indexObjetScenario,
@@ -175,6 +175,26 @@ describe("PREFILL_COFFRE_TUTORIEL", () => {
       expect(colisIds.has(p.templateId), p.templateId).toBe(true);
       expect(p.prixVente).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("TEMPLATES_VERROUILLES_TUTORIEL — invariant anti-cul-de-sac (Task 8, revue)", () => {
+  it("verrouille le préfill ET la manette posée par la démo (trace 0)", () => {
+    // La manette n'est plus posée par le joueur (démo du grand-père) : une
+    // fois dans le coffre, elle doit être aussi immuable que le préfill,
+    // sinon un tap malencontreux sur la carafe (qui atterrit au centre
+    // 0.5/0.5, proche de la trace manette 0.47/0.49) peut la déloger — et
+    // plus aucun chemin ne la repose (exclue du carrousel, cf.
+    // `ajoutsAutorisesTemplateIds` côté prep/page.tsx). Cette assertion
+    // ÉCHOUE sur le code d'avant le fix (seul le préfill était verrouillé).
+    expect(TEMPLATES_VERROUILLES_TUTORIEL.has(TRACES_TUTORIEL[0].templateId)).toBe(true);
+    for (const p of PREFILL_COFFRE_TUTORIEL) {
+      expect(TEMPLATES_VERROUILLES_TUTORIEL.has(p.templateId), p.templateId).toBe(true);
+    }
+  });
+
+  it("ne verrouille PAS la carafe (trace 1) — elle reste posée et déplaçable par le joueur", () => {
+    expect(TEMPLATES_VERROUILLES_TUTORIEL.has(TRACES_TUTORIEL[1].templateId)).toBe(false);
   });
 });
 

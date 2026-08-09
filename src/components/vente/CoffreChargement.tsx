@@ -264,38 +264,62 @@ export function CoffreChargement(p: Props) {
           `[data-carrousel-template="${trace.templateId}"]`,
         )
       : null;
-    const departBox = departEl?.getBoundingClientRect();
-    const conteneurBox = conteneurCoffreRef.current?.getBoundingClientRect();
 
-    // Fail-open : trace/gabarit/image absents ou l'un des deux rects
-    // introuvable (élément pas encore monté, coffre vide…) → le dépôt réel
-    // se joue quand même, immédiatement, sans jamais bloquer le tutoriel
-    // sur un calcul manquant.
-    if (!trace || !tpl || !imageSrc || !departBox || !conteneurBox) {
-      p.demoManette.onTerminee();
+    // Fail-open immédiat : trace/gabarit/image/élément de départ introuvables
+    // — rien à mesurer, le dépôt réel se joue quand même tout de suite, sans
+    // jamais bloquer le tutoriel sur un calcul manquant. Lu via
+    // `demoOnTermineeRef` (mis à jour par l'effet précédent, qui s'exécute
+    // avant celui-ci — même ordre de déclaration) plutôt que
+    // `p.demoManette.onTerminee` directement : source unique, cohérente
+    // avec la branche différée ci-dessous.
+    if (!trace || !tpl || !imageSrc || !departEl) {
+      demoOnTermineeRef.current?.();
       return;
     }
 
-    const sizePx = getScaleCoffre(tailleDe(tpl), camion.capacitePlaces) * conteneurBox.width;
-    setDemoRects({
-      departRect: {
-        x: departBox.left,
-        y: departBox.top,
-        w: departBox.width,
-        h: departBox.height,
-      },
-      cibleRect: {
-        x: conteneurBox.left + trace.posX * conteneurBox.width - sizePx / 2,
-        y:
-          conteneurBox.top +
-          trace.posY * (conteneurBox.width / camion.aspectRatio) -
-          sizePx / 2,
-        w: sizePx,
-        h: sizePx,
-        rotation: trace.rotation,
-      },
-      imageSrc,
+    // La vignette peut être hors du champ visible du carrousel (overflow-x
+    // auto ; 4-6 objets triés par catégorie à cette étape, la manette n'est
+    // pas forcément en premier) : on la fait défiler dans le champ visible
+    // AVANT de mesurer, sinon le clone démarrerait d'un point invisible à
+    // l'écran. Une frame d'attente (rAF) pour laisser ce scroll — natif,
+    // synchrone — se répercuter sur le layout avant de lire les rects.
+    // Optionnel : absent de jsdom (tests), cf. `ParcoursSheet.tsx`.
+    departEl.scrollIntoView?.({ block: "nearest", inline: "center" });
+    const rafId = requestAnimationFrame(() => {
+      const departBox = departEl.getBoundingClientRect();
+      const conteneurBox = conteneurCoffreRef.current?.getBoundingClientRect();
+
+      // Fail-open différé : le conteneur du coffre a disparu entre-temps
+      // (cas limite, ex. démontage en cours) — même traitement, toujours
+      // via la ref pour lire la version la plus fraîche du callback.
+      if (!conteneurBox) {
+        demoOnTermineeRef.current?.();
+        return;
+      }
+
+      const sizePx = getScaleCoffre(tailleDe(tpl), camion.capacitePlaces) * conteneurBox.width;
+      setDemoRects({
+        departRect: {
+          x: departBox.left,
+          y: departBox.top,
+          w: departBox.width,
+          h: departBox.height,
+        },
+        cibleRect: {
+          x: conteneurBox.left + trace.posX * conteneurBox.width - sizePx / 2,
+          y:
+            conteneurBox.top +
+            trace.posY * (conteneurBox.width / camion.aspectRatio) -
+            sizePx / 2,
+          w: sizePx,
+          h: sizePx,
+          rotation: trace.rotation,
+        },
+        imageSrc,
+      });
     });
+
+    return () => cancelAnimationFrame(rafId);
   }, [p.demoManette, p.trace, camion.aspectRatio, camion.capacitePlaces]);
 
   const demoOnTerminee = useCallback(() => {

@@ -126,6 +126,20 @@ export const PREFILL_COFFRE_TUTORIEL: readonly PrefillCoffre[] = [
   { templateId: "ma.lampe_globe_opaline", posX: 0.69, posY: 0.62, rotation: 0, prixVente: 36 },
 ];
 
+/** Task 8 (démo du grand-père) : la manette (trace 0) n'est plus posée par
+ *  le joueur mais par le jeu (`DemoDepotManette`) — une fois dans le coffre,
+ *  elle doit être AUSSI immuable que le préfill, sinon un tap malencontreux
+ *  sur la carafe (tap → centre 0.5/0.5, proche de la trace manette
+ *  0.47/0.49) pourrait la déloger. Délogée, elle redevient injoignable :
+ *  `ajoutsAutorisesTemplateIds` l'exclut du carrousel aux deux étapes
+ *  (Task 8), et plus aucun chemin ne la repose — cul-de-sac irrécupérable.
+ *  La carafe (trace 1), elle, reste manipulable par le joueur — jamais dans
+ *  cet ensemble. */
+export const TEMPLATES_VERROUILLES_TUTORIEL: ReadonlySet<string> = new Set([
+  ...PREFILL_COFFRE_TUTORIEL.map((p) => p.templateId),
+  TRACES_TUTORIEL[0].templateId,
+]);
+
 /* === Pricing guidé ====================================================== */
 
 export const PRIX_CONSEILLES_TUTORIEL: Readonly<Record<string, number>> = {
