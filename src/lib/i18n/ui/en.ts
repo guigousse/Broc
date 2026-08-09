@@ -408,6 +408,8 @@ export const en: DictionnaireUI = {
     aucunObjetACharger: "No items to load. Go picking!",
     pastilleAchat: "purchase",
     pastilleVente: "sale",
+    prixConseille: "Suggested price",
+    etiquetteGrandPere: "Priced by grandpa",
     camionNiveauAria: "Truck level {n}",
   },
   bilan: {

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { TOLERANCE_PRIX_CONSEILLE } from "@/data/tutorielScenario";
 
 interface PrixSliderProps {
   /** Prix de vente courant (poignée mobile). */
@@ -27,12 +28,23 @@ interface PrixSliderProps {
    * existants.
    */
   marcheConnu?: boolean;
+  /**
+   * Tutoriel (pricing guidé) : prix conseillé par le grand-père — pastille
+   * repère supplémentaire ET aimantation du drag (à ± TOLERANCE_PRIX_
+   * CONSEILLE, le prix commité saute exactement sur `cible`).
+   */
+  cible?: number | null;
+  /** Tutoriel : flèches clignotantes sur la poignée tant que `cible` n'est pas posée. */
+  tutoFleches?: boolean;
+  /** Tutoriel : poignée verrouillée (objet déjà étiqueté par le grand-père) — pas de drag, opacité réduite, étiquette explicative. */
+  readOnly?: boolean;
   onChange: (prix: number) => void;
 }
 
 const COL_VENTE = "var(--nego-joueur)";
 const COL_VALEUR = "var(--brass-700)";
 const COL_ACHAT = "var(--ink-500)";
+const COL_CIBLE = "var(--brass-500)";
 
 /**
  * Curseur de prix façon « négociation » avec trois pastilles : valeur de marché
@@ -45,6 +57,9 @@ export function PrixSlider({
   achat,
   ampPct = 100,
   marcheConnu = true,
+  cible = null,
+  tutoFleches = false,
+  readOnly = false,
   onChange,
 }: PrixSliderProps) {
   const { d } = useLangue();
@@ -67,7 +82,14 @@ export function PrixSlider({
       if (!t) return;
       const rect = t.getBoundingClientRect();
       const r = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-      const prix = Math.round(min + r * (max - min));
+      let prix = Math.round(min + r * (max - min));
+      // Aimantation (tutoriel) : à ± TOLERANCE_PRIX_CONSEILLE du prix
+      // conseillé, on committe la cible exacte plutôt que la valeur brute du
+      // pointeur — seul point de commit du curseur, donc suffit à couvrir le
+      // drag ET le relâché (pas de commit séparé au pointerup).
+      if (cible != null && Math.abs(prix - cible) <= TOLERANCE_PRIX_CONSEILLE) {
+        prix = cible;
+      }
       if (prix !== lastRef.current) {
         lastRef.current = prix;
         onChange(prix);
@@ -83,54 +105,75 @@ export function PrixSlider({
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     };
-  }, [dragging, min, max, onChange]);
+  }, [dragging, min, max, onChange, cible]);
 
   return (
-    <div style={row}>
-      <span style={endLabel}>−{ampPct} %</span>
-      <div ref={trackRef} style={track}>
-        <div style={line} />
+    <div>
+      <div style={row}>
+        <span style={endLabel}>−{ampPct} %</span>
+        <div ref={trackRef} style={track}>
+          <div style={line} />
 
-        {marcheConnu && (
+          {marcheConnu && (
+            <Pastille
+              ratio={ratioOf(ref)}
+              color={COL_VALEUR}
+              size={34}
+              label={d.inventaire.valeurMot}
+              labelPos="above"
+            >
+              {ref}€
+            </Pastille>
+          )}
+
+          {typeof achat === "number" && achat > 0 && (
+            <Pastille
+              ratio={ratioOf(achat)}
+              color={COL_ACHAT}
+              size={34}
+              label={d.vente.pastilleAchat}
+              labelPos="above"
+            >
+              {achat}€
+            </Pastille>
+          )}
+
+          {typeof cible === "number" && (
+            <Pastille
+              ratio={ratioOf(cible)}
+              color={COL_CIBLE}
+              size={34}
+              label={d.vente.prixConseille}
+              labelPos="above"
+            >
+              {cible}€
+            </Pastille>
+          )}
+
           <Pastille
-            ratio={ratioOf(ref)}
-            color={COL_VALEUR}
-            size={34}
-            label={d.inventaire.valeurMot}
-            labelPos="above"
+            ratio={ratioOf(value)}
+            color={dragging ? "var(--forest-700)" : COL_VENTE}
+            size={40}
+            label={d.vente.pastilleVente}
+            labelPos="below"
+            z={3}
+            className={tutoFleches ? "tuto-fleches" : undefined}
+            style={readOnly ? { opacity: 0.7 } : undefined}
+            onPointerDown={
+              readOnly
+                ? undefined
+                : (e) => {
+                    e.preventDefault();
+                    setDragging(true);
+                  }
+            }
           >
-            {ref}€
+            {value}€
           </Pastille>
-        )}
-
-        {typeof achat === "number" && achat > 0 && (
-          <Pastille
-            ratio={ratioOf(achat)}
-            color={COL_ACHAT}
-            size={34}
-            label={d.vente.pastilleAchat}
-            labelPos="above"
-          >
-            {achat}€
-          </Pastille>
-        )}
-
-        <Pastille
-          ratio={ratioOf(value)}
-          color={dragging ? "var(--forest-700)" : COL_VENTE}
-          size={40}
-          label={d.vente.pastilleVente}
-          labelPos="below"
-          z={3}
-          onPointerDown={(e) => {
-            e.preventDefault();
-            setDragging(true);
-          }}
-        >
-          {value}€
-        </Pastille>
+        </div>
+        <span style={endLabel}>+{ampPct} %</span>
       </div>
-      <span style={endLabel}>+{ampPct} %</span>
+      {readOnly && <div style={etiquette}>{d.vente.etiquetteGrandPere}</div>}
     </div>
   );
 }
@@ -144,6 +187,8 @@ function Pastille({
   z = 1,
   onPointerDown,
   children,
+  className,
+  style,
 }: {
   ratio: number;
   color: string;
@@ -153,10 +198,15 @@ function Pastille({
   z?: number;
   onPointerDown?: (e: PointerEvent<HTMLDivElement>) => void;
   children: ReactNode;
+  /** Traversée jusqu'au div racine — tutoriel : `.tuto-fleches` (flèches ::before/::after). */
+  className?: string;
+  /** Overrides ponctuels (ex : opacité en lecture seule). Appliqué en dernier. */
+  style?: CSSProperties;
 }) {
   const draggable = !!onPointerDown;
   return (
     <div
+      className={className}
       onPointerDown={onPointerDown}
       style={{
         position: "absolute",
@@ -180,6 +230,7 @@ function Pastille({
         ...(draggable
           ? { touchAction: "none", cursor: "grab" }
           : { pointerEvents: "none" }),
+        ...style,
       }}
     >
       {children}
@@ -230,6 +281,15 @@ const track: CSSProperties = {
   // poignée de vente « fuit » dans le contexte parent, passant DEVANT le footer
   // sticky (z auto) quand on scrolle la liste de tarification.
   isolation: "isolate",
+};
+
+const etiquette: CSSProperties = {
+  marginTop: 2,
+  paddingLeft: 4,
+  fontFamily: "var(--font-mono)",
+  fontSize: 9.5,
+  fontStyle: "italic",
+  color: "var(--ink-500)",
 };
 
 const line: CSSProperties = {

@@ -408,6 +408,8 @@ export const es: DictionnaireUI = {
     aucunObjetACharger: "Ningún objeto que cargar. ¡Sal a rebuscar!",
     pastilleAchat: "compra",
     pastilleVente: "venta",
+    prixConseille: "Precio recomendado",
+    etiquetteGrandPere: "Etiquetado por el abuelo",
     camionNiveauAria: "Camión nivel {n}",
   },
   bilan: {

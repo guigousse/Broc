@@ -1,5 +1,6 @@
 import type { ObjetEnVitrine, TutorielEtape } from "@/types/game";
 import {
+  PRIX_CONSEILLES_TUTORIEL,
   TOLERANCE_TRACE_POS, TOLERANCE_TRACE_ROT, TRACES_TUTORIEL,
   type TraceScenario,
 } from "@/data/tutorielScenario";
@@ -72,4 +73,18 @@ export function traceAPoser(
     return null;
   }
   return null;
+}
+
+/**
+ * Pricing guidé (tutoriel) : vrai si CHAQUE objet du coffre concerné par un
+ * prix conseillé (`PRIX_CONSEILLES_TUTORIEL`) est posé exactement à ce prix
+ * (l'aimantation du `PrixSlider` garantit l'égalité stricte, pas d'à-peu-près
+ * ici). Les objets sans prix conseillé (préfill, reliquat…) sont ignorés —
+ * fail-open hors tutoriel (ou hors les deux templates concernés) : `true`.
+ */
+export function prixPoses(coffre: readonly ObjetEnVitrine[]): boolean {
+  return coffre.every((ov) => {
+    const conseil = PRIX_CONSEILLES_TUTORIEL[ov.objet.templateId];
+    return conseil === undefined || ov.prixVente === conseil;
+  });
 }

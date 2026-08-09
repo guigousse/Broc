@@ -411,6 +411,8 @@ export const fr = {
     aucunObjetACharger: "Aucun objet à charger. Allez chiner !",
     pastilleAchat: "achat",
     pastilleVente: "vente",
+    prixConseille: "Prix conseillé",
+    etiquetteGrandPere: "Étiqueté par le grand-père",
     camionNiveauAria: "Camion niveau {n}",
   },
   bilan: {

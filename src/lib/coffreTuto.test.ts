@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { estSurTrace, traceActive, traceAPoser, tracesToutesPosees } from "./coffreTuto";
-import { TRACES_TUTORIEL } from "@/data/tutorielScenario";
+import { estSurTrace, prixPoses, traceActive, traceAPoser, tracesToutesPosees } from "./coffreTuto";
+import { PRIX_CONSEILLES_TUTORIEL, TRACES_TUTORIEL } from "@/data/tutorielScenario";
 
 const t0 = TRACES_TUTORIEL[0]; // manette, rotation 25 (v3 : pivotée, démo du grand-père)
 const t1 = TRACES_TUTORIEL[1]; // carafe, rotation 40
@@ -71,5 +71,20 @@ describe("traceAPoser", () => {
   it("hors étapes coffre : null", () => {
     expect(traceAPoser("preparer-etal", [] as never)).toBeNull();
     expect(traceAPoser("termine", [] as never)).toBeNull();
+  });
+});
+
+describe("prixPoses", () => {
+  const manette = (prix: number) => ({ objet: { templateId: "jx.manette_vibraduo" }, prixVente: prix }) as never;
+  const carafe = (prix: number) => ({ objet: { templateId: "ma.carafe_cristal_taille" }, prixVente: prix }) as never;
+  const autre = { objet: { templateId: "mus.ukulele_soprano" }, prixVente: 24 } as never;
+  it("vrai quand manette et carafe sont au prix conseillé (les autres objets sont ignorés)", () => {
+    expect(prixPoses([manette(PRIX_CONSEILLES_TUTORIEL["jx.manette_vibraduo"]), carafe(PRIX_CONSEILLES_TUTORIEL["ma.carafe_cristal_taille"]), autre])).toBe(true);
+  });
+  it("faux si un prix conseillé n'est pas posé", () => {
+    expect(prixPoses([manette(PRIX_CONSEILLES_TUTORIEL["jx.manette_vibraduo"]), carafe(99), autre])).toBe(false);
+  });
+  it("vrai sur un coffre sans objets conseillés (fail-open hors tuto)", () => {
+    expect(prixPoses([autre])).toBe(true);
   });
 });

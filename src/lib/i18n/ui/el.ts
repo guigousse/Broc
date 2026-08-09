@@ -422,6 +422,8 @@ export const el: DictionnaireUI = {
     aucunObjetACharger: "Κανένα αντικείμενο για φόρτωση. Πήγαινε για ψάξιμο!",
     pastilleAchat: "αγορά",
     pastilleVente: "πώληση",
+    prixConseille: "Προτεινόμενη τιμή",
+    etiquetteGrandPere: "Τιμολογήθηκε από τον παππού",
     camionNiveauAria: "Φορτηγό επίπεδο {n}",
   },
   bilan: {

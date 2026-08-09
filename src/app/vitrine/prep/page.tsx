@@ -12,7 +12,8 @@ import { CATEGORIES } from "@/data/categories";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { prixSuggere } from "@/lib/prixSuggere";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { traceAPoser, estSurTrace, tracesToutesPosees } from "@/lib/coffreTuto";
+import { nomExpediteur } from "@/lib/i18n/contenu";
+import { traceAPoser, estSurTrace, tracesToutesPosees, prixPoses } from "@/lib/coffreTuto";
 import {
   PREFILL_COFFRE_TUTORIEL,
   PRIX_CONSEILLES_TUTORIEL,
@@ -21,10 +22,20 @@ import {
 } from "@/data/tutorielScenario";
 import { tutorielActif } from "@/lib/tutoriel";
 import { audioManager } from "@/lib/audio/audioManager";
+import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
+import { GRAND_PERE_PORTRAITS, SEQUENCES_TUTORIEL, type DialogueSequence } from "@/data/dialogues";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 // Prix par défaut = prix du marché (curseur de tarification centré sur la valeur).
 const SUGGESTION_FACTEUR = 1;
+
+// Pricing guidé (Task 9) : templateIds du préfill (déjà étiquetés par le
+// grand-père) — poignée verrouillée en lecture seule sur ces lignes,
+// pendant tout le passage packing→pricing du tutoriel. Constant (dérivé
+// d'une donnée figée), calculé une seule fois au chargement du module.
+const READONLY_TEMPLATE_IDS_TUTORIEL: ReadonlySet<string> = new Set(
+  PREFILL_COFFRE_TUTORIEL.map((p) => p.templateId),
+);
 
 // Coffre à traces (tutoriel v3) : la manette (trace 0) n'est plus posée par
 // le joueur — démo du grand-père, Task 8. Alias vers `TRACES_TUTORIEL[0]`
@@ -54,9 +65,13 @@ export default function VitrinePrepPage() {
     setNiveauCamionDev,
   } = useGame();
   const { avancerTutoriel } = useGameActions();
-  const { d } = useLangue();
+  const { d, locale } = useLangue();
 
   const [etape, setEtape] = useState<"packing" | "pricing">("packing");
+  // Pricing guidé (Task 9) : dialogues du grand-père avant/après la
+  // tarification, pendant le tutoriel uniquement (null hors tuto — jamais
+  // affectée). Même pattern que `dialogueTuto` de journee/ClientPage.tsx.
+  const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
 
   // Coffre à traces : latch anti-spam — mémorise le dernier objet aimanté
   // (id + templateId de la trace visée) pour ne pas rejouer le snap/le son
@@ -270,6 +285,12 @@ export default function VitrinePrepPage() {
     );
   }
 
+  // Pricing guidé (Task 9) : la tarification (packing puis pricing) se joue
+  // TOUJOURS pendant `coffre-trace-deux` — l'avancement à `vente-refus`
+  // n'arrive qu'au montage de journee/ClientPage.tsx (cf. son effet
+  // d'entrée), jamais ici. Un seul flag pour gater toute la leçon pricing.
+  const tutoPricing = state.tutorielEtape === "coffre-trace-deux";
+
   /**
    * Coffre à traces (tutoriel v2) : dès que l'objet visé par la trace
    * affichée (`trace`, dérivée de `traceAPoser` — donc déjà « la bonne »
@@ -393,7 +414,14 @@ export default function VitrinePrepPage() {
             onRetirer={retirerDeVitrine}
             onUpgrade={acheterCamion}
             onSetNiveauDev={setNiveauCamionDev}
-            onValider={() => setEtape("pricing")}
+            onValider={() => {
+              setEtape("pricing");
+              // Pricing guidé (Task 9) : le grand-père présente la
+              // tarification au passage packing→pricing, une fois par
+              // arrivée sur l'étape (rejoué si on repasse par "packing" via
+              // Retour puis re-Valider — sans conséquence, juste un rappel).
+              if (tutoPricing) setDialogueTuto(SEQUENCES_TUTORIEL.tuto_prix_avant);
+            }}
             onAnnuler={() => {
               viderVitrine();
               router.push("/bureau");
@@ -426,14 +454,36 @@ export default function VitrinePrepPage() {
             coffre={coffre}
             onAjusterPrix={ajusterPrixVitrine}
             onRetour={() => setEtape("packing")}
-            onValider={() => router.push("/vitrine")}
+            onValider={() => {
+              if (tutoPricing) {
+                setDialogueTuto(SEQUENCES_TUTORIEL.tuto_prix_apres);
+              } else {
+                router.push("/vitrine");
+              }
+            }}
             validerLabel={d.vente.choisirBrocante}
             validerActif={coffre.length > 0}
             categoriesConnues={categoriesConnuesVitrine}
-            tutoMainValider={state.tutorielEtape === "coffre-trace-deux"}
+            tutoMainValider={tutoPricing && prixPoses(coffre)}
+            readOnlyTemplateIds={tutoPricing ? READONLY_TEMPLATE_IDS_TUTORIEL : undefined}
+            cibles={tutoPricing ? PRIX_CONSEILLES_TUTORIEL : null}
+            validerBloque={tutoPricing ? !prixPoses(coffre) : undefined}
           />
         )}
       </main>
+      <DialogueOverlay
+        sequence={dialogueTuto}
+        nom={nomExpediteur("grand-pere", locale)}
+        portraits={GRAND_PERE_PORTRAITS}
+        onFini={() => {
+          // router.push seulement pour tuto_prix_apres (dernier dialogue de
+          // la leçon pricing) — tuto_prix_avant se ferme simplement sur
+          // l'étape pricing déjà affichée, sans navigation.
+          const etaitApres = dialogueTuto === SEQUENCES_TUTORIEL.tuto_prix_apres;
+          setDialogueTuto(null);
+          if (etaitApres) router.push("/vitrine");
+        }}
+      />
     </div>
   );
 }
