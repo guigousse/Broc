@@ -253,8 +253,23 @@ export function CoffreChargement(p: Props) {
       setDemoRects(null);
       return;
     }
+    // NE PAS poser la garde ici : elle ne doit passer à `true` qu'une fois
+    // la mesure RÉELLEMENT actée (fail-open ou `setDemoRects`, plus bas).
+    // Sinon, une course s'ouvre entre le `requestAnimationFrame` différé
+    // ci-dessous et TOUT re-render du parent (StrictMode, ou `p.demoManette`
+    // recréé — un objet neuf à chaque render côté `prep/page.tsx`) : la
+    // garde était posée AVANT l'attente async, le cleanup annulait le rAF en
+    // vol, et la ré-exécution suivante voyait la garde déjà `true` → plus
+    // aucune mesure n'était jamais reprogrammée, `demoRects` ne se posait
+    // jamais, la démo ne montait JAMAIS (revue Task 8, prouvé par deux tests
+    // RTL — StrictMode et rerender avec objet frais, cf.
+    // `CoffreChargement.test.tsx`). En la laissant `false` tant que rien
+    // n'est acté, un cleanup qui annule le rAF avant qu'il ne s'exécute
+    // laisse l'effet reprogrammer la mesure à la prochaine invocation —
+    // convergence garantie après un nombre borné de reprises (le travail
+    // refait — `querySelector`, `scrollIntoView` — est idempotent et sans
+    // effet de bord observable).
     if (demoDejaMesureRef.current) return;
-    demoDejaMesureRef.current = true;
 
     const trace = p.trace;
     const tpl = trace ? getTemplate(trace.templateId) : undefined;
@@ -271,8 +286,10 @@ export function CoffreChargement(p: Props) {
     // `demoOnTermineeRef` (mis à jour par l'effet précédent, qui s'exécute
     // avant celui-ci — même ordre de déclaration) plutôt que
     // `p.demoManette.onTerminee` directement : source unique, cohérente
-    // avec la branche différée ci-dessous.
+    // avec la branche différée ci-dessous. Entièrement synchrone : la garde
+    // peut être posée ici sans risque de course (rien à annuler).
     if (!trace || !tpl || !imageSrc || !departEl) {
+      demoDejaMesureRef.current = true;
       demoOnTermineeRef.current?.();
       return;
     }
@@ -283,7 +300,9 @@ export function CoffreChargement(p: Props) {
     // AVANT de mesurer, sinon le clone démarrerait d'un point invisible à
     // l'écran. Une frame d'attente (rAF) pour laisser ce scroll — natif,
     // synchrone — se répercuter sur le layout avant de lire les rects.
-    // Optionnel : absent de jsdom (tests), cf. `ParcoursSheet.tsx`.
+    // Optionnel : absent de jsdom (tests), cf. `ParcoursSheet.tsx`. Idempotent
+    // si répété (retenté après un cleanup) : un élément déjà visible n'est
+    // pas rescrollé, sans effet de bord.
     departEl.scrollIntoView?.({ block: "nearest", inline: "center" });
     const rafId = requestAnimationFrame(() => {
       const departBox = departEl.getBoundingClientRect();
@@ -291,12 +310,16 @@ export function CoffreChargement(p: Props) {
 
       // Fail-open différé : le conteneur du coffre a disparu entre-temps
       // (cas limite, ex. démontage en cours) — même traitement, toujours
-      // via la ref pour lire la version la plus fraîche du callback.
+      // via la ref pour lire la version la plus fraîche du callback. La
+      // garde n'est posée qu'ICI, une fois le rAF réellement exécuté (pas
+      // annulé par un cleanup) — c'est tout l'objet du fix.
       if (!conteneurBox) {
+        demoDejaMesureRef.current = true;
         demoOnTermineeRef.current?.();
         return;
       }
 
+      demoDejaMesureRef.current = true;
       const sizePx = getScaleCoffre(tailleDe(tpl), camion.capacitePlaces) * conteneurBox.width;
       setDemoRects({
         departRect: {

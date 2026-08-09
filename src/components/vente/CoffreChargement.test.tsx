@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { CoffreChargement } from "./CoffreChargement";
-import { createMockObjetEnVitrine } from "@/lib/__test-fixtures__/gameState";
+import { createMockObjet, createMockObjetEnVitrine } from "@/lib/__test-fixtures__/gameState";
 import {
   RELEVE_BASCULE_MS,
   RELEVE_DUREE_MS,
@@ -294,5 +295,104 @@ describe("CoffreChargement — bouton de gauche", () => {
     const bouton = screen.getByRole("button", { name: "Retour" });
     fireEvent.click(bouton);
     expect(props.onAnnuler).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("CoffreChargement — démo du grand-père : régression course rAF (revue Task 8, fix round 2)", () => {
+  // La manette : templateId réel (gabarit + miniature connus), reprend la
+  // trace 0 du scénario scripté (posX/posY/rotation exacts, sans importer
+  // tutorielScenario ici — la valeur n'est pas ce qui est sous test).
+  const TRACE_MANETTE = {
+    templateId: "jx.manette_vibraduo",
+    posX: 0.47,
+    posY: 0.49,
+    rotation: 25,
+  };
+
+  function stockAvecManette() {
+    return [createMockObjet({ id: "manette-1", templateId: "jx.manette_vibraduo" })];
+  }
+
+  function propsDemo(onTerminee: () => void) {
+    return {
+      niveauCamion: 1 as const,
+      budget: 500,
+      stock: stockAvecManette(),
+      coffre: [],
+      onAjouter: vi.fn(),
+      onMove: vi.fn(),
+      onRotate: vi.fn(),
+      onRetirer: vi.fn(),
+      onUpgrade: vi.fn(),
+      onValider: vi.fn(),
+      onAnnuler: vi.fn(),
+      trace: TRACE_MANETTE,
+      demoManette: { onTerminee },
+    };
+  }
+
+  // Deux passes, PAS une seule grosse : la 1re (courte) laisse React
+  // committer `setDemoRects` — déclenché depuis le rAF de mesure — et monter
+  // `DemoDepotManette`, dont l'effet ne programme SES PROPRES timers qu'à CE
+  // moment-là. Sous fake timers, un composant nouvellement monté à
+  // l'intérieur d'un `vi.advanceTimersByTime` en cours n'a ses effets
+  // flushés qu'APRÈS le retour de cet appel synchrone — un seul grand
+  // `advanceTimersByTime(4000)` ne verrait donc jamais les timers internes
+  // de la démo, programmés « trop tard » pour le budget déjà consommé
+  // (vérifié empiriquement en isolant le repro). La 2e passe (large) couvre
+  // alors toute la timeline interne de la démo (~3,7 s) jusqu'à son propre
+  // `onTerminee`.
+  function laisserLaDemoConverger() {
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+  }
+
+  // Bug (revue) : la garde anti-double-mesure (`demoDejaMesureRef`) était
+  // posée à `true` AVANT le `requestAnimationFrame` différé de la mesure —
+  // si un cleanup annulait ce rAF avant qu'il ne s'exécute (StrictMode, ou
+  // tout re-render du parent), la garde restait bloquée à `true` sans que
+  // la mesure n'ait jamais réellement eu lieu : plus aucune reprogrammation,
+  // `demoRects` jamais posé, la démo ne montait JAMAIS, `onTerminee` jamais
+  // appelé — le tutoriel restait suspendu à `coffre-trace-un` sans issue.
+  it("StrictMode (double-invoke des effets à l'initial mount) : la mesure différée finit par converger, onTerminee appelé une seule fois", () => {
+    const onTerminee = vi.fn();
+    try {
+      vi.useFakeTimers();
+      render(
+        <StrictMode>
+          <CoffreChargement {...propsDemo(onTerminee)} />
+        </StrictMode>,
+      );
+      laisserLaDemoConverger();
+      expect(onTerminee).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("rerender avec un `demoManette` neuf avant que le rAF de mesure n'ait pu s'exécuter : converge quand même, une seule fois, sur la dernière closure reçue", () => {
+    const onTermineeA = vi.fn();
+    const onTermineeB = vi.fn();
+    try {
+      vi.useFakeTimers();
+      const { rerender } = render(<CoffreChargement {...propsDemo(onTermineeA)} />);
+      // `prep/page.tsx` recrée l'objet `demoManette` à chaque render du
+      // parent (un littéral neuf, jamais mémoïsé) — ce rerender reproduit
+      // exactement cette identité fraîche, AVANT que le rAF programmé par le
+      // premier montage n'ait eu la moindre chance de s'exécuter (aucun
+      // `advanceTimersByTime` n'a encore été appelé).
+      rerender(<CoffreChargement {...propsDemo(onTermineeB)} />);
+      laisserLaDemoConverger();
+      // La dernière closure reçue est celle honorée — jamais les deux
+      // (double dépôt), jamais aucune (tutoriel suspendu).
+      expect(onTermineeA).not.toHaveBeenCalled();
+      expect(onTermineeB).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
