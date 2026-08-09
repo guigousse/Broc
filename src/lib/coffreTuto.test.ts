@@ -26,6 +26,13 @@ describe("estSurTrace", () => {
     expect(estSurTrace({ posX: t0.posX, posY: t0.posY, rotation: t0.rotation + 352 }, t0)).toBe(true);
     expect(estSurTrace({ rotation: undefined, posX: undefined, posY: undefined }, t0)).toBe(false);
   });
+  it("wrap-around à trace 0° (branche 360 - brut, inatteignable via les traces réelles 25°/40°)", () => {
+    const traceZero = { templateId: "test", posX: 0.5, posY: 0.5, rotation: 0 };
+    // brut = 352, 360 - brut = 8 ≤ 10 : accepté via le wrap.
+    expect(estSurTrace({ posX: 0.5, posY: 0.5, rotation: 352 }, traceZero)).toBe(true);
+    // brut = 348, 360 - brut = 12 > 10 : refusé.
+    expect(estSurTrace({ posX: 0.5, posY: 0.5, rotation: 348 }, traceZero)).toBe(false);
+  });
 });
 
 describe("tracesToutesPosees", () => {

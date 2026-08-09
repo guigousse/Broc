@@ -208,7 +208,7 @@ export const fr = {
       "collection-lecon": "Ouvre la Collection depuis la barre du bas.",
       "ouvrir-colis": "Ouvre le colis du grand-père, devant la porte.",
       "preparer-etal": "Repasse la porte et choisis « Étaler » pour préparer ta vitrine.",
-      "coffre-trace-un": "Prends le premier objet et pose-le sur son emplacement.",
+      "coffre-trace-un": "Regarde bien : le grand-père pose la manette et la tourne pour toi.",
       "coffre-trace-deux": "Un doigt pour déplacer, un second pour tourner : pose l'objet sur sa trace.",
       "vente-refus": "Ce client offre trop peu — laisse tomber, sans regret.",
       "vente-directe": "Il prend la manette au prix affiché : accepte !",
