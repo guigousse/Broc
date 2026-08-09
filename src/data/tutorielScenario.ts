@@ -76,10 +76,15 @@ export interface TraceScenario {
 }
 
 /* Traces v3 : la manette est PIVOTÉE (c'est la démo du grand-père qui
-   la tourne), la carafe remonte dans le trou haut-droit. */
+ * la tourne), la carafe remonte (posY ≤ 0.45, exigence spec).
+ *
+ * Positions PROUVÉES au pixel (oracle sharp, cf. `tutorielScenario.test.ts`) :
+ * aux valeurs d'origine (0.47/0.5 et 0.62/0.38), manette et carafe se
+ * chevauchaient réellement (88/864 px opaques) — corrigé en écartant la
+ * carafe (posX 0.62→0.66, posY 0.38→0.33), loin aussi du préfill. */
 export const TRACES_TUTORIEL: readonly TraceScenario[] = [
-  { templateId: "jx.manette_vibraduo", posX: 0.47, posY: 0.5, rotation: 25 },
-  { templateId: "ma.carafe_cristal_taille", posX: 0.62, posY: 0.38, rotation: 40 },
+  { templateId: "jx.manette_vibraduo", posX: 0.47, posY: 0.49, rotation: 25 },
+  { templateId: "ma.carafe_cristal_taille", posX: 0.66, posY: 0.33, rotation: 40 },
 ];
 
 /** Tolérance de pose : distance (normalisée) et angle (degrés). */
@@ -107,12 +112,18 @@ export interface PrefillCoffre {
 }
 
 /** Le grand-père a déjà chargé 3 pièces du colis : elles dessinent deux
- *  « trous » — la manette à gauche (pivotée, démo) et la carafe en haut à
- *  droite. Verrouillées pendant le tutoriel, prix déjà étiquetés. */
+ *  « trous » — la manette et la carafe. Verrouillées pendant le tutoriel,
+ *  prix déjà étiquetés.
+ *
+ *  Positions PROUVÉES au pixel (oracle sharp, cf. `tutorielScenario.test.ts`,
+ *  suite au coffre "rogers" (N1, 9 places) qui est nettement plus petit que
+ *  ses silhouettes : le contenant réel (masque `rogers-mask.webp`) est
+ *  saturé par ce triplet — la boîte à outils en particulier n'a de marge
+ *  quasi nulle. NE JAMAIS modifier ces positions sans repasser par l'oracle. */
 export const PREFILL_COFFRE_TUTORIEL: readonly PrefillCoffre[] = [
-  { templateId: "mus.ukulele_soprano", posX: 0.2, posY: 0.32, rotation: 105, prixVente: 24 },
-  { templateId: "br.boite_outils_complete", posX: 0.78, posY: 0.62, rotation: 0, prixVente: 30 },
-  { templateId: "ma.lampe_globe_opaline", posX: 0.22, posY: 0.72, rotation: 0, prixVente: 36 },
+  { templateId: "mus.ukulele_soprano", posX: 0.33, posY: 0.66, rotation: 105, prixVente: 24 },
+  { templateId: "br.boite_outils_complete", posX: 0.39, posY: 0.26, rotation: 0, prixVente: 30 },
+  { templateId: "ma.lampe_globe_opaline", posX: 0.69, posY: 0.62, rotation: 0, prixVente: 36 },
 ];
 
 /* === Pricing guidé ====================================================== */

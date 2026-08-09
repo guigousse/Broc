@@ -1,5 +1,8 @@
+import path from "node:path";
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { getTemplate, tailleDe } from "@/data/objetTemplates";
+import { getCamion, getScaleCoffre } from "@/data/camion";
 import { calculerPrixMinAcceptDepuisPersona } from "@/lib/personas";
 import { getClientIllustration } from "@/lib/personaIllustrations";
 import {
@@ -11,9 +14,13 @@ import {
   deckVerrouille, donCollectionPermis, indexObjetScenario,
   ongletTutorielPermis, scenarioDeLEtape,
 } from "@/lib/tutoriel";
-import { ITEMS_WITH_IMAGE } from "@/lib/itemImages";
+import { getItemThumbUrl, ITEMS_WITH_IMAGE } from "@/lib/itemImages";
 import { ALEA_NEGO_SCRIPTEE, ouvrirNegociation, proposerOffre } from "@/lib/negociation";
 import { genererSessionScriptee } from "@/lib/chine";
+import { getCoffreAssets } from "@/lib/coffreAssets";
+import {
+  computeOverlapsPixel, containRect, type PixelItem, type TrunkMask,
+} from "@/lib/coffre";
 
 describe("SESSION_TUTORIEL", () => {
   it("contient 6 objets aux templates connus, illustrés, sans doublon", () => {
@@ -74,10 +81,7 @@ describe("TRACES_TUTORIEL", () => {
       expect(t.posY).toBeGreaterThan(0.12); expect(t.posY).toBeLessThan(0.88);
     }
     const [a, b] = TRACES_TUTORIEL;
-    // Seuil aligné sur TOLERANCE_TRACE_POS × 2 (v3 : les traces se sont
-    // rapprochées pour laisser la place au préfill Tetris, mais restent
-    // hors de portée du disque de tolérance l'une de l'autre).
-    expect(Math.hypot(a.posX - b.posX, a.posY - b.posY)).toBeGreaterThan(0.16);
+    expect(Math.hypot(a.posX - b.posX, a.posY - b.posY)).toBeGreaterThan(0.2);
   });
 });
 
@@ -164,22 +168,137 @@ describe("COLIS_TUTORIEL_SCRIPTE", () => {
 });
 
 describe("PREFILL_COFFRE_TUTORIEL", () => {
-  it("3 objets pris dans le colis, dans les bornes, sans chevaucher les traces (bbox)", () => {
+  it("3 objets pris dans le colis, avec un prix affiché", () => {
     expect(PREFILL_COFFRE_TUTORIEL).toHaveLength(3);
     const colisIds = new Set(COLIS_TUTORIEL_SCRIPTE.map((o) => o.templateId));
     for (const p of PREFILL_COFFRE_TUTORIEL) {
       expect(colisIds.has(p.templateId), p.templateId).toBe(true);
-      expect(p.posX).toBeGreaterThan(0.1); expect(p.posX).toBeLessThan(0.9);
-      expect(p.posY).toBeGreaterThan(0.1); expect(p.posY).toBeLessThan(0.9);
       expect(p.prixVente).toBeGreaterThan(0);
     }
-    // Écart minimal entre chaque objet verrouillé et chaque trace (les
-    // formes réelles sont plus petites que ces disques — garde grossière).
-    for (const p of PREFILL_COFFRE_TUTORIEL) {
-      for (const t of TRACES_TUTORIEL) {
-        expect(Math.hypot(p.posX - t.posX, p.posY - t.posY), `${p.templateId}↔${t.templateId}`).toBeGreaterThan(0.16);
-      }
+  });
+});
+
+/*
+ * === Oracle géométrique (sharp, hors navigateur) ==========================
+ *
+ * La garde bbox/disque (ancienne version de ce fichier) comparait des
+ * disques de rayon 0.16 à des empreintes réelles bien plus grandes (un objet
+ * "S" fait ~0.333 de côté dans le coffre "rogers", cf. `getScaleCoffre("S", 9)`)
+ * et ne testait AUCUN chevauchement préfill↔préfill : elle ne pouvait pas
+ * prouver la géométrie, seulement repousser une évidence grossière — un
+ * triplet préfill entièrement hors du coffre (cas réellement rencontré en
+ * v3) passait cette garde sans broncher.
+ *
+ * Ce bloc reconstruit hors navigateur (via `sharp`) les MÊMES masques que le
+ * moteur du coffre (`src/lib/coffre.ts` + `CoffreChargement.tsx`) :
+ *   - masque alpha 48×48 de la vignette de chaque objet, en rendu "contain"
+ *     (`containRect`, importé de `coffre.ts` — pas de rotation dans le
+ *     masque : la rotation réelle s'applique séparément, via `PixelItem.rot`,
+ *     exactement comme en production) ;
+ *   - masque du contenant 256×256 depuis `rogers-mask.webp` (le camion du
+ *     tutoriel), luma > 200 = intérieur autorisé — même seuil que
+ *     `buildTrunkMask`.
+ * Puis il appelle LA MÊME fonction que la prod, `computeOverlapsPixel`, sur
+ * les 3 objets du préfill + les 2 traces : un Set vide prouve d'un coup (a)
+ * chaque objet 100% dans le coffre, (b) zéro chevauchement préfill↔préfill,
+ * (c) zéro chevauchement préfill↔traces et (d) zéro chevauchement
+ * trace↔trace — aux positions ET rotations exactes du scénario.
+ *
+ * Le coffre "rogers" (N1, 9 places) est petit : le triplet préfill est
+ * SATURÉ — il n'a quasiment aucune marge contre le bord du contenant.
+ * Toute future modification d'une position (préfill ou trace) DOIT repasser
+ * par ce test avant d'être committée — ne jamais réajuster une coordonnée
+ * "à l'œil".
+ */
+
+const MASK_SIZE = 48; // aligné sur CoffreChargement.tsx (MASK_SIZE)
+const TRUNK_SIZE = 256; // aligné sur CoffreChargement.tsx (TRUNK_MASK_SIZE)
+const PUBLIC_DIR = path.join(process.cwd(), "public");
+
+/** Reconstruit hors navigateur le masque alpha "contain" que produirait
+ *  `buildAlphaMask(src, size, 0)` (src/lib/coffre.ts) — toujours à rotation
+ *  0 : la rotation réelle est appliquée séparément via `PixelItem.rot`. */
+async function buildAlphaMaskNode(relUrl: string, size: number): Promise<Uint8Array> {
+  const img = sharp(path.join(PUBLIC_DIR, relUrl));
+  const meta = await img.metadata();
+  const { dw, dh } = containRect(meta.width ?? size, meta.height ?? size, size);
+  const rw = Math.max(1, Math.round(dw));
+  const rh = Math.max(1, Math.round(dh));
+  const resized = await img.resize(rw, rh, { fit: "fill" }).ensureAlpha().raw().toBuffer();
+  const bits = new Uint8Array(size * size);
+  const offX = Math.round((size - rw) / 2);
+  const offY = Math.round((size - rh) / 2);
+  for (let y = 0; y < rh; y++) {
+    for (let x = 0; x < rw; x++) {
+      if (resized[(y * rw + x) * 4 + 3] <= 16) continue; // même seuil que buildAlphaMask
+      const gx = x + offX;
+      const gy = y + offY;
+      if (gx < 0 || gx >= size || gy < 0 || gy >= size) continue;
+      bits[gy * size + gx] = 1;
     }
+  }
+  return bits;
+}
+
+/** Reconstruit hors navigateur le masque du contenant que produirait
+ *  `buildTrunkMask(src, size)` (zoom=1 : étirement plein cadre, sans crop —
+ *  le coffre "rogers" du tutoriel n'a pas de zoom). */
+async function buildTrunkMaskNode(relUrl: string, size: number): Promise<TrunkMask> {
+  const raw = await sharp(path.join(PUBLIC_DIR, relUrl))
+    .resize(size, size, { fit: "fill" })
+    .ensureAlpha()
+    .raw()
+    .toBuffer();
+  const bits = new Uint8Array(size * size);
+  for (let i = 0; i < size * size; i++) {
+    const r = raw[i * 4];
+    const g = raw[i * 4 + 1];
+    const b = raw[i * 4 + 2];
+    const a = raw[i * 4 + 3];
+    bits[i] = a > 32 && (r + g + b) / 3 > 200 ? 1 : 0; // même seuil que buildTrunkMask
+  }
+  return { bits, size };
+}
+
+describe("géométrie du coffre v3 — oracle pixel-perfect (sharp)", () => {
+  it("préfill + traces : 100% dans le coffre, zéro chevauchement (préfill↔préfill, préfill↔traces, trace↔trace)", async () => {
+    const camion = getCamion(1); // "Rogers" — camion du tutoriel
+    const assets = getCoffreAssets(camion.visuelId);
+    expect(assets, camion.visuelId).toBeTruthy();
+    const trunk = await buildTrunkMaskNode(assets!.mask, TRUNK_SIZE);
+
+    const objetsAVerifier = [
+      ...PREFILL_COFFRE_TUTORIEL.map((p) => ({
+        id: p.templateId, templateId: p.templateId, posX: p.posX, posY: p.posY, rotation: p.rotation,
+      })),
+      ...TRACES_TUTORIEL.map((t) => ({
+        id: `trace:${t.templateId}`, templateId: t.templateId, posX: t.posX, posY: t.posY, rotation: t.rotation,
+      })),
+    ];
+
+    const masks = new Map<string, Uint8Array>();
+    for (const o of objetsAVerifier) {
+      if (masks.has(o.templateId)) continue;
+      const url = getItemThumbUrl(o.templateId);
+      expect(url, o.templateId).toBeTruthy();
+      masks.set(o.templateId, await buildAlphaMaskNode(url!, MASK_SIZE));
+    }
+
+    const items: PixelItem[] = objetsAVerifier.map((o) => {
+      const tpl = getTemplate(o.templateId)!;
+      return {
+        id: o.id,
+        cx: o.posX,
+        cy: o.posY,
+        scale: getScaleCoffre(tailleDe(tpl), camion.capacitePlaces),
+        rot: o.rotation,
+        mask: masks.get(o.templateId)!,
+        maskSize: MASK_SIZE,
+      };
+    });
+
+    const overlaps = computeOverlapsPixel(items, trunk);
+    expect([...overlaps]).toEqual([]);
   });
 });
 
