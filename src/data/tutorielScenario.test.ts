@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { getTemplate } from "@/data/objetTemplates";
+import { getTemplate, tailleDe } from "@/data/objetTemplates";
 import { calculerPrixMinAcceptDepuisPersona } from "@/lib/personas";
+import { getClientIllustration } from "@/lib/personaIllustrations";
 import {
-  PELUCHE_TEMPLATE_ID, SESSION_TUTORIEL, TRACES_TUTORIEL,
+  acheteurDeLEtape, COLIS_TUTORIEL_SCRIPTE, PELUCHE_TEMPLATE_ID, personnageScenario,
+  PREFILL_COFFRE_TUTORIEL, PRIX_CONSEILLES_TUTORIEL, SESSION_TUTORIEL, SESSION_VENTE_TUTORIEL,
+  TOLERANCE_PRIX_CONSEILLE, TRACES_TUTORIEL,
 } from "./tutorielScenario";
 import {
   deckVerrouille, donCollectionPermis, indexObjetScenario,
@@ -60,8 +63,8 @@ describe("SESSION_TUTORIEL", () => {
 });
 
 describe("TRACES_TUTORIEL", () => {
-  it("vise la manette (droite) puis la carafe (pivotée)", () => {
-    expect(TRACES_TUTORIEL[0]).toMatchObject({ templateId: "jx.manette_vibraduo", rotation: 0 });
+  it("vise la manette (pivotée, démo du grand-père) puis la carafe (remontée)", () => {
+    expect(TRACES_TUTORIEL[0]).toMatchObject({ templateId: "jx.manette_vibraduo", rotation: 25 });
     expect(TRACES_TUTORIEL[1].templateId).toBe("ma.carafe_cristal_taille");
     expect(TRACES_TUTORIEL[1].rotation).toBeGreaterThanOrEqual(30);
   });
@@ -71,7 +74,10 @@ describe("TRACES_TUTORIEL", () => {
       expect(t.posY).toBeGreaterThan(0.12); expect(t.posY).toBeLessThan(0.88);
     }
     const [a, b] = TRACES_TUTORIEL;
-    expect(Math.hypot(a.posX - b.posX, a.posY - b.posY)).toBeGreaterThan(0.2);
+    // Seuil aligné sur TOLERANCE_TRACE_POS × 2 (v3 : les traces se sont
+    // rapprochées pour laisser la place au préfill Tetris, mais restent
+    // hors de portée du disque de tolérance l'une de l'autre).
+    expect(Math.hypot(a.posX - b.posX, a.posY - b.posY)).toBeGreaterThan(0.16);
   });
 });
 
@@ -138,5 +144,114 @@ describe("garanties de négo du scénario", () => {
     expect(s.bornesOffre!.min).toBeGreaterThanOrEqual(
       it.prixVendeur * (1 - s.persona.tolerancePct),
     );
+  });
+});
+
+describe("COLIS_TUTORIEL_SCRIPTE", () => {
+  it("5 objets connus, illustrés, petits, 4 communs + 1 rare en dernier", () => {
+    expect(COLIS_TUTORIEL_SCRIPTE).toHaveLength(5);
+    const dejaVus = new Set([...SESSION_TUTORIEL.map((s) => s.templateId), PELUCHE_TEMPLATE_ID]);
+    for (const o of COLIS_TUTORIEL_SCRIPTE) {
+      const t = getTemplate(o.templateId);
+      expect(t, o.templateId).toBeDefined();
+      expect(ITEMS_WITH_IMAGE.has(o.templateId), o.templateId).toBe(true);
+      expect(["XS", "S", "M"], o.templateId).toContain(tailleDe(t!));
+      expect(dejaVus.has(o.templateId), o.templateId).toBe(false);
+    }
+    expect(COLIS_TUTORIEL_SCRIPTE.slice(0, 4).every((o) => getTemplate(o.templateId)!.rarete === "commun")).toBe(true);
+    expect(getTemplate(COLIS_TUTORIEL_SCRIPTE[4].templateId)!.rarete).toBe("rare");
+  });
+});
+
+describe("PREFILL_COFFRE_TUTORIEL", () => {
+  it("3 objets pris dans le colis, dans les bornes, sans chevaucher les traces (bbox)", () => {
+    expect(PREFILL_COFFRE_TUTORIEL).toHaveLength(3);
+    const colisIds = new Set(COLIS_TUTORIEL_SCRIPTE.map((o) => o.templateId));
+    for (const p of PREFILL_COFFRE_TUTORIEL) {
+      expect(colisIds.has(p.templateId), p.templateId).toBe(true);
+      expect(p.posX).toBeGreaterThan(0.1); expect(p.posX).toBeLessThan(0.9);
+      expect(p.posY).toBeGreaterThan(0.1); expect(p.posY).toBeLessThan(0.9);
+      expect(p.prixVente).toBeGreaterThan(0);
+    }
+    // Écart minimal entre chaque objet verrouillé et chaque trace (les
+    // formes réelles sont plus petites que ces disques — garde grossière).
+    for (const p of PREFILL_COFFRE_TUTORIEL) {
+      for (const t of TRACES_TUTORIEL) {
+        expect(Math.hypot(p.posX - t.posX, p.posY - t.posY), `${p.templateId}↔${t.templateId}`).toBeGreaterThan(0.16);
+      }
+    }
+  });
+});
+
+describe("traces v3", () => {
+  it("manette pivotée (démo), carafe remontée", () => {
+    expect(TRACES_TUTORIEL[0].rotation).toBeGreaterThanOrEqual(20);
+    expect(TRACES_TUTORIEL[1].posY).toBeLessThanOrEqual(0.45);
+  });
+});
+
+describe("PRIX_CONSEILLES_TUTORIEL", () => {
+  it("couvre manette et carafe, dans l'échelle du PrixSlider (1..2×réf)", () => {
+    const manette = getTemplate("jx.manette_vibraduo")!;
+    const carafe = getTemplate("ma.carafe_cristal_taille")!;
+    // états scriptés du chinage : manette Très bon (réf 18), carafe Bon (réf 21)
+    expect(PRIX_CONSEILLES_TUTORIEL["jx.manette_vibraduo"]).toBeLessThanOrEqual(18 * 2);
+    expect(PRIX_CONSEILLES_TUTORIEL["ma.carafe_cristal_taille"]).toBeLessThanOrEqual(21 * 2);
+    expect(TOLERANCE_PRIX_CONSEILLE).toBeGreaterThan(0);
+    void manette; void carafe;
+  });
+});
+
+describe("SESSION_VENTE_TUTORIEL — garanties", () => {
+  it("3 acheteurs résolus (personnage nommé + portrait) visant des objets du coffre", () => {
+    expect(SESSION_VENTE_TUTORIEL).toHaveLength(3);
+    for (const a of SESSION_VENTE_TUTORIEL) {
+      const p = personnageScenario(a);
+      expect(getClientIllustration(p.id), p.nom).toBeDefined();
+      expect(["jx.manette_vibraduo", "ma.carafe_cristal_taille"]).toContain(a.templateIdCible);
+    }
+    expect(SESSION_VENTE_TUTORIEL.map((a) => a.mode)).toEqual(["negociation", "achat-direct", "negociation"]);
+  });
+  it("acheteurDeLEtape mappe les 3 étapes de vente", () => {
+    expect(acheteurDeLEtape("vente-refus")).toBe(SESSION_VENTE_TUTORIEL[0]);
+    expect(acheteurDeLEtape("vente-directe")).toBe(SESSION_VENTE_TUTORIEL[1]);
+    expect(acheteurDeLEtape("vente-nego")).toBe(SESSION_VENTE_TUTORIEL[2]);
+    expect(acheteurDeLEtape("conclusion")).toBeNull();
+  });
+  it("radin : AUCUNE offre bornée ne peut conclure ni insulter", () => {
+    const a = SESSION_VENTE_TUTORIEL[0];
+    // borne min > prixMax → jamais d'accord (offreRejoint vente : offre ≤ prixAdverse ≤ prixMax)
+    expect(a.bornesOffre!.min).toBeGreaterThan(a.prixMax);
+    // pire cas d'insulte : prixAdverse au plus bas (tour 1 = offreInitiale)
+    expect(a.bornesOffre!.max).toBeLessThanOrEqual(a.offreInitiale! * (1 + a.persona.tolerancePct));
+    // déroulé complet : quelle que soit l'offre constante, fin en refus_poli (patience), jamais conclu/fache
+    for (let offre = a.bornesOffre!.min; offre <= a.bornesOffre!.max; offre++) {
+      let nego = ouvrirNegociation("vente", a.offreInitiale!, a.prixMax);
+      let tours = 0;
+      while (nego.statut === "en_cours" && tours < 12) {
+        nego = proposerOffre(nego, a.persona, offre, ALEA_NEGO_SCRIPTEE);
+        tours++;
+      }
+      expect(nego.statut, `offre ${offre}`).toBe("refus_poli");
+    }
+  });
+  it("négociatrice : la stratégie borne MAX (la plus lente) conclut dans la patience", () => {
+    const a = SESSION_VENTE_TUTORIEL[2];
+    expect(a.prixMax).toBeGreaterThanOrEqual(a.bornesOffre!.max); // alignement toujours atteignable
+    let nego = ouvrirNegociation("vente", a.offreInitiale!, a.prixMax);
+    let tours = 0;
+    while (nego.statut === "en_cours" && tours < 10) {
+      nego = proposerOffre(nego, a.persona, a.bornesOffre!.max, ALEA_NEGO_SCRIPTEE);
+      tours++;
+      expect(["en_cours", "conclu"], `tour ${tours}`).toContain(nego.statut);
+    }
+    expect(nego.statut).toBe("conclu");
+    expect(tours).toBeLessThanOrEqual(a.persona.patience);
+    // et jamais d'insulte sur la plage au prix adverse le plus bas
+    expect(a.bornesOffre!.max).toBeLessThanOrEqual(a.offreInitiale! * (1 + a.persona.tolerancePct));
+  });
+  it("cohérence prix : l'ami paie le prix conseillé de la manette, le radin ne peut pas payer la carafe", () => {
+    expect(SESSION_VENTE_TUTORIEL[1].prixMax).toBeGreaterThanOrEqual(PRIX_CONSEILLES_TUTORIEL["jx.manette_vibraduo"]);
+    expect(SESSION_VENTE_TUTORIEL[0].prixMax).toBeLessThan(PRIX_CONSEILLES_TUTORIEL["ma.carafe_cristal_taille"]);
   });
 });
