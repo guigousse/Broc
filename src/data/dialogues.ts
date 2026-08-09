@@ -183,13 +183,6 @@ export const SEQUENCES_TUTORIEL: Record<string, DialogueSequence> = {
       { humeur: "souriant", texte: "Referme l'étal quand tu veux, et rentrons. J'ai encore deux mots à te dire à la maison." },
     ],
   },
-  tuto_vente_faite: {
-    id: "tuto_vente_faite",
-    lignes: [
-      { humeur: "rieur", texte: "Et voilà ta première vente ! Le tiroir-caisse qui chante, ça ne s'oublie jamais." },
-      { humeur: "souriant", texte: "Referme l'étal quand tu veux, et rentrons. J'ai quelque chose pour toi à la maison." },
-    ],
-  },
   tuto_conclusion: {
     id: "tuto_conclusion",
     lignes: [

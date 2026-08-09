@@ -96,10 +96,6 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "Your first real sales negotiation. You held firm — there's not much left for me to teach you.",
     "Close the stall whenever you like, and let's head home. I've a couple more words for you at the house.",
   ],
-  tuto_vente_faite: [
-    "And there's your first sale! The song of the till — you never forget it.",
-    "Close the stall whenever you like, and let's go home. I have something for you at the house.",
-  ],
   tuto_conclusion: [
     "You have the eye, and the hands… all you're missing is the years. The shop is in good hands.",
     "Here: my order book. People write down what they're looking for. Go on, open it — I've something to put in it, as it happens.",

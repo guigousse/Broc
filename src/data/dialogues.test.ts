@@ -40,7 +40,7 @@ describe("dialogues (données FR)", () => {
       "tuto_vente_refus_avant", "tuto_vente_refus_apres",
       "tuto_vente_directe_avant", "tuto_vente_directe_apres",
       "tuto_vente_nego_avant", "tuto_vente_nego_apres",
-      "tuto_vente_faite", "tuto_conclusion",
+      "tuto_conclusion",
     ];
     for (const id of attendues) {
       expect(SEQUENCES_TUTORIEL[id]?.id).toBe(id);
