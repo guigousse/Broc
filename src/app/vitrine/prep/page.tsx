@@ -13,13 +13,22 @@ import { aConnaisseurVitrine } from "@/lib/competences";
 import { prixSuggere } from "@/lib/prixSuggere";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { traceAPoser, estSurTrace, tracesToutesPosees } from "@/lib/coffreTuto";
-import { PREFILL_COFFRE_TUTORIEL, TRACES_TUTORIEL } from "@/data/tutorielScenario";
+import {
+  PREFILL_COFFRE_TUTORIEL,
+  PRIX_CONSEILLES_TUTORIEL,
+  TRACES_TUTORIEL,
+} from "@/data/tutorielScenario";
 import { tutorielActif } from "@/lib/tutoriel";
 import { audioManager } from "@/lib/audio/audioManager";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 // Prix par défaut = prix du marché (curseur de tarification centré sur la valeur).
 const SUGGESTION_FACTEUR = 1;
+
+// Coffre à traces (tutoriel v3) : la manette (trace 0) n'est plus posée par
+// le joueur — démo du grand-père, Task 8. Alias vers `TRACES_TUTORIEL[0]`
+// plutôt qu'une chaîne recopiée, pour rester synchronisé avec la source.
+const MANETTE_TEMPLATE_ID = TRACES_TUTORIEL[0].templateId;
 
 /**
  * Préparation du coffre AVANT le choix de la brocante : packing puis pricing.
@@ -138,17 +147,60 @@ export default function VitrinePrepPage() {
     );
   }, [state, coffre]);
 
-  // Coffre Tetris (tutoriel v3) : pendant les leçons de trace, seuls les
-  // deux objets de la leçon en cours (manette puis carafe) sont ajoutables
-  // depuis le carrousel — le reste du stock (rare, colis restant…) reste
-  // visible mais inerte tant que la leçon n'est pas terminée. `null` hors
-  // ces deux étapes = tout redevient ajoutable.
+  // Coffre Tetris (tutoriel v3) : pendant les leçons de trace, seul l'objet
+  // encore posé À LA MAIN (la carafe) reste ajoutable depuis le carrousel —
+  // le reste du stock (rare, colis restant…) reste visible mais inerte tant
+  // que la leçon n'est pas terminée. `null` hors ces deux étapes = tout
+  // redevient ajoutable.
+  //
+  // La manette (trace 0) est délibérément EXCLUE, même à `coffre-trace-un` :
+  // depuis Task 8 elle n'est plus posée par le joueur mais par la démo du
+  // grand-père (`DemoDepotManette`) — la laisser tapable/glissable depuis le
+  // carrousel ouvrirait une fenêtre de course (tap avant que le voile
+  // plein écran de la démo n'ait fini de se monter) où le joueur pourrait
+  // la déposer lui-même, au mauvais prix/à la mauvaise position, et sans
+  // jamais faire avancer l'étape (verifierTrace ne le fait plus non plus).
   const ajoutsAutorisesTemplateIds = useMemo(() => {
     if (tutorielEtape !== "coffre-trace-un" && tutorielEtape !== "coffre-trace-deux") {
       return null;
     }
-    return new Set(TRACES_TUTORIEL.map((t) => t.templateId));
+    return new Set(
+      TRACES_TUTORIEL.filter((t) => t.templateId !== MANETTE_TEMPLATE_ID).map(
+        (t) => t.templateId,
+      ),
+    );
   }, [tutorielEtape]);
+
+  // Coffre à traces (tutoriel v3) : la démo du grand-père se monte tant que
+  // l'étape est `coffre-trace-un` ET que la manette est encore en stock
+  // (pas encore posée) — garde de re-jeu après un kill/remontage en plein
+  // milieu de la démo : la manette n'a alors jamais quitté l'inventaire
+  // (le dépôt réel ne se joue qu'à la toute fin, dans `onTerminee`), donc la
+  // démo se remonte et rejoue depuis le début.
+  const manetteEnStock = useMemo(
+    () => !!state?.inventaireJoueur.some((o) => o.templateId === MANETTE_TEMPLATE_ID),
+    [state],
+  );
+  const demoManette = useMemo(() => {
+    if (!state || tutorielEtape !== "coffre-trace-un" || !manetteEnStock) return null;
+    return {
+      onTerminee: () => {
+        const manette = state.inventaireJoueur.find(
+          (o) => o.templateId === MANETTE_TEMPLATE_ID,
+        );
+        if (manette) {
+          mettreEnVitrine(
+            manette.id,
+            PRIX_CONSEILLES_TUTORIEL[MANETTE_TEMPLATE_ID],
+            TRACES_TUTORIEL[0].posX,
+            TRACES_TUTORIEL[0].posY,
+            TRACES_TUTORIEL[0].rotation,
+          );
+        }
+        avancerTutoriel("coffre-trace-deux");
+      },
+    };
+  }, [state, tutorielEtape, manetteEnStock, mettreEnVitrine, avancerTutoriel]);
 
   const categoriesConnuesVitrine = useMemo(() => {
     const s = new Set<CategorieObjet>();
@@ -197,6 +249,12 @@ export default function VitrinePrepPage() {
    * (le canvas commet des onMove/onRotate en continu pendant tout le
    * geste) ; le latch est levé dès que l'objet sort du disque OU que la
    * trace affichée change de templateId, pour rester réarmable.
+   *
+   * `coffre-trace-un` (la manette) n'avance plus JAMAIS depuis ici : elle
+   * n'est plus posée par le joueur (démo du grand-père, Task 8) — seul
+   * `coffre-trace-deux` (la carafe) continue de faire avancer l'étape par ce
+   * chemin. La branche qui avançait encore `coffre-trace-un` a été retirée,
+   * de toute façon inatteignable désormais.
    */
   const verifierTrace = (
     objetId: string,
@@ -222,9 +280,6 @@ export default function VitrinePrepPage() {
       ajusterPositionVitrine(objetId, trace.posX, trace.posY, trace.rotation);
       void audioManager.playCoffreOuvre();
       derniereTraceValideeRef.current = { objetId, templateId: trace.templateId };
-      if (state.tutorielEtape === "coffre-trace-un") {
-        avancerTutoriel("coffre-trace-deux");
-      }
     }
     return true;
   };
@@ -307,9 +362,17 @@ export default function VitrinePrepPage() {
             }
             trace={trace}
             validerBloque={validerBloque}
-            mainTemplateId={trace?.templateId ?? null}
+            // Pendant `coffre-trace-un`, la manette n'est plus posée par le
+            // joueur (démo du grand-père) : jamais de main pointant le
+            // carrousel à cette étape, même si `trace` y désigne encore la
+            // manette — un second appel du regard (la démo ET la main)
+            // brouillerait la leçon.
+            mainTemplateId={
+              tutorielEtape === "coffre-trace-un" ? null : trace?.templateId ?? null
+            }
             verrouillesIds={verrouillesIds}
             ajoutsAutorisesTemplateIds={ajoutsAutorisesTemplateIds}
+            demoManette={demoManette}
             rotationHint={
               state.tutorielEtape === "coffre-trace-deux" &&
               validerBloque &&

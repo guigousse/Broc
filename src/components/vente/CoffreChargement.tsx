@@ -37,6 +37,7 @@ import { RotationHint } from "./RotationHint";
 import { BoutonConcession } from "./BoutonConcession";
 import { ConcessionSheet } from "./ConcessionSheet";
 import { CarrouselStock } from "./CarrouselStock";
+import { DemoDepotManette, type RectDemoCible, type RectDemoDepart } from "./DemoDepotManette";
 import { DevPanel } from "./DevPanel";
 import { OUTILS_DEV } from "@/lib/outilsDev";
 
@@ -107,6 +108,12 @@ interface Props {
   /** Tutoriel — coffre Tetris (préfill) : ids d'objets verrouillés, passés
    *  tel quel à `CoffreCanvas` (pas de drag, pas de rotation, pas de retrait). */
   verrouillesIds?: ReadonlySet<string>;
+  /** Tutoriel — démo du grand-père (`coffre-trace-un`) : quand non-null, la
+   *  manette de `trace` n'est plus posée par le joueur — un clone anime
+   *  seul le dépôt + la rotation, puis appelle `onTerminee` (dépôt réel côté
+   *  appelant). Rects de départ/arrivée mesurés ici ; fail-open (élément
+   *  introuvable) → `onTerminee` appelé immédiatement, sans rendre la démo. */
+  demoManette?: { onTerminee: () => void } | null;
   /** Tutoriel — coffre Tetris (préfill) : gate les ajouts depuis le
    *  carrousel (tap ET drag) aux seuls templateId de l'ensemble ; `null`/
    *  absent = tout le stock reste ajoutable (comportement hors tutoriel). */
@@ -220,6 +227,80 @@ export function CoffreChargement(p: Props) {
   const conteneurCoffreRef = useRef<HTMLDivElement | null>(null);
   const [dragObjet, setDragObjet] = useState<{ id: string; x: number; y: number } | null>(null);
   const dragIdRef = useRef<string | null>(null);
+
+  // Tutoriel — démo du grand-père (coffre-trace-un) : mesure des rects de
+  // départ (vignette du carrousel) et d'arrivée (silhouette de la trace)
+  // UNE SEULE FOIS par apparition de `p.demoManette` (le parent recrée
+  // l'objet à chaque render — `demoDejaMesureRef` évite de re-mesurer et
+  // d'appeler `onTerminee` en boucle). `demoOnTermineeRef` porte toujours la
+  // version la plus fraîche du callback, lue par l'enfant au moment où il se
+  // déclenche réellement — jamais une closure périmée capturée à la mesure.
+  const demoDejaMesureRef = useRef(false);
+  const demoOnTermineeRef = useRef<(() => void) | null>(null);
+  const [demoRects, setDemoRects] = useState<{
+    departRect: RectDemoDepart;
+    cibleRect: RectDemoCible;
+    imageSrc: string;
+  } | null>(null);
+
+  useEffect(() => {
+    demoOnTermineeRef.current = p.demoManette?.onTerminee ?? null;
+  }, [p.demoManette]);
+
+  useEffect(() => {
+    if (!p.demoManette) {
+      demoDejaMesureRef.current = false;
+      setDemoRects(null);
+      return;
+    }
+    if (demoDejaMesureRef.current) return;
+    demoDejaMesureRef.current = true;
+
+    const trace = p.trace;
+    const tpl = trace ? getTemplate(trace.templateId) : undefined;
+    const imageSrc = trace ? getItemThumbUrl(trace.templateId) : null;
+    const departEl = trace
+      ? document.querySelector<HTMLElement>(
+          `[data-carrousel-template="${trace.templateId}"]`,
+        )
+      : null;
+    const departBox = departEl?.getBoundingClientRect();
+    const conteneurBox = conteneurCoffreRef.current?.getBoundingClientRect();
+
+    // Fail-open : trace/gabarit/image absents ou l'un des deux rects
+    // introuvable (élément pas encore monté, coffre vide…) → le dépôt réel
+    // se joue quand même, immédiatement, sans jamais bloquer le tutoriel
+    // sur un calcul manquant.
+    if (!trace || !tpl || !imageSrc || !departBox || !conteneurBox) {
+      p.demoManette.onTerminee();
+      return;
+    }
+
+    const sizePx = getScaleCoffre(tailleDe(tpl), camion.capacitePlaces) * conteneurBox.width;
+    setDemoRects({
+      departRect: {
+        x: departBox.left,
+        y: departBox.top,
+        w: departBox.width,
+        h: departBox.height,
+      },
+      cibleRect: {
+        x: conteneurBox.left + trace.posX * conteneurBox.width - sizePx / 2,
+        y:
+          conteneurBox.top +
+          trace.posY * (conteneurBox.width / camion.aspectRatio) -
+          sizePx / 2,
+        w: sizePx,
+        h: sizePx,
+        rotation: trace.rotation,
+      },
+      imageSrc,
+    });
+  }, [p.demoManette, p.trace, camion.aspectRatio, camion.capacitePlaces]);
+
+  const demoOnTerminee = useCallback(() => {
+    demoOnTermineeRef.current?.();
+  }, []);
 
   /** Tutoriel — coffre Tetris (préfill) : le templateId de l'objet visé
    *  est-il dans l'ensemble autorisé ? `null`/absent = tout autorisé. */
@@ -476,6 +557,18 @@ export function CoffreChargement(p: Props) {
         mainTemplateId={p.mainTemplateId ?? null}
         templateIdsAutorises={p.ajoutsAutorisesTemplateIds ?? null}
       />
+      {/* Démo du grand-père (coffre-trace-un) : ne rend rien tant que les
+          deux rects n'ont pas été mesurés avec succès (sinon fail-open déjà
+          déclenché ci-dessus, sans rendu). */}
+      {demoRects && (
+        <DemoDepotManette
+          actif
+          onTerminee={demoOnTerminee}
+          departRect={demoRects.departRect}
+          cibleRect={demoRects.cibleRect}
+          imageSrc={demoRects.imageSrc}
+        />
+      )}
       {/* Fantôme de drag : l'objet suit le doigt, à la taille qu'il aura
           dans le coffre. */}
       {dragObjet &&

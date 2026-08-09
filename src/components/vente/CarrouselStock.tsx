@@ -85,6 +85,10 @@ export function CarrouselStock({
         return (
           <div
             key={o.id}
+            // Mesure du rect de départ par la démo du grand-père
+            // (DemoDepotManette, coffre-trace-un) : `querySelector` sur le
+            // templateId visé plutôt qu'un ref par item (liste dynamique).
+            data-carrousel-template={o.templateId}
             className={
               (mainTemplateId ? o.templateId === mainTemplateId : tutoMain && i === 0)
                 ? "tuto-main tuto-main-droite"

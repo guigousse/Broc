@@ -1676,6 +1676,36 @@ nav[aria-label="Navigation principale"] :focus-visible,
 .broc-rotation-hint-main2 {
   animation: broc-rotation-hint-main2 3.2s ease-in-out infinite;
 }
+/* Démo du grand-père (dépôt + rotation de la manette, coffre-trace-un) :
+   fondu des deux mains piloté par classe (pas par transition inline) — la
+   durée réelle est fixée en style inline (`animationDuration`), ces règles
+   ne portent que la forme (nom/timing/tenue de la valeur finale). */
+@keyframes broc-demo-main-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes broc-demo-main-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.broc-demo-main-in {
+  animation-name: broc-demo-main-in;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+.broc-demo-main-out {
+  animation-name: broc-demo-main-out;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
 @media (prefers-reduced-motion: reduce) {
   .tuto-pulse {
     animation: none;
@@ -1700,6 +1730,15 @@ nav[aria-label="Navigation principale"] :focus-visible,
        (main B visible par défaut sans l'animation qui la faisait apparaître
        en fondu ; le groupe reste à sa position de repos, non pivoté). */
     animation: none;
+  }
+  /* Filet CSS pur : le composant lui-même prend déjà une branche statique
+     dédiée (`prefersReducedMotion()`, aucune classe posée) — cette règle
+     neutralise seulement le cas où ces classes seraient malgré tout
+     appliquées (ex. régression future), en tenant la valeur finale. */
+  .broc-demo-main-in,
+  .broc-demo-main-out {
+    animation: none;
+    opacity: 1;
   }
 }
 
