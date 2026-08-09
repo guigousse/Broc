@@ -34,7 +34,7 @@ describe("dialogues (données FR)", () => {
       "tuto_nego_un_avant", "tuto_nego_un_apres",
       "tuto_nego_deux_avant", "tuto_nego_deux_apres",
       "tuto_chine_sortir", "tuto_retour",
-      "tuto_peluche_collection", "tuto_collection_lecon", "tuto_colis_cadeau",
+      "tuto_peluche_collection", "tuto_collection_lecon", "tuto_colis_avant",
       "tuto_vente_entree", "tuto_vente_faite", "tuto_conclusion",
     ];
     for (const id of attendues) {

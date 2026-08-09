@@ -62,9 +62,9 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Y mira: el Mercadillo del domingo ya te abre sus puertas. ¡Empiezan a hablar de ti, chaval!",
     "Ahora, la venta. Vuelve al despacho — la puerta nos espera.",
   ],
-  tuto_colis_cadeau: [
-    "Una última cosa. Este paquete es de mi parte: algunas piezas de la tienda para que empieces.",
-    "Tienes el ojo, tienes la mano… el resto vendrá solo. Ábrelo, ¡y a trabajar!",
+  tuto_colis_avant: [
+    "Antes de ir a vender, toma: un paquete de mi parte. Algunas piezas de la tienda para llenar tu primer puesto.",
+    "Ábrelo — te espera junto a la puerta.",
   ],
   tuto_vente_entree: [
     "Los clientes vendrán. Escúchalos, déjalos hablar… y nunca bajes tu precio demasiado rápido.",

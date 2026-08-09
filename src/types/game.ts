@@ -300,9 +300,11 @@ export interface LedgerEntry {
  * preparer-etal → coffre-trace-un → coffre-trace-deux → vente-refus →
  * vente-directe → vente-nego → conclusion → termine. "termine" = tutoriel
  * fini ou sauté (état des saves antérieures à v12) ; le colis du
- * grand-père est désormais ouvert PENDANT ce flux (ouvrir-colis), pas en
- * post-tutoriel comme avant v3 (cf. `colisEnAttente` dans lib/tutoriel,
- * qui reste utile aux vieilles saves migrées).
+ * grand-père est ouvert PENDANT ce flux (ouvrir-colis) — contenu scripté
+ * fixe (`COLIS_TUTORIEL_SCRIPTE`). Le bouton « Passer » (qui saute
+ * directement à "termine") en re-livre le reliquat dans
+ * `appliquerFinTutoriel` (lib/tutoriel), fail-open pour ne perdre aucun
+ * objet.
  */
 export type TutorielEtape =
   | "accueil"

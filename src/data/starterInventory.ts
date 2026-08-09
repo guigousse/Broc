@@ -1,5 +1,6 @@
 import type { EtatObjet, Objet } from "@/types/game";
-import { OBJET_TEMPLATES, type ObjetTemplate } from "@/data/objetTemplates";
+import { OBJET_TEMPLATES, getTemplate, type ObjetTemplate } from "@/data/objetTemplates";
+import { COLIS_TUTORIEL_SCRIPTE } from "@/data/tutorielScenario";
 
 const ETATS_STARTER: readonly EtatObjet[] = ["Mauvais", "Bon", "Très bon"];
 const FACTEUR_ETAT: Record<EtatObjet, number> = {
@@ -33,20 +34,36 @@ function instancier(template: ObjetTemplate): Objet {
 export const COLIS_TUTORIEL_TAILLE = 5;
 
 /**
- * i-ème objet du colis du tutoriel (0-based) : mêmes tirages que le stock
- * initial historique — 4 communs puis 1 rare, le rare en DERNIER (final de
- * cérémonie). Évite les doublons avec les templates déjà possédés quand le
- * pool le permet.
+ * i-ème objet du colis du tutoriel (0-based) : contenu FIXE (brocante
+ * scriptée, cf. `COLIS_TUTORIEL_SCRIPTE`) — mêmes objets, mêmes états pour
+ * tous les joueurs. `index` hors bornes retombe sur le dernier objet du
+ * colis (fail-open). Le 2ᵉ paramètre (anti-doublon face au stock déjà
+ * possédé) est devenu inutile avec un contenu scripté — conservé (préfixé
+ * `_`) pour compat de signature avec les appelants existants.
  */
 export function objetColisTutoriel(
   index: number,
-  templateIdsPossedes: readonly string[] = [],
+  _templateIdsPossedes: readonly string[] = [],
 ): Objet {
-  const rarete = index >= COLIS_TUTORIEL_TAILLE - 1 ? "rare" : "commun";
-  const pool = OBJET_TEMPLATES.filter((t) => t.rarete === rarete);
-  const possedes = new Set(templateIdsPossedes);
-  const dispo = pool.filter((t) => !possedes.has(t.templateId));
-  return instancier(pickRandom(dispo.length > 0 ? dispo : pool));
+  const i = Math.min(Math.max(index, 0), COLIS_TUTORIEL_SCRIPTE.length - 1);
+  const scripte = COLIS_TUTORIEL_SCRIPTE[i];
+  const template = getTemplate(scripte.templateId);
+  if (!template) {
+    throw new Error(`[starterInventory] template inconnu : ${scripte.templateId}`);
+  }
+  const etat = scripte.etat;
+  return {
+    id: crypto.randomUUID(),
+    templateId: template.templateId,
+    nom: template.nom,
+    categorie: template.categorie,
+    rarete: template.rarete,
+    etat,
+    prixReferenceReel: Math.max(
+      1,
+      Math.round(template.prixRefBase * FACTEUR_ETAT[etat]),
+    ),
+  };
 }
 
 /**

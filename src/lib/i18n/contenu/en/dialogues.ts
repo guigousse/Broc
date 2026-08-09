@@ -62,9 +62,9 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "And look: the Sunday flea market is already opening its doors to you. People are starting to talk, kid!",
     "Now, selling. Back to the office — the door awaits.",
   ],
-  tuto_colis_cadeau: [
-    "One last thing. This parcel is from me: a few pieces from the shop to get you started.",
-    "You have the eye, you have the hands… the rest will come. Open it, and to work!",
+  tuto_colis_avant: [
+    "Before we go selling — here: a parcel from me. A few pieces from the shop to fill your first stall.",
+    "Open it — it's waiting by the door.",
   ],
   tuto_vente_entree: [
     "The customers will come. Listen to them, let them talk… and never drop your price too fast.",

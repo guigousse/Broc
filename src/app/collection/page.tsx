@@ -209,7 +209,7 @@ export default function CollectionPage() {
         sequence={SEQUENCES_TUTORIEL.tuto_collection_lecon}
         nom={nomExpediteur("grand-pere", locale)}
         portraits={GRAND_PERE_PORTRAITS}
-        onFini={() => avancerTutoriel("preparer-etal")}
+        onFini={() => avancerTutoriel("ouvrir-colis")}
       />
     )}
     <CollectionDetailOverlay

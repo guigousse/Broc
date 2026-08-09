@@ -119,11 +119,11 @@ export const SEQUENCES_TUTORIEL: Record<string, DialogueSequence> = {
       { humeur: "songeur", texte: "Maintenant, la vente. Retourne au bureau — la porte nous attend." },
     ],
   },
-  tuto_colis_cadeau: {
-    id: "tuto_colis_cadeau",
+  tuto_colis_avant: {
+    id: "tuto_colis_avant",
     lignes: [
-      { humeur: "emu", texte: "Une dernière chose. Ce colis, c'est de ma part : quelques pièces de la boutique pour te lancer." },
-      { humeur: "souriant", texte: "Tu as l'œil, tu as la main… le reste viendra tout seul. Ouvre-le, et au travail !" },
+      { humeur: "emu", texte: "Avant d'aller vendre, tiens : un colis de ma part. Quelques pièces de la boutique pour garnir ton premier étal." },
+      { humeur: "souriant", texte: "Ouvre-le — il t'attend devant la porte." },
     ],
   },
   tuto_vente_entree: {

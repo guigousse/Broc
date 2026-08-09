@@ -83,7 +83,6 @@ import { nomExpediteur } from "@/lib/i18n/contenu";
 import {
   tutorielActif,
   chapitreDuCarnetDu,
-  colisEnAttente,
   doigtSwipeVersCarnet,
   portePulse,
 } from "@/lib/tutoriel";
@@ -178,16 +177,12 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // vide se poser. Stocké à part de `dialogueQg` pour que le minuteur vive
   // dans son propre effet — cf. les deux effets plus bas.
   const [chapitreEnAttente, setChapitreEnAttente] = useState<DialogueSequence | null>(null);
-  // Cérémonie du colis du tutoriel (post-tutoriel, cf. colisEnAttente) :
-  // objet en cours de révélation + son rang (1-based). null = overlay fermé.
+  // Cérémonie du colis du tutoriel (étape "ouvrir-colis") : objet en cours
+  // de révélation + son rang (1-based). null = overlay fermé.
   const [objetColis, setObjetColis] = useState<Objet | null>(null);
   const [numeroColis, setNumeroColis] = useState(0);
   // Cadeau d'anniversaire (11 juin) : objet en cours de révélation + son année.
   const [objetCadeau, setObjetCadeau] = useState<{ objet: Objet; annee: number } | null>(null);
-  // Cérémonie du colis en cours de lancement (dialogue tuto_colis_cadeau
-  // joué avant l'ouverture du premier objet) — cf. onTap du QgColis plus bas
-  // et le onFini du DialogueOverlay qui ouvre le premier objet à sa clôture.
-  const [colisCadeauEnCours, setColisCadeauEnCours] = useState(false);
 
   // Index de la zone la plus proche (0..2), émis à chaque rAF de scroll.
   const zoneIdxRef = useRef(UNIFIED_ZONE_ORDER.indexOf("porte"));
@@ -443,7 +438,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     else if (etape === "chine-sortir") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_retour);
     else if (etape === "collection-envoyer") {
       jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_peluche_collection);
-    } else if (etape === "conclusion") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
+    } else if (etape === "ouvrir-colis") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_colis_avant);
+    else if (etape === "conclusion") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
   }, [etape, dialogueQg, jouerDialogueQg]);
 
   // Fin du tutoriel : la main a guidé jusqu'au carnet. Son ouverture clôt le
@@ -601,22 +597,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                     }}
                   />
                 )}
-                {colisEnAttente(state) && !dialogueQg && (
+                {etape === "ouvrir-colis" && (
                   <QgColis
                     onTap={() => {
                       playClick();
-                      // Premier tap (aucun objet encore retiré) : le grand-père
-                      // présente le colis avant qu'on l'ouvre — une seule fois,
-                      // le garde du ref empêche toute relecture au même montage.
-                      if (
-                        (state?.colisTutorielLivres ?? 0) === 0 &&
-                        !dialoguesQgJouesRef.current.has("tuto_colis_cadeau")
-                      ) {
-                        dialoguesQgJouesRef.current.add("tuto_colis_cadeau");
-                        setColisCadeauEnCours(true);
-                        setDialogueQg(SEQUENCES_TUTORIEL.tuto_colis_cadeau);
-                        return;
-                      }
                       const premier = ouvrirObjetColis();
                       if (premier) {
                         setNumeroColis((state?.colisTutorielLivres ?? 0) + 1);
@@ -945,6 +929,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             setObjetColis(suivant);
           } else {
             setObjetColis(null);
+            if (etape === "ouvrir-colis") avancerTutoriel("preparer-etal");
           }
         }}
       />
@@ -981,15 +966,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         nom={nomExpediteur("grand-pere", locale)}
         portraits={GRAND_PERE_PORTRAITS}
         onFini={() => {
-          // Capturé avant `setDialogueQg(null)` : un dialogue de chapitre
-          // différé peut avoir remplacé `tuto_colis_cadeau` pendant que
-          // `colisCadeauEnCours` était encore armé (branche `dialogueChapitreId`
-          // ci-dessous prioritaire) — sans ce contrôle sur l'id réellement
-          // joué, le flag resterait vrai et une clôture ULTÉRIEURE d'un
-          // dialogue sans rapport rouvrirait le colis par erreur.
-          const idDialogueJoue = dialogueQg?.id;
           setDialogueQg(null);
-          setColisCadeauEnCours(false);
           if (dialogueChapitreId) {
             accepterChapitrePrincipal(dialogueChapitreId);
             // Le carnet peut être ouvert derrière le dialogue (fin du
@@ -997,12 +974,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             // cible est simplement prête pour la prochaine ouverture.
             setMissionCibleId(dialogueChapitreId);
             setDialogueChapitreId(null);
-          } else if (colisCadeauEnCours && idDialogueJoue === "tuto_colis_cadeau") {
-            const premier = ouvrirObjetColis();
-            if (premier) {
-              setNumeroColis(1);
-              setObjetColis(premier);
-            }
           } else if (etape === "accueil") avancerTutoriel("aller-chiner");
           else if (etape === "chine-sortir") avancerTutoriel("stockage-ouvrir");
           else if (etape === "conclusion") terminerTutoriel();
