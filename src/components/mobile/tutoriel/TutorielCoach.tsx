@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { setCoachOuvert } from "@/lib/coachActif";
 
 /**
  * Une étape de la visite guidée « coach ». `cible` référence l'attribut
@@ -69,7 +70,7 @@ const bulleBase: CSSProperties = {
 };
 
 const texteStyle: CSSProperties = {
-  fontSize: 17,
+  fontSize: 18,
   lineHeight: 1.35,
   color: "#3a2f1e",
 };
@@ -90,6 +91,13 @@ export function TutorielCoach({ etapes, onFini }: TutorielCoachProps) {
 
   const etape: CoachEtape | undefined = etapes[idx];
   const cible = etape?.cible ?? null;
+
+  // La bannière du tutoriel s'abonne à cet état pour se masquer tant que le
+  // coach est ouvert (cf. src/lib/coachActif.ts).
+  useEffect(() => {
+    setCoachOuvert(true);
+    return () => setCoachOuvert(false);
+  }, []);
 
   // Mesure du rect de la cible : au montage de l'étape, sur resize/scroll
   // (capturés — la cible peut être dans un conteneur qui défile), et un
