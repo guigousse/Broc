@@ -613,7 +613,15 @@ export default function VitrineJourneePage() {
                         "vente",
                         ev.offreInitiale,
                         ev.prixMax,
-                        temperamentDe(acheteur.persona.archetype),
+                        // Tempérament (couleur des répliques) : l'id RÉEL du
+                        // ClientPersonnage (ev.persona.archetypeId), mappé
+                        // dans TEMPERAMENT_CLIENTS — PAS acheteur.persona.archetype
+                        // ("radin_tuto"/"ami_tuto"/"nego_tuto", des labels
+                        // scénario absents des deux tables de tempérament,
+                        // qui feraient retomber sur les pools génériques.
+                        // acheteur.persona reste la SEULE source pour la
+                        // mécanique de négo (proposerOffre), inchangée.
+                        temperamentDe(ev.persona.archetypeId),
                       )
                     : null,
                 );
