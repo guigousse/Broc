@@ -722,11 +722,19 @@ export default function VitrineJourneePage() {
   // présent puisque le tick ci-dessus ne touche pas à `tempsRestant` tant que
   // clientActuelRef.current est vrai.
   useEffect(() => {
-    if (tempsRestant !== 0) return;
-    if (finDeclencheeRef.current) return;
-    finDeclencheeRef.current = true;
-    terminerJournee();
-  }, [tempsRestant, terminerJournee]);
+    if (
+      tempsRestant === 0 &&
+      !finDeclencheeRef.current &&
+      // Tutoriel (vente scriptée, spec §7) : l'horloge ne clôt jamais la
+      // journée avant la fin du script, même si le chrono touche 0 (il reste
+      // simplement figé à 0) — même garde que pour la vitrine qui se vide
+      // ci-dessous. Elle reprend ses droits dès « conclusion ».
+      (!state || !tutorielActif(state) || etape === "conclusion")
+    ) {
+      finDeclencheeRef.current = true;
+      terminerJournee();
+    }
+  }, [tempsRestant, terminerJournee, state, etape]);
 
   // Persiste le temps restant aux moments charnières : passage en arrière-plan
   // (iOS suspend le JS sans préavis), pagehide, et démontage (navigation vers le
@@ -786,13 +794,13 @@ export default function VitrineJourneePage() {
   // Dialogue « avant » par étape scriptée de vente : le grand-père présente
   // chaque visage avant qu'il ne surgisse (pattern identique à la chine).
   useEffect(() => {
-    if (!etape || dialogueTuto) return;
+    if (!etape || dialogueTuto || clientActuel) return;
     const seq = AVANT_VENTE[etape];
     if (seq && !dialoguesJouesRef.current.has(seq.id)) {
       dialoguesJouesRef.current.add(seq.id);
       setDialogueTuto(seq);
     }
-  }, [etape, dialogueTuto]);
+  }, [etape, dialogueTuto, clientActuel]);
 
   if (!isHydrated || !state) {
     return (

@@ -96,10 +96,6 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Tu primera negociación de venta de verdad. Has aguantado — ya no tengo mucho más que enseñarte.",
     "Cierra el puesto cuando quieras, y volvamos. Todavía tengo un par de palabras que decirte en casa.",
   ],
-  tuto_vente_faite: [
-    "¡Y ahí está tu primera venta! El canto de la caja registradora — nunca se olvida.",
-    "Cierra el puesto cuando quieras, y volvamos. Tengo algo para ti en casa.",
-  ],
   tuto_conclusion: [
     "Tienes el ojo, y la mano… solo te faltan los años. La tienda queda en buenas manos.",
     "Toma: mi cuaderno de encargos. La gente apunta lo que busca. Ábrelo, anda — justo tengo algo que apuntar en él.",

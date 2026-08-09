@@ -205,7 +205,7 @@ export const en: DictionnaireUI = {
       "collection-lecon": "Open the Collection from the bottom bar.",
       "ouvrir-colis": "Open your grandfather's parcel, by the door.",
       "preparer-etal": "Go through the door again and choose “Set up stall” to get your window ready.",
-      "coffre-trace-un": "Pick up the first item and set it on its outline.",
+      "coffre-trace-un": "Watch closely: your grandfather places the controller and turns it for you.",
       "coffre-trace-deux": "One finger to move, a second to rotate: set the item on its outline.",
       "vente-refus": "This customer offers too little — walk away, no regrets.",
       "vente-directe": "He'll take the controller at the asking price: accept!",

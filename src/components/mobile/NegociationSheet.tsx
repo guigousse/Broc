@@ -146,7 +146,7 @@ export function NegociationSheet({
   // — le minimum reste au moins le plancher scripté même si la dynamique (prix
   // adverse courant) descendrait plus bas, le maximum est le plafond scripté.
   const minJoueur = bornesTuto
-    ? Math.max(bornesTuto.min, minJoueurDefaut)
+    ? Math.min(bornesTuto.max, Math.max(bornesTuto.min, minJoueurDefaut))
     : minJoueurDefaut;
   const maxJoueur = bornesTuto ? bornesTuto.max : maxJoueurDefaut;
 

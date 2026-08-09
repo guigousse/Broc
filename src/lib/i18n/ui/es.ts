@@ -205,7 +205,7 @@ export const es: DictionnaireUI = {
       "collection-lecon": "Abre la Colección desde la barra inferior.",
       "ouvrir-colis": "Abre el paquete de tu abuelo, junto a la puerta.",
       "preparer-etal": "Vuelve a cruzar la puerta y elige «Montar puesto» para preparar tu vitrina.",
-      "coffre-trace-un": "Coge el primer objeto y colócalo sobre su silueta.",
+      "coffre-trace-un": "Mira bien: tu abuelo coloca el mando y lo gira por ti.",
       "coffre-trace-deux": "Un dedo para mover, otro para girar: coloca el objeto sobre su silueta.",
       "vente-refus": "Este cliente ofrece muy poco — déjalo pasar, sin remordimientos.",
       "vente-directe": "Se queda con el mando al precio marcado: ¡acepta!",

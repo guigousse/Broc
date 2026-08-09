@@ -280,12 +280,25 @@ async function buildTrunkMaskNode(relUrl: string, size: number): Promise<TrunkMa
   return { bits, size };
 }
 
+/** Nombre de bits à 1 — sert à prouver qu'un masque n'est pas trivialement
+ *  vide (chemin d'asset dérivé, seuil dérivé) avant de faire confiance à un
+ *  Set de chevauchements vide. */
+function popcount(bits: Uint8Array): number {
+  let n = 0;
+  for (const b of bits) if (b) n++;
+  return n;
+}
+
 describe("géométrie du coffre v3 — oracle pixel-perfect (sharp)", () => {
   it("préfill + traces : 100% dans le coffre, zéro chevauchement (préfill↔préfill, préfill↔traces, trace↔trace)", async () => {
     const camion = getCamion(1); // "Rogers" — camion du tutoriel
     const assets = getCoffreAssets(camion.visuelId);
     expect(assets, camion.visuelId).toBeTruthy();
     const trunk = await buildTrunkMaskNode(assets!.mask, TRUNK_SIZE);
+    // Non-trivialité : un masque contenant entièrement vide (chemin d'asset
+    // ou seuil dérivés) rendrait le Set de chevauchements vide POUR LA
+    // MAUVAISE RAISON — plus aucun pixel "intérieur" à violer.
+    expect(popcount(trunk.bits), "masque du coffre vide — chemin d'asset ou seuil dérivés ?").toBeGreaterThan(0);
 
     const objetsAVerifier = [
       ...PREFILL_COFFRE_TUTORIEL.map((p) => ({
@@ -302,6 +315,12 @@ describe("géométrie du coffre v3 — oracle pixel-perfect (sharp)", () => {
       const url = getItemThumbUrl(o.templateId);
       expect(url, o.templateId).toBeTruthy();
       masks.set(o.templateId, await buildAlphaMaskNode(url!, MASK_SIZE));
+    }
+    for (const [templateId, mask] of masks) {
+      // Même raison que pour le masque du coffre ci-dessus, côté objet : une
+      // vignette introuvable/toute transparente donnerait un masque vide et
+      // ferait "réussir" le test sans rien prouver.
+      expect(popcount(mask), `masque alpha vide pour ${templateId} — chemin d'asset ou seuil dérivés ?`).toBeGreaterThan(0);
     }
 
     const items: PixelItem[] = objetsAVerifier.map((o) => {
