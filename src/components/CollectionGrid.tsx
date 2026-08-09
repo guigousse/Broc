@@ -148,7 +148,17 @@ const CollectionCell = memo(function CollectionCell({
     placeItems: "center",
     // Au-dessus des rangées voisines : la main pointeuse (tuto-main-haut)
     // déborde par le haut de la case et doit rester visible par-dessus.
-    ...(estCibleMain ? { zIndex: 2 } : {}),
+    //
+    // `.broc-grid-cell` porte `content-visibility: auto` (perf, cf.
+    // globals.css) — qui établit un containment de PEINTURE permanent
+    // (pas seulement le "skip" hors-écran) : tout ce qui dépasse la
+    // padding-box de la case est rogné, y compris un ::after positionné
+    // hors de la boîte (même piège que l'overflow:hidden de
+    // StockageItemRow). La main de cette case précise serait donc
+    // invisible (prouvé Playwright : pixel [255,255,255] avec la
+    // déclaration, [255,0,0] sans). On neutralise le containment sur
+    // cette case UNIQUEMENT, en inline (plus spécifique que la classe).
+    ...(estCibleMain ? { zIndex: 2, contentVisibility: "visible" } : {}),
   };
 
   return (

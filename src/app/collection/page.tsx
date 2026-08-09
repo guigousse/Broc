@@ -25,6 +25,7 @@ import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { SEQUENCES_TUTORIEL, GRAND_PERE_PORTRAITS } from "@/data/dialogues";
 import { PELUCHE_TEMPLATE_ID } from "@/data/tutorielScenario";
+import { setCoachOuvert } from "@/lib/coachActif";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 /**
@@ -66,6 +67,26 @@ export default function CollectionPage() {
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
   }, [isHydrated, state, router]);
+
+  // Masque la bannière de tutoriel (cf. TutorielBanniere/coachActif) pendant
+  // TOUTE la leçon guidée sauf la phase finale "dialogue" (déjà couverte par
+  // le DialogueOverlay, z-index 120, qui recouvre tout). Sans ça : 1) sa
+  // consigne périmée (« Ouvre la Collection… », déjà fait) reste affichée
+  // pendant les phases interactives filtre/case/detail, et 2) elle empiète
+  // sur la bande où tombe la main "tuto-main-haut" au-dessus des pastilles.
+  // Les TutorielCoach des phases "coach"/"detail" publient aussi
+  // setCoachOuvert eux-mêmes (leur propre montage/démontage) — sans
+  // conflit : `setCoachOuvert` est idempotent (no-op si même valeur), et
+  // React exécute TOUS les cleanups d'un commit avant TOUTE nouvelle
+  // exécution d'effet, donc à la transition coach→filtre (où le
+  // TutorielCoach démonte et republierait `false`), cet effet-ci républie
+  // `true` dans la même passe avant que la bannière n'ait pu se re-rendre
+  // visible — jamais de flash.
+  useEffect(() => {
+    if (!enLecon || phaseLecon === "dialogue") return;
+    setCoachOuvert(true);
+    return () => setCoachOuvert(false);
+  }, [enLecon, phaseLecon]);
 
   const slotsFiltres: CollectionSlot[] = useMemo(() => {
     if (!state) return [];

@@ -154,7 +154,18 @@ export function CategoriePicker({
             aria-selected={active}
             type="button"
             onClick={() => onChange(cell.cat)}
-            className={estCibleMain ? "tuto-main tuto-main-haut" : undefined}
+            // Variante LATÉRALE (pas `tuto-main-haut`) : la pastille est à
+            // ~34px sous le header (z-index 30, opaque) tandis que ce picker
+            // vit dans StickyTop (z-index 20) — une main "haut" y serait
+            // occultée par l'en-tête sur la majeure partie de sa hauteur
+            // (stacking context : un enfant ne peut jamais peindre par-dessus
+            // un contexte sibling de z-index supérieur, quel que soit le
+            // z-index posé localement). Prouvé Playwright : ~30 des 36px de
+            // la main "haut" tombent sous rgb(26,51,38) (forest-800, le
+            // header) ; la main latérale, elle, reste entièrement dans la
+            // bande du picker. La cible n'est jamais la pastille la plus à
+            // gauche ("Tous") : la main a toujours de la place à gauche.
+            className={estCibleMain ? "tuto-main" : undefined}
             style={{
               ...cellBase,
               background: active ? "var(--forest-800)" : "var(--paper-100)",
