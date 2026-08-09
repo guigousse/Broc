@@ -5,7 +5,7 @@ import {
   SESSION_TUTORIEL, PELUCHE_TEMPLATE_ID, type ObjetScenario,
 } from "@/data/tutorielScenario";
 
-/** Ordre linéaire des étapes du tutoriel guidé (v2, brocante scriptée). */
+/** Ordre linéaire des étapes du tutoriel guidé (v3, brocante scriptée). */
 export const ETAPES_TUTORIEL: readonly TutorielEtape[] = [
   "accueil",
   "aller-chiner",
@@ -18,10 +18,13 @@ export const ETAPES_TUTORIEL: readonly TutorielEtape[] = [
   "stockage-focus",
   "collection-envoyer",
   "collection-lecon",
+  "ouvrir-colis",
   "preparer-etal",
   "coffre-trace-un",
   "coffre-trace-deux",
-  "premiere-vente",
+  "vente-refus",
+  "vente-directe",
+  "vente-nego",
   "conclusion",
   "termine",
 ];
@@ -147,10 +150,34 @@ export function ongletTutorielPermis(
       return "/stockage";
     case "collection-lecon":
       return "/collection";
+    case "ouvrir-colis":
     case "preparer-etal":
       return "/bureau";
     default:
       return null;
+  }
+}
+
+/**
+ * La porte du bureau pulse uniquement quand la franchir est l'action
+ * prescrite. Elle reste TAPABLE sur un ensemble plus large (portePermise,
+ * anti-soft-lock) — le pulse parasite au retour du chinage venait de la
+ * confusion des deux rôles (recette 2026-08-09).
+ */
+export function portePulse(etape: TutorielEtape): boolean {
+  switch (etape) {
+    case "aller-chiner":
+    case "chine-nego-echec":
+    case "chine-achat-direct":
+    case "chine-nego-un":
+    case "chine-nego-deux":
+    case "preparer-etal":
+    case "vente-refus":
+    case "vente-directe":
+    case "vente-nego":
+      return true;
+    default:
+      return false;
   }
 }
 

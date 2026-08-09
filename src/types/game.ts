@@ -293,14 +293,16 @@ export interface LedgerEntry {
 }
 
 /**
- * Étapes du tutoriel guidé, brocante scriptée (v2, 17 valeurs). Linéaire :
+ * Étapes du tutoriel guidé, brocante scriptée (v3, 20 valeurs). Linéaire :
  * accueil → aller-chiner → chine-nego-echec → chine-achat-direct →
  * chine-nego-un → chine-nego-deux → chine-sortir → stockage-ouvrir →
- * stockage-focus → collection-envoyer → collection-lecon → preparer-etal →
- * coffre-trace-un → coffre-trace-deux → premiere-vente → conclusion →
- * termine. "termine" = tutoriel fini ou sauté (état des saves antérieures
- * à v12) ; le colis du grand-père n'est plus une étape de ce flux, il
- * apparaît en post-tutoriel (cf. `colisEnAttente` dans lib/tutoriel).
+ * stockage-focus → collection-envoyer → collection-lecon → ouvrir-colis →
+ * preparer-etal → coffre-trace-un → coffre-trace-deux → vente-refus →
+ * vente-directe → vente-nego → conclusion → termine. "termine" = tutoriel
+ * fini ou sauté (état des saves antérieures à v12) ; le colis du
+ * grand-père est désormais ouvert PENDANT ce flux (ouvrir-colis), pas en
+ * post-tutoriel comme avant v3 (cf. `colisEnAttente` dans lib/tutoriel,
+ * qui reste utile aux vieilles saves migrées).
  */
 export type TutorielEtape =
   | "accueil"
@@ -314,10 +316,13 @@ export type TutorielEtape =
   | "stockage-focus"
   | "collection-envoyer"
   | "collection-lecon"
+  | "ouvrir-colis"
   | "preparer-etal"
   | "coffre-trace-un"
   | "coffre-trace-deux"
-  | "premiere-vente"
+  | "vente-refus"
+  | "vente-directe"
+  | "vente-nego"
   | "conclusion"
   | "termine";
 

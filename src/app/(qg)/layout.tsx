@@ -85,6 +85,7 @@ import {
   chapitreDuCarnetDu,
   colisEnAttente,
   doigtSwipeVersCarnet,
+  portePulse,
 } from "@/lib/tutoriel";
 import { OUTILS_DEV } from "@/lib/outilsDev";
 import {
@@ -502,8 +503,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const modeJournalSol = journalSolMode(state);
   // Widened au-delà de "aller-chiner"/"preparer-etal" : un joueur qui sort de
   // la brocante sans terminer toutes les étapes de chine, ou termine une
-  // journée d'étal sans vente (étape reste "premiere-vente"), doit pouvoir
-  // rouvrir la porte pour réessayer — sinon soft-lock au bureau.
+  // journée d'étal sans vente (étape reste sur l'une des 3 leçons de
+  // vente), doit pouvoir rouvrir la porte pour réessayer — sinon soft-lock
+  // au bureau. "ouvrir-colis" en est volontairement absente : le colis est
+  // devant la porte, pas au-delà.
   const portePermise =
     etape === "aller-chiner" ||
     etape === "chine-nego-echec" ||
@@ -514,7 +517,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     etape === "preparer-etal" ||
     etape === "coffre-trace-un" ||
     etape === "coffre-trace-deux" ||
-    etape === "premiere-vente";
+    etape === "vente-refus" ||
+    etape === "vente-directe" ||
+    etape === "vente-nego";
 
   // Virtualisation : monte un objet si sa zone est à distance ≤ 1 de la zone
   // active (index 0..2). bureau/porte/repos = 0/1/2.
@@ -572,7 +577,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             {showQgZone(1) && (
               <>
                 <QgPorte
-                  pulse={portePermise && !porteOuverte}
+                  pulse={portePulse(etape ?? "termine") && !porteOuverte}
                   onTap={() => {
                     if (tutoActif && !portePermise) return;
                     playDoorOpen();
@@ -751,7 +756,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           etape === "preparer-etal" ||
           etape === "coffre-trace-un" ||
           etape === "coffre-trace-deux" ||
-          etape === "premiere-vente"
+          etape === "vente-refus" ||
+          etape === "vente-directe" ||
+          etape === "vente-nego"
         }
         onChiner={() => {
           playDoorClose();

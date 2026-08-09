@@ -432,7 +432,7 @@ export default function VitrineJourneePage() {
       // site : le gate du seul effet « bravo tout vendu » ne suffisait pas,
       // ce chemin-ci clôturait avant lui). L'effet se re-déclenche à la fin
       // du dialogue (deps etape/dialogueTuto) et clôture alors normalement.
-      if (etape === "premiere-vente" || dialogueTuto) return;
+      if (etape === "vente-nego" || dialogueTuto) return;
       // Vitrine vide : si la journée a démarré (standSnapshot posé), c'est que
       // tout a été vendu — on clôture pour afficher le résumé. Sinon (arrivée
       // sur la page sans préparation), on renvoie à la prépa.
@@ -651,7 +651,7 @@ export default function VitrineJourneePage() {
       // le tuto et le joueur doit refaire une vente (défaillance device
       // 2026-07-17). L'effet se re-déclenche à chaque tick de tempsRestant,
       // donc la clôture reprend dès la fin du dialogue.
-      etape !== "premiere-vente" &&
+      etape !== "vente-nego" &&
       !dialogueTuto
     ) {
       setBravoTout(true);
@@ -733,7 +733,7 @@ export default function VitrineJourneePage() {
       }),
       ton: "vente",
     });
-    if (etape === "premiere-vente") {
+    if (etape === "vente-nego") {
       setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_faite);
     }
     setClientActuel(null);
@@ -760,7 +760,7 @@ export default function VitrineJourneePage() {
       }),
       ton: "vente",
     });
-    if (etape === "premiere-vente") {
+    if (etape === "vente-nego") {
       setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_faite);
     }
     setClientActuel(null);
@@ -1077,7 +1077,7 @@ export default function VitrineJourneePage() {
         <NegociationSheet
           open={true}
           onClose={() => terminerVisiteClient(clientActuel)}
-          tutoMainJoueur={etape === "premiere-vente"}
+          tutoMainJoueur={etape === "vente-nego"}
           mode="vente"
           persona={personaDepuisClient(clientActuel.persona)}
           celebrite={clientActuel.persona.archetypeId === "celebrite"}
@@ -1225,8 +1225,8 @@ export default function VitrineJourneePage() {
         portraits={GRAND_PERE_PORTRAITS}
         onFini={() => {
           setDialogueTuto(null);
-          if (etape === "coffre-trace-deux") avancerTutoriel("premiere-vente");
-          else if (etape === "premiere-vente") avancerTutoriel("conclusion");
+          if (etape === "coffre-trace-deux") avancerTutoriel("vente-refus");
+          else if (etape === "vente-nego") avancerTutoriel("conclusion");
         }}
       />
     </div>
