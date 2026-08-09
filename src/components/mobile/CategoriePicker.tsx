@@ -162,10 +162,19 @@ export function CategoriePicker({
             // un contexte sibling de z-index supérieur, quel que soit le
             // z-index posé localement). Prouvé Playwright : ~30 des 36px de
             // la main "haut" tombent sous rgb(26,51,38) (forest-800, le
-            // header) ; la main latérale, elle, reste entièrement dans la
-            // bande du picker. La cible n'est jamais la pastille la plus à
-            // gauche ("Tous") : la main a toujours de la place à gauche.
-            className={estCibleMain ? "tuto-main" : undefined}
+            // header).
+            //
+            // `tuto-main-droite` (main à DROITE, pas la variante gauche par
+            // défaut) : à 360px (iPhone SE), la cible ("Jeux & Loisirs", 3ᵉ
+            // sur 8 pastilles) n'a que 2 cellules de marge à gauche avant le
+            // bord d'écran — l'arithmétique donne ~1-5px de reste pour une
+            // main de 88px + 8px de dégagement, clippée par le
+            // `overflow:hidden` plein viewport de `MobileLayout`. À droite,
+            // 5 cellules de marge restent largement suffisantes (précédent :
+            // CarrouselStock). Prouvé Playwright à 360×640 : pixel de la main
+            // "gauche" hors écran (x négatif) à ce viewport, main "droite"
+            // entièrement visible.
+            className={estCibleMain ? "tuto-main tuto-main-droite" : undefined}
             style={{
               ...cellBase,
               background: active ? "var(--forest-800)" : "var(--paper-100)",
