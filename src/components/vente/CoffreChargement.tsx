@@ -104,6 +104,13 @@ interface Props {
   /** Tutoriel — coffre à traces, 2ᵉ trace : hint pédagogique décoratif
    *  « un doigt déplace, deux doigts tournent » superposé au canvas. */
   rotationHint?: boolean;
+  /** Tutoriel — coffre Tetris (préfill) : ids d'objets verrouillés, passés
+   *  tel quel à `CoffreCanvas` (pas de drag, pas de rotation, pas de retrait). */
+  verrouillesIds?: ReadonlySet<string>;
+  /** Tutoriel — coffre Tetris (préfill) : gate les ajouts depuis le
+   *  carrousel (tap ET drag) aux seuls templateId de l'ensemble ; `null`/
+   *  absent = tout le stock reste ajoutable (comportement hors tutoriel). */
+  ajoutsAutorisesTemplateIds?: ReadonlySet<string> | null;
 }
 
 function buildSolidMask(size: number): Uint8Array {
@@ -214,11 +221,21 @@ export function CoffreChargement(p: Props) {
   const [dragObjet, setDragObjet] = useState<{ id: string; x: number; y: number } | null>(null);
   const dragIdRef = useRef<string | null>(null);
 
+  /** Tutoriel — coffre Tetris (préfill) : le templateId de l'objet visé
+   *  est-il dans l'ensemble autorisé ? `null`/absent = tout autorisé. */
+  const ajoutAutorise = (objetId: string): boolean => {
+    if (!p.ajoutsAutorisesTemplateIds) return true;
+    const obj = p.stock.find((o) => o.id === objetId);
+    return !!obj && p.ajoutsAutorisesTemplateIds.has(obj.templateId);
+  };
+
   const handleTap = (objetId: string) => {
+    if (!ajoutAutorise(objetId)) return;
     p.onAjouter(objetId, 0.5, 0.5);
   };
 
   const handleDragStart = (objetId: string, x: number, y: number) => {
+    if (!ajoutAutorise(objetId)) return;
     dragIdRef.current = objetId;
     setDragObjet({ id: objetId, x, y });
   };
@@ -445,6 +462,7 @@ export function CoffreChargement(p: Props) {
           onRetour={p.onRetirer}
           conteneurRef={conteneurCoffreRef}
           trace={p.trace}
+          verrouillesIds={p.verrouillesIds}
         />
         <RotationHint actif={p.rotationHint === true && !closing} />
       </div>
@@ -456,6 +474,7 @@ export function CoffreChargement(p: Props) {
         onDragEnd={handleDragEnd}
         tutoMain={p.tuto === true && p.coffre.length === 0}
         mainTemplateId={p.mainTemplateId ?? null}
+        templateIdsAutorises={p.ajoutsAutorisesTemplateIds ?? null}
       />
       {/* Fantôme de drag : l'objet suit le doigt, à la taille qu'il aura
           dans le coffre. */}

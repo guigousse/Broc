@@ -13,7 +13,8 @@ import { aConnaisseurVitrine } from "@/lib/competences";
 import { prixSuggere } from "@/lib/prixSuggere";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { traceAPoser, estSurTrace, tracesToutesPosees } from "@/lib/coffreTuto";
-import { TRACES_TUTORIEL } from "@/data/tutorielScenario";
+import { PREFILL_COFFRE_TUTORIEL, TRACES_TUTORIEL } from "@/data/tutorielScenario";
+import { tutorielActif } from "@/lib/tutoriel";
 import { audioManager } from "@/lib/audio/audioManager";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
@@ -65,6 +66,30 @@ export default function VitrinePrepPage() {
     if (tutorielEtape === "preparer-etal") avancerTutoriel("coffre-trace-un");
   }, [tutorielEtape, avancerTutoriel]);
 
+  // Préfill du coffre Tetris (tutoriel v3) : le grand-père a déjà chargé 3
+  // pièces du colis — livré à l'étape "ouvrir-colis", donc déjà dans
+  // l'inventaire à l'arrivée ici — aux positions scriptées PREFILL_COFFRE_
+  // TUTORIEL. Une seule fois (prefillFaitRef), quand la vitrine est ouverte
+  // ET encore vide (couvre aussi bien le premier passage que la reprise :
+  // si le coffre contient déjà ces objets, `objets.length > 0` court-circuite
+  // avant même de consulter le ref). Fail-open si l'inventaire ne contient
+  // pas les 3 objets (vieux flux / save antérieure sans colis scripté) :
+  // pas de préfill plutôt qu'un crash sur `parTemplate.get(...)!`.
+  const prefillFaitRef = useRef(false);
+  useEffect(() => {
+    if (!state || !tutorielActif(state)) return;
+    if (prefillFaitRef.current) return;
+    if (!state.vitrine || state.vitrine.objets.length > 0) return;
+    const parTemplate = new Map(state.inventaireJoueur.map((o) => [o.templateId, o]));
+    const aTousLesObjets = PREFILL_COFFRE_TUTORIEL.every((p) => parTemplate.has(p.templateId));
+    if (!aTousLesObjets) return;
+    prefillFaitRef.current = true;
+    for (const p of PREFILL_COFFRE_TUTORIEL) {
+      const obj = parTemplate.get(p.templateId)!;
+      mettreEnVitrine(obj.id, p.prixVente, p.posX, p.posY, p.rotation);
+    }
+  }, [state, mettreEnVitrine]);
+
   useEffect(() => {
     if (!isHydrated) return;
     if (!state) {
@@ -99,6 +124,31 @@ export default function VitrinePrepPage() {
       (o) => !ids.has(o.id) && !o.enRestauration,
     );
   }, [state, coffre]);
+
+  // Coffre Tetris (tutoriel v3) : ids des objets du préfill effectivement
+  // présents dans le coffre — verrouillés (drag/rotation/retrait inertes).
+  // Dérivé du coffre courant (pas juste du préfill) : un objet retiré du
+  // coffre par un chemin détourné (dev tools, ancienne save) ne resterait
+  // pas verrouillé sur un fantôme absent.
+  const verrouillesIds = useMemo(() => {
+    if (!state || !tutorielActif(state)) return new Set<string>();
+    const templates = new Set(PREFILL_COFFRE_TUTORIEL.map((p) => p.templateId));
+    return new Set(
+      coffre.filter((ov) => templates.has(ov.objet.templateId)).map((ov) => ov.objet.id),
+    );
+  }, [state, coffre]);
+
+  // Coffre Tetris (tutoriel v3) : pendant les leçons de trace, seuls les
+  // deux objets de la leçon en cours (manette puis carafe) sont ajoutables
+  // depuis le carrousel — le reste du stock (rare, colis restant…) reste
+  // visible mais inerte tant que la leçon n'est pas terminée. `null` hors
+  // ces deux étapes = tout redevient ajoutable.
+  const ajoutsAutorisesTemplateIds = useMemo(() => {
+    if (tutorielEtape !== "coffre-trace-un" && tutorielEtape !== "coffre-trace-deux") {
+      return null;
+    }
+    return new Set(TRACES_TUTORIEL.map((t) => t.templateId));
+  }, [tutorielEtape]);
 
   const categoriesConnuesVitrine = useMemo(() => {
     const s = new Set<CategorieObjet>();
@@ -258,6 +308,8 @@ export default function VitrinePrepPage() {
             trace={trace}
             validerBloque={validerBloque}
             mainTemplateId={trace?.templateId ?? null}
+            verrouillesIds={verrouillesIds}
+            ajoutsAutorisesTemplateIds={ajoutsAutorisesTemplateIds}
             rotationHint={
               state.tutorielEtape === "coffre-trace-deux" &&
               validerBloque &&
