@@ -786,13 +786,13 @@ export default function VitrineJourneePage() {
   // Dialogue « avant » par étape scriptée de vente : le grand-père présente
   // chaque visage avant qu'il ne surgisse (pattern identique à la chine).
   useEffect(() => {
-    if (!etape || dialogueTuto) return;
+    if (!etape || dialogueTuto || clientActuel) return;
     const seq = AVANT_VENTE[etape];
     if (seq && !dialoguesJouesRef.current.has(seq.id)) {
       dialoguesJouesRef.current.add(seq.id);
       setDialogueTuto(seq);
     }
-  }, [etape, dialogueTuto]);
+  }, [etape, dialogueTuto, clientActuel]);
 
   if (!isHydrated || !state) {
     return (
