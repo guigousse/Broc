@@ -5,8 +5,11 @@ import type {
   NegociationState,
   ObjetEnVitrine,
   Tendance,
+  VitrineActive,
 } from "@/types/game";
 import { ALL_PERSONNAGES, type ClientPersonnage } from "@/data/clients";
+import type { AcheteurScenario } from "@/data/tutorielScenario";
+import { personnageScenario } from "@/data/tutorielScenario";
 import { NIVEAU_USAGE_2 } from "@/lib/actives";
 import { modificateurTendance } from "@/lib/tendances";
 import { pickMessage, proposerOffre } from "@/lib/negociation";
@@ -374,6 +377,36 @@ export function genererClientEvent(
     fancy: options.fancy,
     toleranceBoost,
     fourchettePrixMax: calculerFourchettePrixMax(prixMax),
+  };
+}
+
+/**
+ * Événement client de la journée scriptée du tutoriel : personnage, objet
+ * ciblé, mode et chiffres viennent du scénario — rien d'aléatoire. Le
+ * persona de négo est celui du scénario (axes figés). `null` si l'objet
+ * ciblé n'est plus en vitrine (déjà vendu — ne devrait pas arriver dans le
+ * déroulé normal, garde-fou côté appelant).
+ */
+export function genererClientEventScripte(
+  acheteur: AcheteurScenario,
+  vitrine: VitrineActive,
+): ClientEvent | null {
+  const ov = vitrine.objets.find(
+    (o) => o.objet.templateId === acheteur.templateIdCible,
+  );
+  if (!ov) return null;
+  const persona = personnageScenario(acheteur);
+  return {
+    id: crypto.randomUUID(),
+    persona,
+    panier: [ov],
+    prixMax: acheteur.prixMax,
+    prixDemande: ov.prixVente,
+    offreInitiale: acheteur.offreInitiale ?? ov.prixVente,
+    mode: acheteur.mode,
+    fancy: false,
+    toleranceBoost: 0,
+    fourchettePrixMax: calculerFourchettePrixMax(acheteur.prixMax),
   };
 }
 

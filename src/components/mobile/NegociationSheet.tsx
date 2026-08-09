@@ -32,7 +32,9 @@ interface NegociationSheetProps {
   onConclu: (prixFinal: number) => void;
   /** Calcule le prochain état de négociation pour une contre-offre du joueur
    *  (délègue à `proposerOffre` ou, en vente, à `proposerOffreVente` pour que
-   *  la tolérance boostée et le sauvetage Diplomate s'appliquent réellement). */
+   *  la tolérance boostée et le sauvetage Diplomate s'appliquent réellement ;
+   *  pendant le tutoriel scripté, le persona ET l'aléa déterministe
+   *  `ALEA_NEGO_SCRIPTEE` sont déjà pris en charge côté appelant). */
   onProposerOffre: (nego: NegociationState, offre: number) => NegociationState;
   /** Bloc panier d'objets (entre le titre et la zone de négociation). */
   header?: ReactNode;
@@ -49,6 +51,8 @@ interface NegociationSheetProps {
     prixDirect: number;
     onAccepter: () => void;
     onRefuser: () => void;
+    /** Tutoriel (achat direct scripté) : main pointeuse sur le bouton vendre. */
+    tutoMainAccepter?: boolean;
   };
   /** Offre courante du joueur — contrôlée par la page (le dock Boniment en dépend). */
   offreJoueur: number;
@@ -63,6 +67,11 @@ interface NegociationSheetProps {
   /** Mini-happening célébrité : aura dorée autour du portrait, carillon
    *  d'apparition et bandeau de nom luxueux. */
   celebrite?: boolean;
+  /** Tutoriel scripté (journée de vente) : `bornes` restreint le curseur
+   *  d'offre du joueur (le calcul du prochain état — via `onProposerOffre`,
+   *  côté appelant — utilise déjà le persona et l'aléa déterministe du
+   *  scénario) ; `mainLaisserTomber` pose la main sur « laisser tomber ». */
+  scriptTuto?: { bornes?: { min: number; max: number }; mainLaisserTomber?: boolean } | null;
 }
 
 export function NegociationSheet({
@@ -89,6 +98,7 @@ export function NegociationSheet({
   tutoMainJoueur = false,
   celebrite = false,
   achat,
+  scriptTuto = null,
 }: NegociationSheetProps) {
   const { d, tr, locale } = useLangue();
   const [localNego, setLocalNego] = useState<NegociationState>(
@@ -127,10 +137,18 @@ export function NegociationSheet({
   const illustrationCourante =
     estFache && illustrationFacheSrc ? illustrationFacheSrc : illustrationSrc;
 
-  const minJoueur =
+  const bornesTuto = scriptTuto?.bornes ?? null;
+  const minJoueurDefaut =
     mode === "achat" ? 1 : Math.max(1, localNego.prixAdverseCourant);
-  const maxJoueur =
+  const maxJoueurDefaut =
     mode === "achat" ? localNego.prixAdverseCourant : echelleMax;
+  // Négo scriptée (tutoriel) : bornes fixes du scénario, comme ChineNegoDrawer
+  // — le minimum reste au moins le plancher scripté même si la dynamique (prix
+  // adverse courant) descendrait plus bas, le maximum est le plafond scripté.
+  const minJoueur = bornesTuto
+    ? Math.max(bornesTuto.min, minJoueurDefaut)
+    : minJoueurDefaut;
+  const maxJoueur = bornesTuto ? bornesTuto.max : maxJoueurDefaut;
 
   const handleProposer = () => {
     const next = onProposerOffre(localNego, offreJoueur);
@@ -195,6 +213,7 @@ export function NegociationSheet({
           </button>
           <button
             type="button"
+            className={venteDirecte.tutoMainAccepter ? "tuto-main" : undefined}
             style={btnPrimary}
             onClick={venteDirecte.onAccepter}
           >
@@ -232,6 +251,7 @@ export function NegociationSheet({
               <>
                 <button
                   type="button"
+                  className={scriptTuto?.mainLaisserTomber ? "tuto-main" : undefined}
                   style={btnSecondary}
                   onClick={handleAbandonner}
                 >
