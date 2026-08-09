@@ -46,6 +46,7 @@ import { QgPortemanteau } from "@/components/mobile/qg/QgPortemanteau";
 import { QgCalendrier } from "@/components/mobile/qg/QgCalendrier";
 import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
+import { useFermerSheetHorsBureau } from "@/components/mobile/qg/useFermerSheetHorsBureau";
 import { GrandPereBadge } from "@/components/mobile/qg/GrandPereBadge";
 import { QgColis } from "@/components/mobile/qg/QgColis";
 import { QgCadeau } from "@/components/mobile/qg/QgCadeau";
@@ -286,6 +287,12 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     if (gramophoneOuvert) setVinylTargetVolume(1);
     else setVinylTargetVolume(volumeVinylForPos(zoneIdxRef.current));
   }, [gramophoneOuvert, setVinylTargetVolume]);
+
+  // La sheet gramophone n'existe qu'au bureau : si on navigue vers
+  // /stockage, /atelier ou /bibliotheque (même groupe (qg), layout non
+  // démonté, TabBar restée cliquable sous la sheet), elle se ferme.
+  // La musique, elle, continue (cf. GlobalVinylAmbiance).
+  useFermerSheetHorsBureau(() => setGramophoneOuvert(false));
 
   // Restauration session gramophone à l'entrée du panorama.
   useEffect(() => {
