@@ -19,6 +19,10 @@ interface Props {
    *  templateId correspond, plutôt que sur le premier de la liste. Remplace
    *  `tutoMain` quand fourni ; `tutoMain` reste pour compat (autres écrans). */
   mainTemplateId?: string | null;
+  /** Tutoriel — coffre Tetris (préfill) : seuls les templateId de cet
+   *  ensemble restent tapables/glissables ; les autres passent à
+   *  opacité 0.45 et perdent tout handler. `null`/absent = tout autorisé. */
+  templateIdsAutorises?: ReadonlySet<string> | null;
 }
 
 const ITEM_WIDTH = 76;
@@ -31,6 +35,7 @@ export function CarrouselStock({
   onDragEnd,
   tutoMain = false,
   mainTemplateId = null,
+  templateIdsAutorises = null,
 }: Props) {
   const { d, locale } = useLangue();
   if (stock.length === 0) {
@@ -75,25 +80,41 @@ export function CarrouselStock({
         boxShadow: "inset 0 2px 6px rgba(0,0,0,0.55)",
       }}
     >
-      {tri.map((o, i) => (
-        <div
-          key={o.id}
-          className={
-            (mainTemplateId ? o.templateId === mainTemplateId : tutoMain && i === 0)
-              ? "tuto-main tuto-main-droite"
-              : undefined
-          }
-          style={{ flex: `0 0 ${ITEM_WIDTH}px`, width: ITEM_WIDTH }}
-        >
-          <ItemEnCarrousel
-            objet={o}
-            onTap={onTap}
-            onDragStart={onDragStart}
-            onDragMove={onDragMove}
-            onDragEnd={onDragEnd}
-          />
-        </div>
-      ))}
+      {tri.map((o, i) => {
+        const autorise = !templateIdsAutorises || templateIdsAutorises.has(o.templateId);
+        return (
+          <div
+            key={o.id}
+            // Mesure du rect de départ par la démo du grand-père
+            // (DemoDepotManette, coffre-trace-un) : `querySelector` sur le
+            // templateId visé plutôt qu'un ref par item (liste dynamique).
+            data-carrousel-template={o.templateId}
+            className={
+              (mainTemplateId ? o.templateId === mainTemplateId : tutoMain && i === 0)
+                ? "tuto-main tuto-main-droite"
+                : undefined
+            }
+            style={{
+              flex: `0 0 ${ITEM_WIDTH}px`,
+              width: ITEM_WIDTH,
+              opacity: autorise ? 1 : 0.45,
+              // Grisé = totalement inerte (pas seulement visuel) : sans ça,
+              // ItemEnCarrousel armerait son hold-timer/pointer capture pour
+              // rien (ses callbacks onTap/onDragStart resteraient no-op côté
+              // CoffreChargement, mais le geste démarrerait quand même).
+              pointerEvents: autorise ? undefined : "none",
+            }}
+          >
+            <ItemEnCarrousel
+              objet={o}
+              onTap={onTap}
+              onDragStart={onDragStart}
+              onDragMove={onDragMove}
+              onDragEnd={onDragEnd}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

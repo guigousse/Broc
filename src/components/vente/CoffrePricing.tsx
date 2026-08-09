@@ -26,6 +26,12 @@ interface Props {
   categoriesConnues: ReadonlySet<CategorieObjet>;
   /** Tutoriel : main pointeuse sur le bouton de validation. */
   tutoMainValider?: boolean;
+  /** Tutoriel : gabarits déjà étiquetés par le grand-père — poignée verrouillée (lecture seule). */
+  readOnlyTemplateIds?: ReadonlySet<string>;
+  /** Tutoriel : prix conseillés par templateId — pastille repère + aimantation du curseur. */
+  cibles?: Readonly<Record<string, number>> | null;
+  /** Tutoriel : bloque Valider même si `validerActif` serait vrai (ex : prix conseillés pas encore tous posés). */
+  validerBloque?: boolean;
 }
 
 export function CoffrePricing({
@@ -37,9 +43,12 @@ export function CoffrePricing({
   validerActif,
   categoriesConnues,
   tutoMainValider = false,
+  readOnlyTemplateIds,
+  cibles = null,
+  validerBloque = false,
 }: Props) {
   const { d, tr, locale } = useLangue();
-  const peut = validerActif ?? coffre.length > 0;
+  const peut = (validerActif ?? coffre.length > 0) && !validerBloque;
 
   return (
     <>
@@ -57,6 +66,9 @@ export function CoffrePricing({
           const isLast = i === coffre.length - 1;
           const ref = Math.max(1, Math.round(ov.objet.prixReferenceReel));
           const marcheConnu = categoriesConnues.has(ov.objet.categorie);
+          const cible = cibles?.[ov.objet.templateId] ?? null;
+          const readOnly = !!readOnlyTemplateIds?.has(ov.objet.templateId);
+          const tutoFleches = cible !== null && ov.prixVente !== cible;
 
           return (
             <div
@@ -138,6 +150,9 @@ export function CoffrePricing({
                   marche={ref}
                   achat={ov.objet.prixAchat}
                   marcheConnu={marcheConnu}
+                  cible={cible}
+                  tutoFleches={tutoFleches}
+                  readOnly={readOnly}
                   onChange={(prix) => onAjusterPrix(ov.objet.id, prix)}
                 />
               </div>

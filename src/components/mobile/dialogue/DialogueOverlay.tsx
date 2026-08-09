@@ -79,9 +79,10 @@ const corps: CSSProperties = {
 };
 
 const texteStyle: CSSProperties = {
-  fontFamily: "var(--font-handwriting)",
-  fontSize: 18,
-  lineHeight: 1.35,
+  fontFamily: "var(--font-serif)",
+  fontSize: 21,
+  fontWeight: 500,
+  lineHeight: 1.45,
   color: "#3a2f1e",
 };
 

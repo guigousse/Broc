@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import { useGameActions, useGameStateOnly } from "@/context/GameContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { tutorielActif } from "@/lib/tutoriel";
 import { estRoutePartie } from "@/lib/routesPartie";
+import { getCoachOuvert, subscribeCoachOuvert } from "@/lib/coachActif";
 
 /** Gouttière au-dessus de la bannière (cf. `top`) et en dessous d'elle. */
 const GOUTTIERE_PX = 8;
@@ -32,7 +33,7 @@ const wrap: CSSProperties = {
 const texteStyle: CSSProperties = {
   flex: 1,
   fontFamily: "var(--font-mono)",
-  fontSize: 12,
+  fontSize: 13,
   lineHeight: 1.3,
 };
 
@@ -56,9 +57,17 @@ export function TutorielBanniere() {
   const [confirme, setConfirme] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  // Le coach (visite guidée) a sa propre découpe lumineuse par-dessus (z 100)
+  // qui laissait transparaître la bannière (z 90) — jusqu'à faire croire que
+  // « Passer le tutoriel » était la cible (recette 2026-08-09).
+  const coachOuvert = useSyncExternalStore(
+    subscribeCoachOuvert,
+    getCoachOuvert,
+    () => false,
+  );
 
   const visible =
-    estRoutePartie(pathname) && !!state && tutorielActif(state);
+    estRoutePartie(pathname) && !!state && tutorielActif(state) && !coachOuvert;
   const etapeCourante = state?.tutorielEtape;
 
   useEffect(() => () => {

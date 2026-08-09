@@ -192,6 +192,8 @@ export const fr = {
       "La valeur de ta collection grandit à chaque donation.",
     coachCollectionDeblocage:
       "Cette valeur débloque de nouvelles brocantes — et fait ta réputation.",
+    coachCollectionRetirer:
+      "Un objet donné n'est pas perdu : ce bouton le rend à ta réserve — mais la valeur s'en va avec lui.",
     instructions: {
       "accueil": "Écoute ton grand-père…",
       "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",
@@ -204,10 +206,13 @@ export const fr = {
       "stockage-focus": "Fais le tour de ton stockage — touche pour continuer.",
       "collection-envoyer": "Envoie la peluche mohair dans ta collection.",
       "collection-lecon": "Ouvre la Collection depuis la barre du bas.",
+      "ouvrir-colis": "Ouvre le colis du grand-père, devant la porte.",
       "preparer-etal": "Repasse la porte et choisis « Étaler » pour préparer ta vitrine.",
       "coffre-trace-un": "Prends le premier objet et pose-le sur son emplacement.",
       "coffre-trace-deux": "Un doigt pour déplacer, un second pour tourner : pose l'objet sur sa trace.",
-      "premiere-vente": "Vends un objet à un client, puis referme l'étal.",
+      "vente-refus": "Ce client offre trop peu — laisse tomber, sans regret.",
+      "vente-directe": "Il prend la manette au prix affiché : accepte !",
+      "vente-nego": "Négocie la carafe — tiens ton prix, elle montera.",
       "conclusion": "Écoute ton grand-père…",
     },
   },
@@ -406,6 +411,8 @@ export const fr = {
     aucunObjetACharger: "Aucun objet à charger. Allez chiner !",
     pastilleAchat: "achat",
     pastilleVente: "vente",
+    prixConseille: "Prix conseillé",
+    etiquetteGrandPere: "Étiqueté par le grand-père",
     camionNiveauAria: "Camion niveau {n}",
   },
   bilan: {

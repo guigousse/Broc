@@ -1272,4 +1272,9 @@ describe("migrerSauvegarde — v19 étapes v2 du tutoriel", () => {
     };
     expect(migrerSauvegarde(s as unknown as GameState).tutorielEtape).toBe("accueil");
   });
+
+  it("normalise premiere-vente (étape v2 disparue) vers termine", () => {
+    const s = { ...createMockGameState(), version: SAVE_VERSION, tutorielEtape: "premiere-vente" };
+    expect(migrerSauvegarde(s as unknown as GameState).tutorielEtape).toBe("termine");
+  });
 });

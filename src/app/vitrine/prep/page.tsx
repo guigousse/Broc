@@ -12,13 +12,35 @@ import { CATEGORIES } from "@/data/categories";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { prixSuggere } from "@/lib/prixSuggere";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { traceAPoser, estSurTrace, tracesToutesPosees } from "@/lib/coffreTuto";
-import { TRACES_TUTORIEL } from "@/data/tutorielScenario";
+import { nomExpediteur } from "@/lib/i18n/contenu";
+import { traceAPoser, estSurTrace, tracesToutesPosees, prixPoses } from "@/lib/coffreTuto";
+import {
+  PREFILL_COFFRE_TUTORIEL,
+  PRIX_CONSEILLES_TUTORIEL,
+  TEMPLATES_VERROUILLES_TUTORIEL,
+  TRACES_TUTORIEL,
+} from "@/data/tutorielScenario";
+import { tutorielActif } from "@/lib/tutoriel";
 import { audioManager } from "@/lib/audio/audioManager";
+import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
+import { GRAND_PERE_PORTRAITS, SEQUENCES_TUTORIEL, type DialogueSequence } from "@/data/dialogues";
 import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game";
 
 // Prix par défaut = prix du marché (curseur de tarification centré sur la valeur).
 const SUGGESTION_FACTEUR = 1;
+
+// Pricing guidé (Task 9) : templateIds du préfill (déjà étiquetés par le
+// grand-père) — poignée verrouillée en lecture seule sur ces lignes,
+// pendant tout le passage packing→pricing du tutoriel. Constant (dérivé
+// d'une donnée figée), calculé une seule fois au chargement du module.
+const READONLY_TEMPLATE_IDS_TUTORIEL: ReadonlySet<string> = new Set(
+  PREFILL_COFFRE_TUTORIEL.map((p) => p.templateId),
+);
+
+// Coffre à traces (tutoriel v3) : la manette (trace 0) n'est plus posée par
+// le joueur — démo du grand-père, Task 8. Alias vers `TRACES_TUTORIEL[0]`
+// plutôt qu'une chaîne recopiée, pour rester synchronisé avec la source.
+const MANETTE_TEMPLATE_ID = TRACES_TUTORIEL[0].templateId;
 
 /**
  * Préparation du coffre AVANT le choix de la brocante : packing puis pricing.
@@ -43,9 +65,13 @@ export default function VitrinePrepPage() {
     setNiveauCamionDev,
   } = useGame();
   const { avancerTutoriel } = useGameActions();
-  const { d } = useLangue();
+  const { d, locale } = useLangue();
 
   const [etape, setEtape] = useState<"packing" | "pricing">("packing");
+  // Pricing guidé (Task 9) : dialogues du grand-père avant/après la
+  // tarification, pendant le tutoriel uniquement (null hors tuto — jamais
+  // affectée). Même pattern que `dialogueTuto` de journee/ClientPage.tsx.
+  const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
 
   // Coffre à traces : latch anti-spam — mémorise le dernier objet aimanté
   // (id + templateId de la trace visée) pour ne pas rejouer le snap/le son
@@ -64,6 +90,30 @@ export default function VitrinePrepPage() {
   useEffect(() => {
     if (tutorielEtape === "preparer-etal") avancerTutoriel("coffre-trace-un");
   }, [tutorielEtape, avancerTutoriel]);
+
+  // Préfill du coffre Tetris (tutoriel v3) : le grand-père a déjà chargé 3
+  // pièces du colis — livré à l'étape "ouvrir-colis", donc déjà dans
+  // l'inventaire à l'arrivée ici — aux positions scriptées PREFILL_COFFRE_
+  // TUTORIEL. Une seule fois (prefillFaitRef), quand la vitrine est ouverte
+  // ET encore vide (couvre aussi bien le premier passage que la reprise :
+  // si le coffre contient déjà ces objets, `objets.length > 0` court-circuite
+  // avant même de consulter le ref). Fail-open si l'inventaire ne contient
+  // pas les 3 objets (vieux flux / save antérieure sans colis scripté) :
+  // pas de préfill plutôt qu'un crash sur `parTemplate.get(...)!`.
+  const prefillFaitRef = useRef(false);
+  useEffect(() => {
+    if (!state || !tutorielActif(state)) return;
+    if (prefillFaitRef.current) return;
+    if (!state.vitrine || state.vitrine.objets.length > 0) return;
+    const parTemplate = new Map(state.inventaireJoueur.map((o) => [o.templateId, o]));
+    const aTousLesObjets = PREFILL_COFFRE_TUTORIEL.every((p) => parTemplate.has(p.templateId));
+    if (!aTousLesObjets) return;
+    prefillFaitRef.current = true;
+    for (const p of PREFILL_COFFRE_TUTORIEL) {
+      const obj = parTemplate.get(p.templateId)!;
+      mettreEnVitrine(obj.id, p.prixVente, p.posX, p.posY, p.rotation);
+    }
+  }, [state, mettreEnVitrine]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -100,6 +150,115 @@ export default function VitrinePrepPage() {
     );
   }, [state, coffre]);
 
+  // Coffre Tetris (tutoriel v3) : ids des objets du préfill EFFECTIVEMENT
+  // présents dans le coffre — verrouillés (drag/rotation/retrait inertes).
+  // Dérivé du coffre courant (pas juste du préfill) : un objet retiré du
+  // coffre par un chemin détourné (dev tools, ancienne save) ne resterait
+  // pas verrouillé sur un fantôme absent.
+  //
+  // `TEMPLATES_VERROUILLES_TUTORIEL` (tutorielScenario.ts) couvre le préfill
+  // ET la manette (trace 0, posée par la démo du grand-père, Task 8) — revue
+  // Task 8 : sans ce verrou, un tap malencontreux sur la carafe (qui
+  // atterrit au centre 0.5/0.5, tout près de la trace manette 0.47/0.49)
+  // pouvait déloger la manette du coffre ; délogée, elle devient injoignable
+  // (exclue du carrousel par `ajoutsAutorisesTemplateIds` ci-dessous, et plus
+  // aucun chemin ne la repose) — cul-de-sac irrécupérable, Valider mort.
+  // Verrouiller la manette dès qu'elle est dans le coffre ferme cette
+  // fenêtre : elle devient aussi immuable que le préfill, jamais délogeable.
+  const verrouillesIds = useMemo(() => {
+    if (!state || !tutorielActif(state)) return new Set<string>();
+    return new Set(
+      coffre
+        .filter((ov) => TEMPLATES_VERROUILLES_TUTORIEL.has(ov.objet.templateId))
+        .map((ov) => ov.objet.id),
+    );
+  }, [state, coffre]);
+
+  // Coffre Tetris (tutoriel v3) : pendant les leçons de trace, seul l'objet
+  // encore posé À LA MAIN (la carafe) reste ajoutable depuis le carrousel —
+  // le reste du stock (rare, colis restant…) reste visible mais inerte tant
+  // que la leçon n'est pas terminée. `null` hors ces deux étapes = tout
+  // redevient ajoutable.
+  //
+  // La manette (trace 0) est délibérément EXCLUE, même à `coffre-trace-un` :
+  // depuis Task 8 elle n'est plus posée par le joueur mais par la démo du
+  // grand-père (`DemoDepotManette`) — la laisser tapable/glissable depuis le
+  // carrousel ouvrirait une fenêtre de course (tap avant que le voile
+  // plein écran de la démo n'ait fini de se monter) où le joueur pourrait
+  // la déposer lui-même, au mauvais prix/à la mauvaise position, et sans
+  // jamais faire avancer l'étape (verifierTrace ne le fait plus non plus).
+  const ajoutsAutorisesTemplateIds = useMemo(() => {
+    if (tutorielEtape !== "coffre-trace-un" && tutorielEtape !== "coffre-trace-deux") {
+      return null;
+    }
+    return new Set(
+      TRACES_TUTORIEL.filter((t) => t.templateId !== MANETTE_TEMPLATE_ID).map(
+        (t) => t.templateId,
+      ),
+    );
+  }, [tutorielEtape]);
+
+  // Coffre à traces (tutoriel v3) : la démo du grand-père se monte tant que
+  // l'étape est `coffre-trace-un` ET que la manette est encore en stock
+  // (pas encore posée) — garde de re-jeu après un kill/remontage en plein
+  // milieu de la démo : la manette n'a alors jamais quitté l'inventaire
+  // (le dépôt réel ne se joue qu'à la toute fin, dans `onTerminee`), donc la
+  // démo se remonte et rejoue depuis le début.
+  //
+  // `state.vitrine` non-null est AUSSI une condition de montage (pas
+  // seulement une garde interne à `onTerminee`, cf. plus bas) : au premier
+  // rendu du tutoriel, `state.vitrine` peut encore être `null` (l'effet
+  // `ouvrirVitrine` n'a pas encore commité) — démarrer la démo malgré tout
+  // mesurerait ses rects avec succès (le conteneur du coffre se monte que la
+  // vitrine existe ou non) et jouerait les 3,7 s jusqu'au bout, mais
+  // `mettreEnVitrine` no-opperait silencieusement (pas de `prev.vitrine`) :
+  // la manette resterait en stock alors que l'étape aurait déjà avancé à
+  // `coffre-trace-deux` — cul-de-sac (revue Task 8, même famille que le
+  // verrou ci-dessus). Attendre que `state.vitrine` existe avant de créer
+  // `demoManette` ferme cette fenêtre à la racine : la démo ne démarre
+  // jamais tant que le dépôt réel ne peut pas réussir.
+  const manetteEnStock = useMemo(
+    () => !!state?.inventaireJoueur.some((o) => o.templateId === MANETTE_TEMPLATE_ID),
+    [state],
+  );
+  const demoManette = useMemo(() => {
+    if (
+      !state ||
+      !state.vitrine ||
+      tutorielEtape !== "coffre-trace-un" ||
+      !manetteEnStock
+    ) {
+      return null;
+    }
+    return {
+      onTerminee: () => {
+        // Garde défensive (ceinture-bretelles avec le garde de montage
+        // ci-dessus) : si la vitrine a malgré tout disparu entre la mesure
+        // et la fin de la démo, on n'avance PAS — un demi-état (étape
+        // avancée sans dépôt réel) serait exactement le cul-de-sac visé par
+        // la revue. Ne rien faire ici laisse `demoManette` non-null au
+        // prochain rendu (rien n'a changé côté état) : la démo, déjà
+        // terminée visuellement, ne se rejoue pas seule — mais ce cas ne
+        // devrait jamais survenir en pratique, `state.vitrine` ne redevient
+        // jamais `null` une fois ouvert.
+        if (!state.vitrine) return;
+        const manette = state.inventaireJoueur.find(
+          (o) => o.templateId === MANETTE_TEMPLATE_ID,
+        );
+        if (manette) {
+          mettreEnVitrine(
+            manette.id,
+            PRIX_CONSEILLES_TUTORIEL[MANETTE_TEMPLATE_ID],
+            TRACES_TUTORIEL[0].posX,
+            TRACES_TUTORIEL[0].posY,
+            TRACES_TUTORIEL[0].rotation,
+          );
+        }
+        avancerTutoriel("coffre-trace-deux");
+      },
+    };
+  }, [state, tutorielEtape, manetteEnStock, mettreEnVitrine, avancerTutoriel]);
+
   const categoriesConnuesVitrine = useMemo(() => {
     const s = new Set<CategorieObjet>();
     if (!state) return s;
@@ -126,6 +285,12 @@ export default function VitrinePrepPage() {
     );
   }
 
+  // Pricing guidé (Task 9) : la tarification (packing puis pricing) se joue
+  // TOUJOURS pendant `coffre-trace-deux` — l'avancement à `vente-refus`
+  // n'arrive qu'au montage de journee/ClientPage.tsx (cf. son effet
+  // d'entrée), jamais ici. Un seul flag pour gater toute la leçon pricing.
+  const tutoPricing = state.tutorielEtape === "coffre-trace-deux";
+
   /**
    * Coffre à traces (tutoriel v2) : dès que l'objet visé par la trace
    * affichée (`trace`, dérivée de `traceAPoser` — donc déjà « la bonne »
@@ -147,6 +312,12 @@ export default function VitrinePrepPage() {
    * (le canvas commet des onMove/onRotate en continu pendant tout le
    * geste) ; le latch est levé dès que l'objet sort du disque OU que la
    * trace affichée change de templateId, pour rester réarmable.
+   *
+   * `coffre-trace-un` (la manette) n'avance plus JAMAIS depuis ici : elle
+   * n'est plus posée par le joueur (démo du grand-père, Task 8) — seul
+   * `coffre-trace-deux` (la carafe) continue de faire avancer l'étape par ce
+   * chemin. La branche qui avançait encore `coffre-trace-un` a été retirée,
+   * de toute façon inatteignable désormais.
    */
   const verifierTrace = (
     objetId: string,
@@ -172,9 +343,6 @@ export default function VitrinePrepPage() {
       ajusterPositionVitrine(objetId, trace.posX, trace.posY, trace.rotation);
       void audioManager.playCoffreOuvre();
       derniereTraceValideeRef.current = { objetId, templateId: trace.templateId };
-      if (state.tutorielEtape === "coffre-trace-un") {
-        avancerTutoriel("coffre-trace-deux");
-      }
     }
     return true;
   };
@@ -246,7 +414,14 @@ export default function VitrinePrepPage() {
             onRetirer={retirerDeVitrine}
             onUpgrade={acheterCamion}
             onSetNiveauDev={setNiveauCamionDev}
-            onValider={() => setEtape("pricing")}
+            onValider={() => {
+              setEtape("pricing");
+              // Pricing guidé (Task 9) : le grand-père présente la
+              // tarification au passage packing→pricing, une fois par
+              // arrivée sur l'étape (rejoué si on repasse par "packing" via
+              // Retour puis re-Valider — sans conséquence, juste un rappel).
+              if (tutoPricing) setDialogueTuto(SEQUENCES_TUTORIEL.tuto_prix_avant);
+            }}
             onAnnuler={() => {
               viderVitrine();
               router.push("/bureau");
@@ -257,7 +432,17 @@ export default function VitrinePrepPage() {
             }
             trace={trace}
             validerBloque={validerBloque}
-            mainTemplateId={trace?.templateId ?? null}
+            // Pendant `coffre-trace-un`, la manette n'est plus posée par le
+            // joueur (démo du grand-père) : jamais de main pointant le
+            // carrousel à cette étape, même si `trace` y désigne encore la
+            // manette — un second appel du regard (la démo ET la main)
+            // brouillerait la leçon.
+            mainTemplateId={
+              tutorielEtape === "coffre-trace-un" ? null : trace?.templateId ?? null
+            }
+            verrouillesIds={verrouillesIds}
+            ajoutsAutorisesTemplateIds={ajoutsAutorisesTemplateIds}
+            demoManette={demoManette}
             rotationHint={
               state.tutorielEtape === "coffre-trace-deux" &&
               validerBloque &&
@@ -269,14 +454,36 @@ export default function VitrinePrepPage() {
             coffre={coffre}
             onAjusterPrix={ajusterPrixVitrine}
             onRetour={() => setEtape("packing")}
-            onValider={() => router.push("/vitrine")}
+            onValider={() => {
+              if (tutoPricing) {
+                setDialogueTuto(SEQUENCES_TUTORIEL.tuto_prix_apres);
+              } else {
+                router.push("/vitrine");
+              }
+            }}
             validerLabel={d.vente.choisirBrocante}
             validerActif={coffre.length > 0}
             categoriesConnues={categoriesConnuesVitrine}
-            tutoMainValider={state.tutorielEtape === "coffre-trace-deux"}
+            tutoMainValider={tutoPricing && prixPoses(coffre)}
+            readOnlyTemplateIds={tutoPricing ? READONLY_TEMPLATE_IDS_TUTORIEL : undefined}
+            cibles={tutoPricing ? PRIX_CONSEILLES_TUTORIEL : null}
+            validerBloque={tutoPricing ? !prixPoses(coffre) : undefined}
           />
         )}
       </main>
+      <DialogueOverlay
+        sequence={dialogueTuto}
+        nom={nomExpediteur("grand-pere", locale)}
+        portraits={GRAND_PERE_PORTRAITS}
+        onFini={() => {
+          // router.push seulement pour tuto_prix_apres (dernier dialogue de
+          // la leçon pricing) — tuto_prix_avant se ferme simplement sur
+          // l'étape pricing déjà affichée, sans navigation.
+          const etaitApres = dialogueTuto === SEQUENCES_TUTORIEL.tuto_prix_apres;
+          setDialogueTuto(null);
+          if (etaitApres) router.push("/vitrine");
+        }}
+      />
     </div>
   );
 }

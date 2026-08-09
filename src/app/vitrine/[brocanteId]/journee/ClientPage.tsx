@@ -26,14 +26,18 @@ import {
   margeBoniment,
   bourseDe,
   genererClientEvent,
+  genererClientEventScripte,
   personaDepuisClient,
   prochainIntervalleClient,
   proposerOffreVente,
+  sommePrixAchatPanier,
   type ClientEvent,
   type VitrineModifiers,
 } from "@/lib/vitrine";
-import { ouvrirNegociation } from "@/lib/negociation";
+import { ALEA_NEGO_SCRIPTEE, ouvrirNegociation, proposerOffre } from "@/lib/negociation";
 import { temperamentDe } from "@/data/temperaments";
+import { acheteurDeLEtape, type AcheteurScenario } from "@/data/tutorielScenario";
+import { etapeSuivante, tutorielActif } from "@/lib/tutoriel";
 import {
   CLIENT_SILHOUETTE,
   getClientIllustration,
@@ -103,6 +107,7 @@ import type {
   NiveauCamion,
   ObjetEnVitrine,
   Rarete,
+  TutorielEtape,
   VenteHistorique,
 } from "@/types/game";
 
@@ -111,6 +116,21 @@ const TICK_MS = 100;
 // à intervalle fixe qui ignore l'intervalle normal ET le multiplicateur météo.
 const CRIEE_NB_CLIENTS = 3;
 const CRIEE_INTERVALLE_SEC = 1;
+
+/** Journée de vente scriptée (tutoriel) : dialogue « avant » joué une fois
+ *  par étape, dès qu'aucun client n'est présent — mirroir du pattern de la
+ *  chine (`src/app/chiner/[brocanteId]/ClientPage.tsx`). */
+const AVANT_VENTE: Partial<Record<TutorielEtape, DialogueSequence>> = {
+  "vente-refus": SEQUENCES_TUTORIEL.tuto_vente_refus_avant,
+  "vente-directe": SEQUENCES_TUTORIEL.tuto_vente_directe_avant,
+  "vente-nego": SEQUENCES_TUTORIEL.tuto_vente_nego_avant,
+};
+/** Ids des séquences « avant » ci-dessus : sert à détecter, à la fermeture
+ *  du dialogue (`onFini`), qu'il s'agissait d'un « avant » et non d'un
+ *  débrief — dans ce cas le client scripté doit surgir tout de suite. */
+const AVANT_VENTE_IDS: ReadonlySet<string> = new Set(
+  Object.values(AVANT_VENTE).map((s) => s.id),
+);
 
 interface EntreeJournal {
   id: string;
@@ -337,15 +357,42 @@ export default function VitrineJourneePage() {
   // défiler « coup sur coup » une fois déclenchée (cf. bloc de spawn du tick).
   const crieeRestantsRef = useRef(0);
 
-  /** Calcule le prochain état de négo pour une contre-offre du joueur, en
-   *  passant par `proposerOffreVente` : tolérance boostée (Verbe haut/d'or,
-   *  Œil aiguisé) ET sauvetage Diplomate (quota persistant via les actives)
-   *  au lieu de l'ancien `proposerOffre` brut appelé par le sheet. */
+  /** Étape courante, à jour même dans les closures figées du tick (setInterval). */
+  const etapeRef = useRef<TutorielEtape | undefined>(etape);
+  etapeRef.current = etape;
+  /** Dialogue tuto affiché, à jour dans le tick (le spawn scripté doit se
+   *  taire tant qu'un dialogue est ouvert). */
+  const dialogueTutoRef = useRef<DialogueSequence | null>(null);
+  dialogueTutoRef.current = dialogueTuto;
+  /** Acheteur scénario actif (journée de vente scriptée) : posé au spawn
+   *  scripté, consulté pour la négo (persona ET aléa du scénario — PAS le
+   *  persona du `ClientPersonnage` réel, qui porte d'autres axes) et pour le
+   *  câblage `scriptTuto` de la sheet. Null hors tuto ou entre deux clients. */
+  const acheteurScripteRef = useRef<AcheteurScenario | null>(null);
+  /** Chaque séquence « avant » du script de vente ne doit être jouée qu'une
+   *  fois (StrictMode, retours en arrière de `etape` impossibles mais gardé
+   *  par sécurité) — même pattern que la chine. */
+  const dialoguesJouesRef = useRef<Set<string>>(new Set());
+  /** Étape vers laquelle avancer une fois le débrief « après » refermé (posé
+   *  par les débriefs de vente ci-dessous, consommé par `onFini`). */
+  const dialogueApresRef = useRef<TutorielEtape | null>(null);
+
+  /** Calcule le prochain état de négo pour une contre-offre du joueur.
+   *  Pendant la journée scriptée du tutoriel, le persona ET l'aléa sont ceux
+   *  du scénario (`acheteurScripteRef`, prouvés déterministes par
+   *  `tutorielScenario.test.ts`) — pas le `ClientPersonnage` réel du
+   *  personnage nommé, dont les axes de négo diffèrent. Sinon, passe par
+   *  `proposerOffreVente` : tolérance boostée (Verbe haut/d'or, Œil aiguisé)
+   *  ET sauvetage Diplomate (quota persistant via les actives). */
   const handleOffreVente = useCallback(
     (nego: NegociationState, offre: number): NegociationState => {
       const ev = clientActuelRef.current;
-      const mods = modifiersRef.current ?? DEFAULT_MODIFIERS;
       if (!ev) return nego;
+      const acheteurScripte = acheteurScripteRef.current;
+      if (acheteurScripte) {
+        return proposerOffre(nego, acheteurScripte.persona, offre, ALEA_NEGO_SCRIPTEE);
+      }
+      const mods = modifiersRef.current ?? DEFAULT_MODIFIERS;
       const diplomatieDispo =
         mods.diplomate &&
         usagesRestants(
@@ -426,13 +473,14 @@ export default function VitrineJourneePage() {
       return;
     }
     if (state.vitrine.objets.length === 0) {
-      // Tutoriel « première vente » : si l'unique objet vient d'être vendu,
-      // NE PAS clore ici — le dialogue du grand-père doit se jouer et faire
-      // passer l'étape à « conclusion » (défaillance device 2026-07-17, 2e
-      // site : le gate du seul effet « bravo tout vendu » ne suffisait pas,
-      // ce chemin-ci clôturait avant lui). L'effet se re-déclenche à la fin
-      // du dialogue (deps etape/dialogueTuto) et clôture alors normalement.
-      if (etape === "premiere-vente" || dialogueTuto) return;
+      // Tutoriel (journée de vente scriptée) : si le dernier objet vient
+      // d'être vendu, NE PAS clore ici avant que le script ait atteint sa
+      // dernière étape (« conclusion ») — le débrief de Bérénice doit se
+      // jouer et faire avancer l'étape (défaillance device 2026-07-17 :
+      // le gate du seul effet « bravo tout vendu » ne suffisait pas, ce
+      // chemin-ci clôturait avant lui). L'effet se re-déclenche à chaque
+      // changement d'étape (dep `etape`) et clôture alors normalement.
+      if (tutorielActif(state) && etape !== "conclusion") return;
       // Vitrine vide : si la journée a démarré (standSnapshot posé), c'est que
       // tout a été vendu — on clôture pour afficher le résumé. Sinon (arrivée
       // sur la page sans préparation), on renvoie à la prépa.
@@ -442,7 +490,7 @@ export default function VitrineJourneePage() {
         router.replace(`/vitrine/${brocante.id}`);
       }
     }
-  }, [isHydrated, state, router, journeeFinie, brocante, etape, dialogueTuto]);
+  }, [isHydrated, state, router, journeeFinie, brocante, etape]);
 
   const ajouterJournal = useCallback((entree: Omit<EntreeJournal, "id">) => {
     setJournal((prev) => [
@@ -503,8 +551,11 @@ export default function VitrineJourneePage() {
     if (!isHydrated) return;
 
     const id = window.setInterval(() => {
-      // En pause si un client est devant nous
+      // En pause si un client est devant nous, ou (tutoriel) si un dialogue
+      // du grand-père est ouvert — l'horloge ET le spawn attendent qu'il ait
+      // fini de parler (hors tuto, dialogueTuto est toujours null : no-op).
       if (clientActuelRef.current) return;
+      if (dialogueTutoRef.current) return;
 
       // Décompte à la précision du tick sur une ref ; l'état React (et donc
       // le re-render) n'est touché qu'au changement de seconde entière. La
@@ -523,6 +574,68 @@ export default function VitrineJourneePage() {
       {
         const next = prochainClientRef.current! - TICK_MS / 1000;
         if (next <= 0) {
+          const enTuto = tutorielActif({ tutorielEtape: etapeRef.current ?? "termine" });
+          if (enTuto) {
+            // Journée de vente scriptée : jamais le pool aléatoire — un
+            // acheteur nommé par étape, posé seulement une fois son « avant »
+            // joué (dialoguesJouesRef, alimenté par l'effet AVANT_VENTE).
+            const acheteur = acheteurDeLEtape(etapeRef.current!);
+            const avantSeq = AVANT_VENTE[etapeRef.current!];
+            const avantDejaJoue = !avantSeq || dialoguesJouesRef.current.has(avantSeq.id);
+            if (acheteur && avantDejaJoue) {
+              const ev = genererClientEventScripte(acheteur, {
+                brocanteId: brocante?.id ?? "",
+                objets: vitrineRef.current,
+              });
+              if (ev === null) {
+                // Garde-fou : l'objet ciblé n'est plus en vitrine (ne devrait
+                // pas arriver dans le déroulé normal) — on avance l'étape au
+                // lieu de rester coincé sans jamais pouvoir spawner.
+                avancerTutoriel(etapeSuivante(etapeRef.current!));
+              } else {
+                for (const p of ev.panier) {
+                  marquerVuTemplate(p.objet.templateId);
+                }
+                acheteurScripteRef.current = acheteur;
+                setClientActuel(ev);
+                setOffreJoueur(
+                  acheteur.bornesOffre
+                    ? Math.min(
+                        acheteur.bornesOffre.max,
+                        Math.max(acheteur.bornesOffre.min, ev.prixDemande),
+                      )
+                    : ev.prixDemande,
+                );
+                setRevelationFaite(false);
+                setNegoVente(
+                  ev.mode === "negociation"
+                    ? ouvrirNegociation(
+                        "vente",
+                        ev.offreInitiale,
+                        ev.prixMax,
+                        // Tempérament (couleur des répliques) : l'id RÉEL du
+                        // ClientPersonnage (ev.persona.archetypeId), mappé
+                        // dans TEMPERAMENT_CLIENTS — PAS acheteur.persona.archetype
+                        // ("radin_tuto"/"ami_tuto"/"nego_tuto", des labels
+                        // scénario absents des deux tables de tempérament,
+                        // qui feraient retomber sur les pools génériques.
+                        // acheteur.persona reste la SEULE source pour la
+                        // mécanique de négo (proposerOffre), inchangée.
+                        temperamentDe(ev.persona.archetypeId),
+                      )
+                    : null,
+                );
+              }
+            }
+            // Retente vite si l'avant n'est pas encore joué (le dialogue va
+            // fermer et reprogrammer 1.5s) ; sinon rythme normal — la Criée
+            // n'a pas de sens pendant le script (pas de pool à faire défiler).
+            prochainClientRef.current = avantDejaJoue
+              ? prochainIntervalleClient(modifiersRef.current?.intervalleMultiplier ?? 1)
+              : 0.3;
+            return;
+          }
+
           const mods = modifiersRef.current ?? undefined;
           const tempsEcoulePct =
             1 - tempsRestantRef.current / JOURNEE_DUREE_SECONDES;
@@ -558,6 +671,7 @@ export default function VitrineJourneePage() {
             }
             if (ev.fancy) setFancyClientApparu(true);
             if (forceCelebrite) celebriteApparueRef.current = true;
+            acheteurScripteRef.current = null;
             setClientActuel(ev);
             setOffreJoueur(ev.prixDemande);
             setRevelationFaite(false);
@@ -645,14 +759,12 @@ export default function VitrineJourneePage() {
       state &&
       (state.vitrine?.objets.length ?? 0) === 0 &&
       tempsRestant < JOURNEE_DUREE_SECONDES &&
-      // Tutoriel : si l'unique objet vient d'être vendu, ne PAS clore la
-      // journée avant que le dialogue « première vente » soit joué et que
-      // l'étape soit passée à « conclusion » — sinon le bilan court-circuite
-      // le tuto et le joueur doit refaire une vente (défaillance device
-      // 2026-07-17). L'effet se re-déclenche à chaque tick de tempsRestant,
-      // donc la clôture reprend dès la fin du dialogue.
-      etape !== "premiere-vente" &&
-      !dialogueTuto
+      // Tutoriel (journée de vente scriptée) : l'horloge ne clôt jamais la
+      // journée avant la fin du script, même si l'étal se vide plus tôt (le
+      // débrief de Bérénice doit se jouer et faire avancer l'étape jusqu'à
+      // « conclusion » — défaillance device 2026-07-17, généralisée pour les
+      // 3 acheteurs scriptés). Elle reprend ses droits dès « conclusion ».
+      (!state || !tutorielActif(state) || etape === "conclusion")
     ) {
       setBravoTout(true);
       ajouterJournal({
@@ -662,7 +774,7 @@ export default function VitrineJourneePage() {
       });
       terminerJournee();
     }
-  }, [state, isHydrated, journeeFinie, tempsRestant, terminerJournee, ajouterJournal, heureCourante, d, etape, dialogueTuto]);
+  }, [state, isHydrated, journeeFinie, tempsRestant, terminerJournee, ajouterJournal, heureCourante, d, etape]);
 
   // Entrée de journée pendant le tutoriel : le grand-père présente la vente.
   useEffect(() => {
@@ -670,6 +782,17 @@ export default function VitrineJourneePage() {
       setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_entree);
     }
   }, [etape]);
+
+  // Dialogue « avant » par étape scriptée de vente : le grand-père présente
+  // chaque visage avant qu'il ne surgisse (pattern identique à la chine).
+  useEffect(() => {
+    if (!etape || dialogueTuto) return;
+    const seq = AVANT_VENTE[etape];
+    if (seq && !dialoguesJouesRef.current.has(seq.id)) {
+      dialoguesJouesRef.current.add(seq.id);
+      setDialogueTuto(seq);
+    }
+  }, [etape, dialogueTuto]);
 
   if (!isHydrated || !state) {
     return (
@@ -733,9 +856,13 @@ export default function VitrineJourneePage() {
       }),
       ton: "vente",
     });
-    if (etape === "premiere-vente") {
-      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_faite);
+    // Journée scriptée : l'ami Léo achète direct au prix affiché — débrief,
+    // puis la troisième et dernière leçon (la négociatrice Bérénice).
+    if (etape === "vente-directe") {
+      dialogueApresRef.current = "vente-nego";
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_directe_apres);
     }
+    acheteurScripteRef.current = null;
     setClientActuel(null);
     setLotGarniOuvert(false);
   };
@@ -760,9 +887,13 @@ export default function VitrineJourneePage() {
       }),
       ton: "vente",
     });
-    if (etape === "premiere-vente") {
-      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_faite);
+    // Journée scriptée : la négociatrice Bérénice conclut — dernière leçon,
+    // débrief puis fin du script (le bouton Sortir pulsera à « conclusion »).
+    if (etape === "vente-nego") {
+      dialogueApresRef.current = "conclusion";
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_nego_apres);
     }
+    acheteurScripteRef.current = null;
     setClientActuel(null);
     setNegoVente(null);
     setLotGarniOuvert(false);
@@ -774,6 +905,15 @@ export default function VitrineJourneePage() {
       texte: tr(d.vente.journalEloigne, { nom: nomAfficheClient(ev.persona) }),
       ton: "info",
     });
+    // Journée scriptée : le radin (Maxime) est congédié ou renonce de
+    // lui-même (refus_poli à patience) sans jamais conclure ni insulter
+    // (garanti par `SESSION_VENTE_TUTORIEL` — cf. tutorielScenario.test.ts) —
+    // tous les chemins de fin de visite passent par ici. Débrief, puis Léo.
+    if (etape === "vente-refus") {
+      dialogueApresRef.current = "vente-directe";
+      setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_refus_apres);
+    }
+    acheteurScripteRef.current = null;
     setClientActuel(null);
     setNegoVente(null);
     setLotGarniOuvert(false);
@@ -887,13 +1027,16 @@ export default function VitrineJourneePage() {
     { cle: "negociations", montant: xpSession.negociations },
   ];
 
-  /* Persona révélé : compétence Lecteur d'âmes, ou célébrité (toujours à
-     visage découvert). Sinon le client reste anonyme : nom générique et
-     silhouette noire à la place du portrait d'archétype. */
+  /* Persona révélé : compétence Lecteur d'âmes, célébrité (toujours à visage
+     découvert), ou journée de vente scriptée du tutoriel (les trois visages
+     sont NOMMÉS — Maxime, Léo, Bérénice — jamais anonymes). Sinon le client
+     reste anonyme : nom générique et silhouette noire à la place du portrait
+     d'archétype. */
   const personaRevele =
     clientActuel !== null &&
     ((modifiersRef.current?.revelePersona ?? false) ||
-      clientActuel.persona.archetypeId === "celebrite");
+      clientActuel.persona.archetypeId === "celebrite" ||
+      tutorielActif(state));
 
   return (
     <div
@@ -1077,7 +1220,7 @@ export default function VitrineJourneePage() {
         <NegociationSheet
           open={true}
           onClose={() => terminerVisiteClient(clientActuel)}
-          tutoMainJoueur={etape === "premiere-vente"}
+          tutoMainJoueur={etape === "vente-nego"}
           mode="vente"
           persona={personaDepuisClient(clientActuel.persona)}
           celebrite={clientActuel.persona.archetypeId === "celebrite"}
@@ -1099,6 +1242,7 @@ export default function VitrineJourneePage() {
               : clientActuel.prixDemande
           }
           nego={clientActuel.mode === "negociation" ? negoVente : null}
+          achat={sommePrixAchatPanier(clientActuel.panier)}
           nomAffiche={
             personaRevele
               ? nomAfficheClient(clientActuel.persona)
@@ -1125,9 +1269,7 @@ export default function VitrineJourneePage() {
             // n'apparaît que via la révélation Diplomate.
             fourchettePrixMax: clientActuel.fourchettePrixMax,
             prixMax: revelationFaite ? clientActuel.prixMax : undefined,
-            revelePersona:
-              (modifiersRef.current?.revelePersona ?? false) ||
-              clientActuel.persona.archetypeId === "celebrite",
+            revelePersona: personaRevele,
             releveBourse: modifiersRef.current?.releveBourse ?? false,
             oeilAiguise:
               (modifiersRef.current?.oeilAiguise ?? false) || revelationFaite,
@@ -1169,12 +1311,21 @@ export default function VitrineJourneePage() {
                   prixDirect: clientActuel.prixDemande,
                   onAccepter: () => handleAccepterAchatDirect(clientActuel),
                   onRefuser: () => terminerVisiteClient(clientActuel),
+                  tutoMainAccepter: etape === "vente-directe",
                 }
               : undefined
           }
           offreJoueur={offreJoueur}
           onChangeOffre={setOffreJoueur}
           bottomOffset="calc(76px + var(--safe-bottom))"
+          scriptTuto={
+            acheteurScripteRef.current
+              ? {
+                  bornes: acheteurScripteRef.current.bornesOffre,
+                  mainLaisserTomber: etape === "vente-refus",
+                }
+              : null
+          }
         />
       )}
 
@@ -1224,9 +1375,22 @@ export default function VitrineJourneePage() {
         nom={nomExpediteur("grand-pere", locale)}
         portraits={GRAND_PERE_PORTRAITS}
         onFini={() => {
+          const idFini = dialogueTuto?.id;
           setDialogueTuto(null);
-          if (etape === "coffre-trace-deux") avancerTutoriel("premiere-vente");
-          else if (etape === "premiere-vente") avancerTutoriel("conclusion");
+          if (etape === "coffre-trace-deux") {
+            // Entrée de journée : le grand-père a présenté la vente.
+            avancerTutoriel("vente-refus");
+          } else if (dialogueApresRef.current) {
+            // Débrief (« après ») d'une visite scriptée : avance vers
+            // l'étape posée par le gestionnaire de fin de visite/vente.
+            const vers = dialogueApresRef.current;
+            dialogueApresRef.current = null;
+            avancerTutoriel(vers);
+          } else if (idFini && AVANT_VENTE_IDS.has(idFini)) {
+            // « Avant » d'une visite scriptée : le client surgit presque
+            // tout de suite (précédent La Criée l.409).
+            prochainClientRef.current = 1.5;
+          }
         }}
       />
     </div>

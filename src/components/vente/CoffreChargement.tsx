@@ -37,6 +37,7 @@ import { RotationHint } from "./RotationHint";
 import { BoutonConcession } from "./BoutonConcession";
 import { ConcessionSheet } from "./ConcessionSheet";
 import { CarrouselStock } from "./CarrouselStock";
+import { DemoDepotManette, type RectDemoCible, type RectDemoDepart } from "./DemoDepotManette";
 import { DevPanel } from "./DevPanel";
 import { OUTILS_DEV } from "@/lib/outilsDev";
 
@@ -104,6 +105,19 @@ interface Props {
   /** Tutoriel — coffre à traces, 2ᵉ trace : hint pédagogique décoratif
    *  « un doigt déplace, deux doigts tournent » superposé au canvas. */
   rotationHint?: boolean;
+  /** Tutoriel — coffre Tetris (préfill) : ids d'objets verrouillés, passés
+   *  tel quel à `CoffreCanvas` (pas de drag, pas de rotation, pas de retrait). */
+  verrouillesIds?: ReadonlySet<string>;
+  /** Tutoriel — démo du grand-père (`coffre-trace-un`) : quand non-null, la
+   *  manette de `trace` n'est plus posée par le joueur — un clone anime
+   *  seul le dépôt + la rotation, puis appelle `onTerminee` (dépôt réel côté
+   *  appelant). Rects de départ/arrivée mesurés ici ; fail-open (élément
+   *  introuvable) → `onTerminee` appelé immédiatement, sans rendre la démo. */
+  demoManette?: { onTerminee: () => void } | null;
+  /** Tutoriel — coffre Tetris (préfill) : gate les ajouts depuis le
+   *  carrousel (tap ET drag) aux seuls templateId de l'ensemble ; `null`/
+   *  absent = tout le stock reste ajoutable (comportement hors tutoriel). */
+  ajoutsAutorisesTemplateIds?: ReadonlySet<string> | null;
 }
 
 function buildSolidMask(size: number): Uint8Array {
@@ -214,11 +228,142 @@ export function CoffreChargement(p: Props) {
   const [dragObjet, setDragObjet] = useState<{ id: string; x: number; y: number } | null>(null);
   const dragIdRef = useRef<string | null>(null);
 
+  // Tutoriel — démo du grand-père (coffre-trace-un) : mesure des rects de
+  // départ (vignette du carrousel) et d'arrivée (silhouette de la trace)
+  // UNE SEULE FOIS par apparition de `p.demoManette` (le parent recrée
+  // l'objet à chaque render — `demoDejaMesureRef` évite de re-mesurer et
+  // d'appeler `onTerminee` en boucle). `demoOnTermineeRef` porte toujours la
+  // version la plus fraîche du callback, lue par l'enfant au moment où il se
+  // déclenche réellement — jamais une closure périmée capturée à la mesure.
+  const demoDejaMesureRef = useRef(false);
+  const demoOnTermineeRef = useRef<(() => void) | null>(null);
+  const [demoRects, setDemoRects] = useState<{
+    departRect: RectDemoDepart;
+    cibleRect: RectDemoCible;
+    imageSrc: string;
+  } | null>(null);
+
+  useEffect(() => {
+    demoOnTermineeRef.current = p.demoManette?.onTerminee ?? null;
+  }, [p.demoManette]);
+
+  useEffect(() => {
+    if (!p.demoManette) {
+      demoDejaMesureRef.current = false;
+      setDemoRects(null);
+      return;
+    }
+    // NE PAS poser la garde ici : elle ne doit passer à `true` qu'une fois
+    // la mesure RÉELLEMENT actée (fail-open ou `setDemoRects`, plus bas).
+    // Sinon, une course s'ouvre entre le `requestAnimationFrame` différé
+    // ci-dessous et TOUT re-render du parent (StrictMode, ou `p.demoManette`
+    // recréé — un objet neuf à chaque render côté `prep/page.tsx`) : la
+    // garde était posée AVANT l'attente async, le cleanup annulait le rAF en
+    // vol, et la ré-exécution suivante voyait la garde déjà `true` → plus
+    // aucune mesure n'était jamais reprogrammée, `demoRects` ne se posait
+    // jamais, la démo ne montait JAMAIS (revue Task 8, prouvé par deux tests
+    // RTL — StrictMode et rerender avec objet frais, cf.
+    // `CoffreChargement.test.tsx`). En la laissant `false` tant que rien
+    // n'est acté, un cleanup qui annule le rAF avant qu'il ne s'exécute
+    // laisse l'effet reprogrammer la mesure à la prochaine invocation —
+    // convergence garantie après un nombre borné de reprises (le travail
+    // refait — `querySelector`, `scrollIntoView` — est idempotent et sans
+    // effet de bord observable).
+    if (demoDejaMesureRef.current) return;
+
+    const trace = p.trace;
+    const tpl = trace ? getTemplate(trace.templateId) : undefined;
+    const imageSrc = trace ? getItemThumbUrl(trace.templateId) : null;
+    const departEl = trace
+      ? document.querySelector<HTMLElement>(
+          `[data-carrousel-template="${trace.templateId}"]`,
+        )
+      : null;
+
+    // Fail-open immédiat : trace/gabarit/image/élément de départ introuvables
+    // — rien à mesurer, le dépôt réel se joue quand même tout de suite, sans
+    // jamais bloquer le tutoriel sur un calcul manquant. Lu via
+    // `demoOnTermineeRef` (mis à jour par l'effet précédent, qui s'exécute
+    // avant celui-ci — même ordre de déclaration) plutôt que
+    // `p.demoManette.onTerminee` directement : source unique, cohérente
+    // avec la branche différée ci-dessous. Entièrement synchrone : la garde
+    // peut être posée ici sans risque de course (rien à annuler).
+    if (!trace || !tpl || !imageSrc || !departEl) {
+      demoDejaMesureRef.current = true;
+      demoOnTermineeRef.current?.();
+      return;
+    }
+
+    // La vignette peut être hors du champ visible du carrousel (overflow-x
+    // auto ; 4-6 objets triés par catégorie à cette étape, la manette n'est
+    // pas forcément en premier) : on la fait défiler dans le champ visible
+    // AVANT de mesurer, sinon le clone démarrerait d'un point invisible à
+    // l'écran. Une frame d'attente (rAF) pour laisser ce scroll — natif,
+    // synchrone — se répercuter sur le layout avant de lire les rects.
+    // Optionnel : absent de jsdom (tests), cf. `ParcoursSheet.tsx`. Idempotent
+    // si répété (retenté après un cleanup) : un élément déjà visible n'est
+    // pas rescrollé, sans effet de bord.
+    departEl.scrollIntoView?.({ block: "nearest", inline: "center" });
+    const rafId = requestAnimationFrame(() => {
+      const departBox = departEl.getBoundingClientRect();
+      const conteneurBox = conteneurCoffreRef.current?.getBoundingClientRect();
+
+      // Fail-open différé : le conteneur du coffre a disparu entre-temps
+      // (cas limite, ex. démontage en cours) — même traitement, toujours
+      // via la ref pour lire la version la plus fraîche du callback. La
+      // garde n'est posée qu'ICI, une fois le rAF réellement exécuté (pas
+      // annulé par un cleanup) — c'est tout l'objet du fix.
+      if (!conteneurBox) {
+        demoDejaMesureRef.current = true;
+        demoOnTermineeRef.current?.();
+        return;
+      }
+
+      demoDejaMesureRef.current = true;
+      const sizePx = getScaleCoffre(tailleDe(tpl), camion.capacitePlaces) * conteneurBox.width;
+      setDemoRects({
+        departRect: {
+          x: departBox.left,
+          y: departBox.top,
+          w: departBox.width,
+          h: departBox.height,
+        },
+        cibleRect: {
+          x: conteneurBox.left + trace.posX * conteneurBox.width - sizePx / 2,
+          y:
+            conteneurBox.top +
+            trace.posY * (conteneurBox.width / camion.aspectRatio) -
+            sizePx / 2,
+          w: sizePx,
+          h: sizePx,
+          rotation: trace.rotation,
+        },
+        imageSrc,
+      });
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [p.demoManette, p.trace, camion.aspectRatio, camion.capacitePlaces]);
+
+  const demoOnTerminee = useCallback(() => {
+    demoOnTermineeRef.current?.();
+  }, []);
+
+  /** Tutoriel — coffre Tetris (préfill) : le templateId de l'objet visé
+   *  est-il dans l'ensemble autorisé ? `null`/absent = tout autorisé. */
+  const ajoutAutorise = (objetId: string): boolean => {
+    if (!p.ajoutsAutorisesTemplateIds) return true;
+    const obj = p.stock.find((o) => o.id === objetId);
+    return !!obj && p.ajoutsAutorisesTemplateIds.has(obj.templateId);
+  };
+
   const handleTap = (objetId: string) => {
+    if (!ajoutAutorise(objetId)) return;
     p.onAjouter(objetId, 0.5, 0.5);
   };
 
   const handleDragStart = (objetId: string, x: number, y: number) => {
+    if (!ajoutAutorise(objetId)) return;
     dragIdRef.current = objetId;
     setDragObjet({ id: objetId, x, y });
   };
@@ -445,6 +590,7 @@ export function CoffreChargement(p: Props) {
           onRetour={p.onRetirer}
           conteneurRef={conteneurCoffreRef}
           trace={p.trace}
+          verrouillesIds={p.verrouillesIds}
         />
         <RotationHint actif={p.rotationHint === true && !closing} />
       </div>
@@ -456,7 +602,20 @@ export function CoffreChargement(p: Props) {
         onDragEnd={handleDragEnd}
         tutoMain={p.tuto === true && p.coffre.length === 0}
         mainTemplateId={p.mainTemplateId ?? null}
+        templateIdsAutorises={p.ajoutsAutorisesTemplateIds ?? null}
       />
+      {/* Démo du grand-père (coffre-trace-un) : ne rend rien tant que les
+          deux rects n'ont pas été mesurés avec succès (sinon fail-open déjà
+          déclenché ci-dessus, sans rendu). */}
+      {demoRects && (
+        <DemoDepotManette
+          actif
+          onTerminee={demoOnTerminee}
+          departRect={demoRects.departRect}
+          cibleRect={demoRects.cibleRect}
+          imageSrc={demoRects.imageSrc}
+        />
+      )}
       {/* Fantôme de drag : l'objet suit le doigt, à la taille qu'il aura
           dans le coffre. */}
       {dragObjet &&

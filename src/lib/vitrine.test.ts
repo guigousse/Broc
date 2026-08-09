@@ -18,14 +18,17 @@ import {
   calculerPrixMax,
   classeBourse,
   genererClientEvent,
+  genererClientEventScripte,
   personaDepuisClient,
   prochainIntervalleClient,
   proposerOffreVente,
   type VitrineModifiers,
   BRADERIE_INTERVALLE_MULT,
+  sommePrixAchatPanier,
 } from "./vitrine";
 import { estGrandeBraderie } from "./evenements";
 import { ouvrirNegociation } from "./negociation";
+import { SESSION_VENTE_TUTORIEL, personnageScenario } from "@/data/tutorielScenario";
 import { texteNego } from "@/lib/i18n/contenu";
 import { getBrocanteById } from "@/data/brocantes";
 import {
@@ -796,5 +799,57 @@ describe("BRADERIE_INTERVALLE_MULT (Effets braderie côté vente)", () => {
     const braderie = getBrocanteById("grande-braderie")!;
     const boss = getBrocanteById("salon-antiquaires-drouot")!;
     expect(bourseMoyenne(braderie)).toBeGreaterThan(bourseMoyenne({ ...boss, facteurBourse: 1 }));
+  });
+});
+
+describe("sommePrixAchatPanier (pastille achat en négo de vente)", () => {
+  it("somme les prix d'achat quand tous les objets du panier les connaissent", () => {
+    const panier = [
+      createMockObjetEnVitrine({ objet: { prixAchat: 10 } }),
+      createMockObjetEnVitrine({ objet: { prixAchat: 25 } }),
+    ];
+    expect(sommePrixAchatPanier(panier)).toBe(35);
+  });
+
+  it("retourne null si UN objet du panier n'a pas de prix d'achat connu", () => {
+    const panier = [
+      createMockObjetEnVitrine({ objet: { prixAchat: 10 } }),
+      createMockObjetEnVitrine(), // sans prixAchat (colis, ancien retrait de collection)
+    ];
+    expect(sommePrixAchatPanier(panier)).toBeNull();
+  });
+
+  it("retourne null sur un panier vide", () => {
+    expect(sommePrixAchatPanier([])).toBeNull();
+  });
+});
+
+describe("genererClientEventScripte", () => {
+  const vitrineData = {
+    brocanteId: "vide-grenier-quartier",
+    objets: [
+      { objet: { id: "i1", templateId: "jx.manette_vibraduo" }, prixVente: 22 },
+      { objet: { id: "i2", templateId: "ma.carafe_cristal_taille" }, prixVente: 26 },
+    ],
+  };
+  const vitrine = vitrineData as never;
+  it("fabrique l'événement du radin : négo sur la carafe, valeurs scriptées", () => {
+    const a = SESSION_VENTE_TUTORIEL[0];
+    const ev = genererClientEventScripte(a, vitrine)!;
+    expect(ev.persona.nom).toBe(personnageScenario(a).nom);
+    expect(ev.mode).toBe("negociation");
+    expect(ev.panier[0].objet.templateId).toBe("ma.carafe_cristal_taille");
+    expect(ev.offreInitiale).toBe(a.offreInitiale);
+    expect(ev.prixMax).toBe(a.prixMax);
+    expect(ev.prixDemande).toBe(26);
+  });
+  it("mode achat direct pour l'ami", () => {
+    const ev = genererClientEventScripte(SESSION_VENTE_TUTORIEL[1], vitrine)!;
+    expect(ev.mode).toBe("achat-direct");
+    expect(ev.panier[0].objet.templateId).toBe("jx.manette_vibraduo");
+  });
+  it("null si l'objet ciblé n'est plus en vitrine", () => {
+    const sansCarafe = { ...vitrineData, objets: [vitrineData.objets[0]] } as never;
+    expect(genererClientEventScripte(SESSION_VENTE_TUTORIEL[0], sansCarafe)).toBeNull();
   });
 });

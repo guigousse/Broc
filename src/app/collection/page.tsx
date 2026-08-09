@@ -24,6 +24,8 @@ import { nomObjet, nomExpediteur } from "@/lib/i18n/contenu";
 import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { SEQUENCES_TUTORIEL, GRAND_PERE_PORTRAITS } from "@/data/dialogues";
+import { PELUCHE_TEMPLATE_ID } from "@/data/tutorielScenario";
+import { setCoachOuvert } from "@/lib/coachActif";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
 
 /**
@@ -33,6 +35,14 @@ import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
  * dernière étagère et laissait une bande claire jusqu'à la barre d'onglets.
  */
 const RESERVE_BAS = "calc(var(--mobile-tabbar-h) + var(--safe-bottom))";
+
+/**
+ * Machine locale de la leçon « collection-lecon » : 3 bulles de coach, puis
+ * filtre guidé → scroll auto + main sur la case → détail (bouton retirer
+ * montré) → dialogue de conclusion. Remontage en cours de leçon = repart à
+ * "coach" (fail-open, cohérent avec le reste du tutoriel).
+ */
+type PhaseLecon = "coach" | "filtre" | "case" | "detail" | "dialogue";
 
 export default function CollectionPage() {
   const router = useRouter();
@@ -50,12 +60,33 @@ export default function CollectionPage() {
   const [slotActif, setSlotActif] = useState<CollectionSlot | null>(null);
   const [pickerOuvert, setPickerOuvert] = useState(false);
   const [objetADonner, setObjetADonner] = useState<Objet | null>(null);
-  const [coachFini, setCoachFini] = useState(false);
+  const [phaseLecon, setPhaseLecon] = useState<PhaseLecon>("coach");
   const etape = state?.tutorielEtape;
+  const enLecon = etape === "collection-lecon";
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
   }, [isHydrated, state, router]);
+
+  // Masque la bannière de tutoriel (cf. TutorielBanniere/coachActif) pendant
+  // TOUTE la leçon guidée sauf la phase finale "dialogue" (déjà couverte par
+  // le DialogueOverlay, z-index 120, qui recouvre tout). Sans ça : 1) sa
+  // consigne périmée (« Ouvre la Collection… », déjà fait) reste affichée
+  // pendant les phases interactives filtre/case/detail, et 2) elle empiète
+  // sur la bande où tombe la main "tuto-main-haut" au-dessus des pastilles.
+  // Les TutorielCoach des phases "coach"/"detail" publient aussi
+  // setCoachOuvert eux-mêmes (leur propre montage/démontage) — sans
+  // conflit : `setCoachOuvert` est idempotent (no-op si même valeur), et
+  // React exécute TOUS les cleanups d'un commit avant TOUTE nouvelle
+  // exécution d'effet, donc à la transition coach→filtre (où le
+  // TutorielCoach démonte et republierait `false`), cet effet-ci républie
+  // `true` dans la même passe avant que la bannière n'ait pu se re-rendre
+  // visible — jamais de flash.
+  useEffect(() => {
+    if (!enLecon || phaseLecon === "dialogue") return;
+    setCoachOuvert(true);
+    return () => setCoachOuvert(false);
+  }, [enLecon, phaseLecon]);
 
   const slotsFiltres: CollectionSlot[] = useMemo(() => {
     if (!state) return [];
@@ -159,7 +190,18 @@ export default function CollectionPage() {
           <div style={{ marginTop: 4 }}>
             <CategoriePicker
               selection={filtre}
-              onChange={setFiltre}
+              onChange={(c) => {
+                if (enLecon) {
+                  // Phase "filtre" : seule "Jeux & Loisirs" fait avancer la
+                  // leçon ; les autres taps sont ignorés. Aux autres phases
+                  // de la leçon, le picker est inerte.
+                  if (phaseLecon !== "filtre" || c !== "Jeux & Loisirs") return;
+                  setFiltre(c);
+                  setPhaseLecon("case");
+                  return;
+                }
+                setFiltre(c);
+              }}
               comptesParCat={comptes}
               total={Object.values(comptes).reduce((s, v) => s + (v ?? 0), 0)}
               totauxParCat={totauxParCat}
@@ -168,6 +210,9 @@ export default function CollectionPage() {
                 0,
               )}
               nouveautesParCat={nouveautesParCat}
+              mainCategorie={
+                enLecon && phaseLecon === "filtre" ? "Jeux & Loisirs" : null
+              }
             />
           </div>
         </StickyTop>
@@ -186,30 +231,57 @@ export default function CollectionPage() {
           slots={slotsFiltres}
           enStockIds={enStockIds}
           onTap={(s) => {
+            if (enLecon) {
+              // Hors phase "case", la grille est inerte ; en phase "case",
+              // seule la peluche répond (les autres cases sont ignorées).
+              if (phaseLecon !== "case") return;
+              if (s.templateId !== PELUCHE_TEMPLATE_ID) return;
+              setPhaseLecon("detail");
+            }
             if (s.vu && s.vuDansCollection === false) {
               marquerVuDansCollection(s.templateId);
             }
             setSlotActif(s);
           }}
+          scrollVersTemplateId={
+            enLecon && phaseLecon === "case" ? PELUCHE_TEMPLATE_ID : null
+          }
+          mainTemplateId={
+            enLecon && phaseLecon === "case" ? PELUCHE_TEMPLATE_ID : null
+          }
         />
       </div>
     </MobileLayout>
-    {etape === "collection-lecon" && !coachFini && (
+    {enLecon && phaseLecon === "coach" && (
       <TutorielCoach
         etapes={[
           { cible: "collection-case", texte: d.tutoriel.coachCollectionCase },
           { cible: "collection-valeur", texte: d.tutoriel.coachCollectionValeur },
           { cible: null, texte: d.tutoriel.coachCollectionDeblocage },
         ]}
-        onFini={() => setCoachFini(true)}
+        onFini={() => setPhaseLecon("filtre")}
       />
     )}
-    {etape === "collection-lecon" && coachFini && (
+    {enLecon && phaseLecon === "detail" && (
+      <TutorielCoach
+        etapes={[
+          {
+            cible: "collection-retirer",
+            texte: d.tutoriel.coachCollectionRetirer,
+          },
+        ]}
+        onFini={() => {
+          setSlotActif(null);
+          setPhaseLecon("dialogue");
+        }}
+      />
+    )}
+    {enLecon && phaseLecon === "dialogue" && (
       <DialogueOverlay
         sequence={SEQUENCES_TUTORIEL.tuto_collection_lecon}
         nom={nomExpediteur("grand-pere", locale)}
         portraits={GRAND_PERE_PORTRAITS}
-        onFini={() => avancerTutoriel("preparer-etal")}
+        onFini={() => avancerTutoriel("ouvrir-colis")}
       />
     )}
     <CollectionDetailOverlay
@@ -218,6 +290,7 @@ export default function CollectionPage() {
       slot={slotActif}
       candidatsCount={candidats.length}
       retirerDisabled={plein}
+      retirerInerte={enLecon && phaseLecon === "detail"}
       onAjouter={() => setPickerOuvert(true)}
       onRetirer={() => {
         if (!slotActif?.donation) return;

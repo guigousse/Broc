@@ -189,6 +189,8 @@ export const en: DictionnaireUI = {
       "Your collection's value grows with every donation.",
     coachCollectionDeblocage:
       "That value unlocks new flea markets — and builds your reputation.",
+    coachCollectionRetirer:
+      "A donated piece isn't locked away: this button returns it to storage — but its value leaves with it.",
     instructions: {
       "accueil": "Listen to your grandfather…",
       "aller-chiner": "Go through the door, choose “Pick”, then the Neighborhood Yard Sale.",
@@ -201,10 +203,13 @@ export const en: DictionnaireUI = {
       "stockage-focus": "Take a tour of your storage — tap to continue.",
       "collection-envoyer": "Send the mohair teddy bear to your collection.",
       "collection-lecon": "Open the Collection from the bottom bar.",
+      "ouvrir-colis": "Open your grandfather's parcel, by the door.",
       "preparer-etal": "Go through the door again and choose “Set up stall” to get your window ready.",
       "coffre-trace-un": "Pick up the first item and set it on its outline.",
       "coffre-trace-deux": "One finger to move, a second to rotate: set the item on its outline.",
-      "premiere-vente": "Sell an item to a customer, then close the stall.",
+      "vente-refus": "This customer offers too little — walk away, no regrets.",
+      "vente-directe": "He'll take the controller at the asking price: accept!",
+      "vente-nego": "Haggle over the carafe — hold your price, she'll come up.",
       "conclusion": "Listen to your grandfather…",
     },
   },
@@ -403,6 +408,8 @@ export const en: DictionnaireUI = {
     aucunObjetACharger: "No items to load. Go picking!",
     pastilleAchat: "purchase",
     pastilleVente: "sale",
+    prixConseille: "Suggested price",
+    etiquetteGrandPere: "Priced by grandpa",
     camionNiveauAria: "Truck level {n}",
   },
   bilan: {

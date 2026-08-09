@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -36,6 +37,16 @@ interface CollectionGridProps {
   /** TemplateIds présents dans l'inventaire du joueur (badge "+"). */
   enStockIds?: ReadonlySet<string>;
   colonnes?: Colonnes;
+  /**
+   * Optionnel (tutoriel) : au montage / changement, défile jusqu'à la
+   * rangée contenant ce templateId et la centre. `null`/absent hors leçon.
+   */
+  scrollVersTemplateId?: string | null;
+  /**
+   * Optionnel (tutoriel) : la case dont le templateId correspond porte la
+   * main pointeuse (au-dessus, `tuto-main tuto-main-haut`).
+   */
+  mainTemplateId?: string | null;
 }
 
 const starsRow: CSSProperties = {
@@ -82,6 +93,8 @@ interface CollectionCellProps {
   slot: CollectionSlot;
   onTap: (slot: CollectionSlot) => void;
   enStock: boolean;
+  /** Tutoriel : ce templateId porte la main pointeuse au-dessus de sa case. */
+  mainTemplateId?: string | null;
 }
 
 /**
@@ -98,6 +111,7 @@ const CollectionCell = memo(function CollectionCell({
   slot: s,
   onTap,
   enStock,
+  mainTemplateId,
 }: CollectionCellProps) {
   const { d, tr, locale } = useLangue();
   const isDonne = s.donation !== null;
@@ -108,6 +122,7 @@ const CollectionCell = memo(function CollectionCell({
     !showStockBadge && s.vu && !isDonne && s.vuDansCollection === false;
   const colors = getRarityColors(s.rarete, !!s.unique);
   const filledStars = isDonne ? etoileCount(s.donation?.etat) : 0;
+  const estCibleMain = mainTemplateId != null && s.templateId === mainTemplateId;
 
   const variant: StickerVariant = isSilhouette
     ? "silhouette"
@@ -131,12 +146,27 @@ const CollectionCell = memo(function CollectionCell({
     cursor: isSilhouette ? "default" : "pointer",
     display: "grid",
     placeItems: "center",
+    // Au-dessus des rangées voisines : la main pointeuse (tuto-main-haut)
+    // déborde par le haut de la case et doit rester visible par-dessus.
+    //
+    // `.broc-grid-cell` porte `content-visibility: auto` (perf, cf.
+    // globals.css) — qui établit un containment de PEINTURE permanent
+    // (pas seulement le "skip" hors-écran) : tout ce qui dépasse la
+    // padding-box de la case est rogné, y compris un ::after positionné
+    // hors de la boîte (même piège que l'overflow:hidden de
+    // StockageItemRow). La main de cette case précise serait donc
+    // invisible (prouvé Playwright : pixel [255,255,255] avec la
+    // déclaration, [255,0,0] sans). On neutralise le containment sur
+    // cette case UNIQUEMENT, en inline (plus spécifique que la classe).
+    ...(estCibleMain ? { zIndex: 2, contentVisibility: "visible" } : {}),
   };
 
   return (
     <button
       type="button"
-      className="broc-grid-cell"
+      className={
+        estCibleMain ? "broc-grid-cell tuto-main tuto-main-haut" : "broc-grid-cell"
+      }
       onClick={() => onTap(s)}
       disabled={isSilhouette}
       aria-label={isSilhouette ? d.inventaire.pieceInconnue : nomObjet(s, locale)}
@@ -195,10 +225,18 @@ interface RangeeProps {
   planche: CSSProperties;
   onTap: (slot: CollectionSlot) => void;
   enStockIds?: ReadonlySet<string>;
+  mainTemplateId?: string | null;
 }
 
 /** Une rangée d'items posée sur sa planche d'étagère. */
-function Rangee({ rangee, colonnes, planche, onTap, enStockIds }: RangeeProps) {
+function Rangee({
+  rangee,
+  colonnes,
+  planche,
+  onTap,
+  enStockIds,
+  mainTemplateId,
+}: RangeeProps) {
   return (
     <>
       <div
@@ -216,6 +254,7 @@ function Rangee({ rangee, colonnes, planche, onTap, enStockIds }: RangeeProps) {
             slot={s}
             onTap={onTap}
             enStock={enStockIds?.has(s.templateId) ?? false}
+            mainTemplateId={mainTemplateId}
           />
         ))}
       </div>
@@ -230,6 +269,8 @@ export function CollectionGrid({
   onTap,
   enStockIds,
   colonnes = COLONNES_PAR_DEFAUT,
+  scrollVersTemplateId,
+  mainTemplateId,
 }: CollectionGridProps) {
   // Wrapper stable (pattern latest-ref) : même si le parent passe une arrow
   // function inline recréée à chaque render, les cellules mémoïsées gardent
@@ -241,10 +282,13 @@ export function CollectionGrid({
     [],
   );
 
-  const rangees: CollectionSlot[][] = [];
-  for (let i = 0; i < slots.length; i += colonnes) {
-    rangees.push(slots.slice(i, i + colonnes));
-  }
+  const rangees: CollectionSlot[][] = useMemo(() => {
+    const acc: CollectionSlot[][] = [];
+    for (let i = 0; i < slots.length; i += colonnes) {
+      acc.push(slots.slice(i, i + colonnes));
+    }
+    return acc;
+  }, [slots, colonnes]);
 
   // Warm-up : réchauffe le cache HTTP des vignettes affichées (octets seulement,
   // pas de décodage → iOS-safe). Suit le filtre catégorie via `slots`.
@@ -307,6 +351,24 @@ export function CollectionGrid({
     virtualizer.measure();
   }, [colonnes, virtualizer]);
 
+  // ─── Scroll auto (tutoriel) ───────────────────────────────────────────────
+  // Le virtualiseur est local à ce composant : c'est le bon endroit pour
+  // résoudre l'index de rangée d'un templateId ciblé et y défiler.
+  const indexRangeeCible = useMemo(() => {
+    if (!scrollVersTemplateId) return null;
+    for (let i = 0; i < rangees.length; i++) {
+      if (rangees[i].some((s) => s.templateId === scrollVersTemplateId)) {
+        return i;
+      }
+    }
+    return null;
+  }, [rangees, scrollVersTemplateId]);
+
+  useEffect(() => {
+    if (indexRangeeCible === null || !scrollEl) return;
+    virtualizer.scrollToIndex(indexRangeeCible, { align: "center" });
+  }, [indexRangeeCible, scrollEl, virtualizer]);
+
   // Aucun conteneur défilant (hors MobileLayout, tests) : pas de repère pour
   // fenêtrer — on rend la grille entière plutôt que de la tronquer.
   if (scrollEl === null) {
@@ -320,6 +382,7 @@ export function CollectionGrid({
             planche={planche}
             onTap={stableOnTap}
             enStockIds={enStockIds}
+            mainTemplateId={mainTemplateId}
           />
         ))}
       </div>
@@ -354,6 +417,7 @@ export function CollectionGrid({
               planche={planche}
               onTap={stableOnTap}
               enStockIds={enStockIds}
+              mainTemplateId={mainTemplateId}
             />
           </div>
         ))}

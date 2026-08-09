@@ -3,19 +3,21 @@ import {
   ETAPES_TUTORIEL,
   appliquerFinTutoriel,
   chapitreDuCarnetDu,
-  colisEnAttente,
   doigtSwipeVersCarnet,
   etapeSuivante,
+  portePulse,
   tutorielActif,
 } from "./tutoriel";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { chapitrePret } from "./quetes/principales";
 import { createMockGameState } from "./__test-fixtures__/gameState";
+import { COLIS_TUTORIEL_SCRIPTE } from "@/data/tutorielScenario";
+import { objetColisTutoriel, COLIS_TUTORIEL_TAILLE } from "@/data/starterInventory";
 
 describe("tutoriel", () => {
   it("tutorielActif est vrai pour toute étape sauf 'termine'", () => {
     expect(tutorielActif({ tutorielEtape: "accueil" })).toBe(true);
-    expect(tutorielActif({ tutorielEtape: "premiere-vente" })).toBe(true);
+    expect(tutorielActif({ tutorielEtape: "vente-nego" })).toBe(true);
     expect(tutorielActif({ tutorielEtape: "termine" })).toBe(false);
   });
 
@@ -72,16 +74,18 @@ describe("tutoriel", () => {
   });
 });
 
-describe("étapes v2", () => {
-  it("ordonne les 17 étapes du nouveau flux", () => {
+describe("étapes v3", () => {
+  it("ordonne les 20 étapes du flux (colis + 3 leçons de vente)", () => {
     expect(ETAPES_TUTORIEL).toEqual([
       "accueil", "aller-chiner",
       "chine-nego-echec", "chine-achat-direct", "chine-nego-un",
       "chine-nego-deux", "chine-sortir",
       "stockage-ouvrir", "stockage-focus",
       "collection-envoyer", "collection-lecon",
+      "ouvrir-colis",
       "preparer-etal", "coffre-trace-un", "coffre-trace-deux",
-      "premiere-vente", "conclusion", "termine",
+      "vente-refus", "vente-directe", "vente-nego",
+      "conclusion", "termine",
     ]);
   });
 
@@ -90,62 +94,58 @@ describe("étapes v2", () => {
   });
 });
 
+describe("portePulse — la porte ne pulse que quand elle est le chemin", () => {
+  it("pulse aux étapes prescrites", () => {
+    for (const e of ["aller-chiner", "chine-nego-echec", "chine-achat-direct",
+      "chine-nego-un", "chine-nego-deux", "preparer-etal",
+      "vente-refus", "vente-directe", "vente-nego"] as const) {
+      expect(portePulse(e), e).toBe(true);
+    }
+  });
+  it("ne pulse pas à chine-sortir ni pendant stockage/collection/colis", () => {
+    for (const e of ["chine-sortir", "stockage-ouvrir", "stockage-focus",
+      "collection-envoyer", "collection-lecon", "ouvrir-colis",
+      "coffre-trace-un", "coffre-trace-deux", "accueil", "conclusion", "termine"] as const) {
+      expect(portePulse(e), e).toBe(false);
+    }
+  });
+});
+
 describe("appliquerFinTutoriel (v2)", () => {
-  it("ne livre PLUS le colis (inventaire inchangé, compteur intact)", () => {
+  it("livre à nouveau le colis scripté (inventaire enrichi, compteur au maximum)", () => {
     const s = createMockGameState({
       tutorielEtape: "accueil",
       colisTutorielLivres: 0,
     });
     const fin = appliquerFinTutoriel(s);
     expect(fin.tutorielEtape).toBe("termine");
-    expect(fin.inventaireJoueur).toHaveLength(s.inventaireJoueur.length);
-    expect(fin.colisTutorielLivres).toBe(0);
+    expect(fin.inventaireJoueur).toHaveLength(
+      s.inventaireJoueur.length + COLIS_TUTORIEL_TAILLE,
+    );
+    expect(fin.colisTutorielLivres).toBe(COLIS_TUTORIEL_TAILLE);
     expect(fin.miniTutoCarnet).toBe("ouvrir");
   });
 });
 
-describe("colisEnAttente", () => {
-  it("faux tant que le tutoriel court ou que le carnet n'est pas consommé", () => {
-    expect(
-      colisEnAttente({
-        tutorielEtape: "accueil",
-        miniTutoCarnet: undefined,
-        colisTutorielLivres: 0,
-      }),
-    ).toBe(false);
-    expect(
-      colisEnAttente({
-        tutorielEtape: "termine",
-        miniTutoCarnet: "ouvrir",
-        colisTutorielLivres: 0,
-      }),
-    ).toBe(false);
+describe("colis scripté", () => {
+  it("objetColisTutoriel sert les 5 objets fixes, dans l'ordre", () => {
+    for (let i = 0; i < COLIS_TUTORIEL_TAILLE; i++) {
+      const o = objetColisTutoriel(i);
+      expect(o.templateId).toBe(COLIS_TUTORIEL_SCRIPTE[i].templateId);
+      expect(o.etat).toBe(COLIS_TUTORIEL_SCRIPTE[i].etat);
+    }
   });
 
-  it("vrai après le carnet tant que le colis n'est pas vidé", () => {
-    expect(
-      colisEnAttente({
-        tutorielEtape: "termine",
-        miniTutoCarnet: "termine",
-        colisTutorielLivres: 3,
-      }),
-    ).toBe(true);
-    expect(
-      colisEnAttente({
-        tutorielEtape: "termine",
-        miniTutoCarnet: "termine",
-        colisTutorielLivres: 5,
-      }),
-    ).toBe(false);
-  });
-
-  it("vrai pour une vieille save sans miniTutoCarnet et colis entamé", () => {
-    expect(
-      colisEnAttente({
-        tutorielEtape: "termine",
-        miniTutoCarnet: undefined,
-        colisTutorielLivres: 2,
-      }),
-    ).toBe(true);
+  it("appliquerFinTutoriel livre le reliquat du colis scripté (fail-open « Passer »)", () => {
+    const s = createMockGameState({
+      tutorielEtape: "accueil",
+      colisTutorielLivres: 2,
+    });
+    const fin = appliquerFinTutoriel(s);
+    expect(fin.colisTutorielLivres).toBe(COLIS_TUTORIEL_TAILLE);
+    const ids = fin.inventaireJoueur.map((o) => o.templateId);
+    for (const attendu of COLIS_TUTORIEL_SCRIPTE.slice(2).map((c) => c.templateId)) {
+      expect(ids).toContain(attendu);
+    }
   });
 });

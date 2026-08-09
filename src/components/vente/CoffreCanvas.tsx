@@ -26,6 +26,10 @@ interface Props {
   conteneurRef?: React.MutableRefObject<HTMLDivElement | null>;
   /** Tutoriel : silhouette pointillée indiquant où poser l'objet en cours. */
   trace?: TraceScenario | null;
+  /** Tutoriel — coffre Tetris (préfill) : ids d'objets verrouillés, ignorés
+   *  par le hit-test (pas de sélection → pas de drag, pas de rotation, pas
+   *  de retrait, qui passe par le drag hors coffre). */
+  verrouillesIds?: ReadonlySet<string>;
 }
 
 interface PointerInfo {
@@ -49,6 +53,7 @@ export function CoffreCanvas({
   onRetour,
   conteneurRef,
   trace,
+  verrouillesIds,
 }: Props) {
   const camion = getCamion(niveauCamion);
   const assets = getCoffreAssets(camion.visuelId);
@@ -94,6 +99,7 @@ export function CoffreCanvas({
     const items = objetsRef.current;
     for (let i = items.length - 1; i >= 0; i--) {
       const ov = items[i];
+      if (verrouillesIds?.has(ov.objet.id)) continue;
       const tpl = getTemplate(ov.objet.templateId);
       if (!tpl) continue;
       const scale = getScaleCoffre(tailleDe(tpl), camion.capacitePlaces);
@@ -334,8 +340,6 @@ export function CoffreCanvas({
                   width: sizePx,
                   height: sizePx,
                   transform: `rotate(${trace.rotation}deg)`,
-                  border: "2px dashed var(--brass-300)",
-                  borderRadius: 8,
                   zIndex: 1,
                   pointerEvents: "none",
                   display: "grid",
@@ -352,7 +356,7 @@ export function CoffreCanvas({
                       height: "88%",
                       objectFit: "contain",
                       filter: "brightness(0)",
-                      opacity: 0.35,
+                      opacity: 0.45,
                     }}
                   />
                 )}

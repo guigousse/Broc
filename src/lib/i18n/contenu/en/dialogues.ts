@@ -62,16 +62,39 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "And look: the Sunday flea market is already opening its doors to you. People are starting to talk, kid!",
     "Now, selling. Back to the office — the door awaits.",
   ],
-  tuto_colis_cadeau: [
-    "One last thing. This parcel is from me: a few pieces from the shop to get you started.",
-    "You have the eye, you have the hands… the rest will come. Open it, and to work!",
+  tuto_colis_avant: [
+    "Before we go selling — here: a parcel from me. A few pieces from the shop to fill your first stall.",
+    "Open it — it's waiting by the door.",
+  ],
+  tuto_prix_avant: [
+    "Pricing is half the trade. Too high, nobody stops; too low, you work for nothing.",
+    "I've already tagged my pieces. For the controller and the carafe, slide the cursor to the price I show you — a small margin, under market: it sells fast.",
+  ],
+  tuto_prix_apres: [
+    "Honest tags, those. Off we go — customers don't wait.",
   ],
   tuto_vente_entree: [
-    "The customers will come. Listen to them, let them talk… and never drop your price too fast.",
+    "Fine stall! I'll stay with you for this first one — and lucky you: around here, I know everybody.",
+    "Three faces will come by. Listen to them, and remember: YOU hold the price.",
   ],
-  tuto_vente_faite: [
-    "And there's your first sale! The song of the till — you never forget it.",
-    "Close the stall whenever you like, and let's go home. I have something for you at the house.",
+  tuto_vente_refus_avant: [
+    "Well, well — Maxime from the flea pit… He always offers next to nothing. Hear him out — and don't be afraid to let him walk.",
+  ],
+  tuto_vente_refus_apres: [
+    "There you go. Turning down a bad sale is already a win. The carafe will find its buyer — at the right price.",
+  ],
+  tuto_vente_directe_avant: [
+    "Ah, Léo! A friend — and mad about old controllers. At a fair price, he won't even argue.",
+  ],
+  tuto_vente_directe_apres: [
+    "See? An honest price sells itself. The till is singing already.",
+  ],
+  tuto_vente_nego_avant: [
+    "Bérénice, the decorator. She'll haggle — she can't help it… Hold your price: she'll come up.",
+  ],
+  tuto_vente_nego_apres: [
+    "Your first real sales negotiation. You held firm — there's not much left for me to teach you.",
+    "Close the stall whenever you like, and let's head home. I've a couple more words for you at the house.",
   ],
   tuto_conclusion: [
     "You have the eye, and the hands… all you're missing is the years. The shop is in good hands.",

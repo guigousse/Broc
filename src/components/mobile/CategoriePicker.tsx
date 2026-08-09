@@ -36,6 +36,11 @@ interface CategoriePickerProps {
    * non encore consultés dans la collection (affiche un astérisque rouge).
    */
   nouveautesParCat?: Partial<Record<CategorieObjet, boolean>>;
+  /**
+   * Optionnel (tutoriel) : pastille de catégorie à désigner d'une main
+   * pointeuse pendant une leçon guidée — `null`/absent hors leçon.
+   */
+  mainCategorie?: CategorieObjet | null;
 }
 
 const ICONS: Record<string, LucideIcon> = {
@@ -92,6 +97,7 @@ export function CategoriePicker({
   totauxParCat,
   totalGlobal,
   nouveautesParCat,
+  mainCategorie,
 }: CategoriePickerProps) {
   const { d } = useLangue();
   const showFraction = totauxParCat !== undefined;
@@ -140,6 +146,7 @@ export function CategoriePicker({
         const active = cell.cat === selection;
         const Icon = cell.icon;
         const empty = cell.count === 0;
+        const estCibleMain = cell.cat !== null && cell.cat === mainCategorie;
         return (
           <button
             key={cell.key}
@@ -147,6 +154,27 @@ export function CategoriePicker({
             aria-selected={active}
             type="button"
             onClick={() => onChange(cell.cat)}
+            // Variante LATÉRALE (pas `tuto-main-haut`) : la pastille est à
+            // ~34px sous le header (z-index 30, opaque) tandis que ce picker
+            // vit dans StickyTop (z-index 20) — une main "haut" y serait
+            // occultée par l'en-tête sur la majeure partie de sa hauteur
+            // (stacking context : un enfant ne peut jamais peindre par-dessus
+            // un contexte sibling de z-index supérieur, quel que soit le
+            // z-index posé localement). Prouvé Playwright : ~30 des 36px de
+            // la main "haut" tombent sous rgb(26,51,38) (forest-800, le
+            // header).
+            //
+            // `tuto-main-droite` (main à DROITE, pas la variante gauche par
+            // défaut) : à 360px (iPhone SE), la cible ("Jeux & Loisirs", 3ᵉ
+            // sur 8 pastilles) n'a que 2 cellules de marge à gauche avant le
+            // bord d'écran — l'arithmétique donne ~1-5px de reste pour une
+            // main de 88px + 8px de dégagement, clippée par le
+            // `overflow:hidden` plein viewport de `MobileLayout`. À droite,
+            // 5 cellules de marge restent largement suffisantes (précédent :
+            // CarrouselStock). Prouvé Playwright à 360×640 : pixel de la main
+            // "gauche" hors écran (x négatif) à ce viewport, main "droite"
+            // entièrement visible.
+            className={estCibleMain ? "tuto-main tuto-main-droite" : undefined}
             style={{
               ...cellBase,
               background: active ? "var(--forest-800)" : "var(--paper-100)",

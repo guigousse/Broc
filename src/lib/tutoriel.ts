@@ -1,11 +1,11 @@
-import type { GameState, TutorielEtape } from "@/types/game";
+import type { GameState, Objet, TutorielEtape } from "@/types/game";
 import { injecterLettreMamanSiAbsente } from "@/lib/courrier";
-import { COLIS_TUTORIEL_TAILLE } from "@/data/starterInventory";
+import { COLIS_TUTORIEL_TAILLE, objetColisTutoriel } from "@/data/starterInventory";
 import {
   SESSION_TUTORIEL, PELUCHE_TEMPLATE_ID, type ObjetScenario,
 } from "@/data/tutorielScenario";
 
-/** Ordre linéaire des étapes du tutoriel guidé (v2, brocante scriptée). */
+/** Ordre linéaire des étapes du tutoriel guidé (v3, brocante scriptée). */
 export const ETAPES_TUTORIEL: readonly TutorielEtape[] = [
   "accueil",
   "aller-chiner",
@@ -18,10 +18,13 @@ export const ETAPES_TUTORIEL: readonly TutorielEtape[] = [
   "stockage-focus",
   "collection-envoyer",
   "collection-lecon",
+  "ouvrir-colis",
   "preparer-etal",
   "coffre-trace-un",
   "coffre-trace-deux",
-  "premiere-vente",
+  "vente-refus",
+  "vente-directe",
+  "vente-nego",
   "conclusion",
   "termine",
 ];
@@ -40,12 +43,15 @@ export function etapeSuivante(etape: TutorielEtape): TutorielEtape {
 /**
  * Clôt le tutoriel (fin normale OU bouton « Passer ») : injecte la lettre de
  * Maman (différée depuis la création de partie) et passe l'étape à
- * "termine". Depuis la brocante scriptée (v2), le colis du grand-père
- * n'est plus livré ici — il apparaît en post-tutoriel (cf. `colisEnAttente`
- * ci-dessous). Depuis SP2, l'arc principal n'est plus amorcé ici non plus :
- * une fois l'étape à "termine", `chapitrePret(state)` désigne le chapitre 1
- * (condition "depart") et sa délivrance se fait en dialogue
- * (`accepterChapitre`). Idempotent.
+ * "termine". Depuis la brocante scriptée (v3), le colis du grand-père est
+ * livré DANS le tutoriel (étape "ouvrir-colis") — mais le bouton « Passer »
+ * saute directement à "termine" sans traverser cette étape : cette fonction
+ * re-livre le RELIQUAT du colis scripté (fail-open), pour qu'aucun joueur
+ * ne perde les objets qu'il n'a pas eu l'occasion d'ouvrir un par un.
+ * Idempotent une fois livré (colisTutorielLivres déjà au maximum). Depuis
+ * SP2, l'arc principal n'est plus amorcé ici non plus : une fois l'étape à
+ * "termine", `chapitrePret(state)` désigne le chapitre 1 (condition
+ * "depart") et sa délivrance se fait en dialogue (`accepterChapitre`).
  */
 export function appliquerFinTutoriel(state: GameState): GameState {
   if (state.tutorielEtape === "termine") return state;
@@ -54,6 +60,11 @@ export function appliquerFinTutoriel(state: GameState): GameState {
     state.declencheursDeclenches,
     state.jourActuel,
   );
+  const livres = state.colisTutorielLivres ?? 0;
+  const manquants: Objet[] = [];
+  for (let i = livres; i < COLIS_TUTORIEL_TAILLE; i++) {
+    manquants.push(objetColisTutoriel(i));
+  }
   return {
     ...state,
     tutorielEtape: "termine",
@@ -62,26 +73,12 @@ export function appliquerFinTutoriel(state: GameState): GameState {
       ...state.declencheursDeclenches,
       ...inj.declencheursAjoutes,
     ],
+    inventaireJoueur: [...state.inventaireJoueur, ...manquants],
+    colisTutorielLivres: COLIS_TUTORIEL_TAILLE,
     // Le grand-père vient de parler du carnet de commandes : le mini-tuto
     // guide vers la zone gauche du bureau puis le livre de compte.
     miniTutoCarnet: "ouvrir",
   };
-}
-
-/**
- * Le colis du grand-père est un cadeau de fin de tutoriel : il apparaît au
- * bureau une fois le tutoriel clos ET la séquence du carnet consommée
- * (miniTutoCarnet ≠ "ouvrir" — absent sur les vieilles saves = consommé),
- * tant qu'il reste des objets à retirer.
- */
-export function colisEnAttente(
-  state: Pick<GameState, "tutorielEtape" | "miniTutoCarnet" | "colisTutorielLivres">,
-): boolean {
-  return (
-    state.tutorielEtape === "termine" &&
-    state.miniTutoCarnet !== "ouvrir" &&
-    (state.colisTutorielLivres ?? 0) < COLIS_TUTORIEL_TAILLE
-  );
 }
 
 /**
@@ -147,10 +144,34 @@ export function ongletTutorielPermis(
       return "/stockage";
     case "collection-lecon":
       return "/collection";
+    case "ouvrir-colis":
     case "preparer-etal":
       return "/bureau";
     default:
       return null;
+  }
+}
+
+/**
+ * La porte du bureau pulse uniquement quand la franchir est l'action
+ * prescrite. Elle reste TAPABLE sur un ensemble plus large (portePermise,
+ * anti-soft-lock) — le pulse parasite au retour du chinage venait de la
+ * confusion des deux rôles (recette 2026-08-09).
+ */
+export function portePulse(etape: TutorielEtape): boolean {
+  switch (etape) {
+    case "aller-chiner":
+    case "chine-nego-echec":
+    case "chine-achat-direct":
+    case "chine-nego-un":
+    case "chine-nego-deux":
+    case "preparer-etal":
+    case "vente-refus":
+    case "vente-directe":
+    case "vente-nego":
+      return true;
+    default:
+      return false;
   }
 }
 

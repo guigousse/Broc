@@ -21,6 +21,14 @@ interface CollectionDetailOverlayProps {
   onAjouter: () => void;
   /** Appelé lorsqu'on demande à retirer la donation. */
   onRetirer: () => void;
+  /**
+   * Optionnel (tutoriel) : pendant une leçon guidée, le bouton « retirer »
+   * est montré (data-tuto-coach) mais rendu inerte — apparence normale,
+   * mais le tap ne déclenche rien. Fait aussi passer l'overlay sous le
+   * voile du coach (cf. `backdrop` ci-dessous) pour que la découpe du coach
+   * l'éclaire correctement plutôt que de rester masquée derrière.
+   */
+  retirerInerte?: boolean;
 }
 
 const backdrop: CSSProperties = {
@@ -32,6 +40,14 @@ const backdrop: CSSProperties = {
   placeItems: "center",
   padding: "20px",
 };
+
+/**
+ * `TutorielCoach` (voile + découpe) est à z-index 100 — sous cet overlay en
+ * temps normal (105). Pendant la leçon guidée qui montre le bouton retirer,
+ * on passe l'overlay SOUS le coach pour que sa découpe éclaire réellement le
+ * bouton (sinon le coach, invisible derrière l'overlay, ne se voit jamais).
+ */
+const Z_BACKDROP_SOUS_COACH = 95;
 
 const card: CSSProperties = {
   width: "min(300px, 88vw)",
@@ -123,6 +139,7 @@ export function CollectionDetailOverlay({
   retirerDisabled = false,
   onAjouter,
   onRetirer,
+  retirerInerte = false,
 }: CollectionDetailOverlayProps) {
   const { d, tr, locale } = useLangue();
   if (!open || !slot) return null;
@@ -133,7 +150,9 @@ export function CollectionDetailOverlay({
       role="dialog"
       aria-modal="true"
       aria-label={d.inventaire.detailPiece}
-      style={backdrop}
+      style={
+        retirerInerte ? { ...backdrop, zIndex: Z_BACKDROP_SOUS_COACH } : backdrop
+      }
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -173,8 +192,12 @@ export function CollectionDetailOverlay({
               </div>
               <button
                 type="button"
-                onClick={retirerDisabled ? undefined : onRetirer}
+                data-tuto-coach="collection-retirer"
+                onClick={
+                  retirerInerte || retirerDisabled ? undefined : onRetirer
+                }
                 disabled={retirerDisabled}
+                aria-disabled={retirerInerte ? true : undefined}
                 style={{
                   ...btnBase,
                   background: retirerDisabled

@@ -42,8 +42,16 @@ const wrap: CSSProperties = {
 /* Piège overflow (tutoriel) : la main "tuto-main-haut" déborde au-dessus du
    bouton — si `wrap` reste en overflow:hidden pendant le guidage, la main
    est rognée par sa propre ligne avant même d'atteindre le conteneur de la
-   grille. Overflow visible tant que cette ligne porte la main. */
-const wrapGuide: CSSProperties = { ...wrap, overflow: "visible" };
+   grille. Overflow visible tant que cette ligne porte la main.
+   zIndex 37 : au-dessus des lignes sœurs ET de la fenêtre flottante (35) —
+   sans lui, la main restait clippée derrière la ligne du dessus (recette
+   device 2026-08-09). */
+const wrapGuide: CSSProperties = {
+  ...wrap,
+  overflow: "visible",
+  position: "relative",
+  zIndex: 37,
+};
 
 const item: CSSProperties = {
   display: "grid",

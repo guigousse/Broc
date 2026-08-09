@@ -189,6 +189,8 @@ export const es: DictionnaireUI = {
       "El valor de tu colección crece con cada donación.",
     coachCollectionDeblocage:
       "Ese valor desbloquea nuevos mercadillos, y construye tu reputación.",
+    coachCollectionRetirer:
+      "Una pieza donada no está perdida: este botón la devuelve a tu reserva, pero su valor se va con ella.",
     instructions: {
       "accueil": "Escucha a tu abuelo…",
       "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",
@@ -201,10 +203,13 @@ export const es: DictionnaireUI = {
       "stockage-focus": "Echa un vistazo a tu almacén — toca para continuar.",
       "collection-envoyer": "Envía el peluche de mohair a tu colección.",
       "collection-lecon": "Abre la Colección desde la barra inferior.",
+      "ouvrir-colis": "Abre el paquete de tu abuelo, junto a la puerta.",
       "preparer-etal": "Vuelve a cruzar la puerta y elige «Montar puesto» para preparar tu vitrina.",
       "coffre-trace-un": "Coge el primer objeto y colócalo sobre su silueta.",
       "coffre-trace-deux": "Un dedo para mover, otro para girar: coloca el objeto sobre su silueta.",
-      "premiere-vente": "Véndele un objeto a un cliente y cierra el puesto.",
+      "vente-refus": "Este cliente ofrece muy poco — déjalo pasar, sin remordimientos.",
+      "vente-directe": "Se queda con el mando al precio marcado: ¡acepta!",
+      "vente-nego": "Negocia la jarra — mantén tu precio, subirá.",
       "conclusion": "Escucha a tu abuelo…",
     },
   },
@@ -403,6 +408,8 @@ export const es: DictionnaireUI = {
     aucunObjetACharger: "Ningún objeto que cargar. ¡Sal a rebuscar!",
     pastilleAchat: "compra",
     pastilleVente: "venta",
+    prixConseille: "Precio recomendado",
+    etiquetteGrandPere: "Etiquetado por el abuelo",
     camionNiveauAria: "Camión nivel {n}",
   },
   bilan: {

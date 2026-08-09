@@ -47,9 +47,15 @@ export interface CollectionSlot {
   /**
    * Donation présente dans le slot (état + valeur préservés). null = slot vide.
    * `valeur` inclut la prime de restauration (Très bon/Pristin) ; `valeurBase`
-   * conserve le prix de référence brut pour recréer l'objet si on le retire.
+   * conserve le prix de référence brut pour recréer l'objet si on le retire ;
+   * `prixAchat` conserve le prix payé par le joueur pour le restituer aussi.
    */
-  donation: { etat: EtatObjet; valeur: number; valeurBase?: number } | null;
+  donation: {
+    etat: EtatObjet;
+    valeur: number;
+    valeurBase?: number;
+    prixAchat?: number;
+  } | null;
   unique?: boolean;
   /**
    * Vrai si le joueur a consulté ce slot dans la page Collection depuis sa découverte.
@@ -293,14 +299,18 @@ export interface LedgerEntry {
 }
 
 /**
- * Étapes du tutoriel guidé, brocante scriptée (v2, 17 valeurs). Linéaire :
+ * Étapes du tutoriel guidé, brocante scriptée (v3, 20 valeurs). Linéaire :
  * accueil → aller-chiner → chine-nego-echec → chine-achat-direct →
  * chine-nego-un → chine-nego-deux → chine-sortir → stockage-ouvrir →
- * stockage-focus → collection-envoyer → collection-lecon → preparer-etal →
- * coffre-trace-un → coffre-trace-deux → premiere-vente → conclusion →
- * termine. "termine" = tutoriel fini ou sauté (état des saves antérieures
- * à v12) ; le colis du grand-père n'est plus une étape de ce flux, il
- * apparaît en post-tutoriel (cf. `colisEnAttente` dans lib/tutoriel).
+ * stockage-focus → collection-envoyer → collection-lecon → ouvrir-colis →
+ * preparer-etal → coffre-trace-un → coffre-trace-deux → vente-refus →
+ * vente-directe → vente-nego → conclusion → termine. "termine" = tutoriel
+ * fini ou sauté (état des saves antérieures à v12) ; le colis du
+ * grand-père est ouvert PENDANT ce flux (ouvrir-colis) — contenu scripté
+ * fixe (`COLIS_TUTORIEL_SCRIPTE`). Le bouton « Passer » (qui saute
+ * directement à "termine") en re-livre le reliquat dans
+ * `appliquerFinTutoriel` (lib/tutoriel), fail-open pour ne perdre aucun
+ * objet.
  */
 export type TutorielEtape =
   | "accueil"
@@ -314,10 +324,13 @@ export type TutorielEtape =
   | "stockage-focus"
   | "collection-envoyer"
   | "collection-lecon"
+  | "ouvrir-colis"
   | "preparer-etal"
   | "coffre-trace-un"
   | "coffre-trace-deux"
-  | "premiere-vente"
+  | "vente-refus"
+  | "vente-directe"
+  | "vente-nego"
   | "conclusion"
   | "termine";
 
