@@ -18,7 +18,7 @@ const persona: NegoPersona = {
 
 function renderSheet(
   offreJoueur: number,
-  extra: { celebrite?: boolean; nomAffiche?: string } = {},
+  extra: { celebrite?: boolean; nomAffiche?: string; achat?: number | null } = {},
 ) {
   return render(
     <NegociationSheet
@@ -51,6 +51,19 @@ describe("NegociationSheet — offre contrôlée, atouts déplacés dans le dock
     renderSheet(80);
     expect(screen.queryByText(/Lot garni/)).toBeNull();
     expect(screen.queryByText(/Boniment/)).toBeNull();
+  });
+});
+
+describe("NegociationSheet — repère prix d'achat (vente)", () => {
+  it("transmet le prix d'achat à la barre de négo (pastille visible)", () => {
+    renderSheet(80, { achat: 12 });
+    expect(screen.getByText("12€")).toBeTruthy();
+    expect(screen.getByText("achat")).toBeTruthy();
+  });
+
+  it("sans prix d'achat : aucune pastille", () => {
+    renderSheet(80);
+    expect(screen.queryByText("achat")).toBeNull();
   });
 });
 

@@ -75,6 +75,23 @@ export interface ClientEvent {
 }
 
 /**
+ * Somme des prix d'achat du panier d'un client, pour la pastille « achat »
+ * de la barre de négociation (repère fixe, comme en tarification). `null`
+ * si un seul objet n'a pas de prix d'achat connu (colis du tutoriel,
+ * retrait de collection antérieur au correctif) : mieux vaut masquer le
+ * repère qu'afficher une somme fausse.
+ */
+export function sommePrixAchatPanier(panier: ObjetEnVitrine[]): number | null {
+  if (panier.length === 0) return null;
+  let somme = 0;
+  for (const p of panier) {
+    if (p.objet.prixAchat == null) return null;
+    somme += p.objet.prixAchat;
+  }
+  return somme;
+}
+
+/**
  * Fourchette d'estimation du prix max (palier Présentation 3) : largeur
  * totale = 20 % du prix max, position du vrai prix tirée uniformément
  * entre 15 % et 85 % de la fourchette — connaître la fourchette ne suffit

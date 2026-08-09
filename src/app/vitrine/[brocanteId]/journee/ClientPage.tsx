@@ -29,6 +29,7 @@ import {
   personaDepuisClient,
   prochainIntervalleClient,
   proposerOffreVente,
+  sommePrixAchatPanier,
   type ClientEvent,
   type VitrineModifiers,
 } from "@/lib/vitrine";
@@ -1099,6 +1100,7 @@ export default function VitrineJourneePage() {
               : clientActuel.prixDemande
           }
           nego={clientActuel.mode === "negociation" ? negoVente : null}
+          achat={sommePrixAchatPanier(clientActuel.panier)}
           nomAffiche={
             personaRevele
               ? nomAfficheClient(clientActuel.persona)

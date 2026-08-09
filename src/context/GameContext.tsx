@@ -1627,6 +1627,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           objetCourant.templateId,
           objetCourant.etat,
           objetCourant.prixReferenceReel,
+          objetCourant.prixAchat,
         );
         const nouvelInventaire = prev.inventaireJoueur.filter(
           (o) => o.id !== objetId,
@@ -1642,6 +1643,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
               etat: ancienne.etat,
               prixReferenceReel: ancienne.valeurBase ?? ancienne.valeur,
               rarete: tpl.rarete,
+              ...(ancienne.prixAchat != null
+                ? { prixAchat: ancienne.prixAchat }
+                : {}),
             });
           }
         }
@@ -1691,6 +1695,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
               etat: ancienne.etat,
               prixReferenceReel: ancienne.valeurBase ?? ancienne.valeur,
               rarete: tpl.rarete,
+              ...(ancienne.prixAchat != null
+                ? { prixAchat: ancienne.prixAchat }
+                : {}),
             },
           ],
         };

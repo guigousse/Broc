@@ -23,6 +23,7 @@ import {
   proposerOffreVente,
   type VitrineModifiers,
   BRADERIE_INTERVALLE_MULT,
+  sommePrixAchatPanier,
 } from "./vitrine";
 import { estGrandeBraderie } from "./evenements";
 import { ouvrirNegociation } from "./negociation";
@@ -796,5 +797,27 @@ describe("BRADERIE_INTERVALLE_MULT (Effets braderie côté vente)", () => {
     const braderie = getBrocanteById("grande-braderie")!;
     const boss = getBrocanteById("salon-antiquaires-drouot")!;
     expect(bourseMoyenne(braderie)).toBeGreaterThan(bourseMoyenne({ ...boss, facteurBourse: 1 }));
+  });
+});
+
+describe("sommePrixAchatPanier (pastille achat en négo de vente)", () => {
+  it("somme les prix d'achat quand tous les objets du panier les connaissent", () => {
+    const panier = [
+      createMockObjetEnVitrine({ objet: { prixAchat: 10 } }),
+      createMockObjetEnVitrine({ objet: { prixAchat: 25 } }),
+    ];
+    expect(sommePrixAchatPanier(panier)).toBe(35);
+  });
+
+  it("retourne null si UN objet du panier n'a pas de prix d'achat connu", () => {
+    const panier = [
+      createMockObjetEnVitrine({ objet: { prixAchat: 10 } }),
+      createMockObjetEnVitrine(), // sans prixAchat (colis, ancien retrait de collection)
+    ];
+    expect(sommePrixAchatPanier(panier)).toBeNull();
+  });
+
+  it("retourne null sur un panier vide", () => {
+    expect(sommePrixAchatPanier([])).toBeNull();
   });
 });

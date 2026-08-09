@@ -57,6 +57,9 @@ interface NegociationSheetProps {
   bottomOffset?: string;
   /** Tutoriel (première vente) : main pointeuse sur le curseur joueur. */
   tutoMainJoueur?: boolean;
+  /** Prix d'achat du panier (somme) : repère fixe sur la barre de négo,
+   *  comme en tarification. Masqué si absent/null. */
+  achat?: number | null;
   /** Mini-happening célébrité : aura dorée autour du portrait, carillon
    *  d'apparition et bandeau de nom luxueux. */
   celebrite?: boolean;
@@ -85,6 +88,7 @@ export function NegociationSheet({
   bottomOffset,
   tutoMainJoueur = false,
   celebrite = false,
+  achat,
 }: NegociationSheetProps) {
   const { d, tr, locale } = useLangue();
   const [localNego, setLocalNego] = useState<NegociationState>(
@@ -210,6 +214,7 @@ export function NegociationSheet({
             onChangeJoueur={onChangeOffre}
             readOnly={!enCours}
             tutoMainJoueur={tutoMainJoueur}
+            achat={achat}
           />
           <HumeurGauge humeur={localNego.humeur} />
           <div style={btnRowStyle}>

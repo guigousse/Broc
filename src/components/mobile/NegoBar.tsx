@@ -22,10 +22,17 @@ interface NegoBarProps {
   readOnly?: boolean;
   /** Tutoriel : main pointeuse sur le curseur joueur (ignorée si readOnly). */
   tutoMainJoueur?: boolean;
+  /**
+   * Prix d'achat (somme du panier en vente) : repère fixe non interactif,
+   * comme la pastille « achat » du PrixSlider en tarification. Masqué si
+   * absent, null ou ≤ 0 (panier dont un objet n'a pas de prix connu).
+   */
+  achat?: number | null;
 }
 
 const COLOR_JOUEUR = "var(--nego-joueur)";
 const COLOR_ADVERSE = "var(--brass-700, #8c6a2b)";
+const COLOR_ACHAT = "var(--ink-500)";
 
 export function NegoBar({
   mode: _mode,
@@ -37,6 +44,7 @@ export function NegoBar({
   onChangeJoueur,
   readOnly = false,
   tutoMainJoueur = false,
+  achat,
 }: NegoBarProps) {
   const { d } = useLangue();
   const trackRef = useRef<HTMLDivElement>(null);
@@ -84,9 +92,36 @@ export function NegoBar({
     setDragging(true);
   };
 
+  const pctAchat =
+    typeof achat === "number" && achat > 0
+      ? Math.min(100, Math.max(0, (achat / echelleMax) * 100))
+      : null;
+
   return (
     <div style={wrapStyle}>
       <div ref={trackRef} style={trackStyle}>
+        {/* Repère fixe du prix d'achat : premier dans le DOM pour rester
+            SOUS les deux curseurs mobiles quand ils le croisent. */}
+        {pctAchat !== null && (
+          <div
+            style={{
+              ...cursorStyle,
+              width: 28,
+              height: 28,
+              top: 16,
+              left: `${pctAchat}%`,
+              fontSize: 10,
+              background: COLOR_ACHAT,
+              color: "white",
+              pointerEvents: "none",
+            }}
+          >
+            {achat}€
+            <span style={{ ...labelStyle, top: 32 }}>
+              {d.vente.pastilleAchat}
+            </span>
+          </div>
+        )}
         <div
           style={{
             ...cursorStyle,

@@ -47,9 +47,15 @@ export interface CollectionSlot {
   /**
    * Donation présente dans le slot (état + valeur préservés). null = slot vide.
    * `valeur` inclut la prime de restauration (Très bon/Pristin) ; `valeurBase`
-   * conserve le prix de référence brut pour recréer l'objet si on le retire.
+   * conserve le prix de référence brut pour recréer l'objet si on le retire ;
+   * `prixAchat` conserve le prix payé par le joueur pour le restituer aussi.
    */
-  donation: { etat: EtatObjet; valeur: number; valeurBase?: number } | null;
+  donation: {
+    etat: EtatObjet;
+    valeur: number;
+    valeurBase?: number;
+    prixAchat?: number;
+  } | null;
   unique?: boolean;
   /**
    * Vrai si le joueur a consulté ce slot dans la page Collection depuis sa découverte.

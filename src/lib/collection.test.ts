@@ -183,6 +183,28 @@ describe("donnerObjet", () => {
       valeurBase: 100,
     });
   });
+
+  it("conserve le prix d'achat de l'objet déposé dans la donation", () => {
+    const col = withSlots([emptySlot("t1", "Musique")]);
+    const res = donnerObjet(col, "t1", "Bon", 50, 12);
+    expect(res.collection.Musique[0].donation).toEqual({
+      etat: "Bon",
+      valeur: 50,
+      valeurBase: 50,
+      prixAchat: 12,
+    });
+  });
+
+  it("retourne le prix d'achat de l'ancienne donation remplacée", () => {
+    const col = withSlots([
+      {
+        ...emptySlot("t1", "Musique"),
+        donation: { etat: "Mauvais", valeur: 10, prixAchat: 4 },
+      },
+    ]);
+    const res = donnerObjet(col, "t1", "Bon", 50, 12);
+    expect(res.ancienne).toEqual({ etat: "Mauvais", valeur: 10, prixAchat: 4 });
+  });
 });
 
 describe("retirerDonation", () => {
@@ -196,6 +218,17 @@ describe("retirerDonation", () => {
     const res = retirerDonation(col, "t1");
     expect(res.collection.Musique[0].donation).toBeNull();
     expect(res.ancienne).toEqual({ etat: "Très bon", valeur: 80 });
+  });
+
+  it("restitue le prix d'achat conservé dans la donation", () => {
+    const col = withSlots([
+      {
+        ...emptySlot("t1", "Musique"),
+        donation: { etat: "Bon", valeur: 50, valeurBase: 50, prixAchat: 12 },
+      },
+    ]);
+    const res = retirerDonation(col, "t1");
+    expect(res.ancienne?.prixAchat).toBe(12);
   });
 
   it("ne change rien si pas de donation", () => {

@@ -102,7 +102,7 @@ export function marquerVuDansCollection(
 export interface ResultatDonation {
   collection: Record<CategorieObjet, CollectionSlot[]>;
   /** Si le slot était déjà rempli, l'ancienne donation déplacée (à recréer dans l'inventaire par le caller). */
-  ancienne: { etat: EtatObjet; valeur: number; valeurBase?: number } | null;
+  ancienne: CollectionSlot["donation"];
 }
 
 /**
@@ -126,13 +126,15 @@ export function valeurDonation(etat: EtatObjet, prixReference: number): number {
  * Pose une donation dans le slot du `templateId`. Si le slot était déjà rempli,
  * l'ancienne donation est retournée pour que le caller puisse la remettre en inventaire.
  * `valeur` est calculée avec la prime d'état ; `prixReference` brut est conservé
- * dans `valeurBase` pour recréer l'objet sans inflation si on le retire.
+ * dans `valeurBase` pour recréer l'objet sans inflation si on le retire, et
+ * `prixAchat` (prix payé par le joueur) est conservé pour la même raison.
  */
 export function donnerObjet(
   collection: Record<CategorieObjet, CollectionSlot[]>,
   templateId: string,
   etat: EtatObjet,
   prixReference: number,
+  prixAchat?: number,
 ): ResultatDonation {
   let ancienne: ResultatDonation["ancienne"] = null;
   const next = modifierSlot(collection, templateId, (s) => {
@@ -145,6 +147,7 @@ export function donnerObjet(
         etat,
         valeur: valeurDonation(etat, prixReference),
         valeurBase: prixReference,
+        ...(prixAchat != null ? { prixAchat } : {}),
       },
     };
   });
