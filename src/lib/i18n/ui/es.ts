@@ -189,6 +189,8 @@ export const es: DictionnaireUI = {
       "El valor de tu colección crece con cada donación.",
     coachCollectionDeblocage:
       "Ese valor desbloquea nuevos mercadillos, y construye tu reputación.",
+    coachCollectionRetirer:
+      "Una pieza donada no está perdida: este botón la devuelve a tu reserva, pero su valor se va con ella.",
     instructions: {
       "accueil": "Escucha a tu abuelo…",
       "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",

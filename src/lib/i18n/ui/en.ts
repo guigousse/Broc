@@ -189,6 +189,8 @@ export const en: DictionnaireUI = {
       "Your collection's value grows with every donation.",
     coachCollectionDeblocage:
       "That value unlocks new flea markets — and builds your reputation.",
+    coachCollectionRetirer:
+      "A donated piece isn't locked away: this button returns it to storage — but its value leaves with it.",
     instructions: {
       "accueil": "Listen to your grandfather…",
       "aller-chiner": "Go through the door, choose “Pick”, then the Neighborhood Yard Sale.",

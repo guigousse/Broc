@@ -36,6 +36,11 @@ interface CategoriePickerProps {
    * non encore consultés dans la collection (affiche un astérisque rouge).
    */
   nouveautesParCat?: Partial<Record<CategorieObjet, boolean>>;
+  /**
+   * Optionnel (tutoriel) : pastille de catégorie à désigner d'une main
+   * pointeuse pendant une leçon guidée — `null`/absent hors leçon.
+   */
+  mainCategorie?: CategorieObjet | null;
 }
 
 const ICONS: Record<string, LucideIcon> = {
@@ -92,6 +97,7 @@ export function CategoriePicker({
   totauxParCat,
   totalGlobal,
   nouveautesParCat,
+  mainCategorie,
 }: CategoriePickerProps) {
   const { d } = useLangue();
   const showFraction = totauxParCat !== undefined;
@@ -140,6 +146,7 @@ export function CategoriePicker({
         const active = cell.cat === selection;
         const Icon = cell.icon;
         const empty = cell.count === 0;
+        const estCibleMain = cell.cat !== null && cell.cat === mainCategorie;
         return (
           <button
             key={cell.key}
@@ -147,6 +154,7 @@ export function CategoriePicker({
             aria-selected={active}
             type="button"
             onClick={() => onChange(cell.cat)}
+            className={estCibleMain ? "tuto-main tuto-main-haut" : undefined}
             style={{
               ...cellBase,
               background: active ? "var(--forest-800)" : "var(--paper-100)",

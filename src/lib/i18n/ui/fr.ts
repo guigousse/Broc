@@ -192,6 +192,8 @@ export const fr = {
       "La valeur de ta collection grandit à chaque donation.",
     coachCollectionDeblocage:
       "Cette valeur débloque de nouvelles brocantes — et fait ta réputation.",
+    coachCollectionRetirer:
+      "Un objet donné n'est pas perdu : ce bouton le rend à ta réserve — mais la valeur s'en va avec lui.",
     instructions: {
       "accueil": "Écoute ton grand-père…",
       "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",
