@@ -195,6 +195,12 @@ export const es: DictionnaireUI = {
       "Ese valor desbloquea nuevos mercadillos, y construye tu reputación.",
     coachCollectionRetirer:
       "Una pieza donada no está perdida: este botón la devuelve a tu reserva, pero su valor se va con ella.",
+    coachCompetencesXp:
+      "Tu nivel y tu barra de experiencia: cada venta, cada hallazgo la llena.",
+    coachCompetencesArbres:
+      "Un árbol general, y uno por familia de objetos — te especializarás más adelante.",
+    coachCompetencesPoint:
+      "Y ahí tienes tu primer punto para gastar. Te espera.",
     instructions: {
       "accueil": "Escucha a tu abuelo…",
       "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",

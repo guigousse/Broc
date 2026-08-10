@@ -198,6 +198,12 @@ export const fr = {
       "Cette valeur débloque de nouvelles brocantes — et fait ta réputation.",
     coachCollectionRetirer:
       "Un objet donné n'est pas perdu : ce bouton le rend à ta réserve — mais la valeur s'en va avec lui.",
+    coachCompetencesXp:
+      "Ton niveau et ta barre d'expérience : chaque vente, chaque trouvaille la remplit.",
+    coachCompetencesArbres:
+      "Un arbre général, et un par famille d'objets — tu te spécialiseras plus tard.",
+    coachCompetencesPoint:
+      "Et voilà ton premier point à dépenser. Il t'attend.",
     instructions: {
       "accueil": "Écoute ton grand-père…",
       "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",

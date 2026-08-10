@@ -195,6 +195,12 @@ export const en: DictionnaireUI = {
       "That value unlocks new flea markets — and builds your reputation.",
     coachCollectionRetirer:
       "A donated piece isn't locked away: this button returns it to storage — but its value leaves with it.",
+    coachCompetencesXp:
+      "Your level and experience bar: every sale, every find fills it.",
+    coachCompetencesArbres:
+      "One general tree, and one per family of objects — you'll specialise later.",
+    coachCompetencesPoint:
+      "And there's your first point to spend. It's waiting for you.",
     instructions: {
       "accueil": "Listen to your grandfather…",
       "aller-chiner": "Go through the door, choose “Pick”, then the Neighborhood Yard Sale.",

@@ -446,6 +446,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     else if (etape === "collection-envoyer") {
       jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_peluche_collection);
     } else if (etape === "ouvrir-colis") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_colis_avant);
+    else if (etape === "competences-visite") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_niveau_avant);
     else if (etape === "conclusion") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
   }, [etape, dialogueQg, jouerDialogueQg]);
 
