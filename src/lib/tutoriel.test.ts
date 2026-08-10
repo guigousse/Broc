@@ -3,15 +3,17 @@ import {
   ETAPES_TUTORIEL,
   appliquerFinTutoriel,
   chapitreDuCarnetDu,
+  competenceGuidee,
   doigtSwipeVersCarnet,
   etapeSuivante,
+  ongletTutorielPermis,
   portePulse,
   tutorielActif,
 } from "./tutoriel";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { chapitrePret } from "./quetes/principales";
 import { createMockGameState } from "./__test-fixtures__/gameState";
-import { COLIS_TUTORIEL_SCRIPTE } from "@/data/tutorielScenario";
+import { COLIS_TUTORIEL_SCRIPTE, COMPETENCE_PREMIER_POINT } from "@/data/tutorielScenario";
 import { objetColisTutoriel, COLIS_TUTORIEL_TAILLE } from "@/data/starterInventory";
 
 describe("tutoriel", () => {
@@ -74,8 +76,8 @@ describe("tutoriel", () => {
   });
 });
 
-describe("étapes v3", () => {
-  it("ordonne les 20 étapes du flux (colis + 3 leçons de vente)", () => {
+describe("étapes v4", () => {
+  it("ordonne les 23 étapes du flux (colis + 3 leçons de vente + leçon de montée de niveau)", () => {
     expect(ETAPES_TUTORIEL).toEqual([
       "accueil", "aller-chiner",
       "chine-nego-echec", "chine-achat-direct", "chine-nego-un",
@@ -85,12 +87,29 @@ describe("étapes v3", () => {
       "ouvrir-colis",
       "preparer-etal", "coffre-trace-un", "coffre-trace-deux",
       "vente-refus", "vente-directe", "vente-nego",
+      "niveau-celebration", "competences-visite", "competences-choix",
       "conclusion", "termine",
     ]);
   });
 
   it("etapeSuivante enchaîne chine-nego-deux → chine-sortir", () => {
     expect(etapeSuivante("chine-nego-deux")).toBe("chine-sortir");
+  });
+});
+
+describe("leçon de montée de niveau", () => {
+  it("guide vers l'écran Compétences pendant la visite et le choix", () => {
+    expect(ongletTutorielPermis("competences-visite")).toBe("/bibliotheque");
+    expect(ongletTutorielPermis("competences-choix")).toBe("/bibliotheque");
+  });
+  it("ne guide nulle part pendant la célébration (elle se joue au bureau)", () => {
+    expect(ongletTutorielPermis("niveau-celebration")).toBeNull();
+  });
+  it("competenceGuidee ne désigne la cible qu'à l'étape du choix", () => {
+    expect(competenceGuidee("competences-choix")).toBe(COMPETENCE_PREMIER_POINT);
+    expect(competenceGuidee("competences-visite")).toBeNull();
+    expect(competenceGuidee("conclusion")).toBeNull();
+    expect(competenceGuidee("termine")).toBeNull();
   });
 });
 

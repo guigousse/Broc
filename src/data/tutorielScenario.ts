@@ -196,6 +196,15 @@ export const SESSION_VENTE_TUTORIEL: readonly AcheteurScenario[] = [
   },
 ];
 
+/* === Leçon de montée de niveau ========================================= */
+
+/** Le premier point de compétence du joueur, désigné par le grand-père. */
+export const COMPETENCE_PREMIER_POINT = {
+  treeId: "general",
+  brancheId: "presentation",
+  competenceId: "general.presentation.1",
+} as const;
+
 export function acheteurDeLEtape(etape: TutorielEtape): AcheteurScenario | null {
   if (etape === "vente-refus") return SESSION_VENTE_TUTORIEL[0];
   if (etape === "vente-directe") return SESSION_VENTE_TUTORIEL[1];

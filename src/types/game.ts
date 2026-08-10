@@ -299,18 +299,23 @@ export interface LedgerEntry {
 }
 
 /**
- * Étapes du tutoriel guidé, brocante scriptée (v3, 20 valeurs). Linéaire :
+ * Étapes du tutoriel guidé, brocante scriptée (v4, 23 valeurs). Linéaire :
  * accueil → aller-chiner → chine-nego-echec → chine-achat-direct →
  * chine-nego-un → chine-nego-deux → chine-sortir → stockage-ouvrir →
  * stockage-focus → collection-envoyer → collection-lecon → ouvrir-colis →
  * preparer-etal → coffre-trace-un → coffre-trace-deux → vente-refus →
- * vente-directe → vente-nego → conclusion → termine. "termine" = tutoriel
- * fini ou sauté (état des saves antérieures à v12) ; le colis du
- * grand-père est ouvert PENDANT ce flux (ouvrir-colis) — contenu scripté
- * fixe (`COLIS_TUTORIEL_SCRIPTE`). Le bouton « Passer » (qui saute
- * directement à "termine") en re-livre le reliquat dans
- * `appliquerFinTutoriel` (lib/tutoriel), fail-open pour ne perdre aucun
- * objet.
+ * vente-directe → vente-nego → niveau-celebration → competences-visite →
+ * competences-choix → conclusion → termine. "termine" = tutoriel fini ou
+ * sauté (état des saves antérieures à v12) ; le colis du grand-père est
+ * ouvert PENDANT ce flux (ouvrir-colis) — contenu scripté fixe
+ * (`COLIS_TUTORIEL_SCRIPTE`). Depuis SP5, la toute première montée de
+ * niveau (déclenchée par la vente scriptée) devient une leçon : la fanfare
+ * se joue à "niveau-celebration", le grand-père fait visiter l'écran
+ * Compétences à "competences-visite", et le joueur dépense son premier
+ * point (`COMPETENCE_PREMIER_POINT`) à "competences-choix". Le bouton
+ * « Passer » (qui saute directement à "termine") en re-livre le reliquat
+ * dans `appliquerFinTutoriel` (lib/tutoriel), fail-open pour ne perdre
+ * aucun objet.
  */
 export type TutorielEtape =
   | "accueil"
@@ -331,6 +336,9 @@ export type TutorielEtape =
   | "vente-refus"
   | "vente-directe"
   | "vente-nego"
+  | "niveau-celebration"
+  | "competences-visite"
+  | "competences-choix"
   | "conclusion"
   | "termine";
 
