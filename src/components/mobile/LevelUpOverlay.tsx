@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { usePathname } from "next/navigation";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import {
   audioManager,
   PIC_EXPLOSION_S,
@@ -322,6 +322,7 @@ const btnContinuer: CSSProperties = {
 
 export function LevelUpOverlay() {
   const { state, marquerNiveauVu } = useGame();
+  const { avancerTutoriel } = useGameActions();
   const pathname = usePathname();
   const { d, tr, locale } = useLangue();
   // Lu au premier rendu client : l'overlay ne rend rien côté serveur (aucune
@@ -353,7 +354,12 @@ export function LevelUpOverlay() {
   const affichable =
     estRoutePartie(pathname) &&
     !enSession &&
-    !(state && tutorielActif(state)) &&
+    // Le tutoriel s'approprie la toute première montée de niveau : elle se
+    // joue à l'étape dédiée (leçon des compétences), et reste bloquée
+    // partout ailleurs pendant le tutoriel pour ne pas couper une leçon.
+    (!state ||
+      !tutorielActif(state) ||
+      state.tutorielEtape === "niveau-celebration") &&
     !dialogueActif &&
     !coachOuvert;
   const niveauACelebrer =
@@ -496,6 +502,16 @@ export function LevelUpOverlay() {
     DELAI_PREMIERE_LIGNE + lignes.length * ECART_LIGNE + ECART_BOUTON,
   );
 
+  // La fermeture marque le niveau vu et, à l'étape dédiée du tutoriel, fait
+  // avancer vers la leçon des compétences — seule porte de sortie de
+  // `niveau-celebration`.
+  const fermer = () => {
+    marquerNiveauVu();
+    if (state.tutorielEtape === "niveau-celebration") {
+      avancerTutoriel("competences-visite");
+    }
+  };
+
   return (
     <div
       style={scrim}
@@ -559,7 +575,7 @@ export function LevelUpOverlay() {
         type="button"
         className="broc-levelup-ligne"
         style={{ ...btnContinuer, animationDelay: `${delaiBouton}s` }}
-        onClick={marquerNiveauVu}
+        onClick={fermer}
       >
         {d.menu.continuer}
       </button>

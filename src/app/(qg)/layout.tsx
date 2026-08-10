@@ -449,6 +449,19 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     else if (etape === "conclusion") jouerDialogueQg(SEQUENCES_TUTORIEL.tuto_conclusion);
   }, [etape, dialogueQg, jouerDialogueQg]);
 
+  // Filet « rien à célébrer » : l'étape `niveau-celebration` attend la
+  // fermeture de LevelUpOverlay pour avancer — mais si aucun niveau n'est
+  // réellement en attente (reprise de save, XP déjà vue…), cet overlay ne
+  // s'affiche jamais et l'étape resterait bloquée pour toujours. Le
+  // tutoriel ne doit jamais dépendre d'un level-up qui n'a pas eu lieu : on
+  // saute directement à `conclusion`, avec les deux étapes de compétences.
+  useEffect(() => {
+    if (!state || etape !== "niveau-celebration") return;
+    if (state.brocanteur.niveau <= state.niveauVu) {
+      avancerTutoriel("conclusion");
+    }
+  }, [state, etape, avancerTutoriel]);
+
   // Fin du tutoriel : la main a guidé jusqu'au carnet. Son ouverture clôt le
   // mini-tuto ET arme le premier chapitre de la trame (la lampe du grand-père),
   // qui se joue par-dessus le carnet resté ouvert — la commande s'y inscrit à

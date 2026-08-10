@@ -19,10 +19,12 @@ afterEach(() => {
 
 let mockState: Record<string, unknown> | null = null;
 const marquerNiveauVu = vi.fn();
+const avancerTutoriel = vi.fn();
 let mockPathname = "/bureau";
 
 vi.mock("@/context/GameContext", () => ({
   useGame: () => ({ state: mockState, marquerNiveauVu }),
+  useGameActions: () => ({ avancerTutoriel }),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -171,6 +173,40 @@ describe("LevelUpOverlay", () => {
     mockPathname = "/bureau";
     const { container } = render(<LevelUpOverlay />);
     expect(container.firstChild).toBeNull();
+  });
+
+  it("reste masqué pendant le tutoriel hors de l'étape de célébration", () => {
+    mockState = etat(0, 1, 1, [], "vente-nego");
+    mockPathname = "/bureau";
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("s'affiche à l'étape niveau-celebration", () => {
+    mockState = etat(0, 1, 1, [], "niveau-celebration");
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    expect(screen.getByText("Niveau 1")).toBeTruthy();
+  });
+
+  it("reste masqué à niveau-celebration si un dialogue est ouvert", () => {
+    setDialogueActif(true);
+    mockState = etat(0, 1, 1, [], "niveau-celebration");
+    mockPathname = "/bureau";
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+    setDialogueActif(false);
+  });
+
+  it("à niveau-celebration, la fermeture marque le niveau vu ET avance vers competences-visite", () => {
+    mockState = etat(0, 1, 1, [], "niveau-celebration");
+    mockPathname = "/bureau";
+    marquerNiveauVu.mockClear();
+    avancerTutoriel.mockClear();
+    render(<LevelUpOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(marquerNiveauVu).toHaveBeenCalledTimes(1);
+    expect(avancerTutoriel).toHaveBeenCalledWith("competences-visite");
   });
 
   it("dialogue actif (DialogueOverlay, ex. tuto_conclusion) : niveau en attente mais → null", () => {
