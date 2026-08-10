@@ -182,8 +182,12 @@ export const fr = {
       "Ta réserve : le Garage, 10 places. Chaque trouvaille y arrive après la brocante.",
     coachStockageCategories:
       "Filtre par catégorie pour t'y retrouver quand la réserve se remplit.",
-    coachStockageObjet:
-      "Chaque ligne montre l'état de l'objet — et son bouton pour l'envoyer en collection.",
+    coachStockageEtat:
+      "Les étoiles disent l'état de l'objet : plus il est beau, plus il vaut cher.",
+    coachStockageTheme:
+      "Ce petit symbole rappelle son thème — pratique pour trier d'un coup d'œil.",
+    coachStockageBouton:
+      "Et ce bouton l'envoie dans ta collection, au lieu de le vendre.",
     coachStockageAmelioration:
       "Plus tard, tu pourras agrandir : cave, puis hangar.",
     coachCollectionCase:

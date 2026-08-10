@@ -179,8 +179,12 @@ export const en: DictionnaireUI = {
       "Your reserve: the Garage, 10 spots. Every find lands here after the flea market.",
     coachStockageCategories:
       "Filter by category to find your way once the reserve fills up.",
-    coachStockageObjet:
-      "Each row shows the item's condition — and its button to send it to your collection.",
+    coachStockageEtat:
+      "The stars show the item's condition: the finer it is, the more it's worth.",
+    coachStockageTheme:
+      "This little symbol recalls its theme — handy for sorting at a glance.",
+    coachStockageBouton:
+      "And this button sends it to your collection instead of selling it.",
     coachStockageAmelioration:
       "Later, you'll be able to expand it: cellar, then warehouse.",
     coachCollectionCase:

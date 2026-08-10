@@ -179,8 +179,12 @@ export const es: DictionnaireUI = {
       "Tu reserva: el Garaje, 10 plazas. Cada hallazgo llega aquí después del mercadillo.",
     coachStockageCategories:
       "Filtra por categoría para orientarte cuando la reserva se llene.",
-    coachStockageObjet:
-      "Cada fila muestra el estado del objeto, y su botón para enviarlo a la colección.",
+    coachStockageEtat:
+      "Las estrellas indican el estado del objeto: cuanto mejor está, más vale.",
+    coachStockageTheme:
+      "Este pequeño símbolo recuerda su temática — útil para ordenar de un vistazo.",
+    coachStockageBouton:
+      "Y este botón lo envía a tu colección, en vez de venderlo.",
     coachStockageAmelioration:
       "Más adelante podrás ampliarlo: sótano, luego nave.",
     coachCollectionCase:

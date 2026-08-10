@@ -160,7 +160,6 @@ function StockagePageInner() {
               title={d.chrome.onglets.stockage}
               left={
                 <div
-                  data-tuto-coach="stockage-capacite"
                   style={{
                     display: "flex",
                     flexDirection: "column",
@@ -168,7 +167,14 @@ function StockagePageInner() {
                     minWidth: 0,
                   }}
                 >
+                  {/* La découpe du coach cible ce div interne (le texte), pas
+                      le wrapper flex qui l'entoure : ce dernier s'étire sur
+                      toute la largeur disponible du PageHeaderBar, ce qui
+                      englobait une zone bien plus large que le libellé
+                      (recette 2026-08-09). L'attribut data seul ne change
+                      rien au rendu hors tutoriel. */}
                   <div
+                    data-tuto-coach="stockage-capacite"
                     style={{
                       fontFamily: "var(--font-display)",
                       fontSize: 12,
@@ -259,17 +265,18 @@ function StockagePageInner() {
             {flash}
           </div>
         )}
-        <div data-tuto-coach="stockage-objet">
-          <InventoryGrid
-            objets={objetsFiltres}
-            categoriesConnues={categoriesConnuesVitrine}
-            onTapObjet={setObjetOuvert}
-            onEnvoyerCollection={envoyerCollection}
-            mainVinyles={state?.miniTutoVinyle === "ajouter"}
-            mainTemplateId={etape === "collection-envoyer" ? PELUCHE_TEMPLATE_ID : null}
-            collectionStatus={collectionStatus}
-          />
-        </div>
+        <InventoryGrid
+          objets={objetsFiltres}
+          categoriesConnues={categoriesConnuesVitrine}
+          onTapObjet={setObjetOuvert}
+          onEnvoyerCollection={envoyerCollection}
+          mainVinyles={state?.miniTutoVinyle === "ajouter"}
+          mainTemplateId={etape === "collection-envoyer" ? PELUCHE_TEMPLATE_ID : null}
+          // Visite guidée du stockage : la 1ʳᵉ ligne porte les 3 cibles du
+          // coach (étoiles/thème/bouton), cf. TutorielCoach ci-dessous.
+          cibleCoachPremiereLigne={etape === "stockage-focus"}
+          collectionStatus={collectionStatus}
+        />
       </FloatingRoomOverlay>
 
       {etape === "stockage-focus" && (
@@ -277,7 +284,9 @@ function StockagePageInner() {
           etapes={[
             { cible: "stockage-capacite", texte: d.tutoriel.coachStockageCapacite },
             { cible: "stockage-categories", texte: d.tutoriel.coachStockageCategories },
-            { cible: "stockage-objet", texte: d.tutoriel.coachStockageObjet },
+            { cible: "stockage-etat", texte: d.tutoriel.coachStockageEtat },
+            { cible: "stockage-theme", texte: d.tutoriel.coachStockageTheme },
+            { cible: "stockage-bouton", texte: d.tutoriel.coachStockageBouton },
             { cible: "stockage-amelioration", texte: d.tutoriel.coachStockageAmelioration },
           ]}
           onFini={() => avancerTutoriel("collection-envoyer")}

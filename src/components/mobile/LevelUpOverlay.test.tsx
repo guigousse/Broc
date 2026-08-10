@@ -7,8 +7,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { LevelUpOverlay } from "./LevelUpOverlay";
+import { setCoachOuvert } from "@/lib/coachActif";
+import { setDialogueActif } from "@/lib/dialogueActif";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // Modules à état partagé : jamais de fuite d'un test à l'autre.
+  setCoachOuvert(false);
+  setDialogueActif(false);
+});
 
 let mockState: Record<string, unknown> | null = null;
 const marquerNiveauVu = vi.fn();
@@ -46,16 +53,20 @@ vi.mock("@/data/competences", async (importOriginal) => {
   };
 });
 
+// tutorielEtape "termine" par défaut : la plupart des tests célèbrent un
+// niveau hors tutoriel — sinon `tutorielActif(state)` bloquerait affichable.
 function etat(
   niveauVu: number,
   niveau: number,
   pointsDisponibles = 0,
   competencesDebloquees: string[] = [],
+  tutorielEtape = "termine",
 ) {
   return {
     niveauVu,
     brocanteur: { niveau, xp: 0, pointsDisponibles },
     competencesDebloquees,
+    tutorielEtape,
   };
 }
 
@@ -153,6 +164,40 @@ describe("LevelUpOverlay", () => {
     mockPathname = "/mentions-legales";
     const { container } = render(<LevelUpOverlay />);
     expect(container.firstChild).toBeNull();
+  });
+
+  it("tutoriel en cours : niveau en attente mais tutorielActif → null (la célébration attend)", () => {
+    mockState = etat(0, 1, 0, [], "vente-directe");
+    mockPathname = "/bureau";
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("dialogue actif (DialogueOverlay, ex. tuto_conclusion) : niveau en attente mais → null", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    setDialogueActif(true);
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("coach ouvert (TutorielCoach) : niveau en attente mais → null", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    setCoachOuvert(true);
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("niveau non perdu : conservé tant que l'écran n'est pas libre, célébré une fois le dialogue terminé", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    setDialogueActif(true);
+    const { container, rerender } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+    setDialogueActif(false);
+    rerender(<LevelUpOverlay />);
+    expect(screen.getByText("Niveau 1")).toBeTruthy();
   });
 
   it("multi-niveaux : célèbre niveauVu+1, pas le niveau final", () => {
