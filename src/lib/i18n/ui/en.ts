@@ -216,7 +216,7 @@ export const en: DictionnaireUI = {
       "vente-nego": "Haggle over the carafe — hold your price, she'll come up.",
       "niveau-celebration": "You've gained a level — enjoy it!",
       "competences-visite": "Open the Skills screen from the bottom bar.",
-      "competences-choix": "Spend your first point: the Presentation branch, “Soul reader”.",
+      "competences-choix": "Spend your first point: the Insight branch, “Soul reader”.",
       "conclusion": "Listen to your grandfather…",
     },
   },

@@ -216,7 +216,7 @@ export const es: DictionnaireUI = {
       "vente-nego": "Negocia la jarra — mantén tu precio, subirá.",
       "niveau-celebration": "¡Subes de nivel — disfrútalo!",
       "competences-visite": "Abre las Habilidades desde la barra inferior.",
-      "competences-choix": "Gasta tu primer punto: la rama Presentación, «Lector de almas».",
+      "competences-choix": "Gasta tu primer punto: la rama Perspicacia, «Lector de almas».",
       "conclusion": "Escucha a tu abuelo…",
     },
   },
