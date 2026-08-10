@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { MonitorPlay, X } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import { useToast } from "@/components/ui/Toast";
-import { getAdProvider } from "@/lib/ads/adProvider";
+import { getAdProvider, EMPLACEMENTS_PUB } from "@/lib/ads/adProvider";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
   tirerContenuBoite,
@@ -122,7 +122,7 @@ export function BoiteMystereOverlay({
     }
     setEnCours(true);
     try {
-      const { rewarded } = await getAdProvider().showRewardedAd();
+      const { rewarded } = await getAdProvider().showRewardedAd(EMPLACEMENTS_PUB.boiteMystere);
       if (!rewarded) return; // pub non terminée : la boîte reste ouvrable
       const exclus = new Set([
         ...uniquesExclusDuChinage(state),

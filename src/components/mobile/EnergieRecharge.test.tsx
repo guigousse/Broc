@@ -6,8 +6,20 @@ import { PUBS_ENERGIE_MAX_PAR_JOUR } from "@/lib/energie";
 import { definirEnergieInfinie, energieInfinieActive } from "@/lib/iap/energieInfinie";
 import { audioManager } from "@/lib/audio/audioManager";
 
+// vi.hoisted : la factory de vi.mock est hissée, elle ne peut pas capturer une
+// variable déclarée après coup.
+const { showRewardedAd, EMPLACEMENTS_PUB } = vi.hoisted(() => ({
+  showRewardedAd: vi.fn(async () => ({ rewarded: true })),
+  // Le double doit refléter le vrai module : le composant importe la table.
+  EMPLACEMENTS_PUB: {
+    energie: "energie",
+    boiteMystere: "boite-mystere",
+    restauration: "restauration",
+  },
+}));
 vi.mock("@/lib/ads/adProvider", () => ({
-  getAdProvider: () => ({ showRewardedAd: async () => ({ rewarded: true }) }),
+  getAdProvider: () => ({ showRewardedAd }),
+  EMPLACEMENTS_PUB,
 }));
 vi.mock("@/lib/audio/audioManager", () => ({
   audioManager: {
@@ -109,6 +121,18 @@ describe("EnergieRecharge — galvanomètre", () => {
 });
 
 describe("EnergieRecharge — salve finale après la pub", () => {
+  it("demande le bloc AdMob « énergie », pas un autre emplacement", async () => {
+    showRewardedAd.mockClear();
+    mockState = {
+      energie: 2,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+    render(<EnergieRecharge onClose={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: /regarder une pub/i }));
+    await waitFor(() => expect(showRewardedAd).toHaveBeenCalledWith("energie"));
+  });
+
   it("le crédit +1 ⚡ part à la FIN de la salve de tremblement (~600 ms), pas avant", async () => {
     vi.useFakeTimers();
     crediterEnergiePub.mockClear();

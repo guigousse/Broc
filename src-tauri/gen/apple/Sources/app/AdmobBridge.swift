@@ -11,21 +11,46 @@ import AppTrackingTransparency
 // le plugin via NSClassFromString("BrocAdmobBridge").
 // API SDK v12 (noms Swift : MobileAds/RewardedAd/Request,
 // ConsentInformation/ConsentForm — PAS les anciens GAD*/UMP*).
-// Bloc rewarded de PRODUCTION (validation device faite le 2026-07-24 avec le
-// bloc de test officiel Google "ca-app-pub-3940256099942544/1712485313" —
-// à remettre pour tout débogage : cliquer ses propres vraies pubs = ban AdMob).
-private let AD_UNIT_ID = "ca-app-pub-6928338731034491/5859004325"
+// Blocs rewarded de PRODUCTION, UN PAR EMPLACEMENT du jeu. Les clés sont les
+// valeurs de EMPLACEMENTS_PUB (src/lib/ads/adProvider.ts) : c'est ce qui rend
+// les revenus et le taux de complétion lisibles écran par écran dans la
+// console AdMob. Un emplacement laissé vide retombe sur AD_UNIT_DEFAUT — le
+// joueur garde sa récompense, seule la ventilation est perdue.
+// Pour tout débogage, remettre le bloc de test officiel Google
+// "ca-app-pub-3940256099942544/1712485313" : cliquer ses propres vraies pubs
+// = ban AdMob (validation device faite le 2026-07-24 avec ce bloc de test).
+private let AD_UNIT_ENERGIE = "ca-app-pub-6928338731034491/5859004325"
+private let AD_UNITS: [String: String] = [
+  "energie": AD_UNIT_ENERGIE,
+  "boite-mystere": "ca-app-pub-6928338731034491/8064744693",
+  "restauration": "ca-app-pub-6928338731034491/4038801989",
+]
+
+// Bloc servi quand l'emplacement est inconnu ou pas encore créé côté AdMob.
+private let AD_UNIT_DEFAUT = AD_UNIT_ENERGIE
 
 @objc(BrocAdmobBridge) public class BrocAdmobBridge: NSObject {
   @objc public static let shared = BrocAdmobBridge()
 
   // Invariant : les callbacks du SDK GMA (load/present/delegate) arrivent
-  // tous sur le main thread — l'état ci-dessous (finEnAttente, rewardedAd)
+  // tous sur le main thread — l'état ci-dessous (finEnAttente, rewardedAds)
   // n'est donc touché que depuis ce thread, sans synchronisation additionnelle.
-  private var rewardedAd: RewardedAd?
+  //
+  // Une pub préchargée par bloc, indexée par ad unit ID : les emplacements ne
+  // se volent plus leur précharge (avant, une pub chargée pour l'énergie
+  // pouvait être présentée pour la boîte mystère).
+  private var rewardedAds: [String: RewardedAd] = [:]
+  /// Bloc de la pub en cours d'affichage — sert à le recharger à la fermeture.
+  private var unitEnCours: String?
   private var finEnAttente: ((Bool, String?) -> Void)?
   private var recompenseGagnee = false
   private var sdkPret = false
+
+  /// Bloc AdMob d'un emplacement, avec repli sur le bloc par défaut.
+  private func unit(pour emplacement: String) -> String {
+    guard let unit = AD_UNITS[emplacement], !unit.isEmpty else { return AD_UNIT_DEFAUT }
+    return unit
+  }
 
   // MARK: - Entrées du pont (sélecteurs appelés par le plugin vendoré)
 
@@ -38,7 +63,11 @@ private let AD_UNIT_ID = "ca-app-pub-6928338731034491/5859004325"
       self.parcoursConsentement {
         MobileAds.shared.start()
         self.sdkPret = true
-        self.prechargerPub()
+        // Seul le bloc par défaut est préchargé au boot : précharger les trois
+        // ferait trois requêtes par session pour au plus une impression, ce
+        // que le match rate AdMob paie cher. Les autres blocs se chargent à la
+        // demande, puis restent préchargés après leur première utilisation.
+        self.prechargerPub(AD_UNIT_DEFAUT)
         fin()
       }
     }
@@ -89,7 +118,9 @@ private let AD_UNIT_ID = "ca-app-pub-6928338731034491/5859004325"
     return out
   }
 
-  @objc public func montrerRewarded(_ fin: @escaping (Bool, String?) -> Void) {
+  @objc public func montrerRewarded(
+    _ emplacement: String, fin: @escaping (Bool, String?) -> Void
+  ) {
     DispatchQueue.main.async {
       guard self.sdkPret else {
         fin(false, "SDK non initialisé")
@@ -102,18 +133,22 @@ private let AD_UNIT_ID = "ca-app-pub-6928338731034491/5859004325"
         fin(false, "Pub déjà en cours")
         return
       }
+      let unit = self.unit(pour: emplacement)
       // Réservation SYNCHRONE : ferme la fenêtre de course pendant le
       // chargement réseau du chemin sans pub préchargée. Toute sortie
       // d'échec doit libérer la réservation.
       self.finEnAttente = fin
-      if let pub = self.rewardedAd {
+      self.unitEnCours = unit
+      if let pub = self.rewardedAds.removeValue(forKey: unit) {
         self.presenter(pub: pub)
       } else {
-        // Pas de pub préchargée (hors-ligne au boot, no-fill…) : tentative à
-        // la demande — le SDK gère son propre timeout réseau.
-        RewardedAd.load(with: AD_UNIT_ID, request: Request()) { pub, erreur in
+        // Pas de pub préchargée pour ce bloc (premier usage de l'emplacement,
+        // hors-ligne au boot, no-fill…) : tentative à la demande — le SDK
+        // gère son propre timeout réseau.
+        RewardedAd.load(with: unit, request: Request()) { pub, erreur in
           guard let pub else {
             self.finEnAttente = nil
+            self.unitEnCours = nil
             fin(false, erreur?.localizedDescription ?? "Aucune pub disponible")
             return
           }
@@ -150,9 +185,9 @@ private let AD_UNIT_ID = "ca-app-pub-6928338731034491/5859004325"
 
   // MARK: - Cycle de vie des pubs
 
-  private func prechargerPub() {
-    RewardedAd.load(with: AD_UNIT_ID, request: Request()) { [weak self] pub, _ in
-      self?.rewardedAd = pub
+  private func prechargerPub(_ unit: String) {
+    RewardedAd.load(with: unit, request: Request()) { [weak self] pub, _ in
+      self?.rewardedAds[unit] = pub
       pub?.fullScreenContentDelegate = self
     }
   }
@@ -162,11 +197,11 @@ private let AD_UNIT_ID = "ca-app-pub-6928338731034491/5859004325"
     guard let racine = rootViewController() else {
       finEnAttente?(false, "Pas de view controller racine")
       finEnAttente = nil
+      unitEnCours = nil
       return
     }
     recompenseGagnee = false
     pub.fullScreenContentDelegate = self
-    rewardedAd = nil
     pub.present(from: racine) { [weak self] in
       // Callback Google déclenché UNIQUEMENT au visionnage complet.
       self?.recompenseGagnee = true
@@ -189,7 +224,9 @@ extension BrocAdmobBridge: FullScreenContentDelegate {
   public func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
     finEnAttente?(recompenseGagnee, nil)
     finEnAttente = nil
-    prechargerPub()
+    // On ne recharge que le bloc qui vient de servir : l'emplacement suivant
+    // chargera le sien à la demande.
+    rechargerBlocServi()
   }
 
   public func ad(
@@ -198,6 +235,12 @@ extension BrocAdmobBridge: FullScreenContentDelegate {
   ) {
     finEnAttente?(false, error.localizedDescription)
     finEnAttente = nil
-    prechargerPub()
+    rechargerBlocServi()
+  }
+
+  private func rechargerBlocServi() {
+    let unit = unitEnCours ?? AD_UNIT_DEFAUT
+    unitEnCours = nil
+    prechargerPub(unit)
   }
 }

@@ -3,7 +3,7 @@
  * l'API Tauri pour que rien de natif ne soit évalué hors runtime Tauri
  * (même motif que src/lib/notifications).
  */
-import type { AdProvider, AdResult } from "./adProvider";
+import type { AdProvider, AdResult, EmplacementPub } from "./adProvider";
 
 /** Vrai uniquement sous runtime Tauri sur iOS (le plugin n'existe que là). */
 export function adMobDisponible(): boolean {
@@ -38,13 +38,16 @@ export class AdMobAdProvider implements AdProvider {
   }
 
   /**
+   * `emplacement` choisit le bloc AdMob côté natif (un par écran appelant).
    * Échec technique → exception (l'UI affiche `erreurPub`).
    * Pub fermée avant la récompense → `{ rewarded: false }` sans exception.
    */
-  async showRewardedAd(): Promise<AdResult> {
+  async showRewardedAd(emplacement: EmplacementPub): Promise<AdResult> {
     await this.initialiser();
     const { invoke } = await import("@tauri-apps/api/core");
-    const res = await invoke<{ rewarded: boolean }>("plugin:admob|show_rewarded_ad");
+    const res = await invoke<{ rewarded: boolean }>("plugin:admob|show_rewarded_ad", {
+      emplacement,
+    });
     return { rewarded: res.rewarded === true };
   }
 }

@@ -16,7 +16,7 @@ impl<R: Runtime> Admob<R> {
     pub fn initialize(&self) -> crate::Result<()> {
         Err(crate::Error::UnsupportedPlatform)
     }
-    pub fn show_rewarded_ad(&self) -> crate::Result<AdResult> {
+    pub fn show_rewarded_ad(&self, _emplacement: String) -> crate::Result<AdResult> {
         Err(crate::Error::UnsupportedPlatform)
     }
 }

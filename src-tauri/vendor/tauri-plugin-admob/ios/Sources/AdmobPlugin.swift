@@ -25,6 +25,12 @@ class AdmobPlugin: Plugin {
     _ = pont.perform(NSSelectorFromString("initialiser:"), with: fin)
   }
 
+  /// Arguments de `showRewardedAd` — `emplacement` est l'écran appelant
+  /// (cf. EMPLACEMENTS_PUB côté web), qui détermine le bloc AdMob à servir.
+  private struct ArgsRewarded: Decodable {
+    let emplacement: String
+  }
+
   @objc public func showRewardedAd(_ invoke: Invoke) throws {
     guard let pont = pont() else {
       // Pont absent (ne devrait pas arriver dans l'app packagée) ; reject →
@@ -32,6 +38,9 @@ class AdmobPlugin: Plugin {
       invoke.reject("Pont AdMob absent")
       return
     }
+    // Argument absent/illisible : le pont retombe sur son bloc par défaut
+    // plutôt que de priver le joueur de sa récompense.
+    let emplacement = (try? invoke.parseArgs(ArgsRewarded.self))?.emplacement ?? ""
     let fin: @convention(block) (Bool, String?) -> Void = { rewarded, erreur in
       if let erreur {
         invoke.reject(erreur)
@@ -39,7 +48,8 @@ class AdmobPlugin: Plugin {
         invoke.resolve(["rewarded": rewarded])
       }
     }
-    _ = pont.perform(NSSelectorFromString("montrerRewarded:"), with: fin)
+    _ = pont.perform(
+      NSSelectorFromString("montrerRewarded:fin:"), with: emplacement, with: fin)
   }
 }
 

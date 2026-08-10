@@ -106,19 +106,32 @@ describe("AdMobAdProvider", () => {
     invokeMock.mockResolvedValue({ rewarded: true });
     const { adMob } = await chargerFrais();
     const p = new adMob.AdMobAdProvider();
-    await p.showRewardedAd();
-    await p.showRewardedAd();
+    await p.showRewardedAd("energie");
+    await p.showRewardedAd("energie");
     const initCalls = invokeMock.mock.calls.filter(
       (c) => c[0] === "plugin:admob|initialize"
     );
     expect(initCalls).toHaveLength(1);
   });
 
+  it("transmet l'emplacement au natif (un bloc AdMob par emplacement)", async () => {
+    simulerTauriIos();
+    invokeMock.mockResolvedValue({ rewarded: true });
+    const { adMob } = await chargerFrais();
+    const p = new adMob.AdMobAdProvider();
+    await p.showRewardedAd("boite-mystere");
+    await p.showRewardedAd("restauration");
+    const emplacements = invokeMock.mock.calls
+      .filter((c) => c[0] === "plugin:admob|show_rewarded_ad")
+      .map((c) => (c[1] as { emplacement: string }).emplacement);
+    expect(emplacements).toEqual(["boite-mystere", "restauration"]);
+  });
+
   it("mappe rewarded=true", async () => {
     simulerTauriIos();
     invokeMock.mockResolvedValue({ rewarded: true });
     const { adMob } = await chargerFrais();
-    await expect(new adMob.AdMobAdProvider().showRewardedAd()).resolves.toEqual({
+    await expect(new adMob.AdMobAdProvider().showRewardedAd("energie")).resolves.toEqual({
       rewarded: true,
     });
   });
@@ -127,7 +140,7 @@ describe("AdMobAdProvider", () => {
     simulerTauriIos();
     invokeMock.mockResolvedValue({ rewarded: false });
     const { adMob } = await chargerFrais();
-    await expect(new adMob.AdMobAdProvider().showRewardedAd()).resolves.toEqual({
+    await expect(new adMob.AdMobAdProvider().showRewardedAd("energie")).resolves.toEqual({
       rewarded: false,
     });
   });
@@ -140,7 +153,7 @@ describe("AdMobAdProvider", () => {
         : Promise.reject(new Error("no-fill"))
     );
     const { adMob } = await chargerFrais();
-    await expect(new adMob.AdMobAdProvider().showRewardedAd()).rejects.toThrow();
+    await expect(new adMob.AdMobAdProvider().showRewardedAd("energie")).rejects.toThrow();
   });
 
   it("retente l'init au prochain appel si elle a échoué", async () => {
@@ -149,7 +162,7 @@ describe("AdMobAdProvider", () => {
     invokeMock.mockResolvedValue({ rewarded: true });
     const { adMob } = await chargerFrais();
     const p = new adMob.AdMobAdProvider();
-    await expect(p.showRewardedAd()).rejects.toThrow();
-    await expect(p.showRewardedAd()).resolves.toEqual({ rewarded: true });
+    await expect(p.showRewardedAd("energie")).rejects.toThrow();
+    await expect(p.showRewardedAd("energie")).resolves.toEqual({ rewarded: true });
   });
 });

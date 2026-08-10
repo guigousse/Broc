@@ -10,7 +10,7 @@ import {
   pubsEnergieRestantes,
   secondesAvantProchaine,
 } from "@/lib/energie";
-import { getAdProvider } from "@/lib/ads/adProvider";
+import { getAdProvider, EMPLACEMENTS_PUB } from "@/lib/ads/adProvider";
 import { useToastSafe } from "@/components/ui/Toast";
 import { CartelPub } from "@/components/ui/CartelPub";
 import { audioManager } from "@/lib/audio/audioManager";
@@ -278,7 +278,7 @@ export function EnergieRecharge({
     if (pubIndisponible) return;
     setEnCours(true);
     try {
-      const { rewarded } = await getAdProvider().showRewardedAd();
+      const { rewarded } = await getAdProvider().showRewardedAd(EMPLACEMENTS_PUB.energie);
       if (rewarded) {
         // Le tremblement continue en salve finale ; le crédit, les étincelles
         // et le son partent ensemble à la fin de la salve.

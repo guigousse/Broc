@@ -27,9 +27,9 @@ impl<R: Runtime> Admob<R> {
             .run_mobile_plugin("initialize", serde_json::json!({}))
             .map_err(Into::into)
     }
-    pub fn show_rewarded_ad(&self) -> crate::Result<AdResult> {
+    pub fn show_rewarded_ad(&self, emplacement: String) -> crate::Result<AdResult> {
         self.0
-            .run_mobile_plugin("showRewardedAd", serde_json::json!({}))
+            .run_mobile_plugin("showRewardedAd", serde_json::json!({ "emplacement": emplacement }))
             .map_err(Into::into)
     }
 }
