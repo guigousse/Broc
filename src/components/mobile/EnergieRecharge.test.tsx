@@ -20,6 +20,8 @@ const { showRewardedAd, EMPLACEMENTS_PUB } = vi.hoisted(() => ({
 vi.mock("@/lib/ads/adProvider", () => ({
   getAdProvider: () => ({ showRewardedAd }),
   EMPLACEMENTS_PUB,
+  // Ces tests tournent hors Tauri Android : la pub reste proposée.
+  pubDisponible: () => true,
 }));
 vi.mock("@/lib/audio/audioManager", () => ({
   audioManager: {

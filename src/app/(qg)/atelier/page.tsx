@@ -30,7 +30,7 @@ import { audioManager } from "@/lib/audio/audioManager";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getItemThumbUrl } from "@/lib/itemImages";
 import { getTemplate } from "@/data/objetTemplates";
-import { getAdProvider, EMPLACEMENTS_PUB } from "@/lib/ads/adProvider";
+import { getAdProvider, EMPLACEMENTS_PUB, pubDisponible } from "@/lib/ads/adProvider";
 import { useToast } from "@/components/ui/Toast";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
@@ -837,10 +837,11 @@ export default function AtelierPage() {
                 ),
               )}
             </div>
-            {peutTerminerImmediat(
-              enCoursDetail.enRestauration,
-              tempsConfiance() ?? Date.now(),
-            ) && (
+            {pubDisponible() &&
+              peutTerminerImmediat(
+                enCoursDetail.enRestauration,
+                tempsConfiance() ?? Date.now(),
+              ) && (
               <button
                 type="button"
                 disabled={pubEnCours}

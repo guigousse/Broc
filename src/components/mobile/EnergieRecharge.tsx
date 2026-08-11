@@ -10,7 +10,7 @@ import {
   pubsEnergieRestantes,
   secondesAvantProchaine,
 } from "@/lib/energie";
-import { getAdProvider, EMPLACEMENTS_PUB } from "@/lib/ads/adProvider";
+import { getAdProvider, EMPLACEMENTS_PUB, pubDisponible } from "@/lib/ads/adProvider";
 import { useToastSafe } from "@/components/ui/Toast";
 import { CartelPub } from "@/components/ui/CartelPub";
 import { audioManager } from "@/lib/audio/audioManager";
@@ -273,6 +273,10 @@ export function EnergieRecharge({
   // visionnage lancé à ce moment écraserait le crédit en attente du premier.
   const energiePleine = energie >= energieMax;
   const pubIndisponible = enCours || salve || energiePleine || pubsRestantes <= 0;
+  // Android tant que le plugin AdMob Kotlin n'existe pas : aucune pub n'est
+  // proposée du tout — ni cartel, ni levier. La recharge par le temps suffit
+  // à faire tourner la modale.
+  const pubProposee = pubDisponible();
 
   const regarderPub = async () => {
     if (pubIndisponible) return;
@@ -467,7 +471,7 @@ export function EnergieRecharge({
         {/* Le cartel laiton : LE bouton pub (accessible). Le libellé visuel est
             une icône de visionnage ; le nom accessible reste la chaîne i18n.
             Absent en mode énergie infinie : plus rien à regarder pour recharger. */}
-        {!infinie && (
+        {!infinie && pubProposee && (
           <CartelPub
             onClick={regarderPub}
             indisponible={pubIndisponible}
@@ -507,7 +511,7 @@ export function EnergieRecharge({
 
         {/* Le levier peint : zone de tap redondante, invisible pour l'a11y.
             Absent en mode énergie infinie (rien à créditer). */}
-        {!infinie && (
+        {!infinie && pubProposee && (
           <div aria-hidden style={levierTapStyle(pubIndisponible)} onClick={regarderPub} />
         )}
 
