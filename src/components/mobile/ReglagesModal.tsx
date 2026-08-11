@@ -13,7 +13,7 @@ import {
 } from "@/lib/notifications";
 import { notifsActives, setNotifsActives } from "@/lib/notifications/prefs";
 import { definirEnergieInfinie } from "@/lib/iap/energieInfinie";
-import { getIapProvider } from "@/lib/iap/iapProvider";
+import { getIapProvider, achatDisponible } from "@/lib/iap/iapProvider";
 import { useToastSafe } from "@/components/ui/Toast";
 
 interface ReglagesModalProps {
@@ -286,7 +286,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
         </section>
 
         <SectionNotifications />
-        <SectionAchats />
+        {achatDisponible() && <SectionAchats />}
       </div>
     </div>
   );
@@ -362,7 +362,9 @@ function SectionNotifications() {
 }
 
 /** Restauration du non-consommable « Énergie infinie » — bouton exigé par
- *  Apple. Toujours visible : en dev/web le stub relit le drapeau local. */
+ *  Apple. Visible partout où une boutique est branchée : en dev/web le stub
+ *  relit le drapeau local, sur Android rien n'est branché et la section
+ *  n'est pas rendue du tout. */
 function SectionAchats() {
   const { d } = useLangue();
   const { toast } = useToastSafe();

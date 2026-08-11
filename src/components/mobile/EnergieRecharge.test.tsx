@@ -34,6 +34,8 @@ vi.mock("@/lib/iap/iapProvider", () => ({
     obtenirPrix: async () => "3,99 €",
     acheter: async () => "achete",
   }),
+  // Ces tests tournent hors Tauri Android : la boutique reste branchée.
+  achatDisponible: () => true,
 }));
 
 afterEach(cleanup);

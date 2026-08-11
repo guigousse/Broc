@@ -16,7 +16,7 @@ import { CartelPub } from "@/components/ui/CartelPub";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { useEnergieInfinie, definirEnergieInfinie } from "@/lib/iap/energieInfinie";
-import { getIapProvider } from "@/lib/iap/iapProvider";
+import { getIapProvider, achatDisponible } from "@/lib/iap/iapProvider";
 
 /** Course de l'aiguille du galvanomètre : -60° (0 ⚡) → +60° (max), clampée. */
 export function angleAiguille(energie: number, max: number): number {
@@ -208,7 +208,7 @@ export function EnergieRecharge({
 
   // Prix localisé au montage — non-acheteur seulement (StoreKit / stub).
   useEffect(() => {
-    if (infinie) return;
+    if (infinie || !achatDisponible()) return;
     let annule = false;
     getIapProvider()
       .obtenirPrix()
@@ -517,7 +517,7 @@ export function EnergieRecharge({
 
         {/* Bouton d'achat « Énergie infinie » — juste sous le cartel pub.
             Achat non-consommable unique : disparaît dès que le drapeau est actif. */}
-        {!infinie && (
+        {!infinie && achatDisponible() && (
           <button
             type="button"
             onClick={(e) => {

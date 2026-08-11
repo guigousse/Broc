@@ -29,6 +29,8 @@ vi.mock("@/lib/iap/iapProvider", () => ({
   getIapProvider: () => ({
     restaurer: async () => energieInfinieActive(),
   }),
+  // Ces tests tournent hors Tauri Android : la boutique reste branchée.
+  achatDisponible: () => true,
 }));
 
 describe("ReglagesModal — sélecteur de langue", () => {
