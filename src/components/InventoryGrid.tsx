@@ -21,6 +21,11 @@ interface InventoryGridProps {
    * aucune main.
    */
   mainTemplateId?: string | null;
+  /**
+   * Tutoriel (visite du stockage) : la PREMIÈRE ligne devient la cible de la
+   * visite guidée en 3 temps (étoiles, thème, bouton collection).
+   */
+  cibleCoachPremiereLigne?: boolean;
   collectionStatus: (objet: Objet) => CollectionStatus;
 }
 
@@ -44,6 +49,7 @@ export function InventoryGrid({
   onEnvoyerCollection,
   mainVinyles = false,
   mainTemplateId = null,
+  cibleCoachPremiereLigne = false,
   collectionStatus,
 }: InventoryGridProps) {
   const { d } = useLangue();
@@ -95,6 +101,7 @@ export function InventoryGrid({
             guideCollection={
               mainTemplateId != null && o.templateId === mainTemplateId
             }
+            cibleCoach={cibleCoachPremiereLigne && i === 0}
             isLast={i === objets.length - 1}
           />
         );

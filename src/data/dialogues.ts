@@ -183,6 +183,21 @@ export const SEQUENCES_TUTORIEL: Record<string, DialogueSequence> = {
       { humeur: "souriant", texte: "Referme l'étal quand tu veux, et rentrons. J'ai encore deux mots à te dire à la maison." },
     ],
   },
+  tuto_niveau_avant: {
+    id: "tuto_niveau_avant",
+    lignes: [
+      { humeur: "rieur", texte: "Un niveau de plus ! Tu vois cette pluie d'or ? Elle veut dire que le métier commence à rentrer." },
+      { humeur: "souriant", texte: "Chaque niveau t'offre un point à dépenser. C'est comme ça qu'on se forge un savoir-faire — le tien." },
+      { humeur: "songeur", texte: "Ouvre les Compétences, en bas : je te fais visiter." },
+    ],
+  },
+  tuto_niveau_apres: {
+    id: "tuto_niveau_apres",
+    lignes: [
+      { humeur: "souriant", texte: "« Lecteur d'âmes » : dès la prochaine vente, tu sauras à qui tu as affaire. Un nom, un caractère — et déjà la moitié de la négociation." },
+      { humeur: "emu", texte: "Les autres branches attendront tes prochains niveaux. Rentrons, j'ai encore une chose à te confier." },
+    ],
+  },
   tuto_conclusion: {
     id: "tuto_conclusion",
     lignes: [

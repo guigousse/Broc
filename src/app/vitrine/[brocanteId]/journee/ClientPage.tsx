@@ -896,9 +896,11 @@ export default function VitrineJourneePage() {
       ton: "vente",
     });
     // Journée scriptée : la négociatrice Bérénice conclut — dernière leçon,
-    // débrief puis fin du script (le bouton Sortir pulsera à « conclusion »).
+    // débrief puis la leçon de montée de niveau (célébration → visite des
+    // compétences → achat du premier point), qui se clôt elle-même sur
+    // « conclusion » (cf. tuto_niveau_apres dans bibliotheque/page.tsx).
     if (etape === "vente-nego") {
-      dialogueApresRef.current = "conclusion";
+      dialogueApresRef.current = "niveau-celebration";
       setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_nego_apres);
     }
     acheteurScripteRef.current = null;
@@ -1200,7 +1202,19 @@ export default function VitrineJourneePage() {
           type="button"
           aria-label={d.chine.sortir}
           onClick={handleFermerEnAvance}
-          className={etape === "conclusion" ? "tuto-pulse tuto-main tuto-main-droite" : undefined}
+          // Le débrief de Bérénice (vente-nego) n'avance plus directement à
+          // "conclusion" mais à "niveau-celebration" (la leçon de montée de
+          // niveau s'intercale, cf. bibliotheque/page.tsx) — la fanfare
+          // n'attend que la sortie de cette route de session. Le pulse doit
+          // donc guider vers Sortir dès ce palier, pas seulement au dernier.
+          className={
+            etape === "niveau-celebration" ||
+            etape === "competences-visite" ||
+            etape === "competences-choix" ||
+            etape === "conclusion"
+              ? "tuto-pulse tuto-main tuto-main-droite"
+              : undefined
+          }
           style={{
             display: "inline-flex",
             alignItems: "center",

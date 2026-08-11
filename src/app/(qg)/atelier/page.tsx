@@ -30,7 +30,7 @@ import { audioManager } from "@/lib/audio/audioManager";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getItemThumbUrl } from "@/lib/itemImages";
 import { getTemplate } from "@/data/objetTemplates";
-import { getAdProvider } from "@/lib/ads/adProvider";
+import { getAdProvider, EMPLACEMENTS_PUB } from "@/lib/ads/adProvider";
 import { useToast } from "@/components/ui/Toast";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
@@ -101,7 +101,7 @@ export default function AtelierPage() {
     if (pubEnCours) return;
     setPubEnCours(true);
     try {
-      const { rewarded } = await getAdProvider().showRewardedAd();
+      const { rewarded } = await getAdProvider().showRewardedAd(EMPLACEMENTS_PUB.restauration);
       if (rewarded) terminerRestaurationImmediate(objetId);
     } catch {
       toast(d.sheets.erreurPub, { type: "erreur" });

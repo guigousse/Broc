@@ -33,7 +33,6 @@ import {
   type Geometrie,
 } from "@/lib/releveVehicule";
 import { CoffreCanvas } from "./CoffreCanvas";
-import { RotationHint } from "./RotationHint";
 import { BoutonConcession } from "./BoutonConcession";
 import { ConcessionSheet } from "./ConcessionSheet";
 import { CarrouselStock } from "./CarrouselStock";
@@ -102,9 +101,6 @@ interface Props {
   /** Tutoriel — coffre à traces : la main du carrousel désigne l'objet dont
    *  le templateId correspond (au lieu du premier objet, index 0). */
   mainTemplateId?: string | null;
-  /** Tutoriel — coffre à traces, 2ᵉ trace : hint pédagogique décoratif
-   *  « un doigt déplace, deux doigts tournent » superposé au canvas. */
-  rotationHint?: boolean;
   /** Tutoriel — coffre Tetris (préfill) : ids d'objets verrouillés, passés
    *  tel quel à `CoffreCanvas` (pas de drag, pas de rotation, pas de retrait). */
   verrouillesIds?: ReadonlySet<string>;
@@ -592,7 +588,6 @@ export function CoffreChargement(p: Props) {
           trace={p.trace}
           verrouillesIds={p.verrouillesIds}
         />
-        <RotationHint actif={p.rotationHint === true && !closing} />
       </div>
       <CarrouselStock
         stock={p.stock}

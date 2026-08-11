@@ -179,8 +179,12 @@ export const en: DictionnaireUI = {
       "Your reserve: the Garage, 10 spots. Every find lands here after the flea market.",
     coachStockageCategories:
       "Filter by category to find your way once the reserve fills up.",
-    coachStockageObjet:
-      "Each row shows the item's condition — and its button to send it to your collection.",
+    coachStockageEtat:
+      "The stars show the item's condition: the finer it is, the more it's worth.",
+    coachStockageTheme:
+      "This little symbol recalls its theme — handy for sorting at a glance.",
+    coachStockageBouton:
+      "And this button sends it to your collection instead of selling it.",
     coachStockageAmelioration:
       "Later, you'll be able to expand it: cellar, then warehouse.",
     coachCollectionCase:
@@ -191,6 +195,12 @@ export const en: DictionnaireUI = {
       "That value unlocks new flea markets — and builds your reputation.",
     coachCollectionRetirer:
       "A donated piece isn't locked away: this button returns it to storage — but its value leaves with it.",
+    coachCompetencesXp:
+      "Your level and experience bar: every sale, every find fills it.",
+    coachCompetencesArbres:
+      "One general tree, and one per family of objects — you'll specialise later.",
+    coachCompetencesPoint:
+      "And there's your first point to spend. It's waiting for you.",
     instructions: {
       "accueil": "Listen to your grandfather…",
       "aller-chiner": "Go through the door, choose “Pick”, then the Neighborhood Yard Sale.",
@@ -210,6 +220,9 @@ export const en: DictionnaireUI = {
       "vente-refus": "This customer offers too little — walk away, no regrets.",
       "vente-directe": "He'll take the controller at the asking price: accept!",
       "vente-nego": "Haggle over the carafe — hold your price, she'll come up.",
+      "niveau-celebration": "You've gained a level — enjoy it!",
+      "competences-visite": "Open the Skills screen from the bottom bar.",
+      "competences-choix": "Spend your first point: the Insight branch, “Soul reader”.",
       "conclusion": "Listen to your grandfather…",
     },
   },

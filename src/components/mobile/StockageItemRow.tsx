@@ -31,6 +31,12 @@ interface StockageItemRowProps {
    * état) occupe déjà la gauche du bouton.
    */
   guideCollection?: boolean;
+  /**
+   * Tutoriel (visite du stockage) : cette ligne est la cible de la visite
+   * guidée en 3 temps — étoiles (état), logo (thème), bouton (collection).
+   * Vrai uniquement pour la PREMIÈRE ligne pendant `stockage-focus`.
+   */
+  cibleCoach?: boolean;
   isLast: boolean;
 }
 
@@ -45,12 +51,20 @@ const wrap: CSSProperties = {
    grille. Overflow visible tant que cette ligne porte la main.
    zIndex 37 : au-dessus des lignes sœurs ET de la fenêtre flottante (35) —
    sans lui, la main restait clippée derrière la ligne du dessus (recette
-   device 2026-08-09). */
+   device 2026-08-09).
+   `.broc-list-row` porte `content-visibility: auto` (perf, cf. globals.css)
+   — qui établit un containment de PEINTURE permanent : tout ce qui dépasse
+   la boîte est rogné, y compris un ::after positionné hors de la boîte,
+   MALGRÉ l'overflow:visible et le zIndex ci-dessus (même piège que
+   `.broc-grid-cell` dans CollectionGrid, déjà corrigé pareil). On neutralise
+   le containment sur cette ligne UNIQUEMENT, en inline (plus spécifique que
+   la classe). */
 const wrapGuide: CSSProperties = {
   ...wrap,
   overflow: "visible",
   position: "relative",
   zIndex: 37,
+  contentVisibility: "visible",
 };
 
 const item: CSSProperties = {
@@ -111,6 +125,7 @@ function StockageItemRowBase({
   onEnvoyerCollection,
   guideVinyle = false,
   guideCollection = false,
+  cibleCoach = false,
   isLast,
 }: StockageItemRowProps) {
   const { d, tr, locale } = useLangue();
@@ -143,7 +158,11 @@ function StockageItemRowBase({
     <div
       className="broc-list-row"
       style={{
-        ...(guideCollection ? wrapGuide : wrap),
+        // Même élévation/déconteneurisation pour la main du guidage
+        // (guideCollection) et pour la découpe du coach (cibleCoach) : les
+        // trois cibles (étoiles/thème/bouton) subissent le même piège
+        // content-visibility que la main (cf. commentaire de `wrapGuide`).
+        ...(guideCollection || cibleCoach ? wrapGuide : wrap),
         borderBottom: isLast ? "none" : "1px dotted var(--paper-500)",
       }}
     >
@@ -185,16 +204,26 @@ function StockageItemRowBase({
               categorie: libelleCategorie(objet.categorie, d),
             })}
           >
-            <StarRow
-              filled={etoileCount(objet.etat)}
-              color={rarityColors.outer}
-              size={15}
-              display="flex"
-              aria-label={tr(d.chine.etatAriaLabel, {
-                etat: libelleEtat(objet.etat, d),
-              })}
-            />
+            {/* `display: contents` : ce span n'ajoute aucune boîte propre,
+                seulement l'attribut data pour la découpe du coach — le
+                layout des étoiles reste identique hors tutoriel. StarRow
+                n'accepte pas d'attribut data, d'où le wrapper. */}
             <span
+              style={{ display: "contents" }}
+              data-tuto-coach={cibleCoach ? "stockage-etat" : undefined}
+            >
+              <StarRow
+                filled={etoileCount(objet.etat)}
+                color={rarityColors.outer}
+                size={15}
+                display="flex"
+                aria-label={tr(d.chine.etatAriaLabel, {
+                  etat: libelleEtat(objet.etat, d),
+                })}
+              />
+            </span>
+            <span
+              data-tuto-coach={cibleCoach ? "stockage-theme" : undefined}
               style={{ display: "inline-flex", alignItems: "center" }}
               aria-label={tr(d.inventaire.categorieAria, {
                 categorie: libelleCategorie(objet.categorie, d),
@@ -233,6 +262,7 @@ function StockageItemRowBase({
         ) : (
           <button
             type="button"
+            data-tuto-coach={cibleCoach ? "stockage-bouton" : undefined}
             className={
               guideCollection
                 ? "tuto-main tuto-main-haut"
@@ -293,6 +323,7 @@ export const StockageItemRow = memo(
     prev.onEnvoyerCollection === next.onEnvoyerCollection &&
     prev.guideVinyle === next.guideVinyle &&
     prev.guideCollection === next.guideCollection &&
+    prev.cibleCoach === next.cibleCoach &&
     prev.collection.disponible === next.collection.disponible &&
     prev.collection.dejaIdentique === next.collection.dejaIdentique &&
     prev.collection.necessiteConfirmation ===

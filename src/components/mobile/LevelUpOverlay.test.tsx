@@ -7,15 +7,24 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { LevelUpOverlay } from "./LevelUpOverlay";
+import { setCoachOuvert } from "@/lib/coachActif";
+import { setDialogueActif } from "@/lib/dialogueActif";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // Modules à état partagé : jamais de fuite d'un test à l'autre.
+  setCoachOuvert(false);
+  setDialogueActif(false);
+});
 
 let mockState: Record<string, unknown> | null = null;
 const marquerNiveauVu = vi.fn();
+const avancerTutoriel = vi.fn();
 let mockPathname = "/bureau";
 
 vi.mock("@/context/GameContext", () => ({
   useGame: () => ({ state: mockState, marquerNiveauVu }),
+  useGameActions: () => ({ avancerTutoriel }),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -46,16 +55,20 @@ vi.mock("@/data/competences", async (importOriginal) => {
   };
 });
 
+// tutorielEtape "termine" par défaut : la plupart des tests célèbrent un
+// niveau hors tutoriel — sinon `tutorielActif(state)` bloquerait affichable.
 function etat(
   niveauVu: number,
   niveau: number,
   pointsDisponibles = 0,
   competencesDebloquees: string[] = [],
+  tutorielEtape = "termine",
 ) {
   return {
     niveauVu,
     brocanteur: { niveau, xp: 0, pointsDisponibles },
     competencesDebloquees,
+    tutorielEtape,
   };
 }
 
@@ -153,6 +166,74 @@ describe("LevelUpOverlay", () => {
     mockPathname = "/mentions-legales";
     const { container } = render(<LevelUpOverlay />);
     expect(container.firstChild).toBeNull();
+  });
+
+  it("tutoriel en cours : niveau en attente mais tutorielActif → null (la célébration attend)", () => {
+    mockState = etat(0, 1, 0, [], "vente-directe");
+    mockPathname = "/bureau";
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("reste masqué pendant le tutoriel hors de l'étape de célébration", () => {
+    mockState = etat(0, 1, 1, [], "vente-nego");
+    mockPathname = "/bureau";
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("s'affiche à l'étape niveau-celebration", () => {
+    mockState = etat(0, 1, 1, [], "niveau-celebration");
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    expect(screen.getByText("Niveau 1")).toBeTruthy();
+  });
+
+  it("reste masqué à niveau-celebration si un dialogue est ouvert", () => {
+    setDialogueActif(true);
+    mockState = etat(0, 1, 1, [], "niveau-celebration");
+    mockPathname = "/bureau";
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+    setDialogueActif(false);
+  });
+
+  it("à niveau-celebration, la fermeture marque le niveau vu ET avance vers competences-visite", () => {
+    mockState = etat(0, 1, 1, [], "niveau-celebration");
+    mockPathname = "/bureau";
+    marquerNiveauVu.mockClear();
+    avancerTutoriel.mockClear();
+    render(<LevelUpOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(marquerNiveauVu).toHaveBeenCalledTimes(1);
+    expect(avancerTutoriel).toHaveBeenCalledWith("competences-visite");
+  });
+
+  it("dialogue actif (DialogueOverlay, ex. tuto_conclusion) : niveau en attente mais → null", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    setDialogueActif(true);
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("coach ouvert (TutorielCoach) : niveau en attente mais → null", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    setCoachOuvert(true);
+    const { container } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("niveau non perdu : conservé tant que l'écran n'est pas libre, célébré une fois le dialogue terminé", () => {
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    setDialogueActif(true);
+    const { container, rerender } = render(<LevelUpOverlay />);
+    expect(container.firstChild).toBeNull();
+    setDialogueActif(false);
+    rerender(<LevelUpOverlay />);
+    expect(screen.getByText("Niveau 1")).toBeTruthy();
   });
 
   it("multi-niveaux : célèbre niveauVu+1, pas le niveau final", () => {

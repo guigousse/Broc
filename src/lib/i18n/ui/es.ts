@@ -179,8 +179,12 @@ export const es: DictionnaireUI = {
       "Tu reserva: el Garaje, 10 plazas. Cada hallazgo llega aquí después del mercadillo.",
     coachStockageCategories:
       "Filtra por categoría para orientarte cuando la reserva se llene.",
-    coachStockageObjet:
-      "Cada fila muestra el estado del objeto, y su botón para enviarlo a la colección.",
+    coachStockageEtat:
+      "Las estrellas indican el estado del objeto: cuanto mejor está, más vale.",
+    coachStockageTheme:
+      "Este pequeño símbolo recuerda su temática — útil para ordenar de un vistazo.",
+    coachStockageBouton:
+      "Y este botón lo envía a tu colección, en vez de venderlo.",
     coachStockageAmelioration:
       "Más adelante podrás ampliarlo: sótano, luego nave.",
     coachCollectionCase:
@@ -191,6 +195,12 @@ export const es: DictionnaireUI = {
       "Ese valor desbloquea nuevos mercadillos, y construye tu reputación.",
     coachCollectionRetirer:
       "Una pieza donada no está perdida: este botón la devuelve a tu reserva, pero su valor se va con ella.",
+    coachCompetencesXp:
+      "Tu nivel y tu barra de experiencia: cada venta, cada hallazgo la llena.",
+    coachCompetencesArbres:
+      "Un árbol general, y uno por familia de objetos — te especializarás más adelante.",
+    coachCompetencesPoint:
+      "Y ahí tienes tu primer punto para gastar. Te espera.",
     instructions: {
       "accueil": "Escucha a tu abuelo…",
       "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",
@@ -210,6 +220,9 @@ export const es: DictionnaireUI = {
       "vente-refus": "Este cliente ofrece muy poco — déjalo pasar, sin remordimientos.",
       "vente-directe": "Se queda con el mando al precio marcado: ¡acepta!",
       "vente-nego": "Negocia la jarra — mantén tu precio, subirá.",
+      "niveau-celebration": "¡Subes de nivel — disfrútalo!",
+      "competences-visite": "Abre las Habilidades desde la barra inferior.",
+      "competences-choix": "Gasta tu primer punto: la rama Perspicacia, «Lector de almas».",
       "conclusion": "Escucha a tu abuelo…",
     },
   },

@@ -6,10 +6,12 @@ import { getCamion, getScaleCoffre } from "@/data/camion";
 import { calculerPrixMinAcceptDepuisPersona } from "@/lib/personas";
 import { getClientIllustration } from "@/lib/personaIllustrations";
 import {
-  acheteurDeLEtape, COLIS_TUTORIEL_SCRIPTE, PELUCHE_TEMPLATE_ID, personnageScenario,
-  PREFILL_COFFRE_TUTORIEL, PRIX_CONSEILLES_TUTORIEL, SESSION_TUTORIEL, SESSION_VENTE_TUTORIEL,
-  TEMPLATES_VERROUILLES_TUTORIEL, TOLERANCE_PRIX_CONSEILLE, TRACES_TUTORIEL,
+  acheteurDeLEtape, COLIS_TUTORIEL_SCRIPTE, COMPETENCE_PREMIER_POINT, PELUCHE_TEMPLATE_ID,
+  personnageScenario, PREFILL_COFFRE_TUTORIEL, PRIX_CONSEILLES_TUTORIEL, SESSION_TUTORIEL,
+  SESSION_VENTE_TUTORIEL, TEMPLATES_VERROUILLES_TUTORIEL, TOLERANCE_PRIX_CONSEILLE,
+  TRACES_TUTORIEL,
 } from "./tutorielScenario";
+import { getCompetence } from "@/data/competences";
 import {
   deckVerrouille, donCollectionPermis, indexObjetScenario,
   ongletTutorielPermis, scenarioDeLEtape,
@@ -411,5 +413,19 @@ describe("SESSION_VENTE_TUTORIEL — garanties", () => {
   it("cohérence prix : l'ami paie le prix conseillé de la manette, le radin ne peut pas payer la carafe", () => {
     expect(SESSION_VENTE_TUTORIEL[1].prixMax).toBeGreaterThanOrEqual(PRIX_CONSEILLES_TUTORIEL["jx.manette_vibraduo"]);
     expect(SESSION_VENTE_TUTORIEL[0].prixMax).toBeLessThan(PRIX_CONSEILLES_TUTORIEL["ma.carafe_cristal_taille"]);
+  });
+});
+
+describe("COMPETENCE_PREMIER_POINT", () => {
+  it("désigne une compétence réelle, achetable dès le niveau 1 pour 1 point", () => {
+    const c = getCompetence(COMPETENCE_PREMIER_POINT.competenceId);
+    expect(c, COMPETENCE_PREMIER_POINT.competenceId).toBeDefined();
+    expect(c!.coutPoints).toBe(1);
+    expect(c!.niveauBrocanteurRequis).toBe(0);
+  });
+  it("l'id se décompose bien en arbre + branche annoncés", () => {
+    expect(COMPETENCE_PREMIER_POINT.competenceId).toBe(
+      `${COMPETENCE_PREMIER_POINT.treeId}.${COMPETENCE_PREMIER_POINT.brancheId}.1`,
+    );
   });
 });

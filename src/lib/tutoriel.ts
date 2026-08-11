@@ -2,10 +2,10 @@ import type { GameState, Objet, TutorielEtape } from "@/types/game";
 import { injecterLettreMamanSiAbsente } from "@/lib/courrier";
 import { COLIS_TUTORIEL_TAILLE, objetColisTutoriel } from "@/data/starterInventory";
 import {
-  SESSION_TUTORIEL, PELUCHE_TEMPLATE_ID, type ObjetScenario,
+  SESSION_TUTORIEL, PELUCHE_TEMPLATE_ID, COMPETENCE_PREMIER_POINT, type ObjetScenario,
 } from "@/data/tutorielScenario";
 
-/** Ordre linéaire des étapes du tutoriel guidé (v3, brocante scriptée). */
+/** Ordre linéaire des étapes du tutoriel guidé (v4, brocante scriptée). */
 export const ETAPES_TUTORIEL: readonly TutorielEtape[] = [
   "accueil",
   "aller-chiner",
@@ -25,6 +25,9 @@ export const ETAPES_TUTORIEL: readonly TutorielEtape[] = [
   "vente-refus",
   "vente-directe",
   "vente-nego",
+  "niveau-celebration",
+  "competences-visite",
+  "competences-choix",
   "conclusion",
   "termine",
 ];
@@ -136,7 +139,7 @@ export function deckVerrouille(etape: TutorielEtape): boolean {
  */
 export function ongletTutorielPermis(
   etape: TutorielEtape,
-): "/stockage" | "/collection" | "/bureau" | null {
+): "/stockage" | "/collection" | "/bureau" | "/bibliotheque" | null {
   switch (etape) {
     case "stockage-ouvrir":
     case "stockage-focus":
@@ -147,9 +150,23 @@ export function ongletTutorielPermis(
     case "ouvrir-colis":
     case "preparer-etal":
       return "/bureau";
+    case "competences-visite":
+    case "competences-choix":
+      return "/bibliotheque";
     default:
       return null;
   }
+}
+
+/**
+ * Compétence désignée par le grand-père pour le tout premier point du
+ * joueur (étape `competences-choix`). Les autres branches et paliers sont
+ * inertes tant que celle-ci n'est pas achetée.
+ */
+export function competenceGuidee(
+  etape: TutorielEtape,
+): typeof COMPETENCE_PREMIER_POINT | null {
+  return etape === "competences-choix" ? COMPETENCE_PREMIER_POINT : null;
 }
 
 /**

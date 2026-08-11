@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { usePathname } from "next/navigation";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import {
   audioManager,
   PIC_EXPLOSION_S,
@@ -23,6 +30,9 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { titreDeblocage, descriptionDeblocage } from "@/lib/i18n/contenu";
 import { extraireEmoji } from "@/lib/emoji";
 import { MedaillonAtout } from "@/components/mobile/MedaillonAtout";
+import { tutorielActif } from "@/lib/tutoriel";
+import { getCoachOuvert, subscribeCoachOuvert } from "@/lib/coachActif";
+import { getDialogueActif, subscribeDialogueActif } from "@/lib/dialogueActif";
 
 // ── Chronologie (secondes) ────────────────────────────────────────────────
 // Deux temps : le chiffre seul (son + feu d'artifice), puis l'encadré des
@@ -312,6 +322,7 @@ const btnContinuer: CSSProperties = {
 
 export function LevelUpOverlay() {
   const { state, marquerNiveauVu } = useGame();
+  const { avancerTutoriel } = useGameActions();
   const pathname = usePathname();
   const { d, tr, locale } = useLangue();
   // Lu au premier rendu client : l'overlay ne rend rien côté serveur (aucune
@@ -319,10 +330,38 @@ export function LevelUpOverlay() {
   const [mouvementReduit] = useState(prefersReducedMotion);
   const feu = useMemo(construireFeu, []);
   const enSession = ROUTES_SESSION_PREFIXES.some((p) => pathname?.startsWith(p));
+  // Le tutoriel v3 rapporte ≥ 115 XP (achats + découvertes + négos + ventes)
+  // alors que le niveau 1 est à 100 XP : le joueur passe niveau 1 À COUP SÛR
+  // pendant le tutoriel. Pendant le tutoriel, la célébration attend de toute
+  // façon (route de session) ; et juste après `terminerTutoriel()`, le
+  // chapitre 1 s'enchaîne en dialogue (`tuto_conclusion`) — sans cette garde
+  // la fanfare éclaterait par-dessus au retour au bureau (recette 2026-08-08).
+  // La célébration n'est jamais perdue : `niveauVu` la conserve jusqu'à ce
+  // que l'écran soit libre.
+  const coachOuvert = useSyncExternalStore(
+    subscribeCoachOuvert,
+    getCoachOuvert,
+    () => false,
+  );
+  const dialogueActif = useSyncExternalStore(
+    subscribeDialogueActif,
+    getDialogueActif,
+    () => false,
+  );
   // Hors partie (écran titre, mentions légales…), la save du slot actif reste
   // chargée dans le contexte : sans cette garde la célébration se déroulerait
   // par-dessus le menu principal (retour device 2026-07-25).
-  const affichable = estRoutePartie(pathname) && !enSession;
+  const affichable =
+    estRoutePartie(pathname) &&
+    !enSession &&
+    // Le tutoriel s'approprie la toute première montée de niveau : elle se
+    // joue à l'étape dédiée (leçon des compétences), et reste bloquée
+    // partout ailleurs pendant le tutoriel pour ne pas couper une leçon.
+    (!state ||
+      !tutorielActif(state) ||
+      state.tutorielEtape === "niveau-celebration") &&
+    !dialogueActif &&
+    !coachOuvert;
   const niveauACelebrer =
     state && state.brocanteur.niveau > state.niveauVu ? state.niveauVu + 1 : null;
 
@@ -463,6 +502,16 @@ export function LevelUpOverlay() {
     DELAI_PREMIERE_LIGNE + lignes.length * ECART_LIGNE + ECART_BOUTON,
   );
 
+  // La fermeture marque le niveau vu et, à l'étape dédiée du tutoriel, fait
+  // avancer vers la leçon des compétences — seule porte de sortie de
+  // `niveau-celebration`.
+  const fermer = () => {
+    marquerNiveauVu();
+    if (state.tutorielEtape === "niveau-celebration") {
+      avancerTutoriel("competences-visite");
+    }
+  };
+
   return (
     <div
       style={scrim}
@@ -526,7 +575,7 @@ export function LevelUpOverlay() {
         type="button"
         className="broc-levelup-ligne"
         style={{ ...btnContinuer, animationDelay: `${delaiBouton}s` }}
-        onClick={marquerNiveauVu}
+        onClick={fermer}
       >
         {d.menu.continuer}
       </button>

@@ -182,8 +182,12 @@ export const fr = {
       "Ta réserve : le Garage, 10 places. Chaque trouvaille y arrive après la brocante.",
     coachStockageCategories:
       "Filtre par catégorie pour t'y retrouver quand la réserve se remplit.",
-    coachStockageObjet:
-      "Chaque ligne montre l'état de l'objet — et son bouton pour l'envoyer en collection.",
+    coachStockageEtat:
+      "Les étoiles disent l'état de l'objet : plus il est beau, plus il vaut cher.",
+    coachStockageTheme:
+      "Ce petit symbole rappelle son thème — pratique pour trier d'un coup d'œil.",
+    coachStockageBouton:
+      "Et ce bouton l'envoie dans ta collection, au lieu de le vendre.",
     coachStockageAmelioration:
       "Plus tard, tu pourras agrandir : cave, puis hangar.",
     coachCollectionCase:
@@ -194,6 +198,12 @@ export const fr = {
       "Cette valeur débloque de nouvelles brocantes — et fait ta réputation.",
     coachCollectionRetirer:
       "Un objet donné n'est pas perdu : ce bouton le rend à ta réserve — mais la valeur s'en va avec lui.",
+    coachCompetencesXp:
+      "Ton niveau et ta barre d'expérience : chaque vente, chaque trouvaille la remplit.",
+    coachCompetencesArbres:
+      "Un arbre général, et un par famille d'objets — tu te spécialiseras plus tard.",
+    coachCompetencesPoint:
+      "Et voilà ton premier point à dépenser. Il t'attend.",
     instructions: {
       "accueil": "Écoute ton grand-père…",
       "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",
@@ -213,6 +223,9 @@ export const fr = {
       "vente-refus": "Ce client offre trop peu — laisse tomber, sans regret.",
       "vente-directe": "Il prend la manette au prix affiché : accepte !",
       "vente-nego": "Négocie la carafe — tiens ton prix, elle montera.",
+      "niveau-celebration": "Tu montes d'un niveau — savoure !",
+      "competences-visite": "Ouvre les Compétences depuis la barre du bas.",
+      "competences-choix": "Dépense ton premier point : branche Présentation, « Lecteur d'âmes ».",
       "conclusion": "Écoute ton grand-père…",
     },
   },

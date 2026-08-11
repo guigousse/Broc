@@ -1639,43 +1639,6 @@ nav[aria-label="Navigation principale"] :focus-visible,
   animation: broc-trace-pulse 1.6s ease-in-out infinite;
 }
 
-/* Coffre à traces (2ᵉ trace) : hint pédagogique « un doigt déplace, deux
-   doigts tournent » — groupe objet fantôme + main A qui glisse (phase 1,
-   0-40 %), puis pivote de 0 à 40° une fois la main B arrivée (phase 2,
-   40-100 %). Pause immobile 90-100 % avant que la boucle ne reparte (saut
-   volontaire, comme une démo animée qui se réinitialise). */
-@keyframes broc-rotation-hint {
-  0% {
-    translate: -16px 0;
-    rotate: 0deg;
-  }
-  40% {
-    translate: 16px 0;
-    rotate: 0deg;
-  }
-  90%,
-  100% {
-    translate: 16px 0;
-    rotate: 40deg;
-  }
-}
-.broc-rotation-hint {
-  animation: broc-rotation-hint 3.2s ease-in-out infinite;
-}
-/* Main B — invisible en phase 1, rejoint en fondu au début de la phase 2. */
-@keyframes broc-rotation-hint-main2 {
-  0%,
-  40% {
-    opacity: 0;
-  }
-  55%,
-  100% {
-    opacity: 1;
-  }
-}
-.broc-rotation-hint-main2 {
-  animation: broc-rotation-hint-main2 3.2s ease-in-out infinite;
-}
 /* Démo du grand-père (dépôt + rotation de la manette, coffre-trace-un) :
    fondu des deux mains piloté par classe (pas par transition inline) — la
    durée réelle est fixée en style inline (`animationDuration`), ces règles
@@ -1723,13 +1686,6 @@ nav[aria-label="Navigation principale"] :focus-visible,
   .trace-fantome {
     animation: none;
     opacity: 0.85;
-  }
-  .broc-rotation-hint,
-  .broc-rotation-hint-main2 {
-    /* Image parlante figée : objet + les deux mains posées, sans mouvement
-       (main B visible par défaut sans l'animation qui la faisait apparaître
-       en fondu ; le groupe reste à sa position de repos, non pivoté). */
-    animation: none;
   }
   /* Filet CSS pur : le composant lui-même prend déjà une branche statique
      dédiée (`prefersReducedMotion()`, aucune classe posée) — cette règle

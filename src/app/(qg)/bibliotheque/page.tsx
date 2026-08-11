@@ -5,8 +5,10 @@ import { ChevronRight } from "lucide-react";
 import { FloatingRoomOverlay } from "@/components/mobile/floating-room/FloatingRoomOverlay";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { TreePicker } from "@/components/mobile/TreePicker";
+import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
+import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { useToast } from "@/components/ui/Toast";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
 import {
   COMPETENCES,
@@ -18,17 +20,20 @@ import {
   competencesParBranche,
   visuelCompetence,
 } from "@/data/competences";
+import { GRAND_PERE_PORTRAITS, SEQUENCES_TUTORIEL } from "@/data/dialogues";
 import { contexteDepuisState, etatCompetence } from "@/lib/competences";
 import { detailProgressionBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
 import { prochainDeblocage } from "@/data/deblocagesNiveau";
 import { ParcoursSheet } from "@/components/mobile/ParcoursSheet";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { competenceGuidee } from "@/lib/tutoriel";
 import {
   descriptionBranche,
   descriptionCompetence,
   nomArbre,
   nomBranche,
   nomCompetence,
+  nomExpediteur,
   titreDeblocage,
 } from "@/lib/i18n/contenu";
 import type {
@@ -37,13 +42,26 @@ import type {
   CompetenceTreeId,
 } from "@/types/game";
 
+/**
+ * Machine locale de la leçon « visite guidée des compétences » (étapes
+ * `competences-visite` puis `competences-choix`) : coach 3 bulles, main sur
+ * la branche Présentation, tap du bon palier, achat, dialogue de clôture.
+ * Remontage en cours de leçon = repart à "coach" (fail-open, cf. collection).
+ */
+type PhaseLecon = "coach" | "branche" | "palier" | "dialogue";
+
 export default function CompetencesPage() {
   const { state, isHydrated, debloquerCompetence } = useGame();
+  const { avancerTutoriel } = useGameActions();
   const { toast } = useToast();
   const { d, tr, locale } = useLangue();
   const [tree, setTree] = useState<CompetenceTreeId>(TREE_GENERAL);
   const [palierActif, setPalierActif] = useState<CompetenceDef | null>(null);
   const [parcoursOuvert, setParcoursOuvert] = useState(false);
+  const etapeTuto = state?.tutorielEtape;
+  const guide = etapeTuto ? competenceGuidee(etapeTuto) : null;
+  const enLecon = etapeTuto === "competences-visite" || etapeTuto === "competences-choix";
+  const [phaseLecon, setPhaseLecon] = useState<PhaseLecon>("coach");
 
   // When user switches tree, close any open detail sheet
   useEffect(() => {
@@ -81,7 +99,7 @@ export default function CompetencesPage() {
         bande={
           <>
             <PageHeaderBar title={d.bibliotheque.titre} />
-            <div style={{ marginTop: 4 }}>
+            <div data-tuto-coach="competences-arbres" style={{ marginTop: 4 }}>
               <TreePicker
                 nbDebloqueesParTree={nbDebloqueesParTree}
                 selectionne={tree}
@@ -104,6 +122,7 @@ export default function CompetencesPage() {
             }}
           >
             <div
+              data-tuto-coach="competences-xp"
               style={{
                 marginTop: 8,
                 border: "1px solid var(--brass-500)",
@@ -161,6 +180,7 @@ export default function CompetencesPage() {
                 </span>
               </div>
               <div
+                data-tuto-coach="competences-point"
                 style={{
                   fontFamily: "var(--font-display)",
                   fontSize: 14,
@@ -280,8 +300,25 @@ export default function CompetencesPage() {
             );
             if (comps.length === 0) return null;
             const brancheDescription = descriptionBranche(tree, branche, locale);
+            // Leçon guidée (premier point) : la main désigne la branche
+            // "presentation" pendant la phase "branche" — c'est le tap du
+            // bon palier (pas de la section, rien n'y est cliquable) qui
+            // fait avancer la leçon. Piège de clipping (cf. Global
+            // Constraints) : le panneau bas défile (overflowY: auto sur
+            // FloatingRoomOverlay), donc position/zIndex/contentVisibility
+            // en inline, comme CollectionGrid.tsx / StockageItemRow.tsx.
+            const mainBranche =
+              !!guide && phaseLecon === "branche" && branche.id === guide.brancheId;
             return (
-              <section key={branche.id}>
+              <section
+                key={branche.id}
+                className={mainBranche ? "tuto-main tuto-main-droite" : undefined}
+                style={
+                  mainBranche
+                    ? { position: "relative", zIndex: 2, contentVisibility: "visible" }
+                    : undefined
+                }
+              >
                 <h3
                   style={{
                     fontFamily: "var(--font-display)",
@@ -323,12 +360,26 @@ export default function CompetencesPage() {
                       state.competencesDebloquees,
                       contexteDepuisState(state),
                     );
+                    const estPalierGuide = !!guide && c.id === guide.competenceId;
                     return (
                       <PalierTile
                         key={c.id}
                         comp={c}
                         etat={etat}
-                        onTap={() => setPalierActif(c)}
+                        onTap={() => {
+                          if (enLecon) {
+                            // Leçon en cours : seul le palier désigné répond
+                            // (autre branche ou autre palier de la bonne
+                            // branche = tap ignoré).
+                            if (estPalierGuide) {
+                              setPalierActif(c);
+                              setPhaseLecon("palier");
+                            }
+                            return;
+                          }
+                          setPalierActif(c);
+                        }}
+                        main={estPalierGuide && phaseLecon === "branche"}
                       />
                     );
                   })}
@@ -360,6 +411,14 @@ export default function CompetencesPage() {
                   }),
                   { type: "succes" },
                 );
+                // Leçon guidée : l'achat du premier point désigné ouvre le
+                // dialogue de clôture (tuto_niveau_apres) par-dessus.
+                if (
+                  etapeTuto === "competences-choix" &&
+                  palierActif.id === guide?.competenceId
+                ) {
+                  setPhaseLecon("dialogue");
+                }
                 setPalierActif(null);
               } else {
                 toast(
@@ -378,6 +437,28 @@ export default function CompetencesPage() {
         onClose={() => setParcoursOuvert(false)}
         niveau={state.brocanteur.niveau}
       />
+
+      {enLecon && phaseLecon === "coach" && (
+        <TutorielCoach
+          etapes={[
+            { cible: "competences-xp", texte: d.tutoriel.coachCompetencesXp },
+            { cible: "competences-arbres", texte: d.tutoriel.coachCompetencesArbres },
+            { cible: "competences-point", texte: d.tutoriel.coachCompetencesPoint },
+          ]}
+          onFini={() => {
+            setPhaseLecon("branche");
+            avancerTutoriel("competences-choix");
+          }}
+        />
+      )}
+      {enLecon && phaseLecon === "dialogue" && (
+        <DialogueOverlay
+          sequence={SEQUENCES_TUTORIEL.tuto_niveau_apres}
+          nom={nomExpediteur("grand-pere", locale)}
+          portraits={GRAND_PERE_PORTRAITS}
+          onFini={() => avancerTutoriel("conclusion")}
+        />
+      )}
     </>
   );
 }
@@ -386,10 +467,13 @@ function PalierTile({
   comp,
   etat,
   onTap,
+  main,
 }: {
   comp: CompetenceDef;
   etat: "debloquee" | "disponible" | "verrouillee";
   onTap: () => void;
+  /** Leçon guidée (premier point) : cette tuile porte la main du tutoriel. */
+  main?: boolean;
 }) {
   const { tr, d, locale } = useLangue();
   const isDebloquee = etat === "debloquee";
@@ -414,11 +498,27 @@ function PalierTile({
       }
     : baseStyle;
 
+  // Piège de clipping (cf. Global Constraints, précédent StockageItemRow
+  // `wrapGuide`) : cette tuile a SON PROPRE `overflow: hidden` (recadrage de
+  // l'image au carré) — sans l'override, il rognerait le ::after de la main
+  // dessiné hors de la boîte AVANT même d'atteindre le panneau défilant
+  // ancêtre. `overflow: visible` s'ajoute donc aux trois styles habituels.
+  const finalStyle = main
+    ? {
+        ...styleByState,
+        position: "relative" as const,
+        overflow: "visible" as const,
+        zIndex: 2,
+        contentVisibility: "visible" as const,
+      }
+    : styleByState;
+
   return (
     <button
       type="button"
       onClick={onTap}
-      style={styleByState}
+      className={main ? "tuto-main tuto-main-droite" : undefined}
+      style={finalStyle}
       title={nomCompetence(comp, locale)}
     >
       <img

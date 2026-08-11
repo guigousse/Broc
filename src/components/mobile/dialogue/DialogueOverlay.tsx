@@ -6,6 +6,7 @@ import type { DialogueSequence, HumeurPnj } from "@/data/dialogues";
 import { lignesDialogue } from "@/lib/i18n/contenu";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { namePlateStyle } from "@/components/ui/namePlate";
+import { setDialogueActif } from "@/lib/dialogueActif";
 
 interface DialogueOverlayProps {
   /** Séquence à jouer, ou null (rien n'est rendu). */
@@ -106,6 +107,15 @@ export function DialogueOverlay({
   useEffect(() => {
     setIndex(0);
   }, [sequence?.id]);
+
+  // Publie l'état pour LevelUpOverlay : la fanfare de niveau attend que le
+  // dialogue soit terminé (cf. dialogueActif.ts). `sequence` passe à null au
+  // démontage comme à la fin normale de la séquence — les deux cas doivent
+  // publier false.
+  useEffect(() => {
+    setDialogueActif(sequence !== null);
+    return () => setDialogueActif(false);
+  }, [sequence]);
 
   if (!sequence || typeof document === "undefined") return null;
 

@@ -96,6 +96,15 @@ export const DIALOGUES_ES: Record<string, string[]> = {
     "Tu primera negociación de venta de verdad. Has aguantado — ya no tengo mucho más que enseñarte.",
     "Cierra el puesto cuando quieras, y volvamos. Todavía tengo un par de palabras que decirte en casa.",
   ],
+  tuto_niveau_avant: [
+    "¡Un nivel más! ¿Ves esa lluvia de oro? Quiere decir que el oficio empieza a calarte.",
+    "Cada nivel te da un punto para gastar. Así es como uno se forja un oficio propio — el tuyo.",
+    "Abre las Habilidades, ahí abajo: te las enseño.",
+  ],
+  tuto_niveau_apres: [
+    "«Lector de almas»: desde la próxima venta, sabrás quién tienes delante. Un nombre, un carácter — y ya la mitad del regateo hecho.",
+    "Las demás ramas esperarán a tus próximos niveles. Volvamos a casa, todavía tengo algo que confiarte.",
+  ],
   tuto_conclusion: [
     "Tienes el ojo, y la mano… solo te faltan los años. La tienda queda en buenas manos.",
     "Toma: mi cuaderno de encargos. La gente apunta lo que busca. Ábrelo, anda — justo tengo algo que apuntar en él.",

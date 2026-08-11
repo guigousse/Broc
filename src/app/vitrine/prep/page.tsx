@@ -443,11 +443,6 @@ export default function VitrinePrepPage() {
             verrouillesIds={verrouillesIds}
             ajoutsAutorisesTemplateIds={ajoutsAutorisesTemplateIds}
             demoManette={demoManette}
-            rotationHint={
-              state.tutorielEtape === "coffre-trace-deux" &&
-              validerBloque &&
-              trace?.templateId === TRACES_TUTORIEL[1].templateId
-            }
           />
         ) : (
           <CoffrePricing

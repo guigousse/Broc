@@ -96,6 +96,15 @@ export const DIALOGUES_EN: Record<string, string[]> = {
     "Your first real sales negotiation. You held firm — there's not much left for me to teach you.",
     "Close the stall whenever you like, and let's head home. I've a couple more words for you at the house.",
   ],
+  tuto_niveau_avant: [
+    "A level up! See that shower of gold? It means the trade is starting to sink in.",
+    "Every level gives you a point to spend. That's how you forge a craft — your own.",
+    "Open the Skills screen, down there: let me show you around.",
+  ],
+  tuto_niveau_apres: [
+    "“Soul reader”: from the next sale on, you'll know who you're dealing with. A name, a temper — half the haggling done already.",
+    "The other branches will wait for your next levels. Let's head home, I've one more thing to entrust to you.",
+  ],
   tuto_conclusion: [
     "You have the eye, and the hands… all you're missing is the years. The shop is in good hands.",
     "Here: my order book. People write down what they're looking for. Go on, open it — I've something to put in it, as it happens.",
