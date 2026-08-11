@@ -9,6 +9,7 @@ import { SwipePager } from "@/components/mobile/SwipePager";
 import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
 import { AdMobBootstrap } from "@/components/mobile/AdMobBootstrap";
 import { IapBootstrap } from "@/components/mobile/IapBootstrap";
+import { BoutonRetourAndroid } from "@/components/mobile/BoutonRetourAndroid";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -92,6 +93,7 @@ export default function RootLayout({
                 <GlobalVinylAmbiance />
                 <AdMobBootstrap />
                 <IapBootstrap />
+                <BoutonRetourAndroid />
               </GameProvider>
             </ToastProvider>
           </SettingsProvider>

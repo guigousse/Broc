@@ -112,6 +112,7 @@ export const en: DictionnaireUI = {
     energieInsuffisante: "Not enough energy for this outing!",
     energieInfinie: "Unlimited energy",
     acheterEnergieInfinie: "Unlimited energy — {prix}",
+    appuyezPourQuitter: "Press back again to exit",
     achatReussi: "Unlimited energy unlocked!",
     achatEnAttente: "Purchase awaiting approval.",
     erreurAchat: "The purchase could not be completed. Try again later.",

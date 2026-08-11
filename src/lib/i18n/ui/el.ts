@@ -112,6 +112,7 @@ export const el: DictionnaireUI = {
     energieInsuffisante: "Δεν έχεις αρκετή ενέργεια για αυτή την έξοδο!",
     energieInfinie: "Άπειρη ενέργεια",
     acheterEnergieInfinie: "Άπειρη ενέργεια — {prix}",
+    appuyezPourQuitter: "Πατήστε ξανά για έξοδο",
     achatReussi: "Η άπειρη ενέργεια ξεκλειδώθηκε!",
     achatEnAttente: "Η αγορά εκκρεμεί έγκριση.",
     erreurAchat: "Η αγορά δεν ολοκληρώθηκε. Δοκίμασε ξανά αργότερα.",

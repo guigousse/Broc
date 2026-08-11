@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { empilerFermeture } from "@/lib/retourAndroid";
 
 interface BottomSheetProps {
   open: boolean;
@@ -116,6 +117,14 @@ export function BottomSheet({
   useEffect(() => {
     if (open) setDragY(0);
   }, [open]);
+
+  // Le bouton retour d'Android ferme la sheet la plus haute, exactement comme
+  // un tap sur le voile. L'enregistrement suit l'ouverture, le retrait suit le
+  // démontage.
+  useEffect(() => {
+    if (!open) return;
+    return empilerFermeture(onClose);
+  }, [open, onClose]);
 
   if (!open) return null;
 

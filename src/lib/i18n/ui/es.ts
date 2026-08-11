@@ -112,6 +112,7 @@ export const es: DictionnaireUI = {
     energieInsuffisante: "¡No tienes energía suficiente para esta salida!",
     energieInfinie: "Energía infinita",
     acheterEnergieInfinie: "Energía infinita — {prix}",
+    appuyezPourQuitter: "Pulsa de nuevo para salir",
     achatReussi: "¡Energía infinita desbloqueada!",
     achatEnAttente: "Compra pendiente de aprobación.",
     erreurAchat: "No se pudo completar la compra. Inténtalo más tarde.",

@@ -115,6 +115,7 @@ export const fr = {
     energieInsuffisante: "Pas assez d'énergie pour cette sortie !",
     energieInfinie: "Énergie infinie",
     acheterEnergieInfinie: "Énergie infinie — {prix}",
+    appuyezPourQuitter: "Appuyez à nouveau pour quitter",
     achatReussi: "Énergie infinie débloquée !",
     achatEnAttente: "Achat en attente d'approbation.",
     erreurAchat: "L'achat n'a pas abouti. Réessaie plus tard.",

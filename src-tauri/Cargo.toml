@@ -26,6 +26,7 @@ tauri-plugin-log = "2"
 tauri-plugin-notification = "2"
 tauri-plugin-admob = { path = "vendor/tauri-plugin-admob" }
 tauri-plugin-iap = { path = "vendor/tauri-plugin-iap" }
+tauri-plugin-process = "2.3.1"
 
 # Patch local : corrige la sérialisation des dates de notifs planifiées, dont le
 # format ISO-8601 (9 décimales + offset `+00:00`) était rejeté par le parseur
