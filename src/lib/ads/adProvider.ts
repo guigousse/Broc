@@ -1,4 +1,5 @@
 import { AdMobAdProvider, adMobDisponible } from "./adMobProvider";
+import { plateformeNative } from "@/lib/plateforme";
 
 export interface AdResult {
   /** true si la pub a été visionnée jusqu'au bout (récompense due). */
@@ -36,12 +37,33 @@ export class StubAdProvider implements AdProvider {
   }
 }
 
+/**
+ * Provider des plateformes où aucune régie n'est encore branchée — Android,
+ * tant que le plugin Kotlin du sous-projet B n'existe pas. Il ne récompense
+ * jamais : c'est le filet, pas le mécanisme. Le mécanisme est `pubDisponible()`,
+ * que l'UI consulte pour ne proposer aucune pub du tout.
+ */
+export class IndisponibleAdProvider implements AdProvider {
+  async showRewardedAd(_emplacement: EmplacementPub): Promise<AdResult> {
+    throw new Error("Publicités indisponibles sur cette plateforme");
+  }
+}
+
+/** Faux là où aucune régie n'est branchée : l'UI ne doit alors ni proposer de
+ *  pub, ni en offrir la récompense gratuitement. */
+export function pubDisponible(): boolean {
+  return plateformeNative() !== "android";
+}
+
 // Singleton injectable — AdMob natif sous Tauri iOS, stub partout ailleurs
-// (web Safari, simulateur, dev desktop).
+// (web Safari, simulateur, dev desktop), provider indisponible sous Tauri
+// Android (aucune régie n'y est encore branchée).
 let instance: AdProvider | null = null;
 export function getAdProvider(): AdProvider {
   if (!instance) {
-    instance = adMobDisponible() ? new AdMobAdProvider() : new StubAdProvider();
+    if (adMobDisponible()) instance = new AdMobAdProvider();
+    else if (plateformeNative() === "android") instance = new IndisponibleAdProvider();
+    else instance = new StubAdProvider();
   }
   return instance;
 }
