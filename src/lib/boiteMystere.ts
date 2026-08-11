@@ -142,3 +142,20 @@ export function appliquerReclamation<
     boiteMystere: { jour: state.jourActuel, reclamees },
   };
 }
+
+/**
+ * Le vendeur mystère peut-il apparaître dans le deck de cette session ?
+ * Faux pendant le tutoriel guidé (pas de distraction pub/récompense sur la
+ * première session encadrée), faux si le stockage est plein (jamais de pub
+ * gâchée), et faux si aucune régie publicitaire n'est branchée — sa boîte ne
+ * s'ouvre qu'en regardant une pub, elle serait une carte inouvrable.
+ *
+ * Fonction pure : le tirage aléatoire reste dans `tenterApparition`.
+ */
+export function vendeurMysterePeutApparaitre(opts: {
+  tutorielActif: boolean;
+  placeRestante: number;
+  pubDisponible: boolean;
+}): boolean {
+  return !opts.tutorielActif && opts.placeRestante >= 1 && opts.pubDisponible;
+}

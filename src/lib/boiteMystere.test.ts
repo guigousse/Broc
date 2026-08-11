@@ -8,6 +8,7 @@ import {
   nbBoitesReclamees,
   tirerContenuBoite,
   appliquerReclamation,
+  vendeurMysterePeutApparaitre,
   DISTRIB_ETAT_BOITE,
   POIDS_RARETE_BOITE,
 } from "./boiteMystere";
@@ -154,6 +155,26 @@ describe("appliquerReclamation", () => {
       objet,
     );
     expect(r.boiteMystere).toEqual({ jour: 3, reclamees: 1 });
+  });
+});
+
+describe("vendeurMysterePeutApparaitre", () => {
+  const base = { tutorielActif: false, placeRestante: 3, pubDisponible: true };
+
+  it("vrai dans le cas nominal", () => {
+    expect(vendeurMysterePeutApparaitre(base)).toBe(true);
+  });
+
+  it("faux pendant le tutoriel guidé (pas de distraction pub)", () => {
+    expect(vendeurMysterePeutApparaitre({ ...base, tutorielActif: true })).toBe(false);
+  });
+
+  it("faux si le stockage est plein (jamais de pub gâchée)", () => {
+    expect(vendeurMysterePeutApparaitre({ ...base, placeRestante: 0 })).toBe(false);
+  });
+
+  it("faux si aucune régie n'est branchée — sinon carte inouvrable dans le deck", () => {
+    expect(vendeurMysterePeutApparaitre({ ...base, pubDisponible: false })).toBe(false);
   });
 });
 

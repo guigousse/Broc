@@ -49,7 +49,9 @@ import {
   nbBoitesReclamees,
   tenterApparition,
   tirerPositionVendeur,
+  vendeurMysterePeutApparaitre,
 } from "@/lib/boiteMystere";
+import { pubDisponible } from "@/lib/ads/adProvider";
 import { BoiteMystereOverlay } from "@/components/mobile/BoiteMystereOverlay";
 import { indexJourSemaine } from "@/lib/meteo";
 import { indexObjetScenario, scenarioDeLEtape, tutorielActif } from "@/lib/tutoriel";
@@ -240,10 +242,15 @@ export default function SessionChinePage() {
       // boîte déjà réclamée aujourd'hui). N'apparaît que s'il reste de la place
       // (jamais de pub gâchée), et jamais pendant le tutoriel guidé (pas de
       // distraction pub/récompense sur la première session encadrée).
+      // Absent aussi là où aucune régie n'est branchée (Android avant le
+      // sous-projet B) : sa boîte ne s'ouvre qu'en regardant une pub.
       const nReclamees = nbBoitesReclamees(state, state.jourActuel);
       if (
-        !tutorielActif(state) &&
-        placeRestante(state) >= 1 &&
+        vendeurMysterePeutApparaitre({
+          tutorielActif: tutorielActif(state),
+          placeRestante: placeRestante(state),
+          pubDisponible: pubDisponible(),
+        }) &&
         tenterApparition(nReclamees)
       ) {
         // Position tirée une fois pour toute la session : premier, entre
