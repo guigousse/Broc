@@ -1,3 +1,8 @@
+// ⚠ Fichier généré par `tauri android init` mais ÉDITÉ À LA MAIN : configuration de
+//   signature de release et versionCode surchargeable (sous-projet D). Ne pas régénérer
+//   sans reporter ces réglages — même situation que AndroidManifest.xml et
+//   MainActivity.kt ici, et que main.mm / AdmobBridge.swift côté iOS.
+
 import java.util.Properties
 
 plugins {
@@ -13,6 +18,10 @@ val tauriProperties = Properties().apply {
     }
 }
 
+// Chemin du keystore d'upload. Absent en développement : la build reste alors non
+// signée, comme avant — développer ne doit pas exiger la clé de publication.
+val cheminKeystore: String? = System.getenv("ANDROID_KEYSTORE_PATH")
+
 android {
     compileSdk = 36
     namespace = "com.guigousse.broc"
@@ -23,6 +32,16 @@ android {
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+    }
+    signingConfigs {
+        create("release") {
+            if (cheminKeystore != null) {
+                storeFile = file(cheminKeystore)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS") ?: "broc-upload"
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
     }
     buildTypes {
         getByName("debug") {
@@ -38,6 +57,9 @@ android {
             }
         }
         getByName("release") {
+            if (cheminKeystore != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
