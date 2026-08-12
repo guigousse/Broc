@@ -10,6 +10,7 @@ import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
 import { AdMobBootstrap } from "@/components/mobile/AdMobBootstrap";
 import { IapBootstrap } from "@/components/mobile/IapBootstrap";
 import { BoutonRetourAndroid } from "@/components/mobile/BoutonRetourAndroid";
+import { ZoneSureAndroid } from "@/components/mobile/ZoneSureAndroid";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -94,6 +95,7 @@ export default function RootLayout({
                 <AdMobBootstrap />
                 <IapBootstrap />
                 <BoutonRetourAndroid />
+                <ZoneSureAndroid />
               </GameProvider>
             </ToastProvider>
           </SettingsProvider>

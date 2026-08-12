@@ -997,8 +997,14 @@ html, body {
    MOBILE — safe area & règles globales portrait
    ============================================================ */
 :root {
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* La WebView Android ne renseigne pas env(safe-area-inset-*) de façon fiable :
+     l'inset du haut tombe à 0 en cours de partie (header sous la barre d'état),
+     celui du bas y reste (dock sous la barre de gestes). <ZoneSureAndroid />
+     publie donc la mesure native, que WindowInsetsCompat donne sans hésiter.
+     Hors Android les variables n'existent pas, le repli 0px laisse env()
+     décider — iOS est inchangé. */
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--safe-top-natif, 0px));
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-bottom-natif, 0px));
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
 
