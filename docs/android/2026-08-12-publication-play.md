@@ -202,6 +202,26 @@ règle imposée par Google — ne pas la présenter comme telle aux testeurs.
 
 ---
 
+## Le binaire est vérifié — 2026-08-12
+
+Run CI [31608417830](https://github.com/guigousse/Broc/actions/runs/31608417830), 18 min 18,
+artefact `broc-aab`. Cinq contrôles, tous passés :
+
+| Contrôle | Résultat |
+|---|---|
+| Signature de **l'AAB lui-même** (`jarsigner -verify -certs`) | ✅ `jar verified`, `CN=Guillaume Fenard, O=Guigousse, C=FR`, SHA256withRSA 2048 bits |
+| **Alignement 16 Ko** du `.so` arm64 (`llvm-readelf -lW`) | ✅ `0x4000` sur les trois segments `LOAD` — le NDK 27.3 le fait par défaut |
+| **Taille de téléchargement** par appareil (`bundletool get-size`) | ✅ 138,7 Mo au maximum (arm64 : 138,6 Mo), pour une limite Play de 200 Mo |
+| Installation et lancement sur l'émulateur | ✅ menu, nouvelle partie, tutoriel — zéro ligne fatale dans `logcat` |
+| **Survie du pont `BrocInsets` à R8** | ✅ header sous la barre d'état, dock au-dessus de la barre de gestes, en build **release minifiée** |
+
+L'avertissement PKIX de `jarsigner` est normal : une clé d'upload est auto-signée, elle n'a
+pas de chaîne de certification.
+
+⚠️ **Où récupérer l'AAB** : sur la page du run, section *Artifacts* → `broc-aab`.
+À télécharger depuis le navigateur — macOS interdit à un agent d'écrire dans `~/Downloads`
+(`Operation not permitted`, protection TCC).
+
 ## Résultats — à compléter par Guillaume
 
 *(Step 4-5 du plan : exécution dans Play Console, hors de portée de l'agent. Champs
@@ -210,8 +230,8 @@ laissés vides intentionnellement.)*
 | Élément | Valeur |
 |---|---|
 | Date de dépôt du premier AAB | `______________` |
-| `versionCode` réellement déposé | `______________` |
-| Taille de l'AAB (relevée Task 4, Step 7) | `______________` |
+| `versionCode` réellement déposé | **1002002** (run CI n° 2) — à confirmer après dépôt |
+| Taille de l'AAB (relevée Task 4, Step 7) | **526 Mo** (les 4 ABI) — mais **138,7 Mo de téléchargement réel** par appareil, limite Play 200 Mo |
 | Lien d'inscription à la piste de test fermé | `______________` |
 | Nombre de testeurs inscrits | `______________` / 12 |
 | Date du 12ᵉ inscrit | `______________` |
