@@ -7,6 +7,25 @@ d'une version de l'interface à l'autre, corriger ce document si l'écran a boug
 Pré-requis : un AAB signé produit par `.github/workflows/android-play.yml` (Task 3/4),
 vérifié par `bundletool` + `apksigner` (spec § 9).
 
+## Outillage : comment lancer la CI depuis cette branche
+
+GitHub n'affiche l'onglet **Run workflow** pour `workflow_dispatch` que si le fichier de
+workflow existe déjà sur la **branche par défaut** (`main`). Or `feat/android-socle`
+n'est pas encore fusionnée, et `main` ne contient que `ios-testflight.yml` : sans rien de
+plus, Guillaume pousserait la branche et ne verrait aucun bouton pour lancer la build.
+
+Deux options existaient ; celle retenue pour ce lot est la première :
+
+1. **(retenu) Déclencheur `push` temporaire**, restreint à `feat/android-socle` et aux
+   chemins qui comptent (`src-tauri/**`, `src/**`, `package.json`,
+   `package-lock.json`, le workflow lui-même), ajouté dans `android-play.yml` en plus de
+   `workflow_dispatch`. Le premier push de la branche déclenche donc la build tout seul.
+   À retirer du fichier dès que la branche est fusionnée sur `main` — `workflow_dispatch`
+   suffira alors, comme pour `ios-testflight.yml`.
+2. **(écarté pour ce lot)** Fusionner `feat/android-socle` sur `main` avant de toucher à
+   Play Console. Plus propre, mais retarderait le premier dépôt — et donc les 14 jours —
+   le temps de finir la fusion du sous-projet A.
+
 ## Rappel : pourquoi une piste fermée et pas interne
 
 Le compte Play Console de Guillaume est **personnel et créé après le 13 novembre 2023**.
@@ -19,7 +38,12 @@ pas. D'où le point 9 ci-dessous : fermé, pas interne.
 
 ### 1. Créer l'application
 
-- Nom : `BROC`
+- **Nom : `Broc : Jeu de Brocante`** — Play n'a qu'**un seul** champ « nom de
+  l'application » (30 caractères) : celui saisi ici est le même que celui affiché dans
+  la fiche magasin (point 3). Utiliser directement le nom définitif, aligné sur la fiche
+  App Store (`FICHE_APP_STORE.md`), pour ne pas avoir à le corriger après coup. `BROC`
+  seul n'est qu'un raccourci utilisé dans ce document et ailleurs (icône, marketing) —
+  pas la valeur à saisir dans ce champ.
 - Langue par défaut : français
 - Type : Jeu
 - Gratuit
@@ -51,18 +75,24 @@ App Store).** Rédigée pour ce lot, dans le ton de la fiche existante :
 retoucher le texte — il est déjà vérifié en longueur pour l'App Store, et Play tolère
 jusqu'à 4000 caractères, largement au-dessus des ~1300-1500 utilisés.
 
-**Nom de l'application** dans la fiche magasin (distinct du nom de l'app, point 1) :
-`Broc : Jeu de Brocante` (FR) / `Broc: Flea Market Game` (EN), lignes 10 et 59 de la
-fiche.
+**Nom de l'application.** C'est le **même champ** qu'au point 1 (Play n'en a qu'un) : déjà
+réglé sur `Broc : Jeu de Brocante` à la création. Rien à refaire ici en français. En
+anglais, le champ est traduit séparément par langue : `Broc: Flea Market Game` (ligne 59
+de la fiche). Ne pas confondre avec un « nom d'app » et un « titre de fiche » distincts —
+il n'y en a qu'un.
 
 ### 4. Éléments graphiques
 
 - **Icône** : 512×512, `public/icon-512.png` — déjà à la bonne taille, aucun
   rééchantillonnage nécessaire.
-- **Image de couverture (feature graphic)** : 1024×500. **N'existe pas encore** — aucun
-  fichier de ce format dans le dépôt à ce jour. À produire avant cet écran (hors
-  périmètre de cette tâche) ; la bannière Facebook 820×360 (`marketing/facebook/`) n'est
-  pas réutilisable telle quelle, le ratio diffère.
+- **Image de couverture (feature graphic)** : 1024×500. **PRÉREQUIS BLOQUANT, pas hors
+  périmètre** : Play l'exige pour publier la fiche magasin — donc pour publier la piste
+  de test fermé, donc pour démarrer les 14 jours. **N'existe pas encore** — aucun fichier
+  de ce format dans le dépôt à ce jour ; la bannière Facebook 820×360
+  (`marketing/facebook/`) n'est pas réutilisable telle quelle : son ratio est ≈2,28:1
+  (820/360) contre 2,048:1 exigé ici (1024/500) — recadrer, pas seulement redimensionner.
+  **À produire avant l'étape 10 (dépôt)**, idéalement avant de commencer à dérouler cette
+  recette pour ne pas bloquer au dernier écran.
 - **Captures téléphone, au moins deux** : rééchantillonner depuis
   `marketing/appstore/.captures/fr-iphone-6.5-*.png` (ou `en-iphone-6.5-*.png`).
   **Piège de ratio, pas seulement de résolution** : ces captures pèsent 1242×2688, soit un
@@ -119,6 +149,22 @@ Téléverser l'AAB produit par le workflow (artefact `broc-aab` du run manuel de
 lien d'inscription (`Testers → join on the web` ou lien direct `…/apps/testing/...`) — le
 relever et le reporter dans « Résultats » ci-dessous.
 
+**⚠️ `GITHUB_RUN_NUMBER` est propre au fichier de workflow, pas au dépôt.** Le
+`versionCode` calculé en CI vaut `1002000 + GITHUB_RUN_NUMBER`, et ce numéro de run
+repart de 1 si le fichier `android-play.yml` est **renommé ou recréé** (GitHub le traite
+alors comme un workflow différent). Renommer ce fichier après un premier dépôt referait
+donc calculer un `versionCode` déjà utilisé — Play refuse un dépôt qui n'est pas
+strictement croissant. Ne pas renommer/recréer `android-play.yml` une fois le premier AAB
+déposé ; si c'est inévitable, relever manuellement le point de départ (`1002000 + …`)
+au-dessus du dernier `versionCode` déposé.
+
+**Corollaire, dès le tout premier run** : `versionCode` dépasse déjà `1002000` (le
+`versionCode` local de la 1.2.0, lu dans `tauri.properties`) dès le run n°1 de la CI.
+**Aucune build locale de la version 1.2.0 ne pourra plus être déposée** sur cette piste
+une fois la CI passée : toute build future destinée à Play doit venir de la CI (dont le
+compteur ne fait qu'augmenter), ou d'un `versionCode` local relevé à la main au-delà du
+dernier déposé.
+
 ---
 
 ## Testeurs — mode d'emploi
@@ -129,11 +175,18 @@ relever et le reporter dans « Résultats » ci-dessous.
 >
 > 1. Accepte l'invitation ici : `<lien d'inscription>`
 > 2. Installe BROC depuis le Play Store (le lien te redirige)
-> 3. **Surtout : ne désinstalle pas le jeu pendant 14 jours.** Google compte les
->    testeurs inscrits en continu ; une désinstallation remet le compteur à zéro pour
->    tout le monde.
+> 3. **Reste inscrit 14 jours, sans quitter le programme de test.** Google compte les
+>    testeurs inscrits en continu sur cette période ; le mieux est de garder le jeu
+>    installé tout du long, donc évite de le désinstaller.
 >
 > Joue quand tu veux, même cinq minutes. Si tu vois un bug, écris-moi.
+
+**Précision technique (pas à mettre dans le message) :** le compteur porte sur
+l'**inscription** au programme de test (l'opt-in), en continu — pas sur l'installation de
+l'app. Désinstaller le jeu ne désinscrit pas quelqu'un du programme. La consigne de ne
+pas désinstaller reste utile (pour de vrais retours, et parce qu'un testeur qui
+désinstalle a plus de chances de décrocher aussi du programme), mais ce n'est pas une
+règle imposée par Google — ne pas la présenter comme telle aux testeurs.
 
 ### Consigne d'exploitation du groupe Google
 

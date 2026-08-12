@@ -349,21 +349,40 @@ Dans **Settings → Secrets and variables → Actions** du dépôt `guigousse/Br
 
 Créer `.github/workflows/android-play.yml` :
 
+> Le contenu ci-dessous est celui du workflow **au moment de sa conception initiale**. Il
+> a depuis reçu des correctifs de revue (déclencheur `push` temporaire, bootstrap des
+> fichiers Android générés, garde sur les secrets, libération d'espace disque, retrait
+> de l'export front redondant, `$RUNNER_TEMP` au lieu de `${{ runner.temp }}`) : le
+> fichier réel `.github/workflows/android-play.yml` fait foi, pas cette copie figée.
+
 ```yaml
 name: Android → AAB signé
 
 # Build des 4 ABI et signature de l'AAB de release, pour dépôt manuel dans Play Console.
 #
-# Déclenchement MANUEL uniquement : déposer sur Play se décide, contrairement à une
-# build TestFlight. Et surtout, cette build ne peut pas tourner sur le Mac de Guillaume —
-# les 4 ABI représentent 12 à 16 Gi d'artefacts Rust pour 5 Gi libres.
+# Déclenchement voulu : MANUEL (`workflow_dispatch`) — déposer sur Play se décide,
+# contrairement à une build TestFlight. Et surtout, cette build ne peut pas tourner sur
+# le Mac de Guillaume — les 4 ABI représentent 12 à 16 Gi d'artefacts Rust pour 5 Gi
+# libres.
 on:
   workflow_dispatch:
+  # Temporaire : `workflow_dispatch` n'apparaît dans l'onglet Actions que si le
+  # fichier existe sur la branche par défaut. Tant que feat/android-socle n'est pas
+  # fusionnée, ce déclencheur est le seul moyen de lancer la build. À RETIRER après
+  # la fusion sur main.
+  push:
+    branches: [feat/android-socle]
+    paths:
+      - '.github/workflows/android-play.yml'
+      - 'src-tauri/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     # Identifiants NON secrets, en clair pour éviter les fautes de frappe.
     env:
       NDK_VERSION: 27.3.13750724
@@ -371,6 +390,38 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # GitHub injecte une CHAÎNE VIDE pour un secret absent, pas rien : un `?:` côté
+      # Gradle (ANDROID_KEY_ALIAS) ne retombe donc jamais sur son défaut ici. Sans cette
+      # garde, l'échec surviendrait après une heure de compilation. On ne montre JAMAIS
+      # le contenu des secrets, seulement leur présence (`-z`).
+      - name: Garde-fou — secrets de signature non vides
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          manquants=""
+          for nom in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            valeur="${!nom}"
+            if [ -z "$valeur" ]; then
+              manquants="$manquants $nom"
+            fi
+          done
+          if [ -n "$manquants" ]; then
+            echo "::error::Secret(s) absent(s) ou vide(s) :$manquants"
+            exit 1
+          fi
+          echo "Les quatre secrets de signature sont présents."
+
+      # C'est le mur du disque qui a chassé cette build du Mac (5 Gi libres pour 12 à
+      # 16 Gi d'artefacts Rust) : sur ubuntu-latest, quatre cibles Rust en release plus
+      # le NDK/SDK/Gradle/R8 approchent aussi les 20-25 Gi disponibles par défaut.
+      - name: Libérer de l'espace disque du runner
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/hostedtoolcache/CodeQL
+          df -h /
 
       - name: JDK 17
         uses: actions/setup-java@v4
@@ -400,13 +451,29 @@ jobs:
       - name: Dépendances
         run: npm ci
 
-      - name: Export statique du front
-        run: npm run build
+      # Six familles de fichiers dont Gradle a besoin (tauri.settings.gradle,
+      # tauri.build.gradle.kts, tauri.properties, proguard-{tauri,wry}.pro, les
+      # sources Kotlin générées, assets/tauri.conf.json) sont écrites par
+      # `tauri android init` et volontairement non versionnées : elles contiennent
+      # des chemins absolus. On les régénère ici.
+      #
+      # `git checkout` juste après n'est PAS cosmétique : `init` réécrit aussi les
+      # trois fichiers que ce projet édite à la main (AndroidManifest.xml pour le
+      # portrait, MainActivity.kt pour le pont BrocInsets, build.gradle.kts pour la
+      # signature). On restaure donc les fichiers SUIVIS, en gardant les générés.
+      - name: Régénérer les fichiers Android non versionnés
+        run: |
+          npx tauri android init
+          git checkout -- src-tauri/gen/android
+          echo "--- fichiers suivis modifiés après restauration (doit être vide) :"
+          git status --porcelain src-tauri/gen/android
 
       # Le keystore ne vit que le temps du job, hors de l'espace de travail pour qu'il ne
       # puisse pas se retrouver dans un artefact.
       - name: Reconstituer le keystore
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/broc-upload.jks"
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/broc-upload.jks"
 
       # Les expressions GitHub ne savent PAS faire d'arithmétique (les opérateurs
       # documentés s'arrêtent aux comparaisons et aux booléens) : le calcul se fait donc
@@ -417,11 +484,11 @@ jobs:
 
       - name: AAB signé
         env:
-          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/broc-upload.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/broc-upload.jks"
           echo "versionCode = $ANDROID_VERSION_CODE"
           npm run tauri android build -- --aab
 
@@ -463,14 +530,23 @@ EOF
 La CI n'existe pour GitHub que si la branche y est. `feat/android-socle` n'a jamais été
 poussée et porte tout le sous-projet A : **ne pas pousser sans son accord explicite**.
 
+**Le déclencheur `push` du workflow (voir le YAML ci-dessus) va aussi se déclencher tout
+seul** dès que ce push touche `src-tauri/**`, `src/**`, `package.json`,
+`package-lock.json` ou le workflow lui-même — ce qui sera le cas ici, puisque toute la
+branche part d'un coup. C'est voulu (raison : `workflow_dispatch` seul n'apparaît dans
+l'onglet Actions que si le fichier existe déjà sur la branche par défaut `main`, donc
+sans ce filet Guillaume ne verrait pas « Run workflow » après avoir poussé). Prévenir
+Guillaume que la première build partira automatiquement, pas seulement sur clic.
+
 ```bash
 git push -u origin feat/android-socle
 ```
 
 - [ ] **Step 7 : Guillaume déclenche la première build**
 
-Onglet **Actions → Android → AAB signé → Run workflow**, en choisissant la branche
-`feat/android-socle`.
+Le push du Step 6 déclenche déjà une première exécution automatique (déclencheur `push`
+temporaire). Sinon, à la main : onglet **Actions → Android → AAB signé → Run workflow**,
+en choisissant la branche `feat/android-socle`.
 
 **Attendu, en toute honnêteté : la première exécution a de bonnes chances d'échouer.**
 Les points fragiles connus, dans l'ordre de probabilité :
@@ -478,7 +554,11 @@ Les points fragiles connus, dans l'ordre de probabilité :
 1. le chemin de sortie de l'AAB (`universalRelease` peut s'appeler autrement selon le
    découpage d'ABI retenu par Tauri) — l'étape « Où est l'AAB » est là pour le révéler ;
 2. `build-tools;36.0.0` peut ne pas exister encore : replier sur `35.0.0` ;
-3. ProGuard/R8 peut échouer sur les classes de Tauri ou du pont `BrocInsets`.
+3. le pont **Tauri/wry** (`RustWebView`, `WryActivity`, `Ipc`, `TauriActivity`) pourrait
+   perdre des symboles sous R8 si le step « Régénérer les fichiers Android non
+   versionnés » n'a pas produit `proguard-tauri.pro`/`proguard-wry.pro` comme attendu —
+   voir Task 4, « Pourquoi », pour le détail de ce risque (ce n'est **pas** `BrocInsets`,
+   déjà protégé par défaut par AGP 8.11).
 
 Lire le journal, corriger, recommitter, relancer. Ne pas passer à la Task 4 tant que
 l'artefact `broc-aab` n'est pas téléchargeable.
@@ -494,10 +574,18 @@ l'artefact `broc-aab` n'est pas téléchargeable.
 - Consumes: l'artefact `broc-aab` (Task 3)
 - Produces: la certitude que le binaire déposé s'installe, se lance, et porte la bonne clé
 
-**Pourquoi :** c'est en release que `minifyEnabled` et ProGuard entrent en jeu. Un pont
-JavaScript comme `BrocInsets` (`MainActivity.kt`) est exactement le genre de chose que R8
-sait escamoter : les méthodes annotées `@JavascriptInterface` sont normalement conservées
-par les règles par défaut, mais « normalement » n'est pas une vérification.
+**Pourquoi :** c'est en release que `minifyEnabled` et ProGuard entrent en jeu. Le point de
+vigilance réel n'est **pas** le pont `BrocInsets` (`MainActivity.kt`) : AGP 8.11 embarque
+déjà dans `proguard-android-optimize.txt` la règle
+`-keepclassmembers class * { @android.webkit.JavascriptInterface <methods>; }`, qui le
+protège sans qu'on ait rien à écrire. Le vrai risque est le pont **Tauri/wry**
+(`RustWebView.loadUrlMainThread`/`evalScript`, `WryActivity.setWebView`, `Ipc`,
+`TauriActivity.getPluginManager`), appelé par **nom** depuis Rust et protégé uniquement
+par les fichiers `proguard-tauri.pro`/`proguard-wry.pro` générés — des fichiers
+volontairement non versionnés (voir Task 3, le step qui les régénère). Sans eux, R8 peut
+renommer ou supprimer ces méthodes, et le code Rust ne les retrouve plus au runtime. La
+règle de secours pour `BrocInsets` (Step 8 ci-dessous) reste écrite par prudence, mais
+c'est un filet peu probable, pas le risque principal.
 
 - [ ] **Step 1 : Outillage**
 
@@ -515,7 +603,48 @@ Guillaume le télécharge depuis la page du run (Actions → le run → Artifact
 cd ~/Downloads && unzip -o broc-aab.zip && ls -lh *.aab
 ```
 
-- [ ] **Step 3 : Dérouler l'AAB en APK installable**
+- [ ] **Step 3 : Vérifier que l'AAB LUI-MÊME est signé**
+
+**Ne pas sauter cette étape au profit du Step 6** : `bundletool build-apks --ks=…` signe
+lui-même les APK qu'il produit, donc `apksigner verify` au Step 6 affichera toujours le
+bon certificat — même si l'AAB déposé en entrée n'était pas signé. Ce n'est pas ce
+Step 6 qui ferme le risque « la CI a oublié la clé », c'est celui-ci.
+
+```bash
+export JAVA_HOME=/usr/local/opt/openjdk@17; export PATH="$JAVA_HOME/bin:$PATH"
+jarsigner -verify -certs -verbose "$HOME/Downloads/app-universal-release.aab" | head -20
+```
+
+Attendu : `jar verified` et un certificat `CN=Guillaume Fenard`. **Si `jar is unsigned`,
+l'AAB n'est pas signé** — Play le refuserait avec « The Android App Bundle was not
+signed » ; reprendre la Task 1 et vérifier les quatre secrets du dépôt.
+
+- [ ] **Step 4 : Vérifier l'alignement des pages 16 Ko**
+
+Depuis le 1er novembre 2025, Play exige la compatibilité **16 Ko** pour toute nouvelle
+application ciblant Android 15+ (`targetSdk = 36` ici). Un `.so` aligné à 4 Ko ne se
+charge pas sur un appareil en 16 Ko — l'app ne démarre pas — alors que l'émulateur
+`broc-pixel6` (4 Ko) la lancera parfaitement et validera la recette à tort. Une mesure
+faite en local sur un `.so` x86_64 de debug n'est PAS concluante pour arm64 : mesurer
+l'artefact réel.
+
+**Ne pas modifier les drapeaux de compilation** pour « corriger » l'alignement — Tauri
+définit lui-même les `CARGO_TARGET_*_RUSTFLAGS`, et une surcharge maladroite casserait
+l'édition de liens.
+
+```bash
+unzip -o "$HOME/Downloads/app-universal-release.aab" -d /tmp/aab
+"$ANDROID_HOME/ndk/27.3.13750724/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-readelf" \
+  -lW /tmp/aab/base/lib/arm64-v8a/libapp_lib.so | grep LOAD
+```
+
+Attendu : un alignement `0x4000` (16 Ko) — le NDK r27 aligne normalement à 16 Ko par
+défaut. **Si c'est `0x1000` (4 Ko), ne pas déposer** : il faudra passer au NDK r28+ ou
+ajouter `-Wl,-z,max-page-size=16384` à l'édition de liens des cibles Android — sujet à
+traiter avant la production, pas un blocage de ce lot de test fermé si les délais
+pressent, mais à consigner dans les risques (§ 12 de la spec).
+
+- [ ] **Step 5 : Dérouler l'AAB en APK installable**
 
 ```bash
 export JAVA_HOME=/usr/local/opt/openjdk@17; export PATH="$JAVA_HOME/bin:$PATH"
@@ -528,17 +657,23 @@ bundletool build-apks --mode=universal \
 
 `bundletool` demandera le mot de passe du keystore.
 
-- [ ] **Step 4 : Vérifier la signature**
+- [ ] **Step 6 : Vérifier la signature de l'APK dérivé**
 
 ```bash
 cd ~/Downloads && unzip -o -p broc.apks universal.apk > universal.apk
 $ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs universal.apk
 ```
 
-Attendu : le certificat porte `CN=Guillaume Fenard`. **Si l'émetteur est
-`CN=Android Debug`, l'AAB n'est pas signé par la clé d'upload** — reprendre la Task 1.
+**Cette commande ne prouve que la signature faite par `bundletool` lui-même** (Step 5) —
+elle ne dit rien de l'AAB d'entrée, c'est le Step 3 qui a fermé ce risque-là. Elle reste
+utile pour confirmer que l'alias `broc-upload` a bien été utilisé (et pas un autre
+keystore local) et que l'APK dérivé s'installera sans conflit de signature.
 
-- [ ] **Step 5 : Installer et lancer sur l'émulateur**
+Attendu : le certificat porte `CN=Guillaume Fenard`. **Si l'émetteur est
+`CN=Android Debug`, c'est le keystore passé à `--ks` au Step 5 qui est le mauvais** —
+vérifier `~/broc-upload.jks`.
+
+- [ ] **Step 7 : Installer et lancer sur l'émulateur**
 
 ```bash
 $ANDROID_HOME/emulator/emulator -avd broc-pixel6 -no-snapshot -no-boot-anim &
@@ -551,7 +686,7 @@ adb shell am start -n "com.guigousse.broc/com.guigousse.broc.MainActivity"
 Noter l'**absence du suffixe `.debug`** : c'est une build de release, son identifiant est
 `com.guigousse.broc`.
 
-- [ ] **Step 6 : Recette minimale sur la release**
+- [ ] **Step 8 : Recette minimale sur la release**
 
 Trente secondes de jeu suffisent, mais elles sont indispensables :
 
@@ -560,11 +695,12 @@ sleep 20 && adb exec-out screencap -p > /tmp/broc-release.png
 ```
 
 Vérifier sur la capture : le menu s'affiche, **le header ne passe pas sous la barre
-d'état** (le pont `BrocInsets` a donc survécu à R8 — c'est le point à risque), et une
-partie se lance. Puis :
+d'état** (le pont `BrocInsets` a donc survécu à R8 — filet peu probable mais bienvenu :
+AGP 8.11 le protège déjà par défaut, voir le « Pourquoi » ci-dessus), et une partie se
+lance. Puis :
 
 ```bash
-adb logcat -d | grep -iE "AndroidRuntime|FATAL|BrocInsets" | tail -20
+adb logcat -d | grep -iE "AndroidRuntime|FATAL|BrocInsets|Ipc|WryActivity" | tail -20
 ```
 
 Attendu : aucune trace fatale. **Si le header est de nouveau collé en haut**, R8 a
@@ -576,13 +712,24 @@ supprimé le pont : ajouter dans `src-tauri/gen/android/app/proguard-rules.pro` 
 }
 ```
 
-puis reprendre à la Task 3, Step 7.
+puis reprendre à la Task 3, Step 7. **Si en revanche l'écran reste blanc ou logcat
+signale `Ipc`/`WryActivity`/`RustWebView` en fatal**, c'est le pont Tauri/wry qui a été
+amputé — vérifier d'abord que le Step « Régénérer les fichiers Android non versionnés »
+du workflow (Task 3) a bien produit `proguard-tauri.pro` et `proguard-wry.pro` avant de
+chercher plus loin.
 
-- [ ] **Step 7 : Consigner la mesure**
+- [ ] **Step 9 : Consigner la mesure**
 
 Relever la taille de l'AAB et celle de l'APK universel — c'est le premier chiffre
 réaliste de la taille du jeu sur Android, à comparer aux 311 Mo de la build debug. Il
 servira à la Task 5.
+
+**Comparer au seuil, pas seulement relever la taille.** Play limite le **téléchargement
+compressé** à 200 Mo ; `out/` (l'export du front embarqué dans l'APK) fait déjà 144 Mo
+d'assets à lui seul. Si la taille de téléchargement compressé annoncée par Play (visible
+dans Play Console après le dépôt, onglet « App bundle explorer ») dépasse ~160-170 Mo,
+l'alerter explicitement dans le compte rendu (Task 5) : il resterait peu de marge avant
+le refus au dépôt.
 
 ---
 
@@ -604,14 +751,20 @@ Guillaume l'exécute, et l'agent consigne les résultats.
 Créer `docs/android/2026-08-12-publication-play.md`, dans l'ordre où Play Console demande
 les choses :
 
-1. **Créer l'application** — nom `BROC`, langue par défaut français, type *Jeu*,
-   gratuit, `com.guigousse.broc`.
+1. **Créer l'application** — Play n'a qu'**un seul** champ « nom de l'application »
+   (30 caractères, réutilisé tel quel comme titre de la fiche magasin au point 3) : y
+   mettre directement le nom définitif `Broc : Jeu de Brocante`, pas `BROC` seul, pour
+   ne pas avoir à le corriger ensuite. Langue par défaut français, type *Jeu*, gratuit,
+   `com.guigousse.broc`.
 2. **Play App Signing** — adhérer, laisser Google générer la clé de signature, déclarer
    le certificat d'upload (il est déduit du premier AAB déposé).
-3. **Fiche minimale** — reprendre `docs/appstore/FICHE_APP_STORE.md` : nom, description
+3. **Fiche minimale** — reprendre `docs/appstore/FICHE_APP_STORE.md` : description
    courte (80 caractères), description longue. **FR et EN seulement** pour ce lot.
-4. **Éléments graphiques** — icône 512×512, image de couverture 1024×500, au moins deux
-   captures téléphone (rééchantillonner celles de l'App Store, `docs/appstore/`).
+4. **Éléments graphiques** — icône 512×512 ; **image de couverture (feature graphic)
+   1024×500, PRÉREQUIS BLOQUANT** : Play l'exige pour publier la fiche, donc pour publier
+   la piste fermée, donc pour démarrer les 14 jours — à produire avant cet écran, pas
+   « hors périmètre » ; au moins deux captures téléphone (rééchantillonner celles de
+   l'App Store, `docs/appstore/`).
 5. **Politique de confidentialité** — l'URL déjà en ligne depuis le lancement iOS.
 6. **Classification de contenu** — questionnaire, et public cible.
 7. **Data safety** — **déclarer l'état d'aujourd'hui : aucune collecte.** Sur Android,
@@ -632,9 +785,9 @@ Dans le même document, un bloc prêt à copier :
 >
 > 1. Accepte l'invitation ici : `<lien d'inscription>`
 > 2. Installe BROC depuis le Play Store (le lien te redirige)
-> 3. **Surtout : ne désinstalle pas le jeu pendant 14 jours.** Google compte les
->    testeurs inscrits en continu ; une désinstallation remet le compteur à zéro pour
->    tout le monde.
+> 3. **Reste inscrit 14 jours, sans quitter le programme de test.** Google compte les
+>    testeurs inscrits en continu sur cette période ; le mieux est de garder le jeu
+>    installé tout du long, donc évite de le désinstaller.
 >
 > Joue quand tu veux, même cinq minutes. Si tu vois un bug, écris-moi.
 

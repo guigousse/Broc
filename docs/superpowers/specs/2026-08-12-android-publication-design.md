@@ -105,12 +105,38 @@ C'est le troisième fichier généré édité à la main, après `AndroidManifes
 release compile **les quatre ABI**, soit 12 à 16 Gi d'artefacts Rust, quand la machine de
 Guillaume a 5 Gi libres.
 
-Étapes : checkout, JDK 17, SDK Android + NDK, Node 20, `rustup target add` × 4
-(`aarch64`, `armv7`, `i686`, `x86_64`), `npm ci`, `npm run build`,
-`tauri android build --aab`, puis publication de l'AAB **en artefact téléchargeable**.
+Étapes : checkout, garde-fou sur les quatre secrets (une chaîne vide n'est pas une valeur
+absente pour GitHub — mieux vaut échouer en quelques secondes qu'après une heure de
+build), libération d'espace disque du runner, JDK 17, SDK Android + NDK, Node 20,
+`rustup target add` × 4 (`aarch64`, `armv7`, `i686`, `x86_64`), `npm ci`, régénération des
+fichiers Android non versionnés (`tauri android init` puis restauration des fichiers
+suivis, voir § 7.1), `tauri android build --aab`, puis publication de l'AAB **en artefact
+téléchargeable**. Pas d'étape `npm run build` séparée : `beforeBuildCommand` dans
+`tauri.conf.json` s'en charge déjà pendant `tauri android build`, un export manuel en
+amont ferait doublon (5 à 10 minutes perdues).
 
-**Déclenchement manuel** (`workflow_dispatch`) et non sur chaque push : déposer sur Play
-se décide, contrairement à une build TestFlight.
+**Déclenchement** : `workflow_dispatch` (le mode voulu, déposer sur Play se décide,
+contrairement à une build TestFlight) **plus, temporairement, un déclencheur `push`**
+restreint à `feat/android-socle` et aux chemins qui comptent. Motif : GitHub n'affiche
+« Run workflow » que pour un workflow présent sur la branche par défaut ; tant que cette
+branche n'est pas fusionnée sur `main`, `push` est le seul moyen de la lancer. À retirer
+après la fusion.
+
+### 7.1 Les six familles de fichiers Gradle non versionnés
+
+`src-tauri/gen/android/` est sous git, mais les `.gitignore` livrés par Tauri excluent
+`tauri.settings.gradle`, `app/tauri.build.gradle.kts`, `app/tauri.properties`,
+`app/proguard-tauri.pro`, `app/proguard-wry.pro`, `app/src/main/java/.../generated/*.kt`
+et `app/src/main/assets/tauri.conf.json`. Or `settings.gradle` fait
+`apply from: 'tauri.settings.gradle'` : sur un checkout propre, Gradle échoue
+immédiatement. Ces fichiers sont écrits par `tauri-build` pendant `cargo build`, lui-même
+lancé **par** Gradle — œuf et poule — et contiennent des chemins absolus, donc les
+commiter n'est pas une option.
+
+Le workflow les régénère avec `npx tauri android init`, puis restaure par
+`git checkout -- src-tauri/gen/android` les fichiers **suivis** (dont
+`build.gradle.kts`, `AndroidManifest.xml`, `MainActivity.kt`, édités à la main) sans
+toucher aux fichiers générés qui viennent d'apparaître.
 
 **`versionCode`.** Play exige qu'il augmente strictement à chaque dépôt, et il y en aura
 plusieurs pendant les 14 jours. Le workflow le surcharge par une variable
@@ -141,7 +167,33 @@ Ces étapes se font dans l'interface, par Guillaume, guidé par la recette écri
 ## 9. Vérification
 
 Rien n'est unitairement testable ici : ce sont de la configuration et un pipeline. La
-preuve se fait donc sur le binaire lui-même, et elle est réelle :
+preuve se fait donc sur le binaire lui-même, et elle est réelle.
+
+**Étape 0, sur l'AAB lui-même, avant tout le reste.** `bundletool build-apks --ks=…`
+**signe lui-même** les APK qu'il produit à l'étape 1 ci-dessous : `apksigner verify` à
+l'étape 3 affichera donc toujours le bon certificat, **même si l'AAB d'entrée n'était pas
+signé**. Ça ne prouve rien sur l'AAB déposé par la CI — seulement sur ce que `bundletool`
+vient de refaire. La vraie vérification porte donc sur l'AAB brut :
+
+```bash
+jarsigner -verify -certs -verbose app-universal-release.aab | head -20
+```
+
+Attendu : `jar verified` et `CN=Guillaume Fenard`. Si `jar is unsigned`, l'AAB n'est pas
+signé — Play le refuserait au dépôt (« The Android App Bundle was not signed ») ; c'est
+la CI (les quatre secrets) qu'il faut reprendre, pas les étapes suivantes.
+
+**Alignement 16 Ko.** Depuis le 1er novembre 2025, Play exige la compatibilité 16 Ko pour
+toute nouvelle application ciblant Android 15+ (ici `targetSdk = 36`). Un `.so` aligné 4
+Ko ne se charge pas sur un appareil 16 Ko : l'app ne démarre pas, alors que l'émulateur
+`broc-pixel6` (4 Ko) la lance normalement et valide la recette à tort. Mesurer
+l'artefact **arm64 de release réel**, pas un `.so` x86_64 de debug :
+
+```bash
+llvm-readelf -lW base/lib/arm64-v8a/libapp_lib.so | grep LOAD   # attendu : 0x4000
+```
+
+Puis le reste de la chaîne :
 
 ```bash
 # 1. dérouler l'AAB en APK, signé avec la clé d'upload
@@ -149,14 +201,21 @@ bundletool build-apks --mode=universal --bundle=broc.aab --output=broc.apks \
   --ks="$KEYSTORE" --ks-key-alias=broc-upload
 # 2. installer sur l'émulateur déjà démarré
 bundletool install-apks --apks=broc.apks
-# 3. confirmer que c'est bien la clé d'upload, et pas une clé de debug
+# 3. confirme que bundletool a bien signé avec cette clé (ne dit rien de l'AAB d'entrée,
+#    voir « Étape 0 » ci-dessus — c'est un contrôle de cohérence, pas la preuve)
 unzip -p broc.apks universal.apk > universal.apk && apksigner verify --print-certs universal.apk
 ```
 
 Puis lancement sur l'émulateur `broc-pixel6` : le jeu démarre, le menu s'affiche, une
 partie se lance. **Un AAB jamais installé n'est pas un AAB vérifié** — c'est justement en
-release que `minifyEnabled` et ProGuard entrent en jeu, et un pont JavaScript comme
-`BrocInsets` est exactement le genre de chose que R8 peut escamoter.
+release que `minifyEnabled` et ProGuard entrent en jeu. Le point à risque n'est **pas**
+le pont JavaScript `BrocInsets` : les méthodes `@JavascriptInterface` sont protégées par
+défaut par AGP 8.11 (`-keepclassmembers class * { @android.webkit.JavascriptInterface
+<methods>; }`, déjà dans `proguard-android-optimize.txt`). Le point à risque réel est le
+pont **Tauri/wry** (`RustWebView`, `WryActivity`, `Ipc`, `TauriActivity`), appelé par nom
+depuis Rust et protégé uniquement par les fichiers `proguard-tauri.pro`/
+`proguard-wry.pro` générés par `tauri android init` — d'où l'étape de bootstrap qui les
+régénère en CI avant la build (§ 7).
 
 Les 2031 tests unitaires doivent rester verts : cette spec ne touche pas au front.
 
@@ -195,6 +254,14 @@ Les 2031 tests unitaires doivent rester verts : cette spec ne touche pas au fron
   trace pour qu'on ne l'oublie pas.
 - **Aucune recette sur appareil réel** (sous-projet E). Les testeurs du test fermé en
   tiendront lieu partiellement — c'est d'ailleurs leur seul intérêt technique.
+- **L'alignement 16 Ko n'est vérifié que sur l'AAB de la CI, pas encore mesuré à ce jour.**
+  Play l'exige depuis le 1er novembre 2025 pour toute nouvelle app ciblant Android 15+
+  (`targetSdk = 36` ici) ; un `.so` mal aligné ne se charge pas sur un appareil 16 Ko alors
+  que l'émulateur `broc-pixel6` (4 Ko) le lancerait sans broncher et validerait la recette
+  à tort. Le NDK r27 aligne à 16 Ko par défaut, donc le risque est faible, mais le § 9
+  ajoute une mesure `llvm-readelf` sur le `.so` arm64 réel avant tout dépôt. Si elle
+  échoue, la correction (NDK r28+, ou `-Wl,-z,max-page-size=16384`) est un sujet à part,
+  pas à traiter dans l'urgence d'un dépôt.
 
 ## 13. Décisions écartées
 
