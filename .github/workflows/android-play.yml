@@ -1,0 +1,84 @@
+name: Android → AAB signé
+
+# Build des 4 ABI et signature de l'AAB de release, pour dépôt manuel dans Play Console.
+#
+# Déclenchement MANUEL uniquement : déposer sur Play se décide, contrairement à une
+# build TestFlight. Et surtout, cette build ne peut pas tourner sur le Mac de Guillaume —
+# les 4 ABI représentent 12 à 16 Gi d'artefacts Rust pour 5 Gi libres.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    # Identifiants NON secrets, en clair pour éviter les fautes de frappe.
+    env:
+      NDK_VERSION: 27.3.13750724
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: SDK Android
+        uses: android-actions/setup-android@v3
+
+      - name: NDK et plateformes
+        run: |
+          sdkmanager --install "ndk;$NDK_VERSION" "platforms;android-36" "build-tools;36.0.0"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Rust et les quatre cibles Android
+        run: |
+          rustup update stable
+          rustup target add aarch64-linux-android armv7-linux-androideabi \
+                            i686-linux-android x86_64-linux-android
+
+      - name: Dépendances
+        run: npm ci
+
+      - name: Export statique du front
+        run: npm run build
+
+      # Le keystore ne vit que le temps du job, hors de l'espace de travail pour qu'il ne
+      # puisse pas se retrouver dans un artefact.
+      - name: Reconstituer le keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/broc-upload.jks"
+
+      # Les expressions GitHub ne savent PAS faire d'arithmétique (les opérateurs
+      # documentés s'arrêtent aux comparaisons et aux booléens) : le calcul se fait donc
+      # dans le shell. 1002000 = 1.2.0 selon la convention de Tauri ; le numéro de run
+      # garantit la stricte croissance exigée par Play.
+      - name: Calculer le versionCode
+        run: echo "ANDROID_VERSION_CODE=$((1002000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+
+      - name: AAB signé
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/broc-upload.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "versionCode = $ANDROID_VERSION_CODE"
+          npm run tauri android build -- --aab
+
+      - name: Où est l'AAB
+        run: find src-tauri/gen/android -name "*.aab" -exec ls -lh {} \;
+
+      - name: Publier l'artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: broc-aab
+          path: src-tauri/gen/android/app/build/outputs/bundle/universalRelease/*.aab
+          if-no-files-found: error
