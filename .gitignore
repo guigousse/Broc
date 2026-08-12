@@ -39,3 +39,8 @@ src-tauri/vendor/tauri-plugin-iap/.tauri/
 src-tauri/vendor/tauri-plugin-iap/ios/Package.resolved
 src-tauri/vendor/tauri-plugin-iap/ios/.build/
 marketing/appstore/.planches/
+
+# Clés de signature Android — ne doivent JAMAIS être commitées.
+*.jks
+*.keystore
+keystore.properties
