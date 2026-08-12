@@ -85,23 +85,21 @@ il n'y en a qu'un.
 
 - **Icône** : 512×512, `public/icon-512.png` — déjà à la bonne taille, aucun
   rééchantillonnage nécessaire.
-- **Image de couverture (feature graphic)** : 1024×500. **PRÉREQUIS BLOQUANT, pas hors
-  périmètre** : Play l'exige pour publier la fiche magasin — donc pour publier la piste
-  de test fermé, donc pour démarrer les 14 jours. **N'existe pas encore** — aucun fichier
-  de ce format dans le dépôt à ce jour ; la bannière Facebook 820×360
-  (`marketing/facebook/`) n'est pas réutilisable telle quelle : son ratio est ≈2,28:1
-  (820/360) contre 2,048:1 exigé ici (1024/500) — recadrer, pas seulement redimensionner.
-  **À produire avant l'étape 10 (dépôt)**, idéalement avant de commencer à dérouler cette
-  recette pour ne pas bloquer au dernier écran.
-- **Captures téléphone, au moins deux** : rééchantillonner depuis
-  `marketing/appstore/.captures/fr-iphone-6.5-*.png` (ou `en-iphone-6.5-*.png`).
-  **Piège de ratio, pas seulement de résolution** : ces captures pèsent 1242×2688, soit un
-  ratio ≈ 1:2,16. Play plafonne strictement le ratio à **2:1** (`max(côté) ≤ 2 ×
-  min(côté)`) — au-delà, l'upload est refusé. Il faut donc **rogner**, pas seulement
-  redimensionner (par exemple recadrer à 1242×2484, ratio exactement 1:2). Format accepté :
-  JPEG ou PNG 24 bits **sans canal alpha**, 320 à 3840 px par côté. Deux suffisent pour un
-  test fermé ; les captures Android définitives (émulateur ou device) restent à faire
-  plus tard, hors périmètre D.
+- **Image de couverture (feature graphic)** : 1024×500 — ✅ **produite**,
+  `marketing/play/feature-graphic-1024x500.png` (façade du menu, titre en Verve Shadow,
+  1024×500 exactement, sans canal alpha). Régénérable par
+  `node scripts/play/generate-feature-graphic.mjs`. C'était un **prérequis bloquant** :
+  Play l'exige pour publier la fiche, donc la piste, donc pour démarrer les 14 jours.
+  La bannière Facebook 820×360 n'était pas réutilisable — ratio ≈2,28:1 contre 2,048:1.
+- **Captures téléphone, au moins deux** : ✅ **produites**, `marketing/play/captures/`
+  (5 fichiers `01-chiner` … `05-musiques`, 1242×2484, sans alpha). Régénérables par
+  `node scripts/play/preparer-captures.mjs`. Elles sont **rognées** et non
+  redimensionnées : les captures App Store font 1242×2688, soit un ratio ≈1:2,16, alors
+  que Play plafonne strictement à **2:1** — au-delà, l'upload est refusé, et un
+  redimensionnement aurait déformé le jeu. 102 px ont été retirés en haut et en bas, ce
+  qui laisse le HUD et la barre d'onglets intacts. Play les trie par ordre alphabétique,
+  d'où le préfixe numérique. Les captures Android définitives (émulateur ou appareil)
+  restent à faire plus tard, hors périmètre D.
 
 ### 5. Politique de confidentialité
 
