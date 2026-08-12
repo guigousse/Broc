@@ -28,16 +28,22 @@ du sous-projet B, AdMob) sans le Play Store, ce qui économise ~1 Gi. Si le sous
 
 ## Mesure de départ
 
-- **APK debug** : `app-universal-debug.apk` — **159 Mo**
+- **APK debug** : `app-universal-debug.apk` — **159 Mo** à la première build,
+  **311 Mo** après les correctifs de zone sûre
   (`src-tauri/gen/android/app/build/outputs/apk/universal/debug/`)
 - Une seule ABI par build → Tauri nomme la sortie `universal`, pas `x86_64`.
+- Le poste dominant est `lib/x86_64/libapp_lib.so`, **152 Mo**, stocké non compressé et
+  non *strippé* : `CARGO_PROFILE_DEV_DEBUG=0` supprime les sections DWARF mais laisse la
+  table des symboles. C'est une build **de debug** ; le chiffre qui comptera est celui de
+  l'AAB de release (sous-projet D), où le `.so` sera optimisé et strippé. Ne pas lire ces
+  311 Mo comme la taille du jeu sur le Play Store.
 
 ## Les dix points
 
 | # | Point | Verdict |
 |---|---|---|
 | 1 | Lancement | ✅ |
-| 2 | Plein écran / safe areas | ❌ **inset bas absent** |
+| 2 | Plein écran / safe areas | ❌ **les deux insets absents** → corrigé le jour même |
 | 3 | Bouton retour | ✅ (3 contextes) |
 | 4 | Orientation portrait | ✅ prouvé dans l'APK |
 | 5 | Publicités indisponibles | ⏳ à confirmer à l'écran |
@@ -57,29 +63,53 @@ Piège de méthode : la capture prise 10 s après `am start` ne montrait que le 
 forêt du thème. Ce n'était pas une panne, mais l'hydratation React pas encore terminée —
 sur cet émulateur en rendu **logiciel**, laisser ~30 s avant de juger.
 
-### 2. Plein écran et safe areas — ❌ le défaut de cette recette
+### 2. Plein écran et safe areas — ❌ le défaut de cette recette, corrigé depuis
 
 Mesuré dans la webview (console CDP, cf. « Outillage » plus bas) :
 
 ```
 innerHeight 915  ==  screen.height 915      → la webview occupe tout l'écran
-env(safe-area-inset-top)    → --safe-top    = 49px   ✅
-env(safe-area-inset-bottom) → --safe-bottom = 0px    ❌
+env(safe-area-inset-bottom) → --safe-bottom = 0px    ❌  en permanence
+env(safe-area-inset-top)    → --safe-top    = 49px puis 0px  ❌  intermittent
 ```
 
-Or l'appareil a une barre de gestes : `dumpsys window displays` donne un écran de
-1080×2400 pour une zone applicative de 1080×2209, soit **62 px physiques ≈ 24 px CSS**
-en bas, que la WebView Android **ne déclare pas**.
+Le bas d'abord : `dumpsys window displays` donne un écran de 1080×2400 pour une zone
+applicative de 1080×2209, soit **62 px physiques ≈ 24 px CSS** de barre de gestes, que la
+WebView **ne déclare pas**. Le dock (`COLLECTION / OFFICE / STORAGE / WORKSHOP`) était
+rogné, la rangée `BACK / CONTINUE` de la chine passait sous la pilule.
 
-Conséquence visible : le dock du bas (`COLLECTION / OFFICE / STORAGE / WORKSHOP`) est
-rogné, et la rangée `BACK / CONTINUE` de la chine passe sous la pilule de navigation.
-Le haut, lui, est correct — c'était le doute principal du plan, il est levé.
+Le haut ensuite, et c'est le plus vicieux : l'inset valait **49 px à 13h22 et 0 px à
+13h37**, sur le même APK, sans jamais revenir. La WebView Android les perd à certains
+relayouts. Le header se retrouve alors collé à `y = 0` : l'heure par-dessus le logo
+`BROC`, le Wi-Fi sur `TILL`, et `LEVEL` — centré en haut — sous le poinçon de la caméra.
 
-**Pistes de correction** (sous-projet à ouvrir, hors socle) :
-1. côté natif, lire `WindowInsetsCompat.Type.navigationBars()` et l'injecter en variable
-   CSS — la seule voie exacte, y compris barre à 3 boutons (48 dp) ;
-2. côté CSS, replier `--safe-bottom` sur un minimum quand la plateforme est Android et
-   que l'inset vaut 0 — simple, approximatif, suffisant si l'on vise la barre de gestes.
+**Correction retenue : mesurer côté natif, laisser le front venir chercher.**
+
+- `MainActivity.kt` pose un `OnApplyWindowInsetsListener` sur la WebView (sans consommer
+  les insets : le bord à bord est conservé), met les deux hauteurs en cache `@Volatile`
+  et les expose par `window.BrocInsets.hautPx()` / `.basPx()`.
+- `src/lib/zoneSureAndroid.ts` les lit et **refuse** tout ce qui n'est pas une mesure
+  plausible (pont absent ou incomplet, `NaN`, négatif, > 120 px, exception) : on retombe
+  alors sur `env()`, jamais sur une valeur inventée. Arrondi à l'entier supérieur.
+- `<ZoneSureAndroid />` (monté dans le layout racine) publie `--safe-top-natif` et
+  `--safe-bottom-natif`, relus au `resize` **et au retour au premier plan** — c'est là que
+  la WebView perd ses insets.
+- `globals.css` combine :
+  `--safe-top: max(env(safe-area-inset-top, 0px), var(--safe-top-natif, 0px))`, idem en
+  bas. Les ~30 usages existants en héritent sans être touchés, et **iOS est inchangé** :
+  sans le pont, les variables n'existent pas et `env()` garde la main.
+
+C'est le front qui interroge, jamais le natif qui pousse : les insets sont appliqués
+avant que le document existe, une écriture depuis Kotlin serait perdue au chargement.
+
+Vérifié sur l'émulateur après correction : `--safe-top` = 49 px, `--safe-bottom` = 24 px,
+header dégagé sous la barre d'état, dock au-dessus de la pilule.
+
+**Reste ouvert — le contraste des icônes système.** Android les dessine en sombre
+(`mLastAppearance=LIGHT_STATUS_BARS`, le thème de l'app est clair) : gris foncé sur le
+bandeau vert forêt du jeu, lisible mais laid. Les forcer en blanc arrangerait le jeu et
+casserait le menu, dont le haut est une façade beige. La correction propre est de rendre
+l'apparence dépendante de l'écran, donc un second pont JS → natif. Non fait.
 
 ### 3. Bouton retour matériel — ✅
 
@@ -151,7 +181,7 @@ de messages Tauri. Deux enseignements :
 
 ## Suite
 
-1. Corriger l'inset bas (point 2) — le seul vrai défaut trouvé.
+1. Décider du contraste des icônes système (point 2, seul reliquat).
 2. Confirmer les points 5-7 et 9 à l'écran.
 3. Sous-projet B (AdMob Android), puis C (achat), puis D (AAB de release, qui exigera
    les quatre ABI et donc `aarch64-linux-android` de nouveau).
