@@ -31,6 +31,12 @@ jobs:
 
       - name: NDK et plateformes
         run: |
+          # Accepter explicitement les licences SDK avant installation — si on ne le fait pas
+          # et que android-actions/setup-android@v3 ne les a pas acceptées, le premier run
+          # de 90 minutes échouera avec « licenses not accepted » (coûteux et frustrant).
+          # Le `|| true` est là parce que `yes |` peut faire fermer le tuyau et faire rendre
+          # un code non nul à sdkmanager, même si les licences sont bien acceptées.
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
           sdkmanager --install "ndk;$NDK_VERSION" "platforms;android-36" "build-tools;36.0.0"
           echo "NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
 
