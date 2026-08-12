@@ -30,7 +30,11 @@ android {
         applicationId = "com.guigousse.broc"
         minSdk = 24
         targetSdk = 36
-        versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
+        // Play exige un versionCode strictement croissant à chaque dépôt. La CI le
+        // surcharge (base + numéro de run) pour qu'un dépôt de test n'oblige pas à
+        // toucher les six fichiers de version. En local, tauri.properties fait foi.
+        versionCode = (System.getenv("ANDROID_VERSION_CODE")
+            ?: tauriProperties.getProperty("tauri.android.versionCode", "1")).toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
     signingConfigs {
