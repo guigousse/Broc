@@ -2,6 +2,17 @@
 /**
  * Produit les visuels de la fiche App Store.
  *
+ * ⚠️ DEPUIS LE 2026-08-13, LA COMPOSITION DE CE SCRIPT EST SUPPLANTÉE par
+ * `scripts/appstore/generate-triptyque.mjs` (série continue : les trois
+ * premières captures forment un seul dessin, seul lot visible dans les
+ * résultats de recherche de l'App Store). Les deux écrivent dans
+ * `marketing/appstore/<langue>/<appareil>/` : **relancer celui-ci écrase la
+ * série déposée**. Il reste indispensable pour ce qu'il est seul à faire —
+ * produire `.captures/`, la matière première du triptyque — via
+ * `npm run gen:appstore -- --skip-...` : capturer d'abord, ne recomposer que
+ * si l'on veut délibérément revenir à l'ancienne série (un visuel = un
+ * téléphone + un titre).
+ *
  * Voir docs/superpowers/specs/2026-07-29-visuels-appstore-design.md
  *
  * Usage :
