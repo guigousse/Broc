@@ -88,6 +88,18 @@ export function nombreVariantesChiffrees(gabaritCle: string): number {
 }
 
 /**
+ * Nombre de variantes disponibles pour une famille « objet nommé »
+ * (generique + commanditaires). Même contrat que `nombreVariantesChiffrees`,
+ * et même résolution de repli que `genererTexte` (commanditaire connu sinon
+ * `GENERIQUE`) : accesseur en lecture seule réservé aux tests, pour que le
+ * nombre de variantes attendu par langue se déduise du FR canonique plutôt
+ * que d'être recopié en dur.
+ */
+export function nombreVariantesCommanditaire(gabaritCle: string): number {
+  return (PAR_COMMANDITAIRE[gabaritCle] ?? GENERIQUE).length;
+}
+
+/**
  * Texte FR d'une quête chiffrée. Même contrat que `genererTexte` : le FR est
  * persisté dans le payload, le `gabaritId` permet la régénération dans les
  * autres langues à l'affichage.
