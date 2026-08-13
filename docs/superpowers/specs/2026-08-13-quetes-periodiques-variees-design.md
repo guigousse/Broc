@@ -125,8 +125,13 @@ Indexée sur le **niveau du joueur**, par paliers. Les quêtes s'ouvrent au nive
 | Récompense d'une hebdomadaire sans objet | 75 € | 125 € | 210 € | 325 € | 450 € |
 | Récompense d'une quotidienne sans objet | 25 € | 40 € | 70 € | 110 € | 150 € |
 
-Du premier au dernier palier : **×6**, soit la croissance réelle mesurée sur le
-jeu (annexe B). Les quêtes suivent le joueur sans jamais le distancer.
+Du premier au dernier palier, les cibles **en argent** (bénéfice semaine, chiffre
+d'affaires, bénéfice sur une vente, récompenses sans objet) grimpent exactement
+**×6**, soit la croissance réelle mesurée sur le jeu (annexe B). Les cibles **en
+nombre d'objets** grimpent plus doucement (×2 à ×2,7 selon la ligne) — on ne peut
+pas raisonnablement demander 18 objets rares en une semaine sous prétexte que
+l'argent, lui, a été multiplié par 6. Les quêtes suivent le joueur sans jamais le
+distancer.
 
 Le chiffre d'affaires est calé au double du bénéfice — un objet revendu rapporte
 grossièrement le double de son prix d'achat.
@@ -143,9 +148,12 @@ grossièrement le double de son prix d'achat.
 ## 4. Récompenses
 
 `calculerRecompense` part de la valeur des objets demandés — inutilisable pour une
-quête sans objet. On lui ajoute une seconde entrée, calée sur la table ci-dessus,
-avec la même prime et le même arrondi à 5 € que les quêtes d'objets, pour que les
-deux familles restent comparables dans le carnet.
+quête sans objet. Les formes sans objet nommé n'y passent donc pas : leur
+récompense est lue TELLE QUELLE dans la table ci-dessus (`recompenseQuotidienne` /
+`recompenseHebdo`), sans prime ni second arrondi — la table est déjà exprimée en
+valeurs rondes (multiples de 5 €), ce qui rend la question de l'arrondi sans objet.
+Les deux familles restent comparables dans le carnet parce que la table a été
+calibrée pour ça, pas parce qu'elles partagent un calcul.
 
 Les quêtes d'objets nommés, quotidiennes comme hebdomadaires, conservent leur
 calcul actuel — rien ne change pour elles. Les formes sans objet nommé (y compris
