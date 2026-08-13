@@ -117,4 +117,16 @@ describe("composition des lots", () => {
       }
     }
   });
+
+  test("les quêtes chiffrées portent un gabaritId et un texte sans marque", () => {
+    for (let g = 1; g <= 30; g++) {
+      const lot = genererLot(createMockGameState(), "hebdomadaire", `c${g}`, rngGraine(g));
+      for (const c of lot) {
+        if (c.payload.type !== "mission") continue;
+        if (c.payload.cibles.length > 0) continue; // quête d'objet : autre voie
+        expect(c.payload.gabaritId).toBeDefined();
+        expect([c.payload.titre, ...c.payload.corps].join(" ")).not.toMatch(/\{[a-z]+\}/);
+      }
+    }
+  });
 });

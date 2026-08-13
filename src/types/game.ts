@@ -120,6 +120,10 @@ export interface RecompenseCourrier {
 export interface CourrierGabaritParams {
   /** État minimum requis, pour reformer la mention `{etat}` dans la locale. */
   etatMin?: EtatObjet;
+  /** Paramètres des gabarits CHIFFRÉS (quêtes sans objet nommé, SP5 tâche 6). */
+  nombre?: number;
+  montant?: number;
+  categorie?: CategorieObjet;
 }
 
 /** Lettre narrative générique (mère, ami, maire, client…). */

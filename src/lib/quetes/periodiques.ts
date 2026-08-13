@@ -4,7 +4,7 @@ import type { ObjetTemplate } from "@/data/objetTemplates";
 import type { Courrier, GameState, MissionCible } from "@/types/game";
 import { objetsAtteignables } from "./atteignables";
 import { calculerRecompense } from "./recompense";
-import { genererTexte } from "./textes";
+import { genererTexte, genererTexteChiffre } from "./textes";
 import { FAMILLE, FORMES_HEBDOMADAIRES, contenuFormeChiffree, type FormeQuete } from "./formes";
 
 export type TypePeriodique = "quotidienne" | "hebdomadaire";
@@ -129,21 +129,21 @@ function genererUneChiffree(
     (cat ? commanditaires.find((e) => e.domaine === cat) : undefined) ??
     pick(commanditaires, rng);
 
-  // TÂCHE 6 : remplacer ce texte de rechange par `genererTexteChiffre`.
-  const titre = `Quête : ${forme}`;
-  const corps = ["Bonjour,", "J'ai une demande pour toi."];
+  const texte = genererTexteChiffre(contenu.gabaritCle, contenu.gabaritParams, rng);
 
   return {
     ...creerCourrierMission({
       id,
       jour: state.jourActuel,
       expediteurId: exp.id,
-      titre,
-      corps,
+      titre: texte.titre,
+      corps: texte.corps,
       categorie: type,
       cibles: [],
       recompense: { argent: contenu.recompenseArgent },
       objectifs: contenu.objectifs,
+      gabaritId: texte.gabaritId,
+      gabaritParams: contenu.gabaritParams,
     }),
     lu: true,
   };
