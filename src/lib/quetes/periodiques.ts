@@ -93,6 +93,12 @@ function formesDuLot(type: TypePeriodique, rng: () => number): FormeQuete[] {
   const choisies = melanger(FORMES_HEBDOMADAIRES, rng).slice(0, 3);
   if (choisies.some((f) => FAMILLE[f] === "vente")) return choisies;
 
+  // Branche actuellement INATTEIGNABLE (et volontairement conservée) : sur
+  // les 6 formes, seules 2 ("objet", "objetsRares") sont de famille "chine" ;
+  // 3 tirages distincts contiennent donc TOUJOURS au moins une forme de
+  // vente, et le test « au moins une forme de vente » ne l'exerce jamais.
+  // Elle reste correcte en garde-fou pour un futur catalogue plus large
+  // (davantage de formes "chine") où le tirage pourrait un jour en manquer.
   // Aucune vente tirée : on remplace la dernière par une forme de vente.
   const ventes = melanger(
     FORMES_HEBDOMADAIRES.filter((f) => FAMILLE[f] === "vente" && !choisies.includes(f)),
