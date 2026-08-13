@@ -5,6 +5,7 @@ import type { Courrier, GameState, MissionCible } from "@/types/game";
 import { objetsAtteignables } from "./atteignables";
 import { calculerRecompense } from "./recompense";
 import { genererTexte } from "./textes";
+import { FAMILLE, FORMES_HEBDOMADAIRES, contenuFormeChiffree, type FormeQuete } from "./formes";
 
 export type TypePeriodique = "quotidienne" | "hebdomadaire";
 
@@ -68,6 +69,86 @@ function genererUne(
   };
 }
 
+/** Mélange une copie du tableau (Fisher-Yates sur `rng`). */
+function melanger<T>(arr: T[], rng: () => number): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/**
+ * Formes composant un lot.
+ *
+ * Quotidienne : la journée reste tournée vers la chine, faisable en une session.
+ * Hebdomadaire : trois formes distinctes parmi les six, avec au moins une forme
+ * de vente — sans ce garde-fou, une semaine pourrait n'être qu'une série de
+ * quotidiennes en plus lent.
+ */
+function formesDuLot(type: TypePeriodique, rng: () => number): FormeQuete[] {
+  if (type === "quotidienne") return ["objet", "objet", "objetsRares"];
+
+  const choisies = melanger(FORMES_HEBDOMADAIRES, rng).slice(0, 3);
+  if (choisies.some((f) => FAMILLE[f] === "vente")) return choisies;
+
+  // Aucune vente tirée : on remplace la dernière par une forme de vente.
+  const ventes = melanger(
+    FORMES_HEBDOMADAIRES.filter((f) => FAMILLE[f] === "vente" && !choisies.includes(f)),
+    rng,
+  );
+  return [choisies[0], choisies[1], ventes[0]];
+}
+
+/** Génère UNE quête chiffrée (sans objet nommé). `null` si inconstructible. */
+function genererUneChiffree(
+  state: GameState,
+  forme: Exclude<FormeQuete, "objet">,
+  type: TypePeriodique,
+  id: string,
+  rng: () => number,
+): Courrier | null {
+  const categories = [...new Set(objetsAtteignables(state).map((t) => t.categorie))];
+  const contenu = contenuFormeChiffree(
+    forme,
+    type,
+    state.brocanteur.niveau,
+    categories,
+    rng,
+  );
+  if (!contenu) return null;
+
+  // Le commanditaire donne le TON de la lettre : celui de la catégorie demandée
+  // quand il y en a une, un marchand générique sinon.
+  const commanditaires = Object.values(EXPEDITEURS).filter(
+    (e) => e.id !== "maman" && e.id !== "grand-pere" && e.domaine,
+  );
+  const cat = contenu.gabaritParams.categorie;
+  const exp =
+    (cat ? commanditaires.find((e) => e.domaine === cat) : undefined) ??
+    pick(commanditaires, rng);
+
+  // TÂCHE 6 : remplacer ce texte de rechange par `genererTexteChiffre`.
+  const titre = `Quête : ${forme}`;
+  const corps = ["Bonjour,", "J'ai une demande pour toi."];
+
+  return {
+    ...creerCourrierMission({
+      id,
+      jour: state.jourActuel,
+      expediteurId: exp.id,
+      titre,
+      corps,
+      categorie: type,
+      cibles: [],
+      recompense: { argent: contenu.recompenseArgent },
+      objectifs: contenu.objectifs,
+    }),
+    lu: true,
+  };
+}
+
 /** Génère le lot de 3 commandes du type pour la période `cle`. IDs déterministes. */
 export function genererLot(
   state: GameState,
@@ -78,8 +159,14 @@ export function genererLot(
   const prefixe = type === "quotidienne" ? "quo" : "heb";
   const pris = new Set<string>();
   const lot: Courrier[] = [];
-  for (let i = 0; i < 3; i++) {
-    const c = genererUne(state, type, `${prefixe}_${cle}_${i}`, pris, rng);
+  const formes = formesDuLot(type, rng);
+  for (let i = 0; i < formes.length; i++) {
+    const id = `${prefixe}_${cle}_${i}`;
+    const forme = formes[i];
+    const c =
+      forme === "objet"
+        ? genererUne(state, type, id, pris, rng)
+        : genererUneChiffree(state, forme, type, id, rng);
     if (c) lot.push(c);
   }
   return lot;
