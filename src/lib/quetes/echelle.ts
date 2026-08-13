@@ -57,5 +57,7 @@ const PALIERS: { niveauMin: number; cibles: CiblesNiveau }[] = [
 export function ciblesPourNiveau(niveau: number): CiblesNiveau {
   let out = PALIERS[0].cibles;
   for (const p of PALIERS) if (niveau >= p.niveauMin) out = p.cibles;
-  return out;
+  // Retourner une copie pour que les appelants ne puissent pas muter la table
+  // et casser la promesse que les cibles sont « figées dans l'objectif ».
+  return { ...out };
 }

@@ -26,6 +26,45 @@ describe("table de paliers", () => {
     });
   });
 
+  test("palier (niveauMin 10)", () => {
+    expect(ciblesPourNiveau(10)).toEqual({
+      beneficeSemaine: 500,
+      chiffreAffairesSemaine: 1000,
+      profitVenteUnique: 100,
+      ventesCategorie: 4,
+      objetsRaresQuotidien: 2,
+      objetsRaresHebdo: 5,
+      recompenseHebdo: 125,
+      recompenseQuotidienne: 40,
+    });
+  });
+
+  test("palier (niveauMin 20)", () => {
+    expect(ciblesPourNiveau(20)).toEqual({
+      beneficeSemaine: 850,
+      chiffreAffairesSemaine: 1700,
+      profitVenteUnique: 170,
+      ventesCategorie: 5,
+      objetsRaresQuotidien: 3,
+      objetsRaresHebdo: 6,
+      recompenseHebdo: 210,
+      recompenseQuotidienne: 70,
+    });
+  });
+
+  test("palier (niveauMin 40)", () => {
+    expect(ciblesPourNiveau(40)).toEqual({
+      beneficeSemaine: 1300,
+      chiffreAffairesSemaine: 2600,
+      profitVenteUnique: 260,
+      ventesCategorie: 6,
+      objetsRaresQuotidien: 3,
+      objetsRaresHebdo: 7,
+      recompenseHebdo: 325,
+      recompenseQuotidienne: 110,
+    });
+  });
+
   test("palier terminal (niveau 100, plafond)", () => {
     expect(ciblesPourNiveau(100)).toEqual({
       beneficeSemaine: 1800,
