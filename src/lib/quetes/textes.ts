@@ -1,6 +1,6 @@
 import type { EtatObjet } from "@/types/game";
 
-interface Gabarit {
+export interface Gabarit {
   titre: string;
   corps: string[];
 }
@@ -85,6 +85,16 @@ function montantFr(n: number): string {
  */
 export function nombreVariantesChiffrees(gabaritCle: string): number {
   return (CHIFFREES[gabaritCle] ?? CHIFFREES.benefice).length;
+}
+
+/**
+ * Variantes FR d'une famille de gabarits chiffrés. Accesseur en lecture seule
+ * réservé aux tests (même contrat que `nombreVariantesChiffrees`) : permet de
+ * vérifier une propriété sur le TITRE FR canonique — ex. l'absence de marque
+ * `{...}`, cf. `titreDepuisGabarit` qui régénère un titre avec `params = {}`.
+ */
+export function gabaritsChiffres(gabaritCle: string): Gabarit[] {
+  return CHIFFREES[gabaritCle] ?? CHIFFREES.benefice;
 }
 
 /**

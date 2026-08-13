@@ -4,6 +4,7 @@ import { QUETES_GABARITS_ES } from "@/lib/i18n/contenu/es/quetesGabarits";
 import { QUETES_GABARITS_EL } from "@/lib/i18n/contenu/el/quetesGabarits";
 import { titreCourrier, corpsCourrier } from "@/lib/i18n/contenu";
 import {
+  gabaritsChiffres,
   nombreVariantesChiffrees,
   nombreVariantesCommanditaire,
 } from "@/lib/quetes/textes";
@@ -68,6 +69,36 @@ describe.each([
       expect(Object.keys(MARQUES_PAR_FAMILLE)).toContain(famille);
     }
   });
+});
+
+test("aucune famille chiffrée ne porte de marque dans le TITRE (FR + overlays)", () => {
+  // `titreDepuisGabarit` (grand livre, après purge du courrier) régénère un
+  // titre avec `params = {}` : ça ne peut être sans danger QUE si aucun
+  // titre chiffré n'interpole `{nombre}`/`{montant}`/`{categorie}` — c'est le
+  // cas aujourd'hui par accident (toutes les marques vivent dans le corps).
+  // Ce test transforme l'accident en règle : si quelqu'un ajoute un jour un
+  // titre du genre "{montant} avant dimanche", il échoue ici au lieu de
+  // laisser le grand livre afficher silencieusement "€0".
+  const overlaysParLocale: Record<string, Record<string, { titre: string }>> = {
+    en: QUETES_GABARITS_EN,
+    es: QUETES_GABARITS_ES,
+    el: QUETES_GABARITS_EL,
+  };
+  for (const cle of FAMILLES_CHIFFREES) {
+    // Source FR canonique.
+    for (const g of gabaritsChiffres(cle)) {
+      expect(g.titre, `FR ${cle} : "${g.titre}"`).not.toMatch(/\{[a-z]+\}/);
+    }
+    // Chaque overlay traduit.
+    const attendu = nombreVariantesChiffrees(cle);
+    for (const [locale, overlay] of Object.entries(overlaysParLocale)) {
+      for (let i = 0; i < attendu; i++) {
+        const g = overlay[`${cle}#${i}`];
+        expect(g, `${locale} ${cle}#${i} manquant`).toBeDefined();
+        expect(g.titre, `${locale} ${cle}#${i} : "${g.titre}"`).not.toMatch(/\{[a-z]+\}/);
+      }
+    }
+  }
 });
 
 test("courrier périodique avec gabaritId : régénéré dans la locale, cibles localisées", () => {
