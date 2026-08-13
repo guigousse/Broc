@@ -157,6 +157,7 @@ export default function VitrineJourneePage() {
     gagnerXPBrocanteur,
     marquerVuTemplate,
     utiliserActive,
+    tempsConfiance,
   } = useGame();
   const { avancerTutoriel } = useGameActions();
   const { d, tr, locale } = useLangue();
@@ -519,7 +520,11 @@ export default function VitrineJourneePage() {
         id: crypto.randomUUID(),
         type: "vente",
         jour: state?.jourActuel ?? 0,
-        timestamp: Date.now(),
+        // Horloge de confiance : les objectifs périodiques comparent ce
+        // timestamp à `timestampAcceptation` (posé lui aussi via
+        // `tempsConfiance`). Utiliser `Date.now()` ici désynchroniserait les
+        // deux bords de la comparaison si l'horloge de l'appareil dérive.
+        timestamp: tempsConfiance() ?? Date.now(),
         niveauCamion: standSnapshot.current.niveau,
         loyer: standSnapshot.current.loyer,
         ventes: ventesEffectuees,
@@ -539,6 +544,7 @@ export default function VitrineJourneePage() {
     state,
     ventesEffectuees,
     xpSession,
+    tempsConfiance,
   ]);
   terminerJourneeRef.current = terminerJournee;
 
