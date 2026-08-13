@@ -656,6 +656,9 @@ export const fr = {
       restauration: "Restaurer un objet ({etat} min.)",
       valeurCollection: "Valeur de la collection",
       niveau: "Niveau de brocanteur",
+      objetsRares: "Objets rares trouvés",
+      beneficeCumule: "Bénéfice réalisé",
+      ventesCategorie: "Objets vendus ({categorie})",
     },
   },
   // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les

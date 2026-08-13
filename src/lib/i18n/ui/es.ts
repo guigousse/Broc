@@ -646,6 +646,9 @@ export const es: DictionnaireUI = {
       restauration: "Restaurar un objeto ({etat} mín.)",
       valeurCollection: "Valor de la colección",
       niveau: "Nivel de chamarilero",
+      objetsRares: "Piezas raras encontradas",
+      beneficeCumule: "Beneficio obtenido",
+      ventesCategorie: "Objetos vendidos ({categorie})",
     },
   },
   ledger: {

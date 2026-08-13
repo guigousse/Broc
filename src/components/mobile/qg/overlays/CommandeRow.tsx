@@ -7,7 +7,7 @@ import { progressionMission } from "@/lib/missions";
 import { objectifsDeMission, progressionObjectif, missionLivrable } from "@/lib/quetes/objectifs";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { libelleEtat } from "@/lib/i18n/libelles";
+import { libelleEtat, libelleCategorie } from "@/lib/i18n/libelles";
 import { corpsCourrier, nomTemplate, nomExpediteur, titreCourrier } from "@/lib/i18n/contenu";
 import { recompenseEffective } from "@/lib/recompenses";
 import { RecompenseJetons } from "@/components/mobile/qg/RecompenseJetons";
@@ -124,10 +124,21 @@ function libelleObjectif(
     case "objet":
       return "";
     case "objetsRares":
+      return d.carnet.objectifs.objetsRares;
     case "beneficeCumule":
+      return d.carnet.objectifs.beneficeCumule;
     case "ventesCategorie":
-      return ""; // TÂCHE 8 : libellés localisés
+      return tr(d.carnet.objectifs.ventesCategorie, { categorie: libelleCategorie(o.categorie, d) });
   }
+}
+
+/**
+ * Un objectif se compte-t-il en euros ? La liste est EXPLICITE et non une
+ * négation : « tout sauf niveau et restauration » avait fait afficher
+ * « 3 / 5 € » pour un objectif qui compte des objets.
+ */
+function objectifEnEuros(type: ObjectifMission["type"]): boolean {
+  return type === "ventesCumulees" || type === "profitVente" || type === "beneficeCumule";
 }
 
 export function CommandeRow({
@@ -178,7 +189,7 @@ export function CommandeRow({
     ? Math.min(100, (progPremierObjectif.actuel / Math.max(1, progPremierObjectif.cible)) * 100)
     : totalObjectifs > 0 ? (rempliesObjectifs / totalObjectifs) * 100 : 0;
   const compteur = objectifChiffre && progPremierObjectif
-    ? `${accompli ? progPremierObjectif.cible : progPremierObjectif.actuel} / ${progPremierObjectif.cible}${objectifChiffre.type !== "niveau" && objectifChiffre.type !== "restauration" ? " €" : ""}`
+    ? `${accompli ? progPremierObjectif.cible : progPremierObjectif.actuel} / ${progPremierObjectif.cible}${objectifEnEuros(objectifChiffre.type) ? " €" : ""}`
     : `${accompli ? totalObjectifs : rempliesObjectifs}/${totalObjectifs}`;
   /** Libellé/état du bandeau : livrable, ou maintenu « accompli » en cérémonie. */
   const bandeauPret = livrable || accompli;
@@ -269,7 +280,7 @@ export function CommandeRow({
               <div key={i} style={ligneObjectif}>
                 <span>{libelleObjectif(o, d, tr)}</span>
                 <span style={{ fontWeight: 700, color: atteint ? "#2c5e3f" : "#7a6a44" }}>
-                  {accompli ? progObj.cible : progObj.actuel}/{progObj.cible}{o.type !== "niveau" && o.type !== "restauration" ? " €" : ""}
+                  {accompli ? progObj.cible : progObj.actuel}/{progObj.cible}{objectifEnEuros(o.type) ? " €" : ""}
                 </span>
               </div>
             );

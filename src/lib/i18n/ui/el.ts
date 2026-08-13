@@ -665,6 +665,9 @@ export const el: DictionnaireUI = {
       restauration: "Αποκατάσταση αντικειμένου (ελάχ. {etat})",
       valeurCollection: "Αξία συλλογής",
       niveau: "Επίπεδο παλιατζή",
+      objetsRares: "Σπάνια ευρήματα",
+      beneficeCumule: "Κέρδος που επιτεύχθηκε",
+      ventesCategorie: "Αντικείμενα που πουλήθηκαν ({categorie})",
     },
   },
   // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les

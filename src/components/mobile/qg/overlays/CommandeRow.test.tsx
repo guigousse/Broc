@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { CommandeRow } from "./CommandeRow";
-import type { Courrier, GameState } from "@/types/game";
+import type { Courrier, GameState, ObjectifMission } from "@/types/game";
 import { createMockGameState, createMockObjet } from "@/lib/__test-fixtures__/gameState";
 
 afterEach(cleanup);
@@ -144,5 +144,54 @@ describe("CommandeRow", () => {
     const state = createMockGameState({ jourActuel: 1, missions: [{ courrierId: "m1", statut: "active" }] });
     render(<CommandeRow courrier={c} state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}} />);
     expect(screen.getByText("J−4")).toBeTruthy();
+  });
+});
+
+function courrierChiffre(objectif: ObjectifMission): Courrier {
+  return {
+    id: "m2", type: "mission", jourRecu: 1, lu: true,
+    payload: {
+      type: "mission", categorie: "hebdomadaire", expediteurId: "mode",
+      titre: "Quête chiffrée", corps: ["Vas-y."],
+      cibles: [], objectifs: [objectif], recompense: { argent: 210 },
+    },
+  };
+}
+
+describe("objectifs chiffrés", () => {
+  it("un objectif qui compte des objets n'a PAS de suffixe €", () => {
+    const state = createMockGameState({ missions: [{ courrierId: "m2", statut: "active" }] });
+    render(
+      <CommandeRow
+        courrier={courrierChiffre({ type: "ventesCategorie", categorie: "Mode", nombre: 5 })}
+        state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}}
+      />,
+    );
+    const compteur = screen.getByTestId("progression-compteur").textContent ?? "";
+    expect(compteur).toContain("5");
+    expect(compteur).not.toContain("€");
+  });
+
+  it("un objectif en argent garde son suffixe €", () => {
+    const state = createMockGameState({ missions: [{ courrierId: "m2", statut: "active" }] });
+    render(
+      <CommandeRow
+        courrier={courrierChiffre({ type: "beneficeCumule", montant: 850 })}
+        state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}}
+      />,
+    );
+    expect(screen.getByTestId("progression-compteur").textContent ?? "").toContain("€");
+  });
+
+  it("objets rares : compteur sans € et libellé sans marque non remplacée", () => {
+    const state = createMockGameState({ missions: [{ courrierId: "m2", statut: "active" }] });
+    const { container } = render(
+      <CommandeRow
+        courrier={courrierChiffre({ type: "objetsRares", nombre: 3 })}
+        state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}}
+      />,
+    );
+    expect(screen.getByTestId("progression-compteur").textContent ?? "").not.toContain("€");
+    expect(container.textContent ?? "").not.toMatch(/\{[a-z]+\}/);
   });
 });

@@ -645,6 +645,9 @@ export const en: DictionnaireUI = {
       restauration: "Restore an item ({etat} min.)",
       valeurCollection: "Collection value",
       niveau: "Broker level",
+      objetsRares: "Rare finds",
+      beneficeCumule: "Profit made",
+      ventesCategorie: "Items sold ({categorie})",
     },
   },
   ledger: {
