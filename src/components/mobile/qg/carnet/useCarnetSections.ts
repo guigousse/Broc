@@ -1,6 +1,10 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import {
+  safeLocalStorageGet,
+  safeLocalStorageSet,
+} from "@/lib/storage/safeLocalStorage";
 
 /** Clé de préférence d'affichage — même convention que `broc.qg-edit.enabled`. */
 export const CLE_STOCKAGE_CARNET = "broc.carnet.sections";
@@ -13,26 +17,25 @@ type EtatReplis = Partial<Record<CleSection, boolean>>;
  * Lecture défensive : `localStorage` peut être absent (SSR), inaccessible, ou
  * contenir n'importe quoi (main humaine, version antérieure). Aucun de ces cas
  * ne doit empêcher le carnet de s'ouvrir — on retombe sur « tout déplié ».
+ *
+ * Réutilise `safeLocalStorageGet` pour l'accès SSR-safe, puis valide le type.
+ * Exportée pour tester la robustesse SSR en isolation.
  */
-function lire(): EtatReplis {
-  try {
-    const brut = window.localStorage.getItem(CLE_STOCKAGE_CARNET);
-    if (!brut) return {};
-    const parse: unknown = JSON.parse(brut);
-    if (typeof parse !== "object" || parse === null || Array.isArray(parse)) return {};
-    return parse as EtatReplis;
-  } catch {
-    return {};
-  }
+export function lire(): EtatReplis {
+  const parse = safeLocalStorageGet<unknown>(CLE_STOCKAGE_CARNET, {});
+  // safeLocalStorageGet retourne n'importe quel JSON valide, y compris des
+  // primitives. On accepte seulement un objet (pas array, pas null, pas chaîne).
+  if (typeof parse !== "object" || parse === null || Array.isArray(parse)) return {};
+  return parse as EtatReplis;
 }
 
-/** Écriture au mieux : un quota plein ne doit pas casser l'interaction. */
+/**
+ * Écriture au mieux : un quota plein ne doit pas casser l'interaction.
+ * Réutilise `safeLocalStorageSet` qui gère SSR et les exceptions silencieusement.
+ */
 function ecrire(etat: EtatReplis): void {
-  try {
-    window.localStorage.setItem(CLE_STOCKAGE_CARNET, JSON.stringify(etat));
-  } catch {
-    /* préférence d'affichage : perdre l'écriture est sans conséquence */
-  }
+  // safeLocalStorageSet stringify en interne, on passe l'objet directement
+  safeLocalStorageSet(CLE_STOCKAGE_CARNET, etat);
 }
 
 /**
@@ -45,12 +48,12 @@ export function useCarnetSections() {
   const estRepliee = useCallback((c: CleSection) => replis[c] === true, [replis]);
 
   const basculer = useCallback((c: CleSection) => {
-    setReplis((prev) => {
-      const next = { ...prev, [c]: !prev[c] };
-      ecrire(next);
-      return next;
-    });
-  }, []);
+    // Calculer le nouvel état AVANT de l'écrire, pour respecter les règles de
+    // React Strict Mode (les updaters ne doivent pas avoir d'effets de bord).
+    const next = { ...replis, [c]: !replis[c] };
+    setReplis(next);
+    ecrire(next);
+  }, [replis]);
 
   return { estRepliee, basculer };
 }

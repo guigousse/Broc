@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
-import { useCarnetSections, CLE_STOCKAGE_CARNET } from "./useCarnetSections";
+import { useCarnetSections, CLE_STOCKAGE_CARNET, lire } from "./useCarnetSections";
 
 beforeEach(() => window.localStorage.clear());
 afterEach(() => window.localStorage.clear());
@@ -52,6 +52,18 @@ describe("useCarnetSections", () => {
       expect(result.current.estRepliee("histoire")).toBe(true); // l'UI suit quand même
     } finally {
       window.localStorage.setItem = vraiSetItem;
+    }
+  });
+
+  it("window undefined (SSR) retourne tout déplié", () => {
+    // Teste la fonction lire() en isolation avec window undefined
+    // (ne peut pas tester le hook entier avec window undefined car React a besoin du DOM)
+    vi.stubGlobal("window", undefined);
+    try {
+      const etat = lire();
+      expect(etat).toEqual({});
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 });
