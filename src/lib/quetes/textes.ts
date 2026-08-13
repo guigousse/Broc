@@ -79,6 +79,15 @@ function montantFr(n: number): string {
 }
 
 /**
+ * Nombre de variantes disponibles pour une famille de gabarits chiffrés.
+ * Accesseur en lecture seule réservé aux tests : permet de balayer
+ * exhaustivement les variantes d'une famille sans dupliquer le compte en dur.
+ */
+export function nombreVariantesChiffrees(gabaritCle: string): number {
+  return (CHIFFREES[gabaritCle] ?? CHIFFREES.benefice).length;
+}
+
+/**
  * Texte FR d'une quête chiffrée. Même contrat que `genererTexte` : le FR est
  * persisté dans le payload, le `gabaritId` permet la régénération dans les
  * autres langues à l'affichage.
