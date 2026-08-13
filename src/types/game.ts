@@ -157,7 +157,11 @@ export type ObjectifMission =
   | { type: "profitVente"; montant: number }
   | { type: "restauration"; etatMin: EtatObjet }
   | { type: "valeurCollection"; montant: number }
-  | { type: "niveau"; niveau: number };
+  | { type: "niveau"; niveau: number }
+  /* Périodiques (SP5) — comptés APRÈS l'apparition de la quête. */
+  | { type: "objetsRares"; nombre: number }
+  | { type: "beneficeCumule"; montant: number }
+  | { type: "ventesCategorie"; categorie: CategorieObjet; nombre: number };
 
 /** Restauration terminée (trace pour les objectifs "restauration"). */
 export interface RestaurationAccomplie {

@@ -123,6 +123,10 @@ function libelleObjectif(
       return d.carnet.objectifs.niveau;
     case "objet":
       return "";
+    case "objetsRares":
+    case "beneficeCumule":
+    case "ventesCategorie":
+      return ""; // TÂCHE 8 : libellés localisés
   }
 }
 
