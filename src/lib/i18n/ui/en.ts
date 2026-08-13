@@ -639,6 +639,9 @@ export const en: DictionnaireUI = {
     recompenseAria: "Reward: {argent} €, {xp} XP, {energie} energy",
     livrer: "Deliver",
     livrerProgress: "Deliver ({rempli}/{total})",
+    sectionCompteur: "({faits}/{total})",
+    sectionPretes_un: " · {n} ready",
+    sectionPretes_n: " · {n} ready",
     objectifs: {
       ventesCumulees: "Total sales",
       profitVente: "Best profit on one sale",

@@ -657,6 +657,9 @@ export const el: DictionnaireUI = {
     recompenseAria: "Ανταμοιβή: {argent} €, {xp} XP, {energie} ενέργεια",
     livrer: "Παράδοση",
     livrerProgress: "Παράδοση ({rempli}/{total})",
+    sectionCompteur: "({faits}/{total})",
+    sectionPretes_un: " · {n} έτοιμη",
+    sectionPretes_n: " · {n} έτοιμες",
     // Libellés des objectifs de chapitre (SP2 trame) : chaque type non-"objet"
     // affiche une ligne de progression dédiée dans le carnet.
     objectifs: {

@@ -648,6 +648,11 @@ export const fr = {
     recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie",
     livrer: "Livrer",
     livrerProgress: "Livrer ({rempli}/{total})",
+    // En-tête de section rétractable (refonte carnet SP3) : le compteur ne
+    // s'affiche que repliée, la mention "prête" est omise si pretes === 0.
+    sectionCompteur: "({faits}/{total})",
+    sectionPretes_un: " · {n} prête",
+    sectionPretes_n: " · {n} prêtes",
     // Libellés des objectifs de chapitre (SP2 trame) : chaque type non-"objet"
     // affiche une ligne de progression dédiée dans le carnet.
     objectifs: {
