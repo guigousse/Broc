@@ -194,4 +194,46 @@ describe("objectifs chiffrés", () => {
     expect(screen.getByTestId("progression-compteur").textContent ?? "").not.toContain("€");
     expect(container.textContent ?? "").not.toMatch(/\{[a-z]+\}/);
   });
+
+  it("valeurCollection garde son suffixe € (régression : un montant, pas un compte d'objets)", () => {
+    const state = createMockGameState({ missions: [{ courrierId: "m2", statut: "active" }] });
+    render(
+      <CommandeRow
+        courrier={courrierChiffre({ type: "valeurCollection", montant: 1500 })}
+        state={state} ouvert={false} onToggle={() => {}} onLivrer={() => {}}
+      />,
+    );
+    expect(screen.getByTestId("progression-compteur").textContent ?? "").toContain("€");
+  });
+});
+
+// La carte fermée (progression-compteur) et la liste dépliée des objectifs
+// (objectif-detail-compteur) sont DEUX sites de rendu distincts qui décident
+// chacun du suffixe € indépendamment — voir CommandeRow.tsx lignes ~181 et
+// ~299. Les tests ci-dessus, qui ne lisent que progression-compteur,
+// n'auraient rien détecté si seul le second site avait régressé : les deux
+// échecs RED du step 2 portaient sur progression-compteur, jamais sur la
+// liste dépliée. Ce describe couvre spécifiquement le second site.
+describe("objectifs chiffrés — liste dépliée (site 2)", () => {
+  it("liste dépliée : un objectif qui compte des objets n'a PAS de suffixe €", () => {
+    const state = createMockGameState({ missions: [{ courrierId: "m2", statut: "active" }] });
+    render(
+      <CommandeRow
+        courrier={courrierChiffre({ type: "objetsRares", nombre: 3 })}
+        state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}}
+      />,
+    );
+    expect(screen.getByTestId("objectif-detail-compteur").textContent ?? "").not.toContain("€");
+  });
+
+  it("liste dépliée : un objectif en argent garde son suffixe €", () => {
+    const state = createMockGameState({ missions: [{ courrierId: "m2", statut: "active" }] });
+    render(
+      <CommandeRow
+        courrier={courrierChiffre({ type: "valeurCollection", montant: 1500 })}
+        state={state} ouvert={true} onToggle={() => {}} onLivrer={() => {}}
+      />,
+    );
+    expect(screen.getByTestId("objectif-detail-compteur").textContent ?? "").toContain("€");
+  });
 });

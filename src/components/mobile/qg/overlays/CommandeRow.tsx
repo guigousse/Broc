@@ -136,9 +136,25 @@ function libelleObjectif(
  * Un objectif se compte-t-il en euros ? La liste est EXPLICITE et non une
  * négation : « tout sauf niveau et restauration » avait fait afficher
  * « 3 / 5 € » pour un objectif qui compte des objets.
+ *
+ * Énumération type par type (les 9 membres de `ObjectifMission`) :
+ *   - objet             → false (jamais rendu ici, passe par `cibles`)
+ *   - ventesCumulees     → true  (montant en €)
+ *   - profitVente        → true  (montant en €)
+ *   - restauration       → false (état requis, pas un montant)
+ *   - valeurCollection   → true  (montant en €)
+ *   - niveau             → false (numéro de niveau)
+ *   - objetsRares        → false (compte des objets)
+ *   - beneficeCumule     → true  (montant en €)
+ *   - ventesCategorie    → false (compte des objets)
  */
 function objectifEnEuros(type: ObjectifMission["type"]): boolean {
-  return type === "ventesCumulees" || type === "profitVente" || type === "beneficeCumule";
+  return (
+    type === "ventesCumulees" ||
+    type === "profitVente" ||
+    type === "valeurCollection" ||
+    type === "beneficeCumule"
+  );
 }
 
 export function CommandeRow({
@@ -279,7 +295,7 @@ export function CommandeRow({
             return (
               <div key={i} style={ligneObjectif}>
                 <span>{libelleObjectif(o, d, tr)}</span>
-                <span style={{ fontWeight: 700, color: atteint ? "#2c5e3f" : "#7a6a44" }}>
+                <span data-testid="objectif-detail-compteur" style={{ fontWeight: 700, color: atteint ? "#2c5e3f" : "#7a6a44" }}>
                   {accompli ? progObj.cible : progObj.actuel}/{progObj.cible}{objectifEnEuros(o.type) ? " €" : ""}
                 </span>
               </div>
