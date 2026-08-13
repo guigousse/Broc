@@ -94,23 +94,21 @@ const jetonsWrap: CSSProperties = {
  * jeton masqué sans étape de retour resterait invisible pour toute la partie.
  */
 export function PaveRecompense({ recompense, livrable, verrouille = false, onLivrer }: Props) {
-  const { d } = useLangue();
+  const { d, tr } = useLangue();
 
-  const gains: { cle: TypeJeton; valeur: number }[] = (
+  const gains: { cle: TypeJeton; valeur: number; texte: string }[] = (
     [
-      { cle: "argent", valeur: recompense.argent },
-      { cle: "xp", valeur: recompense.xp },
-      { cle: "energie", valeur: recompense.energie },
-    ] as { cle: TypeJeton; valeur: number }[]
+      { cle: "argent", valeur: recompense.argent, texte: tr(d.carnet.jetonArgent, { n: recompense.argent }) },
+      { cle: "xp", valeur: recompense.xp, texte: tr(d.carnet.jetonXp, { n: recompense.xp }) },
+      { cle: "energie", valeur: recompense.energie, texte: tr(d.carnet.jetonEnergie, { n: recompense.energie }) },
+    ] as { cle: TypeJeton; valeur: number; texte: string }[]
   ).filter((g) => g.valeur > 0);
 
   const jetons = (
     <span style={jetonsWrap}>
       {gains.map((g) => (
         <span key={g.cle} data-jeton={g.cle} style={{ ...jetonBase, ...JETON_STYLES[g.cle] }}>
-          {g.cle === "argent" && `+${g.valeur} €`}
-          {g.cle === "xp" && `+${g.valeur} XP`}
-          {g.cle === "energie" && `+${g.valeur} ⚡`}
+          {g.texte}
         </span>
       ))}
     </span>
