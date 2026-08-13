@@ -1,6 +1,6 @@
 {
   "name": "projet-broc",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -24,6 +24,8 @@
     "gen:reels": "node scripts/generate-reels.mjs",
     "gen:gp-hd": "node scripts/generate-grand-pere-hd.mjs",
     "gen:appstore": "node scripts/generate-appstore-shots.mjs",
+    "gen:fb-illu": "node scripts/facebook/generate-cover-illustration.mjs",
+    "gen:fb-cover": "node scripts/facebook/compose-cover.mjs",
     "opt:images": "node scripts/optimize-item-images.mjs",
     "gen:webp": "node scripts/generate-webp.mjs",
     "gen:thumbs": "node scripts/generate-item-thumbs.mjs",
