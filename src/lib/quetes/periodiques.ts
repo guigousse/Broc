@@ -115,7 +115,25 @@ function genererUneChiffree(
   id: string,
   rng: () => number,
 ): Courrier | null {
-  const categories = [...new Set(objetsAtteignables(state).map((t) => t.categorie))];
+  // Le commanditaire donne le TON de la lettre : celui de la catégorie demandée
+  // quand il y en a une, un marchand générique sinon.
+  const commanditaires = Object.values(EXPEDITEURS).filter(
+    (e) => e.id !== "maman" && e.id !== "grand-pere" && e.domaine,
+  );
+  const categoriesToutes = [...new Set(objetsAtteignables(state).map((t) => t.categorie))];
+  // « vends X objets de catégorie Y » : ne pas demander une catégorie que
+  // personne dans le carnet d'adresses n'incarne, sous peine d'une lettre
+  // signée par un commanditaire au ton (et au portrait) sans rapport avec la
+  // catégorie annoncée dans le corps. Repli sur la liste complète si aucune
+  // catégorie atteignable n'a de commanditaire dédié (tout début de partie).
+  const domainesCommanditaires = new Set(commanditaires.map((e) => e.domaine));
+  const categoriesAvecCommanditaire = categoriesToutes.filter((c) =>
+    domainesCommanditaires.has(c),
+  );
+  const categories =
+    forme === "ventesCategorie" && categoriesAvecCommanditaire.length > 0
+      ? categoriesAvecCommanditaire
+      : categoriesToutes;
   const contenu = contenuFormeChiffree(
     forme,
     type,
@@ -125,11 +143,6 @@ function genererUneChiffree(
   );
   if (!contenu) return null;
 
-  // Le commanditaire donne le TON de la lettre : celui de la catégorie demandée
-  // quand il y en a une, un marchand générique sinon.
-  const commanditaires = Object.values(EXPEDITEURS).filter(
-    (e) => e.id !== "maman" && e.id !== "grand-pere" && e.domaine,
-  );
   const cat = contenu.gabaritParams.categorie;
   const exp =
     (cat ? commanditaires.find((e) => e.domaine === cat) : undefined) ??

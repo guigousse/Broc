@@ -3,6 +3,7 @@ import { genererLot } from "./periodiques";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 import { FAMILLE, type FormeQuete } from "./formes";
 import { objetsAtteignables } from "./atteignables";
+import { EXPEDITEURS } from "@/data/expediteursCourrier";
 import type { Courrier } from "@/types/game";
 
 function rngSeq(vals: number[]): () => number {
@@ -116,6 +117,30 @@ describe("composition des lots", () => {
         if (o?.type === "ventesCategorie") expect(accessibles.has(o.categorie)).toBe(true);
       }
     }
+  });
+
+  test("ventesCategorie : le commanditaire est choisi dans la catégorie demandée (spec §5)", () => {
+    // Régression : `contenuFormeChiffree` tirait la catégorie uniformément
+    // parmi TOUTES les catégories atteignables, alors que seules 4 des 7
+    // catégories ont un commanditaire dédié dans `EXPEDITEURS` — un lot
+    // pouvait donc demander « Bricolage » et faire signer la lettre par le
+    // collectionneur d'art. Le tirage doit maintenant préférer l'intersection
+    // catégories atteignables ∩ domaines de commanditaires.
+    const state = createMockGameState();
+    let auMoinsUneVentesCategorie = false;
+    for (let g = 1; g <= 60; g++) {
+      const lot = genererLot(state, "hebdomadaire", `c${g}`, rngGraine(g));
+      for (const c of lot) {
+        if (c.payload.type !== "mission") continue;
+        const o = c.payload.objectifs?.[0];
+        if (o?.type !== "ventesCategorie") continue;
+        auMoinsUneVentesCategorie = true;
+        const exp = EXPEDITEURS[c.payload.expediteurId];
+        expect(exp?.domaine).toBe(o.categorie);
+      }
+    }
+    // Filet : si ce garde-fou ne se déclenche jamais, le test ne prouve rien.
+    expect(auMoinsUneVentesCategorie).toBe(true);
   });
 
   test("les quêtes chiffrées portent un gabaritId et un texte sans marque", () => {
