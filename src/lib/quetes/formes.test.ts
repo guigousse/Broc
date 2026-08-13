@@ -44,6 +44,26 @@ describe("contenuFormeChiffree", () => {
     expect(r?.gabaritParams).toEqual({ montant: c.beneficeSemaine });
   });
 
+  test("chiffreAffaires : cible et récompense lues dans la table (nom de forme ≠ type d'objectif)", () => {
+    // La forme s'appelle « chiffreAffaires » mais émet volontairement le type
+    // d'objectif préexistant `ventesCumulees` — elle réutilise la mécanique
+    // déjà utilisée par les chapitres de l'histoire. Ce n'est PAS une
+    // incohérence à « corriger » : c'est le comportement attendu.
+    const c = ciblesPourNiveau(25);
+    const r = contenuFormeChiffree("chiffreAffaires", "hebdomadaire", 25, ["Musique"], rngFixe);
+    expect(r?.objectifs).toEqual([{ type: "ventesCumulees", montant: c.chiffreAffairesSemaine }]);
+    expect(r?.recompenseArgent).toBe(c.recompenseHebdo);
+    expect(r?.gabaritParams).toEqual({ montant: c.chiffreAffairesSemaine });
+  });
+
+  test("profitVente : cible et récompense lues dans la table", () => {
+    const c = ciblesPourNiveau(25);
+    const r = contenuFormeChiffree("profitVente", "hebdomadaire", 25, ["Musique"], rngFixe);
+    expect(r?.objectifs).toEqual([{ type: "profitVente", montant: c.profitVenteUnique }]);
+    expect(r?.recompenseArgent).toBe(c.recompenseHebdo);
+    expect(r?.gabaritParams).toEqual({ montant: c.profitVenteUnique });
+  });
+
   test("ventesCategorie : la catégorie est tirée parmi celles fournies", () => {
     const r = contenuFormeChiffree("ventesCategorie", "hebdomadaire", 3, ["Mode"], rngFixe);
     expect(r?.objectifs).toEqual([{ type: "ventesCategorie", categorie: "Mode", nombre: 3 }]);
