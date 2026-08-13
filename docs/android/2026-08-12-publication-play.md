@@ -86,11 +86,28 @@ il n'y en a qu'un.
 - **Icône** : 512×512, `public/icon-512.png` — déjà à la bonne taille, aucun
   rééchantillonnage nécessaire.
 - **Image de couverture (feature graphic)** : 1024×500 — ✅ **produite**,
-  `marketing/play/feature-graphic-1024x500.png` (façade du menu, titre en Verve Shadow,
-  1024×500 exactement, sans canal alpha). Régénérable par
-  `node scripts/play/generate-feature-graphic.mjs`. C'était un **prérequis bloquant** :
+  `marketing/play/feature-graphic-1024x500.png`. C'était un **prérequis bloquant** :
   Play l'exige pour publier la fiche, donc la piste, donc pour démarrer les 14 jours.
   La bannière Facebook 820×360 n'était pas réutilisable — ratio ≈2,28:1 contre 2,048:1.
+
+  **Deux versions existent, la seconde est celle qui est déposée :**
+
+  | Fichier | Script | Statut |
+  |---|---|---|
+  | `feature-graphic-1024x500.png` | `generate-feature-graphic-ecrans.mjs` | ✅ **retenue** — éventail de quatre écrans de jeu (musiques, vendre, chiner au centre, collection) + bande de médaillons pour les personnages |
+  | `feature-graphic-facade-1024x500.png` | `generate-feature-graphic.mjs` | archivée — façade du menu seule |
+
+  L'arbitrage, si la question revient : la façade reste la plus lisible quand Play réduit
+  l'image ; l'éventail en dit beaucoup plus sur le jeu mais son détail se perd en petit.
+  C'est un choix entre ambiance et démonstration, tranché le 2026-08-13 en faveur du second.
+
+  Trois contraintes ont dicté la mise en page de l'éventail, à connaître avant d'y toucher :
+  Play **recadre** ce visuel selon les surfaces (d'où l'écran le plus parlant au centre et
+  le titre à distance du bord) ; à 1024×500 les titres des visuels App Store tomberaient à
+  ~10 px (d'où le recours aux **captures brutes** de `marketing/appstore/.captures/` et un
+  seul titre pour toute l'image) ; et l'écran collection est **recadré sur son haut à
+  1,55×** parce que ses dernières rangées sont des objets non découverts, dessinés en noir
+  plein, qui à cette taille passent pour des images cassées.
 - **Captures téléphone, au moins deux** : ✅ **produites**, `marketing/play/captures/`
   (5 fichiers `01-chiner` … `05-musiques`, 1242×2484, sans alpha). Régénérables par
   `node scripts/play/preparer-captures.mjs`. Elles sont **rognées** et non

@@ -24,7 +24,10 @@ import sharp from "sharp";
 import { chargerFontFaceCss } from "../appstore/polices.mjs";
 
 const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const SORTIE = path.join(RACINE, "marketing/play/feature-graphic-1024x500.png");
+// Variante « façade », écartée le 2026-08-13 au profit de l'éventail d'écrans
+// (generate-feature-graphic-ecrans.mjs, qui écrit le fichier déposé). Conservée
+// telle quelle : elle reste la plus lisible quand Play réduit l'image.
+const SORTIE = path.join(RACINE, "marketing/play/feature-graphic-facade-1024x500.png");
 
 const LARGEUR = 1024;
 const HAUTEUR = 500;
