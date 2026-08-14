@@ -6,6 +6,7 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { estMissionLivrable } from "@/lib/missions";
 import { prochainMinuitLocalMs, prochainLundiLocalMs } from "@/lib/quetes/periode";
 import { NIVEAU_QUETES_PERIODIQUES } from "@/lib/quetes/settlePeriodiques";
+import { chapitrePret } from "@/lib/quetes/principales";
 import { useCarnetSections, type CleSection } from "./useCarnetSections";
 import { SectionRetractable } from "./SectionRetractable";
 import { CarteHistoire } from "./CarteHistoire";
@@ -247,9 +248,15 @@ export function CarnetOverlay({
   );
 
   // Chapitre courant de la trame : au plus un seul actif à la fois (la trame
-  // avance un chapitre à la fois, cf. `chapitrePret`). `null` tant qu'aucun
-  // n'a été accepté, ou après le seizième — c'est la même absence dans les
-  // deux cas, donc la même ligne de clôture.
+  // avance un chapitre à la fois, cf. `chapitrePret`). `null` dans DEUX cas
+  // bien différents : soit le chapitre suivant n'a pas encore été accepté
+  // (le joueur n'a pas tapé la pastille du grand-père depuis la livraison du
+  // précédent — la trame continue, silence provisoire), soit les seize
+  // chapitres sont déjà livrés (la trame est réellement finie). Ces deux
+  // absences ne doivent PAS produire le même rendu : `histoireFinie`
+  // ci-dessous les distingue via `chapitrePret`, la même fonction qui arme la
+  // pastille du grand-père — sans elle, la ligne de clôture mentirait au
+  // joueur à chacune des quinze transitions entre deux chapitres.
   const chapitreActuel = useMemo(() => {
     for (const m of actives) {
       const c = byId.get(m.courrierId);
@@ -257,6 +264,11 @@ export function CarnetOverlay({
     }
     return null;
   }, [actives, byId]);
+
+  const histoireFinie = useMemo(
+    () => chapitreActuel === null && chapitrePret(state) === null,
+    [chapitreActuel, state],
+  );
 
   const quotidiennes = useMemo(
     () =>
@@ -378,9 +390,9 @@ export function CarnetOverlay({
                     enCeremonie={ceremonieId === chapitreActuel.id}
                     livrerVerrouille={ceremonieId !== null && ceremonieId !== chapitreActuel.id}
                   />
-                ) : (
+                ) : histoireFinie ? (
                   <p style={ligneEtatStyle}>{d.carnet.histoireTerminee}</p>
-                )}
+                ) : null}
               </SectionRetractable>
 
               <SectionRetractable

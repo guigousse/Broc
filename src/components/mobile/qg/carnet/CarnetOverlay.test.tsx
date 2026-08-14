@@ -4,7 +4,9 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { CarnetOverlay } from "./CarnetOverlay";
 import { CLE_STOCKAGE_CARNET } from "./useCarnetSections";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
-import type { Courrier, GameState } from "@/types/game";
+import { chapitrePret, courrierDeChapitre } from "@/lib/quetes/principales";
+import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
+import type { Courrier, GameState, MissionResolution } from "@/types/game";
 
 afterEach(() => { cleanup(); window.localStorage.clear(); });
 
@@ -23,6 +25,14 @@ function etat(courriers: Courrier[], niveau = 5): GameState {
     courriers,
     missions: courriers.map((c) => ({ courrierId: c.id, statut: "active" as const })),
   });
+  return { ...s, brocanteur: { ...s.brocanteur, niveau } };
+}
+
+/** État bâti à partir de missions déjà résolues (livrées), pour les scénarios
+ *  de trame où le statut n'est PAS "toutes actives" — `etat()` ne convient
+ *  pas ici. */
+function etatResolu(courriers: Courrier[], missions: MissionResolution[], niveau = 5): GameState {
+  const s = createMockGameState({ courriers, missions });
   return { ...s, brocanteur: { ...s.brocanteur, niveau } };
 }
 
@@ -45,9 +55,35 @@ describe("CarnetOverlay", () => {
     expect(screen.getAllByText(/niveau 3|level 3/i).length).toBeGreaterThan(0);
   });
 
-  it("aucun chapitre : HISTOIRE annonce la fin de la trame", () => {
-    render(<CarnetOverlay {...base} state={etat([], 5)} />);
+  it("les seize chapitres livrés : HISTOIRE annonce la fin de la trame", () => {
+    const courriers = QUETES_PRINCIPALES.map((ch) => courrierDeChapitre(ch, 1));
+    const missions: MissionResolution[] = QUETES_PRINCIPALES.map((ch) => ({
+      courrierId: ch.id, statut: "livree", jourResolution: 1,
+    }));
+    const state = etatResolu(courriers, missions);
+    // Sanity du fixture : la trame n'a plus rien à offrir.
+    expect(chapitrePret(state)).toBeNull();
+    render(<CarnetOverlay {...base} state={state} />);
     expect(screen.getByText(/tout raconté/i)).toBeTruthy();
+  });
+
+  it("entre deux chapitres (le suivant n'est pas encore accepté) : pas de ligne de clôture", () => {
+    const ch1 = QUETES_PRINCIPALES.find((c) => c.ordre === 1)!;
+    const courrier1 = courrierDeChapitre(ch1, 1);
+    const state = etatResolu(
+      [courrier1],
+      [{ courrierId: courrier1.id, statut: "livree", jourResolution: 1 }],
+    );
+    // Sanity du fixture : contrairement au test précédent, la trame continue
+    // — un prochain chapitre est dû (même fonction que celle qui arme la
+    // pastille du grand-père). C'est ce qui distingue « entre deux
+    // chapitres » de « la trame est finie ».
+    expect(chapitrePret(state)).not.toBeNull();
+    render(<CarnetOverlay {...base} state={state} />);
+    expect(screen.queryByText(/tout raconté/i)).toBeNull();
+    // Rien à afficher tant que le joueur n'a pas accepté le chapitre suivant :
+    // aucune carte de quête (Histoire ou périodique) n'apparaît nulle part.
+    expect(document.querySelector("[data-commande-id]")).toBeNull();
   });
 
   it("une section mémorisée repliée s'ouvre repliée", () => {
