@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { libelleObjectif, objectifEnEuros } from "./objectifs";
+import { libelleObjectif, objectifEnEuros, progressionAffichee } from "./objectifs";
 import { DICTIONNAIRES } from "@/lib/i18n/ui";
-import type { ObjectifMission } from "@/types/game";
+import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
+import type { CourrierPayloadMission, ObjectifMission } from "@/types/game";
 
 const d = DICTIONNAIRES.fr;
 const tr = (g: string, p?: Record<string, string | number>) =>
@@ -40,5 +41,78 @@ describe("libelleObjectif", () => {
       { type: "ventesCategorie", categorie: "Musique", nombre: 4 },
     ];
     for (const o of tous) expect(libelleObjectif(o, d, tr)).not.toMatch(/\{[a-z]+\}/);
+  });
+});
+
+describe("progressionAffichee", () => {
+  const courrier = { id: "c1", jourRecu: 1 };
+  const state = createMockGameState({});
+
+  const payloadCibles: CourrierPayloadMission = {
+    type: "mission",
+    categorie: "quotidienne",
+    expediteurId: "mode",
+    titre: "Pièce vintage",
+    corps: [],
+    cibles: [{ templateId: "ma.lampe_petrole_ancienne" }],
+    recompense: { argent: 10 },
+  };
+
+  const payloadChiffre: CourrierPayloadMission = {
+    type: "mission",
+    categorie: "hebdomadaire",
+    expediteurId: "mode",
+    titre: "Le nerf de la guerre",
+    corps: [],
+    cibles: [],
+    objectifs: [{ type: "beneficeCumule", montant: 850 }],
+    recompense: { argent: 210 },
+  };
+
+  it("mission à cibles pures : compteur agrégé remplies/total, pas de forme, pas de €", () => {
+    const res = progressionAffichee(payloadCibles, courrier, state, undefined, false, false, false);
+    expect(res.compteur).toBe("0/1");
+    expect(res.pct).toBe(0);
+    expect(res.objectifChiffre).toBeNull();
+    expect(res.IconeForme).toBeNull();
+  });
+
+  it("objectif chiffré unique : compteur fin-grain actuel / cible avec suffixe €", () => {
+    const res = progressionAffichee(payloadChiffre, courrier, state, undefined, false, false, false);
+    expect(res.compteur).toBe("0 / 850 €");
+    expect(res.pct).toBe(0);
+    expect(res.objectifChiffre).toEqual({ type: "beneficeCumule", montant: 850 });
+    expect(res.premierObjectifNonObjet).toEqual({ type: "beneficeCumule", montant: 850 });
+    // Une forme chiffrée résout TOUJOURS une icône Lucide (voir formeDepuisObjectif).
+    expect(res.IconeForme).not.toBeNull();
+  });
+
+  it("accompli force l'affichage plein même sur un state à progression nulle (garde-fou cérémonie)", () => {
+    // Le state passé ici est délibérément à zéro (aucune vente en historique) :
+    // c'est exactement le state post-livraison réel pendant la cérémonie. Sans
+    // le garde-fou `accompli`, pct et compteur retomberaient à 0 pile au payoff.
+    const reso = { courrierId: "c1", statut: "livree" as const, jourResolution: 2 };
+    const res = progressionAffichee(payloadChiffre, courrier, state, reso, true, false, false);
+    expect(res.pct).toBe(100);
+    expect(res.compteur).toBe("850 / 850 €");
+    expect(res.iconeAccompli).toBe(true);
+    expect(res.bandeauPret).toBe(true);
+    expect(res.paveVerrouille).toBe(true);
+  });
+
+  it("bandeauPret et paveVerrouille : dérivés de livrable/accompli/livrerVerrouille, rien d'autre", () => {
+    expect(progressionAffichee(payloadCibles, courrier, state, undefined, false, false, false)).toMatchObject({
+      bandeauPret: false,
+      paveVerrouille: false,
+    });
+    expect(progressionAffichee(payloadCibles, courrier, state, undefined, false, true, false)).toMatchObject({
+      bandeauPret: true,
+      paveVerrouille: false,
+    });
+    // Verrouillé pour une AUTRE cérémonie en cours, même non livrable ici.
+    expect(progressionAffichee(payloadCibles, courrier, state, undefined, false, false, true)).toMatchObject({
+      bandeauPret: false,
+      paveVerrouille: true,
+    });
   });
 });

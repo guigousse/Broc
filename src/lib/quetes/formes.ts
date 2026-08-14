@@ -38,6 +38,33 @@ export const ICONE_FORME: Record<FormeQuete, string | null> = {
   ventesCategorie: "Package",
 };
 
+/**
+ * Déduit la forme (au sens `ICONE_FORME`) depuis le type d'un objectif de
+ * mission. Partagée par les deux cartes du carnet (chapitre courant, ligne
+ * périodique) — c'est la même question des deux côtés : quelle icône
+ * générique représente ce type d'objectif chiffré ? Les types hors périmètre
+ * périodique (`restauration`, `valeurCollection`, `niveau`) n'ont pas de
+ * forme — `null`, cadre vide plutôt qu'une exception : un chapitre ou une
+ * quête périodique peut porter un de ces types, l'affichage ne doit pas se
+ * briser pour autant.
+ */
+export function formeDepuisObjectif(type: ObjectifMission["type"]): FormeQuete | null {
+  switch (type) {
+    case "objetsRares":
+      return "objetsRares";
+    case "beneficeCumule":
+      return "beneficeCumule";
+    case "ventesCumulees":
+      return "chiffreAffaires";
+    case "profitVente":
+      return "profitVente";
+    case "ventesCategorie":
+      return "ventesCategorie";
+    default:
+      return null;
+  }
+}
+
 /** Formes éligibles au tirage hebdomadaire (les six). */
 export const FORMES_HEBDOMADAIRES: FormeQuete[] = [
   "objet",

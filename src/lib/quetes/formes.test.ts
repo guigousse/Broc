@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { FAMILLE, FORMES_HEBDOMADAIRES, ICONE_FORME, contenuFormeChiffree } from "./formes";
+import { FAMILLE, FORMES_HEBDOMADAIRES, ICONE_FORME, contenuFormeChiffree, formeDepuisObjectif } from "./formes";
 import { ciblesPourNiveau } from "./echelle";
 
 const rngFixe = () => 0;
@@ -25,6 +25,23 @@ describe("familles", () => {
     expect([...FORMES_HEBDOMADAIRES].sort()).toEqual(
       ["beneficeCumule", "chiffreAffaires", "objet", "objetsRares", "profitVente", "ventesCategorie"].sort(),
     );
+  });
+});
+
+describe("formeDepuisObjectif", () => {
+  test("les cinq types chiffrés retrouvent leur forme", () => {
+    expect(formeDepuisObjectif("objetsRares")).toBe("objetsRares");
+    expect(formeDepuisObjectif("beneficeCumule")).toBe("beneficeCumule");
+    expect(formeDepuisObjectif("ventesCumulees")).toBe("chiffreAffaires");
+    expect(formeDepuisObjectif("profitVente")).toBe("profitVente");
+    expect(formeDepuisObjectif("ventesCategorie")).toBe("ventesCategorie");
+  });
+
+  test("les types hors périmètre périodique n'ont pas de forme", () => {
+    expect(formeDepuisObjectif("objet")).toBeNull();
+    expect(formeDepuisObjectif("restauration")).toBeNull();
+    expect(formeDepuisObjectif("valeurCollection")).toBeNull();
+    expect(formeDepuisObjectif("niveau")).toBeNull();
   });
 });
 

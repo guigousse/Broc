@@ -46,6 +46,28 @@ describe("CarteHistoire", () => {
     expect(screen.getByText("???")).toBeTruthy();
   });
 
+  it("trois chapitres livrés ou plus : le fil ne garde que les deux plus récents", () => {
+    const encours = chapitre("trame_ch4", "Le chargement final");
+    const livre1 = chapitre("trame_ch1", "Le premier arrivage");
+    const livre2 = chapitre("trame_ch2", "Le second arrivage");
+    const livre3 = chapitre("trame_ch3", "Le troisième arrivage");
+    const state = createMockGameState({
+      courriers: [livre1, livre2, livre3, encours],
+      missions: [
+        { courrierId: "trame_ch1", statut: "livree", jourResolution: 5 },
+        { courrierId: "trame_ch2", statut: "livree", jourResolution: 9 },
+        { courrierId: "trame_ch3", statut: "livree", jourResolution: 14 },
+        { courrierId: "trame_ch4", statut: "active" },
+      ],
+    });
+    const { container } = render(<CarteHistoire courrier={encours} state={state} onLivrer={() => {}} />);
+    expect(screen.queryByText("Le premier arrivage")).toBeNull();
+    expect(screen.getByText("Le second arrivage")).toBeTruthy();
+    expect(screen.getByText("Le troisième arrivage")).toBeTruthy();
+    expect(screen.getAllByText("Le chargement final").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll("[data-etape-fil]").length).toBe(4); // 2 livrés + courant + ???
+  });
+
   it("au premier chapitre, le fil commence par le courant sans ligne vide", () => {
     const c = chapitre("trame_ch1", "La lampe de mon atelier");
     const state = createMockGameState({ courriers: [c], missions: [{ courrierId: "trame_ch1", statut: "active" }] });

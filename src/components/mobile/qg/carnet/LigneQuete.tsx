@@ -1,21 +1,19 @@
 "use client";
 
 import { type CSSProperties } from "react";
-import { Coins, Gem, Package, TrendingUp, type LucideIcon } from "lucide-react";
 import { getTemplate } from "@/data/objetTemplates";
 import { getExpediteur } from "@/data/expediteursCourrier";
 import { ItemImage } from "@/components/ui/ItemImage";
 import { progressionMission } from "@/lib/missions";
 import { objectifsDeMission, progressionObjectif, missionLivrable } from "@/lib/quetes/objectifs";
-import { ICONE_FORME, type FormeQuete } from "@/lib/quetes/formes";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
 import { corpsCourrier, nomTemplate, nomExpediteur, titreCourrier } from "@/lib/i18n/contenu";
 import { recompenseEffective } from "@/lib/recompenses";
-import { libelleObjectif, objectifEnEuros } from "./objectifs";
+import { libelleObjectif, objectifEnEuros, progressionAffichee } from "./objectifs";
 import { PhotoScotchee } from "./PhotoScotchee";
 import { PaveRecompense } from "./PaveRecompense";
-import type { Courrier, GameState, ObjectifMission } from "@/types/game";
+import type { Courrier, GameState } from "@/types/game";
 
 interface Props {
   courrier: Courrier;
@@ -26,38 +24,6 @@ interface Props {
   enCeremonie?: boolean;
   /** Cérémonie d'une AUTRE quête en cours : pavé grisé (tap refusé). */
   livrerVerrouille?: boolean;
-}
-
-/**
- * Composants Lucide indexés par leur PROPRE nom — c'est le seul pont dont on a
- * besoin entre `ICONE_FORME` (qui donne des noms de chaînes, source de vérité
- * côté ①) et les composants réels : on ne recopie pas la table forme→icône,
- * on résout juste le nom qu'elle rend.
- */
-const ICONES_LUCIDE: Record<string, LucideIcon> = { Gem, TrendingUp, Coins, Package };
-
-/**
- * Déduit la forme de quête (au sens `ICONE_FORME`) depuis le type du premier
- * objectif non-"objet". Les types hors périmètre périodique (`restauration`,
- * `valeurCollection`, `niveau`) n'ont pas de forme — `null`, cadre vide plutôt
- * qu'une exception : une quête périodique ne les porte jamais, mais la ligne
- * ne doit pas se briser si un jour elle le fait.
- */
-function formeDepuisObjectif(type: ObjectifMission["type"]): FormeQuete | null {
-  switch (type) {
-    case "objetsRares":
-      return "objetsRares";
-    case "beneficeCumule":
-      return "beneficeCumule";
-    case "ventesCumulees":
-      return "chiffreAffaires";
-    case "profitVente":
-      return "profitVente";
-    case "ventesCategorie":
-      return "ventesCategorie";
-    default:
-      return null;
-  }
 }
 
 const carte: CSSProperties = {
@@ -229,20 +195,18 @@ export function LigneQuete({
    */
   const accompli = enCeremonie;
   const rEff = recompenseEffective(p);
-  // Progression agrégée sur TOUS les objectifs (cibles objets + objectifs non-objet),
-  // pas seulement les cibles objets (`progressionMission`) : pour les quêtes sans
-  // cible (ex. beneficeCumule), `prog.total` vaut 0 et donnerait un faux "0/0" /
-  // une barre à largeur NaN%.
+  // Ré-utilisée par le détail déplié (chaque objectif non-objet, individuellement) :
+  // même repli qu'à l'intérieur de `progressionAffichee`, absence de résolution ⇒ mission active.
   const resoPourObjectifs = reso ?? { courrierId: courrier.id, statut: "active" as const };
-  const objectifsTous = objectifsDeMission(p);
-  const totalObjectifs = objectifsTous.length;
-  const rempliesObjectifs = objectifsTous.filter(
-    (o) => progressionObjectif(o, state, resoPourObjectifs, courrier.jourRecu).atteint,
-  ).length;
-  const premierObjectifNonObjet = objectifsTous.find((o) => o.type !== "objet") ?? null;
-  const progPremierObjectif = premierObjectifNonObjet
-    ? progressionObjectif(premierObjectifNonObjet, state, resoPourObjectifs, courrier.jourRecu)
-    : null;
+  const {
+    pct,
+    compteur,
+    premierObjectifNonObjet,
+    IconeForme,
+    iconeAccompli,
+    bandeauPret,
+    paveVerrouille,
+  } = progressionAffichee(p, courrier, state, reso, accompli, livrable, livrerVerrouille);
   /**
    * « La demande en une ligne » (brief). Sans cible, le visuel de gauche est
    * une icône générique (`beneficeCumule` et `chiffreAffaires` PARTAGENT
@@ -256,32 +220,6 @@ export function LigneQuete({
     p.cibles.length === 0 && premierObjectifNonObjet
       ? libelleObjectif(premierObjectifNonObjet, d, tr)
       : nomExp ?? "";
-  // Progression affichée : objectif chiffré unique (aucune cible objet, un
-  // seul objectif non-objet) → « actuel / cible € » fin-grain ; sinon agrégat
-  // « remplies / total » (mêmes garde-fous 0/0-NaN qu'avant).
-  const objectifChiffre =
-    p.cibles.length === 0 && objectifsTous.length === 1 ? premierObjectifNonObjet : null;
-  const pct = accompli
-    ? 100
-    : objectifChiffre && progPremierObjectif
-    ? Math.min(100, (progPremierObjectif.actuel / Math.max(1, progPremierObjectif.cible)) * 100)
-    : totalObjectifs > 0 ? (rempliesObjectifs / totalObjectifs) * 100 : 0;
-  const compteur = objectifChiffre && progPremierObjectif
-    ? `${accompli ? progPremierObjectif.cible : progPremierObjectif.actuel} / ${progPremierObjectif.cible}${objectifEnEuros(objectifChiffre.type) ? " €" : ""}`
-    : `${accompli ? totalObjectifs : rempliesObjectifs}/${totalObjectifs}`;
-  /** Le pavé s'allume dès que c'est livrable, ou de force en cérémonie (le
-   *  state post-livraison ferait retomber `livrable` à false pile au payoff). */
-  const bandeauPret = livrable || accompli;
-  /** Verrouillé pendant SA PROPRE cérémonie (déjà livrée, un second tap serait
-   *  une double livraison) ou pendant celle d'une autre quête. */
-  const paveVerrouille = accompli || livrerVerrouille;
-
-  // Visuel de gauche : une photo par cible (jusqu'à 4, puis « +n »), sinon
-  // l'icône Lucide de la forme du premier objectif chiffré.
-  const forme = premierObjectifNonObjet ? formeDepuisObjectif(premierObjectifNonObjet.type) : null;
-  const nomIconeForme = forme ? ICONE_FORME[forme] : null;
-  const IconeForme = nomIconeForme ? ICONES_LUCIDE[nomIconeForme] : null;
-  const iconeAccompli = accompli || (progPremierObjectif?.atteint ?? false);
 
   return (
     <div data-commande-id={courrier.id} style={carte}>

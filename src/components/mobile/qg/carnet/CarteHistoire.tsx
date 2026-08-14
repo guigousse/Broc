@@ -1,18 +1,16 @@
 "use client";
 
 import { type CSSProperties } from "react";
-import { Coins, Gem, Package, TrendingUp, type LucideIcon } from "lucide-react";
 import { getTemplate } from "@/data/objetTemplates";
 import { progressionMission } from "@/lib/missions";
-import { objectifsDeMission, progressionObjectif, missionLivrable } from "@/lib/quetes/objectifs";
-import { ICONE_FORME, type FormeQuete } from "@/lib/quetes/formes";
+import { missionLivrable } from "@/lib/quetes/objectifs";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { titreCourrier, corpsCourrier, nomTemplate } from "@/lib/i18n/contenu";
 import { recompenseEffective } from "@/lib/recompenses";
-import { libelleObjectif, objectifEnEuros } from "./objectifs";
+import { libelleObjectif, progressionAffichee } from "./objectifs";
 import { PhotoScotchee } from "./PhotoScotchee";
 import { PaveRecompense } from "./PaveRecompense";
-import type { Courrier, GameState, ObjectifMission } from "@/types/game";
+import type { Courrier, GameState } from "@/types/game";
 
 interface Props {
   courrier: Courrier;
@@ -21,34 +19,6 @@ interface Props {
   enCeremonie?: boolean;
   /** Cérémonie d'une AUTRE quête en cours : pavé grisé (tap refusé). */
   livrerVerrouille?: boolean;
-}
-
-/**
- * Composants Lucide indexés par leur PROPRE nom — même pont que `LigneQuete`
- * entre `ICONE_FORME` (noms de chaînes) et les composants réels. Dupliqué ici
- * plutôt que partagé : les deux cartes sont volontairement indépendantes,
- * seule la FORME du problème (progression d'objectifs) est commune.
- */
-const ICONES_LUCIDE: Record<string, LucideIcon> = { Gem, TrendingUp, Coins, Package };
-
-/** Déduit la forme de quête (au sens `ICONE_FORME`) depuis le type du premier
- *  objectif non-"objet". Même logique que `LigneQuete.tsx` (voir son
- *  commentaire) : les types hors périmètre périodique n'ont pas de forme. */
-function formeDepuisObjectif(type: ObjectifMission["type"]): FormeQuete | null {
-  switch (type) {
-    case "objetsRares":
-      return "objetsRares";
-    case "beneficeCumule":
-      return "beneficeCumule";
-    case "ventesCumulees":
-      return "chiffreAffaires";
-    case "profitVente":
-      return "profitVente";
-    case "ventesCategorie":
-      return "ventesCategorie";
-    default:
-      return null;
-  }
 }
 
 /** Une étape déjà livrée dans le fil, avec son courrier (persistant : les
@@ -239,41 +209,21 @@ export function CarteHistoire({ courrier, state, onLivrer, enCeremonie = false, 
    */
   const accompli = enCeremonie;
   const rEff = recompenseEffective(p);
-
-  const resoPourObjectifs = reso ?? { courrierId: courrier.id, statut: "active" as const };
-  const objectifsTous = objectifsDeMission(p);
-  const totalObjectifs = objectifsTous.length;
-  const rempliesObjectifs = objectifsTous.filter(
-    (o) => progressionObjectif(o, state, resoPourObjectifs, courrier.jourRecu).atteint,
-  ).length;
-  const premierObjectifNonObjet = objectifsTous.find((o) => o.type !== "objet") ?? null;
-  const progPremierObjectif = premierObjectifNonObjet
-    ? progressionObjectif(premierObjectifNonObjet, state, resoPourObjectifs, courrier.jourRecu)
-    : null;
-  const objectifChiffre =
-    p.cibles.length === 0 && objectifsTous.length === 1 ? premierObjectifNonObjet : null;
-  const pct = accompli
-    ? 100
-    : objectifChiffre && progPremierObjectif
-    ? Math.min(100, (progPremierObjectif.actuel / Math.max(1, progPremierObjectif.cible)) * 100)
-    : totalObjectifs > 0 ? (rempliesObjectifs / totalObjectifs) * 100 : 0;
-  const compteur = objectifChiffre && progPremierObjectif
-    ? `${accompli ? progPremierObjectif.cible : progPremierObjectif.actuel} / ${progPremierObjectif.cible}${objectifEnEuros(objectifChiffre.type) ? " €" : ""}`
-    : `${accompli ? totalObjectifs : rempliesObjectifs}/${totalObjectifs}`;
+  const {
+    pct,
+    compteur,
+    premierObjectifNonObjet,
+    IconeForme,
+    iconeAccompli,
+    bandeauPret,
+    paveVerrouille,
+  } = progressionAffichee(p, courrier, state, reso, accompli, livrable, livrerVerrouille);
   /** Étiquette de l'objectif : le libellé du premier objectif chiffré s'il y
    *  en a un, sinon (cibles pures) le décompte des objets demandés — mêmes
    *  garde-fous 0/0 que `LigneQuete`. */
   const labelObjectif = premierObjectifNonObjet
     ? libelleObjectif(premierObjectifNonObjet, d, tr)
     : tr(d.carnet.objetsDemandes, { rempli: accompli ? prog.total : prog.remplies, total: prog.total });
-
-  const bandeauPret = livrable || accompli;
-  const paveVerrouille = accompli || livrerVerrouille;
-
-  const forme = premierObjectifNonObjet ? formeDepuisObjectif(premierObjectifNonObjet.type) : null;
-  const nomIconeForme = forme ? ICONE_FORME[forme] : null;
-  const IconeForme = nomIconeForme ? ICONES_LUCIDE[nomIconeForme] : null;
-  const iconeAccompli = accompli || (progPremierObjectif?.atteint ?? false);
 
   const fil = chapitresRecents(state, courrier.id);
 
