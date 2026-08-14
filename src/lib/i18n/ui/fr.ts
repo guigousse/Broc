@@ -669,6 +669,12 @@ export const fr = {
     histoireSurtitre: "Quête principale",
     histoireObjectifActuel: "Objectif actuel",
     histoireInconnu: "???",
+    // Châssis du carnet (SP3 Task 9) : titre de fenêtre, section Histoire,
+    // verrou de niveau des sections périodiques, clôture de la trame.
+    carnetTitre: "Carnet de quêtes",
+    sectionHistoire: "Histoire",
+    sectionVerrouilleeNiveau: "À partir du niveau {n}",
+    histoireTerminee: "Le grand-père t'a tout raconté.",
   },
   // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les
   // `params` structurés (LedgerEntry.params). Reproduisent EXACTEMENT les chaînes

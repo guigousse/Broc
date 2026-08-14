@@ -101,14 +101,15 @@ export function doigtSwipeVersCarnet(
  * Fin du tutoriel : la main flottante guide jusqu'au carnet, et c'est son
  * ouverture — pas la pastille du bureau — qui déclenche le dialogue de la
  * lampe, dont la commande vient s'inscrire dans la page restée ouverte.
- * Le type du 2e paramètre est écrit en littéral plutôt qu'importé du
- * composant `RegistreOverlay` : `src/lib` ne dépend pas de l'UI.
+ * Le 2e paramètre est un booléen (le carnet n'a plus d'onglet à porter
+ * depuis le châssis `CarnetOverlay`) plutôt que le type d'un composant d'UI :
+ * `src/lib` ne dépend pas de l'UI.
  */
 export function chapitreDuCarnetDu(
   miniTuto: GameState["miniTutoCarnet"],
-  registreOuvert: "commandes" | "comptes" | null,
+  carnetOuvert: boolean,
 ): boolean {
-  return miniTuto === "ouvrir" && registreOuvert === "commandes";
+  return miniTuto === "ouvrir" && carnetOuvert;
 }
 
 /* === Scénario brocante scriptée ====================================== */

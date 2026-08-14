@@ -656,6 +656,10 @@ export const es: DictionnaireUI = {
     histoireSurtitre: "Misión principal",
     histoireObjectifActuel: "Objetivo actual",
     histoireInconnu: "???",
+    carnetTitre: "Cuaderno de misiones",
+    sectionHistoire: "Historia",
+    sectionVerrouilleeNiveau: "A partir del nivel {n}",
+    histoireTerminee: "El abuelo ya te lo ha contado todo.",
   },
   ledger: {
     loyer: "Alquiler · {tier}",

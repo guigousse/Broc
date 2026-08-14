@@ -675,6 +675,10 @@ export const el: DictionnaireUI = {
     histoireSurtitre: "Κύρια αποστολή",
     histoireObjectifActuel: "Τρέχων στόχος",
     histoireInconnu: "???",
+    carnetTitre: "Τετράδιο αποστολών",
+    sectionHistoire: "Ιστορία",
+    sectionVerrouilleeNiveau: "Από το επίπεδο {n}",
+    histoireTerminee: "Ο παππούς σου τα έχει πει όλα.",
   },
   // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les
   // `params` structurés (LedgerEntry.params). Reproduisent EXACTEMENT les chaînes

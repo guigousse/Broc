@@ -655,6 +655,10 @@ export const en: DictionnaireUI = {
     histoireSurtitre: "Main quest",
     histoireObjectifActuel: "Current objective",
     histoireInconnu: "???",
+    carnetTitre: "Quest journal",
+    sectionHistoire: "Story",
+    sectionVerrouilleeNiveau: "From level {n}",
+    histoireTerminee: "Grandfather has told you everything.",
   },
   ledger: {
     loyer: "Rent · {tier}",

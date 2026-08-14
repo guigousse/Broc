@@ -60,14 +60,13 @@ describe("tutoriel", () => {
     expect(doigtSwipeVersCarnet(undefined, 1)).toBe(false);
   });
 
-  it("chapitreDuCarnetDu n'arme le chapitre qu'à l'ouverture de l'onglet Commandes pendant le mini-tuto", () => {
-    expect(chapitreDuCarnetDu("ouvrir", "commandes")).toBe(true);
+  it("chapitreDuCarnetDu n'arme le chapitre qu'à l'ouverture du carnet pendant le mini-tuto", () => {
+    expect(chapitreDuCarnetDu("ouvrir", true)).toBe(true);
     // Mini-tuto déjà consommé : l'ouverture du carnet ne délivre plus rien.
-    expect(chapitreDuCarnetDu("termine", "commandes")).toBe(false);
-    expect(chapitreDuCarnetDu(undefined, "commandes")).toBe(false);
-    // Autre onglet, ou registre fermé : rien.
-    expect(chapitreDuCarnetDu("ouvrir", "comptes")).toBe(false);
-    expect(chapitreDuCarnetDu("ouvrir", null)).toBe(false);
+    expect(chapitreDuCarnetDu("termine", true)).toBe(false);
+    expect(chapitreDuCarnetDu(undefined, true)).toBe(false);
+    // Carnet fermé : rien.
+    expect(chapitreDuCarnetDu("ouvrir", false)).toBe(false);
   });
 
   it("appliquerFinTutoriel est idempotent sur un state déjà terminé", () => {
