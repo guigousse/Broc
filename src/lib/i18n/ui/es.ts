@@ -653,6 +653,9 @@ export const es: DictionnaireUI = {
       beneficeCumule: "Beneficio obtenido",
       ventesCategorie: "Objetos vendidos ({categorie})",
     },
+    histoireSurtitre: "Misión principal",
+    histoireObjectifActuel: "Objetivo actual",
+    histoireInconnu: "???",
   },
   ledger: {
     loyer: "Alquiler · {tier}",

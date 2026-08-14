@@ -652,6 +652,9 @@ export const en: DictionnaireUI = {
       beneficeCumule: "Profit made",
       ventesCategorie: "Items sold ({categorie})",
     },
+    histoireSurtitre: "Main quest",
+    histoireObjectifActuel: "Current objective",
+    histoireInconnu: "???",
   },
   ledger: {
     loyer: "Rent · {tier}",

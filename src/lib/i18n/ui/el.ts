@@ -672,6 +672,9 @@ export const el: DictionnaireUI = {
       beneficeCumule: "Κέρδος που επιτεύχθηκε",
       ventesCategorie: "Αντικείμενα που πουλήθηκαν ({categorie})",
     },
+    histoireSurtitre: "Κύρια αποστολή",
+    histoireObjectifActuel: "Τρέχων στόχος",
+    histoireInconnu: "???",
   },
   // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les
   // `params` structurés (LedgerEntry.params). Reproduisent EXACTEMENT les chaînes

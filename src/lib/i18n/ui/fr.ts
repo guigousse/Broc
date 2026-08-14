@@ -665,6 +665,10 @@ export const fr = {
       beneficeCumule: "Bénéfice réalisé",
       ventesCategorie: "Objets vendus ({categorie})",
     },
+    // Carte d'histoire (trame principale, refonte carnet SP3).
+    histoireSurtitre: "Quête principale",
+    histoireObjectifActuel: "Objectif actuel",
+    histoireInconnu: "???",
   },
   // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les
   // `params` structurés (LedgerEntry.params). Reproduisent EXACTEMENT les chaînes
