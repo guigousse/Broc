@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { CarnetOverlay } from "./CarnetOverlay";
 import { CLE_STOCKAGE_CARNET } from "./useCarnetSections";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
@@ -16,6 +16,19 @@ function quete(id: string, categorie: "principale" | "quotidienne" | "hebdomadai
     payload: {
       type: "mission", categorie, expediteurId: "mode", titre, corps: ["c"],
       cibles: [{ templateId: "ma.lampe_petrole_ancienne" }], recompense: { argent: 60 },
+    },
+  };
+}
+
+/** Quête chiffrée (cinq des six formes périodiques) : `cibles: []`, un seul
+ *  objectif non-objet. `estMissionLivrable` seule la trouverait "livrable" à
+ *  0 % de progression (`0 === payload.cibles.length` est vacuously vrai). */
+function queteChiffree(id: string, categorie: "quotidienne" | "hebdomadaire", titre: string): Courrier {
+  return {
+    id, type: "mission", jourRecu: 1, lu: true,
+    payload: {
+      type: "mission", categorie, expediteurId: "mode", titre, corps: ["c"],
+      cibles: [], objectifs: [{ type: "beneficeCumule", montant: 850 }], recompense: { argent: 210 },
     },
   };
 }
@@ -105,5 +118,19 @@ describe("CarnetOverlay", () => {
     render(<CarnetOverlay {...base} state={etat([q])} />);
     expect(screen.queryByRole("tab")).toBeNull();
     expect(screen.queryByText(/terminées|completed/i)).toBeNull();
+  });
+
+  it("compteur d'en-tête repliée : une quête chiffrée à 0 % n'est jamais « prête » (piège vacuously livrable)", () => {
+    // `beneficeCumule` (comme 4 des 6 formes périodiques) n'a pas de cible
+    // objet : sans `missionLivrable` (qui vérifie AUSSI la progression de
+    // l'objectif chiffré), le header annoncerait « prête » dès la création
+    // de la quête, à 0 % de progression — rien n'est réellement livrable.
+    const q = queteChiffree("q1", "quotidienne", "Le nerf de la guerre");
+    render(<CarnetOverlay {...base} state={etat([q])} />);
+    // Replier la section pour révéler le compteur d'en-tête (masqué dépliée).
+    fireEvent.click(screen.getByRole("button", { name: /Commandes quotidiennes/i }));
+    const entete = screen.getByRole("button", { name: /Commandes quotidiennes/i });
+    expect(entete.textContent ?? "").toMatch(/\(0\/1\)/);
+    expect(entete.textContent ?? "").not.toMatch(/prête/i);
   });
 });

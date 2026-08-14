@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { BookOpen, CalendarDays, CalendarRange } from "lucide-react";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { estMissionLivrable } from "@/lib/missions";
+import { missionLivrable } from "@/lib/quetes/objectifs";
 import { prochainMinuitLocalMs, prochainLundiLocalMs } from "@/lib/quetes/periode";
 import { NIVEAU_QUETES_PERIODIQUES } from "@/lib/quetes/settlePeriodiques";
 import { chapitrePret } from "@/lib/quetes/principales";
@@ -41,19 +41,23 @@ function formatRestant(ms: number): string {
 function trierActives(
   missions: MissionResolution[],
   byId: Map<string, Courrier>,
-  inv: GameState["inventaireJoueur"],
+  state: GameState,
   /** Commande en cours de cérémonie : traitée comme rang 0 (livrable) même si
    *  elle est déjà « livree » côté state — sinon elle dégringole dans la
    *  liste pendant l'envol des jetons, sous les yeux du joueur. */
   ceremonieId?: string | null,
 ) {
+  // ⚠ `missionLivrable`, PAS `estMissionLivrable` seule : une quête chiffrée
+  // (`cibles: []`) est vacuously "toutes ses cibles remplies" (0 === 0) et
+  // dégringolerait en tête de liste sans jamais être réellement livrable
+  // (même piège que le compteur d'en-tête, cf. lib/quetes/objectifs.ts).
   return [...missions].sort((a, b) => {
     const ca = byId.get(a.courrierId);
     const cb = byId.get(b.courrierId);
     const pa = ca?.payload.type === "mission" ? ca.payload : null;
     const pb = cb?.payload.type === "mission" ? cb.payload : null;
-    const lva = a.courrierId === ceremonieId || (pa && estMissionLivrable(pa, inv)) ? 0 : 1;
-    const lvb = b.courrierId === ceremonieId || (pb && estMissionLivrable(pb, inv)) ? 0 : 1;
+    const lva = a.courrierId === ceremonieId || (pa && ca && missionLivrable(pa, a, state, ca.jourRecu)) ? 0 : 1;
+    const lvb = b.courrierId === ceremonieId || (pb && cb && missionLivrable(pb, b, state, cb.jourRecu)) ? 0 : 1;
     if (lva !== lvb) return lva - lvb; // livrables d'abord
     const ja = pa?.jourLimite ?? Infinity;
     const jb = pb?.jourLimite ?? Infinity;
@@ -278,10 +282,10 @@ export function CarnetOverlay({
           return c?.payload.type === "mission" && c.payload.categorie === "quotidienne";
         }),
         byId,
-        state.inventaireJoueur,
+        state,
         ceremonieId,
       ),
-    [actives, byId, state.inventaireJoueur, ceremonieId],
+    [actives, byId, state, ceremonieId],
   );
 
   const hebdomadaires = useMemo(
@@ -292,10 +296,10 @@ export function CarnetOverlay({
           return c?.payload.type === "mission" && c.payload.categorie === "hebdomadaire";
         }),
         byId,
-        state.inventaireJoueur,
+        state,
         ceremonieId,
       ),
-    [actives, byId, state.inventaireJoueur, ceremonieId],
+    [actives, byId, state, ceremonieId],
   );
 
   // Section de la quête visée : le SEUL cas où la préférence de repli
@@ -331,7 +335,11 @@ export function CarnetOverlay({
     for (const m of liste) {
       const c = byId.get(m.courrierId);
       if (c?.payload.type !== "mission") continue;
-      const complet = m.courrierId === ceremonieId || estMissionLivrable(c.payload, state.inventaireJoueur);
+      // ⚠ `missionLivrable`, PAS `estMissionLivrable` seule : cf. le garde-fou
+      // documenté dans lib/quetes/objectifs.ts — une quête chiffrée (`cibles: []`)
+      // aurait `remplies === 0 === cibles.length`, donc "livrable" à 0 % de
+      // progression, et le compteur replié annoncerait « prête » à tort.
+      const complet = m.courrierId === ceremonieId || missionLivrable(c.payload, m, state, c.jourRecu);
       if (!complet) continue;
       faits += 1;
       if (m.courrierId !== ceremonieId) pretes += 1;
