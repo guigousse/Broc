@@ -93,4 +93,41 @@ describe("LigneQuete", () => {
     const { container } = render(<LigneQuete {...props} ouvert courrier={c} state={createMockGameState({ courriers: [c] })} />);
     expect(container.textContent ?? "").not.toMatch(/\{[a-z]+\}/);
   });
+
+  it("collapsée : bénéfice et chiffre d'affaires (même icône TrendingUp) affichent des libellés différents", () => {
+    // ICONE_FORME donne la MÊME icône à beneficeCumule et chiffreAffaires
+    // (ventesCumulees) : sans le libellé de la demande dans la ligne repliée,
+    // ces deux quêtes sont indiscernables au premier coup d'œil.
+    const cBenefice = courrierChiffre({ type: "beneficeCumule", montant: 850 });
+    const premier = render(
+      <LigneQuete {...props} courrier={cBenefice} state={createMockGameState({ courriers: [cBenefice] })} />,
+    );
+    const texteBenefice = screen.getByTestId("ligne-demande").textContent ?? "";
+    premier.unmount();
+
+    const cVentes = courrierChiffre({ type: "ventesCumulees", montant: 300 });
+    render(<LigneQuete {...props} courrier={cVentes} state={createMockGameState({ courriers: [cVentes] })} />);
+    const texteVentes = screen.getByTestId("ligne-demande").textContent ?? "";
+
+    expect(texteBenefice).not.toBe("");
+    expect(texteVentes).not.toBe("");
+    expect(texteBenefice).not.toBe(texteVentes);
+  });
+
+  it("en cérémonie : la barre est pleine et le compteur affiche l'état accompli malgré un state déjà post-livraison", () => {
+    // C'est exactement le state dans lequel la cérémonie tourne réellement :
+    // mission déjà marquée "livree", objet déjà retiré de l'inventaire. Sans
+    // le garde-fou `accompli = enCeremonie`, la barre et le compteur
+    // retomberaient à zéro pile au moment où les jetons s'envolent.
+    const c = courrierObjet();
+    const state = createMockGameState({
+      courriers: [c],
+      missions: [{ courrierId: "q1", statut: "livree", jourResolution: 1 }],
+      inventaireJoueur: [],
+    });
+    render(<LigneQuete {...props} courrier={c} state={state} enCeremonie />);
+    expect(screen.getByTestId("progression-compteur").textContent).toBe("1/1");
+    const barre = document.querySelector('[data-testid="progression-barre"]') as HTMLElement;
+    expect(barre.style.width).toBe("100%");
+  });
 });

@@ -243,6 +243,19 @@ export function LigneQuete({
   const progPremierObjectif = premierObjectifNonObjet
     ? progressionObjectif(premierObjectifNonObjet, state, resoPourObjectifs, courrier.jourRecu)
     : null;
+  /**
+   * « La demande en une ligne » (brief). Sans cible, le visuel de gauche est
+   * une icône générique (`beneficeCumule` et `chiffreAffaires` PARTAGENT
+   * `TrendingUp` dans `ICONE_FORME`) : sans ce libellé, une quête de marge et
+   * une quête de chiffre d'affaires sont visuellement indiscernables au
+   * premier coup d'œil, alors que les titres de gabarit ne le sont pas non
+   * plus (pure saveur, pas le nom de la métrique). Avec des cibles, la photo
+   * de l'objet suffit à lever l'ambiguïté : on garde l'expéditeur.
+   */
+  const demandeAffichee =
+    p.cibles.length === 0 && premierObjectifNonObjet
+      ? libelleObjectif(premierObjectifNonObjet, d, tr)
+      : nomExp ?? "";
   // Progression affichée : objectif chiffré unique (aucune cible objet, un
   // seul objectif non-objet) → « actuel / cible € » fin-grain ; sinon agrégat
   // « remplies / total » (mêmes garde-fous 0/0-NaN qu'avant).
@@ -306,7 +319,7 @@ export function LigneQuete({
           </span>
           <span style={colonneCentre}>
             <span style={titreStyle}>{titreCourrier(courrier, locale)}</span>
-            <span style={demandeStyle}>{nomExp ?? ""}</span>
+            <span style={demandeStyle} data-testid="ligne-demande">{demandeAffichee}</span>
             <span style={barreWrap}>
               <span style={barreFond}>
                 <span data-testid="progression-barre" style={barreRemplissage(pct)} />
