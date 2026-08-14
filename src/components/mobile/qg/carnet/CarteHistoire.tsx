@@ -1,6 +1,7 @@
 "use client";
 
 import { type CSSProperties } from "react";
+import { BookOpen, Library, Star, Wrench, type LucideIcon } from "lucide-react";
 import { getTemplate } from "@/data/objetTemplates";
 import { progressionMission } from "@/lib/missions";
 import { missionLivrable } from "@/lib/quetes/objectifs";
@@ -10,7 +11,21 @@ import { recompenseEffective } from "@/lib/recompenses";
 import { libelleObjectif, progressionAffichee } from "./objectifs";
 import { PhotoScotchee } from "./PhotoScotchee";
 import { PaveRecompense } from "./PaveRecompense";
-import type { Courrier, GameState } from "@/types/game";
+import type { Courrier, GameState, ObjectifMission } from "@/types/game";
+
+/**
+ * Repli d'icône pour la carte d'histoire : `formeDepuisObjectif` (partagée
+ * avec `LigneQuete`) ne visait que les six formes des quêtes PÉRIODIQUES —
+ * elle n'a jamais été un mapping complet sur `ObjectifMission`, alors qu'un
+ * chapitre de trame peut porter n'importe lequel de ses types. Sans ce repli,
+ * `IconeForme` retombe à `null` pour ces trois types et le polaroïd s'affiche
+ * vide (mode "vide" de `PhotoScotchee`) — un cadre de scotch sur rien.
+ */
+const ICONE_SECOURS_CHAPITRE: Partial<Record<ObjectifMission["type"], LucideIcon>> = {
+  restauration: Wrench,
+  niveau: Star,
+  valeurCollection: Library,
+};
 
 interface Props {
   courrier: Courrier;
@@ -225,6 +240,13 @@ export function CarteHistoire({ courrier, state, onLivrer, enCeremonie = false, 
     ? libelleObjectif(premierObjectifNonObjet, d, tr)
     : tr(d.carnet.objetsDemandes, { rempli: accompli ? prog.total : prog.remplies, total: prog.total });
 
+  // `IconeForme` couvre les cinq formes périodiques ; pour les trois types de
+  // chapitre qu'elle ne couvre pas (restauration/niveau/valeurCollection), ou
+  // l'absence totale d'objectif (chapitres purement narratifs, ex. ch10/ch12),
+  // BookOpen ferme le dernier trou — TOUJOURS quelque chose dans le polaroïd.
+  const iconeChapitre: LucideIcon =
+    IconeForme ?? (premierObjectifNonObjet ? ICONE_SECOURS_CHAPITRE[premierObjectifNonObjet.type] ?? BookOpen : BookOpen);
+
   const fil = chapitresRecents(state, courrier.id);
 
   return (
@@ -265,7 +287,7 @@ export function CarteHistoire({ courrier, state, onLivrer, enCeremonie = false, 
             </>
           ) : (
             <PhotoScotchee
-              icone={IconeForme ?? undefined}
+              icone={iconeChapitre}
               taille={84}
               accompli={iconeAccompli}
             />

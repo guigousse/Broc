@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { CarteHistoire } from "./CarteHistoire";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
+import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
+import { courrierDeChapitre } from "@/lib/quetes/principales";
 import type { Courrier } from "@/types/game";
 
 afterEach(cleanup);
@@ -91,5 +93,26 @@ describe("CarteHistoire", () => {
     const c = chapitre("trame_ch3", "La lampe de mon atelier");
     const { container } = render(<CarteHistoire courrier={c} state={createMockGameState({ courriers: [c] })} onLivrer={() => {}} />);
     expect(container.textContent ?? "").not.toMatch(/\{[a-z]+\}/);
+  });
+
+  // Régression : `ICONE_FORME` ne couvrait que les six formes des quêtes
+  // PÉRIODIQUES (chantier antérieur) — jamais un mapping complet sur
+  // `ObjectifMission`. Sept des seize chapitres de la trame (restauration,
+  // niveau, valeurCollection, ou aucun objectif du tout) en portent un type
+  // hors de ce mapping et affichaient un polaroïd vide (mode "vide"). Itérer
+  // sur TOUS les chapitres, pas seulement les quatre déjà repérés, pour que
+  // le test continue de protéger un futur chapitre à un type non couvert.
+  it("chaque chapitre de la trame affiche quelque chose dans son polaroïd (jamais 'vide')", () => {
+    for (const ch of QUETES_PRINCIPALES) {
+      const courrier = courrierDeChapitre(ch, 1);
+      const { container, unmount } = render(
+        <CarteHistoire courrier={courrier} state={createMockGameState({ courriers: [courrier] })} onLivrer={() => {}} />,
+      );
+      expect(
+        container.querySelector("[data-photo-scotchee='vide']"),
+        `${ch.id} affiche un polaroïd vide`,
+      ).toBeNull();
+      unmount();
+    }
   });
 });
