@@ -61,6 +61,10 @@ import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
 import { CarnetOverlay } from "@/components/mobile/qg/carnet/CarnetOverlay";
+import {
+  DELAI_AVANT_DIALOGUE_MS,
+  sequenceEnchainement,
+} from "@/lib/quetes/enchainement";
 import { CourrierSheet } from "@/components/mobile/qg/sheets/CourrierSheet";
 import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { GramophoneSheet } from "@/components/mobile/qg/sheets/GramophoneSheet";
@@ -488,9 +492,24 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     const t = window.setTimeout(() => {
       setDialogueQg(chapitreEnAttente);
       setChapitreEnAttente(null);
-    }, 500);
+    }, DELAI_AVANT_DIALOGUE_MS);
     return () => window.clearTimeout(t);
   }, [chapitreEnAttente]);
+
+  // `onChapitreLivre` est appelé depuis un minuteur créé au tap sur « Livrer » :
+  // à cet instant `chPret` valait null (le chapitre livré était encore actif).
+  // Une closure le capturerait périmé — d'où la ref, lue au moment de l'appel.
+  const chPretRef = useRef(chPret);
+  chPretRef.current = chPret;
+
+  const enchainerChapitre = useCallback(() => {
+    const suivant = chPretRef.current;
+    const seq = sequenceEnchainement(suivant);
+    if (!seq || !suivant) return; // trame close : le carnet reste ouvert
+    setCarnetOuvert(false);
+    setDialogueChapitreId(suivant.id);
+    setChapitreEnAttente(seq);
+  }, []);
 
   if (!isHydrated || !state) {
     return (
@@ -829,6 +848,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         onLivrerMission={(id) => livrerMission(id)}
         tempsConfiance={tempsConfiance}
         missionInitialeId={missionCibleId}
+        onChapitreLivre={enchainerChapitre}
       />
 
       <CalendrierSheet
