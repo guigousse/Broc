@@ -432,9 +432,14 @@ export function CarnetOverlay({
                 cle="quotidiennes"
                 icone={CalendarDays}
                 titre={d.carnet.sectionQuotidiennes}
-                sousTitre={
+                sousTitreAria={
                   periodiquesDeverrouillees
                     ? tr(d.carnet.renouvellement, { t: formatRestant(resteQuotidien) })
+                    : undefined
+                }
+                sousTitre={
+                  periodiquesDeverrouillees
+                    ? formatRestant(resteQuotidien)
                     : undefined
                 }
                 compteur={compteurSection(quotidiennes)}
@@ -448,9 +453,14 @@ export function CarnetOverlay({
                 cle="hebdomadaires"
                 icone={CalendarRange}
                 titre={d.carnet.sectionHebdomadaires}
-                sousTitre={
+                sousTitreAria={
                   periodiquesDeverrouillees
                     ? tr(d.carnet.renouvellement, { t: formatRestant(resteHebdo) })
+                    : undefined
+                }
+                sousTitre={
+                  periodiquesDeverrouillees
+                    ? formatRestant(resteHebdo)
                     : undefined
                 }
                 compteur={compteurSection(hebdomadaires)}

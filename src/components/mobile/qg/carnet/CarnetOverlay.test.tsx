@@ -128,8 +128,8 @@ describe("CarnetOverlay", () => {
     const q = queteChiffree("q1", "quotidienne", "Le nerf de la guerre");
     render(<CarnetOverlay {...base} state={etat([q])} />);
     // Replier la section pour révéler le compteur d'en-tête (masqué dépliée).
-    fireEvent.click(screen.getByRole("button", { name: /Commandes quotidiennes/i }));
-    const entete = screen.getByRole("button", { name: /Commandes quotidiennes/i });
+    fireEvent.click(screen.getByRole("button", { name: /Quotidien/i }));
+    const entete = screen.getByRole("button", { name: /Quotidien/i });
     expect(entete.textContent ?? "").toMatch(/\(0\/1\)/);
     expect(entete.textContent ?? "").not.toMatch(/prête/i);
   });
@@ -155,7 +155,7 @@ describe("CarnetOverlay", () => {
     const q = quete("q1", "quotidienne", "La bonne pioche");
     render(<CarnetOverlay {...base} state={etat([q])} missionInitialeId="q1" />);
     expect(screen.getByText("La bonne pioche")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /Commandes quotidiennes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Quotidien/i }));
     // Un masquage au rendu (`cle === cibleSection ? false : estRepliee(cle)`)
     // resterait actif tant que `missionInitialeId` vaut "q1" : le tap sur
     // l'en-tête n'aurait aucun effet visible, la section serait bloquée
@@ -253,9 +253,25 @@ describe("CarnetOverlay", () => {
     rerender(<CarnetOverlay {...base} state={apres} />);
     expect(ordreAffiche()).toEqual(["q_prete", "q_autre"]);
 
-    fireEvent.click(screen.getByRole("button", { name: /Commandes quotidiennes/i }));
-    const entete = screen.getByRole("button", { name: /Commandes quotidiennes/i });
+    fireEvent.click(screen.getByRole("button", { name: /Quotidien/i }));
+    const entete = screen.getByRole("button", { name: /Quotidien/i });
     expect(entete.textContent ?? "").toMatch(/\(1\/2\)/); // comptée faite…
     expect(entete.textContent ?? "").not.toMatch(/prête/i); // …mais plus « prête »
+  });
+
+  it("l'en-tête n'affiche que le minuteur, mais l'annonce en toutes lettres", () => {
+    // Le libellé « Renouvellement dans » mangeait la largeur et faisait
+    // tronquer le titre de section en français (« COMMANDES QUOTI… »).
+    // À l'écran il ne reste que la durée ; un nombre nu ne voulant rien dire
+    // sans la mise en page, la phrase complète survit en étiquette
+    // d'accessibilité — c'est elle que lit un lecteur d'écran.
+    render(<CarnetOverlay {...base} state={etat([])} />);
+    const entete = screen.getByRole("button", { name: /Quotidien/i });
+    const visible = entete.textContent ?? "";
+    expect(visible).not.toMatch(/renouvellement/i);
+    expect(visible).toMatch(/\d+\s*(h|min)/); // la durée, elle, est bien là
+    // Le nom accessible du bouton, lui, porte la phrase entière.
+    expect(entete.getAttribute("aria-label") ?? entete.querySelector("[aria-label]")?.getAttribute("aria-label") ?? "")
+      .toMatch(/renouvellement/i);
   });
 });
