@@ -134,6 +134,22 @@ describe("CarnetOverlay", () => {
     expect(entete.textContent ?? "").not.toMatch(/prête/i);
   });
 
+  it("compteur d'en-tête HISTOIRE : un chapitre livrable est signalé section repliée", () => {
+    // `trame_ch5` (« Atteindre le niveau 30 ») : `cibles: []`, un seul objectif
+    // chiffré, donc livrable au niveau 30. Sans compteur sur l'en-tête
+    // HISTOIRE, replier la section cacherait ce chapitre prêt à livrer sans
+    // que rien ne le signale — exactement ce que le compteur des deux autres
+    // sections évite déjà.
+    const ch5 = QUETES_PRINCIPALES.find((c) => c.id === "trame_ch5")!;
+    const courrier = courrierDeChapitre(ch5, 1);
+    const state = etatResolu([courrier], [{ courrierId: courrier.id, statut: "active" }], 30);
+    render(<CarnetOverlay {...base} state={state} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Histoire/i }));
+    const entete = screen.getByRole("button", { name: /^Histoire/i });
+    expect(entete.textContent ?? "").toMatch(/\(1\/1\)/);
+    expect(entete.textContent ?? "").toMatch(/1 prête|1 ready/i);
+  });
+
   it("après l'ouverture ciblée, la section redevient repliable au tap", () => {
     window.localStorage.setItem(CLE_STOCKAGE_CARNET, JSON.stringify({ quotidiennes: true }));
     const q = quete("q1", "quotidienne", "La bonne pioche");

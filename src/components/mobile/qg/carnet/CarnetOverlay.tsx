@@ -294,13 +294,16 @@ export function CarnetOverlay({
   // ci-dessous les distingue via `chapitrePret`, la même fonction qui arme la
   // pastille du grand-père — sans elle, la ligne de clôture mentirait au
   // joueur à chacune des quinze transitions entre deux chapitres.
-  const chapitreActuel = useMemo(() => {
+  // Capture AUSSI la résolution du chapitre (pas seulement son courrier) :
+  // `compteurSection` en a besoin pour l'en-tête HISTOIRE (Important 3).
+  const chapitreActif = useMemo(() => {
     for (const m of actives) {
       const c = byId.get(m.courrierId);
-      if (c?.payload.type === "mission" && c.payload.categorie === "principale") return c;
+      if (c?.payload.type === "mission" && c.payload.categorie === "principale") return { courrier: c, resolution: m };
     }
     return null;
   }, [actives, byId]);
+  const chapitreActuel = chapitreActif?.courrier ?? null;
 
   const histoireFinie = useMemo(
     () => chapitreActuel === null && chapitrePret(state) === null,
@@ -405,6 +408,10 @@ export function CarnetOverlay({
                 cle="histoire"
                 icone={BookOpen}
                 titre={d.carnet.sectionHistoire}
+                // Le seul chapitre en cours compte comme une « liste » à un
+                // élément : sans ce compteur, replier HISTOIRE pouvait cacher
+                // un chapitre livrable sans que rien ne le signale (Important 3).
+                compteur={chapitreActif ? compteurSection([chapitreActif.resolution]) : undefined}
                 repliee={estRepliee("histoire")}
                 onBasculer={() => basculer("histoire")}
               >
