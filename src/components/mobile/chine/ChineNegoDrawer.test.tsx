@@ -128,3 +128,51 @@ describe("ChineNegoDrawer — resynchronisation externe", () => {
     expect(screen.getByText(/Proposer/)).toBeTruthy();
   });
 });
+
+describe("ChineNegoDrawer — statuts portés par le tampon de la carte", () => {
+  /** Le tiroir replié : c'est là que vivaient les deux textes retirés. */
+  function renderReplie(item: ObjetEnVente, plein = false) {
+    return render(
+      <ChineNegoDrawer
+        item={item}
+        budget={1000}
+        plein={plein}
+        expanded={false}
+        onExpand={() => {}}
+        onCollapse={() => {}}
+        onUpdateNego={vi.fn()}
+        onConclu={() => {}}
+        onAcheterDirect={() => {}}
+      />,
+    );
+  }
+
+  /** Visible à l'œil = non porté par la classe de masquage `srOnly`. */
+  function texteVisible(el: HTMLElement | null): boolean {
+    return !!el && el.style.position !== "absolute";
+  }
+
+  it("objet acquis : plus de « — Acquis — » à l'écran, l'info reste pour les lecteurs d'écran", () => {
+    // Retour device : « Acquis » fait doublon avec le tampon VENDU de la
+    // carte. Mais ce tampon est `aria-hidden` — le retirer sans rien laisser
+    // priverait complètement un utilisateur de VoiceOver. Même traitement que
+    // « Vendeur fâché », dont le texte avait déjà migré vers le tampon.
+    const { container } = renderReplie({ ...makeItem(null), statut: "achete" });
+    expect(container.textContent).not.toContain("— Acquis —");
+    const annonce = screen.getByText("Vendu", { selector: "span" }) as HTMLElement;
+    expect(texteVisible(annonce)).toBe(false);
+  });
+
+  it("stockage plein : plus de texte rouge, l'info reste pour les lecteurs d'écran", () => {
+    const { container } = renderReplie(makeItem(null), true);
+    expect(container.textContent).not.toContain("Stockage plein");
+    const annonce = screen.getByText("Stock plein", { selector: "span" }) as HTMLElement;
+    expect(texteVisible(annonce)).toBe(false);
+  });
+
+  it("rien de particulier : les boutons d'action restent, aucune annonce parasite", () => {
+    renderReplie(makeItem(null), false);
+    expect(screen.getByRole("button", { name: /négocier/i })).toBeTruthy();
+    expect(screen.queryByText("Stock plein")).toBeNull();
+  });
+});

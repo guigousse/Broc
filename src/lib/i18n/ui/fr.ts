@@ -327,8 +327,10 @@ export const fr = {
     sortir: "Sortir",
     precedent: "Précédent",
     altVendeur: "Vendeur",
-    acquisStatut: "— Acquis —",
     vendeurFache: "Vendeur fâché",
+    // Tampon encreur du stock saturé, posé sur l'objet comme « Vendu ».
+    // Court exprès : le tampon est en diagonale sur la vignette.
+    tamponStockPlein: "Stock plein",
     tamponVendu: "Vendu",
     negocier: "Négocier",
     acheterPrix: "Acheter {prix} €",

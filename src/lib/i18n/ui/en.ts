@@ -324,8 +324,10 @@ export const en: DictionnaireUI = {
     sortir: "Leave",
     precedent: "Previous",
     altVendeur: "Seller",
-    acquisStatut: "— Acquired —",
     vendeurFache: "Angry seller",
+    // Tampon encreur du stock saturé, posé sur l'objet comme « Vendu ».
+    // Court exprès : le tampon est en diagonale sur la vignette.
+    tamponStockPlein: "Storage full",
     tamponVendu: "Sold",
     negocier: "Haggle",
     acheterPrix: "Buy for {prix} €",

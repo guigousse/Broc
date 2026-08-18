@@ -205,7 +205,7 @@ export function ItemSwipeDeck({
               key={s.kind === "mystere" ? "mystere" : s.item.id}
               style={{ flex: "0 0 100%", minWidth: 0, height: "100%" }}
             >
-              <ChineSlideVue slide={s} />
+              <ChineSlideVue slide={s} plein={plein} />
             </div>
           ))}
         </div>

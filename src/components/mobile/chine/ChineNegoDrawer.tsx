@@ -131,13 +131,19 @@ export function ChineNegoDrawer({
               {texteNego(localNego.message, locale)}
             </div>
           ) : acquis ? (
-            <span style={statutTexte("var(--brass-700)")}>{d.chine.acquisStatut}</span>
+            /* Visuel porté par le tampon « Vendu » sur le sticker (retour
+               device : « Acquis » faisait doublon). Le tampon étant
+               `aria-hidden`, cette annonce invisible est la SEULE trace qui
+               reste pour un lecteur d'écran — même règle que le fâché. */
+            <span style={srOnly}>{d.chine.tamponVendu}</span>
           ) : facheInitial ? (
             /* Visuel porté par le tampon « Vendeur fâché » sur le sticker ;
                on ne garde ici que l'annonce pour les lecteurs d'écran. */
             <span style={srOnly}>{d.chine.vendeurFache}</span>
           ) : plein ? (
-            <span style={statutTexte("var(--vermillion-600)")}>{d.qg.stockagePlein}</span>
+            /* Idem : le texte rouge passait inaperçu à l'écran, le tampon
+               « Stock plein » le remplace sur l'objet lui-même. */
+            <span style={srOnly}>{d.chine.tamponStockPlein}</span>
           ) : (
             <div style={peekBtnRow}>
               <button
@@ -319,12 +325,6 @@ const bubbleTailInner: CSSProperties = {
 /** Bandeau nom pleine largeur, coins hauts arrondis (ancienne fiche). */
 const namePlate = namePlateStyle("12px 12px 0 0");
 
-const statutTexte = (color: string): CSSProperties => ({
-  marginBottom: 10,
-  color,
-  fontSize: 14,
-  fontFamily: "var(--font-display)",
-});
 
 /** Texte présent pour les lecteurs d'écran mais invisible à l'écran. */
 const srOnly: CSSProperties = {

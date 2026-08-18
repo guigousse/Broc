@@ -339,8 +339,10 @@ export const el: DictionnaireUI = {
     sortir: "Έξοδος",
     precedent: "Προηγούμενο",
     altVendeur: "Πωλητής",
-    acquisStatut: "— Αποκτήθηκε —",
     vendeurFache: "Θυμωμένος πωλητής",
+    // Tampon encreur du stock saturé, posé sur l'objet comme « Vendu ».
+    // Court exprès : le tampon est en diagonale sur la vignette.
+    tamponStockPlein: "Αποθήκη γεμάτη",
     tamponVendu: "Πουλήθηκε",
     negocier: "Παζάρεμα",
     acheterPrix: "Αγορά {prix} €",
