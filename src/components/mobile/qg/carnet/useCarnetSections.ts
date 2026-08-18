@@ -55,5 +55,18 @@ export function useCarnetSections() {
     ecrire(next);
   }, [replis]);
 
-  return { estRepliee, basculer };
+  /**
+   * Force une section dépliée (ouverture ciblée d'une quête depuis un badge
+   * livrable) — ÉCRIT la préférence, contrairement à un masquage au rendu qui
+   * la laisserait intacte mais mentirait tant que la cible reste affichée.
+   * Sans effet si la section est déjà dépliée : pas d'écriture inutile.
+   */
+  const deplier = useCallback((c: CleSection) => {
+    if (replis[c] !== true) return;
+    const next = { ...replis, [c]: false };
+    setReplis(next);
+    ecrire(next);
+  }, [replis]);
+
+  return { estRepliee, basculer, deplier };
 }

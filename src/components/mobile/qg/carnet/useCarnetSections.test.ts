@@ -72,4 +72,29 @@ describe("useCarnetSections", () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it("déplier une section repliée ÉCRIT la préférence (elle ne se referme pas au remontage)", () => {
+    window.localStorage.setItem(CLE_STOCKAGE_CARNET, JSON.stringify({ quotidiennes: true }));
+    const premier = renderHook(() => useCarnetSections());
+    expect(premier.result.current.estRepliee("quotidiennes")).toBe(true);
+    act(() => premier.result.current.deplier("quotidiennes"));
+    expect(premier.result.current.estRepliee("quotidiennes")).toBe(false);
+    premier.unmount();
+    // Un masquage au seul rendu laisserait `quotidiennes: true` en place :
+    // la section se refermerait dès que la cible cesse d'être désignée.
+    const second = renderHook(() => useCarnetSections());
+    expect(second.result.current.estRepliee("quotidiennes")).toBe(false);
+  });
+
+  it("déplier une section déjà dépliée n'écrit rien", () => {
+    const espion = vi.spyOn(Storage.prototype, "setItem");
+    try {
+      const { result } = renderHook(() => useCarnetSections());
+      act(() => result.current.deplier("histoire")); // déjà dépliée par défaut
+      expect(espion).not.toHaveBeenCalled();
+      expect(result.current.estRepliee("histoire")).toBe(false);
+    } finally {
+      espion.mockRestore();
+    }
+  });
 });

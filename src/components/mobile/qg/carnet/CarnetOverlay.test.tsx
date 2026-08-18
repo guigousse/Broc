@@ -133,4 +133,17 @@ describe("CarnetOverlay", () => {
     expect(entete.textContent ?? "").toMatch(/\(0\/1\)/);
     expect(entete.textContent ?? "").not.toMatch(/prête/i);
   });
+
+  it("après l'ouverture ciblée, la section redevient repliable au tap", () => {
+    window.localStorage.setItem(CLE_STOCKAGE_CARNET, JSON.stringify({ quotidiennes: true }));
+    const q = quete("q1", "quotidienne", "La bonne pioche");
+    render(<CarnetOverlay {...base} state={etat([q])} missionInitialeId="q1" />);
+    expect(screen.getByText("La bonne pioche")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Commandes quotidiennes/i }));
+    // Un masquage au rendu (`cle === cibleSection ? false : estRepliee(cle)`)
+    // resterait actif tant que `missionInitialeId` vaut "q1" : le tap sur
+    // l'en-tête n'aurait aucun effet visible, la section serait bloquée
+    // ouverte jusqu'à la fermeture du carnet.
+    expect(screen.queryByText("La bonne pioche")).toBeNull();
+  });
 });

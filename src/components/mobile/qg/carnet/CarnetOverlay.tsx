@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { BookOpen, CalendarDays, CalendarRange } from "lucide-react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { missionLivrable } from "@/lib/quetes/objectifs";
@@ -196,7 +196,7 @@ export function CarnetOverlay({
   onChapitreLivre,
 }: CarnetOverlayProps) {
   const { d, tr } = useLangue();
-  const { estRepliee, basculer } = useCarnetSections();
+  const { estRepliee, basculer, deplier } = useCarnetSections();
   const { ceremonieId, lancer } = useCeremonieLivraison({
     state,
     onLivrerMission,
@@ -209,6 +209,25 @@ export function CarnetOverlay({
   const [, tick] = useState(0);
 
   const byId = useMemo(() => new Map(state.courriers.map((c) => [c.id, c])), [state.courriers]);
+
+  // Section de la quête visée : calculée AVANT l'effet d'ouverture ciblée
+  // ci-dessous, qui la lit pour déplier la bonne section une fois.
+  const cibleSection = useMemo<CleSection | null>(() => {
+    if (!missionInitialeId) return null;
+    const c = byId.get(missionInitialeId);
+    if (c?.payload.type !== "mission") return null;
+    if (c.payload.categorie === "principale") return "histoire";
+    if (c.payload.categorie === "quotidienne") return "quotidiennes";
+    if (c.payload.categorie === "hebdomadaire") return "hebdomadaires";
+    return null;
+  }, [missionInitialeId, byId]);
+
+  // `deplier` change d'identité à chaque bascule de section (cf.
+  // useCarnetSections) : lu via une ref pour que l'effet d'ouverture ciblée
+  // ci-dessous ne se redéclenche PAS quand le joueur replie/déplie une autre
+  // section pendant que la cible reste affichée.
+  const deplierRef = useRef(deplier);
+  deplierRef.current = deplier;
 
   // Minuteur du renouvellement des sections périodiques (« Renouvellement dans t »).
   useEffect(() => {
@@ -235,13 +254,21 @@ export function CarnetOverlay({
   // vient d'inscrire dans le carnet resté ouvert) : la déplier et l'amener
   // dans la zone visible. `ouvertId` étant initialisé au seul montage, la
   // resynchro ici est ce qui couvre le cas « le carnet était déjà ouvert ».
+  //
+  // Dépendance unique `missionInitialeId` (comme l'effet le documentait déjà
+  // avant ce correctif) : `deplier` honore l'override UNE FOIS, au moment où
+  // la cible est désignée — pas pour toute la durée où `missionInitialeId`
+  // reste affecté à la même valeur (sinon la section redevient pliable au
+  // premier tap, mais chaque re-render la re-déplierait silencieusement).
   useEffect(() => {
     if (!missionInitialeId) return;
     setOuvertId(missionInitialeId);
+    if (cibleSection) deplierRef.current(cibleSection);
     const el = Array.from(document.querySelectorAll<HTMLElement>("[data-commande-id]")).find(
       (n) => n.dataset.commandeId === missionInitialeId,
     );
     if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cibleSection dérive de missionInitialeId ; le réévaluer ici redéclencherait l'ouverture forcée à chaque re-render.
   }, [missionInitialeId]);
 
   // La commande en cérémonie est déjà « livree » dans le state : on la garde
@@ -301,21 +328,6 @@ export function CarnetOverlay({
       ),
     [actives, byId, state, ceremonieId],
   );
-
-  // Section de la quête visée : le SEUL cas où la préférence de repli
-  // mémorisée (useCarnetSections) est outrepassée — jamais persisté, un
-  // recalcul pur à chaque rendu.
-  const cibleSection = useMemo<CleSection | null>(() => {
-    if (!missionInitialeId) return null;
-    const c = byId.get(missionInitialeId);
-    if (c?.payload.type !== "mission") return null;
-    if (c.payload.categorie === "principale") return "histoire";
-    if (c.payload.categorie === "quotidienne") return "quotidiennes";
-    if (c.payload.categorie === "hebdomadaire") return "hebdomadaires";
-    return null;
-  }, [missionInitialeId, byId]);
-
-  const replieeEffective = (cle: CleSection): boolean => (cle === cibleSection ? false : estRepliee(cle));
 
   const now = tempsConfiance?.() ?? Date.now();
   const resteQuotidien = prochainMinuitLocalMs(now) - now;
@@ -387,7 +399,7 @@ export function CarnetOverlay({
                 cle="histoire"
                 icone={BookOpen}
                 titre={d.carnet.sectionHistoire}
-                repliee={replieeEffective("histoire")}
+                repliee={estRepliee("histoire")}
                 onBasculer={() => basculer("histoire")}
               >
                 {chapitreActuel ? (
@@ -413,7 +425,7 @@ export function CarnetOverlay({
                     : undefined
                 }
                 compteur={compteurSection(quotidiennes)}
-                repliee={replieeEffective("quotidiennes")}
+                repliee={estRepliee("quotidiennes")}
                 onBasculer={() => basculer("quotidiennes")}
               >
                 {periodiquesDeverrouillees ? quotidiennes.map(renderLigne) : ligneVerrou}
@@ -429,7 +441,7 @@ export function CarnetOverlay({
                     : undefined
                 }
                 compteur={compteurSection(hebdomadaires)}
-                repliee={replieeEffective("hebdomadaires")}
+                repliee={estRepliee("hebdomadaires")}
                 onBasculer={() => basculer("hebdomadaires")}
               >
                 {periodiquesDeverrouillees ? hebdomadaires.map(renderLigne) : ligneVerrou}
