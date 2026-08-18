@@ -605,10 +605,6 @@ export const el: DictionnaireUI = {
     pagePrecedenteAria: "Προηγούμενη σελίδα",
     pageIndicateurAria: "Σελίδα {page} από {total}",
   },
-  registre: {
-    ongletCommandes: "Παραγγελίες",
-    ongletComptes: "Λογαριασμοί",
-  },
   cahier: {
     marcheDuJour: "Αγορά της ημέρας",
     marcheDuJourN: "Αγορά της ημέρας Η{n}",
@@ -637,8 +633,6 @@ export const el: DictionnaireUI = {
     fermer: "Κλείσιμο",
     titre: "Βιβλίο παραγγελιών",
     jour: "Ημέρα {n}",
-    livrablesSuffixe_un: " · {n} παραδοτέο",
-    livrablesSuffixe_n: " · {n} παραδοτέα",
     aucuneCommande: "Καμία παραγγελία προς το παρόν.",
     sectionPrincipales: "Κύριες παραγγελίες",
     sectionQuotidiennes: "Καθημερινές παραγγελίες",
@@ -657,6 +651,9 @@ export const el: DictionnaireUI = {
     recompenseAria: "Ανταμοιβή: {argent} €, {xp} XP, {energie} ενέργεια",
     livrer: "Παράδοση",
     livrerProgress: "Παράδοση ({rempli}/{total})",
+    sectionCompteur: "({faits}/{total})",
+    sectionPretes_un: " · {n} έτοιμη",
+    sectionPretes_n: " · {n} έτοιμες",
     // Libellés des objectifs de chapitre (SP2 trame) : chaque type non-"objet"
     // affiche une ligne de progression dédiée dans le carnet.
     objectifs: {
@@ -665,7 +662,17 @@ export const el: DictionnaireUI = {
       restauration: "Αποκατάσταση αντικειμένου (ελάχ. {etat})",
       valeurCollection: "Αξία συλλογής",
       niveau: "Επίπεδο παλιατζή",
+      objetsRares: "Σπάνια ευρήματα",
+      beneficeCumule: "Κέρδος που επιτεύχθηκε",
+      ventesCategorie: "Αντικείμενα που πουλήθηκαν ({categorie})",
     },
+    histoireSurtitre: "Κύρια αποστολή",
+    histoireObjectifActuel: "Τρέχων στόχος",
+    histoireInconnu: "???",
+    carnetTitre: "Τετράδιο αποστολών",
+    sectionHistoire: "Ιστορία",
+    sectionVerrouilleeNiveau: "Από το επίπεδο {n}",
+    histoireTerminee: "Ο παππούς σου τα έχει πει όλα.",
   },
   // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les
   // `params` structurés (LedgerEntry.params). Reproduisent EXACTEMENT les chaînes

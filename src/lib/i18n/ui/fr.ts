@@ -594,11 +594,6 @@ export const fr = {
     pagePrecedenteAria: "Page précédente",
     pageIndicateurAria: "Page {page} sur {total}",
   },
-  // Registre unifié (QG) : onglets Commandes / Comptes.
-  registre: {
-    ongletCommandes: "Commandes",
-    ongletComptes: "Comptes",
-  },
   cahier: {
     marcheDuJour: "Marché du jour",
     marcheDuJourN: "Marché du jour J{n}",
@@ -627,8 +622,6 @@ export const fr = {
     fermer: "Fermer",
     titre: "Carnet de commandes",
     jour: "Jour {n}",
-    livrablesSuffixe_un: " · {n} livrable",
-    livrablesSuffixe_n: " · {n} livrables",
     aucuneCommande: "Aucune commande pour l'instant.",
     sectionPrincipales: "Commandes principales",
     sectionQuotidiennes: "Commandes quotidiennes",
@@ -648,6 +641,11 @@ export const fr = {
     recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie",
     livrer: "Livrer",
     livrerProgress: "Livrer ({rempli}/{total})",
+    // En-tête de section rétractable (refonte carnet SP3) : le compteur ne
+    // s'affiche que repliée, la mention "prête" est omise si pretes === 0.
+    sectionCompteur: "({faits}/{total})",
+    sectionPretes_un: " · {n} prête",
+    sectionPretes_n: " · {n} prêtes",
     // Libellés des objectifs de chapitre (SP2 trame) : chaque type non-"objet"
     // affiche une ligne de progression dédiée dans le carnet.
     objectifs: {
@@ -656,7 +654,20 @@ export const fr = {
       restauration: "Restaurer un objet ({etat} min.)",
       valeurCollection: "Valeur de la collection",
       niveau: "Niveau de brocanteur",
+      objetsRares: "Objets rares trouvés",
+      beneficeCumule: "Bénéfice réalisé",
+      ventesCategorie: "Objets vendus ({categorie})",
     },
+    // Carte d'histoire (trame principale, refonte carnet SP3).
+    histoireSurtitre: "Quête principale",
+    histoireObjectifActuel: "Objectif actuel",
+    histoireInconnu: "???",
+    // Châssis du carnet (SP3 Task 9) : titre de fenêtre, section Histoire,
+    // verrou de niveau des sections périodiques, clôture de la trame.
+    carnetTitre: "Carnet de quêtes",
+    sectionHistoire: "Histoire",
+    sectionVerrouilleeNiveau: "À partir du niveau {n}",
+    histoireTerminee: "Le grand-père t'a tout raconté.",
   },
   // Libellés d'écritures du grand livre re-rendus à l'affichage depuis les
   // `params` structurés (LedgerEntry.params). Reproduisent EXACTEMENT les chaînes

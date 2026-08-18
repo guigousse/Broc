@@ -1,5 +1,5 @@
 import type { Locale, LocaleTraduite } from "@/lib/i18n/locales";
-import type { CleMessageNego, MessageNego, Temperament, VendeurArchetypeId } from "@/types/game";
+import type { CategorieObjet, CleMessageNego, MessageNego, Temperament, VendeurArchetypeId } from "@/types/game";
 import { tr } from "@/lib/i18n/ui";
 import { POOLS_NEGO_FR, POOLS_NEGO_TEMPERAMENT_FR } from "@/lib/negociation";
 import { NEGO_EN, NEGO_TEMPERAMENT_EN } from "./en/nego";
@@ -36,7 +36,7 @@ import type { DialogueSequence } from "@/data/dialogues";
 import { DIALOGUES_EN } from "./en/dialogues";
 import { DIALOGUES_ES } from "./es/dialogues";
 import { DIALOGUES_EL } from "./el/dialogues";
-import { libelleEtat } from "@/lib/i18n/libelles";
+import { libelleEtat, libelleCategorie } from "@/lib/i18n/libelles";
 import { DICTIONNAIRES } from "@/lib/i18n/ui";
 import type { EtatObjet, MissionCible } from "@/types/game";
 
@@ -434,15 +434,19 @@ const QUETES_GABARITS_OVERLAY: Record<
 };
 
 /**
- * Mise en forme des placeholders `{objets}`/`{etat}` PROPRE À CHAQUE LANGUE
- * (guillemets, séparateurs, mention d'état) — pas un calque du FR. Le FR reste
- * dans `quetes/textes.ts` ; ici on ne traite que les locales à régénérer.
+ * Mise en forme des placeholders `{objets}`/`{etat}`/`{nombre}`/`{montant}`/
+ * `{categorie}` PROPRE À CHAQUE LANGUE (guillemets, séparateurs, mention
+ * d'état, convention monétaire, libellé de catégorie traduit) — pas un
+ * calque du FR. Le FR reste dans `quetes/textes.ts` ; ici on ne traite que
+ * les locales à régénérer.
  */
 const MISE_EN_FORME_GABARIT: Record<
   LocaleTraduite,
   {
     objets: (cibles: MissionCible[], locale: LocaleTraduite) => string;
     etat: (etatMin: EtatObjet | undefined, locale: LocaleTraduite) => string;
+    montant: (n: number) => string;
+    categorie: (c: CategorieObjet | undefined, locale: LocaleTraduite) => string;
   }
 > = {
   en: {
@@ -450,18 +454,24 @@ const MISE_EN_FORME_GABARIT: Record<
       cibles.map((c) => `"${nomTemplate(c.templateId, locale)}"`).join(", "),
     etat: (etatMin, locale) =>
       etatMin ? ` (min. condition: ${libelleEtat(etatMin, DICTIONNAIRES[locale])})` : "",
+    montant: (n) => `€${n.toLocaleString("en-GB")}`,
+    categorie: (c, locale) => (c ? libelleCategorie(c, DICTIONNAIRES[locale]) : ""),
   },
   es: {
     objets: (cibles, locale) =>
       cibles.map((c) => `« ${nomTemplate(c.templateId, locale)} »`).join(", "),
     etat: (etatMin, locale) =>
       etatMin ? ` (estado mín.: ${libelleEtat(etatMin, DICTIONNAIRES[locale])})` : "",
+    montant: (n) => `${n.toLocaleString("es-ES")} €`,
+    categorie: (c, locale) => (c ? libelleCategorie(c, DICTIONNAIRES[locale]) : ""),
   },
   el: {
     objets: (cibles, locale) =>
       cibles.map((c) => `« ${nomTemplate(c.templateId, locale)} »`).join(", "),
     etat: (etatMin, locale) =>
       etatMin ? ` (ελάχ. κατάσταση: ${libelleEtat(etatMin, DICTIONNAIRES[locale])})` : "",
+    montant: (n) => `${n.toLocaleString("el-GR")} €`,
+    categorie: (c, locale) => (c ? libelleCategorie(c, DICTIONNAIRES[locale]) : ""),
   },
 };
 
@@ -470,14 +480,15 @@ type PayloadCourrier = {
   titre: string;
   corps: string[];
   gabaritId?: string;
-  gabaritParams?: { etatMin?: EtatObjet };
+  gabaritParams?: { etatMin?: EtatObjet; nombre?: number; montant?: number; categorie?: CategorieObjet };
   cibles?: MissionCible[];
 };
 
 /**
  * Cœur de régénération d'un texte de gabarit périodique dans la locale (≠ fr) :
  * résout la variante par `gabaritId` (absorbe un index hors borne via
- * `index % nbVariantes`) puis interpole `{objets}`/`{etat}`. `null` si pas de
+ * `index % nbVariantes`) puis interpole `{objets}`/`{etat}`/`{nombre}`/
+ * `{montant}`/`{categorie}`. `null` si pas de
  * gabarit résoluble. Partagé par la voie payload (`resoudreGabarit`) et la voie
  * ledger (`titreDepuisGabarit`, après purge du courrier).
  */
@@ -486,6 +497,7 @@ function resoudreGabaritCore(
   cibles: MissionCible[],
   etatMin: EtatObjet | undefined,
   locale: LocaleTraduite,
+  params: { nombre?: number; montant?: number; categorie?: CategorieObjet } = {},
 ): { titre: string; corps: string[] } | null {
   if (!gabaritId) return null;
   const sep = gabaritId.lastIndexOf("#");
@@ -505,7 +517,12 @@ function resoudreGabaritCore(
   const objets = fmt.objets(cibles, locale);
   const etat = fmt.etat(etatMin, locale);
   const fill = (s: string) =>
-    s.replaceAll("{objets}", objets).replaceAll("{etat}", etat);
+    s
+      .replaceAll("{objets}", objets)
+      .replaceAll("{etat}", etat)
+      .replaceAll("{nombre}", String(params.nombre ?? 0))
+      .replaceAll("{montant}", fmt.montant(params.montant ?? 0))
+      .replaceAll("{categorie}", fmt.categorie(params.categorie, locale));
   return { titre: fill(g.titre), corps: g.corps.map(fill) };
 }
 
@@ -522,6 +539,11 @@ function resoudreGabarit(
     payload.cibles ?? [],
     payload.gabaritParams?.etatMin,
     locale,
+    {
+      nombre: payload.gabaritParams?.nombre,
+      montant: payload.gabaritParams?.montant,
+      categorie: payload.gabaritParams?.categorie,
+    },
   );
 }
 

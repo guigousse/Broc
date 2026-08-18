@@ -60,7 +60,11 @@ import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
 import { PasserConfirmSheet } from "@/components/mobile/qg/sheets/PasserConfirmSheet";
-import { RegistreOverlay, type OngletRegistre } from "@/components/mobile/qg/overlays/RegistreOverlay";
+import { CarnetOverlay } from "@/components/mobile/qg/carnet/CarnetOverlay";
+import {
+  DELAI_AVANT_DIALOGUE_MS,
+  sequenceEnchainement,
+} from "@/lib/quetes/enchainement";
 import { CourrierSheet } from "@/components/mobile/qg/sheets/CourrierSheet";
 import { CalendrierSheet } from "@/components/mobile/qg/sheets/CalendrierSheet";
 import { GramophoneSheet } from "@/components/mobile/qg/sheets/GramophoneSheet";
@@ -157,9 +161,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   /** Machine à énergie popée avec bandeau : Chiner/Étaler cliqué sans énergie. */
   const [alerteEnergie, setAlerteEnergie] = useState(false);
   const [confirmPasser, setConfirmPasser] = useState(false);
-  /** Registre unifié (Commandes/Comptes) : null = fermé, sinon onglet actif. */
-  const [registreOuvert, setRegistreOuvert] = useState<OngletRegistre | null>(null);
-  /** Commande à déplier d'office dans le registre (badge livrable tapé). */
+  /** Carnet de quêtes : ouvert/fermé (plus d'onglet à porter depuis le châssis). */
+  const [carnetOuvert, setCarnetOuvert] = useState(false);
+  /** Commande à déplier d'office dans le carnet (badge livrable tapé). */
   const [missionCibleId, setMissionCibleId] = useState<string | null>(null);
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
@@ -470,14 +474,14 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // les dépendances de cet effet, son cleanup tuerait le minuteur avant qu'il
   // ne tire.
   useEffect(() => {
-    if (!chapitreDuCarnetDu(state?.miniTutoCarnet, registreOuvert)) return;
+    if (!chapitreDuCarnetDu(state?.miniTutoCarnet, carnetOuvert)) return;
     terminerMiniTutoCarnet();
     // Le mini-tuto est clos quoi qu'il arrive : pas de chapitre dû (save où il
     // a déjà été accepté sous l'ancien flux) ⇒ la pastille reprend la main.
     if (!chPret) return;
     setDialogueChapitreId(chPret.id);
     setChapitreEnAttente({ id: `dlg_${chPret.id}`, lignes: chPret.dialogue });
-  }, [state?.miniTutoCarnet, registreOuvert, chPret, terminerMiniTutoCarnet]);
+  }, [state?.miniTutoCarnet, carnetOuvert, chPret, terminerMiniTutoCarnet]);
 
   // Battement avant le dialogue armé ci-dessus : le joueur voit d'abord la
   // page vide du carnet. Dépendance unique dont l'identité ne change que sur
@@ -488,9 +492,24 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     const t = window.setTimeout(() => {
       setDialogueQg(chapitreEnAttente);
       setChapitreEnAttente(null);
-    }, 500);
+    }, DELAI_AVANT_DIALOGUE_MS);
     return () => window.clearTimeout(t);
   }, [chapitreEnAttente]);
+
+  // `onChapitreLivre` est appelé depuis un minuteur créé au tap sur « Livrer » :
+  // à cet instant `chPret` valait null (le chapitre livré était encore actif).
+  // Une closure le capturerait périmé — d'où la ref, lue au moment de l'appel.
+  const chPretRef = useRef(chPret);
+  chPretRef.current = chPret;
+
+  const enchainerChapitre = useCallback(() => {
+    const suivant = chPretRef.current;
+    const seq = sequenceEnchainement(suivant);
+    if (!seq || !suivant) return; // trame close : le carnet reste ouvert
+    setCarnetOuvert(false);
+    setDialogueChapitreId(suivant.id);
+    setChapitreEnAttente(seq);
+  }, []);
 
   if (!isHydrated || !state) {
     return (
@@ -577,7 +596,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                   onTap={() => {
                     if (tutoActif) return;
                     playClick();
-                    setRegistreOuvert("commandes");
+                    setCarnetOuvert(true);
                   }}
                 />
                 {state.gazetteAchetee && (
@@ -819,18 +838,17 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         bloque={state.chatSurFauteuil}
       />
 
-      <RegistreOverlay
-        open={registreOuvert !== null}
-        onglet={registreOuvert ?? "commandes"}
-        onOngletChange={setRegistreOuvert}
+      <CarnetOverlay
+        open={carnetOuvert}
         onClose={() => {
-          setRegistreOuvert(null);
+          setCarnetOuvert(false);
           setMissionCibleId(null);
         }}
         state={state}
         onLivrerMission={(id) => livrerMission(id)}
         tempsConfiance={tempsConfiance}
         missionInitialeId={missionCibleId}
+        onChapitreLivre={enchainerChapitre}
       />
 
       <CalendrierSheet
@@ -978,7 +996,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           onTap={(courrierId) => {
             playClick();
             setMissionCibleId(courrierId);
-            setRegistreOuvert("commandes");
+            setCarnetOuvert(true);
           }}
         />
       )}

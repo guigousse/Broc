@@ -5,8 +5,15 @@ import {
   objectifsDeMission,
   progressionObjectif,
 } from "./objectifs";
-import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
-import type { Courrier, CourrierPayloadMission, MissionResolution, SessionVente } from "@/types/game";
+import { createMockGameState, createMockObjet } from "@/lib/__test-fixtures__/gameState";
+import type {
+  CategorieObjet,
+  Courrier,
+  CourrierPayloadMission,
+  MissionResolution,
+  SessionChinage,
+  SessionVente,
+} from "@/types/game";
 
 const payloadBase: CourrierPayloadMission = {
   type: "mission", categorie: "principale", expediteurId: "grand-pere",
@@ -14,13 +21,27 @@ const payloadBase: CourrierPayloadMission = {
 };
 const reso: MissionResolution = { courrierId: "x", statut: "active", timestampAcceptation: 1000 };
 
-function venteSession(timestamp: number, ventes: Array<{ prixVente: number; prixAchat: number | null }>): SessionVente {
+function venteSession(
+  timestamp: number,
+  ventes: Array<{ prixVente: number; prixAchat: number | null; categorie?: CategorieObjet }>,
+): SessionVente {
   return {
     id: `s${timestamp}`, type: "vente", jour: 3, timestamp, niveauCamion: 1,
     loyer: 0, invendus: 0, xpGagne: {} as SessionVente["xpGagne"],
     ventes: ventes.map((v) => ({
       templateId: "ma.x", nom: "X", categorie: "Maison",
       etat: "Bon", prixReferenceReel: 10, ...v,
+    })),
+  };
+}
+
+function chineSession(timestamp: number, templateIds: string[]): SessionChinage {
+  return {
+    id: `c${timestamp}`, type: "chinage", jour: 3, timestamp,
+    brocanteId: "b1", brocanteNom: "B", xpGagne: {} as SessionChinage["xpGagne"],
+    achats: templateIds.map((templateId) => ({
+      templateId, nom: "X", categorie: "Musique" as const,
+      etat: "Bon" as const, prixReferenceReel: 10, prixPaye: 5,
     })),
   };
 }
@@ -132,5 +153,77 @@ describe("missionLivrable", () => {
     const state = createMockGameState({ historique: [venteSession(2000, [{ prixVente: 350, prixAchat: 10 }])] });
     expect(missionLivrable(p, reso, state, 1)).toBe(true);
     expect(missionLivrable(p, reso, createMockGameState({}), 1)).toBe(false);
+  });
+});
+
+describe("objetsRares", () => {
+  const obj = { type: "objetsRares" as const, nombre: 2 };
+
+  it("compte les objets rares chinés après l'acceptation", () => {
+    const state = createMockGameState({
+      historique: [
+        chineSession(500, ["mus.guitare_classique_ancienne"]), // avant acceptation
+        chineSession(1500, ["mus.guitare_classique_ancienne", "mus.33tours_jazz_1"]),
+        chineSession(2500, ["mus.test_pressing_des_trolling_sons"]),
+      ],
+    });
+    expect(progressionObjectif(obj, state, reso, 1)).toEqual({ actuel: 2, cible: 2, atteint: true });
+  });
+
+  it("ce qui précède l'acceptation ne compte pas", () => {
+    const state = createMockGameState({
+      historique: [chineSession(500, ["mus.guitare_classique_ancienne", "mus.test_pressing_des_trolling_sons"])],
+    });
+    expect(progressionObjectif(obj, state, reso, 1)).toEqual({ actuel: 0, cible: 2, atteint: false });
+  });
+
+  it("le stock déjà possédé ne compte pas", () => {
+    const state = createMockGameState({
+      historique: [],
+      inventaireJoueur: [createMockObjet({ templateId: "mus.guitare_classique_ancienne", categorie: "Musique" })],
+    });
+    expect(progressionObjectif(obj, state, reso, 1).actuel).toBe(0);
+  });
+});
+
+describe("beneficeCumule", () => {
+  const obj = { type: "beneficeCumule" as const, montant: 300 };
+
+  it("somme les marges des ventes postérieures", () => {
+    const state = createMockGameState({
+      historique: [venteSession(1500, [{ prixVente: 200, prixAchat: 50 }, { prixVente: 100, prixAchat: 40 }])],
+    });
+    expect(progressionObjectif(obj, state, reso, 1)).toEqual({ actuel: 210, cible: 300, atteint: false });
+  });
+
+  it("ignore les ventes sans prix d'achat connu", () => {
+    const state = createMockGameState({
+      historique: [venteSession(1500, [{ prixVente: 500, prixAchat: null }, { prixVente: 100, prixAchat: 40 }])],
+    });
+    expect(progressionObjectif(obj, state, reso, 1).actuel).toBe(60);
+  });
+
+  it("une perte nette ne descend pas sous zéro", () => {
+    const state = createMockGameState({
+      historique: [venteSession(1500, [{ prixVente: 10, prixAchat: 200 }])],
+    });
+    expect(progressionObjectif(obj, state, reso, 1).actuel).toBe(0);
+  });
+});
+
+describe("ventesCategorie", () => {
+  const obj = { type: "ventesCategorie" as const, categorie: "Musique" as const, nombre: 3 };
+
+  it("ne compte que la catégorie demandée", () => {
+    const state = createMockGameState({
+      historique: [
+        venteSession(1500, [
+          { prixVente: 10, prixAchat: 5, categorie: "Musique" },
+          { prixVente: 10, prixAchat: 5, categorie: "Musique" },
+          { prixVente: 10, prixAchat: 5, categorie: "Mode" },
+        ]),
+      ],
+    });
+    expect(progressionObjectif(obj, state, reso, 1)).toEqual({ actuel: 2, cible: 3, atteint: false });
   });
 });

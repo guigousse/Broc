@@ -120,6 +120,10 @@ export interface RecompenseCourrier {
 export interface CourrierGabaritParams {
   /** État minimum requis, pour reformer la mention `{etat}` dans la locale. */
   etatMin?: EtatObjet;
+  /** Paramètres des gabarits CHIFFRÉS (quêtes sans objet nommé, SP5 tâche 6). */
+  nombre?: number;
+  montant?: number;
+  categorie?: CategorieObjet;
 }
 
 /** Lettre narrative générique (mère, ami, maire, client…). */
@@ -157,7 +161,11 @@ export type ObjectifMission =
   | { type: "profitVente"; montant: number }
   | { type: "restauration"; etatMin: EtatObjet }
   | { type: "valeurCollection"; montant: number }
-  | { type: "niveau"; niveau: number };
+  | { type: "niveau"; niveau: number }
+  /* Périodiques (SP5) — comptés APRÈS l'apparition de la quête. */
+  | { type: "objetsRares"; nombre: number }
+  | { type: "beneficeCumule"; montant: number }
+  | { type: "ventesCategorie"; categorie: CategorieObjet; nombre: number };
 
 /** Restauration terminée (trace pour les objectifs "restauration"). */
 export interface RestaurationAccomplie {

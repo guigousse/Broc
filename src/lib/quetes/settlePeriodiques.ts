@@ -16,6 +16,7 @@ function settleUnLot(
   type: TypePeriodique,
   lot: LotPeriodique,
   cleActuelle: string,
+  now: number,
 ):
   | (Pick<GameState, "courriers" | "missions"> & { lot: LotPeriodique })
   | null {
@@ -28,7 +29,13 @@ function settleUnLot(
     courriers: [...courriers, ...nouveaux],
     missions: [
       ...missions,
-      ...nouveaux.map((c) => ({ courrierId: c.id, statut: "active" as const })),
+      ...nouveaux.map((c) => ({
+        courrierId: c.id,
+        statut: "active" as const,
+        // Sans cet horodatage, les objectifs cumulatifs retomberaient sur le
+        // jour de JEU en cours et compteraient des ventes antérieures à la quête.
+        timestampAcceptation: now,
+      })),
     ],
     lot: { cle: cleActuelle, courrierIds: nouveaux.map((c) => c.id) },
   };
@@ -53,6 +60,7 @@ export function settleQuetesPeriodiques(state: GameState, now: number): GameStat
     "quotidienne",
     quotidien,
     cleJourLocal(now),
+    now,
   );
   if (q) {
     courriers = q.courriers;
@@ -66,6 +74,7 @@ export function settleQuetesPeriodiques(state: GameState, now: number): GameStat
     "hebdomadaire",
     hebdo,
     cleSemaineLocale(now),
+    now,
   );
   if (h) {
     courriers = h.courriers;

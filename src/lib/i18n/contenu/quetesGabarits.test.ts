@@ -3,24 +3,103 @@ import { QUETES_GABARITS_EN } from "@/lib/i18n/contenu/en/quetesGabarits";
 import { QUETES_GABARITS_ES } from "@/lib/i18n/contenu/es/quetesGabarits";
 import { QUETES_GABARITS_EL } from "@/lib/i18n/contenu/el/quetesGabarits";
 import { titreCourrier, corpsCourrier } from "@/lib/i18n/contenu";
+import {
+  gabaritsChiffres,
+  nombreVariantesChiffrees,
+  nombreVariantesCommanditaire,
+} from "@/lib/quetes/textes";
 
-const CLES = ["generique", "jeux-video", "set-designer", "mode", "art"];
+/** Familles « formes chiffrées » (Task 6) — les autres sont « objet nommé ». */
+const FAMILLES_CHIFFREES = ["rares", "benefice", "chiffre", "marge", "categorie"];
+
+/** Marques obligatoires dans le CORPS de chaque famille de gabarits. */
+const MARQUES_PAR_FAMILLE: Record<string, string[]> = {
+  generique: ["{objets}"],
+  "jeux-video": ["{objets}"],
+  "set-designer": ["{objets}"],
+  mode: ["{objets}"],
+  art: ["{objets}"],
+  rares: ["{nombre}"],
+  benefice: ["{montant}"],
+  chiffre: ["{montant}"],
+  marge: ["{montant}"],
+  categorie: ["{nombre}", "{categorie}"],
+};
+
+/**
+ * Nombre de variantes attendu par famille, dérivé du FR canonique
+ * (`src/lib/quetes/textes.ts`) plutôt que recopié en dur ici : si une 3ᵉ
+ * variante FR est ajoutée un jour, ce nombre suit automatiquement — un
+ * overlay qui resterait à 2 variantes ferait alors échouer le test au lieu
+ * de laisser `resoudreGabaritCore` absorber silencieusement l'index hors
+ * borne (`idx % variantes.length`) vers la mauvaise phrase.
+ */
+const NB_VARIANTES_ATTENDU: Record<string, number> = Object.fromEntries(
+  Object.keys(MARQUES_PAR_FAMILLE).map((cle) => [
+    cle,
+    FAMILLES_CHIFFREES.includes(cle)
+      ? nombreVariantesChiffrees(cle)
+      : nombreVariantesCommanditaire(cle),
+  ]),
+);
 
 describe.each([
   ["EN", QUETES_GABARITS_EN],
   ["ES", QUETES_GABARITS_ES],
   ["EL", QUETES_GABARITS_EL],
-] as const)(
-  "gabarits périodiques %s", (_, ov) => {
-    test("chaque clé a ≥1 variante indexée depuis #0, placeholders {objets} présents", () => {
-      for (const cle of CLES) {
-        expect(ov[`${cle}#0`]).toBeDefined();
-        const tous = Object.entries(ov).filter(([k]) => k.startsWith(`${cle}#`));
-        for (const [, g] of tous) expect(g.corps.join(" ")).toContain("{objets}");
+] as const)("gabarits périodiques %s", (_, ov) => {
+  test("chaque famille a EXACTEMENT le nombre de variantes du FR, chacune avec ses marques", () => {
+    for (const [cle, marques] of Object.entries(MARQUES_PAR_FAMILLE)) {
+      const attendu = NB_VARIANTES_ATTENDU[cle];
+      for (let i = 0; i < attendu; i++) {
+        const g = ov[`${cle}#${i}`];
+        expect(g, `${cle}#${i} manquant`).toBeDefined();
+        for (const marque of marques) {
+          expect(g.corps.join(" "), `${cle}#${i} devrait contenir ${marque}`).toContain(marque);
+        }
       }
-    });
-  },
-);
+      const tous = Object.entries(ov).filter(([k]) => k.startsWith(`${cle}#`));
+      expect(tous.length, `${cle} : ${attendu} variante(s) attendue(s) côté FR`).toBe(attendu);
+    }
+  });
+
+  test("aucune famille orpheline dans l'overlay", () => {
+    for (const k of Object.keys(ov)) {
+      const famille = k.slice(0, k.lastIndexOf("#"));
+      expect(Object.keys(MARQUES_PAR_FAMILLE)).toContain(famille);
+    }
+  });
+});
+
+test("aucune famille chiffrée ne porte de marque dans le TITRE (FR + overlays)", () => {
+  // `titreDepuisGabarit` (grand livre, après purge du courrier) régénère un
+  // titre avec `params = {}` : ça ne peut être sans danger QUE si aucun
+  // titre chiffré n'interpole `{nombre}`/`{montant}`/`{categorie}` — c'est le
+  // cas aujourd'hui par accident (toutes les marques vivent dans le corps).
+  // Ce test transforme l'accident en règle : si quelqu'un ajoute un jour un
+  // titre du genre "{montant} avant dimanche", il échoue ici au lieu de
+  // laisser le grand livre afficher silencieusement "€0".
+  const overlaysParLocale: Record<string, Record<string, { titre: string }>> = {
+    en: QUETES_GABARITS_EN,
+    es: QUETES_GABARITS_ES,
+    el: QUETES_GABARITS_EL,
+  };
+  for (const cle of FAMILLES_CHIFFREES) {
+    // Source FR canonique.
+    for (const g of gabaritsChiffres(cle)) {
+      expect(g.titre, `FR ${cle} : "${g.titre}"`).not.toMatch(/\{[a-z]+\}/);
+    }
+    // Chaque overlay traduit.
+    const attendu = nombreVariantesChiffrees(cle);
+    for (const [locale, overlay] of Object.entries(overlaysParLocale)) {
+      for (let i = 0; i < attendu; i++) {
+        const g = overlay[`${cle}#${i}`];
+        expect(g, `${locale} ${cle}#${i} manquant`).toBeDefined();
+        expect(g.titre, `${locale} ${cle}#${i} : "${g.titre}"`).not.toMatch(/\{[a-z]+\}/);
+      }
+    }
+  }
+});
 
 test("courrier périodique avec gabaritId : régénéré dans la locale, cibles localisées", () => {
   const payload = {
@@ -38,4 +117,25 @@ test("courrier périodique avec gabaritId : régénéré dans la locale, cibles 
   // fallback : sans gabaritId ni id connu → payload FR
   const legacy = { id: "quo_legacy_1", payload: { ...payload, gabaritId: undefined } };
   expect(corpsCourrier(legacy, "en")).toEqual(["CORPS FR PERSISTÉ"]);
+});
+
+test("quête chiffrée régénérée dans la locale, sans marque résiduelle", () => {
+  const payload = {
+    type: "mission" as const,
+    categorie: "hebdomadaire" as const,
+    expediteurId: "mode",
+    titre: "TITRE FR PERSISTÉ",
+    corps: ["CORPS FR PERSISTÉ"],
+    cibles: [],
+    recompense: { argent: 210 },
+    gabaritId: "categorie#0",
+    gabaritParams: { nombre: 5, categorie: "Mode" as const },
+  };
+  const courrier = { id: "heb_test_1", payload };
+  for (const loc of ["en", "es", "el"] as const) {
+    const tout = [titreCourrier(courrier, loc), ...corpsCourrier(courrier, loc)].join(" ");
+    expect(tout).not.toContain("PERSISTÉ");
+    expect(tout).not.toMatch(/\{[a-z]+\}/);
+    expect(tout).not.toContain("Mode"); // la catégorie doit sortir TRADUITE
+  }
 });

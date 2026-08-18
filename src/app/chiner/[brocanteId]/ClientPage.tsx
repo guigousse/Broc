@@ -486,7 +486,11 @@ export default function SessionChinePage() {
         id: crypto.randomUUID(),
         type: "chinage",
         jour: state.jourActuel,
-        timestamp: Date.now(),
+        // Horloge de confiance : les objectifs périodiques comparent ce
+        // timestamp à `timestampAcceptation` (posé lui aussi via
+        // `tempsConfiance`). Utiliser `Date.now()` ici désynchroniserait les
+        // deux bords de la comparaison si l'horloge de l'appareil dérive.
+        timestamp: tempsConfiance() ?? Date.now(),
         brocanteId: brocante.id,
         brocanteNom: brocante.nom,
         achats,

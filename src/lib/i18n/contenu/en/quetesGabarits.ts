@@ -1,17 +1,22 @@
 /**
- * Overlay EN des gabarits de quêtes périodiques (spec i18n §2, SP4, tâche 5).
- * Clé = `"cle#index"` où `cle` ∈ {generique, jeux-video, set-designer, mode, art}
- * et `index` = variante FR tirée (cf. `GabaritQueteId` dans quetes/textes.ts).
- * Résolu À L'AFFICHAGE (helpers `titreCourrier`/`corpsCourrier`) quand le payload
- * porte un `gabaritId` et que la locale ≠ fr ; fallback payload FR sinon.
+ * Overlay EN des gabarits de quêtes périodiques (spec i18n §2, SP4, tâches 5 et 7).
+ * Clé = `"cle#index"` où `cle` ∈ {generique, jeux-video, set-designer, mode, art,
+ * rares, benefice, chiffre, marge, categorie} et `index` = variante FR tirée
+ * (cf. `GabaritQueteId` dans quetes/textes.ts). Résolu À L'AFFICHAGE (helpers
+ * `titreCourrier`/`corpsCourrier`) quand le payload porte un `gabaritId` et
+ * que la locale ≠ fr ; fallback payload FR sinon.
  *
  * Reformulation par TON de commanditaire (PAS un calque du FR) :
  *  - jeux-video  : joueur enthousiaste
  *  - set-designer: chef décorateur professionnel
  *  - mode        : modeuse chic
  *  - art         : esthète précieux
+ *  - familles chiffrées (rares/benefice/chiffre/marge/categorie) : le même
+ *    vieux marchand que le FR, en plus sec — direct, sans fioritures.
  * Placeholders `{objets}` / `{etat}` interpolés par la mise en forme EN
- * (guillemets droits, mention d'état traduite) dans `contenu/index.ts`.
+ * (guillemets droits, mention d'état traduite) dans `contenu/index.ts` ; les
+ * familles chiffrées ajoutent `{nombre}`, `{montant}` (déjà formaté « €1,800 »)
+ * et `{categorie}` (libellé traduit).
  */
 export const QUETES_GABARITS_EN: Record<
   string,
@@ -78,6 +83,76 @@ export const QUETES_GABARITS_EN: Record<
     corps: [
       "Dear confrère,",
       "A discerning connoisseur seeks {objets}{etat} for his collection. Do let me know.",
+    ],
+  },
+  "rares#0": {
+    titre: "An eye for the good stuff",
+    corps: [
+      "Hello,",
+      "Word is you've got an eye. Bring back {nombre} rare pieces from your next rounds and I'll know who to call.",
+    ],
+  },
+  "rares#1": {
+    titre: "Nothing but the best",
+    corps: [
+      "Dear picker,",
+      "Everyday clutter bores me. {nombre} rare pieces, not one less — show me what you can dig up.",
+    ],
+  },
+  "benefice#0": {
+    titre: "Mind the margin",
+    corps: [
+      "Hi,",
+      "Anyone can buy. Clear {montant} in profit this week and we'll talk about your trade.",
+    ],
+  },
+  "benefice#1": {
+    titre: "Where the money is",
+    corps: [
+      "Hello,",
+      "A wager: {montant} in profit before the week is out. You deliver, I pay.",
+    ],
+  },
+  "chiffre#0": {
+    titre: "Keep the shop moving",
+    corps: [
+      "Hello,",
+      "Never mind the margin — I want to see movement. {montant} in sales this week.",
+    ],
+  },
+  "chiffre#1": {
+    titre: "Make the till sing",
+    corps: [
+      "Hi,",
+      "Let that till sing — {montant} taken before Sunday.",
+    ],
+  },
+  "marge#0": {
+    titre: "The big one",
+    corps: [
+      "Dear colleague,",
+      "Everyone sells plenty. Few land THE one. Make {montant} of margin on a single sale.",
+    ],
+  },
+  "marge#1": {
+    titre: "One will do",
+    corps: [
+      "Hello,",
+      "One fine sale beats ten middling ones. {montant} of margin, on a single piece.",
+    ],
+  },
+  "categorie#0": {
+    titre: "Specialist wanted",
+    corps: [
+      "Hello,",
+      "I need someone who knows their aisle. Sell {nombre} items from {categorie} and you'll have my trust.",
+    ],
+  },
+  "categorie#1": {
+    titre: "Clear the shelf",
+    corps: [
+      "Hi,",
+      "My {categorie} stock is overflowing. Move {nombre} of them for me and I'll owe you one.",
     ],
   },
 };
