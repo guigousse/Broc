@@ -87,7 +87,12 @@ describe("useCeremonieLivraison", () => {
       useCeremonieLivraison({ state: etat(c), onLivrerMission: () => ({ ok: true }) }),
     );
     act(() => vue.result.current.lancer("m1"));
+    // Les DEUX compteurs réellement gelés par cette récompense, pas seulement
+    // la caisse : `recompense.xp` est absent, donc `recompenseEffective`
+    // applique l'XP de catégorie (> 0) et le gel XP part aussi. Ne vérifier
+    // que `budget` laissait le dégel de l'XP hors du filet.
     expect(estGele().budget).toBe(true);
+    expect(estGele().xp).toBe(true);
     vue.unmount();
     expect(estGele()).toEqual({ xp: false, budget: false, energie: false });
   });

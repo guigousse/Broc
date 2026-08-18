@@ -44,7 +44,28 @@ describe("PaveRecompense", () => {
 
   it("les jetons restent présents à l'état livrable (la cérémonie part d'eux)", () => {
     render(<PaveRecompense recompense={REC} livrable onLivrer={() => {}} />);
+    // Les TROIS assertions du passage en pavé sourd, pas seulement `argent` :
+    // le passage en bouton change le conteneur, donc c'est bien la règle
+    // entière (un jeton par gain non nul, et pour eux seuls) qu'il faut
+    // revérifier — un jeton perdu ici est un jeton que la cérémonie ne fera
+    // jamais voler.
     expect(document.querySelector('[data-jeton="argent"]')).toBeTruthy();
+    expect(document.querySelector('[data-jeton="xp"]')).toBeTruthy();
+    expect(document.querySelector('[data-jeton="energie"]')).toBeNull();
+  });
+
+  it("récompense entièrement nulle : aucun jeton, et le bouton livre quand même", () => {
+    // `argent: 0` est légal (une quête peut ne donner que de l'XP, ou rien
+    // du tout côté affichage). Le pavé ne doit ni rendre de jeton fantôme —
+    // la cérémonie le masquerait sans qu'aucune étape ne le fasse
+    // réapparaître — ni refuser la livraison pour autant.
+    const onLivrer = vi.fn();
+    render(<PaveRecompense recompense={{ argent: 0, xp: 0, energie: 0 }} livrable onLivrer={onLivrer} />);
+    expect(document.querySelectorAll("[data-jeton]").length).toBe(0);
+    const btn = screen.getByRole("button") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    btn.click();
+    expect(onLivrer).toHaveBeenCalledTimes(1);
   });
 
   it("aucune couleur bordeaux codée en dur", () => {
