@@ -45,6 +45,7 @@ import {
 } from "@/lib/personaIllustrations";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
 import { audioManager } from "@/lib/audio/audioManager";
+import { vibrerApparition } from "@/lib/haptique";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import { useToast } from "@/components/ui/Toast";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
@@ -604,6 +605,7 @@ export default function VitrineJourneePage() {
                 }
                 acheteurScripteRef.current = acheteur;
                 setClientActuel(ev);
+                vibrerApparition();
                 setOffreJoueur(
                   acheteur.bornesOffre
                     ? Math.min(
@@ -679,6 +681,7 @@ export default function VitrineJourneePage() {
             if (forceCelebrite) celebriteApparueRef.current = true;
             acheteurScripteRef.current = null;
             setClientActuel(ev);
+            vibrerApparition();
             setOffreJoueur(ev.prixDemande);
             setRevelationFaite(false);
             if (ev.mode === "negociation") {
