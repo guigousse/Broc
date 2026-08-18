@@ -84,8 +84,13 @@ section « Terminées ». Le carnet ne parle plus que de ce qu'il y a à faire.
 
 `OngletComptes.tsx` est supprimé. Le rejeu (`SessionSummary` en mode
 `xpReplayMode`) perd son unique point d'entrée et part avec lui ; l'historique
-git le conserve si le sujet revient. `SessionSummary` lui-même reste : il sert
-au bilan de fin de session, qui n'est pas touché.
+git le conserve si le sujet revient. **Correction post-revue** : `SessionSummary`
+lui-même n'a JAMAIS servi au bilan de fin de session — c'est
+`src/components/mobile/bilan/BilanSession.tsx` qui en est chargé, et il n'est
+pas touché par cette refonte. `SessionSummary` n'était atteint que par le rejeu
+de l'ancien registre supprimé ci-dessus ; il n'a donc plus aucun importeur.
+Il n'est pas supprimé par cette même refonte (décision qui revient à l'auteur
+du projet), mais son sort n'est plus lié au bilan de fin de session.
 
 ## 2. Les deux cartes
 
