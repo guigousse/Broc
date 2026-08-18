@@ -1555,8 +1555,14 @@ nav[aria-label="Navigation principale"] :focus-visible,
   0%, 100% { translate: 0 0; opacity: 0.95; }
   50% { translate: 6px 0; opacity: 0.45; }
 }
+/* Géométrie commune aux deux usages. `.nego-fleches` est l'invite permanente
+   posée autour du curseur joueur de toute négociation : mêmes triangles, même
+   place — mais IMMOBILES. Le va-et-vient reste au tutoriel seul, sans quoi il
+   pulserait à chaque négo de la partie et ne signalerait plus rien. */
 .tuto-fleches::before,
-.tuto-fleches::after {
+.tuto-fleches::after,
+.nego-fleches::before,
+.nego-fleches::after {
   content: "";
   position: absolute;
   top: calc(50% - 9px);
@@ -1568,15 +1574,32 @@ nav[aria-label="Navigation principale"] :focus-visible,
   pointer-events: none;
   z-index: 1;
 }
-.tuto-fleches::before {
+.tuto-fleches::before,
+.nego-fleches::before {
   right: calc(100% + 6px);
   border-right: 12px solid var(--nego-joueur);
+}
+.tuto-fleches::after,
+.nego-fleches::after {
+  left: calc(100% + 6px);
+  border-left: 12px solid var(--nego-joueur);
+}
+.tuto-fleches::before {
   animation: tuto-fleche-gauche-kf 1.2s ease-in-out infinite;
 }
 .tuto-fleches::after {
-  left: calc(100% + 6px);
-  border-left: 12px solid var(--nego-joueur);
   animation: tuto-fleche-droite-kf 1.2s ease-in-out infinite;
+}
+/* Modificateurs composables avec l'une ou l'autre des classes ci-dessus :
+   la flèche se coupe du côté où le curseur touche le bout de son échelle,
+   sinon elle sortirait de la piste — sur la tarification elle passerait
+   carrément par-dessus le « −100 % ». Déclarés APRÈS, à spécificité égale,
+   pour l'emporter. */
+.fleches-sans-gauche::before {
+  content: none;
+}
+.fleches-sans-droite::after {
+  content: none;
 }
 /* Variante au-dessus de la cible : main tournée à 90° (doigt vers le bas),
    centrée horizontalement, va-et-vient vertical vers la cible. */

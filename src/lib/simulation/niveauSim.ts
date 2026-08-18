@@ -802,6 +802,7 @@ export function runLotGarniMicroSim(trials = 1000): LotGarniMicroSimResult {
     archetypeId: "sim",
     archetypeNom: "Sim",
     nom: "Client simulé",
+    genre: "m",
     ambiance: "",
     appetitMin: 0.7,
     appetitMax: 1.3,

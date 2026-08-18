@@ -10,6 +10,7 @@ import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomVendeur, texteNego } from "@/lib/i18n/contenu";
+import { genreVendeur } from "@/lib/personas";
 import type { NegociationState, ObjetEnVente } from "@/types/game";
 import type { RoleScenario } from "@/data/tutorielScenario";
 
@@ -95,6 +96,10 @@ export function ChineNegoDrawer({
   }, [item.negociation]);
 
   const enCours = localNego.statut === "en_cours";
+  /* Le vendeur a lâché son dernier prix : plus de contre-offre possible, mais
+     son prix tient encore — au joueur de le prendre ou de partir. Distinct de
+     « fache », où la négo est morte (seule La Tchatche la relance). */
+  const dernierPrix = localNego.statut === "refus_poli";
   const estFache =
     localNego.statut === "fache" || localNego.humeur >= HUMEUR_FACHE_SEUIL;
   const illustrationCourante =
@@ -187,17 +192,27 @@ export function ChineNegoDrawer({
             onChangeJoueur={setOffreJoueur}
             readOnly={!enCours}
             tutoMainJoueur={tutoGuide && expanded}
+            genreAdverse={genreVendeur(persona.archetype)}
+            dernierPrix={dernierPrix}
           />
           <div style={negoBtnRow}>
-            {localNego.statut === "refus_poli" ? (
-              <button
-                type="button"
-                style={{ ...btnPrimaryDisablable(plein), gridColumn: "1 / -1" }}
-                disabled={plein}
-                onClick={() => onConclu(localNego.prixAdverseCourant)}
-              >
-                {tr(d.chine.acheterPrixAffiche, { prix: localNego.prixAdverseCourant })}
-              </button>
+            {dernierPrix ? (
+              // Même disposition que pendant la négo — abandon à gauche,
+              // action principale à droite : le joueur qui tapote le bouton
+              // de droite ne renonce pas par réflexe quand l'écran change.
+              <>
+                <button type="button" style={btnSecondary} onClick={onCollapse}>
+                  {d.chine.laisserTomber}
+                </button>
+                <button
+                  type="button"
+                  style={btnPrimaryDisablable(plein)}
+                  disabled={plein}
+                  onClick={() => onConclu(localNego.prixAdverseCourant)}
+                >
+                  {tr(d.chine.accepterPrix, { prix: localNego.prixAdverseCourant })}
+                </button>
+              </>
             ) : enCours ? (
               <>
                 <button type="button" style={btnSecondary} onClick={onCollapse}>

@@ -647,6 +647,18 @@ export type VendeurArchetypeId =
 export type NegoMode = "achat" | "vente";
 
 /**
+ * Genre grammatical d'un persona — commande l'accord de la pastille adverse
+ * de la barre de négociation. `"n"` n'est pas un neutre mais un PLURIEL :
+ * quelques acheteurs sont des groupes (« Famille Martinez », « Hiroshi &
+ * Yuka »), pour lesquels « Lui » comme « Elle » seraient faux.
+ *
+ * Le genre suit le PORTRAIT, jamais l'intuition sur le prénom : un
+ * personnage du casting croisé (même figure au chinage, au courrier et à la
+ * vente) doit porter le même genre partout.
+ */
+export type GenrePersona = "m" | "f" | "n";
+
+/**
  * Tempérament de dialogue d'un persona (vendeur OU acheteur). Regroupe les
  * archétypes en familles de ton pour colorer les répliques de négociation
  * (mapping dans `src/data/temperaments.ts`, pools dans `negociation.ts`).

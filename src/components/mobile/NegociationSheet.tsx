@@ -12,7 +12,12 @@ import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { texteNego } from "@/lib/i18n/contenu";
-import type { NegoMode, NegoPersona, NegociationState } from "@/types/game";
+import type {
+  GenrePersona,
+  NegoMode,
+  NegoPersona,
+  NegociationState,
+} from "@/types/game";
 
 interface NegociationSheetProps {
   open: boolean;
@@ -20,6 +25,13 @@ interface NegociationSheetProps {
   mode: NegoMode;
   /** Persona adverse (vendeur en achat, client en vente). */
   persona: NegoPersona;
+  /**
+   * Genre de ce persona — accorde la pastille du curseur adverse. Prop à
+   * part plutôt qu'un champ de `NegoPersona` : le persona est un paquet
+   * d'axes de négociation, tiré au sort et jitteré, alors que le genre
+   * appartient au PERSONNAGE (client nommé, archétype vendeur).
+   */
+  genreAdverse?: GenrePersona;
   /** Échelle haute de la barre : prix vendeur initial (achat) ou prix demandé étal (vente). */
   echelleMax: number;
   /** Cible secrète : prixMinAccept (achat) ou prixMax (vente). Sert à initialiser si nego absent. */
@@ -79,6 +91,7 @@ export function NegociationSheet({
   onClose,
   mode,
   persona,
+  genreAdverse,
   echelleMax,
   cibleSecrete,
   prixDepartAdverse,
@@ -234,6 +247,7 @@ export function NegociationSheet({
             readOnly={!enCours}
             tutoMainJoueur={tutoMainJoueur}
             achat={achat}
+            genreAdverse={genreAdverse}
           />
           <HumeurGauge humeur={localNego.humeur} />
           <div style={btnRowStyle}>

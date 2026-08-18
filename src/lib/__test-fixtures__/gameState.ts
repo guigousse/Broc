@@ -152,6 +152,7 @@ export function createMockClient(
     archetypeId: "test",
     archetypeNom: "Test",
     nom: "Client test",
+    genre: "m",
     ambiance: "",
     appetitMin: 0.9,
     appetitMax: 1.1,

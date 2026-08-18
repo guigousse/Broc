@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ChineNegoDrawer } from "./ChineNegoDrawer";
 import { createMockObjet } from "@/lib/__test-fixtures__/gameState";
 import { relancerNegociation } from "@/lib/negociation";
@@ -47,6 +47,8 @@ function makeItem(negociation: NegociationState | null): ObjetEnVente {
 
 function renderDrawer(item: ObjetEnVente, plein = false) {
   const onUpdateNego = vi.fn();
+  const onConclu = vi.fn();
+  const onCollapse = vi.fn();
   const vue = render(
     <ChineNegoDrawer
       item={item}
@@ -54,13 +56,13 @@ function renderDrawer(item: ObjetEnVente, plein = false) {
       plein={plein}
       expanded={true}
       onExpand={() => {}}
-      onCollapse={() => {}}
+      onCollapse={onCollapse}
       onUpdateNego={onUpdateNego}
-      onConclu={() => {}}
+      onConclu={onConclu}
       onAcheterDirect={() => {}}
     />,
   );
-  return { onUpdateNego, vue };
+  return { onUpdateNego, onConclu, onCollapse, vue };
 }
 
 describe("ChineNegoDrawer — Tchatche déplacée dans le dock", () => {
@@ -89,10 +91,12 @@ describe("ChineNegoDrawer — tiroir déplié, stockage plein", () => {
     expect(laisser.disabled).toBe(false);
   });
 
-  it("refus poli : « Acheter au prix affiché » désactivé quand plein", () => {
+  it("dernier prix : « Accepter » désactivé quand plein, abandon toujours possible", () => {
     renderDrawer(makeItem(makeNego({ statut: "refus_poli" })), true);
-    const acheter = screen.getByText(/Acheter au prix affiché/).closest("button") as HTMLButtonElement;
-    expect(acheter.disabled).toBe(true);
+    const accepter = screen.getByText(/Accepter/).closest("button") as HTMLButtonElement;
+    expect(accepter.disabled).toBe(true);
+    const laisser = screen.getByText(/Laisser tomber/).closest("button") as HTMLButtonElement;
+    expect(laisser.disabled).toBe(false);
   });
 
   it("non-régression : stockage non plein, les deux boutons restent actifs", () => {
@@ -174,5 +178,55 @@ describe("ChineNegoDrawer — statuts portés par le tampon de la carte", () => 
     renderReplie(makeItem(null), false);
     expect(screen.getByRole("button", { name: /négocier/i })).toBeTruthy();
     expect(screen.queryByText("Stock plein")).toBeNull();
+  });
+});
+
+describe("ChineNegoDrawer — accord de la pastille adverse", () => {
+  it("« Elle » face à Mamie Odette, « Lui » face au Père Anselme", () => {
+    renderDrawer(makeItem(makeNego({ statut: "en_cours" })));
+    // persona par défaut = grincheux (Père Anselme).
+    expect(screen.getByText("Lui")).toBeTruthy();
+    expect(screen.queryByText("Elle")).toBeNull();
+    cleanup();
+
+    const item = makeItem(makeNego({ statut: "en_cours" }));
+    item.persona = { ...persona, archetype: "mamie" };
+    renderDrawer(item);
+    expect(screen.getByText("Elle")).toBeTruthy();
+    expect(screen.queryByText("Lui")).toBeNull();
+  });
+});
+
+describe("ChineNegoDrawer — le vendeur a donné son dernier prix", () => {
+  const refus = () => makeItem(makeNego({ statut: "refus_poli" }));
+
+  it("propose « Laisser tomber » ET « Accepter » au prix du vendeur", () => {
+    renderDrawer(refus());
+    expect(screen.getByText("Laisser tomber")).toBeTruthy();
+    expect(screen.getByText("Accepter 80 €")).toBeTruthy();
+  });
+
+  it("l'ancien bouton pleine largeur a disparu", () => {
+    renderDrawer(refus());
+    expect(screen.queryByText(/Acheter au prix affich/)).toBeNull();
+  });
+
+  it("« Accepter » conclut au prix du vendeur", () => {
+    const { onConclu } = renderDrawer(refus());
+    fireEvent.click(screen.getByText("Accepter 80 €"));
+    expect(onConclu).toHaveBeenCalledWith(80);
+  });
+
+  it("« Laisser tomber » referme le tiroir sans rien conclure", () => {
+    const { onConclu, onCollapse } = renderDrawer(refus());
+    fireEvent.click(screen.getByText("Laisser tomber"));
+    expect(onCollapse).toHaveBeenCalled();
+    expect(onConclu).not.toHaveBeenCalled();
+  });
+
+  it("le curseur du joueur n'est plus dans la barre", () => {
+    renderDrawer(refus());
+    expect(screen.queryByText("Vous")).toBeNull();
+    expect(screen.getByText("prix final")).toBeTruthy();
   });
 });

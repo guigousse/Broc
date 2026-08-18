@@ -335,6 +335,9 @@ export const fr = {
     negocier: "Négocier",
     acheterPrix: "Acheter {prix} €",
     laisserTomber: "Laisser tomber",
+    /** Pastille du curseur adverse quand le vendeur a lâché son dernier prix.
+     *  Deux mots : elle se plie en deux lignes sous le curseur (cf. NegoBar). */
+    dernierPrix: "prix final",
     accepterPrix: "Accepter {prix} €",
     proposerPrix: "Proposer {prix} €",
     acheterPrixAffiche: "Acheter au prix affiché — {prix} €",
@@ -387,7 +390,7 @@ export const fr = {
     lotGarniChoisirTitre: "🧺 Lot garni — ajouter un objet",
     lotGarniAucunAutre: "Plus rien d'autre à proposer.",
     prixDemandeLabel: "Prix demandé",
-    clientInconnu: "Un inconnu",
+    clientInconnu: { m: "Un inconnu", f: "Une inconnue", n: "Des inconnus" },
     tempsRestantLabel: "Temps restant",
     journeeSansVente: "La journée se termine sans la moindre vente.",
     journeeUneVente: "Une seule vente aujourd'hui. C'est un début.",
@@ -403,7 +406,10 @@ export const fr = {
     bulleJePrends: "« Je prends. Voici {prix} €. »",
     refuser: "Refuser",
     vendrePrix: "Vendre · {prix} €",
-    labelAdverse: "Lui",
+    /** Pastille du curseur adverse, accordée au genre du persona en face
+     *  (`GenrePersona`) : « n » est un pluriel, certains acheteurs sont des
+     *  groupes. Les langues à pastille neutre gardent le même texte partout. */
+    labelAdverse: { m: "Lui", f: "Elle", n: "Eux" },
     labelJoueur: "Vous",
     reorganiserCoffre: "Réarrangez le coffre — certains objets ne tiennent pas.",
     fermetureEnCours: "Fermeture…",

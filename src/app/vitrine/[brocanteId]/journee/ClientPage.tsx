@@ -1274,8 +1274,11 @@ export default function VitrineJourneePage() {
           nomAffiche={
             personaRevele
               ? nomAfficheClient(clientActuel.persona)
-              : d.vente.clientInconnu
+              : d.vente.clientInconnu[clientActuel.persona.genre]
           }
+          /* Le genre reste visible même persona non révélé : on ne connaît
+             pas encore la personne, mais on l'a devant soi. */
+          genreAdverse={clientActuel.persona.genre}
           personaInfo={{
             nom: nomAfficheClient(clientActuel.persona),
             archetypeNom:
