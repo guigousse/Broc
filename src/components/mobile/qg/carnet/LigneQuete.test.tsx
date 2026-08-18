@@ -39,6 +39,16 @@ describe("LigneQuete", () => {
     expect(document.querySelector('[data-commande-id="q1"]')).toBeTruthy();
   });
 
+  it("le jeton argent est bien un DESCENDANT de data-commande-id (pas juste un frère ailleurs sur la page)", () => {
+    // La cérémonie retrouve ses jetons via `racine.querySelectorAll('[data-jeton=...]')`
+    // où `racine = document.querySelector('[data-commande-id=...]')` — la
+    // livraison réelle des jetons dépend de cette IMBRICATION, pas seulement
+    // de la présence indépendante des deux attributs quelque part dans le DOM.
+    const c = courrierObjet();
+    render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
+    expect(document.querySelector('[data-commande-id="q1"] [data-jeton="argent"]')).toBeTruthy();
+  });
+
   it("quête à objets : des photos, pas d'icône", () => {
     const c = courrierObjet();
     render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
