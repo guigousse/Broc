@@ -98,6 +98,7 @@ const chevronStyle: CSSProperties = {
  * disparaît quand `pretes === 0`.
  */
 export function SectionRetractable({
+  cle,
   icone: Icone,
   titre,
   sousTitre,
@@ -107,10 +108,21 @@ export function SectionRetractable({
   children,
 }: Props) {
   const { d, tr } = useLangue();
+  // Une seule section de chaque clé existe dans le carnet : l'id est donc
+  // unique dans le document sans compteur ni `useId`.
+  const idContenu = `carnet-section-${cle}`;
 
   return (
     <div>
-      <button type="button" style={enTete} aria-expanded={!repliee} onClick={onBasculer}>
+      <button
+        type="button"
+        style={enTete}
+        aria-expanded={!repliee}
+        // Repliée, le contenu est DÉMONTÉ (cf. le JSDoc ci-dessus) : garder
+        // l'attribut pointerait vers un id absent du document.
+        aria-controls={repliee ? undefined : idContenu}
+        onClick={onBasculer}
+      >
         <Icone size={16} color="var(--brass-500)" aria-hidden />
         <span style={titreStyle}>{titre}</span>
         {repliee && compteur && (
@@ -129,7 +141,7 @@ export function SectionRetractable({
           <span aria-hidden style={chevronStyle}>{repliee ? "▸" : "▾"}</span>
         </span>
       </button>
-      {!repliee && children}
+      {!repliee && <div id={idContenu}>{children}</div>}
     </div>
   );
 }

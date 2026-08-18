@@ -68,4 +68,23 @@ describe("SectionRetractable", () => {
     const entete = screen.getByRole("button");
     expect(getComputedStyle(entete).position).toBe("sticky");
   });
+
+  it("dépliée : l'en-tête pointe vers son contenu (aria-controls)", () => {
+    render(<SectionRetractable {...base} repliee={false}><p>contenu</p></SectionRetractable>);
+    const entete = screen.getByRole("button");
+    const cible = entete.getAttribute("aria-controls");
+    expect(cible).toBeTruthy();
+    // Le lien doit RÉSOUDRE, pas seulement exister comme attribut.
+    const region = document.getElementById(cible!);
+    expect(region).toBeTruthy();
+    expect(region!.textContent).toContain("contenu");
+  });
+
+  it("repliée : pas d'aria-controls — le contenu est démonté, un IDREF pendant serait faux", () => {
+    // Le repli DÉMONTE le contenu (à dessein : les lignes de quête à
+    // l'intérieur font tourner des minuteurs d'une seconde). Un aria-controls
+    // qui survivrait pointerait vers un id absent du document.
+    render(<SectionRetractable {...base} repliee><p>contenu</p></SectionRetractable>);
+    expect(screen.getByRole("button").getAttribute("aria-controls")).toBeNull();
+  });
 });
