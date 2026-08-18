@@ -32,8 +32,12 @@ export const FAMILLE: Record<FormeQuete, "chine" | "vente"> = {
 export const ICONE_FORME: Record<FormeQuete, string | null> = {
   objet: null,
   objetsRares: "Gem",
+  // Le bénéfice est une courbe qui monte ; le chiffre d'affaires est le
+  // ticket de caisse — ce qui est encaissé, marge comprise. Les deux formes
+  // partageaient `TrendingUp` : deux lignes hebdomadaires indiscernables à
+  // l'œil, l'icône étant le gros visuel de gauche de la carte.
   beneficeCumule: "TrendingUp",
-  chiffreAffaires: "TrendingUp",
+  chiffreAffaires: "Receipt",
   profitVente: "Coins",
   ventesCategorie: "Package",
 };

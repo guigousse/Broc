@@ -105,3 +105,21 @@ describe("contenuFormeChiffree", () => {
     expect(cles.every((c) => typeof c === "string" && c.length > 0)).toBe(true);
   });
 });
+
+describe("ICONE_FORME", () => {
+  test("chaque forme chiffrée porte une icône DISTINCTE des autres", () => {
+    // Deux formes qui partagent une icône rendent deux lignes de quête
+    // impossibles à distinguer d'un coup d'œil : dans le carnet, l'icône est
+    // le gros visuel de gauche, le libellé d'objectif n'est qu'en dessous et
+    // en petit. Propriété, pas littéral : le test survit au prochain
+    // changement d'avis sur QUELLE icône va à quelle forme.
+    const noms = Object.values(ICONE_FORME).filter((n): n is string => n !== null);
+    expect(new Set(noms).size).toBe(noms.length);
+  });
+
+  test("seule la forme `objet` n'a pas d'icône — elle montre la photo de l'objet", () => {
+    for (const [forme, nom] of Object.entries(ICONE_FORME)) {
+      expect(nom === null).toBe(forme === "objet");
+    }
+  });
+});

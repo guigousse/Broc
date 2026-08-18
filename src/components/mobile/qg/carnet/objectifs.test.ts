@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { libelleObjectif, objectifEnEuros, progressionAffichee } from "./objectifs";
 import { DICTIONNAIRES } from "@/lib/i18n/ui";
+import { ICONE_FORME } from "@/lib/quetes/formes";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 import type { CourrierPayloadMission, ObjectifMission } from "@/types/game";
 
@@ -84,7 +85,34 @@ describe("progressionAffichee", () => {
     expect(res.objectifChiffre).toEqual({ type: "beneficeCumule", montant: 850 });
     expect(res.premierObjectifNonObjet).toEqual({ type: "beneficeCumule", montant: 850 });
     // Une forme chiffrée résout TOUJOURS une icône Lucide (voir formeDepuisObjectif).
-    expect(res.IconeForme).not.toBeNull();
+    expect(res.IconeForme).toBeTruthy(); // cf. le test de résolution : `undefined` passe `not.toBeNull`
+  });
+
+  it("chaque forme chiffrée résout une VRAIE icône Lucide (ICONE_FORME ↔ table du carnet)", () => {
+    // `ICONE_FORME` nomme ses icônes par chaîne ; la table `ICONES_LUCIDE` de
+    // ce module doit en importer une par nom. Ajouter un nom sans l'importer
+    // ne casse NI le type NI le rendu : `ICONES_LUCIDE[nom]` vaut undefined et
+    // la carte affiche un cadre de scotch sur rien. Ce test est le seul filet.
+    const objectifDeForme: Record<string, ObjectifMission> = {
+      objetsRares: { type: "objetsRares", nombre: 2 },
+      beneficeCumule: { type: "beneficeCumule", montant: 850 },
+      chiffreAffaires: { type: "ventesCumulees", montant: 900 },
+      profitVente: { type: "profitVente", montant: 120 },
+      ventesCategorie: { type: "ventesCategorie", categorie: "Musique", nombre: 4 },
+    };
+    for (const [forme, nom] of Object.entries(ICONE_FORME)) {
+      if (nom === null) continue;
+      const objectif = objectifDeForme[forme];
+      expect(objectif, `forme "${forme}" absente du fixture de ce test`).toBeTruthy();
+      const res = progressionAffichee(
+        { ...payloadChiffre, objectifs: [objectif] }, courrier, state, undefined, false, false, false,
+      );
+      // ⚠ `toBeTruthy`, PAS `not.toBeNull` : une clé absente de `ICONES_LUCIDE`
+      // rend `undefined`, que `not.toBeNull()` laisse passer — ce test était
+      // creux avant cette correction (prouvé : retirer `Receipt` de la table
+      // le laissait vert).
+      expect(res.IconeForme, `icône "${nom}" non résolue pour la forme "${forme}"`).toBeTruthy();
+    }
   });
 
   it("accompli force l'affichage plein même sur un state à progression nulle (garde-fou cérémonie)", () => {

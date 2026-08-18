@@ -4,7 +4,7 @@
  * Partagées par la carte d'histoire et la ligne de quête.
  */
 
-import { Coins, Gem, Package, TrendingUp, type LucideIcon } from "lucide-react";
+import { Coins, Gem, Package, Receipt, TrendingUp, type LucideIcon } from "lucide-react";
 import { libelleEtat, libelleCategorie } from "@/lib/i18n/libelles";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import { objectifsDeMission, progressionObjectif } from "@/lib/quetes/objectifs";
@@ -68,7 +68,7 @@ export function objectifEnEuros(type: ObjectifMission["type"]): boolean {
 /** Composants Lucide indexés par leur PROPRE nom — le seul pont dont on a
  *  besoin entre `ICONE_FORME` (qui donne des noms de chaînes, source de
  *  vérité côté `lib/quetes`) et les composants réels. */
-const ICONES_LUCIDE: Record<string, LucideIcon> = { Gem, TrendingUp, Coins, Package };
+const ICONES_LUCIDE: Record<string, LucideIcon> = { Gem, TrendingUp, Coins, Package, Receipt };
 
 /** Bloc de progression affiché par une carte de quête (chapitre ou ligne
  *  périodique) : barre, compteur, icône du visuel de gauche, état du pavé de
