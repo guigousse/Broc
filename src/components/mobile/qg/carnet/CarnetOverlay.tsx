@@ -184,7 +184,7 @@ const ligneEtatStyle: CSSProperties = {
  * Le châssis du carnet : assemble le voile, la fenêtre calée entre header et
  * TabBar (repris de `RegistreOverlay`), et les trois sections rétractables.
  * Remplace l'ancien registre à onglets — plus d'onglet Comptes, plus de
- * replay `SessionSummary`, plus de section Terminées.
+ * rejeu de bilan de session, plus de section Terminées.
  */
 export function CarnetOverlay({
   open,
