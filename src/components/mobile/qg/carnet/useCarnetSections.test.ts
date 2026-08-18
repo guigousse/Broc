@@ -44,14 +44,20 @@ describe("useCarnetSections", () => {
   });
 
   it("une écriture qui échoue ne casse pas le basculement en mémoire", () => {
-    const vraiSetItem = window.localStorage.setItem;
-    window.localStorage.setItem = () => { throw new Error("QuotaExceededError"); };
+    // ⚠ `window.localStorage.setItem = ...` NE MARCHE PAS en jsdom : le proxy
+    // `Storage` transforme l'affectation en une entrée stockée sous la clé
+    // "setItem", la vraie méthode reste en place et le test ne lève jamais.
+    // Le seul point d'accroche est le prototype.
+    const espion = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("QuotaExceededError");
+    });
     try {
       const { result } = renderHook(() => useCarnetSections());
       act(() => result.current.basculer("histoire"));
+      expect(espion).toHaveBeenCalled(); // garde-fou : l'écriture a bien été tentée
       expect(result.current.estRepliee("histoire")).toBe(true); // l'UI suit quand même
     } finally {
-      window.localStorage.setItem = vraiSetItem;
+      espion.mockRestore();
     }
   });
 
