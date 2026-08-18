@@ -275,15 +275,28 @@ export function LigneQuete({
               />
             )}
           </span>
-          <span style={colonneCentre}>
-            <span style={demandeStyle} data-testid="ligne-demande">{demandeAffichee}</span>
-            <span style={barreWrap}>
-              <span style={barreFond}>
-                <span data-testid="progression-barre" style={barreRemplissage(pct)} />
+          {/* Colonne du milieu réservée aux quêtes CHIFFRÉES. Avec des cibles
+              objets, les vignettes portent déjà l'identité de la quête (quel
+              objet) ET son avancement (couleur + pastille ✓) : le
+              commanditaire et le compteur y faisaient doublon, et c'est cette
+              colonne qui écrasait la mise en page des quêtes à trois objets
+              (retour device).
+
+              ⚠ Sans cible, en revanche, il n'y a AUCUNE photo pour dire de
+              quoi il s'agit : « Bénéfice réalisé » et « 0 / 850 € » sont la
+              seule identité de la quête. Les retirer là rendrait deux formes
+              chiffrées indiscernables — le défaut corrigé en T7. */}
+          {p.cibles.length === 0 && (
+            <span style={colonneCentre}>
+              <span style={demandeStyle} data-testid="ligne-demande">{demandeAffichee}</span>
+              <span style={barreWrap}>
+                <span style={barreFond}>
+                  <span data-testid="progression-barre" style={barreRemplissage(pct)} />
+                </span>
+                <span data-testid="progression-compteur" style={compteurStyle}>{compteur}</span>
               </span>
-              <span data-testid="progression-compteur" style={compteurStyle}>{compteur}</span>
             </span>
-          </span>
+          )}
           </span>
         </button>
         <div style={colonnePave}>

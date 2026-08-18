@@ -40,4 +40,37 @@ describe("PhotoScotchee", () => {
     const { container } = render(<PhotoScotchee icone={Gem} taille={64} />);
     expect(container.innerHTML.toLowerCase()).not.toContain("#6e1f1f");
   });
+
+  it("objet pas encore trouvé : la photo est en noir et blanc", () => {
+    // Retour device : rien ne distinguait assez une cible trouvée d'une cible
+    // qui reste à chiner. La pastille ✓ ne suffisait pas — elle est petite et
+    // en coin. La couleur devient le signal principal.
+    const { container } = render(
+      <PhotoScotchee templateId="ma.lampe_petrole_ancienne" categorie="Maison" taille={64} alt="lampe" />,
+    );
+    const grise = Array.from(container.querySelectorAll<HTMLElement>("*")).some((n) =>
+      n.style.filter.includes("grayscale"),
+    );
+    expect(grise).toBe(true);
+  });
+
+  it("objet trouvé : la photo reprend ses couleurs", () => {
+    const { container } = render(
+      <PhotoScotchee templateId="ma.lampe_petrole_ancienne" categorie="Maison" taille={64} alt="lampe" accompli />,
+    );
+    const grise = Array.from(container.querySelectorAll<HTMLElement>("*")).some((n) =>
+      n.style.filter.includes("grayscale"),
+    );
+    expect(grise).toBe(false);
+  });
+
+  it("l'icône générique n'est jamais désaturée : elle est déjà à l'encre", () => {
+    // Une forme chiffrée (bénéfice, ventes…) n'a rien à « trouver » — la
+    // griser n'aurait aucun sens et suggérerait un manque.
+    const { container } = render(<PhotoScotchee icone={Gem} taille={64} />);
+    const grise = Array.from(container.querySelectorAll<HTMLElement>("*")).some((n) =>
+      n.style.filter.includes("grayscale"),
+    );
+    expect(grise).toBe(false);
+  });
 });

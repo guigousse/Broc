@@ -41,9 +41,9 @@ const jetonBase: CSSProperties = {
 const paveSourd: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  alignItems: "flex-start",
-  gap: 6,
-  padding: "8px 12px",
+  alignItems: "center",
+  gap: 4,
+  padding: "6px 8px",
   borderRadius: 8,
   border: "none",
   background: "var(--paper-300)",
@@ -75,9 +75,11 @@ const labelSourd: CSSProperties = {
 const paveDore = (verrouille: boolean): CSSProperties => ({
   display: "flex",
   flexDirection: "column",
-  alignItems: "flex-start",
-  gap: 6,
-  padding: "8px 12px",
+  // Centré, et resserré : le pavé mangeait la largeur de la fiche au point de
+  // chevaucher le titre des quêtes à trois objets (retour device).
+  alignItems: "center",
+  gap: 4,
+  padding: "6px 8px",
   borderRadius: 8,
   border: "none",
   background: verrouille ? "var(--paper-300)" : "var(--forest-600)",

@@ -124,21 +124,44 @@ describe("LigneQuete", () => {
     expect(texteBenefice).not.toBe(texteVentes);
   });
 
-  it("en cérémonie : la barre est pleine et le compteur affiche l'état accompli malgré un state déjà post-livraison", () => {
+  it("en cérémonie, quête CHIFFRÉE : la barre est pleine malgré un state déjà post-livraison", () => {
     // C'est exactement le state dans lequel la cérémonie tourne réellement :
     // mission déjà marquée "livree", objet déjà retiré de l'inventaire. Sans
     // le garde-fou `accompli = enCeremonie`, la barre et le compteur
     // retomberaient à zéro pile au moment où les jetons s'envolent.
+    //
+    // Observé sur une quête chiffrée : depuis le retour device, la barre et le
+    // compteur ne s'affichent plus pour les quêtes À CIBLES (les vignettes les
+    // remplacent). Le garde-fou lui-même n'a pas changé — c'est son point
+    // d'observation qui a déménagé, et le test suivant couvre l'autre moitié.
+    const c = courrierChiffre({ type: "beneficeCumule", montant: 850 });
+    const state = createMockGameState({
+      courriers: [c],
+      missions: [{ courrierId: "q2", statut: "livree", jourResolution: 1 }],
+      inventaireJoueur: [],
+    });
+    render(<LigneQuete {...props} courrier={c} state={state} enCeremonie />);
+    const barre = document.querySelector('[data-testid="progression-barre"]') as HTMLElement;
+    expect(barre.style.width).toBe("100%");
+    expect(screen.getByTestId("progression-compteur").textContent).toContain("850");
+  });
+
+  it("en cérémonie, quête À CIBLES : les vignettes restent « trouvées » malgré l'objet déjà consommé", () => {
+    // L'autre moitié du même garde-fou : pour une quête à cibles, c'est la
+    // COULEUR et la pastille ✓ des vignettes qui portent l'état accompli. Sans
+    // `accompli = enCeremonie`, l'objet — déjà retiré de l'inventaire par la
+    // livraison — repasserait en noir et blanc à l'instant du payoff.
     const c = courrierObjet();
     const state = createMockGameState({
       courriers: [c],
       missions: [{ courrierId: "q1", statut: "livree", jourResolution: 1 }],
       inventaireJoueur: [],
     });
-    render(<LigneQuete {...props} courrier={c} state={state} enCeremonie />);
-    expect(screen.getByTestId("progression-compteur").textContent).toBe("1/1");
-    const barre = document.querySelector('[data-testid="progression-barre"]') as HTMLElement;
-    expect(barre.style.width).toBe("100%");
+    const { container } = render(<LigneQuete {...props} courrier={c} state={state} enCeremonie />);
+    const grise = Array.from(container.querySelectorAll<HTMLElement>("*")).some((n) =>
+      n.style.filter.includes("grayscale"),
+    );
+    expect(grise).toBe(false);
   });
 
   it("le titre est sur SA propre ligne, pas coincé dans la rangée des photos", () => {
@@ -158,5 +181,27 @@ describe("LigneQuete", () => {
     // Et la rangée du dessous, elle, contient bien les photos.
     const rangee = Array.from(zone.children).find((n) => n !== titre) as HTMLElement;
     expect(rangee.querySelector("[data-photo-scotchee]")).toBeTruthy();
+  });
+
+  it("quête à objets : ni commanditaire ni compteur — les photos et leurs ✓ le disent", () => {
+    // Retour device : « Arianne 0/2 » faisait doublon avec les vignettes, et
+    // c'est cette colonne du milieu qui écrasait la mise en page des quêtes à
+    // trois objets. Les photos portent déjà l'identité ET l'avancement.
+    const c = courrierObjet();
+    render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
+    expect(screen.queryByTestId("ligne-demande")).toBeNull();
+    expect(screen.queryByTestId("progression-compteur")).toBeNull();
+    expect(screen.queryByTestId("progression-barre")).toBeNull();
+  });
+
+  it("quête chiffrée : le libellé d'objectif ET le compteur restent (garde-fou T7)", () => {
+    // Sans cible objet, il n'y a AUCUNE photo pour dire de quoi il s'agit :
+    // « Bénéfice réalisé » et « 0 / 850 € » sont la seule identité de la quête.
+    // Les retirer ici rendrait deux formes chiffrées indiscernables — c'est
+    // précisément le défaut corrigé en T7, à ne pas réintroduire.
+    const c = courrierChiffre({ type: "beneficeCumule", montant: 850 });
+    render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
+    expect(screen.getByTestId("ligne-demande").textContent).toBeTruthy();
+    expect(screen.getByTestId("progression-compteur").textContent).toContain("850");
   });
 });

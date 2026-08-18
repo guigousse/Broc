@@ -114,4 +114,19 @@ describe("PaveRecompense", () => {
     expect(btn.className).not.toContain("broc-pave-livrer");
     expect(btn.style.background).not.toContain("--forest-600");
   });
+
+  it("bouton Livrer : contenu centré, pas aligné à gauche", () => {
+    render(<PaveRecompense recompense={REC} livrable onLivrer={() => {}} />);
+    const btn = screen.getByRole("button");
+    expect(btn.style.alignItems).toBe("center");
+  });
+
+  it("plaque de récompense : contenu centré aussi, pour que rien ne saute au passage en bouton", () => {
+    // Les deux états occupent le MÊME emplacement : un alignement différent
+    // ferait tressauter les jetons à l'instant où la quête devient livrable —
+    // et la cérémonie part précisément de ces jetons.
+    const { container } = render(<PaveRecompense recompense={REC} livrable={false} onLivrer={() => {}} />);
+    const plaque = container.firstElementChild as HTMLElement;
+    expect(plaque.style.alignItems).toBe("center");
+  });
 });
