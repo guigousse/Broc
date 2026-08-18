@@ -1728,3 +1728,33 @@ nav[aria-label="Navigation principale"] :focus-visible,
     animation: none;
   }
 }
+
+/* ─── Pavé « Livrer » du carnet de quêtes ───────────────────────────────
+   La récompense d'une quête remplie se soulève hors du papier et respire
+   pour appeler le tap. Deux contraintes ont dicté la forme de l'animation :
+
+   1. Elle ne déplace RIEN. La cérémonie d'envol mesure la position des
+      jetons (`getBoundingClientRect`) pour lancer leur clone vers le
+      header : un `transform: scale()` sur le pavé décalerait ce point de
+      départ. Seule l'ombre respire.
+   2. Aucun `calc()` dans une @keyframes — Lightning CSS (Turbopack) jette
+      silencieusement toute la règle, et l'animation disparaît sans erreur.
+
+   L'arête inférieure sombre (`--forest-700`) donne l'épaisseur ; l'appui
+   l'écrase de 2 px et coupe la pulsation, le temps du tap.
+   La pulsation est neutralisée par le bloc `prefers-reduced-motion` global. */
+@keyframes broc-livrer-pulse {
+  0%, 100% { box-shadow: 0 3px 0 var(--forest-700), 0 5px 10px rgba(27, 24, 18, 0.25); }
+  50%      { box-shadow: 0 3px 0 var(--forest-700), 0 7px 18px rgba(59, 106, 82, 0.55); }
+}
+
+.broc-pave-livrer {
+  box-shadow: 0 3px 0 var(--forest-700), 0 5px 10px rgba(27, 24, 18, 0.25);
+  animation: broc-livrer-pulse 2.2s ease-in-out infinite;
+}
+
+.broc-pave-livrer:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--forest-700), 0 2px 5px rgba(27, 24, 18, 0.25);
+  animation: none;
+}

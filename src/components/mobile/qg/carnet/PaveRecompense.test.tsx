@@ -84,4 +84,34 @@ describe("PaveRecompense", () => {
     expect(jetonArgent?.textContent).toBe(tr(d.carnet.jetonArgent, { n: REC.argent }));
     expect(jetonXp?.textContent).toBe(tr(d.carnet.jetonXp, { n: REC.xp }));
   });
+
+  /* ─── relief et appel au tap (retour device 2026-08-18) ─── */
+
+  it("pas livrable : plaque creusée, AUCUN pointillé", () => {
+    const { container } = render(<PaveRecompense recompense={REC} livrable={false} onLivrer={() => {}} />);
+    // Le pointillé disait « découpe de papier » ; il brouillait la lecture
+    // avec les liserés en pointillé du détail déplié.
+    expect(container.innerHTML).not.toContain("dashed");
+    // Creusée : l'ombre est INTERNE — c'est ce qui la distingue du bouton.
+    const plaque = container.firstElementChild as HTMLElement;
+    expect(plaque.style.boxShadow).toContain("inset");
+  });
+
+  it("livrable : bouton vert en relief, ombre PORTÉE et non interne", () => {
+    render(<PaveRecompense recompense={REC} livrable onLivrer={() => {}} />);
+    const btn = screen.getByRole("button");
+    expect(btn.style.background).toContain("--forest-600");
+    // Le relief vient de la classe (cf. globals.css) : rien en ligne, sinon
+    // l'ombre statique et l'ombre animée se disputeraient la cascade.
+    expect(btn.style.boxShadow).toBe("");
+    expect(btn.className).toContain("broc-pave-livrer");
+  });
+
+  it("verrouillé par une autre cérémonie : ni vert ni pulsation", () => {
+    render(<PaveRecompense recompense={REC} livrable verrouille onLivrer={() => {}} />);
+    const btn = screen.getByRole("button");
+    // Un bouton grisé qui pulse quand même appellerait un tap qui sera refusé.
+    expect(btn.className).not.toContain("broc-pave-livrer");
+    expect(btn.style.background).not.toContain("--forest-600");
+  });
 });
