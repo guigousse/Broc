@@ -589,10 +589,6 @@ export const en: DictionnaireUI = {
     pagePrecedenteAria: "Previous page",
     pageIndicateurAria: "Page {page} of {total}",
   },
-  registre: {
-    ongletCommandes: "Orders",
-    ongletComptes: "Accounts",
-  },
   cahier: {
     marcheDuJour: "Market day",
     marcheDuJourN: "Market day D{n}",
@@ -619,8 +615,6 @@ export const en: DictionnaireUI = {
     fermer: "Close",
     titre: "Order book",
     jour: "Day {n}",
-    livrablesSuffixe_un: " · {n} deliverable",
-    livrablesSuffixe_n: " · {n} deliverables",
     aucuneCommande: "No orders for now.",
     sectionPrincipales: "Main orders",
     sectionQuotidiennes: "Daily orders",

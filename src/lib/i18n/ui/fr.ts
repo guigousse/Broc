@@ -594,11 +594,6 @@ export const fr = {
     pagePrecedenteAria: "Page précédente",
     pageIndicateurAria: "Page {page} sur {total}",
   },
-  // Registre unifié (QG) : onglets Commandes / Comptes.
-  registre: {
-    ongletCommandes: "Commandes",
-    ongletComptes: "Comptes",
-  },
   cahier: {
     marcheDuJour: "Marché du jour",
     marcheDuJourN: "Marché du jour J{n}",
@@ -627,8 +622,6 @@ export const fr = {
     fermer: "Fermer",
     titre: "Carnet de commandes",
     jour: "Jour {n}",
-    livrablesSuffixe_un: " · {n} livrable",
-    livrablesSuffixe_n: " · {n} livrables",
     aucuneCommande: "Aucune commande pour l'instant.",
     sectionPrincipales: "Commandes principales",
     sectionQuotidiennes: "Commandes quotidiennes",

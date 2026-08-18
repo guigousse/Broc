@@ -590,10 +590,6 @@ export const es: DictionnaireUI = {
     pagePrecedenteAria: "Página anterior",
     pageIndicateurAria: "Página {page} de {total}",
   },
-  registre: {
-    ongletCommandes: "Pedidos",
-    ongletComptes: "Cuentas",
-  },
   cahier: {
     marcheDuJour: "Mercado del día",
     marcheDuJourN: "Mercado del día D{n}",
@@ -620,8 +616,6 @@ export const es: DictionnaireUI = {
     fermer: "Cerrar",
     titre: "Cuaderno de pedidos",
     jour: "Día {n}",
-    livrablesSuffixe_un: " · {n} entregable",
-    livrablesSuffixe_n: " · {n} entregables",
     aucuneCommande: "No hay pedidos por ahora.",
     sectionPrincipales: "Pedidos principales",
     sectionQuotidiennes: "Pedidos diarios",

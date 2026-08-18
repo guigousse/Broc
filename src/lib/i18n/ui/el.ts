@@ -605,10 +605,6 @@ export const el: DictionnaireUI = {
     pagePrecedenteAria: "Προηγούμενη σελίδα",
     pageIndicateurAria: "Σελίδα {page} από {total}",
   },
-  registre: {
-    ongletCommandes: "Παραγγελίες",
-    ongletComptes: "Λογαριασμοί",
-  },
   cahier: {
     marcheDuJour: "Αγορά της ημέρας",
     marcheDuJourN: "Αγορά της ημέρας Η{n}",
@@ -637,8 +633,6 @@ export const el: DictionnaireUI = {
     fermer: "Κλείσιμο",
     titre: "Βιβλίο παραγγελιών",
     jour: "Ημέρα {n}",
-    livrablesSuffixe_un: " · {n} παραδοτέο",
-    livrablesSuffixe_n: " · {n} παραδοτέα",
     aucuneCommande: "Καμία παραγγελία προς το παρόν.",
     sectionPrincipales: "Κύριες παραγγελίες",
     sectionQuotidiennes: "Καθημερινές παραγγελίες",
