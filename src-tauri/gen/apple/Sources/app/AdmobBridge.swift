@@ -22,7 +22,7 @@ import AppTrackingTransparency
 private let AD_UNIT_ENERGIE = "ca-app-pub-6928338731034491/5859004325"
 private let AD_UNITS: [String: String] = [
   "energie": AD_UNIT_ENERGIE,
-  "boite-mystere": "ca-app-pub-6928338731034491/8064744693",
+  "boite-mystere": "ca-app-pub-6928338731034491/7843939763",
   "restauration": "ca-app-pub-6928338731034491/4038801989",
 ]
 
