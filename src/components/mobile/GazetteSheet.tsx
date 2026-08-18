@@ -24,6 +24,7 @@ import { METEO_ICON } from "@/data/meteos";
 import { getBrocanteById } from "@/data/brocantes";
 import { estJourBraderie, prochaineBraderie } from "@/lib/evenements";
 import { indicesValides, paginerSections } from "@/lib/gazettePagination";
+import { getCelebriteIllustration } from "@/lib/personaIllustrations";
 import { nomBrocante, nomCelebrite, nomCompetence } from "@/lib/i18n/contenu";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleJourSemaine } from "@/lib/i18n/libelles";
@@ -450,6 +451,9 @@ export function GazetteSheet(props: GazetteSheetProps) {
 
   const numeroSemaine = Math.floor((jourActuel - 1) / 7) + 1;
   const brocanteCeleb = celebrite ? getBrocanteById(celebrite.brocanteId) : null;
+  // `undefined` si le nom n'est pas au catalogue des portraits : la vignette
+  // « ? » d'origine reste alors le repli, plutôt qu'une image cassée.
+  const portraitCeleb = celebrite ? getCelebriteIllustration(celebrite.nom) : undefined;
   const tendanceParCategorie = new Map(
     tendances.map((t) => [t.categorie, t.delta] as const),
   );
@@ -513,10 +517,31 @@ export function GazetteSheet(props: GazetteSheetProps) {
                 fontFamily: "var(--font-display)",
                 fontSize: "5cqw",
                 color: "var(--ink-500)",
+                overflow: "hidden",
               }}
               aria-hidden
             >
-              ?
+              {portraitCeleb ? (
+                <img
+                  src={portraitCeleb}
+                  alt=""
+                  data-testid="gazette-portrait-celebrite"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    // Les portraits sont des figures DÉTOURÉES posées sur le bas
+                    // du cadre — même convention que PersonaAvatar. Un `cover`
+                    // recadrerait au milieu du buste.
+                    objectFit: "contain",
+                    objectPosition: "center bottom",
+                    // Encre du journal : la vignette appartient au papier au
+                    // lieu d'y être collée. Réversible en retirant cette ligne.
+                    filter: "grayscale(1) sepia(0.35) contrast(1.08)",
+                  }}
+                />
+              ) : (
+                "?"
+              )}
             </div>
             <p
               style={{
