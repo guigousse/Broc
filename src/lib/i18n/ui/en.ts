@@ -585,6 +585,13 @@ export const en: DictionnaireUI = {
       "The first weekend of September is coming: the Grand Braderie is setting up its stalls! Two days of slashed prices — expect the biggest crowds of the year.",
     braderieEnCours:
       "The Grand Braderie is in full swing! Stalls as far as the eye can see, slashed prices and record crowds — it's this weekend or never.",
+    // Légende sous la rangée des sept jours : la météo n'agit que sur
+    // le rythme d'arrivée des clients AU STAND DE VENTE
+    // (METEO_INTERVALLE_MULT), jamais sur la chine. Pas de chiffre : un
+    // multiplicateur sonnerait tableur au milieu d'un journal.
+    meteoLegende:
+      "Fine weather brings the buyers out; a storm keeps them home. The forecast sets the crowd at your stall — it changes nothing when you go hunting.",
+    pageIndicateur: "Page {page} / {total}",
     pageSuivanteAria: "Next page",
     pagePrecedenteAria: "Previous page",
     pageIndicateurAria: "Page {page} of {total}",

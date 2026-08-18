@@ -586,6 +586,13 @@ export const es: DictionnaireUI = {
       "Se acerca el primer fin de semana de septiembre: ¡la Gran Braderie monta sus puestos! Dos días de precios regalados — esperen la multitud de los grandes días.",
     braderieEnCours:
       "¡La Gran Braderie está en pleno apogeo! Puestos hasta donde alcanza la vista, precios regalados y multitud récord — es este fin de semana o nunca.",
+    // Légende sous la rangée des sept jours : la météo n'agit que sur
+    // le rythme d'arrivée des clients AU STAND DE VENTE
+    // (METEO_INTERVALLE_MULT), jamais sur la chine. Pas de chiffre : un
+    // multiplicateur sonnerait tableur au milieu d'un journal.
+    meteoLegende:
+      "El buen tiempo saca a los compradores; la tormenta los deja en casa. El tiempo marca la afluencia en su puesto — no cambia nada al buscar gangas.",
+    pageIndicateur: "Página {page} / {total}",
     pageSuivanteAria: "Página siguiente",
     pagePrecedenteAria: "Página anterior",
     pageIndicateurAria: "Página {page} de {total}",

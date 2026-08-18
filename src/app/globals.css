@@ -1758,3 +1758,17 @@ nav[aria-label="Navigation principale"] :focus-visible,
   box-shadow: 0 1px 0 var(--forest-700), 0 2px 5px rgba(27, 24, 18, 0.25);
   animation: none;
 }
+
+/* ─── Chevron du coin corné de la Gazette ───────────────────────────────
+   Le triangle de papier seul ne disait pas assez qu'il y avait une suite.
+   Le chevron respire lentement au lieu de clignoter : dans un journal, une
+   invitation insistante jurerait. `prefers-reduced-motion` la neutralise via
+   le bloc global. Pas de calc() dans la @keyframes (Lightning CSS). */
+@keyframes broc-chevron-page {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+.broc-chevron-page {
+  animation: broc-chevron-page 2.4s ease-in-out infinite;
+}

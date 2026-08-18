@@ -918,6 +918,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         }
         onRerollMeteo={() => rerollMeteo()}
         onRerollCelebrite={() => rerollCelebrite()}
+        // Le même bruit de journal qu'à l'ouverture, à chaque page tournée.
+        onTournerPage={playNewspaper}
       />
 
       <GazetteAchatModale

@@ -590,6 +590,13 @@ export const fr = {
       "Le premier week-end de septembre approche : la Grande Braderie dresse ses étals ! Deux jours de prix sacrifiés — attendez-vous à la foule des grands jours.",
     braderieEnCours:
       "La Grande Braderie bat son plein ! Étals à perte de vue, prix sacrifiés et foule record — c'est ce week-end ou jamais.",
+    // Légende sous la rangée des sept jours : la météo n'agit que sur
+    // le rythme d'arrivée des clients AU STAND DE VENTE
+    // (METEO_INTERVALLE_MULT), jamais sur la chine. Pas de chiffre : un
+    // multiplicateur sonnerait tableur au milieu d'un journal.
+    meteoLegende:
+      "Le beau temps fait sortir les acheteurs ; l'orage les garde chez eux. La météo règle l'affluence à votre stand — elle ne change rien à la chine.",
+    pageIndicateur: "Page {page} / {total}",
     pageSuivanteAria: "Page suivante",
     pagePrecedenteAria: "Page précédente",
     pageIndicateurAria: "Page {page} sur {total}",

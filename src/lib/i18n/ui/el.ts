@@ -601,6 +601,13 @@ export const el: DictionnaireUI = {
       "Πλησιάζει το πρώτο σαββατοκύριακο του Σεπτεμβρίου: η Μεγάλη Μπραντερί στήνει τους πάγκους της! Δύο μέρες με τιμές-σοκ — περιμένετε το μεγαλύτερο πλήθος της χρονιάς.",
     braderieEnCours:
       "Η Μεγάλη Μπραντερί είναι στο αποκορύφωμά της! Πάγκοι ως εκεί που φτάνει το μάτι, τιμές-σοκ και πλήθος-ρεκόρ — φέτος είναι αυτό το σαββατοκύριακο ή ποτέ.",
+    // Légende sous la rangée des sept jours : la météo n'agit que sur
+    // le rythme d'arrivée des clients AU STAND DE VENTE
+    // (METEO_INTERVALLE_MULT), jamais sur la chine. Pas de chiffre : un
+    // multiplicateur sonnerait tableur au milieu d'un journal.
+    meteoLegende:
+      "Ο καλός καιρός βγάζει τους αγοραστές έξω· η καταιγίδα τους κρατά σπίτι. Ο καιρός ρυθμίζει την κίνηση στον πάγκο σας — δεν αλλάζει τίποτα στο ψάξιμο.",
+    pageIndicateur: "Σελίδα {page} / {total}",
     pageSuivanteAria: "Επόμενη σελίδα",
     pagePrecedenteAria: "Προηγούμενη σελίδα",
     pageIndicateurAria: "Σελίδα {page} από {total}",
