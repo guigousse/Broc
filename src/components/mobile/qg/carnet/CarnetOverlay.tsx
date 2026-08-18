@@ -230,10 +230,16 @@ export function CarnetOverlay({
   deplierRef.current = deplier;
 
   // Minuteur du renouvellement des sections périodiques (« Renouvellement dans t »).
+  // `CarnetOverlay` est monté en permanence par le layout du QG (cf. le garde
+  // `if (!open) return null` plus bas, APRÈS les hooks) : sans le garde `open`
+  // ici, ce minuteur tournerait pour toute la session, au bureau comme en
+  // stockage — un rendu par seconde payé pour un compteur que personne ne
+  // regarde, carnet fermé.
   useEffect(() => {
+    if (!open) return;
     const id = window.setInterval(() => tick((n) => n + 1), 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [open]);
 
   // Chrome repris de RegistreOverlay : verrou du défilement du body + Échap.
   useEffect(() => {

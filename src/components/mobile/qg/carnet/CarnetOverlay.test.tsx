@@ -146,4 +146,24 @@ describe("CarnetOverlay", () => {
     // ouverte jusqu'à la fermeture du carnet.
     expect(screen.queryByText("La bonne pioche")).toBeNull();
   });
+
+  it("carnet fermé : le minuteur de renouvellement ne tourne pas", () => {
+    // `CarnetOverlay` est monté en permanence par le layout du QG : un
+    // minuteur non gardé battrait la seconde pour toute la session, au bureau
+    // comme en stockage, pour un compte à rebours que personne ne regarde.
+    const vraiSetInterval = window.setInterval;
+    let poses = 0;
+    window.setInterval = ((...args: Parameters<typeof vraiSetInterval>) => {
+      poses += 1;
+      return vraiSetInterval(...args);
+    }) as typeof window.setInterval;
+    try {
+      const { rerender } = render(<CarnetOverlay {...base} open={false} state={etat([])} />);
+      expect(poses).toBe(0);
+      rerender(<CarnetOverlay {...base} open state={etat([])} />);
+      expect(poses).toBeGreaterThan(0); // à l'ouverture, il repart
+    } finally {
+      window.setInterval = vraiSetInterval;
+    }
+  });
 });
