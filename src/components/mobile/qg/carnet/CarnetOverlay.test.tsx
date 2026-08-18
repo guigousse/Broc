@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { CarnetOverlay } from "./CarnetOverlay";
 import { CLE_STOCKAGE_CARNET } from "./useCarnetSections";
-import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
+import { createMockGameState, createMockObjet } from "@/lib/__test-fixtures__/gameState";
 import { chapitrePret, courrierDeChapitre } from "@/lib/quetes/principales";
 import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
 import type { Courrier, GameState, MissionResolution } from "@/types/game";
@@ -181,5 +181,81 @@ describe("CarnetOverlay", () => {
     } finally {
       window.setInterval = vraiSetInterval;
     }
+  });
+
+  /* ─── tri et compteur des sections (trierActives / compteurSection) ─── */
+
+  /** Quête à cible objet, avec le `jourRecu` comme seul départage possible
+   *  (aucune quête du jeu ne fixe `jourLimite`, cf. T7). */
+  function queteCible(id: string, titre: string, templateId: string, jourRecu: number): Courrier {
+    return {
+      id, type: "mission", jourRecu, lu: true,
+      payload: {
+        type: "mission", categorie: "quotidienne", expediteurId: "mode", titre, corps: ["c"],
+        cibles: [{ templateId }], recompense: { argent: 60 },
+      },
+    };
+  }
+
+  const LAMPE = "ma.lampe_petrole_ancienne";
+  const PICHET = "ma.pichet_faience_emaillee";
+
+  /** État à inventaire : seule la quête qui vise LAMPE est livrable. */
+  function etatAvecLampe(courriers: Courrier[], missions?: MissionResolution[]): GameState {
+    const s = createMockGameState({
+      courriers,
+      missions: missions ?? courriers.map((c) => ({ courrierId: c.id, statut: "active" as const })),
+      inventaireJoueur: [createMockObjet({ templateId: LAMPE, categorie: "Maison" })],
+    });
+    return { ...s, brocanteur: { ...s.brocanteur, niveau: 5 } };
+  }
+
+  function ordreAffiche(): string[] {
+    return Array.from(document.querySelectorAll<HTMLElement>("[data-commande-id]")).map(
+      (n) => n.dataset.commandeId ?? "",
+    );
+  }
+
+  it("tri : les livrables d'abord, puis la plus anciennement reçue", () => {
+    const prete = queteCible("q_prete", "Prête à rendre", LAMPE, 5);
+    const recente = queteCible("q_recente", "Reçue hier", PICHET, 3);
+    const ancienne = queteCible("q_ancienne", "Reçue il y a longtemps", PICHET, 1);
+    // Ordre d'entrée délibérément défavorable : la livrable est la plus
+    // récemment reçue, donc le tri doit la remonter CONTRE l'ordre du jour.
+    render(<CarnetOverlay {...base} state={etatAvecLampe([recente, ancienne, prete])} />);
+    expect(ordreAffiche()).toEqual(["q_prete", "q_ancienne", "q_recente"]);
+  });
+
+  it("la quête en cérémonie garde son rang et cesse d'être comptée « prête »", () => {
+    // Pendant l'envol des jetons, le state est DÉJÀ post-livraison (mission
+    // « livree », objet consommé). Sans le garde `ceremonieId`, la carte
+    // dégringolerait en bas de la liste sous les yeux du joueur et le
+    // compteur d'en-tête l'annoncerait encore « prête » alors qu'elle est en
+    // cours de livraison.
+    const prete = queteCible("q_prete", "Prête à rendre", LAMPE, 5);
+    const autre = queteCible("q_autre", "Pas encore", PICHET, 1);
+    const avant = etatAvecLampe([prete, autre]);
+    const { rerender } = render(<CarnetOverlay {...base} state={avant} />);
+    expect(ordreAffiche()).toEqual(["q_prete", "q_autre"]);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Livrer/i }));
+
+    // Le state d'après : mission livrée, objet consommé — plus rien ne la
+    // rend livrable, et `actives` ne la retiendrait pas sans le garde.
+    const apres: GameState = {
+      ...avant,
+      inventaireJoueur: [],
+      missions: [
+        { courrierId: "q_prete", statut: "livree", jourResolution: 1 },
+        { courrierId: "q_autre", statut: "active" },
+      ],
+    };
+    rerender(<CarnetOverlay {...base} state={apres} />);
+    expect(ordreAffiche()).toEqual(["q_prete", "q_autre"]);
+
+    fireEvent.click(screen.getByRole("button", { name: /Commandes quotidiennes/i }));
+    const entete = screen.getByRole("button", { name: /Commandes quotidiennes/i });
+    expect(entete.textContent ?? "").toMatch(/\(1\/2\)/); // comptée faite…
+    expect(entete.textContent ?? "").not.toMatch(/prête/i); // …mais plus « prête »
   });
 });
