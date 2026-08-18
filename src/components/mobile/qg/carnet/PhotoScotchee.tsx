@@ -101,6 +101,9 @@ export function PhotoScotchee({
           fallbackIconSize={Math.round(taille * 0.5)}
         />
       )}
+      {/* `&& Icone` est redondant avec `mode === "icone"` (le mode s'en déduit,
+          cf. le calcul plus haut) mais TypeScript ne propage pas ce lien : sans
+          lui, `Icone` reste `LucideIcon | undefined` sous le JSX. */}
       {mode === "icone" && Icone && (
         <Icone
           size={Math.round(taille * 0.5)}

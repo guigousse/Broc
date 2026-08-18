@@ -87,4 +87,24 @@ describe("SectionRetractable", () => {
     render(<SectionRetractable {...base} repliee><p>contenu</p></SectionRetractable>);
     expect(screen.getByRole("button").getAttribute("aria-controls")).toBeNull();
   });
+
+  it("le compte à rebours reste visible repliée ET dépliée", () => {
+    // Décision assumée en T5, conforme à la spec ② §1 (« le compte à rebours
+    // ne disparaît pas ») : contrairement au COMPTEUR, qui n'apparaît que
+    // repliée, le sous-titre est la seule information que le repli ne doit
+    // pas emporter — c'est lui qui dit quand la section se renouvellera.
+    // Aucun test ne la verrouillait.
+    const { rerender } = render(
+      <SectionRetractable {...base} repliee={false} sousTitre="Renouvellement dans 3 h">
+        <p>c</p>
+      </SectionRetractable>,
+    );
+    expect(screen.getByRole("button").textContent ?? "").toContain("Renouvellement dans 3 h");
+    rerender(
+      <SectionRetractable {...base} repliee sousTitre="Renouvellement dans 3 h">
+        <p>c</p>
+      </SectionRetractable>,
+    );
+    expect(screen.getByRole("button").textContent ?? "").toContain("Renouvellement dans 3 h");
+  });
 });
