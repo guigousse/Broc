@@ -140,4 +140,23 @@ describe("LigneQuete", () => {
     const barre = document.querySelector('[data-testid="progression-barre"]') as HTMLElement;
     expect(barre.style.width).toBe("100%");
   });
+
+  it("le titre est sur SA propre ligne, pas coincé dans la rangée des photos", () => {
+    // Retour device 2026-08-18 : avec trois objets, la colonne du milieu était
+    // écrasée entre les photos et le pavé récompense — le titre débordait et
+    // passait sous la récompense, illisible. La garde structurelle est que le
+    // titre soit un ENFANT DIRECT de la zone tapable, frère de la rangée
+    // [photos + progression], et non un descendant de cette rangée.
+    const c = courrierObjet();
+    render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
+    const zone = screen.getByRole("button", { expanded: false });
+    const titre = screen.getByText("Pièce vintage");
+    expect(titre.parentElement).toBe(zone);
+    // La zone tapable empile ses deux lignes : sans cela, le titre repartirait
+    // en concurrence de largeur avec les photos.
+    expect((zone as HTMLElement).style.flexDirection).toBe("column");
+    // Et la rangée du dessous, elle, contient bien les photos.
+    const rangee = Array.from(zone.children).find((n) => n !== titre) as HTMLElement;
+    expect(rangee.querySelector("[data-photo-scotchee]")).toBeTruthy();
+  });
 });

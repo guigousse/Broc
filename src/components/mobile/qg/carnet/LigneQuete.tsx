@@ -40,10 +40,18 @@ const ligneWrap: CSSProperties = {
   gap: 10,
   padding: "10px 10px 10px 8px",
 };
+/**
+ * Zone tapable : DEUX lignes empilées, le titre puis [photos + progression].
+ * Auparavant tout tenait sur une seule rangée et la colonne du milieu se
+ * retrouvait écrasée entre trois photos et le pavé récompense — un titre de
+ * quête hebdomadaire débordait alors sous la récompense, illisible (retour
+ * device 2026-08-18). Le titre occupe désormais toute la largeur de la zone.
+ */
 const zoneTogglee: CSSProperties = {
   display: "flex",
-  alignItems: "center",
-  gap: 12,
+  flexDirection: "column",
+  alignItems: "stretch",
+  gap: 6,
   flex: 1,
   minWidth: 0,
   background: "transparent",
@@ -53,6 +61,14 @@ const zoneTogglee: CSSProperties = {
   textAlign: "left",
   font: "inherit",
   color: "inherit",
+};
+
+/** La rangée du dessous : les photos (ou l'icône), puis la demande + la barre. */
+const rangeeInfos: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  minWidth: 0,
 };
 const colonneGauche: CSSProperties = {
   display: "flex",
@@ -79,6 +95,8 @@ const colonneCentre: CSSProperties = {
 };
 const titreStyle: CSSProperties = {
   display: "block",
+  // Pas de troncature : c'est précisément ce qui rendait les titres
+  // hebdomadaires invisibles. Un titre long passe à la ligne, la fiche grandit.
   fontFamily: "var(--font-display)",
   fontSize: 14,
   fontWeight: 700,
@@ -225,6 +243,8 @@ export function LigneQuete({
     <div data-commande-id={courrier.id} style={carte}>
       <div style={ligneWrap}>
         <button type="button" style={zoneTogglee} onClick={onToggle} aria-expanded={ouvert}>
+          <span style={titreStyle}>{titreCourrier(courrier, locale)}</span>
+          <span style={rangeeInfos}>
           <span style={colonneGauche}>
             {p.cibles.length > 0 ? (
               <>
@@ -256,7 +276,6 @@ export function LigneQuete({
             )}
           </span>
           <span style={colonneCentre}>
-            <span style={titreStyle}>{titreCourrier(courrier, locale)}</span>
             <span style={demandeStyle} data-testid="ligne-demande">{demandeAffichee}</span>
             <span style={barreWrap}>
               <span style={barreFond}>
@@ -264,6 +283,7 @@ export function LigneQuete({
               </span>
               <span data-testid="progression-compteur" style={compteurStyle}>{compteur}</span>
             </span>
+          </span>
           </span>
         </button>
         <div style={colonnePave}>
