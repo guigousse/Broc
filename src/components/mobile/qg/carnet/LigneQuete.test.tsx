@@ -183,14 +183,25 @@ describe("LigneQuete", () => {
     expect(rangee.querySelector("[data-photo-scotchee]")).toBeTruthy();
   });
 
-  it("quête à objets : ni commanditaire ni compteur — les photos et leurs ✓ le disent", () => {
-    // Retour device : « Arianne 0/2 » faisait doublon avec les vignettes, et
-    // c'est cette colonne du milieu qui écrasait la mise en page des quêtes à
-    // trois objets. Les photos portent déjà l'identité ET l'avancement.
+  it("quête à objets : plus de commanditaire, mais le compteur revient SOUS les vignettes", () => {
+    // Retour device, deux temps : « Arianne » faisait doublon avec les
+    // vignettes et sa colonne écrasait la mise en page à trois objets ; mais
+    // retirer le compteur avec laissait un vide. Il revient donc sous les
+    // photos — plus jamais en concurrence de largeur avec le pavé.
     const c = courrierObjet();
     render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
     expect(screen.queryByTestId("ligne-demande")).toBeNull();
-    expect(screen.queryByTestId("progression-compteur")).toBeNull();
+    const compteur = screen.getByTestId("progression-compteur");
+    expect(compteur.textContent).toBe("0/1");
+    // « Sous » = deux conditions, et la première seule ne suffit pas : il faut
+    // que le compteur soit dans la MÊME colonne que les vignettes, ET que
+    // cette colonne empile (sinon il se remet à leur droite, à se disputer la
+    // largeur du pavé — la cause du chevauchement d'origine).
+    const colonne = compteur.parentElement as HTMLElement;
+    expect(colonne.querySelector("[data-photo-scotchee]")).toBeTruthy();
+    expect(colonne.style.flexDirection).toBe("column");
+    // La barre reste réservée aux quêtes chiffrées : les ✓ des vignettes la
+    // remplacent, et deux jauges pour la même chose se contrediraient.
     expect(screen.queryByTestId("progression-barre")).toBeNull();
   });
 
@@ -203,5 +214,16 @@ describe("LigneQuete", () => {
     render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
     expect(screen.getByTestId("ligne-demande").textContent).toBeTruthy();
     expect(screen.getByTestId("progression-compteur").textContent).toContain("850");
+  });
+
+  it("aucune quête ne verse plus d'XP : pas de jeton XP au pavé", () => {
+    // Décision de design 2026-08-18 : l'XP de quête disparaît, des jetons
+    // « Bazar » prendront sa place plus tard. Le pavé ne rend un jeton que
+    // pour un gain NON NUL, donc l'absence du jeton XP est la preuve
+    // observable que la récompense effective est bien à zéro.
+    const c = courrierObjet();
+    render(<LigneQuete {...props} courrier={c} state={createMockGameState({ courriers: [c] })} />);
+    expect(document.querySelector('[data-jeton="xp"]')).toBeNull();
+    expect(document.querySelector('[data-jeton="argent"]')).toBeTruthy();
   });
 });

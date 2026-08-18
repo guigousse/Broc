@@ -70,11 +70,27 @@ const rangeeInfos: CSSProperties = {
   gap: 12,
   minWidth: 0,
 };
+/**
+ * Colonne des vignettes. Empilée : les photos, puis le compteur SOUS elles.
+ * Le compteur avait d'abord été retiré avec le commanditaire (les ✓ des
+ * vignettes le disaient déjà) — mais son absence laissait un vide sur les
+ * quêtes à un seul objet. Le remettre ici, et pas dans une colonne à côté, le
+ * sort définitivement de la concurrence de largeur avec le pavé récompense,
+ * qui était la cause du chevauchement à trois objets.
+ */
 const colonneGauche: CSSProperties = {
   display: "flex",
+  flexDirection: "column",
   alignItems: "center",
   gap: 4,
   flex: "0 0 auto",
+};
+
+/** Les vignettes elles-mêmes, en rangée, sous laquelle vient le compteur. */
+const rangeeVignettes: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
 };
 const plusPastille: CSSProperties = {
   fontFamily: "var(--font-mono)",
@@ -246,6 +262,7 @@ export function LigneQuete({
           <span style={titreStyle}>{titreCourrier(courrier, locale)}</span>
           <span style={rangeeInfos}>
           <span style={colonneGauche}>
+            <span style={rangeeVignettes}>
             {p.cibles.length > 0 ? (
               <>
                 {p.cibles.slice(0, 4).map((cible, i) => {
@@ -273,6 +290,13 @@ export function LigneQuete({
                 taille={56}
                 accompli={iconeAccompli}
               />
+            )}
+            </span>
+            {/* Compteur sous les vignettes — seulement quand il y a des
+                vignettes : les quêtes chiffrées gardent le leur dans la
+                colonne du milieu, collé à leur barre de progression. */}
+            {p.cibles.length > 0 && (
+              <span data-testid="progression-compteur" style={compteurStyle}>{compteur}</span>
             )}
           </span>
           {/* Colonne du milieu réservée aux quêtes CHIFFRÉES. Avec des cibles

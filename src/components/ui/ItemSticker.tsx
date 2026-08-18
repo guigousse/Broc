@@ -63,12 +63,21 @@ function contourBlanc(px: number): string {
   ].join(" ");
 }
 
+/**
+ * Désaturation des objets « connus mais pas encore à soi » — celle de la
+ * grille de Collection. Exportée parce que le carnet de quêtes doit rendre
+ * EXACTEMENT le même gris pour ses cibles pas encore trouvées : deux réglages
+ * séparés auraient dérivé au premier ajustement.
+ *
+ * Sans le contour blanc, qui n'appartient qu'au découpage die-cut du sticker.
+ */
+export const FILTRE_GRISE = "grayscale(1) brightness(1.3) contrast(0.75) opacity(0.55)";
+
 /** Filtre appliqué à l'image/icône selon la variante. Silhouette = noir + contour blanc. */
 function variantFilter(variant: StickerVariant, outlinePx: number): string {
   const contour = contourBlanc(outlinePx);
   if (variant === "silhouette") return `brightness(0) ${contour}`;
-  if (variant === "grise")
-    return `grayscale(1) brightness(1.3) contrast(0.75) opacity(0.55) ${contour}`;
+  if (variant === "grise") return `${FILTRE_GRISE} ${contour}`;
   return contour;
 }
 

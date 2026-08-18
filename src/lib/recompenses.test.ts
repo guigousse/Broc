@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appliquerRecompense, recompenseEffective, xpParDefaut } from "./recompenses";
-import { XP_QUETE_HEBDO, XP_QUETE_PRINCIPALE, XP_QUETE_QUOTIDIENNE } from "@/lib/xp";
+import { appliquerRecompense, recompenseEffective } from "./recompenses";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 import type { CourrierPayloadMission, MissionCategorie } from "@/types/game";
 
@@ -12,22 +11,23 @@ function mission(patch: Partial<CourrierPayloadMission> = {}): CourrierPayloadMi
   };
 }
 
-describe("xpParDefaut", () => {
-  it("suit les constantes de catégorie", () => {
-    expect(xpParDefaut("quotidienne")).toBe(XP_QUETE_QUOTIDIENNE);
-    expect(xpParDefaut("hebdomadaire")).toBe(XP_QUETE_HEBDO);
-    expect(xpParDefaut("principale")).toBe(XP_QUETE_PRINCIPALE);
-  });
-
-  it("catégorie inconnue (vieille save non purgée) : défaut sûr plutôt qu'undefined", () => {
-    expect(xpParDefaut("mensuelle" as MissionCategorie)).toBe(25);
+describe("XP de quête", () => {
+  it("AUCUNE catégorie ne verse d'XP (décision de design 2026-08-18)", () => {
+    // Les jetons « Bazar » prendront cette place. La règle est vérifiée sur
+    // les trois catégories réelles PLUS une catégorie inconnue, le chemin
+    // qu'emprunterait une vieille save non purgée : aucune ne doit rouvrir
+    // une porte vers l'XP.
+    for (const categorie of ["quotidienne", "hebdomadaire", "principale", "mensuelle"]) {
+      const r = recompenseEffective(mission({ categorie: categorie as MissionCategorie }));
+      expect(r.xp, `catégorie ${categorie}`).toBe(0);
+    }
   });
 });
 
 describe("recompenseEffective", () => {
-  it("applique le défaut XP de la catégorie quand xp est absent", () => {
+  it("xp absent : zéro, pas un défaut de catégorie", () => {
     const r = recompenseEffective(mission({ categorie: "principale", recompense: { argent: 200 } }));
-    expect(r).toEqual({ argent: 200, xp: XP_QUETE_PRINCIPALE, energie: 0 });
+    expect(r).toEqual({ argent: 200, xp: 0, energie: 0 });
   });
 
   it("respecte un xp explicite, y compris 0", () => {
@@ -40,9 +40,11 @@ describe("recompenseEffective", () => {
     expect(recompenseEffective(mission({ recompense: { argent: 30, energie: 2 } })).energie).toBe(2);
   });
 
-  it("catégorie inconnue : pas de NaN (défaut sûr, pas d'undefined)", () => {
+  it("catégorie inconnue : pas de NaN (zéro sûr, pas d'undefined)", () => {
+    // Le risque d'origine n'a pas disparu avec les constantes : c'est
+    // `b.xp + undefined` qui NaN-poisonnerait la save. Zéro est un nombre.
     const r = recompenseEffective(mission({ categorie: "mensuelle" as MissionCategorie }));
-    expect(r).toEqual({ argent: 30, xp: 25, energie: 0 });
+    expect(r).toEqual({ argent: 30, xp: 0, energie: 0 });
     expect(Number.isNaN(r.xp)).toBe(false);
   });
 });

@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { accepterChapitre, chapitrePret } from "./principales";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
-import {
-  appliquerGainXPBrocanteur,
-  POINTS_BONUS_CHAPITRE,
-  XP_QUETE_PRINCIPALE,
-} from "@/lib/xp";
+import { POINTS_BONUS_CHAPITRE } from "@/lib/xp";
 import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
 import type { Courrier, GameState, MissionResolution } from "@/types/game";
 
@@ -137,13 +133,13 @@ describe("accepterChapitre", () => {
     });
     expect(next.budget).toBe(state.budget + 450);
     expect(next.grandLivre.some((e) => e.kind === "mission_recompense" && e.courrierId === "trame_ch10")).toBe(true);
-    const avecXPAttendu = appliquerGainXPBrocanteur(
-      state.brocanteur,
-      XP_QUETE_PRINCIPALE,
-    );
-    expect(next.brocanteur.xp).toBe(avecXPAttendu.xp);
+    // Les quêtes ne versent plus d'XP (décision 2026-08-18) : l'XP du
+    // brocanteur ne bouge pas d'un chapitre livré. En revanche le bonus de
+    // POINTS de compétence propre à la trame, lui, est intact — c'est une
+    // récompense distincte, et la confondre avec l'XP serait la perdre.
+    expect(next.brocanteur.xp).toBe(state.brocanteur.xp);
     expect(next.brocanteur.pointsDisponibles).toBe(
-      avecXPAttendu.pointsDisponibles + POINTS_BONUS_CHAPITRE,
+      state.brocanteur.pointsDisponibles + POINTS_BONUS_CHAPITRE,
     );
   });
 

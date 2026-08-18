@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Gem } from "lucide-react";
 import { PhotoScotchee } from "./PhotoScotchee";
+import { FILTRE_GRISE } from "@/components/ui/ItemSticker";
 
 afterEach(cleanup);
 
@@ -72,5 +73,18 @@ describe("PhotoScotchee", () => {
       n.style.filter.includes("grayscale"),
     );
     expect(grise).toBe(false);
+  });
+
+  it("le gris est EXACTEMENT celui de la grille de Collection", () => {
+    // Deux réglages séparés auraient dérivé au premier ajustement : le joueur
+    // doit reconnaître le même « pas encore à moi » d'un écran à l'autre.
+    // Assertion sur la constante partagée, pas sur ses valeurs numériques.
+    const { container } = render(
+      <PhotoScotchee templateId="ma.lampe_petrole_ancienne" categorie="Maison" taille={64} alt="lampe" />,
+    );
+    const porteur = Array.from(container.querySelectorAll<HTMLElement>("*")).find((n) =>
+      n.style.filter.includes("grayscale"),
+    );
+    expect(porteur?.style.filter).toBe(FILTRE_GRISE);
   });
 });

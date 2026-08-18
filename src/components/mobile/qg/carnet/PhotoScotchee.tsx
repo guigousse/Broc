@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import type { LucideIcon } from "lucide-react";
 import { ItemImage } from "@/components/ui/ItemImage";
+import { FILTRE_GRISE } from "@/components/ui/ItemSticker";
 import type { CategorieObjet } from "@/types/game";
 
 interface Props {
@@ -98,7 +99,10 @@ export function PhotoScotchee({
            pastille ✓ était trop discrète pour porter seule la différence
            entre « trouvé » et « à chiner » (retour device).
            Le filtre est posé sur ce calque, PAS sur le cadre : il ne doit
-           déteindre ni sur le papier ni sur le ruban de scotch en laiton. */
+           déteindre ni sur le papier ni sur le ruban de scotch en laiton.
+           Et c'est LE gris de la grille de Collection (`FILTRE_GRISE`), pas un
+           réglage maison : le joueur doit reconnaître le même « pas encore à
+           moi » d'un écran à l'autre. */
         <span
           style={{
             display: "flex",
@@ -106,7 +110,7 @@ export function PhotoScotchee({
             justifyContent: "center",
             width: "100%",
             height: "100%",
-            filter: accompli ? undefined : "grayscale(1) contrast(0.95)",
+            filter: accompli ? undefined : FILTRE_GRISE,
           }}
         >
           <ItemImage
