@@ -2,6 +2,7 @@ import {
   INITIAL_JOUR,
   type BrocanteurState,
   type Courrier,
+  type CompetenceId,
   type EtatObjet,
   type GameState,
   type ObjetEnVitrine,
@@ -16,6 +17,7 @@ import {
 import {
   COMPETENCES,
   COUT_TOTAL_COMPETENCES,
+  catTreeId,
   getCompetence,
   pointsDepensesCompetences,
 } from "@/data/competences";
@@ -757,7 +759,18 @@ function appliquerMigrations(loaded: GameState): GameState {
       // 0 = nouvelle économie (slots achetés) ; 2/3 = acquis conservés.
       // 1, absent ou invalide → 1 (slot gratuit des sauvegardes historiques).
       const v = (loaded as Partial<GameState>).niveauAtelier;
-      return v === 0 || v === 2 || v === 3 ? v : 1;
+      const brut = v === 0 || v === 2 || v === 3 ? v : 1;
+      // Invariant : savoir réparer, c'est avoir un établi. Le premier est
+      // offert avec la première compétence Réparer (cf. debloquerCompetence) ;
+      // on l'accorde ici aux parties d'avant cette règle, sans quoi deux
+      // joueurs identiques auraient des ateliers différents selon la date de
+      // leur partie.
+      if (brut > 0) return brut;
+      const debloquees = (loaded as Partial<GameState>).competencesDebloquees ?? [];
+      const saitReparer = CATEGORIES.some((cat) =>
+        debloquees.includes(`${catTreeId(cat)}.reparer.1` as CompetenceId),
+      );
+      return saitReparer ? 1 : 0;
     })(),
     niveauStockage: (() => {
       // `v` peut venir d'une vieille sauvegarde et valoir 4 (Entrepôt supprimé).

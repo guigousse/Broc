@@ -195,6 +195,12 @@ export const es: DictionnaireUI = {
       "El valor de tu colección crece con cada donación, y desbloquea nuevos mercadillos.",
     coachCollectionRetirer:
       "Una pieza donada no está perdida: este botón la devuelve a tu reserva, pero su valor se va con ella.",
+    coachAtelierDemanteler:
+      "Lo que nunca venderás, desmóntalo: da piezas.",
+    coachAtelierPieces:
+      "Tus piezas, una reserva por familia de objetos.",
+    coachAtelierEtabli:
+      "Un objeto, unas piezas, un poco de tiempo: y sale en mejor estado.",
     coachVenteHumeur:
       "Su humor: cada tira y afloja lo va crispando. Cuanto más roja se pone la barra, más probable es que se marche para siempre.",
     coachCompetencesXp:

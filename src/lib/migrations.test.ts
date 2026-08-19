@@ -67,6 +67,36 @@ describe("migrerSauvegarde — anciens champs manquants", () => {
     expect(migrerSauvegarde(incomplete).niveauAtelier).toBe(1);
   });
 
+  /**
+   * Invariant posé le 2026-08-19 : savoir réparer, c'est avoir un établi. Le
+   * premier est offert avec la première compétence Réparer — on l'accorde
+   * aussi aux parties d'avant cette règle, sinon deux joueurs identiques
+   * auraient des ateliers différents selon la date de leur partie.
+   */
+  it("offre le premier établi à une vieille partie qui sait déjà réparer", () => {
+    const state = createMockGameState({
+      niveauAtelier: 0,
+      competencesDebloquees: ["cat.Musique.reparer.1"],
+    });
+    expect(migrerSauvegarde(state).niveauAtelier).toBe(1);
+  });
+
+  it("laisse à 0 une partie qui ne sait pas encore réparer", () => {
+    const state = createMockGameState({
+      niveauAtelier: 0,
+      competencesDebloquees: ["cat.Musique.connaisseur.1"],
+    });
+    expect(migrerSauvegarde(state).niveauAtelier).toBe(0);
+  });
+
+  it("ne dégrade jamais un atelier déjà amélioré", () => {
+    const state = createMockGameState({
+      niveauAtelier: 3,
+      competencesDebloquees: [],
+    });
+    expect(migrerSauvegarde(state).niveauAtelier).toBe(3);
+  });
+
   it("garde niveauAtelier=2 si déjà à 2", () => {
     const state = createMockGameState({ niveauAtelier: 2 });
     expect(migrerSauvegarde(state).niveauAtelier).toBe(2);

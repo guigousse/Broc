@@ -228,3 +228,62 @@ describe("ongletSuivantOuvert — le swipe saute les pièces fermées", () => {
     expect(ongletSuivantOuvert(IDX_BUREAU, -1, null)?.path).toBe("/bibliotheque");
   });
 });
+
+/**
+ * Visite guidée de l'Atelier : le cadenas vient de tomber, la main désigne
+ * la porte. Elle passe AVANT le mini-tuto des vinyles — deux mains à la fois
+ * ne guideraient personne.
+ */
+describe("TabBar — main vers l'Atelier fraîchement ouvert", () => {
+  function etatVisiteAtelier(extra: Record<string, unknown> = {}): GameState {
+    return {
+      brocanteur: { niveau: 3, xp: 0, pointsDisponibles: 0 },
+      inventaireJoueur: [],
+      competencesDebloquees: [`${catTreeId(CATEGORIES[0])}.reparer.1`],
+      tutorielEtape: "termine",
+      miniTutoAtelier: "visite",
+      ...extra,
+    } as unknown as GameState;
+  }
+
+  it("la main se pose sur l'Atelier tant que la visite n'est pas faite", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = { state: etatVisiteAtelier(), isHydrated: true };
+    render(<TabBar />);
+    const avecMain = screen
+      .getAllByRole("button")
+      .find((b) => b.className.includes("tuto-main"));
+    expect(avecMain?.textContent).toContain("Atelier");
+  });
+
+  it("plus de main une fois qu'on y est", () => {
+    mockPathname = "/atelier";
+    mockGameStateValue = { state: etatVisiteAtelier(), isHydrated: true };
+    render(<TabBar />);
+    expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+
+  it("l'Atelier prend le pas sur le mini-tuto vinyle", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = {
+      state: etatVisiteAtelier({ miniTutoVinyle: "ajouter" }),
+      isHydrated: true,
+    };
+    render(<TabBar />);
+    const mains = screen
+      .getAllByRole("button")
+      .filter((b) => b.className.includes("tuto-main"));
+    expect(mains).toHaveLength(1);
+    expect(mains[0].textContent).toContain("Atelier");
+  });
+
+  it("visite terminée : plus aucune main", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = {
+      state: etatVisiteAtelier({ miniTutoAtelier: "termine" }),
+      isHydrated: true,
+    };
+    render(<TabBar />);
+    expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+})
