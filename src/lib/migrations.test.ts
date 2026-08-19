@@ -1140,8 +1140,8 @@ function saveV17(patch: Partial<GameState> = {}): GameState {
 }
 
 describe("v18 — la branche thématique « Œil aiguisé » devient Marchandage", () => {
-  it("SAVE_VERSION incrémenté à 19 (v18 Marchandage + v19 tutoriel v2)", () => {
-    expect(SAVE_VERSION).toBe(19);
+  it("SAVE_VERSION incrémenté à 20 (v18 Marchandage + v19 tutoriel v2 + v20 jetons du Bazar)", () => {
+    expect(SAVE_VERSION).toBe(20);
   });
 
   it("retire les ids legacy, rembourse 1 pt chacun, SANS reset des autres compétences (save v17)", () => {
@@ -1276,5 +1276,20 @@ describe("migrerSauvegarde — v19 étapes v2 du tutoriel", () => {
   it("normalise premiere-vente (étape v2 disparue) vers termine", () => {
     const s = { ...createMockGameState(), version: SAVE_VERSION, tutorielEtape: "premiere-vente" };
     expect(migrerSauvegarde(s as unknown as GameState).tutorielEtape).toBe("termine");
+  });
+});
+
+describe("migration v20 — jetons du Bazar", () => {
+  it("pose jetons: 0 sur une save v19 qui ne connaît pas le champ", () => {
+    const v19 = { ...createMockGameState(), version: 19 } as unknown as Record<string, unknown>;
+    delete v19.jetons;
+    const migre = migrerSauvegarde(v19 as unknown as GameState);
+    expect(migre.jetons).toBe(0);
+    expect(migre.version).toBe(20);
+  });
+
+  it("préserve un solde de jetons existant", () => {
+    const v20 = { ...createMockGameState({ jetons: 7 }), version: 20 };
+    expect(migrerSauvegarde(v20).jetons).toBe(7);
   });
 });

@@ -354,6 +354,12 @@ export interface GameState {
   /** Version du schéma de sauvegarde (cf. SAVE_VERSION dans lib/migrations). Absente sur les vieux saves. */
   version?: number;
   budget: number;
+  /**
+   * Monnaie du Bazar. Gagnée aux quêtes périodiques uniquement, dépensée au
+   * Bazar uniquement.
+   * ADDITIF (v20) : absent des saves < 20, la migration pose 0.
+   */
+  jetons: number;
   jourActuel: number;
   inventaireJoueur: Objet[];
   /** Vitrine active : objets exposés dans une brocante donnée. null = aucune vitrine ouverte. */

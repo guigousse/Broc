@@ -711,6 +711,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       niveauStockage: 1,
       niveauCamion: 1,
       piecesAmelioration: emptyPiecesAmelioration(),
+      jetons: 0,
       chatSurFauteuil: false,
       passagesSansChat: 0,
       declencheursDeclenches: [],

@@ -27,6 +27,7 @@ export function createMockGameState(patch: Partial<GameState> = {}): GameState {
 
   const base: GameState = {
     budget: 1000,
+    jetons: 0,
     jourActuel: 1,
     inventaireJoueur: [],
     vitrine: null,

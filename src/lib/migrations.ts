@@ -105,7 +105,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -791,6 +791,9 @@ function appliquerMigrations(loaded: GameState): GameState {
       }
       return base;
     })(),
+    jetons: typeof (loaded as Partial<GameState>).jetons === "number"
+      ? (loaded as Partial<GameState>).jetons!
+      : 0,
     chatSurFauteuil: (loaded as Partial<GameState>).chatSurFauteuil ?? false,
     passagesSansChat: (() => {
       const v = (loaded as Partial<GameState>).passagesSansChat;
