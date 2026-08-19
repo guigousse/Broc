@@ -116,10 +116,23 @@ incarné est un ajout ultérieur, pas un prérequis.
 
 ### Déblocage
 
-Le Bazar s'ouvre **au même niveau que les quêtes périodiques** —
-`NIVEAU_QUETES_PERIODIQUES = 3` (`src/lib/quetes/settlePeriodiques.ts:11`).
-Aucune constante neuve : avant ce niveau il n'y a pas de jetons, donc pas de
-boutique. La cohérence est structurelle, pas conventionnelle.
+Le Bazar ouvre le **10 juillet 1924**, soit le **jour de jeu 35** (jeudi). Le
+Jour 1 est le vendredi 6 juin 1924 (`src/lib/calendrier.ts:12`).
+
+```ts
+/** Jour de jeu du 10 juillet 1924, ouverture du Bazar (jour 1 = 6 juin). */
+export const JOUR_OUVERTURE_BAZAR = 35;
+```
+
+La forme est celle d'`anniversaire.ts`, qui date déjà le 11 juin de la même
+façon : une constante nommée, la date en commentaire. C'est un **événement du
+calendrier**, pas une récompense de progression — le Bazar ouvre ses portes, il ne
+se mérite pas.
+
+Un joueur qui atteindrait le jour 35 sans avoir encore de quêtes périodiques
+(`NIVEAU_QUETES_PERIODIQUES = 3`) trouverait une boutique sans un jeton en poche.
+Le cas est théorique — cinq semaines de jeu sans atteindre le niveau 3 — mais la
+boutique doit rester lisible dans cet état : un étal garni, un compteur à zéro.
 
 ### Contenu — deux rayons
 
@@ -153,10 +166,14 @@ définitif est réservé aux `uniques`, qui ont déjà leur mécanique.
 
 ### Rotation
 
-**Quotidienne**, ancrée sur `cleJourLocal` (`src/lib/quetes/periode.ts`) — la même
-horloge que les quêtes quotidiennes, et donc **le même instant** : à minuit local,
-les quêtes et l'étal se renouvellent ensemble. Un seul moment dans la journée où
-tout est neuf.
+**Hebdomadaire**, ancrée sur `cleSemaineLocale` (`src/lib/quetes/periode.ts`) — la
+même horloge que les quêtes hebdomadaires, et donc **le même instant** : le lundi
+à minuit local, le nouveau lot de quêtes et le nouvel étal arrivent ensemble. Le
+lundi devient le rendez-vous de la semaine.
+
+Noter l'asymétrie, qui est voulue : le Bazar **ouvre** sur une date du jeu (jour
+35) mais **tourne** sur des semaines réelles. C'est cohérent avec sa monnaie — les
+jetons viennent de quêtes elles-mêmes calées sur le temps réel.
 
 L'étal courant est **persisté dans la save** et réglé par un `settle` au tick, sur
 le modèle exact de `settlePeriodiques.ts`. On ne le recalcule pas à la volée : la
@@ -166,11 +183,11 @@ ancre périmée.
 ```ts
 /** ADDITIF (v20) : étal courant du Bazar. */
 bazar?: {
-  /** Clé de jour ("YYYY-MM-DD") de l'étal présenté. */
-  cleJour: string;
-  /** Catégorie du lot de pièces à l'étal ce jour-là. */
+  /** Clé de semaine ISO ("YYYY-Www") de l'étal présenté. */
+  cleSemaine: string;
+  /** Catégorie du lot de pièces à l'étal cette semaine-là. */
   categoriePieces: CategorieObjet;
-  /** Objet de vitrine du jour, ou null si déjà acheté. */
+  /** Objet de vitrine de la semaine, ou null si déjà acheté. */
   vitrine: { templateId: string; valeurBase: number; prix: number } | null;
 };
 ```
@@ -196,8 +213,9 @@ Trois profils de joueur :
 | Régulier, la moitié | ~15 |
 | Une seule connexion dans la semaine | **12** (6 jours de quotidiennes perdus) |
 
-Une semaine parfaite achète donc : **3 objets de vitrine**, ou 30 lots de pièces,
-ou un mélange.
+Face à ce robinet, l'étal de ce premier jalon offre **un seul objet de vitrine
+par semaine** (~10 jetons) et des lots de pièces à 1 jeton. Un joueur assidu
+gagne donc plus qu'il ne peut dépenser — voir le point ouvert en annexe E.
 
 ## 4. Le ratio, et ce qu'il implique
 
@@ -245,9 +263,10 @@ Ce point mérite un test dédié, pas un commentaire.
 
 ### Le plafond du robinet protège la vitrine
 
-À 30 jetons/semaine, la revente de vitrine ne peut pas dépasser **3 objets par
-semaine**, quoi qu'il arrive. Même mal calé, ce rayon ne peut pas détrôner la
-chine. Le garde-fou est structurel : il ne dépend d'aucun réglage.
+La vitrine ne présente **qu'un objet, et il ne se renouvelle qu'une fois par
+semaine**. La revente de vitrine est donc bornée à un objet hebdomadaire, quel que
+soit le prix retenu. Même mal calée, elle ne peut pas détrôner la chine : le
+garde-fou est structurel, il ne dépend d'aucun réglage.
 
 ### Le joueur du dimanche — à surveiller, pas à corriger
 
@@ -265,8 +284,9 @@ des retours, pas sur une intuition.
   barème paie l'ancien montant.
 - Le grand livre garde `recette`/`depense` à 0 sur un achat au Bazar, et affiche
   le suffixe jetons sur une livraison de quête.
-- L'étal se renouvelle au passage de `cleJourLocal`, et **pas** entre deux ticks
-  du même jour.
+- L'étal se renouvelle au passage de `cleSemaineLocale`, et **pas** entre deux
+  ticks de la même semaine.
+- Le Bazar est inaccessible avant le jour 35, et accessible à partir du jour 35.
 - Un objet de vitrine acheté n'est plus à l'étal jusqu'à la rotation.
 - **Un objet acheté au Bazar porte `prixAchat = prix × 25`** (garde-fou §5).
 - Achat refusé si `jetons` est insuffisant, sans effet de bord.
@@ -362,12 +382,38 @@ Une borne dans le Bazar. **1 jeton = une partie**, sur un jeu que le joueur
 10. Pièces vendues **par lot de 5**, catégorie **étiquetée** et tournante.
 11. Le Bazar est un **lieu**, atteint par un **troisième bouton** dans `PorteSheet`.
 12. **30 cartes et 30 timbres** pour la première série.
+13. Rotation **hebdomadaire**, au même instant que le lot de quêtes hebdomadaires.
+14. Le Bazar ouvre le **10 juillet en temps de jeu** (jour 35) — un événement du
+    calendrier, pas un palier de progression.
+15. Prix arrondi **au supérieur**.
 
 ## Annexe E — Questions laissées ouvertes
 
 | Question | Chantier | Pourquoi on ne tranche pas ici |
 |---|---|---|
+| **Le surplus de jetons du premier jalon** : ~30 gagnés par semaine, ~10 à 15 dépensables | ② | Voir la note ci-dessous. |
 | Rattrapage pour le joueur intermittent (12 jetons contre 30) | ① | Réglage de nombre ; se décide sur des retours d'usage. |
 | Le Bazar vendra-t-il aussi des **exclusifs** en fin de partie ? | ② bis | Dépend de ce que la vitrine devient une fois les albums finis. |
 | Le nom « Brockymon » | ④ | Se tranche avec les visuels, pas avant. |
 | Unicité des slots face à une **cartouche dorée** | ⑤ | Demande de connaître les mini-jeux. |
+
+### Note — le surplus du premier jalon
+
+Avec une rotation hebdomadaire et une vitrine à un seul objet, l'étal absorbe
+~10 à 15 jetons par semaine face à un robinet qui en verse jusqu'à 30. Un joueur
+assidu accumule.
+
+Ce n'est pas alarmant : les paquets de cartes et de timbres (④ et ③) sont
+précisément les articles à fort débit qui absorberont ce surplus, et une réserve
+de jetons accumulée le jour où les albums ouvrent est un bon moment de jeu, pas
+un défaut. Mais **le premier jalon vivra seul un certain temps**, et il faut
+décider ce qu'on fait pendant cette période :
+
+- **Ne rien faire** — les jetons s'accumulent, l'étal reste sobre, le trop-plein
+  se déverse à l'arrivée des albums.
+- **Élargir le fond de commerce** — présenter deux ou trois lots de pièces de
+  catégories différentes en même temps, plutôt qu'un seul. Coût nul, absorbe le
+  surplus, et rend l'étal plus vivant pour un rayon qui n'a qu'une ligne.
+
+Recommandation : la seconde. Un étal à une seule ligne de consommable ressemble
+peu à une boutique.
