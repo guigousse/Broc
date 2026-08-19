@@ -394,7 +394,9 @@ export default function VitrinePrepPage() {
           overflowY: "auto",
           // Étape tarification (liste, pas image) : on décale le contenu sous
           // le texte d'étape flottant. Packing (image) reste à fleur du header.
-          paddingTop: etape === "pricing" ? 70 : 0,
+          // `--tuto-banniere-h` (0 hors tutoriel) empêche en plus la bannière
+          // de consigne de mordre sur la première ligne à tarifer.
+          paddingTop: `calc(${etape === "pricing" ? 70 : 0}px + var(--tuto-banniere-h, 0px))`,
         }}
       >
         {etape === "packing" ? (

@@ -159,6 +159,48 @@ export function ongletTutorielPermis(
   }
 }
 
+/* === Bannière de consigne ============================================= */
+
+/**
+ * Étapes où un autre guide occupe déjà l'écran — dialogue plein cadre du
+ * grand-père, visite du coach, démo automatique, cérémonie de niveau. La
+ * bannière n'y ajoute rien et, posée en haut de l'écran, elle recouvre
+ * justement ce que la leçon cherche à montrer.
+ */
+const ETAPES_SANS_BANNIERE: ReadonlySet<TutorielEtape> = new Set<TutorielEtape>([
+  "accueil",
+  "stockage-focus",
+  "coffre-trace-un",
+  "niveau-celebration",
+  "conclusion",
+  "termine",
+]);
+
+/**
+ * Étapes dont la consigne dit « va sur cet onglet ». Une fois arrivé, elle
+ * ment : « Ouvre la Collection » s'affichait DANS la collection (recette
+ * device 2026-08-19). La main de la TabBar suit déjà la même règle — elle ne
+ * pointe jamais l'onglet actif.
+ */
+const DESTINATION_ETAPE: Partial<Record<TutorielEtape, string>> = {
+  "stockage-ouvrir": "/stockage",
+  "collection-lecon": "/collection",
+  "competences-visite": "/bibliotheque",
+};
+
+/**
+ * La bannière de consigne doit-elle s'afficher ? Elle ne paraît que là où
+ * elle apporte une instruction encore vraie.
+ */
+export function banniereVisible(
+  etape: TutorielEtape,
+  pathname: string | null | undefined,
+): boolean {
+  if (ETAPES_SANS_BANNIERE.has(etape)) return false;
+  const destination = DESTINATION_ETAPE[etape];
+  return !(destination && pathname === destination);
+}
+
 /**
  * Compétence désignée par le grand-père pour le tout premier point du
  * joueur (étape `competences-choix`). Les autres branches et paliers sont

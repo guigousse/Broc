@@ -254,10 +254,12 @@ export default function CollectionPage() {
     </MobileLayout>
     {enLecon && phaseLecon === "coach" && (
       <TutorielCoach
+        /* Deux bulles, pas trois : la valeur et ce qu'elle débloque disaient
+           la même chose en deux temps, et la troisième — sans cible — coupait
+           l'élan par un voile plein sans rien à regarder. */
         etapes={[
           { cible: "collection-case", texte: d.tutoriel.coachCollectionCase },
           { cible: "collection-valeur", texte: d.tutoriel.coachCollectionValeur },
-          { cible: null, texte: d.tutoriel.coachCollectionDeblocage },
         ]}
         onFini={() => setPhaseLecon("filtre")}
       />
