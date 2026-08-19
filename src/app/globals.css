@@ -770,6 +770,7 @@
   --brass-500: #C5A059;
   --brass-600: #B08838;
   --brass-700: #8A6A26;
+  --brass-800: #6F5820;
   --brass-900: #4F3D14;
 
   /* Ink */
@@ -882,6 +883,7 @@
   --color-brass-500: var(--brass-500);
   --color-brass-600: var(--brass-600);
   --color-brass-700: var(--brass-700);
+  --color-brass-800: var(--brass-800);
   --color-ink-900: var(--ink-900);
   --color-ink-700: var(--ink-700);
   --color-ink-500: var(--ink-500);

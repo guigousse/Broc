@@ -34,7 +34,7 @@ const JETON_STYLES: Record<"argent" | "xp" | "energie" | "bazar", CSSProperties>
   argent: { background: "#6e1f1f", color: "#f4e9cd", border: "1px solid #b03030" },
   xp: { background: "#e3d7b6", color: "#5a4210", border: "1px solid #c8a24a" },
   energie: { background: "#2c5e3f", color: "#f4e9cd", border: "1px solid #4a8a63" },
-  bazar: { background: "#8a6a1f", color: "#f4e9cd", border: "1px solid #c8a24a" },
+  bazar: { background: "var(--brass-800)", color: "#f4e9cd", border: "1px solid #c8a24a" },
 };
 
 const jetonBase: CSSProperties = {
