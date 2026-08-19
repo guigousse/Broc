@@ -45,7 +45,11 @@ function makeItem(negociation: NegociationState | null): ObjetEnVente {
   };
 }
 
-function renderDrawer(item: ObjetEnVente, plein = false) {
+function renderDrawer(
+  item: ObjetEnVente,
+  plein = false,
+  scriptTuto: Parameters<typeof ChineNegoDrawer>[0]["scriptTuto"] = undefined,
+) {
   const onUpdateNego = vi.fn();
   const onConclu = vi.fn();
   const onCollapse = vi.fn();
@@ -60,6 +64,7 @@ function renderDrawer(item: ObjetEnVente, plein = false) {
       onUpdateNego={onUpdateNego}
       onConclu={onConclu}
       onAcheterDirect={() => {}}
+      scriptTuto={scriptTuto}
     />,
   );
   return { onUpdateNego, onConclu, onCollapse, vue };
@@ -228,5 +233,48 @@ describe("ChineNegoDrawer — le vendeur a donné son dernier prix", () => {
     renderDrawer(refus());
     expect(screen.queryByText("Vous")).toBeNull();
     expect(screen.getByText("prix final")).toBeTruthy();
+  });
+});
+
+/**
+ * Cible pointillée du grand-père (tutoriel) : le curseur n'est plus bridé,
+ * c'est « Proposer » qui reste inerte tant que l'offre n'a pas rejoint
+ * l'anneau. L'offre initiale du tiroir vaut round(prixVendeur × 0.25) = 25
+ * pour un objet à 100 €.
+ */
+describe("ChineNegoDrawer — cible du grand-père", () => {
+  it("Proposer est inerte tant que l'offre est hors de l'anneau", () => {
+    renderDrawer(makeItem(makeNego({ statut: "en_cours" })), false, {
+      role: "nego-reussie",
+      cible: { prix: 60, tolerance: 3 },
+    });
+    const proposer = screen.getByText(/Proposer/).closest("button") as HTMLButtonElement;
+    expect(proposer.disabled).toBe(true);
+  });
+
+  it("Proposer s'active quand l'offre initiale tombe déjà dans l'anneau", () => {
+    renderDrawer(makeItem(makeNego({ statut: "en_cours" })), false, {
+      role: "nego-reussie",
+      cible: { prix: 25, tolerance: 2 },
+    });
+    const proposer = screen.getByText(/Proposer/).closest("button") as HTMLButtonElement;
+    expect(proposer.disabled).toBe(false);
+  });
+
+  it("hors tutoriel, aucune cible ne bloque quoi que ce soit", () => {
+    renderDrawer(makeItem(makeNego({ statut: "en_cours" })));
+    const proposer = screen.getByText(/Proposer/).closest("button") as HTMLButtonElement;
+    expect(proposer.disabled).toBe(false);
+  });
+
+  it("le curseur garde ses bornes naturelles malgré la cible (plus de clamp)", () => {
+    const { vue } = renderDrawer(makeItem(makeNego({ statut: "en_cours" })), false, {
+      role: "nego-reussie",
+      cible: { prix: 60, tolerance: 3 },
+    });
+    // L'anneau est bien posé, et l'offre affichée (25 €) est HORS de ses
+    // bornes (57–63) : le clamp d'autrefois l'aurait remontée à 57.
+    expect(vue.container.querySelector("[data-nego-cible]")).toBeTruthy();
+    expect(screen.getByText("25€")).toBeTruthy();
   });
 });

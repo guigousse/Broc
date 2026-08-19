@@ -605,7 +605,7 @@ export default function SessionChinePage() {
     const scn = SESSION_TUTORIEL.find((s) => s.templateId === it.objet.templateId);
     if (!scn) return null;
     if (scnActif && scn === scnActif) {
-      return { role: scn.role, bornes: scn.bornesOffre };
+      return { role: scn.role, cible: scn.cibleOffre };
     }
     return it.statut === "achete" ? null : ({ role: "decor" } as const);
   };

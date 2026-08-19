@@ -145,3 +145,29 @@ describe("NegoBar — flèches coupées au bord de l'échelle", () => {
     expect(cible.className).not.toContain("fleches-sans");
   });
 });
+
+describe("NegoBar — cible pointillée du grand-père (tutoriel)", () => {
+  it("dessine l'anneau à la position du prix visé, large comme la tolérance", () => {
+    const { container } = renderBar({ cible: { prix: 30, tolerance: 4 } });
+    const anneau = container.querySelector<HTMLElement>("[data-nego-cible]");
+    expect(anneau).toBeTruthy();
+    // Centre = 30/100 de l'échelle ; largeur = 2×4/100 = 8 % de la piste.
+    expect(anneau!.style.left).toBe("30%");
+    expect(anneau!.style.width).toBe("8%");
+  });
+
+  it("porte le prix visé en libellé, pour que le joueur sache où viser", () => {
+    renderBar({ cible: { prix: 30, tolerance: 4 } });
+    expect(screen.getByText("30€")).toBeTruthy();
+  });
+
+  it("n'existe pas hors tutoriel", () => {
+    const { container } = renderBar();
+    expect(container.querySelector("[data-nego-cible]")).toBeNull();
+  });
+
+  it("reste visible même en lecture seule (négo conclue) — repère, pas commande", () => {
+    const { container } = renderBar({ cible: { prix: 30, tolerance: 4 }, readOnly: true });
+    expect(container.querySelector("[data-nego-cible]")).toBeTruthy();
+  });
+});

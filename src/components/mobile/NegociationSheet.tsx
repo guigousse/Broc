@@ -7,6 +7,7 @@ import { HumeurGauge } from "@/components/mobile/HumeurGauge";
 import { PersonaAvatar } from "@/components/mobile/PersonaAvatar";
 import type { PersonaInfo } from "@/components/mobile/PersonaInfoOverlay";
 import { ouvrirNegociation } from "@/lib/negociation";
+import { offreDansCible, type CibleOffre } from "@/data/tutorielScenario";
 import { temperamentDe } from "@/data/temperaments";
 import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
@@ -79,11 +80,13 @@ interface NegociationSheetProps {
   /** Mini-happening célébrité : aura dorée autour du portrait, carillon
    *  d'apparition et bandeau de nom luxueux. */
   celebrite?: boolean;
-  /** Tutoriel scripté (journée de vente) : `bornes` restreint le curseur
-   *  d'offre du joueur (le calcul du prochain état — via `onProposerOffre`,
-   *  côté appelant — utilise déjà le persona et l'aléa déterministe du
-   *  scénario) ; `mainLaisserTomber` pose la main sur « laisser tomber ». */
-  scriptTuto?: { bornes?: { min: number; max: number }; mainLaisserTomber?: boolean } | null;
+  /** Tutoriel scripté (journée de vente) : `cible` pose l'anneau pointillé du
+   *  grand-père sur la barre et rend « Proposer » inerte hors de l'anneau (le
+   *  curseur, lui, reste libre sur ses bornes naturelles — le calcul du
+   *  prochain état, via `onProposerOffre` côté appelant, utilise déjà le
+   *  persona et l'aléa déterministe du scénario) ; `mainLaisserTomber` pose la
+   *  main sur « laisser tomber ». */
+  scriptTuto?: { cible?: CibleOffre; mainLaisserTomber?: boolean } | null;
 }
 
 export function NegociationSheet({
@@ -150,20 +153,19 @@ export function NegociationSheet({
   const illustrationCourante =
     estFache && illustrationFacheSrc ? illustrationFacheSrc : illustrationSrc;
 
-  const bornesTuto = scriptTuto?.bornes ?? null;
-  const minJoueurDefaut =
+  const cibleTuto = scriptTuto?.cible ?? null;
+  // Le curseur garde TOUJOURS ses bornes naturelles, tutoriel compris : c'est
+  // l'anneau de cible (et le bouton inerte hors de l'anneau) qui tient la
+  // garantie du scénario, plus un clamp qui empêchait le geste de viser.
+  const minJoueur =
     mode === "achat" ? 1 : Math.max(1, localNego.prixAdverseCourant);
-  const maxJoueurDefaut =
+  const maxJoueur =
     mode === "achat" ? localNego.prixAdverseCourant : echelleMax;
-  // Négo scriptée (tutoriel) : bornes fixes du scénario, comme ChineNegoDrawer
-  // — le minimum reste au moins le plancher scripté même si la dynamique (prix
-  // adverse courant) descendrait plus bas, le maximum est le plafond scripté.
-  const minJoueur = bornesTuto
-    ? Math.min(bornesTuto.max, Math.max(bornesTuto.min, minJoueurDefaut))
-    : minJoueurDefaut;
-  const maxJoueur = bornesTuto ? bornesTuto.max : maxJoueurDefaut;
+  /* Gate du tutoriel ; fail-open hors tutoriel (pas de cible ⇒ jamais bloqué). */
+  const horsCible = !offreDansCible(offreJoueur, cibleTuto);
 
   const handleProposer = () => {
+    if (horsCible) return;
     const next = onProposerOffre(localNego, offreJoueur);
     setLocalNego(next);
     onUpdateNego(next);
@@ -248,6 +250,7 @@ export function NegociationSheet({
             tutoMainJoueur={tutoMainJoueur}
             achat={achat}
             genreAdverse={genreAdverse}
+            cible={cibleTuto}
           />
           <HumeurGauge humeur={localNego.humeur} />
           <div style={btnRowStyle}>
@@ -273,7 +276,12 @@ export function NegociationSheet({
                 </button>
                 <button
                   type="button"
-                  style={btnPrimary}
+                  style={
+                    horsCible
+                      ? { ...btnPrimary, opacity: 0.55, cursor: "not-allowed" }
+                      : btnPrimary
+                  }
+                  disabled={horsCible}
                   onClick={handleProposer}
                 >
                   {offreRejoint(mode, offreJoueur, localNego.prixAdverseCourant)

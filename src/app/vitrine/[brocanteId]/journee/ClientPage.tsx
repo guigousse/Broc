@@ -606,14 +606,10 @@ export default function VitrineJourneePage() {
                 acheteurScripteRef.current = acheteur;
                 setClientActuel(ev);
                 vibrerApparition();
-                setOffreJoueur(
-                  acheteur.bornesOffre
-                    ? Math.min(
-                        acheteur.bornesOffre.max,
-                        Math.max(acheteur.bornesOffre.min, ev.prixDemande),
-                      )
-                    : ev.prixDemande,
-                );
+                // Le curseur part TOUJOURS du prix affiché sur l'étal : c'est
+                // au joueur de l'amener dans l'anneau du grand-père, pas au
+                // jeu de l'y déposer.
+                setOffreJoueur(ev.prixDemande);
                 setRevelationFaite(false);
                 setNegoVente(
                   ev.mode === "negociation"
@@ -1355,7 +1351,7 @@ export default function VitrineJourneePage() {
           scriptTuto={
             acheteurScripteRef.current
               ? {
-                  bornes: acheteurScripteRef.current.bornesOffre,
+                  cible: acheteurScripteRef.current.cibleOffre,
                   mainLaisserTomber: etape === "vente-refus",
                 }
               : null

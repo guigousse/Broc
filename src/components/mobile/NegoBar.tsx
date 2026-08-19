@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useTickSound } from "@/lib/audio/useTickSound";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import type { CibleOffre } from "@/data/tutorielScenario";
 import type { GenrePersona, NegoMode } from "@/types/game";
 
 interface NegoBarProps {
@@ -41,6 +42,12 @@ interface NegoBarProps {
    * n'a plus de raison d'intercepter quoi que ce soit.
    */
   dernierPrix?: boolean;
+  /**
+   * Tutoriel : cible pointillée du grand-père. Anneau fixe posé sur la piste
+   * — le joueur doit y amener son curseur pour que « Proposer » s'active. Pur
+   * repère : il ne capte aucun geste et reste affiché même en lecture seule.
+   */
+  cible?: CibleOffre | null;
 }
 
 /** Le débordement à combler ne fait que ~6 px sur une piste de ~270 px. */
@@ -63,6 +70,7 @@ export function NegoBar({
   achat,
   genreAdverse = "m",
   dernierPrix = false,
+  cible = null,
 }: NegoBarProps) {
   const { d } = useLangue();
   const trackRef = useRef<HTMLDivElement>(null);
@@ -124,6 +132,17 @@ export function NegoBar({
     setDragging(true);
   };
 
+  /* Anneau de cible : centré sur le prix visé, large de la tolérance de part
+     et d'autre. `minWidth` en pixels plutôt qu'un plancher sur le pourcentage
+     — sur une échelle large (tourne-disque à 90 €), ±4 € ne font que 9 % de la
+     piste, mais sur une échelle serrée le cercle doit rester saisissable. */
+  const cibleGeo = cible
+    ? {
+        pct: Math.min(100, Math.max(0, (cible.prix / echelleMax) * 100)),
+        largeurPct: Math.min(100, ((2 * cible.tolerance) / echelleMax) * 100),
+      }
+    : null;
+
   const pctAchat =
     typeof achat === "number" && achat > 0
       ? Math.min(100, Math.max(0, (achat / echelleMax) * 100))
@@ -132,6 +151,21 @@ export function NegoBar({
   return (
     <div style={dernierPrix ? wrapStyleDeuxLignes : wrapStyle}>
       <div ref={trackRef} style={trackStyle}>
+        {/* Cible du grand-père : tout premier dans le DOM — c'est un décor de
+            piste, il doit passer SOUS les trois pastilles sans exception. */}
+        {cibleGeo && (
+          <div
+            data-nego-cible=""
+            aria-hidden
+            style={{
+              ...cibleStyle,
+              left: `${cibleGeo.pct}%`,
+              width: `${cibleGeo.largeurPct}%`,
+            }}
+          >
+            <span style={cibleLabelStyle}>{cible!.prix}€</span>
+          </div>
+        )}
         {/* Repère fixe du prix d'achat : premier dans le DOM pour rester
             SOUS les deux curseurs mobiles quand ils le croisent. */}
         {pctAchat !== null && (
@@ -233,6 +267,33 @@ const trackStyle: CSSProperties = {
   borderRadius: 2,
   background:
     "linear-gradient(to bottom, transparent 28px, rgba(0,0,0,0.12) 28px, rgba(0,0,0,0.12) 32px, transparent 32px)",
+};
+
+/** Anneau pointillé de la cible : haut de 44 px pour envelopper les 36 px du
+ *  curseur joueur quand il tombe dedans, centré sur la même ligne (y = 30). */
+const cibleStyle: CSSProperties = {
+  position: "absolute",
+  top: 8,
+  height: 44,
+  minWidth: 44,
+  transform: "translateX(-50%)",
+  border: "2px dashed var(--brass-700, #8c6a2b)",
+  borderRadius: 22,
+  background: "rgba(184, 156, 94, 0.12)",
+  pointerEvents: "none",
+  zIndex: 0,
+};
+
+const cibleLabelStyle: CSSProperties = {
+  position: "absolute",
+  top: -15,
+  left: "50%",
+  transform: "translateX(-50%)",
+  fontFamily: "var(--font-display)",
+  fontSize: 10,
+  fontWeight: 700,
+  color: "var(--brass-700, #8c6a2b)",
+  whiteSpace: "nowrap",
 };
 
 const cursorStyle: CSSProperties = {
