@@ -81,6 +81,7 @@ import {
 import { VITRINE_PREP_ID } from "@/lib/vitrinePrep";
 import { stockageEstPlein } from "@/lib/stockage";
 import { energieCourante } from "@/lib/energie";
+import { bazarEstOuvert } from "@/lib/bazar/ouverture";
 import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
@@ -813,6 +814,12 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             return;
           }
           router.push("/vitrine/prep");
+        }}
+        bazarOuvert={bazarEstOuvert(state)}
+        onBazar={() => {
+          playDoorClose();
+          setPorteOuverte(false);
+          router.push("/bazar");
         }}
       />
 

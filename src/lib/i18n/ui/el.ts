@@ -160,6 +160,7 @@ export const el: DictionnaireUI = {
     stockagePlein: "Η αποθήκη είναι γεμάτη",
     chiner: "Ψάξιμο",
     etaler: "Πούλημα",
+    bazar: "Παζάρι",
     chatDortMessage:
       "Μια γάτα κοιμάται ήσυχα στην πολυθρόνα. Δεν μπορείς να τελειώσεις τη μέρα χωρίς να την ενοχλήσεις…",
     seReposer: "Ξεκούραση (+1 ημέρα)",

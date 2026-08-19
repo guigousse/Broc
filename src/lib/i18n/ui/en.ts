@@ -160,6 +160,7 @@ export const en: DictionnaireUI = {
     stockagePlein: "Storage full",
     chiner: "Pick",
     etaler: "Set up stall",
+    bazar: "Bazar",
     chatDortMessage:
       "A cat is sleeping peacefully on the armchair. You can't end the day without disturbing it…",
     seReposer: "Rest (+1 day)",

@@ -16,6 +16,9 @@ interface PorteSheetProps {
   tutoChiner?: boolean;
   /** Tutoriel : force le choix Étaler (pulse) et désactive Chiner. */
   tutoEtaler?: boolean;
+  /** Le Bazar a ouvert (jour 35) : le troisième bouton apparaît. */
+  bazarOuvert: boolean;
+  onBazar: () => void;
 }
 
 export function PorteSheet({
@@ -26,6 +29,8 @@ export function PorteSheet({
   chinerDesactive = false,
   tutoChiner = false,
   tutoEtaler = false,
+  bazarOuvert,
+  onBazar,
 }: PorteSheetProps) {
   const { d } = useLangue();
   return (
@@ -78,6 +83,16 @@ export function PorteSheet({
           {d.qg.etaler}
         </FloatingActionButton>
       </span>
+      {bazarOuvert && (
+        <FloatingActionButton
+          onClick={onBazar}
+          variant="secondary"
+          disabled={tutoChiner || tutoEtaler}
+          minWidth={140}
+        >
+          {d.qg.bazar}
+        </FloatingActionButton>
+      )}
     </FloatingActionBar>
   );
 }
