@@ -761,6 +761,8 @@ export const fr = {
     atelierPleinUn: "Atelier plein ({enCours}/{capacite} slot).",
     atelierPleinN: "Atelier plein ({enCours}/{capacite} slots).",
     competenceReparerManquante: "Vous n'avez pas la compétence Réparer — {categorie}.",
+    bazarPasAssezDeJetons: "Pas assez de jetons",
+    bazarArticleIndisponible: "Article indisponible",
     manquePiecesUn: "Manque {n} pièce {categorie}.",
     manquePiecesN: "Manque {n} pièces {categorie}.",
     objetEnRestauration: "Objet en restauration.",

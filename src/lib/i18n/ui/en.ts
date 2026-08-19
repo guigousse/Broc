@@ -731,6 +731,8 @@ export const en: DictionnaireUI = {
     atelierPleinUn: "Workshop full ({enCours}/{capacite} slot).",
     atelierPleinN: "Workshop full ({enCours}/{capacite} slots).",
     competenceReparerManquante: "You lack the Repair skill — {categorie}.",
+    bazarPasAssezDeJetons: "Not enough tokens",
+    bazarArticleIndisponible: "Item unavailable",
     manquePiecesUn: "Missing {n} {categorie} part.",
     manquePiecesN: "Missing {n} {categorie} parts.",
     objetEnRestauration: "Item under restoration.",

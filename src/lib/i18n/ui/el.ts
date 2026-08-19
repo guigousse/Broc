@@ -747,6 +747,8 @@ export const el: DictionnaireUI = {
     atelierPleinUn: "Το εργαστήριο είναι γεμάτο ({enCours}/{capacite} θέση).",
     atelierPleinN: "Το εργαστήριο είναι γεμάτο ({enCours}/{capacite} θέσεις).",
     competenceReparerManquante: "Δεν έχεις τη δεξιότητα Επισκευή — {categorie}.",
+    bazarPasAssezDeJetons: "Δεν έχετε αρκετές μάρκες",
+    bazarArticleIndisponible: "Μη διαθέσιμο είδος",
     manquePiecesUn: "Λείπει {n} κομμάτι {categorie}.",
     manquePiecesN: "Λείπουν {n} κομμάτια {categorie}.",
     objetEnRestauration: "Το αντικείμενο βρίσκεται σε αποκατάσταση.",

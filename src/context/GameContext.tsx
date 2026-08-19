@@ -76,6 +76,7 @@ import { stockageEstPlein } from "@/lib/stockage";
 import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
 import { settleBazar } from "@/lib/bazar/settleBazar";
+import { acheterLotPieces, acheterVitrine, type AchatBazar } from "@/lib/bazar/achat";
 import { appliquerFinTutoriel, ETAPES_TUTORIEL } from "@/lib/tutoriel";
 import { synchroniserNotifsQuetes } from "@/lib/notifications/quetesNotif";
 import {
@@ -281,6 +282,8 @@ interface GameActionsValue {
   reclamerBoiteMystere: (objet: Objet) => boolean;
   /** Settle l'énergie contre le temps de confiance et persiste. No-op si pas de temps de confiance. */
   rafraichirEnergie: () => void;
+  /** Achète à l'étal du Bazar (lot de pièces ou objet de vitrine). */
+  acheterAuBazar: (achat: AchatBazar) => { ok: boolean; raison?: string };
 }
 
 type GameContextValue = GameStateValue & GameActionsValue;
@@ -945,6 +948,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
     return { ok: true };
   }, []);
+
+  const acheterAuBazar = useCallback(
+    (achat: AchatBazar): { ok: boolean; raison?: string } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
+      const now = tempsConfiance() ?? Date.now();
+      const r =
+        achat.type === "pieces"
+          ? acheterLotPieces(current, achat.index)
+          : acheterVitrine(current, now);
+      if (!r.ok) {
+        // Localiser comme le font les actions voisines : jamais de clé brute
+        // remontée à l'UI.
+        return {
+          ok: false,
+          raison: raisonLocalisee(
+            r.raison === "jetons" ? "bazarPasAssezDeJetons" : "bazarArticleIndisponible",
+          ),
+        };
+      }
+      setState((prev) => (prev ? r.state : prev));
+      return { ok: true };
+    },
+    [tempsConfiance],
+  );
 
   const definirPrixVenteSouhaite = useCallback(
     (objetId: string, prix: number) => {
@@ -2033,6 +2061,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       crediterEnergiePub,
       reclamerBoiteMystere,
       rafraichirEnergie,
+      acheterAuBazar,
     }),
     [
       nouvellePartie,
@@ -2094,6 +2123,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       crediterEnergiePub,
       reclamerBoiteMystere,
       rafraichirEnergie,
+      acheterAuBazar,
     ],
   );
 

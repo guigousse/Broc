@@ -732,6 +732,8 @@ export const es: DictionnaireUI = {
     atelierPleinUn: "Taller lleno ({enCours}/{capacite} espacio).",
     atelierPleinN: "Taller lleno ({enCours}/{capacite} espacios).",
     competenceReparerManquante: "No tienes la habilidad Reparar — {categorie}.",
+    bazarPasAssezDeJetons: "No tienes fichas suficientes",
+    bazarArticleIndisponible: "Artículo no disponible",
     manquePiecesUn: "Falta {n} pieza de {categorie}.",
     manquePiecesN: "Faltan {n} piezas de {categorie}.",
     objetEnRestauration: "Objeto en restauración.",
