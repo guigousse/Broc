@@ -1,13 +1,15 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Album, Anvil, BookOpen, Home, Warehouse, type LucideIcon } from "lucide-react";
+import { Album, Anvil, BookOpen, Home, Lock, Warehouse, type LucideIcon } from "lucide-react";
 import { type CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
 import { useGameActions, useGameStateOnly } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
+import { useToastSafe } from "@/components/ui/Toast";
+import { aCompetenceReparation } from "@/lib/competences";
 import { estPret } from "@/lib/restauration";
 import { ongletTutorielPermis, tutorielActif } from "@/lib/tutoriel";
 import type { GameState } from "@/types/game";
@@ -15,14 +17,22 @@ import type { GameState } from "@/types/game";
 /** Clé d'onglet — sert à retrouver le libellé traduit dans `d.chrome.onglets`. */
 type OngletCle = "collection" | "bibliotheque" | "bureau" | "stockage" | "atelier";
 
-interface TabDef {
+export interface TabDef {
   icon: LucideIcon;
   cle: OngletCle;
   path: string;
   /** `now` = temps de confiance (epoch ms) pour les badges dépendant du temps réel. */
   badge?: (state: GameState, now: number) => number;
-  /** Onglet masqué tant que la condition est vraie (onboarding progressif). */
-  masque?: (state: GameState) => boolean;
+  /**
+   * Onboarding progressif. L'onglet reste TOUJOURS à sa place — grisé sous un
+   * cadenas tant que `ouvert` est faux, et il dit `raison` quand on le touche.
+   * Un trou dans la barre n'apprend rien au joueur ; un cadenas lui montre
+   * qu'il y a quelque chose à gagner, et à quelle condition.
+   */
+  verrou?: {
+    ouvert: (state: GameState) => boolean;
+    raison: (d: DictionnaireUI) => string;
+  };
 }
 
 /**
@@ -38,10 +48,13 @@ export const TAB_ORDER: TabDef[] = [
     cle: "bibliotheque",
     path: "/bibliotheque",
     badge: (state) => state.brocanteur.pointsDisponibles,
-    // Masqué avant le premier level-up : l'écran Compétences s'ouvre au
-    // niveau 1 (cf. deblocagesNiveau). La navigation directe vers
-    // /bibliotheque à niveau 0 reste possible (choix assumé, non bloqué).
-    masque: (s) => s.brocanteur.niveau < 1,
+    // L'écran Compétences s'ouvre au premier level-up (cf. deblocagesNiveau).
+    // La navigation directe vers /bibliotheque à niveau 0 reste possible
+    // (choix assumé, non bloqué) : le cadenas tient la barre, pas la route.
+    verrou: {
+      ouvert: (s) => s.brocanteur.niveau >= 1,
+      raison: (d) => d.chrome.verrouBibliotheque,
+    },
   },
   { icon: Home, cle: "bureau", path: "/bureau" },
   { icon: Warehouse, cle: "stockage", path: "/stockage" },
@@ -53,6 +66,13 @@ export const TAB_ORDER: TabDef[] = [
       state.inventaireJoueur.filter(
         (o) => o.enRestauration && estPret(o.enRestauration, now),
       ).length,
+    // Sans compétence Réparer, l'Atelier n'offrirait que du démantèlement —
+    // dont les pièces ne se dépensent qu'en restauration. Une pièce sans
+    // serrure : autant garder la porte fermée jusqu'au premier apprenti.
+    verrou: {
+      ouvert: aCompetenceReparation,
+      raison: (d) => d.chrome.verrouAtelier,
+    },
   },
 ];
 
@@ -77,6 +97,36 @@ const HIDDEN_EXACT = new Set(["/", "/chiner", "/vitrine"]);
  * tant qu'on est dedans, pour ne pas interrompre l'action en cours.
  */
 export const ROUTES_SESSION_PREFIXES = ["/chiner/", "/vitrine/"];
+
+/**
+ * Un onglet est-il encore fermé pour ce joueur ? `state` null
+ * (pré-hydratation) n'en verrouille aucun, pour ne pas faire clignoter un
+ * cadenas chez un joueur qui aura tout débloqué une fois hydraté. Exporté :
+ * le swipe entre onglets (SwipePager) doit sauter les pièces fermées, sinon
+ * le cadenas de la barre ne voudrait plus rien dire.
+ */
+export function ongletFerme(tab: TabDef, state: GameState | null): boolean {
+  return !!state && !!tab.verrou && !tab.verrou.ouvert(state);
+}
+
+/**
+ * Onglet suivant OUVERT dans le cycle, en partant de `idx` et en avançant de
+ * `pas` (+1 vers la droite, −1 vers la gauche). Les pièces fermées sont
+ * sautées : le swipe ne doit pas entrer par la fenêtre là où la barre montre
+ * un cadenas. `null` si le tour complet ne trouve rien d'ouvert.
+ */
+export function ongletSuivantOuvert(
+  idx: number,
+  pas: 1 | -1,
+  state: GameState | null,
+): TabDef | null {
+  const N = TAB_ORDER.length;
+  for (let k = 1; k < N; k++) {
+    const cible = TAB_ORDER[(((idx + pas * k) % N) + N) % N];
+    if (!ongletFerme(cible, state)) return cible;
+  }
+  return null;
+}
 
 /** Renvoie l'index dans TAB_ORDER de la route active, -1 si aucune ne matche. */
 export function findActiveTabIndex(pathname: string): number {
@@ -148,12 +198,24 @@ const iconBox: CSSProperties = {
   background: "transparent",
 };
 
+/** Cadenas laiton posé par-dessus l'icône grisée de l'onglet fermé. */
+const cadenasOverlay: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  display: "grid",
+  placeItems: "center",
+  color: "var(--brass-300)",
+  filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.85))",
+  pointerEvents: "none",
+};
+
 export function TabBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { state, isHydrated } = useGameStateOnly();
   const { tempsConfiance } = useGameActions();
   const { playClick } = useSettings();
+  const { toast } = useToastSafe();
   const { d } = useLangue();
 
   if (!isHydrated) return null;
@@ -169,11 +231,11 @@ export function TabBar() {
   // chine ou une négociation en cours).
   const ongletPermis = state ? ongletTutorielPermis(state.tutorielEtape) : null;
 
-  // Onglets masqués (onboarding progressif) : filtrés selon l'état courant.
-  // `state` null (pré-hydratation du state du jeu) → aucun masque appliqué,
-  // pour ne pas faire clignoter la disparition d'un onglet chez un joueur
-  // qui, une fois hydraté, l'aura bien débloqué.
-  const visibleTabs = TAB_ORDER.filter((t) => !state || !t.masque?.(state));
+  // Les cinq onglets sont TOUJOURS là (plus de masquage) : ceux qui ne sont
+  // pas encore ouverts portent un cadenas. `state` null (pré-hydratation)
+  // n'en verrouille aucun, pour ne pas faire clignoter un cadenas chez un
+  // joueur qui, une fois hydraté, aura bien tout débloqué.
+  const estVerrouille = (t: TabDef): boolean => ongletFerme(t, state);
 
   // Mini-tuto vinyles (cadeau d'anniversaire) : main pointeuse au-dessus de
   // l'onglet vers lequel guider — Stockage pour ranger le vinyle, Bureau pour
@@ -196,7 +258,7 @@ export function TabBar() {
 
   // Une main est-elle affichée ? La fenêtre flottante du stockage (zIndex 35)
   // passerait sinon devant la main qui déborde au-dessus de la nav (zIndex 30).
-  const mainAffichee = visibleTabs.some((t) => mainTuto(t.path));
+  const mainAffichee = TAB_ORDER.some((t) => mainTuto(t.path));
 
   const activeIdx = findActiveTabIndex(pathname);
   const activeTab = activeIdx >= 0 ? TAB_ORDER[activeIdx] : null;
@@ -211,22 +273,38 @@ export function TabBar() {
       style={{
         ...wrapStyle,
         ...(mainAffichee ? { zIndex: 40 } : null),
-        gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)`,
+        gridTemplateColumns: `repeat(${TAB_ORDER.length}, 1fr)`,
       }}
     >
-      {visibleTabs.map((tab) => {
+      {TAB_ORDER.map((tab) => {
         const Icon = tab.icon;
         const active = tab === activeTab;
-        const count = state && tab.badge ? tab.badge(state, now) : 0;
+        const verrouille = estVerrouille(tab);
+        // Aucun badge sous un cadenas : le compteur de points de compétence
+        // clignoterait derrière une porte fermée.
+        const count = state && tab.badge && !verrouille ? tab.badge(state, now) : 0;
         return (
           <button
             key={tab.path}
             type="button"
             aria-current={active ? "page" : undefined}
-            aria-label={libelleAria(tab.cle, d)}
+            aria-disabled={verrouille || undefined}
+            aria-label={
+              verrouille
+                ? `${libelleAria(tab.cle, d)} — ${d.chrome.ongletVerrouille}`
+                : libelleAria(tab.cle, d)
+            }
             className={mainTuto(tab.path) ? "tuto-main tuto-main-haut" : undefined}
             onClick={() => {
               if (tutoEnCours && tab.path !== ongletPermis) return;
+              if (verrouille) {
+                // Le cadenas répond : il dit à quelle condition il s'ouvre.
+                // Ni navigation ni vibration — rien ne s'est passé, sauf la
+                // réponse.
+                playClick();
+                toast(tab.verrou!.raison(d), { type: "info" });
+                return;
+              }
               playClick();
               if (!active) {
                 if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -238,6 +316,7 @@ export function TabBar() {
             style={{
               ...tabBtn,
               color: active ? "var(--brass-100)" : "var(--brass-300)",
+              opacity: verrouille ? 0.55 : 1,
             }}
           >
             <span
@@ -251,7 +330,13 @@ export function TabBar() {
                 size={18}
                 strokeWidth={1.5}
                 color={active ? "var(--forest-800)" : "var(--brass-300)"}
+                style={verrouille ? { filter: "grayscale(1)" } : undefined}
               />
+              {verrouille && (
+                <span style={cadenasOverlay}>
+                  <Lock size={14} strokeWidth={2.6} />
+                </span>
+              )}
               {count > 0 && (
                 <span style={{ position: "absolute", top: -6, right: -6 }}>
                   <Badge count={count} />

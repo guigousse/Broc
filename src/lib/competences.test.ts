@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CompetenceDef, CompetenceId, GameState } from "@/types/game";
 import {
   aCompetence,
+  aCompetenceReparation,
   aSpecialisteCategorie,
   bonusPassionCategorie,
   bonusMarchandageCategorie,
@@ -9,7 +10,8 @@ import {
   contexteDepuisState,
   etatCompetence,
 } from "./competences";
-import { getCompetence } from "@/data/competences";
+import { getCompetence, catTreeId } from "@/data/competences";
+import { CATEGORIES } from "@/data/categories";
 
 function stateAvec(debloquees: CompetenceId[]): GameState {
   return { competencesDebloquees: debloquees } as GameState;
@@ -333,5 +335,39 @@ describe("bonusToleranceNegoGeneral — Verbe haut / Verbe d'or", () => {
         ]),
       ),
     ).toBe(0.40);
+  });
+});
+
+/**
+ * Ouverture de l'Atelier (2026-08-19) : l'onglet reste affiché dès le début
+ * mais cadenassé, et c'est la PREMIÈRE compétence Réparer — n'importe
+ * laquelle — qui le libère.
+ */
+describe("aCompetenceReparation", () => {
+  it("faux tant qu'aucune branche Réparer n'est ouverte", () => {
+    const s = stateAvec([]);
+    expect(aCompetenceReparation(s)).toBe(false);
+  });
+
+  it("vrai dès un apprenti, quelle que soit la catégorie", () => {
+    for (const cat of CATEGORIES) {
+      const s = stateAvec([`${catTreeId(cat)}.reparer.1` as CompetenceId]);
+      expect(aCompetenceReparation(s), cat).toBe(true);
+    }
+  });
+
+  it("un palier supérieur SEUL ne compte pas — l'apprenti est le prérequis réel", () => {
+    // Défensif : une save trafiquée pourrait porter reparer.2 sans reparer.1.
+    // L'atelier ne s'ouvre que sur le palier qui rend une restauration possible.
+    const s = stateAvec([`${catTreeId(CATEGORIES[0])}.reparer.2` as CompetenceId]);
+    expect(aCompetenceReparation(s)).toBe(false);
+  });
+
+  it("les compétences d'autres branches n'ouvrent rien", () => {
+    const s = stateAvec([
+      "general.presentation.1" as CompetenceId,
+      `${catTreeId(CATEGORIES[0])}.connaisseur.1` as CompetenceId,
+    ]);
+    expect(aCompetenceReparation(s)).toBe(false);
   });
 });
