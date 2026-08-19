@@ -4,7 +4,8 @@ import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 import { FAMILLE, type FormeQuete } from "./formes";
 import { objetsAtteignables } from "./atteignables";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
-import type { Courrier } from "@/types/game";
+import type { Courrier, CourrierPayloadMission } from "@/types/game";
+import { emptyBrocanteur } from "@/lib/xp";
 
 function rngSeq(vals: number[]): () => number {
   let i = 0;
@@ -152,6 +153,24 @@ describe("composition des lots", () => {
         expect(c.payload.gabaritId).toBeDefined();
         expect([c.payload.titre, ...c.payload.corps].join(" ")).not.toMatch(/\{[a-z]+\}/);
       }
+    }
+  });
+});
+
+describe("jetons figés à la naissance", () => {
+  it("une quotidienne naît avec 1 jeton", () => {
+    const lot = genererLot(createMockGameState({ brocanteur: { ...emptyBrocanteur(), niveau: 5 } }), "quotidienne", "2026-08-19");
+    for (const c of lot) {
+      const p = c.payload as CourrierPayloadMission;
+      expect(p.recompense.jetons).toBe(1);
+    }
+  });
+
+  it("une hebdomadaire naît avec 3 jetons", () => {
+    const lot = genererLot(createMockGameState({ brocanteur: { ...emptyBrocanteur(), niveau: 5 } }), "hebdomadaire", "2026-W34");
+    for (const c of lot) {
+      const p = c.payload as CourrierPayloadMission;
+      expect(p.recompense.jetons).toBe(3);
     }
   });
 });

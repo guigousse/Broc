@@ -2,6 +2,7 @@ import { creerCourrierMission } from "@/lib/courrier";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
 import type { ObjetTemplate } from "@/data/objetTemplates";
 import type { Courrier, GameState, MissionCible } from "@/types/game";
+import { JETONS_HEBDO, JETONS_QUOTIDIENNE } from "@/lib/recompenses";
 import { objetsAtteignables } from "./atteignables";
 import { calculerRecompense } from "./recompense";
 import { genererTexte, genererTexteChiffre } from "./textes";
@@ -49,7 +50,8 @@ function genererUne(
     ...(etatMin ? { etatMin } : {}),
   }));
   const templates = new Map(choisis.map((t) => [t.templateId, t]));
-  const recompense = { argent: calculerRecompense(cibles, templates) };
+  const jetons = type === "quotidienne" ? JETONS_QUOTIDIENNE : JETONS_HEBDO;
+  const recompense = { argent: calculerRecompense(cibles, templates), jetons };
   const texte = genererTexte(exp.id, choisis.map((t) => t.nom), etatMin, rng);
 
   return {
@@ -159,7 +161,10 @@ function genererUneChiffree(
       corps: texte.corps,
       categorie: type,
       cibles: [],
-      recompense: { argent: contenu.recompenseArgent },
+      recompense: {
+        argent: contenu.recompenseArgent,
+        jetons: type === "quotidienne" ? JETONS_QUOTIDIENNE : JETONS_HEBDO,
+      },
       objectifs: contenu.objectifs,
       gabaritId: texte.gabaritId,
       gabaritParams: contenu.gabaritParams,

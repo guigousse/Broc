@@ -193,8 +193,11 @@ export interface CourrierPayloadMission {
   jourLimite?: number;
   /** Récompense de livraison. `xp` absent → constante de catégorie
    *  (XP_QUETE_*, cf. lib/recompenses). `energie` absent → 0 ; peut faire
-   *  déborder la jauge au-delà d'ENERGIE_MAX (borné par ENERGIE_PLAFOND). */
-  recompense: { argent: number; xp?: number; energie?: number };
+   *  déborder la jauge au-delà d'ENERGIE_MAX (borné par ENERGIE_PLAFOND).
+   *  `jetons` absent → 0 : seules les quêtes périodiques en versent (1
+   *  quotidienne, 3 hebdo), et le montant est figé à la naissance de la
+   *  quête. */
+  recompense: { argent: number; xp?: number; energie?: number; jetons?: number };
   /** Si vrai, la livraison ne consomme PAS les objets ciblés (le joueur les
    *  garde). Utilisé par la finale de l'arc principal (« Les bijoux de la reine »). */
   conserverCibles?: boolean;
@@ -282,6 +285,9 @@ export interface LedgerParams {
    *  rendu du grand livre (suffixe « +25 XP · +2 ⚡ »). ADDITIF. */
   xp?: number;
   energie?: number;
+  /** mission_recompense : jetons du Bazar versés à la livraison, pour le
+   *  suffixe du grand livre. N'entre JAMAIS dans recette/depense. ADDITIF. */
+  jetons?: number;
 }
 
 export interface LedgerEntry {

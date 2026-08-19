@@ -6,7 +6,7 @@ import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
 
 afterEach(cleanup);
 
-const REC = { argent: 60, xp: 12, energie: 0 };
+const REC = { argent: 60, xp: 12, energie: 0, jetons: 0 };
 const d = DICTIONNAIRES.fr;
 
 describe("PaveRecompense", () => {
@@ -60,7 +60,7 @@ describe("PaveRecompense", () => {
     // la cérémonie le masquerait sans qu'aucune étape ne le fasse
     // réapparaître — ni refuser la livraison pour autant.
     const onLivrer = vi.fn();
-    render(<PaveRecompense recompense={{ argent: 0, xp: 0, energie: 0 }} livrable onLivrer={onLivrer} />);
+    render(<PaveRecompense recompense={{ argent: 0, xp: 0, energie: 0, jetons: 0 }} livrable onLivrer={onLivrer} />);
     expect(document.querySelectorAll("[data-jeton]").length).toBe(0);
     const btn = screen.getByRole("button") as HTMLButtonElement;
     expect(btn.disabled).toBe(false);

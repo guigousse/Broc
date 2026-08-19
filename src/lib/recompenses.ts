@@ -9,12 +9,19 @@ import type {
   MissionCategorie,
 } from "@/types/game";
 
+/** Jetons versés par une quête quotidienne livrée. */
+export const JETONS_QUOTIDIENNE = 1;
+/** Jetons versés par une quête hebdomadaire livrée. */
+export const JETONS_HEBDO = 3;
+
 /** Récompense totale d'une commande, défauts appliqués — source unique de
  *  vérité pour les 4 surfaces d'affichage ET le versement à la livraison. */
 export interface RecompenseEffective {
   argent: number;
   xp: number;
   energie: number;
+  /** Jetons du Bazar. 1 jeton = 25 €, ratio fixe. */
+  jetons: number;
 }
 
 /**
@@ -41,6 +48,7 @@ export function recompenseEffective(
     argent: payload.recompense.argent,
     xp: payload.recompense.xp ?? 0,
     energie: payload.recompense.energie ?? 0,
+    jetons: payload.recompense.jetons ?? 0,
   };
 }
 
@@ -80,6 +88,7 @@ export function appliquerRecompense(
       templateIds: ledger.templateIds,
       xp: r.xp,
       energie: r.energie,
+      jetons: r.jetons,
     },
   });
   next = {
@@ -97,6 +106,9 @@ export function appliquerRecompense(
       energie: Math.min(ENERGIE_PLAFOND, settled.energie + r.energie),
       energieDerniereMaj: settled.energieDerniereMaj,
     };
+  }
+  if (r.jetons > 0) {
+    next = { ...next, jetons: next.jetons + r.jetons };
   }
   return next;
 }
