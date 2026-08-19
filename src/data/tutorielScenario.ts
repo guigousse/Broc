@@ -98,6 +98,9 @@ export interface TraceScenario {
   posY: number;
   /** Rotation visée en degrés (0..360). */
   rotation: number;
+  /** Tolérances propres à cette trace (défauts : TOLERANCE_TRACE_*). */
+  tolerancePos?: number;
+  toleranceRot?: number;
 }
 
 /* Traces v3 : la manette est PIVOTÉE (c'est la démo du grand-père qui
@@ -106,13 +109,22 @@ export interface TraceScenario {
  * Positions PROUVÉES au pixel (oracle sharp, cf. `tutorielScenario.test.ts`) :
  * aux valeurs d'origine (0.47/0.5 et 0.62/0.38), manette et carafe se
  * chevauchaient réellement (88/864 px opaques) — corrigé en écartant la
- * carafe (posX 0.62→0.66, posY 0.38→0.33), loin aussi du préfill. */
+ * carafe (posX 0.62→0.66→0.67, posY 0.38→0.33), loin aussi du préfill. */
 export const TRACES_TUTORIEL: readonly TraceScenario[] = [
   { templateId: "jx.manette_vibraduo", posX: 0.47, posY: 0.49, rotation: 25 },
-  { templateId: "ma.carafe_cristal_taille", posX: 0.66, posY: 0.33, rotation: 40 },
+  {
+    // Écartée (0.66 → 0.67) et la lampe du préfill lui a cédé 4 centièmes de
+    // plus à sa droite : c'est TOUT ce que le coffre "rogers" dégage — au-delà
+    // la lampe sort du contenant et la carafe la percute (balayage complet de
+    // l'oracle pixel, 2026-08-19). Le vrai levier d'indulgence est donc la
+    // tolérance : c'est la seule trace que le JOUEUR pose, au pouce et à deux
+    // doigts, là où la manette est déposée au pixel par la démo du grand-père.
+    templateId: "ma.carafe_cristal_taille", posX: 0.67, posY: 0.33, rotation: 40,
+    tolerancePos: 0.13, toleranceRot: 18,
+  },
 ];
 
-/** Tolérance de pose : distance (normalisée) et angle (degrés). */
+/** Tolérance de pose par défaut : distance (normalisée) et angle (degrés). */
 export const TOLERANCE_TRACE_POS = 0.08;
 export const TOLERANCE_TRACE_ROT = 10;
 
@@ -148,7 +160,7 @@ export interface PrefillCoffre {
 export const PREFILL_COFFRE_TUTORIEL: readonly PrefillCoffre[] = [
   { templateId: "mus.ukulele_soprano", posX: 0.33, posY: 0.66, rotation: 105, prixVente: 24 },
   { templateId: "br.boite_outils_complete", posX: 0.39, posY: 0.26, rotation: 0, prixVente: 30 },
-  { templateId: "ma.lampe_globe_opaline", posX: 0.69, posY: 0.62, rotation: 0, prixVente: 36 },
+  { templateId: "ma.lampe_globe_opaline", posX: 0.73, posY: 0.62, rotation: 0, prixVente: 36 },
 ];
 
 /** Task 8 (démo du grand-père) : la manette (trace 0) n'est plus posée par
