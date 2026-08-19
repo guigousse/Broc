@@ -817,4 +817,15 @@ export const en: DictionnaireUI = {
       corps: "\"{nom}\" is restored ✓",
     },
   },
+  bazar: {
+    titre: "The Bazaar",
+    fondDeCommerce: "On the shelf",
+    vitrine: "In the window",
+    lotPieces: "{n} parts · {categorie}",
+    prixJetons: "{n} tokens",
+    prixJetonUn: "{n} token",
+    vendu: "Sold — back on Monday",
+    pasAssez: "Not enough tokens",
+    soldeJetons: "Your tokens: {n}",
+  },
 };

@@ -839,4 +839,15 @@ export const el: DictionnaireUI = {
       corps: "«{nom}» αποκαταστάθηκε ✓",
     },
   },
+  bazar: {
+    titre: "Το Παζάρι",
+    fondDeCommerce: "Στον πάγκο",
+    vitrine: "Στη βιτρίνα",
+    lotPieces: "{n} ανταλλακτικά · {categorie}",
+    prixJetons: "{n} μάρκες",
+    prixJetonUn: "{n} μάρκα",
+    vendu: "Πουλήθηκε — επιστρέφει τη Δευτέρα",
+    pasAssez: "Δεν έχετε αρκετές μάρκες",
+    soldeJetons: "Οι μάρκες σας: {n}",
+  },
 };

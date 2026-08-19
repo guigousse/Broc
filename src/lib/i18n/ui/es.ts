@@ -820,4 +820,15 @@ export const es: DictionnaireUI = {
       corps: "«{nom}» está restaurado ✓",
     },
   },
+  bazar: {
+    titre: "El Bazar",
+    fondDeCommerce: "En el mostrador",
+    vitrine: "En el escaparate",
+    lotPieces: "{n} piezas · {categorie}",
+    prixJetons: "{n} fichas",
+    prixJetonUn: "{n} ficha",
+    vendu: "Vendido — vuelve el lunes",
+    pasAssez: "No tienes fichas suficientes",
+    soldeJetons: "Tus fichas: {n}",
+  },
 };

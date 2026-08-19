@@ -854,4 +854,16 @@ export const fr = {
       corps: "« {nom} » est restauré ✓",
     },
   },
+  // Écran /bazar : la boutique payée en jetons (Task 7 du chantier jetons-bazar).
+  bazar: {
+    titre: "Le Bazar",
+    fondDeCommerce: "À l'étal",
+    vitrine: "En vitrine",
+    lotPieces: "{n} pièces · {categorie}",
+    prixJetons: "{n} jetons",
+    prixJetonUn: "{n} jeton",
+    vendu: "Vendu — de retour lundi",
+    pasAssez: "Pas assez de jetons",
+    soldeJetons: "Vos jetons : {n}",
+  },
 } as const;
