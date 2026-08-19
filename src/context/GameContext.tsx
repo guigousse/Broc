@@ -75,6 +75,7 @@ import { getProchaineUpgradeStockage, getStockageTier } from "@/data/stockage";
 import { stockageEstPlein } from "@/lib/stockage";
 import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
+import { settleBazar } from "@/lib/bazar/settleBazar";
 import { appliquerFinTutoriel, ETAPES_TUTORIEL } from "@/lib/tutoriel";
 import { synchroniserNotifsQuetes } from "@/lib/notifications/quetesNotif";
 import {
@@ -404,6 +405,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const rafraichirQuetes = useCallback(() => {
     const now = tempsConfiance() ?? Date.now();
     setState((prev) => (prev ? settleQuetesPeriodiques(prev, now) : prev));
+    setState((prev) => (prev ? settleBazar(prev, now) : prev));
   }, [tempsConfiance]);
 
   const consommerEnergie = useCallback(

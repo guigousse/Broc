@@ -484,6 +484,36 @@ export interface GameState {
   pubsEnergie?: { cle: string; n: number };
   /** Usages du jour des compétences actives (clé = jourActuel). Absent tant qu'aucune active n'a servi. */
   activesUtilisees?: ActivesUtilisees;
+  /** ADDITIF (v20) : étal courant du Bazar. Absent tant que le Bazar n'a pas ouvert. */
+  bazar?: EtalBazar;
+}
+
+/** Un lot de pièces de restauration à l'étal du Bazar. */
+export interface LotPiecesBazar {
+  categorie: CategorieObjet;
+  /** Nombre de pièces livrées à l'achat. */
+  quantite: number;
+  /** Prix en jetons. */
+  prix: number;
+}
+
+/** L'objet unique de la vitrine du Bazar, livré en Pristin état. */
+export interface VitrineBazar {
+  templateId: string;
+  /** `prixRefBase` du template au moment de la composition (snapshot). */
+  valeurBase: number;
+  /** Prix en jetons — `Math.ceil(valeurBase / 25)`, minimum 1. */
+  prix: number;
+}
+
+/** Étal du Bazar pour une semaine donnée. */
+export interface EtalBazar {
+  /** Clé de semaine ISO ("YYYY-Www") de l'étal présenté. */
+  cleSemaine: string;
+  /** Fond de commerce : stock illimité, trois catégories distinctes. */
+  lotsPieces: LotPiecesBazar[];
+  /** Vitrine : un seul exemplaire. `null` une fois acheté, jusqu'à la rotation. */
+  vitrine: VitrineBazar | null;
 }
 
 export type CompetenceId = string;

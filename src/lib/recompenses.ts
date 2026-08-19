@@ -20,7 +20,7 @@ export interface RecompenseEffective {
   argent: number;
   xp: number;
   energie: number;
-  /** Jetons du Bazar. 1 jeton = 25 €, ratio fixe. */
+  /** Jetons du Bazar. Ratio fixe, cf. `PRIX_JETON_EUROS` (lib/bazar/etal). */
   jetons: number;
 }
 
