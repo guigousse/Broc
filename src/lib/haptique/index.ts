@@ -11,9 +11,12 @@
  * cache : c'est ce qui rend la coupure immédiate depuis les réglages, sans
  * remontage ni rechargement.
  *
- * Toute erreur est avalée. Le plugin prévient lui-même que le retour haptique
- * n'est garanti sur aucun Android ; un téléphone sans moteur haptique n'a pas
- * le droit de casser l'apparition d'un acheteur.
+ * Toute erreur est avalée — mais TRACÉE. Le plugin prévient lui-même que le
+ * retour haptique n'est garanti sur aucun Android ; un téléphone sans moteur
+ * n'a pas le droit de casser l'apparition d'un acheteur. En revanche, se taire
+ * complètement a déjà coûté un cycle de build : la permission ACL manquait
+ * (`haptics:default` n'existe pas, il faut `haptics:allow-impact-feedback`),
+ * le refus était invisible, et l'app paraissait fonctionner.
  */
 
 import { vibrationsActives } from "./prefs";
@@ -30,7 +33,11 @@ export async function vibrerApparition(): Promise<void> {
   try {
     const { impactFeedback } = await import("@tauri-apps/plugin-haptics");
     await impactFeedback("light");
-  } catch {
-    // Pas de moteur haptique, plugin absent, permission refusée : tant pis.
+  } catch (e) {
+    // On n'interrompt jamais l'appelant — mais on ne se tait pas non plus.
+    // Un refus de l'ACL ressemble EXACTEMENT à un succès vu d'ici (rien ne
+    // vibre, rien ne lève) : sans cette trace, la panne est indétectable
+    // autrement qu'en reconstruisant l'app.
+    console.warn("[haptique] vibration impossible :", e);
   }
 }

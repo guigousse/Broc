@@ -41,6 +41,19 @@ describe("vibrerApparition()", () => {
     impactFeedback.mockRejectedValueOnce(new Error("pas de moteur haptique"));
     await expect(vibrerApparition()).resolves.toBeUndefined();
   });
+
+  it("SIGNALE l'échec en console au lieu de l'effacer", async () => {
+    // Un refus de l'ACL (« haptics.impact_feedback not allowed ») ressemblait
+    // en tout point à un succès : rien ne vibrait, rien ne se plaignait. La
+    // panne doit rester visible dans la console de l'appareil.
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    impactFeedback.mockRejectedValueOnce(new Error("not allowed"));
+    await vibrerApparition();
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0])).toContain("not allowed");
+    warn.mockRestore();
+  });
 });
 
 describe("vibrerApparition() — préférence joueur", () => {
