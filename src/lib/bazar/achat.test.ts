@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { acheterLotPieces, acheterVitrine } from "@/lib/bazar/achat";
 import { genererEtal, PRIX_JETON_EUROS } from "@/lib/bazar/etal";
-import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
+import { createMockGameState, createMockObjet } from "@/lib/__test-fixtures__/gameState";
 import type { GameState } from "@/types/game";
 
 function avecEtal(patch: Partial<GameState> = {}): GameState {
@@ -64,6 +64,13 @@ describe("acheter l'objet de vitrine", () => {
     const state = avecEtal();
     const vide = { ...state, bazar: { ...state.bazar!, vitrine: null } };
     expect(acheterVitrine(vide, Date.now())).toEqual({ ok: false, raison: "indisponible" });
+  });
+
+  it("refuse sans effet de bord quand le stockage est plein — comme tout autre chemin d'acquisition", () => {
+    const plein = Array.from({ length: 10 }, (_, i) => createMockObjet({ id: `plein-${i}` }));
+    const state = avecEtal({ inventaireJoueur: plein });
+    const r = acheterVitrine(state, Date.now());
+    expect(r).toEqual({ ok: false, raison: "stockagePlein" });
   });
 
   it("n'écrit rien au grand livre — aucun euro ne bouge", () => {

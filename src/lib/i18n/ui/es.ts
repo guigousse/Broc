@@ -653,7 +653,7 @@ export const es: DictionnaireUI = {
     jetonEnergie: "+{n} ⚡",
     jetonBazarUn: "+{n} ficha",
     jetonBazarN: "+{n} fichas",
-    recompenseAria: "Recompensa: {argent} €, {xp} XP, {energie} energía",
+    recompenseAria: "Recompensa: {argent} €, {xp} XP, {energie} energía, {jetons} fichas",
     livrer: "Entregar",
     livrerProgress: "Entregar ({rempli}/{total})",
     sectionCompteur: "({faits}/{total})",
@@ -828,7 +828,6 @@ export const es: DictionnaireUI = {
     prixJetons: "{n} fichas",
     prixJetonUn: "{n} ficha",
     vendu: "Vendido — vuelve el lunes",
-    pasAssez: "No tienes fichas suficientes",
     soldeJetons: "Tus fichas: {n}",
   },
 };

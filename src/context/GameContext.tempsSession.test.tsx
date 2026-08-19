@@ -2,7 +2,7 @@
 /**
  * Fix « deux horloges » (revue de branche feat/quetes-periodiques-variees) :
  * `timestampAcceptation` des missions périodiques est posé depuis l'horloge
- * de confiance (`tempsConfiance()`, réseau — cf. `rafraichirQuetes`), tandis
+ * de confiance (`tempsConfiance()`, réseau — cf. `rafraichirPeriodiques`), tandis
  * que les sessions de chine/vente étaient horodatées `Date.now()` (horloge de
  * l'appareil). Un appareil en retard (pile HS, réglage manuel…) rendait alors
  * `session.timestamp < timestampAcceptation` en permanence : les objectifs
@@ -95,7 +95,7 @@ describe("GameContext — horodatage des sessions vs horloge de confiance (régr
     const result = await setupPartieAncreeEnAvance();
 
     // Quête périodique acceptée « maintenant » (temps de confiance), comme
-    // `settleQuetesPeriodiques` le fait via `rafraichirQuetes`.
+    // `settleQuetesPeriodiques` le fait via `rafraichirPeriodiques`.
     const now = result.current.tempsConfiance()!;
     const reso: MissionResolution = {
       courrierId: "heb_test_0",

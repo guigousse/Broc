@@ -21,6 +21,11 @@ function rngFixe(suite: number[]): () => number {
 const etal = genererEtal("2026-W34", rngFixe([0.1, 0.4, 0.7, 0.2]));
 
 describe("EtalBazarVue", () => {
+  it("affiche le titre de l'écran — on arrive ici par une porte, rien d'autre ne dit où l'on est", () => {
+    render(<EtalBazarVue etal={etal} jetons={20} onAcheter={() => {}} />);
+    expect(screen.getByRole("heading", { level: 1, name: "Le Bazar" })).toBeTruthy();
+  });
+
   it("montre les trois lots de pièces et la vitrine", () => {
     render(<EtalBazarVue etal={etal} jetons={20} onAcheter={() => {}} />);
     expect(screen.getAllByRole("button", { name: /pièces/i })).toHaveLength(3);

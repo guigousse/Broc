@@ -1,12 +1,13 @@
 import type { GameState, Objet } from "@/types/game";
 import { getTemplate } from "@/data/objetTemplates";
 import { recalculerPrixReference } from "@/lib/etat";
+import { stockageEstPlein } from "@/lib/stockage";
 import { PRIX_JETON_EUROS } from "./etal";
 
 /** Ce que le joueur peut acheter à l'étal. Défini ICI — la vue l'importe. */
 export type AchatBazar = { type: "pieces"; index: number } | { type: "vitrine" };
 
-export type RaisonRefus = "jetons" | "indisponible";
+export type RaisonRefus = "jetons" | "indisponible" | "stockagePlein";
 
 export type ResultatAchat =
   | { ok: true; state: GameState }
@@ -45,6 +46,11 @@ export function acheterVitrine(state: GameState, now: number): ResultatAchat {
   if (state.jetons < v.prix) return { ok: false, raison: "jetons" };
   const template = getTemplate(v.templateId);
   if (!template) return { ok: false, raison: "indisponible" };
+  // Comme tous les autres chemins d'acquisition (ajouterObjet, acheterObjet,
+  // boîte mystère, porte grise) : le Bazar respecte la capacité de stockage.
+  // Les lots de pièces ne sont pas concernés — les pièces ne prennent pas de
+  // place.
+  if (stockageEstPlein(state)) return { ok: false, raison: "stockagePlein" };
 
   const objet: Objet = {
     id: `bazar_${v.templateId}_${now}`,

@@ -160,7 +160,7 @@ export const el: DictionnaireUI = {
     stockagePlein: "Η αποθήκη είναι γεμάτη",
     chiner: "Ψάξιμο",
     etaler: "Πούλημα",
-    bazar: "Παζάρι",
+    bazar: "Μπαζάρ",
     chatDortMessage:
       "Μια γάτα κοιμάται ήσυχα στην πολυθρόνα. Δεν μπορείς να τελειώσεις τη μέρα χωρίς να την ενοχλήσεις…",
     seReposer: "Ξεκούραση (+1 ημέρα)",
@@ -656,7 +656,7 @@ export const el: DictionnaireUI = {
     jetonEnergie: "+{n} ⚡",
     jetonBazarUn: "+{n} μάρκα",
     jetonBazarN: "+{n} μάρκες",
-    recompenseAria: "Ανταμοιβή: {argent} €, {xp} XP, {energie} ενέργεια",
+    recompenseAria: "Ανταμοιβή: {argent} €, {xp} XP, {energie} ενέργεια, {jetons} μάρκες",
     livrer: "Παράδοση",
     livrerProgress: "Παράδοση ({rempli}/{total})",
     sectionCompteur: "({faits}/{total})",
@@ -840,14 +840,13 @@ export const el: DictionnaireUI = {
     },
   },
   bazar: {
-    titre: "Το Παζάρι",
+    titre: "Το Μπαζάρ",
     fondDeCommerce: "Στον πάγκο",
     vitrine: "Στη βιτρίνα",
     lotPieces: "{n} ανταλλακτικά · {categorie}",
     prixJetons: "{n} μάρκες",
     prixJetonUn: "{n} μάρκα",
     vendu: "Πουλήθηκε — επιστρέφει τη Δευτέρα",
-    pasAssez: "Δεν έχετε αρκετές μάρκες",
     soldeJetons: "Οι μάρκες σας: {n}",
   },
 };

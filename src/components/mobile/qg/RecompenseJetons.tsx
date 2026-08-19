@@ -63,6 +63,7 @@ export function RecompenseJetons({ recompense, variante, label, allume = false }
 
   const aria = tr(d.carnet.recompenseAria, {
     argent: recompense.argent, xp: recompense.xp, energie: recompense.energie,
+    jetons: recompense.jetons,
   });
 
   return (

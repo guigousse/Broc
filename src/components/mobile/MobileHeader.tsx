@@ -16,8 +16,14 @@ import { EnergieRecharge } from "./EnergieRecharge";
 
 interface MobileHeaderProps {
   budget: number;
-  /** Solde de jetons du Bazar. Le bloc est masqué tant qu'il vaut 0. */
+  /** Solde de jetons du Bazar. Le bloc est masqué tant qu'il vaut 0, sauf `forcerAffichageJetons`. */
   jetons?: number;
+  /**
+   * Affiche le compteur de jetons même à 0. Réservé à l'écran du Bazar : « un
+   * étal garni, un compteur à zéro » (spec) — partout ailleurs, masquer à 0
+   * reste le bon choix. Passé par la page, jamais détecté ici depuis l'URL.
+   */
+  forcerAffichageJetons?: boolean;
 }
 
 const wrapStyle: CSSProperties = {
@@ -122,7 +128,7 @@ const xpFillStyle: CSSProperties = {
  *  inconditionnellement, il lui faut donc toujours une valeur. */
 const BROCANTEUR_REPLI = emptyBrocanteur();
 
-export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
+export function MobileHeader({ budget, jetons, forcerAffichageJetons = false }: MobileHeaderProps) {
   const { state } = useGame();
   const { tempsConfiance } = useGameActions();
   const [rechargeOuverte, setRechargeOuverte] = useState(false);
@@ -262,10 +268,10 @@ export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
               <Zap size={15} strokeWidth={2.5} color={couleurReste} aria-hidden />
             </strong>
           </button>
-          {!!jetons && (
+          {(forcerAffichageJetons || !!jetons) && (
             <div style={{ textAlign: "right", flexShrink: 0, ...labelStyle }}>
               {d.chrome.jetons}
-              <strong style={valueStyle}>{jetons.toLocaleString(locale)}</strong>
+              <strong style={valueStyle}>{(jetons ?? 0).toLocaleString(locale)}</strong>
             </div>
           )}
           {/* data-fly-target : cible des objets vendus dans le bilan de vente,

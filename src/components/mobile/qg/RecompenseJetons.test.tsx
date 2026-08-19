@@ -53,4 +53,14 @@ describe("RecompenseJetons", () => {
     );
     expect(screen.queryByText(/jeton/)).toBeNull();
   });
+
+  it("l'annonce vocale mentionne aussi les jetons — pas seulement argent/XP/énergie", () => {
+    render(
+      <RecompenseJetons
+        recompense={{ argent: 30, xp: 25, energie: 1, jetons: 3 }}
+        variante="ligne"
+      />,
+    );
+    expect(screen.getByRole("group").getAttribute("aria-label")).toContain("3 jetons");
+  });
 });

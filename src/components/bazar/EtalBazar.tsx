@@ -29,6 +29,7 @@ export function EtalBazarVue({ etal, jetons, onAcheter }: Props) {
 
   return (
     <div>
+      <h1>{d.bazar.titre}</h1>
       <h2>{d.bazar.fondDeCommerce}</h2>
       <ul>
         {etal.lotsPieces.map((lot, index) => (

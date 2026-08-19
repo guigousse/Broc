@@ -665,7 +665,7 @@ export const fr = {
     jetonEnergie: "+{n} ⚡",
     jetonBazarUn: "+{n} jeton",
     jetonBazarN: "+{n} jetons",
-    recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie",
+    recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie, {jetons} jetons",
     livrer: "Livrer",
     livrerProgress: "Livrer ({rempli}/{total})",
     // En-tête de section rétractable (refonte carnet SP3) : le compteur ne
@@ -863,7 +863,6 @@ export const fr = {
     prixJetons: "{n} jetons",
     prixJetonUn: "{n} jeton",
     vendu: "Vendu — de retour lundi",
-    pasAssez: "Pas assez de jetons",
     soldeJetons: "Vos jetons : {n}",
   },
 } as const;

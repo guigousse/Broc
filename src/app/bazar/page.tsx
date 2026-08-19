@@ -7,11 +7,14 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { EtalBazarVue } from "@/components/bazar/EtalBazar";
 import { useGame } from "@/context/GameContext";
+import { useToastSafe } from "@/components/ui/Toast";
 import { bazarEstOuvert } from "@/lib/bazar/ouverture";
+import type { AchatBazar } from "@/lib/bazar/achat";
 
 export default function BazarPage() {
   const router = useRouter();
-  const { state, isHydrated, acheterAuBazar } = useGame();
+  const { state, isHydrated, acheterAuBazar, rafraichirPeriodiques } = useGame();
+  const { toast } = useToastSafe();
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -21,18 +24,28 @@ export default function BazarPage() {
   }, [isHydrated, state, router]);
 
   // `state.bazar` est absent un cycle après l'ouverture, le temps que le tick
-  // de settleBazar tourne (même mécanique que les lots de quêtes) : on ne
-  // comble surtout pas ce trou en appelant genererEtal ici, ça produirait un
-  // étal non persisté et différent à chaque frame.
+  // de settleBazar tourne (même mécanique que les lots de quêtes) : jusque-là
+  // ce tick n'était déclenché que par l'intervalle 60 s / focus / visibility
+  // du GameContext — un joueur qui ouvre le Bazar pour la première fois
+  // pouvait donc fixer un SkeletonScreen muet jusqu'à 60 s. On déclenche donc
+  // le settle explicitement à l'entrée sur l'écran (une seule fois, au
+  // montage — `rafraichirPeriodiques` est stable). On ne comble surtout pas
+  // ce trou en appelant genererEtal ici : ça produirait un étal non persisté
+  // et différent à chaque frame.
+  useEffect(() => {
+    rafraichirPeriodiques();
+  }, [rafraichirPeriodiques]);
+
+  const handleAcheter = (achat: AchatBazar) => {
+    const res = acheterAuBazar(achat);
+    if (!res.ok) toast(res.raison ?? "", { type: "erreur" });
+  };
+
   if (!state || !state.bazar) return <SkeletonScreen />;
 
   return (
-    <MobileLayout header={<MobileHeader budget={state.budget} jetons={state.jetons} />}>
-      <EtalBazarVue
-        etal={state.bazar}
-        jetons={state.jetons}
-        onAcheter={(achat) => acheterAuBazar(achat)}
-      />
+    <MobileLayout header={<MobileHeader budget={state.budget} jetons={state.jetons} forcerAffichageJetons />}>
+      <EtalBazarVue etal={state.bazar} jetons={state.jetons} onAcheter={handleAcheter} />
     </MobileLayout>
   );
 }

@@ -145,6 +145,14 @@ describe("MobileHeader — compteur de jetons du Bazar", () => {
     expect(screen.getByText("Jetons")).toBeTruthy();
     expect(screen.getByText("7")).toBeTruthy();
   });
+
+  it("forcerAffichageJetons : reste visible à 0 — l'écran du Bazar veut « un étal garni, un compteur à zéro »", () => {
+    mockState = etat(3);
+    mockPathname = "/bazar";
+    render(<MobileHeader budget={0} jetons={0} forcerAffichageJetons />);
+    expect(screen.getByText("Jetons")).toBeTruthy();
+    expect(screen.getByText("0")).toBeTruthy();
+  });
 });
 
 describe("MobileHeader — gel de la barre XP", () => {
