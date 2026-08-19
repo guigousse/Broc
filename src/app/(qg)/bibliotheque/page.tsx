@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { FloatingRoomOverlay } from "@/components/mobile/floating-room/FloatingRoomOverlay";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
@@ -62,6 +62,19 @@ export default function CompetencesPage() {
   const guide = etapeTuto ? competenceGuidee(etapeTuto) : null;
   const enLecon = etapeTuto === "competences-visite" || etapeTuto === "competences-choix";
   const [phaseLecon, setPhaseLecon] = useState<PhaseLecon>("coach");
+
+  /* La branche « Présentation » est bien plus bas que le pli de l'écran : le
+     joueur arrivait sur la visite guidée sans rien voir de ce qu'on lui
+     demandait, et la main pointeuse le désignait hors champ (recette device
+     2026-08-19). Dès que la leçon passe à la phase « branche », le panneau
+     défile jusqu'à elle — comme la collection le fait déjà pour la peluche. */
+  const brancheGuideeRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (phaseLecon !== "branche") return;
+    const el = brancheGuideeRef.current;
+    if (!el) return;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [phaseLecon]);
 
   // When user switches tree, close any open detail sheet
   useEffect(() => {
@@ -309,9 +322,11 @@ export default function CompetencesPage() {
             // en inline, comme CollectionGrid.tsx / StockageItemRow.tsx.
             const mainBranche =
               !!guide && phaseLecon === "branche" && branche.id === guide.brancheId;
+            const estBrancheGuidee = !!guide && branche.id === guide.brancheId;
             return (
               <section
                 key={branche.id}
+                ref={estBrancheGuidee ? brancheGuideeRef : undefined}
                 className={mainBranche ? "tuto-main tuto-main-droite" : undefined}
                 style={
                   mainBranche
