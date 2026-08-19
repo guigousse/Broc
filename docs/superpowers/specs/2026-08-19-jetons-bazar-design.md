@@ -141,12 +141,21 @@ boutique doit rester lisible dans cet état : un étal garni, un compteur à zé
 | Article | Prix |
 |---|---|
 | **5 pièces de restauration**, d'une catégorie nommée | **1 jeton** |
+| idem, deuxième catégorie | 1 jeton |
+| idem, troisième catégorie | 1 jeton |
 
 `piecesAmelioration` est un `Record<CategorieObjet, number>` — **sept stocks
-séparés**, jamais fongibles. L'article porte donc une catégorie explicite
-(« 5 pièces · Musique »), et **cette catégorie change à chaque rotation**. Le
-joueur prend ce qui passe : c'est ce qui fait d'un étal un étal, et c'est ce qui
-donne une raison d'y repasser. Il n'y a pas de choix de catégorie à l'achat.
+séparés**, jamais fongibles. Chaque article porte donc une catégorie explicite
+(« 5 pièces · Musique »), et **le trio de catégories change à chaque rotation** :
+trois des sept, tirées sans doublon. Le joueur prend ce qui passe — c'est ce qui
+fait d'un étal un étal, et ce qui donne une raison d'y repasser. Il n'y a pas de
+choix de catégorie à l'achat.
+
+Trois lignes plutôt qu'une : avec une rotation hebdomadaire, un rayon d'un seul
+article laisserait l'essentiel du robinet de jetons sans emploi tant que les
+albums n'existent pas, et un étal d'une seule ligne ne ressemble pas à une
+boutique. Le stock étant illimité, les trois lignes n'ajoutent aucun mécanisme —
+seulement de la surface.
 
 **La vitrine.** Un seul objet à la fois, en un seul exemplaire.
 
@@ -386,34 +395,27 @@ Une borne dans le Bazar. **1 jeton = une partie**, sur un jeu que le joueur
 14. Le Bazar ouvre le **10 juillet en temps de jeu** (jour 35) — un événement du
     calendrier, pas un palier de progression.
 15. Prix arrondi **au supérieur**.
+16. Fond de commerce à **trois lots de pièces** de catégories différentes, tirées
+    sans doublon à chaque rotation.
 
 ## Annexe E — Questions laissées ouvertes
 
 | Question | Chantier | Pourquoi on ne tranche pas ici |
 |---|---|---|
-| **Le surplus de jetons du premier jalon** : ~30 gagnés par semaine, ~10 à 15 dépensables | ② | Voir la note ci-dessous. |
 | Rattrapage pour le joueur intermittent (12 jetons contre 30) | ① | Réglage de nombre ; se décide sur des retours d'usage. |
 | Le Bazar vendra-t-il aussi des **exclusifs** en fin de partie ? | ② bis | Dépend de ce que la vitrine devient une fois les albums finis. |
 | Le nom « Brockymon » | ④ | Se tranche avec les visuels, pas avant. |
 | Unicité des slots face à une **cartouche dorée** | ⑤ | Demande de connaître les mini-jeux. |
 
-### Note — le surplus du premier jalon
+### Note — le surplus du premier jalon, et pourquoi l'étal a trois lignes
 
-Avec une rotation hebdomadaire et une vitrine à un seul objet, l'étal absorbe
-~10 à 15 jetons par semaine face à un robinet qui en verse jusqu'à 30. Un joueur
-assidu accumule.
+Avec une rotation hebdomadaire et une vitrine à un seul objet, un rayon de
+consommables à une seule ligne absorberait ~10 jetons par semaine face à un
+robinet qui en verse jusqu'à 30. D'où les **trois lots de pièces simultanés**
+retenus au §2.
 
-Ce n'est pas alarmant : les paquets de cartes et de timbres (④ et ③) sont
-précisément les articles à fort débit qui absorberont ce surplus, et une réserve
-de jetons accumulée le jour où les albums ouvrent est un bon moment de jeu, pas
-un défaut. Mais **le premier jalon vivra seul un certain temps**, et il faut
-décider ce qu'on fait pendant cette période :
-
-- **Ne rien faire** — les jetons s'accumulent, l'étal reste sobre, le trop-plein
-  se déverse à l'arrivée des albums.
-- **Élargir le fond de commerce** — présenter deux ou trois lots de pièces de
-  catégories différentes en même temps, plutôt qu'un seul. Coût nul, absorbe le
-  surplus, et rend l'étal plus vivant pour un rayon qui n'a qu'une ligne.
-
-Recommandation : la seconde. Un étal à une seule ligne de consommable ressemble
-peu à une boutique.
+Un surplus subsiste, et c'est voulu : les paquets de cartes et de timbres (④ et ③)
+sont les articles à fort débit qui l'absorberont, et une réserve accumulée le jour
+où les albums ouvrent est un bon moment de jeu, pas un défaut. Ce qu'il fallait
+éviter, c'était un étal si vide que la monnaie perde son sens avant même d'avoir
+servi.
