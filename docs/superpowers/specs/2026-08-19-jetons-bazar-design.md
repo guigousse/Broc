@@ -169,6 +169,17 @@ Pristin de ×1,4 (`src/lib/etat.ts:7`). Un objet de base à 250 € coûte donc
 c'est justifié : l'objet arrive restauré, ce qui lui épargne l'atelier, l'attente
 et les pièces. Une boutique doit donner envie ; au pair, on n'y retourne pas.
 
+**Comment l'objet est choisi.** Tirage uniforme dans le pool de chinage
+(`poolPourTier(3)`, qui exclut déjà les `uniques`), restreint aux templates dont
+le `prixRefBase` tombe **entre 100 et 400 €** — soit 4 à 16 jetons. La borne basse
+garantit que la vitrine vaut toujours le déplacement ; la borne haute qu'elle
+reste atteignable en une semaine. `prixRefBase` est la valeur « Très bon »
+(`FACTEUR_ETAT["Très bon"] === 1`), donc c'est bien la *valeur de base* au sens du
+prix, et l'objet livré en Pristin en vaut 1,4 fois plus.
+
+Cette fourchette est **le premier bouton de réglage** du Bazar : la resserrer rend
+la vitrine plus prévisible, l'élargir plus surprenante.
+
 Acheté, l'emplacement reste **vide jusqu'à la rotation**. Non acheté, l'objet
 **retourne au pot** et pourra réapparaître : rien n'est perdu pour toujours. Le
 définitif est réservé aux `uniques`, qui ont déjà leur mécanique.
