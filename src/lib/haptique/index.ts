@@ -26,13 +26,15 @@ export function haptiqueDisponible(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-/** Petite secousse à l'apparition d'un acheteur : la plus légère des cinq. */
-export async function vibrerApparition(): Promise<void> {
+/** Les cinq crans du plugin, du plus discret au plus sec. */
+type Style = "light" | "medium" | "heavy" | "soft" | "rigid";
+
+async function secousse(style: Style): Promise<void> {
   if (!haptiqueDisponible()) return;
   if (!vibrationsActives()) return;
   try {
     const { impactFeedback } = await import("@tauri-apps/plugin-haptics");
-    await impactFeedback("light");
+    await impactFeedback(style);
   } catch (e) {
     // On n'interrompt jamais l'appelant — mais on ne se tait pas non plus.
     // Un refus de l'ACL ressemble EXACTEMENT à un succès vu d'ici (rien ne
@@ -40,4 +42,19 @@ export async function vibrerApparition(): Promise<void> {
     // autrement qu'en reconstruisant l'app.
     console.warn("[haptique] vibration impossible :", e);
   }
+}
+
+/** Petite secousse à l'apparition d'un acheteur : la plus légère des cinq. */
+export function vibrerApparition(): Promise<void> {
+  return secousse("light");
+}
+
+/**
+ * Détonation d'un bouquet du feu d'artifice de level-up. `force` est celle du
+ * bouquet (cf. BOUQUETS dans LevelUpOverlay) : le bouquet principal frappe
+ * fort, ses satellites un cran en dessous. Aucun ne descend à `light` — la
+ * cérémonie doit se distinguer nettement du « pop » d'un acheteur.
+ */
+export function vibrerExplosion(force: number): Promise<void> {
+  return secousse(force >= 0.75 ? "heavy" : "medium");
 }

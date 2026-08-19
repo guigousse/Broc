@@ -44,6 +44,12 @@ vi.mock("@/lib/audio/audioManager", () => ({
   PIC_EXPLOSION_S: 0.035,
 }));
 
+const vibrerExplosion = vi.fn();
+vi.mock("@/lib/haptique", () => ({
+  vibrerApparition: vi.fn(),
+  vibrerExplosion: (...args: unknown[]) => vibrerExplosion(...args),
+}));
+
 // Plafond fictif simple (10) pour isoler le test de la vraie valeur (96) ;
 // on garde le reste du module réel (deblocagesNiveau.ts en dépend).
 vi.mock("@/data/competences", async (importOriginal) => {
@@ -511,6 +517,51 @@ describe("LevelUpOverlay", () => {
     expect(playLevelUp).toHaveBeenCalledTimes(1);
     expect(playExplosion).not.toHaveBeenCalled();
     window.matchMedia = matchMedia;
+    vi.useRealTimers();
+  });
+});
+
+describe("LevelUpOverlay — secousses du feu d'artifice", () => {
+  it("une secousse par bouquet, calée sur l'ÉCLAT et non sur le son", () => {
+    // Le son part en avance (515 ms) pour que son bang tombe sur l'éclat à
+    // 550 ms. Une vibration n'a pas d'attaque à rattraper : la caler sur le
+    // même horaire la ferait sentir avant qu'on voie quoi que ce soit.
+    vi.useFakeTimers();
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    vibrerExplosion.mockClear();
+    render(<LevelUpOverlay />);
+    vi.advanceTimersByTime(516);
+    expect(vibrerExplosion).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(34);
+    expect(vibrerExplosion).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(1000);
+    expect(vibrerExplosion).toHaveBeenCalledTimes(4);
+    vi.useRealTimers();
+  });
+
+  it("chaque secousse reçoit la force de son bouquet", () => {
+    vi.useFakeTimers();
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    vibrerExplosion.mockClear();
+    render(<LevelUpOverlay />);
+    vi.advanceTimersByTime(3000);
+    const forces = vibrerExplosion.mock.calls.map((c) => c[0] as number);
+    expect(forces[0]).toBe(1);
+    expect(forces).toEqual([...forces].sort((a, b) => b - a));
+    vi.useRealTimers();
+  });
+
+  it("démontage avant l'éclat : aucune secousse", () => {
+    vi.useFakeTimers();
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    vibrerExplosion.mockClear();
+    const { unmount } = render(<LevelUpOverlay />);
+    unmount();
+    vi.advanceTimersByTime(3000);
+    expect(vibrerExplosion).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
 });

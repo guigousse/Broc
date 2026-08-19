@@ -7,13 +7,13 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const impactFeedback = vi.fn(async () => {});
+const impactFeedback = vi.fn(async (_style?: string) => {});
 
 vi.mock("@tauri-apps/plugin-haptics", () => ({
   impactFeedback,
 }));
 
-const { vibrerApparition } = await import("./index");
+const { vibrerApparition, vibrerExplosion } = await import("./index");
 const { setVibrationsActives } = await import("./prefs");
 
 beforeEach(() => {
@@ -70,5 +70,35 @@ describe("vibrerApparition() — préférence joueur", () => {
     setVibrationsActives(true);
     await vibrerApparition();
     expect(impactFeedback).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("vibrerExplosion()", () => {
+  it("frappe fort pour le bouquet principal", async () => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    await vibrerExplosion(1);
+    expect(impactFeedback).toHaveBeenCalledWith("heavy");
+  });
+
+  it("frappe plus doucement pour les bouquets satellites", async () => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    await vibrerExplosion(0.72);
+    expect(impactFeedback).toHaveBeenCalledWith("medium");
+  });
+
+  it("reste plus forte que la secousse d'un acheteur", async () => {
+    // Le sens de la demande : le feu d'artifice doit se distinguer nettement
+    // du « pop » d'un client. Même le plus faible des bouquets tape plus fort.
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    await vibrerExplosion(0.58);
+    const style = impactFeedback.mock.calls[0][0];
+    expect(style).not.toBe("light");
+  });
+
+  it("obéit à la préférence joueur comme le reste", async () => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    setVibrationsActives(false);
+    await vibrerExplosion(1);
+    expect(impactFeedback).not.toHaveBeenCalled();
   });
 });

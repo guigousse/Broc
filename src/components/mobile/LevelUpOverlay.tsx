@@ -15,6 +15,7 @@ import {
   PIC_EXPLOSION_S,
   SON_EXPLOSION,
 } from "@/lib/audio/audioManager";
+import { vibrerExplosion } from "@/lib/haptique";
 import {
   COUT_TOTAL_COMPETENCES,
   pointsDepensesCompetences,
@@ -384,6 +385,15 @@ export function LevelUpOverlay() {
         setTimeout(
           () => void audioManager.playExplosion(b.force, b.vitesse),
           (DELAI_ARTIFICE + b.retard - PIC_EXPLOSION_S / b.vitesse) * 1000,
+        ),
+      ),
+      // Les secousses, elles, tombent PILE sur l'éclat : contrairement au son,
+      // une vibration n'a pas d'attaque à rattraper, donc pas de PIC_EXPLOSION_S
+      // à soustraire. Avancée comme le son, elle se sentirait avant qu'on voie.
+      ...BOUQUETS.map((b) =>
+        setTimeout(
+          () => void vibrerExplosion(b.force),
+          (DELAI_ARTIFICE + b.retard) * 1000,
         ),
       ),
     ];
