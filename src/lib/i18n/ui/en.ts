@@ -192,6 +192,8 @@ export const en: DictionnaireUI = {
       "Your collection's value grows with every donation — and unlocks new flea markets.",
     coachCollectionRetirer:
       "A donated piece isn't locked away: this button returns it to storage — but its value leaves with it.",
+    coachVenteHumeur:
+      "His mood: every round of haggling wears him down. The redder the gauge, the likelier he is to walk away for good.",
     coachCompetencesXp:
       "Your level and experience bar: every sale, every find fills it.",
     coachCompetencesArbres:

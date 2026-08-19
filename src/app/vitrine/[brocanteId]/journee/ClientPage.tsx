@@ -51,6 +51,7 @@ import { useToast } from "@/components/ui/Toast";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
+import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import {
   GRAND_PERE_PORTRAITS,
   SEQUENCES_TUTORIEL,
@@ -111,6 +112,9 @@ import type {
   TutorielEtape,
   VenteHistorique,
 } from "@/types/game";
+
+/** Leçon d'humeur : le temps de lire la réplique du client avant le voile. */
+const DELAI_LECON_HUMEUR_MS = 1100;
 
 const TICK_MS = 100;
 // Active de vente 📣 La Criée (N30) : fait défiler 3 clients coup sur coup,
@@ -243,6 +247,20 @@ export default function VitrineJourneePage() {
   /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
   const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
   const etape = state?.tutorielEtape;
+
+  /* Leçon d'humeur (première vente) : la jauge est le seul signal qui dit
+     pourquoi un acheteur finit par partir, et rien ne l'expliquait. On la
+     montre au moment où elle DÉMONTRE quelque chose — après la première offre
+     refusée du radin, quand elle vient de bouger — et une seule fois.
+     "differe" laisse la réplique du client se lire avant de voiler l'écran. */
+  const [leconHumeur, setLeconHumeur] = useState<
+    "jamais" | "differe" | "visible" | "faite"
+  >("jamais");
+  useEffect(() => {
+    if (leconHumeur !== "differe") return;
+    const t = setTimeout(() => setLeconHumeur("visible"), DELAI_LECON_HUMEUR_MS);
+    return () => clearTimeout(t);
+  }, [leconHumeur]);
 
   /** Crédite l'XP immédiatement ET la compte pour le bilan. L'affichage de la
    *  barre est gelé : elle ne bougera qu'à la cérémonie. */
@@ -392,6 +410,9 @@ export default function VitrineJourneePage() {
       if (!ev) return nego;
       const acheteurScripte = acheteurScripteRef.current;
       if (acheteurScripte) {
+        if (etapeRef.current === "vente-refus") {
+          setLeconHumeur((l) => (l === "jamais" ? "differe" : l));
+        }
         return proposerOffre(nego, acheteurScripte.persona, offre, ALEA_NEGO_SCRIPTEE);
       }
       const mods = modifiersRef.current ?? DEFAULT_MODIFIERS;
@@ -1356,6 +1377,14 @@ export default function VitrineJourneePage() {
                 }
               : null
           }
+          cibleCoachHumeur={leconHumeur === "visible"}
+        />
+      )}
+
+      {leconHumeur === "visible" && (
+        <TutorielCoach
+          etapes={[{ cible: "vente-humeur", texte: d.tutoriel.coachVenteHumeur }]}
+          onFini={() => setLeconHumeur("faite")}
         />
       )}
 

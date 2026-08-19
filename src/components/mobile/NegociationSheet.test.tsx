@@ -110,3 +110,24 @@ describe("NegociationSheet — cible du grand-père", () => {
     expect(container.querySelector("[data-nego-cible]")).toBeNull();
   });
 });
+
+/**
+ * Leçon d'humeur (première vente du tutoriel) : la jauge est le seul signal
+ * qui dit pourquoi un acheteur finit par partir. Le coach doit pouvoir la
+ * viser — donc la trouver.
+ */
+describe("NegociationSheet — cible du coach sur la jauge d'humeur", () => {
+  it("pose la cible sur la jauge quand la leçon la demande", () => {
+    const { container } = renderSheet(80, { cibleCoachHumeur: true });
+    const jauge = container.querySelector('[data-tuto-coach="vente-humeur"]');
+    expect(jauge).toBeTruthy();
+    // Cible utile : elle doit avoir une boîte, sinon TutorielCoach la traite
+    // — à raison — comme introuvable.
+    expect((jauge as HTMLElement).style.display).not.toBe("contents");
+  });
+
+  it("aucune cible le reste du temps", () => {
+    const { container } = renderSheet(80);
+    expect(container.querySelector('[data-tuto-coach="vente-humeur"]')).toBeNull();
+  });
+});

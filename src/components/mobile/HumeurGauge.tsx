@@ -7,6 +7,8 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 interface HumeurGaugeProps {
   /** Humeur courante, 0–1. */
   humeur: number;
+  /** Tutoriel : porte la cible du coach (`vente-humeur`) le temps de la leçon. */
+  cibleCoach?: boolean;
 }
 
 /** Icône (Lucide, trait cohérent Art Déco) selon l'humeur. */
@@ -41,13 +43,14 @@ function couleurHumeur(t: number): string {
  * smiley dans un cercle — l'expression ET la couleur du cercle suivent
  * l'avancement. Pas de libellé visible (annoncé en aria).
  */
-export function HumeurGauge({ humeur }: HumeurGaugeProps) {
+export function HumeurGauge({ humeur, cibleCoach = false }: HumeurGaugeProps) {
   const { d } = useLangue();
   const clamped = Math.min(1, Math.max(0, humeur));
   const Icon = iconForHumeur(clamped);
   return (
     <div
       style={wrapStyle}
+      data-tuto-coach={cibleCoach ? "vente-humeur" : undefined}
       role="img"
       aria-label={`${d.chine.humeur} ${Math.round(clamped * 100)} %`}
     >

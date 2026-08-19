@@ -87,6 +87,8 @@ interface NegociationSheetProps {
    *  persona et l'aléa déterministe du scénario) ; `mainLaisserTomber` pose la
    *  main sur « laisser tomber ». */
   scriptTuto?: { cible?: CibleOffre; mainLaisserTomber?: boolean } | null;
+  /** Tutoriel (première vente) : la jauge d'humeur porte la cible du coach. */
+  cibleCoachHumeur?: boolean;
 }
 
 export function NegociationSheet({
@@ -115,6 +117,7 @@ export function NegociationSheet({
   celebrite = false,
   achat,
   scriptTuto = null,
+  cibleCoachHumeur = false,
 }: NegociationSheetProps) {
   const { d, tr, locale } = useLangue();
   const [localNego, setLocalNego] = useState<NegociationState>(
@@ -252,7 +255,7 @@ export function NegociationSheet({
             genreAdverse={genreAdverse}
             cible={cibleTuto}
           />
-          <HumeurGauge humeur={localNego.humeur} />
+          <HumeurGauge humeur={localNego.humeur} cibleCoach={cibleCoachHumeur} />
           <div style={btnRowStyle}>
             {localNego.statut === "refus_poli" && mode === "achat" ? (
               <button
