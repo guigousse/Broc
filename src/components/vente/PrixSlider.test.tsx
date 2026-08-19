@@ -39,11 +39,16 @@ describe("PrixSlider — étagement des étiquettes", () => {
     expect(screen.getByText("valeur").style.bottom).toBe("calc(100% + 16px)");
   });
 
-  it("« prix conseillé » prend le troisième étage, au-dessus des deux autres", () => {
+  it("« prix conseillé » prend le troisième étage, redescendu de 5 px", () => {
     renderSlider({ cible: 105 });
+    // 3 + 2 × 13 − 5 : posé au sommet de son étage, il venait mordre
+    // visuellement sur la ligne de l'objet au-dessus (recette 2026-08-19).
+    // Il redescend dans le creux qui le sépare de « valeur », qui garde donc
+    // 8 px de dégagement — assez pour que les deux ne se touchent pas.
     expect(screen.getByText("Prix conseillé").style.bottom).toBe(
-      "calc(100% + 29px)",
+      "calc(100% + 24px)",
     );
+    expect(screen.getByText("valeur").style.bottom).toBe("calc(100% + 16px)");
   });
 
   it("« vente » reste sous la piste, seule de son côté", () => {

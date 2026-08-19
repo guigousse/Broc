@@ -54,6 +54,14 @@ const ETAGE_CIBLE = 2;
 /** Hauteur d'un étage : la police fait 9 px, plus 4 px de respiration. */
 const HAUTEUR_ETAGE = 13;
 
+/**
+ * « Prix conseillé » occupe l'étage le plus haut : posé pile au sommet de la
+ * piste, il venait mordre visuellement sur la ligne de l'objet au-dessus. On
+ * le redescend dans le creux qui le sépare de « valeur » — de quoi respirer
+ * en haut sans que les deux étiquettes se touchent (recette 2026-08-19).
+ */
+const DESCENTE_ETIQUETTE_CIBLE = 5;
+
 /** Demi-hauteur de piste sous la ligne — inchangée, la seule étiquette de ce
  *  côté (« vente ») n'a jamais eu de voisine avec qui se cogner. */
 const MARGE_SOUS_LIGNE = 32;
@@ -194,6 +202,7 @@ export function PrixSlider({
               label={d.vente.prixConseille}
               labelPos="above"
               etage={ETAGE_CIBLE}
+              descenteLabel={DESCENTE_ETIQUETTE_CIBLE}
               centreY={centreY}
             >
               {cible}€
@@ -236,6 +245,7 @@ function Pastille({
   label,
   labelPos,
   etage = 0,
+  descenteLabel = 0,
   centreY,
   z = 1,
   onPointerDown,
@@ -251,6 +261,8 @@ function Pastille({
   /** Étage de l'étiquette au-dessus de la pastille (ignoré si `labelPos` vaut
    *  "below" : personne d'autre n'occupe ce côté). */
   etage?: number;
+  /** Pixels dont l'étiquette redescend vers sa pastille, dans son étage. */
+  descenteLabel?: number;
   /** Ordonnée de la ligne dans la piste — remplace un `top: 50%`, qui aurait
    *  fait grandir la piste des DEUX côtés pour des étages ajoutés d'un seul. */
   centreY: number;
@@ -301,7 +313,7 @@ function Pastille({
         style={{
           position: "absolute",
           ...(labelPos === "above"
-            ? { bottom: `calc(100% + ${3 + etage * HAUTEUR_ETAGE}px)` }
+            ? { bottom: `calc(100% + ${3 + etage * HAUTEUR_ETAGE - descenteLabel}px)` }
             : { top: "calc(100% + 3px)" }),
           left: "50%",
           transform: "translateX(-50%)",
