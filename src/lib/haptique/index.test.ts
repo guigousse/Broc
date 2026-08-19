@@ -13,12 +13,14 @@ vi.mock("@tauri-apps/plugin-haptics", () => ({
   impactFeedback,
 }));
 
-const { vibrerApparition } = await import("./haptique");
+const { vibrerApparition } = await import("./index");
+const { setVibrationsActives } = await import("./prefs");
 
 beforeEach(() => {
   impactFeedback.mockClear();
   impactFeedback.mockImplementation(async () => {});
   delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
+  window.localStorage.clear();
 });
 
 describe("vibrerApparition()", () => {
@@ -38,5 +40,22 @@ describe("vibrerApparition()", () => {
     (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
     impactFeedback.mockRejectedValueOnce(new Error("pas de moteur haptique"));
     await expect(vibrerApparition()).resolves.toBeUndefined();
+  });
+});
+
+describe("vibrerApparition() — préférence joueur", () => {
+  it("ne vibre pas quand le joueur a coupé les vibrations", async () => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    setVibrationsActives(false);
+    await vibrerApparition();
+    expect(impactFeedback).not.toHaveBeenCalled();
+  });
+
+  it("revibre dès que le joueur les rallume", async () => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+    setVibrationsActives(false);
+    setVibrationsActives(true);
+    await vibrerApparition();
+    expect(impactFeedback).toHaveBeenCalledTimes(1);
   });
 });

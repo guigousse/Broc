@@ -45,11 +45,12 @@ export const fr = {
   },
   reglages: {
     titre: "— Réglages —",
-    son: "Son",
+    son: "Son et vibrations",
     volumeGeneral: "Volume général — {n}",
     musique: "Musique",
     effets: "Effets sonores",
     ambiance: "Sons d'ambiance",
+    vibrations: "Vibrations",
     langue: "Langue",
     notifications: "Notifications",
     rappels: "Rappels (énergie, atelier, quêtes)",

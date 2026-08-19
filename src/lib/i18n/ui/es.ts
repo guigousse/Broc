@@ -42,11 +42,12 @@ export const es: DictionnaireUI = {
   },
   reglages: {
     titre: "— Ajustes —",
-    son: "Sonido",
+    son: "Sonido y vibración",
     volumeGeneral: "Volumen general — {n}",
     musique: "Música",
     effets: "Efectos de sonido",
     ambiance: "Sonidos de ambiente",
+    vibrations: "Vibración",
     langue: "Idioma",
     notifications: "Notificaciones",
     rappels: "Recordatorios (energía, taller, misiones)",

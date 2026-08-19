@@ -42,11 +42,12 @@ export const el: DictionnaireUI = {
   },
   reglages: {
     titre: "— Ρυθμίσεις —",
-    son: "Ήχος",
+    son: "Ήχος και δόνηση",
     volumeGeneral: "Γενική ένταση — {n}",
     musique: "Μουσική",
     effets: "Ηχητικά εφέ",
     ambiance: "Ήχοι περιβάλλοντος",
+    vibrations: "Δόνηση",
     langue: "Γλώσσα",
     notifications: "Ειδοποιήσεις",
     rappels: "Υπενθυμίσεις (ενέργεια, εργαστήριο, αποστολές)",

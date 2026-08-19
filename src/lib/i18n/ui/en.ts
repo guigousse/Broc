@@ -42,11 +42,12 @@ export const en: DictionnaireUI = {
   },
   reglages: {
     titre: "— Settings —",
-    son: "Sound",
+    son: "Sound & vibration",
     volumeGeneral: "Master volume — {n}",
     musique: "Music",
     effets: "Sound effects",
     ambiance: "Ambient sounds",
+    vibrations: "Vibration",
     langue: "Language",
     notifications: "Notifications",
     rappels: "Reminders (energy, workshop, quests)",
