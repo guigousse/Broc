@@ -40,7 +40,7 @@ export default function ChinerListePage() {
     : brocantesVisiblesAuJour(BROCANTES, state.jourActuel);
 
   return (
-    <MobileLayout header={<MobileHeader budget={state.budget} />} fillContent>
+    <MobileLayout header={<MobileHeader budget={state.budget} jetons={state.jetons} />} fillContent>
       <BrocantePanorama
         brocantes={brocantesVisibles}
         state={state}

@@ -23,4 +23,34 @@ describe("RecompenseJetons", () => {
     render(<RecompenseJetons recompense={{ argent: 30, xp: 25, energie: 0, jetons: 0 }} variante="bandeau" label="Récompense" />);
     expect(screen.getByText("Récompense")).toBeTruthy();
   });
+
+  it("affiche une pastille de jetons quand la récompense en contient", () => {
+    render(
+      <RecompenseJetons
+        recompense={{ argent: 0, xp: 0, energie: 0, jetons: 3 }}
+        variante="ligne"
+      />,
+    );
+    expect(screen.getByText("+3 jetons")).toBeTruthy();
+  });
+
+  it("accorde le singulier", () => {
+    render(
+      <RecompenseJetons
+        recompense={{ argent: 0, xp: 0, energie: 0, jetons: 1 }}
+        variante="ligne"
+      />,
+    );
+    expect(screen.getByText("+1 jeton")).toBeTruthy();
+  });
+
+  it("n'affiche aucune pastille de jetons à zéro", () => {
+    render(
+      <RecompenseJetons
+        recompense={{ argent: 10, xp: 0, energie: 0, jetons: 0 }}
+        variante="ligne"
+      />,
+    );
+    expect(screen.queryByText(/jeton/)).toBeNull();
+  });
 });

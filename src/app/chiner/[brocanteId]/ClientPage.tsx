@@ -620,7 +620,7 @@ export default function SessionChinePage() {
         background: "var(--paper-100)",
       }}
     >
-      <MobileHeader budget={state.budget} />
+      <MobileHeader budget={state.budget} jetons={state.jetons} />
       <main
         style={{
           flex: 1,

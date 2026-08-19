@@ -28,11 +28,13 @@ const labelStyle = (allume: boolean): CSSProperties => ({
   color: allume ? "#2c5e3f" : "#6e1f1f", marginRight: "auto",
 });
 
-/** Teintes par type de gain : cire (argent), laiton (xp), vert (énergie). */
-const JETON_STYLES: Record<"argent" | "xp" | "energie", CSSProperties> = {
+/** Teintes par type de gain : cire (argent), laiton (xp), vert (énergie), laiton
+ *  foncé (jetons du Bazar — distinct du laiton clair de l'XP). */
+const JETON_STYLES: Record<"argent" | "xp" | "energie" | "bazar", CSSProperties> = {
   argent: { background: "#6e1f1f", color: "#f4e9cd", border: "1px solid #b03030" },
   xp: { background: "#e3d7b6", color: "#5a4210", border: "1px solid #c8a24a" },
   energie: { background: "#2c5e3f", color: "#f4e9cd", border: "1px solid #4a8a63" },
+  bazar: { background: "#8a6a1f", color: "#f4e9cd", border: "1px solid #c8a24a" },
 };
 
 const jetonBase: CSSProperties = {
@@ -43,13 +45,21 @@ const jetonBase: CSSProperties = {
 
 export function RecompenseJetons({ recompense, variante, label, allume = false }: Props) {
   const { d, tr } = useLangue();
-  const jetons: Array<{ type: "argent" | "xp" | "energie"; texte: string }> = [];
+  const jetons: Array<{ type: "argent" | "xp" | "energie" | "bazar"; texte: string }> = [];
   if (recompense.argent > 0)
     jetons.push({ type: "argent", texte: tr(d.carnet.jetonArgent, { n: recompense.argent }) });
   if (recompense.xp > 0)
     jetons.push({ type: "xp", texte: tr(d.carnet.jetonXp, { n: recompense.xp }) });
   if (recompense.energie > 0)
     jetons.push({ type: "energie", texte: tr(d.carnet.jetonEnergie, { n: recompense.energie }) });
+  if (recompense.jetons > 0)
+    jetons.push({
+      type: "bazar",
+      texte: tr(
+        recompense.jetons > 1 ? d.carnet.jetonBazarN : d.carnet.jetonBazarUn,
+        { n: recompense.jetons },
+      ),
+    });
 
   const aria = tr(d.carnet.recompenseAria, {
     argent: recompense.argent, xp: recompense.xp, energie: recompense.energie,

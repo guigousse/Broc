@@ -162,7 +162,7 @@ export default function CollectionPage() {
   return (
   <>
     <MobileLayout
-      header={<MobileHeader budget={state.budget} />}
+      header={<MobileHeader budget={state.budget} jetons={state.jetons} />}
       stickyTop={
         <StickyTop>
           <PageHeaderBar

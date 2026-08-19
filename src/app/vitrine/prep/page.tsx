@@ -455,7 +455,7 @@ export default function VitrinePrepPage() {
         background: "var(--paper-100)",
       }}
     >
-      <MobileHeader budget={state.budget} />
+      <MobileHeader budget={state.budget} jetons={state.jetons} />
       <EtapeBandeau>
         {etape === "packing"
           ? d.vente.etapePrepCoffre

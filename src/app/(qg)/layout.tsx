@@ -565,7 +565,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   return (
     <QgEditProvider enabled={editEnabled}>
       <MobileLayout
-        header={<MobileHeader budget={state.budget} />}
+        header={<MobileHeader budget={state.budget} jetons={state.jetons} />}
         fillContent
       >
         <div

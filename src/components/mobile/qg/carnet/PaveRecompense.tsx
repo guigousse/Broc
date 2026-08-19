@@ -12,13 +12,14 @@ interface Props {
   onLivrer: () => void;
 }
 
-type TypeJeton = "argent" | "xp" | "energie";
+type TypeJeton = "argent" | "xp" | "energie" | "bazar";
 
 /** Teintes par type de gain, dans la palette à jetons (aucune valeur codée en dur). */
 const JETON_STYLES: Record<TypeJeton, CSSProperties> = {
   argent: { background: "var(--brass-700)", color: "var(--paper-100)", border: "1px solid var(--brass-500)" },
   xp: { background: "var(--paper-300)", color: "var(--ink-700)", border: "1px solid var(--brass-500)" },
   energie: { background: "var(--patina-500)", color: "var(--paper-100)", border: "1px solid var(--patina-500)" },
+  bazar: { background: "var(--brass-900)", color: "var(--paper-100)", border: "1px solid var(--brass-500)" },
 };
 
 const jetonBase: CSSProperties = {
@@ -125,6 +126,14 @@ export function PaveRecompense({ recompense, livrable, verrouille = false, onLiv
       { cle: "argent", valeur: recompense.argent, texte: tr(d.carnet.jetonArgent, { n: recompense.argent }) },
       { cle: "xp", valeur: recompense.xp, texte: tr(d.carnet.jetonXp, { n: recompense.xp }) },
       { cle: "energie", valeur: recompense.energie, texte: tr(d.carnet.jetonEnergie, { n: recompense.energie }) },
+      {
+        cle: "bazar",
+        valeur: recompense.jetons,
+        texte: tr(
+          recompense.jetons > 1 ? d.carnet.jetonBazarN : d.carnet.jetonBazarUn,
+          { n: recompense.jetons },
+        ),
+      },
     ] as { cle: TypeJeton; valeur: number; texte: string }[]
   ).filter((g) => g.valeur > 0);
 
