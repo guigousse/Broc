@@ -63,6 +63,7 @@ import {
   multiplicateurXPRarete,
 } from "@/lib/xp";
 import {
+  aCompetenceReparation,
   aGenInfluence,
   contexteDepuisState,
   etatCompetence,
@@ -191,6 +192,7 @@ interface GameActionsValue {
   /** Clôt le mini-tuto des vinyles (musique lancée). */
   terminerMiniTutoVinyle: () => void;
   terminerMiniTutoCarnet: () => void;
+  terminerMiniTutoAtelier: () => void;
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
   terminerTutoriel: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
@@ -1059,6 +1061,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  /** Clôt la visite guidée de l'Atelier (les trois bulles sont passées). */
+  const terminerMiniTutoAtelier = useCallback(() => {
+    setState((prev) =>
+      prev && prev.miniTutoAtelier === "visite"
+        ? { ...prev, miniTutoAtelier: "termine" as const }
+        : prev,
+    );
+  }, []);
+
   /** Clôt le mini-tuto du carnet de commandes (le registre a été ouvert). */
   const terminerMiniTutoCarnet = useCallback(() => {
     setState((prev) =>
@@ -1352,7 +1363,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (!prev) return prev;
         if (prev.competencesDebloquees.includes(id)) return prev;
         if (prev.brocanteur.pointsDisponibles < comp.coutPoints) return prev;
-        return {
+        const suivant: GameState = {
           ...prev,
           brocanteur: {
             ...prev.brocanteur,
@@ -1360,6 +1371,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
           },
           competencesDebloquees: [...prev.competencesDebloquees, id],
         };
+        // La toute première compétence Réparer ouvre l'Atelier : son cadenas
+        // tombe, un établi est offert avec le savoir-faire (sans quoi la
+        // pièce serait vide) et la visite guidée s'arme — la main désignera
+        // l'onglet jusqu'à ce que le joueur y aille.
+        if (!aCompetenceReparation(prev) && aCompetenceReparation(suivant)) {
+          return {
+            ...suivant,
+            niveauAtelier: Math.max(suivant.niveauAtelier, 1) as GameState["niveauAtelier"],
+            miniTutoAtelier: "visite",
+          };
+        }
+        return suivant;
       });
       return { ok: true };
     },
@@ -1961,6 +1984,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ouvrirCadeauAnniversaire,
       terminerMiniTutoVinyle,
       terminerMiniTutoCarnet,
+      terminerMiniTutoAtelier,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
@@ -2021,6 +2045,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ouvrirCadeauAnniversaire,
       terminerMiniTutoVinyle,
       terminerMiniTutoCarnet,
+      terminerMiniTutoAtelier,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,

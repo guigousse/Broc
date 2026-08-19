@@ -431,6 +431,15 @@ export interface GameState {
    */
   miniTutoCarnet?: "ouvrir" | "termine";
   /**
+   * ADDITIF : visite guidée de l'Atelier, posée au moment où le joueur achète
+   * sa toute première compétence Réparer — l'instant où l'onglet cesse d'être
+   * cadenassé. "visite" = la main désigne l'onglet, et le coach se joue à
+   * l'arrivée sur l'écran ; "termine" ou absent (saves antérieures) = rien à
+   * guider. Aucune action n'est exigée du joueur : la leçon nomme les lieux
+   * et rend l'écran.
+   */
+  miniTutoAtelier?: "visite" | "termine";
+  /**
    * ADDITIF (v16) : mini-tuto de la Gazette. "aFaire" ou absent = pas encore
    * fait — le journal offert apparaît au sol dès qu'une compétence gazette
    * est débloquée (cf. aAccesGazette) ; "faite" = tuto terminé, cycle

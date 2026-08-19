@@ -147,3 +147,62 @@ describe("GameContext.debloquerCompetence — régression pool global", () => {
     ).toHaveLength(1);
   });
 });
+
+/**
+ * Ouverture de l'Atelier (2026-08-19). La première compétence Réparer fait
+ * trois choses d'un coup : elle lève le cadenas de l'onglet, offre le premier
+ * établi (sans quoi la pièce serait vide — une nouvelle partie démarre à
+ * `niveauAtelier: 0`) et arme la visite guidée.
+ */
+describe("GameContext.debloquerCompetence — ouverture de l'Atelier", () => {
+  it("une partie neuve n'a ni établi ni visite armée", async () => {
+    const result = await setupNouvellePartie();
+    expect(result.current.state!.niveauAtelier).toBe(0);
+    expect(result.current.state!.miniTutoAtelier).toBeUndefined();
+  });
+
+  it("la première compétence Réparer offre l'établi et arme la visite", async () => {
+    const result = await setupNouvellePartie();
+    crediterPoints(result, 1);
+    act(() => {
+      result.current.debloquerCompetence(PALIER_1);
+    });
+    expect(result.current.state!.niveauAtelier).toBe(1);
+    expect(result.current.state!.miniTutoAtelier).toBe("visite");
+  });
+
+  it("une compétence d'une AUTRE branche n'ouvre rien", async () => {
+    const result = await setupNouvellePartie();
+    crediterPoints(result, 1);
+    act(() => {
+      result.current.debloquerCompetence("cat.Musique.connaisseur.1" as CompetenceId);
+    });
+    expect(result.current.state!.niveauAtelier).toBe(0);
+    expect(result.current.state!.miniTutoAtelier).toBeUndefined();
+  });
+
+  it("la DEUXIÈME compétence Réparer ne rejoue pas la visite ni ne re-offre d'établi", async () => {
+    const result = await setupNouvellePartie();
+    crediterPoints(result, 2);
+    act(() => {
+      result.current.debloquerCompetence(PALIER_1);
+    });
+    act(() => {
+      result.current.terminerMiniTutoAtelier();
+    });
+    expect(result.current.state!.miniTutoAtelier).toBe("termine");
+    act(() => {
+      result.current.debloquerCompetence("cat.Mobilier.reparer.1" as CompetenceId);
+    });
+    expect(result.current.state!.miniTutoAtelier).toBe("termine");
+    expect(result.current.state!.niveauAtelier).toBe(1);
+  });
+
+  it("terminerMiniTutoAtelier est inerte hors visite en cours", async () => {
+    const result = await setupNouvellePartie();
+    act(() => {
+      result.current.terminerMiniTutoAtelier();
+    });
+    expect(result.current.state!.miniTutoAtelier).toBeUndefined();
+  });
+});

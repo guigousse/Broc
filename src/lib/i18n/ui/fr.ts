@@ -198,6 +198,12 @@ export const fr = {
       "La valeur de ta collection grandit à chaque donation — et débloque de nouvelles brocantes.",
     coachCollectionRetirer:
       "Un objet donné n'est pas perdu : ce bouton le rend à ta réserve — mais la valeur s'en va avec lui.",
+    coachAtelierDemanteler:
+      "Ce que tu ne vendras jamais, démonte-le : ça donne des pièces.",
+    coachAtelierPieces:
+      "Tes pièces, une réserve par famille d'objets.",
+    coachAtelierEtabli:
+      "Un objet, des pièces, du temps : et il ressort en meilleur état.",
     coachVenteHumeur:
       "Son humeur : chaque échange le crispe un peu plus. Plus la jauge vire au rouge, plus il risque de partir pour de bon.",
     coachCompetencesXp:

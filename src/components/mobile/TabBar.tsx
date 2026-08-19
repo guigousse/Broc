@@ -237,10 +237,14 @@ export function TabBar() {
   // joueur qui, une fois hydraté, aura bien tout débloqué.
   const estVerrouille = (t: TabDef): boolean => ongletFerme(t, state);
 
-  // Mini-tuto vinyles (cadeau d'anniversaire) : main pointeuse au-dessus de
-  // l'onglet vers lequel guider — Stockage pour ranger le vinyle, Bureau pour
-  // revenir au gramophone. Jamais sur l'onglet déjà actif.
+  // Mini-tutos : main pointeuse au-dessus de l'onglet vers lequel guider —
+  // Stockage pour ranger le vinyle, Bureau pour revenir au gramophone,
+  // Atelier quand la première compétence Réparer vient d'en faire tomber le
+  // cadenas. Jamais sur l'onglet déjà actif.
   const mainMiniTuto = (tabPath: string): boolean => {
+    if (state?.miniTutoAtelier === "visite") {
+      return tabPath === "/atelier" && pathname !== "/atelier";
+    }
     const mt = state?.miniTutoVinyle;
     if (mt === "ajouter") return tabPath === "/stockage" && pathname !== "/stockage";
     if (mt === "ecouter") return tabPath === "/bureau" && pathname !== "/bureau";
