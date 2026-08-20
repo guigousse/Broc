@@ -682,6 +682,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, [isHydrated, quetesCles, quotidienNonTerminee, hebdoNonTerminee, locale]);
 
+  // La montée de niveau se lit sur la transition d'état, pas sur la source
+  // d'XP : il y a plusieurs sources (achat, vente, restauration, quêtes,
+  // découverte de collection…) et gagnerXPBrocanteur ne doit pas porter seul
+  // l'émission — un seul endroit ici, quelle que soit la source.
+  const niveauPrecedentRef = useRef<number | null>(null);
+  useEffect(() => {
+    const niveau = state?.brocanteur?.niveau;
+    if (typeof niveau !== "number") return;
+    const precedent = niveauPrecedentRef.current;
+    niveauPrecedentRef.current = niveau;
+    // Premier rendu (ou chargement d'une save) : on mémorise sans émettre —
+    // sinon charger une partie au niveau 12 se lirait comme une montée.
+    if (precedent === null) return;
+    if (niveau > precedent) logEvenement(EVENEMENTS.niveauAtteint, { niveau });
+  }, [state?.brocanteur?.niveau]);
+
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {
       version: SAVE_VERSION,
@@ -785,6 +801,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const avancerJour = useCallback((nbJours: number = 1, volontaire: boolean = false) => {
+    // Jour AVANT l'avancement, lu sur stateRef (jamais dans l'updater, même
+    // raison que partout ailleurs dans ce provider) : `jourActuel` est
+    // strictement croissant en partie, donc "nouveau record" se lit comme une
+    // simple comparaison. `avancerJour(3)` est un saut, pas trois journées
+    // vécues : un seul événement, sur le jour d'arrivée.
+    const jourAvant = stateRef.current?.jourActuel;
     setState((prev) => {
       if (!prev) return prev;
       const pas = Math.max(1, nbJours);
@@ -859,6 +881,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       return baseAvecQuetes;
     });
+    if (typeof jourAvant === "number") {
+      const pas = Math.max(1, nbJours);
+      const nouveauJour = jourAvant + pas;
+      if (nouveauJour > jourAvant) logEvenement(EVENEMENTS.jourAtteint, { jour: nouveauJour });
+    }
   }, []);
 
   const rerollMeteo = useCallback((): { ok: boolean; raison?: string } => {
@@ -915,6 +942,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
       return { ...next, niveauAtelier: upgrade.niveauCible };
     });
+    logEvenement(EVENEMENTS.ameliorationAchetee, {
+      quoi: "atelier",
+      niveau: upgrade.niveauCible,
+    });
     return { ok: true };
   }, []);
 
@@ -939,6 +970,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         params: { niveau: upgrade.niveauCible },
       });
       return { ...next, niveauStockage: upgrade.niveauCible };
+    });
+    logEvenement(EVENEMENTS.ameliorationAchetee, {
+      quoi: "stockage",
+      niveau: upgrade.niveauCible,
     });
     return { ok: true };
   }, []);
@@ -1188,11 +1223,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const acheterCamion = useCallback((niveau: NiveauCamion) => {
+    // Même discipline que les autres achats : la transition réelle se décide
+    // AVANT le setState, sur stateRef (jamais dans l'updater), en rejouant
+    // exactement les mêmes gardes (adjacence + budget) que l'updater
+    // ci-dessous — sinon un rappel no-op (niveau déjà atteint, fonds
+    // insuffisants) émettrait quand même un achat qui n'a pas eu lieu.
+    const current = stateRef.current;
+    const camion = getCamion(niveau);
+    const prix = camion.prixUpgradeVersCeNiveau ?? 0;
+    const transitionReelle =
+      !!current && niveau === current.niveauCamion + 1 && current.budget >= prix;
     setState((prev) => {
       if (!prev) return prev;
       if (niveau !== prev.niveauCamion + 1) return prev;
-      const camion = getCamion(niveau);
-      const prix = camion.prixUpgradeVersCeNiveau ?? 0;
       if (prev.budget < prix) return prev;
       const next = appendLedger(prev, {
         jour: prev.jourActuel,
@@ -1204,6 +1247,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
       return { ...next, niveauCamion: niveau };
     });
+    if (transitionReelle) {
+      logEvenement(EVENEMENTS.ameliorationAchetee, { quoi: "camion", niveau });
+    }
   }, []);
 
   // Dev-only : set direct du niveau sans coût ni vérification d'adjacence.
@@ -1314,6 +1360,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const enregistrerSession = useCallback((session: Session) => {
+    // Rien à mesurer sans partie en cours (même garde que partout ailleurs :
+    // stateRef.current, jamais un drapeau posé dans l'updater).
+    const aUnePartie = !!stateRef.current;
     setState((prev) => {
       if (!prev) return prev;
       // Historique plafonné + compteur cumulatif de ventes (lib/sessions).
@@ -1353,6 +1402,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
         { applyBudget: false, timestamp: session.timestamp },
       );
     });
+    if (!aUnePartie) return;
+    // Discriminé sur session.type : chine et vente partagent ce même hook
+    // (cf. `Session` = SessionChinage | SessionVente, types/game.ts), donc les
+    // deux événements économiques partent d'ici.
+    if (session.type === "chinage") {
+      const depense = session.achats.reduce((s, a) => s + a.prixPaye, 0);
+      logEvenement(EVENEMENTS.sessionChineTerminee, {
+        objets_achetes: session.achats.length,
+        depense: Math.round(depense),
+      });
+      return;
+    }
+    const recette = session.ventes.reduce((s, v) => s + v.prixVente, 0);
+    // Coût d'achat des objets vendus : les objets issus du stock initial
+    // n'ont pas de prixAchat connu (null) — comptés à 0, pas exclus, sinon la
+    // marge surestimerait ces ventes.
+    const coutAchat = session.ventes.reduce((s, v) => s + (v.prixAchat ?? 0), 0);
+    logEvenement(EVENEMENTS.sessionVenteTerminee, {
+      objets_vendus: session.ventes.length,
+      recette: Math.round(recette),
+      marge: Math.round(recette - coutAchat),
+    });
   }, []);
 
   const debloquerCompetence = useCallback(
@@ -1385,6 +1456,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           competencesDebloquees: [...prev.competencesDebloquees, id],
         };
       });
+      logEvenement(EVENEMENTS.competenceDebloquee, { competence_id: id });
       return { ok: true };
     },
     [],
