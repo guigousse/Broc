@@ -3,6 +3,24 @@ import { BAZAR_LAYOUT, CLES_LOTS, CLE_VITRINE, type BazarObjetKey } from "./baza
 import { qgPct, QG_LAYOUT } from "@/components/mobile/qg/layout";
 import { CHAT_BALADEUR_ORDER } from "@/lib/chatBaladeur";
 
+/**
+ * Vrai si `[left, left+width]` tient ENTIÈREMENT dans une seule des trois
+ * zones de 100 vw.
+ *
+ * L'arête droite est ramenée à sa zone par `ceil(x/100) - 1` et non par
+ * `floor(x/100)` : une arête posée exactement sur 100, 200 ou 300 appartient
+ * ainsi à la zone de GAUCHE — l'objet y est collé au bord, il n'est pas à
+ * cheval, et `floor` le déclarait fautif à tort.
+ *
+ * L'arrondi au millionième absorbe les miettes de virgule flottante :
+ * 177,9 + 22,1 vaut 200,00000000000003 en machine, ce qui suffirait à faire
+ * échouer une position pourtant écrite à ras de la frontière.
+ */
+function tientDansUneZone({ left, width }: { left: number; width: number }): boolean {
+  const droite = Math.round((left + width) * 1e6) / 1e6;
+  return Math.floor(left / 100) === Math.ceil(droite / 100) - 1;
+}
+
 describe("BAZAR_LAYOUT", () => {
   it("porte les six cases de l'étagère et les quatre emplacements du décor", () => {
     const cles = Object.keys(BAZAR_LAYOUT.objets) as BazarObjetKey[];
@@ -63,16 +81,24 @@ describe("BAZAR_LAYOUT", () => {
     const cles = Object.keys(BAZAR_LAYOUT.objets) as BazarObjetKey[];
     for (const cle of cles) {
       const c = BAZAR_LAYOUT.objets[cle];
-      const zoneGauche = Math.floor(c.left / 100);
-      const zoneDroite = Math.floor((c.left + c.width) / 100);
-      expect({ cle, zoneGauche, zoneDroite }).toEqual({
-        cle,
-        zoneGauche,
-        zoneDroite: zoneGauche,
-      });
+      expect({ cle, tient: tientDansUneZone(c) }).toEqual({ cle, tient: true });
+      expect(c.width).toBeGreaterThan(0);
       expect(c.left).toBeGreaterThanOrEqual(0);
       expect(c.left + c.width).toBeLessThanOrEqual(300);
     }
+  });
+
+  it("une arête posée pile sur une frontière est légale, un vrai chevauchement non", () => {
+    // Le garde ci-dessus doit dire NON à ce qui est coupé en deux, et OUI à
+    // ce qui est simplement collé au bord de sa zone. Un objet calé à ras de
+    // la frontière est une position parfaitement jouable : la refuser
+    // enverrait Guillaume chasser un bug qui n'existe pas, en pleine passe de
+    // calage à la main.
+    expect(tientDansUneZone({ left: 178, width: 22 })).toBe(true); // finit pile sur 200
+    expect(tientDansUneZone({ left: 200, width: 22 })).toBe(true); // part pile de 200
+    expect(tientDansUneZone({ left: 78, width: 22 })).toBe(true); // finit pile sur 100
+    expect(tientDansUneZone({ left: 195, width: 10 })).toBe(false); // 195 → 205, à cheval
+    expect(tientDansUneZone({ left: 90, width: 30 })).toBe(false); // 90 → 120, à cheval
   });
 
   it("ne pose jamais deux emplacements l'un sur l'autre sur la même planche", () => {
