@@ -45,13 +45,14 @@ tient le bureau d'acajou dans le cabinet). **Un emplacement laissé vide** contr
 le mur, sol dégagé, pour la borne d'arcade compositée plus tard.
 
 **Centre (33–66 %) — le comptoir.** Le comptoir massif vu de face, **plateau de
-bois nu** : pas de vitrine sous verre, rien dessus. Derrière lui, sur le mur du
-fond **plat et frontal**, une étagère montée **haut**, divisée en **neuf cases
-égales** (3 colonnes × 3 rangées), toutes **vides**. Entre le plateau du comptoir
-et la première planche, une **bande de mur nu** à hauteur de buste : c'est là que
-se tiendra le vendeur, sans masquer la marchandise. Au sol derrière le comptoir,
-un espace dégagé de la largeur d'une personne. Une suspension au-dessus fait du
-comptoir le point le plus lumineux de la boutique.
+bois nu** : pas de vitrine sous verre. Une seule chose y est posée, une **caisse
+enregistreuse de laiton**, à son extrémité droite. Derrière lui, sur le mur du
+fond **plat et frontal**, **trois planches de bois nues** sur équerres, sans
+aucune séparation verticale, toutes **vides** — elles portent neuf emplacements,
+trois par planche. Entre le plateau du comptoir et la planche du bas, une
+**bande de mur nu** à hauteur de buste : c'est là que se tiendra le vendeur, sans
+masquer la marchandise. Au sol derrière le comptoir, un espace dégagé de la
+largeur d'une personne.
 
 > **Révision du 2026-08-20**, à la vue des premiers tirages : Guillaume a
 > supprimé la vitrine sous verre et demandé neuf cases. L'objet de la semaine ne
@@ -81,6 +82,19 @@ Non négociable, sous peine d'un lieu qui ne semble pas appartenir au même jeu 
 - **Rien à cheval sur 33 % ni 66 %** — mur nu à ces deux abscisses. C'est la
   contrainte que le prompt du bureau appelle « breathing zones » : sans elle, le
   snap du swipe coupe un objet en deux.
+
+### La lumière — un néon qui serpente
+
+La boutique n'a **pas de suspension** : elle est éclairée par **un tube de néon
+unique et continu** qui traverse tout le magasin sous le plafond, d'un bord à
+l'autre, en serpentant. Sa lumière **se réchauffe au fil du parcours** : bleu
+électrique à gauche au-dessus du coin jeux vidéo, blanc laiteux au-dessus du
+comptoir, ambre en arrivant à la porte. C'est lui qui donne au lieu son
+caractère, et qui fait du comptoir la zone la mieux éclairée.
+
+Le néon **franchit les frontières de swipe des 33 % et 66 %**, et c'est voulu :
+la règle du « rien à cheval » vise les objets isolés, pas les éléments continus.
+Le parquet et la corniche la franchissent déjà dans le bureau.
 
 ### La couleur
 
@@ -166,9 +180,17 @@ Les valeurs sont ajustées à l'œil avec l'outil de calage existant, pas devin�
 
 Le défaut vécu à la recette du 2026-08-20 se referme ici. Un article dont le prix
 dépasse la bourse est **désaturé, son prix barré**, et le toucher affiche une
-bulle brève : « il te manque *n* jetons ». Une seule chaîne neuve, en quatre
-langues. Le bouton reste `disabled` — la bulle est portée par un conteneur
-cliquable, pas par le bouton inerte.
+bulle brève : « il vous manque *n* jetons ». Une seule chaîne neuve, en quatre
+langues.
+
+> **Révision du 2026-08-20**, trouvée en revue : la première version rendait le
+> bouton `disabled` et portait la bulle sur le conteneur. Or **un bouton
+> désactivé n'émet aucun clic et n'en laisse pas remonter à son parent** — taper
+> l'image de l'article, la plus grande cible de la case, ne faisait donc rien, et
+> le trou d'information restait ouvert. Le bouton est désormais **toujours
+> actif**, marqué `aria-disabled`, et c'est **son propre gestionnaire** qui
+> tranche : bulle si la bourse est courte, achat sinon. Il reste focalisable, ce
+> qui donne aussi au clavier un chemin vers l'explication.
 
 ## 4. Tests
 
@@ -209,10 +231,11 @@ Le code ne prouve pas ces points-là :
 1. Une seule image de fond, 2752×1536, même pipeline que le bureau.
 2. Trois zones : `arcade` (gauche), `comptoir` (centre), `antiquites` (droite).
 3. Ouverture sur le comptoir.
-4. L'étagère est **vide, frontale, haute**, à **neuf cases** ; le plateau du
-   comptoir est **nu** (aucune vitrine sous verre). Les articles sont compositées
-   par-dessus : les trois lots sur la rangée du bas, l'objet de la semaine au
-   centre.
+4. Le présentoir est fait de **trois planches de bois nues**, frontales, vides,
+   sans séparation verticale — neuf emplacements, trois par planche. Le plateau
+   du comptoir est **nu** (aucune vitrine sous verre), à l'exception d'une caisse
+   enregistreuse de laiton à droite. Les articles sont compositées par-dessus :
+   les trois lots sur la planche du bas, l'objet de la semaine au centre.
 5. Aucune illustration nouvelle pour les articles — `PieceIcon` et les images
    d'objets existantes.
 6. Deux emplacements réservés : vendeur (derrière le comptoir), borne d'arcade
@@ -221,8 +244,11 @@ Le code ne prouve pas ces points-là :
 8. La porte ramène au bureau.
 9. `UnifiedPanorama` est généralisé, pas copié.
 10. L'article hors de portée est désaturé, prix barré, avec le manque chiffré au
-    tap.
-11. Le fond reste terne ; ce qui attire l'œil est composité par-dessus.
+    tap — bouton **toujours actif** et `aria-disabled`, jamais `disabled`.
+11. La boutique est éclairée par **un néon continu qui serpente** d'un bout à
+    l'autre, du bleu froid à gauche à l'ambre à droite. Aucune suspension.
+12. Le fond reste sobre ; ce qui attire l'œil est composité par-dessus, avec le
+    néon pour seule couleur franche du décor.
 
 ## 7. Questions laissées ouvertes
 
