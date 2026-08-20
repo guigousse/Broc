@@ -144,7 +144,7 @@ sur le modèle de `brocantePanoramaLayout.ts` et de `qg/layout.ts` :
 | Clé | Rôle |
 |---|---|
 | `case1` … `case9` | Les neuf cases de l'étagère, numérotées de gauche à droite puis de haut en bas. `case7`, `case8`, `case9` (rangée du bas) portent les trois lots de pièces ; `case5` (centre) porte l'objet de la semaine ; les cinq autres restent vides jusqu'au chantier ④ |
-| `porte` | Sortie vers le bureau |
+| `sortie` | La porte d'entrée : ramène au bureau. **Surtout pas `porte`** : le QG a déjà une clé de ce nom, et le dictionnaire de calage est plat — la collision déplaçait la zone tactile de sortie du bureau |
 | `borne` | Réservé — muet pour l'instant |
 | `table` | Réservé — muet pour l'instant |
 | `vendeur` | Réservé — jamais rendu pour l'instant |
