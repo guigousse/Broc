@@ -19,14 +19,16 @@ export const BAZAR_LAYOUT = {
   objets: {
     // Zone gauche (0..100vw) — réservé, muet.
     borne: { left: 61.0, bottom: 18.0, width: 30.0 },
-    // Zone centre (100..200vw) — la grille de six cases, mesurée sur le fond :
-    // deux planches, trois emplacements par planche.
-    case1: { left: 114.0, bottom: 66.0, width: 20.0 },
-    case2: { left: 136.0, bottom: 66.0, width: 20.0 },
-    case3: { left: 158.0, bottom: 66.0, width: 20.0 },
-    case4: { left: 114.0, bottom: 56.0, width: 20.0 },
-    case5: { left: 136.0, bottom: 56.0, width: 20.0 },
-    case6: { left: 158.0, bottom: 56.0, width: 20.0 },
+    // Zone centre (100..200vw) — la grille de six cases, MESURÉE sur le fond
+    // et non estimée : les arêtes des deux planches ressortent à 65,9 % et
+    // 55,9 % de la hauteur, et le présentoir court de 114 à 186 vw. Les trois
+    // colonnes se partagent donc ces 72 vw, à 22 vw de large.
+    case1: { left: 114.0, bottom: 66.0, width: 22.0 },
+    case2: { left: 138.0, bottom: 66.0, width: 22.0 },
+    case3: { left: 162.0, bottom: 66.0, width: 22.0 },
+    case4: { left: 114.0, bottom: 56.0, width: 22.0 },
+    case5: { left: 138.0, bottom: 56.0, width: 22.0 },
+    case6: { left: 162.0, bottom: 56.0, width: 22.0 },
     // La bande de mur nu entre le plateau du comptoir et la première planche.
     vendeur: { left: 138.0, bottom: 40.0, width: 24.0 },
     // Zone droite (200..300vw) — réservé et sortie.
