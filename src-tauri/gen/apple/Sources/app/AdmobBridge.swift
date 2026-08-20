@@ -166,10 +166,17 @@ private let AD_UNIT_DEFAUT = AD_UNIT_ENERGIE
     ConsentInformation.shared.requestConsentInfoUpdate(with: params) { erreur in
       guard erreur == nil else {
         // Hors-ligne : on continue sans bloquer, les pubs échoueront proprement.
+        // Aucun verdict publié → la mesure d'audience reste éteinte (fail-closed),
+        // le prochain lancement réessaiera.
         fin()
         return
       }
       ConsentForm.loadAndPresentIfRequired(from: self.rootViewController()) { _ in
+        // Verdict publié pour les autres consommateurs (mesure d'audience).
+        // `canRequestAds` est vrai aussi quand l'UMP juge le formulaire non
+        // requis (hors UE).
+        ConsentementBroc.shared.resoudre(
+          canRequestAds: ConsentInformation.shared.canRequestAds)
         // ATT après le formulaire UMP : l'ordre évite deux popups d'affilée
         // sans contexte. Idempotent (iOS ne re-prompt jamais une fois décidé).
         if #available(iOS 14, *) {
