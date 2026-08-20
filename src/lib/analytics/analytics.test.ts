@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import {
   EVENEMENTS,
   PROPRIETES,
@@ -54,5 +56,25 @@ describe("getAnalytics", () => {
 
   it("rend un singleton stable", () => {
     expect(getAnalytics()).toBe(getAnalytics());
+  });
+});
+
+describe("garde : personne n'appelle logEvent en contournant le contexte", () => {
+  it("aucun fichier de src/ n'appelle getAnalytics().logEvent hors de la lib analytics", () => {
+    const fautifs: string[] = [];
+    const parcourir = (dossier: string) => {
+      for (const entree of readdirSync(dossier, { withFileTypes: true })) {
+        const chemin = join(dossier, entree.name);
+        if (entree.isDirectory()) {
+          parcourir(chemin);
+        } else if (/\.tsx?$/.test(entree.name) && !chemin.includes("lib/analytics")) {
+          if (/getAnalytics\(\)\s*\.\s*logEvent/.test(readFileSync(chemin, "utf8"))) {
+            fautifs.push(chemin);
+          }
+        }
+      }
+    };
+    parcourir("src");
+    expect(fautifs).toEqual([]);
   });
 });
