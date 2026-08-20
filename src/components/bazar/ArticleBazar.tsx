@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Reac
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
+import { PLAQUE_ETIQUETTE } from "./etiquette";
 import { type BazarObjetKey } from "./bazarLayout";
 
 /** Durée d'affichage de la bulle « il vous manque N jetons ». */
@@ -128,16 +129,18 @@ export function ArticleBazar({ cle, visuel, libelle, prix, jetons, onAcheter }: 
       <span style={colonneEtiquettes} data-testid={`etiquettes-${cle}`}>
         <span
           style={{
-            fontSize: "0.7rem",
-            color: "var(--brass-700)",
+            ...PLAQUE_ETIQUETTE,
             textDecoration: horsDePortee ? "line-through" : "none",
-            whiteSpace: "nowrap",
           }}
         >
           {tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
         </span>
         {bulle && horsDePortee && (
-          <span role="status" style={{ fontSize: "0.7rem", whiteSpace: "nowrap" }}>
+          // Même plaque que le prix, et le même laiton clair : le conteneur
+          // porte `grayscale(1)` quand l'article est hors de portée, si bien
+          // qu'une couleur d'alerte ne serait JAMAIS vue rouge. Autant dire
+          // vrai dans le code — c'est le texte qui porte le message.
+          <span role="status" style={PLAQUE_ETIQUETTE}>
             {tr(manque > 1 ? d.bazar.manqueJetons : d.bazar.manqueJetonUn, { n: manque })}
           </span>
         )}

@@ -66,10 +66,19 @@ describe("BazarScene", () => {
 
   it("vitrine vendue : l'étiquette déborde sur toute la rangée, pas juste une case", () => {
     monter({ ...ETAL, vitrine: null });
-    const etiquette = screen.getByText(/Vendu/);
+    // La géométrie est portée par le cadre ; la plaque, à l'intérieur, se
+    // serre autour du texte.
+    const cadre = screen.getByTestId("etiquette-vendu");
     const largeurUneCase = qgPct(BAZAR_LAYOUT.objets.case2.width);
-    const largeurEtiquette = parseFloat(etiquette.style.width);
+    const largeurEtiquette = parseFloat(cadre.style.width);
     expect(largeurEtiquette).toBeGreaterThan(largeurUneCase);
+  });
+
+  it("vitrine vendue : l'étiquette est posée sur une plaque, pas à même le mur", () => {
+    monter({ ...ETAL, vitrine: null });
+    const plaque = screen.getByText(/Vendu/);
+    expect(plaque.style.backgroundColor).toBe("var(--forest-800)");
+    expect(plaque.style.color).toBe("var(--brass-300)");
   });
 
   it("la porte fait sortir", () => {

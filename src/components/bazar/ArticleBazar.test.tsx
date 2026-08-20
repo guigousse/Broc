@@ -205,6 +205,33 @@ describe("ArticleBazar", () => {
       expect(etiquettes.style.transform).toBe("translateX(-50%)");
     });
 
+    // Le fond du Bazar est un mur de sauge pâle : une étiquette écrite à même
+    // l'illustration ne se lit pas (constat de recette sur capture du décor
+    // fini). Le choix des teintes reste un jugement à l'œil, mais l'existence
+    // de la plaque, elle, s'atteste.
+    it("le prix est posé sur une plaque sombre, pas à même l'illustration", () => {
+      monter();
+      const prix = screen.getByText("3 jetons");
+      expect(prix.style.backgroundColor).toBe("var(--forest-800)");
+      expect(prix.style.color).toBe("var(--brass-300)");
+      expect(prix.style.borderRadius).toBe("var(--radius-pill)");
+    });
+
+    it("la bulle du manque a la même plaque, et n'hérite plus de la couleur du corps de page", () => {
+      monter({ prix: 12, jetons: 5 });
+      fireEvent.click(screen.getByRole("button", { name: /5 pièces · Musique/ }));
+      const bulle = screen.getByRole("status");
+      expect(bulle.style.backgroundColor).toBe("var(--forest-800)");
+      expect(bulle.style.color).toBe("var(--brass-300)");
+    });
+
+    it("hors de portée, le prix garde sa rature SUR la plaque", () => {
+      monter({ prix: 12, jetons: 5 });
+      const prix = screen.getByText("12 jetons");
+      expect(prix.style.backgroundColor).toBe("var(--forest-800)");
+      expect(prix.style.textDecoration).toBe("line-through");
+    });
+
     it("faire apparaître la bulle n'ajoute aucune rangée au conteneur", () => {
       monter({ prix: 12, jetons: 5 });
       const article = screen.getByTestId("article-case1");

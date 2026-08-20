@@ -12,6 +12,7 @@ import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
 import type { AchatBazar } from "@/lib/bazar/achat";
 import type { EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
+import { PLAQUE_ETIQUETTE } from "./etiquette";
 import { BAZAR_LAYOUT, CLES_BAZAR, CLES_LOTS, CLE_VITRINE } from "./bazarLayout";
 
 /** Les trois zones du Bazar : le coin arcade, le comptoir, les antiquités. */
@@ -108,19 +109,21 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
           onAcheter={() => onAcheter({ type: "vitrine" })}
         />
       ) : (
+        // Le cadre garde la largeur de la planche et centre l'étiquette ; la
+        // plaque, elle, se serre autour du texte au lieu de barrer toute la
+        // rangée d'une bande sombre. En `nowrap`, elle déborde sur les côtés
+        // si le grec est trop long — c'était déjà l'intention.
         <span
+          data-testid="etiquette-vendu"
           style={{
             position: "absolute",
             left: `${qgPct(venduLeft)}%`,
             bottom: `${coordVitrine.bottom}%`,
             width: `${qgPct(venduWidth)}%`,
             textAlign: "center",
-            whiteSpace: "nowrap",
-            fontSize: "0.7rem",
-            color: "var(--brass-700)",
           }}
         >
-          {d.bazar.vendu}
+          <span style={PLAQUE_ETIQUETTE}>{d.bazar.vendu}</span>
         </span>
       )}
 
