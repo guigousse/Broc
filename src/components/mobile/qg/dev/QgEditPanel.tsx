@@ -2,17 +2,29 @@
 
 import { useState } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
-import { CHAT_BALADEUR_LAYOUT } from "../chatBaladeurLayout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
+import { type BazarObjetKey } from "@/components/bazar/bazarLayout";
 import {
   useQgObjet,
   useChatBaladeurCoord,
   useQgEditContext,
+  coordBase,
+  familleEditable,
   type EditableKey,
+  type FamilleEditable,
 } from "./QgEditContext";
 
 const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
 const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
+/** Familles affichées quand aucune liste de clés n'est passée : la scène du QG. */
+const CLES_QG_PAR_DEFAUT: EditableKey[] = [...QG_KEYS, ...CHAT_KEYS];
+
+const TITRE_FAMILLE: Record<FamilleEditable, string> = {
+  qg: "// QG objets",
+  chat: "// Chat baladeur",
+  bazar: "// Bazar",
+};
+const ORDRE_FAMILLES: FamilleEditable[] = ["qg", "chat", "bazar"];
 
 // Position au-dessous du header mobile (var injectée par MobileLayout).
 const ANCHOR_STYLE = {
@@ -22,6 +34,18 @@ const ANCHOR_STYLE = {
   zIndex: 100,
 };
 
+/**
+ * Dispatch par COMPOSANT, jamais par hook — même mécanique que `QgEditOverlay`.
+ * Chaque wrapper appelle SON hook inconditionnellement : un `if` autour d'un
+ * appel de hook a déjà valu un crash React #310 dans ce fichier voisin.
+ */
+function LigneObjet({ editKey }: { editKey: EditableKey }) {
+  const famille = familleEditable(editKey);
+  if (famille === "chat") return <ChatRow chatKey={editKey as ChatBaladeurId} />;
+  if (famille === "bazar") return <BazarRow bazarKey={editKey as BazarObjetKey} />;
+  return <QgRow qgKey={editKey as QgObjetKey} />;
+}
+
 function QgRow({ qgKey }: { qgKey: QgObjetKey }) {
   const { left, bottom, width } = useQgObjet(qgKey);
   return <CoordRow name={qgKey} left={left} bottom={bottom} width={width} />;
@@ -30,6 +54,11 @@ function QgRow({ qgKey }: { qgKey: QgObjetKey }) {
 function ChatRow({ chatKey }: { chatKey: ChatBaladeurId }) {
   const { left, bottom, width } = useChatBaladeurCoord(chatKey);
   return <CoordRow name={chatKey} left={left} bottom={bottom} width={width} />;
+}
+
+function BazarRow({ bazarKey }: { bazarKey: BazarObjetKey }) {
+  const { left, bottom, width } = useQgObjet(bazarKey);
+  return <CoordRow name={bazarKey} left={left} bottom={bottom} width={width} />;
 }
 
 function CoordRow({
@@ -57,16 +86,32 @@ function CoordRow({
   );
 }
 
-export function QgEditPanel() {
+interface QgEditPanelProps {
+  /**
+   * Clés à lister sur CETTE scène — même contrat que `QgEditOverlay.cles`.
+   * Non fourni : les clés du QG (objets + chat baladeur).
+   */
+  cles?: EditableKey[];
+  /** Étiquette du panneau. Défaut : « QG edit ». */
+  titre?: string;
+}
+
+export function QgEditPanel({ cles, titre = "QG edit" }: QgEditPanelProps = {}) {
   const ctx = useQgEditContext();
   const [collapsed, setCollapsed] = useState(false);
   const active = ctx?.active ?? false;
 
+  const clesAffichees = cles ?? CLES_QG_PAR_DEFAUT;
+  const groupes = ORDRE_FAMILLES.map((famille) => ({
+    famille,
+    cles: clesAffichees.filter((k) => familleEditable(k) === famille),
+  })).filter((g) => g.cles.length > 0);
+
   function effective(key: EditableKey) {
-    const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
-    const base = isChat
-      ? CHAT_BALADEUR_LAYOUT[key as ChatBaladeurId]
-      : QG_LAYOUT.objets[key as QgObjetKey];
+    // `coordBase` connaît les trois familles (QG, chat, Bazar) : c'est la même
+    // fonction que celle dont dérive `useQgObjet`, donc plus aucune chance de
+    // diverger.
+    const base = coordBase(key);
     const o = ctx?.overrides[key];
     return {
       left: o?.left ?? base.left,
@@ -75,17 +120,19 @@ export function QgEditPanel() {
     };
   }
 
+  function ligneSnippet(k: EditableKey): string {
+    const e = effective(k);
+    // Le chat baladeur est indexé par des identifiants non conformes à la
+    // syntaxe des clés nues (`"chat-1"`), d'où les guillemets pour cette
+    // famille seulement.
+    const nom = familleEditable(k) === "chat" ? `  "${k}"` : `    ${k}`;
+    return `${nom}: { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
+  }
+
   function handleCopy() {
-    const qg = QG_KEYS.map((k) => {
-      const e = effective(k);
-      return `    ${k}: { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
-    });
-    const chat = CHAT_KEYS.map((k) => {
-      const e = effective(k);
-      return `  "${k}": { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
-    });
-    const snippet =
-      "// QG objets\n" + qg.join("\n") + "\n\n// Chat baladeur\n" + chat.join("\n");
+    const snippet = groupes
+      .map((g) => TITRE_FAMILLE[g.famille] + "\n" + g.cles.map(ligneSnippet).join("\n"))
+      .join("\n\n");
     navigator.clipboard.writeText(snippet).catch(() => {
       /* clipboard indisponible en contexte non sécurisé : on ignore */
     });
@@ -115,7 +162,7 @@ export function QgEditPanel() {
         }}
         onClick={() => setCollapsed(false)}
       >
-        <span>QG edit</span>
+        <span>{titre}</span>
         <span
           style={{
             fontSize: 9,
@@ -165,7 +212,7 @@ export function QgEditPanel() {
             letterSpacing: "0.08em",
           }}
         >
-          QG edit mode
+          {titre} mode
         </span>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <button
@@ -216,13 +263,21 @@ export function QgEditPanel() {
           opacity: active ? 1 : 0.45,
         }}
       >
-        <div style={{ color: "#8aa", fontSize: 10, marginBottom: 4 }}>// QG objets</div>
-        {QG_KEYS.map((k) => (
-          <QgRow key={k} qgKey={k} />
-        ))}
-        <div style={{ color: "#8aa", fontSize: 10, margin: "6px 0 4px" }}>// Chat baladeur</div>
-        {CHAT_KEYS.map((k) => (
-          <ChatRow key={k} chatKey={k} />
+        {groupes.map((g, i) => (
+          <div key={g.famille}>
+            <div
+              style={{
+                color: "#8aa",
+                fontSize: 10,
+                margin: i === 0 ? "0 0 4px" : "6px 0 4px",
+              }}
+            >
+              {TITRE_FAMILLE[g.famille]}
+            </div>
+            {g.cles.map((k) => (
+              <LigneObjet key={k} editKey={k} />
+            ))}
+          </div>
         ))}
       </div>
 

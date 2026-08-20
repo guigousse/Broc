@@ -56,6 +56,7 @@ import { cadeauAnniversaireVisible, doigtSwipeVersGramophone } from "@/lib/anniv
 import { QgChatBaladeur } from "@/components/mobile/qg/QgChatBaladeur";
 import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
+import { useQgEditEnabled } from "@/components/mobile/qg/dev/useQgEditEnabled";
 import { GazetteSheet } from "@/components/mobile/GazetteSheet";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { PorteSheet } from "@/components/mobile/qg/sheets/PorteSheet";
@@ -92,7 +93,6 @@ import {
   doigtSwipeVersCarnet,
   portePulse,
 } from "@/lib/tutoriel";
-import { OUTILS_DEV } from "@/lib/outilsDev";
 import {
   aConnaisseurTendance,
   aGenBulletinMeteo,
@@ -393,39 +393,13 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     return s;
   }, [state]);
 
-  // Edit mode :
-  //   - activé par défaut si `NEXT_PUBLIC_QG_EDIT=1` au build, OU
-  //   - activable via `?qgedit=1` (persiste ensuite dans localStorage), OU
-  //   - désactivable via `?qgedit=0` (efface la clé).
+  // Edit mode : gate partagée avec le Bazar, cf. `useQgEditEnabled`.
   // ⚠ Ces hooks vivaient APRÈS l'early return « ouverture du local… » :
   // en navigation dure, le premier rendu (non hydraté) déclarait N hooks,
   // le rendu hydraté N+4 → crash React #310 « Rendered more hooks ».
   // Tous les hooks du composant DOIVENT précéder ce return (rules-of-hooks,
   // désormais vérifié par `npm run lint:hooks`).
-  const [editEnabled, setEditEnabled] = useState(
-    () => OUTILS_DEV && process.env.NEXT_PUBLIC_QG_EDIT === "1",
-  );
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    // Prod : le mode édition du QG n'existe pas — ni ?qgedit=1 ni une clé
-    // localStorage résiduelle ne doivent l'activer sur l'appareil d'un joueur.
-    if (!OUTILS_DEV) return;
-    const params = new URLSearchParams(window.location.search);
-    const q = params.get("qgedit");
-    if (q === "1") {
-      window.localStorage.setItem("broc.qg-edit.enabled", "1");
-      setEditEnabled(true);
-      return;
-    }
-    if (q === "0") {
-      window.localStorage.removeItem("broc.qg-edit.enabled");
-      setEditEnabled(process.env.NEXT_PUBLIC_QG_EDIT === "1");
-      return;
-    }
-    if (window.localStorage.getItem("broc.qg-edit.enabled") === "1") {
-      setEditEnabled(true);
-    }
-  }, []);
+  const editEnabled = useQgEditEnabled();
 
   const etape = state?.tutorielEtape;
 

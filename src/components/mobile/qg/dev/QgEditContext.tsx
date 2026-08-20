@@ -29,7 +29,22 @@ function isBazarKey(key: EditableKey): key is BazarObjetKey {
   return BAZAR_KEYS.has(key);
 }
 
-function baseCoord(key: EditableKey): {
+/** Famille d'une clé éditable : chaque famille a son propre dictionnaire de base. */
+export type FamilleEditable = "qg" | "chat" | "bazar";
+
+export function familleEditable(key: EditableKey): FamilleEditable {
+  if (isChatKey(key)) return "chat";
+  if (isBazarKey(key)) return "bazar";
+  return "qg";
+}
+
+/**
+ * Coordonnée AUTHORÉE d'une clé, sans override. Exportée parce que le panneau
+ * de calage en a besoin pour composer son extrait à recopier : il en avait sa
+ * propre copie, qui ne connaissait que le QG et le chat — sur une clé du Bazar
+ * elle lisait `QG_LAYOUT.objets[cle]` → `undefined.left`, donc une exception.
+ */
+export function coordBase(key: EditableKey): {
   left: number;
   bottom: number;
   width: number;
@@ -173,7 +188,7 @@ export function useChatBaladeurCoord(key: ChatBaladeurId): {
 }
 
 function useEditableCoord(key: EditableKey) {
-  const base = baseCoord(key);
+  const base = coordBase(key);
   const ctx = useContext(QgEditContext);
   const o = ctx?.overrides[key];
   return {

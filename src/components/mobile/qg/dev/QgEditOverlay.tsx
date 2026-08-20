@@ -3,11 +3,12 @@
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
-import { BAZAR_LAYOUT, type BazarObjetKey } from "@/components/bazar/bazarLayout";
+import { type BazarObjetKey } from "@/components/bazar/bazarLayout";
 import {
   useQgObjet,
   useChatBaladeurCoord,
   useQgEditContext,
+  familleEditable,
   type EditableKey,
 } from "./QgEditContext";
 
@@ -26,12 +27,9 @@ interface OutlineProps {
  * (l'ancien `useCoord` dispatchait des hooks conditionnellement).
  */
 function ObjetOutline({ editKey }: OutlineProps) {
-  if ((CHAT_BALADEUR_ORDER as readonly string[]).includes(editKey)) {
-    return <OutlineChat editKey={editKey as ChatBaladeurId} />;
-  }
-  if (editKey in BAZAR_LAYOUT.objets) {
-    return <OutlineBazar editKey={editKey as BazarObjetKey} />;
-  }
+  const famille = familleEditable(editKey);
+  if (famille === "chat") return <OutlineChat editKey={editKey as ChatBaladeurId} />;
+  if (famille === "bazar") return <OutlineBazar editKey={editKey as BazarObjetKey} />;
   return <OutlineQg editKey={editKey as QgObjetKey} />;
 }
 
