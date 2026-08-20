@@ -32,6 +32,7 @@ export class FirebaseAnalyticsProvider implements AnalyticsProvider {
   // à attendre, ni à gérer une erreur de mesure. Tout est avalé.
   logEvent(nom: string, params: ParamsEvenement = {}): void {
     void (async () => {
+      await this.initialiser();
       const { invoke } = await import("@tauri-apps/api/core");
       await invoke("plugin:firebase|log_event", { nom, params });
     })().catch(() => {});
@@ -39,6 +40,7 @@ export class FirebaseAnalyticsProvider implements AnalyticsProvider {
 
   setUserProperty(nom: string, valeur: string | null): void {
     void (async () => {
+      await this.initialiser();
       const { invoke } = await import("@tauri-apps/api/core");
       await invoke("plugin:firebase|set_user_property", { nom, valeur });
     })().catch(() => {});
