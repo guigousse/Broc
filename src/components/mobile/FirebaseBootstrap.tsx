@@ -56,6 +56,12 @@ export function FirebaseBootstrap() {
   }, []);
 
   useEffect(() => {
+    // Ce premier `screen_view` d'un boot à froid part avant que la save soit
+    // hydratée (l'effet de contexte ci-dessus tourne au même commit, `state`
+    // encore `null`) : il part donc sans `jour` ni `niveau`. C'est le
+    // compromis voulu — un contexte absent plutôt qu'un jour 0 fabriqué pour
+    // un joueur qui peut être bien plus loin (voir le commentaire d'`enPartie`
+    // ci-dessus) — pas un bug à corriger.
     const nom = nomEcran(pathname);
     if (nom) logEvenement(EVENEMENTS.ecranVu, { screen_name: nom });
   }, [pathname]);

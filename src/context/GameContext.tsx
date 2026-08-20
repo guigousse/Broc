@@ -899,6 +899,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (typeof jourAvant === "number") {
       const pas = Math.max(1, nbJours);
       const nouveauJour = jourAvant + pas;
+      // `pas` vaut au moins 1, donc cette comparaison est TOUJOURS vraie : ce
+      // n'est pas elle qui garantit « nouveau record seulement », c'est le
+      // garde `typeof jourAvant === "number"` ci-dessus conjugué à la
+      // stricte croissance de `jourActuel` en partie (cf. commentaire plus
+      // haut). Gardée quand même comme filet d'assertion, pas comme
+      // mécanisme.
       if (nouveauJour > jourAvant) logEvenement(EVENEMENTS.jourAtteint, { jour: nouveauJour });
     }
   }, []);
@@ -1418,11 +1424,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
       );
     });
     if (!aUnePartie) return;
+    // `depense` et `recette` sont recalculés ici, alors que l'updater
+    // ci-dessus vient de calculer la même chose pour l'entrée du ledger :
+    // duplication volontaire, pas un oubli de factorisation. La copie de
+    // l'updater ne peut pas s'en échapper (StrictMode le double-invoque), et
+    // mutualiser en faisant remonter sa valeur obligerait à faire vivre
+    // `logEvenement` DANS l'updater — exactement le double-emit StrictMode
+    // que ce chantier a pris soin d'éviter partout ailleurs (lire
+    // `stateRef.current` avant `setState`). Toucher au chemin du ledger pour
+    // économiser ce recalcul serait aussi changer du comportement de jeu,
+    // ce que ce chantier s'interdit.
     // Discriminé sur session.type : chine et vente partagent ce même hook
     // (cf. `Session` = SessionChinage | SessionVente, types/game.ts), donc les
     // deux événements économiques partent d'ici.
     if (session.type === "chinage") {
       const depense = session.achats.reduce((s, a) => s + a.prixPaye, 0);
+      // La conception (spec §3.4) promettait un troisième paramètre,
+      // `energie_depensee` : abandonné, aucun champ de `SessionChinage`
+      // (types/game.ts) ne porte cette donnée, et la fabriquer aurait été
+      // pire qu'un paramètre manquant — un chiffre inventé dans un rapport
+      // ne se distingue pas d'un chiffre réel.
       logEvenement(EVENEMENTS.sessionChineTerminee, {
         objets_achetes: session.achats.length,
         depense: Math.round(depense),

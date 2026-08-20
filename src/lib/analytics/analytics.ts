@@ -37,6 +37,10 @@ export const EVENEMENTS = {
   sessionChineTerminee: "session_chine_terminee",
   sessionVenteTerminee: "session_vente_terminee",
   ameliorationAchetee: "amelioration_achetee",
+  // `acheterAuBazar` n'existe pas encore sur cette branche (le Bazar vit sur
+  // feat/jetons-bazar, non fusionnée) : cette entrée est inerte pour le
+  // moment, sans appelant, mais correcte dès la fusion — à garder, pas du
+  // code mort.
   bazarAchat: "bazar_achat",
   // Monétisation
   energieEpuisee: "energie_epuisee",
@@ -49,7 +53,13 @@ export const EVENEMENTS = {
 
 export type Evenement = (typeof EVENEMENTS)[keyof typeof EVENEMENTS];
 
-/** Propriétés utilisateur : ≤ 24 caractères. Servent à découper la population. */
+/**
+ * Propriétés utilisateur : ≤ 24 caractères. Servent à découper la population.
+ * Aucun appelant pour l'instant (setUserProperty, le pont Rust et le handler
+ * Swift existent, mais rien du jeu ne les invoque encore) : décision
+ * volontaire actée dans le plan, à rouvrir après la première semaine de
+ * vraies données.
+ */
 export const PROPRIETES = {
   tutoTermine: "tuto_termine",
   acheteurIap: "acheteur_iap",

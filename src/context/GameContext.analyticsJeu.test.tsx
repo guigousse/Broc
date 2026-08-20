@@ -249,12 +249,12 @@ describe("instrumentation du jeu", () => {
   // Régression : un rappel no-op (fonds insuffisants, palier déjà maximal,
   // niveau déjà adjacent atteint…) ne doit pas gonfler les métriques d'un
   // achat qui n'a pas eu lieu.
-  it("un second ameliorerAtelier au même niveau maximal n'émet rien de plus", async () => {
+  it("un ameliorerAtelier sans les fonds du palier suivant n'émet rien de plus", async () => {
     const result = await setupNouvellePartie();
-    // Budget insuffisant (150 < 100 est faux en réalité — l'atelier niveau 1
-    // coûte 100 et le budget de départ est 150, donc ce premier appel réussit
-    // réellement) : on vérifie plutôt qu'un second appel sans fonds pour le
-    // palier suivant n'émet rien.
+    // L'atelier niveau 1 coûte 100 et le budget de départ est 150 : ce
+    // premier appel réussit réellement et émet. Le niveau 2 coûte 200, il ne
+    // reste que 50 : le second appel est refusé et ne doit rien émettre de
+    // plus.
     act(() => {
       result.current.ameliorerAtelier();
     });
