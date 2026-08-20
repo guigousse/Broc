@@ -101,23 +101,30 @@ describe("BazarPage — le panorama est plein cadre", () => {
 });
 
 describe("BazarPage — retour d'acheterAuBazar câblé sur un toast", () => {
+  // Depuis la recette du 2026-08-20, l'achat demande DEUX gestes : taper
+  // l'article sur l'étagère ouvre sa fiche, et c'est le bouton de la fiche qui
+  // achète.
+  async function acheterLePremierLot() {
+    await act(async () => {
+      screen.getAllByRole("button", { name: /pièces/i })[0].click();
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: "Acheter" }).click();
+    });
+  }
+
   it("achat refusé : la raison localisée est montrée au joueur", async () => {
     acheterAuBazar.mockReturnValue({ ok: false, raison: "Pas assez de jetons" });
     render(<BazarPage />);
-    const bouton = screen.getAllByRole("button", { name: /pièces/i })[0];
-    await act(async () => {
-      bouton.click();
-    });
+    await acheterLePremierLot();
     expect(toast).toHaveBeenCalledWith("Pas assez de jetons", { type: "erreur" });
   });
 
   it("achat réussi : aucun toast d'erreur", async () => {
     acheterAuBazar.mockReturnValue({ ok: true });
     render(<BazarPage />);
-    const bouton = screen.getAllByRole("button", { name: /pièces/i })[0];
-    await act(async () => {
-      bouton.click();
-    });
+    await acheterLePremierLot();
+    expect(acheterAuBazar).toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 });
