@@ -1,11 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
-import {
-  ArticleBazar,
-  CHEVAUCHEMENT_ETIQUETTE_PX,
-  DUREE_BULLE_MS,
-} from "./ArticleBazar";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { ArticleBazar, CHEVAUCHEMENT_ETIQUETTE_PX } from "./ArticleBazar";
 import { BAZAR_LAYOUT } from "./bazarLayout";
 import { qgPct } from "@/components/mobile/qg/layout";
 import {
@@ -16,7 +12,7 @@ import {
 afterEach(cleanup);
 
 function monter(props: Partial<React.ComponentProps<typeof ArticleBazar>> = {}) {
-  const onAcheter = vi.fn();
+  const onOuvrir = vi.fn();
   const utils = render(
     <ArticleBazar
       cle="case1"
@@ -24,11 +20,11 @@ function monter(props: Partial<React.ComponentProps<typeof ArticleBazar>> = {}) 
       libelle="5 pièces · Musique"
       prix={3}
       jetons={10}
-      onAcheter={onAcheter}
+      onOuvrir={onOuvrir}
       {...props}
     />,
   );
-  return { onAcheter, ...utils };
+  return { onOuvrir, ...utils };
 }
 
 describe("ArticleBazar", () => {
@@ -44,16 +40,26 @@ describe("ArticleBazar", () => {
     expect(screen.getByText("1 jeton")).toBeTruthy();
   });
 
-  it("achète au tap quand la bourse suffit", () => {
-    const { onAcheter } = monter();
+  // ── Le tap OUVRE, il n'achète plus ────────────────────────────────────────
+  // Recette du 2026-08-20 : un doigt mal posé sur l'étagère coûtait une
+  // semaine de jetons sans rien demander. L'achat a déménagé dans la fiche
+  // (`ArticleDetailBazar`), avec le message du manque et son minuteur.
+  it("le tap ouvre la fiche, quelle que soit la bourse", () => {
+    const { onOuvrir } = monter();
     fireEvent.click(screen.getByRole("button", { name: /5 pièces · Musique/ }));
-    expect(onAcheter).toHaveBeenCalledTimes(1);
+    expect(onOuvrir).toHaveBeenCalledTimes(1);
   });
 
-  it("hors de portée : le prix est barré et aria-disabled est posé", () => {
+  it("hors de portée AUSSI, le tap ouvre la fiche : c'est elle qui dira le manque", () => {
+    const { onOuvrir } = monter({ prix: 12, jetons: 5 });
+    fireEvent.click(screen.getByRole("button", { name: /5 pièces · Musique/ }));
+    expect(onOuvrir).toHaveBeenCalledTimes(1);
+    // Plus rien ne s'affiche sur l'étagère : le message vit dans la fiche.
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("hors de portée : le prix est barré", () => {
     monter({ prix: 12, jetons: 5 });
-    const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
-    expect(bouton.getAttribute("aria-disabled")).toBe("true");
     // `toHaveStyle` n'existe pas ici : le dépôt n'installe PAS @testing-library/jest-dom.
     // On lit la propriété de style directement.
     const prix = screen.getByText("12 jetons") as HTMLElement;
@@ -69,19 +75,18 @@ describe("ArticleBazar", () => {
     expect(article.style.filter).toBe("");
   });
 
-  it("à portée : aria-disabled est absent ou faux", () => {
-    monter({ prix: 3, jetons: 10 });
-    const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
-    const valeur = bouton.getAttribute("aria-disabled");
-    expect(valeur === null || valeur === "false").toBe(true);
-  });
-
-  it("hors de portée : taper l'image elle-même (le bouton) dit le manque, sans acheter", () => {
-    const { onAcheter } = monter({ prix: 12, jetons: 5 });
-    const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
-    fireEvent.click(bouton);
-    expect(screen.getByText("Il vous manque 7 jetons")).toBeTruthy();
-    expect(onAcheter).not.toHaveBeenCalled();
+  // Le bouton FONCTIONNE, quelle que soit la bourse : il ouvre la fiche.
+  // L'annoncer désactivé serait faux. `aria-disabled` a suivi l'achat dans la
+  // fiche, sur le bouton qui refuse vraiment quelque chose.
+  it("le bouton n'est jamais annoncé désactivé — il ouvre toujours", () => {
+    for (const jetons of [10, 0]) {
+      cleanup();
+      monter({ prix: 12, jetons });
+      const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
+      const valeur = bouton.getAttribute("aria-disabled");
+      expect(valeur === null || valeur === "false").toBe(true);
+      expect(bouton.hasAttribute("disabled")).toBe(false);
+    }
   });
 
   it("hors de portée : le bouton reste focusable au clavier", () => {
@@ -91,113 +96,11 @@ describe("ArticleBazar", () => {
     expect(document.activeElement).toBe(bouton);
   });
 
-  it("le singulier du manque est respecté", () => {
-    monter({ prix: 6, jetons: 5 });
-    const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
-    fireEvent.click(bouton);
-    expect(screen.getByText("Il vous manque 1 jeton")).toBeTruthy();
-  });
-
-  it("la bulle ne réapparaît pas seule si la bourse redescend après être devenue suffisante", () => {
-    const { rerender } = monter({ prix: 12, jetons: 5 });
-    const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
-    fireEvent.click(bouton);
-    expect(screen.getByText("Il vous manque 7 jetons")).toBeTruthy();
-
-    // La bourse remonte au-dessus du prix : la bulle doit disparaître.
-    rerender(
-      <ArticleBazar
-        cle="case1"
-        visuel={<span data-testid="visuel" />}
-        libelle="5 pièces · Musique"
-        prix={12}
-        jetons={20}
-        onAcheter={vi.fn()}
-      />,
-    );
-    expect(screen.queryByText("Il vous manque 7 jetons")).toBeNull();
-
-    // La bourse redescend en dessous du prix, sans nouveau tap : toujours rien.
-    rerender(
-      <ArticleBazar
-        cle="case1"
-        visuel={<span data-testid="visuel" />}
-        libelle="5 pièces · Musique"
-        prix={12}
-        jetons={5}
-        onAcheter={vi.fn()}
-      />,
-    );
-    expect(screen.queryByText("Il vous manque 7 jetons")).toBeNull();
-  });
-
-  it("la bulle est brève : elle s'efface toute seule au bout de 2,5 s", () => {
-    vi.useFakeTimers();
-    try {
-      monter({ prix: 12, jetons: 5 });
-      const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
-      fireEvent.click(bouton);
-      expect(screen.getByText("Il vous manque 7 jetons")).toBeTruthy();
-
-      act(() => {
-        vi.advanceTimersByTime(DUREE_BULLE_MS - 1);
-      });
-      expect(screen.queryByText("Il vous manque 7 jetons")).toBeTruthy();
-
-      act(() => {
-        vi.advanceTimersByTime(1);
-      });
-      expect(screen.queryByText("Il vous manque 7 jetons")).toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("un nouveau tap réarme le minuteur au lieu d'en empiler un second", () => {
-    vi.useFakeTimers();
-    try {
-      monter({ prix: 12, jetons: 5 });
-      const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
-      fireEvent.click(bouton);
-      act(() => {
-        vi.advanceTimersByTime(DUREE_BULLE_MS - 100);
-      });
-      // Deuxième tap juste avant l'échéance : la bulle repart pour 2,5 s
-      // pleines, et le minuteur du premier tap ne doit pas la couper.
-      fireEvent.click(bouton);
-      act(() => {
-        vi.advanceTimersByTime(200);
-      });
-      expect(screen.queryByText("Il vous manque 7 jetons")).toBeTruthy();
-      act(() => {
-        vi.advanceTimersByTime(DUREE_BULLE_MS);
-      });
-      expect(screen.queryByText("Il vous manque 7 jetons")).toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("le minuteur est nettoyé au démontage", () => {
-    vi.useFakeTimers();
-    const clear = vi.spyOn(globalThis, "clearTimeout");
-    try {
-      const { unmount } = monter({ prix: 12, jetons: 5 });
-      fireEvent.click(screen.getByRole("button", { name: /5 pièces · Musique/ }));
-      clear.mockClear();
-      unmount();
-      expect(clear).toHaveBeenCalled();
-    } finally {
-      clear.mockRestore();
-      vi.useRealTimers();
-    }
-  });
-
   // ── Revue du 2026-08-20, constat I1 ──────────────────────────────────────
   // jsdom n'a pas de moteur de layout : la seule trace observable de ces deux
   // défauts est le style en ligne. Le dépôt n'installe pas jest-dom, on lit
   // donc `element.style.*` directement.
-  describe("les étiquettes ne poussent pas l'article hors de l'étagère", () => {
+  describe("l'étiquette ne pousse pas l'article hors de l'étagère", () => {
     it("le conteneur ne porte que le visuel : c'est LUI qui est ancré à la planche", () => {
       monter();
       const article = screen.getByTestId("article-case1");
@@ -234,28 +137,11 @@ describe("ArticleBazar", () => {
       expect(prix.style.borderRadius).toBe("var(--radius-pill)");
     });
 
-    it("la bulle du manque a la même plaque, et n'hérite plus de la couleur du corps de page", () => {
-      monter({ prix: 12, jetons: 5 });
-      fireEvent.click(screen.getByRole("button", { name: /5 pièces · Musique/ }));
-      const bulle = screen.getByRole("status");
-      expect(bulle.style.backgroundColor).toBe("var(--forest-800)");
-      expect(bulle.style.color).toBe("var(--brass-300)");
-    });
-
     it("hors de portée, le prix garde sa rature SUR la plaque", () => {
       monter({ prix: 12, jetons: 5 });
       const prix = screen.getByText("12 jetons");
       expect(prix.style.backgroundColor).toBe("var(--forest-800)");
       expect(prix.style.textDecoration).toBe("line-through");
-    });
-
-    it("faire apparaître la bulle n'ajoute aucune rangée au conteneur", () => {
-      monter({ prix: 12, jetons: 5 });
-      const article = screen.getByTestId("article-case1");
-      const avant = article.children.length;
-      fireEvent.click(screen.getByRole("button", { name: /5 pièces · Musique/ }));
-      expect(screen.getByText("Il vous manque 7 jetons")).toBeTruthy();
-      expect(article.children.length).toBe(avant);
     });
   });
 
@@ -311,7 +197,7 @@ describe("ArticleBazar suit l'outil de calage", () => {
           libelle="lot"
           prix={1}
           jetons={10}
-          onAcheter={vi.fn()}
+          onOuvrir={vi.fn()}
         />
       </QgEditProvider>,
     );
@@ -329,7 +215,7 @@ describe("ArticleBazar suit l'outil de calage", () => {
           libelle="lot"
           prix={1}
           jetons={10}
-          onAcheter={vi.fn()}
+          onOuvrir={vi.fn()}
         />
       </QgEditProvider>,
     );

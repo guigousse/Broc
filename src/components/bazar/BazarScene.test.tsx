@@ -46,16 +46,53 @@ describe("BazarScene", () => {
     expect(screen.getByTestId("article-case2")).toBeTruthy();
   });
 
-  it("achète le lot touché, avec son index", () => {
+  // Depuis la recette du 2026-08-20, le tap OUVRE la fiche de l'article ;
+  // l'achat se confirme sur son bouton. Deux gestes, donc, dans tous les tests
+  // d'achat de cet écran.
+  function acheterDansLaFiche() {
+    fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+  }
+
+  it("taper un lot ouvre SA fiche, et l'achat y porte son index", () => {
     const { onAcheter } = monter();
     fireEvent.click(screen.getAllByRole("button", { name: /Mode/ })[0]);
+    expect(onAcheter).not.toHaveBeenCalled();
+    // La fiche montre bien le lot touché, pas un autre.
+    expect(screen.getByRole("dialog").textContent).toContain("Mode");
+    acheterDansLaFiche();
     expect(onAcheter).toHaveBeenCalledWith({ type: "pieces", index: 1 });
   });
 
-  it("achète la vitrine", () => {
+  it("taper la vitrine ouvre sa fiche, et l'achat s'y confirme", () => {
     const { onAcheter } = monter();
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
+    expect(onAcheter).not.toHaveBeenCalled();
+    acheterDansLaFiche();
     expect(onAcheter).toHaveBeenCalledWith({ type: "vitrine" });
+  });
+
+  it("la fiche se referme après l'achat", () => {
+    monter();
+    fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
+    acheterDansLaFiche();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("aucune fiche n'est ouverte tant que rien n'est tapé", () => {
+    monter();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  // La fiche est posée HORS du panorama : son conteneur scrolle
+  // horizontalement, une fiche placée dedans voyagerait avec la scène — et la
+  // couche d'objets du panorama est en `pointer-events: none`, ce qui rendrait
+  // le voile insensible au tap.
+  it("la fiche n'est pas un enfant du panorama", () => {
+    monter();
+    fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
+    const fiche = screen.getByRole("dialog");
+    const panorama = screen.getByRole("button", { name: /Sortir/ }).closest("div");
+    expect(panorama?.contains(fiche)).toBe(false);
   });
 
   // L'objet de la semaine est rendu comme partout ailleurs dans le jeu : une
@@ -128,9 +165,11 @@ describe("BazarScene", () => {
     expect((screen.getByText("8 jetons") as HTMLElement).style.textDecoration).toBe(
       "line-through",
     );
-    // Et taper n'achète toujours rien.
+    // Et taper n'achète toujours rien : ça ouvre la fiche, qui dit le manque.
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
     expect(onAcheter).not.toHaveBeenCalled();
+    expect(screen.getByText("Il vous manque 8 jetons")).toBeTruthy();
   });
 
   // Revue du 2026-08-20 : la scène testait `etal.vitrine && template`. Un
@@ -144,6 +183,7 @@ describe("BazarScene", () => {
     expect(screen.queryByText(/Vendu/)).toBeNull();
     const bouton = screen.getByRole("button", { name: "zz.template_disparu" });
     fireEvent.click(bouton);
+    fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
     expect(onAcheter).toHaveBeenCalledWith({ type: "vitrine" });
   });
 

@@ -824,5 +824,8 @@ export const en: DictionnaireUI = {
     manqueJetons: "You need {n} more tokens",
     manqueJetonUn: "You need {n} more token",
     sortir: "Leave the Bazaar",
+    detailArticle: "Item details",
+    prixMot: "Price",
+    acheter: "Buy",
   },
 };

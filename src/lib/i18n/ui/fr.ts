@@ -862,5 +862,8 @@ export const fr = {
     manqueJetons: "Il vous manque {n} jetons",
     manqueJetonUn: "Il vous manque {n} jeton",
     sortir: "Sortir du Bazar",
+    detailArticle: "Détail de l'article",
+    prixMot: "Prix",
+    acheter: "Acheter",
   },
 } as const;

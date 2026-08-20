@@ -827,5 +827,8 @@ export const es: DictionnaireUI = {
     manqueJetons: "Te faltan {n} fichas",
     manqueJetonUn: "Te falta {n} ficha",
     sortir: "Salir del Bazar",
+    detailArticle: "Detalle del artículo",
+    prixMot: "Precio",
+    acheter: "Comprar",
   },
 };
