@@ -2,6 +2,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { BazarScene, ZONES_BAZAR } from "./BazarScene";
+import { BAZAR_LAYOUT } from "./bazarLayout";
+import { qgPct } from "@/components/mobile/qg/layout";
 import type { EtalBazar } from "@/types/game";
 
 afterEach(cleanup);
@@ -60,6 +62,14 @@ describe("BazarScene", () => {
     monter({ ...ETAL, vitrine: null });
     expect(screen.queryByTestId("article-case5")).toBeNull();
     expect(screen.getByText(/Vendu/)).toBeTruthy();
+  });
+
+  it("vitrine vendue : l'étiquette déborde sur toute la rangée, pas juste une case", () => {
+    monter({ ...ETAL, vitrine: null });
+    const etiquette = screen.getByText(/Vendu/);
+    const largeurUneCase = qgPct(BAZAR_LAYOUT.objets.case5.width);
+    const largeurEtiquette = parseFloat(etiquette.style.width);
+    expect(largeurEtiquette).toBeGreaterThan(largeurUneCase);
   });
 
   it("la porte fait sortir", () => {

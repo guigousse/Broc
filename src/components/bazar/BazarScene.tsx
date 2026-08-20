@@ -38,6 +38,16 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
   const template = etal.vitrine ? getTemplate(etal.vitrine.templateId) : undefined;
   const coordVitrine = BAZAR_LAYOUT.objets[CLE_VITRINE];
   const coordSortie = BAZAR_LAYOUT.objets.sortie;
+  // Le libellé « Vendu — de retour lundi » est une phrase entière dans les
+  // 4 langues (la version grecque est la plus longue). Une case de 24vw ne
+  // suffit pas — le texte replierait vers le HAUT (le conteneur est ancré en
+  // `bottom`) et empièterait sur la rangée du dessus. On lui donne toute la
+  // largeur de la rangée du milieu (case4..case6), en nowrap : s'il déborde
+  // malgré tout, ça déborde sur les côtés, dans le mur nu du comptoir.
+  const coordCase4 = BAZAR_LAYOUT.objets.case4;
+  const coordCase6 = BAZAR_LAYOUT.objets.case6;
+  const venduLeft = coordCase4.left;
+  const venduWidth = coordCase6.left + coordCase6.width - coordCase4.left;
 
   return (
     <UnifiedPanorama
@@ -84,10 +94,11 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
         <span
           style={{
             position: "absolute",
-            left: `${qgPct(coordVitrine.left)}%`,
+            left: `${qgPct(venduLeft)}%`,
             bottom: `${coordVitrine.bottom}%`,
-            width: `${qgPct(coordVitrine.width)}%`,
+            width: `${qgPct(venduWidth)}%`,
             textAlign: "center",
+            whiteSpace: "nowrap",
             fontSize: "0.7rem",
             color: "var(--brass-700)",
           }}
