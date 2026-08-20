@@ -241,6 +241,32 @@ describe("ArticleBazar", () => {
       expect(article.children.length).toBe(avant);
     });
   });
+
+  // ── Case carrée, visuel centré : demande du 2026-08-20 ──────────────────
+  // L'auteur cale le Bazar à la souris (`?qgedit=1`) et vise le CENTRE de la
+  // case. Sans hauteur propre, la case n'existait qu'en largeur et le visuel,
+  // ancré au pied, débordait vers le haut bien au-delà d'elle.
+  describe("la case est carrée et centre le visuel", () => {
+    it("le conteneur porte aspectRatio 1/1", () => {
+      monter();
+      const article = screen.getByTestId("article-case1");
+      expect(article.style.aspectRatio).toBe("1 / 1");
+    });
+
+    it("le conteneur centre sur les deux axes (placeItems, pas justifyItems)", () => {
+      monter();
+      const article = screen.getByTestId("article-case1");
+      expect(article.style.placeItems).toBe("center");
+    });
+
+    it("le bouton occupe toute la case et centre son visuel sur les deux axes", () => {
+      monter();
+      const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
+      expect(bouton.style.width).toBe("100%");
+      expect(bouton.style.height).toBe("100%");
+      expect(bouton.style.placeItems).toBe("center");
+    });
+  });
 });
 
 // ── Revue du 2026-08-20, constat C1 ────────────────────────────────────────

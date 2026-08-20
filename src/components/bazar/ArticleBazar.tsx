@@ -64,20 +64,26 @@ export function ArticleBazar({ cle, visuel, libelle, prix, jetons, onAcheter }: 
     }
   }, [horsDePortee, annulerMinuteur]);
 
-  // Le conteneur ne porte QUE le visuel : ancré en `bottom`, c'est donc le
-  // visuel — et non son étiquette de prix — qui repose sur la planche. Le prix
-  // et la bulle vivent dans une colonne HORS FLUX suspendue sous lui : ajouter
-  // la bulle ne peut plus pousser l'article d'une rangée vers le haut (défaut
-  // relevé à la revue du 2026-08-20 ; jsdom n'a pas de layout, seul le style
-  // en ligne peut en témoigner).
+  // Le conteneur est une case CARRÉE (`aspectRatio: 1/1` sur une largeur en
+  // `%`) : sans hauteur propre, la case précédente n'existait qu'en largeur,
+  // et le visuel — ancré au pied via `align-items: flex-end` — dépassait
+  // largement vers le haut. L'auteur cale le cadre pointillé de calage
+  // (`?qgedit=1`) sur cette même case : il doit pouvoir viser son centre, pas
+  // deviner où « repose » un visuel de hauteur libre. Le prix et la bulle
+  // vivent dans une colonne HORS FLUX suspendue sous la case (position
+  // relative au conteneur, pas au visuel) : ajouter la bulle ne peut donc pas
+  // pousser l'article d'une rangée vers le haut (défaut relevé à la revue du
+  // 2026-08-20 ; jsdom n'a pas de layout, seul le style en ligne peut en
+  // témoigner).
   const style: CSSProperties = {
     position: "absolute",
     left: `${qgPct(coord.left)}%`,
     bottom: `${coord.bottom}%`,
     width: `${qgPct(coord.width)}%`,
+    aspectRatio: "1 / 1",
     pointerEvents: "auto",
     display: "grid",
-    justifyItems: "center",
+    placeItems: "center",
     filter: horsDePortee ? "grayscale(1) opacity(0.65)" : undefined,
   };
 
@@ -109,19 +115,26 @@ export function ArticleBazar({ cle, visuel, libelle, prix, jetons, onAcheter }: 
             onAcheter();
           }
         }}
-        // Le bouton occupe toute la case et centre son visuel. Il était
-        // auparavant en largeur « shrink-to-fit » : le visuel de la vitrine,
-        // un `<span style="width:100%">`, y résolvait son pourcentage contre
-        // une largeur elle-même déduite du contenu, donc contre rien.
+        // Le bouton occupe toute la case (carrée) et centre son visuel sur
+        // les deux axes. Il était auparavant en largeur « shrink-to-fit » et
+        // aligné au pied : le visuel de la vitrine, un
+        // `<span style="width:100%">`, y résolvait son pourcentage contre une
+        // largeur elle-même déduite du contenu, donc contre rien, et
+        // débordait vers le haut. `overflow: hidden` est le filet : le visuel
+        // de la vitrine (`ItemImage`, width/height 100 % + aspect-ratio 1/1)
+        // remplit la case exactement, mais une pièce fixe (`PieceIcon`,
+        // taille en px) ne doit jamais déborder de la case si celle-ci est un
+        // jour recalée plus petite que l'icône.
         style={{
           background: "transparent",
           border: "none",
           padding: 0,
           cursor: "pointer",
           width: "100%",
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "center",
+          height: "100%",
+          display: "grid",
+          placeItems: "center",
+          overflow: "hidden",
         }}
       >
         {visuel}

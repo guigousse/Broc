@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
 import { type BazarObjetKey } from "@/components/bazar/bazarLayout";
@@ -25,6 +30,13 @@ interface OutlineProps {
  * wrapper qui appelle SON hook inconditionnellement puis rend le corps
  * partagé avec la coordonnée en prop — conforme aux rules-of-hooks
  * (l'ancien `useCoord` dispatchait des hooks conditionnellement).
+ *
+ * La FORME du cadre descend elle aussi par famille, en prop, pas en hook :
+ * le Bazar pose ses articles dans une case CARRÉE (`ArticleBazar` a gagné
+ * `aspectRatio: 1/1`) et le cadre de calage doit coïncider avec elle pour que
+ * l'auteur vise juste. Le QG (bureau) et le chat baladeur restent des images
+ * ancrées au pied, de hauteur libre : leur calage `minHeight: 4vh` est déjà
+ * fait et livré, y toucher le casserait.
  */
 function ObjetOutline({ editKey }: OutlineProps) {
   const famille = familleEditable(editKey);
@@ -35,21 +47,27 @@ function ObjetOutline({ editKey }: OutlineProps) {
 
 function OutlineChat({ editKey }: { editKey: ChatBaladeurId }) {
   const coord = useChatBaladeurCoord(editKey);
-  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
+  return <OutlineAvecCoord editKey={editKey} coord={coord} forme="libre" />;
 }
 function OutlineQg({ editKey }: { editKey: QgObjetKey }) {
   const coord = useQgObjet(editKey);
-  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
+  return <OutlineAvecCoord editKey={editKey} coord={coord} forme="libre" />;
 }
 function OutlineBazar({ editKey }: { editKey: BazarObjetKey }) {
   const coord = useQgObjet(editKey);
-  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
+  return <OutlineAvecCoord editKey={editKey} coord={coord} forme="carree" />;
 }
 
 function OutlineAvecCoord({
   editKey,
   coord,
-}: OutlineProps & { coord: { left: number; bottom: number; width: number } }) {
+  forme,
+}: OutlineProps & {
+  coord: { left: number; bottom: number; width: number };
+  /** "carree" : cadre carré coïncidant avec la case du Bazar (aspectRatio 1/1).
+   *  "libre" : rectangle bas, `minHeight: 4vh` — comportement historique QG/chat. */
+  forme: "carree" | "libre";
+}) {
   const { left, bottom, width } = coord;
   const ctx = useQgEditContext();
   const sceneRef = useRef<HTMLElement | null>(null);
@@ -127,6 +145,9 @@ function OutlineAvecCoord({
     resizing.current = false;
   }
 
+  const formeStyle: CSSProperties =
+    forme === "carree" ? { aspectRatio: "1 / 1" } : { minHeight: "4vh" };
+
   return (
     <div
       ref={containerRef}
@@ -135,7 +156,7 @@ function OutlineAvecCoord({
         left: `${left}vw`,
         bottom: `${bottom}%`,
         width: `${width}vw`,
-        minHeight: "4vh",
+        ...formeStyle,
         zIndex: 20,
         pointerEvents: "auto",
         touchAction: "none",
@@ -148,7 +169,7 @@ function OutlineAvecCoord({
         style={{
           position: "absolute",
           inset: 0,
-          minHeight: "4vh",
+          ...formeStyle,
           border: "2px dashed var(--brass-500)",
           boxSizing: "border-box",
           cursor: "move",
