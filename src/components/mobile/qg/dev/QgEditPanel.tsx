@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
 import { type BazarObjetKey } from "@/components/bazar/bazarLayout";
@@ -96,10 +96,32 @@ interface QgEditPanelProps {
   titre?: string;
 }
 
+/** Ce qu'a donné le dernier clic sur « Copier ». */
+type EtatCopie = null | "copie" | "manuel";
+
 export function QgEditPanel({ cles, titre = "QG edit" }: QgEditPanelProps = {}) {
   const ctx = useQgEditContext();
   const [collapsed, setCollapsed] = useState(false);
+  const [etatCopie, setEtatCopie] = useState<EtatCopie>(null);
+  /** L'extrait à recopier à la main, quand le presse-papiers fait défaut. */
+  const [extraitManuel, setExtraitManuel] = useState<string | null>(null);
+  const zoneRef = useRef<HTMLTextAreaElement | null>(null);
   const active = ctx?.active ?? false;
+
+  // La zone de repli n'a d'intérêt que si son contenu est DÉJÀ sélectionné :
+  // sur un téléphone, sélectionner soi-même quinze lignes de monospace à la
+  // loupe est exactement ce qu'on cherchait à éviter.
+  useEffect(() => {
+    if (extraitManuel === null) return;
+    const zone = zoneRef.current;
+    if (!zone) return;
+    zone.focus();
+    zone.select();
+    // iOS ignore `select()` sur un textarea non focalisé ET refuse la
+    // sélection programmée si le champ est en lecture seule : d'où le champ
+    // éditable, plus `setSelectionRange` qui, lui, est honoré.
+    zone.setSelectionRange(0, extraitManuel.length);
+  }, [extraitManuel]);
 
   const clesAffichees = cles ?? CLES_QG_PAR_DEFAUT;
   const groupes = ORDRE_FAMILLES.map((famille) => ({
@@ -129,13 +151,49 @@ export function QgEditPanel({ cles, titre = "QG edit" }: QgEditPanelProps = {}) 
     return `${nom}: { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
   }
 
+  /**
+   * Copier l'extrait — sans jamais lever.
+   *
+   * L'auteur cale les scènes depuis SON TÉLÉPHONE, sur le serveur de dev servi
+   * en HTTP simple sur le réseau local. Or Safari n'expose PAS `navigator
+   * .clipboard` hors contexte sécurisé : l'objet est `undefined`, et
+   * `navigator.clipboard.writeText(...)` levait `undefined is not an object`
+   * AVANT même d'atteindre le `.catch()` — le clic ne faisait rien, aucune
+   * trace, et les coordonnées qu'il venait de poser étaient irrécupérables.
+   *
+   * On tente donc l'API quand elle existe, et on retombe sinon sur ce qui
+   * marche vraiment en contexte non sécurisé : un `<textarea>` dont le
+   * contenu est déjà sélectionné, prêt pour un « Copier » à la main. Le
+   * panneau dit lequel des deux chemins a été pris.
+   */
   function handleCopy() {
     const snippet = groupes
       .map((g) => TITRE_FAMILLE[g.famille] + "\n" + g.cles.map(ligneSnippet).join("\n"))
       .join("\n\n");
-    navigator.clipboard.writeText(snippet).catch(() => {
-      /* clipboard indisponible en contexte non sécurisé : on ignore */
-    });
+    try {
+      const presse =
+        typeof navigator === "undefined" ? undefined : navigator.clipboard;
+      if (typeof presse?.writeText === "function") {
+        presse.writeText(snippet).then(
+          () => {
+            setExtraitManuel(null);
+            setEtatCopie("copie");
+          },
+          // Promesse rejetée : le presse-papiers EXISTE mais refuse (permission
+          // refusée, document non focalisé…). Même repli que s'il manquait.
+          () => replierSurZone(snippet),
+        );
+        return;
+      }
+    } catch {
+      // Un accès à `navigator.clipboard` qui lève : on replie, comme le reste.
+    }
+    replierSurZone(snippet);
+  }
+
+  function replierSurZone(snippet: string) {
+    setExtraitManuel(snippet);
+    setEtatCopie("manuel");
   }
 
   function handleReset() {
@@ -318,6 +376,51 @@ export function QgEditPanel({ cles, titre = "QG edit" }: QgEditPanelProps = {}) 
           Reset
         </button>
       </div>
+
+      {etatCopie !== null && (
+        <div
+          role="status"
+          style={{
+            marginTop: 6,
+            fontSize: 10,
+            fontFamily: "monospace",
+            lineHeight: 1.4,
+            color: etatCopie === "copie" ? "#b8e0a8" : "#e8d5a3",
+          }}
+        >
+          {etatCopie === "copie"
+            ? "Copié dans le presse-papiers."
+            : "Presse-papiers indisponible (HTTP simple) — texte sélectionné, copiez-le à la main."}
+        </div>
+      )}
+
+      {extraitManuel !== null && (
+        <textarea
+          ref={zoneRef}
+          value={extraitManuel}
+          // Éditable, pas `readOnly` : iOS refuse de sélectionner un champ en
+          // lecture seule. Ce qu'on y taperait n'a aucune conséquence — la
+          // zone est jetée au clic suivant sur « Copier ».
+          onChange={(e) => setExtraitManuel(e.target.value)}
+          spellCheck={false}
+          rows={Math.min(12, extraitManuel.split("\n").length)}
+          aria-label="Extrait à copier à la main"
+          style={{
+            width: "100%",
+            marginTop: 6,
+            background: "rgba(0,0,0,0.5)",
+            border: "1px solid var(--brass-500)",
+            borderRadius: 4,
+            padding: "6px 8px",
+            fontSize: 10,
+            fontFamily: "monospace",
+            lineHeight: 1.4,
+            color: "#e8d5a3",
+            resize: "vertical",
+            whiteSpace: "pre",
+          }}
+        />
+      )}
     </div>
   );
 }
