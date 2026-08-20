@@ -3,6 +3,7 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { QgEditOverlay } from "../qg/dev/QgEditOverlay";
+import type { EditableKey } from "../qg/dev/QgEditContext";
 
 /**
  * Panorama du bureau : une seule image de fond (`/qg/fond-cabinet.webp`,
@@ -27,9 +28,23 @@ export const UNIFIED_ZONE_CENTER_FRACTION: Record<UnifiedZoneKey, number> = {
   repos: 5 / 6,
 };
 
+export interface PanoramaZone {
+  /** Identifiant de la zone, écrit dans `data-unified-zone`. */
+  key: string;
+  /** Centre de la zone en FRACTION de la largeur de scène (0..1). */
+  center: number;
+}
+
+/** Zones du bureau : 3 tiers égaux → centres à 1/6, 1/2, 5/6. */
+export const ZONES_BUREAU: PanoramaZone[] = [
+  { key: "bureau", center: 1 / 6 },
+  { key: "porte", center: 1 / 2 },
+  { key: "repos", center: 5 / 6 },
+];
+
+const IMAGE_BUREAU = "/qg/fond-cabinet.webp";
 /** Aspect exact de l'image de fond (fond-cabinet.webp : 2752×1536). */
-const PANO_ASPECT_W = 2752;
-const PANO_ASPECT_H = 1536;
+const ASPECT_BUREAU = { w: 2752, h: 1536 };
 
 const containerStyle: CSSProperties = {
   position: "relative",
@@ -59,7 +74,7 @@ const snapAnchorStyle: CSSProperties = {
   pointerEvents: "none",
 };
 
-const sceneStyle: CSSProperties = {
+const sceneStyleBase: CSSProperties = {
   position: "relative",
   // Dimensionnée par la HAUTEUR : la scène remplit toujours toute la hauteur
   // visible (header↔tabbar), et sa largeur suit l'aspect de l'image. Sur écran
@@ -67,7 +82,6 @@ const sceneStyle: CSSProperties = {
   // au lieu de l'ancien modèle « 300vw » qui sur-zoomait et rognait le haut
   // (porte coupée). Sur téléphone, largeur ≈ 3 écrans → comportement inchangé.
   height: "100%",
-  aspectRatio: `${PANO_ASPECT_W} / ${PANO_ASPECT_H}`,
   flexShrink: 0,
 };
 
@@ -92,10 +106,17 @@ const objectsLayer: CSSProperties = {
 };
 
 interface UnifiedPanoramaProps {
-  initialZone?: UnifiedZoneKey;
+  image?: string;
+  aspect?: { w: number; h: number };
+  zones?: PanoramaZone[];
+  ariaLabel?: string;
+  /** Clés que l'overlay de calage dev doit afficher sur CETTE scène. */
+  editKeys?: EditableKey[];
+  /** Zone centrée au montage. Défaut : la zone du milieu. */
+  initialZone?: string;
   children?: ReactNode;
   /**
-   * Index de la zone la plus proche (0 = bureau … 2 = repos), émis à
+   * Index de la zone la plus proche (0 = première zone … dernière), émis à
    * chaque rAF de scroll. Seule l'init (mount) émet l'index exact de la
    * zone cible ; ensuite l'index est celui de la zone la plus proche
    * (entier snappé), pas une valeur fractionnaire.
@@ -104,13 +125,23 @@ interface UnifiedPanoramaProps {
 }
 
 export function UnifiedPanorama({
-  initialZone = "porte",
+  image = IMAGE_BUREAU,
+  aspect = ASPECT_BUREAU,
+  zones = ZONES_BUREAU,
+  ariaLabel,
+  editKeys,
+  initialZone,
   children,
   onZoneIndex,
 }: UnifiedPanoramaProps) {
   const { d } = useLangue();
+  const zoneCible = initialZone ?? zones[Math.floor(zones.length / 2)].key;
   const ref = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
+  const sceneStyle: CSSProperties = {
+    ...sceneStyleBase,
+    aspectRatio: `${aspect.w} / ${aspect.h}`,
+  };
   const onZoneIndexRef = useRef(onZoneIndex);
   useEffect(() => {
     onZoneIndexRef.current = onZoneIndex;
@@ -123,7 +154,7 @@ export function UnifiedPanorama({
     const el = ref.current;
     if (!el) return;
     const anchor = el.querySelector(
-      `[data-unified-zone="${initialZone}"]`,
+      `[data-unified-zone="${zoneCible}"]`,
     ) as HTMLElement | null;
     if (!anchor) return;
     const saved = el.style.scrollBehavior;
@@ -131,7 +162,7 @@ export function UnifiedPanorama({
     anchor.scrollIntoView({ inline: "center", block: "nearest" });
     el.style.scrollBehavior = saved;
     didInitRef.current = true;
-    onZoneIndexRef.current?.(UNIFIED_ZONE_ORDER.indexOf(initialZone));
+    onZoneIndexRef.current?.(zones.findIndex((z) => z.key === zoneCible));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -151,9 +182,8 @@ export function UnifiedPanorama({
         const sceneWidth = scene.offsetWidth;
         let closestIdx = 0;
         let bestDist = Infinity;
-        for (let i = 0; i < UNIFIED_ZONE_ORDER.length; i++) {
-          const z = UNIFIED_ZONE_ORDER[i];
-          const centerPx = sceneWidth * UNIFIED_ZONE_CENTER_FRACTION[z];
+        for (let i = 0; i < zones.length; i++) {
+          const centerPx = sceneWidth * zones[i].center;
           const dz = Math.abs(viewportCenter - centerPx);
           if (dz < bestDist) {
             bestDist = dz;
@@ -168,37 +198,33 @@ export function UnifiedPanorama({
       el.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div
       ref={ref}
       style={containerStyle}
-      aria-label={d.qg.panorama}
+      aria-label={ariaLabel ?? d.qg.panorama}
       data-unified-panorama="1"
     >
       <div ref={sceneRef} style={sceneStyle} data-unified-scene="1">
-        <img
-          src="/qg/fond-cabinet.webp"
-          alt=""
-          style={bgStyle}
-          draggable={false}
-        />
+        <img src={image} alt="" style={bgStyle} draggable={false} />
         {/* Objets interactifs positionnés au-dessus */}
         <div style={objectsLayer}>
           {children}
           {/* L'overlay s'auto-gate via le contexte d'édition (enabled + active). */}
-          <QgEditOverlay />
+          <QgEditOverlay cles={editKeys} />
         </div>
 
         {/* Snap anchors (1 par zone), au centre de chaque zone (% de scène). */}
-        {UNIFIED_ZONE_ORDER.map((zone) => (
+        {zones.map((z) => (
           <div
-            key={zone}
-            data-unified-zone={zone}
+            key={z.key}
+            data-unified-zone={z.key}
             style={{
               ...snapAnchorStyle,
-              left: `${UNIFIED_ZONE_CENTER_FRACTION[zone] * 100}%`,
+              left: `${z.center * 100}%`,
             }}
             aria-hidden
           />

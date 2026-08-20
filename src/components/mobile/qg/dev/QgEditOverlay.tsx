@@ -207,7 +207,16 @@ function OutlineAvecCoord({
   );
 }
 
-export function QgEditOverlay() {
+interface QgEditOverlayProps {
+  /**
+   * Clés à afficher sur CETTE scène. Non branché : `ALL_KEYS` reste utilisé
+   * tant que le tri par scène n'est pas implémenté (Task 3 du plan Bazar).
+   */
+  cles?: EditableKey[];
+}
+
+export function QgEditOverlay({ cles }: QgEditOverlayProps = {}) {
+  void cles; // pas encore branché — cf. commentaire de la prop.
   const ctx = useQgEditContext();
   if (!ctx?.enabled || !ctx.active) return null;
   return (
