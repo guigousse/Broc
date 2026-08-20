@@ -864,5 +864,7 @@ export const fr = {
     prixJetonUn: "{n} jeton",
     vendu: "Vendu — de retour lundi",
     soldeJetons: "Vos jetons : {n}",
+    manqueJetons: "Il vous manque {n} jetons",
+    manqueJetonUn: "Il vous manque {n} jeton",
   },
 } as const;

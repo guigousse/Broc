@@ -848,5 +848,7 @@ export const el: DictionnaireUI = {
     prixJetonUn: "{n} μάρκα",
     vendu: "Πουλήθηκε — επιστρέφει τη Δευτέρα",
     soldeJetons: "Οι μάρκες σας: {n}",
+    manqueJetons: "Σου λείπουν {n} μάρκες",
+    manqueJetonUn: "Σου λείπει {n} μάρκα",
   },
 };

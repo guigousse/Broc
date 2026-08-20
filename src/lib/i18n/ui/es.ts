@@ -829,5 +829,7 @@ export const es: DictionnaireUI = {
     prixJetonUn: "{n} ficha",
     vendu: "Vendido — vuelve el lunes",
     soldeJetons: "Tus fichas: {n}",
+    manqueJetons: "Te faltan {n} fichas",
+    manqueJetonUn: "Te falta {n} ficha",
   },
 };

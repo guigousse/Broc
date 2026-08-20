@@ -826,5 +826,7 @@ export const en: DictionnaireUI = {
     prixJetonUn: "{n} token",
     vendu: "Sold — back on Monday",
     soldeJetons: "Your tokens: {n}",
+    manqueJetons: "You need {n} more tokens",
+    manqueJetonUn: "You need {n} more token",
   },
 };
