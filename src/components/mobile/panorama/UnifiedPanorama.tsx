@@ -105,6 +105,24 @@ const objectsLayer: CSSProperties = {
   pointerEvents: "none",
 };
 
+// Aucun idiome « sr-only » partagé n'existe ailleurs dans le code — on
+// inline le clip-rect classique. Le panorama est une scène illustrée : rien
+// à l'écran ne nomme le lieu pour un joueur voyant (le décor parle de
+// lui-même), mais un joueur non-voyant arrive ici par une porte, et sans ce
+// titre rien ne dit où il se trouve — `aria-label` sur le conteneur n'est
+// pas repris par la navigation au rotor des titres (VoiceOver, NVDA).
+const titrePanoramaStyle: CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
 interface UnifiedPanoramaProps {
   image?: string;
   aspect?: { w: number; h: number };
@@ -208,6 +226,7 @@ export function UnifiedPanorama({
       aria-label={ariaLabel ?? d.qg.panorama}
       data-unified-panorama="1"
     >
+      <h1 style={titrePanoramaStyle}>{ariaLabel ?? d.qg.panorama}</h1>
       <div ref={sceneRef} style={sceneStyle} data-unified-scene="1">
         <img src={image} alt="" style={bgStyle} draggable={false} />
         {/* Objets interactifs positionnés au-dessus */}

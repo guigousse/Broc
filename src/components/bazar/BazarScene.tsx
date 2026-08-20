@@ -30,8 +30,8 @@ interface BazarSceneProps {
 /**
  * La scène du Bazar : panorama 3 zones (arcade · comptoir · antiquités),
  * l'étal de la semaine posé sur les neuf cases de l'étagère derrière le
- * comptoir. Vue pure comme `EtalBazarVue` — tout arrive par les props, la
- * composition avec le contexte de jeu reste à faire ailleurs.
+ * comptoir. Vue pure — tout arrive par les props, la composition avec le
+ * contexte de jeu se fait dans `src/app/bazar/page.tsx`.
  */
 export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProps) {
   const { d, tr, locale } = useLangue();
