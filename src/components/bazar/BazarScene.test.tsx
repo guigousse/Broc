@@ -93,17 +93,23 @@ describe("BazarScene", () => {
     expect(screen.queryByTestId("article-table")).toBeNull();
   });
 
-  // La spec (§4.4) exige ce cas sur la SCÈNE, pas seulement sur un article
-  // isolé : bourse à 0 → les quatre articles sont désaturés d'un bloc.
-  it("bourse à 0 : les quatre articles sont désaturés et n'achètent rien", () => {
+  // La spec (§4.4) demandait la désaturation des articles hors de portée ;
+  // l'auteur l'a REFUSÉE à la recette du 2026-08-20 (vue sur téléphone) : la
+  // marchandise reste en couleur, quoi qu'il arrive, et c'est le prix barré
+  // qui dit l'inaccessibilité. Le test garde le cas « bourse à 0 » — il
+  // atteste maintenant ce que la conception dit, pas son contraire.
+  it("bourse à 0 : les quatre articles restent en couleur, prix barré", () => {
     const { onAcheter } = monter(ETAL, 0);
     for (const cle of ["case4", "case5", "case6", "case2"]) {
       const article = screen.getByTestId(`article-${cle}`);
-      expect(article.style.filter).toContain("grayscale");
+      expect(article.style.filter).toBe("");
     }
+    expect((screen.getByText("8 jetons") as HTMLElement).style.textDecoration).toBe(
+      "line-through",
+    );
+    // Et taper n'achète toujours rien.
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
     expect(onAcheter).not.toHaveBeenCalled();
-    expect(screen.getByText(/Il vous manque 8 jetons/)).toBeTruthy();
   });
 
   // Revue du 2026-08-20 : la scène testait `etal.vitrine && template`. Un

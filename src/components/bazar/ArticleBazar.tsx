@@ -23,6 +23,13 @@ interface ArticleBazarProps {
  * Un article posé dans la scène : son visuel, son étiquette de prix, et
  * l'état « hors de portée ».
  *
+ * La marchandise reste TOUJOURS en couleur. Elle a d'abord été désaturée
+ * (`grayscale(1) opacity(0.65)`) quand la bourse ne suffisait pas ; l'auteur
+ * l'a refusé sur son téléphone à la recette du 2026-08-20 — une boutique dont
+ * la moitié des articles est grise ne donne pas envie d'y entrer, et le décor
+ * peint perd ce pour quoi il a été peint. L'inaccessibilité est portée par la
+ * seule étiquette de prix, BARRÉE, et par le message du détail.
+ *
  * Pas de `disabled` natif : un bouton désactivé ne dispatche AUCUN clic et ne
  * le laisse donc jamais remonter à un parent — poser la bulle « il vous
  * manque N jetons » sur le conteneur ne servait à rien tant que le joueur
@@ -89,7 +96,6 @@ export function ArticleBazar({ cle, visuel, libelle, prix, jetons, onAcheter }: 
     display: "grid",
     justifyItems: "center",
     alignItems: "end",
-    filter: horsDePortee ? "grayscale(1) opacity(0.65)" : undefined,
   };
 
   const colonneEtiquettes: CSSProperties = {
@@ -155,10 +161,10 @@ export function ArticleBazar({ cle, visuel, libelle, prix, jetons, onAcheter }: 
           {tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
         </span>
         {bulle && horsDePortee && (
-          // Même plaque que le prix, et le même laiton clair : le conteneur
-          // porte `grayscale(1)` quand l'article est hors de portée, si bien
-          // qu'une couleur d'alerte ne serait JAMAIS vue rouge. Autant dire
-          // vrai dans le code — c'est le texte qui porte le message.
+          // Même plaque que le prix, et le même laiton clair : la marchandise
+          // reste en couleur, c'est le TEXTE qui porte le message — une
+          // couleur d'alerte de plus sur une étagère déjà bariolée ne se
+          // lirait pas mieux.
           <span role="status" style={PLAQUE_ETIQUETTE}>
             {tr(manque > 1 ? d.bazar.manqueJetons : d.bazar.manqueJetonUn, { n: manque })}
           </span>

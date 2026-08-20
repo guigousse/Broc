@@ -56,6 +56,15 @@ describe("ArticleBazar", () => {
     expect(prix.style.textDecoration).toBe("line-through");
   });
 
+  // Recette du 2026-08-20 sur téléphone : l'auteur a refusé la désaturation
+  // des articles trop chers. La marchandise reste en couleur ; seul le prix,
+  // barré, dit que la bourse ne suit pas.
+  it("hors de portée : l'article reste en COULEUR (aucun filtre)", () => {
+    monter({ prix: 12, jetons: 5 });
+    const article = screen.getByTestId("article-case1");
+    expect(article.style.filter).toBe("");
+  });
+
   it("à portée : aria-disabled est absent ou faux", () => {
     monter({ prix: 3, jetons: 10 });
     const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
