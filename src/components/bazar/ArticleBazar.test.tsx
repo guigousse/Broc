@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, fireEvent } from "@testing-library/react";
-import { ArticleBazar } from "./ArticleBazar";
+import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { ArticleBazar, DUREE_BULLE_MS } from "./ArticleBazar";
+import { BAZAR_LAYOUT } from "./bazarLayout";
+import { qgPct } from "@/components/mobile/qg/layout";
+import {
+  QgEditProvider,
+  useQgEditContext,
+} from "@/components/mobile/qg/dev/QgEditContext";
 
 afterEach(cleanup);
 
@@ -110,5 +116,151 @@ describe("ArticleBazar", () => {
       />,
     );
     expect(screen.queryByText("Il vous manque 7 jetons")).toBeNull();
+  });
+
+  it("la bulle est brève : elle s'efface toute seule au bout de 2,5 s", () => {
+    vi.useFakeTimers();
+    try {
+      monter({ prix: 12, jetons: 5 });
+      const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
+      fireEvent.click(bouton);
+      expect(screen.getByText("Il vous manque 7 jetons")).toBeTruthy();
+
+      act(() => {
+        vi.advanceTimersByTime(DUREE_BULLE_MS - 1);
+      });
+      expect(screen.queryByText("Il vous manque 7 jetons")).toBeTruthy();
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+      expect(screen.queryByText("Il vous manque 7 jetons")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("un nouveau tap réarme le minuteur au lieu d'en empiler un second", () => {
+    vi.useFakeTimers();
+    try {
+      monter({ prix: 12, jetons: 5 });
+      const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
+      fireEvent.click(bouton);
+      act(() => {
+        vi.advanceTimersByTime(DUREE_BULLE_MS - 100);
+      });
+      // Deuxième tap juste avant l'échéance : la bulle repart pour 2,5 s
+      // pleines, et le minuteur du premier tap ne doit pas la couper.
+      fireEvent.click(bouton);
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      expect(screen.queryByText("Il vous manque 7 jetons")).toBeTruthy();
+      act(() => {
+        vi.advanceTimersByTime(DUREE_BULLE_MS);
+      });
+      expect(screen.queryByText("Il vous manque 7 jetons")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("le minuteur est nettoyé au démontage", () => {
+    vi.useFakeTimers();
+    const clear = vi.spyOn(globalThis, "clearTimeout");
+    try {
+      const { unmount } = monter({ prix: 12, jetons: 5 });
+      fireEvent.click(screen.getByRole("button", { name: /5 pièces · Musique/ }));
+      clear.mockClear();
+      unmount();
+      expect(clear).toHaveBeenCalled();
+    } finally {
+      clear.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  // ── Revue du 2026-08-20, constat I1 ──────────────────────────────────────
+  // jsdom n'a pas de moteur de layout : la seule trace observable de ces deux
+  // défauts est le style en ligne. Le dépôt n'installe pas jest-dom, on lit
+  // donc `element.style.*` directement.
+  describe("les étiquettes ne poussent pas l'article hors de l'étagère", () => {
+    it("le conteneur ne porte que le visuel : c'est LUI qui est ancré à la planche", () => {
+      monter();
+      const article = screen.getByTestId("article-case1");
+      // Deux enfants seulement : le bouton (dans le flux, donc ancré par
+      // `bottom`) et la colonne d'étiquettes, hors flux.
+      expect(article.children.length).toBe(2);
+      const [bouton, etiquettes] = [...article.children] as HTMLElement[];
+      expect(bouton.tagName).toBe("BUTTON");
+      expect(etiquettes.style.position).toBe("absolute");
+    });
+
+    it("la colonne prix + bulle est suspendue SOUS la case, hors du flux", () => {
+      monter();
+      const etiquettes = screen.getByTestId("etiquettes-case1");
+      expect(etiquettes.style.position).toBe("absolute");
+      expect(etiquettes.style.top).toBe("calc(100% + 2px)");
+      expect(etiquettes.style.left).toBe("50%");
+      expect(etiquettes.style.transform).toBe("translateX(-50%)");
+    });
+
+    it("faire apparaître la bulle n'ajoute aucune rangée au conteneur", () => {
+      monter({ prix: 12, jetons: 5 });
+      const article = screen.getByTestId("article-case1");
+      const avant = article.children.length;
+      fireEvent.click(screen.getByRole("button", { name: /5 pièces · Musique/ }));
+      expect(screen.getByText("Il vous manque 7 jetons")).toBeTruthy();
+      expect(article.children.length).toBe(avant);
+    });
+  });
+});
+
+// ── Revue du 2026-08-20, constat C1 ────────────────────────────────────────
+// L'article lisait `BAZAR_LAYOUT.objets[cle]` en direct : tirer son cadre en
+// mode calage déplaçait le pointillé sans déplacer l'article.
+describe("ArticleBazar suit l'outil de calage", () => {
+  function Deplacer({ left }: { left: number }) {
+    const ctx = useQgEditContext();
+    return (
+      <button type="button" data-testid="deplacer" onClick={() => ctx?.setOverride("case1", { left })}>
+        déplacer
+      </button>
+    );
+  }
+
+  it("sans override, il est posé à sa coordonnée authorée", () => {
+    render(
+      <QgEditProvider enabled>
+        <ArticleBazar
+          cle="case1"
+          visuel={<span />}
+          libelle="lot"
+          prix={1}
+          jetons={10}
+          onAcheter={vi.fn()}
+        />
+      </QgEditProvider>,
+    );
+    const article = screen.getByTestId("article-case1");
+    expect(article.style.left).toBe(`${qgPct(BAZAR_LAYOUT.objets.case1.left)}%`);
+  });
+
+  it("avec un override, l'article se déplace avec son cadre", () => {
+    render(
+      <QgEditProvider enabled>
+        <Deplacer left={120} />
+        <ArticleBazar
+          cle="case1"
+          visuel={<span />}
+          libelle="lot"
+          prix={1}
+          jetons={10}
+          onAcheter={vi.fn()}
+        />
+      </QgEditProvider>,
+    );
+    fireEvent.click(screen.getByTestId("deplacer"));
+    expect(screen.getByTestId("article-case1").style.left).toBe(`${qgPct(120)}%`);
   });
 });

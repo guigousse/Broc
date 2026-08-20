@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { qgPct } from "@/components/mobile/qg/layout";
-import { BAZAR_LAYOUT, type BazarObjetKey } from "./bazarLayout";
+import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
+import { type BazarObjetKey } from "./bazarLayout";
+
+/** Durée d'affichage de la bulle « il vous manque N jetons ». */
+export const DUREE_BULLE_MS = 2500;
 
 interface ArticleBazarProps {
   cle: BazarObjetKey;
@@ -33,7 +37,21 @@ export function ArticleBazar({ cle, visuel, libelle, prix, jetons, onAcheter }: 
   const [bulle, setBulle] = useState(false);
   const horsDePortee = jetons < prix;
   const manque = prix - jetons;
-  const coord = BAZAR_LAYOUT.objets[cle];
+  // Par le hook, pas par le dictionnaire : sans lui, tirer le cadre en mode
+  // calage (`?qgedit=1`) déplaçait le pointillé sans déplacer l'article.
+  const coord = useQgObjet(cle);
+
+  // La bulle est « brève » (spec) : un minuteur la referme au bout de 2,5 s.
+  // Le minuteur est réarmé à chaque tap et nettoyé au démontage — sans ça,
+  // trois lots trop chers laissaient trois lignes affichées indéfiniment.
+  const minuteurRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const annulerMinuteur = useCallback(() => {
+    if (minuteurRef.current !== null) {
+      clearTimeout(minuteurRef.current);
+      minuteurRef.current = null;
+    }
+  }, []);
+  useEffect(() => annulerMinuteur, [annulerMinuteur]);
 
   // La bulle est un aveu ponctuel du tap précédent, pas un état durable : dès
   // que la bourse suffit de nouveau, elle ne doit pas pouvoir réapparaître
@@ -41,9 +59,16 @@ export function ArticleBazar({ cle, visuel, libelle, prix, jetons, onAcheter }: 
   useEffect(() => {
     if (!horsDePortee) {
       setBulle(false);
+      annulerMinuteur();
     }
-  }, [horsDePortee]);
+  }, [horsDePortee, annulerMinuteur]);
 
+  // Le conteneur ne porte QUE le visuel : ancré en `bottom`, c'est donc le
+  // visuel — et non son étiquette de prix — qui repose sur la planche. Le prix
+  // et la bulle vivent dans une colonne HORS FLUX suspendue sous lui : ajouter
+  // la bulle ne peut plus pousser l'article d'une rangée vers le haut (défaut
+  // relevé à la revue du 2026-08-20 ; jsdom n'a pas de layout, seul le style
+  // en ligne peut en témoigner).
   const style: CSSProperties = {
     position: "absolute",
     left: `${qgPct(coord.left)}%`,
@@ -52,8 +77,17 @@ export function ArticleBazar({ cle, visuel, libelle, prix, jetons, onAcheter }: 
     pointerEvents: "auto",
     display: "grid",
     justifyItems: "center",
-    gap: 2,
     filter: horsDePortee ? "grayscale(1) opacity(0.65)" : undefined,
+  };
+
+  const colonneEtiquettes: CSSProperties = {
+    position: "absolute",
+    top: "calc(100% + 2px)",
+    left: "50%",
+    transform: "translateX(-50%)",
+    display: "grid",
+    justifyItems: "center",
+    gap: 2,
   };
 
   return (
@@ -64,30 +98,50 @@ export function ArticleBazar({ cle, visuel, libelle, prix, jetons, onAcheter }: 
         aria-disabled={horsDePortee}
         onClick={() => {
           if (horsDePortee) {
+            annulerMinuteur();
             setBulle(true);
+            minuteurRef.current = setTimeout(() => {
+              minuteurRef.current = null;
+              setBulle(false);
+            }, DUREE_BULLE_MS);
           } else {
             onAcheter();
           }
         }}
-        style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
+        // Le bouton occupe toute la case et centre son visuel. Il était
+        // auparavant en largeur « shrink-to-fit » : le visuel de la vitrine,
+        // un `<span style="width:100%">`, y résolvait son pourcentage contre
+        // une largeur elle-même déduite du contenu, donc contre rien.
+        style={{
+          background: "transparent",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+          width: "100%",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+        }}
       >
         {visuel}
       </button>
-      <span
-        style={{
-          fontSize: "0.7rem",
-          color: "var(--brass-700)",
-          textDecoration: horsDePortee ? "line-through" : "none",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
-      </span>
-      {bulle && horsDePortee && (
-        <span role="status" style={{ fontSize: "0.7rem", whiteSpace: "nowrap" }}>
-          {tr(manque > 1 ? d.bazar.manqueJetons : d.bazar.manqueJetonUn, { n: manque })}
+      <span style={colonneEtiquettes} data-testid={`etiquettes-${cle}`}>
+        <span
+          style={{
+            fontSize: "0.7rem",
+            color: "var(--brass-700)",
+            textDecoration: horsDePortee ? "line-through" : "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
         </span>
-      )}
+        {bulle && horsDePortee && (
+          <span role="status" style={{ fontSize: "0.7rem", whiteSpace: "nowrap" }}>
+            {tr(manque > 1 ? d.bazar.manqueJetons : d.bazar.manqueJetonUn, { n: manque })}
+          </span>
+        )}
+      </span>
     </div>
   );
 }
