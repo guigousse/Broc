@@ -18,6 +18,11 @@ describe("UnifiedPanorama", () => {
       n.getAttribute("data-unified-zone"),
     );
     expect(ancres).toEqual(["bureau", "porte", "repos"]);
+    // L'aspect par défaut est celui de fond-cabinet.webp (2752×1536) : la spec
+    // exige que « à props par défaut, image, ASPECT et clés de zone soient ceux
+    // du cabinet ».
+    const scene = container.querySelector("[data-unified-scene]") as HTMLElement;
+    expect(scene.style.aspectRatio).toBe("2752 / 1536");
   });
 
   it("accepte un autre décor et d'autres zones", () => {
