@@ -356,6 +356,10 @@ describe("EnergieRecharge — iap_ecran_vu", () => {
   afterEach(() => {
     reinitialiserAnalyticsPourTest();
     definirLecteurContexte(null);
+    // Le drapeau vit en localStorage (hors save) : on le remet à zéro pour
+    // ne pas polluer les tests suivants du fichier (même pattern que
+    // ci-dessus, describe « achat énergie infinie »).
+    definirEnergieInfinie(false);
   });
 
   it("émet une fois au montage, source « sortie-bloquee » quand l'alerte est fournie", () => {
@@ -381,6 +385,5 @@ describe("EnergieRecharge — iap_ecran_vu", () => {
     render(<EnergieRecharge onClose={() => {}} />);
     const appels = stub.appels.filter((a) => a.nom === EVENEMENTS.iapEcranVu);
     expect(appels).toHaveLength(0);
-    definirEnergieInfinie(false);
   });
 });

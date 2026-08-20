@@ -1426,14 +1426,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!aUnePartie) return;
     // `depense` et `recette` sont recalculés ici, alors que l'updater
     // ci-dessus vient de calculer la même chose pour l'entrée du ledger :
-    // duplication volontaire, pas un oubli de factorisation. La copie de
-    // l'updater ne peut pas s'en échapper (StrictMode le double-invoque), et
-    // mutualiser en faisant remonter sa valeur obligerait à faire vivre
-    // `logEvenement` DANS l'updater — exactement le double-emit StrictMode
-    // que ce chantier a pris soin d'éviter partout ailleurs (lire
-    // `stateRef.current` avant `setState`). Toucher au chemin du ledger pour
-    // économiser ce recalcul serait aussi changer du comportement de jeu,
-    // ce que ce chantier s'interdit.
+    // duplication volontaire, pas un oubli de factorisation. Les deux calculs
+    // ne dépendent que de `session` — paramètre de `enregistrerSession`, pas
+    // dérivé de `prev` — donc ils ne peuvent pas diverger, quel que soit le
+    // nombre de fois où StrictMode invoque l'updater. On pourrait les
+    // mutualiser en hissant le calcul avant `setState`, mais ce serait
+    // toucher au code qui construit l'entrée du ledger pour un chantier de
+    // mesure — donc changer du comportement de jeu, ce que ce chantier
+    // s'interdit, même pour un remplacement sans risque apparent. En
+    // revanche `logEvenement` DOIT rester hors de l'updater : StrictMode le
+    // double-invoque, et un effet de bord (l'envoi de l'événement) y
+    // partirait deux fois.
     // Discriminé sur session.type : chine et vente partagent ce même hook
     // (cf. `Session` = SessionChinage | SessionVente, types/game.ts), donc les
     // deux événements économiques partent d'ici.
