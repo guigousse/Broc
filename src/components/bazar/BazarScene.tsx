@@ -2,7 +2,7 @@
 
 import { UnifiedPanorama, type PanoramaZone } from "@/components/mobile/panorama/UnifiedPanorama";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
-import { ItemImage } from "@/components/ui/ItemImage";
+import { ItemSticker } from "@/components/ui/ItemSticker";
 import { getTemplate } from "@/data/objetTemplates";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie } from "@/lib/i18n/libelles";
@@ -88,18 +88,26 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
         <ArticleBazar
           cle={CLE_VITRINE}
           visuel={
+            // Le carré est porté par ce `span`, pas par le sticker : c'est lui
+            // qui donne au `fill` une hauteur définie à laquelle se mesurer,
+            // quel que soit le moteur.
             <span style={{ display: "block", width: "100%", aspectRatio: "1 / 1" }}>
               {template ? (
-                <ItemImage
+                // Vignette découpée — la MÊME que partout ailleurs dans le jeu
+                // (collection, détail d'objet, carnet de quêtes) : contour
+                // blanc die-cut et légère inclinaison déterministe. Posé sur
+                // une illustration peinte, un PNG nu se confondait avec le mur
+                // de sauge ; le liseré le détache de l'étagère. `thumb` parce
+                // que la case fait ~22 unités de large : décoder un plein
+                // format pour un timbre-poste coûte de la mémoire à
+                // l'ouverture de l'écran (cf. `getItemThumbUrl`).
+                <ItemSticker
                   templateId={template.templateId}
                   categorie={template.categorie}
-                  alt=""
-                  sizes="30vw"
-                  // `contain` letterboxe les objets larges et bas (une
-                  // ménagère, une pile de vinyles) : sans ancrer le bas, le
-                  // vide laissé par le letterboxing les fait flotter au lieu
-                  // de reposer sur la planche visée par le cadre pointillé.
-                  verticalAlign="bottom"
+                  fill
+                  thumb
+                  tilt
+                  outlinePx={2}
                 />
               ) : null}
             </span>

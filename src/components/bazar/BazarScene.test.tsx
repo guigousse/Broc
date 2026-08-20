@@ -58,6 +58,27 @@ describe("BazarScene", () => {
     expect(onAcheter).toHaveBeenCalledWith({ type: "vitrine" });
   });
 
+  // L'objet de la semaine est rendu comme partout ailleurs dans le jeu : une
+  // vignette découpée (contour blanc die-cut + inclinaison déterministe), pas
+  // un PNG nu. Posé sur une illustration peinte, le PNG se confondait avec le
+  // mur (recette du 2026-08-20).
+  it("l'objet de la semaine est une vignette découpée, en vignette légère", () => {
+    monter();
+    const img = screen
+      .getByTestId("article-case2")
+      .querySelector("img") as HTMLImageElement;
+    expect(img).toBeTruthy();
+    // Le contour die-cut : quatre drop-shadow blanches autour de l'alpha.
+    expect(img.style.filter).toContain("#fdfaf2");
+    // `thumb` : la vignette 384 px, pas le plein format — la case fait ~22
+    // unités de large, décoder un 1600 px pour ça coûte de la mémoire.
+    expect(img.getAttribute("src")).toBe(
+      "/items/thumbs/jx.jeu_magnatimmo_annees_80.webp",
+    );
+    // `fill` : le sticker remplit la case carrée au lieu d'imposer sa taille.
+    expect(img.style.position).toBe("absolute");
+  });
+
   it("vitrine vendue : la place est vide et le dit", () => {
     monter({ ...ETAL, vitrine: null });
     expect(screen.queryByTestId("article-case2")).toBeNull();
