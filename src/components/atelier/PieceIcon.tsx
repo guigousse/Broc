@@ -6,7 +6,14 @@ import type { CategorieObjet } from "@/types/game";
 
 interface PieceIconProps {
   categorie: CategorieObjet;
-  /** Diamètre extérieur (cog). Défaut 36. */
+  /**
+   * Diamètre extérieur (cog). Défaut 36.
+   *
+   * C'est une taille SOUHAITÉE, pas une promesse : l'engrenage ne dépasse
+   * jamais la boîte qui le reçoit (cf. le plafond `max-width/height: 100%`
+   * ci-dessous). Un nombre de pixels ne peut pas tenir dans une case dont la
+   * largeur suit l'écran — celle de l'étal du Bazar, par exemple.
+   */
   size?: number;
   /** Si fourni, badge quantité positionné en bas (chevauche le rim). */
   count?: number;
@@ -31,6 +38,14 @@ export function PieceIcon({ categorie, size = 36, count }: PieceIconProps) {
         placeItems: "center",
         width: size,
         height: size,
+        // « L'objet doit toujours être visible en entier » (recette du
+        // 2026-08-20) : dans une case dont la largeur suit l'écran, un
+        // engrenage de 48 px déborderait sur un petit téléphone et se ferait
+        // rogner. Le plafond le ramène à la taille de sa boîte au lieu de le
+        // laisser sortir. Sans effet là où la boîte est plus grande que
+        // `size` — c'est-à-dire partout ailleurs aujourd'hui.
+        maxWidth: "100%",
+        maxHeight: "100%",
         filter: "drop-shadow(0 1px 1px rgba(40,25,5,0.30))",
       }}
     >
@@ -39,6 +54,11 @@ export function PieceIcon({ categorie, size = 36, count }: PieceIconProps) {
         strokeWidth={1.5}
         color="var(--brass-700)"
         fill="var(--paper-100)"
+        // La taille en style l'emporte sur l'attribut `width`/`height` que
+        // lucide pose à partir de `size` : le dessin suit donc la boîte quand
+        // celle-ci a été rabotée par le plafond, au lieu d'en sortir. Le
+        // `viewBox` de l'icône préserve les proportions.
+        style={{ width: "100%", height: "100%" }}
       />
       <span
         style={{

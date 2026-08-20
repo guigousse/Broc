@@ -146,7 +146,12 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
                     categorie={template.categorie}
                     fill
                     thumb
-                    tilt
+                    // DROIT. `ItemSticker` incline chaque objet de quelques
+                    // degrés (défaut) ; l'auteur n'en veut pas au Bazar : les
+                    // articles d'une boutique sont posés d'aplomb. Accessoire
+                    // utile : une vignette droite n'a plus besoin de déborder
+                    // de son carré aux coins, elle y tient exactement.
+                    tilt={false}
                     outlinePx={2}
                     // Le BAS de l'objet sur l'arête basse du carré. `contain`
                     // letterboxe les objets larges et bas (une ménagère, une

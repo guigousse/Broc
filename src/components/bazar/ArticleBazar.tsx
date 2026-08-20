@@ -113,11 +113,19 @@ export function ArticleBazar({
         // auparavant en largeur « shrink-to-fit » et aligné au pied : le
         // visuel de la vitrine, un `<span style="width:100%">`, y résolvait
         // son pourcentage contre une largeur elle-même déduite du contenu,
-        // donc contre rien, et débordait vers le haut. `overflow: hidden`
-        // est le filet : le visuel de la vitrine (`ItemSticker` en `fill`,
-        // dans un span carré) remplit la case exactement, mais une pièce fixe
-        // (`PieceIcon`, taille en px) ne doit jamais déborder de la case si
-        // celle-ci est un jour recalée plus petite que l'icône.
+        // donc contre rien, et débordait vers le haut.
+        //
+        // PAS d'`overflow: hidden`. Il y en a eu un, comme filet contre un
+        // visuel plus grand que sa case — mais rogner était le mauvais
+        // marché : l'auteur a vu ses articles coupés sur son téléphone
+        // (l'objet de la vitrine par ses coins, le badge de quantité d'un lot
+        // par le bas) et veut l'objet ENTIER, toujours. Le filet est devenu
+        // inutile parce que plus rien ne peut déborder : la vignette est en
+        // `fill` + `object-fit: contain`, donc bornée à la case par
+        // construction, et sans inclinaison depuis la même recette ; et
+        // l'engrenage d'un lot est plafonné à `max-width/height: 100%` de sa
+        // boîte. Un visuel qui ne dépasse pas n'a rien à faire rogner —
+        // rétablir la coupe, ce serait recouper.
         style={{
           background: "transparent",
           border: "none",
@@ -128,7 +136,6 @@ export function ArticleBazar({
           display: "grid",
           justifyItems: "center",
           alignItems: "end",
-          overflow: "hidden",
         }}
       >
         {visuel}

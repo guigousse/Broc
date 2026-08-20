@@ -130,6 +130,27 @@ describe("BazarScene", () => {
     expect(img.style.position).toBe("absolute");
   });
 
+  // « Les objets sont dessinés DROITS » (recette du 2026-08-20) : le sticker
+  // incline chaque objet de quelques degrés par défaut, l'auteur n'en veut pas
+  // dans sa boutique. Accessoire utile : une vignette droite tient exactement
+  // dans son carré, là où une vignette tournée en déborde par les coins.
+  it("l'objet de la semaine est posé d'aplomb, sans inclinaison", () => {
+    monter();
+    const vignette = screen
+      .getByTestId("article-case2")
+      .querySelector("img")?.parentElement as HTMLElement;
+    expect(vignette.style.transform).toBe("rotate(0deg)");
+  });
+
+  // « L'objet doit toujours être visible en entier » : le bouton rognait ce
+  // qui dépassait (`overflow: hidden`), et l'auteur a vu ses articles coupés.
+  // Plus rien ne peut déborder, le filet n'a plus lieu d'être.
+  it("la case ne rogne rien", () => {
+    monter();
+    const bouton = screen.getByRole("button", { name: /Magnatimmo/ });
+    expect(bouton.style.overflow).toBe("");
+  });
+
   // Exigence de l'auteur, acquise le matin même sur `ItemImage` (commit
   // 60d94db5) et reperdue au passage à la vignette : un objet posé sur une
   // étagère touche la planche par sa base. `contain` letterboxe les objets

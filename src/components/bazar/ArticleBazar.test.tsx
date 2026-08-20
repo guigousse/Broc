@@ -172,6 +172,18 @@ describe("ArticleBazar", () => {
       expect(bouton.style.justifyItems).toBe("center");
       expect(bouton.style.alignItems).toBe("end");
     });
+
+    // « L'objet doit toujours être visible en entier » (recette du
+    // 2026-08-20). Le bouton portait `overflow: hidden` comme filet contre un
+    // visuel trop grand ; rogner était le mauvais marché — l'auteur a vu ses
+    // articles coupés sur son téléphone. Plus rien ne peut déborder (vignette
+    // en `fill` + `contain` et sans inclinaison, engrenage plafonné à 100 %
+    // de sa boîte), donc le filet est parti.
+    it("la case ne rogne rien : pas d'overflow: hidden", () => {
+      monter();
+      const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
+      expect(bouton.style.overflow).toBe("");
+    });
   });
 });
 
