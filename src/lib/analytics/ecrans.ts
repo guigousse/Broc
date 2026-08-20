@@ -11,6 +11,9 @@
  */
 const EXACTS: Record<string, string> = {
   "/": "menu",
+  // La route `/bazar` n'existe pas encore sur cette branche (Bazar vit sur
+  // feat/jetons-bazar, non fusionnée) : cette entrée est inerte pour le
+  // moment, mais correcte dès la fusion — à garder, pas du code mort.
   "/bazar": "bazar",
   "/bureau": "bureau",
   "/stockage": "stockage",

@@ -17,7 +17,7 @@ import { nomEcran } from "@/lib/analytics/ecrans";
  * Rend rien ; toute erreur est avalée (une panne de mesure ne casse pas le jeu).
  */
 export function FirebaseBootstrap() {
-  const { state } = useGame();
+  const { state, isHydrated } = useGame();
   const pathname = usePathname();
 
   // Le lecteur de contexte est appelé de façon synchrone au moment du log :
@@ -27,9 +27,15 @@ export function FirebaseBootstrap() {
   etatRef.current = {
     jour: state?.jourActuel ?? 0,
     niveau: state?.brocanteur?.niveau ?? 0,
+    // La route seule ne suffit pas : tant que le chargement async de la save
+    // n'a pas résolu (`isHydrated` faux), `state` est encore `null` alors que
+    // `pathname` peut déjà pointer sur une route de jeu — sans `state != null`
+    // ici, cette fenêtre fabriquait un jour 0 pour un joueur qui peut être au
+    // jour 80 (revue task 5, finding 1).
     // `/bazar` est un écran de jeu absent de ROUTES_PARTIE (cette liste pilote
-    // le chrome global, on n'y touche pas). D'où le complément explicite.
-    enPartie: estRoutePartie(pathname) || pathname === "/bazar",
+    // le chrome global, on n'y touche pas) — Bazar pas encore fusionné sur
+    // cette branche, mais le complément reste correct le jour où il l'est.
+    enPartie: isHydrated && state != null && (estRoutePartie(pathname) || pathname === "/bazar"),
   };
 
   useEffect(() => {
