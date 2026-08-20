@@ -83,4 +83,38 @@ describe("BazarScene", () => {
     expect(screen.queryByTestId("article-borne")).toBeNull();
     expect(screen.queryByTestId("article-table")).toBeNull();
   });
+
+  // La spec (§4.4) exige ce cas sur la SCÈNE, pas seulement sur un article
+  // isolé : bourse à 0 → les quatre articles sont désaturés d'un bloc.
+  it("bourse à 0 : les quatre articles sont désaturés et n'achètent rien", () => {
+    const { onAcheter } = monter(ETAL, 0);
+    for (const cle of ["case4", "case5", "case6", "case2"]) {
+      const article = screen.getByTestId(`article-${cle}`);
+      expect(article.style.filter).toContain("grayscale");
+    }
+    fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
+    expect(onAcheter).not.toHaveBeenCalled();
+    expect(screen.getByText(/Il vous manque 8 jetons/)).toBeTruthy();
+  });
+
+  // Revue du 2026-08-20 : la scène testait `etal.vitrine && template`. Un
+  // templateId retiré du catalogue annonçait « Vendu — de retour lundi » sur
+  // un objet pourtant en vente, et le rendait inachetable.
+  it("template inconnu : l'article reste en vente, sous son identifiant brut", () => {
+    const { onAcheter } = monter({
+      ...ETAL,
+      vitrine: { templateId: "zz.template_disparu", valeurBase: 200, prix: 8 },
+    });
+    expect(screen.queryByText(/Vendu/)).toBeNull();
+    const bouton = screen.getByRole("button", { name: "zz.template_disparu" });
+    fireEvent.click(bouton);
+    expect(onAcheter).toHaveBeenCalledWith({ type: "vitrine" });
+  });
+
+  it("la sortie est posée à la coordonnée du layout, via le hook de calage", () => {
+    monter();
+    const porte = screen.getByRole("button", { name: /Sortir/ }) as HTMLElement;
+    expect(porte.style.left).toBe(`${qgPct(BAZAR_LAYOUT.objets.sortie.left)}%`);
+    expect(porte.style.width).toBe(`${qgPct(BAZAR_LAYOUT.objets.sortie.width)}%`);
+  });
 });

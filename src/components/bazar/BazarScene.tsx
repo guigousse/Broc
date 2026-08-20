@@ -8,10 +8,11 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import { qgPct } from "@/components/mobile/qg/layout";
+import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
 import type { AchatBazar } from "@/lib/bazar/achat";
 import type { EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
-import { BAZAR_LAYOUT, CLES_LOTS, CLE_VITRINE } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_BAZAR, CLES_LOTS, CLE_VITRINE } from "./bazarLayout";
 
 /** Les trois zones du Bazar : le coin arcade, le comptoir, les antiquités. */
 export const ZONES_BAZAR: PanoramaZone[] = [
@@ -35,9 +36,13 @@ interface BazarSceneProps {
  */
 export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProps) {
   const { d, tr, locale } = useLangue();
-  const template = etal.vitrine ? getTemplate(etal.vitrine.templateId) : undefined;
-  const coordVitrine = BAZAR_LAYOUT.objets[CLE_VITRINE];
-  const coordSortie = BAZAR_LAYOUT.objets.sortie;
+  const vitrine = etal.vitrine;
+  const template = vitrine ? getTemplate(vitrine.templateId) : undefined;
+  // Coordonnées lues par le hook, PAS dans le dictionnaire en direct : c'est
+  // ce qui fait suivre l'objet quand on tire son cadre en mode calage
+  // (`?qgedit=1`). Quatre appels inconditionnels, en tête de composant.
+  const coordVitrine = useQgObjet(CLE_VITRINE);
+  const coordSortie = useQgObjet("sortie");
   // Le libellé « Vendu — de retour lundi » est une phrase entière dans les
   // 4 langues (la version grecque est la plus longue). Une case de 20vw ne
   // suffit pas — le texte replierait vers le HAUT (le conteneur est ancré en
@@ -45,8 +50,8 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
   // largeur de la planche qui porte l'objet de la semaine (case1..case3), en
   // nowrap : s'il déborde malgré tout, ça déborde sur les côtés, dans le mur
   // nu du comptoir.
-  const coordCase1 = BAZAR_LAYOUT.objets.case1;
-  const coordCase3 = BAZAR_LAYOUT.objets.case3;
+  const coordCase1 = useQgObjet("case1");
+  const coordCase3 = useQgObjet("case3");
   const venduLeft = coordCase1.left;
   const venduWidth = coordCase3.left + coordCase3.width - coordCase1.left;
 
@@ -56,7 +61,7 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
       aspect={BAZAR_LAYOUT.panoramaAspect}
       zones={ZONES_BAZAR}
       ariaLabel={d.bazar.titre}
-      editKeys={Object.keys(BAZAR_LAYOUT.objets) as (keyof typeof BAZAR_LAYOUT.objets)[]}
+      editKeys={CLES_BAZAR}
     >
       {etal.lotsPieces.map((lot, index) => (
         <ArticleBazar
@@ -73,21 +78,32 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
         />
       ))}
 
-      {etal.vitrine && template ? (
+      {/* La place est vide UNIQUEMENT si la vitrine a été achetée. Un
+          `templateId` retiré du catalogue (`template === undefined`) laissait
+          jusqu'ici afficher « Vendu — de retour lundi » sur un objet pourtant
+          en vente : on retombe sur l'identifiant brut pour le libellé et sur
+          un emplacement nu pour le visuel, mais l'article reste achetable. */}
+      {vitrine ? (
         <ArticleBazar
           cle={CLE_VITRINE}
           visuel={
             <span style={{ display: "block", width: "100%", aspectRatio: "1 / 1" }}>
-              <ItemImage
-                templateId={template.templateId}
-                categorie={template.categorie}
-                alt=""
-                sizes="30vw"
-              />
+              {template ? (
+                <ItemImage
+                  templateId={template.templateId}
+                  categorie={template.categorie}
+                  alt=""
+                  sizes="30vw"
+                />
+              ) : null}
             </span>
           }
-          libelle={nomObjet({ templateId: template.templateId, nom: template.nom }, locale)}
-          prix={etal.vitrine.prix}
+          libelle={
+            template
+              ? nomObjet({ templateId: template.templateId, nom: template.nom }, locale)
+              : vitrine.templateId
+          }
+          prix={vitrine.prix}
           jetons={jetons}
           onAcheter={() => onAcheter({ type: "vitrine" })}
         />

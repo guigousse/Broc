@@ -46,13 +46,36 @@ export default function BazarPage() {
   return (
     <MobileLayout
       header={<MobileHeader budget={state.budget} jetons={state.jetons} forcerAffichageJetons />}
+      fillContent
     >
-      <BazarScene
-        etal={state.bazar}
-        jetons={state.jetons}
-        onAcheter={handleAcheter}
-        onSortir={() => router.push("/bureau")}
-      />
+      <div
+        data-bazar-cadre="1"
+        style={{
+          // Même mécanique que `(qg)/layout.tsx`. `fillContent` supprime les
+          // 12 px de papier que MobileLayout pose sinon autour du contenu :
+          // l'illustration doit être plein cadre, sans marge.
+          // Fixed (hors flux) : la scène est ancrée entre header et TabBar,
+          // insensible à tout scroll résiduel du document ramené d'un autre
+          // onglet.
+          position: "fixed",
+          top: "calc(var(--safe-top) + var(--mobile-header-h))",
+          left: 0,
+          right: 0,
+          // Le panorama s'étend jusqu'au HAUT de la barre d'onglets ; sa base
+          // dépasse sous ce point, et la TabBar opaque recouvre le
+          // chevauchement — aucun espace résiduel entre l'image et la barre.
+          bottom: "var(--mobile-tabbar-h)",
+          background: "var(--forest-800)",
+          overflow: "hidden",
+        }}
+      >
+        <BazarScene
+          etal={state.bazar}
+          jetons={state.jetons}
+          onAcheter={handleAcheter}
+          onSortir={() => router.push("/bureau")}
+        />
+      </div>
     </MobileLayout>
   );
 }

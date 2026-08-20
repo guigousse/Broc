@@ -78,6 +78,28 @@ describe("BazarPage — settle déclenché à l'entrée sur l'écran", () => {
   });
 });
 
+// Revue du 2026-08-20, constat I2 : la page appelait `MobileLayout` SANS
+// `fillContent`, donc 12 px de papier encadraient l'illustration sur les côtés
+// et en haut. Et sans conteneur `position: fixed`, la scène n'héritait pas de
+// l'immunité au scroll résiduel qu'a le panorama du QG.
+describe("BazarPage — le panorama est plein cadre", () => {
+  it("le contenu n'a pas les 12 px de papier de MobileLayout", () => {
+    const { container } = render(<BazarPage />);
+    const main = container.querySelector("main") as HTMLElement;
+    expect(main.style.padding).not.toContain("12px");
+  });
+
+  it("la scène est ancrée hors flux entre l'en-tête et la barre d'onglets", () => {
+    const { container } = render(<BazarPage />);
+    const cadre = container.querySelector("[data-bazar-cadre]") as HTMLElement;
+    expect(cadre).toBeTruthy();
+    expect(cadre.style.position).toBe("fixed");
+    expect(cadre.style.top).toBe("calc(var(--safe-top) + var(--mobile-header-h))");
+    expect(cadre.style.bottom).toBe("var(--mobile-tabbar-h)");
+    expect(cadre.style.overflow).toBe("hidden");
+  });
+});
+
 describe("BazarPage — retour d'acheterAuBazar câblé sur un toast", () => {
   it("achat refusé : la raison localisée est montrée au joueur", async () => {
     acheterAuBazar.mockReturnValue({ ok: false, raison: "Pas assez de jetons" });
