@@ -1181,7 +1181,15 @@ Dans `targets.app_iOS.info.properties`, après `ITSAppUsesNonExemptEncryption: f
 
 ```yaml
         FIREBASE_ANALYTICS_COLLECTION_ENABLED: false
+        FirebaseAutomaticScreenReportingEnabled: false
 ```
+
+`FirebaseAutomaticScreenReportingEnabled` n'est **pas optionnel** : le suivi
+d'écran automatique de Firebase est actif par défaut et **indépendant** de
+`FIREBASE_ANALYTICS_COLLECTION_ENABLED` — sans ce second réglage, le SDK logue
+son propre `screen_view` pour l'unique `UIViewController` de la WebView, et son
+`firebase_screen_class` collant vient ré-étiqueter tous les autres événements
+avec ce nom de contrôleur au lieu des écrans que `ecrans.ts` calcule (spec §3.3).
 
 - [ ] **Step 5 : Vérifier que le projet se génère et compile**
 
@@ -1909,6 +1917,7 @@ Ouvrir la console Firebase → Analytics → DebugView, puis :
 6. **Le jour** : sur une partie avancée, vérifier `jour` et `jour_tranche` sur chaque événement.
 7. **`screen_view`** : naviguer entre les pièces, vérifier les noms d'écran (et qu'aucun identifiant de brocante n'apparaît).
 8. **Aucune régression AdMob** : la pub récompensée fonctionne toujours, l'ordre UMP → ATT est intact.
+9. **Aucun `screen_view` automatique concurrent** : vérifier dans DebugView qu'il n'y a pas un second flux de `screen_view` issu du suivi automatique Firebase, et que `firebase_screen_class` ne s'est pas figé sur le nom du contrôleur natif sur les autres événements — confirme que `FirebaseAutomaticScreenReportingEnabled: false` (Task 4) est bien pris en compte.
 
 - [ ] **Step 3 : Retirer `-FIRDebugEnabled` du schéma**
 

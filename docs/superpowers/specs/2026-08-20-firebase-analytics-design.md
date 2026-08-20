@@ -252,6 +252,16 @@ On logue donc `screen_view` à la main sur les changements de route, avec un nom
 d'écran stable et non localisé : `bureau`, `stockage`, `atelier`, `bibliotheque`,
 `collection`, `chiner`, `vitrine-prep`, `vitrine-journee`, `bazar`, `menu`.
 
+**Le suivi automatique n'est pas désactivé par la seule collecte à `false`.**
+`FIREBASE_ANALYTICS_COLLECTION_ENABLED` coupe la collecte, mais le suivi d'écran
+automatique est un réglage **séparé**, actif par défaut et indépendant : laissé
+tel quel, le SDK logue son propre `screen_view` pour l'unique
+`UIViewController`, et surtout entretient un `firebase_screen_class` **collant**
+qui vient ré-étiqueter *tous les autres événements* du jeu avec le nom de ce
+contrôleur, écrasant les écrans que `ecrans.ts` calcule. Il faut donc aussi
+poser `FirebaseAutomaticScreenReportingEnabled: false` dans l'Info.plist (voir
+Tâche 4 du plan).
+
 ### 3.4 Les événements métier
 
 **Décrochage** — la famille la plus précieuse.
@@ -260,7 +270,11 @@ d'écran stable et non localisé : `bureau`, `stockage`, `atelier`, `bibliothequ
 |---|---|---|
 | `tuto_etape` | `etape` (identifiant d'étape) | chaque `avancerTutoriel` |
 | `tuto_termine` | — | `terminerTutoriel` |
-| `mini_tuto_termine` | `lequel` : `vinyle` \| `carnet` \| `atelier` | les trois `terminerMiniTuto*` |
+| `mini_tuto_termine` | `lequel` : `vinyle` \| `carnet` \| `atelier`¹ | les trois `terminerMiniTuto*` |
+
+¹ **`atelier` reporté.** `terminerMiniTutoAtelier` vit sur `feat/tuto-corrections`
+(non fusionnée) : cette branche n'a rien à appeler. Émis dès que cette branche
+est mergée et que la fonction existe.
 
 **Rétention & progression**
 
@@ -274,10 +288,18 @@ d'écran stable et non localisé : `bureau`, `stockage`, `atelier`, `bibliothequ
 
 | Événement | Paramètres | Déclencheur |
 |---|---|---|
-| `session_chine_terminee` | `objets_achetes`, `depense`, `energie_depensee` | fin d'une session de chine |
+| `session_chine_terminee` | `objets_achetes`, `depense`, `energie_depensee`² | fin d'une session de chine |
 | `session_vente_terminee` | `objets_vendus`, `recette`, `marge` | `enregistrerSession` |
 | `amelioration_achetee` | `quoi` : `atelier` \| `stockage` \| `camion`, `niveau` | `ameliorerAtelier` / `ameliorerStockage` / `acheterCamion` |
-| `bazar_achat` | `article`, `prix_jetons` | `acheterAuBazar` réussi |
+| `bazar_achat`³ | `article`, `prix_jetons` | `acheterAuBazar` réussi |
+
+² **`energie_depensee` reporté.** Aucun champ de `SessionChinage`
+(`src/types/game.ts`) ne porte cette donnée : l'envoyer aurait exigé de la
+fabriquer. Émis quand une vraie source existera.
+
+³ **`bazar_achat` reporté.** `acheterAuBazar` vit sur `feat/jetons-bazar`
+(non fusionnée) : cette branche n'a rien à appeler. Émis dès que cette branche
+est mergée et que la fonction existe.
 
 **Monétisation**
 
@@ -309,6 +331,17 @@ décrochage fausse. Le jour de jeu doit donc être un **paramètre d'événement
 - `niveau` — le niveau de brocanteur, même traitement (métrique numérique).
 
 Le jeu n'a jamais à passer ces paramètres : la façade les lit dans l'état courant.
+
+**Mise en garde — emplacements de sauvegarde multiples.** Une installation
+Firebase correspond à **un seul** utilisateur GA4, alors que le jeu propose
+trois emplacements de sauvegarde indépendants. Un joueur au jour 80 dans
+l'emplacement 1 qui démarre l'emplacement 2 fait repartir `jour` à des valeurs
+basses, et tous les événements suivants portent ce jour bas jusqu'à ce que
+l'emplacement 2 rattrape ou dépasse le record. Les courbes de rétention et de
+décrochage d'un joueur multi-emplacements ne sont donc pas monotones, et rien
+dans ce chantier ne le corrige (il faudrait un champ de sauvegarde, que ce
+document s'interdit). À garder en tête avant de tirer une conclusion d'un
+rapport de rétention.
 
 **Hors partie** (menu, crédits, pages légales), il n'y a pas d'état de jeu à lire —
 la sauvegarde reste pourtant chargée en mémoire, piège connu du layout racine. La
@@ -371,6 +404,11 @@ Points de recette :
 7. **`screen_view`** : naviguer entre les pièces, vérifier les noms d'écran.
 8. **Aucune régression AdMob** : la pub récompensée fonctionne toujours, l'ordre
    UMP → ATT est intact.
+9. **Aucun `screen_view` automatique concurrent** : dans DebugView, vérifier
+   qu'il n'y a pas un second flux de `screen_view` (celui du suivi automatique
+   Firebase) et que `firebase_screen_class` sur les autres événements ne
+   s'est pas figé sur le nom du contrôleur natif — confirme que
+   `FirebaseAutomaticScreenReportingEnabled: false` est bien posé.
 
 ---
 
