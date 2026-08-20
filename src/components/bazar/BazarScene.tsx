@@ -139,6 +139,14 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
                     thumb
                     tilt
                     outlinePx={2}
+                    // Le BAS de l'objet sur l'arête basse du carré. `contain`
+                    // letterboxe les objets larges et bas (une ménagère, une
+                    // pile de vinyles) : sans cet ancrage, le vide laissé par
+                    // le letterboxing les fait flotter au lieu de reposer sur
+                    // la planche visée par le cadre pointillé. Exigence de
+                    // l'auteur, acquise le matin même sur `ItemImage` et
+                    // reperdue au passage à la vignette.
+                    verticalAlign="bottom"
                   />
                 ) : null}
               </span>

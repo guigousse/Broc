@@ -116,6 +116,27 @@ describe("BazarScene", () => {
     expect(img.style.position).toBe("absolute");
   });
 
+  // Exigence de l'auteur, acquise le matin même sur `ItemImage` (commit
+  // 60d94db5) et reperdue au passage à la vignette : un objet posé sur une
+  // étagère touche la planche par sa base. `contain` letterboxe les objets
+  // larges et bas, et le vide laissé sous eux les fait flotter.
+  it("l'objet de la semaine repose sur l'arête basse de sa case, il ne flotte pas", () => {
+    monter();
+    const img = screen
+      .getByTestId("article-case2")
+      .querySelector("img") as HTMLImageElement;
+    expect(img.style.objectPosition).toBe("center bottom");
+  });
+
+  // ... mais dans la fiche, il ne repose sur rien : il est présenté seul dans
+  // une carte au large, et l'ancrer en bas le collerait à son titre.
+  it("dans la fiche, en revanche, l'objet est centré", () => {
+    monter();
+    fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
+    const img = screen.getByRole("dialog").querySelector("img") as HTMLImageElement;
+    expect(img.style.objectPosition).toBe("center");
+  });
+
   it("vitrine vendue : la place est vide et le dit", () => {
     monter({ ...ETAL, vitrine: null });
     expect(screen.queryByTestId("article-case2")).toBeNull();
