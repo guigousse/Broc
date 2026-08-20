@@ -13,7 +13,11 @@ import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
 import type { AchatBazar } from "@/lib/bazar/achat";
 import type { EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
-import { ArticleDetailBazar, type ArticleDetail } from "./ArticleDetailBazar";
+import {
+  ArticleDetailBazar,
+  type ArticleDetail,
+  type ResultatAchatBazar,
+} from "./ArticleDetailBazar";
 import { PLAQUE_ETIQUETTE } from "./etiquette";
 import { BAZAR_LAYOUT, CLES_BAZAR, CLES_LOTS, CLE_VITRINE } from "./bazarLayout";
 
@@ -27,7 +31,12 @@ export const ZONES_BAZAR: PanoramaZone[] = [
 interface BazarSceneProps {
   etal: EtalBazar;
   jetons: number;
-  onAcheter: (achat: AchatBazar) => void;
+  /**
+   * Tente l'achat et dit ce qu'il en est. Le retour n'est PAS décoratif : la
+   * fiche de l'article ne se referme que s'il est `ok`, et affiche sinon la
+   * raison — un refus est le moment où le joueur a besoin de rester pour lire.
+   */
+  onAcheter: (achat: AchatBazar) => ResultatAchatBazar;
   onSortir: () => void;
 }
 
@@ -213,9 +222,14 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
         article={selection?.detail ?? null}
         open={selection !== null}
         jetons={jetons}
-        onAcheter={() => {
-          if (selection) onAcheter(selection.achat);
-        }}
+        onAcheter={() =>
+          selection
+            ? onAcheter(selection.achat)
+            : // Inatteignable : sans sélection, la fiche ne rend rien, donc
+              // aucun bouton n'existe pour appeler ceci. On refuse quand même
+              // plutôt que de prétendre avoir acheté.
+              { ok: false }
+        }
         onClose={() => setSelection(null)}
       />
     </>

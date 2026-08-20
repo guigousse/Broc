@@ -849,5 +849,6 @@ export const el: DictionnaireUI = {
     detailArticle: "Λεπτομέρειες είδους",
     prixMot: "Τιμή",
     acheter: "Αγορά",
+    achatRefuse: "Η αγορά δεν είναι δυνατή.",
   },
 };

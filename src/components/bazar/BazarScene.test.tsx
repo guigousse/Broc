@@ -18,8 +18,14 @@ const ETAL: EtalBazar = {
   vitrine: { templateId: "jx.jeu_magnatimmo_annees_80", valeurBase: 200, prix: 8 },
 };
 
-function monter(etal: EtalBazar = ETAL, jetons = 25) {
-  const onAcheter = vi.fn();
+function monter(
+  etal: EtalBazar = ETAL,
+  jetons = 25,
+  resultat: { ok: boolean; raison?: string } = { ok: true },
+) {
+  // Le retour n'est pas décoratif : la fiche de l'article ne se referme que
+  // s'il est `ok`, et affiche sinon la raison.
+  const onAcheter = vi.fn().mockReturnValue(resultat);
   const onSortir = vi.fn();
   render(<BazarScene etal={etal} jetons={jetons} onAcheter={onAcheter} onSortir={onSortir} />);
   return { onAcheter, onSortir };
@@ -76,6 +82,14 @@ describe("BazarScene", () => {
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
     acheterDansLaFiche();
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("achat refusé par le jeu : la fiche reste ouverte et porte la raison", () => {
+    monter(ETAL, 25, { ok: false, raison: "Stockage plein" });
+    fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
+    acheterDansLaFiche();
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe("Stockage plein");
   });
 
   it("aucune fiche n'est ouverte tant que rien n'est tapé", () => {

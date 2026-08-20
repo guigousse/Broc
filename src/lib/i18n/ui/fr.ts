@@ -865,5 +865,6 @@ export const fr = {
     detailArticle: "Détail de l'article",
     prixMot: "Prix",
     acheter: "Acheter",
+    achatRefuse: "Achat impossible.",
   },
 } as const;

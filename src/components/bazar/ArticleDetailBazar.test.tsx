@@ -30,8 +30,9 @@ function monter(
   article: ArticleDetail | null = VITRINE,
   jetons = 25,
   open = true,
+  resultat: { ok: boolean; raison?: string } = { ok: true },
 ) {
-  const onAcheter = vi.fn();
+  const onAcheter = vi.fn().mockReturnValue(resultat);
   const onClose = vi.fn();
   const utils = render(
     <ArticleDetailBazar
@@ -151,7 +152,7 @@ describe("ArticleDetailBazar", () => {
           article={LOT}
           open
           jetons={0}
-          onAcheter={vi.fn()}
+          onAcheter={vi.fn().mockReturnValue({ ok: true })}
           onClose={vi.fn()}
         />,
       );
@@ -169,7 +170,7 @@ describe("ArticleDetailBazar", () => {
           article={{ ...VITRINE }}
           open
           jetons={3}
-          onAcheter={vi.fn()}
+          onAcheter={vi.fn().mockReturnValue({ ok: true })}
           onClose={vi.fn()}
         />,
       );
@@ -184,7 +185,71 @@ describe("ArticleDetailBazar", () => {
           article={VITRINE}
           open
           jetons={99}
-          onAcheter={vi.fn()}
+          onAcheter={vi.fn().mockReturnValue({ ok: true })}
+          onClose={vi.fn()}
+        />,
+      );
+      expect(screen.queryByRole("status")).toBeNull();
+    });
+  });
+
+  // ── Refus venu du JEU (pas de la bourse) ─────────────────────────────────
+  // Un refus est précisément le moment où le joueur a besoin de RESTER pour
+  // lire pourquoi : refermer la fiche cacherait la réponse et le renverrait
+  // taper l'étagère sans rien savoir. Le canal est unique — la fiche —, le
+  // toast de la page ayant été retiré : transitoire, il partait tout seul.
+  describe("achat refusé par le jeu", () => {
+    it("la fiche RESTE ouverte et affiche la raison", () => {
+      const { onClose } = monter(VITRINE, 99, true, {
+        ok: false,
+        raison: "Stockage plein",
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      expect(onClose).not.toHaveBeenCalled();
+      // Toujours montée, et la raison est lisible.
+      expect(screen.getByRole("dialog")).toBeTruthy();
+      expect(screen.getByRole("status").textContent).toBe("Stockage plein");
+    });
+
+    it("un refus SANS raison n'est jamais muet", () => {
+      monter(VITRINE, 99, true, { ok: false });
+      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      expect(screen.getByRole("status").textContent).toBe("Achat impossible.");
+    });
+
+    it("la raison remplace le message du manque, elle ne s'empile pas dessus", () => {
+      // Bourse courte : le joueur voit d'abord le chiffre qui manque…
+      const { rerender } = monter(VITRINE, 3);
+      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      expect(screen.getByRole("status").textContent).toBe("Il vous manque 5 jetons");
+      // … puis la bourse suffit, et c'est le jeu qui refuse.
+      rerender(
+        <ArticleDetailBazar
+          article={VITRINE}
+          open
+          jetons={99}
+          onAcheter={vi.fn().mockReturnValue({ ok: false, raison: "Stockage plein" })}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      expect(screen.getAllByRole("status")).toHaveLength(1);
+      expect(screen.getByRole("status").textContent).toBe("Stockage plein");
+    });
+
+    it("changer d'article efface la raison", () => {
+      const { rerender } = monter(VITRINE, 99, true, {
+        ok: false,
+        raison: "Stockage plein",
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      expect(screen.queryByRole("status")).toBeTruthy();
+      rerender(
+        <ArticleDetailBazar
+          article={LOT}
+          open
+          jetons={99}
+          onAcheter={vi.fn().mockReturnValue({ ok: true })}
           onClose={vi.fn()}
         />,
       );

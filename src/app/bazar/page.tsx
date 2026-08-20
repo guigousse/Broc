@@ -7,14 +7,12 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { BazarScene } from "@/components/bazar/BazarScene";
 import { useGame } from "@/context/GameContext";
-import { useToastSafe } from "@/components/ui/Toast";
 import { bazarEstOuvert } from "@/lib/bazar/ouverture";
 import type { AchatBazar } from "@/lib/bazar/achat";
 
 export default function BazarPage() {
   const router = useRouter();
   const { state, isHydrated, acheterAuBazar, rafraichirPeriodiques } = useGame();
-  const { toast } = useToastSafe();
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -36,10 +34,13 @@ export default function BazarPage() {
     rafraichirPeriodiques();
   }, [rafraichirPeriodiques]);
 
-  const handleAcheter = (achat: AchatBazar) => {
-    const res = acheterAuBazar(achat);
-    if (!res.ok) toast(res.raison ?? "", { type: "erreur" });
-  };
+  // Le refus est rendu TEL QUEL à la scène, qui le porte jusqu'à la fiche de
+  // l'article. Il passait auparavant par un toast : transitoire, posé au-dessus
+  // de la fiche (z-index 200 contre 105), et il partait tout seul au bout de
+  // quelques secondes — exactement le « ça cache la réponse » qu'on cherche à
+  // éviter. Un seul canal, donc, et c'est le durable : la fiche reste ouverte
+  // et affiche la raison jusqu'à ce que le joueur la referme.
+  const handleAcheter = (achat: AchatBazar) => acheterAuBazar(achat);
 
   if (!state || !state.bazar) return <SkeletonScreen />;
 

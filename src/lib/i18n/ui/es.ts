@@ -830,5 +830,6 @@ export const es: DictionnaireUI = {
     detailArticle: "Detalle del artículo",
     prixMot: "Precio",
     acheter: "Comprar",
+    achatRefuse: "Compra imposible.",
   },
 };

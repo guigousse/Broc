@@ -827,5 +827,6 @@ export const en: DictionnaireUI = {
     detailArticle: "Item details",
     prixMot: "Price",
     acheter: "Buy",
+    achatRefuse: "Purchase not possible.",
   },
 };

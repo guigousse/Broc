@@ -100,7 +100,12 @@ describe("BazarPage — le panorama est plein cadre", () => {
   });
 });
 
-describe("BazarPage — retour d'acheterAuBazar câblé sur un toast", () => {
+// Le canal du refus a changé le 2026-08-20 : il passait par un toast —
+// transitoire, posé au-dessus de la fiche (z-index 200 contre 105) et parti
+// tout seul au bout de quelques secondes. C'est la fiche de l'article qui
+// porte désormais la raison, et elle RESTE OUVERTE : un refus est le moment
+// où le joueur a besoin de rester pour lire pourquoi.
+describe("BazarPage — le refus d'acheterAuBazar remonte jusqu'à la fiche", () => {
   // Depuis la recette du 2026-08-20, l'achat demande DEUX gestes : taper
   // l'article sur l'étagère ouvre sa fiche, et c'est le bouton de la fiche qui
   // achète.
@@ -113,18 +118,27 @@ describe("BazarPage — retour d'acheterAuBazar câblé sur un toast", () => {
     });
   }
 
-  it("achat refusé : la raison localisée est montrée au joueur", async () => {
-    acheterAuBazar.mockReturnValue({ ok: false, raison: "Pas assez de jetons" });
+  it("achat refusé : la raison localisée est montrée au joueur, fiche ouverte", async () => {
+    acheterAuBazar.mockReturnValue({ ok: false, raison: "Stockage plein" });
     render(<BazarPage />);
     await acheterLePremierLot();
-    expect(toast).toHaveBeenCalledWith("Pas assez de jetons", { type: "erreur" });
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe("Stockage plein");
   });
 
-  it("achat réussi : aucun toast d'erreur", async () => {
+  it("achat refusé : plus de toast — un seul canal, le durable", async () => {
+    acheterAuBazar.mockReturnValue({ ok: false, raison: "Stockage plein" });
+    render(<BazarPage />);
+    await acheterLePremierLot();
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it("achat réussi : la fiche se referme, sans rien dire", async () => {
     acheterAuBazar.mockReturnValue({ ok: true });
     render(<BazarPage />);
     await acheterLePremierLot();
     expect(acheterAuBazar).toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(toast).not.toHaveBeenCalled();
   });
 });
