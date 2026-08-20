@@ -38,4 +38,7 @@ src-tauri/vendor/tauri-plugin-admob/ios/.build/
 src-tauri/vendor/tauri-plugin-iap/.tauri/
 src-tauri/vendor/tauri-plugin-iap/ios/Package.resolved
 src-tauri/vendor/tauri-plugin-iap/ios/.build/
+src-tauri/vendor/tauri-plugin-firebase/.tauri/
+src-tauri/vendor/tauri-plugin-firebase/ios/Package.resolved
+src-tauri/vendor/tauri-plugin-firebase/ios/.build/
 marketing/appstore/.planches/
