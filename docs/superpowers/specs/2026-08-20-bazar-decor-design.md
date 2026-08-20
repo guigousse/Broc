@@ -47,19 +47,21 @@ le mur, sol dégagé, pour la borne d'arcade compositée plus tard.
 **Centre (33–66 %) — le comptoir.** Le comptoir massif vu de face, **plateau de
 bois nu** : pas de vitrine sous verre. Une seule chose y est posée, une **caisse
 enregistreuse de laiton**, à son extrémité droite. Derrière lui, sur le mur du
-fond **plat et frontal**, **trois planches de bois nues** sur équerres, sans
-aucune séparation verticale, toutes **vides** — elles portent neuf emplacements,
-trois par planche. Entre le plateau du comptoir et la planche du bas, une
+fond **plat et frontal**, **deux planches de bois nues** sur équerres, sans
+aucune séparation verticale, toutes deux **vides** — elles portent six
+emplacements, trois par planche. Entre le plateau du comptoir et la planche du bas, une
 **bande de mur nu** à hauteur de buste : c'est là que se tiendra le vendeur, sans
 masquer la marchandise. Au sol derrière le comptoir, un espace dégagé de la
 largeur d'une personne.
 
-> **Révision du 2026-08-20**, à la vue des premiers tirages : Guillaume a
-> supprimé la vitrine sous verre et demandé neuf cases. L'objet de la semaine ne
-> vit donc plus sous le verre du comptoir mais **dans la case centrale** de la
-> grille ; les trois lots de pièces occupent la **rangée du bas**. Les cinq cases
-> restantes sont vides — elles accueilleront les paquets de cartes du chantier ④,
-> et en attendant les trous font leur travail : ils appellent.
+> **Révisions du 2026-08-20**, à la vue des tirages successifs : Guillaume a
+> d'abord supprimé la vitrine sous verre au profit d'une étagère à neuf cases,
+> puis ramené le présentoir à **deux planches, six emplacements**. L'objet de la
+> semaine ne vit donc plus sous le verre du comptoir mais **au milieu de la
+> planche du haut** (`case2`) ; les trois lots de pièces occupent la **planche du
+> bas** (`case4`, `case5`, `case6`). Les deux cases libres du haut attendent les
+> paquets de cartes du chantier ④, et en attendant les trous font leur travail :
+> ils appellent.
 
 **Droite (66–100 %) — les antiquités.** Entassement d'horloges, malles, lampes
 et cadres empilés vers 68–82 % : chargé en quantité, terne en couleur. Au centre
@@ -101,8 +103,7 @@ Le parquet et la corniche la franchissent déjà dans le bureau.
 Palette générale **assourdie**, plus terne encore que le cabinet. Les points qui
 attirent l'œil ne sont pas peints dans le fond : ce sont **les éléments
 compositées par-dessus** — les articles de la semaine, la borne, le vendeur — et
-les deux sources de lumière naturelles de la scène (la suspension du comptoir, le
-jour de la porte). Cette règle est ce qui garde le décor lisible quand on lui
+les deux sources de lumière de la scène (le néon, le jour de la porte). Cette règle est ce qui garde le décor lisible quand on lui
 ajoutera des objets plus tard.
 
 ### Les emplacements réservés
@@ -157,7 +158,7 @@ sur le modèle de `brocantePanoramaLayout.ts` et de `qg/layout.ts` :
 
 | Clé | Rôle |
 |---|---|
-| `case1` … `case9` | Les neuf cases de l'étagère, numérotées de gauche à droite puis de haut en bas. `case7`, `case8`, `case9` (rangée du bas) portent les trois lots de pièces ; `case5` (centre) porte l'objet de la semaine ; les cinq autres restent vides jusqu'au chantier ④ |
+| `case1` … `case6` | Les six emplacements du présentoir, numérotés de gauche à droite puis de haut en bas — trois par planche. `case4`, `case5`, `case6` (planche du bas) portent les trois lots de pièces ; `case2` (milieu du haut) porte l'objet de la semaine ; `case1` et `case3` restent vides jusqu'au chantier ④ |
 | `sortie` | La porte d'entrée : ramène au bureau. **Surtout pas `porte`** : le QG a déjà une clé de ce nom, et le dictionnaire de calage est plat — la collision déplaçait la zone tactile de sortie du bureau |
 | `borne` | Réservé — muet pour l'instant |
 | `table` | Réservé — muet pour l'instant |
@@ -231,8 +232,8 @@ Le code ne prouve pas ces points-là :
 1. Une seule image de fond, 2752×1536, même pipeline que le bureau.
 2. Trois zones : `arcade` (gauche), `comptoir` (centre), `antiquites` (droite).
 3. Ouverture sur le comptoir.
-4. Le présentoir est fait de **trois planches de bois nues**, frontales, vides,
-   sans séparation verticale — neuf emplacements, trois par planche. Le plateau
+4. Le présentoir est fait de **deux planches de bois nues**, frontales, vides,
+   sans séparation verticale — six emplacements, trois par planche. Le plateau
    du comptoir est **nu** (aucune vitrine sous verre), à l'exception d'une caisse
    enregistreuse de laiton à droite. Les articles sont compositées par-dessus :
    les trois lots sur la planche du bas, l'objet de la semaine au centre.
@@ -256,7 +257,8 @@ Le code ne prouve pas ces points-là :
   traité ici.
 - **L'arrivée dans la boutique.** Aucune transition particulière n'est prévue
   (l'iris est réservé menu→bureau). À juger sur appareil.
-- **Le nombre de travées.** Trois lots aujourd'hui ; si le catalogue s'élargit
-  (paquets de cartes en ④), le mur devra en accueillir plus. Le layout est un
-  fichier de coordonnées : l'ajout est possible sans redessiner, tant que les
-  étagères dessinées ont de la place libre. À garder en tête au moment du prompt.
+- **Le nombre d'emplacements.** Six aujourd'hui, dont quatre occupés. Guillaume
+  évoque **deux emplacements de plus, posés sur le comptoir lui-même**, quand les
+  paquets de cartes du chantier ④ arriveront — non traité ici, mais le plateau du
+  comptoir est dessiné nu et large, donc la place existe déjà dans l'image. Ce ne
+  sera qu'un ajout de coordonnées.
