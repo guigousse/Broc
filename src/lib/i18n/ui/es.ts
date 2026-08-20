@@ -822,13 +822,10 @@ export const es: DictionnaireUI = {
   },
   bazar: {
     titre: "El Bazar",
-    fondDeCommerce: "En el mostrador",
-    vitrine: "En el escaparate",
     lotPieces: "{n} piezas · {categorie}",
     prixJetons: "{n} fichas",
     prixJetonUn: "{n} ficha",
     vendu: "Vendido — vuelve el lunes",
-    soldeJetons: "Tus fichas: {n}",
     manqueJetons: "Te faltan {n} fichas",
     manqueJetonUn: "Te falta {n} ficha",
     sortir: "Salir del Bazar",

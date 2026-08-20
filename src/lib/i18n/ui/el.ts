@@ -841,15 +841,12 @@ export const el: DictionnaireUI = {
   },
   bazar: {
     titre: "Το Μπαζάρ",
-    fondDeCommerce: "Στον πάγκο",
-    vitrine: "Στη βιτρίνα",
     lotPieces: "{n} ανταλλακτικά · {categorie}",
     prixJetons: "{n} μάρκες",
     prixJetonUn: "{n} μάρκα",
     vendu: "Πουλήθηκε — επιστρέφει τη Δευτέρα",
-    soldeJetons: "Οι μάρκες σας: {n}",
     manqueJetons: "Σου λείπουν {n} μάρκες",
     manqueJetonUn: "Σου λείπει {n} μάρκα",
-    sortir: "Έξοδος από το Παζάρι",
+    sortir: "Έξοδος από το Μπαζάρ",
   },
 };

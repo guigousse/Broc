@@ -819,13 +819,10 @@ export const en: DictionnaireUI = {
   },
   bazar: {
     titre: "The Bazaar",
-    fondDeCommerce: "On the shelf",
-    vitrine: "In the window",
     lotPieces: "{n} parts · {categorie}",
     prixJetons: "{n} tokens",
     prixJetonUn: "{n} token",
     vendu: "Sold — back on Monday",
-    soldeJetons: "Your tokens: {n}",
     manqueJetons: "You need {n} more tokens",
     manqueJetonUn: "You need {n} more token",
     sortir: "Leave the Bazaar",
