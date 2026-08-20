@@ -850,5 +850,6 @@ export const el: DictionnaireUI = {
     soldeJetons: "Οι μάρκες σας: {n}",
     manqueJetons: "Σου λείπουν {n} μάρκες",
     manqueJetonUn: "Σου λείπει {n} μάρκα",
+    sortir: "Έξοδος από το Παζάρι",
   },
 };

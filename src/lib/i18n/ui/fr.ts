@@ -866,5 +866,6 @@ export const fr = {
     soldeJetons: "Vos jetons : {n}",
     manqueJetons: "Il vous manque {n} jetons",
     manqueJetonUn: "Il vous manque {n} jeton",
+    sortir: "Sortir du Bazar",
   },
 } as const;

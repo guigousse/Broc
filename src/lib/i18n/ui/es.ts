@@ -831,5 +831,6 @@ export const es: DictionnaireUI = {
     soldeJetons: "Tus fichas: {n}",
     manqueJetons: "Te faltan {n} fichas",
     manqueJetonUn: "Te falta {n} ficha",
+    sortir: "Salir del Bazar",
   },
 };
