@@ -95,6 +95,11 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
                   categorie={template.categorie}
                   alt=""
                   sizes="30vw"
+                  // `contain` letterboxe les objets larges et bas (une
+                  // ménagère, une pile de vinyles) : sans ancrer le bas, le
+                  // vide laissé par le letterboxing les fait flotter au lieu
+                  // de reposer sur la planche visée par le cadre pointillé.
+                  verticalAlign="bottom"
                 />
               ) : null}
             </span>

@@ -242,29 +242,32 @@ describe("ArticleBazar", () => {
     });
   });
 
-  // ── Case carrée, visuel centré : demande du 2026-08-20 ──────────────────
-  // L'auteur cale le Bazar à la souris (`?qgedit=1`) et vise le CENTRE de la
-  // case. Sans hauteur propre, la case n'existait qu'en largeur et le visuel,
-  // ancré au pied, débordait vers le haut bien au-delà d'elle.
-  describe("la case est carrée et centre le visuel", () => {
+  // ── Case carrée, visuel centré-bas : demande du 2026-08-20, round 2 ──────
+  // L'auteur cale le Bazar à la souris (`?qgedit=1`) et tire le cadre
+  // pointillé pour que son arête BASSE coïncide avec la planche peinte dans
+  // le fond : l'objet doit sembler y reposer, donc centré horizontalement
+  // mais justifié en bas, pas au centre des deux axes (round 1, dépassé).
+  describe("la case est carrée, centre le visuel horizontalement et le justifie en bas", () => {
     it("le conteneur porte aspectRatio 1/1", () => {
       monter();
       const article = screen.getByTestId("article-case1");
       expect(article.style.aspectRatio).toBe("1 / 1");
     });
 
-    it("le conteneur centre sur les deux axes (placeItems, pas justifyItems)", () => {
+    it("le conteneur centre horizontalement et justifie en bas (pas placeItems: center)", () => {
       monter();
       const article = screen.getByTestId("article-case1");
-      expect(article.style.placeItems).toBe("center");
+      expect(article.style.justifyItems).toBe("center");
+      expect(article.style.alignItems).toBe("end");
     });
 
-    it("le bouton occupe toute la case et centre son visuel sur les deux axes", () => {
+    it("le bouton occupe toute la case et place son visuel comme le conteneur", () => {
       monter();
       const bouton = screen.getByRole("button", { name: /5 pièces · Musique/ });
       expect(bouton.style.width).toBe("100%");
       expect(bouton.style.height).toBe("100%");
-      expect(bouton.style.placeItems).toBe("center");
+      expect(bouton.style.justifyItems).toBe("center");
+      expect(bouton.style.alignItems).toBe("end");
     });
   });
 });
