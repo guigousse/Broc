@@ -373,4 +373,14 @@ describe("EnergieRecharge — iap_ecran_vu", () => {
     expect(appels).toHaveLength(1);
     expect(appels[0].params).toMatchObject({ source: "en-tete" });
   });
+
+  it("propriétaire de l'énergie infinie : aucun paywall à comptabiliser", () => {
+    // Cet écran n'affiche plus de bouton d'achat une fois `infinie` acquis
+    // (voir la description « ni bouton d'achat » plus haut) : rien n'est vu.
+    definirEnergieInfinie(true);
+    render(<EnergieRecharge onClose={() => {}} />);
+    const appels = stub.appels.filter((a) => a.nom === EVENEMENTS.iapEcranVu);
+    expect(appels).toHaveLength(0);
+    definirEnergieInfinie(false);
+  });
 });

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Mentions légales de l'application Broc.",
 };
 
-const MAJ = "4 août 2026";
+const MAJ = "20 août 2026";
 const CONTACT = "pepite.admin@gmail.com";
 const EDITEUR = "Guillaume Fenard";
 

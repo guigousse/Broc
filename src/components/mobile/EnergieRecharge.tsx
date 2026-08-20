@@ -214,11 +214,14 @@ export function EnergieRecharge({
   // origine que cet écran connaît déjà, pas besoin de faire remonter un prop
   // dédié depuis chaque appelant.
   useEffect(() => {
+    // Propriétaire de l'énergie infinie : cet écran n'affiche plus aucun
+    // paywall (pas de bouton d'achat), donc rien à comptabiliser comme « vu ».
+    if (infinie) return;
     logEvenement(EVENEMENTS.iapEcranVu, {
       source: alerte ? "sortie-bloquee" : "en-tete",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [infinie]);
 
   // Prix localisé au montage — non-acheteur seulement (StoreKit / stub).
   useEffect(() => {
