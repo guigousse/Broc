@@ -75,6 +75,8 @@ import { stockageEstPlein } from "@/lib/stockage";
 import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
 import { appliquerFinTutoriel, ETAPES_TUTORIEL } from "@/lib/tutoriel";
+import { logEvenement } from "@/lib/analytics/contexte";
+import { EVENEMENTS } from "@/lib/analytics/analytics";
 import { synchroniserNotifsQuetes } from "@/lib/notifications/quetesNotif";
 import {
   initCollection,
@@ -994,6 +996,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (iCible <= iCourante) return prev;
       return { ...prev, tutorielEtape: vers };
     });
+    // Hors de l'updater : StrictMode l'invoque deux fois, ce qui doublerait
+    // l'événement et fausserait l'entonnoir de décrochage.
+    logEvenement(EVENEMENTS.tutoEtape, { etape: vers });
   }, []);
 
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
@@ -1057,6 +1062,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ? { ...prev, miniTutoVinyle: "termine" as const }
         : prev,
     );
+    logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "vinyle" });
   }, []);
 
   /** Clôt le mini-tuto du carnet de commandes (le registre a été ouvert). */
@@ -1066,10 +1072,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ? { ...prev, miniTutoCarnet: "termine" as const }
         : prev,
     );
+    logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "carnet" });
   }, []);
 
   const terminerTutoriel = useCallback(() => {
     setState((prev) => (prev ? appliquerFinTutoriel(prev) : prev));
+    logEvenement(EVENEMENTS.tutoTermine);
   }, []);
 
   const attribuerVitrineABrocante = useCallback((brocanteId: string) => {
