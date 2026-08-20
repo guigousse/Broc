@@ -18,14 +18,19 @@ import Foundation
     DispatchQueue.main.async {
       self.verdict = canRequestAds
       let aPrevenir = self.abonnes
+      // Abonnement à usage unique : un second `resoudre` dans la même session
+      // ne reprévient personne — à revoir le jour où un point d'entrée
+      // « gérer mon consentement » rendra ce cas possible.
       self.abonnes.removeAll()
       for cb in aPrevenir { cb(canRequestAds) }
     }
   }
 
   /// Rappelle immédiatement si le verdict est déjà tombé, sinon met en file.
-  /// Le verdict n'arrivant jamais (UMP hors-ligne) laisse simplement l'abonné
-  /// en attente : c'est le comportement voulu, fail-closed.
+  /// Le verdict n'arrivant jamais (UMP hors-ligne) laisse l'abonné en attente
+  /// sans rien publier : l'état persisté de `setAnalyticsCollectionEnabled`
+  /// reste tel quel — le défaut de l'Info.plist (éteint) au tout premier
+  /// lancement, ou sinon le dernier verdict connu, qui reste en vigueur.
   @objc public func auVerdict(_ cb: @escaping (Bool) -> Void) {
     DispatchQueue.main.async {
       if let verdict = self.verdict {

@@ -21,6 +21,15 @@ import Foundation
     DispatchQueue.main.async {
       guard !self.demarre else { return }
       self.demarre = true
+      // Le plist est committé et câblé dans les Resources du projet, mais
+      // project.pbxproj est généré : un xcodegen relancé sur un arbre où il
+      // manquerait le laisserait tomber silencieusement de la phase Resources.
+      // `FirebaseApp.configure()` lève dans ce cas — une panne de mesure ne
+      // doit jamais casser une partie, donc on abandonne avant plutôt que de
+      // risquer un crash au lancement.
+      guard Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil else {
+        return
+      }
       if FirebaseApp.app() == nil {
         FirebaseApp.configure()
       }
@@ -34,9 +43,15 @@ import Foundation
     }
   }
 
-  @objc public func appliquerConsentement(_ consenti: Bool) {
-    // L'ordre compte : la personnalisation publicitaire doit être posée AVANT
-    // l'activation de la collecte.
+  private func appliquerConsentement(_ consenti: Bool) {
+    // L'ordre compte surtout en révocation : la collecte est encore active
+    // depuis le lancement précédent, donc écrire "false" avant de couper
+    // garantit que la propriété est bien enregistrée pendant qu'elle a encore
+    // un effet. En sens inverse (octroi), la collecte est encore éteinte au
+    // moment de l'écriture et le SDK pourrait la laisser tomber — sans doute
+    // sans conséquence, la personnalisation étant déjà le défaut en l'absence
+    // de propriété, mais ce rejet vit dans le binaire GoogleAppMeasurement et
+    // n'a pas pu être vérifié depuis les sources.
     Analytics.setUserProperty(
       consenti ? "true" : "false",
       forName: AnalyticsUserPropertyAllowAdPersonalizationSignals)
@@ -44,10 +59,18 @@ import Foundation
   }
 
   @objc public func loguer(_ nom: String, params: [String: Any]) {
-    Analytics.logEvent(nom, parameters: params)
+    // Même file d'attente que `demarrer()` : sans ce saut, un événement loggé
+    // tôt pourrait atteindre le SDK avant que `configure()` ait fini sur le
+    // main thread. L'API est thread-safe, donc pas de donnée corrompue — au
+    // pire un premier événement perdu — mais autant fermer la fenêtre.
+    DispatchQueue.main.async {
+      Analytics.logEvent(nom, parameters: params)
+    }
   }
 
   @objc public func definirPropriete(_ nom: String, valeur: String?) {
-    Analytics.setUserProperty(valeur, forName: nom)
+    DispatchQueue.main.async {
+      Analytics.setUserProperty(valeur, forName: nom)
+    }
   }
 }

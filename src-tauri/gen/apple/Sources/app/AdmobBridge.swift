@@ -166,8 +166,10 @@ private let AD_UNIT_DEFAUT = AD_UNIT_ENERGIE
     ConsentInformation.shared.requestConsentInfoUpdate(with: params) { erreur in
       guard erreur == nil else {
         // Hors-ligne : on continue sans bloquer, les pubs échoueront proprement.
-        // Aucun verdict publié → la mesure d'audience reste éteinte (fail-closed),
-        // le prochain lancement réessaiera.
+        // Aucun verdict publié → l'état persisté de la mesure d'audience est
+        // laissé tel quel : éteint par défaut au tout premier lancement, sinon
+        // le dernier verdict connu reste en vigueur. Le prochain lancement
+        // réessaiera de publier un verdict frais.
         fin()
         return
       }
