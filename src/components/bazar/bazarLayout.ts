@@ -1,11 +1,16 @@
 /**
  * Coordonnées des objets de la scène du Bazar.
  *
- * MÊME REPÈRE QUE LE QG : `left`/`width` en vw sur un panorama de référence de
- * 300vw, `bottom` en % de la hauteur de scène. Ce n'est pas un hasard —
- * l'outil de calage dev (`?qgedit=1`) calcule ses déplacements en
- * `window.innerWidth / 100`. Une convention en % ici rendrait l'outil
- * inutilisable sur cette scène.
+ * MÊME REPÈRE QUE LE QG : `left`/`width` sur un panorama de référence de 300
+ * unités, `bottom` en % de la hauteur de scène. Ce n'est pas un hasard : c'est
+ * la convention que `qgPct()` sait traduire et que l'outil de calage dev
+ * (`?qgedit=1`) partage, ce qui permet aux deux scènes d'utiliser le même
+ * outil.
+ *
+ * ⚠ Ces unités ne sont PAS des `vw`. La scène est dimensionnée par sa HAUTEUR,
+ * donc sa largeur dépend de l'aspect du fond : mesurée à 338 vw sur un
+ * téléphone de 393 px. L'outil de calage a longtemps dessiné ses cadres en vw
+ * bruts et les manquait de 265 px — corrigé le 2026-08-20.
  *
  * Valeurs de départ posées à la lecture du fond ; à affiner à la souris.
  *
