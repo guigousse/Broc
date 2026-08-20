@@ -3,6 +3,7 @@
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
+import { BAZAR_LAYOUT, type BazarObjetKey } from "@/components/bazar/bazarLayout";
 import {
   useQgObjet,
   useChatBaladeurCoord,
@@ -28,6 +29,9 @@ function ObjetOutline({ editKey }: OutlineProps) {
   if ((CHAT_BALADEUR_ORDER as readonly string[]).includes(editKey)) {
     return <OutlineChat editKey={editKey as ChatBaladeurId} />;
   }
+  if (editKey in BAZAR_LAYOUT.objets) {
+    return <OutlineBazar editKey={editKey as BazarObjetKey} />;
+  }
   return <OutlineQg editKey={editKey as QgObjetKey} />;
 }
 
@@ -36,6 +40,10 @@ function OutlineChat({ editKey }: { editKey: ChatBaladeurId }) {
   return <OutlineAvecCoord editKey={editKey} coord={coord} />;
 }
 function OutlineQg({ editKey }: { editKey: QgObjetKey }) {
+  const coord = useQgObjet(editKey);
+  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
+}
+function OutlineBazar({ editKey }: { editKey: BazarObjetKey }) {
   const coord = useQgObjet(editKey);
   return <OutlineAvecCoord editKey={editKey} coord={coord} />;
 }
@@ -208,20 +216,17 @@ function OutlineAvecCoord({
 }
 
 interface QgEditOverlayProps {
-  /**
-   * Clés à afficher sur CETTE scène. Non branché : `ALL_KEYS` reste utilisé
-   * tant que le tri par scène n'est pas implémenté (Task 3 du plan Bazar).
-   */
+  /** Clés à afficher sur CETTE scène. Non fourni : toutes les clés connues. */
   cles?: EditableKey[];
 }
 
 export function QgEditOverlay({ cles }: QgEditOverlayProps = {}) {
-  void cles; // pas encore branché — cf. commentaire de la prop.
   const ctx = useQgEditContext();
   if (!ctx?.enabled || !ctx.active) return null;
+  const aAfficher = cles ?? ALL_KEYS;
   return (
     <>
-      {ALL_KEYS.map((key) => (
+      {aAfficher.map((key) => (
         <ObjetOutline key={key} editKey={key} />
       ))}
     </>
