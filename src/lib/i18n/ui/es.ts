@@ -147,8 +147,6 @@ export const es: DictionnaireUI = {
     gramophone: "Gramófono — elegir un vinilo",
     fauteuilChat: "Sillón ocupado por un gato",
     fauteuilPasser: "Sillón — descansar el día",
-    porteRevuesLire: "Revistero — leer la Gaceta",
-    porteRevuesAcheter: "Revistero — comprar la Gaceta",
     journalSolOffert: "Periódico — regalo del abuelo",
     journalSolAcheter: "La Gaceta del lunes — comprar o rechazar",
     journalBureauLire: "Periódico — leer la Gaceta",

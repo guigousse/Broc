@@ -150,8 +150,6 @@ export const fr = {
     gramophone: "Gramophone — choisir un vinyle",
     fauteuilChat: "Fauteuil occupé par un chat",
     fauteuilPasser: "Fauteuil — passer la journée",
-    porteRevuesLire: "Porte-revues — lire la Gazette",
-    porteRevuesAcheter: "Porte-revues — acheter la Gazette",
     journalSolOffert: "Journal offert par Grand-père",
     journalSolAcheter: "La Gazette du lundi — acheter ou refuser",
     journalBureauLire: "Journal — lire la Gazette",

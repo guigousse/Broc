@@ -147,8 +147,6 @@ export const el: DictionnaireUI = {
     gramophone: "Γραμμόφωνο — επίλεξε δίσκο",
     fauteuilChat: "Πολυθρόνα πιασμένη από γάτα",
     fauteuilPasser: "Πολυθρόνα — πέρασε τη μέρα",
-    porteRevuesLire: "Περιοδικοθήκη — διάβασε την Εφημερίδα",
-    porteRevuesAcheter: "Περιοδικοθήκη — αγόρασε την Εφημερίδα",
     journalSolOffert: "Εφημερίδα — δώρο του παππού",
     journalSolAcheter: "Η Γκαζέτα της Δευτέρας — αγορά ή άρνηση",
     journalBureauLire: "Εφημερίδα — διάβασε τη Γκαζέτα",
