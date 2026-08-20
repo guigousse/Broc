@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BAZAR_LAYOUT, CLES_LOTS, CLE_VITRINE, type BazarObjetKey } from "./bazarLayout";
-import { qgPct } from "@/components/mobile/qg/layout";
+import { qgPct, QG_LAYOUT } from "@/components/mobile/qg/layout";
+import { CHAT_BALADEUR_ORDER } from "@/lib/chatBaladeur";
 
 describe("BAZAR_LAYOUT", () => {
   it("porte les neuf cases de l'étagère et les quatre emplacements du décor", () => {
@@ -10,9 +11,21 @@ describe("BAZAR_LAYOUT", () => {
         "case1", "case2", "case3",
         "case4", "case5", "case6",
         "case7", "case8", "case9",
-        "borne", "porte", "table", "vendeur",
+        "borne", "sortie", "table", "vendeur",
       ].sort(),
     );
+  });
+
+  it("ne partage aucune clé avec le QG — le dictionnaire de calage est plat", () => {
+    const bazar = Object.keys(BAZAR_LAYOUT.objets);
+    const qg = Object.keys(QG_LAYOUT.objets);
+    expect(bazar.filter((k) => qg.includes(k))).toEqual([]);
+  });
+
+  it("ne partage aucune clé avec le chat baladeur — même raison", () => {
+    const bazar = Object.keys(BAZAR_LAYOUT.objets);
+    const chat = CHAT_BALADEUR_ORDER as readonly string[];
+    expect(bazar.filter((k) => chat.includes(k))).toEqual([]);
   });
 
   it("désigne la rangée du bas pour les lots et le centre pour l'objet de la semaine", () => {

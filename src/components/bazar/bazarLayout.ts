@@ -31,7 +31,7 @@ export const BAZAR_LAYOUT = {
     vendeur: { left: 138.0, bottom: 40.0, width: 24.0 },
     // Zone droite (200..300vw) — réservé et sortie.
     table: { left: 209.0, bottom: 18.0, width: 44.0 },
-    porte: { left: 270.0, bottom: 20.0, width: 28.0 },
+    sortie: { left: 270.0, bottom: 20.0, width: 28.0 },
   },
 } as const;
 
