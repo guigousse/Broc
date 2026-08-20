@@ -10,6 +10,13 @@ import { type BazarObjetKey } from "./bazarLayout";
 /** Durée d'affichage de la bulle « il vous manque N jetons ». */
 export const DUREE_BULLE_MS = 2500;
 
+/**
+ * De combien la plaque de prix remonte SUR la case, en px. ~10 px : assez pour
+ * qu'elle chevauche visiblement l'arête basse du carré, trop peu pour cacher
+ * le pied de l'objet qui y repose.
+ */
+export const CHEVAUCHEMENT_ETIQUETTE_PX = 10;
+
 interface ArticleBazarProps {
   cle: BazarObjetKey;
   visuel: ReactNode;
@@ -100,7 +107,12 @@ export function ArticleBazar({ cle, visuel, libelle, prix, jetons, onAcheter }: 
 
   const colonneEtiquettes: CSSProperties = {
     position: "absolute",
-    top: "calc(100% + 2px)",
+    // À CHEVAL sur l'arête basse de la case, pas suspendue dessous : la
+    // plaque remonte de CHEVAUCHEMENT_ETIQUETTE_PX pour mordre sur le carré.
+    // Elle se lit alors comme une étiquette épinglée sur la planche, sous
+    // l'objet qui y repose, et non comme un cartouche qui flotte dans le vide
+    // entre deux rangées (recette du 2026-08-20 sur téléphone).
+    top: `calc(100% - ${CHEVAUCHEMENT_ETIQUETTE_PX}px)`,
     left: "50%",
     transform: "translateX(-50%)",
     display: "grid",

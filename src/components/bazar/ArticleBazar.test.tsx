@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
-import { ArticleBazar, DUREE_BULLE_MS } from "./ArticleBazar";
+import {
+  ArticleBazar,
+  CHEVAUCHEMENT_ETIQUETTE_PX,
+  DUREE_BULLE_MS,
+} from "./ArticleBazar";
 import { BAZAR_LAYOUT } from "./bazarLayout";
 import { qgPct } from "@/components/mobile/qg/layout";
 import {
@@ -205,11 +209,15 @@ describe("ArticleBazar", () => {
       expect(etiquettes.style.position).toBe("absolute");
     });
 
-    it("la colonne prix + bulle est suspendue SOUS la case, hors du flux", () => {
+    it("la colonne prix est À CHEVAL sur l'arête basse de la case, hors du flux", () => {
       monter();
       const etiquettes = screen.getByTestId("etiquettes-case1");
       expect(etiquettes.style.position).toBe("absolute");
-      expect(etiquettes.style.top).toBe("calc(100% + 2px)");
+      // Recette du 2026-08-20 : la plaque pendait sous le carré
+      // (`calc(100% + 2px)`) et semblait flotter entre deux rangées. Elle
+      // remonte maintenant PAR-DESSUS l'arête basse.
+      expect(etiquettes.style.top).toBe(`calc(100% - ${CHEVAUCHEMENT_ETIQUETTE_PX}px)`);
+      expect(CHEVAUCHEMENT_ETIQUETTE_PX).toBeGreaterThan(0);
       expect(etiquettes.style.left).toBe("50%");
       expect(etiquettes.style.transform).toBe("translateX(-50%)");
     });
