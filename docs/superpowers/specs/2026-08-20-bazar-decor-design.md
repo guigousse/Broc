@@ -44,12 +44,21 @@ coupées par le bord gauche du cadre, en ancrage de premier plan (le rôle que
 tient le bureau d'acajou dans le cabinet). **Un emplacement laissé vide** contre
 le mur, sol dégagé, pour la borne d'arcade compositée plus tard.
 
-**Centre (33–66 %) — le comptoir.** Le comptoir massif vu de face, plateau
-vitré : c'est la vitrine sous verre. Derrière lui, sur le mur du fond **plat et
-frontal**, trois travées d'étagères **vides** à hauteur d'œil. Entre les deux,
-**un espace de sol dégagé de la largeur d'une personne**, rien devant — la place
-du vendeur. Une suspension au-dessus fait du comptoir le point le plus lumineux
-de la boutique.
+**Centre (33–66 %) — le comptoir.** Le comptoir massif vu de face, **plateau de
+bois nu** : pas de vitrine sous verre, rien dessus. Derrière lui, sur le mur du
+fond **plat et frontal**, une étagère montée **haut**, divisée en **neuf cases
+égales** (3 colonnes × 3 rangées), toutes **vides**. Entre le plateau du comptoir
+et la première planche, une **bande de mur nu** à hauteur de buste : c'est là que
+se tiendra le vendeur, sans masquer la marchandise. Au sol derrière le comptoir,
+un espace dégagé de la largeur d'une personne. Une suspension au-dessus fait du
+comptoir le point le plus lumineux de la boutique.
+
+> **Révision du 2026-08-20**, à la vue des premiers tirages : Guillaume a
+> supprimé la vitrine sous verre et demandé neuf cases. L'objet de la semaine ne
+> vit donc plus sous le verre du comptoir mais **dans la case centrale** de la
+> grille ; les trois lots de pièces occupent la **rangée du bas**. Les cinq cases
+> restantes sont vides — elles accueilleront les paquets de cartes du chantier ④,
+> et en attendant les trous font leur travail : ils appellent.
 
 **Droite (66–100 %) — les antiquités.** Entassement d'horloges, malles, lampes
 et cadres empilés vers 68–82 % : chargé en quantité, terne en couleur. Au centre
@@ -134,8 +143,7 @@ sur le modèle de `brocantePanoramaLayout.ts` et de `qg/layout.ts` :
 
 | Clé | Rôle |
 |---|---|
-| `etagere1`, `etagere2`, `etagere3` | Les trois lots de pièces de la semaine |
-| `vitrine` | L'objet sous le verre du comptoir |
+| `case1` … `case9` | Les neuf cases de l'étagère, numérotées de gauche à droite puis de haut en bas. `case7`, `case8`, `case9` (rangée du bas) portent les trois lots de pièces ; `case5` (centre) porte l'objet de la semaine ; les cinq autres restent vides jusqu'au chantier ④ |
 | `porte` | Sortie vers le bureau |
 | `borne` | Réservé — muet pour l'instant |
 | `table` | Réservé — muet pour l'instant |
@@ -201,8 +209,10 @@ Le code ne prouve pas ces points-là :
 1. Une seule image de fond, 2752×1536, même pipeline que le bureau.
 2. Trois zones : `arcade` (gauche), `comptoir` (centre), `antiquites` (droite).
 3. Ouverture sur le comptoir.
-4. Les étagères sont **vides et sur le mur frontal** ; les articles sont
-   compositées par-dessus.
+4. L'étagère est **vide, frontale, haute**, à **neuf cases** ; le plateau du
+   comptoir est **nu** (aucune vitrine sous verre). Les articles sont compositées
+   par-dessus : les trois lots sur la rangée du bas, l'objet de la semaine au
+   centre.
 5. Aucune illustration nouvelle pour les articles — `PieceIcon` et les images
    d'objets existantes.
 6. Deux emplacements réservés : vendeur (derrière le comptoir), borne d'arcade

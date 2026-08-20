@@ -4,7 +4,7 @@
 
 **Goal:** Remplacer l'écran nu du Bazar par un lieu illustré — un panorama à trois zones qu'on parcourt au swipe, où les articles de la semaine sont posés sur les étagères d'un comptoir.
 
-**Architecture:** Le châssis de panorama du bureau (`UnifiedPanorama`) est généralisé par trois props (image, aspect, zones) au lieu d'être recopié ; le Bazar l'instancie avec son propre décor. Les articles sont des boutons positionnés en pourcentage au-dessus du fond, via un fichier de coordonnées calqué sur celui du QG et calé avec l'outil dev existant. Aucune illustration nouvelle n'est commandée pour les articles : les lots réutilisent `PieceIcon`, la vitrine réutilise `ItemImage`.
+**Architecture:** Le châssis de panorama du bureau (`UnifiedPanorama`) est généralisé par trois props (image, aspect, zones) au lieu d'être recopié ; le Bazar l'instancie avec son propre décor. Les articles sont des boutons positionnés en pourcentage au-dessus du fond, via un fichier de coordonnées calqué sur celui du QG et calé avec l'outil dev existant. Aucune illustration nouvelle n'est commandée pour les articles : les lots réutilisent `PieceIcon`, l'objet de la semaine réutilise `ItemImage`.
 
 **Tech Stack:** Next.js 16 (App Router, `"use client"`), TypeScript strict, React 19, Vitest + Testing Library, Tauri v2 (iOS/Android), Gemini Image API pour le fond.
 
@@ -237,7 +237,7 @@ Dans `scripts/qg-prompts.json`, ajouter un objet au tableau. Le prompt reprend m
   "id": "fond-bazar",
   "aspect": "16:9",
   "transparent": false,
-  "description": "A SINGLE UNINTERRUPTED PANORAMIC PAINTING of one continuous second-hand curiosity shop interior, rendered as ONE flowing seamless mural with absolutely NO vertical lines dividing the image, NO triptych frames, NO panels, NO image seams, NO black borders between any parts — strictly forbidden to split the image into thirds or sections; the result must read as a single painted scroll-like view of the same room.\n\nMATCH THE REFERENCE IMAGE EXACTLY in rendering style, camera height, perspective and depth: single vanishing point at the horizontal centre, horizon line at about 57% of the image height, the room read as a three-walled box — a LEFT SIDE WALL angling forward from 0 to 18%, a FLAT BACK WALL seen straight on from 18% to 82%, a RIGHT SIDE WALL angling forward from 82% to the right edge. ONE continuous wooden floor runs unbroken across the bottom, ONE continuous ceiling moulding runs unbroken across the top. Same sepia ink line-art, soft watercolour wash, cream parchment paper texture, brass and warm wood tones, subtle paper grain.\n\nIMPORTANT compositional constraint: this panorama is viewed on a smartphone that swipes horizontally, snapping to three viewing windows (0-33%, 33-66%, 66-100%). NO key element may straddle the vertical positions at 33% or 66%. Those two areas must contain ONLY plain continuous wall surface — they are the breathing zones between viewing windows.\n\nFeature details by horizontal position (0% = left edge, 100% = right edge):\n\n• 0-18% — LEFT SIDE WALL, the retro video-game corner: floor-to-ceiling wooden shelving crowded with old game consoles, stacked cartridges, small painted figurines, boxed toys, coiled controllers. Dense clutter, muted dusty colours.\n• 0-14% — FOREGROUND ANCHOR: a wooden crate and a stack of boxed games juts forward from the LEFT-BOTTOM CORNER into the viewer's space, cropping out of frame on the left.\n• 20-30% — on the BACK WALL: RESERVED EMPTY SPACE. Plain wall and completely CLEAR EMPTY FLOOR here, no furniture and no objects whatsoever — an arcade cabinet will be composited into this spot later. Paint a soft grey floor shadow ellipse where the cabinet will stand so the added object does not appear to float. Nothing may overlap this reserved area.\n• 33% area — plain continuous wall only (BREATHING ZONE). No furniture, no shelf edge, no object.\n• 38-62% — THE COUNTER: a massive dark wooden shop counter seen straight on, frontal, its top surface fitted with a GLASS DISPLAY CASE (empty, clean glass, brass corner fittings) — the case interior must be EMPTY, an object will be composited inside it later. The counter front is carved with simple Art Déco panels. A cash register or a ledger may sit at one far end, never at the centre.\n• 38-62% — on the BACK WALL behind the counter: THREE WIDE WOODEN SHELF BAYS at eye level, mounted FLAT AGAINST THE FRONTAL BACK WALL (not angled, not in perspective), evenly spaced, and COMPLETELY EMPTY — bare clean shelf boards with nothing on them. These are where merchandise will be composited later. The three bays must be clearly separated and equally sized.\n• 44-56% — the floor between the counter and the back shelves: RESERVED EMPTY SPACE, a clear standing area about one person wide, bare floor, nothing in front of it and nothing on it — a shopkeeper figure will be composited standing here later. Keep the floor line crisp and unobstructed.\n• ~50% on the CEILING: a brass pendant lamp hangs above the counter, casting a warm pool of light that makes the counter the brightest area of the whole painting.\n• 66% area — plain continuous wall only (BREATHING ZONE). No furniture, no object.\n• 68-82% — the antiques corner: a joyful jumble of old things heaped and stacked — grandfather clock, steamer trunks, oil lamps, stacked picture frames, porcelain, a birdcage, rolled carpets. Dense and cluttered, but DESATURATED and dusty; this area must not attract the eye.\n• 72-80% — a plain WOODEN TABLE standing in the middle of this corner, its top completely BARE and clearly readable, no objects on it at all. Reserved for later use.\n• 82-100% — RIGHT SIDE WALL angling forward, with the SHOP'S FRONT DOOR set into it, seen at a three-quarter angle: a wooden door with a large frosted glass pane, a small brass bell above it, warm daylight streaming in through the glass and spilling onto the floor. This daylight is the second bright accent of the painting.\n\nColour: the whole painting is deliberately MUTED and dusty — greys, faded browns, soft sage — EXCEPT the two light sources (the counter's pendant lamp and the daylight at the door), which are warm and inviting. Saturated accents are forbidden everywhere else: bright elements will be composited on top later.\n\nLighting: soft warm directional light from the upper-left, consistent across the whole panorama. NO people, no text, no captions, no signatures, no watermark, no transparent areas — the image is fully opaque.\n\nCRITICAL FINAL CONSTRAINTS — (a) The three shelf bays behind the counter and the glass display case are EMPTY. (b) The arcade spot (20-30%), the shopkeeper spot (44-56%) and the table top (72-80%) are EMPTY and unobstructed. (c) Nothing crosses the vertical positions at 33% or 66%. (d) No vertical seams, no panel borders, no black bars anywhere."
+  "description": "A SINGLE UNINTERRUPTED PANORAMIC PAINTING of one continuous second-hand curiosity shop interior, rendered as ONE flowing seamless mural with absolutely NO vertical lines dividing the image, NO triptych frames, NO panels, NO image seams, NO black borders between any parts — strictly forbidden to split the image into thirds or sections; the result must read as a single painted scroll-like view of the same room.\n\nMATCH THE REFERENCE IMAGE EXACTLY in rendering style, camera height, perspective and depth: single vanishing point at the horizontal centre, horizon line at about 57% of the image height, the room read as a three-walled box — a LEFT SIDE WALL angling forward from 0 to 18%, a FLAT BACK WALL seen straight on from 18% to 82%, a RIGHT SIDE WALL angling forward from 82% to the right edge. ONE continuous wooden floor runs unbroken across the bottom, ONE continuous ceiling moulding runs unbroken across the top. Same sepia ink line-art, soft watercolour wash, cream parchment paper texture, brass and warm wood tones, subtle paper grain.\n\nIMPORTANT compositional constraint: this panorama is viewed on a smartphone that swipes horizontally, snapping to three viewing windows (0-33%, 33-66%, 66-100%). NO key element may straddle the vertical positions at 33% or 66%. Those two areas must contain ONLY plain continuous wall surface — they are the breathing zones between viewing windows.\n\nFeature details by horizontal position (0% = left edge, 100% = right edge):\n\n• 0-18% — LEFT SIDE WALL, the retro video-game corner: floor-to-ceiling wooden shelving crowded with old game consoles, stacked cartridges, small painted figurines, boxed toys, coiled controllers. Dense clutter, muted dusty colours.\n• 0-14% — FOREGROUND ANCHOR: a wooden crate and a stack of boxed games juts forward from the LEFT-BOTTOM CORNER into the viewer's space, cropping out of frame on the left.\n• 20-30% — on the BACK WALL: RESERVED EMPTY SPACE. Plain bare wall and completely CLEAR EMPTY FLOOR here — no furniture, no objects, and NO SHADOW, NO STAIN, NO MARKING OF ANY KIND on either the wall or the floor. This area must read as simply empty. An arcade cabinet will be composited into this spot later. Nothing may overlap this reserved area.\n• 33% area — plain continuous wall only (BREATHING ZONE). No furniture, no shelf edge, no object.\n• 38-62% — THE COUNTER: a massive dark wooden shop counter seen straight on, frontal, carved with simple Art Déco panels. Its top is a PLAIN BARE SOLID WOOD SURFACE — absolutely NO glass display case, NO vitrine, NO glass of any kind, and nothing standing on it. The counter top must be completely clear and empty.\n• 38-62% — on the BACK WALL behind the counter: ONE TALL WOODEN SHELF UNIT mounted FLAT AGAINST THE FRONTAL BACK WALL (not angled, not in perspective), divided into EXACTLY NINE equal compartments in a grid of THREE COLUMNS by THREE ROWS. Every one of the nine compartments is COMPLETELY EMPTY — bare clean shelf boards with nothing on them whatsoever. Merchandise will be composited into these compartments later, so they must be clearly separated, equally sized, and squarely facing the viewer.\n• The shelf unit is mounted HIGH: its bottom edge sits well ABOVE the counter top, leaving a clear horizontal BAND OF BARE WALL between the counter top and the lowest shelf — tall enough that a standing person behind the counter would be seen against that bare wall, not against the shelves. This band is RESERVED and must stay empty of any decoration.\n• 44-56% — the floor between the counter and the back wall: RESERVED EMPTY SPACE, a clear standing area about one person wide, bare floor, nothing on it — a shopkeeper figure will be composited standing here later. Keep the floor line crisp and unobstructed.\n• ~50% on the CEILING: a brass pendant lamp hangs above the counter, casting a warm pool of light that makes the counter the brightest area of the whole painting.\n• 66% area — plain continuous wall only (BREATHING ZONE). No furniture, no object.\n• 68-82% — the antiques corner: a joyful jumble of old things heaped and stacked — grandfather clock, steamer trunks, oil lamps, stacked picture frames, porcelain, a birdcage, rolled carpets. Dense and cluttered, but DESATURATED and dusty; this area must not attract the eye.\n• 72-80% — a plain WOODEN TABLE standing in the middle of this corner, its top completely BARE and clearly readable, no objects on it at all. Reserved for later use.\n• 82-100% — RIGHT SIDE WALL angling forward, with the SHOP'S FRONT DOOR set into it, seen at a three-quarter angle: a wooden door with a large frosted glass pane, a small brass bell above it, warm daylight streaming in through the glass and spilling onto the floor. This daylight is the second bright accent of the painting.\n\nColour: the whole painting is deliberately MUTED and dusty — greys, faded browns, soft sage — EXCEPT the two light sources (the counter's pendant lamp and the daylight at the door), which are warm and inviting. Saturated accents are forbidden everywhere else: bright elements will be composited on top later.\n\nLighting: soft warm directional light from the upper-left, consistent across the whole panorama. NO people, no text, no captions, no signatures, no watermark, no transparent areas — the image is fully opaque.\n\nCRITICAL FINAL CONSTRAINTS — (a) The shelf unit behind the counter has EXACTLY NINE empty compartments (3 columns × 3 rows), sits HIGH above the counter with a band of bare wall between them, and the counter top carries NO glass case and nothing at all. (b) The arcade spot (20-30%), the shopkeeper spot (44-56%) and the table top (72-80%) are EMPTY and unobstructed, with no shadow or marking of any kind. (c) Nothing crosses the vertical positions at 33% or 66%. (d) No vertical seams, no panel borders, no black bars anywhere."
 }
 ```
 
@@ -296,8 +296,8 @@ Attendu : PASS.
 
 **Vérification à l'œil, obligatoire avant de commiter** — l'image est le livrable, pas le test :
 1. Aucun objet ne chevauche 33 % ni 66 % de la largeur.
-2. Les trois travées d'étagère sont vides, frontales, de taille égale.
-3. La vitrine du comptoir est vide.
+2. L'étagère porte NEUF cases vides, frontales, de taille égale, montées haut au-dessus du comptoir.
+3. Le plateau du comptoir est nu — aucune vitrine sous verre, rien dessus.
 4. Les trois emplacements réservés (borne ~25 %, vendeur ~50 %, table ~76 %) sont dégagés.
 5. La perspective se lit comme celle du bureau : même hauteur d'œil, même profondeur.
 
@@ -333,15 +333,25 @@ Créer `src/components/bazar/bazarLayout.test.ts` :
 
 ```ts
 import { describe, expect, it } from "vitest";
-import { BAZAR_LAYOUT, type BazarObjetKey } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_LOTS, CLE_VITRINE, type BazarObjetKey } from "./bazarLayout";
 import { qgPct } from "@/components/mobile/qg/layout";
 
 describe("BAZAR_LAYOUT", () => {
-  it("porte les sept emplacements de la scène", () => {
+  it("porte les neuf cases de l'étagère et les quatre emplacements du décor", () => {
     const cles = Object.keys(BAZAR_LAYOUT.objets) as BazarObjetKey[];
     expect(cles.sort()).toEqual(
-      ["borne", "etagere1", "etagere2", "etagere3", "porte", "table", "vitrine", "vendeur"].sort(),
+      [
+        "case1", "case2", "case3",
+        "case4", "case5", "case6",
+        "case7", "case8", "case9",
+        "borne", "porte", "table", "vendeur",
+      ].sort(),
     );
+  });
+
+  it("désigne la rangée du bas pour les lots et le centre pour l'objet de la semaine", () => {
+    expect(CLES_LOTS).toEqual(["case7", "case8", "case9"]);
+    expect(CLE_VITRINE).toBe("case5");
   });
 
   it("utilise le même repère que le QG (300vw), sinon l'outil de calage ment", () => {
@@ -349,14 +359,29 @@ describe("BAZAR_LAYOUT", () => {
     expect(qgPct(150)).toBe(50);
   });
 
-  it("range les trois travées de gauche à droite dans la zone du comptoir", () => {
-    const { etagere1, etagere2, etagere3 } = BAZAR_LAYOUT.objets;
-    expect(etagere1.left).toBeLessThan(etagere2.left);
-    expect(etagere2.left).toBeLessThan(etagere3.left);
-    // Zone centre = 33 %..66 % de 300vw = 100vw..200vw.
-    for (const e of [etagere1, etagere2, etagere3]) {
-      expect(qgPct(e.left)).toBeGreaterThan(33);
-      expect(qgPct(e.left + e.width)).toBeLessThan(66);
+  it("range la grille de gauche à droite et de haut en bas", () => {
+    const o = BAZAR_LAYOUT.objets;
+    // Trois colonnes : même ordre horizontal sur chaque rangée.
+    for (const [g, c, d] of [
+      ["case1", "case2", "case3"],
+      ["case4", "case5", "case6"],
+      ["case7", "case8", "case9"],
+    ] as const) {
+      expect(o[g].left).toBeLessThan(o[c].left);
+      expect(o[c].left).toBeLessThan(o[d].left);
+    }
+    // Trois rangées : la première est la plus haute (bottom décroît vers le bas).
+    expect(o.case1.bottom).toBeGreaterThan(o.case4.bottom);
+    expect(o.case4.bottom).toBeGreaterThan(o.case7.bottom);
+  });
+
+  it("garde les neuf cases dans la zone du comptoir, loin des frontières de swipe", () => {
+    // Zone centre = 33 %..66 % de 300vw = 100vw..200vw. Une case qui déborde
+    // serait coupée en deux par le snap.
+    for (const cle of ["case1", "case5", "case9"] as const) {
+      const c = BAZAR_LAYOUT.objets[cle];
+      expect(qgPct(c.left)).toBeGreaterThan(33);
+      expect(qgPct(c.left + c.width)).toBeLessThan(66);
     }
   });
 });
@@ -390,23 +415,37 @@ export const BAZAR_LAYOUT = {
   panoramaAspect: { w: 2752, h: 1536 },
   objets: {
     // Zone gauche (0..100vw) — réservé, muet.
-    borne: { left: 62.0, bottom: 16.0, width: 24.0 },
-    // Zone centre (100..200vw) — les trois travées et la vitrine.
-    etagere1: { left: 118.0, bottom: 46.0, width: 20.0 },
-    etagere2: { left: 141.0, bottom: 46.0, width: 20.0 },
-    etagere3: { left: 164.0, bottom: 46.0, width: 20.0 },
-    vitrine: { left: 136.0, bottom: 22.0, width: 28.0 },
-    vendeur: { left: 138.0, bottom: 30.0, width: 24.0 },
+    borne: { left: 61.0, bottom: 18.0, width: 30.0 },
+    // Zone centre (100..200vw) — la grille de neuf cases, mesurée sur le fond :
+    // l'étagère occupe 36 %..64 % de la largeur, ses trois rangées sont à
+    // 53 %, 62 % et 71 % de la hauteur.
+    case1: { left: 111.0, bottom: 71.0, width: 24.0 },
+    case2: { left: 139.0, bottom: 71.0, width: 24.0 },
+    case3: { left: 167.0, bottom: 71.0, width: 24.0 },
+    case4: { left: 111.0, bottom: 62.0, width: 24.0 },
+    case5: { left: 139.0, bottom: 62.0, width: 24.0 },
+    case6: { left: 167.0, bottom: 62.0, width: 24.0 },
+    case7: { left: 111.0, bottom: 53.0, width: 24.0 },
+    case8: { left: 139.0, bottom: 53.0, width: 24.0 },
+    case9: { left: 167.0, bottom: 53.0, width: 24.0 },
+    // La bande de mur nu entre le plateau du comptoir et la première planche.
+    vendeur: { left: 138.0, bottom: 40.0, width: 24.0 },
     // Zone droite (200..300vw) — réservé et sortie.
-    table: { left: 222.0, bottom: 18.0, width: 26.0 },
-    porte: { left: 262.0, bottom: 20.0, width: 30.0 },
+    table: { left: 209.0, bottom: 18.0, width: 44.0 },
+    porte: { left: 270.0, bottom: 20.0, width: 28.0 },
   },
 } as const;
 
 export type BazarObjetKey = keyof typeof BAZAR_LAYOUT.objets;
 
-/** Les trois travées, dans l'ordre où l'étal range ses lots. */
-export const CLES_ETAGERES: BazarObjetKey[] = ["etagere1", "etagere2", "etagere3"];
+/**
+ * Les trois lots de pièces vont sur la rangée du BAS — la plus proche de la
+ * main, et la seule que la suspension n'éclipse pas.
+ */
+export const CLES_LOTS: BazarObjetKey[] = ["case7", "case8", "case9"];
+
+/** L'objet de la semaine trône au centre de la grille. */
+export const CLE_VITRINE: BazarObjetKey = "case5";
 ```
 
 - [ ] **Step 4: Brancher l'outil de calage**
@@ -526,7 +565,7 @@ function monter(props: Partial<React.ComponentProps<typeof ArticleBazar>> = {}) 
   const onAcheter = vi.fn();
   render(
     <ArticleBazar
-      cle="etagere1"
+      cle="case7"
       visuel={<span data-testid="visuel" />}
       libelle="5 pièces · Musique"
       prix={3}
@@ -561,14 +600,14 @@ describe("ArticleBazar", () => {
     const prix = screen.getByText("12 jetons") as HTMLElement;
     expect(prix.style.textDecoration).toBe("line-through");
     // La bulle est portée par le conteneur : un bouton désactivé n'émet pas de clic.
-    fireEvent.click(screen.getByTestId("article-etagere1"));
+    fireEvent.click(screen.getByTestId("article-case7"));
     expect(screen.getByText("Il vous manque 7 jetons")).toBeTruthy();
     expect(onAcheter).not.toHaveBeenCalled();
   });
 
   it("le singulier du manque est respecté", () => {
     monter({ prix: 6, jetons: 5 });
-    fireEvent.click(screen.getByTestId("article-etagere1"));
+    fireEvent.click(screen.getByTestId("article-case7"));
     expect(screen.getByText("Il vous manque 1 jeton")).toBeTruthy();
   });
 });
@@ -717,7 +756,7 @@ git commit -m "feat(bazar): un article posé, et le manque de jetons qui se dit"
 - Test: `src/components/bazar/BazarScene.test.tsx` (créer)
 
 **Interfaces:**
-- Consomme : `UnifiedPanorama` + `ZONES_BAZAR`, `ArticleBazar`, `BAZAR_LAYOUT`, `CLES_ETAGERES`, `PieceIcon`, `ItemImage`, `getTemplate`, `nomObjet`, `libelleCategorie`.
+- Consomme : `UnifiedPanorama` + `ZONES_BAZAR`, `ArticleBazar`, `BAZAR_LAYOUT`, `CLES_LOTS`, `CLE_VITRINE`, `PieceIcon`, `ItemImage`, `getTemplate`, `nomObjet`, `libelleCategorie`.
 - Produit :
 
 ```ts
@@ -768,16 +807,16 @@ describe("BazarScene", () => {
     expect(ZONES_BAZAR[Math.floor(ZONES_BAZAR.length / 2)].key).toBe("comptoir");
   });
 
-  it("pose les trois lots sur les trois travées", () => {
+  it("pose les trois lots sur la rangée du bas", () => {
     monter();
-    expect(screen.getByTestId("article-etagere1")).toBeTruthy();
-    expect(screen.getByTestId("article-etagere2")).toBeTruthy();
-    expect(screen.getByTestId("article-etagere3")).toBeTruthy();
+    expect(screen.getByTestId("article-case7")).toBeTruthy();
+    expect(screen.getByTestId("article-case8")).toBeTruthy();
+    expect(screen.getByTestId("article-case9")).toBeTruthy();
   });
 
-  it("pose l'objet de la semaine sous le verre", () => {
+  it("pose l'objet de la semaine dans la case centrale", () => {
     monter();
-    expect(screen.getByTestId("article-vitrine")).toBeTruthy();
+    expect(screen.getByTestId("article-case5")).toBeTruthy();
   });
 
   it("achète le lot touché, avec son index", () => {
@@ -794,7 +833,7 @@ describe("BazarScene", () => {
 
   it("vitrine vendue : la place est vide et le dit", () => {
     monter({ ...ETAL, vitrine: null });
-    expect(screen.queryByTestId("article-vitrine")).toBeNull();
+    expect(screen.queryByTestId("article-case5")).toBeNull();
     expect(screen.getByText(/Vendu/)).toBeTruthy();
   });
 
@@ -841,7 +880,7 @@ import { qgPct } from "@/components/mobile/qg/layout";
 import type { AchatBazar } from "@/lib/bazar/achat";
 import type { EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
-import { BAZAR_LAYOUT, CLES_ETAGERES } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_LOTS, CLE_VITRINE } from "./bazarLayout";
 
 /** Les trois zones du Bazar : le coin arcade, le comptoir, les antiquités. */
 export const ZONES_BAZAR: PanoramaZone[] = [
@@ -860,7 +899,7 @@ interface BazarSceneProps {
 export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProps) {
   const { d, tr, locale } = useLangue();
   const template = etal.vitrine ? getTemplate(etal.vitrine.templateId) : undefined;
-  const coordVitrine = BAZAR_LAYOUT.objets.vitrine;
+  const coordVitrine = BAZAR_LAYOUT.objets[CLE_VITRINE];
   const coordPorte = BAZAR_LAYOUT.objets.porte;
 
   return (
@@ -874,7 +913,7 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
       {etal.lotsPieces.map((lot, index) => (
         <ArticleBazar
           key={lot.categorie}
-          cle={CLES_ETAGERES[index]}
+          cle={CLES_LOTS[index]}
           visuel={<PieceIcon categorie={lot.categorie} size={48} count={lot.quantite} />}
           libelle={tr(d.bazar.lotPieces, {
             n: lot.quantite,
@@ -888,7 +927,7 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
 
       {etal.vitrine && template ? (
         <ArticleBazar
-          cle="vitrine"
+          cle={CLE_VITRINE}
           visuel={
             <span style={{ display: "block", width: "100%", aspectRatio: "1 / 1" }}>
               <ItemImage
@@ -1036,11 +1075,11 @@ Puis, dans le navigateur : `http://localhost:3000/bazar?qgedit=1`.
 
 - [ ] **Step 2: Caler chaque objet à la souris**
 
-Glisser chaque cadre sur sa place dans le décor, redimensionner par la poignée. Les huit clés : `etagere1..3`, `vitrine`, `porte`, `borne`, `table`, `vendeur`.
+Glisser chaque cadre sur sa place dans le décor, redimensionner par la poignée. Les treize clés : `case1..case9`, `porte`, `borne`, `table`, `vendeur`.
 
 Points de contrôle :
-- Les trois lots sont **posés** sur les planches, pas flottants au-dessus.
-- L'objet de vitrine est **dans** le verre du comptoir.
+- Les trois lots sont **posés** dans les cases du bas, pas flottants au-dessus.
+- L'objet de la semaine est **dans** la case centrale, sans déborder de ses montants.
 - La zone de la porte couvre la porte sans déborder sur le mur.
 - `borne`, `table`, `vendeur` : les cadres coïncident avec les emplacements laissés vides dans l'image (ils ne sont pas rendus en jeu, mais leurs coordonnées serviront aux chantiers suivants — mieux vaut les caler tant que le décor est sous les yeux).
 
