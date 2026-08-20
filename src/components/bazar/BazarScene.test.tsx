@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent, within } from "@testing-library/react";
 import { BazarScene, ZONES_BAZAR } from "./BazarScene";
 import { BAZAR_LAYOUT } from "./bazarLayout";
 import { qgPct } from "@/components/mobile/qg/layout";
@@ -45,6 +45,40 @@ describe("BazarScene", () => {
     expect(screen.getByTestId("article-case4")).toBeTruthy();
     expect(screen.getByTestId("article-case5")).toBeTruthy();
     expect(screen.getByTestId("article-case6")).toBeTruthy();
+  });
+
+  // ── Le badge de quantité quitte l'étagère (recette du 2026-08-20) ────────
+  // Il vivait sous l'engrenage (`bottom: -3`), exactement là où la plaque de
+  // prix est venue mordre sur l'arête basse de la case : elle le recouvrait.
+  // L'auteur a tranché — sur l'étagère, un lot montre son engrenage et son
+  // prix, rien d'autre ; la quantité se lit dans la fiche, à un tap.
+  //
+  // Ces deux assertions vont ENSEMBLE, et c'est tout le sujet : le visuel
+  // disparaît, l'information reste. Un joueur non-voyant n'avait pas de badge
+  // à perdre — c'est le nom accessible qu'il entend, et il doit continuer de
+  // dire combien de pièces contient le lot.
+  it("un lot n'affiche AUCUN badge de quantité sur l'étagère", () => {
+    monter();
+    const bouton = screen.getAllByRole("button", { name: /Mode/ })[0];
+    // L'engrenage est un dessin : sans badge, le bouton n'a plus un seul
+    // caractère de texte. C'est la trace la plus directe de l'absence du « 5 ».
+    expect(bouton.textContent).toBe("");
+  });
+
+  it("… mais son nom accessible dit toujours la quantité", () => {
+    monter();
+    const bouton = screen.getAllByRole("button", { name: /Mode/ })[0];
+    expect(bouton.getAttribute("aria-label")).toContain("5 pièces");
+  });
+
+  it("la fiche garde le badge : c'est le seul endroit où la quantité se VOIT", () => {
+    monter();
+    fireEvent.click(screen.getAllByRole("button", { name: /Mode/ })[0]);
+    const fiche = screen.getByRole("dialog");
+    // Le titre la porte en toutes lettres…
+    expect(fiche.textContent).toContain("5 pièces");
+    // … et l'engrenage y garde son badge chiffré.
+    expect(within(fiche).getByText("5")).toBeTruthy();
   });
 
   it("pose l'objet de la semaine au milieu de la planche du haut", () => {

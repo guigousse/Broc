@@ -126,6 +126,19 @@ describe("BazarPage — le refus d'acheterAuBazar remonte jusqu'à la fiche", ()
     expect(screen.getByRole("status").textContent).toBe("Stockage plein");
   });
 
+  // Le refus qui n'est PAS le manque de jetons — un étal périmé, un article
+  // déjà parti — passait autrefois par le toast, et c'est le cas qu'il fallait
+  // vérifier avant de retirer celui-ci : `acheterAuBazar` localise les trois
+  // raisons de la même façon (`raisonLocaliseeBazar`), la page les rend telles
+  // quelles, et la fiche les affiche toutes.
+  it("refus « article indisponible » : la fiche le dit aussi, pas seulement le manque", async () => {
+    acheterAuBazar.mockReturnValue({ ok: false, raison: "Article indisponible" });
+    render(<BazarPage />);
+    await acheterLePremierLot();
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe("Article indisponible");
+  });
+
   it("achat refusé : plus de toast — un seul canal, le durable", async () => {
     acheterAuBazar.mockReturnValue({ ok: false, raison: "Stockage plein" });
     render(<BazarPage />);

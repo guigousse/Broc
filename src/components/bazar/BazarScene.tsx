@@ -99,7 +99,16 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
             <ArticleBazar
               key={lot.categorie}
               cle={CLES_LOTS[index]}
-              visuel={<PieceIcon categorie={lot.categorie} size={48} count={lot.quantite} />}
+              // SANS `count` : l'engrenage nu. Le badge de quantité vivait sous
+            // l'engrenage (`bottom: -3`), c'est-à-dire exactement là où la
+            // plaque de prix est venue mordre sur l'arête basse de la case —
+            // elle le recouvrait. L'auteur a tranché à la recette du
+            // 2026-08-20 : sur l'étagère, un lot montre son engrenage et son
+            // prix, rien d'autre. La quantité se lit dans la fiche, à un tap.
+            // Elle reste dans le NOM ACCESSIBLE de l'article ci-dessous : un
+            // joueur non-voyant n'a pas de badge à perdre, et c'est ce texte
+            // qu'il entend à la place.
+            visuel={<PieceIcon categorie={lot.categorie} size={48} />}
               libelle={libelle}
               prix={lot.prix}
               jetons={jetons}
