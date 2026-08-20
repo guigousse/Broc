@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { ArticleBazar, CHEVAUCHEMENT_ETIQUETTE_PX } from "./ArticleBazar";
+import { PLAQUE_ETIQUETTE, PLAQUE_ETIQUETTE_ETEINTE } from "./etiquette";
 import { BAZAR_LAYOUT } from "./bazarLayout";
 import { qgPct } from "@/components/mobile/qg/layout";
 import {
@@ -58,12 +59,45 @@ describe("ArticleBazar", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 
-  it("hors de portée : le prix est barré", () => {
+  // ── La rature est remplacée par l'extinction (recette du 2026-08-20) ─────
+  // Le prix hors de portée était BARRÉ. L'auteur a changé la règle : la rature
+  // raye un chiffre qu'on cherche justement à lire, et sur une plaque de
+  // 0,7 rem elle se confond avec le trait du filet. C'est la COULEUR qui porte
+  // l'état, la plaque entière s'éteignant d'un bloc.
+  it("hors de portée : la plaque s'éteint en entier — fond, filet et texte", () => {
     monter({ prix: 12, jetons: 5 });
     // `toHaveStyle` n'existe pas ici : le dépôt n'installe PAS @testing-library/jest-dom.
     // On lit la propriété de style directement.
     const prix = screen.getByText("12 jetons") as HTMLElement;
-    expect(prix.style.textDecoration).toBe("line-through");
+    expect(prix.style.backgroundColor).toBe(PLAQUE_ETIQUETTE_ETEINTE.backgroundColor);
+    // Le raccourci `border` : jsdom ne le décompose pas quand la valeur passe
+    // par un `var()` (piège déjà documenté dans `etiquette.ts`), on lit donc
+    // la propriété telle qu'elle a été posée.
+    expect(prix.style.border).toBe("1px solid var(--ink-300)");
+    expect(prix.style.color).toBe(PLAQUE_ETIQUETTE_ETEINTE.color);
+  });
+
+  it("hors de portée : le prix n'est PLUS barré", () => {
+    monter({ prix: 12, jetons: 5 });
+    const prix = screen.getByText("12 jetons") as HTMLElement;
+    expect(prix.style.textDecoration).not.toBe("line-through");
+  });
+
+  it("à portée : la plaque garde le couple de la maison", () => {
+    monter({ prix: 3, jetons: 10 });
+    const prix = screen.getByText("3 jetons") as HTMLElement;
+    expect(prix.style.backgroundColor).toBe(PLAQUE_ETIQUETTE.backgroundColor);
+    expect(prix.style.color).toBe(PLAQUE_ETIQUETTE.color);
+  });
+
+  // Éteinte, oui ; fantôme, non. Le fond et le texte doivent RESTER un couple
+  // contrasté : `paper-400` sur `ink-500`, 5,6:1, au-dessus du seuil AA.
+  it("les deux états ne partagent aucune des trois teintes", () => {
+    expect(PLAQUE_ETIQUETTE_ETEINTE.backgroundColor).not.toBe(
+      PLAQUE_ETIQUETTE.backgroundColor,
+    );
+    expect(PLAQUE_ETIQUETTE_ETEINTE.border).not.toBe(PLAQUE_ETIQUETTE.border);
+    expect(PLAQUE_ETIQUETTE_ETEINTE.color).not.toBe(PLAQUE_ETIQUETTE.color);
   });
 
   // Recette du 2026-08-20 sur téléphone : l'auteur a refusé la désaturation
@@ -137,11 +171,12 @@ describe("ArticleBazar", () => {
       expect(prix.style.borderRadius).toBe("var(--radius-pill)");
     });
 
-    it("hors de portée, le prix garde sa rature SUR la plaque", () => {
+    it("hors de portée, c'est encore une plaque — éteinte, pas effacée", () => {
       monter({ prix: 12, jetons: 5 });
       const prix = screen.getByText("12 jetons");
-      expect(prix.style.backgroundColor).toBe("var(--forest-800)");
-      expect(prix.style.textDecoration).toBe("line-through");
+      expect(prix.style.backgroundColor).toBe("var(--ink-500)");
+      expect(prix.style.borderRadius).toBe("var(--radius-pill)");
+      expect(prix.style.display).toBe("inline-block");
     });
   });
 

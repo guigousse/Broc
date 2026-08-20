@@ -212,15 +212,18 @@ describe("BazarScene", () => {
   // marchandise reste en couleur, quoi qu'il arrive, et c'est le prix barré
   // qui dit l'inaccessibilité. Le test garde le cas « bourse à 0 » — il
   // atteste maintenant ce que la conception dit, pas son contraire.
-  it("bourse à 0 : les quatre articles restent en couleur, prix barré", () => {
+  it("bourse à 0 : les quatre articles restent en couleur, plaques éteintes", () => {
     const { onAcheter } = monter(ETAL, 0);
     for (const cle of ["case4", "case5", "case6", "case2"]) {
       const article = screen.getByTestId(`article-${cle}`);
       expect(article.style.filter).toBe("");
     }
-    expect((screen.getByText("8 jetons") as HTMLElement).style.textDecoration).toBe(
-      "line-through",
-    );
+    // La rature a été remplacée par l'extinction de la plaque entière à la
+    // recette du 2026-08-20 : c'est la couleur qui porte l'état.
+    const plaque = screen.getByText("8 jetons") as HTMLElement;
+    expect(plaque.style.backgroundColor).toBe("var(--ink-500)");
+    expect(plaque.style.color).toBe("var(--paper-400)");
+    expect(plaque.style.textDecoration).not.toBe("line-through");
     // Et taper n'achète toujours rien : ça ouvre la fiche, qui dit le manque.
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
     fireEvent.click(screen.getByRole("button", { name: "Acheter" }));

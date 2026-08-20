@@ -4,7 +4,7 @@ import { type CSSProperties, type ReactNode } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
-import { PLAQUE_ETIQUETTE } from "./etiquette";
+import { PLAQUE_ETIQUETTE, PLAQUE_ETIQUETTE_ETEINTE } from "./etiquette";
 import { type BazarObjetKey } from "./bazarLayout";
 
 /**
@@ -40,7 +40,9 @@ interface ArticleBazarProps {
  * l'a refusé sur son téléphone à la même recette — une boutique dont la moitié
  * des articles est grise ne donne pas envie d'y entrer, et le décor peint perd
  * ce pour quoi il a été peint. L'inaccessibilité est portée par la seule
- * étiquette de prix, BARRÉE, puis par la fiche.
+ * étiquette de prix, qui s'ÉTEINT d'un bloc (fond, filet et texte ensemble),
+ * puis par la fiche. Elle a été barrée entre-temps : la rature raye un chiffre
+ * qu'on cherche justement à lire, l'auteur l'a remplacée par la couleur.
  *
  * Aucun `aria-disabled` ici non plus, et c'est voulu : le bouton fonctionne
  * pleinement, quel que soit l'état de la bourse — il ouvre la fiche. L'annoncer
@@ -141,12 +143,7 @@ export function ArticleBazar({
         {visuel}
       </button>
       <span style={colonneEtiquettes} data-testid={`etiquettes-${cle}`}>
-        <span
-          style={{
-            ...PLAQUE_ETIQUETTE,
-            textDecoration: horsDePortee ? "line-through" : "none",
-          }}
-        >
+        <span style={horsDePortee ? PLAQUE_ETIQUETTE_ETEINTE : PLAQUE_ETIQUETTE}>
           {tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
         </span>
       </span>

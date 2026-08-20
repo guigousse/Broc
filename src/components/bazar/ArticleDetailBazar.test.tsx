@@ -93,6 +93,12 @@ describe("ArticleDetailBazar", () => {
     expect(onAcheter).toHaveBeenCalledTimes(1);
   });
 
+  it("bourse suffisante : le prix garde l'encre de la carte", () => {
+    monter(VITRINE, 99);
+    const prix = screen.getByText("8 jetons") as HTMLElement;
+    expect(prix.style.color).toBe("var(--forest-800)");
+  });
+
   it("bourse suffisante : le bouton achète et referme la fiche", () => {
     const { onAcheter, onClose } = monter(VITRINE, 25);
     fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
@@ -133,12 +139,16 @@ describe("ArticleDetailBazar", () => {
       expect(screen.getByText("Il vous manque 1 jeton")).toBeTruthy();
     });
 
-    it("le prix est barré, comme sur l'étiquette de l'étagère", () => {
+    // Même règle que sur l'étiquette de l'étagère, et elle a changé le
+    // 2026-08-20 : le prix n'est plus BARRÉ, il s'ÉTEINT. La rature rayait un
+    // chiffre qu'on cherche justement à lire.
+    it("le prix s'éteint, il n'est pas barré", () => {
       monter(VITRINE, 3);
-      expect((screen.getByText("8 jetons") as HTMLElement).style.textDecoration).toBe(
-        "line-through",
-      );
+      const prix = screen.getByText("8 jetons") as HTMLElement;
+      expect(prix.style.color).toBe("var(--ink-300)");
+      expect(prix.style.textDecoration).not.toBe("line-through");
     });
+
 
     // Le message reste affiché tant que la fiche est ouverte (elle est modale,
     // le joueur la referme lui-même) mais il ne doit pas survivre à un rendu
