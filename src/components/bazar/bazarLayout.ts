@@ -8,9 +8,13 @@
  * inutilisable sur cette scène.
  *
  * Valeurs de départ posées à la lecture du fond ; à affiner à la souris.
+ *
+ * Pas de `panoramaWidth` ici : le repère de 300 vw est celui du QG, et
+ * `qgPct()` (seule voie de conversion vers un % de scène) divise par
+ * `QG_LAYOUT.panoramaWidth`. Un second champ portant le même nombre serait une
+ * deuxième source de vérité que rien ne relierait à la première.
  */
 export const BAZAR_LAYOUT = {
-  panoramaWidth: 300,
   panoramaAspect: { w: 2752, h: 1536 },
   objets: {
     // Zone gauche (0..100vw) — réservé, muet.
@@ -32,6 +36,12 @@ export const BAZAR_LAYOUT = {
 } as const;
 
 export type BazarObjetKey = keyof typeof BAZAR_LAYOUT.objets;
+
+/**
+ * Toutes les clés du Bazar, dans l'ordre du dictionnaire. C'est la liste que
+ * la scène passe à l'overlay de calage et que le panneau dev liste.
+ */
+export const CLES_BAZAR = Object.keys(BAZAR_LAYOUT.objets) as BazarObjetKey[];
 
 /**
  * Les trois lots de pièces vont sur la planche du BAS — la plus proche de la
