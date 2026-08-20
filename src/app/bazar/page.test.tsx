@@ -74,7 +74,7 @@ describe("BazarPage — settle déclenché à l'entrée sur l'écran", () => {
 
   it("rend l'étal directement quand le settle a déjà eu lieu — pas de Skeleton bloqué", () => {
     render(<BazarPage />);
-    expect(screen.getByRole("heading", { level: 1, name: "Le Bazar" })).toBeTruthy();
+    expect(screen.getByLabelText("Le Bazar")).toBeTruthy();
   });
 });
 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
-import { EtalBazarVue } from "@/components/bazar/EtalBazar";
+import { BazarScene } from "@/components/bazar/BazarScene";
 import { useGame } from "@/context/GameContext";
 import { useToastSafe } from "@/components/ui/Toast";
 import { bazarEstOuvert } from "@/lib/bazar/ouverture";
@@ -44,8 +44,15 @@ export default function BazarPage() {
   if (!state || !state.bazar) return <SkeletonScreen />;
 
   return (
-    <MobileLayout header={<MobileHeader budget={state.budget} jetons={state.jetons} forcerAffichageJetons />}>
-      <EtalBazarVue etal={state.bazar} jetons={state.jetons} onAcheter={handleAcheter} />
+    <MobileLayout
+      header={<MobileHeader budget={state.budget} jetons={state.jetons} forcerAffichageJetons />}
+    >
+      <BazarScene
+        etal={state.bazar}
+        jetons={state.jetons}
+        onAcheter={handleAcheter}
+        onSortir={() => router.push("/bureau")}
+      />
     </MobileLayout>
   );
 }
