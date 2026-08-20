@@ -4,13 +4,12 @@ import { qgPct, QG_LAYOUT } from "@/components/mobile/qg/layout";
 import { CHAT_BALADEUR_ORDER } from "@/lib/chatBaladeur";
 
 describe("BAZAR_LAYOUT", () => {
-  it("porte les neuf cases de l'étagère et les quatre emplacements du décor", () => {
+  it("porte les six cases de l'étagère et les quatre emplacements du décor", () => {
     const cles = Object.keys(BAZAR_LAYOUT.objets) as BazarObjetKey[];
     expect(cles.sort()).toEqual(
       [
         "case1", "case2", "case3",
         "case4", "case5", "case6",
-        "case7", "case8", "case9",
         "borne", "sortie", "table", "vendeur",
       ].sort(),
     );
@@ -28,9 +27,9 @@ describe("BAZAR_LAYOUT", () => {
     expect(bazar.filter((k) => chat.includes(k))).toEqual([]);
   });
 
-  it("désigne la rangée du bas pour les lots et le centre pour l'objet de la semaine", () => {
-    expect(CLES_LOTS).toEqual(["case7", "case8", "case9"]);
-    expect(CLE_VITRINE).toBe("case5");
+  it("désigne la planche du bas pour les lots et le milieu de la planche du haut pour l'objet de la semaine", () => {
+    expect(CLES_LOTS).toEqual(["case4", "case5", "case6"]);
+    expect(CLE_VITRINE).toBe("case2");
   });
 
   it("utilise le même repère que le QG (300vw), sinon l'outil de calage ment", () => {
@@ -40,27 +39,33 @@ describe("BAZAR_LAYOUT", () => {
 
   it("range la grille de gauche à droite et de haut en bas", () => {
     const o = BAZAR_LAYOUT.objets;
-    // Trois colonnes : même ordre horizontal sur chaque rangée.
+    // Deux planches : même ordre horizontal sur chacune.
     for (const [g, c, d] of [
       ["case1", "case2", "case3"],
       ["case4", "case5", "case6"],
-      ["case7", "case8", "case9"],
     ] as const) {
       expect(o[g].left).toBeLessThan(o[c].left);
       expect(o[c].left).toBeLessThan(o[d].left);
     }
-    // Trois rangées : la première est la plus haute (bottom décroît vers le bas).
+    // La planche du haut est plus haute (bottom décroît vers le bas).
     expect(o.case1.bottom).toBeGreaterThan(o.case4.bottom);
-    expect(o.case4.bottom).toBeGreaterThan(o.case7.bottom);
   });
 
-  it("garde les neuf cases dans la zone du comptoir, loin des frontières de swipe", () => {
+  it("garde les six cases dans la zone du comptoir, loin des frontières de swipe", () => {
     // Zone centre = 33 %..66 % de 300vw = 100vw..200vw. Une case qui déborde
     // serait coupée en deux par le snap.
-    for (const cle of ["case1", "case5", "case9"] as const) {
+    for (const cle of ["case1", "case3", "case4", "case6"] as const) {
       const c = BAZAR_LAYOUT.objets[cle];
       expect(qgPct(c.left)).toBeGreaterThan(33);
       expect(qgPct(c.left + c.width)).toBeLessThan(66);
     }
+  });
+
+  it("ne porte pas de case orpheline — toute case est utilisée par la scène", () => {
+    const cases = Object.keys(BAZAR_LAYOUT.objets).filter((k) => k.startsWith("case"));
+    const utilisees = new Set<string>([...CLES_LOTS, CLE_VITRINE]);
+    // Les cases non utilisées sont admises, mais jamais plus de la moitié :
+    // au-delà, c'est que la grille et le décor ne se correspondent plus.
+    expect(cases.length).toBeLessThanOrEqual(utilisees.size * 2);
   });
 });

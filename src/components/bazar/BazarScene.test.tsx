@@ -34,16 +34,16 @@ describe("BazarScene", () => {
     expect(ZONES_BAZAR[Math.floor(ZONES_BAZAR.length / 2)].key).toBe("comptoir");
   });
 
-  it("pose les trois lots sur la rangée du bas", () => {
+  it("pose les trois lots sur la planche du bas", () => {
     monter();
-    expect(screen.getByTestId("article-case7")).toBeTruthy();
-    expect(screen.getByTestId("article-case8")).toBeTruthy();
-    expect(screen.getByTestId("article-case9")).toBeTruthy();
+    expect(screen.getByTestId("article-case4")).toBeTruthy();
+    expect(screen.getByTestId("article-case5")).toBeTruthy();
+    expect(screen.getByTestId("article-case6")).toBeTruthy();
   });
 
-  it("pose l'objet de la semaine dans la case centrale", () => {
+  it("pose l'objet de la semaine au milieu de la planche du haut", () => {
     monter();
-    expect(screen.getByTestId("article-case5")).toBeTruthy();
+    expect(screen.getByTestId("article-case2")).toBeTruthy();
   });
 
   it("achète le lot touché, avec son index", () => {
@@ -60,14 +60,14 @@ describe("BazarScene", () => {
 
   it("vitrine vendue : la place est vide et le dit", () => {
     monter({ ...ETAL, vitrine: null });
-    expect(screen.queryByTestId("article-case5")).toBeNull();
+    expect(screen.queryByTestId("article-case2")).toBeNull();
     expect(screen.getByText(/Vendu/)).toBeTruthy();
   });
 
   it("vitrine vendue : l'étiquette déborde sur toute la rangée, pas juste une case", () => {
     monter({ ...ETAL, vitrine: null });
     const etiquette = screen.getByText(/Vendu/);
-    const largeurUneCase = qgPct(BAZAR_LAYOUT.objets.case5.width);
+    const largeurUneCase = qgPct(BAZAR_LAYOUT.objets.case2.width);
     const largeurEtiquette = parseFloat(etiquette.style.width);
     expect(largeurEtiquette).toBeGreaterThan(largeurUneCase);
   });

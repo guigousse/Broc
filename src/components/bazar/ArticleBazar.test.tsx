@@ -9,7 +9,7 @@ function monter(props: Partial<React.ComponentProps<typeof ArticleBazar>> = {}) 
   const onAcheter = vi.fn();
   const utils = render(
     <ArticleBazar
-      cle="case7"
+      cle="case1"
       visuel={<span data-testid="visuel" />}
       libelle="5 pièces · Musique"
       prix={3}
@@ -88,7 +88,7 @@ describe("ArticleBazar", () => {
     // La bourse remonte au-dessus du prix : la bulle doit disparaître.
     rerender(
       <ArticleBazar
-        cle="case7"
+        cle="case1"
         visuel={<span data-testid="visuel" />}
         libelle="5 pièces · Musique"
         prix={12}
@@ -101,7 +101,7 @@ describe("ArticleBazar", () => {
     // La bourse redescend en dessous du prix, sans nouveau tap : toujours rien.
     rerender(
       <ArticleBazar
-        cle="case7"
+        cle="case1"
         visuel={<span data-testid="visuel" />}
         libelle="5 pièces · Musique"
         prix={12}

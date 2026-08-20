@@ -15,18 +15,14 @@ export const BAZAR_LAYOUT = {
   objets: {
     // Zone gauche (0..100vw) — réservé, muet.
     borne: { left: 61.0, bottom: 18.0, width: 30.0 },
-    // Zone centre (100..200vw) — la grille de neuf cases, mesurée sur le fond :
-    // l'étagère occupe 36 %..64 % de la largeur, ses trois rangées sont à
-    // 53 %, 62 % et 71 % de la hauteur.
-    case1: { left: 111.0, bottom: 71.0, width: 24.0 },
-    case2: { left: 139.0, bottom: 71.0, width: 24.0 },
-    case3: { left: 167.0, bottom: 71.0, width: 24.0 },
-    case4: { left: 111.0, bottom: 62.0, width: 24.0 },
-    case5: { left: 139.0, bottom: 62.0, width: 24.0 },
-    case6: { left: 167.0, bottom: 62.0, width: 24.0 },
-    case7: { left: 111.0, bottom: 53.0, width: 24.0 },
-    case8: { left: 139.0, bottom: 53.0, width: 24.0 },
-    case9: { left: 167.0, bottom: 53.0, width: 24.0 },
+    // Zone centre (100..200vw) — la grille de six cases, mesurée sur le fond :
+    // deux planches, trois emplacements par planche.
+    case1: { left: 114.0, bottom: 66.0, width: 20.0 },
+    case2: { left: 136.0, bottom: 66.0, width: 20.0 },
+    case3: { left: 158.0, bottom: 66.0, width: 20.0 },
+    case4: { left: 114.0, bottom: 56.0, width: 20.0 },
+    case5: { left: 136.0, bottom: 56.0, width: 20.0 },
+    case6: { left: 158.0, bottom: 56.0, width: 20.0 },
     // La bande de mur nu entre le plateau du comptoir et la première planche.
     vendeur: { left: 138.0, bottom: 40.0, width: 24.0 },
     // Zone droite (200..300vw) — réservé et sortie.
@@ -38,10 +34,10 @@ export const BAZAR_LAYOUT = {
 export type BazarObjetKey = keyof typeof BAZAR_LAYOUT.objets;
 
 /**
- * Les trois lots de pièces vont sur la rangée du BAS — la plus proche de la
- * main, et la seule que la suspension n'éclipse pas.
+ * Les trois lots de pièces vont sur la planche du BAS — la plus proche de la
+ * main, et celle que le regard rencontre en premier en arrivant au comptoir.
  */
-export const CLES_LOTS: BazarObjetKey[] = ["case7", "case8", "case9"];
+export const CLES_LOTS: BazarObjetKey[] = ["case4", "case5", "case6"];
 
-/** L'objet de la semaine trône au centre de la grille. */
-export const CLE_VITRINE: BazarObjetKey = "case5";
+/** L'objet de la semaine trône au milieu de la planche du HAUT. */
+export const CLE_VITRINE: BazarObjetKey = "case2";

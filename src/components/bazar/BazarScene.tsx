@@ -29,7 +29,7 @@ interface BazarSceneProps {
 
 /**
  * La scène du Bazar : panorama 3 zones (arcade · comptoir · antiquités),
- * l'étal de la semaine posé sur les neuf cases de l'étagère derrière le
+ * l'étal de la semaine posé sur les six cases de l'étagère derrière le
  * comptoir. Vue pure — tout arrive par les props, la composition avec le
  * contexte de jeu se fait dans `src/app/bazar/page.tsx`.
  */
@@ -39,15 +39,16 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
   const coordVitrine = BAZAR_LAYOUT.objets[CLE_VITRINE];
   const coordSortie = BAZAR_LAYOUT.objets.sortie;
   // Le libellé « Vendu — de retour lundi » est une phrase entière dans les
-  // 4 langues (la version grecque est la plus longue). Une case de 24vw ne
+  // 4 langues (la version grecque est la plus longue). Une case de 20vw ne
   // suffit pas — le texte replierait vers le HAUT (le conteneur est ancré en
   // `bottom`) et empièterait sur la rangée du dessus. On lui donne toute la
-  // largeur de la rangée du milieu (case4..case6), en nowrap : s'il déborde
-  // malgré tout, ça déborde sur les côtés, dans le mur nu du comptoir.
-  const coordCase4 = BAZAR_LAYOUT.objets.case4;
-  const coordCase6 = BAZAR_LAYOUT.objets.case6;
-  const venduLeft = coordCase4.left;
-  const venduWidth = coordCase6.left + coordCase6.width - coordCase4.left;
+  // largeur de la planche qui porte l'objet de la semaine (case1..case3), en
+  // nowrap : s'il déborde malgré tout, ça déborde sur les côtés, dans le mur
+  // nu du comptoir.
+  const coordCase1 = BAZAR_LAYOUT.objets.case1;
+  const coordCase3 = BAZAR_LAYOUT.objets.case3;
+  const venduLeft = coordCase1.left;
+  const venduWidth = coordCase3.left + coordCase3.width - coordCase1.left;
 
   return (
     <UnifiedPanorama
