@@ -152,4 +152,39 @@ describe("instrumentation du tutoriel", () => {
       stub.appels.filter((a) => a.nom === EVENEMENTS.miniTutoTermine).map((a) => a.params.lequel),
     ).toEqual(["vinyle", "carnet"]);
   });
+
+  // Régression : les updaters de GameContext se gardent déjà eux-mêmes
+  // (idempotents), mais plusieurs call sites appellent ces actions sans
+  // re-vérifier l'état avant (double tap, `onFini` rejoué…). Sans un vrai
+  // calcul de transition, un rappel no-op émettrait quand même l'événement —
+  // l'entonnoir de décrochage n'a de valeur que si chaque événement
+  // correspond à un franchissement d'étape réel.
+  it("un second avancerTutoriel vers une étape déjà atteinte n'émet rien de plus", async () => {
+    const result = await setupNouvellePartie();
+    act(() => {
+      result.current.avancerTutoriel("aller-chiner");
+    });
+    act(() => {
+      // Rappel no-op : "aller-chiner" est déjà l'étape courante.
+      result.current.avancerTutoriel("aller-chiner");
+    });
+    expect(noms().filter((n) => n === EVENEMENTS.tutoEtape)).toHaveLength(1);
+  });
+
+  it("un second terminerMiniTutoVinyle sur un mini-tuto déjà clos n'émet rien de plus", async () => {
+    await seedMiniTutosEnAttente();
+    const result = await setupPartieExistante();
+    act(() => {
+      result.current.terminerMiniTutoVinyle();
+    });
+    act(() => {
+      // Rappel no-op : le mini-tuto est déjà "termine".
+      result.current.terminerMiniTutoVinyle();
+    });
+    expect(
+      stub.appels.filter(
+        (a) => a.nom === EVENEMENTS.miniTutoTermine && a.params.lequel === "vinyle",
+      ),
+    ).toHaveLength(1);
+  });
 });

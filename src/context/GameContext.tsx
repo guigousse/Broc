@@ -989,16 +989,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // court-circuiterait appliquerFinTutoriel (perte silencieuse de la
     // lettre de Maman + du chapitre 1). Passer par terminerTutoriel().
     if (vers === "termine") return;
+    // Décidé AVANT le setState, via stateRef (lu, jamais dans l'updater — cf.
+    // ouvrirObjetColis/ouvrirCadeauAnniversaire) : un updater React n'est pas
+    // synchrone (il tourne au rendu), donc un drapeau posé dedans et relu
+    // juste après le setState mentirait. Sans ce calcul, un double appel
+    // (double tap, call site qui ne re-vérifie pas l'état, cf. les pages
+    // collection/stockage/bibliothèque) émettrait un `tuto_etape` fantôme
+    // sans transition réelle — l'entonnoir n'a de valeur que si chaque
+    // événement correspond à un vrai franchissement d'étape.
+    const current = stateRef.current;
+    const iCourante = current ? ETAPES_TUTORIEL.indexOf(current.tutorielEtape) : -1;
+    const iCible = ETAPES_TUTORIEL.indexOf(vers);
+    const transitionReelle =
+      !!current && current.tutorielEtape !== "termine" && iCible > iCourante;
     setState((prev) => {
       if (!prev || prev.tutorielEtape === "termine") return prev;
-      const iCourante = ETAPES_TUTORIEL.indexOf(prev.tutorielEtape);
-      const iCible = ETAPES_TUTORIEL.indexOf(vers);
-      if (iCible <= iCourante) return prev;
+      const iC = ETAPES_TUTORIEL.indexOf(prev.tutorielEtape);
+      if (iCible <= iC) return prev;
       return { ...prev, tutorielEtape: vers };
     });
-    // Hors de l'updater : StrictMode l'invoque deux fois, ce qui doublerait
-    // l'événement et fausserait l'entonnoir de décrochage.
-    logEvenement(EVENEMENTS.tutoEtape, { etape: vers });
+    if (transitionReelle) logEvenement(EVENEMENTS.tutoEtape, { etape: vers });
   }, []);
 
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
@@ -1057,27 +1067,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   /** Clôt le mini-tuto des vinyles (la musique a été lancée). */
   const terminerMiniTutoVinyle = useCallback(() => {
+    // Décidé avant le setState (même raison que dans avancerTutoriel juste
+    // au-dessus) : sans ça, un rappel de `terminerMiniTutoVinyle` sur un
+    // mini-tuto déjà clos émettrait un `mini_tuto_termine` fantôme.
+    const transitionReelle = stateRef.current?.miniTutoVinyle === "ecouter";
     setState((prev) =>
       prev && prev.miniTutoVinyle === "ecouter"
         ? { ...prev, miniTutoVinyle: "termine" as const }
         : prev,
     );
-    logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "vinyle" });
+    if (transitionReelle) logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "vinyle" });
   }, []);
 
   /** Clôt le mini-tuto du carnet de commandes (le registre a été ouvert). */
   const terminerMiniTutoCarnet = useCallback(() => {
+    const transitionReelle = stateRef.current?.miniTutoCarnet === "ouvrir";
     setState((prev) =>
       prev && prev.miniTutoCarnet === "ouvrir"
         ? { ...prev, miniTutoCarnet: "termine" as const }
         : prev,
     );
-    logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "carnet" });
+    if (transitionReelle) logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "carnet" });
   }, []);
 
   const terminerTutoriel = useCallback(() => {
+    const transitionReelle = !!stateRef.current && stateRef.current.tutorielEtape !== "termine";
     setState((prev) => (prev ? appliquerFinTutoriel(prev) : prev));
-    logEvenement(EVENEMENTS.tutoTermine);
+    if (transitionReelle) logEvenement(EVENEMENTS.tutoTermine);
   }, []);
 
   const attribuerVitrineABrocante = useCallback((brocanteId: string) => {
