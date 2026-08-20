@@ -410,6 +410,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (n: number) => {
       // Achat « Énergie infinie » : le débit est coupé (drapeau device, hors save).
       if (energieInfinieActive()) return;
+      // Énergie AVANT consommation, lue sur stateRef (jamais dans l'updater,
+      // même raison que partout ailleurs dans ce provider) : rejoue le même
+      // settle que l'updater pour rester fidèle à la valeur réellement
+      // débitée, sans dépendre de l'exécution de l'updater (StrictMode).
+      const prevState = stateRef.current;
+      let transitionVersZero = false;
+      if (prevState) {
+        const now = tempsConfiance() ?? Date.now();
+        const energieAvant = settleEnergie(prevState, now, ENERGIE_MAX).energie;
+        const energieApres = Math.max(0, energieAvant - n);
+        transitionVersZero = energieAvant > 0 && energieApres === 0;
+      }
       setState((prev) => {
         if (!prev) return prev;
         const now = tempsConfiance() ?? Date.now();
@@ -419,6 +431,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         };
         return { ...base, energie: Math.max(0, base.energie - n) };
       });
+      // Le moment qui déclenche à la fois la pub et l'IAP : mesuré une fois,
+      // à la transition vers 0, jamais tant que l'énergie y reste.
+      if (transitionVersZero) logEvenement(EVENEMENTS.energieEpuisee);
     },
     [tempsConfiance],
   );
