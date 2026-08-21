@@ -162,6 +162,7 @@ export const fr = {
     chiner: "Chiner",
     etaler: "Étaler",
     bazar: "Bazar",
+    bazarCompteARebours: "J-{n}",
     chatDortMessage:
       "Un chat dort paisiblement sur le fauteuil. Impossible de passer la journée sans le déranger…",
     seReposer: "Se reposer (+1 jour)",

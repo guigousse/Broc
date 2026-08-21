@@ -159,6 +159,7 @@ export const el: DictionnaireUI = {
     chiner: "Ψάξιμο",
     etaler: "Πούλημα",
     bazar: "Μπαζάρ",
+    bazarCompteARebours: "Σε {n} ημέρες",
     chatDortMessage:
       "Μια γάτα κοιμάται ήσυχα στην πολυθρόνα. Δεν μπορείς να τελειώσεις τη μέρα χωρίς να την ενοχλήσεις…",
     seReposer: "Ξεκούραση (+1 ημέρα)",

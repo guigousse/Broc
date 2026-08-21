@@ -159,6 +159,7 @@ export const es: DictionnaireUI = {
     chiner: "Rebuscar",
     etaler: "Montar puesto",
     bazar: "Bazar",
+    bazarCompteARebours: "D-{n}",
     chatDortMessage:
       "Un gato duerme plácidamente en el sillón. No puedes terminar el día sin molestarlo…",
     seReposer: "Descansar (+1 día)",

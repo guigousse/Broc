@@ -11,3 +11,11 @@ export const JOUR_OUVERTURE_BAZAR = 35;
 export function bazarEstOuvert(state: GameState): boolean {
   return state.jourActuel >= JOUR_OUVERTURE_BAZAR;
 }
+
+/**
+ * Jours de jeu restant avant l'ouverture, jamais négatif : le bouton de la
+ * porte affiche « J-{n} » tant que le Bazar est fermé.
+ */
+export function joursAvantOuvertureBazar(state: GameState): number {
+  return Math.max(0, JOUR_OUVERTURE_BAZAR - state.jourActuel);
+}
