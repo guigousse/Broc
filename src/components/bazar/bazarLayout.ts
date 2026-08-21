@@ -22,8 +22,27 @@
 export const BAZAR_LAYOUT = {
   panoramaAspect: { w: 2752, h: 1536 },
   objets: {
-    // Zone gauche (0..100vw) — réservé, muet.
-    borne: { left: 61.0, bottom: 18.0, width: 30.0 },
+    // Zone gauche (0..100vw) — la borne d'arcade, MESURÉE sur le fond le
+    // 2026-08-22 et non estimée. Trois nombres, trois raisons :
+    //
+    // `left` 65 : le pan de mur nu que l'illustration a été dessinée pour
+    // laisser libre court de l'angle de la bibliothèque (~66) au bord gauche
+    // du comptoir (~104). Mieux centré sur ce pan, 72 était plus joli — et
+    // invisible : le snap centre la zone arcade sur 50 et l'écran n'en montre
+    // que ~88,8 unités (5,6 → 94,4 sur le téléphone de référence), la borne y
+    // perdait 8 unités par la droite et disparaissait tout entière dès la zone
+    // suivante. Calée contre l'angle, elle tient dans la fenêtre — et c'est
+    // aussi là qu'on met une borne, dans un coin, pas au milieu d'un mur.
+    //
+    // `width` 29 : le mur du fond fait 55 % de hauteur de la plinthe (25 %) à
+    // la corniche (80 %) pour ~2,75 m, soit 1 % ≈ 5 cm. Une borne de 1,70 m
+    // occupe donc 33 % de la hauteur de scène ; au ratio de l'image détourée
+    // (1089 × 2047), ça fait 29 unités de large.
+    //
+    // `bottom` 20,5 : DEVANT la plinthe, pas dessus. Une borne a ~75 cm de
+    // profondeur, son pied avant descend sous la ligne du mur — exactement ce
+    // que fait le comptoir, base à 21 % pour une ligne de mur à 25 %.
+    borne: { left: 65.0, bottom: 20.5, width: 29.0 },
     // Zone centre (100..200vw) — la grille de six cases, MESURÉE sur le fond
     // et non estimée : les arêtes des deux planches ressortent à 65,9 % et
     // 55,9 % de la hauteur, et la planche court de 114 à 186 vw.

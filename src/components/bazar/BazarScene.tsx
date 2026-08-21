@@ -13,6 +13,7 @@ import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
 import type { AchatBazar } from "@/lib/bazar/achat";
 import type { EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
+import { BorneArcade } from "./BorneArcade";
 import {
   ArticleDetailBazar,
   type ArticleDetail,
@@ -90,6 +91,11 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
         ariaLabel={d.bazar.titre}
         editKeys={CLES_BAZAR}
       >
+        {/* Décor. En tête des enfants, donc au-dessous d'eux dans l'ordre de
+            peinture : une pièce de mobilier ne passe jamais devant la
+            marchandise. */}
+        <BorneArcade />
+
         {etal.lotsPieces.map((lot, index) => {
           const libelle = tr(d.bazar.lotPieces, {
             n: lot.quantite,

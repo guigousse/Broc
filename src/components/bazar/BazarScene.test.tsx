@@ -286,4 +286,39 @@ describe("BazarScene", () => {
     expect(porte.style.left).toBe(`${qgPct(BAZAR_LAYOUT.objets.sortie.left)}%`);
     expect(porte.style.width).toBe(`${qgPct(BAZAR_LAYOUT.objets.sortie.width)}%`);
   });
+
+  // ── La borne d'arcade ────────────────────────────────────────────────────
+  //
+  // Pièce de DÉCOR, pas encore un point d'entrée : le chantier ⑤ lui donnera
+  // son jeu. En attendant elle meuble le coin arcade, qui sans elle n'est
+  // qu'une bibliothèque et un pan de mur vide — et son nom de zone promet
+  // autre chose.
+  it("plante la borne d'arcade dans le coin gauche, aux coordonnées du dictionnaire", () => {
+    monter();
+    const borne = screen.getByTestId("borne-arcade");
+    const c = BAZAR_LAYOUT.objets.borne;
+    expect(borne.style.left).toBe(`${qgPct(c.left)}%`);
+    expect(borne.style.bottom).toBe(`${c.bottom}%`);
+    expect(borne.style.width).toBe(`${qgPct(c.width)}%`);
+  });
+
+  it("la borne est du décor : ni bouton, ni nom accessible", () => {
+    monter();
+    const img = screen.getByTestId("borne-arcade").querySelector("img") as HTMLImageElement;
+    expect(img.getAttribute("src")).toBe("/bazar/borne-arcade.webp");
+    // `alt=""` : une image décorative se tait, sinon le lecteur d'écran
+    // annonce un objet avec lequel on ne peut rien faire.
+    expect(img.getAttribute("alt")).toBe("");
+    expect(screen.getByTestId("borne-arcade").closest("button")).toBe(null);
+  });
+
+  // Sans ombre, une image détourée posée sur un plancher peint FLOTTE : rien
+  // ne dit où elle touche le sol. L'ombre suit l'alpha (`drop-shadow`) plutôt
+  // qu'une ellipse dessinée sous elle — la base d'une borne est un
+  // quadrilatère en fuite, pas un disque.
+  it("la borne porte une ombre de contact, sinon elle flotte", () => {
+    monter();
+    const img = screen.getByTestId("borne-arcade").querySelector("img") as HTMLImageElement;
+    expect(img.style.filter).toContain("drop-shadow");
+  });
 });
