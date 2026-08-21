@@ -10,6 +10,7 @@
     "notification:default",
     "haptics:allow-impact-feedback",
     "admob:default",
-    "iap:default"
+    "iap:default",
+    "firebase:default"
   ]
 }

@@ -17,6 +17,8 @@ import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { useEnergieInfinie, definirEnergieInfinie } from "@/lib/iap/energieInfinie";
 import { getIapProvider } from "@/lib/iap/iapProvider";
+import { logEvenement } from "@/lib/analytics/contexte";
+import { EVENEMENTS } from "@/lib/analytics/analytics";
 
 /** Course de l'aiguille du galvanomètre : -60° (0 ⚡) → +60° (max), clampée. */
 export function angleAiguille(energie: number, max: number): number {
@@ -205,6 +207,21 @@ export function EnergieRecharge({
     },
     [],
   );
+
+  // Vu du paywall IAP, une fois par ouverture. `alerte` distingue le joueur
+  // bloqué à la sortie (porte/vitrine faute d'énergie) de celui qui vient
+  // volontairement depuis le cadran d'énergie de l'en-tête — c'est la seule
+  // origine que cet écran connaît déjà, pas besoin de faire remonter un prop
+  // dédié depuis chaque appelant.
+  useEffect(() => {
+    // Propriétaire de l'énergie infinie : cet écran n'affiche plus aucun
+    // paywall (pas de bouton d'achat), donc rien à comptabiliser comme « vu ».
+    if (infinie) return;
+    logEvenement(EVENEMENTS.iapEcranVu, {
+      source: alerte ? "sortie-bloquee" : "en-tete",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [infinie]);
 
   // Prix localisé au montage — non-acheteur seulement (StoreKit / stub).
   useEffect(() => {

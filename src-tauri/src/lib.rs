@@ -5,6 +5,7 @@ pub fn run() {
     .plugin(tauri_plugin_haptics::init())
     .plugin(tauri_plugin_admob::init())
     .plugin(tauri_plugin_iap::init())
+    .plugin(tauri_plugin_firebase::init())
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(

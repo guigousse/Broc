@@ -21,6 +21,14 @@ function simulerTauriIos() {
 
 async function chargerFrais() {
   vi.resetModules();
+  // Le provider émet maintenant `pub_demandee`/`pub_terminee` : sous
+  // simulerTauriIos(), `firebaseDisponible()` est vrai et le singleton
+  // par défaut instancierait FirebaseAnalyticsProvider, qui appelle
+  // `invoke` lui aussi — brouillant la séquence attendue par `invokeMock`.
+  // On force le stub (module rechargé donc singleton frais, à reforcer
+  // à chaque appel).
+  const analytics = await import("@/lib/analytics/analytics");
+  analytics.reinitialiserAnalyticsPourTest(new analytics.StubAnalyticsProvider());
   return {
     adMob: await import("./adMobProvider"),
     provider: await import("./adProvider"),

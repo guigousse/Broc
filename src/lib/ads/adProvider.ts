@@ -1,4 +1,6 @@
 import { AdMobAdProvider, adMobDisponible } from "./adMobProvider";
+import { logEvenement } from "@/lib/analytics/contexte";
+import { EVENEMENTS } from "@/lib/analytics/analytics";
 
 export interface AdResult {
   /** true si la pub a été visionnée jusqu'au bout (récompense due). */
@@ -30,8 +32,10 @@ export interface AdProvider {
 export class StubAdProvider implements AdProvider {
   constructor(private readonly delaiMs: number = 800) {}
 
-  async showRewardedAd(_emplacement: EmplacementPub): Promise<AdResult> {
+  async showRewardedAd(emplacement: EmplacementPub): Promise<AdResult> {
+    logEvenement(EVENEMENTS.pubDemandee, { emplacement });
     await new Promise((r) => setTimeout(r, this.delaiMs));
+    logEvenement(EVENEMENTS.pubTerminee, { emplacement, rewarded: true });
     return { rewarded: true };
   }
 }
