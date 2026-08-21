@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Mentions légales de l'application Broc.",
 };
 
-const MAJ = "4 août 2026";
+const MAJ = "20 août 2026";
 const CONTACT = "pepite.admin@gmail.com";
 const EDITEUR = "Guillaume Fenard";
 
@@ -90,13 +90,15 @@ export default function MentionsLegalesPage() {
 
       <h2 style={h2}>Données personnelles</h2>
       <p>
-        Broc ne collecte pas directement de données personnelles. Le
-        prestataire publicitaire mentionné ci-dessus peut toutefois traiter
-        certaines données dans le cadre des publicités récompensées. Voir la{" "}
+        Broc ne demande aucun compte ni inscription : la sauvegarde reste sur
+        l’appareil. Le prestataire publicitaire mentionné ci-dessus, ainsi que
+        Firebase Analytics (Google) pour la mesure d’audience du jeu, peuvent
+        néanmoins traiter certaines données, sous réserve du consentement
+        donné au premier lancement. Voir la{" "}
         <Link href="/privacy" style={link}>
           politique de confidentialité
-        </Link>
-        .
+        </Link>{" "}
+        pour le détail.
       </p>
 
       <hr style={{ margin: "56px 0", border: "none", borderTop: "1px solid #cdbf9a" }} />
@@ -153,13 +155,14 @@ export default function MentionsLegalesPage() {
 
       <h2 style={h2}>Personal data</h2>
       <p>
-        Broc does not directly collect personal data. The advertising provider
-        mentioned above may however process certain data as part of rewarded
-        ads. See the{" "}
+        Broc requires no account or sign-up: the save file stays on the
+        device. The advertising provider mentioned above, as well as Firebase
+        Analytics (Google) for the game’s analytics, may nevertheless process
+        certain data, subject to the consent given on first launch. See the{" "}
         <Link href="/privacy" style={link}>
           privacy policy
-        </Link>
-        .
+        </Link>{" "}
+        for details.
       </p>
     </main>
   );

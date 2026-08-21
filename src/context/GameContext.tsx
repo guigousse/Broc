@@ -75,6 +75,8 @@ import { stockageEstPlein } from "@/lib/stockage";
 import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
 import { appliquerFinTutoriel, ETAPES_TUTORIEL } from "@/lib/tutoriel";
+import { logEvenement } from "@/lib/analytics/contexte";
+import { EVENEMENTS } from "@/lib/analytics/analytics";
 import { synchroniserNotifsQuetes } from "@/lib/notifications/quetesNotif";
 import {
   initCollection,
@@ -408,6 +410,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (n: number) => {
       // Achat « Énergie infinie » : le débit est coupé (drapeau device, hors save).
       if (energieInfinieActive()) return;
+      // Énergie AVANT consommation, lue sur stateRef (jamais dans l'updater,
+      // même raison que partout ailleurs dans ce provider) : rejoue le même
+      // settle que l'updater pour rester fidèle à la valeur réellement
+      // débitée, sans dépendre de l'exécution de l'updater (StrictMode).
+      const prevState = stateRef.current;
+      let transitionVersZero = false;
+      if (prevState) {
+        const now = tempsConfiance() ?? Date.now();
+        const energieAvant = settleEnergie(prevState, now, ENERGIE_MAX).energie;
+        const energieApres = Math.max(0, energieAvant - n);
+        transitionVersZero = energieAvant > 0 && energieApres === 0;
+      }
       setState((prev) => {
         if (!prev) return prev;
         const now = tempsConfiance() ?? Date.now();
@@ -417,6 +431,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         };
         return { ...base, energie: Math.max(0, base.energie - n) };
       });
+      // Le moment qui déclenche à la fois la pub et l'IAP : mesuré une fois,
+      // à la transition vers 0, jamais tant que l'énergie y reste.
+      if (transitionVersZero) logEvenement(EVENEMENTS.energieEpuisee);
     },
     [tempsConfiance],
   );
@@ -680,6 +697,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, [isHydrated, quetesCles, quotidienNonTerminee, hebdoNonTerminee, locale]);
 
+  // La montée de niveau se lit sur la transition d'état, pas sur la source
+  // d'XP : il y a plusieurs sources (achat, vente, restauration, quêtes,
+  // découverte de collection…) et gagnerXPBrocanteur ne doit pas porter seul
+  // l'émission — un seul endroit ici, quelle que soit la source.
+  const niveauPrecedentRef = useRef<number | null>(null);
+  useEffect(() => {
+    const niveau = state?.brocanteur?.niveau;
+    if (typeof niveau !== "number") return;
+    const precedent = niveauPrecedentRef.current;
+    niveauPrecedentRef.current = niveau;
+    // Premier rendu (ou chargement d'une save) : on mémorise sans émettre —
+    // sinon charger une partie au niveau 12 se lirait comme une montée.
+    if (precedent === null) return;
+    if (niveau > precedent) logEvenement(EVENEMENTS.niveauAtteint, { niveau });
+  }, [state?.brocanteur?.niveau]);
+
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {
       version: SAVE_VERSION,
@@ -783,6 +816,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const avancerJour = useCallback((nbJours: number = 1, volontaire: boolean = false) => {
+    // Jour AVANT l'avancement, lu sur stateRef (jamais dans l'updater, même
+    // raison que partout ailleurs dans ce provider) : `jourActuel` est
+    // strictement croissant en partie, donc "nouveau record" se lit comme une
+    // simple comparaison. `avancerJour(3)` est un saut, pas trois journées
+    // vécues : un seul événement, sur le jour d'arrivée.
+    const jourAvant = stateRef.current?.jourActuel;
     setState((prev) => {
       if (!prev) return prev;
       const pas = Math.max(1, nbJours);
@@ -857,6 +896,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       return baseAvecQuetes;
     });
+    if (typeof jourAvant === "number") {
+      const pas = Math.max(1, nbJours);
+      const nouveauJour = jourAvant + pas;
+      // `pas` vaut au moins 1, donc cette comparaison est TOUJOURS vraie : ce
+      // n'est pas elle qui garantit « nouveau record seulement », c'est le
+      // garde `typeof jourAvant === "number"` ci-dessus conjugué à la
+      // stricte croissance de `jourActuel` en partie (cf. commentaire plus
+      // haut). Gardée quand même comme filet d'assertion, pas comme
+      // mécanisme.
+      if (nouveauJour > jourAvant) logEvenement(EVENEMENTS.jourAtteint, { jour: nouveauJour });
+    }
   }, []);
 
   const rerollMeteo = useCallback((): { ok: boolean; raison?: string } => {
@@ -913,6 +963,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
       return { ...next, niveauAtelier: upgrade.niveauCible };
     });
+    logEvenement(EVENEMENTS.ameliorationAchetee, {
+      quoi: "atelier",
+      niveau: upgrade.niveauCible,
+    });
     return { ok: true };
   }, []);
 
@@ -937,6 +991,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         params: { niveau: upgrade.niveauCible },
       });
       return { ...next, niveauStockage: upgrade.niveauCible };
+    });
+    logEvenement(EVENEMENTS.ameliorationAchetee, {
+      quoi: "stockage",
+      niveau: upgrade.niveauCible,
     });
     return { ok: true };
   }, []);
@@ -987,13 +1045,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // court-circuiterait appliquerFinTutoriel (perte silencieuse de la
     // lettre de Maman + du chapitre 1). Passer par terminerTutoriel().
     if (vers === "termine") return;
+    // Décidé AVANT le setState, via stateRef (lu, jamais dans l'updater — cf.
+    // ouvrirObjetColis/ouvrirCadeauAnniversaire) : un updater React n'est pas
+    // synchrone (il tourne au rendu), donc un drapeau posé dedans et relu
+    // juste après le setState mentirait. Sans ce calcul, un double appel
+    // (double tap, call site qui ne re-vérifie pas l'état, cf. les pages
+    // collection/stockage/bibliothèque) émettrait un `tuto_etape` fantôme
+    // sans transition réelle — l'entonnoir n'a de valeur que si chaque
+    // événement correspond à un vrai franchissement d'étape.
+    const current = stateRef.current;
+    const iCourante = current ? ETAPES_TUTORIEL.indexOf(current.tutorielEtape) : -1;
+    const iCible = ETAPES_TUTORIEL.indexOf(vers);
+    const transitionReelle =
+      !!current && current.tutorielEtape !== "termine" && iCible > iCourante;
     setState((prev) => {
       if (!prev || prev.tutorielEtape === "termine") return prev;
-      const iCourante = ETAPES_TUTORIEL.indexOf(prev.tutorielEtape);
-      const iCible = ETAPES_TUTORIEL.indexOf(vers);
-      if (iCible <= iCourante) return prev;
+      const iC = ETAPES_TUTORIEL.indexOf(prev.tutorielEtape);
+      if (iCible <= iC) return prev;
       return { ...prev, tutorielEtape: vers };
     });
+    if (transitionReelle) logEvenement(EVENEMENTS.tutoEtape, { etape: vers });
   }, []);
 
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
@@ -1052,24 +1123,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   /** Clôt le mini-tuto des vinyles (la musique a été lancée). */
   const terminerMiniTutoVinyle = useCallback(() => {
+    // Décidé avant le setState (même raison que dans avancerTutoriel juste
+    // au-dessus) : sans ça, un rappel de `terminerMiniTutoVinyle` sur un
+    // mini-tuto déjà clos émettrait un `mini_tuto_termine` fantôme.
+    const transitionReelle = stateRef.current?.miniTutoVinyle === "ecouter";
     setState((prev) =>
       prev && prev.miniTutoVinyle === "ecouter"
         ? { ...prev, miniTutoVinyle: "termine" as const }
         : prev,
     );
+    if (transitionReelle) logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "vinyle" });
   }, []);
 
   /** Clôt le mini-tuto du carnet de commandes (le registre a été ouvert). */
   const terminerMiniTutoCarnet = useCallback(() => {
+    const transitionReelle = stateRef.current?.miniTutoCarnet === "ouvrir";
     setState((prev) =>
       prev && prev.miniTutoCarnet === "ouvrir"
         ? { ...prev, miniTutoCarnet: "termine" as const }
         : prev,
     );
+    if (transitionReelle) logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "carnet" });
   }, []);
 
   const terminerTutoriel = useCallback(() => {
+    const transitionReelle = !!stateRef.current && stateRef.current.tutorielEtape !== "termine";
     setState((prev) => (prev ? appliquerFinTutoriel(prev) : prev));
+    if (transitionReelle) logEvenement(EVENEMENTS.tutoTermine);
   }, []);
 
   const attribuerVitrineABrocante = useCallback((brocanteId: string) => {
@@ -1164,11 +1244,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const acheterCamion = useCallback((niveau: NiveauCamion) => {
+    // Même discipline que les autres achats : la transition réelle se décide
+    // AVANT le setState, sur stateRef (jamais dans l'updater), en rejouant
+    // exactement les mêmes gardes (adjacence + budget) que l'updater
+    // ci-dessous — sinon un rappel no-op (niveau déjà atteint, fonds
+    // insuffisants) émettrait quand même un achat qui n'a pas eu lieu.
+    const current = stateRef.current;
+    const camion = getCamion(niveau);
+    const prix = camion.prixUpgradeVersCeNiveau ?? 0;
+    const transitionReelle =
+      !!current && niveau === current.niveauCamion + 1 && current.budget >= prix;
     setState((prev) => {
       if (!prev) return prev;
       if (niveau !== prev.niveauCamion + 1) return prev;
-      const camion = getCamion(niveau);
-      const prix = camion.prixUpgradeVersCeNiveau ?? 0;
       if (prev.budget < prix) return prev;
       const next = appendLedger(prev, {
         jour: prev.jourActuel,
@@ -1180,6 +1268,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
       return { ...next, niveauCamion: niveau };
     });
+    if (transitionReelle) {
+      logEvenement(EVENEMENTS.ameliorationAchetee, { quoi: "camion", niveau });
+    }
   }, []);
 
   // Dev-only : set direct du niveau sans coût ni vérification d'adjacence.
@@ -1290,6 +1381,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const enregistrerSession = useCallback((session: Session) => {
+    // Rien à mesurer sans partie en cours (même garde que partout ailleurs :
+    // stateRef.current, jamais un drapeau posé dans l'updater).
+    const aUnePartie = !!stateRef.current;
     setState((prev) => {
       if (!prev) return prev;
       // Historique plafonné + compteur cumulatif de ventes (lib/sessions).
@@ -1329,6 +1423,46 @@ export function GameProvider({ children }: { children: ReactNode }) {
         { applyBudget: false, timestamp: session.timestamp },
       );
     });
+    if (!aUnePartie) return;
+    // `depense` et `recette` sont recalculés ici, alors que l'updater
+    // ci-dessus vient de calculer la même chose pour l'entrée du ledger :
+    // duplication volontaire, pas un oubli de factorisation. Les deux calculs
+    // ne dépendent que de `session` — paramètre de `enregistrerSession`, pas
+    // dérivé de `prev` — donc ils ne peuvent pas diverger, quel que soit le
+    // nombre de fois où StrictMode invoque l'updater. On pourrait les
+    // mutualiser en hissant le calcul avant `setState`, mais ce serait
+    // toucher au code qui construit l'entrée du ledger pour un chantier de
+    // mesure — donc changer du comportement de jeu, ce que ce chantier
+    // s'interdit, même pour un remplacement sans risque apparent. En
+    // revanche `logEvenement` DOIT rester hors de l'updater : StrictMode le
+    // double-invoque, et un effet de bord (l'envoi de l'événement) y
+    // partirait deux fois.
+    // Discriminé sur session.type : chine et vente partagent ce même hook
+    // (cf. `Session` = SessionChinage | SessionVente, types/game.ts), donc les
+    // deux événements économiques partent d'ici.
+    if (session.type === "chinage") {
+      const depense = session.achats.reduce((s, a) => s + a.prixPaye, 0);
+      // La conception (spec §3.4) promettait un troisième paramètre,
+      // `energie_depensee` : abandonné, aucun champ de `SessionChinage`
+      // (types/game.ts) ne porte cette donnée, et la fabriquer aurait été
+      // pire qu'un paramètre manquant — un chiffre inventé dans un rapport
+      // ne se distingue pas d'un chiffre réel.
+      logEvenement(EVENEMENTS.sessionChineTerminee, {
+        objets_achetes: session.achats.length,
+        depense: Math.round(depense),
+      });
+      return;
+    }
+    const recette = session.ventes.reduce((s, v) => s + v.prixVente, 0);
+    // Coût d'achat des objets vendus : les objets issus du stock initial
+    // n'ont pas de prixAchat connu (null) — comptés à 0, pas exclus, sinon la
+    // marge surestimerait ces ventes.
+    const coutAchat = session.ventes.reduce((s, v) => s + (v.prixAchat ?? 0), 0);
+    logEvenement(EVENEMENTS.sessionVenteTerminee, {
+      objets_vendus: session.ventes.length,
+      recette: Math.round(recette),
+      marge: Math.round(recette - coutAchat),
+    });
   }, []);
 
   const debloquerCompetence = useCallback(
@@ -1361,6 +1495,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           competencesDebloquees: [...prev.competencesDebloquees, id],
         };
       });
+      logEvenement(EVENEMENTS.competenceDebloquee, { competence_id: id });
       return { ok: true };
     },
     [],

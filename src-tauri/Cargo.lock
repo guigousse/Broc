@@ -85,6 +85,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-admob",
+ "tauri-plugin-firebase",
  "tauri-plugin-iap",
  "tauri-plugin-log",
  "tauri-plugin-notification",
@@ -3770,6 +3771,17 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-admob"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "tauri-plugin-firebase"
 version = "0.1.0"
 dependencies = [
  "serde",
