@@ -37,13 +37,13 @@ import Foundation
       // premier : `setAnalyticsCollectionEnabled` persiste entre les sessions
       // et surcharge l'Info.plist. Sans ce rejeu, une révocation ultérieure du
       // consentement ne couperait jamais la collecte.
-      ConsentementBroc.shared.auVerdict { consenti in
-        self.appliquerConsentement(consenti)
+      ConsentementBroc.shared.auVerdict { verdict in
+        self.appliquerConsentement(verdict)
       }
     }
   }
 
-  private func appliquerConsentement(_ consenti: Bool) {
+  private func appliquerConsentement(_ verdict: VerdictConsentement) {
     // L'ordre compte surtout en révocation : la collecte est encore active
     // depuis le lancement précédent, donc écrire "false" avant de couper
     // garantit que la propriété est bien enregistrée pendant qu'elle a encore
@@ -52,10 +52,14 @@ import Foundation
     // sans conséquence, la personnalisation étant déjà le défaut en l'absence
     // de propriété, mais ce rejet vit dans le binaire GoogleAppMeasurement et
     // n'a pas pu être vérifié depuis les sources.
+    // Deux droits distincts, deux champs distincts. Les confondre revenait à
+    // déclarer à Google qu'un joueur acceptait la personnalisation alors qu'il
+    // venait de la refuser (constaté en recette : `_npa = 0` après un refus
+    // total).
     Analytics.setUserProperty(
-      consenti ? "true" : "false",
+      verdict.personnalisationPub ? "true" : "false",
       forName: AnalyticsUserPropertyAllowAdPersonalizationSignals)
-    Analytics.setAnalyticsCollectionEnabled(consenti)
+    Analytics.setAnalyticsCollectionEnabled(verdict.mesure)
   }
 
   @objc public func loguer(_ nom: String, params: [String: Any]) {
