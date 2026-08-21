@@ -10,6 +10,13 @@ interface Props {
   icone: LucideIcon;
   titre: string;
   sousTitre?: string;
+  /**
+   * Ce que le sous-titre VEUT dire, en toutes lettres. À l'écran il n'affiche
+   * qu'une durée nue (« 9 h 54 ») pour rendre sa largeur au titre de section ;
+   * un nombre seul n'ayant aucun sens hors de la mise en page, c'est cette
+   * étiquette que porte le compteur pour un lecteur d'écran.
+   */
+  sousTitreAria?: string;
   /** Repliée seulement : `QUÊTES DU JOUR (2/3) · 1 prête`. */
   compteur?: { total: number; faits: number; pretes: number };
   repliee: boolean;
@@ -102,6 +109,7 @@ export function SectionRetractable({
   icone: Icone,
   titre,
   sousTitre,
+  sousTitreAria,
   compteur,
   repliee,
   onBasculer,
@@ -137,7 +145,11 @@ export function SectionRetractable({
           </span>
         )}
         <span style={finDEnTete}>
-          {sousTitre && <span style={sousTitreStyle}>{sousTitre}</span>}
+          {sousTitre && (
+            <span style={sousTitreStyle} aria-label={sousTitreAria}>
+              {sousTitre}
+            </span>
+          )}
           <span aria-hidden style={chevronStyle}>{repliee ? "▸" : "▾"}</span>
         </span>
       </button>

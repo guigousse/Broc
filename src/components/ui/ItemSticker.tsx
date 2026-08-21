@@ -31,6 +31,18 @@ interface ItemStickerProps {
   eager?: boolean;
   /** Épaisseur (px) du contour die-cut blanc. Défaut 1.5. */
   outlinePx?: number;
+  /**
+   * Ancrage vertical de l'image dans son cadre. Par défaut centré — c'est le
+   * comportement d'aujourd'hui, inchangé pour tous les appelants existants
+   * (grille de collection, cartes, stockage, carnet, fiche de detail).
+   *
+   * `"bottom"` pose le BAS de l'image sur l'arête basse du cadre. Même forme
+   * et même sens que `ItemImage.verticalAlign`, dont c'est le pendant : un
+   * objet large et bas (une ménagère, une pile de vinyles) est letterboxé par
+   * `object-fit: contain`, et le vide laissé sous lui le fait FLOTTER au-dessus
+   * de la planche du Bazar au lieu d'y reposer.
+   */
+  verticalAlign?: "center" | "bottom";
   /** URL d'image directe (bypasse `getItemImageUrl`) — ex. boîte mystère. */
   srcOverride?: string;
 }
@@ -63,12 +75,21 @@ function contourBlanc(px: number): string {
   ].join(" ");
 }
 
+/**
+ * Désaturation des objets « connus mais pas encore à soi » — celle de la
+ * grille de Collection. Exportée parce que le carnet de quêtes doit rendre
+ * EXACTEMENT le même gris pour ses cibles pas encore trouvées : deux réglages
+ * séparés auraient dérivé au premier ajustement.
+ *
+ * Sans le contour blanc, qui n'appartient qu'au découpage die-cut du sticker.
+ */
+export const FILTRE_GRISE = "grayscale(1) brightness(1.3) contrast(0.75) opacity(0.55)";
+
 /** Filtre appliqué à l'image/icône selon la variante. Silhouette = noir + contour blanc. */
 function variantFilter(variant: StickerVariant, outlinePx: number): string {
   const contour = contourBlanc(outlinePx);
   if (variant === "silhouette") return `brightness(0) ${contour}`;
-  if (variant === "grise")
-    return `grayscale(1) brightness(1.3) contrast(0.75) opacity(0.55) ${contour}`;
+  if (variant === "grise") return `${FILTRE_GRISE} ${contour}`;
   return contour;
 }
 
@@ -76,12 +97,17 @@ const wrapStyle = (
   size: number,
   angle: number,
   fill: boolean,
+  verticalAlign: "center" | "bottom",
 ): CSSProperties => ({
   position: "relative",
   display: "inline-flex",
   width: fill ? "100%" : size,
   height: fill ? "100%" : size,
-  alignItems: "center",
+  // Hors `fill`, l'image reste DANS le flux et sa boîte épouse déjà l'image :
+  // `object-position` n'y a rien à ancrer, c'est CET alignement qui la pose au
+  // bas de la boîte. En `fill`, l'image est hors-flux et c'est l'inverse. Les
+  // deux réglages sont donc posés ensemble, chacun servant dans son mode.
+  alignItems: verticalAlign === "bottom" ? "flex-end" : "center",
   justifyContent: "center",
   flexShrink: 0,
   transform: `rotate(${angle}deg)`,
@@ -93,10 +119,15 @@ const wrapStyle = (
  *  carré `aspect-ratio:1/1` du parent est respecté sur tous les moteurs (iOS
  *  WebKit laissait sinon un PNG très haut — violon, guitare — agrandir la
  *  rangée). Hors `fill`, l'image reste dans le flux, centrée à sa taille. */
-function imageStyle(fill: boolean, filter: string): CSSProperties {
+function imageStyle(
+  fill: boolean,
+  filter: string,
+  verticalAlign: "center" | "bottom",
+): CSSProperties {
   return {
     zIndex: 1,
     objectFit: "contain",
+    objectPosition: verticalAlign === "bottom" ? "center bottom" : "center",
     pointerEvents: "none",
     filter,
     ...(fill
@@ -126,6 +157,7 @@ export function ItemSticker({
   thumb = false,
   eager = false,
   outlinePx = 1.5,
+  verticalAlign = "center",
   srcOverride,
 }: ItemStickerProps) {
   const url =
@@ -134,7 +166,7 @@ export function ItemSticker({
   const angle = tilt ? angleFromId(templateId) : 0;
   const filter = variantFilter(variant, outlinePx);
   return (
-    <span style={wrapStyle(size, angle, fill)} aria-hidden>
+    <span style={wrapStyle(size, angle, fill, verticalAlign)} aria-hidden>
       {url ? (
         <img
           src={url}
@@ -142,7 +174,7 @@ export function ItemSticker({
           draggable={false}
           loading={eager ? "eager" : "lazy"}
           decoding="async"
-          style={imageStyle(fill, filter)}
+          style={imageStyle(fill, filter, verticalAlign)}
         />
       ) : (
         <span style={{ position: "relative", zIndex: 1, filter }}>

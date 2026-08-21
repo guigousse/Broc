@@ -87,12 +87,13 @@ describe("useCeremonieLivraison", () => {
       useCeremonieLivraison({ state: etat(c), onLivrerMission: () => ({ ok: true }) }),
     );
     act(() => vue.result.current.lancer("m1"));
-    // Les DEUX compteurs réellement gelés par cette récompense, pas seulement
-    // la caisse : `recompense.xp` est absent, donc `recompenseEffective`
-    // applique l'XP de catégorie (> 0) et le gel XP part aussi. Ne vérifier
-    // que `budget` laissait le dégel de l'XP hors du filet.
+    // La caisse est gelée (argent > 0). L'XP, elle, ne l'est PLUS : depuis le
+    // 2026-08-18 les quêtes ne versent plus d'XP, donc `rEff.xp` vaut 0 et le
+    // gel conditionnel ne se déclenche pas. Assertion conservée en NÉGATIF
+    // plutôt que supprimée : geler un compteur dont aucun jeton ne volera le
+    // laisserait figé pour toute la partie — c'est le piège n°2 du hook.
     expect(estGele().budget).toBe(true);
-    expect(estGele().xp).toBe(true);
+    expect(estGele().xp).toBe(false);
     vue.unmount();
     expect(estGele()).toEqual({ xp: false, budget: false, energie: false });
   });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ETAPES_TUTORIEL,
   appliquerFinTutoriel,
+  banniereVisible,
   chapitreDuCarnetDu,
   competenceGuidee,
   doigtSwipeVersCarnet,
@@ -164,6 +165,50 @@ describe("colis scripté", () => {
     const ids = fin.inventaireJoueur.map((o) => o.templateId);
     for (const attendu of COLIS_TUTORIEL_SCRIPTE.slice(2).map((c) => c.templateId)) {
       expect(ids).toContain(attendu);
+    }
+  });
+});
+
+/**
+ * Bannière de consigne — recette device 2026-08-19 : « Ouvre la Collection
+ * depuis la barre du bas » restait affiché UNE FOIS DANS la collection, et la
+ * bannière recouvrait l'en-tête que le coach cherchait justement à montrer.
+ */
+describe("banniereVisible", () => {
+  it("s'efface là où un autre guide occupe l'écran", () => {
+    for (const etape of [
+      "accueil", "stockage-focus", "coffre-trace-un", "niveau-celebration",
+      "conclusion", "termine",
+    ] as const) {
+      expect(banniereVisible(etape, "/bureau"), etape).toBe(false);
+    }
+  });
+
+  it("s'efface quand la consigne « va sur cet onglet » est déjà exaucée", () => {
+    expect(banniereVisible("collection-lecon", "/stockage")).toBe(true);
+    expect(banniereVisible("collection-lecon", "/collection")).toBe(false);
+    expect(banniereVisible("stockage-ouvrir", "/bureau")).toBe(true);
+    expect(banniereVisible("stockage-ouvrir", "/stockage")).toBe(false);
+    expect(banniereVisible("competences-visite", "/bureau")).toBe(true);
+    expect(banniereVisible("competences-visite", "/bibliotheque")).toBe(false);
+  });
+
+  it("laisse la consigne d'une ACTION sur place, même sur l'onglet visé", () => {
+    // « Envoie la peluche dans ta collection » se fait DEPUIS le stockage :
+    // ce n'est pas une consigne de navigation, elle doit rester.
+    expect(banniereVisible("collection-envoyer", "/stockage")).toBe(true);
+    expect(banniereVisible("ouvrir-colis", "/bureau")).toBe(true);
+    expect(banniereVisible("preparer-etal", "/bureau")).toBe(true);
+  });
+
+  it("affiche toutes les autres étapes", () => {
+    for (const etape of ETAPES_TUTORIEL) {
+      if (banniereVisible(etape, "/bureau")) continue;
+      expect(
+        ["accueil", "stockage-focus", "coffre-trace-un", "niveau-celebration",
+          "conclusion", "termine"],
+        etape,
+      ).toContain(etape);
     }
   });
 });

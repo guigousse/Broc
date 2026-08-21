@@ -25,8 +25,6 @@ export const QG_LAYOUT = {
   },
   objets: {
     carnet: { left: 11.2, bottom: 20.2, width: 49.1 },
-    carnetRouge: { left: 14.3, bottom: 11.2, width: 32.4 },
-    porteRevues: { left: 100.9, bottom: 18.3, width: 27.3 },
     journalSol: { left: 138.0, bottom: 10.0, width: 14.0 },
     journalBureau: { left: 16.4, bottom: 8.2, width: 21.9 },
     porte: { left: 135.2, bottom: 27.7, width: 24.0 },

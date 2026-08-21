@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { NegociationSheet } from "./NegociationSheet";
 import { ouvrirNegociation } from "@/lib/negociation";
+import type React from "react";
 import type { NegoPersona } from "@/types/game";
 
 afterEach(cleanup);
@@ -18,7 +19,7 @@ const persona: NegoPersona = {
 
 function renderSheet(
   offreJoueur: number,
-  extra: { celebrite?: boolean; nomAffiche?: string; achat?: number | null } = {},
+  extra: Partial<React.ComponentProps<typeof NegociationSheet>> = {},
 ) {
   return render(
     <NegociationSheet
@@ -79,5 +80,54 @@ describe("NegociationSheet — mini-happening célébrité", () => {
     renderSheet(80, { celebrite: true, nomAffiche: "Lady Westmorland" });
     expect(screen.getByTestId("aura-celebrite")).toBeTruthy();
     expect(screen.getByText("✦ Lady Westmorland ✦")).toBeTruthy();
+  });
+});
+
+/**
+ * Cible pointillée du grand-père (tutoriel, journée de vente) : le curseur du
+ * joueur garde ses bornes naturelles, seul « Proposer » est gaté.
+ */
+describe("NegociationSheet — cible du grand-père", () => {
+  it("Proposer est inerte hors de l'anneau", () => {
+    renderSheet(80, { scriptTuto: { cible: { prix: 50, tolerance: 2 } } });
+    const btn = screen.getByText(/Proposer 80/).closest("button") as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+  });
+
+  it("Proposer s'active dans l'anneau, et l'anneau est dessiné", () => {
+    const { container } = renderSheet(50, {
+      scriptTuto: { cible: { prix: 50, tolerance: 2 } },
+    });
+    const btn = screen.getByText(/Proposer 50/).closest("button") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(container.querySelector("[data-nego-cible]")).toBeTruthy();
+  });
+
+  it("hors tutoriel : ni anneau, ni blocage", () => {
+    const { container } = renderSheet(80);
+    const btn = screen.getByText(/Proposer 80/).closest("button") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(container.querySelector("[data-nego-cible]")).toBeNull();
+  });
+});
+
+/**
+ * Leçon d'humeur (première vente du tutoriel) : la jauge est le seul signal
+ * qui dit pourquoi un acheteur finit par partir. Le coach doit pouvoir la
+ * viser — donc la trouver.
+ */
+describe("NegociationSheet — cible du coach sur la jauge d'humeur", () => {
+  it("pose la cible sur la jauge quand la leçon la demande", () => {
+    const { container } = renderSheet(80, { cibleCoachHumeur: true });
+    const jauge = container.querySelector('[data-tuto-coach="vente-humeur"]');
+    expect(jauge).toBeTruthy();
+    // Cible utile : elle doit avoir une boîte, sinon TutorielCoach la traite
+    // — à raison — comme introuvable.
+    expect((jauge as HTMLElement).style.display).not.toBe("contents");
+  });
+
+  it("aucune cible le reste du temps", () => {
+    const { container } = renderSheet(80);
+    expect(container.querySelector('[data-tuto-coach="vente-humeur"]')).toBeNull();
   });
 });

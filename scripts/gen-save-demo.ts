@@ -174,6 +174,7 @@ const brocanteId = "marche-saint-ouen";
 const state: GameState = {
   version: SAVE_VERSION,
   budget: 8420,
+  jetons: 0,
   jourActuel: 96,
   inventaireJoueur: inventaire,
   colisTutorielLivres: 0,

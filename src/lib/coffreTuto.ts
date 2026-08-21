@@ -19,10 +19,10 @@ export function estSurTrace(
 ): boolean {
   if (ov.posX === undefined || ov.posY === undefined) return false;
   const dist = Math.hypot(ov.posX - trace.posX, ov.posY - trace.posY);
-  if (dist > TOLERANCE_TRACE_POS) return false;
+  if (dist > (trace.tolerancePos ?? TOLERANCE_TRACE_POS)) return false;
   const rot = (((ov.rotation ?? 0) % 360) + 360) % 360;
   const brut = Math.abs(rot - trace.rotation);
-  return Math.min(brut, 360 - brut) <= TOLERANCE_TRACE_ROT;
+  return Math.min(brut, 360 - brut) <= (trace.toleranceRot ?? TOLERANCE_TRACE_ROT);
 }
 
 function poseeDans(coffre: readonly ObjetEnVitrine[], trace: TraceScenario): boolean {

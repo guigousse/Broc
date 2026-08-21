@@ -67,6 +67,36 @@ describe("migrerSauvegarde — anciens champs manquants", () => {
     expect(migrerSauvegarde(incomplete).niveauAtelier).toBe(1);
   });
 
+  /**
+   * Invariant posé le 2026-08-19 : savoir réparer, c'est avoir un établi. Le
+   * premier est offert avec la première compétence Réparer — on l'accorde
+   * aussi aux parties d'avant cette règle, sinon deux joueurs identiques
+   * auraient des ateliers différents selon la date de leur partie.
+   */
+  it("offre le premier établi à une vieille partie qui sait déjà réparer", () => {
+    const state = createMockGameState({
+      niveauAtelier: 0,
+      competencesDebloquees: ["cat.Musique.reparer.1"],
+    });
+    expect(migrerSauvegarde(state).niveauAtelier).toBe(1);
+  });
+
+  it("laisse à 0 une partie qui ne sait pas encore réparer", () => {
+    const state = createMockGameState({
+      niveauAtelier: 0,
+      competencesDebloquees: ["cat.Musique.connaisseur.1"],
+    });
+    expect(migrerSauvegarde(state).niveauAtelier).toBe(0);
+  });
+
+  it("ne dégrade jamais un atelier déjà amélioré", () => {
+    const state = createMockGameState({
+      niveauAtelier: 3,
+      competencesDebloquees: [],
+    });
+    expect(migrerSauvegarde(state).niveauAtelier).toBe(3);
+  });
+
   it("garde niveauAtelier=2 si déjà à 2", () => {
     const state = createMockGameState({ niveauAtelier: 2 });
     expect(migrerSauvegarde(state).niveauAtelier).toBe(2);
@@ -1140,8 +1170,8 @@ function saveV17(patch: Partial<GameState> = {}): GameState {
 }
 
 describe("v18 — la branche thématique « Œil aiguisé » devient Marchandage", () => {
-  it("SAVE_VERSION incrémenté à 19 (v18 Marchandage + v19 tutoriel v2)", () => {
-    expect(SAVE_VERSION).toBe(19);
+  it("SAVE_VERSION incrémenté à 20 (v18 Marchandage + v19 tutoriel v2 + v20 jetons du Bazar)", () => {
+    expect(SAVE_VERSION).toBe(20);
   });
 
   it("retire les ids legacy, rembourse 1 pt chacun, SANS reset des autres compétences (save v17)", () => {
@@ -1276,5 +1306,20 @@ describe("migrerSauvegarde — v19 étapes v2 du tutoriel", () => {
   it("normalise premiere-vente (étape v2 disparue) vers termine", () => {
     const s = { ...createMockGameState(), version: SAVE_VERSION, tutorielEtape: "premiere-vente" };
     expect(migrerSauvegarde(s as unknown as GameState).tutorielEtape).toBe("termine");
+  });
+});
+
+describe("migration v20 — jetons du Bazar", () => {
+  it("pose jetons: 0 sur une save v19 qui ne connaît pas le champ", () => {
+    const v19 = { ...createMockGameState(), version: 19 } as unknown as Record<string, unknown>;
+    delete v19.jetons;
+    const migre = migrerSauvegarde(v19 as unknown as GameState);
+    expect(migre.jetons).toBe(0);
+    expect(migre.version).toBe(20);
+  });
+
+  it("préserve un solde de jetons existant", () => {
+    const v20 = { ...createMockGameState({ jetons: 7 }), version: 20 };
+    expect(migrerSauvegarde(v20).jetons).toBe(7);
   });
 });

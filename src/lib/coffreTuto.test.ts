@@ -95,3 +95,39 @@ describe("prixPoses", () => {
     expect(prixPoses([autre])).toBe(true);
   });
 });
+
+/**
+ * Indulgence propre à la carafe (recette device 2026-08-19) : c'est la SEULE
+ * trace que le joueur pose lui-même — la manette est déposée par la démo du
+ * grand-père, pile sur sa trace. Exiger d'un pouce la même précision qu'un
+ * placement programmé n'apprend rien, ça use.
+ */
+describe("tolérance par trace", () => {
+  it("la carafe accepte un décalage et une rotation que la manette refuserait", () => {
+    const decale = { posX: 0.10, rot: 16 };
+    expect(
+      estSurTrace(
+        { posX: t1.posX + decale.posX, posY: t1.posY, rotation: t1.rotation + decale.rot },
+        t1,
+      ),
+    ).toBe(true);
+    expect(
+      estSurTrace(
+        { posX: t0.posX + decale.posX, posY: t0.posY, rotation: t0.rotation + decale.rot },
+        t0,
+      ),
+    ).toBe(false);
+  });
+
+  it("l'indulgence reste bornée : franchement à côté, c'est non", () => {
+    expect(estSurTrace({ posX: t1.posX + 0.2, posY: t1.posY, rotation: t1.rotation }, t1)).toBe(false);
+    expect(estSurTrace({ posX: t1.posX, posY: t1.posY, rotation: t1.rotation + 30 }, t1)).toBe(false);
+  });
+
+  it("un dépôt au centre du coffre ne s'aimante jamais sur la carafe", () => {
+    // handleAjouter dépose au centre (0.5/0.5) quand on tape depuis le
+    // carrousel : la carafe doit rester à distance, sinon elle se poserait
+    // toute seule et la leçon du glisser-tourner passerait à la trappe.
+    expect(estSurTrace({ posX: 0.5, posY: 0.5, rotation: t1.rotation }, t1)).toBe(false);
+  });
+});

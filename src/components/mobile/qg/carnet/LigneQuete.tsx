@@ -40,10 +40,18 @@ const ligneWrap: CSSProperties = {
   gap: 10,
   padding: "10px 10px 10px 8px",
 };
+/**
+ * Zone tapable : DEUX lignes empilées, le titre puis [photos + progression].
+ * Auparavant tout tenait sur une seule rangée et la colonne du milieu se
+ * retrouvait écrasée entre trois photos et le pavé récompense — un titre de
+ * quête hebdomadaire débordait alors sous la récompense, illisible (retour
+ * device 2026-08-18). Le titre occupe désormais toute la largeur de la zone.
+ */
 const zoneTogglee: CSSProperties = {
   display: "flex",
-  alignItems: "center",
-  gap: 12,
+  flexDirection: "column",
+  alignItems: "stretch",
+  gap: 6,
   flex: 1,
   minWidth: 0,
   background: "transparent",
@@ -54,11 +62,35 @@ const zoneTogglee: CSSProperties = {
   font: "inherit",
   color: "inherit",
 };
+
+/** La rangée du dessous : les photos (ou l'icône), puis la demande + la barre. */
+const rangeeInfos: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  minWidth: 0,
+};
+/**
+ * Colonne des vignettes. Empilée : les photos, puis le compteur SOUS elles.
+ * Le compteur avait d'abord été retiré avec le commanditaire (les ✓ des
+ * vignettes le disaient déjà) — mais son absence laissait un vide sur les
+ * quêtes à un seul objet. Le remettre ici, et pas dans une colonne à côté, le
+ * sort définitivement de la concurrence de largeur avec le pavé récompense,
+ * qui était la cause du chevauchement à trois objets.
+ */
 const colonneGauche: CSSProperties = {
   display: "flex",
+  flexDirection: "column",
   alignItems: "center",
   gap: 4,
   flex: "0 0 auto",
+};
+
+/** Les vignettes elles-mêmes, en rangée, sous laquelle vient le compteur. */
+const rangeeVignettes: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
 };
 const plusPastille: CSSProperties = {
   fontFamily: "var(--font-mono)",
@@ -79,6 +111,8 @@ const colonneCentre: CSSProperties = {
 };
 const titreStyle: CSSProperties = {
   display: "block",
+  // Pas de troncature : c'est précisément ce qui rendait les titres
+  // hebdomadaires invisibles. Un titre long passe à la ligne, la fiche grandit.
   fontFamily: "var(--font-display)",
   fontSize: 14,
   fontWeight: 700,
@@ -225,7 +259,10 @@ export function LigneQuete({
     <div data-commande-id={courrier.id} style={carte}>
       <div style={ligneWrap}>
         <button type="button" style={zoneTogglee} onClick={onToggle} aria-expanded={ouvert}>
+          <span style={titreStyle}>{titreCourrier(courrier, locale)}</span>
+          <span style={rangeeInfos}>
           <span style={colonneGauche}>
+            <span style={rangeeVignettes}>
             {p.cibles.length > 0 ? (
               <>
                 {p.cibles.slice(0, 4).map((cible, i) => {
@@ -254,16 +291,36 @@ export function LigneQuete({
                 accompli={iconeAccompli}
               />
             )}
-          </span>
-          <span style={colonneCentre}>
-            <span style={titreStyle}>{titreCourrier(courrier, locale)}</span>
-            <span style={demandeStyle} data-testid="ligne-demande">{demandeAffichee}</span>
-            <span style={barreWrap}>
-              <span style={barreFond}>
-                <span data-testid="progression-barre" style={barreRemplissage(pct)} />
-              </span>
-              <span data-testid="progression-compteur" style={compteurStyle}>{compteur}</span>
             </span>
+            {/* Compteur sous les vignettes — seulement quand il y a des
+                vignettes : les quêtes chiffrées gardent le leur dans la
+                colonne du milieu, collé à leur barre de progression. */}
+            {p.cibles.length > 0 && (
+              <span data-testid="progression-compteur" style={compteurStyle}>{compteur}</span>
+            )}
+          </span>
+          {/* Colonne du milieu réservée aux quêtes CHIFFRÉES. Avec des cibles
+              objets, les vignettes portent déjà l'identité de la quête (quel
+              objet) ET son avancement (couleur + pastille ✓) : le
+              commanditaire et le compteur y faisaient doublon, et c'est cette
+              colonne qui écrasait la mise en page des quêtes à trois objets
+              (retour device).
+
+              ⚠ Sans cible, en revanche, il n'y a AUCUNE photo pour dire de
+              quoi il s'agit : « Bénéfice réalisé » et « 0 / 850 € » sont la
+              seule identité de la quête. Les retirer là rendrait deux formes
+              chiffrées indiscernables — le défaut corrigé en T7. */}
+          {p.cibles.length === 0 && (
+            <span style={colonneCentre}>
+              <span style={demandeStyle} data-testid="ligne-demande">{demandeAffichee}</span>
+              <span style={barreWrap}>
+                <span style={barreFond}>
+                  <span data-testid="progression-barre" style={barreRemplissage(pct)} />
+                </span>
+                <span data-testid="progression-compteur" style={compteurStyle}>{compteur}</span>
+              </span>
+            </span>
+          )}
           </span>
         </button>
         <div style={colonnePave}>

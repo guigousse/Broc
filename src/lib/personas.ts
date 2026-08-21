@@ -1,4 +1,10 @@
-import type { Brocante, CategorieObjet, NegoPersona, VendeurArchetypeId } from "@/types/game";
+import type {
+  Brocante,
+  CategorieObjet,
+  GenrePersona,
+  NegoPersona,
+  VendeurArchetypeId,
+} from "@/types/game";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
 
 /** Médianes des 5 axes par archétype vendeur. */
@@ -58,6 +64,37 @@ export const NOM_VENDEUR: Record<VendeurArchetypeId, string> = {
   modeuse: EXPEDITEURS.mode.nom,
   esthete: EXPEDITEURS.art.nom,
 };
+
+/**
+ * Genre de chaque vendeur, aligné sur son nom propre et sur son portrait.
+ * Sert l'accord de la pastille adverse en négociation (« Lui » / « Elle »).
+ */
+export const GENRE_VENDEUR: Record<VendeurArchetypeId, GenrePersona> = {
+  naif: "m",          // P'tit Lucien
+  bonhomme: "m",      // Dédé la Bretelle
+  mamie: "f",         // Mamie Odette
+  malin: "m",         // Anatole la Combine
+  grincheux: "m",     // Père Anselme
+  antiquaire: "f",    // Madame Vasseur
+  pipelette: "f",     // Tata Monique
+  videcave: "m",      // Jeannot Vide-Cave
+  bonimenteur: "m",   // Oscar la Tchatche
+  disquaire: "m",     // Barnabé 33-Tours
+  // Commanditaires de quêtes — mêmes figures que dans le courrier.
+  joueur: "m",        // Le Joueur du Vide-grenier
+  setdesigner: "f",   // Clara
+  modeuse: "f",       // Arianne
+  esthete: "m",       // Paul-Henry
+};
+
+/**
+ * Genre d'un vendeur. Repli au masculin pour un archétype inconnu, en écho
+ * au « Un vendeur » de `getNomVendeur` — cas qui ne se produit pas en jeu,
+ * la table étant exhaustive (garde de test dans `personas.test.ts`).
+ */
+export function genreVendeur(archetype: string): GenrePersona {
+  return GENRE_VENDEUR[archetype as VendeurArchetypeId] ?? "m";
+}
 
 /** Nom affichable d'un vendeur, avec repli générique si l'archétype est inconnu. */
 export function getNomVendeur(archetype: string): string {

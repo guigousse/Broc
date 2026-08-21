@@ -11,6 +11,17 @@ interface ItemImageProps {
   categorie: CategorieObjet;
   /** Mode d'ajustement de l'image dans son conteneur. */
   fit?: "contain" | "cover";
+  /**
+   * Ancrage vertical de l'image dans son cadre (`object-position`). Par
+   * défaut centré — c'est le comportement d'aujourd'hui, inchangé pour
+   * tous les appelants existants (grille de collection, cartes, stickers…).
+   * `"bottom"` ancre le BAS de l'image sur l'arête basse du cadre : utile
+   * quand `fit="contain"` letterboxe un objet large et bas (une ménagère,
+   * une pile de vinyles) — sans ça, `contain` centre le visible et laisse
+   * un vide transparent sous l'objet, qui semble flotter au-dessus de
+   * l'étagère au lieu d'y reposer.
+   */
+  verticalAlign?: "center" | "bottom";
   /** Taille de l'icône fallback (px). */
   fallbackIconSize?: number;
   /** Couleur de l'icône fallback. */
@@ -54,6 +65,7 @@ export function ItemImage({
   templateId,
   categorie,
   fit = "contain",
+  verticalAlign = "center",
   fallbackIconSize = 40,
   fallbackIconColor = "var(--brass-700)",
   alt = "",
@@ -113,7 +125,11 @@ export function ItemImage({
           sizes={sizes}
           priority={priority}
           onLoad={() => setLoaded(true)}
-          style={{ objectFit: fit, display: "block" }}
+          style={{
+            objectFit: fit,
+            objectPosition: verticalAlign === "bottom" ? "center bottom" : "center",
+            display: "block",
+          }}
         />
       </div>
     </div>

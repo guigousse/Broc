@@ -204,12 +204,14 @@ function StockageItemRowBase({
               categorie: libelleCategorie(objet.categorie, d),
             })}
           >
-            {/* `display: contents` : ce span n'ajoute aucune boîte propre,
-                seulement l'attribut data pour la découpe du coach — le
-                layout des étoiles reste identique hors tutoriel. StarRow
-                n'accepte pas d'attribut data, d'où le wrapper. */}
+            {/* Wrapper porteur de l'attribut data (StarRow n'accepte pas
+                d'attribut arbitraire). Surtout PAS `display: contents` :
+                un élément sans boîte propre renvoie un rect 0×0 à l'origine
+                et le coach plantait sa bulle dans le coin de l'écran
+                (recette device 2026-08-19). En `inline-flex` autour de son
+                unique enfant, le rendu est le même et la boîte existe. */}
             <span
-              style={{ display: "contents" }}
+              style={{ display: "inline-flex", alignItems: "center" }}
               data-tuto-coach={cibleCoach ? "stockage-etat" : undefined}
             >
               <StarRow

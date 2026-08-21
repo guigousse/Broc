@@ -42,11 +42,12 @@ export const el: DictionnaireUI = {
   },
   reglages: {
     titre: "— Ρυθμίσεις —",
-    son: "Ήχος",
+    son: "Ήχος και δόνηση",
     volumeGeneral: "Γενική ένταση — {n}",
     musique: "Μουσική",
     effets: "Ηχητικά εφέ",
     ambiance: "Ήχοι περιβάλλοντος",
+    vibrations: "Δόνηση",
     langue: "Γλώσσα",
     notifications: "Ειδοποιήσεις",
     rappels: "Υπενθυμίσεις (ενέργεια, εργαστήριο, αποστολές)",
@@ -97,9 +98,13 @@ export const el: DictionnaireUI = {
       stockage: "Αποθήκη",
       atelier: "Εργαστήριο",
     },
+    ongletVerrouille: "κλειδωμένο",
+    verrouBibliotheque: "Το Γραφείο ανοίγει στο πρώτο σου επίπεδο Παλαιοπώλη.",
+    verrouAtelier: "Το Εργαστήριο ανοίγει με την πρώτη σου δεξιότητα Επισκευής.",
     navigationPrincipale: "Κύρια πλοήγηση",
     energie: "Ενέργεια",
     caisse: "Ταμείο",
+    jetons: "Μάρκες",
     rechargerEnergie: "Επαναφόρτιση ενέργειας",
     montantEuros: "{valeur} €",
     niveau: "Επίπεδο",
@@ -142,8 +147,6 @@ export const el: DictionnaireUI = {
     gramophone: "Γραμμόφωνο — επίλεξε δίσκο",
     fauteuilChat: "Πολυθρόνα πιασμένη από γάτα",
     fauteuilPasser: "Πολυθρόνα — πέρασε τη μέρα",
-    porteRevuesLire: "Περιοδικοθήκη — διάβασε την Εφημερίδα",
-    porteRevuesAcheter: "Περιοδικοθήκη — αγόρασε την Εφημερίδα",
     journalSolOffert: "Εφημερίδα — δώρο του παππού",
     journalSolAcheter: "Η Γκαζέτα της Δευτέρας — αγορά ή άρνηση",
     journalBureauLire: "Εφημερίδα — διάβασε τη Γκαζέτα",
@@ -155,6 +158,8 @@ export const el: DictionnaireUI = {
     stockagePlein: "Η αποθήκη είναι γεμάτη",
     chiner: "Ψάξιμο",
     etaler: "Πούλημα",
+    bazar: "Μπαζάρ",
+    bazarCompteARebours: "Σε {n} ημέρες",
     chatDortMessage:
       "Μια γάτα κοιμάται ήσυχα στην πολυθρόνα. Δεν μπορείς να τελειώσεις τη μέρα χωρίς να την ενοχλήσεις…",
     seReposer: "Ξεκούραση (+1 ημέρα)",
@@ -169,8 +174,6 @@ export const el: DictionnaireUI = {
     slotLibre: "ελεύθερη",
   },
   tutoriel: {
-    passer: "Παράλειψη εκμάθησης",
-    confirmerPasser: "Σίγουρα; Πάτα ξανά",
     colisTitre: "Το δέμα του παππού",
     cadeauTitre: "Χρόνια πολλά!",
     colisRecuperer: "Παραλαβή",
@@ -190,11 +193,17 @@ export const el: DictionnaireUI = {
     coachCollectionCase:
       "Το λούτρινο βρήκε τη θέση του: δεν πωλείται πια, εκτίθεται.",
     coachCollectionValeur:
-      "Η αξία της συλλογής σου μεγαλώνει με κάθε δωρεά.",
-    coachCollectionDeblocage:
-      "Αυτή η αξία ξεκλειδώνει νέα παζάρια — και χτίζει τη φήμη σου.",
+      "Η αξία της συλλογής σου μεγαλώνει με κάθε δωρεά — και ξεκλειδώνει νέα παζάρια.",
     coachCollectionRetirer:
       "Ένα δωρισμένο αντικείμενο δεν χάνεται: αυτό το κουμπί το επιστρέφει στο απόθεμά σου — αλλά η αξία του φεύγει μαζί του.",
+    coachAtelierDemanteler:
+      "Ό,τι δεν θα πουλήσεις ποτέ, αποσυναρμολόγησέ το: δίνει ανταλλακτικά.",
+    coachAtelierPieces:
+      "Τα ανταλλακτικά σου, ένα απόθεμα ανά οικογένεια αντικειμένων.",
+    coachAtelierEtabli:
+      "Ένα αντικείμενο, λίγα ανταλλακτικά, λίγος χρόνος: και βγαίνει σε καλύτερη κατάσταση.",
+    coachVenteHumeur:
+      "Η διάθεσή του: κάθε γύρος παζαρέματος τον φθείρει. Όσο πιο κόκκινη γίνεται η μπάρα, τόσο πιο πιθανό να φύγει οριστικά.",
     coachCompetencesXp:
       "Το επίπεδό σου και η μπάρα εμπειρίας: κάθε πώληση, κάθε εύρημα τη γεμίζει.",
     coachCompetencesArbres:
@@ -203,40 +212,26 @@ export const el: DictionnaireUI = {
       "Και να ο πρώτος σου πόντος δεξιότητας. Σε περιμένει.",
     instructions: {
       "accueil": "Άκου τον παππού σου…",
-      "aller-chiner":
-        "Πέρνα την πόρτα, επίλεξε «Ψάξιμο», και μετά το Παζάρι της γειτονιάς.",
-      "chine-nego-echec":
-        "Άνοιξε το «Παζάρεμα» και δοκίμασε μια πολύ χαμηλή προσφορά, για να δεις.",
-      "chine-achat-direct":
-        "Αυτή η καράφα έχει δίκαιη τιμή: αγόρασέ την στην τιμή που αναγράφεται.",
-      "chine-nego-un":
-        "Παζάρεψε για το χειριστήριο — πρότεινε τιμή με τον ρυθμιστή.",
-      "chine-nego-deux":
-        "Παζάρεψε για το λούτρινο — αρχίζεις να το πιάνεις το κολπάκι.",
-      "chine-sortir":
-        "Ρίξε μια ματιά στους τελευταίους πάγκους αν θέλεις, μετά βγες από το παζάρι.",
-      "stockage-ouvrir": "Άνοιξε την Αποθήκη από την κάτω μπάρα.",
-      "stockage-focus":
-        "Κάνε μια βόλτα στην αποθήκη σου — πάτα για να συνεχίσεις.",
-      "collection-envoyer": "Στείλε το λούτρινο μοχέρ στη συλλογή σου.",
-      "collection-lecon": "Άνοιξε τη Συλλογή από την κάτω μπάρα.",
-      "ouvrir-colis": "Άνοιξε το δέμα του παππού σου, δίπλα στην πόρτα.",
-      "preparer-etal":
-        "Πέρνα ξανά την πόρτα και επίλεξε «Πούλημα» για να ετοιμάσεις τη βιτρίνα σου.",
-      "coffre-trace-un":
-        "Κοίτα καλά: ο παππούς βάζει το χειριστήριο στη θέση του και το γυρίζει για σένα.",
-      "coffre-trace-deux":
-        "Ένα δάχτυλο για να μετακινήσεις, ένα δεύτερο για να περιστρέψεις: βάλε το αντικείμενο στο περίγραμμά του.",
-      "vente-refus":
-        "Αυτός ο πελάτης προσφέρει πολύ λίγα — άφησέ το, χωρίς τύψεις.",
-      "vente-directe":
-        "Θα πάρει το χειριστήριο στην τιμή που αναγράφεται: δέξου!",
-      "vente-nego":
-        "Παζάρεψε για την καράφα — κράτα την τιμή σου, θα ανέβει.",
-      "niveau-celebration": "Ανέβηκες επίπεδο — απόλαυσέ το!",
-      "competences-visite": "Άνοιξε τις Δεξιότητες από την κάτω μπάρα.",
-      "competences-choix":
-        "Ξόδεψε την πρώτη σου μονάδα: κλάδος Οξυδέρκεια, «Αναγνώστης ψυχών».",
+      "aller-chiner": "Πέρνα την *πόρτα*, μετά *Ψάξιμο* → *Παζάρι της γειτονιάς*.",
+      "chine-nego-echec": "Άνοιξε το *Παζάρεμα* και στόχευσε τον *διάστικτο κύκλο*.",
+      "chine-achat-direct": "Δίκαιη τιμή: *αγόρασέ την στην τιμή της*.",
+      "chine-nego-un": "*Παζάρεψε* το χειριστήριο: ο ρυθμιστής στον *κύκλο*.",
+      "chine-nego-deux": "Το ίδιο για το λούτρινο: ο ρυθμιστής στον *κύκλο*.",
+      "chine-sortir": "*Βγες* από το παζάρι όταν τελειώσεις.",
+      "stockage-ouvrir": "Άνοιξε την *Αποθήκη*, κάτω.",
+      "stockage-focus": "Κάνε μια βόλτα στην αποθήκη σου.",
+      "collection-envoyer": "Στείλε το *λούτρινο* στη *συλλογή* σου.",
+      "collection-lecon": "Άνοιξε τη *Συλλογή*, κάτω.",
+      "ouvrir-colis": "Άνοιξε το *δέμα* του παππού, δίπλα στην πόρτα.",
+      "preparer-etal": "Πέρνα ξανά την πόρτα, μετά *Πούλημα*.",
+      "coffre-trace-un": "Κοίτα: βάζει το χειριστήριο για σένα.",
+      "coffre-trace-deux": "Βάλε την καράφα στο *περίγραμμά* της: ένα δάχτυλο για μετακίνηση, δύο για περιστροφή.",
+      "vente-refus": "Προσφέρει πολύ λίγα: *άφησέ το*.",
+      "vente-directe": "Πληρώνει την τιμή σου: *δέξου*.",
+      "vente-nego": "*Παζάρεψε* την καράφα: ο ρυθμιστής στον *κύκλο*.",
+      "niveau-celebration": "Ανεβαίνεις επίπεδο — απόλαυσέ το!",
+      "competences-visite": "Άνοιξε τις *Δεξιότητες*, κάτω.",
+      "competences-choix": "Ξόδεψε τον πόντο σου: *Παρουσίαση* → *Αναγνώστης ψυχών*.",
       "conclusion": "Άκου τον παππού σου…",
     },
   },
@@ -339,12 +334,15 @@ export const el: DictionnaireUI = {
     sortir: "Έξοδος",
     precedent: "Προηγούμενο",
     altVendeur: "Πωλητής",
-    acquisStatut: "— Αποκτήθηκε —",
     vendeurFache: "Θυμωμένος πωλητής",
+    // Tampon encreur du stock saturé, posé sur l'objet comme « Vendu ».
+    // Court exprès : le tampon est en diagonale sur la vignette.
+    tamponStockPlein: "Αποθήκη γεμάτη",
     tamponVendu: "Πουλήθηκε",
     negocier: "Παζάρεμα",
     acheterPrix: "Αγορά {prix} €",
     laisserTomber: "Παράτα το",
+    dernierPrix: "τελική τιμή",
     accepterPrix: "Αποδοχή {prix} €",
     proposerPrix: "Πρόταση {prix} €",
     acheterPrixAffiche: "Αγορά στην αναγραφόμενη τιμή — {prix} €",
@@ -397,7 +395,7 @@ export const el: DictionnaireUI = {
     lotGarniChoisirTitre: "🧺 Η Παρτίδα — πρόσθεσε ένα αντικείμενο",
     lotGarniAucunAutre: "Δεν έχεις τίποτα άλλο να προσφέρεις.",
     prixDemandeLabel: "Ζητούμενη τιμή",
-    clientInconnu: "Ένας άγνωστος",
+    clientInconnu: { m: "Ένας άγνωστος", f: "Μια άγνωστη", n: "Κάποιοι άγνωστοι" },
     tempsRestantLabel: "Χρόνος που απομένει",
     journeeSansVente: "Η μέρα τελειώνει χωρίς καμία πώληση.",
     journeeUneVente: "Μία μόνο πώληση σήμερα. Είναι μια αρχή.",
@@ -413,7 +411,7 @@ export const el: DictionnaireUI = {
     bulleJePrends: "« Το παίρνω. Ορίστε {prix} €. »",
     refuser: "Άρνηση",
     vendrePrix: "Πώληση · {prix} €",
-    labelAdverse: "Απέναντι",
+    labelAdverse: { m: "Απέναντι", f: "Απέναντι", n: "Απέναντι" },
     labelJoueur: "Εσύ",
     reorganiserCoffre: "Αναδιάταξε την καρότσα — κάποια αντικείμενα δεν χωράνε.",
     fermetureEnCours: "Κλείσιμο…",
@@ -601,6 +599,13 @@ export const el: DictionnaireUI = {
       "Πλησιάζει το πρώτο σαββατοκύριακο του Σεπτεμβρίου: η Μεγάλη Μπραντερί στήνει τους πάγκους της! Δύο μέρες με τιμές-σοκ — περιμένετε το μεγαλύτερο πλήθος της χρονιάς.",
     braderieEnCours:
       "Η Μεγάλη Μπραντερί είναι στο αποκορύφωμά της! Πάγκοι ως εκεί που φτάνει το μάτι, τιμές-σοκ και πλήθος-ρεκόρ — φέτος είναι αυτό το σαββατοκύριακο ή ποτέ.",
+    // Légende sous la rangée des sept jours : la météo n'agit que sur
+    // le rythme d'arrivée des clients AU STAND DE VENTE
+    // (METEO_INTERVALLE_MULT), jamais sur la chine. Pas de chiffre : un
+    // multiplicateur sonnerait tableur au milieu d'un journal.
+    meteoLegende:
+      "Ο καλός καιρός βγάζει τους αγοραστές έξω· η καταιγίδα τους κρατά σπίτι. Ο καιρός ρυθμίζει την κίνηση στον πάγκο σας — δεν αλλάζει τίποτα στο ψάξιμο.",
+    pageIndicateur: "Σελίδα {page} / {total}",
     pageSuivanteAria: "Επόμενη σελίδα",
     pagePrecedenteAria: "Προηγούμενη σελίδα",
     pageIndicateurAria: "Σελίδα {page} από {total}",
@@ -635,8 +640,8 @@ export const el: DictionnaireUI = {
     jour: "Ημέρα {n}",
     aucuneCommande: "Καμία παραγγελία προς το παρόν.",
     sectionPrincipales: "Κύριες παραγγελίες",
-    sectionQuotidiennes: "Καθημερινές παραγγελίες",
-    sectionHebdomadaires: "Εβδομαδιαίες παραγγελίες",
+    sectionQuotidiennes: "Καθημερινά",
+    sectionHebdomadaires: "Εβδομαδιαία",
     renouvellement: "Ανανέωση σε {t}",
     terminees: "Ολοκληρωμένες",
     livreeJour: "Παραδόθηκε Η{n}",
@@ -648,7 +653,9 @@ export const el: DictionnaireUI = {
     jetonArgent: "+{n} €",
     jetonXp: "+{n} XP",
     jetonEnergie: "+{n} ⚡",
-    recompenseAria: "Ανταμοιβή: {argent} €, {xp} XP, {energie} ενέργεια",
+    jetonBazarUn: "+{n} μάρκα",
+    jetonBazarN: "+{n} μάρκες",
+    recompenseAria: "Ανταμοιβή: {argent} €, {xp} XP, {energie} ενέργεια, {jetons} μάρκες",
     livrer: "Παράδοση",
     livrerProgress: "Παράδοση ({rempli}/{total})",
     sectionCompteur: "({faits}/{total})",
@@ -739,6 +746,8 @@ export const el: DictionnaireUI = {
     atelierPleinUn: "Το εργαστήριο είναι γεμάτο ({enCours}/{capacite} θέση).",
     atelierPleinN: "Το εργαστήριο είναι γεμάτο ({enCours}/{capacite} θέσεις).",
     competenceReparerManquante: "Δεν έχεις τη δεξιότητα Επισκευή — {categorie}.",
+    bazarPasAssezDeJetons: "Δεν έχετε αρκετές μάρκες",
+    bazarArticleIndisponible: "Μη διαθέσιμο είδος",
     manquePiecesUn: "Λείπει {n} κομμάτι {categorie}.",
     manquePiecesN: "Λείπουν {n} κομμάτια {categorie}.",
     objetEnRestauration: "Το αντικείμενο βρίσκεται σε αποκατάσταση.",
@@ -828,5 +837,19 @@ export const el: DictionnaireUI = {
       titre: "Εργαστήριο",
       corps: "«{nom}» αποκαταστάθηκε ✓",
     },
+  },
+  bazar: {
+    titre: "Το Μπαζάρ",
+    lotPieces: "{n} ανταλλακτικά · {categorie}",
+    prixJetons: "{n} μάρκες",
+    prixJetonUn: "{n} μάρκα",
+    vendu: "Πουλήθηκε — επιστρέφει τη Δευτέρα",
+    manqueJetons: "Σου λείπουν {n} μάρκες",
+    manqueJetonUn: "Σου λείπει {n} μάρκα",
+    sortir: "Έξοδος από το Μπαζάρ",
+    detailArticle: "Λεπτομέρειες είδους",
+    prixMot: "Τιμή",
+    acheter: "Αγορά",
+    achatRefuse: "Η αγορά δεν είναι δυνατή.",
   },
 };

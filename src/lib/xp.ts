@@ -164,9 +164,6 @@ export const XP_NEGO_BROCANTEUR = 5;
 export const XP_JUSTE_PRIX = 10;
 /** Une étape de restauration récupérée à l'atelier. */
 export const XP_RESTAURATION_ETAPE = 15;
-export const XP_QUETE_QUOTIDIENNE = 25;
-export const XP_QUETE_HEBDO = 75;
-export const XP_QUETE_PRINCIPALE = 100;
 /** Premier exemplaire d'un template ajouté à la collection. */
 export const XP_DECOUVERTE_COLLECTION = 10;
 

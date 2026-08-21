@@ -63,6 +63,7 @@ import {
   multiplicateurXPRarete,
 } from "@/lib/xp";
 import {
+  aCompetenceReparation,
   aGenInfluence,
   contexteDepuisState,
   etatCompetence,
@@ -74,6 +75,13 @@ import { getProchaineUpgradeStockage, getStockageTier } from "@/data/stockage";
 import { stockageEstPlein } from "@/lib/stockage";
 import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
+import { settleBazar } from "@/lib/bazar/settleBazar";
+import {
+  acheterLotPieces,
+  acheterVitrine,
+  type AchatBazar,
+  type RaisonRefus,
+} from "@/lib/bazar/achat";
 import { appliquerFinTutoriel, ETAPES_TUTORIEL } from "@/lib/tutoriel";
 import { logEvenement } from "@/lib/analytics/contexte";
 import { EVENEMENTS } from "@/lib/analytics/analytics";
@@ -157,6 +165,13 @@ function categorieLocalisee(cat: Parameters<typeof libelleCategorie>[0]): string
   return libelleCategorie(cat, DICTIONNAIRES[localeCourante()]);
 }
 
+/** Traduit le `RaisonRefus` brut d'`achat.ts` en message localisé. */
+function raisonLocaliseeBazar(raison: RaisonRefus): string {
+  if (raison === "jetons") return raisonLocalisee("bazarPasAssezDeJetons");
+  if (raison === "stockagePlein") return raisonLocalisee("stockagePlein");
+  return raisonLocalisee("bazarArticleIndisponible");
+}
+
 interface GameStateValue {
   state: GameState | null;
   isHydrated: boolean;
@@ -193,6 +208,7 @@ interface GameActionsValue {
   /** Clôt le mini-tuto des vinyles (musique lancée). */
   terminerMiniTutoVinyle: () => void;
   terminerMiniTutoCarnet: () => void;
+  terminerMiniTutoAtelier: () => void;
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
   terminerTutoriel: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
@@ -280,6 +296,16 @@ interface GameActionsValue {
   reclamerBoiteMystere: (objet: Objet) => boolean;
   /** Settle l'énergie contre le temps de confiance et persiste. No-op si pas de temps de confiance. */
   rafraichirEnergie: () => void;
+  /**
+   * Settle les quêtes périodiques ET le Bazar contre le temps de confiance.
+   * Tourne déjà sur le tick 60 s / focus / visibilitychange / pageshow ; les
+   * écrans qui dépendent d'un de ces deux settle pour ne pas s'ouvrir sur un
+   * état vide (le Bazar à sa première visite du jour 35) l'appellent aussi
+   * à leur montage plutôt que d'attendre le prochain tick.
+   */
+  rafraichirPeriodiques: () => void;
+  /** Achète à l'étal du Bazar (lot de pièces ou objet de vitrine). */
+  acheterAuBazar: (achat: AchatBazar) => { ok: boolean; raison?: string };
 }
 
 type GameContextValue = GameStateValue & GameActionsValue;
@@ -401,9 +427,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [tempsConfiance]);
 
-  const rafraichirQuetes = useCallback(() => {
+  // Nommé « périodiques » (pas « quêtes » seul) depuis la tâche 5 : ce
+  // callback fait aussi tourner `settleBazar` — même famille de settle en
+  // temps de confiance, même absence d'invention au rendu.
+  const rafraichirPeriodiques = useCallback(() => {
     const now = tempsConfiance() ?? Date.now();
     setState((prev) => (prev ? settleQuetesPeriodiques(prev, now) : prev));
+    setState((prev) => (prev ? settleBazar(prev, now) : prev));
   }, [tempsConfiance]);
 
   const consommerEnergie = useCallback(
@@ -496,7 +526,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // Hors-ligne / timeapi muet : rien à faire, l'extrapolation suit déjà
       // l'horloge murale quand le monotone est en retard (veille).
       rafraichirEnergie();
-      rafraichirQuetes();
+      rafraichirPeriodiques();
     };
     sync();
     const onFocus = () => sync();
@@ -508,7 +538,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const syncTimer = window.setInterval(sync, 10 * 60 * 1000); // re-sync /10 min
     const tickTimer = window.setInterval(() => {
       rafraichirEnergie();
-      rafraichirQuetes();
+      rafraichirPeriodiques();
     }, 60 * 1000); // settle /60 s
     return () => {
       actif = false;
@@ -518,7 +548,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       window.clearInterval(syncTimer);
       window.clearInterval(tickTimer);
     };
-  }, [isHydrated, rafraichirEnergie, rafraichirQuetes]);
+  }, [isHydrated, rafraichirEnergie, rafraichirPeriodiques]);
 
   // Achat « Énergie infinie » : toute partie (même une vieille save à jauge
   // basse chargée après l'achat) est calée à ENERGIE_MAX — les portes
@@ -744,6 +774,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       niveauStockage: 1,
       niveauCamion: 1,
       piecesAmelioration: emptyPiecesAmelioration(),
+      jetons: 0,
       chatSurFauteuil: false,
       passagesSansChat: 0,
       declencheursDeclenches: [],
@@ -999,6 +1030,39 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  const acheterAuBazar = useCallback(
+    (achat: AchatBazar): { ok: boolean; raison?: string } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
+      const now = tempsConfiance() ?? Date.now();
+      // Pré-check sur stateRef.current pour un refus immédiat, informatif,
+      // sans toucher setState — MAIS même discipline que `acheterObjet` juste
+      // au-dessus : le retour ne promet que ce que l'updater re-vérifie sur
+      // `prev`, pas sur cet instantané potentiellement périmé (le settle
+      // d'énergie, celui des quêtes et la rotation du Bazar tournent tous
+      // dans ce même contexte toutes les 60 s).
+      const precheck =
+        achat.type === "pieces"
+          ? acheterLotPieces(current, achat.index)
+          : acheterVitrine(current, now);
+      if (!precheck.ok) {
+        // Localiser comme le font les actions voisines : jamais de clé brute
+        // remontée à l'UI.
+        return { ok: false, raison: raisonLocaliseeBazar(precheck.raison) };
+      }
+      setState((prev) => {
+        if (!prev) return prev;
+        const r =
+          achat.type === "pieces"
+            ? acheterLotPieces(prev, achat.index)
+            : acheterVitrine(prev, now);
+        return r.ok ? r.state : prev;
+      });
+      return { ok: true };
+    },
+    [tempsConfiance],
+  );
+
   const definirPrixVenteSouhaite = useCallback(
     (objetId: string, prix: number) => {
       setState((prev) => {
@@ -1133,6 +1197,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         : prev,
     );
     if (transitionReelle) logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "vinyle" });
+  }, []);
+
+  /** Clôt la visite guidée de l'Atelier (les trois bulles sont passées). */
+  const terminerMiniTutoAtelier = useCallback(() => {
+    setState((prev) =>
+      prev && prev.miniTutoAtelier === "visite"
+        ? { ...prev, miniTutoAtelier: "termine" as const }
+        : prev,
+    );
   }, []);
 
   /** Clôt le mini-tuto du carnet de commandes (le registre a été ouvert). */
@@ -1486,7 +1559,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (!prev) return prev;
         if (prev.competencesDebloquees.includes(id)) return prev;
         if (prev.brocanteur.pointsDisponibles < comp.coutPoints) return prev;
-        return {
+        const suivant: GameState = {
           ...prev,
           brocanteur: {
             ...prev.brocanteur,
@@ -1494,6 +1567,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
           },
           competencesDebloquees: [...prev.competencesDebloquees, id],
         };
+        // La toute première compétence Réparer ouvre l'Atelier : son cadenas
+        // tombe, un établi est offert avec le savoir-faire (sans quoi la
+        // pièce serait vide) et la visite guidée s'arme — la main désignera
+        // l'onglet jusqu'à ce que le joueur y aille.
+        if (!aCompetenceReparation(prev) && aCompetenceReparation(suivant)) {
+          return {
+            ...suivant,
+            niveauAtelier: Math.max(suivant.niveauAtelier, 1) as GameState["niveauAtelier"],
+            miniTutoAtelier: "visite",
+          };
+        }
+        return suivant;
       });
       logEvenement(EVENEMENTS.competenceDebloquee, { competence_id: id });
       return { ok: true };
@@ -2096,6 +2181,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ouvrirCadeauAnniversaire,
       terminerMiniTutoVinyle,
       terminerMiniTutoCarnet,
+      terminerMiniTutoAtelier,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
@@ -2141,6 +2227,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       crediterEnergiePub,
       reclamerBoiteMystere,
       rafraichirEnergie,
+      rafraichirPeriodiques,
+      acheterAuBazar,
     }),
     [
       nouvellePartie,
@@ -2156,6 +2244,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ouvrirCadeauAnniversaire,
       terminerMiniTutoVinyle,
       terminerMiniTutoCarnet,
+      terminerMiniTutoAtelier,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
@@ -2201,6 +2290,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       crediterEnergiePub,
       reclamerBoiteMystere,
       rafraichirEnergie,
+      rafraichirPeriodiques,
+      acheterAuBazar,
     ],
   );
 

@@ -1,18 +1,23 @@
 // @vitest-environment jsdom
 /**
- * `TabBar` — onboarding (plan 4/4, Task 7) : l'onglet Bibliothèque ne se
- * révèle qu'au niveau 1 (première ouverture de l'écran Compétences).
+ * `TabBar` — onboarding. Depuis 2026-08-19, les onglets pas encore ouverts
+ * ne DISPARAISSENT plus : ils restent en place, grisés sous un cadenas, et
+ * disent ce qui les déverrouille quand on les touche. Un trou dans la barre
+ * n'apprend rien ; un cadenas montre qu'il y a quelque chose à gagner.
  * On mocke `useGameStateOnly`/`useGameActions` (TabBar ne consomme pas
  * `useGame`) et `next/navigation`, comme LevelUpOverlay.test.tsx.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { TabBar } from "./TabBar";
+import { TabBar, ongletSuivantOuvert } from "./TabBar";
+import { catTreeId } from "@/data/competences";
+import { CATEGORIES } from "@/data/categories";
 import type { GameState } from "@/types/game";
 
 afterEach(() => {
   cleanup();
   pushMock.mockClear();
+  toastMock.mockClear();
 });
 
 let mockPathname = "/bureau";
@@ -37,29 +42,48 @@ vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({ playClick: vi.fn() }),
 }));
 
-function etat(niveau: number): GameState {
+const { toastMock } = vi.hoisted(() => ({ toastMock: vi.fn() }));
+vi.mock("@/components/ui/Toast", () => ({
+  useToastSafe: () => ({ toast: toastMock }),
+}));
+
+function etat(niveau: number, competences: string[] = []): GameState {
   return {
     brocanteur: { niveau, xp: 0, pointsDisponibles: 0 },
     inventaireJoueur: [],
+    competencesDebloquees: competences,
     tutorielEtape: "termine",
   } as unknown as GameState;
 }
 
+/** Le bouton d'onglet portant ce libellé abrégé. */
+function onglet(libelle: string): HTMLElement {
+  const btn = screen
+    .getAllByRole("button")
+    .find((b) => b.textContent?.includes(libelle));
+  if (!btn) throw new Error(`onglet introuvable : ${libelle}`);
+  return btn;
+}
+
+function estCadenasse(libelle: string): boolean {
+  return onglet(libelle).getAttribute("aria-disabled") === "true";
+}
+
 describe("TabBar — onboarding Bibliothèque", () => {
-  it("l'onglet Biblio. est absent à niveau 0", () => {
+  it("l'onglet Biblio. est là dès niveau 0, mais cadenassé", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: etat(0), isHydrated: true };
     render(<TabBar />);
-    expect(screen.queryByText("Biblio.")).toBeNull();
-    expect(screen.getAllByRole("button")).toHaveLength(4);
+    expect(screen.getByText("Biblio.")).toBeTruthy();
+    expect(screen.getAllByRole("button")).toHaveLength(5);
+    expect(estCadenasse("Biblio.")).toBe(true);
   });
 
-  it("l'onglet Biblio. est présent dès le niveau 1", () => {
+  it("le cadenas de Biblio. tombe au niveau 1", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: etat(1), isHydrated: true };
     render(<TabBar />);
-    expect(screen.getByText("Biblio.")).toBeTruthy();
-    expect(screen.getAllByRole("button")).toHaveLength(5);
+    expect(estCadenasse("Biblio.")).toBe(false);
   });
 
   it("state null (pré-hydratation) : les 5 onglets par défaut, pas de flash de disparition", () => {
@@ -90,6 +114,7 @@ describe("TabBar — mini-tuto vinyle (main pointeuse)", () => {
     return {
       brocanteur: { niveau: 1, xp: 0, pointsDisponibles: 0 },
       inventaireJoueur: [],
+      competencesDebloquees: [],
       tutorielEtape: "termine",
       miniTutoVinyle: mt,
     } as unknown as GameState;
@@ -113,3 +138,152 @@ describe("TabBar — mini-tuto vinyle (main pointeuse)", () => {
     expect(document.querySelector(".tuto-main")).toBeNull();
   });
 });
+
+describe("TabBar — onglets cadenassés", () => {
+  it("l'Atelier est cadenassé tant qu'aucune compétence Réparer n'est prise", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = { state: etat(5), isHydrated: true };
+    render(<TabBar />);
+    expect(estCadenasse("Atelier")).toBe(true);
+  });
+
+  it("l'Atelier s'ouvre à la première compétence Réparer", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = {
+      state: etat(5, [`${catTreeId(CATEGORIES[0])}.reparer.1`]),
+      isHydrated: true,
+    };
+    render(<TabBar />);
+    expect(estCadenasse("Atelier")).toBe(false);
+  });
+
+  it("toucher un onglet cadenassé ne navigue pas et dit ce qui le déverrouille", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = { state: etat(0), isHydrated: true };
+    render(<TabBar />);
+    fireEvent.click(onglet("Biblio."));
+    expect(pushMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledTimes(1);
+    expect(String(toastMock.mock.calls[0][0])).toMatch(/niveau/i);
+  });
+
+  it("un onglet ouvert navigue normalement, sans toast", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = { state: etat(1), isHydrated: true };
+    render(<TabBar />);
+    fireEvent.click(onglet("Biblio."));
+    expect(pushMock).toHaveBeenCalledWith("/bibliotheque");
+    expect(toastMock).not.toHaveBeenCalled();
+  });
+
+  it("aucun badge sous un cadenas : rien ne doit clignoter derrière une porte fermée", () => {
+    mockPathname = "/bureau";
+    const state = {
+      ...etat(0),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 3 },
+    } as unknown as GameState;
+    mockGameStateValue = { state, isHydrated: true };
+    render(<TabBar />);
+    expect(onglet("Biblio.").textContent).not.toContain("3");
+  });
+
+  it("state null (pré-hydratation) : aucun cadenas, pas de flash de verrouillage", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = { state: null, isHydrated: true };
+    render(<TabBar />);
+    expect(estCadenasse("Biblio.")).toBe(false);
+    expect(estCadenasse("Atelier")).toBe(false);
+  });
+});
+
+/**
+ * Le swipe entre onglets contournait la barre : il cyclait sur TAB_ORDER sans
+ * rien savoir des cadenas. Une porte fermée qu'on ouvre par la fenêtre n'est
+ * pas fermée.
+ */
+describe("ongletSuivantOuvert — le swipe saute les pièces fermées", () => {
+  const IDX_BUREAU = 2; // Collection, Biblio., Bureau, Stockage, Atelier
+
+  it("saute la Bibliothèque cadenassée en allant à gauche", () => {
+    const s = etat(0);
+    expect(ongletSuivantOuvert(IDX_BUREAU, -1, s)?.path).toBe("/collection");
+  });
+
+  it("s'arrête sur la Bibliothèque une fois ouverte", () => {
+    expect(ongletSuivantOuvert(IDX_BUREAU, -1, etat(1))?.path).toBe("/bibliotheque");
+  });
+
+  it("saute l'Atelier cadenassé en allant à droite, et boucle sur la Collection", () => {
+    const s = etat(1); // biblio ouverte, atelier fermé
+    // Bureau → Stockage → (Atelier fermé) → Collection
+    expect(ongletSuivantOuvert(3, 1, s)?.path).toBe("/collection");
+  });
+
+  it("s'arrête sur l'Atelier dès la première compétence Réparer", () => {
+    const s = etat(1, [`${catTreeId(CATEGORIES[0])}.reparer.1`]);
+    expect(ongletSuivantOuvert(3, 1, s)?.path).toBe("/atelier");
+  });
+
+  it("state null (pré-hydratation) : aucun saut", () => {
+    expect(ongletSuivantOuvert(IDX_BUREAU, -1, null)?.path).toBe("/bibliotheque");
+  });
+});
+
+/**
+ * Visite guidée de l'Atelier : le cadenas vient de tomber, la main désigne
+ * la porte. Elle passe AVANT le mini-tuto des vinyles — deux mains à la fois
+ * ne guideraient personne.
+ */
+describe("TabBar — main vers l'Atelier fraîchement ouvert", () => {
+  function etatVisiteAtelier(extra: Record<string, unknown> = {}): GameState {
+    return {
+      brocanteur: { niveau: 3, xp: 0, pointsDisponibles: 0 },
+      inventaireJoueur: [],
+      competencesDebloquees: [`${catTreeId(CATEGORIES[0])}.reparer.1`],
+      tutorielEtape: "termine",
+      miniTutoAtelier: "visite",
+      ...extra,
+    } as unknown as GameState;
+  }
+
+  it("la main se pose sur l'Atelier tant que la visite n'est pas faite", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = { state: etatVisiteAtelier(), isHydrated: true };
+    render(<TabBar />);
+    const avecMain = screen
+      .getAllByRole("button")
+      .find((b) => b.className.includes("tuto-main"));
+    expect(avecMain?.textContent).toContain("Atelier");
+  });
+
+  it("plus de main une fois qu'on y est", () => {
+    mockPathname = "/atelier";
+    mockGameStateValue = { state: etatVisiteAtelier(), isHydrated: true };
+    render(<TabBar />);
+    expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+
+  it("l'Atelier prend le pas sur le mini-tuto vinyle", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = {
+      state: etatVisiteAtelier({ miniTutoVinyle: "ajouter" }),
+      isHydrated: true,
+    };
+    render(<TabBar />);
+    const mains = screen
+      .getAllByRole("button")
+      .filter((b) => b.className.includes("tuto-main"));
+    expect(mains).toHaveLength(1);
+    expect(mains[0].textContent).toContain("Atelier");
+  });
+
+  it("visite terminée : plus aucune main", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = {
+      state: etatVisiteAtelier({ miniTutoAtelier: "termine" }),
+      isHydrated: true,
+    };
+    render(<TabBar />);
+    expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+})

@@ -213,6 +213,10 @@ export function libelleLedger(
       const suffixes: string[] = [];
       if (p.xp) suffixes.push(tr(d.carnet.jetonXp, { n: p.xp }));
       if (p.energie) suffixes.push(tr(d.carnet.jetonEnergie, { n: p.energie }));
+      if (p.jetons)
+        suffixes.push(
+          tr(p.jetons > 1 ? d.carnet.jetonBazarN : d.carnet.jetonBazarUn, { n: p.jetons }),
+        );
       return suffixes.length > 0 ? `${base} · ${suffixes.join(" · ")}` : base;
     }
   }

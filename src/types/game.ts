@@ -193,8 +193,11 @@ export interface CourrierPayloadMission {
   jourLimite?: number;
   /** Récompense de livraison. `xp` absent → constante de catégorie
    *  (XP_QUETE_*, cf. lib/recompenses). `energie` absent → 0 ; peut faire
-   *  déborder la jauge au-delà d'ENERGIE_MAX (borné par ENERGIE_PLAFOND). */
-  recompense: { argent: number; xp?: number; energie?: number };
+   *  déborder la jauge au-delà d'ENERGIE_MAX (borné par ENERGIE_PLAFOND).
+   *  `jetons` absent → 0 : seules les quêtes périodiques en versent (1
+   *  quotidienne, 3 hebdo), et le montant est figé à la naissance de la
+   *  quête. */
+  recompense: { argent: number; xp?: number; energie?: number; jetons?: number };
   /** Si vrai, la livraison ne consomme PAS les objets ciblés (le joueur les
    *  garde). Utilisé par la finale de l'arc principal (« Les bijoux de la reine »). */
   conserverCibles?: boolean;
@@ -282,6 +285,9 @@ export interface LedgerParams {
    *  rendu du grand livre (suffixe « +25 XP · +2 ⚡ »). ADDITIF. */
   xp?: number;
   energie?: number;
+  /** mission_recompense : jetons du Bazar versés à la livraison, pour le
+   *  suffixe du grand livre. N'entre JAMAIS dans recette/depense. ADDITIF. */
+  jetons?: number;
 }
 
 export interface LedgerEntry {
@@ -354,6 +360,12 @@ export interface GameState {
   /** Version du schéma de sauvegarde (cf. SAVE_VERSION dans lib/migrations). Absente sur les vieux saves. */
   version?: number;
   budget: number;
+  /**
+   * Monnaie du Bazar. Gagnée aux quêtes périodiques uniquement, dépensée au
+   * Bazar uniquement.
+   * ADDITIF (v20) : absent des saves < 20, la migration pose 0.
+   */
+  jetons: number;
   jourActuel: number;
   inventaireJoueur: Objet[];
   /** Vitrine active : objets exposés dans une brocante donnée. null = aucune vitrine ouverte. */
@@ -431,6 +443,15 @@ export interface GameState {
    */
   miniTutoCarnet?: "ouvrir" | "termine";
   /**
+   * ADDITIF : visite guidée de l'Atelier, posée au moment où le joueur achète
+   * sa toute première compétence Réparer — l'instant où l'onglet cesse d'être
+   * cadenassé. "visite" = la main désigne l'onglet, et le coach se joue à
+   * l'arrivée sur l'écran ; "termine" ou absent (saves antérieures) = rien à
+   * guider. Aucune action n'est exigée du joueur : la leçon nomme les lieux
+   * et rend l'écran.
+   */
+  miniTutoAtelier?: "visite" | "termine";
+  /**
    * ADDITIF (v16) : mini-tuto de la Gazette. "aFaire" ou absent = pas encore
    * fait — le journal offert apparaît au sol dès qu'une compétence gazette
    * est débloquée (cf. aAccesGazette) ; "faite" = tuto terminé, cycle
@@ -463,6 +484,36 @@ export interface GameState {
   pubsEnergie?: { cle: string; n: number };
   /** Usages du jour des compétences actives (clé = jourActuel). Absent tant qu'aucune active n'a servi. */
   activesUtilisees?: ActivesUtilisees;
+  /** ADDITIF (v20) : étal courant du Bazar. Absent tant que le Bazar n'a pas ouvert. */
+  bazar?: EtalBazar;
+}
+
+/** Un lot de pièces de restauration à l'étal du Bazar. */
+export interface LotPiecesBazar {
+  categorie: CategorieObjet;
+  /** Nombre de pièces livrées à l'achat. */
+  quantite: number;
+  /** Prix en jetons. */
+  prix: number;
+}
+
+/** L'objet unique de la vitrine du Bazar, livré en Pristin état. */
+export interface VitrineBazar {
+  templateId: string;
+  /** `prixRefBase` du template au moment de la composition (snapshot). */
+  valeurBase: number;
+  /** Prix en jetons — `Math.ceil(valeurBase / 25)`, minimum 1. */
+  prix: number;
+}
+
+/** Étal du Bazar pour une semaine donnée. */
+export interface EtalBazar {
+  /** Clé de semaine ISO ("YYYY-Www") de l'étal présenté. */
+  cleSemaine: string;
+  /** Fond de commerce : stock illimité, trois catégories distinctes. */
+  lotsPieces: LotPiecesBazar[];
+  /** Vitrine : un seul exemplaire. `null` une fois acheté, jusqu'à la rotation. */
+  vitrine: VitrineBazar | null;
 }
 
 export type CompetenceId = string;
@@ -645,6 +696,18 @@ export type VendeurArchetypeId =
 
 /** Sens de la négociation. */
 export type NegoMode = "achat" | "vente";
+
+/**
+ * Genre grammatical d'un persona — commande l'accord de la pastille adverse
+ * de la barre de négociation. `"n"` n'est pas un neutre mais un PLURIEL :
+ * quelques acheteurs sont des groupes (« Famille Martinez », « Hiroshi &
+ * Yuka »), pour lesquels « Lui » comme « Elle » seraient faux.
+ *
+ * Le genre suit le PORTRAIT, jamais l'intuition sur le prénom : un
+ * personnage du casting croisé (même figure au chinage, au courrier et à la
+ * vente) doit porter le même genre partout.
+ */
+export type GenrePersona = "m" | "f" | "n";
 
 /**
  * Tempérament de dialogue d'un persona (vendeur OU acheteur). Regroupe les

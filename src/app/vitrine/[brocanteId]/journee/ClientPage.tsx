@@ -45,11 +45,13 @@ import {
 } from "@/lib/personaIllustrations";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
 import { audioManager } from "@/lib/audio/audioManager";
+import { vibrerApparition } from "@/lib/haptique";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import { useToast } from "@/components/ui/Toast";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
+import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import {
   GRAND_PERE_PORTRAITS,
   SEQUENCES_TUTORIEL,
@@ -110,6 +112,9 @@ import type {
   TutorielEtape,
   VenteHistorique,
 } from "@/types/game";
+
+/** Leçon d'humeur : le temps de lire la réplique du client avant le voile. */
+const DELAI_LECON_HUMEUR_MS = 1100;
 
 const TICK_MS = 100;
 // Active de vente 📣 La Criée (N30) : fait défiler 3 clients coup sur coup,
@@ -242,6 +247,20 @@ export default function VitrineJourneePage() {
   /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
   const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
   const etape = state?.tutorielEtape;
+
+  /* Leçon d'humeur (première vente) : la jauge est le seul signal qui dit
+     pourquoi un acheteur finit par partir, et rien ne l'expliquait. On la
+     montre au moment où elle DÉMONTRE quelque chose — après la première offre
+     refusée du radin, quand elle vient de bouger — et une seule fois.
+     "differe" laisse la réplique du client se lire avant de voiler l'écran. */
+  const [leconHumeur, setLeconHumeur] = useState<
+    "jamais" | "differe" | "visible" | "faite"
+  >("jamais");
+  useEffect(() => {
+    if (leconHumeur !== "differe") return;
+    const t = setTimeout(() => setLeconHumeur("visible"), DELAI_LECON_HUMEUR_MS);
+    return () => clearTimeout(t);
+  }, [leconHumeur]);
 
   /** Crédite l'XP immédiatement ET la compte pour le bilan. L'affichage de la
    *  barre est gelé : elle ne bougera qu'à la cérémonie. */
@@ -391,6 +410,9 @@ export default function VitrineJourneePage() {
       if (!ev) return nego;
       const acheteurScripte = acheteurScripteRef.current;
       if (acheteurScripte) {
+        if (etapeRef.current === "vente-refus") {
+          setLeconHumeur((l) => (l === "jamais" ? "differe" : l));
+        }
         return proposerOffre(nego, acheteurScripte.persona, offre, ALEA_NEGO_SCRIPTEE);
       }
       const mods = modifiersRef.current ?? DEFAULT_MODIFIERS;
@@ -604,14 +626,11 @@ export default function VitrineJourneePage() {
                 }
                 acheteurScripteRef.current = acheteur;
                 setClientActuel(ev);
-                setOffreJoueur(
-                  acheteur.bornesOffre
-                    ? Math.min(
-                        acheteur.bornesOffre.max,
-                        Math.max(acheteur.bornesOffre.min, ev.prixDemande),
-                      )
-                    : ev.prixDemande,
-                );
+                vibrerApparition();
+                // Le curseur part TOUJOURS du prix affiché sur l'étal : c'est
+                // au joueur de l'amener dans l'anneau du grand-père, pas au
+                // jeu de l'y déposer.
+                setOffreJoueur(ev.prixDemande);
                 setRevelationFaite(false);
                 setNegoVente(
                   ev.mode === "negociation"
@@ -679,6 +698,7 @@ export default function VitrineJourneePage() {
             if (forceCelebrite) celebriteApparueRef.current = true;
             acheteurScripteRef.current = null;
             setClientActuel(ev);
+            vibrerApparition();
             setOffreJoueur(ev.prixDemande);
             setRevelationFaite(false);
             if (ev.mode === "negociation") {
@@ -1064,7 +1084,7 @@ export default function VitrineJourneePage() {
         background: "var(--paper-100)",
       }}
     >
-      <MobileHeader budget={state.budget} />
+      <MobileHeader budget={state.budget} jetons={state.jetons} />
 
       <main
         style={{
@@ -1274,8 +1294,11 @@ export default function VitrineJourneePage() {
           nomAffiche={
             personaRevele
               ? nomAfficheClient(clientActuel.persona)
-              : d.vente.clientInconnu
+              : d.vente.clientInconnu[clientActuel.persona.genre]
           }
+          /* Le genre reste visible même persona non révélé : on ne connaît
+             pas encore la personne, mais on l'a devant soi. */
+          genreAdverse={clientActuel.persona.genre}
           personaInfo={{
             nom: nomAfficheClient(clientActuel.persona),
             archetypeNom:
@@ -1349,11 +1372,19 @@ export default function VitrineJourneePage() {
           scriptTuto={
             acheteurScripteRef.current
               ? {
-                  bornes: acheteurScripteRef.current.bornesOffre,
+                  cible: acheteurScripteRef.current.cibleOffre,
                   mainLaisserTomber: etape === "vente-refus",
                 }
               : null
           }
+          cibleCoachHumeur={leconHumeur === "visible"}
+        />
+      )}
+
+      {leconHumeur === "visible" && (
+        <TutorielCoach
+          etapes={[{ cible: "vente-humeur", texte: d.tutoriel.coachVenteHumeur }]}
+          onFini={() => setLeconHumeur("faite")}
         />
       )}
 

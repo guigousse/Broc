@@ -22,6 +22,7 @@ import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { PageHeaderBar } from "@/components/mobile/PageHeaderBar";
 import { AtelierItemRow } from "@/components/atelier/AtelierItemRow";
 import { AtelierSlots } from "@/components/atelier/AtelierSlots";
+import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
 import { ItemSticker } from "@/components/ui/ItemSticker";
@@ -86,6 +87,7 @@ export default function AtelierPage() {
     ameliorerAtelier,
     demantelerObjet,
     recupererObjetRestaure,
+    terminerMiniTutoAtelier,
   } = useGame();
   // Re-render chaque seconde pour rafraîchir les comptes à rebours de restauration.
   const [, forceTick] = useState(0);
@@ -345,12 +347,13 @@ export default function AtelierPage() {
               </div>
             }
           />
-          <div style={{ marginTop: 4 }}>
+          <div data-tuto-coach="atelier-pieces" style={{ marginTop: 4 }}>
             <PiecesInventoryBar pieces={state.piecesAmelioration} />
           </div>
         </>
       }
       milieu={
+        <div data-tuto-coach="atelier-etablis">
         <AtelierSlots
           slotsDebloques={state.niveauAtelier}
           enCours={enCours}
@@ -361,6 +364,7 @@ export default function AtelierPage() {
           onEnCours={(o) => setEnCoursDetail(o)}
           onRecuperer={(o) => recupererObjetRestaure(o.id)}
         />
+        </div>
       }
     >
       {flash && (
@@ -380,7 +384,9 @@ export default function AtelierPage() {
         </div>
       )}
 
-      <h2 style={sectTitle}>{d.inventaire.ongletDemantelement}</h2>
+      <h2 data-tuto-coach="atelier-demanteler" style={sectTitle}>
+        {d.inventaire.ongletDemantelement}
+      </h2>
       {demantelables.length === 0 ? (
         <div style={cardWrap}>
           <p
@@ -869,6 +875,22 @@ export default function AtelierPage() {
           </div>
         )}
       </BottomSheet>
+
+      {state.miniTutoAtelier === "visite" && (
+        /* Visite guidée de l'Atelier — armée à l'achat de la première
+           compétence Réparer, jouée à la première venue ici. Trois bulles
+           dans l'ordre causal de la boucle (démonter → pièces → établi),
+           pas dans l'ordre de l'écran. Aucun bouton n'est gaté : la leçon
+           nomme les lieux et rend l'écran. */
+        <TutorielCoach
+          etapes={[
+            { cible: "atelier-demanteler", texte: d.tutoriel.coachAtelierDemanteler },
+            { cible: "atelier-pieces", texte: d.tutoriel.coachAtelierPieces },
+            { cible: "atelier-etablis", texte: d.tutoriel.coachAtelierEtabli },
+          ]}
+          onFini={terminerMiniTutoAtelier}
+        />
+      )}
     </>
   );
 }

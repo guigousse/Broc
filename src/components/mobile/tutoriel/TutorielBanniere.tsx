@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  useSyncExternalStore,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { usePathname } from "next/navigation";
-import { useGameActions, useGameStateOnly } from "@/context/GameContext";
+import { useGameStateOnly } from "@/context/GameContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { tutorielActif } from "@/lib/tutoriel";
+import { banniereVisible, tutorielActif } from "@/lib/tutoriel";
 import { estRoutePartie } from "@/lib/routesPartie";
 import { getCoachOuvert, subscribeCoachOuvert } from "@/lib/coachActif";
 
 /** Gouttière au-dessus de la bannière (cf. `top`) et en dessous d'elle. */
-const GOUTTIERE_PX = 8;
+const GOUTTIERE_PX = 6;
 
 const wrap: CSSProperties = {
   position: "fixed",
@@ -19,47 +25,52 @@ const wrap: CSSProperties = {
   left: 12,
   right: 12,
   zIndex: 90,
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  padding: "8px 12px",
-  borderRadius: 10,
+  padding: "6px 10px",
+  borderRadius: 8,
   background: "rgba(26, 51, 38, 0.92)",
   border: "1px solid var(--brass-500, #b89c5e)",
   color: "#f6ecd2",
-  pointerEvents: "auto",
+  pointerEvents: "none",
 };
 
 const texteStyle: CSSProperties = {
-  flex: 1,
   fontFamily: "var(--font-mono)",
-  fontSize: 13,
-  lineHeight: 1.3,
+  fontSize: 12,
+  lineHeight: 1.25,
 };
 
-const passerStyle: CSSProperties = {
-  flexShrink: 0,
-  background: "transparent",
-  border: "1px solid rgba(246, 236, 210, 0.5)",
-  borderRadius: 8,
-  color: "#f6ecd2",
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  padding: "6px 10px",
-  cursor: "pointer",
+/** Mot-clé de la consigne : ce sur quoi l'œil doit tomber en premier. */
+const motCleStyle: CSSProperties = {
+  color: "var(--brass-300, #e6cf95)",
+  fontWeight: 700,
 };
+
+/**
+ * Rend une consigne où les mots-clés sont encadrés d'astérisques
+ * (`Passe la *porte*`). Convention volontairement minuscule : les consignes
+ * vivent dans les quatre fichiers de langue, elles doivent rester lisibles et
+ * traduisibles telles quelles, sans balises.
+ */
+export function consigneEnRichesse(texte: string): ReactNode[] {
+  return texte.split("*").map((part, i) =>
+    i % 2 === 1 ? (
+      <strong key={i} style={motCleStyle}>
+        {part}
+      </strong>
+    ) : (
+      <span key={i}>{part}</span>
+    ),
+  );
+}
 
 export function TutorielBanniere() {
   const pathname = usePathname();
   const { state } = useGameStateOnly();
-  const { terminerTutoriel } = useGameActions();
   const { d } = useLangue();
-  const [confirme, setConfirme] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   // Le coach (visite guidée) a sa propre découpe lumineuse par-dessus (z 100)
   // qui laissait transparaître la bannière (z 90) — jusqu'à faire croire que
-  // « Passer le tutoriel » était la cible (recette 2026-08-09).
+  // la bannière était la cible (recette 2026-08-09).
   const coachOuvert = useSyncExternalStore(
     subscribeCoachOuvert,
     getCoachOuvert,
@@ -67,12 +78,12 @@ export function TutorielBanniere() {
   );
 
   const visible =
-    estRoutePartie(pathname) && !!state && tutorielActif(state) && !coachOuvert;
+    estRoutePartie(pathname) &&
+    !!state &&
+    tutorielActif(state) &&
+    !coachOuvert &&
+    banniereVisible(state.tutorielEtape, pathname);
   const etapeCourante = state?.tutorielEtape;
-
-  useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  }, []);
 
   // La bannière est un calque flottant : sans réserve, elle recouvrirait le
   // premier élément de chaque écran (retour device 2026-07-26, titre du bilan
@@ -98,7 +109,7 @@ export function TutorielBanniere() {
       observateur.disconnect();
       racine.style.removeProperty("--tuto-banniere-h");
     };
-  }, [visible, etapeCourante, confirme, d]);
+  }, [visible, etapeCourante, d]);
 
   if (!visible || !state) return null;
   const etape = state.tutorielEtape as Exclude<
@@ -106,21 +117,11 @@ export function TutorielBanniere() {
     "termine"
   >;
 
-  const onPasser = () => {
-    if (confirme) {
-      terminerTutoriel();
-      return;
-    }
-    setConfirme(true);
-    timerRef.current = setTimeout(() => setConfirme(false), 3000);
-  };
-
   return (
     <div ref={wrapRef} style={wrap} role="status">
-      <span style={texteStyle}>{d.tutoriel.instructions[etape]}</span>
-      <button type="button" style={passerStyle} onClick={onPasser}>
-        {confirme ? d.tutoriel.confirmerPasser : d.tutoriel.passer}
-      </button>
+      <span style={texteStyle}>
+        {consigneEnRichesse(d.tutoriel.instructions[etape])}
+      </span>
     </div>
   );
 }

@@ -166,6 +166,27 @@ const CELEBRITE_SLUGS: Record<string, string> = {
   "Le Baron de R.": "baron_de_r",
 };
 
+/**
+ * Portrait d'une célébrité depuis son NOM canonique (celui de
+ * `data/celebrites.ts`, persisté tel quel en save) — sans passer par un
+ * `ClientPersonnage`. La gazette annonce une célébrité au carnet mondain
+ * bien avant qu'elle n'entre en boutique : elle n'a qu'un `CelebriteEvenement`
+ * sous la main, pas un acheteur.
+ *
+ * `undefined` si le nom n'est pas au catalogue — l'appelant retombe alors sur
+ * sa vignette de repli plutôt que de rendre une image cassée.
+ */
+export function getCelebriteIllustration(nom: string): string | undefined {
+  const slug = CELEBRITE_SLUGS[nom];
+  return slug ? `/personas/clients/client-celebrite-${slug}.webp` : undefined;
+}
+
+/** Variante fâchée, même règle (cf. `getCelebriteIllustration`). */
+export function getCelebriteIllustrationFache(nom: string): string | undefined {
+  const slug = CELEBRITE_SLUGS[nom];
+  return slug ? `/personas/clients/client-celebrite-${slug}-fache.webp` : undefined;
+}
+
 /** Slug d'une célébrité depuis un id de personnage
  *  `celebrite.<brocanteId>.<jourSemaine>.<nom>` (le nom peut contenir des
  *  points, les ids de brocante n'en contiennent pas). */

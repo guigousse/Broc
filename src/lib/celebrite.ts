@@ -2,7 +2,7 @@ import type { CelebriteEvenement } from "@/types/game";
 import type { ClientPersonnage } from "@/data/clients";
 import { calculerAxesNego } from "@/data/clients";
 import { BROCANTES } from "@/data/brocantes";
-import { CELEBRITES } from "@/data/celebrites";
+import { CELEBRITES, GENRE_CELEBRITE } from "@/data/celebrites";
 import { PERIODE_TENDANCES_JOURS } from "@/lib/tendances";
 
 /**
@@ -40,6 +40,9 @@ export function buildCelebritePersonnage(c: CelebriteEvenement): ClientPersonnag
     archetypeId: "celebrite",
     archetypeNom: "Célébrité",
     nom: c.nom,
+    // Repli au masculin : un nom hors catalogue ne peut venir que d'une save
+    // écrite par une build où le catalogue différait.
+    genre: GENRE_CELEBRITE[c.nom] ?? "m",
     ambiance: "Entre escortée d'un photographe ; la rumeur la précède.",
     appetitMin,
     appetitMax,

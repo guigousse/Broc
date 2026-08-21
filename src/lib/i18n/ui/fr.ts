@@ -45,11 +45,12 @@ export const fr = {
   },
   reglages: {
     titre: "— Réglages —",
-    son: "Son",
+    son: "Son et vibrations",
     volumeGeneral: "Volume général — {n}",
     musique: "Musique",
     effets: "Effets sonores",
     ambiance: "Sons d'ambiance",
+    vibrations: "Vibrations",
     langue: "Langue",
     notifications: "Notifications",
     rappels: "Rappels (énergie, atelier, quêtes)",
@@ -100,9 +101,13 @@ export const fr = {
       stockage: "Stockage",
       atelier: "Atelier",
     },
+    ongletVerrouille: "verrouillé",
+    verrouBibliotheque: "Le Cabinet ouvre à ton premier niveau de Brocanteur.",
+    verrouAtelier: "L'Atelier ouvre avec ta première compétence Réparer.",
     navigationPrincipale: "Navigation principale",
     energie: "Énergie",
     caisse: "Caisse",
+    jetons: "Jetons",
     rechargerEnergie: "Recharger l'énergie",
     montantEuros: "{valeur} €",
     niveau: "Niveau",
@@ -145,8 +150,6 @@ export const fr = {
     gramophone: "Gramophone — choisir un vinyle",
     fauteuilChat: "Fauteuil occupé par un chat",
     fauteuilPasser: "Fauteuil — passer la journée",
-    porteRevuesLire: "Porte-revues — lire la Gazette",
-    porteRevuesAcheter: "Porte-revues — acheter la Gazette",
     journalSolOffert: "Journal offert par Grand-père",
     journalSolAcheter: "La Gazette du lundi — acheter ou refuser",
     journalBureauLire: "Journal — lire la Gazette",
@@ -158,6 +161,8 @@ export const fr = {
     stockagePlein: "Stockage plein",
     chiner: "Chiner",
     etaler: "Étaler",
+    bazar: "Bazar",
+    bazarCompteARebours: "J-{n}",
     chatDortMessage:
       "Un chat dort paisiblement sur le fauteuil. Impossible de passer la journée sans le déranger…",
     seReposer: "Se reposer (+1 jour)",
@@ -172,8 +177,6 @@ export const fr = {
     slotLibre: "libre",
   },
   tutoriel: {
-    passer: "Passer le tutoriel",
-    confirmerPasser: "Sûr ? Touche encore",
     colisTitre: "Le colis du grand-père",
     cadeauTitre: "Joyeux anniversaire !",
     colisRecuperer: "Récupérer",
@@ -193,11 +196,17 @@ export const fr = {
     coachCollectionCase:
       "La peluche a rejoint sa case : elle ne se vend plus, elle se montre.",
     coachCollectionValeur:
-      "La valeur de ta collection grandit à chaque donation.",
-    coachCollectionDeblocage:
-      "Cette valeur débloque de nouvelles brocantes — et fait ta réputation.",
+      "La valeur de ta collection grandit à chaque donation — et débloque de nouvelles brocantes.",
     coachCollectionRetirer:
       "Un objet donné n'est pas perdu : ce bouton le rend à ta réserve — mais la valeur s'en va avec lui.",
+    coachAtelierDemanteler:
+      "Ce que tu ne vendras jamais, démonte-le : ça donne des pièces.",
+    coachAtelierPieces:
+      "Tes pièces, une réserve par famille d'objets.",
+    coachAtelierEtabli:
+      "Un objet, des pièces, du temps : et il ressort en meilleur état.",
+    coachVenteHumeur:
+      "Son humeur : chaque échange le crispe un peu plus. Plus la jauge vire au rouge, plus il risque de partir pour de bon.",
     coachCompetencesXp:
       "Ton niveau et ta barre d'expérience : chaque vente, chaque trouvaille la remplit.",
     coachCompetencesArbres:
@@ -206,26 +215,26 @@ export const fr = {
       "Et voilà ton premier point à dépenser. Il t'attend.",
     instructions: {
       "accueil": "Écoute ton grand-père…",
-      "aller-chiner": "Passe la porte, choisis « Chiner », puis le Vide-grenier du quartier.",
-      "chine-nego-echec": "Déplie « Négocier » et tente une offre très basse, pour voir.",
-      "chine-achat-direct": "Cette carafe est à prix honnête : achète-la au prix affiché.",
-      "chine-nego-un": "Négocie la manette — propose un prix avec le curseur.",
-      "chine-nego-deux": "Négocie la peluche — tu commences à avoir le coup de main.",
-      "chine-sortir": "Regarde les derniers étals si tu veux, puis sors de la brocante.",
-      "stockage-ouvrir": "Ouvre le Stockage depuis la barre du bas.",
-      "stockage-focus": "Fais le tour de ton stockage — touche pour continuer.",
-      "collection-envoyer": "Envoie la peluche mohair dans ta collection.",
-      "collection-lecon": "Ouvre la Collection depuis la barre du bas.",
-      "ouvrir-colis": "Ouvre le colis du grand-père, devant la porte.",
-      "preparer-etal": "Repasse la porte et choisis « Étaler » pour préparer ta vitrine.",
-      "coffre-trace-un": "Regarde bien : le grand-père pose la manette et la tourne pour toi.",
-      "coffre-trace-deux": "Un doigt pour déplacer, un second pour tourner : pose l'objet sur sa trace.",
-      "vente-refus": "Ce client offre trop peu — laisse tomber, sans regret.",
-      "vente-directe": "Il prend la manette au prix affiché : accepte !",
-      "vente-nego": "Négocie la carafe — tiens ton prix, elle montera.",
+      "aller-chiner": "Passe la *porte*, puis *Chiner* → *Vide-grenier du quartier*.",
+      "chine-nego-echec": "Déplie *Négocier* et vise le *cercle pointillé*.",
+      "chine-achat-direct": "Prix honnête : *achète au prix affiché*.",
+      "chine-nego-un": "*Négocie* la manette : le curseur dans le *cercle*.",
+      "chine-nego-deux": "Pareil pour la peluche : le curseur dans le *cercle*.",
+      "chine-sortir": "*Sors* de la brocante quand tu as fini.",
+      "stockage-ouvrir": "Ouvre le *Stockage*, en bas.",
+      "stockage-focus": "Fais le tour de ton stockage.",
+      "collection-envoyer": "Envoie la *peluche* dans ta *collection*.",
+      "collection-lecon": "Ouvre la *Collection*, en bas.",
+      "ouvrir-colis": "Ouvre le *colis* du grand-père, devant la porte.",
+      "preparer-etal": "Repasse la porte, puis *Étaler*.",
+      "coffre-trace-un": "Regarde : il pose la manette pour toi.",
+      "coffre-trace-deux": "Pose la carafe sur sa *trace* : un doigt pour glisser, deux pour tourner.",
+      "vente-refus": "Il offre trop peu : *laisse tomber*.",
+      "vente-directe": "Il prend au prix affiché : *accepte*.",
+      "vente-nego": "*Négocie* la carafe : le curseur dans le *cercle*.",
       "niveau-celebration": "Tu montes d'un niveau — savoure !",
-      "competences-visite": "Ouvre les Compétences depuis la barre du bas.",
-      "competences-choix": "Dépense ton premier point : branche Présentation, « Lecteur d'âmes ».",
+      "competences-visite": "Ouvre les *Compétences*, en bas.",
+      "competences-choix": "Dépense ton point : *Présentation* → *Lecteur d'âmes*.",
       "conclusion": "Écoute ton grand-père…",
     },
   },
@@ -327,12 +336,17 @@ export const fr = {
     sortir: "Sortir",
     precedent: "Précédent",
     altVendeur: "Vendeur",
-    acquisStatut: "— Acquis —",
     vendeurFache: "Vendeur fâché",
+    // Tampon encreur du stock saturé, posé sur l'objet comme « Vendu ».
+    // Court exprès : le tampon est en diagonale sur la vignette.
+    tamponStockPlein: "Stock plein",
     tamponVendu: "Vendu",
     negocier: "Négocier",
     acheterPrix: "Acheter {prix} €",
     laisserTomber: "Laisser tomber",
+    /** Pastille du curseur adverse quand le vendeur a lâché son dernier prix.
+     *  Deux mots : elle se plie en deux lignes sous le curseur (cf. NegoBar). */
+    dernierPrix: "prix final",
     accepterPrix: "Accepter {prix} €",
     proposerPrix: "Proposer {prix} €",
     acheterPrixAffiche: "Acheter au prix affiché — {prix} €",
@@ -385,7 +399,7 @@ export const fr = {
     lotGarniChoisirTitre: "🧺 Lot garni — ajouter un objet",
     lotGarniAucunAutre: "Plus rien d'autre à proposer.",
     prixDemandeLabel: "Prix demandé",
-    clientInconnu: "Un inconnu",
+    clientInconnu: { m: "Un inconnu", f: "Une inconnue", n: "Des inconnus" },
     tempsRestantLabel: "Temps restant",
     journeeSansVente: "La journée se termine sans la moindre vente.",
     journeeUneVente: "Une seule vente aujourd'hui. C'est un début.",
@@ -401,7 +415,10 @@ export const fr = {
     bulleJePrends: "« Je prends. Voici {prix} €. »",
     refuser: "Refuser",
     vendrePrix: "Vendre · {prix} €",
-    labelAdverse: "Lui",
+    /** Pastille du curseur adverse, accordée au genre du persona en face
+     *  (`GenrePersona`) : « n » est un pluriel, certains acheteurs sont des
+     *  groupes. Les langues à pastille neutre gardent le même texte partout. */
+    labelAdverse: { m: "Lui", f: "Elle", n: "Eux" },
     labelJoueur: "Vous",
     reorganiserCoffre: "Réarrangez le coffre — certains objets ne tiennent pas.",
     fermetureEnCours: "Fermeture…",
@@ -590,6 +607,13 @@ export const fr = {
       "Le premier week-end de septembre approche : la Grande Braderie dresse ses étals ! Deux jours de prix sacrifiés — attendez-vous à la foule des grands jours.",
     braderieEnCours:
       "La Grande Braderie bat son plein ! Étals à perte de vue, prix sacrifiés et foule record — c'est ce week-end ou jamais.",
+    // Légende sous la rangée des sept jours : la météo n'agit que sur
+    // le rythme d'arrivée des clients AU STAND DE VENTE
+    // (METEO_INTERVALLE_MULT), jamais sur la chine. Pas de chiffre : un
+    // multiplicateur sonnerait tableur au milieu d'un journal.
+    meteoLegende:
+      "Le beau temps fait sortir les acheteurs ; l'orage les garde chez eux. La météo règle l'affluence à votre stand — elle ne change rien à la chine.",
+    pageIndicateur: "Page {page} / {total}",
     pageSuivanteAria: "Page suivante",
     pagePrecedenteAria: "Page précédente",
     pageIndicateurAria: "Page {page} sur {total}",
@@ -624,8 +648,8 @@ export const fr = {
     jour: "Jour {n}",
     aucuneCommande: "Aucune commande pour l'instant.",
     sectionPrincipales: "Commandes principales",
-    sectionQuotidiennes: "Commandes quotidiennes",
-    sectionHebdomadaires: "Commandes hebdomadaires",
+    sectionQuotidiennes: "Quotidien",
+    sectionHebdomadaires: "Hebdomadaire",
     renouvellement: "Renouvellement dans {t}",
     terminees: "Terminées",
     livreeJour: "Livrée J{n}",
@@ -638,7 +662,9 @@ export const fr = {
     jetonArgent: "+{n} €",
     jetonXp: "+{n} XP",
     jetonEnergie: "+{n} ⚡",
-    recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie",
+    jetonBazarUn: "+{n} jeton",
+    jetonBazarN: "+{n} jetons",
+    recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie, {jetons} jetons",
     livrer: "Livrer",
     livrerProgress: "Livrer ({rempli}/{total})",
     // En-tête de section rétractable (refonte carnet SP3) : le compteur ne
@@ -734,6 +760,8 @@ export const fr = {
     atelierPleinUn: "Atelier plein ({enCours}/{capacite} slot).",
     atelierPleinN: "Atelier plein ({enCours}/{capacite} slots).",
     competenceReparerManquante: "Vous n'avez pas la compétence Réparer — {categorie}.",
+    bazarPasAssezDeJetons: "Pas assez de jetons",
+    bazarArticleIndisponible: "Article indisponible",
     manquePiecesUn: "Manque {n} pièce {categorie}.",
     manquePiecesN: "Manque {n} pièces {categorie}.",
     objetEnRestauration: "Objet en restauration.",
@@ -824,5 +852,20 @@ export const fr = {
       titre: "Atelier",
       corps: "« {nom} » est restauré ✓",
     },
+  },
+  // Écran /bazar : la boutique payée en jetons (Task 7 du chantier jetons-bazar).
+  bazar: {
+    titre: "Le Bazar",
+    lotPieces: "{n} pièces · {categorie}",
+    prixJetons: "{n} jetons",
+    prixJetonUn: "{n} jeton",
+    vendu: "Vendu — de retour lundi",
+    manqueJetons: "Il vous manque {n} jetons",
+    manqueJetonUn: "Il vous manque {n} jeton",
+    sortir: "Sortir du Bazar",
+    detailArticle: "Détail de l'article",
+    prixMot: "Prix",
+    acheter: "Acheter",
+    achatRefuse: "Achat impossible.",
   },
 } as const;

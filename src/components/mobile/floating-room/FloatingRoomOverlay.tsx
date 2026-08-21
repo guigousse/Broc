@@ -16,7 +16,11 @@ import type { CSSProperties, ReactNode } from "react";
 
 const wrap: CSSProperties = {
   position: "fixed",
-  top: "calc(var(--safe-top) + var(--mobile-header-h))",
+  // La bannière de consigne du tutoriel flotte juste sous le header : sans
+  // cette réserve (0 hors tutoriel), elle recouvrait la bande — c'est-à-dire
+  // l'en-tête même que la visite guidée cherche à montrer (recette device
+  // 2026-08-19, stockage et bibliothèque).
+  top: "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px))",
   left: 0,
   right: 0,
   bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",

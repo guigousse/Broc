@@ -24,6 +24,7 @@ import { METEO_ICON } from "@/data/meteos";
 import { getBrocanteById } from "@/data/brocantes";
 import { estJourBraderie, prochaineBraderie } from "@/lib/evenements";
 import { indicesValides, paginerSections } from "@/lib/gazettePagination";
+import { getCelebriteIllustration } from "@/lib/personaIllustrations";
 import { nomBrocante, nomCelebrite, nomCompetence } from "@/lib/i18n/contenu";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleJourSemaine } from "@/lib/i18n/libelles";
@@ -64,6 +65,12 @@ interface GazetteSheetProps {
   onRerollMeteo: () => void;
   /** Relance la célébrité annoncée via l'Influence. */
   onRerollCelebrite: () => void;
+  /**
+   * Joué à chaque page tournée. Le son vit chez l'appelant (le layout du QG
+   * a déjà `playNewspaper` pour l'ouverture du journal) : la gazette reste
+   * présentationnelle et n'a pas à connaître le gestionnaire audio.
+   */
+  onTournerPage?: () => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -242,6 +249,29 @@ const coinCorneVisuel = (cote: "droit" | "gauche"): CSSProperties => ({
     cote === "droit"
       ? "linear-gradient(315deg, #d8cdb4 0%, #efe7d2 45%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0) 60%)"
       : "linear-gradient(45deg, #d8cdb4 0%, #efe7d2 45%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0) 60%)",
+});
+
+/**
+ * Chevron d'encre posé SUR le coin corné. Le triangle de papier seul était
+ * trop discret pour dire « il y a une suite » — le joueur ne tournait pas la
+ * page. Il respire lentement (classe `broc-chevron-page`, globals.css) pour
+ * appeler le geste sans clignoter.
+ *
+ * Positionné dans l'angle du pli, pas au centre du carré : le bouton est un
+ * carré plein (cf. `coinCorneBouton`) dont seul le triangle est visible.
+ */
+const chevronPage = (cote: "droit" | "gauche"): CSSProperties => ({
+  position: "absolute",
+  bottom: "10%",
+  [cote === "droit" ? "right" : "left"]: "14%",
+  fontFamily: "var(--font-display)",
+  // Volontairement plus gros que le texte courant : la flèche doit APPELER le
+  // geste, pas se fondre dans la page. Le glyphe est fin, il tient dans le pli.
+  fontSize: "7.5cqw",
+  fontWeight: 700,
+  lineHeight: 1,
+  color: "var(--ink-900)",
+  pointerEvents: "none",
 });
 
 const indicateurPageStyle: CSSProperties = {
@@ -431,6 +461,7 @@ export function GazetteSheet(props: GazetteSheetProps) {
     influenceDisponible,
     onRerollMeteo,
     onRerollCelebrite,
+    onTournerPage,
   } = props;
   const { d, tr, locale } = useLangue();
 
@@ -450,6 +481,9 @@ export function GazetteSheet(props: GazetteSheetProps) {
 
   const numeroSemaine = Math.floor((jourActuel - 1) / 7) + 1;
   const brocanteCeleb = celebrite ? getBrocanteById(celebrite.brocanteId) : null;
+  // `undefined` si le nom n'est pas au catalogue des portraits : la vignette
+  // « ? » d'origine reste alors le repli, plutôt qu'une image cassée.
+  const portraitCeleb = celebrite ? getCelebriteIllustration(celebrite.nom) : undefined;
   const tendanceParCategorie = new Map(
     tendances.map((t) => [t.categorie, t.delta] as const),
   );
@@ -513,10 +547,31 @@ export function GazetteSheet(props: GazetteSheetProps) {
                 fontFamily: "var(--font-display)",
                 fontSize: "5cqw",
                 color: "var(--ink-500)",
+                overflow: "hidden",
               }}
               aria-hidden
             >
-              ?
+              {portraitCeleb ? (
+                <img
+                  src={portraitCeleb}
+                  alt=""
+                  data-testid="gazette-portrait-celebrite"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    // Les portraits sont des figures DÉTOURÉES posées sur le bas
+                    // du cadre — même convention que PersonaAvatar. Un `cover`
+                    // recadrerait au milieu du buste.
+                    objectFit: "contain",
+                    objectPosition: "center bottom",
+                    // Encre du journal : la vignette appartient au papier au
+                    // lieu d'y être collée. Réversible en retirant cette ligne.
+                    filter: "grayscale(1) sepia(0.35) contrast(1.08)",
+                  }}
+                />
+              ) : (
+                "?"
+              )}
             </div>
             <p
               style={{
@@ -678,6 +733,19 @@ export function GazetteSheet(props: GazetteSheetProps) {
                 );
               })}
             </div>
+            <p
+              style={{
+                margin: "1% 0 0",
+                fontFamily: "var(--font-serif)",
+                fontStyle: "italic",
+                fontSize: "2.6cqw",
+                lineHeight: 1.3,
+                color: "var(--ink-500)",
+                textAlign: "center",
+              }}
+            >
+              {d.gazette.meteoLegende}
+            </p>
             {influenceDisponible && (
               <button
                 type="button"
@@ -793,21 +861,33 @@ export function GazetteSheet(props: GazetteSheetProps) {
               {pageIndex < pages.length - 1 && (
                 <button
                   type="button"
-                  onClick={() => setPageIndex((p) => p + 1)}
+                  onClick={() => {
+                    onTournerPage?.();
+                    setPageIndex((p) => p + 1);
+                  }}
                   aria-label={d.gazette.pageSuivanteAria}
                   style={coinCorneBouton("droit")}
                 >
                   <span aria-hidden style={coinCorneVisuel("droit")} />
+                  <span aria-hidden data-testid="chevron-page" className="broc-chevron-page" style={chevronPage("droit")}>
+                    ›
+                  </span>
                 </button>
               )}
               {pageIndex > 0 && (
                 <button
                   type="button"
-                  onClick={() => setPageIndex((p) => p - 1)}
+                  onClick={() => {
+                    onTournerPage?.();
+                    setPageIndex((p) => p - 1);
+                  }}
                   aria-label={d.gazette.pagePrecedenteAria}
                   style={coinCorneBouton("gauche")}
                 >
                   <span aria-hidden style={coinCorneVisuel("gauche")} />
+                  <span aria-hidden data-testid="chevron-page" className="broc-chevron-page" style={chevronPage("gauche")}>
+                    ‹
+                  </span>
                 </button>
               )}
               <span
@@ -818,7 +898,10 @@ export function GazetteSheet(props: GazetteSheetProps) {
                 })}
                 style={indicateurPageStyle}
               >
-                {pageIndex + 1}/{pages.length}
+                {tr(d.gazette.pageIndicateur, {
+                  page: String(pageIndex + 1),
+                  total: String(pages.length),
+                })}
               </span>
             </>
           )}

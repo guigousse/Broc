@@ -6,7 +6,7 @@ import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
 
 afterEach(cleanup);
 
-const REC = { argent: 60, xp: 12, energie: 0 };
+const REC = { argent: 60, xp: 12, energie: 0, jetons: 0 };
 const d = DICTIONNAIRES.fr;
 
 describe("PaveRecompense", () => {
@@ -60,7 +60,7 @@ describe("PaveRecompense", () => {
     // la cérémonie le masquerait sans qu'aucune étape ne le fasse
     // réapparaître — ni refuser la livraison pour autant.
     const onLivrer = vi.fn();
-    render(<PaveRecompense recompense={{ argent: 0, xp: 0, energie: 0 }} livrable onLivrer={onLivrer} />);
+    render(<PaveRecompense recompense={{ argent: 0, xp: 0, energie: 0, jetons: 0 }} livrable onLivrer={onLivrer} />);
     expect(document.querySelectorAll("[data-jeton]").length).toBe(0);
     const btn = screen.getByRole("button") as HTMLButtonElement;
     expect(btn.disabled).toBe(false);
@@ -83,5 +83,50 @@ describe("PaveRecompense", () => {
     // la même que celle utilisée par RecompenseJetons, pas une copie locale.
     expect(jetonArgent?.textContent).toBe(tr(d.carnet.jetonArgent, { n: REC.argent }));
     expect(jetonXp?.textContent).toBe(tr(d.carnet.jetonXp, { n: REC.xp }));
+  });
+
+  /* ─── relief et appel au tap (retour device 2026-08-18) ─── */
+
+  it("pas livrable : plaque creusée, AUCUN pointillé", () => {
+    const { container } = render(<PaveRecompense recompense={REC} livrable={false} onLivrer={() => {}} />);
+    // Le pointillé disait « découpe de papier » ; il brouillait la lecture
+    // avec les liserés en pointillé du détail déplié.
+    expect(container.innerHTML).not.toContain("dashed");
+    // Creusée : l'ombre est INTERNE — c'est ce qui la distingue du bouton.
+    const plaque = container.firstElementChild as HTMLElement;
+    expect(plaque.style.boxShadow).toContain("inset");
+  });
+
+  it("livrable : bouton vert en relief, ombre PORTÉE et non interne", () => {
+    render(<PaveRecompense recompense={REC} livrable onLivrer={() => {}} />);
+    const btn = screen.getByRole("button");
+    expect(btn.style.background).toContain("--forest-600");
+    // Le relief vient de la classe (cf. globals.css) : rien en ligne, sinon
+    // l'ombre statique et l'ombre animée se disputeraient la cascade.
+    expect(btn.style.boxShadow).toBe("");
+    expect(btn.className).toContain("broc-pave-livrer");
+  });
+
+  it("verrouillé par une autre cérémonie : ni vert ni pulsation", () => {
+    render(<PaveRecompense recompense={REC} livrable verrouille onLivrer={() => {}} />);
+    const btn = screen.getByRole("button");
+    // Un bouton grisé qui pulse quand même appellerait un tap qui sera refusé.
+    expect(btn.className).not.toContain("broc-pave-livrer");
+    expect(btn.style.background).not.toContain("--forest-600");
+  });
+
+  it("bouton Livrer : contenu centré, pas aligné à gauche", () => {
+    render(<PaveRecompense recompense={REC} livrable onLivrer={() => {}} />);
+    const btn = screen.getByRole("button");
+    expect(btn.style.alignItems).toBe("center");
+  });
+
+  it("plaque de récompense : contenu centré aussi, pour que rien ne saute au passage en bouton", () => {
+    // Les deux états occupent le MÊME emplacement : un alignement différent
+    // ferait tressauter les jetons à l'instant où la quête devient livrable —
+    // et la cérémonie part précisément de ces jetons.
+    const { container } = render(<PaveRecompense recompense={REC} livrable={false} onLivrer={() => {}} />);
+    const plaque = container.firstElementChild as HTMLElement;
+    expect(plaque.style.alignItems).toBe("center");
   });
 });

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Gem } from "lucide-react";
 import { PhotoScotchee } from "./PhotoScotchee";
+import { FILTRE_GRISE } from "@/components/ui/ItemSticker";
 
 afterEach(cleanup);
 
@@ -39,5 +40,51 @@ describe("PhotoScotchee", () => {
   it("aucune couleur bordeaux codée en dur", () => {
     const { container } = render(<PhotoScotchee icone={Gem} taille={64} />);
     expect(container.innerHTML.toLowerCase()).not.toContain("#6e1f1f");
+  });
+
+  it("objet pas encore trouvé : la photo est en noir et blanc", () => {
+    // Retour device : rien ne distinguait assez une cible trouvée d'une cible
+    // qui reste à chiner. La pastille ✓ ne suffisait pas — elle est petite et
+    // en coin. La couleur devient le signal principal.
+    const { container } = render(
+      <PhotoScotchee templateId="ma.lampe_petrole_ancienne" categorie="Maison" taille={64} alt="lampe" />,
+    );
+    const grise = Array.from(container.querySelectorAll<HTMLElement>("*")).some((n) =>
+      n.style.filter.includes("grayscale"),
+    );
+    expect(grise).toBe(true);
+  });
+
+  it("objet trouvé : la photo reprend ses couleurs", () => {
+    const { container } = render(
+      <PhotoScotchee templateId="ma.lampe_petrole_ancienne" categorie="Maison" taille={64} alt="lampe" accompli />,
+    );
+    const grise = Array.from(container.querySelectorAll<HTMLElement>("*")).some((n) =>
+      n.style.filter.includes("grayscale"),
+    );
+    expect(grise).toBe(false);
+  });
+
+  it("l'icône générique n'est jamais désaturée : elle est déjà à l'encre", () => {
+    // Une forme chiffrée (bénéfice, ventes…) n'a rien à « trouver » — la
+    // griser n'aurait aucun sens et suggérerait un manque.
+    const { container } = render(<PhotoScotchee icone={Gem} taille={64} />);
+    const grise = Array.from(container.querySelectorAll<HTMLElement>("*")).some((n) =>
+      n.style.filter.includes("grayscale"),
+    );
+    expect(grise).toBe(false);
+  });
+
+  it("le gris est EXACTEMENT celui de la grille de Collection", () => {
+    // Deux réglages séparés auraient dérivé au premier ajustement : le joueur
+    // doit reconnaître le même « pas encore à moi » d'un écran à l'autre.
+    // Assertion sur la constante partagée, pas sur ses valeurs numériques.
+    const { container } = render(
+      <PhotoScotchee templateId="ma.lampe_petrole_ancienne" categorie="Maison" taille={64} alt="lampe" />,
+    );
+    const porteur = Array.from(container.querySelectorAll<HTMLElement>("*")).find((n) =>
+      n.style.filter.includes("grayscale"),
+    );
+    expect(porteur?.style.filter).toBe(FILTRE_GRISE);
   });
 });

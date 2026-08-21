@@ -1,18 +1,38 @@
 "use client";
 
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
-import { QG_LAYOUT, type QgObjetKey } from "../layout";
+import {
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+import { QG_LAYOUT, qgPct, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
+import { type BazarObjetKey } from "@/components/bazar/bazarLayout";
 import {
   useQgObjet,
   useChatBaladeurCoord,
   useQgEditContext,
+  familleEditable,
   type EditableKey,
 } from "./QgEditContext";
 
 const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
 const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
 const ALL_KEYS: EditableKey[] = [...QG_KEYS, ...CHAT_KEYS];
+
+/**
+ * Convertit un delta en PIXELS ÉCRAN (mouvement du pointeur) en delta dans le
+ * repère authoré « panorama = panoramaWidth vw » (celui des objets, cf.
+ * `qgPct`). La scène est dimensionnée par sa HAUTEUR (`QgScene`/panorama
+ * bazar), donc sa largeur réelle en px n'est PAS `panoramaWidth`% de
+ * `window.innerWidth` — un pixel de drag vaut `panoramaWidth / largeurScène`
+ * unités de coordonnée, pas `100 / window.innerWidth`. C'est la même
+ * conversion que `qgPct`, inversée.
+ */
+export function pxVersDeltaCoord(px: number, largeurScenePx: number): number {
+  return (px * QG_LAYOUT.panoramaWidth) / largeurScenePx;
+}
 
 interface OutlineProps {
   editKey: EditableKey;
@@ -23,27 +43,44 @@ interface OutlineProps {
  * wrapper qui appelle SON hook inconditionnellement puis rend le corps
  * partagé avec la coordonnée en prop — conforme aux rules-of-hooks
  * (l'ancien `useCoord` dispatchait des hooks conditionnellement).
+ *
+ * La FORME du cadre descend elle aussi par famille, en prop, pas en hook :
+ * le Bazar pose ses articles dans une case CARRÉE (`ArticleBazar` a gagné
+ * `aspectRatio: 1/1`) et le cadre de calage doit coïncider avec elle pour que
+ * l'auteur vise juste. Le QG (bureau) et le chat baladeur restent des images
+ * ancrées au pied, de hauteur libre : leur calage `minHeight: 4vh` est déjà
+ * fait et livré, y toucher le casserait.
  */
 function ObjetOutline({ editKey }: OutlineProps) {
-  if ((CHAT_BALADEUR_ORDER as readonly string[]).includes(editKey)) {
-    return <OutlineChat editKey={editKey as ChatBaladeurId} />;
-  }
+  const famille = familleEditable(editKey);
+  if (famille === "chat") return <OutlineChat editKey={editKey as ChatBaladeurId} />;
+  if (famille === "bazar") return <OutlineBazar editKey={editKey as BazarObjetKey} />;
   return <OutlineQg editKey={editKey as QgObjetKey} />;
 }
 
 function OutlineChat({ editKey }: { editKey: ChatBaladeurId }) {
   const coord = useChatBaladeurCoord(editKey);
-  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
+  return <OutlineAvecCoord editKey={editKey} coord={coord} forme="libre" />;
 }
 function OutlineQg({ editKey }: { editKey: QgObjetKey }) {
   const coord = useQgObjet(editKey);
-  return <OutlineAvecCoord editKey={editKey} coord={coord} />;
+  return <OutlineAvecCoord editKey={editKey} coord={coord} forme="libre" />;
+}
+function OutlineBazar({ editKey }: { editKey: BazarObjetKey }) {
+  const coord = useQgObjet(editKey);
+  return <OutlineAvecCoord editKey={editKey} coord={coord} forme="carree" />;
 }
 
 function OutlineAvecCoord({
   editKey,
   coord,
-}: OutlineProps & { coord: { left: number; bottom: number; width: number } }) {
+  forme,
+}: OutlineProps & {
+  coord: { left: number; bottom: number; width: number };
+  /** "carree" : cadre carré coïncidant avec la case du Bazar (aspectRatio 1/1).
+   *  "libre" : rectangle bas, `minHeight: 4vh` — comportement historique QG/chat. */
+  forme: "carree" | "libre";
+}) {
   const { left, bottom, width } = coord;
   const ctx = useQgEditContext();
   const sceneRef = useRef<HTMLElement | null>(null);
@@ -70,6 +107,10 @@ function OutlineAvecCoord({
     return sceneRef.current?.clientHeight ?? window.innerHeight;
   }
 
+  function getSceneWidth(): number {
+    return sceneRef.current?.clientWidth ?? window.innerWidth;
+  }
+
   function onBodyPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (!ctx) return;
     e.stopPropagation();
@@ -85,9 +126,8 @@ function OutlineAvecCoord({
     if (!dragging.current || !ctx) return;
     const dx = e.clientX - startX.current;
     const dy = e.clientY - startY.current;
-    const vwPx = window.innerWidth / 100;
     const hPx = getSceneHeight() / 100;
-    const newLeft = startLeft.current + dx / vwPx;
+    const newLeft = startLeft.current + pxVersDeltaCoord(dx, getSceneWidth());
     const newBottom = startBottom.current - dy / hPx;
     ctx.setOverride(editKey, { left: newLeft, bottom: newBottom });
   }
@@ -110,8 +150,10 @@ function OutlineAvecCoord({
   function onResizePointerMove(e: ReactPointerEvent<HTMLDivElement>) {
     if (!resizing.current || !ctx) return;
     const dx = e.clientX - resizeStartX.current;
-    const vwPx = window.innerWidth / 100;
-    const newWidth = Math.max(1, startWidth.current + dx / vwPx);
+    const newWidth = Math.max(
+      1,
+      startWidth.current + pxVersDeltaCoord(dx, getSceneWidth()),
+    );
     ctx.setOverride(editKey, { width: newWidth });
   }
 
@@ -121,15 +163,22 @@ function OutlineAvecCoord({
     resizing.current = false;
   }
 
+  const formeStyle: CSSProperties =
+    forme === "carree" ? { aspectRatio: "1 / 1" } : { minHeight: "4vh" };
+
   return (
     <div
       ref={containerRef}
       style={{
         position: "absolute",
-        left: `${left}vw`,
+        // Même conversion que les objets (cf. `qgPct`) : le repère authoré
+        // « panorama = panoramaWidth vw » se traduit en % de la LARGEUR DE
+        // LA SCÈNE, pas en vw brut — la scène n'a jamais panoramaWidth vw de
+        // large depuis qu'elle est dimensionnée par sa hauteur.
+        left: `${qgPct(left)}%`,
         bottom: `${bottom}%`,
-        width: `${width}vw`,
-        minHeight: "4vh",
+        width: `${qgPct(width)}%`,
+        ...formeStyle,
         zIndex: 20,
         pointerEvents: "auto",
         touchAction: "none",
@@ -142,7 +191,7 @@ function OutlineAvecCoord({
         style={{
           position: "absolute",
           inset: 0,
-          minHeight: "4vh",
+          ...formeStyle,
           border: "2px dashed var(--brass-500)",
           boxSizing: "border-box",
           cursor: "move",
@@ -207,12 +256,18 @@ function OutlineAvecCoord({
   );
 }
 
-export function QgEditOverlay() {
+interface QgEditOverlayProps {
+  /** Clés à afficher sur CETTE scène. Non fourni : toutes les clés connues. */
+  cles?: EditableKey[];
+}
+
+export function QgEditOverlay({ cles }: QgEditOverlayProps = {}) {
   const ctx = useQgEditContext();
   if (!ctx?.enabled || !ctx.active) return null;
+  const aAfficher = cles ?? ALL_KEYS;
   return (
     <>
-      {ALL_KEYS.map((key) => (
+      {aAfficher.map((key) => (
         <ObjetOutline key={key} editKey={key} />
       ))}
     </>

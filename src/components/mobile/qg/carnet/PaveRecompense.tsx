@@ -12,13 +12,14 @@ interface Props {
   onLivrer: () => void;
 }
 
-type TypeJeton = "argent" | "xp" | "energie";
+type TypeJeton = "argent" | "xp" | "energie" | "bazar";
 
 /** Teintes par type de gain, dans la palette à jetons (aucune valeur codée en dur). */
 const JETON_STYLES: Record<TypeJeton, CSSProperties> = {
   argent: { background: "var(--brass-700)", color: "var(--paper-100)", border: "1px solid var(--brass-500)" },
   xp: { background: "var(--paper-300)", color: "var(--ink-700)", border: "1px solid var(--brass-500)" },
   energie: { background: "var(--patina-500)", color: "var(--paper-100)", border: "1px solid var(--patina-500)" },
+  bazar: { background: "var(--brass-800)", color: "var(--paper-100)", border: "1px solid var(--brass-500)" },
 };
 
 const jetonBase: CSSProperties = {
@@ -31,15 +32,23 @@ const jetonBase: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
+/**
+ * Quête pas encore remplie : la récompense est une plaque CREUSÉE dans le
+ * papier. L'ombre interne (plus un filet clair en bas, la lumière qui frappe
+ * le fond du creux) dit « information à lire », par opposition au bouton
+ * livrable qui, lui, sort de la page. Le pointillé d'origine disait « découpe »
+ * et se confondait avec les liserés en pointillé du détail déplié.
+ */
 const paveSourd: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  alignItems: "flex-start",
-  gap: 6,
-  padding: "8px 12px",
+  alignItems: "center",
+  gap: 4,
+  padding: "6px 8px",
   borderRadius: 8,
-  border: "1px dashed var(--ink-300)",
+  border: "none",
   background: "var(--paper-300)",
+  boxShadow: "inset 0 2px 4px rgba(27,24,18,0.20), inset 0 -1px 0 rgba(251,247,238,0.55)",
 };
 
 const labelSourd: CSSProperties = {
@@ -51,29 +60,45 @@ const labelSourd: CSSProperties = {
   color: "var(--ink-500)",
 };
 
+/**
+ * Quête prête : LE MÊME pavé se soulève et devient le bouton Livrer. Vert
+ * `--forest-600` — la couleur « toi » du jeu (cf. `--nego-joueur` dans la
+ * barre de négociation) — plutôt qu'un laiton de plus, qui se serait fondu
+ * dans le reste de la fiche.
+ *
+ * ⚠ Aucune `boxShadow` en ligne ici : le relief ET sa pulsation vivent dans
+ * `.broc-pave-livrer` (globals.css). Poser l'ombre statique en ligne la
+ * ferait se disputer la cascade avec l'ombre animée.
+ *
+ * Verrouillé (cérémonie d'une AUTRE quête) : ni vert ni relief — un bouton
+ * qui appelle le tap alors qu'il le refusera serait un mensonge.
+ */
 const paveDore = (verrouille: boolean): CSSProperties => ({
   display: "flex",
   flexDirection: "column",
-  alignItems: "flex-start",
-  gap: 6,
-  padding: "8px 12px",
+  // Centré, et resserré : le pavé mangeait la largeur de la fiche au point de
+  // chevaucher le titre des quêtes à trois objets (retour device).
+  alignItems: "center",
+  gap: 4,
+  padding: "6px 8px",
   borderRadius: 8,
-  border: "1px solid var(--brass-500)",
-  background: verrouille ? "var(--paper-300)" : "var(--brass-100)",
+  border: "none",
+  background: verrouille ? "var(--paper-300)" : "var(--forest-600)",
+  ...(verrouille ? { boxShadow: "inset 0 2px 4px rgba(27,24,18,0.20)" } : {}),
   cursor: verrouille ? "default" : "pointer",
   opacity: verrouille ? 0.6 : 1,
   font: "inherit",
   textAlign: "left",
 });
 
-const labelDore: CSSProperties = {
+const labelDore = (verrouille: boolean): CSSProperties => ({
   fontFamily: "var(--font-mono)",
   fontSize: 9,
   fontWeight: 700,
   letterSpacing: "0.14em",
   textTransform: "uppercase",
-  color: "var(--brass-700)",
-};
+  color: verrouille ? "var(--brass-700)" : "var(--paper-300)",
+});
 
 const jetonsWrap: CSSProperties = {
   display: "flex",
@@ -101,6 +126,14 @@ export function PaveRecompense({ recompense, livrable, verrouille = false, onLiv
       { cle: "argent", valeur: recompense.argent, texte: tr(d.carnet.jetonArgent, { n: recompense.argent }) },
       { cle: "xp", valeur: recompense.xp, texte: tr(d.carnet.jetonXp, { n: recompense.xp }) },
       { cle: "energie", valeur: recompense.energie, texte: tr(d.carnet.jetonEnergie, { n: recompense.energie }) },
+      {
+        cle: "bazar",
+        valeur: recompense.jetons,
+        texte: tr(
+          recompense.jetons > 1 ? d.carnet.jetonBazarN : d.carnet.jetonBazarUn,
+          { n: recompense.jetons },
+        ),
+      },
     ] as { cle: TypeJeton; valeur: number; texte: string }[]
   ).filter((g) => g.valeur > 0);
 
@@ -124,8 +157,14 @@ export function PaveRecompense({ recompense, livrable, verrouille = false, onLiv
   }
 
   return (
-    <button type="button" onClick={onLivrer} disabled={verrouille} style={paveDore(verrouille)}>
-      <span style={labelDore}>{d.carnet.livrer}</span>
+    <button
+      type="button"
+      onClick={onLivrer}
+      disabled={verrouille}
+      className={verrouille ? undefined : "broc-pave-livrer"}
+      style={paveDore(verrouille)}
+    >
+      <span style={labelDore(verrouille)}>{d.carnet.livrer}</span>
       {jetons}
     </button>
   );

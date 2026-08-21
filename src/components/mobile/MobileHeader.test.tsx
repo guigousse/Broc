@@ -123,6 +123,38 @@ describe("MobileHeader — jauge d'énergie", () => {
   });
 });
 
+describe("MobileHeader — compteur de jetons du Bazar", () => {
+  it("masqué quand le solde vaut 0", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} jetons={0} />);
+    expect(screen.queryByText("Jetons")).toBeNull();
+  });
+
+  it("masqué quand la prop est absente", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} />);
+    expect(screen.queryByText("Jetons")).toBeNull();
+  });
+
+  it("affiché avec le solde dès qu'il est positif", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={0} jetons={7} />);
+    expect(screen.getByText("Jetons")).toBeTruthy();
+    expect(screen.getByText("7")).toBeTruthy();
+  });
+
+  it("forcerAffichageJetons : reste visible à 0 — l'écran du Bazar veut « un étal garni, un compteur à zéro »", () => {
+    mockState = etat(3);
+    mockPathname = "/bazar";
+    render(<MobileHeader budget={0} jetons={0} forcerAffichageJetons />);
+    expect(screen.getByText("Jetons")).toBeTruthy();
+    expect(screen.getByText("0")).toBeTruthy();
+  });
+});
+
 describe("MobileHeader — gel de la barre XP", () => {
   it("gelé : le niveau affiché est celui de l'instantané, pas celui de l'état", () => {
     mockState = etat(5);

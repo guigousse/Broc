@@ -6,6 +6,7 @@ import type {
   GameState,
 } from "@/types/game";
 import { TREE_GENERAL, catTreeId, getCompetence } from "@/data/competences";
+import { CATEGORIES } from "@/data/categories";
 
 export function aCompetence(
   id: CompetenceId,
@@ -78,6 +79,16 @@ export function peutRestaurerCategorie(
   cat: CategorieObjet,
 ): boolean {
   return peutRestaurerMauvaisVersBon(state, cat);
+}
+
+/**
+ * Vrai dès que le joueur sait réparer QUELQUE CHOSE, toutes catégories
+ * confondues. C'est ce qui ouvre l'Atelier : avant, l'écran n'offrirait que
+ * du démantèlement, dont les pièces ne se dépensent qu'en restauration —
+ * un cul-de-sac déguisé en fonctionnalité.
+ */
+export function aCompetenceReparation(state: GameState): boolean {
+  return CATEGORIES.some((cat) => peutRestaurerCategorie(state, cat));
 }
 
 /** Connaisseur palier 1 : tendance de cette catégorie visible dans la Gazette. */

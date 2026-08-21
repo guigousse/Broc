@@ -5,6 +5,7 @@ import { LangueProvider } from "@/lib/i18n/LangueContext";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ReglagesModal } from "./ReglagesModal";
 import { definirEnergieInfinie, energieInfinieActive } from "@/lib/iap/energieInfinie";
+import { vibrationsActives } from "@/lib/haptique/prefs";
 
 vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({
@@ -104,5 +105,48 @@ describe("ReglagesModal — restaurer les achats", () => {
     fireEvent.click(screen.getByRole("button", { name: /Restaurer les achats/ }));
     expect(await screen.findByText(/Achats restaurés/)).toBeTruthy();
     expect(energieInfinieActive()).toBe(true);
+  });
+});
+
+describe("ReglagesModal — vibrations", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.unstubAllGlobals();
+    vi.stubGlobal("navigator", { language: "fr-FR" });
+  });
+
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+  });
+
+  const ouvrir = () =>
+    render(
+      <LangueProvider>
+        <ReglagesModal open onClose={() => {}} />
+      </LangueProvider>,
+    );
+
+  it("montre l'interrupteur allumé tant que le joueur n'a rien coupé", () => {
+    ouvrir();
+    expect(
+      screen
+        .getByRole("button", { name: "Vibrations" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
+
+  it("couper l'interrupteur retient la préférence", () => {
+    ouvrir();
+    fireEvent.click(screen.getByRole("button", { name: "Vibrations" }));
+    expect(vibrationsActives()).toBe(false);
+  });
+
+  it("le rallumer la remet", () => {
+    ouvrir();
+    const bouton = screen.getByRole("button", { name: "Vibrations" });
+    fireEvent.click(bouton);
+    fireEvent.click(bouton);
+    expect(vibrationsActives()).toBe(true);
   });
 });

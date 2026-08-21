@@ -2,6 +2,7 @@
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_notification::init())
+    .plugin(tauri_plugin_haptics::init())
     .plugin(tauri_plugin_admob::init())
     .plugin(tauri_plugin_iap::init())
     .plugin(tauri_plugin_firebase::init())

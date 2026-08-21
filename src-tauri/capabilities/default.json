@@ -8,6 +8,7 @@
   "permissions": [
     "core:default",
     "notification:default",
+    "haptics:allow-impact-feedback",
     "admob:default",
     "iap:default",
     "firebase:default"

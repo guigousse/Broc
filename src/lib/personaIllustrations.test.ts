@@ -2,9 +2,12 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  getCelebriteIllustration,
+  getCelebriteIllustrationFache,
   getVendeurIllustration,
   getVendeurIllustrationFache,
 } from "./personaIllustrations";
+import { CELEBRITES } from "@/data/celebrites";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
 
 const ARCHETYPES = [
@@ -46,5 +49,33 @@ describe("fichiers d'illustration présents dans public/", () => {
         expect(existsSync(join(process.cwd(), "public", chemin as string)), `fichier manquant : ${chemin}`).toBe(true);
       }
     }
+  });
+});
+
+describe("célébrités du carnet mondain", () => {
+  it("les 19 noms de data/celebrites.ts résolvent TOUS un portrait, calme et fâché", () => {
+    // Ce test est la vraie garde du sujet. La gazette affichait un « ? » à la
+    // place du portrait ; la table de slugs vit dans personaIllustrations.ts et
+    // les noms dans data/celebrites.ts, sans rien qui les relie. Renommer une
+    // célébrité côté données remettrait le « ? » en silence — aucun type, aucun
+    // lint, aucun test ne l'aurait vu.
+    expect(CELEBRITES.length).toBeGreaterThan(0);
+    for (const nom of CELEBRITES) {
+      const calme = getCelebriteIllustration(nom);
+      const fache = getCelebriteIllustrationFache(nom);
+      expect(calme, `aucun portrait pour « ${nom} »`).toBeTruthy();
+      expect(fache, `aucun portrait fâché pour « ${nom} »`).toBeTruthy();
+      for (const chemin of [calme, fache]) {
+        expect(
+          existsSync(join(process.cwd(), "public", chemin as string)),
+          `fichier manquant : ${chemin}`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("un nom inconnu ne résout rien (le « ? » de repli reste possible)", () => {
+    expect(getCelebriteIllustration("un nom qui n'existe pas")).toBeUndefined();
+    expect(getCelebriteIllustrationFache("un nom qui n'existe pas")).toBeUndefined();
   });
 });

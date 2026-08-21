@@ -20,7 +20,10 @@ function creerCourrierMissionAvecGains(): Courrier {
       titre: "Le coffre rétro",
       corps: ["Un petit mot."],
       cibles: [{ templateId: "coffre" }],
-      recompense: { argent: 90, energie: 1 },
+      // `xp` EXPLICITE depuis le 2026-08-18 : les quêtes n'ont plus d'XP par
+      // défaut, et ce test porte sur l'AFFICHAGE d'un jeton XP — qui reste
+      // possible pour une récompense qui en pose un.
+      recompense: { argent: 90, xp: 100, energie: 1 },
     },
   };
 }
@@ -108,5 +111,18 @@ describe("CourrierSheet — cartes postales", () => {
     expect(screen.getByTestId("jeton-argent").textContent).toContain("+90 €");
     expect(screen.getByTestId("jeton-xp").textContent).toContain("+100 XP");
     expect(screen.getByTestId("jeton-energie").textContent).toContain("+1 ⚡");
+  });
+
+  it("mission sans xp explicite : aucun jeton XP (les quêtes n'en versent plus)", () => {
+    // `CourrierSheet` est l'une des quatre surfaces qui affichent la
+    // récompense : la décision doit s'y voir aussi, pas seulement au carnet.
+    const c = creerCourrierMissionAvecGains();
+    const sansXp = {
+      ...c,
+      payload: { ...c.payload, recompense: { argent: 90, energie: 1 } },
+    } as Courrier;
+    render(<CourrierSheet open onClose={vi.fn()} courriers={[sansXp]} onMarquerLu={vi.fn()} />);
+    expect(screen.queryByTestId("jeton-xp")).toBeNull();
+    expect(screen.getByTestId("jeton-argent").textContent).toContain("+90 €");
   });
 });

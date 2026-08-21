@@ -11,7 +11,9 @@ import {
   TAB_ORDER,
   findActiveTabIndex,
   isTabBarRoute,
+  ongletSuivantOuvert,
 } from "@/components/mobile/TabBar";
+import { useGameStateOnly } from "@/context/GameContext";
 
 /**
  * Wrapper de page qui :
@@ -98,6 +100,7 @@ function pageKeyForPathname(pathname: string): string {
 export function SwipePager({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { state } = useGameStateOnly();
   const startRef = useRef<PointerStart | null>(null);
   const prevPathnameRef = useRef<string | null>(null);
 
@@ -154,9 +157,10 @@ export function SwipePager({ children }: { children: ReactNode }) {
 
     const idx = findActiveTabIndex(pathname);
     if (idx < 0) return;
-    const N = TAB_ORDER.length;
-    const next = dx < 0 ? (idx + 1) % N : (idx - 1 + N) % N;
-    router.push(TAB_ORDER[next].path);
+    // On saute les pièces encore fermées : sinon le swipe entrerait par la
+    // fenêtre là où la barre montre un cadenas.
+    const cible = ongletSuivantOuvert(idx, dx < 0 ? 1 : -1, state);
+    if (cible) router.push(cible.path);
   };
 
   const onPointerCancel = () => {

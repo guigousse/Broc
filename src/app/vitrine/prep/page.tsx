@@ -21,6 +21,7 @@ import {
   TRACES_TUTORIEL,
 } from "@/data/tutorielScenario";
 import { tutorielActif } from "@/lib/tutoriel";
+import { setCoachOuvert } from "@/lib/coachActif";
 import { audioManager } from "@/lib/audio/audioManager";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
 import { GRAND_PERE_PORTRAITS, SEQUENCES_TUTORIEL, type DialogueSequence } from "@/data/dialogues";
@@ -29,18 +30,30 @@ import type { CategorieObjet, NiveauCamion, ObjetEnVitrine } from "@/types/game"
 // Prix par défaut = prix du marché (curseur de tarification centré sur la valeur).
 const SUGGESTION_FACTEUR = 1;
 
-// Pricing guidé (Task 9) : templateIds du préfill (déjà étiquetés par le
-// grand-père) — poignée verrouillée en lecture seule sur ces lignes,
-// pendant tout le passage packing→pricing du tutoriel. Constant (dérivé
-// d'une donnée figée), calculé une seule fois au chargement du module.
-const READONLY_TEMPLATE_IDS_TUTORIEL: ReadonlySet<string> = new Set(
-  PREFILL_COFFRE_TUTORIEL.map((p) => p.templateId),
-);
-
 // Coffre à traces (tutoriel v3) : la manette (trace 0) n'est plus posée par
 // le joueur — démo du grand-père, Task 8. Alias vers `TRACES_TUTORIEL[0]`
 // plutôt qu'une chaîne recopiée, pour rester synchronisé avec la source.
 const MANETTE_TEMPLATE_ID = TRACES_TUTORIEL[0].templateId;
+
+// Pricing guidé : lignes dont le grand-père s'occupe lui-même — le préfill
+// (déjà étiqueté) ET la manette, dont il pose le curseur sous les yeux du
+// joueur (cf. l'effet de démo plus bas). Poignée verrouillée en lecture seule
+// sur ces lignes, pendant tout le passage packing→pricing du tutoriel. Il
+// reste donc UN seul curseur à bouger, celui de la carafe : montrer une fois,
+// faire faire une fois — la même leçon en deux temps que le coffre à traces.
+const READONLY_TEMPLATE_IDS_TUTORIEL: ReadonlySet<string> = new Set([
+  ...PREFILL_COFFRE_TUTORIEL.map((p) => p.templateId),
+  MANETTE_TEMPLATE_ID,
+]);
+
+/** Démo du curseur : un pas toutes les 70 ms, assez lent pour se voir.
+ *  Le départ est scripté plutôt que pris sur le prix suggéré : celui-ci
+ *  dépend de ce que le joueur a payé la manette et tombe parfois à deux
+ *  euros du conseil — la glissade serait alors invisible. Douze euros font
+ *  dix pas, soit 0,7 s : le temps de comprendre que quelqu'un d'autre tient
+ *  le curseur. Le saut au départ se joue derrière le dialogue d'intro. */
+const PAS_DEMO_PRIX_MS = 70;
+const DEPART_DEMO_PRIX_MANETTE = 12;
 
 /**
  * Préparation du coffre AVANT le choix de la brocante : packing puis pricing.
@@ -217,6 +230,13 @@ export default function VitrinePrepPage() {
   // verrou ci-dessus). Attendre que `state.vitrine` existe avant de créer
   // `demoManette` ferme cette fenêtre à la racine : la démo ne démarre
   // jamais tant que le dépôt réel ne peut pas réussir.
+  const categoriesConnuesVitrine = useMemo(() => {
+    const s = new Set<CategorieObjet>();
+    if (!state) return s;
+    for (const c of CATEGORIES) if (aConnaisseurVitrine(state, c)) s.add(c);
+    return s;
+  }, [state]);
+
   const manetteEnStock = useMemo(
     () => !!state?.inventaireJoueur.some((o) => o.templateId === MANETTE_TEMPLATE_ID),
     [state],
@@ -246,9 +266,16 @@ export default function VitrinePrepPage() {
           (o) => o.templateId === MANETTE_TEMPLATE_ID,
         );
         if (manette) {
+          // Déposée au prix du MARCHÉ, pas au prix conseillé : c'est à
+          // l'étape de tarification que le grand-père fera glisser son
+          // curseur, sous les yeux du joueur. Chaque leçon à sa place.
           mettreEnVitrine(
             manette.id,
-            PRIX_CONSEILLES_TUTORIEL[MANETTE_TEMPLATE_ID],
+            prixSuggere(
+              manette,
+              categoriesConnuesVitrine.has(manette.categorie),
+              SUGGESTION_FACTEUR,
+            ),
             TRACES_TUTORIEL[0].posX,
             TRACES_TUTORIEL[0].posY,
             TRACES_TUTORIEL[0].rotation,
@@ -257,14 +284,60 @@ export default function VitrinePrepPage() {
         avancerTutoriel("coffre-trace-deux");
       },
     };
-  }, [state, tutorielEtape, manetteEnStock, mettreEnVitrine, avancerTutoriel]);
+  }, [
+    state, tutorielEtape, manetteEnStock, mettreEnVitrine, avancerTutoriel,
+    categoriesConnuesVitrine,
+  ]);
 
-  const categoriesConnuesVitrine = useMemo(() => {
-    const s = new Set<CategorieObjet>();
-    if (!state) return s;
-    for (const c of CATEGORIES) if (aConnaisseurVitrine(state, c)) s.add(c);
-    return s;
-  }, [state]);
+  /* La bannière de consigne parle du coffre à traces — c'est la MÊME étape de
+     tutoriel qui couvre le chargement et la tarification. Sur l'écran de
+     tarification elle ne dit donc plus rien de vrai, et elle mordrait sur la
+     première ligne à tarifer. Même signal que la leçon de collection : un
+     guide local occupe l'écran, la bannière se retire. */
+  useEffect(() => {
+    if (tutorielEtape !== "coffre-trace-deux" || etape !== "pricing") return;
+    setCoachOuvert(true);
+    return () => setCoachOuvert(false);
+  }, [tutorielEtape, etape]);
+
+  /* Pricing guidé : le grand-père fait glisser LUI-MÊME le curseur de la
+     manette jusqu'à son prix conseillé, une fois son dialogue d'intro refermé.
+     Le joueur n'a plus qu'un curseur à bouger — celui de la carafe : montrer
+     une fois, faire faire une fois, comme au coffre à traces. Le latch de ref
+     empêche la démo de se rejouer sur un aller-retour packing → pricing. */
+  const demoPrixFaiteRef = useRef(false);
+  const departDemoPoseRef = useRef(false);
+  const manetteEnCoffreId = state?.vitrine?.objets.find(
+    (o) => o.objet.templateId === MANETTE_TEMPLATE_ID,
+  )?.objet.id;
+  // Le curseur est ramené à son point de départ dès l'arrivée sur l'écran,
+  // c'est-à-dire DERRIÈRE le dialogue d'intro du grand-père : le joueur ne
+  // voit jamais le saut, seulement la glissade qui suivra.
+  useEffect(() => {
+    if (tutorielEtape !== "coffre-trace-deux" || etape !== "pricing") return;
+    if (departDemoPoseRef.current || !manetteEnCoffreId) return;
+    departDemoPoseRef.current = true;
+    ajusterPrixVitrine(manetteEnCoffreId, DEPART_DEMO_PRIX_MANETTE);
+  }, [tutorielEtape, etape, manetteEnCoffreId, ajusterPrixVitrine]);
+
+  useEffect(() => {
+    if (tutorielEtape !== "coffre-trace-deux" || etape !== "pricing") return;
+    if (dialogueTuto || demoPrixFaiteRef.current || !manetteEnCoffreId) return;
+    demoPrixFaiteRef.current = true;
+    const viser = PRIX_CONSEILLES_TUTORIEL[MANETTE_TEMPLATE_ID];
+    let courant = DEPART_DEMO_PRIX_MANETTE;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const avancerDUnPas = () => {
+      if (courant === viser) return;
+      courant += Math.sign(viser - courant);
+      ajusterPrixVitrine(manetteEnCoffreId, courant);
+      timer = setTimeout(avancerDUnPas, PAS_DEMO_PRIX_MS);
+    };
+    timer = setTimeout(avancerDUnPas, PAS_DEMO_PRIX_MS);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [tutorielEtape, etape, dialogueTuto, manetteEnCoffreId, ajusterPrixVitrine]);
 
   if (!isHydrated || !state) {
     return (
@@ -382,7 +455,7 @@ export default function VitrinePrepPage() {
         background: "var(--paper-100)",
       }}
     >
-      <MobileHeader budget={state.budget} />
+      <MobileHeader budget={state.budget} jetons={state.jetons} />
       <EtapeBandeau>
         {etape === "packing"
           ? d.vente.etapePrepCoffre
@@ -394,7 +467,9 @@ export default function VitrinePrepPage() {
           overflowY: "auto",
           // Étape tarification (liste, pas image) : on décale le contenu sous
           // le texte d'étape flottant. Packing (image) reste à fleur du header.
-          paddingTop: etape === "pricing" ? 70 : 0,
+          // `--tuto-banniere-h` (0 hors tutoriel) empêche en plus la bannière
+          // de consigne de mordre sur la première ligne à tarifer.
+          paddingTop: `calc(${etape === "pricing" ? 70 : 0}px + var(--tuto-banniere-h, 0px))`,
         }}
       >
         {etape === "packing" ? (
