@@ -63,7 +63,16 @@ export function FirebaseBootstrap() {
     // un joueur qui peut être bien plus loin (voir le commentaire d'`enPartie`
     // ci-dessus) — pas un bug à corriger.
     const nom = nomEcran(pathname);
-    if (nom) logEvenement(EVENEMENTS.ecranVu, { screen_name: nom });
+    // `screen_class` est fourni explicitement : sans lui, Firebase le déduit
+    // du contrôleur natif courant (`TaoUIViewController`, le WebView de Tauri)
+    // et colle ensuite cet écran sur TOUS les événements suivants. Le drapeau
+    // `FirebaseAutomaticScreenReportingEnabled: false` ne couvre pas ce cas :
+    // il n'empêche que l'émission automatique de `screen_view`, pas la
+    // déduction de la classe. Constaté en DebugView le 2026-08-21.
+    // Une app à WebView unique n'a pas de vraie hiérarchie de classes : on
+    // reprend le nom d'écran, ce qui rend exploitable le rapport GA4
+    // « Pages et écrans », ventilé par classe d'écran.
+    if (nom) logEvenement(EVENEMENTS.ecranVu, { screen_name: nom, screen_class: nom });
   }, [pathname]);
 
   return null;

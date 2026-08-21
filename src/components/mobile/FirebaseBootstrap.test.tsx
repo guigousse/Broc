@@ -118,3 +118,25 @@ describe("FirebaseBootstrap — fenêtre d'hydratation", () => {
     );
   });
 });
+
+describe("FirebaseBootstrap — screen_view", () => {
+  // Recette simulateur du 2026-08-21 : DebugView montrait
+  // `firebase_screen_class = TaoUIViewController` sur TOUS les événements, y
+  // compris `tuto_etape`. Cause : sans `screen_class` explicite, Firebase le
+  // déduit du contrôleur natif courant, puis colle cet écran sur les
+  // événements suivants. `FirebaseAutomaticScreenReportingEnabled: false`
+  // n'empêche que l'ÉMISSION automatique de `screen_view`, pas cette
+  // déduction — le drapeau visait le mauvais mécanisme.
+  // Conséquence sans ce correctif : le rapport GA4 « Pages et écrans »,
+  // ventilé par classe d'écran, fond tous les écrans en une seule ligne.
+  it("déclare screen_class explicitement, sinon Firebase y met la classe du WebView", () => {
+    mockPathname = "/bureau";
+    const stub = new StubAnalyticsProvider();
+    reinitialiserAnalyticsPourTest(stub);
+    monter();
+
+    const vu = stub.appels.find((a) => a.nom === "screen_view");
+    expect(vu).toBeDefined();
+    expect(vu!.params.screen_class).toBe(vu!.params.screen_name);
+  });
+});
