@@ -395,22 +395,63 @@ async function socleDepuis(src) {
   }
   const largeurCoupe = sx1 - sx0 + 1;
 
-  // La cible : la dernière ligne de la façade, et son étendue opaque.
+  // LA CIBLE : la largeur de la façade AU CENTRE DE L'ÉCRAN, et non à sa base.
+  //
+  // Le meuble est vu en légère plongée : son bas est plus RENFONCÉ que le
+  // plan de l'écran, et une base aussi large que le pupitre le ferait paraître
+  // en avant. L'auteur a donné le repère à la recette du 2026-08-23 : l'arête
+  // du bas doit s'aligner sur l'arête prise à mi-hauteur de l'écran. Mesuré :
+  // 857 px là contre 994 à la dernière ligne, soit 13,8 % de fuyant.
   const { width: FW, height: FH } = await sharp(SORTIE).metadata();
-  const derniere = await sharp(SORTIE)
-    .ensureAlpha()
-    .extract({ left: 0, top: FH - 1, width: FW, height: 1 })
-    .raw()
-    .toBuffer();
-  let fx0 = -1;
-  let fx1 = -1;
-  for (let x = 0; x < FW; x++) {
-    if (derniere[x * 4 + 3] > 128) {
-      if (fx0 < 0) fx0 = x;
-      fx1 = x;
+  const facade = await sharp(SORTIE).ensureAlpha().raw().toBuffer();
+  const spanFacade = (y) => {
+    let a = -1;
+    let z = -1;
+    for (let x = 0; x < FW; x++) {
+      if (facade[(y * FW + x) * 4 + 3] > 128) {
+        if (a < 0) a = x;
+        z = x;
+      }
+    }
+    return [a, z];
+  };
+
+  // Le trou du CRT se repère tout seul : ce sont les lignes qui portent
+  // beaucoup de transparent ENTRE leurs deux bords opaques. Le détecter plutôt
+  // que recopier des pourcentages garde ce script juste après une nouvelle
+  // façade, sans qu'on ait à penser à le mettre à jour.
+  //
+  // Par la plus LONGUE plage de telles lignes, et non par la première et la
+  // dernière : le sommet du caisson est arqué, ses deux coins y laissent un
+  // grand vide entre eux, et pris pour le trou il tirait le centre 130 lignes
+  // trop haut (846 px de cible au lieu de 857).
+  const creuse = [];
+  for (let y = 0; y < FH; y++) {
+    const [a, z] = spanFacade(y);
+    if (a < 0) {
+      creuse.push(false);
+      continue;
+    }
+    let creux = 0;
+    for (let x = a; x <= z; x++) if (facade[(y * FW + x) * 4 + 3] <= 128) creux++;
+    creuse.push(creux > (z - a) * 0.3);
+  }
+  let debutTrou = -1;
+  let plage = { debut: -1, longueur: 0 };
+  for (let y = 0; y <= FH; y++) {
+    if (y < FH && creuse[y]) {
+      if (debutTrou < 0) debutTrou = y;
+    } else if (debutTrou >= 0) {
+      if (y - debutTrou > plage.longueur) plage = { debut: debutTrou, longueur: y - debutTrou };
+      debutTrou = -1;
     }
   }
-  const echelle = (fx1 - fx0 + 1) / largeurCoupe;
+  if (plage.debut < 0) throw new Error("trou du CRT introuvable dans la façade");
+  const yTrou0 = plage.debut;
+  const yTrou1 = plage.debut + plage.longueur - 1;
+  const yEcran = Math.round((yTrou0 + yTrou1) / 2);
+  const [tx0, tx1] = spanFacade(yEcran);
+  const echelle = (tx1 - tx0 + 1) / largeurCoupe;
 
   // Remise à l'échelle, puis fenêtre de FW de large calée sur le raccord.
   const larg = Math.max(1, Math.round(W * echelle));
@@ -419,7 +460,7 @@ async function socleDepuis(src) {
     .resize({ width: larg })
     .raw()
     .toBuffer({ resolveWithObject: true });
-  const decalage = Math.round(sx0 * echelle) - fx0;
+  const decalage = Math.round(sx0 * echelle) - tx0;
   const hArt = redim.info.height;
   const art = Buffer.alloc(FW * hArt * 4);
   for (let y = 0; y < hArt; y++) {
@@ -441,12 +482,23 @@ async function socleDepuis(src) {
     hUtile--;
   }
 
-  // Le raccord : quelques lignes de la dernière ligne de la façade, à
-  // l'identique, posées au-dessus du bois.
+  // Le raccord : quelques lignes de la dernière ligne de la façade, RESSERRÉES
+  // à la largeur cible, posées au-dessus du bois. Resserrées et pas recopiées
+  // telles quelles : le bas est maintenant plus étroit que la base de la
+  // façade, une bande pleine largeur dépasserait de part et d'autre du meuble.
+  const [fx0, fx1] = spanFacade(FH - 1);
+  const derniereResserree = await sharp(facade, { raw: { width: FW, height: FH, channels: 4 } })
+    .extract({ left: fx0, top: FH - 1, width: fx1 - fx0 + 1, height: 1 })
+    .resize({ width: tx1 - tx0 + 1, height: 1, fit: "fill" })
+    .raw()
+    .toBuffer();
+  const ligneRaccord = Buffer.alloc(FW * 4);
+  ligneRaccord.set(derniereResserree, tx0 * 4);
+
   const RACCORD = Math.round(FH * 0.02);
   const hTotal = RACCORD + hUtile;
   const sortie = Buffer.alloc(FW * hTotal * 4);
-  for (let y = 0; y < RACCORD; y++) sortie.set(derniere, y * FW * 4);
+  for (let y = 0; y < RACCORD; y++) sortie.set(ligneRaccord, y * FW * 4);
   sortie.set(art.subarray(0, hUtile * FW * 4), RACCORD * FW * 4);
 
   await sharp(sortie, { raw: { width: FW, height: hTotal, channels: 4 } })
@@ -469,7 +521,10 @@ async function socleDepuis(src) {
   console.log("   ── à recopier dans borneArcadeLayout.ts ──");
   console.log(`   ratio du socle : ${(FW / hTotal).toFixed(3)}`);
   console.log(
-    `   coupe à y=${yCoupe}/${H}, silhouette ${largeurCoupe}px → ${fx1 - fx0 + 1}px (×${echelle.toFixed(3)})`,
+    `   coupe à y=${yCoupe}/${H}, silhouette ${largeurCoupe}px → ${tx1 - tx0 + 1}px (×${echelle.toFixed(3)})`,
+  );
+  console.log(
+    `   cible prise au centre de l'écran (y=${yEcran}) : ${tx1 - tx0 + 1}px, contre ${fx1 - fx0 + 1}px à la base`,
   );
 }
 

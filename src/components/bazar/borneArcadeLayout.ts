@@ -67,16 +67,21 @@ export const PART_AIR_AU_DESSUS = 0.14;
  * celui-là qu'on reproduit, à l'identique.
  *
  * Le raccord ne tient pas à la chance. Le script cale l'échelle du tirage sur
- * la largeur de la silhouette À LA LIGNE DE COUPE et non sur ses bornes
- * globales — le pupitre déborde du corps, s'aligner sur les bornes ouvrirait
- * une marche de chaque côté du joint — puis pose quelques lignes de la
- * dernière ligne de la façade au-dessus du bois, ce qui rend le raccord de
- * couleur exact par construction.
+ * la largeur de la silhouette À LA LIGNE DE COUPE, et la cible n'est pas la
+ * base de la façade mais sa largeur AU CENTRE DE L'ÉCRAN : le meuble est vu en
+ * légère plongée, son bas est plus renfoncé que le plan de l'écran, et une
+ * base aussi large que le pupitre le ferait paraître en avant. Mesuré sur la
+ * façade : 857 px à mi-hauteur de l'écran contre 994 à la dernière ligne,
+ * 13,8 % de fuyant. Le pupitre déborde donc du corps, ce qui est juste.
+ *
+ * Quelques lignes de la dernière ligne de la façade, resserrées à cette même
+ * largeur, sont posées au-dessus du bois : le raccord de couleur devient exact
+ * par construction.
  */
 export const SOCLE_BORNE = {
   src: "/bazar/borne-socle.webp",
-  /** largeur / hauteur du dessin (1000 × 886), imprimé par `--socle-from`. */
-  ratio: 1.129,
+  /** largeur / hauteur du dessin (1000 × 785), imprimé par `--socle-from`. */
+  ratio: 1.274,
   /**
    * La plinthe, en une ligne étirable.
    *
