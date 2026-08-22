@@ -4,6 +4,7 @@ import { type CSSProperties, type ReactNode } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
+import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
 import { PLAQUE_ETIQUETTE, PLAQUE_ETIQUETTE_ETEINTE } from "./etiquette";
 import { type BazarObjetKey } from "./bazarLayout";
 
@@ -143,8 +144,27 @@ export function ArticleBazar({
         {visuel}
       </button>
       <span style={colonneEtiquettes} data-testid={`etiquettes-${cle}`}>
-        <span style={horsDePortee ? PLAQUE_ETIQUETTE_ETEINTE : PLAQUE_ETIQUETTE}>
-          {tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
+        {/* La PIÈCE remplace le mot : la case fait 89 px de large et
+            « 3 Bazarcoins » n'y tient dans aucune des quatre langues — le grec
+            était déjà la contrainte qui commandait la largeur des plaques.
+            `role="img"` avec le libellé complet rend le mot à qui écoute :
+            sans lui, un lecteur d'écran annoncerait un « 3 » nu, qui se
+            confondrait avec une quantité d'objets. La pièce, elle, est
+            `aria-hidden` — elle ne doit pas s'annoncer deux fois.
+            La pièce est en `currentColor` : elle s'éteint donc avec sa plaque
+            quand l'article passe hors de portée de la bourse. */}
+        <span
+          role="img"
+          aria-label={tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
+          style={{
+            ...(horsDePortee ? PLAQUE_ETIQUETTE_ETEINTE : PLAQUE_ETIQUETTE),
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          {prix}
+          <BazarcoinIcon terni={horsDePortee} />
         </span>
       </span>
     </div>

@@ -359,7 +359,10 @@ describe("BazarScene", () => {
     }
     // La rature a été remplacée par l'extinction de la plaque entière à la
     // recette du 2026-08-20 : c'est la couleur qui porte l'état.
-    const plaque = screen.getByText("8 jetons") as HTMLElement;
+    // Sur l'étagère, la plaque n'écrit plus que le nombre — c'est la pièce qui
+    // dit la monnaie, et le mot vit dans le nom accessible. On la retrouve
+    // donc par son rôle, pas par son texte.
+    const plaque = screen.getByRole("img", { name: "8 Bazarcoins" }) as HTMLElement;
     expect(plaque.style.backgroundColor).toBe("var(--ink-500)");
     expect(plaque.style.color).toBe("var(--paper-400)");
     expect(plaque.style.textDecoration).not.toBe("line-through");
@@ -367,7 +370,7 @@ describe("BazarScene", () => {
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
     fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
     expect(onAcheter).not.toHaveBeenCalled();
-    expect(screen.getByText("Il vous manque 8 jetons")).toBeTruthy();
+    expect(screen.getByText("Il vous manque 8 Bazarcoins")).toBeTruthy();
   });
 
   // Revue du 2026-08-20 : la scène testait `etal.vitrine && template`. Un
