@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
+import { useLangue } from "@/lib/i18n/LangueContext";
 
 /**
  * L'ombre de contact. Sans elle, une image détourée posée sur un plancher
@@ -33,20 +34,21 @@ const imgStyle: CSSProperties = {
 /**
  * La borne d'arcade du coin gauche.
  *
- * DÉCOR, et rien d'autre pour l'instant : c'est le chantier ⑤ qui lui donnera
- * son jeu. Elle est là parce que la zone s'appelle « arcade » et ne montrait
- * qu'une bibliothèque et un pan de mur vide — l'illustration du fond a été
- * dessinée en réservant ce vide pour elle.
- *
- * Muette pour les lecteurs d'écran (`alt=""`, aucun rôle) : annoncer un objet
- * avec lequel on ne peut rien faire, c'est promettre une action qui n'existe
- * pas. Le jour où elle en aura une, elle deviendra un `button` nommé.
+ * Elle n'est plus muette : c'est le point d'entrée de sa collection de jeux
+ * (chantier ⑤), un bouton qui ouvre `BorneArcadeEcran` en plein écran.
+ * L'image reste `alt=""` — le nom accessible est porté par le `<button>`
+ * (`d.bazar.borneOuvrir`), pas par le dessin qu'il contient.
  *
  * Coordonnées lues par `useQgObjet` et NON dans le dictionnaire en direct :
  * c'est ce qui la fait suivre quand on tire son cadre en mode calage
  * (`?qgedit=1`).
  */
-export function BorneArcade() {
+interface BorneArcadeProps {
+  onOuvrir: () => void;
+}
+
+export function BorneArcade({ onOuvrir }: BorneArcadeProps) {
+  const { d } = useLangue();
   const coord = useQgObjet("borne");
   const style: CSSProperties = {
     position: "absolute",
@@ -54,10 +56,23 @@ export function BorneArcade() {
     bottom: `${coord.bottom}%`,
     width: `${qgPct(coord.width)}%`,
     height: "auto",
+    // Le calque d'objets du panorama est en `pointer-events: none` : sans ce
+    // rétablissement, le bouton ne recevrait aucun tap.
+    pointerEvents: "auto",
+    background: "transparent",
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
   };
   return (
-    <div style={style} data-testid="borne-arcade">
+    <button
+      type="button"
+      aria-label={d.bazar.borneOuvrir}
+      onClick={onOuvrir}
+      style={style}
+      data-testid="borne-arcade"
+    >
       <img src="/bazar/borne-arcade.webp" alt="" draggable={false} style={imgStyle} />
-    </div>
+    </button>
   );
 }
