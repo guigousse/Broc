@@ -1,10 +1,20 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { X } from "lucide-react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { JeuArcade } from "@/lib/bazar/arcade";
-import { BORNE_FACADE, dimensionnerBorne } from "./borneArcadeLayout";
+import {
+  BORNE_FACADE,
+  SOCLE_BORNE,
+  dimensionnerBorne,
+} from "./borneArcadeLayout";
 import { EcranArcade } from "./EcranArcade";
 
 /**
@@ -42,7 +52,8 @@ export const STYLE_VOILE_BORNE: CSSProperties = {
 };
 
 /**
- * Le caisson, centré à la main et posé par terre.
+ * La COLONNE : le meuble entier, façade dessinée plus socle, de l'air du haut
+ * jusqu'au plancher.
  *
  * `left: 50%` + `translateX(-50%)` et NON `place-items: center`, et ce garde
  * reste posé même depuis que le caisson tient en largeur : le voile est en
@@ -55,15 +66,37 @@ export const STYLE_VOILE_BORNE: CSSProperties = {
  * et continuerait de tenir si un jour la façade redevenait plus large que le
  * cadre.
  *
- * `bottom: 0` : une borne pose ses pieds par terre. Sa base se confond avec
- * l'arête haute de la barre d'onglets, qui joue le plancher — centrée, elle
- * flottait au milieu du cadre avec un vide de 97 px sous elle.
+ * `bottom: 0` : une borne pose ses pieds par terre, l'arête haute de la barre
+ * d'onglets joue le plancher. Le `top` vient de `dimensionnerBorne` ; entre
+ * les deux, le socle prend tout ce que la façade ne remplit pas.
  */
-const caisson: CSSProperties = {
+const colonne: CSSProperties = {
   position: "absolute",
   left: "50%",
   bottom: 0,
   transform: "translateX(-50%)",
+};
+
+/**
+ * Le socle, sous la façade et jusqu'au plancher.
+ *
+ * `background-size: 100% 100%` — l'étirement pur est ICI le rendu voulu et non
+ * une déformation subie : la bande est faite d'une seule ligne de pixels
+ * répétée, l'étirer verticalement prolonge le panneau bas à l'identique. C'est
+ * le bord bas d'un neuf-tranches.
+ *
+ * Rendu AVANT la façade, donc dessous : le pixel de recouvrement se glisse
+ * sous elle au lieu de mordre dessus.
+ */
+const socle: CSSProperties = {
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundImage: `url(${SOCLE_BORNE.src})`,
+  backgroundSize: "100% 100%",
+  backgroundRepeat: "no-repeat",
+  pointerEvents: "none",
 };
 
 const boutonFermer: CSSProperties = {
@@ -104,7 +137,11 @@ interface BorneArcadeEcranProps {
  * le masque. L'image porte `pointer-events: none`, sans quoi elle avalerait
  * les taps destinés aux flèches qui sont dessous.
  */
-export function BorneArcadeEcran({ open, jeux, onClose }: BorneArcadeEcranProps) {
+export function BorneArcadeEcran({
+  open,
+  jeux,
+  onClose,
+}: BorneArcadeEcranProps) {
   const { d } = useLangue();
   const voileRef = useRef<HTMLDivElement | null>(null);
   const [place, setPlace] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -138,7 +175,7 @@ export function BorneArcadeEcran({ open, jeux, onClose }: BorneArcadeEcranProps)
 
   if (!open) return null;
 
-  const { w, h } = dimensionnerBorne(place);
+  const { w, h, top } = dimensionnerBorne(place);
 
   return (
     <div
@@ -151,42 +188,56 @@ export function BorneArcadeEcran({ open, jeux, onClose }: BorneArcadeEcranProps)
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <button type="button" aria-label={d.bazar.borneFermer} onClick={onClose} style={boutonFermer}>
+      <button
+        type="button"
+        aria-label={d.bazar.borneFermer}
+        onClick={onClose}
+        style={boutonFermer}
+      >
         <X size={20} />
       </button>
 
-      <div
-        data-testid="borne-facade"
-        style={{ ...caisson, width: w, height: h }}
-      >
-        {/* DESSOUS — voir le commentaire d'en-tête. */}
+      <div data-testid="borne-colonne" style={{ ...colonne, width: w, top }}>
+        {/* Le socle en premier, donc sous la façade (cf. son commentaire). */}
         <div
-          data-testid="borne-fenetre"
-          style={{
-            position: "absolute",
-            left: `${BORNE_FACADE.trou.left}%`,
-            right: `${BORNE_FACADE.trou.right}%`,
-            top: `${BORNE_FACADE.trou.top}%`,
-            bottom: `${BORNE_FACADE.trou.bottom}%`,
-          }}
-        >
-          <EcranArcade jeux={jeux} />
-        </div>
-
-        {/* DESSUS, et transparent aux doigts. */}
-        <img
-          src="/bazar/borne-facade.webp"
-          alt=""
-          draggable={false}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            display: "block",
-            pointerEvents: "none",
-          }}
+          data-testid="borne-socle"
+          aria-hidden
+          style={{ ...socle, top: Math.max(0, h - SOCLE_BORNE.recouvrementPx) }}
         />
+
+        <div
+          data-testid="borne-facade"
+          style={{ position: "absolute", inset: 0, height: h }}
+        >
+          {/* DESSOUS — voir le commentaire d'en-tête. */}
+          <div
+            data-testid="borne-fenetre"
+            style={{
+              position: "absolute",
+              left: `${BORNE_FACADE.trou.left}%`,
+              right: `${BORNE_FACADE.trou.right}%`,
+              top: `${BORNE_FACADE.trou.top}%`,
+              bottom: `${BORNE_FACADE.trou.bottom}%`,
+            }}
+          >
+            <EcranArcade jeux={jeux} />
+          </div>
+
+          {/* DESSUS, et transparent aux doigts. */}
+          <img
+            src="/bazar/borne-facade.webp"
+            alt=""
+            draggable={false}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              display: "block",
+              pointerEvents: "none",
+            }}
+          />
+        </div>
       </div>
     </div>
   );

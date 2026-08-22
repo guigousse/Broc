@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { BORNE_FACADE, PART_LARGEUR_CAISSON, dimensionnerBorne } from "./borneArcadeLayout";
+import {
+  BORNE_FACADE,
+  PART_AIR_AU_DESSUS,
+  PART_LARGEUR_CAISSON,
+  dimensionnerBorne,
+} from "./borneArcadeLayout";
 
 describe("BORNE_FACADE", () => {
   it("décrit un trou qui tient dans le caisson", () => {
@@ -44,18 +49,57 @@ describe("dimensionnerBorne", () => {
       { w: 1200, h: 500 }, // large et court
     ];
     for (const g of gabarits) {
-      const { w, h } = dimensionnerBorne(g);
+      const { w, h, top } = dimensionnerBorne(g);
       expect(w).toBeLessThanOrEqual(g.w + 0.01);
-      expect(h).toBeLessThanOrEqual(g.h + 0.01);
+      expect(top + h).toBeLessThanOrEqual(g.h + 0.01);
     }
   });
 
   // Sur un écran large et court, c'est la hauteur qui commande — la largeur y
   // est si généreuse que s'y caler ferait sortir le marquee et le pupitre.
   it("sur un écran large et court, cale le caisson sur la hauteur", () => {
-    const { w, h } = dimensionnerBorne({ w: 1200, h: 500 });
-    expect(h).toBeCloseTo(500, 0);
-    expect(w).toBeCloseTo(500 * BORNE_FACADE.ratio, 0);
+    const dispo = { w: 1200, h: 500 };
+    const { w, h, top } = dimensionnerBorne(dispo);
+    // La hauteur qui compte est celle qui RESTE sous l'air du haut.
+    expect(h).toBeCloseTo(500 * (1 - PART_AIR_AU_DESSUS), 0);
+    expect(w).toBeCloseTo(h * BORNE_FACADE.ratio, 0);
+    // Et le socle est alors nul : le caisson touche déjà le bas.
+    expect(top + h).toBeCloseTo(dispo.h, 0);
+  });
+
+  // ——— L'air du haut et le socle, ajoutés le 2026-08-23 ———
+
+  it("laisse toujours la même part d'air au-dessus du marquee", () => {
+    for (const dispo of [{ w: 320, h: 464 }, { w: 390, h: 735 }, { w: 834, h: 984 }]) {
+      const { top } = dimensionnerBorne(dispo);
+      expect(top).toBeCloseTo(dispo.h * PART_AIR_AU_DESSUS, 3);
+    }
+  });
+
+  // LA garde du socle : il comble EXACTEMENT ce qui reste, donc jamais de trou
+  // entre la base du meuble et la barre d'onglets, quel que soit le gabarit.
+  it("ne laisse jamais de vide entre la base du caisson et le bas du cadre", () => {
+    const gabarits = [
+      { w: 320, h: 464 },
+      { w: 375, h: 562 },
+      { w: 390, h: 735 },
+      { w: 430, h: 812 },
+      { w: 834, h: 984 },
+      { w: 1200, h: 500 },
+      { w: 1200, h: 300 },
+    ];
+    for (const g of gabarits) {
+      const { w, h, top } = dimensionnerBorne(g);
+      const socle = g.h - top - h;
+      expect(socle).toBeGreaterThanOrEqual(-0.01); // jamais négatif : rien n'est rogné
+      expect(w).toBeLessThanOrEqual(g.w + 0.01);
+      expect(top + h + socle).toBeCloseTo(g.h, 3);
+    }
+  });
+
+  it("ne rend pas de socle négatif sur une place absurde", () => {
+    const { w, h, top } = dimensionnerBorne({ w: 0, h: 0 });
+    expect([w, h, top]).toEqual([0, 0, 0]);
   });
 
   it("garde toujours le ratio du caisson", () => {

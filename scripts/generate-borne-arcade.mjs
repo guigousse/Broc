@@ -25,11 +25,13 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SORTIE = path.join(ROOT, "public", "bazar", "borne-facade.webp");
+const SORTIE_SOCLE = path.join(ROOT, "public", "bazar", "borne-socle.webp");
 const REFERENCE = path.join(ROOT, "public", "bazar", "borne-arcade.webp");
 
 const args = process.argv.slice(2);
 const from = args.includes("--from") ? args[args.indexOf("--from") + 1] : null;
 const generer = args.includes("--generer");
+const socleSeul = args.includes("--socle");
 
 const PROMPT_INTRO =
   "Reference image (attached): an arcade cabinet drawn in the exact style to keep. " +
@@ -196,12 +198,83 @@ async function detourer(src) {
   );
 }
 
-if (generer) {
+
+/**
+ * Le SOCLE : la continuation du bas du caisson, en une bande étirable.
+ *
+ * Le tirage est « cropped just below the control panel » (c'est écrit dans le
+ * prompt), et c'est très bien ainsi : demander à Gemini de dessiner un meuble
+ * entier ferait un écran minuscule. Mais du coup, une borne remontée dans le
+ * cadre laisse un trou entre sa base et la barre d'onglets.
+ *
+ * On ne redessine rien pour le combler. Le bas de la façade est un panneau
+ * plat parfaitement régulier — vérifié ligne à ligne : les huit dernières
+ * lignes sont identiques à un point de bruit près, et opaques de x=3 à x=996.
+ * Une bande faite de cette ligne, étirée verticalement en CSS
+ * (`background-size: 100% 100%`), prolonge donc le meuble exactement : les
+ * montants de bois deviennent deux traits verticaux, le panneau continue, le
+ * liseré d'encre tient les deux bords. C'est le bord bas d'un neuf-tranches.
+ *
+ * L'assombrissement est CUIT DANS L'IMAGE et non posé en CSS par-dessus, et
+ * c'est la seule façon correcte : un dégradé CSS couvrirait aussi les trois
+ * pixels transparents de chaque bord et peindrait deux barres sombres à côté
+ * du meuble. Cuit dans la bande, il respecte l'alpha pixel par pixel. Il dit
+ * l'ombre du sol, et évite surtout qu'une grande surface unie ne se lise comme
+ * un aplat oublié.
+ */
+async function socle() {
+  const { width: W, height: H } = await sharp(SORTIE).metadata();
+  // Moyenne des trois dernières lignes : une seule porterait son bruit de
+  // compression, répété ensuite sur toute la hauteur du socle.
+  const ECHANTILLON = 3;
+  const src = await sharp(SORTIE)
+    .ensureAlpha()
+    .extract({ left: 0, top: H - ECHANTILLON, width: W, height: ECHANTILLON })
+    .raw()
+    .toBuffer();
+  const ligne = new Uint8Array(W * 4);
+  for (let x = 0; x < W; x++) {
+    for (let c = 0; c < 4; c++) {
+      let somme = 0;
+      for (let y = 0; y < ECHANTILLON; y++) somme += src[(y * W + x) * 4 + c];
+      ligne[x * 4 + c] = Math.round(somme / ECHANTILLON);
+    }
+  }
+
+  // 96 lignes : assez pour que le dégradé reste lisse une fois étiré sur les
+  // ~250 px que le socle peut atteindre sur un grand téléphone.
+  const HAUTEUR = 96;
+  const PLUS_SOMBRE = 0.66;
+  const bande = Buffer.alloc(W * HAUTEUR * 4);
+  for (let y = 0; y < HAUTEUR; y++) {
+    const k = 1 - (1 - PLUS_SOMBRE) * (y / (HAUTEUR - 1));
+    for (let x = 0; x < W; x++) {
+      const s = x * 4;
+      const d = (y * W + x) * 4;
+      bande[d] = Math.round(ligne[s] * k);
+      bande[d + 1] = Math.round(ligne[s + 1] * k);
+      bande[d + 2] = Math.round(ligne[s + 2] * k);
+      bande[d + 3] = ligne[s + 3]; // l'alpha ne s'assombrit pas
+    }
+  }
+
+  await sharp(bande, { raw: { width: W, height: HAUTEUR, channels: 4 } })
+    .webp({ quality: 92, alphaQuality: 100 })
+    .toFile(SORTIE_SOCLE);
+  console.log(`✅ ${SORTIE_SOCLE}  ${W} × ${HAUTEUR}`);
+}
+
+if (socleSeul) {
+  await socle();
+} else if (generer) {
   const n = Number(args[args.indexOf("--generer") + 1]) || 3;
   await tirages(n);
 } else if (from) {
   await detourer(from);
+  // Le socle est DÉRIVÉ de la façade : il se refait avec elle, sans quoi les
+  // deux divergeraient au premier nouveau tirage et le raccord se verrait.
+  await socle();
 } else {
-  console.error("Usage : --from <fichier.png>  |  --generer [n]");
+  console.error("Usage : --from <fichier.png>  |  --generer [n]  |  --socle");
   process.exit(1);
 }

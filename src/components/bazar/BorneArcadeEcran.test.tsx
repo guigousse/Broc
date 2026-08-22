@@ -105,20 +105,50 @@ describe("BorneArcadeEcran", () => {
   // correction.
   it("centre le caisson par un calage explicite, pas par l'alignement de grille", () => {
     monter();
-    const cadre = screen.getByTestId("borne-facade");
-    expect(cadre.style.position).toBe("absolute");
-    expect(cadre.style.left).toBe("50%");
-    expect(cadre.style.transform).toBe("translateX(-50%)");
+    const col = screen.getByTestId("borne-colonne");
+    expect(col.style.position).toBe("absolute");
+    expect(col.style.left).toBe("50%");
+    expect(col.style.transform).toBe("translateX(-50%)");
     const dlg = screen.getByRole("dialog");
     expect(dlg.style.display).not.toBe("grid");
   });
 
   // Une borne, ça pose ses pieds par terre : sa base se confond avec l'arête
   // haute de la barre d'onglets. Elle flottait au milieu du cadre.
-  it("pose la base du caisson sur la barre d'onglets", () => {
+  it("pose le meuble par terre et le remonte par le haut", () => {
     monter();
-    expect(screen.getByTestId("borne-facade").style.bottom).toBe("0px");
-    expect(screen.getByTestId("borne-facade").style.top).toBe("");
+    const col = screen.getByTestId("borne-colonne");
+    expect(col.style.bottom).toBe("0px");
+    // `top` est calculé (`dimensionnerBorne`), donc posé : c'est lui qui fait
+    // remonter le marquee, la façade ne s'étirant jamais.
+    expect(col.style.top).not.toBe("");
+  });
+
+  // Le socle : la seule pièce qui garantit qu'aucun vide n'apparaît sous la
+  // base une fois la borne remontée. Il part du bas de la façade et descend
+  // jusqu'au plancher, quoi qu'il arrive.
+  it("prolonge le bas du meuble par un socle qui descend jusqu'au plancher", () => {
+    monter();
+    const s = screen.getByTestId("borne-socle");
+    expect(s.style.bottom).toBe("0px");
+    expect(s.style.left).toBe("0px");
+    expect(s.style.right).toBe("0px");
+    expect(s.style.backgroundImage).toContain("/bazar/borne-socle.webp");
+    // L'étirement pur est le rendu VOULU : la bande est une ligne de pixels
+    // répétée, l'étirer verticalement prolonge le panneau à l'identique.
+    expect(s.style.backgroundSize).toBe("100% 100%");
+    expect(s.style.backgroundRepeat).toBe("no-repeat");
+  });
+
+  // Le socle est rendu AVANT la façade, donc dessous : son pixel de
+  // recouvrement se glisse sous elle au lieu de mordre sur le pupitre.
+  it("pose le socle sous la façade dans l'ordre du DOM", () => {
+    monter();
+    const enfants = Array.from(screen.getByTestId("borne-colonne").children);
+    const iSocle = enfants.findIndex((e) => e.getAttribute("data-testid") === "borne-socle");
+    const iFacade = enfants.findIndex((e) => e.getAttribute("data-testid") === "borne-facade");
+    expect(iSocle).toBeGreaterThanOrEqual(0);
+    expect(iFacade).toBeGreaterThan(iSocle);
   });
 
   // Le fond était à 0,88 d'opacité : le flou ne montrait rien, on tombait sur
