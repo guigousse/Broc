@@ -37,8 +37,29 @@ export const BAZAR_LAYOUT = {
     case4: { left: 114.0, bottom: 56.0, width: 22.0 },
     case5: { left: 138.0, bottom: 56.0, width: 22.0 },
     case6: { left: 162.0, bottom: 56.0, width: 22.0 },
-    // La bande de mur nu entre le plateau du comptoir et la première planche.
-    vendeur: { left: 138.0, bottom: 40.0, width: 24.0 },
+    // Le tenancier, dans la bande de mur entre le plateau du comptoir et la
+    // première planche. MESURÉ sur le fond, pas posé à l'estime :
+    //  · `bottom` 38,8 % = l'arête ARRIÈRE du plateau (y ≈ 940 sur 1536). Le
+    //    bas du buste s'y confond, ce qui le met DERRIÈRE le comptoir ; à 40 %
+    //    il flottait 20 px au-dessus.
+    //  · `left` et `width` sont ceux calés à la souris par l'auteur.
+    //  · `bottom` 38 % vaut y = 952 sur le fond : les DOIGTS s'y posent, au
+    //    milieu du plateau, qui court de 937 (arête arrière) à 963 (arête
+    //    avant) — 26 px de profondeur mesurés sur `fond-bazar.webp`, et toute
+    //    la perspective tient là-dedans.
+    //
+    //    Ce réglage, posé à la souris par l'auteur, tombe exactement juste :
+    //    la coupe du buste (faite dans l'illustration même, cf.
+    //    `scripts/_decouper-tenancier.mjs`, 15 px de fond au-dessus des
+    //    doigts) atterrit à y = 937,3, c'est-à-dire SUR l'arête arrière au
+    //    tiers de pixel près. Le buste passe donc derrière le bois pendant que
+    //    les mains restent devant.
+    //
+    //    ⚠ Les trois nombres sont solidaires de la coupe : changer `width`
+    //    change la hauteur affichée, donc l'échelle, donc la position de la
+    //    coupe. Retoucher `bottom` seul déplace l'ensemble sans casser
+    //    l'alignement ; retoucher `width` demande de recalculer `COUPE_Y`.
+    vendeur: { left: 122.0, bottom: 38.0, width: 31.4 },
     // Zone droite (200..300vw) — réservé et sortie.
     table: { left: 209.0, bottom: 18.0, width: 44.0 },
     sortie: { left: 270.0, bottom: 20.0, width: 28.0 },
@@ -59,5 +80,11 @@ export const CLES_BAZAR = Object.keys(BAZAR_LAYOUT.objets) as BazarObjetKey[];
  */
 export const CLES_LOTS: BazarObjetKey[] = ["case4", "case5", "case6"];
 
-/** L'objet de la semaine trône au milieu de la planche du HAUT. */
-export const CLE_VITRINE: BazarObjetKey = "case2";
+/**
+ * L'étagère du HAUT porte les trois objets uniques, un par gamme de prix
+ * (cf. `GAMMES_BAZAR`) : la trouvaille modeste à gauche, la vitrine de la
+ * semaine au milieu, la pièce de caractère à droite. L'ordre des clés EST
+ * l'ordre des index de `EtalBazar.articles` — le prix monte le long de la
+ * planche.
+ */
+export const CLES_ARTICLES: BazarObjetKey[] = ["case1", "case2", "case3"];

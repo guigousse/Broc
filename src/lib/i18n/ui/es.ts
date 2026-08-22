@@ -824,7 +824,7 @@ export const es: DictionnaireUI = {
     lotPieces: "{n} piezas · {categorie}",
     prixJetons: "{n} fichas",
     prixJetonUn: "{n} ficha",
-    vendu: "Vendido — vuelve el lunes",
+    vendu: "Vendido",
     manqueJetons: "Te faltan {n} fichas",
     manqueJetonUn: "Te falta {n} ficha",
     sortir: "Salir del Bazar",

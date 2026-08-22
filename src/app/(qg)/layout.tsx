@@ -29,6 +29,7 @@ import {
 } from "@/lib/storage/safeLocalStorage";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { IrisArrivee } from "@/components/mobile/IrisTransition";
+import { usePassageIris } from "@/components/mobile/usePassageIris";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import {
   UnifiedPanorama,
@@ -400,6 +401,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // Tous les hooks du composant DOIVENT précéder ce return (rules-of-hooks,
   // désormais vérifié par `npm run lint:hooks`).
   const editEnabled = useQgEditEnabled();
+  // Départ vers le Bazar : iris court, puis navigation. Hook, donc ici — au
+  // même titre que le précédent, AVANT tout return anticipé.
+  const { overlay: irisBazar, partirVers } = usePassageIris();
 
   const etape = state?.tutorielEtape;
 
@@ -792,11 +796,19 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         bazarOuvert={bazarEstOuvert(state)}
         joursAvantBazar={joursAvantOuvertureBazar(state)}
         onBazar={() => {
+          // Deux sons de porte, et c'est voulu : celle du bureau qu'on referme
+          // derrière soi ici, le carillon de la boutique à l'arrivée. La
+          // fermeture d'iris les sépare.
           playDoorClose();
           setPorteOuverte(false);
-          router.push("/bazar");
+          partirVers("/bazar");
         }}
       />
+
+      {/* Fermeture d'iris du départ vers le Bazar. La réouverture, elle, est
+          montée par `QgLayout` (plus bas) : elle doit couvrir l'early-return
+          d'hydratation de ce composant-ci. */}
+      {irisBazar}
 
       {/* Machine à énergie popée en alerte (sortie refusée faute d'énergie). */}
       {alerteEnergie && (
@@ -1023,6 +1035,8 @@ export default function QgLayout({
           de QgLayoutInner pour couvrir aussi son early-return « ouverture
           du local… » pendant l'hydratation, et ne dépendre d'aucun état de
           jeu. Sans flag (refresh, lien direct), ne rend rien. */}
+      {/* Le flag dit AUSSI laquelle des deux variantes rejouer : longue
+          depuis l'écran-titre, courte au retour du Bazar. */}
       <IrisArrivee imageSrc="/qg/fond-cabinet.webp" />
     </>
   );

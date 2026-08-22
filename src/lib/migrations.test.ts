@@ -1170,8 +1170,8 @@ function saveV17(patch: Partial<GameState> = {}): GameState {
 }
 
 describe("v18 — la branche thématique « Œil aiguisé » devient Marchandage", () => {
-  it("SAVE_VERSION incrémenté à 20 (v18 Marchandage + v19 tutoriel v2 + v20 jetons du Bazar)", () => {
-    expect(SAVE_VERSION).toBe(20);
+  it("SAVE_VERSION incrémenté à 21 (v18 Marchandage + v19 tutoriel v2 + v20 jetons du Bazar + v21 étal à trois articles)", () => {
+    expect(SAVE_VERSION).toBe(21);
   });
 
   it("retire les ids legacy, rembourse 1 pt chacun, SANS reset des autres compétences (save v17)", () => {
@@ -1315,11 +1315,53 @@ describe("migration v20 — jetons du Bazar", () => {
     delete v19.jetons;
     const migre = migrerSauvegarde(v19 as unknown as GameState);
     expect(migre.jetons).toBe(0);
-    expect(migre.version).toBe(20);
+    expect(migre.version).toBe(SAVE_VERSION);
   });
 
   it("préserve un solde de jetons existant", () => {
     const v20 = { ...createMockGameState({ jetons: 7 }), version: 20 };
     expect(migrerSauvegarde(v20).jetons).toBe(7);
+  });
+});
+
+/**
+ * v21 — l'étal du Bazar passe d'UNE vitrine à TROIS articles (une gamme de
+ * prix par case). Le Bazar est déjà dans `main` (PR #36), donc le format v20
+ * existe dans de vraies sauvegardes : un étal sans `articles` ferait planter
+ * la scène, qui lit `etal.articles.map(...)`.
+ *
+ * La migration jette l'étal plutôt que de le convertir. `settleBazar` en
+ * recompose un complet à la première ouverture, exactement comme une rotation
+ * de semaine : convertir laisserait deux cases vides pendant des jours, avec
+ * une étiquette « Vendu » qui mentirait — personne ne les a achetées.
+ */
+describe("migration v21 — l'étal du Bazar à trois articles", () => {
+  const etalV20 = {
+    cleSemaine: "2026-W34",
+    lotsPieces: [{ categorie: "Musique", quantite: 5, prix: 1 }],
+    vitrine: { templateId: "mus.33tours_jazz_1", valeurBase: 200, prix: 8 },
+  };
+
+  it("jette un étal v20 : rien ne subsiste du format à une vitrine", () => {
+    const save = { ...createMockGameState(), version: 20, bazar: etalV20 };
+    const migre = migrerSauvegarde(save as unknown as GameState);
+    expect(migre.bazar).toBeUndefined();
+  });
+
+  it("garde un étal déjà v21 intact — la migration est idempotente", () => {
+    const etalV21 = {
+      cleSemaine: "2026-W34",
+      lotsPieces: [{ categorie: "Musique", quantite: 5, prix: 1 }],
+      articles: [null, { templateId: "mus.33tours_jazz_1", valeurBase: 200, prix: 8 }, null],
+    };
+    const save = { ...createMockGameState(), version: 21, bazar: etalV21 };
+    const migre = migrerSauvegarde(save as unknown as GameState);
+    expect(migre.bazar).toEqual(etalV21);
+  });
+
+  it("une sauvegarde sans Bazar du tout traverse sans y gagner un étal", () => {
+    const save = { ...createMockGameState(), version: 19 };
+    delete (save as { bazar?: unknown }).bazar;
+    expect(migrerSauvegarde(save as unknown as GameState).bazar).toBeUndefined();
   });
 });

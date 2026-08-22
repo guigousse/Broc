@@ -497,8 +497,8 @@ export interface LotPiecesBazar {
   prix: number;
 }
 
-/** L'objet unique de la vitrine du Bazar, livré en Pristin état. */
-export interface VitrineBazar {
+/** Un objet de l'étagère du haut, exemplaire unique, livré en Pristin état. */
+export interface ObjetBazar {
   templateId: string;
   /** `prixRefBase` du template au moment de la composition (snapshot). */
   valeurBase: number;
@@ -512,8 +512,12 @@ export interface EtalBazar {
   cleSemaine: string;
   /** Fond de commerce : stock illimité, trois catégories distinctes. */
   lotsPieces: LotPiecesBazar[];
-  /** Vitrine : un seul exemplaire. `null` une fois acheté, jusqu'à la rotation. */
-  vitrine: VitrineBazar | null;
+  /**
+   * L'étagère du haut : un objet par gamme de prix (cf. `GAMMES_BAZAR`), dans
+   * l'ordre des cases 1-2-3. Chaque case est un exemplaire unique et retombe à
+   * `null` une fois achetée, jusqu'à la rotation de semaine.
+   */
+  articles: (ObjetBazar | null)[];
 }
 
 export type CompetenceId = string;

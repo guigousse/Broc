@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PorteSheet } from "./PorteSheet";
-import { JOUR_OUVERTURE_BAZAR } from "@/lib/bazar/ouverture";
 
 afterEach(cleanup);
 
@@ -18,7 +17,7 @@ function poserLaPorte(surcharges: Partial<Parameters<typeof PorteSheet>[0]> = {}
       onChiner={vi.fn()}
       onVitrine={vi.fn()}
       bazarOuvert={false}
-      joursAvantBazar={JOUR_OUVERTURE_BAZAR - 20}
+      joursAvantBazar={15}
       onBazar={onBazar}
       {...surcharges}
     />,

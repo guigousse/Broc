@@ -843,7 +843,7 @@ export const el: DictionnaireUI = {
     lotPieces: "{n} ανταλλακτικά · {categorie}",
     prixJetons: "{n} μάρκες",
     prixJetonUn: "{n} μάρκα",
-    vendu: "Πουλήθηκε — επιστρέφει τη Δευτέρα",
+    vendu: "Πουλήθηκε",
     manqueJetons: "Σου λείπουν {n} μάρκες",
     manqueJetonUn: "Σου λείπει {n} μάρκα",
     sortir: "Έξοδος από το Μπαζάρ",

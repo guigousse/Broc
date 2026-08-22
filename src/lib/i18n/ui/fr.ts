@@ -859,7 +859,7 @@ export const fr = {
     lotPieces: "{n} pièces · {categorie}",
     prixJetons: "{n} jetons",
     prixJetonUn: "{n} jeton",
-    vendu: "Vendu — de retour lundi",
+    vendu: "Vendu",
     manqueJetons: "Il vous manque {n} jetons",
     manqueJetonUn: "Il vous manque {n} jeton",
     sortir: "Sortir du Bazar",

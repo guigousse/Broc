@@ -13,6 +13,12 @@
  *
  * Le panneau ne liste que les clés du Bazar : `QG_LAYOUT` n'a rien à faire sur
  * cet écran, et ses clés y renverraient des cadres invisibles.
+ *
+ * Il porte aussi la réouverture d'iris à l'arrivée (`IrisArrivee`, pendant de
+ * celle du bureau) : ici et pas dans la page, parce que la page rend un
+ * `SkeletonScreen` tant que l'étal n'est pas composé — un joueur qui arrive à
+ * cet instant verrait ce squelette à découvert au lieu du noir dont l'iris est
+ * censé le sortir.
  */
 
 import type { ReactNode } from "react";
@@ -20,6 +26,7 @@ import { QgEditProvider } from "@/components/mobile/qg/dev/QgEditContext";
 import { QgEditPanel } from "@/components/mobile/qg/dev/QgEditPanel";
 import { useQgEditEnabled } from "@/components/mobile/qg/dev/useQgEditEnabled";
 import { CLES_BAZAR } from "@/components/bazar/bazarLayout";
+import { IrisArrivee } from "@/components/mobile/IrisTransition";
 
 export default function BazarLayout({ children }: { children: ReactNode }) {
   // Hook unique et inconditionnel, au-dessus de tout return : c'est la règle
@@ -29,6 +36,7 @@ export default function BazarLayout({ children }: { children: ReactNode }) {
   return (
     <QgEditProvider enabled={editEnabled}>
       {children}
+      <IrisArrivee imageSrc="/bazar/fond-bazar.webp" />
       {editEnabled && <QgEditPanel cles={CLES_BAZAR} titre="Bazar edit" />}
     </QgEditProvider>
   );

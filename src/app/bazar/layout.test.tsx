@@ -27,6 +27,7 @@ vi.mock("@/lib/outilsDev", () => ({
 import BazarLayout from "./layout";
 import { QgEditOverlay } from "@/components/mobile/qg/dev/QgEditOverlay";
 import { CLES_BAZAR } from "@/components/bazar/bazarLayout";
+import { poserFlagIris } from "@/lib/transitionIris";
 
 function allerA(url: string) {
   window.history.replaceState({}, "", url);
@@ -106,5 +107,37 @@ describe("layout de /bazar — le fournisseur du mode calage", () => {
     );
     expect(screen.queryByText(/Bazar edit/)).toBeNull();
     expect(screen.queryByText("case1")).toBeNull();
+  });
+});
+
+/**
+ * La réouverture d'iris à l'arrivée au Bazar. Elle est montée par le LAYOUT et
+ * pas par la page : la page rend un `SkeletonScreen` tant que l'étal n'est pas
+ * composé (le settle peut tourner une frame après le montage), et un joueur
+ * qui arrive à cet instant-là verrait ce squelette en clair, à découvert, au
+ * lieu du noir dont l'iris est censé le sortir.
+ */
+describe("layout de /bazar — la réouverture d'iris à l'arrivée", () => {
+  it("sans flag, aucun voile : un rechargement direct sur /bazar arrive à cru", () => {
+    sessionStorage.clear();
+    const { container } = render(<BazarLayout>{null}</BazarLayout>);
+    expect(container.querySelector("[aria-hidden]")).toBeNull();
+  });
+
+  it("avec le flag court posé par le départ, le voile couvre l'écran dès le rendu", () => {
+    poserFlagIris("court");
+    const { container } = render(<BazarLayout>{null}</BazarLayout>);
+    expect(container.querySelector("[aria-hidden]")).not.toBeNull();
+  });
+
+  it("couvre même le Skeleton : l'iris est au-dessus de la page, pas dedans", () => {
+    poserFlagIris("court");
+    render(
+      <BazarLayout>
+        <div data-testid="skeleton" />
+      </BazarLayout>,
+    );
+    expect(screen.getByTestId("skeleton")).toBeTruthy();
+    expect(document.querySelector("[aria-hidden]")).not.toBeNull();
   });
 });

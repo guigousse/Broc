@@ -23,14 +23,13 @@ import {
   type JSX,
 } from "react";
 import {
-  DUREE_FADE_REDUIT_MS,
-  DUREE_FERMETURE_MS,
-  DUREE_OUVERTURE_MS,
   NOIR_MIN_MS,
+  dureesIris,
   effacerFlagIris,
   lireFlagIris,
   prechargerImage,
   prefersReducedMotion,
+  type VarianteIris,
 } from "@/lib/transitionIris";
 
 /** Marge après la fin théorique de la transition CSS avant le callback. */
@@ -72,13 +71,13 @@ function trouStyle(
   };
 }
 
-function voileStyle(opaque: boolean): CSSProperties {
+function voileStyle(opaque: boolean, dureeMs: number): CSSProperties {
   return {
     position: "absolute",
     inset: 0,
     background: "var(--forest-900)",
     opacity: opaque ? 1 : 0,
-    transition: `opacity ${DUREE_FADE_REDUIT_MS}ms ease`,
+    transition: `opacity ${dureeMs}ms ease`,
   };
 }
 
@@ -94,6 +93,11 @@ interface IrisFermetureProps {
    * tap-pour-passer vivant pendant l'iris (« skip conservé »).
    */
   bloqueInteractions?: boolean;
+  /**
+   * « long » (défaut) : l'iris de l'écran-titre vers le bureau. « court » :
+   * le passage bureau ↔ Bazar, la même animation à 70 % de sa durée.
+   */
+  variante?: VarianteIris;
 }
 
 export function IrisFermeture({
@@ -101,7 +105,9 @@ export function IrisFermeture({
   cy,
   onNoir,
   bloqueInteractions = true,
+  variante = "long",
 }: IrisFermetureProps): JSX.Element {
+  const durees = dureesIris(variante);
   const [reduit] = useState(prefersReducedMotion);
   const [diametreOuvert] = useState(() => diametreCouvrant(cx, cy));
   const [ferme, setFerme] = useState(false);
@@ -118,14 +124,14 @@ export function IrisFermeture({
     const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => setFerme(true));
     });
-    const duree = reduit ? DUREE_FADE_REDUIT_MS : DUREE_FERMETURE_MS;
+    const duree = reduit ? durees.fadeReduit : durees.fermeture;
     const timer = setTimeout(() => onNoirRef.current(), duree + MARGE_FIN_MS);
     return () => {
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
       clearTimeout(timer);
     };
-  }, [reduit]);
+  }, [reduit, durees.fadeReduit, durees.fermeture]);
 
   return (
     <div
@@ -136,14 +142,14 @@ export function IrisFermeture({
       aria-hidden
     >
       {reduit ? (
-        <div style={voileStyle(ferme)} />
+        <div style={voileStyle(ferme, durees.fadeReduit)} />
       ) : (
         <div
           style={trouStyle(
             cx,
             cy,
             ferme ? 0 : diametreOuvert,
-            DUREE_FERMETURE_MS,
+            durees.fermeture,
             "cubic-bezier(0.55, 0, 1, 0.45)",
           )}
         />
@@ -165,7 +171,14 @@ interface IrisArriveeProps {
  * centre de l'écran, puis démontage automatique.
  */
 export function IrisArrivee({ imageSrc }: IrisArriveeProps): JSX.Element | null {
-  const [actif, setActif] = useState(false);
+  // La variante n'est PAS une prop : le bureau est atteint depuis l'écran-titre
+  // (iris long) comme depuis le Bazar (iris court), et c'est le flag —
+  // consommé ci-dessous — qui dit lequel des deux rejouer.
+  const [variante, setVariante] = useState<VarianteIris | null>(null);
+  // Le flag non consommé (ou absent) vaut « pas d'iris à jouer » : l'état de
+  // la variante porte donc à lui seul l'activité de l'overlay.
+  const actif = variante !== null;
+  const durees = dureesIris(variante ?? "long");
   const [reduit] = useState(prefersReducedMotion);
   const [ouvert, setOuvert] = useState(false);
   const [fini, setFini] = useState(false);
@@ -175,9 +188,10 @@ export function IrisArrivee({ imageSrc }: IrisArriveeProps): JSX.Element | null 
   // seconde lecture raterait le flag déjà consommé) ni dans un useEffect
   // (une frame de retard = flash de l'écran de chargement).
   useLayoutEffect(() => {
-    if (!lireFlagIris()) return;
+    const v = lireFlagIris();
+    if (!v) return;
     effacerFlagIris();
-    setActif(true);
+    setVariante(v);
   }, []);
 
   // Notre overlay React est en place (même commit, avant paint) : le voile
@@ -196,21 +210,21 @@ export function IrisArrivee({ imageSrc }: IrisArriveeProps): JSX.Element | null 
       setOuvert(true);
       timerFin = setTimeout(
         () => setFini(true),
-        (reduit ? DUREE_FADE_REDUIT_MS : DUREE_OUVERTURE_MS) + MARGE_FIN_MS,
+        (reduit ? durees.fadeReduit : durees.ouverture) + MARGE_FIN_MS,
       );
     });
     return () => {
       annule = true;
       if (timerFin !== undefined) clearTimeout(timerFin);
     };
-  }, [actif, imageSrc, reduit]);
+  }, [actif, imageSrc, reduit, durees.fadeReduit, durees.ouverture]);
 
   if (!actif || fini) return null;
 
   if (reduit) {
     return (
       <div style={conteneurStyle} aria-hidden>
-        <div style={voileStyle(!ouvert)} />
+        <div style={voileStyle(!ouvert, durees.fadeReduit)} />
       </div>
     );
   }
@@ -224,7 +238,7 @@ export function IrisArrivee({ imageSrc }: IrisArriveeProps): JSX.Element | null 
           cx,
           cy,
           ouvert ? diametreCouvrant(cx, cy) : 0,
-          DUREE_OUVERTURE_MS,
+          durees.ouverture,
           "cubic-bezier(0.16, 1, 0.3, 1)",
         )}
       />

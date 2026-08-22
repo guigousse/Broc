@@ -603,6 +603,24 @@ class AudioManager {
     src.start();
   }
 
+  /**
+   * Carillon de la porte du Bazar. Il sonne à l'ARRIVÉE sur l'écran, pas au
+   * tap qui a lancé la navigation : `playDoorClose` est la porte du bureau
+   * qu'on referme derrière soi, celle-ci est celle de la boutique qu'on
+   * pousse. Les deux s'enchaînent, séparées par la fermeture d'iris.
+   */
+  async playCarillon(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/carillon-bazar.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   /** Coffre de camionnette qui se ferme (validation chargement). */
   async playCoffreFerme(): Promise<void> {
     if (!this.prefs.effets) return;

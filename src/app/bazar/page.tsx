@@ -1,18 +1,23 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { BazarScene } from "@/components/bazar/BazarScene";
 import { useGame } from "@/context/GameContext";
+import { audioManager } from "@/lib/audio/audioManager";
+import { usePassageIris } from "@/components/mobile/usePassageIris";
 import { bazarEstOuvert } from "@/lib/bazar/ouverture";
 import type { AchatBazar } from "@/lib/bazar/achat";
 
 export default function BazarPage() {
   const router = useRouter();
   const { state, isHydrated, acheterAuBazar, rafraichirPeriodiques } = useGame();
+  // On ne quitte pas le Bazar comme on change d'onglet : c'est un lieu, et on
+  // en sort par la porte, iris compris (cf. `usePassageIris`).
+  const { overlay: irisSortie, partirVers } = usePassageIris();
 
   useEffect(() => {
     if (isHydrated && !state) router.replace("/");
@@ -33,6 +38,20 @@ export default function BazarPage() {
   useEffect(() => {
     rafraichirPeriodiques();
   }, [rafraichirPeriodiques]);
+
+  // Le carillon de la boutique, à l'arrivée. Pas au tap qui a lancé la
+  // navigation : le QG y joue déjà `playDoorClose` — la porte du bureau qu'on
+  // referme derrière soi — et les deux sons s'enchaînent de part et d'autre de
+  // la fermeture d'iris. Le ref garde du double montage de StrictMode en
+  // développement, où un effet nu ferait sonner la cloche deux fois. Posé
+  // AVANT le retour anticipé du Skeleton : le joueur qui arrive une seconde
+  // avant le settle entend quand même la porte.
+  const carillonJoue = useRef(false);
+  useEffect(() => {
+    if (carillonJoue.current) return;
+    carillonJoue.current = true;
+    void audioManager.playCarillon();
+  }, []);
 
   // Le refus est rendu TEL QUEL à la scène, qui le porte jusqu'à la fiche de
   // l'article. Il passait auparavant par un toast : transitoire, posé au-dessus
@@ -74,9 +93,10 @@ export default function BazarPage() {
           etal={state.bazar}
           jetons={state.jetons}
           onAcheter={handleAcheter}
-          onSortir={() => router.push("/bureau")}
+          onSortir={() => partirVers("/bureau")}
         />
       </div>
+      {irisSortie}
     </MobileLayout>
   );
 }

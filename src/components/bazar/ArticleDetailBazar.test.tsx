@@ -11,7 +11,7 @@ import { ArticleDetailBazar, type ArticleDetail } from "./ArticleDetailBazar";
 afterEach(cleanup);
 
 const VITRINE: ArticleDetail = {
-  genre: "vitrine",
+  genre: "objet",
   templateId: "jx.jeu_magnatimmo_annees_80",
   categorie: "Jeux & Loisirs",
   libelle: "Jeu Magnatimmo années 80",
@@ -82,7 +82,7 @@ describe("ArticleDetailBazar", () => {
 
   it("template disparu du catalogue : la fiche reste, sans visuel, et achète", () => {
     const { onAcheter } = monter({
-      genre: "vitrine",
+      genre: "objet",
       templateId: "zz.template_disparu",
       categorie: null,
       libelle: "zz.template_disparu",

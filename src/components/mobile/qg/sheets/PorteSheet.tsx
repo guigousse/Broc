@@ -18,7 +18,7 @@ interface PorteSheetProps {
   tutoChiner?: boolean;
   /** Tutoriel : force le choix Étaler (pulse) et désactive Chiner. */
   tutoEtaler?: boolean;
-  /** Le Bazar a ouvert (jour 35). Fermé, son bouton reste visible mais cadenassé. */
+  /** Le Bazar a ouvert (jour 20). Fermé, son bouton reste visible mais cadenassé. */
   bazarOuvert: boolean;
   /** Jours de jeu avant l'ouverture, pour le « J-{n} ». Ignoré si `bazarOuvert`. */
   joursAvantBazar: number;

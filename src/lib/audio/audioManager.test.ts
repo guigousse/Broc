@@ -735,3 +735,30 @@ describe("audioManager — playEclair (achat énergie infinie)", () => {
     expect(urls.filter((u) => u === "/sounds/eclair.mp3")).toHaveLength(2);
   });
 });
+
+/**
+ * Le carillon de la porte du Bazar : il sonne à l'ARRIVÉE sur l'écran, pas au
+ * tap qui a lancé la navigation — c'est la porte de la boutique qu'on pousse,
+ * pas celle du bureau qu'on referme (`playDoorClose`, côté QG).
+ */
+describe("audioManager — playCarillon (porte du Bazar)", () => {
+  beforeEach(stubBrowserGlobals);
+
+  it("playCarillon charge /sounds/carillon-bazar.mp3 et lance la source", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playCarillon();
+    expect(fetchMock).toHaveBeenCalledWith("/sounds/carillon-bazar.mp3");
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(1);
+    expect(ctx.bufferSources[0].start).toHaveBeenCalled();
+  });
+
+  it("playCarillon est muet quand la préférence effets est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    await audioManager.playCarillon();
+    // Muet au point de ne pas même aller chercher le fichier.
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(FakeAudioContext.instances).toHaveLength(0);
+  });
+});

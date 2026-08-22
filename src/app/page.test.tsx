@@ -140,7 +140,7 @@ describe("TitleScreen — Continuer avec transition iris", () => {
 
     expect(screen.getByTestId("iris-fermeture")).toBeTruthy();
     expect(location.href).toBe("");
-    expect(lireFlagIris()).toBe(false);
+    expect(lireFlagIris()).toBe(null);
   });
 
   it("au noir : pose le flag et navigue vers /bureau", () => {
@@ -151,7 +151,7 @@ describe("TitleScreen — Continuer avec transition iris", () => {
 
     irisOnNoir!();
 
-    expect(lireFlagIris()).toBe(true);
+    expect(lireFlagIris()).toBe("long");
     expect(location.href).toBe("/bureau");
   });
 
@@ -190,7 +190,7 @@ describe("TitleScreen — lancement d'un slot via la modal Parties", () => {
     expect(detacherPartie.mock.invocationCallOrder[0]).toBeLessThan(
       changerSlotActif.mock.invocationCallOrder[0],
     );
-    expect(lireFlagIris()).toBe(true);
+    expect(lireFlagIris()).toBe("long");
     expect(location.href).toBe("/bureau");
   });
 });

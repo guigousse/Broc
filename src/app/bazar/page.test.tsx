@@ -2,7 +2,7 @@
 /**
  * Revue finale (C1) : `settleBazar` ne tournait que sur le tick 60 s /
  * focus / visibilitychange / pageshow du GameContext — rien ne le
- * déclenchait à la navigation. Un joueur qui passait au jour 35 et tapait
+ * déclenchait à la navigation. Un joueur qui passait au jour 20 et tapait
  * aussitôt sur la porte du Bazar tombait sur un `SkeletonScreen` muet
  * jusqu'à 60 s (le temps que le tick suivant compose l'étal). Ce test
  * verrouille le déclenchement explicite au montage de l'écran.
@@ -12,10 +12,13 @@
  * vendu par une autre course) ne disait rien au joueur.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { StrictMode } from "react";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import BazarPage from "./page";
 import { genererEtal } from "@/lib/bazar/etal";
 import { JOUR_OUVERTURE_BAZAR } from "@/lib/bazar/ouverture";
+import { audioManager } from "@/lib/audio/audioManager";
+import { dureesIris, lireFlagIris } from "@/lib/transitionIris";
 
 const push = vi.fn();
 const replace = vi.fn();
@@ -153,5 +156,81 @@ describe("BazarPage — le refus d'acheterAuBazar remonte jusqu'à la fiche", ()
     expect(acheterAuBazar).toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(toast).not.toHaveBeenCalled();
+  });
+});
+
+// Le carillon de la boutique sonne à l'ARRIVÉE, pas au tap qui a lancé la
+// navigation : le QG joue déjà `playDoorClose` (la porte du bureau qu'on
+// referme derrière soi) au moment du tap, et les deux sons s'enchaînent de
+// part et d'autre de la fermeture d'iris.
+describe("BazarPage — le carillon de la porte", () => {
+  it("sonne à l'arrivée sur l'écran", () => {
+    const carillon = vi.spyOn(audioManager, "playCarillon").mockResolvedValue();
+    render(<BazarPage />);
+    expect(carillon).toHaveBeenCalledTimes(1);
+  });
+
+  // En développement, StrictMode monte/démonte/remonte chaque composant : un
+  // `useEffect(..., [])` nu ferait sonner la cloche DEUX fois, et c'est
+  // audible. Le garde est un ref, qui survit au remontage simulé.
+  it("ne sonne qu'une fois, même sous StrictMode", () => {
+    const carillon = vi.spyOn(audioManager, "playCarillon").mockResolvedValue();
+    render(
+      <StrictMode>
+        <BazarPage />
+      </StrictMode>,
+    );
+    expect(carillon).toHaveBeenCalledTimes(1);
+  });
+
+  it("sonne aussi quand l'étal n'est pas encore composé (Skeleton)", () => {
+    // L'effet est en tête de composant, avant le retour anticipé : le joueur
+    // qui arrive une seconde avant le settle entend quand même la porte.
+    mockState = { ...mockState, bazar: undefined } as Record<string, unknown>;
+    const carillon = vi.spyOn(audioManager, "playCarillon").mockResolvedValue();
+    render(<BazarPage />);
+    expect(carillon).toHaveBeenCalledTimes(1);
+  });
+});
+
+// On ne quitte pas le Bazar comme on change d'onglet : c'est un LIEU, et on en
+// sort par la porte. Le même iris qu'entre l'écran-titre et le bureau, 30 %
+// plus court, ferme la boutique avant de rendre la main au bureau — dont le
+// layout (qg) rouvre l'iris de son côté, sur le flag posé ici.
+describe("BazarPage — sortir par la porte", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    vi.useFakeTimers({
+      toFake: [
+        "setTimeout",
+        "clearTimeout",
+        "requestAnimationFrame",
+        "cancelAnimationFrame",
+      ],
+    });
+  });
+  afterEach(() => vi.useRealTimers());
+
+  function pousserLaPorte() {
+    act(() => {
+      screen.getByRole("button", { name: "Sortir du Bazar" }).click();
+    });
+  }
+
+  it("la porte ferme l'iris et ne navigue pas encore", () => {
+    render(<BazarPage />);
+    pousserLaPorte();
+    expect(push).not.toHaveBeenCalled();
+    expect(lireFlagIris()).toBe(null);
+  });
+
+  it("au noir : le flag court est posé, puis on revient au bureau", async () => {
+    render(<BazarPage />);
+    pousserLaPorte();
+    await act(() =>
+      vi.advanceTimersByTimeAsync(dureesIris("court").fermeture + 200),
+    );
+    expect(lireFlagIris()).toBe("court");
+    expect(push).toHaveBeenCalledWith("/bureau");
   });
 });
