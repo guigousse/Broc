@@ -212,11 +212,17 @@ est un second visuel et qui, elle, reste muette (voir ci-dessous).
 - le tap sur le fond flouté ;
 - la touche Échap.
 
-**Accessibilité.** `role="dialog"`, focus piégé, image du caisson `alt=""`,
+**Accessibilité.** `role="dialog"`, `aria-modal`, image du caisson `alt=""`,
 flèches nommées, et le titre du jeu sélectionné annoncé à chaque changement —
 sans quoi un joueur non-voyant swipe dans le vide. Ce qui est masqué
 visuellement par les joysticks ne l'est pas pour un lecteur d'écran : c'est un
 recouvrement de pixels, pas un retrait du DOM.
+
+**Pas de piège à focus**, et c'est délibéré : aucun dialogue de ce jeu n'en
+pose — ni la fiche d'article du Bazar, ni les sheets du bureau. En ajouter un
+ici ferait de cet écran le seul à se comporter autrement, ce qui est pire qu'un
+manque uniforme. C'est une limite connue de l'application entière ; si elle se
+corrige un jour, elle se corrigera partout d'un coup.
 
 ## 6. Découpage
 
