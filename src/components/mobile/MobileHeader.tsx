@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Zap } from "lucide-react";
+import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { ENERGIE_MAX, energieCourante } from "@/lib/energie";
 import { emptyBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
 import { useBudgetAffiche, useEnergieAffiche, useXpAffiche } from "@/lib/affichageGele";
+import { formaterMontantCompact } from "@/lib/montantCompact";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { useEnergieInfinie } from "@/lib/iap/energieInfinie";
@@ -16,14 +18,16 @@ import { EnergieRecharge } from "./EnergieRecharge";
 
 interface MobileHeaderProps {
   budget: number;
-  /** Solde de jetons du Bazar. Le bloc est masqué tant qu'il vaut 0, sauf `forcerAffichageJetons`. */
-  jetons?: number;
   /**
-   * Affiche le compteur de jetons même à 0. Réservé à l'écran du Bazar : « un
-   * étal garni, un compteur à zéro » (spec) — partout ailleurs, masquer à 0
-   * reste le bon choix. Passé par la page, jamais détecté ici depuis l'URL.
+   * Solde en Bazarcoins. TOUJOURS affiché, même à zéro.
+   *
+   * Il était masqué à zéro tant qu'il vivait dans son propre bloc, et l'écran
+   * du Bazar le forçait par une prop. Depuis que la caisse porte les deux
+   * devises sous un seul libellé, en escamoter une fait sauter le centrage du
+   * mot d'un écran à l'autre — et une bourse à zéro est une information : elle
+   * dit au joueur qu'il lui faut aller en gagner.
    */
-  forcerAffichageJetons?: boolean;
+  jetons?: number;
 }
 
 const wrapStyle: CSSProperties = {
@@ -39,9 +43,9 @@ const innerStyle: CSSProperties = {
   display: "grid",
   // Colonnes latérales de même flexibilité : le bloc NIVEAU, seul au milieu,
   // tombe donc au centre de la page. Elles ne s'écartent de l'égalité que si
-  // la droite (énergie + caisse) déborde — la caisse peut grossir de « 8 € »
-  // à « 128 450 € » : le niveau glisse alors du minimum nécessaire plutôt
-  // que de pousser la caisse hors de l'écran.
+  // la droite (énergie + caisse) déborde. La caisse est bornée depuis
+  // qu'elle abrège (« 128,4k € » et non « 128 450 € »), mais le niveau garde
+  // ce droit de glisser plutôt que de la pousser hors de l'écran.
   gridTemplateColumns: "1fr auto 1fr",
   alignItems: "center",
   gap: 10,
@@ -70,10 +74,31 @@ const labelStyle: CSSProperties = {
   lineHeight: 1,
 };
 
+/**
+ * Hors de vue, mais dans l'arbre d'accessibilité. Même clip-rect que
+ * `ChineNegoDrawer` — le dépôt n'a pas d'idiome « sr-only » partagé.
+ */
+const srOnlyStyle: CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
 const valueStyle: CSSProperties = {
   display: "block",
   fontFamily: "var(--font-display)",
   fontWeight: 700,
+  // Le bloc caisse hérite du `uppercase` de son libellé : sans ce contre-ordre,
+  // la forme courte s'affiche « 10,6K ». La minuscule est voulue — après un
+  // chiffre en police d'affichage, une capitale fait une seconde hampe qui se
+  // lit comme un caractère de plus.
+  textTransform: "none",
   fontSize: "clamp(13px, 3.8vw, 16px)",
   color: "var(--brass-300)",
   marginTop: 2,
@@ -128,7 +153,7 @@ const xpFillStyle: CSSProperties = {
  *  inconditionnellement, il lui faut donc toujours une valeur. */
 const BROCANTEUR_REPLI = emptyBrocanteur();
 
-export function MobileHeader({ budget, jetons, forcerAffichageJetons = false }: MobileHeaderProps) {
+export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
   const { state } = useGame();
   const { tempsConfiance } = useGameActions();
   const [rechargeOuverte, setRechargeOuverte] = useState(false);
@@ -268,25 +293,69 @@ export function MobileHeader({ budget, jetons, forcerAffichageJetons = false }: 
               <Zap size={15} strokeWidth={2.5} color={couleurReste} aria-hidden />
             </strong>
           </button>
-          {(forcerAffichageJetons || !!jetons) && (
-            <div style={{ textAlign: "right", flexShrink: 0, ...labelStyle }}>
-              {d.chrome.jetons}
-              <strong style={valueStyle}>{(jetons ?? 0).toLocaleString(locale)}</strong>
-            </div>
-          )}
-          {/* data-fly-target : cible des objets vendus dans le bilan de vente,
-              comme le stockage l'est pour les objets chinés. */}
+          {/* LA CAISSE, en deux devises sous UN SEUL libellé — c'est une
+              bourse, pas deux compteurs voisins. Le libellé se centre donc
+              sur l'ensemble.
+
+              La couleur est ce qui les sépare : le Bazarcoin en bleu
+              électrique, les euros en laiton comme partout ailleurs dans le
+              jeu. Sans elle, deux nombres voisins sous un même mot seraient
+              illisibles. */}
           <div
-            style={{ textAlign: "right", flexShrink: 0, ...labelStyle }}
-            data-fly-target="caisse-header"
+            data-caisse
+            style={{ flexShrink: 0, textAlign: "center", ...labelStyle }}
           >
             {d.chrome.caisse}
-            <strong style={valueStyle}>
-              {tr(d.chrome.montantEuros, {
-                valeur: budgetAffiche.toLocaleString(locale),
-              })}
-            </strong>
-          </div>
+            <span
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "center",
+                gap: 9,
+              }}
+            >
+              <strong
+                  style={{
+                    ...valueStyle,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 3,
+                    color: "var(--azur-400)",
+                  }}
+                >
+                  {/* Le mot ET le compte exact restent dans le DOM, hors de
+                      vue : un lecteur d'écran entend « Caisse, Bazarcoins
+                      12 500, 10 610 € », là où l'œil lit un signe et une
+                      forme courte. L'abréviation est une commodité pour
+                      l'œil ; le montant, lui, reste dû. */}
+                  <span style={srOnlyStyle}>
+                    {`${d.chrome.jetons} ${(jetons ?? 0).toLocaleString(locale)}`}
+                  </span>
+                  <span aria-hidden="true">
+                    {formaterMontantCompact(jetons ?? 0, locale)}
+                  </span>
+                  <BazarcoinIcon size={14} />
+                </strong>
+              {/* data-fly-target : cible des objets vendus dans le bilan de
+                  vente, comme le stockage l'est pour les objets chinés. Il est
+                  posé sur le MONTANT EN EUROS et non sur le bloc entier :
+                  depuis que la caisse porte deux devises, le centre du bloc
+                  tombe entre les deux nombres, et l'argent volerait à côté de
+                  la somme qu'il vient grossir. */}
+              <strong style={{ ...valueStyle, display: "inline-block" }} data-fly-target="caisse-header">
+                <span style={srOnlyStyle}>
+                  {tr(d.chrome.montantEuros, {
+                    valeur: budgetAffiche.toLocaleString(locale),
+                  })}
+                </span>
+                <span aria-hidden="true">
+                  {tr(d.chrome.montantEuros, {
+                    valeur: formaterMontantCompact(budgetAffiche, locale),
+                  })}
+                </span>
+              </strong>
+            </span>
+        </div>
         </div>
       </div>
 

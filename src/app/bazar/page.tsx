@@ -65,7 +65,7 @@ export default function BazarPage() {
 
   return (
     <MobileLayout
-      header={<MobileHeader budget={state.budget} jetons={state.jetons} forcerAffichageJetons />}
+      header={<MobileHeader budget={state.budget} jetons={state.jetons} />}
       fillContent
     >
       <div
