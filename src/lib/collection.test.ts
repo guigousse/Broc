@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CategorieObjet, CollectionSlot, Rarete } from "@/types/game";
 import { CATEGORIES } from "@/data/categories";
+import { getTemplate } from "@/data/objetTemplates";
 import {
   collectionComplete,
   donnerObjet,
@@ -12,6 +13,7 @@ import {
   progressionGlobale,
   retirerDonation,
   templateDejaPossede,
+  templateDonne,
   templateVu,
   valeurParCategorie,
   valeurTotale,
@@ -365,5 +367,28 @@ describe("templateVu", () => {
 
   it("faux pour un templateId inconnu", () => {
     expect(templateVu(initCollection(), "template-inexistant")).toBe(false);
+  });
+});
+
+describe("templateDonne", () => {
+  it("est faux tant que le slot n'a pas de donation, même déjà possédé", () => {
+    const c = initCollection();
+    const cat = getTemplate("jx.cartouche_bluebot_8_bit")!.categorie;
+    const slot = c[cat].find((s) => s.templateId === "jx.cartouche_bluebot_8_bit")!;
+    slot.dejaPossede = true;
+    slot.vu = true;
+    expect(templateDonne(c, "jx.cartouche_bluebot_8_bit")).toBe(false);
+  });
+
+  it("est vrai dès qu'une donation occupe le slot", () => {
+    const c = initCollection();
+    const cat = getTemplate("jx.cartouche_bluebot_8_bit")!.categorie;
+    const slot = c[cat].find((s) => s.templateId === "jx.cartouche_bluebot_8_bit")!;
+    slot.donation = { etat: "Bon", valeur: 42 };
+    expect(templateDonne(c, "jx.cartouche_bluebot_8_bit")).toBe(true);
+  });
+
+  it("est faux pour un templateId qui n'existe nulle part", () => {
+    expect(templateDonne(initCollection(), "xx.inexistant")).toBe(false);
   });
 });
