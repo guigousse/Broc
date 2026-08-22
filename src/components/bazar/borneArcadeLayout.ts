@@ -20,36 +20,36 @@ export const BORNE_FACADE = {
 } as const;
 
 /**
- * Part de la largeur disponible que le TROU doit occuper.
+ * Part de la largeur disponible que le CAISSON occupe.
  *
- * On cale le trou, pas le caisson : l'auteur a explicitement autorisé le bois
- * à sortir du cadre du moment que l'écran est vu en entier. Sans ça, un
- * caisson entier tenu dans un téléphone ne laisserait qu'un écran de
- * 268 × 196 — trop petit pour porter une capture en grand, qui est tout
- * l'objet de cet écran.
+ * On calait auparavant le TROU sur 92 % de la largeur, et le bois débordait :
+ * l'auteur l'avait autorisé pour gagner un écran plus grand. Il est revenu
+ * dessus à la recette du 2026-08-23 — une borne dont les flancs sortent du
+ * cadre ne se lit plus comme un meuble posé dans la boutique, on ne voit plus
+ * qu'un panneau. C'est donc le caisson entier qui tient en largeur, et l'écran
+ * paie la différence : sur un iPhone 12 il passe de 359 × 264 à 268 × 197.
+ * C'est le prix décidé, pas un oubli.
  *
- * 92 % et pas 100 % : il faut un filet de bois de chaque côté, sinon le trou
- * touche les bords et la borne cesse de se lire comme un meuble.
+ * 96 % et pas 100 % : un filet d'air de chaque côté, sinon les flancs touchent
+ * les bords du cadre et la borne a l'air encastrée dans l'écran.
  */
-export const PART_LARGEUR_TROU = 0.92;
+export const PART_LARGEUR_CAISSON = 0.96;
 
 /**
  * Dimensions du caisson pour une place donnée.
  *
- * Deux règles, la seconde bornant la première :
- *   1. le trou occupe `PART_LARGEUR_TROU` de la largeur disponible ;
- *   2. mais le caisson ENTIER doit tenir en hauteur — c'est ce qui garantit
- *      que le marquee et le pupitre restent visibles, et donc qu'on reconnaît
- *      une borne. Sur un téléphone c'est (1) qui gagne, sur un écran large et
- *      court c'est (2).
+ * Une seule règle, prise deux fois : le caisson ENTIER tient dans le cadre,
+ * en largeur comme en hauteur. La plus contraignante des deux gagne — sur un
+ * téléphone c'est la largeur, sur un écran large et court c'est la hauteur,
+ * et c'est elle qui garantit alors que le marquee et le pupitre restent
+ * visibles, donc qu'on reconnaît une borne.
  */
 export function dimensionnerBorne(dispo: { w: number; h: number }): {
   w: number;
   h: number;
 } {
   if (dispo.w <= 0 || dispo.h <= 0) return { w: 0, h: 0 };
-  const partTrou = (100 - BORNE_FACADE.trou.left - BORNE_FACADE.trou.right) / 100;
-  const parLargeur = (dispo.w * PART_LARGEUR_TROU) / partTrou;
+  const parLargeur = dispo.w * PART_LARGEUR_CAISSON;
   const parHauteur = dispo.h * BORNE_FACADE.ratio;
   const w = Math.min(parLargeur, parHauteur);
   return { w, h: w / BORNE_FACADE.ratio };

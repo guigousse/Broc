@@ -44,14 +44,16 @@ export const STYLE_VOILE_BORNE: CSSProperties = {
 /**
  * Le caisson, centré à la main et posé par terre.
  *
- * `left: 50%` + `translateX(-50%)` et NON `place-items: center` : le voile est
- * en `overflow: hidden`, donc un conteneur de défilement, et le moteur y
- * recale sur le bord de DÉPART tout objet plus large que lui — pour ne pas
- * rendre son début inatteignable. Or ce caisson est plus large que le
- * téléphone par construction (cf. `PART_LARGEUR_TROU`). Mesuré sur iPhone 12
- * avant correction : 501 px de caisson posés à `x = 0`, les 111 px de débord
- * entièrement à droite, le marquee « ARCADE » tranché. Le calage explicite
- * échappe à cette correction et redonne un débord symétrique.
+ * `left: 50%` + `translateX(-50%)` et NON `place-items: center`, et ce garde
+ * reste posé même depuis que le caisson tient en largeur : le voile est en
+ * `overflow: hidden`, donc un conteneur de défilement, et le moteur y recale
+ * sur le bord de DÉPART tout objet plus large que lui — pour ne pas rendre son
+ * début inatteignable. Le caisson l'était par construction tant qu'on calait
+ * le trou et non le meuble ; mesuré sur iPhone 12 avant correction : 501 px de
+ * caisson posés à `x = 0`, les 111 px de débord entièrement à droite, le
+ * marquee « ARCADE » tranché. Le calage explicite échappe à cette correction,
+ * et continuerait de tenir si un jour la façade redevenait plus large que le
+ * cadre.
  *
  * `bottom: 0` : une borne pose ses pieds par terre. Sa base se confond avec
  * l'arête haute de la barre d'onglets, qui joue le plancher — centrée, elle

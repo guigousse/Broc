@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BORNE_FACADE, PART_LARGEUR_TROU, dimensionnerBorne } from "./borneArcadeLayout";
+import { BORNE_FACADE, PART_LARGEUR_CAISSON, dimensionnerBorne } from "./borneArcadeLayout";
 
 describe("BORNE_FACADE", () => {
   it("décrit un trou qui tient dans le caisson", () => {
@@ -21,20 +21,37 @@ describe("BORNE_FACADE", () => {
 });
 
 describe("dimensionnerBorne", () => {
-  // Sur un téléphone c'est la LARGEUR qui commande : le caisson déborde des
-  // deux côtés, ce que l'auteur a explicitement autorisé — seul l'écran doit
-  // être vu en entier.
-  it("sur un téléphone, cale le trou sur la largeur et laisse le bois déborder", () => {
+  // Sur un téléphone c'est la LARGEUR qui commande, et le caisson ENTIER doit y
+  // tenir : l'auteur est revenu le 2026-08-23 sur l'autorisation de déborder
+  // qu'il avait donnée. Une borne dont les flancs sortent du cadre ne se lit
+  // plus comme un meuble posé dans la boutique.
+  it("sur un téléphone, fait tenir le caisson entier dans la largeur", () => {
     const { w, h } = dimensionnerBorne({ w: 393, h: 760 });
-    expect(w).toBeGreaterThan(393); // le caisson déborde
-    expect(h).toBeLessThanOrEqual(760); // mais il tient en hauteur
-    const largeurTrou = (w * (100 - BORNE_FACADE.trou.left - BORNE_FACADE.trou.right)) / 100;
-    expect(largeurTrou).toBeCloseTo(393 * PART_LARGEUR_TROU, 0);
+    expect(w).toBeLessThanOrEqual(393);
+    expect(w).toBeCloseTo(393 * PART_LARGEUR_CAISSON, 0);
+    expect(h).toBeLessThanOrEqual(760);
   });
 
-  // Sur un écran large et court, c'est la hauteur qui commande, sinon le
-  // marquee et le pupitre sortiraient du cadre et on ne reconnaîtrait plus
-  // une borne.
+  // La garde qui compte, et sur les gabarits réels : rien ne dépasse, jamais,
+  // ni en largeur ni en hauteur. C'est tout ce que le cadrage promet.
+  it("tient dans le cadre sur tous les gabarits, du plus étroit à la tablette", () => {
+    const gabarits = [
+      { w: 320, h: 480 }, // iPhone SE 1ʳᵉ génération, le plus étroit qu'on vise
+      { w: 375, h: 667 },
+      { w: 390, h: 735 }, // iPhone 12, cadre du Bazar mesuré
+      { w: 430, h: 800 },
+      { w: 834, h: 1000 }, // iPad portrait
+      { w: 1200, h: 500 }, // large et court
+    ];
+    for (const g of gabarits) {
+      const { w, h } = dimensionnerBorne(g);
+      expect(w).toBeLessThanOrEqual(g.w + 0.01);
+      expect(h).toBeLessThanOrEqual(g.h + 0.01);
+    }
+  });
+
+  // Sur un écran large et court, c'est la hauteur qui commande — la largeur y
+  // est si généreuse que s'y caler ferait sortir le marquee et le pupitre.
   it("sur un écran large et court, cale le caisson sur la hauteur", () => {
     const { w, h } = dimensionnerBorne({ w: 1200, h: 500 });
     expect(h).toBeCloseTo(500, 0);
