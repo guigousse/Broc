@@ -1,10 +1,23 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S npx tsx
 /**
  * Les onze fausses captures d'écran de la borne d'arcade.
  *
  * UN SEUL BRIEF COMMUN, et c'est le point : ces onze images doivent avoir
- * l'air de tourner sur la même machine. Le brief impose la palette, la taille
- * des pixels et le cadrage ; seule la SCÈNE change d'un jeu à l'autre.
+ * l'air de tourner sur la même machine. Le brief impose la palette, la
+ * taille des pixels et le cadrage ; ce qui change d'un jeu à l'autre, c'est
+ * l'image de RÉFÉRENCE envoyée à Gemini — la jaquette de la cartouche
+ * (`public/items/<templateId>.webp`), dont le personnage est déjà original
+ * et validé. On ne décrit plus la scène en anglais : le texte est justement
+ * ce qui, la première fois, faisait dériver le dessin vers un jeu réel
+ * (le titre du catalogue « inspirait » une description qui redessinait un
+ * personnage existant). En passant l'illustration comme référence, il n'y a
+ * plus d'intermédiaire textuel par lequel la dérive peut passer.
+ *
+ * La liste des onze jeux est importée de `JEUX_ARCADE`, pas recopiée : les
+ * deux ne peuvent plus diverger. Le fichier reste un `.mjs` mais s'exécute
+ * via `tsx` (le shebang et le script npm `gen:captures-arcade` s'en
+ * chargent) — c'est nécessaire pour que l'alias `@/` dont `arcade.ts` a
+ * besoin (`@/lib/collection`, `@/types/game`) se résolve.
  *
  * Usage :
  *   npm run gen:captures-arcade                 # les manquantes
@@ -16,45 +29,35 @@ import sharp from "sharp";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { JEUX_ARCADE } from "../src/lib/bazar/arcade.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DEST = path.join(ROOT, "public", "bazar", "arcade");
+const REF_DIR = path.join(ROOT, "public", "items");
 
-/** Le style, identique pour les onze. */
-const BRIEF = [
-  "A fake screenshot of a fictional 16-bit arcade video game, as seen on a CRT monitor.",
-  "Bold saturated 16-bit palette, chunky square pixels, thick readable sprites, strong contrast.",
-  "The scene reads instantly at a glance: a clear foreground character or object, a simple",
-  "background, a ground line. Flat pixel-art shading, no photographic texture, no gradients,",
-  "no modern lighting. A thin HUD strip of pixel digits along the top edge.",
-  "The image is full-bleed: the game fills the whole frame edge to edge.",
+/** Le brief, identique pour les onze — seule la référence attachée change. */
+const REFERENCE_INTRO = [
+  "Reference image (attached): the label art of a fictional video-game cartridge.",
+  "The character it shows is the subject of this image — redraw that same character",
+  "in bold chunky square 16-bit pixels, keeping its silhouette, colors and",
+  "accessories recognizably the same.",
 ].join(" ");
 
-/** La scène propre à chaque jeu. Le titre du catalogue en dicte le sujet. */
-const SCENES = {
-  "jx.cartouche_bluebot_8_bit":
-    "A small round blue robot with antenna and glowing eyes running along a metal factory walkway, pipes and conveyor belts behind it.",
-  "jx.cartouche_la_legende_de_solda_8_bit":
-    "A tiny green-clad hero with a sword and round shield standing at the entrance of a stone dungeon, torches on the walls, a treasure chest ahead.",
-  "jx.cartouche_le_plombier_sauteur_8_bit":
-    "A stocky moustachioed workman in blue overalls and a red cap jumping between floating brick blocks over a bright blue sky, a coin spinning above him.",
-  "jx.cartouche_turbo_herisson_16_bit":
-    "A fast blue spiky creature curled into a ball speeding through a green loop-the-loop track, palm trees and checkered ground rushing past.",
-  "jx.cartouche_street_castagne_ii_16_bit":
-    "Two pixel fighters facing off in a street arena, one throwing a punch, health bars along the top, a crowd of onlookers in the background.",
-  "jx.cartouche_gachette_du_temps_rpg_16_bit":
-    "A turn-based role-playing battle screen: three heroes on the right facing a large horned monster on the left, a command menu box at the bottom.",
-  "jx.jeu_le_manoir_du_mal_32_bit":
-    "A dark haunted mansion corridor with cracked portraits and a candelabra, a lone silhouetted figure with a flashlight beam, a full moon through a window.",
-  "jx.jeu_foxy_crush_32_bit":
-    "A colourful puzzle grid of shiny gems and fruit, a cartoon fox mascot cheering in the corner, sparkles where three gems align.",
-  "jx.jeu_engrenage_de_metal_infiltration_32_bit":
-    "A top-down stealth screen: a soldier crouching behind a crate inside a military base, a guard's vision cone sweeping the floor, radar box in the corner.",
-  "jx.jeu_solda_flute_temporelle_aventure_3d_64_bit":
-    "An early-3D-looking pixel rendition of a green-clad hero on a wide grassy field at sunset, a distant castle, a floating fairy of light beside him.",
-  "jx.jeu_d_aventure_japonais_128_bit":
-    "A spiky-haired hero with an oversized sword standing before a neon-lit futuristic city street at night, rain, a dialogue box at the bottom.",
-};
+const BRIEF = [
+  "The result is this game's title screen, as seen on a CRT monitor: the character",
+  "large, centered or slightly off-center, with a simple background behind it that",
+  "stays consistent with the setting shown in the reference image.",
+  "The word PLAY appears in large pixel letters in the bottom half of the screen.",
+  "The studio mark FÉFÉ GAMES appears in small pixel letters in the top half.",
+  "Bold saturated 16-bit palette, chunky square pixels, thick readable shapes,",
+  "strong contrast, flat pixel-art shading, no photographic texture, no gradients,",
+  "no modern lighting. The image is full-bleed: the game fills the whole frame",
+  "edge to edge.",
+  "The only characters anywhere in the image are PLAY and FÉFÉ GAMES. Every other",
+  "surface is free of letters and words — in particular, no game title is painted",
+  "anywhere in the scene: the app already shows it beneath the screen, translated",
+  "into the player's language.",
+].join(" ");
 
 async function chargerEnv() {
   const contenu = await fs.readFile(path.join(ROOT, ".env"), "utf8");
@@ -72,6 +75,13 @@ async function chargerEnv() {
   }
 }
 
+/** Charge la jaquette de la cartouche, envoyée en référence à Gemini. */
+async function loadReferenceImage(id) {
+  const refPath = path.join(REF_DIR, `${id}.webp`);
+  const buf = await fs.readFile(refPath);
+  return { mimeType: "image/webp", data: buf.toString("base64") };
+}
+
 await chargerEnv();
 await fs.mkdir(DEST, { recursive: true });
 
@@ -82,7 +92,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 let ok = 0;
 let saute = 0;
-for (const [id, scene] of Object.entries(SCENES)) {
+for (const id of JEUX_ARCADE) {
   if (seuls.length && !seuls.includes(id)) continue;
   const sortie = path.join(DEST, `${id}.webp`);
   if (!force) {
@@ -96,9 +106,15 @@ for (const [id, scene] of Object.entries(SCENES)) {
   }
   process.stdout.write(`🎮  ${id}… `);
   try {
+    const reference = await loadReferenceImage(id);
     const res = await ai.models.generateContent({
       model: "gemini-3-pro-image-preview",
-      contents: `${BRIEF}\n\nThe game: ${scene}`,
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: REFERENCE_INTRO }, { inlineData: reference }, { text: BRIEF }],
+        },
+      ],
       config: { imageConfig: { aspectRatio: "4:3", imageSize: "1K" } },
     });
     const parts = res.candidates?.[0]?.content?.parts ?? [];
