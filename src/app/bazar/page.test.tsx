@@ -321,6 +321,23 @@ describe("BazarPage — sortir par la porte", () => {
   );
 
   /**
+   * Renoncer, c'est aussi refermer la porte. Un joueur qui tape à côté pour
+   * annuler doit entendre le battant retomber, sinon le geste ne dit rien
+   * qu'un tap dans le vide. C'est ce que fait déjà la porte du bureau.
+   */
+  it("referme la porte quand on renonce sans choisir", () => {
+    const ferme = vi.spyOn(audioManager, "playDoorClose").mockResolvedValue();
+    render(<BazarPage />);
+    pousserLaPorte();
+    // Le voile posé derrière les boutons : c'est lui qu'on tape pour annuler.
+    const voile = screen.getByRole("dialog").previousElementSibling as HTMLElement;
+    act(() => voile.click());
+    expect(ferme).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Chiner" })).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  /**
    * La porte se referme MÊME quand la sortie est refusée faute d'énergie : le
    * geste a eu lieu, le battant a bougé, et c'est ce que fait déjà la porte du
    * bureau. Un silence ici se lirait comme un tap perdu.

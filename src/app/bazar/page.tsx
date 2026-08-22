@@ -119,7 +119,12 @@ export default function BazarPage() {
 
       <PorteBazarSheet
         open={porteOuverte}
-        onClose={() => setPorteOuverte(false)}
+        onClose={() => {
+          // Renoncer, c'est aussi refermer la porte : sans ce son, un tap à
+          // côté pour annuler ne dirait rien qu'un tap dans le vide.
+          void audioManager.playDoorClose();
+          setPorteOuverte(false);
+        }}
         chinerDesactive={stockageEstPlein(state)}
         onChiner={() => {
           void audioManager.playDoorClose();
