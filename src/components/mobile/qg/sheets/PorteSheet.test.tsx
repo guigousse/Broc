@@ -13,7 +13,6 @@ function poserLaPorte(surcharges: Partial<Parameters<typeof PorteSheet>[0]> = {}
     <PorteSheet
       open
       onClose={vi.fn()}
-      vitrineActive={false}
       onChiner={vi.fn()}
       onVitrine={vi.fn()}
       bazarOuvert={false}
@@ -31,7 +30,7 @@ describe("PorteSheet — la sortie Bazar", () => {
     const { bouton } = poserLaPorte({ bazarOuvert: false, joursAvantBazar: 15 });
     expect((bouton as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText("J-15")).not.toBeNull();
-    expect(screen.getByTestId("bazar-cadenas")).not.toBeNull();
+    expect(document.querySelector("[data-cadenas]")).not.toBeNull();
   });
 
   it("un tap sur le Bazar fermé ne mène nulle part", async () => {

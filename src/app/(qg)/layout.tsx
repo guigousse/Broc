@@ -744,7 +744,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           playDoorClose();
           setPorteOuverte(false);
         }}
-        vitrineActive={!!state.vitrine}
         chinerDesactive={stockageEstPlein(state)}
         tutoChiner={
           etape === "aller-chiner" ||
