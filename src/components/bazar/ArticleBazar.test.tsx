@@ -91,7 +91,38 @@ describe("ArticleBazar", () => {
     // par un `var()` (piège déjà documenté dans `etiquette.ts`), on lit donc
     // la propriété telle qu'elle a été posée.
     expect(prix.style.border).toBe("1px solid var(--ink-300)");
-    expect(prix.style.color).toBe(PLAQUE_ETIQUETTE_ETEINTE.color);
+    // Le TEXTE, lui, ne suit plus la plaque : il passe au rouge d'alerte.
+    expect(prix.style.color).toBe("var(--red-signal-300)");
+  });
+
+  /**
+   * Hors de portée, le montant ET le signe passent au rouge — l'extinction de
+   * la plaque dit « pas pour toi », le rouge dit « il t'en manque ». Les deux
+   * signaux ensemble, décidés à la recette du 2026-08-23.
+   *
+   * Le signe suit par `currentColor` plutôt que par une seconde teinte à
+   * accorder à la main : une seule couleur posée sur la plaque, et le nombre
+   * comme le signe la prennent.
+   */
+  it("hors de portée : le signe passe au rouge avec le montant", () => {
+    const { container } = monter({ prix: 12, jetons: 5 });
+    const trace = container.querySelector("svg path") as SVGElement;
+    expect(trace.getAttribute("stroke")).toBe("currentColor");
+  });
+
+  /**
+   * Le montant est écrit PLUS GRAND que le reste de la plaque, et ce n'est pas
+   * qu'une affaire de goût : sur le gris de la plaque éteinte, le rouge ne
+   * mesure que 3,56:1. C'est sous le seuil AA du texte courant (4,5:1) mais
+   * au-dessus de celui du GRAND texte (3:1), qui commence à 18,66 px en gras.
+   * 1,2 rem vaut 19,2 px — la taille est donc ce qui rend le rouge légal.
+   */
+  it("écrit le montant assez grand pour que le rouge y soit lisible", () => {
+    monter({ prix: 12, jetons: 5 });
+    const montant = screen.getByText("12") as HTMLElement;
+    expect(montant.style.fontSize).toBe("1.2rem");
+    expect(montant.style.fontWeight).toBe("700");
+    expect(Number.parseFloat(montant.style.fontSize) * 16).toBeGreaterThanOrEqual(18.66);
   });
 
   it("hors de portée : le prix n'est PLUS barré", () => {
@@ -104,7 +135,9 @@ describe("ArticleBazar", () => {
     monter({ prix: 3, jetons: 10 });
     const prix = screen.getByRole("img", { name: "3 Bazarcoins" }) as HTMLElement;
     expect(prix.style.backgroundColor).toBe(PLAQUE_ETIQUETTE.backgroundColor);
-    expect(prix.style.color).toBe(PLAQUE_ETIQUETTE.color);
+    // À portée, le montant prend le BLEU du Bazarcoin — le prix et la monnaie
+    // qui le paie sont d'une seule couleur. 4,82:1 sur le fond de la plaque.
+    expect(prix.style.color).toBe("var(--azur-400)");
   });
 
   // Éteinte, oui ; fantôme, non. Le fond et le texte doivent RESTER un couple
@@ -184,7 +217,9 @@ describe("ArticleBazar", () => {
       monter();
       const prix = screen.getByRole("img", { name: "3 Bazarcoins" });
       expect(prix.style.backgroundColor).toBe("var(--forest-800)");
-      expect(prix.style.color).toBe("var(--brass-300)");
+      // Le laiton de la chrome a laissé la place au bleu du Bazarcoin : le
+      // prix et la monnaie qui le paie sont désormais d'une seule couleur.
+      expect(prix.style.color).toBe("var(--azur-400)");
       expect(prix.style.borderRadius).toBe("var(--radius-pill)");
     });
 

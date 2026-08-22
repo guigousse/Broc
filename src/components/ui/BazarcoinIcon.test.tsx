@@ -40,6 +40,17 @@ describe("BazarcoinIcon", () => {
   });
 
   /**
+   * Sur les plaques de prix du Bazar, le signe doit suivre le montant : bleu
+   * quand la bourse suffit, rouge quand elle ne suffit pas. Plutôt qu'une
+   * teinte de plus à accorder à la main, il hérite de celle de sa plaque.
+   */
+  it("hérite de la couleur qui l'entoure quand on le lui demande", () => {
+    const { container } = render(<BazarcoinIcon couleur="currentColor" />);
+    const trace = container.querySelector("path") as SVGElement;
+    expect(trace.getAttribute("stroke")).toBe("currentColor");
+  });
+
+  /**
    * Le cadre épouse le signe. Le dessin a été composé dans un repère de 24×24
    * qui contenait aussi un flan ; le flan retiré, garder ce repère laisserait
    * un tiers de vide autour et le signe ne ferait plus que 9 px de haut là où

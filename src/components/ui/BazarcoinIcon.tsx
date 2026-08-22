@@ -25,6 +25,13 @@ interface BazarcoinIconProps {
    * illisible ; celui-ci y mesure 6,3:1.
    */
   surClair?: boolean;
+  /**
+   * Couleur imposée, qui court-circuite les trois teintes ci-dessus. Sert à
+   * `currentColor` : sur les plaques de prix du Bazar, le signe doit suivre
+   * le montant — bleu quand la bourse suffit, rouge quand elle ne suffit pas
+   * — et une teinte de plus à accorder à la main dériverait de l'autre.
+   */
+  couleur?: string;
 }
 
 /**
@@ -59,8 +66,11 @@ export function BazarcoinIcon({
   size = 13,
   terni = false,
   surClair = false,
+  couleur: couleurImposee,
 }: BazarcoinIconProps): JSX.Element {
-  const couleur = terni
+  const couleur = couleurImposee
+    ? couleurImposee
+    : terni
     ? "var(--paper-400)"
     : surClair
       ? "var(--azur-600)"

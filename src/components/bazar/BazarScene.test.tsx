@@ -374,7 +374,10 @@ describe("BazarScene", () => {
     // donc par son rôle, pas par son texte.
     const plaque = screen.getByRole("img", { name: "8 Bazarcoins" }) as HTMLElement;
     expect(plaque.style.backgroundColor).toBe("var(--ink-500)");
-    expect(plaque.style.color).toBe("var(--paper-400)");
+    // DEUX signaux depuis la recette du 2026-08-23 : la plaque s'éteint, ET
+    // le montant passe au rouge. L'extinction dit « pas pour toi », le rouge
+    // dit « il t'en manque ».
+    expect(plaque.style.color).toBe("var(--red-signal-300)");
     expect(plaque.style.textDecoration).not.toBe("line-through");
     // Et taper n'achète toujours rien : ça ouvre la fiche, qui dit le manque.
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
