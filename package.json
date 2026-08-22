@@ -24,6 +24,8 @@
     "gen:reels": "node scripts/generate-reels.mjs",
     "gen:gp-hd": "node scripts/generate-grand-pere-hd.mjs",
     "gen:appstore": "node scripts/generate-appstore-shots.mjs",
+    "gen:borne": "node scripts/generate-borne-arcade.mjs",
+    "gen:captures-arcade": "tsx scripts/generate-captures-arcade.mjs",
     "opt:images": "node scripts/optimize-item-images.mjs",
     "gen:webp": "node scripts/generate-webp.mjs",
     "gen:thumbs": "node scripts/generate-item-thumbs.mjs",

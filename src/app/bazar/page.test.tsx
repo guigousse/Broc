@@ -19,6 +19,7 @@ import { genererEtal } from "@/lib/bazar/etal";
 import { JOUR_OUVERTURE_BAZAR } from "@/lib/bazar/ouverture";
 import { audioManager } from "@/lib/audio/audioManager";
 import { dureesIris, lireFlagIris } from "@/lib/transitionIris";
+import { initCollection } from "@/lib/collection";
 
 const push = vi.fn();
 const replace = vi.fn();
@@ -61,6 +62,9 @@ beforeEach(() => {
     energie: 5,
     energieDerniereMaj: Date.now(),
     brocanteur: { niveau: 1, xp: 0, pointsDisponibles: 0 },
+    // La page dérive désormais `jeuxArcade(state.collection)` pour la borne
+    // d'arcade : la collection vide suffit, juste de quoi monter.
+    collection: initCollection(),
   };
 });
 

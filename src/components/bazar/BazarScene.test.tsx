@@ -4,6 +4,7 @@ import { cleanup, render, screen, fireEvent, within } from "@testing-library/rea
 import { BazarScene, ZONES_BAZAR } from "./BazarScene";
 import { BAZAR_LAYOUT } from "./bazarLayout";
 import { qgPct } from "@/components/mobile/qg/layout";
+import { JEUX_ARCADE } from "@/lib/bazar/arcade";
 import type { EtalBazar } from "@/types/game";
 
 afterEach(cleanup);
@@ -38,7 +39,16 @@ function monter(
   // s'il est `ok`, et affiche sinon la raison.
   const onAcheter = vi.fn().mockReturnValue(resultat);
   const onSortir = vi.fn();
-  render(<BazarScene etal={etal} jetons={jetons} onAcheter={onAcheter} onSortir={onSortir} />);
+  const jeux = JEUX_ARCADE.map((templateId) => ({ templateId, trouve: false }));
+  render(
+    <BazarScene
+      etal={etal}
+      jetons={jetons}
+      jeuxArcade={jeux}
+      onAcheter={onAcheter}
+      onSortir={onSortir}
+    />,
+  );
   return { onAcheter, onSortir };
 }
 
@@ -392,5 +402,59 @@ describe("BazarScene", () => {
     const porte = screen.getByRole("button", { name: /Sortir/ }) as HTMLElement;
     expect(porte.style.left).toBe(`${qgPct(BAZAR_LAYOUT.objets.sortie.left)}%`);
     expect(porte.style.width).toBe(`${qgPct(BAZAR_LAYOUT.objets.sortie.width)}%`);
+  });
+
+  // ── La borne d'arcade ────────────────────────────────────────────────────
+  //
+  // Pièce de DÉCOR, pas encore un point d'entrée : le chantier ⑤ lui donnera
+  // son jeu. En attendant elle meuble le coin arcade, qui sans elle n'est
+  // qu'une bibliothèque et un pan de mur vide — et son nom de zone promet
+  // autre chose.
+  it("plante la borne d'arcade dans le coin gauche, aux coordonnées du dictionnaire", () => {
+    monter();
+    const borne = screen.getByTestId("borne-arcade");
+    const c = BAZAR_LAYOUT.objets.borne;
+    expect(borne.style.left).toBe(`${qgPct(c.left)}%`);
+    expect(borne.style.bottom).toBe(`${c.bottom}%`);
+    expect(borne.style.width).toBe(`${qgPct(c.width)}%`);
+  });
+
+  it("la borne garde son image muette : c'est le bouton qui porte le nom", () => {
+    monter();
+    const img = screen.getByTestId("borne-arcade").querySelector("img") as HTMLImageElement;
+    expect(img.getAttribute("src")).toBe("/bazar/borne-arcade.webp");
+    expect(img.getAttribute("alt")).toBe("");
+  });
+
+  it("la borne d'arcade est un bouton nommé, et non plus une image muette", () => {
+    monter();
+    expect(screen.getByRole("button", { name: "Voir la borne d'arcade" })).toBeTruthy();
+  });
+
+  it("le tap sur la borne ouvre son plein écran", () => {
+    monter();
+    expect(screen.queryByRole("dialog")).toBe(null);
+    fireEvent.click(screen.getByRole("button", { name: "Voir la borne d'arcade" }));
+    expect(screen.getByRole("dialog").getAttribute("aria-label")).toBe("Borne d'arcade");
+  });
+
+  // Même règle que la fiche d'article : un dialogue ne vit pas DANS le
+  // panorama, qui défile sous lui.
+  it("le plein écran de la borne est rendu hors du panorama", () => {
+    monter();
+    fireEvent.click(screen.getByRole("button", { name: "Voir la borne d'arcade" }));
+    const dialogue = screen.getByRole("dialog");
+    const panorama = screen.getByRole("button", { name: /Sortir/ }).closest("div");
+    expect(panorama?.contains(dialogue)).toBe(false);
+  });
+
+  // Sans ombre, une image détourée posée sur un plancher peint FLOTTE : rien
+  // ne dit où elle touche le sol. L'ombre suit l'alpha (`drop-shadow`) plutôt
+  // qu'une ellipse dessinée sous elle — la base d'une borne est un
+  // quadrilatère en fuite, pas un disque.
+  it("la borne porte une ombre de contact, sinon elle flotte", () => {
+    monter();
+    const img = screen.getByTestId("borne-arcade").querySelector("img") as HTMLImageElement;
+    expect(img.style.filter).toContain("drop-shadow");
   });
 });

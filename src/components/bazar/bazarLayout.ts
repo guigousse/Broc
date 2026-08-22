@@ -22,32 +22,60 @@
 export const BAZAR_LAYOUT = {
   panoramaAspect: { w: 2752, h: 1536 },
   objets: {
-    // Zone gauche (0..100vw) — réservé, muet.
-    borne: { left: 61.0, bottom: 18.0, width: 30.0 },
+    // Zone gauche (0..100vw) — la borne d'arcade, MESURÉE sur le fond le
+    // 2026-08-22 et non estimée. Trois nombres, trois raisons :
+    //
+    // Calée à la main par Guillaume le 2026-08-22, puis glissée de 3,8 unités
+    // vers la gauche — et c'est CE déplacement qui mérite d'être écrit, parce
+    // que rien à l'écran ne le réclamait.
+    //
+    // `width` 33,2 est son réglage : à l'œil, la borne demandait à être plus
+    // grosse que les 29 déduits de l'échelle du mur (1 % ≈ 5 cm, une borne de
+    // 1,70 m = 33 % de hauteur). Elle mesure donc ~1,95 m — un peu haute pour
+    // une vraie borne, juste pour celle-ci : c'est le sujet de la zone, et le
+    // seul objet peint qui lui dispute le regard est une bibliothèque de 2,6 m.
+    //
+    // `left` 61,2 et pas 65 : à 65, la borne finissait à 98,2 alors que
+    // l'écran ne montre la zone arcade que jusqu'à 94,4 (cf. le garde plus
+    // bas) — son flanc droit était tranché de 17 px, et le snap étant
+    // `mandatory`, on ne pouvait pas s'arrêter ailleurs pour le voir. Mesuré
+    // sur quatre gabarits, de l'Android 360 px au 15 Pro Max. 61,2 est le
+    // dernier `left` qui la fait tenir entière ; elle chevauche alors le
+    // montant droit de la bibliothèque, ce qui ne cache aucune marchandise et
+    // se lit comme de la profondeur dans une boutique encombrée.
+    //
+    // `bottom` 20,5 : DEVANT la plinthe (~25 %), pas dessus. Une borne a
+    // ~75 cm de profondeur, son pied avant descend sous la ligne du mur —
+    // exactement ce que fait le comptoir, base à 21 % pour un mur à 25 %.
+    borne: { left: 61.2, bottom: 20.5, width: 33.2 },
     // Zone centre (100..200vw) — la grille de six cases, MESURÉE sur le fond
     // et non estimée : les arêtes des deux planches ressortent à 65,9 % et
     // 55,9 % de la hauteur, et la planche court de 114 à 186 vw.
     //
-    // La planche du BAS garde la grille régulière d'origine : trois colonnes
-    // de 22 vw sur un pas de 24, soit 114→136, 138→160 et 162→184, les 2 vw
-    // d'écart entre colonnes et les 2 vw de marge en bout de planche.
+    // Les six cases ont TOUTES été reprises à la souris par l'auteur le
+    // 2026-08-22, en deux passes qui ont fusionné ici : celle de la borne
+    // d'arcade a recalé les cases 4 et 6 de quelques dixièmes, celle de la
+    // vitrine a rétréci les trois cases du haut.
     //
-    // La planche du HAUT s'en écarte : colonnes resserrées à 20 vw et pas
-    // élargi à ~24,2, repris à la souris par l'auteur le 2026-08-22. Le motif
-    // est la TAILLE, pas la position — à 22 vw les trois objets se touchaient
-    // presque, et une vitrine de boutique demande que chaque pièce respire.
-    // Rétrécir les cases élargit d'autant le vide entre elles.
+    // La planche du HAUT : colonnes resserrées de 22 à 20 vw, pas élargi à
+    // ~24,2. Le motif est la TAILLE, pas la position — à 22 vw les trois
+    // objets se touchaient presque, et une vitrine de boutique demande que
+    // chaque pièce respire. Rétrécir les cases élargit d'autant le vide entre
+    // elles.
     //
-    // Les trois partagent le MÊME `bottom` : ils reposent sur une seule
-    // planche peinte, horizontale. Si un calage à la souris fait apparaître
-    // des dixièmes d'écart, c'est de l'imprécision de glisser-déposer, pas une
-    // intention — les remettre à égalité.
+    // La planche du BAS garde les colonnes de 22 vw, à quelques dixièmes près
+    // sur les cases 4 et 6.
+    //
+    // Les trois cases d'une planche visent le MÊME `bottom` : elles reposent
+    // sur une seule planche peinte, horizontale. Le test le garde à l'unité
+    // près — il absorbe les dixièmes qu'un glisser-déposer laisse derrière lui
+    // (case4 à 55,8), mais pas un objet qui dériverait sur l'autre planche.
     case1: { left: 114.8, bottom: 66.0, width: 20.0 },
     case2: { left: 139.6, bottom: 66.0, width: 20.0 },
     case3: { left: 163.2, bottom: 66.0, width: 20.0 },
-    case4: { left: 114.0, bottom: 56.0, width: 22.0 },
+    case4: { left: 117.4, bottom: 55.8, width: 22.0 },
     case5: { left: 138.0, bottom: 56.0, width: 22.0 },
-    case6: { left: 162.0, bottom: 56.0, width: 22.0 },
+    case6: { left: 160.5, bottom: 56.0, width: 22.0 },
     // Le tenancier, dans la bande de mur entre le plateau du comptoir et la
     // première planche. MESURÉ sur le fond, pas posé à l'estime :
     //  · `bottom` 38,8 % = l'arête ARRIÈRE du plateau (y ≈ 940 sur 1536). Le

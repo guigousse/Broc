@@ -836,5 +836,11 @@ export const es: DictionnaireUI = {
     prixMot: "Precio",
     acheter: "Comprar",
     achatRefuse: "Compra imposible.",
+    borneOuvrir: "Ver la máquina recreativa",
+    borneTitre: "Máquina recreativa",
+    borneFermer: "Cerrar la máquina",
+    bornePasDeSignal: "SIN SEÑAL",
+    borneJeuPrecedent: "Juego anterior",
+    borneJeuSuivant: "Juego siguiente",
   },
 };

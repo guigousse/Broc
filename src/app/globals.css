@@ -1810,3 +1810,11 @@ nav[aria-label="Navigation principale"] :focus-visible,
 .broc-chevron-page {
   animation: broc-chevron-page 2.4s ease-in-out infinite;
 }
+
+/* ─── Grésillement de l'écran d'arcade ──────────────────────────────────
+   Le grésillement de l'écran d'un jeu pas encore trouvé. Deux pas seulement :
+   une neige qui glisse en continu ondule, une neige qui saute grésille. */
+@keyframes broc-arcade-neige {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-2px, 1px, 0); }
+}

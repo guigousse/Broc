@@ -855,5 +855,11 @@ export const el: DictionnaireUI = {
     prixMot: "Τιμή",
     acheter: "Αγορά",
     achatRefuse: "Η αγορά δεν είναι δυνατή.",
+    borneOuvrir: "Δείτε το μηχάνημα arcade",
+    borneTitre: "Μηχάνημα arcade",
+    borneFermer: "Κλείσιμο",
+    bornePasDeSignal: "ΧΩΡΙΣ ΣΗΜΑ",
+    borneJeuPrecedent: "Προηγούμενο παιχνίδι",
+    borneJeuSuivant: "Επόμενο παιχνίδι",
   },
 };

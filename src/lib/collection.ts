@@ -270,3 +270,20 @@ export function templateVu(
     slots.some((s) => s.templateId === templateId && s.vu),
   );
 }
+
+/**
+ * Vrai si le template occupe un slot de la collection par une DONATION —
+ * la collection au sens strict du jeu, pas « déjà possédé ».
+ *
+ * La nuance est le sujet même de la borne d'arcade : elle récompense le geste
+ * de donner, pas celui de passer. Un jeu acheté puis revendu y redevient
+ * inconnu, et c'est voulu.
+ */
+export function templateDonne(
+  collection: Record<CategorieObjet, CollectionSlot[]>,
+  templateId: string,
+): boolean {
+  return Object.values(collection).some((slots) =>
+    slots.some((s) => s.templateId === templateId && s.donation !== null),
+  );
+}
