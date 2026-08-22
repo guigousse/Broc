@@ -85,4 +85,23 @@ describe("EcranArcade", () => {
     render(<EcranArcade jeux={jeux()} />);
     expect(screen.getByTestId("arcade-titre").getAttribute("aria-live")).toBe("polite");
   });
+
+  // PLAY et FÉFÉ GAMES sont posés en HTML par-dessus la capture (pas peints
+  // dans l'image) : ils n'ont de sens que sur un jeu réellement affiché.
+  it("un jeu trouvé montre PLAY et FÉFÉ GAMES en décor, hors du lecteur d'écran", () => {
+    render(<EcranArcade jeux={jeux(0)} />);
+    const fefe = screen.getByTestId("arcade-texte-fefe");
+    const play = screen.getByTestId("arcade-texte-play");
+    expect(fefe.textContent).toBe("FÉFÉ GAMES");
+    expect(play.textContent).toBe("PLAY");
+    expect(fefe.getAttribute("aria-hidden")).toBe("true");
+    expect(play.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  // Sur « PAS DE SIGNAL », un PLAY par-dessus n'aurait aucun sens.
+  it("un jeu inconnu ne montre ni PLAY ni FÉFÉ GAMES", () => {
+    render(<EcranArcade jeux={jeux()} />);
+    expect(screen.queryByTestId("arcade-texte-fefe")).toBe(null);
+    expect(screen.queryByTestId("arcade-texte-play")).toBe(null);
+  });
 });

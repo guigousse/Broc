@@ -15,8 +15,12 @@ const crt: CSSProperties = {
   inset: 0,
   background: "#04140b",
   overflow: "hidden",
-  display: "flex",
-  flexDirection: "column",
+  // Conteneur de requête CSS : `PLAY` et `FÉFÉ GAMES` se dimensionnent en
+  // `cqh`, proportionnels à la hauteur RÉELLE du trou (mesurée en px par
+  // `BorneArcadeEcran`), pas à une police. `containerType: "size"` (et non
+  // `"inline-size"`) est nécessaire pour que `cqh` se résolve : sans lui,
+  // seul `cqw` existerait.
+  containerType: "size",
   // Le look CRT vient d'ICI et non d'une police : aucune police pixel ne
   // couvre le grec, et les titres des jeux sont traduits en quatre langues.
   fontFamily: "ui-monospace, Menlo, monospace",
@@ -31,9 +35,14 @@ const balayage: CSSProperties = {
     "repeating-linear-gradient(0deg, rgba(0,0,0,0.30) 0 1px, transparent 1px 3px)",
 };
 
+// Remplit TOUT le trou du CRT — la barre de titre se pose PAR-DESSUS, en
+// `position: absolute` elle aussi, comme le bandeau de score d'une vraie
+// borne. Avant, cette zone était `flex: 1` dans une colonne et cédait sa
+// hauteur du bas à la barre : le format de la capture n'avait plus rien à
+// voir avec la forme du trou. Ce n'est plus le cas.
 const zoneJeu: CSSProperties = {
-  flex: 1,
-  position: "relative",
+  position: "absolute",
+  inset: 0,
   overflow: "hidden",
   touchAction: "pan-y",
 };
@@ -49,8 +58,14 @@ const neige: CSSProperties = {
   animation: "broc-arcade-neige 220ms steps(2) infinite",
 };
 
+// Posée PAR-DESSUS `zoneJeu` (rendue après elle dans le JSX, donc dessus à
+// l'écran sans avoir besoin de z-index) : son fond semi-opaque existait déjà
+// et prend enfin son sens, comme le bandeau de score d'une vraie borne.
 const barre: CSSProperties = {
-  flex: "none",
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 0,
   padding: "5px 4px 7px",
   background: "rgba(0,0,0,0.45)",
   borderTop: "1px solid rgba(125,252,174,0.25)",
@@ -63,6 +78,41 @@ const pilote: CSSProperties = {
   justifyContent: "space-between",
   padding: "0 6px",
   marginTop: 2,
+};
+
+// « PLAY » et « FÉFÉ GAMES » : posés en HTML par-dessus la capture, pas
+// peints dans l'image (voir `generate-captures-arcade.mjs`) — restylables
+// sans régénérer une image, et nets à toute résolution au lieu d'être
+// pixelisés deux fois. Ni l'un ni l'autre n'est jamais traduit (ce sont des
+// mentions de marque, pas un titre de jeu), donc la pile monospace du
+// système suffit ici — c'est elle qui donne le look CRT à tout l'écran.
+// L'ombre portée sombre et épaisse (plusieurs décalages + un flou) fait
+// office de contour : elle doit tenir aussi bien sur le manoir hanté (fond
+// très sombre) que sur le chantier du plombier (fond très clair).
+const overlayTexteBase: CSSProperties = {
+  position: "absolute",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  color: "#ffc93c",
+  fontWeight: 900,
+  letterSpacing: "0.14em",
+  whiteSpace: "nowrap",
+  pointerEvents: "none",
+  textShadow:
+    "0 0 3px #241000, 0 0 6px #241000, 2px 2px 0 #241000, -2px -2px 0 #241000, " +
+    "2px -2px 0 #241000, -2px 2px 0 #241000, 0 3px 8px rgba(0,0,0,0.7)",
+};
+
+const texteFefe: CSSProperties = {
+  ...overlayTexteBase,
+  top: "12%",
+  fontSize: "4.5cqh",
+};
+
+const textePlay: CSSProperties = {
+  ...overlayTexteBase,
+  top: "62%",
+  fontSize: "12cqh",
 };
 
 function flecheStyle(eteinte: boolean): CSSProperties {
@@ -132,24 +182,35 @@ export function EcranArcade({ jeux }: EcranArcadeProps) {
         onPointerCancel={onPointerCancel}
       >
         {jeu?.trouve ? (
-          // `alt=""` : le titre juste en dessous porte déjà l'information, et
-          // il est dans une région vivante. Deux annonces pour une seule
-          // image feraient bégayer le lecteur d'écran.
-          <img
-            data-testid="arcade-capture"
-            src={`/bazar/arcade/${jeu.templateId}.webp`}
-            alt=""
-            draggable={false}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-              // Une capture pixel art doit rester en gros pixels carrés :
-              // le lissage par défaut la transformerait en bouillie.
-              imageRendering: "pixelated",
-            }}
-          />
+          <>
+            {/* `alt=""` : le titre juste en dessous porte déjà l'information,
+                et il est dans une région vivante. Deux annonces pour une
+                seule image feraient bégayer le lecteur d'écran. */}
+            <img
+              data-testid="arcade-capture"
+              src={`/bazar/arcade/${jeu.templateId}.webp`}
+              alt=""
+              draggable={false}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+                // Une capture pixel art doit rester en gros pixels carrés :
+                // le lissage par défaut la transformerait en bouillie.
+                imageRendering: "pixelated",
+              }}
+            />
+            {/* Décor de l'écran, pas de l'information : le titre du jeu et
+                les boutons sont déjà annoncés ailleurs. Les faire lire
+                ajouterait du bruit. */}
+            <div data-testid="arcade-texte-fefe" aria-hidden="true" style={texteFefe}>
+              FÉFÉ GAMES
+            </div>
+            <div data-testid="arcade-texte-play" aria-hidden="true" style={textePlay}>
+              PLAY
+            </div>
+          </>
         ) : (
           <>
             {/* La capture n'est PAS rendue puis masquée : elle n'est pas
