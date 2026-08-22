@@ -7,23 +7,68 @@ import type { JeuArcade } from "@/lib/bazar/arcade";
 import { BORNE_FACADE, dimensionnerBorne } from "./borneArcadeLayout";
 import { EcranArcade } from "./EcranArcade";
 
-const voile: CSSProperties = {
+/**
+ * Le voile occupe LE CADRE DU BAZAR, pas l'écran.
+ *
+ * Ses quatre côtés reprennent mot pour mot ceux de `src/app/bazar/page.tsx` :
+ * il se superpose au panorama au pixel près. Deux conséquences, et ce sont
+ * exactement les deux qu'on cherche.
+ *
+ *  - Le bandeau et la barre d'onglets restent nets et lisibles au-dessus : ils
+ *    sont peints par-dessus, et le voile ne va plus mordre dessous.
+ *  - Le flou porte sur la boutique et sur rien d'autre. Le fond était à 0,88
+ *    d'opacité — un aplat vert où le `backdrop-filter` n'avait plus rien à
+ *    montrer. À 0,42 la borne se détache toujours (le caisson est sombre et
+ *    contrasté) mais on voit qu'on est resté au Bazar, l'étagère hors du point
+ *    derrière la machine.
+ */
+export const STYLE_VOILE_BORNE: CSSProperties = {
   position: "fixed",
-  inset: 0,
+  top: "calc(var(--safe-top) + var(--mobile-header-h))",
+  bottom: "var(--mobile-tabbar-h)",
+  left: 0,
+  right: 0,
   // Au-dessus de la fiche d'article (105), qui ne peut pas être ouverte en
   // même temps mais dont le z-index sert de repère à tout cet écran.
   zIndex: 110,
-  background: "rgba(15,31,24,0.88)",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
-  display: "grid",
-  placeItems: "center",
+  background: "rgba(15,31,24,0.42)",
+  // Plus flou qu'avant, justement parce qu'on voit maintenant à travers :
+  // 10 px laissaient les articles de l'étagère encore identifiables, et l'œil
+  // partait les lire au lieu de regarder la borne. La désaturation les tasse
+  // dans le fond sans les effacer.
+  backdropFilter: "blur(16px) saturate(0.8)",
+  WebkitBackdropFilter: "blur(16px) saturate(0.8)",
   overflow: "hidden",
+};
+
+/**
+ * Le caisson, centré à la main et posé par terre.
+ *
+ * `left: 50%` + `translateX(-50%)` et NON `place-items: center` : le voile est
+ * en `overflow: hidden`, donc un conteneur de défilement, et le moteur y
+ * recale sur le bord de DÉPART tout objet plus large que lui — pour ne pas
+ * rendre son début inatteignable. Or ce caisson est plus large que le
+ * téléphone par construction (cf. `PART_LARGEUR_TROU`). Mesuré sur iPhone 12
+ * avant correction : 501 px de caisson posés à `x = 0`, les 111 px de débord
+ * entièrement à droite, le marquee « ARCADE » tranché. Le calage explicite
+ * échappe à cette correction et redonne un débord symétrique.
+ *
+ * `bottom: 0` : une borne pose ses pieds par terre. Sa base se confond avec
+ * l'arête haute de la barre d'onglets, qui joue le plancher — centrée, elle
+ * flottait au milieu du cadre avec un vide de 97 px sous elle.
+ */
+const caisson: CSSProperties = {
+  position: "absolute",
+  left: "50%",
+  bottom: 0,
+  transform: "translateX(-50%)",
 };
 
 const boutonFermer: CSSProperties = {
   position: "absolute",
-  top: "calc(var(--safe-top) + 10px)",
+  // 10 px du bord HAUT DU VOILE, qui commence sous le bandeau : celui-ci a
+  // déjà absorbé l'encoche, la réserver une seconde fois décrocherait la croix.
+  top: 10,
   right: 12,
   zIndex: 2,
   width: 40,
@@ -99,7 +144,7 @@ export function BorneArcadeEcran({ open, jeux, onClose }: BorneArcadeEcranProps)
       role="dialog"
       aria-modal="true"
       aria-label={d.bazar.borneTitre}
-      style={voile}
+      style={STYLE_VOILE_BORNE}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -110,7 +155,7 @@ export function BorneArcadeEcran({ open, jeux, onClose }: BorneArcadeEcranProps)
 
       <div
         data-testid="borne-facade"
-        style={{ position: "relative", width: w, height: h, flex: "none" }}
+        style={{ ...caisson, width: w, height: h }}
       >
         {/* DESSOUS — voir le commentaire d'en-tête. */}
         <div
