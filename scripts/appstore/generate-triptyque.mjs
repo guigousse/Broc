@@ -60,16 +60,38 @@ const APPAREILS = {
 };
 
 /**
- * Accroche du panneau 1. Les verbes sont repris tels quels des puces de
- * `docs/appstore/FICHE_APP_STORE.md`, langue par langue : ils y sont déjà
- * validés, et chaque langue y garde sa propre adresse au joueur (vouvoiement
- * en français, tutoiement en espagnol et en grec).
+ * Textes du panneau 1, sur deux étages.
+ *
+ * `revendication` vient en premier et en grand : c'est le positionnement du
+ * jeu, pas une description de ses mécaniques — la seule phrase qui doive
+ * survivre à la lecture en vignette d'un résultat de recherche. Les `verbes`
+ * la suivent, plus petits ; ils sont repris tels quels des puces de
+ * `docs/appstore/FICHE_APP_STORE.md`, langue par langue, où chacune garde son
+ * adresse au joueur (vouvoiement en français, tutoiement en espagnol et en
+ * grec). L'ancienne ligne d'appoint « jeu de brocante cosy » est supprimée :
+ * la revendication dit déjà de quoi il s'agit, en bien plus lisible.
+ *
+ * Les retours à la ligne sont ÉCRITS, jamais laissés au navigateur : une
+ * coupure automatique tombe où elle veut, et la revendication doit se lire en
+ * deux blocs de sens, pas en deux morceaux de phrase.
  */
 const ACCROCHES = {
-  fr: { lignes: ["Chinez, restaurez, revendez…", "et collectionnez !"], sous: "Jeu de brocante cosy" },
-  en: { lignes: ["Hunt, restore, sell…", "and collect!"], sous: "Cosy flea market game" },
-  es: { lignes: ["Busca, restaura, vende…", "¡y colecciona!"], sous: "Juego de mercadillo acogedor" },
-  el: { lignes: ["Ψάξε, αναπαλαίωσε, πούλα…", "και συμπλήρωσε!"], sous: "Χαλαρό παιχνίδι παζαριού" },
+  fr: {
+    revendication: ["Le premier jeu", "de brocante !"],
+    verbes: ["Chinez, restaurez, revendez…", "et collectionnez !"],
+  },
+  en: {
+    revendication: ["The first", "flea market game!"],
+    verbes: ["Hunt, restore, sell…", "and collect!"],
+  },
+  es: {
+    revendication: ["¡El primer juego", "de mercadillo!"],
+    verbes: ["Busca, restaura, vende…", "¡y colecciona!"],
+  },
+  el: {
+    revendication: ["Το πρώτο παιχνίδι", "παζαριού!"],
+    verbes: ["Ψάξε, αναπαλαίωσε, πούλα…", "και συμπλήρωσε!"],
+  },
 };
 
 /**
@@ -79,10 +101,20 @@ const ACCROCHES = {
 const BASE = {
   titreLeft: 0.074, titreTop: 0.112, titreSize: 0.2415,
   traitTop: 0.2455, traitW: 0.209, traitH: 0.0026,
-  accrocheTop: 0.2772, accrocheSize: 0.0628, accrocheW: 0.87,
-  sousTop: 0.4129, sousSize: 0.0322,
-  gpLeft: -0.145, gpTop: 0.452, gpW: 1.183,
-  enteteTop: 0.1116, enteteSize: 0.058, entetePad: 0.072,
+  // 0,0773 × 1242 = 96 px : la revendication est le plus gros texte de la
+  // série après le logo. Les verbes suivent à 0,058 × 1242 = 72 px.
+  revenTop: 0.262, revenSize: 0.0773, revenLh: 1.14, revenW: 0.92,
+  accrocheTop: 0.356, accrocheSize: 0.058, accrocheLh: 1.22, accrocheW: 0.87,
+  // Le grand-père descend et rétrécit d'autant : la colonne de texte du
+  // panneau 1 a gagné un étage, et c'est le français — trois lignes de verbes,
+  // sa première faisant 1117 px pour 1081 px de boîte — qui la dimensionne.
+  // `gpW` est calé pour que le bas de l'image atteigne encore le bas du
+  // panneau : plus petit, le grand-père flotterait au-dessus du vide.
+  gpLeft: -0.145, gpTop: 0.466, gpW: 1.17,
+  // Les en-têtes des panneaux 2 à 6 passent à la même taille que la
+  // revendication : à 0,058 elles se lisaient à peine dans une vignette de
+  // résultat de recherche, qui est pourtant leur seul usage réel.
+  enteteTop: 0.1116, enteteSize: 0.0773, enteteLh: 1.2, entetePad: 0.062,
   filetTop: 0.9226,
   cadreRayon: 0.0419, cadreBord: 0.004,
   // Panneaux 4 et 5 : un seul écran, presque droit, au centre du panneau.
@@ -101,10 +133,13 @@ const SURCHARGES = {
   ipad: {
     titreTop: 0.1, titreSize: 0.175,
     traitTop: 0.213, traitW: 0.16,
-    accrocheTop: 0.24, accrocheSize: 0.044, accrocheW: 0.8,
-    sousTop: 0.375, sousSize: 0.026,
+    // Le panneau iPad est bien moins haut à largeur égale : les deux étages
+    // du panneau 1 y tiennent, mais seulement en les remontant ET en serrant
+    // leurs interlignes — la mesure de fin de rendu le vérifie.
+    revenTop: 0.232, revenSize: 0.0562, revenLh: 1.12, revenW: 0.88,
+    accrocheTop: 0.3455, accrocheSize: 0.0421, accrocheLh: 1.22, accrocheW: 0.8,
     gpLeft: -0.1, gpTop: 0.44, gpW: 0.82,
-    enteteTop: 0.1, enteteSize: 0.042, entetePad: 0.09,
+    enteteTop: 0.1, enteteSize: 0.056, enteteLh: 1.2, entetePad: 0.08,
     cadreRayon: 0.022, cadreBord: 0.0025,
     solo: { y: 0.6, h: 0.7, rot: -3 },
     medaillon: { top: 0.26, marge: 0.07, gouttiere: 0.026 },
@@ -265,18 +300,19 @@ body { width: ${TOTAL}px; height: ${H}px; overflow: hidden; }
   position: absolute; left: ${px(g.titreLeft + 0.006, L)}px; top: ${px(g.traitTop, H)}px;
   width: ${px(g.traitW, L)}px; height: ${px(g.traitH, H)}px; background: ${BRASS_300};
 }
+.reven {
+  position: absolute; left: ${px(g.titreLeft + 0.003, L)}px; top: ${px(g.revenTop, H)}px;
+  width: ${px(g.revenW, L)}px;
+  font-family: 'Cinzel', Georgia, serif; font-weight: 700;
+  font-size: ${px(g.revenSize, L)}px; line-height: ${g.revenLh}; color: ${BRASS_100};
+  text-shadow: 0 ${px(0.003, H)}px ${px(0.012, H)}px rgba(0,0,0,0.85);
+}
 .accroche {
   position: absolute; left: ${px(g.titreLeft + 0.003, L)}px; top: ${px(g.accrocheTop, H)}px;
   width: ${px(g.accrocheW, L)}px;
   font-family: 'Cinzel', Georgia, serif;
-  font-size: ${px(g.accrocheSize, L)}px; line-height: 1.3; color: ${BRASS_100};
+  font-size: ${px(g.accrocheSize, L)}px; line-height: ${g.accrocheLh}; color: ${BRASS_300};
   text-shadow: 0 ${px(0.002, H)}px ${px(0.009, H)}px rgba(0,0,0,0.8);
-}
-.sous {
-  position: absolute; left: ${px(g.titreLeft + 0.006, L)}px; top: ${px(g.sousTop, H)}px;
-  font-family: 'Cinzel', Georgia, serif;
-  font-size: ${px(g.sousSize, L)}px; color: ${BRASS_300};
-  letter-spacing: 0.2em; text-transform: uppercase;
 }
 /* Le grand-père en grand, assis sur le filet, débordant par le bas et la
    gauche : il doit paraître entrer dans le cadre, pas y flotter. */
@@ -291,7 +327,7 @@ body { width: ${TOTAL}px; height: ${H}px; overflow: hidden; }
 .entete {
   position: absolute; top: ${px(g.enteteTop, H)}px; width: ${L}px; z-index: 8;
   font-family: 'Cinzel', Georgia, serif;
-  font-size: ${px(g.enteteSize, L)}px; line-height: 1.25; color: ${BRASS_100};
+  font-size: ${px(g.enteteSize, L)}px; line-height: ${g.enteteLh}; color: ${BRASS_100};
   text-align: center; padding: 0 ${px(g.entetePad, L)}px;
   text-shadow: 0 ${px(0.002, H)}px ${px(0.01, H)}px rgba(0,0,0,0.85);
 }
@@ -337,8 +373,8 @@ body { width: ${TOTAL}px; height: ${H}px; overflow: hidden; }
     <div class="bloc1">
       <div class="titre">BROC</div>
       <div class="trait"></div>
-      <div class="accroche">${t.lignes.join("<br>")}</div>
-      <div class="sous">${t.sous}</div>
+      <div class="reven">${t.revendication.join("<br>")}</div>
+      <div class="accroche">${t.verbes.join("<br>")}</div>
       <img class="grandpere" src="${grandPere}" alt="">
     </div>
 
@@ -357,7 +393,11 @@ body { width: ${TOTAL}px; height: ${H}px; overflow: hidden; }
 
   const page = await navigateur.newPage({ viewport: { width: 1000, height: 1000 }, deviceScaleFactor: 1 });
   await page.setViewportSize({ width: TOTAL, height: H });
-  await page.setContent(html, { waitUntil: "load" });
+  // La scène iPad fait 12 288 × 2 732 px et embarque une douzaine d'images en
+  // base64 : `load` attend leur décodage, et les 30 s par défaut de Playwright
+  // tombent une fois sur deux sur cette machine. Le rendu n'est pas en cause,
+  // seul le délai l'était.
+  await page.setContent(html, { waitUntil: "load", timeout: 180000 });
 
   // `document.fonts.check()` ment : on MESURE la largeur du titre avec la
   // police attendue, puis avec un repli. Deux largeurs égales = police absente.
@@ -399,6 +439,81 @@ body { width: ${TOTAL}px; height: ${H}px; overflow: hidden; }
     Promise.all([...document.images].map((i) => (i.complete ? null : i.decode().catch(() => null)))),
   );
   await page.waitForTimeout(400);
+
+  // Les deux étages du panneau 1 et les en-têtes des cinq autres viennent
+  // d'être agrandis : leur place n'est plus acquise, elle est disputée — par
+  // le grand-père en dessous, par les écrans et la galerie sur les autres
+  // panneaux. Une collision ne fait pas planter le rendu, elle produit une
+  // capture illisible qu'on ne remarque qu'à l'œil, langue par langue. On
+  // MESURE donc les boîtes rendues, avec la vraie police, et on refuse de
+  // livrer si elles se chevauchent.
+  const boites = await page.evaluate((largeurPanneau) => {
+    const r = (sel) => {
+      const el = document.querySelector(sel);
+      return el ? el.getBoundingClientRect() : null;
+    };
+    const panneauDe = (rect) => Math.round(rect.left / largeurPanneau);
+    const obstacles = [...document.querySelectorAll(".cadre, .galerie")].map((el) => {
+      const b = el.getBoundingClientRect();
+      return { gauche: b.left, droite: b.right, haut: b.top };
+    });
+    const entetes = [...document.querySelectorAll(".entete")].map((el) => {
+      const b = el.getBoundingClientRect();
+      const panneau = panneauDe(b);
+      const bornes = [panneau * largeurPanneau, (panneau + 1) * largeurPanneau];
+      // Un écran de l'éventail déborde sur le panneau voisin : on ne retient
+      // que les obstacles qui mordent VRAIMENT sur la colonne de l'en-tête.
+      const dessous = obstacles.filter((o) => o.droite > bornes[0] && o.gauche < bornes[1]);
+      return {
+        panneau,
+        texte: el.textContent.trim(),
+        bas: b.bottom,
+        lignes: Math.round(b.height / parseFloat(getComputedStyle(el).lineHeight)),
+        obstacleHaut: dessous.length ? Math.min(...dessous.map((o) => o.haut)) : Infinity,
+      };
+    });
+    const reven = r(".reven");
+    const accroche = r(".accroche");
+    const gp = r(".grandpere");
+    return {
+      revenBas: reven.bottom,
+      accrocheHaut: accroche.top,
+      accrocheBas: accroche.bottom,
+      grandPereHaut: gp.top,
+      entetes,
+    };
+  }, L);
+
+  // Recaler la colonne du panneau 1 demande de LIRE les boîtes, pas de les
+  // deviner : `BROC_DEBUG_BOITES=1` les imprime toutes, y compris celles qui
+  // ne sont pas encore en collision mais qui n'ont plus de marge.
+  if (process.env.BROC_DEBUG_BOITES) console.log(JSON.stringify(boites, null, 2));
+
+  const collisions = [];
+  if (boites.revenBas > boites.accrocheHaut) {
+    collisions.push(
+      `panneau 1 : la revendication (bas à ${boites.revenBas.toFixed(0)}px) recouvre ` +
+        `les verbes (haut à ${boites.accrocheHaut.toFixed(0)}px)`,
+    );
+  }
+  if (boites.accrocheBas > boites.grandPereHaut) {
+    collisions.push(
+      `panneau 1 : les verbes (bas à ${boites.accrocheBas.toFixed(0)}px) recouvrent ` +
+        `le grand-père (haut à ${boites.grandPereHaut.toFixed(0)}px)`,
+    );
+  }
+  for (const e of boites.entetes) {
+    if (e.bas > e.obstacleHaut) {
+      collisions.push(
+        `panneau ${e.panneau + 1} : l'en-tête « ${e.texte} » (${e.lignes} lignes, bas à ` +
+          `${e.bas.toFixed(0)}px) recouvre l'image en dessous (haut à ${e.obstacleHaut.toFixed(0)}px)`,
+      );
+    }
+  }
+  if (collisions.length) {
+    throw new Error(`${langue}/${id} — texte trop grand :\n   ${collisions.join("\n   ")}`);
+  }
+
   const scene = await page.screenshot({ type: "png" });
   await page.close();
 
