@@ -4,10 +4,15 @@ import type { JSX } from "react";
 
 interface BazarcoinIconProps {
   /**
-   * HAUTEUR en px — le signe se dimensionne comme un caractère, pas comme une
+   * HAUTEUR — le signe se dimensionne comme un caractère, pas comme une
    * vignette carrée. Défaut 13, la hauteur d'œil du texte des plaques de prix.
+   *
+   * Un nombre vaut des pixels. Une chaîne passe telle quelle en CSS (`0.73em`)
+   * et la largeur suit par `calc` : c'est ce qu'il faut quand le corps voisin
+   * est fluide et que le signe doit rester à la hauteur d'œil de son nombre
+   * d'un gabarit à l'autre.
    */
-  size?: number;
+  size?: number | string;
   /**
    * Signe éteint, au nuancier des plaques hors de portée de la bourse. Sans
    * ça, un signe rouge vif resterait allumé au milieu d'une plaque qui s'est
@@ -45,8 +50,10 @@ interface BazarcoinIconProps {
  * lecteur d'écran à chaque prix, il n'ajouterait que du bruit.
  */
 
-/** Largeur / hauteur du tracé, épaisseur de trait comprise. */
-const RAPPORT = 11.44 / 15.2;
+/** Largeur / hauteur du tracé, épaisseur de trait comprise. Arrondi à quatre
+ *  décimales : il part aussi tel quel dans un `calc()` CSS, où les quinze
+ *  chiffres du quotient flottant ne seraient que du bruit. */
+const RAPPORT = +(11.44 / 15.2).toFixed(4);
 
 export function BazarcoinIcon({
   size = 13,
@@ -58,9 +65,13 @@ export function BazarcoinIcon({
     : surClair
       ? "var(--azur-600)"
       : "var(--azur-400)";
+  const largeur =
+    typeof size === "number"
+      ? +(size * RAPPORT).toFixed(2)
+      : `calc(${size} * ${RAPPORT})`;
   return (
     <svg
-      width={+(size * RAPPORT).toFixed(2)}
+      width={largeur}
       height={size}
       viewBox="6.43 4.40 11.44 15.20"
       aria-hidden="true"

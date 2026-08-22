@@ -167,9 +167,68 @@ describe("MobileHeader — compteur de Bazarcoins", () => {
     expect(caisse).toBeTruthy();
     expect(caisse.textContent).toContain("Caisse");
     expect(caisse.textContent).toContain("25");
-    expect(caisse.textContent).toContain("8,4k €");
+    expect(caisse.textContent).toContain("8,4k");
     // Un seul « Caisse » dans tout le bandeau — pas un par devise.
     expect(screen.getAllByText("Caisse")).toHaveLength(1);
+  });
+
+  /**
+   * Les deux devises portent leur signe de la MÊME façon : même hauteur d'œil,
+   * même écart au nombre. Le Ƶ dépassait le « € » d'un tiers (14 px d'encre
+   * contre 10,85, mesurés au canvas sur Cinzel à 14,93 px de corps), ce qui le
+   * faisait lire comme une vignette posée là plutôt que comme un caractère de
+   * la même ligne.
+   */
+  it("donne au signe du Bazarcoin la hauteur d'œil du signe €", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={8420} jetons={25} />);
+    const svg = container.querySelector("[data-caisse] svg") as SVGElement;
+    expect(svg.getAttribute("height")).toBe("0.73em");
+  });
+
+  /**
+   * Les deux signes s'assoient sur la LIGNE DE BASE de leur nombre. Le Ƶ était
+   * centré sur la ligne, ce qui le posait 1,6 px plus bas que le « € » voisin
+   * — mesuré sur une capture ×8, invisible à l'œil nu mais bien là.
+   */
+  it("assied les deux signes sur la ligne de base de leur nombre", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={8420} jetons={25} />);
+    const [bzc, euros] = [...container.querySelectorAll("[data-caisse] strong")];
+    expect((bzc as HTMLElement).style.alignItems).toBe("baseline");
+    expect(euros.querySelector<HTMLElement>("[aria-hidden]")!.style.alignItems).toBe("baseline");
+  });
+
+  /**
+   * L'écart entre un montant et son signe se règle des deux côtés — il ne se
+   * réglait pas du côté des euros, où il venait de l'espace littérale du
+   * gabarit de traduction.
+   *
+   * Les deux valeurs CSS ne sont PAS égales, et c'est voulu : le Ƶ est un SVG
+   * sans approche, le « € » un caractère qui en a une, et la ligne porte une
+   * interlettre de 0,18 em. C'est l'écart d'ENCRE qui doit l'être, et lui se
+   * mesure sur une capture, pas dans jsdom — relevé sous 1 px sur cinq cas.
+   * Ce test garde donc seulement qu'un réglage existe des deux côtés.
+   */
+  it("règle l'écart au signe des deux côtés, sans espace littérale", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={8420} jetons={25} />);
+    const [bzc, euros] = [...container.querySelectorAll("[data-caisse] strong")];
+    expect((bzc as HTMLElement).style.gap).toBe("3px");
+    expect(euros.querySelector<HTMLElement>("[aria-hidden]")!.style.gap).toBe("4px");
+  });
+
+  /** Plus d'espace littéral : c'est le `gap` qui règle l'écart, et lui seul. */
+  it("ne laisse plus d'espace dans le texte du montant en euros", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={8420} jetons={25} />);
+    const euros = [...container.querySelectorAll("[data-caisse] strong")][1];
+    const vu = euros.querySelector("[aria-hidden]")!.textContent;
+    expect(vu).toBe("8,4k€");
   });
 
   /**
@@ -183,7 +242,7 @@ describe("MobileHeader — compteur de Bazarcoins", () => {
     render(<MobileHeader budget={8420} jetons={25} />);
     const bzc = screen.getByText("25").closest("strong") as HTMLElement;
     expect(bzc.style.color).toBe("var(--azur-400)");
-    const euros = screen.getByText("8,4k €").closest("strong") as HTMLElement;
+    const euros = screen.getByText("8,4k").closest("strong") as HTMLElement;
     expect(euros.style.color).toBe("var(--brass-300)");
   });
 
@@ -199,7 +258,7 @@ describe("MobileHeader — compteur de Bazarcoins", () => {
     mockPathname = "/bureau";
     const { container } = render(<MobileHeader budget={10610} jetons={0} />);
     const caisse = container.querySelector("[data-caisse]") as HTMLElement;
-    expect(caisse.textContent).toContain("10,6k €");
+    expect(caisse.textContent).toContain("10,6k");
   });
 
   it("laisse les montants sous le millier écrits en entier", () => {
@@ -229,7 +288,7 @@ describe("MobileHeader — compteur de Bazarcoins", () => {
     mockState = etat(3);
     mockPathname = "/bureau";
     render(<MobileHeader budget={10610} jetons={12500} />);
-    const euros = screen.getByText("10,6k €").closest("strong") as HTMLElement;
+    const euros = screen.getByText("10,6k").closest("strong") as HTMLElement;
     expect(euros.style.textTransform).toBe("none");
   });
 

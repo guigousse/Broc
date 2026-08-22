@@ -90,6 +90,46 @@ const srOnlyStyle: CSSProperties = {
   border: 0,
 };
 
+/**
+ * Hauteur du signe Ƶ, en em du corps qui l'entoure : l'œil du « € » et des
+ * chiffres. MESURÉE au canvas et non estimée — 10,85 px d'encre pour 14,93 px
+ * de corps sur Cinzel, soit 0,727 ; le « 8 » y mesure 10,87, la même chose.
+ *
+ * En em et non en pixels parce que le corps de la caisse est fluide
+ * (`clamp(13px, 3.8vw, 16px)`) : figé, le signe dépasserait le « € » sur un
+ * petit écran et lui serait plus court sur un grand.
+ */
+const HAUTEUR_SIGNE = "0.73em";
+
+/**
+ * L'écart entre un montant et son signe. Deux valeurs pour UN SEUL écart vu :
+ * le Ƶ est un SVG, qui n'a pas d'approche, tandis que le « € » est un
+ * caractère qui en a une, et que la ligne porte une interlettre de 0,18 em.
+ * À `gap` égal, l'encre ne l'est pas.
+ *
+ * Réglé sur captures ×8, cinq cas (trois montants, trois gabarits) : 3 px
+ * côté Bazarcoin et 4 px côté euros laissent moins d'un pixel d'écart entre
+ * les deux blancs. Le reste tient aux approches des chiffres eux-mêmes — un
+ * « 7 » ne se termine pas là où se termine un « 0 » — et aucun réglage ne
+ * l'égalise pour tous les montants à la fois.
+ */
+const ECART_SIGNE = 3;
+const ECART_SIGNE_TEXTE = 4;
+
+/**
+ * Découpe un gabarit `"{valeur} €"` en morceaux autour de sa variable, en
+ * rendant `null` à sa place et en laissant tomber les espaces qui la
+ * bordaient. Les quatre langues suffixent aujourd'hui le signe, mais une
+ * langue qui le préfixerait passe par le même chemin.
+ */
+function decouperGabarit(gabarit: string): (string | null)[] {
+  return gabarit
+    .split("{valeur}")
+    .flatMap((part, i) => (i === 0 ? [part] : [null, part]))
+    .map((part) => (part === null ? null : part.trim()))
+    .filter((part) => part !== "");
+}
+
 const valueStyle: CSSProperties = {
   display: "block",
   fontFamily: "var(--font-display)",
@@ -318,8 +358,13 @@ export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
                   style={{
                     ...valueStyle,
                     display: "inline-flex",
-                    alignItems: "center",
-                    gap: 3,
+                    // Sur la LIGNE DE BASE du nombre, pas au centre de la
+                    // ligne : centré, le signe tombait 1,6 px plus bas que le
+                    // « € » voisin, mesuré sur une capture ×8. En alignement
+                    // par ligne de base, le bord bas du SVG s'y pose — et
+                    // c'est là que s'arrête aussi l'encre des chiffres.
+                    alignItems: "baseline",
+                    gap: ECART_SIGNE,
                     color: "var(--azur-400)",
                   }}
                 >
@@ -334,7 +379,7 @@ export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
                   <span aria-hidden="true">
                     {formaterMontantCompact(jetons ?? 0, locale)}
                   </span>
-                  <BazarcoinIcon size={14} />
+                  <BazarcoinIcon size={HAUTEUR_SIGNE} />
                 </strong>
               {/* data-fly-target : cible des objets vendus dans le bilan de
                   vente, comme le stockage l'est pour les objets chinés. Il est
@@ -342,16 +387,28 @@ export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
                   depuis que la caisse porte deux devises, le centre du bloc
                   tombe entre les deux nombres, et l'argent volerait à côté de
                   la somme qu'il vient grossir. */}
-              <strong style={{ ...valueStyle, display: "inline-block" }} data-fly-target="caisse-header">
+              <strong style={{ ...valueStyle, display: "inline-flex" }} data-fly-target="caisse-header">
                 <span style={srOnlyStyle}>
                   {tr(d.chrome.montantEuros, {
                     valeur: budgetAffiche.toLocaleString(locale),
                   })}
                 </span>
-                <span aria-hidden="true">
-                  {tr(d.chrome.montantEuros, {
-                    valeur: formaterMontantCompact(budgetAffiche, locale),
-                  })}
+                {/* Le gabarit de traduction porte une espace littérale entre
+                    le nombre et le « € ». Elle est plus large que l'écart du
+                    Bazarcoin voisin et échappe à tout réglage : on découpe
+                    donc le gabarit autour de sa variable et c'est le `gap` qui
+                    tient l'écart, identique des deux côtés. */}
+                <span
+                  aria-hidden="true"
+                  style={{ display: "inline-flex", alignItems: "baseline", gap: ECART_SIGNE_TEXTE }}
+                >
+                  {decouperGabarit(d.chrome.montantEuros).map((part, i) =>
+                    part === null ? (
+                      <span key={i}>{formaterMontantCompact(budgetAffiche, locale)}</span>
+                    ) : (
+                      <span key={i}>{part}</span>
+                    ),
+                  )}
                 </span>
               </strong>
             </span>

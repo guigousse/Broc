@@ -26,6 +26,20 @@ describe("BazarcoinIcon", () => {
   });
 
   /**
+   * Une hauteur peut aussi se demander en unités CSS. Dans le bandeau, le
+   * signe doit faire l'œil du « € » voisin, et ce corps-là est fluide
+   * (`clamp(13px, 3.8vw, 16px)`) : le figer en pixels le ferait grandir ou
+   * rapetisser par rapport au signe qu'il accompagne d'un gabarit à l'autre.
+   * La largeur suit dans la même unité, par `calc`.
+   */
+  it("accepte une hauteur en unités CSS, et en déduit la largeur", () => {
+    const { container } = render(<BazarcoinIcon size="0.73em" />);
+    const svg = container.querySelector("svg") as SVGElement;
+    expect(svg.getAttribute("height")).toBe("0.73em");
+    expect(svg.getAttribute("width")).toBe("calc(0.73em * 0.7526)");
+  });
+
+  /**
    * Le cadre épouse le signe. Le dessin a été composé dans un repère de 24×24
    * qui contenait aussi un flan ; le flan retiré, garder ce repère laisserait
    * un tiers de vide autour et le signe ne ferait plus que 9 px de haut là où
