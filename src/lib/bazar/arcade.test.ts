@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { JEUX_ARCADE, jeuxArcade } from "./arcade";
 import { getTemplate } from "@/data/objetTemplates";
@@ -39,5 +41,16 @@ describe("jeuxArcade", () => {
     c[cat].find((s) => s.templateId === cible)!.donation = { etat: "Bon", valeur: 10 };
     const jeux = jeuxArcade(c);
     expect(jeux.filter((j) => j.trouve).map((j) => j.templateId)).toEqual([cible]);
+  });
+});
+
+describe("les captures", () => {
+  // L'oubli d'un fichier ne se voit qu'au onzième swipe, et seulement si on
+  // regarde. Un test le dit tout de suite.
+  it("chaque jeu a sa capture dans public/bazar/arcade", () => {
+    for (const id of JEUX_ARCADE) {
+      const p = path.join(process.cwd(), "public", "bazar", "arcade", `${id}.webp`);
+      expect({ id, present: existsSync(p) }).toEqual({ id, present: true });
+    }
   });
 });
