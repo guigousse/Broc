@@ -16,6 +16,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import BazarPage from "./page";
 import { genererEtal } from "@/lib/bazar/etal";
 import { JOUR_OUVERTURE_BAZAR } from "@/lib/bazar/ouverture";
+import { initCollection } from "@/lib/collection";
 
 const push = vi.fn();
 const replace = vi.fn();
@@ -58,6 +59,9 @@ beforeEach(() => {
     energie: 5,
     energieDerniereMaj: Date.now(),
     brocanteur: { niveau: 1, xp: 0, pointsDisponibles: 0 },
+    // La page dérive désormais `jeuxArcade(state.collection)` pour la borne
+    // d'arcade : la collection vide suffit, juste de quoi monter.
+    collection: initCollection(),
   };
 });
 
