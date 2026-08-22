@@ -24,24 +24,40 @@ describe("RecompenseJetons", () => {
     expect(screen.getByText("Récompense")).toBeTruthy();
   });
 
-  it("affiche une pastille de jetons quand la récompense en contient", () => {
-    render(
+  /**
+   * La pastille montre le SIGNE, pas le mot — comme celle de l'énergie montre
+   * un éclair. « +3 Bazarcoins » écrit en toutes lettres dans une pastille
+   * de 9 px de police allongeait la ligne du carnet au point de la faire
+   * passer à deux lignes. Le mot reste dans l'annonce vocale du groupe.
+   */
+  it("la pastille du Bazar montre le nombre et le signe, sans le mot", () => {
+    const { container } = render(
       <RecompenseJetons
         recompense={{ argent: 0, xp: 0, energie: 0, jetons: 3 }}
         variante="ligne"
       />,
     );
-    expect(screen.getByText("+3 jetons")).toBeTruthy();
+    const pastille = screen.getByTestId("jeton-bazar");
+    expect(pastille.textContent).toBe("+3");
+    expect(pastille.querySelector("svg")).toBeTruthy();
+    expect(container.textContent).not.toContain("Bazarcoin");
   });
 
-  it("accorde le singulier", () => {
+  /**
+   * Le bleu de la devise, jusque dans le carnet : c'est lui qui distingue un
+   * gain en Bazarcoins d'un gain en euros, sur une ligne qui peut porter les
+   * deux.
+   */
+  it("la pastille du Bazar porte le bleu de la devise", () => {
     render(
       <RecompenseJetons
         recompense={{ argent: 0, xp: 0, energie: 0, jetons: 1 }}
         variante="ligne"
       />,
     );
-    expect(screen.getByText("+1 jeton")).toBeTruthy();
+    const pastille = screen.getByTestId("jeton-bazar");
+    expect(pastille.style.color).toBe("var(--azur-400)");
+    expect(pastille.textContent).toBe("+1");
   });
 
   it("n'affiche aucune pastille de jetons à zéro", () => {
@@ -61,6 +77,6 @@ describe("RecompenseJetons", () => {
         variante="ligne"
       />,
     );
-    expect(screen.getByRole("group").getAttribute("aria-label")).toContain("3 jetons");
+    expect(screen.getByRole("group").getAttribute("aria-label")).toContain("3 Bazarcoins");
   });
 });

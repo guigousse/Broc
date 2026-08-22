@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { RecompenseEffective } from "@/lib/recompenses";
 
@@ -19,7 +20,9 @@ const JETON_STYLES: Record<TypeJeton, CSSProperties> = {
   argent: { background: "var(--brass-700)", color: "var(--paper-100)", border: "1px solid var(--brass-500)" },
   xp: { background: "var(--paper-300)", color: "var(--ink-700)", border: "1px solid var(--brass-500)" },
   energie: { background: "var(--patina-500)", color: "var(--paper-100)", border: "1px solid var(--patina-500)" },
-  bazar: { background: "var(--brass-800)", color: "var(--paper-100)", border: "1px solid var(--brass-500)" },
+  // Le BLEU de la devise : c'est lui qui distingue un gain en Bazarcoins
+  // d'un gain en euros sur une ligne qui peut porter les deux.
+  bazar: { background: "var(--midnight-800)", color: "var(--azur-400)", border: "1px solid var(--azur-400)" },
 };
 
 const jetonBase: CSSProperties = {
@@ -121,27 +124,32 @@ const jetonsWrap: CSSProperties = {
 export function PaveRecompense({ recompense, livrable, verrouille = false, onLivrer }: Props) {
   const { d, tr } = useLangue();
 
-  const gains: { cle: TypeJeton; valeur: number; texte: string }[] = (
+  const gains: { cle: TypeJeton; valeur: number; texte: string; signe?: boolean }[] = (
     [
       { cle: "argent", valeur: recompense.argent, texte: tr(d.carnet.jetonArgent, { n: recompense.argent }) },
       { cle: "xp", valeur: recompense.xp, texte: tr(d.carnet.jetonXp, { n: recompense.xp }) },
       { cle: "energie", valeur: recompense.energie, texte: tr(d.carnet.jetonEnergie, { n: recompense.energie }) },
-      {
-        cle: "bazar",
-        valeur: recompense.jetons,
-        texte: tr(
-          recompense.jetons > 1 ? d.carnet.jetonBazarN : d.carnet.jetonBazarUn,
-          { n: recompense.jetons },
-        ),
-      },
-    ] as { cle: TypeJeton; valeur: number; texte: string }[]
+      // Le SIGNE, pas le mot — comme l'énergie montre un éclair. Le mot reste
+      // dans le grand livre, qui est du texte pur et n'a pas de signe à
+      // montrer.
+      { cle: "bazar", valeur: recompense.jetons, texte: tr(d.carnet.jetonBazar, { n: recompense.jetons }), signe: true },
+    ] as { cle: TypeJeton; valeur: number; texte: string; signe?: boolean }[]
   ).filter((g) => g.valeur > 0);
 
   const jetons = (
     <span style={jetonsWrap}>
       {gains.map((g) => (
-        <span key={g.cle} data-jeton={g.cle} style={{ ...jetonBase, ...JETON_STYLES[g.cle] }}>
+        <span
+          key={g.cle}
+          data-jeton={g.cle}
+          style={{
+            ...jetonBase,
+            ...JETON_STYLES[g.cle],
+            ...(g.signe ? { display: "inline-flex", alignItems: "center", gap: 3 } : null),
+          }}
+        >
           {g.texte}
+          {g.signe ? <BazarcoinIcon size={12} /> : null}
         </span>
       ))}
     </span>
