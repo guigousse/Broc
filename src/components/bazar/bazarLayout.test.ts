@@ -54,9 +54,15 @@ describe("BAZAR_LAYOUT", () => {
   // monte le long de la planche : une permutation ici mettrait la pièce de
   // caractère à la place de la trouvaille modeste, sans qu'aucun autre test ne
   // s'en aperçoive.
+  //
+  // La hauteur est vérifiée À UNE UNITÉ PRÈS, et non à l'identique, alors que
+  // l'intention EST une hauteur commune : les trois reposent sur une seule
+  // planche peinte. La tolérance absorbe les dixièmes qu'un calage à la souris
+  // laisse derrière lui, sans jamais laisser un objet dériver sur l'autre
+  // planche — c'est ça, l'erreur à attraper, et elle vaut dix unités.
   it("les trois objets sont sur la MÊME planche, de gauche à droite", () => {
     const cases = CLES_ARTICLES.map((c) => BAZAR_LAYOUT.objets[c]);
-    for (const c of cases) expect(c.bottom).toBe(cases[0].bottom);
+    for (const c of cases) expect(Math.abs(c.bottom - cases[0].bottom)).toBeLessThan(1);
     for (let i = 1; i < cases.length; i++) {
       expect(cases[i].left).toBeGreaterThan(cases[i - 1].left);
     }

@@ -27,13 +27,24 @@ export const BAZAR_LAYOUT = {
     // Zone centre (100..200vw) — la grille de six cases, MESURÉE sur le fond
     // et non estimée : les arêtes des deux planches ressortent à 65,9 % et
     // 55,9 % de la hauteur, et la planche court de 114 à 186 vw.
-    // Les trois colonnes font 22 vw de large sur un pas de 24 vw : elles
-    // occupent 114→136, 138→160 et 162→184. Les 2 vw qui séparent deux
-    // colonnes sont l'écart qui les distingue, et les 2 vw restants après 184
-    // sont la marge en bout de planche.
-    case1: { left: 114.0, bottom: 66.0, width: 22.0 },
-    case2: { left: 138.0, bottom: 66.0, width: 22.0 },
-    case3: { left: 162.0, bottom: 66.0, width: 22.0 },
+    //
+    // La planche du BAS garde la grille régulière d'origine : trois colonnes
+    // de 22 vw sur un pas de 24, soit 114→136, 138→160 et 162→184, les 2 vw
+    // d'écart entre colonnes et les 2 vw de marge en bout de planche.
+    //
+    // La planche du HAUT s'en écarte : colonnes resserrées à 20 vw et pas
+    // élargi à ~24,2, repris à la souris par l'auteur le 2026-08-22. Le motif
+    // est la TAILLE, pas la position — à 22 vw les trois objets se touchaient
+    // presque, et une vitrine de boutique demande que chaque pièce respire.
+    // Rétrécir les cases élargit d'autant le vide entre elles.
+    //
+    // Les trois partagent le MÊME `bottom` : ils reposent sur une seule
+    // planche peinte, horizontale. Si un calage à la souris fait apparaître
+    // des dixièmes d'écart, c'est de l'imprécision de glisser-déposer, pas une
+    // intention — les remettre à égalité.
+    case1: { left: 114.8, bottom: 66.0, width: 20.0 },
+    case2: { left: 139.6, bottom: 66.0, width: 20.0 },
+    case3: { left: 163.2, bottom: 66.0, width: 20.0 },
     case4: { left: 114.0, bottom: 56.0, width: 22.0 },
     case5: { left: 138.0, bottom: 56.0, width: 22.0 },
     case6: { left: 162.0, bottom: 56.0, width: 22.0 },
