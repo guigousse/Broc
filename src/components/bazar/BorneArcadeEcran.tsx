@@ -78,22 +78,39 @@ const colonne: CSSProperties = {
 };
 
 /**
- * Le socle, sous la façade et jusqu'au plancher.
+ * Le bas du meuble, posé sous la façade.
  *
- * `background-size: 100% 100%` — l'étirement pur est ICI le rendu voulu et non
- * une déformation subie : la bande est faite d'une seule ligne de pixels
- * répétée, l'étirer verticalement prolonge le panneau bas à l'identique. C'est
- * le bord bas d'un neuf-tranches.
+ * Ancré par le HAUT et laissé déborder : sur un petit téléphone la place sous
+ * la façade est plus courte que le dessin, et c'est l'amorce du bois qu'on
+ * veut voir — pas un meuble écrasé. Le `overflow: hidden` du voile tranche le
+ * reste au ras de la barre d'onglets, qui joue le plancher.
  *
- * Rendu AVANT la façade, donc dessous : le pixel de recouvrement se glisse
- * sous elle au lieu de mordre dessus.
+ * Rendu AVANT la façade, donc dessous : son pixel de recouvrement se glisse
+ * sous elle au lieu de mordre sur le pupitre.
  */
 const socle: CSSProperties = {
   position: "absolute",
   left: 0,
   right: 0,
+  pointerEvents: "none",
+  display: "block",
+};
+
+/**
+ * La plinthe étirée, filet de sécurité sous le dessin.
+ *
+ * `background-size: 100% 100%` — l'étirement pur est ICI le rendu voulu et non
+ * une déformation subie : la bande est une seule ligne de pixels, l'étirer
+ * verticalement prolonge la plinthe à l'identique. Elle ne sert que sur un
+ * cadre plus élancé que 2:1, où le dessin ne descend pas jusqu'au plancher ;
+ * partout ailleurs sa hauteur tombe à zéro.
+ */
+const bandePlinthe: CSSProperties = {
+  position: "absolute",
+  left: 0,
+  right: 0,
   bottom: 0,
-  backgroundImage: `url(${SOCLE_BORNE.src})`,
+  backgroundImage: `url(${SOCLE_BORNE.bande})`,
   backgroundSize: "100% 100%",
   backgroundRepeat: "no-repeat",
   pointerEvents: "none",
@@ -176,6 +193,11 @@ export function BorneArcadeEcran({
   if (!open) return null;
 
   const { w, h, top } = dimensionnerBorne(place);
+  // Le bas du meuble : sa largeur est celle du caisson, sa hauteur suit son
+  // propre ratio. Il part un pixel sous la façade (cf. `recouvrementPx`).
+  const r = SOCLE_BORNE.recouvrementPx;
+  const hautSocle = Math.max(0, h - r);
+  const hSocle = w / SOCLE_BORNE.ratio;
 
   return (
     <div
@@ -198,11 +220,20 @@ export function BorneArcadeEcran({
       </button>
 
       <div data-testid="borne-colonne" style={{ ...colonne, width: w, top }}>
-        {/* Le socle en premier, donc sous la façade (cf. son commentaire). */}
+        {/* Le bas du meuble en premier, donc sous la façade (cf. son
+            commentaire) ; la plinthe encore dessous, sous lui. */}
         <div
-          data-testid="borne-socle"
+          data-testid="borne-plinthe"
           aria-hidden
-          style={{ ...socle, top: Math.max(0, h - SOCLE_BORNE.recouvrementPx) }}
+          style={{ ...bandePlinthe, top: Math.max(0, hautSocle + hSocle - r) }}
+        />
+        <img
+          data-testid="borne-socle"
+          src={SOCLE_BORNE.src}
+          alt=""
+          draggable={false}
+          aria-hidden
+          style={{ ...socle, top: hautSocle, height: hSocle }}
         />
 
         <div

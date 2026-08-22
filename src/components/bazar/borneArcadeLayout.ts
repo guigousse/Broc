@@ -44,29 +44,53 @@ export const PART_LARGEUR_CAISSON = 0.96;
  * le cadrage se ressemble d'un téléphone à l'autre au lieu de dépendre du
  * hasard des proportions.
  *
- * Ce qui manque alors sous sa base, c'est le socle qui le comble (cf.
- * `SOCLE_BORNE`), et non un vide.
+ * Ce qui manque alors sous sa base, ce n'est pas un vide : c'est le bas du
+ * meuble — panneau de bois, monnayeur, plinthe — qui vient s'y poser (cf.
+ * `SOCLE_BORNE`).
  */
 export const PART_AIR_AU_DESSUS = 0.14;
 
 /**
- * La bande qui prolonge le bas du caisson, étirée verticalement.
+ * Le BAS DU MEUBLE : la partie en bois et son monnayeur.
  *
- * Le tirage de la façade s'arrête juste sous le pupitre — c'est écrit dans le
- * prompt de `scripts/generate-borne-arcade.mjs`, et c'est voulu : un meuble
- * entier dans un téléphone donnerait un écran minuscule. `borne-socle.webp`
- * est DÉRIVÉ de la façade par ce même script (`--socle`) : c'est sa dernière
- * ligne de pixels, moyennée puis dégradée vers l'ombre du sol. Étirée en
- * `background-size: 100% 100%`, elle continue le panneau bas exactement, avec
- * ses montants de bois et son liseré d'encre.
+ * Le tirage de la façade s'arrête juste sous le pupitre — c'est écrit dans son
+ * prompt, et c'est voulu : un meuble entier dans un téléphone donnerait un
+ * écran minuscule. Ce bas-là est donc un SECOND dessin
+ * (`--socle-generer` / `--socle-from`), pas un étirement : il porte le panneau
+ * de bois, le monnayeur et la plinthe.
+ *
+ * Son modèle est `borne-arcade.webp`, LA BORNE DE LA SCÈNE, et surtout pas la
+ * façade : la façade ne sait rien du bas du meuble, s'en servir revient à faire
+ * inventer un monnayeur. Le dessin d'origine en a déjà un — plaque grise, deux
+ * fentes rouges, deux boutons carrés, serrure ronde, trappe à monnaie sous
+ * elle, galon terracotta et or à l'intérieur des montants de bois — et c'est
+ * celui-là qu'on reproduit, à l'identique.
+ *
+ * Le raccord ne tient pas à la chance. Le script cale l'échelle du tirage sur
+ * la largeur de la silhouette À LA LIGNE DE COUPE et non sur ses bornes
+ * globales — le pupitre déborde du corps, s'aligner sur les bornes ouvrirait
+ * une marche de chaque côté du joint — puis pose quelques lignes de la
+ * dernière ligne de la façade au-dessus du bois, ce qui rend le raccord de
+ * couleur exact par construction.
  */
 export const SOCLE_BORNE = {
   src: "/bazar/borne-socle.webp",
+  /** largeur / hauteur du dessin (1000 × 886), imprimé par `--socle-from`. */
+  ratio: 1.129,
   /**
-   * Le socle remonte d'un pixel sous la façade. Sans ce recouvrement, un
-   * arrondi de sous-pixel ouvre par moments un cheveu de fond entre les deux.
-   * La façade est peinte APRÈS, donc par-dessus : le recouvrement ne se voit
-   * pas.
+   * La plinthe, en une ligne étirable.
+   *
+   * Filet de sécurité et rien d'autre : sur les gabarits d'aujourd'hui le
+   * dessin remplit déjà la place, mais un cadre plus élancé que 2:1 en
+   * laisserait sous lui. Elle est tirée de la DERNIÈRE ligne du socle, donc
+   * elle le prolonge exactement.
+   */
+  bande: "/bazar/borne-socle-bande.webp",
+  /**
+   * Le socle remonte d'un pixel sous la façade, et la bande d'un pixel sous le
+   * socle. Sans ces recouvrements, un arrondi de sous-pixel ouvre par moments
+   * un cheveu de fond entre deux pièces. Chaque pièce est peinte APRÈS celle
+   * qu'elle recouvre, donc le recouvrement ne se voit pas.
    */
   recouvrementPx: 1,
 } as const;

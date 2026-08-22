@@ -26,12 +26,14 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SORTIE = path.join(ROOT, "public", "bazar", "borne-facade.webp");
 const SORTIE_SOCLE = path.join(ROOT, "public", "bazar", "borne-socle.webp");
+const SORTIE_BANDE = path.join(ROOT, "public", "bazar", "borne-socle-bande.webp");
 const REFERENCE = path.join(ROOT, "public", "bazar", "borne-arcade.webp");
 
 const args = process.argv.slice(2);
 const from = args.includes("--from") ? args[args.indexOf("--from") + 1] : null;
 const generer = args.includes("--generer");
-const socleSeul = args.includes("--socle");
+const socleGenerer = args.includes("--socle-generer");
+const socleFrom = args.includes("--socle-from") ? args[args.indexOf("--socle-from") + 1] : null;
 
 const PROMPT_INTRO =
   "Reference image (attached): an arcade cabinet drawn in the exact style to keep. " +
@@ -114,14 +116,19 @@ async function tirages(n) {
   console.log("Choisir un tirage, puis relancer avec --from <fichier>.");
 }
 
-async function detourer(src) {
+/**
+ * Le fond vert, ôté par DIFFUSION depuis les bords et jamais par sélection de
+ * couleur : le pupitre porte des boutons verts qu'une sélection globale
+ * percerait aussi, et ils ne touchent aucun bord.
+ *
+ * Partagé par la façade et par le bas du meuble — les deux tirages sortent du
+ * même studio vert, ils se découpent de la même façon.
+ */
+async function surFondDecoupe(src) {
   const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const W = info.width;
   const H = info.height;
   const idx = (x, y) => (y * W + x) * 4;
-
-  // 1. le fond vert, par diffusion depuis les bords (les boutons verts du
-  //    pupitre ne sont reliés à aucun bord, ils survivent).
   const estVert = (x, y) => {
     const i = idx(x, y);
     return (
@@ -144,6 +151,30 @@ async function detourer(src) {
     data[idx(x, y) + 3] = 0;
     pile.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
   }
+  return { data, W, H, idx };
+}
+
+/** Les bornes du dessin restant, une fois le fond ôté. */
+function bornesOpaques(data, W, H, idx) {
+  let x0 = W;
+  let y0 = H;
+  let x1 = -1;
+  let y1 = -1;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (data[idx(x, y) + 3] > 128) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+  }
+  return { x0, y0, x1, y1 };
+}
+
+async function detourer(src) {
+  const { data, W, H, idx } = await surFondDecoupe(src);
 
   // 2. le magenta de l'écran, par sélection.
   let sx0 = W;
@@ -164,20 +195,7 @@ async function detourer(src) {
   }
 
   // 3. rogner aux bornes du caisson.
-  let ax0 = W;
-  let ay0 = H;
-  let ax1 = -1;
-  let ay1 = -1;
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      if (data[idx(x, y) + 3] > 128) {
-        if (x < ax0) ax0 = x;
-        if (x > ax1) ax1 = x;
-        if (y < ay0) ay0 = y;
-        if (y > ay1) ay1 = y;
-      }
-    }
-  }
+  const { x0: ax0, y0: ay0, x1: ax1, y1: ay1 } = bornesOpaques(data, W, H, idx);
   const cw = ax1 - ax0 + 1;
   const ch = ay1 - ay0 + 1;
 
@@ -199,82 +217,278 @@ async function detourer(src) {
 }
 
 
+// ———————————————————————————————————————————————————————————————
+// LE BAS DU MEUBLE — la partie en bois et son monnayeur
+// ———————————————————————————————————————————————————————————————
+
 /**
- * Le SOCLE : la continuation du bas du caisson, en une bande étirable.
- *
- * Le tirage est « cropped just below the control panel » (c'est écrit dans le
- * prompt), et c'est très bien ainsi : demander à Gemini de dessiner un meuble
- * entier ferait un écran minuscule. Mais du coup, une borne remontée dans le
- * cadre laisse un trou entre sa base et la barre d'onglets.
- *
- * On ne redessine rien pour le combler. Le bas de la façade est un panneau
- * plat parfaitement régulier — vérifié ligne à ligne : les huit dernières
- * lignes sont identiques à un point de bruit près, et opaques de x=3 à x=996.
- * Une bande faite de cette ligne, étirée verticalement en CSS
- * (`background-size: 100% 100%`), prolonge donc le meuble exactement : les
- * montants de bois deviennent deux traits verticaux, le panneau continue, le
- * liseré d'encre tient les deux bords. C'est le bord bas d'un neuf-tranches.
- *
- * L'assombrissement est CUIT DANS L'IMAGE et non posé en CSS par-dessus, et
- * c'est la seule façon correcte : un dégradé CSS couvrirait aussi les trois
- * pixels transparents de chaque bord et peindrait deux barres sombres à côté
- * du meuble. Cuit dans la bande, il respecte l'alpha pixel par pixel. Il dit
- * l'ombre du sol, et évite surtout qu'une grande surface unie ne se lise comme
- * un aplat oublié.
+ * La façade sert de RÉFÉRENCE ici, et pas `borne-arcade.webp` : c'est elle
+ * qu'on prolonge, c'est donc sa palette, ses montants et son épaisseur de trait
+ * qu'il faut retrouver au raccord. Se référer à la vignette de la scène ferait
+ * dessiner un autre meuble.
  */
-async function socle() {
-  const { width: W, height: H } = await sharp(SORTIE).metadata();
-  // Moyenne des trois dernières lignes : une seule porterait son bruit de
-  // compression, répété ensuite sur toute la hauteur du socle.
-  const ECHANTILLON = 3;
-  const src = await sharp(SORTIE)
-    .ensureAlpha()
-    .extract({ left: 0, top: H - ECHANTILLON, width: W, height: ECHANTILLON })
-    .raw()
-    .toBuffer();
-  const ligne = new Uint8Array(W * 4);
-  for (let x = 0; x < W; x++) {
-    for (let c = 0; c < 4; c++) {
-      let somme = 0;
-      for (let y = 0; y < ECHANTILLON; y++) somme += src[(y * W + x) * 4 + c];
-      ligne[x * 4 + c] = Math.round(somme / ECHANTILLON);
-    }
-  }
+/**
+ * La RÉFÉRENCE est la borne de la scène, et surtout pas la façade.
+ *
+ * La façade s'arrête sous le pupitre : elle ne sait rien du bas du meuble, et
+ * s'en servir revient à faire inventer un monnayeur à Gemini — ce qu'il a fait,
+ * et il en a dessiné un autre. `borne-arcade.webp` est le dessin d'origine du
+ * meuble ENTIER, monnayeur compris : c'est lui qui fait foi. Le prompt ne fait
+ * que décrire ce qu'on y voit, pour que le modèle ne s'en écarte pas.
+ */
+const PROMPT_SOCLE_INTRO =
+  "Reference image (attached): the arcade cabinet of this game, drawn in three-quarter view. This " +
+  "is the ONE cabinet to reproduce — its identity, its palette and its details are all in this " +
+  "drawing. Keep the same warm mid-brown wood with its visible vertical grain, the same terracotta " +
+  "and gold trim, the same thick hand-inked cartoon outlines and the same soft cel shading.";
 
-  // 96 lignes : assez pour que le dégradé reste lisse une fois étiré sur les
-  // ~250 px que le socle peut atteindre sur un grand téléphone.
-  const HAUTEUR = 96;
-  const PLUS_SOMBRE = 0.66;
-  const bande = Buffer.alloc(W * HAUTEUR * 4);
-  for (let y = 0; y < HAUTEUR; y++) {
-    const k = 1 - (1 - PLUS_SOMBRE) * (y / (HAUTEUR - 1));
-    for (let x = 0; x < W; x++) {
-      const s = x * 4;
-      const d = (y * W + x) * 4;
-      bande[d] = Math.round(ligne[s] * k);
-      bande[d + 1] = Math.round(ligne[s + 1] * k);
-      bande[d + 2] = Math.round(ligne[s + 2] * k);
-      bande[d + 3] = ligne[s + 3]; // l'alpha ne s'assombrit pas
-    }
-  }
+const PROMPT_SOCLE_SUJET = [
+  "Draw ONLY THE LOWER PART of this same cabinet — the wooden body below the control panel, from",
+  "just under the control panel down to the floor. The marquee, the screen and the control panel are",
+  "outside the frame: the drawing starts at the top of the wooden body.",
+  "",
+  "VIEW: strictly frontal and straight-on, a flat front elevation, camera facing the cabinet square.",
+  "The reference is drawn in three-quarter view; turn it to face the viewer. Both side panels are",
+  "hidden behind the front face, every horizontal edge is perfectly horizontal and every vertical",
+  "edge perfectly vertical. The body is one straight-sided rectangle, as wide at the bottom as at",
+  "the top.",
+  "",
+  "WHAT THE FRONT CARRIES, exactly as in the reference:",
+  "a warm mid-brown wooden panel with visible vertical grain fills the whole front;",
+  "at the extreme left and right edges, a plain warm brown WOODEN SIDE RAIL runs from top to bottom,",
+  "a narrow upright band about one fiftieth of the width — it is the side of the cabinet seen edge",
+  "on, and it is the outermost thing in the drawing, bare wood with no trim on it;",
+  "just INSIDE each of those two rails, and not touching the edge, runs a vertical trim stripe: a",
+  "terracotta red band edged with a thin gold line, the two mirroring each other;",
+  "centred between them, the coin door: an upright grey-green steel plate with two small RED coin",
+  "slots side by side at the top, two small dark square buttons below them, and a small round",
+  "keyhole to their right;",
+  "directly under that plate, a second wider grey-green steel panel — the cash box door — with a",
+  "small round knob near its right edge;",
+  "at the very bottom, the wooden body meets the floor on a plain dark kick plate.",
+  "",
+  "The wooden panel is the subject and fills most of the image; the coin door is one detail sitting",
+  "on it, about a fifth of the width.",
+  "",
+  "The area around the cabinet is filled with ONE single flat uniform saturated pure green",
+  "(RGB 0, 255, 0), a smooth even backdrop, exactly like a chroma-key green screen. The cabinet keeps",
+  "a crisp clean silhouette against it.",
+].join(" ");
 
-  await sharp(bande, { raw: { width: W, height: HAUTEUR, channels: 4 } })
-    .webp({ quality: 92, alphaQuality: 100 })
-    .toFile(SORTIE_SOCLE);
-  console.log(`✅ ${SORTIE_SOCLE}  ${W} × ${HAUTEUR}`);
+async function socleTirages(n) {
+  await chargerEnv();
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const ref = await fs.readFile(REFERENCE);
+  const contents = [
+    {
+      role: "user",
+      parts: [
+        { text: PROMPT_SOCLE_INTRO },
+        { inlineData: { mimeType: "image/webp", data: ref.toString("base64") } },
+        { text: `Subject: ${PROMPT_SOCLE_SUJET}` },
+      ],
+    },
+  ];
+  for (let i = 1; i <= n; i++) {
+    const res = await ai.models.generateContent({
+      model: "gemini-3-pro-image-preview",
+      contents,
+      config: { imageConfig: { aspectRatio: "4:3", imageSize: "2K" } },
+    });
+    const parts = res.candidates?.[0]?.content?.parts ?? [];
+    const img = parts.find((p) => p.inlineData?.data);
+    if (!img) {
+      console.log(`❌ tirage ${i} : pas d'image`);
+      continue;
+    }
+    const out = path.join(ROOT, `borne-socle-tirage-${i}.png`);
+    await fs.writeFile(out, Buffer.from(img.inlineData.data, "base64"));
+    console.log(`✅ ${out}`);
+  }
+  console.log("Choisir un tirage, puis relancer avec --socle-from <fichier>.");
 }
 
-if (socleSeul) {
-  await socle();
+
+/**
+ * Découpe un tirage de bas de meuble et le fait tomber PILE sous la façade.
+ *
+ * Le tirage redessine toujours le pupitre et son galon en chevron — il faut
+ * bien les lui montrer pour qu'il sache où il est. On ne garde donc que ce qui
+ * commence AU BOIS, et deux réglages font le raccord :
+ *
+ * 1. LA LIGNE DE COUPE se trouve par la plus longue plage de lignes à
+ *    dominante bois. Chercher « la première ligne brune » attraperait l'or du
+ *    galon, qui est de la même famille de teinte ; la plus longue plage, non :
+ *    le galon fait quelques lignes, le panneau en fait des centaines.
+ *
+ * 2. L'ÉCHELLE se prend sur la largeur de la silhouette À CETTE LIGNE, et non
+ *    sur les bornes globales du dessin. C'est LE point : le pupitre déborde du
+ *    corps, donc caler sur les bornes globales rétrécit le bois et ouvre une
+ *    marche de part et d'autre du raccord. Calé sur la ligne de coupe, le
+ *    meuble a exactement la largeur qu'il avait au bas de la façade, et ce
+ *    qu'il fait plus bas (se resserrer un peu, par perspective) est juste.
+ *
+ * On pose enfin quelques lignes de la dernière ligne de la façade au-dessus du
+ * bois : le raccord de couleur devient exact par construction, et non « assez
+ * proche ».
+ */
+async function socleDepuis(src) {
+  const { data, W, H, idx } = await surFondDecoupe(src);
+
+  // Où commence le bois : plus longue plage de lignes à dominante brun chaud.
+  const estBois = (x, y) => {
+    const i = idx(x, y);
+    if (data[i + 3] < 128) return false;
+    const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
+    return r > 95 && r - b > 30 && g - b > 8;
+  };
+  // On juge sur DEUX FENÊTRES LATÉRALES et jamais sur le centre : le monnayeur
+  // est au milieu et couvre le bois sur presque toute la hauteur — jugé au
+  // centre, le « plus long » se trouvait sous la trappe à monnaie et la coupe
+  // tombait 1400 lignes trop bas. Les fenêtres sont posées entre le galon et
+  // le monnayeur, là où il n'y a que du bois du haut en bas.
+  //
+  // Et elles se calent sur les bornes du MEUBLE, pas de l'image : le dessin
+  // n'occupe qu'une partie du tirage, des pourcentages de l'image tomberaient
+  // dans le fond.
+  const b = bornesOpaques(data, W, H, idx);
+  const bw = b.x1 - b.x0 + 1;
+  const fenetres = [
+    [b.x0 + Math.round(bw * 0.14), b.x0 + Math.round(bw * 0.28)],
+    [b.x0 + Math.round(bw * 0.72), b.x0 + Math.round(bw * 0.86)],
+  ];
+  const dominante = [];
+  for (let y = 0; y < H; y++) {
+    let bois = 0;
+    let opaques = 0;
+    for (const [a, z] of fenetres) {
+      for (let x = a; x <= z; x++) {
+        if (data[idx(x, y) + 3] >= 128) {
+          opaques++;
+          if (estBois(x, y)) bois++;
+        }
+      }
+    }
+    dominante.push(opaques > 0 && bois / opaques > 0.6);
+  }
+  let debut = -1;
+  let meilleur = { debut: -1, longueur: 0 };
+  for (let y = 0; y <= H; y++) {
+    if (y < H && dominante[y]) {
+      if (debut < 0) debut = y;
+    } else if (debut >= 0) {
+      if (y - debut > meilleur.longueur) meilleur = { debut, longueur: y - debut };
+      debut = -1;
+    }
+  }
+  if (meilleur.debut < 0) throw new Error("aucune plage de bois trouvée dans le tirage");
+  const yCoupe = meilleur.debut;
+
+  // La silhouette à cette ligne, qui donne l'échelle.
+  let sx0 = -1;
+  let sx1 = -1;
+  for (let x = 0; x < W; x++) {
+    if (data[idx(x, yCoupe) + 3] > 128) {
+      if (sx0 < 0) sx0 = x;
+      sx1 = x;
+    }
+  }
+  const largeurCoupe = sx1 - sx0 + 1;
+
+  // La cible : la dernière ligne de la façade, et son étendue opaque.
+  const { width: FW, height: FH } = await sharp(SORTIE).metadata();
+  const derniere = await sharp(SORTIE)
+    .ensureAlpha()
+    .extract({ left: 0, top: FH - 1, width: FW, height: 1 })
+    .raw()
+    .toBuffer();
+  let fx0 = -1;
+  let fx1 = -1;
+  for (let x = 0; x < FW; x++) {
+    if (derniere[x * 4 + 3] > 128) {
+      if (fx0 < 0) fx0 = x;
+      fx1 = x;
+    }
+  }
+  const echelle = (fx1 - fx0 + 1) / largeurCoupe;
+
+  // Remise à l'échelle, puis fenêtre de FW de large calée sur le raccord.
+  const larg = Math.max(1, Math.round(W * echelle));
+  const redim = await sharp(Buffer.from(data), { raw: { width: W, height: H, channels: 4 } })
+    .extract({ left: 0, top: yCoupe, width: W, height: H - yCoupe })
+    .resize({ width: larg })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const decalage = Math.round(sx0 * echelle) - fx0;
+  const hArt = redim.info.height;
+  const art = Buffer.alloc(FW * hArt * 4);
+  for (let y = 0; y < hArt; y++) {
+    for (let x = 0; x < FW; x++) {
+      const sx = x + decalage;
+      if (sx < 0 || sx >= larg) continue;
+      art.set(redim.data.subarray((y * larg + sx) * 4, (y * larg + sx) * 4 + 4), (y * FW + x) * 4);
+    }
+  }
+
+  // Rogner le vide sous le meuble. Le tirage garde du fond sous la plinthe :
+  // laissé là, il donne une dernière ligne TRANSPARENTE, et la bande de
+  // plinthe qui s'en déduit ne peint plus rien.
+  let hUtile = hArt;
+  while (hUtile > 1) {
+    let opaque = false;
+    for (let x = 0; x < FW && !opaque; x++) if (art[((hUtile - 1) * FW + x) * 4 + 3] > 128) opaque = true;
+    if (opaque) break;
+    hUtile--;
+  }
+
+  // Le raccord : quelques lignes de la dernière ligne de la façade, à
+  // l'identique, posées au-dessus du bois.
+  const RACCORD = Math.round(FH * 0.02);
+  const hTotal = RACCORD + hUtile;
+  const sortie = Buffer.alloc(FW * hTotal * 4);
+  for (let y = 0; y < RACCORD; y++) sortie.set(derniere, y * FW * 4);
+  sortie.set(art.subarray(0, hUtile * FW * 4), RACCORD * FW * 4);
+
+  await sharp(sortie, { raw: { width: FW, height: hTotal, channels: 4 } })
+    .webp({ quality: 92, alphaQuality: 100 })
+    .toFile(SORTIE_SOCLE);
+
+  // La bande étirable, tirée de la DERNIÈRE ligne du socle : elle prolonge la
+  // plinthe quand un cadre très allongé laisse plus de place que le dessin.
+  const bas = await sharp(SORTIE_SOCLE)
+    .ensureAlpha()
+    .extract({ left: 0, top: hTotal - 1, width: FW, height: 1 })
+    .raw()
+    .toBuffer();
+  await sharp(bas, { raw: { width: FW, height: 1, channels: 4 } })
+    .webp({ quality: 92, alphaQuality: 100 })
+    .toFile(SORTIE_BANDE);
+
+  console.log(`✅ ${SORTIE_SOCLE}  ${FW} × ${hTotal}`);
+  console.log(`✅ ${SORTIE_BANDE}  ${FW} × 1`);
+  console.log("   ── à recopier dans borneArcadeLayout.ts ──");
+  console.log(`   ratio du socle : ${(FW / hTotal).toFixed(3)}`);
+  console.log(
+    `   coupe à y=${yCoupe}/${H}, silhouette ${largeurCoupe}px → ${fx1 - fx0 + 1}px (×${echelle.toFixed(3)})`,
+  );
+}
+
+if (socleFrom) {
+  await socleDepuis(socleFrom);
+} else if (socleGenerer) {
+  await socleTirages(Number(args[args.indexOf("--socle-generer") + 1]) || 3);
 } else if (generer) {
   const n = Number(args[args.indexOf("--generer") + 1]) || 3;
   await tirages(n);
 } else if (from) {
   await detourer(from);
-  // Le socle est DÉRIVÉ de la façade : il se refait avec elle, sans quoi les
-  // deux divergeraient au premier nouveau tirage et le raccord se verrait.
-  await socle();
+  // Le socle se cale sur la DERNIÈRE LIGNE de la façade (couleur et largeur de
+  // silhouette) : une façade refaite oblige à repasser `--socle-from` sur son
+  // tirage de bas de meuble, sinon le raccord dérive.
+  console.log("⚠  Refaire aussi le bas : --socle-generer puis --socle-from <tirage>.");
 } else {
-  console.error("Usage : --from <fichier.png>  |  --generer [n]  |  --socle");
+  console.error(
+    "Usage : --from <f.png> | --generer [n] | --socle-generer [n] | --socle-from <f.png>",
+  );
   process.exit(1);
 }

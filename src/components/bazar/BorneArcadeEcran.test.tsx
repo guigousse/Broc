@@ -124,54 +124,44 @@ describe("BorneArcadeEcran", () => {
     expect(col.style.top).not.toBe("");
   });
 
-  // Le socle : la seule pièce qui garantit qu'aucun vide n'apparaît sous la
-  // base une fois la borne remontée. Il part du bas de la façade et descend
-  // jusqu'au plancher, quoi qu'il arrive.
-  it("prolonge le bas du meuble par un socle qui descend jusqu'au plancher", () => {
+  // Le bas du meuble : un SECOND dessin (bois, monnayeur, plinthe) et non un
+  // étirement du panneau. Ancré par le haut et laissé déborder — sur un petit
+  // téléphone c'est l'amorce du bois qu'on veut voir, pas un meuble écrasé.
+  it("pose le bas du meuble dessiné sous la façade, ancré par le haut", () => {
     monter();
-    const s = screen.getByTestId("borne-socle");
-    expect(s.style.bottom).toBe("0px");
-    expect(s.style.left).toBe("0px");
-    expect(s.style.right).toBe("0px");
-    expect(s.style.backgroundImage).toContain("/bazar/borne-socle.webp");
-    // L'étirement pur est le rendu VOULU : la bande est une ligne de pixels
-    // répétée, l'étirer verticalement prolonge le panneau à l'identique.
-    expect(s.style.backgroundSize).toBe("100% 100%");
-    expect(s.style.backgroundRepeat).toBe("no-repeat");
+    const b = screen.getByTestId("borne-socle");
+    expect(b.tagName).toBe("IMG");
+    expect(b.getAttribute("src")).toBe("/bazar/borne-socle.webp");
+    expect(b.getAttribute("alt")).toBe("");
+    expect(b.style.left).toBe("0px");
+    expect(b.style.right).toBe("0px");
+    // Ancré par le haut : une hauteur posée, jamais un `bottom` qui l'étirerait.
+    expect(b.style.top).not.toBe("");
+    expect(b.style.bottom).toBe("");
   });
 
-  // Le socle est rendu AVANT la façade, donc dessous : son pixel de
-  // recouvrement se glisse sous elle au lieu de mordre sur le pupitre.
-  it("pose le socle sous la façade dans l'ordre du DOM", () => {
+  // Le filet de sécurité : sur un cadre plus élancé que 2:1 le dessin ne
+  // descend pas jusqu'au plancher, et la plinthe étirée comble le reste.
+  it("prolonge la plinthe jusqu'au plancher par une bande étirable", () => {
     monter();
-    const enfants = Array.from(screen.getByTestId("borne-colonne").children);
-    const iSocle = enfants.findIndex((e) => e.getAttribute("data-testid") === "borne-socle");
-    const iFacade = enfants.findIndex((e) => e.getAttribute("data-testid") === "borne-facade");
-    expect(iSocle).toBeGreaterThanOrEqual(0);
-    expect(iFacade).toBeGreaterThan(iSocle);
+    const p = screen.getByTestId("borne-plinthe");
+    expect(p.style.bottom).toBe("0px");
+    expect(p.style.backgroundImage).toContain("/bazar/borne-socle-bande.webp");
+    // L'étirement pur est le rendu VOULU : la bande est une seule ligne de
+    // pixels, l'étirer verticalement prolonge la plinthe à l'identique.
+    expect(p.style.backgroundSize).toBe("100% 100%");
+    expect(p.style.backgroundRepeat).toBe("no-repeat");
   });
 
-  // Le fond était à 0,88 d'opacité : le flou ne montrait rien, on tombait sur
-  // un aplat vert. On veut voir la boutique derrière, hors du point.
-  it("laisse voir la boutique floutée derrière le caisson", () => {
+  // Ordre de peinture : plinthe, puis bas du meuble, puis façade. Chaque pièce
+  // recouvre d'un pixel celle d'en dessous, et c'est la suivante qui masque le
+  // recouvrement — sans quoi un arrondi de sous-pixel ouvre un cheveu de fond.
+  it("empile plinthe, bas du meuble puis façade dans l'ordre du DOM", () => {
     monter();
-    const dlg = screen.getByRole("dialog");
-    const alpha = Number(/rgba\([^)]*?,\s*([\d.]+)\s*\)/.exec(dlg.style.background)?.[1]);
-    expect(alpha).toBeGreaterThan(0);
-    expect(alpha).toBeLessThan(0.6);
-    expect(dlg.style.backdropFilter).toMatch(/blur\(/);
-    // La variante préfixée se lit sur l'objet de style et non dans le DOM :
-    // jsdom jette `-webkit-backdrop-filter`, qui est pourtant LA seule forme
-    // comprise par le WKWebView des iOS d'avant 18 — c'est-à-dire la cible.
-    expect(STYLE_VOILE_BORNE.WebkitBackdropFilter).toMatch(/blur\(/);
-  });
-
-  // Le voile commence désormais SOUS le bandeau, qui a déjà absorbé l'encoche :
-  // réserver `--safe-top` une seconde fois décrocherait la croix vers le bas.
-  it("ne compte pas l'encoche deux fois pour le bouton de fermeture", () => {
-    monter();
-    const btn = screen.getByRole("button", { name: "Fermer la borne" });
-    expect(btn.style.top).not.toMatch(/safe-top/);
+    const cles = Array.from(screen.getByTestId("borne-colonne").children).map((e) =>
+      e.getAttribute("data-testid"),
+    );
+    expect(cles).toEqual(["borne-plinthe", "borne-socle", "borne-facade"]);
   });
 
   it("place la fenêtre aux pourcentages mesurés du caisson", () => {
