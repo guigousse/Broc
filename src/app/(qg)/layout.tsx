@@ -80,10 +80,9 @@ import {
   SEQUENCES_TUTORIEL,
   type DialogueSequence,
 } from "@/data/dialogues";
-import { VITRINE_PREP_ID } from "@/lib/vitrinePrep";
 import { stockageEstPlein } from "@/lib/stockage";
-import { energieCourante } from "@/lib/energie";
 import { bazarEstOuvert, joursAvantOuvertureBazar } from "@/lib/bazar/ouverture";
+import { destinationChiner, destinationEtaler } from "@/lib/porte";
 import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
@@ -767,31 +766,27 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           playDoorClose();
           setPorteOuverte(false);
           // Pas d'énergie → la machine pope avec le bandeau d'alerte.
-          if (energieCourante(state, tempsConfiance() ?? Date.now()) < 1) {
+          const ou = destinationChiner(state, tempsConfiance() ?? Date.now());
+          if (ou.type === "energieInsuffisante") {
             setAlerteEnergie(true);
             return;
           }
-          router.push("/chiner");
+          router.push(ou.href);
         }}
         onVitrine={() => {
           playDoorClose();
           setPorteOuverte(false);
           // Flow étaler : packing + pricing en prep, puis sélection brocante,
-          // puis journée. Reprise :
-          //   - vitrine attachée à une vraie brocante → reprise de la journée.
-          //   - vitrine en prep (ou pas de vitrine) → /vitrine/prep.
-          const v = state.vitrine;
-          if (v && v.brocanteId !== VITRINE_PREP_ID) {
-            // Journée déjà commencée (énergie déjà consommée) : jamais bloquée.
-            router.push(`/vitrine/${v.brocanteId}/journee`);
-            return;
-          }
-          // Pas d'énergie → la machine pope avec le bandeau d'alerte.
-          if (energieCourante(state, tempsConfiance() ?? Date.now()) < 1) {
+          // puis journée. La règle de reprise — et le fait qu'une journée déjà
+          // commencée ne repaie pas son énergie — vit dans `lib/porte`, avec
+          // ses tests : la porte du Bazar propose les mêmes sorties, et deux
+          // copies auraient fini par diverger.
+          const ou = destinationEtaler(state, tempsConfiance() ?? Date.now());
+          if (ou.type === "energieInsuffisante") {
             setAlerteEnergie(true);
             return;
           }
-          router.push("/vitrine/prep");
+          router.push(ou.href);
         }}
         bazarOuvert={bazarEstOuvert(state)}
         joursAvantBazar={joursAvantOuvertureBazar(state)}
