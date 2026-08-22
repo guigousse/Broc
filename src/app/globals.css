@@ -790,6 +790,19 @@
   /* Rouge d'alerte SUR FOND SOMBRE (jauge d'énergie à zéro dans le header) :
      le vermillion ne mesure que 2,8:1 sur forest-800, celui-ci 5,1:1. */
   --red-signal-300: #E8836F;
+  /* Bleu électrique du BAZARCOIN — la monnaie du Bazar. Le nuancier n'avait
+     aucun bleu franc (`midnight-*` sont des gris bleutés) : celui-ci existe
+     pour qu'une devise ne se confonde jamais avec l'autre, la caisse portant
+     désormais les euros ET les Bazarcoins sous un même libellé. Mesuré
+     4,8:1 sur forest-800 et 6,1:1 sur forest-900 — au-dessus d'AA sur les
+     deux fonds où il vit, et d'une présence comparable au rouge qu'il
+     remplace (5,1:1). */
+  --azur-400: #4D9BFF;
+  /* Le même bleu POUR FOND CLAIR — la fiche d'un article est sur papier crème,
+     où `azur-400` tombe à 2,6:1 et devient illisible. Celui-ci y mesure
+     6,3:1. Deux teintes pour une seule devise, comme le jeu a déjà deux
+     rouges (`vermillion-500` sombre, `red-signal-300` clair). */
+  --azur-600: #1D4ED8;
 
   /* Gradients récurrents */
   /* Jauge d'humeur client : contentement → neutre → colère (teintes patina/brass/vermillion). */
