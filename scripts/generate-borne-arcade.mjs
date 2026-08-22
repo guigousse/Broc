@@ -504,6 +504,81 @@ async function socleDepuis(src) {
     hUtile--;
   }
 
+  // ——— LE CHANFREIN ———
+  //
+  // Le fût est renfoncé, la façade descend jusqu'à son propre bord : entre les
+  // deux, il manquait l'arête qui va de l'un à l'autre, et il restait un coin
+  // de fond vide sous l'angle du pupitre. Mesuré : la façade finit à x=3, le
+  // dessin reprenait à x=52.
+  //
+  // Ce chanfrein est CONSTRUIT et non attendu du tirage. Un tirage en donne un
+  // parfois (un épaulement biseauté sous le pupitre), parfois aucun, et jamais
+  // à la bonne profondeur — celle-ci vaut exactement la moitié du retrait, qui
+  // est une donnée de la façade et pas du dessin. On retire donc l'épaulement
+  // dessiné s'il y en a un, et on pose le sien : chaque ligne est une copie de
+  // la première ligne du fût, rééchantillonnée à l'horizontale sur une
+  // silhouette qui va tout droit du bord de la façade au bord du fût. Dans un
+  // dessin à plat, un montant et un galon qui s'évasent ainsi se lisent
+  // exactement comme un pan coupé, ce qu'ils sont.
+  //
+  // Il n'est PAS dans le prolongement de la diagonale de la façade, et c'est
+  // juste : celle-là est l'évasement du pupitre, celui-ci le retrait du corps.
+  // Deux arêtes opposées, qui doivent se rejoindre et non se continuer.
+  const spanArt = (buf, y) => {
+    let a = -1;
+    let z = -1;
+    for (let x = 0; x < FW; x++) {
+      if (buf[(y * FW + x) * 4 + 3] > 128) {
+        if (a < 0) a = x;
+        z = x;
+      }
+    }
+    return [a, z];
+  };
+  const [ffx0, ffx1] = spanFacade(FH - 1);
+  const largeurFut = tx1 - tx0 + 1;
+
+  // 1. ôter l'épaulement dessiné : on repart de la première ligne d'aplomb.
+  let yFut = 0;
+  while (yFut < hUtile - 1) {
+    const [a, z] = spanArt(art, yFut);
+    if (a >= 0 && z - a + 1 <= largeurFut + 2) break;
+    yFut++;
+  }
+  const fut = art.subarray(yFut * FW * 4, hUtile * FW * 4);
+  const hFut = hUtile - yFut;
+
+  // 2. poser le sien. Un peu plus haut que profond (×1,3) : à 45° l'arête est
+  //    dure, plus couchée elle transforme le retrait en entonnoir.
+  const retrait = (ffx1 - ffx0 - (tx1 - tx0)) / 2;
+  const CHANFREIN = Math.max(1, Math.round(retrait * 1.3));
+  const [pa, pz] = spanArt(fut, 0);
+  const chanfrein = Buffer.alloc(FW * CHANFREIN * 4);
+  for (let y = 0; y < CHANFREIN; y++) {
+    const t = y / CHANFREIN;
+    const cx0 = ffx0 + (tx0 - ffx0) * t;
+    const cx1 = ffx1 + (tx1 - ffx1) * t;
+    const rapport = (pz - pa) / Math.max(1, cx1 - cx0);
+    for (let x = Math.round(cx0); x <= Math.round(cx1); x++) {
+      const sx = pa + (x - cx0) * rapport;
+      const i0 = Math.max(pa, Math.min(pz, Math.floor(sx)));
+      const i1 = Math.max(pa, Math.min(pz, i0 + 1));
+      const f = sx - i0;
+      const d = (y * FW + x) * 4;
+      for (let c = 0; c < 4; c++) {
+        const v0 = fut[(0 * FW + i0) * 4 + c];
+        const v1 = fut[(0 * FW + i1) * 4 + c];
+        chanfrein[d + c] = Math.round(v0 + (v1 - v0) * f);
+      }
+    }
+  }
+  const corps = Buffer.concat([chanfrein, fut]);
+  const hCorps = CHANFREIN + hFut;
+  console.log(
+    `   chanfrein construit : ${CHANFREIN} lignes, ${ffx1 - ffx0 + 1}px → ${largeurFut}px` +
+      ` (épaulement dessiné ôté : ${yFut} lignes)`,
+  );
+
   // ——— LE RACCORD ———
   //
   // Deux pièces, et pas une bande de couleur. La première version posait
@@ -521,15 +596,15 @@ async function socleDepuis(src) {
   // 2. UNE OMBRE PORTÉE en haut du corps, qui s'éteint vers le bas. C'est elle
   //    qui dit le renfoncement : sans ombre, un corps simplement plus étroit se
   //    lit comme un meuble plus petit, pas comme un meuble en retrait.
-  const [fx0, fx1] = spanFacade(FH - 1);
+  const [fx0, fx1] = [ffx0, ffx1];
   const derniere = facade.subarray((FH - 1) * FW * 4, FH * FW * 4);
   // L'encre du dessin, prise sur le contour de la façade lui-même.
   const encre = [derniere[fx0 * 4], derniere[fx0 * 4 + 1], derniere[fx0 * 4 + 2]];
   const ENCRE = Math.max(3, Math.round(FH * 0.004));
-  const OMBRE = Math.round(hUtile * 0.09);
+  const OMBRE = Math.round(hCorps * 0.09);
   const OMBRE_MIN = 0.55;
 
-  const hTotal = ENCRE + hUtile;
+  const hTotal = ENCRE + hCorps;
   const sortie = Buffer.alloc(FW * hTotal * 4);
   for (let y = 0; y < ENCRE; y++) {
     for (let x = 0; x < FW; x++) {
@@ -542,16 +617,16 @@ async function socleDepuis(src) {
       sortie[d + 3] = a;
     }
   }
-  for (let y = 0; y < hUtile; y++) {
+  for (let y = 0; y < hCorps; y++) {
     const k = y >= OMBRE ? 1 : OMBRE_MIN + (1 - OMBRE_MIN) * (y / OMBRE);
     for (let x = 0; x < FW; x++) {
       const src = (y * FW + x) * 4;
       const d = ((ENCRE + y) * FW + x) * 4;
-      if (art[src + 3] <= 0) continue;
-      sortie[d] = Math.round(art[src] * k);
-      sortie[d + 1] = Math.round(art[src + 1] * k);
-      sortie[d + 2] = Math.round(art[src + 2] * k);
-      sortie[d + 3] = art[src + 3];
+      if (corps[src + 3] <= 0) continue;
+      sortie[d] = Math.round(corps[src] * k);
+      sortie[d + 1] = Math.round(corps[src + 1] * k);
+      sortie[d + 2] = Math.round(corps[src + 2] * k);
+      sortie[d + 3] = corps[src + 3];
     }
   }
 

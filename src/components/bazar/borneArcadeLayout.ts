@@ -74,17 +74,25 @@ export const PART_AIR_AU_DESSUS = 0.14;
  * façade : 857 px à mi-hauteur de l'écran contre 994 à la dernière ligne,
  * 13,8 % de fuyant. Le pupitre déborde donc du corps, ce qui est juste.
  *
- * Deux pièces font le joint, et pas une bande de couleur — la première
+ * Trois pièces font le joint, et pas une bande de couleur — la première
  * version en posait une, et elle se lisait comme une barre mauve en travers du
- * meuble : un TRAIT D'ENCRE à la largeur de la FAÇADE, qui rend son arête basse
- * au pupitre tranché net par le cadrage du tirage, et une OMBRE PORTÉE en haut
- * du corps, qui s'éteint vers le bas. Sans l'ombre, un corps simplement plus
- * étroit se lit comme un meuble plus petit et non comme un meuble en retrait.
+ * meuble :
+ *
+ *  - un TRAIT D'ENCRE à la largeur de la FAÇADE, qui rend son arête basse au
+ *    pupitre que le cadrage du tirage a tranché net ;
+ *  - un CHANFREIN construit, qui va tout droit du bord de la façade au bord du
+ *    fût. Sans lui, le retrait laissait un coin de fond vide sous l'angle du
+ *    pupitre : la façade finit à x=3, le dessin reprenait à x=52. Il est
+ *    construit et non attendu du tirage, parce que sa profondeur est une donnée
+ *    de la façade — la moitié du retrait — et pas du dessin ;
+ *  - une OMBRE PORTÉE en haut du corps, qui s'éteint vers le bas. Sans elle, un
+ *    corps simplement plus étroit se lit comme un meuble plus petit et non
+ *    comme un meuble en retrait.
  */
 export const SOCLE_BORNE = {
   src: "/bazar/borne-socle.webp",
-  /** largeur / hauteur du dessin (1000 × 733), imprimé par `--socle-from`. */
-  ratio: 1.364,
+  /** largeur / hauteur du dessin (1000 × 710), imprimé par `--socle-from`. */
+  ratio: 1.408,
   /**
    * La plinthe, en une ligne étirable.
    *
