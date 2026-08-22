@@ -74,14 +74,17 @@ export const PART_AIR_AU_DESSUS = 0.14;
  * façade : 857 px à mi-hauteur de l'écran contre 994 à la dernière ligne,
  * 13,8 % de fuyant. Le pupitre déborde donc du corps, ce qui est juste.
  *
- * Quelques lignes de la dernière ligne de la façade, resserrées à cette même
- * largeur, sont posées au-dessus du bois : le raccord de couleur devient exact
- * par construction.
+ * Deux pièces font le joint, et pas une bande de couleur — la première
+ * version en posait une, et elle se lisait comme une barre mauve en travers du
+ * meuble : un TRAIT D'ENCRE à la largeur de la FAÇADE, qui rend son arête basse
+ * au pupitre tranché net par le cadrage du tirage, et une OMBRE PORTÉE en haut
+ * du corps, qui s'éteint vers le bas. Sans l'ombre, un corps simplement plus
+ * étroit se lit comme un meuble plus petit et non comme un meuble en retrait.
  */
 export const SOCLE_BORNE = {
   src: "/bazar/borne-socle.webp",
-  /** largeur / hauteur du dessin (1000 × 785), imprimé par `--socle-from`. */
-  ratio: 1.274,
+  /** largeur / hauteur du dessin (1000 × 733), imprimé par `--socle-from`. */
+  ratio: 1.364,
   /**
    * La plinthe, en une ligne étirable.
    *

@@ -384,16 +384,34 @@ async function socleDepuis(src) {
   if (meilleur.debut < 0) throw new Error("aucune plage de bois trouvée dans le tirage");
   const yCoupe = meilleur.debut;
 
-  // La silhouette à cette ligne, qui donne l'échelle.
-  let sx0 = -1;
-  let sx1 = -1;
-  for (let x = 0; x < W; x++) {
-    if (data[idx(x, yCoupe) + 3] > 128) {
-      if (sx0 < 0) sx0 = x;
-      sx1 = x;
+  // La silhouette du FÛT, prise à la MÉDIANE et non à la ligne de coupe.
+  //
+  // Le corps ne descend pas d'aplomb : il porte un épaulement en haut (les
+  // montants biseautés sous le pupitre) et une plinthe évasée en bas. Mesurée
+  // à la ligne de coupe, la silhouette est celle de l'épaulement — le fût s'en
+  // trouvait rétréci et son arête rentrait sous celle qu'on visait. La médiane
+  // ignore les deux accidents : c'est la largeur que le meuble tient sur la
+  // plus grande partie de sa hauteur, et c'est elle, l'« arête de la partie
+  // basse ».
+  const spans = [];
+  for (let y = yCoupe; y < H; y++) {
+    let a = -1;
+    let z = -1;
+    for (let x = 0; x < W; x++) {
+      if (data[idx(x, y) + 3] > 128) {
+        if (a < 0) a = x;
+        z = x;
+      }
     }
+    if (a >= 0) spans.push({ a, z, l: z - a + 1, c: (a + z) / 2 });
   }
-  const largeurCoupe = sx1 - sx0 + 1;
+  if (!spans.length) throw new Error("aucune silhouette sous la ligne de coupe");
+  const median = (xs) => {
+    const t = [...xs].sort((u, v) => u - v);
+    return t[Math.floor(t.length / 2)];
+  };
+  const largeurCoupe = median(spans.map((s) => s.l));
+  const centreFut = median(spans.map((s) => s.c));
 
   // LA CIBLE : la largeur de la façade AU CENTRE DE L'ÉCRAN, et non à sa base.
   //
@@ -460,7 +478,11 @@ async function socleDepuis(src) {
     .resize({ width: larg })
     .raw()
     .toBuffer({ resolveWithObject: true });
-  const decalage = Math.round(sx0 * echelle) - tx0;
+  // Le fût est CENTRÉ sur le centre de la façade, et non calé par son bord
+  // gauche : un dessin très légèrement asymétrique se voit tout de suite quand
+  // il est collé d'un côté.
+  const centreCible = (tx0 + tx1) / 2;
+  const decalage = Math.round(centreFut * echelle - centreCible);
   const hArt = redim.info.height;
   const art = Buffer.alloc(FW * hArt * 4);
   for (let y = 0; y < hArt; y++) {
@@ -482,24 +504,56 @@ async function socleDepuis(src) {
     hUtile--;
   }
 
-  // Le raccord : quelques lignes de la dernière ligne de la façade, RESSERRÉES
-  // à la largeur cible, posées au-dessus du bois. Resserrées et pas recopiées
-  // telles quelles : le bas est maintenant plus étroit que la base de la
-  // façade, une bande pleine largeur dépasserait de part et d'autre du meuble.
+  // ——— LE RACCORD ———
+  //
+  // Deux pièces, et pas une bande de couleur. La première version posait
+  // quelques lignes du bas de la façade au-dessus du bois : ça donnait une
+  // barre mauve parasite en travers du meuble, vue à la recette.
+  //
+  // Ce qu'il fallait, c'est ce que le dessin demande une fois le corps
+  // renfoncé :
+  //
+  // 1. UN TRAIT D'ENCRE SOUS LE DÉBORD, à la largeur de la FAÇADE et non du
+  //    corps. Le tirage de la façade est tranché net à sa dernière ligne, sans
+  //    contour : posé au-dessus du vide, le pupitre flottait comme une boîte
+  //    sciée. Ce trait lui rend son arête basse, y compris de part et d'autre
+  //    du corps où il n'y a rien en dessous.
+  // 2. UNE OMBRE PORTÉE en haut du corps, qui s'éteint vers le bas. C'est elle
+  //    qui dit le renfoncement : sans ombre, un corps simplement plus étroit se
+  //    lit comme un meuble plus petit, pas comme un meuble en retrait.
   const [fx0, fx1] = spanFacade(FH - 1);
-  const derniereResserree = await sharp(facade, { raw: { width: FW, height: FH, channels: 4 } })
-    .extract({ left: fx0, top: FH - 1, width: fx1 - fx0 + 1, height: 1 })
-    .resize({ width: tx1 - tx0 + 1, height: 1, fit: "fill" })
-    .raw()
-    .toBuffer();
-  const ligneRaccord = Buffer.alloc(FW * 4);
-  ligneRaccord.set(derniereResserree, tx0 * 4);
+  const derniere = facade.subarray((FH - 1) * FW * 4, FH * FW * 4);
+  // L'encre du dessin, prise sur le contour de la façade lui-même.
+  const encre = [derniere[fx0 * 4], derniere[fx0 * 4 + 1], derniere[fx0 * 4 + 2]];
+  const ENCRE = Math.max(3, Math.round(FH * 0.004));
+  const OMBRE = Math.round(hUtile * 0.09);
+  const OMBRE_MIN = 0.55;
 
-  const RACCORD = Math.round(FH * 0.02);
-  const hTotal = RACCORD + hUtile;
+  const hTotal = ENCRE + hUtile;
   const sortie = Buffer.alloc(FW * hTotal * 4);
-  for (let y = 0; y < RACCORD; y++) sortie.set(ligneRaccord, y * FW * 4);
-  sortie.set(art.subarray(0, hUtile * FW * 4), RACCORD * FW * 4);
+  for (let y = 0; y < ENCRE; y++) {
+    for (let x = 0; x < FW; x++) {
+      const a = derniere[x * 4 + 3];
+      if (a <= 128) continue;
+      const d = (y * FW + x) * 4;
+      sortie[d] = encre[0];
+      sortie[d + 1] = encre[1];
+      sortie[d + 2] = encre[2];
+      sortie[d + 3] = a;
+    }
+  }
+  for (let y = 0; y < hUtile; y++) {
+    const k = y >= OMBRE ? 1 : OMBRE_MIN + (1 - OMBRE_MIN) * (y / OMBRE);
+    for (let x = 0; x < FW; x++) {
+      const src = (y * FW + x) * 4;
+      const d = ((ENCRE + y) * FW + x) * 4;
+      if (art[src + 3] <= 0) continue;
+      sortie[d] = Math.round(art[src] * k);
+      sortie[d + 1] = Math.round(art[src + 1] * k);
+      sortie[d + 2] = Math.round(art[src + 2] * k);
+      sortie[d + 3] = art[src + 3];
+    }
+  }
 
   await sharp(sortie, { raw: { width: FW, height: hTotal, channels: 4 } })
     .webp({ quality: 92, alphaQuality: 100 })
