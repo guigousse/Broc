@@ -1,21 +1,32 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { BazarScene } from "@/components/bazar/BazarScene";
-import { useGame } from "@/context/GameContext";
+import { useGame, useGameActions } from "@/context/GameContext";
 import { audioManager } from "@/lib/audio/audioManager";
 import { usePassageIris } from "@/components/mobile/usePassageIris";
 import { bazarEstOuvert } from "@/lib/bazar/ouverture";
 import { jeuxArcade } from "@/lib/bazar/arcade";
+import { PorteBazarSheet } from "@/components/bazar/PorteBazarSheet";
+import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
+import { destinationChiner, destinationEtaler } from "@/lib/porte";
+import { stockageEstPlein } from "@/lib/stockage";
+import { useLangue } from "@/lib/i18n/LangueContext";
 import type { AchatBazar } from "@/lib/bazar/achat";
 
 export default function BazarPage() {
   const router = useRouter();
   const { state, isHydrated, acheterAuBazar, rafraichirPeriodiques } = useGame();
+  const { tempsConfiance } = useGameActions();
+  const { d } = useLangue();
+  // La porte ne ramène plus droit au bureau : elle ouvre les mêmes sorties que
+  // celle du bureau — chiner, étaler, rentrer.
+  const [porteOuverte, setPorteOuverte] = useState(false);
+  const [alerteEnergie, setAlerteEnergie] = useState(false);
   // On ne quitte pas le Bazar comme on change d'onglet : c'est un lieu, et on
   // en sort par la porte, iris compris (cf. `usePassageIris`).
   const { overlay: irisSortie, partirVers } = usePassageIris();
@@ -95,9 +106,61 @@ export default function BazarPage() {
           jetons={state.jetons}
           jeuxArcade={jeuxArcade(state.collection)}
           onAcheter={handleAcheter}
-          onSortir={() => partirVers("/bureau")}
+          onSortir={() => {
+            // Les mêmes bruits qu'à la porte du bureau : le battant grince en
+            // s'ouvrant sur les choix, il se referme quand on en fait un. Le
+            // carillon, lui, ne sonne qu'à l'arrivée — c'est la cloche du
+            // commerçant, pas la porte.
+            void audioManager.playDoorOpen();
+            setPorteOuverte(true);
+          }}
         />
       </div>
+
+      <PorteBazarSheet
+        open={porteOuverte}
+        onClose={() => setPorteOuverte(false)}
+        chinerDesactive={stockageEstPlein(state)}
+        onChiner={() => {
+          void audioManager.playDoorClose();
+          setPorteOuverte(false);
+          const ou = destinationChiner(state, tempsConfiance() ?? Date.now());
+          if (ou.type === "energieInsuffisante") {
+            setAlerteEnergie(true);
+            return;
+          }
+          // PAS d'iris : il est le passage entre le bureau et la boutique, et
+          // n'a pas d'ouverture de l'autre côté sur l'écran de chinage —
+          // l'appeler ici laisserait le joueur au noir.
+          router.push(ou.href);
+        }}
+        onEtaler={() => {
+          void audioManager.playDoorClose();
+          setPorteOuverte(false);
+          const ou = destinationEtaler(state, tempsConfiance() ?? Date.now());
+          if (ou.type === "energieInsuffisante") {
+            setAlerteEnergie(true);
+            return;
+          }
+          router.push(ou.href);
+        }}
+        onBureau={() => {
+          void audioManager.playDoorClose();
+          setPorteOuverte(false);
+          // Seule sortie qui repasse par l'iris : c'est le chemin dont il est
+          // le passage, et le bureau sait le rouvrir à l'arrivée.
+          partirVers("/bureau");
+        }}
+      />
+
+      {/* Machine à énergie popée en alerte, comme à la porte du bureau : un
+          bouton qui ne fait rien vaut moins qu'un refus qui dit pourquoi. */}
+      {alerteEnergie && (
+        <EnergieRecharge
+          onClose={() => setAlerteEnergie(false)}
+          alerte={d.chrome.energieInsuffisante}
+        />
+      )}
       {irisSortie}
     </MobileLayout>
   );

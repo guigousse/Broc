@@ -65,6 +65,11 @@ beforeEach(() => {
     // La page dérive désormais `jeuxArcade(state.collection)` pour la borne
     // d'arcade : la collection vide suffit, juste de quoi monter.
     collection: initCollection(),
+    // La porte propose désormais « Chiner », qui grise si le stockage déborde,
+    // et « Étaler », qui reprend une journée en cours : de quoi les juger.
+    inventaireJoueur: [],
+    niveauStockage: 1,
+    vitrine: null,
   };
 });
 
@@ -221,9 +226,32 @@ describe("BazarPage — sortir par la porte", () => {
     });
   }
 
-  it("la porte ferme l'iris et ne navigue pas encore", () => {
+  function choisir(sortie: string) {
+    act(() => {
+      screen.getByRole("button", { name: sortie }).click();
+    });
+  }
+
+  /**
+   * La porte ne ramène plus droit au bureau : elle propose les mêmes sorties
+   * que celle du bureau, pour qu'on aille chiner ou étaler sans repasser par
+   * chez soi. Le tap sur la porte n'est donc plus un départ — c'est un choix
+   * qui s'ouvre, et rien ne doit bouger tant qu'il n'est pas fait.
+   */
+  it("la porte ouvre les trois sorties, et ne part nulle part", () => {
     render(<BazarPage />);
     pousserLaPorte();
+    expect(screen.getByRole("button", { name: "Chiner" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Étaler" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Bureau" })).not.toBeNull();
+    expect(push).not.toHaveBeenCalled();
+    expect(lireFlagIris()).toBe(null);
+  });
+
+  it("la sortie Bureau ferme l'iris et ne navigue pas encore", () => {
+    render(<BazarPage />);
+    pousserLaPorte();
+    choisir("Bureau");
     expect(push).not.toHaveBeenCalled();
     expect(lireFlagIris()).toBe(null);
   });
@@ -231,10 +259,92 @@ describe("BazarPage — sortir par la porte", () => {
   it("au noir : le flag court est posé, puis on revient au bureau", async () => {
     render(<BazarPage />);
     pousserLaPorte();
+    choisir("Bureau");
     await act(() =>
       vi.advanceTimersByTimeAsync(dureesIris("court").fermeture + 200),
     );
     expect(lireFlagIris()).toBe("court");
     expect(push).toHaveBeenCalledWith("/bureau");
+  });
+
+  /**
+   * Chiner et étaler ne repassent PAS par l'iris. L'iris est le passage entre
+   * le bureau et la boutique, dans un sens comme dans l'autre ; il n'a pas
+   * d'ouverture de l'autre côté sur ces écrans-là, et l'y appeler laisserait
+   * le joueur au noir.
+   */
+  it("la sortie Chiner part droit au chinage, sans iris", () => {
+    render(<BazarPage />);
+    pousserLaPorte();
+    choisir("Chiner");
+    expect(push).toHaveBeenCalledWith("/chiner");
+    expect(lireFlagIris()).toBe(null);
+  });
+
+  it("la sortie Étaler mène à la préparation quand aucune journée n'est ouverte", () => {
+    render(<BazarPage />);
+    pousserLaPorte();
+    choisir("Étaler");
+    expect(push).toHaveBeenCalledWith("/vitrine/prep");
+  });
+
+  it("la sortie Étaler reprend la journée déjà commencée", () => {
+    mockState!.vitrine = { brocanteId: "broc-42", objets: [] };
+    render(<BazarPage />);
+    pousserLaPorte();
+    choisir("Étaler");
+    expect(push).toHaveBeenCalledWith("/vitrine/broc-42/journee");
+  });
+
+  /**
+   * Les mêmes bruits de porte qu'au bureau : elle grince en s'ouvrant sur les
+   * choix, et se referme derrière le joueur quand il en fait un. Le carillon
+   * de la boutique, lui, ne sonne qu'à l'ARRIVÉE — c'est la cloche du
+   * commerçant, pas le battant.
+   */
+  it("la porte grince quand on l'ouvre", () => {
+    const ouvre = vi.spyOn(audioManager, "playDoorOpen").mockResolvedValue();
+    render(<BazarPage />);
+    pousserLaPorte();
+    expect(ouvre).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["Chiner", "Étaler", "Bureau"])(
+    "la sortie %s referme la porte derrière soi",
+    (sortie) => {
+      const ferme = vi.spyOn(audioManager, "playDoorClose").mockResolvedValue();
+      render(<BazarPage />);
+      pousserLaPorte();
+      choisir(sortie);
+      expect(ferme).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  /**
+   * La porte se referme MÊME quand la sortie est refusée faute d'énergie : le
+   * geste a eu lieu, le battant a bougé, et c'est ce que fait déjà la porte du
+   * bureau. Un silence ici se lirait comme un tap perdu.
+   */
+  it("referme la porte même quand l'énergie manque", () => {
+    mockState!.energie = 0;
+    const ferme = vi.spyOn(audioManager, "playDoorClose").mockResolvedValue();
+    render(<BazarPage />);
+    pousserLaPorte();
+    choisir("Chiner");
+    expect(ferme).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Sans énergie, la porte du bureau pope la machine à énergie plutôt que de
+   * refuser en silence. Celle du Bazar doit faire pareil — sinon le joueur
+   * tape un bouton qui ne fait rien.
+   */
+  it("sans énergie, Chiner pope la machine au lieu de partir", () => {
+    mockState!.energie = 0;
+    render(<BazarPage />);
+    pousserLaPorte();
+    choisir("Chiner");
+    expect(push).not.toHaveBeenCalled();
+    expect(screen.getByText("Pas assez d'énergie pour cette sortie !")).not.toBeNull();
   });
 });
