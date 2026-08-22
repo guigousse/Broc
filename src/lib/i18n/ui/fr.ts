@@ -867,5 +867,11 @@ export const fr = {
     prixMot: "Prix",
     acheter: "Acheter",
     achatRefuse: "Achat impossible.",
+    borneOuvrir: "Voir la borne d'arcade",
+    borneTitre: "Borne d'arcade",
+    borneFermer: "Fermer la borne",
+    bornePasDeSignal: "PAS DE SIGNAL",
+    borneJeuPrecedent: "Jeu précédent",
+    borneJeuSuivant: "Jeu suivant",
   },
 } as const;

@@ -829,5 +829,11 @@ export const en: DictionnaireUI = {
     prixMot: "Price",
     acheter: "Buy",
     achatRefuse: "Purchase not possible.",
+    borneOuvrir: "View the arcade cabinet",
+    borneTitre: "Arcade cabinet",
+    borneFermer: "Close the cabinet",
+    bornePasDeSignal: "NO SIGNAL",
+    borneJeuPrecedent: "Previous game",
+    borneJeuSuivant: "Next game",
   },
 };
