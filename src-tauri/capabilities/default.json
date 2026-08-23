@@ -11,6 +11,7 @@
     "haptics:allow-impact-feedback",
     "admob:default",
     "iap:default",
-    "firebase:default"
+    "firebase:default",
+    "stockage:default"
   ]
 }
