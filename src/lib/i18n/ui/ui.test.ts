@@ -65,9 +65,9 @@ describe("dictionnaires UI", () => {
       expect(consigne).toContain(d.chrome.onglets.reserve);
       // Le piège : « Ouvre le Stockage » resterait vrai pour le code et faux
       // pour le joueur, qui ne voit plus ce mot nulle part dans la barre.
-      // Assertion sautée quand reserve === stockage (es/el, où les deux
-      // onglets partagent déjà le même mot par choix de traduction : la
-      // consigne reste alors correcte quel que soit le mot qu'elle cite).
+      // Assertion sautée quand reserve === stockage (grec, où les deux
+      // onglets partagent encore le même mot — décision de langue en attente ;
+      // la consigne reste alors correcte quel que soit le mot qu'elle cite).
       if (d.chrome.onglets.reserve !== d.chrome.onglets.stockage) {
         expect(consigne).not.toContain(d.chrome.onglets.stockage);
       }
