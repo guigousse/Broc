@@ -188,4 +188,73 @@ describe("migrerVersFichiers", () => {
       expect(fichiers.has("index")).toBe(true);
     });
   });
+
+  // Ruling R11 — revue post-tâche 7 : c'est exactement le cas pour lequel le
+  // double-buffer existait (kill du WebView en pleine écriture du slot
+  // principal, la copie de secours écrite AVANT lui reste intacte). Avant ce
+  // correctif, la migration considérait « occupé » = « clé présente », sans
+  // jamais parser : la garbage du slot corrompu était copiée telle quelle
+  // dans le fichier (la relecture stricte compare la garbage à elle-même —
+  // elle ne prouve rien), puis la purge en fin de fonction effaçait la SEULE
+  // copie valide qui existait. Le joueur, guérissable avant ce chantier,
+  // perdait tout après.
+  describe("guérison depuis la copie de secours (Ruling R11)", () => {
+    it("un slot corrompu dont la copie de secours est valide est guéri, pas perdu", async () => {
+      window.localStorage.setItem(cleSlot(1), "json-tronque{{{");
+      const etatSecours = createMockGameState({ jourActuel: 21 });
+      window.localStorage.setItem(cleBackup(1), JSON.stringify(etatSecours));
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const relu = await fichierGameRepository.load();
+
+      // La partie est retrouvée, pas perdue.
+      expect(relu?.jourActuel).toBe(21);
+      // Le fichier migré porte le contenu guéri (celui de la copie), jamais
+      // la garbage du slot principal.
+      expect(fichiers.get("slot_1")).toBe(JSON.stringify(etatSecours));
+      // Le miroir principal est réparé, comme le ferait chargerSlot() à une
+      // lecture directe.
+      expect(JSON.parse(window.localStorage.getItem(cleSlot(1))!).jourActuel).toBe(
+        21,
+      );
+      // La copie de secours n'est PAS purgée : la garde (Ruling R11) ne
+      // retire `cleBackup(n)` que pour un slot dont le contenu PROPRE
+      // parsait déjà — jamais pour un slot qu'on vient de réparer depuis
+      // elle.
+      expect(window.localStorage.getItem(cleBackup(1))).not.toBeNull();
+    });
+
+    it("un slot dont le principal ET la copie sont illisibles n'est migré ni détruit, sans bloquer les autres slots", async () => {
+      window.localStorage.setItem(cleSlot(1), "corrompu{");
+      window.localStorage.setItem(cleBackup(1), "corrompu-aussi{");
+      window.localStorage.setItem(
+        cleSlot(2),
+        JSON.stringify(createMockGameState({ jourActuel: 5 })),
+      );
+
+      const { migrerVersFichiers } = await import("./migrationFichiers");
+      const resultat = await migrerVersFichiers();
+
+      expect(resultat).not.toBeNull();
+      // Rien n'a été copié pour le slot 1 : ni un fichier bidon...
+      expect(fichiers.has("slot_1")).toBe(false);
+      // ...ni les clés miroir détruites (aucun des deux n'était recouvrable,
+      // mais rien ne les efface pour autant).
+      expect(window.localStorage.getItem(cleSlot(1))).toBe("corrompu{");
+      expect(window.localStorage.getItem(cleBackup(1))).toBe("corrompu-aussi{");
+      // Le slot 2, sain, migre normalement malgré le slot 1 irrécupérable.
+      expect(fichiers.get("slot_2")).toBe(window.localStorage.getItem(cleSlot(2)));
+    });
+
+    it("un slot déjà valide continue de purger sa copie de secours devenue orpheline (non-régression)", async () => {
+      window.localStorage.setItem(cleSlot(1), JSON.stringify(createMockGameState()));
+      window.localStorage.setItem(cleBackup(1), "vieille copie, jamais lue");
+
+      const { migrerVersFichiers } = await import("./migrationFichiers");
+      await migrerVersFichiers();
+
+      expect(window.localStorage.getItem(cleBackup(1))).toBeNull();
+      expect(window.localStorage.getItem(cleSlot(1))).not.toBeNull();
+    });
+  });
 });

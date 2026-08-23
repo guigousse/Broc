@@ -15,6 +15,35 @@ function lireMiroir(n: NumeroSlot): string | null {
   }
 }
 
+function lireMiroirBackup(n: NumeroSlot): string | null {
+  try {
+    return window.localStorage.getItem(cleBackup(n));
+  } catch {
+    return null;
+  }
+}
+
+function parseValide(brut: string | null): boolean {
+  if (!brut) return false;
+  try {
+    JSON.parse(brut);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ce qu'il y a à migrer pour un slot, et d'où : `slotValide` distingue « le
+ * principal du miroir parsait déjà » de « guéri depuis la copie de secours »
+ * — c'est cette distinction, et elle seule, qui gouverne la purge de
+ * `cleBackup(n)` plus bas (Ruling R11).
+ */
+interface CandidatSlot {
+  brut: string;
+  slotValide: boolean;
+}
+
 /**
  * Copie les sauvegardes du miroir vers les fichiers, puis écrit l'index
  * fichier. Paranoïaque comme `tenterMigrationLegacy` : chaque copie est relue
@@ -54,6 +83,17 @@ function lireMiroir(n: NumeroSlot): string | null {
  * .load()` doit pouvoir poursuivre directement avec cet index sans jamais
  * avoir besoin de le relire une seconde fois (voir le commentaire sur
  * l'écriture de l'index ci-dessous).
+ *
+ * Ruling R11 (revue post-tâche 7) : « occupé » ne veut PAS dire « la clé
+ * existe » — un slot dont `cleSlot(n)` ne parse pas (kill du WebView en
+ * pleine écriture, par exemple) doit être guéri depuis `cleBackup(n)` si
+ * elle parse, PAS copié tel quel. Sans cette distinction, la relecture
+ * stricte ci-dessous ne prouve rien (elle compare la garbage écrite à
+ * elle-même) et la purge en fin de migration effacerait la SEULE copie
+ * valide — exactement le cas pour lequel le double-buffer existait. La
+ * purge de `cleBackup(n)` est donc gardée : elle ne retire la copie de
+ * secours QUE pour un slot dont le contenu PROPRE parsait déjà, jamais pour
+ * un slot qu'on vient de réparer depuis elle.
  */
 export async function migrerVersFichiers(): Promise<IndexFichier | null> {
   if (typeof window === "undefined") return null;
@@ -61,15 +101,27 @@ export async function migrerVersFichiers(): Promise<IndexFichier | null> {
   const index = chargerIndex();
 
   // Ce qu'il y a à copier, décidé une fois pour toutes avant tout effet de
-  // bord : seuls les slots occupés du miroir sont candidats.
-  const aCopier = new Map<NumeroSlot, string>();
+  // bord : seuls les slots occupés du miroir sont candidats — « occupé »
+  // veut dire « au moins l'une des deux clés parse », pas « la clé existe ».
+  const aCopier = new Map<NumeroSlot, CandidatSlot>();
   for (const n of NUMEROS) {
-    const brut = lireMiroir(n);
-    if (brut !== null) aCopier.set(n, brut);
+    const brutSlot = lireMiroir(n);
+    if (parseValide(brutSlot)) {
+      aCopier.set(n, { brut: brutSlot as string, slotValide: true });
+      continue;
+    }
+    // Principal absent ou illisible : la copie de secours est le filet
+    // exact pour lequel le double-buffer existait.
+    const brutBackup = lireMiroirBackup(n);
+    if (parseValide(brutBackup)) {
+      aCopier.set(n, { brut: brutBackup as string, slotValide: false });
+    }
+    // Ni l'un ni l'autre ne parse : rien de recouvrable pour ce slot — on
+    // continue avec les autres, sans rien copier ni détruire ici.
   }
 
   const revisions: Record<NumeroSlot, number> = { 1: 0, 2: 0, 3: 0 };
-  for (const [n, brut] of aCopier) {
+  for (const [n, candidat] of aCopier) {
     let dejaPresent: string | null;
     try {
       dejaPresent = await lireSave(quoiDuSlot(n));
@@ -79,8 +131,8 @@ export async function migrerVersFichiers(): Promise<IndexFichier | null> {
 
     if (dejaPresent === null) {
       try {
-        await ecrireSave(quoiDuSlot(n), brut);
-        if ((await lireSave(quoiDuSlot(n))) !== brut) return null;
+        await ecrireSave(quoiDuSlot(n), candidat.brut);
+        if ((await lireSave(quoiDuSlot(n))) !== candidat.brut) return null;
       } catch {
         return null;
       }
@@ -88,6 +140,34 @@ export async function migrerVersFichiers(): Promise<IndexFichier | null> {
     // Copié ou laissé intact : dans les deux cas, la révision inscrite est
     // celle du miroir (voir le commentaire de tête).
     revisions[n] = revisionDe(n);
+
+    if (candidat.slotValide) {
+      // Gate (Ruling R11) : le principal parsait déjà tout seul — la copie
+      // de secours ne sert plus à rien pour CE slot, elle peut partir. Dans
+      // la boucle par slot plutôt qu'en passe globale à la fin : ce retrait
+      // ne dépend que de l'état de ce slot précis, jamais du sort des
+      // autres ni de la réussite de l'écriture de l'index plus bas (un
+      // slot déjà valide n'a jamais eu besoin de sa copie, que la migration
+      // aboutisse ou non).
+      try {
+        window.localStorage.removeItem(cleBackup(n));
+      } catch {
+        // Copie orpheline mais inerte : plus personne ne la relit.
+      }
+    } else {
+      // Heal (Ruling R11) : le principal était illisible, on vient de
+      // migrer le contenu de la copie de secours — on répare aussi le
+      // miroir avec ce même contenu, comme le ferait `chargerSlot()` à la
+      // prochaine lecture. La copie de secours, elle, n'est PAS retirée :
+      // elle reste le filet tant qu'on ne l'a pas jugée superflue par la
+      // branche ci-dessus.
+      try {
+        window.localStorage.setItem(cleSlot(n), candidat.brut);
+      } catch {
+        // Réparation impossible (quota) : sans conséquence — `chargerSlot()`
+        // retentera la même réparation à la prochaine lecture.
+      }
+    }
   }
 
   const indexFichier: IndexFichier = { actif: index.actif, revisions };
@@ -110,15 +190,9 @@ export async function migrerVersFichiers(): Promise<IndexFichier | null> {
     return null;
   }
 
-  // Les fichiers sont en place et atomiques : le double-buffer du miroir n'a
-  // plus de raison d'être. On ne touche JAMAIS aux clés de slot elles-mêmes.
-  for (const n of NUMEROS) {
-    try {
-      window.localStorage.removeItem(cleBackup(n));
-    } catch {
-      // Copie orpheline mais inerte : plus personne ne la relit.
-    }
-  }
-
+  // La purge de `cleBackup(n)` a déjà eu lieu, slot par slot, dans la
+  // boucle ci-dessus (Ruling R11) — jamais en passe globale ici, et jamais
+  // pour un slot qu'on vient de guérir depuis sa copie. On ne touche JAMAIS
+  // aux clés de slot elles-mêmes (`cleSlot(n)`), sinon pour les réparer.
   return indexFichier;
 }

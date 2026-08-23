@@ -35,7 +35,7 @@ import {
   idDeclencheurCadeau,
   objetCadeauAnniversaire,
 } from "@/lib/anniversaire";
-import { createGameRepository } from "@/lib/storage/createGameRepository";
+import { obtenirGameRepository } from "@/lib/storage/createGameRepository";
 import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
 import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
@@ -145,8 +145,6 @@ import { localeCourante } from "@/lib/i18n/locales";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { slotActif, type NumeroSlot } from "@/lib/storage/slots";
 
-const gameRepository = createGameRepository();
-
 /**
  * Raison d'échec localisée (SP4 i18n). GameContext exécute ses raisons dans des
  * callbacks mémoïsés, hors cycle de rendu — on lit donc la locale via
@@ -195,7 +193,7 @@ interface GameActionsValue {
    * Détache l'état en mémoire sans toucher au storage — utilisé avant une
    * bascule de slot pour que l'effet d'auto-save (gardé sur state null) ne
    * puisse plus écrire. ⚠ NE PAS confondre avec `reset()` : `reset()` efface
-   * aussi la clé de save active (`gameRepository.clear()`), ce qui
+   * aussi la clé de save active (`obtenirGameRepository().clear()`), ce qui
    * supprimerait la partie qu'on est justement en train de quitter.
    */
   detacherPartie: () => void;
@@ -341,7 +339,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    gameRepository.load().then((loaded) => {
+    obtenirGameRepository().load().then((loaded) => {
       if (cancelled) return;
       // Migration : ajoute les champs manquants + remap les anciennes catégories.
       const migrated: GameState | null = loaded
@@ -363,7 +361,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // écrire maintenant détruirait la save du nouveau slot. On abandonne —
       // cet état est de toute façon en train d'être détaché.
       if (slotActif() !== slotEtatRef.current) return;
-      gameRepository.save(state).then((res) => {
+      obtenirGameRepository().save(state).then((res) => {
         if (!res.ok && !saveEnEchecRef.current) {
           saveEnEchecRef.current = true;
           toast(raisonLocalisee("sauvegardeImpossible"), { type: "erreur" });
@@ -1091,7 +1089,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // slotActif() inchangé donc la garde d'appartenance seule ne voit rien).
     slotEtatRef.current = null;
     setState(null);
-    gameRepository.clear();
+    obtenirGameRepository().clear();
   }, []);
 
   // Détache l'état en mémoire sans toucher au storage — utilisé avant une
@@ -1439,7 +1437,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // pour la suspension iOS (l'effet d'auto-save post-commit peut ne jamais
     // tourner). Peut manquer une mutation encore en attente dans la même
     // frame — l'auto-save la réécrira au commit suivant.
-    void gameRepository.save({
+    void obtenirGameRepository().save({
       ...current,
       vitrine: { ...current.vitrine, tempsRestantSec },
     });
