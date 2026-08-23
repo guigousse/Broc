@@ -10,9 +10,10 @@ import {
   type NumeroSlot,
 } from "./slots";
 
-// Chaque save écrit d'abord la copie de secours (`cleBackup`), puis le slot
-// principal : un kill du WebView en pleine écriture ne peut corrompre qu'une
-// des deux clés, jamais les deux.
+// `save()` n'écrit plus de copie de secours (`cleBackup`) — le fichier
+// atomique (`fichierGameRepository`, sous Tauri) a pris ce rôle. `cleBackup`
+// reste néanmoins lue ici : c'est la parachute des saves écrites par une
+// version antérieure du jeu, encore présentes sur les appareils des joueurs.
 export { cleBackup } from "./slots";
 
 function parseState(raw: string | null): GameState | null {
@@ -79,16 +80,6 @@ export async function enregistrerSlot(
 ): Promise<ResultatSave> {
   if (typeof window === "undefined") return { ok: false, genre: "indisponible" };
   const serialise = JSON.stringify(state);
-  try {
-    window.localStorage.setItem(cleBackup(n), serialise);
-  } catch (err) {
-    // La copie de secours est un filet, pas un prérequis : si elle échoue
-    // (quota), on tente quand même la sauvegarde principale.
-    console.warn(
-      "[localGameRepository] Échec de l'écriture de la copie de secours :",
-      err,
-    );
-  }
   try {
     window.localStorage.setItem(cleSlot(n), serialise);
   } catch (err) {

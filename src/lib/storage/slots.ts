@@ -262,10 +262,13 @@ function slotOccupePlusRecent(
 }
 
 /**
- * Clé de la copie de secours d'un slot (double-buffer d'écriture de
- * `localGameRepository`). Déclarée ici pour que l'effacement d'un slot
- * emporte toujours sa copie — sinon une vieille copie orpheline pourrait
- * être « restaurée » dans un slot réutilisé.
+ * Clé de la copie de secours d'un slot. Ancien double-buffer d'écriture de
+ * `localGameRepository`, remplacé par le fichier atomique sous Tauri — plus
+ * personne n'écrit sous cette clé, mais `localGameRepository.load()`
+ * continue de la LIRE : c'est la parachute des saves écrites par une version
+ * antérieure du jeu. Déclarée ici pour que l'effacement d'un slot emporte
+ * toujours sa copie — sinon une vieille copie orpheline pourrait être
+ * « restaurée » dans un slot réutilisé.
  */
 export function cleBackup(n: NumeroSlot): string {
   return `${cleSlot(n)}:backup`;

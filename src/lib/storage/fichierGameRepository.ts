@@ -45,6 +45,26 @@ type EtatIndexFichier =
   | { genre: "illisible" }
   | { genre: "ok"; index: IndexFichier };
 
+/**
+ * Ruling R10 — un JSON syntaxiquement valide peut quand même être de la
+ * MAUVAISE forme (`"{}"`, `"5"`, `"[]"` : tout ce qui n'est pas un objet
+ * `{ actif, revisions }`). Sans cette garde, `index.revisions[n]` plante hors
+ * de la promesse dans `chargerAvecIndex`/`save()` — `load()` rejette sans
+ * jamais atteindre le repli miroir : le jeu ne s'affiche pas. Traiter un tel
+ * contenu comme "illisible" le fait retomber sur une branche déjà sûre.
+ */
+function estIndexFichierValide(x: unknown): x is IndexFichier {
+  if (typeof x !== "object" || x === null || Array.isArray(x)) return false;
+  const candidat = x as Partial<IndexFichier>;
+  if (candidat.actif !== 1 && candidat.actif !== 2 && candidat.actif !== 3) {
+    return false;
+  }
+  const { revisions } = candidat;
+  return (
+    typeof revisions === "object" && revisions !== null && !Array.isArray(revisions)
+  );
+}
+
 async function lireEtatIndexFichier(): Promise<EtatIndexFichier> {
   let brut: string | null;
   try {
@@ -57,7 +77,7 @@ async function lireEtatIndexFichier(): Promise<EtatIndexFichier> {
   }
   if (brut === null) return { genre: "absent" };
   const index = parse<IndexFichier>(brut);
-  if (index === null) return { genre: "illisible" };
+  if (index === null || !estIndexFichierValide(index)) return { genre: "illisible" };
   return { genre: "ok", index };
 }
 

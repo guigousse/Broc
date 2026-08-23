@@ -89,13 +89,10 @@ describe("localGameRepository — load", () => {
   });
 });
 
-describe("localGameRepository — copie de secours (double-buffer)", () => {
-  it("save écrit aussi la copie de secours du slot actif", async () => {
-    const state = createMockGameState({ budget: 55 });
-    await localGameRepository.save(state);
-    const raw = window.localStorage.getItem(cleBackup(1));
-    expect(raw).toBeTruthy();
-    expect(JSON.parse(raw!).budget).toBe(55);
+describe("localGameRepository — copie de secours (lecture uniquement)", () => {
+  it("n'écrit plus de copie de secours — le fichier atomique l'a remplacée", async () => {
+    await localGameRepository.save(createMockGameState());
+    expect(window.localStorage.getItem(cleBackup(1))).toBeNull();
   });
 
   it("restaure la copie de secours si le slot actif est corrompu", async () => {
@@ -127,24 +124,13 @@ describe("localGameRepository — copie de secours (double-buffer)", () => {
     expect(await localGameRepository.load()).toBeNull();
   });
 
-  it("l'échec d'écriture de la copie n'empêche pas la sauvegarde principale", async () => {
-    const original = window.localStorage.setItem.bind(window.localStorage);
-    const spy = vi
-      .spyOn(window.localStorage, "setItem")
-      .mockImplementation((k: string, v: string) => {
-        if (k === cleBackup(1)) throw new Error("quota dépassé");
-        original(k, v);
-      });
-
-    const res = await localGameRepository.save(createMockGameState({ budget: 9 }));
-
-    spy.mockRestore();
-    expect(res).toEqual({ ok: true });
-    expect((await localGameRepository.load())?.budget).toBe(9);
-  });
-
-  it("clear supprime aussi la copie de secours", async () => {
-    await localGameRepository.save(createMockGameState());
+  it("clear supprime aussi une éventuelle copie de secours legacy", async () => {
+    // save() n'en écrit plus, mais une version antérieure du jeu a pu en
+    // laisser une : clear() doit continuer à la nettoyer.
+    window.localStorage.setItem(
+      cleBackup(1),
+      JSON.stringify(createMockGameState()),
+    );
     await localGameRepository.clear();
     expect(window.localStorage.getItem(cleBackup(1))).toBeNull();
   });

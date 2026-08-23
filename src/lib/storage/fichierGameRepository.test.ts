@@ -450,4 +450,39 @@ describe("fichierGameRepository", () => {
       expect(relu?.jourActuel).toBe(55);
     });
   });
+
+  // Ruling R10 : un index qui parse en JSON valide mais de la MAUVAISE forme
+  // (pas d'objet, ou objet sans `revisions`) ne doit jamais faire planter
+  // `chargerAvecIndex`/`save()` — `index.revisions[n]` sur `undefined`
+  // lèverait hors de la promesse, et comme `load()` ne rattraperait rien,
+  // le repli miroir ne serait JAMAIS atteint : le jeu ne s'afficherait pas.
+  // Un tel contenu doit être traité comme "illisible", branche déjà sûre.
+  describe("garde de forme sur l'index fichier (Ruling R10)", () => {
+    it.each(["{}", "5", "[]", "null"])(
+      "un index de forme invalide (%s) est traité comme illisible au load(), sans planter",
+      async (contenu) => {
+        fichiers.set("index", contenu);
+        window.localStorage.setItem(
+          cleSlot(1),
+          JSON.stringify(createMockGameState({ jourActuel: 7 })),
+        );
+        const avertir = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+        const { fichierGameRepository } = await import("./fichierGameRepository");
+        const relu = await fichierGameRepository.load();
+
+        expect(relu?.jourActuel).toBe(7); // servi par le miroir, pas de rejet
+        expect(avertir).toHaveBeenCalled();
+      },
+    );
+
+    it("un index de forme invalide (\"{}\") ne fait pas non plus planter save()", async () => {
+      fichiers.set("index", "{}");
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const r = await fichierGameRepository.save(createMockGameState({ jourActuel: 3 }));
+
+      expect(r).toEqual({ ok: true });
+    });
+  });
 });
