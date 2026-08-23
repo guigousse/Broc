@@ -34,10 +34,13 @@ describe("settleBazar", () => {
     expect(semaine2.bazar?.cleSemaine).not.toBe(semaine1.bazar?.cleSemaine);
   });
 
-  it("la vitrine achetée revient garnie à la rotation", () => {
+  it("l'étagère vidée par les achats revient garnie à la rotation", () => {
     const semaine1 = settleBazar(createMockGameState(OUVERT), LUNDI);
-    const vide = { ...semaine1, bazar: { ...semaine1.bazar!, vitrine: null } };
+    const vide = {
+      ...semaine1,
+      bazar: { ...semaine1.bazar!, articles: [null, null, null] },
+    };
     const semaine2 = settleBazar(vide, LUNDI_SUIVANT);
-    expect(semaine2.bazar?.vitrine).not.toBeNull();
+    expect(semaine2.bazar?.articles.every((a) => a !== null)).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BAZAR_LAYOUT, CLES_LOTS, CLE_VITRINE, type BazarObjetKey } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_ARTICLES, CLES_LOTS, type BazarObjetKey } from "./bazarLayout";
 import { qgPct, QG_LAYOUT } from "@/components/mobile/qg/layout";
 import { CHAT_BALADEUR_ORDER } from "@/lib/chatBaladeur";
 
@@ -45,9 +45,27 @@ describe("BAZAR_LAYOUT", () => {
     expect(bazar.filter((k) => chat.includes(k))).toEqual([]);
   });
 
-  it("désigne la planche du bas pour les lots et le milieu de la planche du haut pour l'objet de la semaine", () => {
+  it("désigne la planche du bas pour les lots et celle du haut pour les trois objets", () => {
     expect(CLES_LOTS).toEqual(["case4", "case5", "case6"]);
-    expect(CLE_VITRINE).toBe("case2");
+    expect(CLES_ARTICLES).toEqual(["case1", "case2", "case3"]);
+  });
+
+  // L'ordre des clés EST l'ordre des index de `EtalBazar.articles`, et le prix
+  // monte le long de la planche : une permutation ici mettrait la pièce de
+  // caractère à la place de la trouvaille modeste, sans qu'aucun autre test ne
+  // s'en aperçoive.
+  //
+  // La hauteur est vérifiée À UNE UNITÉ PRÈS, et non à l'identique, alors que
+  // l'intention EST une hauteur commune : les trois reposent sur une seule
+  // planche peinte. La tolérance absorbe les dixièmes qu'un calage à la souris
+  // laisse derrière lui, sans jamais laisser un objet dériver sur l'autre
+  // planche — c'est ça, l'erreur à attraper, et elle vaut dix unités.
+  it("les trois objets sont sur la MÊME planche, de gauche à droite", () => {
+    const cases = CLES_ARTICLES.map((c) => BAZAR_LAYOUT.objets[c]);
+    for (const c of cases) expect(Math.abs(c.bottom - cases[0].bottom)).toBeLessThan(1);
+    for (let i = 1; i < cases.length; i++) {
+      expect(cases[i].left).toBeGreaterThan(cases[i - 1].left);
+    }
   });
 
   it("utilise le même repère que le QG (300vw), sinon l'outil de calage ment", () => {
@@ -169,7 +187,7 @@ describe("BAZAR_LAYOUT", () => {
   });
 
   it("les emplacements que la scène désigne existent bel et bien", () => {
-    for (const cle of [...CLES_LOTS, CLE_VITRINE]) {
+    for (const cle of [...CLES_LOTS, ...CLES_ARTICLES]) {
       expect(BAZAR_LAYOUT.objets[cle]).toBeDefined();
     }
   });

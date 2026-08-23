@@ -107,7 +107,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -696,6 +696,20 @@ function appliquerMigrations(loaded: GameState): GameState {
 
   return {
     ...loadedSansChampsSupprimes,
+    // v21 — l'étal du Bazar passe d'UNE vitrine à TROIS articles (une gamme de
+    // prix par case, cf. `GAMMES_BAZAR`). Un étal v20 n'a pas de champ
+    // `articles` et ferait planter la scène, qui le parcourt.
+    //
+    // On le JETTE plutôt que de le convertir : `settleBazar` en recompose un
+    // complet à la première ouverture, exactement comme une rotation de
+    // semaine. Convertir laisserait deux cases vides pendant des jours sous une
+    // étiquette « Vendu » qui mentirait — personne ne les a achetées. Le prix
+    // assumé de ce choix : un joueur qui avait déjà acheté la vitrine de la
+    // semaine se voit reproposer un étal neuf. Il ne reçoit rien gratuitement,
+    // il a juste une offre de plus, une seule fois.
+    bazar: Array.isArray((loaded as Partial<GameState>).bazar?.articles)
+      ? (loaded as Partial<GameState>).bazar
+      : undefined,
     tutorielEtape,
     colisTutorielLivres,
     inventaireJoueur: inventaire,

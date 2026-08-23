@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PorteSheet } from "./PorteSheet";
-import { JOUR_OUVERTURE_BAZAR } from "@/lib/bazar/ouverture";
 
 afterEach(cleanup);
 
@@ -14,11 +13,10 @@ function poserLaPorte(surcharges: Partial<Parameters<typeof PorteSheet>[0]> = {}
     <PorteSheet
       open
       onClose={vi.fn()}
-      vitrineActive={false}
       onChiner={vi.fn()}
       onVitrine={vi.fn()}
       bazarOuvert={false}
-      joursAvantBazar={JOUR_OUVERTURE_BAZAR - 20}
+      joursAvantBazar={15}
       onBazar={onBazar}
       {...surcharges}
     />,
@@ -32,7 +30,7 @@ describe("PorteSheet — la sortie Bazar", () => {
     const { bouton } = poserLaPorte({ bazarOuvert: false, joursAvantBazar: 15 });
     expect((bouton as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText("J-15")).not.toBeNull();
-    expect(screen.getByTestId("bazar-cadenas")).not.toBeNull();
+    expect(document.querySelector("[data-cadenas]")).not.toBeNull();
   });
 
   it("un tap sur le Bazar fermé ne mène nulle part", async () => {

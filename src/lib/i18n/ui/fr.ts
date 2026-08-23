@@ -110,7 +110,7 @@ export const fr = {
     navigationPrincipale: "Navigation principale",
     energie: "Énergie",
     caisse: "Caisse",
-    jetons: "Jetons",
+    jetons: "Bazarcoins",
     rechargerEnergie: "Recharger l'énergie",
     montantEuros: "{valeur} €",
     niveau: "Niveau",
@@ -662,13 +662,24 @@ export const fr = {
     objetsDemandes: "Objets demandés ({rempli}/{total})",
     etatMin: "état min : {etat}",
     recompenseLabel: "Récompense",
-    // Jetons de gains (bandeau récompense, lettre, grand livre).
+    // Le GRAND LIVRE, où une ligne de crédit se lit contre des lignes de
+    // débit : là, et là seulement, le « + » porte du sens.
     jetonArgent: "+{n} €",
     jetonXp: "+{n} XP",
     jetonEnergie: "+{n} ⚡",
-    jetonBazarUn: "+{n} jeton",
-    jetonBazarN: "+{n} jetons",
-    recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie, {jetons} jetons",
+    // Les PASTILLES du carnet, SANS « + » : la plaque s'intitule déjà
+    // « Récompense » et rien n'y est jamais retiré — le signe n'apprend rien
+    // et vole la place au montant, qu'on veut gros. Le Bazarcoin y sort en
+    // chiffre nu, son signe bleu étant dessiné à côté.
+    gainArgent: "{n} €",
+    gainXp: "{n} XP",
+    gainEnergie: "{n} ⚡",
+    gainBazar: "{n}",
+    // Le GRAND LIVRE, qui est du texte pur : aucun signe dessiné n'y a sa
+    // place, le mot doit donc rester écrit.
+    jetonBazarUn: "+{n} Bazarcoin",
+    jetonBazarN: "+{n} Bazarcoins",
+    recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie, {jetons} Bazarcoins",
     livrer: "Livrer",
     livrerProgress: "Livrer ({rempli}/{total})",
     // En-tête de section rétractable (refonte carnet SP3) : le compteur ne
@@ -764,7 +775,7 @@ export const fr = {
     atelierPleinUn: "Atelier plein ({enCours}/{capacite} slot).",
     atelierPleinN: "Atelier plein ({enCours}/{capacite} slots).",
     competenceReparerManquante: "Vous n'avez pas la compétence Réparer — {categorie}.",
-    bazarPasAssezDeJetons: "Pas assez de jetons",
+    bazarPasAssezDeJetons: "Pas assez de Bazarcoins",
     bazarArticleIndisponible: "Article indisponible",
     manquePiecesUn: "Manque {n} pièce {categorie}.",
     manquePiecesN: "Manque {n} pièces {categorie}.",
@@ -883,11 +894,11 @@ export const fr = {
   bazar: {
     titre: "Le Bazar",
     lotPieces: "{n} pièces · {categorie}",
-    prixJetons: "{n} jetons",
-    prixJetonUn: "{n} jeton",
-    vendu: "Vendu — de retour lundi",
-    manqueJetons: "Il vous manque {n} jetons",
-    manqueJetonUn: "Il vous manque {n} jeton",
+    prixJetons: "{n} Bazarcoins",
+    prixJetonUn: "{n} Bazarcoin",
+    vendu: "Vendu",
+    manqueJetons: "Il vous manque {n} Bazarcoins",
+    manqueJetonUn: "Il vous manque {n} Bazarcoin",
     sortir: "Sortir du Bazar",
     detailArticle: "Détail de l'article",
     prixMot: "Prix",
@@ -897,6 +908,7 @@ export const fr = {
     borneTitre: "Borne d'arcade",
     borneFermer: "Fermer la borne",
     bornePasDeSignal: "PAS DE SIGNAL",
+    borneIndiceCartouche: "AJOUTER LA CARTOUCHE À LA COLLECTION",
     borneJeuPrecedent: "Jeu précédent",
     borneJeuSuivant: "Jeu suivant",
   },

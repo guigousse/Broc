@@ -4,6 +4,7 @@ import { type CSSProperties, type ReactNode } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
+import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
 import { PLAQUE_ETIQUETTE, PLAQUE_ETIQUETTE_ETEINTE } from "./etiquette";
 import { type BazarObjetKey } from "./bazarLayout";
 
@@ -143,8 +144,43 @@ export function ArticleBazar({
         {visuel}
       </button>
       <span style={colonneEtiquettes} data-testid={`etiquettes-${cle}`}>
-        <span style={horsDePortee ? PLAQUE_ETIQUETTE_ETEINTE : PLAQUE_ETIQUETTE}>
-          {tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
+        {/* La PIÈCE remplace le mot : la case fait 89 px de large et
+            « 3 Bazarcoins » n'y tient dans aucune des quatre langues — le grec
+            était déjà la contrainte qui commandait la largeur des plaques.
+            `role="img"` avec le libellé complet rend le mot à qui écoute :
+            sans lui, un lecteur d'écran annoncerait un « 3 » nu, qui se
+            confondrait avec une quantité d'objets. La pièce, elle, est
+            `aria-hidden` — elle ne doit pas s'annoncer deux fois.
+
+            DEUX SIGNAUX quand la bourse ne suffit pas, décidés à la recette du
+            2026-08-23 : la plaque s'éteint d'un bloc, ET le montant passe au
+            rouge avec son signe. L'extinction dit « pas pour toi », le rouge
+            dit « il t'en manque ».
+
+            Une seule couleur est posée, sur la plaque : le nombre en hérite et
+            le signe la prend par `currentColor`. Deux teintes à accorder à la
+            main auraient fini par dériver l'une de l'autre. */}
+        <span
+          role="img"
+          aria-label={tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
+          style={{
+            ...(horsDePortee ? PLAQUE_ETIQUETTE_ETEINTE : PLAQUE_ETIQUETTE),
+            color: horsDePortee ? "var(--red-signal-300)" : "var(--azur-400)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          {/* La TAILLE est ce qui rend le rouge lisible, et pas seulement ce
+              qui le rend visible : sur le gris de la plaque éteinte, le rouge
+              ne mesure que 3,56:1. C'est sous le seuil AA du texte courant
+              (4,5:1) mais au-dessus de celui du GRAND texte (3:1), qui
+              commence à 18,66 px en gras. 1,2 rem vaut 19,2 px.
+              Le signe, lui, ne grossit pas : c'est le montant qu'on lit. */}
+          <strong style={{ fontSize: "1.2rem", fontWeight: 700, lineHeight: 1 }}>
+            {prix}
+          </strong>
+          <BazarcoinIcon couleur="currentColor" />
         </span>
       </span>
     </div>

@@ -17,6 +17,7 @@ import { audioManager } from "@/lib/audio/audioManager";
  * Hors du groupe (qg) (chiner, vitrine…), on étouffe et on
  * baisse pour donner l'impression d'entendre la musique de loin —
  * sans interrompre la lecture. Détail :
+ *  - bazar                 : muet (on est ailleurs, pas plus loin)
  *  - chiner / vitrine     : franchement lointain (mur extérieur)
  *  - autres                : niveau "à distance" générique
  */
@@ -41,6 +42,14 @@ function ambianceForPathname(pathname: string): Ambiance | null {
   // L'écran titre pilote lui-même sa musique jazz — pleine, sans lowpass
   // (cf. demarrerMusiqueTitre) : le contrôleur global ne l'étouffe plus.
   if (pathname === "/") return null;
+  // Le Bazar n'est pas le bureau entendu de plus loin : c'est un autre lieu,
+  // et le gramophone n'y porte pas. Le fondu qui y mène appartient au passage
+  // (`usePassageIris`, réglé sur la fermeture de l'iris) ; cette ligne est le
+  // garde-fou qui empêche la règle générique ci-dessous de rallumer le disque
+  // à 0,22 pile au moment où la route bascule.
+  if (pathname.startsWith("/bazar")) {
+    return { volume: 0, lowpassHz: 700 };
+  }
   if (
     pathname.startsWith("/chiner") ||
     pathname.startsWith("/vitrine")

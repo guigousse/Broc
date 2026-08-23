@@ -6,6 +6,7 @@ import {
   DUREE_FERMETURE_MS,
   DUREE_OUVERTURE_MS,
   NOIR_MIN_MS,
+  dureesIris,
   lireFlagIris,
   poserFlagIris,
 } from "@/lib/transitionIris";
@@ -47,6 +48,31 @@ describe("IrisFermeture", () => {
     expect(onNoir).toHaveBeenCalledTimes(1);
   });
 
+  // Le passage bureau ↔ Bazar rejoue le même iris, 30 % plus court. La preuve
+  // est prise sur le CALLBACK, pas sur la feuille de style : c'est lui qui
+  // retient la navigation, et le décalage entre les deux variantes est
+  // exactement ce qu'on veut voir raccourcir.
+  it("variante courte : onNoir arrive avant la fin de la fermeture longue", async () => {
+    const onNoir = vi.fn();
+    render(<IrisFermeture cx={100} cy={200} onNoir={onNoir} variante="court" />);
+
+    await act(() => vi.advanceTimersByTimeAsync(dureesIris("court").fermeture));
+    expect(onNoir).not.toHaveBeenCalled();
+
+    await act(() => vi.advanceTimersByTimeAsync(200));
+    expect(onNoir).toHaveBeenCalledTimes(1);
+    // Et c'est bien plus tôt que l'iris de l'écran-titre.
+    expect(dureesIris("court").fermeture).toBeLessThan(DUREE_FERMETURE_MS);
+  });
+
+  it("variante courte : le trou se referme sur la durée courte, pas la longue", () => {
+    const { container } = render(
+      <IrisFermeture cx={10} cy={10} onNoir={vi.fn()} variante="court" />,
+    );
+    const trou = (container.firstChild as HTMLElement).firstChild as HTMLElement;
+    expect(trou.style.transition).toContain(`${dureesIris("court").fermeture}ms`);
+  });
+
   it("pointer-events : bloque par défaut, laisse passer avec bloqueInteractions={false}", () => {
     const a = render(<IrisFermeture cx={10} cy={10} onNoir={vi.fn()} />);
     expect((a.container.firstChild as HTMLElement).style.pointerEvents).toBe("auto");
@@ -68,7 +94,7 @@ describe("IrisArrivee", () => {
     poserFlagIris();
     const { container } = render(<IrisArrivee imageSrc="/qg/fond-cabinet.webp" />);
     expect(container.firstChild).not.toBeNull();
-    expect(lireFlagIris()).toBe(false);
+    expect(lireFlagIris()).toBe(null);
   });
 
   it("retire le voile preboot posé par le script du layout racine", () => {
@@ -78,6 +104,20 @@ describe("IrisArrivee", () => {
     poserFlagIris();
     render(<IrisArrivee imageSrc="/qg/fond-cabinet.webp" />);
     expect(document.getElementById("broc-iris-preboot")).toBeNull();
+  });
+
+  // L'arrivée ne reçoit pas sa variante en prop : elle la LIT dans le flag,
+  // parce que le bureau est atteint aussi bien depuis l'écran-titre (long) que
+  // depuis le Bazar (court), et que c'est le même composant qui l'ouvre.
+  it("flag court : l'ouverture est finie avant la fin de l'ouverture longue", async () => {
+    poserFlagIris("court");
+    const { container } = render(<IrisArrivee imageSrc="/bazar/fond-bazar.webp" />);
+
+    await act(() =>
+      vi.advanceTimersByTimeAsync(NOIR_MIN_MS + dureesIris("court").ouverture + 200),
+    );
+    expect(container.firstChild).toBeNull();
+    expect(dureesIris("court").ouverture).toBeLessThan(DUREE_OUVERTURE_MS);
   });
 
   it("s'ouvre après préchargement + noir minimum, puis se démonte", async () => {

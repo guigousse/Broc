@@ -77,8 +77,8 @@ import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
 import { settleBazar } from "@/lib/bazar/settleBazar";
 import {
+  acheterArticle,
   acheterLotPieces,
-  acheterVitrine,
   type AchatBazar,
   type RaisonRefus,
 } from "@/lib/bazar/achat";
@@ -310,7 +310,7 @@ interface GameActionsValue {
    * Settle les quêtes périodiques ET le Bazar contre le temps de confiance.
    * Tourne déjà sur le tick 60 s / focus / visibilitychange / pageshow ; les
    * écrans qui dépendent d'un de ces deux settle pour ne pas s'ouvrir sur un
-   * état vide (le Bazar à sa première visite du jour 35) l'appellent aussi
+   * état vide (le Bazar à sa première visite du jour 20) l'appellent aussi
    * à leur montage plutôt que d'attendre le prochain tick.
    */
   rafraichirPeriodiques: () => void;
@@ -1090,7 +1090,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const precheck =
         achat.type === "pieces"
           ? acheterLotPieces(current, achat.index)
-          : acheterVitrine(current, now);
+          : acheterArticle(current, achat.index, now);
       if (!precheck.ok) {
         // Localiser comme le font les actions voisines : jamais de clé brute
         // remontée à l'UI.
@@ -1101,7 +1101,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const r =
           achat.type === "pieces"
             ? acheterLotPieces(prev, achat.index)
-            : acheterVitrine(prev, now);
+            : acheterArticle(prev, achat.index, now);
         return r.ok ? r.state : prev;
       });
       return { ok: true };

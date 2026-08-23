@@ -8,11 +8,11 @@ import { dateForJour } from "@/lib/calendrier";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 
 describe("ouverture du Bazar", () => {
-  it("le jour d'ouverture est bien le 10 juillet 1924", () => {
+  it("le jour d'ouverture est bien le 25 juin 1924", () => {
     const d = dateForJour(JOUR_OUVERTURE_BAZAR);
     expect(d.getUTCFullYear()).toBe(1924);
-    expect(d.getUTCMonth()).toBe(6); // juillet
-    expect(d.getUTCDate()).toBe(10);
+    expect(d.getUTCMonth()).toBe(5); // juin
+    expect(d.getUTCDate()).toBe(25);
   });
 
   it("fermé la veille, ouvert le jour même et après", () => {

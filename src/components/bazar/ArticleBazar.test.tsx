@@ -29,16 +29,33 @@ function monter(props: Partial<React.ComponentProps<typeof ArticleBazar>> = {}) 
 }
 
 describe("ArticleBazar", () => {
+  // La plaque montre la PIÈCE et le nombre, pas le mot : les cases font 89 px
+  // de large et « 3 Bazarcoins » n'y tient dans aucune des quatre langues. Le
+  // mot survit dans le nom accessible — un lecteur d'écran doit entendre une
+  // monnaie, pas un nombre nu qui se confondrait avec une quantité d'objets.
+  it("la plaque de prix montre le nombre et la pièce, sans le mot", () => {
+    monter({ prix: 3, jetons: 10 });
+    const plaque = screen.getByRole("img", { name: "3 Bazarcoins" });
+    expect(plaque.textContent).toBe("3");
+    expect(plaque.querySelector("svg")).toBeTruthy();
+  });
+
+  it("le singulier passe dans le nom accessible", () => {
+    monter({ prix: 1, jetons: 10 });
+    const plaque = screen.getByRole("img", { name: "1 Bazarcoin" });
+    expect(plaque.textContent).toBe("1");
+  });
+
   it("montre le visuel, le libellé et le prix", () => {
     monter();
     expect(screen.getByTestId("visuel")).toBeTruthy();
     expect(screen.getByRole("button", { name: /5 pièces · Musique/ })).toBeTruthy();
-    expect(screen.getByText("3 jetons")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "3 Bazarcoins" })).toBeTruthy();
   });
 
   it("le singulier du prix est respecté", () => {
     monter({ prix: 1, jetons: 10 });
-    expect(screen.getByText("1 jeton")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "1 Bazarcoin" })).toBeTruthy();
   });
 
   // ── Le tap OUVRE, il n'achète plus ────────────────────────────────────────
@@ -68,26 +85,59 @@ describe("ArticleBazar", () => {
     monter({ prix: 12, jetons: 5 });
     // `toHaveStyle` n'existe pas ici : le dépôt n'installe PAS @testing-library/jest-dom.
     // On lit la propriété de style directement.
-    const prix = screen.getByText("12 jetons") as HTMLElement;
+    const prix = screen.getByRole("img", { name: "12 Bazarcoins" }) as HTMLElement;
     expect(prix.style.backgroundColor).toBe(PLAQUE_ETIQUETTE_ETEINTE.backgroundColor);
     // Le raccourci `border` : jsdom ne le décompose pas quand la valeur passe
     // par un `var()` (piège déjà documenté dans `etiquette.ts`), on lit donc
     // la propriété telle qu'elle a été posée.
     expect(prix.style.border).toBe("1px solid var(--ink-300)");
-    expect(prix.style.color).toBe(PLAQUE_ETIQUETTE_ETEINTE.color);
+    // Le TEXTE, lui, ne suit plus la plaque : il passe au rouge d'alerte.
+    expect(prix.style.color).toBe("var(--red-signal-300)");
+  });
+
+  /**
+   * Hors de portée, le montant ET le signe passent au rouge — l'extinction de
+   * la plaque dit « pas pour toi », le rouge dit « il t'en manque ». Les deux
+   * signaux ensemble, décidés à la recette du 2026-08-23.
+   *
+   * Le signe suit par `currentColor` plutôt que par une seconde teinte à
+   * accorder à la main : une seule couleur posée sur la plaque, et le nombre
+   * comme le signe la prennent.
+   */
+  it("hors de portée : le signe passe au rouge avec le montant", () => {
+    const { container } = monter({ prix: 12, jetons: 5 });
+    const trace = container.querySelector("svg path") as SVGElement;
+    expect(trace.getAttribute("stroke")).toBe("currentColor");
+  });
+
+  /**
+   * Le montant est écrit PLUS GRAND que le reste de la plaque, et ce n'est pas
+   * qu'une affaire de goût : sur le gris de la plaque éteinte, le rouge ne
+   * mesure que 3,56:1. C'est sous le seuil AA du texte courant (4,5:1) mais
+   * au-dessus de celui du GRAND texte (3:1), qui commence à 18,66 px en gras.
+   * 1,2 rem vaut 19,2 px — la taille est donc ce qui rend le rouge légal.
+   */
+  it("écrit le montant assez grand pour que le rouge y soit lisible", () => {
+    monter({ prix: 12, jetons: 5 });
+    const montant = screen.getByText("12") as HTMLElement;
+    expect(montant.style.fontSize).toBe("1.2rem");
+    expect(montant.style.fontWeight).toBe("700");
+    expect(Number.parseFloat(montant.style.fontSize) * 16).toBeGreaterThanOrEqual(18.66);
   });
 
   it("hors de portée : le prix n'est PLUS barré", () => {
     monter({ prix: 12, jetons: 5 });
-    const prix = screen.getByText("12 jetons") as HTMLElement;
+    const prix = screen.getByRole("img", { name: "12 Bazarcoins" }) as HTMLElement;
     expect(prix.style.textDecoration).not.toBe("line-through");
   });
 
   it("à portée : la plaque garde le couple de la maison", () => {
     monter({ prix: 3, jetons: 10 });
-    const prix = screen.getByText("3 jetons") as HTMLElement;
+    const prix = screen.getByRole("img", { name: "3 Bazarcoins" }) as HTMLElement;
     expect(prix.style.backgroundColor).toBe(PLAQUE_ETIQUETTE.backgroundColor);
-    expect(prix.style.color).toBe(PLAQUE_ETIQUETTE.color);
+    // À portée, le montant prend le BLEU du Bazarcoin — le prix et la monnaie
+    // qui le paie sont d'une seule couleur. 4,82:1 sur le fond de la plaque.
+    expect(prix.style.color).toBe("var(--azur-400)");
   });
 
   // Éteinte, oui ; fantôme, non. Le fond et le texte doivent RESTER un couple
@@ -165,18 +215,26 @@ describe("ArticleBazar", () => {
     // de la plaque, elle, s'atteste.
     it("le prix est posé sur une plaque sombre, pas à même l'illustration", () => {
       monter();
-      const prix = screen.getByText("3 jetons");
+      const prix = screen.getByRole("img", { name: "3 Bazarcoins" });
       expect(prix.style.backgroundColor).toBe("var(--forest-800)");
-      expect(prix.style.color).toBe("var(--brass-300)");
+      // Le laiton de la chrome a laissé la place au bleu du Bazarcoin : le
+      // prix et la monnaie qui le paie sont désormais d'une seule couleur.
+      expect(prix.style.color).toBe("var(--azur-400)");
       expect(prix.style.borderRadius).toBe("var(--radius-pill)");
     });
 
     it("hors de portée, c'est encore une plaque — éteinte, pas effacée", () => {
       monter({ prix: 12, jetons: 5 });
-      const prix = screen.getByText("12 jetons");
+      const prix = screen.getByRole("img", { name: "12 Bazarcoins" });
       expect(prix.style.backgroundColor).toBe("var(--ink-500)");
       expect(prix.style.borderRadius).toBe("var(--radius-pill)");
-      expect(prix.style.display).toBe("inline-block");
+      // La plaque est passée d'`inline-block` à `inline-flex` le jour où la
+      // pièce est venue s'asseoir à côté du nombre : c'est la façon la plus
+      // sûre de les aligner et de les espacer. Ce qui compte pour ce test n'a
+      // pas bougé — la plaque reste une pastille en ligne, éteinte et non
+      // effacée.
+      expect(prix.style.display).toMatch(/^inline/);
+      expect(prix.style.alignItems).toBe("center");
     });
   });
 
