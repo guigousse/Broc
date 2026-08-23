@@ -223,7 +223,7 @@ export const fr = {
       "chine-nego-un": "*Négocie* la manette : le curseur dans le *cercle*.",
       "chine-nego-deux": "Pareil pour la peluche : le curseur dans le *cercle*.",
       "chine-sortir": "*Sors* de la brocante quand tu as fini.",
-      "stockage-ouvrir": "Ouvre le *Stockage*, en bas.",
+      "stockage-ouvrir": "Ouvre la *Réserve*, en bas.",
       "stockage-focus": "Fais le tour de ton stockage.",
       "collection-envoyer": "Envoie la *peluche* dans ta *collection*.",
       "collection-lecon": "Ouvre la *Collection*, en bas.",

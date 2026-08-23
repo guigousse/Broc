@@ -220,7 +220,7 @@ export const en: DictionnaireUI = {
       "chine-nego-un": "*Haggle* for the controller: slider inside the *circle*.",
       "chine-nego-deux": "Same for the teddy bear: slider inside the *circle*.",
       "chine-sortir": "*Leave* the flea market when you're done.",
-      "stockage-ouvrir": "Open *Storage*, bottom bar.",
+      "stockage-ouvrir": "Open the *Storeroom*, at the bottom.",
       "stockage-focus": "Take a tour of your storage.",
       "collection-envoyer": "Send the *teddy bear* to your *collection*.",
       "collection-lecon": "Open the *Collection*, bottom bar.",

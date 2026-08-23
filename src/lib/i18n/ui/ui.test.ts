@@ -58,4 +58,19 @@ describe("dictionnaires UI", () => {
     compare(DICTIONNAIRES.fr, el, "el", "");
     expect(derives).toEqual([]);
   });
+
+  it("la consigne d'ouverture nomme l'onglet réellement affiché, dans les 4 langues", () => {
+    for (const d of [DICTIONNAIRES.fr, DICTIONNAIRES.en, DICTIONNAIRES.es, el]) {
+      const consigne = d.tutoriel.instructions["stockage-ouvrir"];
+      expect(consigne).toContain(d.chrome.onglets.reserve);
+      // Le piège : « Ouvre le Stockage » resterait vrai pour le code et faux
+      // pour le joueur, qui ne voit plus ce mot nulle part dans la barre.
+      // Assertion sautée quand reserve === stockage (es/el, où les deux
+      // onglets partagent déjà le même mot par choix de traduction : la
+      // consigne reste alors correcte quel que soit le mot qu'elle cite).
+      if (d.chrome.onglets.reserve !== d.chrome.onglets.stockage) {
+        expect(consigne).not.toContain(d.chrome.onglets.stockage);
+      }
+    }
+  });
 });
