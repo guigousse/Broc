@@ -60,9 +60,18 @@ function estIndexFichierValide(x: unknown): x is IndexFichier {
     return false;
   }
   const { revisions } = candidat;
-  return (
-    typeof revisions === "object" && revisions !== null && !Array.isArray(revisions)
-  );
+  if (typeof revisions !== "object" || revisions === null || Array.isArray(revisions)) {
+    return false;
+  }
+  // Revue finale (composition) : les VALEURS comptent autant que la forme.
+  // Une révision non numérique donne `revision: NaN` un peu plus loin, que
+  // `JSON.stringify` écrit `"revision":null` dans l'index MIROIR — forme que
+  // `estMetaSlotValide` rejette, et `chargerIndex()` jette alors TOUT l'index
+  // miroir : noms d'emplacements perdus, `actif` remis à 1, sauvegardes
+  // suivantes dans le mauvais emplacement. Un index dont une révision n'est
+  // pas un nombre fini est donc traité comme illisible — branche déjà sûre,
+  // qui ne contamine rien.
+  return Object.values(revisions).every((v) => Number.isFinite(v));
 }
 
 async function lireEtatIndexFichier(): Promise<EtatIndexFichier> {

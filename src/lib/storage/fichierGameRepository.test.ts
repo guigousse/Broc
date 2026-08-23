@@ -12,6 +12,7 @@ import {
   changerSlotActif,
   chargerIndex,
   cleSlot,
+  renommerSlot,
   revisionDe,
   toucherDerniereSession,
 } from "./slots";
@@ -504,6 +505,38 @@ describe("fichierGameRepository", () => {
         expect(avertir).toHaveBeenCalled();
       },
     );
+
+    // Revue finale (composition) : les VALEURS de `revisions` n'étaient pas
+    // validées. Une valeur non numérique donnait `revision: NaN`, que
+    // `JSON.stringify` écrit `"revision":null` dans l'index MIROIR, que
+    // `estMetaSlotValide` rejette — et `chargerIndex()` jetait alors tout
+    // l'index miroir : noms d'emplacements perdus, `actif` remis à 1, et via
+    // I2 les sauvegardes suivantes partaient dans le mauvais slot. Trois
+    // mineurs d'apparence cosmétique enchaînés en destruction silencieuse.
+    it.each([
+      ['une révision texte', JSON.stringify({ actif: 1, revisions: { 1: "x", 2: 0, 3: 0 } })],
+      ['une révision nulle', JSON.stringify({ actif: 1, revisions: { 1: null, 2: 0, 3: 0 } })],
+      ['une révision NaN sérialisée', '{"actif":1,"revisions":{"1":null}}'],
+    ])("%s rend l'index illisible plutôt que de contaminer le miroir", async (_libelle, contenu) => {
+      window.localStorage.setItem(
+        cleSlot(1),
+        JSON.stringify(createMockGameState({ jourActuel: 7 })),
+      );
+      changerSlotActif(1);
+      renommerSlot(1, "Ma partie");
+      fichiers.set("index", contenu);
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const relu = await fichierGameRepository.load();
+      expect(relu?.jourActuel).toBe(7); // servi par le miroir, branche sûre
+
+      // Et surtout : le miroir n'a pas été détruit au passage.
+      const r = await fichierGameRepository.save(createMockGameState({ jourActuel: 8 }));
+      expect(r).toEqual({ ok: true });
+      expect(chargerIndex().slots[1]?.nom).toBe("Ma partie");
+      expect(Number.isFinite(chargerIndex().slots[1]?.revision)).toBe(true);
+    });
 
     it("un index de forme invalide (\"{}\") ne fait pas non plus planter save()", async () => {
       fichiers.set("index", "{}");
