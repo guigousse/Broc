@@ -41,6 +41,9 @@ src-tauri/vendor/tauri-plugin-iap/ios/.build/
 src-tauri/vendor/tauri-plugin-firebase/.tauri/
 src-tauri/vendor/tauri-plugin-firebase/ios/Package.resolved
 src-tauri/vendor/tauri-plugin-firebase/ios/.build/
+src-tauri/vendor/tauri-plugin-stockage/.tauri/
+src-tauri/vendor/tauri-plugin-stockage/ios/Package.resolved
+src-tauri/vendor/tauri-plugin-stockage/ios/.build/
 marketing/appstore/.planches/
 
 # tauri-plugin-stockage est un plugin maison (pas un vendor drop crates.io

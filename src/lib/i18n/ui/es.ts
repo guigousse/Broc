@@ -768,6 +768,12 @@ export const es: DictionnaireUI = {
     sauvegardeModaleIo:
       "El almacenamiento no está disponible en este momento. Tu partida no se está guardando.",
     sauvegardeModaleBouton: "Entendido",
+    // Aviso preventivo de espacio en disco (Tarea 9): antes de que falle el
+    // guardado, no después.
+    espaceTitre: "El almacenamiento de tu teléfono está casi lleno",
+    espaceCorps:
+      "BROC podría dejar de poder guardar tu partida. Libera algo de espacio para seguir jugando tranquilo.",
+    espaceBouton: "Entendido",
   },
   deblocage: {
     long: {

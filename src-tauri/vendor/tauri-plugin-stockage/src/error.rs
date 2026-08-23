@@ -12,6 +12,14 @@ pub enum Error {
     Io(String),
     #[error("Indisponible sur cette plateforme")]
     Indisponible,
+    // Échec de l'appel au plugin Swift (côté iOS uniquement) : plugin non
+    // enregistré, réponse mal formée. Rangé sous le même genre "io" que les
+    // erreurs de fichier — la couche TS n'a qu'un seul contrat à lire (cf.
+    // commentaire de `Serialize` ci-dessous) et n'a pas besoin de distinguer
+    // un fichier illisible d'un pont natif en panne.
+    #[cfg(target_os = "ios")]
+    #[error(transparent)]
+    PluginInvoke(#[from] tauri::plugin::mobile::PluginInvokeError),
 }
 
 impl From<std::io::Error> for Error {
@@ -33,6 +41,8 @@ impl Serialize for Error {
             Error::DisquePlein => "disque_plein",
             Error::Io(_) => "io",
             Error::Indisponible => "indisponible",
+            #[cfg(target_os = "ios")]
+            Error::PluginInvoke(_) => "io",
         };
         let mut st = s.serialize_struct("Error", 2)?;
         st.serialize_field("genre", genre)?;

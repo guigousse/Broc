@@ -26,6 +26,14 @@ impl Quoi {
     }
 }
 
+/// Réponse du plugin Swift iOS. `octets` est `None` quand la mesure n'a pas
+/// pu être obtenue (clé de ressource absente, valeur négative) — jamais un
+/// chiffre fabriqué (cf. commentaire de `commands::espace_libre`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EspaceLibreResult {
+    pub octets: Option<u64>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

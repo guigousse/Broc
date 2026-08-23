@@ -767,6 +767,11 @@ export const en: DictionnaireUI = {
     sauvegardeModaleIo:
       "Storage isn't available right now. Your game isn't being saved.",
     sauvegardeModaleBouton: "Got it",
+    // Preventive disk-space warning (Task 9): before saving fails, not after.
+    espaceTitre: "Your phone's storage is almost full",
+    espaceCorps:
+      "BROC may soon be unable to save your game. Free up some space to keep playing safely.",
+    espaceBouton: "Got it",
   },
   deblocage: {
     long: {

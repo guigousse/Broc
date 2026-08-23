@@ -801,6 +801,12 @@ export const fr = {
     sauvegardeModaleIo:
       "Le stockage n'est pas disponible en ce moment. Ta partie n'est pas enregistrée.",
     sauvegardeModaleBouton: "J'ai compris",
+    // Avertissement préventif d'espace disque (Tâche 9) : avant que la
+    // sauvegarde échoue, pas après (cf. AvertissementEspace.tsx).
+    espaceTitre: "Le stockage de ton téléphone est presque plein",
+    espaceCorps:
+      "BROC risque de ne plus pouvoir enregistrer ta partie. Libère un peu de place pour continuer sereinement.",
+    espaceBouton: "J'ai compris",
   },
   // Conditions de déblocage des brocantes (deblocage.ts) : rendues à l'affichage
   // (panorama). `long` = description complète, `court` = avec progression.

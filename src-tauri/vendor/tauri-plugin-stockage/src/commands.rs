@@ -1,6 +1,7 @@
 use crate::error::{Error, Result};
 use crate::fichiers;
 use crate::models::Quoi;
+use crate::StockageExt;
 use tauri::{command, AppHandle, Manager, Runtime};
 
 fn repertoire<R: Runtime>(app: &AppHandle<R>) -> Result<std::path::PathBuf> {
@@ -26,12 +27,13 @@ pub(crate) async fn ecrire_save<R: Runtime>(
     fichiers::ecrire_atomique(&repertoire(&app)?, quoi.nom_fichier(), &contenu)
 }
 
-// Souches : le Swift arrive aux tâches 10 et 11. `None` signifie « je ne sais
+// Routé vers le Swift iOS (mobile.rs, `volumeAvailableCapacityForImportantUsageKey`)
+// ou vers le no-op Android/bureau (desktop.rs). `None` signifie « je ne sais
 // pas », jamais un chiffre faux — un statvfs sous-estimerait l'espace en
 // ignorant la place purgeable, et déclencherait l'avertissement à tort.
 #[command]
-pub(crate) async fn espace_libre<R: Runtime>(_app: AppHandle<R>) -> Result<Option<u64>> {
-    Ok(None)
+pub(crate) async fn espace_libre<R: Runtime>(app: AppHandle<R>) -> Result<Option<u64>> {
+    app.stockage().espace_libre()
 }
 
 #[command]
