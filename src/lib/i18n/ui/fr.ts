@@ -195,6 +195,8 @@ export const fr = {
       "Et ce bouton l'envoie dans ta collection, au lieu de le vendre.",
     coachStockageAmelioration:
       "Plus tard, tu pourras agrandir : cave, puis hangar.",
+    coachStockageAtelier:
+      "Et là, l'atelier — il ouvrira quand tu sauras réparer.",
     coachCollectionCase:
       "La peluche a rejoint sa case : elle ne se vend plus, elle se montre.",
     coachCollectionValeur:

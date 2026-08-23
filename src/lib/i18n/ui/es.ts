@@ -192,6 +192,8 @@ export const es: DictionnaireUI = {
       "Y este botón lo envía a tu colección, en vez de venderlo.",
     coachStockageAmelioration:
       "Más adelante podrás ampliarlo: sótano, luego nave.",
+    coachStockageAtelier:
+      "Y ahí, el taller — se abrirá cuando sepas reparar.",
     coachCollectionCase:
       "El peluche ya tiene su lugar: ya no se vende, se exhibe.",
     coachCollectionValeur:

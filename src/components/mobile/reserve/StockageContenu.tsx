@@ -298,6 +298,7 @@ function StockageContenuInner() {
             { cible: "stockage-theme", texte: d.tutoriel.coachStockageTheme },
             { cible: "stockage-bouton", texte: d.tutoriel.coachStockageBouton },
             { cible: "stockage-amelioration", texte: d.tutoriel.coachStockageAmelioration },
+            { cible: "reserve-onglet-atelier", texte: d.tutoriel.coachStockageAtelier },
           ]}
           onFini={() => avancerTutoriel("collection-envoyer")}
         />

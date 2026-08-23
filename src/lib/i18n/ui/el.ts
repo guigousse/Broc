@@ -192,6 +192,8 @@ export const el: DictionnaireUI = {
       "Και αυτό το κουμπί το στέλνει στη συλλογή σου, αντί να το πουλήσεις.",
     coachStockageAmelioration:
       "Αργότερα θα μπορείς να το επεκτείνεις: υπόγειο, μετά αποθήκη.",
+    coachStockageAtelier:
+      "Κι εκεί, το εργαστήριο — ανοίγει μόλις μάθεις να επισκευάζεις.",
     coachCollectionCase:
       "Το λούτρινο βρήκε τη θέση του: δεν πωλείται πια, εκτίθεται.",
     coachCollectionValeur:
