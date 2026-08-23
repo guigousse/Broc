@@ -346,6 +346,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [etatSauvegarde, setEtatSauvegarde] = useState<EtatSauvegarde>({
     enEchec: false,
   });
+  // Ruling R13 : lue dans le `.then()` de `doSave` pour décider du toast de
+  // rétablissement HORS de l'updater `setEtatSauvegarde` (un updater React
+  // n'est pas garanti de tourner une seule fois — StrictMode le rejoue en
+  // dev — donc un effet de bord dedans peut doubler le toast).
+  const etatSauvegardeRef = useRef<EtatSauvegarde>({ enEchec: false });
+  etatSauvegardeRef.current = etatSauvegarde;
   // Slot auquel appartient l'état en mémoire (posé à l'hydratation et à
   // `nouvellePartie`). Le repository résout le slot cible au moment de
   // l'ÉCRITURE (`slotActif()`) : si l'index a basculé entre-temps (lancement
@@ -380,9 +386,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // cet état est de toute façon en train d'être détaché.
       if (slotActif() !== slotEtatRef.current) return;
       obtenirGameRepository().save(state).then((res) => {
+        // Ruling R13 : l'updater ci-dessous est PUR (aucun effet de bord) —
+        // React ne garantit pas qu'un updater fonctionnel ne s'exécute
+        // qu'une fois (StrictMode le rejoue en dev). La transition
+        // échec→succès est donc lue AVANT l'appel, sur la ref toujours à
+        // jour, et le toast est déclenché APRÈS, une seule fois.
+        const etaitEnEchec = etatSauvegardeRef.current.enEchec;
         setEtatSauvegarde((prec) => {
           if (res.ok) {
-            if (prec.enEchec) toast(raisonLocalisee("sauvegardeRetablie"), { type: "succes" });
             return prec.enEchec ? { enEchec: false } : prec;
           }
           // `depuis` est posé au PREMIER échec et ne bouge plus : c'est lui qui
@@ -392,6 +403,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           }
           return { enEchec: true, genre: res.genre, depuis: Date.now() };
         });
+        if (res.ok && etaitEnEchec) {
+          toast(raisonLocalisee("sauvegardeRetablie"), { type: "succes" });
+        }
       });
     };
     // Debounce (trailing edge via cleanup) : évite un JSON.stringify de TOUT
@@ -1113,6 +1127,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     slotEtatRef.current = null;
     setState(null);
     obtenirGameRepository().clear();
+    // Ruling R14 : sans ça, une alerte d'échec restait affichée sur une
+    // partie tout juste réinitialisée qui n'a encore rien tenté de
+    // sauvegarder — une fausse alerte, exactement ce que le bandeau
+    // persistant ne doit jamais être. Si le disque est réellement toujours
+    // en panne, le prochain échec (dans les 400 ms du debounce) la relève.
+    setEtatSauvegarde({ enEchec: false });
   }, []);
 
   // Détache l'état en mémoire sans toucher au storage — utilisé avant une
