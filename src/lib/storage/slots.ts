@@ -94,14 +94,25 @@ function indexExiste(): boolean {
 }
 
 /**
- * Version exportée d'`indexExiste()`, pour `fichierGameRepository` : distingue
- * « le miroir a un index réellement enregistré » de « rien n'a jamais été
- * écrit côté miroir » (Ruling R4). Dans le premier cas l'`actif` du miroir
- * fait foi (c'est lui que `changerSlotActif()` écrit) ; dans le second, seul
- * l'`actif` du fichier a une chance d'être à jour.
+ * Pour `fichierGameRepository` : dit si le miroir a un index EXPLOITABLE, dont
+ * l'`actif` fait foi (c'est lui que `changerSlotActif()` écrit) — Ruling R4.
+ * Sinon, seul l'`actif` du fichier a une chance d'être à jour.
+ *
+ * Adossé à la lecture VALIDÉE, pas à la simple présence de la clé (revue
+ * finale I2). Une clé présente mais illisible fait retomber `slotActif()` sur
+ * le défaut, c'est-à-dire le slot 1 (voir `chargerIndex()`, cas ANORMAL) : la
+ * déclarer « réellement enregistrée » ferait gagner ce 1 par défaut contre
+ * l'`actif` du fichier, on servirait et surtout on ÉCRIRAIT le slot 1, et une
+ * partie vivant dans le slot 2/3 — dont le fichier existe pourtant — devenait
+ * inatteignable depuis l'UI. Or ce chantier part du principe que ces écritures
+ * miroir peuvent être perdues.
+ *
+ * Volontairement distincte d'`indexExiste()`, qui garde la migration legacy et
+ * doit, elle, rester sur la PRÉSENCE : migrer par-dessus un index existant
+ * mais corrompu écraserait des données.
  */
 export function indexMiroirExiste(): boolean {
-  return indexExiste();
+  return lireIndexBrut() !== null;
 }
 
 function ecrireIndex(index: IndexSlots): boolean {

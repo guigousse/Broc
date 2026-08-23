@@ -6,6 +6,7 @@ import {
   chargerIndex,
   cleBackup,
   cleSlot,
+  indexMiroirExiste,
   premierSlotLibre,
   renommerSlot,
   resumeSlot,
@@ -455,6 +456,31 @@ describe("revisionDe", () => {
       }),
     );
     expect(revisionDe(1)).toBe(0);
+  });
+});
+
+// Revue finale I2 : le témoin doit dire « le miroir a un index EXPLOITABLE »,
+// pas « la clé existe ». Une clé illisible fait retomber `slotActif()` sur le
+// slot 1 : la déclarer présente ferait gagner ce 1 contre l'`actif` du
+// fichier, et rendrait une partie du slot 2/3 inatteignable.
+describe("indexMiroirExiste — validité, pas seulement présence", () => {
+  it("faux quand aucune clé d'index n'existe", () => {
+    expect(indexMiroirExiste()).toBe(false);
+  });
+
+  it("vrai quand l'index miroir est présent ET lisible", () => {
+    changerSlotActif(2);
+    expect(indexMiroirExiste()).toBe(true);
+  });
+
+  it("faux quand la clé existe mais ne parse pas", () => {
+    localStorage.setItem(CLE_INDEX, "{ceci n'est pas du json");
+    expect(indexMiroirExiste()).toBe(false);
+  });
+
+  it("faux quand la clé parse mais n'a pas la forme d'un index", () => {
+    localStorage.setItem(CLE_INDEX, JSON.stringify({ actif: 9, slots: {} }));
+    expect(indexMiroirExiste()).toBe(false);
   });
 });
 

@@ -8,6 +8,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockGameState } from "../__test-fixtures__/gameState";
 import {
+  CLE_INDEX,
   changerSlotActif,
   chargerIndex,
   cleSlot,
@@ -172,6 +173,28 @@ describe("fichierGameRepository", () => {
         JSON.stringify({ actif: 2, revisions: { 1: 0, 2: 5, 3: 0 } }),
       );
       fichiers.set("slot_2", JSON.stringify(createMockGameState({ jourActuel: 33 })));
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const relu = await fichierGameRepository.load();
+      expect(relu?.jourActuel).toBe(33);
+    });
+
+    // Revue finale I2 : le témoin testait la PRÉSENCE de la clé d'index
+    // miroir, alors que `slotActif()` retombe sur le défaut (slot 1) dès
+    // qu'elle est illisible. Un index miroir corrompu faisait donc servir —
+    // et surtout ÉCRIRE — le slot 1, rendant la partie du slot 2 (dont le
+    // fichier existe pourtant, et dit `actif: 2`) inatteignable depuis l'UI.
+    it("un index miroir présent mais ILLISIBLE ne l'emporte pas : l'actif du fichier est utilisé", async () => {
+      window.localStorage.setItem(CLE_INDEX, "{ceci n'est pas du json");
+      fichiers.set(
+        "index",
+        JSON.stringify({ actif: 2, revisions: { 1: 0, 2: 5, 3: 0 } }),
+      );
+      // Leurre au slot 1, celui sur lequel un `slotActif()` par défaut
+      // retomberait.
+      fichiers.set("slot_1", JSON.stringify(createMockGameState({ jourActuel: 99 })));
+      fichiers.set("slot_2", JSON.stringify(createMockGameState({ jourActuel: 33 })));
+      vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const { fichierGameRepository } = await import("./fichierGameRepository");
       const relu = await fichierGameRepository.load();

@@ -132,7 +132,9 @@ function genreDe(e: unknown): ErreurStockage["genre"] {
  * emplacement — exactement la perte de partie que ce chantier corrige.
  *
  * Même règle qu'au `load()` (Ruling R4) : le miroir l'emporte s'il a un
- * index RÉELLEMENT enregistré (c'est lui que `changerSlotActif()` écrit) ;
+ * index réellement enregistré ET EXPLOITABLE (c'est lui que
+ * `changerSlotActif()` écrit ; un index illisible ferait retomber
+ * `slotActif()` sur le slot 1 — voir `indexMiroirExiste`, revue finale I2) ;
  * sinon, seul l'actif du fichier a une chance d'être à jour. `index` peut
  * être `null` (aucune save fichier encore écrite) : l'actif retombe alors
  * sur 1, comme le ferait un miroir tout neuf.
