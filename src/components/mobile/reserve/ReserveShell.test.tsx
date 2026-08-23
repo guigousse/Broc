@@ -4,6 +4,7 @@
  * Le point testé n'est pas le rendu mais la RÈGLE D'ANIMATION : arriver de
  * l'onglet frère ne doit pas rejouer le glissement de 320 ms (cf. spec).
  */
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { ReserveShell, __resetMemoireReserve } from "./ReserveShell";
@@ -68,5 +69,34 @@ describe("ReserveShell — règle d'animation", () => {
     poser("stockage");
     expect(screen.getByText("bande")).toBeTruthy();
     expect(screen.getByText("contenu")).toBeTruthy();
+  });
+
+  it("StrictMode : le montage fantôme ne doit pas annuler la mémoire d'une instance toujours montée", async () => {
+    // StrictMode (actif par défaut sur cette app en dev) double-invoque les
+    // effets au montage : setup → cleanup → setup, le tout synchrone. Une
+    // garde qui compare seulement par VALEUR d'onglet ne peut pas distinguer
+    // ce cleanup fantôme d'une vraie sortie de la Réserve quand les deux
+    // montages portent le même onglet — elle annule la mémoire à tort.
+    render(
+      <StrictMode>
+        <ReserveShell
+          onglet="stockage"
+          atelierOuvert
+          badgeAtelier={0}
+          onVerrou={() => {}}
+          bande={<div>bande</div>}
+        >
+          <div>contenu</div>
+        </ReserveShell>
+      </StrictMode>,
+    );
+    // Laisse le temps aux microtâches en attente (dont le nettoyage différé
+    // du cleanup fantôme) de se résoudre avant l'interaction du joueur —
+    // c'est ce qui se passe réellement : un tap est une tâche séparée,
+    // toujours postérieure à la file de microtâches déjà en attente.
+    await Promise.resolve();
+    cleanup();
+    poser("atelier");
+    expect(overlay().getAttribute("data-animer")).toBe("0");
   });
 });

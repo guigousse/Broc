@@ -77,4 +77,36 @@ describe("FloatingRoomOverlay", () => {
     const wrap = container.querySelector('[data-floating-room="1"]') as HTMLElement;
     expect(wrap.children.length).toBe(2);
   });
+
+  it("anime les trois blocs par défaut (animer non fourni)", () => {
+    const { container } = render(
+      <FloatingRoomOverlay bande={<div>B</div>} milieu={<div>M</div>}>
+        <div>P</div>
+      </FloatingRoomOverlay>,
+    );
+    const wrap = container.querySelector('[data-floating-room="1"]') as HTMLElement;
+    const [bandeEl, milieuEl, panneauEl] = Array.from(wrap.children) as HTMLElement[];
+    expect(wrap.getAttribute("data-animer")).toBe("1");
+    expect(bandeEl.style.animation).toContain("320ms");
+    expect(milieuEl.style.animation).toContain("320ms");
+    expect(panneauEl.style.animation).toContain("320ms");
+  });
+
+  it("coupe réellement l'animation des trois blocs quand animer vaut false", () => {
+    // Le point de la prop `animer` n'est pas l'attribut `data-animer` (que le
+    // composant pose lui-même) mais le style CSS effectivement appliqué :
+    // une inversion du ternaire dans le JSX passerait un test qui ne
+    // vérifierait que l'attribut.
+    const { container } = render(
+      <FloatingRoomOverlay bande={<div>B</div>} milieu={<div>M</div>} animer={false}>
+        <div>P</div>
+      </FloatingRoomOverlay>,
+    );
+    const wrap = container.querySelector('[data-floating-room="1"]') as HTMLElement;
+    const [bandeEl, milieuEl, panneauEl] = Array.from(wrap.children) as HTMLElement[];
+    expect(wrap.getAttribute("data-animer")).toBe("0");
+    expect(bandeEl.style.animation).toBe("none");
+    expect(milieuEl.style.animation).toBe("none");
+    expect(panneauEl.style.animation).toBe("none");
+  });
 });

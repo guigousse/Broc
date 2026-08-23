@@ -23,9 +23,23 @@ import { ReserveTabs, type OngletReserve } from "./ReserveTabs";
 /** Dernier onglet de la Réserve monté, ou null si l'on n'y est plus. */
 let dernierOngletMonte: OngletReserve | null = null;
 
+/**
+ * Compteur monotone, incrémenté à CHAQUE setup d'effet — réel ou fantôme
+ * (React StrictMode, actif par défaut en dev sur cette app, double-invoque
+ * les effets au montage : setup → cleanup → setup, tout synchrone). Un
+ * cleanup différé ne peut pas se fier à une comparaison par VALEUR d'onglet
+ * pour savoir s'il doit annuler la mémoire : quand le montage fantôme et le
+ * montage réel portent le même onglet, cette comparaison ne les distingue
+ * pas et efface à tort la mémoire d'une instance toujours montée. Chaque
+ * cleanup capture donc SA génération et n'annule la mémoire que si aucun
+ * nouveau setup n'a eu lieu depuis.
+ */
+let generationMemoire = 0;
+
 /** Réservé aux tests : remet la mémoire à zéro entre deux cas. */
 export function __resetMemoireReserve(): void {
   dernierOngletMonte = null;
+  generationMemoire = 0;
 }
 
 const ROUTE_ONGLET: Record<OngletReserve, string> = {
@@ -62,14 +76,22 @@ export function ReserveShell({
 
   useEffect(() => {
     dernierOngletMonte = ongletRef.current;
+    generationMemoire += 1;
+    const maGeneration = generationMemoire;
     return () => {
       // Le démontage peut être un passage à l'onglet frère (on garde la
-      // mémoire) ou une sortie de la Réserve. On ne peut pas le savoir ici :
-      // c'est le montage suivant qui tranche, en écrasant la valeur. La
-      // sortie est traitée par le nettoyage différé ci-dessous.
+      // mémoire), une sortie de la Réserve, ou un cleanup fantôme de
+      // StrictMode immédiatement suivi d'un remontage. On ne peut pas le
+      // savoir ici : c'est le montage suivant qui tranche. Comparer
+      // seulement la VALEUR de l'onglet ne suffit pas — un remontage fantôme
+      // porte souvent le même onglet que celui qui vient de se démonter —
+      // d'où la génération : si un nouveau setup a eu lieu depuis celui-ci
+      // (réel ou fantôme), on n'annule rien.
       const parti = ongletRef.current;
       queueMicrotask(() => {
-        if (dernierOngletMonte === parti) dernierOngletMonte = null;
+        if (dernierOngletMonte === parti && generationMemoire === maGeneration) {
+          dernierOngletMonte = null;
+        }
       });
     };
   }, []);
