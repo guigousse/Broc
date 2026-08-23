@@ -1,17 +1,17 @@
 // @vitest-environment jsdom
 /**
- * Garde de CÂBLAGE du cadenas de l'Atelier.
+ * Garde de CÂBLAGE du cadenas, côté Atelier — le pendant exact de
+ * StockageContenu.test.tsx.
  *
- * `ReserveTabs` reçoit `atelierOuvert` déjà calculé : il ne peut pas prouver
- * d'où vient ce booléen, et un `true` en dur y passerait inaperçu. Le
- * prédicat lui-même est couvert ailleurs (competences.test.ts) — ce qui est
- * vérifié ici, c'est que la Réserve l'interroge vraiment : on monte le vrai
- * `StockageContenu` sur deux états de jeu qui ne diffèrent QUE par la
- * première compétence Réparer, et on lit le cadenas sur l'onglet Atelier.
+ * Les deux contenus de la Réserve montent la même bande d'onglets ; si un
+ * seul des deux interrogeait vraiment `useVerrouReserve`, l'autre pourrait
+ * afficher un cadenas (ou un badge) qui ne dit pas la même chose, et rien ne
+ * le verrait. On monte donc le vrai `AtelierContenu` sur deux états de jeu
+ * qui ne diffèrent QUE par la première compétence Réparer.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { StockageContenu } from "./StockageContenu";
+import { AtelierContenu } from "./AtelierContenu";
 import { __resetMemoireReserve } from "./ReserveShell";
 import { catTreeId } from "@/data/competences";
 import { CATEGORIES } from "@/data/categories";
@@ -20,21 +20,22 @@ import type { GameState } from "@/types/game";
 let mockState: GameState;
 
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams(),
   useRouter: () => ({ replace: vi.fn() }),
 }));
 
 vi.mock("@/context/GameContext", () => ({
   useGameStateOnly: () => ({ state: mockState, isHydrated: true }),
+  useGameActions: () => ({ tempsConfiance: () => null }),
   useGame: () => ({
     state: mockState,
     isHydrated: true,
-    donnerACollection: vi.fn(),
-    ameliorerStockage: vi.fn(),
-  }),
-  useGameActions: () => ({
-    avancerTutoriel: vi.fn(),
+    restaurerObjet: vi.fn(),
+    terminerRestaurationImmediate: vi.fn(),
     tempsConfiance: () => null,
+    ameliorerAtelier: vi.fn(),
+    demantelerObjet: vi.fn(),
+    recupererObjetRestaure: vi.fn(),
+    terminerMiniTutoAtelier: vi.fn(),
   }),
 }));
 
@@ -53,7 +54,7 @@ function etat(competences: string[]): GameState {
     inventaireJoueur: [],
     competencesDebloquees: competences,
     piecesAmelioration: {},
-    niveauStockage: 1,
+    niveauAtelier: 1,
     budget: 0,
     tutorielEtape: "termine",
   } as unknown as GameState;
@@ -68,16 +69,16 @@ function ongletAtelier(): HTMLElement {
   return btn;
 }
 
-describe("StockageContenu — d'où vient l'ouverture de l'Atelier", () => {
+describe("AtelierContenu — d'où vient l'ouverture de l'Atelier", () => {
   it("sans compétence Réparer, l'onglet Atelier est cadenassé", () => {
     mockState = etat([]);
-    render(<StockageContenu />);
+    render(<AtelierContenu />);
     expect(ongletAtelier().getAttribute("aria-disabled")).toBe("true");
   });
 
   it("la première compétence Réparer l'ouvre", () => {
     mockState = etat([`${catTreeId(CATEGORIES[0])}.reparer.1`]);
-    render(<StockageContenu />);
+    render(<AtelierContenu />);
     expect(ongletAtelier().getAttribute("aria-disabled")).toBe(null);
   });
 });

@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ReserveShell } from "./ReserveShell";
+import { useVerrouReserve } from "./useVerrouReserve";
 import { CategoriePicker } from "@/components/mobile/CategoriePicker";
 import { InventoryGrid } from "@/components/InventoryGrid";
 import { ObjetDetailOverlay } from "@/components/mobile/ObjetDetailOverlay";
@@ -16,9 +17,7 @@ import {
 } from "@/data/stockage";
 import { getCapaciteStockage, totalEnStock } from "@/lib/stockage";
 import { UpgradeButton } from "@/components/mobile/UpgradeButton";
-import { aCompetenceReparation, aConnaisseurVitrine } from "@/lib/competences";
-import { estPret } from "@/lib/restauration";
-import { useToast } from "@/components/ui/Toast";
+import { aConnaisseurVitrine } from "@/lib/competences";
 import { collectionStatusPourObjet } from "@/lib/atelier";
 import { donCollectionPermis } from "@/lib/tutoriel";
 import { PELUCHE_TEMPLATE_ID } from "@/data/tutorielScenario";
@@ -37,14 +36,14 @@ export function StockageContenu() {
 function StockageContenuInner() {
   const searchParams = useSearchParams();
   const { d, tr, locale } = useLangue();
-  const { toast } = useToast();
+  const { atelierOuvert, badgeAtelier, onVerrou } = useVerrouReserve();
   const {
     state,
     isHydrated,
     donnerACollection,
     ameliorerStockage,
   } = useGame();
-  const { avancerTutoriel, tempsConfiance } = useGameActions();
+  const { avancerTutoriel } = useGameActions();
   const etape = state?.tutorielEtape;
   // Visite guidée du stockage (tutoriel v2) : l'arrivée sur la page depuis
   // la TabBar déclenche le coach en 4 temps (cf. Step 1 du brief T10).
@@ -157,15 +156,9 @@ function StockageContenuInner() {
     <>
       <ReserveShell
         onglet="stockage"
-        atelierOuvert={aCompetenceReparation(state)}
-        badgeAtelier={
-          state.inventaireJoueur.filter(
-            (o) =>
-              o.enRestauration &&
-              estPret(o.enRestauration, tempsConfiance() ?? Date.now()),
-          ).length
-        }
-        onVerrou={() => toast(d.chrome.verrouAtelier, { type: "info" })}
+        atelierOuvert={atelierOuvert}
+        badgeAtelier={badgeAtelier}
+        onVerrou={onVerrou}
         bande={
           <>
             {/* Le titre `— STOCKAGE —` a cédé la place à la bande d'onglets

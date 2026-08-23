@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ReserveShell } from "./ReserveShell";
+import { useVerrouReserve } from "./useVerrouReserve";
 import { useGame } from "@/context/GameContext";
 import {
-  aCompetenceReparation,
   aConnaisseurVitrine,
   peutRestaurerBonVersTresBon,
   peutRestaurerMauvaisVersBon,
@@ -12,7 +12,6 @@ import {
 } from "@/lib/competences";
 import {
   dureeRestaurationMs,
-  estPret,
   restantMs,
   peutTerminerImmediat,
   formatDuree,
@@ -79,6 +78,7 @@ function btnSheet(
 export function AtelierContenu() {
   const { d, tr, locale } = useLangue();
   const { toast } = useToast();
+  const { atelierOuvert, badgeAtelier, onVerrou } = useVerrouReserve();
   const {
     state,
     isHydrated,
@@ -328,15 +328,9 @@ export function AtelierContenu() {
     <>
     <ReserveShell
       onglet="atelier"
-      atelierOuvert={aCompetenceReparation(state)}
-      badgeAtelier={
-        state.inventaireJoueur.filter(
-          (o) =>
-            o.enRestauration &&
-            estPret(o.enRestauration, tempsConfiance() ?? Date.now()),
-        ).length
-      }
-      onVerrou={() => toast(d.chrome.verrouAtelier, { type: "info" })}
+      atelierOuvert={atelierOuvert}
+      badgeAtelier={badgeAtelier}
+      onVerrou={onVerrou}
       bande={
         <>
           {/* Le titre `— ATELIER —` a cédé la place à la bande d'onglets
