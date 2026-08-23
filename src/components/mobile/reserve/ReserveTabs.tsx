@@ -108,6 +108,12 @@ function ongletStyle(actif: boolean, verrouille: boolean): CSSProperties {
     // l'air un pixel au-dessus — la cassure visible à la loupe.
     paddingBottom: RECOUVREMENT_ONGLETS - EPAISSEUR_CADRE_CARTE,
     border: "none",
+    // Le bouton est un rectangle rempli du papier de la carte : sans le même
+    // arrondi que sa face, ce fond déborde AU-DELÀ de l'arc et le coin
+    // redevient carré. Rien en bas : cette arête plonge sous la carte, et
+    // l'arrondir y creuserait une encoche.
+    borderTopLeftRadius: "var(--radius-card)",
+    borderTopRightRadius: "var(--radius-card)",
     background: actif ? "var(--paper-100)" : "transparent",
     cursor: "pointer",
     opacity: verrouille ? 0.55 : 1,
