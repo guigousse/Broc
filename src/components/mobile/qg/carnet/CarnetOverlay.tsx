@@ -68,11 +68,19 @@ function trierActives(
 
 /* ─── styles (jetons uniquement) ─── */
 
+/* Le carnet est un ONGLET depuis 2026-08-23 (route `/quetes`) : on doit
+ * pouvoir en sortir par la barre du bas, pas seulement par sa croix. Le voile
+ * s'arrête donc au sommet de la barre et passe SOUS le chrome — même cadrage
+ * et mêmes z-index que `FloatingRoomOverlay` (voile 35, feuille au-dessus,
+ * TabBar 30). */
 const scrim: CSSProperties = {
   position: "fixed",
-  inset: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
   background: "rgba(15,30,22,0.55)",
-  zIndex: 50,
+  zIndex: 35,
   animation: "broc-fade-in 160ms ease",
 };
 
@@ -84,7 +92,9 @@ const stage: CSSProperties = {
   left: 0,
   right: 0,
   bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom) + 8px)",
-  zIndex: 51,
+  // Un cran au-dessus du voile (35), et toujours sous la TabBar quand celle-ci
+  // se relève à 40 pour laisser passer une main de tutoriel.
+  zIndex: 36,
   display: "flex",
   justifyContent: "center",
   padding: "0 12px",

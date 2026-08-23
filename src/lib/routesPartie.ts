@@ -10,6 +10,7 @@
  */
 export const ROUTES_PARTIE = [
   "/bureau",
+  "/quetes",
   "/stockage",
   "/atelier",
   "/collection",

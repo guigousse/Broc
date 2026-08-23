@@ -24,6 +24,15 @@ describe("GlobalVinylAmbiance", () => {
     expect(vol).not.toHaveBeenCalled();
   });
 
+  it("route /quetes : pièce du groupe (qg), le panorama pilote — aucun étouffement", () => {
+    pathname = "/quetes";
+    const vol = vi
+      .spyOn(audioManager, "setVinylAmbianceVolume")
+      .mockImplementation(() => {});
+    render(<GlobalVinylAmbiance />);
+    expect(vol).not.toHaveBeenCalled();
+  });
+
   it("route générique (/collection) : mise à distance 0.22 / 700 Hz", () => {
     pathname = "/collection";
     const cible = vi

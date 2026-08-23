@@ -20,7 +20,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
@@ -34,7 +34,6 @@ import {
   UnifiedPanorama,
   UNIFIED_ZONE_ORDER,
 } from "@/components/mobile/panorama/UnifiedPanorama";
-import { QgCarnet } from "@/components/mobile/qg/QgCarnet";
 import { LivrablesBadges } from "@/components/mobile/qg/LivrablesBadges";
 import { QgJournalSol } from "@/components/mobile/qg/QgJournalSol";
 import { QgJournalBureau } from "@/components/mobile/qg/QgJournalBureau";
@@ -113,6 +112,7 @@ const GRAMO_SESSION_KEY = "broc.gramo.session";
 
 function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { d, locale } = useLangue();
   const {
     state,
@@ -162,8 +162,12 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   /** Machine à énergie popée avec bandeau : Chiner/Étaler cliqué sans énergie. */
   const [alerteEnergie, setAlerteEnergie] = useState(false);
   const [confirmPasser, setConfirmPasser] = useState(false);
-  /** Carnet de quêtes : ouvert/fermé (plus d'onglet à porter depuis le châssis). */
-  const [carnetOuvert, setCarnetOuvert] = useState(false);
+  /**
+   * Carnet de quêtes : ouvert par la ROUTE depuis 2026-08-23 (onglet Quêtes
+   * de la barre du bas). Le livre posé sur la table du bureau a disparu ;
+   * l'onglet est le seul chemin.
+   */
+  const carnetOuvert = pathname === "/quetes";
   /** Commande à déplier d'office dans le carnet (badge livrable tapé). */
   const [missionCibleId, setMissionCibleId] = useState<string | null>(null);
   const [courrierOuvert, setCourrierOuvert] = useState(false);
@@ -481,10 +485,11 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
     const suivant = chPretRef.current;
     const seq = sequenceEnchainement(suivant);
     if (!seq || !suivant) return; // trame close : le carnet reste ouvert
-    setCarnetOuvert(false);
+    // Le carnet se ferme en QUITTANT sa route : c'est elle qui l'ouvre.
+    router.push("/bureau");
     setDialogueChapitreId(suivant.id);
     setChapitreEnAttente(seq);
-  }, []);
+  }, [router]);
 
   if (!isHydrated || !state) {
     return (
@@ -566,14 +571,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             {/* ─── Sections du bureau (0/1/2) ─── */}
             {showQgZone(0) && (
               <>
-                <QgCarnet
-                  tutoMain={state.miniTutoCarnet === "ouvrir" && !dialogueQg}
-                  onTap={() => {
-                    if (tutoActif) return;
-                    playClick();
-                    setCarnetOuvert(true);
-                  }}
-                />
                 {state.gazetteAchetee && (
                   <QgJournalBureau
                     onTap={() => {
@@ -823,8 +820,8 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
       <CarnetOverlay
         open={carnetOuvert}
         onClose={() => {
-          setCarnetOuvert(false);
           setMissionCibleId(null);
+          router.push("/bureau");
         }}
         state={state}
         onLivrerMission={(id) => livrerMission(id)}
@@ -980,7 +977,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           onTap={(courrierId) => {
             playClick();
             setMissionCibleId(courrierId);
-            setCarnetOuvert(true);
+            router.push("/quetes");
           }}
         />
       )}

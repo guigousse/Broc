@@ -60,18 +60,22 @@ function hasSwipeIgnoreAncestor(el: Element | null): boolean {
   return false;
 }
 
-/** Sens du déplacement d'un onglet à l'autre dans le cycle. */
+/**
+ * Sens du déplacement d'un onglet à l'autre dans le cycle.
+ *
+ * La résolution « route → onglet » passe par `findActiveTabIndex`, seule
+ * source de vérité : elle cherche dans le champ `routes` de chaque onglet,
+ * pas seulement dans son `path`. Une résolution locale sur `t.path` ratait
+ * les routes secondaires (`/atelier`, deuxième route de la Réserve) et toute
+ * transition les impliquant retombait sur "none" — page posée sans glisser.
+ */
 function computeDirection(
   prev: string | null,
   curr: string,
 ): "right" | "left" | "none" {
   if (!prev || prev === curr) return "none";
-  const prevIdx = TAB_ORDER.findIndex(
-    (t) => prev === t.path || prev.startsWith(`${t.path}/`),
-  );
-  const currIdx = TAB_ORDER.findIndex(
-    (t) => curr === t.path || curr.startsWith(`${t.path}/`),
-  );
+  const prevIdx = findActiveTabIndex(prev);
+  const currIdx = findActiveTabIndex(curr);
   if (prevIdx < 0 || currIdx < 0) return "none";
   const N = TAB_ORDER.length;
   const forward = (currIdx - prevIdx + N) % N;
@@ -88,6 +92,7 @@ function computeDirection(
  */
 const QG_GROUP = new Set<string>([
   "/bureau",
+  "/quetes",
   "/stockage",
   "/atelier",
   "/bibliotheque",

@@ -57,6 +57,21 @@ describe("CarnetOverlay", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("le voile s'arrête au sommet de la barre du bas, et la feuille reste au-dessus de lui", () => {
+    // Le carnet est devenu un ONGLET (route /quetes) : on doit pouvoir en
+    // sortir par la barre du bas. Un voile plein écran en z-index 50 la
+    // recouvrait — même cadrage que FloatingRoomOverlay désormais.
+    const { container } = render(<CarnetOverlay {...base} state={etat([])} />);
+    const voile = container.querySelector("[aria-hidden]") as HTMLElement;
+    expect(voile.style.bottom).toBe(
+      "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
+    );
+    expect(voile.style.zIndex).toBe("35");
+    const feuille = screen.getByRole("dialog") as HTMLElement;
+    expect(Number(feuille.style.zIndex)).toBeGreaterThan(Number(voile.style.zIndex));
+    expect(feuille.style.zIndex).toBe("36");
+  });
+
   it("les trois sections sont dépliées à la première ouverture", () => {
     const q = quete("q1", "quotidienne", "La bonne pioche");
     render(<CarnetOverlay {...base} state={etat([q])} />);
