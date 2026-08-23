@@ -101,8 +101,11 @@ export async function migrerVersFichiers(): Promise<IndexFichier | null> {
   const index = chargerIndex();
 
   // Ce qu'il y a à copier, décidé une fois pour toutes avant tout effet de
-  // bord : seuls les slots occupés du miroir sont candidats — « occupé »
-  // veut dire « au moins l'une des deux clés parse », pas « la clé existe ».
+  // bord : seuls les slots occupés du miroir sont candidats. « Occupé » veut
+  // dire « le principal parse » — ou, à défaut, « le principal EXISTE sans
+  // parser et sa copie de secours parse ». Jamais « la clé principale
+  // existe » (elle peut être de la garbage), et jamais « la copie de secours
+  // parse » toute seule (elle peut être orpheline — revue finale I4).
   const aCopier = new Map<NumeroSlot, CandidatSlot>();
   for (const n of NUMEROS) {
     const brutSlot = lireMiroir(n);
@@ -110,7 +113,18 @@ export async function migrerVersFichiers(): Promise<IndexFichier | null> {
       aCopier.set(n, { brut: brutSlot as string, slotValide: true });
       continue;
     }
-    // Principal absent ou illisible : la copie de secours est le filet
+    // Principal ABSENT (ou vide) : ce slot a été supprimé, ou n'a jamais
+    // existé. On s'arrête ici, sans jamais consulter la copie de secours —
+    // une copie orpheline ressusciterait une partie supprimée, et la
+    // guérison plus bas la réécrirait jusque dans `cleSlot(n)`. Ces
+    // orphelines sont atteignables : `effacerCleEtEntree` (slots.ts)
+    // enveloppe ses DEUX `removeItem` dans un seul `try`, donc le second
+    // peut ne jamais s'exécuter. C'est la règle écrite à `cleBackup`
+    // (slots.ts) et celle qu'applique déjà le chargeur que cette migration
+    // émule (`chargerSlot` : `if (!raw) return null;`) — revue finale I4.
+    if (!brutSlot) continue;
+
+    // Principal PRÉSENT mais illisible : la copie de secours est le filet
     // exact pour lequel le double-buffer existait.
     const brutBackup = lireMiroirBackup(n);
     if (parseValide(brutBackup)) {

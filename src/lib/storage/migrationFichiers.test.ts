@@ -246,6 +246,33 @@ describe("migrerVersFichiers", () => {
       expect(fichiers.get("slot_2")).toBe(window.localStorage.getItem(cleSlot(2)));
     });
 
+    // Revue finale I4 : la guérison ne vaut QUE pour un principal présent et
+    // illisible. Principal ABSENT veut dire « ce slot a été supprimé » (ou
+    // n'a jamais existé) — et une copie de secours orpheline est atteignable,
+    // puisque `effacerCleEtEntree` enveloppe ses deux `removeItem` dans un
+    // SEUL try. Migrer depuis elle ressusciterait une partie supprimée, et la
+    // réécrirait même dans `cleSlot(n)`. C'est exactement la règle que
+    // `slots.ts` énonce à `cleBackup` et que `chargerSlot` applique déjà
+    // (`if (!raw) return null;`).
+    it("un slot au principal ABSENT n'est jamais ressuscité depuis une copie de secours orpheline", async () => {
+      // Aucune `cleSlot(1)` : le joueur a supprimé cette partie. Seule la
+      // copie de secours a survécu au `removeItem`.
+      window.localStorage.setItem(
+        cleBackup(1),
+        JSON.stringify(createMockGameState({ jourActuel: 21 })),
+      );
+
+      const { migrerVersFichiers } = await import("./migrationFichiers");
+      const resultat = await migrerVersFichiers();
+
+      expect(resultat).not.toBeNull();
+      expect(fichiers.has("slot_1")).toBe(false); // rien de migré
+      expect(window.localStorage.getItem(cleSlot(1))).toBeNull(); // rien de ressuscité
+      // La copie orpheline n'est ni lue ni détruite : ce n'est pas à la
+      // migration de faire ce ménage.
+      expect(window.localStorage.getItem(cleBackup(1))).not.toBeNull();
+    });
+
     it("un slot déjà valide continue de purger sa copie de secours devenue orpheline (non-régression)", async () => {
       window.localStorage.setItem(cleSlot(1), JSON.stringify(createMockGameState()));
       window.localStorage.setItem(cleBackup(1), "vieille copie, jamais lue");
