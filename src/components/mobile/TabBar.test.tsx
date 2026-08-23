@@ -303,3 +303,19 @@ describe("findActiveTabIndex — un onglet peut revendiquer plusieurs routes", (
     expect(findActiveTabIndex("/chiner")).toBe(-1);
   });
 });
+
+describe("TabBar — onglet Réserve actif sur /atelier et /stockage", () => {
+  it("l'onglet Réserve se rend actif (aria-current='page') sur /atelier", () => {
+    mockPathname = "/atelier";
+    mockGameStateValue = { state: etat(1), isHydrated: true };
+    render(<TabBar />);
+    expect(onglet("Réserve").getAttribute("aria-current")).toBe("page");
+  });
+
+  it("l'onglet Réserve se rend actif (aria-current='page') sur /stockage", () => {
+    mockPathname = "/stockage";
+    mockGameStateValue = { state: etat(1), isHydrated: true };
+    render(<TabBar />);
+    expect(onglet("Réserve").getAttribute("aria-current")).toBe("page");
+  });
+});
