@@ -78,8 +78,9 @@ export function appliquerFinTutoriel(state: GameState): GameState {
     ],
     inventaireJoueur: [...state.inventaireJoueur, ...manquants],
     colisTutorielLivres: COLIS_TUTORIEL_TAILLE,
-    // Le grand-père vient de parler du carnet de commandes : le mini-tuto
-    // guide vers la zone gauche du bureau puis le livre de compte.
+    // Le grand-père vient de parler du carnet de quêtes : le mini-tuto
+    // guide vers l'onglet Quêtes de la barre du bas (cf. `chapitreDuCarnetDu`
+    // juste dessous — c'est l'arrivée sur `/quetes` qui clôt le mini-tuto).
     miniTutoCarnet: "ouvrir",
   };
 }

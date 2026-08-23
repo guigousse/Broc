@@ -211,7 +211,7 @@ describe("ongletSuivantOuvert — le swipe saute les pièces fermées", () => {
   // ReserveTabs en Task 2) : à cinq onglets, la Réserve (idx 3) n'est plus
   // le dernier — Collection (idx 4) la suit directement. Le pas à droite
   // avance donc simplement à l'onglet suivant, ce n'est pas un bouclage.
-  it("boucle de la Réserve vers la Collection en allant à droite", () => {
+  it("avance de la Réserve vers la Collection en allant à droite", () => {
     const s = etat(1); // biblio ouverte
     expect(ongletSuivantOuvert(3, 1, s)?.path).toBe("/collection");
   });

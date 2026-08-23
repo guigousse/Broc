@@ -10,8 +10,11 @@ interface FlyOpts {
   /** Couleur de bordure du clone. */
   borderColor: string;
   /**
-   * Sélecteur CSS de l'élément cible (icône TabBar).
-   * Ex: `[data-fly-target="/atelier"]`
+   * Sélecteur CSS de l'élément cible du vol.
+   * Ex: `[data-fly-target="stockage-bilan"]`, `"travaux"`, `"caisse-header"`.
+   * Les cibles sont NOMMÉES, pas routées : l'ancien exemple `"/atelier"` ne
+   * résolvait plus rien (l'Atelier n'a plus de colonne à lui depuis la fusion
+   * des pièces dans la Réserve).
    */
   targetSelector: string;
   /** Durée du vol en ms. Défaut: 620. */
