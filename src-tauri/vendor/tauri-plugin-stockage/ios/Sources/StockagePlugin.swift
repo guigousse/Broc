@@ -90,6 +90,16 @@ class StockagePlugin: Plugin {
       // sourceView/sourceRect/permittedArrowDirections en un seul appel —
       // sans effet sur iPhone, où la feuille n'est pas un popover.
       UIUtils.centerPopover(rootViewController: racine, popoverController: feuille)
+      // Ménage : la copie n'a de raison d'exister que le temps de la feuille
+      // de partage. Sans ce handler elle survivrait indéfiniment dans
+      // NSTemporaryDirectory() — un fichier de plus à chaque export, sur
+      // l'appareil même que ce chantier essaie de désengorger. Le retrait
+      // est inconditionnel : partage terminé, annulé ou en échec, la copie
+      // n'a plus de raison d'être. Le `removeItem` avant la copie plus haut
+      // reste la garde ceinture-et-bretelles du cas même nom.
+      feuille.completionWithItemsHandler = { _, _, _, _ in
+        try? FileManager.default.removeItem(at: destination)
+      }
       racine.present(feuille, animated: true)
       invoke.resolve()
     }
