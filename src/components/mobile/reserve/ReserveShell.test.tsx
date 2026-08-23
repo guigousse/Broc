@@ -100,3 +100,18 @@ describe("ReserveShell — règle d'animation", () => {
     expect(overlay().getAttribute("data-animer")).toBe("0");
   });
 });
+
+describe("ReserveShell — les onglets sortent de la carte", () => {
+  it("monte les languettes dans la zone dédiée, pas dans la carte", () => {
+    poser("stockage");
+    const wrap = document.querySelector("[data-floating-room]") as HTMLElement;
+    const languettes = wrap.children[0] as HTMLElement;
+    const carte = wrap.children[1] as HTMLElement;
+    // Les onglets vivaient DANS la carte (ils rompaient son cadre) ; ils
+    // doivent désormais en être un frère, rendu avant elle.
+    expect(languettes.textContent).toContain("Stockage");
+    expect(languettes.textContent).toContain("Atelier");
+    expect(carte.textContent).not.toContain("Stockage");
+    expect(carte.textContent).toContain("bande");
+  });
+});

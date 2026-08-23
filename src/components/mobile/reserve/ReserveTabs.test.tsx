@@ -7,6 +7,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ReserveTabs } from "./ReserveTabs";
+import { RECOUVREMENT_ONGLETS } from "@/components/mobile/floating-room/FloatingRoomOverlay";
 
 vi.mock("@/lib/i18n/LangueContext", () => ({
   useLangue: () => ({
@@ -106,5 +107,38 @@ describe("ReserveTabs — main de guidage du mini-tuto Atelier", () => {
     // déclenche le toast de verrou, jamais la navigation promise.
     poser({ atelierOuvert: false, mainSurAtelier: true });
     expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+});
+
+describe("ReserveTabs — languettes derrière le cadre", () => {
+  it("coins SUPÉRIEURS arrondis, et aucun trait en bas", () => {
+    // Le bas de la languette disparaît sous la carte : lui donner un trait
+    // ou un arrondi dessinerait une ligne fantôme au ras du cadre.
+    poser();
+    for (const libelle of ["Stockage", "Atelier"]) {
+      const b = bouton(libelle);
+      expect(b.style.borderTopLeftRadius).not.toBe("");
+      expect(b.style.borderTopRightRadius).not.toBe("");
+      expect(b.style.borderBottomLeftRadius).toBe("");
+      expect(b.style.borderBottomRightRadius).toBe("");
+      expect(b.style.borderBottomWidth || "").toBe("");
+    }
+  });
+
+  it("les deux languettes sont séparées par une gouttière", () => {
+    poser();
+    const rangee = bouton("Stockage").parentElement as HTMLElement;
+    expect(rangee.style.display).toBe("flex");
+    expect(parseFloat(rangee.style.gap)).toBeGreaterThan(0);
+  });
+
+  it("cible tactile pleine hauteur, silhouette réduite", () => {
+    // La partie basse est masquée par la carte : sans cette réserve de
+    // padding, le libellé serait centré dans une boîte dont on ne voit que
+    // le haut — donc collé au bord bas du visible.
+    poser();
+    const b = bouton("Stockage");
+    expect(b.style.minHeight).toBe("var(--tap-min)");
+    expect(b.style.paddingBottom).toBe(`${RECOUVREMENT_ONGLETS}px`);
   });
 });

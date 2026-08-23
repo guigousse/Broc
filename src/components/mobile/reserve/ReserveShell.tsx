@@ -102,19 +102,17 @@ export function ReserveShell({
   return (
     <FloatingRoomOverlay
       animer={animer}
-      bande={
-        <>
-          <ReserveTabs
-            actif={onglet}
-            atelierOuvert={atelierOuvert}
-            badgeAtelier={badgeAtelier}
-            mainSurAtelier={mainSurAtelier}
-            onChoisir={(o) => router.replace(ROUTE_ONGLET[o])}
-            onVerrou={onVerrou}
-          />
-          {bande}
-        </>
+      onglets={
+        <ReserveTabs
+          actif={onglet}
+          atelierOuvert={atelierOuvert}
+          badgeAtelier={badgeAtelier}
+          mainSurAtelier={mainSurAtelier}
+          onChoisir={(o) => router.replace(ROUTE_ONGLET[o])}
+          onVerrou={onVerrou}
+        />
       }
+      bande={bande}
       milieu={milieu}
     >
       {children}

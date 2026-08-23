@@ -14,6 +14,22 @@ import type { CSSProperties, ReactNode } from "react";
  * Le backdrop bloque tous les pointeurs vers le panorama derrière.
  */
 
+/**
+ * Interstice vertical entre les blocs du châssis. Exporté parce que la zone
+ * des languettes doit l'ANNULER pour venir se glisser sous la carte : le flex
+ * n'offre pas de réglage d'interstice par élément.
+ */
+export const GAP_WRAP = 12;
+
+/**
+ * Hauteur de languette cachée derrière la carte. C'est ce recouvrement qui
+ * produit l'illusion : les onglets sortent de DERRIÈRE un cadre qui, lui,
+ * n'est jamais rompu. Il sert aussi de réserve de padding aux languettes,
+ * pour que leur libellé reste centré dans la seule partie visible tout en
+ * gardant une cible tactile à pleine hauteur.
+ */
+export const RECOUVREMENT_ONGLETS = 16;
+
 const wrap: CSSProperties = {
   position: "fixed",
   // La bannière de consigne du tutoriel flotte juste sous le header : sans
@@ -31,7 +47,7 @@ const wrap: CSSProperties = {
   WebkitBackdropFilter: "blur(14px)",
   display: "flex",
   flexDirection: "column",
-  gap: 12,
+  gap: GAP_WRAP,
   padding: "10px 12px 12px",
   // Clippe les deux blocs pendant leur glissement d'entrée : la bande
   // semble sortir de sous le header, le panneau de la TabBar.
@@ -49,9 +65,24 @@ const carte: CSSProperties = {
   background: "var(--paper-100)",
 };
 
+/* Zone des languettes : rendue AVANT la carte et remontée sous elle. Un
+   onglet enfant de la carte peindrait par-dessus son liseré (les enfants
+   peignent après le fond ET la bordure du parent) — soit l'inverse exact de
+   l'effet voulu. D'où le bloc frère. */
+const ongletsStyle: CSSProperties = {
+  flexShrink: 0,
+  marginBottom: -(GAP_WRAP + RECOUVREMENT_ONGLETS),
+  animation: "broc-float-bande-in 320ms ease-out",
+};
+
 const bandeStyle: CSSProperties = {
   ...carte,
   flexShrink: 0,
+  // Contexte d'empilement : sans lui, le TEXTE des languettes ressortirait
+  // par-dessus le fond de la carte (les contenus en ligne peignent dans une
+  // passe ultérieure à celle des fonds).
+  position: "relative",
+  zIndex: 1,
   padding: "8px 10px 10px",
   animation: "broc-float-bande-in 320ms ease-out",
 };
@@ -79,6 +110,13 @@ const panneauStyle: CSSProperties = {
 };
 
 interface FloatingRoomOverlayProps {
+  /**
+   * Languettes d'onglets, posées DERRIÈRE la carte : elles en dépassent par
+   * le haut et leur bas disparaît sous elle. Optionnel — les pièces à un
+   * seul écran (bibliothèque, bureau) n'en ont pas, et leur structure reste
+   * exactement celle d'avant.
+   */
+  onglets?: ReactNode;
   /** Carte haute (titre, actions, filtres). Glisse depuis le haut. */
   bande: ReactNode;
   /** Bloc carte optionnel entre bande et panneau (ex. slots d'atelier). */
@@ -95,6 +133,7 @@ interface FloatingRoomOverlayProps {
 }
 
 export function FloatingRoomOverlay({
+  onglets,
   bande,
   milieu,
   children,
@@ -103,6 +142,11 @@ export function FloatingRoomOverlay({
   const sansAnim = { animation: "none" as const };
   return (
     <div style={wrap} data-floating-room="1" data-animer={animer ? "1" : "0"}>
+      {onglets !== undefined && (
+        <div style={animer ? ongletsStyle : { ...ongletsStyle, ...sansAnim }}>
+          {onglets}
+        </div>
+      )}
       <div style={animer ? bandeStyle : { ...bandeStyle, ...sansAnim }}>{bande}</div>
       {milieu !== undefined && (
         <div style={animer ? milieuStyle : { ...milieuStyle, ...sansAnim }}>{milieu}</div>
