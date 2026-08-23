@@ -106,9 +106,25 @@ Pour un slot donné :
 4. `fsync` du répertoire, pour que le renommage survive à un kill
 
 À aucun instant il n'existe de `slot-N.json` à moitié écrit. C'est ce qui rend le
-double-buffer principal/backup du localStorage obsolète. Un kill pendant l'étape
-1 ou 2 laisse un `.tmp` orphelin, ignoré à la lecture et écrasé à l'écriture
-suivante.
+double-buffer principal/backup du localStorage obsolète.
+
+**Le nom du `.tmp` est unique par écriture** (pid + compteur monotone), et non
+`slot-N.json.tmp`. Les commandes du plugin sont `async` : deux écritures peuvent
+se chevaucher — ce que cette branche produit elle-même, `flush` étant abonné à
+la fois à `pagehide` et à `visibilitychange→hidden` (Ruling R13), plus le flush
+vitrine qui écrit un état DIFFÉRENT. Sur un `.tmp` partagé, les deux écrivains
+tronquent le même fichier et écrivent depuis l'offset 0 : deux charges de
+longueurs différentes laissent la queue de la plus longue derrière la plus
+courte, et c'est ce JSON invalide qui est renommé sur le fichier faisant
+autorité. Le `rename` est atomique contre un **kill**, jamais contre un **second
+écrivain**.
+
+Corollaire : le `.tmp` n'étant plus écrasé par la tentative suivante, les
+chemins d'échec suppriment eux-mêmes le leur — sans quoi un épisode de disque
+plein (une écriture ratée par sauvegarde debouncée) joncherait de partiels le
+stockage que ce chantier cherche à désengorger. Seul un kill franc entre la
+création et le renommage peut encore laisser un orphelin : ~87 Ko, ignoré à la
+lecture, cas rare.
 
 **L'ordre slot puis index est conservé** (`toucherDerniereSession`). Une save sans
 entrée d'index est récupérable — `premierSlotLibre()` et `renommerSlot()` savent
@@ -130,6 +146,16 @@ migration réussie**, récupérant ~260 Ko.
 `ios/Sources/`, `permissions/`), enregistré dans `src-tauri/src/lib.rs` à la suite
 des cinq autres. Commandes nommées en français, comme `tauri-plugin-iap`.
 
+**Enregistrer le plugin ne suffit pas : il faut lui ACCORDER ses permissions**
+dans `src-tauri/capabilities/default.json` (`stockage:default`). L'ACL de Tauri
+v2 est deny-by-default — une commande qu'aucune capability n'active est rejetée
+avant d'atteindre le Rust. Le mot « capabilities » n'apparaissait ni dans ce
+document ni dans le plan, aucune tâche ne l'a jamais possédé, et aucune barrière
+automatique ne pouvait le voir : la revue finale a rattrapé de justesse une
+build qui n'aurait sauvegardé **nulle part** (`save()` rend son verdict à
+l'étape 1, donc l'échec précédait aussi l'écriture miroir). C'est un défaut du
+PLAN, pas de l'exécution, et il est désormais gardé par un test (voir « Tests »).
+
 | Commande | Implémentation | iOS | Android | Bureau |
 |---|---|---|---|---|
 | `lire_save(quoi)` | Rust `std::fs` | oui | oui | oui |
@@ -150,6 +176,15 @@ déclencherait à tort — précisément le bruit qu'on cherche à éviter.
 commande Tauri est appelable depuis n'importe quel JS de la webview ; une chaîne
 libre ouvrirait une traversée de répertoire sur le conteneur. Le chemin est
 construit côté Rust.
+
+**Le même soin vaut pour `nomLisible`** (export, Swift), qui traverse la même
+surface de commande et sert de composant de chemin avec un `removeItem`
+derrière : seul son dernier composant est retenu, et le vide, `.`, `..` ainsi
+que tout résidu contenant `/` sont rejetés. Sans quoi
+`"../Library/Application Support/slot-1.json"` sortait du répertoire temporaire
+pour atterrir dans celui des sauvegardes, où le `removeItem` **supprimait la
+partie** — l'invariant énoncé juste au-dessus était donc contredit à deux mètres
+de là.
 
 **Le modèle d'erreur dévie de celui d'`iap`**, qui sérialise en simple chaîne. La
 couche TS doit brancher sur la cause, et matcher un message texte serait fragile
@@ -204,6 +239,28 @@ Chaque sauvegarde incrémente un compteur, écrit dans les **deux** index. Au
 chargement, on retient le magasin dont la révision est la plus haute pour ce
 slot.
 
+**L'asymétrie qui rend ce scénario atteignable.** Une première implémentation
+rendait le verdict d'échec à l'étape 1 sans jamais atteindre l'écriture miroir :
+`revMiroir > revFichier` était alors **impossible à produire en production**, et
+tout cet arbitrage traitait un état que le code ne pouvait pas fabriquer. Pire
+pour le joueur : dans la forme même de l'incident — disque plein pendant une
+heure —, cette heure n'était écrite **nulle part**. La règle est donc :
+
+| Étape en échec | Miroir | Pourquoi |
+|---|---|---|
+| 1 — le fichier du slot | **écrit**, avec la révision | Le fichier n'a rien pris. Si WebKit parvient à persister le `setItem`, l'arbitrage récupère l'heure au prochain lancement ; sinon rien n'est perdu — on ne fait qu'essayer. C'est le seul chemin qui produit `revMiroir > revFichier` |
+| 2 — le fichier d'index | **intact** | Le fichier du slot vient d'être écrit : il est plus FRAIS que le miroir. Lui donner une révision plus haute ferait gagner l'arbitrage à un miroir périmé et détruirait ce contenu — c'est ce qui préserve le cas 3b de la migration |
+
+Dans les deux cas, **le verdict rendu reste celui du fichier** : le miroir ne le
+change jamais. Et la révision n'est estampillée que si le contenu miroir a
+réellement été écrit — l'estampiller sur un `setItem` refusé (quota) ferait
+gagner l'arbitrage à un miroir dont le contenu ne porte pas cette révision.
+
+Corollaire : toute écriture de `MetaSlot` doit **reporter** `revision`, jamais la
+reconstruire sans elle. `renommerSlot` la remettait à 0 en silence — inoffensif
+tant que l'étape 1 n'écrivait pas le miroir, chemin de perte de données dès
+qu'elle le fait.
+
 Concrètement, `MetaSlot` (`slots.ts:16`) gagne un champ `revision: number`.
 `estMetaSlotValide()` le tolère absent — c'est le cas de toutes les données
 existantes — et une révision manquante vaut 0, ce qui fait perdre l'arbitrage
@@ -228,6 +285,15 @@ partie parce que la migration s'est mal passée.
 
 **Le miroir n'est jamais supprimé.** Il coûte ~260 Ko au pire et c'est le
 parachute.
+
+**Une copie de secours ne guérit qu'un principal PRÉSENT.** Si `cleSlot(n)` est
+absente, ce slot a été supprimé (ou n'a jamais existé) : la copie de secours
+n'est même pas consultée. Ces orphelines sont atteignables — `effacerCleEtEntree`
+enveloppe ses deux `removeItem` dans un seul `try`, le second peut donc ne jamais
+s'exécuter — et migrer depuis l'une d'elles **ressusciterait une partie
+supprimée**, jusque dans `cleSlot(n)`. C'est la règle déjà écrite à `cleBackup`
+(`slots.ts`) et celle qu'applique le chargeur que cette migration émule
+(`chargerSlot` : `if (!raw) return null;`).
 
 ## L'alerte qui escalade
 
@@ -313,30 +379,50 @@ Unitaires (`vitest --maxWorkers=4` — sans ce drapeau ce Mac produit ~41 faux
 remplace rien — le proxy `Storage` en fait une entrée stockée — et donne un test
 creux qui reste vert.
 
-Côté Rust : écriture atomique, et construction de chemin par énuméré (pas de
-traversée).
+Côté Rust : écriture atomique, construction de chemin par énuméré (pas de
+traversée), **deux écritures concurrentes qui ne mélangent jamais leurs
+octets**, et **aucun `.tmp` laissé derrière une écriture en échec**.
+
+Hors src/, un filet à part : `scripts/capabilities-acl.test.mjs` relie les
+plugins enregistrés dans `src-tauri/src/lib.rs` aux permissions de
+`src-tauri/capabilities/default.json`. L'ACL de Tauri v2 est deny-by-default et
+**rien d'autre ne peut voir un oubli** — ni `cargo check`, ni `npm run build`,
+ni le reste de la suite. Ce chantier a failli livrer un jeu ne sauvegardant
+nulle part pour cette seule raison, et c'était la deuxième fois dans ce dépôt
+après `c71c45e1` (haptique).
 
 ## Recette, et sa limite
 
-### Ce qui a été vérifié automatiquement (tâche 11, 2026-08-23)
+### Ce qui a été vérifié automatiquement (vague de correction de revue finale, 2026-08-23)
 
 | Vérification | Commande | Résultat |
 |---|---|---|
-| Suite complète | `npx vitest run --maxWorkers=4` | **257 fichiers, 2551 tests passés, 2 skip, 0 échec** (baseline du chantier : 2551/2/0 — identique, ce qui est attendu puisque cette tâche n'ajoute aucun test) |
+| Suite complète | `npx vitest run --maxWorkers=4` | **258 fichiers passés + 1 skip (259), 2565 tests passés, 2 skip, 0 échec** — soit les 2551 de la baseline plus les **14 tests** ajoutés par cette vague |
 | Lint | `npx eslint src` | propre, aucune sortie |
 | Build web | `npm run build` | succès (71 pages), seuls avertissements `metadataBase` préexistants et sans rapport |
 | Compilation Rust hôte | `cd src-tauri && cargo check` | succès, 0 avertissement |
+| Compilation Rust iOS | `cargo check --target aarch64-apple-ios` (dans le plugin) | succès, 0 avertissement |
+| Tests Rust du plugin | `cargo test` (dans le plugin) | **7 passés, 0 échec** |
+| Compilation Swift | `swift build --sdk <iphonesimulator> --triple arm64-apple-ios13.0-simulator` | succès |
 
-Ces quatre commandes ont été exécutées par l'agent de la tâche 11, dans ce
-worktree, le 2026-08-23. Elles ne demandent ni simulateur ni appareil et sont
-rejouables à l'identique par quiconque avant de fusionner.
+Ces commandes ne demandent ni simulateur ni appareil et sont rejouables à
+l'identique par quiconque avant de fusionner.
+
+⚠ **Un test statistique instable, sans rapport avec ce chantier.**
+`src/lib/chine.test.ts` (« T3 : ~40 % des sessions contiennent une pièce
+d'exception ») tire 300 sessions sur un `Math.random` non graîné et compare la
+proportion obtenue à une fourchette : il échoue de temps en temps. Il a échoué
+une fois pendant cette vague, puis est repassé **5 fois sur 5** à la relance, et
+aucun fichier de ce chantier ne touche `genererSession`. À reprendre dans un
+chantier séparé (graine fixe ou fourchette élargie) ; ce n'est pas une
+régression de cette branche.
 
 **Ce que ces quatre commandes ne couvrent PAS**, et qui reste à la charge de
 Guillaume : tout ce qui suit dans cette section, plus le Swift (voir plus bas).
 
-### Recette au simulateur — quatre points, chacun avec sa preuve
+### Recette au simulateur — cinq points, chacun avec sa preuve
 
-Aucun des quatre points suivants n'a pu être exécuté par un agent : ils
+Aucun des cinq points suivants n'a pu être exécuté par un agent : ils
 demandent de lancer l'app dans le simulateur iOS, ce qu'aucun agent de ce
 chantier n'a pu faire. Chaque point ci-dessous dit précisément quoi poser,
 quoi regarder, et quel résultat prouve que ça marche.
@@ -390,7 +476,15 @@ distance, sur la webview de l'app dans le simulateur) fait échouer tout appel
 sans jamais toucher au disque réel. La clé n'est posée par aucun code du
 jeu — sans danger en production.
 
-Séquence à observer, dans l'ordre, une fois la clé posée en jouant :
+⚠ **Deux gestes, pas un : poser la clé PUIS entrer dans une partie.** Le
+bandeau est gaté sur `estRoutePartie()` (`BandeauSauvegarde.tsx:133`), comme
+tout composant du layout racine — au menu, aucune partie n'est chargée, donc
+rien ne s'affiche, même la clé posée et même si les écritures échouent
+réellement. Poser la clé depuis l'écran-titre et conclure « la fonctionnalité
+est cassée » est l'erreur de recette à éviter ici. La séquence n'a de sens
+qu'une fois **dans le jeu** (bureau, chine, étal…).
+
+Séquence à observer, dans l'ordre, une fois la clé posée et une partie ouverte :
 1. **Immédiat** : le bandeau apparaît et reste affiché — texte exact
    « Sauvegarde impossible — ta progression n'est pas enregistrée. »
    (`BandeauSauvegarde.tsx`, clé i18n `sauvegardeBandeau`).
@@ -403,6 +497,17 @@ Séquence à observer, dans l'ordre, une fois la clé posée en jouant :
    déclencher une sauvegarde (toute action qui en provoque une) : le bandeau
    disparaît et un toast « Sauvegarde rétablie. » s'affiche (clé i18n
    `sauvegardeRetablie`).
+
+**5. Observation à faire pendant tout le point 2 : l'occlusion sous le
+bandeau.** Contrairement à la bannière du tutoriel, ce bandeau est
+**permanent** tant que l'échec dure — il peut donc masquer l'en-tête pendant
+une panne entière, c'est-à-dire précisément quand le joueur cherche à
+comprendre ce qui se passe. Pendant que le bandeau est affiché, parcourir les
+écrans de jeu et vérifier qu'aucun élément d'en-tête (retour, titre, compteurs
+d'argent/énergie, onglets) ne devient illisible ou intappable dessous. Le
+point d'échec à chercher : un bouton qu'on voit mais qui ne répond pas, parce
+que le bandeau le recouvre. À noter avec une capture s'il s'en présente un.
+
 
 **3. L'avertissement disque.**
 
@@ -435,6 +540,19 @@ doit rester joignable une fois la modale fermée (« J'ai compris ») ; si la
 modale s'affiche derrière la feuille système, elle doit rester joignable une
 fois la feuille système traitée (accepter/refuser). Le point d'échec à
 chercher : un écran bloqué où aucun des deux boutons ne répond au tap.
+
+**5. L'export, et le double-tap qui le met à l'épreuve.**
+
+Sur la ligne d'une partie (modale « Parties »), l'icône de partage doit ouvrir
+la feuille de partage iOS avec un fichier nommé `broc-partie-jour-N.json`.
+Vérifier ce nom, et que le partage aboutisse (vers Fichiers, par exemple).
+
+Puis, sur la même icône, **taper deux fois très vite**. Attendu : **une seule**
+feuille de partage, et l'app qui reste utilisable après l'avoir fermée. Le
+point d'échec à chercher : deux feuilles empilées, une feuille qui ne se ferme
+plus, ou un plantage. Cette course est décrite juste en dessous et n'est **pas
+corrigée dans ce chantier** — ce double-tap est le seul moyen de savoir si elle
+se manifeste en vrai.
 
 ### Une course non recettable en simulateur, à garder en tête
 
@@ -507,3 +625,33 @@ que non détectée.
 | Faux avertissement disque | API Apple de place purgeable, pas `statvfs` |
 | Deux bannières superposées | Empilement ou priorité, à traiter à l'implémentation |
 | `ENOSPC` non recettable | Interrupteur de debug ; incertitude assumée |
+| Permission ACL du plugin oubliée | Test de non-régression reliant `lib.rs` à `capabilities/default.json` (`scripts/capabilities-acl.test.mjs`) |
+| **La surface de gestion reste 100 % miroir** | **Documenté, non corrigé** — voir ci-dessous |
+| **La garde d'auto-save re-résout l'actif dans le miroir** | **Documenté, non corrigé** — voir ci-dessous |
+
+### Les deux risques laissés ouverts par la revue finale
+
+Décidés à documenter plutôt qu'à corriger maintenant. Aucun des deux n'est une
+régression — avant cette branche, une éviction du miroir perdait TOUT — mais
+tous deux sont de nouveaux modes de panne **propres à cette branche**, puisque
+la partie survit désormais à une éviction que l'UI, elle, ne voit pas.
+
+**1. La surface de gestion est encore entièrement adossée au miroir.**
+L'occupation des emplacements, `resumeSlot`, `renommerSlot`, `supprimerSlot` et
+`premierSlotLibre` (`slots.ts`, consommés par `PartiesModal.tsx`) lisent le
+`localStorage` et lui seul. Après une éviction du miroir, seul l'emplacement
+actif réapparaît — les slots 2 et 3 restent **invisibles alors que leurs
+fichiers existent**. Deux conséquences :
+- « Nouvelle partie » peut atterrir sur un emplacement dont le **fichier** porte
+  une vraie partie, sans la confirmation « Écraser » ;
+- l'UI se contredit : « Continuer » fonctionne (le repository composite, lui,
+  résout par le fichier) pendant que la liste des parties affiche des
+  emplacements vides.
+
+**2. La garde d'auto-save re-résout l'emplacement actif dans le magasin déclaré
+non autoritaire.** `GameContext.tsx:387` — `if (slotActif() !== slotEtatRef
+.current) return;` — interroge `slots.ts`, donc le miroir. Si l'index miroir
+disparaît en cours de session, `slotActif()` retombe à 1, la garde cesse de
+correspondre, et **chaque sauvegarde suivante est sautée en silence — sans
+bandeau**, puisque la garde rend la main AVANT l'appel à `save()`. C'est la
+seule panne de sauvegarde de cette branche qui n'allume aucune alerte.
