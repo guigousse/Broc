@@ -758,6 +758,15 @@ export const en: DictionnaireUI = {
     sauvegardeImpossible:
       "Saving failed — storage full or unavailable. Your progress may be lost.",
     sauvegardeRetablie: "Saving restored.",
+    sauvegardeBandeau: "Saving failed — your progress isn't being recorded.",
+    sauvegardeModaleTitre: "Your progress isn't being saved",
+    sauvegardeModaleDepuisUn: "For 1 minute.",
+    sauvegardeModaleDepuisN: "For {minutes} minutes.",
+    sauvegardeModaleDisquePlein:
+      "Your phone's storage is full. Free up some space so your game can be saved.",
+    sauvegardeModaleIo:
+      "Storage isn't available right now. Your game isn't being saved.",
+    sauvegardeModaleBouton: "Got it",
   },
   deblocage: {
     long: {

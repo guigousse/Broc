@@ -144,6 +144,7 @@ import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
 import { localeCourante } from "@/lib/i18n/locales";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { slotActif, type NumeroSlot } from "@/lib/storage/slots";
+import type { GenreErreur } from "@/lib/storage/pontNatif";
 
 /**
  * Raison d'échec localisée (SP4 i18n). GameContext exécute ses raisons dans des
@@ -170,9 +171,20 @@ function raisonLocaliseeBazar(raison: RaisonRefus): string {
   return raisonLocalisee("bazarArticleIndisponible");
 }
 
+/**
+ * État de la sauvegarde automatique. `depuis` est posé au PREMIER échec et
+ * ne bouge plus tant que l'échec persiste (même si le genre change) : c'est
+ * lui qui mesure le temps de jeu réellement en danger (Tâche 8, remplace le
+ * toast unique `saveEnEchecRef` qui ne redonnait aucun signal après 2,5 s).
+ */
+export type EtatSauvegarde =
+  | { enEchec: false }
+  | { enEchec: true; genre: GenreErreur; depuis: number };
+
 interface GameStateValue {
   state: GameState | null;
   isHydrated: boolean;
+  etatSauvegarde: EtatSauvegarde;
 }
 
 interface GameActionsValue {
@@ -311,7 +323,9 @@ type GameContextValue = GameStateValue & GameActionsValue;
 // Deux contextes séparés : l'état (change à chaque mutation) et les actions
 // (objet mémoïsé une seule fois — les consommateurs d'actions seules ne
 // re-rendent jamais sur mutation d'état).
-const GameStateContext = createContext<GameStateValue | null>(null);
+// Exporté pour `BandeauSauvegarde.test.tsx` (Tâche 8), qui monte le composant
+// avec un `etatSauvegarde` maîtrisé sans passer par un `GameProvider` complet.
+export const GameStateContext = createContext<GameStateValue | null>(null);
 const GameActionsContext = createContext<GameActionsValue | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -326,8 +340,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const stateRef = useRef<GameState | null>(null);
   stateRef.current = state;
-  // Évite de spammer le toast : on n'alerte qu'à la bascule succès→échec.
-  const saveEnEchecRef = useRef(false);
+  // État partagé de la sauvegarde (Tâche 8) : consommé par `BandeauSauvegarde`
+  // pour un bandeau persistant + une modale d'escalade, à la place de l'ancien
+  // toast unique de 2,5 s.
+  const [etatSauvegarde, setEtatSauvegarde] = useState<EtatSauvegarde>({
+    enEchec: false,
+  });
   // Slot auquel appartient l'état en mémoire (posé à l'hydratation et à
   // `nouvellePartie`). Le repository résout le slot cible au moment de
   // l'ÉCRITURE (`slotActif()`) : si l'index a basculé entre-temps (lancement
@@ -362,13 +380,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // cet état est de toute façon en train d'être détaché.
       if (slotActif() !== slotEtatRef.current) return;
       obtenirGameRepository().save(state).then((res) => {
-        if (!res.ok && !saveEnEchecRef.current) {
-          saveEnEchecRef.current = true;
-          toast(raisonLocalisee("sauvegardeImpossible"), { type: "erreur" });
-        } else if (res.ok && saveEnEchecRef.current) {
-          saveEnEchecRef.current = false;
-          toast(raisonLocalisee("sauvegardeRetablie"), { type: "succes" });
-        }
+        setEtatSauvegarde((prec) => {
+          if (res.ok) {
+            if (prec.enEchec) toast(raisonLocalisee("sauvegardeRetablie"), { type: "succes" });
+            return prec.enEchec ? { enEchec: false } : prec;
+          }
+          // `depuis` est posé au PREMIER échec et ne bouge plus : c'est lui qui
+          // mesure le temps de jeu réellement en danger.
+          if (prec.enEchec) {
+            return prec.genre === res.genre ? prec : { ...prec, genre: res.genre };
+          }
+          return { enEchec: true, genre: res.genre, depuis: Date.now() };
+        });
       });
     };
     // Debounce (trailing edge via cleanup) : évite un JSON.stringify de TOUT
@@ -2158,8 +2181,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const stateValue = useMemo<GameStateValue>(
-    () => ({ state, isHydrated }),
-    [state, isHydrated],
+    () => ({ state, isHydrated, etatSauvegarde }),
+    [state, isHydrated, etatSauvegarde],
   );
 
   // Toutes les actions sont des useCallback stables → cet objet n'est créé

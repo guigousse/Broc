@@ -759,6 +759,15 @@ export const es: DictionnaireUI = {
     sauvegardeImpossible:
       "No se pudo guardar: almacenamiento lleno o no disponible. Tu progreso podría perderse.",
     sauvegardeRetablie: "Guardado restablecido.",
+    sauvegardeBandeau: "No se pudo guardar — tu progreso no se está registrando.",
+    sauvegardeModaleTitre: "Tu progreso no se está guardando",
+    sauvegardeModaleDepuisUn: "Desde hace 1 minuto.",
+    sauvegardeModaleDepuisN: "Desde hace {minutes} minutos.",
+    sauvegardeModaleDisquePlein:
+      "El almacenamiento de tu teléfono está lleno. Libera espacio para que tu partida pueda guardarse.",
+    sauvegardeModaleIo:
+      "El almacenamiento no está disponible en este momento. Tu partida no se está guardando.",
+    sauvegardeModaleBouton: "Entendido",
   },
   deblocage: {
     long: {

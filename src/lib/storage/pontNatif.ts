@@ -48,6 +48,16 @@ export function lireSave(quoi: Quoi): Promise<string | null> {
 }
 
 export function ecrireSave(quoi: Quoi, contenu: string): Promise<void> {
+  // Recette : `localStorage["broc.debug.echec-save"] = "1"` fait échouer toute
+  // écriture comme le ferait un disque plein. Aucune incidence en production —
+  // la clé n'est jamais posée par le jeu. Seul moyen de recetter la chaîne
+  // d'alerte (Tâche 8, bandeau + modale) sur un vrai appareil.
+  if (
+    typeof window !== "undefined" &&
+    window.localStorage?.getItem("broc.debug.echec-save") === "1"
+  ) {
+    throw { genre: "disque_plein", message: "Échec forcé (debug)" } as ErreurStockage;
+  }
   return appeler<void>("ecrire_save", { quoi, contenu });
 }
 

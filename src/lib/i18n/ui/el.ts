@@ -772,6 +772,15 @@ export const el: DictionnaireUI = {
     competenceReparerManquanteSimple: "Λείπει η δεξιότητα Επισκευή.",
     objetIntrouvableStock: "Το αντικείμενο δεν βρέθηκε στην αποθήκη.",
     // Auto-save (GameContext) : seul avertissement de perte de progression.
+    sauvegardeBandeau: "Η αποθήκευση απέτυχε — η πρόοδός σου δεν καταγράφεται.",
+    sauvegardeModaleTitre: "Η πρόοδός σου δεν αποθηκεύεται",
+    sauvegardeModaleDepuisUn: "Εδώ και 1 λεπτό.",
+    sauvegardeModaleDepuisN: "Εδώ και {minutes} λεπτά.",
+    sauvegardeModaleDisquePlein:
+      "Ο αποθηκευτικός χώρος του τηλεφώνου σου είναι γεμάτος. Ελευθέρωσε χώρο ώστε το παιχνίδι σου να αποθηκευτεί.",
+    sauvegardeModaleIo:
+      "Ο αποθηκευτικός χώρος δεν είναι διαθέσιμος αυτή τη στιγμή. Το παιχνίδι σου δεν αποθηκεύεται.",
+    sauvegardeModaleBouton: "Κατάλαβα",
     sauvegardeImpossible:
       "Η αποθήκευση απέτυχε — ο χώρος είναι γεμάτος ή μη διαθέσιμος. Η πρόοδός σου κινδυνεύει να χαθεί.",
     sauvegardeRetablie: "Η αποθήκευση αποκαταστάθηκε.",
