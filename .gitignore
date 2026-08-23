@@ -49,3 +49,6 @@ marketing/appstore/.planches/
 # enregistré dans src-tauri/Cargo.toml, ce lockfile local devient
 # vestigial (le Cargo.lock racine du workspace prend le relais).
 src-tauri/vendor/tauri-plugin-stockage/Cargo.lock
+# target/ standalone : présent car la tâche 1 a fait tourner `cargo test`
+# directement dans ce répertoire, hors du workspace src-tauri.
+src-tauri/vendor/tauri-plugin-stockage/target/

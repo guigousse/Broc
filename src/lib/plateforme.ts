@@ -13,3 +13,9 @@ export function tauriIosDisponible(): boolean {
     (/Macintosh/.test(ua) && window.navigator.maxTouchPoints > 1)
   );
 }
+
+/** Vrai sous n'importe quel runtime Tauri (iOS, Android, bureau). */
+export function tauriDisponible(): boolean {
+  if (typeof window === "undefined") return false;
+  return "__TAURI_INTERNALS__" in window;
+}
