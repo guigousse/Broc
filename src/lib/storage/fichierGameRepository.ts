@@ -1,6 +1,7 @@
 import type { GameState } from "@/types/game";
 import type { GameRepository, ResultatSave } from "./gameRepository";
 import { chargerSlot, enregistrerSlot, localGameRepository } from "./localGameRepository";
+import { migrerVersFichiers } from "./migrationFichiers";
 import { ecrireSave, lireSave, quoiDuSlot } from "./pontNatif";
 import type { ErreurStockage } from "./pontNatif";
 import {
@@ -81,8 +82,17 @@ export const fichierGameRepository: GameRepository = {
   async load() {
     const index = await lireIndexFichier();
 
-    // Pas d'index fichier : rien n'a encore été migré (tâche 6 branchera ici).
-    if (!index) return localGameRepository.load();
+    // Pas d'index fichier : première ouverture après mise à jour (ou index
+    // illisible — `lireIndexFichier()` confond les deux, `migrerVersFichiers`
+    // s'en protège). On migre, et si ça échoue on continue sur le miroir —
+    // jamais de perte. L'appel récursif ne peut pas boucler : la migration
+    // n'a rendu `true` qu'après avoir écrit l'index, donc `lireIndexFichier()`
+    // le trouvera au second tour.
+    if (!index) {
+      const migre = await migrerVersFichiers();
+      if (!migre) return localGameRepository.load();
+      return this.load();
+    }
 
     // Quel emplacement charger ? Résolu une seule fois (Ruling R6) et
     // transmis explicitement à tout ce qui suit, y compris le repli miroir.
