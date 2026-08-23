@@ -97,6 +97,9 @@ export const es: DictionnaireUI = {
       bureau: "Despacho",
       stockage: "Almacén",
       atelier: "Taller",
+      reserve: "Reserva",
+      quetes: "Misiones",
+      quetesAbrege: "Misiones",
     },
     ongletVerrouille: "bloqueado",
     verrouBibliotheque: "El Gabinete abre en tu primer nivel de Chamarilero.",
@@ -136,7 +139,6 @@ export const es: DictionnaireUI = {
     panorama: "Panorama del cuartel",
     decor: "Decorado del cuartel",
     porteEntree: "Puerta de entrada",
-    carnetSessions: "Cuaderno — sesiones recientes",
     grandPere: "Hablar con el abuelo",
     colis: "Paquete del abuelo",
     cadeau: "Regalo de cumpleaños",
@@ -190,6 +192,8 @@ export const es: DictionnaireUI = {
       "Y este botón lo envía a tu colección, en vez de venderlo.",
     coachStockageAmelioration:
       "Más adelante podrás ampliarlo: sótano, luego nave.",
+    coachStockageAtelier:
+      "Y ahí, el taller — se abrirá cuando sepas reparar.",
     coachCollectionCase:
       "El peluche ya tiene su lugar: ya no se vende, se exhibe.",
     coachCollectionValeur:
@@ -218,7 +222,7 @@ export const es: DictionnaireUI = {
       "chine-nego-un": "*Negocia* el mando: el deslizador en el *círculo*.",
       "chine-nego-deux": "Igual con el peluche: el deslizador en el *círculo*.",
       "chine-sortir": "*Sal* del mercadillo cuando termines.",
-      "stockage-ouvrir": "Abre el *Almacén*, abajo.",
+      "stockage-ouvrir": "Abre la *Reserva*, abajo.",
       "stockage-focus": "Echa un vistazo a tu almacén.",
       "collection-envoyer": "Envía el *peluche* a tu *colección*.",
       "collection-lecon": "Abre la *Colección*, abajo.",
@@ -832,5 +836,11 @@ export const es: DictionnaireUI = {
     prixMot: "Precio",
     acheter: "Comprar",
     achatRefuse: "Compra imposible.",
+    borneOuvrir: "Ver la máquina recreativa",
+    borneTitre: "Máquina recreativa",
+    borneFermer: "Cerrar la máquina",
+    bornePasDeSignal: "SIN SEÑAL",
+    borneJeuPrecedent: "Juego anterior",
+    borneJeuSuivant: "Juego siguiente",
   },
 };

@@ -1637,13 +1637,6 @@ nav[aria-label="Navigation principale"] :focus-visible,
   pointer-events: none;
   z-index: 6;
 }
-/* Mini-tuto carnet : même main au bord gauche, en miroir, pointe vers la
-   gauche pour inviter à rejoindre la zone gauche du bureau (livre de compte). */
-.tuto-main-swipe-gauche {
-  right: auto;
-  left: 12px;
-  scale: -1 1;
-}
 /* TutorielCoach : la découpe glisse d'une cible à la suivante — transition
    sur le rect (top/left/width/height) plutôt qu'un cross-fade, pour que le
    voile suive visuellement l'attention. */
@@ -1796,4 +1789,12 @@ nav[aria-label="Navigation principale"] :focus-visible,
 
 .broc-chevron-page {
   animation: broc-chevron-page 2.4s ease-in-out infinite;
+}
+
+/* ─── Grésillement de l'écran d'arcade ──────────────────────────────────
+   Le grésillement de l'écran d'un jeu pas encore trouvé. Deux pas seulement :
+   une neige qui glisse en continu ondule, une neige qui saute grésille. */
+@keyframes broc-arcade-neige {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-2px, 1px, 0); }
 }

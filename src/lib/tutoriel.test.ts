@@ -5,7 +5,6 @@ import {
   banniereVisible,
   chapitreDuCarnetDu,
   competenceGuidee,
-  doigtSwipeVersCarnet,
   etapeSuivante,
   ongletTutorielPermis,
   portePulse,
@@ -54,11 +53,9 @@ describe("tutoriel", () => {
     expect(fin.miniTutoCarnet).toBe("ouvrir");
   });
 
-  it("doigtSwipeVersCarnet pointe tant que la zone gauche (0) n'est pas atteinte", () => {
-    expect(doigtSwipeVersCarnet("ouvrir", 1)).toBe(true);
-    expect(doigtSwipeVersCarnet("ouvrir", 0)).toBe(false);
-    expect(doigtSwipeVersCarnet("termine", 1)).toBe(false);
-    expect(doigtSwipeVersCarnet(undefined, 1)).toBe(false);
+  it("doigtSwipeVersCarnet n'existe plus : le livre a quitté le panorama", async () => {
+    const mod = await import("./tutoriel");
+    expect("doigtSwipeVersCarnet" in mod).toBe(false);
   });
 
   it("chapitreDuCarnetDu n'arme le chapitre qu'à l'ouverture du carnet pendant le mini-tuto", () => {
@@ -73,6 +70,20 @@ describe("tutoriel", () => {
   it("appliquerFinTutoriel est idempotent sur un state déjà terminé", () => {
     const state = createMockGameState({ tutorielEtape: "termine" });
     expect(appliquerFinTutoriel(state)).toBe(state);
+  });
+});
+
+describe("fin du tutoriel — le chapitre est dû à l'arrivée sur /quetes", () => {
+  it("mini-tuto armé + sur /quetes : le chapitre est dû", () => {
+    expect(chapitreDuCarnetDu("ouvrir", true)).toBe(true);
+  });
+
+  it("mini-tuto armé mais ailleurs : rien n'est dû", () => {
+    expect(chapitreDuCarnetDu("ouvrir", false)).toBe(false);
+  });
+
+  it("mini-tuto déjà clos : rien n'est dû même sur /quetes", () => {
+    expect(chapitreDuCarnetDu("termine", true)).toBe(false);
   });
 });
 

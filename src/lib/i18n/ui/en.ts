@@ -97,6 +97,9 @@ export const en: DictionnaireUI = {
       bureau: "Office",
       stockage: "Storage",
       atelier: "Workshop",
+      reserve: "Storeroom",
+      quetes: "Quests",
+      quetesAbrege: "Quests",
     },
     ongletVerrouille: "locked",
     verrouBibliotheque: "The Study opens at your first Dealer level.",
@@ -136,7 +139,6 @@ export const en: DictionnaireUI = {
     panorama: "HQ panorama",
     decor: "HQ backdrop",
     porteEntree: "Front door",
-    carnetSessions: "Notebook — recent sessions",
     grandPere: "Talk to Grandpa",
     colis: "Grandpa's parcel",
     cadeau: "Birthday present",
@@ -190,6 +192,8 @@ export const en: DictionnaireUI = {
       "And this button sends it to your collection instead of selling it.",
     coachStockageAmelioration:
       "Later, you'll be able to expand it: cellar, then warehouse.",
+    coachStockageAtelier:
+      "And there, the workshop — it opens once you can repair.",
     coachCollectionCase:
       "The teddy bear found its spot: it's not for sale anymore, it's on display.",
     coachCollectionValeur:
@@ -218,7 +222,7 @@ export const en: DictionnaireUI = {
       "chine-nego-un": "*Haggle* for the controller: slider inside the *circle*.",
       "chine-nego-deux": "Same for the teddy bear: slider inside the *circle*.",
       "chine-sortir": "*Leave* the flea market when you're done.",
-      "stockage-ouvrir": "Open *Storage*, bottom bar.",
+      "stockage-ouvrir": "Open the *Storeroom*, at the bottom.",
       "stockage-focus": "Take a tour of your storage.",
       "collection-envoyer": "Send the *teddy bear* to your *collection*.",
       "collection-lecon": "Open the *Collection*, bottom bar.",
@@ -829,5 +833,11 @@ export const en: DictionnaireUI = {
     prixMot: "Price",
     acheter: "Buy",
     achatRefuse: "Purchase not possible.",
+    borneOuvrir: "View the arcade cabinet",
+    borneTitre: "Arcade cabinet",
+    borneFermer: "Close the cabinet",
+    bornePasDeSignal: "NO SIGNAL",
+    borneJeuPrecedent: "Previous game",
+    borneJeuSuivant: "Next game",
   },
 };

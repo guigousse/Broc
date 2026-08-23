@@ -120,6 +120,54 @@ describe("BAZAR_LAYOUT", () => {
     }
   });
 
+  // ── La zone ne suffit pas : ce qui compte, c'est la FENÊTRE VISIBLE ──────
+  //
+  // Tenir dans les 100 vw de sa zone ne garantit PAS d'être vu en entier. La
+  // scène est dimensionnée par sa hauteur : sa largeur mesure 338 vw sur le
+  // téléphone de référence (393 px, mesuré le 2026-08-20), donc un écran n'en
+  // montre que 300 × 100/338 ≈ 88,8 unités. Le snap centre la zone arcade sur
+  // 50 → la fenêtre va de ~5,6 à ~94,4, pas de 0 à 100.
+  //
+  // La borne est le seul objet auquel ce garde s'applique : c'est une pièce de
+  // décor haute et large, elle ne se lit que d'un bloc. Les autres clés ne
+  // sont pas rattrapées ici — `sortie` déborde de 3,6 unités par construction
+  // (le montant droit de la porte fuit vers le bord de l'image, et le voir
+  // coupé est exactement ce que la perspective raconte).
+  const FENETRE_UNITES = (300 * 100) / 338;
+
+  /**
+   * Tolérance, en unités. 338 vw n'est pas une constante du code mais une
+   * MESURE, et elle a sa dispersion : 338,1 vw sur un écran de 393 px, 337,9
+   * sur un de 375, 346 sur un Android de 360. Serrer la borne au millième
+   * ferait échouer un calage qui dépasse de 0,02 unité, soit 0,09 px — un
+   * faux positif qui enverrait Guillaume corriger du vide. Une demi-unité
+   * vaut ~2 px : invisible, là où la coupe que ce garde existe pour attraper
+   * en faisait 17.
+   */
+  const TOLERANCE_UNITES = 0.5;
+
+  it("montre la borne d'arcade EN ENTIER quand la zone arcade est centrée", () => {
+    const centre = 300 / 6;
+    const gauche = centre - FENETRE_UNITES / 2 - TOLERANCE_UNITES;
+    const droite = centre + FENETRE_UNITES / 2 + TOLERANCE_UNITES;
+    const borne = BAZAR_LAYOUT.objets.borne;
+    expect(borne.left).toBeGreaterThanOrEqual(gauche);
+    expect(borne.left + borne.width).toBeLessThanOrEqual(droite);
+  });
+
+  it("pose la borne sur le pan de mur nu, devant la plinthe et avant le comptoir", () => {
+    // Bord mesuré sur `fond-bazar.webp` (2752 px pour 300 unités) : le
+    // comptoir commence à ~104. Rien ne garde le bord GAUCHE, et c'est
+    // délibéré — la borne chevauche le montant droit de la bibliothèque
+    // (angle à ~66), seul moyen de la montrer entière à sa taille réglée.
+    const borne = BAZAR_LAYOUT.objets.borne;
+    expect(borne.left + borne.width).toBeLessThanOrEqual(104);
+    // Debout sur le plancher, devant la plinthe (~25 %) et non dessus : une
+    // borne a de la profondeur, son pied avant descend sous la ligne du mur.
+    expect(borne.bottom).toBeLessThan(25);
+    expect(borne.bottom).toBeGreaterThan(15);
+  });
+
   it("les emplacements que la scène désigne existent bel et bien", () => {
     for (const cle of [...CLES_LOTS, CLE_VITRINE]) {
       expect(BAZAR_LAYOUT.objets[cle]).toBeDefined();

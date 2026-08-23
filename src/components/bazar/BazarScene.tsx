@@ -11,8 +11,11 @@ import { nomObjet } from "@/lib/i18n/contenu";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
 import type { AchatBazar } from "@/lib/bazar/achat";
+import type { JeuArcade } from "@/lib/bazar/arcade";
 import type { EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
+import { BorneArcade } from "./BorneArcade";
+import { BorneArcadeEcran } from "./BorneArcadeEcran";
 import {
   ArticleDetailBazar,
   type ArticleDetail,
@@ -32,6 +35,11 @@ interface BazarSceneProps {
   etal: EtalBazar;
   jetons: number;
   /**
+   * L'état des onze jeux, déjà calculé. La scène reste une vue pure : elle ne
+   * touche jamais à la collection, `src/app/bazar/page.tsx` la lui dérive.
+   */
+  jeuxArcade: JeuArcade[];
+  /**
    * Tente l'achat et dit ce qu'il en est. Le retour n'est PAS décoratif : la
    * fiche de l'article ne se referme que s'il est `ok`, et affiche sinon la
    * raison — un refus est le moment où le joueur a besoin de rester pour lire.
@@ -46,7 +54,7 @@ interface BazarSceneProps {
  * comptoir. Vue pure — tout arrive par les props, la composition avec le
  * contexte de jeu se fait dans `src/app/bazar/page.tsx`.
  */
-export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProps) {
+export function BazarScene({ etal, jetons, jeuxArcade, onAcheter, onSortir }: BazarSceneProps) {
   const { d, tr, locale } = useLangue();
   const vitrine = etal.vitrine;
   const template = vitrine ? getTemplate(vitrine.templateId) : undefined;
@@ -77,6 +85,10 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
     achat: AchatBazar;
   } | null>(null);
 
+  // Le plein écran de la borne d'arcade, à côté de la fiche d'article : même
+  // mécanique, même raison de vivre hors du panorama (cf. plus bas).
+  const [borneOuverte, setBorneOuverte] = useState(false);
+
   const libelleVitrine = template
     ? nomObjet({ templateId: template.templateId, nom: template.nom }, locale)
     : (vitrine?.templateId ?? "");
@@ -90,6 +102,11 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
         ariaLabel={d.bazar.titre}
         editKeys={CLES_BAZAR}
       >
+        {/* Décor. En tête des enfants, donc au-dessous d'eux dans l'ordre de
+            peinture : une pièce de mobilier ne passe jamais devant la
+            marchandise. */}
+        <BorneArcade onOuvrir={() => setBorneOuverte(true)} />
+
         {etal.lotsPieces.map((lot, index) => {
           const libelle = tr(d.bazar.lotPieces, {
             n: lot.quantite,
@@ -245,6 +262,12 @@ export function BazarScene({ etal, jetons, onAcheter, onSortir }: BazarSceneProp
               { ok: false }
         }
         onClose={() => setSelection(null)}
+      />
+
+      <BorneArcadeEcran
+        open={borneOuverte}
+        jeux={jeuxArcade}
+        onClose={() => setBorneOuverte(false)}
       />
     </>
   );

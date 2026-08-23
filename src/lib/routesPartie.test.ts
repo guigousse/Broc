@@ -7,6 +7,10 @@ describe("estRoutePartie", () => {
     expect(estRoutePartie("/bazar/quoi-que-ce-soit")).toBe(true);
   });
 
+  it("/quetes est un écran de la partie (chrome global actif)", () => {
+    expect(estRoutePartie("/quetes")).toBe(true);
+  });
+
   it("ignore les écrans hors partie (menu, mentions légales…)", () => {
     expect(estRoutePartie("/")).toBe(false);
     expect(estRoutePartie(null)).toBe(false);

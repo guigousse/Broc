@@ -9,8 +9,8 @@ import { audioManager } from "@/lib/audio/audioManager";
  *
  * Dans le panorama (bureau), le layout (qg) pilote l'ambiance à
  * "pleine pièce" et la position de scroll module volume musique zone
- * par zone (cf. handleZoneIndex). `/stockage` et `/atelier` sont des
- * fenêtres flottantes DANS la pièce du bureau — l'ambiance zone-driven
+ * par zone (cf. handleZoneIndex). `/stockage`, `/atelier` et `/quetes` sont
+ * des calques DANS la pièce du bureau — l'ambiance zone-driven
  * du panorama continue derrière l'overlay, donc elles sont traitées
  * comme le panorama.
  *
@@ -23,6 +23,9 @@ import { audioManager } from "@/lib/audio/audioManager";
 
 const PANORAMA_PATHS = new Set<string>([
   "/bureau",
+  // `/quetes` = le carnet, un calque posé sur le panorama du bureau : la
+  // musique doit y rester exactement celle de la pièce.
+  "/quetes",
   "/stockage",
   "/atelier",
   "/bibliotheque",

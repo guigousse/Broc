@@ -57,6 +57,39 @@ describe("CarnetOverlay", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("le voile s'arrête au sommet de la barre du bas, et la feuille reste au-dessus de lui", () => {
+    // Le carnet est devenu un ONGLET (route /quetes) : on doit pouvoir en
+    // sortir par la barre du bas. Un voile plein écran en z-index 50 la
+    // recouvrait — même cadrage que FloatingRoomOverlay désormais.
+    const { container } = render(<CarnetOverlay {...base} state={etat([])} />);
+    const voile = container.querySelector("[aria-hidden]") as HTMLElement;
+    expect(voile.style.bottom).toBe(
+      "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
+    );
+    expect(voile.style.zIndex).toBe("35");
+    const feuille = screen.getByRole("dialog") as HTMLElement;
+    expect(Number(feuille.style.zIndex)).toBeGreaterThan(Number(voile.style.zIndex));
+    expect(feuille.style.zIndex).toBe("36");
+  });
+
+  it("le voile s'arrête aussi SOUS le header : Énergie, XP et logo restent tapables", () => {
+    // Le bord bas avait été traité, pas le bord haut : le voile partait de
+    // `top: 0` et recouvrait `MobileHeader` (z-index 30). Le joueur ouvrait
+    // les Quêtes, voyait qu'il n'avait plus d'énergie, tapait le bloc
+    // ÉNERGIE — et rien ne se passait. Même formule que le `wrap` de
+    // `FloatingRoomOverlay`, réserve de bannière de tutoriel comprise.
+    const { container } = render(<CarnetOverlay {...base} state={etat([])} />);
+    const voile = container.querySelector("[aria-hidden]") as HTMLElement;
+    expect(voile.style.top).toBe(
+      "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px))",
+    );
+    // La feuille non plus ne remonte pas sous le header (8px de marge en sus).
+    const feuille = screen.getByRole("dialog") as HTMLElement;
+    expect(feuille.style.top).toBe(
+      "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px) + 8px)",
+    );
+  });
+
   it("les trois sections sont dépliées à la première ouverture", () => {
     const q = quete("q1", "quotidienne", "La bonne pioche");
     render(<CarnetOverlay {...base} state={etat([q])} />);
@@ -148,6 +181,32 @@ describe("CarnetOverlay", () => {
     const entete = screen.getByRole("button", { name: /^Histoire/i });
     expect(entete.textContent ?? "").toMatch(/\(1\/1\)/);
     expect(entete.textContent ?? "").toMatch(/1 prête|1 ready/i);
+  });
+
+  it("ouverture ciblée depuis une pastille (fermé → ouvert) : la commande est amenée dans la zone visible", () => {
+    // Depuis que le carnet est une route, `setMissionCibleId` (urgente) et
+    // `router.push("/quetes")` (transition) tombent en DEUX commits React :
+    // l'effet d'ouverture ciblée part carnet FERMÉ, où aucun
+    // `[data-commande-id]` n'est monté. Sans `open` en dépendance, il ne
+    // rejouerait jamais et le défilement serait silencieusement perdu.
+    const q = quete("q1", "quotidienne", "La bonne pioche");
+    const cibles: string[] = [];
+    const proto = Element.prototype as unknown as { scrollIntoView?: () => void };
+    const vrai = proto.scrollIntoView;
+    proto.scrollIntoView = function (this: HTMLElement) {
+      cibles.push(this.dataset.commandeId ?? "");
+    };
+    try {
+      const { rerender } = render(
+        <CarnetOverlay {...base} open={false} state={etat([q])} missionInitialeId="q1" />,
+      );
+      expect(cibles).toEqual([]); // rien à faire défiler : le carnet ne rend rien
+      rerender(<CarnetOverlay {...base} open state={etat([q])} missionInitialeId="q1" />);
+      expect(cibles).toEqual(["q1"]);
+    } finally {
+      if (vrai) proto.scrollIntoView = vrai;
+      else delete proto.scrollIntoView;
+    }
   });
 
   it("après l'ouverture ciblée, la section redevient repliable au tap", () => {

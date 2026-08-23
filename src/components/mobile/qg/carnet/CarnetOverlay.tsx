@@ -68,23 +68,41 @@ function trierActives(
 
 /* ─── styles (jetons uniquement) ─── */
 
+/* Le carnet est un ONGLET depuis 2026-08-23 (route `/quetes`) : on doit
+ * pouvoir en sortir par la barre du bas, pas seulement par sa croix. Le voile
+ * est donc borné des DEUX côtés, exactement comme le `wrap` de
+ * `FloatingRoomOverlay` : il commence sous le header (z-index 30) et s'arrête
+ * au sommet de la TabBar (z-index 30), en réservant au passage la place de la
+ * bannière de tutoriel.
+ *
+ * Le bord HAUT compte autant que le bas : un voile parti de `top: 0` recouvre
+ * le header et rend MORTS le bloc Énergie, le lien XP/niveau et le logo —
+ * mesuré au serveur, `elementFromPoint` au centre du bouton Énergie renvoyait
+ * le voile. Les Quêtes étaient le seul onglet du jeu dans ce cas. */
 const scrim: CSSProperties = {
   position: "fixed",
-  inset: 0,
+  top: "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px))",
+  left: 0,
+  right: 0,
+  bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
   background: "rgba(15,30,22,0.55)",
-  zIndex: 50,
+  zIndex: 35,
   animation: "broc-fade-in 160ms ease",
 };
 
 /* La fenêtre est ancrée entre le header supérieur et la TabBar, comme
- * l'ancien `RegistreOverlay` — rien ne chevauche le chrome. */
+ * l'ancien `RegistreOverlay` — elle ne chevauche donc ni le header ni la
+ * barre du bas, tous deux restant tapables pendant que le carnet est ouvert.
+ * Même réserve de bannière de tutoriel que le voile ci-dessus. */
 const stage: CSSProperties = {
   position: "fixed",
-  top: "calc(var(--safe-top) + var(--mobile-header-h) + 8px)",
+  top: "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px) + 8px)",
   left: 0,
   right: 0,
   bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom) + 8px)",
-  zIndex: 51,
+  // Un cran au-dessus du voile (35), et toujours sous la TabBar quand celle-ci
+  // se relève à 40 pour laisser passer une main de tutoriel.
+  zIndex: 36,
   display: "flex",
   justifyContent: "center",
   padding: "0 12px",
@@ -261,13 +279,21 @@ export function CarnetOverlay({
   // dans la zone visible. `ouvertId` étant initialisé au seul montage, la
   // resynchro ici est ce qui couvre le cas « le carnet était déjà ouvert ».
   //
-  // Dépendance unique `missionInitialeId` (comme l'effet le documentait déjà
-  // avant ce correctif) : `deplier` honore l'override UNE FOIS, au moment où
-  // la cible est désignée — pas pour toute la durée où `missionInitialeId`
-  // reste affecté à la même valeur (sinon la section redevient pliable au
-  // premier tap, mais chaque re-render la re-déplierait silencieusement).
+  // Dépendances `missionInitialeId` et `open` seulement : `deplier` honore
+  // l'override UNE FOIS, au moment où la cible est désignée — pas pour toute
+  // la durée où `missionInitialeId` reste affecté à la même valeur (sinon la
+  // section redevient pliable au premier tap, mais chaque re-render la
+  // re-déplierait silencieusement).
+  //
+  // `open` est indispensable : depuis que l'ouverture passe par la route
+  // (`router.push("/quetes")` est une transition, `setMissionCibleId` une
+  // mise à jour urgente), les deux arrivent en DEUX commits React. Le premier
+  // rend l'effet carnet encore FERMÉ, où le garde `if (!open) return null`
+  // plus bas laisse le DOM sans aucun `[data-commande-id]` : sans rejouer à
+  // l'ouverture, `scrollIntoView` ne trouverait jamais sa cible. L'effet est
+  // idempotent, le rejouer ne coûte rien.
   useEffect(() => {
-    if (!missionInitialeId) return;
+    if (!open || !missionInitialeId) return;
     setOuvertId(missionInitialeId);
     if (cibleSection) deplierRef.current(cibleSection);
     const el = Array.from(document.querySelectorAll<HTMLElement>("[data-commande-id]")).find(
@@ -275,7 +301,7 @@ export function CarnetOverlay({
     );
     if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "start" });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- cibleSection dérive de missionInitialeId ; le réévaluer ici redéclencherait l'ouverture forcée à chaque re-render.
-  }, [missionInitialeId]);
+  }, [missionInitialeId, open]);
 
   // La commande en cérémonie est déjà « livree » dans le state : on la garde
   // parmi les actives le temps que les jetons rejoignent le header.

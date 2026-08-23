@@ -8,6 +8,7 @@ import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { BazarScene } from "@/components/bazar/BazarScene";
 import { useGame } from "@/context/GameContext";
 import { bazarEstOuvert } from "@/lib/bazar/ouverture";
+import { jeuxArcade } from "@/lib/bazar/arcade";
 import type { AchatBazar } from "@/lib/bazar/achat";
 
 export default function BazarPage() {
@@ -73,6 +74,7 @@ export default function BazarPage() {
         <BazarScene
           etal={state.bazar}
           jetons={state.jetons}
+          jeuxArcade={jeuxArcade(state.collection)}
           onAcheter={handleAcheter}
           onSortir={() => router.push("/bureau")}
         />

@@ -97,6 +97,9 @@ export const el: DictionnaireUI = {
       bureau: "Γραφείο",
       stockage: "Αποθήκη",
       atelier: "Εργαστήριο",
+      reserve: "Αποθήκη",
+      quetes: "Αποστολές",
+      quetesAbrege: "Αποστ.",
     },
     ongletVerrouille: "κλειδωμένο",
     verrouBibliotheque: "Το Γραφείο ανοίγει στο πρώτο σου επίπεδο Παλαιοπώλη.",
@@ -136,7 +139,6 @@ export const el: DictionnaireUI = {
     panorama: "Πανόραμα αρχηγείου",
     decor: "Σκηνικό αρχηγείου",
     porteEntree: "Εξώπορτα",
-    carnetSessions: "Σημειωματάριο — τελευταίες συνεδρίες",
     grandPere: "Μίλα στον παππού",
     colis: "Το δέμα του παππού",
     cadeau: "Δώρο γενεθλίων",
@@ -190,6 +192,8 @@ export const el: DictionnaireUI = {
       "Και αυτό το κουμπί το στέλνει στη συλλογή σου, αντί να το πουλήσεις.",
     coachStockageAmelioration:
       "Αργότερα θα μπορείς να το επεκτείνεις: υπόγειο, μετά αποθήκη.",
+    coachStockageAtelier:
+      "Κι εκεί, το εργαστήριο — ανοίγει μόλις μάθεις να επισκευάζεις.",
     coachCollectionCase:
       "Το λούτρινο βρήκε τη θέση του: δεν πωλείται πια, εκτίθεται.",
     coachCollectionValeur:
@@ -851,5 +855,11 @@ export const el: DictionnaireUI = {
     prixMot: "Τιμή",
     acheter: "Αγορά",
     achatRefuse: "Η αγορά δεν είναι δυνατή.",
+    borneOuvrir: "Δείτε το μηχάνημα arcade",
+    borneTitre: "Μηχάνημα arcade",
+    borneFermer: "Κλείσιμο",
+    bornePasDeSignal: "ΧΩΡΙΣ ΣΗΜΑ",
+    borneJeuPrecedent: "Προηγούμενο παιχνίδι",
+    borneJeuSuivant: "Επόμενο παιχνίδι",
   },
 };

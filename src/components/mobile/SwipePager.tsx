@@ -60,19 +60,32 @@ function hasSwipeIgnoreAncestor(el: Element | null): boolean {
   return false;
 }
 
-/** Sens du déplacement d'un onglet à l'autre dans le cycle. */
-function computeDirection(
+/**
+ * Sens du déplacement d'un onglet à l'autre dans le cycle.
+ *
+ * La résolution « route → onglet » passe par `findActiveTabIndex`, seule
+ * source de vérité : elle cherche dans le champ `routes` de chaque onglet,
+ * pas seulement dans son `path`. Une résolution locale sur `t.path` ratait
+ * les routes secondaires (`/atelier`, deuxième route de la Réserve) et toute
+ * transition les impliquant retombait sur "none" — page posée sans glisser.
+ *
+ * Exportée pour le test : deux routes d'un MÊME onglet (`/stockage` et
+ * `/atelier`) partagent aussi la même `pageKey`, si bien qu'aucun rendu ne
+ * peut distinguer ici "none" de "right" — seul l'appel direct le peut.
+ */
+export function computeDirection(
   prev: string | null,
   curr: string,
 ): "right" | "left" | "none" {
   if (!prev || prev === curr) return "none";
-  const prevIdx = TAB_ORDER.findIndex(
-    (t) => prev === t.path || prev.startsWith(`${t.path}/`),
-  );
-  const currIdx = TAB_ORDER.findIndex(
-    (t) => curr === t.path || curr.startsWith(`${t.path}/`),
-  );
+  const prevIdx = findActiveTabIndex(prev);
+  const currIdx = findActiveTabIndex(curr);
   if (prevIdx < 0 || currIdx < 0) return "none";
+  // Deux routes du même onglet : on ne change pas d'onglet, donc rien ne
+  // glisse. Sans ce garde, l'arithmétique du cycle rendrait "right"
+  // (forward = 0 ≤ backward = 0) — un mensonge que seul le garde de
+  // `pageKey`, en aval, masque aujourd'hui.
+  if (prevIdx === currIdx) return "none";
   const N = TAB_ORDER.length;
   const forward = (currIdx - prevIdx + N) % N;
   const backward = (prevIdx - currIdx + N) % N;
@@ -88,6 +101,7 @@ function computeDirection(
  */
 const QG_GROUP = new Set<string>([
   "/bureau",
+  "/quetes",
   "/stockage",
   "/atelier",
   "/bibliotheque",

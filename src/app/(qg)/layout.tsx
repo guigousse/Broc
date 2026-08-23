@@ -20,7 +20,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
@@ -34,7 +34,6 @@ import {
   UnifiedPanorama,
   UNIFIED_ZONE_ORDER,
 } from "@/components/mobile/panorama/UnifiedPanorama";
-import { QgCarnet } from "@/components/mobile/qg/QgCarnet";
 import { LivrablesBadges } from "@/components/mobile/qg/LivrablesBadges";
 import { QgJournalSol } from "@/components/mobile/qg/QgJournalSol";
 import { QgJournalBureau } from "@/components/mobile/qg/QgJournalBureau";
@@ -47,6 +46,7 @@ import { QgCalendrier } from "@/components/mobile/qg/QgCalendrier";
 import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
 import { useFermerSheetHorsBureau } from "@/components/mobile/qg/useFermerSheetHorsBureau";
+import { useMissionCible } from "@/components/mobile/qg/useMissionCible";
 import { GrandPereBadge } from "@/components/mobile/qg/GrandPereBadge";
 import { QgColis } from "@/components/mobile/qg/QgColis";
 import { QgCadeau } from "@/components/mobile/qg/QgCadeau";
@@ -90,7 +90,6 @@ import { nomExpediteur } from "@/lib/i18n/contenu";
 import {
   tutorielActif,
   chapitreDuCarnetDu,
-  doigtSwipeVersCarnet,
   portePulse,
 } from "@/lib/tutoriel";
 import {
@@ -110,9 +109,12 @@ import {
 
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
+/** Route de l'onglet Quêtes : c'est elle, et elle seule, qui ouvre le carnet. */
+const ROUTE_CARNET = "/quetes";
 
 function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { d, locale } = useLangue();
   const {
     state,
@@ -162,10 +164,26 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   /** Machine à énergie popée avec bandeau : Chiner/Étaler cliqué sans énergie. */
   const [alerteEnergie, setAlerteEnergie] = useState(false);
   const [confirmPasser, setConfirmPasser] = useState(false);
-  /** Carnet de quêtes : ouvert/fermé (plus d'onglet à porter depuis le châssis). */
-  const [carnetOuvert, setCarnetOuvert] = useState(false);
-  /** Commande à déplier d'office dans le carnet (badge livrable tapé). */
-  const [missionCibleId, setMissionCibleId] = useState<string | null>(null);
+  /**
+   * Carnet de quêtes : ouvert par la ROUTE depuis 2026-08-23 (onglet Quêtes
+   * de la barre du bas). Le livre posé sur la table du bureau a disparu ;
+   * l'onglet est le seul chemin.
+   */
+  const carnetOuvert = pathname === ROUTE_CARNET;
+  const searchParams = useSearchParams();
+  /**
+   * Commande à déplier d'office dans le carnet. Voir `useMissionCible` pour
+   * la mécanique (attente locale gelée pendant le rendu à chaque ouverture,
+   * priorité sur une URL périmée). `armerAttenteMissionCible` : les sites
+   * de navigation explicite (tap sur une pastille, `router.replace` du
+   * chapitre recalé en place) doivent purger l'attente (`(null)`) avant de
+   * poser leur propre cible ; le chapitre du grand-père accepté carnet
+   * FERMÉ l'arme pour la prochaine ouverture générique.
+   */
+  const { missionCibleId, armerAttente: armerAttenteMissionCible } = useMissionCible(
+    carnetOuvert,
+    searchParams.get("mission"),
+  );
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
@@ -477,14 +495,27 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const chPretRef = useRef(chPret);
   chPretRef.current = chPret;
 
+  // MÊME piège pour la route : entre le tap sur « Livrer » et l'appel de ce
+  // callback, la cérémonie dure ~2 s, pendant lesquelles le joueur peut très
+  // bien taper RÉSERVE et se mettre à trier son stock. Une closure sur
+  // `pathname` déciderait alors avec une route périmée et l'arracherait de la
+  // pièce où il vient d'aller.
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+
   const enchainerChapitre = useCallback(() => {
     const suivant = chPretRef.current;
     const seq = sequenceEnchainement(suivant);
     if (!seq || !suivant) return; // trame close : le carnet reste ouvert
-    setCarnetOuvert(false);
+    // Le carnet se ferme en QUITTANT sa route : c'est elle qui l'ouvre. On ne
+    // pousse que si l'on est ENCORE dessus — ailleurs, le joueur a déjà
+    // quitté de lui-même et le déplacer serait un enlèvement. Le push reste
+    // indispensable quand on y est : le dialogue (z-120) s'afficherait sinon
+    // par-dessus le carnet.
+    if (pathnameRef.current === ROUTE_CARNET) router.push("/bureau");
     setDialogueChapitreId(suivant.id);
     setChapitreEnAttente(seq);
-  }, []);
+  }, [router]);
 
   if (!isHydrated || !state) {
     return (
@@ -566,14 +597,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             {/* ─── Sections du bureau (0/1/2) ─── */}
             {showQgZone(0) && (
               <>
-                <QgCarnet
-                  tutoMain={state.miniTutoCarnet === "ouvrir" && !dialogueQg}
-                  onTap={() => {
-                    if (tutoActif) return;
-                    playClick();
-                    setCarnetOuvert(true);
-                  }}
-                />
                 {state.gazetteAchetee && (
                   <QgJournalBureau
                     onTap={() => {
@@ -721,11 +744,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             <div className="tuto-main-swipe" aria-hidden />
           )}
 
-          {/* Mini-tuto carnet : invite à rejoindre la zone gauche (livre de
-              compte) après la conclusion du tutoriel. */}
-          {state && !dialogueQg && doigtSwipeVersCarnet(state.miniTutoCarnet, zoneActive) && (
-            <div className="tuto-main-swipe tuto-main-swipe-gauche" aria-hidden />
-          )}
+          {/* Le doigt « swipe vers le carnet » a disparu d'ici : le livre de
+              compte a quitté la zone gauche du panorama pour devenir la route
+              `/quetes`. Il pointait une table vide. */}
         </div>
       </MobileLayout>
 
@@ -823,8 +844,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
       <CarnetOverlay
         open={carnetOuvert}
         onClose={() => {
-          setCarnetOuvert(false);
-          setMissionCibleId(null);
+          router.push("/bureau");
         }}
         state={state}
         onLivrerMission={(id) => livrerMission(id)}
@@ -960,6 +980,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         visible={
           !!chPret &&
           !dialogueQg &&
+          // La feuille du carnet est descendue en z-index 36 (pour laisser la
+          // barre du bas cliquable) : cette pastille, fixe en 40, resterait
+          // peinte PAR-DESSUS le carnet. Le voile plein écran la masquait avant.
+          !carnetOuvert &&
           // Chapitre 1 réservé au carnet tant que le mini-tuto de fin de
           // tutoriel n'est pas consommé, puis pendant tout le temps où son
           // dialogue est armé/joué : un seul chemin de délivrance.
@@ -973,14 +997,21 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           setDialogueQg({ id: `dlg_${chPret.id}`, lignes: chPret.dialogue });
         }}
       />
-      {!tutoActif && !dialogueQg && (
+      {/* `!carnetOuvert` : même raison que pour GrandPereBadge — et ici c'est
+          le chemin nominal d'entrée dans le carnet, la pastille resterait
+          peinte sur la page qu'elle vient d'ouvrir. */}
+      {!tutoActif && !dialogueQg && !carnetOuvert && (
         <LivrablesBadges
           livrables={livrables}
           sureleves={!!chPret}
           onTap={(courrierId) => {
             playClick();
-            setMissionCibleId(courrierId);
-            setCarnetOuvert(true);
+            // Intention explicite : elle prime sur une attente périmée
+            // laissée par un autre chemin (chapitre du grand-père armé
+            // carnet fermé, cf. plus bas) qui masquerait sinon la mission
+            // que le joueur vient de taper.
+            armerAttenteMissionCible(null);
+            router.push(`/quetes?mission=${encodeURIComponent(courrierId)}`);
           }}
         />
       )}
@@ -992,10 +1023,18 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           setDialogueQg(null);
           if (dialogueChapitreId) {
             accepterChapitrePrincipal(dialogueChapitreId);
-            // Le carnet peut être ouvert derrière le dialogue (fin du
-            // tutoriel) : la commande neuve s'y affiche dépliée. Sinon la
-            // cible est simplement prête pour la prochaine ouverture.
-            setMissionCibleId(dialogueChapitreId);
+            if (carnetOuvert) {
+              // Le carnet est déjà ouvert derrière le dialogue (mini-tuto
+              // de fin de tutoriel) : recaler la cible sur la commande qui
+              // vient d'être créée, sans naviguer — `replace` corrige l'URL
+              // en place (pas de nouvelle entrée d'historique).
+              router.replace(`/quetes?mission=${encodeURIComponent(dialogueChapitreId)}`);
+            } else {
+              // Carnet fermé (pastille du grand-père hors `/quetes`) :
+              // rien dans l'URL à corriger sans l'ouvrir malgré lui — armer
+              // la cible pour la prochaine ouverture générique.
+              armerAttenteMissionCible(dialogueChapitreId);
+            }
             setDialogueChapitreId(null);
           } else if (etape === "accueil") avancerTutoriel("aller-chiner");
           else if (etape === "chine-sortir") avancerTutoriel("stockage-ouvrir");

@@ -8,6 +8,7 @@ describe("nomEcran", () => {
     expect(nomEcran("/atelier")).toBe("atelier");
     expect(nomEcran("/collection")).toBe("collection");
     expect(nomEcran("/bibliotheque")).toBe("bibliotheque");
+    expect(nomEcran("/quetes")).toBe("quetes");
   });
 
   it("distingue les écrans de vitrine", () => {

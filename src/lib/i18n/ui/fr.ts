@@ -100,6 +100,9 @@ export const fr = {
       bureau: "Bureau",
       stockage: "Stockage",
       atelier: "Atelier",
+      reserve: "Réserve",
+      quetes: "Quêtes",
+      quetesAbrege: "Quêtes",
     },
     ongletVerrouille: "verrouillé",
     verrouBibliotheque: "Le Cabinet ouvre à ton premier niveau de Brocanteur.",
@@ -139,7 +142,6 @@ export const fr = {
     panorama: "Panorama du QG",
     decor: "Décor du QG",
     porteEntree: "Porte d'entrée",
-    carnetSessions: "Carnet — dernières sessions",
     grandPere: "Parler à Grand-père",
     colis: "Colis du grand-père",
     cadeau: "Cadeau d'anniversaire",
@@ -193,6 +195,8 @@ export const fr = {
       "Et ce bouton l'envoie dans ta collection, au lieu de le vendre.",
     coachStockageAmelioration:
       "Plus tard, tu pourras agrandir : cave, puis hangar.",
+    coachStockageAtelier:
+      "Et là, l'atelier — il ouvrira quand tu sauras réparer.",
     coachCollectionCase:
       "La peluche a rejoint sa case : elle ne se vend plus, elle se montre.",
     coachCollectionValeur:
@@ -221,7 +225,7 @@ export const fr = {
       "chine-nego-un": "*Négocie* la manette : le curseur dans le *cercle*.",
       "chine-nego-deux": "Pareil pour la peluche : le curseur dans le *cercle*.",
       "chine-sortir": "*Sors* de la brocante quand tu as fini.",
-      "stockage-ouvrir": "Ouvre le *Stockage*, en bas.",
+      "stockage-ouvrir": "Ouvre la *Réserve*, en bas.",
       "stockage-focus": "Fais le tour de ton stockage.",
       "collection-envoyer": "Envoie la *peluche* dans ta *collection*.",
       "collection-lecon": "Ouvre la *Collection*, en bas.",
@@ -867,5 +871,11 @@ export const fr = {
     prixMot: "Prix",
     acheter: "Acheter",
     achatRefuse: "Achat impossible.",
+    borneOuvrir: "Voir la borne d'arcade",
+    borneTitre: "Borne d'arcade",
+    borneFermer: "Fermer la borne",
+    bornePasDeSignal: "PAS DE SIGNAL",
+    borneJeuPrecedent: "Jeu précédent",
+    borneJeuSuivant: "Jeu suivant",
   },
 } as const;

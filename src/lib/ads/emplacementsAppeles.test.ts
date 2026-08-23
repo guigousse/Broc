@@ -9,13 +9,13 @@ import { EMPLACEMENTS_PUB } from "./adProvider";
  * illisibles par écran dans la console AdMob.
  *
  * Le test lit la source des appelants : c'est le seul endroit où l'oubli se
- * voit, les composants concernés (page atelier, overlay boîte) n'ayant pas de
- * harnais de rendu.
+ * voit, les composants concernés (contenu Atelier de la Réserve, overlay
+ * boîte) n'ayant pas de harnais de rendu.
  */
 const APPELANTS = [
   ["src/components/mobile/EnergieRecharge.tsx", "energie"],
   ["src/components/mobile/BoiteMystereOverlay.tsx", "boiteMystere"],
-  ["src/app/(qg)/atelier/page.tsx", "restauration"],
+  ["src/components/mobile/reserve/AtelierContenu.tsx", "restauration"],
 ] as const;
 
 describe("emplacements publicitaires — câblage des appelants", () => {

@@ -78,38 +78,26 @@ export function appliquerFinTutoriel(state: GameState): GameState {
     ],
     inventaireJoueur: [...state.inventaireJoueur, ...manquants],
     colisTutorielLivres: COLIS_TUTORIEL_TAILLE,
-    // Le grand-père vient de parler du carnet de commandes : le mini-tuto
-    // guide vers la zone gauche du bureau puis le livre de compte.
+    // Le grand-père vient de parler du carnet de quêtes : le mini-tuto
+    // guide vers l'onglet Quêtes de la barre du bas (cf. `chapitreDuCarnetDu`
+    // juste dessous — c'est l'arrivée sur `/quetes` qui clôt le mini-tuto).
     miniTutoCarnet: "ouvrir",
   };
 }
 
 /**
- * Doigt de swipe du mini-tuto carnet : le livre de compte est en zone
- * gauche (0) du panorama — la main flottante pointe vers la gauche tant que
- * cette zone n'est pas atteinte.
- */
-export function doigtSwipeVersCarnet(
-  miniTuto: GameState["miniTutoCarnet"],
-  zoneActive: number,
-): boolean {
-  return miniTuto === "ouvrir" && zoneActive !== 0;
-}
-
-/**
- * Vrai quand l'ouverture du carnet doit délivrer le chapitre du grand-père.
- * Fin du tutoriel : la main flottante guide jusqu'au carnet, et c'est son
- * ouverture — pas la pastille du bureau — qui déclenche le dialogue de la
+ * Vrai quand l'arrivée dans le carnet doit délivrer le chapitre du grand-père.
+ * Fin du tutoriel : la main guide jusqu'à l'onglet Quêtes, et c'est l'arrivée
+ * sur `/quetes` — pas la pastille du bureau — qui déclenche le dialogue de la
  * lampe, dont la commande vient s'inscrire dans la page restée ouverte.
- * Le 2e paramètre est un booléen (le carnet n'a plus d'onglet à porter
- * depuis le châssis `CarnetOverlay`) plutôt que le type d'un composant d'UI :
- * `src/lib` ne dépend pas de l'UI.
+ * Le 2e paramètre est un booléen (`src/lib` ne dépend ni de l'UI ni du
+ * routeur) : au layout de dire s'il est sur la route du carnet.
  */
 export function chapitreDuCarnetDu(
   miniTuto: GameState["miniTutoCarnet"],
-  carnetOuvert: boolean,
+  surRouteQuetes: boolean,
 ): boolean {
-  return miniTuto === "ouvrir" && carnetOuvert;
+  return miniTuto === "ouvrir" && surRouteQuetes;
 }
 
 /* === Scénario brocante scriptée ====================================== */

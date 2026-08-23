@@ -7,6 +7,7 @@ import {
   progression,
   estPret,
   peutTerminerImmediat,
+  restaurationsPretes,
 } from "./restauration";
 import type { GameState } from "@/types/game";
 
@@ -80,4 +81,36 @@ describe("peutTerminerImmediat (fenêtre pub)", () => {
 it("DUREE_RESTAURATION_MS couvre tous les états", () => {
   expect(DUREE_RESTAURATION_MS["Mauvais"]).toBe(1 * H);
   expect(DUREE_RESTAURATION_MS["Pristin état"]).toBe(0);
+});
+
+/**
+ * Source unique du badge « restaurations prêtes » : la barre du bas (onglet
+ * Réserve) et la bande haute (onglet Atelier) affichent le MÊME chiffre à
+ * quelques centimètres l'un de l'autre. La règle a vécu en trois exemplaires ;
+ * ce test tient la définition à un seul endroit.
+ */
+describe("restaurationsPretes", () => {
+  function inv(objets: unknown[]): GameState {
+    return { inventaireJoueur: objets } as unknown as GameState;
+  }
+  const pret = { enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 10 * H } };
+  const nu = { id: "x" };
+
+  it("inventaire vide : zéro", () => {
+    expect(restaurationsPretes(inv([]), 10 * H)).toBe(0);
+  });
+
+  it("ne compte que les objets EN restauration", () => {
+    expect(restaurationsPretes(inv([nu, nu, pret]), 10 * H)).toBe(1);
+  });
+
+  it("compte à la seconde près, comme estPret", () => {
+    expect(restaurationsPretes(inv([pret]), 10 * H - 1)).toBe(0);
+    expect(restaurationsPretes(inv([pret]), 10 * H)).toBe(1);
+  });
+
+  it("plusieurs prêts, plusieurs en cours", () => {
+    const enCours = { enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 20 * H } };
+    expect(restaurationsPretes(inv([pret, pret, enCours, nu]), 10 * H)).toBe(2);
+  });
 });

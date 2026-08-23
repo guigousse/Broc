@@ -436,19 +436,22 @@ export interface GameState {
    */
   miniTutoVinyle?: "ajouter" | "ecouter" | "termine";
   /**
-   * ADDITIF : mini-tutoriel du carnet de commandes, posé à la fin du
-   * tutoriel (le grand-père vient d'en parler). "ouvrir" = guider vers la
-   * zone gauche du bureau puis le livre de compte ; "termine" ou absent
-   * (saves antérieures) = rien à guider.
+   * ADDITIF : mini-tutoriel du carnet de quêtes, posé à la fin du tutoriel
+   * (le grand-père vient d'en parler). "ouvrir" = guider vers l'onglet
+   * Quêtes de la barre du bas (le livre posé sur la table du bureau n'existe
+   * plus depuis 2026-08-23 : la route `/quetes` est le seul chemin) ;
+   * "termine" ou absent (saves antérieures) = rien à guider.
    */
   miniTutoCarnet?: "ouvrir" | "termine";
   /**
    * ADDITIF : visite guidée de l'Atelier, posée au moment où le joueur achète
    * sa toute première compétence Réparer — l'instant où l'onglet cesse d'être
-   * cadenassé. "visite" = la main désigne l'onglet, et le coach se joue à
-   * l'arrivée sur l'écran ; "termine" ou absent (saves antérieures) = rien à
-   * guider. Aucune action n'est exigée du joueur : la leçon nomme les lieux
-   * et rend l'écran.
+   * cadenassé. "visite" = la guidance se fait EN DEUX TEMPS depuis la fusion
+   * des pièces (2026-08-23) : une main sur l'onglet Réserve de la barre du
+   * bas, puis une seconde sur l'onglet Atelier de la bande haute une fois
+   * dans la pièce ; le coach se joue à l'arrivée sur l'écran. "termine" ou
+   * absent (saves antérieures) = rien à guider. Aucune action n'est exigée du
+   * joueur : la leçon nomme les lieux et rend l'écran.
    */
   miniTutoAtelier?: "visite" | "termine";
   /**
