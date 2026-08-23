@@ -17,6 +17,10 @@ export interface MetaSlot {
   nom: string | null;
   /** Timestamp ms de la dernière écriture de la save de ce slot. */
   derniereSession: number;
+  /** Compteur monotone d'écritures de ce slot. Absent sur toute donnée
+   *  antérieure à ce chantier : vaut alors 0, ce qui fait perdre l'arbitrage
+   *  au magasin qui ne l'a pas encore. */
+  revision?: number;
 }
 
 export interface IndexSlots {
@@ -44,7 +48,8 @@ function estMetaSlotValide(meta: unknown): meta is MetaSlot | null {
   const candidat = meta as Partial<MetaSlot>;
   return (
     (candidat.nom === null || typeof candidat.nom === "string") &&
-    typeof candidat.derniereSession === "number"
+    typeof candidat.derniereSession === "number" &&
+    (candidat.revision === undefined || typeof candidat.revision === "number")
   );
 }
 
@@ -86,6 +91,28 @@ function indexExiste(): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Pour `fichierGameRepository` : dit si le miroir a un index EXPLOITABLE, dont
+ * l'`actif` fait foi (c'est lui que `changerSlotActif()` écrit) — Ruling R4.
+ * Sinon, seul l'`actif` du fichier a une chance d'être à jour.
+ *
+ * Adossé à la lecture VALIDÉE, pas à la simple présence de la clé (revue
+ * finale I2). Une clé présente mais illisible fait retomber `slotActif()` sur
+ * le défaut, c'est-à-dire le slot 1 (voir `chargerIndex()`, cas ANORMAL) : la
+ * déclarer « réellement enregistrée » ferait gagner ce 1 par défaut contre
+ * l'`actif` du fichier, on servirait et surtout on ÉCRIRAIT le slot 1, et une
+ * partie vivant dans le slot 2/3 — dont le fichier existe pourtant — devenait
+ * inatteignable depuis l'UI. Or ce chantier part du principe que ces écritures
+ * miroir peuvent être perdues.
+ *
+ * Volontairement distincte d'`indexExiste()`, qui garde la migration legacy et
+ * doit, elle, rester sur la PRÉSENCE : migrer par-dessus un index existant
+ * mais corrompu écraserait des données.
+ */
+export function indexMiroirExiste(): boolean {
+  return lireIndexBrut() !== null;
 }
 
 function ecrireIndex(index: IndexSlots): boolean {
@@ -224,6 +251,11 @@ export function renommerSlot(n: NumeroSlot, nom: string | null): void {
   index.slots[n] = {
     nom: nomFinal,
     derniereSession: existant ? existant.derniereSession : 0,
+    // La révision est reportée, jamais remise à 0 : renommer un emplacement
+    // ne doit rien dire de la fraîcheur de sa sauvegarde. La perdre ferait
+    // perdre au miroir l'arbitrage contre le fichier — précisément celui
+    // qu'il doit gagner pendant un épisode de disque plein (revue finale I1).
+    revision: existant?.revision ?? 0,
   };
   ecrireIndex(index);
 }
@@ -246,10 +278,13 @@ function slotOccupePlusRecent(
 }
 
 /**
- * Clé de la copie de secours d'un slot (double-buffer d'écriture de
- * `localGameRepository`). Déclarée ici pour que l'effacement d'un slot
- * emporte toujours sa copie — sinon une vieille copie orpheline pourrait
- * être « restaurée » dans un slot réutilisé.
+ * Clé de la copie de secours d'un slot. Ancien double-buffer d'écriture de
+ * `localGameRepository`, remplacé par le fichier atomique sous Tauri — plus
+ * personne n'écrit sous cette clé, mais `localGameRepository.load()`
+ * continue de la LIRE : c'est la parachute des saves écrites par une version
+ * antérieure du jeu. Déclarée ici pour que l'effacement d'un slot emporte
+ * toujours sa copie — sinon une vieille copie orpheline pourrait être
+ * « restaurée » dans un slot réutilisé.
  */
 export function cleBackup(n: NumeroSlot): string {
   return `${cleSlot(n)}:backup`;
@@ -288,28 +323,61 @@ export function supprimerSlot(n: NumeroSlot): void {
 }
 
 /**
- * Efface la clé de save du slot ACTIF et son entrée d'index, sans jamais
- * rebasculer l'actif (contrairement à `supprimerSlot`). C'est la sémantique
- * de « Supprimer la sauvegarde » dans Réglages : on repart à zéro sur LE
- * MÊME emplacement, on ne change pas de partie en cours de route.
+ * Efface la clé de save d'un slot DONNÉ et son entrée d'index, sans jamais
+ * toucher `index.actif` — contrairement à `supprimerSlot`, qui rebascule
+ * l'actif quand `n` en est l'emplacement. Introduit pour
+ * `fichierGameRepository.clear()` (Ruling R6) : il doit pouvoir vider
+ * l'emplacement résolu par le fichier même quand il diffère de l'actif du
+ * miroir, sans jamais faire dévier l'actif de ce dernier.
  */
-export function viderSlotActif(): void {
+export function viderSlot(n: NumeroSlot): void {
   if (typeof window === "undefined") return;
   const index = chargerIndex();
-  effacerCleEtEntree(index, index.actif);
+  effacerCleEtEntree(index, n);
   ecrireIndex(index);
 }
 
-/** Upsert la meta du slot en conservant le nom existant. */
-export function toucherDerniereSession(n: NumeroSlot): void {
+/**
+ * Efface la clé de save du slot ACTIF et son entrée d'index, sans jamais
+ * rebasculer l'actif (contrairement à `supprimerSlot`). C'est la sémantique
+ * de « Supprimer la sauvegarde » dans Réglages : on repart à zéro sur LE
+ * MÊME emplacement, on ne change pas de partie en cours de route. Cas
+ * particulier de `viderSlot` où `n = slotActif()`.
+ */
+export function viderSlotActif(): void {
+  viderSlot(slotActif());
+}
+
+/**
+ * Upsert la meta du slot en conservant le nom existant. `revision`, si
+ * fourni, remplace le compteur du slot (voir `revisionDe`) ; sinon le
+ * compteur existant est conservé (0 si absent).
+ */
+export function toucherDerniereSession(
+  n: NumeroSlot,
+  revision?: number,
+): void {
   if (typeof window === "undefined") return;
   const index = chargerIndex();
   const existant = index.slots[n];
   index.slots[n] = {
     nom: existant ? existant.nom : null,
     derniereSession: Date.now(),
+    revision: revision ?? existant?.revision ?? 0,
   };
   ecrireIndex(index);
+}
+
+/**
+ * Compteur monotone d'écritures du slot, tel qu'inscrit par
+ * `toucherDerniereSession`. 0 si le slot n'a jamais été touché depuis ce
+ * chantier (champ absent) — c'est le tiebreaker entre l'index du fichier et
+ * celui du localStorage-miroir : le magasin qui n'a pas encore ce numéro
+ * perd l'arbitrage.
+ */
+export function revisionDe(n: NumeroSlot): number {
+  if (typeof window === "undefined") return 0;
+  return chargerIndex().slots[n]?.revision ?? 0;
 }
 
 export function premierSlotLibre(): NumeroSlot | null {

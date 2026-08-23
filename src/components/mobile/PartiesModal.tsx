@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Share2, Trash2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
+import { partageDisponible, partagerFichier, quoiDuSlot } from "@/lib/storage/pontNatif";
 import {
   chargerIndex,
   renommerSlot,
@@ -15,6 +16,16 @@ import {
   type IndexSlots,
   type NumeroSlot,
 } from "@/lib/storage/slots";
+
+/**
+ * Nom du fichier proposé au partage : `resumeSlot` lit déjà `jourActuel` de
+ * façon défensive (toute save absente/corrompue/mal typée rend `null`) ; on
+ * retombe alors sur un nom générique plutôt que d'exposer un slot sans jour
+ * lisible.
+ */
+function nomExport(resume: { jour: number } | null): string {
+  return resume ? `broc-partie-jour-${resume.jour}.json` : "broc-partie.json";
+}
 
 interface PartiesModalProps {
   open: boolean;
@@ -359,6 +370,26 @@ export function PartiesModal({
   const suppressionEnCoursRef = useRef(false);
   const { d, tr, locale } = useLangue();
 
+  // Export (Ruling R15) : disponibilité sondée UNE FOIS pour la session —
+  // cette modale reste montée en permanence dans l'arbre (seul `open`
+  // bascule, cf. src/app/page.tsx), donc une ref suffit à ne sonder qu'à la
+  // toute première fois, sans état de module. `false` par défaut = icône
+  // visible tant que le sondage n'a pas prouvé le contraire (échoue ouvert
+  // plutôt que de masquer l'export pendant l'attente).
+  //
+  // Sondage par `partageDisponible()`, une commande DÉDIÉE sans effet de
+  // bord (aucune copie de fichier, aucune UI) — pas par un appel partiel de
+  // `partagerFichier`. La version précédente sondait en appelant
+  // `partagerFichier` avec un nom de fichier vide, en pariant sur l'ordre
+  // « validation avant copie » du Swift : ça marchait, mais c'était un
+  // invariant non protégé par un test — un futur changement qui déplacerait
+  // la validation après la copie aurait transformé chaque ouverture de
+  // « Parties » en partage réel silencieux. `partageDisponible()` retire le
+  // pari : elle ne touche jamais au disque ni à l'UI, par construction
+  // (mobile.rs / desktop.rs, une constante par plateforme).
+  const [exportIndisponible, setExportIndisponible] = useState(false);
+  const sondeExportFaite = useRef(false);
+
   useEffect(() => {
     if (open) {
       setIndex(chargerIndex());
@@ -369,6 +400,17 @@ export function PartiesModal({
       suppressionEnCoursRef.current = false;
     }
   }, [open]);
+
+  useEffect(() => {
+    if (sondeExportFaite.current) return;
+    sondeExportFaite.current = true;
+    partageDisponible()
+      .then((disponible) => setExportIndisponible(!disponible))
+      // Une sonde qui échoue (hors Tauri, pont natif en panne) est traitée
+      // comme une indisponibilité : on ne sait pas partager, donc on ne
+      // propose pas l'export plutôt que de risquer un clic qui échoue.
+      .catch(() => setExportIndisponible(true));
+  }, []);
 
   if (!open || index === null) return null;
 
@@ -522,6 +564,30 @@ export function PartiesModal({
 
                     {mode === "gestion" && (
                       <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                        {!exportIndisponible && (
+                          <BoutonSlot
+                            variant="secondary"
+                            onClick={() =>
+                              partagerFichier(
+                                quoiDuSlot(ligne.n),
+                                nomExport(ligne.resume),
+                              ).catch(() => {
+                                // Échec au clic (fichier absent, copie
+                                // impossible…) : rien d'affiché — pas de
+                                // toast prévu par ce chantier, l'icône reste
+                                // disponible pour un nouvel essai.
+                              })
+                            }
+                            ariaLabel={d.raisons.exporterPartie}
+                            style={{
+                              padding: "12px 13px",
+                              display: "grid",
+                              placeItems: "center",
+                            }}
+                          >
+                            <Share2 size={16} strokeWidth={2} aria-hidden />
+                          </BoutonSlot>
+                        )}
                         <BoutonSlot
                           variant="secondary"
                           onClick={() => onDebuterRenommage(ligne.n, ligne.nom)}

@@ -53,7 +53,10 @@ export default function PrivacyPage() {
         (argent, collection, réglages, sauvegarde) est enregistrée{" "}
         <strong>localement</strong> sur votre appareil (stockage local du
         système) et n’est jamais envoyée sur un serveur ni partagée : le
-        contenu de votre sauvegarde ne quitte jamais votre appareil. Deux
+        contenu de votre sauvegarde ne quitte jamais votre appareil. Sur
+        iPhone, ce stockage local est inclus dans la sauvegarde système de
+        l’appareil (iCloud ou ordinateur) : il s’agit d’un mécanisme
+        d’Apple, propre au système, pas d’un envoi par le jeu. Deux
         fonctionnalités facultatives impliquent néanmoins une collecte de
         données par Google : les publicités (voir section 4, « Publicités »)
         et la mesure d’audience du jeu (voir section 5, « Mesure
@@ -197,7 +200,10 @@ export default function PrivacyPage() {
         Broc requires no account or sign-up. Your progress (money, collection,
         settings, save file) is stored <strong>locally</strong> on your device
         (system local storage) and is never uploaded to a server or shared:
-        the contents of your save file never leave your device. Two optional
+        the contents of your save file never leave your device. On iPhone,
+        this local storage is included in the device’s system backup
+        (iCloud or computer): this is an Apple mechanism specific to the
+        system, not something the game itself sends anywhere. Two optional
         features nevertheless involve data collection by Google: advertising
         (see section 4, “Advertising”) and game analytics (see section 5,
         “Analytics”), both conditioned on the consent form shown on first
@@ -331,8 +337,12 @@ export default function PrivacyPage() {
         ajustes, partida guardada) se almacena <strong>localmente</strong> en
         tu dispositivo (almacenamiento local del sistema) y nunca se envía a
         un servidor ni se comparte: el contenido de tu partida guardada nunca
-        sale de tu dispositivo. Dos funciones opcionales implican no obstante
-        una recopilación de datos por parte de Google: la publicidad (ver
+        sale de tu dispositivo. En iPhone, este almacenamiento local se
+        incluye en la copia de seguridad del sistema del dispositivo (iCloud
+        u ordenador): es un mecanismo propio de Apple, del sistema, no un
+        envío por parte del juego. Dos funciones opcionales implican no
+        obstante una recopilación de datos por parte de Google: la publicidad
+        (ver
         sección 4, «Publicidad») y la medición de audiencia del juego (ver
         sección 5, «Medición de audiencia»), ambas condicionadas al
         formulario de consentimiento mostrado en el primer arranque.
@@ -477,8 +487,12 @@ export default function PrivacyPage() {
         <strong>τοπικά</strong> στη συσκευή σας (τοπικός χώρος αποθήκευσης
         του συστήματος) και δεν αποστέλλεται ποτέ σε διακομιστή ούτε
         κοινοποιείται: το περιεχόμενο του αποθηκευμένου παιχνιδιού σας δεν
-        φεύγει ποτέ από τη συσκευή σας. Δύο προαιρετικές λειτουργίες
-        συνεπάγονται ωστόσο συλλογή δεδομένων από την Google: οι διαφημίσεις
+        φεύγει ποτέ από τη συσκευή σας. Σε iPhone, αυτός ο τοπικός χώρος
+        αποθήκευσης περιλαμβάνεται στο αντίγραφο ασφαλείας συστήματος της
+        συσκευής (iCloud ή υπολογιστής): πρόκειται για μηχανισμό της Apple,
+        δικό του συστήματος, όχι για αποστολή από το ίδιο το παιχνίδι. Δύο
+        προαιρετικές λειτουργίες συνεπάγονται ωστόσο συλλογή δεδομένων από
+        την Google: οι διαφημίσεις
         (βλ. ενότητα 4, «Διαφημίσεις») και η μέτρηση επισκεψιμότητας του
         παιχνιδιού (βλ. ενότητα 5, «Μέτρηση επισκεψιμότητας»), αμφότερες
         εξαρτώμενες από τη φόρμα συγκατάθεσης που εμφανίζεται κατά την πρώτη

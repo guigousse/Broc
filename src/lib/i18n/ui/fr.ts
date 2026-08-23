@@ -793,6 +793,28 @@ export const fr = {
     sauvegardeImpossible:
       "Sauvegarde impossible — stockage plein ou indisponible. Ta progression risque d'être perdue.",
     sauvegardeRetablie: "Sauvegarde rétablie.",
+    // Bandeau + modale d'escalade (Tâche 8) : le toast `sauvegardeImpossible`
+    // ci-dessus ne s'affiche plus jamais — un échec persistant a désormais
+    // un signal qui ne s'efface pas tout seul.
+    sauvegardeBandeau: "Sauvegarde impossible — ta progression n'est pas enregistrée.",
+    sauvegardeModaleTitre: "Ta progression n'est pas sauvegardée",
+    sauvegardeModaleDepuisUn: "Depuis 1 minute.",
+    sauvegardeModaleDepuisN: "Depuis {minutes} minutes.",
+    sauvegardeModaleDisquePlein:
+      "Le stockage de ton téléphone est plein. Libère de la place pour que ta partie soit enregistrée.",
+    sauvegardeModaleIo:
+      "Le stockage n'est pas disponible en ce moment. Ta partie n'est pas enregistrée.",
+    sauvegardeModaleBouton: "J'ai compris",
+    // Avertissement préventif d'espace disque (Tâche 9) : avant que la
+    // sauvegarde échoue, pas après (cf. AvertissementEspace.tsx).
+    espaceTitre: "Le stockage de ton téléphone est presque plein",
+    espaceCorps:
+      "BROC risque de ne plus pouvoir enregistrer ta partie. Libère un peu de place pour continuer sereinement.",
+    espaceBouton: "J'ai compris",
+    // Export de sauvegarde (Tâche 10) : bouton par emplacement dans
+    // PartiesModal.tsx. Pas de pendant « importer » dans ce chantier — le
+    // joueur archive, il ne restaure pas.
+    exporterPartie: "Exporter cette partie",
   },
   // Conditions de déblocage des brocantes (deblocage.ts) : rendues à l'affichage
   // (panorama). `long` = description complète, `court` = avec progression.

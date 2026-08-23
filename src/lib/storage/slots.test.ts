@@ -6,9 +6,11 @@ import {
   chargerIndex,
   cleBackup,
   cleSlot,
+  indexMiroirExiste,
   premierSlotLibre,
   renommerSlot,
   resumeSlot,
+  revisionDe,
   slotActif,
   supprimerSlot,
   toucherDerniereSession,
@@ -150,6 +152,31 @@ describe("opérations", () => {
     idx = chargerIndex();
     expect(idx.slots[1]?.nom).toBeNull();
     expect(idx.slots[1]?.derniereSession).toBe(12345);
+  });
+
+  // Revue finale : `renommerSlot` reconstruisait la MetaSlot avec `nom` et
+  // `derniereSession` seulement — la révision retombait donc à 0 en silence.
+  // Depuis que le miroir est écrit même quand l'écriture fichier échoue
+  // (revue finale I1), c'est un vrai chemin de perte : renommer un
+  // emplacement pendant un épisode de disque plein ferait perdre au miroir
+  // l'arbitrage qu'il est justement là pour gagner.
+  it("renommerSlot préserve la révision du slot", () => {
+    localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 1,
+        slots: {
+          1: { nom: null, derniereSession: 12345, revision: 7 },
+          2: null,
+          3: null,
+        },
+      }),
+    );
+
+    renommerSlot(1, "Ma partie");
+
+    expect(chargerIndex().slots[1]?.nom).toBe("Ma partie");
+    expect(revisionDe(1)).toBe(7);
   });
 
   it("renommerSlot sur un slot vide : no-op, pas de MetaSlot fantôme", () => {
@@ -385,6 +412,75 @@ describe("opérations", () => {
     idx = chargerIndex();
     expect(idx.slots[2]?.nom).toBeNull();
     expect(typeof idx.slots[2]?.derniereSession).toBe("number");
+  });
+});
+
+describe("revisionDe", () => {
+  it("rend 0 pour un slot dont la révision n'a jamais été écrite", () => {
+    window.localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 1,
+        slots: { 1: { nom: null, derniereSession: 123 }, 2: null, 3: null },
+      }),
+    );
+    expect(revisionDe(1)).toBe(0);
+  });
+
+  it("conserve la révision écrite", () => {
+    toucherDerniereSession(1, 7);
+    expect(revisionDe(1)).toBe(7);
+  });
+
+  it("accepte une meta ancienne, sans champ revision", () => {
+    window.localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 2,
+        slots: { 1: null, 2: { nom: "Partie", derniereSession: 5 }, 3: null },
+      }),
+    );
+    expect(slotActif()).toBe(2);
+  });
+
+  it("refuse une revision mal typée plutôt que de la propager", () => {
+    window.localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 1,
+        slots: {
+          1: { nom: null, derniereSession: 5, revision: "sept" },
+          2: null,
+          3: null,
+        },
+      }),
+    );
+    expect(revisionDe(1)).toBe(0);
+  });
+});
+
+// Revue finale I2 : le témoin doit dire « le miroir a un index EXPLOITABLE »,
+// pas « la clé existe ». Une clé illisible fait retomber `slotActif()` sur le
+// slot 1 : la déclarer présente ferait gagner ce 1 contre l'`actif` du
+// fichier, et rendrait une partie du slot 2/3 inatteignable.
+describe("indexMiroirExiste — validité, pas seulement présence", () => {
+  it("faux quand aucune clé d'index n'existe", () => {
+    expect(indexMiroirExiste()).toBe(false);
+  });
+
+  it("vrai quand l'index miroir est présent ET lisible", () => {
+    changerSlotActif(2);
+    expect(indexMiroirExiste()).toBe(true);
+  });
+
+  it("faux quand la clé existe mais ne parse pas", () => {
+    localStorage.setItem(CLE_INDEX, "{ceci n'est pas du json");
+    expect(indexMiroirExiste()).toBe(false);
+  });
+
+  it("faux quand la clé parse mais n'a pas la forme d'un index", () => {
+    localStorage.setItem(CLE_INDEX, JSON.stringify({ actif: 9, slots: {} }));
+    expect(indexMiroirExiste()).toBe(false);
   });
 });
 

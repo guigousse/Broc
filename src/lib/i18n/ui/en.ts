@@ -762,6 +762,23 @@ export const en: DictionnaireUI = {
     sauvegardeImpossible:
       "Saving failed — storage full or unavailable. Your progress may be lost.",
     sauvegardeRetablie: "Saving restored.",
+    sauvegardeBandeau: "Saving failed — your progress isn't being recorded.",
+    sauvegardeModaleTitre: "Your progress isn't being saved",
+    sauvegardeModaleDepuisUn: "For 1 minute.",
+    sauvegardeModaleDepuisN: "For {minutes} minutes.",
+    sauvegardeModaleDisquePlein:
+      "Your phone's storage is full. Free up some space so your game can be saved.",
+    sauvegardeModaleIo:
+      "Storage isn't available right now. Your game isn't being saved.",
+    sauvegardeModaleBouton: "Got it",
+    // Preventive disk-space warning (Task 9): before saving fails, not after.
+    espaceTitre: "Your phone's storage is almost full",
+    espaceCorps:
+      "BROC may soon be unable to save your game. Free up some space to keep playing safely.",
+    espaceBouton: "Got it",
+    // Save export (Task 10): per-slot button in PartiesModal.tsx. No import
+    // counterpart in this chantier — the player archives, they don't restore.
+    exporterPartie: "Export this save",
   },
   deblocage: {
     long: {

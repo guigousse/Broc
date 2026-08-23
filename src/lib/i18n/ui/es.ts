@@ -763,6 +763,25 @@ export const es: DictionnaireUI = {
     sauvegardeImpossible:
       "No se pudo guardar: almacenamiento lleno o no disponible. Tu progreso podría perderse.",
     sauvegardeRetablie: "Guardado restablecido.",
+    sauvegardeBandeau: "No se pudo guardar — tu progreso no se está registrando.",
+    sauvegardeModaleTitre: "Tu progreso no se está guardando",
+    sauvegardeModaleDepuisUn: "Desde hace 1 minuto.",
+    sauvegardeModaleDepuisN: "Desde hace {minutes} minutos.",
+    sauvegardeModaleDisquePlein:
+      "El almacenamiento de tu teléfono está lleno. Libera espacio para que tu partida pueda guardarse.",
+    sauvegardeModaleIo:
+      "El almacenamiento no está disponible en este momento. Tu partida no se está guardando.",
+    sauvegardeModaleBouton: "Entendido",
+    // Aviso preventivo de espacio en disco (Tarea 9): antes de que falle el
+    // guardado, no después.
+    espaceTitre: "El almacenamiento de tu teléfono está casi lleno",
+    espaceCorps:
+      "BROC podría dejar de poder guardar tu partida. Libera algo de espacio para seguir jugando tranquilo.",
+    espaceBouton: "Entendido",
+    // Exportación de partida (Tarea 10): botón por emplazamiento en
+    // PartiesModal.tsx. Sin contraparte de importación en este proyecto — el
+    // jugador archiva, no restaura.
+    exporterPartie: "Exportar esta partida",
   },
   deblocage: {
     long: {
