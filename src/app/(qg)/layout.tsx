@@ -109,6 +109,8 @@ import {
 
 const VINYLE_PREFIXES = ["mus.vinyle_", "mus.33tours_"];
 const GRAMO_SESSION_KEY = "broc.gramo.session";
+/** Route de l'onglet Quêtes : c'est elle, et elle seule, qui ouvre le carnet. */
+const ROUTE_CARNET = "/quetes";
 
 function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -167,7 +169,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
    * de la barre du bas). Le livre posé sur la table du bureau a disparu ;
    * l'onglet est le seul chemin.
    */
-  const carnetOuvert = pathname === "/quetes";
+  const carnetOuvert = pathname === ROUTE_CARNET;
   const searchParams = useSearchParams();
   /**
    * Commande à déplier d'office dans le carnet. Voir `useMissionCible` pour
@@ -493,12 +495,24 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const chPretRef = useRef(chPret);
   chPretRef.current = chPret;
 
+  // MÊME piège pour la route : entre le tap sur « Livrer » et l'appel de ce
+  // callback, la cérémonie dure ~2 s, pendant lesquelles le joueur peut très
+  // bien taper RÉSERVE et se mettre à trier son stock. Une closure sur
+  // `pathname` déciderait alors avec une route périmée et l'arracherait de la
+  // pièce où il vient d'aller.
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+
   const enchainerChapitre = useCallback(() => {
     const suivant = chPretRef.current;
     const seq = sequenceEnchainement(suivant);
     if (!seq || !suivant) return; // trame close : le carnet reste ouvert
-    // Le carnet se ferme en QUITTANT sa route : c'est elle qui l'ouvre.
-    router.push("/bureau");
+    // Le carnet se ferme en QUITTANT sa route : c'est elle qui l'ouvre. On ne
+    // pousse que si l'on est ENCORE dessus — ailleurs, le joueur a déjà
+    // quitté de lui-même et le déplacer serait un enlèvement. Le push reste
+    // indispensable quand on y est : le dialogue (z-120) s'afficherait sinon
+    // par-dessus le carnet.
+    if (pathnameRef.current === ROUTE_CARNET) router.push("/bureau");
     setDialogueChapitreId(suivant.id);
     setChapitreEnAttente(seq);
   }, [router]);
