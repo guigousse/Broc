@@ -85,18 +85,6 @@ export function appliquerFinTutoriel(state: GameState): GameState {
 }
 
 /**
- * Doigt de swipe du mini-tuto carnet : le livre de compte est en zone
- * gauche (0) du panorama — la main flottante pointe vers la gauche tant que
- * cette zone n'est pas atteinte.
- */
-export function doigtSwipeVersCarnet(
-  miniTuto: GameState["miniTutoCarnet"],
-  zoneActive: number,
-): boolean {
-  return miniTuto === "ouvrir" && zoneActive !== 0;
-}
-
-/**
  * Vrai quand l'ouverture du carnet doit délivrer le chapitre du grand-père.
  * Fin du tutoriel : la main flottante guide jusqu'au carnet, et c'est son
  * ouverture — pas la pastille du bureau — qui déclenche le dialogue de la

@@ -20,7 +20,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
@@ -167,8 +167,26 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
    * l'onglet est le seul chemin.
    */
   const carnetOuvert = pathname === "/quetes";
-  /** Commande à déplier d'office dans le carnet (badge livrable tapé). */
-  const [missionCibleId, setMissionCibleId] = useState<string | null>(null);
+  /**
+   * Commande à déplier d'office dans le carnet. Source de vérité : l'URL
+   * (`?mission=`), posée par `LivrablesBadges.onTap` ou recalée par
+   * `router.replace` quand le chapitre du grand-père s'inscrit pendant que
+   * le carnet est déjà ouvert (mini-tuto). `missionCibleAttente` ne sert
+   * QUE quand ce chapitre est accepté carnet FERMÉ (pastille du grand-père,
+   * hors `/quetes`) : rien dans l'URL à corriger sans ouvrir le carnet
+   * malgré lui, donc la cible est armée en local pour la prochaine
+   * ouverture générique. Elle est consommée (effet ci-dessous) dès que le
+   * carnet s'ouvre : contrairement à l'ancien `missionCibleId` remis à
+   * `null` seulement dans `onClose`, elle ne peut plus rester collée après
+   * une sortie par la barre du bas (Task 8) sans passer par `onClose`.
+   */
+  const searchParams = useSearchParams();
+  const missionUrl = searchParams.get("mission");
+  const [missionCibleAttente, setMissionCibleAttente] = useState<string | null>(null);
+  const missionCibleId = missionUrl ?? missionCibleAttente;
+  useEffect(() => {
+    if (carnetOuvert) setMissionCibleAttente(null);
+  }, [carnetOuvert]);
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
@@ -817,7 +835,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
       <CarnetOverlay
         open={carnetOuvert}
         onClose={() => {
-          setMissionCibleId(null);
           router.push("/bureau");
         }}
         state={state}
@@ -980,8 +997,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           sureleves={!!chPret}
           onTap={(courrierId) => {
             playClick();
-            setMissionCibleId(courrierId);
-            router.push("/quetes");
+            router.push(`/quetes?mission=${encodeURIComponent(courrierId)}`);
           }}
         />
       )}
@@ -993,10 +1009,18 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           setDialogueQg(null);
           if (dialogueChapitreId) {
             accepterChapitrePrincipal(dialogueChapitreId);
-            // Le carnet peut être ouvert derrière le dialogue (fin du
-            // tutoriel) : la commande neuve s'y affiche dépliée. Sinon la
-            // cible est simplement prête pour la prochaine ouverture.
-            setMissionCibleId(dialogueChapitreId);
+            if (carnetOuvert) {
+              // Le carnet est déjà ouvert derrière le dialogue (mini-tuto
+              // de fin de tutoriel) : recaler la cible sur la commande qui
+              // vient d'être créée, sans naviguer — `replace` corrige l'URL
+              // en place (pas de nouvelle entrée d'historique).
+              router.replace(`/quetes?mission=${encodeURIComponent(dialogueChapitreId)}`);
+            } else {
+              // Carnet fermé (pastille du grand-père hors `/quetes`) :
+              // rien dans l'URL à corriger sans l'ouvrir malgré lui — armer
+              // la cible pour la prochaine ouverture générique.
+              setMissionCibleAttente(dialogueChapitreId);
+            }
             setDialogueChapitreId(null);
           } else if (etape === "accueil") avancerTutoriel("aller-chiner");
           else if (etape === "chine-sortir") avancerTutoriel("stockage-ouvrir");

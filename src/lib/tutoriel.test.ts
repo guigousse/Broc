@@ -5,7 +5,6 @@ import {
   banniereVisible,
   chapitreDuCarnetDu,
   competenceGuidee,
-  doigtSwipeVersCarnet,
   etapeSuivante,
   ongletTutorielPermis,
   portePulse,
@@ -54,11 +53,9 @@ describe("tutoriel", () => {
     expect(fin.miniTutoCarnet).toBe("ouvrir");
   });
 
-  it("doigtSwipeVersCarnet pointe tant que la zone gauche (0) n'est pas atteinte", () => {
-    expect(doigtSwipeVersCarnet("ouvrir", 1)).toBe(true);
-    expect(doigtSwipeVersCarnet("ouvrir", 0)).toBe(false);
-    expect(doigtSwipeVersCarnet("termine", 1)).toBe(false);
-    expect(doigtSwipeVersCarnet(undefined, 1)).toBe(false);
+  it("doigtSwipeVersCarnet n'existe plus : le livre a quitté le panorama", async () => {
+    const mod = await import("./tutoriel");
+    expect("doigtSwipeVersCarnet" in mod).toBe(false);
   });
 
   it("chapitreDuCarnetDu n'arme le chapitre qu'à l'ouverture du carnet pendant le mini-tuto", () => {
