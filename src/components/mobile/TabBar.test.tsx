@@ -53,6 +53,11 @@ function etat(niveau: number, competences: string[] = []): GameState {
     inventaireJoueur: [],
     competencesDebloquees: competences,
     tutorielEtape: "termine",
+    // L'onglet Quêtes porte un badge (missionsLivrables) calculé pour
+    // TOUS les fixtures, cadenassé ou pas : sans ces deux tableaux vides,
+    // missionsLivrables plante sur un état de test qui ne les fournit pas.
+    missions: [],
+    courriers: [],
   } as unknown as GameState;
 }
 
@@ -75,8 +80,7 @@ describe("TabBar — onboarding Bibliothèque", () => {
     mockGameStateValue = { state: etat(0), isHydrated: true };
     render(<TabBar />);
     expect(screen.getByText("Biblio.")).toBeTruthy();
-    // 5 colonnes reviennent en Task 8 avec l'onglet Quêtes.
-    expect(screen.getAllByRole("button")).toHaveLength(4);
+    expect(screen.getAllByRole("button")).toHaveLength(5);
     expect(estCadenasse("Biblio.")).toBe(true);
   });
 
@@ -87,13 +91,12 @@ describe("TabBar — onboarding Bibliothèque", () => {
     expect(estCadenasse("Biblio.")).toBe(false);
   });
 
-  it("state null (pré-hydratation) : les 4 onglets par défaut, pas de flash de disparition", () => {
+  it("state null (pré-hydratation) : les 5 onglets par défaut, pas de flash de disparition", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: null, isHydrated: true };
     render(<TabBar />);
     expect(screen.getByText("Biblio.")).toBeTruthy();
-    // 5 colonnes reviennent en Task 8 avec l'onglet Quêtes.
-    expect(screen.getAllByRole("button")).toHaveLength(4);
+    expect(screen.getAllByRole("button")).toHaveLength(5);
   });
 
   it("tutoriel en cours : la barre reste visible mais la navigation est inerte", () => {
@@ -119,6 +122,8 @@ describe("TabBar — mini-tuto vinyle (main pointeuse)", () => {
       competencesDebloquees: [],
       tutorielEtape: "termine",
       miniTutoVinyle: mt,
+      missions: [],
+      courriers: [],
     } as unknown as GameState;
   }
 
@@ -190,11 +195,11 @@ describe("TabBar — onglets cadenassés", () => {
  * pas fermée.
  */
 describe("ongletSuivantOuvert — le swipe saute les pièces fermées", () => {
-  const IDX_BUREAU = 2; // Collection, Biblio., Bureau, Réserve
+  const IDX_BUREAU = 2; // Quêtes, Biblio., Bureau, Réserve, Collection
 
   it("saute la Bibliothèque cadenassée en allant à gauche", () => {
     const s = etat(0);
-    expect(ongletSuivantOuvert(IDX_BUREAU, -1, s)?.path).toBe("/collection");
+    expect(ongletSuivantOuvert(IDX_BUREAU, -1, s)?.path).toBe("/quetes");
   });
 
   it("s'arrête sur la Bibliothèque une fois ouverte", () => {
@@ -229,6 +234,8 @@ describe("TabBar — main vers l'Atelier fraîchement ouvert (onglet Réserve)",
       competencesDebloquees: [`${catTreeId(CATEGORIES[0])}.reparer.1`],
       tutorielEtape: "termine",
       miniTutoAtelier: "visite",
+      missions: [],
+      courriers: [],
       ...extra,
     } as unknown as GameState;
   }
@@ -317,5 +324,33 @@ describe("TabBar — onglet Réserve actif sur /atelier et /stockage", () => {
     mockGameStateValue = { state: etat(1), isHydrated: true };
     render(<TabBar />);
     expect(onglet("Réserve").getAttribute("aria-current")).toBe("page");
+  });
+});
+
+describe("TabBar — l'onglet Quêtes et le nouvel ordre", () => {
+  it("cinq colonnes, Quêtes en premier et Collection en dernier", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = { state: etat(1), isHydrated: true };
+    render(<TabBar />);
+    expect(screen.getAllByRole("button")).toHaveLength(5);
+    expect(TAB_ORDER[0].cle).toBe("quetes");
+    expect(TAB_ORDER[4].cle).toBe("collection");
+    expect(TAB_ORDER[2].cle).toBe("bureau"); // le Bureau reste au centre
+  });
+
+  it("taper Quêtes navigue vers /quetes", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = { state: etat(1), isHydrated: true };
+    render(<TabBar />);
+    fireEvent.click(onglet("Quêtes"));
+    expect(pushMock).toHaveBeenCalledWith("/quetes");
+  });
+
+  it("le swipe boucle sur les cinq onglets en sautant la Biblio verrouillée", () => {
+    const s = etat(0); // niveau 0 : Bibliothèque cadenassée
+    // depuis Quêtes (0), un pas à droite doit sauter la Biblio (1)
+    expect(ongletSuivantOuvert(0, 1, s)?.cle).toBe("bureau");
+    // et un pas à gauche depuis Quêtes boucle sur Collection (4)
+    expect(ongletSuivantOuvert(0, -1, s)?.cle).toBe("collection");
   });
 });

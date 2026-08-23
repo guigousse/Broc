@@ -101,6 +101,8 @@ export const fr = {
       stockage: "Stockage",
       atelier: "Atelier",
       reserve: "Réserve",
+      quetes: "Quêtes",
+      quetesAbrege: "Quêtes",
     },
     ongletVerrouille: "verrouillé",
     verrouBibliotheque: "Le Cabinet ouvre à ton premier niveau de Brocanteur.",

@@ -64,6 +64,23 @@ describe("useMissionCible", () => {
     expect(result.current.missionCibleId).toBeNull();
   });
 
+  it("armerAttente pendant que le carnet est déjà OUVERT est ignoré : l'invariant devient structurel", () => {
+    // Troisième récidive potentielle du défaut « valeur périmée qui survit » :
+    // les deux appelants réels (LivrablesBadges.onTap, le dialogue du
+    // grand-père) sont structurellement carnet fermé quand ils arment une
+    // attente, mais rien ne l'empêchait avant ce correctif. Un appel pendant
+    // que le carnet est ouvert doit être un no-op, pas juste un cas qui
+    // n'arrive jamais en pratique.
+    const { result, rerender } = renderHook(
+      ({ carnetOuvert, missionUrl }) => useMissionCible(carnetOuvert, missionUrl),
+      { initialProps: { carnetOuvert: true, missionUrl: null as string | null } },
+    );
+    act(() => result.current.armerAttente("chapitre_ignore"));
+    rerender({ carnetOuvert: false, missionUrl: null });
+    rerender({ carnetOuvert: true, missionUrl: null });
+    expect(result.current.missionCibleId).toBeNull();
+  });
+
   it("un router.replace pendant que le carnet reste ouvert recale la cible sans repasser par une fermeture", () => {
     // Mini-tuto de fin de tutoriel : le dialogue du chapitre joue par-dessus
     // le carnet resté ouvert, et router.replace pose la nouvelle mission

@@ -98,6 +98,8 @@ export const en: DictionnaireUI = {
       stockage: "Storage",
       atelier: "Workshop",
       reserve: "Storeroom",
+      quetes: "Quests",
+      quetesAbrege: "Quests",
     },
     ongletVerrouille: "locked",
     verrouBibliotheque: "The Study opens at your first Dealer level.",

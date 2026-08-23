@@ -98,6 +98,8 @@ export const el: DictionnaireUI = {
       stockage: "Αποθήκη",
       atelier: "Εργαστήριο",
       reserve: "Αποθήκη",
+      quetes: "Αποστολές",
+      quetesAbrege: "Αποστ.",
     },
     ongletVerrouille: "κλειδωμένο",
     verrouBibliotheque: "Το Γραφείο ανοίγει στο πρώτο σου επίπεδο Παλαιοπώλη.",

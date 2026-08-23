@@ -98,6 +98,8 @@ export const es: DictionnaireUI = {
       stockage: "Almacén",
       atelier: "Taller",
       reserve: "Almacén",
+      quetes: "Misiones",
+      quetesAbrege: "Misiones",
     },
     ongletVerrouille: "bloqueado",
     verrouBibliotheque: "El Gabinete abre en tu primer nivel de Chamarilero.",

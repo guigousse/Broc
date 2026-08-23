@@ -1,7 +1,15 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Album, BookOpen, Home, Lock, Warehouse, type LucideIcon } from "lucide-react";
+import {
+  Album,
+  BookOpen,
+  Home,
+  Lock,
+  ScrollText,
+  Warehouse,
+  type LucideIcon,
+} from "lucide-react";
 import { type CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
 import { useGameActions, useGameStateOnly } from "@/context/GameContext";
@@ -10,16 +18,12 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import { useToastSafe } from "@/components/ui/Toast";
 import { estPret } from "@/lib/restauration";
+import { missionsLivrables } from "@/lib/quetes/objectifs";
 import { ongletTutorielPermis, tutorielActif } from "@/lib/tutoriel";
 import type { GameState } from "@/types/game";
 
-/**
- * Clé d'onglet — sert à retrouver le libellé traduit dans `d.chrome.onglets`.
- * "quetes" arrive en Task 8 avec le cinquième onglet ; l'ajouter dès
- * maintenant casserait `d.chrome.onglets[tab.cle]` (TS7053), faute de clé
- * `quetes` dans le dictionnaire tant qu'aucun onglet ne s'en sert.
- */
-type OngletCle = "collection" | "bibliotheque" | "bureau" | "reserve";
+/** Clé d'onglet — sert à retrouver le libellé traduit dans `d.chrome.onglets`. */
+type OngletCle = "quetes" | "collection" | "bibliotheque" | "bureau" | "reserve";
 
 export interface TabDef {
   icon: LucideIcon;
@@ -51,13 +55,23 @@ export interface TabDef {
 }
 
 /**
- * Ordre cyclique : Collection → Bibliothèque → Bureau → Réserve → (boucle)
+ * Ordre cyclique : Quêtes → Bibliothèque → Bureau → Réserve → Collection → (boucle)
  *
- * Seul le Bureau est un panorama (3 zones swipables). Les autres onglets
- * ouvrent directement leur écran de gestion.
+ * Le Bureau reste au centre. Seul lui est un panorama (3 zones swipables) ;
+ * les autres onglets ouvrent directement leur écran.
  */
 export const TAB_ORDER: TabDef[] = [
-  { icon: Album, cle: "collection", path: "/collection", routes: ["/collection"] },
+  {
+    icon: ScrollText,
+    cle: "quetes",
+    path: "/quetes",
+    routes: ["/quetes"],
+    abrege: (d) => d.chrome.onglets.quetesAbrege,
+    // Les pastilles de livrables ne vivent que dans le bureau : le badge
+    // porte la même information partout ailleurs dans le jeu. Même source
+    // que les pastilles — aucune règle dupliquée.
+    badge: (state) => missionsLivrables(state).length,
+  },
   {
     icon: BookOpen,
     cle: "bibliotheque",
@@ -88,6 +102,7 @@ export const TAB_ORDER: TabDef[] = [
         (o) => o.enRestauration && estPret(o.enRestauration, now),
       ).length,
   },
+  { icon: Album, cle: "collection", path: "/collection", routes: ["/collection"] },
 ];
 
 /** Libellé abrégé affiché sous l'icône (colonne étroite) — cf. `d.chrome.onglets`. */

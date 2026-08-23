@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 /**
  * Cible du carnet à déplier d'office, dérivée de deux sources : `missionUrl`
@@ -29,6 +29,17 @@ import { useState } from "react";
  * le chapitre suivant s'arme en attente carnet fermé, puis un retour
  * arrière restaure `/quetes?mission=<déjà livré>` — sans la priorité à
  * l'attente, cette valeur périmée regagnerait la main sur la cible fraîche.
+ *
+ * `armerAttente` n'a de sens que carnet FERMÉ : c'est le seul moment où rien
+ * dans l'URL ne peut porter la cible. Les deux appelants réels (tap sur une
+ * pastille de livrable hors `/quetes`, dialogue du grand-père accepté carnet
+ * fermé) sont structurellement dans ce cas — mais rien ne l'imposait, et un
+ * appel pendant que le carnet est déjà ouvert armerait une attente qui ne
+ * serait consommée ni à cette ouverture (déjà passée) ni à la fermeture,
+ * pour ressurgir et battre une URL fraîche à l'ouverture SUIVANTE. C'est la
+ * même famille de défaut (valeur périmée qui survit) que le gel pendant le
+ * rendu corrige déjà ailleurs dans ce hook ; ici on rend l'invariant
+ * structurel en ignorant l'appel plutôt que de le documenter seulement.
  */
 export function useMissionCible(carnetOuvert: boolean, missionUrl: string | null) {
   const [attente, setAttente] = useState<string | null>(null);
@@ -47,8 +58,16 @@ export function useMissionCible(carnetOuvert: boolean, missionUrl: string | null
     setPrecedent({ carnetOuvert, missionUrl });
   }
 
+  const armerAttente = useCallback(
+    (id: string | null) => {
+      if (carnetOuvert) return;
+      setAttente(id);
+    },
+    [carnetOuvert],
+  );
+
   return {
     missionCibleId: carnetOuvert ? cibleGelee : null,
-    armerAttente: setAttente,
+    armerAttente,
   };
 }
