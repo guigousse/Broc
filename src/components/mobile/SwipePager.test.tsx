@@ -11,7 +11,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
-import { SwipePager } from "./SwipePager";
+import { SwipePager, computeDirection } from "./SwipePager";
 import type { GameState } from "@/types/game";
 
 let mockPathname = "/bureau";
@@ -28,6 +28,11 @@ const etat = {
   tutorielEtape: "termine",
 } as unknown as GameState;
 
+// `SwipePager` n'importe que `next/navigation`, `TabBar` et `GameContext`.
+// Tout le reste des mocks ci-dessous (`useGameActions`, `SettingsContext`,
+// `Toast`) ne sert qu'à faire taire `TabBar` — tiré pour `TAB_ORDER` et
+// `findActiveTabIndex`, mais embarqué en entier par la chaîne d'imports.
+// Ne pas les supprimer en les croyant morts.
 vi.mock("@/context/GameContext", () => ({
   useGameStateOnly: () => ({ state: etat, isHydrated: true }),
   useGameActions: () => ({ tempsConfiance: () => null }),
@@ -84,5 +89,22 @@ describe("SwipePager — animation d'entrée", () => {
     // Même pageKey `_qg` des deux côtés : le sous-arbre ne re-monte pas, le
     // panorama garde son scroll — et rien ne glisse.
     expect(classeApresTransition("/bureau", "/atelier")).toBe("");
+  });
+});
+
+describe("computeDirection", () => {
+  it("deux routes du même onglet : aucun sens", () => {
+    // `/stockage` et `/atelier` sont les deux routes de la Réserve : on ne
+    // change pas d'onglet. Sans garde, l'arithmétique du cycle répondait
+    // "right" (forward = backward = 0). Le garde de `pageKey` le masque au
+    // rendu, mais la fonction mentait prise isolément.
+    expect(computeDirection("/stockage", "/atelier")).toBe("none");
+    expect(computeDirection("/atelier", "/stockage")).toBe("none");
+  });
+
+  it("route identique ou inconnue : aucun sens non plus", () => {
+    expect(computeDirection("/bureau", "/bureau")).toBe("none");
+    expect(computeDirection(null, "/bureau")).toBe("none");
+    expect(computeDirection("/privacy", "/bureau")).toBe("none");
   });
 });

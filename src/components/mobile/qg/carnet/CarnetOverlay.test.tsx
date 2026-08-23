@@ -165,6 +165,32 @@ describe("CarnetOverlay", () => {
     expect(entete.textContent ?? "").toMatch(/1 prête|1 ready/i);
   });
 
+  it("ouverture ciblée depuis une pastille (fermé → ouvert) : la commande est amenée dans la zone visible", () => {
+    // Depuis que le carnet est une route, `setMissionCibleId` (urgente) et
+    // `router.push("/quetes")` (transition) tombent en DEUX commits React :
+    // l'effet d'ouverture ciblée part carnet FERMÉ, où aucun
+    // `[data-commande-id]` n'est monté. Sans `open` en dépendance, il ne
+    // rejouerait jamais et le défilement serait silencieusement perdu.
+    const q = quete("q1", "quotidienne", "La bonne pioche");
+    const cibles: string[] = [];
+    const proto = Element.prototype as unknown as { scrollIntoView?: () => void };
+    const vrai = proto.scrollIntoView;
+    proto.scrollIntoView = function (this: HTMLElement) {
+      cibles.push(this.dataset.commandeId ?? "");
+    };
+    try {
+      const { rerender } = render(
+        <CarnetOverlay {...base} open={false} state={etat([q])} missionInitialeId="q1" />,
+      );
+      expect(cibles).toEqual([]); // rien à faire défiler : le carnet ne rend rien
+      rerender(<CarnetOverlay {...base} open state={etat([q])} missionInitialeId="q1" />);
+      expect(cibles).toEqual(["q1"]);
+    } finally {
+      if (vrai) proto.scrollIntoView = vrai;
+      else delete proto.scrollIntoView;
+    }
+  });
+
   it("après l'ouverture ciblée, la section redevient repliable au tap", () => {
     window.localStorage.setItem(CLE_STOCKAGE_CARNET, JSON.stringify({ quotidiennes: true }));
     const q = quete("q1", "quotidienne", "La bonne pioche");

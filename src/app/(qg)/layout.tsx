@@ -89,7 +89,6 @@ import { nomExpediteur } from "@/lib/i18n/contenu";
 import {
   tutorielActif,
   chapitreDuCarnetDu,
-  doigtSwipeVersCarnet,
   portePulse,
 } from "@/lib/tutoriel";
 import {
@@ -718,11 +717,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
             <div className="tuto-main-swipe" aria-hidden />
           )}
 
-          {/* Mini-tuto carnet : invite à rejoindre la zone gauche (livre de
-              compte) après la conclusion du tutoriel. */}
-          {state && !dialogueQg && doigtSwipeVersCarnet(state.miniTutoCarnet, zoneActive) && (
-            <div className="tuto-main-swipe tuto-main-swipe-gauche" aria-hidden />
-          )}
+          {/* Le doigt « swipe vers le carnet » a disparu d'ici : le livre de
+              compte a quitté la zone gauche du panorama pour devenir la route
+              `/quetes`. Il pointait une table vide. */}
         </div>
       </MobileLayout>
 
@@ -957,6 +954,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         visible={
           !!chPret &&
           !dialogueQg &&
+          // La feuille du carnet est descendue en z-index 36 (pour laisser la
+          // barre du bas cliquable) : cette pastille, fixe en 40, resterait
+          // peinte PAR-DESSUS le carnet. Le voile plein écran la masquait avant.
+          !carnetOuvert &&
           // Chapitre 1 réservé au carnet tant que le mini-tuto de fin de
           // tutoriel n'est pas consommé, puis pendant tout le temps où son
           // dialogue est armé/joué : un seul chemin de délivrance.
@@ -970,7 +971,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           setDialogueQg({ id: `dlg_${chPret.id}`, lignes: chPret.dialogue });
         }}
       />
-      {!tutoActif && !dialogueQg && (
+      {/* `!carnetOuvert` : même raison que pour GrandPereBadge — et ici c'est
+          le chemin nominal d'entrée dans le carnet, la pastille resterait
+          peinte sur la page qu'elle vient d'ouvrir. */}
+      {!tutoActif && !dialogueQg && !carnetOuvert && (
         <LivrablesBadges
           livrables={livrables}
           sureleves={!!chPret}

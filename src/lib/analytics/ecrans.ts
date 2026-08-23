@@ -20,6 +20,11 @@ const EXACTS: Record<string, string> = {
   "/atelier": "atelier",
   "/collection": "collection",
   "/bibliotheque": "bibliotheque",
+  // Le carnet de quêtes est une route à part entière depuis qu'il a quitté
+  // l'état local du layout (qg) : sans cette entrée, `nomEcran` renvoie null,
+  // aucun `screen_view` n'est journalisé et le `screen_class` de l'écran
+  // précédent reste collé aux événements suivants.
+  "/quetes": "quetes",
 };
 
 export function nomEcran(pathname: string | null | undefined): string | null {
