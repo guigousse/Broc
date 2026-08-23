@@ -108,9 +108,9 @@ describe("CourrierSheet — cartes postales", () => {
         onMarquerLu={vi.fn()}
       />,
     );
-    expect(screen.getByTestId("jeton-argent").textContent).toContain("+90 €");
-    expect(screen.getByTestId("jeton-xp").textContent).toContain("+100 XP");
-    expect(screen.getByTestId("jeton-energie").textContent).toContain("+1 ⚡");
+    expect(screen.getByTestId("jeton-argent").textContent).toBe("90 €");
+    expect(screen.getByTestId("jeton-xp").textContent).toBe("100 XP");
+    expect(screen.getByTestId("jeton-energie").textContent).toBe("1 ⚡");
   });
 
   it("mission sans xp explicite : aucun jeton XP (les quêtes n'en versent plus)", () => {
@@ -123,6 +123,6 @@ describe("CourrierSheet — cartes postales", () => {
     } as Courrier;
     render(<CourrierSheet open onClose={vi.fn()} courriers={[sansXp]} onMarquerLu={vi.fn()} />);
     expect(screen.queryByTestId("jeton-xp")).toBeNull();
-    expect(screen.getByTestId("jeton-argent").textContent).toContain("+90 €");
+    expect(screen.getByTestId("jeton-argent").textContent).toBe("90 €");
   });
 });

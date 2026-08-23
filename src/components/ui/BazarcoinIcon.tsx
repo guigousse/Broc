@@ -57,6 +57,23 @@ interface BazarcoinIconProps {
  * lecteur d'écran à chaque prix, il n'ajouterait que du bruit.
  */
 
+/**
+ * Hauteur du signe Ƶ quand il voisine un montant écrit en POLICE D'AFFICHAGE
+ * (Cinzel) : l'œil du « € » et des chiffres. MESURÉE au canvas et non estimée
+ * — 10,85 px d'encre pour 14,93 px de corps, soit 0,727 ; le « 8 » y mesure
+ * 10,87, la même chose.
+ *
+ * En em et non en pixels : le corps qui l'entoure est fluide à la caisse
+ * (`clamp(13px, 3.8vw, 16px)`). Figé, le signe dépasserait le « € » sur un
+ * petit écran et lui serait plus court sur un grand.
+ *
+ * ⚠ Elle ne vaut QUE pour Cinzel. En `--font-serif` (Cormorant Garamond) le
+ * « € » ne mesure que 0,492 em : y poser 0,73 em donnerait un Ƶ une fois et
+ * demie trop haut. C'est le défaut qu'ont porté les pastilles du carnet
+ * jusqu'au 2026-08-23.
+ */
+export const HAUTEUR_SIGNE_DISPLAY = "0.73em";
+
 /** Largeur / hauteur du tracé, épaisseur de trait comprise. Arrondi à quatre
  *  décimales : il part aussi tel quel dans un `calc()` CSS, où les quinze
  *  chiffres du quotient flottant ne seraient que du bruit. */

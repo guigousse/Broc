@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { PaveRecompense } from "./PaveRecompense";
 import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
+import { HAUTEUR_SIGNE_DISPLAY } from "@/components/ui/BazarcoinIcon";
 
 afterEach(cleanup);
 
@@ -77,12 +78,14 @@ describe("PaveRecompense", () => {
     render(<PaveRecompense recompense={REC} livrable={false} onLivrer={() => {}} />);
     const jetonArgent = document.querySelector('[data-jeton="argent"]');
     const jetonXp = document.querySelector('[data-jeton="xp"]');
-    // Si quelqu'un recode `+${n} €` en dur dans le composant, ce test échoue
-    // dès que jetonArgent/jetonXp change de forme dans le dictionnaire (par
+    // Si quelqu'un recode `${n} €` en dur dans le composant, ce test échoue
+    // dès que gainArgent/gainXp change de forme dans le dictionnaire (par
     // ex. un futur "€{n}" ou une unité déplacée) : la source de vérité est
     // la même que celle utilisée par RecompenseJetons, pas une copie locale.
-    expect(jetonArgent?.textContent).toBe(tr(d.carnet.jetonArgent, { n: REC.argent }));
-    expect(jetonXp?.textContent).toBe(tr(d.carnet.jetonXp, { n: REC.xp }));
+    expect(jetonArgent?.textContent).toBe(tr(d.carnet.gainArgent, { n: REC.argent }));
+    expect(jetonXp?.textContent).toBe(tr(d.carnet.gainXp, { n: REC.xp }));
+    // Et surtout : PAS le gabarit du grand livre, qui garde son « + ».
+    expect(jetonArgent?.textContent).not.toContain("+");
   });
 
   /* ─── relief et appel au tap (retour device 2026-08-18) ─── */
@@ -128,5 +131,31 @@ describe("PaveRecompense", () => {
     const { container } = render(<PaveRecompense recompense={REC} livrable={false} onLivrer={() => {}} />);
     const plaque = container.firstElementChild as HTMLElement;
     expect(plaque.style.alignItems).toBe("center");
+  });
+  /* ─── les deux devises à la même hauteur (retour 2026-08-23) ─── */
+
+  it("le signe Ƶ prend la hauteur du « € » voisin, et non une taille choisie à l'œil", () => {
+    // Le défaut corrigé : `size={12}` en dur à côté d'un « € » qui n'en
+    // mesurait que 6,4 (0,492 em de Cormorant à corps 13) — le Ƶ faisait
+    // 1,9 fois le €.
+    render(
+      <PaveRecompense
+        recompense={{ argent: 250, xp: 0, energie: 0, jetons: 3 }}
+        livrable={false}
+        onLivrer={() => {}}
+      />,
+    );
+    const svg = document.querySelector('[data-jeton="bazar"] svg');
+    expect(svg?.getAttribute("height")).toBe(HAUTEUR_SIGNE_DISPLAY);
+  });
+
+  it("les montants sont écrits en police d'affichage — sans quoi 0,73 em ne veut plus rien dire", () => {
+    // La constante est la hauteur du « € » DE CINZEL. Reposer ces pastilles
+    // sur `--font-serif` sans y toucher rendrait le Ƶ une fois et demie trop
+    // haut, en silence : ce test est la sentinelle de ce couplage.
+    render(<PaveRecompense recompense={REC} livrable={false} onLivrer={() => {}} />);
+    const argent = document.querySelector('[data-jeton="argent"]') as HTMLElement;
+    expect(argent.style.fontFamily).toBe("var(--font-display)");
+    expect(argent.style.fontVariantNumeric).toContain("lining-nums");
   });
 });

@@ -8,9 +8,12 @@ afterEach(cleanup);
 describe("RecompenseJetons", () => {
   it("rend un jeton par gain non nul", () => {
     render(<RecompenseJetons recompense={{ argent: 200, xp: 300, energie: 2, jetons: 0 }} variante="bandeau" label="Récompense" />);
-    expect(screen.getByTestId("jeton-argent").textContent).toContain("+200 €");
-    expect(screen.getByTestId("jeton-xp").textContent).toContain("+300 XP");
-    expect(screen.getByTestId("jeton-energie").textContent).toContain("+2 ⚡");
+    // SANS « + » : la plaque s'intitule « Récompense » et rien n'y est
+    // jamais retiré. Le signe reste au grand livre, où il oppose un crédit
+    // à un débit.
+    expect(screen.getByTestId("jeton-argent").textContent).toBe("200 €");
+    expect(screen.getByTestId("jeton-xp").textContent).toBe("300 XP");
+    expect(screen.getByTestId("jeton-energie").textContent).toBe("2 ⚡");
   });
 
   it("omet les jetons à 0", () => {
@@ -38,7 +41,7 @@ describe("RecompenseJetons", () => {
       />,
     );
     const pastille = screen.getByTestId("jeton-bazar");
-    expect(pastille.textContent).toBe("+3");
+    expect(pastille.textContent).toBe("3");
     expect(pastille.querySelector("svg")).toBeTruthy();
     expect(container.textContent).not.toContain("Bazarcoin");
   });
@@ -57,7 +60,7 @@ describe("RecompenseJetons", () => {
     );
     const pastille = screen.getByTestId("jeton-bazar");
     expect(pastille.style.color).toBe("var(--azur-400)");
-    expect(pastille.textContent).toBe("+1");
+    expect(pastille.textContent).toBe("1");
   });
 
   it("n'affiche aucune pastille de jetons à zéro", () => {

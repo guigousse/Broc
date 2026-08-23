@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Zap } from "lucide-react";
-import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
+import { BazarcoinIcon, HAUTEUR_SIGNE_DISPLAY } from "@/components/ui/BazarcoinIcon";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
@@ -89,17 +89,6 @@ const srOnlyStyle: CSSProperties = {
   whiteSpace: "nowrap",
   border: 0,
 };
-
-/**
- * Hauteur du signe Ƶ, en em du corps qui l'entoure : l'œil du « € » et des
- * chiffres. MESURÉE au canvas et non estimée — 10,85 px d'encre pour 14,93 px
- * de corps sur Cinzel, soit 0,727 ; le « 8 » y mesure 10,87, la même chose.
- *
- * En em et non en pixels parce que le corps de la caisse est fluide
- * (`clamp(13px, 3.8vw, 16px)`) : figé, le signe dépasserait le « € » sur un
- * petit écran et lui serait plus court sur un grand.
- */
-const HAUTEUR_SIGNE = "0.73em";
 
 /**
  * L'écart entre un montant et son signe. Deux valeurs pour UN SEUL écart vu :
@@ -379,7 +368,7 @@ export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
                   <span aria-hidden="true">
                     {formaterMontantCompact(jetons ?? 0, locale)}
                   </span>
-                  <BazarcoinIcon size={HAUTEUR_SIGNE} />
+                  <BazarcoinIcon size={HAUTEUR_SIGNE_DISPLAY} />
                 </strong>
               {/* data-fly-target : cible des objets vendus dans le bilan de
                   vente, comme le stockage l'est pour les objets chinés. Il est

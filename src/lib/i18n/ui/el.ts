@@ -653,8 +653,14 @@ export const el: DictionnaireUI = {
     jetonArgent: "+{n} €",
     jetonXp: "+{n} XP",
     jetonEnergie: "+{n} ⚡",
-    // Les PASTILLES du carnet : le nombre nu, le signe bleu le suit.
-    jetonBazar: "+{n}",
+    // Les PASTILLES du carnet, SANS « + » : la plaque s'intitule déjà
+    // « Récompense » et rien n'y est jamais retiré — le signe n'apprend rien
+    // et vole la place au montant, qu'on veut gros. Le Bazarcoin y sort en
+    // chiffre nu, son signe bleu étant dessiné à côté.
+    gainArgent: "{n} €",
+    gainXp: "{n} XP",
+    gainEnergie: "{n} ⚡",
+    gainBazar: "{n}",
     // Le GRAND LIVRE, qui est du texte pur : aucun signe dessiné n'y a sa
     // place, le mot doit donc rester écrit.
     jetonBazarUn: "+{n} Bazarcoin",
