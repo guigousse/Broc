@@ -38,6 +38,15 @@ export const RECOUVREMENT_ONGLETS = 16;
  */
 export const Z_CARTE = 1;
 
+/**
+ * Épaisseur du feuilletage laiton de la carte : 1 px de liseré, 2 px de
+ * papier, 1 px de liseré. La face d'une languette doit descendre d'exactement
+ * cette valeur SOUS le bord haut de la carte : ses deux traits traversent
+ * alors les deux traits du cadre et s'y raccordent, au lieu de s'arrêter en
+ * l'air juste au-dessus (constaté à la loupe ×10).
+ */
+export const EPAISSEUR_CADRE_CARTE = 4;
+
 const wrap: CSSProperties = {
   position: "fixed",
   // La bannière de consigne du tutoriel flotte juste sous le header : sans

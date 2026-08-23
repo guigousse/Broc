@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ReserveTabs } from "./ReserveTabs";
 import {
+  EPAISSEUR_CADRE_CARTE,
   RECOUVREMENT_ONGLETS,
   Z_CARTE,
 } from "@/components/mobile/floating-room/FloatingRoomOverlay";
@@ -142,7 +143,12 @@ describe("ReserveTabs — languettes derrière le cadre", () => {
     poser();
     const b = bouton("Stockage");
     expect(b.style.minHeight).toBe("var(--tap-min)");
-    expect(b.style.paddingBottom).toBe(`${RECOUVREMENT_ONGLETS}px`);
+    // La face descend SOUS le bord haut de la carte, de l'épaisseur exacte
+    // de son feuilletage : c'est ce qui raccorde les traits au lieu de les
+    // laisser finir en l'air.
+    expect(b.style.paddingBottom).toBe(
+      `${RECOUVREMENT_ONGLETS - EPAISSEUR_CADRE_CARTE}px`,
+    );
   });
 });
 
@@ -202,5 +208,51 @@ describe("ReserveTabs — les languettes dégagent les coins de la carte", () =>
     const rangee = bouton("Stockage").parentElement as HTMLElement;
     expect(parseFloat(rangee.style.paddingLeft)).toBeGreaterThan(8);
     expect(parseFloat(rangee.style.paddingRight)).toBeGreaterThan(8);
+  });
+});
+
+describe("ReserveTabs — la languette porte le MÊME liseré double que la carte", () => {
+  it("deux liserés imbriqués, séparés par une bande de papier", () => {
+    // La carte dessine laiton / papier / laiton. Une languette à trait
+    // SIMPLE fait buter la double ligne du cadre au lieu de la prolonger :
+    // c'est la cassure visible à la jonction.
+    poser({ actif: "stockage" });
+    const face = bouton("Stockage").firstElementChild as HTMLElement;
+    const interieur = face.firstElementChild as HTMLElement;
+    expect(interieur).not.toBeNull();
+    expect(face.style.borderTop).not.toBe("");
+    expect(interieur.style.borderTop).not.toBe("");
+    // La bande de papier qui sépare les deux liserés — sur trois côtés
+    // seulement : 2 px de papier EN BAS retiendraient le trait intérieur à
+    // mi-hauteur du cadre, et il finirait en l'air (loupe ×10).
+    expect(parseFloat(face.style.paddingTop)).toBeGreaterThan(0);
+    expect(parseFloat(face.style.paddingLeft)).toBeGreaterThan(0);
+    expect(parseFloat(face.style.paddingRight)).toBeGreaterThan(0);
+    expect(parseFloat(face.style.paddingBottom)).toBe(0);
+  });
+
+  it("aucun des deux liserés ne se referme en bas", () => {
+    // Un trait bas, à l'un ou l'autre niveau, redessinerait l'arête que
+    // l'onglet actif est censé faire disparaître.
+    poser({ actif: "stockage" });
+    const face = bouton("Stockage").firstElementChild as HTMLElement;
+    const interieur = face.firstElementChild as HTMLElement;
+    expect(face.style.borderBottom || "").toBe("");
+    expect(interieur.style.borderBottom || "").toBe("");
+  });
+
+  it("la bande intermédiaire est du papier de la carte, actif ou non", () => {
+    poser({ actif: "stockage" });
+    const faceActive = bouton("Stockage").firstElementChild as HTMLElement;
+    const faceInactive = bouton("Atelier").firstElementChild as HTMLElement;
+    expect(faceActive.style.background).toBe("var(--paper-100)");
+    expect(faceInactive.style.background).toBe("var(--paper-100)");
+    // Seul l'intérieur porte la distinction actif / inactif.
+    expect((faceActive.firstElementChild as HTMLElement).style.background).toBe(
+      "var(--paper-100)",
+    );
+    expect((faceInactive.firstElementChild as HTMLElement).style.background).toBe(
+      "var(--paper-200)",
+    );
   });
 });

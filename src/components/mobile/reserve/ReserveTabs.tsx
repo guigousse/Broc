@@ -27,6 +27,7 @@ import { Lock } from "lucide-react";
 import type { CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
 import {
+  EPAISSEUR_CADRE_CARTE,
   RECOUVREMENT_ONGLETS,
   Z_CARTE,
 } from "@/components/mobile/floating-room/FloatingRoomOverlay";
@@ -101,7 +102,11 @@ function ongletStyle(actif: boolean, verrouille: boolean): CSSProperties {
     alignItems: "stretch",
     minHeight: "var(--tap-min)",
     padding: 0,
-    paddingBottom: RECOUVREMENT_ONGLETS,
+    // La face déborde SOUS le bord haut de la carte, de l'épaisseur exacte
+    // du feuilletage laiton : ses deux traits traversent alors les deux
+    // traits du cadre et s'y raccordent. Sans ce débord, ils s'arrêtaient en
+    // l'air un pixel au-dessus — la cassure visible à la loupe.
+    paddingBottom: RECOUVREMENT_ONGLETS - EPAISSEUR_CADRE_CARTE,
     border: "none",
     background: actif ? "var(--paper-100)" : "transparent",
     cursor: "pointer",
@@ -110,24 +115,53 @@ function ongletStyle(actif: boolean, verrouille: boolean): CSSProperties {
   };
 }
 
-function faceStyle(actif: boolean): CSSProperties {
+/* La carte dessine un liseré DOUBLE : laiton, 2 px de papier, laiton (son
+   `border` plus deux ombres internes). Une languette à trait simple ferait
+   buter cette double ligne au lieu de la prolonger — c'est la cassure qu'on
+   voit à la jonction. La face reproduit donc le même feuilletage, en deux
+   éléments imbriqués : c'est la seule façon d'obtenir la double ligne SANS
+   la refermer en bas, là où la languette donne sur la page. */
+function faceStyle(): CSSProperties {
+  return {
+    flex: 1,
+    display: "flex",
+    // La bande de papier qui sépare les deux liserés — celle du cadre. Sur
+    // trois côtés seulement : 2 px en bas retiendraient le trait intérieur à
+    // mi-hauteur du feuilletage, et il finirait en l'air au lieu de rejoindre
+    // le trait intérieur de la carte.
+    paddingTop: 2,
+    paddingRight: 2,
+    paddingBottom: 0,
+    paddingLeft: 2,
+    borderTop: liseret,
+    borderRight: liseret,
+    borderLeft: liseret,
+    borderTopLeftRadius: "var(--radius-card)",
+    borderTopRightRadius: "var(--radius-card)",
+    background: "var(--paper-100)",
+    minWidth: 0,
+    boxSizing: "border-box",
+  };
+}
+
+function faceInterieureStyle(actif: boolean): CSSProperties {
   return {
     flex: 1,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    paddingTop: 6,
-    paddingRight: 8,
-    paddingBottom: 6,
-    paddingLeft: 8,
-    // Trois côtés seulement, et sur la seule partie VISIBLE : le bas n'existe
-    // pas parce qu'il n'y a rien à souligner — la face donne sur la carte.
+    paddingTop: 5,
+    paddingRight: 6,
+    paddingBottom: 5,
+    paddingLeft: 6,
     borderTop: liseret,
     borderRight: liseret,
     borderLeft: liseret,
-    borderTopLeftRadius: "var(--radius-card)",
-    borderTopRightRadius: "var(--radius-card)",
+    // Rayon intérieur = rayon de la carte moins l'épaisseur du feuilletage,
+    // pour que les deux arcs restent concentriques.
+    borderTopLeftRadius: "calc(var(--radius-card) - 3px)",
+    borderTopRightRadius: "calc(var(--radius-card) - 3px)",
     background: actif ? "var(--paper-100)" : "var(--paper-200)",
     color: actif ? "var(--forest-800)" : "var(--brass-700)",
     fontFamily: "var(--font-display)",
@@ -169,8 +203,10 @@ export function ReserveTabs({
         }}
         style={ongletStyle(actif === "stockage", false)}
       >
-        <span style={faceStyle(actif === "stockage")}>
-          {d.chrome.onglets.stockage}
+        <span style={faceStyle()}>
+          <span style={faceInterieureStyle(actif === "stockage")}>
+            {d.chrome.onglets.stockage}
+          </span>
         </span>
       </button>
 
@@ -202,10 +238,12 @@ export function ReserveTabs({
         }
         style={ongletStyle(actif === "atelier", !atelierOuvert)}
       >
-        <span style={faceStyle(actif === "atelier")}>
-          {!atelierOuvert && <Lock size={13} strokeWidth={2.6} style={cadenas} />}
-          {d.chrome.onglets.atelier}
-          {badge > 0 && <Badge count={badge} />}
+        <span style={faceStyle()}>
+          <span style={faceInterieureStyle(actif === "atelier")}>
+            {!atelierOuvert && <Lock size={13} strokeWidth={2.6} style={cadenas} />}
+            {d.chrome.onglets.atelier}
+            {badge > 0 && <Badge count={badge} />}
+          </span>
         </span>
       </button>
     </div>
