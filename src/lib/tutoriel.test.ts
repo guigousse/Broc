@@ -73,6 +73,20 @@ describe("tutoriel", () => {
   });
 });
 
+describe("fin du tutoriel — le chapitre est dû à l'arrivée sur /quetes", () => {
+  it("mini-tuto armé + sur /quetes : le chapitre est dû", () => {
+    expect(chapitreDuCarnetDu("ouvrir", true)).toBe(true);
+  });
+
+  it("mini-tuto armé mais ailleurs : rien n'est dû", () => {
+    expect(chapitreDuCarnetDu("ouvrir", false)).toBe(false);
+  });
+
+  it("mini-tuto déjà clos : rien n'est dû même sur /quetes", () => {
+    expect(chapitreDuCarnetDu("termine", true)).toBe(false);
+  });
+});
+
 describe("étapes v4", () => {
   it("ordonne les 23 étapes du flux (colis + 3 leçons de vente + leçon de montée de niveau)", () => {
     expect(ETAPES_TUTORIEL).toEqual([

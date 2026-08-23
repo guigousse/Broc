@@ -208,8 +208,9 @@ describe("ongletSuivantOuvert — le swipe saute les pièces fermées", () => {
 
   // La Réserve (ex-Atelier fusionné) n'a plus de verrou propre dans la
   // TabBar depuis la fusion des routes (cf. `ongletFerme` — moved to
-  // ReserveTabs en Task 2) : depuis la Réserve (idx 3, dernier onglet), le
-  // cycle vers la droite boucle directement sur la Collection.
+  // ReserveTabs en Task 2) : à cinq onglets, la Réserve (idx 3) n'est plus
+  // le dernier — Collection (idx 4) la suit directement. Le pas à droite
+  // avance donc simplement à l'onglet suivant, ce n'est pas un bouclage.
   it("boucle de la Réserve vers la Collection en allant à droite", () => {
     const s = etat(1); // biblio ouverte
     expect(ongletSuivantOuvert(3, 1, s)?.path).toBe("/collection");
@@ -286,6 +287,55 @@ describe("TabBar — main vers l'Atelier fraîchement ouvert (onglet Réserve)",
     };
     render(<TabBar />);
     expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+});
+
+/**
+ * Fin du tutoriel : le livre a quitté le bureau, la main désigne désormais
+ * l'onglet Quêtes. Elle passe AVANT les mini-tutos Atelier et Vinyle — la
+ * fin du tutoriel prime.
+ */
+describe("TabBar — fin du tutoriel (main vers l'onglet Quêtes)", () => {
+  it("mini-tuto carnet : la main se pose sur l'onglet Quêtes", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = {
+      state: { ...etat(1), miniTutoCarnet: "ouvrir" } as unknown as GameState,
+      isHydrated: true,
+    };
+    render(<TabBar />);
+    const main = screen
+      .getAllByRole("button")
+      .find((b) => b.className.includes("tuto-main"));
+    expect(main?.textContent).toContain("Quêtes");
+  });
+
+  it("plus de main une fois sur /quetes", () => {
+    mockPathname = "/quetes";
+    mockGameStateValue = {
+      state: { ...etat(1), miniTutoCarnet: "ouvrir" } as unknown as GameState,
+      isHydrated: true,
+    };
+    render(<TabBar />);
+    expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+
+  it("la main du carnet prend le pas sur les mini-tutos Atelier et Vinyle", () => {
+    mockPathname = "/bureau";
+    mockGameStateValue = {
+      state: {
+        ...etat(3, [`${catTreeId(CATEGORIES[0])}.reparer.1`]),
+        miniTutoCarnet: "ouvrir",
+        miniTutoAtelier: "visite",
+        miniTutoVinyle: "ecouter",
+      } as unknown as GameState,
+      isHydrated: true,
+    };
+    render(<TabBar />);
+    const mains = screen
+      .getAllByRole("button")
+      .filter((b) => b.className.includes("tuto-main"));
+    expect(mains).toHaveLength(1);
+    expect(mains[0].textContent).toContain("Quêtes");
   });
 });
 

@@ -43,7 +43,10 @@ interface ReserveTabsProps {
    * (piège déjà payé ailleurs dans ce dépôt). L'onglet Atelier est la colonne
    * de DROITE : le doigt par défaut se pose à sa gauche, par-dessus l'onglet
    * Stockage voisin, et reste entièrement dans la hauteur du bouton — jamais
-   * près du bord rogné.
+   * près du bord rogné. Le plan nommait une variante BASSE en repli ; elle
+   * n'existe pas dans ce dépôt (`globals.css` ne définit que `tuto-main`,
+   * `tuto-main-haut`, `tuto-main-droite` et `tuto-main-swipe`), d'où le
+   * choix direct de l'horizontale plutôt qu'un repli inexistant.
    */
   mainSurAtelier?: boolean;
   onChoisir: (onglet: OngletReserve) => void;

@@ -265,12 +265,17 @@ export function TabBar() {
   const estVerrouille = (t: TabDef): boolean => ongletFerme(t, state);
 
   // Mini-tutos : main pointeuse au-dessus de l'onglet vers lequel guider —
-  // Réserve pour ranger le vinyle ou visiter l'Atelier fraîchement déverrouillé
-  // par la première compétence Réparer, Bureau pour revenir au gramophone.
+  // Quêtes pour clore le tutoriel (le livre a quitté le bureau), Réserve
+  // pour ranger le vinyle ou visiter l'Atelier fraîchement déverrouillé par
+  // la première compétence Réparer, Bureau pour revenir au gramophone.
+  // Le carnet passe AVANT l'Atelier et le Vinyle : la fin du tutoriel prime.
   // Jamais sur l'onglet déjà actif — et l'Atelier n'ayant plus sa propre
   // colonne (fusionné dans la Réserve), « déjà actif » couvre ses deux
   // routes (`/atelier` et `/stockage`).
   const mainMiniTuto = (tabPath: string): boolean => {
+    if (state?.miniTutoCarnet === "ouvrir") {
+      return tabPath === "/quetes" && pathname !== "/quetes";
+    }
     if (state?.miniTutoAtelier === "visite") {
       return tabPath === "/stockage" && pathname !== "/atelier" && pathname !== "/stockage";
     }

@@ -85,19 +85,18 @@ export function appliquerFinTutoriel(state: GameState): GameState {
 }
 
 /**
- * Vrai quand l'ouverture du carnet doit délivrer le chapitre du grand-père.
- * Fin du tutoriel : la main flottante guide jusqu'au carnet, et c'est son
- * ouverture — pas la pastille du bureau — qui déclenche le dialogue de la
+ * Vrai quand l'arrivée dans le carnet doit délivrer le chapitre du grand-père.
+ * Fin du tutoriel : la main guide jusqu'à l'onglet Quêtes, et c'est l'arrivée
+ * sur `/quetes` — pas la pastille du bureau — qui déclenche le dialogue de la
  * lampe, dont la commande vient s'inscrire dans la page restée ouverte.
- * Le 2e paramètre est un booléen (le carnet n'a plus d'onglet à porter
- * depuis le châssis `CarnetOverlay`) plutôt que le type d'un composant d'UI :
- * `src/lib` ne dépend pas de l'UI.
+ * Le 2e paramètre est un booléen (`src/lib` ne dépend ni de l'UI ni du
+ * routeur) : au layout de dire s'il est sur la route du carnet.
  */
 export function chapitreDuCarnetDu(
   miniTuto: GameState["miniTutoCarnet"],
-  carnetOuvert: boolean,
+  surRouteQuetes: boolean,
 ): boolean {
-  return miniTuto === "ouvrir" && carnetOuvert;
+  return miniTuto === "ouvrir" && surRouteQuetes;
 }
 
 /* === Scénario brocante scriptée ====================================== */
