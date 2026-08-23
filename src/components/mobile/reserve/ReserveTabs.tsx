@@ -31,6 +31,21 @@ interface ReserveTabsProps {
   atelierOuvert: boolean;
   /** Restaurations prêtes à récupérer. Ignoré si l'atelier est fermé. */
   badgeAtelier: number;
+  /**
+   * Mini-tuto Atelier : main pointeuse au-dessus de l'onglet. La guidance se
+   * fait en deux temps depuis la fusion — la barre du bas amène à la Réserve,
+   * cette main amène à l'onglet. Jamais sur l'onglet déjà actif.
+   *
+   * Variante HORIZONTALE (`tuto-main`, pas `tuto-main-haut`) : cette bande
+   * vit dans le `bande` de `FloatingRoomOverlay`, dont le conteneur racine
+   * (`wrap`) porte `overflow: hidden` à quelques px seulement au-dessus de la
+   * carte — un doigt posé au-dessus (`::after` à -62px) y serait tranché
+   * (piège déjà payé ailleurs dans ce dépôt). L'onglet Atelier est la colonne
+   * de DROITE : le doigt par défaut se pose à sa gauche, par-dessus l'onglet
+   * Stockage voisin, et reste entièrement dans la hauteur du bouton — jamais
+   * près du bord rogné.
+   */
+  mainSurAtelier?: boolean;
   onChoisir: (onglet: OngletReserve) => void;
   onVerrou: () => void;
 }
@@ -76,6 +91,7 @@ export function ReserveTabs({
   actif,
   atelierOuvert,
   badgeAtelier,
+  mainSurAtelier = false,
   onChoisir,
   onVerrou,
 }: ReserveTabsProps) {
@@ -115,6 +131,9 @@ export function ReserveTabs({
           }
           if (actif !== "atelier") onChoisir("atelier");
         }}
+        className={
+          mainSurAtelier && actif !== "atelier" ? "tuto-main" : undefined
+        }
         style={ongletStyle(actif === "atelier", !atelierOuvert)}
       >
         {!atelierOuvert && <Lock size={13} strokeWidth={2.6} style={cadenas} />}

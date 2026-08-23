@@ -26,6 +26,7 @@ function poser(over: Partial<Parameters<typeof ReserveTabs>[0]> = {}) {
     actif: "stockage" as const,
     atelierOuvert: true,
     badgeAtelier: 0,
+    mainSurAtelier: false,
     onChoisir: vi.fn(),
     onVerrou: vi.fn(),
     ...over,
@@ -81,5 +82,22 @@ describe("ReserveTabs", () => {
     expect(
       document.querySelector('[data-tuto-coach="reserve-onglet-atelier"]'),
     ).not.toBeNull();
+  });
+});
+
+describe("ReserveTabs — main de guidage du mini-tuto Atelier", () => {
+  it("pose la main sur l'onglet Atelier quand on la demande", () => {
+    poser({ mainSurAtelier: true });
+    expect(bouton("Atelier").className).toContain("tuto-main");
+  });
+
+  it("aucune main par défaut", () => {
+    poser();
+    expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+
+  it("aucune main sur l'onglet Atelier déjà actif", () => {
+    poser({ actif: "atelier", mainSurAtelier: true });
+    expect(document.querySelector(".tuto-main")).toBeNull();
   });
 });

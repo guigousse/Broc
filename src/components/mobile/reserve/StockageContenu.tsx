@@ -159,6 +159,7 @@ function StockageContenuInner() {
         atelierOuvert={atelierOuvert}
         badgeAtelier={badgeAtelier}
         onVerrou={onVerrou}
+        mainSurAtelier={state.miniTutoAtelier === "visite"}
         bande={
           <>
             {/* Le titre `— STOCKAGE —` a cédé la place à la bande d'onglets

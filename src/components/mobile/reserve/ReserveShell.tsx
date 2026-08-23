@@ -53,6 +53,8 @@ interface ReserveShellProps {
   badgeAtelier: number;
   /** Appelé au tap sur l'onglet Atelier cadenassé (le parent toaste). */
   onVerrou: () => void;
+  /** Mini-tuto Atelier : relayé tel quel à `ReserveTabs`. */
+  mainSurAtelier?: boolean;
   bande: ReactNode;
   milieu?: ReactNode;
   children: ReactNode;
@@ -63,6 +65,7 @@ export function ReserveShell({
   atelierOuvert,
   badgeAtelier,
   onVerrou,
+  mainSurAtelier,
   bande,
   milieu,
   children,
@@ -105,6 +108,7 @@ export function ReserveShell({
             actif={onglet}
             atelierOuvert={atelierOuvert}
             badgeAtelier={badgeAtelier}
+            mainSurAtelier={mainSurAtelier}
             onChoisir={(o) => router.replace(ROUTE_ONGLET[o])}
             onVerrou={onVerrou}
           />
