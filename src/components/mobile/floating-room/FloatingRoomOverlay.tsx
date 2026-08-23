@@ -30,6 +30,14 @@ export const GAP_WRAP = 12;
  */
 export const RECOUVREMENT_ONGLETS = 16;
 
+/**
+ * Cran d'empilement de la carte. Les languettes INACTIVES passent dessous —
+ * le cadre les traverse. La languette ACTIVE passe DESSUS (cf. ReserveTabs) :
+ * son papier, qui est celui de la carte, recouvre le liseré haut et l'arête
+ * entre l'onglet et la page disparaît.
+ */
+export const Z_CARTE = 1;
+
 const wrap: CSSProperties = {
   position: "fixed",
   // La bannière de consigne du tutoriel flotte juste sous le header : sans
@@ -82,7 +90,7 @@ const bandeStyle: CSSProperties = {
   // par-dessus le fond de la carte (les contenus en ligne peignent dans une
   // passe ultérieure à celle des fonds).
   position: "relative",
-  zIndex: 1,
+  zIndex: Z_CARTE,
   padding: "8px 10px 10px",
   animation: "broc-float-bande-in 320ms ease-out",
 };

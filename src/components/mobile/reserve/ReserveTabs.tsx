@@ -26,7 +26,10 @@
 import { Lock } from "lucide-react";
 import type { CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
-import { RECOUVREMENT_ONGLETS } from "@/components/mobile/floating-room/FloatingRoomOverlay";
+import {
+  RECOUVREMENT_ONGLETS,
+  Z_CARTE,
+} from "@/components/mobile/floating-room/FloatingRoomOverlay";
 import { useLangue } from "@/lib/i18n/LangueContext";
 
 export type OngletReserve = "stockage" | "atelier";
@@ -68,24 +71,45 @@ const rangee: CSSProperties = {
 
 const liseret = "1px solid var(--brass-500)";
 
+/* Le BOUTON n'est que la cible tactile : pleine hauteur, sans liseré, et —
+   quand il est actif — rempli du papier de la carte pour en noyer le liseré
+   haut. La FACE porte tout l'habillage visible. Deux éléments, parce qu'un
+   liseré porté par le bouton descendrait dans les 16 px cachés et planterait
+   deux traits verticaux au milieu de la carte (constaté à la loupe). */
 function ongletStyle(actif: boolean, verrouille: boolean): CSSProperties {
   return {
     position: "relative",
+    // L'ACTIF passe par-dessus la carte : son fond — celui de la carte —
+    // recouvre le liseré haut et l'arête entre l'onglet et la page disparaît.
+    // L'inactif reste dessous, traversé par le cadre.
+    zIndex: actif ? Z_CARTE + 1 : undefined,
+    flex: 1,
+    display: "flex",
+    alignItems: "stretch",
+    minHeight: "var(--tap-min)",
+    padding: 0,
+    paddingBottom: RECOUVREMENT_ONGLETS,
+    border: "none",
+    background: actif ? "var(--paper-100)" : "transparent",
+    cursor: "pointer",
+    opacity: verrouille ? 0.55 : 1,
+    minWidth: 0,
+  };
+}
+
+function faceStyle(actif: boolean): CSSProperties {
+  return {
     flex: 1,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    // Cible tactile à pleine hauteur, silhouette réduite : le bas de la
-    // boîte passe sous la carte. La réserve de padding recentre le libellé
-    // dans la seule partie visible.
-    minHeight: "var(--tap-min)",
     paddingTop: 6,
     paddingRight: 8,
-    paddingBottom: RECOUVREMENT_ONGLETS,
+    paddingBottom: 6,
     paddingLeft: 8,
-    // Trois côtés seulement : le quatrième disparaît derrière la carte, et
-    // l'y dessiner tracerait une ligne fantôme au ras du cadre.
+    // Trois côtés seulement, et sur la seule partie VISIBLE : le bas n'existe
+    // pas parce qu'il n'y a rien à souligner — la face donne sur la carte.
     borderTop: liseret,
     borderRight: liseret,
     borderLeft: liseret,
@@ -97,9 +121,8 @@ function ongletStyle(actif: boolean, verrouille: boolean): CSSProperties {
     fontSize: 12,
     letterSpacing: "0.18em",
     textTransform: "uppercase",
-    cursor: "pointer",
-    opacity: verrouille ? 0.55 : 1,
     minWidth: 0,
+    boxSizing: "border-box",
   };
 }
 
@@ -133,7 +156,9 @@ export function ReserveTabs({
         }}
         style={ongletStyle(actif === "stockage", false)}
       >
-        {d.chrome.onglets.stockage}
+        <span style={faceStyle(actif === "stockage")}>
+          {d.chrome.onglets.stockage}
+        </span>
       </button>
 
       <button
@@ -164,9 +189,11 @@ export function ReserveTabs({
         }
         style={ongletStyle(actif === "atelier", !atelierOuvert)}
       >
-        {!atelierOuvert && <Lock size={13} strokeWidth={2.6} style={cadenas} />}
-        {d.chrome.onglets.atelier}
-        {badge > 0 && <Badge count={badge} />}
+        <span style={faceStyle(actif === "atelier")}>
+          {!atelierOuvert && <Lock size={13} strokeWidth={2.6} style={cadenas} />}
+          {d.chrome.onglets.atelier}
+          {badge > 0 && <Badge count={badge} />}
+        </span>
       </button>
     </div>
   );
