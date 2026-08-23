@@ -51,3 +51,13 @@ pub(crate) async fn partager_fichier<R: Runtime>(
     let chemin = repertoire(&app)?.join(quoi.nom_fichier());
     app.stockage().partager_fichier(&chemin, &nom_lisible)
 }
+
+// Ruling R15 : sonde de disponibilité DÉDIÉE, sans effet de bord (aucune
+// copie de fichier, aucune UI) — remplace l'ancien sondage qui appelait
+// `partager_fichier` avec un nom vide en s'appuyant sur l'ordre
+// validation-puis-copie du Swift, un invariant qu'aucun test ne protégeait.
+// `true` sur iOS, `false` partout ailleurs ; jamais d'erreur.
+#[command]
+pub(crate) async fn partage_disponible<R: Runtime>(app: AppHandle<R>) -> Result<bool> {
+    Ok(app.stockage().partage_disponible())
+}

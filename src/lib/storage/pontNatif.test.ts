@@ -47,4 +47,11 @@ describe("pontNatif", () => {
     const { ecrireSave } = await import("./pontNatif");
     await expect(ecrireSave("slot_1", "{}")).rejects.toMatchObject({ genre: "io" });
   });
+
+  it("interroge la commande dédiée de disponibilité du partage (Ruling R15)", async () => {
+    invoke.mockResolvedValue(true);
+    const { partageDisponible } = await import("./pontNatif");
+    await expect(partageDisponible()).resolves.toBe(true);
+    expect(invoke).toHaveBeenCalledWith("plugin:stockage|partage_disponible", {});
+  });
 });

@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
-import { partagerFichier, quoiDuSlot } from "@/lib/storage/pontNatif";
+import { partageDisponible, partagerFichier, quoiDuSlot } from "@/lib/storage/pontNatif";
 import {
   chargerIndex,
   renommerSlot,
@@ -370,12 +370,23 @@ export function PartiesModal({
   const suppressionEnCoursRef = useRef(false);
   const { d, tr, locale } = useLangue();
 
-  // Export (Tâche 10) : disponibilité sondée UNE FOIS pour la session — cette
-  // modale reste montée en permanence dans l'arbre (seul `open` bascule, cf.
-  // src/app/page.tsx), donc une ref suffit à ne sonder qu'à la toute première
-  // fois, sans état de module. `false` par défaut = icône visible tant que
-  // le sondage n'a pas prouvé le contraire (échoue ouvert plutôt que de
-  // masquer l'export pendant l'attente).
+  // Export (Ruling R15) : disponibilité sondée UNE FOIS pour la session —
+  // cette modale reste montée en permanence dans l'arbre (seul `open`
+  // bascule, cf. src/app/page.tsx), donc une ref suffit à ne sonder qu'à la
+  // toute première fois, sans état de module. `false` par défaut = icône
+  // visible tant que le sondage n'a pas prouvé le contraire (échoue ouvert
+  // plutôt que de masquer l'export pendant l'attente).
+  //
+  // Sondage par `partageDisponible()`, une commande DÉDIÉE sans effet de
+  // bord (aucune copie de fichier, aucune UI) — pas par un appel partiel de
+  // `partagerFichier`. La version précédente sondait en appelant
+  // `partagerFichier` avec un nom de fichier vide, en pariant sur l'ordre
+  // « validation avant copie » du Swift : ça marchait, mais c'était un
+  // invariant non protégé par un test — un futur changement qui déplacerait
+  // la validation après la copie aurait transformé chaque ouverture de
+  // « Parties » en partage réel silencieux. `partageDisponible()` retire le
+  // pari : elle ne touche jamais au disque ni à l'UI, par construction
+  // (mobile.rs / desktop.rs, une constante par plateforme).
   const [exportIndisponible, setExportIndisponible] = useState(false);
   const sondeExportFaite = useRef(false);
 
@@ -393,17 +404,12 @@ export function PartiesModal({
   useEffect(() => {
     if (sondeExportFaite.current) return;
     sondeExportFaite.current = true;
-    // `nomLisible` vide plutôt que le vrai nom de fichier : StockagePlugin.
-    // swift rejette un nom vide AVANT toute copie de fichier ou présentation
-    // de feuille de partage (garde générale, pas spécifique au sondage) —
-    // cet appel ne peut donc jamais déclencher un partage réel. Seul le
-    // GENRE de l'échec nous intéresse : `indisponible` (Android, bureau)
-    // masque définitivement l'icône pour la session ; tout autre genre (ex.
-    // "io") la laisse visible, un échec réel se constatera au clic.
-    partagerFichier(quoiDuSlot(1), "").catch((e: unknown) => {
-      const genre = (e as { genre?: string } | null | undefined)?.genre;
-      if (genre === "indisponible") setExportIndisponible(true);
-    });
+    partageDisponible()
+      .then((disponible) => setExportIndisponible(!disponible))
+      // Une sonde qui échoue (hors Tauri, pont natif en panne) est traitée
+      // comme une indisponibilité : on ne sait pas partager, donc on ne
+      // propose pas l'export plutôt que de risquer un clic qui échoue.
+      .catch(() => setExportIndisponible(true));
   }, []);
 
   if (!open || index === null) return null;

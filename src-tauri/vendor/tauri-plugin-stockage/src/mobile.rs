@@ -48,4 +48,11 @@ impl<R: Runtime> Stockage<R> {
             )
             .map_err(Into::into)
     }
+
+    // Ruling R15 : pas besoin d'aller demander au Swift — ce fichier n'est
+    // compilé QUE pour iOS (`#[cfg(target_os = "ios")]` dans lib.rs), la
+    // réponse est donc une constante, sans round-trip natif ni effet de bord.
+    pub fn partage_disponible(&self) -> bool {
+        true
+    }
 }

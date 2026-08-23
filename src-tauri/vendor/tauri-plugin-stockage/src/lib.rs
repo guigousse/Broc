@@ -4,11 +4,13 @@ pub mod models;
 
 mod commands;
 
-// `espace_libre` (Tâche 9) et `partager_fichier` (Tâche 10) ont besoin de
-// code natif : le split mobile/desktop (identique dans l'esprit à
-// tauri-plugin-iap et tauri-plugin-firebase) porte ces deux commandes —
-// lire_save/ecrire_save restent des fonctions Rust directes dans
-// commands.rs, inchangées.
+// `espace_libre` (Tâche 9), `partager_fichier` et `partage_disponible`
+// (Tâche 10) varient par plateforme : le split mobile/desktop (identique
+// dans l'esprit à tauri-plugin-iap et tauri-plugin-firebase) porte ces trois
+// commandes — lire_save/ecrire_save restent des fonctions Rust directes
+// dans commands.rs, inchangées. Seuls `espace_libre` et `partager_fichier`
+// font un round-trip natif vers le Swift ; `partage_disponible` est une
+// constante par plateforme (cf. mobile.rs), pas un appel.
 #[cfg(target_os = "ios")]
 mod mobile;
 #[cfg(not(target_os = "ios"))]
@@ -43,7 +45,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::lire_save,
             commands::ecrire_save,
             commands::espace_libre,
-            commands::partager_fichier
+            commands::partager_fichier,
+            commands::partage_disponible
         ])
         .setup(|app, api| {
             #[cfg(target_os = "ios")]

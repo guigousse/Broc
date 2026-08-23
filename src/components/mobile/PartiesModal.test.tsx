@@ -16,16 +16,16 @@
  * partie » délègue au parent via `onLancer(slot)`. L'iris de transition et
  * l'ordre détacher/bascule/navigation sont testés dans `page.test.tsx`.
  *
- * Export (Tâche 10) : `partagerFichier` est mocké (module entier) — la
- * modal sonde sa disponibilité au montage (voir `PartiesModal.tsx`), donc
- * TOUT rendu appelle le mock. Le `beforeEach` lui donne une résolution par
- * défaut pour que les tests qui ne portent pas sur l'export n'aient pas à
- * s'en soucier.
+ * Export (Tâche 10, Ruling R15) : `partagerFichier` et `partageDisponible`
+ * sont mockés (module entier) — la modal sonde `partageDisponible` (une
+ * commande dédiée, sans effet de bord) au montage, donc TOUT rendu appelle
+ * ce mock. Le `beforeEach` lui donne une résolution par défaut (`true`) pour
+ * que les tests qui ne portent pas sur l'export n'aient pas à s'en soucier.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { PartiesModal } from "./PartiesModal";
-import { partagerFichier } from "@/lib/storage/pontNatif";
+import { partageDisponible, partagerFichier } from "@/lib/storage/pontNatif";
 import {
   CLE_INDEX,
   changerSlotActif,
@@ -39,8 +39,9 @@ import {
 vi.mock("@/lib/storage/pontNatif", async (importOriginal) => {
   const reel = await importOriginal<typeof import("@/lib/storage/pontNatif")>();
   // `quoiDuSlot` est une fonction pure (numéro → chaîne) : gardée réelle,
-  // seul `partagerFichier` (l'appel natif) est mocké.
-  return { ...reel, partagerFichier: vi.fn() };
+  // seuls les deux appels natifs (`partagerFichier`, `partageDisponible`)
+  // sont mockés.
+  return { ...reel, partagerFichier: vi.fn(), partageDisponible: vi.fn() };
 });
 
 afterEach(() => {
@@ -51,6 +52,7 @@ afterEach(() => {
 beforeEach(() => {
   localStorage.clear();
   vi.mocked(partagerFichier).mockReset().mockResolvedValue(undefined);
+  vi.mocked(partageDisponible).mockReset().mockResolvedValue(true);
 });
 
 function ecrireSave(n: NumeroSlot, jour: number, niveau: number, budget: number) {
@@ -541,9 +543,9 @@ describe("PartiesModal — fermeture", () => {
   });
 });
 
-describe("PartiesModal — export (Tâche 10)", () => {
+describe("PartiesModal — export (Tâche 10, Ruling R15)", () => {
   it("propose l'export sur un emplacement occupé", async () => {
-    vi.mocked(partagerFichier).mockResolvedValue(undefined);
+    vi.mocked(partageDisponible).mockResolvedValue(true);
     rendreParties();
     expect(await screen.findAllByLabelText(/exporter/i)).toHaveLength(1);
   });
@@ -557,7 +559,7 @@ describe("PartiesModal — export (Tâche 10)", () => {
   });
 
   it("masque l'export quand la plateforme ne sait pas partager", async () => {
-    vi.mocked(partagerFichier).mockRejectedValue({ genre: "indisponible", message: "" });
+    vi.mocked(partageDisponible).mockResolvedValue(false);
     rendreParties();
     await waitFor(() => expect(screen.queryByLabelText(/exporter/i)).toBeNull());
   });
@@ -565,5 +567,24 @@ describe("PartiesModal — export (Tâche 10)", () => {
   it("n'affiche pas d'export sur un emplacement vide", async () => {
     rendreParties({ slotsOccupes: [] });
     await waitFor(() => expect(screen.queryByLabelText(/exporter/i)).toBeNull());
+  });
+
+  // Couverture DÉDIÉE de la Ruling R15 (sonde par commande, pas par appel
+  // partiel de `partagerFichier`) : le sondage n'appelle plus jamais
+  // `partagerFichier` — seul `partageDisponible` le fait, et son résultat
+  // booléen pilote directement l'affichage.
+  it("Ruling R15 — le bouton est masqué quand partage_disponible répond false", async () => {
+    vi.mocked(partageDisponible).mockResolvedValue(false);
+    rendreParties();
+    await waitFor(() => expect(screen.queryByLabelText(/exporter/i)).toBeNull());
+    // Le sondage ne déclenche jamais de partage réel.
+    expect(partagerFichier).not.toHaveBeenCalled();
+  });
+
+  it("Ruling R15 — le bouton est affiché quand partage_disponible répond true", async () => {
+    vi.mocked(partageDisponible).mockResolvedValue(true);
+    rendreParties();
+    expect(await screen.findAllByLabelText(/exporter/i)).toHaveLength(1);
+    expect(partagerFichier).not.toHaveBeenCalled();
   });
 });

@@ -68,3 +68,13 @@ export function espaceLibre(): Promise<number | null> {
 export function partagerFichier(quoi: Quoi, nomLisible: string): Promise<void> {
   return appeler<void>("partager_fichier", { quoi, nomLisible });
 }
+
+/**
+ * Ruling R15 : dit si `partagerFichier` peut aboutir sur cette plateforme —
+ * SANS l'appeler (aucune copie de fichier, aucune UI). `true` sur iOS,
+ * `false` ailleurs (Android, bureau, hors Tauri — cette dernière valeur via
+ * `appeler`, qui rejette en `indisponible` avant tout `invoke`).
+ */
+export function partageDisponible(): Promise<boolean> {
+  return appeler<boolean>("partage_disponible", {});
+}

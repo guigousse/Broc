@@ -331,6 +331,18 @@
           "markdownDescription": "Denies the lire_save command without any pre-configured scope."
         },
         {
+          "description": "Enables the partage_disponible command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-partage-disponible",
+          "markdownDescription": "Enables the partage_disponible command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the partage_disponible command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-partage-disponible",
+          "markdownDescription": "Denies the partage_disponible command without any pre-configured scope."
+        },
+        {
           "description": "Enables the partager_fichier command without any pre-configured scope.",
           "type": "string",
           "const": "allow-partager-fichier",
@@ -343,10 +355,10 @@
           "markdownDescription": "Denies the partager_fichier command without any pre-configured scope."
         },
         {
-          "description": "Permissions par défaut du plugin Stockage : lecture et écriture des sauvegardes, espace disque, partage de fichier.\n#### This default permission set includes:\n\n- `allow-lire-save`\n- `allow-ecrire-save`\n- `allow-espace-libre`\n- `allow-partager-fichier`",
+          "description": "Permissions par défaut du plugin Stockage : lecture et écriture des sauvegardes, espace disque, partage de fichier, disponibilité du partage.\n#### This default permission set includes:\n\n- `allow-lire-save`\n- `allow-ecrire-save`\n- `allow-espace-libre`\n- `allow-partager-fichier`\n- `allow-partage-disponible`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Permissions par défaut du plugin Stockage : lecture et écriture des sauvegardes, espace disque, partage de fichier.\n#### This default permission set includes:\n\n- `allow-lire-save`\n- `allow-ecrire-save`\n- `allow-espace-libre`\n- `allow-partager-fichier`"
+          "markdownDescription": "Permissions par défaut du plugin Stockage : lecture et écriture des sauvegardes, espace disque, partage de fichier, disponibilité du partage.\n#### This default permission set includes:\n\n- `allow-lire-save`\n- `allow-ecrire-save`\n- `allow-espace-libre`\n- `allow-partager-fichier`\n- `allow-partage-disponible`"
         }
       ]
     }

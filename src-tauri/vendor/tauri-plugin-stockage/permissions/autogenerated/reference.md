@@ -1,6 +1,6 @@
 ## Default Permission
 
-Permissions par défaut du plugin Stockage : lecture et écriture des sauvegardes, espace disque, partage de fichier.
+Permissions par défaut du plugin Stockage : lecture et écriture des sauvegardes, espace disque, partage de fichier, disponibilité du partage.
 
 #### This default permission set includes the following:
 
@@ -8,6 +8,7 @@ Permissions par défaut du plugin Stockage : lecture et écriture des sauvegarde
 - `allow-ecrire-save`
 - `allow-espace-libre`
 - `allow-partager-fichier`
+- `allow-partage-disponible`
 
 ## Permission Table
 
@@ -92,6 +93,32 @@ Enables the lire_save command without any pre-configured scope.
 <td>
 
 Denies the lire_save command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`stockage:allow-partage-disponible`
+
+</td>
+<td>
+
+Enables the partage_disponible command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`stockage:deny-partage-disponible`
+
+</td>
+<td>
+
+Denies the partage_disponible command without any pre-configured scope.
 
 </td>
 </tr>

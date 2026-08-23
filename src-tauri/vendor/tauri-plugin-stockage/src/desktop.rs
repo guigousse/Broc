@@ -30,4 +30,9 @@ impl<R: Runtime> Stockage<R> {
     pub fn partager_fichier(&self, _chemin: &Path, _nom_lisible: &str) -> crate::Result<()> {
         Err(Error::Indisponible)
     }
+
+    // Ruling R15 : constante, symétrique de mobile.rs.
+    pub fn partage_disponible(&self) -> bool {
+        false
+    }
 }
