@@ -7,7 +7,13 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockGameState } from "../__test-fixtures__/gameState";
-import { changerSlotActif, chargerIndex, cleSlot, toucherDerniereSession } from "./slots";
+import {
+  changerSlotActif,
+  chargerIndex,
+  cleSlot,
+  revisionDe,
+  toucherDerniereSession,
+} from "./slots";
 
 const fichiers = new Map<string, string>();
 vi.mock("./pontNatif", async (orig) => ({
@@ -483,6 +489,71 @@ describe("fichierGameRepository", () => {
       const r = await fichierGameRepository.save(createMockGameState({ jourActuel: 3 }));
 
       expect(r).toEqual({ ok: true });
+    });
+  });
+
+  // Revue finale I1 — l'asymétrie de l'écriture miroir. Sur échec de
+  // l'étape 1 (le fichier du slot), le miroir DOIT être écrit : c'est le seul
+  // chemin par lequel `revMiroir > revFichier` peut naître en production, et
+  // cet état est toute la raison d'être de l'arbitrage par révision. Sur
+  // échec de l'étape 2 (l'index), le miroir NE DOIT PAS l'être : le fichier
+  // du slot vient d'être écrit, il est donc plus frais (cas 3b).
+  describe("asymétrie de l'écriture miroir en cas d'échec (revue finale I1)", () => {
+    it("échec de l'étape 1 : le miroir est écrit AVEC sa révision, et le load() suivant le sert", async () => {
+      const { ecrireSave } = await import("./pontNatif");
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+
+      // Une sauvegarde saine d'abord : fichier et miroir alignés (révision 1).
+      const ancien = createMockGameState({ jourActuel: 10 });
+      await fichierGameRepository.save(ancien);
+
+      // Puis le disque se remplit : l'écriture du SLOT échoue. C'est la forme
+      // exacte de l'incident — l'heure de jeu qui, sans ce correctif, ne
+      // serait écrite nulle part du tout.
+      vi.mocked(ecrireSave).mockRejectedValueOnce({
+        genre: "disque_plein",
+        message: "",
+      });
+      const frais = createMockGameState({ jourActuel: 41 });
+      const r = await fichierGameRepository.save(frais);
+
+      expect(r).toEqual({ ok: false, genre: "disque_plein" }); // le verdict reste celui du fichier
+      expect(fichiers.get("slot_1")).toBe(JSON.stringify(ancien)); // fichier inchangé
+      expect(window.localStorage.getItem(cleSlot(1))).toBe(JSON.stringify(frais));
+      expect(revisionDe(1)).toBe(2); // estampillée, sinon le miroir perdrait l'arbitrage
+
+      const avertir = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const relu = await fichierGameRepository.load();
+      expect(relu?.jourActuel).toBe(41); // l'heure de jeu est récupérée
+      expect(avertir).toHaveBeenCalled();
+    });
+
+    it("échec de l'étape 2 : le miroir n'est PAS écrit, et le load() suivant sert le fichier plus frais", async () => {
+      const { ecrireSave } = await import("./pontNatif");
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+
+      const ancien = createMockGameState({ jourActuel: 10 });
+      await fichierGameRepository.save(ancien);
+
+      // Le slot s'écrit, l'index échoue.
+      vi.mocked(ecrireSave)
+        .mockImplementationOnce(async (q: string, c: string) => {
+          fichiers.set(q, c);
+        })
+        .mockRejectedValueOnce({ genre: "io", message: "" });
+      const frais = createMockGameState({ jourActuel: 41 });
+      const r = await fichierGameRepository.save(frais);
+
+      expect(r).toEqual({ ok: false, genre: "io" });
+      expect(fichiers.get("slot_1")).toBe(JSON.stringify(frais)); // le fichier, lui, est frais
+      // Écrire le miroir ici lui donnerait une révision plus haute que
+      // l'index fichier resté en arrière : le miroir PÉRIMÉ gagnerait
+      // l'arbitrage et détruirait le contenu plus frais du fichier.
+      expect(window.localStorage.getItem(cleSlot(1))).toBe(JSON.stringify(ancien));
+      expect(revisionDe(1)).toBe(1);
+
+      const relu = await fichierGameRepository.load();
+      expect(relu?.jourActuel).toBe(41);
     });
   });
 });

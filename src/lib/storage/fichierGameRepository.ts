@@ -92,6 +92,31 @@ async function lireIndexFichier(): Promise<IndexFichier | null> {
   return etat.genre === "ok" ? etat.index : null;
 }
 
+/**
+ * Écrit le miroir localStorage en best-effort, et n'estampille la révision
+ * QUE si le contenu a réellement été écrit.
+ *
+ * Cette condition n'est pas cosmétique : estampiller une révision que le
+ * contenu miroir ne porte pas (setItem refusé pour cause de quota) ferait
+ * gagner l'arbitrage à un miroir PÉRIMÉ, qui écraserait alors un fichier plus
+ * frais. Une révision ne vaut que pour un contenu effectivement enregistré.
+ *
+ * `enregistrerSlot(n, …)`, jamais `localGameRepository.save(…)` : ce dernier
+ * re-résoudrait son propre `slotActif()` (Ruling R6).
+ */
+async function ecrireMiroir(
+  n: NumeroSlot,
+  state: GameState,
+  revision: number,
+): Promise<void> {
+  try {
+    const resultat = await enregistrerSlot(n, state);
+    if (resultat.ok) toucherDerniereSession(n, revision);
+  } catch {
+    // Le miroir est consultatif : son échec ne change jamais le verdict.
+  }
+}
+
 function genreDe(e: unknown): ErreurStockage["genre"] {
   return typeof e === "object" && e !== null && "genre" in e
     ? ((e as ErreurStockage).genre)
@@ -226,9 +251,32 @@ export const fichierGameRepository: GameRepository = {
     const revision = Math.max(index?.revisions[n] ?? 0, revisionDe(n)) + 1;
 
     // 1. Le slot d'abord : c'est lui qui rend le verdict.
+    //
+    // ⚠ ASYMÉTRIE VOULUE, ne pas la « simplifier » (revue finale I1). Sur
+    // échec ICI — l'étape 1 —, on écrit quand même le miroir, AVEC la
+    // révision, avant de rendre le verdict d'échec :
+    //  - c'est la forme exacte de l'incident du 2026-08-23 (disque plein
+    //    pendant une heure). Le fichier n'a rien pris ; si WebKit parvient à
+    //    persister le `setItem`, l'arbitrage par révision récupère cette
+    //    heure au prochain lancement. S'il n'y parvient pas, rien n'est
+    //    perdu — on ne fait qu'essayer ;
+    //  - c'est le SEUL chemin par lequel `revMiroir > revFichier` peut
+    //    naître en production. Sans lui, tout l'arbitrage par révision
+    //    traiterait un état inatteignable.
+    //
+    // Sur échec de l'étape 2 (l'index, plus bas), au contraire, on NE
+    // touche PAS au miroir : le fichier du slot vient d'être écrit, il est
+    // donc PLUS FRAIS que le miroir. Lui donner une révision plus haute
+    // ferait gagner l'arbitrage à un miroir périmé et détruirait ce contenu
+    // plus frais — c'est ce que préserve le cas 3b de la migration (voir
+    // migrationFichiers.ts).
+    //
+    // Dans les deux cas le verdict reste celui du FICHIER : le miroir ne le
+    // change jamais.
     try {
       await ecrireSave(quoiDuSlot(n), serialise);
     } catch (e) {
+      await ecrireMiroir(n, state, revision);
       return { ok: false, genre: genreDe(e) };
     }
 
@@ -260,10 +308,7 @@ export const fichierGameRepository: GameRepository = {
     }
 
     // 3. Le miroir en best-effort : son échec ne change pas le verdict.
-    //    `enregistrerSlot(n, …)`, pas `localGameRepository.save(…)` : ce
-    //    dernier re-résoudrait son propre `slotActif()` (Ruling R6).
-    await enregistrerSlot(n, state);
-    toucherDerniereSession(n, revision);
+    await ecrireMiroir(n, state, revision);
 
     return { ok: true };
   },

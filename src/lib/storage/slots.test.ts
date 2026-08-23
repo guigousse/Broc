@@ -153,6 +153,31 @@ describe("opérations", () => {
     expect(idx.slots[1]?.derniereSession).toBe(12345);
   });
 
+  // Revue finale : `renommerSlot` reconstruisait la MetaSlot avec `nom` et
+  // `derniereSession` seulement — la révision retombait donc à 0 en silence.
+  // Depuis que le miroir est écrit même quand l'écriture fichier échoue
+  // (revue finale I1), c'est un vrai chemin de perte : renommer un
+  // emplacement pendant un épisode de disque plein ferait perdre au miroir
+  // l'arbitrage qu'il est justement là pour gagner.
+  it("renommerSlot préserve la révision du slot", () => {
+    localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 1,
+        slots: {
+          1: { nom: null, derniereSession: 12345, revision: 7 },
+          2: null,
+          3: null,
+        },
+      }),
+    );
+
+    renommerSlot(1, "Ma partie");
+
+    expect(chargerIndex().slots[1]?.nom).toBe("Ma partie");
+    expect(revisionDe(1)).toBe(7);
+  });
+
   it("renommerSlot sur un slot vide : no-op, pas de MetaSlot fantôme", () => {
     renommerSlot(2, "Nom fantôme");
 

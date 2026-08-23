@@ -240,6 +240,11 @@ export function renommerSlot(n: NumeroSlot, nom: string | null): void {
   index.slots[n] = {
     nom: nomFinal,
     derniereSession: existant ? existant.derniereSession : 0,
+    // La révision est reportée, jamais remise à 0 : renommer un emplacement
+    // ne doit rien dire de la fraîcheur de sa sauvegarde. La perdre ferait
+    // perdre au miroir l'arbitrage contre le fichier — précisément celui
+    // qu'il doit gagner pendant un épisode de disque plein (revue finale I1).
+    revision: existant?.revision ?? 0,
   };
   ecrireIndex(index);
 }
