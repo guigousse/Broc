@@ -164,7 +164,19 @@ export function FloatingRoomOverlay({
           {onglets}
         </div>
       )}
-      <div style={animer ? bandeStyle : { ...bandeStyle, ...sansAnim }}>{bande}</div>
+      <div
+        style={{
+          ...(animer ? bandeStyle : { ...bandeStyle, ...sansAnim }),
+          // Les languettes sont à ras des bords : ce sont ELLES qui prennent
+          // les coins hauts. La carte y renonce aux siens, sans quoi son arc
+          // dépasserait sous leur bas, qui est droit.
+          ...(onglets !== undefined
+            ? { borderTopLeftRadius: 0, borderTopRightRadius: 0 }
+            : null),
+        }}
+      >
+        {bande}
+      </div>
       {milieu !== undefined && (
         <div style={animer ? milieuStyle : { ...milieuStyle, ...sansAnim }}>{milieu}</div>
       )}
