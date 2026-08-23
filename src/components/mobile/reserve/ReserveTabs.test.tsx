@@ -192,3 +192,15 @@ describe("ReserveTabs — le liseré s'arrête au ras de la page", () => {
     expect(bouton("Atelier").style.background).toBe("transparent");
   });
 });
+
+describe("ReserveTabs — les languettes dégagent les coins de la carte", () => {
+  it("la rangée est en retrait des deux bords", () => {
+    // Le remplissage de la languette active est un RECTANGLE : posé sur un
+    // coin arrondi de la carte, il vient le combler par-derrière et le coin
+    // redevient carré. Le retrait doit dépasser le rayon de la carte.
+    poser();
+    const rangee = bouton("Stockage").parentElement as HTMLElement;
+    expect(parseFloat(rangee.style.paddingLeft)).toBeGreaterThan(8);
+    expect(parseFloat(rangee.style.paddingRight)).toBeGreaterThan(8);
+  });
+});

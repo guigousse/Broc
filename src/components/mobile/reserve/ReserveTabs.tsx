@@ -62,11 +62,24 @@ interface ReserveTabsProps {
   onVerrou: () => void;
 }
 
+/**
+ * Retrait latéral des languettes. Il doit DÉPASSER le rayon de la carte
+ * (`--radius-card`, 8 px) : le remplissage de la languette active est un
+ * rectangle, et posé sur un coin arrondi il vient le combler par-derrière —
+ * le coin redevient carré. En s'arrêtant avant les coins, les languettes les
+ * laissent entiers, et le liseré haut de la carte reparaît de part et
+ * d'autre : c'est aussi ce qui les fait lire comme des onglets de classeur
+ * plutôt que comme un bandeau.
+ */
+const RETRAIT_LANGUETTES = 14;
+
 const rangee: CSSProperties = {
   display: "flex",
   // Deux languettes SÉPARÉES : la gouttière est ce qui les fait lire comme
   // deux onglets plutôt que comme un sélecteur segmenté.
   gap: 6,
+  paddingLeft: RETRAIT_LANGUETTES,
+  paddingRight: RETRAIT_LANGUETTES,
 };
 
 const liseret = "1px solid var(--brass-500)";
