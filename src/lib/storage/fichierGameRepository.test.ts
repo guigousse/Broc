@@ -359,4 +359,95 @@ describe("fichierGameRepository", () => {
       expect(fichiers.get("slot_1")).toBe(JSON.stringify(etatFrais)); // jamais écrasé
     });
   });
+
+  // Revue de tâche 6 (constat) : `migrerVersFichiers()` ne vérifiait aucune
+  // relecture de l'INDEX qu'elle venait d'écrire (seuls les slots l'étaient).
+  // Chemin atteignable : un joueur sans AUCUNE save miroir — l'écriture de
+  // l'index est alors la SEULE écriture de toute la migration. Si elle
+  // résout sans être retrouvée à la relecture, l'ancien `load()` rappelait
+  // `this.load()` sur la foi du `true` rendu, retombait sur `absent`, migrait
+  // à nouveau, indéfiniment : le jeu ne s'affichait jamais. Le test ci-dessous
+  // vérifie que `load()` se termine — pas seulement qu'il tombe juste.
+  describe("protection contre la boucle de démarrage (revue de tâche 6)", () => {
+    it("ne boucle jamais si l'écriture de l'index migré n'est pas retrouvée à la relecture", async () => {
+      const { lireSave } = await import("./pontNatif");
+      // Aucune save miroir : deux appels à lireSave("index") au total —
+      // le constat initial (absent) puis la relecture de vérification après
+      // l'écriture migrée. Les deux rendent `null` ici.
+      vi.mocked(lireSave)
+        .mockResolvedValueOnce(null) // lireEtatIndexFichier() initial : absent
+        .mockResolvedValueOnce(null); // relecture de vérification post-écriture
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const relu = await fichierGameRepository.load();
+
+      // La promesse se résout (pas de récursion infinie) et retombe sur le
+      // miroir — ici vide, donc null.
+      expect(relu).toBeNull();
+    });
+
+    // La relecture ci-dessus suffit à empêcher CE scénario précis de boucler
+    // (la migration échoue proprement). Ce second test cible spécifiquement
+    // la garde STRUCTURELLE : même quand la migration RÉUSSIT, `load()` ne
+    // doit plus jamais relire l'index une seconde fois (ce que ferait un
+    // `return this.load()` réintroduit) — il doit poursuivre directement
+    // avec l'index que la migration vient d'écrire ET de vérifier.
+    it("ne relit jamais l'index une seconde fois après une migration réussie (pas de récursion)", async () => {
+      const { lireSave } = await import("./pontNatif");
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+
+      const relu = await fichierGameRepository.load();
+      expect(relu).toBeNull(); // aucune save nulle part (mirroir vide, migration à vide)
+
+      // Exactement 3 appels : le constat initial (absent), la relecture de
+      // vérification de l'index migré, puis la lecture du slot résolu par
+      // la poursuite directe. Un `this.load()` réintroduit provoquerait un
+      // second passage complet (au moins un 4e appel, pour un second constat
+      // d'index).
+      expect(vi.mocked(lireSave)).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  // Ruling R9 : `save()` lisait l'index via `lireIndexFichier()`, qui
+  // confond « absent » et « illisible » — sur un index PRÉSENT MAIS
+  // ILLISIBLE, les révisions des slots AUTRES que celui en cours de save()
+  // retombaient à 0 par défaut, alors que leurs fichiers peuvent très bien
+  // exister avec une révision réelle non nulle : ils perdraient ensuite
+  // l'arbitrage de load() face à leur propre miroir, alors qu'ils étaient
+  // peut-être plus frais. `save()` doit reconstruire ces révisions depuis
+  // `revisionDe(k)` (le miroir), pas depuis 0, quand l'index est illisible.
+  describe("index fichier illisible pendant save() (Ruling R9)", () => {
+    it("reconstruit les révisions des autres slots depuis le miroir plutôt que de les remettre à 0", async () => {
+      // Le miroir a une vraie histoire sur le slot 2 (révision 5, contenu
+      // plus ancien que le fichier).
+      window.localStorage.setItem(
+        cleSlot(2),
+        JSON.stringify(createMockGameState({ jourActuel: 20 })),
+      );
+      toucherDerniereSession(2, 5);
+      // Le fichier du slot 2 existe déjà, plus frais.
+      fichiers.set("slot_2", JSON.stringify(createMockGameState({ jourActuel: 55 })));
+      // Index fichier illisible.
+      fichiers.set("index", "{ceci n'est pas du json");
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      // On sauvegarde sur le slot 1 (actif par défaut du miroir).
+      const r = await fichierGameRepository.save(createMockGameState({ jourActuel: 1 }));
+      expect(r).toEqual({ ok: true });
+
+      const indexEcrit = JSON.parse(fichiers.get("index") ?? "null") as {
+        revisions: Record<number, number>;
+      } | null;
+      // Sans le correctif, revisions[2] vaudrait 0 (index reconstruit avec
+      // {1:.,2:0,3:0}) : le fichier du slot 2 perdrait alors l'arbitrage
+      // face à son propre miroir.
+      expect(indexEcrit?.revisions[2]).toBe(5);
+
+      // Confirmation par l'arbitrage : le fichier du slot 2 (plus frais que
+      // son miroir) doit l'emporter au load() suivant.
+      changerSlotActif(2);
+      const relu = await fichierGameRepository.load();
+      expect(relu?.jourActuel).toBe(55);
+    });
+  });
 });

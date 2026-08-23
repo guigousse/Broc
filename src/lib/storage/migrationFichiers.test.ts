@@ -41,7 +41,7 @@ describe("migrerVersFichiers", () => {
       }),
     );
     const { migrerVersFichiers } = await import("./migrationFichiers");
-    await expect(migrerVersFichiers()).resolves.toBe(true);
+    await expect(migrerVersFichiers()).resolves.not.toBeNull();
     expect(fichiers.get("slot_1")).toBe(window.localStorage.getItem(cleSlot(1)));
     expect(fichiers.has("index")).toBe(true);
   });
@@ -51,7 +51,7 @@ describe("migrerVersFichiers", () => {
     const { ecrireSave } = await import("./pontNatif");
     vi.mocked(ecrireSave).mockRejectedValueOnce({ genre: "disque_plein", message: "" });
     const { migrerVersFichiers } = await import("./migrationFichiers");
-    await expect(migrerVersFichiers()).resolves.toBe(false);
+    await expect(migrerVersFichiers()).resolves.toBeNull();
     expect(fichiers.has("index")).toBe(false);
     // Surtout : le miroir est intact.
     expect(window.localStorage.getItem(cleSlot(1))).not.toBeNull();
@@ -67,8 +67,27 @@ describe("migrerVersFichiers", () => {
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce("un contenu different");
     const { migrerVersFichiers } = await import("./migrationFichiers");
-    await expect(migrerVersFichiers()).resolves.toBe(false);
+    await expect(migrerVersFichiers()).resolves.toBeNull();
     expect(fichiers.has("index")).toBe(false);
+  });
+
+  // Revue de tâche 6 (constat) : la seule écriture de la fonction qui n'était
+  // vérifiée par AUCUNE relecture était l'index lui-même. Chemin atteignable :
+  // un joueur sans AUCUNE save miroir — `aCopier` est vide, donc l'écriture de
+  // l'index est la SEULE écriture de toute la fonction. Si `ecrireSave`
+  // résout mais la relecture immédiate ne la retrouve pas, l'ancienne version
+  // rendait quand même `true` : `fichierGameRepository.load()` rappelait alors
+  // `this.load()`, qui retrouvait `absent` et migrait à nouveau, indéfiniment
+  // — le jeu ne s'affichait jamais. La relecture de vérification ci-dessous
+  // referme ce chemin ; la structure sans récursion de `load()` (voir
+  // fichierGameRepository.ts) le referme une seconde fois, structurellement.
+  it("annule si la relecture de l'index ne correspond pas, même sans aucune save à copier", async () => {
+    const { lireSave } = await import("./pontNatif");
+    // Aucun slot occupé : le seul appel à lireSave de toute la fonction est
+    // la relecture de vérification de l'index qui vient d'être écrit.
+    vi.mocked(lireSave).mockResolvedValueOnce(null);
+    const { migrerVersFichiers } = await import("./migrationFichiers");
+    await expect(migrerVersFichiers()).resolves.toBeNull();
   });
 
   it("efface les copies de secours devenues orphelines, et elles seules", async () => {
@@ -82,7 +101,7 @@ describe("migrerVersFichiers", () => {
 
   it("réussit sans rien copier quand aucune partie n'existe", async () => {
     const { migrerVersFichiers } = await import("./migrationFichiers");
-    await expect(migrerVersFichiers()).resolves.toBe(true);
+    await expect(migrerVersFichiers()).resolves.not.toBeNull();
     expect(fichiers.has("index")).toBe(true);
   });
 
@@ -102,7 +121,20 @@ describe("migrerVersFichiers", () => {
   // autres slots et d'écrire l'index, pour que la migration finisse quand
   // même par aboutir.
   describe("un fichier de slot déjà présent n'est jamais écrasé (Ruling R8)", () => {
-    it("laisse le fichier déjà présent intact, octet pour octet, et réussit quand même", async () => {
+    // Revue de tâche 6 (constat) : asserter `revisions[1] === 0` ici ne
+    // prouvait rien, puisque `revisions` est INITIALISÉ à `{1:0,2:0,3:0}` —
+    // le test restait vert même sans la ligne `revisions[n] = revisionDe(n)`.
+    // On sème donc une révision miroir NON NULLE (7) avant de migrer, exactement
+    // la forme que `toucherDerniereSession` écrit (slots.ts:344-348), pour que
+    // seule la ligne R8-iii puisse produire la valeur attendue.
+    it("inscrit la révision réelle du miroir pour un slot déjà présent (Ruling R8-iii), pas 0 par défaut", async () => {
+      window.localStorage.setItem(
+        CLE_INDEX,
+        JSON.stringify({
+          actif: 1,
+          slots: { 1: { nom: null, derniereSession: 1, revision: 7 }, 2: null, 3: null },
+        }),
+      );
       window.localStorage.setItem(
         cleSlot(1),
         JSON.stringify(createMockGameState({ jourActuel: 1 })), // le miroir : plus ancien
@@ -113,7 +145,8 @@ describe("migrerVersFichiers", () => {
       fichiers.set("slot_1", contenuFichierExistant);
 
       const { migrerVersFichiers } = await import("./migrationFichiers");
-      await expect(migrerVersFichiers()).resolves.toBe(true);
+      const resultat = await migrerVersFichiers();
+      expect(resultat).not.toBeNull();
 
       expect(fichiers.get("slot_1")).toBe(contenuFichierExistant);
       // Le miroir non plus n'est jamais touché par la migration.
@@ -121,14 +154,16 @@ describe("migrerVersFichiers", () => {
         JSON.stringify(createMockGameState({ jourActuel: 1 })),
       );
 
-      // La révision inscrite pour ce slot est celle du miroir (Ruling
-      // R8-iii), pas 0 par défaut ni une valeur inventée : c'est ce qui
-      // permet à un fichier plus frais que le miroir de gagner l'arbitrage
-      // de fichierGameRepository.load() plutôt que de perdre l'égalité.
       const indexEcrit = JSON.parse(fichiers.get("index") ?? "null") as {
         revisions: Record<number, number>;
       } | null;
-      expect(indexEcrit?.revisions[1]).toBe(0); // revisionDe(1) ici : jamais touché par ce test
+      expect(indexEcrit?.revisions[1]).toBe(7);
+
+      // Et l'arbitrage du load() suivant confirme que c'est bien le fichier
+      // (plus frais) qui est servi, pas le miroir périmé.
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const relu = await fichierGameRepository.load();
+      expect(relu?.jourActuel).toBe(99);
     });
 
     it("copie seulement le slot manquant quand un autre slot a déjà un fichier", async () => {
@@ -146,7 +181,7 @@ describe("migrerVersFichiers", () => {
       fichiers.set("slot_2", contenuFichierExistantSlot2);
 
       const { migrerVersFichiers } = await import("./migrationFichiers");
-      await expect(migrerVersFichiers()).resolves.toBe(true);
+      await expect(migrerVersFichiers()).resolves.not.toBeNull();
 
       expect(fichiers.get("slot_1")).toBe(window.localStorage.getItem(cleSlot(1)));
       expect(fichiers.get("slot_2")).toBe(contenuFichierExistantSlot2); // inchangé

@@ -112,6 +112,51 @@ function resoudreSlotActif(index: IndexFichier | null): NumeroSlot {
   return n;
 }
 
+/**
+ * Corps de `load()` une fois un `IndexFichier` VALIDE en main — qu'il vienne
+ * de `lireEtatIndexFichier()` (genre "ok") ou de `migrerVersFichiers()`
+ * (déjà vérifié par relecture stricte, voir migrationFichiers.ts). Extrait
+ * en fonction dédiée exprès : `load()` ne doit JAMAIS avoir besoin de relire
+ * l'index une seconde fois après une migration pour poursuivre — c'est cette
+ * relecture évitée qui rend la non-récursion structurelle plutôt que
+ * simplement observée (revue de tâche 6, voir `load()` ci-dessous).
+ */
+async function chargerAvecIndex(index: IndexFichier): Promise<GameState | null> {
+  // Quel emplacement charger ? Résolu une seule fois (Ruling R6) et
+  // transmis explicitement à tout ce qui suit, y compris le repli miroir.
+  const n = resoudreSlotActif(index);
+
+  let duFichier: GameState | null = null;
+  try {
+    duFichier = parse<GameState>(await lireSave(quoiDuSlot(n)));
+  } catch {
+    duFichier = null;
+  }
+
+  const revFichier = index.revisions[n] ?? 0;
+  const revMiroir = revisionDe(n);
+
+  // Le fichier ne l'emporte QUE s'il est lisible ET au moins aussi frais.
+  // Un fichier corrompu, ou distancé parce qu'il avait décroché pendant que
+  // le miroir continuait, laisse la main au miroir.
+  if (duFichier && revFichier >= revMiroir) return duFichier;
+
+  // `chargerSlot(n)`, pas `localGameRepository.load()` : ce dernier
+  // re-résoudrait son propre `slotActif()`, qui peut différer de `n` quand
+  // le miroir n'a pas d'index (Ruling R6) — et lirait alors le mauvais
+  // emplacement.
+  const duMiroir = await chargerSlot(n);
+  if (duMiroir) {
+    console.warn(
+      `[fichierGameRepository] Slot ${n} servi depuis le miroir ` +
+        `(fichier ${duFichier ? "distancé" : "illisible"}, ` +
+        `révisions fichier=${revFichier} miroir=${revMiroir}).`,
+    );
+    return duMiroir;
+  }
+  return duFichier;
+}
+
 export const fichierGameRepository: GameRepository = {
   async load() {
     const etat = await lireEtatIndexFichier();
@@ -132,54 +177,28 @@ export const fichierGameRepository: GameRepository = {
 
     // Index réellement absent : première ouverture après mise à jour. On
     // migre, et si ça échoue on continue sur le miroir — jamais de perte.
-    // L'appel récursif ne peut pas boucler : la migration n'a rendu `true`
-    // qu'après avoir écrit l'index, donc `lireEtatIndexFichier()` le
-    // trouvera (genre "ok") au second tour.
+    // Pas de rappel à `load()` ici : `migrerVersFichiers()` rend l'index
+    // qu'elle vient d'écrire ET de vérifier par relecture stricte (jamais un
+    // simple booléen), donc on poursuit DIRECTEMENT avec cet index via
+    // `chargerAvecIndex`. Structurellement, il ne peut donc plus y avoir de
+    // second passage par `lireEtatIndexFichier()` après une migration — pas
+    // seulement « la migration n'a rendu vrai qu'après avoir écrit l'index »
+    // (l'hypothèse qui a permis la boucle non bornée corrigée en revue de
+    // tâche 6 : un `ecrireSave` qui résout sans être relisible aurait fait
+    // boucler `absent → migre → absent → …` indéfiniment, le jeu ne
+    // s'affichant jamais).
     if (etat.genre === "absent") {
-      const migre = await migrerVersFichiers();
-      if (!migre) return localGameRepository.load();
-      return this.load();
+      const indexMigre = await migrerVersFichiers();
+      if (!indexMigre) return localGameRepository.load();
+      return chargerAvecIndex(indexMigre);
     }
 
-    const index = etat.index;
-
-    // Quel emplacement charger ? Résolu une seule fois (Ruling R6) et
-    // transmis explicitement à tout ce qui suit, y compris le repli miroir.
-    const n = resoudreSlotActif(index);
-
-    let duFichier: GameState | null = null;
-    try {
-      duFichier = parse<GameState>(await lireSave(quoiDuSlot(n)));
-    } catch {
-      duFichier = null;
-    }
-
-    const revFichier = index.revisions[n] ?? 0;
-    const revMiroir = revisionDe(n);
-
-    // Le fichier ne l'emporte QUE s'il est lisible ET au moins aussi frais.
-    // Un fichier corrompu, ou distancé parce qu'il avait décroché pendant que
-    // le miroir continuait, laisse la main au miroir.
-    if (duFichier && revFichier >= revMiroir) return duFichier;
-
-    // `chargerSlot(n)`, pas `localGameRepository.load()` : ce dernier
-    // re-résoudrait son propre `slotActif()`, qui peut différer de `n` quand
-    // le miroir n'a pas d'index (Ruling R6) — et lirait alors le mauvais
-    // emplacement.
-    const duMiroir = await chargerSlot(n);
-    if (duMiroir) {
-      console.warn(
-        `[fichierGameRepository] Slot ${n} servi depuis le miroir ` +
-          `(fichier ${duFichier ? "distancé" : "illisible"}, ` +
-          `révisions fichier=${revFichier} miroir=${revMiroir}).`,
-      );
-      return duMiroir;
-    }
-    return duFichier;
+    return chargerAvecIndex(etat.index);
   },
 
   async save(state): Promise<ResultatSave> {
-    const index = await lireIndexFichier();
+    const etat = await lireEtatIndexFichier();
+    const index = etat.genre === "ok" ? etat.index : null;
     // Résolu une seule fois (Ruling R6) : ni l'écriture du fichier, ni celle
     // du miroir, ni `toucherDerniereSession` ne doivent re-résoudre le leur.
     const n = resoudreSlotActif(index);
@@ -195,9 +214,24 @@ export const fichierGameRepository: GameRepository = {
 
     // 2. L'index ensuite. Une save sans entrée d'index est récupérable ;
     //    l'inverse serait un emplacement fantôme.
+    //
+    // Ruling R9 : sur un index ABSENT, aucun fichier de slot n'a jamais
+    // existé — `{1:0,2:0,3:0}` est la vérité. Sur un index PRÉSENT MAIS
+    // ILLISIBLE, en revanche, des fichiers de slots AUTRES que `n` peuvent
+    // très bien exister avec une révision réelle non nulle : leur attribuer
+    // 0 leur ferait perdre l'arbitrage `revFichier >= revMiroir` de
+    // `chargerAvecIndex` face à leur propre miroir, même s'ils sont plus
+    // frais — le même dégât que R8(i) corrige pour `load()`, non corrigé
+    // ici. La meilleure estimation disponible sans lire ces fichiers est la
+    // révision du MIROIR pour chaque slot (`revisionDe`, la même
+    // contrepartie que R8(iii) utilise déjà côté migration).
+    const basesRevisions: Record<NumeroSlot, number> =
+      etat.genre === "illisible"
+        ? { 1: revisionDe(1), 2: revisionDe(2), 3: revisionDe(3) }
+        : (index?.revisions ?? { 1: 0, 2: 0, 3: 0 });
     const suivant: IndexFichier = {
       actif: n,
-      revisions: { ...(index?.revisions ?? { 1: 0, 2: 0, 3: 0 }), [n]: revision },
+      revisions: { ...basesRevisions, [n]: revision },
     };
     try {
       await ecrireSave("index", JSON.stringify(suivant));

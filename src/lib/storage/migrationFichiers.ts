@@ -48,9 +48,15 @@ function lireMiroir(n: NumeroSlot): string | null {
  * l'arbitrage `revFichier >= revMiroir` dans `fichierGameRepository.load()`
  * au lieu de perdre face à un miroir qui n'a jamais vu la save qui a
  * produit ce fichier.
+ *
+ * Rend l'`IndexFichier` effectivement écrit (et relu à l'identique) en cas
+ * de succès, `null` sinon — jamais un simple booléen : `fichierGameRepository
+ * .load()` doit pouvoir poursuivre directement avec cet index sans jamais
+ * avoir besoin de le relire une seconde fois (voir le commentaire sur
+ * l'écriture de l'index ci-dessous).
  */
-export async function migrerVersFichiers(): Promise<boolean> {
-  if (typeof window === "undefined") return false;
+export async function migrerVersFichiers(): Promise<IndexFichier | null> {
+  if (typeof window === "undefined") return null;
 
   const index = chargerIndex();
 
@@ -68,15 +74,15 @@ export async function migrerVersFichiers(): Promise<boolean> {
     try {
       dejaPresent = await lireSave(quoiDuSlot(n));
     } catch {
-      return false;
+      return null;
     }
 
     if (dejaPresent === null) {
       try {
         await ecrireSave(quoiDuSlot(n), brut);
-        if ((await lireSave(quoiDuSlot(n))) !== brut) return false;
+        if ((await lireSave(quoiDuSlot(n))) !== brut) return null;
       } catch {
-        return false;
+        return null;
       }
     }
     // Copié ou laissé intact : dans les deux cas, la révision inscrite est
@@ -85,10 +91,23 @@ export async function migrerVersFichiers(): Promise<boolean> {
   }
 
   const indexFichier: IndexFichier = { actif: index.actif, revisions };
+  const indexSerialise = JSON.stringify(indexFichier);
   try {
-    await ecrireSave("index", JSON.stringify(indexFichier));
+    await ecrireSave("index", indexSerialise);
+    // Revue de tâche 6 (constat) : c'était la SEULE écriture de la fonction
+    // qui n'était vérifiée par aucune relecture — chaque copie de slot l'est
+    // déjà (ligne ci-dessus), mais l'index, non. Chemin atteignable : un
+    // joueur sans AUCUNE save miroir (`aCopier` vide) ne fait alors QUE
+    // cette écriture. Si `ecrireSave` résout sans que le fichier soit
+    // effectivement retrouvable en relecture immédiate, rendre `true` (ou un
+    // index non vérifié) ferait croire à `fichierGameRepository.load()` que
+    // la migration a réussi ; son prochain lireIndexFichier() la retrouverait
+    // `absent` malgré tout, et sans garde structurelle, on aurait bouclé
+    // indéfiniment (absent → migre → absent → …) — le jeu ne s'affichant
+    // jamais. Même règle que les slots, ici appliquée à l'index lui-même.
+    if ((await lireSave("index")) !== indexSerialise) return null;
   } catch {
-    return false;
+    return null;
   }
 
   // Les fichiers sont en place et atomiques : le double-buffer du miroir n'a
@@ -101,5 +120,5 @@ export async function migrerVersFichiers(): Promise<boolean> {
     }
   }
 
-  return true;
+  return indexFichier;
 }
