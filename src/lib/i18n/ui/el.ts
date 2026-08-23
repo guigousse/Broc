@@ -790,6 +790,10 @@ export const el: DictionnaireUI = {
     sauvegardeImpossible:
       "Η αποθήκευση απέτυχε — ο χώρος είναι γεμάτος ή μη διαθέσιμος. Η πρόοδός σου κινδυνεύει να χαθεί.",
     sauvegardeRetablie: "Η αποθήκευση αποκαταστάθηκε.",
+    // Εξαγωγή παρτίδας (Εργασία 10): κουμπί ανά θέση στο PartiesModal.tsx.
+    // Χωρίς αντίστοιχη εισαγωγή σε αυτό το εγχείρημα — ο παίκτης αρχειοθετεί,
+    // δεν αποκαθιστά.
+    exporterPartie: "Εξαγωγή αυτής της παρτίδας",
   },
   // Conditions de déblocage des brocantes (deblocage.ts) : rendues à l'affichage
   // (panorama). `long` = description complète, `court` = avec progression.

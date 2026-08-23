@@ -807,6 +807,10 @@ export const fr = {
     espaceCorps:
       "BROC risque de ne plus pouvoir enregistrer ta partie. Libère un peu de place pour continuer sereinement.",
     espaceBouton: "J'ai compris",
+    // Export de sauvegarde (Tâche 10) : bouton par emplacement dans
+    // PartiesModal.tsx. Pas de pendant « importer » dans ce chantier — le
+    // joueur archive, il ne restaure pas.
+    exporterPartie: "Exporter cette partie",
   },
   // Conditions de déblocage des brocantes (deblocage.ts) : rendues à l'affichage
   // (panorama). `long` = description complète, `court` = avec progression.

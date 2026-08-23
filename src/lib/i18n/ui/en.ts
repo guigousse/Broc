@@ -772,6 +772,9 @@ export const en: DictionnaireUI = {
     espaceCorps:
       "BROC may soon be unable to save your game. Free up some space to keep playing safely.",
     espaceBouton: "Got it",
+    // Save export (Task 10): per-slot button in PartiesModal.tsx. No import
+    // counterpart in this chantier — the player archives, they don't restore.
+    exporterPartie: "Export this save",
   },
   deblocage: {
     long: {

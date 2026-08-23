@@ -36,11 +36,18 @@ pub(crate) async fn espace_libre<R: Runtime>(app: AppHandle<R>) -> Result<Option
     app.stockage().espace_libre()
 }
 
+// Tâche 10 : l'export de sauvegarde. Routé vers le Swift iOS (mobile.rs, la
+// feuille de partage système) ou vers le rejet immédiat Android/bureau
+// (desktop.rs) — même schéma que `espace_libre` ci-dessus. `chemin` pointe
+// TOUJOURS vers le vrai fichier du slot (app_data_dir + nom du `Quoi`) ;
+// c'est le Swift qui en fait une copie avant de la présenter, jamais ce
+// fichier lui-même (cf. commentaire de `StockagePlugin.swift`).
 #[command]
 pub(crate) async fn partager_fichier<R: Runtime>(
-    _app: AppHandle<R>,
-    _quoi: Quoi,
-    _nom_lisible: String,
+    app: AppHandle<R>,
+    quoi: Quoi,
+    nom_lisible: String,
 ) -> Result<()> {
-    Err(Error::Indisponible)
+    let chemin = repertoire(&app)?.join(quoi.nom_fichier());
+    app.stockage().partager_fichier(&chemin, &nom_lisible)
 }

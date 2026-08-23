@@ -774,6 +774,10 @@ export const es: DictionnaireUI = {
     espaceCorps:
       "BROC podría dejar de poder guardar tu partida. Libera algo de espacio para seguir jugando tranquilo.",
     espaceBouton: "Entendido",
+    // Exportación de partida (Tarea 10): botón por emplazamiento en
+    // PartiesModal.tsx. Sin contraparte de importación en este proyecto — el
+    // jugador archiva, no restaura.
+    exporterPartie: "Exportar esta partida",
   },
   deblocage: {
     long: {

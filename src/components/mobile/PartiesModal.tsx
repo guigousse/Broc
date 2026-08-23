@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Share2, Trash2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
+import { partagerFichier, quoiDuSlot } from "@/lib/storage/pontNatif";
 import {
   chargerIndex,
   renommerSlot,
@@ -15,6 +16,16 @@ import {
   type IndexSlots,
   type NumeroSlot,
 } from "@/lib/storage/slots";
+
+/**
+ * Nom du fichier proposé au partage : `resumeSlot` lit déjà `jourActuel` de
+ * façon défensive (toute save absente/corrompue/mal typée rend `null`) ; on
+ * retombe alors sur un nom générique plutôt que d'exposer un slot sans jour
+ * lisible.
+ */
+function nomExport(resume: { jour: number } | null): string {
+  return resume ? `broc-partie-jour-${resume.jour}.json` : "broc-partie.json";
+}
 
 interface PartiesModalProps {
   open: boolean;
@@ -359,6 +370,15 @@ export function PartiesModal({
   const suppressionEnCoursRef = useRef(false);
   const { d, tr, locale } = useLangue();
 
+  // Export (Tâche 10) : disponibilité sondée UNE FOIS pour la session — cette
+  // modale reste montée en permanence dans l'arbre (seul `open` bascule, cf.
+  // src/app/page.tsx), donc une ref suffit à ne sonder qu'à la toute première
+  // fois, sans état de module. `false` par défaut = icône visible tant que
+  // le sondage n'a pas prouvé le contraire (échoue ouvert plutôt que de
+  // masquer l'export pendant l'attente).
+  const [exportIndisponible, setExportIndisponible] = useState(false);
+  const sondeExportFaite = useRef(false);
+
   useEffect(() => {
     if (open) {
       setIndex(chargerIndex());
@@ -369,6 +389,22 @@ export function PartiesModal({
       suppressionEnCoursRef.current = false;
     }
   }, [open]);
+
+  useEffect(() => {
+    if (sondeExportFaite.current) return;
+    sondeExportFaite.current = true;
+    // `nomLisible` vide plutôt que le vrai nom de fichier : StockagePlugin.
+    // swift rejette un nom vide AVANT toute copie de fichier ou présentation
+    // de feuille de partage (garde générale, pas spécifique au sondage) —
+    // cet appel ne peut donc jamais déclencher un partage réel. Seul le
+    // GENRE de l'échec nous intéresse : `indisponible` (Android, bureau)
+    // masque définitivement l'icône pour la session ; tout autre genre (ex.
+    // "io") la laisse visible, un échec réel se constatera au clic.
+    partagerFichier(quoiDuSlot(1), "").catch((e: unknown) => {
+      const genre = (e as { genre?: string } | null | undefined)?.genre;
+      if (genre === "indisponible") setExportIndisponible(true);
+    });
+  }, []);
 
   if (!open || index === null) return null;
 
@@ -522,6 +558,30 @@ export function PartiesModal({
 
                     {mode === "gestion" && (
                       <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                        {!exportIndisponible && (
+                          <BoutonSlot
+                            variant="secondary"
+                            onClick={() =>
+                              partagerFichier(
+                                quoiDuSlot(ligne.n),
+                                nomExport(ligne.resume),
+                              ).catch(() => {
+                                // Échec au clic (fichier absent, copie
+                                // impossible…) : rien d'affiché — pas de
+                                // toast prévu par ce chantier, l'icône reste
+                                // disponible pour un nouvel essai.
+                              })
+                            }
+                            ariaLabel={d.raisons.exporterPartie}
+                            style={{
+                              padding: "12px 13px",
+                              display: "grid",
+                              placeItems: "center",
+                            }}
+                          >
+                            <Share2 size={16} strokeWidth={2} aria-hidden />
+                          </BoutonSlot>
+                        )}
                         <BoutonSlot
                           variant="secondary"
                           onClick={() => onDebuterRenommage(ligne.n, ligne.nom)}

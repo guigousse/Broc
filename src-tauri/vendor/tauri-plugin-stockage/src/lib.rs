@@ -4,10 +4,11 @@ pub mod models;
 
 mod commands;
 
-// Seule `espace_libre` a besoin de code natif : le split mobile/desktop
-// (identique dans l'esprit à tauri-plugin-iap et tauri-plugin-firebase)
-// ne porte donc QUE cette commande — lire_save/ecrire_save/partager_fichier
-// restent des fonctions Rust directes dans commands.rs, inchangées.
+// `espace_libre` (Tâche 9) et `partager_fichier` (Tâche 10) ont besoin de
+// code natif : le split mobile/desktop (identique dans l'esprit à
+// tauri-plugin-iap et tauri-plugin-firebase) porte ces deux commandes —
+// lire_save/ecrire_save restent des fonctions Rust directes dans
+// commands.rs, inchangées.
 #[cfg(target_os = "ios")]
 mod mobile;
 #[cfg(not(target_os = "ios"))]

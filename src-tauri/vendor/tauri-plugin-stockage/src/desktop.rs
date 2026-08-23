@@ -1,5 +1,8 @@
 use serde::de::DeserializeOwned;
+use std::path::Path;
 use tauri::{plugin::PluginApi, AppHandle, Runtime};
+
+use crate::error::Error;
 
 pub fn init<R: Runtime, C: DeserializeOwned>(
     app: &AppHandle<R>,
@@ -18,5 +21,13 @@ pub struct Stockage<R: Runtime>(#[allow(dead_code)] AppHandle<R>);
 impl<R: Runtime> Stockage<R> {
     pub fn espace_libre(&self) -> crate::Result<Option<u64>> {
         Ok(None)
+    }
+
+    // Android et bureau : aucune feuille de partage native branchée ici.
+    // Rejette IMMÉDIATEMENT — aucun accès disque, aucune UI — c'est ce
+    // zéro-effet-de-bord qui rend inoffensif le sondage de disponibilité que
+    // PartiesModal.tsx fait au montage (Tâche 10).
+    pub fn partager_fichier(&self, _chemin: &Path, _nom_lisible: &str) -> crate::Result<()> {
+        Err(Error::Indisponible)
     }
 }

@@ -33,6 +33,67 @@ class StockagePlugin: Plugin {
       invoke.resolve(["octets": NSNull()])
     }
   }
+
+  // Tâche 10 : l'export de sauvegarde. `chemin` est le chemin ABSOLU du
+  // fichier source calculé côté Rust (app_data_dir + nom du `Quoi`,
+  // commands.rs) ; `nomLisible` le nom sous lequel le présenter au joueur
+  // (ex. "broc-partie-jour-34.json").
+  private struct ArgsPartager: Decodable {
+    let chemin: String
+    let nomLisible: String
+  }
+
+  @objc public func partagerFichier(_ invoke: Invoke) throws {
+    let args = try invoke.parseArgs(ArgsPartager.self)
+
+    // Garde générale, pas seulement pour le sondage : un nom vide ne peut
+    // produire aucune copie exploitable. C'est ce rejet précoce — AVANT
+    // toute copie de fichier ou présentation d'UI — dont PartiesModal.tsx se
+    // sert pour sonder la disponibilité du partage au montage sans jamais
+    // déclencher un partage réel.
+    guard !args.nomLisible.isEmpty else {
+      invoke.reject("Nom de fichier vide")
+      return
+    }
+
+    let source = URL(fileURLWithPath: args.chemin)
+    let destination = URL(fileURLWithPath: NSTemporaryDirectory())
+      .appendingPathComponent(args.nomLisible)
+
+    do {
+      // La feuille de partage reçoit toujours une COPIE, jamais `source` :
+      // le fichier réel du slot n'est ni déplacé, ni renommé, ni supprimé
+      // par ce code — c'est tout le sens de ce chantier. Un fichier du même
+      // nom laissé par un partage précédent est écrasé.
+      if FileManager.default.fileExists(atPath: destination.path) {
+        try FileManager.default.removeItem(at: destination)
+      }
+      try FileManager.default.copyItem(at: source, to: destination)
+    } catch {
+      invoke.reject("Copie du fichier à partager impossible : \(error)")
+      return
+    }
+
+    guard let racine = manager.viewController else {
+      invoke.reject("Aucun contrôleur racine pour présenter le partage")
+      return
+    }
+
+    // La présentation UIKit doit courir sur le thread principal : ce
+    // handler tourne sur la file `ipcDispatchQueue` de PluginManager.
+    DispatchQueue.main.async {
+      let feuille = UIActivityViewController(
+        activityItems: [destination], applicationActivities: nil)
+      // iPad : sans `popoverPresentationController`, la présentation plante
+      // (project.yml déclare les orientations iPad, donc iPad est une
+      // cible réelle). `UIUtils.centerPopover` (Tauri, UiUtils.swift) pose
+      // sourceView/sourceRect/permittedArrowDirections en un seul appel —
+      // sans effet sur iPhone, où la feuille n'est pas un popover.
+      UIUtils.centerPopover(rootViewController: racine, popoverController: feuille)
+      racine.present(feuille, animated: true)
+      invoke.resolve()
+    }
+  }
 }
 
 @_cdecl("init_plugin_stockage")

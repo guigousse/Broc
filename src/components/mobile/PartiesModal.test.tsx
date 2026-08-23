@@ -15,10 +15,17 @@
  * La modal ne navigue plus elle-même pour lancer une partie : « Lancer la
  * partie » délègue au parent via `onLancer(slot)`. L'iris de transition et
  * l'ordre détacher/bascule/navigation sont testés dans `page.test.tsx`.
+ *
+ * Export (Tâche 10) : `partagerFichier` est mocké (module entier) — la
+ * modal sonde sa disponibilité au montage (voir `PartiesModal.tsx`), donc
+ * TOUT rendu appelle le mock. Le `beforeEach` lui donne une résolution par
+ * défaut pour que les tests qui ne portent pas sur l'export n'aient pas à
+ * s'en soucier.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { PartiesModal } from "./PartiesModal";
+import { partagerFichier } from "@/lib/storage/pontNatif";
 import {
   CLE_INDEX,
   changerSlotActif,
@@ -29,6 +36,13 @@ import {
   type NumeroSlot,
 } from "@/lib/storage/slots";
 
+vi.mock("@/lib/storage/pontNatif", async (importOriginal) => {
+  const reel = await importOriginal<typeof import("@/lib/storage/pontNatif")>();
+  // `quoiDuSlot` est une fonction pure (numéro → chaîne) : gardée réelle,
+  // seul `partagerFichier` (l'appel natif) est mocké.
+  return { ...reel, partagerFichier: vi.fn() };
+});
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
@@ -36,6 +50,7 @@ afterEach(() => {
 
 beforeEach(() => {
   localStorage.clear();
+  vi.mocked(partagerFichier).mockReset().mockResolvedValue(undefined);
 });
 
 function ecrireSave(n: NumeroSlot, jour: number, niveau: number, budget: number) {
@@ -65,6 +80,22 @@ function mockLocation() {
 
 function ligne(numero: number) {
   return screen.getByRole("group", { name: `Emplacement ${numero}` });
+}
+
+/**
+ * Rendu dédié aux tests d'export : un seul emplacement occupé (le 1, jour
+ * 34) par défaut — c'est le jour attendu par le nom de fichier généré,
+ * `broc-partie-jour-34.json`. `slotsOccupes: []` seed volontairement rien,
+ * pour le cas « aucun emplacement occupé ».
+ */
+function rendreParties(opts: { slotsOccupes?: NumeroSlot[] } = {}) {
+  const slotsOccupes = opts.slotsOccupes ?? [1];
+  for (const n of slotsOccupes) {
+    seedOccupe(n, { jour: 34, niveau: 5, budget: 100 });
+  }
+  return render(
+    <PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />,
+  );
 }
 
 describe("PartiesModal — fermée", () => {
@@ -507,5 +538,32 @@ describe("PartiesModal — fermeture", () => {
     render(<PartiesModal open onClose={onClose} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Fermer" }));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("PartiesModal — export (Tâche 10)", () => {
+  it("propose l'export sur un emplacement occupé", async () => {
+    vi.mocked(partagerFichier).mockResolvedValue(undefined);
+    rendreParties();
+    expect(await screen.findAllByLabelText(/exporter/i)).toHaveLength(1);
+  });
+
+  it("nomme le fichier avec le jour de jeu", async () => {
+    rendreParties();
+    (await screen.findByLabelText(/exporter/i)).click();
+    await waitFor(() =>
+      expect(partagerFichier).toHaveBeenCalledWith("slot_1", "broc-partie-jour-34.json"),
+    );
+  });
+
+  it("masque l'export quand la plateforme ne sait pas partager", async () => {
+    vi.mocked(partagerFichier).mockRejectedValue({ genre: "indisponible", message: "" });
+    rendreParties();
+    await waitFor(() => expect(screen.queryByLabelText(/exporter/i)).toBeNull());
+  });
+
+  it("n'affiche pas d'export sur un emplacement vide", async () => {
+    rendreParties({ slotsOccupes: [] });
+    await waitFor(() => expect(screen.queryByLabelText(/exporter/i)).toBeNull());
   });
 });
