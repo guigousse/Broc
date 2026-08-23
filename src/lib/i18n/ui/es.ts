@@ -97,6 +97,7 @@ export const es: DictionnaireUI = {
       bureau: "Despacho",
       stockage: "Almacén",
       atelier: "Taller",
+      reserve: "Almacén",
     },
     ongletVerrouille: "bloqueado",
     verrouBibliotheque: "El Gabinete abre en tu primer nivel de Chamarilero.",

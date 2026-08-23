@@ -97,6 +97,7 @@ export const en: DictionnaireUI = {
       bureau: "Office",
       stockage: "Storage",
       atelier: "Workshop",
+      reserve: "Storeroom",
     },
     ongletVerrouille: "locked",
     verrouBibliotheque: "The Study opens at your first Dealer level.",

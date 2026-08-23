@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Album, Anvil, BookOpen, Home, Lock, Warehouse, type LucideIcon } from "lucide-react";
+import { Album, BookOpen, Home, Lock, Warehouse, type LucideIcon } from "lucide-react";
 import { type CSSProperties } from "react";
 import { Badge } from "@/components/mobile/Badge";
 import { useGameActions, useGameStateOnly } from "@/context/GameContext";
@@ -9,18 +9,33 @@ import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import { useToastSafe } from "@/components/ui/Toast";
-import { aCompetenceReparation } from "@/lib/competences";
 import { estPret } from "@/lib/restauration";
 import { ongletTutorielPermis, tutorielActif } from "@/lib/tutoriel";
 import type { GameState } from "@/types/game";
 
-/** Clé d'onglet — sert à retrouver le libellé traduit dans `d.chrome.onglets`. */
-type OngletCle = "collection" | "bibliotheque" | "bureau" | "stockage" | "atelier";
+/**
+ * Clé d'onglet — sert à retrouver le libellé traduit dans `d.chrome.onglets`.
+ * "quetes" arrive en Task 8 avec le cinquième onglet ; l'ajouter dès
+ * maintenant casserait `d.chrome.onglets[tab.cle]` (TS7053), faute de clé
+ * `quetes` dans le dictionnaire tant qu'aucun onglet ne s'en sert.
+ */
+type OngletCle = "collection" | "bibliotheque" | "bureau" | "reserve";
 
 export interface TabDef {
   icon: LucideIcon;
   cle: OngletCle;
+  /** Route ouverte au tap. Toujours le premier élément de `routes`. */
   path: string;
+  /**
+   * TOUS les chemins qui appartiennent à cet onglet. La Réserve en a deux
+   * (`/stockage` et `/atelier`) : ce sont deux vraies routes rendant la même
+   * coquille, et l'onglet doit se reconnaître actif sur les deux. Sans ça,
+   * `findActiveTabIndex` renvoie -1 sur /atelier et le swipe entre pièces
+   * ne sait plus d'où il part.
+   */
+  routes: string[];
+  /** Libellé court pour la colonne étroite. À défaut, `d.chrome.onglets[cle]`. */
+  abrege?: (d: DictionnaireUI) => string;
   /** `now` = temps de confiance (epoch ms) pour les badges dépendant du temps réel. */
   badge?: (state: GameState, now: number) => number;
   /**
@@ -36,17 +51,19 @@ export interface TabDef {
 }
 
 /**
- * Ordre cyclique : Collection → Bibliothèque → Bureau → Stockage → Atelier → (boucle)
+ * Ordre cyclique : Collection → Bibliothèque → Bureau → Réserve → (boucle)
  *
  * Seul le Bureau est un panorama (3 zones swipables). Les autres onglets
  * ouvrent directement leur écran de gestion.
  */
 export const TAB_ORDER: TabDef[] = [
-  { icon: Album, cle: "collection", path: "/collection" },
+  { icon: Album, cle: "collection", path: "/collection", routes: ["/collection"] },
   {
     icon: BookOpen,
     cle: "bibliotheque",
     path: "/bibliotheque",
+    routes: ["/bibliotheque"],
+    abrege: (d) => d.chrome.onglets.bibliothequeAbrege,
     badge: (state) => state.brocanteur.pointsDisponibles,
     // L'écran Compétences s'ouvre au premier level-up (cf. deblocagesNiveau).
     // La navigation directe vers /bibliotheque à niveau 0 reste possible
@@ -56,36 +73,31 @@ export const TAB_ORDER: TabDef[] = [
       raison: (d) => d.chrome.verrouBibliotheque,
     },
   },
-  { icon: Home, cle: "bureau", path: "/bureau" },
-  { icon: Warehouse, cle: "stockage", path: "/stockage" },
+  { icon: Home, cle: "bureau", path: "/bureau", routes: ["/bureau"] },
   {
-    icon: Anvil,
-    cle: "atelier",
-    path: "/atelier",
+    icon: Warehouse,
+    cle: "reserve",
+    path: "/stockage",
+    routes: ["/stockage", "/atelier"],
+    // Le badge des restaurations prêtes vivait sur l'onglet Atelier, qui
+    // n'existe plus en bas : il remonte ici. La bande d'onglets haute le
+    // redouble sur l'onglet Atelier (cf. ReserveTabs) pour dire laquelle des
+    // deux moitiés appelle.
     badge: (state, now) =>
       state.inventaireJoueur.filter(
         (o) => o.enRestauration && estPret(o.enRestauration, now),
       ).length,
-    // Sans compétence Réparer, l'Atelier n'offrirait que du démantèlement —
-    // dont les pièces ne se dépensent qu'en restauration. Une pièce sans
-    // serrure : autant garder la porte fermée jusqu'au premier apprenti.
-    verrou: {
-      ouvert: aCompetenceReparation,
-      raison: (d) => d.chrome.verrouAtelier,
-    },
   },
 ];
 
 /** Libellé abrégé affiché sous l'icône (colonne étroite) — cf. `d.chrome.onglets`. */
-function libelleAbrege(cle: OngletCle, d: DictionnaireUI): string {
-  return cle === "bibliotheque"
-    ? d.chrome.onglets.bibliothequeAbrege
-    : d.chrome.onglets[cle];
+function libelleAbrege(tab: TabDef, d: DictionnaireUI): string {
+  return tab.abrege ? tab.abrege(d) : d.chrome.onglets[tab.cle];
 }
 
 /** Libellé complet pour les lecteurs d'écran (aria-label), quand l'abrégé diffère. */
-function libelleAria(cle: OngletCle, d: DictionnaireUI): string {
-  return cle === "bibliotheque" ? d.chrome.onglets.bibliotheque : d.chrome.onglets[cle];
+function libelleAria(tab: TabDef, d: DictionnaireUI): string {
+  return d.chrome.onglets[tab.cle];
 }
 
 const HIDDEN_EXACT = new Set(["/", "/chiner", "/vitrine"]);
@@ -130,8 +142,8 @@ export function ongletSuivantOuvert(
 
 /** Renvoie l'index dans TAB_ORDER de la route active, -1 si aucune ne matche. */
 export function findActiveTabIndex(pathname: string): number {
-  return TAB_ORDER.findIndex(
-    (t) => pathname === t.path || pathname.startsWith(`${t.path}/`),
+  return TAB_ORDER.findIndex((t) =>
+    t.routes.some((r) => pathname === r || pathname.startsWith(`${r}/`)),
   );
 }
 
@@ -238,12 +250,14 @@ export function TabBar() {
   const estVerrouille = (t: TabDef): boolean => ongletFerme(t, state);
 
   // Mini-tutos : main pointeuse au-dessus de l'onglet vers lequel guider —
-  // Stockage pour ranger le vinyle, Bureau pour revenir au gramophone,
-  // Atelier quand la première compétence Réparer vient d'en faire tomber le
-  // cadenas. Jamais sur l'onglet déjà actif.
+  // Réserve pour ranger le vinyle ou visiter l'Atelier fraîchement déverrouillé
+  // par la première compétence Réparer, Bureau pour revenir au gramophone.
+  // Jamais sur l'onglet déjà actif — et l'Atelier n'ayant plus sa propre
+  // colonne (fusionné dans la Réserve), « déjà actif » couvre ses deux
+  // routes (`/atelier` et `/stockage`).
   const mainMiniTuto = (tabPath: string): boolean => {
     if (state?.miniTutoAtelier === "visite") {
-      return tabPath === "/atelier" && pathname !== "/atelier";
+      return tabPath === "/stockage" && pathname !== "/atelier" && pathname !== "/stockage";
     }
     const mt = state?.miniTutoVinyle;
     if (mt === "ajouter") return tabPath === "/stockage" && pathname !== "/stockage";
@@ -295,8 +309,8 @@ export function TabBar() {
             aria-disabled={verrouille || undefined}
             aria-label={
               verrouille
-                ? `${libelleAria(tab.cle, d)} — ${d.chrome.ongletVerrouille}`
-                : libelleAria(tab.cle, d)
+                ? `${libelleAria(tab, d)} — ${d.chrome.ongletVerrouille}`
+                : libelleAria(tab, d)
             }
             className={mainTuto(tab.path) ? "tuto-main tuto-main-haut" : undefined}
             onClick={() => {
@@ -347,7 +361,7 @@ export function TabBar() {
                 </span>
               )}
             </span>
-            <span style={tabLabel}>{libelleAbrege(tab.cle, d)}</span>
+            <span style={tabLabel}>{libelleAbrege(tab, d)}</span>
           </button>
         );
       })}

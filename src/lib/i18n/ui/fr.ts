@@ -100,6 +100,7 @@ export const fr = {
       bureau: "Bureau",
       stockage: "Stockage",
       atelier: "Atelier",
+      reserve: "Réserve",
     },
     ongletVerrouille: "verrouillé",
     verrouBibliotheque: "Le Cabinet ouvre à ton premier niveau de Brocanteur.",

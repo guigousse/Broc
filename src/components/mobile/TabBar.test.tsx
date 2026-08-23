@@ -9,7 +9,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { TabBar, ongletSuivantOuvert } from "./TabBar";
+import { TabBar, findActiveTabIndex, ongletSuivantOuvert, TAB_ORDER } from "./TabBar";
 import { catTreeId } from "@/data/competences";
 import { CATEGORIES } from "@/data/categories";
 import type { GameState } from "@/types/game";
@@ -75,7 +75,8 @@ describe("TabBar — onboarding Bibliothèque", () => {
     mockGameStateValue = { state: etat(0), isHydrated: true };
     render(<TabBar />);
     expect(screen.getByText("Biblio.")).toBeTruthy();
-    expect(screen.getAllByRole("button")).toHaveLength(5);
+    // 5 colonnes reviennent en Task 8 avec l'onglet Quêtes.
+    expect(screen.getAllByRole("button")).toHaveLength(4);
     expect(estCadenasse("Biblio.")).toBe(true);
   });
 
@@ -86,12 +87,13 @@ describe("TabBar — onboarding Bibliothèque", () => {
     expect(estCadenasse("Biblio.")).toBe(false);
   });
 
-  it("state null (pré-hydratation) : les 5 onglets par défaut, pas de flash de disparition", () => {
+  it("state null (pré-hydratation) : les 4 onglets par défaut, pas de flash de disparition", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: null, isHydrated: true };
     render(<TabBar />);
     expect(screen.getByText("Biblio.")).toBeTruthy();
-    expect(screen.getAllByRole("button")).toHaveLength(5);
+    // 5 colonnes reviennent en Task 8 avec l'onglet Quêtes.
+    expect(screen.getAllByRole("button")).toHaveLength(4);
   });
 
   it("tutoriel en cours : la barre reste visible mais la navigation est inerte", () => {
@@ -139,24 +141,11 @@ describe("TabBar — mini-tuto vinyle (main pointeuse)", () => {
   });
 });
 
+// Le cadenas de l'Atelier (compétence Réparer) ne vit plus dans la TabBar :
+// l'Atelier n'est plus un onglet du bas, il est fondu dans la Réserve, qui
+// n'a pas de verrou propre. Ce cadenas migre vers `ReserveTabs` en Task 2,
+// avec ses propres tests.
 describe("TabBar — onglets cadenassés", () => {
-  it("l'Atelier est cadenassé tant qu'aucune compétence Réparer n'est prise", () => {
-    mockPathname = "/bureau";
-    mockGameStateValue = { state: etat(5), isHydrated: true };
-    render(<TabBar />);
-    expect(estCadenasse("Atelier")).toBe(true);
-  });
-
-  it("l'Atelier s'ouvre à la première compétence Réparer", () => {
-    mockPathname = "/bureau";
-    mockGameStateValue = {
-      state: etat(5, [`${catTreeId(CATEGORIES[0])}.reparer.1`]),
-      isHydrated: true,
-    };
-    render(<TabBar />);
-    expect(estCadenasse("Atelier")).toBe(false);
-  });
-
   it("toucher un onglet cadenassé ne navigue pas et dit ce qui le déverrouille", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: etat(0), isHydrated: true };
@@ -192,7 +181,6 @@ describe("TabBar — onglets cadenassés", () => {
     mockGameStateValue = { state: null, isHydrated: true };
     render(<TabBar />);
     expect(estCadenasse("Biblio.")).toBe(false);
-    expect(estCadenasse("Atelier")).toBe(false);
   });
 });
 
@@ -202,7 +190,7 @@ describe("TabBar — onglets cadenassés", () => {
  * pas fermée.
  */
 describe("ongletSuivantOuvert — le swipe saute les pièces fermées", () => {
-  const IDX_BUREAU = 2; // Collection, Biblio., Bureau, Stockage, Atelier
+  const IDX_BUREAU = 2; // Collection, Biblio., Bureau, Réserve
 
   it("saute la Bibliothèque cadenassée en allant à gauche", () => {
     const s = etat(0);
@@ -213,15 +201,13 @@ describe("ongletSuivantOuvert — le swipe saute les pièces fermées", () => {
     expect(ongletSuivantOuvert(IDX_BUREAU, -1, etat(1))?.path).toBe("/bibliotheque");
   });
 
-  it("saute l'Atelier cadenassé en allant à droite, et boucle sur la Collection", () => {
-    const s = etat(1); // biblio ouverte, atelier fermé
-    // Bureau → Stockage → (Atelier fermé) → Collection
+  // La Réserve (ex-Atelier fusionné) n'a plus de verrou propre dans la
+  // TabBar depuis la fusion des routes (cf. `ongletFerme` — moved to
+  // ReserveTabs en Task 2) : depuis la Réserve (idx 3, dernier onglet), le
+  // cycle vers la droite boucle directement sur la Collection.
+  it("boucle de la Réserve vers la Collection en allant à droite", () => {
+    const s = etat(1); // biblio ouverte
     expect(ongletSuivantOuvert(3, 1, s)?.path).toBe("/collection");
-  });
-
-  it("s'arrête sur l'Atelier dès la première compétence Réparer", () => {
-    const s = etat(1, [`${catTreeId(CATEGORIES[0])}.reparer.1`]);
-    expect(ongletSuivantOuvert(3, 1, s)?.path).toBe("/atelier");
   });
 
   it("state null (pré-hydratation) : aucun saut", () => {
@@ -232,9 +218,10 @@ describe("ongletSuivantOuvert — le swipe saute les pièces fermées", () => {
 /**
  * Visite guidée de l'Atelier : le cadenas vient de tomber, la main désigne
  * la porte. Elle passe AVANT le mini-tuto des vinyles — deux mains à la fois
- * ne guideraient personne.
+ * ne guideraient personne. L'Atelier n'a plus sa propre colonne dans la barre
+ * (fusionné dans la Réserve) : la main se pose désormais sur l'onglet Réserve.
  */
-describe("TabBar — main vers l'Atelier fraîchement ouvert", () => {
+describe("TabBar — main vers l'Atelier fraîchement ouvert (onglet Réserve)", () => {
   function etatVisiteAtelier(extra: Record<string, unknown> = {}): GameState {
     return {
       brocanteur: { niveau: 3, xp: 0, pointsDisponibles: 0 },
@@ -246,18 +233,25 @@ describe("TabBar — main vers l'Atelier fraîchement ouvert", () => {
     } as unknown as GameState;
   }
 
-  it("la main se pose sur l'Atelier tant que la visite n'est pas faite", () => {
+  it("la main se pose sur la Réserve tant que la visite n'est pas faite", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: etatVisiteAtelier(), isHydrated: true };
     render(<TabBar />);
     const avecMain = screen
       .getAllByRole("button")
       .find((b) => b.className.includes("tuto-main"));
-    expect(avecMain?.textContent).toContain("Atelier");
+    expect(avecMain?.textContent).toContain("Réserve");
   });
 
-  it("plus de main une fois qu'on y est", () => {
+  it("plus de main une fois qu'on y est (via /atelier)", () => {
     mockPathname = "/atelier";
+    mockGameStateValue = { state: etatVisiteAtelier(), isHydrated: true };
+    render(<TabBar />);
+    expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+
+  it("plus de main une fois qu'on y est (via /stockage)", () => {
+    mockPathname = "/stockage";
     mockGameStateValue = { state: etatVisiteAtelier(), isHydrated: true };
     render(<TabBar />);
     expect(document.querySelector(".tuto-main")).toBeNull();
@@ -274,7 +268,7 @@ describe("TabBar — main vers l'Atelier fraîchement ouvert", () => {
       .getAllByRole("button")
       .filter((b) => b.className.includes("tuto-main"));
     expect(mains).toHaveLength(1);
-    expect(mains[0].textContent).toContain("Atelier");
+    expect(mains[0].textContent).toContain("Réserve");
   });
 
   it("visite terminée : plus aucune main", () => {
@@ -286,4 +280,26 @@ describe("TabBar — main vers l'Atelier fraîchement ouvert", () => {
     render(<TabBar />);
     expect(document.querySelector(".tuto-main")).toBeNull();
   });
-})
+});
+
+describe("findActiveTabIndex — un onglet peut revendiquer plusieurs routes", () => {
+  it("/stockage tombe sur l'onglet Réserve", () => {
+    const i = findActiveTabIndex("/stockage");
+    expect(i).toBeGreaterThanOrEqual(0);
+    expect(TAB_ORDER[i].cle).toBe("reserve");
+  });
+
+  it("/atelier tombe sur le MÊME onglet — sinon le swipe entre pièces casse", () => {
+    expect(findActiveTabIndex("/atelier")).toBe(findActiveTabIndex("/stockage"));
+  });
+
+  it("une sous-route d'un chemin revendiqué compte aussi", () => {
+    expect(findActiveTabIndex("/atelier/quoi-que-ce-soit")).toBe(
+      findActiveTabIndex("/stockage"),
+    );
+  });
+
+  it("une route étrangère ne tombe sur aucun onglet", () => {
+    expect(findActiveTabIndex("/chiner")).toBe(-1);
+  });
+});

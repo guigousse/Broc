@@ -97,6 +97,7 @@ export const el: DictionnaireUI = {
       bureau: "Γραφείο",
       stockage: "Αποθήκη",
       atelier: "Εργαστήριο",
+      reserve: "Αποθήκη",
     },
     ongletVerrouille: "κλειδωμένο",
     verrouBibliotheque: "Το Γραφείο ανοίγει στο πρώτο σου επίπεδο Παλαιοπώλη.",
