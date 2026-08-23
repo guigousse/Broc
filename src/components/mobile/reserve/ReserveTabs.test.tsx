@@ -190,24 +190,29 @@ describe("ReserveTabs — le liseré s'arrête au ras de la page", () => {
     expect(face.style.borderTopLeftRadius).not.toBe("");
   });
 
-  it("l'actif noie le liseré haut de la carte sous son propre papier", () => {
-    // Le bouton actif court sur toute la hauteur, recouvrement compris : son
-    // fond doit être CELUI DE LA CARTE pour effacer l'arête.
+  it("le bouton ne peint RIEN : seule sa face noie le cadre", () => {
+    // Le bouton court sur toute la hauteur, recouvrement compris. Lui donner
+    // un fond le ferait déborder sur le liseré LATÉRAL de la carte, qui
+    // disparaîtrait sur 16 px sous la languette (constaté à l'alignement sur
+    // les bords). La face, elle, ne descend que de l'épaisseur du cadre :
+    // elle en couvre le trait haut, pas davantage.
     poser({ actif: "stockage" });
-    expect(bouton("Stockage").style.background).toBe("var(--paper-100)");
+    expect(bouton("Stockage").style.background).toBe("transparent");
     expect(bouton("Atelier").style.background).toBe("transparent");
+    const face = bouton("Stockage").firstElementChild as HTMLElement;
+    expect(face.style.background).toBe("var(--paper-100)");
   });
 });
 
 describe("ReserveTabs — les languettes dégagent les coins de la carte", () => {
-  it("la rangée est en retrait des deux bords", () => {
-    // Le remplissage de la languette active est un RECTANGLE : posé sur un
-    // coin arrondi de la carte, il vient le combler par-derrière et le coin
-    // redevient carré. Le retrait doit dépasser le rayon de la carte.
+  it("la rangée est à ras des bords : Stockage à gauche, Atelier à droite", () => {
+    // Les languettes prolongent les bords de la fenêtre. C'est la carte qui
+    // renonce à ses arrondis hauts pour leur laisser les coins (cf.
+    // FloatingRoomOverlay), et non les languettes qui se retirent.
     poser();
     const rangee = bouton("Stockage").parentElement as HTMLElement;
-    expect(parseFloat(rangee.style.paddingLeft)).toBeGreaterThan(8);
-    expect(parseFloat(rangee.style.paddingRight)).toBeGreaterThan(8);
+    expect(parseFloat(rangee.style.paddingLeft) || 0).toBe(0);
+    expect(parseFloat(rangee.style.paddingRight) || 0).toBe(0);
   });
 });
 

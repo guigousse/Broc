@@ -172,6 +172,37 @@ describe("FloatingRoomOverlay", () => {
     expect(Array.from(wrap.children).map((c) => c.textContent)).toEqual(["B", "P"]);
   });
 
+  it("avec des languettes, la carte perd ses arrondis HAUTS", () => {
+    // Les languettes sont à ras des bords : ce sont ELLES qui prennent les
+    // coins. Si la carte y restait arrondie, son arc dépasserait sous la
+    // languette, dont le bas est droit — le coin redeviendrait sale.
+    const { container } = render(
+      <FloatingRoomOverlay onglets={<div>L</div>} bande={<div>B</div>}>
+        <div>P</div>
+      </FloatingRoomOverlay>,
+    );
+    const carte = (
+      container.querySelector('[data-floating-room="1"]') as HTMLElement
+    ).children[1] as HTMLElement;
+    expect(carte.style.borderTopLeftRadius).toBe("0px");
+    expect(carte.style.borderTopRightRadius).toBe("0px");
+    // Le bas garde les siens : rien ne vient s'y poser.
+    expect(carte.style.borderRadius).not.toBe("0px");
+  });
+
+  it("sans languettes, la carte garde ses quatre arrondis", () => {
+    const { container } = render(
+      <FloatingRoomOverlay bande={<div>B</div>}>
+        <div>P</div>
+      </FloatingRoomOverlay>,
+    );
+    const carte = (
+      container.querySelector('[data-floating-room="1"]') as HTMLElement
+    ).children[0] as HTMLElement;
+    expect(carte.style.borderTopLeftRadius).toBe("");
+    expect(carte.style.borderTopRightRadius).toBe("");
+  });
+
   it("coupe réellement l'animation des trois blocs quand animer vaut false", () => {
     // Le point de la prop `animer` n'est pas l'attribut `data-animer` (que le
     // composant pose lui-même) mais le style CSS effectivement appliqué :
