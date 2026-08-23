@@ -363,11 +363,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // écrire maintenant détruirait la save du nouveau slot. On abandonne —
       // cet état est de toute façon en train d'être détaché.
       if (slotActif() !== slotEtatRef.current) return;
-      gameRepository.save(state).then((ok) => {
-        if (!ok && !saveEnEchecRef.current) {
+      gameRepository.save(state).then((res) => {
+        if (!res.ok && !saveEnEchecRef.current) {
           saveEnEchecRef.current = true;
           toast(raisonLocalisee("sauvegardeImpossible"), { type: "erreur" });
-        } else if (ok && saveEnEchecRef.current) {
+        } else if (res.ok && saveEnEchecRef.current) {
           saveEnEchecRef.current = false;
           toast(raisonLocalisee("sauvegardeRetablie"), { type: "succes" });
         }

@@ -136,10 +136,10 @@ describe("localGameRepository — copie de secours (double-buffer)", () => {
         original(k, v);
       });
 
-    const ok = await localGameRepository.save(createMockGameState({ budget: 9 }));
+    const res = await localGameRepository.save(createMockGameState({ budget: 9 }));
 
     spy.mockRestore();
-    expect(ok).toBe(true);
+    expect(res).toEqual({ ok: true });
     expect((await localGameRepository.load())?.budget).toBe(9);
   });
 
@@ -161,7 +161,7 @@ describe("localGameRepository — save", () => {
 
   it("save puis load restitue l'état", async () => {
     const state = createMockGameState({ jourActuel: 17 });
-    expect(await localGameRepository.save(state)).toBe(true);
+    expect(await localGameRepository.save(state)).toEqual({ ok: true });
     expect((await localGameRepository.load())?.jourActuel).toBe(17);
   });
 
@@ -211,10 +211,10 @@ describe("localGameRepository — save", () => {
         throw new Error("quota dépassé");
       });
 
-    const ok = await localGameRepository.save(createMockGameState());
+    const res = await localGameRepository.save(createMockGameState());
 
     spy.mockRestore();
-    expect(ok).toBe(false);
+    expect(res).toEqual({ ok: false, genre: "io" });
     // toucherDerniereSession n'a jamais été appelé : aucun index n'a été créé.
     expect(window.localStorage.getItem(CLE_INDEX)).toBeNull();
   });
@@ -269,7 +269,7 @@ describe("localGameRepository — environnement sans window", () => {
     vi.stubGlobal("window", undefined);
     await expect(
       localGameRepository.save(createMockGameState()),
-    ).resolves.toBe(false);
+    ).resolves.toEqual({ ok: false, genre: "indisponible" });
   });
 
   it("clear() ne plante pas si window est undefined (SSR)", async () => {

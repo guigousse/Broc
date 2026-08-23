@@ -1,5 +1,6 @@
 import type { GameState } from "@/types/game";
 import type { GameRepository } from "./gameRepository";
+import type { GenreErreur } from "./pontNatif";
 import {
   cleBackup,
   cleSlot,
@@ -20,6 +21,14 @@ function parseState(raw: string | null): GameState | null {
   } catch {
     return null;
   }
+}
+
+/** Déduit le genre d'échec du nom de l'exception levée par `localStorage.setItem`. */
+function genreDeLErreur(err: unknown): GenreErreur {
+  const nom = err instanceof Error ? err.name : "";
+  return nom === "QuotaExceededError" || nom === "NS_ERROR_DOM_QUOTA_REACHED"
+    ? "disque_plein"
+    : "io";
 }
 
 export const localGameRepository: GameRepository = {
@@ -52,7 +61,7 @@ export const localGameRepository: GameRepository = {
     return null;
   },
   async save(state) {
-    if (typeof window === "undefined") return false;
+    if (typeof window === "undefined") return { ok: false, genre: "indisponible" };
     const n = slotActif();
     const serialise = JSON.stringify(state);
     try {
@@ -73,10 +82,10 @@ export const localGameRepository: GameRepository = {
         "[localGameRepository] Échec de la sauvegarde de la partie :",
         err,
       );
-      return false;
+      return { ok: false, genre: genreDeLErreur(err) };
     }
     toucherDerniereSession(n);
-    return true;
+    return { ok: true };
   },
   async clear() {
     if (typeof window === "undefined") return;
