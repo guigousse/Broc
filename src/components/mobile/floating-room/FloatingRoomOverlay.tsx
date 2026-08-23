@@ -85,18 +85,31 @@ interface FloatingRoomOverlayProps {
   milieu?: ReactNode;
   /** Panneau bas (contenu scrollable). Monte depuis le bas. */
   children: ReactNode;
+  /**
+   * Jouer l'entrée glissée de 320 ms ? Faux quand on arrive d'un onglet
+   * frère de la même pièce : les deux cartes sont déjà en place, les faire
+   * re-glisser serait lourd — et le coach du tutoriel mesurerait une cible
+   * en mouvement.
+   */
+  animer?: boolean;
 }
 
 export function FloatingRoomOverlay({
   bande,
   milieu,
   children,
+  animer = true,
 }: FloatingRoomOverlayProps) {
+  const sansAnim = { animation: "none" as const };
   return (
-    <div style={wrap} data-floating-room="1">
-      <div style={bandeStyle}>{bande}</div>
-      {milieu !== undefined && <div style={milieuStyle}>{milieu}</div>}
-      <div style={panneauStyle}>{children}</div>
+    <div style={wrap} data-floating-room="1" data-animer={animer ? "1" : "0"}>
+      <div style={animer ? bandeStyle : { ...bandeStyle, ...sansAnim }}>{bande}</div>
+      {milieu !== undefined && (
+        <div style={animer ? milieuStyle : { ...milieuStyle, ...sansAnim }}>{milieu}</div>
+      )}
+      <div style={animer ? panneauStyle : { ...panneauStyle, ...sansAnim }}>
+        {children}
+      </div>
     </div>
   );
 }
