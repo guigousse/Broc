@@ -313,7 +313,7 @@ function StockageItemRowBase({
  * objets recréés à chaque render du parent (résultats de `atelierStatus(o)` /
  * `collectionStatus(o)`) — on les compare donc par valeur. Les callbacks sont
  * comparés par référence : pour que le memo soit effectif, le parent doit les
- * stabiliser (useCallback), cf. app/(qg)/stockage/page.tsx.
+ * stabiliser (useCallback), cf. components/mobile/reserve/StockageContenu.tsx.
  */
 export const StockageItemRow = memo(
   StockageItemRowBase,

@@ -15,7 +15,7 @@ import { EMPLACEMENTS_PUB } from "./adProvider";
 const APPELANTS = [
   ["src/components/mobile/EnergieRecharge.tsx", "energie"],
   ["src/components/mobile/BoiteMystereOverlay.tsx", "boiteMystere"],
-  ["src/app/(qg)/atelier/page.tsx", "restauration"],
+  ["src/components/mobile/reserve/AtelierContenu.tsx", "restauration"],
 ] as const;
 
 describe("emplacements publicitaires — câblage des appelants", () => {
