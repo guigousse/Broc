@@ -882,6 +882,7 @@ export const fr = {
     borneTitre: "Borne d'arcade",
     borneFermer: "Fermer la borne",
     bornePasDeSignal: "PAS DE SIGNAL",
+    borneIndiceCartouche: "AJOUTER LA CARTOUCHE À LA COLLECTION",
     borneJeuPrecedent: "Jeu précédent",
     borneJeuSuivant: "Jeu suivant",
   },

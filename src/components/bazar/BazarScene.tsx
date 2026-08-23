@@ -46,6 +46,14 @@ interface BazarSceneProps {
    */
   onAcheter: (achat: AchatBazar) => ResultatAchatBazar;
   onSortir: () => void;
+  /**
+   * Index de la zone regardée (0 = arcade · 1 = comptoir · 2 = antiquités),
+   * émis au montage puis à chaque snap. La scène ne s'en sert pas : elle le
+   * relaie, parce qu'elle est la seule à tenir le panorama et que l'écran qui
+   * pilote l'ambiance sonore, lui, n'a aucun autre moyen de savoir où le
+   * joueur se tient.
+   */
+  onZoneIndex?: (idx: number) => void;
 }
 
 /**
@@ -54,7 +62,14 @@ interface BazarSceneProps {
  * comptoir. Vue pure — tout arrive par les props, la composition avec le
  * contexte de jeu se fait dans `src/app/bazar/page.tsx`.
  */
-export function BazarScene({ etal, jetons, jeuxArcade, onAcheter, onSortir }: BazarSceneProps) {
+export function BazarScene({
+  etal,
+  jetons,
+  jeuxArcade,
+  onAcheter,
+  onSortir,
+  onZoneIndex,
+}: BazarSceneProps) {
   const { d, tr, locale } = useLangue();
   // Coordonnées lues par le hook, PAS dans le dictionnaire en direct : c'est
   // ce qui fait suivre l'objet quand on tire son cadre en mode calage
@@ -101,6 +116,7 @@ export function BazarScene({ etal, jetons, jeuxArcade, onAcheter, onSortir }: Ba
         initialZone="antiquites"
         ariaLabel={d.bazar.titre}
         editKeys={CLES_BAZAR}
+        onZoneIndex={onZoneIndex}
       >
         {/* Décor. En tête des enfants, donc au-dessous d'eux dans l'ordre de
             peinture : une pièce de mobilier ne passe jamais devant la

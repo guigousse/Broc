@@ -865,6 +865,7 @@ export const el: DictionnaireUI = {
     borneTitre: "Μηχάνημα arcade",
     borneFermer: "Κλείσιμο",
     bornePasDeSignal: "ΧΩΡΙΣ ΣΗΜΑ",
+    borneIndiceCartouche: "ΠΡΟΣΘΕΣΤΕ ΤΗΝ ΚΑΣΕΤΑ ΣΤΗ ΣΥΛΛΟΓΗ",
     borneJeuPrecedent: "Προηγούμενο παιχνίδι",
     borneJeuSuivant: "Επόμενο παιχνίδι",
   },

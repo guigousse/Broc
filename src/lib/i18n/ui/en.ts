@@ -843,6 +843,7 @@ export const en: DictionnaireUI = {
     borneTitre: "Arcade cabinet",
     borneFermer: "Close the cabinet",
     bornePasDeSignal: "NO SIGNAL",
+    borneIndiceCartouche: "ADD THE CARTRIDGE TO YOUR COLLECTION",
     borneJeuPrecedent: "Previous game",
     borneJeuSuivant: "Next game",
   },

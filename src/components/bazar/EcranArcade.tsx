@@ -1,11 +1,13 @@
 "use client";
 
-import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomObjet } from "@/lib/i18n/contenu";
 import { getTemplate } from "@/data/objetTemplates";
+import { audioManager } from "@/lib/audio/audioManager";
 import type { JeuArcade } from "@/lib/bazar/arcade";
+import { arcadeAudioUrl } from "@/lib/bazar/arcadeAudio";
 
 /** Seuil de swipe, en px. Le même qu'au chinage : le geste doit se ressembler. */
 const SWIPE_SEUIL_PX = 40;
@@ -167,6 +169,30 @@ export function EcranArcade({ jeux }: EcranArcadeProps) {
     departXRef.current = null;
   };
 
+  // La bande-son suit le jeu affiché, et cet écran est le SEUL à savoir lequel
+  // c'est. `BorneArcadeEcran` ne le monte que quand la borne est ouverte, donc
+  // son cycle de vie est exactement celui du meuble allumé.
+  const pisteCourante = jeu?.trouve ? jeu.templateId : null;
+
+  useEffect(() => {
+    if (!pisteCourante) {
+      // « PAS DE SIGNAL » est muet, pour la même raison que sa capture n'est
+      // pas dans le DOM : rien ne doit trahir un jeu pas encore trouvé.
+      audioManager.stopArcade();
+      return;
+    }
+    // Allumage ou changement de cartouche : c'est le manager qui tranche,
+    // selon qu'une piste tourne déjà. Cet écran n'a donc rien à retenir entre
+    // deux swipes — et rien à faire de particulier au premier rendu.
+    void audioManager.playArcadeTrack(arcadeAudioUrl(pisteCourante));
+  }, [pisteCourante]);
+
+  // Effet SÉPARÉ, sans dépendance : le nettoyage de celui du dessus se
+  // rejouerait à chaque changement de jeu et couperait la piste qu'on vient
+  // tout juste de lancer. Ici il ne tourne qu'au démontage — c'est-à-dire à la
+  // fermeture de la borne, quelle qu'en soit la façon (croix, Échap, voile).
+  useEffect(() => () => audioManager.stopArcade(), []);
+
   const titre =
     jeu?.trouve && template
       ? nomObjet({ templateId: template.templateId, nom: template.nom }, locale).toUpperCase()
@@ -217,19 +243,42 @@ export function EcranArcade({ jeux }: EcranArcadeProps) {
                 demandée du tout. Une image posée dans le DOM se voit dans
                 l'onglet réseau, et le contenu à découvrir fuiterait. */}
             <div style={neige} />
+            {/* Colonne, et non plus une seule ligne centrée : la neige disait
+                que le jeu manque, jamais COMMENT l'allumer. La marche à
+                suivre se pose donc juste dessous, dans le vert plus sourd
+                d'un sous-titre de borne — le message d'état reste le premier
+                lu, l'indice se donne à qui s'attarde. */}
             <div
               style={{
                 position: "absolute",
                 inset: 0,
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
+                gap: 8,
+                // Marge latérale : l'indice est une phrase entière dans les
+                // quatre langues (le grec est le plus long) et le trou du CRT
+                // est étroit. Sans elle, il touche les deux bords.
+                padding: "0 10px",
                 color: "#7dfcae",
                 fontSize: 12,
                 letterSpacing: "0.22em",
               }}
             >
               {d.bazar.bornePasDeSignal}
+              <span
+                data-testid="arcade-indice"
+                style={{
+                  fontSize: 9,
+                  letterSpacing: "0.12em",
+                  lineHeight: 1.5,
+                  color: "#4fbf85",
+                  textAlign: "center",
+                }}
+              >
+                {d.bazar.borneIndiceCartouche}
+              </span>
             </div>
           </>
         )}

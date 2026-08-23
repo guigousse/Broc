@@ -20,6 +20,7 @@ import { JOUR_OUVERTURE_BAZAR } from "@/lib/bazar/ouverture";
 import { audioManager } from "@/lib/audio/audioManager";
 import { dureesIris, lireFlagIris } from "@/lib/transitionIris";
 import { initCollection } from "@/lib/collection";
+import { volumeAmbianceBazarForPos } from "@/components/bazar/bazarAudioCurves";
 
 const push = vi.fn();
 const replace = vi.fn();
@@ -76,6 +77,9 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  // Les espions posés sur le singleton audio ne doivent pas survivre au test
+  // suivant : `clearAllMocks` vide les appels, il ne rend pas l'original.
+  vi.restoreAllMocks();
 });
 
 describe("BazarPage — settle déclenché à l'entrée sur l'écran", () => {
@@ -363,5 +367,27 @@ describe("BazarPage — sortir par la porte", () => {
     choisir("Chiner");
     expect(push).not.toHaveBeenCalled();
     expect(screen.getByText("Pas assez d'énergie pour cette sortie !")).not.toBeNull();
+  });
+});
+
+// L'ambiance de rue du bureau se rejoue au Bazar, mais elle vient de la porte :
+// pleine à la sortie (zone de droite), au tiers dans le coin arcade (zone de
+// gauche). Le volume d'entrée n'est pas un détail — sans lui la boucle monte au
+// niveau du bureau avant de retomber, et ça s'entend à l'ouverture de l'écran.
+describe("BazarPage — l'ambiance de rue", () => {
+  it("démarre au montage, au volume de la zone ouverte", () => {
+    const start = vi.spyOn(audioManager, "startAmbience").mockResolvedValue();
+    render(<BazarPage />);
+    // 2 = les antiquités, côté porte : la zone d'arrivée au Bazar.
+    expect(start).toHaveBeenCalledWith(volumeAmbianceBazarForPos(2));
+  });
+
+  it("s'arrête quand on quitte l'écran", () => {
+    vi.spyOn(audioManager, "startAmbience").mockResolvedValue();
+    const stop = vi.spyOn(audioManager, "stopAmbience").mockImplementation(() => {});
+    const { unmount } = render(<BazarPage />);
+    expect(stop).not.toHaveBeenCalled();
+    unmount();
+    expect(stop).toHaveBeenCalled();
   });
 });
