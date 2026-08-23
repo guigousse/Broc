@@ -12,7 +12,7 @@
 
 import { useGameActions, useGameStateOnly } from "@/context/GameContext";
 import { aCompetenceReparation } from "@/lib/competences";
-import { estPret } from "@/lib/restauration";
+import { restaurationsPretes } from "@/lib/restauration";
 import { useToast } from "@/components/ui/Toast";
 import { useLangue } from "@/lib/i18n/LangueContext";
 
@@ -38,10 +38,7 @@ export function useVerrouReserve(): VerrouReserve {
 
   return {
     atelierOuvert: !!state && aCompetenceReparation(state),
-    badgeAtelier:
-      state?.inventaireJoueur.filter(
-        (o) => o.enRestauration && estPret(o.enRestauration, now),
-      ).length ?? 0,
+    badgeAtelier: state ? restaurationsPretes(state, now) : 0,
     onVerrou: () => toast(d.chrome.verrouAtelier, { type: "info" }),
   };
 }

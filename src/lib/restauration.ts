@@ -48,6 +48,21 @@ export function estPret(enRest: Timer, now: number): boolean {
   return now >= enRest.finMs;
 }
 
+/**
+ * Combien de restaurations sont PRÊTES à être récupérées, au temps `now`
+ * (temps de confiance, `Date.now()` en repli).
+ *
+ * Source unique du chiffre : la barre du bas (onglet Réserve) et la bande
+ * d'onglets haute (onglet Atelier) l'affichent à trois centimètres l'une de
+ * l'autre. La règle a déjà existé en trois exemplaires ; recopiée, elle
+ * divergerait en silence le jour où « prêt » changera de définition.
+ */
+export function restaurationsPretes(state: GameState, now: number): number {
+  return state.inventaireJoueur.filter(
+    (o) => o.enRestauration && estPret(o.enRestauration, now),
+  ).length;
+}
+
 /** Vrai si on est dans la fenêtre pub : 0 < restant <= 30 min. */
 export function peutTerminerImmediat(enRest: Timer, now: number): boolean {
   const r = enRest.finMs - now;

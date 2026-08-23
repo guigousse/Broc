@@ -17,7 +17,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import { useToastSafe } from "@/components/ui/Toast";
-import { estPret } from "@/lib/restauration";
+import { restaurationsPretes } from "@/lib/restauration";
 import { missionsLivrables } from "@/lib/quetes/objectifs";
 import { ongletTutorielPermis, tutorielActif } from "@/lib/tutoriel";
 import type { GameState } from "@/types/game";
@@ -96,11 +96,9 @@ export const TAB_ORDER: TabDef[] = [
     // Le badge des restaurations prêtes vivait sur l'onglet Atelier, qui
     // n'existe plus en bas : il remonte ici. La bande d'onglets haute le
     // redouble sur l'onglet Atelier (cf. ReserveTabs) pour dire laquelle des
-    // deux moitiés appelle.
-    badge: (state, now) =>
-      state.inventaireJoueur.filter(
-        (o) => o.enRestauration && estPret(o.enRestauration, now),
-      ).length,
+    // deux moitiés appelle — d'où la source UNIQUE `restaurationsPretes` :
+    // les deux chiffres s'affichent à trois centimètres l'un de l'autre.
+    badge: (state, now) => restaurationsPretes(state, now),
   },
   { icon: Album, cle: "collection", path: "/collection", routes: ["/collection"] },
 ];
