@@ -14,6 +14,29 @@ import { espaceLibre } from "@/lib/storage/pontNatif";
  * disque ne bouge pas assez vite pour justifier une mesure répétée, et
  * `volumeAvailableCapacityForImportantUsageKey` (Swift, StockagePlugin.swift)
  * n'a pas vocation à être un poll.
+ *
+ * DÉLIBÉRÉMENT NON GATÉ sur `estRoutePartie` (contrairement à
+ * `BandeauSauvegarde` et aux autres composants du layout racine — cf. le
+ * commentaire de `BandeauSauvegarde.tsx` sur les deux régressions déjà
+ * survenues, bannière tutoriel et level-up, quand un composant montré hors
+ * partie se fiait par erreur à de l'état de partie). Ce composant-ci ne lit
+ * ni route ni save : il porte sur l'espace disque de l'APPAREIL, disponible
+ * et pertinent que le joueur soit en partie ou au menu. Avertir dès le menu
+ * — avant que le joueur investisse une heure de jeu — est même préférable à
+ * n'avertir qu'une fois en partie.
+ *
+ * Collision au boot considérée et jugée sans gravité (pas de séquencement
+ * inter-composants au boot dans ce projet, aucun n'a été ajouté ici) :
+ *   - voile pré-hydratation de la transition iris (layout.tsx, z-index 9999,
+ *     posé en HTML brut avant React) : passe DEVANT cette modale tant qu'il
+ *     est présent, la masque simplement le temps qu'il se retire — jamais de
+ *     modale « sautée » silencieusement puisque son propre fond bloque les
+ *     taps et qu'elle réapparaît dès le voile levé.
+ *   - feuille de consentement native UMP/ATT déclenchée par `AdMobBootstrap`
+ *     au boot (AdMobBootstrap.tsx) : ordre d'empilement avec une feuille
+ *     SYSTÈME (hors DOM/z-index web) non vérifiable depuis ce composant ni
+ *     en test jsdom — POINT DE RECETTE DEVICE : si les deux se chevauchent à
+ *     l'écran, confirmer qu'aucune des deux ne devient inatteignable.
  */
 
 /**
