@@ -137,7 +137,6 @@ export const el: DictionnaireUI = {
     panorama: "Πανόραμα αρχηγείου",
     decor: "Σκηνικό αρχηγείου",
     porteEntree: "Εξώπορτα",
-    carnetSessions: "Σημειωματάριο — τελευταίες συνεδρίες",
     grandPere: "Μίλα στον παππού",
     colis: "Το δέμα του παππού",
     cadeau: "Δώρο γενεθλίων",

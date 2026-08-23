@@ -46,6 +46,7 @@ import { QgCalendrier } from "@/components/mobile/qg/QgCalendrier";
 import { QgFauteuil } from "@/components/mobile/qg/QgFauteuil";
 import { QgGramophone } from "@/components/mobile/qg/QgGramophone";
 import { useFermerSheetHorsBureau } from "@/components/mobile/qg/useFermerSheetHorsBureau";
+import { useMissionCible } from "@/components/mobile/qg/useMissionCible";
 import { GrandPereBadge } from "@/components/mobile/qg/GrandPereBadge";
 import { QgColis } from "@/components/mobile/qg/QgColis";
 import { QgCadeau } from "@/components/mobile/qg/QgCadeau";
@@ -167,26 +168,20 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
    * l'onglet est le seul chemin.
    */
   const carnetOuvert = pathname === "/quetes";
-  /**
-   * Commande à déplier d'office dans le carnet. Source de vérité : l'URL
-   * (`?mission=`), posée par `LivrablesBadges.onTap` ou recalée par
-   * `router.replace` quand le chapitre du grand-père s'inscrit pendant que
-   * le carnet est déjà ouvert (mini-tuto). `missionCibleAttente` ne sert
-   * QUE quand ce chapitre est accepté carnet FERMÉ (pastille du grand-père,
-   * hors `/quetes`) : rien dans l'URL à corriger sans ouvrir le carnet
-   * malgré lui, donc la cible est armée en local pour la prochaine
-   * ouverture générique. Elle est consommée (effet ci-dessous) dès que le
-   * carnet s'ouvre : contrairement à l'ancien `missionCibleId` remis à
-   * `null` seulement dans `onClose`, elle ne peut plus rester collée après
-   * une sortie par la barre du bas (Task 8) sans passer par `onClose`.
-   */
   const searchParams = useSearchParams();
-  const missionUrl = searchParams.get("mission");
-  const [missionCibleAttente, setMissionCibleAttente] = useState<string | null>(null);
-  const missionCibleId = missionUrl ?? missionCibleAttente;
-  useEffect(() => {
-    if (carnetOuvert) setMissionCibleAttente(null);
-  }, [carnetOuvert]);
+  /**
+   * Commande à déplier d'office dans le carnet. Voir `useMissionCible` pour
+   * la mécanique (attente locale gelée pendant le rendu à chaque ouverture,
+   * priorité sur une URL périmée). `armerAttenteMissionCible` : les sites
+   * de navigation explicite (tap sur une pastille, `router.replace` du
+   * chapitre recalé en place) doivent purger l'attente (`(null)`) avant de
+   * poser leur propre cible ; le chapitre du grand-père accepté carnet
+   * FERMÉ l'arme pour la prochaine ouverture générique.
+   */
+  const { missionCibleId, armerAttente: armerAttenteMissionCible } = useMissionCible(
+    carnetOuvert,
+    searchParams.get("mission"),
+  );
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
@@ -997,6 +992,11 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           sureleves={!!chPret}
           onTap={(courrierId) => {
             playClick();
+            // Intention explicite : elle prime sur une attente périmée
+            // laissée par un autre chemin (chapitre du grand-père armé
+            // carnet fermé, cf. plus bas) qui masquerait sinon la mission
+            // que le joueur vient de taper.
+            armerAttenteMissionCible(null);
             router.push(`/quetes?mission=${encodeURIComponent(courrierId)}`);
           }}
         />
@@ -1019,7 +1019,7 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
               // Carnet fermé (pastille du grand-père hors `/quetes`) :
               // rien dans l'URL à corriger sans l'ouvrir malgré lui — armer
               // la cible pour la prochaine ouverture générique.
-              setMissionCibleAttente(dialogueChapitreId);
+              armerAttenteMissionCible(dialogueChapitreId);
             }
             setDialogueChapitreId(null);
           } else if (etape === "accueil") avancerTutoriel("aller-chiner");

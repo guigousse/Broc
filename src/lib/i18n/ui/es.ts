@@ -137,7 +137,6 @@ export const es: DictionnaireUI = {
     panorama: "Panorama del cuartel",
     decor: "Decorado del cuartel",
     porteEntree: "Puerta de entrada",
-    carnetSessions: "Cuaderno — sesiones recientes",
     grandPere: "Hablar con el abuelo",
     colis: "Paquete del abuelo",
     cadeau: "Regalo de cumpleaños",

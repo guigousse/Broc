@@ -137,7 +137,6 @@ export const en: DictionnaireUI = {
     panorama: "HQ panorama",
     decor: "HQ backdrop",
     porteEntree: "Front door",
-    carnetSessions: "Notebook — recent sessions",
     grandPere: "Talk to Grandpa",
     colis: "Grandpa's parcel",
     cadeau: "Birthday present",

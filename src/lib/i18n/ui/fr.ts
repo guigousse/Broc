@@ -140,7 +140,6 @@ export const fr = {
     panorama: "Panorama du QG",
     decor: "Décor du QG",
     porteEntree: "Porte d'entrée",
-    carnetSessions: "Carnet — dernières sessions",
     grandPere: "Parler à Grand-père",
     colis: "Colis du grand-père",
     cadeau: "Cadeau d'anniversaire",
