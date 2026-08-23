@@ -293,4 +293,70 @@ describe("fichierGameRepository", () => {
       expect(chargerIndex().actif).toBe(2);
     });
   });
+
+  // Ruling R8(i) : `lireSave("index")` distingue « absent » (null) de
+  // « présent » (une chaîne) — la migration (tâche 6) ne doit se déclencher
+  // QUE sur l'absence. Un index présent mais illisible ne migre jamais : des
+  // fichiers de slots pourraient déjà exister et être plus récents que le
+  // miroir (cas 3b, voir migrationFichiers.ts), migrer par-dessus les
+  // écraserait.
+  describe("index fichier présent mais illisible (Ruling R8)", () => {
+    it("ne migre jamais, ne touche à aucun fichier de slot, sert le miroir, et avertit", async () => {
+      fichiers.set("index", "{ceci n'est pas du json");
+      window.localStorage.setItem(
+        cleSlot(1),
+        JSON.stringify(createMockGameState({ jourActuel: 7 })),
+      );
+      const avertir = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const relu = await fichierGameRepository.load();
+
+      expect(relu?.jourActuel).toBe(7); // servi par le miroir
+      expect(fichiers.has("slot_1")).toBe(false); // aucune migration tentée
+      expect(fichiers.get("index")).toBe("{ceci n'est pas du json"); // inchangé
+      expect(avertir).toHaveBeenCalled();
+    });
+  });
+
+  // Ruling R8, cas 3b : un save() dont l'écriture du fichier réussit mais
+  // dont l'écriture de l'index échoue laisse le miroir intact (l'étape 3 de
+  // save() n'est jamais atteinte) — le fichier est alors plus FRAIS que le
+  // miroir. La migration qui suit ne doit ni l'écraser ni le perdre : il
+  // doit survivre et gagner l'arbitrage du load() suivant.
+  describe("cas 3b : un fichier plus frais que le miroir survit à la migration", () => {
+    it("le fichier écrit par un save() dont l'index a échoué gagne l'arbitrage après migration", async () => {
+      const { ecrireSave } = await import("./pontNatif");
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+
+      window.localStorage.setItem(
+        cleSlot(1),
+        JSON.stringify(createMockGameState({ jourActuel: 10 })), // le miroir, plus ancien
+      );
+
+      // save() : le slot s'écrit, puis l'index échoue — le miroir n'est donc
+      // jamais mis à jour (fichierGameRepository.save, étape 3 jamais atteinte).
+      vi.mocked(ecrireSave)
+        .mockImplementationOnce(async (q: string, c: string) => {
+          fichiers.set(q, c);
+        })
+        .mockRejectedValueOnce({ genre: "disque_plein", message: "" });
+
+      const etatFrais = createMockGameState({ jourActuel: 123 });
+      const resultat = await fichierGameRepository.save(etatFrais);
+      expect(resultat).toEqual({ ok: false, genre: "disque_plein" });
+
+      expect(fichiers.get("slot_1")).toBe(JSON.stringify(etatFrais));
+      expect(fichiers.has("index")).toBe(false); // index fichier resté absent
+      expect(window.localStorage.getItem(cleSlot(1))).toBe(
+        JSON.stringify(createMockGameState({ jourActuel: 10 })),
+      ); // le miroir n'a pas bougé
+
+      // Prochain lancement : index toujours absent → migration.
+      const relu = await fichierGameRepository.load();
+
+      expect(relu?.jourActuel).toBe(123); // le fichier plus frais l'a emporté
+      expect(fichiers.get("slot_1")).toBe(JSON.stringify(etatFrais)); // jamais écrasé
+    });
+  });
 });

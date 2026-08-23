@@ -30,12 +30,46 @@ function parse<T>(brut: string | null): T | null {
   }
 }
 
-async function lireIndexFichier(): Promise<IndexFichier | null> {
+/**
+ * Distingue « aucun fichier d'index » (`lireSave` rend `null` : le fichier
+ * n'existe simplement pas encore) de « fichier présent mais illisible »
+ * (JSON invalide, ou lecture qui échoue) — Ruling R8(i). C'est cette
+ * distinction, et non le `IndexFichier | null` conflaté qu'utilisaient
+ * `save()`/`clear()` avant elle, qui doit gouverner le déclenchement de la
+ * migration (tâche 6) dans `load()` : migrer sur un index illisible
+ * risquerait d'écraser des fichiers de slots sains et plus récents que le
+ * miroir derrière un index simplement corrompu.
+ */
+type EtatIndexFichier =
+  | { genre: "absent" }
+  | { genre: "illisible" }
+  | { genre: "ok"; index: IndexFichier };
+
+async function lireEtatIndexFichier(): Promise<EtatIndexFichier> {
+  let brut: string | null;
   try {
-    return parse<IndexFichier>(await lireSave("index"));
+    brut = await lireSave("index");
   } catch {
-    return null;
+    // Échec de lecture (io/indisponible) : on ne peut pas conclure à une
+    // absence. Même traitement qu'un index présent mais illisible — dans
+    // le doute, pas de migration.
+    return { genre: "illisible" };
   }
+  if (brut === null) return { genre: "absent" };
+  const index = parse<IndexFichier>(brut);
+  if (index === null) return { genre: "illisible" };
+  return { genre: "ok", index };
+}
+
+/**
+ * Version conflatée pour `save()`/`clear()`, qui n'ont pas besoin de la
+ * distinction absent/illisible : dans les deux cas, ils repartent d'un
+ * index par défaut (voir `index?.revisions ?? {…}` plus bas). Seul `load()`
+ * a besoin de `lireEtatIndexFichier()` directement.
+ */
+async function lireIndexFichier(): Promise<IndexFichier | null> {
+  const etat = await lireEtatIndexFichier();
+  return etat.genre === "ok" ? etat.index : null;
 }
 
 function genreDe(e: unknown): ErreurStockage["genre"] {
@@ -80,19 +114,34 @@ function resoudreSlotActif(index: IndexFichier | null): NumeroSlot {
 
 export const fichierGameRepository: GameRepository = {
   async load() {
-    const index = await lireIndexFichier();
+    const etat = await lireEtatIndexFichier();
 
-    // Pas d'index fichier : première ouverture après mise à jour (ou index
-    // illisible — `lireIndexFichier()` confond les deux, `migrerVersFichiers`
-    // s'en protège). On migre, et si ça échoue on continue sur le miroir —
-    // jamais de perte. L'appel récursif ne peut pas boucler : la migration
-    // n'a rendu `true` qu'après avoir écrit l'index, donc `lireIndexFichier()`
-    // le trouvera au second tour.
-    if (!index) {
+    // Index présent mais illisible (Ruling R8(i)) : JAMAIS de migration ici.
+    // Des fichiers de slots pourraient déjà exister et être plus récents que
+    // le miroir (cas 3b, voir migrationFichiers.ts) — migrer par-dessus les
+    // écraserait. On sert le miroir pour CETTE session seulement (rien n'est
+    // réparé, rien n'est perdu) et on trace pour le diagnostic device, comme
+    // `slots.ts:chargerIndex()` le fait pour son propre index illisible.
+    if (etat.genre === "illisible") {
+      console.warn(
+        "[fichierGameRepository] Index fichier présent mais illisible — " +
+          "migration non tentée, partie servie depuis le miroir pour cette session.",
+      );
+      return localGameRepository.load();
+    }
+
+    // Index réellement absent : première ouverture après mise à jour. On
+    // migre, et si ça échoue on continue sur le miroir — jamais de perte.
+    // L'appel récursif ne peut pas boucler : la migration n'a rendu `true`
+    // qu'après avoir écrit l'index, donc `lireEtatIndexFichier()` le
+    // trouvera (genre "ok") au second tour.
+    if (etat.genre === "absent") {
       const migre = await migrerVersFichiers();
       if (!migre) return localGameRepository.load();
       return this.load();
     }
+
+    const index = etat.index;
 
     // Quel emplacement charger ? Résolu une seule fois (Ruling R6) et
     // transmis explicitement à tout ce qui suit, y compris le repli miroir.

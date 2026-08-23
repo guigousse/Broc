@@ -21,31 +21,33 @@ function lireMiroir(n: NumeroSlot): string | null {
  * PAR LE FICHIER et comparée par égalité de chaîne stricte — une relecture
  * localStorage ne prouverait rien, elle serait servie par la copie mémoire.
  *
- * Le moindre échec rend `false` sans rien détruire : le jeu continue sur le
- * miroir et on retentera au prochain lancement.
+ * Le moindre échec d'ÉCRITURE (disque plein, relecture qui ne correspond
+ * pas) rend `false` sans rien détruire : le jeu continue sur le miroir et
+ * on retentera au prochain lancement.
  *
- * Garde-fou (risque reporté par la tâche précédente) : `lireIndexFichier()`
- * confond « aucun index fichier » et « index présent mais illisible » — les
- * deux rendent `null`, et c'est cette absence qui déclenche cette migration
- * depuis `fichierGameRepository.load()`. Si l'index fichier est en réalité
- * CORROMPU (pas absent) alors que des fichiers de slots existent déjà et
- * sont sains — potentiellement plus récents que le miroir —, copier
- * aveuglément le miroir par-dessus les écraserait : exactement le dégât que
- * ce chantier corrige, provoqué par son propre chemin de réparation. On ne
- * peut pas distinguer ce cas d'une migration précédente restée inachevée
- * (auquel cas écraser avec le miroir courant serait sans risque). Dans le
- * doute, on n'écrase JAMAIS : la présence, ne serait-ce que d'un seul
- * fichier de slot déjà là — parmi ceux qu'on s'apprêtait à écrire — annule
- * TOUTE la migration, comme `tenterMigrationLegacy` refuse d'écraser une
- * clé slot 1 déjà présente. Ce précontrôle passe intégralement AVANT la
- * moindre écriture (deux boucles distinctes, jamais fusionnées) : sinon un
- * premier slot pourrait être écrit avant qu'un second slot ne déclenche
- * l'abandon, ce qui ne serait plus un no-op. Conséquence assumée : si une
- * migration précédente s'est arrêtée en cours de route (fichier du slot 1
- * déjà écrit, puis disque plein sur le slot 2 — ou même la relecture de
- * vérification du slot 1 qui échoue APRÈS une écriture réussie), on ne
- * retentera plus jamais automatiquement : le jeu reste sur le miroir
- * indéfiniment. C'est une perte de durabilité, jamais une perte de partie.
+ * Garde-fou (Ruling R8) : cette fonction n'est appelée par
+ * `fichierGameRepository.load()` que lorsque l'index fichier est
+ * GENUINEMENT absent (`lireSave("index")` a rendu `null` — un index présent
+ * mais illisible ne déclenche jamais la migration, voir `load()`). Mais
+ * même l'index absent confirmé, un fichier de slot peut déjà exister, et on
+ * ne peut pas savoir pourquoi :
+ *  - soit une migration précédente s'est arrêtée en cours de route (fichier
+ *    déjà écrit lors d'une tentative interrompue) — l'écraser avec le
+ *    miroir courant serait sans risque ;
+ *  - soit un `save()` a réussi à écrire le fichier du slot puis a échoué à
+ *    écrire l'index (`fichierGameRepository.save()`, étape 2) — auquel cas
+ *    l'étape 3 (miroir) n'a JAMAIS eu lieu, et ce fichier est en réalité
+ *    PLUS FRAIS que le miroir.
+ * Ces deux cas sont indiscernables d'ici. On ne touche donc JAMAIS à un
+ * fichier de slot déjà présent — mais, contrairement à un abandon global,
+ * on continue de copier les AUTRES slots et d'écrire l'index, pour que la
+ * migration finisse quand même par aboutir plutôt que de rester bloquée
+ * indéfiniment. La révision inscrite pour un slot ignoré est celle du
+ * miroir (`revisionDe(n)`, identique à celle d'un slot copié) : c'est ce
+ * qui permet à un fichier plus frais que le miroir de gagner l'égalité de
+ * l'arbitrage `revFichier >= revMiroir` dans `fichierGameRepository.load()`
+ * au lieu de perdre face à un miroir qui n'a jamais vu la save qui a
+ * produit ce fichier.
  */
 export async function migrerVersFichiers(): Promise<boolean> {
   if (typeof window === "undefined") return false;
@@ -53,31 +55,32 @@ export async function migrerVersFichiers(): Promise<boolean> {
   const index = chargerIndex();
 
   // Ce qu'il y a à copier, décidé une fois pour toutes avant tout effet de
-  // bord : seuls les slots occupés du miroir seront écrits.
+  // bord : seuls les slots occupés du miroir sont candidats.
   const aCopier = new Map<NumeroSlot, string>();
   for (const n of NUMEROS) {
     const brut = lireMiroir(n);
     if (brut !== null) aCopier.set(n, brut);
   }
 
-  // Précontrôle : AUCUNE écriture avant d'avoir vérifié qu'aucun des slots
-  // qu'on s'apprête à copier n'a déjà un fichier.
-  for (const n of aCopier.keys()) {
-    try {
-      if ((await lireSave(quoiDuSlot(n))) !== null) return false;
-    } catch {
-      return false;
-    }
-  }
-
   const revisions: Record<NumeroSlot, number> = { 1: 0, 2: 0, 3: 0 };
   for (const [n, brut] of aCopier) {
+    let dejaPresent: string | null;
     try {
-      await ecrireSave(quoiDuSlot(n), brut);
-      if ((await lireSave(quoiDuSlot(n))) !== brut) return false;
+      dejaPresent = await lireSave(quoiDuSlot(n));
     } catch {
       return false;
     }
+
+    if (dejaPresent === null) {
+      try {
+        await ecrireSave(quoiDuSlot(n), brut);
+        if ((await lireSave(quoiDuSlot(n))) !== brut) return false;
+      } catch {
+        return false;
+      }
+    }
+    // Copié ou laissé intact : dans les deux cas, la révision inscrite est
+    // celle du miroir (voir le commentaire de tête).
     revisions[n] = revisionDe(n);
   }
 

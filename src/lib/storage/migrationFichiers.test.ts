@@ -86,34 +86,52 @@ describe("migrerVersFichiers", () => {
     expect(fichiers.has("index")).toBe(true);
   });
 
-  // Risque reporté par la tâche 4 : `lireIndexFichier()` confond « aucun
-  // index fichier » et « index présent mais illisible ». La migration se
-  // déclenche sur les deux cas indifféremment (elle ne peut pas les
-  // distinguer depuis `fichierGameRepository`). Si un fichier de slot existe
-  // déjà, il peut s'agir d'un index corrompu à côté de fichiers sains et
-  // plus récents que le miroir — écraser serait exactement le dégât que ce
-  // chantier corrige.
-  describe("garde-fou index corrompu vs absent", () => {
-    it("refuse de migrer si un fichier de slot existe déjà, et ne le touche pas", async () => {
+  // Ruling R8 : `lireEtatIndexFichier()` (fichierGameRepository) distingue
+  // maintenant « index absent » (seul cas qui déclenche cette fonction) de
+  // « index présent mais illisible » (jamais migré, cf. fichierGameRepository
+  // .test.ts). Reste, même une fois l'index absent confirmé, un flou que
+  // cette fonction seule ne peut pas lever : un fichier de slot déjà présent
+  // peut être une copie d'une migration précédente restée inachevée
+  // (l'écraser avec le miroir courant serait sans risque) OU le fichier
+  // qu'un `save()` a réussi à écrire avant que l'écriture de l'index fichier
+  // n'échoue — auquel cas le miroir n'a JAMAIS reçu cette save (voir
+  // fichierGameRepository.save(), étape 3 jamais atteinte) et le fichier est
+  // en réalité PLUS FRAIS que le miroir. Ces deux cas sont indiscernables
+  // d'ici : on ne touche donc JAMAIS à un fichier de slot déjà présent —
+  // mais contrairement à un abandon global, on continue de copier les
+  // autres slots et d'écrire l'index, pour que la migration finisse quand
+  // même par aboutir.
+  describe("un fichier de slot déjà présent n'est jamais écrasé (Ruling R8)", () => {
+    it("laisse le fichier déjà présent intact, octet pour octet, et réussit quand même", async () => {
       window.localStorage.setItem(
         cleSlot(1),
-        JSON.stringify(createMockGameState({ jourActuel: 1 })),
+        JSON.stringify(createMockGameState({ jourActuel: 1 })), // le miroir : plus ancien
       );
       const contenuFichierExistant = JSON.stringify(
-        createMockGameState({ jourActuel: 99 }),
+        createMockGameState({ jourActuel: 99 }), // le fichier : plus récent (cas 3b)
       );
       fichiers.set("slot_1", contenuFichierExistant);
 
       const { migrerVersFichiers } = await import("./migrationFichiers");
-      await expect(migrerVersFichiers()).resolves.toBe(false);
+      await expect(migrerVersFichiers()).resolves.toBe(true);
 
       expect(fichiers.get("slot_1")).toBe(contenuFichierExistant);
-      expect(fichiers.has("index")).toBe(false);
-      // Le miroir n'est pas non plus touché.
-      expect(window.localStorage.getItem(cleSlot(1))).not.toBeNull();
+      // Le miroir non plus n'est jamais touché par la migration.
+      expect(window.localStorage.getItem(cleSlot(1))).toBe(
+        JSON.stringify(createMockGameState({ jourActuel: 1 })),
+      );
+
+      // La révision inscrite pour ce slot est celle du miroir (Ruling
+      // R8-iii), pas 0 par défaut ni une valeur inventée : c'est ce qui
+      // permet à un fichier plus frais que le miroir de gagner l'arbitrage
+      // de fichierGameRepository.load() plutôt que de perdre l'égalité.
+      const indexEcrit = JSON.parse(fichiers.get("index") ?? "null") as {
+        revisions: Record<number, number>;
+      } | null;
+      expect(indexEcrit?.revisions[1]).toBe(0); // revisionDe(1) ici : jamais touché par ce test
     });
 
-    it("refuse de migrer même si seul un AUTRE slot a déjà un fichier", async () => {
+    it("copie seulement le slot manquant quand un autre slot a déjà un fichier", async () => {
       window.localStorage.setItem(
         cleSlot(1),
         JSON.stringify(createMockGameState({ jourActuel: 1 })),
@@ -122,13 +140,17 @@ describe("migrerVersFichiers", () => {
         cleSlot(2),
         JSON.stringify(createMockGameState({ jourActuel: 2 })),
       );
-      fichiers.set("slot_2", JSON.stringify(createMockGameState({ jourActuel: 42 })));
+      const contenuFichierExistantSlot2 = JSON.stringify(
+        createMockGameState({ jourActuel: 42 }),
+      );
+      fichiers.set("slot_2", contenuFichierExistantSlot2);
 
       const { migrerVersFichiers } = await import("./migrationFichiers");
-      await expect(migrerVersFichiers()).resolves.toBe(false);
+      await expect(migrerVersFichiers()).resolves.toBe(true);
 
-      expect(fichiers.has("slot_1")).toBe(false);
-      expect(fichiers.has("index")).toBe(false);
+      expect(fichiers.get("slot_1")).toBe(window.localStorage.getItem(cleSlot(1)));
+      expect(fichiers.get("slot_2")).toBe(contenuFichierExistantSlot2); // inchangé
+      expect(fichiers.has("index")).toBe(true);
     });
   });
 });
