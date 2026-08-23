@@ -42,3 +42,10 @@ src-tauri/vendor/tauri-plugin-firebase/.tauri/
 src-tauri/vendor/tauri-plugin-firebase/ios/Package.resolved
 src-tauri/vendor/tauri-plugin-firebase/ios/.build/
 marketing/appstore/.planches/
+
+# tauri-plugin-stockage est un plugin maison (pas un vendor drop crates.io
+# comme tauri-plugin-notification) : ni tauri-plugin-firebase ni
+# tauri-plugin-iap ne committent de Cargo.lock, et une fois le plugin
+# enregistré dans src-tauri/Cargo.toml, ce lockfile local devient
+# vestigial (le Cargo.lock racine du workspace prend le relais).
+src-tauri/vendor/tauri-plugin-stockage/Cargo.lock
