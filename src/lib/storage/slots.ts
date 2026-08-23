@@ -17,6 +17,10 @@ export interface MetaSlot {
   nom: string | null;
   /** Timestamp ms de la dernière écriture de la save de ce slot. */
   derniereSession: number;
+  /** Compteur monotone d'écritures de ce slot. Absent sur toute donnée
+   *  antérieure à ce chantier : vaut alors 0, ce qui fait perdre l'arbitrage
+   *  au magasin qui ne l'a pas encore. */
+  revision?: number;
 }
 
 export interface IndexSlots {
@@ -44,7 +48,8 @@ function estMetaSlotValide(meta: unknown): meta is MetaSlot | null {
   const candidat = meta as Partial<MetaSlot>;
   return (
     (candidat.nom === null || typeof candidat.nom === "string") &&
-    typeof candidat.derniereSession === "number"
+    typeof candidat.derniereSession === "number" &&
+    (candidat.revision === undefined || typeof candidat.revision === "number")
   );
 }
 
@@ -300,16 +305,36 @@ export function viderSlotActif(): void {
   ecrireIndex(index);
 }
 
-/** Upsert la meta du slot en conservant le nom existant. */
-export function toucherDerniereSession(n: NumeroSlot): void {
+/**
+ * Upsert la meta du slot en conservant le nom existant. `revision`, si
+ * fourni, remplace le compteur du slot (voir `revisionDe`) ; sinon le
+ * compteur existant est conservé (0 si absent).
+ */
+export function toucherDerniereSession(
+  n: NumeroSlot,
+  revision?: number,
+): void {
   if (typeof window === "undefined") return;
   const index = chargerIndex();
   const existant = index.slots[n];
   index.slots[n] = {
     nom: existant ? existant.nom : null,
     derniereSession: Date.now(),
+    revision: revision ?? existant?.revision ?? 0,
   };
   ecrireIndex(index);
+}
+
+/**
+ * Compteur monotone d'écritures du slot, tel qu'inscrit par
+ * `toucherDerniereSession`. 0 si le slot n'a jamais été touché depuis ce
+ * chantier (champ absent) — c'est le tiebreaker entre l'index du fichier et
+ * celui du localStorage-miroir : le magasin qui n'a pas encore ce numéro
+ * perd l'arbitrage.
+ */
+export function revisionDe(n: NumeroSlot): number {
+  if (typeof window === "undefined") return 0;
+  return chargerIndex().slots[n]?.revision ?? 0;
 }
 
 export function premierSlotLibre(): NumeroSlot | null {

@@ -9,6 +9,7 @@ import {
   premierSlotLibre,
   renommerSlot,
   resumeSlot,
+  revisionDe,
   slotActif,
   supprimerSlot,
   toucherDerniereSession,
@@ -385,6 +386,50 @@ describe("opérations", () => {
     idx = chargerIndex();
     expect(idx.slots[2]?.nom).toBeNull();
     expect(typeof idx.slots[2]?.derniereSession).toBe("number");
+  });
+});
+
+describe("revisionDe", () => {
+  it("rend 0 pour un slot dont la révision n'a jamais été écrite", () => {
+    window.localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 1,
+        slots: { 1: { nom: null, derniereSession: 123 }, 2: null, 3: null },
+      }),
+    );
+    expect(revisionDe(1)).toBe(0);
+  });
+
+  it("conserve la révision écrite", () => {
+    toucherDerniereSession(1, 7);
+    expect(revisionDe(1)).toBe(7);
+  });
+
+  it("accepte une meta ancienne, sans champ revision", () => {
+    window.localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 2,
+        slots: { 1: null, 2: { nom: "Partie", derniereSession: 5 }, 3: null },
+      }),
+    );
+    expect(slotActif()).toBe(2);
+  });
+
+  it("refuse une revision mal typée plutôt que de la propager", () => {
+    window.localStorage.setItem(
+      CLE_INDEX,
+      JSON.stringify({
+        actif: 1,
+        slots: {
+          1: { nom: null, derniereSession: 5, revision: "sept" },
+          2: null,
+          3: null,
+        },
+      }),
+    );
+    expect(revisionDe(1)).toBe(0);
   });
 });
 
