@@ -93,6 +93,17 @@ function indexExiste(): boolean {
   }
 }
 
+/**
+ * Version exportée d'`indexExiste()`, pour `fichierGameRepository` : distingue
+ * « le miroir a un index réellement enregistré » de « rien n'a jamais été
+ * écrit côté miroir » (Ruling R4). Dans le premier cas l'`actif` du miroir
+ * fait foi (c'est lui que `changerSlotActif()` écrit) ; dans le second, seul
+ * l'`actif` du fichier a une chance d'être à jour.
+ */
+export function indexMiroirExiste(): boolean {
+  return indexExiste();
+}
+
 function ecrireIndex(index: IndexSlots): boolean {
   if (typeof window === "undefined") return false;
   try {

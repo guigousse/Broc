@@ -4,6 +4,7 @@ import { localGameRepository } from "./localGameRepository";
 import { ecrireSave, lireSave, quoiDuSlot } from "./pontNatif";
 import type { ErreurStockage } from "./pontNatif";
 import {
+  indexMiroirExiste,
   revisionDe,
   slotActif,
   toucherDerniereSession,
@@ -43,11 +44,19 @@ function genreDe(e: unknown): ErreurStockage["genre"] {
 
 export const fichierGameRepository: GameRepository = {
   async load() {
-    const n = slotActif();
     const index = await lireIndexFichier();
 
     // Pas d'index fichier : rien n'a encore été migré (tâche 6 branchera ici).
     if (!index) return localGameRepository.load();
+
+    // Quel emplacement charger ? Si le miroir a un index RÉELLEMENT
+    // enregistré, son `actif` fait foi : c'est lui que `changerSlotActif()`
+    // écrit, et le fichier ne le rattrape qu'au `save()` suivant — un
+    // changement d'emplacement suivi aussitôt d'un chargement doit être vu
+    // tout de suite, pas au prochain enregistrement. Si le miroir n'a jamais
+    // existé (perdu — le scénario que ce chantier vise), seul le fichier a
+    // une chance de savoir quel emplacement était actif.
+    const n = indexMiroirExiste() ? slotActif() : index.actif;
 
     let duFichier: GameState | null = null;
     try {
@@ -112,8 +121,18 @@ export const fichierGameRepository: GameRepository = {
     viderSlotActif();
     try {
       await ecrireSave(quoiDuSlot(slotActif()), "");
-    } catch {
-      // Le fichier restera, mais l'index du miroir dit déjà l'emplacement vide.
+    } catch (e) {
+      // Le miroir est déjà vidé (revision retombée à 0), mais le fichier —
+      // et son entrée d'index, restés inchangés — gardent l'ancienne save à
+      // une révision plus haute : le prochain load() la ressuscitera via
+      // l'arbitrage (revFichier >= revMiroir). Une suppression n'est donc
+      // PAS garantie de tenir si le disque est plein au moment même de
+      // l'effacer ; c'est un compromis assumé (voir Ruling R5), pas un filet.
+      console.warn(
+        "[fichierGameRepository] Échec de l'effacement du fichier du slot — " +
+          "la partie peut réapparaître au prochain chargement :",
+        e,
+      );
     }
   },
 };
