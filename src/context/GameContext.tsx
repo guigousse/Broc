@@ -391,7 +391,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         // qu'une fois (StrictMode le rejoue en dev). La transition
         // échec→succès est donc lue AVANT l'appel, sur la ref toujours à
         // jour, et le toast est déclenché APRÈS, une seule fois.
+        //
+        // Revue (finding 2) : deux `doSave()` peuvent être en vol en même
+        // temps (`flush` est abonné à la fois à `pagehide` ET à
+        // `visibilitychange→hidden`, qu'iOS déclenche tous les deux à la mise
+        // en arrière-plan ; une écriture native lente d'une instance d'effet
+        // précédente peut aussi traîner). Si la ref n'était mise à jour qu'au
+        // rendu, deux succès concurrents pourraient tous deux lire
+        // `enEchec: true` avant que React n'ait commité le premier, et
+        // doubler le toast. Elle est donc aussi écrite ICI, tout de suite
+        // après la lecture — avant même que l'updater (pur) ne tourne.
         const etaitEnEchec = etatSauvegardeRef.current.enEchec;
+        if (res.ok && etaitEnEchec) etatSauvegardeRef.current = { enEchec: false };
         setEtatSauvegarde((prec) => {
           if (res.ok) {
             return prec.enEchec ? { enEchec: false } : prec;

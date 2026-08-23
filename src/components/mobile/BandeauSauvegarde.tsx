@@ -50,6 +50,13 @@ const bandeauStyle: CSSProperties = {
   fontSize: 12,
   lineHeight: 1.3,
   textAlign: "center",
+  // Revue Tâche 8 (finding 1) : sans ça, la bande occupe le même rectangle
+  // que StickyTop/le cadre du Bazar (safe-top + header + 6px, pleine
+  // largeur) et devient une zone morte — untappable — pendant toute la
+  // durée (potentiellement illimitée) d'un échec de sauvegarde. Un bandeau
+  // purement informatif ne doit jamais voler les taps sous lui, comme
+  // `TutorielBanniere` (cf. son `wrap.pointerEvents`).
+  pointerEvents: "none",
 };
 
 const backdropStyle: CSSProperties = {
