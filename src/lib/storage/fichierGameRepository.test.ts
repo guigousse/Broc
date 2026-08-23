@@ -7,7 +7,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockGameState } from "../__test-fixtures__/gameState";
-import { changerSlotActif, cleSlot, toucherDerniereSession } from "./slots";
+import { changerSlotActif, chargerIndex, cleSlot, toucherDerniereSession } from "./slots";
 
 const fichiers = new Map<string, string>();
 vi.mock("./pontNatif", async (orig) => ({
@@ -248,6 +248,49 @@ describe("fichierGameRepository", () => {
 
       expect(window.localStorage.getItem(cleSlot(2))).toBeNull();
       expect(fichiers.get("slot_2")).toBe("");
+    });
+  });
+
+  // Ruling R7 : la divergence intra-appel est corrigée (Ruling R6), mais
+  // sans ré-amorçage, le PREMIER écrivain miroir (toucherDerniereSession /
+  // viderSlot) fabrique lui-même un index par défaut `actif: 1` en
+  // remplissant `slots[n]` — et l'appel SUIVANT, voyant alors un miroir qui
+  // existe, y retombe et écrase le vrai slot une écriture plus tard.
+  describe("ré-amorçage du miroir après éviction (Ruling R7)", () => {
+    it("deux save() consécutifs restent sur le slot du fichier, sans miroir au départ", async () => {
+      // beforeEach a vidé localStorage : aucun index miroir n'existe. Le
+      // fichier dit que le slot 2 est actif.
+      fichiers.set(
+        "index",
+        JSON.stringify({ actif: 2, revisions: { 1: 0, 2: 3, 3: 0 } }),
+      );
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+
+      await fichierGameRepository.save(createMockGameState());
+      await fichierGameRepository.save(createMockGameState());
+
+      expect(fichiers.has("slot_1")).toBe(false);
+      expect(fichiers.has("slot_2")).toBe(true);
+      const index = JSON.parse(fichiers.get("index") ?? "null") as {
+        actif: number;
+      } | null;
+      expect(index?.actif).toBe(2);
+    });
+
+    it("clear() sans miroir ne laisse pas un index miroir pointant sur le slot 1", async () => {
+      fichiers.set(
+        "index",
+        JSON.stringify({ actif: 2, revisions: { 1: 0, 2: 5, 3: 0 } }),
+      );
+      window.localStorage.setItem(
+        cleSlot(2),
+        JSON.stringify(createMockGameState({ jourActuel: 5 })),
+      );
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+
+      await fichierGameRepository.clear();
+
+      expect(chargerIndex().actif).toBe(2);
     });
   });
 });

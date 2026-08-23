@@ -4,6 +4,7 @@ import { chargerSlot, enregistrerSlot, localGameRepository } from "./localGameRe
 import { ecrireSave, lireSave, quoiDuSlot } from "./pontNatif";
 import type { ErreurStockage } from "./pontNatif";
 import {
+  changerSlotActif,
   indexMiroirExiste,
   revisionDe,
   slotActif,
@@ -55,9 +56,25 @@ function genreDe(e: unknown): ErreurStockage["genre"] {
  * sinon, seul l'actif du fichier a une chance d'être à jour. `index` peut
  * être `null` (aucune save fichier encore écrite) : l'actif retombe alors
  * sur 1, comme le ferait un miroir tout neuf.
+ *
+ * Ruling R7 — quand le miroir n'a PAS d'index (cas ci-dessus), on le
+ * ré-amorce ici même avec l'actif retenu. Sans ce ré-amorçage, le tout
+ * prochain écrivain mirroir (`toucherDerniereSession`/`viderSlot`, via
+ * `chargerIndex()`) fabriquerait lui-même un index par défaut à `actif: 1`
+ * tout en remplissant `slots[n]` — et l'appel SUIVANT, voyant alors un
+ * miroir qui existe, retomberait sur ce `1` et écraserait le vrai slot une
+ * écriture plus tard. Best-effort et silencieux : le miroir reste
+ * consultatif, son échec ne doit jamais changer le verdict.
  */
 function resoudreSlotActif(index: IndexFichier | null): NumeroSlot {
-  return indexMiroirExiste() ? slotActif() : index?.actif ?? 1;
+  if (indexMiroirExiste()) return slotActif();
+  const n = index?.actif ?? 1;
+  try {
+    changerSlotActif(n);
+  } catch {
+    // best-effort : le miroir n'est qu'un accélérateur, pas une dépendance.
+  }
+  return n;
 }
 
 export const fichierGameRepository: GameRepository = {
