@@ -1719,7 +1719,7 @@ git commit -m "feat(stockage): export d'une partie par la feuille de partage iOS
 - [ ] **Step 1 : suite complète et lint**
 
 Run: `npx vitest run --maxWorkers=4 && npx eslint src`
-Expected: tout au vert. Noter le nombre de tests, à comparer aux 2089 d'avant
+Expected: tout au vert. Noter le nombre de tests, à comparer aux 2474 d'avant
 chantier.
 
 - [ ] **Step 2 : build web et compilation Rust**
