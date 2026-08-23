@@ -46,19 +46,31 @@ class StockagePlugin: Plugin {
   @objc public func partagerFichier(_ invoke: Invoke) throws {
     let args = try invoke.parseArgs(ArgsPartager.self)
 
-    // Garde générale, pas seulement pour le sondage : un nom vide ne peut
-    // produire aucune copie exploitable. C'est ce rejet précoce — AVANT
-    // toute copie de fichier ou présentation d'UI — dont PartiesModal.tsx se
-    // sert pour sonder la disponibilité du partage au montage sans jamais
-    // déclencher un partage réel.
-    guard !args.nomLisible.isEmpty else {
-      invoke.reject("Nom de fichier vide")
+    // `nomLisible` traverse la surface de commande Tauri : n'importe quel JS
+    // de la webview peut l'appeler avec ce qu'il veut. C'est exactement
+    // l'hypothèse qui justifie que `quoi` soit un ÉNUMÉRÉ côté Rust — et le
+    // même soin s'impose ici, puisque ce nom sert de composant de chemin ET
+    // qu'un `removeItem` le suit. « ../Library/Application Support/slot-1.json »
+    // sortirait de NSTemporaryDirectory() pour atterrir dans le répertoire des
+    // sauvegardes, où le `removeItem` plus bas SUPPRIMERAIT la partie (revue
+    // finale I6).
+    //
+    // On ne garde donc que le dernier composant, et on rejette tout ce qui ne
+    // peut pas nommer un fichier. Ce rejet est précoce — AVANT toute copie de
+    // fichier ou présentation d'UI.
+    let nomFichier = (args.nomLisible as NSString).lastPathComponent
+    guard !nomFichier.isEmpty,
+          nomFichier != ".",
+          nomFichier != "..",
+          !nomFichier.contains("/")
+    else {
+      invoke.reject("Nom de fichier invalide")
       return
     }
 
     let source = URL(fileURLWithPath: args.chemin)
     let destination = URL(fileURLWithPath: NSTemporaryDirectory())
-      .appendingPathComponent(args.nomLisible)
+      .appendingPathComponent(nomFichier)
 
     do {
       // La feuille de partage reçoit toujours une COPIE, jamais `source` :
