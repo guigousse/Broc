@@ -70,12 +70,18 @@ function trierActives(
 
 /* Le carnet est un ONGLET depuis 2026-08-23 (route `/quetes`) : on doit
  * pouvoir en sortir par la barre du bas, pas seulement par sa croix. Le voile
- * s'arrête donc au sommet de la barre et passe SOUS le chrome — même cadrage
- * et mêmes z-index que `FloatingRoomOverlay` (voile 35, feuille au-dessus,
- * TabBar 30). */
+ * est donc borné des DEUX côtés, exactement comme le `wrap` de
+ * `FloatingRoomOverlay` : il commence sous le header (z-index 30) et s'arrête
+ * au sommet de la TabBar (z-index 30), en réservant au passage la place de la
+ * bannière de tutoriel.
+ *
+ * Le bord HAUT compte autant que le bas : un voile parti de `top: 0` recouvre
+ * le header et rend MORTS le bloc Énergie, le lien XP/niveau et le logo —
+ * mesuré au serveur, `elementFromPoint` au centre du bouton Énergie renvoyait
+ * le voile. Les Quêtes étaient le seul onglet du jeu dans ce cas. */
 const scrim: CSSProperties = {
   position: "fixed",
-  top: 0,
+  top: "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px))",
   left: 0,
   right: 0,
   bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom))",
@@ -85,10 +91,12 @@ const scrim: CSSProperties = {
 };
 
 /* La fenêtre est ancrée entre le header supérieur et la TabBar, comme
- * l'ancien `RegistreOverlay` — rien ne chevauche le chrome. */
+ * l'ancien `RegistreOverlay` — elle ne chevauche donc ni le header ni la
+ * barre du bas, tous deux restant tapables pendant que le carnet est ouvert.
+ * Même réserve de bannière de tutoriel que le voile ci-dessus. */
 const stage: CSSProperties = {
   position: "fixed",
-  top: "calc(var(--safe-top) + var(--mobile-header-h) + 8px)",
+  top: "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px) + 8px)",
   left: 0,
   right: 0,
   bottom: "calc(var(--mobile-tabbar-h) + var(--safe-bottom) + 8px)",

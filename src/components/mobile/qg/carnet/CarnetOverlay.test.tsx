@@ -72,6 +72,24 @@ describe("CarnetOverlay", () => {
     expect(feuille.style.zIndex).toBe("36");
   });
 
+  it("le voile s'arrête aussi SOUS le header : Énergie, XP et logo restent tapables", () => {
+    // Le bord bas avait été traité, pas le bord haut : le voile partait de
+    // `top: 0` et recouvrait `MobileHeader` (z-index 30). Le joueur ouvrait
+    // les Quêtes, voyait qu'il n'avait plus d'énergie, tapait le bloc
+    // ÉNERGIE — et rien ne se passait. Même formule que le `wrap` de
+    // `FloatingRoomOverlay`, réserve de bannière de tutoriel comprise.
+    const { container } = render(<CarnetOverlay {...base} state={etat([])} />);
+    const voile = container.querySelector("[aria-hidden]") as HTMLElement;
+    expect(voile.style.top).toBe(
+      "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px))",
+    );
+    // La feuille non plus ne remonte pas sous le header (8px de marge en sus).
+    const feuille = screen.getByRole("dialog") as HTMLElement;
+    expect(feuille.style.top).toBe(
+      "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px) + 8px)",
+    );
+  });
+
   it("les trois sections sont dépliées à la première ouverture", () => {
     const q = quete("q1", "quotidienne", "La bonne pioche");
     render(<CarnetOverlay {...base} state={etat([q])} />);
