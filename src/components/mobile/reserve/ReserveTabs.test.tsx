@@ -256,3 +256,19 @@ describe("ReserveTabs — la languette porte le MÊME liseré double que la cart
     );
   });
 });
+
+describe("ReserveTabs — le fond du bouton suit la courbe de la face", () => {
+  it("le bouton porte les mêmes arrondis hauts que sa face", () => {
+    // Le bouton est un rectangle rempli du papier de la carte. Sans le même
+    // arrondi, son fond déborde AU-DELÀ de l'arc de la face et le coin
+    // redevient carré — le défaut se voit à la loupe sur l'onglet actif.
+    poser({ actif: "stockage" });
+    const b = bouton("Stockage");
+    const face = b.firstElementChild as HTMLElement;
+    expect(b.style.borderTopLeftRadius).toBe(face.style.borderTopLeftRadius);
+    expect(b.style.borderTopRightRadius).toBe(face.style.borderTopRightRadius);
+    // Le bas plonge sous la carte : l'arrondir y creuserait une encoche.
+    expect(b.style.borderBottomLeftRadius).toBe("");
+    expect(b.style.borderBottomRightRadius).toBe("");
+  });
+});
