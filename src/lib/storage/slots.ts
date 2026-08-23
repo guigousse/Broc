@@ -304,16 +304,29 @@ export function supprimerSlot(n: NumeroSlot): void {
 }
 
 /**
+ * Efface la clé de save d'un slot DONNÉ et son entrée d'index, sans jamais
+ * toucher `index.actif` — contrairement à `supprimerSlot`, qui rebascule
+ * l'actif quand `n` en est l'emplacement. Introduit pour
+ * `fichierGameRepository.clear()` (Ruling R6) : il doit pouvoir vider
+ * l'emplacement résolu par le fichier même quand il diffère de l'actif du
+ * miroir, sans jamais faire dévier l'actif de ce dernier.
+ */
+export function viderSlot(n: NumeroSlot): void {
+  if (typeof window === "undefined") return;
+  const index = chargerIndex();
+  effacerCleEtEntree(index, n);
+  ecrireIndex(index);
+}
+
+/**
  * Efface la clé de save du slot ACTIF et son entrée d'index, sans jamais
  * rebasculer l'actif (contrairement à `supprimerSlot`). C'est la sémantique
  * de « Supprimer la sauvegarde » dans Réglages : on repart à zéro sur LE
- * MÊME emplacement, on ne change pas de partie en cours de route.
+ * MÊME emplacement, on ne change pas de partie en cours de route. Cas
+ * particulier de `viderSlot` où `n = slotActif()`.
  */
 export function viderSlotActif(): void {
-  if (typeof window === "undefined") return;
-  const index = chargerIndex();
-  effacerCleEtEntree(index, index.actif);
-  ecrireIndex(index);
+  viderSlot(slotActif());
 }
 
 /**

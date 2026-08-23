@@ -187,4 +187,67 @@ describe("fichierGameRepository", () => {
       expect(relu?.jourActuel).toBe(55);
     });
   });
+
+  // Ruling R6 : l'emplacement actif doit être résolu UNE SEULE FOIS par
+  // appel (load/save/clear) et transmis explicitement — aucun chemin ne doit
+  // laisser `localGameRepository` (ou `slots.ts`) re-résoudre le sien, sous
+  // peine de désaccord entre deux résolutions indépendantes.
+  describe("résolution unique de l'emplacement (Ruling R6)", () => {
+    it("save() écrit sur l'actif du fichier quand le miroir n'a pas d'index (jamais dans le mauvais slot)", async () => {
+      // beforeEach a vidé localStorage : aucun index miroir n'existe. Le
+      // fichier dit que le slot 2 est actif — c'est lui qui doit être écrit,
+      // jamais le slot 1 par défaut d'un `slotActif()` non résolu.
+      fichiers.set(
+        "index",
+        JSON.stringify({ actif: 2, revisions: { 1: 0, 2: 3, 3: 0 } }),
+      );
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const r = await fichierGameRepository.save(createMockGameState());
+
+      expect(r).toEqual({ ok: true });
+      expect(fichiers.has("slot_2")).toBe(true);
+      expect(fichiers.has("slot_1")).toBe(false);
+    });
+
+    it("le repli miroir de load() lit le slot résolu, pas le slot 1", async () => {
+      // Miroir sans index (perdu), fichier dit slot 2 actif mais son
+      // contenu est illisible : le repli doit lire le miroir au slot 2, pas
+      // au slot 1 par défaut d'une résolution indépendante.
+      fichiers.set(
+        "index",
+        JSON.stringify({ actif: 2, revisions: { 1: 0, 2: 4, 3: 0 } }),
+      );
+      fichiers.set("slot_2", "{ceci n'est pas du json");
+      window.localStorage.setItem(
+        cleSlot(1),
+        JSON.stringify(createMockGameState({ jourActuel: 11 })),
+      );
+      window.localStorage.setItem(
+        cleSlot(2),
+        JSON.stringify(createMockGameState({ jourActuel: 77 })),
+      );
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const relu = await fichierGameRepository.load();
+      expect(relu?.jourActuel).toBe(77);
+    });
+
+    it("clear() vide le slot résolu par le fichier même sans index miroir", async () => {
+      fichiers.set(
+        "index",
+        JSON.stringify({ actif: 2, revisions: { 1: 0, 2: 5, 3: 0 } }),
+      );
+      window.localStorage.setItem(
+        cleSlot(2),
+        JSON.stringify(createMockGameState({ jourActuel: 5 })),
+      );
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      await fichierGameRepository.clear();
+
+      expect(window.localStorage.getItem(cleSlot(2))).toBeNull();
+      expect(fichiers.get("slot_2")).toBe("");
+    });
+  });
 });

@@ -1,6 +1,6 @@
 import type { GameState } from "@/types/game";
 import type { GameRepository, ResultatSave } from "./gameRepository";
-import { localGameRepository } from "./localGameRepository";
+import { chargerSlot, enregistrerSlot, localGameRepository } from "./localGameRepository";
 import { ecrireSave, lireSave, quoiDuSlot } from "./pontNatif";
 import type { ErreurStockage } from "./pontNatif";
 import {
@@ -8,7 +8,7 @@ import {
   revisionDe,
   slotActif,
   toucherDerniereSession,
-  viderSlotActif,
+  viderSlot,
   type NumeroSlot,
 } from "./slots";
 
@@ -42,6 +42,24 @@ function genreDe(e: unknown): ErreurStockage["genre"] {
     : "io";
 }
 
+/**
+ * Résout l'emplacement actif UNE SEULE FOIS par appel public (load/save/
+ * clear) — Ruling R6. Aucun chemin ne doit ensuite laisser
+ * `localGameRepository` (ou `slots.ts`) re-résoudre le sien via
+ * `slotActif()` : un second appel indépendant pourrait tomber sur un numéro
+ * différent si le miroir a disparu entre-temps, et lire/écrire le mauvais
+ * emplacement — exactement la perte de partie que ce chantier corrige.
+ *
+ * Même règle qu'au `load()` (Ruling R4) : le miroir l'emporte s'il a un
+ * index RÉELLEMENT enregistré (c'est lui que `changerSlotActif()` écrit) ;
+ * sinon, seul l'actif du fichier a une chance d'être à jour. `index` peut
+ * être `null` (aucune save fichier encore écrite) : l'actif retombe alors
+ * sur 1, comme le ferait un miroir tout neuf.
+ */
+function resoudreSlotActif(index: IndexFichier | null): NumeroSlot {
+  return indexMiroirExiste() ? slotActif() : index?.actif ?? 1;
+}
+
 export const fichierGameRepository: GameRepository = {
   async load() {
     const index = await lireIndexFichier();
@@ -49,14 +67,9 @@ export const fichierGameRepository: GameRepository = {
     // Pas d'index fichier : rien n'a encore été migré (tâche 6 branchera ici).
     if (!index) return localGameRepository.load();
 
-    // Quel emplacement charger ? Si le miroir a un index RÉELLEMENT
-    // enregistré, son `actif` fait foi : c'est lui que `changerSlotActif()`
-    // écrit, et le fichier ne le rattrape qu'au `save()` suivant — un
-    // changement d'emplacement suivi aussitôt d'un chargement doit être vu
-    // tout de suite, pas au prochain enregistrement. Si le miroir n'a jamais
-    // existé (perdu — le scénario que ce chantier vise), seul le fichier a
-    // une chance de savoir quel emplacement était actif.
-    const n = indexMiroirExiste() ? slotActif() : index.actif;
+    // Quel emplacement charger ? Résolu une seule fois (Ruling R6) et
+    // transmis explicitement à tout ce qui suit, y compris le repli miroir.
+    const n = resoudreSlotActif(index);
 
     let duFichier: GameState | null = null;
     try {
@@ -73,7 +86,11 @@ export const fichierGameRepository: GameRepository = {
     // le miroir continuait, laisse la main au miroir.
     if (duFichier && revFichier >= revMiroir) return duFichier;
 
-    const duMiroir = await localGameRepository.load();
+    // `chargerSlot(n)`, pas `localGameRepository.load()` : ce dernier
+    // re-résoudrait son propre `slotActif()`, qui peut différer de `n` quand
+    // le miroir n'a pas d'index (Ruling R6) — et lirait alors le mauvais
+    // emplacement.
+    const duMiroir = await chargerSlot(n);
     if (duMiroir) {
       console.warn(
         `[fichierGameRepository] Slot ${n} servi depuis le miroir ` +
@@ -86,9 +103,11 @@ export const fichierGameRepository: GameRepository = {
   },
 
   async save(state): Promise<ResultatSave> {
-    const n = slotActif();
-    const serialise = JSON.stringify(state);
     const index = await lireIndexFichier();
+    // Résolu une seule fois (Ruling R6) : ni l'écriture du fichier, ni celle
+    // du miroir, ni `toucherDerniereSession` ne doivent re-résoudre le leur.
+    const n = resoudreSlotActif(index);
+    const serialise = JSON.stringify(state);
     const revision = Math.max(index?.revisions[n] ?? 0, revisionDe(n)) + 1;
 
     // 1. Le slot d'abord : c'est lui qui rend le verdict.
@@ -111,16 +130,24 @@ export const fichierGameRepository: GameRepository = {
     }
 
     // 3. Le miroir en best-effort : son échec ne change pas le verdict.
-    await localGameRepository.save(state);
+    //    `enregistrerSlot(n, …)`, pas `localGameRepository.save(…)` : ce
+    //    dernier re-résoudrait son propre `slotActif()` (Ruling R6).
+    await enregistrerSlot(n, state);
     toucherDerniereSession(n, revision);
 
     return { ok: true };
   },
 
   async clear() {
-    viderSlotActif();
+    const index = await lireIndexFichier();
+    // Résolu une seule fois (Ruling R6) : `viderSlot(n)` vide exactement cet
+    // emplacement, sans jamais faire dévier `index.actif` du miroir (à la
+    // différence de `supprimerSlot`) et sans `removeItem` supplémentaire au
+    // delà de ce que `viderSlot`/`viderSlotActif` font déjà en interne.
+    const n = resoudreSlotActif(index);
+    viderSlot(n);
     try {
-      await ecrireSave(quoiDuSlot(slotActif()), "");
+      await ecrireSave(quoiDuSlot(n), "");
     } catch (e) {
       // Le miroir est déjà vidé (revision retombée à 0), mais le fichier —
       // et son entrée d'index, restés inchangés — gardent l'ancienne save à
