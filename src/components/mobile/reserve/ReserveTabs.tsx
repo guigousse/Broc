@@ -134,8 +134,14 @@ export function ReserveTabs({
           }
           if (actif !== "atelier") onChoisir("atelier");
         }}
+        // `atelierOuvert` en premier : une main posée sur un onglet CADENASSÉ
+        // désignerait un bouton qui ne répond que par un refus (toast). La
+        // visite guidée n'est armée qu'à la chute du cadenas, mais une save
+        // bricolée ou un futur réordonnancement des déblocages suffirait.
         className={
-          mainSurAtelier && actif !== "atelier" ? "tuto-main" : undefined
+          atelierOuvert && mainSurAtelier && actif !== "atelier"
+            ? "tuto-main"
+            : undefined
         }
         style={ongletStyle(actif === "atelier", !atelierOuvert)}
       >

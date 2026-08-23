@@ -47,7 +47,7 @@ afterEach(() => {
   __resetMemoireReserve();
 });
 
-function etat(competences: string[]): GameState {
+function etat(competences: string[], extra: Record<string, unknown> = {}): GameState {
   return {
     brocanteur: { niveau: 1, xp: 0, pointsDisponibles: 0 },
     inventaireJoueur: [],
@@ -56,8 +56,12 @@ function etat(competences: string[]): GameState {
     niveauStockage: 1,
     budget: 0,
     tutorielEtape: "termine",
+    ...extra,
   } as unknown as GameState;
 }
+
+/** L'Atelier ouvert : condition de la visite guidée. */
+const REPARER = [`${catTreeId(CATEGORIES[0])}.reparer.1`];
 
 /** Le bouton de l'onglet Atelier de la bande haute. */
 function ongletAtelier(): HTMLElement {
@@ -79,5 +83,38 @@ describe("StockageContenu — d'où vient l'ouverture de l'Atelier", () => {
     mockState = etat([`${catTreeId(CATEGORIES[0])}.reparer.1`]);
     render(<StockageContenu />);
     expect(ongletAtelier().getAttribute("aria-disabled")).toBe(null);
+  });
+});
+
+/**
+ * Une seule main à la fois dans tout le jeu. `TabBar.mainMiniTuto` applique
+ * une priorité stricte carnet > atelier > vinyle ; la bande haute de la
+ * Réserve doit lire la même règle, sinon un joueur qui a les deux mini-tutos
+ * armés voit DEUX doigts — l'un vers QUÊTES en bas, l'autre vers ATELIER en
+ * haut.
+ */
+describe("StockageContenu — une seule main de guidage", () => {
+  it("visite de l'Atelier armée seule : la main se pose sur l'onglet", () => {
+    mockState = etat(REPARER, { miniTutoAtelier: "visite" });
+    render(<StockageContenu />);
+    expect(ongletAtelier().className).toContain("tuto-main");
+  });
+
+  it("mini-tuto du carnet en cours : la main de l'Atelier s'efface", () => {
+    mockState = etat(REPARER, {
+      miniTutoAtelier: "visite",
+      miniTutoCarnet: "ouvrir",
+    });
+    render(<StockageContenu />);
+    expect(document.querySelector(".tuto-main")).toBeNull();
+  });
+
+  it("carnet déjà clos : la main de l'Atelier revient", () => {
+    mockState = etat(REPARER, {
+      miniTutoAtelier: "visite",
+      miniTutoCarnet: "termine",
+    });
+    render(<StockageContenu />);
+    expect(ongletAtelier().className).toContain("tuto-main");
   });
 });

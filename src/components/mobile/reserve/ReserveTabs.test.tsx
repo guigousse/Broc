@@ -100,4 +100,11 @@ describe("ReserveTabs — main de guidage du mini-tuto Atelier", () => {
     poser({ actif: "atelier", mainSurAtelier: true });
     expect(document.querySelector(".tuto-main")).toBeNull();
   });
+
+  it("aucune main sur un onglet CADENASSÉ", () => {
+    // Le doigt désignerait un bouton qui ne sait que refuser : le tap
+    // déclenche le toast de verrou, jamais la navigation promise.
+    poser({ atelierOuvert: false, mainSurAtelier: true });
+    expect(document.querySelector(".tuto-main")).toBeNull();
+  });
 });

@@ -159,7 +159,14 @@ function StockageContenuInner() {
         atelierOuvert={atelierOuvert}
         badgeAtelier={badgeAtelier}
         onVerrou={onVerrou}
-        mainSurAtelier={state.miniTutoAtelier === "visite"}
+        // Même priorité stricte que `TabBar.mainMiniTuto` (carnet > atelier >
+        // vinyle) : sans le second terme, la main du carnet en bas et celle de
+        // l'Atelier en haut s'affichaient EN MÊME TEMPS pour un joueur qui a
+        // les deux mini-tutos armés — deux doigts qui désignent deux endroits
+        // ne guident personne.
+        mainSurAtelier={
+          state.miniTutoAtelier === "visite" && state.miniTutoCarnet !== "ouvrir"
+        }
         bande={
           <>
             {/* Le titre `— STOCKAGE —` a cédé la place à la bande d'onglets
