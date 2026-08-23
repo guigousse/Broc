@@ -2,7 +2,12 @@
 
 import { useState, type JSX } from "react";
 import { useRouter } from "next/navigation";
-import { poserFlagIris } from "@/lib/transitionIris";
+import {
+  dureesIris,
+  poserFlagIris,
+  prefersReducedMotion,
+} from "@/lib/transitionIris";
+import { audioManager } from "@/lib/audio/audioManager";
 import { IrisFermeture } from "./IrisTransition";
 
 interface PassageIris {
@@ -35,6 +40,17 @@ export function usePassageIris(): PassageIris {
     // passer les taps sur le bouton resté sous lui pendant plus d'une seconde,
     // et deux départs, ce sont deux entrées d'historique pour un seul geste.
     if (cible !== null) return;
+    // Le gramophone s'éteint AVEC le cercle, et pas au moment du noir : le
+    // fondu prend exactement la durée de la fermeture (la même arithmétique
+    // que le départ de l'écran-titre, cf. `lancerIrisVers`). On descend le
+    // BUS, donc la musique et le crépitement de l'aiguille ensemble, sans
+    // arrêter la lecture — le disque tourne en silence pendant la visite et le
+    // layout (qg) le rallume tout seul au retour, là où il en est rendu.
+    const durees = dureesIris("court");
+    audioManager.setVinylAmbianceVolume(
+      0,
+      prefersReducedMotion() ? durees.fadeReduit : durees.fermeture,
+    );
     setCible(href);
   };
 

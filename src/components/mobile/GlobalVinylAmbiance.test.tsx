@@ -24,6 +24,25 @@ describe("GlobalVinylAmbiance", () => {
     expect(vol).not.toHaveBeenCalled();
   });
 
+  /**
+   * Le Bazar est un autre lieu : on n'y entend pas le gramophone du bureau.
+   * Le fondu est joué par l'iris du passage ; cet effet-ci est le garde-fou
+   * qui empêche la règle générique de le rallumer à 0,22 au moment du noir.
+   */
+  it("route /bazar : le gramophone se tait", () => {
+    pathname = "/bazar";
+    vi.spyOn(audioManager, "setVinylTargetVolume").mockImplementation(() => {});
+    const vol = vi
+      .spyOn(audioManager, "setVinylAmbianceVolume")
+      .mockImplementation(() => {});
+    const lp = vi
+      .spyOn(audioManager, "setVinylAmbianceLowpass")
+      .mockImplementation(() => {});
+    render(<GlobalVinylAmbiance />);
+    expect(vol).toHaveBeenCalledWith(0);
+    expect(lp).toHaveBeenCalledWith(700);
+  });
+
   it("route générique (/collection) : mise à distance 0.22 / 700 Hz", () => {
     pathname = "/collection";
     const cible = vi

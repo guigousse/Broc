@@ -663,6 +663,24 @@ describe("audioManager — gramophone", () => {
     );
   });
 
+  /**
+   * Le passage vers le Bazar fait taire le gramophone en même temps que
+   * l'iris se ferme : la rampe doit donc pouvoir durer autre chose que les
+   * 0,4 s du réglage de pièce.
+   */
+  it("setVinylAmbianceVolume rampe sur la durée demandée", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startNeedle();
+    const ctx = FakeAudioContext.instances[0];
+    const busGain = ctx.gains[1];
+
+    audioManager.setVinylAmbianceVolume(0, 1260);
+    expect(busGain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(
+      0,
+      1.26,
+    );
+  });
+
   it("setVinylAmbianceLowpass clampe dans [80, 20000]", async () => {
     const { audioManager } = await freshManager();
     await audioManager.startNeedle();

@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { usePassageIris } from "./usePassageIris";
 import { dureesIris, lireFlagIris } from "@/lib/transitionIris";
+import { audioManager } from "@/lib/audio/audioManager";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -75,6 +76,30 @@ describe("usePassageIris", () => {
     act(() => screen.getByText("partir").click());
     await act(() => vi.advanceTimersByTimeAsync(JUSQU_AU_NOIR));
     expect(push).toHaveBeenCalledWith("/bureau");
+  });
+
+  /**
+   * Le gramophone du bureau n'a rien à faire au Bazar : il s'éteint AVEC le
+   * cercle, pas au moment du noir. Le bus descend à zéro, le disque continue
+   * de tourner — le layout (qg) le rallume tout seul au retour.
+   */
+  it("le départ fait taire le gramophone sur la durée de la fermeture", () => {
+    const vol = vi
+      .spyOn(audioManager, "setVinylAmbianceVolume")
+      .mockImplementation(() => {});
+    render(<Sonde />);
+    act(() => screen.getByText("partir").click());
+    expect(vol).toHaveBeenCalledWith(0, dureesIris("court").fermeture);
+  });
+
+  it("un second tap pendant l'iris ne relance pas le fondu", () => {
+    const vol = vi
+      .spyOn(audioManager, "setVinylAmbianceVolume")
+      .mockImplementation(() => {});
+    render(<Sonde />);
+    act(() => screen.getByText("partir").click());
+    act(() => screen.getByText("partir").click());
+    expect(vol).toHaveBeenCalledTimes(1);
   });
 
   // L'overlay laisse passer les taps sur un bouton resté sous lui pendant plus
