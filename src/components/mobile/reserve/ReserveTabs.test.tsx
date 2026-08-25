@@ -106,6 +106,25 @@ describe("ReserveTabs — main de guidage du mini-tuto Atelier", () => {
     expect(document.querySelector(".tuto-main")).toBeNull();
   });
 
+  it("la main passe DEVANT la carte — sinon le doigt disparaît sous la fenêtre", () => {
+    // Recette device 2026-08-26 : le doigt était peint SOUS la carte. Son
+    // `::after` vit dans le contexte d'empilement de la fenêtre flottante,
+    // à égalité de plan avec la carte — qui vient après dans le DOM et
+    // gagnait donc l'égalité. La languette inactive, elle, doit RESTER sous
+    // la carte (le cadre laiton la traverse) : seule la main remonte.
+    poser({ mainSurAtelier: true });
+    const b = bouton("Atelier");
+    expect(b.style.zIndex).toBe("");
+    expect(Number(b.style.getPropertyValue("--tuto-main-z"))).toBeGreaterThan(
+      Z_CARTE,
+    );
+  });
+
+  it("aucun plan forcé quand il n'y a pas de main à faire passer devant", () => {
+    poser();
+    expect(bouton("Atelier").style.getPropertyValue("--tuto-main-z")).toBe("");
+  });
+
   it("aucune main sur un onglet CADENASSÉ", () => {
     // Le doigt désignerait un bouton qui ne sait que refuser : le tap
     // déclenche le toast de verrou, jamais la navigation promise.
