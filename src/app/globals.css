@@ -1521,7 +1521,10 @@ nav[aria-label="Navigation principale"] :focus-visible,
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
   animation: tuto-main-kf 1.6s ease-in-out infinite;
   pointer-events: none;
-  z-index: 1;
+  /* Plan de la main, réglable par la cible : dans une fenêtre flottante, le
+     doigt vit dans le même contexte d'empilement que la carte et se faisait
+     peindre dessous (cf. ReserveTabs, `--tuto-main-z`). */
+  z-index: var(--tuto-main-z, 1);
 }
 /* Variante pour les cibles collées au bord gauche : main à droite, en miroir
    (le translate positif devient un va-et-vient vers la cible). */
