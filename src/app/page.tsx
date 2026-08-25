@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { FolderOpen, Info, Play, Plus, Settings } from "lucide-react";
+import { FolderOpen, Heart, Info, Play, Plus, Settings } from "lucide-react";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { CreditsModal } from "@/components/mobile/CreditsModal";
+import { SoutienSheet } from "@/components/mobile/SoutienSheet";
 import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
 import { IrisFermeture } from "@/components/mobile/IrisTransition";
@@ -168,6 +169,7 @@ export default function TitleScreen() {
   const { d } = useLangue();
   const [reglagesOuverts, setReglagesOuverts] = useState(false);
   const [creditsOuverts, setCreditsOuverts] = useState(false);
+  const [soutienOuvert, setSoutienOuvert] = useState(false);
   const [partiesModal, setPartiesModal] = useState<
     "gestion" | "choisir-ecrasement" | null
   >(null);
@@ -297,6 +299,11 @@ export default function TitleScreen() {
     setCreditsOuverts(true);
   };
 
+  const onSoutien = () => {
+    playClick();
+    setSoutienOuvert(true);
+  };
+
   const onParties = () => {
     playClick();
     setPartiesModal("gestion");
@@ -397,7 +404,7 @@ export default function TitleScreen() {
           </h1>
         </div>
 
-        {/* Menu : 5 boutons superposés, centrés à l'écran, tous au format
+        {/* Menu : 6 boutons superposés, centrés à l'écran, tous au format
             du bouton Continuer (icône à gauche, libellé à droite). */}
         <div
           style={{
@@ -435,6 +442,11 @@ export default function TitleScreen() {
             label={d.menu.credits}
             onClick={onCredits}
           />
+          <BoutonMenu
+            icon={<Heart size={17} strokeWidth={2} aria-hidden />}
+            label={d.menu.soutenir}
+            onClick={onSoutien}
+          />
         </div>
       </div>
 
@@ -445,6 +457,10 @@ export default function TitleScreen() {
       <CreditsModal
         open={creditsOuverts}
         onClose={() => setCreditsOuverts(false)}
+      />
+      <SoutienSheet
+        open={soutienOuvert}
+        onClose={() => setSoutienOuvert(false)}
       />
       <PartiesModal
         open={partiesModal !== null}

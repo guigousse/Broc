@@ -228,4 +228,11 @@ describe("TitleScreen — musique jazz du titre", () => {
     expect(fade).toHaveBeenCalledTimes(1);
     expect(fade).toHaveBeenCalledWith(DUREE_FERMETURE_MS);
   });
+
+  it("le menu principal propose Soutenir, qui ouvre la feuille", () => {
+    render(<TitleScreen />);
+    const bouton = screen.getByRole("button", { name: "Soutenir" });
+    fireEvent.click(bouton);
+    expect(screen.getByTestId("soutien-instagram")).toBeTruthy();
+  });
 });
