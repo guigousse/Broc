@@ -13,3 +13,14 @@ export function tauriIosDisponible(): boolean {
     (/Macintosh/.test(ua) && window.navigator.maxTouchPoints > 1)
   );
 }
+
+/**
+ * Vrai uniquement sous runtime Tauri sur Android. Pendant symétrique de
+ * `tauriIosDisponible` — même structure, même ordre de gardes, pour qu'un
+ * lecteur qui connaît l'une reconnaisse l'autre au premier coup d'œil.
+ */
+export function tauriAndroidDisponible(): boolean {
+  if (typeof window === "undefined") return false;
+  if (!("__TAURI_INTERNALS__" in window)) return false;
+  return /Android/.test(window.navigator.userAgent);
+}
