@@ -7,7 +7,12 @@ import { EtapeBandeau } from "@/components/vente/EtapeBandeau";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { CoffreChargement } from "@/components/vente/CoffreChargement";
 import { CoffrePricing } from "@/components/vente/CoffrePricing";
-import { VITRINE_PREP_ID, vitrineEstEnPrep } from "@/lib/vitrinePrep";
+import {
+  VITRINE_PREP_ID,
+  vitrineEstEnPrep,
+  reserveHauteContenuPrep,
+  type EtapePrep,
+} from "@/lib/vitrinePrep";
 import { CATEGORIES } from "@/data/categories";
 import { aConnaisseurVitrine } from "@/lib/competences";
 import { prixSuggere } from "@/lib/prixSuggere";
@@ -80,7 +85,7 @@ export default function VitrinePrepPage() {
   const { avancerTutoriel } = useGameActions();
   const { d, locale } = useLangue();
 
-  const [etape, setEtape] = useState<"packing" | "pricing">("packing");
+  const [etape, setEtape] = useState<EtapePrep>("packing");
   // Pricing guidé (Task 9) : dialogues du grand-père avant/après la
   // tarification, pendant le tutoriel uniquement (null hors tuto — jamais
   // affectée). Même pattern que `dialogueTuto` de journee/ClientPage.tsx.
@@ -465,11 +470,11 @@ export default function VitrinePrepPage() {
         style={{
           flex: 1,
           overflowY: "auto",
-          // Étape tarification (liste, pas image) : on décale le contenu sous
-          // le texte d'étape flottant. Packing (image) reste à fleur du header.
-          // `--tuto-banniere-h` (0 hors tutoriel) empêche en plus la bannière
-          // de consigne de mordre sur la première ligne à tarifer.
-          paddingTop: `calc(${etape === "pricing" ? 70 : 0}px + var(--tuto-banniere-h, 0px))`,
+          // Cf. `reserveHauteContenuPrep` : la tarification (liste) réserve la
+          // place des deux calques flottants, le packing (image) les laisse se
+          // superposer — y réserver la place poussait le carrousel du stock
+          // sous la barre d'actions.
+          paddingTop: reserveHauteContenuPrep(etape),
         }}
       >
         {etape === "packing" ? (
