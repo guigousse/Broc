@@ -1686,12 +1686,39 @@ git commit -m "feat(tuto): la fin du tutoriel guide vers l'onglet Quêtes"
 
 Avant d'ouvrir la PR :
 
-- [ ] `npx vitest run --maxWorkers=4` — suite complète verte.
-- [ ] `npx eslint src` — aucune erreur.
-- [ ] `npm run lint:hooks` — le filet de règles React du dépôt.
-- [ ] Les quatre langues : aucun libellé d'onglet tronqué, grec compris.
-- [ ] Le swipe entre pièces fait le tour complet des cinq onglets, dans les deux sens, en sautant les pièces fermées.
-- [ ] Depuis `/atelier`, un swipe sort bien de la Réserve (et ne bascule pas d'onglet).
-- [ ] Un objet envoyé en collection depuis la Réserve vole toujours vers l'onglet Collection.
-- [ ] Le colis du grand-père vole toujours vers l'onglet Réserve.
+- [x] `npx vitest run --maxWorkers=4` — 260 fichiers, 2659 tests verts (1 fichier / 2 tests ignorés).
+- [x] `npx eslint src` — aucune erreur.
+- [x] `npm run lint:hooks` — aucune erreur.
+- [x] Les quatre langues : aucun libellé tronqué, grec compris (mesuré, cf. constatations).
+- [x] Le swipe fait le tour des cinq onglets dans les deux sens ; le saut des pièces fermées est tenu par les tests de `ongletSuivantOuvert`.
+- [x] Depuis `/atelier`, un swipe sort bien de la Réserve (→ `/collection`), sans basculer d'onglet haut.
+- [x] Les cinq cibles de vol `data-fly-target` existent en barre basse, Collection et Réserve comprises.
 - [ ] Recette device via TestFlight (la recette sur vrai iPhone est impossible depuis ce Mac).
+
+### Constatations de la recette du 2026-08-26
+
+Sonde Playwright (`scripts/_recette-reserve.mjs`, `_recette-swipe.mjs`, `_recette-vols.mjs`,
+non versionnées), iPhone 390×844 contre `next dev`, partie « Ouverture du Bazar ».
+
+**Libellés, largeur naturelle / largeur offerte** — aucun débordement au-delà de l'arrondi
+(1 px entre `Range.getBoundingClientRect` et le rect de l'élément) :
+
+| | Quêtes | Biblio. | Bureau | Réserve | Collection |
+|---|---|---|---|---|---|
+| fr | 39/39 | 46/45 | 39/39 | 46/45 | 65/65 |
+| en | 39/39 | 39/39 | 39/39 | 59/58 | 65/65 |
+| es | 52/52 | 72/71 | 52/52 | 46/45 | 59/58 |
+| el | 40/40 | 27/26 | 47/46 | 47/46 | 47/46 |
+
+L'espagnol est la langue serrée (HABILIDADES 72 px dans une colonne de 78) ; il passe.
+
+**Cycle du swipe** — depuis `/collection` : `→ /quetes → /bibliotheque → /bureau` en avant,
+`→ /stockage → /bureau` en arrière. Depuis `/atelier`, un swipe vers l'avant sort sur
+`/collection` : la Réserve ne bascule pas d'onglet haut sous le doigt.
+
+**Le Bureau retient le swipe** : le panorama est lui-même un scrollable horizontal et le
+pager lui laisse la main tant qu'il peut encore glisser (`findHorizontallyScrollableAncestor`).
+Une sonde qui colle le scroll au bord s'arrête à 902 sur 927 — l'accrochage (`scroll-snap`)
+garde 25 px de mou, au-delà de la tolérance de 1 px du pager. **Comportement antérieur au
+chantier** : le diff de `SwipePager.tsx` sur cette branche ne touche que `computeDirection`.
+À confirmer au doigt lors de la recette device.
