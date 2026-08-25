@@ -14,6 +14,7 @@ export const es: DictionnaireUI = {
     charger: "Cargar",
     reglages: "Ajustes",
     credits: "Créditos",
+    soutenir: "Apoyar",
   },
   parties: {
     titre: "— Partidas —",
@@ -842,5 +843,16 @@ export const es: DictionnaireUI = {
     bornePasDeSignal: "SIN SEÑAL",
     borneJeuPrecedent: "Juego anterior",
     borneJeuSuivant: "Juego siguiente",
+  },
+  soutien: {
+    titre: "Apoyar a Broc",
+    insertCoin: "▶ INSERT COIN",
+    modeDemo: "MODO DEMOSTRACIÓN. ESTE JUEGO NO ARRANCA.",
+    corps:
+      "Broc lo hace una sola persona. Seguir el taller o dejar una reseña es lo que le ayuda a seguir existiendo.",
+    instagram: "Seguir en Instagram",
+    tiktok: "Seguir en TikTok",
+    noter: "Dejar una reseña",
+    pasJouable: "MODO DEMOSTRACIÓN. ESTE JUEGO NO ARRANCA.",
   },
 };
