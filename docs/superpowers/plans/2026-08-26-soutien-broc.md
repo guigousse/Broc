@@ -959,9 +959,8 @@ export function AccrocheBorne() {
 
 - [ ] **Step 6 : Écrire le test de la borne qui échoue**
 
-Ajouter à `src/components/bazar/EcranArcade.test.tsx` :
+Ajouter à `src/components/bazar/EcranArcade.test.tsx`.
 
-```tsx
 Le mock du toast se déclare en tête de fichier, avec celui d'`audioManager` :
 
 ```tsx
