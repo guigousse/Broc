@@ -44,10 +44,19 @@ export const BAZAR_LAYOUT = {
     // montant droit de la bibliothèque, ce qui ne cache aucune marchandise et
     // se lit comme de la profondeur dans une boutique encombrée.
     //
-    // `bottom` 20,5 : DEVANT la plinthe (~25 %), pas dessus. Une borne a
-    // ~75 cm de profondeur, son pied avant descend sous la ligne du mur —
-    // exactement ce que fait le comptoir, base à 21 % pour un mur à 25 %.
-    borne: { left: 61.2, bottom: 20.5, width: 33.2 },
+    // `bottom` 19,2 : DEVANT la plinthe, pas dessus. Une borne a ~75 cm de
+    // profondeur, son pied avant descend sous la ligne du mur — exactement
+    // ce que fait le comptoir, base à 21 % pour un mur à 25 %.
+    //
+    // 19,2 et non 20,5 (retour device 2026-08-26) : le dessin est vu en
+    // légère plongée, son coin ARRIÈRE droit remonte de ~10 % de la hauteur
+    // du dessin par rapport au pied avant (alpha de `borne-arcade.webp` :
+    // y=1049 devant, y=949 au fond, sur 1053). À 20,5 ce coin retombait 2 px
+    // AU-DESSUS du bas de la plinthe — mesuré à 24 % sur le fond peint — et
+    // la borne se lisait comme posée SUR la plinthe. À 19,2 il passe ~7 px
+    // dessous : le plancher se voit derrière le meuble, qui repose dessus.
+    // Le glissement vaut 1,3 unité, soit ~9,5 px sur un iPhone 12.
+    borne: { left: 61.2, bottom: 19.2, width: 33.2 },
     // Zone centre (100..200vw) — la grille de six cases, MESURÉE sur le fond
     // et non estimée : les arêtes des deux planches ressortent à 65,9 % et
     // 55,9 % de la hauteur, et la planche court de 114 à 186 vw.

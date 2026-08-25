@@ -180,9 +180,21 @@ describe("BAZAR_LAYOUT", () => {
     // (angle à ~66), seul moyen de la montrer entière à sa taille réglée.
     const borne = BAZAR_LAYOUT.objets.borne;
     expect(borne.left + borne.width).toBeLessThanOrEqual(104);
-    // Debout sur le plancher, devant la plinthe (~25 %) et non dessus : une
-    // borne a de la profondeur, son pied avant descend sous la ligne du mur.
-    expect(borne.bottom).toBeLessThan(25);
+    // Debout sur le PLANCHER, et non calée sur la plinthe.
+    //
+    // La ligne du plancher est mesurée sur le fond peint, pas estimée : les
+    // deux traits sombres de la plinthe tombent à y=594 et y=610 sur un
+    // iPhone 12 (390 × 844) dont le panorama fait 735 px de haut et finit à
+    // y=786 — le bas de la plinthe vaut donc (786 − 610) / 735 ≈ 24 %.
+    //
+    // Le dessin de la borne est vu en légère plongée : son coin ARRIÈRE
+    // droit remonte de ~10 % de la hauteur du dessin par rapport au pied
+    // avant (profil alpha de `borne-arcade.webp` : y=1049 devant, y=949 au
+    // fond, sur 1053). À `bottom` 20,5 ce coin arrière retombait à 2 px
+    // AU-DESSUS de la ligne du plancher : la borne semblait posée sur la
+    // plinthe (retour device 2026-08-26). Il lui faut donc redescendre sous
+    // 19,5 pour que l'arrière touche le sol.
+    expect(borne.bottom).toBeLessThanOrEqual(19.5);
     expect(borne.bottom).toBeGreaterThan(15);
   });
 
