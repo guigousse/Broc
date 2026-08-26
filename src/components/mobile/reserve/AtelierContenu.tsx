@@ -21,6 +21,7 @@ import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import {
   atelierStatusPourObjet,
   coutAmelioration,
+  coutAmeliorationAffichable,
   peutDemanteler,
   prochaineEtatCible,
   rendementDemantelement,
@@ -28,6 +29,7 @@ import {
 import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { AtelierItemRow } from "@/components/atelier/AtelierItemRow";
 import { AtelierActions } from "@/components/atelier/AtelierActions";
+import { PrixMarche } from "@/components/ui/PrixMarche";
 import { AtelierSlots } from "@/components/atelier/AtelierSlots";
 import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
@@ -448,9 +450,11 @@ export function AtelierContenu() {
             // restaurer » pour le connaître. `null` au sommet de l'échelle,
             // où il n'y a plus rien à améliorer.
             const cibleAmelioration = prochaineEtatCible(o.etat);
-            const coutAmelio = cibleAmelioration
-              ? coutAmelioration(o, cibleAmelioration)
-              : null;
+            // `null` tant que le joueur ne SAIT pas mener cette réparation :
+            // le bouton disparaît alors, il ne grise pas. Un gris promet une
+            // action qui existe et qu'on pourra s'offrir ; sans la
+            // compétence, il n'y a rien à promettre.
+            const coutAmelio = coutAmeliorationAffichable(state, o);
             // Une seule source pour le refus : atelier plein, compétence
             // manquante ou pièces insuffisantes s'y décident déjà, avec leur
             // raison localisée.
@@ -461,20 +465,7 @@ export function AtelierContenu() {
                 objet={o}
                 isLast={i === demantelables.length - 1}
                 metaLigne={
-                  <span
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 9.5,
-                      color: "var(--ink-500)",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    {valeurConnue
-                      ? tr(d.inventaire.valeurEuros, {
-                          n: o.prixReferenceReel,
-                        })
-                      : d.inventaire.valeurInconnue}
-                  </span>
+                  <PrixMarche prix={o.prixReferenceReel} connue={valeurConnue} />
                 }
                 action={
                   <AtelierActions

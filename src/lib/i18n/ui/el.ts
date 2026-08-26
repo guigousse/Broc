@@ -511,8 +511,6 @@ export const el: DictionnaireUI = {
     aucunePieceARestaurer: "Κανένα κομμάτι για αποκατάσταση.",
     dureeValeurVers: "{duree} · αξία {valeur} →",
     dureeValeurInconnue: "{duree} · αξία ? → ?",
-    valeurEuros: "αξία {n} €",
-    valeurInconnue: "αξία ?",
     aucunObjetADemanteler: "Κανένα αντικείμενο για αποσυναρμολόγηση στην αποθήκη.",
     confirmerRestaurationAria:
       "Επιβεβαίωση αποκατάστασης — κόστος {cout} κομμάτια {categorie}",

@@ -150,6 +150,28 @@ export function collectionStatusPourObjet(
 }
 
 /**
+ * Prix de la prochaine amélioration, ou `null` s'il n'y a rien à montrer.
+ *
+ * `null` dans deux cas seulement : l'objet est au sommet de l'échelle, ou le
+ * joueur ne sait PAS encore faire cette réparation-là. Un bouton gris promet
+ * une action qui existe et qu'on pourra s'offrir ; tant que la compétence
+ * manque, il n'y a rien à promettre et le prix lui-même n'a pas de sens.
+ *
+ * Les pièces manquantes, elles, ne cachent rien : c'est le cas où le gris
+ * parle — « reviens avec deux engrenages de plus ». Le palier compte : savoir
+ * mener Mauvais→Bon ne dit rien de Très bon→Pristin.
+ */
+export function coutAmeliorationAffichable(
+  state: GameState,
+  o: Objet,
+): number | null {
+  const cible = prochaineEtatCible(o.etat);
+  if (!cible) return null;
+  if (!peutRestaurerTransition(state, o.categorie, o.etat)) return null;
+  return coutAmelioration(o, cible);
+}
+
+/**
  * Coût en pièces de la catégorie pour faire passer `o` de son état actuel
  * à `cible`. Min 1 pièce. Formule : ceil(gain_prixRef / 10) — une pièce
  * "vaut" ~5 € au démantèlement, la restauration laisse donc ~la moitié

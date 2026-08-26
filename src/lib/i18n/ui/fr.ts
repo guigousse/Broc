@@ -518,8 +518,6 @@ export const fr = {
     aucunePieceARestaurer: "Aucune pièce à restaurer.",
     dureeValeurVers: "{duree} · valeur {valeur} →",
     dureeValeurInconnue: "{duree} · valeur ? → ?",
-    valeurEuros: "valeur {n} €",
-    valeurInconnue: "valeur ?",
     aucunObjetADemanteler: "Aucun objet à démanteler en stock.",
     confirmerRestaurationAria:
       "Confirmer la restauration — coût {cout} pièces {categorie}",

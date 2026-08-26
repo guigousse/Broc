@@ -3,6 +3,7 @@
 import { memo, useRef, type CSSProperties } from "react";
 import { Album, ArrowDownToLine, TrendingDown, TrendingUp } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
+import { PrixMarche } from "@/components/ui/PrixMarche";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
@@ -247,19 +248,9 @@ function StockageItemRowBase({
           </div>
           {/* Prix du marché sous la ligne état + thème ; libellé complet
               « Prix du marché : ? € » tant que la compétence connaisseur
-              n'est pas débloquée. */}
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 13,
-              color: "var(--forest-800)",
-              marginTop: 4,
-            }}
-          >
-            {valeurConnue
-              ? `${Math.round(objet.prixReferenceReel)} €`
-              : d.inventaire.prixMarcheInconnu}
-          </div>
+              n'est pas débloquée. L'atelier écrit la même ligne, d'où le
+              composant partagé. */}
+          <PrixMarche prix={objet.prixReferenceReel} connue={valeurConnue} />
         </div>
         {/* Déjà donné à l'identique (même état) : pas de bouton. Sinon la
             flèche dit ce que l'envoi FERA à la collection, avant le tap :

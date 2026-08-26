@@ -5,6 +5,7 @@ import {
   atelierStatusPourObjet,
   collectionStatusPourObjet,
   coutAmelioration,
+  coutAmeliorationAffichable,
   nbRestaurationsEnCours,
   peutDemanteler,
   peutRestaurerTransition,
@@ -349,6 +350,49 @@ describe("collectionStatusPourObjet", () => {
     expect(collectionStatusPourObjet(avec("Bon"), objet("Mauvais")).tendance).toBe(
       "baisse",
     );
+  });
+});
+
+describe("coutAmeliorationAffichable", () => {
+  /**
+   * Le bouton « améliorer » ne se montre QUE si le joueur sait faire cette
+   * réparation-là (demande de l'auteur, 2026-08-26). Un bouton gris promet
+   * une action qui existe et qu'on pourra s'offrir ; tant que la compétence
+   * manque, il n'y a rien à promettre — le prix lui-même n'a pas de sens.
+   *
+   * Les pièces, elles, ne cachent RIEN : c'est le cas où le gris parle, il
+   * dit « reviens avec deux engrenages de plus ».
+   */
+  const objetAvec = (etat: "Mauvais" | "Bon" | "Très bon" | "Pristin état") =>
+    createMockObjet({ categorie: "Musique", etat, prixReferenceReel: 100 });
+
+  it("null sans la compétence de la transition : pas de bouton du tout", () => {
+    const state = createMockGameState();
+    expect(coutAmeliorationAffichable(state, objetAvec("Mauvais"))).toBeNull();
+  });
+
+  it("le prix dès que la compétence est là, MÊME sans les pièces", () => {
+    const state = withPieces(
+      withCompetences(createMockGameState(), ["cat.Musique.reparer.1"]),
+      "Musique",
+      0,
+    );
+    expect(coutAmeliorationAffichable(state, objetAvec("Mauvais"))).toBeGreaterThan(0);
+  });
+
+  it("null au sommet de l'échelle : il n'y a plus rien à améliorer", () => {
+    const state = withCompetences(createMockGameState(), [
+      "cat.Musique.reparer.1",
+      "cat.Musique.reparer.2",
+      "cat.Musique.reparer.3",
+    ]);
+    expect(coutAmeliorationAffichable(state, objetAvec("Pristin état"))).toBeNull();
+  });
+
+  it("suit le PALIER : savoir réparer Mauvais→Bon ne montre pas le prix de Très bon→Pristin", () => {
+    const state = withCompetences(createMockGameState(), ["cat.Musique.reparer.1"]);
+    expect(coutAmeliorationAffichable(state, objetAvec("Mauvais"))).not.toBeNull();
+    expect(coutAmeliorationAffichable(state, objetAvec("Très bon"))).toBeNull();
   });
 });
 

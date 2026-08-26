@@ -510,8 +510,6 @@ export const es: DictionnaireUI = {
     aucunePieceARestaurer: "Ninguna pieza que restaurar.",
     dureeValeurVers: "{duree} · valor {valeur} →",
     dureeValeurInconnue: "{duree} · valor ? → ?",
-    valeurEuros: "valor {n} €",
-    valeurInconnue: "valor ?",
     aucunObjetADemanteler: "Ningún objeto que desmantelar en el almacén.",
     confirmerRestaurationAria:
       "Confirmar la restauración — coste {cout} piezas de {categorie}",
