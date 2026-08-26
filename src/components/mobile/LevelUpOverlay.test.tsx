@@ -4,7 +4,7 @@
  * Pur lecteur de `useGame()` + 1 action (`marquerNiveauVu`) : on mocke le
  * contexte, `next/navigation` et `audioManager` (pas besoin du vrai provider).
  */
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { LevelUpOverlay } from "./LevelUpOverlay";
 import { setCoachOuvert } from "@/lib/coachActif";
@@ -48,6 +48,11 @@ const vibrerExplosion = vi.fn();
 vi.mock("@/lib/haptique", () => ({
   vibrerApparition: vi.fn(),
   vibrerExplosion: (...args: unknown[]) => vibrerExplosion(...args),
+}));
+
+const demanderNotation = vi.fn(() => Promise.resolve());
+vi.mock("@/lib/soutien/notation", () => ({
+  demanderNotation: () => demanderNotation(),
 }));
 
 // Plafond fictif simple (10) pour isoler le test de la vraie valeur (96) ;
@@ -563,5 +568,42 @@ describe("LevelUpOverlay — secousses du feu d'artifice", () => {
     vi.advanceTimersByTime(3000);
     expect(vibrerExplosion).not.toHaveBeenCalled();
     vi.useRealTimers();
+  });
+});
+
+describe("LevelUpOverlay — demande de notation", () => {
+  beforeEach(() => {
+    demanderNotation.mockClear();
+    window.localStorage.clear();
+    mockPathname = "/bureau";
+  });
+
+  it("fermer la fanfare du niveau 10 demande la notation", () => {
+    mockState = etat(9, 10);
+    render(<LevelUpOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(demanderNotation).toHaveBeenCalledTimes(1);
+  });
+
+  it("un autre niveau ne demande rien", () => {
+    mockState = etat(8, 9);
+    render(<LevelUpOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(demanderNotation).not.toHaveBeenCalled();
+  });
+
+  it("une seule fois, même dans une nouvelle partie", () => {
+    mockState = etat(9, 10);
+    render(<LevelUpOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+    cleanup();
+    demanderNotation.mockClear();
+
+    // Nouvelle partie : le GameState est neuf, mais le drapeau vit dans
+    // localStorage — donc à l'échelle de la PERSONNE, pas de la sauvegarde.
+    mockState = etat(9, 10);
+    render(<LevelUpOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(demanderNotation).not.toHaveBeenCalled();
   });
 });
