@@ -680,6 +680,7 @@ export const es: DictionnaireUI = {
       valeurCollection: "Valor de la colección",
       niveau: "Nivel de chamarilero",
       objetsRares: "Piezas raras encontradas",
+      objetLegendaire: "Pieza legendaria encontrada",
       beneficeCumule: "Beneficio obtenido",
       ventesCategorie: "Objetos vendidos ({categorie})",
     },

@@ -2,23 +2,29 @@ import { ciblesPourNiveau } from "./echelle";
 import type { TypePeriodique } from "./periodiques";
 import type { CategorieObjet, ObjectifMission } from "@/types/game";
 
-/** Les six formes qu'une quête périodique peut prendre. */
+/** Les formes qu'une quête périodique peut prendre. */
 export type FormeQuete =
   | "objet"
   | "objetsRares"
+  | "objetLegendaire"
+  | "restauration"
   | "beneficeCumule"
   | "chiffreAffaires"
   | "profitVente"
   | "ventesCategorie";
 
 /**
- * Famille d'une forme. Sert au garde-fou du lot hebdomadaire : sans au moins
+ * Famille d'une forme. Sert au garde-fou du lot hebdomadaire (sans au moins
  * une forme « vente », la semaine ne serait qu'une série de quotidiennes en
- * plus lent.
+ * plus lent) ET à celui du lot quotidien (au plus UNE forme « vente » parmi
+ * les deux tirées, sans quoi la journée cesserait d'être tournée vers la
+ * chine).
  */
-export const FAMILLE: Record<FormeQuete, "chine" | "vente"> = {
+export const FAMILLE: Record<FormeQuete, "chine" | "vente" | "atelier"> = {
   objet: "chine",
   objetsRares: "chine",
+  objetLegendaire: "chine",
+  restauration: "atelier",
   beneficeCumule: "vente",
   chiffreAffaires: "vente",
   profitVente: "vente",
@@ -40,6 +46,10 @@ export const ICONE_FORME: Record<FormeQuete, string | null> = {
   chiffreAffaires: "Receipt",
   profitVente: "Coins",
   ventesCategorie: "Package",
+  // La couronne dit « pièce d'exception » sans redire « rare » : `Gem` est
+  // déjà pris par objetsRares, et les deux lignes peuvent coexister le même jour.
+  objetLegendaire: "Crown",
+  restauration: "Hammer",
 };
 
 /**
@@ -47,15 +57,18 @@ export const ICONE_FORME: Record<FormeQuete, string | null> = {
  * mission. Partagée par les deux cartes du carnet (chapitre courant, ligne
  * périodique) — c'est la même question des deux côtés : quelle icône
  * générique représente ce type d'objectif chiffré ? Les types hors périmètre
- * périodique (`restauration`, `valeurCollection`, `niveau`) n'ont pas de
- * forme — `null`, cadre vide plutôt qu'une exception : un chapitre ou une
- * quête périodique peut porter un de ces types, l'affichage ne doit pas se
- * briser pour autant.
+ * périodique (`valeurCollection`, `niveau`) n'ont pas de forme — `null`,
+ * cadre vide plutôt qu'une exception : un chapitre peut porter un de ces
+ * types, l'affichage ne doit pas se briser pour autant.
  */
 export function formeDepuisObjectif(type: ObjectifMission["type"]): FormeQuete | null {
   switch (type) {
     case "objetsRares":
       return "objetsRares";
+    case "objetLegendaire":
+      return "objetLegendaire";
+    case "restauration":
+      return "restauration";
     case "beneficeCumule":
       return "beneficeCumule";
     case "ventesCumulees":
@@ -69,7 +82,8 @@ export function formeDepuisObjectif(type: ObjectifMission["type"]): FormeQuete |
   }
 }
 
-/** Formes éligibles au tirage hebdomadaire (les six). */
+/** Formes éligibles au tirage hebdomadaire. Volontairement PAS élargi aux
+ *  deux formes quotidiennes neuves — cf. « Hors périmètre » de la spec. */
 export const FORMES_HEBDOMADAIRES: FormeQuete[] = [
   "objet",
   "objetsRares",
@@ -102,6 +116,11 @@ export interface ContenuForme {
  *
  * La forme `objet` n'est PAS traitée ici : elle garde sa fabrique historique
  * dans `periodiques.ts`, qui choisit ses cibles dans le pool atteignable.
+ * `objetLegendaire` et `restauration` non plus : ce sont les deux formes
+ * quotidiennes neuves du catalogue (chantier « quêtes quotidiennes variées »),
+ * pas encore tirées par `formesDuLot` — leur fabrique dédiée reste à écrire ;
+ * les cas ci-dessous ne sont donc pas atteignables aujourd'hui, seulement là
+ * pour l'exhaustivité du switch.
  */
 export function contenuFormeChiffree(
   forme: Exclude<FormeQuete, "objet">,
@@ -158,5 +177,8 @@ export function contenuFormeChiffree(
         gabaritParams: { nombre, categorie },
       };
     }
+    case "objetLegendaire":
+    case "restauration":
+      throw new Error(`contenuFormeChiffree : forme "${forme}" pas encore câblée`);
   }
 }

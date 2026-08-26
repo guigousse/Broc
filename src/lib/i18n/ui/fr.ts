@@ -697,6 +697,7 @@ export const fr = {
       valeurCollection: "Valeur de la collection",
       niveau: "Niveau de brocanteur",
       objetsRares: "Objets rares trouvés",
+      objetLegendaire: "Pièce légendaire trouvée",
       beneficeCumule: "Bénéfice réalisé",
       ventesCategorie: "Objets vendus ({categorie})",
     },

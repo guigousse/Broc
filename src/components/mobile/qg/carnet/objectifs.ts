@@ -4,7 +4,7 @@
  * Partagées par la carte d'histoire et la ligne de quête.
  */
 
-import { Coins, Gem, Package, Receipt, TrendingUp, type LucideIcon } from "lucide-react";
+import { Coins, Crown, Gem, Hammer, Package, Receipt, TrendingUp, type LucideIcon } from "lucide-react";
 import { libelleEtat, libelleCategorie } from "@/lib/i18n/libelles";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
 import { objectifsDeMission, progressionObjectif } from "@/lib/quetes/objectifs";
@@ -33,6 +33,8 @@ export function libelleObjectif(
       return "";
     case "objetsRares":
       return d.carnet.objectifs.objetsRares;
+    case "objetLegendaire":
+      return d.carnet.objectifs.objetLegendaire;
     case "beneficeCumule":
       return d.carnet.objectifs.beneficeCumule;
     case "ventesCategorie":
@@ -45,7 +47,7 @@ export function libelleObjectif(
  * négation : « tout sauf niveau et restauration » avait fait afficher
  * « 3 / 5 € » pour un objectif qui compte des objets.
  *
- * Énumération type par type (les 9 membres de `ObjectifMission`) :
+ * Énumération type par type (les 10 membres de `ObjectifMission`) :
  *   - objet             → false (jamais rendu ici, passe par `cibles`)
  *   - ventesCumulees     → true  (montant en €)
  *   - profitVente        → true  (montant en €)
@@ -53,6 +55,7 @@ export function libelleObjectif(
  *   - valeurCollection   → true  (montant en €)
  *   - niveau             → false (numéro de niveau)
  *   - objetsRares        → false (compte des objets)
+ *   - objetLegendaire    → false (compte des objets)
  *   - beneficeCumule     → true  (montant en €)
  *   - ventesCategorie    → false (compte des objets)
  */
@@ -68,7 +71,9 @@ export function objectifEnEuros(type: ObjectifMission["type"]): boolean {
 /** Composants Lucide indexés par leur PROPRE nom — le seul pont dont on a
  *  besoin entre `ICONE_FORME` (qui donne des noms de chaînes, source de
  *  vérité côté `lib/quetes`) et les composants réels. */
-const ICONES_LUCIDE: Record<string, LucideIcon> = { Gem, TrendingUp, Coins, Package, Receipt };
+const ICONES_LUCIDE: Record<string, LucideIcon> = {
+  Gem, TrendingUp, Coins, Package, Receipt, Crown, Hammer,
+};
 
 /** Bloc de progression affiché par une carte de quête (chapitre ou ligne
  *  périodique) : barre, compteur, icône du visuel de gauche, état du pavé de

@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { FAMILLE, FORMES_HEBDOMADAIRES, ICONE_FORME, contenuFormeChiffree, formeDepuisObjectif } from "./formes";
+import {
+  FAMILLE,
+  FORMES_HEBDOMADAIRES,
+  ICONE_FORME,
+  contenuFormeChiffree,
+  formeDepuisObjectif,
+} from "./formes";
 import { ciblesPourNiveau } from "./echelle";
 
 const rngFixe = () => 0;
@@ -39,7 +45,6 @@ describe("formeDepuisObjectif", () => {
 
   test("les types hors périmètre périodique n'ont pas de forme", () => {
     expect(formeDepuisObjectif("objet")).toBeNull();
-    expect(formeDepuisObjectif("restauration")).toBeNull();
     expect(formeDepuisObjectif("valeurCollection")).toBeNull();
     expect(formeDepuisObjectif("niveau")).toBeNull();
   });
@@ -121,5 +126,26 @@ describe("ICONE_FORME", () => {
     for (const [forme, nom] of Object.entries(ICONE_FORME)) {
       expect(nom === null).toBe(forme === "objet");
     }
+  });
+});
+
+describe("catalogue élargi", () => {
+  test("les deux nouvelles formes ont une famille et une icône", () => {
+    expect(FAMILLE.objetLegendaire).toBe("chine");
+    expect(FAMILLE.restauration).toBe("atelier");
+    expect(ICONE_FORME.objetLegendaire).toBe("Crown");
+    expect(ICONE_FORME.restauration).toBe("Hammer");
+  });
+
+  test("formeDepuisObjectif reconnaît les deux nouveaux types", () => {
+    expect(formeDepuisObjectif("objetLegendaire")).toBe("objetLegendaire");
+    expect(formeDepuisObjectif("restauration")).toBe("restauration");
+  });
+
+  test("les formes hebdomadaires restent les six d'origine", () => {
+    expect(FORMES_HEBDOMADAIRES).toEqual([
+      "objet", "objetsRares", "beneficeCumule",
+      "chiffreAffaires", "profitVente", "ventesCategorie",
+    ]);
   });
 });

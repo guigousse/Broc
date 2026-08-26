@@ -679,6 +679,7 @@ export const en: DictionnaireUI = {
       valeurCollection: "Collection value",
       niveau: "Broker level",
       objetsRares: "Rare finds",
+      objetLegendaire: "Legendary find",
       beneficeCumule: "Profit made",
       ventesCategorie: "Items sold ({categorie})",
     },

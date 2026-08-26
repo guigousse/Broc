@@ -685,6 +685,7 @@ export const el: DictionnaireUI = {
       valeurCollection: "Αξία συλλογής",
       niveau: "Επίπεδο παλιατζή",
       objetsRares: "Σπάνια ευρήματα",
+      objetLegendaire: "Θρυλικό εύρημα",
       beneficeCumule: "Κέρδος που επιτεύχθηκε",
       ventesCategorie: "Αντικείμενα που πουλήθηκαν ({categorie})",
     },
