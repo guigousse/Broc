@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AudioPrefs } from "./audioManager";
+import { VOLUME_AMBIANCE_QG } from "./audioManager";
 
 /* ------------------------------------------------------------------ */
 /* Mocks Web Audio API (Vitest tourne en environnement Node, sans DOM) */
@@ -128,6 +129,12 @@ class FakeAudio {
   crossOrigin: string | null = null;
   preload = "";
   paused = true;
+  // La borne d'arcade s'en sert : `loop` pour tourner sans fin comme un
+  // attract mode, `playbackRate` pour l'allumage et le dérapage du glitch.
+  // Sur un vrai <audio>, `playbackRate` est un NOMBRE et pas un AudioParam —
+  // il ne s'automatise pas, d'où l'échelonnage à la main côté manager.
+  loop = false;
+  playbackRate = 1;
   private listeners = new Map<string, Set<() => void>>();
 
   constructor(src = "") {
@@ -542,6 +549,29 @@ describe("audioManager — boucles d'ambiance", () => {
     expect(() => audioManager.stopCrowd()).not.toThrow();
   });
 
+  // Le garde d'idempotence (`if (this.ambienceSource) return`) est posé AVANT
+  // le `await` du décodage : deux appels rapprochés le franchissent tous les
+  // deux et la boucle part en double, deux fois trop fort. C'est le cas réel
+  // du montage/démontage/remontage de React en dev, et de deux navigations
+  // enchaînées ailleurs.
+  it("deux startAmbience concurrents ne lancent QU'UNE boucle", async () => {
+    const { audioManager } = await freshManager();
+    await Promise.all([audioManager.startAmbience(), audioManager.startAmbience()]);
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(1);
+  });
+
+  // Corollaire : un stop arrivé pendant le décodage doit être tenu. Sinon la
+  // boucle démarre APRÈS que l'écran a été quitté, et joue dans le vide.
+  it("stopAmbience pendant le chargement annule le démarrage", async () => {
+    const { audioManager } = await freshManager();
+    const enCours = audioManager.startAmbience();
+    audioManager.stopAmbience();
+    await enCours;
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(0);
+  });
+
   it("setFireplaceVolume clampe la cible dans [0, 1]", async () => {
     const { audioManager } = await freshManager();
     await audioManager.startFireplace(0.3);
@@ -557,6 +587,45 @@ describe("audioManager — boucles d'ambiance", () => {
     expect(fireGain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(
       0,
       expect.any(Number),
+    );
+  });
+
+  // Le Bazar rejoue l'ambiance du bureau, mais son volume dépend de la
+  // distance à la porte : il lui faut une commande, comme la cheminée.
+  it("setAmbienceVolume clampe la cible dans [0, 1]", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startAmbience();
+    const ctx = FakeAudioContext.instances[0];
+    const ambGain = ctx.gains[1];
+
+    audioManager.setAmbienceVolume(2.5);
+    expect(ambGain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(
+      1,
+      expect.any(Number),
+    );
+    audioManager.setAmbienceVolume(-1);
+    expect(ambGain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(
+      0,
+      expect.any(Number),
+    );
+  });
+
+  // Sans volume d'entrée, l'ambiance du Bazar monterait au niveau du bureau
+  // avant de retomber à sa vraie valeur — un coup de rue à l'ouverture.
+  it("startAmbience monte au volume demandé", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startAmbience(0.1);
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.gains[1].gain.linearRampToValueAtTime).toHaveBeenCalledWith(0.1, 0.6);
+  });
+
+  it("startAmbience sans argument garde le volume du bureau", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startAmbience();
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.gains[1].gain.linearRampToValueAtTime).toHaveBeenCalledWith(
+      VOLUME_AMBIANCE_QG,
+      0.6,
     );
   });
 
@@ -733,5 +802,261 @@ describe("audioManager — playEclair (achat énergie infinie)", () => {
     await audioManager.playEclair();
     const urls = fetchMock.mock.calls.map((c) => c[0] as string);
     expect(urls.filter((u) => u === "/sounds/eclair.mp3")).toHaveLength(2);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* La borne d'arcade du Bazar                                          */
+/* ------------------------------------------------------------------ */
+
+describe("audioManager — la borne d'arcade", () => {
+  beforeEach(stubBrowserGlobals);
+
+  const PISTE = "/sounds/arcade/jx.cartouche_bluebot_8_bit.m4a";
+  const AUTRE = "/sounds/arcade/jx.jeu_foxy_crush_32_bit.m4a";
+
+  it("ne joue rien si la famille « musique » est coupée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.hydrate({ musique: false });
+    await audioManager.playArcadeTrack(PISTE);
+    expect(FakeAudio.instances).toHaveLength(0);
+  });
+
+  it("crée un <audio> EN BOUCLE sur la piste et le route vers le master", async () => {
+    const { audioManager, VOLUME_BORNE_ARCADE } = await freshManager();
+    await audioManager.playArcadeTrack(PISTE);
+    await flushMicrotasks();
+    const audio = FakeAudio.instances[0];
+    expect(audio.src).toBe(PISTE);
+    // Sans `loop`, la piste la plus courte (30 s) laisserait la borne muette
+    // au bout d'une demi-minute, sans que rien ne le dise à l'écran.
+    expect(audio.loop).toBe(true);
+    expect(audio.paused).toBe(false);
+    const ctx = FakeAudioContext.instances[0];
+    const master = ctx.gains[0];
+    const busBorne = ctx.gains[ctx.gains.length - 1];
+    expect(busBorne.connect).toHaveBeenCalledWith(master);
+    expect(busBorne.gain.linearRampToValueAtTime).toHaveBeenCalledWith(
+      VOLUME_BORNE_ARCADE,
+      expect.any(Number),
+    );
+  });
+
+  it("la première piste ALLUME le meuble : la vitesse part de loin", async () => {
+    vi.useFakeTimers();
+    const { audioManager } = await freshManager();
+    void audioManager.playArcadeTrack(PISTE);
+    await flushMicrotasks();
+    const audio = FakeAudio.instances[0];
+    // Le meuble qui prend le courant : le son monte en hauteur pendant que
+    // le gain monte en niveau.
+    expect(audio.playbackRate).toBeCloseTo(0.82, 5);
+    vi.advanceTimersByTime(500);
+    expect(audio.playbackRate).toBeCloseTo(1, 5);
+  });
+
+  // Le manager tranche SEUL entre les deux, sur le simple fait qu'une piste
+  // tourne déjà : aucun appelant n'a de drapeau à tenir, donc aucun ne peut
+  // se tromper (en développement, le double montage de StrictMode faisait
+  // perdre l'allumage à la version qui laissait le choix au composant).
+  it("la piste suivante est un changement de cartouche : la vitesse part de plus près", async () => {
+    vi.useFakeTimers();
+    const { audioManager } = await freshManager();
+    void audioManager.playArcadeTrack(PISTE);
+    await flushMicrotasks();
+    void audioManager.playArcadeTrack(AUTRE);
+    await flushMicrotasks();
+    vi.advanceTimersByTime(80);
+    await flushMicrotasks();
+    expect(FakeAudio.instances[1].playbackRate).toBeCloseTo(0.94, 5);
+  });
+
+  it("rallume vraiment le meuble après un écran éteint", async () => {
+    vi.useFakeTimers();
+    const { audioManager } = await freshManager();
+    void audioManager.playArcadeTrack(PISTE);
+    await flushMicrotasks();
+    // Le joueur swipe sur un jeu pas encore trouvé : la borne s'éteint…
+    audioManager.stopArcade();
+    vi.advanceTimersByTime(200);
+    // …puis sur un jeu trouvé. L'écran était noir : c'est un allumage.
+    void audioManager.playArcadeTrack(AUTRE);
+    await flushMicrotasks();
+    expect(FakeAudio.instances[1].playbackRate).toBeCloseTo(0.82, 5);
+  });
+
+  it("changement de cartouche : l'ancienne piste est coupée avant la nouvelle", async () => {
+    vi.useFakeTimers();
+    const { audioManager } = await freshManager();
+    void audioManager.playArcadeTrack(PISTE);
+    await flushMicrotasks();
+    const premiere = FakeAudio.instances[0];
+
+    void audioManager.playArcadeTrack(AUTRE);
+    await flushMicrotasks();
+    // Coupure FRANCHE, et un blanc : rien ne démarre pendant que l'ancienne
+    // s'éteint. C'est ce qui sonne comme une cartouche qu'on arrache, là où
+    // un fondu enchaîné sonnerait comme une playlist.
+    expect(FakeAudio.instances).toHaveLength(1);
+    vi.advanceTimersByTime(200);
+    await flushMicrotasks();
+    expect(FakeAudio.instances).toHaveLength(2);
+    expect(FakeAudio.instances[1].src).toBe(AUTRE);
+    expect(premiere.paused).toBe(true);
+  });
+
+  it("stopArcade éteint la borne et relâche l'élément", async () => {
+    vi.useFakeTimers();
+    const { audioManager } = await freshManager();
+    void audioManager.playArcadeTrack(PISTE);
+    await flushMicrotasks();
+    const audio = FakeAudio.instances[0];
+    audioManager.stopArcade();
+    vi.advanceTimersByTime(200);
+    expect(audio.paused).toBe(true);
+    expect(audio.src).toBe("");
+  });
+
+  it("couper la famille « musique » éteint la borne en cours", async () => {
+    vi.useFakeTimers();
+    const { audioManager } = await freshManager();
+    void audioManager.playArcadeTrack(PISTE);
+    await flushMicrotasks();
+    const audio = FakeAudio.instances[0];
+    audioManager.setPref("musique", false);
+    vi.advanceTimersByTime(200);
+    expect(audio.paused).toBe(true);
+  });
+
+  it("le glitch coupe puis rétablit le gain, et se reprogramme tout seul", async () => {
+    vi.useFakeTimers();
+    // Math.random figé au minimum : le premier glitch tombe au plus tôt, et
+    // le test n'a pas à parier sur un délai tiré au hasard.
+    const hasard = vi.spyOn(Math, "random").mockReturnValue(0);
+    const { audioManager, VOLUME_BORNE_ARCADE } = await freshManager();
+    void audioManager.playArcadeTrack(PISTE);
+    await flushMicrotasks();
+    const ctx = FakeAudioContext.instances[0];
+    const bus = ctx.gains[ctx.gains.length - 1];
+    bus.gain.setValueAtTime.mockClear();
+
+    // 12 050 ms et non 12 500 : avec Math.random() figé à 0 l'accroc tombe à
+    // 12 000 ms pile, et son rétablissement de vitesse 120 ms plus tard. Une
+    // avance trop large franchirait les deux d'un coup et on ne verrait
+    // jamais le dérapage.
+    vi.advanceTimersByTime(12_050);
+    // Une micro-coupure = le gain tombe à 0 puis revient à son niveau, à des
+    // instants programmés d'avance sur l'horloge audio.
+    expect(bus.gain.setValueAtTime).toHaveBeenCalledWith(0, expect.any(Number));
+    expect(bus.gain.setValueAtTime).toHaveBeenCalledWith(
+      VOLUME_BORNE_ARCADE,
+      expect.any(Number),
+    );
+    const audio = FakeAudio.instances[0];
+    // Le son « accroche » : ce n'est pas qu'un blanc, la vitesse dérape aussi.
+    expect(audio.playbackRate).toBeLessThan(1);
+    vi.advanceTimersByTime(300);
+    expect(audio.playbackRate).toBeCloseTo(1, 5);
+
+    // …et il y en aura un autre : le glitch se reprogramme, il n'arrive pas
+    // qu'une fois par ouverture.
+    bus.gain.setValueAtTime.mockClear();
+    vi.advanceTimersByTime(12_500);
+    expect(bus.gain.setValueAtTime).toHaveBeenCalledWith(0, expect.any(Number));
+    hasard.mockRestore();
+  });
+
+  it("le glitch s'arrête avec la borne", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const { audioManager } = await freshManager();
+    void audioManager.playArcadeTrack(PISTE);
+    await flushMicrotasks();
+    const ctx = FakeAudioContext.instances[0];
+    const bus = ctx.gains[ctx.gains.length - 1];
+    audioManager.stopArcade();
+    bus.gain.setValueAtTime.mockClear();
+    vi.advanceTimersByTime(60_000);
+    expect(bus.gain.setValueAtTime).not.toHaveBeenCalled();
+  });
+
+  it("est sans effet et sans crash hors navigateur", async () => {
+    vi.unstubAllGlobals();
+    const { audioManager } = await freshManager();
+    await expect(audioManager.playArcadeTrack(PISTE)).resolves.toBeUndefined();
+    expect(() => audioManager.stopArcade()).not.toThrow();
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Atténuation de l'ambiance (la borne passe devant la rue)            */
+/* ------------------------------------------------------------------ */
+
+describe("audioManager — setAmbienceDuck", () => {
+  beforeEach(stubBrowserGlobals);
+
+  /** Démarre l'ambiance et rend son gain. */
+  async function ambianceEnPlace(mod: Awaited<ReturnType<typeof freshManager>>) {
+    await mod.audioManager.startAmbience(0.4);
+    await flushMicrotasks();
+    const ctx = FakeAudioContext.instances[0];
+    return ctx.gains[ctx.gains.length - 1];
+  }
+
+  it("multiplie le volume de zone au lieu de le remplacer", async () => {
+    const mod = await freshManager();
+    const gain = await ambianceEnPlace(mod);
+    gain.gain.linearRampToValueAtTime.mockClear();
+    mod.audioManager.setAmbienceDuck(0.3);
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(
+      expect.closeTo(0.4 * 0.3, 5),
+      expect.any(Number),
+    );
+  });
+
+  it("un changement de zone PENDANT l'atténuation reste atténué", async () => {
+    const mod = await freshManager();
+    const gain = await ambianceEnPlace(mod);
+    mod.audioManager.setAmbienceDuck(0.3);
+    gain.gain.linearRampToValueAtTime.mockClear();
+    // Le joueur ne peut pas bouger dans le panorama borne ouverte, mais le
+    // panorama, lui, ré-émet son index au remontage. Sans la mémoire du
+    // facteur, ce simple rappel rétablirait la rue à plein volume par-dessus
+    // la musique.
+    mod.audioManager.setAmbienceVolume(0.2);
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(
+      expect.closeTo(0.2 * 0.3, 5),
+      expect.any(Number),
+    );
+  });
+
+  it("revenir à 1 rend son volume de zone à la rue", async () => {
+    const mod = await freshManager();
+    const gain = await ambianceEnPlace(mod);
+    mod.audioManager.setAmbienceDuck(0.3);
+    gain.gain.linearRampToValueAtTime.mockClear();
+    mod.audioManager.setAmbienceDuck(1);
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(
+      expect.closeTo(0.4, 5),
+      expect.any(Number),
+    );
+  });
+
+  it("stopAmbience remet le facteur à neutre", async () => {
+    const mod = await freshManager();
+    await ambianceEnPlace(mod);
+    mod.audioManager.setAmbienceDuck(0.3);
+    mod.audioManager.stopAmbience();
+    // LE piège qu'on ferme ici : une atténuation oubliée derrière soi rendrait
+    // l'ambiance du BUREAU trois fois trop basse au prochain écran, sans que
+    // rien ne relie la panne à la borne du Bazar.
+    await mod.audioManager.startAmbience(0.4);
+    await flushMicrotasks();
+    const ctx = FakeAudioContext.instances[0];
+    const gain2 = ctx.gains[ctx.gains.length - 1];
+    expect(gain2.gain.linearRampToValueAtTime).toHaveBeenCalledWith(
+      expect.closeTo(0.4, 5),
+      expect.any(Number),
+    );
   });
 });

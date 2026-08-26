@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
@@ -9,6 +9,8 @@ import { BazarScene } from "@/components/bazar/BazarScene";
 import { useGame } from "@/context/GameContext";
 import { bazarEstOuvert } from "@/lib/bazar/ouverture";
 import { jeuxArcade } from "@/lib/bazar/arcade";
+import { audioManager } from "@/lib/audio/audioManager";
+import { volumeAmbianceBazarForPos } from "@/components/bazar/bazarAudioCurves";
 import type { AchatBazar } from "@/lib/bazar/achat";
 
 export default function BazarPage() {
@@ -34,6 +36,35 @@ export default function BazarPage() {
   useEffect(() => {
     rafraichirPeriodiques();
   }, [rafraichirPeriodiques]);
+
+  // Ambiance de rue : la MÊME boucle qu'au bureau, mais son volume suit la
+  // distance à la porte (pleine à la sortie, au tiers dans le coin arcade).
+  // Le volume vit dans une ref et pas dans un state : il change à chaque snap
+  // du panorama et ne peint rien — un state re-rendrait toute la boutique pour
+  // un gain audio.
+  //
+  // Valeur de départ = celle du comptoir, la zone que `UnifiedPanorama` centre
+  // au montage. Ce n'est pas une précaution en l'air : le panorama émet son
+  // index depuis un effet ENFANT, donc AVANT celui-ci, et la ref est déjà à
+  // jour quand la boucle démarre.
+  const volumeAmbianceRef = useRef(volumeAmbianceBazarForPos(1));
+
+  const handleZoneIndex = useCallback((idx: number) => {
+    volumeAmbianceRef.current = volumeAmbianceBazarForPos(idx);
+    audioManager.setAmbienceVolume(volumeAmbianceRef.current);
+  }, []);
+
+  useEffect(() => {
+    // `startAmbience` attend le décodage du fichier : la zone a pu changer
+    // entre-temps, et `setAmbienceVolume` n'aurait alors trouvé aucun gain à
+    // régler. On repose donc la valeur courante une fois la boucle en place.
+    void audioManager
+      .startAmbience(volumeAmbianceRef.current)
+      .then(() => audioManager.setAmbienceVolume(volumeAmbianceRef.current));
+    return () => {
+      audioManager.stopAmbience();
+    };
+  }, []);
 
   // Le refus est rendu TEL QUEL à la scène, qui le porte jusqu'à la fiche de
   // l'article. Il passait auparavant par un toast : transitoire, posé au-dessus
@@ -77,6 +108,7 @@ export default function BazarPage() {
           jeuxArcade={jeuxArcade(state.collection)}
           onAcheter={handleAcheter}
           onSortir={() => router.push("/bureau")}
+          onZoneIndex={handleZoneIndex}
         />
       </div>
     </MobileLayout>

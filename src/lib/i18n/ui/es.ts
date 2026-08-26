@@ -841,6 +841,7 @@ export const es: DictionnaireUI = {
     borneTitre: "Máquina recreativa",
     borneFermer: "Cerrar la máquina",
     bornePasDeSignal: "SIN SEÑAL",
+    borneIndiceCartouche: "AÑADE EL CARTUCHO A LA COLECCIÓN",
     borneJeuPrecedent: "Juego anterior",
     borneJeuSuivant: "Juego siguiente",
   },
