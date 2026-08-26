@@ -855,8 +855,6 @@ export const en: DictionnaireUI = {
     prixJetons: "{n} Bazarcoins",
     prixJetonUn: "{n} Bazarcoin",
     vendu: "Sold",
-    manqueJetons: "You need {n} more Bazarcoins",
-    manqueJetonUn: "You need {n} more Bazarcoin",
     sortir: "Leave the Bazaar",
     detailArticle: "Item details",
     acheterPour: "Buy for {n}",

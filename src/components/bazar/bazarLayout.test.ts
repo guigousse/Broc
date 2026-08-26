@@ -90,6 +90,24 @@ describe("BAZAR_LAYOUT", () => {
     expect(o.case1.bottom).toBeGreaterThan(o.case4.bottom);
   });
 
+  /**
+   * Le lot du MILIEU est à égale distance de ses deux voisins (réglage de
+   * l'auteur, 2026-08-26). Trois pièces posées sur une planche, ce n'est pas
+   * trois positions indépendantes : c'est un rythme, et l'œil voit le
+   * dixième d'écart que le glisser-déposer laisse derrière lui.
+   *
+   * La tolérance est de 0,1 unité — de quoi absorber l'arrondi d'un centre,
+   * pas un décalage voulu.
+   */
+  it("le lot du milieu est à égale distance de ses deux voisins", () => {
+    const centre = (cle: "case4" | "case5" | "case6") => {
+      const c = BAZAR_LAYOUT.objets[cle];
+      return c.left + c.width / 2;
+    };
+    const attendu = (centre("case4") + centre("case6")) / 2;
+    expect(Math.abs(centre("case5") - attendu)).toBeLessThanOrEqual(0.1);
+  });
+
   it("garde CHAQUE emplacement entier dans une seule zone de swipe", () => {
     // Trois zones de 100vw : [0,100] arcade, [100,200] comptoir, [200,300]
     // antiquités. Un objet à cheval sur une frontière est coupé en deux par le

@@ -82,9 +82,26 @@ export const BAZAR_LAYOUT = {
     case1: { left: 114.8, bottom: 66.0, width: 20.0 },
     case2: { left: 139.6, bottom: 66.0, width: 20.0 },
     case3: { left: 163.2, bottom: 66.0, width: 20.0 },
-    case4: { left: 117.4, bottom: 55.8, width: 22.0 },
-    case5: { left: 138.0, bottom: 56.0, width: 22.0 },
-    case6: { left: 160.5, bottom: 56.0, width: 22.0 },
+    // LA PLANCHE DU BAS, remise au rythme régulier le 2026-08-26.
+    //
+    // Le lot du milieu se posait 0,95 unité trop à gauche : 91 px d'écart avec
+    // son voisin de gauche contre 98 à droite, mesuré sur un iPhone 12. Trois
+    // pièces sur une planche ne sont pas trois positions indépendantes, c'est
+    // un rythme — et l'œil voit le dixième qu'un glisser-déposer laisse
+    // derrière lui.
+    //
+    // Le recentrer a réveillé le garde anti-chevauchement, et il avait raison :
+    // trois cases de 22 demandent 66 unités, or il n'y en avait que 65,1 entre
+    // le bord gauche de `case4` (117,4) et le bord droit de `case6` (182,5).
+    // Les zones de tap se marchaient donc DÉJÀ dessus — invisible à l'œil,
+    // puisque la pièce est plus petite que sa case, mais un doigt posé entre
+    // deux lots touchait celui du dessus. Les deux extrêmes s'écartent de
+    // ~0,9 unité (4 px) pour rendre à la rangée la place qu'il lui faut : les
+    // trois cases sont maintenant espacées de 22,4, avec 0,4 de jeu entre
+    // elles, et le milieu tombe pile au centre.
+    case4: { left: 116.6, bottom: 55.8, width: 22.0 },
+    case5: { left: 139.0, bottom: 56.0, width: 22.0 },
+    case6: { left: 161.4, bottom: 56.0, width: 22.0 },
     // Le tenancier, dans la bande de mur entre le plateau du comptoir et la
     // première planche. MESURÉ sur le fond, pas posé à l'estime :
     //  · `bottom` 38,8 % = l'arête ARRIÈRE du plateau (y ≈ 940 sur 1536). Le

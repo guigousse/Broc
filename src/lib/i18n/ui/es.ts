@@ -862,8 +862,6 @@ export const es: DictionnaireUI = {
     prixJetons: "{n} Bazarcoins",
     prixJetonUn: "{n} Bazarcoin",
     vendu: "Vendido",
-    manqueJetons: "Te faltan {n} Bazarcoins",
-    manqueJetonUn: "Te falta {n} Bazarcoin",
     sortir: "Salir del Bazar",
     detailArticle: "Detalle del artículo",
     acheterPour: "Comprar por {n}",

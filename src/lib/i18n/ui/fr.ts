@@ -901,8 +901,6 @@ export const fr = {
     prixJetons: "{n} Bazarcoins",
     prixJetonUn: "{n} Bazarcoin",
     vendu: "Vendu",
-    manqueJetons: "Il vous manque {n} Bazarcoins",
-    manqueJetonUn: "Il vous manque {n} Bazarcoin",
     sortir: "Sortir du Bazar",
     detailArticle: "Détail de l'article",
     acheterPour: "Acheter pour {n}",

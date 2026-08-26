@@ -881,8 +881,6 @@ export const el: DictionnaireUI = {
     prixJetons: "{n} Bazarcoins",
     prixJetonUn: "{n} Bazarcoin",
     vendu: "Πουλήθηκε",
-    manqueJetons: "Σου λείπουν {n} Bazarcoins",
-    manqueJetonUn: "Σου λείπει {n} Bazarcoin",
     sortir: "Έξοδος από το Μπαζάρ",
     detailArticle: "Λεπτομέρειες είδους",
     acheterPour: "Αγορά για {n}",

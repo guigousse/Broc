@@ -431,11 +431,15 @@ describe("BazarScene", () => {
     // C'était le prix à payer pour une vitrine muette, accepté en connaissance
     // de cause — la fiche, elle, dit toujours le manque.
     expect(screen.queryByRole("img", { name: /Bazarcoin/ })).toBeNull();
-    // Et taper n'achète toujours rien : ça ouvre la fiche, qui dit le manque.
+    // Et taper n'achète toujours rien : la fiche s'ouvre, son bouton est
+    // éteint, et il ne se passe rien de plus — le « il vous manque N » a été
+    // retiré le 2026-08-26, le bouton éteint porte seul le refus.
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
-    fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
+    const acheter = screen.getByRole("button", { name: /^Acheter pour/ });
+    expect(acheter.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(acheter);
     expect(onAcheter).not.toHaveBeenCalled();
-    expect(screen.getByText("Il vous manque 8 Bazarcoins")).toBeTruthy();
+    expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
   // Revue du 2026-08-20 : la scène testait `etal.vitrine && template`. Un

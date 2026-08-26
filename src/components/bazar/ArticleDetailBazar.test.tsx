@@ -86,6 +86,62 @@ describe("ArticleDetailBazar", () => {
     expect(screen.getByText("5")).toBeTruthy();
   });
 
+  // ── LA FICHE FLOTTE (refonte du 2026-08-26) ─────────────────────────────
+  // Le nom, le prix et le bouton vivaient dans un cartouche de papier crème
+  // posé en bas de l'écran — un formulaire devant une vitrine. Les trois
+  // éléments sont maintenant autonomes, empilés sous l'objet sur le voile
+  // sombre. jsdom n'a pas de moteur de rendu : ce qui s'atteste ici, c'est
+  // l'ORDRE dans le document et les styles en ligne.
+  describe("les éléments flottent sous l'objet", () => {
+    function suit(avant: Element, apres: Element): boolean {
+      return Boolean(
+        avant.compareDocumentPosition(apres) & Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    }
+
+    it("l'ordre est objet, étoiles, plaque du nom, bouton", () => {
+      monter();
+      const visuel = screen.getByTestId("fiche-visuel");
+      const etoiles = screen.getByTestId("etoiles-fiche");
+      const plaque = screen.getByTestId("fiche-plaque");
+      const bouton = screen.getByRole("button", { name: /^Acheter pour/ });
+      expect(suit(visuel, etoiles)).toBe(true);
+      expect(suit(etoiles, plaque)).toBe(true);
+      expect(suit(plaque, bouton)).toBe(true);
+    });
+
+    it("le cartouche de papier a disparu", () => {
+      monter();
+      const papier = [...screen.getByRole("dialog").querySelectorAll("div")].find(
+        (e) => (e as HTMLElement).style.background === "var(--paper-100)",
+      );
+      expect(papier).toBeUndefined();
+    });
+
+    // La plaque du Bazar : laiton en dégradé et PANS COUPÉS — les quatre coins
+    // biseautés, signature art déco, obtenus au `clip-path` pour que le biseau
+    // tienne quelle que soit la hauteur (un nom de catalogue peut passer à la
+    // ligne).
+    it("le nom est porté par une plaque de laiton à pans coupés", () => {
+      monter();
+      const plaque = screen.getByTestId("fiche-plaque");
+      expect(plaque.textContent).toContain("Jeu Magnatimmo années 80");
+      expect(plaque.style.clipPath).toContain("polygon");
+      expect(plaque.style.background).toContain("brass");
+    });
+
+    // Le refus du jeu (stockage plein, article déjà parti) survit, lui : sans
+    // lui un vrai refus serait muet. Mais il quitte le papier crème pour le
+    // fond sombre, et sa teinte doit suivre.
+    it("le refus se lit sur le fond sombre", () => {
+      monter(VITRINE, 99, true, { ok: false, raison: "Stockage plein" });
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
+      const message = screen.getByRole("status") as HTMLElement;
+      expect(message.textContent).toBe("Stockage plein");
+      expect(message.style.color).toBe("var(--brass-300)");
+    });
+  });
+
   it("template disparu du catalogue : la fiche reste, sans visuel, et achète", () => {
     const { onAcheter } = monter({
       genre: "objet",
@@ -197,18 +253,16 @@ describe("ArticleDetailBazar", () => {
       expect(document.activeElement).toBe(bouton);
     });
 
-    it("taper n'achète pas, ne ferme pas, et dit le manque", () => {
+    // Le « il vous manque N Bazarcoins » a été retiré le 2026-08-26 à la
+    // demande de l'auteur : le bouton ÉTEINT porte seul le refus, et la fiche
+    // ne s'encombre plus d'une phrase sous le bouton. Le tap ne fait donc
+    // rien — mais il ne doit surtout pas acheter ni refermer.
+    it("taper n'achète pas, ne ferme pas, et ne dit rien", () => {
       const { onAcheter, onClose } = monter(VITRINE, 3);
       fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       expect(onAcheter).not.toHaveBeenCalled();
       expect(onClose).not.toHaveBeenCalled();
-      expect(screen.getByRole("status").textContent).toBe("Il vous manque 5 Bazarcoins");
-    });
-
-    it("le singulier du manque est respecté", () => {
-      monter(VITRINE, 7);
-      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
-      expect(screen.getByText("Il vous manque 1 Bazarcoin")).toBeTruthy();
+      expect(screen.queryByRole("status")).toBeNull();
     });
 
     // Même règle que sur l'étiquette de l'étagère, et elle a changé le
@@ -226,57 +280,8 @@ describe("ArticleDetailBazar", () => {
     });
 
 
-    // Le message reste affiché tant que la fiche est ouverte (elle est modale,
-    // le joueur la referme lui-même) mais il ne doit pas survivre à un rendu
-    // du parent, ni se traîner d'un article au suivant.
-    it("le message ne survit pas à un changement d'article", () => {
-      const { rerender } = monter(VITRINE, 3);
-      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
-      expect(screen.queryByRole("status")).toBeTruthy();
-      rerender(
-        <ArticleDetailBazar
-          article={LOT}
-          open
-          jetons={0}
-          onAcheter={vi.fn().mockReturnValue({ ok: true })}
-          onClose={vi.fn()}
-        />,
-      );
-      expect(screen.queryByRole("status")).toBeNull();
-    });
 
-    it("le message survit à un rendu du parent qui ne change rien", () => {
-      const { rerender } = monter(VITRINE, 3);
-      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
-      // Un objet d'article reconstruit à l'identique : c'est la VALEUR qui
-      // compte, pas la référence, sinon le joueur perdrait son chiffre à la
-      // frame suivante.
-      rerender(
-        <ArticleDetailBazar
-          article={{ ...VITRINE }}
-          open
-          jetons={3}
-          onAcheter={vi.fn().mockReturnValue({ ok: true })}
-          onClose={vi.fn()}
-        />,
-      );
-      expect(screen.queryByRole("status")).toBeTruthy();
-    });
 
-    it("le message disparaît dès que la bourse suffit", () => {
-      const { rerender } = monter(VITRINE, 3);
-      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
-      rerender(
-        <ArticleDetailBazar
-          article={VITRINE}
-          open
-          jetons={99}
-          onAcheter={vi.fn().mockReturnValue({ ok: true })}
-          onClose={vi.fn()}
-        />,
-      );
-      expect(screen.queryByRole("status")).toBeNull();
-    });
   });
 
   // ── Refus venu du JEU (pas de la bourse) ─────────────────────────────────
@@ -303,25 +308,6 @@ describe("ArticleDetailBazar", () => {
       expect(screen.getByRole("status").textContent).toBe("Achat impossible.");
     });
 
-    it("la raison remplace le message du manque, elle ne s'empile pas dessus", () => {
-      // Bourse courte : le joueur voit d'abord le chiffre qui manque…
-      const { rerender } = monter(VITRINE, 3);
-      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
-      expect(screen.getByRole("status").textContent).toBe("Il vous manque 5 Bazarcoins");
-      // … puis la bourse suffit, et c'est le jeu qui refuse.
-      rerender(
-        <ArticleDetailBazar
-          article={VITRINE}
-          open
-          jetons={99}
-          onAcheter={vi.fn().mockReturnValue({ ok: false, raison: "Stockage plein" })}
-          onClose={vi.fn()}
-        />,
-      );
-      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
-      expect(screen.getAllByRole("status")).toHaveLength(1);
-      expect(screen.getByRole("status").textContent).toBe("Stockage plein");
-    });
 
     it("changer d'article efface la raison", () => {
       const { rerender } = monter(VITRINE, 99, true, {

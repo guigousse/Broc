@@ -117,51 +117,45 @@ const pieceBox: CSSProperties = {
   placeItems: "center",
 };
 
-const titreCard: CSSProperties = {
-  fontFamily: "var(--font-display)",
-  fontSize: 14,
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  color: "var(--forest-800)",
-  fontWeight: 700,
-  textAlign: "center",
-  paddingBottom: 10,
-  borderBottom: "1px dotted var(--brass-500)",
-};
+/** Profondeur du pan coupé de la plaque, en px. */
+const BISEAU_PLAQUE_PX = 12;
 
-const prixCard: CSSProperties = {
+/**
+ * LA PLAQUE DU BAZAR — le nom de l'article, gravé dans le laiton.
+ *
+ * Art déco par ses PANS COUPÉS : les quatre coins tombés à 45°, dessinés au
+ * `clip-path` et non par un `border-radius`, qui n'arrondit que des arcs. Le
+ * biseau est en PIXELS, donc constant : un nom du catalogue peut passer à la
+ * ligne (« Aquarelle fauviste de Roland Duff (signée) » en fait deux) sans que
+ * les coins s'étirent en pointes.
+ *
+ * Le dégradé est celui des bandeaux de laiton du jeu (`namePlateStyle`) —
+ * clair, moyen, clair, comme une plaque prise en lumière rasante. Ce qui
+ * appartient à celle-ci : les deux FILETS GRAVÉS, en retrait des bords, tirés
+ * en `inset` d'ombre plutôt qu'en bordures — une bordure suivrait le biseau et
+ * dessinerait un liseré tout autour, là où une plaque gravée porte deux traits
+ * droits, en haut et en bas.
+ *
+ * Pas de `border` non plus, pour la même raison : `clip-path` coupe la
+ * bordure au ras du pan et la laisse ouverte aux quatre coins.
+ */
+const plaqueNom: CSSProperties = {
   position: "relative",
-  background: "var(--paper-100)",
-  border: "1px solid var(--brass-500)",
+  padding: "12px 22px",
+  background:
+    "linear-gradient(180deg, var(--brass-300) 0%, var(--brass-500) 52%, var(--brass-300) 100%)",
+  clipPath: `polygon(${BISEAU_PLAQUE_PX}px 0, calc(100% - ${BISEAU_PLAQUE_PX}px) 0, 100% ${BISEAU_PLAQUE_PX}px, 100% calc(100% - ${BISEAU_PLAQUE_PX}px), calc(100% - ${BISEAU_PLAQUE_PX}px) 100%, ${BISEAU_PLAQUE_PX}px 100%, 0 calc(100% - ${BISEAU_PLAQUE_PX}px), 0 ${BISEAU_PLAQUE_PX}px)`,
   boxShadow:
-    "inset 0 0 0 2px var(--paper-100), inset 0 0 0 3px var(--brass-700), 0 10px 20px rgba(0,0,0,0.3)",
-  padding: "20px 22px",
-};
-
-const prixRow: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "baseline",
-  padding: "10px 0",
-  borderBottom: "none",
-};
-
-const prixLabel: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 10.5,
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-  color: "var(--brass-700)",
-};
-
-const prixValue: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 5,
+    "inset 0 5px 0 -4px var(--brass-700), inset 0 -5px 0 -4px var(--brass-700)",
   fontFamily: "var(--font-display)",
-  fontSize: 14,
+  fontSize: 15,
+  fontWeight: 700,
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+  textAlign: "center",
+  lineHeight: 1.35,
   color: "var(--forest-800)",
-  fontWeight: 600,
+  textShadow: "0 1px 0 rgba(255,243,213,0.6)",
 };
 
 /** Le CTA d'achat — celui de `ConcessionSheet`, l'autre achat en fiche du jeu. */
@@ -181,16 +175,24 @@ const boutonAcheter = (peut: boolean): CSSProperties => ({
   // manque), il n'est pas mort. `not-allowed` mentirait.
   cursor: "pointer",
   opacity: peut ? 1 : 0.75,
+  // Il ne repose plus sur une carte : sans ombre, il flotterait sans poids
+  // au-dessus du voile.
+  boxShadow: "0 6px 14px rgba(0,0,0,0.35)",
 });
 
-const messageManque: CSSProperties = {
+/**
+ * Le refus du jeu (stockage plein, article déjà parti). Écrit en laiton CLAIR :
+ * il ne se lit plus sur le papier crème d'un cartouche mais sur le voile
+ * sombre, où `brass-700` disparaissait.
+ */
+const messageRefus: CSSProperties = {
   display: "block",
-  marginTop: 8,
+  marginTop: 10,
   textAlign: "center",
   fontFamily: "var(--font-mono)",
   fontSize: 11,
   letterSpacing: "0.06em",
-  color: "var(--brass-700)",
+  color: "var(--brass-300)",
 };
 
 /** Côté de l'engrenage d'un lot de pièces vu en grand, en px. */
@@ -220,13 +222,11 @@ export function ArticleDetailBazar({
   onClose,
 }: ArticleDetailBazarProps) {
   const { d, tr } = useLangue();
-  const [manqueVu, setManqueVu] = useState(false);
   /** La raison d'un refus VENU DU JEU (stockage plein, article parti…). */
   const [refus, setRefus] = useState<string | null>(null);
 
   const prix = article?.prix ?? 0;
   const horsDePortee = jetons < prix;
-  const manque = prix - jetons;
 
   // Fermeture au clavier : le voile se tape à la souris et au doigt, mais rien
   // ne l'atteint au clavier. Même idiome que les sheets du QG.
@@ -255,12 +255,8 @@ export function ArticleDetailBazar({
     ? JSON.stringify([article.genre, article.libelle, article.prix])
     : "";
   useEffect(() => {
-    setManqueVu(false);
     setRefus(null);
   }, [open, cleArticle]);
-  useEffect(() => {
-    if (!horsDePortee) setManqueVu(false);
-  }, [horsDePortee]);
 
   if (!open || !article) return null;
 
@@ -275,7 +271,7 @@ export function ArticleDetailBazar({
       }}
     >
       <div style={card}>
-        <div style={previewWrap}>
+        <div style={previewWrap} data-testid="fiche-visuel">
           {article.genre === "objet" ? (
             <div style={stickerBox}>
               {article.categorie ? (
@@ -315,19 +311,21 @@ export function ArticleDetailBazar({
           )}
         </div>
 
-        <div style={prixCard}>
-          <div style={titreCard}>{article.libelle}</div>
+        {/* L'ÉTAT, collé à l'objet — la même rangée qu'au pied de la case,
+            en un peu plus grand. Le joueur qui vient de taper l'article doit
+            retrouver ce qui l'a fait taper, et l'ordre le dit : l'objet, son
+            état, son nom, son prix.
 
-          {/* L'ÉTAT, juste sous le nom — la même rangée qu'au pied de la case,
-              en un peu plus grand puisque la carte a la place. Le joueur qui
-              vient de taper l'article doit retrouver ce qui l'a fait taper.
-              Un lot de pièces n'a pas d'état, et un template disparu n'a plus
-              de rareté pour teinter quoi que ce soit : dans les deux cas, rien
-              — plutôt qu'une rangée grise qui dirait « mauvais état ». */}
-          {article.genre === "objet" && article.rarete ? (
+            Un lot de pièces n'a pas d'état, et un template disparu n'a plus de
+            rareté pour teinter quoi que ce soit : dans les deux cas, rien —
+            plutôt qu'une rangée grise qui dirait « mauvais état ».
+
+            L'ombre de lisibilité (`dropShadow`) est venue avec le voile : les
+            étoiles ne reposent plus sur du papier crème. */}
+        {article.genre === "objet" && article.rarete ? (
             <span
               data-testid="etoiles-fiche"
-              style={{ display: "flex", justifyContent: "center", marginTop: 6 }}
+              style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}
               aria-label={tr(d.chine.etatAriaLabel, {
                 etat: libelleEtat(ETAT_ARTICLE_BAZAR, d),
               })}
@@ -335,12 +333,17 @@ export function ArticleDetailBazar({
               <StarRow
                 filled={etoileCount(ETAT_ARTICLE_BAZAR)}
                 color={getRarityColors(article.rarete).outer}
-                size={18}
+                size={20}
                 display="flex"
-                gap={2}
+                gap={3}
+                dropShadow
               />
             </span>
-          ) : null}
+        ) : null}
+
+        <div style={plaqueNom} data-testid="fiche-plaque">
+          {article.libelle}
+        </div>
 
           <button
             type="button"
@@ -361,11 +364,13 @@ export function ArticleDetailBazar({
               gap: 6,
             }}
             onClick={() => {
-              // Pré-check local : le jeu refuserait aussi, mais avec une phrase
-              // générique. Ici on connaît le CHIFFRE qui manque.
+              // Hors de portée : le bouton ÉTEINT porte seul le refus depuis
+              // le 2026-08-26 — le « il vous manque N Bazarcoins » a été
+              // retiré à la demande de l'auteur, la fiche ne s'encombre plus
+              // d'une phrase sous le bouton. Le tap ne fait donc rien, mais il
+              // n'achète ni ne referme : c'est ce que garde le test.
               if (horsDePortee) {
                 setRefus(null);
-                setManqueVu(true);
                 return;
               }
               const res = onAcheter();
@@ -378,7 +383,6 @@ export function ArticleDetailBazar({
               // raison. La refermer cacherait la réponse et renverrait le
               // joueur taper l'étagère sans savoir. Le repli générique existe
               // pour qu'un refus ne puisse JAMAIS être muet.
-              setManqueVu(false);
               setRefus(res.raison ?? d.bazar.achatRefuse);
             }}
           >
@@ -391,22 +395,21 @@ export function ArticleDetailBazar({
             <BazarcoinIcon size={16} surClair={horsDePortee} />
           </button>
 
-          {(refus !== null || (manqueVu && horsDePortee)) && (
-            // Un seul endroit pour les deux refus — celui qu'on a vu venir
-            // (la bourse) et celui que le jeu renvoie. Il reste affiché tant
-            // que la fiche est ouverte : sur l'étagère, le message s'effaçait
-            // au bout de 2,5 s parce qu'il était écrit à même l'illustration
-            // et y encombrait la rangée voisine. Dans une fiche modale que le
-            // joueur referme lui-même, l'effacer ne ferait que lui reprendre
-            // la réponse qu'il est en train de lire.
-            <span role="status" style={messageManque}>
-              {refus ??
-                tr(manque > 1 ? d.bazar.manqueJetons : d.bazar.manqueJetonUn, {
-                  n: manque,
-                })}
-            </span>
-          )}
-        </div>
+        {refus !== null && (
+          // Le refus du JEU (stockage plein, article déjà parti, bourse
+          // rattrapée par un tick) : la fiche reste ouverte et le montre. Le
+          // repli générique existe pour qu'un refus renvoyé ne puisse jamais
+          // être muet — c'est le seul message qui subsiste ici.
+          //
+          // Il reste affiché tant que la fiche est ouverte : sur l'étagère, un
+          // message s'effaçait au bout de 2,5 s parce qu'il était écrit à même
+          // l'illustration et encombrait la rangée voisine. Dans une fiche
+          // modale que le joueur referme lui-même, l'effacer ne ferait que lui
+          // reprendre la réponse qu'il est en train de lire.
+          <span role="status" style={messageRefus}>
+            {refus}
+          </span>
+        )}
       </div>
     </div>
   );
