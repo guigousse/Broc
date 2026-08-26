@@ -14,6 +14,16 @@ export const JETONS_QUOTIDIENNE = 1;
 /** Jetons versés par une quête hebdomadaire livrée. */
 export const JETONS_HEBDO = 3;
 
+/**
+ * Prime de la quête « pièce légendaire », en fraction du `prixRefBase` de la
+ * pièce trouvée. Le pourcentage porte sur la valeur de MARCHÉ et non sur le
+ * prix payé au vendeur : sur le prix payé, mal négocier rapporterait plus.
+ */
+export const TAUX_PRIME_LEGENDAIRE = 0.2;
+
+/** Jetons Bazar d'une quête « pièce légendaire » (au lieu de JETONS_QUOTIDIENNE). */
+export const JETONS_LEGENDAIRE = 3;
+
 /** Récompense totale d'une commande, défauts appliqués — source unique de
  *  vérité pour les 4 surfaces d'affichage ET le versement à la livraison. */
 export interface RecompenseEffective {

@@ -1,6 +1,7 @@
 import { ciblesPourNiveau } from "./echelle";
 import type { TypePeriodique } from "./periodiques";
-import type { CategorieObjet, ObjectifMission } from "@/types/game";
+import type { CategorieObjet, EtatObjet, ObjectifMission, PrimeVariable } from "@/types/game";
+import { JETONS_LEGENDAIRE, TAUX_PRIME_LEGENDAIRE } from "@/lib/recompenses";
 
 /** Les formes qu'une quête périodique peut prendre. */
 export type FormeQuete =
@@ -98,6 +99,8 @@ export interface ParamsGabarit {
   nombre?: number;
   montant?: number;
   categorie?: CategorieObjet;
+  /** État minimum, pour la marque `{etat}` (forme `restauration`). */
+  etatMin?: EtatObjet;
 }
 
 /** Contenu d'une forme SANS objet nommé. */
@@ -107,6 +110,10 @@ export interface ContenuForme {
   /** Famille de gabarit de texte (cf. quetes/textes.ts). */
   gabaritCle: string;
   gabaritParams: ParamsGabarit;
+  /** Jetons Bazar, si la forme déroge au tarif de sa période. */
+  jetons?: number;
+  /** Prime résolue à la livraison (cf. lib/recompenses). */
+  primeVariable?: PrimeVariable;
 }
 
 /**
@@ -116,11 +123,11 @@ export interface ContenuForme {
  *
  * La forme `objet` n'est PAS traitée ici : elle garde sa fabrique historique
  * dans `periodiques.ts`, qui choisit ses cibles dans le pool atteignable.
- * `objetLegendaire` et `restauration` non plus — mais ce ne sont PAS des
- * formes « inconstructibles dans l'état courant » comme `ventesCategorie` :
- * elles sont juste pas encore câblées, la tâche 5 les livre. En attendant,
- * `null` sert de filet — la branche est inatteignable aujourd'hui puisque
- * `formesDuLot` ne les met pas dans le pool tiré.
+ *
+ * Les formes d'argent (`beneficeCumule`, `chiffreAffaires`, `profitVente`,
+ * `ventesCategorie`) lisent un barème DIFFÉRENT selon la période — cible
+ * quotidienne réduite ET clé de gabarit dédiée (`"...Jour"`), pour que le
+ * texte annonce bien « aujourd'hui » plutôt que « cette semaine ».
  */
 export function contenuFormeChiffree(
   forme: Exclude<FormeQuete, "objet">,
@@ -132,11 +139,11 @@ export function contenuFormeChiffree(
   const c = ciblesPourNiveau(niveau);
   const recompenseArgent =
     periode === "quotidienne" ? c.recompenseQuotidienne : c.recompenseHebdo;
+  const jour = periode === "quotidienne";
 
   switch (forme) {
     case "objetsRares": {
-      const nombre =
-        periode === "quotidienne" ? c.objetsRaresQuotidien : c.objetsRaresHebdo;
+      const nombre = jour ? c.objetsRaresQuotidien : c.objetsRaresHebdo;
       return {
         objectifs: [{ type: "objetsRares", nombre }],
         recompenseArgent,
@@ -144,41 +151,64 @@ export function contenuFormeChiffree(
         gabaritParams: { nombre },
       };
     }
-    case "beneficeCumule":
+    case "objetLegendaire":
+      // Une seule pièce suffit : à 0,8 % par objet tiré au tier 4, en demander
+      // deux reviendrait à écrire une quête qu'on ne réussit jamais.
       return {
-        objectifs: [{ type: "beneficeCumule", montant: c.beneficeSemaine }],
+        objectifs: [{ type: "objetLegendaire", nombre: 1 }],
         recompenseArgent,
-        gabaritCle: "benefice",
-        gabaritParams: { montant: c.beneficeSemaine },
+        gabaritCle: "legendaire",
+        gabaritParams: {},
+        jetons: JETONS_LEGENDAIRE,
+        primeVariable: { type: "pourcentageLegendaire", taux: TAUX_PRIME_LEGENDAIRE },
       };
-    case "chiffreAffaires":
+    case "restauration": {
+      const etatMin = c.restaurationEtatMin;
       return {
-        objectifs: [{ type: "ventesCumulees", montant: c.chiffreAffairesSemaine }],
+        objectifs: [{ type: "restauration", etatMin }],
         recompenseArgent,
-        gabaritCle: "chiffre",
-        gabaritParams: { montant: c.chiffreAffairesSemaine },
+        gabaritCle: "restauration",
+        gabaritParams: { etatMin },
       };
-    case "profitVente":
+    }
+    case "beneficeCumule": {
+      const montant = jour ? c.beneficeJour : c.beneficeSemaine;
       return {
-        objectifs: [{ type: "profitVente", montant: c.profitVenteUnique }],
+        objectifs: [{ type: "beneficeCumule", montant }],
         recompenseArgent,
-        gabaritCle: "marge",
-        gabaritParams: { montant: c.profitVenteUnique },
+        gabaritCle: jour ? "beneficeJour" : "benefice",
+        gabaritParams: { montant },
       };
+    }
+    case "chiffreAffaires": {
+      const montant = jour ? c.chiffreAffairesJour : c.chiffreAffairesSemaine;
+      return {
+        objectifs: [{ type: "ventesCumulees", montant }],
+        recompenseArgent,
+        gabaritCle: jour ? "chiffreJour" : "chiffre",
+        gabaritParams: { montant },
+      };
+    }
+    case "profitVente": {
+      const montant = jour ? c.profitVenteJour : c.profitVenteUnique;
+      return {
+        objectifs: [{ type: "profitVente", montant }],
+        recompenseArgent,
+        gabaritCle: jour ? "margeJour" : "marge",
+        gabaritParams: { montant },
+      };
+    }
     case "ventesCategorie": {
       if (categoriesDisponibles.length === 0) return null;
       const categorie =
         categoriesDisponibles[Math.floor(rng() * categoriesDisponibles.length)];
-      const nombre = c.ventesCategorie;
+      const nombre = jour ? c.ventesCategorieJour : c.ventesCategorie;
       return {
         objectifs: [{ type: "ventesCategorie", categorie, nombre }],
         recompenseArgent,
-        gabaritCle: "categorie",
+        gabaritCle: jour ? "categorieJour" : "categorie",
         gabaritParams: { nombre, categorie },
       };
     }
-    case "objetLegendaire":
-    case "restauration":
-      return null;
   }
 }

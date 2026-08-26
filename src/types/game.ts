@@ -177,6 +177,13 @@ export interface RestaurationAccomplie {
   etatFinal: EtatObjet;
 }
 
+/**
+ * Prime dont le MONTANT n'est connu qu'à la livraison : il dépend de ce que le
+ * joueur a trouvé, pas de ce que la quête valait à sa naissance. Résolue par
+ * `recompenseEffective` quand un contexte lui est fourni.
+ */
+export type PrimeVariable = { type: "pourcentageLegendaire"; taux: number };
+
 /** Mission reçue par lettre : fournir un ou plusieurs objets contre récompense. */
 export interface CourrierPayloadMission {
   type: "mission";
@@ -212,6 +219,8 @@ export interface CourrierPayloadMission {
   gabaritId?: string;
   /** Paramètres de régénération (état min…). ADDITIF, absent ⇒ payload FR. */
   gabaritParams?: CourrierGabaritParams;
+  /** Prime résolue à la livraison. ADDITIF : absent ⇒ récompense figée. */
+  primeVariable?: PrimeVariable;
 }
 
 export type CourrierPayload = CourrierPayloadLettre | CourrierPayloadMission;

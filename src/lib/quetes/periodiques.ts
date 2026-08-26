@@ -152,6 +152,9 @@ function genererUneChiffree(
 
   const texte = genererTexteChiffre(contenu.gabaritCle, contenu.gabaritParams, rng);
 
+  const jetons =
+    contenu.jetons ?? (type === "quotidienne" ? JETONS_QUOTIDIENNE : JETONS_HEBDO);
+
   return {
     ...creerCourrierMission({
       id,
@@ -161,13 +164,11 @@ function genererUneChiffree(
       corps: texte.corps,
       categorie: type,
       cibles: [],
-      recompense: {
-        argent: contenu.recompenseArgent,
-        jetons: type === "quotidienne" ? JETONS_QUOTIDIENNE : JETONS_HEBDO,
-      },
+      recompense: { argent: contenu.recompenseArgent, jetons },
       objectifs: contenu.objectifs,
       gabaritId: texte.gabaritId,
       gabaritParams: contenu.gabaritParams,
+      ...(contenu.primeVariable ? { primeVariable: contenu.primeVariable } : {}),
     }),
     lu: true,
   };
