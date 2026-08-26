@@ -517,6 +517,8 @@ export const el: DictionnaireUI = {
     confirmerRestaurationAria:
       "Επιβεβαίωση αποκατάστασης — κόστος {cout} κομμάτια {categorie}",
     demantelerAria: "Αποσυναρμολόγηση — απόδοση {pieces} κομμάτια {categorie}",
+    ameliorerAria: "Αναβάθμιση — κόστος {cout} κομμάτια {categorie}",
+    ongletObjets: "Αντικείμενα προς επεξεργασία",
     demantelerSeg1: "Η αποσυναρμολόγηση",
     demantelerSeg2: "αποδίδει",
     demantelerSeg3: ". Το αντικείμενο θα καταστραφεί οριστικά.",

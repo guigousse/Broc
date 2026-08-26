@@ -514,6 +514,8 @@ export const en: DictionnaireUI = {
     confirmerRestaurationAria:
       "Confirm the restoration — cost {cout} {categorie} parts",
     demantelerAria: "Dismantle — yields {pieces} {categorie} parts",
+    ameliorerAria: "Upgrade — costs {cout} {categorie} parts",
+    ongletObjets: "Items to work on",
     demantelerSeg1: "Dismantling",
     demantelerSeg2: "yields",
     demantelerSeg3: ". The item will be destroyed for good.",

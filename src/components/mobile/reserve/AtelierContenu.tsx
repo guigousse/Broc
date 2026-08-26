@@ -18,9 +18,16 @@ import {
 } from "@/lib/restauration";
 import { recalculerPrixReference } from "@/lib/etat";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
-import { coutAmelioration, peutDemanteler, rendementDemantelement } from "@/lib/atelier";
+import {
+  atelierStatusPourObjet,
+  coutAmelioration,
+  peutDemanteler,
+  prochaineEtatCible,
+  rendementDemantelement,
+} from "@/lib/atelier";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { AtelierItemRow } from "@/components/atelier/AtelierItemRow";
+import { AtelierActions } from "@/components/atelier/AtelierActions";
 import { AtelierSlots } from "@/components/atelier/AtelierSlots";
 import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
@@ -166,6 +173,20 @@ export function AtelierContenu() {
   // Le layout (qg) gate le rendu (redirect + écran d'attente) : ce garde
   // ne sert qu'au narrowing TypeScript.
   if (!isHydrated || !state) return null;
+
+  /**
+   * Rect de la vignette d'une ligne, pour le point de départ du vol.
+   * Il se lisait auparavant depuis l'événement du bouton (`closest`) ; les
+   * deux gestes de la ligne le demandent désormais sans événement sous la
+   * main, on le retrouve donc par l'id de l'objet — que `AtelierItemRow`
+   * pose déjà sur sa racine.
+   */
+  const rectVignette = (objetId: string): DOMRect | null => {
+    const el = document.querySelector(
+      `[data-objet-id="${CSS.escape(objetId)}"] [data-atelier-thumb]`,
+    );
+    return el?.getBoundingClientRect() ?? null;
+  };
 
   const handleConfirmDemanteler = () => {
     if (!demantelerCible) return;
@@ -396,8 +417,10 @@ export function AtelierContenu() {
         </div>
       )}
 
+      {/* La liste ne sert plus au seul démantèlement : chaque ligne porte
+          aussi son amélioration, avec son prix. Le titre le dit. */}
       <h2 data-tuto-coach="atelier-demanteler" style={sectTitle}>
-        {d.inventaire.ongletDemantelement}
+        {d.inventaire.ongletObjets}
       </h2>
       {demantelables.length === 0 ? (
         <div style={cardWrap}>
@@ -420,6 +443,18 @@ export function AtelierContenu() {
             const valeurConnue = state
               ? aConnaisseurVitrine(state, o.categorie)
               : false;
+            // Le prix de l'amélioration se lit maintenant SUR la ligne : il
+            // fallait auparavant ouvrir la feuille « choisir un objet à
+            // restaurer » pour le connaître. `null` au sommet de l'échelle,
+            // où il n'y a plus rien à améliorer.
+            const cibleAmelioration = prochaineEtatCible(o.etat);
+            const coutAmelio = cibleAmelioration
+              ? coutAmelioration(o, cibleAmelioration)
+              : null;
+            // Une seule source pour le refus : atelier plein, compétence
+            // manquante ou pièces insuffisantes s'y décident déjà, avec leur
+            // raison localisée.
+            const statutAmelio = atelierStatusPourObjet(state, o, d);
             return (
               <AtelierItemRow
                 key={o.id}
@@ -442,47 +477,33 @@ export function AtelierContenu() {
                   </span>
                 }
                 action={
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      const rowEl = (e.currentTarget as HTMLElement).closest(
-                        "[data-atelier-row]",
-                      ) as HTMLElement | null;
-                      const thumb = rowEl?.querySelector(
-                        "[data-atelier-thumb]",
-                      ) as HTMLElement | null;
+                  <AtelierActions
+                    categorie={o.categorie}
+                    cout={coutAmelio}
+                    rendement={yieldPieces}
+                    ameliorationDisponible={statutAmelio.disponible}
+                    raisonRefus={statutAmelio.raison}
+                    onAmeliorer={() => {
+                      if (!cibleAmelioration || coutAmelio === null) return;
+                      setRestaurerCible({
+                        objet: o,
+                        etatCible: cibleAmelioration,
+                        cout: coutAmelio,
+                        thumbRect: rectVignette(o.id),
+                      });
+                    }}
+                    onDemanteler={() => {
                       setDemantelerCible({
                         objet: o,
                         yieldPieces,
-                        thumbRect: thumb?.getBoundingClientRect() ?? null,
+                        thumbRect: rectVignette(o.id),
                       });
                     }}
-                    aria-label={tr(d.inventaire.demantelerAria, {
-                      pieces: yieldPieces,
-                      categorie: libelleCategorie(o.categorie, d),
-                    })}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                      padding: "4px 6px",
-                      border: "1px solid var(--brass-500)",
-                      background: "var(--brass-600)",
-                      color: "var(--paper-100)",
-                      cursor: "pointer",
+                    onRefus={(raison) => {
+                      setFlash(raison);
+                      setTimeout(() => setFlash(null), 2500);
                     }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 11,
-                        fontWeight: 700,
-                      }}
-                    >
-                      +{yieldPieces}
-                    </span>
-                    <PieceIcon categorie={o.categorie} size={22} />
-                  </button>
+                  />
                 }
               />
             );

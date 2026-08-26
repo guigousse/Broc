@@ -524,6 +524,8 @@ export const fr = {
     confirmerRestaurationAria:
       "Confirmer la restauration — coût {cout} pièces {categorie}",
     demantelerAria: "Démanteler — rendement {pieces} pièces {categorie}",
+    ameliorerAria: "Améliorer — coût {cout} pièces {categorie}",
+    ongletObjets: "Objets à travailler",
     demantelerSeg1: "Démanteler",
     demantelerSeg2: "rend",
     demantelerSeg3: ". L'objet sera détruit définitivement.",

@@ -516,6 +516,8 @@ export const es: DictionnaireUI = {
     confirmerRestaurationAria:
       "Confirmar la restauración — coste {cout} piezas de {categorie}",
     demantelerAria: "Desmantelar — rendimiento {pieces} piezas de {categorie}",
+    ameliorerAria: "Mejorar — coste {cout} piezas de {categorie}",
+    ongletObjets: "Objetos por trabajar",
     demantelerSeg1: "Desmantelar",
     demantelerSeg2: "rinde",
     demantelerSeg3: ". El objeto se destruirá definitivamente.",
