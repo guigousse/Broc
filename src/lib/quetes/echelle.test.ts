@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { ciblesPourNiveau, type CiblesNiveau } from "./echelle";
 
-const CLES: (keyof CiblesNiveau)[] = [
+// Énumérée à la main : toutes les cibles ne sont pas des nombres depuis que
+// `restaurationEtatMin` (EtatObjet) existe. Une liste dérivée automatiquement
+// de `keyof CiblesNiveau` y ré-introduirait une chaîne, cassant le test de monotonie.
+const CLES = [
   "beneficeSemaine",
   "chiffreAffairesSemaine",
   "profitVenteUnique",
@@ -14,7 +17,7 @@ const CLES: (keyof CiblesNiveau)[] = [
   "beneficeJour",
   "profitVenteJour",
   "ventesCategorieJour",
-];
+] as const satisfies readonly (keyof CiblesNiveau)[];
 
 describe("table de paliers", () => {
   test("palier d'entrée (niveau 3, ouverture des quêtes)", () => {
