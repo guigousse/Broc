@@ -42,6 +42,10 @@ vi.mock("@/lib/audio/audioManager", () => ({
   },
   SON_EXPLOSION: "/sounds/explosion.mp3",
   PIC_EXPLOSION_S: 0.035,
+  // `SettingsContext` (importé transitivement via `TabBar`) référence ce
+  // champ dans sa constante de module `NOOP_SETTINGS` : sans lui, le mock
+  // jette dès l'import, avant même le rendu de ce test.
+  DEFAULT_AUDIO_PREFS: { volume: 70, musique: true, effets: true, ambiance: true },
 }));
 
 const vibrerExplosion = vi.fn();

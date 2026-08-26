@@ -16,8 +16,13 @@ vi.mock("@/lib/soutien/liens", () => ({
   lienNotation: () => lienNotation(),
 }));
 
-// `BottomSheet` lit `useLangue()` en interne pour son titre : sans provider,
-// le rendu casse avant même d'atteindre le composant sous test.
+// Ce mock existe pour un seul test (« aucun bouton n'appelle... » plus bas),
+// mais il doit être posé ici : c'est le module qu'il remplace.
+const demanderNotation = vi.fn(() => Promise.resolve());
+vi.mock("@/lib/soutien/notation", () => ({
+  demanderNotation: () => demanderNotation(),
+}));
+
 vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({
     playClick: vi.fn(),
@@ -33,6 +38,8 @@ vi.mock("@/context/SettingsContext", () => ({
 
 import { SoutienSheet } from "./SoutienSheet";
 
+// `BottomSheet` lit `useLangue()` en interne pour son titre : sans provider,
+// le rendu casse avant même d'atteindre le composant sous test.
 function monter(props: Partial<ComponentProps<typeof SoutienSheet>> = {}) {
   return render(
     <LangueProvider>
@@ -43,6 +50,7 @@ function monter(props: Partial<ComponentProps<typeof SoutienSheet>> = {}) {
 
 beforeEach(() => {
   ouvrirLien.mockClear();
+  demanderNotation.mockClear();
   lienNotation.mockReturnValue("itms-apps://test");
 });
 
@@ -72,6 +80,21 @@ describe("SoutienSheet", () => {
     monter();
     expect(screen.queryByTestId("soutien-noter")).toBeNull();
     expect(screen.getByTestId("soutien-instagram")).toBeTruthy();
+  });
+
+  // Règle non négociable du chantier (voir src/lib/soutien/notation.ts) :
+  // la feuille de notation NATIVE ne doit JAMAIS partir d'un bouton — Google
+  // l'interdit nommément et sanctionne la fiche Play, pas un test rouge.
+  // Le bouton ★ de cette feuille doit toujours ouvrir l'URL de la fiche
+  // (`ouvrirLien`), jamais déclencher `demanderNotation()`. Ce test existe
+  // pour empêcher qu'un futur contributeur « simplifie » les deux chemins
+  // en un seul sans savoir que l'un des deux est interdit par plateforme.
+  it("aucun bouton (Instagram, TikTok, Noter) ne déclenche la feuille de notation native", () => {
+    monter();
+    fireEvent.click(screen.getByTestId("soutien-instagram"));
+    fireEvent.click(screen.getByTestId("soutien-tiktok"));
+    fireEvent.click(screen.getByTestId("soutien-noter"));
+    expect(demanderNotation).not.toHaveBeenCalled();
   });
 
   it("l'intro n'est rendue que si on la fournit", () => {

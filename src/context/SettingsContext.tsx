@@ -204,46 +204,45 @@ export function useSettings(): SettingsValue {
  * global juste pour ça, sous peine de rendre fragile chaque test de tout
  * ancêtre qui le monte.
  *
- * Construit PARESSEUSEMENT (au premier appel de `useSettingsSafe` sans
- * provider), et non comme une constante de module : `audioPrefs` lit
- * `DEFAULT_AUDIO_PREFS` depuis `audioManager`, et une constante de module
- * évaluerait cette lecture dès l'IMPORT de ce fichier — y compris dans des
- * tests qui mockent `audioManager` sans ce champ et ne rendent jamais
- * `SoutienSheet`. Paresseux, cette lecture n'arrive que si `useSettingsSafe`
- * tourne réellement hors provider.
+ * Constante de module, comme `NOOP_TOAST` dans `@/components/ui/Toast` — pas
+ * de construction paresseuse : `DEFAULT_AUDIO_PREFS` est déjà importé en tête
+ * de fichier, et ce fichier l'utilise déjà, sans détour, dans `useState()`
+ * plus bas. Le rendre paresseux ici n'aurait rien évité.
+ *
+ * ⚠ Effet de bord de l'aplatissement : tout import (même transitif, ex. via
+ * `TabBar`) de ce fichier référence désormais `DEFAULT_AUDIO_PREFS` DÈS LE
+ * CHARGEMENT DU MODULE, plus seulement au premier rendu. Un test qui mocke
+ * `@/lib/audio/audioManager` SANS exporter `DEFAULT_AUDIO_PREFS` cassera à
+ * l'import — pas avec un `undefined` silencieux : le mock Vitest lève une
+ * erreur explicite sur un export non déclaré. Voir le mock corrigé dans
+ * `LevelUpOverlay.test.tsx` pour le patron à suivre.
  */
-let noopSettings: SettingsValue | null = null;
-function getNoopSettings(): SettingsValue {
-  if (!noopSettings) {
-    noopSettings = {
-      audioPrefs: DEFAULT_AUDIO_PREFS,
-      setAudioPref: () => {},
-      setVolume: () => {},
-      playClick: () => {},
-      playCash: () => {},
-      playPaper: () => {},
-      playNewspaper: () => {},
-      playDoorOpen: () => {},
-      playDoorClose: () => {},
-      startCrowd: () => {},
-      stopCrowd: () => {},
-      startCatPurr: () => {},
-      stopCatPurr: () => {},
-      playVinyl: () => {},
-      playGramophoneSong: () => {},
-      pauseVinyl: () => {},
-      resumeVinyl: () => {},
-      stopVinyl: () => {},
-      stopGramophone: () => {},
-      setVinylTargetVolume: () => {},
-      setVinylAmbianceVolume: () => {},
-      setVinylAmbianceLowpass: () => {},
-      startNeedle: () => {},
-      stopNeedle: () => {},
-    };
-  }
-  return noopSettings;
-}
+const NOOP_SETTINGS: SettingsValue = {
+  audioPrefs: DEFAULT_AUDIO_PREFS,
+  setAudioPref: () => {},
+  setVolume: () => {},
+  playClick: () => {},
+  playCash: () => {},
+  playPaper: () => {},
+  playNewspaper: () => {},
+  playDoorOpen: () => {},
+  playDoorClose: () => {},
+  startCrowd: () => {},
+  stopCrowd: () => {},
+  startCatPurr: () => {},
+  stopCatPurr: () => {},
+  playVinyl: () => {},
+  playGramophoneSong: () => {},
+  pauseVinyl: () => {},
+  resumeVinyl: () => {},
+  stopVinyl: () => {},
+  stopGramophone: () => {},
+  setVinylTargetVolume: () => {},
+  setVinylAmbianceVolume: () => {},
+  setVinylAmbianceLowpass: () => {},
+  startNeedle: () => {},
+  stopNeedle: () => {},
+};
 
 /**
  * Variante non-bloquante de `useSettings` : renvoie un jeu de réglages no-op
@@ -253,5 +252,5 @@ function getNoopSettings(): SettingsValue {
  */
 export function useSettingsSafe(): SettingsValue {
   const ctx = useContext(SettingsContext);
-  return ctx ?? getNoopSettings();
+  return ctx ?? NOOP_SETTINGS;
 }

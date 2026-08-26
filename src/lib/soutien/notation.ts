@@ -1,3 +1,5 @@
+import { tauriDisponible } from "@/lib/plateforme";
+
 /**
  * La feuille de notation native — le SEUL endroit du code qui l'appelle.
  *
@@ -21,7 +23,7 @@
  */
 export async function demanderNotation(): Promise<void> {
   if (typeof window === "undefined") return;
-  if (!("__TAURI_INTERNALS__" in window)) return;
+  if (!tauriDisponible()) return;
 
   try {
     const { requestReview } = await import("@gbyte/tauri-plugin-in-app-review");

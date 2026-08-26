@@ -46,4 +46,18 @@ describe("liens de soutien", () => {
     plateforme("android");
     expect(lienNotation()).toBeNull();
   });
+
+  // Régression : le déploiement Vercel est aussi ouvert depuis des
+  // téléphones Android (hors Tauri, donc `plateforme("web")` seul ne le
+  // couvrait pas). Sans cette règle, ce cas retombait sur `APP_STORE_WEB` et
+  // proposait de noter une application que ce joueur ne peut pas installer —
+  // exactement le principe que `PLAY_STORE_ACTIF` existe pour éviter, mais
+  // appliqué à moitié (seulement sous Tauri).
+  it("sur Android WEB (site ouvert depuis un téléphone Android, hors Tauri), aucune fiche non plus", () => {
+    vi.spyOn(window.navigator, "userAgent", "get").mockReturnValue(
+      "Mozilla/5.0 (Linux; Android 14; Pixel 8)",
+    );
+    delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
+    expect(lienNotation()).toBeNull();
+  });
 });

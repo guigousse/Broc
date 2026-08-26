@@ -1,3 +1,5 @@
+import { tauriDisponible } from "@/lib/plateforme";
+
 /**
  * Le SEUL endroit du code qui ouvre une adresse hors du jeu.
  *
@@ -8,7 +10,7 @@
 export async function ouvrirLien(url: string): Promise<void> {
   if (typeof window === "undefined") return;
 
-  if (!("__TAURI_INTERNALS__" in window)) {
+  if (!tauriDisponible()) {
     window.open(url, "_blank", "noopener,noreferrer");
     return;
   }

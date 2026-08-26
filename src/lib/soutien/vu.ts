@@ -22,18 +22,39 @@ import {
 const CLE_POPUP_BORNE = "projet-broc:soutien:borne:v1";
 const CLE_NOTATION_NIVEAU = "projet-broc:soutien:notation-niveau:v1";
 
+// Repli en mémoire, pour quand l'écriture disque échoue (quota dépassé,
+// stockage désactivé en navigation privée, WebView capricieuse).
+// `safeLocalStorageSet` renvoie `false` dans ce cas précisément pour qu'on
+// puisse réagir — l'ignorer laisserait `popupBorneVu()` répondre faux pour
+// toujours, et le pop-up se rouvrirait à CHAQUE tap sur la borne : c'est le
+// harcèlement que la spec §3 nomme explicitement (onze fois de suite) comme
+// le comportement à ne pas produire. Ce drapeau ne survit pas un rechargement
+// de page, mais garantit au moins « une fois par session » quand le disque
+// ne répond pas — largement suffisant, la persistance réelle restant le
+// chemin normal.
+let popupBorneVuEnMemoire = false;
+let notationNiveauFaiteEnMemoire = false;
+
 export function popupBorneVu(): boolean {
-  return safeLocalStorageGet<boolean>(CLE_POPUP_BORNE, false) === true;
+  return (
+    popupBorneVuEnMemoire ||
+    safeLocalStorageGet<boolean>(CLE_POPUP_BORNE, false) === true
+  );
 }
 
 export function marquerPopupBorneVu(): void {
+  popupBorneVuEnMemoire = true;
   safeLocalStorageSet(CLE_POPUP_BORNE, true);
 }
 
 export function notationNiveauFaite(): boolean {
-  return safeLocalStorageGet<boolean>(CLE_NOTATION_NIVEAU, false) === true;
+  return (
+    notationNiveauFaiteEnMemoire ||
+    safeLocalStorageGet<boolean>(CLE_NOTATION_NIVEAU, false) === true
+  );
 }
 
 export function marquerNotationNiveauFaite(): void {
+  notationNiveauFaiteEnMemoire = true;
   safeLocalStorageSet(CLE_NOTATION_NIVEAU, true);
 }
