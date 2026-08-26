@@ -366,8 +366,7 @@ import { describe, expect, it } from "vitest";
 import { brocanteTier4Debloquee, formeEligible } from "./eligibilite";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
-import { ID_GRANDE_BRADERIE } from "@/lib/evenements";
-import { BROCANTES } from "@/data/brocantes";
+import { ID_GRANDE_BRADERIE, prochaineBraderie } from "@/lib/evenements";
 import { CATEGORIES } from "@/data/categories";
 import { catTreeId } from "@/lib/competences";
 import type { CompetenceId } from "@/types/game";
@@ -377,17 +376,15 @@ describe("brocanteTier4Debloquee", () => {
     expect(brocanteTier4Debloquee(createMockGameState())).toBe(false);
   });
 
-  it("la Grande Braderie seule ne suffit pas", () => {
-    // Garde-fou de lecture : le test n'a de sens que si la braderie est bien
-    // de tier 4. Le jour où elle changerait de tier, c'est CETTE ligne qui
-    // doit échouer, pas l'assertion suivante en silence.
-    const braderie = BROCANTES.find((b) => b.id === ID_GRANDE_BRADERIE);
-    expect(braderie?.tier).toBe(4);
-
-    const state = createMockGameState();
+  it("la Grande Braderie ouverte ne débloque PAS le tier 4", () => {
+    // La braderie s'ouvre sur `estJourBraderie(jourActuel)` : sur une partie
+    // neuve elle est FERMÉE, et un test posé là n'exercerait pas l'exclusion
+    // qu'il prétend couvrir. On se cale donc sur son jour.
+    const state = createMockGameState({ jourActuel: prochaineBraderie(1) });
     const tier4 = calculerBrocantesDebloqueesParTier(state).get(4) ?? new Set<string>();
-    const horsBraderie = [...tier4].filter((id) => id !== ID_GRANDE_BRADERIE);
-    expect(brocanteTier4Debloquee(state)).toBe(horsBraderie.length > 0);
+    // Le test n'a de sens que si la braderie est ouverte ce jour-là ET seule.
+    expect([...tier4]).toEqual([ID_GRANDE_BRADERIE]);
+    expect(brocanteTier4Debloquee(state)).toBe(false);
   });
 });
 
@@ -1130,8 +1127,11 @@ describe("gabarits quotidiens", () => {
     }
   });
 
-  test("les familles hebdomadaires ne parlent plus au nom du jour, et inversement", () => {
-    for (const cle of ["benefice", "chiffre", "marge", "categorie"]) {
+  test("aucune famille du jour ne parle de la semaine", () => {
+    // Seules `benefice` et `chiffre` nomment une période côté hebdomadaire
+    // (« cette semaine », « avant dimanche ») ; `marge` et `categorie` n'en
+    // ont jamais nommé, d'où l'asymétrie assumée des deux boucles.
+    for (const cle of ["benefice", "chiffre"]) {
       const texte = gabaritsChiffres(cle).flatMap((g) => g.corps).join(" ");
       expect(texte, cle).toMatch(/semaine|dimanche/i);
     }
