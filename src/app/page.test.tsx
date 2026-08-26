@@ -56,6 +56,10 @@ vi.mock("@/context/GameContext", () => ({
 const playClick = vi.fn();
 vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({ playClick }),
+  // `SoutienSheet` (ouverte depuis « Soutenir » du menu principal) appelle
+  // désormais `useSettingsSafe` : le mock du module doit fournir les deux
+  // exports, sous peine de casser au rendu.
+  useSettingsSafe: () => ({ playClick }),
 }));
 
 let introOnFini: (() => void) | null = null;

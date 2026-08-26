@@ -195,3 +195,63 @@ export function useSettings(): SettingsValue {
   }
   return ctx;
 }
+
+/**
+ * Silencieux au lieu de tout un jeu de sons : chaque méthode est un no-op.
+ * Utilisée par des composants montés en permanence au fond d'un arbre (ex.
+ * `SoutienSheet`, montée fermée par `EcranArcade`) pour un simple retour
+ * sonore de clic — un composant pareil ne doit pas exiger un `SettingsProvider`
+ * global juste pour ça, sous peine de rendre fragile chaque test de tout
+ * ancêtre qui le monte.
+ *
+ * Construit PARESSEUSEMENT (au premier appel de `useSettingsSafe` sans
+ * provider), et non comme une constante de module : `audioPrefs` lit
+ * `DEFAULT_AUDIO_PREFS` depuis `audioManager`, et une constante de module
+ * évaluerait cette lecture dès l'IMPORT de ce fichier — y compris dans des
+ * tests qui mockent `audioManager` sans ce champ et ne rendent jamais
+ * `SoutienSheet`. Paresseux, cette lecture n'arrive que si `useSettingsSafe`
+ * tourne réellement hors provider.
+ */
+let noopSettings: SettingsValue | null = null;
+function getNoopSettings(): SettingsValue {
+  if (!noopSettings) {
+    noopSettings = {
+      audioPrefs: DEFAULT_AUDIO_PREFS,
+      setAudioPref: () => {},
+      setVolume: () => {},
+      playClick: () => {},
+      playCash: () => {},
+      playPaper: () => {},
+      playNewspaper: () => {},
+      playDoorOpen: () => {},
+      playDoorClose: () => {},
+      startCrowd: () => {},
+      stopCrowd: () => {},
+      startCatPurr: () => {},
+      stopCatPurr: () => {},
+      playVinyl: () => {},
+      playGramophoneSong: () => {},
+      pauseVinyl: () => {},
+      resumeVinyl: () => {},
+      stopVinyl: () => {},
+      stopGramophone: () => {},
+      setVinylTargetVolume: () => {},
+      setVinylAmbianceVolume: () => {},
+      setVinylAmbianceLowpass: () => {},
+      startNeedle: () => {},
+      stopNeedle: () => {},
+    };
+  }
+  return noopSettings;
+}
+
+/**
+ * Variante non-bloquante de `useSettings` : renvoie un jeu de réglages no-op
+ * si aucun `SettingsProvider` n'est présent, au lieu de lever une erreur —
+ * même patron que `useToastSafe` dans `@/components/ui/Toast`, et pour la
+ * même raison.
+ */
+export function useSettingsSafe(): SettingsValue {
+  const ctx = useContext(SettingsContext);
+  return ctx ?? getNoopSettings();
+}

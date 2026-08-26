@@ -30,6 +30,11 @@ vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({
     playClick: vi.fn(),
   }),
+  // `SoutienSheet` appelle désormais `useSettingsSafe` : le mock du module
+  // doit fournir les deux exports, sous peine de casser au rendu.
+  useSettingsSafe: () => ({
+    playClick: vi.fn(),
+  }),
 }));
 
 beforeEach(() => {

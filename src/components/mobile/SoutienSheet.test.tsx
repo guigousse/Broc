@@ -22,6 +22,13 @@ vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({
     playClick: vi.fn(),
   }),
+  // `SoutienSheet` appelle désormais `useSettingsSafe` (voir SettingsContext.tsx) :
+  // le mock du module doit fournir les deux, sous peine de casser au rendu
+  // (le mock remplace tout l'export du module, `useSettings` seul ne suffit
+  // plus).
+  useSettingsSafe: () => ({
+    playClick: vi.fn(),
+  }),
 }));
 
 import { SoutienSheet } from "./SoutienSheet";

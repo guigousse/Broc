@@ -4,7 +4,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Aperture, Music2, Star } from "lucide-react";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { useSettings } from "@/context/SettingsContext";
+import { useSettingsSafe } from "@/context/SettingsContext";
 import { INSTAGRAM_URL, TIKTOK_URL, lienNotation } from "@/lib/soutien/liens";
 import { ouvrirLien } from "@/lib/soutien/ouvrir";
 
@@ -53,7 +53,11 @@ interface SoutienSheetProps {
 
 export function SoutienSheet({ open, onClose, intro }: SoutienSheetProps) {
   const { d } = useLangue();
-  const { playClick } = useSettings();
+  // `useSettingsSafe`, PAS `useSettings` : cette feuille est montée en
+  // permanence (fermée) par `EcranArcade`, au fond de l'arbre de la borne.
+  // Exiger un `SettingsProvider` juste pour le son du clic rendrait fragile
+  // le test de chaque ancêtre qui monte cet écran.
+  const { playClick } = useSettingsSafe();
 
   // Recalculé à chaque rendu, et c'est voulu : `PLAY_STORE_ACTIF` peut basculer
   // d'une version à l'autre, et rien ici ne coûte assez cher pour être mémoïsé.
