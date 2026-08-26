@@ -219,6 +219,10 @@ export function BazarScene({
                       // de son carré aux coins, elle y tient exactement.
                       tilt={false}
                       outlinePx={2}
+                      // L'éclat du pristin (cf. `ItemSticker`) : ce que le
+                      // Bazar vend est impeccable, et ça se voit de loin sur
+                      // l'étagère comme dans la collection.
+                      etat={ETAT_ARTICLE_BAZAR}
                       // Le BAS de l'objet sur l'arête basse du carré. `contain`
                       // letterboxe les objets larges et bas (une ménagère, une
                       // pile de vinyles) : sans cet ancrage, le vide laissé par

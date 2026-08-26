@@ -9,6 +9,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ArticleDetailBazar, type ArticleDetail } from "./ArticleDetailBazar";
 import { ETAT_ARTICLE_BAZAR } from "@/lib/bazar/achat";
 import { getRarityColors } from "@/lib/rarityColors";
+import { ECLAT_PRISTIN } from "@/components/ui/ItemSticker";
 import { etoileCount } from "@/lib/etat";
 
 afterEach(cleanup);
@@ -64,7 +65,8 @@ describe("ArticleDetailBazar", () => {
   it("l'objet de la vitrine : sa vignette EN GRAND, son nom, son prix", () => {
     monter();
     expect(screen.getByText("Jeu Magnatimmo années 80")).toBeTruthy();
-    expect(screen.getByText("8 Bazarcoins")).toBeTruthy();
+    // Le prix ne s'écrit plus sur une ligne à part : il est DANS le bouton.
+    expect(screen.getByRole("button", { name: "Acheter pour 8 Bazarcoins" })).toBeTruthy();
     const img = screen.getByRole("dialog").querySelector("img") as HTMLImageElement;
     // Plein format, PAS la vignette 384 px : ici l'objet occupe 75 vw.
     expect(img.getAttribute("src")).toBe(
@@ -77,7 +79,7 @@ describe("ArticleDetailBazar", () => {
   it("un lot de pièces : son engrenage EN GRAND, son libellé, son prix", () => {
     monter(LOT);
     expect(screen.getByText("5 pièces · Musique")).toBeTruthy();
-    expect(screen.getByText("3 Bazarcoins")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Acheter pour 3 Bazarcoins" })).toBeTruthy();
     // Aucun visuel d'objet : un lot n'est pas une pièce du catalogue.
     expect(screen.getByRole("dialog").querySelector("img")).toBeNull();
     // Le badge de quantité de l'engrenage.
@@ -94,7 +96,7 @@ describe("ArticleDetailBazar", () => {
       prix: 8,
     });
     expect(screen.getByRole("dialog").querySelector("img")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
     expect(onAcheter).toHaveBeenCalledTimes(1);
   });
 
@@ -125,15 +127,53 @@ describe("ArticleDetailBazar", () => {
     expect(screen.queryByTestId("etoiles-fiche")).toBeNull();
   });
 
-  it("bourse suffisante : le prix garde l'encre de la carte", () => {
-    monter(VITRINE, 99);
-    const prix = screen.getByText("8 Bazarcoins") as HTMLElement;
-    expect(prix.style.color).toBe("var(--forest-800)");
+  // ── Le prix passe DANS le bouton (demande du 2026-08-26) ────────────────
+  // La carte annonçait « Prix · 12 Bazarcoins » sur une ligne, puis proposait
+  // un bouton « Acheter » muet sur le montant. Deux endroits pour une seule
+  // idée : le bouton dit maintenant ce qu'il fait ET ce qu'il coûte.
+  it("le bouton dit ce qu'il achète et pour combien", () => {
+    monter();
+    const bouton = screen.getByRole("button", { name: "Acheter pour 8 Bazarcoins" });
+    // À l'œil, le chiffre et la pièce — le mot ne tient pas dans un bouton.
+    expect(bouton.textContent).toContain("8");
+    expect(bouton.querySelector("svg")).toBeTruthy();
+  });
+
+  it("le singulier passe dans le bouton", () => {
+    monter({ ...VITRINE, prix: 1 });
+    expect(screen.getByRole("button", { name: "Acheter pour 1 Bazarcoin" })).toBeTruthy();
+  });
+
+  it("la fiche n'écrit plus le prix sur une ligne à part", () => {
+    monter();
+    expect(screen.queryByText("Prix")).toBeNull();
+  });
+
+  // Hors de portée, le bouton garde son libellé : cacher le prix au moment où
+  // il manque serait précisément cacher la seule chose utile.
+  it("hors de portée : le bouton dit toujours le prix", () => {
+    monter(VITRINE, 2);
+    expect(screen.getByRole("button", { name: "Acheter pour 8 Bazarcoins" })).toBeTruthy();
+  });
+
+  // L'ÉCLAT DU PRISTIN, comme dans la collection : le Bazar ne vend que des
+  // pièces impeccables, et elles doivent rayonner ici aussi.
+  it("l'objet de la fiche porte le halo du pristin", () => {
+    const { container } = monter();
+    const img = container.querySelector("img") as HTMLElement;
+    expect(img.style.filter).toContain(ECLAT_PRISTIN);
+  });
+
+  it("bourse suffisante : le bouton est allumé", () => {
+    monter(VITRINE, 25);
+    const bouton = screen.getByRole("button", { name: /^Acheter pour/ });
+    expect(bouton.style.background).toBe("var(--forest-800)");
+    expect(bouton.getAttribute("aria-disabled")).toBe("false");
   });
 
   it("bourse suffisante : le bouton achète et referme la fiche", () => {
     const { onAcheter, onClose } = monter(VITRINE, 25);
-    fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
     expect(onAcheter).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -145,21 +185,21 @@ describe("ArticleDetailBazar", () => {
   describe("bourse insuffisante", () => {
     it("le bouton n'est pas `disabled`, mais porte aria-disabled", () => {
       monter(VITRINE, 3);
-      const bouton = screen.getByRole("button", { name: "Acheter" });
+      const bouton = screen.getByRole("button", { name: /^Acheter pour/ });
       expect(bouton.hasAttribute("disabled")).toBe(false);
       expect(bouton.getAttribute("aria-disabled")).toBe("true");
     });
 
     it("le bouton reste focusable au clavier", () => {
       monter(VITRINE, 3);
-      const bouton = screen.getByRole("button", { name: "Acheter" });
+      const bouton = screen.getByRole("button", { name: /^Acheter pour/ });
       bouton.focus();
       expect(document.activeElement).toBe(bouton);
     });
 
     it("taper n'achète pas, ne ferme pas, et dit le manque", () => {
       const { onAcheter, onClose } = monter(VITRINE, 3);
-      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       expect(onAcheter).not.toHaveBeenCalled();
       expect(onClose).not.toHaveBeenCalled();
       expect(screen.getByRole("status").textContent).toBe("Il vous manque 5 Bazarcoins");
@@ -167,18 +207,22 @@ describe("ArticleDetailBazar", () => {
 
     it("le singulier du manque est respecté", () => {
       monter(VITRINE, 7);
-      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       expect(screen.getByText("Il vous manque 1 Bazarcoin")).toBeTruthy();
     });
 
     // Même règle que sur l'étiquette de l'étagère, et elle a changé le
     // 2026-08-20 : le prix n'est plus BARRÉ, il s'ÉTEINT. La rature rayait un
     // chiffre qu'on cherche justement à lire.
-    it("le prix s'éteint, il n'est pas barré", () => {
-      monter(VITRINE, 3);
-      const prix = screen.getByText("8 Bazarcoins") as HTMLElement;
-      expect(prix.style.color).toBe("var(--ink-300)");
-      expect(prix.style.textDecoration).not.toBe("line-through");
+    // Le prix a rejoint le bouton (2026-08-26) : c'est donc le BOUTON qui
+    // s'éteint, d'un bloc, quand la bourse ne suit pas. Éteint, jamais barré —
+    // la rature raye un chiffre qu'on cherche justement à lire.
+    it("le bouton s'éteint, et le prix qu'il porte n'est pas barré", () => {
+      const bouton = (monter(VITRINE, 3),
+        screen.getByRole("button", { name: /^Acheter pour/ }) as HTMLElement);
+      expect(bouton.style.background).toBe("var(--paper-200)");
+      expect(bouton.style.color).toBe("var(--ink-300)");
+      expect(bouton.style.textDecoration).not.toBe("line-through");
     });
 
 
@@ -187,7 +231,7 @@ describe("ArticleDetailBazar", () => {
     // du parent, ni se traîner d'un article au suivant.
     it("le message ne survit pas à un changement d'article", () => {
       const { rerender } = monter(VITRINE, 3);
-      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       expect(screen.queryByRole("status")).toBeTruthy();
       rerender(
         <ArticleDetailBazar
@@ -203,7 +247,7 @@ describe("ArticleDetailBazar", () => {
 
     it("le message survit à un rendu du parent qui ne change rien", () => {
       const { rerender } = monter(VITRINE, 3);
-      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       // Un objet d'article reconstruit à l'identique : c'est la VALEUR qui
       // compte, pas la référence, sinon le joueur perdrait son chiffre à la
       // frame suivante.
@@ -221,7 +265,7 @@ describe("ArticleDetailBazar", () => {
 
     it("le message disparaît dès que la bourse suffit", () => {
       const { rerender } = monter(VITRINE, 3);
-      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       rerender(
         <ArticleDetailBazar
           article={VITRINE}
@@ -246,7 +290,7 @@ describe("ArticleDetailBazar", () => {
         ok: false,
         raison: "Stockage plein",
       });
-      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       expect(onClose).not.toHaveBeenCalled();
       // Toujours montée, et la raison est lisible.
       expect(screen.getByRole("dialog")).toBeTruthy();
@@ -255,14 +299,14 @@ describe("ArticleDetailBazar", () => {
 
     it("un refus SANS raison n'est jamais muet", () => {
       monter(VITRINE, 99, true, { ok: false });
-      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       expect(screen.getByRole("status").textContent).toBe("Achat impossible.");
     });
 
     it("la raison remplace le message du manque, elle ne s'empile pas dessus", () => {
       // Bourse courte : le joueur voit d'abord le chiffre qui manque…
       const { rerender } = monter(VITRINE, 3);
-      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       expect(screen.getByRole("status").textContent).toBe("Il vous manque 5 Bazarcoins");
       // … puis la bourse suffit, et c'est le jeu qui refuse.
       rerender(
@@ -274,7 +318,7 @@ describe("ArticleDetailBazar", () => {
           onClose={vi.fn()}
         />,
       );
-      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       expect(screen.getAllByRole("status")).toHaveLength(1);
       expect(screen.getByRole("status").textContent).toBe("Stockage plein");
     });
@@ -284,7 +328,7 @@ describe("ArticleDetailBazar", () => {
         ok: false,
         raison: "Stockage plein",
       });
-      fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
       expect(screen.queryByRole("status")).toBeTruthy();
       rerender(
         <ArticleDetailBazar

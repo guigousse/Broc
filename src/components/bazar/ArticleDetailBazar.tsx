@@ -296,6 +296,10 @@ export function ArticleDetailBazar({
                   fill
                   tilt={false}
                   variant="normal"
+                  // L'éclat du pristin, comme dans la collection : le Bazar ne
+                  // vend que des pièces impeccables, et un objet au sommet de
+                  // l'échelle brille partout où il se montre.
+                  etat={ETAT_ARTICLE_BAZAR}
                   eager
                 />
               ) : null}
@@ -338,34 +342,24 @@ export function ArticleDetailBazar({
             </span>
           ) : null}
 
-          <div style={prixRow}>
-            <span style={prixLabel}>{d.bazar.prixMot}</span>
-            <span
-              style={{
-                ...prixValue,
-                // La règle de l'étiquette de l'étagère, reprise ici : hors de
-                // portée, le prix s'ÉTEINT — il n'est pas barré. `ink-300` est
-                // la teinte des commandes désactivées du jeu (cf.
-                // `ConcessionSheet`) et tient 4,5:1 sur le papier de la carte,
-                // au seuil AA. Pas de plaque à éteindre ici : dans la fiche le
-                // prix est une valeur de ligne, pas un cartouche posé sur une
-                // illustration.
-                color: horsDePortee ? "var(--ink-300)" : prixValue.color,
-              }}
-            >
-              {/* La fiche a la place, contrairement aux plaques de l'étagère :
-                  elle écrit le mot ET montre la pièce. C'est ici que le joueur
-                  apprend que l'une désigne l'autre — sur l'étal, la pièce
-                  seule doit ensuite lui suffire. */}
-              <BazarcoinIcon size={16} surClair />
-              {tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
-            </span>
-          </div>
-
           <button
             type="button"
             aria-disabled={horsDePortee}
-            style={boutonAcheter(!horsDePortee)}
+            // Le nom accessible écrit le mot que le bouton ne montre pas :
+            // « Acheter pour 12 Bazarcoins » là où l'œil lit « ACHETER POUR 12 »
+            // suivi de la pièce. Le texte visible est contenu dans le nom, comme
+            // l'exige WCAG 2.5.3 — une commande vocale « acheter pour 12 »
+            // atteint donc bien ce bouton.
+            aria-label={tr(d.bazar.acheterPour, {
+              n: tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix }),
+            })}
+            style={{
+              ...boutonAcheter(!horsDePortee),
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+            }}
             onClick={() => {
               // Pré-check local : le jeu refuserait aussi, mais avec une phrase
               // générique. Ici on connaît le CHIFFRE qui manque.
@@ -388,7 +382,13 @@ export function ArticleDetailBazar({
               setRefus(res.raison ?? d.bazar.achatRefuse);
             }}
           >
-            {d.bazar.acheter}
+            {/* Le prix vivait sur une ligne « Prix · 12 Bazarcoins », au-dessus
+                d'un bouton muet sur le montant : deux endroits pour une seule
+                idée. Le bouton porte les deux depuis le 2026-08-26 — ce qu'il
+                fait, et ce qu'il coûte. La pièce remplace le mot, comme partout
+                ailleurs au Bazar. */}
+            {tr(d.bazar.acheterPour, { n: prix })}
+            <BazarcoinIcon size={16} surClair={horsDePortee} />
           </button>
 
           {(refus !== null || (manqueVu && horsDePortee)) && (

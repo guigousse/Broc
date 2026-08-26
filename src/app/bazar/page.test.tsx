@@ -130,7 +130,7 @@ describe("BazarPage — le refus d'acheterAuBazar remonte jusqu'à la fiche", ()
       screen.getAllByRole("button", { name: /pièces/i })[0].click();
     });
     await act(async () => {
-      screen.getByRole("button", { name: "Acheter" }).click();
+      screen.getByRole("button", { name: /^Acheter pour/ }).click();
     });
   }
 

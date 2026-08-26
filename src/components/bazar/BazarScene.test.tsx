@@ -7,6 +7,7 @@ import { qgPct } from "@/components/mobile/qg/layout";
 import { JEUX_ARCADE } from "@/lib/bazar/arcade";
 import { ETAT_ARTICLE_BAZAR } from "@/lib/bazar/achat";
 import { etoileCount } from "@/lib/etat";
+import { ECLAT_PRISTIN } from "@/components/ui/ItemSticker";
 import type { EtalBazar } from "@/types/game";
 
 afterEach(cleanup);
@@ -142,7 +143,7 @@ describe("BazarScene", () => {
   // l'achat se confirme sur son bouton. Deux gestes, donc, dans tous les tests
   // d'achat de cet écran.
   function acheterDansLaFiche() {
-    fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
   }
 
   // ── L'ÉTAT AU PIED, LE PRIX DANS LA FICHE (demande du 2026-08-26) ───────
@@ -161,6 +162,16 @@ describe("BazarScene", () => {
       ...screen.getByTestId("etoiles-case2").querySelectorAll("svg"),
     ].filter((e) => e.getAttribute("fill") !== "transparent");
     expect(remplies).toHaveLength(etoileCount(ETAT_ARTICLE_BAZAR));
+  });
+
+  // La règle de la collection vaut au Bazar : un objet pristin brille partout
+  // où il se montre. La vitrine du tenancier n'en vend pas d'autres.
+  it("l'objet de la semaine porte le halo du pristin", () => {
+    monter();
+    const img = screen
+      .getByTestId("article-case2")
+      .querySelector("img") as HTMLElement;
+    expect(img.style.filter).toContain(ECLAT_PRISTIN);
   });
 
   it("un lot de pièces n'a pas d'état : son pied reste nu", () => {
@@ -422,7 +433,7 @@ describe("BazarScene", () => {
     expect(screen.queryByRole("img", { name: /Bazarcoin/ })).toBeNull();
     // Et taper n'achète toujours rien : ça ouvre la fiche, qui dit le manque.
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
     expect(onAcheter).not.toHaveBeenCalled();
     expect(screen.getByText("Il vous manque 8 Bazarcoins")).toBeTruthy();
   });
@@ -437,7 +448,7 @@ describe("BazarScene", () => {
     expect(screen.queryByText(/Vendu/)).toBeNull();
     const bouton = screen.getByRole("button", { name: "zz.template_disparu" });
     fireEvent.click(bouton);
-    fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
     expect(onAcheter).toHaveBeenCalledWith({ type: "objet", index: 1 });
   });
 
