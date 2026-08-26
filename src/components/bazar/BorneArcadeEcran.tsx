@@ -167,6 +167,13 @@ export function BorneArcadeEcran({
 
   // Fermeture au clavier — même idiome que la fiche d'article et les sheets
   // du QG : le voile se tape au doigt, mais rien ne l'atteint au clavier.
+  //
+  // Posé en phase de bulles (par défaut) et non de capture : si une sheet
+  // (ex. `SoutienSheet`, ouverte au-dessus d'un jeu) écoute elle aussi
+  // `Escape` sur `window`, c'est ELLE qui doit fermer, pas le meuble entier.
+  // `BottomSheet` capte l'événement en phase de capture et l'arrête — ce
+  // gestionnaire-ci ne le voit alors jamais. Voir le commentaire dans
+  // `BottomSheet.tsx`.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {

@@ -14,6 +14,7 @@ export const en: DictionnaireUI = {
     charger: "Load",
     reglages: "Settings",
     credits: "Credits",
+    soutenir: "Support",
   },
   parties: {
     titre: "— Games —",
@@ -869,5 +870,16 @@ export const en: DictionnaireUI = {
     borneIndiceCartouche: "ADD THE CARTRIDGE TO YOUR COLLECTION",
     borneJeuPrecedent: "Previous game",
     borneJeuSuivant: "Next game",
+  },
+  soutien: {
+    titre: "Support Broc",
+    insertCoin: "▶ INSERT COIN",
+    modeDemo: "DEMO MODE. THIS GAME DOES NOT START.",
+    corps:
+      "Broc is made by one person. Following the workshop or leaving a review is what helps it keep going.",
+    instagram: "Follow on Instagram",
+    tiktok: "Follow on TikTok",
+    noter: "Leave a review",
+    pasJouable: "DEMO MODE. THIS GAME DOES NOT START.",
   },
 };

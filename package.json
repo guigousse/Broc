@@ -34,10 +34,12 @@
     "lint:hooks": "eslint src"
   },
   "dependencies": {
+    "@gbyte/tauri-plugin-in-app-review": "^0.1.0",
     "@tanstack/react-virtual": "^3.14.4",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-haptics": "^2.3.2",
     "@tauri-apps/plugin-notification": "^2.3.3",
+    "@tauri-apps/plugin-opener": "^2.5.4",
     "lucide-react": "^1.16.0",
     "next": "^16.2.6",
     "react": "19.0.0",

@@ -17,6 +17,7 @@ export const fr = {
     charger: "Charger",
     reglages: "Réglages",
     credits: "Crédits",
+    soutenir: "Soutenir",
   },
   parties: {
     titre: "— Parties —",
@@ -915,5 +916,16 @@ export const fr = {
     borneIndiceCartouche: "AJOUTER LA CARTOUCHE À LA COLLECTION",
     borneJeuPrecedent: "Jeu précédent",
     borneJeuSuivant: "Jeu suivant",
+  },
+  soutien: {
+    titre: "Soutenir Broc",
+    insertCoin: "▶ INSERT COIN",
+    modeDemo: "MODE DÉMONSTRATION. CE JEU NE SE LANCE PAS.",
+    corps:
+      "Broc est fabriqué par une seule personne. Suivre l'atelier ou laisser un avis, c'est ce qui l'aide à continuer d'exister.",
+    instagram: "Suivre sur Instagram",
+    tiktok: "Suivre sur TikTok",
+    noter: "Laisser un avis",
+    pasJouable: "MODE DÉMONSTRATION. CE JEU NE SE LANCE PAS.",
   },
 } as const;

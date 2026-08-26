@@ -56,6 +56,10 @@ vi.mock("@/context/GameContext", () => ({
 const playClick = vi.fn();
 vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({ playClick }),
+  // `SoutienSheet` (ouverte depuis « Soutenir » du menu principal) appelle
+  // désormais `useSettingsSafe` : le mock du module doit fournir les deux
+  // exports, sous peine de casser au rendu.
+  useSettingsSafe: () => ({ playClick }),
 }));
 
 let introOnFini: (() => void) | null = null;
@@ -227,5 +231,12 @@ describe("TitleScreen — musique jazz du titre", () => {
 
     expect(fade).toHaveBeenCalledTimes(1);
     expect(fade).toHaveBeenCalledWith(DUREE_FERMETURE_MS);
+  });
+
+  it("le menu principal propose Soutenir, qui ouvre la feuille", () => {
+    render(<TitleScreen />);
+    const bouton = screen.getByRole("button", { name: "Soutenir" });
+    fireEvent.click(bouton);
+    expect(screen.getByTestId("soutien-instagram")).toBeTruthy();
   });
 });

@@ -8,6 +8,10 @@ import { getTemplate } from "@/data/objetTemplates";
 import { audioManager } from "@/lib/audio/audioManager";
 import type { JeuArcade } from "@/lib/bazar/arcade";
 import { arcadeAudioUrl } from "@/lib/bazar/arcadeAudio";
+import { SoutienSheet } from "@/components/mobile/SoutienSheet";
+import { AccrocheBorne } from "./AccrocheBorne";
+import { marquerPopupBorneVu, popupBorneVu } from "@/lib/soutien/vu";
+import { useToastSafe } from "@/components/ui/Toast";
 
 /** Seuil de swipe, en px. Le même qu'au chinage : le geste doit se ressembler. */
 const SWIPE_SEUIL_PX = 40;
@@ -144,6 +148,8 @@ interface EcranArcadeProps {
 export function EcranArcade({ jeux }: EcranArcadeProps) {
   const { d, locale } = useLangue();
   const [index, setIndex] = useState(0);
+  const [soutienOuvert, setSoutienOuvert] = useState(false);
+  const { toast } = useToastSafe();
   const departXRef = useRef<number | null>(null);
 
   const idx = Math.min(index, Math.max(0, jeux.length - 1));
@@ -159,11 +165,39 @@ export function EcranArcade({ jeux }: EcranArcadeProps) {
   const onPointerDown = (e: PointerEvent) => {
     departXRef.current = e.clientX;
   };
+
+  /**
+   * Le tap ne répond QUE sur un jeu trouvé. Les jeux inconnus gardent leur
+   * neige et leur indice de cartouche : cet écran-là dit déjà ce qui manque et
+   * comment le trouver, et y greffer une demande de soutien punirait le joueur
+   * qui n'a encore rien déniché.
+   *
+   * Le dégradé : l'invitation une fois, la réponse toujours. Un pop-up à
+   * chaque tap serait du harcèlement — le joueur qui parcourt les onze jeux le
+   * verrait onze fois d'affilée. Mais « rien du tout » aux taps suivants
+   * rendrait PLAY mort une deuxième fois, et le joueur conclurait au bug.
+   */
+  const tapSurJeu = () => {
+    if (!jeu?.trouve) return;
+    if (popupBorneVu()) {
+      toast(d.soutien.pasJouable, { type: "info" });
+      return;
+    }
+    marquerPopupBorneVu();
+    setSoutienOuvert(true);
+  };
+
   const onPointerUp = (e: PointerEvent) => {
     if (departXRef.current === null) return;
     const dx = e.clientX - departXRef.current;
     departXRef.current = null;
-    if (Math.abs(dx) > SWIPE_SEUIL_PX) aller(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > SWIPE_SEUIL_PX) {
+      aller(dx < 0 ? 1 : -1);
+      return;
+    }
+    // En deçà du seuil, c'est un TAP. Le geste était déjà mesuré pour le
+    // swipe : rien de neuf à calculer, on lit juste l'autre côté du même `dx`.
+    tapSurJeu();
   };
   const onPointerCancel = () => {
     departXRef.current = null;
@@ -199,132 +233,140 @@ export function EcranArcade({ jeux }: EcranArcadeProps) {
       : "???";
 
   return (
-    <div style={crt}>
-      <div
-        style={zoneJeu}
-        data-testid="arcade-zone"
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerCancel}
-      >
-        {jeu?.trouve ? (
-          <>
-            {/* `alt=""` : le titre juste en dessous porte déjà l'information,
-                et il est dans une région vivante. Deux annonces pour une
-                seule image feraient bégayer le lecteur d'écran. */}
-            <img
-              data-testid="arcade-capture"
-              src={`/bazar/arcade/${jeu.templateId}.webp`}
-              alt=""
-              draggable={false}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-                // Une capture pixel art doit rester en gros pixels carrés :
-                // le lissage par défaut la transformerait en bouillie.
-                imageRendering: "pixelated",
-              }}
-            />
-            {/* Décor de l'écran, pas de l'information : le titre du jeu et
-                les boutons sont déjà annoncés ailleurs. Les faire lire
-                ajouterait du bruit. */}
-            <div data-testid="arcade-texte-fefe" aria-hidden="true" style={texteFefe}>
-              FÉFÉ GAMES
-            </div>
-            <div data-testid="arcade-texte-play" aria-hidden="true" style={textePlay}>
-              PLAY
-            </div>
-          </>
-        ) : (
-          <>
-            {/* La capture n'est PAS rendue puis masquée : elle n'est pas
-                demandée du tout. Une image posée dans le DOM se voit dans
-                l'onglet réseau, et le contenu à découvrir fuiterait. */}
-            <div style={neige} />
-            {/* Colonne, et non plus une seule ligne centrée : la neige disait
-                que le jeu manque, jamais COMMENT l'allumer. La marche à
-                suivre se pose donc juste dessous, dans le vert plus sourd
-                d'un sous-titre de borne — le message d'état reste le premier
-                lu, l'indice se donne à qui s'attarde. */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                // Marge latérale : l'indice est une phrase entière dans les
-                // quatre langues (le grec est le plus long) et le trou du CRT
-                // est étroit. Sans elle, il touche les deux bords.
-                padding: "0 10px",
-                color: "#7dfcae",
-                fontSize: 12,
-                letterSpacing: "0.22em",
-              }}
-            >
-              {d.bazar.bornePasDeSignal}
-              <span
-                data-testid="arcade-indice"
+    <>
+      <div style={crt}>
+        <div
+          style={zoneJeu}
+          data-testid="arcade-zone"
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerCancel}
+        >
+          {jeu?.trouve ? (
+            <>
+              {/* `alt=""` : le titre juste en dessous porte déjà l'information,
+                  et il est dans une région vivante. Deux annonces pour une
+                  seule image feraient bégayer le lecteur d'écran. */}
+              <img
+                data-testid="arcade-capture"
+                src={`/bazar/arcade/${jeu.templateId}.webp`}
+                alt=""
+                draggable={false}
                 style={{
-                  fontSize: 9,
-                  letterSpacing: "0.12em",
-                  lineHeight: 1.5,
-                  color: "#4fbf85",
-                  textAlign: "center",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                  // Une capture pixel art doit rester en gros pixels carrés :
+                  // le lissage par défaut la transformerait en bouillie.
+                  imageRendering: "pixelated",
+                }}
+              />
+              {/* Décor de l'écran, pas de l'information : le titre du jeu et
+                  les boutons sont déjà annoncés ailleurs. Les faire lire
+                  ajouterait du bruit. */}
+              <div data-testid="arcade-texte-fefe" aria-hidden="true" style={texteFefe}>
+                FÉFÉ GAMES
+              </div>
+              <div data-testid="arcade-texte-play" aria-hidden="true" style={textePlay}>
+                PLAY
+              </div>
+            </>
+          ) : (
+            <>
+              {/* La capture n'est PAS rendue puis masquée : elle n'est pas
+                  demandée du tout. Une image posée dans le DOM se voit dans
+                  l'onglet réseau, et le contenu à découvrir fuiterait. */}
+              <div style={neige} />
+              {/* Colonne, et non plus une seule ligne centrée : la neige disait
+                  que le jeu manque, jamais COMMENT l'allumer. La marche à
+                  suivre se pose donc juste dessous, dans le vert plus sourd
+                  d'un sous-titre de borne — le message d'état reste le premier
+                  lu, l'indice se donne à qui s'attarde. */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  // Marge latérale : l'indice est une phrase entière dans les
+                  // quatre langues (le grec est le plus long) et le trou du CRT
+                  // est étroit. Sans elle, il touche les deux bords.
+                  padding: "0 10px",
+                  color: "#7dfcae",
+                  fontSize: 12,
+                  letterSpacing: "0.22em",
                 }}
               >
-                {d.bazar.borneIndiceCartouche}
-              </span>
-            </div>
-          </>
-        )}
+                {d.bazar.bornePasDeSignal}
+                <span
+                  data-testid="arcade-indice"
+                  style={{
+                    fontSize: 9,
+                    letterSpacing: "0.12em",
+                    lineHeight: 1.5,
+                    color: "#4fbf85",
+                    textAlign: "center",
+                  }}
+                >
+                  {d.bazar.borneIndiceCartouche}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div style={barre}>
+          <div
+            data-testid="arcade-titre"
+            aria-live="polite"
+            style={{
+              fontSize: 13,
+              letterSpacing: jeu?.trouve ? "0.09em" : "0.3em",
+              color: jeu?.trouve ? "#b7ffd6" : "#3f9d68",
+            }}
+          >
+            {titre}
+          </div>
+          <div style={pilote}>
+            <button
+              type="button"
+              aria-label={d.bazar.borneJeuPrecedent}
+              onClick={() => aller(-1)}
+              disabled={auDebut}
+              style={flecheStyle(auDebut)}
+            >
+              <ChevronLeft size={34} />
+            </button>
+            <span
+              data-testid="arcade-compteur"
+              style={{ color: "#3f9d68", fontSize: 10, letterSpacing: "0.18em" }}
+            >
+              {String(idx + 1).padStart(2, "0")} / {String(jeux.length).padStart(2, "0")}
+            </span>
+            <button
+              type="button"
+              aria-label={d.bazar.borneJeuSuivant}
+              onClick={() => aller(1)}
+              disabled={aLaFin}
+              style={flecheStyle(aLaFin)}
+            >
+              <ChevronRight size={34} />
+            </button>
+          </div>
+        </div>
+
+        <div style={balayage} />
       </div>
 
-      <div style={barre}>
-        <div
-          data-testid="arcade-titre"
-          aria-live="polite"
-          style={{
-            fontSize: 13,
-            letterSpacing: jeu?.trouve ? "0.09em" : "0.3em",
-            color: jeu?.trouve ? "#b7ffd6" : "#3f9d68",
-          }}
-        >
-          {titre}
-        </div>
-        <div style={pilote}>
-          <button
-            type="button"
-            aria-label={d.bazar.borneJeuPrecedent}
-            onClick={() => aller(-1)}
-            disabled={auDebut}
-            style={flecheStyle(auDebut)}
-          >
-            <ChevronLeft size={34} />
-          </button>
-          <span
-            data-testid="arcade-compteur"
-            style={{ color: "#3f9d68", fontSize: 10, letterSpacing: "0.18em" }}
-          >
-            {String(idx + 1).padStart(2, "0")} / {String(jeux.length).padStart(2, "0")}
-          </span>
-          <button
-            type="button"
-            aria-label={d.bazar.borneJeuSuivant}
-            onClick={() => aller(1)}
-            disabled={aLaFin}
-            style={flecheStyle(aLaFin)}
-          >
-            <ChevronRight size={34} />
-          </button>
-        </div>
-      </div>
-
-      <div style={balayage} />
-    </div>
+      <SoutienSheet
+        open={soutienOuvert}
+        onClose={() => setSoutienOuvert(false)}
+        intro={<AccrocheBorne />}
+      />
+    </>
   );
 }

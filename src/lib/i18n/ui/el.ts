@@ -14,6 +14,7 @@ export const el: DictionnaireUI = {
     charger: "Φόρτωση",
     reglages: "Ρυθμίσεις",
     credits: "Συντελεστές",
+    soutenir: "Στήριξη",
   },
   parties: {
     titre: "— Παρτίδες —",
@@ -895,5 +896,16 @@ export const el: DictionnaireUI = {
     borneIndiceCartouche: "ΠΡΟΣΘΕΣΤΕ ΤΗΝ ΚΑΣΕΤΑ ΣΤΗ ΣΥΛΛΟΓΗ",
     borneJeuPrecedent: "Προηγούμενο παιχνίδι",
     borneJeuSuivant: "Επόμενο παιχνίδι",
+  },
+  soutien: {
+    titre: "Στήριξε το Broc",
+    insertCoin: "▶ INSERT COIN",
+    modeDemo: "ΛΕΙΤΟΥΡΓΙΑ ΕΠΙΔΕΙΞΗΣ. ΤΟ ΠΑΙΧΝΙΔΙ ΔΕΝ ΞΕΚΙΝΑ.",
+    corps:
+      "Το Broc το φτιάχνει ένα μόνο άτομο. Το να ακολουθείς το εργαστήρι ή να αφήνεις μια κριτική είναι αυτό που το βοηθά να συνεχίσει να υπάρχει.",
+    instagram: "Ακολούθησε στο Instagram",
+    tiktok: "Ακολούθησε στο TikTok",
+    noter: "Άφησε μια κριτική",
+    pasJouable: "ΛΕΙΤΟΥΡΓΙΑ ΕΠΙΔΕΙΞΗΣ. ΤΟ ΠΑΙΧΝΙΔΙ ΔΕΝ ΞΕΚΙΝΑ.",
   },
 };

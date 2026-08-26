@@ -15,6 +15,22 @@ vi.mock("@/lib/audio/audioManager", () => ({
   },
 }));
 
+// `EcranArcade` monte désormais `SoutienSheet` en permanence (fermée par
+// défaut), qui tire `useSettings` — sans mock, tout rendu de cet écran
+// casserait avant même d'atteindre le composant sous test. Même mock que
+// `SoutienSheet.test.tsx`.
+vi.mock("@/context/SettingsContext", () => ({
+  useSettings: () => ({
+    playClick: vi.fn(),
+  }),
+  // `SoutienSheet` (montée par `EcranArcade`) appelle désormais
+  // `useSettingsSafe` : le mock du module doit fournir les deux exports, sous
+  // peine de casser au rendu.
+  useSettingsSafe: () => ({
+    playClick: vi.fn(),
+  }),
+}));
+
 // jsdom ne fournit pas ResizeObserver ; le composant le construit dès son
 // premier rendu ouvert, donc le bouchon doit être posé avant tout render.
 globalThis.ResizeObserver = class {
