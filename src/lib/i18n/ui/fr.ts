@@ -920,6 +920,13 @@ export const fr = {
     modeDemo: "MODE DÉMONSTRATION. CE JEU NE SE LANCE PAS.",
     corps:
       "Broc est fabriqué par une seule personne. Suivre l'atelier ou laisser un avis, c'est ce qui l'aide à continuer d'exister.",
+    merciTitre: "Merci d'être là",
+    merciCorps:
+      "Broc est fabriqué par une seule personne, dans son coin d'atelier. Vous savoir ici, à chiner, c'est déjà beaucoup.",
+    merciPartage:
+      "Pour aider le projet à grandir : rejoignez-nous sur les réseaux et partagez vos plus belles trouvailles autour de vous.",
+    merciAvis:
+      "Et si le cœur vous en dit, laissez un avis sur la boutique — vos suggestions d'amélioration y sont lues une par une.",
     instagram: "Suivre sur Instagram",
     tiktok: "Suivre sur TikTok",
     noter: "Laisser un avis",

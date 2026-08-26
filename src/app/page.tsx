@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FolderOpen, Heart, Info, Play, Plus, Settings } from "lucide-react";
 import { ReglagesModal } from "@/components/mobile/ReglagesModal";
 import { CreditsModal } from "@/components/mobile/CreditsModal";
-import { SoutienSheet } from "@/components/mobile/SoutienSheet";
+import { SoutienModal } from "@/components/mobile/SoutienModal";
 import { PartiesModal } from "@/components/mobile/PartiesModal";
 import { IntroPorte } from "@/components/mobile/IntroPorte";
 import { IrisFermeture } from "@/components/mobile/IrisTransition";
@@ -458,7 +458,7 @@ export default function TitleScreen() {
         open={creditsOuverts}
         onClose={() => setCreditsOuverts(false)}
       />
-      <SoutienSheet
+      <SoutienModal
         open={soutienOuvert}
         onClose={() => setSoutienOuvert(false)}
       />

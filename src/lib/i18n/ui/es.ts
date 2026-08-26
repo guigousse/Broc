@@ -881,6 +881,13 @@ export const es: DictionnaireUI = {
     modeDemo: "MODO DEMOSTRACIÓN. ESTE JUEGO NO ARRANCA.",
     corps:
       "Broc lo hace una sola persona. Seguir el taller o dejar una reseña es lo que le ayuda a seguir existiendo.",
+    merciTitre: "Gracias por estar aquí",
+    merciCorps:
+      "Broc lo hace una sola persona, en un rincón de su taller. Saber que estás aquí, rebuscando, ya es mucho.",
+    merciPartage:
+      "Para ayudar a que el proyecto crezca: únete a nosotros en las redes y comparte tus mejores hallazgos con quienes te rodean.",
+    merciAvis:
+      "Y si te apetece, deja una reseña en la tienda: allí se lee cada sugerencia de mejora, una por una.",
     instagram: "Seguir en Instagram",
     tiktok: "Seguir en TikTok",
     noter: "Dejar una reseña",
