@@ -164,6 +164,10 @@ export type ObjectifMission =
   | { type: "niveau"; niveau: number }
   /* Périodiques (SP5) — comptés APRÈS l'apparition de la quête. */
   | { type: "objetsRares"; nombre: number }
+  /** « Mets la main sur une pièce légendaire » (SP5 quotidiennes variées).
+   *  Membre distinct plutôt qu'un paramètre de rareté greffé sur `objetsRares` :
+   *  aucun objectif déjà sauvegardé ne change de forme, donc pas de migration. */
+  | { type: "objetLegendaire"; nombre: number }
   | { type: "beneficeCumule"; montant: number }
   | { type: "ventesCategorie"; categorie: CategorieObjet; nombre: number };
 
