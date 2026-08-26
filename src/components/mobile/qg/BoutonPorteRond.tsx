@@ -61,6 +61,52 @@ const [FIN_X, FIN_Y] = pointArc(90 - OUVERTURE);
 /** `sweep-flag` à 0 : l'angle décroît, donc on passe par le bas et non par le haut. */
 const ARC = `M ${DEBUT_X.toFixed(2)} ${DEBUT_Y.toFixed(2)} A ${RAYON_ARC} ${RAYON_ARC} 0 0 0 ${FIN_X.toFixed(2)} ${FIN_Y.toFixed(2)}`;
 
+/** Longueur du chemin du mot, dans le repère de 100. */
+export const LONGUEUR_ARC = (RAYON_ARC * 2 * OUVERTURE * Math.PI) / 180;
+
+/** Corps du mot quand il tient sans effort — la valeur d'origine du dessin. */
+const CORPS_MAX = 9.5;
+/**
+ * Interlettre, en fraction du corps. Les deux maigrissent ensemble : réduire
+ * le corps seul laisserait un mot menu aux lettres écartées, qui déborderait
+ * encore.
+ */
+const INTERLETTRE = 1.1 / CORPS_MAX;
+/** Chasse d'une monospace, en fraction du corps (DM Mono, Courier Prime). */
+const CHASSE = 0.6;
+/**
+ * Part de l'arc où le mot a le droit de s'étendre. La marge existe parce que
+ * la chasse ci-dessus est une valeur de fonte nominale : si la fonte de repli
+ * est un peu plus large, il reste de quoi encaisser.
+ */
+const PART_UTILE = 0.94;
+
+/** Largeur qu'occupe un mot de `signes` caractères, au corps de référence. */
+export function largeurDuMot(signes: number): number {
+  return signes * corpsDuMot(signes) * (CHASSE + INTERLETTRE);
+}
+
+/**
+ * Corps du mot posé sur l'arc : le corps de référence tant que le mot tient,
+ * réduit juste ce qu'il faut au-delà.
+ *
+ * `textPath` ROGNE ce qui dépasse du chemin — il ne rétrécit pas, ne renvoie
+ * pas à la ligne, il coupe. Sur un arc de 71 unités, « Set up stall » (12
+ * signes) en demandait 82 et « Montar puesto » (13) en demandait 88 : leurs
+ * première et dernière lettres disparaissaient, l'anglais s'affichait
+ * « ET UP STAL » (vu sur émulateur Android le 2026-08-26). Le français
+ * (« Étaler ») et le grec (« Πούλημα ») tenaient, d'où un défaut resté
+ * invisible pendant tout le développement.
+ *
+ * Le corps ne bouge pas pour les mots courts : rétrécir un libellé qui tient,
+ * pour la seule symétrie, donnerait des médaillons dont le mot change de
+ * taille d'une langue à l'autre.
+ */
+export function corpsDuMot(signes: number): number {
+  if (signes <= 0) return CORPS_MAX;
+  return Math.min(CORPS_MAX, (LONGUEUR_ARC * PART_UTILE) / (signes * (CHASSE + INTERLETTRE)));
+}
+
 const cadreStyle = (d: number, actif: boolean): CSSProperties => ({
   position: "relative",
   width: d,
@@ -96,6 +142,8 @@ export function BoutonPorteRond({
   // douteuse et un sélecteur CSS carrément invalide — React le documente. On
   // les retire une bonne fois plutôt que de compter sur l'indulgence du moteur.
   const idArc = `arc-porte-${useId().replace(/:/g, "")}`;
+  // Le mot se règle sur sa propre longueur : voir corpsDuMot.
+  const corps = corpsDuMot(libelle.length);
   return (
     // L'enveloppe existe pour le tutoriel, et elle porte deux corrections :
     // elle ne rogne pas — sinon la main pointeuse, posée 26 px au-dessus de la
@@ -185,9 +233,9 @@ export function BoutonPorteRond({
         <text
           fill="var(--brass-300)"
           fontFamily="var(--font-mono)"
-          fontSize={9.5}
+          fontSize={corps}
           fontWeight={700}
-          letterSpacing={1.1}
+          letterSpacing={corps * INTERLETTRE}
           dominantBaseline="central"
         >
           <textPath href={`#${idArc}`} startOffset="50%" textAnchor="middle">

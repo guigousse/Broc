@@ -6,7 +6,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { BoutonPorteRond } from "./BoutonPorteRond";
+import { BoutonPorteRond, LONGUEUR_ARC, corpsDuMot, largeurDuMot } from "./BoutonPorteRond";
 
 afterEach(cleanup);
 
@@ -111,6 +111,51 @@ describe("BoutonPorteRond", () => {
     expect(bouton.getAttribute("aria-label")).toBe("Chiner");
     expect(container.querySelector("textPath")!.textContent).toBe("CHINER");
     expect(container.querySelector("img")!.style.filter).toContain("grayscale");
+  });
+
+
+  /**
+   * LE MOT NE DOIT JAMAIS DÉBORDER DE SON ARC. `textPath` rogne ce qui dépasse
+   * du chemin : il ne rétrécit pas, ne renvoie pas à la ligne, il coupe. Vu sur
+   * l'émulateur Android le 2026-08-26, en anglais — « SET UP STALL » s'affichait
+   * « ET UP STAL », première et dernière lettres avalées.
+   *
+   * Le français (« Étaler », 6 signes) et le grec (« Πούλημα », 7) tenaient sans
+   * effort, d'où un défaut invisible pendant tout le développement. Ce test tient
+   * les QUATRE langues, avec les libellés réels des quatre portes.
+   */
+  describe("le mot tient toujours sur l'arc", () => {
+    const LIBELLES = [
+      ["fr", "Chiner", "Étaler", "Bazar", "Bureau"],
+      ["en", "Pick", "Set up stall", "Bazar", "Office"],
+      ["es", "Rebuscar", "Montar puesto", "Bazar", "Despacho"],
+      ["el", "Ψάξιμο", "Πούλημα", "Μπαζάρ", "Γραφείο"],
+    ] as const;
+
+    for (const [langue, ...mots] of LIBELLES) {
+      for (const mot of mots) {
+        it(`${langue} — « ${mot} » (${mot.length} signes)`, () => {
+          expect(largeurDuMot(mot.length)).toBeLessThanOrEqual(LONGUEUR_ARC);
+        });
+      }
+    }
+
+    /**
+     * Le corps ne bouge PAS tant que le mot tient : rétrécir un libellé court
+     * pour la seule symétrie donnerait quatre médaillons aux mots de tailles
+     * différentes selon la langue, ce qui se voit.
+     */
+    it("un mot court garde le corps de référence, un mot long est réduit", () => {
+      expect(corpsDuMot(6)).toBe(corpsDuMot(4));
+      expect(corpsDuMot(12)).toBeLessThan(corpsDuMot(6));
+      expect(corpsDuMot(13)).toBeLessThan(corpsDuMot(12));
+    });
+
+    /** Un libellé absurdement long rétrécit sans jamais passer sous zéro. */
+    it("un libellé démesuré reste positif", () => {
+      expect(corpsDuMot(80)).toBeGreaterThan(0);
+      expect(largeurDuMot(80)).toBeLessThanOrEqual(LONGUEUR_ARC);
+    });
   });
 
   it("sans cadenas, l'illustration garde ses couleurs", () => {
