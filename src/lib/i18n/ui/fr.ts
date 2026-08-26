@@ -490,6 +490,10 @@ export const fr = {
     themeMot: "Thème",
     envoyerCollection: "Envoyer dans la collection",
     remplacerCollection: "Remplacer l'exemplaire de la collection",
+    remplacerCollectionHausse:
+      "Remplacer l'exemplaire de la collection — sa valeur monte",
+    remplacerCollectionBaisse:
+      "Remplacer l'exemplaire de la collection — sa valeur baisse",
     etatCategorieAria: "État {etat}, catégorie {categorie}",
     categorieAria: "Catégorie : {categorie}",
     valeurMot: "valeur",

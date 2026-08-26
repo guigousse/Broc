@@ -482,6 +482,8 @@ export const en: DictionnaireUI = {
     themeMot: "Theme",
     envoyerCollection: "Send to the collection",
     remplacerCollection: "Replace the collection copy",
+    remplacerCollectionHausse: "Replace the collection copy — its value goes up",
+    remplacerCollectionBaisse: "Replace the collection copy — its value goes down",
     etatCategorieAria: "Condition {etat}, category {categorie}",
     categorieAria: "Category: {categorie}",
     valeurMot: "value",

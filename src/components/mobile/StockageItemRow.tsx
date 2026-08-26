@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useRef, type CSSProperties } from "react";
-import { Album, ArrowRight, RotateCw } from "lucide-react";
+import { Album, ArrowDownToLine, TrendingDown, TrendingUp } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { StarRow } from "@/components/ui/StarRow";
@@ -256,9 +256,10 @@ function StockageItemRowBase({
               : d.inventaire.prixMarcheInconnu}
           </div>
         </div>
-        {/* Déjà donné à l'identique (même état) : pas de bouton. Sinon,
-            flèche droite = don direct, flèche circulaire = remplacement
-            d'un exemplaire dans un autre état (confirmation en aval).
+        {/* Déjà donné à l'identique (même état) : pas de bouton. Sinon la
+            flèche dit ce que l'envoi FERA à la collection, avant le tap :
+            elle ENTRE quand la case est vide, elle MONTE quand l'exemplaire
+            en place vaut moins, elle DESCEND quand il vaut plus.
             stopPropagation : ne déclenche pas le tap de la fiche (détail). */}
         {collection.dejaIdentique ? (
           <span aria-hidden style={{ width: 44 }} />
@@ -287,18 +288,24 @@ function StockageItemRowBase({
             }}
             disabled={!collection.disponible}
             aria-label={
-              collection.necessiteConfirmation
-                ? d.inventaire.remplacerCollection
-                : d.inventaire.envoyerCollection
+              !collection.necessiteConfirmation
+                ? d.inventaire.envoyerCollection
+                : collection.tendance === "hausse"
+                  ? d.inventaire.remplacerCollectionHausse
+                  : collection.tendance === "baisse"
+                    ? d.inventaire.remplacerCollectionBaisse
+                    : d.inventaire.remplacerCollection
             }
           >
             <span style={iconWithPlus}>
               <Album size={22} strokeWidth={1.5} />
               <span style={arrowBadge}>
-                {collection.necessiteConfirmation ? (
-                  <RotateCw size={12} strokeWidth={2.4} />
+                {!collection.necessiteConfirmation ? (
+                  <ArrowDownToLine size={12} strokeWidth={2.4} />
+                ) : collection.tendance === "baisse" ? (
+                  <TrendingDown size={12} strokeWidth={2.4} />
                 ) : (
-                  <ArrowRight size={12} strokeWidth={2.4} />
+                  <TrendingUp size={12} strokeWidth={2.4} />
                 )}
               </span>
             </span>
@@ -330,5 +337,9 @@ export const StockageItemRow = memo(
     prev.collection.disponible === next.collection.disponible &&
     prev.collection.dejaIdentique === next.collection.dejaIdentique &&
     prev.collection.necessiteConfirmation ===
-      next.collection.necessiteConfirmation,
+      next.collection.necessiteConfirmation &&
+    // La tendance décide de la FLÈCHE : l'oublier ici fige la ligne sur sa
+    // première (une restauration change la tendance sans rien changer
+    // d'autre dans le statut).
+    prev.collection.tendance === next.collection.tendance,
 );

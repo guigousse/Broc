@@ -482,6 +482,10 @@ export const es: DictionnaireUI = {
     themeMot: "Tema",
     envoyerCollection: "Enviar a la colección",
     remplacerCollection: "Reemplazar el ejemplar de la colección",
+    remplacerCollectionHausse:
+      "Reemplazar el ejemplar de la colección — su valor sube",
+    remplacerCollectionBaisse:
+      "Reemplazar el ejemplar de la colección — su valor baja",
     etatCategorieAria: "Estado {etat}, categoría {categorie}",
     categorieAria: "Categoría: {categorie}",
     valeurMot: "valor",

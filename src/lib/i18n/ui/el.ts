@@ -483,6 +483,10 @@ export const el: DictionnaireUI = {
     themeMot: "Θέμα",
     envoyerCollection: "Αποστολή στη συλλογή",
     remplacerCollection: "Αντικατάσταση του αντιτύπου της συλλογής",
+    remplacerCollectionHausse:
+      "Αντικατάσταση του αντιτύπου της συλλογής — η αξία ανεβαίνει",
+    remplacerCollectionBaisse:
+      "Αντικατάσταση του αντιτύπου της συλλογής — η αξία πέφτει",
     etatCategorieAria: "Κατάσταση {etat}, κατηγορία {categorie}",
     categorieAria: "Κατηγορία: {categorie}",
     valeurMot: "αξία",

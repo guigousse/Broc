@@ -270,6 +270,86 @@ describe("collectionStatusPourObjet", () => {
     expect(res.necessiteConfirmation).toBe(true);
     expect(res.ancienneDonation).toEqual({ etat: "Mauvais", valeur: 10 });
   });
+
+  /**
+   * Le bouton d'envoi doit dire lequel des trois cas s'applique AVANT le tap :
+   * rien dans la collection, un exemplaire moins bon (l'envoi fait monter la
+   * valeur), ou un exemplaire meilleur (elle baisserait). Demande de l'auteur,
+   * 2026-08-26.
+   */
+  it("aucune tendance quand la case est vide : il n'y a rien à comparer", () => {
+    const state = createMockGameState();
+    const o = createMockObjet({ templateId: "absent" });
+    expect(collectionStatusPourObjet(state, o).tendance).toBeUndefined();
+  });
+
+  it("tendance à la HAUSSE quand l'exemplaire donné vaut moins", () => {
+    const slot = createMockSlot({
+      templateId: "t1",
+      categorie: "Musique",
+      donation: { etat: "Mauvais", valeur: 10 },
+    });
+    const state = createMockGameState({
+      collection: { ...createMockGameState().collection, Musique: [slot] },
+    });
+    const o = createMockObjet({
+      templateId: "t1",
+      categorie: "Musique",
+      etat: "Pristin état",
+      prixReferenceReel: 100,
+    });
+    expect(collectionStatusPourObjet(state, o).tendance).toBe("hausse");
+  });
+
+  it("tendance à la BAISSE quand l'exemplaire donné vaut plus", () => {
+    const slot = createMockSlot({
+      templateId: "t1",
+      categorie: "Musique",
+      donation: { etat: "Pristin état", valeur: 500 },
+    });
+    const state = createMockGameState({
+      collection: { ...createMockGameState().collection, Musique: [slot] },
+    });
+    const o = createMockObjet({
+      templateId: "t1",
+      categorie: "Musique",
+      etat: "Mauvais",
+      prixReferenceReel: 10,
+    });
+    expect(collectionStatusPourObjet(state, o).tendance).toBe("baisse");
+  });
+
+  it("à valeur égale, c'est la QUALITÉ qui tranche — jamais d'égalité muette", () => {
+    // « Mauvais » et « Bon » partagent la prime de donation (1) : à prix de
+    // référence égal, les deux valent EXACTEMENT pareil. Le bouton doit quand
+    // même choisir une flèche — sans départage il tomberait sur « ni hausse
+    // ni baisse », et le rendu retomberait sur celui d'une case vide, faux.
+    const avec = (etatDonne: "Mauvais" | "Bon") =>
+      createMockGameState({
+        collection: {
+          ...createMockGameState().collection,
+          Musique: [
+            createMockSlot({
+              templateId: "t1",
+              categorie: "Musique",
+              donation: { etat: etatDonne, valeur: 42 },
+            }),
+          ],
+        },
+      });
+    const objet = (etat: "Mauvais" | "Bon") =>
+      createMockObjet({
+        templateId: "t1", categorie: "Musique", etat, prixReferenceReel: 42,
+      });
+
+    // Même valeur (42 des deux côtés), qualité supérieure → hausse.
+    expect(collectionStatusPourObjet(avec("Mauvais"), objet("Bon")).tendance).toBe(
+      "hausse",
+    );
+    expect(collectionStatusPourObjet(avec("Bon"), objet("Mauvais")).tendance).toBe(
+      "baisse",
+    );
+  });
 });
 
 describe("peutDemanteler", () => {
