@@ -1,9 +1,23 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { EcranArcade } from "./EcranArcade";
 import type { JeuArcade } from "@/lib/bazar/arcade";
 import { JEUX_ARCADE } from "@/lib/bazar/arcade";
+
+const playArcadeTrack = vi.fn((_url: string) => Promise.resolve());
+const stopArcade = vi.fn();
+vi.mock("@/lib/audio/audioManager", () => ({
+  audioManager: {
+    playArcadeTrack: (url: string) => playArcadeTrack(url),
+    stopArcade: () => stopArcade(),
+  },
+}));
+
+beforeEach(() => {
+  playArcadeTrack.mockClear();
+  stopArcade.mockClear();
+});
 
 afterEach(cleanup);
 
@@ -29,6 +43,20 @@ describe("EcranArcade", () => {
     render(<EcranArcade jeux={jeux()} />);
     expect(screen.getByTestId("arcade-titre").textContent).toBe("???");
     expect(screen.getByText("PAS DE SIGNAL")).toBeTruthy();
+  });
+
+  // La neige disait que le jeu manque, jamais COMMENT l'allumer. L'écran
+  // porte donc maintenant la marche à suivre, sous « PAS DE SIGNAL ».
+  it("un jeu inconnu dit comment le débloquer", () => {
+    render(<EcranArcade jeux={jeux()} />);
+    expect(screen.getByTestId("arcade-indice").textContent).toBe(
+      "AJOUTER LA CARTOUCHE À LA COLLECTION",
+    );
+  });
+
+  it("un jeu trouvé n'affiche plus l'indice", () => {
+    render(<EcranArcade jeux={jeux(0)} />);
+    expect(screen.queryByTestId("arcade-indice")).toBe(null);
   });
 
   // Une image posée dans le DOM puis masquée en CSS reste visible dans
@@ -103,5 +131,64 @@ describe("EcranArcade", () => {
     render(<EcranArcade jeux={jeux()} />);
     expect(screen.queryByTestId("arcade-texte-fefe")).toBe(null);
     expect(screen.queryByTestId("arcade-texte-play")).toBe(null);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* La bande-son du jeu affiché                                         */
+/* ------------------------------------------------------------------ */
+
+describe("EcranArcade — la bande-son", () => {
+  const piste = (i: number) => `/sounds/arcade/${JEUX_ARCADE[i]}.m4a`;
+
+  it("joue la piste du jeu affiché", () => {
+    render(<EcranArcade jeux={jeux(0)} />);
+    expect(playArcadeTrack).toHaveBeenCalledWith(piste(0));
+  });
+
+  // Allumage ou changement de cartouche ne se décide PAS ici : le manager le
+  // sait mieux, puisqu'il sait si une piste tourne déjà. Cet écran ne dit que
+  // quel jeu est à l'affiche.
+  it("changer de jeu rejoue sur la nouvelle piste", () => {
+    render(<EcranArcade jeux={jeux(0, 1)} />);
+    playArcadeTrack.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Jeu suivant" }));
+    expect(playArcadeTrack).toHaveBeenCalledWith(piste(1));
+  });
+
+  // « PAS DE SIGNAL » n'a pas de bande-son — même raison que la capture, qui
+  // n'est même pas demandée au réseau : rien ne doit trahir un jeu pas encore
+  // trouvé.
+  it("un jeu inconnu éteint la borne au lieu de jouer quoi que ce soit", () => {
+    render(<EcranArcade jeux={jeux()} />);
+    expect(playArcadeTrack).not.toHaveBeenCalled();
+    expect(stopArcade).toHaveBeenCalled();
+  });
+
+  // On peut ouvrir la borne sur la neige et swiper jusqu'au premier jeu
+  // trouvé : c'est LUI qui allume le meuble, pas l'écran vide d'avant.
+  it("le premier jeu trouvé après la neige lance bien sa piste", () => {
+    render(<EcranArcade jeux={jeux(1)} />);
+    fireEvent.click(screen.getByRole("button", { name: "Jeu suivant" }));
+    expect(playArcadeTrack).toHaveBeenCalledWith(piste(1));
+  });
+
+  it("revenir sur le même jeu ne relance pas la piste", () => {
+    render(<EcranArcade jeux={jeux(0, 1)} />);
+    playArcadeTrack.mockClear();
+    const suiv = screen.getByRole("button", { name: "Jeu suivant" });
+    fireEvent.click(suiv);
+    fireEvent.click(screen.getByRole("button", { name: "Jeu précédent" }));
+    fireEvent.click(suiv);
+    // Deux allers pour le jeu 1, un retour pour le jeu 0 : trois appels, et
+    // pas un de plus — un re-rendu ne doit jamais redéclencher la lecture.
+    expect(playArcadeTrack).toHaveBeenCalledTimes(3);
+  });
+
+  it("quitter l'écran éteint la borne", () => {
+    const vue = render(<EcranArcade jeux={jeux(0)} />);
+    stopArcade.mockClear();
+    vue.unmount();
+    expect(stopArcade).toHaveBeenCalled();
   });
 });

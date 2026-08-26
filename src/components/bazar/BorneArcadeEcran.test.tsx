@@ -3,6 +3,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { BorneArcadeEcran } from "./BorneArcadeEcran";
 import { JEUX_ARCADE } from "@/lib/bazar/arcade";
+import { ATTENUATION_AMBIANCE_BORNE } from "./bazarAudioCurves";
+
+const setAmbienceDuck = vi.fn();
+vi.mock("@/lib/audio/audioManager", () => ({
+  audioManager: {
+    setAmbienceDuck: (f: number) => setAmbienceDuck(f),
+    // `EcranArcade`, monté par ce composant, pilote sa propre piste.
+    playArcadeTrack: () => Promise.resolve(),
+    stopArcade: () => {},
+  },
+}));
 
 // jsdom ne fournit pas ResizeObserver ; le composant le construit dès son
 // premier rendu ouvert, donc le bouchon doit être posé avant tout render.
@@ -84,5 +95,48 @@ describe("BorneArcadeEcran", () => {
     expect(f.style.right).toBe("14.22%");
     expect(f.style.top).toBe("24.57%");
     expect(f.style.bottom).toBe("25.96%");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* La rue passe derrière la borne                                      */
+/* ------------------------------------------------------------------ */
+
+describe("BorneArcadeEcran — l'ambiance du Bazar", () => {
+  it("atténue la rue tant que la borne est ouverte", () => {
+    setAmbienceDuck.mockClear();
+    monter(true);
+    expect(setAmbienceDuck).toHaveBeenCalledWith(ATTENUATION_AMBIANCE_BORNE);
+  });
+
+  it("ne touche à rien tant que la borne est fermée", () => {
+    setAmbienceDuck.mockClear();
+    monter(false);
+    expect(setAmbienceDuck).not.toHaveBeenCalled();
+  });
+
+  it("rend son volume à la rue en refermant", () => {
+    const { onClose } = monter(true);
+    setAmbienceDuck.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Fermer la borne" }));
+    // Le composant est piloté par `open` : c'est le parent qui referme. Le
+    // démontage est la seule voie de sortie garantie, quelle qu'ait été la
+    // façon de fermer (croix, Échap, voile).
+    expect(onClose).toHaveBeenCalled();
+    cleanup();
+    expect(setAmbienceDuck).toHaveBeenCalledWith(1);
+  });
+
+  // Le facteur est posé par la BORNE et rendu par elle : jamais un volume
+  // absolu, sans quoi il faudrait retenir la zone du panorama d'où le joueur
+  // a ouvert le meuble.
+  it("ne pose et ne rend qu'un facteur, jamais un volume de zone", () => {
+    setAmbienceDuck.mockClear();
+    monter(true);
+    cleanup();
+    for (const [facteur] of setAmbienceDuck.mock.calls) {
+      expect(facteur).toBeGreaterThan(0);
+      expect(facteur).toBeLessThanOrEqual(1);
+    }
   });
 });

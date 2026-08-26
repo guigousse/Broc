@@ -23,6 +23,7 @@ function monter(
   etal: EtalBazar = ETAL,
   jetons = 25,
   resultat: { ok: boolean; raison?: string } = { ok: true },
+  onZoneIndex?: (idx: number) => void,
 ) {
   // Le retour n'est pas décoratif : la fiche de l'article ne se referme que
   // s'il est `ok`, et affiche sinon la raison.
@@ -36,6 +37,7 @@ function monter(
       jeuxArcade={jeux}
       onAcheter={onAcheter}
       onSortir={onSortir}
+      onZoneIndex={onZoneIndex}
     />,
   );
   return { onAcheter, onSortir };
@@ -48,6 +50,15 @@ describe("BazarScene", () => {
     // La zone du milieu est celle que `UnifiedPanorama` centre au montage
     // quand `initialZone` n'est pas passé (cf. Task 1).
     expect(ZONES_BAZAR[Math.floor(ZONES_BAZAR.length / 2)].key).toBe("comptoir");
+  });
+
+  // L'ambiance de rue du Bazar se règle sur la distance à la porte : sans ce
+  // relais, la page n'a aucun moyen de savoir où le joueur se tient.
+  it("relaie la zone regardée au parent, dès le montage", () => {
+    const onZoneIndex = vi.fn();
+    monter(ETAL, 25, { ok: true }, onZoneIndex);
+    // 1 = le comptoir, la zone centrée à l'ouverture.
+    expect(onZoneIndex).toHaveBeenCalledWith(1);
   });
 
   it("pose les trois lots sur la planche du bas", () => {

@@ -3,7 +3,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { X } from "lucide-react";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { audioManager } from "@/lib/audio/audioManager";
 import type { JeuArcade } from "@/lib/bazar/arcade";
+import { ATTENUATION_AMBIANCE_BORNE } from "./bazarAudioCurves";
 import { BORNE_FACADE, dimensionnerBorne } from "./borneArcadeLayout";
 import { EcranArcade } from "./EcranArcade";
 
@@ -72,6 +74,18 @@ export function BorneArcadeEcran({ open, jeux, onClose }: BorneArcadeEcranProps)
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  // La rue passe DERRIÈRE la borne — atténuée, pas coupée : la boutique reste
+  // là. C'est ici et pas dans `EcranArcade` parce que c'est ce composant qui
+  // sait que le meuble est ouvert ; l'écran, lui, ne sait que quel jeu est
+  // affiché. Un FACTEUR est posé, jamais un volume : la borne n'a ainsi rien
+  // à savoir de la zone du panorama d'où le joueur l'a ouverte, ni à retenir
+  // le volume qu'elle remplace pour le lui rendre (cf. `setAmbienceDuck`).
+  useEffect(() => {
+    if (!open) return;
+    audioManager.setAmbienceDuck(ATTENUATION_AMBIANCE_BORNE);
+    return () => audioManager.setAmbienceDuck(1);
+  }, [open]);
 
   // On mesure le CONTENEUR et jamais `window` : en WebView iOS le body est
   // verrouillé et les dimensions de la fenêtre mentent sur la place réelle.
