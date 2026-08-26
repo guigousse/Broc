@@ -4,14 +4,20 @@ import { act, renderHook } from "@testing-library/react";
 import { useCeremonieLivraison } from "./useCeremonieLivraison";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 import { estGele } from "@/lib/affichageGele";
+import { audioManager } from "@/lib/audio/audioManager";
+import { DECALAGE_VOL_MS, VOL_MS } from "@/lib/quetes/ceremonieLivraison";
 import type { Courrier, GameState } from "@/types/game";
 
-function courrier(id: string, categorie: "principale" | "quotidienne"): Courrier {
+function courrier(
+  id: string,
+  categorie: "principale" | "quotidienne",
+  recompense: { argent: number; jetons?: number } = { argent: 60 },
+): Courrier {
   return {
     id, type: "mission", jourRecu: 1, lu: true,
     payload: {
       type: "mission", categorie, expediteurId: "grand-pere",
-      titre: "T", corps: ["c"], cibles: [], recompense: { argent: 60 },
+      titre: "T", corps: ["c"], cibles: [], recompense,
       objectifs: [{ type: "ventesCumulees", montant: 10 }],
     },
   };
@@ -95,6 +101,50 @@ describe("useCeremonieLivraison", () => {
     expect(estGele().budget).toBe(true);
     expect(estGele().xp).toBe(false);
     vue.unmount();
-    expect(estGele()).toEqual({ xp: false, budget: false, energie: false });
+    expect(estGele()).toEqual({ xp: false, budget: false, energie: false, jetons: false });
+  });
+
+  /**
+   * LES BAZARCOINS (2026-08-26). Ils volent en dernier, et leur compteur est
+   * figé comme les autres jusqu'à ce que la pièce s'y pose — sinon le gain
+   * apparaîtrait dans la caisse avant d'avoir quitté le carnet.
+   */
+  it("les Bazarcoins gèlent leur compteur, et l'atterrissage le dégèle en tintant", () => {
+    const tinte = vi
+      .spyOn(audioManager, "playJetonBazar")
+      .mockResolvedValue(undefined);
+    const c = courrier("m1", "quotidienne", { argent: 0, jetons: 3 });
+    const vue = renderHook(() =>
+      useCeremonieLivraison({ state: etat(c), onLivrerMission: () => ({ ok: true }) }),
+    );
+    act(() => vue.result.current.lancer("m1"));
+    expect(estGele().jetons).toBe(true);
+    // Seuls les Bazarcoins volent : leur atterrissage tombe à VOL_MS.
+    expect(tinte).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(VOL_MS + 10);
+    });
+    expect(estGele().jetons).toBe(false);
+    expect(tinte).toHaveBeenCalledTimes(1);
+    vue.unmount();
+    tinte.mockRestore();
+  });
+
+  it("une quête sans Bazarcoins ne gèle pas leur compteur ni ne tinte", () => {
+    const tinte = vi
+      .spyOn(audioManager, "playJetonBazar")
+      .mockResolvedValue(undefined);
+    const c = courrier("m1", "quotidienne", { argent: 60 });
+    const vue = renderHook(() =>
+      useCeremonieLivraison({ state: etat(c), onLivrerMission: () => ({ ok: true }) }),
+    );
+    act(() => vue.result.current.lancer("m1"));
+    expect(estGele().jetons).toBe(false);
+    act(() => {
+      vi.advanceTimersByTime(DECALAGE_VOL_MS + VOL_MS + 500);
+    });
+    expect(tinte).not.toHaveBeenCalled();
+    vue.unmount();
+    tinte.mockRestore();
   });
 });

@@ -113,6 +113,47 @@ describe("ArticleBazar — l'état au pied de la case", () => {
     expect(bouton.getAttribute("aria-label")).toBe("5 pièces · Musique");
   });
 
+  // ── L'ARTICLE VENDU (2026-08-26) ────────────────────────────────────────
+  // Il ne quitte plus l'étagère : il y reste en noir et blanc sous son cachet,
+  // jusqu'au renouvellement du lundi. La case ne promet plus rien — donc elle
+  // n'est plus une commande.
+  describe("un article vendu", () => {
+    const vendu = { objet: OBJET_PRISTIN, vendu: true } as const;
+
+    it("n'est plus un bouton : il n'y a plus rien à ouvrir", () => {
+      monter(vendu);
+      expect(screen.queryByRole("button")).toBeNull();
+      expect(screen.getByTestId("visuel")).toBeTruthy();
+    });
+
+    it("porte le cachet en diagonale de la chine", () => {
+      monter(vendu);
+      const cachet = screen.getByTestId("tampon");
+      expect(cachet.textContent).toBe("Vendu");
+      const encre = cachet.firstElementChild as HTMLElement;
+      expect(encre.style.transform).toBe("rotate(-18deg)");
+    });
+
+    // Son état ne renseigne plus personne — l'objet n'est plus à vendre — et
+    // une rangée colorée sous une vignette grise se contredirait.
+    it("perd ses étoiles d'état", () => {
+      monter(vendu);
+      expect(screen.queryByTestId("etoiles-case1")).toBeNull();
+    });
+
+    it("se dit vendu à qui ne le voit pas", () => {
+      monter(vendu);
+      const cadre = screen.getByRole("img", { name: /Harmonica chromatique.*Vendu/ });
+      expect(cadre).toBeTruthy();
+    });
+
+    it("un tap ne déclenche rien", () => {
+      const { onOuvrir } = monter(vendu);
+      fireEvent.click(screen.getByTestId("visuel"));
+      expect(onOuvrir).not.toHaveBeenCalled();
+    });
+  });
+
   // ── Le tap OUVRE, il n'achète pas ────────────────────────────────────────
   // Recette du 2026-08-20 : un doigt mal posé sur l'étagère coûtait une
   // semaine de jetons sans rien demander. L'achat vit dans la fiche.

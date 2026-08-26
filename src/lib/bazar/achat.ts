@@ -66,7 +66,10 @@ export function acheterArticle(
   now: number,
 ): ResultatAchat {
   const v = state.bazar?.articles[index];
-  if (!v) return { ok: false, raison: "indisponible" };
+  // `vendu` autant que `null` : depuis le 2026-08-26 l'article acheté reste sur
+  // l'étagère pour s'y montrer tamponné, il n'est plus effacé — sans ce garde,
+  // il redeviendrait achetable en boucle.
+  if (!v || v.vendu) return { ok: false, raison: "indisponible" };
   if (state.jetons < v.prix) return { ok: false, raison: "jetons" };
   const template = getTemplate(v.templateId);
   if (!template) return { ok: false, raison: "indisponible" };
@@ -95,7 +98,10 @@ export function acheterArticle(
       inventaireJoueur: [...state.inventaireJoueur, objet],
       bazar: {
         ...state.bazar!,
-        articles: state.bazar!.articles.map((a, i) => (i === index ? null : a)),
+        // MARQUÉ, pas effacé : l'étagère garde l'objet pour le montrer vendu.
+        articles: state.bazar!.articles.map((a, i) =>
+          i === index && a ? { ...a, vendu: true } : a,
+        ),
       },
     },
   };

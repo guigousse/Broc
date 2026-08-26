@@ -873,5 +873,12 @@ export const es: DictionnaireUI = {
     borneIndiceCartouche: "AÑADE EL CARTUCHO A LA COLECCIÓN",
     borneJeuPrecedent: "Juego anterior",
     borneJeuSuivant: "Juego siguiente",
+    parlerTenancier: "Hablar con el tendero",
+    delaiJours: "{n} días",
+    delaiJourUn: "{n} día",
+    delaiHeures: "{n} horas",
+    delaiHeureUne: "{n} hora",
+    delaiMinutes: "{n} minutos",
+    delaiMinuteUne: "{n} minuto",
   },
 };

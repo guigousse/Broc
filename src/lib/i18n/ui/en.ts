@@ -866,5 +866,12 @@ export const en: DictionnaireUI = {
     borneIndiceCartouche: "ADD THE CARTRIDGE TO YOUR COLLECTION",
     borneJeuPrecedent: "Previous game",
     borneJeuSuivant: "Next game",
+    parlerTenancier: "Talk to the shopkeeper",
+    delaiJours: "{n} days",
+    delaiJourUn: "{n} day",
+    delaiHeures: "{n} hours",
+    delaiHeureUne: "{n} hour",
+    delaiMinutes: "{n} minutes",
+    delaiMinuteUne: "{n} minute",
   },
 };

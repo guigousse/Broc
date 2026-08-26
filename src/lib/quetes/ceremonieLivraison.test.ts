@@ -11,6 +11,33 @@ describe("phasesLivraison", () => {
     expect(envols).toEqual(["xp", "energie", "argent"]);
   });
 
+  /**
+   * Les Bazarcoins volent EN DERNIER (demande de l'auteur, 2026-08-26) : la
+   * caisse porte deux monnaies, et les voir arriver l'une après l'autre dit
+   * laquelle vient de grossir. Ensemble, elles se disputeraient le même coin
+   * de l'écran.
+   */
+  it("ordre XP → énergie → argent → Bazarcoins quand tout est présent", () => {
+    const envols = phasesLivraison({ argent: 200, xp: 300, energie: 2, jetons: 3 })
+      .filter((e) => e.etape.type === "envol")
+      .map((e) => (e.etape.type === "envol" ? e.etape.jeton : ""));
+    expect(envols).toEqual(["xp", "energie", "argent", "bazar"]);
+  });
+
+  // Le cas courant d'une quête quotidienne : des jetons, et rien d'autre.
+  it("des Bazarcoins seuls volent quand même", () => {
+    const plan = phasesLivraison({ argent: 0, xp: 0, energie: 0, jetons: 1 });
+    const envols = plan.filter((e) => e.etape.type === "envol");
+    expect(envols).toHaveLength(1);
+    expect(envols[0].etape).toEqual({ type: "envol", jeton: "bazar" });
+    expect(envols[0].at).toBe(0);
+  });
+
+  it("omet les Bazarcoins à 0", () => {
+    const plan = phasesLivraison({ argent: 30, xp: 25, energie: 0, jetons: 0 });
+    expect(plan.some((e) => e.etape.type === "envol" && e.etape.jeton === "bazar")).toBe(false);
+  });
+
   it("omet les jetons à 0 (pas d'énergie → deux vols)", () => {
     const plan = phasesLivraison({ argent: 30, xp: 25, energie: 0, jetons: 0 });
     expect(plan.filter((e) => e.etape.type === "envol").length).toBe(2);

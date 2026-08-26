@@ -912,5 +912,12 @@ export const fr = {
     borneIndiceCartouche: "AJOUTER LA CARTOUCHE À LA COLLECTION",
     borneJeuPrecedent: "Jeu précédent",
     borneJeuSuivant: "Jeu suivant",
+    parlerTenancier: "Parler au tenancier",
+    delaiJours: "{n} jours",
+    delaiJourUn: "{n} jour",
+    delaiHeures: "{n} heures",
+    delaiHeureUne: "{n} heure",
+    delaiMinutes: "{n} minutes",
+    delaiMinuteUne: "{n} minute",
   },
 } as const;

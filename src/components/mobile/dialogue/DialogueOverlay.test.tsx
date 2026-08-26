@@ -70,4 +70,52 @@ describe("DialogueOverlay", () => {
     expect(screen.getByRole("button", { name: /\bcontinue\b/i })).toBeTruthy();
     localStorage.clear();
   });
+
+  /**
+   * LES LIGNES FOURNIES PAR L'APPELANT (2026-08-26). Le tenancier du Bazar
+   * s'en sert : sa dernière réplique porte un délai à mettre en gras, donc du
+   * balisage, que le contenu scénarisé — de simples chaînes — ne sait pas
+   * transporter. Quand l'appelant fournit ses lignes, l'overlay les affiche
+   * telles quelles et ne va plus les chercher dans la séquence.
+   */
+  describe("lignes fournies par l'appelant", () => {
+    it("affiche les lignes reçues plutôt que celles de la séquence", async () => {
+      const user = userEvent.setup();
+      const onFini = vi.fn();
+      render(
+        <DialogueOverlay
+          sequence={seq}
+          nom="Le Joueur du Vide-grenier"
+          portraits={GRAND_PERE_PORTRAITS}
+          lignes={["Bonjour à vous.", <span key="d">dans <strong>4 j</strong></span>]}
+          onFini={onFini}
+        />,
+      );
+      expect(screen.getByText("Bonjour à vous.")).toBeTruthy();
+      expect(screen.queryByText(seq.lignes[0].texte)).toBeNull();
+      await user.click(screen.getByRole("button", { name: /continuer/i }));
+      // Le balisage arrive intact : le délai est bien en gras.
+      expect(screen.getByText("4 j").tagName).toBe("STRONG");
+      await user.click(screen.getByRole("button", { name: /continuer/i }));
+      expect(onFini).toHaveBeenCalledTimes(1);
+    });
+
+    // Le compte des lignes vient alors de l'appelant, pas de la séquence :
+    // sinon l'overlay refermerait trop tôt, ou tournerait dans le vide.
+    it("compte les lignes reçues, pas celles de la séquence", async () => {
+      const user = userEvent.setup();
+      const onFini = vi.fn();
+      render(
+        <DialogueOverlay
+          sequence={seq}
+          nom="Le Joueur du Vide-grenier"
+          portraits={GRAND_PERE_PORTRAITS}
+          lignes={["Une seule ligne."]}
+          onFini={onFini}
+        />,
+      );
+      await user.click(screen.getByRole("button", { name: /continuer/i }));
+      expect(onFini).toHaveBeenCalledTimes(1);
+    });
+  });
 });

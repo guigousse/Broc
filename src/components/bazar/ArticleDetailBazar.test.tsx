@@ -4,13 +4,15 @@
  * un article sur l'étagère l'achetait sur-le-champ, un doigt mal posé coûtait
  * une semaine de jetons sans rien demander.
  */
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ArticleDetailBazar, type ArticleDetail } from "./ArticleDetailBazar";
 import { ETAT_ARTICLE_BAZAR } from "@/lib/bazar/achat";
 import { getRarityColors } from "@/lib/rarityColors";
 import { ECLAT_PRISTIN } from "@/components/ui/ItemSticker";
 import { etoileCount } from "@/lib/etat";
+import { audioManager } from "@/lib/audio/audioManager";
+import { DELAI_OBJET_MS, JETONS_MAX } from "@/lib/celebrationAchat";
 
 afterEach(cleanup);
 
@@ -139,6 +141,86 @@ describe("ArticleDetailBazar", () => {
       const message = screen.getByRole("status") as HTMLElement;
       expect(message.textContent).toBe("Stockage plein");
       expect(message.style.color).toBe("var(--brass-300)");
+    });
+  });
+
+  // ── LA CÉLÉBRATION DE L'ACHAT (2026-08-26) ──────────────────────────────
+  // Payer doit se voir et s'entendre : les jetons quittent la caisse, l'objet
+  // file vers la Réserve, une cloche dit que c'est fait. Les trois partent
+  // ensemble, et RIEN ne part si le jeu refuse.
+  describe("la célébration de l'achat", () => {
+    /** Les cibles nommées que la célébration cherche dans la page. */
+    function poserCibles() {
+      for (const cible of ["jetons-header", "/stockage"]) {
+        const el = document.createElement("span");
+        el.dataset.flyTarget = cible;
+        document.body.appendChild(el);
+      }
+    }
+    const jetonsEnVol = () =>
+      document.querySelectorAll('[data-testid="jeton-jailli"]');
+    /** Le clone que `flyToTab` lâche par-dessus la page. */
+    const objetEnVol = () =>
+      [...document.body.querySelectorAll("div")].filter(
+        (e) => e.style.position === "fixed" && e.style.zIndex === "9999",
+      );
+
+    beforeEach(() => {
+      poserCibles();
+      vi.useFakeTimers();
+      vi.spyOn(audioManager, "playCash").mockResolvedValue(undefined);
+      vi.spyOn(audioManager, "playPickup").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+      document.body.innerHTML = "";
+    });
+
+    it("un achat réussi fait sonner la monnaie", () => {
+      monter();
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
+      expect(audioManager.playCash).toHaveBeenCalledTimes(1);
+    });
+
+    it("les jetons payés quittent la caisse, plafonnés à la gerbe", () => {
+      monter();
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
+      // L'article de la vitrine coûte 8 jetons ; la gerbe en montre six.
+      expect(jetonsEnVol()).toHaveLength(JETONS_MAX);
+    });
+
+    // Second temps : l'objet ne part qu'APRÈS le paiement (cf.
+    // `DELAI_OBJET_MS`). Au moment du tap, rien ne vole encore.
+    it("l'objet s'envole vers la Réserve, dans un second temps", () => {
+      monter();
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
+      expect(objetEnVol()).toHaveLength(0);
+      vi.advanceTimersByTime(DELAI_OBJET_MS + 10);
+      expect(objetEnVol()).toHaveLength(1);
+    });
+
+    /**
+     * Le refus du jeu arrive APRÈS le tap : stockage plein, article déjà parti.
+     * Rien ne doit s'envoler — la caisse n'a rien lâché, et une fête sur un
+     * échec est pire qu'un silence.
+     */
+    it("un achat refusé ne fait ni bruit ni gerbe", () => {
+      monter(VITRINE, 99, true, { ok: false, raison: "Stockage plein" });
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
+      expect(audioManager.playCash).not.toHaveBeenCalled();
+      expect(jetonsEnVol()).toHaveLength(0);
+      vi.advanceTimersByTime(DELAI_OBJET_MS + 10);
+      expect(objetEnVol()).toHaveLength(0);
+      expect(audioManager.playPickup).not.toHaveBeenCalled();
+    });
+
+    it("un bouton éteint ne célèbre rien non plus", () => {
+      monter(VITRINE, 3);
+      fireEvent.click(screen.getByRole("button", { name: /^Acheter pour/ }));
+      expect(audioManager.playCash).not.toHaveBeenCalled();
+      expect(jetonsEnVol()).toHaveLength(0);
     });
   });
 

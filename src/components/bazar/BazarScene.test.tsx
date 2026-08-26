@@ -28,7 +28,19 @@ const ETAL: EtalBazar = {
   ],
 };
 
-/** L'étal avec la case `index` vidée par un achat. */
+/**
+ * L'étal après l'achat de la case `index`. L'article n'est plus EFFACÉ mais
+ * marqué vendu (2026-08-26) : il reste sur l'étagère pour s'y montrer en noir
+ * et blanc sous son cachet.
+ */
+function vendu(index: number): EtalBazar {
+  return {
+    ...ETAL,
+    articles: ETAL.articles.map((a, i) => (i === index && a ? { ...a, vendu: true } : a)),
+  };
+}
+
+/** L'étal d'une partie d'AVANT le marquage : la case est vide, sans rien à montrer. */
 function sansArticle(index: number): EtalBazar {
   return { ...ETAL, articles: ETAL.articles.map((a, i) => (i === index ? null : a)) };
 }
@@ -322,55 +334,62 @@ describe("BazarScene", () => {
     expect(img.style.objectPosition).toBe("center");
   });
 
-  it("article vendu : sa place est vide et le dit", () => {
-    monter(sansArticle(1));
-    expect(screen.queryByTestId("article-case2")).toBeNull();
-    expect(screen.getByText(/Vendu/)).toBeTruthy();
+  // ── L'ARTICLE VENDU RESTE À L'ÉTAGÈRE (2026-08-26) ──────────────────────
+  // Il était effacé et remplacé par une plaque « Vendu » pendue sous la case.
+  // Il reste maintenant en place, en noir et blanc, sous le cachet en diagonale
+  // de la chine : le joueur revoit ce qu'il a acheté, et l'étagère ne se creuse
+  // pas de trous au fil de la semaine.
+  it("article vendu : l'objet reste en place, grisé et tamponné", () => {
+    monter(vendu(1));
+    const case2 = screen.getByTestId("article-case2");
+    expect(case2).toBeTruthy();
+    const img = case2.querySelector("img") as HTMLElement;
+    expect(img.style.filter).toContain("grayscale(1)");
+    expect(within(case2).getByTestId("tampon").textContent).toBe("Vendu");
   });
 
-  // L'étiquette occupait TOUTE la largeur de la planche, parce qu'elle portait
-  // une phrase entière (« Vendu — de retour lundi ») qu'une case de 22 unités
-  // ne tenait pas. Avec trois articles, une étiquette pleine rangée
-  // recouvrirait les deux cases encore en vente : elle se serre donc sur SA
-  // case, et le libellé est raccourci pour y tenir dans les quatre langues.
-  it("article vendu : l'étiquette tient dans sa case et ne mord pas sur les voisines", () => {
-    monter(sansArticle(1));
-    const cadre = screen.getByTestId("etiquette-vendu-1");
-    expect(parseFloat(cadre.style.width)).toBeCloseTo(
-      qgPct(BAZAR_LAYOUT.objets.case2.width),
-      5,
-    );
-    expect(parseFloat(cadre.style.left)).toBeCloseTo(
-      qgPct(BAZAR_LAYOUT.objets.case2.left),
-      5,
-    );
+  it("article vendu : la plaque pendue sous la case a disparu", () => {
+    monter(vendu(1));
+    expect(screen.queryByTestId("etiquette-vendu-1")).toBeNull();
+  });
+
+  it("article vendu : il n'ouvre plus de fiche", () => {
+    monter(vendu(1));
+    expect(screen.queryByRole("button", { name: /Magnatimmo/ })).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("article vendu : les deux autres restent en vente", () => {
-    monter(sansArticle(1));
-    expect(screen.getByTestId("article-case1")).toBeTruthy();
-    expect(screen.getByTestId("article-case3")).toBeTruthy();
-    expect(screen.getAllByText(/Vendu/)).toHaveLength(1);
+    monter(vendu(1));
+    expect(screen.getAllByTestId("tampon")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: /Harmonica/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /flipper|Flipper/ })).toBeTruthy();
   });
 
-  it("étagère entièrement vendue : trois étiquettes, une par case", () => {
-    monter({ ...ETAL, articles: [null, null, null] });
-    expect(screen.getAllByText(/Vendu/)).toHaveLength(3);
-    for (const i of [0, 1, 2]) {
-      expect(screen.getByTestId(`etiquette-vendu-${i}`)).toBeTruthy();
+  it("étagère entièrement vendue : trois objets tamponnés, aucune commande", () => {
+    monter({
+      ...ETAL,
+      articles: ETAL.articles.map((a) => (a ? { ...a, vendu: true } : a)),
+    });
+    expect(screen.getAllByTestId("tampon")).toHaveLength(3);
+    for (const cle of ["case1", "case2", "case3"]) {
+      expect(screen.getByTestId(`article-${cle}`)).toBeTruthy();
     }
   });
 
-  it("article vendu : l'étiquette est posée sur une plaque, pas à même le mur", () => {
+  /**
+   * Les parties d'AVANT le marquage portent un `null` à la place de l'article
+   * acheté : il n'y a alors rien à montrer, et la case reste simplement vide
+   * jusqu'au renouvellement du lundi. Pas de migration pour ça — l'étal se
+   * renouvelle de lui-même.
+   */
+  it("case vide d'une ancienne partie : rien, et rien qui plante", () => {
     monter(sansArticle(1));
-    const plaque = screen.getByText(/Vendu/);
-    expect(plaque.style.backgroundColor).toBe("var(--forest-800)");
-    expect(plaque.style.color).toBe("var(--brass-300)");
+    expect(screen.queryByTestId("article-case2")).toBeNull();
+    expect(screen.queryByTestId("tampon")).toBeNull();
+    expect(screen.getByTestId("article-case1")).toBeTruthy();
   });
 
-  // Le tenancier est du DÉCOR : il se voit, il ne se tape pas. Tant qu'il n'a
-  // ni nom ni réplique, en faire un bouton promettrait une interaction qui
-  // n'existe pas — et un lecteur d'écran annoncerait une commande morte.
   describe("le tenancier derrière le comptoir", () => {
     it("est posé à la coordonnée `vendeur` du layout, via le hook de calage", () => {
       monter();
@@ -392,14 +411,26 @@ describe("BazarScene", () => {
       expect(img.getAttribute("src")).toBe("/bazar/vendeur-bazar.webp");
     });
 
-    it("ne répond pas au tap et reste muet pour un lecteur d'écran", () => {
+    /**
+     * Il a longtemps été décor — muet et sourd aux taps — « faute d'avoir une
+     * réplique ». Il en a depuis le 2026-08-26 : le tenancier est un bouton
+     * nommé qui ouvre sa bulle. Le DESSIN, lui, reste muet : c'est le bouton
+     * qui porte le nom, pas l'image qu'il contient.
+     */
+    it("répond au tap et porte son nom, le dessin restant muet", () => {
       monter();
       const el = screen.getByTestId("tenancier-bazar");
-      expect(el.getAttribute("aria-hidden")).toBe("true");
-      expect(el.style.pointerEvents).toBe("none");
-      expect(el.querySelector("button")).toBeNull();
-      const img = el.querySelector("img") as HTMLImageElement;
-      expect(img.getAttribute("alt")).toBe("");
+      expect(el.tagName).toBe("BUTTON");
+      expect(el.getAttribute("aria-label")).toBe("Parler au tenancier");
+      expect(el.style.pointerEvents).toBe("auto");
+      expect((el.querySelector("img") as HTMLImageElement).getAttribute("alt")).toBe("");
+    });
+
+    it("le tap ouvre sa bulle, qui finit par le calendrier de l'étal", () => {
+      monter();
+      fireEvent.click(screen.getByTestId("tenancier-bazar"));
+      fireEvent.click(screen.getByRole("button", { name: /continuer/i }));
+      expect(screen.getByText(/prochain arrivage/i)).toBeTruthy();
     });
   });
 

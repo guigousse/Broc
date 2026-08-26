@@ -892,5 +892,12 @@ export const el: DictionnaireUI = {
     borneIndiceCartouche: "ΠΡΟΣΘΕΣΤΕ ΤΗΝ ΚΑΣΕΤΑ ΣΤΗ ΣΥΛΛΟΓΗ",
     borneJeuPrecedent: "Προηγούμενο παιχνίδι",
     borneJeuSuivant: "Επόμενο παιχνίδι",
+    parlerTenancier: "Μίλα στον καταστηματάρχη",
+    delaiJours: "{n} ημέρες",
+    delaiJourUn: "{n} ημέρα",
+    delaiHeures: "{n} ώρες",
+    delaiHeureUne: "{n} ώρα",
+    delaiMinutes: "{n} λεπτά",
+    delaiMinuteUne: "{n} λεπτό",
   },
 };

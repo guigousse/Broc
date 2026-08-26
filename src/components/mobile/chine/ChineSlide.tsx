@@ -18,6 +18,7 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { ObjetEnVente } from "@/types/game";
+import { TamponEncreur } from "@/components/ui/TamponEncreur";
 
 // Agrandissement max du sticker au-delà de sa taille naturelle. Les images
 // objets sont en 470 px : la taille de base (≈224 px) × 2 reste sous la
@@ -244,19 +245,15 @@ export function ChineSlideVue({ slide, plein = false }: { slide: ChineSlide; ple
                 aussitôt « Stock plein » — elle annoncerait l'empêchement au
                 lieu de la réussite. `acquis` passe donc en premier. */}
             {(acquis || vendeurFache || plein) && (
-              <div style={tamponBox} aria-hidden>
-                <span
-                  style={tampon(
-                    acquis ? "var(--forest-600)" : "var(--vermillion-500)",
-                  )}
-                >
-                  {acquis
-                    ? d.chine.tamponVendu
-                    : vendeurFache
-                    ? d.chine.vendeurFache
-                    : d.chine.tamponStockPlein}
-                </span>
-              </div>
+              <TamponEncreur
+                encre={acquis ? "var(--forest-600)" : "var(--vermillion-500)"}
+              >
+                {acquis
+                  ? d.chine.tamponVendu
+                  : vendeurFache
+                  ? d.chine.vendeurFache
+                  : d.chine.tamponStockPlein}
+              </TamponEncreur>
             )}
           </div>
         </div>
@@ -277,34 +274,6 @@ const stickerImg: CSSProperties = {
   width: "min(224px, 60vw)",
   aspectRatio: "1 / 1",
 };
-
-/** Calque centrant le tampon sur le sticker, sans gêner les gestes. */
-const tamponBox: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  pointerEvents: "none",
-  zIndex: 2,
-};
-
-/** Tampon encreur : cadre + texte de la couleur d'encre, posé en diagonale. */
-const tampon = (encre: string): CSSProperties => ({
-  transform: "rotate(-18deg)",
-  border: `3px solid ${encre}`,
-  borderRadius: 8,
-  padding: "4px 14px",
-  fontFamily: "var(--font-display)",
-  fontWeight: 800,
-  fontSize: 20,
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  whiteSpace: "nowrap",
-  color: encre,
-  background: "rgba(250,243,224,0.62)",
-  boxShadow: "0 1px 6px rgba(0,0,0,0.35)",
-});
 
 const titre: CSSProperties = {
   position: "relative",

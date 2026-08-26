@@ -10,6 +10,8 @@ import { libelleEtat } from "@/lib/i18n/libelles";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
 import { ETAT_ARTICLE_BAZAR } from "@/lib/bazar/achat";
+import { celebrerAchat } from "@/lib/celebrationAchat";
+import { getItemImageUrl } from "@/lib/itemImages";
 import type { CategorieObjet, Rarete } from "@/types/game";
 
 /**
@@ -258,6 +260,32 @@ export function ArticleDetailBazar({
     setRefus(null);
   }, [open, cleArticle]);
 
+  /**
+   * LA CÉLÉBRATION DE L'ACHAT — deux temps, orchestrés hors d'ici.
+   *
+   * La fiche ne fait que fournir ce qu'elle seule connaît : le prix payé, la
+   * position de la vignette AU MOMENT DU TAP, et l'image de l'objet. Elle se
+   * referme dans la foulée, donc elle ne peut rien tenir de plus — les
+   * minuteries et les clones vivent dans `celebrationAchat`, hors de React.
+   *
+   * Un lot de pièces vole sans image : il n'a pas de vignette au catalogue,
+   * seulement son engrenage.
+   */
+  const celebrer = () => {
+    if (!article) return;
+    const visuel = document.querySelector(
+      '[data-testid="fiche-visuel"]',
+    ) as HTMLElement | null;
+    celebrerAchat({
+      prix: article.prix,
+      rectObjet: visuel ? visuel.getBoundingClientRect() : null,
+      imageUrl:
+        article.genre === "objet" && article.categorie
+          ? getItemImageUrl(article.templateId)
+          : null,
+    });
+  };
+
   if (!open || !article) return null;
 
   return (
@@ -375,6 +403,10 @@ export function ArticleDetailBazar({
               }
               const res = onAcheter();
               if (res.ok) {
+                celebrer();
+                // La fiche se referme AUSSITÔT, sans attendre la fin des vols :
+                // les clones animés vivent dans le `body`, hors d'elle. Attendre
+                // les jouerait derrière le voile, c'est-à-dire nulle part.
                 onClose();
                 return;
               }

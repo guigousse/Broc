@@ -6,6 +6,7 @@ import { libelleEtat } from "@/lib/i18n/libelles";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
 import { StarRow } from "@/components/ui/StarRow";
+import { TamponEncreur } from "@/components/ui/TamponEncreur";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
 import { type EtatObjet, type Rarete } from "@/types/game";
@@ -33,6 +34,12 @@ interface ArticleBazarProps {
    * nu, sans que la scène ait à porter l'exception.
    */
   objet?: { etat: EtatObjet; rarete: Rarete };
+  /**
+   * L'article a été acheté. Il reste sur l'étagère — en noir et blanc, sous
+   * son cachet — jusqu'au renouvellement du lundi, mais il ne promet plus
+   * rien : ni fiche à ouvrir, ni état à lire.
+   */
+  vendu?: boolean;
   /** Ouvre la fiche de l'article. Le tap N'ACHÈTE PAS (cf. ci-dessous). */
   onOuvrir: () => void;
 }
@@ -68,6 +75,7 @@ export function ArticleBazar({
   visuel,
   libelle,
   objet,
+  vendu = false,
   onOuvrir,
 }: ArticleBazarProps) {
   const { d, tr } = useLangue();
@@ -80,9 +88,13 @@ export function ArticleBazar({
   // dont le nom s'annonce à coup sûr à la prise de focus. Le prix, lui, a
   // quitté l'étagère pour tout le monde de la même façon : il est dans la
   // fiche, que ce bouton ouvre.
-  const nomAccessible = objet
-    ? `${libelle} — ${tr(d.chine.etatAriaLabel, { etat: libelleEtat(objet.etat, d) })}`
-    : libelle;
+  // Vendu, c'est CELA qu'il faut annoncer, et rien d'autre : l'état d'un objet
+  // qui n'est plus à vendre n'apprend rien à personne.
+  const nomAccessible = vendu
+    ? `${libelle} — ${d.bazar.vendu}`
+    : objet
+      ? `${libelle} — ${tr(d.chine.etatAriaLabel, { etat: libelleEtat(objet.etat, d) })}`
+      : libelle;
 
   // Le conteneur est une case CARRÉE (`aspectRatio: 1/1` sur une largeur en
   // `%`) : sans hauteur propre, la case précédente n'existait qu'en largeur,
@@ -118,6 +130,27 @@ export function ArticleBazar({
     justifyItems: "center",
     gap: 2,
   };
+
+  if (vendu) {
+    return (
+      // Ni bouton, ni cible de tap : il n'y a plus rien à ouvrir, et une
+      // commande qui ne promet rien ment. `role="img"` avec le nom complet
+      // rend au lecteur d'écran ce que le cachet dit à l'œil.
+      <div
+        style={style}
+        data-testid={`article-${cle}`}
+        role="img"
+        aria-label={nomAccessible}
+      >
+        <span style={{ position: "relative", width: "100%", height: "100%", display: "grid", justifyItems: "center", alignItems: "end" }}>
+          {visuel}
+          <TamponEncreur encre="var(--forest-600)" taille={13}>
+            {d.bazar.vendu}
+          </TamponEncreur>
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div style={style} data-testid={`article-${cle}`}>
