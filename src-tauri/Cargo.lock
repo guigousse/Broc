@@ -88,6 +88,7 @@ dependencies = [
  "tauri-plugin-firebase",
  "tauri-plugin-haptics",
  "tauri-plugin-iap",
+ "tauri-plugin-in-app-review",
  "tauri-plugin-log",
  "tauri-plugin-notification",
  "tauri-plugin-opener",
@@ -3844,6 +3845,19 @@ dependencies = [
  "serde",
  "serde_json",
  "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "tauri-plugin-in-app-review"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c732f3b1a977e639295993fd4859423ccdf546c5961dd67755a704ded41a29c6"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-build",
  "tauri-plugin",
  "thiserror 2.0.18",
 ]

@@ -13,6 +13,7 @@
     "iap:default",
     "firebase:default",
     "opener:default",
+    "in-app-review:default",
     {
       "identifier": "opener:allow-open-url",
       "allow": [

@@ -4,6 +4,7 @@ pub fn run() {
     .plugin(tauri_plugin_notification::init())
     .plugin(tauri_plugin_haptics::init())
     .plugin(tauri_plugin_opener::init())
+    .plugin(tauri_plugin_in_app_review::init())
     .plugin(tauri_plugin_admob::init())
     .plugin(tauri_plugin_iap::init())
     .plugin(tauri_plugin_firebase::init())

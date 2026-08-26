@@ -34,6 +34,7 @@
     "lint:hooks": "eslint src"
   },
   "dependencies": {
+    "@gbyte/tauri-plugin-in-app-review": "^0.1.0",
     "@tanstack/react-virtual": "^3.14.4",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-haptics": "^2.3.2",

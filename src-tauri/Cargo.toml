@@ -26,6 +26,7 @@ tauri-plugin-log = "2"
 tauri-plugin-notification = "2"
 tauri-plugin-haptics = "2"
 tauri-plugin-opener = "2"
+tauri-plugin-in-app-review = "0.2"
 tauri-plugin-admob = { path = "vendor/tauri-plugin-admob" }
 tauri-plugin-iap = { path = "vendor/tauri-plugin-iap" }
 tauri-plugin-firebase = { path = "vendor/tauri-plugin-firebase" }
