@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { DialogueSequence, HumeurPnj } from "@/data/dialogues";
 import { lignesDialogue } from "@/lib/i18n/contenu";
@@ -15,6 +15,16 @@ interface DialogueOverlayProps {
   nom: string;
   /** Portrait par humeur. */
   portraits: Record<HumeurPnj, string>;
+  /**
+   * Lignes DÉJÀ localisées, à la place de celles de la séquence.
+   *
+   * Le tenancier du Bazar s'en sert : sa dernière réplique porte un délai à
+   * mettre en gras, donc du balisage, que le contenu scénarisé — de simples
+   * chaînes traduites par `lignesDialogue` — ne sait pas transporter. Quand
+   * elles sont fournies, c'est leur nombre qui commande la fin de la séquence,
+   * sinon l'overlay se refermerait trop tôt ou tournerait dans le vide.
+   */
+  lignes?: ReactNode[];
   /** Appelé après le tap sur la dernière ligne. */
   onFini: () => void;
 }
@@ -98,6 +108,7 @@ export function DialogueOverlay({
   sequence,
   nom,
   portraits,
+  lignes: lignesFournies,
   onFini,
 }: DialogueOverlayProps) {
   const { locale, d } = useLangue();
@@ -119,7 +130,7 @@ export function DialogueOverlay({
 
   if (!sequence || typeof document === "undefined") return null;
 
-  const lignes = lignesDialogue(sequence, locale);
+  const lignes: ReactNode[] = lignesFournies ?? lignesDialogue(sequence, locale);
   const ligne = sequence.lignes[Math.min(index, sequence.lignes.length - 1)];
   const texte = lignes[Math.min(index, lignes.length - 1)];
   const derniere = index >= lignes.length - 1;

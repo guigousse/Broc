@@ -130,11 +130,58 @@ export function useEnergieAffiche(reel: number): number {
 }
 
 /**
- * Lecture sans effet de bord de l'état de gel des trois compteurs. Pensée
+ * BAZARCOINS figés pendant la cérémonie de livraison, le temps que la pièce
+ * vole du carnet jusqu'à la caisse (2026-08-26).
+ *
+ * `null` veut dire « rien de gelé » — et surtout PAS `0`, qui est un
+ * instantané parfaitement légitime : la toute première quête d'une partie
+ * gèle un compteur à zéro, et le confondre avec l'absence de gel ferait
+ * apparaître le gain avant que la pièce ne se pose.
+ */
+let jetonsGeles: number | null = null;
+
+function lireJetons(): number | null {
+  return jetonsGeles;
+}
+function lireJetonsServeur(): number | null {
+  return null;
+}
+
+/** Fige le compteur de Bazarcoins sur cette valeur. Idempotent. */
+export function gelerJetonsAffichage(valeur: number): void {
+  jetonsGeles = valeur;
+  notifier();
+}
+
+/** Rend le compteur à sa valeur réelle. Sans effet si rien n'est gelé. */
+export function degelerJetonsAffichage(): void {
+  if (jetonsGeles === null) return;
+  jetonsGeles = null;
+  notifier();
+}
+
+/** Renvoie le compte figé tant que le gel dure, la valeur réelle sinon. */
+export function useJetonsAffiche(reel: number): number {
+  const gele = useSyncExternalStore(souscrire, lireJetons, lireJetonsServeur);
+  return gele ?? reel;
+}
+
+/**
+ * Lecture sans effet de bord de l'état de gel des quatre compteurs. Pensée
  * pour les tests : vérifier qu'un démontage en pleine cérémonie dégèle bien
  * tout (un compteur figé pour le reste de la partie est le genre de bug qui
  * ne se voit qu'en production).
  */
-export function estGele(): { xp: boolean; budget: boolean; energie: boolean } {
-  return { xp: instantane !== null, budget: budgetGele !== null, energie: energieGelee !== null };
+export function estGele(): {
+  xp: boolean;
+  budget: boolean;
+  energie: boolean;
+  jetons: boolean;
+} {
+  return {
+    xp: instantane !== null,
+    budget: budgetGele !== null,
+    energie: energieGelee !== null,
+    jetons: jetonsGeles !== null,
+  };
 }

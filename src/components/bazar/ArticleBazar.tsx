@@ -2,67 +2,99 @@
 
 import { type CSSProperties, type ReactNode } from "react";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleEtat } from "@/lib/i18n/libelles";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
-import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
-import { PLAQUE_ETIQUETTE, PLAQUE_ETIQUETTE_ETEINTE } from "./etiquette";
+import { StarRow } from "@/components/ui/StarRow";
+import { TamponEncreur } from "@/components/ui/TamponEncreur";
+import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
+import { type EtatObjet, type Rarete } from "@/types/game";
 import { type BazarObjetKey } from "./bazarLayout";
 
 /**
- * De combien la plaque de prix remonte SUR la case, en px. ~10 px : assez pour
- * qu'elle chevauche visiblement l'arête basse du carré, trop peu pour cacher
- * le pied de l'objet qui y repose.
+ * De combien le pied remonte SUR la case, en px. La rangée d'étoiles se pose
+ * ainsi À CHEVAL sur l'arête basse du carré — elle se lit comme posée sur la
+ * planche, sous l'objet qui y repose, et non comme un cartouche qui flotte
+ * entre deux rangées (recette du 2026-08-20, héritée de la plaque de prix).
+ * 7 px pour une rangée haute de 14 : la moitié dessus, la moitié dessous.
  */
-export const CHEVAUCHEMENT_ETIQUETTE_PX = 10;
+export const CHEVAUCHEMENT_PIED_PX = 7;
+
+/** Taille d'une étoile au pied de la case, en px. */
+const TAILLE_ETOILE_PX = 14;
 
 interface ArticleBazarProps {
   cle: BazarObjetKey;
   visuel: ReactNode;
   libelle: string;
-  prix: number;
-  jetons: number;
-  /** Ouvre la fiche de l'article. Le tap N'ACHÈTE PLUS (cf. ci-dessous). */
+  /**
+   * L'objet en vente : de quoi dire son état au pied de la case. ABSENT pour
+   * un lot de pièces de restauration, qui n'a pas d'état — le pied reste alors
+   * nu, sans que la scène ait à porter l'exception.
+   */
+  objet?: { etat: EtatObjet; rarete: Rarete };
+  /**
+   * L'article a été acheté. Il reste sur l'étagère — en noir et blanc, sous
+   * son cachet — jusqu'au renouvellement du lundi, mais il ne promet plus
+   * rien : ni fiche à ouvrir, ni état à lire.
+   */
+  vendu?: boolean;
+  /** Ouvre la fiche de l'article. Le tap N'ACHÈTE PAS (cf. ci-dessous). */
   onOuvrir: () => void;
 }
 
 /**
- * Un article posé dans la scène : son visuel, son étiquette de prix, et
- * l'état « hors de portée ».
+ * Un article posé dans la scène : son visuel, et les étoiles de son état.
+ *
+ * LE PRIX N'EST PLUS SUR L'ÉTAGÈRE (demande de l'auteur, 2026-08-26). Une
+ * boutique montre sa marchandise ; elle ne crie pas ses tarifs. Le pied de la
+ * case dit désormais l'ÉTAT de l'objet — la même rangée d'étoiles qu'au
+ * stockage et à l'atelier, dans la teinte de sa rareté — et le prix attend la
+ * fiche, à un tap. Avec lui sont partis l'extinction de la plaque et le rouge
+ * du montant : le « il vous manque N jetons » vit dans `ArticleDetailBazar`,
+ * qui le disait déjà. Le composant ne connaît donc PLUS la bourse du joueur.
  *
  * Il OUVRE, il n'achète pas. Le tap déclenchait autrefois l'achat sur-le-champ
  * — un doigt mal posé coûtait une semaine de jetons sans rien demander.
  * Depuis la recette du 2026-08-20, il ouvre `ArticleDetailBazar` : l'article en
- * grand, son nom, son prix, et un bouton qui achète. Le message « il vous
- * manque N jetons » et son minuteur de 2,5 s ont suivi l'achat dans la fiche ;
- * ils n'avaient plus rien à dire sur une étagère qu'on ne fait qu'ouvrir.
+ * grand, son nom, son prix, et un bouton qui achète.
  *
  * La marchandise reste TOUJOURS en couleur. Elle a d'abord été désaturée
  * (`grayscale(1) opacity(0.65)`) quand la bourse ne suffisait pas ; l'auteur
- * l'a refusé sur son téléphone à la même recette — une boutique dont la moitié
- * des articles est grise ne donne pas envie d'y entrer, et le décor peint perd
- * ce pour quoi il a été peint. L'inaccessibilité est portée par la seule
- * étiquette de prix, qui s'ÉTEINT d'un bloc (fond, filet et texte ensemble),
- * puis par la fiche. Elle a été barrée entre-temps : la rature raye un chiffre
- * qu'on cherche justement à lire, l'auteur l'a remplacée par la couleur.
+ * l'a refusé sur son téléphone — une boutique dont la moitié des articles est
+ * grise ne donne pas envie d'y entrer, et le décor peint perd ce pour quoi il
+ * a été peint.
  *
- * Aucun `aria-disabled` ici non plus, et c'est voulu : le bouton fonctionne
- * pleinement, quel que soit l'état de la bourse — il ouvre la fiche. L'annoncer
- * désactivé serait faux. `aria-disabled` a suivi l'achat dans la fiche, sur le
- * bouton qui, lui, refuse vraiment quelque chose.
+ * Aucun `aria-disabled` ici, et c'est voulu : le bouton fonctionne pleinement
+ * — il ouvre la fiche. L'annoncer désactivé serait faux. `aria-disabled` vit
+ * dans la fiche, sur le bouton qui, lui, refuse vraiment quelque chose.
  */
 export function ArticleBazar({
   cle,
   visuel,
   libelle,
-  prix,
-  jetons,
+  objet,
+  vendu = false,
   onOuvrir,
 }: ArticleBazarProps) {
   const { d, tr } = useLangue();
-  const horsDePortee = jetons < prix;
   // Par le hook, pas par le dictionnaire : sans lui, tirer le cadre en mode
   // calage (`?qgedit=1`) déplaçait le pointillé sans déplacer l'article.
   const coord = useQgObjet(cle);
+
+  // Ce que voit l'œil, dit à l'oreille. Les étoiles ne rendent rien à qui ne
+  // les voit pas ; l'état passe donc dans le nom du BOUTON, le seul élément
+  // dont le nom s'annonce à coup sûr à la prise de focus. Le prix, lui, a
+  // quitté l'étagère pour tout le monde de la même façon : il est dans la
+  // fiche, que ce bouton ouvre.
+  // Vendu, c'est CELA qu'il faut annoncer, et rien d'autre : l'état d'un objet
+  // qui n'est plus à vendre n'apprend rien à personne.
+  const nomAccessible = vendu
+    ? `${libelle} — ${d.bazar.vendu}`
+    : objet
+      ? `${libelle} — ${tr(d.chine.etatAriaLabel, { etat: libelleEtat(objet.etat, d) })}`
+      : libelle;
 
   // Le conteneur est une case CARRÉE (`aspectRatio: 1/1` sur une largeur en
   // `%`) : sans hauteur propre, la case précédente n'existait qu'en largeur,
@@ -73,11 +105,10 @@ export function ArticleBazar({
   // physiquement, un objet posé sur une étagère touche la planche par sa
   // base, donc quand l'auteur tire le cadre pour que son arête basse coïncide
   // avec la planche peinte dans le fond, l'objet doit sembler y reposer
-  // (raffinement demandé à la revue du 2026-08-20, round 2 — le round 1
-  // n'avait centré que sur les deux axes). Le prix vit dans une colonne HORS
-  // FLUX accrochée à la case (position relative au conteneur, pas au visuel) :
-  // l'étiquette ne peut donc pas pousser l'article d'une rangée vers le haut.
-  // jsdom n'a pas de layout, seul le style en ligne peut en témoigner.
+  // (raffinement demandé à la revue du 2026-08-20, round 2). Le pied vit HORS
+  // FLUX, accroché à la case (position relative au conteneur, pas au visuel) :
+  // les étoiles ne peuvent donc pas pousser l'article d'une rangée vers le
+  // haut. jsdom n'a pas de layout, seul le style en ligne peut en témoigner.
   const style: CSSProperties = {
     position: "absolute",
     left: `${qgPct(coord.left)}%`,
@@ -90,14 +121,9 @@ export function ArticleBazar({
     alignItems: "end",
   };
 
-  const colonneEtiquettes: CSSProperties = {
+  const colonnePied: CSSProperties = {
     position: "absolute",
-    // À CHEVAL sur l'arête basse de la case, pas suspendue dessous : la
-    // plaque remonte de CHEVAUCHEMENT_ETIQUETTE_PX pour mordre sur le carré.
-    // Elle se lit alors comme une étiquette épinglée sur la planche, sous
-    // l'objet qui y repose, et non comme un cartouche qui flotte dans le vide
-    // entre deux rangées (recette du 2026-08-20 sur téléphone).
-    top: `calc(100% - ${CHEVAUCHEMENT_ETIQUETTE_PX}px)`,
+    top: `calc(100% - ${CHEVAUCHEMENT_PIED_PX}px)`,
     left: "50%",
     transform: "translateX(-50%)",
     display: "grid",
@@ -105,11 +131,32 @@ export function ArticleBazar({
     gap: 2,
   };
 
+  if (vendu) {
+    return (
+      // Ni bouton, ni cible de tap : il n'y a plus rien à ouvrir, et une
+      // commande qui ne promet rien ment. `role="img"` avec le nom complet
+      // rend au lecteur d'écran ce que le cachet dit à l'œil.
+      <div
+        style={style}
+        data-testid={`article-${cle}`}
+        role="img"
+        aria-label={nomAccessible}
+      >
+        <span style={{ position: "relative", width: "100%", height: "100%", display: "grid", justifyItems: "center", alignItems: "end" }}>
+          {visuel}
+          <TamponEncreur encre="var(--forest-600)" taille={13}>
+            {d.bazar.vendu}
+          </TamponEncreur>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div style={style} data-testid={`article-${cle}`}>
       <button
         type="button"
-        aria-label={libelle}
+        aria-label={nomAccessible}
         onClick={onOuvrir}
         // Le bouton occupe toute la case (carrée) et place son visuel comme
         // le conteneur : centré horizontalement, justifié en bas. Il était
@@ -143,46 +190,24 @@ export function ArticleBazar({
       >
         {visuel}
       </button>
-      <span style={colonneEtiquettes} data-testid={`etiquettes-${cle}`}>
-        {/* La PIÈCE remplace le mot : la case fait 89 px de large et
-            « 3 Bazarcoins » n'y tient dans aucune des quatre langues — le grec
-            était déjà la contrainte qui commandait la largeur des plaques.
-            `role="img"` avec le libellé complet rend le mot à qui écoute :
-            sans lui, un lecteur d'écran annoncerait un « 3 » nu, qui se
-            confondrait avec une quantité d'objets. La pièce, elle, est
-            `aria-hidden` — elle ne doit pas s'annoncer deux fois.
-
-            DEUX SIGNAUX quand la bourse ne suffit pas, décidés à la recette du
-            2026-08-23 : la plaque s'éteint d'un bloc, ET le montant passe au
-            rouge avec son signe. L'extinction dit « pas pour toi », le rouge
-            dit « il t'en manque ».
-
-            Une seule couleur est posée, sur la plaque : le nombre en hérite et
-            le signe la prend par `currentColor`. Deux teintes à accorder à la
-            main auraient fini par dériver l'une de l'autre. */}
-        <span
-          role="img"
-          aria-label={tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
-          style={{
-            ...(horsDePortee ? PLAQUE_ETIQUETTE_ETEINTE : PLAQUE_ETIQUETTE),
-            color: horsDePortee ? "var(--red-signal-300)" : "var(--azur-400)",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-          }}
-        >
-          {/* La TAILLE est ce qui rend le rouge lisible, et pas seulement ce
-              qui le rend visible : sur le gris de la plaque éteinte, le rouge
-              ne mesure que 3,56:1. C'est sous le seuil AA du texte courant
-              (4,5:1) mais au-dessus de celui du GRAND texte (3:1), qui
-              commence à 18,66 px en gras. 1,2 rem vaut 19,2 px.
-              Le signe, lui, ne grossit pas : c'est le montant qu'on lit. */}
-          <strong style={{ fontSize: "1.2rem", fontWeight: 700, lineHeight: 1 }}>
-            {prix}
-          </strong>
-          <BazarcoinIcon couleur="currentColor" />
+      {objet && (
+        // Les étoiles portent l'ombre de lisibilité (`dropShadow`) : posées
+        // sur une illustration peinte — mur de sauge, planche de bois clair —
+        // et non sur le fond uni des autres écrans, un liseré de rareté clair
+        // s'y dissoudrait. La teinte est celle de la RARETÉ, comme au stockage
+        // et à l'atelier : c'est elle qui dit la valeur de la pièce, et un
+        // objet au sommet de l'échelle y gagne l'éclat que `StarRow` accorde
+        // partout ailleurs.
+        <span style={colonnePied} data-testid={`etoiles-${cle}`}>
+          <StarRow
+            filled={etoileCount(objet.etat)}
+            color={getRarityColors(objet.rarete).outer}
+            size={TAILLE_ETOILE_PX}
+            display="flex"
+            dropShadow
+          />
         </span>
-      </span>
+      )}
     </div>
   );
 }

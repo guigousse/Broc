@@ -10,10 +10,11 @@ import { libelleCategorie } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
-import type { AchatBazar } from "@/lib/bazar/achat";
+import { ETAT_ARTICLE_BAZAR, type AchatBazar } from "@/lib/bazar/achat";
 import type { JeuArcade } from "@/lib/bazar/arcade";
 import type { EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
+import { TenancierBazar } from "./TenancierBazar";
 import { BorneArcade } from "./BorneArcade";
 import { BorneArcadeEcran } from "./BorneArcadeEcran";
 import {
@@ -32,6 +33,8 @@ export const ZONES_BAZAR: PanoramaZone[] = [
 ];
 
 interface BazarSceneProps {
+  /** L'horloge du jeu, pour ce que le tenancier a à dire du calendrier. */
+  horloge?: () => number;
   etal: EtalBazar;
   jetons: number;
   /**
@@ -66,6 +69,7 @@ export function BazarScene({
   etal,
   jetons,
   jeuxArcade,
+  horloge,
   onAcheter,
   onSortir,
   onZoneIndex,
@@ -73,21 +77,12 @@ export function BazarScene({
   const { d, tr, locale } = useLangue();
   // Coordonnées lues par le hook, PAS dans le dictionnaire en direct : c'est
   // ce qui fait suivre l'objet quand on tire son cadre en mode calage
-  // (`?qgedit=1`). Appels INCONDITIONNELS, en tête de composant : un par case
-  // de l'étagère du haut, plus la sortie.
-  //
-  // L'étiquette « Vendu » se serre désormais sur SA case. Elle occupait toute
-  // la planche tant qu'il n'y avait qu'un objet au milieu, parce qu'elle
-  // portait une phrase entière (« Vendu — de retour lundi ») qu'une case de 22
-  // unités ne tenait pas dans les 4 langues. Avec trois articles, cette
-  // étiquette pleine rangée recouvrirait les deux cases encore en vente : le
-  // libellé a été raccourci à « Vendu » pour tenir chez lui.
-  const coordCase1 = useQgObjet(CLES_ARTICLES[0]);
-  const coordCase2 = useQgObjet(CLES_ARTICLES[1]);
-  const coordCase3 = useQgObjet(CLES_ARTICLES[2]);
-  const coordsArticles = [coordCase1, coordCase2, coordCase3];
+  // (`?qgedit=1`).
+  // La sortie seule reste ici : les articles lisent leur coordonnée chacun
+  // dans son `ArticleBazar`, et le tenancier dans le sien depuis qu'il parle
+  // (2026-08-26). L'étiquette « Vendu » qui vivait à ce niveau a disparu avec
+  // le marquage des ventes — l'article vendu reste en place, tamponné.
   const coordSortie = useQgObjet("sortie");
-  const coordVendeur = useQgObjet("vendeur");
 
   // L'article dont la fiche est ouverte, avec l'achat qu'il déclenchera. Le
   // couple est tenu en ÉTAT plutôt que redérivé au rendu : la fiche garde
@@ -143,8 +138,6 @@ export function BazarScene({
             // qu'il entend à la place.
             visuel={<PieceIcon categorie={lot.categorie} size={48} />}
               libelle={libelle}
-              prix={lot.prix}
-              jetons={jetons}
               onOuvrir={() =>
                 setSelection({
                   detail: {
@@ -169,24 +162,11 @@ export function BazarScene({
             annoncerait « Vendu » sur un objet pourtant en vente. */}
         {etal.articles.map((article, index) => {
           const cle = CLES_ARTICLES[index];
-          if (!article) {
-            const coord = coordsArticles[index];
-            return (
-              <span
-                key={cle}
-                data-testid={`etiquette-vendu-${index}`}
-                style={{
-                  position: "absolute",
-                  left: `${qgPct(coord.left)}%`,
-                  bottom: `${coord.bottom}%`,
-                  width: `${qgPct(coord.width)}%`,
-                  textAlign: "center",
-                }}
-              >
-                <span style={PLAQUE_ETIQUETTE}>{d.bazar.vendu}</span>
-              </span>
-            );
-          }
+          // `null` : une partie d'AVANT le marquage des ventes (2026-08-26),
+          // où l'article acheté était effacé. Il n'y a rien à montrer, et la
+          // case reste vide jusqu'au renouvellement du lundi — l'étal se
+          // renouvelle de lui-même, aucune migration à écrire pour ça.
+          if (!article) return null;
           const template = getTemplate(article.templateId);
           const libelle = template
             ? nomObjet({ templateId: template.templateId, nom: template.nom }, locale)
@@ -221,6 +201,13 @@ export function BazarScene({
                       // de son carré aux coins, elle y tient exactement.
                       tilt={false}
                       outlinePx={2}
+                      // L'éclat du pristin (cf. `ItemSticker`) : ce que le
+                      // Bazar vend est impeccable, et ça se voit de loin sur
+                      // l'étagère comme dans la collection. Un article VENDU,
+                      // lui, passe au gris de la chine (« vu, plus à prendre »)
+                      // et perd son halo avec sa couleur.
+                      variant={article.vendu ? "grise" : "normal"}
+                      etat={article.vendu ? undefined : ETAT_ARTICLE_BAZAR}
                       // Le BAS de l'objet sur l'arête basse du carré. `contain`
                       // letterboxe les objets larges et bas (une ménagère, une
                       // pile de vinyles) : sans cet ancrage, le vide laissé par
@@ -234,16 +221,26 @@ export function BazarScene({
                 </span>
               }
               libelle={libelle}
-              prix={article.prix}
-              jetons={jetons}
+              vendu={article.vendu === true}
+              // Le pied de la case dit l'ÉTAT, plus le prix (2026-08-26). Pas
+              // de template, pas d'étoiles : sans lui il n'y a ni rareté pour
+              // les teinter ni objet dont promettre l'état — la case montre ce
+              // qu'elle sait, et rien de plus.
+              objet={
+                template && !article.vendu
+                  ? { etat: ETAT_ARTICLE_BAZAR, rarete: template.rarete }
+                  : undefined
+              }
               onOuvrir={() =>
                 setSelection({
                   detail: {
                     genre: "objet",
                     templateId: article.templateId,
                     // `null` quand le template a quitté le catalogue : la fiche
-                    // n'a alors aucun visuel à montrer, comme l'étagère.
+                    // n'a alors ni visuel à montrer ni teinte d'étoiles, comme
+                    // l'étagère.
                     categorie: template?.categorie ?? null,
+                    rarete: template?.rarete ?? null,
                     libelle,
                     prix: article.prix,
                   },
@@ -254,34 +251,11 @@ export function BazarScene({
           );
         })}
 
-        {/* Le tenancier. DÉCOR, pas commande : il n'a encore ni nom ni
-            réplique, et en faire un bouton promettrait une interaction qui
-            n'existe pas — un lecteur d'écran annoncerait une commande morte.
-            D'où `aria-hidden` et `pointerEvents: none`, qui rendent aussi les
-            taps à ce qu'il y a dessous.
-
-            Hauteur en `auto` : la largeur commande, le buste garde ses
-            proportions. Son bas se confond avec l'arête arrière du plateau
-            (cf. `BAZAR_LAYOUT.objets.vendeur`), ce qui le place DERRIÈRE le
-            comptoir plutôt que posé dessus. */}
-        <span
-          data-testid="tenancier-bazar"
-          aria-hidden
-          style={{
-            position: "absolute",
-            left: `${qgPct(coordVendeur.left)}%`,
-            bottom: `${coordVendeur.bottom}%`,
-            width: `${qgPct(coordVendeur.width)}%`,
-            pointerEvents: "none",
-          }}
-        >
-          <img
-            src="/bazar/vendeur-bazar.webp"
-            alt=""
-            draggable={false}
-            style={{ width: "100%", height: "auto", display: "block" }}
-          />
-        </span>
+        {/* Le tenancier, qui répond enfin quand on lui parle : il porte le
+            nom et le visage du Joueur du Vide-grenier, l'un des commanditaires
+            du courrier. Il tient son propre état (sa bulle) — la scène n'a pas
+            à savoir ce qu'il raconte. */}
+        <TenancierBazar horloge={horloge} />
 
         <button
           type="button"

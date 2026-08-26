@@ -9,7 +9,12 @@ import type { CSSProperties } from "react";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { ENERGIE_MAX, energieCourante } from "@/lib/energie";
 import { emptyBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
-import { useBudgetAffiche, useEnergieAffiche, useXpAffiche } from "@/lib/affichageGele";
+import {
+  useBudgetAffiche,
+  useEnergieAffiche,
+  useJetonsAffiche,
+  useXpAffiche,
+} from "@/lib/affichageGele";
 import { formaterMontantCompact } from "@/lib/montantCompact";
 import { ROUTES_SESSION_PREFIXES } from "@/components/mobile/TabBar";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -198,6 +203,10 @@ export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
   // Idem pour la caisse pendant une journée de vente : elle n'encaisse qu'au
   // bilan, quand chaque prix de vente vient s'y poser.
   const budgetAffiche = useBudgetAffiche(budget);
+  // Gelé pendant la cérémonie de livraison d'une quête : le compteur ne monte
+  // qu'au moment où la pièce s'y pose, alors que la partie est créditée dès le
+  // tap sur « Livrer » (cf. `useCeremonieLivraison`).
+  const jetonsAffiche = useJetonsAffiche(jetons ?? 0);
 
   const energieMax = ENERGIE_MAX;
   const energie = state
@@ -343,7 +352,15 @@ export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
                 gap: 9,
               }}
             >
+              {/* data-fly-target : point de DÉPART des Bazarcoins qui jaillissent
+                  quand le Bazar est payé (cf. `celebrationAchat.ts`). Posé sur
+                  le compteur de jetons et non sur le bloc entier, pour la même
+                  raison que `caisse-header` l'est sur le montant en euros :
+                  depuis que la caisse porte deux monnaies, le centre du bloc
+                  tombe entre les deux nombres, et les pièces sortiraient d'à
+                  côté de la somme qu'elles quittent. */}
               <strong
+                  data-fly-target="jetons-header"
                   style={{
                     ...valueStyle,
                     display: "inline-flex",
@@ -363,10 +380,10 @@ export function MobileHeader({ budget, jetons }: MobileHeaderProps) {
                       forme courte. L'abréviation est une commodité pour
                       l'œil ; le montant, lui, reste dû. */}
                   <span style={srOnlyStyle}>
-                    {`${d.chrome.jetons} ${(jetons ?? 0).toLocaleString(locale)}`}
+                    {`${d.chrome.jetons} ${jetonsAffiche.toLocaleString(locale)}`}
                   </span>
                   <span aria-hidden="true">
-                    {formaterMontantCompact(jetons ?? 0, locale)}
+                    {formaterMontantCompact(jetonsAffiche, locale)}
                   </span>
                   <BazarcoinIcon size={HAUTEUR_SIGNE_DISPLAY} />
                 </strong>

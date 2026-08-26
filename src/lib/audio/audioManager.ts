@@ -503,6 +503,27 @@ class AudioManager {
     });
   }
 
+  /**
+   * Le tintement d'une pièce qui tombe dans la caisse — les Bazarcoins d'une
+   * quête, au bout de leur vol depuis le carnet (2026-08-26).
+   *
+   * Un fichier et non une synthèse : le son est choisi par l'auteur, et sa
+   * couleur 8 bits ne se retrouverait pas à l'oscillateur. Il passe par le
+   * cache de tampons comme `cash.mp3` — une quête peut en verser plusieurs à
+   * la suite, et retélécharger 33 ko à chaque pièce serait absurde.
+   */
+  async playJetonBazar(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/jeton-bazar.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   /** Apparition d'une célébrité : arpège cristallin ascendant façon carillon,
    *  puis traîne scintillante (deux aigus détunés qui s'éteignent lentement). */
   playCelebrite(): void {

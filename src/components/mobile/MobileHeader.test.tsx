@@ -8,7 +8,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { MobileHeader } from "./MobileHeader";
-import { degelerXpAffichage, gelerXpAffichage } from "@/lib/affichageGele";
+import {
+  degelerJetonsAffichage,
+  degelerXpAffichage,
+  gelerJetonsAffichage,
+  gelerXpAffichage,
+} from "@/lib/affichageGele";
 
 afterEach(() => {
   degelerXpAffichage();
@@ -312,5 +317,53 @@ describe("MobileHeader — compteur de Bazarcoins", () => {
     act(() => degelerXpAffichage());
     rerender(<MobileHeader budget={0} />);
     expect(screen.getByLabelText("Niveau de Brocanteur 5")).toBeTruthy();
+  });
+});
+
+/**
+ * La caisse est le point de DÉPART d'une animation depuis le 2026-08-26 : les
+ * Bazarcoins en jaillissent quand le Bazar est payé. La cible est nommée sur
+ * le compteur de jetons lui-même, et non sur le bloc entier : la caisse porte
+ * deux monnaies, et le centre du bloc tombe entre les deux nombres — les
+ * pièces sortiraient d'à côté de la somme qu'elles quittent. C'est la même
+ * raison qui avait fait poser `caisse-header` sur le montant en euros.
+ */
+describe("MobileHeader — le compteur de jetons est une cible d'animation", () => {
+  it("porte la cible nommée que cherche la célébration d'achat", () => {
+    mockState = etat(5);
+    mockPathname = "/bazar";
+    render(<MobileHeader budget={100} jetons={42} />);
+    const compteur = document.querySelector("[data-fly-target='jetons-header']");
+    expect(compteur).toBeTruthy();
+    expect(compteur!.textContent).toContain("42");
+  });
+
+  it("ne la confond pas avec celle des euros", () => {
+    mockState = etat(5);
+    mockPathname = "/bazar";
+    render(<MobileHeader budget={100} jetons={42} />);
+    const jetons = document.querySelector("[data-fly-target='jetons-header']");
+    const euros = document.querySelector("[data-fly-target='caisse-header']");
+    expect(jetons).not.toBe(euros);
+    expect(euros!.textContent).toContain("100");
+  });
+});
+
+/**
+ * Le compteur de Bazarcoins suit le GEL d'affichage, comme la caisse en euros :
+ * pendant la cérémonie de livraison d'une quête, il ne doit monter qu'au
+ * moment où la pièce s'y pose. La partie, elle, est créditée bien avant.
+ */
+describe("MobileHeader — le compteur de jetons obéit au gel", () => {
+  afterEach(() => degelerJetonsAffichage());
+
+  it("gelé : montre l'ancienne valeur, pas la vraie", () => {
+    mockState = etat(5);
+    mockPathname = "/bureau";
+    gelerJetonsAffichage(2);
+    render(<MobileHeader budget={100} jetons={5} />);
+    const compteur = document.querySelector("[data-fly-target='jetons-header']");
+    expect(compteur!.textContent).toContain("2");
+    expect(compteur!.textContent).not.toContain("5");
   });
 });
