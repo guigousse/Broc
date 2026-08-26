@@ -136,6 +136,25 @@ un vrai appareil, où la pression mémoire est différente. Si cela se confirme,
 n'est pas dans le composant React mais côté natif : garder l'écouteur enregistré, ou
 neutraliser le `OnBackPressedCallback` par défaut.
 
+**⚠ Portée réelle du « fermer l'overlay », mesurée le 2026-08-26 — plus étroite
+qu'il n'y paraît ici.** Le contexte éprouvé ci-dessus (l'encart de négociation) est
+un `BottomSheet`, et `BottomSheet.tsx` est **le seul composant du dépôt** à appeler
+`empilerFermeture` (`src/lib/retourAndroid.ts`). Tout overlay qui n'en est pas un
+ignore donc le bouton retour. Constaté sur la borne d'arcade du Bazar : deux appuis,
+la borne reste ouverte (l'app ne quitte pas, au moins).
+
+La liste des couches plein écran concernées est longue — `ObjetDetailOverlay`,
+`CollectionDetailOverlay`, `GazetteSheet`, `ParcoursSheet`, `EnergieRecharge`,
+`PartiesModal`, `ArticleDetailBazar`, `CreditsModal`, la borne d'arcade… Sur Android,
+Retour est *le* geste de retour arrière : un testeur qui appuie sans effet en conclut
+que l'app est cassée.
+
+Ce n'est PAS une correction d'une ligne : chaque overlay doit être jugé
+individuellement, et certains ne doivent surtout pas se fermer sur Retour
+(`LevelUpOverlay`, `BandeauSauvegarde`, `Toast`, `TabBar`). Chantier laissé ouvert
+sciemment le 2026-08-26 : le défaut existait déjà dans la 1.3.0 déposée sur Play, il
+ne régresse rien, et la mise à jour des testeurs ne devait pas l'attendre.
+
 ### 4. Orientation portrait — ✅
 
 `android:screenOrientation="1"` (portrait) lu **dans l'APK construit** via `apkanalyzer`,
