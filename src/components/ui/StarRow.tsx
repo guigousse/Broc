@@ -46,8 +46,20 @@ export function StarRow({
   style,
   "aria-label": ariaLabel,
 }: StarRowProps) {
-  const starStyle: CSSProperties | undefined = dropShadow
-    ? { filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))" }
+  // Trois sur trois : le sommet de l'échelle d'état (« Pristin état »). La
+  // teinte de rareté est conservée — c'est elle qui dit la valeur de l'objet —
+  // mais montée en éclat et doublée d'un halo de la même couleur : un serré
+  // qui appuie la forme, un large qui la fait rayonner. La règle vit ici, pas
+  // chez les appelants : un objet pristin brille partout où il se montre.
+  const eclat = total > 0 && filled >= total;
+  const filtres = [
+    dropShadow ? "drop-shadow(0 1px 1px rgba(0,0,0,0.5))" : null,
+    eclat ? `brightness(1.3) saturate(1.15)` : null,
+    eclat ? `drop-shadow(0 0 2px ${color})` : null,
+    eclat ? `drop-shadow(0 0 6px ${color})` : null,
+  ].filter(Boolean);
+  const starStyle: CSSProperties | undefined = filtres.length
+    ? { filter: filtres.join(" ") }
     : undefined;
 
   return (

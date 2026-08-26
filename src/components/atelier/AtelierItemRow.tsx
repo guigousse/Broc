@@ -71,6 +71,7 @@ export function AtelierItemRow({
         <ItemSticker
           templateId={objet.templateId}
           categorie={objet.categorie}
+          etat={objet.etat}
           fill
           tilt={false}
           variant="normal"

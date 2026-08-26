@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { getItemImageUrl, getItemThumbUrl } from "@/lib/itemImages";
-import type { CategorieObjet } from "@/types/game";
+import { estPristin } from "@/lib/etat";
+import type { CategorieObjet, EtatObjet } from "@/types/game";
 
 /** État visuel du sticker dans la collection. */
 export type StickerVariant = "normal" | "grise" | "silhouette";
@@ -45,6 +46,13 @@ interface ItemStickerProps {
   verticalAlign?: "center" | "bottom";
   /** URL d'image directe (bypasse `getItemImageUrl`) — ex. boîte mystère. */
   srcOverride?: string;
+  /**
+   * État de l'objet. Sert UNIQUEMENT à l'éclat du pristin (cf.
+   * `ECLAT_PRISTIN`) : au sommet de l'échelle, l'objet gagne une montée de
+   * lumière et un halo ambré. Facultatif — un appelant qui n'a pas l'état
+   * sous la main garde le rendu d'avant, à l'identique.
+   */
+  etat?: EtatObjet;
 }
 
 /** Angle déterministe en degrés dans ~[-3, +3] à partir du templateId, pour
@@ -85,12 +93,38 @@ function contourBlanc(px: number): string {
  */
 export const FILTRE_GRISE = "grayscale(1) brightness(1.3) contrast(0.75) opacity(0.55)";
 
+/**
+ * L'ÉCLAT DU PRISTIN — le dessus du panier se voit sans qu'on lise l'étiquette.
+ *
+ * Une montée de lumière discrète (7 %), un rien de saturation, puis un halo
+ * ambré en deux passes : la première serre la silhouette, la seconde rayonne.
+ * Le halo vient APRÈS le contour die-cut pour envelopper le liseré blanc au
+ * lieu de passer dessous — sinon il disparaît sur le papier clair de la
+ * Collection.
+ *
+ * Deux passes de filtre en plus, et seulement sur les objets pristins : le
+ * contour est déjà passé de 8 à 4 passes pour le coût GPU au scroll des
+ * grilles denses (cf. `contourBlanc`), on ne rouvre pas cette dépense pour
+ * tout le monde.
+ */
+export const ECLAT_PRISTIN = [
+  "brightness(1.07) saturate(1.06)",
+  "drop-shadow(0 0 2px rgba(255, 205, 100, 0.85))",
+  "drop-shadow(0 0 7px rgba(255, 190, 70, 0.55))",
+].join(" ");
+
 /** Filtre appliqué à l'image/icône selon la variante. Silhouette = noir + contour blanc. */
-function variantFilter(variant: StickerVariant, outlinePx: number): string {
+function variantFilter(
+  variant: StickerVariant,
+  outlinePx: number,
+  eclat: boolean,
+): string {
   const contour = contourBlanc(outlinePx);
   if (variant === "silhouette") return `brightness(0) ${contour}`;
+  // Grisé = « vu, pas possédé ». Un halo doré y promettrait le contraire de
+  // ce que la variante raconte : l'éclat ne s'applique qu'au rendu normal.
   if (variant === "grise") return `${FILTRE_GRISE} ${contour}`;
-  return contour;
+  return eclat ? `${contour} ${ECLAT_PRISTIN}` : contour;
 }
 
 const wrapStyle = (
@@ -159,12 +193,13 @@ export function ItemSticker({
   outlinePx = 1.5,
   verticalAlign = "center",
   srcOverride,
+  etat,
 }: ItemStickerProps) {
   const url =
     srcOverride ??
     (thumb ? getItemThumbUrl(templateId) : getItemImageUrl(templateId));
   const angle = tilt ? angleFromId(templateId) : 0;
-  const filter = variantFilter(variant, outlinePx);
+  const filter = variantFilter(variant, outlinePx, estPristin(etat));
   return (
     <span style={wrapStyle(size, angle, fill, verticalAlign)} aria-hidden>
       {url ? (

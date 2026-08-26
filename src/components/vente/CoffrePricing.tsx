@@ -107,6 +107,7 @@ export function CoffrePricing({
                   <ItemSticker
                     templateId={ov.objet.templateId}
                     categorie={ov.objet.categorie}
+                    etat={ov.objet.etat}
                     fill
                     tilt={false}
                     variant="normal"
