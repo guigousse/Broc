@@ -1,8 +1,18 @@
-import type { GameState, Objet } from "@/types/game";
+import type { EtatObjet, GameState, Objet } from "@/types/game";
 import { getTemplate } from "@/data/objetTemplates";
 import { recalculerPrixReference } from "@/lib/etat";
 import { stockageEstPlein } from "@/lib/stockage";
 import { PRIX_JETON_EUROS } from "./etal";
+
+/**
+ * L'état dans lequel le Bazar vend ses objets : le tenancier ne propose que
+ * des pièces impeccables, et c'est son argument de vente.
+ *
+ * Exportée parce que l'ÉTAGÈRE l'affiche désormais en étoiles au pied de
+ * chaque case (2026-08-26) : la vitrine doit promettre ce que l'achat livre,
+ * et deux constantes séparées auraient dérivé en silence.
+ */
+export const ETAT_ARTICLE_BAZAR: EtatObjet = "Pristin état";
 
 /**
  * Ce que le joueur peut acheter à l'étal. Défini ICI — la vue l'importe.
@@ -71,8 +81,8 @@ export function acheterArticle(
     templateId: template.templateId,
     nom: template.nom,
     categorie: template.categorie,
-    prixReferenceReel: recalculerPrixReference(v.valeurBase, "Très bon", "Pristin état"),
-    etat: "Pristin état",
+    prixReferenceReel: recalculerPrixReference(v.valeurBase, "Très bon", ETAT_ARTICLE_BAZAR),
+    etat: ETAT_ARTICLE_BAZAR,
     rarete: template.rarete,
     prixAchat: v.prix * PRIX_JETON_EUROS,
   };

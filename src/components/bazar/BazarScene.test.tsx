@@ -5,6 +5,8 @@ import { BazarScene, ZONES_BAZAR } from "./BazarScene";
 import { BAZAR_LAYOUT } from "./bazarLayout";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { JEUX_ARCADE } from "@/lib/bazar/arcade";
+import { ETAT_ARTICLE_BAZAR } from "@/lib/bazar/achat";
+import { etoileCount } from "@/lib/etat";
 import type { EtalBazar } from "@/types/game";
 
 afterEach(cleanup);
@@ -142,6 +144,40 @@ describe("BazarScene", () => {
   function acheterDansLaFiche() {
     fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
   }
+
+  // ── L'ÉTAT AU PIED, LE PRIX DANS LA FICHE (demande du 2026-08-26) ───────
+  // L'étagère montre la marchandise et son état ; le tarif attend le tap.
+  it("l'objet de la semaine montre les étoiles de son état", () => {
+    monter();
+    expect(screen.getByTestId("etoiles-case2").querySelectorAll("svg")).toHaveLength(3);
+  });
+
+  // Le lien qui compte : l'étagère promet l'état que l'ACHAT livre réellement
+  // (`acheterArticle` pose `ETAT_ARTICLE_BAZAR`). Deux constantes séparées
+  // auraient dérivé en silence, et la vitrine aurait menti.
+  it("l'étagère promet l'état que l'achat livre", () => {
+    monter();
+    const remplies = [
+      ...screen.getByTestId("etoiles-case2").querySelectorAll("svg"),
+    ].filter((e) => e.getAttribute("fill") !== "transparent");
+    expect(remplies).toHaveLength(etoileCount(ETAT_ARTICLE_BAZAR));
+  });
+
+  it("un lot de pièces n'a pas d'état : son pied reste nu", () => {
+    monter();
+    for (const cle of ["case4", "case5", "case6"]) {
+      expect(screen.queryByTestId(`etoiles-${cle}`)).toBeNull();
+    }
+  });
+
+  // Sans template, pas de rareté pour teinter les étoiles ni d'état à
+  // promettre : la case montre ce qu'elle sait, et rien de plus.
+  it("template inconnu : aucune étoile inventée", () => {
+    const articles = [...ETAL.articles];
+    articles[1] = { templateId: "zz.template_disparu", valeurBase: 200, prix: 8 };
+    monter({ ...ETAL, articles });
+    expect(screen.queryByTestId("etoiles-case2")).toBeNull();
+  });
 
   it("taper un lot ouvre SA fiche, et l'achat y porte son index", () => {
     const { onAcheter } = monter();
@@ -373,24 +409,17 @@ describe("BazarScene", () => {
   // marchandise reste en couleur, quoi qu'il arrive, et c'est le prix barré
   // qui dit l'inaccessibilité. Le test garde le cas « bourse à 0 » — il
   // atteste maintenant ce que la conception dit, pas son contraire.
-  it("bourse à 0 : les six articles restent en couleur, plaques éteintes", () => {
+  it("bourse à 0 : les six articles restent en couleur, et aucun prix ne s'affiche", () => {
     const { onAcheter } = monter(ETAL, 0);
     for (const cle of ["case1", "case2", "case3", "case4", "case5", "case6"]) {
       const article = screen.getByTestId(`article-${cle}`);
       expect(article.style.filter).toBe("");
     }
-    // La rature a été remplacée par l'extinction de la plaque entière à la
-    // recette du 2026-08-20 : c'est la couleur qui porte l'état.
-    // Sur l'étagère, la plaque n'écrit plus que le nombre — c'est la pièce qui
-    // dit la monnaie, et le mot vit dans le nom accessible. On la retrouve
-    // donc par son rôle, pas par son texte.
-    const plaque = screen.getByRole("img", { name: "8 Bazarcoins" }) as HTMLElement;
-    expect(plaque.style.backgroundColor).toBe("var(--ink-500)");
-    // DEUX signaux depuis la recette du 2026-08-23 : la plaque s'éteint, ET
-    // le montant passe au rouge. L'extinction dit « pas pour toi », le rouge
-    // dit « il t'en manque ».
-    expect(plaque.style.color).toBe("var(--red-signal-300)");
-    expect(plaque.style.textDecoration).not.toBe("line-through");
+    // Le prix a quitté l'étagère le 2026-08-26 : plus de plaque, ni allumée ni
+    // éteinte, et donc plus rien qui dise l'inaccessibilité AVANT le tap.
+    // C'était le prix à payer pour une vitrine muette, accepté en connaissance
+    // de cause — la fiche, elle, dit toujours le manque.
+    expect(screen.queryByRole("img", { name: /Bazarcoin/ })).toBeNull();
     // Et taper n'achète toujours rien : ça ouvre la fiche, qui dit le manque.
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
     fireEvent.click(screen.getByRole("button", { name: "Acheter" }));

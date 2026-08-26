@@ -4,8 +4,13 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
 import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
+import { StarRow } from "@/components/ui/StarRow";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import type { CategorieObjet } from "@/types/game";
+import { libelleEtat } from "@/lib/i18n/libelles";
+import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
+import { ETAT_ARTICLE_BAZAR } from "@/lib/bazar/achat";
+import type { CategorieObjet, Rarete } from "@/types/game";
 
 /**
  * L'article présenté en grand. Deux genres, parce que l'étal en vend deux :
@@ -22,6 +27,13 @@ export type ArticleDetail =
       genre: "objet";
       templateId: string;
       categorie: CategorieObjet | null;
+      /**
+       * La teinte des étoiles d'état. `null` avec `categorie` et pour la même
+       * raison : un `templateId` retiré du catalogue ne dit plus sa rareté.
+       * L'ÉTAT, lui, ne se transporte pas — le Bazar n'en vend qu'un
+       * (`ETAT_ARTICLE_BAZAR`), la fiche le lit à la source.
+       */
+      rarete: Rarete | null;
       libelle: string;
       prix: number;
     }
@@ -301,6 +313,30 @@ export function ArticleDetailBazar({
 
         <div style={prixCard}>
           <div style={titreCard}>{article.libelle}</div>
+
+          {/* L'ÉTAT, juste sous le nom — la même rangée qu'au pied de la case,
+              en un peu plus grand puisque la carte a la place. Le joueur qui
+              vient de taper l'article doit retrouver ce qui l'a fait taper.
+              Un lot de pièces n'a pas d'état, et un template disparu n'a plus
+              de rareté pour teinter quoi que ce soit : dans les deux cas, rien
+              — plutôt qu'une rangée grise qui dirait « mauvais état ». */}
+          {article.genre === "objet" && article.rarete ? (
+            <span
+              data-testid="etoiles-fiche"
+              style={{ display: "flex", justifyContent: "center", marginTop: 6 }}
+              aria-label={tr(d.chine.etatAriaLabel, {
+                etat: libelleEtat(ETAT_ARTICLE_BAZAR, d),
+              })}
+            >
+              <StarRow
+                filled={etoileCount(ETAT_ARTICLE_BAZAR)}
+                color={getRarityColors(article.rarete).outer}
+                size={18}
+                display="flex"
+                gap={2}
+              />
+            </span>
+          ) : null}
 
           <div style={prixRow}>
             <span style={prixLabel}>{d.bazar.prixMot}</span>

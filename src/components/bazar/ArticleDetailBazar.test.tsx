@@ -7,6 +7,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ArticleDetailBazar, type ArticleDetail } from "./ArticleDetailBazar";
+import { ETAT_ARTICLE_BAZAR } from "@/lib/bazar/achat";
+import { getRarityColors } from "@/lib/rarityColors";
+import { etoileCount } from "@/lib/etat";
 
 afterEach(cleanup);
 
@@ -15,6 +18,7 @@ const VITRINE: ArticleDetail = {
   templateId: "jx.jeu_magnatimmo_annees_80",
   categorie: "Jeux & Loisirs",
   libelle: "Jeu Magnatimmo années 80",
+  rarete: "rare",
   prix: 8,
 };
 
@@ -85,12 +89,40 @@ describe("ArticleDetailBazar", () => {
       genre: "objet",
       templateId: "zz.template_disparu",
       categorie: null,
+      rarete: null,
       libelle: "zz.template_disparu",
       prix: 8,
     });
     expect(screen.getByRole("dialog").querySelector("img")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
     expect(onAcheter).toHaveBeenCalledTimes(1);
+  });
+
+  // ── L'état suit l'objet jusque dans la fiche (2026-08-26) ───────────────
+  // Le prix a quitté l'étagère pour venir ici ; l'état, lui, fait le chemin
+  // inverse et doit se retrouver DANS LES DEUX. Sans ça il disparaîtrait au
+  // moment précis où le joueur regarde l'objet en grand pour se décider.
+  it("la fiche d'un objet montre les étoiles de son état", () => {
+    monter();
+    const rangee = screen.getByTestId("etoiles-fiche");
+    const etoiles = [...rangee.querySelectorAll("svg")];
+    expect(etoiles).toHaveLength(3);
+    const remplies = etoiles.filter(
+      (e) => e.getAttribute("fill") === getRarityColors("rare").outer,
+    );
+    expect(remplies).toHaveLength(etoileCount(ETAT_ARTICLE_BAZAR));
+  });
+
+  it("un lot de pièces n'a pas d'état : pas d'étoiles dans sa fiche", () => {
+    monter(LOT);
+    expect(screen.queryByTestId("etoiles-fiche")).toBeNull();
+  });
+
+  // Même règle que sur l'étagère : sans template, on ne sait plus rien de
+  // l'objet — ni sa rareté ni ce qu'on pourrait promettre. Aucune étoile.
+  it("template disparu : aucune étoile inventée", () => {
+    monter({ ...VITRINE, categorie: null, rarete: null });
+    expect(screen.queryByTestId("etoiles-fiche")).toBeNull();
   });
 
   it("bourse suffisante : le prix garde l'encre de la carte", () => {

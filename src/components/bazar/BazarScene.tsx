@@ -10,7 +10,7 @@ import { libelleCategorie } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
-import type { AchatBazar } from "@/lib/bazar/achat";
+import { ETAT_ARTICLE_BAZAR, type AchatBazar } from "@/lib/bazar/achat";
 import type { JeuArcade } from "@/lib/bazar/arcade";
 import type { EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
@@ -143,8 +143,6 @@ export function BazarScene({
             // qu'il entend à la place.
             visuel={<PieceIcon categorie={lot.categorie} size={48} />}
               libelle={libelle}
-              prix={lot.prix}
-              jetons={jetons}
               onOuvrir={() =>
                 setSelection({
                   detail: {
@@ -234,16 +232,25 @@ export function BazarScene({
                 </span>
               }
               libelle={libelle}
-              prix={article.prix}
-              jetons={jetons}
+              // Le pied de la case dit l'ÉTAT, plus le prix (2026-08-26). Pas
+              // de template, pas d'étoiles : sans lui il n'y a ni rareté pour
+              // les teinter ni objet dont promettre l'état — la case montre ce
+              // qu'elle sait, et rien de plus.
+              objet={
+                template
+                  ? { etat: ETAT_ARTICLE_BAZAR, rarete: template.rarete }
+                  : undefined
+              }
               onOuvrir={() =>
                 setSelection({
                   detail: {
                     genre: "objet",
                     templateId: article.templateId,
                     // `null` quand le template a quitté le catalogue : la fiche
-                    // n'a alors aucun visuel à montrer, comme l'étagère.
+                    // n'a alors ni visuel à montrer ni teinte d'étoiles, comme
+                    // l'étagère.
                     categorie: template?.categorie ?? null,
+                    rarete: template?.rarete ?? null,
                     libelle,
                     prix: article.prix,
                   },
