@@ -116,11 +116,11 @@ export interface ContenuForme {
  *
  * La forme `objet` n'est PAS traitée ici : elle garde sa fabrique historique
  * dans `periodiques.ts`, qui choisit ses cibles dans le pool atteignable.
- * `objetLegendaire` et `restauration` non plus : ce sont les deux formes
- * quotidiennes neuves du catalogue (chantier « quêtes quotidiennes variées »),
- * pas encore tirées par `formesDuLot` — leur fabrique dédiée reste à écrire ;
- * les cas ci-dessous ne sont donc pas atteignables aujourd'hui, seulement là
- * pour l'exhaustivité du switch.
+ * `objetLegendaire` et `restauration` non plus — mais ce ne sont PAS des
+ * formes « inconstructibles dans l'état courant » comme `ventesCategorie` :
+ * elles sont juste pas encore câblées, la tâche 5 les livre. En attendant,
+ * `null` sert de filet — la branche est inatteignable aujourd'hui puisque
+ * `formesDuLot` ne les met pas dans le pool tiré.
  */
 export function contenuFormeChiffree(
   forme: Exclude<FormeQuete, "objet">,
@@ -179,6 +179,6 @@ export function contenuFormeChiffree(
     }
     case "objetLegendaire":
     case "restauration":
-      throw new Error(`contenuFormeChiffree : forme "${forme}" pas encore câblée`);
+      return null;
   }
 }
