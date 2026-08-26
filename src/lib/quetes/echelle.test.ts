@@ -10,6 +10,10 @@ const CLES: (keyof CiblesNiveau)[] = [
   "objetsRaresHebdo",
   "recompenseHebdo",
   "recompenseQuotidienne",
+  "chiffreAffairesJour",
+  "beneficeJour",
+  "profitVenteJour",
+  "ventesCategorieJour",
 ];
 
 describe("table de paliers", () => {
@@ -23,6 +27,11 @@ describe("table de paliers", () => {
       objetsRaresHebdo: 4,
       recompenseHebdo: 75,
       recompenseQuotidienne: 25,
+      chiffreAffairesJour: 150,
+      beneficeJour: 75,
+      profitVenteJour: 30,
+      ventesCategorieJour: 2,
+      restaurationEtatMin: "Bon",
     });
   });
 
@@ -36,6 +45,11 @@ describe("table de paliers", () => {
       objetsRaresHebdo: 5,
       recompenseHebdo: 125,
       recompenseQuotidienne: 40,
+      chiffreAffairesJour: 250,
+      beneficeJour: 125,
+      profitVenteJour: 50,
+      ventesCategorieJour: 2,
+      restaurationEtatMin: "Bon",
     });
   });
 
@@ -49,6 +63,11 @@ describe("table de paliers", () => {
       objetsRaresHebdo: 6,
       recompenseHebdo: 210,
       recompenseQuotidienne: 70,
+      chiffreAffairesJour: 425,
+      beneficeJour: 215,
+      profitVenteJour: 85,
+      ventesCategorieJour: 3,
+      restaurationEtatMin: "Très bon",
     });
   });
 
@@ -62,6 +81,11 @@ describe("table de paliers", () => {
       objetsRaresHebdo: 7,
       recompenseHebdo: 325,
       recompenseQuotidienne: 110,
+      chiffreAffairesJour: 650,
+      beneficeJour: 325,
+      profitVenteJour: 130,
+      ventesCategorieJour: 3,
+      restaurationEtatMin: "Très bon",
     });
   });
 
@@ -75,6 +99,11 @@ describe("table de paliers", () => {
       objetsRaresHebdo: 9,
       recompenseHebdo: 450,
       recompenseQuotidienne: 150,
+      chiffreAffairesJour: 900,
+      beneficeJour: 450,
+      profitVenteJour: 180,
+      ventesCategorieJour: 4,
+      restaurationEtatMin: "Très bon",
     });
   });
 
@@ -100,5 +129,45 @@ describe("table de paliers", () => {
   test("un niveau hors bornes retombe sur un palier valide", () => {
     expect(ciblesPourNiveau(0)).toEqual(ciblesPourNiveau(1));
     expect(ciblesPourNiveau(999)).toEqual(ciblesPourNiveau(100));
+  });
+});
+
+describe("barème quotidien", () => {
+  const NIVEAUX = [0, 10, 20, 40, 70];
+
+  test("chaque cible quotidienne chiffrée croît d'un palier au suivant", () => {
+    for (const champ of ["chiffreAffairesJour", "beneficeJour", "profitVenteJour"] as const) {
+      for (let i = 1; i < NIVEAUX.length; i++) {
+        const avant = ciblesPourNiveau(NIVEAUX[i - 1])[champ];
+        const apres = ciblesPourNiveau(NIVEAUX[i])[champ];
+        expect(apres, `${champ} au niveau ${NIVEAUX[i]}`).toBeGreaterThan(avant);
+      }
+    }
+  });
+
+  test("les ventes par catégorie ne décroissent jamais", () => {
+    for (let i = 1; i < NIVEAUX.length; i++) {
+      expect(ciblesPourNiveau(NIVEAUX[i]).ventesCategorieJour).toBeGreaterThanOrEqual(
+        ciblesPourNiveau(NIVEAUX[i - 1]).ventesCategorieJour,
+      );
+    }
+  });
+
+  test("la cible quotidienne reste sous la cible hebdomadaire correspondante", () => {
+    for (const n of NIVEAUX) {
+      const c = ciblesPourNiveau(n);
+      expect(c.chiffreAffairesJour).toBeLessThan(c.chiffreAffairesSemaine);
+      expect(c.beneficeJour).toBeLessThan(c.beneficeSemaine);
+      expect(c.profitVenteJour).toBeLessThan(c.profitVenteUnique);
+      expect(c.ventesCategorieJour).toBeLessThanOrEqual(c.ventesCategorie);
+    }
+  });
+
+  test("la restauration quotidienne ne demande JAMAIS Pristin état", () => {
+    // 4 h de temps réel, et il faut déjà posséder une pièce en Très bon :
+    // infaisable dans la fenêtre d'une journée.
+    for (const n of NIVEAUX) {
+      expect(ciblesPourNiveau(n).restaurationEtatMin).not.toBe("Pristin état");
+    }
   });
 });

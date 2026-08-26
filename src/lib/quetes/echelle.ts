@@ -9,7 +9,14 @@
  * La cible est lue UNE FOIS, à la naissance de la quête, et figée dans
  * l'objectif : un joueur qui prend un niveau en milieu de semaine ne voit pas
  * son objectif se durcir sous ses pieds.
+ *
+ * Cibles QUOTIDIENNES : chiffre d'affaires et bénéfice au quart de la cible
+ * hebdomadaire (pas au septième — l'hebdo doit rester confortable pour qui ne
+ * joue pas tous les jours) ; marge sur une vente à la moitié (une vente reste
+ * une vente). Le palier 0 (niveaux 3 à 9) n'a PAS été mesuré : si la recette
+ * le trouve trop dur, diviser par 5 plutôt que par 4 sur ce seul palier.
  */
+import type { EtatObjet } from "@/types/game";
 export interface CiblesNiveau {
   /** « Réalise X € de bénéfice » (hebdomadaire). */
   beneficeSemaine: number;
@@ -27,29 +34,47 @@ export interface CiblesNiveau {
   recompenseHebdo: number;
   /** Récompense en € d'une quotidienne SANS objet nommé. */
   recompenseQuotidienne: number;
+  /** « Encaisse X € » — version quotidienne (quart de la cible hebdomadaire). */
+  chiffreAffairesJour: number;
+  /** « Réalise X € de bénéfice » — version quotidienne (quart de l'hebdo). */
+  beneficeJour: number;
+  /**
+   * « Fais X € de marge sur une seule vente » — version quotidienne.
+   * MOITIÉ de l'hebdomadaire, pas le quart : une vente reste une vente, elle
+   * ne s'étale pas sur la semaine. Au quart, l'objectif serait trivial.
+   */
+  profitVenteJour: number;
+  /** « Vends X objets de catégorie Y » — version quotidienne. */
+  ventesCategorieJour: number;
+  /**
+   * État minimum d'une restauration quotidienne. Jamais `Pristin état` :
+   * 4 h de temps RÉEL (cf. `DUREE_RESTAURATION_MS`) et il faut déjà posséder
+   * une pièce en Très bon.
+   */
+  restaurationEtatMin: EtatObjet;
 }
 
 /** Paliers, du plus bas au plus haut. Le premier couvre tout niveau < 10. */
 const PALIERS: { niveauMin: number; cibles: CiblesNiveau }[] = [
   {
     niveauMin: 0,
-    cibles: { beneficeSemaine: 300, chiffreAffairesSemaine: 600, profitVenteUnique: 60, ventesCategorie: 3, objetsRaresQuotidien: 2, objetsRaresHebdo: 4, recompenseHebdo: 75, recompenseQuotidienne: 25 },
+    cibles: { beneficeSemaine: 300, chiffreAffairesSemaine: 600, profitVenteUnique: 60, ventesCategorie: 3, objetsRaresQuotidien: 2, objetsRaresHebdo: 4, recompenseHebdo: 75, recompenseQuotidienne: 25, chiffreAffairesJour: 150, beneficeJour: 75, profitVenteJour: 30, ventesCategorieJour: 2, restaurationEtatMin: "Bon" },
   },
   {
     niveauMin: 10,
-    cibles: { beneficeSemaine: 500, chiffreAffairesSemaine: 1000, profitVenteUnique: 100, ventesCategorie: 4, objetsRaresQuotidien: 2, objetsRaresHebdo: 5, recompenseHebdo: 125, recompenseQuotidienne: 40 },
+    cibles: { beneficeSemaine: 500, chiffreAffairesSemaine: 1000, profitVenteUnique: 100, ventesCategorie: 4, objetsRaresQuotidien: 2, objetsRaresHebdo: 5, recompenseHebdo: 125, recompenseQuotidienne: 40, chiffreAffairesJour: 250, beneficeJour: 125, profitVenteJour: 50, ventesCategorieJour: 2, restaurationEtatMin: "Bon" },
   },
   {
     niveauMin: 20,
-    cibles: { beneficeSemaine: 850, chiffreAffairesSemaine: 1700, profitVenteUnique: 170, ventesCategorie: 5, objetsRaresQuotidien: 3, objetsRaresHebdo: 6, recompenseHebdo: 210, recompenseQuotidienne: 70 },
+    cibles: { beneficeSemaine: 850, chiffreAffairesSemaine: 1700, profitVenteUnique: 170, ventesCategorie: 5, objetsRaresQuotidien: 3, objetsRaresHebdo: 6, recompenseHebdo: 210, recompenseQuotidienne: 70, chiffreAffairesJour: 425, beneficeJour: 215, profitVenteJour: 85, ventesCategorieJour: 3, restaurationEtatMin: "Très bon" },
   },
   {
     niveauMin: 40,
-    cibles: { beneficeSemaine: 1300, chiffreAffairesSemaine: 2600, profitVenteUnique: 260, ventesCategorie: 6, objetsRaresQuotidien: 3, objetsRaresHebdo: 7, recompenseHebdo: 325, recompenseQuotidienne: 110 },
+    cibles: { beneficeSemaine: 1300, chiffreAffairesSemaine: 2600, profitVenteUnique: 260, ventesCategorie: 6, objetsRaresQuotidien: 3, objetsRaresHebdo: 7, recompenseHebdo: 325, recompenseQuotidienne: 110, chiffreAffairesJour: 650, beneficeJour: 325, profitVenteJour: 130, ventesCategorieJour: 3, restaurationEtatMin: "Très bon" },
   },
   {
     niveauMin: 70,
-    cibles: { beneficeSemaine: 1800, chiffreAffairesSemaine: 3600, profitVenteUnique: 360, ventesCategorie: 8, objetsRaresQuotidien: 4, objetsRaresHebdo: 9, recompenseHebdo: 450, recompenseQuotidienne: 150 },
+    cibles: { beneficeSemaine: 1800, chiffreAffairesSemaine: 3600, profitVenteUnique: 360, ventesCategorie: 8, objetsRaresQuotidien: 4, objetsRaresHebdo: 9, recompenseHebdo: 450, recompenseQuotidienne: 150, chiffreAffairesJour: 900, beneficeJour: 450, profitVenteJour: 180, ventesCategorieJour: 4, restaurationEtatMin: "Très bon" },
   },
 ];
 
