@@ -97,3 +97,55 @@ describe("ChineSlideVue — plancher révélé (Le Flair v2)", () => {
     expect(screen.queryByText(/plancher/i)).toBeNull();
   });
 });
+
+describe("ChineSlideVue — tampon de statut", () => {
+  function itemAvec(over: Partial<ObjetEnVente>): ChineSlide {
+    const base = makeSlide(false) as Extract<ChineSlide, { kind: "item" }>;
+    return { ...base, item: { ...base.item, ...over } };
+  }
+
+  it("stock plein : l'objet est tamponné, comme un objet vendu", () => {
+    // Le texte rouge « Stockage plein » du tiroir passait inaperçu (retour
+    // device) : l'information vit désormais sur l'objet lui-même.
+    render(<ChineSlideVue slide={makeSlide(false)} plein />);
+    expect(screen.getByText("Stock plein")).toBeTruthy();
+  });
+
+  it("stock plein grise l'objet, comme les autres états bloqués", () => {
+    render(<ChineSlideVue slide={makeSlide(false)} plein />);
+    // La variante « grise » se lit à son filtre CSS (ItemSticker n'expose pas
+    // d'attribut de variante) : c'est le même désaturé que « Vendu ». Selon
+    // que le sticker rende une image ou son icône de repli, le filtre est
+    // porté par des éléments différents — on cherche donc n'importe lequel.
+    const grise = Array.from(document.querySelectorAll<HTMLElement>("*")).some(
+      (n) => n.style.filter.includes("grayscale"),
+    );
+    expect(grise).toBe(true);
+  });
+
+  it("déjà acheté : « Vendu » l'emporte sur « Stock plein »", () => {
+    // Acheter REMPLIT le stockage : sans priorité explicite, la carte de
+    // l'objet qu'on vient d'acquérir basculerait sur « Stock plein » —
+    // elle annoncerait l'empêchement au lieu de la réussite.
+    render(<ChineSlideVue slide={itemAvec({ statut: "achete" })} plein />);
+    expect(screen.getByText("Vendu")).toBeTruthy();
+    expect(screen.queryByText("Stock plein")).toBeNull();
+  });
+
+  it("vendeur fâché : son tampon l'emporte aussi", () => {
+    render(
+      <ChineSlideVue
+        slide={itemAvec({ negociation: { statut: "fache" } as ObjetEnVente["negociation"] })}
+        plein
+      />,
+    );
+    expect(screen.getByText("Vendeur fâché")).toBeTruthy();
+    expect(screen.queryByText("Stock plein")).toBeNull();
+  });
+
+  it("stock disponible : aucun tampon", () => {
+    render(<ChineSlideVue slide={makeSlide(false)} />);
+    expect(screen.queryByText("Stock plein")).toBeNull();
+    expect(screen.queryByText("Vendu")).toBeNull();
+  });
+});

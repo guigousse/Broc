@@ -15,6 +15,12 @@ export interface CoachEtape {
   texte: string;
 }
 
+/** Cadence de la traque de la cible, et sa borne dure. La borne couvre très
+ *  largement l'animation d'entrée la plus longue des écrans du tutoriel
+ *  (320 ms) sans jamais laisser tourner de boucle si la cible n'arrive pas. */
+const PAS_TRAQUE_MS = 60;
+const DUREE_TRAQUE_MS = 900;
+
 interface TutorielCoachProps {
   etapes: CoachEtape[];
   onFini: () => void;
@@ -99,31 +105,59 @@ export function TutorielCoach({ etapes, onFini }: TutorielCoachProps) {
     return () => setCoachOuvert(false);
   }, []);
 
-  // Mesure du rect de la cible : au montage de l'étape, sur resize/scroll
-  // (capturés — la cible peut être dans un conteneur qui défile), et un
-  // requestAnimationFrame après montage (les rects bougent à l'ouverture
-  // de la fenêtre flottante, après le premier paint).
+  /* Mesure du rect de la cible. La difficulté n'est pas de mesurer, c'est de
+     mesurer AU BON MOMENT : les écrans du tutoriel montent le coach en même
+     temps que leur propre animation d'entrée (FloatingRoomOverlay glisse sa
+     bande depuis translateY(-110%) pendant 320 ms). Une mesure au montage
+     plus une frame plus tard tombait en plein milieu de ce glissement et
+     figeait la découpe sur un rect fantôme, au-dessus de l'écran — d'où la
+     bulle collée sous la barre d'état (recette device 2026-08-19).
+
+     On traque donc la cible à cadence fixe pendant DUREE_TRAQUE_MS, puis on
+     s'arrête net. Pas d'arrêt anticipé sur « deux mesures identiques » : une
+     animation qui démarre après un délai, ou un rect qui passe deux fois par
+     la même valeur, couperait la traque en plein vol. Une quinzaine de
+     `getBoundingClientRect` sur un élément ne coûte rien ; se tromper de
+     cible coûte la leçon. Les écoutes resize/scroll prennent ensuite le
+     relais pour toute la durée de l'étape. */
   useEffect(() => {
     if (cible === null) {
       setRect(null);
       return;
     }
     let annule = false;
-    const mesurer = () => {
-      if (annule) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let restant = Math.ceil(DUREE_TRAQUE_MS / PAS_TRAQUE_MS);
+
+    const lire = (): DOMRect | null => {
       const el = document.querySelector(`[data-tuto-coach="${cible}"]`);
-      // Fail-open : introuvable ⇒ pas de découpe, jamais de blocage.
-      setRect(el ? el.getBoundingClientRect() : null);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      // Un élément sans boîte propre (`display: contents`) renvoie un rect
+      // 0×0 à l'origine : ce n'est pas une cible, c'est une absence de
+      // cible. Fail-open, comme un élément introuvable.
+      return r.width > 0 && r.height > 0 ? r : null;
     };
-    mesurer();
-    const raf = requestAnimationFrame(mesurer);
-    window.addEventListener("resize", mesurer);
-    window.addEventListener("scroll", mesurer, true);
+
+    const traquer = () => {
+      if (annule) return;
+      setRect(lire());
+      restant -= 1;
+      if (restant <= 0) return;
+      timer = setTimeout(traquer, PAS_TRAQUE_MS);
+    };
+    traquer();
+
+    const remesurer = () => {
+      if (!annule) setRect(lire());
+    };
+    window.addEventListener("resize", remesurer);
+    window.addEventListener("scroll", remesurer, true);
     return () => {
       annule = true;
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", mesurer);
-      window.removeEventListener("scroll", mesurer, true);
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("resize", remesurer);
+      window.removeEventListener("scroll", remesurer, true);
     };
     // `idx` (et pas seulement `cible`) est dans les deps : deux étapes
     // consécutives peuvent viser la MÊME cible (plusieurs bulles sur le même

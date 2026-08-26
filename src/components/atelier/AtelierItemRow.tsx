@@ -27,7 +27,11 @@ interface AtelierItemRowProps {
 
 const row: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "67px 1fr auto",
+  // DEUX colonnes : la vignette et le texte. Les commandes vivaient dans une
+  // troisième, à droite — deux boutons y prenaient assez de largeur pour
+  // rogner le nom de l'objet à cinq lettres. Elles sont descendues sur la
+  // ligne de l'état (cf. plus bas), et le titre récupère toute la carte.
+  gridTemplateColumns: "67px 1fr",
   gap: 10,
   alignItems: "center",
   padding: "14px 12px",
@@ -71,6 +75,7 @@ export function AtelierItemRow({
         <ItemSticker
           templateId={objet.templateId}
           categorie={objet.categorie}
+          etat={objet.etat}
           fill
           tilt={false}
           variant="normal"
@@ -81,6 +86,7 @@ export function AtelierItemRow({
       {/* alignSelf start : le titre s'aligne sur le HAUT de la vignette. */}
       <div style={{ minWidth: 0, alignSelf: "start" }}>
         <div
+          data-atelier-titre
           style={{
             fontFamily: "var(--font-display)",
             fontSize: 13,
@@ -98,9 +104,17 @@ export function AtelierItemRow({
         <div
           style={{
             display: "flex",
-            alignItems: "center",
+            // PIED à pied, et non centre à centre : les boutons sont deux
+            // fois plus hauts que les étoiles, et un centrage laissait 6 px
+            // d'air sous elles — le prix du marché tombait alors 11 px plus
+            // bas qu'au stockage, pour 5 là-bas. Alignés par le bas, les deux
+            // écrans retrouvent le même rythme (mesuré).
+            alignItems: "flex-end",
+            // Les étoiles et le thème à gauche, les commandes à droite : une
+            // seule ligne porte l'état de l'objet ET ce qu'on peut en faire.
+            justifyContent: "space-between",
             gap: 6,
-            marginTop: 4,
+            marginTop: 2,
           }}
           aria-label={
             targetStars !== null && etatCible !== undefined
@@ -115,6 +129,7 @@ export function AtelierItemRow({
                 })
           }
         >
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           {renderStars(currentStars, rarityColors.outer)}
           {targetStars !== null && (
             <>
@@ -126,16 +141,17 @@ export function AtelierItemRow({
               {renderStars(targetStars, rarityColors.outer)}
             </>
           )}
-          <CategorieIcon
-            categorie={objet.categorie}
-            size={17}
-            strokeWidth={1.5}
-            color="var(--brass-700)"
-          />
+            <CategorieIcon
+              categorie={objet.categorie}
+              size={17}
+              strokeWidth={1.5}
+              color="var(--brass-700)"
+            />
+          </span>
+          {action}
         </div>
         <div style={{ marginTop: 4 }}>{metaLigne}</div>
       </div>
-      <div>{action}</div>
     </div>
   );
 }

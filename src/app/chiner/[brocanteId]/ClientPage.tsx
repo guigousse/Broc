@@ -493,7 +493,11 @@ export default function SessionChinePage() {
         id: crypto.randomUUID(),
         type: "chinage",
         jour: state.jourActuel,
-        timestamp: Date.now(),
+        // Horloge de confiance : les objectifs périodiques comparent ce
+        // timestamp à `timestampAcceptation` (posé lui aussi via
+        // `tempsConfiance`). Utiliser `Date.now()` ici désynchroniserait les
+        // deux bords de la comparaison si l'horloge de l'appareil dérive.
+        timestamp: tempsConfiance() ?? Date.now(),
         brocanteId: brocante.id,
         brocanteNom: brocante.nom,
         achats,
@@ -608,7 +612,7 @@ export default function SessionChinePage() {
     const scn = SESSION_TUTORIEL.find((s) => s.templateId === it.objet.templateId);
     if (!scn) return null;
     if (scnActif && scn === scnActif) {
-      return { role: scn.role, bornes: scn.bornesOffre };
+      return { role: scn.role, cible: scn.cibleOffre };
     }
     return it.statut === "achete" ? null : ({ role: "decor" } as const);
   };
@@ -623,7 +627,7 @@ export default function SessionChinePage() {
         background: "var(--paper-100)",
       }}
     >
-      <MobileHeader budget={state.budget} />
+      <MobileHeader budget={state.budget} jetons={state.jetons} />
       <main
         style={{
           flex: 1,

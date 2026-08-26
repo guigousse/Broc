@@ -128,3 +128,13 @@ export function useEnergieAffiche(reel: number): number {
   const gele = useSyncExternalStore(souscrire, lireEnergie, lireEnergieServeur);
   return gele ?? reel;
 }
+
+/**
+ * Lecture sans effet de bord de l'état de gel des trois compteurs. Pensée
+ * pour les tests : vérifier qu'un démontage en pleine cérémonie dégèle bien
+ * tout (un compteur figé pour le reste de la partie est le genre de bug qui
+ * ne se voit qu'en production).
+ */
+export function estGele(): { xp: boolean; budget: boolean; energie: boolean } {
+  return { xp: instantane !== null, budget: budgetGele !== null, energie: energieGelee !== null };
+}

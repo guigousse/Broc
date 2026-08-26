@@ -178,6 +178,10 @@ const CollectionCell = memo(function CollectionCell({
       <ItemSticker
         templateId={s.templateId}
         categorie={s.categorie}
+        // L'état vient de la DONATION : c'est l'exemplaire donné qui est
+        // exposé sur l'étagère. La variante « grise » (vu, pas possédé)
+        // annule l'éclat côté ItemSticker.
+        etat={s.donation?.etat}
         fill
         tilt={false}
         variant={variant}

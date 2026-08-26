@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   ETAPES_TUTORIEL,
   appliquerFinTutoriel,
+  banniereVisible,
   chapitreDuCarnetDu,
   competenceGuidee,
-  doigtSwipeVersCarnet,
   etapeSuivante,
   ongletTutorielPermis,
   portePulse,
@@ -53,26 +53,37 @@ describe("tutoriel", () => {
     expect(fin.miniTutoCarnet).toBe("ouvrir");
   });
 
-  it("doigtSwipeVersCarnet pointe tant que la zone gauche (0) n'est pas atteinte", () => {
-    expect(doigtSwipeVersCarnet("ouvrir", 1)).toBe(true);
-    expect(doigtSwipeVersCarnet("ouvrir", 0)).toBe(false);
-    expect(doigtSwipeVersCarnet("termine", 1)).toBe(false);
-    expect(doigtSwipeVersCarnet(undefined, 1)).toBe(false);
+  it("doigtSwipeVersCarnet n'existe plus : le livre a quitté le panorama", async () => {
+    const mod = await import("./tutoriel");
+    expect("doigtSwipeVersCarnet" in mod).toBe(false);
   });
 
-  it("chapitreDuCarnetDu n'arme le chapitre qu'à l'ouverture de l'onglet Commandes pendant le mini-tuto", () => {
-    expect(chapitreDuCarnetDu("ouvrir", "commandes")).toBe(true);
+  it("chapitreDuCarnetDu n'arme le chapitre qu'à l'ouverture du carnet pendant le mini-tuto", () => {
+    expect(chapitreDuCarnetDu("ouvrir", true)).toBe(true);
     // Mini-tuto déjà consommé : l'ouverture du carnet ne délivre plus rien.
-    expect(chapitreDuCarnetDu("termine", "commandes")).toBe(false);
-    expect(chapitreDuCarnetDu(undefined, "commandes")).toBe(false);
-    // Autre onglet, ou registre fermé : rien.
-    expect(chapitreDuCarnetDu("ouvrir", "comptes")).toBe(false);
-    expect(chapitreDuCarnetDu("ouvrir", null)).toBe(false);
+    expect(chapitreDuCarnetDu("termine", true)).toBe(false);
+    expect(chapitreDuCarnetDu(undefined, true)).toBe(false);
+    // Carnet fermé : rien.
+    expect(chapitreDuCarnetDu("ouvrir", false)).toBe(false);
   });
 
   it("appliquerFinTutoriel est idempotent sur un state déjà terminé", () => {
     const state = createMockGameState({ tutorielEtape: "termine" });
     expect(appliquerFinTutoriel(state)).toBe(state);
+  });
+});
+
+describe("fin du tutoriel — le chapitre est dû à l'arrivée sur /quetes", () => {
+  it("mini-tuto armé + sur /quetes : le chapitre est dû", () => {
+    expect(chapitreDuCarnetDu("ouvrir", true)).toBe(true);
+  });
+
+  it("mini-tuto armé mais ailleurs : rien n'est dû", () => {
+    expect(chapitreDuCarnetDu("ouvrir", false)).toBe(false);
+  });
+
+  it("mini-tuto déjà clos : rien n'est dû même sur /quetes", () => {
+    expect(chapitreDuCarnetDu("termine", true)).toBe(false);
   });
 });
 
@@ -165,6 +176,50 @@ describe("colis scripté", () => {
     const ids = fin.inventaireJoueur.map((o) => o.templateId);
     for (const attendu of COLIS_TUTORIEL_SCRIPTE.slice(2).map((c) => c.templateId)) {
       expect(ids).toContain(attendu);
+    }
+  });
+});
+
+/**
+ * Bannière de consigne — recette device 2026-08-19 : « Ouvre la Collection
+ * depuis la barre du bas » restait affiché UNE FOIS DANS la collection, et la
+ * bannière recouvrait l'en-tête que le coach cherchait justement à montrer.
+ */
+describe("banniereVisible", () => {
+  it("s'efface là où un autre guide occupe l'écran", () => {
+    for (const etape of [
+      "accueil", "stockage-focus", "coffre-trace-un", "niveau-celebration",
+      "conclusion", "termine",
+    ] as const) {
+      expect(banniereVisible(etape, "/bureau"), etape).toBe(false);
+    }
+  });
+
+  it("s'efface quand la consigne « va sur cet onglet » est déjà exaucée", () => {
+    expect(banniereVisible("collection-lecon", "/stockage")).toBe(true);
+    expect(banniereVisible("collection-lecon", "/collection")).toBe(false);
+    expect(banniereVisible("stockage-ouvrir", "/bureau")).toBe(true);
+    expect(banniereVisible("stockage-ouvrir", "/stockage")).toBe(false);
+    expect(banniereVisible("competences-visite", "/bureau")).toBe(true);
+    expect(banniereVisible("competences-visite", "/bibliotheque")).toBe(false);
+  });
+
+  it("laisse la consigne d'une ACTION sur place, même sur l'onglet visé", () => {
+    // « Envoie la peluche dans ta collection » se fait DEPUIS le stockage :
+    // ce n'est pas une consigne de navigation, elle doit rester.
+    expect(banniereVisible("collection-envoyer", "/stockage")).toBe(true);
+    expect(banniereVisible("ouvrir-colis", "/bureau")).toBe(true);
+    expect(banniereVisible("preparer-etal", "/bureau")).toBe(true);
+  });
+
+  it("affiche toutes les autres étapes", () => {
+    for (const etape of ETAPES_TUTORIEL) {
+      if (banniereVisible(etape, "/bureau")) continue;
+      expect(
+        ["accueil", "stockage-focus", "coffre-trace-un", "niveau-celebration",
+          "conclusion", "termine"],
+        etape,
+      ).toContain(etape);
     }
   });
 });

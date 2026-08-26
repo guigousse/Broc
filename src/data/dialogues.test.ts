@@ -40,6 +40,7 @@ describe("dialogues (données FR)", () => {
       "tuto_vente_refus_avant", "tuto_vente_refus_apres",
       "tuto_vente_directe_avant", "tuto_vente_directe_apres",
       "tuto_vente_nego_avant", "tuto_vente_nego_apres",
+      "tuto_niveau_avant", "tuto_niveau_apres",
       "tuto_conclusion",
     ];
     for (const id of attendues) {

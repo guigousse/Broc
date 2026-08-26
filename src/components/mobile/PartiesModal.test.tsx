@@ -15,10 +15,17 @@
  * La modal ne navigue plus elle-même pour lancer une partie : « Lancer la
  * partie » délègue au parent via `onLancer(slot)`. L'iris de transition et
  * l'ordre détacher/bascule/navigation sont testés dans `page.test.tsx`.
+ *
+ * Export (Tâche 10, Ruling R15) : `partagerFichier` et `partageDisponible`
+ * sont mockés (module entier) — la modal sonde `partageDisponible` (une
+ * commande dédiée, sans effet de bord) au montage, donc TOUT rendu appelle
+ * ce mock. Le `beforeEach` lui donne une résolution par défaut (`true`) pour
+ * que les tests qui ne portent pas sur l'export n'aient pas à s'en soucier.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { PartiesModal } from "./PartiesModal";
+import { partageDisponible, partagerFichier } from "@/lib/storage/pontNatif";
 import {
   CLE_INDEX,
   changerSlotActif,
@@ -29,6 +36,14 @@ import {
   type NumeroSlot,
 } from "@/lib/storage/slots";
 
+vi.mock("@/lib/storage/pontNatif", async (importOriginal) => {
+  const reel = await importOriginal<typeof import("@/lib/storage/pontNatif")>();
+  // `quoiDuSlot` est une fonction pure (numéro → chaîne) : gardée réelle,
+  // seuls les deux appels natifs (`partagerFichier`, `partageDisponible`)
+  // sont mockés.
+  return { ...reel, partagerFichier: vi.fn(), partageDisponible: vi.fn() };
+});
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
@@ -36,6 +51,8 @@ afterEach(() => {
 
 beforeEach(() => {
   localStorage.clear();
+  vi.mocked(partagerFichier).mockReset().mockResolvedValue(undefined);
+  vi.mocked(partageDisponible).mockReset().mockResolvedValue(true);
 });
 
 function ecrireSave(n: NumeroSlot, jour: number, niveau: number, budget: number) {
@@ -65,6 +82,22 @@ function mockLocation() {
 
 function ligne(numero: number) {
   return screen.getByRole("group", { name: `Emplacement ${numero}` });
+}
+
+/**
+ * Rendu dédié aux tests d'export : un seul emplacement occupé (le 1, jour
+ * 34) par défaut — c'est le jour attendu par le nom de fichier généré,
+ * `broc-partie-jour-34.json`. `slotsOccupes: []` seed volontairement rien,
+ * pour le cas « aucun emplacement occupé ».
+ */
+function rendreParties(opts: { slotsOccupes?: NumeroSlot[] } = {}) {
+  const slotsOccupes = opts.slotsOccupes ?? [1];
+  for (const n of slotsOccupes) {
+    seedOccupe(n, { jour: 34, niveau: 5, budget: 100 });
+  }
+  return render(
+    <PartiesModal open onClose={vi.fn()} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />,
+  );
 }
 
 describe("PartiesModal — fermée", () => {
@@ -507,5 +540,51 @@ describe("PartiesModal — fermeture", () => {
     render(<PartiesModal open onClose={onClose} mode="gestion" onNouvellePartie={vi.fn()} onLancer={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Fermer" }));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("PartiesModal — export (Tâche 10, Ruling R15)", () => {
+  it("propose l'export sur un emplacement occupé", async () => {
+    vi.mocked(partageDisponible).mockResolvedValue(true);
+    rendreParties();
+    expect(await screen.findAllByLabelText(/exporter/i)).toHaveLength(1);
+  });
+
+  it("nomme le fichier avec le jour de jeu", async () => {
+    rendreParties();
+    (await screen.findByLabelText(/exporter/i)).click();
+    await waitFor(() =>
+      expect(partagerFichier).toHaveBeenCalledWith("slot_1", "broc-partie-jour-34.json"),
+    );
+  });
+
+  it("masque l'export quand la plateforme ne sait pas partager", async () => {
+    vi.mocked(partageDisponible).mockResolvedValue(false);
+    rendreParties();
+    await waitFor(() => expect(screen.queryByLabelText(/exporter/i)).toBeNull());
+  });
+
+  it("n'affiche pas d'export sur un emplacement vide", async () => {
+    rendreParties({ slotsOccupes: [] });
+    await waitFor(() => expect(screen.queryByLabelText(/exporter/i)).toBeNull());
+  });
+
+  // Couverture DÉDIÉE de la Ruling R15 (sonde par commande, pas par appel
+  // partiel de `partagerFichier`) : le sondage n'appelle plus jamais
+  // `partagerFichier` — seul `partageDisponible` le fait, et son résultat
+  // booléen pilote directement l'affichage.
+  it("Ruling R15 — le bouton est masqué quand partage_disponible répond false", async () => {
+    vi.mocked(partageDisponible).mockResolvedValue(false);
+    rendreParties();
+    await waitFor(() => expect(screen.queryByLabelText(/exporter/i)).toBeNull());
+    // Le sondage ne déclenche jamais de partage réel.
+    expect(partagerFichier).not.toHaveBeenCalled();
+  });
+
+  it("Ruling R15 — le bouton est affiché quand partage_disponible répond true", async () => {
+    vi.mocked(partageDisponible).mockResolvedValue(true);
+    rendreParties();
+    expect(await screen.findAllByLabelText(/exporter/i)).toHaveLength(1);
+    expect(partagerFichier).not.toHaveBeenCalled();
   });
 });

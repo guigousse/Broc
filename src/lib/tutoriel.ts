@@ -78,37 +78,26 @@ export function appliquerFinTutoriel(state: GameState): GameState {
     ],
     inventaireJoueur: [...state.inventaireJoueur, ...manquants],
     colisTutorielLivres: COLIS_TUTORIEL_TAILLE,
-    // Le grand-père vient de parler du carnet de commandes : le mini-tuto
-    // guide vers la zone gauche du bureau puis le livre de compte.
+    // Le grand-père vient de parler du carnet de quêtes : le mini-tuto
+    // guide vers l'onglet Quêtes de la barre du bas (cf. `chapitreDuCarnetDu`
+    // juste dessous — c'est l'arrivée sur `/quetes` qui clôt le mini-tuto).
     miniTutoCarnet: "ouvrir",
   };
 }
 
 /**
- * Doigt de swipe du mini-tuto carnet : le livre de compte est en zone
- * gauche (0) du panorama — la main flottante pointe vers la gauche tant que
- * cette zone n'est pas atteinte.
- */
-export function doigtSwipeVersCarnet(
-  miniTuto: GameState["miniTutoCarnet"],
-  zoneActive: number,
-): boolean {
-  return miniTuto === "ouvrir" && zoneActive !== 0;
-}
-
-/**
- * Vrai quand l'ouverture du carnet doit délivrer le chapitre du grand-père.
- * Fin du tutoriel : la main flottante guide jusqu'au carnet, et c'est son
- * ouverture — pas la pastille du bureau — qui déclenche le dialogue de la
+ * Vrai quand l'arrivée dans le carnet doit délivrer le chapitre du grand-père.
+ * Fin du tutoriel : la main guide jusqu'à l'onglet Quêtes, et c'est l'arrivée
+ * sur `/quetes` — pas la pastille du bureau — qui déclenche le dialogue de la
  * lampe, dont la commande vient s'inscrire dans la page restée ouverte.
- * Le type du 2e paramètre est écrit en littéral plutôt qu'importé du
- * composant `RegistreOverlay` : `src/lib` ne dépend pas de l'UI.
+ * Le 2e paramètre est un booléen (`src/lib` ne dépend ni de l'UI ni du
+ * routeur) : au layout de dire s'il est sur la route du carnet.
  */
 export function chapitreDuCarnetDu(
   miniTuto: GameState["miniTutoCarnet"],
-  registreOuvert: "commandes" | "comptes" | null,
+  surRouteQuetes: boolean,
 ): boolean {
-  return miniTuto === "ouvrir" && registreOuvert === "commandes";
+  return miniTuto === "ouvrir" && surRouteQuetes;
 }
 
 /* === Scénario brocante scriptée ====================================== */
@@ -156,6 +145,48 @@ export function ongletTutorielPermis(
     default:
       return null;
   }
+}
+
+/* === Bannière de consigne ============================================= */
+
+/**
+ * Étapes où un autre guide occupe déjà l'écran — dialogue plein cadre du
+ * grand-père, visite du coach, démo automatique, cérémonie de niveau. La
+ * bannière n'y ajoute rien et, posée en haut de l'écran, elle recouvre
+ * justement ce que la leçon cherche à montrer.
+ */
+const ETAPES_SANS_BANNIERE: ReadonlySet<TutorielEtape> = new Set<TutorielEtape>([
+  "accueil",
+  "stockage-focus",
+  "coffre-trace-un",
+  "niveau-celebration",
+  "conclusion",
+  "termine",
+]);
+
+/**
+ * Étapes dont la consigne dit « va sur cet onglet ». Une fois arrivé, elle
+ * ment : « Ouvre la Collection » s'affichait DANS la collection (recette
+ * device 2026-08-19). La main de la TabBar suit déjà la même règle — elle ne
+ * pointe jamais l'onglet actif.
+ */
+const DESTINATION_ETAPE: Partial<Record<TutorielEtape, string>> = {
+  "stockage-ouvrir": "/stockage",
+  "collection-lecon": "/collection",
+  "competences-visite": "/bibliotheque",
+};
+
+/**
+ * La bannière de consigne doit-elle s'afficher ? Elle ne paraît que là où
+ * elle apporte une instruction encore vraie.
+ */
+export function banniereVisible(
+  etape: TutorielEtape,
+  pathname: string | null | undefined,
+): boolean {
+  if (ETAPES_SANS_BANNIERE.has(etape)) return false;
+  const destination = DESTINATION_ETAPE[etape];
+  return !(destination && pathname === destination);
 }
 
 /**

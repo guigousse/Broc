@@ -18,7 +18,11 @@ describe("PageHeaderBar", () => {
       <PageHeaderBar title="Collection" align="left" right={<i>somme</i>} />,
     );
     const wrap = container.firstElementChild as HTMLElement;
-    expect(wrap.firstElementChild?.textContent).toBe("— COLLECTION —");
+    // Aucun tiret À GAUCHE : les deux tirets encadrent un titre CENTRÉ. Collé
+    // au bord gauche, celui de gauche ne cadre plus rien — il pend dans la
+    // marge (retour device 2026-08-26). Seul celui de droite reste, qui
+    // sépare le titre de la valeur.
+    expect(wrap.firstElementChild?.textContent).toBe("COLLECTION —");
     expect(wrap.lastElementChild?.textContent).toBe("somme");
     expect(wrap.style.justifyContent).toBe("space-between");
   });

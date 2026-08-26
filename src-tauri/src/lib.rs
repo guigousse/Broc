@@ -2,12 +2,17 @@
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_notification::init())
+    .plugin(tauri_plugin_haptics::init())
+    .plugin(tauri_plugin_opener::init())
+    .plugin(tauri_plugin_in_app_review::init())
     .plugin(tauri_plugin_admob::init())
     .plugin(tauri_plugin_iap::init())
     // Sortie explicite : sur Android, enregistrer un écouteur du bouton retour
     // supprime le comportement par défaut (AppPlugin.kt), il faut donc pouvoir
     // quitter nous-mêmes depuis l'écran racine.
     .plugin(tauri_plugin_process::init())
+    .plugin(tauri_plugin_firebase::init())
+    .plugin(tauri_plugin_stockage::init())
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(

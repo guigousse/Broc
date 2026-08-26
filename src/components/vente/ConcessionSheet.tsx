@@ -82,11 +82,16 @@ const boutonStyle = (peut: boolean): CSSProperties => ({
 });
 
 /** Libellé de la taille de coffre visée. */
-const LIBELLE_TAILLE: Record<TailleCoffre, keyof DictionnaireUI["vente"]> = {
+/* `satisfies` plutôt qu'une annotation : on garde la garde « ces clés existent
+   bien au dictionnaire » tout en conservant les littéraux, sinon l'indexation
+   `d.vente[...]` retombe sur l'union de TOUTES les valeurs de la section — qui
+   n'est plus faite que de chaînes depuis que certaines entrées s'accordent en
+   genre. */
+const LIBELLE_TAILLE = {
   petit: "coffrePetit",
   moyen: "coffreMoyen",
   grand: "coffreGrand",
-};
+} as const satisfies Record<TailleCoffre, keyof DictionnaireUI["vente"]>;
 
 /**
  * Fiche du véhicule suivant : les deux véhicules de profil de part et d'autre

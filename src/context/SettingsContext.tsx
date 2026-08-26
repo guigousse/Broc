@@ -195,3 +195,62 @@ export function useSettings(): SettingsValue {
   }
   return ctx;
 }
+
+/**
+ * Silencieux au lieu de tout un jeu de sons : chaque méthode est un no-op.
+ * Utilisée par des composants montés en permanence au fond d'un arbre (ex.
+ * `SoutienSheet`, montée fermée par `EcranArcade`) pour un simple retour
+ * sonore de clic — un composant pareil ne doit pas exiger un `SettingsProvider`
+ * global juste pour ça, sous peine de rendre fragile chaque test de tout
+ * ancêtre qui le monte.
+ *
+ * Constante de module, comme `NOOP_TOAST` dans `@/components/ui/Toast` — pas
+ * de construction paresseuse : `DEFAULT_AUDIO_PREFS` est déjà importé en tête
+ * de fichier, et ce fichier l'utilise déjà, sans détour, dans `useState()`
+ * plus bas. Le rendre paresseux ici n'aurait rien évité.
+ *
+ * ⚠ Effet de bord de l'aplatissement : tout import (même transitif, ex. via
+ * `TabBar`) de ce fichier référence désormais `DEFAULT_AUDIO_PREFS` DÈS LE
+ * CHARGEMENT DU MODULE, plus seulement au premier rendu. Un test qui mocke
+ * `@/lib/audio/audioManager` SANS exporter `DEFAULT_AUDIO_PREFS` cassera à
+ * l'import — pas avec un `undefined` silencieux : le mock Vitest lève une
+ * erreur explicite sur un export non déclaré. Voir le mock corrigé dans
+ * `LevelUpOverlay.test.tsx` pour le patron à suivre.
+ */
+const NOOP_SETTINGS: SettingsValue = {
+  audioPrefs: DEFAULT_AUDIO_PREFS,
+  setAudioPref: () => {},
+  setVolume: () => {},
+  playClick: () => {},
+  playCash: () => {},
+  playPaper: () => {},
+  playNewspaper: () => {},
+  playDoorOpen: () => {},
+  playDoorClose: () => {},
+  startCrowd: () => {},
+  stopCrowd: () => {},
+  startCatPurr: () => {},
+  stopCatPurr: () => {},
+  playVinyl: () => {},
+  playGramophoneSong: () => {},
+  pauseVinyl: () => {},
+  resumeVinyl: () => {},
+  stopVinyl: () => {},
+  stopGramophone: () => {},
+  setVinylTargetVolume: () => {},
+  setVinylAmbianceVolume: () => {},
+  setVinylAmbianceLowpass: () => {},
+  startNeedle: () => {},
+  stopNeedle: () => {},
+};
+
+/**
+ * Variante non-bloquante de `useSettings` : renvoie un jeu de réglages no-op
+ * si aucun `SettingsProvider` n'est présent, au lieu de lever une erreur —
+ * même patron que `useToastSafe` dans `@/components/ui/Toast`, et pour la
+ * même raison.
+ */
+export function useSettingsSafe(): SettingsValue {
+  const ctx = useContext(SettingsContext);
+  return ctx ?? NOOP_SETTINGS;
+}

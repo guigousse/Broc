@@ -770,6 +770,7 @@
   --brass-500: #C5A059;
   --brass-600: #B08838;
   --brass-700: #8A6A26;
+  --brass-800: #6F5820;
   --brass-900: #4F3D14;
 
   /* Ink */
@@ -789,6 +790,19 @@
   /* Rouge d'alerte SUR FOND SOMBRE (jauge d'énergie à zéro dans le header) :
      le vermillion ne mesure que 2,8:1 sur forest-800, celui-ci 5,1:1. */
   --red-signal-300: #E8836F;
+  /* Bleu électrique du BAZARCOIN — la monnaie du Bazar. Le nuancier n'avait
+     aucun bleu franc (`midnight-*` sont des gris bleutés) : celui-ci existe
+     pour qu'une devise ne se confonde jamais avec l'autre, la caisse portant
+     désormais les euros ET les Bazarcoins sous un même libellé. Mesuré
+     4,8:1 sur forest-800 et 6,1:1 sur forest-900 — au-dessus d'AA sur les
+     deux fonds où il vit, et d'une présence comparable au rouge qu'il
+     remplace (5,1:1). */
+  --azur-400: #4D9BFF;
+  /* Le même bleu POUR FOND CLAIR — la fiche d'un article est sur papier crème,
+     où `azur-400` tombe à 2,6:1 et devient illisible. Celui-ci y mesure
+     6,3:1. Deux teintes pour une seule devise, comme le jeu a déjà deux
+     rouges (`vermillion-500` sombre, `red-signal-300` clair). */
+  --azur-600: #1D4ED8;
 
   /* Gradients récurrents */
   /* Jauge d'humeur client : contentement → neutre → colère (teintes patina/brass/vermillion). */
@@ -882,6 +896,7 @@
   --color-brass-500: var(--brass-500);
   --color-brass-600: var(--brass-600);
   --color-brass-700: var(--brass-700);
+  --color-brass-800: var(--brass-800);
   --color-ink-900: var(--ink-900);
   --color-ink-700: var(--ink-700);
   --color-ink-500: var(--ink-500);
@@ -1525,7 +1540,10 @@ nav[aria-label="Navigation principale"] :focus-visible,
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
   animation: tuto-main-kf 1.6s ease-in-out infinite;
   pointer-events: none;
-  z-index: 1;
+  /* Plan de la main, réglable par la cible : dans une fenêtre flottante, le
+     doigt vit dans le même contexte d'empilement que la carte et se faisait
+     peindre dessous (cf. ReserveTabs, `--tuto-main-z`). */
+  z-index: var(--tuto-main-z, 1);
 }
 /* Variante pour les cibles collées au bord gauche : main à droite, en miroir
    (le translate positif devient un va-et-vient vers la cible). */
@@ -1561,8 +1579,14 @@ nav[aria-label="Navigation principale"] :focus-visible,
   0%, 100% { translate: 0 0; opacity: 0.95; }
   50% { translate: 6px 0; opacity: 0.45; }
 }
+/* Géométrie commune aux deux usages. `.nego-fleches` est l'invite permanente
+   posée autour du curseur joueur de toute négociation : mêmes triangles, même
+   place — mais IMMOBILES. Le va-et-vient reste au tutoriel seul, sans quoi il
+   pulserait à chaque négo de la partie et ne signalerait plus rien. */
 .tuto-fleches::before,
-.tuto-fleches::after {
+.tuto-fleches::after,
+.nego-fleches::before,
+.nego-fleches::after {
   content: "";
   position: absolute;
   top: calc(50% - 9px);
@@ -1574,15 +1598,32 @@ nav[aria-label="Navigation principale"] :focus-visible,
   pointer-events: none;
   z-index: 1;
 }
-.tuto-fleches::before {
+.tuto-fleches::before,
+.nego-fleches::before {
   right: calc(100% + 6px);
   border-right: 12px solid var(--nego-joueur);
+}
+.tuto-fleches::after,
+.nego-fleches::after {
+  left: calc(100% + 6px);
+  border-left: 12px solid var(--nego-joueur);
+}
+.tuto-fleches::before {
   animation: tuto-fleche-gauche-kf 1.2s ease-in-out infinite;
 }
 .tuto-fleches::after {
-  left: calc(100% + 6px);
-  border-left: 12px solid var(--nego-joueur);
   animation: tuto-fleche-droite-kf 1.2s ease-in-out infinite;
+}
+/* Modificateurs composables avec l'une ou l'autre des classes ci-dessus :
+   la flèche se coupe du côté où le curseur touche le bout de son échelle,
+   sinon elle sortirait de la piste — sur la tarification elle passerait
+   carrément par-dessus le « −100 % ». Déclarés APRÈS, à spécificité égale,
+   pour l'emporter. */
+.fleches-sans-gauche::before {
+  content: none;
+}
+.fleches-sans-droite::after {
+  content: none;
 }
 /* Variante au-dessus de la cible : main tournée à 90° (doigt vers le bas),
    centrée horizontalement, va-et-vient vertical vers la cible. */
@@ -1617,13 +1658,6 @@ nav[aria-label="Navigation principale"] :focus-visible,
   animation: tuto-main-kf 1.6s ease-in-out infinite;
   pointer-events: none;
   z-index: 6;
-}
-/* Mini-tuto carnet : même main au bord gauche, en miroir, pointe vers la
-   gauche pour inviter à rejoindre la zone gauche du bureau (livre de compte). */
-.tuto-main-swipe-gauche {
-  right: auto;
-  left: 12px;
-  scale: -1 1;
 }
 /* TutorielCoach : la découpe glisse d'une cible à la suivante — transition
    sur le rect (top/left/width/height) plutôt qu'un cross-fade, pour que le
@@ -1733,4 +1767,56 @@ nav[aria-label="Navigation principale"] :focus-visible,
   .broc-pill-nouveau {
     animation: none;
   }
+}
+
+/* ─── Pavé « Livrer » du carnet de quêtes ───────────────────────────────
+   La récompense d'une quête remplie se soulève hors du papier et respire
+   pour appeler le tap. Deux contraintes ont dicté la forme de l'animation :
+
+   1. Elle ne déplace RIEN. La cérémonie d'envol mesure la position des
+      jetons (`getBoundingClientRect`) pour lancer leur clone vers le
+      header : un `transform: scale()` sur le pavé décalerait ce point de
+      départ. Seule l'ombre respire.
+   2. Aucun `calc()` dans une @keyframes — Lightning CSS (Turbopack) jette
+      silencieusement toute la règle, et l'animation disparaît sans erreur.
+
+   L'arête inférieure sombre (`--forest-700`) donne l'épaisseur ; l'appui
+   l'écrase de 2 px et coupe la pulsation, le temps du tap.
+   La pulsation est neutralisée par le bloc `prefers-reduced-motion` global. */
+@keyframes broc-livrer-pulse {
+  0%, 100% { box-shadow: 0 3px 0 var(--forest-700), 0 5px 10px rgba(27, 24, 18, 0.25); }
+  50%      { box-shadow: 0 3px 0 var(--forest-700), 0 7px 18px rgba(59, 106, 82, 0.55); }
+}
+
+.broc-pave-livrer {
+  box-shadow: 0 3px 0 var(--forest-700), 0 5px 10px rgba(27, 24, 18, 0.25);
+  animation: broc-livrer-pulse 2.2s ease-in-out infinite;
+}
+
+.broc-pave-livrer:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--forest-700), 0 2px 5px rgba(27, 24, 18, 0.25);
+  animation: none;
+}
+
+/* ─── Chevron du coin corné de la Gazette ───────────────────────────────
+   Le triangle de papier seul ne disait pas assez qu'il y avait une suite.
+   Le chevron respire lentement au lieu de clignoter : dans un journal, une
+   invitation insistante jurerait. `prefers-reduced-motion` la neutralise via
+   le bloc global. Pas de calc() dans la @keyframes (Lightning CSS). */
+@keyframes broc-chevron-page {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+.broc-chevron-page {
+  animation: broc-chevron-page 2.4s ease-in-out infinite;
+}
+
+/* ─── Grésillement de l'écran d'arcade ──────────────────────────────────
+   Le grésillement de l'écran d'un jeu pas encore trouvé. Deux pas seulement :
+   une neige qui glisse en continu ondule, une neige qui saute grésille. */
+@keyframes broc-arcade-neige {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-2px, 1px, 0); }
 }

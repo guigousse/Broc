@@ -5,6 +5,8 @@
  */
 import type { AdProvider, AdResult, EmplacementPub } from "./adProvider";
 import { plateformeNative } from "@/lib/plateforme";
+import { logEvenement } from "@/lib/analytics/contexte";
+import { EVENEMENTS } from "@/lib/analytics/analytics";
 
 /** Vrai uniquement sous runtime Tauri sur iOS (le plugin n'existe que là). */
 export function adMobDisponible(): boolean {
@@ -35,11 +37,23 @@ export class AdMobAdProvider implements AdProvider {
    * Pub fermée avant la récompense → `{ rewarded: false }` sans exception.
    */
   async showRewardedAd(emplacement: EmplacementPub): Promise<AdResult> {
+    logEvenement(EVENEMENTS.pubDemandee, { emplacement });
     await this.initialiser();
     const { invoke } = await import("@tauri-apps/api/core");
-    const res = await invoke<{ rewarded: boolean }>("plugin:admob|show_rewarded_ad", {
-      emplacement,
-    });
-    return { rewarded: res.rewarded === true };
+    try {
+      const res = await invoke<{ rewarded: boolean }>("plugin:admob|show_rewarded_ad", {
+        emplacement,
+      });
+      const rewarded = res.rewarded === true;
+      logEvenement(EVENEMENTS.pubTerminee, { emplacement, rewarded });
+      return { rewarded };
+    } catch (e) {
+      // Échec technique (pas d'inventaire, hors-ligne) : `rewarded: false`
+      // distingue « pub non aboutie » de « joueur qui ferme avant la fin »
+      // uniquement au croisement avec la console AdMob. On mesure les deux
+      // pareil ici, et on relance : l'UI doit toujours voir l'erreur.
+      logEvenement(EVENEMENTS.pubTerminee, { emplacement, rewarded: false });
+      throw e;
+    }
   }
 }

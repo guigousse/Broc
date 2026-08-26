@@ -12,6 +12,7 @@ import {
   permissionAccordee,
 } from "@/lib/notifications";
 import { notifsActives, setNotifsActives } from "@/lib/notifications/prefs";
+import { vibrationsActives, setVibrationsActives } from "@/lib/haptique/prefs";
 import { definirEnergieInfinie } from "@/lib/iap/energieInfinie";
 import { getIapProvider, achatDisponible } from "@/lib/iap/iapProvider";
 import { useToastSafe } from "@/components/ui/Toast";
@@ -150,15 +151,19 @@ const togglesRow: CSSProperties = {
 function Toggle({
   on,
   onToggle,
+  label,
 }: {
   on: boolean;
   onToggle: () => void;
+  /** Nom accessible : le libellé voisin est un simple <span>, non relié. */
+  label: string;
 }) {
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-pressed={on}
+      aria-label={label}
       style={{
         width: 44,
         height: 24,
@@ -194,8 +199,20 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
     playClick,
   } = useSettings();
   const { locale, setLocale, d, tr } = useLangue();
+  const [vibrations, setVibrations] = useState(true);
+
+  useEffect(() => {
+    setVibrations(vibrationsActives());
+  }, []);
 
   if (!open) return null;
+
+  const onToggleVibrations = () => {
+    playClick();
+    const suivant = !vibrations;
+    setVibrations(suivant);
+    setVibrationsActives(suivant);
+  };
 
   const onToggleAudio = (k: keyof AudioPrefs) => {
     playClick();
@@ -245,6 +262,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
             <Toggle
               on={audioPrefs.musique}
               onToggle={() => onToggleAudio("musique")}
+              label={d.reglages.musique}
             />
           </div>
           <div style={togglesRow}>
@@ -252,6 +270,7 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
             <Toggle
               on={audioPrefs.effets}
               onToggle={() => onToggleAudio("effets")}
+              label={d.reglages.effets}
             />
           </div>
           <div style={togglesRow}>
@@ -259,6 +278,15 @@ export function ReglagesModal({ open, onClose }: ReglagesModalProps) {
             <Toggle
               on={audioPrefs.ambiance}
               onToggle={() => onToggleAudio("ambiance")}
+              label={d.reglages.ambiance}
+            />
+          </div>
+          <div style={togglesRow}>
+            <span>{d.reglages.vibrations}</span>
+            <Toggle
+              on={vibrations}
+              onToggle={onToggleVibrations}
+              label={d.reglages.vibrations}
             />
           </div>
         </section>
@@ -327,7 +355,7 @@ function SectionNotifications() {
 
       <div style={togglesRow}>
         <span>{d.reglages.rappels}</span>
-        <Toggle on={actives} onToggle={onToggle} />
+        <Toggle on={actives} onToggle={onToggle} label={d.reglages.rappels} />
       </div>
 
       {!dispo ? (

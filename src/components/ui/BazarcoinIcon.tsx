@@ -1,0 +1,121 @@
+"use client";
+
+import type { JSX } from "react";
+
+interface BazarcoinIconProps {
+  /**
+   * HAUTEUR — le signe se dimensionne comme un caractère, pas comme une
+   * vignette carrée. Défaut 13, la hauteur d'œil du texte des plaques de prix.
+   *
+   * Un nombre vaut des pixels. Une chaîne passe telle quelle en CSS (`0.73em`)
+   * et la largeur suit par `calc` : c'est ce qu'il faut quand le corps voisin
+   * est fluide et que le signe doit rester à la hauteur d'œil de son nombre
+   * d'un gabarit à l'autre.
+   */
+  size?: number | string;
+  /**
+   * Signe éteint, au nuancier des plaques hors de portée de la bourse. Sans
+   * ça, un signe rouge vif resterait allumé au milieu d'une plaque qui s'est
+   * éteinte d'un bloc (cf. `etiquette.ts`).
+   */
+  terni?: boolean;
+  /**
+   * Le signe est posé sur un fond CLAIR (la fiche d'un article, sur papier
+   * crème). Le bleu du bandeau et des plaques y tombe à 2,6:1 et devient
+   * illisible ; celui-ci y mesure 6,3:1.
+   */
+  surClair?: boolean;
+  /**
+   * Couleur imposée, qui court-circuite les trois teintes ci-dessus. Sert à
+   * `currentColor` : sur les plaques de prix du Bazar, le signe doit suivre
+   * le montant — bleu quand la bourse suffit, rouge quand elle ne suffit pas
+   * — et une teinte de plus à accorder à la main dériverait de l'autre.
+   */
+  couleur?: string;
+}
+
+/**
+ * Le Bazarcoin : la monnaie du Bazar, un Z barré à la manière de l'euro.
+ *
+ * Dessiné par l'auteur dans `public/dev-bazarcoin.html` et exporté tel quel.
+ * C'est un SIGNE, pas une pièce : il n'a pas de flan autour, comme € ou £ n'en
+ * ont pas. Trois traits pour le Z — deux barres bombées et leur diagonale — et
+ * deux barres traversantes, ce qui fait au total les cinq horizontales que
+ * l'œil lit comme « monnaie » plutôt que comme « lettre ». La courbe est
+ * poussée à fond : c'est elle qui écarte le signe de la lettre Z.
+ *
+ * LE CADRE EST SERRÉ sur le tracé (`viewBox` 6.43 4.40 11.44 15.20). Le dessin
+ * a été composé dans un repère de 24×24 qui contenait aussi un flan rond ;
+ * celui-ci retiré, garder ce repère laisserait un tiers de vide autour et le
+ * signe ne ferait plus que 9 px de haut là où on en demande 14.
+ *
+ * BLEU ÉLECTRIQUE, et c'est une exigence : la caisse porte les deux monnaies
+ * sous un même libellé, et tout le reste du jeu est en laiton. C'est la
+ * couleur, et elle seule, qui dit d'un coup d'œil laquelle des deux on lit.
+ *
+ * DÉCORATIF : c'est l'étiquette qui le nomme (« 4 Bazarcoins »). Répété par un
+ * lecteur d'écran à chaque prix, il n'ajouterait que du bruit.
+ */
+
+/**
+ * Hauteur du signe Ƶ quand il voisine un montant écrit en POLICE D'AFFICHAGE
+ * (Cinzel) : l'œil du « € » et des chiffres. MESURÉE au canvas et non estimée
+ * — 10,85 px d'encre pour 14,93 px de corps, soit 0,727 ; le « 8 » y mesure
+ * 10,87, la même chose.
+ *
+ * En em et non en pixels : le corps qui l'entoure est fluide à la caisse
+ * (`clamp(13px, 3.8vw, 16px)`). Figé, le signe dépasserait le « € » sur un
+ * petit écran et lui serait plus court sur un grand.
+ *
+ * ⚠ Elle ne vaut QUE pour Cinzel. En `--font-serif` (Cormorant Garamond) le
+ * « € » ne mesure que 0,492 em : y poser 0,73 em donnerait un Ƶ une fois et
+ * demie trop haut. C'est le défaut qu'ont porté les pastilles du carnet
+ * jusqu'au 2026-08-23.
+ */
+export const HAUTEUR_SIGNE_DISPLAY = "0.73em";
+
+/** Largeur / hauteur du tracé, épaisseur de trait comprise. Arrondi à quatre
+ *  décimales : il part aussi tel quel dans un `calc()` CSS, où les quinze
+ *  chiffres du quotient flottant ne seraient que du bruit. */
+const RAPPORT = +(11.44 / 15.2).toFixed(4);
+
+export function BazarcoinIcon({
+  size = 13,
+  terni = false,
+  surClair = false,
+  couleur: couleurImposee,
+}: BazarcoinIconProps): JSX.Element {
+  const couleur = couleurImposee
+    ? couleurImposee
+    : terni
+    ? "var(--paper-400)"
+    : surClair
+      ? "var(--azur-600)"
+      : "var(--azur-400)";
+  const largeur =
+    typeof size === "number"
+      ? +(size * RAPPORT).toFixed(2)
+      : `calc(${size} * ${RAPPORT})`;
+  return (
+    <svg
+      width={largeur}
+      height={size}
+      viewBox="6.43 4.40 11.44 15.20"
+      aria-hidden="true"
+      style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}
+    >
+      <path
+        d="M7.03 6.50Q12.15 3.50 17.27 6.50
+           M17.27 6.50Q9.96 9.95 7.03 17.50
+           M7.03 17.50Q12.15 20.50 17.27 17.50
+           M7.03 10.17H17.27
+           M7.03 13.83H17.27"
+        fill="none"
+        stroke={couleur}
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

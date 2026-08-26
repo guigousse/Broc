@@ -162,12 +162,16 @@ export default function CollectionPage() {
   return (
   <>
     <MobileLayout
-      header={<MobileHeader budget={state.budget} />}
+      header={<MobileHeader budget={state.budget} jetons={state.jetons} />}
       stickyTop={
         <StickyTop>
           <PageHeaderBar
             title={d.chrome.onglets.collection}
-            align="center"
+            // Titre à GAUCHE : la grille centrée n'accordait qu'un tiers de
+            // la largeur à la valeur de la collection, qui s'y tronquait
+            // (retour device 2026-08-26). En mode « left », elle prend toute
+            // la place restante à droite.
+            align="left"
             right={
               <div
                 data-tuto-coach="collection-valeur"
@@ -254,10 +258,12 @@ export default function CollectionPage() {
     </MobileLayout>
     {enLecon && phaseLecon === "coach" && (
       <TutorielCoach
+        /* Deux bulles, pas trois : la valeur et ce qu'elle débloque disaient
+           la même chose en deux temps, et la troisième — sans cible — coupait
+           l'élan par un voile plein sans rien à regarder. */
         etapes={[
           { cible: "collection-case", texte: d.tutoriel.coachCollectionCase },
           { cible: "collection-valeur", texte: d.tutoriel.coachCollectionValeur },
-          { cible: null, texte: d.tutoriel.coachCollectionDeblocage },
         ]}
         onFini={() => setPhaseLecon("filtre")}
       />

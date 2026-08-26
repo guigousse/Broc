@@ -38,6 +38,31 @@ const STORAGE_KEY = "projet-broc:audio:v1";
  */
 const COFFRE_OUVRE_VITESSE = 0.6;
 
+/** Le blanc entre deux cartouches, en ms. Court : c'est un geste, pas une pause. */
+const ARCADE_BLANC_CARTOUCHE_MS = 60;
+
+/** Fourchette entre deux accrocs de la borne, en ms. */
+const ARCADE_GLITCH_MIN_MS = 12_000;
+const ARCADE_GLITCH_MAX_MS = 30_000;
+
+/**
+ * Volume de l'ambiance de rue telle qu'on l'entend au bureau — la référence
+ * dont les autres écrans se déduisent. Le Bazar rejoue la MÊME boucle mais
+ * plus ou moins fort selon la distance à sa porte : « plein volume » y veut
+ * dire « comme au bureau », pas « gain 1 », qui hurlerait.
+ */
+export const VOLUME_AMBIANCE_QG = 0.35;
+
+/**
+ * Niveau de la bande-son de la borne d'arcade du Bazar.
+ *
+ * Plus haut que l'ambiance de rue (0,35 au bureau) parce que c'est le premier
+ * plan quand la borne est ouverte, et que les pistes sont normalisées à
+ * -18 LUFS puis compressées par `build-arcade-audio.mjs` : elles arrivent déjà
+ * denses, un gain de 1 hurlerait.
+ */
+export const VOLUME_BORNE_ARCADE = 0.55;
+
 /** Détonation d'un bouquet de feu d'artifice (écran de level-up). */
 export const SON_EXPLOSION = "/sounds/explosion.mp3";
 
@@ -48,6 +73,13 @@ export const SON_EXPLOSION = "/sounds/explosion.mp3";
  * avance — divisé par la `vitesse` de lecture, qui étire ou comprime ce délai.
  */
 export const PIC_EXPLOSION_S = 0.035;
+
+/**
+ * Rampe par défaut du bus gramophone (volume et lowpass). C'est la durée d'un
+ * changement de PIÈCE : assez lente pour qu'on n'entende pas un saut, assez
+ * courte pour être finie avant qu'on ait fini d'arriver.
+ */
+const DUREE_RAMPE_BUS_MS = 400;
 
 type WindowAudio = typeof window & { webkitAudioContext?: typeof AudioContext };
 
@@ -60,6 +92,20 @@ class AudioManager {
   private catPurrGain?: GainNode;
   private ambienceSource?: AudioBufferSourceNode;
   private ambienceGain?: GainNode;
+  /**
+   * Jeton de démarrage de l'ambiance. Le garde d'idempotence classique
+   * (`if (this.ambienceSource) return`) est posé AVANT le `await` du
+   * décodage : deux appels rapprochés le franchissent tous les deux et la
+   * boucle part en double, deux fois trop fort. Le cas n'est pas théorique —
+   * c'est le montage/démontage/remontage de React en développement, et deux
+   * navigations enchaînées ailleurs.
+   *
+   * `ambienceStarting` ferme la porte pendant le vol ; `ambienceGen`, qu'un
+   * stop incrémente, permet au démarrage qui atterrit de constater qu'on a
+   * quitté l'écran entre-temps et de renoncer.
+   */
+  private ambienceStarting = false;
+  private ambienceGen = 0;
   private fireplaceSource?: AudioBufferSourceNode;
   private fireplaceGain?: GainNode;
   private needleSource?: AudioBufferSourceNode;
@@ -77,6 +123,26 @@ class AudioManager {
   private vinylAmbianceLowpass?: BiquadFilterNode;
   private ambianceVolume = 1;
   private ambianceLowpass = 20000;
+  // ── Borne d'arcade ────────────────────────────────────────────────
+  // Un <audio> en streaming, comme le vinyle, et SURTOUT pas un AudioBuffer
+  // décodé : la plus longue piste fait 2 min 45, soit ~58 Mo de PCM en
+  // mémoire une fois décodée à la fréquence du contexte. En WKWebView, onze
+  // jeux à ce régime tuent l'onglet.
+  private arcadeAudio?: HTMLAudioElement;
+  private arcadeSource?: MediaElementAudioSourceNode;
+  private arcadeGain?: GainNode;
+  private arcadeTimers: number[] = [];
+  /** Jeton de démarrage — même rôle que `ambienceGen` (cf. son commentaire). */
+  private arcadeGen = 0;
+  /**
+   * Le volume d'ambiance se calcule `base × facteur`, et les deux se règlent
+   * séparément : la zone du panorama pose la BASE, la borne d'arcade pose le
+   * FACTEUR. C'est ce qui permet à la borne d'atténuer la rue sans rien savoir
+   * de l'endroit où le joueur se tenait, et à un changement de zone de rester
+   * atténué tant que la borne joue.
+   */
+  private ambienceBase = VOLUME_AMBIANCE_QG;
+  private ambienceDuck = 1;
   private buffers: Map<string, AudioBuffer> = new Map();
   prefs: AudioPrefs = { ...DEFAULT_AUDIO_PREFS };
 
@@ -157,6 +223,7 @@ class AudioManager {
     if (k === "musique" && v === false) {
       this.pauseVinyl();
       this.stopNeedle();
+      this.stopArcade();
     }
   }
 
@@ -603,6 +670,24 @@ class AudioManager {
     src.start();
   }
 
+  /**
+   * Carillon de la porte du Bazar. Il sonne à l'ARRIVÉE sur l'écran, pas au
+   * tap qui a lancé la navigation : `playDoorClose` est la porte du bureau
+   * qu'on referme derrière soi, celle-ci est celle de la boutique qu'on
+   * pousse. Les deux s'enchaînent, séparées par la fermeture d'iris.
+   */
+  async playCarillon(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/carillon-bazar.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   /** Coffre de camionnette qui se ferme (validation chargement). */
   async playCoffreFerme(): Promise<void> {
     if (!this.prefs.effets) return;
@@ -787,14 +872,24 @@ class AudioManager {
     this.catPurrGain = undefined;
   }
 
-  /** Ambiance de rue calme du QG, en boucle. */
-  async startAmbience(): Promise<void> {
+  /**
+   * Ambiance de rue calme, en boucle. Le volume d'entrée existe pour le
+   * Bazar : sans lui, la boucle monterait au niveau du bureau avant de
+   * retomber à sa vraie valeur, et ce coup de rue s'entend à l'ouverture de
+   * l'écran. Ensuite, `setAmbienceVolume` la pilote.
+   */
+  async startAmbience(initialVolume: number = VOLUME_AMBIANCE_QG): Promise<void> {
     if (!this.prefs.ambiance) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
-    if (this.ambienceSource) return;
+    if (this.ambienceSource || this.ambienceStarting) return;
+    this.ambienceStarting = true;
+    const gen = ++this.ambienceGen;
     const buf = await this.loadBuffer("/sounds/ambience-qg.mp3");
-    if (!buf) return;
+    this.ambienceStarting = false;
+    // `gen` périmé = un stopAmbience est passé pendant le décodage : l'écran
+    // est déjà quitté, la boucle n'a plus lieu d'être.
+    if (!buf || gen !== this.ambienceGen) return;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.loop = true;
@@ -803,13 +898,67 @@ class AudioManager {
     src.connect(gain);
     gain.connect(this.master);
     const now = this.ctx.currentTime;
-    gain.gain.linearRampToValueAtTime(0.35, now + 0.6);
+    this.ambienceBase = Math.max(0, Math.min(1, initialVolume));
+    gain.gain.linearRampToValueAtTime(
+      this.ambienceBase * this.ambienceDuck,
+      now + 0.6,
+    );
     src.start();
     this.ambienceSource = src;
     this.ambienceGain = gain;
   }
 
+  /**
+   * Ajuste le volume de zone de l'ambiance en douceur (0..1).
+   *
+   * Pose la BASE, pas le gain final : une atténuation en cours (borne
+   * d'arcade ouverte) survit à l'appel. Sans ça, le panorama qui ré-émet son
+   * index rétablirait la rue à plein volume par-dessus la musique du jeu.
+   */
+  setAmbienceVolume(volume: number): void {
+    this.ambienceBase = Math.max(0, Math.min(1, volume));
+    this.appliquerAmbience(0.12);
+  }
+
+  /**
+   * Atténue l'ambiance d'un FACTEUR (0..1) sans toucher au volume de zone.
+   *
+   * Un facteur et pas un volume : l'appelant (la borne d'arcade) n'a alors
+   * rien à savoir de la position du joueur dans le panorama, ni à retenir le
+   * volume qu'il remplace pour le rendre ensuite. Il pose 0,3 en arrivant,
+   * 1 en repartant, et la courbe de zone reprend la main d'elle-même.
+   *
+   * La rampe est plus lente que celle du volume de zone (0,4 s contre 0,12) :
+   * un snap de panorama est un déplacement, une borne qui s'allume est une
+   * bascule d'attention — elle mérite qu'on l'entende arriver.
+   */
+  setAmbienceDuck(facteur: number): void {
+    this.ambienceDuck = Math.max(0, Math.min(1, facteur));
+    this.appliquerAmbience(0.4);
+  }
+
+  /** Pose `base × facteur` sur le gain d'ambiance, en `dureeS` secondes. */
+  private appliquerAmbience(dureeS: number): void {
+    if (!this.ctx || !this.ambienceGain) return;
+    const now = this.ctx.currentTime;
+    this.ambienceGain.gain.cancelScheduledValues(now);
+    this.ambienceGain.gain.setValueAtTime(this.ambienceGain.gain.value, now);
+    this.ambienceGain.gain.linearRampToValueAtTime(
+      this.ambienceBase * this.ambienceDuck,
+      now + dureeS,
+    );
+  }
+
   stopAmbience(): void {
+    // Le facteur d'atténuation ne survit PAS à la boucle qu'il atténuait.
+    // Oublié derrière soi, il rendrait l'ambiance du bureau trois fois trop
+    // basse à l'écran suivant, sans que rien ne relie la panne à la borne du
+    // Bazar qu'on vient de quitter.
+    this.ambienceDuck = 1;
+    // Avant tout autre garde : annule aussi un démarrage encore en vol, dont
+    // le buffer se décode et qui n'a donc encore posé aucune source.
+    this.ambienceGen++;
+    this.ambienceStarting = false;
     if (!this.ctx || !this.ambienceSource || !this.ambienceGain) return;
     const now = this.ctx.currentTime;
     const src = this.ambienceSource;
@@ -889,8 +1038,18 @@ class AudioManager {
     this.vinylAmbianceLowpass = lp;
   }
 
-  /** Volume global du bus gramophone (musique + crépitement). 0..1. */
-  setVinylAmbianceVolume(v: number): void {
+  /**
+   * Volume global du bus gramophone (musique + crépitement). 0..1.
+   *
+   * `dureeMs` sert aux réglages de pièce (défaut : une transition douce dont
+   * personne ne doit remarquer la longueur) mais se règle au cas par cas
+   * quand le fondu doit tenir la mesure d'autre chose — le passage vers le
+   * Bazar l'aligne sur la fermeture de l'iris.
+   *
+   * Le disque n'est PAS arrêté, même à zéro : c'est un volume, pas une fin de
+   * lecture. `fadeOutVinylBus` est l'autre geste, celui qui coupe pour de bon.
+   */
+  setVinylAmbianceVolume(v: number, dureeMs = DUREE_RAMPE_BUS_MS): void {
     this.ambianceVolume = Math.max(0, Math.min(1, v));
     // Un fondu de sortie en vol possède le gain : on n'écrase pas sa rampe.
     // La cible de route vient d'être mise à jour ci-dessus et sera appliquée
@@ -905,7 +1064,7 @@ class AudioManager {
     );
     this.vinylAmbianceGain.gain.linearRampToValueAtTime(
       this.ambianceVolume,
-      now + 0.4,
+      now + Math.max(0, dureeMs) / 1000,
     );
   }
 
@@ -921,7 +1080,7 @@ class AudioManager {
     );
     this.vinylAmbianceLowpass.frequency.linearRampToValueAtTime(
       this.ambianceLowpass,
-      now + 0.4,
+      now + DUREE_RAMPE_BUS_MS / 1000,
     );
   }
 
@@ -1129,6 +1288,206 @@ class AudioManager {
     this.gramoTimers = [];
     this.stopVinyl();
     this.stopNeedle();
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Borne d'arcade                                                     */
+  /* ---------------------------------------------------------------- */
+
+  /**
+   * Lance la bande-son du jeu affiché sur la borne, en boucle.
+   *
+   * PARTAGE DES RÔLES AVEC LE SCRIPT DE BUILD — la coloration « haut-parleur
+   * de borne » (caisse, petit ampli, crush gradué par génération) est CUITE
+   * dans le `.m4a` par `scripts/build-arcade-audio.mjs` : elle ne dépend ni du
+   * moment ni du joueur, la refaire ici coûterait quatre nœuds et une
+   * deuxième implémentation à tenir. Ce qui reste ici est tout ce qui doit
+   * varier : l'allumage, le changement de cartouche, et le glitch.
+   *
+   * ALLUMAGE OU CHANGEMENT DE CARTOUCHE : le manager tranche seul, selon
+   * qu'une piste tourne déjà ou non. Rien à passer, donc rien à se rappeler
+   * côté appelant — et c'est ce qui rend l'effet juste dans tous les cas :
+   * ouvrir la borne allume le meuble, swiper d'un jeu à l'autre change la
+   * cartouche, et repasser par un écran neigeux (qui éteint) rallume. Un
+   * drapeau tenu par l'appelant se serait trompé sur au moins l'un des trois.
+   */
+  async playArcadeTrack(url: string): Promise<void> {
+    if (!this.prefs.musique) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+
+    const remplace = this.arcadeAudio !== undefined;
+    // Coupure SÈCHE quand on remplace : c'est le bruit de la cartouche qu'on
+    // arrache, et il est voulu. `stopArcade` (fermeture de la borne) garde
+    // son fondu de 60 ms, lui — éteindre un meuble ne claque pas.
+    this.couperArcade(remplace ? 0 : 0.06);
+    const gen = this.arcadeGen;
+    if (remplace) {
+      await new Promise<void>((resolve) => {
+        this.arcadeTimer(resolve, ARCADE_BLANC_CARTOUCHE_MS);
+      });
+      // Le joueur a pu refermer la borne, ou reswiper, pendant le blanc.
+      if (gen !== this.arcadeGen) return;
+    }
+
+    const audio = new Audio(url);
+    audio.crossOrigin = "anonymous";
+    audio.preload = "auto";
+    // L'attract mode d'une vraie borne ne s'arrête pas : la plus courte des
+    // onze pistes fait 30 s, et un silence au bout d'une demi-minute passerait
+    // pour une panne.
+    audio.loop = true;
+    let source: MediaElementAudioSourceNode;
+    try {
+      source = this.ctx.createMediaElementSource(audio);
+    } catch {
+      return;
+    }
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0;
+    source.connect(gain);
+    // Directement au master : le bus gramophone porte un lowpass de pièce qui
+    // n'a rien à voir avec la borne, dont la coloration est déjà dans le
+    // fichier.
+    gain.connect(this.master);
+    this.arcadeAudio = audio;
+    this.arcadeSource = source;
+    this.arcadeGain = gain;
+
+    // Le meuble qui prend le courant monte de plus loin, et plus longtemps,
+    // qu'une cartouche qu'on enfonce.
+    const monteeMs = remplace ? 120 : 350;
+    const now = this.ctx.currentTime;
+    gain.gain.linearRampToValueAtTime(VOLUME_BORNE_ARCADE, now + monteeMs / 1000);
+    this.glisserVitesse(remplace ? 0.94 : 0.82, 1, monteeMs);
+
+    try {
+      await audio.play();
+    } catch {
+      // Refusée (autoplay hors geste) : l'élément reste en place, le prochain
+      // tap du joueur passe par les débloqueurs d'`installUnlockHandlers`.
+    }
+    this.programmerGlitch();
+  }
+
+  /** Éteint la borne : fondu court, timers annulés, élément relâché. */
+  stopArcade(): void {
+    this.couperArcade(0.06);
+  }
+
+  /**
+   * Coupe la piste en cours sur `fonduS` secondes et relâche tout.
+   *
+   * Les références sont capturées AVANT d'être effacées, et la libération
+   * passe par un timer LOCAL, hors de `arcadeTimers` : sans ça, la piste
+   * suivante — qui vide la liste en démarrant — annulerait la libération de la
+   * précédente et laisserait un `<audio>` orphelin en lecture.
+   */
+  private couperArcade(fonduS: number): void {
+    this.arcadeGen++;
+    this.arcadeTimers.forEach((t) => window.clearTimeout(t));
+    this.arcadeTimers = [];
+    const audio = this.arcadeAudio;
+    const source = this.arcadeSource;
+    const gain = this.arcadeGain;
+    this.arcadeAudio = undefined;
+    this.arcadeSource = undefined;
+    this.arcadeGain = undefined;
+    if (!audio) return;
+    if (this.ctx && gain) {
+      const now = this.ctx.currentTime;
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.linearRampToValueAtTime(0, now + fonduS);
+    }
+    window.setTimeout(
+      () => {
+        audio.pause();
+        audio.src = "";
+        try {
+          source?.disconnect();
+        } catch {
+          /* ignore */
+        }
+        try {
+          gain?.disconnect();
+        } catch {
+          /* ignore */
+        }
+      },
+      Math.round(fonduS * 1000) + 20,
+    );
+  }
+
+  /** Pousse un timer de borne dans la liste annulable. */
+  private arcadeTimer(fn: () => void, ms: number): void {
+    this.arcadeTimers.push(window.setTimeout(fn, ms));
+  }
+
+  /**
+   * Fait glisser la vitesse de lecture de `depuis` vers `vers`.
+   *
+   * ÉCHELONNÉ À LA MAIN parce que `playbackRate` d'un `<audio>` est un simple
+   * nombre et non un `AudioParam` : il n'a pas de rampe, on ne peut que le
+   * reposer souvent. Dix pas suffisent à ce que l'oreille entende un glissando
+   * et pas un escalier.
+   */
+  private glisserVitesse(depuis: number, vers: number, dureeMs: number): void {
+    const audio = this.arcadeAudio;
+    if (!audio) return;
+    audio.playbackRate = depuis;
+    const pas = 10;
+    for (let i = 1; i <= pas; i++) {
+      this.arcadeTimer(
+        () => {
+          // La piste a pu changer entre-temps : on ne règle jamais la vitesse
+          // d'un élément qui n'est plus celui à l'écran.
+          if (this.arcadeAudio !== audio) return;
+          audio.playbackRate = depuis + (vers - depuis) * (i / pas);
+        },
+        (dureeMs * i) / pas,
+      );
+    }
+  }
+
+  /**
+   * Programme le prochain accroc, à un moment tiré au hasard.
+   *
+   * LE HASARD EST LA RAISON D'ÊTRE DE CE CODE. Un glitch cuit dans le fichier
+   * tomberait au même endroit à chaque tour de boucle et deviendrait une
+   * signature reconnaissable en trois minutes — donc un défaut, plus un
+   * accident. Tiré entre 12 et 30 s, il ne se répète jamais au même endroit
+   * de la musique.
+   */
+  private programmerGlitch(): void {
+    const delai =
+      ARCADE_GLITCH_MIN_MS +
+      Math.random() * (ARCADE_GLITCH_MAX_MS - ARCADE_GLITCH_MIN_MS);
+    this.arcadeTimer(() => this.glitch(), delai);
+  }
+
+  /** Une grappe de micro-coupures, plus un dérapage de vitesse. */
+  private glitch(): void {
+    const audio = this.arcadeAudio;
+    const gain = this.arcadeGain;
+    if (!this.ctx || !audio || !gain) return;
+    let t = this.ctx.currentTime;
+    const coupures = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < coupures; i++) {
+      // 20 à 60 ms : assez pour s'entendre, trop court pour qu'on croie à une
+      // panne de lecture.
+      const duree = 0.02 + Math.random() * 0.04;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.setValueAtTime(VOLUME_BORNE_ARCADE, t + duree);
+      t += duree + 0.04 + Math.random() * 0.08;
+    }
+    // Le son ACCROCHE, il ne fait pas que se taire : un blanc seul sonne comme
+    // un fichier qui saute, une nappe de connecteur fatiguée traîne un peu.
+    audio.playbackRate = 0.985;
+    this.arcadeTimer(() => {
+      if (this.arcadeAudio === audio) audio.playbackRate = 1;
+    }, 120);
+    this.programmerGlitch();
   }
 
   /** Vrai si un vinyle est chargé et en lecture (non mis en pause). */

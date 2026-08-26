@@ -10,8 +10,9 @@ import { HUMEUR_FACHE_SEUIL } from "@/lib/personaIllustrations";
 import { audioManager } from "@/lib/audio/audioManager";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomVendeur, texteNego } from "@/lib/i18n/contenu";
+import { genreVendeur } from "@/lib/personas";
 import type { NegociationState, ObjetEnVente } from "@/types/game";
-import type { RoleScenario } from "@/data/tutorielScenario";
+import { offreDansCible, type CibleOffre, type RoleScenario } from "@/data/tutorielScenario";
 
 /**
  * Tiroir de négociation en bas de la carte de chine — reprend l'allure de la
@@ -53,7 +54,7 @@ export function ChineNegoDrawer({
   tutoGuide?: boolean;
   /** Tutoriel scripté : impose le chemin (négo bloquée/forcée, achat direct
    *  bloqué/forcé) et borne l'offre initiale + le curseur joueur. */
-  scriptTuto?: { role: RoleScenario; bornes?: { min: number; max: number } } | null;
+  scriptTuto?: { role: RoleScenario; cible?: CibleOffre } | null;
 }) {
   const { d, tr, locale } = useLangue();
   const { prixVendeur, statut, persona } = item;
@@ -63,7 +64,11 @@ export function ChineNegoDrawer({
   const acheterDisabled = acquis || tropCher || plein;
 
   const roleTuto = scriptTuto?.role ?? null;
-  const bornes = scriptTuto?.bornes ?? null;
+  /* Cible pointillée du grand-père : le curseur n'est PLUS bridé (il retrouve
+     ses bornes naturelles, 1…prix adverse), c'est « Proposer » qui reste
+     inerte tant que l'offre n'est pas dans l'anneau. Le joueur fait donc le
+     geste — viser — au lieu de buter contre un mur invisible. */
+  const cibleTuto = scriptTuto?.cible ?? null;
   const negocierBloque = roleTuto === "achat-direct" || roleTuto === "decor";
   const acheterBloqueTuto = roleTuto !== null && roleTuto !== "achat-direct";
 
@@ -78,10 +83,7 @@ export function ChineNegoDrawer({
       ),
   );
   const [offreJoueur, setOffreJoueur] = useState<number>(() =>
-    Math.min(
-      bornes?.max ?? Infinity,
-      Math.max(bornes?.min ?? 1, Math.round(prixVendeur * 0.25)),
-    ),
+    Math.max(1, Math.round(prixVendeur * 0.25)),
   );
 
   // Resynchronise quand la négo change de l'EXTÉRIEUR (relance Tchatche depuis
@@ -95,12 +97,21 @@ export function ChineNegoDrawer({
   }, [item.negociation]);
 
   const enCours = localNego.statut === "en_cours";
+  /* Le vendeur a lâché son dernier prix : plus de contre-offre possible, mais
+     son prix tient encore — au joueur de le prendre ou de partir. Distinct de
+     « fache », où la négo est morte (seule La Tchatche la relance). */
+  const dernierPrix = localNego.statut === "refus_poli";
   const estFache =
     localNego.statut === "fache" || localNego.humeur >= HUMEUR_FACHE_SEUIL;
   const illustrationCourante =
     estFache && illustrationFacheSrc ? illustrationFacheSrc : illustrationSrc;
 
+  /* Gate du tutoriel : hors de l'anneau, rien à proposer. Fail-open hors
+     tutoriel (pas de cible ⇒ jamais bloqué). */
+  const horsCible = !offreDansCible(offreJoueur, cibleTuto);
+
   const handleProposer = () => {
+    if (horsCible) return;
     const next = proposerOffre(
       localNego,
       persona,
@@ -131,13 +142,19 @@ export function ChineNegoDrawer({
               {texteNego(localNego.message, locale)}
             </div>
           ) : acquis ? (
-            <span style={statutTexte("var(--brass-700)")}>{d.chine.acquisStatut}</span>
+            /* Visuel porté par le tampon « Vendu » sur le sticker (retour
+               device : « Acquis » faisait doublon). Le tampon étant
+               `aria-hidden`, cette annonce invisible est la SEULE trace qui
+               reste pour un lecteur d'écran — même règle que le fâché. */
+            <span style={srOnly}>{d.chine.tamponVendu}</span>
           ) : facheInitial ? (
             /* Visuel porté par le tampon « Vendeur fâché » sur le sticker ;
                on ne garde ici que l'annonce pour les lecteurs d'écran. */
             <span style={srOnly}>{d.chine.vendeurFache}</span>
           ) : plein ? (
-            <span style={statutTexte("var(--vermillion-600)")}>{d.qg.stockagePlein}</span>
+            /* Idem : le texte rouge passait inaperçu à l'écran, le tampon
+               « Stock plein » le remplace sur l'objet lui-même. */
+            <span style={srOnly}>{d.chine.tamponStockPlein}</span>
           ) : (
             <div style={peekBtnRow}>
               <button
@@ -176,22 +193,33 @@ export function ChineNegoDrawer({
             echelleMax={prixVendeur}
             prixAdverse={localNego.prixAdverseCourant}
             prixJoueur={offreJoueur}
-            minJoueur={bornes?.min ?? 1}
-            maxJoueur={Math.min(bornes?.max ?? Infinity, localNego.prixAdverseCourant)}
+            minJoueur={1}
+            maxJoueur={localNego.prixAdverseCourant}
+            cible={cibleTuto}
             onChangeJoueur={setOffreJoueur}
             readOnly={!enCours}
             tutoMainJoueur={tutoGuide && expanded}
+            genreAdverse={genreVendeur(persona.archetype)}
+            dernierPrix={dernierPrix}
           />
           <div style={negoBtnRow}>
-            {localNego.statut === "refus_poli" ? (
-              <button
-                type="button"
-                style={{ ...btnPrimaryDisablable(plein), gridColumn: "1 / -1" }}
-                disabled={plein}
-                onClick={() => onConclu(localNego.prixAdverseCourant)}
-              >
-                {tr(d.chine.acheterPrixAffiche, { prix: localNego.prixAdverseCourant })}
-              </button>
+            {dernierPrix ? (
+              // Même disposition que pendant la négo — abandon à gauche,
+              // action principale à droite : le joueur qui tapote le bouton
+              // de droite ne renonce pas par réflexe quand l'écran change.
+              <>
+                <button type="button" style={btnSecondary} onClick={onCollapse}>
+                  {d.chine.laisserTomber}
+                </button>
+                <button
+                  type="button"
+                  style={btnPrimaryDisablable(plein)}
+                  disabled={plein}
+                  onClick={() => onConclu(localNego.prixAdverseCourant)}
+                >
+                  {tr(d.chine.accepterPrix, { prix: localNego.prixAdverseCourant })}
+                </button>
+              </>
             ) : enCours ? (
               <>
                 <button type="button" style={btnSecondary} onClick={onCollapse}>
@@ -201,8 +229,8 @@ export function ChineNegoDrawer({
                     coupé — l'achat échouerait (garde atomique acheterObjet). */}
                 <button
                   type="button"
-                  style={btnPrimaryDisablable(plein)}
-                  disabled={plein}
+                  style={btnPrimaryDisablable(plein || horsCible)}
+                  disabled={plein || horsCible}
                   onClick={handleProposer}
                 >
                   {offreJoueur >= localNego.prixAdverseCourant
@@ -319,12 +347,6 @@ const bubbleTailInner: CSSProperties = {
 /** Bandeau nom pleine largeur, coins hauts arrondis (ancienne fiche). */
 const namePlate = namePlateStyle("12px 12px 0 0");
 
-const statutTexte = (color: string): CSSProperties => ({
-  marginBottom: 10,
-  color,
-  fontSize: 14,
-  fontFamily: "var(--font-display)",
-});
 
 /** Texte présent pour les lecteurs d'écran mais invisible à l'écran. */
 const srOnly: CSSProperties = {

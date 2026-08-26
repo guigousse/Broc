@@ -5,6 +5,13 @@
  * des littéraux français en dur dans GameContext, alors que le jeu est vendu
  * en 4 langues. Ils doivent passer par le dictionnaire de la locale courante
  * (raisonLocalisee), comme toutes les autres raisons.
+ *
+ * Tâche 8 : le toast d'ÉCHEC a depuis disparu (remplacé par le bandeau
+ * persistant + la modale d'escalade de `BandeauSauvegarde`, seuls capables de
+ * donner un signal qui ne s'efface pas tout seul). Ce test ne vérifie donc
+ * plus que l'échec bascule `etatSauvegarde` en erreur ; le toast de
+ * RÉTABLISSEMENT, lui, reste inchangé et doit toujours parler la langue du
+ * joueur.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
@@ -46,7 +53,7 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe("GameContext — toasts de sauvegarde localisés", () => {
-  it("échec puis rétablissement : les deux toasts parlent la langue du joueur (grec)", async () => {
+  it("échec : etatSauvegarde bascule en erreur (le toast a été remplacé par le bandeau, Tâche 8) ; rétablissement : le toast parle la langue du joueur (grec)", async () => {
     // Le joueur joue en grec — persisté AVANT de casser le stockage.
     persisterLocale("el");
 
@@ -66,9 +73,7 @@ describe("GameContext — toasts de sauvegarde localisés", () => {
       window.dispatchEvent(new Event("pagehide"));
     });
     await waitFor(() =>
-      expect(
-        screen.getByText(DICTIONNAIRES.el.raisons.sauvegardeImpossible),
-      ).toBeTruthy(),
+      expect(result.current.etatSauvegarde.enEchec).toBe(true),
     );
 
     // Le stockage revient : le toast de rétablissement doit aussi être grec.

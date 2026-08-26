@@ -14,6 +14,7 @@ export const es: DictionnaireUI = {
     charger: "Cargar",
     reglages: "Ajustes",
     credits: "Créditos",
+    soutenir: "Apoyar",
   },
   parties: {
     titre: "— Partidas —",
@@ -42,11 +43,12 @@ export const es: DictionnaireUI = {
   },
   reglages: {
     titre: "— Ajustes —",
-    son: "Sonido",
+    son: "Sonido y vibración",
     volumeGeneral: "Volumen general — {n}",
     musique: "Música",
     effets: "Efectos de sonido",
     ambiance: "Sonidos de ambiente",
+    vibrations: "Vibración",
     langue: "Idioma",
     notifications: "Notificaciones",
     rappels: "Recordatorios (energía, taller, misiones)",
@@ -96,10 +98,17 @@ export const es: DictionnaireUI = {
       bureau: "Despacho",
       stockage: "Almacén",
       atelier: "Taller",
+      reserve: "Reserva",
+      quetes: "Misiones",
+      quetesAbrege: "Misiones",
     },
+    ongletVerrouille: "bloqueado",
+    verrouBibliotheque: "El Gabinete abre en tu primer nivel de Chamarilero.",
+    verrouAtelier: "El Taller abre con tu primera habilidad Reparar.",
     navigationPrincipale: "Navegación principal",
     energie: "Energía",
     caisse: "Caja",
+    jetons: "Bazarcoins",
     rechargerEnergie: "Recargar energía",
     montantEuros: "{valeur} €",
     niveau: "Nivel",
@@ -132,7 +141,6 @@ export const es: DictionnaireUI = {
     panorama: "Panorama del cuartel",
     decor: "Decorado del cuartel",
     porteEntree: "Puerta de entrada",
-    carnetSessions: "Cuaderno — sesiones recientes",
     grandPere: "Hablar con el abuelo",
     colis: "Paquete del abuelo",
     cadeau: "Regalo de cumpleaños",
@@ -143,8 +151,6 @@ export const es: DictionnaireUI = {
     gramophone: "Gramófono — elegir un vinilo",
     fauteuilChat: "Sillón ocupado por un gato",
     fauteuilPasser: "Sillón — descansar el día",
-    porteRevuesLire: "Revistero — leer la Gaceta",
-    porteRevuesAcheter: "Revistero — comprar la Gaceta",
     journalSolOffert: "Periódico — regalo del abuelo",
     journalSolAcheter: "La Gaceta del lunes — comprar o rechazar",
     journalBureauLire: "Periódico — leer la Gaceta",
@@ -156,6 +162,8 @@ export const es: DictionnaireUI = {
     stockagePlein: "Almacén lleno",
     chiner: "Rebuscar",
     etaler: "Montar puesto",
+    bazar: "Bazar",
+    bazarCompteARebours: "D-{n}",
     chatDortMessage:
       "Un gato duerme plácidamente en el sillón. No puedes terminar el día sin molestarlo…",
     seReposer: "Descansar (+1 día)",
@@ -170,8 +178,6 @@ export const es: DictionnaireUI = {
     slotLibre: "libre",
   },
   tutoriel: {
-    passer: "Saltar tutorial",
-    confirmerPasser: "¿Seguro? Toca otra vez",
     colisTitre: "El paquete del abuelo",
     cadeauTitre: "¡Feliz cumpleaños!",
     colisRecuperer: "Recoger",
@@ -188,36 +194,50 @@ export const es: DictionnaireUI = {
       "Y este botón lo envía a tu colección, en vez de venderlo.",
     coachStockageAmelioration:
       "Más adelante podrás ampliarlo: sótano, luego nave.",
+    coachStockageAtelier:
+      "Y ahí, el taller — se abrirá cuando sepas reparar.",
     coachCollectionCase:
       "El peluche ya tiene su lugar: ya no se vende, se exhibe.",
     coachCollectionValeur:
-      "El valor de tu colección crece con cada donación.",
-    coachCollectionDeblocage:
-      "Ese valor desbloquea nuevos mercadillos, y construye tu reputación.",
+      "El valor de tu colección crece con cada donación, y desbloquea nuevos mercadillos.",
     coachCollectionRetirer:
       "Una pieza donada no está perdida: este botón la devuelve a tu reserva, pero su valor se va con ella.",
+    coachAtelierDemanteler:
+      "Lo que nunca venderás, desmóntalo: da piezas.",
+    coachAtelierPieces:
+      "Tus piezas, una reserva por familia de objetos.",
+    coachAtelierEtabli:
+      "Un objeto, unas piezas, un poco de tiempo: y sale en mejor estado.",
+    coachVenteHumeur:
+      "Su humor: cada tira y afloja lo va crispando. Cuanto más roja se pone la barra, más probable es que se marche para siempre.",
+    coachCompetencesXp:
+      "Tu nivel y tu barra de experiencia: cada venta, cada hallazgo la llena.",
+    coachCompetencesArbres:
+      "Un árbol general, y uno por familia de objetos — te especializarás más adelante.",
+    coachCompetencesPoint:
+      "Y ahí tienes tu primer punto para gastar. Te espera.",
     instructions: {
       "accueil": "Escucha a tu abuelo…",
-      "aller-chiner": "Cruza la puerta, elige «Rebuscar» y luego el Mercadillo del barrio.",
-      "chine-nego-echec": "Despliega «Negociar» e intenta una oferta muy baja, a ver qué pasa.",
-      "chine-achat-direct": "Esa jarra tiene un precio justo: cómprala al precio marcado.",
-      "chine-nego-un": "Negocia el mando — propón un precio con el deslizador.",
-      "chine-nego-deux": "Negocia el peluche — ya le vas pillando el truco.",
-      "chine-sortir": "Echa un vistazo a los últimos puestos si quieres, y luego sal del mercadillo.",
-      "stockage-ouvrir": "Abre el Almacén desde la barra inferior.",
-      "stockage-focus": "Echa un vistazo a tu almacén — toca para continuar.",
-      "collection-envoyer": "Envía el peluche de mohair a tu colección.",
-      "collection-lecon": "Abre la Colección desde la barra inferior.",
-      "ouvrir-colis": "Abre el paquete de tu abuelo, junto a la puerta.",
-      "preparer-etal": "Vuelve a cruzar la puerta y elige «Montar puesto» para preparar tu vitrina.",
-      "coffre-trace-un": "Mira bien: tu abuelo coloca el mando y lo gira por ti.",
-      "coffre-trace-deux": "Un dedo para mover, otro para girar: coloca el objeto sobre su silueta.",
-      "vente-refus": "Este cliente ofrece muy poco — déjalo pasar, sin remordimientos.",
-      "vente-directe": "Se queda con el mando al precio marcado: ¡acepta!",
-      "vente-nego": "Negocia la jarra — mantén tu precio, subirá.",
+      "aller-chiner": "Cruza la *puerta*, luego *Rebuscar* → *Mercadillo del barrio*.",
+      "chine-nego-echec": "Despliega *Negociar* y apunta al *círculo punteado*.",
+      "chine-achat-direct": "Precio justo: *cómprala al precio marcado*.",
+      "chine-nego-un": "*Negocia* el mando: el deslizador en el *círculo*.",
+      "chine-nego-deux": "Igual con el peluche: el deslizador en el *círculo*.",
+      "chine-sortir": "*Sal* del mercadillo cuando termines.",
+      "stockage-ouvrir": "Abre la *Reserva*, abajo.",
+      "stockage-focus": "Echa un vistazo a tu almacén.",
+      "collection-envoyer": "Envía el *peluche* a tu *colección*.",
+      "collection-lecon": "Abre la *Colección*, abajo.",
+      "ouvrir-colis": "Abre el *paquete* del abuelo, junto a la puerta.",
+      "preparer-etal": "Cruza la puerta otra vez, luego *Montar puesto*.",
+      "coffre-trace-un": "Mira: él coloca el mando por ti.",
+      "coffre-trace-deux": "Pon la jarra en su *silueta*: un dedo para mover, dos para girar.",
+      "vente-refus": "Ofrece muy poco: *déjalo pasar*.",
+      "vente-directe": "Paga el precio marcado: *acepta*.",
+      "vente-nego": "*Negocia* la jarra: el deslizador en el *círculo*.",
       "niveau-celebration": "¡Subes de nivel — disfrútalo!",
-      "competences-visite": "Abre las Habilidades desde la barra inferior.",
-      "competences-choix": "Gasta tu primer punto: la rama Perspicacia, «Lector de almas».",
+      "competences-visite": "Abre las *Habilidades*, abajo.",
+      "competences-choix": "Gasta tu punto: *Perspicacia* → *Lector de almas*.",
       "conclusion": "Escucha a tu abuelo…",
     },
   },
@@ -319,12 +339,15 @@ export const es: DictionnaireUI = {
     sortir: "Salir",
     precedent: "Anterior",
     altVendeur: "Vendedor",
-    acquisStatut: "— Adquirido —",
     vendeurFache: "Vendedor enfadado",
+    // Tampon encreur du stock saturé, posé sur l'objet comme « Vendu ».
+    // Court exprès : le tampon est en diagonale sur la vignette.
+    tamponStockPlein: "Almacén lleno",
     tamponVendu: "Vendido",
     negocier: "Regatear",
     acheterPrix: "Comprar por {prix} €",
     laisserTomber: "Abandonar",
+    dernierPrix: "precio final",
     accepterPrix: "Aceptar {prix} €",
     proposerPrix: "Ofrecer {prix} €",
     acheterPrixAffiche: "Comprar al precio indicado — {prix} €",
@@ -377,7 +400,7 @@ export const es: DictionnaireUI = {
     lotGarniChoisirTitre: "🧺 Lot garni — añadir un objeto",
     lotGarniAucunAutre: "Nada más que ofrecer.",
     prixDemandeLabel: "Precio pedido",
-    clientInconnu: "Un desconocido",
+    clientInconnu: { m: "Un desconocido", f: "Una desconocida", n: "Unos desconocidos" },
     tempsRestantLabel: "Tiempo restante",
     journeeSansVente: "La jornada termina sin una sola venta.",
     journeeUneVente: "Una sola venta hoy. Es un comienzo.",
@@ -393,7 +416,7 @@ export const es: DictionnaireUI = {
     bulleJePrends: "«Me lo quedo. Aquí tienes {prix} €.»",
     refuser: "Rechazar",
     vendrePrix: "Vender · {prix} €",
-    labelAdverse: "Él",
+    labelAdverse: { m: "Él", f: "Ella", n: "Ellos" },
     labelJoueur: "Tú",
     reorganiserCoffre: "Reorganiza el baúl — algunos objetos no caben.",
     fermetureEnCours: "Cerrando…",
@@ -461,6 +484,10 @@ export const es: DictionnaireUI = {
     themeMot: "Tema",
     envoyerCollection: "Enviar a la colección",
     remplacerCollection: "Reemplazar el ejemplar de la colección",
+    remplacerCollectionHausse:
+      "Reemplazar el ejemplar de la colección — su valor sube",
+    remplacerCollectionBaisse:
+      "Reemplazar el ejemplar de la colección — su valor baja",
     etatCategorieAria: "Estado {etat}, categoría {categorie}",
     categorieAria: "Categoría: {categorie}",
     valeurMot: "valor",
@@ -485,12 +512,12 @@ export const es: DictionnaireUI = {
     aucunePieceARestaurer: "Ninguna pieza que restaurar.",
     dureeValeurVers: "{duree} · valor {valeur} →",
     dureeValeurInconnue: "{duree} · valor ? → ?",
-    valeurEuros: "valor {n} €",
-    valeurInconnue: "valor ?",
     aucunObjetADemanteler: "Ningún objeto que desmantelar en el almacén.",
     confirmerRestaurationAria:
       "Confirmar la restauración — coste {cout} piezas de {categorie}",
     demantelerAria: "Desmantelar — rendimiento {pieces} piezas de {categorie}",
+    ameliorerAria: "Mejorar — coste {cout} piezas de {categorie}",
+    ongletObjets: "Objetos por trabajar",
     demantelerSeg1: "Desmantelar",
     demantelerSeg2: "rinde",
     demantelerSeg3: ". El objeto se destruirá definitivamente.",
@@ -581,13 +608,16 @@ export const es: DictionnaireUI = {
       "Se acerca el primer fin de semana de septiembre: ¡la Gran Braderie monta sus puestos! Dos días de precios regalados — esperen la multitud de los grandes días.",
     braderieEnCours:
       "¡La Gran Braderie está en pleno apogeo! Puestos hasta donde alcanza la vista, precios regalados y multitud récord — es este fin de semana o nunca.",
+    // Légende sous la rangée des sept jours : la météo n'agit que sur
+    // le rythme d'arrivée des clients AU STAND DE VENTE
+    // (METEO_INTERVALLE_MULT), jamais sur la chine. Pas de chiffre : un
+    // multiplicateur sonnerait tableur au milieu d'un journal.
+    meteoLegende:
+      "El buen tiempo saca a los compradores; la tormenta los deja en casa. El tiempo marca la afluencia en su puesto — no cambia nada al buscar gangas.",
+    pageIndicateur: "Página {page} / {total}",
     pageSuivanteAria: "Página siguiente",
     pagePrecedenteAria: "Página anterior",
     pageIndicateurAria: "Página {page} de {total}",
-  },
-  registre: {
-    ongletCommandes: "Pedidos",
-    ongletComptes: "Cuentas",
   },
   cahier: {
     marcheDuJour: "Mercado del día",
@@ -615,12 +645,10 @@ export const es: DictionnaireUI = {
     fermer: "Cerrar",
     titre: "Cuaderno de pedidos",
     jour: "Día {n}",
-    livrablesSuffixe_un: " · {n} entregable",
-    livrablesSuffixe_n: " · {n} entregables",
     aucuneCommande: "No hay pedidos por ahora.",
     sectionPrincipales: "Pedidos principales",
-    sectionQuotidiennes: "Pedidos diarios",
-    sectionHebdomadaires: "Pedidos semanales",
+    sectionQuotidiennes: "Diario",
+    sectionHebdomadaires: "Semanal",
     renouvellement: "Se renueva en {t}",
     terminees: "Completados",
     livreeJour: "Entregado D{n}",
@@ -632,16 +660,41 @@ export const es: DictionnaireUI = {
     jetonArgent: "+{n} €",
     jetonXp: "+{n} XP",
     jetonEnergie: "+{n} ⚡",
-    recompenseAria: "Recompensa: {argent} €, {xp} XP, {energie} energía",
+    // Les PASTILLES du carnet, SANS « + » : la plaque s'intitule déjà
+    // « Récompense » et rien n'y est jamais retiré — le signe n'apprend rien
+    // et vole la place au montant, qu'on veut gros. Le Bazarcoin y sort en
+    // chiffre nu, son signe bleu étant dessiné à côté.
+    gainArgent: "{n} €",
+    gainXp: "{n} XP",
+    gainEnergie: "{n} ⚡",
+    gainBazar: "{n}",
+    // Le GRAND LIVRE, qui est du texte pur : aucun signe dessiné n'y a sa
+    // place, le mot doit donc rester écrit.
+    jetonBazarUn: "+{n} Bazarcoin",
+    jetonBazarN: "+{n} Bazarcoins",
+    recompenseAria: "Recompensa: {argent} €, {xp} XP, {energie} energía, {jetons} Bazarcoins",
     livrer: "Entregar",
     livrerProgress: "Entregar ({rempli}/{total})",
+    sectionCompteur: "({faits}/{total})",
+    sectionPretes_un: " · {n} lista",
+    sectionPretes_n: " · {n} listas",
     objectifs: {
       ventesCumulees: "Ventas acumuladas",
       profitVente: "Mejor beneficio en una venta",
       restauration: "Restaurar un objeto ({etat} mín.)",
       valeurCollection: "Valor de la colección",
       niveau: "Nivel de chamarilero",
+      objetsRares: "Piezas raras encontradas",
+      beneficeCumule: "Beneficio obtenido",
+      ventesCategorie: "Objetos vendidos ({categorie})",
     },
+    histoireSurtitre: "Misión principal",
+    histoireObjectifActuel: "Objetivo actual",
+    histoireInconnu: "???",
+    carnetTitre: "Cuaderno de misiones",
+    sectionHistoire: "Historia",
+    sectionVerrouilleeNiveau: "A partir del nivel {n}",
+    histoireTerminee: "El abuelo ya te lo ha contado todo.",
   },
   ledger: {
     loyer: "Alquiler · {tier}",
@@ -698,6 +751,8 @@ export const es: DictionnaireUI = {
     atelierPleinUn: "Taller lleno ({enCours}/{capacite} espacio).",
     atelierPleinN: "Taller lleno ({enCours}/{capacite} espacios).",
     competenceReparerManquante: "No tienes la habilidad Reparar — {categorie}.",
+    bazarPasAssezDeJetons: "No tienes Bazarcoins suficientes",
+    bazarArticleIndisponible: "Artículo no disponible",
     manquePiecesUn: "Falta {n} pieza de {categorie}.",
     manquePiecesN: "Faltan {n} piezas de {categorie}.",
     objetEnRestauration: "Objeto en restauración.",
@@ -724,6 +779,25 @@ export const es: DictionnaireUI = {
     sauvegardeImpossible:
       "No se pudo guardar: almacenamiento lleno o no disponible. Tu progreso podría perderse.",
     sauvegardeRetablie: "Guardado restablecido.",
+    sauvegardeBandeau: "No se pudo guardar — tu progreso no se está registrando.",
+    sauvegardeModaleTitre: "Tu progreso no se está guardando",
+    sauvegardeModaleDepuisUn: "Desde hace 1 minuto.",
+    sauvegardeModaleDepuisN: "Desde hace {minutes} minutos.",
+    sauvegardeModaleDisquePlein:
+      "El almacenamiento de tu teléfono está lleno. Libera espacio para que tu partida pueda guardarse.",
+    sauvegardeModaleIo:
+      "El almacenamiento no está disponible en este momento. Tu partida no se está guardando.",
+    sauvegardeModaleBouton: "Entendido",
+    // Aviso preventivo de espacio en disco (Tarea 9): antes de que falle el
+    // guardado, no después.
+    espaceTitre: "El almacenamiento de tu teléfono está casi lleno",
+    espaceCorps:
+      "BROC podría dejar de poder guardar tu partida. Libera algo de espacio para seguir jugando tranquilo.",
+    espaceBouton: "Entendido",
+    // Exportación de partida (Tarea 10): botón por emplazamiento en
+    // PartiesModal.tsx. Sin contraparte de importación en este proyecto — el
+    // jugador archiva, no restaura.
+    exporterPartie: "Exportar esta partida",
   },
   deblocage: {
     long: {
@@ -783,5 +857,37 @@ export const es: DictionnaireUI = {
       titre: "Taller",
       corps: "«{nom}» está restaurado ✓",
     },
+  },
+  bazar: {
+    titre: "El Bazar",
+    lotPieces: "{n} piezas · {categorie}",
+    prixJetons: "{n} Bazarcoins",
+    prixJetonUn: "{n} Bazarcoin",
+    vendu: "Vendido",
+    manqueJetons: "Te faltan {n} Bazarcoins",
+    manqueJetonUn: "Te falta {n} Bazarcoin",
+    sortir: "Salir del Bazar",
+    detailArticle: "Detalle del artículo",
+    prixMot: "Precio",
+    acheter: "Comprar",
+    achatRefuse: "Compra imposible.",
+    borneOuvrir: "Ver la máquina recreativa",
+    borneTitre: "Máquina recreativa",
+    borneFermer: "Cerrar la máquina",
+    bornePasDeSignal: "SIN SEÑAL",
+    borneIndiceCartouche: "AÑADE EL CARTUCHO A LA COLECCIÓN",
+    borneJeuPrecedent: "Juego anterior",
+    borneJeuSuivant: "Juego siguiente",
+  },
+  soutien: {
+    titre: "Apoyar a Broc",
+    insertCoin: "▶ INSERT COIN",
+    modeDemo: "MODO DEMOSTRACIÓN. ESTE JUEGO NO ARRANCA.",
+    corps:
+      "Broc lo hace una sola persona. Seguir el taller o dejar una reseña es lo que le ayuda a seguir existiendo.",
+    instagram: "Seguir en Instagram",
+    tiktok: "Seguir en TikTok",
+    noter: "Dejar una reseña",
+    pasJouable: "MODO DEMOSTRACIÓN. ESTE JUEGO NO ARRANCA.",
   },
 };

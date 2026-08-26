@@ -11,25 +11,47 @@ import {
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
 import { CHAT_BALADEUR_LAYOUT } from "../chatBaladeurLayout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
+import { BAZAR_LAYOUT, type BazarObjetKey } from "@/components/bazar/bazarLayout";
 
 const STORAGE_KEY = "broc.qg-edit.overrides";
 const ACTIVE_STORAGE_KEY = "broc.qg-edit.active";
 
-export type EditableKey = QgObjetKey | ChatBaladeurId;
+export type EditableKey = QgObjetKey | ChatBaladeurId | BazarObjetKey;
 
 const CHAT_KEYS = new Set<string>(CHAT_BALADEUR_ORDER);
+const BAZAR_KEYS = new Set<string>(Object.keys(BAZAR_LAYOUT.objets));
 
 function isChatKey(key: EditableKey): key is ChatBaladeurId {
   return CHAT_KEYS.has(key);
 }
 
-function baseCoord(key: EditableKey): {
+function isBazarKey(key: EditableKey): key is BazarObjetKey {
+  return BAZAR_KEYS.has(key);
+}
+
+/** Famille d'une clé éditable : chaque famille a son propre dictionnaire de base. */
+export type FamilleEditable = "qg" | "chat" | "bazar";
+
+export function familleEditable(key: EditableKey): FamilleEditable {
+  if (isChatKey(key)) return "chat";
+  if (isBazarKey(key)) return "bazar";
+  return "qg";
+}
+
+/**
+ * Coordonnée AUTHORÉE d'une clé, sans override. Exportée parce que le panneau
+ * de calage en a besoin pour composer son extrait à recopier : il en avait sa
+ * propre copie, qui ne connaissait que le QG et le chat — sur une clé du Bazar
+ * elle lisait `QG_LAYOUT.objets[cle]` → `undefined.left`, donc une exception.
+ */
+export function coordBase(key: EditableKey): {
   left: number;
   bottom: number;
   width: number;
 } {
   if (isChatKey(key)) return CHAT_BALADEUR_LAYOUT[key];
-  return QG_LAYOUT.objets[key];
+  if (isBazarKey(key)) return BAZAR_LAYOUT.objets[key];
+  return QG_LAYOUT.objets[key as QgObjetKey];
 }
 
 export interface ObjetOverride {
@@ -147,8 +169,8 @@ export function QgEditProvider({
   );
 }
 
-/** Coords effectives (base + override) pour un objet QG. */
-export function useQgObjet(key: QgObjetKey): {
+/** Coords effectives (base + override) pour un objet éditable (QG, chat, Bazar…). */
+export function useQgObjet(key: EditableKey): {
   left: number;
   bottom: number;
   width: number;
@@ -166,7 +188,7 @@ export function useChatBaladeurCoord(key: ChatBaladeurId): {
 }
 
 function useEditableCoord(key: EditableKey) {
-  const base = baseCoord(key);
+  const base = coordBase(key);
   const ctx = useContext(QgEditContext);
   const o = ctx?.overrides[key];
   return {

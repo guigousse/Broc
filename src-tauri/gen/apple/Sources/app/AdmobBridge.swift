@@ -22,7 +22,7 @@ import AppTrackingTransparency
 private let AD_UNIT_ENERGIE = "ca-app-pub-6928338731034491/5859004325"
 private let AD_UNITS: [String: String] = [
   "energie": AD_UNIT_ENERGIE,
-  "boite-mystere": "ca-app-pub-6928338731034491/8064744693",
+  "boite-mystere": "ca-app-pub-6928338731034491/7843939763",
   "restauration": "ca-app-pub-6928338731034491/4038801989",
 ]
 
@@ -166,10 +166,19 @@ private let AD_UNIT_DEFAUT = AD_UNIT_ENERGIE
     ConsentInformation.shared.requestConsentInfoUpdate(with: params) { erreur in
       guard erreur == nil else {
         // Hors-ligne : on continue sans bloquer, les pubs échoueront proprement.
+        // Aucun verdict publié → l'état persisté de la mesure d'audience est
+        // laissé tel quel : éteint par défaut au tout premier lancement, sinon
+        // le dernier verdict connu reste en vigueur. Le prochain lancement
+        // réessaiera de publier un verdict frais.
         fin()
         return
       }
       ConsentForm.loadAndPresentIfRequired(from: self.rootViewController()) { _ in
+        // Verdict publié pour les autres consommateurs (mesure d'audience).
+        // `canRequestAds` est vrai aussi quand l'UMP juge le formulaire non
+        // requis (hors UE).
+        ConsentementBroc.shared.resoudre(
+          canRequestAds: ConsentInformation.shared.canRequestAds)
         // ATT après le formulaire UMP : l'ordre évite deux popups d'affilée
         // sans contexte. Idempotent (iOS ne re-prompt jamais une fois décidé).
         if #available(iOS 14, *) {

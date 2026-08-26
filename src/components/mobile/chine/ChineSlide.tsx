@@ -108,7 +108,13 @@ export type ChineSlide =
  * les actions vivent dans le tiroir rendu sous la carte (ChineNegoDrawer pour
  * un objet, ChineMystereDrawer pour la boîte mystère).
  */
-export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
+/**
+ * `plein` : le stockage du joueur est saturé. Contrairement à `acquis` et
+ * `vendeurFache`, qui se déduisent de l'objet, c'est un état GLOBAL — il
+ * tamponne donc toutes les cartes à la fois, ce qui est le message voulu :
+ * plus rien n'est prenable tant qu'on n'a pas fait de la place.
+ */
+export function ChineSlideVue({ slide, plein = false }: { slide: ChineSlide; plein?: boolean }) {
   const { d, tr, locale } = useLangue();
 
   if (slide.kind === "mystere") {
@@ -221,24 +227,34 @@ export function ChineSlideVue({ slide }: { slide: ChineSlide }) {
             <ItemSticker
               templateId={objet.templateId}
               categorie={objet.categorie}
+              etat={objet.etat}
               fill
               tilt={false}
-              variant={acquis || vendeurFache ? "grise" : "normal"}
+              variant={acquis || vendeurFache || plein ? "grise" : "normal"}
               thumb
               eager
               outlinePx={3}
             />
-            {/* Tampon encreur en diagonale : VENDU (vert) ou VENDEUR FÂCHÉ
-                (rouge). Le statut est déjà annoncé textuellement dans le
-                tiroir de négo → décoratif pour les lecteurs d'écran. */}
-            {(acquis || vendeurFache) && (
+            {/* Tampon encreur en diagonale : VENDU (vert), VENDEUR FÂCHÉ ou
+                STOCK PLEIN (rouge). Décoratif — le tiroir de négo porte
+                l'annonce pour les lecteurs d'écran.
+
+                ⚠ Ordre de priorité, pas un simple `||` : acheter REMPLIT le
+                stockage, donc la carte que l'on vient d'acquérir serait
+                aussitôt « Stock plein » — elle annoncerait l'empêchement au
+                lieu de la réussite. `acquis` passe donc en premier. */}
+            {(acquis || vendeurFache || plein) && (
               <div style={tamponBox} aria-hidden>
                 <span
                   style={tampon(
                     acquis ? "var(--forest-600)" : "var(--vermillion-500)",
                   )}
                 >
-                  {acquis ? d.chine.tamponVendu : d.chine.vendeurFache}
+                  {acquis
+                    ? d.chine.tamponVendu
+                    : vendeurFache
+                    ? d.chine.vendeurFache
+                    : d.chine.tamponStockPlein}
                 </span>
               </div>
             )}

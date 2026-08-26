@@ -71,4 +71,15 @@ describe("settleQuetesPeriodiques", () => {
     expect(out.courriers.find((c) => c.id === "princ_1")).toBeDefined();
     expect(out.missions.find((m) => m.courrierId === "princ_1")).toBeDefined();
   });
+
+  it("les missions périodiques créées portent leur horodatage d'apparition", () => {
+    const state = createMockGameState();
+    state.brocanteur.niveau = 3;
+    const apres = settleQuetesPeriodiques(state, now);
+    const nouvelles = apres.missions.filter(
+      (m) => !state.missions.some((v) => v.courrierId === m.courrierId),
+    );
+    expect(nouvelles.length).toBeGreaterThan(0);
+    for (const m of nouvelles) expect(m.timestampAcceptation).toBe(now);
+  });
 });

@@ -5,12 +5,15 @@ import { LangueProvider } from "@/lib/i18n/LangueContext";
 import { TabBar } from "@/components/mobile/TabBar";
 import { LevelUpOverlay } from "@/components/mobile/LevelUpOverlay";
 import { TutorielBanniere } from "@/components/mobile/tutoriel/TutorielBanniere";
+import { BandeauSauvegarde } from "@/components/mobile/BandeauSauvegarde";
+import { AvertissementEspace } from "@/components/mobile/AvertissementEspace";
 import { SwipePager } from "@/components/mobile/SwipePager";
 import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
 import { AdMobBootstrap } from "@/components/mobile/AdMobBootstrap";
 import { IapBootstrap } from "@/components/mobile/IapBootstrap";
 import { BoutonRetourAndroid } from "@/components/mobile/BoutonRetourAndroid";
 import { ZoneSureAndroid } from "@/components/mobile/ZoneSureAndroid";
+import { FirebaseBootstrap } from "@/components/mobile/FirebaseBootstrap";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -91,11 +94,14 @@ export default function RootLayout({
                 <TabBar />
                 <LevelUpOverlay />
                 <TutorielBanniere />
+                <BandeauSauvegarde />
+                <AvertissementEspace />
                 <GlobalVinylAmbiance />
                 <AdMobBootstrap />
                 <IapBootstrap />
                 <BoutonRetourAndroid />
                 <ZoneSureAndroid />
+                <FirebaseBootstrap />
               </GameProvider>
             </ToastProvider>
           </SettingsProvider>

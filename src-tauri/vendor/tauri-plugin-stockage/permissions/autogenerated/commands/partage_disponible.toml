@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-partage-disponible"
+description = "Enables the partage_disponible command without any pre-configured scope."
+commands.allow = ["partage_disponible"]
+
+[[permission]]
+identifier = "deny-partage-disponible"
+description = "Denies the partage_disponible command without any pre-configured scope."
+commands.deny = ["partage_disponible"]

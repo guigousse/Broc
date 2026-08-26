@@ -4,13 +4,26 @@ import Image from "next/image";
 import { useState, type CSSProperties } from "react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { getItemImageUrl, getItemThumbUrl } from "@/lib/itemImages";
-import type { CategorieObjet } from "@/types/game";
+import { ECLAT_PRISTIN } from "@/components/ui/ItemSticker";
+import { estPristin } from "@/lib/etat";
+import type { CategorieObjet, EtatObjet } from "@/types/game";
 
 interface ItemImageProps {
   templateId: string;
   categorie: CategorieObjet;
   /** Mode d'ajustement de l'image dans son conteneur. */
   fit?: "contain" | "cover";
+  /**
+   * Ancrage vertical de l'image dans son cadre (`object-position`). Par
+   * défaut centré — c'est le comportement d'aujourd'hui, inchangé pour
+   * tous les appelants existants (grille de collection, cartes, stickers…).
+   * `"bottom"` ancre le BAS de l'image sur l'arête basse du cadre : utile
+   * quand `fit="contain"` letterboxe un objet large et bas (une ménagère,
+   * une pile de vinyles) — sans ça, `contain` centre le visible et laisse
+   * un vide transparent sous l'objet, qui semble flotter au-dessus de
+   * l'étagère au lieu d'y reposer.
+   */
+  verticalAlign?: "center" | "bottom";
   /** Taille de l'icône fallback (px). */
   fallbackIconSize?: number;
   /** Couleur de l'icône fallback. */
@@ -37,6 +50,12 @@ interface ItemImageProps {
    * (le WebView recharge la page). Cf. `getItemThumbUrl`.
    */
   fullSize?: boolean;
+  /**
+   * État de l'objet. Sert UNIQUEMENT à l'éclat du pristin — le même halo que
+   * celui du sticker (`ECLAT_PRISTIN`), pour qu'un objet au sommet se
+   * reconnaisse d'un écran à l'autre. Facultatif : sans lui, rendu inchangé.
+   */
+  etat?: EtatObjet;
 }
 
 const wrapper: CSSProperties = {
@@ -54,6 +73,7 @@ export function ItemImage({
   templateId,
   categorie,
   fit = "contain",
+  verticalAlign = "center",
   fallbackIconSize = 40,
   fallbackIconColor = "var(--brass-700)",
   alt = "",
@@ -61,6 +81,7 @@ export function ItemImage({
   sizes = DEFAULT_SIZES,
   priority = false,
   fullSize = false,
+  etat,
 }: ItemImageProps) {
   const src = fullSize
     ? getItemImageUrl(templateId)
@@ -113,7 +134,12 @@ export function ItemImage({
           sizes={sizes}
           priority={priority}
           onLoad={() => setLoaded(true)}
-          style={{ objectFit: fit, display: "block" }}
+          style={{
+            objectFit: fit,
+            objectPosition: verticalAlign === "bottom" ? "center bottom" : "center",
+            display: "block",
+            ...(estPristin(etat) ? { filter: ECLAT_PRISTIN } : null),
+          }}
         />
       </div>
     </div>

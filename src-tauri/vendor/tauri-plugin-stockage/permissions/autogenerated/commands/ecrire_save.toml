@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-ecrire-save"
+description = "Enables the ecrire_save command without any pre-configured scope."
+commands.allow = ["ecrire_save"]
+
+[[permission]]
+identifier = "deny-ecrire-save"
+description = "Denies the ecrire_save command without any pre-configured scope."
+commands.deny = ["ecrire_save"]

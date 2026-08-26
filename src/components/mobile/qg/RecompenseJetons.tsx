@@ -1,6 +1,13 @@
 "use client";
 
 import { type CSSProperties } from "react";
+import { BazarcoinIcon, HAUTEUR_SIGNE_DISPLAY } from "@/components/ui/BazarcoinIcon";
+import {
+  listerGains,
+  STYLE_GAIN_AVEC_SIGNE,
+  STYLE_GAIN_BASE,
+  type TypeGain,
+} from "./gainsRecompense";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { RecompenseEffective } from "@/lib/recompenses";
 
@@ -28,31 +35,27 @@ const labelStyle = (allume: boolean): CSSProperties => ({
   color: allume ? "#2c5e3f" : "#6e1f1f", marginRight: "auto",
 });
 
-/** Teintes par type de gain : cire (argent), laiton (xp), vert (énergie). */
-const JETON_STYLES: Record<"argent" | "xp" | "energie", CSSProperties> = {
+/** Teintes par type de gain : cire (argent), laiton (xp), vert (énergie), et le
+ *  BLEU de la devise pour le Bazar — c'est lui qui distingue un gain en
+ *  Bazarcoins d'un gain en euros sur une ligne qui peut porter les deux. */
+const JETON_STYLES: Record<TypeGain, CSSProperties> = {
   argent: { background: "#6e1f1f", color: "#f4e9cd", border: "1px solid #b03030" },
   xp: { background: "#e3d7b6", color: "#5a4210", border: "1px solid #c8a24a" },
   energie: { background: "#2c5e3f", color: "#f4e9cd", border: "1px solid #4a8a63" },
-};
-
-const jetonBase: CSSProperties = {
-  display: "inline-block", padding: "3px 9px", borderRadius: 11,
-  fontFamily: "var(--font-serif)", fontSize: 13, fontWeight: 700,
-  whiteSpace: "nowrap",
+  bazar: { background: "var(--midnight-800)", color: "var(--azur-400)", border: "1px solid var(--azur-400)" },
 };
 
 export function RecompenseJetons({ recompense, variante, label, allume = false }: Props) {
   const { d, tr } = useLangue();
-  const jetons: Array<{ type: "argent" | "xp" | "energie"; texte: string }> = [];
-  if (recompense.argent > 0)
-    jetons.push({ type: "argent", texte: tr(d.carnet.jetonArgent, { n: recompense.argent }) });
-  if (recompense.xp > 0)
-    jetons.push({ type: "xp", texte: tr(d.carnet.jetonXp, { n: recompense.xp }) });
-  if (recompense.energie > 0)
-    jetons.push({ type: "energie", texte: tr(d.carnet.jetonEnergie, { n: recompense.energie }) });
+  // Le SIGNE, pas le mot — comme l'énergie montre un éclair. « 3 Bazarcoins »
+  // en toutes lettres dans une pastille allongeait la ligne du carnet au point
+  // de la faire passer à deux lignes. Le mot reste dans l'annonce vocale du
+  // groupe (`recompenseAria`, juste en dessous).
+  const jetons = listerGains(recompense, d, tr);
 
   const aria = tr(d.carnet.recompenseAria, {
     argent: recompense.argent, xp: recompense.xp, energie: recompense.energie,
+    jetons: recompense.jetons,
   });
 
   return (
@@ -65,9 +68,14 @@ export function RecompenseJetons({ recompense, variante, label, allume = false }
         <span style={labelStyle(allume)}>{label}</span>
       ) : null}
       {jetons.map((j) => (
-        <span key={j.type} data-testid={`jeton-${j.type}`} data-jeton={j.type}
-          style={{ ...jetonBase, ...JETON_STYLES[j.type] }}>
+        <span key={j.cle} data-testid={`jeton-${j.cle}`} data-jeton={j.cle}
+          style={{
+            ...STYLE_GAIN_BASE,
+            ...JETON_STYLES[j.cle],
+            ...(j.signe ? STYLE_GAIN_AVEC_SIGNE : null),
+          }}>
           {j.texte}
+          {j.signe ? <BazarcoinIcon size={HAUTEUR_SIGNE_DISPLAY} /> : null}
         </span>
       ))}
     </span>

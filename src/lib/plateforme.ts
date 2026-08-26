@@ -1,4 +1,19 @@
 /**
+ * Vrai sous runtime Tauri, quelle que soit la plateforme (iOS, Android,
+ * desktop). Sert à distinguer « dans l'app » de « dans un navigateur »
+ * (Broc tourne aussi sur Vercel) sans se soucier du système en dessous.
+ *
+ * N'a PAS remplacé les détections déjà en place ailleurs dans le dépôt
+ * (`haptique/index.ts`, `notifications/index.ts`) : ce sont des modules que
+ * cette relecture n'a pas touchés, et les faire pointer ici serait élargir le
+ * chantier au-delà de ce qui a été relu.
+ */
+export function tauriDisponible(): boolean {
+  if (typeof window === "undefined") return false;
+  return "__TAURI_INTERNALS__" in window;
+}
+
+/**
  * Plateforme native sous laquelle tourne le jeu, ou `null` hors runtime Tauri
  * (web, dev desktop, tests) — où les stubs de développement prennent le relais.
  *
@@ -22,4 +37,15 @@ export function plateformeNative(): PlateformeNative | null {
 /** Vrai uniquement sous runtime Tauri sur iOS. */
 export function tauriIosDisponible(): boolean {
   return plateformeNative() === "ios";
+}
+
+/**
+ * Vrai uniquement sous runtime Tauri sur Android. Pendant symétrique de
+ * `tauriIosDisponible` — même structure, même ordre de gardes, pour qu'un
+ * lecteur qui connaît l'une reconnaisse l'autre au premier coup d'œil.
+ */
+export function tauriAndroidDisponible(): boolean {
+  if (typeof window === "undefined") return false;
+  if (!("__TAURI_INTERNALS__" in window)) return false;
+  return /Android/.test(window.navigator.userAgent);
 }

@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-lire-save"
+description = "Enables the lire_save command without any pre-configured scope."
+commands.allow = ["lire_save"]
+
+[[permission]]
+identifier = "deny-lire-save"
+description = "Denies the lire_save command without any pre-configured scope."
+commands.deny = ["lire_save"]

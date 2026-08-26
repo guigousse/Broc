@@ -35,7 +35,7 @@ import {
   idDeclencheurCadeau,
   objetCadeauAnniversaire,
 } from "@/lib/anniversaire";
-import { createGameRepository } from "@/lib/storage/createGameRepository";
+import { obtenirGameRepository } from "@/lib/storage/createGameRepository";
 import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
 import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
@@ -63,6 +63,7 @@ import {
   multiplicateurXPRarete,
 } from "@/lib/xp";
 import {
+  aCompetenceReparation,
   aGenInfluence,
   contexteDepuisState,
   etatCompetence,
@@ -74,7 +75,16 @@ import { getProchaineUpgradeStockage, getStockageTier } from "@/data/stockage";
 import { stockageEstPlein } from "@/lib/stockage";
 import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
+import { settleBazar } from "@/lib/bazar/settleBazar";
+import {
+  acheterArticle,
+  acheterLotPieces,
+  type AchatBazar,
+  type RaisonRefus,
+} from "@/lib/bazar/achat";
 import { appliquerFinTutoriel, ETAPES_TUTORIEL } from "@/lib/tutoriel";
+import { logEvenement } from "@/lib/analytics/contexte";
+import { EVENEMENTS } from "@/lib/analytics/analytics";
 import { synchroniserNotifsQuetes } from "@/lib/notifications/quetesNotif";
 import {
   initCollection,
@@ -134,8 +144,7 @@ import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
 import { localeCourante } from "@/lib/i18n/locales";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { slotActif, type NumeroSlot } from "@/lib/storage/slots";
-
-const gameRepository = createGameRepository();
+import type { GenreErreur } from "@/lib/storage/pontNatif";
 
 /**
  * Raison d'échec localisée (SP4 i18n). GameContext exécute ses raisons dans des
@@ -155,9 +164,27 @@ function categorieLocalisee(cat: Parameters<typeof libelleCategorie>[0]): string
   return libelleCategorie(cat, DICTIONNAIRES[localeCourante()]);
 }
 
+/** Traduit le `RaisonRefus` brut d'`achat.ts` en message localisé. */
+function raisonLocaliseeBazar(raison: RaisonRefus): string {
+  if (raison === "jetons") return raisonLocalisee("bazarPasAssezDeJetons");
+  if (raison === "stockagePlein") return raisonLocalisee("stockagePlein");
+  return raisonLocalisee("bazarArticleIndisponible");
+}
+
+/**
+ * État de la sauvegarde automatique. `depuis` est posé au PREMIER échec et
+ * ne bouge plus tant que l'échec persiste (même si le genre change) : c'est
+ * lui qui mesure le temps de jeu réellement en danger (Tâche 8, remplace le
+ * toast unique `saveEnEchecRef` qui ne redonnait aucun signal après 2,5 s).
+ */
+export type EtatSauvegarde =
+  | { enEchec: false }
+  | { enEchec: true; genre: GenreErreur; depuis: number };
+
 interface GameStateValue {
   state: GameState | null;
   isHydrated: boolean;
+  etatSauvegarde: EtatSauvegarde;
 }
 
 interface GameActionsValue {
@@ -178,7 +205,7 @@ interface GameActionsValue {
    * Détache l'état en mémoire sans toucher au storage — utilisé avant une
    * bascule de slot pour que l'effet d'auto-save (gardé sur state null) ne
    * puisse plus écrire. ⚠ NE PAS confondre avec `reset()` : `reset()` efface
-   * aussi la clé de save active (`gameRepository.clear()`), ce qui
+   * aussi la clé de save active (`obtenirGameRepository().clear()`), ce qui
    * supprimerait la partie qu'on est justement en train de quitter.
    */
   detacherPartie: () => void;
@@ -191,6 +218,7 @@ interface GameActionsValue {
   /** Clôt le mini-tuto des vinyles (musique lancée). */
   terminerMiniTutoVinyle: () => void;
   terminerMiniTutoCarnet: () => void;
+  terminerMiniTutoAtelier: () => void;
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
   terminerTutoriel: () => void;
   ouvrirVitrine: (brocanteId: string) => void;
@@ -278,6 +306,16 @@ interface GameActionsValue {
   reclamerBoiteMystere: (objet: Objet) => boolean;
   /** Settle l'énergie contre le temps de confiance et persiste. No-op si pas de temps de confiance. */
   rafraichirEnergie: () => void;
+  /**
+   * Settle les quêtes périodiques ET le Bazar contre le temps de confiance.
+   * Tourne déjà sur le tick 60 s / focus / visibilitychange / pageshow ; les
+   * écrans qui dépendent d'un de ces deux settle pour ne pas s'ouvrir sur un
+   * état vide (le Bazar à sa première visite du jour 20) l'appellent aussi
+   * à leur montage plutôt que d'attendre le prochain tick.
+   */
+  rafraichirPeriodiques: () => void;
+  /** Achète à l'étal du Bazar (lot de pièces ou objet de vitrine). */
+  acheterAuBazar: (achat: AchatBazar) => { ok: boolean; raison?: string };
 }
 
 type GameContextValue = GameStateValue & GameActionsValue;
@@ -285,7 +323,9 @@ type GameContextValue = GameStateValue & GameActionsValue;
 // Deux contextes séparés : l'état (change à chaque mutation) et les actions
 // (objet mémoïsé une seule fois — les consommateurs d'actions seules ne
 // re-rendent jamais sur mutation d'état).
-const GameStateContext = createContext<GameStateValue | null>(null);
+// Exporté pour `BandeauSauvegarde.test.tsx` (Tâche 8), qui monte le composant
+// avec un `etatSauvegarde` maîtrisé sans passer par un `GameProvider` complet.
+export const GameStateContext = createContext<GameStateValue | null>(null);
 const GameActionsContext = createContext<GameActionsValue | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -300,8 +340,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const stateRef = useRef<GameState | null>(null);
   stateRef.current = state;
-  // Évite de spammer le toast : on n'alerte qu'à la bascule succès→échec.
-  const saveEnEchecRef = useRef(false);
+  // État partagé de la sauvegarde (Tâche 8) : consommé par `BandeauSauvegarde`
+  // pour un bandeau persistant + une modale d'escalade, à la place de l'ancien
+  // toast unique de 2,5 s.
+  const [etatSauvegarde, setEtatSauvegarde] = useState<EtatSauvegarde>({
+    enEchec: false,
+  });
+  // Ruling R13 : lue dans le `.then()` de `doSave` pour décider du toast de
+  // rétablissement HORS de l'updater `setEtatSauvegarde` (un updater React
+  // n'est pas garanti de tourner une seule fois — StrictMode le rejoue en
+  // dev — donc un effet de bord dedans peut doubler le toast).
+  const etatSauvegardeRef = useRef<EtatSauvegarde>({ enEchec: false });
+  etatSauvegardeRef.current = etatSauvegarde;
   // Slot auquel appartient l'état en mémoire (posé à l'hydratation et à
   // `nouvellePartie`). Le repository résout le slot cible au moment de
   // l'ÉCRITURE (`slotActif()`) : si l'index a basculé entre-temps (lancement
@@ -313,7 +363,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    gameRepository.load().then((loaded) => {
+    obtenirGameRepository().load().then((loaded) => {
       if (cancelled) return;
       // Migration : ajoute les champs manquants + remap les anciennes catégories.
       const migrated: GameState | null = loaded
@@ -335,12 +385,36 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // écrire maintenant détruirait la save du nouveau slot. On abandonne —
       // cet état est de toute façon en train d'être détaché.
       if (slotActif() !== slotEtatRef.current) return;
-      gameRepository.save(state).then((ok) => {
-        if (!ok && !saveEnEchecRef.current) {
-          saveEnEchecRef.current = true;
-          toast(raisonLocalisee("sauvegardeImpossible"), { type: "erreur" });
-        } else if (ok && saveEnEchecRef.current) {
-          saveEnEchecRef.current = false;
+      obtenirGameRepository().save(state).then((res) => {
+        // Ruling R13 : l'updater ci-dessous est PUR (aucun effet de bord) —
+        // React ne garantit pas qu'un updater fonctionnel ne s'exécute
+        // qu'une fois (StrictMode le rejoue en dev). La transition
+        // échec→succès est donc lue AVANT l'appel, sur la ref toujours à
+        // jour, et le toast est déclenché APRÈS, une seule fois.
+        //
+        // Revue (finding 2) : deux `doSave()` peuvent être en vol en même
+        // temps (`flush` est abonné à la fois à `pagehide` ET à
+        // `visibilitychange→hidden`, qu'iOS déclenche tous les deux à la mise
+        // en arrière-plan ; une écriture native lente d'une instance d'effet
+        // précédente peut aussi traîner). Si la ref n'était mise à jour qu'au
+        // rendu, deux succès concurrents pourraient tous deux lire
+        // `enEchec: true` avant que React n'ait commité le premier, et
+        // doubler le toast. Elle est donc aussi écrite ICI, tout de suite
+        // après la lecture — avant même que l'updater (pur) ne tourne.
+        const etaitEnEchec = etatSauvegardeRef.current.enEchec;
+        if (res.ok && etaitEnEchec) etatSauvegardeRef.current = { enEchec: false };
+        setEtatSauvegarde((prec) => {
+          if (res.ok) {
+            return prec.enEchec ? { enEchec: false } : prec;
+          }
+          // `depuis` est posé au PREMIER échec et ne bouge plus : c'est lui qui
+          // mesure le temps de jeu réellement en danger.
+          if (prec.enEchec) {
+            return prec.genre === res.genre ? prec : { ...prec, genre: res.genre };
+          }
+          return { enEchec: true, genre: res.genre, depuis: Date.now() };
+        });
+        if (res.ok && etaitEnEchec) {
           toast(raisonLocalisee("sauvegardeRetablie"), { type: "succes" });
         }
       });
@@ -399,15 +473,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [tempsConfiance]);
 
-  const rafraichirQuetes = useCallback(() => {
+  // Nommé « périodiques » (pas « quêtes » seul) depuis la tâche 5 : ce
+  // callback fait aussi tourner `settleBazar` — même famille de settle en
+  // temps de confiance, même absence d'invention au rendu.
+  const rafraichirPeriodiques = useCallback(() => {
     const now = tempsConfiance() ?? Date.now();
     setState((prev) => (prev ? settleQuetesPeriodiques(prev, now) : prev));
+    setState((prev) => (prev ? settleBazar(prev, now) : prev));
   }, [tempsConfiance]);
 
   const consommerEnergie = useCallback(
     (n: number) => {
       // Achat « Énergie infinie » : le débit est coupé (drapeau device, hors save).
       if (energieInfinieActive()) return;
+      // Énergie AVANT consommation, lue sur stateRef (jamais dans l'updater,
+      // même raison que partout ailleurs dans ce provider) : rejoue le même
+      // settle que l'updater pour rester fidèle à la valeur réellement
+      // débitée, sans dépendre de l'exécution de l'updater (StrictMode).
+      const prevState = stateRef.current;
+      let transitionVersZero = false;
+      if (prevState) {
+        const now = tempsConfiance() ?? Date.now();
+        const energieAvant = settleEnergie(prevState, now, ENERGIE_MAX).energie;
+        const energieApres = Math.max(0, energieAvant - n);
+        transitionVersZero = energieAvant > 0 && energieApres === 0;
+      }
       setState((prev) => {
         if (!prev) return prev;
         const now = tempsConfiance() ?? Date.now();
@@ -417,6 +507,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         };
         return { ...base, energie: Math.max(0, base.energie - n) };
       });
+      // Le moment qui déclenche à la fois la pub et l'IAP : mesuré une fois,
+      // à la transition vers 0, jamais tant que l'énergie y reste.
+      if (transitionVersZero) logEvenement(EVENEMENTS.energieEpuisee);
     },
     [tempsConfiance],
   );
@@ -479,7 +572,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // Hors-ligne / timeapi muet : rien à faire, l'extrapolation suit déjà
       // l'horloge murale quand le monotone est en retard (veille).
       rafraichirEnergie();
-      rafraichirQuetes();
+      rafraichirPeriodiques();
     };
     sync();
     const onFocus = () => sync();
@@ -491,7 +584,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const syncTimer = window.setInterval(sync, 10 * 60 * 1000); // re-sync /10 min
     const tickTimer = window.setInterval(() => {
       rafraichirEnergie();
-      rafraichirQuetes();
+      rafraichirPeriodiques();
     }, 60 * 1000); // settle /60 s
     return () => {
       actif = false;
@@ -501,7 +594,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       window.clearInterval(syncTimer);
       window.clearInterval(tickTimer);
     };
-  }, [isHydrated, rafraichirEnergie, rafraichirQuetes]);
+  }, [isHydrated, rafraichirEnergie, rafraichirPeriodiques]);
 
   // Achat « Énergie infinie » : toute partie (même une vieille save à jauge
   // basse chargée après l'achat) est calée à ENERGIE_MAX — les portes
@@ -680,6 +773,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
   }, [isHydrated, quetesCles, quotidienNonTerminee, hebdoNonTerminee, locale]);
 
+  // La montée de niveau se lit sur la transition d'état, pas sur la source
+  // d'XP : il y a plusieurs sources (achat, vente, restauration, quêtes,
+  // découverte de collection…) et gagnerXPBrocanteur ne doit pas porter seul
+  // l'émission — un seul endroit ici, quelle que soit la source.
+  const niveauPrecedentRef = useRef<number | null>(null);
+  useEffect(() => {
+    const niveau = state?.brocanteur?.niveau;
+    if (typeof niveau !== "number") return;
+    const precedent = niveauPrecedentRef.current;
+    niveauPrecedentRef.current = niveau;
+    // Premier rendu (ou chargement d'une save) : on mémorise sans émettre —
+    // sinon charger une partie au niveau 12 se lirait comme une montée.
+    if (precedent === null) return;
+    if (niveau > precedent) logEvenement(EVENEMENTS.niveauAtteint, { niveau });
+  }, [state?.brocanteur?.niveau]);
+
   const nouvellePartie = useCallback(() => {
     const initial: GameState = {
       version: SAVE_VERSION,
@@ -711,6 +820,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       niveauStockage: 1,
       niveauCamion: 1,
       piecesAmelioration: emptyPiecesAmelioration(),
+      jetons: 0,
       chatSurFauteuil: false,
       passagesSansChat: 0,
       declencheursDeclenches: [],
@@ -783,6 +893,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const avancerJour = useCallback((nbJours: number = 1, volontaire: boolean = false) => {
+    // Jour AVANT l'avancement, lu sur stateRef (jamais dans l'updater, même
+    // raison que partout ailleurs dans ce provider) : `jourActuel` est
+    // strictement croissant en partie, donc "nouveau record" se lit comme une
+    // simple comparaison. `avancerJour(3)` est un saut, pas trois journées
+    // vécues : un seul événement, sur le jour d'arrivée.
+    const jourAvant = stateRef.current?.jourActuel;
     setState((prev) => {
       if (!prev) return prev;
       const pas = Math.max(1, nbJours);
@@ -857,6 +973,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       return baseAvecQuetes;
     });
+    if (typeof jourAvant === "number") {
+      const pas = Math.max(1, nbJours);
+      const nouveauJour = jourAvant + pas;
+      // `pas` vaut au moins 1, donc cette comparaison est TOUJOURS vraie : ce
+      // n'est pas elle qui garantit « nouveau record seulement », c'est le
+      // garde `typeof jourAvant === "number"` ci-dessus conjugué à la
+      // stricte croissance de `jourActuel` en partie (cf. commentaire plus
+      // haut). Gardée quand même comme filet d'assertion, pas comme
+      // mécanisme.
+      if (nouveauJour > jourAvant) logEvenement(EVENEMENTS.jourAtteint, { jour: nouveauJour });
+    }
   }, []);
 
   const rerollMeteo = useCallback((): { ok: boolean; raison?: string } => {
@@ -913,6 +1040,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
       return { ...next, niveauAtelier: upgrade.niveauCible };
     });
+    logEvenement(EVENEMENTS.ameliorationAchetee, {
+      quoi: "atelier",
+      niveau: upgrade.niveauCible,
+    });
     return { ok: true };
   }, []);
 
@@ -938,8 +1069,45 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
       return { ...next, niveauStockage: upgrade.niveauCible };
     });
+    logEvenement(EVENEMENTS.ameliorationAchetee, {
+      quoi: "stockage",
+      niveau: upgrade.niveauCible,
+    });
     return { ok: true };
   }, []);
+
+  const acheterAuBazar = useCallback(
+    (achat: AchatBazar): { ok: boolean; raison?: string } => {
+      const current = stateRef.current;
+      if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
+      const now = tempsConfiance() ?? Date.now();
+      // Pré-check sur stateRef.current pour un refus immédiat, informatif,
+      // sans toucher setState — MAIS même discipline que `acheterObjet` juste
+      // au-dessus : le retour ne promet que ce que l'updater re-vérifie sur
+      // `prev`, pas sur cet instantané potentiellement périmé (le settle
+      // d'énergie, celui des quêtes et la rotation du Bazar tournent tous
+      // dans ce même contexte toutes les 60 s).
+      const precheck =
+        achat.type === "pieces"
+          ? acheterLotPieces(current, achat.index)
+          : acheterArticle(current, achat.index, now);
+      if (!precheck.ok) {
+        // Localiser comme le font les actions voisines : jamais de clé brute
+        // remontée à l'UI.
+        return { ok: false, raison: raisonLocaliseeBazar(precheck.raison) };
+      }
+      setState((prev) => {
+        if (!prev) return prev;
+        const r =
+          achat.type === "pieces"
+            ? acheterLotPieces(prev, achat.index)
+            : acheterArticle(prev, achat.index, now);
+        return r.ok ? r.state : prev;
+      });
+      return { ok: true };
+    },
+    [tempsConfiance],
+  );
 
   const definirPrixVenteSouhaite = useCallback(
     (objetId: string, prix: number) => {
@@ -969,7 +1137,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // slotActif() inchangé donc la garde d'appartenance seule ne voit rien).
     slotEtatRef.current = null;
     setState(null);
-    gameRepository.clear();
+    obtenirGameRepository().clear();
+    // Ruling R14 : sans ça, une alerte d'échec restait affichée sur une
+    // partie tout juste réinitialisée qui n'a encore rien tenté de
+    // sauvegarder — une fausse alerte, exactement ce que le bandeau
+    // persistant ne doit jamais être. Si le disque est réellement toujours
+    // en panne, le prochain échec (dans les 400 ms du debounce) la relève.
+    setEtatSauvegarde({ enEchec: false });
   }, []);
 
   // Détache l'état en mémoire sans toucher au storage — utilisé avant une
@@ -987,13 +1161,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // court-circuiterait appliquerFinTutoriel (perte silencieuse de la
     // lettre de Maman + du chapitre 1). Passer par terminerTutoriel().
     if (vers === "termine") return;
+    // Décidé AVANT le setState, via stateRef (lu, jamais dans l'updater — cf.
+    // ouvrirObjetColis/ouvrirCadeauAnniversaire) : un updater React n'est pas
+    // synchrone (il tourne au rendu), donc un drapeau posé dedans et relu
+    // juste après le setState mentirait. Sans ce calcul, un double appel
+    // (double tap, call site qui ne re-vérifie pas l'état, cf. les pages
+    // collection/stockage/bibliothèque) émettrait un `tuto_etape` fantôme
+    // sans transition réelle — l'entonnoir n'a de valeur que si chaque
+    // événement correspond à un vrai franchissement d'étape.
+    const current = stateRef.current;
+    const iCourante = current ? ETAPES_TUTORIEL.indexOf(current.tutorielEtape) : -1;
+    const iCible = ETAPES_TUTORIEL.indexOf(vers);
+    const transitionReelle =
+      !!current && current.tutorielEtape !== "termine" && iCible > iCourante;
     setState((prev) => {
       if (!prev || prev.tutorielEtape === "termine") return prev;
-      const iCourante = ETAPES_TUTORIEL.indexOf(prev.tutorielEtape);
-      const iCible = ETAPES_TUTORIEL.indexOf(vers);
-      if (iCible <= iCourante) return prev;
+      const iC = ETAPES_TUTORIEL.indexOf(prev.tutorielEtape);
+      if (iCible <= iC) return prev;
       return { ...prev, tutorielEtape: vers };
     });
+    if (transitionReelle) logEvenement(EVENEMENTS.tutoEtape, { etape: vers });
   }, []);
 
   /** Clôt le tutoriel (fin normale ou « Passer ») : lettre de Maman + chapitre 1. */
@@ -1052,24 +1239,42 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   /** Clôt le mini-tuto des vinyles (la musique a été lancée). */
   const terminerMiniTutoVinyle = useCallback(() => {
+    // Décidé avant le setState (même raison que dans avancerTutoriel juste
+    // au-dessus) : sans ça, un rappel de `terminerMiniTutoVinyle` sur un
+    // mini-tuto déjà clos émettrait un `mini_tuto_termine` fantôme.
+    const transitionReelle = stateRef.current?.miniTutoVinyle === "ecouter";
     setState((prev) =>
       prev && prev.miniTutoVinyle === "ecouter"
         ? { ...prev, miniTutoVinyle: "termine" as const }
+        : prev,
+    );
+    if (transitionReelle) logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "vinyle" });
+  }, []);
+
+  /** Clôt la visite guidée de l'Atelier (les trois bulles sont passées). */
+  const terminerMiniTutoAtelier = useCallback(() => {
+    setState((prev) =>
+      prev && prev.miniTutoAtelier === "visite"
+        ? { ...prev, miniTutoAtelier: "termine" as const }
         : prev,
     );
   }, []);
 
   /** Clôt le mini-tuto du carnet de commandes (le registre a été ouvert). */
   const terminerMiniTutoCarnet = useCallback(() => {
+    const transitionReelle = stateRef.current?.miniTutoCarnet === "ouvrir";
     setState((prev) =>
       prev && prev.miniTutoCarnet === "ouvrir"
         ? { ...prev, miniTutoCarnet: "termine" as const }
         : prev,
     );
+    if (transitionReelle) logEvenement(EVENEMENTS.miniTutoTermine, { lequel: "carnet" });
   }, []);
 
   const terminerTutoriel = useCallback(() => {
+    const transitionReelle = !!stateRef.current && stateRef.current.tutorielEtape !== "termine";
     setState((prev) => (prev ? appliquerFinTutoriel(prev) : prev));
+    if (transitionReelle) logEvenement(EVENEMENTS.tutoTermine);
   }, []);
 
   const attribuerVitrineABrocante = useCallback((brocanteId: string) => {
@@ -1164,11 +1369,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const acheterCamion = useCallback((niveau: NiveauCamion) => {
+    // Même discipline que les autres achats : la transition réelle se décide
+    // AVANT le setState, sur stateRef (jamais dans l'updater), en rejouant
+    // exactement les mêmes gardes (adjacence + budget) que l'updater
+    // ci-dessous — sinon un rappel no-op (niveau déjà atteint, fonds
+    // insuffisants) émettrait quand même un achat qui n'a pas eu lieu.
+    const current = stateRef.current;
+    const camion = getCamion(niveau);
+    const prix = camion.prixUpgradeVersCeNiveau ?? 0;
+    const transitionReelle =
+      !!current && niveau === current.niveauCamion + 1 && current.budget >= prix;
     setState((prev) => {
       if (!prev) return prev;
       if (niveau !== prev.niveauCamion + 1) return prev;
-      const camion = getCamion(niveau);
-      const prix = camion.prixUpgradeVersCeNiveau ?? 0;
       if (prev.budget < prix) return prev;
       const next = appendLedger(prev, {
         jour: prev.jourActuel,
@@ -1180,6 +1393,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
       return { ...next, niveauCamion: niveau };
     });
+    if (transitionReelle) {
+      logEvenement(EVENEMENTS.ameliorationAchetee, { quoi: "camion", niveau });
+    }
   }, []);
 
   // Dev-only : set direct du niveau sans coût ni vérification d'adjacence.
@@ -1275,7 +1491,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // pour la suspension iOS (l'effet d'auto-save post-commit peut ne jamais
     // tourner). Peut manquer une mutation encore en attente dans la même
     // frame — l'auto-save la réécrira au commit suivant.
-    void gameRepository.save({
+    void obtenirGameRepository().save({
       ...current,
       vitrine: { ...current.vitrine, tempsRestantSec },
     });
@@ -1290,6 +1506,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const enregistrerSession = useCallback((session: Session) => {
+    // Rien à mesurer sans partie en cours (même garde que partout ailleurs :
+    // stateRef.current, jamais un drapeau posé dans l'updater).
+    const aUnePartie = !!stateRef.current;
     setState((prev) => {
       if (!prev) return prev;
       // Historique plafonné + compteur cumulatif de ventes (lib/sessions).
@@ -1329,6 +1548,46 @@ export function GameProvider({ children }: { children: ReactNode }) {
         { applyBudget: false, timestamp: session.timestamp },
       );
     });
+    if (!aUnePartie) return;
+    // `depense` et `recette` sont recalculés ici, alors que l'updater
+    // ci-dessus vient de calculer la même chose pour l'entrée du ledger :
+    // duplication volontaire, pas un oubli de factorisation. Les deux calculs
+    // ne dépendent que de `session` — paramètre de `enregistrerSession`, pas
+    // dérivé de `prev` — donc ils ne peuvent pas diverger, quel que soit le
+    // nombre de fois où StrictMode invoque l'updater. On pourrait les
+    // mutualiser en hissant le calcul avant `setState`, mais ce serait
+    // toucher au code qui construit l'entrée du ledger pour un chantier de
+    // mesure — donc changer du comportement de jeu, ce que ce chantier
+    // s'interdit, même pour un remplacement sans risque apparent. En
+    // revanche `logEvenement` DOIT rester hors de l'updater : StrictMode le
+    // double-invoque, et un effet de bord (l'envoi de l'événement) y
+    // partirait deux fois.
+    // Discriminé sur session.type : chine et vente partagent ce même hook
+    // (cf. `Session` = SessionChinage | SessionVente, types/game.ts), donc les
+    // deux événements économiques partent d'ici.
+    if (session.type === "chinage") {
+      const depense = session.achats.reduce((s, a) => s + a.prixPaye, 0);
+      // La conception (spec §3.4) promettait un troisième paramètre,
+      // `energie_depensee` : abandonné, aucun champ de `SessionChinage`
+      // (types/game.ts) ne porte cette donnée, et la fabriquer aurait été
+      // pire qu'un paramètre manquant — un chiffre inventé dans un rapport
+      // ne se distingue pas d'un chiffre réel.
+      logEvenement(EVENEMENTS.sessionChineTerminee, {
+        objets_achetes: session.achats.length,
+        depense: Math.round(depense),
+      });
+      return;
+    }
+    const recette = session.ventes.reduce((s, v) => s + v.prixVente, 0);
+    // Coût d'achat des objets vendus : les objets issus du stock initial
+    // n'ont pas de prixAchat connu (null) — comptés à 0, pas exclus, sinon la
+    // marge surestimerait ces ventes.
+    const coutAchat = session.ventes.reduce((s, v) => s + (v.prixAchat ?? 0), 0);
+    logEvenement(EVENEMENTS.sessionVenteTerminee, {
+      objets_vendus: session.ventes.length,
+      recette: Math.round(recette),
+      marge: Math.round(recette - coutAchat),
+    });
   }, []);
 
   const debloquerCompetence = useCallback(
@@ -1352,7 +1611,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (!prev) return prev;
         if (prev.competencesDebloquees.includes(id)) return prev;
         if (prev.brocanteur.pointsDisponibles < comp.coutPoints) return prev;
-        return {
+        const suivant: GameState = {
           ...prev,
           brocanteur: {
             ...prev.brocanteur,
@@ -1360,7 +1619,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
           },
           competencesDebloquees: [...prev.competencesDebloquees, id],
         };
+        // La toute première compétence Réparer ouvre l'Atelier : son cadenas
+        // tombe, un établi est offert avec le savoir-faire (sans quoi la
+        // pièce serait vide) et la visite guidée s'arme — la main désignera
+        // l'onglet jusqu'à ce que le joueur y aille.
+        if (!aCompetenceReparation(prev) && aCompetenceReparation(suivant)) {
+          return {
+            ...suivant,
+            niveauAtelier: Math.max(suivant.niveauAtelier, 1) as GameState["niveauAtelier"],
+            miniTutoAtelier: "visite",
+          };
+        }
+        return suivant;
       });
+      logEvenement(EVENEMENTS.competenceDebloquee, { competence_id: id });
       return { ok: true };
     },
     [],
@@ -1940,8 +2212,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const stateValue = useMemo<GameStateValue>(
-    () => ({ state, isHydrated }),
-    [state, isHydrated],
+    () => ({ state, isHydrated, etatSauvegarde }),
+    [state, isHydrated, etatSauvegarde],
   );
 
   // Toutes les actions sont des useCallback stables → cet objet n'est créé
@@ -1961,6 +2233,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ouvrirCadeauAnniversaire,
       terminerMiniTutoVinyle,
       terminerMiniTutoCarnet,
+      terminerMiniTutoAtelier,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
@@ -2006,6 +2279,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       crediterEnergiePub,
       reclamerBoiteMystere,
       rafraichirEnergie,
+      rafraichirPeriodiques,
+      acheterAuBazar,
     }),
     [
       nouvellePartie,
@@ -2021,6 +2296,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ouvrirCadeauAnniversaire,
       terminerMiniTutoVinyle,
       terminerMiniTutoCarnet,
+      terminerMiniTutoAtelier,
       terminerTutoriel,
       ouvrirVitrine,
       attribuerVitrineABrocante,
@@ -2066,6 +2342,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       crediterEnergiePub,
       reclamerBoiteMystere,
       rafraichirEnergie,
+      rafraichirPeriodiques,
+      acheterAuBazar,
     ],
   );
 

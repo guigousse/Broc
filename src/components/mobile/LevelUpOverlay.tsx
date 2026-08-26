@@ -15,6 +15,7 @@ import {
   PIC_EXPLOSION_S,
   SON_EXPLOSION,
 } from "@/lib/audio/audioManager";
+import { vibrerExplosion } from "@/lib/haptique";
 import {
   COUT_TOTAL_COMPETENCES,
   pointsDepensesCompetences,
@@ -33,6 +34,11 @@ import { MedaillonAtout } from "@/components/mobile/MedaillonAtout";
 import { tutorielActif } from "@/lib/tutoriel";
 import { getCoachOuvert, subscribeCoachOuvert } from "@/lib/coachActif";
 import { getDialogueActif, subscribeDialogueActif } from "@/lib/dialogueActif";
+import { demanderNotation } from "@/lib/soutien/notation";
+import {
+  marquerNotationNiveauFaite,
+  notationNiveauFaite,
+} from "@/lib/soutien/vu";
 
 // ── Chronologie (secondes) ────────────────────────────────────────────────
 // Deux temps : le chiffre seul (son + feu d'artifice), puis l'encadré des
@@ -53,6 +59,9 @@ const DELAI_CARTE = 2.25;
 const DELAI_PREMIERE_LIGNE = DELAI_CARTE + 0.15;
 const ECART_LIGNE = 0.09;
 const ECART_BOUTON = 0.2;
+
+/** Le niveau à partir duquel on ose demander un avis. Cf. commentaire ci-dessous. */
+const NIVEAU_NOTATION = 10;
 
 // ── Feu d'artifice ────────────────────────────────────────────────────────
 const COULEURS_ARTIFICE = ["#C5A059", "#3B6A52", "#A33B2A", "#3B6EA5"];
@@ -386,6 +395,15 @@ export function LevelUpOverlay() {
           (DELAI_ARTIFICE + b.retard - PIC_EXPLOSION_S / b.vitesse) * 1000,
         ),
       ),
+      // Les secousses, elles, tombent PILE sur l'éclat : contrairement au son,
+      // une vibration n'a pas d'attaque à rattraper, donc pas de PIC_EXPLOSION_S
+      // à soustraire. Avancée comme le son, elle se sentirait avant qu'on voie.
+      ...BOUQUETS.map((b) =>
+        setTimeout(
+          () => void vibrerExplosion(b.force),
+          (DELAI_ARTIFICE + b.retard) * 1000,
+        ),
+      ),
     ];
     return () => timers.forEach(clearTimeout);
   }, [niveauACelebrer, affichable, mouvementReduit]);
@@ -509,6 +527,22 @@ export function LevelUpOverlay() {
     marquerNiveauVu();
     if (state.tutorielEtape === "niveau-celebration") {
       avancerTutoriel("competences-visite");
+    }
+    // La demande de notation part D'ICI, et pas de `marquerNiveauVu` dans le
+    // GameContext : la logique de jeu n'a pas à connaître l'existence des
+    // stores.
+    //
+    // POURQUOI LE NIVEAU 10. Le tutoriel rapporte ≥ 115 XP alors que le
+    // niveau 1 est à 100 : le joueur passe niveau 1 À COUP SÛR pendant le
+    // tutoriel, avant d'avoir rien vu du jeu. Le niveau 10 garantit un joueur
+    // qui connaît Broc, sur un triomphe franc — c'est le contexte que les deux
+    // plateformes recommandent.
+    //
+    // Rien n'est branché derrière : l'appel ne dit jamais si la boîte s'est
+    // affichée, ni si le joueur a noté. Cf. `notation.ts`.
+    if (niveauACelebrer === NIVEAU_NOTATION && !notationNiveauFaite()) {
+      marquerNotationNiveauFaite();
+      void demanderNotation();
     }
   };
 

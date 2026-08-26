@@ -72,9 +72,6 @@ import {
   XP_DECOUVERTE_COLLECTION,
   XP_JUSTE_PRIX,
   XP_NEGO_BROCANTEUR,
-  XP_QUETE_HEBDO,
-  XP_QUETE_PRINCIPALE,
-  XP_QUETE_QUOTIDIENNE,
   XP_RESTAURATION_ETAPE,
   XP_VENTE_BROCANTEUR,
   multiplicateurXPRarete,
@@ -149,8 +146,6 @@ export const PROFILES: Record<ProfileId, ProfileConfig> = {
   },
 };
 
-const QUETE_QUOTIDIENNE_PROBA = 0.1;
-const QUETE_HEBDO_INTERVALLE_JOURS = 21;
 const SEUIL_STOCK_VENTE = 3;
 const JOUR_OUVERTURE_ATELIER = 3;
 const RATIO_ACHAT_DECENT = 0.85;
@@ -533,23 +528,11 @@ function joueJourMissions(
       gainXP += XP_RESTAURATION_ETAPE;
     }
   }
-  if (Math.random() < QUETE_QUOTIDIENNE_PROBA) {
-    xp.queteQuotidienne += XP_QUETE_QUOTIDIENNE;
-    gainXP += XP_QUETE_QUOTIDIENNE;
-  }
-  if (sim.jour % QUETE_HEBDO_INTERVALLE_JOURS === 0) {
-    xp.queteHebdo += XP_QUETE_HEBDO;
-    gainXP += XP_QUETE_HEBDO;
-  }
+  // Les quêtes ne versent plus d'XP depuis le 2026-08-18 (des jetons « Bazar »
+  // prendront cette place) : les trois compteurs `xp.quete*` restent dans le
+  // rapport et y affichent désormais zéro — c'est l'information utile, plutôt
+  // qu'une ligne disparue qui laisserait croire à un oubli.
   return gainXP;
-}
-
-function joursChapitres(profile: ProfileConfig, totalDays: number): Set<number> {
-  const jours = new Set<number>();
-  for (let i = 1; i <= profile.totalChapitres; i++) {
-    jours.add(Math.round((i * totalDays) / (profile.totalChapitres + 1)));
-  }
-  return jours;
 }
 
 /* === Boucle principale : la partie complète ============================= */
@@ -570,7 +553,6 @@ export function runSimulation(
   const xpTotals = emptyXpTotals();
   const days: DaySnapshot[] = [];
   const gateEvents: GateEvent[] = [];
-  const joursChap = joursChapitres(profile, totalDays);
 
   let debloqueesAvant = sansEvenements(
     calculerBrocantesDebloqueesParTier(stateLike(sim)),
@@ -601,10 +583,6 @@ export function runSimulation(
       gainXPJour += joueJourVente(sim, brocante, xpTotals);
     }
     gainXPJour += joueJourMissions(sim, profile, xpTotals);
-    if (joursChap.has(jour)) {
-      xpTotals.questePrincipale += XP_QUETE_PRINCIPALE;
-      gainXPJour += XP_QUETE_PRINCIPALE;
-    }
 
     sim.brocanteur = appliquerGainXPBrocanteur(sim.brocanteur, gainXPJour);
 
@@ -824,6 +802,7 @@ export function runLotGarniMicroSim(trials = 1000): LotGarniMicroSimResult {
     archetypeId: "sim",
     archetypeNom: "Sim",
     nom: "Client simulé",
+    genre: "m",
     ambiance: "",
     appetitMin: 0.7,
     appetitMax: 1.3,

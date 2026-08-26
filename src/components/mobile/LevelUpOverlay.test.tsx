@@ -4,7 +4,7 @@
  * Pur lecteur de `useGame()` + 1 action (`marquerNiveauVu`) : on mocke le
  * contexte, `next/navigation` et `audioManager` (pas besoin du vrai provider).
  */
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { LevelUpOverlay } from "./LevelUpOverlay";
 import { setCoachOuvert } from "@/lib/coachActif";
@@ -42,6 +42,21 @@ vi.mock("@/lib/audio/audioManager", () => ({
   },
   SON_EXPLOSION: "/sounds/explosion.mp3",
   PIC_EXPLOSION_S: 0.035,
+  // `SettingsContext` (importé transitivement via `TabBar`) référence ce
+  // champ dans sa constante de module `NOOP_SETTINGS` : sans lui, le mock
+  // jette dès l'import, avant même le rendu de ce test.
+  DEFAULT_AUDIO_PREFS: { volume: 70, musique: true, effets: true, ambiance: true },
+}));
+
+const vibrerExplosion = vi.fn();
+vi.mock("@/lib/haptique", () => ({
+  vibrerApparition: vi.fn(),
+  vibrerExplosion: (...args: unknown[]) => vibrerExplosion(...args),
+}));
+
+const demanderNotation = vi.fn(() => Promise.resolve());
+vi.mock("@/lib/soutien/notation", () => ({
+  demanderNotation: () => demanderNotation(),
 }));
 
 // Plafond fictif simple (10) pour isoler le test de la vraie valeur (96) ;
@@ -512,5 +527,87 @@ describe("LevelUpOverlay", () => {
     expect(playExplosion).not.toHaveBeenCalled();
     window.matchMedia = matchMedia;
     vi.useRealTimers();
+  });
+});
+
+describe("LevelUpOverlay — secousses du feu d'artifice", () => {
+  it("une secousse par bouquet, calée sur l'ÉCLAT et non sur le son", () => {
+    // Le son part en avance (515 ms) pour que son bang tombe sur l'éclat à
+    // 550 ms. Une vibration n'a pas d'attaque à rattraper : la caler sur le
+    // même horaire la ferait sentir avant qu'on voie quoi que ce soit.
+    vi.useFakeTimers();
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    vibrerExplosion.mockClear();
+    render(<LevelUpOverlay />);
+    vi.advanceTimersByTime(516);
+    expect(vibrerExplosion).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(34);
+    expect(vibrerExplosion).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(1000);
+    expect(vibrerExplosion).toHaveBeenCalledTimes(4);
+    vi.useRealTimers();
+  });
+
+  it("chaque secousse reçoit la force de son bouquet", () => {
+    vi.useFakeTimers();
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    vibrerExplosion.mockClear();
+    render(<LevelUpOverlay />);
+    vi.advanceTimersByTime(3000);
+    const forces = vibrerExplosion.mock.calls.map((c) => c[0] as number);
+    expect(forces[0]).toBe(1);
+    expect(forces).toEqual([...forces].sort((a, b) => b - a));
+    vi.useRealTimers();
+  });
+
+  it("démontage avant l'éclat : aucune secousse", () => {
+    vi.useFakeTimers();
+    mockState = etat(0, 1);
+    mockPathname = "/bureau";
+    vibrerExplosion.mockClear();
+    const { unmount } = render(<LevelUpOverlay />);
+    unmount();
+    vi.advanceTimersByTime(3000);
+    expect(vibrerExplosion).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+});
+
+describe("LevelUpOverlay — demande de notation", () => {
+  beforeEach(() => {
+    demanderNotation.mockClear();
+    window.localStorage.clear();
+    mockPathname = "/bureau";
+  });
+
+  it("fermer la fanfare du niveau 10 demande la notation", () => {
+    mockState = etat(9, 10);
+    render(<LevelUpOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(demanderNotation).toHaveBeenCalledTimes(1);
+  });
+
+  it("un autre niveau ne demande rien", () => {
+    mockState = etat(8, 9);
+    render(<LevelUpOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(demanderNotation).not.toHaveBeenCalled();
+  });
+
+  it("une seule fois, même dans une nouvelle partie", () => {
+    mockState = etat(9, 10);
+    render(<LevelUpOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+    cleanup();
+    demanderNotation.mockClear();
+
+    // Nouvelle partie : le GameState est neuf, mais le drapeau vit dans
+    // localStorage — donc à l'échelle de la PERSONNE, pas de la sauvegarde.
+    mockState = etat(9, 10);
+    render(<LevelUpOverlay />);
+    fireEvent.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(demanderNotation).not.toHaveBeenCalled();
   });
 });

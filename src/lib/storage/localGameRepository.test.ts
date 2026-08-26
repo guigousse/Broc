@@ -89,13 +89,10 @@ describe("localGameRepository — load", () => {
   });
 });
 
-describe("localGameRepository — copie de secours (double-buffer)", () => {
-  it("save écrit aussi la copie de secours du slot actif", async () => {
-    const state = createMockGameState({ budget: 55 });
-    await localGameRepository.save(state);
-    const raw = window.localStorage.getItem(cleBackup(1));
-    expect(raw).toBeTruthy();
-    expect(JSON.parse(raw!).budget).toBe(55);
+describe("localGameRepository — copie de secours (lecture uniquement)", () => {
+  it("n'écrit plus de copie de secours — le fichier atomique l'a remplacée", async () => {
+    await localGameRepository.save(createMockGameState());
+    expect(window.localStorage.getItem(cleBackup(1))).toBeNull();
   });
 
   it("restaure la copie de secours si le slot actif est corrompu", async () => {
@@ -127,24 +124,13 @@ describe("localGameRepository — copie de secours (double-buffer)", () => {
     expect(await localGameRepository.load()).toBeNull();
   });
 
-  it("l'échec d'écriture de la copie n'empêche pas la sauvegarde principale", async () => {
-    const original = window.localStorage.setItem.bind(window.localStorage);
-    const spy = vi
-      .spyOn(window.localStorage, "setItem")
-      .mockImplementation((k: string, v: string) => {
-        if (k === cleBackup(1)) throw new Error("quota dépassé");
-        original(k, v);
-      });
-
-    const ok = await localGameRepository.save(createMockGameState({ budget: 9 }));
-
-    spy.mockRestore();
-    expect(ok).toBe(true);
-    expect((await localGameRepository.load())?.budget).toBe(9);
-  });
-
-  it("clear supprime aussi la copie de secours", async () => {
-    await localGameRepository.save(createMockGameState());
+  it("clear supprime aussi une éventuelle copie de secours legacy", async () => {
+    // save() n'en écrit plus, mais une version antérieure du jeu a pu en
+    // laisser une : clear() doit continuer à la nettoyer.
+    window.localStorage.setItem(
+      cleBackup(1),
+      JSON.stringify(createMockGameState()),
+    );
     await localGameRepository.clear();
     expect(window.localStorage.getItem(cleBackup(1))).toBeNull();
   });
@@ -161,7 +147,7 @@ describe("localGameRepository — save", () => {
 
   it("save puis load restitue l'état", async () => {
     const state = createMockGameState({ jourActuel: 17 });
-    expect(await localGameRepository.save(state)).toBe(true);
+    expect(await localGameRepository.save(state)).toEqual({ ok: true });
     expect((await localGameRepository.load())?.jourActuel).toBe(17);
   });
 
@@ -211,10 +197,10 @@ describe("localGameRepository — save", () => {
         throw new Error("quota dépassé");
       });
 
-    const ok = await localGameRepository.save(createMockGameState());
+    const res = await localGameRepository.save(createMockGameState());
 
     spy.mockRestore();
-    expect(ok).toBe(false);
+    expect(res).toEqual({ ok: false, genre: "io" });
     // toucherDerniereSession n'a jamais été appelé : aucun index n'a été créé.
     expect(window.localStorage.getItem(CLE_INDEX)).toBeNull();
   });
@@ -269,7 +255,7 @@ describe("localGameRepository — environnement sans window", () => {
     vi.stubGlobal("window", undefined);
     await expect(
       localGameRepository.save(createMockGameState()),
-    ).resolves.toBe(false);
+    ).resolves.toEqual({ ok: false, genre: "indisponible" });
   });
 
   it("clear() ne plante pas si window est undefined (SSR)", async () => {

@@ -45,11 +45,13 @@ import {
 } from "@/lib/personaIllustrations";
 import { activeDebloquee, usagesRestants, NIVEAU_ACTIVES, type ActiveId } from "@/lib/actives";
 import { audioManager } from "@/lib/audio/audioManager";
+import { vibrerApparition } from "@/lib/haptique";
 import { getBrocanteImageUrl } from "@/lib/brocanteImages";
 import { useToast } from "@/components/ui/Toast";
 import { NegociationSheet } from "@/components/mobile/NegociationSheet";
 import { NegoItemRow } from "@/components/mobile/NegoItemRow";
 import { DialogueOverlay } from "@/components/mobile/dialogue/DialogueOverlay";
+import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import {
   GRAND_PERE_PORTRAITS,
   SEQUENCES_TUTORIEL,
@@ -111,6 +113,9 @@ import type {
   VenteHistorique,
 } from "@/types/game";
 
+/** Leçon d'humeur : le temps de lire la réplique du client avant le voile. */
+const DELAI_LECON_HUMEUR_MS = 1100;
+
 const TICK_MS = 100;
 // Active de vente 📣 La Criée (N30) : fait défiler 3 clients coup sur coup,
 // à intervalle fixe qui ignore l'intervalle normal ET le multiplicateur météo.
@@ -157,6 +162,7 @@ export default function VitrineJourneePage() {
     gagnerXPBrocanteur,
     marquerVuTemplate,
     utiliserActive,
+    tempsConfiance,
   } = useGame();
   const { avancerTutoriel } = useGameActions();
   const { d, tr, locale } = useLangue();
@@ -241,6 +247,20 @@ export default function VitrineJourneePage() {
   /** Séquence de dialogue tutoriel actuellement affichée (grand-père), ou null. */
   const [dialogueTuto, setDialogueTuto] = useState<DialogueSequence | null>(null);
   const etape = state?.tutorielEtape;
+
+  /* Leçon d'humeur (première vente) : la jauge est le seul signal qui dit
+     pourquoi un acheteur finit par partir, et rien ne l'expliquait. On la
+     montre au moment où elle DÉMONTRE quelque chose — après la première offre
+     refusée du radin, quand elle vient de bouger — et une seule fois.
+     "differe" laisse la réplique du client se lire avant de voiler l'écran. */
+  const [leconHumeur, setLeconHumeur] = useState<
+    "jamais" | "differe" | "visible" | "faite"
+  >("jamais");
+  useEffect(() => {
+    if (leconHumeur !== "differe") return;
+    const t = setTimeout(() => setLeconHumeur("visible"), DELAI_LECON_HUMEUR_MS);
+    return () => clearTimeout(t);
+  }, [leconHumeur]);
 
   /** Crédite l'XP immédiatement ET la compte pour le bilan. L'affichage de la
    *  barre est gelé : elle ne bougera qu'à la cérémonie. */
@@ -390,6 +410,9 @@ export default function VitrineJourneePage() {
       if (!ev) return nego;
       const acheteurScripte = acheteurScripteRef.current;
       if (acheteurScripte) {
+        if (etapeRef.current === "vente-refus") {
+          setLeconHumeur((l) => (l === "jamais" ? "differe" : l));
+        }
         return proposerOffre(nego, acheteurScripte.persona, offre, ALEA_NEGO_SCRIPTEE);
       }
       const mods = modifiersRef.current ?? DEFAULT_MODIFIERS;
@@ -519,7 +542,11 @@ export default function VitrineJourneePage() {
         id: crypto.randomUUID(),
         type: "vente",
         jour: state?.jourActuel ?? 0,
-        timestamp: Date.now(),
+        // Horloge de confiance : les objectifs périodiques comparent ce
+        // timestamp à `timestampAcceptation` (posé lui aussi via
+        // `tempsConfiance`). Utiliser `Date.now()` ici désynchroniserait les
+        // deux bords de la comparaison si l'horloge de l'appareil dérive.
+        timestamp: tempsConfiance() ?? Date.now(),
         niveauCamion: standSnapshot.current.niveau,
         loyer: standSnapshot.current.loyer,
         ventes: ventesEffectuees,
@@ -539,6 +566,7 @@ export default function VitrineJourneePage() {
     state,
     ventesEffectuees,
     xpSession,
+    tempsConfiance,
   ]);
   terminerJourneeRef.current = terminerJournee;
 
@@ -598,14 +626,11 @@ export default function VitrineJourneePage() {
                 }
                 acheteurScripteRef.current = acheteur;
                 setClientActuel(ev);
-                setOffreJoueur(
-                  acheteur.bornesOffre
-                    ? Math.min(
-                        acheteur.bornesOffre.max,
-                        Math.max(acheteur.bornesOffre.min, ev.prixDemande),
-                      )
-                    : ev.prixDemande,
-                );
+                vibrerApparition();
+                // Le curseur part TOUJOURS du prix affiché sur l'étal : c'est
+                // au joueur de l'amener dans l'anneau du grand-père, pas au
+                // jeu de l'y déposer.
+                setOffreJoueur(ev.prixDemande);
                 setRevelationFaite(false);
                 setNegoVente(
                   ev.mode === "negociation"
@@ -673,6 +698,7 @@ export default function VitrineJourneePage() {
             if (forceCelebrite) celebriteApparueRef.current = true;
             acheteurScripteRef.current = null;
             setClientActuel(ev);
+            vibrerApparition();
             setOffreJoueur(ev.prixDemande);
             setRevelationFaite(false);
             if (ev.mode === "negociation") {
@@ -896,9 +922,11 @@ export default function VitrineJourneePage() {
       ton: "vente",
     });
     // Journée scriptée : la négociatrice Bérénice conclut — dernière leçon,
-    // débrief puis fin du script (le bouton Sortir pulsera à « conclusion »).
+    // débrief puis la leçon de montée de niveau (célébration → visite des
+    // compétences → achat du premier point), qui se clôt elle-même sur
+    // « conclusion » (cf. tuto_niveau_apres dans bibliotheque/page.tsx).
     if (etape === "vente-nego") {
-      dialogueApresRef.current = "conclusion";
+      dialogueApresRef.current = "niveau-celebration";
       setDialogueTuto(SEQUENCES_TUTORIEL.tuto_vente_nego_apres);
     }
     acheteurScripteRef.current = null;
@@ -1056,7 +1084,7 @@ export default function VitrineJourneePage() {
         background: "var(--paper-100)",
       }}
     >
-      <MobileHeader budget={state.budget} />
+      <MobileHeader budget={state.budget} jetons={state.jetons} />
 
       <main
         style={{
@@ -1200,7 +1228,19 @@ export default function VitrineJourneePage() {
           type="button"
           aria-label={d.chine.sortir}
           onClick={handleFermerEnAvance}
-          className={etape === "conclusion" ? "tuto-pulse tuto-main tuto-main-droite" : undefined}
+          // Le débrief de Bérénice (vente-nego) n'avance plus directement à
+          // "conclusion" mais à "niveau-celebration" (la leçon de montée de
+          // niveau s'intercale, cf. bibliotheque/page.tsx) — la fanfare
+          // n'attend que la sortie de cette route de session. Le pulse doit
+          // donc guider vers Sortir dès ce palier, pas seulement au dernier.
+          className={
+            etape === "niveau-celebration" ||
+            etape === "competences-visite" ||
+            etape === "competences-choix" ||
+            etape === "conclusion"
+              ? "tuto-pulse tuto-main tuto-main-droite"
+              : undefined
+          }
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -1254,8 +1294,11 @@ export default function VitrineJourneePage() {
           nomAffiche={
             personaRevele
               ? nomAfficheClient(clientActuel.persona)
-              : d.vente.clientInconnu
+              : d.vente.clientInconnu[clientActuel.persona.genre]
           }
+          /* Le genre reste visible même persona non révélé : on ne connaît
+             pas encore la personne, mais on l'a devant soi. */
+          genreAdverse={clientActuel.persona.genre}
           personaInfo={{
             nom: nomAfficheClient(clientActuel.persona),
             archetypeNom:
@@ -1329,11 +1372,19 @@ export default function VitrineJourneePage() {
           scriptTuto={
             acheteurScripteRef.current
               ? {
-                  bornes: acheteurScripteRef.current.bornesOffre,
+                  cible: acheteurScripteRef.current.cibleOffre,
                   mainLaisserTomber: etape === "vente-refus",
                 }
               : null
           }
+          cibleCoachHumeur={leconHumeur === "visible"}
+        />
+      )}
+
+      {leconHumeur === "visible" && (
+        <TutorielCoach
+          etapes={[{ cible: "vente-humeur", texte: d.tutoriel.coachVenteHumeur }]}
+          onFini={() => setLeconHumeur("faite")}
         />
       )}
 

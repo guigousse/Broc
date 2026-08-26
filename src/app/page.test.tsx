@@ -56,6 +56,10 @@ vi.mock("@/context/GameContext", () => ({
 const playClick = vi.fn();
 vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({ playClick }),
+  // `SoutienSheet` (ouverte depuis « Soutenir » du menu principal) appelle
+  // désormais `useSettingsSafe` : le mock du module doit fournir les deux
+  // exports, sous peine de casser au rendu.
+  useSettingsSafe: () => ({ playClick }),
 }));
 
 let introOnFini: (() => void) | null = null;
@@ -140,7 +144,7 @@ describe("TitleScreen — Continuer avec transition iris", () => {
 
     expect(screen.getByTestId("iris-fermeture")).toBeTruthy();
     expect(location.href).toBe("");
-    expect(lireFlagIris()).toBe(false);
+    expect(lireFlagIris()).toBe(null);
   });
 
   it("au noir : pose le flag et navigue vers /bureau", () => {
@@ -151,7 +155,7 @@ describe("TitleScreen — Continuer avec transition iris", () => {
 
     irisOnNoir!();
 
-    expect(lireFlagIris()).toBe(true);
+    expect(lireFlagIris()).toBe("long");
     expect(location.href).toBe("/bureau");
   });
 
@@ -190,7 +194,7 @@ describe("TitleScreen — lancement d'un slot via la modal Parties", () => {
     expect(detacherPartie.mock.invocationCallOrder[0]).toBeLessThan(
       changerSlotActif.mock.invocationCallOrder[0],
     );
-    expect(lireFlagIris()).toBe(true);
+    expect(lireFlagIris()).toBe("long");
     expect(location.href).toBe("/bureau");
   });
 });
@@ -227,5 +231,12 @@ describe("TitleScreen — musique jazz du titre", () => {
 
     expect(fade).toHaveBeenCalledTimes(1);
     expect(fade).toHaveBeenCalledWith(DUREE_FERMETURE_MS);
+  });
+
+  it("le menu principal propose Soutenir, qui ouvre la feuille", () => {
+    render(<TitleScreen />);
+    const bouton = screen.getByRole("button", { name: "Soutenir" });
+    fireEvent.click(bouton);
+    expect(screen.getByTestId("soutien-instagram")).toBeTruthy();
   });
 });

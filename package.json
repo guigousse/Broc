@@ -1,6 +1,6 @@
 {
   "name": "projet-broc",
-  "version": "1.3.0",
+  "version": "1.4.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -26,6 +26,8 @@
     "gen:appstore": "node scripts/generate-appstore-shots.mjs",
     "gen:fb-illu": "node scripts/facebook/generate-cover-illustration.mjs",
     "gen:fb-cover": "node scripts/facebook/compose-cover.mjs",
+    "gen:borne": "node scripts/generate-borne-arcade.mjs",
+    "gen:captures-arcade": "tsx scripts/generate-captures-arcade.mjs",
     "opt:images": "node scripts/optimize-item-images.mjs",
     "gen:webp": "node scripts/generate-webp.mjs",
     "gen:thumbs": "node scripts/generate-item-thumbs.mjs",
@@ -34,10 +36,13 @@
     "lint:hooks": "eslint src"
   },
   "dependencies": {
+    "@gbyte/tauri-plugin-in-app-review": "^0.1.0",
     "@tanstack/react-virtual": "^3.14.4",
     "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-haptics": "^2.3.2",
     "@tauri-apps/plugin-notification": "^2.3.3",
     "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-opener": "^2.5.4",
     "lucide-react": "^1.16.0",
     "next": "^16.2.6",
     "react": "19.0.0",

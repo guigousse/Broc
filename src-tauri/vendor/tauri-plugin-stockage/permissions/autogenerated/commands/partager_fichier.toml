@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-partager-fichier"
+description = "Enables the partager_fichier command without any pre-configured scope."
+commands.allow = ["partager_fichier"]
+
+[[permission]]
+identifier = "deny-partager-fichier"
+description = "Denies the partager_fichier command without any pre-configured scope."
+commands.deny = ["partager_fichier"]

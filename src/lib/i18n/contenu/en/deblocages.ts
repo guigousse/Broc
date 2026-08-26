@@ -30,7 +30,7 @@ export const DEBLOCAGES_EN: Record<string, string> = {
 
 export const DEBLOCAGES_DESC_EN: Record<string, string> = {
   "Ouverture de l'écran Compétences (+1 point)":
-    "The library opens the Skills screen: spend your points (1 per tier) to sharpen your trade.",
+    "The Skills tab opens: spend your points (1 per tier) to sharpen your trade.",
   "Quêtes quotidiennes et hebdomadaires":
     "The mail brings commissions: a daily one, plus a more ambitious weekly one, rewarded in cash.",
   "Paliers 2 des compétences": "Tier 2 of every skill branch becomes purchasable.",

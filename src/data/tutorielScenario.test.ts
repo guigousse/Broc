@@ -6,7 +6,8 @@ import { getCamion, getScaleCoffre } from "@/data/camion";
 import { calculerPrixMinAcceptDepuisPersona } from "@/lib/personas";
 import { getClientIllustration } from "@/lib/personaIllustrations";
 import {
-  acheteurDeLEtape, COLIS_TUTORIEL_SCRIPTE, COMPETENCE_PREMIER_POINT, PELUCHE_TEMPLATE_ID,
+  acheteurDeLEtape, bornesDeCible, COLIS_TUTORIEL_SCRIPTE, COMPETENCE_PREMIER_POINT,
+  offreDansCible, PELUCHE_TEMPLATE_ID,
   personnageScenario, PREFILL_COFFRE_TUTORIEL, PRIX_CONSEILLES_TUTORIEL, SESSION_TUTORIEL,
   SESSION_VENTE_TUTORIEL, TEMPLATES_VERROUILLES_TUTORIEL, TOLERANCE_PRIX_CONSEILLE,
   TRACES_TUTORIEL,
@@ -42,25 +43,25 @@ describe("SESSION_TUTORIEL", () => {
   it("la peluche est le 4e objet et part en collection", () => {
     expect(SESSION_TUTORIEL[3].templateId).toBe(PELUCHE_TEMPLATE_ID);
   });
-  it("l'échec est garanti : toute offre bornée est insultante au tour 1", () => {
+  it("l'échec est garanti : toute offre PROPOSABLE est insultante au tour 1", () => {
     const s = SESSION_TUTORIEL[0];
     const seuil = s.prixVendeur * (1 - s.persona.tolerancePct);
-    expect(s.bornesOffre!.max).toBeLessThan(seuil);
+    expect(bornesDeCible(s.cibleOffre!).max).toBeLessThan(seuil);
   });
-  it("les réussites sont garanties : min ≥ prix plancher et jamais d'insulte", () => {
+  it("les réussites sont garanties : cible basse ≥ prix plancher et jamais d'insulte", () => {
     for (const s of SESSION_TUTORIEL.filter((x) => x.role === "nego-reussie")) {
       const plancher = calculerPrixMinAcceptDepuisPersona(s.persona, s.prixVendeur);
-      expect(s.bornesOffre!.min).toBeGreaterThanOrEqual(plancher);
+      expect(bornesDeCible(s.cibleOffre!).min).toBeGreaterThanOrEqual(plancher);
       // pire cas d'insulte : prix adverse au plus haut (tour 1)
-      expect(s.bornesOffre!.min).toBeGreaterThanOrEqual(
+      expect(bornesDeCible(s.cibleOffre!).min).toBeGreaterThanOrEqual(
         s.prixVendeur * (1 - s.persona.tolerancePct),
       );
-      expect(s.bornesOffre!.max).toBeLessThan(s.prixVendeur);
+      expect(bornesDeCible(s.cibleOffre!).max).toBeLessThan(s.prixVendeur);
     }
   });
   it("le budget initial couvre large les 3 achats au pire prix", () => {
     const pire = SESSION_TUTORIEL[1].prixVendeur +
-      SESSION_TUTORIEL[2].bornesOffre!.max + SESSION_TUTORIEL[3].bornesOffre!.max;
+      bornesDeCible(SESSION_TUTORIEL[2].cibleOffre!).max + bornesDeCible(SESSION_TUTORIEL[3].cibleOffre!).max;
     expect(pire).toBeLessThanOrEqual(120); // INITIAL_BUDGET = 150, marge 30
   });
   it("la valeur de donation de la peluche franchit le seuil de 30 €", () => {
@@ -68,6 +69,40 @@ describe("SESSION_TUTORIEL", () => {
     // état "Très bon" → prixReferenceReel = prixRefBase ; prime donation 1.1
     expect(SESSION_TUTORIEL[3].etat).toBe("Très bon");
     expect(Math.round(tpl.prixRefBase * 1.1)).toBeGreaterThanOrEqual(30);
+  });
+});
+
+describe("CibleOffre — cible pointillée du grand-père", () => {
+  it("les 5 négos scriptées portent une cible, les autres objets non", () => {
+    expect(SESSION_TUTORIEL.filter((s) => s.cibleOffre).map((s) => s.role)).toEqual([
+      "nego-echec", "nego-reussie", "nego-reussie",
+    ]);
+    expect(SESSION_VENTE_TUTORIEL.filter((a) => a.cibleOffre)).toHaveLength(2);
+    // L'achat direct et les objets de décor n'ont rien à proposer.
+    expect(SESSION_TUTORIEL[1].cibleOffre).toBeUndefined();
+  });
+  it("bornesDeCible encadre la cible symétriquement", () => {
+    expect(bornesDeCible({ prix: 30, tolerance: 4 })).toEqual({ min: 26, max: 34 });
+  });
+  it("offreDansCible gate le bouton Proposer, et fail-open sans cible", () => {
+    const c = { prix: 30, tolerance: 4 };
+    expect(offreDansCible(26, c)).toBe(true);
+    expect(offreDansCible(34, c)).toBe(true);
+    expect(offreDansCible(25, c)).toBe(false);
+    expect(offreDansCible(35, c)).toBe(false);
+    // Hors tutoriel (ou objet sans cible) : rien ne doit jamais être bloqué.
+    expect(offreDansCible(999, null)).toBe(true);
+    expect(offreDansCible(999, undefined)).toBe(true);
+  });
+  it("toutes les cibles tiennent dans une plage entière atteignable au curseur", () => {
+    for (const c of [
+      ...SESSION_TUTORIEL.map((s) => s.cibleOffre),
+      ...SESSION_VENTE_TUTORIEL.map((a) => a.cibleOffre),
+    ].filter(Boolean)) {
+      expect(Number.isInteger(c!.prix)).toBe(true);
+      expect(c!.tolerance).toBeGreaterThanOrEqual(1);
+      expect(bornesDeCible(c!).min).toBeGreaterThanOrEqual(1);
+    }
   });
 });
 
@@ -119,10 +154,10 @@ describe("helpers d'étape", () => {
 });
 
 describe("garanties de négo du scénario", () => {
-  it("objet 1 : TOUTE offre bornée fâche le vendeur au tour 1", () => {
+  it("objet 1 : TOUTE offre de la cible fâche le vendeur au tour 1", () => {
     const s = SESSION_TUTORIEL[0];
     const it = genererSessionScriptee()[0];
-    for (let offre = s.bornesOffre!.min; offre <= s.bornesOffre!.max; offre++) {
+    for (let offre = bornesDeCible(s.cibleOffre!).min; offre <= bornesDeCible(s.cibleOffre!).max; offre++) {
       const nego = proposerOffre(
         ouvrirNegociation("achat", it.prixVendeur, it.prixMinAccept),
         s.persona, offre, ALEA_NEGO_SCRIPTEE,
@@ -130,7 +165,7 @@ describe("garanties de négo du scénario", () => {
       expect(nego.statut, `offre ${offre}`).toBe("fache");
     }
   });
-  it.each([[2], [3]])("objet %d : aucune suite d'offres bornées ne peut échouer", (idx) => {
+  it.each([[2], [3]])("objet %d : aucune suite d'offres de la cible ne peut échouer", (idx) => {
     const s = SESSION_TUTORIEL[idx];
     const it = genererSessionScriptee()[idx];
     // Pire stratégie pour l'accord : offrir la borne MIN à chaque tour
@@ -139,7 +174,7 @@ describe("garanties de négo du scénario", () => {
     let nego = ouvrirNegociation("achat", it.prixVendeur, it.prixMinAccept);
     let tours = 0;
     while (nego.statut === "en_cours" && tours < 10) {
-      nego = proposerOffre(nego, s.persona, s.bornesOffre!.min, ALEA_NEGO_SCRIPTEE);
+      nego = proposerOffre(nego, s.persona, bornesDeCible(s.cibleOffre!).min, ALEA_NEGO_SCRIPTEE);
       tours++;
       expect(["en_cours", "conclu"], `tour ${tours}`).toContain(nego.statut);
     }
@@ -147,7 +182,7 @@ describe("garanties de négo du scénario", () => {
     expect(tours).toBeLessThanOrEqual(s.persona.patience);
     // Et l'insulte est impossible sur TOUTE la plage au prix adverse le plus
     // haut (tour 1) — les prix suivants ne font que baisser le seuil.
-    expect(s.bornesOffre!.min).toBeGreaterThanOrEqual(
+    expect(bornesDeCible(s.cibleOffre!).min).toBeGreaterThanOrEqual(
       it.prixVendeur * (1 - s.persona.tolerancePct),
     );
   });
@@ -378,14 +413,14 @@ describe("SESSION_VENTE_TUTORIEL — garanties", () => {
     expect(acheteurDeLEtape("vente-nego")).toBe(SESSION_VENTE_TUTORIEL[2]);
     expect(acheteurDeLEtape("conclusion")).toBeNull();
   });
-  it("radin : AUCUNE offre bornée ne peut conclure ni insulter", () => {
+  it("radin : AUCUNE offre de la cible ne peut conclure ni insulter", () => {
     const a = SESSION_VENTE_TUTORIEL[0];
     // borne min > prixMax → jamais d'accord (offreRejoint vente : offre ≤ prixAdverse ≤ prixMax)
-    expect(a.bornesOffre!.min).toBeGreaterThan(a.prixMax);
+    expect(bornesDeCible(a.cibleOffre!).min).toBeGreaterThan(a.prixMax);
     // pire cas d'insulte : prixAdverse au plus bas (tour 1 = offreInitiale)
-    expect(a.bornesOffre!.max).toBeLessThanOrEqual(a.offreInitiale! * (1 + a.persona.tolerancePct));
+    expect(bornesDeCible(a.cibleOffre!).max).toBeLessThanOrEqual(a.offreInitiale! * (1 + a.persona.tolerancePct));
     // déroulé complet : quelle que soit l'offre constante, fin en refus_poli (patience), jamais conclu/fache
-    for (let offre = a.bornesOffre!.min; offre <= a.bornesOffre!.max; offre++) {
+    for (let offre = bornesDeCible(a.cibleOffre!).min; offre <= bornesDeCible(a.cibleOffre!).max; offre++) {
       let nego = ouvrirNegociation("vente", a.offreInitiale!, a.prixMax);
       let tours = 0;
       while (nego.statut === "en_cours" && tours < 12) {
@@ -395,20 +430,20 @@ describe("SESSION_VENTE_TUTORIEL — garanties", () => {
       expect(nego.statut, `offre ${offre}`).toBe("refus_poli");
     }
   });
-  it("négociatrice : la stratégie borne MAX (la plus lente) conclut dans la patience", () => {
+  it("négociatrice : la stratégie cible MAX (la plus lente) conclut dans la patience", () => {
     const a = SESSION_VENTE_TUTORIEL[2];
-    expect(a.prixMax).toBeGreaterThanOrEqual(a.bornesOffre!.max); // alignement toujours atteignable
+    expect(a.prixMax).toBeGreaterThanOrEqual(bornesDeCible(a.cibleOffre!).max); // alignement toujours atteignable
     let nego = ouvrirNegociation("vente", a.offreInitiale!, a.prixMax);
     let tours = 0;
     while (nego.statut === "en_cours" && tours < 10) {
-      nego = proposerOffre(nego, a.persona, a.bornesOffre!.max, ALEA_NEGO_SCRIPTEE);
+      nego = proposerOffre(nego, a.persona, bornesDeCible(a.cibleOffre!).max, ALEA_NEGO_SCRIPTEE);
       tours++;
       expect(["en_cours", "conclu"], `tour ${tours}`).toContain(nego.statut);
     }
     expect(nego.statut).toBe("conclu");
     expect(tours).toBeLessThanOrEqual(a.persona.patience);
     // et jamais d'insulte sur la plage au prix adverse le plus bas
-    expect(a.bornesOffre!.max).toBeLessThanOrEqual(a.offreInitiale! * (1 + a.persona.tolerancePct));
+    expect(bornesDeCible(a.cibleOffre!).max).toBeLessThanOrEqual(a.offreInitiale! * (1 + a.persona.tolerancePct));
   });
   it("cohérence prix : l'ami paie le prix conseillé de la manette, le radin ne peut pas payer la carafe", () => {
     expect(SESSION_VENTE_TUTORIEL[1].prixMax).toBeGreaterThanOrEqual(PRIX_CONSEILLES_TUTORIEL["jx.manette_vibraduo"]);

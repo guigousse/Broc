@@ -1,11 +1,13 @@
 import { ETATS_ORDRE } from "@/lib/etat";
 import { valeurTotale } from "@/lib/collection";
 import { estMissionLivrable, progressionMission } from "@/lib/missions";
+import { getTemplate } from "@/data/objetTemplates";
 import type {
   CourrierPayloadMission,
   GameState,
   MissionResolution,
   ObjectifMission,
+  SessionChinage,
   SessionVente,
 } from "@/types/game";
 
@@ -30,6 +32,20 @@ function sessionsComptees(
 ): SessionVente[] {
   return state.historique.filter((s): s is SessionVente => {
     if (s.type !== "vente") return false;
+    return reso.timestampAcceptation !== undefined
+      ? s.timestamp > reso.timestampAcceptation
+      : s.jour >= jourRecu;
+  });
+}
+
+/** Idem `sessionsComptees`, pour les sessions de chinage. */
+function sessionsChinageComptees(
+  state: Pick<GameState, "historique">,
+  reso: Pick<MissionResolution, "timestampAcceptation">,
+  jourRecu: number,
+): SessionChinage[] {
+  return state.historique.filter((s): s is SessionChinage => {
+    if (s.type !== "chinage") return false;
     return reso.timestampAcceptation !== undefined
       ? s.timestamp > reso.timestampAcceptation
       : s.jour >= jourRecu;
@@ -77,6 +93,26 @@ export function progressionObjectif(
     case "niveau": {
       const actuel = state.brocanteur?.niveau ?? 0;
       return { actuel, cible: obj.niveau, atteint: actuel >= obj.niveau };
+    }
+    case "objetsRares": {
+      const n = sessionsChinageComptees(state, reso, jourRecu)
+        .flatMap((s) => s.achats)
+        .filter((a) => getTemplate(a.templateId)?.rarete === "rare").length;
+      return { actuel: n, cible: obj.nombre, atteint: n >= obj.nombre };
+    }
+    case "beneficeCumule": {
+      // Une vente à perte ne doit pas rendre la barre négative (largeur NaN%).
+      const brut = sessionsComptees(state, reso, jourRecu)
+        .flatMap((s) => s.ventes)
+        .reduce((acc, v) => (v.prixAchat === null ? acc : acc + (v.prixVente - v.prixAchat)), 0);
+      const total = Math.max(0, brut);
+      return { actuel: total, cible: obj.montant, atteint: total >= obj.montant };
+    }
+    case "ventesCategorie": {
+      const n = sessionsComptees(state, reso, jourRecu)
+        .flatMap((s) => s.ventes)
+        .filter((v) => v.categorie === obj.categorie).length;
+      return { actuel: n, cible: obj.nombre, atteint: n >= obj.nombre };
     }
   }
 }

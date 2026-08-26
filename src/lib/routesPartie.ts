@@ -10,12 +10,14 @@
  */
 export const ROUTES_PARTIE = [
   "/bureau",
+  "/quetes",
   "/stockage",
   "/atelier",
   "/collection",
   "/bibliotheque",
   "/chiner",
   "/vitrine",
+  "/bazar",
 ] as const;
 
 /** Vrai si `pathname` est un écran de la partie en cours. */

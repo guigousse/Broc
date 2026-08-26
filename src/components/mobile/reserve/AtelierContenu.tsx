@@ -1,0 +1,921 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ReserveShell } from "./ReserveShell";
+import { useVerrouReserve } from "./useVerrouReserve";
+import { useGame } from "@/context/GameContext";
+import {
+  aConnaisseurVitrine,
+  peutRestaurerBonVersTresBon,
+  peutRestaurerMauvaisVersBon,
+  peutRestaurerTresBonVersPristin,
+} from "@/lib/competences";
+import {
+  dureeRestaurationMs,
+  restantMs,
+  peutTerminerImmediat,
+  formatDuree,
+} from "@/lib/restauration";
+import { recalculerPrixReference } from "@/lib/etat";
+import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
+import {
+  atelierStatusPourObjet,
+  coutAmelioration,
+  coutAmeliorationAffichable,
+  peutDemanteler,
+  prochaineEtatCible,
+  rendementDemantelement,
+} from "@/lib/atelier";
+import { BottomSheet } from "@/components/mobile/BottomSheet";
+import { AtelierItemRow } from "@/components/atelier/AtelierItemRow";
+import { AtelierActions } from "@/components/atelier/AtelierActions";
+import { PrixMarche } from "@/components/ui/PrixMarche";
+import { AtelierSlots } from "@/components/atelier/AtelierSlots";
+import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
+import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
+import { PieceIcon } from "@/components/atelier/PieceIcon";
+import { ItemSticker } from "@/components/ui/ItemSticker";
+import type { EtatObjet, Objet } from "@/types/game";
+import { audioManager } from "@/lib/audio/audioManager";
+import { getRarityColors } from "@/lib/rarityColors";
+import { getItemThumbUrl } from "@/lib/itemImages";
+import { getTemplate } from "@/data/objetTemplates";
+import { getAdProvider, EMPLACEMENTS_PUB, pubDisponible } from "@/lib/ads/adProvider";
+import { useToast } from "@/components/ui/Toast";
+import { useLangue } from "@/lib/i18n/LangueContext";
+import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
+import { nomObjet } from "@/lib/i18n/contenu";
+
+const sectTitle: React.CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 11,
+  letterSpacing: "0.18em",
+  textTransform: "uppercase",
+  color: "var(--forest-800)",
+  margin: "10px 2px 6px",
+};
+
+// Pas de cadre propre : le panneau de la fenêtre flottante fournit déjà
+// la carte — un second liseré ferait une double ligne (même choix que le
+// stockage). Les listes sont structurées par les titres de section et les
+// séparateurs entre lignes.
+const cardWrap: React.CSSProperties = {
+  background: "var(--paper-100)",
+  overflow: "hidden",
+};
+
+/** Boutons ghost/primary des tiroirs (mêmes styles que le tiroir démantèlement). */
+function btnSheet(
+  variant: "ghost" | "primary",
+  disabled = false,
+): React.CSSProperties {
+  return {
+    flex: 1,
+    padding: "10px 12px",
+    fontFamily: "var(--font-display)",
+    fontSize: 10.5,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    border: "1px solid var(--brass-500)",
+    background: variant === "primary" ? "var(--forest-800)" : "var(--paper-200)",
+    color: variant === "primary" ? "var(--brass-300)" : "var(--ink-700)",
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.6 : 1,
+  };
+}
+
+export function AtelierContenu() {
+  const { d, tr, locale } = useLangue();
+  const { toast } = useToast();
+  const { atelierOuvert, badgeAtelier, onVerrou } = useVerrouReserve();
+  const {
+    state,
+    isHydrated,
+    restaurerObjet,
+    terminerRestaurationImmediate,
+    tempsConfiance,
+    ameliorerAtelier,
+    demantelerObjet,
+    recupererObjetRestaure,
+    terminerMiniTutoAtelier,
+  } = useGame();
+  // Re-render chaque seconde pour rafraîchir les comptes à rebours de restauration.
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const [flash, setFlash] = useState<string | null>(null);
+  // Accélération via pub récompensée (même provider que l'énergie). AdMob
+  // natif sous Tauri iOS, stub en dev web/desktop (cf. getAdProvider).
+  const [pubEnCours, setPubEnCours] = useState(false);
+  const accelererViaPub = async (objetId: string) => {
+    if (pubEnCours) return;
+    setPubEnCours(true);
+    try {
+      const { rewarded } = await getAdProvider().showRewardedAd(EMPLACEMENTS_PUB.restauration);
+      if (rewarded) terminerRestaurationImmediate(objetId);
+    } catch {
+      toast(d.sheets.erreurPub, { type: "erreur" });
+    } finally {
+      setPubEnCours(false);
+    }
+  };
+  const [restaurerCible, setRestaurerCible] = useState<{
+    objet: Objet;
+    etatCible: EtatObjet;
+    cout: number;
+    thumbRect: DOMRect | null;
+  } | null>(null);
+  const [demantelerCible, setDemantelerCible] = useState<{
+    objet: Objet;
+    yieldPieces: number;
+    thumbRect: DOMRect | null;
+  } | null>(null);
+  const [achatSlotOuvert, setAchatSlotOuvert] = useState(false);
+  const [choisirOuvert, setChoisirOuvert] = useState(false);
+  const [enCoursDetail, setEnCoursDetail] = useState<Objet | null>(null);
+  const actionEnCoursRef = useRef(false);
+
+  const enCours = useMemo(
+    () => state?.inventaireJoueur.filter((o) => o.enRestauration) ?? [],
+    [state],
+  );
+  const restaurables = useMemo(() => {
+    if (!state) return [];
+    return state.inventaireJoueur.filter((o) => {
+      if (o.enRestauration) return false;
+      const cible: EtatObjet | null =
+        o.etat === "Mauvais"
+          ? "Bon"
+          : o.etat === "Bon"
+            ? "Très bon"
+            : o.etat === "Très bon"
+              ? "Pristin état"
+              : null;
+      if (!cible) return false;
+      const peutCompetence =
+        (o.etat === "Mauvais" &&
+          peutRestaurerMauvaisVersBon(state, o.categorie)) ||
+        (o.etat === "Bon" &&
+          peutRestaurerBonVersTresBon(state, o.categorie)) ||
+        (o.etat === "Très bon" &&
+          peutRestaurerTresBonVersPristin(state, o.categorie));
+      if (!peutCompetence) return false;
+      const cout = coutAmelioration(o, cible);
+      const dispo = state.piecesAmelioration[o.categorie] ?? 0;
+      return dispo >= cout;
+    });
+  }, [state]);
+  const demantelables = useMemo(() => {
+    if (!state) return [];
+    return state.inventaireJoueur.filter((o) => peutDemanteler(state, o, d).disponible);
+  }, [state, d]);
+
+  // Le layout (qg) gate le rendu (redirect + écran d'attente) : ce garde
+  // ne sert qu'au narrowing TypeScript.
+  if (!isHydrated || !state) return null;
+
+  /**
+   * Rect de la vignette d'une ligne, pour le point de départ du vol.
+   * Il se lisait auparavant depuis l'événement du bouton (`closest`) ; les
+   * deux gestes de la ligne le demandent désormais sans événement sous la
+   * main, on le retrouve donc par l'id de l'objet — que `AtelierItemRow`
+   * pose déjà sur sa racine.
+   */
+  const rectVignette = (objetId: string): DOMRect | null => {
+    const el = document.querySelector(
+      `[data-objet-id="${CSS.escape(objetId)}"] [data-atelier-thumb]`,
+    );
+    return el?.getBoundingClientRect() ?? null;
+  };
+
+  const handleConfirmDemanteler = () => {
+    if (!demantelerCible) return;
+    if (actionEnCoursRef.current) return;
+    actionEnCoursRef.current = true;
+    const { objet, yieldPieces, thumbRect } = demantelerCible;
+    void audioManager.playBreak();
+    setDemantelerCible(null);
+    const rowEl = document.querySelector(
+      `[data-objet-id="${objet.id}"]`,
+    ) as HTMLElement | null;
+    if (rowEl) {
+      rowEl.style.transition = "opacity 250ms ease-in";
+      rowEl.style.opacity = "0";
+    }
+    if (thumbRect) {
+      const target = document.querySelector(
+        `[data-fly-target="piece-${objet.categorie}"]`,
+      ) as HTMLElement | null;
+      if (target) {
+        const toRect = target.getBoundingClientRect();
+        const clone = document.createElement("div");
+        const COG_SIZE = 28;
+        Object.assign(clone.style, {
+          position: "fixed",
+          left: `${thumbRect.left + thumbRect.width / 2 - COG_SIZE / 2}px`,
+          top: `${thumbRect.top + thumbRect.height / 2 - COG_SIZE / 2}px`,
+          width: `${COG_SIZE}px`,
+          height: `${COG_SIZE}px`,
+          borderRadius: "50%",
+          background: "var(--paper-100)",
+          border: "1.5px solid var(--brass-700)",
+          boxShadow: "0 4px 10px rgba(40,25,5,0.30)",
+          zIndex: "9999",
+          pointerEvents: "none",
+          transition:
+            "left 620ms cubic-bezier(0.55,0,0.45,1), top 620ms cubic-bezier(0.45,0,0.55,1), opacity 250ms ease-in 400ms, transform 620ms ease-in-out",
+        });
+        document.body.appendChild(clone);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            clone.style.left = `${toRect.left + toRect.width / 2 - COG_SIZE / 2}px`;
+            clone.style.top = `${toRect.top + toRect.height / 2 - COG_SIZE / 2}px`;
+            clone.style.transform = "scale(0.6) rotate(-90deg)";
+            clone.style.opacity = "0";
+          });
+        });
+        window.setTimeout(() => {
+          clone.remove();
+          target.classList.remove("broc-pulse-once");
+          void target.offsetWidth;
+          target.classList.add("broc-pulse-once");
+          void audioManager.playPickup();
+          window.setTimeout(
+            () => target.classList.remove("broc-pulse-once"),
+            650,
+          );
+        }, 620);
+      }
+    }
+    window.setTimeout(() => {
+      const res = demantelerObjet(objet.id);
+      if (res.ok) {
+        setFlash(
+          tr(d.inventaire.flashDemantele, {
+            nom: nomObjet(objet, locale),
+            pieces: res.pieces ?? 0,
+            categorie: objet.categorie,
+          }),
+        );
+      } else {
+        setFlash(
+          tr(d.inventaire.impossibleRaison, {
+            raison: res.raison ?? d.inventaire.conditionNonRemplie,
+          }),
+        );
+      }
+      setTimeout(() => setFlash(null), 2500);
+      actionEnCoursRef.current = false;
+    }, 620);
+  };
+
+  const handleConfirmRestaurer = () => {
+    if (!restaurerCible) return;
+    if (actionEnCoursRef.current) return;
+    actionEnCoursRef.current = true;
+    const { objet, etatCible, thumbRect } = restaurerCible;
+    void audioManager.playRepair();
+    setRestaurerCible(null);
+    if (thumbRect) {
+      const target = document.querySelector(
+        '[data-fly-target="travaux"]',
+      ) as HTMLElement | null;
+      if (target) {
+        const toRect = target.getBoundingClientRect();
+        const isUnique = !!getTemplate(objet.templateId)?.unique;
+        const rarity = getRarityColors(objet.rarete, isUnique);
+        const clone = document.createElement("div");
+        Object.assign(clone.style, {
+          position: "fixed",
+          left: `${thumbRect.left}px`,
+          top: `${thumbRect.top}px`,
+          width: `${thumbRect.width}px`,
+          height: `${thumbRect.height}px`,
+          background: rarity.thumbBg,
+          border: `1.5px solid ${rarity.outer}`,
+          boxSizing: "border-box",
+          zIndex: "9999",
+          pointerEvents: "none",
+          boxShadow:
+            "0 8px 18px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25)",
+          transition:
+            "left 620ms cubic-bezier(0.55,0,0.45,1), top 620ms cubic-bezier(0.45,0,0.55,1), width 620ms ease-in, height 620ms ease-in, opacity 620ms ease-in",
+        });
+        const imgUrl = getItemThumbUrl(objet.templateId);
+        if (imgUrl) {
+          clone.style.backgroundImage = `url(${imgUrl})`;
+          clone.style.backgroundSize = "cover";
+          clone.style.backgroundPosition = "center";
+        }
+        document.body.appendChild(clone);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const SZ = 18;
+            clone.style.left = `${toRect.left + toRect.width / 2 - SZ / 2}px`;
+            clone.style.top = `${toRect.top + toRect.height / 2 - SZ / 2}px`;
+            clone.style.width = `${SZ}px`;
+            clone.style.height = `${SZ}px`;
+            clone.style.opacity = "0.4";
+          });
+        });
+        window.setTimeout(() => clone.remove(), 640);
+      }
+    }
+    window.setTimeout(() => {
+      const res = restaurerObjet(objet.id, etatCible);
+      if (res.ok) {
+        setFlash(
+          tr(d.inventaire.flashEnRestauration, {
+            nom: nomObjet(objet, locale),
+            etat: libelleEtat(etatCible, d),
+            duree: formatDuree(
+              dureeRestaurationMs(state, objet.categorie, objet.etat),
+            ),
+          }),
+        );
+      } else {
+        setFlash(
+          tr(d.inventaire.impossibleRaison, {
+            raison: res.raison ?? d.inventaire.conditionNonRemplie,
+          }),
+        );
+      }
+      setTimeout(() => setFlash(null), 2500);
+      actionEnCoursRef.current = false;
+    }, 620);
+  };
+
+  return (
+    <>
+    <ReserveShell
+      onglet="atelier"
+      atelierOuvert={atelierOuvert}
+      badgeAtelier={badgeAtelier}
+      onVerrou={onVerrou}
+      bande={
+        <>
+          {/* Le titre `— ATELIER —` a cédé la place à la bande d'onglets
+              (cf. ReserveTabs) ; sa zone latérale reste, dans le même
+              conteneur que le mode « left » de PageHeaderBar. */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 12,
+                letterSpacing: "0.10em",
+                textTransform: "uppercase",
+                color: "var(--forest-800)",
+              }}
+            >
+              {tr(d.inventaire.etabliCompteur, {
+                n: enCours.length,
+                max: ATELIER_SLOTS[state.niveauAtelier],
+              })}
+            </div>
+          </div>
+          <div data-tuto-coach="atelier-pieces" style={{ marginTop: 4 }}>
+            <PiecesInventoryBar pieces={state.piecesAmelioration} />
+          </div>
+        </>
+      }
+      milieu={
+        <div data-tuto-coach="atelier-etablis">
+        <AtelierSlots
+          slotsDebloques={state.niveauAtelier}
+          enCours={enCours}
+          now={tempsConfiance() ?? Date.now()}
+          prochaineUpgrade={getProchaineUpgrade(state.niveauAtelier)}
+          onAcheterSlot={() => setAchatSlotOuvert(true)}
+          onSlotVide={() => setChoisirOuvert(true)}
+          onEnCours={(o) => setEnCoursDetail(o)}
+          onRecuperer={(o) => recupererObjetRestaure(o.id)}
+        />
+        </div>
+      }
+    >
+      {flash && (
+        <div
+          style={{
+            padding: "10px 12px",
+            background: "var(--brass-100)",
+            border: "1px solid var(--brass-700)",
+            fontFamily: "var(--font-serif)",
+            fontStyle: "italic",
+            fontSize: 12.5,
+            color: "var(--ink-700)",
+            marginBottom: 8,
+          }}
+        >
+          {tr(d.inventaire.flashCitation, { texte: flash })}
+        </div>
+      )}
+
+      {/* La liste ne sert plus au seul démantèlement : chaque ligne porte
+          aussi son amélioration, avec son prix. Le titre le dit. */}
+      <h2 data-tuto-coach="atelier-demanteler" style={sectTitle}>
+        {d.inventaire.ongletObjets}
+      </h2>
+      {demantelables.length === 0 ? (
+        <div style={cardWrap}>
+          <p
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontStyle: "italic",
+              color: "var(--ink-500)",
+              textAlign: "center",
+              padding: "12px 0",
+            }}
+          >
+            {d.inventaire.aucunObjetADemanteler}
+          </p>
+        </div>
+      ) : (
+        <div style={cardWrap}>
+          {demantelables.map((o, i) => {
+            const yieldPieces = rendementDemantelement(o);
+            const valeurConnue = state
+              ? aConnaisseurVitrine(state, o.categorie)
+              : false;
+            // Le prix de l'amélioration se lit maintenant SUR la ligne : il
+            // fallait auparavant ouvrir la feuille « choisir un objet à
+            // restaurer » pour le connaître. `null` au sommet de l'échelle,
+            // où il n'y a plus rien à améliorer.
+            const cibleAmelioration = prochaineEtatCible(o.etat);
+            // `null` tant que le joueur ne SAIT pas mener cette réparation :
+            // le bouton disparaît alors, il ne grise pas. Un gris promet une
+            // action qui existe et qu'on pourra s'offrir ; sans la
+            // compétence, il n'y a rien à promettre.
+            const coutAmelio = coutAmeliorationAffichable(state, o);
+            // Une seule source pour le refus : atelier plein, compétence
+            // manquante ou pièces insuffisantes s'y décident déjà, avec leur
+            // raison localisée.
+            const statutAmelio = atelierStatusPourObjet(state, o, d);
+            return (
+              <AtelierItemRow
+                key={o.id}
+                objet={o}
+                isLast={i === demantelables.length - 1}
+                metaLigne={
+                  <PrixMarche prix={o.prixReferenceReel} connue={valeurConnue} />
+                }
+                action={
+                  <AtelierActions
+                    categorie={o.categorie}
+                    cout={coutAmelio}
+                    rendement={yieldPieces}
+                    ameliorationDisponible={statutAmelio.disponible}
+                    raisonRefus={statutAmelio.raison}
+                    onAmeliorer={() => {
+                      if (!cibleAmelioration || coutAmelio === null) return;
+                      setRestaurerCible({
+                        objet: o,
+                        etatCible: cibleAmelioration,
+                        cout: coutAmelio,
+                        thumbRect: rectVignette(o.id),
+                      });
+                    }}
+                    onDemanteler={() => {
+                      setDemantelerCible({
+                        objet: o,
+                        yieldPieces,
+                        thumbRect: rectVignette(o.id),
+                      });
+                    }}
+                    onRefus={(raison) => {
+                      setFlash(raison);
+                      setTimeout(() => setFlash(null), 2500);
+                    }}
+                  />
+                }
+              />
+            );
+          })}
+        </div>
+      )}
+
+    </ReserveShell>
+
+      <BottomSheet
+        open={demantelerCible !== null}
+        onClose={() => setDemantelerCible(null)}
+        title={d.inventaire.ongletDemantelement}
+      >
+        {demantelerCible && (
+          <div style={{ padding: "8px 16px 16px" }}>
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: 13,
+                color: "var(--ink-700)",
+                marginBottom: 10,
+              }}
+            >
+              {d.inventaire.demantelerSeg1}{" "}
+              <strong>{nomObjet(demantelerCible.objet, locale)}</strong>{" "}
+              {d.inventaire.demantelerSeg2}{" "}
+              <strong>
+                {demantelerCible.yieldPieces} ⚙{" "}
+                {libelleCategorie(demantelerCible.objet.categorie, d)}
+              </strong>
+              {d.inventaire.demantelerSeg3}
+            </p>
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button
+                type="button"
+                onClick={() => setDemantelerCible(null)}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 10.5,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  border: "1px solid var(--brass-500)",
+                  background: "var(--paper-200)",
+                  color: "var(--ink-700)",
+                  cursor: "pointer",
+                }}
+              >
+                {d.commun.annuler}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDemanteler}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 10.5,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  border: "1px solid var(--brass-500)",
+                  background: "var(--forest-800)",
+                  color: "var(--brass-300)",
+                  cursor: "pointer",
+                }}
+              >
+                {d.inventaire.demantelerBouton}
+              </button>
+            </div>
+          </div>
+        )}
+      </BottomSheet>
+      <BottomSheet
+        open={restaurerCible !== null}
+        onClose={() => setRestaurerCible(null)}
+        title={d.inventaire.titreRestauration}
+      >
+        {restaurerCible && (
+          <div style={{ padding: "8px 16px 16px" }}>
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: 13,
+                color: "var(--ink-700)",
+                marginBottom: 10,
+              }}
+            >
+              {d.inventaire.restaurerSeg1}{" "}
+              <strong>{nomObjet(restaurerCible.objet, locale)}</strong>{" "}
+              {d.inventaire.restaurerSeg2}{" "}
+              <strong>{libelleEtat(restaurerCible.etatCible, d)}</strong>{" "}
+              {d.inventaire.restaurerSeg3}{" "}
+              <strong>
+                {formatDuree(
+                  dureeRestaurationMs(
+                    state,
+                    restaurerCible.objet.categorie,
+                    restaurerCible.objet.etat,
+                  ),
+                )}
+              </strong>{" "}
+              {d.inventaire.restaurerSeg4}{" "}
+              <strong>
+                {restaurerCible.cout} ⚙ {libelleCategorie(restaurerCible.objet.categorie, d)}
+              </strong>
+              {d.inventaire.restaurerSeg5}
+            </p>
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button
+                type="button"
+                onClick={() => setRestaurerCible(null)}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 10.5,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  border: "1px solid var(--brass-500)",
+                  background: "var(--paper-200)",
+                  color: "var(--ink-700)",
+                  cursor: "pointer",
+                }}
+              >
+                {d.commun.annuler}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRestaurer}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 10.5,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  border: "1px solid var(--brass-500)",
+                  background: "var(--forest-800)",
+                  color: "var(--brass-300)",
+                  cursor: "pointer",
+                }}
+              >
+                {d.commun.confirmer}
+              </button>
+            </div>
+          </div>
+        )}
+      </BottomSheet>
+
+      {/* Achat de slot. */}
+      <BottomSheet
+        open={achatSlotOuvert}
+        onClose={() => setAchatSlotOuvert(false)}
+        title={d.inventaire.acheterSlotTitre}
+      >
+        {(() => {
+          const up = getProchaineUpgrade(state.niveauAtelier);
+          if (!up) return null;
+          const peut = state.budget >= up.cout;
+          return (
+            <div style={{ padding: "8px 16px 16px" }}>
+              <p
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: 13,
+                  color: "var(--ink-700)",
+                  marginBottom: 12,
+                }}
+              >
+                {tr(d.inventaire.acheterSlotCorps, {
+                  n: up.niveauCible,
+                  cout: up.cout,
+                })}
+              </p>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setAchatSlotOuvert(false)}
+                  style={btnSheet("ghost")}
+                >
+                  {d.commun.annuler}
+                </button>
+                <button
+                  type="button"
+                  disabled={!peut}
+                  onClick={() => {
+                    const res = ameliorerAtelier();
+                    setAchatSlotOuvert(false);
+                    if (!res.ok) {
+                      setFlash(res.raison ?? d.inventaire.impossible);
+                      setTimeout(() => setFlash(null), 2500);
+                    }
+                  }}
+                  style={btnSheet("primary", !peut)}
+                >
+                  {d.inventaire.acheterSlotCta} — {up.cout} €
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+      </BottomSheet>
+
+      {/* Choix d'un objet à restaurer (slot vide). */}
+      <BottomSheet
+        open={choisirOuvert}
+        onClose={() => setChoisirOuvert(false)}
+        title={d.inventaire.choisirObjetTitre}
+      >
+        <div style={{ padding: "0 4px 12px" }}>
+          {restaurables.length === 0 ? (
+            <p
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontStyle: "italic",
+                color: "var(--ink-500)",
+                textAlign: "center",
+                padding: "16px 12px",
+              }}
+            >
+              {d.inventaire.aucunePieceARestaurer}
+            </p>
+          ) : (
+            restaurables.map((o, i) => {
+              const cible: EtatObjet =
+                o.etat === "Mauvais"
+                  ? "Bon"
+                  : o.etat === "Bon"
+                    ? "Très bon"
+                    : "Pristin état";
+              const duree = formatDuree(
+                dureeRestaurationMs(state, o.categorie, o.etat),
+              );
+              const prixApres = recalculerPrixReference(
+                o.prixReferenceReel,
+                o.etat,
+                cible,
+              );
+              const cout = coutAmelioration(o, cible);
+              const valeurConnue = state
+                ? aConnaisseurVitrine(state, o.categorie)
+                : false;
+              return (
+                <AtelierItemRow
+                  key={o.id}
+                  objet={o}
+                  etatCible={cible}
+                  isLast={i === restaurables.length - 1}
+                  metaLigne={
+                    <div
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 9.5,
+                        color: "var(--ink-500)",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      {valeurConnue ? (
+                        <>
+                          {tr(d.inventaire.dureeValeurVers, {
+                            duree,
+                            valeur: o.prixReferenceReel,
+                          })}{" "}
+                          <span style={{ color: "var(--brass-700)" }}>
+                            {tr(d.chrome.montantEuros, { valeur: prixApres })}
+                          </span>
+                        </>
+                      ) : (
+                        <>{tr(d.inventaire.dureeValeurInconnue, { duree })}</>
+                      )}
+                    </div>
+                  }
+                  action={
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        const rowEl = (e.currentTarget as HTMLElement).closest(
+                          "[data-atelier-row]",
+                        ) as HTMLElement | null;
+                        const thumb = rowEl?.querySelector(
+                          "[data-atelier-thumb]",
+                        ) as HTMLElement | null;
+                        setChoisirOuvert(false);
+                        setRestaurerCible({
+                          objet: o,
+                          etatCible: cible,
+                          cout,
+                          thumbRect: thumb?.getBoundingClientRect() ?? null,
+                        });
+                      }}
+                      aria-label={tr(d.inventaire.confirmerRestaurationAria, {
+                        cout,
+                        categorie: libelleCategorie(o.categorie, d),
+                      })}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 5,
+                        padding: "4px 6px",
+                        border: "1px solid var(--brass-500)",
+                        background: "var(--forest-800)",
+                        color: "var(--brass-300)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 11,
+                          fontWeight: 700,
+                        }}
+                      >
+                        −{cout}
+                      </span>
+                      <PieceIcon categorie={o.categorie} size={22} />
+                    </button>
+                  }
+                />
+              );
+            })
+          )}
+        </div>
+      </BottomSheet>
+
+      {/* Détail d'une restauration en cours. */}
+      <BottomSheet
+        open={enCoursDetail !== null}
+        onClose={() => setEnCoursDetail(null)}
+        title={d.inventaire.enCoursDetailTitre}
+      >
+        {enCoursDetail && enCoursDetail.enRestauration && (
+          <div style={{ padding: "8px 16px 16px", textAlign: "center" }}>
+            <div style={{ width: 96, height: 96, margin: "0 auto 8px" }}>
+              <ItemSticker
+                templateId={enCoursDetail.templateId}
+                categorie={enCoursDetail.categorie}
+                fill
+                tilt={false}
+                variant="normal"
+                eager
+                thumb
+              />
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 13,
+                textTransform: "uppercase",
+                color: "var(--forest-800)",
+                fontWeight: 700,
+                marginBottom: 4,
+              }}
+            >
+              {nomObjet(enCoursDetail, locale)}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--ink-700)",
+                marginBottom: 12,
+              }}
+            >
+              {formatDuree(
+                restantMs(
+                  enCoursDetail.enRestauration,
+                  tempsConfiance() ?? Date.now(),
+                ),
+              )}
+            </div>
+            {pubDisponible() &&
+              peutTerminerImmediat(
+                enCoursDetail.enRestauration,
+                tempsConfiance() ?? Date.now(),
+              ) && (
+              <button
+                type="button"
+                disabled={pubEnCours}
+                onClick={() => {
+                  accelererViaPub(enCoursDetail.id);
+                  setEnCoursDetail(null);
+                }}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 9,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "var(--paper-100)",
+                  background: "var(--brass-600)",
+                  border: "1px solid var(--brass-700)",
+                  padding: "6px 12px",
+                  borderRadius: 3,
+                  whiteSpace: "nowrap",
+                  cursor: pubEnCours ? "not-allowed" : "pointer",
+                  opacity: pubEnCours ? 0.6 : 1,
+                }}
+              >
+                {pubEnCours ? d.chrome.pubEnCours : d.inventaire.terminerPub}
+              </button>
+            )}
+          </div>
+        )}
+      </BottomSheet>
+
+      {state.miniTutoAtelier === "visite" && (
+        /* Visite guidée de l'Atelier — armée à l'achat de la première
+           compétence Réparer, jouée à la première venue ici. Trois bulles
+           dans l'ordre causal de la boucle (démonter → pièces → établi),
+           pas dans l'ordre de l'écran. Aucun bouton n'est gaté : la leçon
+           nomme les lieux et rend l'écran. */
+        <TutorielCoach
+          etapes={[
+            { cible: "atelier-demanteler", texte: d.tutoriel.coachAtelierDemanteler },
+            { cible: "atelier-pieces", texte: d.tutoriel.coachAtelierPieces },
+            { cible: "atelier-etablis", texte: d.tutoriel.coachAtelierEtabli },
+          ]}
+          onFini={terminerMiniTutoAtelier}
+        />
+      )}
+    </>
+  );
+}

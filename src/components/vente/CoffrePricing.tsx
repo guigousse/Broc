@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { CategorieObjet, ObjetEnVitrine } from "@/types/game";
 import { getRarityColors } from "@/lib/rarityColors";
 import { getTemplate } from "@/data/objetTemplates";
@@ -50,6 +51,21 @@ export function CoffrePricing({
   const { d, tr, locale } = useLangue();
   const peut = (validerActif ?? coffre.length > 0) && !validerBloque;
 
+  /* Ce qui attend une action passe en tête. Pendant le tutoriel, le coffre
+     compte cinq objets dont trois sont déjà étiquetés par le grand-père :
+     dans l'ordre de chargement, le seul à tarifer se retrouvait au milieu de
+     la liste et le joueur devait le chercher (recette device 2026-08-19).
+     Tri STABLE : hors de ce cas, l'ordre du coffre est intact. */
+  const lignes = useMemo(() => {
+    const aTarifer = (ov: ObjetEnVitrine) =>
+      cibles?.[ov.objet.templateId] !== undefined &&
+      !readOnlyTemplateIds?.has(ov.objet.templateId);
+    return coffre
+      .map((ov, i) => ({ ov, i }))
+      .sort((a, b) => Number(aTarifer(b.ov)) - Number(aTarifer(a.ov)) || a.i - b.i)
+      .map((x) => x.ov);
+  }, [coffre, cibles, readOnlyTemplateIds]);
+
   return (
     <>
       <section
@@ -60,10 +76,10 @@ export function CoffrePricing({
           padding: "10px 12px",
         }}
       >
-        {coffre.map((ov, i) => {
+        {lignes.map((ov, i) => {
           const isUnique = !!getTemplate(ov.objet.templateId)?.unique;
           const c = getRarityColors(ov.objet.rarete, isUnique);
-          const isLast = i === coffre.length - 1;
+          const isLast = i === lignes.length - 1;
           const ref = Math.max(1, Math.round(ov.objet.prixReferenceReel));
           const marcheConnu = categoriesConnues.has(ov.objet.categorie);
           const cible = cibles?.[ov.objet.templateId] ?? null;
@@ -91,6 +107,7 @@ export function CoffrePricing({
                   <ItemSticker
                     templateId={ov.objet.templateId}
                     categorie={ov.objet.categorie}
+                    etat={ov.objet.etat}
                     fill
                     tilt={false}
                     variant="normal"

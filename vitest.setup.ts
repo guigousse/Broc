@@ -27,3 +27,12 @@ if (typeof globalThis.ResizeObserver === "undefined") {
 if (typeof Element !== "undefined" && !Element.prototype.scrollTo) {
   Element.prototype.scrollTo = function scrollTo() {};
 }
+
+/**
+ * jsdom n'implémente pas non plus `Element.prototype.scrollIntoView`.
+ * `UnifiedPanorama` l'appelle au montage pour centrer la zone cible ; sans
+ * stub, tout rendu direct du composant lève en environnement de test.
+ */
+if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = function scrollIntoView() {};
+}

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  GENRE_VENDEUR,
   NOM_ARCHETYPE,
   NOM_VENDEUR,
   calculerPrixMinAcceptDepuisPersona,
   getAffiniteCategorie,
+  genreVendeur,
   getNomVendeur,
   tirerPersonaVendeur,
 } from "./personas";
@@ -273,5 +275,39 @@ describe("commanditaires vendeurs", () => {
       // boost 25 sur 126 de poids total tier 2 (151 avec le boost) → ~16,6 % attendu ; ≥ 5 est très conservateur.
       expect(n).toBeGreaterThanOrEqual(5);
     }
+  });
+});
+
+describe("GENRE_VENDEUR", () => {
+  it("a un genre pour chacun des 14 archétypes vendeurs", () => {
+    for (const a of Object.keys(NOM_VENDEUR) as (keyof typeof NOM_VENDEUR)[]) {
+      expect(GENRE_VENDEUR[a], `genre manquant pour « ${a} »`).toBeTruthy();
+    }
+    expect(Object.keys(GENRE_VENDEUR).length).toBe(
+      Object.keys(NOM_VENDEUR).length,
+    );
+  });
+
+  it("accorde les vendeuses au féminin", () => {
+    // Mamie Odette, Madame Vasseur, Tata Monique, Clara, Arianne.
+    expect(GENRE_VENDEUR.mamie).toBe("f");
+    expect(GENRE_VENDEUR.antiquaire).toBe("f");
+    expect(GENRE_VENDEUR.pipelette).toBe("f");
+    expect(GENRE_VENDEUR.setdesigner).toBe("f");
+    expect(GENRE_VENDEUR.modeuse).toBe("f");
+  });
+
+  it("laisse les vendeurs au masculin", () => {
+    expect(GENRE_VENDEUR.naif).toBe("m");
+    expect(GENRE_VENDEUR.bonhomme).toBe("m");
+    expect(GENRE_VENDEUR.grincheux).toBe("m");
+    expect(GENRE_VENDEUR.malin).toBe("m");
+    expect(GENRE_VENDEUR.esthete).toBe("m");
+  });
+
+  it("genreVendeur() résout l'archétype et retombe au masculin si inconnu", () => {
+    expect(genreVendeur("mamie")).toBe("f");
+    expect(genreVendeur("grincheux")).toBe("m");
+    expect(genreVendeur("archetype-qui-nexiste-pas")).toBe("m");
   });
 });

@@ -9,20 +9,24 @@ import { audioManager } from "@/lib/audio/audioManager";
  *
  * Dans le panorama (bureau), le layout (qg) pilote l'ambiance à
  * "pleine pièce" et la position de scroll module volume musique zone
- * par zone (cf. handleZoneIndex). `/stockage` et `/atelier` sont des
- * fenêtres flottantes DANS la pièce du bureau — l'ambiance zone-driven
+ * par zone (cf. handleZoneIndex). `/stockage`, `/atelier` et `/quetes` sont
+ * des calques DANS la pièce du bureau — l'ambiance zone-driven
  * du panorama continue derrière l'overlay, donc elles sont traitées
  * comme le panorama.
  *
  * Hors du groupe (qg) (chiner, vitrine…), on étouffe et on
  * baisse pour donner l'impression d'entendre la musique de loin —
  * sans interrompre la lecture. Détail :
+ *  - bazar                 : muet (on est ailleurs, pas plus loin)
  *  - chiner / vitrine     : franchement lointain (mur extérieur)
  *  - autres                : niveau "à distance" générique
  */
 
 const PANORAMA_PATHS = new Set<string>([
   "/bureau",
+  // `/quetes` = le carnet, un calque posé sur le panorama du bureau : la
+  // musique doit y rester exactement celle de la pièce.
+  "/quetes",
   "/stockage",
   "/atelier",
   "/bibliotheque",
@@ -38,6 +42,14 @@ function ambianceForPathname(pathname: string): Ambiance | null {
   // L'écran titre pilote lui-même sa musique jazz — pleine, sans lowpass
   // (cf. demarrerMusiqueTitre) : le contrôleur global ne l'étouffe plus.
   if (pathname === "/") return null;
+  // Le Bazar n'est pas le bureau entendu de plus loin : c'est un autre lieu,
+  // et le gramophone n'y porte pas. Le fondu qui y mène appartient au passage
+  // (`usePassageIris`, réglé sur la fermeture de l'iris) ; cette ligne est le
+  // garde-fou qui empêche la règle générique ci-dessous de rallumer le disque
+  // à 0,22 pile au moment où la route bascule.
+  if (pathname.startsWith("/bazar")) {
+    return { volume: 0, lowpassHz: 700 };
+  }
   if (
     pathname.startsWith("/chiner") ||
     pathname.startsWith("/vitrine")

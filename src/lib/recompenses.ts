@@ -1,9 +1,4 @@
-import {
-  XP_QUETE_HEBDO,
-  XP_QUETE_PRINCIPALE,
-  XP_QUETE_QUOTIDIENNE,
-  appliquerGainXPBrocanteur,
-} from "@/lib/xp";
+import { appliquerGainXPBrocanteur } from "@/lib/xp";
 import { appendLedger } from "@/lib/grandLivre";
 import { pointsDepensesCompetences } from "@/data/competences";
 import { ENERGIE_MAX, ENERGIE_PLAFOND, settleEnergie } from "@/lib/energie";
@@ -14,37 +9,46 @@ import type {
   MissionCategorie,
 } from "@/types/game";
 
+/** Jetons versés par une quête quotidienne livrée. */
+export const JETONS_QUOTIDIENNE = 1;
+/** Jetons versés par une quête hebdomadaire livrée. */
+export const JETONS_HEBDO = 3;
+
 /** Récompense totale d'une commande, défauts appliqués — source unique de
  *  vérité pour les 4 surfaces d'affichage ET le versement à la livraison. */
 export interface RecompenseEffective {
   argent: number;
   xp: number;
   energie: number;
+  /** Jetons du Bazar. Ratio fixe, cf. `PRIX_JETON_EUROS` (lib/bazar/etal). */
+  jetons: number;
 }
 
-/** XP versée à défaut de `recompense.xp` explicite (comportement historique). */
-export function xpParDefaut(categorie: MissionCategorie): number {
-  switch (categorie) {
-    case "principale":
-      return XP_QUETE_PRINCIPALE;
-    case "hebdomadaire":
-      return XP_QUETE_HEBDO;
-    case "quotidienne":
-      return XP_QUETE_QUOTIDIENNE;
-    default:
-      // Catégorie inconnue (ex. vieille save non purgée) : défaut sûr plutôt
-      // qu'un `undefined` qui NaN-poisonnerait `b.xp + undefined` en save.
-      return XP_QUETE_QUOTIDIENNE;
-  }
-}
-
+/**
+ * Décision de design du 2026-08-18 : **les quêtes ne versent plus d'XP**. Des
+ * jetons « Bazar » prendront cette place (à spécifier).
+ *
+ * Le `0` est écrit ici, au point de passage unique du versement ET des quatre
+ * surfaces d'affichage, plutôt qu'en mettant les constantes `XP_QUETE_*` à
+ * zéro : une constante nommée qui vaut 0 est un piège pour le prochain
+ * lecteur. Ces constantes et `xpParDefaut` ont donc été supprimées.
+ *
+ * Conséquence voulue en cascade : un gain nul ne produit pas de jeton
+ * (`PaveRecompense`), la cérémonie n'émet donc aucune étape XP et ne gèle plus
+ * le compteur d'XP — aucun cas particulier à ajouter ailleurs.
+ *
+ * ⚠ `payload.recompense.xp` est toujours honoré s'il est explicitement
+ * renseigné : aucune quête du jeu ne le fait aujourd'hui, mais une save
+ * ancienne ou une future quête exceptionnelle reste libre de le poser.
+ */
 export function recompenseEffective(
   payload: CourrierPayloadMission,
 ): RecompenseEffective {
   return {
     argent: payload.recompense.argent,
-    xp: payload.recompense.xp ?? xpParDefaut(payload.categorie),
+    xp: payload.recompense.xp ?? 0,
     energie: payload.recompense.energie ?? 0,
+    jetons: payload.recompense.jetons ?? 0,
   };
 }
 
@@ -84,6 +88,7 @@ export function appliquerRecompense(
       templateIds: ledger.templateIds,
       xp: r.xp,
       energie: r.energie,
+      jetons: r.jetons,
     },
   });
   next = {
@@ -101,6 +106,9 @@ export function appliquerRecompense(
       energie: Math.min(ENERGIE_PLAFOND, settled.energie + r.energie),
       energieDerniereMaj: settled.energieDerniereMaj,
     };
+  }
+  if (r.jetons > 0) {
+    next = { ...next, jetons: next.jetons + r.jetons };
   }
   return next;
 }

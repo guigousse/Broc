@@ -5,6 +5,7 @@ import {
   atelierStatusPourObjet,
   collectionStatusPourObjet,
   coutAmelioration,
+  coutAmeliorationAffichable,
   nbRestaurationsEnCours,
   peutDemanteler,
   peutRestaurerTransition,
@@ -269,6 +270,129 @@ describe("collectionStatusPourObjet", () => {
     expect(res.disponible).toBe(true);
     expect(res.necessiteConfirmation).toBe(true);
     expect(res.ancienneDonation).toEqual({ etat: "Mauvais", valeur: 10 });
+  });
+
+  /**
+   * Le bouton d'envoi doit dire lequel des trois cas s'applique AVANT le tap :
+   * rien dans la collection, un exemplaire moins bon (l'envoi fait monter la
+   * valeur), ou un exemplaire meilleur (elle baisserait). Demande de l'auteur,
+   * 2026-08-26.
+   */
+  it("aucune tendance quand la case est vide : il n'y a rien à comparer", () => {
+    const state = createMockGameState();
+    const o = createMockObjet({ templateId: "absent" });
+    expect(collectionStatusPourObjet(state, o).tendance).toBeUndefined();
+  });
+
+  it("tendance à la HAUSSE quand l'exemplaire donné vaut moins", () => {
+    const slot = createMockSlot({
+      templateId: "t1",
+      categorie: "Musique",
+      donation: { etat: "Mauvais", valeur: 10 },
+    });
+    const state = createMockGameState({
+      collection: { ...createMockGameState().collection, Musique: [slot] },
+    });
+    const o = createMockObjet({
+      templateId: "t1",
+      categorie: "Musique",
+      etat: "Pristin état",
+      prixReferenceReel: 100,
+    });
+    expect(collectionStatusPourObjet(state, o).tendance).toBe("hausse");
+  });
+
+  it("tendance à la BAISSE quand l'exemplaire donné vaut plus", () => {
+    const slot = createMockSlot({
+      templateId: "t1",
+      categorie: "Musique",
+      donation: { etat: "Pristin état", valeur: 500 },
+    });
+    const state = createMockGameState({
+      collection: { ...createMockGameState().collection, Musique: [slot] },
+    });
+    const o = createMockObjet({
+      templateId: "t1",
+      categorie: "Musique",
+      etat: "Mauvais",
+      prixReferenceReel: 10,
+    });
+    expect(collectionStatusPourObjet(state, o).tendance).toBe("baisse");
+  });
+
+  it("à valeur égale, c'est la QUALITÉ qui tranche — jamais d'égalité muette", () => {
+    // « Mauvais » et « Bon » partagent la prime de donation (1) : à prix de
+    // référence égal, les deux valent EXACTEMENT pareil. Le bouton doit quand
+    // même choisir une flèche — sans départage il tomberait sur « ni hausse
+    // ni baisse », et le rendu retomberait sur celui d'une case vide, faux.
+    const avec = (etatDonne: "Mauvais" | "Bon") =>
+      createMockGameState({
+        collection: {
+          ...createMockGameState().collection,
+          Musique: [
+            createMockSlot({
+              templateId: "t1",
+              categorie: "Musique",
+              donation: { etat: etatDonne, valeur: 42 },
+            }),
+          ],
+        },
+      });
+    const objet = (etat: "Mauvais" | "Bon") =>
+      createMockObjet({
+        templateId: "t1", categorie: "Musique", etat, prixReferenceReel: 42,
+      });
+
+    // Même valeur (42 des deux côtés), qualité supérieure → hausse.
+    expect(collectionStatusPourObjet(avec("Mauvais"), objet("Bon")).tendance).toBe(
+      "hausse",
+    );
+    expect(collectionStatusPourObjet(avec("Bon"), objet("Mauvais")).tendance).toBe(
+      "baisse",
+    );
+  });
+});
+
+describe("coutAmeliorationAffichable", () => {
+  /**
+   * Le bouton « améliorer » ne se montre QUE si le joueur sait faire cette
+   * réparation-là (demande de l'auteur, 2026-08-26). Un bouton gris promet
+   * une action qui existe et qu'on pourra s'offrir ; tant que la compétence
+   * manque, il n'y a rien à promettre — le prix lui-même n'a pas de sens.
+   *
+   * Les pièces, elles, ne cachent RIEN : c'est le cas où le gris parle, il
+   * dit « reviens avec deux engrenages de plus ».
+   */
+  const objetAvec = (etat: "Mauvais" | "Bon" | "Très bon" | "Pristin état") =>
+    createMockObjet({ categorie: "Musique", etat, prixReferenceReel: 100 });
+
+  it("null sans la compétence de la transition : pas de bouton du tout", () => {
+    const state = createMockGameState();
+    expect(coutAmeliorationAffichable(state, objetAvec("Mauvais"))).toBeNull();
+  });
+
+  it("le prix dès que la compétence est là, MÊME sans les pièces", () => {
+    const state = withPieces(
+      withCompetences(createMockGameState(), ["cat.Musique.reparer.1"]),
+      "Musique",
+      0,
+    );
+    expect(coutAmeliorationAffichable(state, objetAvec("Mauvais"))).toBeGreaterThan(0);
+  });
+
+  it("null au sommet de l'échelle : il n'y a plus rien à améliorer", () => {
+    const state = withCompetences(createMockGameState(), [
+      "cat.Musique.reparer.1",
+      "cat.Musique.reparer.2",
+      "cat.Musique.reparer.3",
+    ]);
+    expect(coutAmeliorationAffichable(state, objetAvec("Pristin état"))).toBeNull();
+  });
+
+  it("suit le PALIER : savoir réparer Mauvais→Bon ne montre pas le prix de Très bon→Pristin", () => {
+    const state = withCompetences(createMockGameState(), ["cat.Musique.reparer.1"]);
+    expect(coutAmeliorationAffichable(state, objetAvec("Mauvais"))).not.toBeNull();
+    expect(coutAmeliorationAffichable(state, objetAvec("Très bon"))).toBeNull();
   });
 });
 

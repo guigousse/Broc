@@ -103,12 +103,21 @@ export function BottomSheet({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      // Capture + stopPropagation : une sheet peut s'ouvrir par-dessus un
+      // parent qui écoute lui aussi `Escape` sur `window` (ex. la borne
+      // d'arcade). En phase de capture, ce gestionnaire s'exécute AVANT
+      // celui du parent (posé en phase de bulles) quel que soit l'ordre de
+      // montage — et l'arrêter ici l'empêche d'atteindre ce parent. La
+      // feuille la plus intérieure doit céder l'événement en premier et
+      // seule : sans ça, Échap referme la sheet ET son parent d'un coup.
+      e.stopPropagation();
+      onClose();
     };
-    window.addEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
     document.body.style.overflow = "hidden";
     return () => {
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keydown", onKey, true);
       document.body.style.overflow = "";
     };
   }, [open, onClose]);

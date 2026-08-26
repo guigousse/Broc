@@ -1,10 +1,16 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { EnergieRecharge, angleAiguille, CELEBRATION, MACHINE_IMG_INFINIE } from "./EnergieRecharge";
 import { PUBS_ENERGIE_MAX_PAR_JOUR } from "@/lib/energie";
 import { definirEnergieInfinie, energieInfinieActive } from "@/lib/iap/energieInfinie";
 import { audioManager } from "@/lib/audio/audioManager";
+import {
+  EVENEMENTS,
+  StubAnalyticsProvider,
+  reinitialiserAnalyticsPourTest,
+} from "@/lib/analytics/analytics";
+import { definirLecteurContexte } from "@/lib/analytics/contexte";
 
 // vi.hoisted : la factory de vi.mock est hissée, elle ne peut pas capturer une
 // variable déclarée après coup.
@@ -334,5 +340,54 @@ describe("EnergieRecharge — achat énergie infinie", () => {
     ).toBeNull();
     expect(screen.queryByLabelText(/Regarder une pub/)).toBeNull();
     expect(document.querySelector(`img[src="${MACHINE_IMG_INFINIE}"]`)).not.toBeNull();
+  });
+});
+
+describe("EnergieRecharge — iap_ecran_vu", () => {
+  let stub: StubAnalyticsProvider;
+
+  beforeEach(() => {
+    stub = new StubAnalyticsProvider();
+    reinitialiserAnalyticsPourTest(stub);
+    definirLecteurContexte(() => ({ jour: 2, niveau: 1 }));
+    mockState = {
+      energie: 0,
+      energieDerniereMaj: Date.now(),
+      brocanteur: { niveau: 0, xp: 0, pointsDisponibles: 0 },
+    };
+  });
+
+  afterEach(() => {
+    reinitialiserAnalyticsPourTest();
+    definirLecteurContexte(null);
+    // Le drapeau vit en localStorage (hors save) : on le remet à zéro pour
+    // ne pas polluer les tests suivants du fichier (même pattern que
+    // ci-dessus, describe « achat énergie infinie »).
+    definirEnergieInfinie(false);
+  });
+
+  it("émet une fois au montage, source « sortie-bloquee » quand l'alerte est fournie", () => {
+    render(
+      <EnergieRecharge onClose={() => {}} alerte="Pas assez d'énergie pour cette sortie !" />,
+    );
+    const appels = stub.appels.filter((a) => a.nom === EVENEMENTS.iapEcranVu);
+    expect(appels).toHaveLength(1);
+    expect(appels[0].params).toMatchObject({ source: "sortie-bloquee" });
+  });
+
+  it("émet source « en-tete » quand ouvert sans alerte (tap volontaire du cadran)", () => {
+    render(<EnergieRecharge onClose={() => {}} />);
+    const appels = stub.appels.filter((a) => a.nom === EVENEMENTS.iapEcranVu);
+    expect(appels).toHaveLength(1);
+    expect(appels[0].params).toMatchObject({ source: "en-tete" });
+  });
+
+  it("propriétaire de l'énergie infinie : aucun paywall à comptabiliser", () => {
+    // Cet écran n'affiche plus de bouton d'achat une fois `infinie` acquis
+    // (voir la description « ni bouton d'achat » plus haut) : rien n'est vu.
+    definirEnergieInfinie(true);
+    render(<EnergieRecharge onClose={() => {}} />);
+    const appels = stub.appels.filter((a) => a.nom === EVENEMENTS.iapEcranVu);
+    expect(appels).toHaveLength(0);
   });
 });

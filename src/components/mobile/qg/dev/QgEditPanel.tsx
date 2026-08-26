@@ -1,18 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { QG_LAYOUT, type QgObjetKey } from "../layout";
-import { CHAT_BALADEUR_LAYOUT } from "../chatBaladeurLayout";
 import { CHAT_BALADEUR_ORDER, type ChatBaladeurId } from "@/lib/chatBaladeur";
+import { type BazarObjetKey } from "@/components/bazar/bazarLayout";
 import {
   useQgObjet,
   useChatBaladeurCoord,
   useQgEditContext,
+  coordBase,
+  familleEditable,
   type EditableKey,
+  type FamilleEditable,
 } from "./QgEditContext";
 
 const QG_KEYS = Object.keys(QG_LAYOUT.objets) as QgObjetKey[];
 const CHAT_KEYS = [...CHAT_BALADEUR_ORDER] as ChatBaladeurId[];
+/** Familles affichées quand aucune liste de clés n'est passée : la scène du QG. */
+const CLES_QG_PAR_DEFAUT: EditableKey[] = [...QG_KEYS, ...CHAT_KEYS];
+
+const TITRE_FAMILLE: Record<FamilleEditable, string> = {
+  qg: "// QG objets",
+  chat: "// Chat baladeur",
+  bazar: "// Bazar",
+};
+const ORDRE_FAMILLES: FamilleEditable[] = ["qg", "chat", "bazar"];
 
 // Position au-dessous du header mobile (var injectée par MobileLayout).
 const ANCHOR_STYLE = {
@@ -22,6 +34,18 @@ const ANCHOR_STYLE = {
   zIndex: 100,
 };
 
+/**
+ * Dispatch par COMPOSANT, jamais par hook — même mécanique que `QgEditOverlay`.
+ * Chaque wrapper appelle SON hook inconditionnellement : un `if` autour d'un
+ * appel de hook a déjà valu un crash React #310 dans ce fichier voisin.
+ */
+function LigneObjet({ editKey }: { editKey: EditableKey }) {
+  const famille = familleEditable(editKey);
+  if (famille === "chat") return <ChatRow chatKey={editKey as ChatBaladeurId} />;
+  if (famille === "bazar") return <BazarRow bazarKey={editKey as BazarObjetKey} />;
+  return <QgRow qgKey={editKey as QgObjetKey} />;
+}
+
 function QgRow({ qgKey }: { qgKey: QgObjetKey }) {
   const { left, bottom, width } = useQgObjet(qgKey);
   return <CoordRow name={qgKey} left={left} bottom={bottom} width={width} />;
@@ -30,6 +54,11 @@ function QgRow({ qgKey }: { qgKey: QgObjetKey }) {
 function ChatRow({ chatKey }: { chatKey: ChatBaladeurId }) {
   const { left, bottom, width } = useChatBaladeurCoord(chatKey);
   return <CoordRow name={chatKey} left={left} bottom={bottom} width={width} />;
+}
+
+function BazarRow({ bazarKey }: { bazarKey: BazarObjetKey }) {
+  const { left, bottom, width } = useQgObjet(bazarKey);
+  return <CoordRow name={bazarKey} left={left} bottom={bottom} width={width} />;
 }
 
 function CoordRow({
@@ -57,16 +86,54 @@ function CoordRow({
   );
 }
 
-export function QgEditPanel() {
+interface QgEditPanelProps {
+  /**
+   * Clés à lister sur CETTE scène — même contrat que `QgEditOverlay.cles`.
+   * Non fourni : les clés du QG (objets + chat baladeur).
+   */
+  cles?: EditableKey[];
+  /** Étiquette du panneau. Défaut : « QG edit ». */
+  titre?: string;
+}
+
+/** Ce qu'a donné le dernier clic sur « Copier ». */
+type EtatCopie = null | "copie" | "manuel";
+
+export function QgEditPanel({ cles, titre = "QG edit" }: QgEditPanelProps = {}) {
   const ctx = useQgEditContext();
   const [collapsed, setCollapsed] = useState(false);
+  const [etatCopie, setEtatCopie] = useState<EtatCopie>(null);
+  /** L'extrait à recopier à la main, quand le presse-papiers fait défaut. */
+  const [extraitManuel, setExtraitManuel] = useState<string | null>(null);
+  const zoneRef = useRef<HTMLTextAreaElement | null>(null);
   const active = ctx?.active ?? false;
 
+  // La zone de repli n'a d'intérêt que si son contenu est DÉJÀ sélectionné :
+  // sur un téléphone, sélectionner soi-même quinze lignes de monospace à la
+  // loupe est exactement ce qu'on cherchait à éviter.
+  useEffect(() => {
+    if (extraitManuel === null) return;
+    const zone = zoneRef.current;
+    if (!zone) return;
+    zone.focus();
+    zone.select();
+    // iOS ignore `select()` sur un textarea non focalisé ET refuse la
+    // sélection programmée si le champ est en lecture seule : d'où le champ
+    // éditable, plus `setSelectionRange` qui, lui, est honoré.
+    zone.setSelectionRange(0, extraitManuel.length);
+  }, [extraitManuel]);
+
+  const clesAffichees = cles ?? CLES_QG_PAR_DEFAUT;
+  const groupes = ORDRE_FAMILLES.map((famille) => ({
+    famille,
+    cles: clesAffichees.filter((k) => familleEditable(k) === famille),
+  })).filter((g) => g.cles.length > 0);
+
   function effective(key: EditableKey) {
-    const isChat = (CHAT_BALADEUR_ORDER as readonly string[]).includes(key);
-    const base = isChat
-      ? CHAT_BALADEUR_LAYOUT[key as ChatBaladeurId]
-      : QG_LAYOUT.objets[key as QgObjetKey];
+    // `coordBase` connaît les trois familles (QG, chat, Bazar) : c'est la même
+    // fonction que celle dont dérive `useQgObjet`, donc plus aucune chance de
+    // diverger.
+    const base = coordBase(key);
     const o = ctx?.overrides[key];
     return {
       left: o?.left ?? base.left,
@@ -75,20 +142,58 @@ export function QgEditPanel() {
     };
   }
 
+  function ligneSnippet(k: EditableKey): string {
+    const e = effective(k);
+    // Le chat baladeur est indexé par des identifiants non conformes à la
+    // syntaxe des clés nues (`"chat-1"`), d'où les guillemets pour cette
+    // famille seulement.
+    const nom = familleEditable(k) === "chat" ? `  "${k}"` : `    ${k}`;
+    return `${nom}: { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
+  }
+
+  /**
+   * Copier l'extrait — sans jamais lever.
+   *
+   * L'auteur cale les scènes depuis SON TÉLÉPHONE, sur le serveur de dev servi
+   * en HTTP simple sur le réseau local. Or Safari n'expose PAS `navigator
+   * .clipboard` hors contexte sécurisé : l'objet est `undefined`, et
+   * `navigator.clipboard.writeText(...)` levait `undefined is not an object`
+   * AVANT même d'atteindre le `.catch()` — le clic ne faisait rien, aucune
+   * trace, et les coordonnées qu'il venait de poser étaient irrécupérables.
+   *
+   * On tente donc l'API quand elle existe, et on retombe sinon sur ce qui
+   * marche vraiment en contexte non sécurisé : un `<textarea>` dont le
+   * contenu est déjà sélectionné, prêt pour un « Copier » à la main. Le
+   * panneau dit lequel des deux chemins a été pris.
+   */
   function handleCopy() {
-    const qg = QG_KEYS.map((k) => {
-      const e = effective(k);
-      return `    ${k}: { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
-    });
-    const chat = CHAT_KEYS.map((k) => {
-      const e = effective(k);
-      return `  "${k}": { left: ${e.left.toFixed(1)}, bottom: ${e.bottom.toFixed(1)}, width: ${e.width.toFixed(1)} },`;
-    });
-    const snippet =
-      "// QG objets\n" + qg.join("\n") + "\n\n// Chat baladeur\n" + chat.join("\n");
-    navigator.clipboard.writeText(snippet).catch(() => {
-      /* clipboard indisponible en contexte non sécurisé : on ignore */
-    });
+    const snippet = groupes
+      .map((g) => TITRE_FAMILLE[g.famille] + "\n" + g.cles.map(ligneSnippet).join("\n"))
+      .join("\n\n");
+    try {
+      const presse =
+        typeof navigator === "undefined" ? undefined : navigator.clipboard;
+      if (typeof presse?.writeText === "function") {
+        presse.writeText(snippet).then(
+          () => {
+            setExtraitManuel(null);
+            setEtatCopie("copie");
+          },
+          // Promesse rejetée : le presse-papiers EXISTE mais refuse (permission
+          // refusée, document non focalisé…). Même repli que s'il manquait.
+          () => replierSurZone(snippet),
+        );
+        return;
+      }
+    } catch {
+      // Un accès à `navigator.clipboard` qui lève : on replie, comme le reste.
+    }
+    replierSurZone(snippet);
+  }
+
+  function replierSurZone(snippet: string) {
+    setExtraitManuel(snippet);
+    setEtatCopie("manuel");
   }
 
   function handleReset() {
@@ -115,7 +220,7 @@ export function QgEditPanel() {
         }}
         onClick={() => setCollapsed(false)}
       >
-        <span>QG edit</span>
+        <span>{titre}</span>
         <span
           style={{
             fontSize: 9,
@@ -165,7 +270,7 @@ export function QgEditPanel() {
             letterSpacing: "0.08em",
           }}
         >
-          QG edit mode
+          {titre} mode
         </span>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <button
@@ -216,13 +321,21 @@ export function QgEditPanel() {
           opacity: active ? 1 : 0.45,
         }}
       >
-        <div style={{ color: "#8aa", fontSize: 10, marginBottom: 4 }}>// QG objets</div>
-        {QG_KEYS.map((k) => (
-          <QgRow key={k} qgKey={k} />
-        ))}
-        <div style={{ color: "#8aa", fontSize: 10, margin: "6px 0 4px" }}>// Chat baladeur</div>
-        {CHAT_KEYS.map((k) => (
-          <ChatRow key={k} chatKey={k} />
+        {groupes.map((g, i) => (
+          <div key={g.famille}>
+            <div
+              style={{
+                color: "#8aa",
+                fontSize: 10,
+                margin: i === 0 ? "0 0 4px" : "6px 0 4px",
+              }}
+            >
+              {TITRE_FAMILLE[g.famille]}
+            </div>
+            {g.cles.map((k) => (
+              <LigneObjet key={k} editKey={k} />
+            ))}
+          </div>
         ))}
       </div>
 
@@ -263,6 +376,51 @@ export function QgEditPanel() {
           Reset
         </button>
       </div>
+
+      {etatCopie !== null && (
+        <div
+          role="status"
+          style={{
+            marginTop: 6,
+            fontSize: 10,
+            fontFamily: "monospace",
+            lineHeight: 1.4,
+            color: etatCopie === "copie" ? "#b8e0a8" : "#e8d5a3",
+          }}
+        >
+          {etatCopie === "copie"
+            ? "Copié dans le presse-papiers."
+            : "Presse-papiers indisponible (HTTP simple) — texte sélectionné, copiez-le à la main."}
+        </div>
+      )}
+
+      {extraitManuel !== null && (
+        <textarea
+          ref={zoneRef}
+          value={extraitManuel}
+          // Éditable, pas `readOnly` : iOS refuse de sélectionner un champ en
+          // lecture seule. Ce qu'on y taperait n'a aucune conséquence — la
+          // zone est jetée au clic suivant sur « Copier ».
+          onChange={(e) => setExtraitManuel(e.target.value)}
+          spellCheck={false}
+          rows={Math.min(12, extraitManuel.split("\n").length)}
+          aria-label="Extrait à copier à la main"
+          style={{
+            width: "100%",
+            marginTop: 6,
+            background: "rgba(0,0,0,0.5)",
+            border: "1px solid var(--brass-500)",
+            borderRadius: 4,
+            padding: "6px 8px",
+            fontSize: 10,
+            fontFamily: "monospace",
+            lineHeight: 1.4,
+            color: "#e8d5a3",
+            resize: "vertical",
+            whiteSpace: "pre",
+          }}
+        />
+      )}
     </div>
   );
 }
