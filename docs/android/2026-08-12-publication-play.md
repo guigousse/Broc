@@ -182,6 +182,60 @@ dernier déposé.
 
 ---
 
+## Mettre à jour une piste de test fermé déjà en cours — 2026-08-26
+
+Le premier dépôt portait le contenu de la **1.3.0**. `main` a pris 319 commits d'avance
+depuis (Bazar et ses jetons, réserve à onglets, sauvegarde durable, corrections du
+tutoriel, Soutien, Pristin) : le report a été fait sur `feat/android-socle`, en **1.4.1**.
+
+### Ce que la mise à jour ne remet PAS en cause
+
+- **Le compteur des 14 jours ne repart pas de zéro.** Il porte sur l'inscription continue
+  des testeurs au programme, pas sur la version installée. Publier une nouvelle version
+  sur la même piste fermée ne l'interrompt pas.
+- **Ni la Data safety, ni la déclaration « pas de publicités »** — vérifié le 2026-08-26 :
+  `tauri-plugin-admob` et `tauri-plugin-firebase` n'ont toujours qu'un dossier `ios/` et
+  sont gardés par `#[cfg(target_os = "ios")]` ; côté front, `firebaseProvider.ts` délègue
+  à `tauriIosDisponible()`. Rien ne collecte quoi que ce soit sur Android. Les
+  avertissements des points 7 et 8 ci-dessus restent donc en attente du sous-projet B.
+
+### Ce qui change dans le binaire
+
+- **Base du `versionCode` relevée de `1002000` à `1004000`** dans `android-play.yml`, pour
+  suivre la version 1.4.1. Le dernier code produit par ce workflow était `1002003`
+  (run n° 3) ; le prochain run vaudra donc `1004000 + n° de run`, strictement supérieur.
+  Cette base est à relever à chaque version mineure.
+- **Poids** : +9,8 Mo d'assets par rapport à l'AAB déposé (33 fichiers, dont les onze
+  musiques d'arcade du Bazar). Sur les 138,7 Mo de téléchargement mesurés en 1.3.0, on
+  reste très en dessous des 200 Mo imposés par Play — mais c'est le chiffre à re-mesurer
+  au `bundletool get-size` si une version future ajoute un lot d'audio ou d'images.
+- **Compilation croisée vérifiée en local** (`cargo check --target x86_64-linux-android`,
+  1 min 55) : les huit plugins compilent, y compris `tauri-plugin-stockage` et
+  `tauri-plugin-firebase` qui ne l'avaient jamais été pour Android. `stockage` retombe sur
+  son chemin `desktop` — de l'`std::fs` pur — donc **la sauvegarde durable fonctionne sur
+  Android**. C'est le point qui comptait le plus pour quatorze jours de test : un testeur
+  qui perd sa partie arrête de tester.
+
+### ⚠️ La build se déclenche toute seule au push
+
+Le déclencheur `push` temporaire d'`android-play.yml` inclut `src/**` et `src-tauri/**` :
+**pousser `feat/android-socle` lance la build de 1 à 2 h sans rien demander**, et consomme
+un numéro de run (donc un `versionCode`). C'est voulu ici, mais à savoir avant de pousser
+un simple correctif de documentation sur cette branche.
+
+### Ordre des opérations dans Play Console
+
+1. Récupérer l'artefact `broc-aab` sur la page du run (cf. l'avertissement TCC plus bas).
+2. `Test → Test fermé → la piste → Créer une version`.
+3. Téléverser l'AAB. Play affiche le `versionCode` : vérifier qu'il est bien supérieur au
+   précédent avant d'aller plus loin.
+4. **Notes de version** : Play les exige à chaque version. Elles sont vues par les
+   testeurs, c'est le moment de dire quoi essayer.
+5. Publier. La revue d'une piste fermée est en général plus rapide qu'un premier dépôt,
+   mais elle existe — ne pas promettre la mise à jour aux testeurs le jour même.
+
+---
+
 ## Testeurs — mode d'emploi
 
 ### Message type à copier-coller

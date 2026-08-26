@@ -144,10 +144,15 @@ jobs:
 
       # Les expressions GitHub ne savent PAS faire d'arithmétique (les opérateurs
       # documentés s'arrêtent aux comparaisons et aux booléens) : le calcul se fait donc
-      # dans le shell. 1002000 = 1.2.0 selon la convention de Tauri ; le numéro de run
+      # dans le shell. 1004000 = 1.4.0 selon la convention de Tauri ; le numéro de run
       # garantit la stricte croissance exigée par Play.
+      #
+      # La base suit le `version` de package.json (1.4.1 au 2026-08-26) : elle doit être
+      # relevée à chaque changement de version mineure, sans quoi un versionCode de 1.4.x
+      # finirait par dépasser la base de 1.5.0. Le dernier code PRODUIT par ce workflow
+      # est 1002003 (run n°3, contenu 1.3.0) — toute valeur produite ici lui est supérieure.
       - name: Calculer le versionCode
-        run: echo "ANDROID_VERSION_CODE=$((1002000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+        run: echo "ANDROID_VERSION_CODE=$((1004000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
 
       - name: AAB signé
         env:
