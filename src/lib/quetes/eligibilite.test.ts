@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { brocanteTier4Debloquee, formeEligible } from "./eligibilite";
-import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
+import { createMockGameState, createMockSlot } from "@/lib/__test-fixtures__/gameState";
 import { calculerBrocantesDebloqueesParTier } from "@/lib/deblocage";
 import { ID_GRANDE_BRADERIE, prochaineBraderie } from "@/lib/evenements";
 import { CATEGORIES } from "@/data/categories";
 import { catTreeId } from "@/data/competences";
-import type { CompetenceId } from "@/types/game";
+import { chapitreParOrdre } from "@/data/quetesPrincipales";
+import type { CategorieObjet, CompetenceId, CollectionSlot } from "@/types/game";
 
 describe("brocanteTier4Debloquee", () => {
   it("est faux sur une partie neuve", () => {
@@ -42,5 +43,67 @@ describe("formeEligible", () => {
 
   it("la pièce légendaire attend une brocante tier 4", () => {
     expect(formeEligible("objetLegendaire", createMockGameState())).toBe(false);
+  });
+
+  it("quand une brocante de tier 4 (hors braderie) s'ouvre, la pièce légendaire est éligible", () => {
+    // Débloquer le tier 4 : trois chapitres + seuils de valeur.
+    // Les chapitres se livrent dans les missions ; leur condition d'accès
+    // se lit dans deblocage.ts. On les déclare livrés directement ici.
+    const ch4 = chapitreParOrdre(4)!;
+    const ch8 = chapitreParOrdre(8)!;
+    const ch13 = chapitreParOrdre(13)!;
+
+    // Seuils de valeur par catégorie : Maison ≥ 600, Musique ≥ 500,
+    // Mode ≥ 400, Objets d'art ≥ 350, Bricolage ≥ 60, total ≥ 5000.
+    // On utilise createMockSlot pour construire des slots avec donations.
+    const slotMaison = createMockSlot({
+      categorie: "Maison",
+      donation: { etat: "Pristin état", valeur: 1500 },
+    });
+    const slotMusique = createMockSlot({
+      categorie: "Musique",
+      donation: { etat: "Pristin état", valeur: 1300 },
+    });
+    const slotMode = createMockSlot({
+      categorie: "Mode",
+      donation: { etat: "Pristin état", valeur: 1000 },
+    });
+    const slotArt = createMockSlot({
+      categorie: "Objets d'art",
+      donation: { etat: "Pristin état", valeur: 800 },
+    });
+    const slotBrico = createMockSlot({
+      categorie: "Bricolage",
+      donation: { etat: "Pristin état", valeur: 500 },
+    });
+
+    // Construire la collection avec les donations. Pour chaque catégorie,
+    // assigner le slot.
+    const collection: Record<CategorieObjet, CollectionSlot[]> = {
+      Maison: [slotMaison],
+      Musique: [slotMusique],
+      Mode: [slotMode],
+      "Objets d'art": [slotArt],
+      Bricolage: [slotBrico],
+      "Jeux & Loisirs": [],
+      "Livres & Papeterie": [],
+    };
+
+    const state = createMockGameState({
+      missions: [
+        { courrierId: ch4.id, statut: "livree" },
+        { courrierId: ch8.id, statut: "livree" },
+        { courrierId: ch13.id, statut: "livree" },
+      ],
+      collection,
+    });
+
+    // Vérifier que le Salon des Antiquaires est bien dans le tier 4 débloqueé.
+    const tier4 = calculerBrocantesDebloqueesParTier(state).get(4) ?? new Set<string>();
+    expect([...tier4]).toContain("salon-antiquaires-drouot");
+
+    // Vérifier que la pièce légendaire devient éligible.
+    expect(brocanteTier4Debloquee(state)).toBe(true);
+    expect(formeEligible("objetLegendaire", state)).toBe(true);
   });
 });
