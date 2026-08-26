@@ -12,6 +12,7 @@
     "admob:default",
     "iap:default",
     "firebase:default",
+    "stockage:default",
     "opener:default",
     "in-app-review:default",
     {

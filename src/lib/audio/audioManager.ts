@@ -74,6 +74,13 @@ export const SON_EXPLOSION = "/sounds/explosion.mp3";
  */
 export const PIC_EXPLOSION_S = 0.035;
 
+/**
+ * Rampe par défaut du bus gramophone (volume et lowpass). C'est la durée d'un
+ * changement de PIÈCE : assez lente pour qu'on n'entende pas un saut, assez
+ * courte pour être finie avant qu'on ait fini d'arriver.
+ */
+const DUREE_RAMPE_BUS_MS = 400;
+
 type WindowAudio = typeof window & { webkitAudioContext?: typeof AudioContext };
 
 class AudioManager {
@@ -663,6 +670,24 @@ class AudioManager {
     src.start();
   }
 
+  /**
+   * Carillon de la porte du Bazar. Il sonne à l'ARRIVÉE sur l'écran, pas au
+   * tap qui a lancé la navigation : `playDoorClose` est la porte du bureau
+   * qu'on referme derrière soi, celle-ci est celle de la boutique qu'on
+   * pousse. Les deux s'enchaînent, séparées par la fermeture d'iris.
+   */
+  async playCarillon(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/carillon-bazar.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   /** Coffre de camionnette qui se ferme (validation chargement). */
   async playCoffreFerme(): Promise<void> {
     if (!this.prefs.effets) return;
@@ -1013,8 +1038,18 @@ class AudioManager {
     this.vinylAmbianceLowpass = lp;
   }
 
-  /** Volume global du bus gramophone (musique + crépitement). 0..1. */
-  setVinylAmbianceVolume(v: number): void {
+  /**
+   * Volume global du bus gramophone (musique + crépitement). 0..1.
+   *
+   * `dureeMs` sert aux réglages de pièce (défaut : une transition douce dont
+   * personne ne doit remarquer la longueur) mais se règle au cas par cas
+   * quand le fondu doit tenir la mesure d'autre chose — le passage vers le
+   * Bazar l'aligne sur la fermeture de l'iris.
+   *
+   * Le disque n'est PAS arrêté, même à zéro : c'est un volume, pas une fin de
+   * lecture. `fadeOutVinylBus` est l'autre geste, celui qui coupe pour de bon.
+   */
+  setVinylAmbianceVolume(v: number, dureeMs = DUREE_RAMPE_BUS_MS): void {
     this.ambianceVolume = Math.max(0, Math.min(1, v));
     // Un fondu de sortie en vol possède le gain : on n'écrase pas sa rampe.
     // La cible de route vient d'être mise à jour ci-dessus et sera appliquée
@@ -1029,7 +1064,7 @@ class AudioManager {
     );
     this.vinylAmbianceGain.gain.linearRampToValueAtTime(
       this.ambianceVolume,
-      now + 0.4,
+      now + Math.max(0, dureeMs) / 1000,
     );
   }
 
@@ -1045,7 +1080,7 @@ class AudioManager {
     );
     this.vinylAmbianceLowpass.frequency.linearRampToValueAtTime(
       this.ambianceLowpass,
-      now + 0.4,
+      now + DUREE_RAMPE_BUS_MS / 1000,
     );
   }
 

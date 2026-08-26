@@ -22,7 +22,7 @@ import {
   type ResultatAchatBazar,
 } from "./ArticleDetailBazar";
 import { PLAQUE_ETIQUETTE } from "./etiquette";
-import { BAZAR_LAYOUT, CLES_BAZAR, CLES_LOTS, CLE_VITRINE } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_BAZAR, CLES_ARTICLES, CLES_LOTS } from "./bazarLayout";
 
 /** Les trois zones du Bazar : le coin arcade, le comptoir, les antiquités. */
 export const ZONES_BAZAR: PanoramaZone[] = [
@@ -71,24 +71,23 @@ export function BazarScene({
   onZoneIndex,
 }: BazarSceneProps) {
   const { d, tr, locale } = useLangue();
-  const vitrine = etal.vitrine;
-  const template = vitrine ? getTemplate(vitrine.templateId) : undefined;
   // Coordonnées lues par le hook, PAS dans le dictionnaire en direct : c'est
   // ce qui fait suivre l'objet quand on tire son cadre en mode calage
-  // (`?qgedit=1`). Quatre appels inconditionnels, en tête de composant.
-  const coordVitrine = useQgObjet(CLE_VITRINE);
+  // (`?qgedit=1`). Appels INCONDITIONNELS, en tête de composant : un par case
+  // de l'étagère du haut, plus la sortie.
+  //
+  // L'étiquette « Vendu » se serre désormais sur SA case. Elle occupait toute
+  // la planche tant qu'il n'y avait qu'un objet au milieu, parce qu'elle
+  // portait une phrase entière (« Vendu — de retour lundi ») qu'une case de 22
+  // unités ne tenait pas dans les 4 langues. Avec trois articles, cette
+  // étiquette pleine rangée recouvrirait les deux cases encore en vente : le
+  // libellé a été raccourci à « Vendu » pour tenir chez lui.
+  const coordCase1 = useQgObjet(CLES_ARTICLES[0]);
+  const coordCase2 = useQgObjet(CLES_ARTICLES[1]);
+  const coordCase3 = useQgObjet(CLES_ARTICLES[2]);
+  const coordsArticles = [coordCase1, coordCase2, coordCase3];
   const coordSortie = useQgObjet("sortie");
-  // Le libellé « Vendu — de retour lundi » est une phrase entière dans les
-  // 4 langues (la version grecque est la plus longue). Une case de 20vw ne
-  // suffit pas — le texte replierait vers le HAUT (le conteneur est ancré en
-  // `bottom`) et empièterait sur la rangée du dessus. On lui donne toute la
-  // largeur de la planche qui porte l'objet de la semaine (case1..case3), en
-  // nowrap : s'il déborde malgré tout, ça déborde sur les côtés, dans le mur
-  // nu du comptoir.
-  const coordCase1 = useQgObjet("case1");
-  const coordCase3 = useQgObjet("case3");
-  const venduLeft = coordCase1.left;
-  const venduWidth = coordCase3.left + coordCase3.width - coordCase1.left;
+  const coordVendeur = useQgObjet("vendeur");
 
   // L'article dont la fiche est ouverte, avec l'achat qu'il déclenchera. Le
   // couple est tenu en ÉTAT plutôt que redérivé au rendu : la fiche garde
@@ -104,16 +103,17 @@ export function BazarScene({
   // mécanique, même raison de vivre hors du panorama (cf. plus bas).
   const [borneOuverte, setBorneOuverte] = useState(false);
 
-  const libelleVitrine = template
-    ? nomObjet({ templateId: template.templateId, nom: template.nom }, locale)
-    : (vitrine?.templateId ?? "");
-
   return (
     <>
       <UnifiedPanorama
         image="/bazar/fond-bazar.webp"
         aspect={BAZAR_LAYOUT.panoramaAspect}
         zones={ZONES_BAZAR}
+        // On entre PAR LA PORTE, qui est peinte à droite du fond (l'objet
+        // `sortie` est à 270 sur 300). Sans ça, `UnifiedPanorama` centre la
+        // zone du milieu et le joueur se retrouve au comptoir sans être passé
+        // devant l'entrée.
+        initialZone="antiquites"
         ariaLabel={d.bazar.titre}
         editKeys={CLES_BAZAR}
         onZoneIndex={onZoneIndex}
@@ -161,88 +161,127 @@ export function BazarScene({
           );
         })}
 
-        {/* La place est vide UNIQUEMENT si la vitrine a été achetée. Un
-            `templateId` retiré du catalogue (`template === undefined`) laissait
-            jusqu'ici afficher « Vendu — de retour lundi » sur un objet pourtant
-            en vente : on retombe sur l'identifiant brut pour le libellé et sur
-            un emplacement nu pour le visuel, mais l'article reste achetable. */}
-        {vitrine ? (
-          <ArticleBazar
-            cle={CLE_VITRINE}
-            visuel={
-              // Le carré est porté par ce `span`, pas par le sticker : c'est lui
-              // qui donne au `fill` une hauteur définie à laquelle se mesurer,
-              // quel que soit le moteur.
-              <span style={{ display: "block", width: "100%", aspectRatio: "1 / 1" }}>
-                {template ? (
-                  // Vignette découpée — la MÊME que partout ailleurs dans le jeu
-                  // (collection, détail d'objet, carnet de quêtes) : contour
-                  // blanc die-cut et légère inclinaison déterministe. Posé sur
-                  // une illustration peinte, un PNG nu se confondait avec le mur
-                  // de sauge ; le liseré le détache de l'étagère. `thumb` parce
-                  // que la case fait ~22 unités de large : décoder un plein
-                  // format pour un timbre-poste coûte de la mémoire à
-                  // l'ouverture de l'écran (cf. `getItemThumbUrl`).
-                  <ItemSticker
-                    templateId={template.templateId}
-                    categorie={template.categorie}
-                    fill
-                    thumb
-                    // DROIT. `ItemSticker` incline chaque objet de quelques
-                    // degrés (défaut) ; l'auteur n'en veut pas au Bazar : les
-                    // articles d'une boutique sont posés d'aplomb. Accessoire
-                    // utile : une vignette droite n'a plus besoin de déborder
-                    // de son carré aux coins, elle y tient exactement.
-                    tilt={false}
-                    outlinePx={2}
-                    // Le BAS de l'objet sur l'arête basse du carré. `contain`
-                    // letterboxe les objets larges et bas (une ménagère, une
-                    // pile de vinyles) : sans cet ancrage, le vide laissé par
-                    // le letterboxing les fait flotter au lieu de reposer sur
-                    // la planche visée par le cadre pointillé. Exigence de
-                    // l'auteur, acquise le matin même sur `ItemImage` et
-                    // reperdue au passage à la vignette.
-                    verticalAlign="bottom"
-                  />
-                ) : null}
+        {/* L'étagère du haut : un objet par gamme de prix. Une case vide
+            n'est PAS un trou — c'est un article acheté cette semaine, et
+            l'étiquette le dit. Un `templateId` retiré du catalogue
+            (`template === undefined`) ne vide pas la case : l'article reste
+            achetable, sous son identifiant brut, faute de quoi la scène
+            annoncerait « Vendu » sur un objet pourtant en vente. */}
+        {etal.articles.map((article, index) => {
+          const cle = CLES_ARTICLES[index];
+          if (!article) {
+            const coord = coordsArticles[index];
+            return (
+              <span
+                key={cle}
+                data-testid={`etiquette-vendu-${index}`}
+                style={{
+                  position: "absolute",
+                  left: `${qgPct(coord.left)}%`,
+                  bottom: `${coord.bottom}%`,
+                  width: `${qgPct(coord.width)}%`,
+                  textAlign: "center",
+                }}
+              >
+                <span style={PLAQUE_ETIQUETTE}>{d.bazar.vendu}</span>
               </span>
-            }
-            libelle={libelleVitrine}
-            prix={vitrine.prix}
-            jetons={jetons}
-            onOuvrir={() =>
-              setSelection({
-                detail: {
-                  genre: "vitrine",
-                  templateId: vitrine.templateId,
-                  // `null` quand le template a quitté le catalogue : la fiche
-                  // n'a alors aucun visuel à montrer, comme l'étagère.
-                  categorie: template?.categorie ?? null,
-                  libelle: libelleVitrine,
-                  prix: vitrine.prix,
-                },
-                achat: { type: "vitrine" },
-              })
-            }
+            );
+          }
+          const template = getTemplate(article.templateId);
+          const libelle = template
+            ? nomObjet({ templateId: template.templateId, nom: template.nom }, locale)
+            : article.templateId;
+          return (
+            <ArticleBazar
+              key={cle}
+              cle={cle}
+              visuel={
+                // Le carré est porté par ce `span`, pas par le sticker : c'est lui
+                // qui donne au `fill` une hauteur définie à laquelle se mesurer,
+                // quel que soit le moteur.
+                <span style={{ display: "block", width: "100%", aspectRatio: "1 / 1" }}>
+                  {template ? (
+                    // Vignette découpée — la MÊME que partout ailleurs dans le jeu
+                    // (collection, détail d'objet, carnet de quêtes) : contour
+                    // blanc die-cut et légère inclinaison déterministe. Posé sur
+                    // une illustration peinte, un PNG nu se confondait avec le mur
+                    // de sauge ; le liseré le détache de l'étagère. `thumb` parce
+                    // que la case fait ~22 unités de large : décoder un plein
+                    // format pour un timbre-poste coûte de la mémoire à
+                    // l'ouverture de l'écran (cf. `getItemThumbUrl`).
+                    <ItemSticker
+                      templateId={template.templateId}
+                      categorie={template.categorie}
+                      fill
+                      thumb
+                      // DROIT. `ItemSticker` incline chaque objet de quelques
+                      // degrés (défaut) ; l'auteur n'en veut pas au Bazar : les
+                      // articles d'une boutique sont posés d'aplomb. Accessoire
+                      // utile : une vignette droite n'a plus besoin de déborder
+                      // de son carré aux coins, elle y tient exactement.
+                      tilt={false}
+                      outlinePx={2}
+                      // Le BAS de l'objet sur l'arête basse du carré. `contain`
+                      // letterboxe les objets larges et bas (une ménagère, une
+                      // pile de vinyles) : sans cet ancrage, le vide laissé par
+                      // le letterboxing les fait flotter au lieu de reposer sur
+                      // la planche visée par le cadre pointillé. Exigence de
+                      // l'auteur, acquise le matin même sur `ItemImage` et
+                      // reperdue au passage à la vignette.
+                      verticalAlign="bottom"
+                    />
+                  ) : null}
+                </span>
+              }
+              libelle={libelle}
+              prix={article.prix}
+              jetons={jetons}
+              onOuvrir={() =>
+                setSelection({
+                  detail: {
+                    genre: "objet",
+                    templateId: article.templateId,
+                    // `null` quand le template a quitté le catalogue : la fiche
+                    // n'a alors aucun visuel à montrer, comme l'étagère.
+                    categorie: template?.categorie ?? null,
+                    libelle,
+                    prix: article.prix,
+                  },
+                  achat: { type: "objet", index },
+                })
+              }
+            />
+          );
+        })}
+
+        {/* Le tenancier. DÉCOR, pas commande : il n'a encore ni nom ni
+            réplique, et en faire un bouton promettrait une interaction qui
+            n'existe pas — un lecteur d'écran annoncerait une commande morte.
+            D'où `aria-hidden` et `pointerEvents: none`, qui rendent aussi les
+            taps à ce qu'il y a dessous.
+
+            Hauteur en `auto` : la largeur commande, le buste garde ses
+            proportions. Son bas se confond avec l'arête arrière du plateau
+            (cf. `BAZAR_LAYOUT.objets.vendeur`), ce qui le place DERRIÈRE le
+            comptoir plutôt que posé dessus. */}
+        <span
+          data-testid="tenancier-bazar"
+          aria-hidden
+          style={{
+            position: "absolute",
+            left: `${qgPct(coordVendeur.left)}%`,
+            bottom: `${coordVendeur.bottom}%`,
+            width: `${qgPct(coordVendeur.width)}%`,
+            pointerEvents: "none",
+          }}
+        >
+          <img
+            src="/bazar/vendeur-bazar.webp"
+            alt=""
+            draggable={false}
+            style={{ width: "100%", height: "auto", display: "block" }}
           />
-        ) : (
-          // Le cadre garde la largeur de la planche et centre l'étiquette ; la
-          // plaque, elle, se serre autour du texte au lieu de barrer toute la
-          // rangée d'une bande sombre. En `nowrap`, elle déborde sur les côtés
-          // si le grec est trop long — c'était déjà l'intention.
-          <span
-            data-testid="etiquette-vendu"
-            style={{
-              position: "absolute",
-              left: `${qgPct(venduLeft)}%`,
-              bottom: `${coordVitrine.bottom}%`,
-              width: `${qgPct(venduWidth)}%`,
-              textAlign: "center",
-            }}
-          >
-            <span style={PLAQUE_ETIQUETTE}>{d.bazar.vendu}</span>
-          </span>
-        )}
+        </span>
 
         <button
           type="button"

@@ -108,7 +108,7 @@ export const en: DictionnaireUI = {
     navigationPrincipale: "Main navigation",
     energie: "Energy",
     caisse: "Till",
-    jetons: "Tokens",
+    jetons: "Bazarcoins",
     rechargerEnergie: "Recharge energy",
     montantEuros: "{valeur} €",
     niveau: "Level",
@@ -654,9 +654,19 @@ export const en: DictionnaireUI = {
     jetonArgent: "+{n} €",
     jetonXp: "+{n} XP",
     jetonEnergie: "+{n} ⚡",
-    jetonBazarUn: "+{n} token",
-    jetonBazarN: "+{n} tokens",
-    recompenseAria: "Reward: {argent} €, {xp} XP, {energie} energy, {jetons} tokens",
+    // Les PASTILLES du carnet, SANS « + » : la plaque s'intitule déjà
+    // « Récompense » et rien n'y est jamais retiré — le signe n'apprend rien
+    // et vole la place au montant, qu'on veut gros. Le Bazarcoin y sort en
+    // chiffre nu, son signe bleu étant dessiné à côté.
+    gainArgent: "{n} €",
+    gainXp: "{n} XP",
+    gainEnergie: "{n} ⚡",
+    gainBazar: "{n}",
+    // Le GRAND LIVRE, qui est du texte pur : aucun signe dessiné n'y a sa
+    // place, le mot doit donc rester écrit.
+    jetonBazarUn: "+{n} Bazarcoin",
+    jetonBazarN: "+{n} Bazarcoins",
+    recompenseAria: "Reward: {argent} €, {xp} XP, {energie} energy, {jetons} Bazarcoins",
     livrer: "Deliver",
     livrerProgress: "Deliver ({rempli}/{total})",
     sectionCompteur: "({faits}/{total})",
@@ -735,7 +745,7 @@ export const en: DictionnaireUI = {
     atelierPleinUn: "Workshop full ({enCours}/{capacite} slot).",
     atelierPleinN: "Workshop full ({enCours}/{capacite} slots).",
     competenceReparerManquante: "You lack the Repair skill — {categorie}.",
-    bazarPasAssezDeJetons: "Not enough tokens",
+    bazarPasAssezDeJetons: "Not enough Bazarcoins",
     bazarArticleIndisponible: "Item unavailable",
     manquePiecesUn: "Missing {n} {categorie} part.",
     manquePiecesN: "Missing {n} {categorie} parts.",
@@ -763,6 +773,23 @@ export const en: DictionnaireUI = {
     sauvegardeImpossible:
       "Saving failed — storage full or unavailable. Your progress may be lost.",
     sauvegardeRetablie: "Saving restored.",
+    sauvegardeBandeau: "Saving failed — your progress isn't being recorded.",
+    sauvegardeModaleTitre: "Your progress isn't being saved",
+    sauvegardeModaleDepuisUn: "For 1 minute.",
+    sauvegardeModaleDepuisN: "For {minutes} minutes.",
+    sauvegardeModaleDisquePlein:
+      "Your phone's storage is full. Free up some space so your game can be saved.",
+    sauvegardeModaleIo:
+      "Storage isn't available right now. Your game isn't being saved.",
+    sauvegardeModaleBouton: "Got it",
+    // Preventive disk-space warning (Task 9): before saving fails, not after.
+    espaceTitre: "Your phone's storage is almost full",
+    espaceCorps:
+      "BROC may soon be unable to save your game. Free up some space to keep playing safely.",
+    espaceBouton: "Got it",
+    // Save export (Task 10): per-slot button in PartiesModal.tsx. No import
+    // counterpart in this chantier — the player archives, they don't restore.
+    exporterPartie: "Export this save",
   },
   deblocage: {
     long: {
@@ -824,11 +851,11 @@ export const en: DictionnaireUI = {
   bazar: {
     titre: "The Bazaar",
     lotPieces: "{n} parts · {categorie}",
-    prixJetons: "{n} tokens",
-    prixJetonUn: "{n} token",
-    vendu: "Sold — back on Monday",
-    manqueJetons: "You need {n} more tokens",
-    manqueJetonUn: "You need {n} more token",
+    prixJetons: "{n} Bazarcoins",
+    prixJetonUn: "{n} Bazarcoin",
+    vendu: "Sold",
+    manqueJetons: "You need {n} more Bazarcoins",
+    manqueJetonUn: "You need {n} more Bazarcoin",
     sortir: "Leave the Bazaar",
     detailArticle: "Item details",
     prixMot: "Price",

@@ -16,8 +16,19 @@ const ETAL: EtalBazar = {
     { categorie: "Mode", quantite: 5, prix: 1 },
     { categorie: "Maison", quantite: 5, prix: 1 },
   ],
-  vitrine: { templateId: "jx.jeu_magnatimmo_annees_80", valeurBase: 200, prix: 8 },
+  // L'étagère du haut, une gamme par case (cf. `GAMMES_BAZAR`) : trouvaille
+  // modeste, vitrine de la semaine, pièce de caractère.
+  articles: [
+    { templateId: "mus.harmonica_chromatique_de_bluesman", valeurBase: 50, prix: 2 },
+    { templateId: "jx.jeu_magnatimmo_annees_80", valeurBase: 200, prix: 8 },
+    { templateId: "jx.flipper_a_plateau_annees_60", valeurBase: 750, prix: 30 },
+  ],
 };
+
+/** L'étal avec la case `index` vidée par un achat. */
+function sansArticle(index: number): EtalBazar {
+  return { ...ETAL, articles: ETAL.articles.map((a, i) => (i === index ? null : a)) };
+}
 
 function monter(
   etal: EtalBazar = ETAL,
@@ -44,12 +55,29 @@ function monter(
 }
 
 describe("BazarScene", () => {
-  it("a trois zones, en tiers, et s'ouvre sur le comptoir", () => {
+  it("a trois zones, en tiers", () => {
     expect(ZONES_BAZAR.map((z) => z.key)).toEqual(["arcade", "comptoir", "antiquites"]);
     expect(ZONES_BAZAR.map((z) => z.center)).toEqual([1 / 6, 1 / 2, 5 / 6]);
-    // La zone du milieu est celle que `UnifiedPanorama` centre au montage
-    // quand `initialZone` n'est pas passé (cf. Task 1).
-    expect(ZONES_BAZAR[Math.floor(ZONES_BAZAR.length / 2)].key).toBe("comptoir");
+  });
+
+  // On entre au Bazar PAR LA PORTE, et la porte est peinte à droite du fond
+  // (`sortie` : left 270 sur 300, donc dans la zone « antiquites »). La scène
+  // s'ouvrait sur le comptoir — la zone du milieu, le défaut de
+  // `UnifiedPanorama` : le joueur arrivait donc au fond de la boutique sans
+  // être passé devant l'entrée. `initialZone` corrige le point d'arrivée.
+  it("s'ouvre sur les antiquités, la zone de la porte, et pas sur le comptoir", () => {
+    const ancres: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function scrollIntoView(this: Element) {
+      ancres.push(this);
+    };
+    try {
+      monter();
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+    expect(ancres).toHaveLength(1);
+    expect(ancres[0].getAttribute("data-unified-zone")).toBe("antiquites");
   });
 
   // L'ambiance de rue du Bazar se règle sur la distance à la porte : sans ce
@@ -57,8 +85,9 @@ describe("BazarScene", () => {
   it("relaie la zone regardée au parent, dès le montage", () => {
     const onZoneIndex = vi.fn();
     monter(ETAL, 25, { ok: true }, onZoneIndex);
-    // 1 = le comptoir, la zone centrée à l'ouverture.
-    expect(onZoneIndex).toHaveBeenCalledWith(1);
+    // 2 = les antiquités, la zone centrée à l'ouverture : on entre par la
+    // porte de la boutique (`initialZone="antiquites"`).
+    expect(onZoneIndex).toHaveBeenCalledWith(2);
   });
 
   it("pose les trois lots sur la planche du bas", () => {
@@ -124,12 +153,31 @@ describe("BazarScene", () => {
     expect(onAcheter).toHaveBeenCalledWith({ type: "pieces", index: 1 });
   });
 
-  it("taper la vitrine ouvre sa fiche, et l'achat s'y confirme", () => {
+  it("taper un article ouvre sa fiche, et l'achat s'y confirme", () => {
     const { onAcheter } = monter();
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
     expect(onAcheter).not.toHaveBeenCalled();
     acheterDansLaFiche();
-    expect(onAcheter).toHaveBeenCalledWith({ type: "vitrine" });
+    expect(onAcheter).toHaveBeenCalledWith({ type: "objet", index: 1 });
+  });
+
+  // Les trois cases du haut sont interchangeables du point de vue de la scène :
+  // même composant, même fiche, seul l'index change. C'est ce qui garantit
+  // qu'on ne peut pas acheter la case d'à côté par erreur.
+  it("chaque case du haut achète SON article, pas celui du voisin", () => {
+    const attendus: [RegExp, number, string][] = [
+      [/Harmonica/, 0, "case1"],
+      [/Magnatimmo/, 1, "case2"],
+      [/Flipper/, 2, "case3"],
+    ];
+    for (const [nom, index, cle] of attendus) {
+      cleanup();
+      const { onAcheter } = monter(ETAL, 100);
+      expect(screen.getByTestId(`article-${cle}`)).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: nom }));
+      acheterDansLaFiche();
+      expect(onAcheter).toHaveBeenCalledWith({ type: "objet", index });
+    }
   });
 
   it("la fiche se referme après l'achat", () => {
@@ -227,27 +275,85 @@ describe("BazarScene", () => {
     expect(img.style.objectPosition).toBe("center");
   });
 
-  it("vitrine vendue : la place est vide et le dit", () => {
-    monter({ ...ETAL, vitrine: null });
+  it("article vendu : sa place est vide et le dit", () => {
+    monter(sansArticle(1));
     expect(screen.queryByTestId("article-case2")).toBeNull();
     expect(screen.getByText(/Vendu/)).toBeTruthy();
   });
 
-  it("vitrine vendue : l'étiquette déborde sur toute la rangée, pas juste une case", () => {
-    monter({ ...ETAL, vitrine: null });
-    // La géométrie est portée par le cadre ; la plaque, à l'intérieur, se
-    // serre autour du texte.
-    const cadre = screen.getByTestId("etiquette-vendu");
-    const largeurUneCase = qgPct(BAZAR_LAYOUT.objets.case2.width);
-    const largeurEtiquette = parseFloat(cadre.style.width);
-    expect(largeurEtiquette).toBeGreaterThan(largeurUneCase);
+  // L'étiquette occupait TOUTE la largeur de la planche, parce qu'elle portait
+  // une phrase entière (« Vendu — de retour lundi ») qu'une case de 22 unités
+  // ne tenait pas. Avec trois articles, une étiquette pleine rangée
+  // recouvrirait les deux cases encore en vente : elle se serre donc sur SA
+  // case, et le libellé est raccourci pour y tenir dans les quatre langues.
+  it("article vendu : l'étiquette tient dans sa case et ne mord pas sur les voisines", () => {
+    monter(sansArticle(1));
+    const cadre = screen.getByTestId("etiquette-vendu-1");
+    expect(parseFloat(cadre.style.width)).toBeCloseTo(
+      qgPct(BAZAR_LAYOUT.objets.case2.width),
+      5,
+    );
+    expect(parseFloat(cadre.style.left)).toBeCloseTo(
+      qgPct(BAZAR_LAYOUT.objets.case2.left),
+      5,
+    );
   });
 
-  it("vitrine vendue : l'étiquette est posée sur une plaque, pas à même le mur", () => {
-    monter({ ...ETAL, vitrine: null });
+  it("article vendu : les deux autres restent en vente", () => {
+    monter(sansArticle(1));
+    expect(screen.getByTestId("article-case1")).toBeTruthy();
+    expect(screen.getByTestId("article-case3")).toBeTruthy();
+    expect(screen.getAllByText(/Vendu/)).toHaveLength(1);
+  });
+
+  it("étagère entièrement vendue : trois étiquettes, une par case", () => {
+    monter({ ...ETAL, articles: [null, null, null] });
+    expect(screen.getAllByText(/Vendu/)).toHaveLength(3);
+    for (const i of [0, 1, 2]) {
+      expect(screen.getByTestId(`etiquette-vendu-${i}`)).toBeTruthy();
+    }
+  });
+
+  it("article vendu : l'étiquette est posée sur une plaque, pas à même le mur", () => {
+    monter(sansArticle(1));
     const plaque = screen.getByText(/Vendu/);
     expect(plaque.style.backgroundColor).toBe("var(--forest-800)");
     expect(plaque.style.color).toBe("var(--brass-300)");
+  });
+
+  // Le tenancier est du DÉCOR : il se voit, il ne se tape pas. Tant qu'il n'a
+  // ni nom ni réplique, en faire un bouton promettrait une interaction qui
+  // n'existe pas — et un lecteur d'écran annoncerait une commande morte.
+  describe("le tenancier derrière le comptoir", () => {
+    it("est posé à la coordonnée `vendeur` du layout, via le hook de calage", () => {
+      monter();
+      const el = screen.getByTestId("tenancier-bazar");
+      const coord = BAZAR_LAYOUT.objets.vendeur;
+      expect(parseFloat(el.style.left)).toBeCloseTo(qgPct(coord.left), 5);
+      expect(parseFloat(el.style.width)).toBeCloseTo(qgPct(coord.width), 5);
+      expect(parseFloat(el.style.bottom)).toBeCloseTo(coord.bottom, 5);
+    });
+
+    // Son bas se confond avec l'arête arrière du plateau : c'est ce qui le
+    // met DERRIÈRE le comptoir et non posé dessus. Une hauteur imposée
+    // écraserait ou étirerait le buste — la largeur commande, la hauteur suit.
+    it("laisse sa hauteur suivre la largeur, sans jamais être étiré", () => {
+      monter();
+      const img = screen.getByTestId("tenancier-bazar").querySelector("img") as HTMLImageElement;
+      expect(img.style.width).toBe("100%");
+      expect(img.style.height).toBe("auto");
+      expect(img.getAttribute("src")).toBe("/bazar/vendeur-bazar.webp");
+    });
+
+    it("ne répond pas au tap et reste muet pour un lecteur d'écran", () => {
+      monter();
+      const el = screen.getByTestId("tenancier-bazar");
+      expect(el.getAttribute("aria-hidden")).toBe("true");
+      expect(el.style.pointerEvents).toBe("none");
+      expect(el.querySelector("button")).toBeNull();
+      const img = el.querySelector("img") as HTMLImageElement;
+      expect(img.getAttribute("alt")).toBe("");
+    });
   });
 
   it("la porte fait sortir", () => {
@@ -267,38 +373,43 @@ describe("BazarScene", () => {
   // marchandise reste en couleur, quoi qu'il arrive, et c'est le prix barré
   // qui dit l'inaccessibilité. Le test garde le cas « bourse à 0 » — il
   // atteste maintenant ce que la conception dit, pas son contraire.
-  it("bourse à 0 : les quatre articles restent en couleur, plaques éteintes", () => {
+  it("bourse à 0 : les six articles restent en couleur, plaques éteintes", () => {
     const { onAcheter } = monter(ETAL, 0);
-    for (const cle of ["case4", "case5", "case6", "case2"]) {
+    for (const cle of ["case1", "case2", "case3", "case4", "case5", "case6"]) {
       const article = screen.getByTestId(`article-${cle}`);
       expect(article.style.filter).toBe("");
     }
     // La rature a été remplacée par l'extinction de la plaque entière à la
     // recette du 2026-08-20 : c'est la couleur qui porte l'état.
-    const plaque = screen.getByText("8 jetons") as HTMLElement;
+    // Sur l'étagère, la plaque n'écrit plus que le nombre — c'est la pièce qui
+    // dit la monnaie, et le mot vit dans le nom accessible. On la retrouve
+    // donc par son rôle, pas par son texte.
+    const plaque = screen.getByRole("img", { name: "8 Bazarcoins" }) as HTMLElement;
     expect(plaque.style.backgroundColor).toBe("var(--ink-500)");
-    expect(plaque.style.color).toBe("var(--paper-400)");
+    // DEUX signaux depuis la recette du 2026-08-23 : la plaque s'éteint, ET
+    // le montant passe au rouge. L'extinction dit « pas pour toi », le rouge
+    // dit « il t'en manque ».
+    expect(plaque.style.color).toBe("var(--red-signal-300)");
     expect(plaque.style.textDecoration).not.toBe("line-through");
     // Et taper n'achète toujours rien : ça ouvre la fiche, qui dit le manque.
     fireEvent.click(screen.getByRole("button", { name: /Magnatimmo/ }));
     fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
     expect(onAcheter).not.toHaveBeenCalled();
-    expect(screen.getByText("Il vous manque 8 jetons")).toBeTruthy();
+    expect(screen.getByText("Il vous manque 8 Bazarcoins")).toBeTruthy();
   });
 
   // Revue du 2026-08-20 : la scène testait `etal.vitrine && template`. Un
   // templateId retiré du catalogue annonçait « Vendu — de retour lundi » sur
   // un objet pourtant en vente, et le rendait inachetable.
   it("template inconnu : l'article reste en vente, sous son identifiant brut", () => {
-    const { onAcheter } = monter({
-      ...ETAL,
-      vitrine: { templateId: "zz.template_disparu", valeurBase: 200, prix: 8 },
-    });
+    const articles = [...ETAL.articles];
+    articles[1] = { templateId: "zz.template_disparu", valeurBase: 200, prix: 8 };
+    const { onAcheter } = monter({ ...ETAL, articles });
     expect(screen.queryByText(/Vendu/)).toBeNull();
     const bouton = screen.getByRole("button", { name: "zz.template_disparu" });
     fireEvent.click(bouton);
     fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
-    expect(onAcheter).toHaveBeenCalledWith({ type: "vitrine" });
+    expect(onAcheter).toHaveBeenCalledWith({ type: "objet", index: 1 });
   });
 
   it("la sortie est posée à la coordonnée du layout, via le hook de calage", () => {

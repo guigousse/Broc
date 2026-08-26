@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BAZAR_LAYOUT, CLES_LOTS, CLE_VITRINE, type BazarObjetKey } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_ARTICLES, CLES_LOTS, type BazarObjetKey } from "./bazarLayout";
 import { qgPct, QG_LAYOUT } from "@/components/mobile/qg/layout";
 import { CHAT_BALADEUR_ORDER } from "@/lib/chatBaladeur";
 
@@ -45,9 +45,27 @@ describe("BAZAR_LAYOUT", () => {
     expect(bazar.filter((k) => chat.includes(k))).toEqual([]);
   });
 
-  it("désigne la planche du bas pour les lots et le milieu de la planche du haut pour l'objet de la semaine", () => {
+  it("désigne la planche du bas pour les lots et celle du haut pour les trois objets", () => {
     expect(CLES_LOTS).toEqual(["case4", "case5", "case6"]);
-    expect(CLE_VITRINE).toBe("case2");
+    expect(CLES_ARTICLES).toEqual(["case1", "case2", "case3"]);
+  });
+
+  // L'ordre des clés EST l'ordre des index de `EtalBazar.articles`, et le prix
+  // monte le long de la planche : une permutation ici mettrait la pièce de
+  // caractère à la place de la trouvaille modeste, sans qu'aucun autre test ne
+  // s'en aperçoive.
+  //
+  // La hauteur est vérifiée À UNE UNITÉ PRÈS, et non à l'identique, alors que
+  // l'intention EST une hauteur commune : les trois reposent sur une seule
+  // planche peinte. La tolérance absorbe les dixièmes qu'un calage à la souris
+  // laisse derrière lui, sans jamais laisser un objet dériver sur l'autre
+  // planche — c'est ça, l'erreur à attraper, et elle vaut dix unités.
+  it("les trois objets sont sur la MÊME planche, de gauche à droite", () => {
+    const cases = CLES_ARTICLES.map((c) => BAZAR_LAYOUT.objets[c]);
+    for (const c of cases) expect(Math.abs(c.bottom - cases[0].bottom)).toBeLessThan(1);
+    for (let i = 1; i < cases.length; i++) {
+      expect(cases[i].left).toBeGreaterThan(cases[i - 1].left);
+    }
   });
 
   it("utilise le même repère que le QG (300vw), sinon l'outil de calage ment", () => {
@@ -162,14 +180,26 @@ describe("BAZAR_LAYOUT", () => {
     // (angle à ~66), seul moyen de la montrer entière à sa taille réglée.
     const borne = BAZAR_LAYOUT.objets.borne;
     expect(borne.left + borne.width).toBeLessThanOrEqual(104);
-    // Debout sur le plancher, devant la plinthe (~25 %) et non dessus : une
-    // borne a de la profondeur, son pied avant descend sous la ligne du mur.
-    expect(borne.bottom).toBeLessThan(25);
+    // Debout sur le PLANCHER, et non calée sur la plinthe.
+    //
+    // La ligne du plancher est mesurée sur le fond peint, pas estimée : les
+    // deux traits sombres de la plinthe tombent à y=594 et y=610 sur un
+    // iPhone 12 (390 × 844) dont le panorama fait 735 px de haut et finit à
+    // y=786 — le bas de la plinthe vaut donc (786 − 610) / 735 ≈ 24 %.
+    //
+    // Le dessin de la borne est vu en légère plongée : son coin ARRIÈRE
+    // droit remonte de ~10 % de la hauteur du dessin par rapport au pied
+    // avant (profil alpha de `borne-arcade.webp` : y=1049 devant, y=949 au
+    // fond, sur 1053). À `bottom` 20,5 ce coin arrière retombait à 2 px
+    // AU-DESSUS de la ligne du plancher : la borne semblait posée sur la
+    // plinthe (retour device 2026-08-26). Il lui faut donc redescendre sous
+    // 19,5 pour que l'arrière touche le sol.
+    expect(borne.bottom).toBeLessThanOrEqual(19.5);
     expect(borne.bottom).toBeGreaterThan(15);
   });
 
   it("les emplacements que la scène désigne existent bel et bien", () => {
-    for (const cle of [...CLES_LOTS, CLE_VITRINE]) {
+    for (const cle of [...CLES_LOTS, ...CLES_ARTICLES]) {
       expect(BAZAR_LAYOUT.objets[cle]).toBeDefined();
     }
   });

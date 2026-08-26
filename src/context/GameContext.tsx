@@ -35,7 +35,7 @@ import {
   idDeclencheurCadeau,
   objetCadeauAnniversaire,
 } from "@/lib/anniversaire";
-import { createGameRepository } from "@/lib/storage/createGameRepository";
+import { obtenirGameRepository } from "@/lib/storage/createGameRepository";
 import { migrerSauvegarde, SAVE_VERSION } from "@/lib/migrations";
 import { useToastSafe } from "@/components/ui/Toast";
 import { appendLedger } from "@/lib/grandLivre";
@@ -77,8 +77,8 @@ import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
 import { settleBazar } from "@/lib/bazar/settleBazar";
 import {
+  acheterArticle,
   acheterLotPieces,
-  acheterVitrine,
   type AchatBazar,
   type RaisonRefus,
 } from "@/lib/bazar/achat";
@@ -144,8 +144,7 @@ import { DICTIONNAIRES, tr } from "@/lib/i18n/ui";
 import { localeCourante } from "@/lib/i18n/locales";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { slotActif, type NumeroSlot } from "@/lib/storage/slots";
-
-const gameRepository = createGameRepository();
+import type { GenreErreur } from "@/lib/storage/pontNatif";
 
 /**
  * Raison d'échec localisée (SP4 i18n). GameContext exécute ses raisons dans des
@@ -172,9 +171,20 @@ function raisonLocaliseeBazar(raison: RaisonRefus): string {
   return raisonLocalisee("bazarArticleIndisponible");
 }
 
+/**
+ * État de la sauvegarde automatique. `depuis` est posé au PREMIER échec et
+ * ne bouge plus tant que l'échec persiste (même si le genre change) : c'est
+ * lui qui mesure le temps de jeu réellement en danger (Tâche 8, remplace le
+ * toast unique `saveEnEchecRef` qui ne redonnait aucun signal après 2,5 s).
+ */
+export type EtatSauvegarde =
+  | { enEchec: false }
+  | { enEchec: true; genre: GenreErreur; depuis: number };
+
 interface GameStateValue {
   state: GameState | null;
   isHydrated: boolean;
+  etatSauvegarde: EtatSauvegarde;
 }
 
 interface GameActionsValue {
@@ -195,7 +205,7 @@ interface GameActionsValue {
    * Détache l'état en mémoire sans toucher au storage — utilisé avant une
    * bascule de slot pour que l'effet d'auto-save (gardé sur state null) ne
    * puisse plus écrire. ⚠ NE PAS confondre avec `reset()` : `reset()` efface
-   * aussi la clé de save active (`gameRepository.clear()`), ce qui
+   * aussi la clé de save active (`obtenirGameRepository().clear()`), ce qui
    * supprimerait la partie qu'on est justement en train de quitter.
    */
   detacherPartie: () => void;
@@ -300,7 +310,7 @@ interface GameActionsValue {
    * Settle les quêtes périodiques ET le Bazar contre le temps de confiance.
    * Tourne déjà sur le tick 60 s / focus / visibilitychange / pageshow ; les
    * écrans qui dépendent d'un de ces deux settle pour ne pas s'ouvrir sur un
-   * état vide (le Bazar à sa première visite du jour 35) l'appellent aussi
+   * état vide (le Bazar à sa première visite du jour 20) l'appellent aussi
    * à leur montage plutôt que d'attendre le prochain tick.
    */
   rafraichirPeriodiques: () => void;
@@ -313,7 +323,9 @@ type GameContextValue = GameStateValue & GameActionsValue;
 // Deux contextes séparés : l'état (change à chaque mutation) et les actions
 // (objet mémoïsé une seule fois — les consommateurs d'actions seules ne
 // re-rendent jamais sur mutation d'état).
-const GameStateContext = createContext<GameStateValue | null>(null);
+// Exporté pour `BandeauSauvegarde.test.tsx` (Tâche 8), qui monte le composant
+// avec un `etatSauvegarde` maîtrisé sans passer par un `GameProvider` complet.
+export const GameStateContext = createContext<GameStateValue | null>(null);
 const GameActionsContext = createContext<GameActionsValue | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -328,8 +340,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const stateRef = useRef<GameState | null>(null);
   stateRef.current = state;
-  // Évite de spammer le toast : on n'alerte qu'à la bascule succès→échec.
-  const saveEnEchecRef = useRef(false);
+  // État partagé de la sauvegarde (Tâche 8) : consommé par `BandeauSauvegarde`
+  // pour un bandeau persistant + une modale d'escalade, à la place de l'ancien
+  // toast unique de 2,5 s.
+  const [etatSauvegarde, setEtatSauvegarde] = useState<EtatSauvegarde>({
+    enEchec: false,
+  });
+  // Ruling R13 : lue dans le `.then()` de `doSave` pour décider du toast de
+  // rétablissement HORS de l'updater `setEtatSauvegarde` (un updater React
+  // n'est pas garanti de tourner une seule fois — StrictMode le rejoue en
+  // dev — donc un effet de bord dedans peut doubler le toast).
+  const etatSauvegardeRef = useRef<EtatSauvegarde>({ enEchec: false });
+  etatSauvegardeRef.current = etatSauvegarde;
   // Slot auquel appartient l'état en mémoire (posé à l'hydratation et à
   // `nouvellePartie`). Le repository résout le slot cible au moment de
   // l'ÉCRITURE (`slotActif()`) : si l'index a basculé entre-temps (lancement
@@ -341,7 +363,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    gameRepository.load().then((loaded) => {
+    obtenirGameRepository().load().then((loaded) => {
       if (cancelled) return;
       // Migration : ajoute les champs manquants + remap les anciennes catégories.
       const migrated: GameState | null = loaded
@@ -363,12 +385,36 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // écrire maintenant détruirait la save du nouveau slot. On abandonne —
       // cet état est de toute façon en train d'être détaché.
       if (slotActif() !== slotEtatRef.current) return;
-      gameRepository.save(state).then((ok) => {
-        if (!ok && !saveEnEchecRef.current) {
-          saveEnEchecRef.current = true;
-          toast(raisonLocalisee("sauvegardeImpossible"), { type: "erreur" });
-        } else if (ok && saveEnEchecRef.current) {
-          saveEnEchecRef.current = false;
+      obtenirGameRepository().save(state).then((res) => {
+        // Ruling R13 : l'updater ci-dessous est PUR (aucun effet de bord) —
+        // React ne garantit pas qu'un updater fonctionnel ne s'exécute
+        // qu'une fois (StrictMode le rejoue en dev). La transition
+        // échec→succès est donc lue AVANT l'appel, sur la ref toujours à
+        // jour, et le toast est déclenché APRÈS, une seule fois.
+        //
+        // Revue (finding 2) : deux `doSave()` peuvent être en vol en même
+        // temps (`flush` est abonné à la fois à `pagehide` ET à
+        // `visibilitychange→hidden`, qu'iOS déclenche tous les deux à la mise
+        // en arrière-plan ; une écriture native lente d'une instance d'effet
+        // précédente peut aussi traîner). Si la ref n'était mise à jour qu'au
+        // rendu, deux succès concurrents pourraient tous deux lire
+        // `enEchec: true` avant que React n'ait commité le premier, et
+        // doubler le toast. Elle est donc aussi écrite ICI, tout de suite
+        // après la lecture — avant même que l'updater (pur) ne tourne.
+        const etaitEnEchec = etatSauvegardeRef.current.enEchec;
+        if (res.ok && etaitEnEchec) etatSauvegardeRef.current = { enEchec: false };
+        setEtatSauvegarde((prec) => {
+          if (res.ok) {
+            return prec.enEchec ? { enEchec: false } : prec;
+          }
+          // `depuis` est posé au PREMIER échec et ne bouge plus : c'est lui qui
+          // mesure le temps de jeu réellement en danger.
+          if (prec.enEchec) {
+            return prec.genre === res.genre ? prec : { ...prec, genre: res.genre };
+          }
+          return { enEchec: true, genre: res.genre, depuis: Date.now() };
+        });
+        if (res.ok && etaitEnEchec) {
           toast(raisonLocalisee("sauvegardeRetablie"), { type: "succes" });
         }
       });
@@ -1044,7 +1090,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const precheck =
         achat.type === "pieces"
           ? acheterLotPieces(current, achat.index)
-          : acheterVitrine(current, now);
+          : acheterArticle(current, achat.index, now);
       if (!precheck.ok) {
         // Localiser comme le font les actions voisines : jamais de clé brute
         // remontée à l'UI.
@@ -1055,7 +1101,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const r =
           achat.type === "pieces"
             ? acheterLotPieces(prev, achat.index)
-            : acheterVitrine(prev, now);
+            : acheterArticle(prev, achat.index, now);
         return r.ok ? r.state : prev;
       });
       return { ok: true };
@@ -1091,7 +1137,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // slotActif() inchangé donc la garde d'appartenance seule ne voit rien).
     slotEtatRef.current = null;
     setState(null);
-    gameRepository.clear();
+    obtenirGameRepository().clear();
+    // Ruling R14 : sans ça, une alerte d'échec restait affichée sur une
+    // partie tout juste réinitialisée qui n'a encore rien tenté de
+    // sauvegarder — une fausse alerte, exactement ce que le bandeau
+    // persistant ne doit jamais être. Si le disque est réellement toujours
+    // en panne, le prochain échec (dans les 400 ms du debounce) la relève.
+    setEtatSauvegarde({ enEchec: false });
   }, []);
 
   // Détache l'état en mémoire sans toucher au storage — utilisé avant une
@@ -1439,7 +1491,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // pour la suspension iOS (l'effet d'auto-save post-commit peut ne jamais
     // tourner). Peut manquer une mutation encore en attente dans la même
     // frame — l'auto-save la réécrira au commit suivant.
-    void gameRepository.save({
+    void obtenirGameRepository().save({
       ...current,
       vitrine: { ...current.vitrine, tempsRestantSec },
     });
@@ -2160,8 +2212,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const stateValue = useMemo<GameStateValue>(
-    () => ({ state, isHydrated }),
-    [state, isHydrated],
+    () => ({ state, isHydrated, etatSauvegarde }),
+    [state, isHydrated, etatSauvegarde],
   );
 
   // Toutes les actions sont des useCallback stables → cet objet n'est créé

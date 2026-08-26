@@ -19,6 +19,36 @@ export const TIMEOUT_PRECHARGEMENT_MS = 4000;
 export const DUREE_FADE_REDUIT_MS = 400;
 
 /**
+ * Deux iris, un seul dessin. « Long » est celui de l'écran-titre vers le
+ * bureau — le rideau qui ouvre la partie, on lui laisse son temps. « Court »
+ * est le passage bureau ↔ Bazar : la même animation à 70 % de sa durée, parce
+ * qu'on la traverse plusieurs fois par partie et qu'un rideau de deux
+ * secondes pour changer de pièce se paie vite en impatience.
+ */
+export type VarianteIris = "long" | "court";
+
+/** 30 % de moins, appliqués aux TROIS durées — fondu réduit compris. */
+export const FACTEUR_IRIS_COURT = 0.7;
+
+export interface DureesIris {
+  /** Fermeture du trou (départ). */
+  fermeture: number;
+  /** Réouverture du trou (arrivée). */
+  ouverture: number;
+  /** Fondu au noir de remplacement sous `prefers-reduced-motion`. */
+  fadeReduit: number;
+}
+
+export function dureesIris(variante: VarianteIris): DureesIris {
+  const f = variante === "court" ? FACTEUR_IRIS_COURT : 1;
+  return {
+    fermeture: Math.round(DUREE_FERMETURE_MS * f),
+    ouverture: Math.round(DUREE_OUVERTURE_MS * f),
+    fadeReduit: Math.round(DUREE_FADE_REDUIT_MS * f),
+  };
+}
+
+/**
  * Centre mesuré de la porte d'entrée sur `facade-accueil.webp` (rectangle
  * brun sombre ~190×470 px, mesure sharp .extract + .stats() — cf. l'ancienne
  * doc d'IntroPorte) : cx ≈ 51 %, cy ≈ 66 % de l'image.
@@ -28,20 +58,32 @@ export const PORTE_CY_PCT = 66;
 
 const FLAG_KEY = "broc.transition-iris";
 
-export function poserFlagIris(): void {
+/**
+ * Valeur écrite en storage pour chaque variante. Le « 1 » de la variante
+ * longue n'est PAS décoratif : le script preboot du layout racine le teste en
+ * dur pour peindre son voile noir avant le premier paint. La variante courte
+ * prend une autre valeur exprès — le passage bureau ↔ Bazar est une navigation
+ * douce, sans rechargement, donc sans voile preboot à poser.
+ */
+const VALEUR_FLAG: Record<VarianteIris, string> = { long: "1", court: "court" };
+
+export function poserFlagIris(variante: VarianteIris = "long"): void {
   try {
-    window.sessionStorage.setItem(FLAG_KEY, "1");
+    window.sessionStorage.setItem(FLAG_KEY, VALEUR_FLAG[variante]);
   } catch {
     // Storage indisponible : l'arrivée se fera sans iris, sans casser le jeu.
   }
 }
 
-export function lireFlagIris(): boolean {
-  if (typeof window === "undefined") return false;
+/** La variante d'iris à rejouer à l'arrivée, ou `null` s'il n'y en a pas. */
+export function lireFlagIris(): VarianteIris | null {
+  if (typeof window === "undefined") return null;
   try {
-    return window.sessionStorage.getItem(FLAG_KEY) === "1";
+    const brut = window.sessionStorage.getItem(FLAG_KEY);
+    if (brut === VALEUR_FLAG.court) return "court";
+    return brut === VALEUR_FLAG.long ? "long" : null;
   } catch {
-    return false;
+    return null;
   }
 }
 

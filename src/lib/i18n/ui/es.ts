@@ -108,7 +108,7 @@ export const es: DictionnaireUI = {
     navigationPrincipale: "Navegación principal",
     energie: "Energía",
     caisse: "Caja",
-    jetons: "Fichas",
+    jetons: "Bazarcoins",
     rechargerEnergie: "Recargar energía",
     montantEuros: "{valeur} €",
     niveau: "Nivel",
@@ -655,9 +655,19 @@ export const es: DictionnaireUI = {
     jetonArgent: "+{n} €",
     jetonXp: "+{n} XP",
     jetonEnergie: "+{n} ⚡",
-    jetonBazarUn: "+{n} ficha",
-    jetonBazarN: "+{n} fichas",
-    recompenseAria: "Recompensa: {argent} €, {xp} XP, {energie} energía, {jetons} fichas",
+    // Les PASTILLES du carnet, SANS « + » : la plaque s'intitule déjà
+    // « Récompense » et rien n'y est jamais retiré — le signe n'apprend rien
+    // et vole la place au montant, qu'on veut gros. Le Bazarcoin y sort en
+    // chiffre nu, son signe bleu étant dessiné à côté.
+    gainArgent: "{n} €",
+    gainXp: "{n} XP",
+    gainEnergie: "{n} ⚡",
+    gainBazar: "{n}",
+    // Le GRAND LIVRE, qui est du texte pur : aucun signe dessiné n'y a sa
+    // place, le mot doit donc rester écrit.
+    jetonBazarUn: "+{n} Bazarcoin",
+    jetonBazarN: "+{n} Bazarcoins",
+    recompenseAria: "Recompensa: {argent} €, {xp} XP, {energie} energía, {jetons} Bazarcoins",
     livrer: "Entregar",
     livrerProgress: "Entregar ({rempli}/{total})",
     sectionCompteur: "({faits}/{total})",
@@ -736,7 +746,7 @@ export const es: DictionnaireUI = {
     atelierPleinUn: "Taller lleno ({enCours}/{capacite} espacio).",
     atelierPleinN: "Taller lleno ({enCours}/{capacite} espacios).",
     competenceReparerManquante: "No tienes la habilidad Reparar — {categorie}.",
-    bazarPasAssezDeJetons: "No tienes fichas suficientes",
+    bazarPasAssezDeJetons: "No tienes Bazarcoins suficientes",
     bazarArticleIndisponible: "Artículo no disponible",
     manquePiecesUn: "Falta {n} pieza de {categorie}.",
     manquePiecesN: "Faltan {n} piezas de {categorie}.",
@@ -764,6 +774,25 @@ export const es: DictionnaireUI = {
     sauvegardeImpossible:
       "No se pudo guardar: almacenamiento lleno o no disponible. Tu progreso podría perderse.",
     sauvegardeRetablie: "Guardado restablecido.",
+    sauvegardeBandeau: "No se pudo guardar — tu progreso no se está registrando.",
+    sauvegardeModaleTitre: "Tu progreso no se está guardando",
+    sauvegardeModaleDepuisUn: "Desde hace 1 minuto.",
+    sauvegardeModaleDepuisN: "Desde hace {minutes} minutos.",
+    sauvegardeModaleDisquePlein:
+      "El almacenamiento de tu teléfono está lleno. Libera espacio para que tu partida pueda guardarse.",
+    sauvegardeModaleIo:
+      "El almacenamiento no está disponible en este momento. Tu partida no se está guardando.",
+    sauvegardeModaleBouton: "Entendido",
+    // Aviso preventivo de espacio en disco (Tarea 9): antes de que falle el
+    // guardado, no después.
+    espaceTitre: "El almacenamiento de tu teléfono está casi lleno",
+    espaceCorps:
+      "BROC podría dejar de poder guardar tu partida. Libera algo de espacio para seguir jugando tranquilo.",
+    espaceBouton: "Entendido",
+    // Exportación de partida (Tarea 10): botón por emplazamiento en
+    // PartiesModal.tsx. Sin contraparte de importación en este proyecto — el
+    // jugador archiva, no restaura.
+    exporterPartie: "Exportar esta partida",
   },
   deblocage: {
     long: {
@@ -827,11 +856,11 @@ export const es: DictionnaireUI = {
   bazar: {
     titre: "El Bazar",
     lotPieces: "{n} piezas · {categorie}",
-    prixJetons: "{n} fichas",
-    prixJetonUn: "{n} ficha",
-    vendu: "Vendido — vuelve el lunes",
-    manqueJetons: "Te faltan {n} fichas",
-    manqueJetonUn: "Te falta {n} ficha",
+    prixJetons: "{n} Bazarcoins",
+    prixJetonUn: "{n} Bazarcoin",
+    vendu: "Vendido",
+    manqueJetons: "Te faltan {n} Bazarcoins",
+    manqueJetonUn: "Te falta {n} Bazarcoin",
     sortir: "Salir del Bazar",
     detailArticle: "Detalle del artículo",
     prixMot: "Precio",

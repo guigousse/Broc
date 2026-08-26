@@ -44,25 +44,70 @@ export const BAZAR_LAYOUT = {
     // montant droit de la bibliothèque, ce qui ne cache aucune marchandise et
     // se lit comme de la profondeur dans une boutique encombrée.
     //
-    // `bottom` 20,5 : DEVANT la plinthe (~25 %), pas dessus. Une borne a
-    // ~75 cm de profondeur, son pied avant descend sous la ligne du mur —
-    // exactement ce que fait le comptoir, base à 21 % pour un mur à 25 %.
-    borne: { left: 61.2, bottom: 20.5, width: 33.2 },
+    // `bottom` 19,2 : DEVANT la plinthe, pas dessus. Une borne a ~75 cm de
+    // profondeur, son pied avant descend sous la ligne du mur — exactement
+    // ce que fait le comptoir, base à 21 % pour un mur à 25 %.
+    //
+    // 19,2 et non 20,5 (retour device 2026-08-26) : le dessin est vu en
+    // légère plongée, son coin ARRIÈRE droit remonte de ~10 % de la hauteur
+    // du dessin par rapport au pied avant (alpha de `borne-arcade.webp` :
+    // y=1049 devant, y=949 au fond, sur 1053). À 20,5 ce coin retombait 2 px
+    // AU-DESSUS du bas de la plinthe — mesuré à 24 % sur le fond peint — et
+    // la borne se lisait comme posée SUR la plinthe. À 19,2 il passe ~7 px
+    // dessous : le plancher se voit derrière le meuble, qui repose dessus.
+    // Le glissement vaut 1,3 unité, soit ~9,5 px sur un iPhone 12.
+    borne: { left: 61.2, bottom: 19.2, width: 33.2 },
     // Zone centre (100..200vw) — la grille de six cases, MESURÉE sur le fond
     // et non estimée : les arêtes des deux planches ressortent à 65,9 % et
     // 55,9 % de la hauteur, et la planche court de 114 à 186 vw.
-    // Les trois colonnes font 22 vw de large sur un pas de 24 vw : elles
-    // occupent 114→136, 138→160 et 162→184. Les 2 vw qui séparent deux
-    // colonnes sont l'écart qui les distingue, et les 2 vw restants après 184
-    // sont la marge en bout de planche.
-    case1: { left: 114.0, bottom: 66.0, width: 22.0 },
-    case2: { left: 138.0, bottom: 66.0, width: 22.0 },
-    case3: { left: 162.0, bottom: 66.0, width: 22.0 },
+    //
+    // Les six cases ont TOUTES été reprises à la souris par l'auteur le
+    // 2026-08-22, en deux passes qui ont fusionné ici : celle de la borne
+    // d'arcade a recalé les cases 4 et 6 de quelques dixièmes, celle de la
+    // vitrine a rétréci les trois cases du haut.
+    //
+    // La planche du HAUT : colonnes resserrées de 22 à 20 vw, pas élargi à
+    // ~24,2. Le motif est la TAILLE, pas la position — à 22 vw les trois
+    // objets se touchaient presque, et une vitrine de boutique demande que
+    // chaque pièce respire. Rétrécir les cases élargit d'autant le vide entre
+    // elles.
+    //
+    // La planche du BAS garde les colonnes de 22 vw, à quelques dixièmes près
+    // sur les cases 4 et 6.
+    //
+    // Les trois cases d'une planche visent le MÊME `bottom` : elles reposent
+    // sur une seule planche peinte, horizontale. Le test le garde à l'unité
+    // près — il absorbe les dixièmes qu'un glisser-déposer laisse derrière lui
+    // (case4 à 55,8), mais pas un objet qui dériverait sur l'autre planche.
+    case1: { left: 114.8, bottom: 66.0, width: 20.0 },
+    case2: { left: 139.6, bottom: 66.0, width: 20.0 },
+    case3: { left: 163.2, bottom: 66.0, width: 20.0 },
     case4: { left: 117.4, bottom: 55.8, width: 22.0 },
     case5: { left: 138.0, bottom: 56.0, width: 22.0 },
     case6: { left: 160.5, bottom: 56.0, width: 22.0 },
-    // La bande de mur nu entre le plateau du comptoir et la première planche.
-    vendeur: { left: 138.0, bottom: 40.0, width: 24.0 },
+    // Le tenancier, dans la bande de mur entre le plateau du comptoir et la
+    // première planche. MESURÉ sur le fond, pas posé à l'estime :
+    //  · `bottom` 38,8 % = l'arête ARRIÈRE du plateau (y ≈ 940 sur 1536). Le
+    //    bas du buste s'y confond, ce qui le met DERRIÈRE le comptoir ; à 40 %
+    //    il flottait 20 px au-dessus.
+    //  · `left` et `width` sont ceux calés à la souris par l'auteur.
+    //  · `bottom` 38 % vaut y = 952 sur le fond : les DOIGTS s'y posent, au
+    //    milieu du plateau, qui court de 937 (arête arrière) à 963 (arête
+    //    avant) — 26 px de profondeur mesurés sur `fond-bazar.webp`, et toute
+    //    la perspective tient là-dedans.
+    //
+    //    Ce réglage, posé à la souris par l'auteur, tombe exactement juste :
+    //    la coupe du buste (faite dans l'illustration même, cf.
+    //    `scripts/_decouper-tenancier.mjs`, 15 px de fond au-dessus des
+    //    doigts) atterrit à y = 937,3, c'est-à-dire SUR l'arête arrière au
+    //    tiers de pixel près. Le buste passe donc derrière le bois pendant que
+    //    les mains restent devant.
+    //
+    //    ⚠ Les trois nombres sont solidaires de la coupe : changer `width`
+    //    change la hauteur affichée, donc l'échelle, donc la position de la
+    //    coupe. Retoucher `bottom` seul déplace l'ensemble sans casser
+    //    l'alignement ; retoucher `width` demande de recalculer `COUPE_Y`.
+    vendeur: { left: 122.0, bottom: 38.0, width: 31.4 },
     // Zone droite (200..300vw) — réservé et sortie.
     table: { left: 209.0, bottom: 18.0, width: 44.0 },
     sortie: { left: 270.0, bottom: 20.0, width: 28.0 },
@@ -83,5 +128,11 @@ export const CLES_BAZAR = Object.keys(BAZAR_LAYOUT.objets) as BazarObjetKey[];
  */
 export const CLES_LOTS: BazarObjetKey[] = ["case4", "case5", "case6"];
 
-/** L'objet de la semaine trône au milieu de la planche du HAUT. */
-export const CLE_VITRINE: BazarObjetKey = "case2";
+/**
+ * L'étagère du HAUT porte les trois objets uniques, un par gamme de prix
+ * (cf. `GAMMES_BAZAR`) : la trouvaille modeste à gauche, la vitrine de la
+ * semaine au milieu, la pièce de caractère à droite. L'ordre des clés EST
+ * l'ordre des index de `EtalBazar.articles` — le prix monte le long de la
+ * planche.
+ */
+export const CLES_ARTICLES: BazarObjetKey[] = ["case1", "case2", "case3"];

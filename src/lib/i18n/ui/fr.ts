@@ -111,7 +111,7 @@ export const fr = {
     navigationPrincipale: "Navigation principale",
     energie: "Énergie",
     caisse: "Caisse",
-    jetons: "Jetons",
+    jetons: "Bazarcoins",
     rechargerEnergie: "Recharger l'énergie",
     montantEuros: "{valeur} €",
     niveau: "Niveau",
@@ -663,13 +663,24 @@ export const fr = {
     objetsDemandes: "Objets demandés ({rempli}/{total})",
     etatMin: "état min : {etat}",
     recompenseLabel: "Récompense",
-    // Jetons de gains (bandeau récompense, lettre, grand livre).
+    // Le GRAND LIVRE, où une ligne de crédit se lit contre des lignes de
+    // débit : là, et là seulement, le « + » porte du sens.
     jetonArgent: "+{n} €",
     jetonXp: "+{n} XP",
     jetonEnergie: "+{n} ⚡",
-    jetonBazarUn: "+{n} jeton",
-    jetonBazarN: "+{n} jetons",
-    recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie, {jetons} jetons",
+    // Les PASTILLES du carnet, SANS « + » : la plaque s'intitule déjà
+    // « Récompense » et rien n'y est jamais retiré — le signe n'apprend rien
+    // et vole la place au montant, qu'on veut gros. Le Bazarcoin y sort en
+    // chiffre nu, son signe bleu étant dessiné à côté.
+    gainArgent: "{n} €",
+    gainXp: "{n} XP",
+    gainEnergie: "{n} ⚡",
+    gainBazar: "{n}",
+    // Le GRAND LIVRE, qui est du texte pur : aucun signe dessiné n'y a sa
+    // place, le mot doit donc rester écrit.
+    jetonBazarUn: "+{n} Bazarcoin",
+    jetonBazarN: "+{n} Bazarcoins",
+    recompenseAria: "Récompense : {argent} €, {xp} XP, {energie} énergie, {jetons} Bazarcoins",
     livrer: "Livrer",
     livrerProgress: "Livrer ({rempli}/{total})",
     // En-tête de section rétractable (refonte carnet SP3) : le compteur ne
@@ -765,7 +776,7 @@ export const fr = {
     atelierPleinUn: "Atelier plein ({enCours}/{capacite} slot).",
     atelierPleinN: "Atelier plein ({enCours}/{capacite} slots).",
     competenceReparerManquante: "Vous n'avez pas la compétence Réparer — {categorie}.",
-    bazarPasAssezDeJetons: "Pas assez de jetons",
+    bazarPasAssezDeJetons: "Pas assez de Bazarcoins",
     bazarArticleIndisponible: "Article indisponible",
     manquePiecesUn: "Manque {n} pièce {categorie}.",
     manquePiecesN: "Manque {n} pièces {categorie}.",
@@ -794,6 +805,28 @@ export const fr = {
     sauvegardeImpossible:
       "Sauvegarde impossible — stockage plein ou indisponible. Ta progression risque d'être perdue.",
     sauvegardeRetablie: "Sauvegarde rétablie.",
+    // Bandeau + modale d'escalade (Tâche 8) : le toast `sauvegardeImpossible`
+    // ci-dessus ne s'affiche plus jamais — un échec persistant a désormais
+    // un signal qui ne s'efface pas tout seul.
+    sauvegardeBandeau: "Sauvegarde impossible — ta progression n'est pas enregistrée.",
+    sauvegardeModaleTitre: "Ta progression n'est pas sauvegardée",
+    sauvegardeModaleDepuisUn: "Depuis 1 minute.",
+    sauvegardeModaleDepuisN: "Depuis {minutes} minutes.",
+    sauvegardeModaleDisquePlein:
+      "Le stockage de ton téléphone est plein. Libère de la place pour que ta partie soit enregistrée.",
+    sauvegardeModaleIo:
+      "Le stockage n'est pas disponible en ce moment. Ta partie n'est pas enregistrée.",
+    sauvegardeModaleBouton: "J'ai compris",
+    // Avertissement préventif d'espace disque (Tâche 9) : avant que la
+    // sauvegarde échoue, pas après (cf. AvertissementEspace.tsx).
+    espaceTitre: "Le stockage de ton téléphone est presque plein",
+    espaceCorps:
+      "BROC risque de ne plus pouvoir enregistrer ta partie. Libère un peu de place pour continuer sereinement.",
+    espaceBouton: "J'ai compris",
+    // Export de sauvegarde (Tâche 10) : bouton par emplacement dans
+    // PartiesModal.tsx. Pas de pendant « importer » dans ce chantier — le
+    // joueur archive, il ne restaure pas.
+    exporterPartie: "Exporter cette partie",
   },
   // Conditions de déblocage des brocantes (deblocage.ts) : rendues à l'affichage
   // (panorama). `long` = description complète, `court` = avec progression.
@@ -862,11 +895,11 @@ export const fr = {
   bazar: {
     titre: "Le Bazar",
     lotPieces: "{n} pièces · {categorie}",
-    prixJetons: "{n} jetons",
-    prixJetonUn: "{n} jeton",
-    vendu: "Vendu — de retour lundi",
-    manqueJetons: "Il vous manque {n} jetons",
-    manqueJetonUn: "Il vous manque {n} jeton",
+    prixJetons: "{n} Bazarcoins",
+    prixJetonUn: "{n} Bazarcoin",
+    vendu: "Vendu",
+    manqueJetons: "Il vous manque {n} Bazarcoins",
+    manqueJetonUn: "Il vous manque {n} Bazarcoin",
     sortir: "Sortir du Bazar",
     detailArticle: "Détail de l'article",
     prixMot: "Prix",

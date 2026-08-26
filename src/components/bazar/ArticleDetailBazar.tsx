@@ -3,22 +3,23 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
+import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { CategorieObjet } from "@/types/game";
 
 /**
  * L'article présenté en grand. Deux genres, parce que l'étal en vend deux :
- * l'objet du catalogue de la semaine, et les lots de pièces de restauration —
- * qui ne sont PAS des objets (aucun `templateId`, aucune illustration) et se
- * représentent par leur engrenage.
+ * les objets du catalogue de l'étagère du haut (une gamme de prix par case),
+ * et les lots de pièces de restauration — qui ne sont PAS des objets (aucun
+ * `templateId`, aucune illustration) et se représentent par leur engrenage.
  *
- * `categorie` peut être `null` du côté vitrine : un `templateId` retiré du
+ * `categorie` peut être `null` du côté objet : un `templateId` retiré du
  * catalogue reste en vente, mais on ne sait alors plus rien de lui. Même
  * traitement que sur l'étagère — aucun visuel, l'article reste achetable.
  */
 export type ArticleDetail =
   | {
-      genre: "vitrine";
+      genre: "objet";
       templateId: string;
       categorie: CategorieObjet | null;
       libelle: string;
@@ -142,6 +143,9 @@ const prixLabel: CSSProperties = {
 };
 
 const prixValue: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 5,
   fontFamily: "var(--font-display)",
   fontSize: 14,
   color: "var(--forest-800)",
@@ -260,7 +264,7 @@ export function ArticleDetailBazar({
     >
       <div style={card}>
         <div style={previewWrap}>
-          {article.genre === "vitrine" ? (
+          {article.genre === "objet" ? (
             <div style={stickerBox}>
               {article.categorie ? (
                 // Plein format ici, PAS `thumb` : la vignette 384 px suffit à
@@ -313,6 +317,11 @@ export function ArticleDetailBazar({
                 color: horsDePortee ? "var(--ink-300)" : prixValue.color,
               }}
             >
+              {/* La fiche a la place, contrairement aux plaques de l'étagère :
+                  elle écrit le mot ET montre la pièce. C'est ici que le joueur
+                  apprend que l'une désigne l'autre — sur l'étal, la pièce
+                  seule doit ensuite lui suffire. */}
+              <BazarcoinIcon size={16} surClair />
               {tr(prix > 1 ? d.bazar.prixJetons : d.bazar.prixJetonUn, { n: prix })}
             </span>
           </div>

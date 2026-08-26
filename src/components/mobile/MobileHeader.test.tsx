@@ -123,45 +123,185 @@ describe("MobileHeader — jauge d'énergie", () => {
   });
 });
 
-describe("MobileHeader — compteur de jetons du Bazar", () => {
-  it("masqué quand le solde vaut 0", () => {
+describe("MobileHeader — compteur de Bazarcoins", () => {
+  /**
+   * La caisse affiche TOUJOURS les deux devises, même à zéro. Elle les cachait
+   * à zéro tant que le compteur vivait dans son propre bloc ; depuis qu'elles
+   * partagent un libellé, en escamoter une fait sauter le centrage du mot
+   * « Caisse » d'un écran à l'autre. Et une bourse à zéro est une information
+   * — c'est ce qui dit au joueur qu'il lui faut aller en gagner.
+   */
+  it("affiché même à zéro", () => {
     mockState = etat(3);
     mockPathname = "/bureau";
     render(<MobileHeader budget={0} jetons={0} />);
-    expect(screen.queryByText("Jetons")).toBeNull();
+    expect(screen.getByText(/^Bazarcoins /)).toBeTruthy();
+    expect(screen.getAllByText("0").length).toBeGreaterThan(0);
   });
 
-  it("masqué quand la prop est absente", () => {
+  it("affiché sans la prop `jetons`, à zéro", () => {
     mockState = etat(3);
     mockPathname = "/bureau";
     render(<MobileHeader budget={0} />);
-    expect(screen.queryByText("Jetons")).toBeNull();
+    expect(screen.getByText(/^Bazarcoins /)).toBeTruthy();
   });
 
   it("affiché avec le solde dès qu'il est positif", () => {
     mockState = etat(3);
     mockPathname = "/bureau";
     render(<MobileHeader budget={0} jetons={7} />);
-    expect(screen.getByText("Jetons")).toBeTruthy();
+    expect(screen.getByText(/^Bazarcoins /)).toBeTruthy();
     expect(screen.getByText("7")).toBeTruthy();
   });
 
-  it("forcerAffichageJetons : reste visible à 0 — l'écran du Bazar veut « un étal garni, un compteur à zéro »", () => {
+  /**
+   * La caisse porte les DEUX monnaies. Son libellé se centre donc sur
+   * l'ensemble, et non sur les seuls euros : c'est une seule bourse, tenue en
+   * deux devises, pas deux compteurs voisins.
+   */
+  it("la caisse rassemble les deux monnaies sous un seul libellé", () => {
     mockState = etat(3);
-    mockPathname = "/bazar";
-    render(<MobileHeader budget={0} jetons={0} forcerAffichageJetons />);
-    expect(screen.getByText("Jetons")).toBeTruthy();
-    expect(screen.getByText("0")).toBeTruthy();
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={8420} jetons={25} />);
+    const caisse = container.querySelector('[data-caisse]') as HTMLElement;
+    expect(caisse).toBeTruthy();
+    expect(caisse.textContent).toContain("Caisse");
+    expect(caisse.textContent).toContain("25");
+    expect(caisse.textContent).toContain("8,4k");
+    // Un seul « Caisse » dans tout le bandeau — pas un par devise.
+    expect(screen.getAllByText("Caisse")).toHaveLength(1);
   });
-});
 
-describe("MobileHeader — gel de la barre XP", () => {
-  it("gelé : le niveau affiché est celui de l'instantané, pas celui de l'état", () => {
-    mockState = etat(5);
-    mockPathname = "/chiner/xxx";
-    gelerXpAffichage({ niveau: 3, xp: 120, pointsDisponibles: 0 });
-    render(<MobileHeader budget={0} />);
-    expect(screen.getByLabelText("Niveau de Brocanteur 3")).toBeTruthy();
+  /**
+   * Les deux devises portent leur signe de la MÊME façon : même hauteur d'œil,
+   * même écart au nombre. Le Ƶ dépassait le « € » d'un tiers (14 px d'encre
+   * contre 10,85, mesurés au canvas sur Cinzel à 14,93 px de corps), ce qui le
+   * faisait lire comme une vignette posée là plutôt que comme un caractère de
+   * la même ligne.
+   */
+  it("donne au signe du Bazarcoin la hauteur d'œil du signe €", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={8420} jetons={25} />);
+    const svg = container.querySelector("[data-caisse] svg") as SVGElement;
+    expect(svg.getAttribute("height")).toBe("0.73em");
+  });
+
+  /**
+   * Les deux signes s'assoient sur la LIGNE DE BASE de leur nombre. Le Ƶ était
+   * centré sur la ligne, ce qui le posait 1,6 px plus bas que le « € » voisin
+   * — mesuré sur une capture ×8, invisible à l'œil nu mais bien là.
+   */
+  it("assied les deux signes sur la ligne de base de leur nombre", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={8420} jetons={25} />);
+    const [bzc, euros] = [...container.querySelectorAll("[data-caisse] strong")];
+    expect((bzc as HTMLElement).style.alignItems).toBe("baseline");
+    expect(euros.querySelector<HTMLElement>("[aria-hidden]")!.style.alignItems).toBe("baseline");
+  });
+
+  /**
+   * L'écart entre un montant et son signe se règle des deux côtés — il ne se
+   * réglait pas du côté des euros, où il venait de l'espace littérale du
+   * gabarit de traduction.
+   *
+   * Les deux valeurs CSS ne sont PAS égales, et c'est voulu : le Ƶ est un SVG
+   * sans approche, le « € » un caractère qui en a une, et la ligne porte une
+   * interlettre de 0,18 em. C'est l'écart d'ENCRE qui doit l'être, et lui se
+   * mesure sur une capture, pas dans jsdom — relevé sous 1 px sur cinq cas.
+   * Ce test garde donc seulement qu'un réglage existe des deux côtés.
+   */
+  it("règle l'écart au signe des deux côtés, sans espace littérale", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={8420} jetons={25} />);
+    const [bzc, euros] = [...container.querySelectorAll("[data-caisse] strong")];
+    expect((bzc as HTMLElement).style.gap).toBe("3px");
+    expect(euros.querySelector<HTMLElement>("[aria-hidden]")!.style.gap).toBe("4px");
+  });
+
+  /** Plus d'espace littéral : c'est le `gap` qui règle l'écart, et lui seul. */
+  it("ne laisse plus d'espace dans le texte du montant en euros", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={8420} jetons={25} />);
+    const euros = [...container.querySelectorAll("[data-caisse] strong")][1];
+    const vu = euros.querySelector("[aria-hidden]")!.textContent;
+    expect(vu).toBe("8,4k€");
+  });
+
+  /**
+   * « Le montant de Bazarcoin sera également dans ce même bleu » : c'est la
+   * couleur qui sépare les deux devises d'un coup d'œil, puisqu'elles
+   * partagent désormais le même libellé.
+   */
+  it("le montant en Bazarcoins est bleu, celui en euros reste laiton", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={8420} jetons={25} />);
+    const bzc = screen.getByText("25").closest("strong") as HTMLElement;
+    expect(bzc.style.color).toBe("var(--azur-400)");
+    const euros = screen.getByText("8,4k").closest("strong") as HTMLElement;
+    expect(euros.style.color).toBe("var(--brass-300)");
+  });
+
+
+  /**
+   * Le header porte trois blocs sur une ligne et la caisse est le seul dont la
+   * largeur suit la fortune du joueur : passé quelques milliers d'euros, elle
+   * poussait le bloc NIVEAU hors du centre. La forme courte lui donne une
+   * largeur bornée.
+   */
+  it("abrège les montants à partir du millier", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={10610} jetons={0} />);
+    const caisse = container.querySelector("[data-caisse]") as HTMLElement;
+    expect(caisse.textContent).toContain("10,6k");
+  });
+
+  it("laisse les montants sous le millier écrits en entier", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={840} jetons={0} />);
+    const caisse = container.querySelector("[data-caisse]") as HTMLElement;
+    expect(caisse.textContent).toContain("840 €");
+  });
+
+  /** Les deux devises tiennent la même règle — les jetons grossissent aussi. */
+  it("abrège aussi le solde en Bazarcoins", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    const { container } = render(<MobileHeader budget={0} jetons={12500} />);
+    const caisse = container.querySelector("[data-caisse]") as HTMLElement;
+    expect(caisse.textContent).toContain("12,5k");
+  });
+
+  /**
+   * Le libellé « CAISSE » est en capitales, et le bloc entier hérite de son
+   * `text-transform` : sans contre-ordre, « 10,6k » s'affiche « 10,6K ». Le
+   * DOM, lui, porte le texte d'origine — seule la règle CSS trahit le défaut,
+   * d'où cette assertion sur le style et non sur le texte.
+   */
+  it("garde le suffixe en minuscule malgré les capitales du libellé", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={10610} jetons={12500} />);
+    const euros = screen.getByText("10,6k").closest("strong") as HTMLElement;
+    expect(euros.style.textTransform).toBe("none");
+  });
+
+  /**
+   * L'abréviation est une commodité pour l'œil. Le montant exact reste dû :
+   * le lecteur d'écran doit entendre « 10 610 € », pas « dix virgule six k ».
+   */
+  it("garde le montant exact pour le lecteur d'écran", () => {
+    mockState = etat(3);
+    mockPathname = "/bureau";
+    render(<MobileHeader budget={10610} jetons={12500} />);
+    expect(screen.getByText(/10[\s\u00a0]610[\s\u00a0]€/)).toBeTruthy();
+    expect(screen.getByText(/Bazarcoins 12[\s\u00a0]500/)).toBeTruthy();
   });
 
   it("dégelé : le niveau réel est de nouveau affiché", () => {

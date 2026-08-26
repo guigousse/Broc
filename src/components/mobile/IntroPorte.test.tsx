@@ -62,11 +62,11 @@ describe("IntroPorte — contemplation puis iris (plus de zoom)", () => {
     const onFini = vi.fn();
     render(<IntroPorte onFini={onFini} />);
     act(() => vi.advanceTimersByTime(600));
-    expect(lireFlagIris()).toBe(false);
+    expect(lireFlagIris()).toBe(null);
 
     act(() => irisOnNoir!());
 
-    expect(lireFlagIris()).toBe(true);
+    expect(lireFlagIris()).toBe("long");
     expect(onFini).toHaveBeenCalledTimes(1);
   });
 
@@ -78,7 +78,7 @@ describe("IntroPorte — contemplation puis iris (plus de zoom)", () => {
       screen.getByRole("button", { name: "Passer l'introduction" }),
     );
 
-    expect(lireFlagIris()).toBe(true);
+    expect(lireFlagIris()).toBe("long");
     expect(onFini).toHaveBeenCalledTimes(1);
   });
 

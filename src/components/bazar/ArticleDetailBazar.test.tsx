@@ -11,7 +11,7 @@ import { ArticleDetailBazar, type ArticleDetail } from "./ArticleDetailBazar";
 afterEach(cleanup);
 
 const VITRINE: ArticleDetail = {
-  genre: "vitrine",
+  genre: "objet",
   templateId: "jx.jeu_magnatimmo_annees_80",
   categorie: "Jeux & Loisirs",
   libelle: "Jeu Magnatimmo années 80",
@@ -60,7 +60,7 @@ describe("ArticleDetailBazar", () => {
   it("l'objet de la vitrine : sa vignette EN GRAND, son nom, son prix", () => {
     monter();
     expect(screen.getByText("Jeu Magnatimmo années 80")).toBeTruthy();
-    expect(screen.getByText("8 jetons")).toBeTruthy();
+    expect(screen.getByText("8 Bazarcoins")).toBeTruthy();
     const img = screen.getByRole("dialog").querySelector("img") as HTMLImageElement;
     // Plein format, PAS la vignette 384 px : ici l'objet occupe 75 vw.
     expect(img.getAttribute("src")).toBe(
@@ -73,7 +73,7 @@ describe("ArticleDetailBazar", () => {
   it("un lot de pièces : son engrenage EN GRAND, son libellé, son prix", () => {
     monter(LOT);
     expect(screen.getByText("5 pièces · Musique")).toBeTruthy();
-    expect(screen.getByText("3 jetons")).toBeTruthy();
+    expect(screen.getByText("3 Bazarcoins")).toBeTruthy();
     // Aucun visuel d'objet : un lot n'est pas une pièce du catalogue.
     expect(screen.getByRole("dialog").querySelector("img")).toBeNull();
     // Le badge de quantité de l'engrenage.
@@ -82,7 +82,7 @@ describe("ArticleDetailBazar", () => {
 
   it("template disparu du catalogue : la fiche reste, sans visuel, et achète", () => {
     const { onAcheter } = monter({
-      genre: "vitrine",
+      genre: "objet",
       templateId: "zz.template_disparu",
       categorie: null,
       libelle: "zz.template_disparu",
@@ -95,7 +95,7 @@ describe("ArticleDetailBazar", () => {
 
   it("bourse suffisante : le prix garde l'encre de la carte", () => {
     monter(VITRINE, 99);
-    const prix = screen.getByText("8 jetons") as HTMLElement;
+    const prix = screen.getByText("8 Bazarcoins") as HTMLElement;
     expect(prix.style.color).toBe("var(--forest-800)");
   });
 
@@ -130,13 +130,13 @@ describe("ArticleDetailBazar", () => {
       fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
       expect(onAcheter).not.toHaveBeenCalled();
       expect(onClose).not.toHaveBeenCalled();
-      expect(screen.getByRole("status").textContent).toBe("Il vous manque 5 jetons");
+      expect(screen.getByRole("status").textContent).toBe("Il vous manque 5 Bazarcoins");
     });
 
     it("le singulier du manque est respecté", () => {
       monter(VITRINE, 7);
       fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
-      expect(screen.getByText("Il vous manque 1 jeton")).toBeTruthy();
+      expect(screen.getByText("Il vous manque 1 Bazarcoin")).toBeTruthy();
     });
 
     // Même règle que sur l'étiquette de l'étagère, et elle a changé le
@@ -144,7 +144,7 @@ describe("ArticleDetailBazar", () => {
     // chiffre qu'on cherche justement à lire.
     it("le prix s'éteint, il n'est pas barré", () => {
       monter(VITRINE, 3);
-      const prix = screen.getByText("8 jetons") as HTMLElement;
+      const prix = screen.getByText("8 Bazarcoins") as HTMLElement;
       expect(prix.style.color).toBe("var(--ink-300)");
       expect(prix.style.textDecoration).not.toBe("line-through");
     });
@@ -231,7 +231,7 @@ describe("ArticleDetailBazar", () => {
       // Bourse courte : le joueur voit d'abord le chiffre qui manque…
       const { rerender } = monter(VITRINE, 3);
       fireEvent.click(screen.getByRole("button", { name: "Acheter" }));
-      expect(screen.getByRole("status").textContent).toBe("Il vous manque 5 jetons");
+      expect(screen.getByRole("status").textContent).toBe("Il vous manque 5 Bazarcoins");
       // … puis la bourse suffit, et c'est le jeu qui refuse.
       rerender(
         <ArticleDetailBazar

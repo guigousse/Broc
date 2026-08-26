@@ -5,6 +5,8 @@ import { LangueProvider } from "@/lib/i18n/LangueContext";
 import { TabBar } from "@/components/mobile/TabBar";
 import { LevelUpOverlay } from "@/components/mobile/LevelUpOverlay";
 import { TutorielBanniere } from "@/components/mobile/tutoriel/TutorielBanniere";
+import { BandeauSauvegarde } from "@/components/mobile/BandeauSauvegarde";
+import { AvertissementEspace } from "@/components/mobile/AvertissementEspace";
 import { SwipePager } from "@/components/mobile/SwipePager";
 import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
 import { AdMobBootstrap } from "@/components/mobile/AdMobBootstrap";
@@ -90,6 +92,8 @@ export default function RootLayout({
                 <TabBar />
                 <LevelUpOverlay />
                 <TutorielBanniere />
+                <BandeauSauvegarde />
+                <AvertissementEspace />
                 <GlobalVinylAmbiance />
                 <AdMobBootstrap />
                 <IapBootstrap />

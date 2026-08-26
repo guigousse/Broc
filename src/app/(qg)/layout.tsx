@@ -29,6 +29,7 @@ import {
 } from "@/lib/storage/safeLocalStorage";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { IrisArrivee } from "@/components/mobile/IrisTransition";
+import { usePassageIris } from "@/components/mobile/usePassageIris";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import {
   UnifiedPanorama,
@@ -79,10 +80,9 @@ import {
   SEQUENCES_TUTORIEL,
   type DialogueSequence,
 } from "@/data/dialogues";
-import { VITRINE_PREP_ID } from "@/lib/vitrinePrep";
 import { stockageEstPlein } from "@/lib/stockage";
-import { energieCourante } from "@/lib/energie";
 import { bazarEstOuvert, joursAvantOuvertureBazar } from "@/lib/bazar/ouverture";
+import { destinationChiner, destinationEtaler } from "@/lib/porte";
 import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
 import { indexJourSemaine } from "@/lib/meteo";
 import { PRIX_GAZETTE } from "@/lib/tendances";
@@ -418,6 +418,9 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // Tous les hooks du composant DOIVENT précéder ce return (rules-of-hooks,
   // désormais vérifié par `npm run lint:hooks`).
   const editEnabled = useQgEditEnabled();
+  // Départ vers le Bazar : iris court, puis navigation. Hook, donc ici — au
+  // même titre que le précédent, AVANT tout return anticipé.
+  const { overlay: irisBazar, partirVers } = usePassageIris();
 
   const etape = state?.tutorielEtape;
 
@@ -762,7 +765,6 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           playDoorClose();
           setPorteOuverte(false);
         }}
-        vitrineActive={!!state.vitrine}
         chinerDesactive={stockageEstPlein(state)}
         tutoChiner={
           etape === "aller-chiner" ||
@@ -784,40 +786,44 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
           playDoorClose();
           setPorteOuverte(false);
           // Pas d'énergie → la machine pope avec le bandeau d'alerte.
-          if (energieCourante(state, tempsConfiance() ?? Date.now()) < 1) {
+          const ou = destinationChiner(state, tempsConfiance() ?? Date.now());
+          if (ou.type === "energieInsuffisante") {
             setAlerteEnergie(true);
             return;
           }
-          router.push("/chiner");
+          router.push(ou.href);
         }}
         onVitrine={() => {
           playDoorClose();
           setPorteOuverte(false);
           // Flow étaler : packing + pricing en prep, puis sélection brocante,
-          // puis journée. Reprise :
-          //   - vitrine attachée à une vraie brocante → reprise de la journée.
-          //   - vitrine en prep (ou pas de vitrine) → /vitrine/prep.
-          const v = state.vitrine;
-          if (v && v.brocanteId !== VITRINE_PREP_ID) {
-            // Journée déjà commencée (énergie déjà consommée) : jamais bloquée.
-            router.push(`/vitrine/${v.brocanteId}/journee`);
-            return;
-          }
-          // Pas d'énergie → la machine pope avec le bandeau d'alerte.
-          if (energieCourante(state, tempsConfiance() ?? Date.now()) < 1) {
+          // puis journée. La règle de reprise — et le fait qu'une journée déjà
+          // commencée ne repaie pas son énergie — vit dans `lib/porte`, avec
+          // ses tests : la porte du Bazar propose les mêmes sorties, et deux
+          // copies auraient fini par diverger.
+          const ou = destinationEtaler(state, tempsConfiance() ?? Date.now());
+          if (ou.type === "energieInsuffisante") {
             setAlerteEnergie(true);
             return;
           }
-          router.push("/vitrine/prep");
+          router.push(ou.href);
         }}
         bazarOuvert={bazarEstOuvert(state)}
         joursAvantBazar={joursAvantOuvertureBazar(state)}
         onBazar={() => {
+          // Deux sons de porte, et c'est voulu : celle du bureau qu'on referme
+          // derrière soi ici, le carillon de la boutique à l'arrivée. La
+          // fermeture d'iris les sépare.
           playDoorClose();
           setPorteOuverte(false);
-          router.push("/bazar");
+          partirVers("/bazar");
         }}
       />
+
+      {/* Fermeture d'iris du départ vers le Bazar. La réouverture, elle, est
+          montée par `QgLayout` (plus bas) : elle doit couvrir l'early-return
+          d'hydratation de ce composant-ci. */}
+      {irisBazar}
 
       {/* Machine à énergie popée en alerte (sortie refusée faute d'énergie). */}
       {alerteEnergie && (
@@ -1062,6 +1068,8 @@ export default function QgLayout({
           de QgLayoutInner pour couvrir aussi son early-return « ouverture
           du local… » pendant l'hydratation, et ne dépendre d'aucun état de
           jeu. Sans flag (refresh, lien direct), ne rend rien. */}
+      {/* Le flag dit AUSSI laquelle des deux variantes rejouer : longue
+          depuis l'écran-titre, courte au retour du Bazar. */}
       <IrisArrivee imageSrc="/qg/fond-cabinet.webp" />
     </>
   );

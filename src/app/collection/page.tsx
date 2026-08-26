@@ -167,7 +167,11 @@ export default function CollectionPage() {
         <StickyTop>
           <PageHeaderBar
             title={d.chrome.onglets.collection}
-            align="center"
+            // Titre à GAUCHE : la grille centrée n'accordait qu'un tiers de
+            // la largeur à la valeur de la collection, qui s'y tronquait
+            // (retour device 2026-08-26). En mode « left », elle prend toute
+            // la place restante à droite.
+            align="left"
             right={
               <div
                 data-tuto-coach="collection-valeur"

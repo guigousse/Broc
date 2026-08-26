@@ -108,7 +108,7 @@ export const el: DictionnaireUI = {
     navigationPrincipale: "Κύρια πλοήγηση",
     energie: "Ενέργεια",
     caisse: "Ταμείο",
-    jetons: "Μάρκες",
+    jetons: "Bazarcoins",
     rechargerEnergie: "Επαναφόρτιση ενέργειας",
     montantEuros: "{valeur} €",
     niveau: "Επίπεδο",
@@ -658,9 +658,19 @@ export const el: DictionnaireUI = {
     jetonArgent: "+{n} €",
     jetonXp: "+{n} XP",
     jetonEnergie: "+{n} ⚡",
-    jetonBazarUn: "+{n} μάρκα",
-    jetonBazarN: "+{n} μάρκες",
-    recompenseAria: "Ανταμοιβή: {argent} €, {xp} XP, {energie} ενέργεια, {jetons} μάρκες",
+    // Les PASTILLES du carnet, SANS « + » : la plaque s'intitule déjà
+    // « Récompense » et rien n'y est jamais retiré — le signe n'apprend rien
+    // et vole la place au montant, qu'on veut gros. Le Bazarcoin y sort en
+    // chiffre nu, son signe bleu étant dessiné à côté.
+    gainArgent: "{n} €",
+    gainXp: "{n} XP",
+    gainEnergie: "{n} ⚡",
+    gainBazar: "{n}",
+    // Le GRAND LIVRE, qui est du texte pur : aucun signe dessiné n'y a sa
+    // place, le mot doit donc rester écrit.
+    jetonBazarUn: "+{n} Bazarcoin",
+    jetonBazarN: "+{n} Bazarcoins",
+    recompenseAria: "Ανταμοιβή: {argent} €, {xp} XP, {energie} ενέργεια, {jetons} Bazarcoins",
     livrer: "Παράδοση",
     livrerProgress: "Παράδοση ({rempli}/{total})",
     sectionCompteur: "({faits}/{total})",
@@ -751,7 +761,7 @@ export const el: DictionnaireUI = {
     atelierPleinUn: "Το εργαστήριο είναι γεμάτο ({enCours}/{capacite} θέση).",
     atelierPleinN: "Το εργαστήριο είναι γεμάτο ({enCours}/{capacite} θέσεις).",
     competenceReparerManquante: "Δεν έχεις τη δεξιότητα Επισκευή — {categorie}.",
-    bazarPasAssezDeJetons: "Δεν έχετε αρκετές μάρκες",
+    bazarPasAssezDeJetons: "Δεν έχετε αρκετά Bazarcoins",
     bazarArticleIndisponible: "Μη διαθέσιμο είδος",
     manquePiecesUn: "Λείπει {n} κομμάτι {categorie}.",
     manquePiecesN: "Λείπουν {n} κομμάτια {categorie}.",
@@ -777,9 +787,28 @@ export const el: DictionnaireUI = {
     competenceReparerManquanteSimple: "Λείπει η δεξιότητα Επισκευή.",
     objetIntrouvableStock: "Το αντικείμενο δεν βρέθηκε στην αποθήκη.",
     // Auto-save (GameContext) : seul avertissement de perte de progression.
+    sauvegardeBandeau: "Η αποθήκευση απέτυχε — η πρόοδός σου δεν καταγράφεται.",
+    sauvegardeModaleTitre: "Η πρόοδός σου δεν αποθηκεύεται",
+    sauvegardeModaleDepuisUn: "Εδώ και 1 λεπτό.",
+    sauvegardeModaleDepuisN: "Εδώ και {minutes} λεπτά.",
+    sauvegardeModaleDisquePlein:
+      "Ο αποθηκευτικός χώρος του τηλεφώνου σου είναι γεμάτος. Ελευθέρωσε χώρο ώστε το παιχνίδι σου να αποθηκευτεί.",
+    sauvegardeModaleIo:
+      "Ο αποθηκευτικός χώρος δεν είναι διαθέσιμος αυτή τη στιγμή. Το παιχνίδι σου δεν αποθηκεύεται.",
+    sauvegardeModaleBouton: "Κατάλαβα",
+    // Προληπτική προειδοποίηση χώρου αποθήκευσης (Εργασία 9): πριν αποτύχει
+    // η αποθήκευση, όχι μετά.
+    espaceTitre: "Ο αποθηκευτικός χώρος του τηλεφώνου σου είναι σχεδόν γεμάτος",
+    espaceCorps:
+      "Το BROC ίσως σύντομα δεν μπορεί πια να αποθηκεύσει την παρτίδα σου. Ελευθέρωσε λίγο χώρο για να συνεχίσεις χωρίς άγχος.",
+    espaceBouton: "Κατάλαβα",
     sauvegardeImpossible:
       "Η αποθήκευση απέτυχε — ο χώρος είναι γεμάτος ή μη διαθέσιμος. Η πρόοδός σου κινδυνεύει να χαθεί.",
     sauvegardeRetablie: "Η αποθήκευση αποκαταστάθηκε.",
+    // Εξαγωγή παρτίδας (Εργασία 10): κουμπί ανά θέση στο PartiesModal.tsx.
+    // Χωρίς αντίστοιχη εισαγωγή σε αυτό το εγχείρημα — ο παίκτης αρχειοθετεί,
+    // δεν αποκαθιστά.
+    exporterPartie: "Εξαγωγή αυτής της παρτίδας",
   },
   // Conditions de déblocage des brocantes (deblocage.ts) : rendues à l'affichage
   // (panorama). `long` = description complète, `court` = avec progression.
@@ -846,11 +875,11 @@ export const el: DictionnaireUI = {
   bazar: {
     titre: "Το Μπαζάρ",
     lotPieces: "{n} ανταλλακτικά · {categorie}",
-    prixJetons: "{n} μάρκες",
-    prixJetonUn: "{n} μάρκα",
-    vendu: "Πουλήθηκε — επιστρέφει τη Δευτέρα",
-    manqueJetons: "Σου λείπουν {n} μάρκες",
-    manqueJetonUn: "Σου λείπει {n} μάρκα",
+    prixJetons: "{n} Bazarcoins",
+    prixJetonUn: "{n} Bazarcoin",
+    vendu: "Πουλήθηκε",
+    manqueJetons: "Σου λείπουν {n} Bazarcoins",
+    manqueJetonUn: "Σου λείπει {n} Bazarcoin",
     sortir: "Έξοδος από το Μπαζάρ",
     detailArticle: "Λεπτομέρειες είδους",
     prixMot: "Τιμή",

@@ -188,6 +188,21 @@ export function ReserveTabs({
   // Aucun badge sous un cadenas : un compteur clignoterait derrière une porte
   // fermée (même règle que la barre du bas).
   const badge = atelierOuvert ? badgeAtelier : 0;
+  // `atelierOuvert` en premier : une main posée sur un onglet CADENASSÉ
+  // désignerait un bouton qui ne répond que par un refus (toast). La visite
+  // guidée n'est armée qu'à la chute du cadenas, mais une save bricolée ou un
+  // futur réordonnancement des déblocages suffirait.
+  const mainVisible = atelierOuvert && !!mainSurAtelier && actif !== "atelier";
+  // La main est un `::after` de ce bouton : elle vit donc dans le contexte
+  // d'empilement de la fenêtre flottante, à égalité de plan avec la carte —
+  // qui vient APRÈS dans le DOM et gagnait l'égalité, si bien que le doigt
+  // se peignait SOUS la fenêtre (retour device 2026-08-26). On remonte la
+  // MAIN seule : donner ce plan au bouton ferait passer la languette
+  // inactive par-dessus le cadre laiton qui doit la traverser.
+  const styleAtelier: CSSProperties = {
+    ...ongletStyle(actif === "atelier", !atelierOuvert),
+    ...(mainVisible ? ({ "--tuto-main-z": Z_CARTE + 2 } as CSSProperties) : null),
+  };
 
   return (
     <div style={rangee}>
@@ -224,16 +239,8 @@ export function ReserveTabs({
           }
           if (actif !== "atelier") onChoisir("atelier");
         }}
-        // `atelierOuvert` en premier : une main posée sur un onglet CADENASSÉ
-        // désignerait un bouton qui ne répond que par un refus (toast). La
-        // visite guidée n'est armée qu'à la chute du cadenas, mais une save
-        // bricolée ou un futur réordonnancement des déblocages suffirait.
-        className={
-          atelierOuvert && mainSurAtelier && actif !== "atelier"
-            ? "tuto-main"
-            : undefined
-        }
-        style={ongletStyle(actif === "atelier", !atelierOuvert)}
+        className={mainVisible ? "tuto-main" : undefined}
+        style={styleAtelier}
       >
         <span style={faceStyle()}>
           <span style={faceInterieureStyle(actif === "atelier")}>

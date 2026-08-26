@@ -1,6 +1,13 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { BazarcoinIcon, HAUTEUR_SIGNE_DISPLAY } from "@/components/ui/BazarcoinIcon";
+import {
+  listerGains,
+  STYLE_GAIN_AVEC_SIGNE,
+  STYLE_GAIN_BASE,
+  type TypeGain,
+} from "../gainsRecompense";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import type { RecompenseEffective } from "@/lib/recompenses";
 
@@ -12,24 +19,14 @@ interface Props {
   onLivrer: () => void;
 }
 
-type TypeJeton = "argent" | "xp" | "energie" | "bazar";
-
 /** Teintes par type de gain, dans la palette à jetons (aucune valeur codée en dur). */
-const JETON_STYLES: Record<TypeJeton, CSSProperties> = {
+const JETON_STYLES: Record<TypeGain, CSSProperties> = {
   argent: { background: "var(--brass-700)", color: "var(--paper-100)", border: "1px solid var(--brass-500)" },
   xp: { background: "var(--paper-300)", color: "var(--ink-700)", border: "1px solid var(--brass-500)" },
   energie: { background: "var(--patina-500)", color: "var(--paper-100)", border: "1px solid var(--patina-500)" },
-  bazar: { background: "var(--brass-800)", color: "var(--paper-100)", border: "1px solid var(--brass-500)" },
-};
-
-const jetonBase: CSSProperties = {
-  display: "inline-block",
-  padding: "3px 9px",
-  borderRadius: 11,
-  fontFamily: "var(--font-serif)",
-  fontSize: 13,
-  fontWeight: 700,
-  whiteSpace: "nowrap",
+  // Le BLEU de la devise : c'est lui qui distingue un gain en Bazarcoins
+  // d'un gain en euros sur une ligne qui peut porter les deux.
+  bazar: { background: "var(--midnight-800)", color: "var(--azur-400)", border: "1px solid var(--azur-400)" },
 };
 
 /**
@@ -121,27 +118,22 @@ const jetonsWrap: CSSProperties = {
 export function PaveRecompense({ recompense, livrable, verrouille = false, onLivrer }: Props) {
   const { d, tr } = useLangue();
 
-  const gains: { cle: TypeJeton; valeur: number; texte: string }[] = (
-    [
-      { cle: "argent", valeur: recompense.argent, texte: tr(d.carnet.jetonArgent, { n: recompense.argent }) },
-      { cle: "xp", valeur: recompense.xp, texte: tr(d.carnet.jetonXp, { n: recompense.xp }) },
-      { cle: "energie", valeur: recompense.energie, texte: tr(d.carnet.jetonEnergie, { n: recompense.energie }) },
-      {
-        cle: "bazar",
-        valeur: recompense.jetons,
-        texte: tr(
-          recompense.jetons > 1 ? d.carnet.jetonBazarN : d.carnet.jetonBazarUn,
-          { n: recompense.jetons },
-        ),
-      },
-    ] as { cle: TypeJeton; valeur: number; texte: string }[]
-  ).filter((g) => g.valeur > 0);
+  const gains = listerGains(recompense, d, tr);
 
   const jetons = (
     <span style={jetonsWrap}>
       {gains.map((g) => (
-        <span key={g.cle} data-jeton={g.cle} style={{ ...jetonBase, ...JETON_STYLES[g.cle] }}>
+        <span
+          key={g.cle}
+          data-jeton={g.cle}
+          style={{
+            ...STYLE_GAIN_BASE,
+            ...JETON_STYLES[g.cle],
+            ...(g.signe ? STYLE_GAIN_AVEC_SIGNE : null),
+          }}
+        >
           {g.texte}
+          {g.signe ? <BazarcoinIcon size={HAUTEUR_SIGNE_DISPLAY} /> : null}
         </span>
       ))}
     </span>
