@@ -14,6 +14,24 @@ vi.mock("@/lib/audio/audioManager", () => ({
   },
 }));
 
+const toast = vi.fn();
+vi.mock("@/components/ui/Toast", () => ({
+  useToastSafe: () => ({ toast }),
+}));
+
+// `SoutienSheet` (montée par `EcranArcade` au premier tap) tire ces deux
+// modules en interne : sans mock, le rendu casse avant même d'atteindre le
+// composant sous test — voir `SoutienSheet.test.tsx`.
+const ouvrirLien = vi.fn((_url: string) => Promise.resolve());
+vi.mock("@/lib/soutien/ouvrir", () => ({
+  ouvrirLien: (url: string) => ouvrirLien(url),
+}));
+vi.mock("@/context/SettingsContext", () => ({
+  useSettings: () => ({
+    playClick: vi.fn(),
+  }),
+}));
+
 beforeEach(() => {
   playArcadeTrack.mockClear();
   stopArcade.mockClear();
@@ -190,5 +208,59 @@ describe("EcranArcade — la bande-son", () => {
     stopArcade.mockClear();
     vue.unmount();
     expect(stopArcade).toHaveBeenCalled();
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Le pop-up de soutien                                                */
+/* ------------------------------------------------------------------ */
+
+describe("EcranArcade — pop-up de soutien", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    toast.mockClear();
+  });
+
+  /** Un tap = pointerdown puis pointerup au MÊME endroit (dx = 0). */
+  function taper(zone: HTMLElement) {
+    fireEvent.pointerDown(zone, { clientX: 100 });
+    fireEvent.pointerUp(zone, { clientX: 100 });
+  }
+
+  it("le premier tap sur un jeu trouvé ouvre la feuille de soutien", () => {
+    render(<EcranArcade jeux={jeux(0)} />);
+    taper(screen.getByTestId("arcade-zone"));
+    expect(screen.getByTestId("soutien-accroche-borne")).toBeTruthy();
+  });
+
+  it("le deuxième tap donne un toast, plus de pop-up", () => {
+    const { unmount } = render(<EcranArcade jeux={jeux(0)} />);
+    taper(screen.getByTestId("arcade-zone"));
+    unmount();
+
+    render(<EcranArcade jeux={jeux(0)} />);
+    taper(screen.getByTestId("arcade-zone"));
+    expect(screen.queryByTestId("soutien-accroche-borne")).toBeNull();
+    // L'écran répond TOUJOURS : sans ce toast, PLAY serait mort une 2e fois.
+    expect(toast).toHaveBeenCalledWith(
+      "MODE DÉMONSTRATION. CE JEU NE SE LANCE PAS.",
+      { type: "info" },
+    );
+  });
+
+  it("taper un jeu NON trouvé n'ouvre rien", () => {
+    render(<EcranArcade jeux={jeux()} />);
+    taper(screen.getByTestId("arcade-zone"));
+    expect(screen.queryByTestId("soutien-accroche-borne")).toBeNull();
+    expect(window.localStorage.length).toBe(0);
+  });
+
+  it("un swipe navigue et n'ouvre jamais la feuille", () => {
+    render(<EcranArcade jeux={jeux(0, 1)} />);
+    const zone = screen.getByTestId("arcade-zone");
+    fireEvent.pointerDown(zone, { clientX: 200 });
+    fireEvent.pointerUp(zone, { clientX: 100 });
+    expect(screen.queryByTestId("soutien-accroche-borne")).toBeNull();
+    expect(screen.getByTestId("arcade-compteur").textContent).toBe("02 / 11");
   });
 });
