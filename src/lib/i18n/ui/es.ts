@@ -482,6 +482,10 @@ export const es: DictionnaireUI = {
     themeMot: "Tema",
     envoyerCollection: "Enviar a la colección",
     remplacerCollection: "Reemplazar el ejemplar de la colección",
+    remplacerCollectionHausse:
+      "Reemplazar el ejemplar de la colección — su valor sube",
+    remplacerCollectionBaisse:
+      "Reemplazar el ejemplar de la colección — su valor baja",
     etatCategorieAria: "Estado {etat}, categoría {categorie}",
     categorieAria: "Categoría: {categorie}",
     valeurMot: "valor",
@@ -506,12 +510,12 @@ export const es: DictionnaireUI = {
     aucunePieceARestaurer: "Ninguna pieza que restaurar.",
     dureeValeurVers: "{duree} · valor {valeur} →",
     dureeValeurInconnue: "{duree} · valor ? → ?",
-    valeurEuros: "valor {n} €",
-    valeurInconnue: "valor ?",
     aucunObjetADemanteler: "Ningún objeto que desmantelar en el almacén.",
     confirmerRestaurationAria:
       "Confirmar la restauración — coste {cout} piezas de {categorie}",
     demantelerAria: "Desmantelar — rendimiento {pieces} piezas de {categorie}",
+    ameliorerAria: "Mejorar — coste {cout} piezas de {categorie}",
+    ongletObjets: "Objetos por trabajar",
     demantelerSeg1: "Desmantelar",
     demantelerSeg2: "rinde",
     demantelerSeg3: ". El objeto se destruirá definitivamente.",

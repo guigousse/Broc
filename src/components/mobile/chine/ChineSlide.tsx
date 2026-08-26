@@ -227,6 +227,7 @@ export function ChineSlideVue({ slide, plein = false }: { slide: ChineSlide; ple
             <ItemSticker
               templateId={objet.templateId}
               categorie={objet.categorie}
+              etat={objet.etat}
               fill
               tilt={false}
               variant={acquis || vendeurFache || plein ? "grise" : "normal"}

@@ -15,6 +15,15 @@ export const ETAT_STARS: Record<EtatObjet, 0 | 1 | 2 | 3> = {
   "Pristin état": 3,
 };
 
+/**
+ * Le sommet de l'échelle. Une seule définition, parce que trois écrans
+ * décident maintenant d'un rendu à partir d'elle (étoiles, halo du sticker,
+ * et la comparaison littérale se serait dispersée en autant de chaînes).
+ */
+export function estPristin(etat: EtatObjet | undefined): boolean {
+  return etat === "Pristin état";
+}
+
 /** Nombre maximum d'étoiles dans l'échelle d'état. */
 export const ETAT_STARS_MAX = 3;
 

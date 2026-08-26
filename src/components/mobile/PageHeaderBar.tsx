@@ -60,9 +60,15 @@ export function PageHeaderBar({
   const titre = <div style={titleStyle}>— {title.toUpperCase()} —</div>;
 
   if (align === "left") {
+    // Le tiret de GAUCHE tombe avec le centrage : les deux encadrent un titre
+    // centré, et collé au bord gauche celui-là ne cadre plus rien — il pend
+    // dans la marge (retour device 2026-08-26). Celui de droite reste : il
+    // sépare le titre de la valeur qui le suit.
     return (
       <div style={wrapLeft}>
-        {titre}
+        <div style={{ ...titleStyle, textAlign: "left" }}>
+          {title.toUpperCase()} —
+        </div>
         <div style={colRight}>{right ?? null}</div>
       </div>
     );

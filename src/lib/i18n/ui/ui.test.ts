@@ -59,6 +59,20 @@ describe("dictionnaires UI", () => {
     expect(derives).toEqual([]);
   });
 
+  it("l'onglet des compétences porte le nom de l'écran qu'il ouvre, dans les 4 langues", () => {
+    // L'écran s'appelle « Compétences » depuis longtemps ; en français seul,
+    // la barre disait encore « Biblio. » et le joueur cherchait un rapport
+    // entre les deux (retour 2026-08-26). La route reste `/bibliotheque` —
+    // c'est un chemin, pas un mot lu.
+    for (const d of [DICTIONNAIRES.fr, DICTIONNAIRES.en, DICTIONNAIRES.es, el]) {
+      expect(d.chrome.onglets.bibliotheque).toBe(d.bibliotheque.titre);
+      // L'abrégé de la colonne étroite doit rester le MÊME mot, seulement
+      // coupé : « Biblio. » pour « Compétences » nommait autre chose.
+      const abrege = d.chrome.onglets.bibliothequeAbrege.replace(/\.$/, "");
+      expect(d.bibliotheque.titre.startsWith(abrege)).toBe(true);
+    }
+  });
+
   it("la consigne d'ouverture nomme l'onglet réellement affiché, dans les 4 langues", () => {
     for (const d of [DICTIONNAIRES.fr, DICTIONNAIRES.en, DICTIONNAIRES.es, el]) {
       const consigne = d.tutoriel.instructions["stockage-ouvrir"];

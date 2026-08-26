@@ -34,7 +34,7 @@ export const DEBLOCAGES_EL: Record<string, string> = {
 
 export const DEBLOCAGES_DESC_EL: Record<string, string> = {
   "Ouverture de l'écran Compétences (+1 point)":
-    "Η βιβλιοθήκη ανοίγει την οθόνη Δεξιοτήτων: ξόδεψε τους πόντους σου (1 ανά βαθμίδα) για να βελτιώσεις την τέχνη σου.",
+    "Ανοίγει η καρτέλα Δεξιότητες: ξόδεψε τους πόντους σου (1 ανά βαθμίδα) για να βελτιώσεις την τέχνη σου.",
   "Quêtes quotidiennes et hebdomadaires":
     "Το ταχυδρομείο φέρνει παραγγελίες: μία καθημερινή και μία πιο φιλόδοξη εβδομαδιαία, με χρηματική αμοιβή.",
   "Paliers 2 des compétences": "Η βαθμίδα 2 όλων των κλάδων δεξιοτήτων γίνεται αγοράσιμη.",

@@ -483,6 +483,10 @@ export const el: DictionnaireUI = {
     themeMot: "Θέμα",
     envoyerCollection: "Αποστολή στη συλλογή",
     remplacerCollection: "Αντικατάσταση του αντιτύπου της συλλογής",
+    remplacerCollectionHausse:
+      "Αντικατάσταση του αντιτύπου της συλλογής — η αξία ανεβαίνει",
+    remplacerCollectionBaisse:
+      "Αντικατάσταση του αντιτύπου της συλλογής — η αξία πέφτει",
     etatCategorieAria: "Κατάσταση {etat}, κατηγορία {categorie}",
     categorieAria: "Κατηγορία: {categorie}",
     valeurMot: "αξία",
@@ -507,12 +511,12 @@ export const el: DictionnaireUI = {
     aucunePieceARestaurer: "Κανένα κομμάτι για αποκατάσταση.",
     dureeValeurVers: "{duree} · αξία {valeur} →",
     dureeValeurInconnue: "{duree} · αξία ? → ?",
-    valeurEuros: "αξία {n} €",
-    valeurInconnue: "αξία ?",
     aucunObjetADemanteler: "Κανένα αντικείμενο για αποσυναρμολόγηση στην αποθήκη.",
     confirmerRestaurationAria:
       "Επιβεβαίωση αποκατάστασης — κόστος {cout} κομμάτια {categorie}",
     demantelerAria: "Αποσυναρμολόγηση — απόδοση {pieces} κομμάτια {categorie}",
+    ameliorerAria: "Αναβάθμιση — κόστος {cout} κομμάτια {categorie}",
+    ongletObjets: "Αντικείμενα προς επεξεργασία",
     demantelerSeg1: "Η αποσυναρμολόγηση",
     demantelerSeg2: "αποδίδει",
     demantelerSeg3: ". Το αντικείμενο θα καταστραφεί οριστικά.",

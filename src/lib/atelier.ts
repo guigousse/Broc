@@ -11,7 +11,8 @@ import {
   peutRestaurerTresBonVersPristin,
 } from "@/lib/competences";
 import { getCapaciteAtelier } from "@/data/atelier";
-import { recalculerPrixReference } from "@/lib/etat";
+import { ETATS_ORDRE, recalculerPrixReference } from "@/lib/etat";
+import { valeurDonation } from "@/lib/collection";
 import { tr, type DictionnaireUI } from "@/lib/i18n/ui";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 
@@ -103,6 +104,12 @@ export interface CollectionStatus {
   /** Un exemplaire du même template, dans le MÊME état, est déjà donné. */
   dejaIdentique?: boolean;
   ancienneDonation?: { etat: EtatObjet; valeur: number };
+  /**
+   * Ce que l'envoi ferait à la valeur de la collection, quand la case est
+   * DÉJÀ occupée. Absent si la case est vide : il n'y a alors rien à
+   * comparer, l'objet entre et c'est tout.
+   */
+  tendance?: "hausse" | "baisse";
 }
 
 /** Calcule si un objet précis peut être donné à la collection. */
@@ -123,11 +130,45 @@ export function collectionStatusPourObjet(
       dejaIdentique: true,
     };
   }
+  // La valeur de collection, pas le prix de vente : c'est elle qu'affiche le
+  // total de l'écran Collection, donc elle que le joueur verra bouger. À
+  // valeur égale — deux états différents peuvent tomber sur le même arrondi —
+  // c'est la QUALITÉ qui tranche : le bouton doit choisir une flèche, sinon
+  // il retomberait sur le rendu « case vide », qui serait faux.
+  const valeurNouvelle = valeurDonation(o.etat, o.prixReferenceReel);
+  const ecart = valeurNouvelle - slot.donation.valeur;
+  const hausse =
+    ecart !== 0
+      ? ecart > 0
+      : ETATS_ORDRE.indexOf(o.etat) > ETATS_ORDRE.indexOf(slot.donation.etat);
   return {
     disponible: true,
     necessiteConfirmation: true,
     ancienneDonation: slot.donation,
+    tendance: hausse ? "hausse" : "baisse",
   };
+}
+
+/**
+ * Prix de la prochaine amélioration, ou `null` s'il n'y a rien à montrer.
+ *
+ * `null` dans deux cas seulement : l'objet est au sommet de l'échelle, ou le
+ * joueur ne sait PAS encore faire cette réparation-là. Un bouton gris promet
+ * une action qui existe et qu'on pourra s'offrir ; tant que la compétence
+ * manque, il n'y a rien à promettre et le prix lui-même n'a pas de sens.
+ *
+ * Les pièces manquantes, elles, ne cachent rien : c'est le cas où le gris
+ * parle — « reviens avec deux engrenages de plus ». Le palier compte : savoir
+ * mener Mauvais→Bon ne dit rien de Très bon→Pristin.
+ */
+export function coutAmeliorationAffichable(
+  state: GameState,
+  o: Objet,
+): number | null {
+  const cible = prochaineEtatCible(o.etat);
+  if (!cible) return null;
+  if (!peutRestaurerTransition(state, o.categorie, o.etat)) return null;
+  return coutAmelioration(o, cible);
 }
 
 /**

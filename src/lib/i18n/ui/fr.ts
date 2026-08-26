@@ -95,8 +95,8 @@ export const fr = {
   chrome: {
     onglets: {
       collection: "Collection",
-      bibliothequeAbrege: "Biblio.",
-      bibliotheque: "Bibliothèque",
+      bibliothequeAbrege: "Compétences",
+      bibliotheque: "Compétences",
       bureau: "Bureau",
       stockage: "Stockage",
       atelier: "Atelier",
@@ -490,6 +490,10 @@ export const fr = {
     themeMot: "Thème",
     envoyerCollection: "Envoyer dans la collection",
     remplacerCollection: "Remplacer l'exemplaire de la collection",
+    remplacerCollectionHausse:
+      "Remplacer l'exemplaire de la collection — sa valeur monte",
+    remplacerCollectionBaisse:
+      "Remplacer l'exemplaire de la collection — sa valeur baisse",
     etatCategorieAria: "État {etat}, catégorie {categorie}",
     categorieAria: "Catégorie : {categorie}",
     valeurMot: "valeur",
@@ -514,12 +518,12 @@ export const fr = {
     aucunePieceARestaurer: "Aucune pièce à restaurer.",
     dureeValeurVers: "{duree} · valeur {valeur} →",
     dureeValeurInconnue: "{duree} · valeur ? → ?",
-    valeurEuros: "valeur {n} €",
-    valeurInconnue: "valeur ?",
     aucunObjetADemanteler: "Aucun objet à démanteler en stock.",
     confirmerRestaurationAria:
       "Confirmer la restauration — coût {cout} pièces {categorie}",
     demantelerAria: "Démanteler — rendement {pieces} pièces {categorie}",
+    ameliorerAria: "Améliorer — coût {cout} pièces {categorie}",
+    ongletObjets: "Objets à travailler",
     demantelerSeg1: "Démanteler",
     demantelerSeg2: "rend",
     demantelerSeg3: ". L'objet sera détruit définitivement.",

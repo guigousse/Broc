@@ -170,6 +170,7 @@ export function CollectionDetailOverlay({
           <ItemSticker
             templateId={slot.templateId}
             categorie={slot.categorie}
+            etat={slot.donation?.etat}
             fill
             tilt={false}
             variant={isDonne ? "normal" : "grise"}
