@@ -30,7 +30,7 @@ export const DEBLOCAGES_ES: Record<string, string> = {
 
 export const DEBLOCAGES_DESC_ES: Record<string, string> = {
   "Ouverture de l'écran Compétences (+1 point)":
-    "La biblioteca abre la pantalla de Habilidades: gasta tus puntos (1 por nivel) para afinar el oficio.",
+    "Se abre la pestaña Habilidades: gasta tus puntos (1 por nivel) para afinar el oficio.",
   "Quêtes quotidiennes et hebdomadaires":
     "El correo trae encargos: uno diario y otro semanal más ambicioso, recompensados con dinero.",
   "Paliers 2 des compétences": "El rango 2 de todas las ramas de habilidades pasa a estar disponible.",

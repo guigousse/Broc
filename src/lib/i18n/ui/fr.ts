@@ -95,8 +95,8 @@ export const fr = {
   chrome: {
     onglets: {
       collection: "Collection",
-      bibliothequeAbrege: "Biblio.",
-      bibliotheque: "Bibliothèque",
+      bibliothequeAbrege: "Compétences",
+      bibliotheque: "Compétences",
       bureau: "Bureau",
       stockage: "Stockage",
       atelier: "Atelier",
