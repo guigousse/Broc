@@ -109,7 +109,12 @@ const collectionInlineBtn = (enabled: boolean): CSSProperties => ({
 
 const arrowBadge: CSSProperties = {
   position: "absolute",
-  right: -8,
+  // -4 et non -8 : le bouton fait 44 px, la boîte d'icône 28, il reste donc
+  // 8 px de marge de chaque côté. À -8 la flèche débordait de toute cette
+  // marge et venait affleurer le liseré laiton ; à -4 elle garde 4 px d'air,
+  // le même que le cadre s'accorde ailleurs. Plus à gauche encore, elle
+  // mordrait sur le trait de l'album.
+  right: -4,
   bottom: -4,
   display: "grid",
   placeItems: "center",
