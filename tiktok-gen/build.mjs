@@ -50,9 +50,21 @@ export function filtrerAvecImages(entrees, idsDisponibles) {
   return { gardes, manquants: manquants.map((e) => e.id) };
 }
 
-async function copierDossier(src, dest, filtre = () => true) {
+/**
+ * Copie les fichiers (non-dossiers, filtrés) de `src` vers `dest`.
+ * Tolère un `src` absent (dossier vide, ex. `src/` ou `assets/badges/`
+ * non versionnés par git faute de contenu) : crée quand même `dest`.
+ */
+export async function copierDossier(src, dest, filtre = () => true) {
   await fsp.mkdir(dest, { recursive: true });
-  for (const nom of await fsp.readdir(src)) {
+  let noms;
+  try {
+    noms = await fsp.readdir(src);
+  } catch (e) {
+    if (e.code === "ENOENT") return;
+    throw e;
+  }
+  for (const nom of noms) {
     const s = path.join(src, nom);
     if ((await fsp.stat(s)).isDirectory() || !filtre(nom)) continue;
     await fsp.copyFile(s, path.join(dest, nom));

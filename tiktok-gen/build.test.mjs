@@ -1,5 +1,8 @@
+import fsp from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { analyserCatalogueCsv, filtrerAvecImages } from "./build.mjs";
+import { analyserCatalogueCsv, copierDossier, filtrerAvecImages } from "./build.mjs";
 
 const CSV = `﻿templateId;nom;categorie;rarete;unique;tierMin;prix_Mauvais
 br.marteau_menuisier;Marteau de menuisier;Bricolage;commun;;1;2
@@ -21,5 +24,20 @@ describe("filtrerAvecImages", () => {
     const { gardes, manquants } = filtrerAvecImages(entrees, new Set(["br.marteau_menuisier"]));
     expect(gardes.map((e) => e.id)).toEqual(["br.marteau_menuisier"]);
     expect(manquants).toEqual(["art.aquarelle_marine_xixe"]);
+  });
+});
+
+describe("copierDossier", () => {
+  it("tolère un dossier source absent : crée quand même la destination sans jeter", async () => {
+    const base = await fsp.mkdtemp(path.join(os.tmpdir(), "tiktok-gen-test-"));
+    try {
+      const dest = path.join(base, "dest");
+      await copierDossier(path.join(base, "absent"), dest);
+      const stat = await fsp.stat(dest);
+      expect(stat.isDirectory()).toBe(true);
+      expect(await fsp.readdir(dest)).toEqual([]);
+    } finally {
+      await fsp.rm(base, { recursive: true, force: true });
+    }
   });
 });
