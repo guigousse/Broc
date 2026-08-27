@@ -64,8 +64,9 @@ const closeBtn: CSSProperties = {
 const carte: CSSProperties = {
   background: "var(--forest-800)",
   border: "1px solid var(--brass-500)",
-  boxShadow:
-    "0 16px 32px rgba(0,0,0,0.38), inset 0 0 0 2px var(--forest-800), inset 0 0 0 3px var(--brass-500)",
+  // Un seul filet, pas le double liseré des cartes de Réglages : le texte de
+  // remerciement se lit mieux sans cadre dans le cadre.
+  boxShadow: "0 16px 32px rgba(0,0,0,0.38)",
   borderRadius: "var(--radius-card)",
   padding: "16px 18px",
   margin: "10px 24px 0",

@@ -11,7 +11,7 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { useSettingsSafe } from "@/context/SettingsContext";
 import { INSTAGRAM_URL, TIKTOK_URL, lienNotation } from "@/lib/soutien/liens";
 import { ouvrirLien } from "@/lib/soutien/ouvrir";
-import { ChatQuiPasse } from "@/components/mobile/ChatQuiPasse";
+import { ChatPose } from "@/components/mobile/ChatPose";
 
 /**
  * Les trois portes de sortie du soutien (Instagram, TikTok, fiche du store),
@@ -68,7 +68,7 @@ const zoneAvis: CSSProperties = { marginTop: 14 };
 const libelle: CSSProperties = { flex: 1, textAlign: "center" };
 
 interface BoutonsSoutienProps {
-  /** Fait traverser le chat au-dessus du bouton d'avis (page du menu). */
+  /** Pose le chat sur le bord du bouton d'avis (page du menu). */
   avecChat?: boolean;
 }
 
@@ -120,7 +120,7 @@ export function BoutonsSoutien({ avecChat = false }: BoutonsSoutienProps) {
           ouvrirait une page inexistante est pire que pas de bouton. */}
       {urlNotation && (
         <div style={zoneAvis}>
-          {avecChat && <ChatQuiPasse />}
+          {avecChat && <ChatPose />}
           <button
             type="button"
             data-testid="soutien-noter"

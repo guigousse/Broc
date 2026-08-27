@@ -3,13 +3,12 @@
 import type { CSSProperties } from "react";
 
 /**
- * Le chat qui traverse la page « Soutenir » et vient se poster à droite,
- * juste au-dessus du bouton d'avis. Il ne demande rien, il montre : l'œil
- * suit le mouvement, et le mouvement s'arrête sur le bouton.
+ * Le chat posé à droite de la page « Soutenir », sur le bord haut du bouton
+ * d'avis, comme s'il y marchait. Il ne demande rien, il désigne.
  *
  * Le sprite est un chat DE PROFIL EN MARCHE, dessiné tourné vers la gauche,
- * et il est laissé dans ce sens. La traversée va donc de la droite vers sa
- * place : un chat qui marche à reculons se voit tout de suite.
+ * et il est laissé dans ce sens. Il est POSÉ, pas animé : rien ne bouge à
+ * l'ouverture de la page, le chat est simplement là, sur le bord du bouton.
  */
 
 const piste: CSSProperties = {
@@ -32,19 +31,10 @@ const chat: CSSProperties = {
   filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.45))",
 };
 
-export function ChatQuiPasse() {
+export function ChatPose() {
   return (
     <div style={piste} aria-hidden data-testid="soutien-chat">
-      <div className="broc-chat-traversee">
-        <div className="broc-chat-pas">
-          <img
-            src="/ui/chat-marche.webp"
-            alt=""
-            draggable={false}
-            style={chat}
-          />
-        </div>
-      </div>
+      <img src="/ui/chat-marche.webp" alt="" draggable={false} style={chat} />
     </div>
   );
 }
