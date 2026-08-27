@@ -825,6 +825,23 @@ class AudioManager {
     src.start();
   }
 
+  /**
+   * Montée d'état d'un objet restauré (cérémonie de l'Atelier). Distinct du
+   * level-up du brocanteur : c'est l'OBJET qui gagne son étoile, pas le
+   * joueur son niveau.
+   */
+  async playUpgrade(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/upgrade.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   /** Vendeur mystère : deux notes feutrées à intervalle intrigant, longue traîne. */
   playMystere(): void {
     if (!this.prefs.effets) return;

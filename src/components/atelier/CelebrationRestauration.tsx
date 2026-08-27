@@ -105,6 +105,9 @@ const etatLigne: CSSProperties = {
   letterSpacing: "0.16em",
   textTransform: "uppercase",
   color: "var(--brass-300)",
+  // Remonté par la `key` sur le libellé : le mot rejoue son apparition au
+  // moment où il change, sinon la bascule d'état passerait inaperçue.
+  animation: "broc-bilan-pop 320ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both",
 };
 
 export function CelebrationRestauration({
@@ -176,7 +179,7 @@ export function CelebrationRestauration({
     planifier(SEQUENCE_MS.etoiles, () => setPhase(1));
     planifier(SEQUENCE_MS.gagne, () => {
       setPhase(2);
-      void audioManager.playPop();
+      void audioManager.playUpgrade();
       if (pristinRef.current) void audioManager.playRarete();
     });
     planifier(SEQUENCE_MS.vol, () => {
@@ -237,7 +240,15 @@ export function CelebrationRestauration({
             />
           </span>
         )}
-        {phase >= 2 && <span style={etatLigne}>{libelleEtat(etatApres, d)}</span>}
+        {phase >= 1 && (
+          <span
+            key={etatAffiche}
+            data-testid="etat-celebration"
+            style={etatLigne}
+          >
+            {libelleEtat(etatAffiche, d)}
+          </span>
+        )}
       </div>
     </div>
   );

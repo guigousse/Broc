@@ -10,15 +10,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent, act } from "@testing-library/react";
 import { LangueProvider } from "@/lib/i18n/LangueContext";
+import { persisterLocale } from "@/lib/i18n/locales";
 import { CelebrationRestauration, SEQUENCE_MS } from "./CelebrationRestauration";
 import type { EtatObjet, Objet } from "@/types/game";
 
-const playPop = vi.fn();
+const playUpgrade = vi.fn();
 const playRarete = vi.fn();
 const playPickup = vi.fn();
 vi.mock("@/lib/audio/audioManager", () => ({
   audioManager: {
-    playPop: () => playPop(),
+    playUpgrade: () => playUpgrade(),
     playRarete: () => playRarete(),
     playPickup: () => playPickup(),
   },
@@ -75,7 +76,7 @@ function avancer(ms: number) {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  playPop.mockClear();
+  playUpgrade.mockClear();
   playRarete.mockClear();
   playPickup.mockClear();
   const cible = document.createElement("div");
@@ -95,7 +96,7 @@ describe("CelebrationRestauration", () => {
     expect(etoilesPleines()).toBe(1); // « Bon »
     avancer(SEQUENCE_MS.gagne - SEQUENCE_MS.etoiles + 10);
     expect(etoilesPleines()).toBe(2); // « Très bon »
-    expect(playPop).toHaveBeenCalledTimes(1);
+    expect(playUpgrade).toHaveBeenCalledTimes(1);
   });
 
   it("se termine seule : l'objet vole vers le Stockage, onTermine une fois", () => {
@@ -114,12 +115,22 @@ describe("CelebrationRestauration", () => {
     // de zéro à chaque tick et repopperait sans fin (bug du 2026-08-28).
     const { onTermine, rejouerLeParent } = afficher("Bon", "Très bon");
     avancer(SEQUENCE_MS.gagne + 10);
-    expect(playPop).toHaveBeenCalledTimes(1);
+    expect(playUpgrade).toHaveBeenCalledTimes(1);
     act(() => rejouerLeParent());
     avancer(SEQUENCE_MS.vol - SEQUENCE_MS.gagne + SEQUENCE_MS.dureeVol + 100);
-    expect(playPop).toHaveBeenCalledTimes(1);
+    expect(playUpgrade).toHaveBeenCalledTimes(1);
     expect(etoilesPleines()).toBe(2);
     expect(onTermine).toHaveBeenCalledTimes(1);
+  });
+
+  it("le libellé d'état montre l'ancien état, puis le nouveau", () => {
+    // La cérémonie doit RACONTER la montée : d'où l'objet part, où il arrive.
+    persisterLocale("fr");
+    afficher("Bon", "Très bon");
+    avancer(SEQUENCE_MS.etoiles + 10);
+    expect(screen.getByTestId("etat-celebration").textContent).toBe("Bon");
+    avancer(SEQUENCE_MS.gagne - SEQUENCE_MS.etoiles + 10);
+    expect(screen.getByTestId("etat-celebration").textContent).toBe("Très bon");
   });
 
   it("un tap saute directement au vol", () => {
