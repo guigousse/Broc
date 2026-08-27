@@ -43,11 +43,21 @@ trois quêtes d'objet nommé — moins varié qu'aujourd'hui, ce qui serait un c
 Exactement une quête d'objet par jour, ni plus ni moins.
 
 **Garde-fou de famille : au plus UNE forme de famille `vente` parmi les deux
-tirées.** Quatre des sept formes du pool sont de famille vente ; sans garde-fou,
-une journée sur trois environ serait « un objet à chiner, puis deux objectifs de
-caisse ». La spec d'origine défendait « la journée reste tournée vers la chine,
-faisable en une session » — ce garde-fou est ce qui tient cette promesse une fois
-le tirage ouvert.
+tirées — mais seulement s'il reste un vrai choix.** Quatre des sept formes du
+pool sont de famille vente ; sans garde-fou, une journée sur trois environ
+serait « un objet à chiner, puis deux objectifs de caisse ». La spec d'origine
+défendait « la journée reste tournée vers la chine, faisable en une session » —
+ce garde-fou est ce qui tient cette promesse une fois le tirage ouvert.
+
+Correctif post-revue (mesuré sur partie neuve, 500 graines) : ce garde-fou ne
+s'applique QUE si le pool éligible compte au moins **deux** formes hors famille
+vente. Sur une partie neuve, `objetLegendaire` et `restauration` sont
+verrouillées et il ne reste qu'une seule forme hors-vente (`objetsRares`) —
+imposer « au plus une vente » sans condition forçait alors `objetsRares` dans
+**500 lots sur 500**, avec seulement 4 compositions distinctes possibles :
+exactement l'invariance que ce chantier existe pour supprimer. Le garde-fou ne
+redevient actif qu'une fois un second verrou hors-vente ouvert (Réparer, ou une
+brocante tier 4).
 
 L'hebdomadaire n'est **pas modifié** par ce chantier.
 
