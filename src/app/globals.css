@@ -1822,12 +1822,12 @@ nav[aria-label="Navigation principale"] :focus-visible,
    `both` est indispensable : sous `prefers-reduced-motion`, la durée tombe à
    0,01 ms et le chat doit atterrir à sa place finale, pas revenir au départ. */
 @keyframes broc-chat-traversee {
-  from { transform: translateX(-56px); }
+  from { transform: translateX(-190px); }
   to   { transform: translateX(0); }
 }
 @keyframes broc-chat-pas {
-  0%, 100% { transform: translateY(0) rotate(-1.2deg); }
-  50%      { transform: translateY(-3px) rotate(1.2deg); }
+  0%, 100% { transform: translateY(0) rotate(-0.7deg); }
+  50%      { transform: translateY(-2px) rotate(0.7deg); }
 }
 .broc-chat-traversee {
   animation: broc-chat-traversee 2600ms cubic-bezier(0.22, 0.65, 0.3, 1) both;
