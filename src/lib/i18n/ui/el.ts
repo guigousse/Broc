@@ -655,6 +655,7 @@ export const el: DictionnaireUI = {
     objetsDemandes: "Ζητούμενα αντικείμενα ({rempli}/{total})",
     etatMin: "ελάχ. κατάσταση: {etat}",
     recompenseLabel: "Ανταμοιβή",
+    primeVariableLegendaire: "+ {taux}% της αξίας του κομματιού",
     jetonArgent: "+{n} €",
     jetonXp: "+{n} XP",
     jetonEnergie: "+{n} ⚡",

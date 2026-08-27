@@ -257,6 +257,13 @@ function renderMission(
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <strong>{d.sheets.recompenseLabel}</strong>
           <RecompenseJetons recompense={recompenseEffective(p)} variante="ligne" />
+          {p.primeVariable && (
+            <span style={{ fontSize: 12, opacity: 0.8 }}>
+              {tr(d.carnet.primeVariableLegendaire, {
+                taux: Math.round(p.primeVariable.taux * 100),
+              })}
+            </span>
+          )}
         </div>
         {p.jourLimite !== undefined && (
           <div>

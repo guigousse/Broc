@@ -663,6 +663,10 @@ export const fr = {
     objetsDemandes: "Objets demandés ({rempli}/{total})",
     etatMin: "état min : {etat}",
     recompenseLabel: "Récompense",
+    // Quête « pièce légendaire » (tâche 10) : tant qu'elle n'est pas trouvée,
+    // aucun total n'est calculable — la mention annonce ce qui s'ajoutera à
+    // la part fixe déjà affichée par le pavé.
+    primeVariableLegendaire: "+ {taux} % de la valeur de la pièce",
     // Le GRAND LIVRE, où une ligne de crédit se lit contre des lignes de
     // débit : là, et là seulement, le « + » porte du sens.
     jetonArgent: "+{n} €",
