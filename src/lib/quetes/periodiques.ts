@@ -106,7 +106,19 @@ const POOL_QUOTIDIEN: FormeQuete[] = [
  * le tout mélangé pour que l'objet garanti ne soit pas éternellement en tête.
  * Garde-fou : au plus une forme de famille « vente » parmi les deux tirées —
  * quatre des sept formes du pool en sont, et sans lui une journée sur trois
- * environ ne serait qu'une paire d'objectifs de caisse.
+ * environ ne serait qu'une paire d'objectifs de caisse. MAIS ce garde-fou ne
+ * s'active que si le pool éligible compte au moins DEUX formes hors famille
+ * « vente » : en dessous, il n'y a plus de choix à garder, seulement une
+ * ligne à imposer.
+ *
+ * Piège vérifié en revue (mesure : 500 graines sur partie neuve) : sur une
+ * partie neuve, `objetLegendaire` et `restauration` sont verrouillées — le
+ * pool hors-vente éligible se réduit à la seule `objetsRares`. Appliquer le
+ * garde-fou sans condition forçait alors `objetsRares` dans TOUS les lots
+ * (500/500) et ne laissait que 4 compositions distinctes possibles : très
+ * exactement la ligne unique que ce chantier existe pour supprimer. Ne
+ * resserre pas ce garde-fou à « au moins une forme hors-vente » sans relire
+ * cette mesure — c'est la condition qui recrée le bug.
  *
  * Hebdomadaire : trois formes distinctes parmi les six, avec au moins une forme
  * de vente — sans ce garde-fou, une semaine pourrait n'être qu'une série de
@@ -118,14 +130,21 @@ function formesDuLot(
   rng: () => number,
 ): FormeQuete[] {
   if (type === "quotidienne") {
-    const pool = melanger(
-      POOL_QUOTIDIEN.filter((f) => formeEligible(f, state)),
-      rng,
-    );
+    const eligibles = POOL_QUOTIDIEN.filter((f) => formeEligible(f, state));
+    const horsVenteEligibles = eligibles.filter((f) => FAMILLE[f] !== "vente");
+    const gardeFouActif = horsVenteEligibles.length >= 2;
+
+    const pool = melanger(eligibles, rng);
     const tirees: FormeQuete[] = [];
     for (const f of pool) {
       if (tirees.length === 2) break;
-      if (FAMILLE[f] === "vente" && tirees.some((t) => FAMILLE[t] === "vente")) continue;
+      if (
+        gardeFouActif &&
+        FAMILLE[f] === "vente" &&
+        tirees.some((t) => FAMILLE[t] === "vente")
+      ) {
+        continue;
+      }
       tirees.push(f);
     }
     return melanger(["objet", ...tirees], rng);

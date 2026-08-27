@@ -1,13 +1,20 @@
 import { describe, it, test, expect } from "vitest";
 import { genererLot } from "./periodiques";
-import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
+import { createMockGameState, createMockSlot } from "@/lib/__test-fixtures__/gameState";
 import { FAMILLE, type FormeQuete } from "./formes";
 import { objetsAtteignables } from "./atteignables";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
-import type { Courrier, CourrierPayloadMission, CompetenceId } from "@/types/game";
+import type {
+  Courrier,
+  CourrierPayloadMission,
+  CompetenceId,
+  CategorieObjet,
+  CollectionSlot,
+} from "@/types/game";
 import { emptyBrocanteur } from "@/lib/xp";
 import { CATEGORIES } from "@/data/categories";
 import { catTreeId } from "@/data/competences";
+import { chapitreParOrdre } from "@/data/quetesPrincipales";
 
 function rngSeq(vals: number[]): () => number {
   let i = 0;
@@ -100,12 +107,38 @@ describe("composition des lots", () => {
     }
   });
 
-  test("quotidienne : au plus UNE forme de vente parmi les tirées", () => {
+  test("quotidienne : au plus une forme de vente quand le garde-fou est actif (≥2 hors-vente éligibles)", () => {
+    // Sur partie neuve, seule `objetsRares` est hors-vente éligible : le
+    // garde-fou est désactivé (cf. `formesDuLot`) et ce test ne l'exercerait
+    // pas. Réparer débloqué ajoute `restauration` au pool hors-vente : deux
+    // formes hors-vente, donc un vrai choix, donc le garde-fou s'applique.
+    const state = createMockGameState({
+      competencesDebloquees: [`${catTreeId(CATEGORIES[0])}.reparer.1`] as CompetenceId[],
+    });
     for (let g = 1; g <= 60; g++) {
-      const lot = genererLot(createMockGameState(), "quotidienne", `c${g}`, rngGraine(g));
+      const lot = genererLot(state, "quotidienne", `c${g}`, rngGraine(g));
       const tirees = lot.map(formeDe).filter((f) => f !== "objet");
       expect(tirees.filter((f) => FAMILLE[f] === "vente").length).toBeLessThanOrEqual(1);
     }
+  });
+
+  test("quotidienne : sur partie neuve, le garde-fou de vente se désactive et objetsRares cesse d'être systématique", () => {
+    // Régression du défaut mesuré en revue : sur partie neuve, seule
+    // `objetsRares` est hors-vente éligible (`objetLegendaire` et
+    // `restauration` verrouillées) — imposer « au plus une vente » forçait
+    // alors `objetsRares` dans 500 lots sur 500 (4 compositions distinctes
+    // seulement). Le garde-fou conditionnel doit casser ce déterminisme.
+    const state = createMockGameState();
+    let avecRares = 0;
+    const compositions = new Set<string>();
+    for (let g = 1; g <= 200; g++) {
+      const lot = genererLot(state, "quotidienne", `c${g}`, rngGraine(g));
+      const formes = lot.map(formeDe);
+      if (formes.includes("objetsRares")) avecRares++;
+      compositions.add(formes.slice().sort().join("|"));
+    }
+    expect(avecRares).toBeLessThan(200);
+    expect(compositions.size).toBeGreaterThan(4);
   });
 
   test("quotidienne : la position de la quête d'objet varie", () => {
@@ -147,6 +180,64 @@ describe("composition des lots", () => {
       vue = genererLot(state, "quotidienne", `c${g}`, rngGraine(g))
         .map(formeDe)
         .includes("restauration");
+    }
+    expect(vue).toBe(true);
+  });
+
+  test("quotidienne : une brocante tier 4 ouverte fait apparaître la pièce légendaire", () => {
+    // Recette reprise telle quelle de eligibilite.test.ts (« quand une
+    // brocante de tier 4 [...] s'ouvre, la pièce légendaire est éligible ») :
+    // trois chapitres livrés + seuils de valeur par catégorie, pour ouvrir le
+    // Salon des Antiquaires (tier 4) sans dépendre de la Grande Braderie.
+    const ch4 = chapitreParOrdre(4)!;
+    const ch8 = chapitreParOrdre(8)!;
+    const ch13 = chapitreParOrdre(13)!;
+
+    const slotMaison = createMockSlot({
+      categorie: "Maison",
+      donation: { etat: "Pristin état", valeur: 1500 },
+    });
+    const slotMusique = createMockSlot({
+      categorie: "Musique",
+      donation: { etat: "Pristin état", valeur: 1300 },
+    });
+    const slotMode = createMockSlot({
+      categorie: "Mode",
+      donation: { etat: "Pristin état", valeur: 1000 },
+    });
+    const slotArt = createMockSlot({
+      categorie: "Objets d'art",
+      donation: { etat: "Pristin état", valeur: 800 },
+    });
+    const slotBrico = createMockSlot({
+      categorie: "Bricolage",
+      donation: { etat: "Pristin état", valeur: 500 },
+    });
+
+    const collection: Record<CategorieObjet, CollectionSlot[]> = {
+      Maison: [slotMaison],
+      Musique: [slotMusique],
+      Mode: [slotMode],
+      "Objets d'art": [slotArt],
+      Bricolage: [slotBrico],
+      "Jeux & Loisirs": [],
+      "Livres & Papeterie": [],
+    };
+
+    const state = createMockGameState({
+      missions: [
+        { courrierId: ch4.id, statut: "livree" },
+        { courrierId: ch8.id, statut: "livree" },
+        { courrierId: ch13.id, statut: "livree" },
+      ],
+      collection,
+    });
+
+    let vue = false;
+    for (let g = 1; g <= 80 && !vue; g++) {
+      vue = genererLot(state, "quotidienne", `c${g}`, rngGraine(g))
+        .map(formeDe)
+        .includes("objetLegendaire");
     }
     expect(vue).toBe(true);
   });
@@ -213,13 +304,18 @@ describe("composition des lots", () => {
   });
 
   test("les quêtes chiffrées portent un gabaritId et un texte sans marque", () => {
-    for (let g = 1; g <= 30; g++) {
-      const lot = genererLot(createMockGameState(), "hebdomadaire", `c${g}`, rngGraine(g));
-      for (const c of lot) {
-        if (c.payload.type !== "mission") continue;
-        if (c.payload.cibles.length > 0) continue; // quête d'objet : autre voie
-        expect(c.payload.gabaritId).toBeDefined();
-        expect([c.payload.titre, ...c.payload.corps].join(" ")).not.toMatch(/\{[a-z]+\}/);
+    // Bouclé sur les DEUX périodes : la quotidienne a ses propres gabarits
+    // (six neufs depuis ce chantier — clés "...Jour" dans textes.ts) que
+    // l'hebdomadaire seule n'exerce jamais.
+    for (const type of ["quotidienne", "hebdomadaire"] as const) {
+      for (let g = 1; g <= 30; g++) {
+        const lot = genererLot(createMockGameState(), type, `c${g}`, rngGraine(g));
+        for (const c of lot) {
+          if (c.payload.type !== "mission") continue;
+          if (c.payload.cibles.length > 0) continue; // quête d'objet : autre voie
+          expect(c.payload.gabaritId).toBeDefined();
+          expect([c.payload.titre, ...c.payload.corps].join(" ")).not.toMatch(/\{[a-z]+\}/);
+        }
       }
     }
   });
