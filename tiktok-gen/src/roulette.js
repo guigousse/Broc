@@ -29,9 +29,13 @@ export function positionsA(t, r, { nbObjets, indexCible, espacement }) {
   const out = [];
   for (let i = 0; i < nbObjets; i++) {
     // Décalage de l'objet i par rapport à la cible, replié dans [−L/2, L/2).
-    // Le signe « + vitessePx·t » fait avancer la bande vers la droite (gauche → droite),
-    // conformément à la convention de centrage de calculerRoulette.
-    let rel = (i - indexCible + nbObjets / 2) * espacement + r.vitessePx * t;
+    // vitessePx·t croît avec le temps (la bande avance vers la droite) ; on en
+    // retranche la distance de départ de l'objet i pour que rel s'annule (mod L)
+    // exactement à ses instants de centrage (voir la convention de calculerRoulette :
+    // vitessePx·t ≡ espacement·rang (mod L) à ces instants, qui est aussi la valeur
+    // de d_i mod L — donc rel ≡ 0 (mod L) pile à t = rang/vitesse + k·periodeTour).
+    const d_i = (i - indexCible + nbObjets / 2) * espacement;
+    let rel = r.vitessePx * t - d_i;
     rel = (((rel + L / 2) % L) + L) % L - L / 2;
     out.push({ index: i, x: CENTRE_X + rel });
   }

@@ -50,6 +50,13 @@ describe("positionsA", () => {
     const r = calculerRoulette(CFG);
     expect(positionsA(r.duree, r, CFG)).toEqual(positionsA(0, r, CFG).map((p) => ({ ...p, x: expect.closeTo(p.x, 6) })));
   });
+  it("chaque tic coïncide avec le passage de son objet au centre", () => {
+    const r = calculerRoulette(CFG);
+    for (const tic of r.instantsTics) {
+      const x = positionsA(tic.t, r, CFG).find((p) => p.index === tic.index).x;
+      expect(x).toBeCloseTo(CENTRE_X, 6);
+    }
+  });
 });
 
 describe("estFlash / tempsBoucle", () => {
