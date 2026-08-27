@@ -12,6 +12,7 @@ export default defineConfig({
       "src/**/*.test.ts",
       "src/**/*.test.tsx",
       "scripts/**/*.test.mjs",
+      "tiktok-gen/**/*.test.mjs",
     ],
     exclude: ["node_modules/**", ".next/**", "out/**"],
     setupFiles: ["./vitest.setup.ts"],

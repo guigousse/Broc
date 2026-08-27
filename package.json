@@ -31,7 +31,9 @@
     "gen:thumbs": "node scripts/generate-item-thumbs.mjs",
     "test": "vitest",
     "test:run": "vitest run",
-    "lint:hooks": "eslint src"
+    "lint:hooks": "eslint src",
+    "tiktok:build": "node tiktok-gen/build.mjs",
+    "tiktok:serve": "node tiktok-gen/build.mjs && python3 -m http.server 3200 --directory tiktok-gen/dist"
   },
   "dependencies": {
     "@gbyte/tauri-plugin-in-app-review": "^0.1.0",

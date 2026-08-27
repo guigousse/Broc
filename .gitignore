@@ -55,3 +55,6 @@ src-tauri/vendor/tauri-plugin-stockage/Cargo.lock
 # target/ standalone : présent car la tâche 1 a fait tourner `cargo test`
 # directement dans ce répertoire, hors du workspace src-tauri.
 src-tauri/vendor/tauri-plugin-stockage/target/
+
+# Générateur TikTok : assets copiés au build
+tiktok-gen/dist/
