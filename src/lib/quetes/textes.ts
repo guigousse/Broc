@@ -91,7 +91,7 @@ const CHIFFREES: Record<string, Gabarit[]> = {
   ],
   restauration: [
     { titre: "Rendre son éclat", corps: ["Bonjour,", "J'ai horreur du délabré. Prends une pièce, passe-la à l'établi et remets-la en état{etat}."] },
-    { titre: "Un passage à l'établi", corps: ["Salut,", "Une pièce, un établi, un peu de patience. Restaure-moi ça{etat} et on est bons."] },
+    { titre: "Un passage à l'établi", corps: ["Salut,", "Une pièce, un établi, un peu de patience. Je la reprends une fois retapée{etat}."] },
   ],
   legendaire: [
     { titre: "La pièce d'une vie", corps: ["Cher confrère,", "On ne croise ça qu'une ou deux fois dans une carrière. Si une pièce légendaire passe devant toi aujourd'hui, ne la laisse pas filer — je saurai me montrer reconnaissant."] },
