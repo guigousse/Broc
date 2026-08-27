@@ -923,8 +923,9 @@ export const fr = {
     titre: "Soutenir Broc",
     insertCoin: "▶ INSERT COIN",
     modeDemo: "MODE DÉMONSTRATION. CE JEU NE SE LANCE PAS.",
-    corps:
-      "Broc est fabriqué par une seule personne. Suivre l'atelier ou laisser un avis, c'est ce qui l'aide à continuer d'exister.",
+    borneBlague: "Ce jeu n'existe pas. Pas encore.",
+    borneSuite:
+      "Une seule personne fabrique Broc, entre deux brocantes. Vos avis décident de la suite : laissez le vôtre, et la prochaine cartouche de cette borne existera peut-être pour de vrai.",
     merciTitre: "Merci d'être là",
     merciCorps:
       "Broc est fabriqué par une seule personne. Vous savoir ici, à chiner, c'est déjà beaucoup.",

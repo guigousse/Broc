@@ -876,8 +876,9 @@ export const en: DictionnaireUI = {
     titre: "Support Broc",
     insertCoin: "▶ INSERT COIN",
     modeDemo: "DEMO MODE. THIS GAME DOES NOT START.",
-    corps:
-      "Broc is made by one person. Following the workshop or leaving a review is what helps it keep going.",
+    borneBlague: "This game does not exist. Not yet.",
+    borneSuite:
+      "One person makes Broc, between two flea markets. Your reviews decide what comes next: leave yours, and the next cartridge in this machine might just exist for real.",
     merciTitre: "Thank you for being here",
     merciCorps:
       "Broc is made by one person. Knowing you are here, rummaging, already means a lot.",

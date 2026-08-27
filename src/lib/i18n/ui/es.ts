@@ -881,8 +881,9 @@ export const es: DictionnaireUI = {
     titre: "Apoyar a Broc",
     insertCoin: "▶ INSERT COIN",
     modeDemo: "MODO DEMOSTRACIÓN. ESTE JUEGO NO ARRANCA.",
-    corps:
-      "Broc lo hace una sola persona. Seguir el taller o dejar una reseña es lo que le ayuda a seguir existiendo.",
+    borneBlague: "Este juego no existe. Todavía.",
+    borneSuite:
+      "Una sola persona hace Broc, entre dos mercadillos. Tus reseñas deciden lo que viene: deja la tuya y puede que el próximo cartucho de esta máquina exista de verdad.",
     merciTitre: "Gracias por estar aquí",
     merciCorps:
       "Broc lo hace una sola persona. Saber que estás aquí, rebuscando, ya es mucho.",

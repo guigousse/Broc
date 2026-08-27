@@ -15,13 +15,16 @@ import { ChatPose } from "@/components/mobile/ChatPose";
 
 /**
  * Les trois portes de sortie du soutien (Instagram, TikTok, fiche du store),
- * partagées par les DEUX entrées : la page « Soutenir » du menu principal
- * (`SoutienModal`) et la feuille de la borne d'arcade (`SoutienSheet`).
+ * telles que les présente la page « Soutenir » du menu principal
+ * (`SoutienModal`).
  *
- * Un seul endroit pour les liens, un seul jeu de `data-testid`, un seul
- * habillage — celui des boutons du menu d'accueil : fond vert, bordure et
- * texte laiton. L'ancien habillage (fond transparent, texte `paper-100`)
- * posait du blanc cassé sur du papier : illisible sur appareil.
+ * La borne d'arcade, elle, ne montre QUE l'avis, et dans son propre décor
+ * (`SoutienBorneOverlay`) : y empiler les réseaux transformait une pichenette
+ * en formulaire.
+ *
+ * Habillage repris des boutons du menu d'accueil : fond vert, bordure et
+ * texte laiton. L'ancien (fond transparent, texte `paper-100`) posait du
+ * blanc cassé sur du papier : illisible sur appareil.
  */
 
 const base: CSSProperties = {
@@ -40,31 +43,27 @@ const base: CSSProperties = {
   cursor: "pointer",
 };
 
-/* Deux fonds, une seule règle : les réseaux se fondent dans le décor, et le
-   bouton d'avis prend le CONTRE-PIED de ce décor. C'est lui qu'on demande
-   vraiment ; il doit se voir sans qu'on ajoute une couleur d'accent que la
-   palette du jeu n'a pas. Sur la page du menu (fond vert sombre) il est donc
-   crème, et sur la feuille de la borne (papier) il est vert. */
-const bouton = (surPapier: boolean): CSSProperties => ({
+const bouton: CSSProperties = {
   ...base,
-  background: surPapier ? "transparent" : "var(--forest-800)",
-  color: surPapier ? "var(--forest-800)" : "var(--brass-300)",
+  background: "var(--forest-800)",
+  color: "var(--brass-300)",
   border: "1px solid var(--brass-500)",
-  boxShadow: surPapier
-    ? "none"
-    : "0 6px 14px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,225,160,0.20)",
-});
+  boxShadow:
+    "0 6px 14px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,225,160,0.20)",
+};
 
-const boutonAvis = (surPapier: boolean): CSSProperties => ({
+/* Le bouton d'avis est le seul qu'on DEMANDE vraiment : il quitte le vert des
+   deux autres pour le crème du papier, texte vert et bordure laiton épaissie.
+   Inversion de valeurs plutôt que couleur d'accent — la page n'en a pas. */
+const boutonAvis: CSSProperties = {
   ...base,
-  background: surPapier ? "var(--forest-800)" : "var(--paper-100)",
-  color: surPapier ? "var(--brass-300)" : "var(--forest-800)",
+  background: "var(--paper-100)",
+  color: "var(--forest-800)",
   border: "2px solid var(--brass-600)",
   fontWeight: 700,
-  boxShadow: surPapier
-    ? "0 6px 16px rgba(40,25,5,0.30)"
-    : "0 8px 20px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.6)",
-});
+  boxShadow:
+    "0 8px 20px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.6)",
+};
 
 const pile: CSSProperties = { display: "grid", gap: 10 };
 
@@ -78,14 +77,9 @@ const libelle: CSSProperties = { flex: 1, textAlign: "center" };
 interface BoutonsSoutienProps {
   /** Pose le chat sur le bord du bouton d'avis (page du menu). */
   avecChat?: boolean;
-  /** Habillage pour un fond clair — la feuille de la borne d'arcade. */
-  surPapier?: boolean;
 }
 
-export function BoutonsSoutien({
-  avecChat = false,
-  surPapier = false,
-}: BoutonsSoutienProps) {
+export function BoutonsSoutien({ avecChat = false }: BoutonsSoutienProps) {
   const { d } = useLangue();
   // `useSettingsSafe`, PAS `useSettings` : ces boutons sont montés en
   // permanence (feuille fermée) par `EcranArcade`, au fond de l'arbre de la
@@ -113,7 +107,7 @@ export function BoutonsSoutien({
       <button
         type="button"
         data-testid="soutien-instagram"
-        style={bouton(surPapier)}
+        style={bouton}
         onClick={aller(INSTAGRAM_URL)}
       >
         <LogoInstagram />
@@ -122,7 +116,7 @@ export function BoutonsSoutien({
       <button
         type="button"
         data-testid="soutien-tiktok"
-        style={bouton(surPapier)}
+        style={bouton}
         onClick={aller(TIKTOK_URL)}
       >
         <LogoTikTok />
@@ -137,7 +131,7 @@ export function BoutonsSoutien({
           <button
             type="button"
             data-testid="soutien-noter"
-            style={boutonAvis(surPapier)}
+            style={boutonAvis}
             onClick={aller(urlNotation)}
           >
             {surPlay ? <LogoGooglePlay /> : <LogoAppStore />}

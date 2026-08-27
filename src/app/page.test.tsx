@@ -57,7 +57,7 @@ const playClick = vi.fn();
 const playPop = vi.fn();
 vi.mock("@/context/SettingsContext", () => ({
   useSettings: () => ({ playClick, playPop }),
-  // `SoutienSheet` (ouverte depuis « Soutenir » du menu principal) appelle
+  // `BoutonsSoutien` (rendue par la page « Soutenir » du menu principal) appelle
   // désormais `useSettingsSafe` : le mock du module doit fournir les deux
   // exports, sous peine de casser au rendu.
   useSettingsSafe: () => ({ playClick, playPop }),

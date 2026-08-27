@@ -169,7 +169,7 @@ export function BorneArcadeEcran({
   // du QG : le voile se tape au doigt, mais rien ne l'atteint au clavier.
   //
   // Posé en phase de bulles (par défaut) et non de capture : si une sheet
-  // (ex. `SoutienSheet`, ouverte au-dessus d'un jeu) écoute elle aussi
+  // (ex. `SoutienBorneOverlay`, ouvert au-dessus d'un jeu) écoute lui aussi
   // `Escape` sur `window`, c'est ELLE qui doit fermer, pas le meuble entier.
   // `BottomSheet` capte l'événement en phase de capture et l'arrête — ce
   // gestionnaire-ci ne le voit alors jamais. Voir le commentaire dans

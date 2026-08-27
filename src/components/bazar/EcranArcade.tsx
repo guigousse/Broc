@@ -8,8 +8,7 @@ import { getTemplate } from "@/data/objetTemplates";
 import { audioManager } from "@/lib/audio/audioManager";
 import type { JeuArcade } from "@/lib/bazar/arcade";
 import { arcadeAudioUrl } from "@/lib/bazar/arcadeAudio";
-import { SoutienSheet } from "@/components/mobile/SoutienSheet";
-import { AccrocheBorne } from "./AccrocheBorne";
+import { SoutienBorneOverlay } from "./SoutienBorneOverlay";
 import { marquerPopupBorneVu, popupBorneVu } from "@/lib/soutien/vu";
 import { useToastSafe } from "@/components/ui/Toast";
 
@@ -362,10 +361,9 @@ export function EcranArcade({ jeux }: EcranArcadeProps) {
         <div style={balayage} />
       </div>
 
-      <SoutienSheet
+      <SoutienBorneOverlay
         open={soutienOuvert}
         onClose={() => setSoutienOuvert(false)}
-        intro={<AccrocheBorne />}
       />
     </>
   );

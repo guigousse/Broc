@@ -11,8 +11,8 @@ import { BoutonsSoutien } from "@/components/mobile/BoutonsSoutien";
  * et Crédits — écran-titre flouté derrière, encadré vert flottant devant —
  * puis les trois boutons de soutien en dessous, à même le fond.
  *
- * La borne d'arcade garde sa feuille (`SoutienSheet`) : elle s'ouvre au-dessus
- * d'un jeu, pas d'un menu. Les deux partagent `BoutonsSoutien`.
+ * La borne d'arcade, elle, a son propre décor (`SoutienBorneOverlay`) : elle
+ * s'ouvre au-dessus d'un jeu, pas d'un menu, et ne montre que l'avis.
  */
 
 interface SoutienModalProps {

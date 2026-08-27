@@ -203,7 +203,7 @@ export function useSettings(): SettingsValue {
 /**
  * Silencieux au lieu de tout un jeu de sons : chaque méthode est un no-op.
  * Utilisée par des composants montés en permanence au fond d'un arbre (ex.
- * `SoutienSheet`, montée fermée par `EcranArcade`) pour un simple retour
+ * `SoutienBorneOverlay`, monté fermé par `EcranArcade`) pour un simple retour
  * sonore de clic — un composant pareil ne doit pas exiger un `SettingsProvider`
  * global juste pour ça, sous peine de rendre fragile chaque test de tout
  * ancêtre qui le monte.
