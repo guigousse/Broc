@@ -8,6 +8,7 @@ import {
   estPret,
   peutTerminerImmediat,
   restaurationsPretes,
+  angleVoileDeg,
 } from "./restauration";
 import type { GameState } from "@/types/game";
 
@@ -112,5 +113,26 @@ describe("restaurationsPretes", () => {
   it("plusieurs prêts, plusieurs en cours", () => {
     const enCours = { enRestauration: { etatCible: "Bon", debutMs: 0, finMs: 20 * H } };
     expect(restaurationsPretes(inv([pret, pret, enCours, nu]), 10 * H)).toBe(2);
+  });
+});
+
+describe("angleVoileDeg", () => {
+  const enRest = { debutMs: 0, finMs: 4 * H };
+
+  it("360° au début : le voile couvre tout le carré", () => {
+    expect(angleVoileDeg(enRest, 0)).toBe(360);
+  });
+
+  it("180° à mi-parcours", () => {
+    expect(angleVoileDeg(enRest, 2 * H)).toBe(180);
+  });
+
+  it("0° à la fin, et jamais négatif après", () => {
+    expect(angleVoileDeg(enRest, 4 * H)).toBe(0);
+    expect(angleVoileDeg(enRest, 10 * H)).toBe(0);
+  });
+
+  it("fenêtre nulle → 0° (rien à couvrir)", () => {
+    expect(angleVoileDeg({ debutMs: 5, finMs: 5 }, 5)).toBe(0);
   });
 });

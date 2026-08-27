@@ -3,7 +3,12 @@
 import type { CSSProperties } from "react";
 import { Lock, Plus } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
-import { estPret, restantMs, formatDuree } from "@/lib/restauration";
+import {
+  estPret,
+  restantMs,
+  formatDuree,
+  angleVoileDeg,
+} from "@/lib/restauration";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { Objet } from "@/types/game";
@@ -13,7 +18,8 @@ import type { Objet } from "@/types/game";
  * panneau de la fenêtre flottante Atelier. Composant présentational : les
  * achats/tiroirs vivent dans la page.
  * États d'un carré : verrouillé (cadenas + prix sur le prochain achetable),
- * vide (+), occupé (sticker + temps restant), prêt (sticker + badge).
+ * vide (+), occupé (sticker sous un voile vert qui se retire au fil du temps,
+ * décompte au centre), prêt (sticker nu + pastille « Récupérer » pulsante).
  */
 
 interface AtelierSlotsProps {
@@ -69,26 +75,59 @@ const prixStyle: CSSProperties = {
   textAlign: "center",
 };
 
-const tempsStyle: CSSProperties = {
+/**
+ * Voile de l'établi : un secteur vert qui part de midi et couvre le temps
+ * RESTANT dans le sens horaire — la part découverte grandit donc dans
+ * l'antihoraire depuis midi, comme une aiguille qui balaie le carré. À
+ * `finMs` l'angle vaut 0° : il n'y a rien à retirer au passage au « prêt »,
+ * le voile s'est effacé tout seul.
+ *
+ * L'angle passe par une variable CSS plutôt que par une chaîne recomposée :
+ * une seule valeur à écrire par tick, et elle reste lisible à la mesure.
+ */
+const voileStyle: CSSProperties = {
   position: "absolute",
-  bottom: 2,
-  left: 0,
-  right: 0,
-  fontFamily: "var(--font-mono)",
-  fontSize: 10.5,
-  letterSpacing: "0.06em",
-  color: "var(--ink-700)",
-  textAlign: "center",
-  background: "rgba(241,227,191,0.85)",
-  padding: "1px 0",
+  inset: 0,
+  borderRadius: "inherit",
+  pointerEvents: "none",
+  background:
+    "conic-gradient(from 0deg, rgba(85,117,79,0.72) 0 var(--voile-angle), transparent var(--voile-angle) 360deg)",
 };
 
-const badgePret: CSSProperties = {
-  ...tempsStyle,
+/** Pastille centrée (décompte comme « Récupérer ») : même assise, deux robes. */
+const pastilleCentre: CSSProperties = {
+  position: "absolute",
+  left: "50%",
+  top: "50%",
+  transform: "translate(-50%, -50%)",
+  borderRadius: 999,
+  whiteSpace: "nowrap",
+  pointerEvents: "none",
+};
+
+const decompteStyle: CSSProperties = {
+  ...pastilleCentre,
+  fontFamily: "var(--font-mono)",
+  fontSize: 15,
+  letterSpacing: "0.06em",
   color: "var(--paper-100)",
-  background: "var(--forest-700)",
-  textTransform: "uppercase",
+  background: "rgba(28,22,12,0.62)",
+  border: "1px solid rgba(241,227,191,0.35)",
+  padding: "3px 9px",
+};
+
+// `broc-slot-ready-pulse` : halo vert qui s'écarte, écrit pour cet état exact.
+const recupererStyle: CSSProperties = {
+  ...pastilleCentre,
+  fontFamily: "var(--font-display)",
+  fontSize: 10.5,
   letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: "var(--brass-300)",
+  background: "var(--forest-800)",
+  border: "1px solid var(--forest-700)",
+  padding: "7px 12px",
+  animation: "broc-slot-ready-pulse 1.8s ease-in-out infinite",
 };
 
 export function AtelierSlots({
@@ -173,12 +212,26 @@ export function AtelierSlots({
               eager
             />
             {pret ? (
-              <span style={badgePret}>{d.inventaire.pret}</span>
+              <span data-testid="pastille-recuperer" style={recupererStyle}>
+                {d.inventaire.recuperer}
+              </span>
             ) : (
               objet.enRestauration && (
-                <span style={tempsStyle}>
-                  {formatDuree(restantMs(objet.enRestauration, now))}
-                </span>
+                <>
+                  <span
+                    data-testid="voile-restauration"
+                    style={{
+                      ...voileStyle,
+                      ["--voile-angle" as string]: `${angleVoileDeg(
+                        objet.enRestauration,
+                        now,
+                      )}deg`,
+                    }}
+                  />
+                  <span style={decompteStyle}>
+                    {formatDuree(restantMs(objet.enRestauration, now))}
+                  </span>
+                </>
               )
             )}
           </button>

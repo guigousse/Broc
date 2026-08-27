@@ -10,7 +10,7 @@
  * qui ne diffèrent QUE par la première compétence Réparer.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { AtelierContenu } from "./AtelierContenu";
 import { __resetMemoireReserve } from "./ReserveShell";
 import { catTreeId } from "@/data/competences";
@@ -18,6 +18,10 @@ import { CATEGORIES } from "@/data/categories";
 import type { GameState } from "@/types/game";
 
 let mockState: GameState;
+
+const { recupererMock } = vi.hoisted(() => ({
+  recupererMock: vi.fn(() => ({ ok: true }) as { ok: boolean; raison?: string }),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
@@ -34,7 +38,7 @@ vi.mock("@/context/GameContext", () => ({
     tempsConfiance: () => null,
     ameliorerAtelier: vi.fn(),
     demantelerObjet: vi.fn(),
-    recupererObjetRestaure: vi.fn(),
+    recupererObjetRestaure: recupererMock,
     terminerMiniTutoAtelier: vi.fn(),
   }),
 }));
@@ -46,6 +50,8 @@ vi.mock("@/components/ui/Toast", () => ({
 afterEach(() => {
   cleanup();
   __resetMemoireReserve();
+  recupererMock.mockClear();
+  recupererMock.mockReturnValue({ ok: true });
 });
 
 function etat(competences: string[]): GameState {
@@ -80,5 +86,47 @@ describe("AtelierContenu — d'où vient l'ouverture de l'Atelier", () => {
     mockState = etat([`${catTreeId(CATEGORIES[0])}.reparer.1`]);
     render(<AtelierContenu />);
     expect(ongletAtelier().getAttribute("aria-disabled")).toBe(null);
+  });
+});
+
+describe("AtelierContenu — récupérer un objet restauré", () => {
+  /** État avec un établi dont la restauration est échue. */
+  function etatAvecObjetPret(): GameState {
+    const s = etat([`${catTreeId(CATEGORIES[0])}.reparer.1`]);
+    return {
+      ...s,
+      inventaireJoueur: [
+        {
+          id: "o1",
+          templateId: "lampe-tiffany",
+          categorie: "Maison",
+          etat: "Bon",
+          rarete: "commun",
+          enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 1 },
+        },
+      ],
+    } as unknown as GameState;
+  }
+
+  function cliquerRecuperer() {
+    const pastille = screen.getByTestId("pastille-recuperer");
+    fireEvent.click(pastille.closest("button") as HTMLElement);
+  }
+
+  it("crédite la partie une seule fois, puis joue la cérémonie", () => {
+    mockState = etatAvecObjetPret();
+    render(<AtelierContenu />);
+    cliquerRecuperer();
+    expect(recupererMock).toHaveBeenCalledTimes(1);
+    expect(recupererMock).toHaveBeenCalledWith("o1");
+    expect(screen.getByTestId("celebration-restauration")).toBeTruthy();
+  });
+
+  it("récupération refusée : aucune cérémonie", () => {
+    mockState = etatAvecObjetPret();
+    recupererMock.mockReturnValue({ ok: false, raison: "pas fini" });
+    render(<AtelierContenu />);
+    cliquerRecuperer();
+    expect(screen.queryByTestId("celebration-restauration")).toBeNull();
   });
 });

@@ -31,6 +31,7 @@ import { AtelierItemRow } from "@/components/atelier/AtelierItemRow";
 import { AtelierActions } from "@/components/atelier/AtelierActions";
 import { PrixMarche } from "@/components/ui/PrixMarche";
 import { AtelierSlots } from "@/components/atelier/AtelierSlots";
+import { CelebrationRestauration } from "@/components/atelier/CelebrationRestauration";
 import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
@@ -135,6 +136,12 @@ export function AtelierContenu() {
   const [achatSlotOuvert, setAchatSlotOuvert] = useState(false);
   const [choisirOuvert, setChoisirOuvert] = useState(false);
   const [enCoursDetail, setEnCoursDetail] = useState<Objet | null>(null);
+  // Cérémonie de récupération : l'objet et son état d'AVANT sont figés ici,
+  // parce que la partie, elle, est déjà créditée quand elle s'ouvre.
+  const [celebration, setCelebration] = useState<{
+    objet: Objet;
+    etatApres: EtatObjet;
+  } | null>(null);
   const actionEnCoursRef = useRef(false);
 
   const enCours = useMemo(
@@ -271,6 +278,26 @@ export function AtelierContenu() {
     }, 620);
   };
 
+  /**
+   * Récupération d'un établi prêt : on crédite d'abord (rien ne dépend de
+   * l'animation), on n'ouvre la cérémonie qu'en cas de succès.
+   */
+  const handleRecuperer = (objet: Objet) => {
+    if (celebration) return;
+    const etatApres = objet.enRestauration?.etatCible ?? objet.etat;
+    const res = recupererObjetRestaure(objet.id);
+    if (!res.ok) {
+      setFlash(
+        tr(d.inventaire.impossibleRaison, {
+          raison: res.raison ?? d.inventaire.conditionNonRemplie,
+        }),
+      );
+      setTimeout(() => setFlash(null), 2500);
+      return;
+    }
+    setCelebration({ objet, etatApres });
+  };
+
   const handleConfirmRestaurer = () => {
     if (!restaurerCible) return;
     if (actionEnCoursRef.current) return;
@@ -397,7 +424,7 @@ export function AtelierContenu() {
           onAcheterSlot={() => setAchatSlotOuvert(true)}
           onSlotVide={() => setChoisirOuvert(true)}
           onEnCours={(o) => setEnCoursDetail(o)}
-          onRecuperer={(o) => recupererObjetRestaure(o.id)}
+          onRecuperer={handleRecuperer}
         />
         </div>
       }
@@ -913,6 +940,14 @@ export function AtelierContenu() {
             { cible: "atelier-etablis", texte: d.tutoriel.coachAtelierEtabli },
           ]}
           onFini={terminerMiniTutoAtelier}
+        />
+      )}
+
+      {celebration && (
+        <CelebrationRestauration
+          objet={celebration.objet}
+          etatApres={celebration.etatApres}
+          onTermine={() => setCelebration(null)}
         />
       )}
     </>
