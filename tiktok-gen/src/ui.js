@@ -4,7 +4,7 @@
  */
 import { calculerRoulette, estFlash, tempsBoucle } from "./roulette.js";
 import { chargerCatalogue } from "./catalogue.js";
-import { CacheImages } from "./images.js";
+import { CacheImages, chargerImage } from "./images.js";
 import { dessinerFrame } from "./rendu.js";
 
 async function chargerFontes() {
@@ -30,15 +30,18 @@ async function demarrer() {
   const r = calculerRoulette(cfg);
 
   const cache = new CacheImages();
-  const [fond, objets, silhouette] = await Promise.all([
+  const [fond, objets, silhouette, appStore, googlePlay] = await Promise.all([
     cache.fond("foire-chatou"),
     Promise.all(entrees.map((e) => cache.objet(e.id))),
     cache.silhouette(entrees[cfg.indexCible].id),
+    chargerImage("assets/badges/app-store.svg"),
+    chargerImage("assets/badges/google-play.svg"),
   ]);
 
   const scene = {
     r, cfg, fond, objets, silhouette,
     consigne: `Mets pause sur ${entrees[cfg.indexCible].nom} !`,
+    badges: { appStore, googlePlay },
   };
 
   const t0 = performance.now();

@@ -1,6 +1,7 @@
 /** Dessin d'une frame de la roulette sur le canvas. Module DOM/canvas, pas de tests unitaires. */
 import { CENTRE_X, CENTRE_Y, LARGEUR, HAUTEUR, positionsA } from "./roulette.js";
 import { COULEURS } from "./theme.js";
+import { dessinerOverlay } from "./overlay.js";
 
 export const HAUTEUR_OBJET = 420;
 
@@ -37,5 +38,5 @@ export function dessinerFrame(ctx, t, scene) {
     if (Math.abs(x - CENTRE_X) > LARGEUR / 2 + cfg.espacement) continue;
     const img = objets[index]; if (img) dessinerCentre(ctx, img, x, HAUTEUR_OBJET);
   }
-  if (flashActif) scene.dessinerOverlay?.(ctx, scene);
+  if (flashActif) dessinerOverlay(ctx, scene);
 }

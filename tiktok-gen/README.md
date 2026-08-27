@@ -37,3 +37,12 @@ du projet Vercel :
 
 `vercel.json` fixe `buildCommand: "node build.mjs"` et
 `outputDirectory: "dist"`.
+
+## Badges de téléchargement
+
+`assets/badges/app-store.svg` et `google-play.svg` sont des **placeholders**
+dessinés à la main (rectangle noir, texte système). Avant publication, les
+remplacer par les badges officiels — en gardant les mêmes noms de fichier :
+
+- Apple : developer.apple.com/app-store/marketing/guidelines
+- Google : play.google.com/intl/fr/badges
