@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { ciblesPourNiveau, type CiblesNiveau } from "./echelle";
+import { ETATS_ORDRE } from "@/lib/etat";
 
 // Énumérée à la main : toutes les cibles ne sont pas des nombres depuis que
 // `restaurationEtatMin` (EtatObjet) existe. Une liste dérivée automatiquement
@@ -166,11 +167,18 @@ describe("barème quotidien", () => {
     }
   });
 
-  test("la restauration quotidienne ne demande JAMAIS Pristin état", () => {
-    // 4 h de temps réel, et il faut déjà posséder une pièce en Très bon :
-    // infaisable dans la fenêtre d'une journée.
+  test("la restauration quotidienne demande un état entre Bon et Très bon inclus", () => {
+    // Bornée dans les DEUX sens via `ETATS_ORDRE` (source unique de l'ordre
+    // des états) : pas « Pristin état » (4 h de temps réel, et il faut déjà
+    // posséder une pièce en Très bon — infaisable dans la fenêtre d'une
+    // journée), mais pas « Mauvais » non plus, qui passerait ce même test
+    // sans être un palier crédible pour une restauration quotidienne.
+    const iBon = ETATS_ORDRE.indexOf("Bon");
+    const iTresBon = ETATS_ORDRE.indexOf("Très bon");
     for (const n of NIVEAUX) {
-      expect(ciblesPourNiveau(n).restaurationEtatMin).not.toBe("Pristin état");
+      const i = ETATS_ORDRE.indexOf(ciblesPourNiveau(n).restaurationEtatMin);
+      expect(i).toBeGreaterThanOrEqual(iBon);
+      expect(i).toBeLessThanOrEqual(iTresBon);
     }
   });
 });
