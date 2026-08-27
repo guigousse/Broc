@@ -772,6 +772,7 @@ export const es: DictionnaireUI = {
     nonRestaurable: "No restaurable.",
     competenceReparerManquanteSimple: "Falta la habilidad Reparar.",
     objetIntrouvableStock: "Objeto no encontrado en el almacén.",
+    pieceUniqueProtegee: "Pieza única: no se vende ni se desmonta. Su sitio es la colección.",
     // Auto-save (GameContext) : seul avertissement de perte de progression.
     sauvegardeImpossible:
       "No se pudo guardar: almacenamiento lleno o no disponible. Tu progreso podría perderse.",

@@ -11,6 +11,7 @@ import {
   peutRestaurerTresBonVersPristin,
 } from "@/lib/competences";
 import { getCapaciteAtelier } from "@/data/atelier";
+import { estVendable } from "@/lib/vitrine";
 import { recalculerPrixReference } from "@/lib/etat";
 import { tr, type DictionnaireUI } from "@/lib/i18n/ui";
 import { libelleCategorie } from "@/lib/i18n/libelles";
@@ -201,6 +202,11 @@ export function peutDemanteler(
   o: Objet,
   d: DictionnaireUI,
 ): AtelierStatus {
+  // Une pièce unique ne réapparaît jamais en chinage une fois possédée
+  // (`uniquesExclusDuChinage`) : la démanteler serait une perte définitive.
+  // L'établi lui reste ouvert — seules la vente et la casse lui sont fermées.
+  if (!estVendable(o))
+    return { disponible: false, raison: d.raisons.pieceUniqueProtegee };
   if (o.enRestauration)
     return { disponible: false, raison: d.raisons.objetEnRestauration };
   // Un objet en vitrine n'est PAS dans inventaireJoueur (cf. mettreEnVitrine

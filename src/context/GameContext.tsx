@@ -73,6 +73,7 @@ import { tirerMeteo, tirerMeteoSemaine, indexJourSemaine } from "@/lib/meteo";
 import { tirerCelebrite } from "@/lib/celebrite";
 import { getProchaineUpgradeStockage, getStockageTier } from "@/data/stockage";
 import { stockageEstPlein } from "@/lib/stockage";
+import { estVendable } from "@/lib/vitrine";
 import { tickQuetes } from "@/lib/quetes/tick";
 import { settleQuetesPeriodiques } from "@/lib/quetes/settlePeriodiques";
 import { settleBazar } from "@/lib/bazar/settleBazar";
@@ -1322,6 +1323,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (!prev || !prev.vitrine) return prev;
         const objet = prev.inventaireJoueur.find((o) => o.id === objetId);
         if (!objet) return prev;
+        // Dernier filet sur les pièces uniques : elles ne réapparaissent
+        // jamais en chinage une fois possédées, donc les vendre serait une
+        // perte définitive. Les écrans les écartent déjà du coffre
+        // (`stockChargeable`) ; ce goulot garantit qu'aucun chemin d'appel
+        // non prévu ne peut en faire fuir une.
+        if (!estVendable(objet)) return prev;
         const nouvelEntree: ObjetEnVitrine = {
           objet,
           prixVente,

@@ -788,6 +788,7 @@ export const el: DictionnaireUI = {
     nonRestaurable: "Δεν αποκαθίσταται.",
     competenceReparerManquanteSimple: "Λείπει η δεξιότητα Επισκευή.",
     objetIntrouvableStock: "Το αντικείμενο δεν βρέθηκε στην αποθήκη.",
+    pieceUniqueProtegee: "Μοναδικό κομμάτι: δεν πωλείται ούτε αποσυναρμολογείται. Η θέση του είναι στη συλλογή.",
     // Auto-save (GameContext) : seul avertissement de perte de progression.
     sauvegardeBandeau: "Η αποθήκευση απέτυχε — η πρόοδός σου δεν καταγράφεται.",
     sauvegardeModaleTitre: "Η πρόοδός σου δεν αποθηκεύεται",

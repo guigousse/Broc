@@ -1,4 +1,23 @@
-import { describe, expect, it } from "vitest";
+describe("une pièce unique reste restaurable", () => {
+  // Décision explicite : le verrou porte sur la VENTE et la CASSE, pas sur
+  // l'établi. Ce test existe pour qu'on ne referme pas l'atelier par erreur
+  // en durcissant la protection des uniques plus tard.
+  it("atelierStatusPourObjet ne refuse pas un unique pour son unicité", () => {
+    const o = createMockObjet({
+      templateId: "uniq.mus.violon_paganini",
+      categorie: "Musique",
+      etat: "Mauvais",
+    });
+    const state = withPieces(
+      withCompetences(createMockGameState({ inventaireJoueur: [o] }), [
+        "cat.Musique.reparer.1",
+      ]),
+      "Musique",
+      99,
+    );
+    expect(atelierStatusPourObjet(state, o, DICTIONNAIRES.fr).disponible).toBe(true);
+  });
+});import { describe, expect, it } from "vitest";
 import {
   appliquerRecuperation,
   atelierAuneSlotLibre,
@@ -289,6 +308,43 @@ describe("peutDemanteler", () => {
     const o = createMockObjet();
     const state = createMockGameState({ inventaireJoueur: [o] });
     expect(peutDemanteler(state, o, DICTIONNAIRES.fr).disponible).toBe(true);
+  });
+
+  it("refus sur une pièce unique, avec sa raison", () => {
+    // Une pièce unique n'existe qu'en un exemplaire par partie et ne
+    // réapparaît jamais en chinage : la démanteler serait irréversible.
+    const o = createMockObjet({ templateId: "uniq.art.toile_monet_inedite" });
+    const state = createMockGameState({ inventaireJoueur: [o] });
+    const statut = peutDemanteler(state, o, DICTIONNAIRES.fr);
+    expect(statut.disponible).toBe(false);
+    expect(statut.raison).toBe(DICTIONNAIRES.fr.raisons.pieceUniqueProtegee);
+  });
+
+  it("un légendaire NON unique se démantèle toujours", () => {
+    const o = createMockObjet({ templateId: "leg.lv.gutenberg_feuillet" });
+    const state = createMockGameState({ inventaireJoueur: [o] });
+    expect(peutDemanteler(state, o, DICTIONNAIRES.fr).disponible).toBe(true);
+  });
+});
+
+describe("une pièce unique reste restaurable", () => {
+  // Décision explicite : le verrou porte sur la VENTE et la CASSE, pas sur
+  // l'établi. Ce test existe pour qu'on ne referme pas l'atelier par erreur
+  // en durcissant la protection des uniques plus tard.
+  it("atelierStatusPourObjet ne refuse pas un unique pour son unicité", () => {
+    const o = createMockObjet({
+      templateId: "uniq.mus.violon_paganini",
+      categorie: "Musique",
+      etat: "Mauvais",
+    });
+    const state = withPieces(
+      withCompetences(createMockGameState({ inventaireJoueur: [o] }), [
+        "cat.Musique.reparer.1",
+      ]),
+      "Musique",
+      99,
+    );
+    expect(atelierStatusPourObjet(state, o, DICTIONNAIRES.fr).disponible).toBe(true);
   });
 });
 

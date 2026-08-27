@@ -102,6 +102,20 @@ const prixValue: CSSProperties = {
   fontWeight: 600,
 };
 
+/** Même châssis que `restaurationBanner`, teinté « pièce d'exception ». */
+const uniqueBanner: CSSProperties = {
+  padding: "8px 10px",
+  background: "var(--paper-200)",
+  border: "1px solid var(--brass-700)",
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  lineHeight: 1.5,
+  letterSpacing: "0.06em",
+  color: "var(--brass-700)",
+  textAlign: "center",
+  marginBottom: 12,
+};
+
 const restaurationBanner: CSSProperties = {
   padding: "8px 10px",
   background: "var(--paper-200)",
@@ -160,6 +174,12 @@ export function ObjetDetailOverlay({
             <div style={restaurationBanner}>
               {d.inventaire.enRestaurationAtelier}
             </div>
+          )}
+
+          {/* Une pièce unique sort du carrousel de chargement du coffre sans
+              rien dire ; c'est ici que le joueur vient chercher pourquoi. */}
+          {isUnique && (
+            <div style={uniqueBanner}>{d.raisons.pieceUniqueProtegee}</div>
           )}
 
           <div style={prixRow}>

@@ -3,10 +3,12 @@ import type {
   CategorieObjet,
   NegoPersona,
   NegociationState,
+  Objet,
   ObjetEnVitrine,
   Tendance,
   VitrineActive,
 } from "@/types/game";
+import { getTemplate } from "@/data/objetTemplates";
 import { ALL_PERSONNAGES, type ClientPersonnage } from "@/data/clients";
 import type { AcheteurScenario } from "@/data/tutorielScenario";
 import { personnageScenario } from "@/data/tutorielScenario";
@@ -581,4 +583,38 @@ export function prochainIntervalleClient(
 ): number {
   const span = CLIENT_INTERVALLE_MAX_SEC - CLIENT_INTERVALLE_MIN_SEC;
   return (CLIENT_INTERVALLE_MIN_SEC + Math.random() * span) * intervalleMultiplier;
+}
+
+/* === Uniques : ni coffre, ni étal ====================================== */
+
+/**
+ * Une pièce UNIQUE ne se vend pas : elle n'existe qu'en un exemplaire par
+ * partie, et `uniquesExclusDuChinage` ne la represente jamais une fois
+ * possédée. La vendre serait donc une perte définitive et silencieuse — et
+ * la faire réapparaître après revente rouvrirait la boucle d'argent que ce
+ * verrou de chinage avait fermée (au Grand Salon, `facteurBourse` 5,0 porte
+ * la bourse d'un gros client à 10 000 €, au-dessus du prix d'achat des
+ * uniques les moins chers). Sa place est la collection ; l'atelier lui reste
+ * ouvert, seule la vente et le démantèlement lui sont fermés.
+ *
+ * Fail-open sur template inconnu : sans template on ne peut pas affirmer
+ * l'unicité, et bloquer le stock d'une vieille sauvegarde serait pire.
+ */
+export function estVendable(objet: Pick<Objet, "templateId">): boolean {
+  return getTemplate(objet.templateId)?.unique !== true;
+}
+
+/**
+ * Objets de l'inventaire proposables au chargement du coffre. Source unique
+ * des deux écrans d'étal (préparation hors brocante et sur place), qui
+ * recopiaient la même règle.
+ */
+export function stockChargeable(
+  inventaire: readonly Objet[],
+  coffre: readonly ObjetEnVitrine[],
+): Objet[] {
+  const dansLeCoffre = new Set(coffre.map((o) => o.objet.id));
+  return inventaire.filter(
+    (o) => !dansLeCoffre.has(o.id) && !o.enRestauration && estVendable(o),
+  );
 }

@@ -771,6 +771,7 @@ export const en: DictionnaireUI = {
     nonRestaurable: "Not restorable.",
     competenceReparerManquanteSimple: "Repair skill missing.",
     objetIntrouvableStock: "Item not found in storage.",
+    pieceUniqueProtegee: "One-of-a-kind piece: it can't be sold or broken down. It belongs in the collection.",
     // Auto-save (GameContext) : seul avertissement de perte de progression.
     sauvegardeImpossible:
       "Saving failed — storage full or unavailable. Your progress may be lost.",
