@@ -56,6 +56,17 @@ class FakeAudioContext {
   resume = vi.fn(async () => {
     this.state = "running";
   });
+  // WebKit ferme le contexte de son côté (reset du service média, pression
+  // mémoire) : le manager doit savoir en rebâtir un.
+  close = vi.fn(async () => {
+    this.state = "closed";
+  });
+  onstatechange: (() => void) | null = null;
+  /** Simule une transition subie : pose l'état PUIS notifie, comme le fait iOS. */
+  subirEtat(etat: AudioContextState): void {
+    this.state = etat;
+    this.onstatechange?.();
+  }
   destination = { connect: vi.fn(), disconnect: vi.fn() };
   gains: FakeGain[] = [];
   oscillators: FakeOscillator[] = [];
@@ -135,6 +146,7 @@ class FakeAudio {
   // il ne s'automatise pas, d'où l'échelonnage à la main côté manager.
   loop = false;
   playbackRate = 1;
+  currentTime = 0;
   private listeners = new Map<string, Set<() => void>>();
 
   constructor(src = "") {
@@ -398,6 +410,26 @@ describe("audioManager — effets et préférences", () => {
     audioManager.playTick();
     // Pas de contexte créé : retour immédiat avant ensureCtx.
     expect(FakeAudioContext.instances).toHaveLength(0);
+  });
+
+  // Le carillon qui remplace le son SYSTÈME d'une notification reçue en jouant
+  // (celui-ci prenait la session audio iOS et coupait tout le son du jeu).
+  it("playNotif joue les deux notes du carillon", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playNotif();
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.oscillators).toHaveLength(2);
+    expect(ctx.oscillators[0].start).toHaveBeenCalled();
+    expect(ctx.oscillators[1].start).toHaveBeenCalled();
+  });
+
+  // Il passe par le bus du jeu, donc par ses réglages — c'est précisément ce
+  // que le son système ignorait.
+  it("playNotif est muet quand la préférence effets est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    audioManager.playNotif();
+    expect(FakeAudioContext.instances[0]?.oscillators ?? []).toHaveLength(0);
   });
 
   it("playApparition crée un oscillateur avec enveloppe quand effets est actif", async () => {
@@ -1120,5 +1152,223 @@ describe("audioManager — setAmbienceDuck", () => {
       expect.closeTo(0.4, 5),
       expect.any(Number),
     );
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Auto-réparation du contexte (le son qui se coupe en pleine session)  */
+/* ------------------------------------------------------------------ */
+
+/*
+ * LE défaut que ferme cette suite : tout le jeu sonne à travers UN seul
+ * AudioContext, et le seul rattrapage était un `resume()` tiré au petit
+ * bonheur. Un contexte qu'iOS ferme (reset du service média, pression
+ * mémoire) ou qu'il laisse « interrupted » (pub récompensée, notification,
+ * appel) ne revient jamais de lui-même : le `return` anticipé d'ensureCtx
+ * garantissait qu'on retente éternellement sur un contexte mort. Symptôme
+ * côté joueur : tout se tait d'un coup, en pleine partie, jusqu'au
+ * redémarrage de l'app.
+ */
+describe("audioManager — un contexte mort est rebâti", () => {
+  beforeEach(stubBrowserGlobals);
+
+  it("un contexte fermé par iOS est rebâti au son suivant", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+
+    ctx1.state = "closed";
+    audioManager.playClick();
+
+    expect(FakeAudioContext.instances).toHaveLength(2);
+    // Le son demandé sort sur le NOUVEAU contexte, pas dans le vide.
+    expect(FakeAudioContext.instances[1].oscillators).toHaveLength(1);
+    // Un contexte déjà fermé n'est pas refermé — WebKit lève sur un second
+    // close(), et le graphe neuf partirait alors sur une exception.
+    expect(ctx1.close).not.toHaveBeenCalled();
+  });
+
+  it("un resume refusé (contexte mort) fait rebâtir le graphe", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+
+    ctx1.state = "suspended";
+    ctx1.resume.mockRejectedValueOnce(new Error("InvalidStateError"));
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    expect(FakeAudioContext.instances).toHaveLength(2);
+    // L'ancien, lui, est encore ouvert : il DOIT être relâché. WebKit
+    // plafonne le nombre d'AudioContext par page, en accumuler des morts
+    // finirait par tuer le son pour de bon.
+    expect(ctx1.close).toHaveBeenCalled();
+  });
+
+  // Non-régression : un contexte simplement endormi (le cas de tous les jours)
+  // se réveille par resume. Le rebâtir serait une coupure gratuite.
+  it("un contexte seulement suspendu est repris, pas rebâti", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+
+    ctx1.state = "suspended";
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    expect(ctx1.resume).toHaveBeenCalled();
+    expect(FakeAudioContext.instances).toHaveLength(1);
+  });
+
+  // Le cas WebKit : resume() tient sa promesse mais l'état ne bouge pas.
+  // Sans escalade, on retenterait la même chose pour l'éternité.
+  it("un « interrupted » que resume ne réveille pas finit par être rebâti", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+    ctx1.resume.mockImplementation(async () => {});
+    ctx1.state = "interrupted" as AudioContextState;
+
+    for (let i = 0; i < 4; i++) {
+      audioManager.playClick();
+      await flushMicrotasks();
+    }
+
+    expect(FakeAudioContext.instances).toHaveLength(2);
+  });
+
+  it("l'ambiance qui tournait repart sur le contexte rebâti", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startAmbience(0.4);
+    const ctx1 = FakeAudioContext.instances[0];
+    expect(ctx1.bufferSources).toHaveLength(1);
+
+    ctx1.state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    const ctx2 = FakeAudioContext.instances[1];
+    expect(ctx2.bufferSources).toHaveLength(1);
+    expect(ctx2.bufferSources[0].loop).toBe(true);
+  });
+
+  it("le disque reprend à la seconde où il s'est tu", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/aaa.m4a");
+    const disque1 = FakeAudio.instances[0];
+    disque1.currentTime = 42;
+
+    FakeAudioContext.instances[0].state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    const disque2 = FakeAudio.instances[FakeAudio.instances.length - 1];
+    expect(disque2).not.toBe(disque1);
+    expect(disque2.src).toBe("/sounds/vinyles/aaa.m4a");
+    expect(disque2.currentTime).toBe(42);
+    expect(disque2.paused).toBe(false);
+  });
+
+  // Un disque que le joueur a mis en pause doit RESTER en pause : une panne
+  // technique n'est pas une raison de rallumer la musique qu'il a coupée.
+  it("un disque mis en pause par le joueur ne redémarre pas tout seul", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/aaa.m4a");
+    audioManager.pauseVinyl();
+    const avant = FakeAudio.instances.length;
+
+    FakeAudioContext.instances[0].state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    expect(FakeAudio.instances).toHaveLength(avant);
+  });
+
+  // Sans ça, la reprise attend le prochain tap du joueur : dans un dialogue
+  // ou une cinématique, le silence dure.
+  it("une interruption subie déclenche la reprise sans attendre un tap", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+    ctx1.resume.mockClear();
+
+    ctx1.subirEtat("suspended");
+    await flushMicrotasks();
+
+    expect(ctx1.resume).toHaveBeenCalled();
+  });
+
+  // La panne n'est observable ni au simulateur ni au débogueur : elle n'arrive
+  // qu'en session longue sur l'appareil. Le journal est la seule pièce à
+  // conviction disponible si le rattrapage lui-même échoue.
+  it("le journal garde la trace des états subis", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx1 = FakeAudioContext.instances[0];
+
+    ctx1.subirEtat("interrupted" as AudioContextState);
+    await flushMicrotasks();
+
+    const journal = audioManager.journalAudio();
+    expect(journal.length).toBeGreaterThan(0);
+    expect(journal.some((l) => l.etat === "interrupted")).toBe(true);
+  });
+
+  // Le contexte qui se réveille ne suffit pas : iOS met AUSSI en pause les
+  // éléments <audio>. Les boucles d'ambiance (des AudioBufferSource) repartent
+  // toutes seules, la musique du gramophone non — d'où « tout revient sauf la
+  // musique », qui n'aurait ressemblé à rien.
+  it("après une reprise, le disque qu'iOS avait mis en pause repart", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/aaa.m4a");
+    const disque = FakeAudio.instances[0];
+    disque.paused = true;
+
+    FakeAudioContext.instances[0].subirEtat("suspended");
+    await flushMicrotasks();
+
+    expect(disque.paused).toBe(false);
+  });
+
+  it("un disque en pause volontaire n'est pas relancé par la reprise", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/aaa.m4a");
+    const disque = FakeAudio.instances[0];
+    audioManager.pauseVinyl();
+
+    FakeAudioContext.instances[0].subirEtat("suspended");
+    await flushMicrotasks();
+
+    expect(disque.paused).toBe(true);
+  });
+
+  it("la borne éteinte ne se rallume pas sur le contexte rebâti", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playArcadeTrack("/sounds/arcade/jeu.m4a");
+    audioManager.stopArcade();
+    const avant = FakeAudio.instances.length;
+
+    FakeAudioContext.instances[0].state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+
+    expect(FakeAudio.instances).toHaveLength(avant);
+  });
+
+  // Garde-fou : deux pannes coup sur coup ne doivent pas partir en fabrique à
+  // contextes. WebKit en plafonne le nombre par page.
+  it("deux pannes rapprochées ne rebâtissent qu'une fois", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+
+    FakeAudioContext.instances[0].state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+    expect(FakeAudioContext.instances).toHaveLength(2);
+
+    FakeAudioContext.instances[1].state = "closed";
+    audioManager.playClick();
+    await flushMicrotasks();
+    expect(FakeAudioContext.instances).toHaveLength(2);
   });
 });
