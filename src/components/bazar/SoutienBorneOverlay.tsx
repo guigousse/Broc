@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { useSettingsSafe } from "@/context/SettingsContext";
 import { lienNotation } from "@/lib/soutien/liens";
@@ -169,7 +170,12 @@ export function SoutienBorneOverlay({ open, onClose }: SoutienBorneOverlayProps)
     onClose();
   };
 
-  return (
+  // RENDU AU BODY, et ce n'est pas un détail de style : `BorneArcadeEcran`
+  // porte un `backdrop-filter`, ce qui fait de lui le bloc conteneur de tout
+  // `position: fixed` en dessous de lui. Rendu sur place, ce voile ne couvrait
+  // donc PAS l'écran mais la seule fenêtre de la borne — un rectangle sombre
+  // posé au milieu du Bazar, exactement ce que la recette a vu.
+  return createPortal(
     <div
       style={scrim}
       onClick={onFermer}
@@ -207,6 +213,7 @@ export function SoutienBorneOverlay({ open, onClose }: SoutienBorneOverlayProps)
         </button>
         <div style={balayage} aria-hidden />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
