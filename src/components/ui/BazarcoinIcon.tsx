@@ -79,6 +79,21 @@ export const HAUTEUR_SIGNE_DISPLAY = "0.73em";
  *  chiffres du quotient flottant ne seraient que du bruit. */
 const RAPPORT = +(11.44 / 15.2).toFixed(4);
 
+/**
+ * Le tracé et son cadre, exportés parce qu'ils ne servent plus qu'ici : la
+ * célébration d'achat fait jaillir des Bazarcoins qu'elle construit en DOM
+ * pur, hors de React (cf. `celebrationAchat.ts`). Un second tracé recopié
+ * là-bas aurait dérivé de celui-ci au premier retouchage du signe.
+ */
+export const VUE_BAZARCOIN = "6.43 4.40 11.44 15.20";
+export const TRACE_BAZARCOIN = `M7.03 6.50Q12.15 3.50 17.27 6.50
+           M17.27 6.50Q9.96 9.95 7.03 17.50
+           M7.03 17.50Q12.15 20.50 17.27 17.50
+           M7.03 10.17H17.27
+           M7.03 13.83H17.27`;
+/** Largeur du signe pour une hauteur donnée, en px. */
+export const largeurBazarcoin = (hauteur: number) => +(hauteur * RAPPORT).toFixed(2);
+
 export function BazarcoinIcon({
   size = 13,
   terni = false,
@@ -100,16 +115,12 @@ export function BazarcoinIcon({
     <svg
       width={largeur}
       height={size}
-      viewBox="6.43 4.40 11.44 15.20"
+      viewBox={VUE_BAZARCOIN}
       aria-hidden="true"
       style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}
     >
       <path
-        d="M7.03 6.50Q12.15 3.50 17.27 6.50
-           M17.27 6.50Q9.96 9.95 7.03 17.50
-           M7.03 17.50Q12.15 20.50 17.27 17.50
-           M7.03 10.17H17.27
-           M7.03 13.83H17.27"
+        d={TRACE_BAZARCOIN}
         fill="none"
         stroke={couleur}
         strokeWidth="1.2"

@@ -486,6 +486,23 @@ describe("audioManager — effets et préférences", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  // Le tintement des Bazarcoins qui tombent dans la caisse, au bout de leur vol
+  // depuis le carnet de quêtes (2026-08-26).
+  it("playJetonBazar charge /sounds/jeton-bazar.mp3 et lance la source", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playJetonBazar();
+    expect(fetchMock).toHaveBeenCalledWith("/sounds/jeton-bazar.mp3");
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources[0].start).toHaveBeenCalled();
+  });
+
+  it("playJetonBazar se tait quand les effets sont coupés", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    await audioManager.playJetonBazar();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("playCash respecte la préférence effets désactivée (aucun fetch)", async () => {
     const { audioManager } = await freshManager();
     audioManager.setPref("effets", false);

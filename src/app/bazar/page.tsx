@@ -136,6 +136,7 @@ export default function BazarPage() {
         }}
       >
         <BazarScene
+          horloge={() => tempsConfiance() ?? Date.now()}
           etal={state.bazar}
           jetons={state.jetons}
           jeuxArcade={jeuxArcade(state.collection)}

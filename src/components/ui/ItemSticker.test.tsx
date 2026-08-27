@@ -93,3 +93,48 @@ describe("ItemSticker", () => {
     });
   });
 });
+
+describe("ItemSticker — l'éclat du pristin", () => {
+  const props = {
+    templateId: "br.scie_egoine_de_charpentier",
+    categorie: "Bricolage" as const,
+  };
+
+  it("un objet pristin gagne un halo chaud et une montée de lumière", () => {
+    const { container } = render(<ItemSticker {...props} etat="Pristin état" />);
+    const f = container.querySelector("img")!.style.filter;
+    expect(f).toContain("brightness(");
+    expect(f).toContain("drop-shadow(0 0 ");
+  });
+
+  it("un objet en très bon état ne brille pas : l'éclat est le privilège du sommet", () => {
+    const { container } = render(<ItemSticker {...props} etat="Très bon" />);
+    const f = container.querySelector("img")!.style.filter;
+    expect(f).not.toContain("brightness(");
+  });
+
+  it("sans état connu, rien ne change — les appelants qui l'ignorent gardent leur rendu", () => {
+    const { container } = render(<ItemSticker {...props} />);
+    const f = container.querySelector("img")!.style.filter;
+    expect(f).not.toContain("brightness(");
+  });
+
+  it("l'éclat n'efface pas le contour die-cut ni l'ombre portée", () => {
+    const { container } = render(<ItemSticker {...props} etat="Pristin état" />);
+    const f = container.querySelector("img")!.style.filter;
+    expect(f).toContain("#fdfaf2");
+    expect(f).toContain("rgba(40,25,5,0.35)");
+  });
+
+  it("un objet pristin encore GRISÉ (vu, pas possédé) ne brille pas", () => {
+    // La grille de Collection grise ce qu'on a seulement croisé. Un halo
+    // doré sur un objet qu'on ne possède pas promettrait le contraire de ce
+    // que la variante raconte.
+    const { container } = render(
+      <ItemSticker {...props} etat="Pristin état" variant="grise" />,
+    );
+    const f = container.querySelector("img")!.style.filter;
+    expect(f).toContain("grayscale(1)");
+    expect(f).not.toContain("drop-shadow(0 0 ");
+  });
+});

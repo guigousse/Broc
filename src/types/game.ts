@@ -516,6 +516,16 @@ export interface LotPiecesBazar {
 /** Un objet de l'étagère du haut, exemplaire unique, livré en Pristin état. */
 export interface ObjetBazar {
   templateId: string;
+  /**
+   * L'article a été acheté. Il RESTE sur l'étagère jusqu'au renouvellement du
+   * lundi, en noir et blanc et tamponné « Vendu » (2026-08-26) — d'où le
+   * marquage plutôt que l'effacement : une case vidée n'a plus rien à montrer.
+   *
+   * Optionnel : les parties d'avant portent un `null` à la place de l'article
+   * acheté, et l'étal se renouvelle de toute façon chaque lundi. Aucune
+   * migration à écrire pour un champ dont l'absence signifie « en vente ».
+   */
+  vendu?: boolean;
   /** `prixRefBase` du template au moment de la composition (snapshot). */
   valeurBase: number;
   /** Prix en jetons — `Math.ceil(valeurBase / 25)`, minimum 1. */

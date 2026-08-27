@@ -1,8 +1,9 @@
 "use client";
 
 import { memo, useRef, type CSSProperties } from "react";
-import { Album, ArrowRight, RotateCw } from "lucide-react";
+import { Album, ArrowDownToLine, TrendingDown, TrendingUp } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
+import { PrixMarche } from "@/components/ui/PrixMarche";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
@@ -109,7 +110,12 @@ const collectionInlineBtn = (enabled: boolean): CSSProperties => ({
 
 const arrowBadge: CSSProperties = {
   position: "absolute",
-  right: -8,
+  // -4 et non -8 : le bouton fait 44 px, la boîte d'icône 28, il reste donc
+  // 8 px de marge de chaque côté. À -8 la flèche débordait de toute cette
+  // marge et venait affleurer le liseré laiton ; à -4 elle garde 4 px d'air,
+  // le même que le cadre s'accorde ailleurs. Plus à gauche encore, elle
+  // mordrait sur le trait de l'album.
+  right: -4,
   bottom: -4,
   display: "grid",
   placeItems: "center",
@@ -171,6 +177,7 @@ function StockageItemRowBase({
           <ItemSticker
             templateId={objet.templateId}
             categorie={objet.categorie}
+            etat={objet.etat}
             fill
             tilt={false}
             variant="normal"
@@ -241,23 +248,14 @@ function StockageItemRowBase({
           </div>
           {/* Prix du marché sous la ligne état + thème ; libellé complet
               « Prix du marché : ? € » tant que la compétence connaisseur
-              n'est pas débloquée. */}
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 13,
-              color: "var(--forest-800)",
-              marginTop: 4,
-            }}
-          >
-            {valeurConnue
-              ? `${Math.round(objet.prixReferenceReel)} €`
-              : d.inventaire.prixMarcheInconnu}
-          </div>
+              n'est pas débloquée. L'atelier écrit la même ligne, d'où le
+              composant partagé. */}
+          <PrixMarche prix={objet.prixReferenceReel} connue={valeurConnue} />
         </div>
-        {/* Déjà donné à l'identique (même état) : pas de bouton. Sinon,
-            flèche droite = don direct, flèche circulaire = remplacement
-            d'un exemplaire dans un autre état (confirmation en aval).
+        {/* Déjà donné à l'identique (même état) : pas de bouton. Sinon la
+            flèche dit ce que l'envoi FERA à la collection, avant le tap :
+            elle ENTRE quand la case est vide, elle MONTE quand l'exemplaire
+            en place vaut moins, elle DESCEND quand il vaut plus.
             stopPropagation : ne déclenche pas le tap de la fiche (détail). */}
         {collection.dejaIdentique ? (
           <span aria-hidden style={{ width: 44 }} />
@@ -286,18 +284,24 @@ function StockageItemRowBase({
             }}
             disabled={!collection.disponible}
             aria-label={
-              collection.necessiteConfirmation
-                ? d.inventaire.remplacerCollection
-                : d.inventaire.envoyerCollection
+              !collection.necessiteConfirmation
+                ? d.inventaire.envoyerCollection
+                : collection.tendance === "hausse"
+                  ? d.inventaire.remplacerCollectionHausse
+                  : collection.tendance === "baisse"
+                    ? d.inventaire.remplacerCollectionBaisse
+                    : d.inventaire.remplacerCollection
             }
           >
             <span style={iconWithPlus}>
               <Album size={22} strokeWidth={1.5} />
               <span style={arrowBadge}>
-                {collection.necessiteConfirmation ? (
-                  <RotateCw size={12} strokeWidth={2.4} />
+                {!collection.necessiteConfirmation ? (
+                  <ArrowDownToLine size={12} strokeWidth={2.4} />
+                ) : collection.tendance === "baisse" ? (
+                  <TrendingDown size={12} strokeWidth={2.4} />
                 ) : (
-                  <ArrowRight size={12} strokeWidth={2.4} />
+                  <TrendingUp size={12} strokeWidth={2.4} />
                 )}
               </span>
             </span>
@@ -329,5 +333,9 @@ export const StockageItemRow = memo(
     prev.collection.disponible === next.collection.disponible &&
     prev.collection.dejaIdentique === next.collection.dejaIdentique &&
     prev.collection.necessiteConfirmation ===
-      next.collection.necessiteConfirmation,
+      next.collection.necessiteConfirmation &&
+    // La tendance décide de la FLÈCHE : l'oublier ici fige la ligne sur sa
+    // première (une restauration change la tendance sans rien changer
+    // d'autre dans le statut).
+    prev.collection.tendance === next.collection.tendance,
 );

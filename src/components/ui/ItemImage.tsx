@@ -4,7 +4,9 @@ import Image from "next/image";
 import { useState, type CSSProperties } from "react";
 import { CategorieIcon } from "@/components/ui/CategorieIcon";
 import { getItemImageUrl, getItemThumbUrl } from "@/lib/itemImages";
-import type { CategorieObjet } from "@/types/game";
+import { ECLAT_PRISTIN } from "@/components/ui/ItemSticker";
+import { estPristin } from "@/lib/etat";
+import type { CategorieObjet, EtatObjet } from "@/types/game";
 
 interface ItemImageProps {
   templateId: string;
@@ -48,6 +50,12 @@ interface ItemImageProps {
    * (le WebView recharge la page). Cf. `getItemThumbUrl`.
    */
   fullSize?: boolean;
+  /**
+   * État de l'objet. Sert UNIQUEMENT à l'éclat du pristin — le même halo que
+   * celui du sticker (`ECLAT_PRISTIN`), pour qu'un objet au sommet se
+   * reconnaisse d'un écran à l'autre. Facultatif : sans lui, rendu inchangé.
+   */
+  etat?: EtatObjet;
 }
 
 const wrapper: CSSProperties = {
@@ -73,6 +81,7 @@ export function ItemImage({
   sizes = DEFAULT_SIZES,
   priority = false,
   fullSize = false,
+  etat,
 }: ItemImageProps) {
   const src = fullSize
     ? getItemImageUrl(templateId)
@@ -129,6 +138,7 @@ export function ItemImage({
             objectFit: fit,
             objectPosition: verticalAlign === "bottom" ? "center bottom" : "center",
             display: "block",
+            ...(estPristin(etat) ? { filter: ECLAT_PRISTIN } : null),
           }}
         />
       </div>

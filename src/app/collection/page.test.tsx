@@ -47,7 +47,8 @@ afterEach(cleanup);
 describe("Collection — en-tête", () => {
   it("le titre est justifié à gauche, la valeur à droite", () => {
     render(<CollectionPage />);
-    const titre = screen.getByText(/— COLLECTION —/i);
+    // Plus de tiret À GAUCHE depuis le passage au mode « left ».
+    const titre = screen.getByText(/^COLLECTION —$/i);
     const barre = titre.parentElement as HTMLElement;
     // Mode "left" de PageHeaderBar : deux zones poussées aux extrémités,
     // le titre EN PREMIER. Le mode "center" produisait une grille.

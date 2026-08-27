@@ -74,28 +74,28 @@ function estCadenasse(libelle: string): boolean {
   return onglet(libelle).getAttribute("aria-disabled") === "true";
 }
 
-describe("TabBar — onboarding Bibliothèque", () => {
-  it("l'onglet Biblio. est là dès niveau 0, mais cadenassé", () => {
+describe("TabBar — onboarding Compétences", () => {
+  it("l'onglet Compétences est là dès niveau 0, mais cadenassé", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: etat(0), isHydrated: true };
     render(<TabBar />);
-    expect(screen.getByText("Biblio.")).toBeTruthy();
+    expect(screen.getByText("Compétences")).toBeTruthy();
     expect(screen.getAllByRole("button")).toHaveLength(5);
-    expect(estCadenasse("Biblio.")).toBe(true);
+    expect(estCadenasse("Compétences")).toBe(true);
   });
 
-  it("le cadenas de Biblio. tombe au niveau 1", () => {
+  it("le cadenas des Compétences tombe au niveau 1", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: etat(1), isHydrated: true };
     render(<TabBar />);
-    expect(estCadenasse("Biblio.")).toBe(false);
+    expect(estCadenasse("Compétences")).toBe(false);
   });
 
   it("state null (pré-hydratation) : les 5 onglets par défaut, pas de flash de disparition", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: null, isHydrated: true };
     render(<TabBar />);
-    expect(screen.getByText("Biblio.")).toBeTruthy();
+    expect(screen.getByText("Compétences")).toBeTruthy();
     expect(screen.getAllByRole("button")).toHaveLength(5);
   });
 
@@ -155,7 +155,7 @@ describe("TabBar — onglets cadenassés", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: etat(0), isHydrated: true };
     render(<TabBar />);
-    fireEvent.click(onglet("Biblio."));
+    fireEvent.click(onglet("Compétences"));
     expect(pushMock).not.toHaveBeenCalled();
     expect(toastMock).toHaveBeenCalledTimes(1);
     expect(String(toastMock.mock.calls[0][0])).toMatch(/niveau/i);
@@ -165,7 +165,7 @@ describe("TabBar — onglets cadenassés", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: etat(1), isHydrated: true };
     render(<TabBar />);
-    fireEvent.click(onglet("Biblio."));
+    fireEvent.click(onglet("Compétences"));
     expect(pushMock).toHaveBeenCalledWith("/bibliotheque");
     expect(toastMock).not.toHaveBeenCalled();
   });
@@ -178,14 +178,14 @@ describe("TabBar — onglets cadenassés", () => {
     } as unknown as GameState;
     mockGameStateValue = { state, isHydrated: true };
     render(<TabBar />);
-    expect(onglet("Biblio.").textContent).not.toContain("3");
+    expect(onglet("Compétences").textContent).not.toContain("3");
   });
 
   it("state null (pré-hydratation) : aucun cadenas, pas de flash de verrouillage", () => {
     mockPathname = "/bureau";
     mockGameStateValue = { state: null, isHydrated: true };
     render(<TabBar />);
-    expect(estCadenasse("Biblio.")).toBe(false);
+    expect(estCadenasse("Compétences")).toBe(false);
   });
 });
 
@@ -195,7 +195,7 @@ describe("TabBar — onglets cadenassés", () => {
  * pas fermée.
  */
 describe("ongletSuivantOuvert — le swipe saute les pièces fermées", () => {
-  const IDX_BUREAU = 2; // Quêtes, Biblio., Bureau, Réserve, Collection
+  const IDX_BUREAU = 2; // Quêtes, Compétences, Bureau, Réserve, Collection
 
   it("saute la Bibliothèque cadenassée en allant à gauche", () => {
     const s = etat(0);

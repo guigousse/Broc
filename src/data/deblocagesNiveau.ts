@@ -42,7 +42,7 @@ const DESC_USAGE_3 = "L'atout peut désormais être utilisé trois fois par jour
 
 const ENTREES: readonly DeblocageNiveau[] = [
   { niveau: 1, titre: "Ouverture de l'écran Compétences (+1 point)", famille: "jalon", effectif: true,
-    description: "La bibliothèque ouvre l'écran Compétences : dépensez vos points (1 par palier) pour renforcer votre métier." },
+    description: "L'onglet Compétences s'ouvre : dépensez vos points (1 par palier) pour renforcer votre métier." },
   { niveau: NIVEAU_QUETES_PERIODIQUES, titre: "Quêtes quotidiennes et hebdomadaires", famille: "contenu", effectif: true,
     description: "Le courrier apporte des commandes : une quotidienne, et une hebdomadaire plus ambitieuse, récompensées en argent." },
   { niveau: NIVEAU_BROCANTEUR_PALIER_2, titre: "Paliers 2 des compétences", famille: "jalon", effectif: true,
