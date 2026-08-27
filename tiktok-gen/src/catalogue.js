@@ -5,15 +5,19 @@ export const CATEGORIES = ["Musique", "Jeux & Loisirs", "Livres & Papeterie", "M
 const plat = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export function filtrerCatalogue(entrees, { categorie = "", recherche = "" } = {}) {
-  const q = plat(recherche.trim());
-  return entrees.filter((e) => (!categorie || e.categorie === categorie) && (!q || plat(e.nom).includes(q)));
+  const cat = String(categorie ?? "");
+  const q = plat(String(recherche ?? "").trim());
+  return entrees.filter((e) => (!cat || e.categorie === cat) && (!q || plat(e.nom).includes(q)));
 }
 
 /** Tire `n` entrées distinctes (mélange partiel type Fisher-Yates), plafonné à la taille du catalogue. */
 export function tirerAleatoire(entrees, n, alea = Math.random) {
   const reste = [...entrees];
   const out = [];
-  while (out.length < n && reste.length) out.push(reste.splice(Math.floor(alea() * reste.length), 1)[0]);
+  while (out.length < n && reste.length) {
+    const idx = Math.min(reste.length - 1, Math.floor(alea() * reste.length));
+    out.push(reste.splice(idx, 1)[0]);
+  }
   return out;
 }
 

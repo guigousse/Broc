@@ -19,6 +19,12 @@ describe("tirerAleatoire", () => {
     expect(new Set(ids).size).toBe(2);
   });
   it("plafonné à la taille du catalogue", () => expect(tirerAleatoire(E, 10, Math.random)).toHaveLength(3));
+  it("n'échoue pas quand l'aléa vaut exactement 1", () => {
+    const res = tirerAleatoire(E, 2, () => 1);
+    expect(res).toHaveLength(2);
+    for (const e of res) expect(e).toBeDefined();
+    expect(new Set(res.map((e) => e.id)).size).toBe(2);
+  });
 });
 
 it("7 catégories dans l'ordre du jeu", () => {
