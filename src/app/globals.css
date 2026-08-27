@@ -1814,3 +1814,24 @@ nav[aria-label="Navigation principale"] :focus-visible,
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(-2px, 1px, 0); }
 }
+
+/* Le chat baladeur qui traverse la page « Soutenir » avant de s'asseoir
+   au-dessus du bouton d'avis. Deux animations superposées sur deux boîtes :
+   la traversée (l'extérieure) et le balancement du pas (l'intérieure) — un
+   seul élément ne peut pas porter deux `transform` animés à la fois.
+   `both` est indispensable : sous `prefers-reduced-motion`, la durée tombe à
+   0,01 ms et le chat doit atterrir à sa place finale, pas revenir au départ. */
+@keyframes broc-chat-traversee {
+  from { transform: translateX(-56px); }
+  to   { transform: translateX(0); }
+}
+@keyframes broc-chat-pas {
+  0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+  50%      { transform: translateY(-3px) rotate(1.2deg); }
+}
+.broc-chat-traversee {
+  animation: broc-chat-traversee 2600ms cubic-bezier(0.22, 0.65, 0.3, 1) both;
+}
+.broc-chat-pas {
+  animation: broc-chat-pas 380ms ease-in-out 7 both;
+}

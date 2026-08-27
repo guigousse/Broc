@@ -926,11 +926,11 @@ export const fr = {
       "Broc est fabriqué par une seule personne. Suivre l'atelier ou laisser un avis, c'est ce qui l'aide à continuer d'exister.",
     merciTitre: "Merci d'être là",
     merciCorps:
-      "Broc est fabriqué par une seule personne, dans son coin d'atelier. Vous savoir ici, à chiner, c'est déjà beaucoup.",
+      "Broc est fabriqué par une seule personne. Vous savoir ici, à chiner, c'est déjà beaucoup.",
     merciPartage:
-      "Pour aider le projet à grandir : rejoignez-nous sur les réseaux et partagez vos plus belles trouvailles autour de vous.",
+      "Pour aider le projet à grandir : rejoignez-nous sur les réseaux et partagez vos trouvailles.",
     merciAvis:
-      "Et si le cœur vous en dit, laissez un avis sur la boutique — vos suggestions d'amélioration y sont lues une par une.",
+      "Vos avis comptent énormément ! Chaque note, chaque suggestion est lue avec soin et fait grandir le jeu.",
     instagram: "Suivre sur Instagram",
     tiktok: "Suivre sur TikTok",
     noter: "Laisser un avis",

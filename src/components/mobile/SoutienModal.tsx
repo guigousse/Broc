@@ -67,28 +67,33 @@ const carte: CSSProperties = {
   boxShadow:
     "0 16px 32px rgba(0,0,0,0.38), inset 0 0 0 2px var(--forest-800), inset 0 0 0 3px var(--brass-500)",
   borderRadius: "var(--radius-card)",
-  padding: "18px 16px",
-  margin: "18px 24px 0",
+  padding: "16px 18px",
+  margin: "10px 24px 0",
 };
 
 const sectionTitle: CSSProperties = {
   fontFamily: "var(--font-display)",
-  fontSize: 11,
-  letterSpacing: "0.24em",
+  fontSize: 12.5,
+  letterSpacing: "0.22em",
   textTransform: "uppercase",
-  color: "var(--brass-500)",
-  margin: "0 0 14px",
+  color: "var(--brass-300)",
+  margin: "0 0 16px",
 };
 
+/* Corps de lecture, pas de légende : Cormorant est une garalde fine, elle
+   demande de la taille et du gras pour rester lisible sur un fond sombre —
+   17px en 500, sur du `paper-100` plutôt que du `paper-300`. */
 const paragraphe: CSSProperties = {
   fontFamily: "var(--font-serif)",
-  fontSize: 14,
-  lineHeight: 1.65,
-  color: "var(--paper-300)",
+  fontSize: 17,
+  fontWeight: 500,
+  lineHeight: 1.72,
+  letterSpacing: "0.005em",
+  color: "var(--paper-100)",
   margin: "0 0 10px",
 };
 
-const boutons: CSSProperties = { padding: "18px 24px 24px" };
+const boutons: CSSProperties = { padding: "14px 24px 24px" };
 
 export function SoutienModal({ open, onClose }: SoutienModalProps) {
   const { d } = useLangue();
@@ -128,7 +133,7 @@ export function SoutienModal({ open, onClose }: SoutienModalProps) {
       </section>
 
       <div style={boutons}>
-        <BoutonsSoutien />
+        <BoutonsSoutien avecChat />
       </div>
     </div>
   );

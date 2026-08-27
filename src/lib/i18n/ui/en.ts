@@ -879,11 +879,11 @@ export const en: DictionnaireUI = {
       "Broc is made by one person. Following the workshop or leaving a review is what helps it keep going.",
     merciTitre: "Thank you for being here",
     merciCorps:
-      "Broc is made by one person, in a corner of the workshop. Knowing you are here, rummaging, already means a lot.",
+      "Broc is made by one person. Knowing you are here, rummaging, already means a lot.",
     merciPartage:
-      "To help the project grow: join us on social media and share your finest finds with the people around you.",
+      "To help the project grow: join us on social media and share your finest finds.",
     merciAvis:
-      "And if you feel like it, leave a review on the store — every suggestion for improvement is read there, one by one.",
+      "Your reviews mean the world! Every rating, every suggestion is read with care and makes the game grow.",
     instagram: "Follow on Instagram",
     tiktok: "Follow on TikTok",
     noter: "Leave a review",
