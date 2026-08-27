@@ -2065,7 +2065,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const conserver = payloadMission.conserverCibles === true;
       const categorieMission = payloadMission.categorie;
       const now = tempsConfiance() ?? Date.now();
-      const rEff = recompenseEffective(payloadMission);
+      const rEff = recompenseEffective(payloadMission, {
+        state: current,
+        reso,
+        jourRecu: courrier.jourRecu,
+      });
       setState((prev) => {
         if (!prev) return prev;
         const resoPrev = prev.missions.find((m) => m.courrierId === courrierId);

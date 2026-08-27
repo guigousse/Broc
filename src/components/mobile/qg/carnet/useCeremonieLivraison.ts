@@ -75,7 +75,11 @@ export function useCeremonieLivraison({
   const lancer = (courrierId: string) => {
     const courrier = byId.get(courrierId);
     if (!courrier || courrier.payload.type !== "mission" || ceremonieId) return;
-    const rEff = recompenseEffective(courrier.payload);
+    const rEff = recompenseEffective(courrier.payload, {
+      state,
+      reso: state.missions.find((m) => m.courrierId === courrierId) ?? {},
+      jourRecu: courrier.jourRecu,
+    });
     const maintenant = tempsConfiance?.() ?? Date.now();
     const avant = {
       brocanteur: state.brocanteur,

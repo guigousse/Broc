@@ -2,11 +2,13 @@ import { appliquerGainXPBrocanteur } from "@/lib/xp";
 import { appendLedger } from "@/lib/grandLivre";
 import { pointsDepensesCompetences } from "@/data/competences";
 import { ENERGIE_MAX, ENERGIE_PLAFOND, settleEnergie } from "@/lib/energie";
+import { legendairesAcquis } from "@/lib/quetes/objectifs";
 import type {
   CourrierPayloadMission,
   EtatObjet,
   GameState,
   MissionCategorie,
+  MissionResolution,
 } from "@/types/game";
 
 /** Jetons versés par une quête quotidienne livrée. */
@@ -50,16 +52,50 @@ export interface RecompenseEffective {
  * ⚠ `payload.recompense.xp` est toujours honoré s'il est explicitement
  * renseigné : aucune quête du jeu ne le fait aujourd'hui, mais une save
  * ancienne ou une future quête exceptionnelle reste libre de le poser.
+ *
+ * Prime variable : `ctx` est optionnel et absent des quatre surfaces
+ * d'affichage (carnet, sheet, carte d'histoire) — la pièce légendaire n'est
+ * pas encore trouvée à l'affichage, il n'y a rien à chiffrer. Seule la
+ * livraison le fournit, ce qui garantit qu'aucune quête existante (arc
+ * principal compris, qui ne porte jamais de `primeVariable`) ne change de
+ * comportement.
  */
 export function recompenseEffective(
   payload: CourrierPayloadMission,
+  ctx?: ContextePrime,
 ): RecompenseEffective {
   return {
-    argent: payload.recompense.argent,
+    argent: payload.recompense.argent + (ctx ? primeVariableArgent(payload, ctx) : 0),
     xp: payload.recompense.xp ?? 0,
     energie: payload.recompense.energie ?? 0,
     jetons: payload.recompense.jetons ?? 0,
   };
+}
+
+/**
+ * Contexte de résolution d'une prime variable. Optionnel partout : les
+ * surfaces d'AFFICHAGE (carnet, sheet, carte d'histoire) appellent sans lui et
+ * montrent la part fixe — la pièce n'est pas encore trouvée, il n'y a rien à
+ * chiffrer. Seule la LIVRAISON le fournit.
+ */
+export interface ContextePrime {
+  state: Pick<GameState, "historique">;
+  reso: Pick<MissionResolution, "timestampAcceptation">;
+  jourRecu: number;
+}
+
+/**
+ * Part variable de la récompense : un pourcentage du `prixRefBase` de la pièce
+ * légendaire trouvée, la plus chère si le joueur en a déniché plusieurs.
+ */
+function primeVariableArgent(
+  payload: CourrierPayloadMission,
+  ctx: ContextePrime,
+): number {
+  if (payload.primeVariable?.type !== "pourcentageLegendaire") return 0;
+  const [meilleure] = legendairesAcquis(ctx.state, ctx.reso, ctx.jourRecu);
+  if (!meilleure) return 0;
+  return Math.round(meilleure.prixRefBase * payload.primeVariable.taux);
 }
 
 /** Contexte d'écriture au grand livre (repris du payload mission au moment
