@@ -7,9 +7,9 @@ import type { CSSProperties } from "react";
  * juste au-dessus du bouton d'avis. Il ne demande rien, il montre : l'œil
  * suit le mouvement, et le mouvement s'arrête sur le bouton.
  *
- * Le sprite est un chat DE PROFIL EN MARCHE, dessiné tourné vers la gauche.
- * Il est retourné ici (`scaleX(-1)`) pour marcher dans le sens de la
- * traversée — de la gauche vers sa place, à droite.
+ * Le sprite est un chat DE PROFIL EN MARCHE, dessiné tourné vers la gauche,
+ * et il est laissé dans ce sens. La traversée va donc de la droite vers sa
+ * place : un chat qui marche à reculons se voit tout de suite.
  */
 
 const piste: CSSProperties = {
@@ -28,9 +28,6 @@ const chat: CSSProperties = {
   width: "auto",
   height: 50,
   display: "block",
-  // Le dessin regarde à gauche : on le retourne pour qu'il aille dans le sens
-  // de sa marche.
-  transform: "scaleX(-1)",
   // Une ombre portée le décolle du vert sombre de la page.
   filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.45))",
 };
