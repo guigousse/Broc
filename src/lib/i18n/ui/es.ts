@@ -879,8 +879,6 @@ export const es: DictionnaireUI = {
   },
   soutien: {
     titre: "Apoyar a Broc",
-    insertCoin: "▶ INSERT COIN",
-    modeDemo: "MODO DEMOSTRACIÓN. ESTE JUEGO NO ARRANCA.",
     borneBlague: "Este juego no existe. Todavía.",
     borneSuite:
       "Una sola persona hace Broc, entre dos mercadillos. Tus reseñas deciden lo que viene: deja la tuya y puede que el próximo cartucho de esta máquina exista de verdad.",
@@ -894,6 +892,5 @@ export const es: DictionnaireUI = {
     instagram: "Seguir en Instagram",
     tiktok: "Seguir en TikTok",
     noter: "Dejar una reseña",
-    pasJouable: "MODO DEMOSTRACIÓN. ESTE JUEGO NO ARRANCA.",
   },
 };

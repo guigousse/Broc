@@ -874,8 +874,6 @@ export const en: DictionnaireUI = {
   },
   soutien: {
     titre: "Support Broc",
-    insertCoin: "▶ INSERT COIN",
-    modeDemo: "DEMO MODE. THIS GAME DOES NOT START.",
     borneBlague: "This game does not exist. Not yet.",
     borneSuite:
       "One person makes Broc, between two flea markets. Your reviews decide what comes next: leave yours, and the next cartridge in this machine might just exist for real.",
@@ -889,6 +887,5 @@ export const en: DictionnaireUI = {
     instagram: "Follow on Instagram",
     tiktok: "Follow on TikTok",
     noter: "Leave a review",
-    pasJouable: "DEMO MODE. THIS GAME DOES NOT START.",
   },
 };

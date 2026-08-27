@@ -921,8 +921,6 @@ export const fr = {
   },
   soutien: {
     titre: "Soutenir Broc",
-    insertCoin: "▶ INSERT COIN",
-    modeDemo: "MODE DÉMONSTRATION. CE JEU NE SE LANCE PAS.",
     borneBlague: "Ce jeu n'existe pas. Pas encore.",
     borneSuite:
       "Une seule personne fabrique Broc, entre deux brocantes. Vos avis décident de la suite : laissez le vôtre, et la prochaine cartouche de cette borne existera peut-être pour de vrai.",
@@ -936,6 +934,5 @@ export const fr = {
     instagram: "Suivre sur Instagram",
     tiktok: "Suivre sur TikTok",
     noter: "Laisser un avis",
-    pasJouable: "MODE DÉMONSTRATION. CE JEU NE SE LANCE PAS.",
   },
 } as const;

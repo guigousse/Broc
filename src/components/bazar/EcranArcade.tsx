@@ -9,8 +9,6 @@ import { audioManager } from "@/lib/audio/audioManager";
 import type { JeuArcade } from "@/lib/bazar/arcade";
 import { arcadeAudioUrl } from "@/lib/bazar/arcadeAudio";
 import { SoutienBorneOverlay } from "./SoutienBorneOverlay";
-import { marquerPopupBorneVu, popupBorneVu } from "@/lib/soutien/vu";
-import { useToastSafe } from "@/components/ui/Toast";
 
 /** Seuil de swipe, en px. Le même qu'au chinage : le geste doit se ressembler. */
 const SWIPE_SEUIL_PX = 40;
@@ -148,7 +146,6 @@ export function EcranArcade({ jeux }: EcranArcadeProps) {
   const { d, locale } = useLangue();
   const [index, setIndex] = useState(0);
   const [soutienOuvert, setSoutienOuvert] = useState(false);
-  const { toast } = useToastSafe();
   const departXRef = useRef<number | null>(null);
 
   const idx = Math.min(index, Math.max(0, jeux.length - 1));
@@ -171,18 +168,14 @@ export function EcranArcade({ jeux }: EcranArcadeProps) {
    * comment le trouver, et y greffer une demande de soutien punirait le joueur
    * qui n'a encore rien déniché.
    *
-   * Le dégradé : l'invitation une fois, la réponse toujours. Un pop-up à
-   * chaque tap serait du harcèlement — le joueur qui parcourt les onze jeux le
-   * verrait onze fois d'affilée. Mais « rien du tout » aux taps suivants
-   * rendrait PLAY mort une deuxième fois, et le joueur conclurait au bug.
+   * Sur un jeu trouvé, l'overlay répond à CHAQUE fois. La version précédente
+   * ne l'ouvrait qu'une fois par appareil puis basculait sur un toast, pour ne
+   * pas harceler ; mais l'overlay est devenu la RÉPONSE de la borne — « ce jeu
+   * n'existe pas, pas encore » — et non plus une demande greffée dessus. Une
+   * machine qui répond une fois sur onze, c'est une machine cassée.
    */
   const tapSurJeu = () => {
     if (!jeu?.trouve) return;
-    if (popupBorneVu()) {
-      toast(d.soutien.pasJouable, { type: "info" });
-      return;
-    }
-    marquerPopupBorneVu();
     setSoutienOuvert(true);
   };
 

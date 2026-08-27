@@ -232,25 +232,26 @@ describe("EcranArcade — pop-up de soutien", () => {
     fireEvent.pointerUp(zone, { clientX: 100 });
   }
 
-  it("le premier tap sur un jeu trouvé ouvre l'overlay de soutien", () => {
+  it("un tap sur un jeu trouvé ouvre l'overlay de soutien", () => {
     render(<EcranArcade jeux={jeux(0)} />);
     taper(screen.getByTestId("arcade-zone"));
     expect(screen.getByTestId("soutien-borne")).toBeTruthy();
   });
 
-  it("le deuxième tap donne un toast, plus de pop-up", () => {
+  // La borne répond à CHAQUE tap, y compris d'une session à l'autre. Elle ne
+  // s'ouvrait qu'une fois par appareil du temps où l'overlay était une demande
+  // greffée sur PLAY ; c'est devenu la réponse de la machine elle-même, et une
+  // machine qui ne répond qu'une fois sur onze passe pour cassée.
+  it("le deuxième tap rouvre l'overlay, même après un remontage", () => {
     const { unmount } = render(<EcranArcade jeux={jeux(0)} />);
     taper(screen.getByTestId("arcade-zone"));
     unmount();
 
     render(<EcranArcade jeux={jeux(0)} />);
     taper(screen.getByTestId("arcade-zone"));
-    expect(screen.queryByTestId("soutien-borne")).toBeNull();
-    // L'écran répond TOUJOURS : sans ce toast, PLAY serait mort une 2e fois.
-    expect(toast).toHaveBeenCalledWith(
-      "MODE DÉMONSTRATION. CE JEU NE SE LANCE PAS.",
-      { type: "info" },
-    );
+    expect(screen.getByTestId("soutien-borne")).toBeTruthy();
+    // Plus de toast de repli : il n'y a plus de tap « sans réponse ».
+    expect(toast).not.toHaveBeenCalled();
   });
 
   it("taper un jeu NON trouvé n'ouvre rien", () => {

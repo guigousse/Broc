@@ -12,7 +12,8 @@
  * Ce que la partie garantit :
  *  - jour 30 → le Bazar est OUVERT (il ouvre au jour 20, `JOUR_OUVERTURE_BAZAR`) ;
  *  - trois cartouches DONNÉES à la collection → trois jeux « trouvés » sur la
- *    borne, seuls à répondre au tap (les autres gardent leur neige) ;
+ *    borne, seuls à répondre au tap (les autres gardent leur neige) ; chaque
+ *    tap rouvre l'overlay, il n'y a plus de drapeau « déjà vu » à réarmer ;
  *  - le tutoriel est terminé, l'énergie pleine, la bourse garnie.
  *
  * Usage : npx tsx scripts/dev-save-borne.mjs
@@ -85,18 +86,15 @@ const html = `<!DOCTYPE html>
   <li>« Installer » écrit la partie dans <b>l'emplacement 3</b> et le rend actif. Les emplacements 1 et 2 ne sont pas touchés.</li>
   <li>Ouvre le jeu → <b>Continuer</b> → porte du <b>Bazar</b> (ouvert : on est au jour ${save.jourActuel}).</li>
   <li>Tape la <b>borne d'arcade</b>, puis tape l'un des <b>trois premiers jeux</b> (les seuls trouvés, sans neige).</li>
-  <li>Le <b>premier</b> tap ouvre la feuille de soutien ; les suivants affichent le toast « mode démonstration ».</li>
+  <li><b>Chaque</b> tap ouvre l'overlay de soutien de la borne — il n'y a plus de « première fois » à réarmer.</li>
 </ol>
-<p>Pour revoir la feuille autant de fois qu'il faut : « Rejouer la première fois » efface le drapeau <code>${"projet-broc:soutien:borne:v1"}</code>, puis recharge le jeu.</p>
 <button id="go">Installer la partie de test</button>
-<button id="rejouer" class="secondaire">Rejouer la première fois</button>
 <button id="wipe" class="danger">Effacer l'emplacement 3</button>
 <p id="etat"></p>
 <script>
 const SAVE = ${JSON.stringify(save)};
 const CLE_SLOT = "projet-broc:slot:3:v1";
 const CLE_INDEX = "projet-broc:slots:v1";
-const CLE_VU = "projet-broc:soutien:borne:v1";
 const etat = document.getElementById("etat");
 
 function lireIndex() {
@@ -113,13 +111,7 @@ document.getElementById("go").onclick = () => {
   index.slots[3] = { nom: "Test borne", derniereSession: Date.now(), revision: 1 };
   index.actif = 3;
   localStorage.setItem(CLE_INDEX, JSON.stringify(index));
-  localStorage.removeItem(CLE_VU);
   etat.innerHTML = '✅ Installée dans l\\'emplacement 3 — <a href="/">ouvrir le jeu</a>';
-};
-
-document.getElementById("rejouer").onclick = () => {
-  localStorage.removeItem(CLE_VU);
-  etat.innerHTML = '🔁 Drapeau effacé — <a href="/">recharge le jeu</a>, la feuille se rouvrira au prochain tap.';
 };
 
 document.getElementById("wipe").onclick = () => {

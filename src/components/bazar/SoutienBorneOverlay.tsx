@@ -31,7 +31,6 @@ interface SoutienBorneOverlayProps {
 
 const VERT = "#7dfcae";
 const VERT_PALE = "#b7ffd6";
-const AMBRE = "#ffc93c";
 const TUBE = "#04140b";
 
 const scrim: CSSProperties = {
@@ -71,22 +70,23 @@ const balayage: CSSProperties = {
     "repeating-linear-gradient(0deg, rgba(0,0,0,0.30) 0 1px, transparent 1px 3px)",
 };
 
-const enseigne: CSSProperties = {
-  fontSize: 11,
-  lineHeight: 1.6,
-  color: AMBRE,
-  letterSpacing: "0.02em",
-  marginBottom: 14,
-};
+/* La blague est la seule phrase en 8-bit : cette police est large, trois
+   lignes suffisent à la faire lire, six l'auraient rendue pénible.
 
-/* La blague est la seule phrase en 8-bit : cette police est large, deux lignes
-   suffisent à la faire lire, quatre l'auraient rendue pénible. */
+   ⚠ DANS UNE FONTE PIXEL, LE GRAS SE FAIT À LA TAILLE, PAS À LA GRAISSE.
+   Press Start 2P n'existe qu'en poids 400 ; `fontWeight: 700` en fabrique un
+   gras synthétique et un doublage à l'ombre (essayé, mesuré à l'écran)
+   épaissit tellement le trait — 1 px de décalage pour ~1,9 px de trait — que
+   les contreformes se bouchent : les lettres redeviennent des taches. On
+   monte donc le corps, et la présence vient d'un halo de tube, qui lui ne
+   touche pas à la forme des glyphes. */
 const blague: CSSProperties = {
-  fontSize: 11,
-  lineHeight: 1.9,
+  fontSize: 16,
+  lineHeight: 1.75,
   color: VERT,
-  margin: "0 0 14px",
+  margin: "0 0 16px",
   textTransform: "uppercase",
+  textShadow: "0 0 10px rgba(125,252,174,0.55)",
 };
 
 /* Le corps repasse en monospace : le pixel est un décor, pas une punition. */
@@ -113,7 +113,7 @@ const bouton: CSSProperties = {
   boxShadow: `0 0 0 3px ${VERT}`,
   borderRadius: 0,
   fontFamily: "var(--font-arcade)",
-  fontSize: 10,
+  fontSize: 13,
   lineHeight: 1.6,
   textTransform: "uppercase",
   cursor: "pointer",
@@ -174,7 +174,6 @@ export function SoutienBorneOverlay({ open, onClose }: SoutienBorneOverlayProps)
     >
       {/* Le clic sur le cadre ne doit pas refermer : seul le fond le fait. */}
       <div style={cadre} onClick={(e) => e.stopPropagation()}>
-        <div style={enseigne}>{d.soutien.insertCoin}</div>
         <p style={blague} data-testid="soutien-borne-blague">
           {d.soutien.borneBlague}
         </p>

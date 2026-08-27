@@ -15,18 +15,15 @@
   <li>« Installer » écrit la partie dans <b>l'emplacement 3</b> et le rend actif. Les emplacements 1 et 2 ne sont pas touchés.</li>
   <li>Ouvre le jeu → <b>Continuer</b> → porte du <b>Bazar</b> (ouvert : on est au jour 30).</li>
   <li>Tape la <b>borne d'arcade</b>, puis tape l'un des <b>trois premiers jeux</b> (les seuls trouvés, sans neige).</li>
-  <li>Le <b>premier</b> tap ouvre la feuille de soutien ; les suivants affichent le toast « mode démonstration ».</li>
+  <li><b>Chaque</b> tap ouvre l'overlay de soutien de la borne — il n'y a plus de « première fois » à réarmer.</li>
 </ol>
-<p>Pour revoir la feuille autant de fois qu'il faut : « Rejouer la première fois » efface le drapeau <code>projet-broc:soutien:borne:v1</code>, puis recharge le jeu.</p>
 <button id="go">Installer la partie de test</button>
-<button id="rejouer" class="secondaire">Rejouer la première fois</button>
 <button id="wipe" class="danger">Effacer l'emplacement 3</button>
 <p id="etat"></p>
 <script>
 const SAVE = {"budget":5000,"jetons":40,"jourActuel":30,"inventaireJoueur":[],"vitrine":null,"historique":[],"tendances":[],"prochainesTendances":[],"prochainRafraichissementTendances":8,"gazetteAchetee":false,"competencesDebloquees":[],"brocanteur":{"xp":0,"niveau":0,"pointsDisponibles":0},"collection":{"Musique":[],"Jeux & Loisirs":[{"templateId":"jx.cartouche_bluebot_8_bit","nom":"Cartouche 'Bluebot' (8-bit)","categorie":"Jeux & Loisirs","rarete":"commun","vu":true,"dejaPossede":true,"donation":{"etat":"Bon","prixAchat":null}},{"templateId":"jx.cartouche_la_legende_de_solda_8_bit","nom":"Cartouche 'La Légende de Solda' (8-bit)","categorie":"Jeux & Loisirs","rarete":"commun","vu":true,"dejaPossede":true,"donation":{"etat":"Bon","prixAchat":null}},{"templateId":"jx.cartouche_le_plombier_sauteur_8_bit","nom":"Cartouche 'Le Plombier Sauteur' (8-bit)","categorie":"Jeux & Loisirs","rarete":"commun","vu":true,"dejaPossede":true,"donation":{"etat":"Bon","prixAchat":null}}],"Livres & Papeterie":[],"Mode":[],"Maison":[],"Objets d'art":[],"Bricolage":[]},"bossDebloqueSeen":false,"niveauVu":0,"meteoSemaine":[],"celebriteActuelle":null,"influenceUtilisee":false,"courriers":[],"niveauAtelier":3,"niveauStockage":3,"niveauCamion":3,"piecesAmelioration":{"Musique":0,"Jeux & Loisirs":0,"Livres & Papeterie":0,"Mode":0,"Maison":0,"Objets d'art":0,"Bricolage":0},"chatSurFauteuil":false,"passagesSansChat":0,"declencheursDeclenches":[],"tutorielEtape":"termine","grandLivre":[],"missions":[],"quetesPeriodiques":{"quotidien":{"cle":"","courrierIds":[]},"hebdo":{"cle":"","courrierIds":[]}},"energie":5,"energieDerniereMaj":0,"version":21};
 const CLE_SLOT = "projet-broc:slot:3:v1";
 const CLE_INDEX = "projet-broc:slots:v1";
-const CLE_VU = "projet-broc:soutien:borne:v1";
 const etat = document.getElementById("etat");
 
 function lireIndex() {
@@ -43,13 +40,7 @@ document.getElementById("go").onclick = () => {
   index.slots[3] = { nom: "Test borne", derniereSession: Date.now(), revision: 1 };
   index.actif = 3;
   localStorage.setItem(CLE_INDEX, JSON.stringify(index));
-  localStorage.removeItem(CLE_VU);
   etat.innerHTML = '✅ Installée dans l\'emplacement 3 — <a href="/">ouvrir le jeu</a>';
-};
-
-document.getElementById("rejouer").onclick = () => {
-  localStorage.removeItem(CLE_VU);
-  etat.innerHTML = '🔁 Drapeau effacé — <a href="/">recharge le jeu</a>, la feuille se rouvrira au prochain tap.';
 };
 
 document.getElementById("wipe").onclick = () => {
