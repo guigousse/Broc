@@ -268,6 +268,30 @@ class AudioManager {
   }
 
   /**
+   * Le « pop » d'une bulle qui éclate : une sinusoïde qui monte vite en
+   * fréquence et s'éteint aussitôt. C'est la MONTÉE qui fait le pop — à
+   * fréquence fixe, on n'entend qu'un clic de plus.
+   */
+  playPop(): void {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(260, now);
+    osc.frequency.exponentialRampToValueAtTime(1180, now + 0.055);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.42, now + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+    osc.connect(gain);
+    gain.connect(this.master);
+    osc.start(now);
+    osc.stop(now + 0.13);
+  }
+
+  /**
    * Tic discret de drag, plus aigu et plus court que playClick.
    * Pensé pour être joué en rafale pendant un drag, throttlé côté appelant.
    */

@@ -20,6 +20,7 @@ interface SettingsValue {
   setAudioPref: <K extends keyof AudioPrefs>(k: K, v: AudioPrefs[K]) => void;
   setVolume: (v: number) => void;
   playClick: () => void;
+  playPop: () => void;
   playCash: () => void;
   playPaper: () => void;
   playNewspaper: () => void;
@@ -71,6 +72,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const playClick = useCallback(() => audioManager.playClick(), []);
+  const playPop = useCallback(() => audioManager.playPop(), []);
   const playCash = useCallback(() => {
     void audioManager.playCash();
   }, []);
@@ -134,6 +136,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setAudioPref,
       setVolume,
       playClick,
+      playPop,
       playCash,
       playPaper,
       playNewspaper,
@@ -160,6 +163,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setAudioPref,
       setVolume,
       playClick,
+      playPop,
       playCash,
       playPaper,
       playNewspaper,
@@ -222,6 +226,7 @@ const NOOP_SETTINGS: SettingsValue = {
   setAudioPref: () => {},
   setVolume: () => {},
   playClick: () => {},
+  playPop: () => {},
   playCash: () => {},
   playPaper: () => {},
   playNewspaper: () => {},

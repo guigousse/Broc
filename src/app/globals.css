@@ -790,6 +790,9 @@
   /* Rouge d'alerte SUR FOND SOMBRE (jauge d'énergie à zéro dans le header) :
      le vermillion ne mesure que 2,8:1 sur forest-800, celui-ci 5,1:1. */
   --red-signal-300: #E8836F;
+  /* Le rouge du cœur qui éclot dans le bouton « Soutenir » : plus vif que les
+     rouges d'alerte, qui virent au brique sur le vert du menu. */
+  --rouge-coeur: #D9453B;
   /* Bleu électrique du BAZARCOIN — la monnaie du Bazar. Le nuancier n'avait
      aucun bleu franc (`midnight-*` sont des gris bleutés) : celui-ci existe
      pour qu'une devise ne se confonde jamais avec l'autre, la caisse portant
@@ -1815,23 +1818,18 @@ nav[aria-label="Navigation principale"] :focus-visible,
   to { transform: translate3d(-2px, 1px, 0); }
 }
 
-/* Le chat baladeur qui traverse la page « Soutenir » avant de s'asseoir
-   au-dessus du bouton d'avis. Deux animations superposées sur deux boîtes :
-   la traversée (l'extérieure) et le balancement du pas (l'intérieure) — un
-   seul élément ne peut pas porter deux `transform` animés à la fois.
-   `both` est indispensable : sous `prefers-reduced-motion`, la durée tombe à
-   0,01 ms et le chat doit atterrir à sa place finale, pas revenir au départ. */
-@keyframes broc-chat-traversee {
-  from { transform: translateX(190px); }
-  to   { transform: translateX(0); }
+/* « Soutenir » : un cœur rouge éclot dans le cœur du bouton, dépasse sa taille
+   puis se pose. Le dépassement est la moitié de l'effet — sans lui, ce n'est
+   qu'un fondu. */
+@keyframes broc-coeur-jaillit {
+  0%   { transform: scale(0.15); opacity: 0; }
+  30%  { transform: scale(1.5);  opacity: 1; }
+  55%  { transform: scale(0.92); opacity: 1; }
+  75%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1.05); opacity: 1; }
 }
-@keyframes broc-chat-pas {
-  0%, 100% { transform: translateY(0) rotate(-0.7deg); }
-  50%      { transform: translateY(-2px) rotate(0.7deg); }
-}
-.broc-chat-traversee {
-  animation: broc-chat-traversee 2600ms cubic-bezier(0.22, 0.65, 0.3, 1) both;
-}
-.broc-chat-pas {
-  animation: broc-chat-pas 380ms ease-in-out 7 both;
+.broc-coeur-jaillit {
+  animation: broc-coeur-jaillit 420ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  transform-origin: center;
+  filter: drop-shadow(0 0 6px rgba(217, 69, 59, 0.75));
 }
