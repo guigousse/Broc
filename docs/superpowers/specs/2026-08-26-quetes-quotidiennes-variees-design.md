@@ -265,7 +265,9 @@ supprimé — il devient le test des nouveaux invariants :
 
 - exactement une forme `objet` par lot quotidien ;
 - deux formes tirées **distinctes**, et distinctes d'`objet` ;
-- au plus une forme de famille `vente` parmi les tirées ;
+- au plus une forme de famille `vente` parmi les tirées — **tant que ce garde-fou
+  reste satisfiable**, c'est-à-dire tant qu'au moins deux formes hors `vente`
+  sont éligibles (cf. le correctif décrit plus haut) ;
 - la position de la quête `objet` **varie** selon la graine (l'invariant qui
   interdit le retour du lot scripté) ;
 - la composition varie d'une graine à l'autre.
