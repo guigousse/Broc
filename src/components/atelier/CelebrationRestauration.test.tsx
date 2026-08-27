@@ -44,7 +44,7 @@ function etoilesPleines(): number {
 
 function afficher(etat: EtatObjet, etatApres: EtatObjet) {
   const onTermine = vi.fn();
-  render(
+  const { rerender } = render(
     <LangueProvider>
       <CelebrationRestauration
         objet={objet(etat)}
@@ -53,7 +53,18 @@ function afficher(etat: EtatObjet, etatApres: EtatObjet) {
       />
     </LangueProvider>,
   );
-  return onTermine;
+  /** Re-rend avec un `onTermine` d'identité NEUVE, comme le fait l'écran. */
+  const rejouerLeParent = () =>
+    rerender(
+      <LangueProvider>
+        <CelebrationRestauration
+          objet={objet(etat)}
+          etatApres={etatApres}
+          onTermine={() => onTermine()}
+        />
+      </LangueProvider>,
+    );
+  return { onTermine, rejouerLeParent };
 }
 
 function avancer(ms: number) {
@@ -79,7 +90,7 @@ afterEach(() => {
 
 describe("CelebrationRestauration", () => {
   it("montre les étoiles de l'ancien état avant d'ajouter la nouvelle", () => {
-    afficher("Bon", "Très bon");
+    const { rejouerLeParent } = afficher("Bon", "Très bon");
     avancer(SEQUENCE_MS.etoiles + 10);
     expect(etoilesPleines()).toBe(1); // « Bon »
     avancer(SEQUENCE_MS.gagne - SEQUENCE_MS.etoiles + 10);
@@ -88,7 +99,7 @@ describe("CelebrationRestauration", () => {
   });
 
   it("se termine seule : l'objet vole vers le Stockage, onTermine une fois", () => {
-    const onTermine = afficher("Bon", "Très bon");
+    const { onTermine } = afficher("Bon", "Très bon");
     avancer(SEQUENCE_MS.vol - 10);
     expect(onTermine).not.toHaveBeenCalled();
     avancer(SEQUENCE_MS.dureeVol + 100);
@@ -97,8 +108,22 @@ describe("CelebrationRestauration", () => {
     expect(onTermine).toHaveBeenCalledTimes(1);
   });
 
+  it("les re-rendus du parent ne replanifient pas la séquence", () => {
+    // L'écran Atelier se re-rend chaque seconde pour ses décomptes et
+    // recrée son `onTermine` : si la séquence en dépendait, elle repartirait
+    // de zéro à chaque tick et repopperait sans fin (bug du 2026-08-28).
+    const { onTermine, rejouerLeParent } = afficher("Bon", "Très bon");
+    avancer(SEQUENCE_MS.gagne + 10);
+    expect(playPop).toHaveBeenCalledTimes(1);
+    act(() => rejouerLeParent());
+    avancer(SEQUENCE_MS.vol - SEQUENCE_MS.gagne + SEQUENCE_MS.dureeVol + 100);
+    expect(playPop).toHaveBeenCalledTimes(1);
+    expect(etoilesPleines()).toBe(2);
+    expect(onTermine).toHaveBeenCalledTimes(1);
+  });
+
   it("un tap saute directement au vol", () => {
-    const onTermine = afficher("Bon", "Très bon");
+    const { onTermine } = afficher("Bon", "Très bon");
     avancer(100);
     fireEvent.click(screen.getByTestId("celebration-restauration"));
     avancer(SEQUENCE_MS.dureeVol + 100);
@@ -106,13 +131,15 @@ describe("CelebrationRestauration", () => {
   });
 
   it("le pristin déclenche le son victorieux, les autres états non", () => {
-    afficher("Très bon", "Pristin état");
+    const c1 = afficher("Très bon", "Pristin état");
+    void c1;
     avancer(SEQUENCE_MS.gagne + 10);
     expect(etoilesPleines()).toBe(3);
     expect(playRarete).toHaveBeenCalledTimes(1);
     cleanup();
 
-    afficher("Mauvais", "Bon");
+    const c2 = afficher("Mauvais", "Bon");
+    void c2;
     avancer(SEQUENCE_MS.gagne + 10);
     expect(playRarete).toHaveBeenCalledTimes(1); // toujours l'unique appel
   });

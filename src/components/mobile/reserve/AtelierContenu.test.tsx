@@ -10,7 +10,7 @@
  * qui ne diffèrent QUE par la première compétence Réparer.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { AtelierContenu } from "./AtelierContenu";
 import { __resetMemoireReserve } from "./ReserveShell";
 import { catTreeId } from "@/data/competences";
@@ -120,6 +120,32 @@ describe("AtelierContenu — récupérer un objet restauré", () => {
     expect(recupererMock).toHaveBeenCalledTimes(1);
     expect(recupererMock).toHaveBeenCalledWith("o1");
     expect(screen.getByTestId("celebration-restauration")).toBeTruthy();
+  });
+
+  it("la cérémonie survit aux ticks d'horloge de l'écran et se referme", () => {
+    // L'écran se re-rend CHAQUE SECONDE pour rafraîchir les décomptes des
+    // établis. Si la séquence de la cérémonie repart à chaque re-rendu, elle
+    // ne parvient jamais à son vol : elle rejoue en boucle (bug 2026-08-28).
+    vi.useFakeTimers();
+    try {
+      mockState = etatAvecObjetPret();
+      render(<AtelierContenu />);
+      cliquerRecuperer();
+      // Sans cette garde, l'attente ci-dessous passerait aussi pour une
+      // cérémonie qui n'a JAMAIS été montée (test creux).
+      expect(screen.getByTestId("celebration-restauration")).toBeTruthy();
+      // EN TRANCHES : un seul `advanceTimersByTime(4000)` groupe tous les
+      // re-rendus à la fin de l'act et le tick d'horloge ne tombe jamais au
+      // milieu de la séquence — c'est précisément le cas qui casse.
+      for (let t = 0; t < 50; t++) {
+        act(() => {
+          vi.advanceTimersByTime(100);
+        });
+      }
+      expect(screen.queryByTestId("celebration-restauration")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("récupération refusée : aucune cérémonie", () => {

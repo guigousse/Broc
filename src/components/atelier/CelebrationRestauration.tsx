@@ -119,19 +119,21 @@ export function CelebrationRestauration({
   const termine = useRef(false);
 
   const pristin = estPristin(etatApres);
+  const pristinRef = useRef(pristin);
+  pristinRef.current = pristin;
   const rarity = getRarityColors(
     objet.rarete,
     !!getTemplate(objet.templateId)?.unique,
   );
 
-  const arreterMinuteries = () => {
+  const arreterMinuteries = useCallback(() => {
     minuteries.current.forEach((id) => window.clearTimeout(id));
     minuteries.current = [];
-  };
+  }, []);
 
   // Le vol : l'objet quitte l'écran vers l'onglet Stockage, qui pulse à
   // l'arrivée (même helper que toutes les autres arrivées d'objet du jeu).
-  const envoyerAuStockage = useCallback(() => {
+  const envoyerAuStockage = () => {
     const rect = cadreRef.current?.getBoundingClientRect() ?? null;
     if (rect) {
       flyToTab({
@@ -150,7 +152,22 @@ export function CelebrationRestauration({
       onTermine();
     }, SEQUENCE_MS.dureeVol);
     minuteries.current.push(id);
-  }, [objet.templateId, onTermine, rarity.outer, rarity.thumbBg]);
+  };
+
+  /**
+   * Le dernier `envoyerAuStockage` connu, rafraîchi à chaque rendu.
+   *
+   * L'écran qui nous monte se re-rend CHAQUE SECONDE (décomptes des
+   * établis) et recrée son `onTermine` au passage. Si la séquence dépendait
+   * de cette identité, elle se replanifierait à chaque tick et n'atteindrait
+   * jamais son vol : l'étoile repoppait en boucle (bug du 2026-08-28). La
+   * séquence se planifie donc UNE FOIS au montage et lit ici sa version
+   * fraîche au moment de tirer.
+   */
+  const envoyerRef = useRef(envoyerAuStockage);
+  useEffect(() => {
+    envoyerRef.current = envoyerAuStockage;
+  });
 
   useEffect(() => {
     const planifier = (ms: number, fn: () => void) => {
@@ -160,20 +177,21 @@ export function CelebrationRestauration({
     planifier(SEQUENCE_MS.gagne, () => {
       setPhase(2);
       void audioManager.playPop();
-      if (pristin) void audioManager.playRarete();
+      if (pristinRef.current) void audioManager.playRarete();
     });
     planifier(SEQUENCE_MS.vol, () => {
       setPhase(3);
-      envoyerAuStockage();
+      envoyerRef.current();
     });
     return arreterMinuteries;
-  }, [pristin, envoyerAuStockage]);
+    // Montage UNIQUEMENT : cf. le commentaire d'`envoyerRef`.
+  }, [arreterMinuteries]);
 
   const sauter = () => {
     if (phase === 3) return;
     arreterMinuteries();
     setPhase(3);
-    envoyerAuStockage();
+    envoyerRef.current();
   };
 
   const etatAffiche = phase >= 2 ? etatApres : objet.etat;
