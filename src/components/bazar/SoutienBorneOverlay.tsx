@@ -33,11 +33,17 @@ const VERT = "#7dfcae";
 const VERT_PALE = "#b7ffd6";
 const TUBE = "#04140b";
 
+/* Pas de voile noir : le flou de profondeur du reste de l'appli (Réglages,
+   Crédits, Parties, et l'écran de la borne juste dessous). Le décor recule
+   sans disparaître — on garde la sensation d'être DEVANT la borne, pas
+   devant un trou noir. Le voile forêt à 0,35 est celui des autres overlays. */
 const scrim: CSSProperties = {
   position: "fixed",
   inset: 0,
   zIndex: 60,
-  background: "rgba(2, 10, 6, 0.72)",
+  background: "rgba(15,31,24,0.35)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
   display: "grid",
   placeItems: "center",
   padding: "calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom))",
