@@ -10,7 +10,11 @@ import {
 } from "@/lib/quetes/textes";
 
 /** Familles « formes chiffrées » (Task 6) — les autres sont « objet nommé ». */
-const FAMILLES_CHIFFREES = ["rares", "benefice", "chiffre", "marge", "categorie"];
+const FAMILLES_CHIFFREES = [
+  "rares", "benefice", "chiffre", "marge", "categorie",
+  "beneficeJour", "chiffreJour", "margeJour", "categorieJour",
+  "restauration", "legendaire",
+];
 
 /** Marques obligatoires dans le CORPS de chaque famille de gabarits. */
 const MARQUES_PAR_FAMILLE: Record<string, string[]> = {
@@ -24,6 +28,12 @@ const MARQUES_PAR_FAMILLE: Record<string, string[]> = {
   chiffre: ["{montant}"],
   marge: ["{montant}"],
   categorie: ["{nombre}", "{categorie}"],
+  beneficeJour: ["{montant}"],
+  chiffreJour: ["{montant}"],
+  margeJour: ["{montant}"],
+  categorieJour: ["{nombre}", "{categorie}"],
+  restauration: ["{etat}"],
+  legendaire: [],
 };
 
 /**

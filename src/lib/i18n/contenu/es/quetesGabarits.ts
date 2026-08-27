@@ -155,4 +155,88 @@ export const QUETES_GABARITS_ES: Record<
       "Mi stock de {categorie} desborda. Muéveme {nombre} de esos y te lo deberé.",
     ],
   },
+  "beneficeJour#0": {
+    titre: "La cuenta del día",
+    corps: [
+      "Hola:",
+      "Sin discursos: {montant} de beneficio antes de esta noche. Ya veremos lo que vales.",
+    ],
+  },
+  "beneficeJour#1": {
+    titre: "Esta noche echamos cuentas",
+    corps: [
+      "Buenas:",
+      "Saca {montant} de beneficio antes de que acabe el día y te apunto en mi libreta.",
+    ],
+  },
+  "chiffreJour#0": {
+    titre: "Que se mueva, hoy",
+    corps: [
+      "Buenas:",
+      "El margen me da igual: quiero movimiento. {montant} ingresados antes del cierre.",
+    ],
+  },
+  "chiffreJour#1": {
+    titre: "La caja de un solo día",
+    corps: [
+      "Hola:",
+      "Haz cantar la caja antes de esta noche: {montant} ingresados, ni un céntimo menos.",
+    ],
+  },
+  "margeJour#0": {
+    titre: "El golpe del día",
+    corps: [
+      "Estimado colega:",
+      "Una buena venta vale por diez mediocres. {montant} de margen en una sola pieza, y antes de esta noche.",
+    ],
+  },
+  "margeJour#1": {
+    titre: "Una sola venta",
+    corps: [
+      "Buenas:",
+      "No me importa cuánto vendas hoy. Quiero {montant} de margen en UNA venta.",
+    ],
+  },
+  "categorieJour#0": {
+    titre: "La sección del día",
+    corps: [
+      "Buenas:",
+      "Hoy te ocupas de la sección {categorie}. Véndeme {nombre} y hablamos.",
+    ],
+  },
+  "categorieJour#1": {
+    titre: "Antes del cierre",
+    corps: [
+      "Hola:",
+      "{nombre} piezas de la sección {categorie}, vendidas antes de esta noche. ¿Fácil, no?",
+    ],
+  },
+  "restauration#0": {
+    titre: "Devolverle el brillo",
+    corps: [
+      "Buenas:",
+      "No soporto lo destartalado. Coge una pieza, pásala por el banco y devuélvemela en condiciones{etat}.",
+    ],
+  },
+  "restauration#1": {
+    titre: "Un paso por el banco",
+    corps: [
+      "Hola:",
+      "Una pieza, un banco y algo de paciencia. Me la quedo en cuanto esté arreglada{etat}.",
+    ],
+  },
+  "legendaire#0": {
+    titre: "La pieza de una vida",
+    corps: [
+      "Estimado colega:",
+      "Eso se cruza una o dos veces en toda una carrera. Si hoy pasa ante ti una pieza legendaria, no la dejes escapar: sabré ser agradecido.",
+    ],
+  },
+  "legendaire#1": {
+    titre: "Si aparece, es tuya",
+    corps: [
+      "Buenas:",
+      "Dicen que hoy va a salir una pieza excepcional en alguna parte. Échale el guante. Pagaré el precio de la suerte.",
+    ],
+  },
 };
