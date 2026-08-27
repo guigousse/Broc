@@ -6,6 +6,7 @@ import { calculerRoulette, estFlash, tempsBoucle } from "./roulette.js";
 import { chargerCatalogue } from "./catalogue.js";
 import { CacheImages, chargerImage } from "./images.js";
 import { dessinerFrame } from "./rendu.js";
+import { SonRoulette } from "./son.js";
 
 async function chargerFontes() {
   const fontes = await Promise.all([
@@ -44,7 +45,18 @@ async function demarrer() {
     badges: { appStore, googlePlay },
   };
 
-  const t0 = performance.now();
+  let t0 = performance.now();
+
+  // Bouton « ▶︎ Son » : les contextes audio iOS exigent un geste utilisateur.
+  const son = new SonRoulette();
+  const boutonSon = document.getElementById("bouton-son");
+  boutonSon.addEventListener("click", async () => {
+    await son.demarrer();
+    // L'animation et le son repartent du même zéro.
+    t0 = performance.now() + 50;
+    son.planifierBoucleInfinie(r, son.tempsContexte + 0.05);
+  });
+
   function boucle(now) {
     const t = tempsBoucle((now - t0) / 1000, r);
     dessinerFrame(ctx, t, { ...scene, flashActif: estFlash(t, r) });

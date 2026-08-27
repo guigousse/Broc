@@ -1,3 +1,4 @@
 body { margin: 0; background: #14181C; color: #F1E3BF; font-family: system-ui; }
 #apercu { display: flex; justify-content: center; }
 #scene { width: min(100vw, 45vh); height: auto; aspect-ratio: 9 / 16; }
+#bouton-son { display: block; margin: 12px auto; padding: 8px 20px; font-size: 1rem; }
