@@ -12,6 +12,7 @@ import { GlobalVinylAmbiance } from "@/components/mobile/GlobalVinylAmbiance";
 import { AdMobBootstrap } from "@/components/mobile/AdMobBootstrap";
 import { IapBootstrap } from "@/components/mobile/IapBootstrap";
 import { FirebaseBootstrap } from "@/components/mobile/FirebaseBootstrap";
+import { NotifSonBootstrap } from "@/components/mobile/NotifSonBootstrap";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -98,6 +99,7 @@ export default function RootLayout({
                 <AdMobBootstrap />
                 <IapBootstrap />
                 <FirebaseBootstrap />
+                <NotifSonBootstrap />
               </GameProvider>
             </ToastProvider>
           </SettingsProvider>

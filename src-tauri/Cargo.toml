@@ -32,10 +32,16 @@ tauri-plugin-iap = { path = "vendor/tauri-plugin-iap" }
 tauri-plugin-firebase = { path = "vendor/tauri-plugin-firebase" }
 tauri-plugin-stockage = { path = "vendor/tauri-plugin-stockage" }
 
-# Patch local : corrige la sérialisation des dates de notifs planifiées, dont le
-# format ISO-8601 (9 décimales + offset `+00:00`) était rejeté par le parseur
-# natif iOS du plugin → notifs jamais programmées sur iOS. Le crate vendoré ne
-# diffère de la 2.3.3 que par cette sérialisation (src/models.rs). À retirer si
-# le plugin amont corrige le bug.
+# Patch local : le crate vendoré diffère de la 2.3.3 par DEUX correctifs iOS.
+#
+# 1. src/models.rs — sérialisation des dates de notifs planifiées, dont le
+#    format ISO-8601 (9 décimales + offset `+00:00`) était rejeté par le
+#    parseur natif iOS du plugin → notifs jamais programmées sur iOS.
+# 2. ios/Sources/NotificationHandler.swift — plus de `.sound` au premier plan :
+#    le son d'une notification y prend la session audio iOS et interrompait le
+#    contexte Web Audio de la WebView, coupant TOUT le son du jeu en pleine
+#    partie jusqu'au redémarrage de l'app.
+#
+# À retirer si le plugin amont corrige ces deux points.
 [patch.crates-io]
 tauri-plugin-notification = { path = "vendor/tauri-plugin-notification" }

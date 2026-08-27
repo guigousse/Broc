@@ -39,9 +39,24 @@ public class NotificationHandler: NSObject, NotificationHandlerProtocol {
       }
     }
 
+    // PATCH BROC — pas de `.sound` au premier plan.
+    //
+    // `willPresent` n'est appelé QUE lorsque l'app est déjà à l'écran. Or le
+    // son d'une notification y prend la session audio iOS, ce qui interrompt
+    // le contexte Web Audio de la WebView : tout le son du jeu se taisait
+    // d'un coup en pleine partie. Le cas était nominal, pas limite — la notif
+    // « énergie pleine » se déclenche précisément quand le joueur assidu est
+    // encore en train de jouer.
+    //
+    // La bannière et la pastille restent : l'information garde sa valeur,
+    // c'est le son qui n'en a aucune quand le jeu est sous les yeux. En
+    // arrière-plan, la notif sonne normalement — ce chemin ne passe pas ici.
+    //
+    // (Le garde `silent` ci-dessus ne suffisait pas : il lit une map tenue en
+    // mémoire au moment de la programmation, vide pour toute notif posée lors
+    // d'un lancement précédent.)
     return [
       .badge,
-      .sound,
       .alert,
     ]
   }
