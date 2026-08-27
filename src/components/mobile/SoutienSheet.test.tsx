@@ -97,6 +97,26 @@ describe("SoutienSheet", () => {
     expect(demanderNotation).not.toHaveBeenCalled();
   });
 
+  // La feuille s'ouvre sur du PAPIER, pas sur le vert du menu : les habillages
+  // s'inversent. Les réseaux se fondent dans la feuille, et le bouton d'avis
+  // prend le contre-pied du fond — c'est lui qu'on demande vraiment. Le même
+  // couple de tests existe à l'endroit (voir `SoutienModal.test.tsx`).
+  it("sur le papier de la feuille, les réseaux sont en encre sur fond nu", () => {
+    monter();
+    for (const id of ["soutien-instagram", "soutien-tiktok"]) {
+      const style = (screen.getByTestId(id) as HTMLElement).style;
+      expect(style.background).toBe("transparent");
+      expect(style.color).toContain("--forest-800");
+    }
+  });
+
+  it("sur le papier de la feuille, le bouton d'avis passe au vert", () => {
+    monter();
+    const style = (screen.getByTestId("soutien-noter") as HTMLElement).style;
+    expect(style.background).toContain("--forest-800");
+    expect(style.color).toContain("--brass-300");
+  });
+
   it("l'intro n'est rendue que si on la fournit", () => {
     const { rerender } = render(
       <LangueProvider>

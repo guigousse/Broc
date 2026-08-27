@@ -24,16 +24,13 @@ import { ChatPose } from "@/components/mobile/ChatPose";
  * posait du blanc cassé sur du papier : illisible sur appareil.
  */
 
-const bouton: CSSProperties = {
+const base: CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 14,
   width: "100%",
   padding: "14px 16px",
   minHeight: "var(--tap-min)",
-  background: "var(--forest-800)",
-  color: "var(--brass-300)",
-  border: "1px solid var(--brass-500)",
   borderRadius: 6,
   fontFamily: "var(--font-display)",
   fontSize: 13,
@@ -41,24 +38,35 @@ const bouton: CSSProperties = {
   textTransform: "uppercase",
   textAlign: "left",
   cursor: "pointer",
-  boxShadow:
-    "0 6px 14px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,225,160,0.20)",
 };
 
-const pile: CSSProperties = { display: "grid", gap: 10 };
+/* Deux fonds, une seule règle : les réseaux se fondent dans le décor, et le
+   bouton d'avis prend le CONTRE-PIED de ce décor. C'est lui qu'on demande
+   vraiment ; il doit se voir sans qu'on ajoute une couleur d'accent que la
+   palette du jeu n'a pas. Sur la page du menu (fond vert sombre) il est donc
+   crème, et sur la feuille de la borne (papier) il est vert. */
+const bouton = (surPapier: boolean): CSSProperties => ({
+  ...base,
+  background: surPapier ? "transparent" : "var(--forest-800)",
+  color: surPapier ? "var(--forest-800)" : "var(--brass-300)",
+  border: "1px solid var(--brass-500)",
+  boxShadow: surPapier
+    ? "none"
+    : "0 6px 14px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,225,160,0.20)",
+});
 
-/* Le bouton d'avis est le seul qu'on DEMANDE vraiment : il quitte le vert des
-   deux autres pour le crème du papier, texte vert et bordure laiton épaissie.
-   Inversion de valeurs plutôt que couleur d'accent — la page n'en a pas. */
-const boutonAvis: CSSProperties = {
-  ...bouton,
-  background: "var(--paper-100)",
-  color: "var(--forest-800)",
+const boutonAvis = (surPapier: boolean): CSSProperties => ({
+  ...base,
+  background: surPapier ? "var(--forest-800)" : "var(--paper-100)",
+  color: surPapier ? "var(--brass-300)" : "var(--forest-800)",
   border: "2px solid var(--brass-600)",
   fontWeight: 700,
-  boxShadow:
-    "0 8px 20px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.6)",
-};
+  boxShadow: surPapier
+    ? "0 6px 16px rgba(40,25,5,0.30)"
+    : "0 8px 20px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.6)",
+});
+
+const pile: CSSProperties = { display: "grid", gap: 10 };
 
 /* Il descend aussi : l'espace au-dessus le détache du duo de réseaux et laisse
    la place au chat. */
@@ -70,9 +78,14 @@ const libelle: CSSProperties = { flex: 1, textAlign: "center" };
 interface BoutonsSoutienProps {
   /** Pose le chat sur le bord du bouton d'avis (page du menu). */
   avecChat?: boolean;
+  /** Habillage pour un fond clair — la feuille de la borne d'arcade. */
+  surPapier?: boolean;
 }
 
-export function BoutonsSoutien({ avecChat = false }: BoutonsSoutienProps) {
+export function BoutonsSoutien({
+  avecChat = false,
+  surPapier = false,
+}: BoutonsSoutienProps) {
   const { d } = useLangue();
   // `useSettingsSafe`, PAS `useSettings` : ces boutons sont montés en
   // permanence (feuille fermée) par `EcranArcade`, au fond de l'arbre de la
@@ -100,7 +113,7 @@ export function BoutonsSoutien({ avecChat = false }: BoutonsSoutienProps) {
       <button
         type="button"
         data-testid="soutien-instagram"
-        style={bouton}
+        style={bouton(surPapier)}
         onClick={aller(INSTAGRAM_URL)}
       >
         <LogoInstagram />
@@ -109,7 +122,7 @@ export function BoutonsSoutien({ avecChat = false }: BoutonsSoutienProps) {
       <button
         type="button"
         data-testid="soutien-tiktok"
-        style={bouton}
+        style={bouton(surPapier)}
         onClick={aller(TIKTOK_URL)}
       >
         <LogoTikTok />
@@ -124,7 +137,7 @@ export function BoutonsSoutien({ avecChat = false }: BoutonsSoutienProps) {
           <button
             type="button"
             data-testid="soutien-noter"
-            style={boutonAvis}
+            style={boutonAvis(surPapier)}
             onClick={aller(urlNotation)}
           >
             {surPlay ? <LogoGooglePlay /> : <LogoAppStore />}

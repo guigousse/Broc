@@ -26,7 +26,7 @@ export function SoutienSheet({ open, onClose, intro }: SoutienSheetProps) {
   return (
     <BottomSheet open={open} onClose={onClose} title={d.soutien.titre}>
       {intro}
-      <BoutonsSoutien />
+      <BoutonsSoutien surPapier />
     </BottomSheet>
   );
 }

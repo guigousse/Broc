@@ -5,9 +5,10 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 
 /**
  * L'accroche posée en tête de la feuille de soutien quand elle s'ouvre depuis
- * la borne. C'est la BORNE qui parle, dans sa langue : le joueur n'est pas
- * tiré hors de la fiction pour se faire demander un service, la demande arrive
- * ensuite, en petit.
+ * la borne. C'est la BORNE qui parle d'abord, dans sa langue : le joueur n'est
+ * pas tiré hors de la fiction pour se faire demander un service. Le mot de
+ * remerciement vient ensuite, et c'est le MÊME qu'à la page « Soutenir » du
+ * menu (clés `soutien.merci*`) : deux portes, un seul discours.
  *
  * ⚠ « MODE DÉMONSTRATION » ne promet rien, et c'est le point. Une vraie borne
  * au repos tourne en mode démonstration — c'est littéralement ce que fait cet
@@ -41,11 +42,16 @@ const etat: CSSProperties = {
   color: "#7dfcae",
 };
 
+/* Le texte se lit sur le PAPIER de la feuille : il lui faut de l'encre, pas
+   du blanc cassé (`paper-100`, qui a longtemps rendu ce paragraphe invisible
+   sur appareil). Même corps de lecture que la page « Soutenir » du menu. */
 const corps: CSSProperties = {
-  marginBottom: 14,
-  fontSize: 13,
-  lineHeight: 1.55,
-  color: "var(--paper-100)",
+  margin: "0 0 10px",
+  fontFamily: "var(--font-serif)",
+  fontSize: 16,
+  fontWeight: 500,
+  lineHeight: 1.6,
+  color: "var(--ink-700)",
 };
 
 export function AccrocheBorne() {
@@ -56,7 +62,9 @@ export function AccrocheBorne() {
         <div style={enseigne}>{d.soutien.insertCoin}</div>
         <div style={etat}>{d.soutien.modeDemo}</div>
       </div>
-      <p style={corps}>{d.soutien.corps}</p>
+      <p style={corps}>{d.soutien.merciCorps}</p>
+      <p style={corps}>{d.soutien.merciPartage}</p>
+      <p style={{ ...corps, marginBottom: 16 }}>{d.soutien.merciAvis}</p>
     </>
   );
 }
