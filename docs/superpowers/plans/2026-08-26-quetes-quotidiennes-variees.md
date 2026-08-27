@@ -1206,7 +1206,7 @@ Dans l'objet `CHIFFREES`, à la suite des familles existantes (qui ne changent p
   ],
   restauration: [
     { titre: "Rendre son éclat", corps: ["Bonjour,", "J'ai horreur du délabré. Prends une pièce, passe-la à l'établi et remets-la en état{etat}."] },
-    { titre: "Un passage à l'établi", corps: ["Salut,", "Une pièce, un établi, un peu de patience. Restaure-moi ça{etat} et on est bons."] },
+    { titre: "Un passage à l'établi", corps: ["Salut,", "Une pièce, un établi, un peu de patience. Je la reprends une fois retapée{etat}."] },
   ],
   legendaire: [
     { titre: "La pièce d'une vie", corps: ["Cher confrère,", "On ne croise ça qu'une ou deux fois dans une carrière. Si une pièce légendaire passe devant toi aujourd'hui, ne la laisse pas filer — je saurai me montrer reconnaissant."] },
@@ -1310,7 +1310,7 @@ Ajouter à `QUETES_GABARITS_EN` :
   "categorieJour#0": { titre: "Today's shelf", corps: ["Hello,", "Today you mind the {categorie} shelf. Sell me {nombre} of them and we'll talk."] },
   "categorieJour#1": { titre: "Before closing", corps: ["Hi,", "{nombre} pieces from the {categorie} shelf, sold before tonight. Simple enough?"] },
   "restauration#0": { titre: "Bring back the shine", corps: ["Hello,", "I can't stand a wreck. Take a piece, put it on the bench and bring it back to condition{etat}."] },
-  "restauration#1": { titre: "A turn at the bench", corps: ["Hi,", "One piece, one bench, a little patience. Restore that for me{etat} and we're square."] },
+  "restauration#1": { titre: "A turn at the bench", corps: ["Hi,", "One piece, one bench, a little patience. I'll take it back once it's been done up{etat}."] },
   "legendaire#0": { titre: "The piece of a lifetime", corps: ["Dear colleague,", "You meet one of those once or twice in a career. If a legendary piece crosses your path today, don't let it go — I'll know how to show my gratitude."] },
   "legendaire#1": { titre: "If it surfaces, it's yours", corps: ["Hello,", "Word is an exceptional piece is surfacing somewhere today. Get your hands on it. I'll pay the price of luck."] },
 ```
@@ -1329,7 +1329,7 @@ Ajouter à `QUETES_GABARITS_ES` :
   "categorieJour#0": { titre: "La sección del día", corps: ["Buenas:", "Hoy te ocupas de la sección {categorie}. Véndeme {nombre} y hablamos."] },
   "categorieJour#1": { titre: "Antes del cierre", corps: ["Hola:", "{nombre} piezas de la sección {categorie}, vendidas antes de esta noche. ¿Fácil, no?"] },
   "restauration#0": { titre: "Devolverle el brillo", corps: ["Buenas:", "No soporto lo destartalado. Coge una pieza, pásala por el banco y devuélvemela en condiciones{etat}."] },
-  "restauration#1": { titre: "Un paso por el banco", corps: ["Hola:", "Una pieza, un banco y algo de paciencia. Restáurame eso{etat} y en paz."] },
+  "restauration#1": { titre: "Un paso por el banco", corps: ["Hola:", "Una pieza, un banco y algo de paciencia. Me la quedo en cuanto esté arreglada{etat}."] },
   "legendaire#0": { titre: "La pieza de una vida", corps: ["Estimado colega:", "Eso se cruza una o dos veces en toda una carrera. Si hoy pasa ante ti una pieza legendaria, no la dejes escapar: sabré ser agradecido."] },
   "legendaire#1": { titre: "Si aparece, es tuya", corps: ["Buenas:", "Dicen que hoy va a salir una pieza excepcional en alguna parte. Échale el guante. Pagaré el precio de la suerte."] },
 ```
@@ -1348,7 +1348,7 @@ Ajouter à `QUETES_GABARITS_EL` :
   "categorieJour#0": { titre: "Ο πάγκος της ημέρας", corps: ["Καλησπέρα,", "Σήμερα αναλαμβάνεις τον πάγκο {categorie}. Πούλα μου {nombre} και τα ξαναλέμε."] },
   "categorieJour#1": { titre: "Πριν το κλείσιμο", corps: ["Γεια σου,", "{nombre} κομμάτια από την κατηγορία {categorie}, πουλημένα πριν απόψε. Απλό, έτσι;"] },
   "restauration#0": { titre: "Να ξαναλάμψει", corps: ["Καλησπέρα,", "Σιχαίνομαι τα ρημαγμένα. Πάρε ένα κομμάτι, βάλ' το στον πάγκο και φέρ' το μου σε κατάσταση{etat}."] },
-  "restauration#1": { titre: "Ένα πέρασμα από τον πάγκο", corps: ["Γεια σου,", "Ένα κομμάτι, ένας πάγκος, λίγη υπομονή. Αποκατάστησέ μου το{etat} και είμαστε εντάξει."] },
+  "restauration#1": { titre: "Ένα πέρασμα από τον πάγκο", corps: ["Γεια σου,", "Ένα κομμάτι, ένας πάγκος, λίγη υπομονή. Θα το πάρω πίσω μόλις φτιαχτεί{etat}."] },
   "legendaire#0": { titre: "Το κομμάτι μιας ζωής", corps: ["Αγαπητέ συνάδελφε,", "Τέτοιο συναντάς μία ή δύο φορές σε ολόκληρη καριέρα. Αν σήμερα περάσει μπροστά σου ένα θρυλικό κομμάτι, μην το αφήσεις να φύγει — θα ξέρω να σε ευγνωμονήσω."] },
   "legendaire#1": { titre: "Αν βγει, δικό σου", corps: ["Καλησπέρα,", "Λένε πως σήμερα βγαίνει κάπου ένα εξαιρετικό κομμάτι. Βάλε χέρι. Θα πληρώσω το τίμημα της τύχης."] },
 ```
