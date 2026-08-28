@@ -31,6 +31,8 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 import { titreDeblocage, descriptionDeblocage } from "@/lib/i18n/contenu";
 import { extraireEmoji } from "@/lib/emoji";
 import { MedaillonAtout } from "@/components/mobile/MedaillonAtout";
+import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
+import { JETONS_NIVEAU_MAX, NIVEAU_BROCANTEUR_MAX } from "@/lib/xp";
 import { tutorielActif } from "@/lib/tutoriel";
 import { getCoachOuvert, subscribeCoachOuvert } from "@/lib/coachActif";
 import { getDialogueActif, subscribeDialogueActif } from "@/lib/dialogueActif";
@@ -244,6 +246,15 @@ const sousTitre: CSSProperties = {
   color: "var(--paper-200)",
 };
 
+const ligneJetons: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 5,
+  fontFamily: "var(--font-mono)",
+  fontSize: 13,
+  color: "var(--paper-200)",
+};
+
 const ligneDeblocage: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: 13,
@@ -433,6 +444,20 @@ export function LevelUpOverlay() {
       ),
     });
   }
+  // Le plafond de niveau verse ses Bazarcoins (cf. `crediterXPBrocanteur`).
+  if (niveauACelebrer === NIVEAU_BROCANTEUR_MAX) {
+    recompenses.push({
+      key: "jetons",
+      contenu: (
+        <Puce>
+          <div style={ligneJetons} data-testid="levelup-jetons">
+            <span>{tr(d.sheets.plusJetonsNiveauMax, { n: JETONS_NIVEAU_MAX })}</span>
+            <BazarcoinIcon size={13} />
+          </div>
+        </Puce>
+      ),
+    });
+  }
   for (const dep of deblocages) {
     const titreLocal = titreDeblocage(dep, locale);
     if (dep.famille === "active") {
@@ -516,8 +541,11 @@ export function LevelUpOverlay() {
   // Mouvement réduit : plus aucune attente, tout est là d'emblée (le bloc
   // @media neutralise les animations mais pas les délais).
   const t = (secondes: number) => (mouvementReduit ? 0 : secondes);
+  // Sans cadre, le bouton n'a plus rien à attendre que la fin du feu.
   const delaiBouton = t(
-    DELAI_PREMIERE_LIGNE + lignes.length * ECART_LIGNE + ECART_BOUTON,
+    lignes.length > 0
+      ? DELAI_PREMIERE_LIGNE + lignes.length * ECART_LIGNE + ECART_BOUTON
+      : DELAI_CARTE + ECART_BOUTON,
   );
 
   // La fermeture marque le niveau vu et, à l'étape dédiée du tutoriel, fait
@@ -588,23 +616,29 @@ export function LevelUpOverlay() {
           </div>
         )}
       </div>
-      <div
-        className="broc-levelup-carte"
-        style={{ ...carte, animationDelay: `${t(DELAI_CARTE)}s` }}
-      >
-        {lignes.map((l, i) => (
-          <div
-            key={l.key}
-            className="broc-levelup-ligne"
-            style={{
-              ...ligneWrap,
-              animationDelay: `${t(DELAI_PREMIERE_LIGNE + i * ECART_LIGNE)}s`,
-            }}
-          >
-            {l.contenu}
-          </div>
-        ))}
-      </div>
+      {/* Le cadre ne monte QUE s'il a quelque chose à dire. En fin de
+          parcours (plus aucun déblocage à venir, plafond de points atteint)
+          les deux sections sont vides : un grand rectangle vert vide se lit
+          comme un bug, alors que le chiffre et son feu se suffisent. */}
+      {lignes.length > 0 && (
+        <div
+          className="broc-levelup-carte"
+          style={{ ...carte, animationDelay: `${t(DELAI_CARTE)}s` }}
+        >
+          {lignes.map((l, i) => (
+            <div
+              key={l.key}
+              className="broc-levelup-ligne"
+              style={{
+                ...ligneWrap,
+                animationDelay: `${t(DELAI_PREMIERE_LIGNE + i * ECART_LIGNE)}s`,
+              }}
+            >
+              {l.contenu}
+            </div>
+          ))}
+        </div>
+      )}
       <button
         type="button"
         className="broc-levelup-ligne"

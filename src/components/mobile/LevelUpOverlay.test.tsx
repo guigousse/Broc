@@ -146,6 +146,19 @@ describe("LevelUpOverlay", () => {
     expect(screen.getByText("À venir")).toBeTruthy();
   });
 
+  it("plus rien à annoncer : pas d'encadré vide (fin de parcours au plafond)", () => {
+    // Niveau très haut (aucun déblocage à venir) ET plafond de points atteint
+    // (6 dispo + 4 dépensés = 10) : les deux sections sont vides. Le cadre
+    // laiton ne doit pas monter pour ne rien contenir — un grand rectangle
+    // vert vide se lit comme un bug.
+    mockState = etat(998, 999, 6, ["a", "b", "c", "d"]);
+    mockPathname = "/bureau";
+    const { container } = render(<LevelUpOverlay />);
+    expect(screen.getByText("Niveau 999")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Continuer" })).toBeTruthy();
+    expect(container.querySelector(".broc-levelup-carte")).toBeNull();
+  });
+
   it("Continuer appelle marquerNiveauVu et joue le son une fois par niveau", () => {
     vi.useFakeTimers();
     mockState = etat(0, 1);
@@ -265,6 +278,22 @@ describe("LevelUpOverlay", () => {
     mockPathname = "/bureau";
     render(<LevelUpOverlay />);
     expect(screen.getByText(/point de compétence/)).toBeTruthy();
+  });
+
+  it("niveau 100 : la fiche annonce les 50 Bazarcoins du plafond", () => {
+    mockState = etat(99, 100, 6, ["a", "b", "c", "d"]);
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    const ligne = screen.getByTestId("levelup-jetons");
+    expect(ligne.textContent).toMatch(/\+50/);
+    expect(ligne.querySelector("svg")).toBeTruthy();
+  });
+
+  it("niveau 99 : pas de ligne Bazarcoins", () => {
+    mockState = etat(98, 99, 6, ["a", "b", "c", "d"]);
+    mockPathname = "/bureau";
+    render(<LevelUpOverlay />);
+    expect(screen.queryByTestId("levelup-jetons")).toBeNull();
   });
 
   it("plafond de compétences atteint : « +1 point » masqué", () => {

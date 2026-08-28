@@ -22,7 +22,11 @@ import {
 } from "@/data/competences";
 import { GRAND_PERE_PORTRAITS, SEQUENCES_TUTORIEL } from "@/data/dialogues";
 import { contexteDepuisState, etatCompetence } from "@/lib/competences";
-import { detailProgressionBrocanteur, progressionNiveauBrocanteur } from "@/lib/xp";
+import {
+  auPlafondNiveau,
+  detailProgressionBrocanteur,
+  progressionNiveauBrocanteur,
+} from "@/lib/xp";
 import { prochainDeblocage } from "@/data/deblocagesNiveau";
 import { ParcoursSheet } from "@/components/mobile/ParcoursSheet";
 import { useLangue } from "@/lib/i18n/LangueContext";
@@ -186,10 +190,15 @@ export default function CompetencesPage() {
                     pointerEvents: "none",
                   }}
                 >
-                  {tr(d.bibliotheque.xpProgression, {
-                    dansNiveau: dansNiveau.toLocaleString(locale),
-                    requisNiveau: requisNiveau.toLocaleString(locale),
-                  })}
+                  {/* Au plafond, `detailProgressionBrocanteur` rend 0 / 0 :
+                      afficher « 0 / 0 XP » ferait lire une progression
+                      remise à zéro. La barre est pleine, on le dit. */}
+                  {auPlafondNiveau(state.brocanteur)
+                    ? d.bibliotheque.xpMaximum
+                    : tr(d.bibliotheque.xpProgression, {
+                        dansNiveau: dansNiveau.toLocaleString(locale),
+                        requisNiveau: requisNiveau.toLocaleString(locale),
+                      })}
                 </span>
               </div>
               <div

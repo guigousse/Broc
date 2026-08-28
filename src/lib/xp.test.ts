@@ -7,12 +7,17 @@ import {
   pointsOctroyables,
   POINTS_BONUS_CHAPITRE,
   progressionNiveauBrocanteur,
+  auPlafondNiveau,
+  crediterXPBrocanteur,
+  JETONS_NIVEAU_MAX,
+  NIVEAU_BROCANTEUR_MAX,
   xpRequisPourNiveauBrocanteur,
   xpDuNiveauBrocanteur,
   XP_COUDE_NIVEAU,
   XP_CIBLE_AU_COUDE,
 } from "./xp";
 import { COUT_TOTAL_COMPETENCES } from "@/data/competences";
+import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
 
 const freshBrocanteur = () => ({ xp: 0, niveau: 0, pointsDisponibles: 0 });
 
@@ -181,5 +186,81 @@ describe("plafond de points à vie (COUT_TOTAL_COMPETENCES)", () => {
     expect(pointsOctroyables(b, COUT_TOTAL_COMPETENCES - 1, POINTS_BONUS_CHAPITRE)).toBe(1);
     expect(pointsOctroyables(b, COUT_TOTAL_COMPETENCES, POINTS_BONUS_CHAPITRE)).toBe(0);
     expect(pointsOctroyables(b, 0, POINTS_BONUS_CHAPITRE)).toBe(POINTS_BONUS_CHAPITRE);
+  });
+});
+
+describe("auPlafondNiveau — au niveau 100, l'XP n'a plus d'effet", () => {
+  it("vrai au plafond seulement", () => {
+    expect(auPlafondNiveau({ niveau: NIVEAU_BROCANTEUR_MAX - 1 })).toBe(false);
+    expect(auPlafondNiveau({ niveau: NIVEAU_BROCANTEUR_MAX })).toBe(true);
+    // Une save corrompue au-delà du plafond reste « au plafond », jamais en
+    // deçà : c'est le sens de la comparaison, pas une égalité stricte.
+    expect(auPlafondNiveau({ niveau: NIVEAU_BROCANTEUR_MAX + 3 })).toBe(true);
+  });
+
+  it("l'XP continue de s'accumuler en silence, le niveau et les points ne bougent plus", () => {
+    const b = {
+      xp: xpRequisPourNiveauBrocanteur(NIVEAU_BROCANTEUR_MAX),
+      niveau: NIVEAU_BROCANTEUR_MAX,
+      pointsDisponibles: 0,
+    };
+    const apres = appliquerGainXPBrocanteur(b, 500, 0);
+    expect(apres.niveau).toBe(NIVEAU_BROCANTEUR_MAX);
+    expect(apres.xp).toBe(b.xp + 500);
+    expect(apres.pointsDisponibles).toBe(0);
+  });
+});
+
+describe("crediterXPBrocanteur — le niveau 100 verse ses Bazarcoins (2026-08-28)", () => {
+  const xpDe = (niveau: number) => xpRequisPourNiveauBrocanteur(niveau);
+
+  it("franchir le niveau 100 crédite JETONS_NIVEAU_MAX jetons (= 50)", () => {
+    expect(JETONS_NIVEAU_MAX).toBe(50);
+    const s = createMockGameState({
+      jetons: 7,
+      brocanteur: { xp: xpDe(99), niveau: 99, pointsDisponibles: 0 },
+    });
+    const next = crediterXPBrocanteur(s, xpDe(100) - xpDe(99));
+    expect(next.brocanteur.niveau).toBe(100);
+    expect(next.jetons).toBe(7 + JETONS_NIVEAU_MAX);
+  });
+
+  it("un saut de plusieurs niveaux qui passe par le 100 ne verse qu'une fois", () => {
+    const s = createMockGameState({
+      jetons: 0,
+      brocanteur: { xp: xpDe(97), niveau: 97, pointsDisponibles: 0 },
+    });
+    const next = crediterXPBrocanteur(s, xpDe(100) - xpDe(97) + 5000);
+    expect(next.brocanteur.niveau).toBe(100);
+    expect(next.jetons).toBe(JETONS_NIVEAU_MAX);
+  });
+
+  it("un niveau ordinaire ne touche pas aux jetons", () => {
+    const s = createMockGameState({
+      jetons: 3,
+      brocanteur: { xp: xpDe(41), niveau: 41, pointsDisponibles: 0 },
+    });
+    const next = crediterXPBrocanteur(s, xpDe(42) - xpDe(41));
+    expect(next.brocanteur.niveau).toBe(42);
+    expect(next.jetons).toBe(3);
+  });
+
+  it("déjà au plafond : l'XP s'accumule, aucun jeton de plus", () => {
+    const s = createMockGameState({
+      jetons: 50,
+      brocanteur: { xp: xpDe(100), niveau: 100, pointsDisponibles: 0 },
+    });
+    const next = crediterXPBrocanteur(s, 999);
+    expect(next.brocanteur.xp).toBe(xpDe(100) + 999);
+    expect(next.jetons).toBe(50);
+  });
+
+  it("le point de compétence du niveau est versé comme avant", () => {
+    const s = createMockGameState({
+      brocanteur: { xp: xpDe(4), niveau: 4, pointsDisponibles: 1 },
+      competencesDebloquees: [],
+    });
+    const next = crediterXPBrocanteur(s, xpDe(5) - xpDe(4));
+    expect(next.brocanteur.pointsDisponibles).toBe(2);
   });
 });

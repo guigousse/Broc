@@ -54,10 +54,8 @@ import { chapitreParId } from "@/data/quetesPrincipales";
 import { accepterChapitre } from "@/lib/quetes/principales";
 import { prochainLundi } from "@/lib/calendrier";
 import {
-  appliquerGainXPBrocanteur,
+  crediterXPBrocanteur,
   emptyBrocanteur,
-  pointsOctroyables,
-  POINTS_BONUS_CHAPITRE,
   XP_DECOUVERTE_COLLECTION,
   XP_RESTAURATION_ETAPE,
   multiplicateurXPRarete,
@@ -1764,14 +1762,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (montant <= 0) return;
     setState((prev) => {
       if (!prev) return prev;
-      return {
-        ...prev,
-        brocanteur: appliquerGainXPBrocanteur(
-          prev.brocanteur,
-          montant,
-          pointsDepensesCompetences(prev.competencesDebloquees),
-        ),
-      };
+      return crediterXPBrocanteur(prev, montant);
     });
   }, []);
 
@@ -1791,18 +1782,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (!prev) return prev;
         const next = appliquerRecuperation(prev, objetId, now);
         if (!next) return prev;
-        return {
-          ...next,
-          brocanteur: appliquerGainXPBrocanteur(
-            next.brocanteur,
-            XP_RESTAURATION_ETAPE *
-              multiplicateurXPRarete(
-                objet.rarete,
-                !!getTemplate(objet.templateId)?.unique,
-              ),
-            pointsDepensesCompetences(prev.competencesDebloquees),
-          ),
-        };
+        return crediterXPBrocanteur(
+          next,
+          XP_RESTAURATION_ETAPE *
+            multiplicateurXPRarete(
+              objet.rarete,
+              !!getTemplate(objet.templateId)?.unique,
+            ),
+        );
       });
       return { ok: true };
     },
@@ -1866,14 +1853,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         collection: marquerDejaPossedeFn(prev.collection, templateId),
       };
       if (dejaConnu) return next;
-      return {
-        ...next,
-        brocanteur: appliquerGainXPBrocanteur(
-          next.brocanteur,
-          XP_DECOUVERTE_COLLECTION,
-          pointsDepensesCompetences(prev.competencesDebloquees),
-        ),
-      };
+      return crediterXPBrocanteur(next, XP_DECOUVERTE_COLLECTION);
     });
   }, []);
 
@@ -2060,7 +2040,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // Certaines missions (finale de l'arc principal) valident à la possession
       // sans consommer l'objet : le joueur garde la pièce.
       const conserver = payloadMission.conserverCibles === true;
-      const categorieMission = payloadMission.categorie;
       const now = tempsConfiance() ?? Date.now();
       const rEff = recompenseEffective(payloadMission, {
         state: current,
@@ -2099,22 +2078,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
           },
           now,
         );
-        const avecXP = credited.brocanteur;
-        // Bonus de points de compétence par chapitre livré (décision D4),
-        // appliqué APRÈS le gain d'XP pour ne pas écraser les points de level-up.
-        const brocanteur =
-          categorieMission === "principale"
-            ? {
-                ...avecXP,
-                pointsDisponibles:
-                  avecXP.pointsDisponibles +
-                  pointsOctroyables(
-                    avecXP,
-                    pointsDepensesCompetences(credited.competencesDebloquees),
-                    POINTS_BONUS_CHAPITRE,
-                  ),
-              }
-            : avecXP;
         // Chapitre de la trame portant une invitation (ex. ch4/ch8, à
         // objectifs → livrés ici, contrairement aux chapitres narratifs
         // injectés directement dans `accepterChapitre`) : la lettre des
@@ -2124,12 +2087,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
           chapitreParId(courrierId)?.invitationTier,
           prev.jourActuel,
         );
+        // Aucun bonus de points de compétence ici (2026-08-28, fin de
+        // l'ancienne décision D4) : les points ne tombent QUE du niveau de
+        // Brocanteur, un par niveau. Le brocanteur d'`appliquerRecompense`
+        // passe donc tel quel.
         return {
           ...credited,
           courriers,
           inventaireJoueur: invMaj,
           missions: missionsMaj,
-          brocanteur,
         };
       });
       return { ok: true };

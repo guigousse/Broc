@@ -1,6 +1,5 @@
-import { appliquerGainXPBrocanteur } from "@/lib/xp";
+import { crediterXPBrocanteur } from "@/lib/xp";
 import { appendLedger } from "@/lib/grandLivre";
-import { pointsDepensesCompetences } from "@/data/competences";
 import { ENERGIE_MAX, ENERGIE_PLAFOND, settleEnergie } from "@/lib/energie";
 import { legendairesAcquis } from "@/lib/quetes/objectifs";
 import type {
@@ -137,14 +136,7 @@ export function appliquerRecompense(
       jetons: r.jetons,
     },
   });
-  next = {
-    ...next,
-    brocanteur: appliquerGainXPBrocanteur(
-      next.brocanteur,
-      r.xp,
-      pointsDepensesCompetences(next.competencesDebloquees),
-    ),
-  };
+  next = crediterXPBrocanteur(next, r.xp);
   if (r.energie > 0) {
     const settled = settleEnergie(next, now, ENERGIE_MAX);
     next = {

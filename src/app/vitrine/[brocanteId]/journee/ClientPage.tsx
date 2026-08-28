@@ -14,6 +14,7 @@ import { DoorOpen } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { SkillDock, type DockSkill } from "@/components/mobile/SkillDock";
 import { ItemCard } from "@/components/ui/ItemCard";
+import { lignesXpDuBilan } from "@/lib/bilan/ceremonie";
 import { BilanSession, type LigneXp } from "@/components/mobile/bilan/BilanSession";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -1057,11 +1058,17 @@ export default function VitrineJourneePage() {
 
   const brocanteBg = brocante ? getBrocanteImageUrl(brocante.id) : null;
 
-  const lignesXpBilan: LigneXp[] = [
-    { cle: "ventes", montant: xpSession.ventes },
-    { cle: "justePrix", montant: xpSession.justePrix },
-    { cle: "negociations", montant: xpSession.negociations },
-  ];
+  /** Décompte d'XP du bilan — muet si la journée s'est ouverte au niveau
+   *  maximum : l'XP y est toujours créditée mais ne produit plus rien, et une
+   *  pastille qui s'envole vers une barre déjà pleine ne promet que du vide. */
+  const lignesXpBilan: readonly LigneXp[] = lignesXpDuBilan(
+    [
+      { cle: "ventes", montant: xpSession.ventes },
+      { cle: "justePrix", montant: xpSession.justePrix },
+      { cle: "negociations", montant: xpSession.negociations },
+    ],
+    instantaneXpRef.current,
+  );
 
   /* Persona révélé : compétence Lecteur d'âmes, célébrité (toujours à visage
      découvert), ou journée de vente scriptée du tutoriel (les trois visages
@@ -1509,13 +1516,18 @@ function Horloge({
           style={{
             position: "absolute",
             inset: 0,
-            width: `${progress}%`,
+            width: "100%",
+            // Remplissage par `transform` (compositeur seul) plutôt que par
+            // `width` : la barre vit toute la journée de vente, une transition
+            // de largeur imposait layout + paint à chaque frame.
+            transform: `scaleX(${progress / 100})`,
+            transformOrigin: "left",
             background: "var(--forest-700)",
-            // La largeur ne change qu'au changement de seconde entière (le
+            // Le remplissage ne change qu'au changement de seconde entière (le
             // tick de 100 ms ne re-rend pas la page). La transition doit donc
             // couvrir toute la seconde : la barre glisse alors sans à-coups,
             // au lieu de bondir en 100 ms puis d'attendre 900 ms.
-            transition: "width 1s linear",
+            transition: "transform 1s linear",
           }}
         />
       </div>

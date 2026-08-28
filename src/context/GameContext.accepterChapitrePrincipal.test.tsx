@@ -121,6 +121,42 @@ describe("GameContext.accepterChapitrePrincipal", () => {
     );
   });
 
+  it("chapitre narratif accepté : aucun point de compétence versé", async () => {
+    const result = await setupTutorielTermine();
+    const avant = result.current.state!.brocanteur.pointsDisponibles;
+
+    act(() => {
+      result.current.accepterChapitrePrincipal("trame_ch10");
+    });
+
+    // La trame ne verse plus de bonus de points (2026-08-28) : le seul
+    // robinet est le niveau de Brocanteur, à raison d'un point par niveau.
+    expect(result.current.state!.brocanteur.pointsDisponibles).toBe(avant);
+  });
+
+  it("mission de chapitre livrée : aucun point de compétence versé", async () => {
+    const result = await setupTutorielTermine();
+
+    act(() => {
+      result.current.accepterChapitrePrincipal("trame_ch1");
+      result.current.accepterChapitrePrincipal("trame_ch2");
+      result.current.accepterChapitrePrincipal("trame_ch3");
+      result.current.accepterChapitrePrincipal("trame_ch4");
+    });
+    act(() => {
+      result.current.ajouterObjet(objetDuTemplate("ma.pichet_faience_emaillee"));
+    });
+    const avant = result.current.state!.brocanteur.pointsDisponibles;
+
+    let livraison: { ok: boolean; raison?: string } | undefined;
+    act(() => {
+      livraison = result.current.livrerMission("trame_ch4");
+    });
+
+    expect(livraison?.ok).toBe(true);
+    expect(result.current.state!.brocanteur.pointsDisponibles).toBe(avant);
+  });
+
   it("livraison d'un chapitre à invitationTier (trame_ch4) injecte la lettre d'invitation tier 2", async () => {
     const result = await setupTutorielTermine();
 
