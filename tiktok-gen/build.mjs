@@ -7,6 +7,7 @@
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
+import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
@@ -73,10 +74,19 @@ export async function copierDossier(src, dest, filtre = () => true) {
   }
 }
 
+function shaGit() {
+  try { return execSync("git rev-parse HEAD", { cwd: ICI, stdio: ["ignore", "pipe", "ignore"] }).toString().trim(); }
+  catch { return "local"; }
+}
+
 async function construire() {
   await fsp.rm(DIST, { recursive: true, force: true });
   await fsp.mkdir(path.join(DIST, "assets"), { recursive: true });
-  for (const f of ["index.html", "styles.css"]) await fsp.copyFile(path.join(ICI, f), path.join(DIST, f));
+  // Tampon de version affiché dans l'app : commit (Vercel le fournit, sinon git) + heure de build.
+  const version = `${(process.env.VERCEL_GIT_COMMIT_SHA ?? shaGit()).slice(0, 7)} · ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
+  const html = (await fsp.readFile(path.join(ICI, "index.html"), "utf8")).replace("__VERSION__", version);
+  await fsp.writeFile(path.join(DIST, "index.html"), html);
+  await fsp.copyFile(path.join(ICI, "styles.css"), path.join(DIST, "styles.css"));
   await copierDossier(path.join(ICI, "src"), path.join(DIST, "src"), (n) => !n.endsWith(".test.mjs"));
   await copierDossier(path.join(ICI, "assets", "badges"), path.join(DIST, "assets", "badges"));
   await copierDossier(path.join(ICI, "assets", "sons"), path.join(DIST, "assets", "sons"));

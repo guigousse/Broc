@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planImages, FPS_VIDEO, audioSpecificConfig } from "./encodeur.js";
+import { planImages, FPS_VIDEO, audioSpecificConfig, instantsSousImages, SOUS_IMAGES } from "./encodeur.js";
 
 describe("planImages", () => {
   it("60 images par seconde, dernière à duree − 1/fps, sans image de queue", () => {
@@ -32,4 +32,15 @@ describe("audioSpecificConfig", () => {
     expect([...audioSpecificConfig(44100, 2)]).toEqual([0x12, 0x10]);
   });
   it("refuse une fréquence hors table", () => expect(() => audioSpecificConfig(50000, 1)).toThrow());
+});
+
+describe("instantsSousImages", () => {
+  it("instants centrés dans l'intervalle de l'image, tous dans [t, t + 1/fps)", () => {
+    const t = 1 / 60;
+    const xs = instantsSousImages(t);
+    expect(xs).toHaveLength(SOUS_IMAGES);
+    expect(xs[0]).toBeCloseTo(t + 0.5 / SOUS_IMAGES / 60, 12);
+    expect(xs.at(-1)).toBeCloseTo(t + (SOUS_IMAGES - 0.5) / SOUS_IMAGES / 60, 12);
+    for (const x of xs) { expect(x).toBeGreaterThanOrEqual(t); expect(x).toBeLessThan(t + 1 / 60); }
+  });
 });

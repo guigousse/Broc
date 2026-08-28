@@ -452,7 +452,7 @@ async function demarrer() {
       const fps = Math.round(fpsMoyen);
       dire(fpsMoyen < FPS_MINI
         ? `Enregistrement saccadé (${fps} fps) : réenregistre en fermant les autres apps.`
-        : `Enregistré : ${formaterDuree(apercu.r?.duree)} · ${fps} fps`);
+        : `Enregistré en temps réel (secours, sans WebCodecs) : ${formaterDuree(apercu.r?.duree)} · ${fps} fps`);
     } catch (e) {
       dire(String(e?.message ?? e));
     } finally {

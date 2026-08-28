@@ -27,6 +27,8 @@ body {
   padding: calc(8px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom));
 }
 
+.version { font-size: 12px; opacity: 0.55; text-align: center; margin: 0; }
+
 /* ------------------------------------------------------------- aperçu */
 
 #apercu {

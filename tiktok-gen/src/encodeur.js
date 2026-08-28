@@ -27,6 +27,15 @@ const FREQUENCE_AUDIO = 48_000;
 const INTERVALLE_CLE_S = 2;
 /** Au-delà, on laisse l'encodeur respirer avant de lui donner l'image suivante. */
 const FILE_MAX = 6;
+/**
+ * Flou de mouvement : chaque image encodée est la MOYENNE de `SOUS_IMAGES`
+ * rendus répartis sur son intervalle (obturateur ouvert à 360°). Sans lui,
+ * un objet net qui saute de 20–40 px entre deux images stroboscope — surtout
+ * une fois le fichier ré-encodé à 30 fps par TikTok. Le rendu coûte
+ * `SOUS_IMAGES` fois plus de dessin, hors ligne on s'en moque.
+ */
+export const SOUS_IMAGES = 8;
+
 /** Codecs H.264 tentés dans l'ordre : High 4.2 (1080p60), Main 4.2, Baseline 4.2. */
 export const CODECS_VIDEO = ["avc1.64002A", "avc1.4D402A", "avc1.42E02A"];
 const CODEC_AUDIO = "mp4a.40.2";
@@ -46,6 +55,32 @@ export function planImages(duree, fps = FPS_VIDEO, intervalleCleS = INTERVALLE_C
   }
   return { nb, dureeUs: Math.round((nb * 1_000_000) / fps), images };
 }
+
+/**
+ * Les instants des sous-images d'une image à `t`, répartis sur [t, t + 1/fps)
+ * (centrés dans leur case : k + ½). Pure, testable.
+ */
+export function instantsSousImages(t, fps = FPS_VIDEO, n = SOUS_IMAGES) {
+  const out = [];
+  for (let k = 0; k < n; k++) out.push(t + ((k + 0.5) / n) / fps);
+  return out;
+}
+
+/**
+ * Dessine sur `ctx` la moyenne des sous-images de l'instant `t` : la k-ième
+ * est composée avec alpha 1/(k+1), ce qui donne exactement la moyenne courante.
+ */
+export function dessinerImageFloue(ctx, t, scene, r, fps = FPS_VIDEO, n = SOUS_IMAGES) {
+  const instants = instantsSousImages(t, fps, n);
+  ctx.save();
+  instants.forEach((ti, k) => {
+    ctx.globalAlpha = 1 / (k + 1);
+    dessinerFrame(ctx, ti, { ...scene, flashActif: estFlash(ti, r) });
+  });
+  ctx.restore();
+}
+
+
 
 /** Ce que sait faire le navigateur : { ok, codecVideo, audio } — `audio` faux = fichier muet. */
 export async function capacitesHorsLigne() {
@@ -112,7 +147,7 @@ export async function rendreHorsLigne({ scene, r, son, sonActif, cibleId, capaci
   try {
     for (const img of plan.images) {
       if (erreur) throw erreur;
-      dessinerFrame(ctx, img.t, { ...scene, flashActif: estFlash(img.t, r) });
+      dessinerImageFloue(ctx, img.t, scene, r);
       const frame = new VideoFrame(canvas, { timestamp: img.timestampUs, duration: Math.round(1_000_000 / FPS_VIDEO) });
       encodeurVideo.encode(frame, { keyFrame: img.cle });
       frame.close();
