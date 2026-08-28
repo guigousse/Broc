@@ -382,6 +382,13 @@ async function demarrer() {
   // bien plus courte que le clip. La prise en temps réel ne sert plus que de secours.
   const horsLigne = await capacitesHorsLigne();
   if (DEBUG) console.info("rendu hors ligne", horsLigne);
+  // Diagnostic visible : quel chemin servira, et pourquoi (secours = pas de VideoEncoder).
+  const diag = document.getElementById("diagnostic");
+  if (diag) {
+    diag.textContent = horsLigne.ok
+      ? `rendu hors ligne ${horsLigne.codecVideo}${horsLigne.audio ? " + AAC" : ", sans AudioEncoder"}`
+      : `secours temps réel (VideoEncoder ${typeof VideoEncoder === "undefined" ? "absent" : "sans H.264"})`;
+  }
 
   /** Le fichier de la dernière prise, valable tant que les réglages n'ont pas changé. */
   let prise = null;
