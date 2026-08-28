@@ -6,27 +6,43 @@
 import { CATEGORIES, chargerCatalogue, filtrerCatalogue, tirerAleatoire } from "./catalogue.js";
 import { CacheImages } from "./images.js";
 import {
-  REGLAGES_DEFAUT, chargerReglages, consigneParDefaut, normaliserReglages, sauverReglages,
+  REGLAGES_DEFAUT, chargerReglages, normaliserReglages, sauverReglages,
 } from "./reglages.js";
-import { formaterInfos, nomCourt } from "./texte.js";
+import { consigneCourte, formaterInfos } from "./texte.js";
 import { SonRoulette } from "./son.js";
-import { Apercu } from "./apercu.js";
+import { Apercu, roulettePour } from "./apercu.js";
 
 const MAX_OBJETS = 12;
 const TIRAGE = 8;
 const FOND_PERSO = "perso";
+/** Longueur max de la consigne : celle du champ (`maxlength=40` dans index.html). */
+const MAX_CONSIGNE = 40;
+/**
+ * Un curseur émet un `input` par pixel parcouru. Redessiner et surtout
+ * replanifier l'audio à chacun coûterait un tour de roulette par pixel : on
+ * n'agit que 150 ms après le dernier mouvement (la ligne d'infos, elle, suit
+ * immédiatement — elle ne dépend d'aucune image).
+ */
+const DELAI_CURSEUR = 150;
 
 const $ = (id) => document.getElementById(id);
 
 /** localStorage inaccessible en navigation privée Safari : on retombe sur une mémoire volatile. */
 function stockageSur() {
+  const sonde = "broc-tiktok-sonde";
   try {
     const s = window.localStorage;
-    s.getItem("");
+    // Un aller-retour complet : en privé, Safari laisse lire mais refuse d'écrire.
+    s.setItem(sonde, "1");
+    s.removeItem(sonde);
     return s;
   } catch {
     const memoire = new Map();
-    return { getItem: (k) => memoire.get(k) ?? null, setItem: (k, v) => memoire.set(k, v) };
+    return {
+      getItem: (k) => memoire.get(k) ?? null,
+      setItem: (k, v) => memoire.set(k, v),
+      removeItem: (k) => memoire.delete(k),
+    };
   }
 }
 
@@ -166,7 +182,8 @@ async function demarrer() {
   function basculerObjet(id) {
     if (reglages.objets.includes(id)) {
       reglages.objets = reglages.objets.filter((x) => x !== id);
-      if (reglages.cible === id) reglages.cible = reglages.objets[0] ?? null;
+      // Passer par definirCible : la consigne doit suivre la nouvelle cible.
+      if (reglages.cible === id) definirCible(reglages.objets[0] ?? null, { differer: true });
       dire("");
     } else {
       if (reglages.objets.length >= MAX_OBJETS) { dire(`${MAX_OBJETS} objets au maximum.`); return; }
@@ -181,11 +198,9 @@ async function demarrer() {
   function definirCible(id, { differer = false } = {}) {
     reglages.cible = id;
     if (consigneAuto) {
-      const entree = parId.get(id);
-      if (entree) {
-        reglages.consigne = consigneParDefaut(nomCourt(entree.nom));
-        el.consigne.value = reglages.consigne;
-      }
+      // `consigneCourte` garantit la limite du champ (les noms du catalogue la dépassent souvent).
+      reglages.consigne = consigneCourte(parId.get(id)?.nom ?? "", MAX_CONSIGNE);
+      el.consigne.value = reglages.consigne;
     }
     if (!differer) appliquer();
   }
@@ -208,12 +223,30 @@ async function demarrer() {
     el.son.checked = reglages.son;
   }
 
-  function majAffichage() {
+  /** Durée et fenêtre de pause : calcul pur, aucune image à charger — donc immédiat. */
+  function majInfos() {
+    const infos = formaterInfos(roulettePour(reglages, catalogue));
+    el.duree.textContent = infos.duree;
+    el.fenetre.textContent = infos.fenetre;
+  }
+
+  /** Ce qu'un mouvement de curseur (ou une frappe) change : trois `textContent`. */
+  function majCurseurs() {
     for (const c of curseurs) c.sortie.textContent = c.texte(reglages[c.cle]);
+    majInfos();
+  }
+
+  /** Ce que seul un changement de sélection ou de fond change : les 392 vignettes. */
+  function majGrilles() {
     el.compte.textContent = `${reglages.objets.length} / ${MAX_OBJETS}`;
     for (const b of el.grilleFonds.children) b.classList.toggle("actif", b.dataset.fond === reglages.fond);
     for (const [id, b] of vignettesObjets) b.classList.toggle("selectionne", reglages.objets.includes(id));
     construireSelection();
+  }
+
+  function majAffichage() {
+    majCurseurs();
+    majGrilles();
   }
 
   function sauver() {
@@ -222,22 +255,32 @@ async function demarrer() {
 
   async function rafraichirApercu() {
     try {
-      const { r } = await apercu.charger(reglages, catalogue);
-      const infos = formaterInfos(r);
-      el.duree.textContent = infos.duree;
-      el.fenetre.textContent = infos.fenetre;
+      await apercu.charger(reglages, catalogue);
+      dire("");                       // le chargement a abouti : plus rien à signaler.
     } catch (e) {
       const texte = String(e?.message ?? e);
       dire(texte.charAt(0).toUpperCase() + texte.slice(1));
     }
   }
 
-  /** Point de passage unique de tout changement : normalise, persiste, redessine. */
-  function appliquer() {
+  let minuterieApercu = null;
+  function planifierApercu(delai) {
+    if (minuterieApercu !== null) { clearTimeout(minuterieApercu); minuterieApercu = null; }
+    if (delai <= 0) { rafraichirApercu(); return; }
+    minuterieApercu = setTimeout(() => { minuterieApercu = null; rafraichirApercu(); }, delai);
+  }
+
+  /**
+   * Point de passage unique de tout changement : normalise, persiste, redessine.
+   * `delai` diffère le seul rechargement de l'aperçu (curseurs et frappe) ;
+   * l'écran, lui, est à jour tout de suite. `leger` saute les grilles, que ni
+   * un curseur ni la consigne ne touchent.
+   */
+  function appliquer({ delai = 0, leger = false } = {}) {
     reglages = normaliserReglages(reglages);
     sauver();
-    majAffichage();
-    rafraichirApercu();
+    if (leger) majCurseurs(); else majAffichage();
+    planifierApercu(delai);
   }
 
   // ------------------------------------------------------------- événements
@@ -248,12 +291,15 @@ async function demarrer() {
   el.vider.addEventListener("click", () => { reglages.objets = []; reglages.cible = null; dire(""); appliquer(); });
 
   for (const c of curseurs) {
-    c.champ.addEventListener("input", () => { reglages[c.cle] = Number(c.champ.value); appliquer(); });
+    c.champ.addEventListener("input", () => {
+      reglages[c.cle] = Number(c.champ.value);
+      appliquer({ delai: DELAI_CURSEUR, leger: true });
+    });
   }
   el.consigne.addEventListener("input", () => {
     consigneAuto = false;               // dès qu'il écrit, la consigne lui appartient.
     reglages.consigne = el.consigne.value;
-    appliquer();
+    appliquer({ delai: DELAI_CURSEUR, leger: true });   // une frappe ≠ un tour de roulette.
   });
   el.son.addEventListener("change", () => {
     reglages.son = el.son.checked;

@@ -28,6 +28,11 @@ export class SonRoulette {
     this.destinationFlux = null;
     this._minuterie = null;
     this._active = true;
+    // Voix du plan courant : { osc, fin }. Sans elles, `arreter()` ne ferait
+    // que couper la minuterie — les oscillateurs déjà programmés joueraient.
+    this._voix = [];
+    // Gain propre au plan courant : le débrancher rend le silence immédiat.
+    this._sortiePlan = null;
   }
 
   /** Crée le contexte et le graphe audio s'ils n'existent pas déjà. */
@@ -58,6 +63,44 @@ export class SonRoulette {
     await this.audioCtx.resume();
   }
 
+  /** Gain du plan courant, créé à la demande : toutes les voix s'y branchent. */
+  _sortie() {
+    if (!this._sortiePlan) {
+      this._sortiePlan = this.audioCtx.createGain();
+      this._sortiePlan.gain.value = 1;
+      this._sortiePlan.connect(this.gainMaitre);
+    }
+    return this._sortiePlan;
+  }
+
+  /** Retient une voix pour pouvoir la faire taire, et oublie celles qui ont fini. */
+  _retenirVoix(osc, fin) {
+    const t = this.audioCtx.currentTime;
+    if (this._voix.length > 256) this._voix = this._voix.filter((v) => v.fin > t);
+    this._voix.push({ osc, fin });
+  }
+
+  /**
+   * Coupe le plan courant : arrête les oscillateurs déjà programmés et
+   * débranche leur gain. Sans ça, replanifier (chaque `input` d'un curseur)
+   * empilerait des tours qui se marchent dessus.
+   */
+  _purgerPlan() {
+    if (!this.audioCtx) return;
+    const t = this.audioCtx.currentTime;
+    for (const { osc } of this._voix) {
+      try { osc.stop(t); } catch { /* déjà arrêté */ }
+      try { osc.disconnect(); } catch { /* déjà débranché */ }
+    }
+    this._voix = [];
+    if (this._sortiePlan) {
+      this._sortiePlan.gain.cancelScheduledValues(t);
+      this._sortiePlan.gain.setValueAtTime(0, t);
+      this._sortiePlan.disconnect();
+      this._sortiePlan = null;
+    }
+  }
+
   /** Un picot de roulette : oscillateur carré filtré, claquement sec. */
   _planifierTic(t) {
     const ctx = this.audioCtx;
@@ -77,9 +120,10 @@ export class SonRoulette {
 
     osc.connect(filtre);
     filtre.connect(gain);
-    gain.connect(this.gainMaitre);
+    gain.connect(this._sortie());
     osc.start(t);
     osc.stop(t + DUREE_TIC);
+    this._retenirVoix(osc, t + DUREE_TIC);
   }
 
   /** Le ding de la cible : deux sinus qui décroissent ensemble. */
@@ -95,9 +139,10 @@ export class SonRoulette {
       gain.gain.linearRampToValueAtTime(0, t + DUREE_DING);
 
       osc.connect(gain);
-      gain.connect(this.gainMaitre);
+      gain.connect(this._sortie());
       osc.start(t);
       osc.stop(t + DUREE_DING);
+      this._retenirVoix(osc, t + DUREE_DING);
     }
   }
 
@@ -132,6 +177,7 @@ export class SonRoulette {
   planifierBoucleInfinie(r, tDebutCtx) {
     this._assurerContexte();
     this._arreterMinuterie();
+    this._purgerPlan();          // le plan précédent se tait avant que le nouveau parle.
     this.planifierTour(r, tDebutCtx);
     let tour = 0;
     this._minuterie = setInterval(() => {
@@ -148,9 +194,10 @@ export class SonRoulette {
     }
   }
 
-  /** Annule les timers et coupe le gain immédiatement. */
+  /** Annule les timers, fait taire les voix déjà programmées et coupe le gain. */
   arreter() {
     this._arreterMinuterie();
+    this._purgerPlan();
     if (this.gainMaitre && this.audioCtx) {
       const t = this.audioCtx.currentTime;
       this.gainMaitre.gain.cancelScheduledValues(t);

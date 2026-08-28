@@ -256,6 +256,17 @@ output {
   border: none;
 }
 
+/* La croix reste un carré de 26 px à l'œil, mais le doigt vise 44 px. */
+.vignette.selection .retirer::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--touche, 44px);
+  height: var(--touche, 44px);
+  transform: translate(-50%, -50%);
+}
+
 .vignette.selection.cible {
   border-width: 3px;
   box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.4);

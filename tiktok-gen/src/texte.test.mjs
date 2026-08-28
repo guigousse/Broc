@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { nomCourt, formaterDuree, formaterFenetre, formaterInfos } from "./texte.js";
+import { nomCourt, formaterDuree, formaterFenetre, formaterInfos, consigneCourte } from "./texte.js";
 
 describe("nomCourt", () => {
   it("retire l'article défini et met l'initiale en minuscule", () => {
@@ -65,5 +65,41 @@ describe("formaterInfos", () => {
   });
   it("renvoie des tirets quand la roulette n'est pas calculable", () => {
     expect(formaterInfos(null)).toEqual({ duree: "—", fenetre: "—" });
+  });
+});
+
+describe("consigneCourte", () => {
+  it("rend la consigne complète quand elle tient dans la limite", () => {
+    expect(consigneCourte("Le vinyle rare")).toBe("Mets pause sur vinyle rare !");
+    expect(consigneCourte("Une aquarelle marine XIXe")).toBe("Mets pause sur aquarelle marine XIXe !");
+  });
+
+  it("garde la consigne complète quand elle fait pile la limite", () => {
+    const consigne = consigneCourte("Aquarelle marine XIXe s");
+    expect(consigne).toBe("Mets pause sur aquarelle marine XIXe s !");
+    expect(consigne).toHaveLength(40);
+  });
+
+  it("condense un nom trop long sur les premiers mots entiers", () => {
+    const consigne = consigneCourte("Plat en céramique de Vallauris signé Picassiette");
+    expect(consigne).toBe("Mets pause sur plat en céramique de … !");
+    expect(consigne.length).toBeLessThanOrEqual(40);
+  });
+
+  it("coupe dans le premier mot s'il dépasse à lui seul", () => {
+    const consigne = consigneCourte("Anticonstitutionnellement grand vase");
+    expect(consigne).toBe("Mets pause sur anticonstitutionnelle … !");
+    expect(consigne).toHaveLength(40);
+  });
+
+  it("respecte une limite personnalisée", () => {
+    const consigne = consigneCourte("Plat en céramique de Vallauris signé Picassiette", 30);
+    expect(consigne).toBe("Mets pause sur plat en … !");
+    expect(consigne.length).toBeLessThanOrEqual(30);
+  });
+
+  it("retombe sur la consigne par défaut si le nom est vide", () => {
+    expect(consigneCourte("")).toBe("Mets pause sur …");
+    expect(consigneCourte(null)).toBe("Mets pause sur …");
   });
 });

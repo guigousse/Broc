@@ -1,6 +1,8 @@
 /** Petits formatages de texte de l'interface. Fonctions pures, aucune dépendance au DOM. */
+import { REGLAGES_DEFAUT, consigneParDefaut } from "./reglages.js";
 
 const TIRET = "—";
+const ELLIPSE = "…";
 
 /** Articles retirés en tête de nom : élidés (l') d'abord, puis les autres suivis d'un espace. */
 const ARTICLE = /^(?:l['’]\s*|(?:les|le|la|une|un|des)\s+)/i;
@@ -15,6 +17,30 @@ export function nomCourt(nom) {
   const sansArticle = brut.replace(ARTICLE, "").trim();
   const mot = sansArticle || brut;
   return mot.charAt(0).toLowerCase() + mot.slice(1);
+}
+
+/**
+ * Consigne « Mets pause sur … ! » garantie sous `max` caractères — la limite
+ * du champ `#consigne`, au-delà de laquelle le bandeau du canvas condense le
+ * texte. Si le nom complet ne tient pas, on ne garde que ses premiers mots
+ * entiers, suivis d'une ellipse (et à défaut, on coupe dans le premier mot).
+ */
+export function consigneCourte(nom, max = 40) {
+  const court = nomCourt(nom);
+  if (!court) return REGLAGES_DEFAUT.consigne;
+  const complete = consigneParDefaut(court);
+  if (complete.length <= max) return complete;
+
+  // Place laissée au nom une fois posé l'habillage « Mets pause sur  … ! ».
+  const place = max - consigneParDefaut(` ${ELLIPSE}`).length;
+  let retenu = "";
+  for (const mot of court.split(" ")) {
+    const essai = retenu ? `${retenu} ${mot}` : mot;
+    if (essai.length > place) break;
+    retenu = essai;
+  }
+  if (!retenu) retenu = court.slice(0, Math.max(0, place)).trimEnd();
+  return consigneParDefaut(`${retenu} ${ELLIPSE}`);
 }
 
 /** Nombre exploitable, ou null : `Number(null)` vaut 0, ce qui masquerait une valeur absente. */

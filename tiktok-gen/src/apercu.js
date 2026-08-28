@@ -14,6 +14,37 @@ export const MESSAGE_INCOMPLET = "Choisis au moins 2 objets et une cible";
 /** Avance de planification du son sur l'animation (s) : le temps de monter le graphe audio. */
 const AVANCE_SON = 0.05;
 
+/**
+ * cfg dérivé des réglages, ou `null` si la sélection est incomplète (moins de
+ * 2 objets connus du catalogue, ou pas de cible). Partagé avec l'interface,
+ * qui s'en sert pour afficher durée et fenêtre de pause sans attendre les
+ * images.
+ */
+export function construireCfg(reglages, catalogue) {
+  const connus = Array.isArray(catalogue) ? new Set(catalogue.map((e) => e.id)) : null;
+  const ids = (reglages.objets ?? []).filter((id) => !connus || connus.has(id));
+  const cible = ids.includes(reglages.cible) ? reglages.cible : null;
+  if (ids.length < 2 || cible === null) return null;
+  return {
+    ids,
+    cible,
+    cfg: {
+      nbObjets: ids.length,
+      indexCible: ids.indexOf(cible),
+      vitesse: reglages.vitesse,
+      espacement: reglages.espacement,
+      nbPassages: reglages.nbPassages,
+      largeurFlash: reglages.largeurFlash,
+    },
+  };
+}
+
+/** Roulette des réglages courants, ou `null` si la sélection est incomplète. */
+export function roulettePour(reglages, catalogue) {
+  const d = construireCfg(reglages, catalogue);
+  return d ? calculerRoulette(d.cfg) : null;
+}
+
 export class Apercu {
   #canvas; #ctx; #cache; #son;
   #scene = null; #r = null; #cfg = null;
@@ -54,24 +85,16 @@ export class Apercu {
   async charger(reglages, catalogue) {
     const jeton = ++this.#jeton;
 
-    const connus = Array.isArray(catalogue) ? new Set(catalogue.map((e) => e.id)) : null;
-    const ids = (reglages.objets ?? []).filter((id) => !connus || connus.has(id));
-    const cible = ids.includes(reglages.cible) ? reglages.cible : null;
+    const donnees = construireCfg(reglages, catalogue);
 
-    if (ids.length < 2 || cible === null) {
+    if (donnees === null) {
       this.#scene = null; this.#r = null; this.#cfg = null;
       this.#dessinerInvite();
+      this.#son.arreter();   // sinon la roulette d'avant continue de tictaquer dans le vide.
       return { cfg: null, r: null };
     }
 
-    const cfg = {
-      nbObjets: ids.length,
-      indexCible: ids.indexOf(cible),
-      vitesse: reglages.vitesse,
-      espacement: reglages.espacement,
-      nbPassages: reglages.nbPassages,
-      largeurFlash: reglages.largeurFlash,
-    };
+    const { ids, cible, cfg } = donnees;
     const r = calculerRoulette(cfg);
 
     const nomFond = reglages.fond === "perso"
@@ -119,9 +142,9 @@ export class Apercu {
   /** (Re)cale l'origine des temps et replanifie le son sur la roulette courante. */
   #relancer() {
     this.#t0 = performance.now() + AVANCE_SON * 1000;
-    if (this.sonDemarre && this.#r) {
-      this.#son.planifierBoucleInfinie(this.#r, this.#son.tempsContexte + AVANCE_SON);
-    }
+    if (!this.sonDemarre) return;
+    if (this.#r) this.#son.planifierBoucleInfinie(this.#r, this.#son.tempsContexte + AVANCE_SON);
+    else this.#son.arreter();   // plus de roulette : rien à jouer.
   }
 
   jouer() {
