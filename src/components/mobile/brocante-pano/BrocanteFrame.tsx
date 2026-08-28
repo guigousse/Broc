@@ -34,13 +34,15 @@ const frameOuter = (coord: FrameCoord, selected: boolean): CSSProperties => ({
   top: coord.top,
   width: coord.width,
   height: coord.height,
+  // Cadre laiton épais : bord sombre extérieur, filet clair (arête éclairée),
+  // puis le relief est donné par l'ombre portée intérieure sur la toile.
   border: selected
-    ? "3px solid var(--brass-300)"
-    : "2px solid var(--brass-700)",
+    ? "4px solid var(--brass-300)"
+    : "4px solid var(--brass-700)",
   background: "var(--paper-200)",
   boxShadow: selected
-    ? "0 0 0 2px var(--brass-500), 0 0 18px 4px rgba(220,170,60,0.55), 0 6px 14px rgba(40,25,5,0.25)"
-    : "inset 0 0 0 2px var(--paper-100), 0 4px 10px rgba(40,25,5,0.25)",
+    ? "0 0 0 2px var(--brass-500), 0 0 18px 4px rgba(220,170,60,0.55), 7px 9px 14px rgba(40,25,5,0.45)"
+    : "0 0 0 1px var(--brass-900), 7px 9px 14px rgba(40,25,5,0.45)",
   // overflow:hidden pour cliper la peinture, mais on autorise le badge à
   // déborder en utilisant un wrapper interne + un badge en absolute hors clip.
   overflow: "visible",
@@ -52,6 +54,17 @@ const paintingWrap: CSSProperties = {
   position: "absolute",
   inset: 0,
   overflow: "hidden",
+};
+
+// Lumière venant du haut à gauche : le cadre porte son ombre sur la toile
+// dans l'angle supérieur gauche (ici), et sur le mur en bas à droite
+// (boxShadow de frameOuter). Posée au-dessus de l'image, sans capter les taps.
+const paintingReliefStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  pointerEvents: "none",
+  boxShadow:
+    "inset 0 0 0 1px var(--brass-300), inset 6px 7px 9px rgba(20,12,0,0.7), inset 0 0 6px 1px rgba(20,12,0,0.3)",
 };
 
 const fallbackStyle: CSSProperties = {
@@ -159,6 +172,7 @@ export function BrocanteFrame({
             <Store size={32} strokeWidth={1.2} color="var(--brass-100)" />
           </div>
         )}
+        <div style={paintingReliefStyle} aria-hidden />
         {!debloquee && (
           <div style={lockOverlayStyle} aria-hidden>
             <div style={lockBubbleStyle}>

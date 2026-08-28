@@ -54,13 +54,14 @@ async function loadDotEnv() {
 await loadDotEnv();
 
 const STYLE_BRIEF = [
-  "Vintage Art Déco scene illustration in a museum catalog style.",
-  "Elegant ink line-art with subtle sepia and forest green color wash.",
-  "Color palette: warm sepia and muted forest-green tones on cream parchment, consistent with the headquarters cabinet panorama. Avoid bright neons or high-saturation colors.",
-  "Composition: a wide-angle scene depicting the location, viewed slightly from above, soft and atmospheric, no people in the foreground (only distant silhouettes if any).",
-  "Cream parchment background with subtle paper grain texture.",
-  "Soft directional lighting, no harsh shadows, no text overlays, no captions, no watermark.",
-  "Strict square 1:1 aspect ratio composition.",
+  "An oil painting on canvas by an old master, a genre painting of everyday life, museum quality.",
+  "Visible confident brushwork, translucent glazes over a warm earth-toned underpainting, chiaroscuro lighting, a slightly ambered varnish and a very faint craquelure.",
+  "Overall palette rooted in warm sepia, raw umber, forest green, brass gold and cream (the world of the game), with the scene's accent colours used as small precise glazes so the image reads clearly even as a tiny thumbnail.",
+  "The scene is inhabited: people are doing things, browsing, bargaining, examining objects, painted as real characters with faces and gestures, integrated naturally into the composition.",
+  "Objects are painted with precision and love, as in a still life: they must be recognisable at small size.",
+  "FULL-BLEED COMPOSITION: the painting fills the entire image edge to edge. No painted frame, no border, no margin, no mat, no canvas edge, no vignette darkening the corners. The picture will be shown inside its own frame later.",
+  "No text, no lettering, no signature, no caption, no watermark.",
+  "Square 1:1 composition, main subject centred so that a tight crop keeps it.",
 ].join(" ");
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
@@ -122,7 +123,14 @@ async function main() {
       }
     }
 
-    const prompt = `${STYLE_BRIEF}\n\nScene: ${item.description}.`;
+    const prompt = [
+      STYLE_BRIEF,
+      item.maitre ? `Painted in the manner of ${item.maitre}.` : "",
+      item.accent ? `Accent colours: ${item.accent}.` : "",
+      `Scene: ${item.description}`,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
     if (verbose) console.log(`  prompt → ${prompt}`);
     console.log(`🎨  ${item.id} — génération en cours (${model})…`);
 
