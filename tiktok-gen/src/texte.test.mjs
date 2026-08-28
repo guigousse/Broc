@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { nomCourt, formaterDuree, formaterFenetre, formaterInfos, consigneCourte } from "./texte.js";
+import { nomCourt, formaterDuree, formaterFenetre, formaterInfos, consigneCourte, formaterPrix, texteAutresObjets } from "./texte.js";
 
 describe("nomCourt", () => {
   it("retire l'article défini et met l'initiale en minuscule", () => {
@@ -101,5 +101,22 @@ describe("consigneCourte", () => {
   it("retombe sur la consigne par défaut si le nom est vide", () => {
     expect(consigneCourte("")).toBe("Mets pause sur …");
     expect(consigneCourte(null)).toBe("Mets pause sur …");
+  });
+});
+
+describe("formaterPrix", () => {
+  it("entier avec € et espace fine", () => {
+    expect(formaterPrix(5)).toBe("5\u202f€");
+    expect(formaterPrix(1200)).toBe("1\u202f200\u202f€");
+    expect(formaterPrix(7.6)).toBe("8\u202f€");
+    expect(formaterPrix(undefined)).toBe("0\u202f€");
+  });
+});
+
+describe("texteAutresObjets", () => {
+  it("pluriel, singulier, bornes", () => {
+    expect(texteAutresObjets(391)).toBe("+ 391 autres objets à collectionner dans le jeu");
+    expect(texteAutresObjets(1)).toBe("+ 1 autre objet à collectionner dans le jeu");
+    expect(texteAutresObjets(-2)).toBe("+ 0 autres objets à collectionner dans le jeu");
   });
 });

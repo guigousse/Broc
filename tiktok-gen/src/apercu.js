@@ -112,7 +112,13 @@ export class Apercu {
 
     this.#cfg = cfg;
     this.#r = r;
-    this.#scene = { r, cfg, fond, objets, silhouette, badges };
+    const entreeCible = catalogue.find((e) => e.id === cible);
+    this.#scene = {
+      r, cfg, fond, objets, silhouette, badges,
+      // Pour la légende du flash : la cible, et combien d'autres objets l'attendent dans le jeu.
+      cible: { nom: entreeCible?.nom ?? cible, prix: entreeCible?.prix ?? 0 },
+      nbAutres: Math.max(0, catalogue.length - 1),
+    };
 
     // Le son était planifié pour l'ancienne roulette : on repart de zéro, ensemble.
     if (this.#raf !== null) this.#relancer();

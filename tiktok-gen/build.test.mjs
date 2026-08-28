@@ -4,16 +4,16 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { analyserCatalogueCsv, copierDossier, filtrerAvecImages } from "./build.mjs";
 
-const CSV = `﻿templateId;nom;categorie;rarete;unique;tierMin;prix_Mauvais
-br.marteau_menuisier;Marteau de menuisier;Bricolage;commun;;1;2
-art.aquarelle_marine_xixe;"Aquarelle ""marine"" XIXe";Objets d'art;rare;;3;20
+const CSV = `﻿templateId;nom;categorie;rarete;unique;tierMin;prix_Mauvais;prix_Bon
+br.marteau_menuisier;Marteau de menuisier;Bricolage;commun;;1;2;5
+art.aquarelle_marine_xixe;"Aquarelle ""marine"" XIXe";Objets d'art;rare;;3;20;45
 `;
 
 describe("analyserCatalogueCsv", () => {
-  it("lit id, nom, catégorie, rareté en ignorant le BOM et les guillemets", () => {
+  it("lit id, nom, catégorie, rareté, prix (état bon) en ignorant le BOM et les guillemets", () => {
     expect(analyserCatalogueCsv(CSV)).toEqual([
-      { id: "br.marteau_menuisier", nom: "Marteau de menuisier", categorie: "Bricolage", rarete: "commun" },
-      { id: "art.aquarelle_marine_xixe", nom: 'Aquarelle "marine" XIXe', categorie: "Objets d'art", rarete: "rare" },
+      { id: "br.marteau_menuisier", nom: "Marteau de menuisier", categorie: "Bricolage", rarete: "commun", prix: 5 },
+      { id: "art.aquarelle_marine_xixe", nom: 'Aquarelle "marine" XIXe', categorie: "Objets d'art", rarete: "rare", prix: 45 },
     ]);
   });
 });

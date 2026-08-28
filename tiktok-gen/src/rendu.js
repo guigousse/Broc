@@ -1,9 +1,9 @@
 /** Dessin d'une frame de la roulette sur le canvas. Module DOM/canvas, pas de tests unitaires. */
-import { CENTRE_X, CENTRE_Y, LARGEUR, HAUTEUR, positionsVisibles } from "./roulette.js";
+import { CENTRE_X, CENTRE_Y, LARGEUR, HAUTEUR, HAUTEUR_OBJET, positionsVisibles } from "./roulette.js";
 import { COULEURS } from "./theme.js";
 import { dessinerOverlay } from "./overlay.js";
 
-export const HAUTEUR_OBJET = 420;
+export { HAUTEUR_OBJET };
 
 /** `fond` est déjà plein cadre (voir `preparerFond`) ; on n'ajoute que le vignettage. */
 function dessinerCover(ctx, fond) {

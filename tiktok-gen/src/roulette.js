@@ -1,5 +1,7 @@
 /** Logique pure de la roulette : aucune dépendance au DOM. Temps en secondes. */
 export const LARGEUR = 1080, HAUTEUR = 1920, CENTRE_X = 540, CENTRE_Y = 960;
+/** Hauteur de dessin des objets (et de la silhouette), en px du cadre. */
+export const HAUTEUR_OBJET = 420;
 export const FPS = 30;
 
 export function calculerRoulette({ nbObjets, indexCible, vitesse, espacement, nbPassages, largeurFlash = 4 }) {

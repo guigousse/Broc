@@ -47,6 +47,20 @@ export function consigneCourte(nom, max = 40) {
 const nombre = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? null : Number(v));
 
 /** Durée en secondes, une décimale, virgule française : 12 → « 12,0 s ». */
+/** « 5 € », « 1 200 € » : entier, espace fine insécable comme séparateur de milliers. */
+export function formaterPrix(prix) {
+  const n = Math.round(Number(prix) || 0);
+  return `${n.toLocaleString("fr-FR").replace(/[\u202f\u00a0 ]/g, "\u202f")}\u202f€`;
+}
+
+/** « + 391 autres objets à collectionner dans le jeu » (singulier à 1). */
+export function texteAutresObjets(nbAutres) {
+  const n = Math.max(0, Math.round(Number(nbAutres) || 0));
+  return n === 1
+    ? "+ 1 autre objet à collectionner dans le jeu"
+    : `+ ${n.toLocaleString("fr-FR").replace(/[\u202f\u00a0 ]/g, "\u202f")} autres objets à collectionner dans le jeu`;
+}
+
 export function formaterDuree(secondes) {
   const n = nombre(secondes);
   return n === null ? TIRET : `${n.toFixed(1).replace(".", ",")} s`;

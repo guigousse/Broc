@@ -39,9 +39,11 @@ export function analyserCatalogueCsv(texte) {
   const [entete, ...lignes] = analyserCsv(texte);
   const col = (nom) => entete.indexOf(nom);
   const iId = col("templateId"), iNom = col("nom"), iCat = col("categorie"), iRar = col("rarete");
+  // Prix affiché sous l'objet au flash : celui de l'état « bon », la valeur de référence.
+  const iPrix = col("prix_Bon");
   return lignes
     .filter((l) => l[iId])
-    .map((l) => ({ id: l[iId], nom: l[iNom], categorie: l[iCat], rarete: l[iRar] }));
+    .map((l) => ({ id: l[iId], nom: l[iNom], categorie: l[iCat], rarete: l[iRar], prix: Number(l[iPrix]) || 0 }));
 }
 
 export function filtrerAvecImages(entrees, idsDisponibles) {
