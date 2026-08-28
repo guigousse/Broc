@@ -13,6 +13,7 @@ import { AdMobBootstrap } from "@/components/mobile/AdMobBootstrap";
 import { IapBootstrap } from "@/components/mobile/IapBootstrap";
 import { FirebaseBootstrap } from "@/components/mobile/FirebaseBootstrap";
 import { NotifSonBootstrap } from "@/components/mobile/NotifSonBootstrap";
+import { NotifTapBootstrap } from "@/components/mobile/NotifTapBootstrap";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -100,6 +101,7 @@ export default function RootLayout({
                 <IapBootstrap />
                 <FirebaseBootstrap />
                 <NotifSonBootstrap />
+                <NotifTapBootstrap />
               </GameProvider>
             </ToastProvider>
           </SettingsProvider>

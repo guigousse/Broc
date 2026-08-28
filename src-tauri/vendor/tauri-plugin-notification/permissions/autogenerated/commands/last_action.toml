@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-last-action"
+description = "Enables the last_action command without any pre-configured scope."
+commands.allow = ["last_action"]
+
+[[permission]]
+identifier = "deny-last-action"
+description = "Denies the last_action command without any pre-configured scope."
+commands.deny = ["last_action"]
