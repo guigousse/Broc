@@ -24,13 +24,15 @@ function dessinerCentre(ctx, img, x, hauteur) {
 function dessinerAura(ctx, dt) {
   const { opacite, echelle } = aura(dt);
   if (opacite <= 0) return;
-  const rayon = HAUTEUR_OBJET * 0.62 * echelle;
+  const rayon = HAUTEUR_OBJET * 0.85 * echelle;
   const g = ctx.createRadialGradient(CENTRE_X, CENTRE_Y, 0, CENTRE_X, CENTRE_Y, rayon);
-  g.addColorStop(0, "rgba(255,205,110,0.55)");
-  g.addColorStop(0.45, "rgba(255,190,70,0.22)");
+  // Plus dense que dans le jeu (0,55) : ici le halo rayonne sur un fond déjà clair sous le flash.
+  g.addColorStop(0, "rgba(255,205,110,0.85)");
+  g.addColorStop(0.45, "rgba(255,190,70,0.4)");
   g.addColorStop(0.72, "rgba(255,190,70,0)");
   ctx.save();
   ctx.globalAlpha = opacite;
+  ctx.globalCompositeOperation = "lighter";   // additif : la lumière s'ajoute, elle ne voile pas
   ctx.fillStyle = g;
   ctx.fillRect(CENTRE_X - rayon, CENTRE_Y - rayon, rayon * 2, rayon * 2);
   ctx.restore();
