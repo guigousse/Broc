@@ -70,7 +70,7 @@ export class Apercu {
     if (!this.#badges) {
       this.#badges = Promise.all([
         chargerImage("assets/badges/app-store.svg"),
-        chargerImage("assets/badges/google-play.svg"),
+        chargerImage("assets/badges/google-play.png"),
       ]).then(([appStore, googlePlay]) => ({ appStore, googlePlay }));
     }
     return this.#badges;
@@ -102,7 +102,7 @@ export class Apercu {
       : reglages.fond;
 
     const [fond, objets, silhouette, badges] = await Promise.all([
-      this.#cache.fond(nomFond),
+      this.#cache.fondPrepare(nomFond, reglages.flou),
       Promise.all(ids.map((id) => this.#cache.objet(id))),
       this.#cache.silhouette(cible),
       this.#chargerBadges(),

@@ -96,6 +96,7 @@ async function demarrer() {
     { cle: "espacement", champ: $("espacement"), sortie: $("v-espacement"), texte: (v) => `${v} px` },
     { cle: "nbPassages", champ: $("nbPassages"), sortie: $("v-passages"), texte: (v) => String(v) },
     { cle: "largeurFlash", champ: $("largeurFlash"), sortie: $("v-flash"), texte: (v) => `${v} img` },
+    { cle: "flou", champ: $("flou"), sortie: $("v-flou"), texte: (v) => (v ? `${v} px` : "aucun") },
   ];
 
   const dire = (texte) => { el.message.textContent = texte; };

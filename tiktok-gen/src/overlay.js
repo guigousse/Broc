@@ -9,12 +9,20 @@ export function dessinerOverlay(ctx, { badges }) {
   ctx.fillStyle = g; ctx.fillRect(0, 0, LARGEUR, HAUTEUR);
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.shadowColor = "rgba(0,0,0,0.85)"; ctx.shadowBlur = 24;
-  ctx.font = "220px 'Verve Shadow'"; ctx.fillStyle = COULEURS.laiton; ctx.fillText("BROC", CENTRE_X, 589);
-  ctx.font = "600 64px Cinzel"; ctx.fillStyle = COULEURS.laitonClair; ctx.fillText("Le jeu de brocante", CENTRE_X, 675);
+  // Titre dans le tiers haut, bien au-dessus de la roulette (haut des objets ≈ 750).
+  ctx.font = "220px 'Verve Shadow'"; ctx.fillStyle = COULEURS.laiton; ctx.fillText("BROC", CENTRE_X, 400);
+  ctx.font = "600 64px Cinzel"; ctx.fillStyle = COULEURS.laitonClair; ctx.fillText("Le jeu de brocante", CENTRE_X, 520);
   ctx.font = "500 56px Cinzel"; ctx.fillText("Disponible gratuitement sur", CENTRE_X, 1560);
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0;
-  const w = 400, h = 118, ecart = 40;
-  if (badges?.appStore) ctx.drawImage(badges.appStore, CENTRE_X - w - ecart / 2, 1680 - h / 2, w, h);
-  if (badges?.googlePlay) ctx.drawImage(badges.googlePlay, CENTRE_X + ecart / 2, 1680 - h / 2, w, h);
+  // Badges officiels, chacun à son ratio natif, à la même hauteur (le badge
+  // Google Play embarque sa propre marge transparente : on le sert un peu plus haut).
+  const ecart = 40, hApple = 118, hGoogle = 132;
+  const a = badges?.appStore, gp = badges?.googlePlay;
+  const wApple = a ? hApple * (a.naturalWidth / a.naturalHeight) : 0;
+  const wGoogle = gp ? hGoogle * (gp.naturalWidth / gp.naturalHeight) : 0;
+  const total = wApple + (a && gp ? ecart : 0) + wGoogle;
+  let x = CENTRE_X - total / 2;
+  if (a) { ctx.drawImage(a, x, 1680 - hApple / 2, wApple, hApple); x += wApple + ecart; }
+  if (gp) ctx.drawImage(gp, x, 1680 - hGoogle / 2, wGoogle, hGoogle);
   ctx.restore();
 }

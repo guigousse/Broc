@@ -18,6 +18,12 @@ describe("normaliserReglages", () => {
     expect(normaliserReglages({ objets: ["a"], cible: "z" }).cible).toBeNull();
     expect(normaliserReglages({ objets: ["a"], cible: "a" }).cible).toBe("a");
   });
+  it("borne le flou entre 0 et 40 px, entier", () => {
+    expect(normaliserReglages({ flou: 99 }).flou).toBe(40);
+    expect(normaliserReglages({ flou: -3 }).flou).toBe(0);
+    expect(normaliserReglages({ flou: 12.6 }).flou).toBe(13);
+    expect(normaliserReglages({}).flou).toBe(0);
+  });
   it("complète avec les défauts", () => expect(normaliserReglages({}).consigne).toBe(REGLAGES_DEFAUT.consigne));
 });
 

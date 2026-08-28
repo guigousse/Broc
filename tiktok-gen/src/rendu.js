@@ -5,10 +5,9 @@ import { dessinerOverlay } from "./overlay.js";
 
 export const HAUTEUR_OBJET = 420;
 
-function dessinerCover(ctx, img) {
-  const k = Math.max(LARGEUR / img.naturalWidth, HAUTEUR / img.naturalHeight);
-  const w = img.naturalWidth * k, h = img.naturalHeight * k;
-  ctx.drawImage(img, (LARGEUR - w) / 2, (HAUTEUR - h) / 2, w, h);
+/** `fond` est déjà plein cadre (voir `preparerFond`) ; on n'ajoute que le vignettage. */
+function dessinerCover(ctx, fond) {
+  ctx.drawImage(fond, 0, 0, LARGEUR, HAUTEUR);
   const g = ctx.createRadialGradient(CENTRE_X, CENTRE_Y, 300, CENTRE_X, CENTRE_Y, 1100);
   g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.45)");
   ctx.fillStyle = g; ctx.fillRect(0, 0, LARGEUR, HAUTEUR);

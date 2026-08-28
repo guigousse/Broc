@@ -125,14 +125,10 @@ tap** débloque le son (contrainte du navigateur, pas un bug de l'app).
 - Un `fondPerso` (photo importée) de plus de **2 Mo n'est pas persisté**
   d'une session à l'autre — il faut réimporter la photo si l'app est
   relancée.
-- Les badges de téléchargement sont des **placeholders** à remplacer
-  avant publication (voir section suivante).
 
 ## Badges de téléchargement
 
-`assets/badges/app-store.svg` et `google-play.svg` sont des **placeholders**
-dessinés à la main (rectangle noir, texte système). Avant publication, les
-remplacer par les badges officiels — en gardant les mêmes noms de fichier :
-
-- Apple : developer.apple.com/app-store/marketing/guidelines
-- Google : play.google.com/intl/fr/badges
+`assets/badges/app-store.svg` (badge Apple officiel FR) et `google-play.png`
+(badge Google Play officiel FR, 646×192) viennent de `marketing/poster/`.
+L'overlay les dessine chacun à son ratio natif ; le badge Google embarque sa
+propre marge transparente, d'où sa hauteur un peu supérieure dans `overlay.js`.
