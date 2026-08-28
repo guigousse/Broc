@@ -168,7 +168,12 @@ async function demarrer() {
       const retirer = document.createElement("button");
       retirer.type = "button";
       retirer.className = "retirer";
-      retirer.textContent = "×";
+      // Le bouton est la zone du doigt (44 px) ; la croix visible n'en occupe que le coin.
+      const croix = document.createElement("span");
+      croix.className = "croix";
+      croix.textContent = "×";
+      croix.setAttribute("aria-hidden", "true");
+      retirer.append(croix);
       retirer.setAttribute("aria-label", `Retirer ${entree?.nom ?? id}`);
       retirer.addEventListener("click", () => basculerObjet(id));
 

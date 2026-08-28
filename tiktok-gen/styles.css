@@ -181,6 +181,15 @@ output {
   gap: 6px;
 }
 
+/*
+ * Tuiles plus larges : la zone de retrait de 44 px mangeait 37 % d'une vignette
+ * de 72 px, au point de gêner « appuyer pour choisir la cible ». À 96 px elle
+ * n'en pèse plus que 21 % au pire (13 % à la largeur rendue ici).
+ */
+#grille-selection {
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+}
+
 #grille-objets {
   max-height: 40vh;
   overflow-y: auto;
@@ -241,30 +250,38 @@ output {
   border-radius: 0;
 }
 
+/*
+ * Le bouton lui-même EST la zone du doigt (44 px) : transparent, il tient
+ * entièrement dans la vignette, donc l'`overflow: hidden` de celle-ci ne le
+ * rogne pas. Le visuel, lui, reste un carré de 26 px dans le coin.
+ */
 .vignette.selection .retirer {
   position: absolute;
   top: 0;
   right: 0;
-  width: 26px;
-  height: 26px;
+  width: var(--touche);
+  height: var(--touche);
   min-height: 0;
   padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.vignette.selection .retirer .croix {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
   line-height: 1;
   font-size: 1rem;
   border-radius: 0 8px 0 8px;
   background: rgba(20, 24, 28, 0.85);
-  border: none;
-}
-
-/* La croix reste un carré de 26 px à l'œil, mais le doigt vise 44 px. */
-.vignette.selection .retirer::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: var(--touche, 44px);
-  height: var(--touche, 44px);
-  transform: translate(-50%, -50%);
+  pointer-events: none;   /* le clic appartient au bouton, pas au décor. */
 }
 
 .vignette.selection.cible {
