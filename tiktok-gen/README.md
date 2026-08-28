@@ -28,19 +28,24 @@ npm run tiktok:build
 (`captureStream`) et le son (la sortie `MediaStream` du graphe audio) sont
 encodés ensemble par un `MediaRecorder`.
 
-- La prise se fait **en temps réel** : elle dure exactement la durée
-  annoncée sous les réglages (« Durée 12,0 s »). Pas de rendu accéléré —
-  le son est joué par le contexte audio, qui avance à la vitesse du monde
-  réel. Les réglages sont gelés pendant ce temps ; ne pas quitter la page.
-- Sur **Safari iOS**, le fichier est un **mp4 H.264/AAC** : TikTok
-  l'accepte tel quel, sans réencodage. Sur Chrome/Firefox c'est un **webm**
-  (VP9/Opus) — bon pour vérifier au bureau, à ne pas téléverser sur TikTok.
-- La dernière image est identique à la première : la vidéo **boucle** sans
-  saut, comme le veut le format.
+- La prise se fait **en temps réel** : elle dure la durée annoncée sous les
+  réglages (« Durée 12,0 s »), à une image près. Pas de rendu accéléré — le
+  son est joué par le contexte audio, qui avance à la vitesse du monde réel.
+  Les réglages sont gelés pendant ce temps ; ne pas quitter la page.
+- Le format dépend de ce que sait encoder le navigateur : le premier mime
+  accepté de la liste est retenu, mp4 H.264/AAC d'abord. **Safari iOS** donne
+  donc un **mp4**, que TikTok avale sans réencodage ; Chrome le donne aussi
+  souvent (son build gère avc1), Firefox retombe sur du **webm** VP9/Opus —
+  bon pour vérifier au bureau, pas pour téléverser sur TikTok.
+- La vidéo **boucle** sans saut ni temps mort : la première image est celle
+  de `t = 0`, la dernière celle de `duree − 1/30` — surtout **pas** une
+  seconde copie de la première, qui marquerait un arrêt à chaque tour.
 - Si la case **Son** est décochée, la vidéo a bien une piste audio, mais
   silencieuse.
 - Le message final donne la cadence obtenue (« Enregistré : 12,0 s ·
-  30 fps »). En dessous de 25 fps, l'app prévient que la prise est
+  30 fps »). C'est la cadence tenue par la **boucle de dessin** (qui vise les
+  30 créneaux/s du flux vidéo), pas celle qu'a réellement encodée le
+  navigateur. En dessous de 25 fps, l'app prévient que la prise est
   saccadée : fermer les autres apps et recommencer.
 
 **Partager** ouvre la feuille de partage iOS (`navigator.share` avec le

@@ -82,6 +82,8 @@ async function demarrer() {
 
   const el = {
     app: $("app"), scene: $("scene"),
+    // Panneaux rendus inertes pendant une prise (le panneau d'export, lui, reste vivant).
+    panneauxGeles: [...document.querySelectorAll(".panneau:not(#p-export)")],
     enregistrer: $("enregistrer"), progression: $("progression"), partager: $("partager"),
     grilleFonds: $("grille-fonds"), fondPerso: $("fond-perso"),
     compte: $("compte-objets"), categorie: $("filtre-categorie"), recherche: $("recherche"),
@@ -269,7 +271,9 @@ async function demarrer() {
     oublierPrise();                   // les réglages ont bougé : le fichier d'avant ne les montre plus.
     try {
       const { r } = await apercu.charger(reglages, catalogue);
-      el.enregistrer.disabled = !r;   // sans roulette (moins de 2 objets, pas de cible), rien à enregistrer.
+      // Sans roulette (moins de 2 objets, pas de cible), rien à enregistrer ; et
+      // pendant une prise, le bouton reste grisé quoi que dise le rechargement.
+      el.enregistrer.disabled = !r || enregistrementEnCours;
       dire("");                       // le chargement a abouti : plus rien à signaler.
     } catch (e) {
       el.enregistrer.disabled = true; // scène incomplète : on n'enregistre pas une image fausse.
@@ -368,8 +372,12 @@ async function demarrer() {
   }
 
   el.enregistrer.addEventListener("click", async () => {
+    // Synchrone, avant le moindre `await` : deux taps rapprochés ne doivent lancer
+    // qu'une prise (le second retombe ici même, sur le drapeau déjà levé).
+    if (enregistrementEnCours || el.enregistrer.disabled) return;
     if (!capacites.ok) { dire(capacites.raison); return; }
-    if (el.enregistrer.disabled) return;
+    enregistrementEnCours = true;
+    el.enregistrer.disabled = true;
 
     await flusherApercu();
     // Le clic EST le geste utilisateur : c'est ici, et nulle part ailleurs, qu'iOS
@@ -382,9 +390,8 @@ async function demarrer() {
       console.warn("son indisponible", e);   // vidéo muette plutôt que pas de vidéo.
     }
 
-    enregistrementEnCours = true;
     el.app.classList.add("figee");
-    el.enregistrer.disabled = true;
+    for (const p of el.panneauxGeles) p.inert = true;
     oublierPrise();
     el.progression.value = 0;
     el.progression.hidden = false;
@@ -413,6 +420,7 @@ async function demarrer() {
       enregistrementEnCours = false;
       el.progression.hidden = true;
       el.app.classList.remove("figee");
+      for (const p of el.panneauxGeles) p.inert = false;
       el.enregistrer.disabled = !apercu.r;
     }
   });
