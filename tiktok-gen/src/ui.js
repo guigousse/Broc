@@ -86,6 +86,7 @@ async function demarrer() {
     panneauxGeles: [...document.querySelectorAll(".panneau:not(#p-export)")],
     enregistrer: $("enregistrer"), progression: $("progression"), partager: $("partager"),
     grilleFonds: $("grille-fonds"), fondPerso: $("fond-perso"),
+    textes: ["sousTitre", "texteAutres", "texteDispo"].map((cle) => ({ cle, champ: $(cle) })),
     compte: $("compte-objets"), categorie: $("filtre-categorie"), recherche: $("recherche"),
     aleatoire: $("aleatoire"), vider: $("vider"),
     grilleObjets: $("grille-objets"), grilleSelection: $("grille-selection"),
@@ -229,6 +230,7 @@ async function demarrer() {
   function peuplerChamps() {
     for (const c of curseurs) c.champ.value = String(reglages[c.cle]);
     el.son.checked = reglages.son;
+    for (const t of el.textes) t.champ.value = reglages[t.cle];
   }
 
   /** Durée et fenêtre de pause : calcul pur, aucune image à charger — donc immédiat. */
@@ -347,6 +349,12 @@ async function demarrer() {
   el.categorie.addEventListener("change", appliquerFiltre);
   el.recherche.addEventListener("input", appliquerFiltre);
   el.aleatoire.addEventListener("click", tirer);
+  for (const t of el.textes) {
+    t.champ.addEventListener("input", () => {
+      reglages[t.cle] = t.champ.value;
+      appliquer({ delai: DELAI_CURSEUR, leger: true });   // une frappe ≠ un tour de roulette.
+    });
+  }
   el.vider.addEventListener("click", () => { reglages.objets = []; reglages.cible = null; dire(""); appliquer(); });
 
   for (const c of curseurs) {

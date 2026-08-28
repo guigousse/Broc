@@ -11,8 +11,15 @@ export const REGLAGES_DEFAUT = Object.freeze({
   fond: "foire-chatou", fondPerso: null, objets: [], cible: null,
   vitesse: 2.5, espacement: 520, nbPassages: 3, largeurFlash: 4,
   flou: 0,
+  // Textes du flash (BROC reste le logo). Vide = ligne masquée.
+  sousTitre: "Le jeu de brocante",
+  texteAutres: "+ {n} autres objets à collectionner dans le jeu",
+  texteDispo: "Disponible gratuitement sur",
   consigne: "Mets pause sur …", son: true,
 });
+
+/** Un texte du flash : chaîne (même vide, qui masque la ligne) ou le défaut si absent. */
+const texte = (v, def) => (typeof v === "string" ? v.slice(0, 80) : def);
 
 const borne = (v, min, max, def) => {
   const n = Number(v);
@@ -31,6 +38,9 @@ export function normaliserReglages(brut = {}) {
     nbPassages: Math.round(borne(brut.nbPassages, 2, 4, REGLAGES_DEFAUT.nbPassages)),
     largeurFlash: Math.round(borne(brut.largeurFlash, 2, 8, REGLAGES_DEFAUT.largeurFlash)),
     flou: Math.round(borne(brut.flou, 0, 40, REGLAGES_DEFAUT.flou)),
+    sousTitre: texte(brut.sousTitre, REGLAGES_DEFAUT.sousTitre),
+    texteAutres: texte(brut.texteAutres, REGLAGES_DEFAUT.texteAutres),
+    texteDispo: texte(brut.texteDispo, REGLAGES_DEFAUT.texteDispo),
     consigne: typeof brut.consigne === "string" ? brut.consigne : REGLAGES_DEFAUT.consigne,
     son: brut.son === undefined ? REGLAGES_DEFAUT.son : Boolean(brut.son),
   };

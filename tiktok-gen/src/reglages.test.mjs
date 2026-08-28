@@ -24,6 +24,12 @@ describe("normaliserReglages", () => {
     expect(normaliserReglages({ flou: 12.6 }).flou).toBe(13);
     expect(normaliserReglages({}).flou).toBe(0);
   });
+  it("textes du flash : défauts, chaîne vide conservée (ligne masquée), tronqués à 80", () => {
+    expect(normaliserReglages({}).sousTitre).toBe("Le jeu de brocante");
+    expect(normaliserReglages({ texteAutres: "" }).texteAutres).toBe("");
+    expect(normaliserReglages({ texteDispo: 42 }).texteDispo).toBe("Disponible gratuitement sur");
+    expect(normaliserReglages({ sousTitre: "x".repeat(100) }).sousTitre).toHaveLength(80);
+  });
   it("complète avec les défauts", () => expect(normaliserReglages({}).consigne).toBe(REGLAGES_DEFAUT.consigne));
 });
 

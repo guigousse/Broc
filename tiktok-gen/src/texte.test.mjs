@@ -114,9 +114,12 @@ describe("formaterPrix", () => {
 });
 
 describe("texteAutresObjets", () => {
-  it("pluriel, singulier, bornes", () => {
+  it("remplace {n}, borne à 0, texte libre", () => {
     expect(texteAutresObjets(391)).toBe("+ 391 autres objets à collectionner dans le jeu");
-    expect(texteAutresObjets(1)).toBe("+ 1 autre objet à collectionner dans le jeu");
+    expect(texteAutresObjets(1200)).toBe("+ 1\u202f200 autres objets à collectionner dans le jeu");
     expect(texteAutresObjets(-2)).toBe("+ 0 autres objets à collectionner dans le jeu");
+    expect(texteAutresObjets(5, "encore {n} trésors")).toBe("encore 5 trésors");
+    expect(texteAutresObjets(5, "sans nombre")).toBe("sans nombre");
+    expect(texteAutresObjets(5, "")).toBe("");
   });
 });

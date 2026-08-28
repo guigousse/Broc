@@ -118,6 +118,7 @@ export class Apercu {
       // Pour la légende du flash : la cible, et combien d'autres objets l'attendent dans le jeu.
       cible: { nom: entreeCible?.nom ?? cible, prix: entreeCible?.prix ?? 0 },
       nbAutres: Math.max(0, catalogue.length - 1),
+      textes: { sousTitre: reglages.sousTitre, autres: reglages.texteAutres, dispo: reglages.texteDispo },
     };
 
     // Le son était planifié pour l'ancienne roulette : on repart de zéro, ensemble.

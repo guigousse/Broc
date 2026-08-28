@@ -53,12 +53,12 @@ export function formaterPrix(prix) {
   return `${n.toLocaleString("fr-FR").replace(/[\u202f\u00a0 ]/g, "\u202f")}\u202f€`;
 }
 
-/** « + 391 autres objets à collectionner dans le jeu » (singulier à 1). */
-export function texteAutresObjets(nbAutres) {
+export const MODELE_AUTRES_OBJETS = "+ {n} autres objets à collectionner dans le jeu";
+
+/** Le modèle avec `{n}` remplacé par le nombre (« + 391 autres objets … »). Sans `{n}`, le texte tel quel. */
+export function texteAutresObjets(nbAutres, modele = MODELE_AUTRES_OBJETS) {
   const n = Math.max(0, Math.round(Number(nbAutres) || 0));
-  return n === 1
-    ? "+ 1 autre objet à collectionner dans le jeu"
-    : `+ ${n.toLocaleString("fr-FR").replace(/[\u202f\u00a0 ]/g, "\u202f")} autres objets à collectionner dans le jeu`;
+  return String(modele ?? "").replaceAll("{n}", n.toLocaleString("fr-FR").replace(/[\u202f\u00a0 ]/g, "\u202f"));
 }
 
 export function formaterDuree(secondes) {
