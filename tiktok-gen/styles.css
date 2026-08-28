@@ -43,7 +43,8 @@ body {
 }
 
 #scene {
-  width: min(60vw, 38vh);
+  /* ≈ un quart de la hauteur de l'écran (9:16 → hauteur = largeur × 16/9) : la place va aux panneaux. */
+  width: min(30vw, 14vh);
   height: auto;
   aspect-ratio: 9 / 16;
   border: 1px solid var(--bord);
