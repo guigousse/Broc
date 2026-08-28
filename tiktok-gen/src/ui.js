@@ -51,6 +51,7 @@ async function demarrer() {
   const son = new SonRoulette();
   const boutonSon = document.getElementById("bouton-son");
   boutonSon.addEventListener("click", async () => {
+    boutonSon.disabled = true; // un seul clic : deux plans empilés dérailleraient le son.
     await son.demarrer();
     // L'animation et le son repartent du même zéro.
     t0 = performance.now() + 50;

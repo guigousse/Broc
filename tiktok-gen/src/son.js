@@ -16,7 +16,8 @@ const Q_FILTRE_TIC = 6;
 
 const FREQS_DING = [1320, 1980];
 const DUREE_DING = 0.45;
-const GAIN_DING = 0.25;
+// Chaque partiel pèse la moitié : les deux ensemble culminent à 0.25.
+const GAIN_DING = 0.125;
 
 const DUREE_FONDU_ACTIF = 0.01;
 
@@ -26,6 +27,7 @@ export class SonRoulette {
     this.gainMaitre = null;
     this.destinationFlux = null;
     this._minuterie = null;
+    this._active = true;
   }
 
   /** Crée le contexte et le graphe audio s'ils n'existent pas déjà. */
@@ -99,9 +101,17 @@ export class SonRoulette {
     }
   }
 
+  /** Restaure le gain maître à l'état actif courant (utile après un arreter()). */
+  _appliquerActif() {
+    const t = this.audioCtx.currentTime;
+    this.gainMaitre.gain.cancelScheduledValues(t);
+    this.gainMaitre.gain.setValueAtTime(this._active ? 1 : 0, t);
+  }
+
   /** Planifie tous les tics de r.instantsTics à tDebutCtx + t (un ding en plus sur la cible). */
   planifierTour(r, tDebutCtx) {
     this._assurerContexte();
+    this._appliquerActif();
     for (const tic of r.instantsTics) {
       const t = tDebutCtx + tic.t;
       this._planifierTic(t);
@@ -110,20 +120,25 @@ export class SonRoulette {
   }
 
   /**
-   * Planifie le tour courant tout de suite, puis un tour de plus à chaque
-   * intervalle de r.periodeTour — ainsi la planification garde toujours au
-   * moins un tour d'avance sur la lecture, sans jamais tout planifier
-   * d'avance ni recourir à un setTimeout par tic.
+   * Planifie le tour courant (un tour = un passage complet de
+   * r.instantsTics, de durée r.duree) tout de suite, puis un seul
+   * setInterval(r.duree × 1000) qui, à chaque déclenchement, planifie le
+   * tour suivant — la planification garde ainsi toujours un tour d'avance
+   * sur la lecture, sans jamais tout planifier d'un coup ni recourir à un
+   * setTimeout par tic. Si l'intervalle se déclenche en retard (onglet mis
+   * en pause), le début du tour suivant est ramené au présent plutôt que
+   * planifié dans le passé.
    */
   planifierBoucleInfinie(r, tDebutCtx) {
     this._assurerContexte();
     this._arreterMinuterie();
     this.planifierTour(r, tDebutCtx);
-    let tour = 1;
+    let tour = 0;
     this._minuterie = setInterval(() => {
-      this.planifierTour(r, tDebutCtx + tour * r.duree);
       tour++;
-    }, r.periodeTour * 1000);
+      const tDebut = tDebutCtx + tour * r.duree;
+      this.planifierTour(r, Math.max(tDebut, this.audioCtx.currentTime));
+    }, r.duree * 1000);
   }
 
   _arreterMinuterie() {
@@ -145,6 +160,7 @@ export class SonRoulette {
 
   /** Coupe ou rétablit le son sans toucher à la planification. */
   set active(actif) {
+    this._active = actif;
     if (!this.gainMaitre || !this.audioCtx) return;
     const t = this.audioCtx.currentTime;
     this.gainMaitre.gain.cancelScheduledValues(t);
