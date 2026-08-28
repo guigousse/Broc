@@ -38,20 +38,22 @@ describe("normaliserReglages", () => {
   });
   it("calques de texte : les trois d'origine par défaut, migration des anciens champs", () => {
     const d = normaliserReglages({}).textes;
-    expect(d.map((c) => c.id)).toEqual(["sous-titre", "autres", "dispo"]);
+    expect(d.map((c) => c.id)).toEqual(["sous-titre", "objet", "autres", "dispo"]);
+    expect(d[1].texte).toBe("{nom} · {prix}");
     expect(d[0]).toMatchObject({ texte: "Le jeu de brocante", x: 540, y: 520, police: "Cinzel", taille: 64 });
     const m = normaliserReglages({ sousTitre: "Yo", texteAutres: "", texteDispo: "x".repeat(100) }).textes;
-    expect(m.map((c) => c.id)).toEqual(["sous-titre", "dispo"]);
-    expect(m[0].texte).toBe("Yo"); expect(m[1].texte).toHaveLength(80);
+    expect(m.map((c) => c.id)).toEqual(["sous-titre", "objet", "dispo"]);
+    expect(m[0].texte).toBe("Yo"); expect(m[2].texte).toHaveLength(80);
   });
   it("calques de texte : liste normalisée, bornée, sans entrée invalide", () => {
     const r = normaliserReglages({ textes: [
       { id: "a", texte: "A", x: -5, y: 5000, police: "Comic", taille: 999, couleur: "rose", gras: 0 },
       { texte: "sans id" }, null,
     ] }).textes;
-    expect(r).toHaveLength(1);
+    expect(r.map((c) => c.id)).toEqual(["a", "objet"]);   // le calque objet est ajouté aux sauvegardes qui ne l'ont pas
     expect(r[0]).toEqual({ id: "a", texte: "A", x: 0, y: 1920, police: "Cinzel", taille: 220, couleur: "ivoire", gras: false });
-    expect(normaliserReglages({ textes: [] }).textes).toEqual([]);
+    expect(normaliserReglages({ textes: [] }).textes.map((c) => c.id)).toEqual(["objet"]);
+    expect(normaliserReglages({ textes: [{ id: "z", texte: "Prix : {prix}" }] }).textes.map((c) => c.id)).toEqual(["z"]);
   });
   it("complète avec les défauts", () => expect(normaliserReglages({}).consigne).toBe(REGLAGES_DEFAUT.consigne));
 });

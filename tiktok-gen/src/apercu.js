@@ -166,7 +166,7 @@ export class Apercu {
     dessinerFrame(this.#ctx, instantDessine(t, this.#r), { ...this.#scene, flashActif: true });
     const c = this.coucheActive && (this.#scene.textes ?? []).find((x) => x.id === this.coucheActive);
     if (!c) return;
-    const b = boiteTexte(this.#ctx, c, this.#scene.nbAutres);
+    const b = boiteTexte(this.#ctx, c, this.#scene);
     const ctx = this.#ctx;
     ctx.save();
     ctx.strokeStyle = "rgba(79,178,134,0.95)"; ctx.lineWidth = 4; ctx.setLineDash([16, 12]);
@@ -182,7 +182,7 @@ export class Apercu {
     if (!this.#scene) return null;
     const textes = this.#scene.textes ?? [];
     for (let i = textes.length - 1; i >= 0; i--) {
-      const b = boiteTexte(this.#ctx, textes[i], this.#scene.nbAutres);
+      const b = boiteTexte(this.#ctx, textes[i], this.#scene);
       if (x >= b.x0 - 16 && x <= b.x1 + 16 && y >= b.y0 - 8 && y <= b.y1 + 8) return textes[i];
     }
     return null;

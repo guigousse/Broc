@@ -10,6 +10,7 @@ export const FOND_PERSO = "perso";
 /** Les trois calques d'origine, aux positions de l'overlay historique. `{n}` = nombre d'autres objets. */
 export const TEXTES_DEFAUT = Object.freeze([
   { id: "sous-titre", texte: "Le jeu de brocante", x: 540, y: 520, police: "Cinzel", taille: 64, couleur: "ivoire", gras: true },
+  { id: "objet", texte: "{nom} · {prix}", x: 540, y: 1226, police: "Cinzel", taille: 58, couleur: "ivoire", gras: true },
   { id: "autres", texte: "+ {n} autres objets à collectionner dans le jeu", x: 540, y: 1284, police: "Cinzel", taille: 40, couleur: "ivoire", gras: false },
   { id: "dispo", texte: "Disponible gratuitement sur", x: 540, y: 1358, police: "Cinzel", taille: 46, couleur: "ivoire", gras: false },
 ]);
@@ -68,7 +69,14 @@ export function normaliserTexte(brut) {
  * texteAutres, texteDispo) s'ils étaient là — un champ vidé retire son calque.
  */
 export function normaliserTextes(brut) {
-  if (Array.isArray(brut.textes)) return brut.textes.map(normaliserTexte).filter(Boolean).slice(0, TEXTES_MAX);
+  if (Array.isArray(brut.textes)) {
+    const out = brut.textes.map(normaliserTexte).filter(Boolean).slice(0, TEXTES_MAX);
+    // Sauvegarde d'avant le calque « objet » : on le lui donne, sinon plus de nom ni de prix.
+    if (!out.some((c) => c.texte.includes("{nom}") || c.texte.includes("{prix}")) && out.length < TEXTES_MAX) {
+      out.splice(Math.min(1, out.length), 0, { ...TEXTES_DEFAUT.find((d) => d.id === "objet") });
+    }
+    return out;
+  }
   const anciens = { "sous-titre": brut.sousTitre, autres: brut.texteAutres, dispo: brut.texteDispo };
   const out = [];
   for (const d of TEXTES_DEFAUT) {
