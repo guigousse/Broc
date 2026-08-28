@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculerRoulette, positionsA, estFlash, tempsBoucle, CENTRE_X, FPS } from "./roulette.js";
+import { calculerRoulette, positionsA, positionsVisibles, estFlash, tempsBoucle, CENTRE_X, LARGEUR, FPS } from "./roulette.js";
 
 const CFG = { nbObjets: 8, indexCible: 2, vitesse: 2, espacement: 500, nbPassages: 3, largeurFlash: 4 };
 
@@ -56,6 +56,47 @@ describe("positionsA", () => {
       const x = positionsA(tic.t, r, CFG).find((p) => p.index === tic.index).x;
       expect(x).toBeCloseTo(CENTRE_X, 6);
     }
+  });
+});
+
+describe("positionsVisibles", () => {
+  // Deux objets très espacés : la bande (2 × 700 = 1400 px) dépasse à peine
+  // l'écran (1080), donc le pli de [−L/2, L/2) tombe DANS le cadre.
+  const CFG2 = { nbObjets: 2, indexCible: 0, vitesse: 2.5, espacement: 700, nbPassages: 3, largeurFlash: 4 };
+
+  it("rend les deux exemplaires d'un objet à cheval sur le pli", () => {
+    const r = calculerRoulette(CFG2);
+    // À t = 0, l'objet 0 est pile sur le bord du pli : il doit apparaître des deux côtés.
+    const xs0 = positionsVisibles(0, r, CFG2).filter((p) => p.index === 0).map((p) => p.x).sort((a, b) => a - b);
+    expect(xs0).toHaveLength(2);
+    expect(xs0[0]).toBeCloseTo(CENTRE_X - 700);
+    expect(xs0[1]).toBeCloseTo(CENTRE_X + 700);
+  });
+
+  it("aucun trou plus large qu'un espacement en travers du cadre", () => {
+    const r = calculerRoulette(CFG2);
+    for (let t = 0; t < r.duree; t += 0.05) {
+      const xs = positionsVisibles(t, r, CFG2).map((p) => p.x).sort((a, b) => a - b);
+      expect(xs[0]).toBeLessThanOrEqual(CENTRE_X - LARGEUR / 2);
+      expect(xs[xs.length - 1]).toBeGreaterThanOrEqual(CENTRE_X + LARGEUR / 2);
+      for (let i = 1; i < xs.length; i++) expect(xs[i] - xs[i - 1]).toBeLessThanOrEqual(CFG2.espacement + 1e-6);
+    }
+  });
+
+  it("bande assez longue : c'est positionsA moins ce qui sort du cadre", () => {
+    const r = calculerRoulette(CFG);
+    const marge = LARGEUR / 2 + CFG.espacement;
+    for (const t of [0, 0.3, 1.7, 5.5]) {
+      const attendu = positionsA(t, r, CFG).filter((p) => Math.abs(p.x - CENTRE_X) <= marge);
+      expect(positionsVisibles(t, r, CFG)).toEqual(attendu);
+    }
+  });
+
+  it("la marge est réglable", () => {
+    const r = calculerRoulette(CFG);
+    expect(positionsVisibles(0.3, r, CFG, 0)).toEqual(
+      positionsA(0.3, r, CFG).filter((p) => Math.abs(p.x - CENTRE_X) <= 0),
+    );
   });
 });
 

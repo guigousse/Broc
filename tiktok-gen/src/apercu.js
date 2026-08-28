@@ -7,7 +7,7 @@ import { calculerRoulette, estFlash, tempsBoucle, LARGEUR, HAUTEUR, CENTRE_X, CE
 import { dessinerFrame } from "./rendu.js";
 import { chargerImage } from "./images.js";
 import { COULEURS } from "./theme.js";
-import { REGLAGES_DEFAUT } from "./reglages.js";
+import { FOND_PERSO, REGLAGES_DEFAUT } from "./reglages.js";
 
 export const MESSAGE_INCOMPLET = "Choisis au moins 2 objets et une cible";
 
@@ -97,7 +97,7 @@ export class Apercu {
     const { ids, cible, cfg } = donnees;
     const r = calculerRoulette(cfg);
 
-    const nomFond = reglages.fond === "perso"
+    const nomFond = reglages.fond === FOND_PERSO
       ? (reglages.fondPerso || REGLAGES_DEFAUT.fond)
       : reglages.fond;
 

@@ -42,6 +42,26 @@ export function positionsA(t, r, { nbObjets, indexCible, espacement }) {
   return out;
 }
 
+/**
+ * Tous les exemplaires visibles de la bande à l'instant t : les positions de
+ * `positionsA` (repliées dans [−L/2, L/2)) plus leurs copies à x ± longueurBande.
+ * Quand la bande est courte (peu d'objets très espacés), le pli du repli tombe à
+ * l'intérieur du cadre : sans les copies, un objet disparaîtrait d'un bord de
+ * l'écran pour réapparaître à l'autre. Un même `index` peut donc sortir deux fois,
+ * à deux x différents. Ne sont renvoyés que les x à `marge` du centre : l'appelant
+ * n'a plus rien à filtrer.
+ */
+export function positionsVisibles(t, r, cfg, marge = LARGEUR / 2 + cfg.espacement) {
+  const out = [];
+  for (const { index, x } of positionsA(t, r, cfg)) {
+    for (const dx of [0, -r.longueurBande, r.longueurBande]) {
+      const xv = x + dx;
+      if (Math.abs(xv - CENTRE_X) <= marge) out.push({ index, x: xv });
+    }
+  }
+  return out;
+}
+
 export function estFlash(t, r) {
   const tb = tempsBoucle(t, r);
   return r.instantsCentrage.some((c) => Math.abs(tb - c) <= r.demiFlash);

@@ -2,7 +2,10 @@
 export const CLE_STOCKAGE = "broc-tiktok-gen";
 
 /** Taille max (en caractères) d'un fond personnalisé (data-URL) avant qu'on refuse de le persister. */
-const TAILLE_MAX_FOND_PERSO = 2_000_000;
+export const TAILLE_MAX_FOND_PERSO = 2_000_000;
+
+/** Identifiant du fond « photo importée » : source unique, l'interface et l'aperçu s'y réfèrent. */
+export const FOND_PERSO = "perso";
 
 export const REGLAGES_DEFAUT = Object.freeze({
   fond: "foire-chatou", fondPerso: null, objets: [], cible: null,

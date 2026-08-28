@@ -6,7 +6,8 @@
 import { CATEGORIES, chargerCatalogue, filtrerCatalogue, tirerAleatoire } from "./catalogue.js";
 import { CacheImages } from "./images.js";
 import {
-  REGLAGES_DEFAUT, chargerReglages, normaliserReglages, sauverReglages,
+  FOND_PERSO, REGLAGES_DEFAUT, TAILLE_MAX_FOND_PERSO,
+  chargerReglages, normaliserReglages, sauverReglages,
 } from "./reglages.js";
 import { consigneCourte, formaterDuree, formaterInfos } from "./texte.js";
 import { SonRoulette } from "./son.js";
@@ -15,7 +16,9 @@ import { capacitesEnregistrement, enregistrer, partager } from "./enregistreur.j
 
 const MAX_OBJETS = 12;
 const TIRAGE = 8;
-const FOND_PERSO = "perso";
+/** Dit quand `sauverReglages` abandonne la photo : elle marche, mais elle ne survivra pas à la page. */
+const MESSAGE_FOND_LOURD =
+  "Photo trop lourde pour être mémorisée : elle sera à réimporter à la prochaine ouverture.";
 /** Longueur max de la consigne : celle du champ (`maxlength=40` dans index.html). */
 const MAX_CONSIGNE = 40;
 /**
@@ -263,18 +266,29 @@ async function demarrer() {
     majGrilles();
   }
 
+  /** Avertissement qui doit survivre au rechargement de l'aperçu (lequel vide la ligne). */
+  let avertissement = "";
+
   function sauver() {
+    // `sauverReglages` laisse tomber un fond personnalisé trop lourd pour le
+    // localStorage : sans un mot, la photo disparaîtrait à la prochaine ouverture.
+    avertissement = reglages.fond === FOND_PERSO
+      && typeof reglages.fondPerso === "string"
+      && reglages.fondPerso.length > TAILLE_MAX_FOND_PERSO
+      ? MESSAGE_FOND_LOURD : "";
     try { sauverReglages(stockage, reglages); } catch (e) { console.warn("réglages non sauvegardés", e); }
+    dire(avertissement);
   }
 
-  async function rafraichirApercu() {
+  /** Le rechargement lui-même. Passer par `rafraichirApercu`, sauf pour préparer une prise. */
+  async function rechargerScene() {
     oublierPrise();                   // les réglages ont bougé : le fichier d'avant ne les montre plus.
     try {
       const { r } = await apercu.charger(reglages, catalogue);
       // Sans roulette (moins de 2 objets, pas de cible), rien à enregistrer ; et
       // pendant une prise, le bouton reste grisé quoi que dise le rechargement.
       el.enregistrer.disabled = !r || enregistrementEnCours;
-      dire("");                       // le chargement a abouti : plus rien à signaler.
+      dire(avertissement);            // le chargement a abouti : plus rien à signaler.
     } catch (e) {
       el.enregistrer.disabled = true; // scène incomplète : on n'enregistre pas une image fausse.
       const texte = String(e?.message ?? e);
@@ -283,6 +297,25 @@ async function demarrer() {
   }
 
   let minuterieApercu = null;
+  /** Promesse du rechargement en vol, s'il y en a un : la prise l'attend avant de filmer. */
+  let apercuEnVol = null;
+
+  function lancerRechargement() {
+    const p = rechargerScene().finally(() => { if (apercuEnVol === p) apercuEnVol = null; });
+    apercuEnVol = p;
+    return p;
+  }
+
+  /**
+   * Rechargement demandé par un changement de réglages. Pendant une prise, on ne
+   * touche pas à la scène : l'enregistreur la filme, la remplacer sous lui
+   * changerait de décor au milieu de la vidéo.
+   */
+  function rafraichirApercu() {
+    if (enregistrementEnCours) return Promise.resolve();
+    return lancerRechargement();
+  }
+
   function planifierApercu(delai) {
     if (minuterieApercu !== null) { clearTimeout(minuterieApercu); minuterieApercu = null; }
     if (delai <= 0) { rafraichirApercu(); return; }
@@ -290,15 +323,19 @@ async function demarrer() {
   }
 
   /**
-   * Exécute tout de suite le rechargement encore différé, s'il y en a un :
-   * avant d'enregistrer, la scène doit montrer les réglages courants et pas
-   * ceux d'il y a 150 ms.
+   * Exécute tout de suite le rechargement encore différé, s'il y en a un, puis
+   * attend celui déjà en vol : avant d'enregistrer, la scène doit montrer les
+   * réglages courants — et surtout aucun chargement d'images ne doit aboutir en
+   * pleine prise. Contourne la garde de `rafraichirApercu` : le drapeau de prise
+   * est levé mais rien n'est encore filmé.
    */
   async function flusherApercu() {
-    if (minuterieApercu === null) return;
-    clearTimeout(minuterieApercu);
-    minuterieApercu = null;
-    await rafraichirApercu();
+    if (minuterieApercu !== null) {
+      clearTimeout(minuterieApercu);
+      minuterieApercu = null;
+      lancerRechargement();
+    }
+    await apercuEnVol;
   }
 
   /**

@@ -23,7 +23,8 @@ body {
   gap: 12px;
   max-width: 720px;
   margin: 0 auto;
-  padding: 8px 12px calc(24px + env(safe-area-inset-bottom));
+  /* En plein écran (viewport-fit=cover + mode autonome), la barre d'état mange le haut. */
+  padding: calc(8px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom));
 }
 
 /* ------------------------------------------------------------- aperçu */
