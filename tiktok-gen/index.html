@@ -9,27 +9,30 @@
 </head>
 <body>
 <main id="app">
+  <header id="entete">
+    <span class="marque">BROC</span>
+    <span class="sous-marque">Générateur de vidéos</span>
+  </header>
   <section id="apercu"><canvas id="scene" width="1080" height="1920"></canvas></section>
   <section class="panneau" id="p-export">
-    <button class="principal" id="enregistrer" disabled>Enregistrer</button>
+    <button class="principal" id="enregistrer" disabled hidden>Enregistrer</button>
     <progress id="progression" max="1" value="0" hidden></progress>
-    <button class="principal" id="partager" hidden disabled>Partager</button>
     <p id="message" role="status"></p>
-    <p class="version" id="version">version __VERSION__ · <span id="diagnostic">…</span></p>
+    <button class="principal" id="partager" hidden disabled>Partager la vidéo</button>
   </section>
 
   <section class="panneau feuille" id="p-fond" hidden>
     <h2>Fond</h2>
     <div class="grille" id="grille-fonds"></div>
-    <label class="bouton">Importer une photo <input type="file" accept="image/*" id="fond-perso" hidden></label>
+    <label class="bouton secondaire">Importer une photo <input type="file" accept="image/*" id="fond-perso" hidden></label>
   </section>
 
   <section class="panneau feuille" id="p-objets" hidden>
     <h2>Objets <span id="compte-objets"></span></h2>
     <div class="ligne"><select id="filtre-categorie"><option value="">Toutes</option></select><input id="recherche" type="search" placeholder="Rechercher"></div>
-    <div class="ligne"><button id="aleatoire">Aléatoire ×8</button><button id="vider">Vider</button></div>
+    <div class="ligne"><button id="aleatoire">Tirer 8 au hasard</button><button id="vider" class="discret">Vider</button></div>
     <div class="grille" id="grille-objets"></div>
-    <h3>Sélection (appuie pour choisir la cible)</h3>
+    <h3>Sélection <span class="aide">appuie sur un objet pour en faire la cible</span></h3>
     <div class="grille" id="grille-selection"></div>
   </section>
 
@@ -42,7 +45,7 @@
     </div>
     <div class="ligne">
       <button id="preset-sauver">Enregistrer sous…</button>
-      <button id="preset-supprimer" disabled>Supprimer</button>
+      <button id="preset-supprimer" class="discret" disabled>Supprimer</button>
     </div>
     <p class="info">Un préréglage mémorise tout sauf les objets, la cible et la photo importée.</p>
     <h3>Vidéo</h3>
@@ -69,6 +72,7 @@
     <p class="info">Durée <b id="info-duree">—</b> · <span id="info-fenetre-libelle">fenêtre de pause</span> <b id="info-fenetre">—</b></p>
   </section>
 
+  <p class="version" id="version">version __VERSION__ · <span id="diagnostic">…</span></p>
 </main>
 <nav id="barre" aria-label="Sections">
   <button type="button" data-section="p-fond" aria-pressed="false">

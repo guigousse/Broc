@@ -1,20 +1,52 @@
+/*
+ * BROC · Générateur — feuille de style.
+ * Minimaliste, outil de production. Trois couleurs, chacune avec un sens :
+ *   laiton  = identité BROC et état actif (onglet, fond choisi, valeur d'un curseur)
+ *   rouge   = enregistrer (le bouton, la progression) — nulle part ailleurs
+ *   vert    = la cible et ce qui est sélectionné — nulle part ailleurs
+ * Tout le reste est neutre : encre, cartes, ivoire.
+ */
 :root {
-  --nuit: #14181C;
+  --encre: #121418;
+  --carte: #1A1D23;
+  --carte-2: #22262E;
+  --bord: #2A2F38;
+  --texte: #ECE7DA;
+  --texte-2: rgba(236, 231, 218, 0.62);
+  --texte-3: rgba(236, 231, 218, 0.4);
   --laiton: #C5A059;
-  --laiton-clair: #F1E3BF;
-  --panneau: #1B2026;
-  --bord: #2C333B;
+  --laiton-fond: rgba(197, 160, 89, 0.14);
+  --rouge: #E0503C;
+  --rouge-fond: rgba(224, 80, 60, 0.16);
+  --vert: #4FB286;
+  --vert-fond: rgba(79, 178, 134, 0.16);
   --touche: 44px;
+  --rayon: 12px;
+  --rayon-s: 8px;
+  --ombre: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --laiton-clair: var(--texte);   /* compat : ancien nom */
+  --nuit: var(--encre);
 }
 
 * { box-sizing: border-box; }
 
+html { background: var(--encre); }
+
 body {
   margin: 0;
-  background: var(--nuit);
-  color: var(--laiton-clair);
-  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--encre);
+  color: var(--texte);
+  font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.35;
   -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@font-face {
+  font-family: "Cinzel";
+  src: url("assets/fonts/cinzel.woff2") format("woff2");
+  font-display: swap;
 }
 
 #app {
@@ -23,14 +55,37 @@ body {
   gap: 12px;
   max-width: 720px;
   margin: 0 auto;
-  /* En plein écran (viewport-fit=cover + mode autonome), la barre d'état mange le haut. */
-  /* En bas : la barre de navigation fixe (64 px + zone sûre). */
-  padding: calc(8px + env(safe-area-inset-top)) 12px calc(88px + env(safe-area-inset-bottom));
+  /* Barre d'état en haut (plein écran), barre de navigation fixe en bas. */
+  padding: calc(6px + env(safe-area-inset-top)) 14px calc(96px + env(safe-area-inset-bottom));
 }
 
-.version { font-size: 12px; opacity: 0.55; text-align: center; margin: 0; }
+/* ------------------------------------------------------------- en-tête */
 
-/* ------------------------------------------------------------- aperçu */
+#entete {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 2px 0;
+}
+
+.marque {
+  font-family: "Cinzel", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.12em;
+  color: var(--laiton);
+}
+
+.sous-marque { font-size: 0.85rem; color: var(--texte-2); }
+
+.version {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  color: var(--texte-3);
+  text-align: center;
+}
+
+/* -------------------------------------------------------------- aperçu */
 
 #apercu {
   display: flex;
@@ -38,71 +93,80 @@ body {
   position: sticky;
   top: 0;
   z-index: 2;
-  padding: 4px 0;
-  background: var(--nuit);
+  padding: 6px 0 8px;
+  background: linear-gradient(var(--encre) 85%, rgba(18, 20, 24, 0));
 }
 
 #scene {
-  /* ≈ 45 % de la hauteur de l'écran (9:16 → hauteur = largeur × 16/9). */
+  /* ≈ 45 % de la hauteur de l'écran (9:16). */
   width: min(56vw, 25vh);
   height: auto;
   aspect-ratio: 9 / 16;
-  border: 1px solid var(--bord);
-  border-radius: 8px;
+  border-radius: 14px;
+  box-shadow: var(--ombre), 0 0 0 1px var(--bord);
+  background: var(--carte);
 }
 
-/* ----------------------------------------------------------- panneaux */
+/* ------------------------------------------------------------ panneaux */
 
 .panneau {
-  background: var(--panneau);
-  border: 1px solid var(--bord);
-  border-radius: 10px;
-  padding: 12px;
+  background: var(--carte);
+  border-radius: var(--rayon);
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-.panneau h2,
-.panneau h3 {
+.panneau.feuille[hidden] { display: none; }
+
+.panneau h2 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  color: var(--laiton);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
-.panneau h3 { font-size: 0.9rem; }
+.panneau h3 {
+  margin: 6px 0 -4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--texte-2);
+}
+
+.panneau h3 .aide {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--texte-3);
+}
+
+#compte-objets {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--texte-2);
+  background: var(--carte-2);
+}
 
 /* Réglages propres à un type de vidéo : seuls ceux du type choisi s'affichent. */
 #p-reglages[data-type="pause"] [data-mode="ralentie"],
 #p-reglages[data-type="ralentie"] [data-mode="pause"] { display: none; }
 
-/*
- * Pendant l'enregistrement : les réglages sont gelés (toucher un curseur
- * relancerait la roulette au milieu de la prise). Le panneau d'export, lui,
- * reste vivant — c'est là que vit la barre de progression.
- */
-#app.figee .panneau:not(#p-export) {
-  pointer-events: none;
-  opacity: 0.6;
-}
+/* Pendant une prise, les réglages sont gelés (un curseur relancerait la roulette). */
+#app.figee .panneau:not(#p-export) { pointer-events: none; opacity: 0.5; }
 
-#compte-objets {
-  font-weight: 400;
-  color: var(--laiton-clair);
-  opacity: 0.7;
-}
+.ligne { display: flex; gap: 8px; align-items: center; }
+.ligne > * { flex: 1; min-width: 0; }
 
-.ligne {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.ligne > * { flex: 1; }
-
-/* ------------------------------------------------ boutons et contrôles */
+/* -------------------------------------------------- boutons et champs */
 
 button,
 .bouton,
@@ -110,173 +174,210 @@ select,
 input[type="search"],
 input[type="text"] {
   min-height: var(--touche);
-  padding: 0 12px;
-  font-size: 1rem;
-  font-family: inherit;
-  color: var(--laiton-clair);
-  background: #232A31;
-  border: 1px solid var(--bord);
-  border-radius: 8px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--texte);
+  background: var(--carte-2);
+  border: 1px solid transparent;
+  border-radius: var(--rayon-s);
+  outline: none;
 }
+
+input[type="search"],
+input[type="text"] { -webkit-appearance: none; appearance: none; }
+
+input[type="search"]:focus-visible,
+input[type="text"]:focus-visible,
+select:focus-visible { border-color: var(--laiton); }
 
 button,
-.bouton {
-  cursor: pointer;
-  color: var(--laiton);
-}
+.bouton { cursor: pointer; font-weight: 500; }
 
-button:disabled { opacity: 0.45; cursor: default; }
+button:focus-visible,
+.bouton:focus-visible { box-shadow: 0 0 0 2px var(--encre), 0 0 0 4px var(--laiton); }
 
-.bouton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+button:active { transform: scale(0.98); }
+
+button:disabled { opacity: 0.38; cursor: default; transform: none; }
+
+.bouton { display: flex; align-items: center; justify-content: center; }
+
+.bouton.secondaire { border-color: var(--bord); background: transparent; color: var(--texte-2); }
+
+button.discret { background: transparent; border-color: var(--bord); color: var(--texte-2); }
 
 button.principal {
-  min-height: 52px;
+  min-height: 50px;
   font-weight: 600;
   background: var(--laiton);
-  color: var(--nuit);
-  border-color: var(--laiton);
+  color: #1A1408;
 }
 
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><path d='M4 6l4 4 4-4' fill='none' stroke='%23ECE7DA' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' opacity='.7'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+/* Étiquette + valeur sur une ligne, curseur ou champ dessous. */
 #p-reglages label {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 4px 10px;
+  gap: 2px 10px;
   font-size: 0.95rem;
   min-height: var(--touche);
 }
 
-#p-reglages label input[type="range"] {
-  grid-column: 1 / -1;
-  width: 100%;
-  height: var(--touche);
-  accent-color: var(--laiton);
-}
-
 #p-reglages label input[type="text"],
-#p-reglages label select { grid-column: 1 / -1; width: 100%; }
+#p-reglages label select { grid-column: 1 / -1; width: 100%; margin-top: 4px; }
 
 #p-reglages label:has(input[type="checkbox"]) {
   grid-template-columns: auto 1fr;
   justify-items: start;
+  gap: 10px;
 }
 
-#p-reglages input[type="checkbox"] {
-  width: 24px;
-  height: 24px;
-  accent-color: var(--laiton);
-}
+#p-reglages input[type="checkbox"] { width: 22px; height: 22px; margin: 0; accent-color: var(--laiton); }
 
 output {
   font-variant-numeric: tabular-nums;
+  font-weight: 600;
   color: var(--laiton);
 }
 
-.info {
+/* Curseur : piste fine, pouce rond et franc. */
+#p-reglages label input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: var(--touche);
   margin: 0;
-  font-size: 0.9rem;
-  opacity: 0.85;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
 }
-
-.info b { color: var(--laiton); font-variant-numeric: tabular-nums; }
-
-#message {
-  margin: 0;
-  min-height: 1.2em;
-  font-size: 0.9rem;
-  color: var(--laiton);
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bord);
 }
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px; height: 28px;
+  margin-top: -12px;
+  border-radius: 50%;
+  background: var(--texte);
+  border: 3px solid var(--carte);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--laiton);
+}
+input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--laiton-fond), 0 0 0 1px var(--laiton); }
 
-#progression { width: 100%; height: 8px; }
+.info { margin: 0; font-size: 0.85rem; color: var(--texte-2); }
+.info b { font-weight: 600; color: var(--texte); font-variant-numeric: tabular-nums; }
 
-/* ------------------------------------------------------------ grilles */
+/* ------------------------------------------------- panneau de la prise */
+
+#p-export { gap: 10px; padding: 12px 14px; }
+#p-export:has(#message:empty):has(#progression[hidden]):has(#partager[hidden]) { display: none; }
+
+#message { margin: 0; font-size: 0.9rem; color: var(--texte-2); }
+#message:empty { display: none; }
+
+#progression {
+  width: 100%;
+  height: 6px;
+  border: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bord);
+  -webkit-appearance: none;
+  appearance: none;
+}
+#progression::-webkit-progress-bar { background: var(--bord); }
+#progression::-webkit-progress-value { background: var(--rouge); border-radius: 3px; transition: width 120ms linear; }
+
+#partager { background: var(--vert); color: #0B1F16; }
+
+/* ------------------------------------------------------------- grilles */
 
 .grille {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 8px;
 }
 
-/*
- * Tuiles plus larges : la zone de retrait de 44 px mangeait 37 % d'une vignette
- * de 72 px, au point de gêner « appuyer pour choisir la cible ». À 96 px elle
- * n'en pèse plus que 21 % au pire (13 % à la largeur rendue ici).
- */
-#grille-selection {
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-}
-
-/* La grille d'objets s'affiche en entier : la section se rabat pour ne pas encombrer. */
+#grille-selection { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
 
 .vignette {
   position: relative;
-  padding: 2px;
+  padding: 4px;
   aspect-ratio: 1;
   min-height: var(--touche);
-  background: #10141A;
-  border: 1px solid var(--bord);
-  border-radius: 8px;
+  background: var(--carte-2);
+  border: 0;
+  border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 0 0 1px transparent;
+  transition: box-shadow 120ms ease, transform 120ms ease;
 }
 
-.vignette img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
+.vignette:active { transform: scale(0.96); }
+
+.vignette img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.vignette.fond img { object-fit: cover; border-radius: 6px; }
+
+/* Objet retenu : anneau vert et coche. Fond choisi : anneau laiton. */
+.vignette.objet.selectionne { box-shadow: 0 0 0 2px var(--vert); background: var(--vert-fond); }
+.vignette.objet.selectionne::after {
+  content: "✓";
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  font-size: 0.75rem; font-weight: 700;
+  color: #0B1F16;
+  background: var(--vert);
 }
 
-.vignette.fond img { object-fit: cover; }
-
-.vignette.objet.selectionne { border-color: var(--laiton); }
-
-.vignette.fond.actif {
-  border-color: var(--laiton);
-  box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.45);
-}
+.vignette.fond.actif { box-shadow: 0 0 0 2px var(--laiton); }
 
 .vignette .etiquette {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 2px;
-  font-size: 0.7rem;
-  background: rgba(20, 24, 28, 0.7);
+  left: 4px; right: 4px; bottom: 4px;
+  padding: 3px 4px;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--texte);
+  border-radius: 0 0 6px 6px;
+  background: rgba(18, 20, 24, 0.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
-/* ---------------------------------------------------------- sélection */
+/* ----------------------------------------------------------- sélection */
 
-.vignette.selection {
-  padding: 0;
-  border-color: var(--laiton);
-}
+.vignette.selection { padding: 0; }
 
 .vignette.selection .choisir {
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   min-height: 0;
-  padding: 2px;
+  padding: 6px;
   background: none;
   border: none;
   border-radius: 0;
 }
 
-/*
- * Le bouton lui-même EST la zone du doigt (44 px) : transparent, il tient
- * entièrement dans la vignette, donc l'`overflow: hidden` de celle-ci ne le
- * rogne pas. Le visuel, lui, reste un carré de 26 px dans le coin.
- */
+/* Le bouton lui-même EST la zone du doigt (44 px) ; le visuel est un rond de 24 px dans le coin. */
 .vignette.selection .retirer {
   position: absolute;
-  top: 0;
-  right: 0;
-  width: var(--touche);
-  height: var(--touche);
+  top: 0; right: 0;
+  width: var(--touche); height: var(--touche);
   min-height: 0;
   padding: 0;
   background: none;
@@ -286,67 +387,64 @@ output {
 
 .vignette.selection .retirer .croix {
   position: absolute;
-  top: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
+  top: 4px; right: 4px;
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px;
   line-height: 1;
-  font-size: 1rem;
-  border-radius: 0 8px 0 8px;
-  background: rgba(20, 24, 28, 0.85);
-  pointer-events: none;   /* le clic appartient au bouton, pas au décor. */
-}
-
-.vignette.selection.cible {
-  border-width: 3px;
-  box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.4);
-}
-
-.vignette.selection.cible::after {
-  content: "◎";
-  position: absolute;
-  left: 2px;
-  bottom: 0;
-  font-size: 1rem;
-  color: var(--laiton);
-  text-shadow: 0 0 4px var(--nuit);
+  font-size: 0.9rem;
+  color: var(--texte);
+  border-radius: 50%;
+  background: rgba(18, 20, 24, 0.85);
   pointer-events: none;
 }
 
-/* ------------------------------------------------ barre de navigation (bas) */
+.vignette.selection.cible { box-shadow: 0 0 0 2.5px var(--vert); background: var(--vert-fond); }
+
+.vignette.selection.cible::after {
+  content: "Cible";
+  position: absolute;
+  left: 4px; bottom: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0B1F16;
+  background: var(--vert);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------ barre de navigation */
 
 #barre {
   position: fixed;
   left: 0; right: 0; bottom: 0;
   z-index: 3;
   display: flex;
-  justify-content: space-around;
   align-items: stretch;
-  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-  background: rgba(16, 20, 26, 0.96);
+  gap: 2px;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  background: rgba(18, 20, 24, 0.92);
   border-top: 1px solid var(--bord);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
 }
 
 #barre button {
   flex: 1;
-  min-height: 52px;
+  min-height: 54px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   padding: 4px 2px;
   background: none;
   border: 0;
   border-radius: 10px;
-  font-size: 0.72rem;
-  color: var(--laiton-clair);
-  opacity: 0.75;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--texte-2);
 }
 
 #barre button svg {
@@ -354,20 +452,29 @@ output {
   fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
 }
 
-#barre button[aria-pressed="true"] { color: var(--laiton); opacity: 1; background: rgba(255, 255, 255, 0.06); }
-#barre #barre-type { color: var(--laiton); opacity: 1; }
+#barre button[aria-pressed="true"] { color: var(--laiton); background: var(--laiton-fond); }
 
-/* Le bouton d'enregistrement : plein laiton, comme « Exporter » sur CapCut. */
+#barre #barre-type { color: var(--texte); }
+#barre #barre-type span {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  color: var(--laiton);
+  background: var(--laiton-fond);
+}
+
+/* Enregistrer : le seul rouge de l'interface. */
 #barre button.accent {
-  flex: 1.15;
-  margin-left: 4px;
-  background: var(--laiton);
-  color: var(--nuit);
-  opacity: 1;
+  flex: 1.2;
+  margin-left: 6px;
+  background: var(--rouge);
+  color: #fff;
   font-weight: 600;
 }
-#barre button.accent:disabled { opacity: 0.4; }
-#barre #barre-type span { font-weight: 600; }
+#barre button.accent:disabled { opacity: 0.35; }
 
-/* Un panneau de section ne s'affiche que depuis la barre ; un seul à la fois. */
-.panneau.feuille[hidden] { display: none; }
+/* --------------------------------------------------------- accessibilité */
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
