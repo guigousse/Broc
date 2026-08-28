@@ -59,18 +59,74 @@ vers l'enregistrement d'écran iOS.
 ## Déploiement
 
 Ce dossier est déployé comme un **projet Vercel séparé** du jeu principal
-(la mini-app n'a rien à voir avec le build Next.js/Tauri du jeu). Réglages
-du projet Vercel :
+(la mini-app n'a rien à voir avec le build Next.js/Tauri du jeu). `vercel.json`
+fixe `buildCommand: "node build.mjs"` et `outputDirectory: "dist"`.
 
-- **Root Directory** : `tiktok-gen`
-- Cocher **« Include source files outside of the Root Directory »**
-  (le build lit `public/items`, `public/brocantes`, `public/fonts` et
-  `docs/items-catalogue.csv` à la racine du monorepo)
-- Activer **Deployment Protection** (la mini-app n'est pas destinée à être
-  publique)
+Procédure (dashboard Vercel, une seule fois) :
 
-`vercel.json` fixe `buildCommand: "node build.mjs"` et
-`outputDirectory: "dist"`.
+1. **Add New Project** → importer le repo GitHub du monorepo.
+2. **Root Directory** : `tiktok-gen`.
+3. Cocher **« Include source files outside of the Root Directory »** (le
+   build lit `public/items`, `public/brocantes`, `public/fonts` et
+   `docs/items-catalogue.csv` à la racine du monorepo, hors de
+   `tiktok-gen/`).
+4. **Framework Preset** : `Other`.
+5. **Deploy**.
+6. Une fois le projet créé, **Settings → Deployment Protection** → activer
+   **« Vercel Authentication »** (ou **« Password Protection »**) : la
+   mini-app n'est pas destinée à être publique.
+7. Vérifier le déploiement :
+   - `https://<projet>.vercel.app/assets/catalogue.json` répond du JSON.
+   - `https://<projet>.vercel.app/` affiche l'app.
+
+Ensuite, chaque `git push` sur la branche suivie **redéploie
+automatiquement**. Le build prend environ **1 minute** (il copie ~70 Mo
+d'assets depuis la racine du monorepo).
+
+## Recette iPhone
+
+À faire sur un vrai iPhone (Safari), sur l'URL Vercel déployée — pas en
+local (voir l'avertissement sur `navigator.share` plus haut).
+
+- [ ] **1. Ajouter à l'écran d'accueil.** L'app s'ouvre en plein écran
+  (pas de barre Safari), grâce à `apple-mobile-web-app-capable`.
+- [ ] **2. Composer** un fond, 8 objets et une cible. L'aperçu tourne à
+  60 fps, le son démarre au premier tap (déblocage audio iOS).
+- [ ] **3. Enregistrer.** La progression va de 0 à 100 % en `duree`
+  secondes, sans message d'avertissement « saccadé ».
+- [ ] **4. Partager → Enregistrer la vidéo.** Dans Photos : un mp4 de
+  `duree` secondes, **avec son**, boucle propre (pas de saut ni d'arrêt
+  visible au raccord), et une pause nette au moment du calage (l'overlay
+  de résultat est visible).
+- [ ] **5. Partager → TikTok.** La vidéo est acceptée telle quelle, sans
+  réencodage refusé ni erreur de format.
+- [ ] **6. Réglages conservés** après fermeture complète de l'app (fond,
+  objets, cible, durée, son).
+- [ ] **7. Importer une photo** de la pellicule comme fond personnalisé.
+
+**Comment signaler un écart** : noter le numéro du point concerné et
+joindre un enregistrement d'écran (Réglages → Centre de contrôle →
+Enregistrement de l'écran) montrant le comportement observé.
+
+## Ajouter à l'écran d'accueil
+
+Safari → bouton **Partager** → **Sur l'écran d'accueil**. L'app s'ouvre
+alors plein écran, sans chrome Safari, grâce à
+`apple-mobile-web-app-capable`. Comme sur toute page web iOS, le **premier
+tap** débloque le son (contrainte du navigateur, pas un bug de l'app).
+
+## Limites connues
+
+- L'enregistrement se fait **en temps réel** : capturer une vidéo de
+  12 s prend 12 s, pas de rendu accéléré.
+- Le chiffre de fps affiché après enregistrement mesure la **boucle de
+  dessin** (le rythme auquel l'app tente de dessiner), pas la cadence
+  réellement encodée par le navigateur.
+- Un `fondPerso` (photo importée) de plus de **2 Mo n'est pas persisté**
+  d'une session à l'autre — il faut réimporter la photo si l'app est
+  relancée.
+- Les badges de téléchargement sont des **placeholders** à remplacer
+  avant publication (voir section suivante).
 
 ## Badges de téléchargement
 
