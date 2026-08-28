@@ -8,9 +8,10 @@ import { CacheImages } from "./images.js";
 import {
   REGLAGES_DEFAUT, chargerReglages, normaliserReglages, sauverReglages,
 } from "./reglages.js";
-import { consigneCourte, formaterInfos } from "./texte.js";
+import { consigneCourte, formaterDuree, formaterInfos } from "./texte.js";
 import { SonRoulette } from "./son.js";
 import { Apercu, roulettePour } from "./apercu.js";
+import { capacitesEnregistrement, enregistrer, partager } from "./enregistreur.js";
 
 const MAX_OBJETS = 12;
 const TIRAGE = 8;
@@ -24,6 +25,10 @@ const MAX_CONSIGNE = 40;
  * immédiatement — elle ne dépend d'aucune image).
  */
 const DELAI_CURSEUR = 150;
+/** En dessous, la prise a sauté des images : on le dit plutôt que de livrer une vidéo hachée. */
+const FPS_MINI = 25;
+/** `?debug` expose le dernier blob sur `window` — pour les vérifications automatisées, pas pour le public. */
+const DEBUG = new URLSearchParams(window.location.search).has("debug");
 
 const $ = (id) => document.getElementById(id);
 
@@ -76,6 +81,8 @@ async function demarrer() {
   let consigneAuto = reglages.consigne === REGLAGES_DEFAUT.consigne;
 
   const el = {
+    app: $("app"), scene: $("scene"),
+    enregistrer: $("enregistrer"), progression: $("progression"), partager: $("partager"),
     grilleFonds: $("grille-fonds"), fondPerso: $("fond-perso"),
     compte: $("compte-objets"), categorie: $("filtre-categorie"), recherche: $("recherche"),
     aleatoire: $("aleatoire"), vider: $("vider"),
@@ -259,10 +266,13 @@ async function demarrer() {
   }
 
   async function rafraichirApercu() {
+    oublierPrise();                   // les réglages ont bougé : le fichier d'avant ne les montre plus.
     try {
-      await apercu.charger(reglages, catalogue);
+      const { r } = await apercu.charger(reglages, catalogue);
+      el.enregistrer.disabled = !r;   // sans roulette (moins de 2 objets, pas de cible), rien à enregistrer.
       dire("");                       // le chargement a abouti : plus rien à signaler.
     } catch (e) {
+      el.enregistrer.disabled = true; // scène incomplète : on n'enregistre pas une image fausse.
       const texte = String(e?.message ?? e);
       dire(texte.charAt(0).toUpperCase() + texte.slice(1));
     }
@@ -273,6 +283,18 @@ async function demarrer() {
     if (minuterieApercu !== null) { clearTimeout(minuterieApercu); minuterieApercu = null; }
     if (delai <= 0) { rafraichirApercu(); return; }
     minuterieApercu = setTimeout(() => { minuterieApercu = null; rafraichirApercu(); }, delai);
+  }
+
+  /**
+   * Exécute tout de suite le rechargement encore différé, s'il y en a un :
+   * avant d'enregistrer, la scène doit montrer les réglages courants et pas
+   * ceux d'il y a 150 ms.
+   */
+  async function flusherApercu() {
+    if (minuterieApercu === null) return;
+    clearTimeout(minuterieApercu);
+    minuterieApercu = null;
+    await rafraichirApercu();
   }
 
   /**
@@ -326,13 +348,99 @@ async function demarrer() {
     lecteur.readAsDataURL(fichier);
   });
 
+  // ---------------------------------------------------- enregistrer / partager
+
+  const capacites = capacitesEnregistrement();
+
+  /** Le fichier de la dernière prise, valable tant que les réglages n'ont pas changé. */
+  let prise = null;
+  /**
+   * Vrai pendant la prise. Le tout premier tap de la page est un pointerdown
+   * ET un click : si ce tap tombe sur « Enregistrer », le gestionnaire de
+   * pointerdown relancerait l'aperçu par-dessus la boucle de l'enregistreur.
+   */
+  let enregistrementEnCours = false;
+
+  function oublierPrise() {
+    prise = null;
+    el.partager.hidden = true;
+    el.partager.disabled = true;
+  }
+
+  el.enregistrer.addEventListener("click", async () => {
+    if (!capacites.ok) { dire(capacites.raison); return; }
+    if (el.enregistrer.disabled) return;
+
+    await flusherApercu();
+    // Le clic EST le geste utilisateur : c'est ici, et nulle part ailleurs, qu'iOS
+    // accepte de créer/reprendre le contexte audio dont l'enregistreur lit le flux.
+    try {
+      await son.demarrer();
+      son.active = reglages.son;
+      apercu.sonDemarre = true;
+    } catch (e) {
+      console.warn("son indisponible", e);   // vidéo muette plutôt que pas de vidéo.
+    }
+
+    enregistrementEnCours = true;
+    el.app.classList.add("figee");
+    el.enregistrer.disabled = true;
+    oublierPrise();
+    el.progression.value = 0;
+    el.progression.hidden = false;
+    dire("Enregistrement en cours… (temps réel, ne quitte pas la page)");
+
+    try {
+      const { blob, nomFichier, fpsMoyen } = await enregistrer({
+        canvas: el.scene,
+        apercu,
+        son,
+        cibleId: reglages.cible,
+        mime: capacites.mime,
+        onProgression: (p) => { el.progression.value = p; },
+      });
+      prise = { blob, nomFichier };
+      if (DEBUG) window.__dernierBlob = blob;
+      el.partager.hidden = false;
+      el.partager.disabled = false;
+      const fps = Math.round(fpsMoyen);
+      dire(fpsMoyen < FPS_MINI
+        ? `Enregistrement saccadé (${fps} fps) : réenregistre en fermant les autres apps.`
+        : `Enregistré : ${formaterDuree(apercu.r?.duree)} · ${fps} fps`);
+    } catch (e) {
+      dire(String(e?.message ?? e));
+    } finally {
+      enregistrementEnCours = false;
+      el.progression.hidden = true;
+      el.app.classList.remove("figee");
+      el.enregistrer.disabled = !apercu.r;
+    }
+  });
+
+  el.partager.addEventListener("click", async () => {
+    if (!prise) return;
+    el.partager.disabled = true;
+    try {
+      const issue = await partager(prise.blob, prise.nomFichier);
+      dire({
+        partage: "Vidéo partagée.",
+        telechargement: `Vidéo téléchargée : ${prise.nomFichier}`,
+        annule: "Partage annulé.",
+      }[issue] ?? "");
+    } catch (e) {
+      dire(`Partage impossible : ${String(e?.message ?? e)}`);
+    } finally {
+      el.partager.disabled = false;
+    }
+  });
+
   // iOS n'autorise l'audio qu'après un geste : jusque-là l'aperçu tourne muet.
   document.addEventListener("pointerdown", async () => {
     try {
       await son.demarrer();
       son.active = reglages.son;
       apercu.sonDemarre = true;
-      apercu.jouer();
+      if (!enregistrementEnCours) apercu.jouer();   // l'enregistreur tient déjà le canvas.
     } catch (e) {
       console.warn("son indisponible", e);
     }

@@ -69,6 +69,16 @@ body {
 
 .panneau h3 { font-size: 0.9rem; }
 
+/*
+ * Pendant l'enregistrement : les réglages sont gelés (toucher un curseur
+ * relancerait la roulette au milieu de la prise). Le panneau d'export, lui,
+ * reste vivant — c'est là que vit la barre de progression.
+ */
+#app.figee .panneau:not(#p-export) {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 #compte-objets {
   font-weight: 400;
   color: var(--laiton-clair);
