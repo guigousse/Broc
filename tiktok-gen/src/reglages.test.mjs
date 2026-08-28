@@ -24,6 +24,13 @@ describe("normaliserReglages", () => {
     expect(normaliserReglages({ flou: 12.6 }).flou).toBe(13);
     expect(normaliserReglages({}).flou).toBe(0);
   });
+  it("type de vidéo et réglages du ralenti bornés", () => {
+    expect(normaliserReglages({}).type).toBe("pause");
+    expect(normaliserReglages({ type: "ralentie" }).type).toBe("ralentie");
+    expect(normaliserReglages({ type: "n'importe quoi" }).type).toBe("pause");
+    expect(normaliserReglages({ nbTours: 99, dureeDefilement: 1, arretFinal: 9 })).toMatchObject({ nbTours: 6, dureeDefilement: 3, arretFinal: 5 });
+    expect(normaliserReglages({})).toMatchObject({ nbTours: 3, dureeDefilement: 8, arretFinal: 2 });
+  });
   it("liseré de la silhouette borné 0–30, défaut 17", () => {
     expect(normaliserReglages({}).liseret).toBe(17);
     expect(normaliserReglages({ liseret: 99 }).liseret).toBe(30);

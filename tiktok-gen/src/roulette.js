@@ -4,11 +4,25 @@ export const LARGEUR = 1080, HAUTEUR = 1920, CENTRE_X = 540, CENTRE_Y = 960;
 export const HAUTEUR_OBJET = 420;
 export const FPS = 30;
 
+export const TYPES_VIDEO = ["pause", "ralentie"];
+/** Exposant de la décélération : s(u) = A·(1 − (1 − u)³) — départ 3× plus vite que la moyenne, arrêt en douceur. */
+const EXPOSANT_RALENTI = 3;
+
+/** Aiguillage sur `cfg.type` (défaut : « pause », la roulette régulière qui boucle). */
+export function calculerPour(cfg) {
+  return cfg.type === "ralentie" ? calculerRouletteRalentie(cfg) : calculerRoulette(cfg);
+}
+
+/**
+ * Roulette « Mets pause » : défilement régulier, la cible passe `nbPassages`
+ * fois au centre, la vidéo boucle. `avancement(t)` = px parcourus par la bande.
+ */
 export function calculerRoulette({ nbObjets, indexCible, vitesse, espacement, nbPassages, largeurFlash = 4 }) {
   const periodeTour = nbObjets / vitesse;
   const duree = nbPassages * periodeTour;
   const vitessePx = vitesse * espacement;
   const longueurBande = nbObjets * espacement;
+  const avancement = (t) => vitessePx * t;
   const decalage = nbObjets / 2;
   const instantsCentrage = Array.from({ length: nbPassages }, (_, k) => (k + 0.5) * periodeTour);
   const instantsTics = [];
@@ -21,8 +35,51 @@ export function calculerRoulette({ nbObjets, indexCible, vitesse, espacement, nb
   instantsTics.sort((a, b) => a.t - b.t);
   const demiFlash = largeurFlash / 2 / FPS;
   return {
-    periodeTour, duree, vitessePx, longueurBande, instantsCentrage, instantsTics,
-    demiFlash, fenetrePauseMs: (largeurFlash / FPS) * 1000,
+    type: "pause", periodeTour, duree, vitessePx, longueurBande, avancement, instantsCentrage, instantsTics,
+    demiFlash, fenetrePauseMs: (largeurFlash / FPS) * 1000, geleAuFlash: true, arretDepuis: null,
+  };
+}
+
+/**
+ * Roulette « qui ralentit » : très vite au départ, décélération continue
+ * jusqu'à l'arrêt exact de la cible au centre après `nbTours` tours complets,
+ * puis `arretFinal` s d'image fixe (flash permanent). Ne boucle pas.
+ *
+ * Convention de position (voir positionsA) : la cible est au centre quand
+ * avancement ≡ L/2 (mod L). L'avancement final vaut donc L/2 + nbTours·L, et
+ * s(t) = A_fin · (1 − (1 − t/T)^3) sur [0, T], constant ensuite.
+ * L'objet i franchit le centre quand s = d_i + m·L : t = T·(1 − (1 − s/A_fin)^(1/3)).
+ */
+export function calculerRouletteRalentie({ nbObjets, indexCible, espacement, nbTours, dureeDefilement, arretFinal, largeurFlash = 4 }) {
+  const longueurBande = nbObjets * espacement;
+  const T = dureeDefilement;
+  const avancementFinal = longueurBande / 2 + nbTours * longueurBande;
+  const avancement = (t) => {
+    const u = Math.min(1, Math.max(0, t / T));
+    return avancementFinal * (1 - (1 - u) ** EXPOSANT_RALENTI);
+  };
+  const instantPour = (s) => T * (1 - (1 - s / avancementFinal) ** (1 / EXPOSANT_RALENTI));
+  const instantsTics = [];
+  const instantsCentrage = [];
+  for (let i = 0; i < nbObjets; i++) {
+    const d_i = (i - indexCible + nbObjets / 2) * espacement;
+    for (let m = 0; ; m++) {
+      const s = d_i + m * longueurBande;
+      if (s < 0) continue;
+      if (s > avancementFinal + 1e-9) break;
+      const t = Math.min(T, instantPour(Math.min(s, avancementFinal)));
+      const estCible = i === indexCible;
+      instantsTics.push({ t, index: i, estCible });
+      if (estCible) instantsCentrage.push(t);
+    }
+  }
+  instantsTics.sort((a, b) => a.t - b.t);
+  const duree = T + arretFinal;
+  const demiFlash = largeurFlash / 2 / FPS;
+  return {
+    type: "ralentie", periodeTour: T, duree, vitessePx: (EXPOSANT_RALENTI * avancementFinal) / T, longueurBande,
+    avancement, instantsCentrage, instantsTics, demiFlash, fenetrePauseMs: arretFinal * 1000,
+    geleAuFlash: false, arretDepuis: T,
   };
 }
 
@@ -37,7 +94,7 @@ export function positionsA(t, r, { nbObjets, indexCible, espacement }) {
     // vitessePx·t ≡ espacement·rang (mod L) à ces instants, qui est aussi la valeur
     // de d_i mod L — donc rel ≡ 0 (mod L) pile à t = rang/vitesse + k·periodeTour).
     const d_i = (i - indexCible + nbObjets / 2) * espacement;
-    let rel = r.vitessePx * t - d_i;
+    let rel = r.avancement(t) - d_i;
     rel = (((rel + L / 2) % L) + L) % L - L / 2;
     out.push({ index: i, x: CENTRE_X + rel });
   }
@@ -66,6 +123,7 @@ export function positionsVisibles(t, r, cfg, marge = LARGEUR / 2 + cfg.espacemen
 
 export function estFlash(t, r) {
   const tb = tempsBoucle(t, r);
+  if (r.arretDepuis !== null && r.arretDepuis !== undefined && tb >= r.arretDepuis) return true;   // image finale
   return r.instantsCentrage.some((c) => Math.abs(tb - c) <= r.demiFlash);
 }
 
@@ -77,6 +135,7 @@ export function estFlash(t, r) {
  */
 export function instantDessine(t, r) {
   const tb = tempsBoucle(t, r);
+  if (r.geleAuFlash === false) return tb;   // roulette qui ralentit : elle continue sous le flash, l'arrêt final est déjà immobile.
   const c = r.instantsCentrage.find((x) => Math.abs(tb - x) <= r.demiFlash);
   return c === undefined ? tb : c;
 }

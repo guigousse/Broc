@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculerRoulette, positionsA, positionsVisibles, estFlash, instantDessine, tempsBoucle, CENTRE_X, LARGEUR, FPS } from "./roulette.js";
+import { calculerRoulette, calculerRouletteRalentie, calculerPour, positionsA, positionsVisibles, estFlash, instantDessine, tempsBoucle, CENTRE_X, LARGEUR, FPS } from "./roulette.js";
 
 const CFG = { nbObjets: 8, indexCible: 2, vitesse: 2, espacement: 500, nbPassages: 3, largeurFlash: 4 };
 
@@ -131,5 +131,62 @@ describe("instantDessine", () => {
     const t = r.instantsCentrage[0] + r.demiFlash * 3;
     expect(instantDessine(t, r)).toBeCloseTo(tempsBoucle(t, r), 12);
     expect(instantDessine(t + r.duree, r)).toBeCloseTo(tempsBoucle(t, r), 9);
+  });
+});
+
+describe("calculerRouletteRalentie", () => {
+  const CFG_R = { type: "ralentie", nbObjets: 8, indexCible: 2, espacement: 500, nbTours: 3, dureeDefilement: 8, arretFinal: 2, largeurFlash: 4 };
+  const r = calculerRouletteRalentie(CFG_R);
+
+  it("calculerPour aiguille sur le type", () => {
+    expect(calculerPour(CFG_R).type).toBe("ralentie");
+    expect(calculerPour(CFG).type).toBe("pause");
+  });
+  it("durée = défilement + arrêt ; avancement nul au départ, plat après T", () => {
+    expect(r.duree).toBe(10);
+    expect(r.avancement(0)).toBe(0);
+    expect(r.avancement(8)).toBeCloseTo(r.avancement(9.9), 9);
+    expect(r.avancement(8)).toBeCloseTo(500 * 4 + 3 * 4000, 6);
+  });
+  it("ne fait que décélérer : les pas successifs décroissent", () => {
+    let prev = null;
+    for (let t = 0; t < 8; t += 0.1) {
+      const pas = r.avancement(t + 0.1) - r.avancement(t);
+      expect(pas).toBeGreaterThanOrEqual(0);
+      if (prev !== null) expect(pas).toBeLessThanOrEqual(prev + 1e-9);
+      prev = pas;
+    }
+  });
+  it("la cible finit pile au centre et y reste pendant l'arrêt", () => {
+    for (const t of [8, 8.5, 9.99]) {
+      const c = positionsA(t, r, CFG_R).find((p) => p.index === 2);
+      expect(c.x).toBeCloseTo(CENTRE_X, 6);
+    }
+  });
+  it("un centrage par passage de la cible, le dernier à T ; flash permanent après T", () => {
+    expect(r.instantsCentrage).toHaveLength(4);   // L/2, 3L/2, 5L/2, 7L/2 = final
+    expect(r.instantsCentrage.at(-1)).toBeCloseTo(8, 9);
+    for (const c of r.instantsCentrage) {
+      expect(positionsA(c, r, CFG_R).find((p) => p.index === 2).x).toBeCloseTo(CENTRE_X, 4);
+      expect(estFlash(c, r)).toBe(true);
+    }
+    expect(estFlash(9, r)).toBe(true);
+    expect(estFlash(4, r)).toBe(false);
+  });
+  it("un tic par objet qui franchit le centre, triés, tous dans [0, T]", () => {
+    // Un tic par (objet, tour) tant que d_i + m·L ≤ avancement final : 27 ici.
+    let attendu = 0;
+    for (let i = 0; i < 8; i++) for (let s = (i - 2 + 4) * 500; s <= 2000 + 3 * 4000; s += 4000) attendu++;
+    expect(attendu).toBe(27);
+    expect(r.instantsTics.length).toBe(attendu);
+    for (let i = 1; i < r.instantsTics.length; i++) expect(r.instantsTics[i].t).toBeGreaterThanOrEqual(r.instantsTics[i - 1].t);
+    for (const tic of r.instantsTics) {
+      expect(tic.t).toBeGreaterThanOrEqual(0); expect(tic.t).toBeLessThanOrEqual(8);
+      expect(positionsA(tic.t, r, CFG_R).find((p) => p.index === tic.index).x).toBeCloseTo(CENTRE_X, 3);
+    }
+  });
+  it("pas de gel au flash : instantDessine rend le temps tel quel", () => {
+    const c = r.instantsCentrage[1];
+    expect(instantDessine(c + r.demiFlash / 2, r)).toBeCloseTo(c + r.demiFlash / 2, 12);
   });
 });

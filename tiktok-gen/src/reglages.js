@@ -9,7 +9,10 @@ export const FOND_PERSO = "perso";
 
 export const REGLAGES_DEFAUT = Object.freeze({
   fond: "foire-chatou", fondPerso: null, objets: [], cible: null,
+  type: "pause",
   vitesse: 2.5, espacement: 520, nbPassages: 3, largeurFlash: 4,
+  // Roulette qui ralentit.
+  nbTours: 3, dureeDefilement: 8, arretFinal: 2,
   flou: 0,
   liseret: 17,
   // Textes du flash (BROC reste le logo). Vide = ligne masquée.
@@ -34,7 +37,11 @@ export function normaliserReglages(brut = {}) {
     fondPerso: typeof brut.fondPerso === "string" ? brut.fondPerso : null,
     objets,
     cible: objets.includes(brut.cible) ? brut.cible : null,
+    type: brut.type === "ralentie" ? "ralentie" : "pause",
     vitesse: borne(brut.vitesse, 1.5, 4, REGLAGES_DEFAUT.vitesse),
+    nbTours: Math.round(borne(brut.nbTours, 1, 6, REGLAGES_DEFAUT.nbTours)),
+    dureeDefilement: borne(brut.dureeDefilement, 3, 15, REGLAGES_DEFAUT.dureeDefilement),
+    arretFinal: borne(brut.arretFinal, 0.5, 5, REGLAGES_DEFAUT.arretFinal),
     espacement: borne(brut.espacement, 400, 700, REGLAGES_DEFAUT.espacement),
     nbPassages: Math.round(borne(brut.nbPassages, 2, 4, REGLAGES_DEFAUT.nbPassages)),
     largeurFlash: Math.round(borne(brut.largeurFlash, 2, 8, REGLAGES_DEFAUT.largeurFlash)),

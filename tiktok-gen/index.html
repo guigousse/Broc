@@ -11,13 +11,13 @@
 <main id="app">
   <section id="apercu"><canvas id="scene" width="1080" height="1920"></canvas></section>
 
-  <details class="panneau" id="p-fond" open>
+  <details class="panneau" id="p-fond">
     <summary><h2>Fond</h2></summary>
     <div class="grille" id="grille-fonds"></div>
     <label class="bouton">Importer une photo <input type="file" accept="image/*" id="fond-perso" hidden></label>
   </details>
 
-  <details class="panneau" id="p-objets" open>
+  <details class="panneau" id="p-objets">
     <summary><h2>Objets <span id="compte-objets"></span></h2></summary>
     <div class="ligne"><select id="filtre-categorie"><option value="">Toutes</option></select><input id="recherche" type="search" placeholder="Rechercher"></div>
     <div class="ligne"><button id="aleatoire">Aléatoire ×8</button><button id="vider">Vider</button></div>
@@ -26,11 +26,20 @@
     <div class="grille" id="grille-selection"></div>
   </details>
 
-  <details class="panneau" id="p-reglages" open>
+  <details class="panneau" id="p-reglages" data-type="pause">
     <summary><h2>Réglages</h2></summary>
-    <label>Vitesse <output id="v-vitesse"></output><input type="range" id="vitesse" min="1.5" max="4" step="0.1"></label>
+    <label>Type de vidéo
+      <select id="typeVideo">
+        <option value="pause">Mets pause — défilement régulier, ça boucle</option>
+        <option value="ralentie">Roulette — très vite, ralentit, s'arrête sur la cible</option>
+      </select>
+    </label>
+    <label data-mode="pause">Vitesse <output id="v-vitesse"></output><input type="range" id="vitesse" min="1.5" max="4" step="0.1"></label>
+    <label data-mode="ralentie">Tours avant l'arrêt <output id="v-tours"></output><input type="range" id="nbTours" min="1" max="6" step="1"></label>
+    <label data-mode="ralentie">Durée du défilement <output id="v-defilement"></output><input type="range" id="dureeDefilement" min="3" max="15" step="0.5"></label>
+    <label data-mode="ralentie">Arrêt final <output id="v-arret"></output><input type="range" id="arretFinal" min="0.5" max="5" step="0.5"></label>
     <label>Espacement <output id="v-espacement"></output><input type="range" id="espacement" min="400" max="700" step="10"></label>
-    <label>Passages <output id="v-passages"></output><input type="range" id="nbPassages" min="2" max="4" step="1"></label>
+    <label data-mode="pause">Passages <output id="v-passages"></output><input type="range" id="nbPassages" min="2" max="4" step="1"></label>
     <label>Flou du fond <output id="v-flou"></output><input type="range" id="flou" min="0" max="40" step="2"></label>
     <label>Liseré de la silhouette <output id="v-liseret"></output><input type="range" id="liseret" min="0" max="30" step="1"></label>
     <label>Largeur du flash (images) <output id="v-flash"></output><input type="range" id="largeurFlash" min="2" max="8" step="1"></label>
@@ -39,7 +48,7 @@
     <label>Sous-titre <input type="text" id="sousTitre" maxlength="80"></label>
     <label>Autres objets, {n} = le nombre <input type="text" id="texteAutres" maxlength="80"></label>
     <label>Au-dessus des badges <input type="text" id="texteDispo" maxlength="80"></label>
-    <p class="info">Durée <b id="info-duree">—</b> · fenêtre de pause <b id="info-fenetre">—</b></p>
+    <p class="info">Durée <b id="info-duree">—</b> · <span id="info-fenetre-libelle">fenêtre de pause</span> <b id="info-fenetre">—</b></p>
   </details>
 
   <section class="panneau" id="p-export">

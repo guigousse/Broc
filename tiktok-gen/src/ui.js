@@ -92,6 +92,7 @@ async function demarrer() {
     grilleObjets: $("grille-objets"), grilleSelection: $("grille-selection"),
     son: $("son"),
     duree: $("info-duree"), fenetre: $("info-fenetre"), message: $("message"),
+    typeVideo: $("typeVideo"), reglagesPanneau: $("p-reglages"),
   };
   const curseurs = [
     { cle: "vitesse", champ: $("vitesse"), sortie: $("v-vitesse"), texte: (v) => v.toFixed(1).replace(".", ",") },
@@ -100,6 +101,9 @@ async function demarrer() {
     { cle: "largeurFlash", champ: $("largeurFlash"), sortie: $("v-flash"), texte: (v) => `${v} img` },
     { cle: "flou", champ: $("flou"), sortie: $("v-flou"), texte: (v) => (v ? `${v} px` : "aucun") },
     { cle: "liseret", champ: $("liseret"), sortie: $("v-liseret"), texte: (v) => (v ? `${v} px` : "aucun") },
+    { cle: "nbTours", champ: $("nbTours"), sortie: $("v-tours"), texte: (v) => String(v) },
+    { cle: "dureeDefilement", champ: $("dureeDefilement"), sortie: $("v-defilement"), texte: (v) => formaterDuree(v) },
+    { cle: "arretFinal", champ: $("arretFinal"), sortie: $("v-arret"), texte: (v) => formaterDuree(v) },
   ];
 
   const dire = (texte) => { el.message.textContent = texte; };
@@ -231,6 +235,8 @@ async function demarrer() {
   function peuplerChamps() {
     for (const c of curseurs) c.champ.value = String(reglages[c.cle]);
     el.son.checked = reglages.son;
+    el.typeVideo.value = reglages.type;
+    el.reglagesPanneau.dataset.type = reglages.type;
     for (const t of el.textes) t.champ.value = reglages[t.cle];
   }
 
@@ -239,6 +245,8 @@ async function demarrer() {
     const infos = formaterInfos(roulettePour(reglages, catalogue));
     el.duree.textContent = infos.duree;
     el.fenetre.textContent = infos.fenetre;
+    const lib = document.getElementById("info-fenetre-libelle");
+    if (lib) lib.textContent = reglages.type === "ralentie" ? "arrêt final" : "fenêtre de pause";
   }
 
   /** Ce qu'un mouvement de curseur (ou une frappe) change : trois `textContent`. */
@@ -350,6 +358,11 @@ async function demarrer() {
   el.categorie.addEventListener("change", appliquerFiltre);
   el.recherche.addEventListener("input", appliquerFiltre);
   el.aleatoire.addEventListener("click", tirer);
+  el.typeVideo.addEventListener("change", () => {
+    reglages.type = el.typeVideo.value;
+    el.reglagesPanneau.dataset.type = reglages.type;
+    appliquer({ leger: true });
+  });
   for (const t of el.textes) {
     t.champ.addEventListener("input", () => {
       reglages[t.cle] = t.champ.value;
@@ -514,15 +527,16 @@ async function demarrer() {
   construireGrilleFonds();
   appliquerFiltre();
   // Sections rabattables : l'état de chacune survit au rechargement (confort local).
-  const CLE_OUVERTS = "broc-tiktok-gen-sections";
+  // Rabattues par défaut ; on mémorise celles que l'utilisateur a ouvertes.
+  const CLE_OUVERTS = "broc-tiktok-gen-sections-ouvertes";
   const sections = [...document.querySelectorAll("details.panneau")];
   try {
-    const fermees = JSON.parse(stockage.getItem(CLE_OUVERTS) ?? "[]");
-    for (const d of sections) d.open = !fermees.includes(d.id);
-  } catch { /* état non lu : tout reste ouvert */ }
+    const ouvertes = JSON.parse(stockage.getItem(CLE_OUVERTS) ?? "[]");
+    for (const d of sections) d.open = ouvertes.includes(d.id);
+  } catch { /* état non lu : tout reste rabattu */ }
   for (const d of sections) {
     d.addEventListener("toggle", () => {
-      try { stockage.setItem(CLE_OUVERTS, JSON.stringify(sections.filter((x) => !x.open).map((x) => x.id))); } catch { /* tant pis */ }
+      try { stockage.setItem(CLE_OUVERTS, JSON.stringify(sections.filter((x) => x.open).map((x) => x.id))); } catch { /* tant pis */ }
     });
   }
 

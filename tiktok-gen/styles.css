@@ -99,6 +99,10 @@ details.panneau > summary::after {
 details.panneau[open] > summary::after { transform: rotate(45deg); }
 details.panneau[open] > summary { margin-bottom: -2px; }
 
+/* Réglages propres à un type de vidéo : seuls ceux du type choisi s'affichent. */
+#p-reglages[data-type="pause"] [data-mode="ralentie"],
+#p-reglages[data-type="ralentie"] [data-mode="pause"] { display: none; }
+
 /*
  * Pendant l'enregistrement : les réglages sont gelés (toucher un curseur
  * relancerait la roulette au milieu de la prise). Le panneau d'export, lui,

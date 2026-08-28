@@ -3,7 +3,7 @@
  * d'animation (rAF) et cale le son dessus. Module DOM/canvas, pas de tests
  * unitaires — la logique testable vit dans roulette.js et texte.js.
  */
-import { calculerRoulette, estFlash, instantDessine, tempsBoucle, LARGEUR, HAUTEUR, CENTRE_X, CENTRE_Y } from "./roulette.js";
+import { calculerPour, estFlash, instantDessine, tempsBoucle, LARGEUR, HAUTEUR, CENTRE_X, CENTRE_Y } from "./roulette.js";
 import { dessinerFrame } from "./rendu.js";
 import { chargerImage } from "./images.js";
 import { COULEURS } from "./theme.js";
@@ -35,6 +35,10 @@ export function construireCfg(reglages, catalogue) {
       espacement: reglages.espacement,
       nbPassages: reglages.nbPassages,
       largeurFlash: reglages.largeurFlash,
+      type: reglages.type,
+      nbTours: reglages.nbTours,
+      dureeDefilement: reglages.dureeDefilement,
+      arretFinal: reglages.arretFinal,
     },
   };
 }
@@ -42,7 +46,7 @@ export function construireCfg(reglages, catalogue) {
 /** Roulette des réglages courants, ou `null` si la sélection est incomplète. */
 export function roulettePour(reglages, catalogue) {
   const d = construireCfg(reglages, catalogue);
-  return d ? calculerRoulette(d.cfg) : null;
+  return d ? calculerPour(d.cfg) : null;
 }
 
 export class Apercu {
@@ -95,7 +99,7 @@ export class Apercu {
     }
 
     const { ids, cible, cfg } = donnees;
-    const r = calculerRoulette(cfg);
+    const r = calculerPour(cfg);
 
     const nomFond = reglages.fond === FOND_PERSO
       ? (reglages.fondPerso || REGLAGES_DEFAUT.fond)
