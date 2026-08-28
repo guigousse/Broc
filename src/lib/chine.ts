@@ -9,6 +9,7 @@ import type {
 import {
   getTemplate,
   poolPourTier,
+  tierMinTemplate,
   type ObjetTemplate,
 } from "@/data/objetTemplates";
 import type { Brocante, CelebriteEvenement } from "@/types/game";
@@ -179,6 +180,22 @@ function poidsRarete(rarete: Rarete, boost: boolean, tier: 1 | 2 | 3 | 4): numbe
   return boost && rarete !== "commun" ? base * CELEBRITE_BOOST_RARES : base;
 }
 
+/**
+ * Poids d'un objet NATIF du tier de la brocante au 2ᵉ étage du tirage. Le
+ * pool est cumulatif (un objet de T1 se trouve encore en T3) : sans ce poids,
+ * une brocante 3⭐ n'était qu'une 1⭐ avec plus de rares — ses propres pièces
+ * (le dernier tercile de prix) se noyaient dans deux tiers d'objets bon marché.
+ * Décision du 2026-08-28 : « 30 % de chances en plus sur son tier ». Le T4 n'a
+ * pas de tier natif propre (les terciles s'arrêtent à 3) : il favorise les T3.
+ */
+export const BONUS_TIER_NATIF = 1.3;
+
+function poidsTierNatif(template: ObjetTemplate, tier: 1 | 2 | 3 | 4): number {
+  return tierMinTemplate(template.templateId) === Math.min(tier, 3)
+    ? BONUS_TIER_NATIF
+    : 1;
+}
+
 function tirerTemplatePondere(
   pool: readonly ObjetTemplate[],
   boostRares: boolean,
@@ -206,8 +223,15 @@ function tirerTemplatePondere(
       break;
     }
   }
-  // 2ᵉ étage : uniforme parmi les templates de la rareté choisie.
-  return choisis[Math.floor(Math.random() * choisis.length)];
+  // 2ᵉ étage : parmi les templates de la rareté choisie, les natifs du tier
+  // pèsent BONUS_TIER_NATIF, les autres 1.
+  const poidsTemplates = choisis.map((t) => poidsTierNatif(t, tier));
+  let r2 = Math.random() * poidsTemplates.reduce((s, p) => s + p, 0);
+  for (let i = 0; i < choisis.length; i++) {
+    r2 -= poidsTemplates[i];
+    if (r2 <= 0) return choisis[i];
+  }
+  return choisis[choisis.length - 1];
 }
 
 /**

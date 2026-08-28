@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   BONUS_SPECIALISATION,
+  BONUS_TIER_NATIF,
   CHANCE_EXCLUSIF_PAR_SESSION,
   MIX_RARETE_PAR_TIER,
   SEUIL_COLERE_VENDEUR,
@@ -18,6 +19,7 @@ import {
   createMockSlot,
 } from "./__test-fixtures__/gameState";
 import { UNIQUES } from "@/data/uniques";
+import { poolPourTier, tierMinTemplate } from "@/data/objetTemplates";
 import { getBrocanteById } from "@/data/brocantes";
 import { vinylesCadeauxExclus, VINYLES_CADEAU_PAR_ANNEE } from "@/lib/anniversaire";
 import type { Brocante, CollectionSlot, Courrier, GameState } from "@/types/game";
@@ -672,5 +674,54 @@ describe("prixMinAvecMarchandage — Marchandage à l'ouverture de la négo", ()
   it("ne descend jamais sous 1 €", () => {
     // 20 × 0.12 = 2.4 → 2 ; 1 − 2 = −1 → clampé à 1.
     expect(prixMinAvecMarchandage(20, 1, 0.12)).toBe(1);
+  });
+});
+
+describe("genererSession — les objets natifs du tier dominent (2026-08-28)", () => {
+  it("BONUS_TIER_NATIF = 1,3 : « 30 % de chances en plus » sur son propre tier", () => {
+    expect(BONUS_TIER_NATIF).toBe(1.3);
+  });
+
+  /** Part observée des COMMUNS natifs du tier, sur n sessions génériques. */
+  function partNatifs(tier: 1 | 2 | 3 | 4, sessions: number): number {
+    const broc = createMockBrocante({ id: "broc-natif", tier, etoiles: tier, taillePool: 10 });
+    const natif = Math.min(tier, 3);
+    let natifs = 0;
+    let total = 0;
+    for (let s = 0; s < sessions; s++) {
+      for (const it of genererSession(10, [], broc)) {
+        if (it.objet.rarete !== "commun") continue;
+        total += 1;
+        if (tierMinTemplate(it.objet.templateId) === natif) natifs += 1;
+      }
+    }
+    return natifs / total;
+  }
+
+  /** Part attendue si chaque natif pèse BONUS_TIER_NATIF pour 1. */
+  function partAttendue(tier: 1 | 2 | 3 | 4): number {
+    const communs = poolPourTier(tier).filter((t) => t.rarete === "commun");
+    const natif = Math.min(tier, 3);
+    const n = communs.filter((t) => tierMinTemplate(t.templateId) === natif).length;
+    const autres = communs.length - n;
+    return (n * BONUS_TIER_NATIF) / (n * BONUS_TIER_NATIF + autres);
+  }
+
+  it("T2 : les natifs T2 sortent à ×1,3 de leur part uniforme (tolérance ±3 pts)", () => {
+    const obs = partNatifs(2, 400);
+    const att = partAttendue(2);
+    // Sans le bonus, la part serait n/(n+autres) ≈ 0,49 ; avec, ≈ 0,56.
+    expect(att).toBeGreaterThan(0.52);
+    expect(Math.abs(obs - att)).toBeLessThan(0.03);
+  });
+
+  it("T3 : le dernier tercile (natif T3) est favorisé (tolérance ±3 pts)", () => {
+    const obs = partNatifs(3, 400);
+    expect(Math.abs(obs - partAttendue(3))).toBeLessThan(0.03);
+  });
+
+  it("T4 : aucun tier natif 4 — ce sont les natifs T3 qui pèsent 1,3", () => {
+    const obs = partNatifs(4, 400);
+    expect(Math.abs(obs - partAttendue(4))).toBeLessThan(0.03);
   });
 });
