@@ -28,6 +28,17 @@
 
   <details class="panneau" id="p-reglages" data-type="pause">
     <summary><h2>Réglages</h2></summary>
+    <h3>Préréglages</h3>
+    <div class="ligne">
+      <select id="preset-liste"><option value="">— aucun —</option></select>
+      <button id="preset-charger" disabled>Charger</button>
+    </div>
+    <div class="ligne">
+      <button id="preset-sauver">Enregistrer sous…</button>
+      <button id="preset-supprimer" disabled>Supprimer</button>
+    </div>
+    <p class="info">Un préréglage mémorise tout sauf les objets, la cible et la photo importée.</p>
+    <h3>Vidéo</h3>
     <label>Type de vidéo
       <select id="typeVideo">
         <option value="pause">Mets pause (défilement régulier, boucle)</option>

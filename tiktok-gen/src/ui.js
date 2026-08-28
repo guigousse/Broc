@@ -14,6 +14,7 @@ import { SonRoulette } from "./son.js";
 import { Apercu, roulettePour } from "./apercu.js";
 import { capacitesEnregistrement, enregistrer, partager } from "./enregistreur.js";
 import { capacitesHorsLigne, rendreHorsLigne } from "./encodeur.js";
+import { appliquerPreset, chargerPreset, nomsPresets, sauverPreset, supprimerPreset } from "./presets.js";
 
 const MAX_OBJETS = 12;
 const TIRAGE = 8;
@@ -93,6 +94,7 @@ async function demarrer() {
     son: $("son"),
     duree: $("info-duree"), fenetre: $("info-fenetre"), message: $("message"),
     typeVideo: $("typeVideo"), reglagesPanneau: $("p-reglages"),
+    presetListe: $("preset-liste"), presetCharger: $("preset-charger"), presetSauver: $("preset-sauver"), presetSupprimer: $("preset-supprimer"),
   };
   const curseurs = [
     { cle: "vitesse", champ: $("vitesse"), sortie: $("v-vitesse"), texte: (v) => v.toFixed(1).replace(".", ",") },
@@ -358,6 +360,42 @@ async function demarrer() {
   el.categorie.addEventListener("change", appliquerFiltre);
   el.recherche.addEventListener("input", appliquerFiltre);
   el.aleatoire.addEventListener("click", tirer);
+  // ------------------------------------------------------------- préréglages
+  function majPresets(selection = "") {
+    const noms = nomsPresets(stockage);
+    el.presetListe.replaceChildren(new Option("— aucun —", ""), ...noms.map((n) => new Option(n, n)));
+    el.presetListe.value = noms.includes(selection) ? selection : "";
+    const choisi = el.presetListe.value !== "";
+    el.presetCharger.disabled = !choisi;
+    el.presetSupprimer.disabled = !choisi;
+  }
+  el.presetListe.addEventListener("change", () => majPresets(el.presetListe.value));
+  el.presetSauver.addEventListener("click", () => {
+    const nom = window.prompt("Nom du préréglage", el.presetListe.value || "");
+    if (nom === null) return;
+    const retenu = sauverPreset(stockage, nom, reglages);
+    if (!retenu) { dire("Donne un nom au préréglage."); return; }
+    majPresets(retenu);
+    dire(`Préréglage « ${retenu} » enregistré.`);
+  });
+  el.presetCharger.addEventListener("click", () => {
+    const nom = el.presetListe.value;
+    const p = chargerPreset(stockage, nom);
+    if (!p) { majPresets(); return; }
+    reglages = appliquerPreset(reglages, p);
+    peuplerChamps();
+    appliquer();
+    dire(`Préréglage « ${nom} » chargé.`);
+  });
+  el.presetSupprimer.addEventListener("click", () => {
+    const nom = el.presetListe.value;
+    if (!nom || !window.confirm(`Supprimer le préréglage « ${nom} » ?`)) return;
+    supprimerPreset(stockage, nom);
+    majPresets();
+    dire(`Préréglage « ${nom} » supprimé.`);
+  });
+  majPresets();
+
   el.typeVideo.addEventListener("change", () => {
     reglages.type = el.typeVideo.value;
     el.reglagesPanneau.dataset.type = reglages.type;
