@@ -492,7 +492,7 @@ async function demarrer() {
       if (horsLigne.ok) {
         const { blob, nomFichier, fps } = await rendreHorsLigne({
           scene: apercu.scene, r: apercu.r, son, sonActif: reglages.son, cibleId: reglages.cible,
-          capacites: horsLigne, onProgression: (p) => { el.progression.value = p; },
+          capacites: horsLigne, onProgression: (p) => { el.progression.value = p; majBarreEnregistrer(p); },
         });
         prise = { blob, nomFichier };
         if (DEBUG) window.__dernierBlob = blob;
@@ -507,7 +507,7 @@ async function demarrer() {
         son,
         cibleId: reglages.cible,
         mime: capacites.mime,
-        onProgression: (p) => { el.progression.value = p; },
+        onProgression: (p) => { el.progression.value = p; majBarreEnregistrer(p); },
       });
       prise = { blob, nomFichier };
       if (DEBUG) window.__dernierBlob = blob;
@@ -600,6 +600,19 @@ async function demarrer() {
     appliquer({ leger: true });   // le libellé de la barre dit le mode, pas besoin de message.
   }
   barreType.addEventListener("click", () => changerType(reglages.type === "pause" ? "ralentie" : "pause"));
+
+  // Bouton Enregistrer de la barre : même prise que celui du panneau, même état.
+  const barreEnregistrer = document.getElementById("barre-enregistrer");
+  const barreEnregistrerLibelle = document.getElementById("barre-enregistrer-libelle");
+  function majBarreEnregistrer(progression = null) {
+    barreEnregistrer.disabled = el.enregistrer.disabled;
+    barreEnregistrerLibelle.textContent = enregistrementEnCours && progression !== null
+      ? `${Math.round(progression * 100)} %`
+      : "Enregistrer";
+  }
+  new MutationObserver(() => majBarreEnregistrer()).observe(el.enregistrer, { attributes: true, attributeFilter: ["disabled"] });
+  barreEnregistrer.addEventListener("click", () => el.enregistrer.click());
+  majBarreEnregistrer();
 
   peuplerChamps();
   majAffichage();

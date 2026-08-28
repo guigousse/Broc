@@ -356,6 +356,17 @@ output {
 
 #barre button[aria-pressed="true"] { color: var(--laiton); opacity: 1; background: rgba(255, 255, 255, 0.06); }
 #barre #barre-type { color: var(--laiton); opacity: 1; }
+
+/* Le bouton d'enregistrement : plein laiton, comme « Exporter » sur CapCut. */
+#barre button.accent {
+  flex: 1.15;
+  margin-left: 4px;
+  background: var(--laiton);
+  color: var(--nuit);
+  opacity: 1;
+  font-weight: 600;
+}
+#barre button.accent:disabled { opacity: 0.4; }
 #barre #barre-type span { font-weight: 600; }
 
 /* Un panneau de section ne s'affiche que depuis la barre ; un seul à la fois. */
