@@ -11,23 +11,23 @@
 <main id="app">
   <section id="apercu"><canvas id="scene" width="1080" height="1920"></canvas></section>
 
-  <section class="panneau" id="p-fond">
-    <h2>Fond</h2>
+  <details class="panneau" id="p-fond" open>
+    <summary><h2>Fond</h2></summary>
     <div class="grille" id="grille-fonds"></div>
     <label class="bouton">Importer une photo <input type="file" accept="image/*" id="fond-perso" hidden></label>
-  </section>
+  </details>
 
-  <section class="panneau" id="p-objets">
-    <h2>Objets <span id="compte-objets"></span></h2>
+  <details class="panneau" id="p-objets" open>
+    <summary><h2>Objets <span id="compte-objets"></span></h2></summary>
     <div class="ligne"><select id="filtre-categorie"><option value="">Toutes</option></select><input id="recherche" type="search" placeholder="Rechercher"></div>
     <div class="ligne"><button id="aleatoire">Aléatoire ×8</button><button id="vider">Vider</button></div>
     <div class="grille" id="grille-objets"></div>
     <h3>Sélection (appuie pour choisir la cible)</h3>
     <div class="grille" id="grille-selection"></div>
-  </section>
+  </details>
 
-  <section class="panneau" id="p-reglages">
-    <h2>Réglages</h2>
+  <details class="panneau" id="p-reglages" open>
+    <summary><h2>Réglages</h2></summary>
     <label>Vitesse <output id="v-vitesse"></output><input type="range" id="vitesse" min="1.5" max="4" step="0.1"></label>
     <label>Espacement <output id="v-espacement"></output><input type="range" id="espacement" min="400" max="700" step="10"></label>
     <label>Passages <output id="v-passages"></output><input type="range" id="nbPassages" min="2" max="4" step="1"></label>
@@ -40,7 +40,7 @@
     <label>Autres objets, {n} = le nombre <input type="text" id="texteAutres" maxlength="80"></label>
     <label>Au-dessus des badges <input type="text" id="texteDispo" maxlength="80"></label>
     <p class="info">Durée <b id="info-duree">—</b> · fenêtre de pause <b id="info-fenetre">—</b></p>
-  </section>
+  </details>
 
   <section class="panneau" id="p-export">
     <button class="principal" id="enregistrer" disabled>Enregistrer</button>

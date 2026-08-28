@@ -513,6 +513,19 @@ async function demarrer() {
 
   construireGrilleFonds();
   appliquerFiltre();
+  // Sections rabattables : l'état de chacune survit au rechargement (confort local).
+  const CLE_OUVERTS = "broc-tiktok-gen-sections";
+  const sections = [...document.querySelectorAll("details.panneau")];
+  try {
+    const fermees = JSON.parse(stockage.getItem(CLE_OUVERTS) ?? "[]");
+    for (const d of sections) d.open = !fermees.includes(d.id);
+  } catch { /* état non lu : tout reste ouvert */ }
+  for (const d of sections) {
+    d.addEventListener("toggle", () => {
+      try { stockage.setItem(CLE_OUVERTS, JSON.stringify(sections.filter((x) => !x.open).map((x) => x.id))); } catch { /* tant pis */ }
+    });
+  }
+
   peuplerChamps();
   majAffichage();
   await rafraichirApercu();

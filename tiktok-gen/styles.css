@@ -72,6 +72,33 @@ body {
 
 .panneau h3 { font-size: 0.9rem; }
 
+/* Sections rabattables : le titre est la poignée, chevron à droite, zone tactile ≥ 44 px. */
+details.panneau > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--touche);
+  margin: -12px;
+  padding: 0 12px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+details.panneau > summary::-webkit-details-marker { display: none; }
+details.panneau > summary::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--laiton);
+  border-bottom: 2px solid var(--laiton);
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+  margin-right: 4px;
+}
+details.panneau[open] > summary::after { transform: rotate(45deg); }
+details.panneau[open] > summary { margin-bottom: -2px; }
+
 /*
  * Pendant l'enregistrement : les réglages sont gelés (toucher un curseur
  * relancerait la roulette au milieu de la prise). Le panneau d'export, lui,
@@ -203,11 +230,7 @@ output {
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
 }
 
-#grille-objets {
-  max-height: 40vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
+/* La grille d'objets s'affiche en entier : la section se rabat pour ne pas encombrer. */
 
 .vignette {
   position: relative;
