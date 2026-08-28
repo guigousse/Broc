@@ -454,14 +454,6 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px 
 
 #barre button[aria-pressed="true"] { color: var(--laiton); background: var(--laiton-fond); }
 
-#barre #barre-type { color: var(--texte); }
-#barre #barre-type span {
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-weight: 600;
-  color: var(--laiton);
-  background: var(--laiton-fond);
-}
 
 /* Enregistrer : le seul rouge de l'interface. */
 #barre button.accent {
@@ -478,3 +470,44 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ------------------------------------------------------ éditeur de texte */
+
+#scene.edition { touch-action: none; cursor: grab; }
+
+#textes-liste { display: flex; flex-direction: column; gap: 10px; }
+
+.carte-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--carte-2);
+  box-shadow: 0 0 0 1px transparent;
+}
+
+.carte-texte.active { box-shadow: 0 0 0 2px var(--vert); }
+
+.carte-texte input[type="text"] { width: 100%; background: var(--carte); }
+.carte-texte select { background: var(--carte); }
+.carte-texte .ligne label { display: flex; align-items: center; gap: 8px; min-height: var(--touche); }
+.carte-texte .ligne label input[type="checkbox"] { width: 22px; height: 22px; margin: 0; accent-color: var(--laiton); }
+
+.carte-texte > label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.carte-texte > label input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: var(--touche);
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#p-texte code { font-family: inherit; color: var(--laiton); }

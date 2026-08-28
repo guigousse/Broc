@@ -3,7 +3,8 @@
  * d'animation (rAF) et cale le son dessus. Module DOM/canvas, pas de tests
  * unitaires — la logique testable vit dans roulette.js et texte.js.
  */
-import { calculerPour, estFlash, instantDessine, tempsBoucle, LARGEUR, HAUTEUR, CENTRE_X, CENTRE_Y } from "./roulette.js";
+import { calculerPour, estFlash, instantDessine, instantFin, tempsBoucle, LARGEUR, HAUTEUR, CENTRE_X, CENTRE_Y } from "./roulette.js";
+import { boiteTexte } from "./overlay.js";
 import { dessinerFrame } from "./rendu.js";
 import { chargerImage } from "./images.js";
 import { COULEURS } from "./theme.js";
@@ -58,6 +59,10 @@ export class Apercu {
 
   /** Passé à vrai par l'interface une fois `son.demarrer()` résolu (geste utilisateur). */
   sonDemarre = false;
+  /** Mode « fin » (éditeur de texte) : image fixe de la cible posée sur la silhouette, overlay visible, sans son. */
+  #modeFin = false;
+  /** Id du calque de texte mis en évidence (cadre pointillé) en mode fin, ou null. */
+  coucheActive = null;
 
   constructor(canvas, cache, son) {
     this.#canvas = canvas;
@@ -122,9 +127,10 @@ export class Apercu {
       // Pour la légende du flash : la cible, et combien d'autres objets l'attendent dans le jeu.
       cible: { nom: entreeCible?.nom ?? cible, prix: entreeCible?.prix ?? 0 },
       nbAutres: Math.max(0, catalogue.length - 1),
-      textes: { sousTitre: reglages.sousTitre, autres: reglages.texteAutres, dispo: reglages.texteDispo },
+      textes: reglages.textes,
     };
 
+    if (this.#modeFin) { this.dessinerFin(); return { cfg, r }; }
     // Le son était planifié pour l'ancienne roulette : on repart de zéro, ensemble.
     if (this.#raf !== null) this.#relancer();
     return { cfg, r };
@@ -135,6 +141,57 @@ export class Apercu {
     if (!this.#scene) { this.#dessinerInvite(); return; }
     const tb = tempsBoucle(t, this.#r);
     dessinerFrame(this.#ctx, instantDessine(tb, this.#r), { ...this.#scene, flashActif: estFlash(tb, this.#r) });
+  }
+
+  get modeFin() { return this.#modeFin; }
+
+  /** Entre ou sort du mode fin : image fixe (aucune boucle, son coupé) ou lecture normale. */
+  figerFin(actif) {
+    if (this.#modeFin === actif) return;
+    this.#modeFin = actif;
+    if (actif) {
+      if (this.#raf !== null) { cancelAnimationFrame(this.#raf); this.#raf = null; }
+      this.#son.arreter();
+      this.dessinerFin();
+    } else {
+      this.coucheActive = null;
+      this.jouer();
+    }
+  }
+
+  /** L'image de fin : cible sur la silhouette, overlay, aura au plus fort — et le cadre du calque actif. */
+  dessinerFin() {
+    if (!this.#scene) { this.#dessinerInvite(); return; }
+    const t = instantFin(this.#r);
+    dessinerFrame(this.#ctx, instantDessine(t, this.#r), { ...this.#scene, flashActif: true });
+    const c = this.coucheActive && (this.#scene.textes ?? []).find((x) => x.id === this.coucheActive);
+    if (!c) return;
+    const b = boiteTexte(this.#ctx, c, this.#scene.nbAutres);
+    const ctx = this.#ctx;
+    ctx.save();
+    ctx.strokeStyle = "rgba(79,178,134,0.95)"; ctx.lineWidth = 4; ctx.setLineDash([16, 12]);
+    ctx.strokeRect(b.x0 - 16, b.y0 - 8, b.x1 - b.x0 + 32, b.y1 - b.y0 + 16);
+    ctx.restore();
+  }
+
+  /** Redessine l'image de fin si on y est (après un déplacement de calque). */
+  redessiner() { if (this.#modeFin) this.dessinerFin(); }
+
+  /** Le calque de texte sous le point (x, y) du cadre, le plus haut d'abord ; null sinon. */
+  coucheSous(x, y) {
+    if (!this.#scene) return null;
+    const textes = this.#scene.textes ?? [];
+    for (let i = textes.length - 1; i >= 0; i--) {
+      const b = boiteTexte(this.#ctx, textes[i], this.#scene.nbAutres);
+      if (x >= b.x0 - 16 && x <= b.x1 + 16 && y >= b.y0 - 8 && y <= b.y1 + 8) return textes[i];
+    }
+    return null;
+  }
+
+  /** Coordonnées d'un événement pointeur → px du cadre (1080×1920). */
+  versCadre(clientX, clientY) {
+    const r = this.#canvas.getBoundingClientRect();
+    return { x: ((clientX - r.left) / r.width) * LARGEUR, y: ((clientY - r.top) / r.height) * HAUTEUR };
   }
 
   #dessinerInvite() {
@@ -159,6 +216,7 @@ export class Apercu {
   }
 
   jouer() {
+    if (this.#modeFin) { this.dessinerFin(); return; }   // image fixe : pas de boucle, pas de son.
     if (this.#raf !== null) { this.#relancer(); return; }
     this.#relancer();
     const boucle = (maintenant) => {

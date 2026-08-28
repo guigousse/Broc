@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { REGLAGES_DEFAUT, normaliserReglages, chargerReglages, sauverReglages, consigneParDefaut } from "./reglages.js";
+import { REGLAGES_DEFAUT, normaliserReglages, chargerReglages, sauverReglages, consigneParDefaut, nouveauTexte } from "./reglages.js";
 
 const memoire = () => {
   const m = new Map();
@@ -36,11 +36,22 @@ describe("normaliserReglages", () => {
     expect(normaliserReglages({ liseret: 99 }).liseret).toBe(30);
     expect(normaliserReglages({ liseret: -1 }).liseret).toBe(0);
   });
-  it("textes du flash : défauts, chaîne vide conservée (ligne masquée), tronqués à 80", () => {
-    expect(normaliserReglages({}).sousTitre).toBe("Le jeu de brocante");
-    expect(normaliserReglages({ texteAutres: "" }).texteAutres).toBe("");
-    expect(normaliserReglages({ texteDispo: 42 }).texteDispo).toBe("Disponible gratuitement sur");
-    expect(normaliserReglages({ sousTitre: "x".repeat(100) }).sousTitre).toHaveLength(80);
+  it("calques de texte : les trois d'origine par défaut, migration des anciens champs", () => {
+    const d = normaliserReglages({}).textes;
+    expect(d.map((c) => c.id)).toEqual(["sous-titre", "autres", "dispo"]);
+    expect(d[0]).toMatchObject({ texte: "Le jeu de brocante", x: 540, y: 520, police: "Cinzel", taille: 64 });
+    const m = normaliserReglages({ sousTitre: "Yo", texteAutres: "", texteDispo: "x".repeat(100) }).textes;
+    expect(m.map((c) => c.id)).toEqual(["sous-titre", "dispo"]);
+    expect(m[0].texte).toBe("Yo"); expect(m[1].texte).toHaveLength(80);
+  });
+  it("calques de texte : liste normalisée, bornée, sans entrée invalide", () => {
+    const r = normaliserReglages({ textes: [
+      { id: "a", texte: "A", x: -5, y: 5000, police: "Comic", taille: 999, couleur: "rose", gras: 0 },
+      { texte: "sans id" }, null,
+    ] }).textes;
+    expect(r).toHaveLength(1);
+    expect(r[0]).toEqual({ id: "a", texte: "A", x: 0, y: 1920, police: "Cinzel", taille: 220, couleur: "ivoire", gras: false });
+    expect(normaliserReglages({ textes: [] }).textes).toEqual([]);
   });
   it("complète avec les défauts", () => expect(normaliserReglages({}).consigne).toBe(REGLAGES_DEFAUT.consigne));
 });
@@ -66,3 +77,12 @@ describe("localStorage", () => {
 });
 
 it("consigneParDefaut", () => expect(consigneParDefaut("la lampe")).toBe("Mets pause sur la lampe !"));
+
+describe("nouveauTexte", () => {
+  it("ids distincts, calque au centre, taille 56", () => {
+    const a = nouveauTexte(), b = nouveauTexte("B");
+    expect(a.id).not.toBe(b.id);
+    expect(a).toMatchObject({ x: 540, taille: 56, police: "Cinzel" });
+    expect(b.texte).toBe("B");
+  });
+});

@@ -161,6 +161,16 @@ export function aura(dt) {
   return { opacite: 0.8 + 0.2 * w, echelle: 1.2 + 0.14 * w };
 }
 
+/**
+ * L'instant « fin » à montrer dans l'éditeur de texte : la cible posée sur la
+ * silhouette avec l'overlay. Roulette qui boucle : le premier calage. Roulette
+ * qui ralentit : pendant l'arrêt final, l'aura au plus fort.
+ */
+export function instantFin(r) {
+  if (r.arretDepuis === null || r.arretDepuis === undefined) return r.instantsCentrage[0];
+  return Math.min(r.duree - 1e-3, r.arretDepuis + AURA_APPARITION + AURA_PERIODE / 2);
+}
+
 export function tempsBoucle(t, r) {
   return ((t % r.duree) + r.duree) % r.duree;
 }

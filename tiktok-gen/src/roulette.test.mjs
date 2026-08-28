@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculerRoulette, calculerRouletteRalentie, calculerPour, positionsA, positionsVisibles, estFlash, instantDessine, aura, AURA_APPARITION, AURA_PERIODE, tempsBoucle, CENTRE_X, LARGEUR, FPS } from "./roulette.js";
+import { calculerRoulette, calculerRouletteRalentie, calculerPour, positionsA, positionsVisibles, estFlash, instantDessine, aura, AURA_APPARITION, AURA_PERIODE, instantFin, tempsBoucle, CENTRE_X, LARGEUR, FPS } from "./roulette.js";
 
 const CFG = { nbObjets: 8, indexCible: 2, vitesse: 2, espacement: 500, nbPassages: 3, largeurFlash: 4 };
 
@@ -207,5 +207,18 @@ describe("aura", () => {
   it("la roulette qui ralentit célèbre à T, celle qui boucle jamais", () => {
     expect(calculerRouletteRalentie({ nbObjets: 4, indexCible: 0, espacement: 500, nbTours: 1, dureeDefilement: 3, arretFinal: 1 }).instantCelebration).toBe(3);
     expect(calculerRoulette(CFG).instantCelebration).toBeNull();
+  });
+});
+
+describe("instantFin", () => {
+  it("boucle : premier calage ; ralentie : dans l'arrêt final, aura au maximum", () => {
+    const r = calculerRoulette(CFG);
+    expect(instantFin(r)).toBe(r.instantsCentrage[0]);
+    expect(estFlash(instantFin(r), r)).toBe(true);
+    const rr = calculerRouletteRalentie({ nbObjets: 4, indexCible: 0, espacement: 500, nbTours: 1, dureeDefilement: 3, arretFinal: 2 });
+    expect(instantFin(rr)).toBeCloseTo(3 + AURA_APPARITION + AURA_PERIODE / 2, 9);
+    expect(instantFin(rr)).toBeLessThan(rr.duree);
+    const court = calculerRouletteRalentie({ nbObjets: 4, indexCible: 0, espacement: 500, nbTours: 1, dureeDefilement: 3, arretFinal: 0.5 });
+    expect(instantFin(court)).toBeLessThan(court.duree);
   });
 });

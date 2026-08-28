@@ -5,19 +5,20 @@ import {
 } from "./presets.js";
 
 const memoire = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v) }; };
-const R = { ...REGLAGES_DEFAUT, objets: ["a", "b"], cible: "a", fond: "grange", fondPerso: "data:x", vitesse: 3, type: "ralentie", sousTitre: "Yo" };
+const T = [{ id: "sous-titre", texte: "Yo", x: 540, y: 520, police: "Cinzel", taille: 64, couleur: "ivoire", gras: true }];
+const R = { ...REGLAGES_DEFAUT, objets: ["a", "b"], cible: "a", fond: "grange", fondPerso: "data:x", vitesse: 3, type: "ralentie", textes: T };
 
 describe("extrairePreset / appliquerPreset", () => {
   it("exclut objets, cible et photo ; garde fond, curseurs, type, textes", () => {
     const p = extrairePreset(R);
     expect(p).not.toHaveProperty("objets"); expect(p).not.toHaveProperty("cible"); expect(p).not.toHaveProperty("fondPerso");
-    expect(p).toMatchObject({ fond: "grange", vitesse: 3, type: "ralentie", sousTitre: "Yo" });
+    expect(p).toMatchObject({ fond: "grange", vitesse: 3, type: "ralentie", textes: T });
   });
   it("appliquer garde la sélection courante et normalise", () => {
     const courant = { ...REGLAGES_DEFAUT, objets: ["z"], cible: "z", fondPerso: null };
-    const r = appliquerPreset(courant, { vitesse: 99, type: "ralentie", sousTitre: "Yo" });
+    const r = appliquerPreset(courant, { vitesse: 99, type: "ralentie", textes: T });
     expect(r.objets).toEqual(["z"]); expect(r.cible).toBe("z");
-    expect(r.vitesse).toBe(4); expect(r.type).toBe("ralentie"); expect(r.sousTitre).toBe("Yo");
+    expect(r.vitesse).toBe(4); expect(r.type).toBe("ralentie"); expect(r.textes[0].texte).toBe("Yo");
   });
   it("un fond « perso » sans photo retombe sur le fond courant", () => {
     const courant = { ...REGLAGES_DEFAUT, fond: "grange", fondPerso: null };

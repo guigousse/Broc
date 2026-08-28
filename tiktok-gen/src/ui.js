@@ -6,8 +6,8 @@
 import { CATEGORIES, chargerCatalogue, filtrerCatalogue, tirerAleatoire } from "./catalogue.js";
 import { CacheImages } from "./images.js";
 import {
-  FOND_PERSO, REGLAGES_DEFAUT, TAILLE_MAX_FOND_PERSO,
-  chargerReglages, normaliserReglages, sauverReglages,
+  COULEURS_TEXTE, FOND_PERSO, POLICES, REGLAGES_DEFAUT, TAILLE_MAX_FOND_PERSO, TEXTE_MAX, TEXTES_MAX,
+  chargerReglages, normaliserReglages, nouveauTexte, sauverReglages,
 } from "./reglages.js";
 import { formaterDuree, formaterInfos } from "./texte.js";
 import { SonRoulette } from "./son.js";
@@ -87,7 +87,6 @@ async function demarrer() {
     panneauxGeles: [...document.querySelectorAll(".panneau:not(#p-export)")],
     enregistrer: $("enregistrer"), progression: $("progression"), partager: $("partager"),
     grilleFonds: $("grille-fonds"), fondPerso: $("fond-perso"),
-    textes: ["sousTitre", "texteAutres", "texteDispo"].map((cle) => ({ cle, champ: $(cle) })),
     compte: $("compte-objets"), categorie: $("filtre-categorie"), recherche: $("recherche"),
     aleatoire: $("aleatoire"), vider: $("vider"),
     grilleObjets: $("grille-objets"), grilleSelection: $("grille-selection"),
@@ -239,8 +238,7 @@ async function demarrer() {
     el.son.checked = reglages.son;
     el.typeVideo.value = reglages.type;
     el.reglagesPanneau.dataset.type = reglages.type;
-    if (typeof majBarreType === "function") majBarreType();
-    for (const t of el.textes) t.champ.value = reglages[t.cle];
+    construireTextes();
   }
 
   /** Durée et fenêtre de pause : calcul pur, aucune image à charger — donc immédiat. */
@@ -398,12 +396,6 @@ async function demarrer() {
   majPresets();
 
   el.typeVideo.addEventListener("change", () => changerType(el.typeVideo.value));
-  for (const t of el.textes) {
-    t.champ.addEventListener("input", () => {
-      reglages[t.cle] = t.champ.value;
-      appliquer({ delai: DELAI_CURSEUR, leger: true });   // une frappe ≠ un tour de roulette.
-    });
-  }
   el.vider.addEventListener("click", () => { reglages.objets = []; reglages.cible = null; dire(""); appliquer(); });
 
   for (const c of curseurs) {
@@ -562,6 +554,108 @@ async function demarrer() {
   construireGrilleFonds();
   appliquerFiltre();
   // Sections rabattables : l'état de chacune survit au rechargement (confort local).
+  // ------------------------------------------------------ éditeur de texte
+  const listeTextes = document.getElementById("textes-liste");
+  const boutonAjouterTexte = document.getElementById("texte-ajouter");
+  let coucheActive = null;
+
+  function activerCouche(id) {
+    coucheActive = id;
+    apercu.coucheActive = id;
+    for (const carte of listeTextes.children) carte.classList.toggle("active", carte.dataset.id === id);
+    apercu.redessiner();
+  }
+
+  /** Une carte par calque : texte, police, taille, couleur, gras, centrer, supprimer. */
+  function construireTextes() {
+    const ids = new Set(reglages.textes.map((c) => c.id));
+    if (!ids.has(coucheActive)) coucheActive = null;
+    listeTextes.replaceChildren(...reglages.textes.map((c, i) => carteTexte(c, i)));
+    boutonAjouterTexte.disabled = reglages.textes.length >= TEXTES_MAX;
+    apercu.coucheActive = coucheActive;
+  }
+
+  function carteTexte(c, i) {
+    const carte = document.createElement("div");
+    carte.className = `carte-texte${c.id === coucheActive ? " active" : ""}`;
+    carte.dataset.id = c.id;
+    const maj = (patch, { delai = 0 } = {}) => {
+      Object.assign(reglages.textes[i], patch);
+      appliquer({ delai, leger: true });
+    };
+    const champ = document.createElement("input");
+    champ.type = "text"; champ.maxLength = TEXTE_MAX; champ.value = c.texte; champ.placeholder = "Texte";
+    champ.setAttribute("aria-label", `Texte ${i + 1}`);
+    champ.addEventListener("focus", () => activerCouche(c.id));
+    champ.addEventListener("input", () => maj({ texte: champ.value }, { delai: DELAI_CURSEUR }));
+    const police = document.createElement("select");
+    for (const p of POLICES) police.append(new Option(p, p));
+    police.value = c.police;
+    police.addEventListener("change", () => maj({ police: police.value }));
+    const couleur = document.createElement("select");
+    for (const [nom] of Object.entries(COULEURS_TEXTE)) couleur.append(new Option(nom.charAt(0).toUpperCase() + nom.slice(1), nom));
+    couleur.value = c.couleur;
+    couleur.addEventListener("change", () => maj({ couleur: couleur.value }));
+    const gras = document.createElement("label");
+    const grasCase = document.createElement("input"); grasCase.type = "checkbox"; grasCase.checked = c.gras;
+    grasCase.addEventListener("change", () => maj({ gras: grasCase.checked }));
+    gras.append(grasCase, " Gras");
+    const taille = document.createElement("label");
+    const tailleSortie = document.createElement("output"); tailleSortie.textContent = `${c.taille} px`;
+    const tailleChamp = document.createElement("input");
+    tailleChamp.type = "range"; tailleChamp.min = "20"; tailleChamp.max = "220"; tailleChamp.step = "2"; tailleChamp.value = String(c.taille);
+    tailleChamp.addEventListener("input", () => { tailleSortie.textContent = `${tailleChamp.value} px`; maj({ taille: Number(tailleChamp.value) }, { delai: DELAI_CURSEUR }); });
+    taille.append("Taille ", tailleSortie, tailleChamp);
+    const centrer = document.createElement("button"); centrer.type = "button"; centrer.className = "discret"; centrer.textContent = "Centrer";
+    centrer.addEventListener("click", () => maj({ x: 540 }));
+    const supprimer = document.createElement("button"); supprimer.type = "button"; supprimer.className = "discret"; supprimer.textContent = "Supprimer";
+    supprimer.addEventListener("click", () => { reglages.textes.splice(i, 1); appliquer({ leger: true }); construireTextes(); });
+    const ligne1 = document.createElement("div"); ligne1.className = "ligne"; ligne1.append(police, couleur);
+    const ligne2 = document.createElement("div"); ligne2.className = "ligne"; ligne2.append(gras, centrer, supprimer);
+    carte.append(champ, ligne1, taille, ligne2);
+    carte.addEventListener("pointerdown", () => activerCouche(c.id));
+    return carte;
+  }
+
+  boutonAjouterTexte.addEventListener("click", () => {
+    if (reglages.textes.length >= TEXTES_MAX) return;
+    const c = nouveauTexte();
+    reglages.textes.push(c);
+    coucheActive = c.id;
+    appliquer({ leger: true });
+    construireTextes();
+    listeTextes.lastElementChild?.querySelector("input[type=text]")?.focus();
+  });
+
+  // Glisser-déposer sur l'aperçu, en mode fin seulement : on déplace le calque sous le doigt.
+  let glisse = null;
+  el.scene.addEventListener("pointerdown", (e) => {
+    if (!apercu.modeFin) return;
+    const p = apercu.versCadre(e.clientX, e.clientY);
+    const c = apercu.coucheSous(p.x, p.y);
+    if (!c) return;
+    e.preventDefault();
+    el.scene.setPointerCapture(e.pointerId);
+    glisse = { id: c.id, dx: c.x - p.x, dy: c.y - p.y, calque: c };
+    activerCouche(c.id);
+  });
+  el.scene.addEventListener("pointermove", (e) => {
+    if (!glisse) return;
+    const p = apercu.versCadre(e.clientX, e.clientY);
+    glisse.calque.x = Math.round(Math.min(1080, Math.max(0, p.x + glisse.dx)));
+    glisse.calque.y = Math.round(Math.min(1920, Math.max(0, p.y + glisse.dy)));
+    apercu.redessiner();
+  });
+  const finGlisse = () => {
+    if (!glisse) return;
+    const cible = reglages.textes.find((x) => x.id === glisse.id);
+    if (cible) { cible.x = glisse.calque.x; cible.y = glisse.calque.y; }
+    glisse = null;
+    appliquer({ leger: true });
+  };
+  el.scene.addEventListener("pointerup", finGlisse);
+  el.scene.addEventListener("pointercancel", finGlisse);
+
   // ------------------------------------------------- barre du bas (onglets)
   // Un seul panneau ouvert à la fois ; tap sur l'onglet actif = fermer. Mémorisé.
   const CLE_ONGLET = "broc-tiktok-gen-onglet";
@@ -570,6 +664,10 @@ async function demarrer() {
   function ouvrirSection(id) {
     for (const f of feuilles) f.hidden = f.id !== id;
     for (const o of onglets) o.setAttribute("aria-pressed", String(o.dataset.section === id));
+    // L'éditeur de texte travaille sur l'image finale : aperçu figé dessus, glisser-déposer actif.
+    const modeTexte = id === "p-texte";
+    apercu.figerFin(modeTexte);
+    el.scene.classList.toggle("edition", modeTexte);
     try { stockage.setItem(CLE_ONGLET, id ?? ""); } catch { /* tant pis */ }
     const f = id && document.getElementById(id);
     if (f) f.scrollIntoView({ block: "start", behavior: "smooth" });
@@ -584,22 +682,14 @@ async function demarrer() {
   try { ongletInitial = stockage.getItem(CLE_ONGLET) || null; } catch { /* rien */ }
   for (const f of feuilles) f.hidden = f.id !== ongletInitial;
   for (const o of onglets) o.setAttribute("aria-pressed", String(o.dataset.section === ongletInitial));
+  if (ongletInitial === "p-texte") { apercu.figerFin(true); el.scene.classList.add("edition"); }
 
-  const LIBELLES_TYPE = { pause: "Mets pause", ralentie: "Roulette" };
-  const barreType = document.getElementById("barre-type");
-  const barreTypeLibelle = document.getElementById("barre-type-libelle");
-  function majBarreType() {
-    barreTypeLibelle.textContent = LIBELLES_TYPE[reglages.type] ?? "Type";
-    barreType.title = `Type de vidéo : ${LIBELLES_TYPE[reglages.type]} — appuie pour changer`;
-  }
   function changerType(type) {
     reglages.type = type;
     el.typeVideo.value = type;
     el.reglagesPanneau.dataset.type = type;
-    majBarreType();
-    appliquer({ leger: true });   // le libellé de la barre dit le mode, pas besoin de message.
+    appliquer({ leger: true });
   }
-  barreType.addEventListener("click", () => changerType(reglages.type === "pause" ? "ralentie" : "pause"));
 
   // Bouton Enregistrer de la barre : même prise que celui du panneau, même état.
   const barreEnregistrer = document.getElementById("barre-enregistrer");
