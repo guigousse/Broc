@@ -10,9 +10,10 @@ export const FOND_PERSO = "perso";
 /** Les trois calques d'origine, aux positions de l'overlay historique. `{n}` = nombre d'autres objets. */
 export const TEXTES_DEFAUT = Object.freeze([
   { id: "sous-titre", texte: "Le jeu de brocante", x: 540, y: 520, police: "Cinzel", taille: 64, couleur: "ivoire", gras: true },
-  { id: "objet", texte: "{nom} · {prix}", x: 540, y: 1226, police: "Cinzel", taille: 58, couleur: "ivoire", gras: true },
-  { id: "autres", texte: "+ {n} autres objets à collectionner dans le jeu", x: 540, y: 1284, police: "Cinzel", taille: 40, couleur: "ivoire", gras: false },
-  { id: "dispo", texte: "Disponible gratuitement sur", x: 540, y: 1358, police: "Cinzel", taille: 46, couleur: "ivoire", gras: false },
+  { id: "nom", texte: "{nom}", x: 540, y: 1214, police: "Cinzel", taille: 56, couleur: "ivoire", gras: true },
+  { id: "prix", texte: "{prix}", x: 540, y: 1286, police: "Cinzel", taille: 68, couleur: "laiton", gras: true },
+  { id: "autres", texte: "+ {n} autres objets à collectionner dans le jeu", x: 540, y: 1346, police: "Cinzel", taille: 36, couleur: "ivoire", gras: false },
+  { id: "dispo", texte: "Disponible gratuitement sur", x: 540, y: 1396, police: "Cinzel", taille: 38, couleur: "ivoire", gras: false },
 ]);
 
 export const REGLAGES_DEFAUT = Object.freeze({
@@ -70,12 +71,23 @@ export function normaliserTexte(brut) {
  */
 export function normaliserTextes(brut) {
   if (Array.isArray(brut.textes)) {
-    const out = brut.textes.map(normaliserTexte).filter(Boolean).slice(0, TEXTES_MAX);
-    // Sauvegarde d'avant le calque « objet » : on le lui donne, sinon plus de nom ni de prix.
-    if (!out.some((c) => c.texte.includes("{nom}") || c.texte.includes("{prix}")) && out.length < TEXTES_MAX) {
-      out.splice(Math.min(1, out.length), 0, { ...TEXTES_DEFAUT.find((d) => d.id === "objet") });
+    let out = brut.textes.map(normaliserTexte).filter(Boolean);
+    const defaut = (id) => ({ ...TEXTES_DEFAUT.find((d) => d.id === id) });
+    // Sauvegarde d'un état intermédiaire : « {nom} · {prix} » sur une ligne → nom puis prix dessous.
+    const i = out.findIndex((c) => c.id === "objet" && c.texte === "{nom} · {prix}");
+    if (i >= 0) {
+      out.splice(i, 1, defaut("nom"), defaut("prix"));
+      // Les calques suivants jamais déplacés depuis leurs anciennes places descendent avec la pile.
+      for (const c of out) {
+        if (c.id === "autres" && c.y === 1284) Object.assign(c, { y: 1346, taille: 36 });
+        if (c.id === "dispo" && c.y === 1358) Object.assign(c, { y: 1396, taille: 38 });
+      }
     }
-    return out;
+    // Sauvegarde d'avant les calques nom / prix : on les lui donne, sinon plus de nom ni de prix.
+    if (!out.some((c) => c.texte.includes("{nom}") || c.texte.includes("{prix}"))) {
+      out.splice(Math.min(1, out.length), 0, defaut("nom"), defaut("prix"));
+    }
+    return out.slice(0, TEXTES_MAX);
   }
   const anciens = { "sous-titre": brut.sousTitre, autres: brut.texteAutres, dispo: brut.texteDispo };
   const out = [];

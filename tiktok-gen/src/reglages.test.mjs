@@ -38,21 +38,22 @@ describe("normaliserReglages", () => {
   });
   it("calques de texte : les trois d'origine par défaut, migration des anciens champs", () => {
     const d = normaliserReglages({}).textes;
-    expect(d.map((c) => c.id)).toEqual(["sous-titre", "objet", "autres", "dispo"]);
-    expect(d[1].texte).toBe("{nom} · {prix}");
+    expect(d.map((c) => c.id)).toEqual(["sous-titre", "nom", "prix", "autres", "dispo"]);
+    expect(d[1].texte).toBe("{nom}"); expect(d[2]).toMatchObject({ texte: "{prix}", couleur: "laiton", taille: 68 });
+    expect(d[2].y).toBeGreaterThan(d[1].y);
     expect(d[0]).toMatchObject({ texte: "Le jeu de brocante", x: 540, y: 520, police: "Cinzel", taille: 64 });
     const m = normaliserReglages({ sousTitre: "Yo", texteAutres: "", texteDispo: "x".repeat(100) }).textes;
-    expect(m.map((c) => c.id)).toEqual(["sous-titre", "objet", "dispo"]);
-    expect(m[0].texte).toBe("Yo"); expect(m[2].texte).toHaveLength(80);
+    expect(m.map((c) => c.id)).toEqual(["sous-titre", "nom", "prix", "dispo"]);
+    expect(m[0].texte).toBe("Yo"); expect(m[3].texte).toHaveLength(80);
   });
   it("calques de texte : liste normalisée, bornée, sans entrée invalide", () => {
     const r = normaliserReglages({ textes: [
       { id: "a", texte: "A", x: -5, y: 5000, police: "Comic", taille: 999, couleur: "rose", gras: 0 },
       { texte: "sans id" }, null,
     ] }).textes;
-    expect(r.map((c) => c.id)).toEqual(["a", "objet"]);   // le calque objet est ajouté aux sauvegardes qui ne l'ont pas
+    expect(r.map((c) => c.id)).toEqual(["a", "nom", "prix"]);   // nom et prix sont ajoutés aux sauvegardes qui ne les ont pas
     expect(r[0]).toEqual({ id: "a", texte: "A", x: 0, y: 1920, police: "Cinzel", taille: 220, couleur: "ivoire", gras: false });
-    expect(normaliserReglages({ textes: [] }).textes.map((c) => c.id)).toEqual(["objet"]);
+    expect(normaliserReglages({ textes: [] }).textes.map((c) => c.id)).toEqual(["nom", "prix"]);
     expect(normaliserReglages({ textes: [{ id: "z", texte: "Prix : {prix}" }] }).textes.map((c) => c.id)).toEqual(["z"]);
   });
   it("complète avec les défauts", () => expect(normaliserReglages({}).consigne).toBe(REGLAGES_DEFAUT.consigne));
@@ -86,5 +87,21 @@ describe("nouveauTexte", () => {
     expect(a.id).not.toBe(b.id);
     expect(a).toMatchObject({ x: 540, taille: 56, police: "Cinzel" });
     expect(b.texte).toBe("B");
+  });
+});
+
+describe("migration du calque « {nom} · {prix} »", () => {
+  it("devient nom puis prix, et la pile intacte descend", () => {
+    const r = normaliserReglages({ textes: [
+      { id: "sous-titre", texte: "S", x: 540, y: 520 },
+      { id: "objet", texte: "{nom} · {prix}", x: 540, y: 1226 },
+      { id: "autres", texte: "+ {n}", x: 540, y: 1284, taille: 40 },
+      { id: "dispo", texte: "D", x: 540, y: 1358, taille: 46 },
+    ] }).textes;
+    expect(r.map((c) => c.id)).toEqual(["sous-titre", "nom", "prix", "autres", "dispo"]);
+    expect(r[3]).toMatchObject({ y: 1346, taille: 36 }); expect(r[4]).toMatchObject({ y: 1396, taille: 38 });
+    // Un calque déjà déplacé à la main ne bouge pas.
+    const d = normaliserReglages({ textes: [{ id: "objet", texte: "{nom} · {prix}" }, { id: "dispo", texte: "D", y: 1000, taille: 46 }] }).textes;
+    expect(d.find((c) => c.id === "dispo")).toMatchObject({ y: 1000, taille: 46 });
   });
 });
