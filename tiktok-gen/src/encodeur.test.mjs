@@ -35,12 +35,16 @@ describe("audioSpecificConfig", () => {
 });
 
 describe("instantsSousImages", () => {
-  it("instants centrés dans l'intervalle de l'image, tous dans [t, t + 1/fps)", () => {
+  it("une seule sous-image = l'instant exact (objets nets, pleine opacité)", () => {
+    expect(SOUS_IMAGES).toBe(1);
+    expect(instantsSousImages(1 / 60)).toEqual([1 / 60]);
+  });
+  it("n > 1 : instants centrés dans l'intervalle, tous dans [t, t + 1/fps)", () => {
     const t = 1 / 60;
-    const xs = instantsSousImages(t);
-    expect(xs).toHaveLength(SOUS_IMAGES);
-    expect(xs[0]).toBeCloseTo(t + 0.5 / SOUS_IMAGES / 60, 12);
-    expect(xs.at(-1)).toBeCloseTo(t + (SOUS_IMAGES - 0.5) / SOUS_IMAGES / 60, 12);
+    const xs = instantsSousImages(t, 60, 4);
+    expect(xs).toHaveLength(4);
+    expect(xs[0]).toBeCloseTo(t + 1 / 480, 12);
+    expect(xs.at(-1)).toBeCloseTo(t + 7 / 480, 12);
     for (const x of xs) { expect(x).toBeGreaterThanOrEqual(t); expect(x).toBeLessThan(t + 1 / 60); }
   });
 });

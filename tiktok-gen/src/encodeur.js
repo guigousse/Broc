@@ -28,13 +28,12 @@ const INTERVALLE_CLE_S = 2;
 /** Au-delà, on laisse l'encodeur respirer avant de lui donner l'image suivante. */
 const FILE_MAX = 6;
 /**
- * Flou de mouvement : chaque image encodée est la MOYENNE de `SOUS_IMAGES`
- * rendus répartis sur son intervalle (obturateur ouvert à 360°). Sans lui,
- * un objet net qui saute de 20–40 px entre deux images stroboscope — surtout
- * une fois le fichier ré-encodé à 30 fps par TikTok. Le rendu coûte
- * `SOUS_IMAGES` fois plus de dessin, hors ligne on s'en moque.
+ * Sous-images par image encodée. 1 = image nette à l'instant exact. Un flou de
+ * mouvement (moyenne de 8 sous-images) a été essayé : il rendait les objets
+ * fins translucides et étalait la cible au flash — refusé, les objets doivent
+ * garder toute leur opacité.
  */
-export const SOUS_IMAGES = 8;
+export const SOUS_IMAGES = 1;
 
 /** Codecs H.264 tentés dans l'ordre : High 4.2 (1080p60), Main 4.2, Baseline 4.2. */
 export const CODECS_VIDEO = ["avc1.64002A", "avc1.4D402A", "avc1.42E02A"];
@@ -57,10 +56,11 @@ export function planImages(duree, fps = FPS_VIDEO, intervalleCleS = INTERVALLE_C
 }
 
 /**
- * Les instants des sous-images d'une image à `t`, répartis sur [t, t + 1/fps)
- * (centrés dans leur case : k + ½). Pure, testable.
+ * Les instants des sous-images d'une image à `t` : `t` seul si n = 1, sinon
+ * répartis sur [t, t + 1/fps), centrés dans leur case (k + ½). Pure, testable.
  */
 export function instantsSousImages(t, fps = FPS_VIDEO, n = SOUS_IMAGES) {
+  if (n <= 1) return [t];   // une seule : l'instant exact, pas le milieu de la case.
   const out = [];
   for (let k = 0; k < n; k++) out.push(t + ((k + 0.5) / n) / fps);
   return out;
