@@ -306,6 +306,7 @@ export function BrocantePanorama({
               conditions={selectedConditions}
               destination={destination}
               coffreHorsTheme={coffreHorsTheme}
+              collection={state.collection}
             />
           </div>
         )}

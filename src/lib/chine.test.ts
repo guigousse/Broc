@@ -9,6 +9,7 @@ import {
   genererRemplacement,
   genererSession,
   genererSessionScriptee,
+  objetsTrouvables,
   prixMinAvecMarchandage,
   uniquesExclusDuChinage,
 } from "./chine";
@@ -723,5 +724,36 @@ describe("genererSession — les objets natifs du tier dominent (2026-08-28)", (
   it("T4 : aucun tier natif 4 — ce sont les natifs T3 qui pèsent 1,3", () => {
     const obs = partNatifs(4, 400);
     expect(Math.abs(obs - partAttendue(4))).toBeLessThan(0.03);
+  });
+});
+
+describe("objetsTrouvables — ce que la loupe de la carte de brocante montre", () => {
+  it("brocante générale : les natifs du tier, rien d'en dessous", () => {
+    const broc = createMockBrocante({ id: "b2", tier: 2, etoiles: 2 });
+    const ids = objetsTrouvables(broc).map((t) => t.templateId);
+    expect(ids.length).toBeGreaterThan(50);
+    expect(ids.every((id) => tierMinTemplate(id) === 2)).toBe(true);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("brocante spécialisée : filtrée sur sa catégorie", () => {
+    const broc = createMockBrocante({ id: "b1m", tier: 1, etoiles: 1, specialisation: "Musique" });
+    const liste = objetsTrouvables(broc);
+    expect(liste.length).toBeGreaterThan(0);
+    expect(liste.every((t) => t.categorie === "Musique")).toBe(true);
+  });
+
+  it("T4 : natifs T3 + le poolExclusif, exclusifs en tête", () => {
+    const exclusif = UNIQUES[0].templateId;
+    const broc = createMockBrocante({ id: "b4", tier: 4, etoiles: 4, poolExclusif: [exclusif] });
+    const ids = objetsTrouvables(broc).map((t) => t.templateId);
+    expect(ids[0]).toBe(exclusif);
+    expect(ids.slice(1).every((id) => tierMinTemplate(id) === 3)).toBe(true);
+  });
+
+  it("poolExclusif hors thème d'une spécialisée : écarté, comme au tirage", () => {
+    const exclusif = UNIQUES.find((u) => u.categorie !== "Musique")!.templateId;
+    const broc = createMockBrocante({ id: "b3m", tier: 3, etoiles: 3, specialisation: "Musique", poolExclusif: [exclusif] });
+    expect(objetsTrouvables(broc).map((t) => t.templateId)).not.toContain(exclusif);
   });
 });

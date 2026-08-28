@@ -1,16 +1,19 @@
 "use client";
 
-import { Zap } from "lucide-react";
-import type { CSSProperties } from "react";
-import type { Brocante } from "@/types/game";
+import { Package, Search, Zap } from "lucide-react";
+import { useState, type CSSProperties } from "react";
+import type { Brocante, CategorieObjet, CollectionSlot } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
 import { bourseMoyenne } from "@/lib/vitrine";
 import type { ConditionInfo } from "@/lib/deblocage";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { descriptionBrocante, nomBrocante } from "@/lib/i18n/contenu";
 import { libelleCategorie } from "@/lib/i18n/libelles";
+import { initCollection } from "@/lib/collection";
 import { CATEGORY_ICONS } from "./categoryIcons";
 import { CornerOrnament } from "@/components/mobile/CornerOrnament";
+import { plaqueLaiton } from "@/components/ui/plaqueLaiton";
+import { ObjetsTrouvablesSheet } from "./ObjetsTrouvablesSheet";
 
 interface BrocanteDetailFloatingProps {
   brocante: Brocante;
@@ -24,6 +27,8 @@ interface BrocanteDetailFloatingProps {
   /** Vente sur bourse à thème : le coffre contient des objets hors thème
    *  (bloque Continuer, un message explique la règle et sa contrepartie). */
   coffreHorsTheme?: boolean;
+  /** Collection du joueur — pilote les silhouettes de la loupe (mode chiner). */
+  collection?: Record<CategorieObjet, CollectionSlot[]>;
 }
 
 const cardStyle: CSSProperties = {
@@ -53,8 +58,7 @@ const titleStyle: CSSProperties = {
   fontSize: 20,
   fontWeight: 400,
   color: "var(--brass-500)",
-  textShadow:
-    "0 1px 0 rgba(255,235,180,0.4), 0 1px 2px rgba(80,50,10,0.25)",
+  textShadow: "0 1px 0 rgba(255,235,180,0.4), 0 1px 2px rgba(80,50,10,0.25)",
   textAlign: "center",
   margin: 0,
   lineHeight: 1.1,
@@ -117,7 +121,9 @@ const fraisBoxStyle = (peutEntrer: boolean): CSSProperties => {
     alignItems: "center",
     gap: 6,
     color,
-    background: peutEntrer ? "rgba(245,239,225,0.85)" : "rgba(245,225,225,0.85)",
+    background: peutEntrer
+      ? "rgba(245,239,225,0.85)"
+      : "rgba(245,225,225,0.85)",
     border: `1px solid ${peutEntrer ? "var(--brass-700)" : "var(--vermillion-600)"}`,
     borderRadius: 3,
     padding: "4px 9px",
@@ -164,6 +170,85 @@ const themeCachetStyle: CSSProperties = {
   flexShrink: 0,
 };
 
+// ── Carte de chinage (2026-08-28) : plaque de laiton + 4 cellules ──────────
+const plaqueStyle: CSSProperties = {
+  ...plaqueLaiton,
+  width: "100%",
+  boxSizing: "border-box",
+  color: "var(--forest-900)",
+  fontSize: 14,
+  padding: "10px 18px",
+};
+
+const cellulesStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1.2fr 1fr auto",
+  alignItems: "start",
+  gap: 8,
+  width: "100%",
+  marginTop: 8,
+};
+
+const celluleStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 5,
+  minWidth: 0,
+};
+
+const celluleLabelStyle: CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 9,
+  letterSpacing: "0.18em",
+  textTransform: "uppercase",
+  color: "var(--brass-700)",
+  fontWeight: 700,
+};
+
+const celluleValeurStyle = (alerte = false): CSSProperties => ({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+  fontFamily: "var(--font-display)",
+  fontSize: 15,
+  fontWeight: 700,
+  letterSpacing: "0.04em",
+  lineHeight: "32px",
+  color: alerte ? "var(--vermillion-600)" : "var(--ink-900)",
+  whiteSpace: "nowrap",
+});
+
+const themeVideStyle: CSSProperties = {
+  ...celluleValeurStyle(),
+  color: "var(--brass-700)",
+  opacity: 0.6,
+};
+
+// La loupe « ? » : un bouton rond de laiton, au gabarit du cachet thème.
+const loupeBtnStyle: CSSProperties = {
+  ...themeCachetStyle,
+  position: "relative",
+  width: 36,
+  height: 36,
+  cursor: "pointer",
+  padding: 0,
+  font: "inherit",
+};
+
+const loupeInterrogation: CSSProperties = {
+  position: "absolute",
+  left: "50%",
+  top: "50%",
+  transform: "translate(-62%, -62%)",
+  fontFamily: "var(--font-display)",
+  fontSize: 10,
+  fontWeight: 700,
+  lineHeight: 1,
+  color: "#3a2410",
+  pointerEvents: "none",
+};
+
 const conditionsListStyle: CSSProperties = {
   listStyle: "none",
   padding: 0,
@@ -196,8 +281,10 @@ export function BrocanteDetailFloating({
   conditions,
   destination,
   coffreHorsTheme = false,
+  collection,
 }: BrocanteDetailFloatingProps) {
   const { d, tr, locale } = useLangue();
+  const [loupeOuverte, setLoupeOuverte] = useState(false);
   const ThemeIcon = brocante.specialisation
     ? CATEGORY_ICONS[brocante.specialisation]
     : null;
@@ -223,7 +310,105 @@ export function BrocanteDetailFloating({
     );
   }
 
-  // --- Layout DÉBLOQUÉ : titre + desc + filet d'or + meta intégrée ---
+  // --- Layout CHINAGE (2026-08-28) : plaque de laiton, puis Taille / Entrée /
+  // Thème / loupe. Pas de description : la scène du panorama la raconte déjà.
+  if (destination === "chiner") {
+    return (
+      <>
+        <aside style={cardStyle} aria-live="polite">
+          <CornerOrnament position="tl" />
+          <CornerOrnament position="tr" />
+          <CornerOrnament position="bl" />
+          <CornerOrnament position="br" />
+          <h2 style={plaqueStyle} data-testid="brocante-plaque">
+            {nomBrocante(brocante, locale)}
+          </h2>
+          <div style={cellulesStyle}>
+            <div style={celluleStyle}>
+              <span style={celluleLabelStyle}>{d.chine.tailleLabel}</span>
+              <span
+                style={celluleValeurStyle()}
+                data-testid="brocante-taille"
+                aria-label={tr(d.chine.taillePoolItems, {
+                  n: brocante.taillePool,
+                })}
+              >
+                {brocante.taillePool}
+                <Package size={16} strokeWidth={1.8} aria-hidden />
+              </span>
+            </div>
+            <div style={celluleStyle}>
+              <span style={celluleLabelStyle}>{d.chine.entreeLabel}</span>
+              <span
+                style={celluleValeurStyle(!peutEntrer)}
+                data-testid="brocante-entree"
+                aria-label={tr(d.chine.entreeAria, {
+                  prix: fraisEntree(brocante),
+                })}
+              >
+                {fraisEntree(brocante)} €<span style={fraisPlusStyle}>+</span>
+                <Zap size={14} strokeWidth={2} aria-hidden />
+              </span>
+            </div>
+            <div style={celluleStyle}>
+              <span style={celluleLabelStyle}>{d.chine.themeLabel}</span>
+              {ThemeIcon ? (
+                <div
+                  style={themeCachetStyle}
+                  data-testid="brocante-theme"
+                  aria-label={tr(d.chine.themeAria, {
+                    theme: brocante.specialisation
+                      ? libelleCategorie(brocante.specialisation, d)
+                      : "",
+                  })}
+                >
+                  <ThemeIcon size={18} strokeWidth={2} />
+                </div>
+              ) : (
+                <span
+                  style={themeVideStyle}
+                  data-testid="brocante-theme"
+                  aria-hidden
+                >
+                  —
+                </span>
+              )}
+            </div>
+            <div style={celluleStyle}>
+              <span style={celluleLabelStyle} aria-hidden>
+                &nbsp;
+              </span>
+              <button
+                type="button"
+                style={loupeBtnStyle}
+                onClick={() => setLoupeOuverte(true)}
+                aria-label={d.chine.objetsTrouvablesAria}
+              >
+                <Search size={20} strokeWidth={2} aria-hidden />
+                <span style={loupeInterrogation} aria-hidden>
+                  ?
+                </span>
+              </button>
+            </div>
+          </div>
+        </aside>
+        {/* Hors de la carte : son backdrop-filter ferait d'elle le bloc de
+          confinement de la sheet `position: fixed`, qui s'ouvrirait DEDANS.
+          Et la couche flottante est en pointer-events: none (propriété
+          héritée) : sans ce div, la sheet ne recevrait aucun tap. */}
+        <div style={{ pointerEvents: "auto" }}>
+          <ObjetsTrouvablesSheet
+            open={loupeOuverte}
+            onClose={() => setLoupeOuverte(false)}
+            brocante={brocante}
+            collection={collection ?? EMPTY_COLLECTION}
+          />
+        </div>
+      </>
+    );
+  }
+
+  // --- Layout VENTE : titre + desc + filet d'or + meta intégrée ---
   return (
     <aside style={cardStyle} aria-live="polite">
       <CornerOrnament position="tl" />
@@ -234,20 +419,14 @@ export function BrocanteDetailFloating({
       <p style={descStyle}>{descriptionBrocante(brocante, locale)}</p>
       <div style={goldRuleStyle} aria-hidden />
       <div style={metaRowStyle}>
-        {destination === "chiner" ? (
-          <span style={metaItemsStyle}>
-            {tr(d.chine.taillePoolItems, { n: brocante.taillePool })}
-          </span>
-        ) : (
-          <span
-            style={metaItemsStyle}
-            aria-label={tr(d.chine.bourseMoyenneClientsAria, {
-              valeur: bourseMoyenne(brocante),
-            })}
-          >
-            {tr(d.chine.bourseMoyLabel, { valeur: bourseMoyenne(brocante) })}
-          </span>
-        )}
+        <span
+          style={metaItemsStyle}
+          aria-label={tr(d.chine.bourseMoyenneClientsAria, {
+            valeur: bourseMoyenne(brocante),
+          })}
+        >
+          {tr(d.chine.bourseMoyLabel, { valeur: bourseMoyenne(brocante) })}
+        </span>
         <span
           style={fraisBoxStyle(peutEntrer)}
           aria-label={tr(d.chine.entreeAria, { prix: fraisEntree(brocante) })}
@@ -260,7 +439,9 @@ export function BrocanteDetailFloating({
         {ThemeIcon && (
           <div
             style={themeCachetStyle}
-            aria-label={tr(d.chine.themeAria, { theme: brocante.specialisation ?? "" })}
+            aria-label={tr(d.chine.themeAria, {
+              theme: brocante.specialisation ?? "",
+            })}
           >
             <ThemeIcon size={18} strokeWidth={2} />
           </div>
@@ -276,6 +457,8 @@ export function BrocanteDetailFloating({
     </aside>
   );
 }
+
+const EMPTY_COLLECTION = initCollection();
 
 const horsThemeStyle: CSSProperties = {
   margin: "8px 0 0",

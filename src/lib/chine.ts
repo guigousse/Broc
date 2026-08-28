@@ -256,6 +256,27 @@ function poolGeneriquePour(brocante?: Brocante): readonly ObjetTemplate[] {
   return poolPourTier(brocante?.tier ?? 1);
 }
 
+/**
+ * Ce que la loupe de la carte de brocante montre : les objets NATIFS du tier
+ * (ceux que la brocante favorise, cf. BONUS_TIER_NATIF), filtrés par la
+ * spécialisation, précédés du poolExclusif — exactement les règles du tirage
+ * de `genererSession`, pour ne jamais promettre un objet qui n'y sort pas.
+ * Les objets des tiers inférieurs restent trouvables mais ne sont pas listés :
+ * la loupe sert à choisir OÙ chiner, pas à recopier le catalogue.
+ */
+export function objetsTrouvables(brocante: Brocante): ObjetTemplate[] {
+  const spe = brocante.specialisation;
+  const dansTheme = (t: ObjetTemplate) => !spe || t.categorie === spe;
+  const natif = Math.min(brocante.tier, 3);
+  const exclusifs = brocante.poolExclusif
+    .map((id) => getTemplate(id))
+    .filter((t): t is ObjetTemplate => t !== undefined && dansTheme(t));
+  const natifs = poolPourTier(brocante.tier).filter(
+    (t) => tierMinTemplate(t.templateId) === natif && dansTheme(t),
+  );
+  return [...exclusifs, ...natifs];
+}
+
 export function genererSession(
   taille: number,
   tendances: readonly Tendance[] = [],
