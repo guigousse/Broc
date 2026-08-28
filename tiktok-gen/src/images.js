@@ -10,12 +10,15 @@ export function chargerImage(url) {
   });
 }
 
+/** Marge de la silhouette autour de l'objet : un liseré de 3 % de chaque côté. */
+export const ECHELLE_SILHOUETTE = 1.06;
+
 /**
- * Découpe une silhouette : masque alpha de `img`, rempli de noir à 85 %.
- * Même taille que l'objet (échelle 1) : dessinée au même centre et à la même
- * hauteur, elle se superpose exactement à la cible quand celle-ci passe.
+ * Découpe une silhouette : masque alpha de `img`, rempli de noir à 85 %,
+ * agrandi de `echelle`. Dessinée au même centre que l'objet, elle le déborde
+ * d'un fin liseré régulier quand la cible se cale.
  */
-export function creerSilhouette(img, echelle = 1) {
+export function creerSilhouette(img, echelle = ECHELLE_SILHOUETTE) {
   const c = document.createElement("canvas");
   c.width = Math.round(img.naturalWidth * echelle);
   c.height = Math.round(img.naturalHeight * echelle);

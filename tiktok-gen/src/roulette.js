@@ -69,6 +69,18 @@ export function estFlash(t, r) {
   return r.instantsCentrage.some((c) => Math.abs(tb - c) <= r.demiFlash);
 }
 
+/**
+ * L'instant à DESSINER pour l'instant t : pendant le flash, la roulette est
+ * gelée sur le calage exact (la cible pile au centre, une vraie « pause ») ;
+ * sinon t replié sur la boucle. Sans ce gel, la bande continue d'avancer
+ * pendant les ~130 ms du flash et la cible dérive de plusieurs dizaines de px.
+ */
+export function instantDessine(t, r) {
+  const tb = tempsBoucle(t, r);
+  const c = r.instantsCentrage.find((x) => Math.abs(tb - x) <= r.demiFlash);
+  return c === undefined ? tb : c;
+}
+
 export function tempsBoucle(t, r) {
   return ((t % r.duree) + r.duree) % r.duree;
 }

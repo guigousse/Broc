@@ -12,7 +12,7 @@
  *
  * Aucune requête au DOM hors la création d'un canvas de travail.
  */
-import { estFlash } from "./roulette.js";
+import { estFlash, instantDessine } from "./roulette.js";
 import { dessinerFrame } from "./rendu.js";
 import { LARGEUR, HAUTEUR } from "./roulette.js";
 import { nomFichierPour } from "./enregistreur.js";
@@ -75,7 +75,7 @@ export function dessinerImageFloue(ctx, t, scene, r, fps = FPS_VIDEO, n = SOUS_I
   ctx.save();
   instants.forEach((ti, k) => {
     ctx.globalAlpha = 1 / (k + 1);
-    dessinerFrame(ctx, ti, { ...scene, flashActif: estFlash(ti, r) });
+    dessinerFrame(ctx, instantDessine(ti, r), { ...scene, flashActif: estFlash(ti, r) });
   });
   ctx.restore();
 }

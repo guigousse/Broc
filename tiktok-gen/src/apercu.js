@@ -3,7 +3,7 @@
  * d'animation (rAF) et cale le son dessus. Module DOM/canvas, pas de tests
  * unitaires — la logique testable vit dans roulette.js et texte.js.
  */
-import { calculerRoulette, estFlash, tempsBoucle, LARGEUR, HAUTEUR, CENTRE_X, CENTRE_Y } from "./roulette.js";
+import { calculerRoulette, estFlash, instantDessine, tempsBoucle, LARGEUR, HAUTEUR, CENTRE_X, CENTRE_Y } from "./roulette.js";
 import { dessinerFrame } from "./rendu.js";
 import { chargerImage } from "./images.js";
 import { COULEURS } from "./theme.js";
@@ -129,7 +129,7 @@ export class Apercu {
   dessinerA(t) {
     if (!this.#scene) { this.#dessinerInvite(); return; }
     const tb = tempsBoucle(t, this.#r);
-    dessinerFrame(this.#ctx, tb, { ...this.#scene, flashActif: estFlash(tb, this.#r) });
+    dessinerFrame(this.#ctx, instantDessine(tb, this.#r), { ...this.#scene, flashActif: estFlash(tb, this.#r) });
   }
 
   #dessinerInvite() {

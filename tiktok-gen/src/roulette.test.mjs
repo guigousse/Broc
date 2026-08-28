@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculerRoulette, positionsA, positionsVisibles, estFlash, tempsBoucle, CENTRE_X, LARGEUR, FPS } from "./roulette.js";
+import { calculerRoulette, positionsA, positionsVisibles, estFlash, instantDessine, tempsBoucle, CENTRE_X, LARGEUR, FPS } from "./roulette.js";
 
 const CFG = { nbObjets: 8, indexCible: 2, vitesse: 2, espacement: 500, nbPassages: 3, largeurFlash: 4 };
 
@@ -112,5 +112,24 @@ describe("estFlash / tempsBoucle", () => {
   it("tempsBoucle replie sur la durée", () => {
     const r = calculerRoulette(CFG);
     expect(tempsBoucle(13, r)).toBeCloseTo(1);
+  });
+});
+
+describe("instantDessine", () => {
+  it("gèle la roulette sur le calage exact pendant tout le flash", () => {
+    const r = calculerRoulette(CFG);
+    const c = r.instantsCentrage[1];
+    for (const dt of [-r.demiFlash, -r.demiFlash / 2, 0, r.demiFlash / 2, r.demiFlash]) {
+      expect(instantDessine(c + dt, r)).toBe(c);
+    }
+    // Au calage, la cible est pile au centre.
+    const cible = positionsA(instantDessine(c + r.demiFlash / 2, r), r, CFG).find((p) => p.index === CFG.indexCible);
+    expect(cible.x).toBeCloseTo(CENTRE_X, 6);
+  });
+  it("hors flash : le temps replié, inchangé", () => {
+    const r = calculerRoulette(CFG);
+    const t = r.instantsCentrage[0] + r.demiFlash * 3;
+    expect(instantDessine(t, r)).toBeCloseTo(tempsBoucle(t, r), 12);
+    expect(instantDessine(t + r.duree, r)).toBeCloseTo(tempsBoucle(t, r), 9);
   });
 });
