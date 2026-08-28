@@ -77,6 +77,7 @@ async function construire() {
   for (const f of ["index.html", "styles.css"]) await fsp.copyFile(path.join(ICI, f), path.join(DIST, f));
   await copierDossier(path.join(ICI, "src"), path.join(DIST, "src"), (n) => !n.endsWith(".test.mjs"));
   await copierDossier(path.join(ICI, "assets", "badges"), path.join(DIST, "assets", "badges"));
+  await copierDossier(path.join(ICI, "assets", "sons"), path.join(DIST, "assets", "sons"));
   const webp = (n) => n.endsWith(".webp");
   await copierDossier(path.join(RACINE, "public", "items"), path.join(DIST, "assets", "items"), webp);
   await copierDossier(path.join(RACINE, "public", "items", "thumbs"), path.join(DIST, "assets", "thumbs"), webp);

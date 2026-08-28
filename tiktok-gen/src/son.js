@@ -1,23 +1,30 @@
 /**
- * Son de la roulette : tics à chaque objet qui franchit le centre, ding sur
- * la cible. AudioContext créé au premier appel qui en a besoin (typiquement
+ * Son de la roulette : un tic à chaque objet qui franchit le centre — la cible
+ * comprise, sans ding : le calage se voit, il ne s'entend pas.
+ *
+ * Le tic est un ÉCHANTILLON (`assets/sons/tic.wav`, une languette de roue de
+ * la fortune sur un picot), chargé dans `demarrer()`. Tant qu'il n'est pas
+ * décodé, un tic synthétisé prend le relais — jamais de silence.
+ *
+ * AudioContext créé au premier appel qui en a besoin (typiquement
  * `demarrer()`, appelé depuis un geste utilisateur — obligatoire sur iOS).
  * Sortie vers les haut-parleurs (ctx.destination) ET vers un flux
- * MediaStream (pour l'enregistreur de la Task 8), via un même GainNode
- * maître.
+ * MediaStream (pour l'enregistreur), via un même GainNode maître.
  */
 
+export const URL_TIC = "assets/sons/tic.wav";
+const GAIN_ECHANTILLON = 0.8;
+/** Chaque tic diffère un peu du voisin (hauteur ±4 %, volume 85–100 %) : sans ça, mitrailleuse. */
+const VARIATION_HAUTEUR = 0.04;
+const VOLUME_MINI = 0.85;
+
+// Tic de secours, synthétisé, tant que l'échantillon n'est pas décodé.
 const FREQ_TIC = 1800;
 const DUREE_TIC = 0.035;
 const PIC_TIC = 0.002;
 const GAIN_TIC = 0.35;
 const FREQ_FILTRE_TIC = 2200;
 const Q_FILTRE_TIC = 6;
-
-const FREQS_DING = [1320, 1980];
-const DUREE_DING = 0.45;
-// Chaque partiel pèse la moitié : les deux ensemble culminent à 0.25.
-const GAIN_DING = 0.125;
 
 const DUREE_FONDU_ACTIF = 0.01;
 
@@ -33,6 +40,22 @@ export class SonRoulette {
     this._voix = [];
     // Gain propre au plan courant : le débrancher rend le silence immédiat.
     this._sortiePlan = null;
+    // AudioBuffer du tic, une fois décodé ; et la promesse de son chargement (une seule fois).
+    this._tic = null;
+    this._chargementTic = null;
+    this._alea = Math.random;
+  }
+
+  /** Télécharge et décode l'échantillon ; un échec laisse le tic synthétisé en service. */
+  _chargerTic() {
+    if (!this._chargementTic) {
+      this._chargementTic = fetch(URL_TIC)
+        .then((rep) => { if (!rep.ok) throw new Error(`tic introuvable : ${rep.status}`); return rep.arrayBuffer(); })
+        .then((donnees) => this.audioCtx.decodeAudioData(donnees))
+        .then((buffer) => { this._tic = buffer; })
+        .catch((e) => { console.warn("tic échantillonné indisponible, tic synthétisé", e); });
+    }
+    return this._chargementTic;
   }
 
   /** Crée le contexte et le graphe audio s'ils n'existent pas déjà. */
@@ -60,7 +83,7 @@ export class SonRoulette {
 
   async demarrer() {
     this._assurerContexte();
-    await this.audioCtx.resume();
+    await Promise.all([this.audioCtx.resume(), this._chargerTic()]);
   }
 
   /** Gain du plan courant, créé à la demande : toutes les voix s'y branchent. */
@@ -101,8 +124,29 @@ export class SonRoulette {
     }
   }
 
-  /** Un picot de roulette : oscillateur carré filtré, claquement sec. */
+  /** Un picot de roulette : l'échantillon s'il est décodé, sinon le tic synthétisé. */
   _planifierTic(t) {
+    if (this._tic) { this._planifierTicEchantillon(t); return; }
+    this._planifierTicSynthese(t);
+  }
+
+  _planifierTicEchantillon(t) {
+    const ctx = this.audioCtx;
+    const src = ctx.createBufferSource();
+    src.buffer = this._tic;
+    src.playbackRate.value = 1 + (this._alea() * 2 - 1) * VARIATION_HAUTEUR;
+    const gain = ctx.createGain();
+    gain.gain.value = GAIN_ECHANTILLON * (VOLUME_MINI + this._alea() * (1 - VOLUME_MINI));
+    src.connect(gain);
+    gain.connect(this._sortie());
+    const fin = t + this._tic.duration / src.playbackRate.value;
+    src.start(t);
+    src.stop(fin);
+    this._retenirVoix(src, fin);
+  }
+
+  /** Oscillateur carré filtré, claquement sec — le secours. */
+  _planifierTicSynthese(t) {
     const ctx = this.audioCtx;
     const osc = ctx.createOscillator();
     osc.type = "square";
@@ -126,26 +170,6 @@ export class SonRoulette {
     this._retenirVoix(osc, t + DUREE_TIC);
   }
 
-  /** Le ding de la cible : deux sinus qui décroissent ensemble. */
-  _planifierDing(t) {
-    const ctx = this.audioCtx;
-    for (const freq of FREQS_DING) {
-      const osc = ctx.createOscillator();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(GAIN_DING, t);
-      gain.gain.linearRampToValueAtTime(0, t + DUREE_DING);
-
-      osc.connect(gain);
-      gain.connect(this._sortie());
-      osc.start(t);
-      osc.stop(t + DUREE_DING);
-      this._retenirVoix(osc, t + DUREE_DING);
-    }
-  }
-
   /** Restaure le gain maître à l'état actif courant (utile après un arreter()). */
   _appliquerActif() {
     const t = this.audioCtx.currentTime;
@@ -153,15 +177,11 @@ export class SonRoulette {
     this.gainMaitre.gain.setValueAtTime(this._active ? 1 : 0, t);
   }
 
-  /** Planifie tous les tics de r.instantsTics à tDebutCtx + t (un ding en plus sur la cible). */
+  /** Planifie tous les tics de r.instantsTics à tDebutCtx + t (la cible tique comme les autres). */
   planifierTour(r, tDebutCtx) {
     this._assurerContexte();
     this._appliquerActif();
-    for (const tic of r.instantsTics) {
-      const t = tDebutCtx + tic.t;
-      this._planifierTic(t);
-      if (tic.estCible) this._planifierDing(t);
-    }
+    for (const tic of r.instantsTics) this._planifierTic(tDebutCtx + tic.t);
   }
 
   /**
