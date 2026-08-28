@@ -1,5 +1,5 @@
 /** Chargement et préparation des images (objets, fonds, silhouettes). Module DOM/canvas, pas de tests unitaires. */
-import { LARGEUR, HAUTEUR } from "./roulette.js";
+import { LARGEUR, HAUTEUR, HAUTEUR_OBJET } from "./roulette.js";
 
 export function chargerImage(url) {
   return new Promise((resoudre, rejeter) => {
@@ -10,23 +10,40 @@ export function chargerImage(url) {
   });
 }
 
-/** Marge de la silhouette autour de l'objet : un liseré de 3 % de chaque côté. */
-export const ECHELLE_SILHOUETTE = 1.06;
+/** Épaisseur du liseré de la silhouette autour de l'objet, en px du cadre (à la hauteur d'affichage). */
+export const OFFSET_SILHOUETTE = 14;
+/** Directions de la dilatation : 24 pas d'angle, deux rayons → contour rond, sans facettes visibles. */
+const DIRECTIONS = 24;
 
 /**
- * Découpe une silhouette : masque alpha de `img`, rempli de noir à 85 %,
- * agrandi de `echelle`. Dessinée au même centre que l'objet, elle le déborde
- * d'un fin liseré régulier quand la cible se cale.
+ * Silhouette = le masque alpha de `img` DILATÉ d'un liseré d'épaisseur
+ * constante, rempli de noir à 85 %. Une simple mise à l'échelle ne convient
+ * pas : elle agrandit autour du centre de la boîte (l'objet n'y est pas
+ * centré → silhouette décalée) et donne un liseré inégal (fin sur un manche,
+ * large sur une tête). Ici le masque est recopié dans `DIRECTIONS` directions
+ * sur un rayon `r`, puis `r/2` : l'union est le contour arrondi de la forme.
+ *
+ * Le canvas rendu déborde l'image de `r` de chaque côté ; son centre reste
+ * celui de l'image. `echelleHauteur` (= (h + 2r) / h) dit à quelle hauteur le
+ * dessiner pour que la forme intérieure coïncide exactement avec l'objet.
  */
-export function creerSilhouette(img, echelle = ECHELLE_SILHOUETTE) {
+export function creerSilhouette(img, offsetPx = OFFSET_SILHOUETTE, hauteurAffichee = HAUTEUR_OBJET) {
+  const w = img.naturalWidth ?? img.width, h = img.naturalHeight ?? img.height;
+  const r = Math.max(1, Math.round((offsetPx * h) / hauteurAffichee));   // offset ramené aux px de l'image
   const c = document.createElement("canvas");
-  c.width = Math.round(img.naturalWidth * echelle);
-  c.height = Math.round(img.naturalHeight * echelle);
+  c.width = w + 2 * r; c.height = h + 2 * r;
   const ctx = c.getContext("2d");
-  ctx.drawImage(img, 0, 0, c.width, c.height);
+  for (const rayon of [r, r / 2]) {
+    for (let k = 0; k < DIRECTIONS; k++) {
+      const a = (2 * Math.PI * k) / DIRECTIONS;
+      ctx.drawImage(img, r + rayon * Math.cos(a), r + rayon * Math.sin(a));
+    }
+  }
+  ctx.drawImage(img, r, r);
   ctx.globalCompositeOperation = "source-in";
   ctx.fillStyle = "rgba(0,0,0,0.85)";
   ctx.fillRect(0, 0, c.width, c.height);
+  c.echelleHauteur = (h + 2 * r) / h;
   return c;
 }
 

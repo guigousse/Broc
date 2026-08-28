@@ -1,6 +1,5 @@
 /** Dessin d'une frame de la roulette sur le canvas. Module DOM/canvas, pas de tests unitaires. */
 import { CENTRE_X, CENTRE_Y, LARGEUR, HAUTEUR, HAUTEUR_OBJET, positionsVisibles } from "./roulette.js";
-import { ECHELLE_SILHOUETTE } from "./images.js";
 import { COULEURS } from "./theme.js";
 import { dessinerOverlay } from "./overlay.js";
 
@@ -23,8 +22,8 @@ export function dessinerFrame(ctx, t, scene) {
   dessinerCover(ctx, fond);
   if (silhouette) {
     ctx.save(); ctx.shadowColor = COULEURS.laiton; ctx.shadowBlur = 18;
-    // Même centre que l'objet, à peine plus grande : la cible la recouvre, liseré compris.
-    dessinerCentre(ctx, silhouette, CENTRE_X, HAUTEUR_OBJET * ECHELLE_SILHOUETTE); ctx.restore();
+    // Même centre que l'objet ; la hauteur inclut le liseré, la forme intérieure coïncide avec la cible.
+    dessinerCentre(ctx, silhouette, CENTRE_X, HAUTEUR_OBJET * (silhouette.echelleHauteur ?? 1)); ctx.restore();
   }
   // positionsVisibles filtre déjà hors cadre et rend les deux exemplaires d'un
   // objet à cheval sur le pli de la bande (peu d'objets très espacés).
