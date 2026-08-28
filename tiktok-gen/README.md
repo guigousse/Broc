@@ -24,37 +24,32 @@ npm run tiktok:build
 
 ## Enregistrer et partager
 
-**Enregistrer** capture la scène telle qu'elle s'affiche : le canvas
-(`captureStream`) et le son (la sortie `MediaStream` du graphe audio) sont
-encodés ensemble par un `MediaRecorder`.
+**Enregistrer** rend la vidéo **hors ligne** (WebCodecs) : chaque image est
+dessinée puis encodée une par une, à **60 images/s fixes** — aucune image ne
+peut être perdue. Le son du tour est rendu par `OfflineAudioContext` puis
+encodé en AAC ; le tout est muxé en mp4 H.264 (`src/encodeur.js`, muxeur
+`dist/vendor/mp4-muxer.mjs`). Le rendu prend à peu près la durée du clip sur
+iPhone, souvent moins.
 
-- La prise se fait **en temps réel** : elle dure la durée annoncée sous les
-  réglages (« Durée 12,0 s »), à une image près. Pas de rendu accéléré — le
-  son est joué par le contexte audio, qui avance à la vitesse du monde réel.
-  Les réglages sont gelés pendant ce temps ; ne pas quitter la page.
-- Le format dépend de ce que sait encoder le navigateur : le premier mime
-  accepté de la liste est retenu, mp4 H.264/AAC d'abord. **Safari iOS** donne
-  donc un **mp4**, que TikTok avale sans réencodage ; Chrome le donne aussi
-  souvent (son build gère avc1), Firefox retombe sur du **webm** VP9/Opus —
-  bon pour vérifier au bureau, pas pour téléverser sur TikTok.
-- La vidéo **boucle** sans saut ni temps mort : la première image est celle
-  de `t = 0`, la dernière celle de `duree − 1/30` — surtout **pas** une
-  seconde copie de la première, qui marquerait un arrêt à chaque tour.
-- Si la case **Son** est décochée, la vidéo a bien une piste audio, mais
-  silencieuse.
-- Le message final donne la cadence obtenue (« Enregistré : 12,0 s ·
-  30 fps »). C'est la cadence tenue par la **boucle de dessin** (qui vise les
-  30 créneaux/s du flux vidéo), pas celle qu'a réellement encodée le
-  navigateur. En dessous de 25 fps, l'app prévient que la prise est
-  saccadée : fermer les autres apps et recommencer.
+Pourquoi : l'ancienne prise en **temps réel** (`MediaRecorder` sur
+`canvas.captureStream`, `src/enregistreur.js`) ne capturait que ce que le
+téléphone avait réussi à dessiner à temps — sur un vrai fichier iPhone, 11
+images perdues sur 197 (trous de 42 à 67 ms) et une cadence variable que
+TikTok, en ré-encodant à cadence fixe, transformait en saccades. Elle reste
+en **secours** si `VideoEncoder` manque ; le message final le dit
+(« Enregistrement en cours… (temps réel) »).
+
+- La vidéo **boucle** sans saut : première image à `t = 0`, dernière à
+  `duree − 1/60` — jamais une seconde copie de la première.
+- Si la case **Son** est décochée, la piste audio existe mais est silencieuse.
+- Sans `AudioEncoder` (WebKit ancien), le fichier sort **muet** et le message
+  le dit.
+- Le message final : « Rendu : 6,7 s · 60 fps ».
 
 **Partager** ouvre la feuille de partage iOS (`navigator.share` avec le
 fichier) → « Enregistrer dans Photos », puis publication depuis TikTok. Si
 le navigateur ne sait pas partager de fichiers — c'est le cas au bureau, et
 **en HTTP local dans tous les cas** — le fichier est simplement téléchargé.
-
-Si le navigateur ne sait pas enregistrer du tout, l'app le dit et renvoie
-vers l'enregistrement d'écran iOS.
 
 ## Déploiement
 
@@ -117,11 +112,8 @@ tap** débloque le son (contrainte du navigateur, pas un bug de l'app).
 
 ## Limites connues
 
-- L'enregistrement se fait **en temps réel** : capturer une vidéo de
-  12 s prend 12 s, pas de rendu accéléré.
-- Le chiffre de fps affiché après enregistrement mesure la **boucle de
-  dessin** (le rythme auquel l'app tente de dessiner), pas la cadence
-  réellement encodée par le navigateur.
+- En secours temps réel seulement : le chiffre de fps affiché mesure la
+  boucle de dessin, pas la cadence réellement encodée.
 - Un `fondPerso` (photo importée) de plus de **2 Mo n'est pas persisté**
   d'une session à l'autre — il faut réimporter la photo si l'app est
   relancée.

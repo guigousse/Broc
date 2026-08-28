@@ -131,23 +131,52 @@ export class SonRoulette {
   }
 
   _planifierTicEchantillon(t) {
-    const ctx = this.audioCtx;
+    const fin = SonRoulette._ticEchantillonSur(this.audioCtx, this._sortie(), this._tic, t, this._alea);
+    this._retenirVoix(fin.src, fin.fin);
+  }
+
+  /** L'échantillon sur n'importe quel contexte (temps réel ou hors ligne). → { src, fin } */
+  static _ticEchantillonSur(ctx, sortie, buffer, t, alea) {
     const src = ctx.createBufferSource();
-    src.buffer = this._tic;
-    src.playbackRate.value = 1 + (this._alea() * 2 - 1) * VARIATION_HAUTEUR;
+    src.buffer = buffer;
+    src.playbackRate.value = 1 + (alea() * 2 - 1) * VARIATION_HAUTEUR;
     const gain = ctx.createGain();
-    gain.gain.value = GAIN_ECHANTILLON * (VOLUME_MINI + this._alea() * (1 - VOLUME_MINI));
+    gain.gain.value = GAIN_ECHANTILLON * (VOLUME_MINI + alea() * (1 - VOLUME_MINI));
     src.connect(gain);
-    gain.connect(this._sortie());
-    const fin = t + this._tic.duration / src.playbackRate.value;
+    gain.connect(sortie);
+    const fin = t + buffer.duration / src.playbackRate.value;
     src.start(t);
     src.stop(fin);
-    this._retenirVoix(src, fin);
+    return { src, fin };
+  }
+
+  /**
+   * Le son d'un tour complet, rendu hors ligne : un AudioBuffer mono de
+   * `r.duree` s, prêt à être encodé. Ne joue rien, n'exige aucun geste
+   * utilisateur ; l'échantillon est chargé si besoin (via le contexte temps
+   * réel, seul à savoir décoder — il peut rester suspendu pour ça).
+   */
+  async rendreHorsLigne(r, frequence = 48000) {
+    this._assurerContexte();
+    await this._chargerTic();
+    const nb = Math.max(1, Math.round(r.duree * frequence));
+    const ctx = new OfflineAudioContext(1, nb, frequence);
+    const sortie = ctx.createGain();
+    sortie.connect(ctx.destination);
+    for (const tic of r.instantsTics) {
+      if (this._tic) SonRoulette._ticEchantillonSur(ctx, sortie, this._tic, tic.t, this._alea);
+      else SonRoulette._ticSyntheseSur(ctx, sortie, tic.t);
+    }
+    return ctx.startRendering();
   }
 
   /** Oscillateur carré filtré, claquement sec — le secours. */
   _planifierTicSynthese(t) {
-    const ctx = this.audioCtx;
+    const { osc, fin } = SonRoulette._ticSyntheseSur(this.audioCtx, this._sortie(), t);
+    this._retenirVoix(osc, fin);
+  }
+
+  static _ticSyntheseSur(ctx, sortie, t) {
     const osc = ctx.createOscillator();
     osc.type = "square";
     osc.frequency.value = FREQ_TIC;
@@ -164,10 +193,10 @@ export class SonRoulette {
 
     osc.connect(filtre);
     filtre.connect(gain);
-    gain.connect(this._sortie());
+    gain.connect(sortie);
     osc.start(t);
     osc.stop(t + DUREE_TIC);
-    this._retenirVoix(osc, t + DUREE_TIC);
+    return { osc, fin: t + DUREE_TIC };
   }
 
   /** Restaure le gain maître à l'état actif courant (utile après un arreter()). */

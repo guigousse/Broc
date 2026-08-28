@@ -13,6 +13,7 @@ import { formaterDuree, formaterInfos } from "./texte.js";
 import { SonRoulette } from "./son.js";
 import { Apercu, roulettePour } from "./apercu.js";
 import { capacitesEnregistrement, enregistrer, partager } from "./enregistreur.js";
+import { capacitesHorsLigne, rendreHorsLigne } from "./encodeur.js";
 
 const MAX_OBJETS = 12;
 const TIRAGE = 8;
@@ -377,6 +378,10 @@ async function demarrer() {
   // ---------------------------------------------------- enregistrer / partager
 
   const capacites = capacitesEnregistrement();
+  // Rendu hors ligne (WebCodecs) d'abord : cadence fixe, aucune image perdue, prise
+  // bien plus courte que le clip. La prise en temps réel ne sert plus que de secours.
+  const horsLigne = await capacitesHorsLigne();
+  if (DEBUG) console.info("rendu hors ligne", horsLigne);
 
   /** Le fichier de la dernière prise, valable tant que les réglages n'ont pas changé. */
   let prise = null;
@@ -397,7 +402,7 @@ async function demarrer() {
     // Synchrone, avant le moindre `await` : deux taps rapprochés ne doivent lancer
     // qu'une prise (le second retombe ici même, sur le drapeau déjà levé).
     if (enregistrementEnCours || el.enregistrer.disabled) return;
-    if (!capacites.ok) { dire(capacites.raison); return; }
+    if (!horsLigne.ok && !capacites.ok) { dire(capacites.raison); return; }
     enregistrementEnCours = true;
     el.enregistrer.disabled = true;
 
@@ -417,9 +422,21 @@ async function demarrer() {
     oublierPrise();
     el.progression.value = 0;
     el.progression.hidden = false;
-    dire("Enregistrement en cours… (temps réel, ne quitte pas la page)");
+    dire(horsLigne.ok ? "Rendu en cours…" : "Enregistrement en cours… (temps réel, ne quitte pas la page)");
 
     try {
+      if (horsLigne.ok) {
+        const { blob, nomFichier, fps } = await rendreHorsLigne({
+          scene: apercu.scene, r: apercu.r, son, sonActif: reglages.son, cibleId: reglages.cible,
+          capacites: horsLigne, onProgression: (p) => { el.progression.value = p; },
+        });
+        prise = { blob, nomFichier };
+        if (DEBUG) window.__dernierBlob = blob;
+        el.partager.hidden = false;
+        el.partager.disabled = false;
+        dire(`Rendu : ${formaterDuree(apercu.r?.duree)} · ${fps} fps${horsLigne.audio ? "" : " · sans son (navigateur)"}`);
+        return;
+      }
       const { blob, nomFichier, fpsMoyen } = await enregistrer({
         canvas: el.scene,
         apercu,
