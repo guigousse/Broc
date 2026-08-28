@@ -193,6 +193,32 @@ export function rendementDemantelement(o: Objet): number {
 }
 
 /**
+ * Accélération par pub : ramène l'échéance de la restauration à `now`.
+ *
+ * Elle ne LIVRE pas l'objet — l'établi passe simplement en « prêt » et c'est
+ * le tap du joueur sur « Récupérer » qui déclenche la cérémonie, comme pour
+ * une restauration arrivée à terme d'elle-même. Un seul chemin d'arrivée,
+ * donc une seule animation à entretenir.
+ *
+ * Retourne null si l'objet n'existe pas ou n'est pas en restauration.
+ * Helper pur — appelé par GameContext, qui garde la fenêtre des 30 min.
+ */
+export function appliquerAccelerationRestauration(
+  state: GameState,
+  objetId: string,
+  now: number,
+): GameState | null {
+  const objet = state.inventaireJoueur.find((o) => o.id === objetId);
+  if (!objet?.enRestauration) return null;
+  const inv = state.inventaireJoueur.map((o) =>
+    o.id === objetId
+      ? { ...o, enRestauration: { ...o.enRestauration!, finMs: now } }
+      : o,
+  );
+  return { ...state, inventaireJoueur: inv };
+}
+
+/**
  * Applique la fin de restauration d'un objet : mute son état vers `etatCible`,
  * recalcule son prix de référence, et efface `enRestauration`. Trace la
  * restauration accomplie dans `state.restaurations` (bornée aux 100 dernières),
@@ -206,11 +232,6 @@ export function appliquerRecuperation(
   state: GameState,
   objetId: string,
   now: number,
-  // Timestamp de la trace `state.restaurations`. Par défaut `now`, mais la fin
-  // immédiate via pub force `now = finMs` (potentiellement 30 min dans le
-  // futur) : elle passe ici le temps réel pour ne pas horodater dans le futur
-  // (sinon un objectif de chapitre accepté APRÈS la restauration la compterait).
-  traceTimestamp: number = now,
 ): GameState | null {
   const objet = state.inventaireJoueur.find((o) => o.id === objetId);
   if (!objet || !objet.enRestauration) return null;
@@ -232,7 +253,7 @@ export function appliquerRecuperation(
   );
   const restaurations = [
     ...(state.restaurations ?? []),
-    { timestamp: traceTimestamp, etatFinal: cible },
+    { timestamp: now, etatFinal: cible },
   ].slice(-100);
   return { ...state, inventaireJoueur: inv, restaurations };
 }

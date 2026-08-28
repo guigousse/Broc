@@ -508,6 +508,7 @@ export const es: DictionnaireUI = {
     recuperer: "Recoger",
     celebrationRestaurationAria: "{nom} restaurado: {etat}",
     terminerPub: "Terminar (anuncio) ▶",
+    pubCourt: "Anuncio",
     ongletDemantelement: "Desmantelamiento",
     aucunePieceARestaurer: "Ninguna pieza que restaurar.",
     dureeValeurVers: "{duree} · valor {valeur} →",

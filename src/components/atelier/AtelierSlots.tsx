@@ -1,13 +1,14 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { Lock, Plus } from "lucide-react";
+import { Lock, MonitorPlay, Plus } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import {
   estPret,
   restantMs,
   formatDuree,
   angleVoileDeg,
+  peutTerminerImmediat,
 } from "@/lib/restauration";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomObjet } from "@/lib/i18n/contenu";
@@ -31,6 +32,10 @@ interface AtelierSlotsProps {
   onSlotVide: () => void;
   onEnCours: (objet: Objet) => void;
   onRecuperer: (objet: Objet) => void;
+  /** Accélération par pub récompensée (fenêtre des 30 dernières minutes). */
+  onAccelerer: (objet: Objet) => void;
+  /** Une pub est déjà en vol : la pastille se fige le temps de la regarder. */
+  pubEnCours: boolean;
 }
 
 /* Répartition équidistante : un tiers de la largeur par slot, chaque
@@ -55,6 +60,13 @@ const carreBase: CSSProperties = {
   boxShadow: "0 10px 22px rgba(0,0,0,0.32)",
   padding: 0,
   cursor: "pointer",
+};
+
+/** Enveloppe d'un établi occupé : le carré, plus la pile posée par-dessus. */
+const cellule: CSSProperties = {
+  position: "relative",
+  width: 114,
+  height: 114,
 };
 
 const carreVerrouille: CSSProperties = {
@@ -94,15 +106,30 @@ const voileStyle: CSSProperties = {
     "conic-gradient(from 0deg, rgba(85,117,79,0.72) 0 var(--voile-angle), transparent var(--voile-angle) 360deg)",
 };
 
-/** Pastille centrée (décompte comme « Récupérer ») : même assise, deux robes. */
-const pastilleCentre: CSSProperties = {
+/**
+ * La pile centrale du carré : décompte (ou « Récupérer ») et, dans les 30
+ * dernières minutes, la pastille pub juste dessous. Les deux sont centrés
+ * ENSEMBLE, d'où la colonne plutôt que deux calages indépendants.
+ *
+ * Elle est posée PAR-DESSUS le bouton du carré et ne capte rien : seule la
+ * pastille pub y reprend les taps. Un `<button>` dans un `<button>` serait du
+ * HTML invalide — c'est ce qui vaut à la cellule son enveloppe.
+ */
+const pileCentre: CSSProperties = {
   position: "absolute",
-  left: "50%",
-  top: "50%",
-  transform: "translate(-50%, -50%)",
+  inset: 0,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  pointerEvents: "none",
+};
+
+/** Assise commune des pastilles de la pile : même galet, trois robes. */
+const pastilleCentre: CSSProperties = {
   borderRadius: 999,
   whiteSpace: "nowrap",
-  pointerEvents: "none",
 };
 
 const decompteStyle: CSSProperties = {
@@ -115,6 +142,26 @@ const decompteStyle: CSSProperties = {
   border: "1px solid rgba(241,227,191,0.35)",
   padding: "3px 9px",
 };
+
+function pastillePub(pubEnCours: boolean): CSSProperties {
+  return {
+    ...pastilleCentre,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    fontFamily: "var(--font-mono)",
+    fontSize: 9,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    color: "var(--paper-100)",
+    background: "var(--brass-600)",
+    border: "1px solid var(--brass-700)",
+    padding: "4px 8px",
+    pointerEvents: "auto",
+    cursor: pubEnCours ? "not-allowed" : "pointer",
+    opacity: pubEnCours ? 0.6 : 1,
+  };
+}
 
 // `broc-slot-ready-pulse` : halo vert qui s'écarte, écrit pour cet état exact.
 const recupererStyle: CSSProperties = {
@@ -139,6 +186,8 @@ export function AtelierSlots({
   onSlotVide,
   onEnCours,
   onRecuperer,
+  onAccelerer,
+  pubEnCours,
 }: AtelierSlotsProps) {
   const { d, tr, locale } = useLangue();
 
@@ -189,52 +238,74 @@ export function AtelierSlots({
         const pret = objet.enRestauration
           ? estPret(objet.enRestauration, now)
           : false;
+        const accelerable =
+          !!objet.enRestauration &&
+          peutTerminerImmediat(objet.enRestauration, now);
         return (
-          <button
-            key={idx}
-            type="button"
-            style={{ ...carreBase, borderStyle: "solid" }}
-            onClick={() => (pret ? onRecuperer(objet) : onEnCours(objet))}
-            aria-label={tr(
-              pret
-                ? d.inventaire.slotPretAria
-                : d.inventaire.slotEnCoursAria,
-              { nom: nomObjet(objet, locale) },
-            )}
-          >
-            <ItemSticker
-              templateId={objet.templateId}
-              categorie={objet.categorie}
-              fill
-              tilt={false}
-              variant="normal"
-              thumb
-              eager
-            />
-            {pret ? (
-              <span data-testid="pastille-recuperer" style={recupererStyle}>
-                {d.inventaire.recuperer}
-              </span>
-            ) : (
-              objet.enRestauration && (
-                <>
-                  <span
-                    data-testid="voile-restauration"
-                    style={{
-                      ...voileStyle,
-                      ["--voile-angle" as string]: `${angleVoileDeg(
-                        objet.enRestauration,
-                        now,
-                      )}deg`,
-                    }}
-                  />
+          <div key={idx} style={cellule}>
+            <button
+              type="button"
+              // Repère stable du carré : la pile centrale (décompte, pastilles)
+              // vit HORS du bouton depuis qu'elle porte un bouton à elle.
+              data-etabli-id={objet.id}
+              style={{ ...carreBase, borderStyle: "solid", width: "100%", height: "100%" }}
+              onClick={() => (pret ? onRecuperer(objet) : onEnCours(objet))}
+              aria-label={tr(
+                pret
+                  ? d.inventaire.slotPretAria
+                  : d.inventaire.slotEnCoursAria,
+                { nom: nomObjet(objet, locale) },
+              )}
+            >
+              <ItemSticker
+                templateId={objet.templateId}
+                categorie={objet.categorie}
+                fill
+                tilt={false}
+                variant="normal"
+                thumb
+                eager
+              />
+              {!pret && objet.enRestauration && (
+                <span
+                  data-testid="voile-restauration"
+                  style={{
+                    ...voileStyle,
+                    ["--voile-angle" as string]: `${angleVoileDeg(
+                      objet.enRestauration,
+                      now,
+                    )}deg`,
+                  }}
+                />
+              )}
+            </button>
+            <div style={pileCentre}>
+              {pret ? (
+                <span data-testid="pastille-recuperer" style={recupererStyle}>
+                  {d.inventaire.recuperer}
+                </span>
+              ) : (
+                objet.enRestauration && (
                   <span style={decompteStyle}>
                     {formatDuree(restantMs(objet.enRestauration, now))}
                   </span>
-                </>
-              )
-            )}
-          </button>
+                )
+              )}
+              {accelerable && (
+                <button
+                  type="button"
+                  data-testid="pastille-pub"
+                  disabled={pubEnCours}
+                  onClick={() => onAccelerer(objet)}
+                  style={pastillePub(pubEnCours)}
+                  aria-label={d.inventaire.terminerPub}
+                >
+                  <MonitorPlay size={12} strokeWidth={2.2} />
+                  {d.inventaire.pubCourt}
+                </button>
+              )}
+            </div>
+          </div>
         );
       })}
     </div>

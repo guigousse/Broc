@@ -516,6 +516,7 @@ export const fr = {
     recuperer: "Récupérer",
     celebrationRestaurationAria: "{nom} restauré : {etat}",
     terminerPub: "Terminer (pub) ▶",
+    pubCourt: "Pub",
     ongletDemantelement: "Démantèlement",
     aucunePieceARestaurer: "Aucune pièce à restaurer.",
     dureeValeurVers: "{duree} · valeur {valeur} →",

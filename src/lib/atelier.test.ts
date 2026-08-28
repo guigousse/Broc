@@ -20,6 +20,7 @@ describe("une pièce unique reste restaurable", () => {
 });import { describe, expect, it } from "vitest";
 import {
   appliquerRecuperation,
+  appliquerAccelerationRestauration,
   atelierAuneSlotLibre,
   atelierStatusPourObjet,
   collectionStatusPourObjet,
@@ -472,6 +473,32 @@ describe("une pièce unique reste restaurable", () => {
   });
 });
 
+describe("appliquerAccelerationRestauration", () => {
+  it("ramène l'échéance à maintenant : l'établi devient prêt, l'objet y reste", () => {
+    const o = createMockObjet({
+      id: "o1",
+      etat: "Bon",
+      enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 999999 },
+    });
+    const s = createMockGameState({ inventaireJoueur: [o] });
+    const next = appliquerAccelerationRestauration(s, "o1", 4242)!;
+    const apres = next.inventaireJoueur[0];
+    expect(apres.enRestauration?.finMs).toBe(4242);
+    // L'objet ne sort PAS de l'établi : la cérémonie de récupération reste à
+    // faire, c'est le tap du joueur sur « Récupérer » qui la déclenche.
+    expect(apres.enRestauration?.etatCible).toBe("Très bon");
+    expect(apres.etat).toBe("Bon");
+    expect(next.restaurations ?? []).toHaveLength(0);
+  });
+
+  it("retourne null si l'objet n'existe pas ou n'est pas en restauration", () => {
+    const o = createMockObjet({ id: "o1", etat: "Bon" });
+    const s = createMockGameState({ inventaireJoueur: [o] });
+    expect(appliquerAccelerationRestauration(s, "inconnu", 1)).toBeNull();
+    expect(appliquerAccelerationRestauration(s, "o1", 1)).toBeNull();
+  });
+});
+
 describe("appliquerRecuperation", () => {
   it("retourne null si l'objet n'existe pas", () => {
     const s = createMockGameState({ inventaireJoueur: [] });
@@ -538,18 +565,6 @@ describe("appliquerRecuperation", () => {
       timestamp: 999999,
       etatFinal: next!.inventaireJoueur.find((x) => x.id === "o1")!.etat,
     });
-  });
-
-  it("trace au timestamp réel fourni (fin immédiate via pub : finMs est dans le futur)", () => {
-    const o = createMockObjet({
-      id: "o1",
-      etat: "Bon",
-      enRestauration: { etatCible: "Très bon", debutMs: 0, finMs: 999999 },
-    });
-    const s = createMockGameState({ inventaireJoueur: [o], jourActuel: 5 });
-    // Complétion forcée avec now = finMs, mais tracée au moment réel (1234).
-    const next = appliquerRecuperation(s, "o1", 999999, 1234);
-    expect(next?.restaurations?.[0]?.timestamp).toBe(1234);
   });
 
   it("borne la trace des restaurations à 100 entrées", () => {

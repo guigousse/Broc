@@ -509,6 +509,7 @@ export const el: DictionnaireUI = {
     recuperer: "Παραλαβή",
     celebrationRestaurationAria: "{nom} αποκαταστάθηκε: {etat}",
     terminerPub: "Τέλος (διαφήμιση) ▶",
+    pubCourt: "Διαφ.",
     ongletDemantelement: "Αποσυναρμολόγηση",
     aucunePieceARestaurer: "Κανένα κομμάτι για αποκατάσταση.",
     dureeValeurVers: "{duree} · αξία {valeur} →",

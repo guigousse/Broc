@@ -98,6 +98,7 @@ import {
 import { getTemplate } from "@/data/objetTemplates";
 import { ATELIER_SLOTS, getProchaineUpgrade } from "@/data/atelier";
 import {
+  appliquerAccelerationRestauration,
   appliquerRecuperation,
   coutAmelioration,
   rendementDemantelement,
@@ -1821,25 +1822,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const now = tempsConfiance() ?? Date.now();
       if (!peutTerminerImmediat(objet.enRestauration, now))
         return { ok: false, raison: raisonLocalisee("horsFenetre30min") };
-      const fin = objet.enRestauration.finMs;
+      // L'échéance tombe à maintenant : l'établi passe en « prêt ». L'objet
+      // n'est PAS livré ici — sa récupération (et l'XP qui va avec) reste au
+      // tap du joueur, qui déclenche la cérémonie comme pour une restauration
+      // arrivée à terme. La notif « objet restauré » encore programmée
+      // s'annule d'elle-même : la resync est cadencée sur `finMs`.
       setState((prev) => {
         if (!prev) return prev;
-        // Forcer la complétion : on applique avec now = finMs (>= finMs), mais
-        // on trace au temps réel — finMs peut être 30 min dans le futur.
-        const next = appliquerRecuperation(prev, objetId, fin, Math.min(now, fin));
-        if (!next) return prev;
-        return {
-          ...next,
-          brocanteur: appliquerGainXPBrocanteur(
-            next.brocanteur,
-            XP_RESTAURATION_ETAPE *
-              multiplicateurXPRarete(
-                objet.rarete,
-                !!getTemplate(objet.templateId)?.unique,
-              ),
-            pointsDepensesCompetences(prev.competencesDebloquees),
-          ),
-        };
+        return appliquerAccelerationRestauration(prev, objetId, now) ?? prev;
       });
       return { ok: true };
     },

@@ -32,6 +32,7 @@ import { AtelierActions } from "@/components/atelier/AtelierActions";
 import { PrixMarche } from "@/components/ui/PrixMarche";
 import { AtelierSlots } from "@/components/atelier/AtelierSlots";
 import { CelebrationRestauration } from "@/components/atelier/CelebrationRestauration";
+import { RestaurationProjection } from "@/components/atelier/RestaurationProjection";
 import { TutorielCoach } from "@/components/mobile/tutoriel/TutorielCoach";
 import { PiecesInventoryBar } from "@/components/atelier/PiecesInventoryBar";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
@@ -425,6 +426,8 @@ export function AtelierContenu() {
           onSlotVide={() => setChoisirOuvert(true)}
           onEnCours={(o) => setEnCoursDetail(o)}
           onRecuperer={handleRecuperer}
+          onAccelerer={(o) => accelererViaPub(o.id)}
+          pubEnCours={pubEnCours}
         />
         </div>
       }
@@ -856,17 +859,6 @@ export function AtelierContenu() {
       >
         {enCoursDetail && enCoursDetail.enRestauration && (
           <div style={{ padding: "8px 16px 16px", textAlign: "center" }}>
-            <div style={{ width: 96, height: 96, margin: "0 auto 8px" }}>
-              <ItemSticker
-                templateId={enCoursDetail.templateId}
-                categorie={enCoursDetail.categorie}
-                fill
-                tilt={false}
-                variant="normal"
-                eager
-                thumb
-              />
-            </div>
             <div
               style={{
                 fontFamily: "var(--font-display)",
@@ -874,55 +866,70 @@ export function AtelierContenu() {
                 textTransform: "uppercase",
                 color: "var(--forest-800)",
                 fontWeight: 700,
-                marginBottom: 4,
+                marginBottom: 12,
+                textAlign: "center",
               }}
             >
               {nomObjet(enCoursDetail, locale)}
             </div>
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                color: "var(--ink-700)",
-                marginBottom: 12,
-              }}
-            >
-              {formatDuree(
-                restantMs(
+            {/* Le voyage de l'objet : état d'aujourd'hui → état projeté, le
+                temps restant au-dessus de la flèche et l'accélération en
+                dessous. Le bouton reste VISIBLE hors de la fenêtre des 30
+                min, mais grisé : le joueur voit ainsi que l'accélération
+                existe, et à quel moment elle s'ouvrira. */}
+            <RestaurationProjection
+              objet={enCoursDetail}
+              etatCible={enCoursDetail.enRestauration.etatCible}
+              entete={
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 12,
+                    color: "var(--ink-700)",
+                  }}
+                >
+                  {formatDuree(
+                    restantMs(
+                      enCoursDetail.enRestauration,
+                      tempsConfiance() ?? Date.now(),
+                    ),
+                  )}
+                </span>
+              }
+              action={(() => {
+                const ouvert = peutTerminerImmediat(
                   enCoursDetail.enRestauration,
                   tempsConfiance() ?? Date.now(),
-                ),
-              )}
-            </div>
-            {peutTerminerImmediat(
-              enCoursDetail.enRestauration,
-              tempsConfiance() ?? Date.now(),
-            ) && (
-              <button
-                type="button"
-                disabled={pubEnCours}
-                onClick={() => {
-                  accelererViaPub(enCoursDetail.id);
-                  setEnCoursDetail(null);
-                }}
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 9,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  color: "var(--paper-100)",
-                  background: "var(--brass-600)",
-                  border: "1px solid var(--brass-700)",
-                  padding: "6px 12px",
-                  borderRadius: 3,
-                  whiteSpace: "nowrap",
-                  cursor: pubEnCours ? "not-allowed" : "pointer",
-                  opacity: pubEnCours ? 0.6 : 1,
-                }}
-              >
-                {pubEnCours ? d.chrome.pubEnCours : d.inventaire.terminerPub}
-              </button>
-            )}
+                );
+                const inactif = !ouvert || pubEnCours;
+                return (
+                  <button
+                    type="button"
+                    disabled={inactif}
+                    onClick={() => {
+                      accelererViaPub(enCoursDetail.id);
+                      setEnCoursDetail(null);
+                    }}
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: "var(--paper-100)",
+                      background: "var(--brass-600)",
+                      border: "1px solid var(--brass-700)",
+                      padding: "6px 12px",
+                      borderRadius: 3,
+                      whiteSpace: "nowrap",
+                      cursor: inactif ? "not-allowed" : "pointer",
+                      opacity: inactif ? 0.45 : 1,
+                    }}
+                  >
+                    {pubEnCours ? d.chrome.pubEnCours : d.inventaire.terminerPub}
+                  </button>
+                );
+              })()}
+            />
           </div>
         )}
       </BottomSheet>

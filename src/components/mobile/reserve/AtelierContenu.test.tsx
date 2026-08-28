@@ -10,7 +10,14 @@
  * qui ne diffèrent QUE par la première compétence Réparer.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import { AtelierContenu } from "./AtelierContenu";
 import { __resetMemoireReserve } from "./ReserveShell";
 import { catTreeId } from "@/data/competences";
@@ -18,6 +25,16 @@ import { CATEGORIES } from "@/data/categories";
 import type { GameState } from "@/types/game";
 
 let mockState: GameState;
+
+const { accelererMock, showRewardedAd } = vi.hoisted(() => ({
+  accelererMock: vi.fn(() => ({ ok: true }) as { ok: boolean; raison?: string }),
+  showRewardedAd: vi.fn(async () => ({ rewarded: true })),
+}));
+
+vi.mock("@/lib/ads/adProvider", () => ({
+  getAdProvider: () => ({ showRewardedAd }),
+  EMPLACEMENTS_PUB: { restauration: "restauration" },
+}));
 
 const { recupererMock } = vi.hoisted(() => ({
   recupererMock: vi.fn(() => ({ ok: true }) as { ok: boolean; raison?: string }),
@@ -34,7 +51,7 @@ vi.mock("@/context/GameContext", () => ({
     state: mockState,
     isHydrated: true,
     restaurerObjet: vi.fn(),
-    terminerRestaurationImmediate: vi.fn(),
+    terminerRestaurationImmediate: accelererMock,
     tempsConfiance: () => null,
     ameliorerAtelier: vi.fn(),
     demantelerObjet: vi.fn(),
@@ -51,6 +68,8 @@ afterEach(() => {
   cleanup();
   __resetMemoireReserve();
   recupererMock.mockClear();
+  accelererMock.mockClear();
+  showRewardedAd.mockClear();
   recupererMock.mockReturnValue({ ok: true });
 });
 
@@ -109,8 +128,12 @@ describe("AtelierContenu — récupérer un objet restauré", () => {
   }
 
   function cliquerRecuperer() {
-    const pastille = screen.getByTestId("pastille-recuperer");
-    fireEvent.click(pastille.closest("button") as HTMLElement);
+    // La pastille « Récupérer » est une étiquette posée SUR le carré ; c'est
+    // le carré qui porte le geste.
+    expect(screen.getByTestId("pastille-recuperer")).toBeTruthy();
+    fireEvent.click(
+      document.querySelector('[data-etabli-id="o1"]') as HTMLElement,
+    );
   }
 
   it("crédite la partie une seule fois, puis joue la cérémonie", () => {
@@ -154,5 +177,48 @@ describe("AtelierContenu — récupérer un objet restauré", () => {
     render(<AtelierContenu />);
     cliquerRecuperer();
     expect(screen.queryByTestId("celebration-restauration")).toBeNull();
+  });
+});
+
+describe("AtelierContenu — accélérer par la pub", () => {
+  /** Établi dont il reste 10 minutes : dans la fenêtre d'accélération. */
+  function etatAvecObjetPresque(): GameState {
+    const s = etat([`${catTreeId(CATEGORIES[0])}.reparer.1`]);
+    return {
+      ...s,
+      inventaireJoueur: [
+        {
+          id: "o1",
+          templateId: "lampe-tiffany",
+          categorie: "Maison",
+          etat: "Bon",
+          rarete: "commun",
+          enRestauration: {
+            etatCible: "Très bon",
+            debutMs: Date.now() - 60_000,
+            finMs: Date.now() + 10 * 60_000,
+          },
+        },
+      ],
+    } as unknown as GameState;
+  }
+
+  it("la pastille du slot lance la pub, qui rend l'établi prêt SANS cérémonie", async () => {
+    mockState = etatAvecObjetPresque();
+    render(<AtelierContenu />);
+    fireEvent.click(screen.getByTestId("pastille-pub"));
+    await waitFor(() => expect(accelererMock).toHaveBeenCalledWith("o1"));
+    // La cérémonie appartient au tap sur « Récupérer », pas à la pub.
+    expect(screen.queryByTestId("celebration-restauration")).toBeNull();
+    expect(recupererMock).not.toHaveBeenCalled();
+  });
+
+  it("pub refusée (non regardée jusqu'au bout) : rien ne bouge", async () => {
+    showRewardedAd.mockResolvedValueOnce({ rewarded: false });
+    mockState = etatAvecObjetPresque();
+    render(<AtelierContenu />);
+    fireEvent.click(screen.getByTestId("pastille-pub"));
+    await waitFor(() => expect(showRewardedAd).toHaveBeenCalled());
+    expect(accelererMock).not.toHaveBeenCalled();
   });
 });
