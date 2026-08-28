@@ -44,7 +44,7 @@ let compteur = 0;
 /** Un calque neuf, au centre du cadre, prêt à être déplacé. */
 export function nouveauTexte(texte = "Nouveau texte") {
   compteur += 1;
-  return { id: `t${Date.now().toString(36)}${compteur}`, texte, x: 540, y: 820, police: "Cinzel", taille: 56, couleur: "laiton", gras: true };
+  return { id: `t${Date.now().toString(36)}${compteur}`, texte, x: 540, y: 680, police: "Cinzel", taille: 56, couleur: "laiton", gras: true };
 }
 
 /** Un calque borné et typé, ou null s'il n'est pas exploitable (pas d'id). */
