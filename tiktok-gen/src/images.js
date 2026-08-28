@@ -11,7 +11,7 @@ export function chargerImage(url) {
 }
 
 /** Épaisseur du liseré de la silhouette autour de l'objet, en px du cadre (à la hauteur d'affichage). */
-export const OFFSET_SILHOUETTE = 14;
+export const OFFSET_SILHOUETTE = 17;
 /** Directions de la dilatation : 24 pas d'angle, deux rayons → contour rond, sans facettes visibles. */
 const DIRECTIONS = 24;
 
@@ -98,5 +98,5 @@ export class CacheImages {
   fond(nom) { return this.#memo(`fond:${nom}`, () => chargerImage(nom.startsWith("data:") ? nom : `assets/fonds/${nom}.webp`)); }
   /** Fond plein cadre, flouté : voir `preparerFond`. */
   fondPrepare(nom, flou) { return this.#memo(`fondp:${nom}:${flou}`, async () => preparerFond(await this.fond(nom), flou)); }
-  silhouette(id) { return this.#memo(`silh:${id}`, async () => creerSilhouette(await this.objet(id))); }
+  silhouette(id, offsetPx = OFFSET_SILHOUETTE) { return this.#memo(`silh:${id}:${offsetPx}`, async () => creerSilhouette(await this.objet(id), offsetPx)); }
 }

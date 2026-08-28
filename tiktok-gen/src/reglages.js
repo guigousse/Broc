@@ -11,6 +11,7 @@ export const REGLAGES_DEFAUT = Object.freeze({
   fond: "foire-chatou", fondPerso: null, objets: [], cible: null,
   vitesse: 2.5, espacement: 520, nbPassages: 3, largeurFlash: 4,
   flou: 0,
+  liseret: 17,
   // Textes du flash (BROC reste le logo). Vide = ligne masquée.
   sousTitre: "Le jeu de brocante",
   texteAutres: "+ {n} autres objets à collectionner dans le jeu",
@@ -38,6 +39,7 @@ export function normaliserReglages(brut = {}) {
     nbPassages: Math.round(borne(brut.nbPassages, 2, 4, REGLAGES_DEFAUT.nbPassages)),
     largeurFlash: Math.round(borne(brut.largeurFlash, 2, 8, REGLAGES_DEFAUT.largeurFlash)),
     flou: Math.round(borne(brut.flou, 0, 40, REGLAGES_DEFAUT.flou)),
+    liseret: Math.round(borne(brut.liseret, 0, 30, REGLAGES_DEFAUT.liseret)),
     sousTitre: texte(brut.sousTitre, REGLAGES_DEFAUT.sousTitre),
     texteAutres: texte(brut.texteAutres, REGLAGES_DEFAUT.texteAutres),
     texteDispo: texte(brut.texteDispo, REGLAGES_DEFAUT.texteDispo),

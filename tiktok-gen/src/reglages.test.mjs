@@ -24,6 +24,11 @@ describe("normaliserReglages", () => {
     expect(normaliserReglages({ flou: 12.6 }).flou).toBe(13);
     expect(normaliserReglages({}).flou).toBe(0);
   });
+  it("liseré de la silhouette borné 0–30, défaut 17", () => {
+    expect(normaliserReglages({}).liseret).toBe(17);
+    expect(normaliserReglages({ liseret: 99 }).liseret).toBe(30);
+    expect(normaliserReglages({ liseret: -1 }).liseret).toBe(0);
+  });
   it("textes du flash : défauts, chaîne vide conservée (ligne masquée), tronqués à 80", () => {
     expect(normaliserReglages({}).sousTitre).toBe("Le jeu de brocante");
     expect(normaliserReglages({ texteAutres: "" }).texteAutres).toBe("");
