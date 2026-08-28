@@ -182,7 +182,8 @@ button.principal {
   accent-color: var(--laiton);
 }
 
-#p-reglages label input[type="text"] { grid-column: 1 / -1; }
+#p-reglages label input[type="text"],
+#p-reglages label select { grid-column: 1 / -1; width: 100%; }
 
 #p-reglages label:has(input[type="checkbox"]) {
   grid-template-columns: auto 1fr;
