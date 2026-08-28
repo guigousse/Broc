@@ -34,8 +34,8 @@ export function texteCouche(couche, contexte = {}) {
     .replaceAll("{prix}", cible.prix === undefined ? "" : formaterPrix(cible.prix));
 }
 
-/** Largeur maximale d'un calque : le cadre moins une marge — la ligne se tasse au-delà. */
-const LARGEUR_MAX_TEXTE = LARGEUR - 80;
+/** Largeur maximale d'un calque centré pour rester dans la zone sûre (760 px) — la ligne se tasse au-delà. */
+const LARGEUR_MAX_TEXTE = 2 * (ZONE_SURE.droite - CENTRE_X);
 
 /** Boîte englobante d'un calque sur le canvas, en px du cadre (pour le glisser-déposer). */
 export function boiteTexte(ctx, couche, contexte) {
