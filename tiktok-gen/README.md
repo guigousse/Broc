@@ -28,7 +28,7 @@ npm run tiktok:build
 dessinée puis encodée une par une, à **60 images/s fixes** — aucune image ne
 peut être perdue. Le son du tour est rendu par `OfflineAudioContext` puis
 encodé en AAC ; le tout est muxé en mp4 H.264 (`src/encodeur.js`, muxeur
-`dist/vendor/mp4-muxer.mjs`). Le rendu prend à peu près la durée du clip sur
+`tiktok-gen/vendor/mp4-muxer.mjs`, vendorisé — Vercel n'installe rien). Le rendu prend à peu près la durée du clip sur
 iPhone, souvent moins.
 
 Pourquoi : l'ancienne prise en **temps réel** (`MediaRecorder` sur

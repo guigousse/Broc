@@ -48,7 +48,6 @@
     "react-dom": "19.0.0"
   },
   "devDependencies": {
-    "mp4-muxer": "^5.2.2",
     "@google/genai": "^2.6.0",
     "@next/eslint-plugin-next": "^16.2.10",
     "@tailwindcss/postcss": "^4.0.0",

@@ -90,9 +90,9 @@ async function construire() {
   await copierDossier(path.join(ICI, "src"), path.join(DIST, "src"), (n) => !n.endsWith(".test.mjs"));
   await copierDossier(path.join(ICI, "assets", "badges"), path.join(DIST, "assets", "badges"));
   await copierDossier(path.join(ICI, "assets", "sons"), path.join(DIST, "assets", "sons"));
-  // Muxeur mp4 (WebCodecs → fichier) : seule dépendance, servie telle quelle.
-  await fsp.mkdir(path.join(DIST, "vendor"), { recursive: true });
-  await fsp.copyFile(path.join(RACINE, "node_modules", "mp4-muxer", "build", "mp4-muxer.mjs"), path.join(DIST, "vendor", "mp4-muxer.mjs"));
+  // Muxeur mp4 (WebCodecs → fichier), vendorisé dans le dépôt : Vercel n'installe
+  // rien (`installCommand` vide), un node_modules absent y ferait échouer le build.
+  await copierDossier(path.join(ICI, "vendor"), path.join(DIST, "vendor"));
   const webp = (n) => n.endsWith(".webp");
   await copierDossier(path.join(RACINE, "public", "items"), path.join(DIST, "assets", "items"), webp);
   await copierDossier(path.join(RACINE, "public", "items", "thumbs"), path.join(DIST, "assets", "thumbs"), webp);
