@@ -112,7 +112,7 @@ export class Apercu {
 
     this.#cfg = cfg;
     this.#r = r;
-    this.#scene = { r, cfg, fond, objets, silhouette, consigne: reglages.consigne, badges };
+    this.#scene = { r, cfg, fond, objets, silhouette, badges };
 
     // Le son était planifié pour l'ancienne roulette : on repart de zéro, ensemble.
     if (this.#raf !== null) this.#relancer();

@@ -9,7 +9,7 @@ import {
   FOND_PERSO, REGLAGES_DEFAUT, TAILLE_MAX_FOND_PERSO,
   chargerReglages, normaliserReglages, sauverReglages,
 } from "./reglages.js";
-import { consigneCourte, formaterDuree, formaterInfos } from "./texte.js";
+import { formaterDuree, formaterInfos } from "./texte.js";
 import { SonRoulette } from "./son.js";
 import { Apercu, roulettePour } from "./apercu.js";
 import { capacitesEnregistrement, enregistrer, partager } from "./enregistreur.js";
@@ -19,8 +19,6 @@ const TIRAGE = 8;
 /** Dit quand `sauverReglages` abandonne la photo : elle marche, mais elle ne survivra pas à la page. */
 const MESSAGE_FOND_LOURD =
   "Photo trop lourde pour être mémorisée : elle sera à réimporter à la prochaine ouverture.";
-/** Longueur max de la consigne : celle du champ (`maxlength=40` dans index.html). */
-const MAX_CONSIGNE = 40;
 /**
  * Un curseur émet un `input` par pixel parcouru. Redessiner et surtout
  * replanifier l'audio à chacun coûterait un tour de roulette par pixel : on
@@ -80,8 +78,6 @@ async function demarrer() {
   const parId = new Map(catalogue.map((e) => [e.id, e]));
 
   let reglages = chargerReglages(stockage);
-  // Vrai tant que la consigne n'a pas été retouchée à la main : on peut la régénérer.
-  let consigneAuto = reglages.consigne === REGLAGES_DEFAUT.consigne;
 
   const el = {
     app: $("app"), scene: $("scene"),
@@ -92,7 +88,7 @@ async function demarrer() {
     compte: $("compte-objets"), categorie: $("filtre-categorie"), recherche: $("recherche"),
     aleatoire: $("aleatoire"), vider: $("vider"),
     grilleObjets: $("grille-objets"), grilleSelection: $("grille-selection"),
-    consigne: $("consigne"), son: $("son"),
+    son: $("son"),
     duree: $("info-duree"), fenetre: $("info-fenetre"), message: $("message"),
   };
   const curseurs = [
@@ -199,7 +195,7 @@ async function demarrer() {
   function basculerObjet(id) {
     if (reglages.objets.includes(id)) {
       reglages.objets = reglages.objets.filter((x) => x !== id);
-      // Passer par definirCible : la consigne doit suivre la nouvelle cible.
+      // Passer par definirCible : elle rafraîchit l'aperçu si besoin.
       if (reglages.cible === id) definirCible(reglages.objets[0] ?? null, { differer: true });
       dire("");
     } else {
@@ -211,14 +207,8 @@ async function demarrer() {
     appliquer();
   }
 
-  /** La cible fixe aussi la consigne, tant que celle-ci n'a pas été écrite à la main. */
   function definirCible(id, { differer = false } = {}) {
     reglages.cible = id;
-    if (consigneAuto) {
-      // `consigneCourte` garantit la limite du champ (les noms du catalogue la dépassent souvent).
-      reglages.consigne = consigneCourte(parId.get(id)?.nom ?? "", MAX_CONSIGNE);
-      el.consigne.value = reglages.consigne;
-    }
     if (!differer) appliquer();
   }
 
@@ -236,7 +226,6 @@ async function demarrer() {
 
   function peuplerChamps() {
     for (const c of curseurs) c.champ.value = String(reglages[c.cle]);
-    el.consigne.value = reglages.consigne;
     el.son.checked = reglages.son;
   }
 
@@ -342,7 +331,7 @@ async function demarrer() {
    * Point de passage unique de tout changement : normalise, persiste, redessine.
    * `delai` diffère le seul rechargement de l'aperçu (curseurs et frappe) ;
    * l'écran, lui, est à jour tout de suite. `leger` saute les grilles, que ni
-   * un curseur ni la consigne ne touchent.
+   * les curseurs ne touchent pas.
    */
   function appliquer({ delai = 0, leger = false } = {}) {
     reglages = normaliserReglages(reglages);
@@ -364,11 +353,6 @@ async function demarrer() {
       appliquer({ delai: DELAI_CURSEUR, leger: true });
     });
   }
-  el.consigne.addEventListener("input", () => {
-    consigneAuto = false;               // dès qu'il écrit, la consigne lui appartient.
-    reglages.consigne = el.consigne.value;
-    appliquer({ delai: DELAI_CURSEUR, leger: true });   // une frappe ≠ un tour de roulette.
-  });
   el.son.addEventListener("change", () => {
     reglages.son = el.son.checked;
     son.active = reglages.son;

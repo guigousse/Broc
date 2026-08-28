@@ -13,26 +13,18 @@ function dessinerCover(ctx, img) {
   g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.45)");
   ctx.fillStyle = g; ctx.fillRect(0, 0, LARGEUR, HAUTEUR);
 }
-function dessinerConsigne(ctx, texte) {
-  if (!texte) return;
-  ctx.save();
-  ctx.fillStyle = "rgba(20,24,28,0.55)"; ctx.fillRect(0, 300, LARGEUR, 150);
-  ctx.font = "600 64px Cinzel"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 12;
-  ctx.fillStyle = COULEURS.laitonClair; ctx.fillText(texte, CENTRE_X, 375, LARGEUR - 80);
-  ctx.restore();
-}
 function dessinerCentre(ctx, img, x, hauteur) {
   const w = img.width * (hauteur / img.height);
   ctx.drawImage(img, x - w / 2, CENTRE_Y - hauteur / 2, w, hauteur);
 }
 export function dessinerFrame(ctx, t, scene) {
-  const { r, cfg, fond, objets, silhouette, consigne, flashActif } = scene;
+  // Pas de bandeau de texte : la consigne s'ajoute au montage (CapCut), pas ici.
+  const { r, cfg, fond, objets, silhouette, flashActif } = scene;
   dessinerCover(ctx, fond);
-  dessinerConsigne(ctx, consigne);
   if (silhouette) {
     ctx.save(); ctx.shadowColor = COULEURS.laiton; ctx.shadowBlur = 18;
-    dessinerCentre(ctx, silhouette, CENTRE_X, HAUTEUR_OBJET * 1.15); ctx.restore();
+    // Même centre, même hauteur que l'objet : la cible vient la recouvrir pile.
+    dessinerCentre(ctx, silhouette, CENTRE_X, HAUTEUR_OBJET); ctx.restore();
   }
   // positionsVisibles filtre déjà hors cadre et rend les deux exemplaires d'un
   // objet à cheval sur le pli de la bande (peu d'objets très espacés).
