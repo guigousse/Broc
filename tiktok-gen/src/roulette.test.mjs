@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculerRoulette, calculerRouletteRalentie, calculerPour, positionsA, positionsVisibles, estFlash, instantDessine, tempsBoucle, CENTRE_X, LARGEUR, FPS } from "./roulette.js";
+import { calculerRoulette, calculerRouletteRalentie, calculerPour, positionsA, positionsVisibles, estFlash, instantDessine, aura, AURA_APPARITION, AURA_PERIODE, tempsBoucle, CENTRE_X, LARGEUR, FPS } from "./roulette.js";
 
 const CFG = { nbObjets: 8, indexCible: 2, vitesse: 2, espacement: 500, nbPassages: 3, largeurFlash: 4 };
 
@@ -188,5 +188,24 @@ describe("calculerRouletteRalentie", () => {
   it("pas de gel au flash : instantDessine rend le temps tel quel", () => {
     const c = r.instantsCentrage[1];
     expect(instantDessine(c + r.demiFlash / 2, r)).toBeCloseTo(c + r.demiFlash / 2, 12);
+  });
+});
+
+describe("aura", () => {
+  it("rien avant l'arrêt, montée en 420 ms, puis respiration bornée", () => {
+    expect(aura(-0.1)).toEqual({ opacite: 0, echelle: 0 });
+    expect(aura(0).opacite).toBe(0);
+    expect(aura(AURA_APPARITION).opacite).toBeCloseTo(0.8, 9);   // raccord : fin de montée = bas de la respiration
+    expect(aura(AURA_APPARITION).echelle).toBeCloseTo(1.2, 9);
+    for (let dt = AURA_APPARITION; dt < 5; dt += 0.05) {
+      const a = aura(dt);
+      expect(a.opacite).toBeGreaterThanOrEqual(0.8 - 1e-9); expect(a.opacite).toBeLessThanOrEqual(1 + 1e-9);
+      expect(a.echelle).toBeGreaterThanOrEqual(1.2 - 1e-9); expect(a.echelle).toBeLessThanOrEqual(1.34 + 1e-9);
+    }
+    expect(aura(AURA_APPARITION + AURA_PERIODE / 2).echelle).toBeCloseTo(1.34, 9);
+  });
+  it("la roulette qui ralentit célèbre à T, celle qui boucle jamais", () => {
+    expect(calculerRouletteRalentie({ nbObjets: 4, indexCible: 0, espacement: 500, nbTours: 1, dureeDefilement: 3, arretFinal: 1 }).instantCelebration).toBe(3);
+    expect(calculerRoulette(CFG).instantCelebration).toBeNull();
   });
 });

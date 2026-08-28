@@ -36,7 +36,7 @@ export function calculerRoulette({ nbObjets, indexCible, vitesse, espacement, nb
   const demiFlash = largeurFlash / 2 / FPS;
   return {
     type: "pause", periodeTour, duree, vitessePx, longueurBande, avancement, instantsCentrage, instantsTics,
-    demiFlash, fenetrePauseMs: (largeurFlash / FPS) * 1000, geleAuFlash: true, arretDepuis: null,
+    demiFlash, fenetrePauseMs: (largeurFlash / FPS) * 1000, geleAuFlash: true, arretDepuis: null, instantCelebration: null,
   };
 }
 
@@ -79,7 +79,7 @@ export function calculerRouletteRalentie({ nbObjets, indexCible, espacement, nbT
   return {
     type: "ralentie", periodeTour: T, duree, vitessePx: (EXPOSANT_RALENTI * avancementFinal) / T, longueurBande,
     avancement, instantsCentrage, instantsTics, demiFlash, fenetrePauseMs: arretFinal * 1000,
-    geleAuFlash: false, arretDepuis: T,
+    geleAuFlash: false, arretDepuis: T, instantCelebration: T,
   };
 }
 
@@ -138,6 +138,27 @@ export function instantDessine(t, r) {
   if (r.geleAuFlash === false) return tb;   // roulette qui ralentit : elle continue sous le flash, l'arrêt final est déjà immobile.
   const c = r.instantsCentrage.find((x) => Math.abs(tb - x) <= r.demiFlash);
   return c === undefined ? tb : c;
+}
+
+/** Apparition de l'aura (s) puis période de sa respiration (s) — mêmes valeurs que le jeu. */
+export const AURA_APPARITION = 0.42, AURA_PERIODE = 1.6;
+
+/**
+ * L'aura pristine à `dt` secondes après l'arrêt de la cible : { opacite, echelle }.
+ * Avant l'arrêt : rien. Puis montée en 420 ms (0 → 0,8, échelle 0,7 → 1,2),
+ * puis respiration entre (0,8 ; ×1,2) et (1 ; ×1,34) sur 1,6 s — copie des
+ * keyframes `boite-aura` / `boite-aura-pulse` du jeu.
+ */
+export function aura(dt) {
+  if (!(dt >= 0)) return { opacite: 0, echelle: 0 };
+  if (dt < AURA_APPARITION) {
+    const u = dt / AURA_APPARITION;
+    const e = 1 - (1 - u) ** 2;   // ease-out
+    return { opacite: 0.8 * e, echelle: 0.7 + 0.5 * e };
+  }
+  const phase = ((dt - AURA_APPARITION) % AURA_PERIODE) / AURA_PERIODE;
+  const w = 0.5 - 0.5 * Math.cos(2 * Math.PI * phase);   // 0 → 1 → 0, doux
+  return { opacite: 0.8 + 0.2 * w, echelle: 1.2 + 0.14 * w };
 }
 
 export function tempsBoucle(t, r) {

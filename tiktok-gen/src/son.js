@@ -13,6 +13,9 @@
  */
 
 export const URL_TIC = "assets/sons/tic.wav";
+/** Son de célébration à l'arrêt de la cible : la « magie » du pristin, reprise du jeu. */
+export const URL_CELEBRATION = "assets/sons/celebration.mp3";
+const GAIN_CELEBRATION = 0.9;
 const GAIN_ECHANTILLON = 0.8;
 /** Chaque tic diffère un peu du voisin (hauteur ±4 %, volume 85–100 %) : sans ça, mitrailleuse. */
 const VARIATION_HAUTEUR = 0.04;
@@ -43,19 +46,34 @@ export class SonRoulette {
     // AudioBuffer du tic, une fois décodé ; et la promesse de son chargement (une seule fois).
     this._tic = null;
     this._chargementTic = null;
+    this._celebration = null;
     this._alea = Math.random;
   }
 
   /** Télécharge et décode l'échantillon ; un échec laisse le tic synthétisé en service. */
   _chargerTic() {
     if (!this._chargementTic) {
-      this._chargementTic = fetch(URL_TIC)
-        .then((rep) => { if (!rep.ok) throw new Error(`tic introuvable : ${rep.status}`); return rep.arrayBuffer(); })
-        .then((donnees) => this.audioCtx.decodeAudioData(donnees))
-        .then((buffer) => { this._tic = buffer; })
-        .catch((e) => { console.warn("tic échantillonné indisponible, tic synthétisé", e); });
+      const charger = (url, nom) => fetch(url)
+        .then((rep) => { if (!rep.ok) throw new Error(`${nom} introuvable : ${rep.status}`); return rep.arrayBuffer(); })
+        .then((donnees) => this.audioCtx.decodeAudioData(donnees));
+      this._chargementTic = Promise.all([
+        charger(URL_TIC, "tic").then((b) => { this._tic = b; }).catch((e) => { console.warn("tic échantillonné indisponible, tic synthétisé", e); }),
+        charger(URL_CELEBRATION, "célébration").then((b) => { this._celebration = b; }).catch((e) => { console.warn("son de célébration indisponible", e); }),
+      ]);
     }
     return this._chargementTic;
+  }
+
+  /** L'échantillon de célébration, sur n'importe quel contexte. → { src, fin } ou null s'il n'est pas chargé. */
+  static _celebrationSur(ctx, sortie, buffer, t) {
+    if (!buffer) return null;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.value = GAIN_CELEBRATION;
+    src.connect(gain); gain.connect(sortie);
+    src.start(t);
+    return { src, fin: t + buffer.duration };
   }
 
   /** Crée le contexte et le graphe audio s'ils n'existent pas déjà. */
@@ -167,6 +185,9 @@ export class SonRoulette {
       if (this._tic) SonRoulette._ticEchantillonSur(ctx, sortie, this._tic, tic.t, this._alea);
       else SonRoulette._ticSyntheseSur(ctx, sortie, tic.t);
     }
+    if (r.instantCelebration !== null && r.instantCelebration !== undefined) {
+      SonRoulette._celebrationSur(ctx, sortie, this._celebration, r.instantCelebration);
+    }
     return ctx.startRendering();
   }
 
@@ -211,6 +232,10 @@ export class SonRoulette {
     this._assurerContexte();
     this._appliquerActif();
     for (const tic of r.instantsTics) this._planifierTic(tDebutCtx + tic.t);
+    if (r.instantCelebration !== null && r.instantCelebration !== undefined) {
+      const v = SonRoulette._celebrationSur(this.audioCtx, this._sortie(), this._celebration, tDebutCtx + r.instantCelebration);
+      if (v) this._retenirVoix(v.src, v.fin);
+    }
   }
 
   /**
