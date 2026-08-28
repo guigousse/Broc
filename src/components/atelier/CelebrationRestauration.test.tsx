@@ -16,11 +16,13 @@ import type { EtatObjet, Objet } from "@/types/game";
 
 const playUpgrade = vi.fn();
 const playRarete = vi.fn();
+const playPristinMagie = vi.fn();
 const playPickup = vi.fn();
 vi.mock("@/lib/audio/audioManager", () => ({
   audioManager: {
     playUpgrade: () => playUpgrade(),
     playRarete: () => playRarete(),
+    playPristinMagie: () => playPristinMagie(),
     playPickup: () => playPickup(),
   },
 }));
@@ -78,6 +80,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   playUpgrade.mockClear();
   playRarete.mockClear();
+  playPristinMagie.mockClear();
   playPickup.mockClear();
   const cible = document.createElement("div");
   cible.setAttribute("data-fly-target", "stockage-onglet");
@@ -147,11 +150,14 @@ describe("CelebrationRestauration", () => {
     avancer(SEQUENCE_MS.gagne + 10);
     expect(etoilesPleines()).toBe(3);
     expect(playRarete).toHaveBeenCalledTimes(1);
+    // La couche « magie » se superpose au carillon, pour le pristin seul.
+    expect(playPristinMagie).toHaveBeenCalledTimes(1);
     cleanup();
 
     const c2 = afficher("Mauvais", "Bon");
     void c2;
     avancer(SEQUENCE_MS.gagne + 10);
     expect(playRarete).toHaveBeenCalledTimes(1); // toujours l'unique appel
+    expect(playPristinMagie).toHaveBeenCalledTimes(1);
   });
 });

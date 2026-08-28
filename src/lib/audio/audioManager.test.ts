@@ -535,6 +535,23 @@ describe("audioManager — effets et préférences", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  // La couche « magie » superposée quand un objet atteint le pristin.
+  it("playPristinMagie charge /sounds/pristin-magie.mp3 et lance la source", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playPristinMagie();
+    expect(fetchMock).toHaveBeenCalledWith("/sounds/pristin-magie.mp3");
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(1);
+    expect(ctx.bufferSources[0].start).toHaveBeenCalled();
+  });
+
+  it("playPristinMagie est muet quand la préférence effets est désactivée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.setPref("effets", false);
+    await audioManager.playPristinMagie();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   // Le tintement des Bazarcoins qui tombent dans la caisse, au bout de leur vol
   // depuis le carnet de quêtes (2026-08-26).
   it("playJetonBazar charge /sounds/jeton-bazar.mp3 et lance la source", async () => {

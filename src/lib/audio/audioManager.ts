@@ -842,6 +842,23 @@ class AudioManager {
     src.start();
   }
 
+  /**
+   * Couche « magie » superposée au son de montée quand l'objet atteint le
+   * PRISTIN — le sommet de l'échelle doit s'entendre autrement qu'une
+   * montée ordinaire.
+   */
+  async playPristinMagie(): Promise<void> {
+    if (!this.prefs.effets) return;
+    this.ensureCtx();
+    if (!this.ctx || !this.master) return;
+    const buf = await this.loadBuffer("/sounds/pristin-magie.mp3");
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.master);
+    src.start();
+  }
+
   /** Vendeur mystère : deux notes feutrées à intervalle intrigant, longue traîne. */
   playMystere(): void {
     if (!this.prefs.effets) return;

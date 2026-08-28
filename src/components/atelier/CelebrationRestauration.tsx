@@ -180,7 +180,10 @@ export function CelebrationRestauration({
     planifier(SEQUENCE_MS.gagne, () => {
       setPhase(2);
       void audioManager.playUpgrade();
-      if (pristinRef.current) void audioManager.playRarete();
+      if (pristinRef.current) {
+        void audioManager.playRarete();
+        void audioManager.playPristinMagie();
+      }
     });
     planifier(SEQUENCE_MS.vol, () => {
       setPhase(3);
