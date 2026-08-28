@@ -239,6 +239,7 @@ async function demarrer() {
     el.son.checked = reglages.son;
     el.typeVideo.value = reglages.type;
     el.reglagesPanneau.dataset.type = reglages.type;
+    if (typeof majBarreType === "function") majBarreType();
     for (const t of el.textes) t.champ.value = reglages[t.cle];
   }
 
@@ -396,11 +397,7 @@ async function demarrer() {
   });
   majPresets();
 
-  el.typeVideo.addEventListener("change", () => {
-    reglages.type = el.typeVideo.value;
-    el.reglagesPanneau.dataset.type = reglages.type;
-    appliquer({ leger: true });
-  });
+  el.typeVideo.addEventListener("change", () => changerType(el.typeVideo.value));
   for (const t of el.textes) {
     t.champ.addEventListener("input", () => {
       reglages[t.cle] = t.champ.value;
@@ -565,18 +562,44 @@ async function demarrer() {
   construireGrilleFonds();
   appliquerFiltre();
   // Sections rabattables : l'état de chacune survit au rechargement (confort local).
-  // Rabattues par défaut ; on mémorise celles que l'utilisateur a ouvertes.
-  const CLE_OUVERTS = "broc-tiktok-gen-sections-ouvertes";
-  const sections = [...document.querySelectorAll("details.panneau")];
-  try {
-    const ouvertes = JSON.parse(stockage.getItem(CLE_OUVERTS) ?? "[]");
-    for (const d of sections) d.open = ouvertes.includes(d.id);
-  } catch { /* état non lu : tout reste rabattu */ }
-  for (const d of sections) {
-    d.addEventListener("toggle", () => {
-      try { stockage.setItem(CLE_OUVERTS, JSON.stringify(sections.filter((x) => x.open).map((x) => x.id))); } catch { /* tant pis */ }
+  // ------------------------------------------------- barre du bas (onglets)
+  // Un seul panneau ouvert à la fois ; tap sur l'onglet actif = fermer. Mémorisé.
+  const CLE_ONGLET = "broc-tiktok-gen-onglet";
+  const onglets = [...document.querySelectorAll("#barre button[data-section]")];
+  const feuilles = [...document.querySelectorAll(".panneau.feuille")];
+  function ouvrirSection(id) {
+    for (const f of feuilles) f.hidden = f.id !== id;
+    for (const o of onglets) o.setAttribute("aria-pressed", String(o.dataset.section === id));
+    try { stockage.setItem(CLE_ONGLET, id ?? ""); } catch { /* tant pis */ }
+    const f = id && document.getElementById(id);
+    if (f) f.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+  for (const o of onglets) {
+    o.addEventListener("click", () => {
+      const deja = o.getAttribute("aria-pressed") === "true";
+      ouvrirSection(deja ? null : o.dataset.section);
     });
   }
+  let ongletInitial = null;
+  try { ongletInitial = stockage.getItem(CLE_ONGLET) || null; } catch { /* rien */ }
+  for (const f of feuilles) f.hidden = f.id !== ongletInitial;
+  for (const o of onglets) o.setAttribute("aria-pressed", String(o.dataset.section === ongletInitial));
+
+  const LIBELLES_TYPE = { pause: "Mets pause", ralentie: "Roulette" };
+  const barreType = document.getElementById("barre-type");
+  const barreTypeLibelle = document.getElementById("barre-type-libelle");
+  function majBarreType() {
+    barreTypeLibelle.textContent = LIBELLES_TYPE[reglages.type] ?? "Type";
+    barreType.title = `Type de vidéo : ${LIBELLES_TYPE[reglages.type]} — appuie pour changer`;
+  }
+  function changerType(type) {
+    reglages.type = type;
+    el.typeVideo.value = type;
+    el.reglagesPanneau.dataset.type = type;
+    majBarreType();
+    appliquer({ leger: true });   // le libellé de la barre dit le mode, pas besoin de message.
+  }
+  barreType.addEventListener("click", () => changerType(reglages.type === "pause" ? "ralentie" : "pause"));
 
   peuplerChamps();
   majAffichage();

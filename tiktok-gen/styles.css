@@ -24,7 +24,8 @@ body {
   max-width: 720px;
   margin: 0 auto;
   /* En plein écran (viewport-fit=cover + mode autonome), la barre d'état mange le haut. */
-  padding: calc(8px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom));
+  /* En bas : la barre de navigation fixe (64 px + zone sûre). */
+  padding: calc(8px + env(safe-area-inset-top)) 12px calc(88px + env(safe-area-inset-bottom));
 }
 
 .version { font-size: 12px; opacity: 0.55; text-align: center; margin: 0; }
@@ -71,33 +72,6 @@ body {
 }
 
 .panneau h3 { font-size: 0.9rem; }
-
-/* Sections rabattables : le titre est la poignée, chevron à droite, zone tactile ≥ 44 px. */
-details.panneau > summary {
-  list-style: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: var(--touche);
-  margin: -12px;
-  padding: 0 12px;
-  -webkit-user-select: none;
-  user-select: none;
-}
-details.panneau > summary::-webkit-details-marker { display: none; }
-details.panneau > summary::after {
-  content: "";
-  width: 10px;
-  height: 10px;
-  border-right: 2px solid var(--laiton);
-  border-bottom: 2px solid var(--laiton);
-  transform: rotate(-45deg);
-  transition: transform 0.15s;
-  margin-right: 4px;
-}
-details.panneau[open] > summary::after { transform: rotate(45deg); }
-details.panneau[open] > summary { margin-bottom: -2px; }
 
 /* Réglages propres à un type de vidéo : seuls ceux du type choisi s'affichent. */
 #p-reglages[data-type="pause"] [data-mode="ralentie"],
@@ -340,3 +314,48 @@ output {
   text-shadow: 0 0 4px var(--nuit);
   pointer-events: none;
 }
+
+/* ------------------------------------------------ barre de navigation (bas) */
+
+#barre {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  background: rgba(16, 20, 26, 0.96);
+  border-top: 1px solid var(--bord);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+#barre button {
+  flex: 1;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 2px;
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  color: var(--laiton-clair);
+  opacity: 0.75;
+}
+
+#barre button svg {
+  width: 24px; height: 24px;
+  fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+
+#barre button[aria-pressed="true"] { color: var(--laiton); opacity: 1; background: rgba(255, 255, 255, 0.06); }
+#barre #barre-type { color: var(--laiton); opacity: 1; }
+#barre #barre-type span { font-weight: 600; }
+
+/* Un panneau de section ne s'affiche que depuis la barre ; un seul à la fois. */
+.panneau.feuille[hidden] { display: none; }
