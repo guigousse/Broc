@@ -1,4 +1,273 @@
-body { margin: 0; background: #14181C; color: #F1E3BF; font-family: system-ui; }
-#apercu { display: flex; justify-content: center; }
-#scene { width: min(100vw, 45vh); height: auto; aspect-ratio: 9 / 16; }
-#bouton-son { display: block; margin: 12px auto; padding: 8px 20px; font-size: 1rem; }
+:root {
+  --nuit: #14181C;
+  --laiton: #C5A059;
+  --laiton-clair: #F1E3BF;
+  --panneau: #1B2026;
+  --bord: #2C333B;
+  --touche: 44px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--nuit);
+  color: var(--laiton-clair);
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 12px calc(24px + env(safe-area-inset-bottom));
+}
+
+/* ------------------------------------------------------------- aperçu */
+
+#apercu {
+  display: flex;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 4px 0;
+  background: var(--nuit);
+}
+
+#scene {
+  width: min(60vw, 38vh);
+  height: auto;
+  aspect-ratio: 9 / 16;
+  border: 1px solid var(--bord);
+  border-radius: 8px;
+}
+
+/* ----------------------------------------------------------- panneaux */
+
+.panneau {
+  background: var(--panneau);
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panneau h2,
+.panneau h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--laiton);
+  letter-spacing: 0.02em;
+}
+
+.panneau h3 { font-size: 0.9rem; }
+
+#compte-objets {
+  font-weight: 400;
+  color: var(--laiton-clair);
+  opacity: 0.7;
+}
+
+.ligne {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ligne > * { flex: 1; }
+
+/* ------------------------------------------------ boutons et contrôles */
+
+button,
+.bouton,
+select,
+input[type="search"],
+input[type="text"] {
+  min-height: var(--touche);
+  padding: 0 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--laiton-clair);
+  background: #232A31;
+  border: 1px solid var(--bord);
+  border-radius: 8px;
+}
+
+button,
+.bouton {
+  cursor: pointer;
+  color: var(--laiton);
+}
+
+button:disabled { opacity: 0.45; cursor: default; }
+
+.bouton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button.principal {
+  min-height: 52px;
+  font-weight: 600;
+  background: var(--laiton);
+  color: var(--nuit);
+  border-color: var(--laiton);
+}
+
+#p-reglages label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 0.95rem;
+  min-height: var(--touche);
+}
+
+#p-reglages label input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: var(--touche);
+  accent-color: var(--laiton);
+}
+
+#p-reglages label input[type="text"] { grid-column: 1 / -1; }
+
+#p-reglages label:has(input[type="checkbox"]) {
+  grid-template-columns: auto 1fr;
+  justify-items: start;
+}
+
+#p-reglages input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--laiton);
+}
+
+output {
+  font-variant-numeric: tabular-nums;
+  color: var(--laiton);
+}
+
+.info {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.info b { color: var(--laiton); font-variant-numeric: tabular-nums; }
+
+#message {
+  margin: 0;
+  min-height: 1.2em;
+  font-size: 0.9rem;
+  color: var(--laiton);
+}
+
+#progression { width: 100%; height: 8px; }
+
+/* ------------------------------------------------------------ grilles */
+
+.grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+}
+
+#grille-objets {
+  max-height: 40vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vignette {
+  position: relative;
+  padding: 2px;
+  aspect-ratio: 1;
+  min-height: var(--touche);
+  background: #10141A;
+  border: 1px solid var(--bord);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.vignette img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.vignette.fond img { object-fit: cover; }
+
+.vignette.objet.selectionne { border-color: var(--laiton); }
+
+.vignette.fond.actif {
+  border-color: var(--laiton);
+  box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.45);
+}
+
+.vignette .etiquette {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2px;
+  font-size: 0.7rem;
+  background: rgba(20, 24, 28, 0.7);
+}
+
+/* ---------------------------------------------------------- sélection */
+
+.vignette.selection {
+  padding: 0;
+  border-color: var(--laiton);
+}
+
+.vignette.selection .choisir {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 2px;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.vignette.selection .retirer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  padding: 0;
+  line-height: 1;
+  font-size: 1rem;
+  border-radius: 0 8px 0 8px;
+  background: rgba(20, 24, 28, 0.85);
+  border: none;
+}
+
+.vignette.selection.cible {
+  border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.4);
+}
+
+.vignette.selection.cible::after {
+  content: "◎";
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  font-size: 1rem;
+  color: var(--laiton);
+  text-shadow: 0 0 4px var(--nuit);
+  pointer-events: none;
+}

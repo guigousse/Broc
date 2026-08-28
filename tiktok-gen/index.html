@@ -10,7 +10,39 @@
 <body>
 <main id="app">
   <section id="apercu"><canvas id="scene" width="1080" height="1920"></canvas></section>
-  <button id="bouton-son">▶︎ Son</button>
+
+  <section class="panneau" id="p-fond">
+    <h2>Fond</h2>
+    <div class="grille" id="grille-fonds"></div>
+    <label class="bouton">Importer une photo <input type="file" accept="image/*" id="fond-perso" hidden></label>
+  </section>
+
+  <section class="panneau" id="p-objets">
+    <h2>Objets <span id="compte-objets"></span></h2>
+    <div class="ligne"><select id="filtre-categorie"><option value="">Toutes</option></select><input id="recherche" type="search" placeholder="Rechercher"></div>
+    <div class="ligne"><button id="aleatoire">Aléatoire ×8</button><button id="vider">Vider</button></div>
+    <div class="grille" id="grille-objets"></div>
+    <h3>Sélection (appuie pour choisir la cible)</h3>
+    <div class="grille" id="grille-selection"></div>
+  </section>
+
+  <section class="panneau" id="p-reglages">
+    <h2>Réglages</h2>
+    <label>Vitesse <output id="v-vitesse"></output><input type="range" id="vitesse" min="1.5" max="4" step="0.1"></label>
+    <label>Espacement <output id="v-espacement"></output><input type="range" id="espacement" min="400" max="700" step="10"></label>
+    <label>Passages <output id="v-passages"></output><input type="range" id="nbPassages" min="2" max="4" step="1"></label>
+    <label>Largeur du flash (images) <output id="v-flash"></output><input type="range" id="largeurFlash" min="2" max="8" step="1"></label>
+    <label>Consigne <input type="text" id="consigne" maxlength="40"></label>
+    <label><input type="checkbox" id="son"> Son</label>
+    <p class="info">Durée <b id="info-duree">—</b> · fenêtre de pause <b id="info-fenetre">—</b></p>
+  </section>
+
+  <section class="panneau" id="p-export">
+    <button class="principal" id="enregistrer" disabled>Enregistrer</button>
+    <progress id="progression" max="1" value="0" hidden></progress>
+    <button class="principal" id="partager" hidden disabled>Partager</button>
+    <p id="message" role="status"></p>
+  </section>
 </main>
 <script type="module" src="src/ui.js"></script>
 </body>

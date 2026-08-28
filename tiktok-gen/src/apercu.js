@@ -1,0 +1,141 @@
+/**
+ * Aperçu animé : construit la scène à partir des réglages, tient la boucle
+ * d'animation (rAF) et cale le son dessus. Module DOM/canvas, pas de tests
+ * unitaires — la logique testable vit dans roulette.js et texte.js.
+ */
+import { calculerRoulette, estFlash, tempsBoucle, LARGEUR, HAUTEUR, CENTRE_X, CENTRE_Y } from "./roulette.js";
+import { dessinerFrame } from "./rendu.js";
+import { chargerImage } from "./images.js";
+import { COULEURS } from "./theme.js";
+import { REGLAGES_DEFAUT } from "./reglages.js";
+
+export const MESSAGE_INCOMPLET = "Choisis au moins 2 objets et une cible";
+
+/** Avance de planification du son sur l'animation (s) : le temps de monter le graphe audio. */
+const AVANCE_SON = 0.05;
+
+export class Apercu {
+  #canvas; #ctx; #cache; #son;
+  #scene = null; #r = null; #cfg = null;
+  #raf = null; #t0 = 0;
+  #jeton = 0;            // n° du dernier chargement lancé : les plus vieux sont ignorés.
+  #badges = null;        // promesse mémoïsée des deux badges de l'overlay.
+
+  /** Passé à vrai par l'interface une fois `son.demarrer()` résolu (geste utilisateur). */
+  sonDemarre = false;
+
+  constructor(canvas, cache, son) {
+    this.#canvas = canvas;
+    this.#ctx = canvas.getContext("2d");
+    this.#cache = cache;
+    this.#son = son;
+  }
+
+  get r() { return this.#r; }
+  get cfg() { return this.#cfg; }
+  get scene() { return this.#scene; }
+
+  #chargerBadges() {
+    if (!this.#badges) {
+      this.#badges = Promise.all([
+        chargerImage("assets/badges/app-store.svg"),
+        chargerImage("assets/badges/google-play.svg"),
+      ]).then(([appStore, googlePlay]) => ({ appStore, googlePlay }));
+    }
+    return this.#badges;
+  }
+
+  /**
+   * Reconstruit cfg/r/scene depuis les réglages. Pendant les chargements, la
+   * scène précédente reste affichée (pas de clignotement). Si la sélection est
+   * incomplète, affiche le message d'invite et renvoie { cfg: null, r: null }.
+   * Lève si une image manque : l'appelant décide quoi en dire.
+   */
+  async charger(reglages, catalogue) {
+    const jeton = ++this.#jeton;
+
+    const connus = Array.isArray(catalogue) ? new Set(catalogue.map((e) => e.id)) : null;
+    const ids = (reglages.objets ?? []).filter((id) => !connus || connus.has(id));
+    const cible = ids.includes(reglages.cible) ? reglages.cible : null;
+
+    if (ids.length < 2 || cible === null) {
+      this.#scene = null; this.#r = null; this.#cfg = null;
+      this.#dessinerInvite();
+      return { cfg: null, r: null };
+    }
+
+    const cfg = {
+      nbObjets: ids.length,
+      indexCible: ids.indexOf(cible),
+      vitesse: reglages.vitesse,
+      espacement: reglages.espacement,
+      nbPassages: reglages.nbPassages,
+      largeurFlash: reglages.largeurFlash,
+    };
+    const r = calculerRoulette(cfg);
+
+    const nomFond = reglages.fond === "perso"
+      ? (reglages.fondPerso || REGLAGES_DEFAUT.fond)
+      : reglages.fond;
+
+    const [fond, objets, silhouette, badges] = await Promise.all([
+      this.#cache.fond(nomFond),
+      Promise.all(ids.map((id) => this.#cache.objet(id))),
+      this.#cache.silhouette(cible),
+      this.#chargerBadges(),
+    ]);
+
+    if (jeton !== this.#jeton) return { cfg: this.#cfg, r: this.#r }; // un chargement plus récent a pris la main.
+
+    this.#cfg = cfg;
+    this.#r = r;
+    this.#scene = { r, cfg, fond, objets, silhouette, consigne: reglages.consigne, badges };
+
+    // Le son était planifié pour l'ancienne roulette : on repart de zéro, ensemble.
+    if (this.#raf !== null) this.#relancer();
+    return { cfg, r };
+  }
+
+  /** Une frame à l'instant t (secondes), repliée sur la durée de la boucle. */
+  dessinerA(t) {
+    if (!this.#scene) { this.#dessinerInvite(); return; }
+    const tb = tempsBoucle(t, this.#r);
+    dessinerFrame(this.#ctx, tb, { ...this.#scene, flashActif: estFlash(tb, this.#r) });
+  }
+
+  #dessinerInvite() {
+    const ctx = this.#ctx;
+    ctx.save();
+    ctx.fillStyle = COULEURS.nuit;
+    ctx.fillRect(0, 0, LARGEUR, HAUTEUR);
+    ctx.fillStyle = COULEURS.laitonClair;
+    ctx.font = "56px Cinzel";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(MESSAGE_INCOMPLET, CENTRE_X, CENTRE_Y, LARGEUR - 120);
+    ctx.restore();
+  }
+
+  /** (Re)cale l'origine des temps et replanifie le son sur la roulette courante. */
+  #relancer() {
+    this.#t0 = performance.now() + AVANCE_SON * 1000;
+    if (this.sonDemarre && this.#r) {
+      this.#son.planifierBoucleInfinie(this.#r, this.#son.tempsContexte + AVANCE_SON);
+    }
+  }
+
+  jouer() {
+    if (this.#raf !== null) { this.#relancer(); return; }
+    this.#relancer();
+    const boucle = (maintenant) => {
+      this.dessinerA((maintenant - this.#t0) / 1000);
+      this.#raf = requestAnimationFrame(boucle);
+    };
+    this.#raf = requestAnimationFrame(boucle);
+  }
+
+  arreter() {
+    if (this.#raf !== null) { cancelAnimationFrame(this.#raf); this.#raf = null; }
+    this.#son.arreter();
+  }
+}
