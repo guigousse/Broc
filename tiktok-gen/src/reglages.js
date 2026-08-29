@@ -49,6 +49,19 @@ export function nouveauTexte(texte = "Nouveau texte") {
   return { id: `t${Date.now().toString(36)}${compteur}`, texte, x: 540, y: 680, police: "Cinzel", taille: 56, couleur: "laiton", gras: true };
 }
 
+/**
+ * Déplace le calque `id` d'un cran dans la pile : +1 vers la fin du tableau
+ * (= dessiné plus tard = plus en avant), −1 vers l'arrière. En place.
+ * → true si quelque chose a bougé, false en bout de pile ou id inconnu.
+ */
+export function deplacerTexte(textes, id, sens) {
+  const i = textes.findIndex((c) => c.id === id);
+  const j = i + Math.sign(sens);
+  if (i < 0 || j < 0 || j >= textes.length) return false;
+  [textes[i], textes[j]] = [textes[j], textes[i]];
+  return true;
+}
+
 /** Un calque borné et typé, ou null s'il n'est pas exploitable (pas d'id). */
 export function normaliserTexte(brut) {
   if (!brut || typeof brut !== "object" || typeof brut.id !== "string" || !brut.id) return null;

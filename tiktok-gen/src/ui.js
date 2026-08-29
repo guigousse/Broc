@@ -7,7 +7,7 @@ import { CATEGORIES, chargerCatalogue, filtrerCatalogue, tirerAleatoire } from "
 import { CacheImages } from "./images.js";
 import {
   COULEURS_TEXTE, FOND_PERSO, POLICES, REGLAGES_DEFAUT, TAILLE_MAX_FOND_PERSO, TEXTE_MAX, TEXTES_MAX,
-  chargerReglages, normaliserReglages, nouveauTexte, sauverReglages,
+  chargerReglages, deplacerTexte, normaliserReglages, nouveauTexte, sauverReglages,
 } from "./reglages.js";
 import { formaterDuree, formaterInfos } from "./texte.js";
 import { SonRoulette } from "./son.js";
@@ -572,11 +572,15 @@ async function demarrer() {
     apercu.redessiner();
   }
 
-  /** Une carte par calque : texte, police, taille, couleur, gras, centrer, supprimer. */
+  /**
+   * Une carte par calque : texte, police, taille, couleur, gras, centrer, devant/derrière, supprimer.
+   * La liste montre la pile comme CapCut : la carte du HAUT est le calque le plus en avant
+   * (= le dernier du tableau, dessiné en dernier).
+   */
   function construireTextes() {
     const ids = new Set(reglages.textes.map((c) => c.id));
     if (!ids.has(coucheActive)) coucheActive = null;
-    listeTextes.replaceChildren(...reglages.textes.map((c, i) => carteTexte(c, i)));
+    listeTextes.replaceChildren(...reglages.textes.map((c, i) => carteTexte(c, i)).reverse());
     boutonAjouterTexte.disabled = reglages.textes.length >= TEXTES_MAX;
     apercu.coucheActive = coucheActive;
   }
@@ -616,9 +620,24 @@ async function demarrer() {
     centrer.addEventListener("click", () => maj({ x: 540 }));
     const supprimer = document.createElement("button"); supprimer.type = "button"; supprimer.className = "discret"; supprimer.textContent = "Supprimer";
     supprimer.addEventListener("click", () => { reglages.textes.splice(i, 1); appliquer({ leger: true }); construireTextes(); });
+    const deplacer = (libelle, sens, enBout) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "discret"; b.textContent = libelle;
+      b.disabled = enBout;
+      b.setAttribute("aria-label", `${libelle} : texte ${i + 1}`);
+      b.addEventListener("click", () => {
+        if (!deplacerTexte(reglages.textes, c.id, sens)) return;
+        coucheActive = c.id;
+        appliquer({ leger: true });
+        construireTextes();
+      });
+      return b;
+    };
+    const devant = deplacer("▲ Devant", +1, i === reglages.textes.length - 1);
+    const derriere = deplacer("▼ Derrière", -1, i === 0);
     const ligne1 = document.createElement("div"); ligne1.className = "ligne"; ligne1.append(police, couleur);
     const ligne2 = document.createElement("div"); ligne2.className = "ligne"; ligne2.append(gras, centrer, supprimer);
-    carte.append(champ, ligne1, taille, ligne2);
+    const ligne3 = document.createElement("div"); ligne3.className = "ligne"; ligne3.append(devant, derriere);
+    carte.append(champ, ligne1, taille, ligne2, ligne3);
     carte.addEventListener("pointerdown", () => activerCouche(c.id));
     return carte;
   }
@@ -630,7 +649,8 @@ async function demarrer() {
     coucheActive = c.id;
     appliquer({ leger: true });
     construireTextes();
-    listeTextes.lastElementChild?.querySelector("input[type=text]")?.focus();
+    // Le nouveau calque est au-dessus de la pile : sa carte est en haut de la liste.
+    listeTextes.firstElementChild?.querySelector("input[type=text]")?.focus();
   });
 
   // Glisser-déposer sur l'aperçu, en mode fin seulement : on déplace le calque sous le doigt.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { REGLAGES_DEFAUT, normaliserReglages, chargerReglages, sauverReglages, consigneParDefaut, nouveauTexte } from "./reglages.js";
+import { REGLAGES_DEFAUT, normaliserReglages, chargerReglages, sauverReglages, consigneParDefaut, nouveauTexte, deplacerTexte } from "./reglages.js";
 
 const memoire = () => {
   const m = new Map();
@@ -103,5 +103,23 @@ describe("migration du calque « {nom} · {prix} »", () => {
     // Un calque déjà déplacé à la main ne bouge pas.
     const d = normaliserReglages({ textes: [{ id: "objet", texte: "{nom} · {prix}" }, { id: "dispo", texte: "D", y: 1000, taille: 46 }] }).textes;
     expect(d.find((c) => c.id === "dispo")).toMatchObject({ y: 1000, taille: 46 });
+  });
+});
+
+describe("deplacerTexte", () => {
+  const pile = () => [{ id: "a" }, { id: "b" }, { id: "c" }];   // c = dessiné en dernier = devant
+  it("+1 avance d'un cran (vers la fin du tableau), −1 recule", () => {
+    const t = pile();
+    expect(deplacerTexte(t, "a", +1)).toBe(true);
+    expect(t.map((c) => c.id)).toEqual(["b", "a", "c"]);
+    expect(deplacerTexte(t, "c", -1)).toBe(true);
+    expect(t.map((c) => c.id)).toEqual(["b", "c", "a"]);
+  });
+  it("ne bouge pas en bout de pile ni pour un id inconnu", () => {
+    const t = pile();
+    expect(deplacerTexte(t, "c", +1)).toBe(false);
+    expect(deplacerTexte(t, "a", -1)).toBe(false);
+    expect(deplacerTexte(t, "zz", +1)).toBe(false);
+    expect(t.map((c) => c.id)).toEqual(["a", "b", "c"]);
   });
 });
