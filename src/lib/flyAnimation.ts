@@ -1,4 +1,5 @@
 import { audioManager } from "@/lib/audio/audioManager";
+import { prefersReducedMotion } from "@/lib/transitionIris";
 
 interface FlyOpts {
   /** Rect de l'élément source (thumb, image…). */
@@ -52,6 +53,17 @@ export function flyToTab(opts: FlyOpts): void {
     if (opts.playSound !== false) audioManager.playPickup();
     return;
   }
+
+  // `prefers-reduced-motion` : pas de clone qui traverse l'écran. On garde
+  // les effets attendus par les appelants (pulsation de la cible, son) et on
+  // respecte la durée nominale : les cérémonies (bilan, livraison, colis…)
+  // enchaînent leurs étapes sur cette durée, la raccourcir désynchroniserait
+  // leur chorégraphie.
+  if (prefersReducedMotion()) {
+    window.setTimeout(() => arrivee(target, opts.playSound !== false), duration);
+    return;
+  }
+
   const toRect = target.getBoundingClientRect();
 
   const clone = document.createElement("div");
@@ -101,11 +113,16 @@ export function flyToTab(opts: FlyOpts): void {
 
   window.setTimeout(() => {
     clone.remove();
-    target.classList.remove(PULSE_CLASS);
-    // reflow pour redéclencher l'animation si déclenchée plusieurs fois
-    void target.offsetWidth;
-    target.classList.add(PULSE_CLASS);
-    if (opts.playSound !== false) audioManager.playPickup();
-    window.setTimeout(() => target.classList.remove(PULSE_CLASS), 650);
+    arrivee(target, opts.playSound !== false);
   }, duration);
+}
+
+/** Fin de vol : pulsation de la cible et son d'ajout. */
+function arrivee(target: HTMLElement, son: boolean): void {
+  target.classList.remove(PULSE_CLASS);
+  // reflow pour redéclencher l'animation si déclenchée plusieurs fois
+  void target.offsetWidth;
+  target.classList.add(PULSE_CLASS);
+  if (son) audioManager.playPickup();
+  window.setTimeout(() => target.classList.remove(PULSE_CLASS), 650);
 }
