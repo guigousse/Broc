@@ -6,10 +6,12 @@
  * savoir de plus. Temps en secondes, aucune dépendance au DOM.
  */
 
-/** Le titre « Devine le prix ! » avant le premier objet : grossit, tient, s'efface. */
-export const INTRO = 1.8;
-/** Part de l'intro passée à grossir, puis à s'effacer (le reste : tenue). */
-export const INTRO_MONTEE = 0.6, INTRO_FONDU = 0.5;
+/** Le titre « Devine le prix ! » avant le premier objet : claque, tient, s'efface. Court : le hook doit arriver vite. */
+export const INTRO = 1.4;
+/** Part de l'intro passée à claquer (zoom avec dépassement), puis à s'effacer (le reste : tenue). */
+export const INTRO_MONTEE = 0.35, INTRO_FONDU = 0.4;
+/** Fondu d'entrée de l'overlay final (s), depuis la dernière révélation. */
+export const OVERLAY_FONDU = 0.7;
 /** Durée de l'apparition d'un objet (zoom + fondu). */
 export const APPARITION = 0.5;
 /** Temps, après la dernière révélation, où l'étiquette a fini de rebondir : l'image « fin ». */
@@ -49,11 +51,25 @@ export function calculerDevine({ nbObjets, dureeCompte, dureeRevele }) {
  * (ease-out) puis tenue puis fondu de sortie. Rien hors [0, INTRO).
  */
 export function intro(t) {
-  if (!(t >= 0) || t >= INTRO) return { opacite: 0, echelle: 1 };
+  if (!(t >= 0) || t >= INTRO) return { opacite: 0, echelle: 1, angle: 0 };
   const m = Math.min(1, t / INTRO_MONTEE);
-  const e = 1 - (1 - m) ** 3;
+  // « back out » : dépasse 1 (≈ 1,1 à mi-course) puis se pose — le titre claque au lieu de glisser.
+  const c1 = 1.70158, c3 = c1 + 1;
+  const e = 1 + c3 * (m - 1) ** 3 + c1 * (m - 1) ** 2;
   const sortie = Math.max(0, (t - (INTRO - INTRO_FONDU)) / INTRO_FONDU);
-  return { opacite: e * (1 - sortie), echelle: 0.4 + 0.6 * e };
+  // Pendant la tenue, un léger battement pour ne jamais être figé ; à la sortie, le titre file vers le haut.
+  const tenue = m >= 1 ? 1 + 0.03 * Math.sin((t - INTRO_MONTEE) * 2 * Math.PI * 2) : 1;
+  return {
+    opacite: Math.min(1, m * 3) * (1 - sortie),
+    echelle: (0.2 + 0.8 * e) * tenue * (1 + 0.25 * sortie),
+    angle: (-8 * (1 - Math.min(1, m))) * (Math.PI / 180),
+  };
+}
+
+/** Opacité de l'overlay final à l'instant t : fondu depuis la dernière révélation. */
+export function opaciteOverlay(t, r) {
+  if (r.arretDepuis === null || r.arretDepuis === undefined) return 0;
+  return Math.min(1, Math.max(0, (t - r.arretDepuis) / OVERLAY_FONDU));
 }
 
 /**

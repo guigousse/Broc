@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculerDevine, etapeA, intro, APPARITION, INTRO } from "./devine.js";
+import { calculerDevine, etapeA, intro, opaciteOverlay, APPARITION, INTRO, INTRO_MONTEE, OVERLAY_FONDU } from "./devine.js";
 
 const cfg = { nbObjets: 3, dureeCompte: 3, dureeRevele: 2 };
 const I = INTRO;   // 1,8 s de titre avant le premier objet
@@ -41,7 +41,7 @@ describe("calculerDevine", () => {
 describe("etapeA", () => {
   const r = calculerDevine(cfg);
   it("phase et avancement dans la phase", () => {
-    expect(etapeA(0.9, r)).toMatchObject({ index: 0, phase: "intro", u: 0.5 });
+    expect(etapeA(I / 2, r)).toMatchObject({ index: 0, phase: "intro", u: 0.5 });
     expect(etapeA(I + 0.25, r)).toMatchObject({ index: 0, phase: "apparition" });
     expect(etapeA(I + 0.25, r).u).toBeCloseTo(0.5, 9);
     expect(etapeA(I + 1.2, r)).toMatchObject({ index: 0, phase: "compte", reste: 3 });
@@ -57,12 +57,25 @@ describe("etapeA", () => {
 });
 
 describe("intro", () => {
-  it("invisible avant 0 et après INTRO ; grossit en ease-out ; s'efface à la fin", () => {
+  it("invisible avant 0 et après INTRO ; claque avec dépassement ; s'efface à la fin", () => {
     expect(intro(-1).opacite).toBe(0);
     expect(intro(INTRO).opacite).toBe(0);
-    expect(intro(0)).toEqual({ opacite: 0, echelle: 0.4 });
-    expect(intro(0.6)).toEqual({ opacite: 1, echelle: 1 });
-    expect(intro(1.0)).toEqual({ opacite: 1, echelle: 1 });
-    expect(intro(INTRO - 0.25).opacite).toBeCloseTo(0.5, 9);
+    expect(intro(0).opacite).toBe(0);
+    expect(intro(0).echelle).toBeCloseTo(0.2, 9);
+    expect(intro(0).angle).toBeLessThan(0);
+    const max = Math.max(...Array.from({ length: 50 }, (_, k) => intro((k / 50) * INTRO_MONTEE).echelle));
+    expect(max).toBeGreaterThan(1.05);   // le dépassement
+    expect(intro(INTRO_MONTEE).echelle).toBeCloseTo(1, 6);
+    expect(intro(INTRO_MONTEE).opacite).toBe(1);
+    expect(intro(INTRO - 0.2).opacite).toBeCloseTo(0.5, 9);
+  });
+});
+
+describe("opaciteOverlay", () => {
+  it("0 avant la dernière révélation, 1 après le fondu", () => {
+    const r = calculerDevine({ nbObjets: 1, dureeCompte: 3, dureeRevele: 2 });
+    expect(opaciteOverlay(r.arretDepuis - 0.1, r)).toBe(0);
+    expect(opaciteOverlay(r.arretDepuis + OVERLAY_FONDU / 2, r)).toBeCloseTo(0.5, 9);
+    expect(opaciteOverlay(r.arretDepuis + 5, r)).toBe(1);
   });
 });

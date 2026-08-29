@@ -1,8 +1,8 @@
 /** Dessin d'une frame de la roulette sur le canvas. Module DOM/canvas, pas de tests unitaires. */
 import { CENTRE_X, CENTRE_Y, LARGEUR, HAUTEUR, HAUTEUR_OBJET, positionsVisibles, aura } from "./roulette.js";
 import { COULEURS } from "./theme.js";
-import { dessinerOverlay } from "./overlay.js";
-import { etapeA, intro } from "./devine.js";
+import { dessinerOverlay, LARGEUR_MAX_TEXTE as LARGEUR_MAX_OVERLAY } from "./overlay.js";
+import { etapeA, intro, opaciteOverlay } from "./devine.js";
 import { formaterPrix } from "./texte.js";
 
 export { HAUTEUR_OBJET };
@@ -128,10 +128,10 @@ export function dessinerFrameDevine(ctx, t, scene) {
   const e = etapeA(t, r);
   if (e.phase === "intro") {
     // Le titre grossit dans la partie haute puis s'efface : le compte commence après.
-    const { opacite, echelle } = intro(t);
+    const { opacite, echelle, angle } = intro(t);
     ctx.save(); ctx.globalAlpha = opacite;
-    ctx.translate(CENTRE_X, 560); ctx.scale(echelle, echelle);
-    dessinerTexteOmbre(ctx, "Devine le prix !", 0, 0, "600 110px 'Cinzel'", COULEURS.laiton, LARGEUR - 120);
+    ctx.translate(CENTRE_X, 560); ctx.rotate(angle); ctx.scale(echelle, echelle);
+    dessinerTexteOmbre(ctx, "Devine le prix !", 0, 0, "600 118px 'Cinzel'", COULEURS.laiton, LARGEUR - 120);
     ctx.restore();
     return;
   }
@@ -152,11 +152,21 @@ export function dessinerFrameDevine(ctx, t, scene) {
     ctx.restore();
   }
 
-  // Sous l'overlay promo, les calques {nom} / {prix} disent déjà tout : on ne double pas.
-  if (flashActif) { dessinerOverlay(ctx, scene); return; }
+  // Overlay final en fondu : le nom / l'étiquette / la question du rendu s'effacent
+  // à mesure que l'overlay (et ses calques {nom} / {prix}) prend la place.
+  const aOverlay = flashActif ? opaciteOverlay(t, r) : 0;
+  if (aOverlay >= 1) { dessinerOverlay(ctx, scene); return; }
 
+  ctx.save(); ctx.globalAlpha = 1 - aOverlay;
+  dessinerElementsDevine(ctx, t, r, e, entree, uApp, { sansQuestion: aOverlay > 0 });
+  ctx.restore();
+  if (aOverlay > 0) { ctx.save(); ctx.globalAlpha = aOverlay; dessinerOverlay(ctx, scene); ctx.restore(); }
+}
+
+/** Nom, étiquette, chiffre du compte, rareté ou question : tout sauf le fond et l'objet. */
+function dessinerElementsDevine(ctx, t, r, e, entree, uApp, { sansQuestion = false } = {}) {
   // Nom, sous l'objet.
-  ctx.save(); ctx.globalAlpha = uApp;
+  ctx.save(); ctx.globalAlpha *= uApp;
   dessinerTexteOmbre(ctx, entree.nom, CENTRE_X, 1214, "600 56px 'Cinzel'", COULEURS.laitonClair);
   ctx.restore();
 
@@ -175,7 +185,9 @@ export function dessinerFrameDevine(ctx, t, scene) {
     }
   } else if (e.mystere) {
     dessinerEtiquette(ctx, "? €", CENTRE_X, yEtiquette, { echelle: rebond(Math.min(1, e.u * r.dureeRevele / 0.8)) });
-    dessinerTexteOmbre(ctx, "Tu paierais quel prix ?", CENTRE_X, Y_CHIFFRE, "600 64px 'Cinzel'", COULEURS.laiton);
+    // Même place et même style que le titre de l'overlay final ; dès que l'overlay
+    // se fond, c'est lui qui la dessine (sinon deux exemplaires se superposent).
+    if (!sansQuestion) dessinerTexteOmbre(ctx, "Tu paierais quel prix ?", CENTRE_X, 400, "600 82px 'Cinzel'", COULEURS.laiton, LARGEUR_MAX_OVERLAY);
   } else {
     const uReb = Math.min(1, (e.u * r.dureeRevele) / 0.8);
     dessinerEtiquette(ctx, formaterPrix(entree.prix), CENTRE_X, yEtiquette, { echelle: rebond(uReb) });

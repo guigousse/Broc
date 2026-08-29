@@ -36,7 +36,7 @@ export function texteCouche(couche, contexte = {}) {
 }
 
 /** Largeur maximale d'un calque centré pour rester dans la zone sûre (760 px) — la ligne se tasse au-delà. */
-const LARGEUR_MAX_TEXTE = 2 * (ZONE_SURE.droite - CENTRE_X);
+export const LARGEUR_MAX_TEXTE = 2 * (ZONE_SURE.droite - CENTRE_X);
 
 /** Boîte englobante d'un calque sur le canvas, en px du cadre (pour le glisser-déposer). */
 export function boiteTexte(ctx, couche, contexte) {
