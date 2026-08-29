@@ -502,6 +502,32 @@ export interface GameState {
   activesUtilisees?: ActivesUtilisees;
   /** ADDITIF (v20) : étal courant du Bazar. Absent tant que le Bazar n'a pas ouvert. */
   bazar?: EtalBazar;
+  /** Classeur de cartes et album de timbres (2026-08-30). Absent = jamais renseigné (vieille save) : lire via `albumsDe`. */
+  albums?: AlbumsState;
+}
+
+export interface AlbumState {
+  achete: boolean;
+  /** id de pièce → quantité possédée (≥ 1). Absent = jamais obtenue. */
+  pieces: Record<string, number>;
+  /** Pièces obtenues pas encore consultées dans l'album (pastille « nouveau »). */
+  nouvelles: string[];
+}
+export interface PlacementTimbre {
+  page: 0 | 1;
+  ligne: 0 | 1 | 2 | 3 | 4;
+  /** Centre du timbre en fraction de la largeur de page, 0..1. */
+  x: number;
+}
+export interface AlbumTimbresState extends AlbumState {
+  /** Timbres posés sur une page. Absent = dans le bac « en vrac ». */
+  placements: Record<string, PlacementTimbre>;
+  /** Ordre d'empilement : le DERNIER id est dessus. */
+  ordreZ: string[];
+}
+export interface AlbumsState {
+  classeur: AlbumState;
+  timbres: AlbumTimbresState;
 }
 
 /** Un lot de pièces de restauration à l'étal du Bazar. */
