@@ -79,6 +79,29 @@ describe("ObjetsTrouvablesSheet — la collection, en vrac", () => {
     expect(sousTitre.nextElementSibling).toBe(ligne);
   });
 
+  it("s'arrête sous la barre des plaques ★ quand elle est à l'écran", () => {
+    const barre = document.createElement("div");
+    barre.setAttribute("data-scene-plaques-bar", "");
+    barre.getBoundingClientRect = () => ({ bottom: 60 }) as DOMRect;
+    document.body.appendChild(barre);
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    try {
+      render(
+        <ObjetsTrouvablesSheet open onClose={() => {}} brocante={brocante} collection={initCollection()} />,
+      );
+      expect((screen.getByRole("dialog") as HTMLElement).style.maxHeight).toBe("728px");
+    } finally {
+      barre.remove();
+    }
+  });
+
+  it("sans barre de plaques : plafond par défaut en pourcentage", () => {
+    render(
+      <ObjetsTrouvablesSheet open onClose={() => {}} brocante={brocante} collection={initCollection()} />,
+    );
+    expect((screen.getByRole("dialog") as HTMLElement).style.maxHeight).toBe("88%");
+  });
+
   it("Fermer appelle onClose", () => {
     const onClose = vi.fn();
     render(<ObjetsTrouvablesSheet open onClose={onClose} brocante={brocante} collection={initCollection()} />);

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useLayoutEffect, useState, type CSSProperties } from "react";
 import type { Brocante, CategorieObjet, CollectionSlot } from "@/types/game";
 import { objetsDesTiersPrecedents, objetsTrouvables } from "@/lib/chine";
 import { templateDonne, templateVu } from "@/lib/collection";
@@ -64,6 +64,26 @@ const nomStyle: CSSProperties = {
   WebkitBoxOrient: "vertical",
 };
 
+const MARGE_SOUS_PLAQUES = 12;
+
+/**
+ * Hauteur maximale de la sheet pour qu'elle s'arrête SOUS la barre des
+ * plaques ★ (position:fixed ignore la carte, elle grimperait sinon jusqu'à
+ * 88 % de l'écran, par-dessus les étoiles). Mesurée à l'ouverture ; sans
+ * barre (tests, autre écran), la sheet garde son plafond par défaut.
+ */
+function usePlafondSousPlaques(): number | undefined {
+  const [plafond, setPlafond] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    const barre = document.querySelector<HTMLElement>("[data-scene-plaques-bar]");
+    if (!barre) return;
+    const bas = barre.getBoundingClientRect().bottom;
+    if (bas <= 0) return;
+    setPlafond(Math.max(160, window.innerHeight - bas - MARGE_SOUS_PLAQUES));
+  }, []);
+  return plafond;
+}
+
 /** « ★ », « ★ et ★★ » : les tiers en dessous du natif, en étoiles pleines. */
 function etoilesDesTiersPrecedents(tier: number, et: string): string {
   const natif = Math.min(tier, 3);
@@ -88,11 +108,29 @@ export function ObjetsTrouvablesSheet({
   collection,
 }: ObjetsTrouvablesSheetProps) {
   const { d, tr, locale } = useLangue();
-  if (!open) return null;
+  return open ? (
+    <SheetOuverte onClose={onClose} brocante={brocante} collection={collection} d={d} tr={tr} locale={locale} />
+  ) : null;
+}
+
+function SheetOuverte({
+  onClose,
+  brocante,
+  collection,
+  d,
+  tr,
+  locale,
+}: Omit<ObjetsTrouvablesSheetProps, "open"> & Pick<ReturnType<typeof useLangue>, "d" | "tr" | "locale">) {
+  const plafond = usePlafondSousPlaques();
   const liste = objetsTrouvables(brocante);
   const nPrecedents = objetsDesTiersPrecedents(brocante);
   return (
-    <BottomSheet open onClose={onClose} title={nomBrocante(brocante, locale)}>
+    <BottomSheet
+      open
+      onClose={onClose}
+      title={nomBrocante(brocante, locale)}
+      maxHeightPx={plafond}
+    >
       <div style={entete}>
         <p style={sousTitre}>
           {tr(d.chine.objetsTrouvablesSousTitre, { n: liste.length })}
