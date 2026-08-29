@@ -56,6 +56,9 @@ class FakeAudioContext {
   resume = vi.fn(async () => {
     this.state = "running";
   });
+  suspend = vi.fn(async () => {
+    this.state = "suspended";
+  });
   // WebKit ferme le contexte de son côté (reset du service média, pression
   // mémoire) : le manager doit savoir en rebâtir un.
   close = vi.fn(async () => {
@@ -1404,5 +1407,89 @@ describe("audioManager — un contexte mort est rebâti", () => {
     audioManager.playClick();
     await flushMicrotasks();
     expect(FakeAudioContext.instances).toHaveLength(2);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Sortie et retour dans l'app                                          */
+/* ------------------------------------------------------------------ */
+
+describe("audioManager — sortie de l'app", () => {
+  let listeners: Record<string, Array<() => void>>;
+  let visibilityState: string;
+
+  beforeEach(() => {
+    stubBrowserGlobals();
+    listeners = {};
+    visibilityState = "visible";
+    const on = (ev: string, fn: () => void) => {
+      (listeners[ev] ??= []).push(fn);
+    };
+    vi.stubGlobal("window", {
+      AudioContext: FakeAudioContext,
+      localStorage: storage,
+      setTimeout: (fn: () => void, ms?: number) => globalThis.setTimeout(fn, ms),
+      clearTimeout: (t: number) => globalThis.clearTimeout(t),
+      addEventListener: on,
+    });
+    vi.stubGlobal("document", {
+      addEventListener: on,
+      get visibilityState() {
+        return visibilityState;
+      },
+    });
+  });
+
+  const cacher = () => {
+    visibilityState = "hidden";
+    listeners.visibilitychange?.forEach((fn) => fn());
+  };
+  const montrer = () => {
+    visibilityState = "visible";
+    listeners.visibilitychange?.forEach((fn) => fn());
+  };
+
+  it("en arrière-plan : le disque et le contexte se taisent, sans pause volontaire", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/test.mp3");
+    const audio = FakeAudio.instances[0];
+    const ctx = FakeAudioContext.instances[0];
+    expect(audio.paused).toBe(false);
+
+    cacher();
+    expect(audio.paused).toBe(true);
+    expect(ctx.suspend).toHaveBeenCalled();
+    expect(audioManager.vinylEnLecture()).toBe(false);
+
+    montrer();
+    await flushMicrotasks();
+    expect(ctx.resume).toHaveBeenCalled();
+    expect(audio.paused).toBe(false);
+  });
+
+  it("un disque que le joueur avait mis en pause ne repart pas au retour", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/test.mp3");
+    const audio = FakeAudio.instances[0];
+    audioManager.pauseVinyl();
+
+    cacher();
+    montrer();
+    await flushMicrotasks();
+    expect(audio.paused).toBe(true);
+  });
+
+  it("la borne d'arcade se tait aussi et repart au retour", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playArcadeTrack("/sounds/arcade/jx.cartouche_bluebot_8_bit.m4a");
+    await flushMicrotasks();
+    const borne = FakeAudio.instances.at(-1)!;
+    expect(borne.paused).toBe(false);
+
+    cacher();
+    expect(borne.paused).toBe(true);
+    montrer();
+    await flushMicrotasks();
+    expect(borne.paused).toBe(false);
   });
 });

@@ -488,7 +488,27 @@ class AudioManager {
     // le prochain geste utilisateur.
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") unlock();
+      else this.mettreEnArrierePlan();
     });
+  }
+
+  /**
+   * Sortie de l'app : on coupe tout nous-mêmes au lieu de s'en remettre à
+   * iOS, qui laisse parfois un `<audio>` tourner en arrière-plan. Le disque
+   * et la borne sont mis en pause SANS poser `vinylePause` (ce drapeau veut
+   * dire « le joueur a mis pause ») ; `suspend()` fait taire d'un coup les
+   * boucles Web Audio (foule, feu, chat). Le retour passe par `unlock` :
+   * `ensureCtx` réveille le contexte et `reprendreLesElements` relance
+   * exactement ce qui jouait — un disque en pause volontaire le reste.
+   */
+  mettreEnArrierePlan(): void {
+    if (this.vinylAudio && !this.vinylAudio.paused) this.vinylAudio.pause();
+    if (this.arcadeAudio && !this.arcadeAudio.paused) this.arcadeAudio.pause();
+    if (this.ctx && this.ctx.state === "running") {
+      void Promise.resolve(this.ctx.suspend()).catch(() => {
+        /* un contexte déjà mort n'a rien à suspendre */
+      });
+    }
   }
 
   setVolume(v: number): void {
