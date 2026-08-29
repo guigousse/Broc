@@ -3,6 +3,7 @@ import { LEGENDAIRES } from "@/data/legendaires";
 import { UNIQUES } from "@/data/uniques";
 import { TAILLES_OVERRIDE } from "@/data/objetTemplatesTailles";
 import { QUETES_PRINCIPALES } from "@/data/quetesPrincipales";
+import { templateDePiece } from "@/data/pieces";
 
 export interface ObjetTemplate {
   templateId: string;
@@ -553,9 +554,9 @@ export function poolPourTier(tier: 1 | 2 | 3 | 4): ObjetTemplate[] {
 
 export const ALL_TEMPLATES: ObjetTemplate[] = [...OBJET_TEMPLATES, ...LEGENDAIRES, ...UNIQUES];
 
-/** Résout un templateId vers son template (incluant les légendaires). */
+/** Résout un templateId vers son template (légendaires, uniques… et les pièces d'album). */
 export function getTemplate(templateId: string): ObjetTemplate | undefined {
-  return ALL_TEMPLATES.find((t) => t.templateId === templateId);
+  return ALL_TEMPLATES.find((t) => t.templateId === templateId) ?? templateDePiece(templateId);
 }
 
 const TAILLE_DEFAUT: Record<CategorieObjet, TailleObjet> = {
