@@ -90,7 +90,7 @@ async function demarrer() {
     compte: $("compte-objets"), categorie: $("filtre-categorie"), recherche: $("recherche"),
     aleatoire: $("aleatoire"), vider: $("vider"),
     grilleObjets: $("grille-objets"), grilleSelection: $("grille-selection"),
-    son: $("son"), dernierMystere: $("dernierMystere"),
+    son: $("son"),
     duree: $("info-duree"), fenetre: $("info-fenetre"), message: $("message"),
     typeVideo: $("typeVideo"), reglagesPanneau: $("p-reglages"),
     presetListe: $("preset-liste"), presetCharger: $("preset-charger"), presetSauver: $("preset-sauver"), presetSupprimer: $("preset-supprimer"),
@@ -239,7 +239,6 @@ async function demarrer() {
   function peuplerChamps() {
     for (const c of curseurs) c.champ.value = String(reglages[c.cle]);
     el.son.checked = reglages.son;
-    el.dernierMystere.checked = reglages.dernierMystere;
     el.typeVideo.value = reglages.type;
     el.reglagesPanneau.dataset.type = reglages.type;
     construireTextes();
@@ -408,10 +407,6 @@ async function demarrer() {
       appliquer({ delai: DELAI_CURSEUR, leger: true });
     });
   }
-  el.dernierMystere.addEventListener("change", () => {
-    reglages.dernierMystere = el.dernierMystere.checked;
-    appliquer();
-  });
   el.son.addEventListener("change", () => {
     reglages.son = el.son.checked;
     son.active = reglages.son;

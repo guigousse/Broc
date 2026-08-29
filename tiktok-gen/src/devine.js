@@ -15,7 +15,9 @@ export const APPARITION = 0.5;
 /** Temps, après la dernière révélation, où l'étiquette a fini de rebondir : l'image « fin ». */
 export const REBOND = 0.8;
 
-export function calculerDevine({ nbObjets, dureeCompte, dureeRevele, dernierMystere = true }) {
+/** Le dernier objet reste toujours mystère : c'est l'appel à commenter, pas une option. */
+export function calculerDevine({ nbObjets, dureeCompte, dureeRevele }) {
+  const dernierMystere = true;
   const dureeObjet = APPARITION + dureeCompte + dureeRevele;
   const etapes = [];
   const instantsTics = [];

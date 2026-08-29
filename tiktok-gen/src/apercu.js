@@ -40,7 +40,6 @@ export function construireCfg(reglages, catalogue) {
       indexCible: devine ? 0 : ids.indexOf(cible),
       dureeCompte: reglages.dureeCompte,
       dureeRevele: reglages.dureeRevele,
-      dernierMystere: reglages.dernierMystere,
       vitesse: reglages.vitesse,
       espacement: reglages.espacement,
       nbPassages: reglages.nbPassages,

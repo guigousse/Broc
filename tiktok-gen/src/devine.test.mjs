@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculerDevine, etapeA, intro, APPARITION, INTRO } from "./devine.js";
 
-const cfg = { nbObjets: 3, dureeCompte: 3, dureeRevele: 2, dernierMystere: false };
+const cfg = { nbObjets: 3, dureeCompte: 3, dureeRevele: 2 };
 const I = INTRO;   // 1,8 s de titre avant le premier objet
 const d = (xs) => xs.map((x) => Math.round((x + I) * 1e6) / 1e6);
 
@@ -24,16 +24,15 @@ describe("calculerDevine", () => {
     const r = calculerDevine({ ...cfg, nbObjets: 1, dureeCompte: 2.5 });
     expect(r.instantsTics.map((x) => x.t)).toEqual(d([0.5, 1.5, 2.5]));
   });
-  it("une célébration à chaque révélation ; l'overlay dès la dernière", () => {
+  it("une célébration à chaque révélation sauf la dernière (mystère) ; l'overlay dès la dernière", () => {
     const r = calculerDevine(cfg);
-    expect(r.instantsCelebration).toEqual(d([3.5, 9, 14.5]));
+    expect(r.instantsCelebration).toEqual(d([3.5, 9]));
     expect(r.arretDepuis).toBe(I + 14.5);
     expect(r.instantCelebration).toBeNull();
     expect(r.fenetrePauseMs).toBe(2000);
   });
-  it("dernier mystère : pas de célébration ni de prix pour le dernier", () => {
-    const r = calculerDevine({ ...cfg, dernierMystere: true });
-    expect(r.instantsCelebration).toEqual(d([3.5, 9]));
+  it("le dernier objet est toujours mystère, les autres non", () => {
+    const r = calculerDevine(cfg);
     expect(r.etapes[2].mystere).toBe(true);
     expect(r.etapes[1].mystere).toBe(false);
   });
@@ -51,9 +50,6 @@ describe("etapeA", () => {
     expect(etapeA(I + 4.5, r).phase).toBe("revelation");
     expect(etapeA(I + 4.5, r).u).toBeCloseTo(0.5, 9);
     expect(etapeA(I + 5.5, r)).toMatchObject({ index: 1, phase: "apparition" });
-  });
-  it("le dernier objet est mystère par défaut", () => {
-    expect(calculerDevine({ nbObjets: 2, dureeCompte: 3, dureeRevele: 2 }).etapes[1].mystere).toBe(true);
   });
   it("après la fin : dernière révélation, u = 1", () => {
     expect(etapeA(99, r)).toMatchObject({ index: 2, phase: "revelation", u: 1 });

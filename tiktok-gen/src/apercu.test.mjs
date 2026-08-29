@@ -10,9 +10,9 @@ describe("construireCfg", () => {
     expect(construireCfg({ type: "pause", objets: ["a", "b"], cible: "b" }, catalogue).cfg.indexCible).toBe(1);
   });
   it("devine : 1 objet suffit, la cible est ignorée, les durées passent", () => {
-    const d = construireCfg({ type: "devine", objets: ["a"], cible: null, dureeCompte: 4, dureeRevele: 1.5, dernierMystere: true }, catalogue);
+    const d = construireCfg({ type: "devine", objets: ["a"], cible: null, dureeCompte: 4, dureeRevele: 1.5 }, catalogue);
     expect(d.cible).toBeNull();
-    expect(d.cfg).toMatchObject({ type: "devine", nbObjets: 1, dureeCompte: 4, dureeRevele: 1.5, dernierMystere: true });
+    expect(d.cfg).toMatchObject({ type: "devine", nbObjets: 1, dureeCompte: 4, dureeRevele: 1.5 });
     expect(construireCfg({ type: "devine", objets: [] }, catalogue)).toBeNull();
   });
   it("message d'invite selon le type", () => {
