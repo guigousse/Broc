@@ -57,7 +57,33 @@ export function creerSilhouette(img, offsetPx = OFFSET_SILHOUETTE, hauteurAffich
  * Sans `ctx.filter` (WebKit ancien), on retombe sur un flou par
  * sous-échantillonnage : l'image est réduite puis ré-agrandie, deux fois.
  */
-export function preparerFond(img, flou = 0) {
+/**
+ * Sature (ou désature) des pixels RGBA en place : chaque couleur est écartée
+ * de sa luminance (Rec. 709) d'un facteur `pourcent/100`. Pure, testable.
+ */
+export function saturerPixels(data, pourcent) {
+  const k = pourcent / 100;
+  if (k === 1) return data;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    const y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    data[i] = y + (r - y) * k; data[i + 1] = y + (g - y) * k; data[i + 2] = y + (b - y) * k;
+  }
+  return data;
+}
+
+export function preparerFond(img, flou = 0, saturation = 100) {
+  const c = preparerFondFlou(img, flou, saturation);
+  if (saturation === 100 || "filter" in c.getContext("2d")) return c;
+  // Repli sans `ctx.filter` : une passe pixel, une seule fois par (fond, flou, saturation).
+  const ctx = c.getContext("2d");
+  const donnees = ctx.getImageData(0, 0, c.width, c.height);
+  saturerPixels(donnees.data, saturation);
+  ctx.putImageData(donnees, 0, 0);
+  return c;
+}
+
+function preparerFondFlou(img, flou, saturation) {
   const c = document.createElement("canvas");
   c.width = LARGEUR; c.height = HAUTEUR;
   const ctx = c.getContext("2d");
@@ -66,9 +92,11 @@ export function preparerFond(img, flou = 0) {
   const k = Math.max((LARGEUR + marge * 2) / iw, (HAUTEUR + marge * 2) / ih);
   const w = iw * k, h = ih * k;
   const x = (LARGEUR - w) / 2, y = (HAUTEUR - h) / 2;
-  if (flou <= 0) { ctx.drawImage(img, x, y, w, h); return c; }
-  if ("filter" in ctx) {
-    ctx.filter = `blur(${flou}px)`;
+  const filtres = [];
+  if (saturation !== 100) filtres.push(`saturate(${saturation}%)`);
+  if (flou > 0) filtres.push(`blur(${flou}px)`);
+  if ("filter" in ctx || flou <= 0) {
+    if (filtres.length && "filter" in ctx) ctx.filter = filtres.join(" ");
     ctx.drawImage(img, x, y, w, h);
     return c;
   }
@@ -97,6 +125,8 @@ export class CacheImages {
   objet(id) { return this.#memo(`objet:${id}`, () => chargerImage(`assets/items/${id}.webp`)); }
   fond(nom) { return this.#memo(`fond:${nom}`, () => chargerImage(nom.startsWith("data:") ? nom : `assets/fonds/${nom}.webp`)); }
   /** Fond plein cadre, flouté : voir `preparerFond`. */
-  fondPrepare(nom, flou) { return this.#memo(`fondp:${nom}:${flou}`, async () => preparerFond(await this.fond(nom), flou)); }
+  fondPrepare(nom, flou, saturation = 100) {
+    return this.#memo(`fondp:${nom}:${flou}:${saturation}`, async () => preparerFond(await this.fond(nom), flou, saturation));
+  }
   silhouette(id, offsetPx = OFFSET_SILHOUETTE) { return this.#memo(`silh:${id}:${offsetPx}`, async () => creerSilhouette(await this.objet(id), offsetPx)); }
 }

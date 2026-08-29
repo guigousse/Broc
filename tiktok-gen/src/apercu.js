@@ -111,7 +111,7 @@ export class Apercu {
       : reglages.fond;
 
     const [fond, objets, silhouette, badges] = await Promise.all([
-      this.#cache.fondPrepare(nomFond, reglages.flou),
+      this.#cache.fondPrepare(nomFond, reglages.flou, reglages.saturation),
       Promise.all(ids.map((id) => this.#cache.objet(id))),
       this.#cache.silhouette(cible, reglages.liseret),
       this.#chargerBadges(),

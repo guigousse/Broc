@@ -101,6 +101,7 @@ async function demarrer() {
     { cle: "nbPassages", champ: $("nbPassages"), sortie: $("v-passages"), texte: (v) => String(v) },
     { cle: "largeurFlash", champ: $("largeurFlash"), sortie: $("v-flash"), texte: (v) => `${v} img` },
     { cle: "flou", champ: $("flou"), sortie: $("v-flou"), texte: (v) => (v ? `${v} px` : "aucun") },
+    { cle: "saturation", champ: $("saturation"), sortie: $("v-saturation"), texte: (v) => (v === 100 ? "normale" : v === 0 ? "noir et blanc" : `${v} %`) },
     { cle: "liseret", champ: $("liseret"), sortie: $("v-liseret"), texte: (v) => (v ? `${v} px` : "aucun") },
     { cle: "nbTours", champ: $("nbTours"), sortie: $("v-tours"), texte: (v) => String(v) },
     { cle: "dureeDefilement", champ: $("dureeDefilement"), sortie: $("v-defilement"), texte: (v) => formaterDuree(v) },

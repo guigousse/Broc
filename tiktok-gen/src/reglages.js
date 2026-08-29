@@ -23,6 +23,8 @@ export const REGLAGES_DEFAUT = Object.freeze({
   // Roulette qui ralentit.
   nbTours: 3, dureeDefilement: 8, arretFinal: 2,
   flou: 0,
+  // Saturation du fond, en % (100 = tel quel, 0 = noir et blanc).
+  saturation: 100,
   liseret: 17,
   // Calques de texte de l'overlay (BROC, nom/prix et badges restent fixes).
   textes: TEXTES_DEFAUT,
@@ -128,6 +130,7 @@ export function normaliserReglages(brut = {}) {
     nbPassages: Math.round(borne(brut.nbPassages, 2, 4, REGLAGES_DEFAUT.nbPassages)),
     largeurFlash: Math.round(borne(brut.largeurFlash, 2, 8, REGLAGES_DEFAUT.largeurFlash)),
     flou: Math.round(borne(brut.flou, 0, 40, REGLAGES_DEFAUT.flou)),
+    saturation: Math.round(borne(brut.saturation, 0, 200, REGLAGES_DEFAUT.saturation)),
     liseret: Math.round(borne(brut.liseret, 0, 30, REGLAGES_DEFAUT.liseret)),
     textes: normaliserTextes(brut),
     consigne: typeof brut.consigne === "string" ? brut.consigne : REGLAGES_DEFAUT.consigne,
