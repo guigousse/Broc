@@ -143,6 +143,10 @@ export class Apercu {
         prix: r.type === "devine" && r.etapes.at(-1)?.mystere ? null : (entreeCible?.prix ?? 0),
       },
       serie: ids.map(entreePour),
+      // Dernier objet mystère : l'overlay pose la question en haut et l'invitation sous l'objet.
+      ...(r.type === "devine" && r.etapes.at(-1)?.mystere
+        ? { titre: "Tu paierais quel prix ?", substituts: { autres: "à découvrir en jouant à Broc" } }
+        : {}),
       nbAutres: Math.max(0, catalogue.length - 1),
       textes: reglages.textes,
     };

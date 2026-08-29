@@ -137,6 +137,7 @@ describe("réglages « Devine le prix »", () => {
     expect(r.dureeCompte).toBe(5);
     expect(r.dureeRevele).toBe(1);
     expect(r.dernierMystere).toBe(false);
+    expect(normaliserReglages({}).dernierMystere).toBe(true);
     expect(normaliserReglages({}).dureeCompte).toBe(3);
     expect(normaliserReglages({ type: "n'importe" }).type).toBe("pause");
   });

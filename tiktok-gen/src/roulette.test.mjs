@@ -227,6 +227,6 @@ describe("calculerPour / instantFin — devine", () => {
   it("aiguille sur le type devine et pose l'image de fin après le rebond de la dernière révélation", () => {
     const r = calculerPour({ type: "devine", nbObjets: 2, dureeCompte: 3, dureeRevele: 2 });
     expect(r.type).toBe("devine");
-    expect(instantFin(r)).toBeCloseTo(9 + 0.8, 9);
+    expect(instantFin(r)).toBeCloseTo(1.8 + 9 + 0.8, 9);
   });
 });

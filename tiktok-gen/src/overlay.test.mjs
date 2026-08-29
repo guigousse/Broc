@@ -39,3 +39,29 @@ describe("dessinerOverlay", () => {
     expect(iTexte).toBeGreaterThan(iBadge);
   });
 });
+
+describe("dessinerOverlay — titre et substituts", () => {
+  const ctxEspion = (appels) => new Proxy({}, {
+    get: (_, nom) => {
+      if (nom === "measureText") return () => ({ width: 10 });
+      if (nom === "createRadialGradient") return () => ({ addColorStop() {} });
+      return (...args) => { appels.push([nom, args]); };
+    },
+    set: () => true,
+  });
+  it("un titre remplace BROC ; un substitut remplace la ligne du calque visé", () => {
+    const appels = [];
+    dessinerOverlay(ctxEspion(appels), {
+      badges: {}, cible: { nom: "X", prix: 3 }, nbAutres: 5, titre: "Tu paierais quel prix ?",
+      substituts: { autres: "à découvrir en jouant à Broc" },
+      textes: [{ id: "autres", texte: "+ {n} autres", x: 540, y: 1346, police: "Cinzel", taille: 36, couleur: "ivoire", gras: false },
+               { id: "nom", texte: "{nom}", x: 540, y: 1214, police: "Cinzel", taille: 56, couleur: "ivoire", gras: true }],
+    });
+    const textes = appels.filter(([n]) => n === "fillText").map(([, a]) => a[0]);
+    expect(textes).toContain("Tu paierais quel prix ?");
+    expect(textes).not.toContain("BROC");
+    expect(textes).toContain("à découvrir en jouant à Broc");
+    expect(textes).not.toContain("+ 5 autres");
+    expect(textes).toContain("X");
+  });
+});

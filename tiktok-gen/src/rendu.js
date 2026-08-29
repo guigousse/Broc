@@ -2,7 +2,7 @@
 import { CENTRE_X, CENTRE_Y, LARGEUR, HAUTEUR, HAUTEUR_OBJET, positionsVisibles, aura } from "./roulette.js";
 import { COULEURS } from "./theme.js";
 import { dessinerOverlay } from "./overlay.js";
-import { etapeA } from "./devine.js";
+import { etapeA, intro } from "./devine.js";
 import { formaterPrix } from "./texte.js";
 
 export { HAUTEUR_OBJET };
@@ -126,6 +126,15 @@ export function dessinerFrameDevine(ctx, t, scene) {
   const { r, fond, objets, serie = [], flashActif } = scene;
   dessinerCover(ctx, fond);
   const e = etapeA(t, r);
+  if (e.phase === "intro") {
+    // Le titre grossit dans la partie haute puis s'efface : le compte commence après.
+    const { opacite, echelle } = intro(t);
+    ctx.save(); ctx.globalAlpha = opacite;
+    ctx.translate(CENTRE_X, 560); ctx.scale(echelle, echelle);
+    dessinerTexteOmbre(ctx, "Devine le prix !", 0, 0, "600 110px 'Cinzel'", COULEURS.laiton, LARGEUR - 120);
+    ctx.restore();
+    return;
+  }
   const img = objets[e.index];
   const entree = serie[e.index] ?? { nom: "", prix: 0, rarete: "commun" };
 
@@ -144,11 +153,7 @@ export function dessinerFrameDevine(ctx, t, scene) {
   }
 
   // Sous l'overlay promo, les calques {nom} / {prix} disent déjà tout : on ne double pas.
-  if (flashActif) {
-    dessinerOverlay(ctx, scene);
-    if (e.mystere) dessinerTexteOmbre(ctx, "Ta réponse en commentaire", CENTRE_X, 582, "600 44px 'Cinzel'", COULEURS.laiton);
-    return;
-  }
+  if (flashActif) { dessinerOverlay(ctx, scene); return; }
 
   // Nom, sous l'objet.
   ctx.save(); ctx.globalAlpha = uApp;
@@ -170,7 +175,7 @@ export function dessinerFrameDevine(ctx, t, scene) {
     }
   } else if (e.mystere) {
     dessinerEtiquette(ctx, "? €", CENTRE_X, yEtiquette, { echelle: rebond(Math.min(1, e.u * r.dureeRevele / 0.8)) });
-    dessinerTexteOmbre(ctx, "Ta réponse en commentaire", CENTRE_X, Y_CHIFFRE, "600 64px 'Cinzel'", COULEURS.laiton);
+    dessinerTexteOmbre(ctx, "Tu paierais quel prix ?", CENTRE_X, Y_CHIFFRE, "600 64px 'Cinzel'", COULEURS.laiton);
   } else {
     const uReb = Math.min(1, (e.u * r.dureeRevele) / 0.8);
     dessinerEtiquette(ctx, formaterPrix(entree.prix), CENTRE_X, yEtiquette, { echelle: rebond(uReb) });

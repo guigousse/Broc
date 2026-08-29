@@ -52,8 +52,10 @@ export function dessinerTextes(ctx, textes, contexte) {
   ctx.save();
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.shadowColor = "rgba(0,0,0,0.85)"; ctx.shadowBlur = 24;
+  const substituts = contexte?.substituts ?? {};
   for (const c of textes ?? []) {
-    const t = texteCouche(c, contexte);
+    // Un substitut remplace le texte d'un calque (par id) sans toucher à sa place ni à son style.
+    const t = c.id in substituts ? substituts[c.id] : texteCouche(c, contexte);
     if (!t) continue;
     ctx.font = policeCss(c);
     ctx.fillStyle = COULEURS_TEXTE[c.couleur] ?? COULEURS_TEXTE.ivoire;
@@ -62,7 +64,12 @@ export function dessinerTextes(ctx, textes, contexte) {
   ctx.restore();
 }
 
-export function dessinerOverlay(ctx, { badges, cible, nbAutres, textes = [] }) {
+/**
+ * `titre` : le mot du haut — « BROC » en Verve Shadow par défaut, ou un texte
+ * de remplacement (Cinzel) pour une accroche comme « Tu paierais quel prix ? ».
+ * `substituts` : { idCalque: texte } pour remplacer la ligne d'un calque.
+ */
+export function dessinerOverlay(ctx, { badges, cible, nbAutres, textes = [], titre = null, substituts = null }) {
   ctx.save();
   const g = ctx.createRadialGradient(CENTRE_X, CENTRE_Y, 300, CENTRE_X, CENTRE_Y, 420);
   g.addColorStop(0, "rgba(20,24,28,0)"); g.addColorStop(1, "rgba(20,24,28,0.6)");
@@ -70,7 +77,8 @@ export function dessinerOverlay(ctx, { badges, cible, nbAutres, textes = [] }) {
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.shadowColor = "rgba(0,0,0,0.85)"; ctx.shadowBlur = 24;
   // Titre dans le tiers haut, bien au-dessus de la roulette (haut des objets ≈ 750).
-  ctx.font = "220px 'Verve Shadow'"; ctx.fillStyle = COULEURS.laiton; ctx.fillText("BROC", CENTRE_X, 400);
+  if (titre) { ctx.font = "600 82px 'Cinzel'"; ctx.fillStyle = COULEURS.laiton; ctx.fillText(titre, CENTRE_X, 400, LARGEUR_MAX_TEXTE); }
+  else { ctx.font = "220px 'Verve Shadow'"; ctx.fillStyle = COULEURS.laiton; ctx.fillText("BROC", CENTRE_X, 400); }
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0;
   // Badges officiels, chacun à son ratio natif, à la même hauteur (le badge
   // Google Play embarque sa propre marge transparente : on le sert un peu plus haut).
@@ -83,6 +91,6 @@ export function dessinerOverlay(ctx, { badges, cible, nbAutres, textes = [] }) {
   if (a) { ctx.drawImage(a, x, Y_BADGES - hApple / 2, wApple, hApple); x += wApple + ecart; }
   if (gp) ctx.drawImage(gp, x, Y_BADGES - hGoogle / 2, wGoogle, hGoogle);
   // Les calques de texte en dernier : ils passent devant les badges (pas l'inverse).
-  dessinerTextes(ctx, textes, { nbAutres, cible });
+  dessinerTextes(ctx, textes, { nbAutres, cible, substituts: substituts ?? {} });
   ctx.restore();
 }
