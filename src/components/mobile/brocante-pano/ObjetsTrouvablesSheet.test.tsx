@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ObjetsTrouvablesSheet } from "./ObjetsTrouvablesSheet";
-import { objetsTrouvables } from "@/lib/chine";
+import { objetsDesTiersPrecedents, objetsTrouvables } from "@/lib/chine";
 import { initCollection, marquerVu, marquerDejaPossede, donnerObjet } from "@/lib/collection";
 import { createMockBrocante } from "@/lib/__test-fixtures__/gameState";
 
@@ -50,14 +50,33 @@ describe("ObjetsTrouvablesSheet — la collection, en vrac", () => {
     expect(parId(c.templateId).textContent).toContain(c.nom);
   });
 
-  it("en vrac : chaque sticker a sa propre inclinaison et son propre décalage", () => {
+  it("droits, sur une grille de 4 colonnes", () => {
     render(
       <ObjetsTrouvablesSheet open onClose={() => {}} brocante={brocante} collection={initCollection()} />,
     );
-    const transforms = new Set(
-      screen.getAllByTestId("trouvable").map((el) => (el as HTMLElement).style.transform),
+    const liste = screen.getByTestId("trouvables-liste") as HTMLElement;
+    expect(liste.style.display).toBe("grid");
+    expect(liste.style.gridTemplateColumns).toBe("repeat(4, 1fr)");
+    for (const el of screen.getAllByTestId("trouvable")) {
+      expect((el as HTMLElement).style.transform).toBe("");
+    }
+  });
+
+  it("brocante ★ : pas de mention des tiers précédents", () => {
+    render(
+      <ObjetsTrouvablesSheet open onClose={() => {}} brocante={brocante} collection={initCollection()} />,
     );
-    expect(transforms.size).toBeGreaterThan(3);
+    expect(screen.queryByTestId("trouvables-tiers-precedents")).toBeNull();
+  });
+
+  it("brocante ★★★ : « + xx objets issus des brocantes ★ et ★★ » sous le sous-titre", () => {
+    const b3 = createMockBrocante({ id: "b3", nom: "Grande", tier: 3, etoiles: 3 });
+    render(<ObjetsTrouvablesSheet open onClose={() => {}} brocante={b3} collection={initCollection()} />);
+    const n = objetsDesTiersPrecedents(b3);
+    const ligne = screen.getByTestId("trouvables-tiers-precedents");
+    expect(ligne.textContent).toBe(`+ ${n} objets issus des brocantes ★ et ★★`);
+    const sousTitre = screen.getByText(/objets à dénicher ici/);
+    expect(sousTitre.nextElementSibling).toBe(ligne);
   });
 
   it("Fermer appelle onClose", () => {

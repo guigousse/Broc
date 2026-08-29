@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import type { Brocante, CategorieObjet, CollectionSlot } from "@/types/game";
-import { objetsTrouvables } from "@/lib/chine";
+import { objetsDesTiersPrecedents, objetsTrouvables } from "@/lib/chine";
 import { templateDonne, templateVu } from "@/lib/collection";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { nomBrocante, nomTemplate } from "@/lib/i18n/contenu";
@@ -17,7 +17,7 @@ interface ObjetsTrouvablesSheetProps {
 }
 
 const sousTitre: CSSProperties = {
-  margin: "0 0 10px",
+  margin: 0,
   fontFamily: "var(--font-mono)",
   fontSize: 10.5,
   letterSpacing: "0.14em",
@@ -26,24 +26,25 @@ const sousTitre: CSSProperties = {
   textAlign: "center",
 };
 
-/**
- * « Un peu en vrac » : pas de grille. Les stickers coulent en rangées
- * (`flex-wrap`) et chacun se décale de quelques pixels et s'incline selon
- * son id — toujours au même endroit d'une ouverture à l'autre, comme des
- * pièces posées sur une nappe et non rangées sur une étagère.
- */
-const vrac: CSSProperties = {
-  display: "flex",
-  flexWrap: "wrap",
-  justifyContent: "center",
-  gap: "14px 10px",
+const tiersPrecedents: CSSProperties = {
+  ...sousTitre,
+  color: "var(--ink-500)",
+  marginTop: 3,
+};
+
+const entete: CSSProperties = { marginBottom: 10 };
+
+/** Rangés droits sur une étagère de 4 colonnes. */
+const grille: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(4, 1fr)",
+  gap: "14px 6px",
   padding: "6px 8px 12px",
 };
 
 const TAILLE_STICKER = 68;
 
 const carte: CSSProperties = {
-  width: TAILLE_STICKER + 12,
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
@@ -63,19 +64,12 @@ const nomStyle: CSSProperties = {
   WebkitBoxOrient: "vertical",
 };
 
-function hash(id: string): number {
-  let h = 7;
-  for (let i = 0; i < id.length; i += 1) h = (h * 33 + id.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
-/** Décalage (±5 px) et inclinaison (±7°) déterministes, propres à l'objet. */
-function poseEnVrac(templateId: string): string {
-  const h = hash(templateId);
-  const dx = (h % 11) - 5;
-  const dy = ((h >> 4) % 9) - 4;
-  const rot = (((h >> 8) % 15) - 7) * 1;
-  return `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+/** « ★ », « ★ et ★★ » : les tiers en dessous du natif, en étoiles pleines. */
+function etoilesDesTiersPrecedents(tier: number, et: string): string {
+  const natif = Math.min(tier, 3);
+  const parts: string[] = [];
+  for (let t = 1; t < natif; t += 1) parts.push("★".repeat(t));
+  return parts.join(` ${et} `);
 }
 
 function varianteDe(
@@ -96,18 +90,29 @@ export function ObjetsTrouvablesSheet({
   const { d, tr, locale } = useLangue();
   if (!open) return null;
   const liste = objetsTrouvables(brocante);
+  const nPrecedents = objetsDesTiersPrecedents(brocante);
   return (
     <BottomSheet open onClose={onClose} title={nomBrocante(brocante, locale)}>
-      <p style={sousTitre}>
-        {tr(d.chine.objetsTrouvablesSousTitre, { n: liste.length })}
-      </p>
-      <div style={vrac} data-testid="trouvables-liste">
+      <div style={entete}>
+        <p style={sousTitre}>
+          {tr(d.chine.objetsTrouvablesSousTitre, { n: liste.length })}
+        </p>
+        {nPrecedents > 0 && (
+          <p style={tiersPrecedents} data-testid="trouvables-tiers-precedents">
+            {tr(d.chine.objetsTrouvablesTiersPrecedents, {
+              n: nPrecedents,
+              etoiles: etoilesDesTiersPrecedents(brocante.tier, d.chine.objetsTrouvablesEt),
+            })}
+          </p>
+        )}
+      </div>
+      <div style={grille} data-testid="trouvables-liste">
         {liste.map((t) => {
           const variant = varianteDe(collection, t.templateId);
           return (
             <div
               key={t.templateId}
-              style={{ ...carte, transform: poseEnVrac(t.templateId) }}
+              style={carte}
               data-testid="trouvable"
               data-template={t.templateId}
               data-variant={variant}

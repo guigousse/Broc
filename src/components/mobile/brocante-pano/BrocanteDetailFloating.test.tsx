@@ -61,19 +61,36 @@ describe("BrocanteDetailFloating — méta selon la destination", () => {
     expect(screen.getByTestId("trouvables-liste")).toBeTruthy();
   });
 
-  it("mode vitrine : affiche la bourse moyenne des clients, pas le nombre d'objets", () => {
+  it("mode vitrine : plaque de laiton, Budgets moyens / Entrée / Thème — sans loupe ni description", () => {
     render(
-      <BrocanteDetailFloating
-        brocante={brocante}
-        debloquee
-        peutEntrer
-        conditions={[]}
-        destination="vitrine"
-      />,
+      <BrocanteDetailFloating brocante={brocante} debloquee peutEntrer conditions={[]} destination="vitrine" />,
     );
-    expect(screen.queryByText(/6 items/i)).toBeNull();
-    const attendu = bourseMoyenne(brocante);
-    expect(screen.getByText(new RegExp(`${attendu}`))).toBeTruthy();
-    expect(screen.getByText(/bourse/i)).toBeTruthy();
+    expect(screen.getByTestId("brocante-plaque").textContent).toBe("Vide-grenier du quartier");
+    expect(screen.queryByText(/Quelques tables/)).toBeNull();
+    expect(screen.getByText(/^Budgets moyens$/i)).toBeTruthy();
+    expect(screen.getByTestId("brocante-budget").textContent).toContain(`${bourseMoyenne(brocante)} €`);
+    expect(screen.queryByText(/^Taille$/i)).toBeNull();
+    expect(screen.getByText(/^Entrée$/i)).toBeTruthy();
+    expect(screen.getByTestId("brocante-theme").textContent).toBe("—");
+    expect(screen.queryByRole("button", { name: /objets/i })).toBeNull();
+    expect(screen.queryByTestId("brocante-appetit")).toBeNull();
+  });
+
+  it("mode vitrine, spécialisée : ligne « Appétit +10 % sur Musique »", () => {
+    render(
+      <BrocanteDetailFloating brocante={{ ...brocante, specialisation: "Musique" }} debloquee peutEntrer conditions={[]} destination="vitrine" />,
+    );
+    expect(screen.getByLabelText(/Thème : Musique/)).toBeTruthy();
+    expect(screen.getByTestId("brocante-appetit").textContent).toBe("Appétit +10 % sur Musique");
+  });
+
+  it("mode vitrine, coffre hors thème : cadenas + « Musique uniquement », cellules masquées", () => {
+    render(
+      <BrocanteDetailFloating brocante={{ ...brocante, specialisation: "Musique" }} debloquee peutEntrer conditions={[]} destination="vitrine" coffreHorsTheme />,
+    );
+    expect(screen.getByTestId("brocante-cadenas")).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toBe("Musique uniquement");
+    expect(screen.queryByText(/^Budgets moyens$/i)).toBeNull();
+    expect(screen.queryByTestId("brocante-appetit")).toBeNull();
   });
 });

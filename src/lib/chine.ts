@@ -277,6 +277,20 @@ export function objetsTrouvables(brocante: Brocante): ObjetTemplate[] {
   return [...exclusifs, ...natifs];
 }
 
+/**
+ * Combien d'objets des tiers INFÉRIEURS restent trouvables ici (même pool,
+ * même filtre de spécialisation que `objetsTrouvables`, sans le poolExclusif).
+ * La loupe l'annonce en une ligne au lieu de les lister. 0 pour une ★.
+ */
+export function objetsDesTiersPrecedents(brocante: Brocante): number {
+  const spe = brocante.specialisation;
+  const natif = Math.min(brocante.tier, 3);
+  return poolPourTier(brocante.tier).filter(
+    (t) =>
+      tierMinTemplate(t.templateId) < natif && (!spe || t.categorie === spe),
+  ).length;
+}
+
 export function genererSession(
   taille: number,
   tendances: readonly Tendance[] = [],

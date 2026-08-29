@@ -10,6 +10,7 @@ import {
   genererSession,
   genererSessionScriptee,
   objetsTrouvables,
+  objetsDesTiersPrecedents,
   prixMinAvecMarchandage,
   uniquesExclusDuChinage,
 } from "./chine";
@@ -755,5 +756,30 @@ describe("objetsTrouvables — ce que la loupe de la carte de brocante montre", 
     const exclusif = UNIQUES.find((u) => u.categorie !== "Musique")!.templateId;
     const broc = createMockBrocante({ id: "b3m", tier: 3, etoiles: 3, specialisation: "Musique", poolExclusif: [exclusif] });
     expect(objetsTrouvables(broc).map((t) => t.templateId)).not.toContain(exclusif);
+  });
+});
+
+describe("objetsDesTiersPrecedents — ce que la loupe annonce en plus", () => {
+  it("brocante ★ : rien en dessous", () => {
+    expect(objetsDesTiersPrecedents(createMockBrocante({ id: "b1", tier: 1, etoiles: 1 }))).toBe(0);
+  });
+
+  it("brocante ★★ : les objets T1 du pool, jamais les natifs", () => {
+    const broc = createMockBrocante({ id: "b2", tier: 2, etoiles: 2 });
+    const attendu = poolPourTier(2).filter((t) => tierMinTemplate(t.templateId) < 2).length;
+    expect(attendu).toBeGreaterThan(0);
+    expect(objetsDesTiersPrecedents(broc)).toBe(attendu);
+  });
+
+  it("spécialisée : filtrée sur sa catégorie ; T4 : T1 + T2 cumulés, poolExclusif exclu", () => {
+    const spe = createMockBrocante({ id: "b3m", tier: 3, etoiles: 3, specialisation: "Musique" });
+    const attenduSpe = poolPourTier(3).filter(
+      (t) => t.categorie === "Musique" && tierMinTemplate(t.templateId) < 3,
+    ).length;
+    expect(objetsDesTiersPrecedents(spe)).toBe(attenduSpe);
+    const t4 = createMockBrocante({ id: "b4", tier: 4, etoiles: 4, poolExclusif: [UNIQUES[0].templateId] });
+    expect(objetsDesTiersPrecedents(t4)).toBe(
+      poolPourTier(4).filter((t) => tierMinTemplate(t.templateId) < 3).length,
+    );
   });
 });

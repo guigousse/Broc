@@ -1,13 +1,13 @@
 "use client";
 
-import { Package, Search, Zap } from "lucide-react";
+import { Lock, Package, Search, Wallet, Zap } from "lucide-react";
 import { useState, type CSSProperties } from "react";
 import type { Brocante, CategorieObjet, CollectionSlot } from "@/types/game";
 import { fraisEntree } from "@/data/brocantes";
-import { bourseMoyenne } from "@/lib/vitrine";
+import { BONUS_SPECIALISATION_CLIENT, bourseMoyenne } from "@/lib/vitrine";
 import type { ConditionInfo } from "@/lib/deblocage";
 import { useLangue } from "@/lib/i18n/LangueContext";
-import { descriptionBrocante, nomBrocante } from "@/lib/i18n/contenu";
+import { nomBrocante } from "@/lib/i18n/contenu";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { initCollection } from "@/lib/collection";
 import { CATEGORY_ICONS } from "./categoryIcons";
@@ -66,24 +66,6 @@ const titleStyle: CSSProperties = {
   textWrap: "balance",
 };
 
-/** Variante grisée du titre quand la brocante est verrouillée. */
-const titleStyleLocked: CSSProperties = {
-  ...titleStyle,
-  color: "#6b6657",
-  textShadow: "0 1px 0 rgba(255,255,255,0.35)",
-  filter: "saturate(0.4)",
-};
-
-const descStyle: CSSProperties = {
-  fontFamily: "var(--font-serif)",
-  fontStyle: "italic",
-  fontSize: 12.5,
-  color: "var(--ink-500)",
-  margin: 0,
-  lineHeight: 1.35,
-  textAlign: "center",
-};
-
 // Filet doré séparateur — fin, centré, gradient.
 const goldRuleStyle: CSSProperties = {
   width: "70%",
@@ -93,59 +75,20 @@ const goldRuleStyle: CSSProperties = {
   margin: "6px 0 2px",
 };
 
-// Meta row inside the card.
-const metaRowStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 18,
-  marginTop: 4,
+/** Variante grisée du titre quand la brocante est verrouillée. */
+const titleStyleLocked: CSSProperties = {
+  ...titleStyle,
+  color: "#6b6657",
+  textShadow: "0 1px 0 rgba(255,255,255,0.35)",
+  filter: "saturate(0.4)",
 };
 
-const metaItemsStyle: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: "0.14em",
-  textTransform: "lowercase",
-  color: "var(--ink-900)",
-};
 
-// Affichage du coût d'entrée : un encadré horizontal compact regroupant
-// l'icône billet, le label "ENTRÉE", le montant, le "+", puis l'icône énergie.
-// Style "billet de gala" — passe en rouge si !peutEntrer.
-const fraisBoxStyle = (peutEntrer: boolean): CSSProperties => {
-  const color = peutEntrer ? "var(--ink-900)" : "var(--vermillion-600)";
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    color,
-    background: peutEntrer
-      ? "rgba(245,239,225,0.85)"
-      : "rgba(245,225,225,0.85)",
-    border: `1px solid ${peutEntrer ? "var(--brass-700)" : "var(--vermillion-600)"}`,
-    borderRadius: 3,
-    padding: "4px 9px",
-    lineHeight: 1,
-  };
-};
 
-const fraisLabelStyle: CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 8.5,
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
-  opacity: 0.75,
-  fontWeight: 700,
-};
 
-const fraisAmountStyle: CSSProperties = {
-  fontFamily: "var(--font-display)",
-  fontSize: 14,
-  fontWeight: 700,
-  letterSpacing: "0.04em",
-};
+
+
+
 
 const fraisPlusStyle: CSSProperties = {
   fontFamily: "var(--font-mono)",
@@ -183,6 +126,16 @@ const plaqueStyle: CSSProperties = {
 const cellulesStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "1fr 1.2fr 1fr auto",
+  alignItems: "start",
+  gap: 8,
+  width: "100%",
+  marginTop: 8,
+};
+
+/** Vente : trois cellules, pas de loupe. */
+const cellulesVenteStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1.2fr 1.2fr 1fr",
   alignItems: "start",
   gap: 8,
   width: "100%",
@@ -247,6 +200,33 @@ const loupeInterrogation: CSSProperties = {
   lineHeight: 1,
   color: "#3a2410",
   pointerEvents: "none",
+};
+
+/** Vente sur bourse à thème : « Appétit +10 % sur Musique ». */
+const appetitStyle: CSSProperties = {
+  ...celluleLabelStyle,
+  marginTop: 8,
+  textAlign: "center",
+  letterSpacing: "0.14em",
+};
+
+// Coffre hors thème : la plaque reste, un cadenas de laiton prend la place
+// des cellules, et la règle tient en deux mots (« Musique uniquement »).
+const cadenasStyle: CSSProperties = {
+  color: "var(--brass-700)",
+  filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))",
+  marginTop: 10,
+};
+
+const themeUniquementStyle: CSSProperties = {
+  margin: "4px 0 0",
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  fontWeight: 700,
+  textAlign: "center",
+  color: "var(--vermillion-600)",
 };
 
 const conditionsListStyle: CSSProperties = {
@@ -408,51 +388,90 @@ export function BrocanteDetailFloating({
     );
   }
 
-  // --- Layout VENTE : titre + desc + filet d'or + meta intégrée ---
+  // --- Layout VENTE (2026-08-29) : même plaque, Budgets moyens / Entrée /
+  // Thème ; « Appétit +x % » si spécialisée ; cadenas si le coffre sort du thème.
+  const spe = brocante.specialisation;
+  const categorie = spe ? libelleCategorie(spe, d) : "";
   return (
     <aside style={cardStyle} aria-live="polite">
       <CornerOrnament position="tl" />
       <CornerOrnament position="tr" />
       <CornerOrnament position="bl" />
       <CornerOrnament position="br" />
-      <h2 style={titleStyle}>{nomBrocante(brocante, locale)}</h2>
-      <p style={descStyle}>{descriptionBrocante(brocante, locale)}</p>
-      <div style={goldRuleStyle} aria-hidden />
-      <div style={metaRowStyle}>
-        <span
-          style={metaItemsStyle}
-          aria-label={tr(d.chine.bourseMoyenneClientsAria, {
-            valeur: bourseMoyenne(brocante),
-          })}
-        >
-          {tr(d.chine.bourseMoyLabel, { valeur: bourseMoyenne(brocante) })}
-        </span>
-        <span
-          style={fraisBoxStyle(peutEntrer)}
-          aria-label={tr(d.chine.entreeAria, { prix: fraisEntree(brocante) })}
-        >
-          <span style={fraisLabelStyle}>{d.chine.entreeLabel}</span>
-          <span style={fraisAmountStyle}>{fraisEntree(brocante)} €</span>
-          <span style={fraisPlusStyle}>+</span>
-          <Zap size={14} strokeWidth={2} />
-        </span>
-        {ThemeIcon && (
-          <div
-            style={themeCachetStyle}
-            aria-label={tr(d.chine.themeAria, {
-              theme: brocante.specialisation ?? "",
-            })}
-          >
-            <ThemeIcon size={18} strokeWidth={2} />
+      <h2
+        style={coffreHorsTheme ? { ...plaqueStyle, filter: "saturate(0.4)" } : plaqueStyle}
+        data-testid="brocante-plaque"
+      >
+        {nomBrocante(brocante, locale)}
+      </h2>
+      {coffreHorsTheme && spe ? (
+        <>
+          <Lock
+            size={28}
+            strokeWidth={2.2}
+            style={cadenasStyle}
+            data-testid="brocante-cadenas"
+            aria-hidden
+          />
+          <p style={themeUniquementStyle} role="alert">
+            {tr(d.chine.themeUniquement, { categorie })}
+          </p>
+        </>
+      ) : (
+        <>
+          <div style={cellulesVenteStyle}>
+            <div style={celluleStyle}>
+              <span style={celluleLabelStyle}>{d.chine.budgetsLabel}</span>
+              <span
+                style={celluleValeurStyle()}
+                data-testid="brocante-budget"
+                aria-label={tr(d.chine.bourseMoyenneClientsAria, {
+                  valeur: bourseMoyenne(brocante),
+                })}
+              >
+                {bourseMoyenne(brocante)} €
+                <Wallet size={16} strokeWidth={1.8} aria-hidden />
+              </span>
+            </div>
+            <div style={celluleStyle}>
+              <span style={celluleLabelStyle}>{d.chine.entreeLabel}</span>
+              <span
+                style={celluleValeurStyle(!peutEntrer)}
+                data-testid="brocante-entree"
+                aria-label={tr(d.chine.entreeAria, {
+                  prix: fraisEntree(brocante),
+                })}
+              >
+                {fraisEntree(brocante)} €<span style={fraisPlusStyle}>+</span>
+                <Zap size={14} strokeWidth={2} aria-hidden />
+              </span>
+            </div>
+            <div style={celluleStyle}>
+              <span style={celluleLabelStyle}>{d.chine.themeLabel}</span>
+              {ThemeIcon ? (
+                <div
+                  style={themeCachetStyle}
+                  data-testid="brocante-theme"
+                  aria-label={tr(d.chine.themeAria, { theme: categorie })}
+                >
+                  <ThemeIcon size={18} strokeWidth={2} />
+                </div>
+              ) : (
+                <span style={themeVideStyle} data-testid="brocante-theme" aria-hidden>
+                  —
+                </span>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-      {coffreHorsTheme && brocante.specialisation && (
-        <p style={horsThemeStyle} role="alert">
-          {tr(d.chine.coffreHorsTheme, {
-            categorie: libelleCategorie(brocante.specialisation, d),
-          })}
-        </p>
+          {spe && (
+            <p style={appetitStyle} data-testid="brocante-appetit">
+              {tr(d.chine.appetitTheme, {
+                pct: Math.round((BONUS_SPECIALISATION_CLIENT - 1) * 100),
+                categorie,
+              })}
+            </p>
+          )}
+        </>
       )}
     </aside>
   );
@@ -460,12 +479,3 @@ export function BrocanteDetailFloating({
 
 const EMPTY_COLLECTION = initCollection();
 
-const horsThemeStyle: CSSProperties = {
-  margin: "8px 0 0",
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  letterSpacing: "0.06em",
-  fontWeight: 700,
-  textAlign: "center",
-  color: "var(--vermillion-600)",
-};
