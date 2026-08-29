@@ -23,7 +23,7 @@ export const REGLAGES_DEFAUT = Object.freeze({
   // Roulette qui ralentit.
   nbTours: 3, dureeDefilement: 8, arretFinal: 2,
   // Devine le prix.
-  dureeCompte: 3, dureeRevele: 2,
+  dureeCompte: 3, dureeRevele: 2, musique: true,
   flou: 0,
   // Saturation du fond, en % (100 = tel quel, 0 = noir et blanc).
   saturation: 100,
@@ -126,6 +126,7 @@ export function normaliserReglages(brut = {}) {
     type: ["ralentie", "devine"].includes(brut.type) ? brut.type : "pause",
     dureeCompte: borne(brut.dureeCompte, 2, 5, REGLAGES_DEFAUT.dureeCompte),
     dureeRevele: borne(brut.dureeRevele, 1, 4, REGLAGES_DEFAUT.dureeRevele),
+    musique: brut.musique === undefined ? REGLAGES_DEFAUT.musique : brut.musique === true,
     vitesse: borne(brut.vitesse, 1.5, 4, REGLAGES_DEFAUT.vitesse),
     nbTours: Math.round(borne(brut.nbTours, 1, 6, REGLAGES_DEFAUT.nbTours)),
     dureeDefilement: borne(brut.dureeDefilement, 3, 15, REGLAGES_DEFAUT.dureeDefilement),

@@ -15,7 +15,14 @@
 export const URL_TIC = "assets/sons/tic.wav";
 /** Son de célébration à l'arrêt de la cible : la « magie » du pristin, reprise du jeu. */
 export const URL_CELEBRATION = "assets/sons/celebration.mp3";
-const GAIN_CELEBRATION = 0.9;
+/** Les échantillons de « Devine le prix », repris du jeu (cash, carillon du Bazar, papier, jazz 33 tours). */
+export const ECHANTILLONS = Object.freeze({
+  tic: URL_TIC, celebration: URL_CELEBRATION,
+  cash: "assets/sons/cash.mp3", carillon: "assets/sons/carillon.mp3", pop: "assets/sons/pop.mp3", jazz: "assets/sons/jazz.m4a",
+});
+/** Gain de chaque échantillon joué tel quel (le tic a le sien, variable). */
+const GAINS = Object.freeze({ celebration: 0.9, eclat: 0.7, cash: 0.9, carillon: 0.7, pop: 0.45, musique: 0.13 });
+const GAIN_CELEBRATION = GAINS.celebration;
 const GAIN_ECHANTILLON = 0.8;
 /** Chaque tic diffère un peu du voisin (hauteur ±4 %, volume 85–100 %) : sans ça, mitrailleuse. */
 const VARIATION_HAUTEUR = 0.04;
@@ -47,6 +54,8 @@ export class SonRoulette {
     this._tic = null;
     this._chargementTic = null;
     this._celebration = null;
+    // Tous les échantillons décodés, par nom (tic et célébration y sont aussi).
+    this._echantillons = {};
     this._alea = Math.random;
   }
 
@@ -56,10 +65,12 @@ export class SonRoulette {
       const charger = (url, nom) => fetch(url)
         .then((rep) => { if (!rep.ok) throw new Error(`${nom} introuvable : ${rep.status}`); return rep.arrayBuffer(); })
         .then((donnees) => this.audioCtx.decodeAudioData(donnees));
-      this._chargementTic = Promise.all([
-        charger(URL_TIC, "tic").then((b) => { this._tic = b; }).catch((e) => { console.warn("tic échantillonné indisponible, tic synthétisé", e); }),
-        charger(URL_CELEBRATION, "célébration").then((b) => { this._celebration = b; }).catch((e) => { console.warn("son de célébration indisponible", e); }),
-      ]);
+      this._chargementTic = Promise.all(Object.entries(ECHANTILLONS).map(([nom, url]) =>
+        charger(url, nom).then((b) => {
+          this._echantillons[nom] = b;
+          if (nom === "tic") this._tic = b;
+          if (nom === "celebration") this._celebration = b;
+        }).catch((e) => { console.warn(`échantillon « ${nom} » indisponible`, e); })));
     }
     return this._chargementTic;
   }
@@ -142,17 +153,6 @@ export class SonRoulette {
     }
   }
 
-  /** Un picot de roulette : l'échantillon s'il est décodé, sinon le tic synthétisé. */
-  _planifierTic(t) {
-    if (this._tic) { this._planifierTicEchantillon(t); return; }
-    this._planifierTicSynthese(t);
-  }
-
-  _planifierTicEchantillon(t) {
-    const fin = SonRoulette._ticEchantillonSur(this.audioCtx, this._sortie(), this._tic, t, this._alea);
-    this._retenirVoix(fin.src, fin.fin);
-  }
-
   /** L'échantillon sur n'importe quel contexte (temps réel ou hors ligne). → { src, fin } */
   static _ticEchantillonSur(ctx, sortie, buffer, t, alea) {
     const src = ctx.createBufferSource();
@@ -181,11 +181,7 @@ export class SonRoulette {
     const ctx = new OfflineAudioContext(1, nb, frequence);
     const sortie = ctx.createGain();
     sortie.connect(ctx.destination);
-    for (const tic of r.instantsTics) {
-      if (this._tic) SonRoulette._ticEchantillonSur(ctx, sortie, this._tic, tic.t, this._alea);
-      else SonRoulette._ticSyntheseSur(ctx, sortie, tic.t);
-    }
-    for (const t of instantsCelebration(r)) SonRoulette._celebrationSur(ctx, sortie, this._celebration, t);
+    for (const ev of evenementsSon(r)) this._jouerSur(ctx, sortie, ev, ev.t);
     // La promesse ET l'événement `complete` : sur iOS, l'un des deux a déjà été vu muet.
     return new Promise((resoudre, rejeter) => {
       ctx.oncomplete = (e) => resoudre(e.renderedBuffer);
@@ -202,12 +198,121 @@ export class SonRoulette {
     try { await avecLimite(this.audioCtx.resume(), 2000); } catch { /* on rend quand même */ }
   }
 
-  /** Oscillateur carré filtré, claquement sec — le secours. */
-  _planifierTicSynthese(t) {
-    const { osc, fin } = SonRoulette._ticSyntheseSur(this.audioCtx, this._sortie(), t);
-    this._retenirVoix(osc, fin);
+  /**
+   * Joue un événement sonore à `t` sur n'importe quel contexte (temps réel ou
+   * hors ligne). → { src|osc, fin } ou null. Échantillon manquant : synthèse
+   * pour le tic, silence pour les autres (jamais d'erreur).
+   */
+  _jouerSur(ctx, sortie, ev, t) {
+    const ech = this._echantillons;
+    switch (ev.type) {
+      case "tic":
+        return this._tic ? SonRoulette._ticEchantillonSur(ctx, sortie, this._tic, t, this._alea) : SonRoulette._ticSyntheseSur(ctx, sortie, t);
+      case "celebration": return SonRoulette._celebrationSur(ctx, sortie, this._celebration, t);
+      case "eclat": return SonRoulette._echantillonSur(ctx, sortie, ech.celebration, t, GAINS.eclat);
+      case "cash": return SonRoulette._echantillonSur(ctx, sortie, ech.cash, t, GAINS.cash);
+      case "carillon": return SonRoulette._echantillonSur(ctx, sortie, ech.carillon, t, GAINS.carillon);
+      case "pop": return SonRoulette._echantillonSur(ctx, sortie, ech.pop, t, GAINS.pop);
+      case "musique": return SonRoulette._musiqueSur(ctx, sortie, ech.jazz, t, ev.duree);
+      case "whoosh": return SonRoulette._whooshSur(ctx, sortie, t, ev.duree ?? 0.35);
+      case "impact": return SonRoulette._impactSur(ctx, sortie, t);
+      case "riser": return SonRoulette._riserSur(ctx, sortie, t, ev.duree ?? 3);
+      case "sting": return SonRoulette._stingSur(ctx, sortie, t);
+      default: return null;
+    }
   }
 
+  /** Un échantillon tel quel, au gain donné. */
+  static _echantillonSur(ctx, sortie, buffer, t, gainV) {
+    if (!buffer) return null;
+    const src = ctx.createBufferSource(); src.buffer = buffer;
+    const gain = ctx.createGain(); gain.gain.value = gainV;
+    src.connect(gain); gain.connect(sortie);
+    src.start(t);
+    return { src, fin: t + buffer.duration };
+  }
+
+  /** Le lit musical : l'échantillon (bouclé si trop court) de t à t + duree, fondu de sortie sur la dernière seconde. */
+  static _musiqueSur(ctx, sortie, buffer, t, duree) {
+    if (!buffer || !(duree > 0)) return null;
+    const src = ctx.createBufferSource(); src.buffer = buffer; src.loop = true;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(GAINS.musique, t);
+    gain.gain.setValueAtTime(GAINS.musique, t + Math.max(0, duree - 1));
+    gain.gain.linearRampToValueAtTime(0, t + duree);
+    src.connect(gain); gain.connect(sortie);
+    src.start(t); src.stop(t + duree);
+    return { src, fin: t + duree };
+  }
+
+  /** Bruit blanc de `duree` s, une source par appel. */
+  static _bruitSur(ctx, duree) {
+    const n = Math.max(1, Math.round(duree * ctx.sampleRate));
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    let x = 0x9E3779B9;   // bruit déterministe : même rendu à chaque export
+    for (let i = 0; i < n; i++) { x ^= x << 13; x ^= x >>> 17; x ^= x << 5; d[i] = ((x >>> 0) / 4294967296) * 2 - 1; }
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    return src;
+  }
+
+  /** Souffle qui monte : bruit passe-bande balayé 300 → 3000 Hz, gonfle puis meurt sur l'impact. */
+  static _whooshSur(ctx, sortie, t, duree) {
+    const src = SonRoulette._bruitSur(ctx, duree + 0.05);
+    const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 1.2;
+    f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(3000, t + duree);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.5, t + duree * 0.85); g.gain.linearRampToValueAtTime(0, t + duree);
+    src.connect(f); f.connect(g); g.connect(sortie);
+    src.start(t); src.stop(t + duree + 0.05);
+    return { src, fin: t + duree + 0.05 };
+  }
+
+  /** Coup sourd : sinus 90 → 35 Hz en 0,35 s, plus un claquement de bruit de 40 ms. */
+  static _impactSur(ctx, sortie, t) {
+    const osc = ctx.createOscillator(); osc.type = "sine";
+    osc.frequency.setValueAtTime(90, t); osc.frequency.exponentialRampToValueAtTime(35, t + 0.35);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.95, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    osc.connect(g); g.connect(sortie);
+    osc.start(t); osc.stop(t + 0.42);
+    const clac = SonRoulette._bruitSur(ctx, 0.05);
+    const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1800;
+    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.6, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    clac.connect(f); f.connect(g2); g2.connect(sortie);
+    clac.start(t); clac.stop(t + 0.06);
+    return { osc, fin: t + 0.42 };
+  }
+
+  /** Tension qui monte pendant le compte : bruit passe-bande 400 → 4000 Hz, gain 0 → 0,3, coupé net à la fin. */
+  static _riserSur(ctx, sortie, t, duree) {
+    const src = SonRoulette._bruitSur(ctx, duree + 0.02);
+    const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 2.5;
+    f.frequency.setValueAtTime(400, t); f.frequency.exponentialRampToValueAtTime(4000, t + duree);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + duree); g.gain.setValueAtTime(0, t + duree + 0.001);
+    src.connect(f); f.connect(g); g.connect(sortie);
+    src.start(t); src.stop(t + duree + 0.02);
+    return { src, fin: t + duree + 0.02 };
+  }
+
+  /** Deux notes qui montent (sol → do), en triangle, chacune 180 ms : la question posée. */
+  static _stingSur(ctx, sortie, t) {
+    const notes = [[392, 0], [523.25, 0.18]];
+    let osc0 = null;
+    for (const [freq, dt] of notes) {
+      const osc = ctx.createOscillator(); osc.type = "triangle"; osc.frequency.value = freq;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t + dt); g.gain.exponentialRampToValueAtTime(0.35, t + dt + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dt + 0.45);
+      osc.connect(g); g.connect(sortie);
+      osc.start(t + dt); osc.stop(t + dt + 0.5);
+      osc0 ??= osc;
+    }
+    return { osc: osc0, fin: t + 0.7 };
+  }
+
+  /** Oscillateur carré filtré, claquement sec — le secours. */
   static _ticSyntheseSur(ctx, sortie, t) {
     const osc = ctx.createOscillator();
     osc.type = "square";
@@ -242,10 +347,9 @@ export class SonRoulette {
   planifierTour(r, tDebutCtx) {
     this._assurerContexte();
     this._appliquerActif();
-    for (const tic of r.instantsTics) this._planifierTic(tDebutCtx + tic.t);
-    for (const t of instantsCelebration(r)) {
-      const v = SonRoulette._celebrationSur(this.audioCtx, this._sortie(), this._celebration, tDebutCtx + t);
-      if (v) this._retenirVoix(v.src, v.fin);
+    for (const ev of evenementsSon(r)) {
+      const v = this._jouerSur(this.audioCtx, this._sortie(), ev, tDebutCtx + ev.t);
+      if (v) this._retenirVoix(v.src ?? v.osc, v.fin);
     }
   }
 
@@ -305,6 +409,17 @@ export class SonRoulette {
 export function instantsCelebration(r) {
   if (Array.isArray(r.instantsCelebration)) return r.instantsCelebration;
   return r.instantCelebration === null || r.instantCelebration === undefined ? [] : [r.instantCelebration];
+}
+
+/**
+ * La partition d'un tour : `r.evenementsSon` si le type l'a composée (Devine le
+ * prix), sinon les tics et célébrations des roulettes, triés. Pure.
+ */
+export function evenementsSon(r) {
+  if (Array.isArray(r.evenementsSon)) return r.evenementsSon;
+  const out = r.instantsTics.map((x) => ({ t: x.t, type: "tic" }));
+  for (const t of instantsCelebration(r)) out.push({ t, type: "celebration" });
+  return out.sort((a, b) => a.t - b.t);
 }
 
 /** La promesse, ou un rejet si `ms` s'écoulent d'abord. */

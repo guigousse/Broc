@@ -79,3 +79,26 @@ describe("opaciteOverlay", () => {
     expect(opaciteOverlay(r.arretDepuis + 5, r)).toBe(1);
   });
 });
+
+describe("evenementsDevine (via calculerDevine)", () => {
+  const types = (r, type) => r.evenementsSon.filter((e) => e.type === type).map((e) => e.t);
+  it("whoosh + impact à l'intro, pop et riser par objet, ka-ching sauf mystère, sting, carillon, lit jazz", () => {
+    const r = calculerDevine({ nbObjets: 2, dureeCompte: 3, dureeRevele: 2, raretes: ["commun", "rare"] });
+    expect(types(r, "whoosh")).toEqual([0]);
+    expect(types(r, "impact")).toEqual([INTRO_MONTEE]);
+    expect(types(r, "pop")).toEqual([r.etapes[0].debut, r.etapes[1].debut]);
+    expect(types(r, "riser")).toEqual([r.etapes[0].compte, r.etapes[1].compte]);
+    expect(r.evenementsSon.find((e) => e.type === "riser").duree).toBe(3);
+    expect(types(r, "cash")).toEqual([r.etapes[0].revelation]);
+    expect(types(r, "sting")).toEqual([r.etapes[1].revelation]);
+    expect(types(r, "carillon")).toEqual([r.etapes[1].revelation + OVERLAY_FONDU + 0.1]);
+    expect(types(r, "tic")).toEqual(r.instantsTics.map((x) => x.t));
+    expect(r.evenementsSon.find((e) => e.type === "musique")).toEqual({ t: 0, type: "musique", duree: r.duree });
+    expect(r.evenementsSon.map((e) => e.t)).toEqual([...r.evenementsSon.map((e) => e.t)].sort((a, b) => a - b));
+  });
+  it("éclat de rareté seulement pour un objet rare/légendaire révélé ; pas de musique si décochée", () => {
+    const r = calculerDevine({ nbObjets: 3, dureeCompte: 3, dureeRevele: 2, raretes: ["rare", "commun", "legendaire"], musique: false });
+    expect(types(r, "eclat")).toEqual([r.etapes[0].revelation + 0.15]);   // le 3ᵉ est mystère : pas d'éclat
+    expect(types(r, "musique")).toEqual([]);
+  });
+});

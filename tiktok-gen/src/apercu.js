@@ -40,6 +40,8 @@ export function construireCfg(reglages, catalogue) {
       indexCible: devine ? 0 : ids.indexOf(cible),
       dureeCompte: reglages.dureeCompte,
       dureeRevele: reglages.dureeRevele,
+      musique: reglages.musique,
+      raretes: ids.map((id) => (Array.isArray(catalogue) ? catalogue.find((e) => e.id === id)?.rarete : undefined) ?? "commun"),
       vitesse: reglages.vitesse,
       espacement: reglages.espacement,
       nbPassages: reglages.nbPassages,

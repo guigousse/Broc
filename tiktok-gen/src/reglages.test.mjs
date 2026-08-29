@@ -137,6 +137,8 @@ describe("réglages « Devine le prix »", () => {
     expect(r.dureeCompte).toBe(5);
     expect(r.dureeRevele).toBe(1);
     expect("dernierMystere" in r).toBe(false);   // plus une option : le dernier objet reste toujours mystère
+    expect(normaliserReglages({}).musique).toBe(true);
+    expect(normaliserReglages({ musique: false }).musique).toBe(false);
     expect(normaliserReglages({}).dureeCompte).toBe(3);
     expect(normaliserReglages({ type: "n'importe" }).type).toBe("pause");
   });

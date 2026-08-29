@@ -18,7 +18,7 @@ export const APPARITION = 0.5;
 export const REBOND = 0.8;
 
 /** Le dernier objet reste toujours mystère : c'est l'appel à commenter, pas une option. */
-export function calculerDevine({ nbObjets, dureeCompte, dureeRevele }) {
+export function calculerDevine({ nbObjets, dureeCompte, dureeRevele, raretes = [], musique = true }) {
   const dernierMystere = true;
   const dureeObjet = APPARITION + dureeCompte + dureeRevele;
   const etapes = [];
@@ -36,14 +36,46 @@ export function calculerDevine({ nbObjets, dureeCompte, dureeRevele }) {
   }
   const duree = INTRO + nbObjets * dureeObjet;
   const derniere = etapes[etapes.length - 1];
+  const evenementsSon = evenementsDevine({ etapes, instantsTics, raretes, musique, duree, dureeCompte });
   return {
     type: "devine", duree, etapes, dureeCompte, dureeRevele,
-    instantsTics, instantsCelebration, instantCelebration: null,
+    instantsTics, instantsCelebration, instantCelebration: null, evenementsSon,
     instantsCentrage: [], demiFlash: 0, fenetrePauseMs: dureeRevele * 1000,
     geleAuFlash: false, arretDepuis: derniere ? derniere.revelation : null,
     // Sans bande : ces champs existent pour les lecteurs génériques (infos, tests).
     periodeTour: dureeObjet, vitessePx: 0, longueurBande: 0, avancement: () => 0,
   };
+}
+
+/** Délai de l'éclat de rareté après le ka-ching, et du carillon après la fin du fondu de l'overlay. */
+const DELAI_ECLAT = 0.15, DELAI_CARILLON = 0.1;
+
+/**
+ * La partition sonore de la série, en événements { t, type, … } que `son.js`
+ * sait jouer : whoosh puis impact sur le titre, pop à chaque objet, tics et
+ * riser sur le compte, ka-ching (+ éclat si rare/légendaire) à la révélation,
+ * sting sur le mystère, carillon sur l'overlay, lit jazz du début à la fin.
+ */
+export function evenementsDevine({ etapes, instantsTics, raretes, musique, duree, dureeCompte }) {
+  const out = [];
+  if (musique) out.push({ t: 0, type: "musique", duree });
+  out.push({ t: 0, type: "whoosh", duree: INTRO_MONTEE });
+  out.push({ t: INTRO_MONTEE, type: "impact" });
+  for (const e of etapes) {
+    out.push({ t: e.debut, type: "pop" });
+    out.push({ t: e.compte, type: "riser", duree: dureeCompte });
+    if (e.mystere) {
+      out.push({ t: e.revelation, type: "sting" });
+    } else {
+      out.push({ t: e.revelation, type: "cash" });
+      if (["rare", "legendaire"].includes(raretes[e.index])) out.push({ t: e.revelation + DELAI_ECLAT, type: "eclat" });
+    }
+  }
+  for (const tic of instantsTics) out.push({ t: tic.t, type: "tic" });
+  const derniere = etapes[etapes.length - 1];
+  if (derniere) out.push({ t: derniere.revelation + OVERLAY_FONDU + DELAI_CARILLON, type: "carillon" });
+  out.sort((a, b) => a.t - b.t);
+  return out;
 }
 
 /**
