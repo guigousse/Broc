@@ -25,8 +25,26 @@ const DEBIT_AUDIO = 128_000;
 const FREQUENCE_AUDIO = 48_000;
 /** Une image clé toutes les 2 s : TikTok découpe proprement, le fichier reste léger. */
 const INTERVALLE_CLE_S = 2;
-/** Au-delà, on laisse l'encodeur respirer avant de lui donner l'image suivante. */
-const FILE_MAX = 6;
+/**
+ * File d'attente de l'encodeur : on ne lui donne l'image suivante que si sa
+ * file est courte. Sur iPhone, un fond photo (bien plus coûteux à encoder
+ * qu'un fond du jeu) saturait l'encodeur matériel et l'export restait figé
+ * à la fin des images : une file courte le laisse respirer.
+ */
+const FILE_MAX = 2;
+/** Sondage de la file (ms) : l'événement `dequeue` n'est pas garanti partout, on regarde nous-mêmes. */
+const PAS_SONDAGE_MS = 4;
+/** Au-delà, une image qui ne se vide pas de la file est un encodeur bloqué. */
+const ATTENTE_FILE_MAX_MS = 20_000;
+/** Délai maximal accordé à la finalisation vidéo (`flush`) : passé, on livre ce qu'on a. */
+const DELAI_FLUSH_MS = 20_000;
+/** Délai maximal des étapes audio et fichier. */
+const DELAI_AUDIO_MS = 60_000;
+
+/** Les étapes de `rendreHorsLigne`, telles que rapportées par `onProgression(p, etape)`. */
+export const ETAPES = Object.freeze({
+  images: "images", flush: "finalisation vidéo", son: "son", fichier: "fichier",
+});
 /**
  * Sous-images par image encodée. 1 = image nette à l'instant exact. Un flou de
  * mouvement (moyenne de 8 sous-images) a été essayé : il rendait les objets
@@ -111,7 +129,7 @@ export async function capacitesHorsLigne() {
  * `scene` est celle de l'aperçu (déjà chargée), `r` sa roulette. `sonActif`
  * faux → piste audio silencieuse (le fichier garde une piste, comme avant).
  */
-export async function rendreHorsLigne({ scene, r, son, sonActif, cibleId, capacites, onProgression }) {
+export async function rendreHorsLigne({ scene, r, son, sonActif, cibleId, capacites, onProgression, journal = console }) {
   const caps = capacites ?? await capacitesHorsLigne();
   if (!caps.ok) throw new Error("Ce navigateur ne sait pas encoder la vidéo hors ligne.");
   const { Muxer, ArrayBufferTarget } = await import("../vendor/mp4-muxer.mjs");
@@ -131,8 +149,9 @@ export async function rendreHorsLigne({ scene, r, son, sonActif, cibleId, capaci
   });
 
   let erreur = null;
+  let morceauxRecus = 0;
   const encodeurVideo = new VideoEncoder({
-    output: (morceau, meta) => muxer.addVideoChunk(morceau, meta),
+    output: (morceau, meta) => { morceauxRecus += 1; muxer.addVideoChunk(morceau, meta); },
     error: (e) => { erreur = e; },
   });
   encodeurVideo.configure({
@@ -144,36 +163,72 @@ export async function rendreHorsLigne({ scene, r, son, sonActif, cibleId, capaci
   canvas.width = LARGEUR; canvas.height = HAUTEUR;
   const ctx = canvas.getContext("2d");
 
+  let avertissement = null;
   try {
     for (const img of plan.images) {
       if (erreur) throw erreur;
+      const ok = await attendreFileCourte(encodeurVideo, { max: FILE_MAX, pasMs: PAS_SONDAGE_MS, maxMs: ATTENTE_FILE_MAX_MS });
+      if (!ok) throw new Error(`L'encodeur vidéo ne répond plus (image ${img.i + 1}/${plan.nb}, ${morceauxRecus} reçues).`);
       dessinerImageFloue(ctx, img.t, scene, r);
       const frame = new VideoFrame(canvas, { timestamp: img.timestampUs, duration: Math.round(1_000_000 / FPS_VIDEO) });
       encodeurVideo.encode(frame, { keyFrame: img.cle });
       frame.close();
-      onProgression?.((img.i + 1) / plan.nb * 0.9);
-      if (encodeurVideo.encodeQueueSize > FILE_MAX) await attendreDequeue(encodeurVideo);
+      onProgression?.((img.i + 1) / plan.nb * 0.9, ETAPES.images);
     }
-    await encodeurVideo.flush();
+    onProgression?.(0.9, ETAPES.flush);
+    // Un `flush` qui ne revient jamais (encodeur matériel saturé) ne doit pas
+    // figer l'export : on livre les images déjà muxées et on le dit.
+    try {
+      await avecDelai(encodeurVideo.flush(), DELAI_FLUSH_MS, ETAPES.flush);
+    } catch (e) {
+      if (!(e instanceof ErreurDelai)) throw e;
+      avertissement = `Finalisation vidéo interrompue : ${morceauxRecus}/${plan.nb} images livrées.`;
+      journal?.warn?.(avertissement, e);
+    }
     if (erreur) throw erreur;
 
-    const buffer = await audioPromesse;
-    if (buffer) await encoderAudio(buffer, muxer);
-    onProgression?.(1);
+    onProgression?.(0.92, ETAPES.son);
+    const buffer = await avecDelai(audioPromesse, DELAI_AUDIO_MS, ETAPES.son);
+    if (buffer) await avecDelai(encoderAudio(buffer, muxer), DELAI_AUDIO_MS, ETAPES.son);
+    onProgression?.(0.98, ETAPES.fichier);
 
     muxer.finalize();
+    onProgression?.(1, ETAPES.fichier);
     return {
       blob: new Blob([muxer.target.buffer], { type: "video/mp4" }),
       nomFichier: nomFichierPour(cibleId, "video/mp4"),
       fps: FPS_VIDEO,
+      avertissement,
     };
   } finally {
     try { encodeurVideo.close(); } catch { /* déjà fermé */ }
   }
 }
 
-function attendreDequeue(encodeur) {
-  return new Promise((resolve) => { encodeur.addEventListener("dequeue", resolve, { once: true }); });
+/**
+ * Attend que `encodeur.encodeQueueSize` ≤ `max`, par sondage toutes les `pasMs`.
+ * → true dès que la file est courte, false si `maxMs` s'écoule avant. Pure
+ * vis-à-vis de WebCodecs : n'importe quel objet à `encodeQueueSize` convient.
+ */
+export async function attendreFileCourte(encodeur, { max = FILE_MAX, pasMs = PAS_SONDAGE_MS, maxMs = ATTENTE_FILE_MAX_MS } = {}) {
+  if (encodeur.encodeQueueSize <= max) return true;
+  const limite = Date.now() + maxMs;
+  while (encodeur.encodeQueueSize > max) {
+    if (Date.now() >= limite) return false;
+    await new Promise((resolve) => setTimeout(resolve, pasMs));
+  }
+  return true;
+}
+
+export class ErreurDelai extends Error {}
+
+/** La promesse, ou une `ErreurDelai` nommant `etape` si `ms` s'écoulent d'abord. */
+export function avecDelai(promesse, ms, etape) {
+  let minuterie;
+  const garde = new Promise((_, rejeter) => {
+    minuterie = setTimeout(() => rejeter(new ErreurDelai(`Étape « ${etape} » trop longue (${Math.round(ms / 1000)} s).`)), ms);
+  });
+  return Promise.race([promesse, garde]).finally(() => clearTimeout(minuterie));
 }
 
 /** Un AudioBuffer mono muet de `duree` s (fichier « avec son » mais silencieux). */

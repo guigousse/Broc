@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planImages, FPS_VIDEO, audioSpecificConfig, instantsSousImages, SOUS_IMAGES } from "./encodeur.js";
+import { planImages, FPS_VIDEO, audioSpecificConfig, instantsSousImages, SOUS_IMAGES, attendreFileCourte, avecDelai } from "./encodeur.js";
 
 describe("planImages", () => {
   it("60 images par seconde, dernière à duree − 1/fps, sans image de queue", () => {
@@ -46,5 +46,35 @@ describe("instantsSousImages", () => {
     expect(xs[0]).toBeCloseTo(t + 1 / 480, 12);
     expect(xs.at(-1)).toBeCloseTo(t + 7 / 480, 12);
     for (const x of xs) { expect(x).toBeGreaterThanOrEqual(t); expect(x).toBeLessThan(t + 1 / 60); }
+  });
+});
+
+describe("attendreFileCourte", () => {
+  it("revient tout de suite si la file est déjà courte", async () => {
+    const enc = { encodeQueueSize: 1 };
+    const debut = Date.now();
+    await attendreFileCourte(enc, { max: 2, pasMs: 50 });
+    expect(Date.now() - debut).toBeLessThan(40);
+  });
+  it("sonde la file sans dépendre d'un événement `dequeue`", async () => {
+    const enc = { encodeQueueSize: 9 };   // aucun addEventListener : l'événement ne peut pas exister
+    setTimeout(() => { enc.encodeQueueSize = 2; }, 30);
+    await attendreFileCourte(enc, { max: 2, pasMs: 5 });
+    expect(enc.encodeQueueSize).toBe(2);
+  });
+  it("abandonne après `maxMs` plutôt que d'attendre à jamais", async () => {
+    const enc = { encodeQueueSize: 9 };
+    const r = await attendreFileCourte(enc, { max: 2, pasMs: 5, maxMs: 30 });
+    expect(r).toBe(false);
+  });
+});
+
+describe("avecDelai", () => {
+  it("rend la valeur de la promesse si elle arrive à temps", async () => {
+    await expect(avecDelai(Promise.resolve(7), 100, "test")).resolves.toBe(7);
+  });
+  it("rejette en nommant l'étape quand le délai expire", async () => {
+    const jamais = new Promise(() => {});
+    await expect(avecDelai(jamais, 20, "finalisation vidéo")).rejects.toThrow(/finalisation vidéo/);
   });
 });

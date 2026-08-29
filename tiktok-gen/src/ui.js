@@ -482,15 +482,21 @@ async function demarrer() {
 
     try {
       if (horsLigne.ok) {
-        const { blob, nomFichier, fps } = await rendreHorsLigne({
+        let etapeVue = null;
+        const { blob, nomFichier, fps, avertissement } = await rendreHorsLigne({
           scene: apercu.scene, r: apercu.r, son, sonActif: reglages.son, cibleId: reglages.cible,
-          capacites: horsLigne, onProgression: (p) => { el.progression.value = p; majBarreEnregistrer(p); },
+          capacites: horsLigne,
+          onProgression: (p, etape) => {
+            el.progression.value = p; majBarreEnregistrer(p);
+            // L'étape en clair : si l'export se fige, on sait au moins à laquelle.
+            if (etape && etape !== etapeVue) { etapeVue = etape; dire(`Rendu en cours… (${etape})`); }
+          },
         });
         prise = { blob, nomFichier };
         if (DEBUG) window.__dernierBlob = blob;
         el.partager.hidden = false;
         el.partager.disabled = false;
-        dire(`Rendu : ${formaterDuree(apercu.r?.duree)} · ${fps} fps${horsLigne.audio ? "" : " · sans son (navigateur)"}`);
+        dire(`Rendu : ${formaterDuree(apercu.r?.duree)} · ${fps} fps${horsLigne.audio ? "" : " · sans son (navigateur)"}${avertissement ? ` · ⚠ ${avertissement}` : ""}`);
         return;
       }
       const { blob, nomFichier, fpsMoyen } = await enregistrer({
