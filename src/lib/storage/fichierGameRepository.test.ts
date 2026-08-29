@@ -14,6 +14,7 @@ import {
   cleSlot,
   renommerSlot,
   revisionDe,
+  slotActif,
   toucherDerniereSession,
 } from "./slots";
 
@@ -610,6 +611,168 @@ describe("fichierGameRepository", () => {
 
       const relu = await fichierGameRepository.load();
       expect(relu?.jourActuel).toBe(41);
+    });
+  });
+
+  // F-01 : `supprimerSlot` n'effaçait que le miroir localStorage. Le fichier
+  // natif `slot-N.json` (et son entrée d'index) restait intact, et comme
+  // `chargerAvecIndex` arbitre par `revFichier >= revMiroir`, la partie
+  // supprimée ressuscitait au load() suivant — ou écrasait une nouvelle
+  // partie ouverte dans le même emplacement tant qu'elle n'avait pas sauvé.
+  describe("clearSlot() (F-01)", () => {
+    it("après suppression du slot 2, load() ne ressuscite pas l'ancienne partie même si le fichier avait une révision supérieure au miroir", async () => {
+      changerSlotActif(2);
+      window.localStorage.setItem(
+        cleSlot(2),
+        JSON.stringify(createMockGameState({ jourActuel: 2 })),
+      );
+      toucherDerniereSession(2, 3);
+      fichiers.set("index", JSON.stringify({ actif: 2, revisions: { 1: 0, 2: 7, 3: 0 } }));
+      fichiers.set("slot_2", JSON.stringify(createMockGameState({ jourActuel: 70 })));
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      await fichierGameRepository.clearSlot(2);
+
+      // Miroir vidé, fichier vidé, entrée d'index fichier remise à 0.
+      expect(window.localStorage.getItem(cleSlot(2))).toBeNull();
+      expect(chargerIndex().slots[2]).toBeNull();
+      expect(fichiers.get("slot_2")).toBe("");
+      const index = JSON.parse(fichiers.get("index") ?? "null") as {
+        revisions: Record<number, number>;
+      } | null;
+      expect(index?.revisions[2]).toBe(0);
+
+      // Le slot 2 reste l'actif (seul slot, rien vers quoi rebasculer) :
+      // le load() suivant ne doit rien servir.
+      expect(slotActif()).toBe(2);
+      const relu = await fichierGameRepository.load();
+      expect(relu).toBeNull();
+    });
+
+    it("ne touche pas aux autres slots", async () => {
+      fichiers.set("index", JSON.stringify({ actif: 1, revisions: { 1: 4, 2: 7, 3: 0 } }));
+      fichiers.set("slot_1", JSON.stringify(createMockGameState({ jourActuel: 10 })));
+      fichiers.set("slot_2", JSON.stringify(createMockGameState({ jourActuel: 70 })));
+      changerSlotActif(1);
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      await fichierGameRepository.clearSlot(2);
+
+      expect(fichiers.get("slot_1")).toBe(JSON.stringify(createMockGameState({ jourActuel: 10 })));
+      const index = JSON.parse(fichiers.get("index") ?? "null") as {
+        actif: number;
+        revisions: Record<number, number>;
+      } | null;
+      expect(index?.revisions[1]).toBe(4);
+      expect(index?.actif).toBe(1);
+    });
+  });
+
+  // F-04 : course de slot. `save()` faisait `await lireEtatIndexFichier()`
+  // PUIS `resoudreSlotActif()` — si `detacherPartie(); changerSlotActif(n)`
+  // survenait pendant l'await, l'état du slot A s'écrivait dans le slot B.
+  describe("course de slot et écritures en vol (F-04)", () => {
+    /** Promesse contrôlée à la main. */
+    function differe<T>() {
+      let resolve!: (v: T) => void;
+      const promesse = new Promise<T>((r) => {
+        resolve = r;
+      });
+      return { promesse, resolve };
+    }
+
+    it("save() lancé puis bascule de slot pendant l'await : l'écriture atterrit dans le slot d'origine, jamais dans le nouveau", async () => {
+      changerSlotActif(1);
+      const { lireSave } = await import("./pontNatif");
+      const lectureIndex = differe<string | null>();
+      vi.mocked(lireSave).mockImplementationOnce(() => lectureIndex.promesse);
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const enVol = fichierGameRepository.save(createMockGameState({ jourActuel: 1 }));
+
+      // Pendant l'await : le joueur lance une autre partie.
+      changerSlotActif(2);
+      lectureIndex.resolve(null);
+      await enVol;
+
+      expect(fichiers.has("slot_2")).toBe(false);
+      expect(fichiers.has("slot_1")).toBe(true);
+    });
+
+    it("save(state, slot) écrit dans le slot passé explicitement, quel que soit l'actif du miroir", async () => {
+      changerSlotActif(1);
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const r = await fichierGameRepository.save(createMockGameState({ jourActuel: 3 }), 3);
+      expect(r).toEqual({ ok: true });
+      expect(fichiers.has("slot_3")).toBe(true);
+      expect(fichiers.has("slot_1")).toBe(false);
+    });
+
+    it("save en vol pendant clear() : aucun fichier ni miroir réécrit après le clear", async () => {
+      const { ecrireSave } = await import("./pontNatif");
+      const ecritureSlot = differe<void>();
+      vi.mocked(ecrireSave).mockImplementationOnce((q: string, c: string) => {
+        fichiers.set(q, c);
+        return ecritureSlot.promesse;
+      });
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const enVol = fichierGameRepository.save(createMockGameState({ jourActuel: 5 }));
+      // Laisse la save atteindre son écriture native (bloquée).
+      await new Promise((r) => setTimeout(r, 0));
+      const effacement = fichierGameRepository.clear();
+      ecritureSlot.resolve();
+      await Promise.all([enVol, effacement]);
+
+      expect(fichiers.get("slot_1")).toBe("");
+      expect(window.localStorage.getItem(cleSlot(1))).toBeNull();
+      expect(revisionDe(1)).toBe(0);
+      const index = JSON.parse(fichiers.get("index") ?? "null") as {
+        revisions: Record<number, number>;
+      } | null;
+      expect(index?.revisions[1] ?? 0).toBe(0);
+    });
+
+    it("invaliderEcrituresEnVol() : une save en attente n'écrit plus rien", async () => {
+      changerSlotActif(1);
+      const { lireSave } = await import("./pontNatif");
+      const lectureIndex = differe<string | null>();
+      vi.mocked(lireSave).mockImplementationOnce(() => lectureIndex.promesse);
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const enVol = fichierGameRepository.save(createMockGameState({ jourActuel: 1 }));
+      fichierGameRepository.invaliderEcrituresEnVol();
+      lectureIndex.resolve(null);
+      await enVol;
+
+      expect(fichiers.has("slot_1")).toBe(false);
+      expect(window.localStorage.getItem(cleSlot(1))).toBeNull();
+    });
+
+    it("écritures sérialisées : une à la fois, le dernier état gagne, les intermédiaires sont coalescées", async () => {
+      const { ecrireSave } = await import("./pontNatif");
+      const premiere = differe<void>();
+      vi.mocked(ecrireSave).mockImplementationOnce((q: string, c: string) => {
+        fichiers.set(q, c);
+        return premiere.promesse;
+      });
+
+      const { fichierGameRepository } = await import("./fichierGameRepository");
+      const s1 = fichierGameRepository.save(createMockGameState({ jourActuel: 1 }));
+      await new Promise((r) => setTimeout(r, 0));
+      const s2 = fichierGameRepository.save(createMockGameState({ jourActuel: 2 }));
+      const s3 = fichierGameRepository.save(createMockGameState({ jourActuel: 3 }));
+      premiere.resolve();
+      const resultats = await Promise.all([s1, s2, s3]);
+
+      expect(resultats.every((r) => r.ok)).toBe(true);
+      expect(JSON.parse(fichiers.get("slot_1") ?? "null")?.jourActuel).toBe(3);
+      // slot (s1), index (s1), slot (s3), index (s3) — jamais l'état 2.
+      const contenusSlot = vi
+        .mocked(ecrireSave)
+        .mock.calls.filter(([q]) => q === "slot_1")
+        .map(([, c]) => (JSON.parse(c) as { jourActuel: number }).jourActuel);
+      expect(contenusSlot).toEqual([1, 3]);
     });
   });
 });

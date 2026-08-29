@@ -9,6 +9,7 @@ import {
   indexMiroirExiste,
   revisionDe,
   slotActif,
+  supprimerSlot,
   toucherDerniereSession,
   viderSlot,
   type NumeroSlot,
@@ -213,6 +214,222 @@ async function chargerAvecIndex(index: IndexFichier): Promise<GameState | null> 
   return duFichier;
 }
 
+/**
+ * F-04 — jeton de génération. Incrémenté par `clear()`, `clearSlot()` et
+ * `invaliderEcrituresEnVol()` (appelé par `detacherPartie`). Une écriture
+ * capture la génération au moment où `save()` est APPELÉ ; si elle a changé
+ * quand vient son tour d'écrire (ou entre deux étapes), elle s'abandonne :
+ * plus rien de ce qui a été lancé avant une bascule/suppression ne doit
+ * atteindre le stockage.
+ */
+let generation = 0;
+
+interface EcritureEnAttente {
+  state: GameState;
+  /** Slot capturé synchronement à l'appel, ou `null` si seul l'index
+   *  fichier peut le dire (miroir sans index). */
+  slot: NumeroSlot | null;
+  generation: number;
+  resoudre: Array<(r: ResultatSave) => void>;
+}
+
+/** Écriture (save/clear/clearSlot) en cours, ou `null` si la file est vide. */
+let ecritureEnCours: Promise<unknown> | null = null;
+/** Au plus UNE save en attente : une nouvelle remplace la précédente
+ *  (dernier état gagne), dont les appelants reçoivent le verdict de celle
+ *  qui l'a supplantée. */
+let saveEnAttente: EcritureEnAttente | null = null;
+
+/**
+ * Sérialise TOUTES les écritures : une seule à la fois. `pagehide` et
+ * `visibilitychange` peuvent lancer deux `save()` d'états différents dans le
+ * même tick ; sans file, leurs écritures natives (slot, index, miroir)
+ * pouvaient s'entrelacer et laisser un index qui ne décrit pas le slot.
+ */
+function enchainer<T>(tache: () => Promise<T>): Promise<T> {
+  const precedente = ecritureEnCours ?? Promise.resolve();
+  const courante = precedente.then(tache, tache);
+  ecritureEnCours = courante.then(
+    () => {
+      if (ecritureEnCours === courante) ecritureEnCours = null;
+    },
+    () => {
+      if (ecritureEnCours === courante) ecritureEnCours = null;
+    },
+  );
+  return courante;
+}
+
+function planifierSave(
+  state: GameState,
+  slot: NumeroSlot | null,
+): Promise<ResultatSave> {
+  return new Promise<ResultatSave>((resoudre) => {
+    if (saveEnAttente) {
+      // Coalescence : l'état précédent, jamais écrit, est obsolète.
+      saveEnAttente.state = state;
+      saveEnAttente.slot = slot;
+      saveEnAttente.generation = generation;
+      saveEnAttente.resoudre.push(resoudre);
+      return;
+    }
+    const tache: EcritureEnAttente = {
+      state,
+      slot,
+      generation,
+      resoudre: [resoudre],
+    };
+    saveEnAttente = tache;
+    void enchainer(async () => {
+      // Lue au moment de PARTIR, pas de planifier : c'est le dernier état
+      // coalescé qui s'écrit.
+      saveEnAttente = null;
+      let r: ResultatSave;
+      try {
+        r = await executerSave(tache);
+      } catch (e) {
+        r = { ok: false, genre: genreDe(e) };
+      }
+      for (const f of tache.resoudre) f(r);
+    });
+  });
+}
+
+/** Résolution SYNCHRONE du slot cible (F-04) : le miroir, s'il a un index
+ *  exploitable, répond sans await. Sinon `null` : seul l'index fichier peut
+ *  trancher, et `executerSave` le fera — mais la génération capturée ici
+ *  protège quand même l'écriture d'une bascule survenue pendant l'await. */
+function resoudreSlotSynchrone(slot: NumeroSlot | undefined): NumeroSlot | null {
+  if (slot !== undefined) return slot;
+  return indexMiroirExiste() ? slotActif() : null;
+}
+
+async function executerSave(tache: EcritureEnAttente): Promise<ResultatSave> {
+  const { state } = tache;
+  if (tache.generation !== generation) return { ok: true, annulee: true };
+  const etat = await lireEtatIndexFichier();
+  if (tache.generation !== generation) return { ok: true, annulee: true };
+  const index = etat.genre === "ok" ? etat.index : null;
+  // Résolu une seule fois (Ruling R6) : ni l'écriture du fichier, ni celle
+  // du miroir, ni `toucherDerniereSession` ne doivent re-résoudre le leur.
+  // Le slot capturé synchronement à l'appel prime (F-04) ; le repli par
+  // l'index fichier ne sert que sans miroir exploitable.
+  const n = tache.slot ?? resoudreSlotActif(index);
+  const serialise = JSON.stringify(state);
+  const revision = Math.max(index?.revisions[n] ?? 0, revisionDe(n)) + 1;
+
+  // 1. Le slot d'abord : c'est lui qui rend le verdict.
+  //
+  // ⚠ ASYMÉTRIE VOULUE, ne pas la « simplifier » (revue finale I1). Sur
+  // échec ICI — l'étape 1 —, on écrit quand même le miroir, AVEC la
+  // révision, avant de rendre le verdict d'échec :
+  //  - c'est la forme exacte de l'incident du 2026-08-23 (disque plein
+  //    pendant une heure). Le fichier n'a rien pris ; si WebKit parvient à
+  //    persister le `setItem`, l'arbitrage par révision récupère cette
+  //    heure au prochain lancement. S'il n'y parvient pas, rien n'est
+  //    perdu — on ne fait qu'essayer ;
+  //  - c'est le SEUL chemin par lequel `revMiroir > revFichier` peut
+  //    naître en production. Sans lui, tout l'arbitrage par révision
+  //    traiterait un état inatteignable.
+  //
+  // Sur échec de l'étape 2 (l'index, plus bas), au contraire, on NE
+  // touche PAS au miroir : le fichier du slot vient d'être écrit, il est
+  // donc PLUS FRAIS que le miroir. Lui donner une révision plus haute
+  // ferait gagner l'arbitrage à un miroir périmé et détruirait ce contenu
+  // plus frais — c'est ce que préserve le cas 3b de la migration (voir
+  // migrationFichiers.ts).
+  //
+  // Dans les deux cas le verdict reste celui du FICHIER : le miroir ne le
+  // change jamais.
+  try {
+    await ecrireSave(quoiDuSlot(n), serialise);
+  } catch (e) {
+    if (tache.generation !== generation) return { ok: true, annulee: true };
+    await ecrireMiroir(n, state, revision);
+    return { ok: false, genre: genreDe(e) };
+  }
+  // Une bascule/suppression est survenue pendant l'écriture native : le
+  // fichier a pu être écrit (impossible à annuler), mais `clear`/`clearSlot`
+  // attendent la fin de cette écriture avant d'effacer — on ne doit surtout
+  // pas réécrire index ni miroir par-dessus.
+  if (tache.generation !== generation) return { ok: true, annulee: true };
+
+  // 2. L'index ensuite. Une save sans entrée d'index est récupérable ;
+  //    l'inverse serait un emplacement fantôme.
+  //
+  // Ruling R9 : sur un index ABSENT, aucun fichier de slot n'a jamais
+  // existé — `{1:0,2:0,3:0}` est la vérité. Sur un index PRÉSENT MAIS
+  // ILLISIBLE, en revanche, des fichiers de slots AUTRES que `n` peuvent
+  // très bien exister avec une révision réelle non nulle : leur attribuer
+  // 0 leur ferait perdre l'arbitrage `revFichier >= revMiroir` de
+  // `chargerAvecIndex` face à leur propre miroir, même s'ils sont plus
+  // frais — le même dégât que R8(i) corrige pour `load()`, non corrigé
+  // ici. La meilleure estimation disponible sans lire ces fichiers est la
+  // révision du MIROIR pour chaque slot (`revisionDe`, la même
+  // contrepartie que R8(iii) utilise déjà côté migration).
+  const basesRevisions: Record<NumeroSlot, number> =
+    etat.genre === "illisible"
+      ? { 1: revisionDe(1), 2: revisionDe(2), 3: revisionDe(3) }
+      : (index?.revisions ?? { 1: 0, 2: 0, 3: 0 });
+  const suivant: IndexFichier = {
+    actif: n,
+    revisions: { ...basesRevisions, [n]: revision },
+  };
+  try {
+    await ecrireSave("index", JSON.stringify(suivant));
+  } catch (e) {
+    return { ok: false, genre: genreDe(e) };
+  }
+  if (tache.generation !== generation) return { ok: true, annulee: true };
+
+  // 3. Le miroir en best-effort : son échec ne change pas le verdict.
+  await ecrireMiroir(n, state, revision);
+
+  return { ok: true };
+}
+
+/**
+ * Efface le fichier du slot `n` ET remet son entrée d'index fichier à 0
+ * (F-01). Sans la seconde étape, l'index garderait une révision haute pour
+ * un fichier vide — inoffensif pour `load()` (un fichier vide ne parse pas),
+ * mais trompeur pour toute migration/arbitrage ultérieur. Best-effort : le
+ * miroir est déjà vidé par l'appelant, les échecs sont tracés.
+ */
+async function effacerFichierDuSlot(n: NumeroSlot): Promise<void> {
+  try {
+    await ecrireSave(quoiDuSlot(n), "");
+  } catch (e) {
+    // Le miroir est déjà vidé (revision retombée à 0), mais le fichier —
+    // et son entrée d'index, restés inchangés — gardent l'ancienne save à
+    // une révision plus haute : le prochain load() la ressuscitera via
+    // l'arbitrage (revFichier >= revMiroir). Une suppression n'est donc
+    // PAS garantie de tenir si le disque est plein au moment même de
+    // l'effacer ; c'est un compromis assumé (voir Ruling R5), pas un filet.
+    console.warn(
+      "[fichierGameRepository] Échec de l'effacement du fichier du slot — " +
+        "la partie peut réapparaître au prochain chargement :",
+      e,
+    );
+    return;
+  }
+  const index = await lireIndexFichier();
+  if (!index) return;
+  const suivant: IndexFichier = {
+    // L'actif du miroir vient d'être (re)calculé par l'appelant ; on l'aligne
+    // pour qu'un miroir perdu ne renvoie pas vers un emplacement vidé.
+    actif: indexMiroirExiste() ? slotActif() : index.actif,
+    revisions: { ...index.revisions, [n]: 0 },
+  };
+  try {
+    await ecrireSave("index", JSON.stringify(suivant));
+  } catch (e) {
+    console.warn(
+      "[fichierGameRepository] Échec de la mise à jour de l'index fichier après effacement :",
+      e,
+    );
+  }
+}
+
 export const fichierGameRepository: GameRepository = {
   async load() {
     const etat = await lireEtatIndexFichier();
@@ -252,100 +469,44 @@ export const fichierGameRepository: GameRepository = {
     return chargerAvecIndex(etat.index);
   },
 
-  async save(state): Promise<ResultatSave> {
-    const etat = await lireEtatIndexFichier();
-    const index = etat.genre === "ok" ? etat.index : null;
-    // Résolu une seule fois (Ruling R6) : ni l'écriture du fichier, ni celle
-    // du miroir, ni `toucherDerniereSession` ne doivent re-résoudre le leur.
-    const n = resoudreSlotActif(index);
-    const serialise = JSON.stringify(state);
-    const revision = Math.max(index?.revisions[n] ?? 0, revisionDe(n)) + 1;
-
-    // 1. Le slot d'abord : c'est lui qui rend le verdict.
-    //
-    // ⚠ ASYMÉTRIE VOULUE, ne pas la « simplifier » (revue finale I1). Sur
-    // échec ICI — l'étape 1 —, on écrit quand même le miroir, AVEC la
-    // révision, avant de rendre le verdict d'échec :
-    //  - c'est la forme exacte de l'incident du 2026-08-23 (disque plein
-    //    pendant une heure). Le fichier n'a rien pris ; si WebKit parvient à
-    //    persister le `setItem`, l'arbitrage par révision récupère cette
-    //    heure au prochain lancement. S'il n'y parvient pas, rien n'est
-    //    perdu — on ne fait qu'essayer ;
-    //  - c'est le SEUL chemin par lequel `revMiroir > revFichier` peut
-    //    naître en production. Sans lui, tout l'arbitrage par révision
-    //    traiterait un état inatteignable.
-    //
-    // Sur échec de l'étape 2 (l'index, plus bas), au contraire, on NE
-    // touche PAS au miroir : le fichier du slot vient d'être écrit, il est
-    // donc PLUS FRAIS que le miroir. Lui donner une révision plus haute
-    // ferait gagner l'arbitrage à un miroir périmé et détruirait ce contenu
-    // plus frais — c'est ce que préserve le cas 3b de la migration (voir
-    // migrationFichiers.ts).
-    //
-    // Dans les deux cas le verdict reste celui du FICHIER : le miroir ne le
-    // change jamais.
-    try {
-      await ecrireSave(quoiDuSlot(n), serialise);
-    } catch (e) {
-      await ecrireMiroir(n, state, revision);
-      return { ok: false, genre: genreDe(e) };
-    }
-
-    // 2. L'index ensuite. Une save sans entrée d'index est récupérable ;
-    //    l'inverse serait un emplacement fantôme.
-    //
-    // Ruling R9 : sur un index ABSENT, aucun fichier de slot n'a jamais
-    // existé — `{1:0,2:0,3:0}` est la vérité. Sur un index PRÉSENT MAIS
-    // ILLISIBLE, en revanche, des fichiers de slots AUTRES que `n` peuvent
-    // très bien exister avec une révision réelle non nulle : leur attribuer
-    // 0 leur ferait perdre l'arbitrage `revFichier >= revMiroir` de
-    // `chargerAvecIndex` face à leur propre miroir, même s'ils sont plus
-    // frais — le même dégât que R8(i) corrige pour `load()`, non corrigé
-    // ici. La meilleure estimation disponible sans lire ces fichiers est la
-    // révision du MIROIR pour chaque slot (`revisionDe`, la même
-    // contrepartie que R8(iii) utilise déjà côté migration).
-    const basesRevisions: Record<NumeroSlot, number> =
-      etat.genre === "illisible"
-        ? { 1: revisionDe(1), 2: revisionDe(2), 3: revisionDe(3) }
-        : (index?.revisions ?? { 1: 0, 2: 0, 3: 0 });
-    const suivant: IndexFichier = {
-      actif: n,
-      revisions: { ...basesRevisions, [n]: revision },
-    };
-    try {
-      await ecrireSave("index", JSON.stringify(suivant));
-    } catch (e) {
-      return { ok: false, genre: genreDe(e) };
-    }
-
-    // 3. Le miroir en best-effort : son échec ne change pas le verdict.
-    await ecrireMiroir(n, state, revision);
-
-    return { ok: true };
+  save(state, slot): Promise<ResultatSave> {
+    // Le slot cible est capturé ICI, synchronement, avant tout await (F-04) :
+    // une bascule de slot survenue pendant l'attente ne peut plus détourner
+    // l'écriture vers le nouvel emplacement.
+    return planifierSave(state, resoudreSlotSynchrone(slot));
   },
 
-  async clear() {
-    const index = await lireIndexFichier();
-    // Résolu une seule fois (Ruling R6) : `viderSlot(n)` vide exactement cet
-    // emplacement, sans jamais faire dévier `index.actif` du miroir (à la
-    // différence de `supprimerSlot`) et sans `removeItem` supplémentaire au
-    // delà de ce que `viderSlot`/`viderSlotActif` font déjà en interne.
-    const n = resoudreSlotActif(index);
-    viderSlot(n);
-    try {
-      await ecrireSave(quoiDuSlot(n), "");
-    } catch (e) {
-      // Le miroir est déjà vidé (revision retombée à 0), mais le fichier —
-      // et son entrée d'index, restés inchangés — gardent l'ancienne save à
-      // une révision plus haute : le prochain load() la ressuscitera via
-      // l'arbitrage (revFichier >= revMiroir). Une suppression n'est donc
-      // PAS garantie de tenir si le disque est plein au moment même de
-      // l'effacer ; c'est un compromis assumé (voir Ruling R5), pas un filet.
-      console.warn(
-        "[fichierGameRepository] Échec de l'effacement du fichier du slot — " +
-          "la partie peut réapparaître au prochain chargement :",
-        e,
-      );
-    }
+  clear() {
+    // Invalide d'abord (rien de lancé avant ne doit plus écrire), puis
+    // attend son tour dans la file : une écriture native déjà partie ne
+    // peut pas être annulée, mais elle sera terminée AVANT l'effacement.
+    generation += 1;
+    saveEnAttente = null;
+    return enchainer(async () => {
+      const index = await lireIndexFichier();
+      // Résolu une seule fois (Ruling R6) : `viderSlot(n)` vide exactement cet
+      // emplacement, sans jamais faire dévier `index.actif` du miroir (à la
+      // différence de `supprimerSlot`) et sans `removeItem` supplémentaire au
+      // delà de ce que `viderSlot`/`viderSlotActif` font déjà en interne.
+      const n = resoudreSlotActif(index);
+      viderSlot(n);
+      await effacerFichierDuSlot(n);
+    });
+  },
+
+  clearSlot(n) {
+    generation += 1;
+    saveEnAttente = null;
+    return enchainer(async () => {
+      // Miroir d'abord (synchrone, sémantique « Supprimer » : rebascule
+      // l'actif si `n` l'était), puis fichier + index fichier.
+      supprimerSlot(n);
+      await effacerFichierDuSlot(n);
+    });
+  },
+
+  invaliderEcrituresEnVol() {
+    generation += 1;
+    saveEnAttente = null;
   },
 };

@@ -5,6 +5,7 @@ import {
   cleBackup,
   cleSlot,
   slotActif,
+  supprimerSlot,
   toucherDerniereSession,
   viderSlotActif,
   type NumeroSlot,
@@ -103,12 +104,20 @@ export const localGameRepository: GameRepository = {
   load() {
     return chargerSlot(slotActif());
   },
-  save(state) {
-    return enregistrerSlot(slotActif(), state);
+  save(state, slot) {
+    return enregistrerSlot(slot ?? slotActif(), state);
   },
   async clear() {
     if (typeof window === "undefined") return;
     // viderSlotActif efface la clé du slot ET sa copie de secours.
     viderSlotActif();
+  },
+  async clearSlot(n) {
+    // Sémantique « Supprimer » de PartiesModal : clé + copie de secours +
+    // entrée d'index, et rebascule de l'actif si `n` l'était.
+    supprimerSlot(n);
+  },
+  invaliderEcrituresEnVol() {
+    // localStorage est synchrone : aucune écriture n'est jamais en vol.
   },
 };

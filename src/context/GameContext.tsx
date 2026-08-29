@@ -384,8 +384,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // L'état n'appartient plus au slot actif (bascule de partie en cours) :
       // écrire maintenant détruirait la save du nouveau slot. On abandonne —
       // cet état est de toute façon en train d'être détaché.
-      if (slotActif() !== slotEtatRef.current) return;
-      obtenirGameRepository().save(state).then((res) => {
+      // F-04 : le slot cible est capturé ICI, synchronement, et passé
+      // explicitement au repository — il ne doit jamais le re-résoudre après
+      // un await, pendant lequel `detacherPartie(); changerSlotActif(n)` a pu
+      // basculer l'actif.
+      const slot = slotEtatRef.current;
+      if (slot === null || slotActif() !== slot) return;
+      obtenirGameRepository().save(state, slot).then((res) => {
+        // Écriture invalidée en vol (bascule/suppression pendant l'await) :
+        // ni verdict ni toast, l'état n'appartient plus à personne.
+        if (res.ok && res.annulee) return;
         // Ruling R13 : l'updater ci-dessous est PUR (aucun effet de bord) —
         // React ne garantit pas qu'un updater fonctionnel ne s'exécute
         // qu'une fois (StrictMode le rejoue en dev). La transition
@@ -1152,6 +1160,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // que dans `reset` : les listeners du flush survivent jusqu'au commit).
   const detacherPartie = useCallback(() => {
     slotEtatRef.current = null;
+    // F-04 : une save déjà lancée (debounce/flush) et encore en vol ne doit
+    // plus rien écrire — le slot actif est sur le point de changer.
+    obtenirGameRepository().invaliderEcrituresEnVol();
     setState(null);
   }, []);
 
@@ -1492,15 +1503,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (current.vitrine.tempsRestantSec === tempsRestantSec) return;
     // Même garde d'appartenance que l'auto-save : jamais d'écriture d'un
     // état dans un slot qui n'est plus le sien.
-    if (slotActif() !== slotEtatRef.current) return;
+    const slot = slotEtatRef.current;
+    if (slot === null || slotActif() !== slot) return;
     // Persistance synchrone immédiate depuis le dernier état COMMITÉ : filet
     // pour la suspension iOS (l'effet d'auto-save post-commit peut ne jamais
     // tourner). Peut manquer une mutation encore en attente dans la même
-    // frame — l'auto-save la réécrira au commit suivant.
-    void obtenirGameRepository().save({
-      ...current,
-      vitrine: { ...current.vitrine, tempsRestantSec },
-    });
+    // frame — l'auto-save la réécrira au commit suivant. Slot capturé et
+    // passé explicitement (F-04), comme dans l'auto-save.
+    void obtenirGameRepository().save(
+      {
+        ...current,
+        vitrine: { ...current.vitrine, tempsRestantSec },
+      },
+      slot,
+    );
     // Forme updater (PAS valeur) : ne doit jamais écraser une mutation en
     // attente posée dans la même frame (ex. vente conclue juste avant le
     // passage en arrière-plan).
