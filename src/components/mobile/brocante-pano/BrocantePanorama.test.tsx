@@ -143,6 +143,45 @@ describe("BrocantePanorama", () => {
     expect(consommerEnergieMock).toHaveBeenCalledTimes(1);
   });
 
+  it("vitrine, coffre hors thème : les cadres spécialisés incompatibles sont cadenassés, pas les généraux", () => {
+    const state = {
+      ...minimalState,
+      vitrine: { objets: [{ objet: { categorie: "Musique" }, prixVente: 10 }] },
+    } as unknown as GameState;
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES}
+        state={state}
+        debloqueesIds={new Set(["vide-grenier-quartier", "bouquinerie-plein-air"])}
+        destination="vitrine"
+        onBack={noop}
+      />,
+    );
+    const cadenasDe = (nom: RegExp) =>
+      screen.getByRole("button", { name: nom }).querySelector("[data-testid=cadre-cadenas]");
+    expect(cadenasDe(/bouquinerie de plein air/i)).not.toBeNull();
+    expect(cadenasDe(/vide-grenier du quartier/i)).toBeNull();
+  });
+
+  it("chiner : un coffre hors thème ne cadenasse rien", () => {
+    const state = {
+      ...minimalState,
+      vitrine: { objets: [{ objet: { categorie: "Musique" }, prixVente: 10 }] },
+    } as unknown as GameState;
+    render(
+      <BrocantePanorama
+        brocantes={BROCANTES}
+        state={state}
+        debloqueesIds={new Set(["vide-grenier-quartier", "bouquinerie-plein-air"])}
+        destination="chiner"
+        onBack={noop}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /bouquinerie de plein air/i }).querySelector("[data-testid=cadre-cadenas]"),
+    ).toBeNull();
+  });
+
   it("appelle onBack au clic sur Retour", () => {
     const onBack = vi.fn();
     render(

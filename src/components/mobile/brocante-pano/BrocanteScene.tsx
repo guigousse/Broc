@@ -14,6 +14,8 @@ interface BrocanteSceneProps {
   brocantesById: Map<string, Brocante>;
   selectedId: string | null;
   debloqueesIds: Set<string>;
+  /** Vente : brocantes à thème incompatibles avec le coffre (cadenassées). */
+  horsThemeIds?: ReadonlySet<string>;
   onSelect: (id: string) => void;
   /** Tutoriel : id du cadre à désigner avec la main pointeuse (null = aucun). */
   tutoMainId?: string | null;
@@ -89,6 +91,7 @@ export function BrocanteScene({
   brocantesById,
   selectedId,
   debloqueesIds,
+  horsThemeIds,
   onSelect,
   tutoMainId = null,
 }: BrocanteSceneProps) {
@@ -120,6 +123,7 @@ export function BrocanteScene({
               coord={merged}
               selected={selectedId === b.id}
               debloquee={debloqueesIds.has(b.id)}
+              horsTheme={horsThemeIds?.has(b.id) ?? false}
               onSelect={onSelect}
               tutoMain={tutoMainId === b.id}
             />

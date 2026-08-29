@@ -16,6 +16,10 @@ interface BrocanteFrameProps {
   coord: FrameCoord;
   selected: boolean;
   debloquee: boolean;
+  /** Vente : bourse à thème incompatible avec le coffre actuel — même rendu
+   *  qu'une brocante verrouillée (toile grise + cadenas), toujours cliquable
+   *  pour que la carte explique « Musique uniquement ». */
+  horsTheme?: boolean;
   onSelect: (id: string) => void;
   /** Tutoriel : main pointeuse sur ce cadre (miroir — le cadre tuto est près du bord gauche). */
   tutoMain?: boolean;
@@ -130,9 +134,11 @@ export function BrocanteFrame({
   coord,
   selected,
   debloquee,
+  horsTheme = false,
   onSelect,
   tutoMain = false,
 }: BrocanteFrameProps) {
+  const verrouillee = !debloquee || horsTheme;
   const imageUrl = getBrocanteImageUrl(brocante.id);
   const { d, locale } = useLangue();
   const { enabled: editing } = useBrocanteFramesEdit();
@@ -149,7 +155,7 @@ export function BrocanteFrame({
       onClick={onClickHandler}
       aria-label={ariaLabel}
       aria-pressed={selected}
-      aria-disabled={!debloquee}
+      aria-disabled={verrouillee}
       className={tutoMain ? "tuto-main tuto-main-droite" : undefined}
       style={{ ...frameOuter(coord, selected), pointerEvents }}
     >
@@ -165,7 +171,7 @@ export function BrocanteFrame({
             alt=""
             fill
             sizes="(max-width: 600px) 20vw, 200px"
-            style={zoomedImageStyle(debloquee)}
+            style={zoomedImageStyle(!verrouillee)}
           />
         ) : (
           <div style={fallbackStyle}>
@@ -173,8 +179,8 @@ export function BrocanteFrame({
           </div>
         )}
         <div style={paintingReliefStyle} aria-hidden />
-        {!debloquee && (
-          <div style={lockOverlayStyle} aria-hidden>
+        {verrouillee && (
+          <div style={lockOverlayStyle} aria-hidden data-testid="cadre-cadenas">
             <div style={lockBubbleStyle}>
               <Lock size={20} strokeWidth={2.2} />
             </div>
