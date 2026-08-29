@@ -11,6 +11,10 @@ import { COULEURS } from "./theme.js";
 import { FOND_PERSO, REGLAGES_DEFAUT } from "./reglages.js";
 
 export const MESSAGE_INCOMPLET = "Choisis au moins 2 objets et une cible";
+export const MESSAGE_INCOMPLET_DEVINE = "Choisis au moins 1 objet";
+
+/** Le message d'invite du type courant. */
+export function messageIncomplet(type) { return type === "devine" ? MESSAGE_INCOMPLET_DEVINE : MESSAGE_INCOMPLET; }
 
 /** Avance de planification du son sur l'animation (s) : le temps de monter le graphe audio. */
 const AVANCE_SON = 0.05;
@@ -24,14 +28,19 @@ const AVANCE_SON = 0.05;
 export function construireCfg(reglages, catalogue) {
   const connus = Array.isArray(catalogue) ? new Set(catalogue.map((e) => e.id)) : null;
   const ids = (reglages.objets ?? []).filter((id) => !connus || connus.has(id));
-  const cible = ids.includes(reglages.cible) ? reglages.cible : null;
-  if (ids.length < 2 || cible === null) return null;
+  const devine = reglages.type === "devine";
+  // « Devine le prix » : la série est la sélection, pas de cible ; sinon 2 objets et une cible.
+  const cible = devine ? (ids.includes(reglages.cible) ? reglages.cible : null) : (ids.includes(reglages.cible) ? reglages.cible : null);
+  if (devine ? ids.length < 1 : (ids.length < 2 || cible === null)) return null;
   return {
     ids,
-    cible,
+    cible: devine ? null : cible,
     cfg: {
       nbObjets: ids.length,
-      indexCible: ids.indexOf(cible),
+      indexCible: devine ? 0 : ids.indexOf(cible),
+      dureeCompte: reglages.dureeCompte,
+      dureeRevele: reglages.dureeRevele,
+      dernierMystere: reglages.dernierMystere,
       vitesse: reglages.vitesse,
       espacement: reglages.espacement,
       nbPassages: reglages.nbPassages,
@@ -52,7 +61,7 @@ export function roulettePour(reglages, catalogue) {
 
 export class Apercu {
   #canvas; #ctx; #cache; #son;
-  #scene = null; #r = null; #cfg = null;
+  #scene = null; #r = null; #cfg = null; #type = "pause";
   #raf = null; #t0 = 0;
   #jeton = 0;            // n° du dernier chargement lancé : les plus vieux sont ignorés.
   #badges = null;        // promesse mémoïsée des deux badges de l'overlay.
@@ -94,6 +103,7 @@ export class Apercu {
   async charger(reglages, catalogue) {
     const jeton = ++this.#jeton;
 
+    this.#type = reglages.type;
     const donnees = construireCfg(reglages, catalogue);
 
     if (donnees === null) {
@@ -113,7 +123,7 @@ export class Apercu {
     const [fond, objets, silhouette, badges] = await Promise.all([
       this.#cache.fondPrepare(nomFond, reglages.flou, reglages.saturation),
       Promise.all(ids.map((id) => this.#cache.objet(id))),
-      this.#cache.silhouette(cible, reglages.liseret),
+      cible ? this.#cache.silhouette(cible, reglages.liseret) : Promise.resolve(null),
       this.#chargerBadges(),
     ]);
 
@@ -121,11 +131,18 @@ export class Apercu {
 
     this.#cfg = cfg;
     this.#r = r;
-    const entreeCible = catalogue.find((e) => e.id === cible);
+    const entreePour = (id) => catalogue.find((e) => e.id === id) ?? { id, nom: id, prix: 0, rarete: "commun" };
+    // Devine le prix : la « cible » de la légende est le dernier objet de la série.
+    const entreeCible = entreePour(cible ?? ids[ids.length - 1]);
     this.#scene = {
       r, cfg, fond, objets, silhouette, badges,
       // Pour la légende du flash : la cible, et combien d'autres objets l'attendent dans le jeu.
-      cible: { nom: entreeCible?.nom ?? cible, prix: entreeCible?.prix ?? 0 },
+      cible: {
+        nom: entreeCible?.nom ?? cible,
+        // Dernier objet mystère : le calque {prix} affiche « ? € », pas la réponse.
+        prix: r.type === "devine" && r.etapes.at(-1)?.mystere ? null : (entreeCible?.prix ?? 0),
+      },
+      serie: ids.map(entreePour),
       nbAutres: Math.max(0, catalogue.length - 1),
       textes: reglages.textes,
     };
@@ -203,7 +220,7 @@ export class Apercu {
     ctx.font = "56px Cinzel";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(MESSAGE_INCOMPLET, CENTRE_X, CENTRE_Y, LARGEUR - 120);
+    ctx.fillText(messageIncomplet(this.#type), CENTRE_X, CENTRE_Y, LARGEUR - 120);
     ctx.restore();
   }
 

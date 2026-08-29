@@ -2,6 +2,8 @@
 import { CENTRE_X, CENTRE_Y, LARGEUR, HAUTEUR, HAUTEUR_OBJET, positionsVisibles, aura } from "./roulette.js";
 import { COULEURS } from "./theme.js";
 import { dessinerOverlay } from "./overlay.js";
+import { etapeA } from "./devine.js";
+import { formaterPrix } from "./texte.js";
 
 export { HAUTEUR_OBJET };
 
@@ -39,6 +41,7 @@ function dessinerAura(ctx, dt) {
 }
 
 export function dessinerFrame(ctx, t, scene) {
+  if (scene.r.type === "devine") return dessinerFrameDevine(ctx, t, scene);
   // Pas de bandeau de texte : la consigne s'ajoute au montage (CapCut), pas ici.
   const { r, cfg, fond, objets, silhouette, flashActif } = scene;
   dessinerCover(ctx, fond);
@@ -61,4 +64,119 @@ export function dessinerFrame(ctx, t, scene) {
     } else dessinerCentre(ctx, img, x, HAUTEUR_OBJET);
   }
   if (flashActif) dessinerOverlay(ctx, scene);
+}
+
+// ------------------------------------------------------------ Devine le prix
+
+/** Hauteur de l'objet du jour, plus grand que sur la roulette : il est seul. */
+const HAUTEUR_OBJET_DEVINE = 500;
+/**
+ * Centre vertical de l'objet, remonté pour laisser nom et étiquette sous lui —
+ * aux places des calques {nom} (1214) et {prix} (1286) de l'overlay, qui
+ * prennent le relais sur l'image finale sans que rien ne saute.
+ */
+const Y_OBJET = CENTRE_Y - 100;
+const Y_CHIFFRE = 330;
+const RARETE = {
+  commun: { mot: "Commun", couleur: "#F1E3BF" },
+  rare: { mot: "Rare", couleur: "#7FC8FF" },
+  legendaire: { mot: "Légendaire", couleur: "#FFB347" },
+};
+
+const easeOut = (u) => 1 - (1 - u) ** 3;
+/** Rebond d'apparition d'une étiquette : 1,35 → 1 en `REBOND_S`, dépasse un peu sous 1 puis se pose. */
+function rebond(u) {
+  if (u >= 1) return 1;
+  const k = easeOut(u);
+  return 1.35 - 0.35 * k - 0.06 * Math.sin(Math.PI * k);
+}
+
+/** Plaque de laiton arrondie, texte centré ; `echelle` autour de (x, y). */
+function dessinerEtiquette(ctx, texte, x, y, { echelle = 1, police = "600 84px 'Cinzel'", couleurFond = COULEURS.laiton, couleurTexte = COULEURS.nuit } = {}) {
+  ctx.save();
+  ctx.translate(x, y); ctx.scale(echelle, echelle);
+  ctx.font = police; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const w = ctx.measureText(texte).width + 96, h = 132, r = 26;
+  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
+  ctx.fillStyle = couleurFond;
+  ctx.beginPath(); ctx.roundRect(-w / 2, -h / 2, w, h, r); ctx.fill();
+  ctx.shadowColor = "transparent";
+  ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = couleurTexte;
+  ctx.fillText(texte, 0, 6);
+  ctx.restore();
+}
+
+function dessinerTexteOmbre(ctx, texte, x, y, police, couleur, maxW = LARGEUR - 160) {
+  ctx.save();
+  ctx.font = police; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.shadowColor = "rgba(0,0,0,0.85)"; ctx.shadowBlur = 24;
+  ctx.fillStyle = couleur;
+  ctx.fillText(texte, x, y, maxW);
+  ctx.restore();
+}
+
+/**
+ * Une image de « Devine le prix » : l'objet courant (zoom + fondu à
+ * l'apparition), son nom, le gros chiffre du compte à rebours, l'étiquette
+ * « ? » qui devient le prix (rebond) et le mot de rareté à la révélation.
+ * L'overlay promo se pose pendant la dernière révélation (`flashActif`).
+ */
+export function dessinerFrameDevine(ctx, t, scene) {
+  const { r, fond, objets, serie = [], flashActif } = scene;
+  dessinerCover(ctx, fond);
+  const e = etapeA(t, r);
+  const img = objets[e.index];
+  const entree = serie[e.index] ?? { nom: "", prix: 0, rarete: "commun" };
+
+  // Objet : apparition en zoom + fondu, puis stable ; halo doré à la révélation.
+  const uApp = e.phase === "apparition" ? easeOut(e.u) : 1;
+  if (img) {
+    ctx.save();
+    ctx.globalAlpha = uApp;
+    const h = HAUTEUR_OBJET_DEVINE * (0.6 + 0.4 * uApp);
+    if (e.phase === "revelation" && !e.mystere) {
+      ctx.shadowColor = "rgba(255,205,110,0.9)"; ctx.shadowBlur = 40 * Math.min(1, e.u * 3);
+    }
+    const w = img.width * (h / img.height);
+    ctx.drawImage(img, CENTRE_X - w / 2, Y_OBJET - h / 2, w, h);
+    ctx.restore();
+  }
+
+  // Sous l'overlay promo, les calques {nom} / {prix} disent déjà tout : on ne double pas.
+  if (flashActif) {
+    dessinerOverlay(ctx, scene);
+    if (e.mystere) dessinerTexteOmbre(ctx, "Ta réponse en commentaire", CENTRE_X, 582, "600 44px 'Cinzel'", COULEURS.laiton);
+    return;
+  }
+
+  // Nom, sous l'objet.
+  ctx.save(); ctx.globalAlpha = uApp;
+  dessinerTexteOmbre(ctx, entree.nom, CENTRE_X, 1214, "600 56px 'Cinzel'", COULEURS.laitonClair);
+  ctx.restore();
+
+  const yEtiquette = 1330;
+  if (e.phase !== "revelation") {
+    // Étiquette « ? » qui respire doucement pendant le compte.
+    const resp = e.phase === "compte" ? 1 + 0.04 * Math.sin(t * 2 * Math.PI) : uApp;
+    dessinerEtiquette(ctx, "? €", CENTRE_X, yEtiquette, { echelle: resp });
+    if (e.phase === "compte") {
+      // Le chiffre : gros, il tombe en place à chaque seconde (rebond court).
+      const uSec = Math.min(1, ((t - r.etapes[e.index].compte) % 1) / 0.25);
+      ctx.save();
+      ctx.translate(CENTRE_X, Y_CHIFFRE); ctx.scale(rebond(uSec), rebond(uSec));
+      dessinerTexteOmbre(ctx, String(e.reste), 0, 0, "300px 'Verve Shadow'", COULEURS.laiton);
+      ctx.restore();
+    }
+  } else if (e.mystere) {
+    dessinerEtiquette(ctx, "? €", CENTRE_X, yEtiquette, { echelle: rebond(Math.min(1, e.u * r.dureeRevele / 0.8)) });
+    dessinerTexteOmbre(ctx, "Ta réponse en commentaire", CENTRE_X, Y_CHIFFRE, "600 64px 'Cinzel'", COULEURS.laiton);
+  } else {
+    const uReb = Math.min(1, (e.u * r.dureeRevele) / 0.8);
+    dessinerEtiquette(ctx, formaterPrix(entree.prix), CENTRE_X, yEtiquette, { echelle: rebond(uReb) });
+    const rar = RARETE[entree.rarete] ?? RARETE.commun;
+    ctx.save(); ctx.globalAlpha = Math.min(1, uReb * 1.5);
+    dessinerTexteOmbre(ctx, rar.mot, CENTRE_X, yEtiquette + 120, "600 54px 'Cinzel'", rar.couleur);
+    ctx.restore();
+  }
 }

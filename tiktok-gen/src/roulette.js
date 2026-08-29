@@ -1,15 +1,17 @@
 /** Logique pure de la roulette : aucune dépendance au DOM. Temps en secondes. */
+import { calculerDevine, REBOND } from "./devine.js";
 export const LARGEUR = 1080, HAUTEUR = 1920, CENTRE_X = 540, CENTRE_Y = 960;
 /** Hauteur de dessin des objets (et de la silhouette), en px du cadre. */
 export const HAUTEUR_OBJET = 420;
 export const FPS = 30;
 
-export const TYPES_VIDEO = ["pause", "ralentie"];
+export const TYPES_VIDEO = ["pause", "ralentie", "devine"];
 /** Exposant de la décélération : s(u) = A·(1 − (1 − u)³) — départ 3× plus vite que la moyenne, arrêt en douceur. */
 const EXPOSANT_RALENTI = 3;
 
 /** Aiguillage sur `cfg.type` (défaut : « pause », la roulette régulière qui boucle). */
 export function calculerPour(cfg) {
+  if (cfg.type === "devine") return calculerDevine(cfg);
   return cfg.type === "ralentie" ? calculerRouletteRalentie(cfg) : calculerRoulette(cfg);
 }
 
@@ -167,6 +169,7 @@ export function aura(dt) {
  * qui ralentit : pendant l'arrêt final, l'aura au plus fort.
  */
 export function instantFin(r) {
+  if (r.type === "devine") return Math.min(r.duree - 1e-3, (r.arretDepuis ?? 0) + REBOND);
   if (r.arretDepuis === null || r.arretDepuis === undefined) return r.instantsCentrage[0];
   return Math.min(r.duree - 1e-3, r.arretDepuis + AURA_APPARITION + AURA_PERIODE / 2);
 }

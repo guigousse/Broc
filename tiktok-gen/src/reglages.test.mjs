@@ -129,3 +129,15 @@ describe("deplacerTexte", () => {
     expect(t.map((c) => c.id)).toEqual(["a", "b", "c"]);
   });
 });
+
+describe("réglages « Devine le prix »", () => {
+  it("type accepté, durées bornées, dernier mystère booléen strict", () => {
+    const r = normaliserReglages({ type: "devine", dureeCompte: 9, dureeRevele: 0.2, dernierMystere: "oui" });
+    expect(r.type).toBe("devine");
+    expect(r.dureeCompte).toBe(5);
+    expect(r.dureeRevele).toBe(1);
+    expect(r.dernierMystere).toBe(false);
+    expect(normaliserReglages({}).dureeCompte).toBe(3);
+    expect(normaliserReglages({ type: "n'importe" }).type).toBe("pause");
+  });
+});

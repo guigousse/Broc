@@ -185,9 +185,7 @@ export class SonRoulette {
       if (this._tic) SonRoulette._ticEchantillonSur(ctx, sortie, this._tic, tic.t, this._alea);
       else SonRoulette._ticSyntheseSur(ctx, sortie, tic.t);
     }
-    if (r.instantCelebration !== null && r.instantCelebration !== undefined) {
-      SonRoulette._celebrationSur(ctx, sortie, this._celebration, r.instantCelebration);
-    }
+    for (const t of instantsCelebration(r)) SonRoulette._celebrationSur(ctx, sortie, this._celebration, t);
     // La promesse ET l'événement `complete` : sur iOS, l'un des deux a déjà été vu muet.
     return new Promise((resoudre, rejeter) => {
       ctx.oncomplete = (e) => resoudre(e.renderedBuffer);
@@ -245,8 +243,8 @@ export class SonRoulette {
     this._assurerContexte();
     this._appliquerActif();
     for (const tic of r.instantsTics) this._planifierTic(tDebutCtx + tic.t);
-    if (r.instantCelebration !== null && r.instantCelebration !== undefined) {
-      const v = SonRoulette._celebrationSur(this.audioCtx, this._sortie(), this._celebration, tDebutCtx + r.instantCelebration);
+    for (const t of instantsCelebration(r)) {
+      const v = SonRoulette._celebrationSur(this.audioCtx, this._sortie(), this._celebration, tDebutCtx + t);
       if (v) this._retenirVoix(v.src, v.fin);
     }
   }
@@ -301,6 +299,12 @@ export class SonRoulette {
     this.gainMaitre.gain.setValueAtTime(this.gainMaitre.gain.value, t);
     this.gainMaitre.gain.linearRampToValueAtTime(actif ? 1 : 0, t + DUREE_FONDU_ACTIF);
   }
+}
+
+/** Les instants de célébration d'un tour : `instantsCelebration` (série) ou l'unique `instantCelebration`. */
+export function instantsCelebration(r) {
+  if (Array.isArray(r.instantsCelebration)) return r.instantsCelebration;
+  return r.instantCelebration === null || r.instantCelebration === undefined ? [] : [r.instantCelebration];
 }
 
 /** La promesse, ou un rejet si `ms` s'écoulent d'abord. */

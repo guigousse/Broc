@@ -15,6 +15,7 @@ describe("texteCouche", () => {
     expect(texteCouche({ texte: "+ {n} objets" }, 391)).toBe("+ 391 objets");
     expect(texteCouche({ texte: "{nom} · {prix}" }, { nbAutres: 3, cible: { nom: "Marteau", prix: 1200 } })).toBe("Marteau · 1\u202f200\u202f€");
     expect(texteCouche({ texte: "{nom}" }, {})).toBe("");
+    expect(texteCouche({ texte: "{prix}" }, { cible: { nom: "X", prix: null } })).toBe("?\u202f€");
   });
 });
 

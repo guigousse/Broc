@@ -90,7 +90,7 @@ async function demarrer() {
     compte: $("compte-objets"), categorie: $("filtre-categorie"), recherche: $("recherche"),
     aleatoire: $("aleatoire"), vider: $("vider"),
     grilleObjets: $("grille-objets"), grilleSelection: $("grille-selection"),
-    son: $("son"),
+    son: $("son"), dernierMystere: $("dernierMystere"),
     duree: $("info-duree"), fenetre: $("info-fenetre"), message: $("message"),
     typeVideo: $("typeVideo"), reglagesPanneau: $("p-reglages"),
     presetListe: $("preset-liste"), presetCharger: $("preset-charger"), presetSauver: $("preset-sauver"), presetSupprimer: $("preset-supprimer"),
@@ -106,6 +106,8 @@ async function demarrer() {
     { cle: "nbTours", champ: $("nbTours"), sortie: $("v-tours"), texte: (v) => String(v) },
     { cle: "dureeDefilement", champ: $("dureeDefilement"), sortie: $("v-defilement"), texte: (v) => formaterDuree(v) },
     { cle: "arretFinal", champ: $("arretFinal"), sortie: $("v-arret"), texte: (v) => formaterDuree(v) },
+    { cle: "dureeCompte", champ: $("dureeCompte"), sortie: $("v-compte"), texte: (v) => formaterDuree(v) },
+    { cle: "dureeRevele", champ: $("dureeRevele"), sortie: $("v-revele"), texte: (v) => formaterDuree(v) },
   ];
 
   const dire = (texte) => { el.message.textContent = texte; };
@@ -237,6 +239,7 @@ async function demarrer() {
   function peuplerChamps() {
     for (const c of curseurs) c.champ.value = String(reglages[c.cle]);
     el.son.checked = reglages.son;
+    el.dernierMystere.checked = reglages.dernierMystere;
     el.typeVideo.value = reglages.type;
     el.reglagesPanneau.dataset.type = reglages.type;
     construireTextes();
@@ -248,7 +251,7 @@ async function demarrer() {
     el.duree.textContent = infos.duree;
     el.fenetre.textContent = infos.fenetre;
     const lib = document.getElementById("info-fenetre-libelle");
-    if (lib) lib.textContent = reglages.type === "ralentie" ? "arrêt final" : "fenêtre de pause";
+    if (lib) lib.textContent = { ralentie: "arrêt final", devine: "révélation" }[reglages.type] ?? "fenêtre de pause";
   }
 
   /** Ce qu'un mouvement de curseur (ou une frappe) change : trois `textContent`. */
@@ -405,6 +408,10 @@ async function demarrer() {
       appliquer({ delai: DELAI_CURSEUR, leger: true });
     });
   }
+  el.dernierMystere.addEventListener("change", () => {
+    reglages.dernierMystere = el.dernierMystere.checked;
+    appliquer();
+  });
   el.son.addEventListener("change", () => {
     reglages.son = el.son.checked;
     son.active = reglages.son;

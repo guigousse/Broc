@@ -31,7 +31,8 @@ export function texteCouche(couche, contexte = {}) {
   const cible = c.cible ?? {};
   return texteAutresObjets(c.nbAutres ?? 0, couche.texte)
     .replaceAll("{nom}", cible.nom ?? "")
-    .replaceAll("{prix}", cible.prix === undefined ? "" : formaterPrix(cible.prix));
+    // prix `null` = volontairement caché (dernier objet mystère de « Devine le prix »).
+    .replaceAll("{prix}", cible.prix === undefined ? "" : cible.prix === null ? "?\u202f€" : formaterPrix(cible.prix));
 }
 
 /** Largeur maximale d'un calque centré pour rester dans la zone sûre (760 px) — la ligne se tasse au-delà. */
