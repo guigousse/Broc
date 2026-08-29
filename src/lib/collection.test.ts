@@ -14,6 +14,7 @@ import {
   retirerDonation,
   templateDejaPossede,
   templateDonne,
+  templateEnMainOuDonne,
   templateVu,
   valeurParCategorie,
   valeurTotale,
@@ -367,6 +368,40 @@ describe("templateVu", () => {
 
   it("faux pour un templateId inconnu", () => {
     expect(templateVu(initCollection(), "template-inexistant")).toBe(false);
+  });
+});
+
+describe("templateEnMainOuDonne — la pastille collection du chinage", () => {
+  const id = "jx.cartouche_bluebot_8_bit";
+  const objet = { templateId: id } as { templateId: string };
+
+  it("faux pour un objet acheté puis revendu (dejaPossede seul)", () => {
+    const c = initCollection();
+    const cat = getTemplate(id)!.categorie;
+    const slot = c[cat].find((s) => s.templateId === id)!;
+    slot.dejaPossede = true;
+    slot.vu = true;
+    expect(templateEnMainOuDonne({ collection: c, inventaireJoueur: [], vitrine: null }, id)).toBe(false);
+  });
+
+  it("vrai si donné à la collection", () => {
+    const c = initCollection();
+    const cat = getTemplate(id)!.categorie;
+    c[cat].find((s) => s.templateId === id)!.donation = { etat: "Bon", valeur: 42 };
+    expect(templateEnMainOuDonne({ collection: c, inventaireJoueur: [], vitrine: null }, id)).toBe(true);
+  });
+
+  it("vrai s'il est en stock ou sur l'étal", () => {
+    const c = initCollection();
+    expect(
+      templateEnMainOuDonne({ collection: c, inventaireJoueur: [objet as never], vitrine: null }, id),
+    ).toBe(true);
+    expect(
+      templateEnMainOuDonne(
+        { collection: c, inventaireJoueur: [], vitrine: { objets: [{ objet }] } as never },
+        id,
+      ),
+    ).toBe(true);
   });
 });
 

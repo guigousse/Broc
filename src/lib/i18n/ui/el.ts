@@ -373,7 +373,7 @@ export const el: DictionnaireUI = {
     atoutActifAria: "{nom} — ήδη ενεργό",
     atoutVerrouilleAria: "{nom} — κλειδωμένο, ξεκλειδώνει στο επίπεδο {niveau}",
     atoutVerrouilleToast: "{nom} — ξεκλειδώνει στο επίπεδο {niveau}",
-    dejaPossedeAria: "Ήδη στη συλλογή",
+    dejaPossedeAria: "Ήδη στα χέρια σας ή στη συλλογή",
     nouveauPill: "Νέο",
     conditionBraderie: "Ανοιχτά μόνο το πρώτο σαββατοκύριακο του Σεπτεμβρίου",
     badgeEvenement: "Εκδήλωση",

@@ -377,7 +377,7 @@ export const fr = {
     atoutActifAria: "{nom} — déjà actif",
     atoutVerrouilleAria: "{nom} — verrouillé, se débloque au niveau {niveau}",
     atoutVerrouilleToast: "{nom} — se débloque au niveau {niveau}",
-    dejaPossedeAria: "Déjà possédé dans la collection",
+    dejaPossedeAria: "Déjà en votre possession ou dans la collection",
     nouveauPill: "Nouveau",
     conditionBraderie: "Ouvert uniquement le premier week-end de septembre",
     badgeEvenement: "Événement",

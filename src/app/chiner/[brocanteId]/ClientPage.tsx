@@ -12,7 +12,7 @@ import {
 import { ItemSwipeDeck } from "@/components/mobile/chine/ItemSwipeDeck";
 import type { ChineSlide } from "@/components/mobile/chine/ChineSlide";
 import { getTemplate } from "@/data/objetTemplates";
-import { templateDejaPossede, templateVu } from "@/lib/collection";
+import { templateDejaPossede, templateEnMainOuDonne, templateVu } from "@/lib/collection";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/components/ui/Toast";
@@ -309,7 +309,7 @@ export default function SessionChinePage() {
                 bonusMarchandageCategorie(state, it.objet.categorie),
               )
             : undefined,
-        dejaPossede: state ? templateDejaPossede(state.collection, it.objet.templateId) : false,
+        dejaPossede: state ? templateEnMainOuDonne(state, it.objet.templateId) : false,
         estNouveau: decouvertesRef.current.has(it.id),
       });
     }

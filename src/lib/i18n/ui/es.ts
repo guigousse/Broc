@@ -372,7 +372,7 @@ export const es: DictionnaireUI = {
     atoutActifAria: "{nom} — ya activo",
     atoutVerrouilleAria: "{nom} — bloqueado, se desbloquea en el nivel {niveau}",
     atoutVerrouilleToast: "{nom} — se desbloquea en el nivel {niveau}",
-    dejaPossedeAria: "Ya poseído en la colección",
+    dejaPossedeAria: "Ya en tu poder o en la colección",
     nouveauPill: "Nuevo",
     conditionBraderie: "Abierto solo el primer fin de semana de septiembre",
     badgeEvenement: "Evento",

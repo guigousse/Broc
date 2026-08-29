@@ -42,17 +42,17 @@ function makeSlide(dejaPossede: boolean, estNouveau = false): ChineSlide {
 }
 
 describe("ChineSlideVue — badge collection", () => {
-  it("affiche le badge ✓ quand le template a déjà été possédé", () => {
+  it("affiche le badge ✓ quand le joueur a encore l'objet (collection, stock ou étal)", () => {
     render(<ChineSlideVue slide={makeSlide(true)} />);
     expect(
-      screen.getByLabelText("Déjà possédé dans la collection"),
+      screen.getByLabelText("Déjà en votre possession ou dans la collection"),
     ).toBeTruthy();
   });
 
-  it("pas de badge pour une découverte jamais possédée", () => {
+  it("pas de badge pour un objet qu'il n'a plus (ou jamais eu)", () => {
     render(<ChineSlideVue slide={makeSlide(false)} />);
     expect(
-      screen.queryByLabelText("Déjà possédé dans la collection"),
+      screen.queryByLabelText("Déjà en votre possession ou dans la collection"),
     ).toBeNull();
   });
 });

@@ -372,7 +372,7 @@ export const en: DictionnaireUI = {
     atoutActifAria: "{nom} — already active",
     atoutVerrouilleAria: "{nom} — locked, unlocks at level {niveau}",
     atoutVerrouilleToast: "{nom} — unlocks at level {niveau}",
-    dejaPossedeAria: "Already owned in the collection",
+    dejaPossedeAria: "Already in your hands or in the collection",
     nouveauPill: "New",
     conditionBraderie: "Open only on the first weekend of September",
     badgeEvenement: "Event",

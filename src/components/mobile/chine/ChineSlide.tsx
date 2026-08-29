@@ -93,7 +93,7 @@ export type ChineSlide =
       /** Le Flair v2 (cote déjà connue) : prix plancher du vendeur révélé —
        *  valeur EFFECTIVE, bonus Marchandage déjà appliqué. Absent sinon. */
       plancherRevele?: number;
-      /** Le template a déjà été possédé au moins une fois : badge collection ✓. */
+      /** Le joueur a encore cet objet (collection, stock ou étal) : badge collection ✓. */
       dejaPossede: boolean;
       /**
        * Le template n'avait jamais été croisé avant cette carte : rayons de
@@ -433,7 +433,7 @@ const etatLigne: CSSProperties = {
   gap: 8,
 };
 
-/** Badge collection : logo Album + ✓ en médaillon, l'objet est déjà possédé. */
+/** Badge collection : logo Album + ✓ en médaillon, le joueur a encore l'objet. */
 const badgeCollection: CSSProperties = {
   position: "relative",
   display: "inline-flex",
