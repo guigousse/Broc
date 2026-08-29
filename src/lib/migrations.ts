@@ -391,7 +391,7 @@ function appliquerMigrations(loaded: GameState): GameState {
       {
         vu?: boolean;
         dejaPossede?: boolean;
-        donation?: { etat: string; valeur: number } | null;
+        donation?: { etat: string; valeur: number; valeurBase?: number; prixAchat?: number } | null;
       }
     >();
     for (const cat of Object.keys(loadedCollection as Record<string, unknown>)) {
@@ -408,7 +408,12 @@ function appliquerMigrations(loaded: GameState): GameState {
             s as {
               vu?: boolean;
               dejaPossede?: boolean;
-              donation?: { etat: string; valeur: number } | null;
+              donation?: {
+                etat: string;
+                valeur: number;
+                valeurBase?: number;
+                prixAchat?: number;
+              } | null;
             },
           );
         }
@@ -435,6 +440,14 @@ function appliquerMigrations(loaded: GameState): GameState {
                     ? T
                     : never,
                   valeur: persiste.donation.valeur,
+                  // Sans eux, retirer la pièce après rechargement recréait
+                  // l'objet sans prix payé (fiche « cadeau » à tort).
+                  ...(persiste.donation.valeurBase != null
+                    ? { valeurBase: persiste.donation.valeurBase }
+                    : {}),
+                  ...(persiste.donation.prixAchat != null
+                    ? { prixAchat: persiste.donation.prixAchat }
+                    : {}),
                 }
               : slot.donation,
         };

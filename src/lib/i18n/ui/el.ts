@@ -123,6 +123,7 @@ export const el: DictionnaireUI = {
     acheterEnergieInfinie: "Άπειρη ενέργεια — {prix}",
     achatReussi: "Η άπειρη ενέργεια ξεκλειδώθηκε!",
     achatEnAttente: "Η αγορά εκκρεμεί έγκριση.",
+    achatIndisponible: "Η αγορά δεν είναι διαθέσιμη σε αυτή την πλατφόρμα.",
     erreurAchat: "Η αγορά δεν ολοκληρώθηκε. Δοκίμασε ξανά αργότερα.",
     ameliorerVersNiveau: "Αναβάθμιση σε LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
@@ -576,6 +577,8 @@ export const el: DictionnaireUI = {
     prixMarche: "Εμπορική αξία",
     prixMarcheInconnu: "Εμπορική αξία: ? €",
     prixAchat: "Τιμή αγοράς",
+    /** Un objet entré sans prix payé (don, quête, boîte mystère). */
+    prixAchatCadeau: "0 € (δώρο)",
     // — remplacement de donation —
     remplacerDonationAria: "Αντικατάσταση της δωρεάς",
     remplacerDonationTitre: "— Αντικατάσταση της δωρεάς; —",

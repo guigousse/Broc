@@ -126,6 +126,7 @@ export const fr = {
     acheterEnergieInfinie: "Énergie infinie — {prix}",
     achatReussi: "Énergie infinie débloquée !",
     achatEnAttente: "Achat en attente d'approbation.",
+    achatIndisponible: "Achat indisponible sur cette plateforme.",
     erreurAchat: "L'achat n'a pas abouti. Réessaie plus tard.",
     ameliorerVersNiveau: "Améliorer vers LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
@@ -584,6 +585,8 @@ export const fr = {
     prixMarche: "Prix du marché",
     prixMarcheInconnu: "Prix du marché : ? €",
     prixAchat: "Prix d'achat",
+    /** Un objet entré sans prix payé (don, quête, boîte mystère). */
+    prixAchatCadeau: "0 € (cadeau)",
     // — remplacement de donation —
     remplacerDonationAria: "Remplacer la donation",
     remplacerDonationTitre: "— Remplacer la donation ? —",

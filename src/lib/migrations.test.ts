@@ -6,6 +6,7 @@ import { MAX_HISTORIQUE } from "./sessions";
 import { COUT_TOTAL_COMPETENCES, pointsDepensesCompetences } from "@/data/competences";
 import { ID_LETTRE_MAMAN_DEBUT } from "./courrier";
 import { createMockGameState, createMockObjet } from "./__test-fixtures__/gameState";
+import { initCollection } from "./collection";
 import { emptyBrocanteur, xpRequisPourNiveauBrocanteur } from "@/lib/xp";
 import { chapitrePret, courrierDeChapitre } from "@/lib/quetes/principales";
 import { chapitreParId } from "@/data/quetesPrincipales";
@@ -158,6 +159,28 @@ describe("migrerSauvegarde — résilience aux structures corrompues", () => {
     } as unknown as GameState;
     const m = migrerSauvegarde(corrupt);
     expect(Array.isArray(m.historique)).toBe(true);
+  });
+
+  it("conserve valeurBase et prixAchat d'une donation au chargement", () => {
+    // Sans eux, retirer la pièce après un rechargement recréait l'objet sans
+    // son prix payé — et la fiche écrivait « cadeau » pour une pièce achetée.
+    const templateId = "ma.statuette_africaine_bois";
+    const loaded = {
+      ...createMockGameState(),
+      collection: {
+        Maison: [
+          {
+            templateId,
+            vu: true,
+            dejaPossede: true,
+            donation: { etat: "Bon", valeur: 34, valeurBase: 25, prixAchat: 10 },
+          },
+        ],
+      },
+    } as unknown as GameState;
+    const m = migrerSauvegarde(loaded);
+    const migre = m.collection.Maison.find((s) => s.templateId === templateId);
+    expect(migre?.donation).toEqual({ etat: "Bon", valeur: 34, valeurBase: 25, prixAchat: 10 });
   });
 
   it("renvoie une collection cohérente même sans collection persistée", () => {

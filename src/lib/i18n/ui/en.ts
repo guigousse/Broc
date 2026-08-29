@@ -123,6 +123,7 @@ export const en: DictionnaireUI = {
     acheterEnergieInfinie: "Unlimited energy — {prix}",
     achatReussi: "Unlimited energy unlocked!",
     achatEnAttente: "Purchase awaiting approval.",
+    achatIndisponible: "Purchase unavailable on this platform.",
     erreurAchat: "The purchase could not be completed. Try again later.",
     ameliorerVersNiveau: "Upgrade to LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
@@ -572,6 +573,8 @@ export const en: DictionnaireUI = {
     prixMarche: "Market price",
     prixMarcheInconnu: "Market price: ? €",
     prixAchat: "Purchase price",
+    /** Un objet entré sans prix payé (don, quête, boîte mystère). */
+    prixAchatCadeau: "€0 (gift)",
     // — remplacement de donation —
     remplacerDonationAria: "Replace the donation",
     remplacerDonationTitre: "— Replace the donation? —",

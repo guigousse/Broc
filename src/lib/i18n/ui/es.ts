@@ -123,6 +123,7 @@ export const es: DictionnaireUI = {
     acheterEnergieInfinie: "Energía infinita — {prix}",
     achatReussi: "¡Energía infinita desbloqueada!",
     achatEnAttente: "Compra pendiente de aprobación.",
+    achatIndisponible: "Compra no disponible en esta plataforma.",
     erreurAchat: "No se pudo completar la compra. Inténtalo más tarde.",
     ameliorerVersNiveau: "Mejorar a LVL {niveau} ({cout} €)",
     lvlAbrege: "LVL{n}",
@@ -575,6 +576,8 @@ export const es: DictionnaireUI = {
     prixMarche: "Precio de mercado",
     prixMarcheInconnu: "Precio de mercado: ? €",
     prixAchat: "Precio de compra",
+    /** Un objet entré sans prix payé (don, quête, boîte mystère). */
+    prixAchatCadeau: "0 € (regalo)",
     // — remplacement de donation —
     remplacerDonationAria: "Reemplazar la donación",
     remplacerDonationTitre: "— ¿Reemplazar la donación? —",
