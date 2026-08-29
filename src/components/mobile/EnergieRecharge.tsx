@@ -193,6 +193,13 @@ export function EnergieRecharge({
   const infinie = useEnergieInfinie();
   const [prix, setPrix] = useState<string | null>(null);
   const [achatEnCours, setAchatEnCours] = useState(false);
+  // Boutique réellement disponible (StoreKit, ou stub de recette en dev).
+  // Décidé en effet et non au premier rendu : la plateforme n'est connue qu'au
+  // client, et un rendu serveur ne doit pas diverger de l'hydratation.
+  const [iapDisponible, setIapDisponible] = useState(false);
+  useEffect(() => {
+    setIapDisponible(getIapProvider().disponible());
+  }, []);
   /** Célébration d'achat : flash + machine encore en habillage normal pendant swapMs. */
   const [celebration, setCelebration] = useState(false);
   const [imageInfinie, setImageInfinie] = useState(false);
@@ -330,6 +337,8 @@ export function EnergieRecharge({
         toast(d.chrome.achatReussi, { type: "succes" });
       } else if (statut === "pending") {
         toast(d.chrome.achatEnAttente);
+      } else if (statut === "indisponible") {
+        toast(d.chrome.achatIndisponible, { type: "erreur" });
       }
       // "annule" : silence (fermeture volontaire du sheet Apple).
     } catch {
@@ -529,8 +538,10 @@ export function EnergieRecharge({
         )}
 
         {/* Bouton d'achat « Énergie infinie » — juste sous le cartel pub.
-            Achat non-consommable unique : disparaît dès que le drapeau est actif. */}
-        {!infinie && (
+            Achat non-consommable unique : disparaît dès que le drapeau est actif.
+            Masqué aussi quand aucune boutique n'est disponible (Android/desktop/
+            web en prod : le stub y est inactif). */}
+        {!infinie && iapDisponible && (
           <button
             type="button"
             onClick={(e) => {
