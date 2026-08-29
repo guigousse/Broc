@@ -658,6 +658,56 @@ describe("audioManager — boucles d'ambiance", () => {
     expect(ctx.bufferSources).toHaveLength(0);
   });
 
+  // F-05 : les boucles longues (~86 Mo de PCM à elles quatre) ne restent pas
+  // en cache une fois arrêtées. Observable par le re-fetch au redémarrage.
+  it("stopAmbience évince le tampon : un nouveau startAmbience re-télécharge", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startAmbience();
+    audioManager.stopAmbience();
+    await audioManager.startAmbience();
+    const urls = fetchMock.mock.calls.map((c) => c[0] as string);
+    expect(urls.filter((u) => u === "/sounds/ambience-qg.mp3")).toHaveLength(2);
+    const ctx = FakeAudioContext.instances[0];
+    expect(ctx.bufferSources).toHaveLength(2);
+  });
+
+  it("stopAmbience annulant un démarrage en vol évince aussi le tampon décodé", async () => {
+    const { audioManager } = await freshManager();
+    const enCours = audioManager.startAmbience();
+    audioManager.stopAmbience();
+    await enCours;
+    await audioManager.startAmbience();
+    const urls = fetchMock.mock.calls.map((c) => c[0] as string);
+    expect(urls.filter((u) => u === "/sounds/ambience-qg.mp3")).toHaveLength(2);
+    // Une seule boucle joue : celle du second start.
+    expect(FakeAudioContext.instances[0].bufferSources).toHaveLength(1);
+  });
+
+  it("stopCrowd / stopFireplace / stopNeedle évincent leur tampon", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.startCrowd();
+    audioManager.stopCrowd();
+    await audioManager.startCrowd();
+    await audioManager.startFireplace(0.3);
+    audioManager.stopFireplace();
+    await audioManager.startFireplace(0.3);
+    await audioManager.startNeedle();
+    audioManager.stopNeedle();
+    await audioManager.startNeedle();
+    const urls = fetchMock.mock.calls.map((c) => c[0] as string);
+    for (const u of ["/sounds/crowd.mp3", "/sounds/fireplace.mp3", "/sounds/vinyl-noise-loop.mp3"]) {
+      expect(urls.filter((x) => x === u)).toHaveLength(2);
+    }
+  });
+
+  it("stopAmbience / stopFireplace / stopNeedle sans start ne jettent pas", async () => {
+    const { audioManager } = await freshManager();
+    expect(() => audioManager.stopAmbience()).not.toThrow();
+    expect(() => audioManager.stopFireplace()).not.toThrow();
+    expect(() => audioManager.stopNeedle()).not.toThrow();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("setFireplaceVolume clampe la cible dans [0, 1]", async () => {
     const { audioManager } = await freshManager();
     await audioManager.startFireplace(0.3);

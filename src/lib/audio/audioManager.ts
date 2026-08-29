@@ -1261,6 +1261,21 @@ class AudioManager {
     this.crowdSource = undefined;
     this.crowdGain = undefined;
     this.enCours.foule = false;
+    this.evincerBoucle("/sounds/crowd.mp3");
+  }
+
+  /**
+   * Éviction du PCM décodé d'une boucle longue à son arrêt (F-05). Les quatre
+   * boucles (ambiance QG, foule, cheminée, crépitement vinyle) pèsent ~86 Mo
+   * décodées : gardées à vie dans `buffers`, elles exposaient la WKWebView au
+   * jetsam iOS. La source en fondu conserve sa propre référence au tampon, le
+   * fade-out n'est donc pas affecté ; le prochain start re-télécharge et
+   * re-décode. Un start encore en vol n'est pas gêné : son `loadBuffer`
+   * remettra le tampon en cache au retour du décodage, puis posera sa source
+   * dans le même tour synchrone (aucune double lecture possible).
+   */
+  private evincerBoucle(url: string): void {
+    this.buffers.delete(url);
   }
 
   /** Ronronnement du chat en boucle (volume réduit). */
@@ -1316,8 +1331,13 @@ class AudioManager {
     const buf = await this.loadBuffer("/sounds/ambience-qg.mp3");
     this.ambienceStarting = false;
     // `gen` périmé = un stopAmbience est passé pendant le décodage : l'écran
-    // est déjà quitté, la boucle n'a plus lieu d'être.
-    if (!buf || gen !== this.ambienceGen) return;
+    // est déjà quitté, la boucle n'a plus lieu d'être — et son tampon, que
+    // le stop n'a pas pu évincer (il n'était pas encore en cache), non plus.
+    if (!buf) return;
+    if (gen !== this.ambienceGen) {
+      this.evincerBoucle("/sounds/ambience-qg.mp3");
+      return;
+    }
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.loop = true;
@@ -1402,6 +1422,7 @@ class AudioManager {
     this.ambienceSource = undefined;
     this.ambienceGain = undefined;
     this.enCours.ambiance = undefined;
+    this.evincerBoucle("/sounds/ambience-qg.mp3");
   }
 
   /** Cheminée en boucle. Volume géré dynamiquement par setFireplaceVolume(). */
@@ -1453,6 +1474,7 @@ class AudioManager {
     this.fireplaceSource = undefined;
     this.fireplaceGain = undefined;
     this.enCours.cheminee = undefined;
+    this.evincerBoucle("/sounds/fireplace.mp3");
   }
 
   /* ---------------------------------------------------------------- */
@@ -1680,6 +1702,7 @@ class AudioManager {
     this.needleSource = undefined;
     this.needleGain = undefined;
     this.enCours.aiguille = false;
+    this.evincerBoucle("/sounds/vinyl-noise-loop.mp3");
   }
 
   /** One-shot fire-and-forget (Vinyl 1 / Vinyl 2). */
