@@ -188,7 +188,20 @@ export class SonRoulette {
     if (r.instantCelebration !== null && r.instantCelebration !== undefined) {
       SonRoulette._celebrationSur(ctx, sortie, this._celebration, r.instantCelebration);
     }
-    return ctx.startRendering();
+    // La promesse ET l'événement `complete` : sur iOS, l'un des deux a déjà été vu muet.
+    return new Promise((resoudre, rejeter) => {
+      ctx.oncomplete = (e) => resoudre(e.renderedBuffer);
+      ctx.startRendering().then(resoudre, rejeter);
+    });
+  }
+
+  /** L'état du contexte temps réel (« interrupted » sur iOS après une autre app audio), ou null. */
+  get etat() { return this.audioCtx ? this.audioCtx.state : null; }
+
+  /** Tente de sortir d'une interruption iOS ; ne lève jamais. */
+  async reprendre() {
+    if (!this.audioCtx || this.audioCtx.state === "running") return;
+    try { await avecLimite(this.audioCtx.resume(), 2000); } catch { /* on rend quand même */ }
   }
 
   /** Oscillateur carré filtré, claquement sec — le secours. */
@@ -288,4 +301,9 @@ export class SonRoulette {
     this.gainMaitre.gain.setValueAtTime(this.gainMaitre.gain.value, t);
     this.gainMaitre.gain.linearRampToValueAtTime(actif ? 1 : 0, t + DUREE_FONDU_ACTIF);
   }
+}
+
+/** La promesse, ou un rejet si `ms` s'écoulent d'abord. */
+function avecLimite(promesse, ms) {
+  return Promise.race([promesse, new Promise((_, rejeter) => setTimeout(() => rejeter(new Error("délai")), ms))]);
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planImages, FPS_VIDEO, audioSpecificConfig, instantsSousImages, SOUS_IMAGES, attendreFileCourte, avecDelai } from "./encodeur.js";
+import { planImages, FPS_VIDEO, audioSpecificConfig, instantsSousImages, SOUS_IMAGES, attendreFileCourte, avecDelai, avecRepli } from "./encodeur.js";
 
 describe("planImages", () => {
   it("60 images par seconde, dernière à duree − 1/fps, sans image de queue", () => {
@@ -76,5 +76,17 @@ describe("avecDelai", () => {
   it("rejette en nommant l'étape quand le délai expire", async () => {
     const jamais = new Promise(() => {});
     await expect(avecDelai(jamais, 20, "finalisation vidéo")).rejects.toThrow(/finalisation vidéo/);
+  });
+});
+
+describe("avecRepli", () => {
+  it("valeur de la promesse à temps, sans repli", async () => {
+    expect(await avecRepli(Promise.resolve("son"), 100, () => "silence")).toEqual({ valeur: "son", repli: false });
+  });
+  it("repli quand la promesse ne revient pas", async () => {
+    expect(await avecRepli(new Promise(() => {}), 20, () => "silence")).toEqual({ valeur: "silence", repli: true });
+  });
+  it("une vraie erreur n'est pas masquée par le repli", async () => {
+    await expect(avecRepli(Promise.reject(new Error("boum")), 100, () => "silence")).rejects.toThrow("boum");
   });
 });

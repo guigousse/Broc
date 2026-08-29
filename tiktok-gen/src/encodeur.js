@@ -38,12 +38,16 @@ const PAS_SONDAGE_MS = 4;
 const ATTENTE_FILE_MAX_MS = 20_000;
 /** Délai maximal accordé à la finalisation vidéo (`flush`) : passé, on livre ce qu'on a. */
 const DELAI_FLUSH_MS = 20_000;
-/** Délai maximal des étapes audio et fichier. */
-const DELAI_AUDIO_MS = 60_000;
+/**
+ * Délai maximal du rendu et de l'encodage audio. Sur iPhone, après le sélecteur
+ * de photos, le rendu hors ligne du son a été vu ne jamais revenir (export figé
+ * à 92 %) : passé ce délai, on livre la vidéo MUETTE et on le dit.
+ */
+const DELAI_AUDIO_MS = 15_000;
 
 /** Les étapes de `rendreHorsLigne`, telles que rapportées par `onProgression(p, etape)`. */
 export const ETAPES = Object.freeze({
-  images: "images", flush: "finalisation vidéo", son: "son", fichier: "fichier",
+  images: "images", flush: "finalisation vidéo", son: "son : rendu", sonEncodage: "son : encodage", fichier: "fichier",
 });
 /**
  * Sous-images par image encodée. 1 = image nette à l'instant exact. Un flou de
@@ -137,7 +141,7 @@ export async function rendreHorsLigne({ scene, r, son, sonActif, cibleId, capaci
   const plan = planImages(r.duree);
   // Le son se rend pendant que la vidéo s'encode : les deux sont indépendants.
   const audioPromesse = caps.audio
-    ? (sonActif ? son.rendreHorsLigne(r, FREQUENCE_AUDIO) : Promise.resolve(silence(r.duree)))
+    ? (sonActif ? rendreSon(son, r) : Promise.resolve(silence(r.duree)))
     : Promise.resolve(null);
 
   const muxer = new Muxer({
@@ -188,8 +192,19 @@ export async function rendreHorsLigne({ scene, r, son, sonActif, cibleId, capaci
     if (erreur) throw erreur;
 
     onProgression?.(0.92, ETAPES.son);
-    const buffer = await avecDelai(audioPromesse, DELAI_AUDIO_MS, ETAPES.son);
-    if (buffer) await avecDelai(encoderAudio(buffer, muxer), DELAI_AUDIO_MS, ETAPES.son);
+    let buffer = await avecRepli(audioPromesse, DELAI_AUDIO_MS, () => (caps.audio ? silence(r.duree) : null));
+    if (buffer.repli) {
+      avertissement = ajouter(avertissement, `Son abandonné (rendu bloqué, contexte « ${son?.etat ?? "?"} ») : vidéo muette.`);
+      journal?.warn?.(avertissement);
+    }
+    if (buffer.valeur) {
+      onProgression?.(0.95, ETAPES.sonEncodage);
+      const enc = await avecRepli(encoderAudio(buffer.valeur, muxer), DELAI_AUDIO_MS, () => null);
+      if (enc.repli) {
+        avertissement = ajouter(avertissement, "Encodage du son bloqué : vidéo muette.");
+        journal?.warn?.(avertissement);
+      }
+    }
     onProgression?.(0.98, ETAPES.fichier);
 
     muxer.finalize();
@@ -221,6 +236,28 @@ export async function attendreFileCourte(encodeur, { max = FILE_MAX, pasMs = PAS
 }
 
 export class ErreurDelai extends Error {}
+
+/**
+ * La promesse dans le délai → { valeur, repli: false } ; sinon → { valeur: repli(), repli: true }.
+ * Une promesse en retard qui finit par rejeter est ignorée (le repli a déjà pris la place).
+ */
+export async function avecRepli(promesse, ms, repli) {
+  try {
+    return { valeur: await avecDelai(promesse, ms, "repli"), repli: false };
+  } catch (e) {
+    if (!(e instanceof ErreurDelai)) throw e;
+    promesse.catch(() => {});
+    return { valeur: repli(), repli: true };
+  }
+}
+
+function ajouter(a, b) { return a ? `${a} ${b}` : b; }
+
+/** Le son du tour, après une tentative de sortie d'interruption iOS. */
+async function rendreSon(son, r) {
+  await son.reprendre?.();
+  return son.rendreHorsLigne(r, FREQUENCE_AUDIO);
+}
 
 /** La promesse, ou une `ErreurDelai` nommant `etape` si `ms` s'écoulent d'abord. */
 export function avecDelai(promesse, ms, etape) {
