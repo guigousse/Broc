@@ -97,6 +97,9 @@ async function construire() {
   await copierDossier(path.join(RACINE, "public", "items"), path.join(DIST, "assets", "items"), webp);
   await copierDossier(path.join(RACINE, "public", "items", "thumbs"), path.join(DIST, "assets", "thumbs"), webp);
   await copierDossier(path.join(RACINE, "public", "brocantes"), path.join(DIST, "assets", "fonds"), webp);
+  // Les brocantes d'avant les toiles de maître (2026-08-28), gardées ici en plus :
+  // le jeu les a remplacées sous les mêmes noms, la mini-app propose les deux.
+  await copierDossier(path.join(ICI, "assets", "fonds-anciens"), path.join(DIST, "assets", "fonds"), webp);
   await fsp.mkdir(path.join(DIST, "assets", "fonts"), { recursive: true });
   await fsp.copyFile(path.join(RACINE, "public/fonts/VerveShadow.ttf"), path.join(DIST, "assets/fonts/VerveShadow.ttf"));
   await fsp.copyFile(path.join(RACINE, "public/fonts/google/g05.woff2"), path.join(DIST, "assets/fonts/cinzel.woff2"));
