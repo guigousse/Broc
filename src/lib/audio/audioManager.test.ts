@@ -56,8 +56,11 @@ class FakeAudioContext {
   resume = vi.fn(async () => {
     this.state = "running";
   });
+  // Comme le vrai navigateur : suspend() notifie statechange, ce qui a fait
+  // croire au manager qu'iOS l'interrompait alors qu'il se taisait lui-même.
   suspend = vi.fn(async () => {
     this.state = "suspended";
+    this.onstatechange?.();
   });
   // WebKit ferme le contexte de son côté (reset du service média, pression
   // mémoire) : le manager doit savoir en rebâtir un.
@@ -1510,6 +1513,34 @@ describe("audioManager — sortie de l'app", () => {
     expect(audio.paused).toBe(true);
     expect(ctx.suspend).toHaveBeenCalled();
     expect(audioManager.vinylEnLecture()).toBe(false);
+
+    montrer();
+    await flushMicrotasks();
+    expect(ctx.resume).toHaveBeenCalled();
+    expect(audio.paused).toBe(false);
+  });
+
+  // Le bug de la 1.4.1 : suspend() déclenche statechange, le manager y voyait
+  // une interruption iOS et relançait resume() + disque dans la même volée —
+  // sifflement à la sortie, contexte laissé « interrupted » au retour.
+  it("en arrière-plan : le contexte qu'on a suspendu soi-même n'est pas réveillé", async () => {
+    const { audioManager } = await freshManager();
+    await audioManager.playVinyl("/sounds/vinyles/test.mp3");
+    const audio = FakeAudio.instances[0];
+    const ctx = FakeAudioContext.instances[0];
+    ctx.resume.mockClear();
+
+    cacher();
+    await flushMicrotasks();
+    expect(ctx.resume).not.toHaveBeenCalled();
+    expect(ctx.state).toBe("suspended");
+    expect(audio.paused).toBe(true);
+
+    // Une interruption iOS pendant qu'on est caché ne relance rien non plus.
+    ctx.subirEtat("interrupted" as AudioContextState);
+    await flushMicrotasks();
+    expect(ctx.resume).not.toHaveBeenCalled();
+    expect(audio.paused).toBe(true);
 
     montrer();
     await flushMicrotasks();

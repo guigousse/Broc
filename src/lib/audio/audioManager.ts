@@ -204,6 +204,14 @@ class AudioManager {
   private journal: LigneJournalAudio[] = [];
   private repriseEnCours = false;
   private echecsReprise = 0;
+  /**
+   * L'app est cachée : c'est NOUS qui avons suspendu le contexte. Sans ce
+   * drapeau, `suspend()` déclenche `statechange`, que `surChangementEtat`
+   * prenait pour une interruption iOS — d'où un `resume()` et un `play()`
+   * lancés dans la même volée que la mise en pause : sifflement à la sortie
+   * de l'app, contexte laissé « interrupted » au retour.
+   */
+  private enArrierePlan = false;
   private derniereReconstruction = 0;
   prefs: AudioPrefs = { ...DEFAULT_AUDIO_PREFS };
 
@@ -280,6 +288,9 @@ class AudioManager {
     const etat = this.ctx?.state as string | undefined;
     if (!etat) return;
     this.noterEtat(etat);
+    // Caché, on ne réveille rien : la reprise attend le retour au premier
+    // plan, qui passe par `unlock` → `ensureCtx`.
+    if (this.enArrierePlan) return;
     if (etat === "running") {
       this.echecsReprise = 0;
       this.reprendreLesElements();
@@ -487,8 +498,12 @@ class AudioManager {
     // "running" tout seul après une interruption — on retente sans attendre
     // le prochain geste utilisateur.
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") unlock();
-      else this.mettreEnArrierePlan();
+      if (document.visibilityState === "visible") {
+        this.enArrierePlan = false;
+        unlock();
+      } else {
+        this.mettreEnArrierePlan();
+      }
     });
   }
 
@@ -502,6 +517,7 @@ class AudioManager {
    * exactement ce qui jouait — un disque en pause volontaire le reste.
    */
   mettreEnArrierePlan(): void {
+    this.enArrierePlan = true;
     if (this.vinylAudio && !this.vinylAudio.paused) this.vinylAudio.pause();
     if (this.arcadeAudio && !this.arcadeAudio.paused) this.arcadeAudio.pause();
     if (this.ctx && this.ctx.state === "running") {
