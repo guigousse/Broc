@@ -37,6 +37,7 @@ const { mocks } = vi.hoisted(() => ({
     marquerPieceConsultee: vi.fn(),
     poserTimbre: vi.fn(),
     rendreTimbreAuBac: vi.fn(),
+    toast: vi.fn(),
   },
 }));
 
@@ -52,8 +53,8 @@ vi.mock("@/context/GameContext", () => ({
 }));
 
 vi.mock("@/components/ui/Toast", () => ({
-  useToast: () => ({ toast: vi.fn() }),
-  useToastSafe: () => ({ toast: vi.fn() }),
+  useToast: () => ({ toast: mocks.toast }),
+  useToastSafe: () => ({ toast: mocks.toast }),
 }));
 
 afterEach(cleanup);
@@ -72,6 +73,26 @@ describe("AlbumTimbresOverlay", () => {
     expect(screen.queryByTestId("timbre-fantome")).toBeNull();
     expect(mocks.poserTimbre).not.toHaveBeenCalled();
     expect(mocks.rendreTimbreAuBac).not.toHaveBeenCalled();
+  });
+
+  // M5 revue finale 2026-08-30 : un swipe de page interrompu ne doit pas
+  // laisser `swipeStartRef` posé pour un lâcher tardif/fantôme.
+  it("un swipe de page interrompu (pointercancel) ne tourne pas la page au lâcher qui suit", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const page = screen.getByTestId("page-timbres");
+    fireEvent.pointerDown(page, { clientX: 200 });
+    fireEvent.pointerCancel(page);
+    fireEvent.pointerUp(page, { clientX: 100 }); // dx = -100 : aurait tourné la page
+    expect(screen.getByText("1 / 2")).toBeTruthy();
+  });
+
+  it("le doigt qui sort de la zone (pointerleave) sans relâcher ne tourne pas non plus la page", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const page = screen.getByTestId("page-timbres");
+    fireEvent.pointerDown(page, { clientX: 200 });
+    fireEvent.pointerLeave(page);
+    fireEvent.pointerUp(page, { clientX: 100 });
+    expect(screen.getByText("1 / 2")).toBeTruthy();
   });
 
   it("les timbres sans placement sont dans le bac, le timbre posé sur sa ligne", () => {
@@ -109,5 +130,64 @@ describe("AlbumTimbresOverlay", () => {
     fireEvent.pointerUp(posee, { clientX: 12, clientY: 501, pointerId: 1 });
     fireEvent.click(screen.getByRole("button", { name: "Rendre au bac" }));
     expect(mocks.rendreTimbreAuBac).toHaveBeenCalledWith(t2);
+  });
+
+  it("glisser un timbre posé et le lâcher sur le bac appelle rendreTimbreAuBac", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const bac = screen.getByTestId("bac");
+    bac.getBoundingClientRect = () =>
+      ({ left: 0, top: 400, width: 300, height: 80, right: 300, bottom: 480, x: 0, y: 400, toJSON: () => ({}) }) as DOMRect;
+    const posee = screen.getByTestId("timbre-pose");
+    fireEvent.pointerDown(posee, { clientX: 150, clientY: 200, pointerId: 1 });
+    fireEvent.pointerMove(posee, { clientX: 150, clientY: 440, pointerId: 1 });
+    fireEvent.pointerUp(posee, { clientX: 150, clientY: 440, pointerId: 1 });
+    expect(mocks.rendreTimbreAuBac).toHaveBeenCalledWith(t2);
+  });
+
+  // ── I4 revue finale 2026-08-30 ────────────────────────────────────────
+  it("le bac défile au doigt : touchAction pan-x sur ses items, none sur un timbre posé", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const item = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
+    expect(item.style.touchAction).toBe("pan-x");
+    const pose = screen.getByTestId("timbre-pose");
+    expect(pose.style.touchAction).toBe("none");
+  });
+
+  it("un mouvement surtout horizontal dans le bac ne déclenche pas le fantôme (le défilement natif reste libre)", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
+    fireEvent.pointerDown(t, { clientX: 10, clientY: 200, pointerId: 1 });
+    fireEvent.pointerMove(t, { clientX: 60, clientY: 205, pointerId: 1 }); // dx=50, dy=5
+    expect(screen.queryByTestId("timbre-fantome")).toBeNull();
+  });
+
+  it("un mouvement vertical au-delà de 12 px dans le bac déclenche le fantôme même si l'horizontal domine", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
+    fireEvent.pointerDown(t, { clientX: 10, clientY: 200, pointerId: 1 });
+    fireEvent.pointerMove(t, { clientX: 60, clientY: 215, pointerId: 1 }); // dx=50, dy=15 (>12)
+    expect(screen.getByTestId("timbre-fantome")).toBeTruthy();
+  });
+
+  it("un timbre du bac est un bouton nommé (nom + ×N si doublon), activable au clavier", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const items = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac");
+    expect(items[0].tagName).toBe("BUTTON");
+    expect(items[0].getAttribute("aria-label")).toBeTruthy();
+    fireEvent.click(items[0]);
+    expect(mocks.marquerPieceConsultee).toHaveBeenCalledWith(t0);
+  });
+
+  it("un timbre posé est un bouton nommé", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const pose = screen.getByTestId("timbre-pose");
+    expect(pose.tagName).toBe("BUTTON");
+    expect(pose.getAttribute("aria-label")).toBeTruthy();
+  });
+
+  it("le libellé « En vrac » est affiché au-dessus du bac, et porté par son aria-label", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    expect(screen.getByText("En vrac")).toBeTruthy();
+    expect(screen.getByTestId("bac").getAttribute("aria-label")).toBe("En vrac");
   });
 });

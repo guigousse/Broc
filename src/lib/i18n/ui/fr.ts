@@ -970,6 +970,7 @@ export const fr = {
     compteur: "{n} / {total}",
     recycler: "Recycler les doublons ({n})",
     recyclerConfirm: "Recycler {n} doublon(s) contre {n} pièce(s) de réparation ?",
+    recycleFaitUn: "+1 pièce · {categorie}",
     recycleFait: "+{n} pièces · {categorie}",
     aVenir: "à venir",
     pochetteVide: "Pas encore trouvée",

@@ -17,11 +17,12 @@ import {
   TAILLE_TIMBRE,
   type Ligne,
 } from "@/components/albums/albumTimbresLayout";
-import { CATEGORIE_ALBUM, piecesDe } from "@/data/pieces";
+import { CATEGORIE_ALBUM, getPiece, piecesDe } from "@/data/pieces";
 import { albumsDe, doublons, nbPossedees, NB_LIGNES_ALBUM, NB_PAGES_ALBUM, premierePlaceLibre } from "@/lib/albums";
 import { useGame } from "@/context/GameContext";
 import { useToast } from "@/components/ui/Toast";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { nomObjet } from "@/lib/i18n/contenu";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { prefersReducedMotion } from "@/lib/transitionIris";
 import type { DictionnaireUI } from "@/lib/i18n/ui";
@@ -44,6 +45,10 @@ import type { DictionnaireUI } from "@/lib/i18n/ui";
 
 const SEUIL_TAP_PX = 6;
 const GHOST_TAILLE_PX = 60;
+/** Seuil vertical (px) au-delà duquel un geste démarré dans le bac est
+ *  considéré comme un glisser (même s'il a autant ou plus bougé à
+ *  l'horizontale) plutôt qu'un défilement natif du bac. */
+const SEUIL_VERTICAL_BAC_PX = 12;
 
 const pageWrap: CSSProperties = {
   position: "relative",
@@ -64,8 +69,19 @@ const ligneTrace: CSSProperties = {
   pointerEvents: "none",
 };
 
+/** Remise à zéro du style natif de `<button>` : ces items sont des boutons
+ *  pour le clavier/VoiceOver, mais visuellement de simples cadres au tap. */
+const resetBouton: CSSProperties = {
+  border: "none",
+  background: "transparent",
+  padding: 0,
+  font: "inherit",
+  color: "inherit",
+};
+
 function timbrePoseStyle(x: number, ligne: Ligne, z: number, sansTransition: boolean): CSSProperties {
   return {
+    ...resetBouton,
     position: "absolute",
     left: `${x * 100}%`,
     top: `${yDeLigne(ligne) * 100}%`,
@@ -90,12 +106,16 @@ const bacWrap: CSSProperties = {
 };
 
 const bacItemStyle: CSSProperties = {
+  ...resetBouton,
   position: "relative",
   flex: "0 0 auto",
   width: 56,
   aspectRatio: "1",
   cursor: "grab",
-  touchAction: "none",
+  // "pan-x" (pas "none") : le bac défile horizontalement au doigt — voir
+  // SEUIL_VERTICAL_BAC_PX, qui laisse ce défilement natif se produire tant
+  // que le geste n'est pas identifié comme un glisser vers la page.
+  touchAction: "pan-x",
 };
 
 const badgeQuantite: CSSProperties = {
@@ -171,6 +191,16 @@ const point = (actif: boolean): CSSProperties => ({
   background: actif ? "var(--brass-300)" : "var(--brass-700)",
 });
 
+const bacLabel: CSSProperties = {
+  marginTop: 12,
+  marginBottom: -6,
+  fontFamily: "var(--font-mono)",
+  fontSize: 11,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--brass-300)",
+};
+
 const poserBtn: CSSProperties = {
   width: "100%",
   minHeight: "var(--tap-min)",
@@ -228,14 +258,28 @@ function Pagination({
   );
 }
 
+/** Origine du geste : le bac défile nativement (`pan-x`), la page non — voir
+ *  `SEUIL_VERTICAL_BAC_PX`. */
+type OrigineGeste = "bac" | "page";
+
+interface StartInfo {
+  id: string;
+  x: number;
+  y: number;
+  origine: OrigineGeste;
+  /** Faux tant qu'un item du bac n'a pas franchi le seuil vertical : le
+   *  fantôme n'apparaît pas, le défilement natif du bac reste libre. */
+  started: boolean;
+}
+
 export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { d, tr } = useLangue();
+  const { d, tr, locale } = useLangue();
   const { state, recyclerDoublonsAlbum, marquerPieceConsultee, poserTimbre, rendreTimbreAuBac } = useGame();
   const { toast } = useToast();
   const [page, setPage] = useState<0 | 1>(0);
   const [fiche, setFiche] = useState<string | null>(null);
   const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
-  const startRef = useRef<{ id: string; x: number; y: number } | null>(null);
+  const startRef = useRef<StartInfo | null>(null);
   const swipeStartRef = useRef<number | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
   const bacRef = useRef<HTMLDivElement | null>(null);
@@ -253,19 +297,45 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
     (id) => album.placements[id] && album.placements[id].page === page,
   );
 
-  const onPointerDownTimbre = (id: string) => (e: ReactPointerEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    startRef.current = { id, x: e.clientX, y: e.clientY };
-    setDrag({ id, x: e.clientX, y: e.clientY });
+  /** Nom localisé + « ×N » si doublon, pour l'`aria-label` d'un timbre. */
+  const ariaLabelTimbre = (id: string): string => {
+    const piece = getPiece(id);
+    if (!piece) return "";
+    const nom = nomObjet({ templateId: id, nom: piece.nom }, locale);
+    const quantite = album.pieces[id] ?? 0;
+    return quantite > 1 ? `${nom} ${tr(d.albums.doublon, { n: quantite })}` : nom;
   };
 
-  const onPointerMoveTimbre = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!startRef.current) return;
-    setDrag({ id: startRef.current.id, x: e.clientX, y: e.clientY });
+  const ouvrirFiche = (id: string) => {
+    marquerPieceConsultee(id);
+    setFiche(id);
   };
 
-  const onPointerUpTimbre = (e: ReactPointerEvent<HTMLDivElement>) => {
+  const onPointerDownTimbre =
+    (id: string, origine: OrigineGeste) => (e: ReactPointerEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+      // Un item posé démarre son glisser immédiatement (comme avant) ; un
+      // item du bac attend le franchissement du seuil vertical, pour ne pas
+      // voler le défilement horizontal natif à un simple swipe du bac.
+      const started = origine === "page";
+      startRef.current = { id, x: e.clientX, y: e.clientY, origine, started };
+      if (started) setDrag({ id, x: e.clientX, y: e.clientY });
+    };
+
+  const onPointerMoveTimbre = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const start = startRef.current;
+    if (!start) return;
+    if (!start.started) {
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      if (Math.abs(dy) <= Math.abs(dx) && Math.abs(dy) <= SEUIL_VERTICAL_BAC_PX) return;
+      start.started = true;
+    }
+    setDrag({ id: start.id, x: e.clientX, y: e.clientY });
+  };
+
+  const onPointerUpTimbre = (e: ReactPointerEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     const start = startRef.current;
     startRef.current = null;
@@ -273,8 +343,7 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
     if (!start) return;
     const distance = Math.hypot(e.clientX - start.x, e.clientY - start.y);
     if (distance < SEUIL_TAP_PX) {
-      marquerPieceConsultee(start.id);
-      setFiche(start.id);
+      ouvrirFiche(start.id);
       return;
     }
     const rectPage = pageRef.current?.getBoundingClientRect();
@@ -313,6 +382,12 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
     if (dx < -SEUIL) setPage(1);
     else if (dx > SEUIL) setPage(0);
   };
+  // Même garde que `onPointerAbandonneTimbre` : un geste interrompu ou un
+  // doigt sorti de la page sans relâcher ne doit pas laisser `swipeStartRef`
+  // posé pour un lâcher tardif/fantôme (M5 revue finale 2026-08-30).
+  const onSwipeAbandonne = () => {
+    swipeStartRef.current = null;
+  };
 
   const fichePlacement = fiche ? album.placements[fiche] : undefined;
 
@@ -326,7 +401,10 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
       onRecycler={() => {
         const n = recyclerDoublonsAlbum("timbres");
         toast(
-          tr(d.albums.recycleFait, { n, categorie: libelleCategorie(CATEGORIE_ALBUM.timbres, d) }),
+          tr(n === 1 ? d.albums.recycleFaitUn : d.albums.recycleFait, {
+            n,
+            categorie: libelleCategorie(CATEGORIE_ALBUM.timbres, d),
+          }),
           { type: "succes" },
         );
       }}
@@ -337,6 +415,8 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
         style={pageWrap}
         onPointerDown={onSwipeDown}
         onPointerUp={onSwipeUp}
+        onPointerCancel={onSwipeAbandonne}
+        onPointerLeave={onSwipeAbandonne}
       >
         {Array.from({ length: NB_LIGNES_ALBUM }, (_, l) => l as Ligne).map((l) => (
           <div key={l} style={{ ...ligneTrace, top: `${yDeLigne(l) * 100}%` }} />
@@ -345,47 +425,56 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
           const placement = album.placements[id];
           const z = album.ordreZ.indexOf(id);
           return (
-            <div
+            <button
               key={id}
+              type="button"
               data-testid="timbre-pose"
               data-id={id}
+              aria-label={ariaLabelTimbre(id)}
               style={timbrePoseStyle(placement.x, placement.ligne, z, sansTransition)}
-              onPointerDown={onPointerDownTimbre(id)}
+              onPointerDown={onPointerDownTimbre(id, "page")}
               onPointerMove={onPointerMoveTimbre}
               onPointerUp={onPointerUpTimbre}
               onPointerCancel={onPointerAbandonneTimbre}
               onLostPointerCapture={onPointerAbandonneTimbre}
+              onClick={() => ouvrirFiche(id)}
             >
-              <PieceVisuel id={id} />
-            </div>
+              <PieceVisuel id={id} thumb />
+            </button>
           );
         })}
       </div>
-      <div ref={bacRef} data-testid="bac" style={bacWrap}>
+      <div style={bacLabel} aria-hidden>
+        {d.albums.bac}
+      </div>
+      <div ref={bacRef} data-testid="bac" style={bacWrap} aria-label={d.albums.bac}>
         {idsBac.map((id) => {
           const quantite = album.pieces[id] ?? 0;
           return (
-            <div
+            <button
               key={id}
+              type="button"
               data-testid="timbre-bac"
               data-id={id}
+              aria-label={ariaLabelTimbre(id)}
               style={bacItemStyle}
-              onPointerDown={onPointerDownTimbre(id)}
+              onPointerDown={onPointerDownTimbre(id, "bac")}
               onPointerMove={onPointerMoveTimbre}
               onPointerUp={onPointerUpTimbre}
               onPointerCancel={onPointerAbandonneTimbre}
               onLostPointerCapture={onPointerAbandonneTimbre}
+              onClick={() => ouvrirFiche(id)}
             >
-              <PieceVisuel id={id} />
+              <PieceVisuel id={id} thumb />
               {quantite > 1 && (
                 <span style={badgeQuantite}>{tr(d.albums.doublon, { n: quantite })}</span>
               )}
               {album.nouvelles.includes(id) && (
-                <span style={newBadge} aria-label={d.albums.nouveau}>
+                <span style={newBadge} aria-hidden>
                   *
                 </span>
               )}
-            </div>
+            </button>
           );
         })}
       </div>

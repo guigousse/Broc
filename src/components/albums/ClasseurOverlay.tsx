@@ -200,6 +200,13 @@ export function ClasseurOverlay({ open, onClose }: { open: boolean; onClose: () 
     if (dx < -SWIPE_SEUIL_PX) setPage((p) => Math.min(pages - 1, p + 1));
     else if (dx > SWIPE_SEUIL_PX) setPage((p) => Math.max(0, p - 1));
   };
+  // Geste interrompu (appel, notification…) ou doigt sorti de la zone sans
+  // relâcher : purge SANS tourner la page — sinon `startXRef` reste posé et
+  // le PROCHAIN pointerdown ailleurs calcule un dx fantôme depuis ce vieux
+  // point (M5 revue finale 2026-08-30).
+  const onPointerAbandonne = () => {
+    startXRef.current = null;
+  };
 
   return (
     <AlbumShell
@@ -211,7 +218,10 @@ export function ClasseurOverlay({ open, onClose }: { open: boolean; onClose: () 
       onRecycler={() => {
         const n = recyclerDoublonsAlbum("classeur");
         toast(
-          tr(d.albums.recycleFait, { n, categorie: libelleCategorie(CATEGORIE_ALBUM.classeur, d) }),
+          tr(n === 1 ? d.albums.recycleFaitUn : d.albums.recycleFait, {
+            n,
+            categorie: libelleCategorie(CATEGORIE_ALBUM.classeur, d),
+          }),
           { type: "succes" },
         );
       }}
@@ -221,6 +231,8 @@ export function ClasseurOverlay({ open, onClose }: { open: boolean; onClose: () 
         data-testid="page-classeur"
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerAbandonne}
+        onPointerLeave={onPointerAbandonne}
       >
         {cases.map((p, i) => {
           if (!p) {
@@ -245,7 +257,7 @@ export function ClasseurOverlay({ open, onClose }: { open: boolean; onClose: () 
                 setFiche(p.id);
               }}
             >
-              <PieceVisuel id={p.id} grise={!possedee} />
+              <PieceVisuel id={p.id} grise={!possedee} thumb />
               {!possedee && <span style={pointInterrogation}>?</span>}
               {quantite > 1 && (
                 <span style={badgeQuantite}>{tr(d.albums.doublon, { n: quantite })}</span>

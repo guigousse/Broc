@@ -25,6 +25,7 @@ const { mocks } = vi.hoisted(() => ({
   mocks: {
     recyclerDoublonsAlbum: vi.fn(() => 2),
     marquerPieceConsultee: vi.fn(),
+    toast: vi.fn(),
   },
 }));
 
@@ -40,8 +41,8 @@ vi.mock("@/context/GameContext", () => ({
 }));
 
 vi.mock("@/components/ui/Toast", () => ({
-  useToast: () => ({ toast: vi.fn() }),
-  useToastSafe: () => ({ toast: vi.fn() }),
+  useToast: () => ({ toast: mocks.toast }),
+  useToastSafe: () => ({ toast: mocks.toast }),
 }));
 
 afterEach(cleanup);
@@ -60,12 +61,48 @@ describe("ClasseurOverlay", () => {
     expect(screen.getByText("2 / 6")).toBeTruthy();
   });
 
-  it("recycler : confirmation puis appel", () => {
+  // M5 revue finale 2026-08-30 : un swipe interrompu (appel, notification…)
+  // ne doit pas laisser `startXRef` posé pour un lâcher tardif/fantôme.
+  it("un swipe interrompu (pointercancel) ne tourne pas la page au lâcher qui suit", () => {
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    const page = screen.getByTestId("page-classeur");
+    fireEvent.pointerDown(page, { clientX: 200 });
+    fireEvent.pointerCancel(page);
+    fireEvent.pointerUp(page, { clientX: 100 }); // dx = -100 : aurait tourné la page
+    expect(screen.getByText("1 / 6")).toBeTruthy();
+  });
+
+  it("le doigt qui sort de la zone (pointerleave) sans relâcher ne tourne pas non plus la page", () => {
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    const page = screen.getByTestId("page-classeur");
+    fireEvent.pointerDown(page, { clientX: 200 });
+    fireEvent.pointerLeave(page);
+    fireEvent.pointerUp(page, { clientX: 100 });
+    expect(screen.getByText("1 / 6")).toBeTruthy();
+  });
+
+  it("recycler : confirmation puis appel, toast au pluriel (n=2)", () => {
     const { recyclerDoublonsAlbum } = mocks;
     render(<ClasseurOverlay open onClose={() => {}} />);
     fireEvent.click(screen.getByRole("button", { name: /recycler les doublons \(1\)/i }));
     fireEvent.click(screen.getByRole("button", { name: /^recycler/i, hidden: false }));
     expect(recyclerDoublonsAlbum).toHaveBeenCalledWith("classeur");
+    expect(mocks.toast).toHaveBeenCalledWith(
+      "+2 pièces · Jeux & Loisirs",
+      expect.objectContaining({ type: "succes" }),
+    );
+  });
+
+  // M10 revue finale 2026-08-30 : « +1 pièce », pas « +1 pièces ».
+  it("recycler un seul doublon : toast au singulier (n=1)", () => {
+    mocks.recyclerDoublonsAlbum.mockReturnValueOnce(1);
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: /recycler les doublons \(1\)/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^recycler/i, hidden: false }));
+    expect(mocks.toast).toHaveBeenCalledWith(
+      "+1 pièce · Jeux & Loisirs",
+      expect.objectContaining({ type: "succes" }),
+    );
   });
 
   it("tap sur une carte possédée ouvre la fiche et marque la pièce consultée", () => {

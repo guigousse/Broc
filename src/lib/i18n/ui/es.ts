@@ -922,6 +922,7 @@ export const es: DictionnaireUI = {
     compteur: "{n} / {total}",
     recycler: "Reciclar duplicados ({n})",
     recyclerConfirm: "¿Reciclar {n} duplicado(s) por {n} pieza(s) de reparación?",
+    recycleFaitUn: "+1 pieza · {categorie}",
     recycleFait: "+{n} piezas · {categorie}",
     aVenir: "próximamente",
     pochetteVide: "Aún no encontrada",

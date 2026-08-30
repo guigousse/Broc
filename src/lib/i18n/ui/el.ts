@@ -940,6 +940,7 @@ export const el: DictionnaireUI = {
     compteur: "{n} / {total}",
     recycler: "Ανακύκλωση διπλών ({n})",
     recyclerConfirm: "Ανακύκλωση {n} διπλών για {n} ανταλλακτικά;",
+    recycleFaitUn: "+1 ανταλλακτικό · {categorie}",
     recycleFait: "+{n} ανταλλακτικά · {categorie}",
     aVenir: "σύντομα",
     pochetteVide: "Δεν βρέθηκε ακόμη",
