@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { acheterArticle, acheterLotPieces } from "@/lib/bazar/achat";
-import { GAMMES_BAZAR, genererEtal, PRIX_JETON_EUROS } from "@/lib/bazar/etal";
+import { GAMMES_BAZAR, genererEtal, NB_LOTS_PIECES, PRIX_JETON_EUROS } from "@/lib/bazar/etal";
 import { createMockGameState, createMockObjet } from "@/lib/__test-fixtures__/gameState";
 import type { GameState } from "@/types/game";
 
@@ -22,7 +22,7 @@ describe("acheter un lot de pièces", () => {
 
   it("le lot reste à l'étal — stock illimité", () => {
     const r = acheterLotPieces(avecEtal(), 0);
-    expect(r.ok && r.state.bazar!.lotsPieces).toHaveLength(3);
+    expect(r.ok && r.state.bazar!.lotsPieces).toHaveLength(NB_LOTS_PIECES);
   });
 
   it("refuse sans effet de bord quand les jetons manquent", () => {

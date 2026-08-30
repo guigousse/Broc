@@ -1,4 +1,5 @@
 import type { EtatObjet, GameState, Objet } from "@/types/game";
+import type { AlbumId } from "@/data/pieces";
 import { getTemplate } from "@/data/objetTemplates";
 import { recalculerPrixReference } from "@/lib/etat";
 import { stockageEstPlein } from "@/lib/stockage";
@@ -23,7 +24,9 @@ export const ETAT_ARTICLE_BAZAR: EtatObjet = "Pristin état";
  */
 export type AchatBazar =
   | { type: "pieces"; index: number }
-  | { type: "objet"; index: number };
+  | { type: "objet"; index: number }
+  | { type: "album"; album: AlbumId }
+  | { type: "paquet"; album: AlbumId };
 
 export type RaisonRefus = "jetons" | "indisponible" | "stockagePlein";
 

@@ -90,24 +90,26 @@ describe("GameContext.acheterAuBazar — atomicité (I1)", () => {
 
   it("refuse le second achat sans rien perdre du premier quand les jetons ne couvrent qu'un seul lot", async () => {
     const result = await setupPartieAvecJetons();
+    const cat = result.current.state!.bazar!.lotsPieces[0].categorie;
+    const piecesAvant = result.current.state!.piecesAmelioration[cat];
     // Dépense un premier jeton (solde initial 2) pour ne laisser que le
     // strict nécessaire à UN SEUL des deux achats synchrones qui suivent.
+    // NB_LOTS_PIECES = 1 depuis 2026-08-30 : un seul lot en vente, donc les
+    // trois achats de ce test portent tous sur `index: 0`.
     act(() => {
       result.current.acheterAuBazar({ type: "pieces", index: 0 });
     });
     expect(result.current.state!.jetons).toBe(1);
-    const cat = result.current.state!.bazar!.lotsPieces[1].categorie;
-    const piecesAvant = result.current.state!.piecesAmelioration[cat];
 
     act(() => {
-      // Deux achats du lot suivant (1 jeton chacun) alors qu'il n'en reste
+      // Deux achats du même lot (1 jeton chacun) alors qu'il n'en reste
       // qu'un : le premier doit passer, le second doit être refusé — et
-      // SURTOUT ne pas effacer l'effet du premier.
-      result.current.acheterAuBazar({ type: "pieces", index: 1 });
-      result.current.acheterAuBazar({ type: "pieces", index: 1 });
+      // SURTOUT ne pas effacer l'effet des deux premiers.
+      result.current.acheterAuBazar({ type: "pieces", index: 0 });
+      result.current.acheterAuBazar({ type: "pieces", index: 0 });
     });
 
     expect(result.current.state!.jetons).toBe(0);
-    expect(result.current.state!.piecesAmelioration[cat]).toBe(piecesAvant + 5);
+    expect(result.current.state!.piecesAmelioration[cat]).toBe(piecesAvant + 10);
   });
 });

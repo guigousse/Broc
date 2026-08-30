@@ -7,8 +7,13 @@ import type { CategorieObjet, EtalBazar, LotPiecesBazar, ObjetBazar } from "@/ty
 export const PRIX_JETON_EUROS = 25;
 /** Pièces de restauration livrées par lot. */
 export const PIECES_PAR_LOT = 5;
-/** Lots de pièces présentés simultanément, de catégories distinctes. */
-export const NB_LOTS_PIECES = 3;
+/**
+ * Lots de pièces présentés simultanément. Un seul depuis le classeur/album
+ * de collection (2026-08-30) : les jetons ont désormais un autre débouché
+ * (albums et paquets), la planche du bas n'a plus besoin de trois gammes
+ * pour donner un horizon d'épargne.
+ */
+export const NB_LOTS_PIECES = 1;
 /**
  * Les trois gammes de l'étagère du haut, dans l'ordre des cases 1-2-3 : une
  * trouvaille modeste, la vitrine de la semaine, une pièce de caractère.

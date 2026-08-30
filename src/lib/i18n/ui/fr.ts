@@ -812,6 +812,7 @@ export const fr = {
     competenceReparerManquante: "Vous n'avez pas la compétence Réparer — {categorie}.",
     bazarPasAssezDeJetons: "Pas assez de Bazarcoins",
     bazarArticleIndisponible: "Article indisponible",
+    bazarAlbumDejaAchete: "Déjà acheté",
     manquePiecesUn: "Manque {n} pièce {categorie}.",
     manquePiecesN: "Manque {n} pièces {categorie}.",
     objetEnRestauration: "Objet en restauration.",

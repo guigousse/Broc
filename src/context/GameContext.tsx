@@ -81,6 +81,7 @@ import {
   type AchatBazar,
   type RaisonRefus,
 } from "@/lib/bazar/achat";
+import { acheterAlbum, acheterPaquet, appliquerPaquet } from "@/lib/bazar/albums";
 import { appliquerFinTutoriel, ETAPES_TUTORIEL } from "@/lib/tutoriel";
 import { logEvenement } from "@/lib/analytics/contexte";
 import { EVENEMENTS } from "@/lib/analytics/analytics";
@@ -167,9 +168,16 @@ function categorieLocalisee(cat: Parameters<typeof libelleCategorie>[0]): string
 }
 
 /** Traduit le `RaisonRefus` brut d'`achat.ts` en message localisé. */
-function raisonLocaliseeBazar(raison: RaisonRefus): string {
+function raisonLocaliseeBazar(achat: AchatBazar, raison: RaisonRefus): string {
   if (raison === "jetons") return raisonLocalisee("bazarPasAssezDeJetons");
   if (raison === "stockagePlein") return raisonLocalisee("stockagePlein");
+  if (raison === "indisponible") {
+    // "indisponible" recouvre deux refus bien distincts pour les nouveaux
+    // achats du Bazar : un album déjà acheté (album), ou un paquet tenté
+    // sans l'album qui le débloque (paquet — même clé que l'achat de pièce).
+    if (achat.type === "album") return raisonLocalisee("bazarAlbumDejaAchete");
+    if (achat.type === "paquet") return raisonLocalisee("albumManquant");
+  }
   return raisonLocalisee("bazarArticleIndisponible");
 }
 
@@ -317,7 +325,7 @@ interface GameActionsValue {
    */
   rafraichirPeriodiques: () => void;
   /** Achète à l'étal du Bazar (lot de pièces ou objet de vitrine). */
-  acheterAuBazar: (achat: AchatBazar) => { ok: boolean; raison?: string };
+  acheterAuBazar: (achat: AchatBazar) => { ok: boolean; raison?: string; pieces?: string[] };
 }
 
 type GameContextValue = GameStateValue & GameActionsValue;
@@ -1101,10 +1109,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const acheterAuBazar = useCallback(
-    (achat: AchatBazar): { ok: boolean; raison?: string } => {
+    (achat: AchatBazar): { ok: boolean; raison?: string; pieces?: string[] } => {
       const current = stateRef.current;
       if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
       const now = tempsConfiance() ?? Date.now();
+
+      // Le paquet a une forme à part : c'est le seul achat qui TIRE au hasard
+      // (`acheterPaquet`). Le tirage n'a le droit de se produire qu'UNE fois
+      // — ici, dans le pré-check — et l'updater ne fait que le REJOUER avec
+      // les ids déjà connus (`appliquerPaquet`), pour rester pur et
+      // rejouable comme les autres branches de `setState`.
+      if (achat.type === "paquet") {
+        const pre = acheterPaquet(current, achat.album);
+        if (!pre.ok) return { ok: false, raison: raisonLocaliseeBazar(achat, pre.raison) };
+        const pieces = pre.pieces!;
+        setState((prev) => {
+          if (!prev) return prev;
+          const r = appliquerPaquet(prev, achat.album, pieces);
+          return r.ok ? r.state : prev;
+        });
+        return { ok: true, pieces };
+      }
+
       // Pré-check sur stateRef.current pour un refus immédiat, informatif,
       // sans toucher setState — MAIS même discipline que `acheterObjet` juste
       // au-dessus : le retour ne promet que ce que l'updater re-vérifie sur
@@ -1114,18 +1140,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const precheck =
         achat.type === "pieces"
           ? acheterLotPieces(current, achat.index)
-          : acheterArticle(current, achat.index, now);
+          : achat.type === "objet"
+            ? acheterArticle(current, achat.index, now)
+            : acheterAlbum(current, achat.album);
       if (!precheck.ok) {
         // Localiser comme le font les actions voisines : jamais de clé brute
         // remontée à l'UI.
-        return { ok: false, raison: raisonLocaliseeBazar(precheck.raison) };
+        return { ok: false, raison: raisonLocaliseeBazar(achat, precheck.raison) };
       }
       setState((prev) => {
         if (!prev) return prev;
         const r =
           achat.type === "pieces"
             ? acheterLotPieces(prev, achat.index)
-            : acheterArticle(prev, achat.index, now);
+            : achat.type === "objet"
+              ? acheterArticle(prev, achat.index, now)
+              : acheterAlbum(prev, achat.album);
         return r.ok ? r.state : prev;
       });
       return { ok: true };

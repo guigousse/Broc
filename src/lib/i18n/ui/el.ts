@@ -789,6 +789,7 @@ export const el: DictionnaireUI = {
     competenceReparerManquante: "Δεν έχεις τη δεξιότητα Επισκευή — {categorie}.",
     bazarPasAssezDeJetons: "Δεν έχετε αρκετά Bazarcoins",
     bazarArticleIndisponible: "Μη διαθέσιμο είδος",
+    bazarAlbumDejaAchete: "Ήδη αγορασμένο",
     manquePiecesUn: "Λείπει {n} κομμάτι {categorie}.",
     manquePiecesN: "Λείπουν {n} κομμάτια {categorie}.",
     objetEnRestauration: "Το αντικείμενο βρίσκεται σε αποκατάσταση.",

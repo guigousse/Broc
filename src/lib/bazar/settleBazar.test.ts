@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { settleBazar } from "@/lib/bazar/settleBazar";
+import { NB_LOTS_PIECES } from "@/lib/bazar/etal";
 import { JOUR_OUVERTURE_BAZAR } from "@/lib/bazar/ouverture";
 import { cleSemaineLocale } from "@/lib/quetes/periode";
 import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
@@ -18,7 +19,7 @@ describe("settleBazar", () => {
   it("compose un étal au premier passage après l'ouverture", () => {
     const next = settleBazar(createMockGameState(OUVERT), LUNDI);
     expect(next.bazar?.cleSemaine).toBe(cleSemaineLocale(LUNDI));
-    expect(next.bazar?.lotsPieces).toHaveLength(3);
+    expect(next.bazar?.lotsPieces).toHaveLength(NB_LOTS_PIECES);
   });
 
   it("ne rejoue rien dans la même semaine — même référence d'objet", () => {

@@ -52,9 +52,10 @@ export type ArticleDetail =
 /**
  * Ce que rend une tentative d'achat, vue de l'écran : la forme exacte de
  * `GameContext.acheterAuBazar`. La `raison` est DÉJÀ localisée — aucune clé
- * brute ne remonte jamais jusqu'ici.
+ * brute ne remonte jamais jusqu'ici. `pieces` : les 3 ids tirés par un achat
+ * de paquet, pour la cérémonie d'ouverture — absent pour les autres achats.
  */
-export type ResultatAchatBazar = { ok: boolean; raison?: string };
+export type ResultatAchatBazar = { ok: boolean; raison?: string; pieces?: string[] };
 
 interface ArticleDetailBazarProps {
   article: ArticleDetail | null;

@@ -774,6 +774,7 @@ export const es: DictionnaireUI = {
     competenceReparerManquante: "No tienes la habilidad Reparar — {categorie}.",
     bazarPasAssezDeJetons: "No tienes Bazarcoins suficientes",
     bazarArticleIndisponible: "Artículo no disponible",
+    bazarAlbumDejaAchete: "Ya comprado",
     manquePiecesUn: "Falta {n} pieza de {categorie}.",
     manquePiecesN: "Faltan {n} piezas de {categorie}.",
     objetEnRestauration: "Objeto en restauración.",

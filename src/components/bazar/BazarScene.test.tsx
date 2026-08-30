@@ -14,11 +14,7 @@ afterEach(cleanup);
 
 const ETAL: EtalBazar = {
   cleSemaine: "2026-W34",
-  lotsPieces: [
-    { categorie: "Musique", quantite: 5, prix: 1 },
-    { categorie: "Mode", quantite: 5, prix: 1 },
-    { categorie: "Maison", quantite: 5, prix: 1 },
-  ],
+  lotsPieces: [{ categorie: "Mode", quantite: 5, prix: 1 }],
   // L'étagère du haut, une gamme par case (cf. `GAMMES_BAZAR`) : trouvaille
   // modeste, vitrine de la semaine, pièce de caractère.
   articles: [
@@ -105,11 +101,12 @@ describe("BazarScene", () => {
     expect(onZoneIndex).toHaveBeenCalledWith(2);
   });
 
-  it("pose les trois lots sur la planche du bas", () => {
+  it("pose l'unique lot sur la planche du bas", () => {
     monter();
     expect(screen.getByTestId("article-case4")).toBeTruthy();
-    expect(screen.getByTestId("article-case5")).toBeTruthy();
-    expect(screen.getByTestId("article-case6")).toBeTruthy();
+    // NB_LOTS_PIECES = 1 depuis 2026-08-30 : case5/case6 ne rendent plus rien.
+    expect(screen.queryByTestId("article-case5")).toBeNull();
+    expect(screen.queryByTestId("article-case6")).toBeNull();
   });
 
   // ── Le badge de quantité quitte l'étagère (recette du 2026-08-20) ────────
@@ -188,9 +185,7 @@ describe("BazarScene", () => {
 
   it("un lot de pièces n'a pas d'état : son pied reste nu", () => {
     monter();
-    for (const cle of ["case4", "case5", "case6"]) {
-      expect(screen.queryByTestId(`etoiles-${cle}`)).toBeNull();
-    }
+    expect(screen.queryByTestId("etoiles-case4")).toBeNull();
   });
 
   // Sans template, pas de rareté pour teinter les étoiles ni d'état à
@@ -209,7 +204,7 @@ describe("BazarScene", () => {
     // La fiche montre bien le lot touché, pas un autre.
     expect(screen.getByRole("dialog").textContent).toContain("Mode");
     acheterDansLaFiche();
-    expect(onAcheter).toHaveBeenCalledWith({ type: "pieces", index: 1 });
+    expect(onAcheter).toHaveBeenCalledWith({ type: "pieces", index: 0 });
   });
 
   it("taper un article ouvre sa fiche, et l'achat s'y confirme", () => {
@@ -451,9 +446,12 @@ describe("BazarScene", () => {
   // marchandise reste en couleur, quoi qu'il arrive, et c'est le prix barré
   // qui dit l'inaccessibilité. Le test garde le cas « bourse à 0 » — il
   // atteste maintenant ce que la conception dit, pas son contraire.
-  it("bourse à 0 : les six articles restent en couleur, et aucun prix ne s'affiche", () => {
+  it("bourse à 0 : les quatre articles restent en couleur, et aucun prix ne s'affiche", () => {
     const { onAcheter } = monter(ETAL, 0);
-    for (const cle of ["case1", "case2", "case3", "case4", "case5", "case6"]) {
+    // case1-3 : les trois articles de l'étagère du haut. case4 : l'unique lot
+    // de pièces (`NB_LOTS_PIECES = 1` depuis 2026-08-30 — case5/case6 ne
+    // rendent plus rien).
+    for (const cle of ["case1", "case2", "case3", "case4"]) {
       const article = screen.getByTestId(`article-${cle}`);
       expect(article.style.filter).toBe("");
     }

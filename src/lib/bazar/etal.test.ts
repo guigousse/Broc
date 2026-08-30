@@ -22,7 +22,7 @@ describe("prixEnJetons", () => {
 });
 
 describe("genererEtal", () => {
-  it("présente trois lots de pièces, de trois catégories distinctes", () => {
+  it("présente un lot de pièces", () => {
     const etal = genererEtal("2026-W34", rngFixe([0.1, 0.4, 0.7, 0.2]));
     expect(etal.lotsPieces).toHaveLength(NB_LOTS_PIECES);
     const cats = etal.lotsPieces.map((l) => l.categorie);

@@ -771,6 +771,7 @@ export const en: DictionnaireUI = {
     competenceReparerManquante: "You lack the Repair skill — {categorie}.",
     bazarPasAssezDeJetons: "Not enough Bazarcoins",
     bazarArticleIndisponible: "Item unavailable",
+    bazarAlbumDejaAchete: "Already bought",
     manquePiecesUn: "Missing {n} {categorie} part.",
     manquePiecesN: "Missing {n} {categorie} parts.",
     objetEnRestauration: "Item under restoration.",
