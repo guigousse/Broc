@@ -917,6 +917,7 @@ export const en: DictionnaireUI = {
     pochetteVide: "Not found yet",
     bac: "Loose",
     poserSurLaPage: "Place on the page",
+    rendreAuBac: "Return to the tray",
     pageSuivante: "Next page",
     pagePrecedente: "Previous page",
     enVenteAuBazar: "On sale at the Bazaar",

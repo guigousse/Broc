@@ -943,6 +943,7 @@ export const el: DictionnaireUI = {
     pochetteVide: "Δεν βρέθηκε ακόμη",
     bac: "Χύμα",
     poserSurLaPage: "Τοποθέτηση στη σελίδα",
+    rendreAuBac: "Επιστροφή στη θήκη",
     pageSuivante: "Επόμενη σελίδα",
     pagePrecedente: "Προηγούμενη σελίδα",
     enVenteAuBazar: "Πωλείται στο Παζάρι",

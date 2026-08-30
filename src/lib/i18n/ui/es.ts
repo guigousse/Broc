@@ -925,6 +925,7 @@ export const es: DictionnaireUI = {
     pochetteVide: "Aún no encontrada",
     bac: "Sueltos",
     poserSurLaPage: "Colocar en la página",
+    rendreAuBac: "Devolver a la bandeja",
     pageSuivante: "Página siguiente",
     pagePrecedente: "Página anterior",
     enVenteAuBazar: "A la venta en el Bazar",

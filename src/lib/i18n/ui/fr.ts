@@ -973,6 +973,7 @@ export const fr = {
     pochetteVide: "Pas encore trouvée",
     bac: "En vrac",
     poserSurLaPage: "Poser sur la page",
+    rendreAuBac: "Rendre au bac",
     pageSuivante: "Page suivante",
     pagePrecedente: "Page précédente",
     enVenteAuBazar: "En vente au Bazar",

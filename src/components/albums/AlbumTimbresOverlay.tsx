@@ -291,6 +291,17 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
     // Ni page ni bac : le timbre reste où il était (aucun appel).
   };
 
+  // Geste interrompu (appel, notification, geste système) : `pointercancel`
+  // ET la perte de capture qui l'accompagne (`onLostPointerCapture`, qui se
+  // déclenche AUSSI après un lâcher normal réussi — idempotent puisque
+  // `startRef`/`drag` sont déjà à `null` à ce moment-là). Dans tous les cas,
+  // on efface l'état SANS jamais appeler `poserTimbre`/`rendreTimbreAuBac` :
+  // le timbre reste où il était, le fantôme disparaît.
+  const onPointerAbandonneTimbre = () => {
+    startRef.current = null;
+    setDrag(null);
+  };
+
   const onSwipeDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     swipeStartRef.current = e.clientX;
   };
@@ -342,6 +353,8 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
               onPointerDown={onPointerDownTimbre(id)}
               onPointerMove={onPointerMoveTimbre}
               onPointerUp={onPointerUpTimbre}
+              onPointerCancel={onPointerAbandonneTimbre}
+              onLostPointerCapture={onPointerAbandonneTimbre}
             >
               <PieceVisuel id={id} />
             </div>
@@ -360,6 +373,8 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
               onPointerDown={onPointerDownTimbre(id)}
               onPointerMove={onPointerMoveTimbre}
               onPointerUp={onPointerUpTimbre}
+              onPointerCancel={onPointerAbandonneTimbre}
+              onLostPointerCapture={onPointerAbandonneTimbre}
             >
               <PieceVisuel id={id} />
               {quantite > 1 && (
@@ -376,13 +391,27 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
       </div>
       <Pagination page={page} onChange={setPage} d={d} />
       {drag && (
-        <div style={{ ...fantome, left: drag.x, top: drag.y }}>
+        <div data-testid="timbre-fantome" style={{ ...fantome, left: drag.x, top: drag.y }}>
           <PieceVisuel id={drag.id} />
         </div>
       )}
       {fiche && (
         <FichePiece id={fiche} quantite={album.pieces[fiche] ?? 0} onClose={() => setFiche(null)}>
-          {!fichePlacement && (
+          {fichePlacement ? (
+            // Symétrie avec « Poser sur la page » : un timbre déjà posé se
+            // rend au bac sans passer par le glisser (même chemin que
+            // `rendreTimbreAuBac` au lâcher, mais accessible au clavier).
+            <button
+              type="button"
+              style={poserBtn}
+              onClick={() => {
+                rendreTimbreAuBac(fiche);
+                setFiche(null);
+              }}
+            >
+              {d.albums.rendreAuBac}
+            </button>
+          ) : (
             <button
               type="button"
               style={poserBtn}

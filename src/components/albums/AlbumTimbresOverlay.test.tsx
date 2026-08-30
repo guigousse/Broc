@@ -59,6 +59,21 @@ vi.mock("@/components/ui/Toast", () => ({
 afterEach(cleanup);
 
 describe("AlbumTimbresOverlay", () => {
+  // En premier : les autres tests appellent `poserTimbre`/`rendreTimbreAuBac`
+  // sur les mêmes espions (pas de `resetMocks` dans ce dépôt) — un « pas
+  // appelé » n'est fiable que tant que rien d'autre ne l'a encore appelé.
+  it("un geste interrompu (pointercancel) efface le fantôme sans poser ni rendre", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
+    fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
+    fireEvent.pointerMove(t, { clientX: 150, clientY: 200, pointerId: 1 });
+    expect(screen.getByTestId("timbre-fantome")).toBeTruthy();
+    fireEvent.pointerCancel(t, { pointerId: 1 });
+    expect(screen.queryByTestId("timbre-fantome")).toBeNull();
+    expect(mocks.poserTimbre).not.toHaveBeenCalled();
+    expect(mocks.rendreTimbreAuBac).not.toHaveBeenCalled();
+  });
+
   it("les timbres sans placement sont dans le bac, le timbre posé sur sa ligne", () => {
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
     expect(within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")).toHaveLength(2);
@@ -85,5 +100,14 @@ describe("AlbumTimbresOverlay", () => {
     fireEvent.pointerUp(t, { clientX: 12, clientY: 501, pointerId: 1 });
     fireEvent.click(screen.getByRole("button", { name: "Poser sur la page" }));
     expect(mocks.poserTimbre).toHaveBeenCalledWith(expect.any(String), 0, 0, 0.1);
+  });
+
+  it("un tap sur un timbre posé ouvre la fiche avec « Rendre au bac »", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const posee = screen.getByTestId("timbre-pose");
+    fireEvent.pointerDown(posee, { clientX: 10, clientY: 500, pointerId: 1 });
+    fireEvent.pointerUp(posee, { clientX: 12, clientY: 501, pointerId: 1 });
+    fireEvent.click(screen.getByRole("button", { name: "Rendre au bac" }));
+    expect(mocks.rendreTimbreAuBac).toHaveBeenCalledWith(t2);
   });
 });
