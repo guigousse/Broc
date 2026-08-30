@@ -22,6 +22,11 @@ import type { ReactNode } from "react";
 import { GameProvider, useGame } from "./GameContext";
 import { cleSlot } from "@/lib/storage/slots";
 import { JOUR_OUVERTURE_BAZAR } from "@/lib/bazar/ouverture";
+import { initAlbums } from "@/lib/albums";
+import { fr } from "@/lib/i18n/ui/fr";
+import { en } from "@/lib/i18n/ui/en";
+import { es } from "@/lib/i18n/ui/es";
+import { el } from "@/lib/i18n/ui/el";
 import type { GameState } from "@/types/game";
 
 // GameProvider appelle useRouter() (nouvellePartie → router.push("/bureau")).
@@ -44,12 +49,14 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 /**
- * Save au jour d'ouverture du Bazar, avec 2 jetons — de quoi payer DEUX lots
- * de pièces (1 jeton chacun, cf. `etal.ts`). Le Bazar lui-même se compose
- * tout seul à l'hydratation (le `sync()` du GameContext appelle déjà
+ * Save au jour d'ouverture du Bazar. Le Bazar lui-même se compose tout seul
+ * à l'hydratation (le `sync()` du GameContext appelle déjà
  * `rafraichirPeriodiques` au montage) : pas besoin de le pré-fabriquer ici.
+ *
+ * `patch` permute la save juste avant remontage — jetons, albums déjà
+ * achetés, etc. — sans dupliquer toute la mécanique de montage/démontage.
  */
-async function setupPartieAvecJetons() {
+async function setupPartie(patch: (save: GameState) => void = () => {}) {
   const { result, unmount } = renderHook(() => useGame(), { wrapper });
   await waitFor(() => expect(result.current.isHydrated).toBe(true));
   act(() => {
@@ -61,7 +68,7 @@ async function setupPartieAvecJetons() {
   );
   const save = JSON.parse(window.localStorage.getItem(cleSlot(1))!) as GameState;
   save.jourActuel = JOUR_OUVERTURE_BAZAR;
-  save.jetons = 2;
+  patch(save);
   window.localStorage.setItem(cleSlot(1), JSON.stringify(save));
   unmount();
 
@@ -69,6 +76,22 @@ async function setupPartieAvecJetons() {
   await waitFor(() => expect(remonte.result.current.state).not.toBeNull());
   await waitFor(() => expect(remonte.result.current.state!.bazar).toBeDefined());
   return remonte.result;
+}
+
+/** 2 jetons — de quoi payer DEUX lots de pièces (1 jeton chacun, cf. `etal.ts`). */
+function setupPartieAvecJetons() {
+  return setupPartie((save) => {
+    save.jetons = 2;
+  });
+}
+
+/** Save avec l'album `albumId` déjà acheté et `jetons` en poche — pour tester les paquets. */
+function setupPartieAvecAlbumAchete(albumId: "classeur" | "timbres", jetons: number) {
+  return setupPartie((save) => {
+    save.jetons = jetons;
+    const albums = initAlbums();
+    save.albums = { ...albums, [albumId]: { ...albums[albumId], achete: true } };
+  });
 }
 
 describe("GameContext.acheterAuBazar — atomicité (I1)", () => {
@@ -111,5 +134,71 @@ describe("GameContext.acheterAuBazar — atomicité (I1)", () => {
 
     expect(result.current.state!.jetons).toBe(0);
     expect(result.current.state!.piecesAmelioration[cat]).toBe(piecesAvant + 10);
+  });
+
+  it("un paquet renvoie ses 3 ids et les range dans l'album, en débitant 5 Ƶ", async () => {
+    const result = await setupPartieAvecAlbumAchete("classeur", 5);
+
+    let retour: { ok: boolean; raison?: string; pieces?: string[] } | undefined;
+    act(() => {
+      retour = result.current.acheterAuBazar({ type: "paquet", album: "classeur" });
+    });
+
+    expect(retour!.ok).toBe(true);
+    expect(retour!.pieces).toHaveLength(3);
+
+    await waitFor(() => expect(result.current.state!.jetons).toBe(0));
+    const pieces = result.current.state!.albums!.classeur.pieces;
+    // Les ids retournés sont exactement ceux rangés dans l'album, et leur
+    // total de quantités vaut 3 (des doublons possibles réduisent le nombre
+    // de clés distinctes, jamais la somme).
+    expect(Object.keys(pieces).sort()).toEqual([...new Set(retour!.pieces)].sort());
+    expect(Object.values(pieces).reduce((s, q) => s + q, 0)).toBe(3);
+  });
+
+  it("deux achats de paquet synchrones débitent et livrent DEUX fois, pas une (I1)", async () => {
+    const result = await setupPartieAvecAlbumAchete("classeur", 10);
+
+    // Même course que les lots de pièces plus haut : deux achats dans le
+    // MÊME batch, exactement ce que `stateRef.current` lu une seule fois ne
+    // pouvait pas voir.
+    act(() => {
+      result.current.acheterAuBazar({ type: "paquet", album: "classeur" });
+      result.current.acheterAuBazar({ type: "paquet", album: "classeur" });
+    });
+
+    await waitFor(() => expect(result.current.state!.jetons).toBe(0));
+    const pieces = result.current.state!.albums!.classeur.pieces;
+    expect(Object.values(pieces).reduce((s, q) => s + q, 0)).toBe(6);
+  });
+
+  it("acheter un album le marque acheté, et refuse un second achat avec une raison localisée", async () => {
+    const result = await setupPartieAvecAlbumAchete("classeur", 30);
+    expect(result.current.state!.albums!.timbres.achete).toBe(false);
+
+    let premier: { ok: boolean; raison?: string } | undefined;
+    act(() => {
+      premier = result.current.acheterAuBazar({ type: "album", album: "timbres" });
+    });
+    expect(premier!.ok).toBe(true);
+    await waitFor(() => expect(result.current.state!.albums!.timbres.achete).toBe(true));
+    await waitFor(() => expect(result.current.state!.jetons).toBe(20));
+
+    let second: { ok: boolean; raison?: string } | undefined;
+    act(() => {
+      second = result.current.acheterAuBazar({ type: "album", album: "timbres" });
+    });
+    expect(second!.ok).toBe(false);
+    // Localisée : jamais la clé brute "indisponible", ni "jetons"/"stockagePlein"
+    // — la locale par défaut de l'environnement de test n'est pas garantie
+    // (ici "en"), donc on compare aux 4 traductions plutôt qu'à un texte figé.
+    expect(second!.raison).toBeTruthy();
+    expect(["indisponible", "jetons", "stockagePlein"]).not.toContain(second!.raison);
+    expect([
+      fr.raisons.bazarAlbumDejaAchete,
+      en.raisons.bazarAlbumDejaAchete,
+      es.raisons.bazarAlbumDejaAchete,
+      el.raisons.bazarAlbumDejaAchete,
+    ]).toContain(second!.raison);
   });
 });
