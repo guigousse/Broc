@@ -62,6 +62,14 @@ describe("ObjetsTrouvablesSheet — la collection, en vrac", () => {
     }
   });
 
+  it("annonce toujours les cartes et timbres à collectionner", () => {
+    render(
+      <ObjetsTrouvablesSheet open onClose={() => {}} brocante={brocante} collection={initCollection()} />,
+    );
+    const ligne = screen.getByTestId("trouvables-pieces");
+    expect(ligne.textContent).toBe("+ cartes et timbres à collectionner");
+  });
+
   it("brocante ★ : pas de mention des tiers précédents", () => {
     render(
       <ObjetsTrouvablesSheet open onClose={() => {}} brocante={brocante} collection={initCollection()} />,

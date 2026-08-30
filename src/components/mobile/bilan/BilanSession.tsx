@@ -6,6 +6,7 @@ import { ArrowRight, Coins, DoorOpen, Package } from "lucide-react";
 import { BarreBasSession } from "@/components/mobile/BarreBasSession";
 import { CadreBilan } from "@/components/mobile/bilan/CadreBilan";
 import { ItemSticker } from "@/components/ui/ItemSticker";
+import { PieceVisuel } from "@/components/pieces/PieceVisuel";
 import { getTemplate } from "@/data/objetTemplates";
 import { audioManager } from "@/lib/audio/audioManager";
 import {
@@ -28,7 +29,7 @@ import {
   poserSupplementBudget,
 } from "@/lib/affichageGele";
 import type { CategorieObjet } from "@/types/game";
-import type { AlbumId } from "@/data/pieces";
+import { estPiece, type AlbumId } from "@/data/pieces";
 
 export type ModeBilan = "chinage" | "vente";
 
@@ -429,7 +430,11 @@ export function BilanSession({
                   }
                   style={{ display: "inline-flex" }}
                 >
-                  <ItemSticker templateId={it.templateId} categorie={it.categorie} thumb />
+                  {estPiece(it.templateId) ? (
+                    <PieceVisuel id={it.templateId} size={60} />
+                  ) : (
+                    <ItemSticker templateId={it.templateId} categorie={it.categorie} thumb />
+                  )}
                 </span>
                 {mode === "chinage" ? (
                   <span style={nomItem}>
