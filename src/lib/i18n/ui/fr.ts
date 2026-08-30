@@ -952,6 +952,14 @@ export const fr = {
     delaiHeureUne: "{n} heure",
     delaiMinutes: "{n} minutes",
     delaiMinuteUne: "{n} minute",
+    classeur: "Classeur de cartes",
+    albumTimbres: "Album de timbres",
+    paquetCartes: "Paquet de 3 cartes",
+    pochetteTimbres: "Pochette de 3 timbres",
+    albumDescription:
+      "Ouvre une nouvelle collection : les pièces trouvées en brocante s'y rangent d'elles-mêmes.",
+    paquetDescription:
+      "3 pièces au hasard. Les doublons se recyclent en pièces de réparation.",
   },
   soutien: {
     titre: "Soutenir Broc",

@@ -8,6 +8,7 @@ import { JEUX_ARCADE } from "@/lib/bazar/arcade";
 import { ETAT_ARTICLE_BAZAR } from "@/lib/bazar/achat";
 import { etoileCount } from "@/lib/etat";
 import { ECLAT_PRISTIN } from "@/components/ui/ItemSticker";
+import { initAlbums } from "@/lib/albums";
 import type { EtalBazar } from "@/types/game";
 
 afterEach(cleanup);
@@ -46,6 +47,7 @@ function monter(
   jetons = 25,
   resultat: { ok: boolean; raison?: string } = { ok: true },
   onZoneIndex?: (idx: number) => void,
+  albums = initAlbums(),
 ) {
   // Le retour n'est pas décoratif : la fiche de l'article ne se referme que
   // s'il est `ok`, et affiche sinon la raison.
@@ -57,6 +59,7 @@ function monter(
       etal={etal}
       jetons={jetons}
       jeuxArcade={jeux}
+      albums={albums}
       onAcheter={onAcheter}
       onSortir={onSortir}
       onZoneIndex={onZoneIndex}
@@ -104,9 +107,30 @@ describe("BazarScene", () => {
   it("pose l'unique lot sur la planche du bas", () => {
     monter();
     expect(screen.getByTestId("article-case4")).toBeTruthy();
-    // NB_LOTS_PIECES = 1 depuis 2026-08-30 : case5/case6 ne rendent plus rien.
-    expect(screen.queryByTestId("article-case5")).toBeNull();
-    expect(screen.queryByTestId("article-case6")).toBeNull();
+  });
+
+  // ── Le classeur de cartes et l'album de timbres (2026-08-30) ────────────
+  // Ils occupent les deux cases restantes de la planche du bas : tant qu'un
+  // album n'est pas acheté, la case propose l'album lui-même ; une fois
+  // acheté, elle propose un paquet/une pochette de 3 pièces.
+  it("cases 5 et 6 : classeur et album avant achat, paquet et pochette après", () => {
+    monter(ETAL, 25, { ok: true }, undefined, initAlbums());
+    expect(screen.getByRole("button", { name: /classeur de cartes/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /album de timbres/i })).toBeTruthy();
+    cleanup();
+    const a = initAlbums();
+    a.classeur.achete = true;
+    a.timbres.achete = true;
+    monter(ETAL, 25, { ok: true }, undefined, a);
+    expect(screen.getByRole("button", { name: /paquet de 3 cartes/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /pochette de 3 timbres/i })).toBeTruthy();
+  });
+
+  it("taper le classeur ouvre la fiche et l'achat envoie { type: 'album', album: 'classeur' }", () => {
+    const { onAcheter } = monter(ETAL, 25, { ok: true }, undefined, initAlbums());
+    fireEvent.click(screen.getByRole("button", { name: /classeur de cartes/i }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: /acheter pour 10/i }));
+    expect(onAcheter).toHaveBeenCalledWith({ type: "album", album: "classeur" });
   });
 
   // ── Le badge de quantité quitte l'étagère (recette du 2026-08-20) ────────

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import { Album, BookOpen, Mail, Package } from "lucide-react";
 import { ItemSticker } from "@/components/ui/ItemSticker";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
 import { BazarcoinIcon } from "@/components/ui/BazarcoinIcon";
@@ -14,7 +15,9 @@ import { etoileCount } from "@/lib/etat";
 import { ETAT_ARTICLE_BAZAR } from "@/lib/bazar/achat";
 import { celebrerAchat } from "@/lib/celebrationAchat";
 import { getItemImageUrl } from "@/lib/itemImages";
+import type { AlbumId } from "@/data/pieces";
 import type { CategorieObjet, Rarete } from "@/types/game";
+import { RondArticle } from "./RondArticle";
 
 /**
  * L'article présenté en grand. Deux genres, parce que l'étal en vend deux :
@@ -45,6 +48,26 @@ export type ArticleDetail =
       genre: "pieces";
       categorie: CategorieObjet;
       quantite: number;
+      libelle: string;
+      prix: number;
+    }
+  /**
+   * Le classeur de cartes ou l'album de timbres, pas encore acheté : achat
+   * unique, condition d'entrée pour ouvrir des paquets de cet album.
+   */
+  | {
+      genre: "album";
+      album: AlbumId;
+      libelle: string;
+      prix: number;
+    }
+  /**
+   * Un paquet de 3 pièces (cartes ou timbres) de l'album donné — achetable
+   * en stock illimité une fois l'album acquis.
+   */
+  | {
+      genre: "paquet";
+      album: AlbumId;
       libelle: string;
       prix: number;
     };
@@ -160,6 +183,32 @@ const messageRefus: CSSProperties = {
 
 /** Côté de l'engrenage d'un lot de pièces vu en grand, en px. */
 const TAILLE_PIECE_GRANDE = 150;
+
+/**
+ * Ce que fait un album ou un paquet — sous la plaque, à la place des étoiles
+ * qu'un album n'a pas. Même contrainte de lisibilité que le refus : le fond
+ * est le voile sombre, pas du papier crème.
+ */
+const descriptionAlbum: CSSProperties = {
+  fontSize: 13,
+  color: "var(--paper-100)",
+  textAlign: "center",
+  margin: "0 0 14px",
+  textShadow: "0 1px 2px rgba(0,0,0,.6)",
+};
+
+/** L'icône PLACEHOLDER d'un album/paquet — en attendant `public/bazar/albums/*.webp`. */
+function IconeAlbum({
+  genre,
+  album,
+}: {
+  genre: "album" | "paquet";
+  album: AlbumId;
+}) {
+  const Icone =
+    album === "classeur" ? (genre === "paquet" ? Package : Album) : genre === "paquet" ? Mail : BookOpen;
+  return <Icone size={72} />;
+}
 
 /**
  * La fiche d'un article du Bazar : l'article en grand, son nom, son prix en
@@ -289,13 +338,19 @@ export function ArticleDetailBazar({
                 />
               ) : null}
             </div>
-          ) : (
+          ) : article.genre === "pieces" ? (
             <div style={pieceBox}>
               <PieceIcon
                 categorie={article.categorie}
                 size={TAILLE_PIECE_GRANDE}
                 count={article.quantite}
               />
+            </div>
+          ) : (
+            <div style={pieceBox}>
+              <RondArticle size={120}>
+                <IconeAlbum genre={article.genre} album={article.album} />
+              </RondArticle>
             </div>
           )}
         </div>
@@ -333,6 +388,15 @@ export function ArticleDetailBazar({
         <div style={plaqueNom} data-testid="fiche-plaque">
           {article.libelle}
         </div>
+
+        {/* Ce que fait l'album ou le paquet — à la place des étoiles qu'ils
+            n'ont pas : ni l'un ni l'autre n'est un objet du catalogue avec un
+            état à promettre. */}
+        {article.genre === "album" || article.genre === "paquet" ? (
+          <p style={descriptionAlbum}>
+            {article.genre === "album" ? d.bazar.albumDescription : d.bazar.paquetDescription}
+          </p>
+        ) : null}
 
           <button
             type="button"

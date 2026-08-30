@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Album, BookOpen, Mail, Package } from "lucide-react";
 import { UnifiedPanorama, type PanoramaZone } from "@/components/mobile/panorama/UnifiedPanorama";
 import { PieceIcon } from "@/components/atelier/PieceIcon";
 import { ItemSticker } from "@/components/ui/ItemSticker";
@@ -11,9 +12,11 @@ import { nomObjet } from "@/lib/i18n/contenu";
 import { qgPct } from "@/components/mobile/qg/layout";
 import { useQgObjet } from "@/components/mobile/qg/dev/QgEditContext";
 import { ETAT_ARTICLE_BAZAR, type AchatBazar } from "@/lib/bazar/achat";
+import { PRIX_ALBUM, PRIX_PAQUET } from "@/lib/bazar/albums";
 import type { JeuArcade } from "@/lib/bazar/arcade";
-import type { EtalBazar } from "@/types/game";
+import type { AlbumsState, EtalBazar } from "@/types/game";
 import { ArticleBazar } from "./ArticleBazar";
+import { RondArticle } from "./RondArticle";
 import { TenancierBazar } from "./TenancierBazar";
 import { BorneArcade } from "./BorneArcade";
 import { BorneArcadeEcran } from "./BorneArcadeEcran";
@@ -23,7 +26,7 @@ import {
   type ResultatAchatBazar,
 } from "./ArticleDetailBazar";
 import { PLAQUE_ETIQUETTE } from "./etiquette";
-import { BAZAR_LAYOUT, CLES_BAZAR, CLES_ARTICLES, CLES_LOTS } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_BAZAR, CLES_ARTICLES } from "./bazarLayout";
 
 /** Les trois zones du Bazar : le coin arcade, le comptoir, les antiquités. */
 export const ZONES_BAZAR: PanoramaZone[] = [
@@ -37,6 +40,12 @@ interface BazarSceneProps {
   horloge?: () => number;
   etal: EtalBazar;
   jetons: number;
+  /**
+   * L'état du classeur de cartes et de l'album de timbres : les deux cases
+   * restantes de la planche du bas en dérivent leur libellé (album tant qu'il
+   * n'est pas acheté, sinon un paquet de 3 pièces) et leur icône.
+   */
+  albums: AlbumsState;
   /**
    * L'état des onze jeux, déjà calculé. La scène reste une vue pure : elle ne
    * touche jamais à la collection, `src/app/bazar/page.tsx` la lui dérive.
@@ -68,6 +77,7 @@ interface BazarSceneProps {
 export function BazarScene({
   etal,
   jetons,
+  albums,
   jeuxArcade,
   horloge,
   onAcheter,
@@ -118,36 +128,79 @@ export function BazarScene({
             marchandise. */}
         <BorneArcade onOuvrir={() => setBorneOuverte(true)} />
 
-        {etal.lotsPieces.map((lot, index) => {
-          const libelle = tr(d.bazar.lotPieces, {
-            n: lot.quantite,
-            categorie: libelleCategorie(lot.categorie, d),
-          });
+        {etal.lotsPieces[0] &&
+          (() => {
+            const lot = etal.lotsPieces[0];
+            const libelle = tr(d.bazar.lotPieces, {
+              n: lot.quantite,
+              categorie: libelleCategorie(lot.categorie, d),
+            });
+            return (
+              <ArticleBazar
+                key={lot.categorie}
+                cle="case4"
+                // SANS `count` : l'engrenage nu. Le badge de quantité vivait sous
+                // l'engrenage (`bottom: -3`), c'est-à-dire exactement là où la
+                // plaque de prix est venue mordre sur l'arête basse de la case —
+                // elle le recouvrait. L'auteur a tranché à la recette du
+                // 2026-08-20 : sur l'étagère, un lot montre son engrenage et son
+                // prix, rien d'autre. La quantité se lit dans la fiche, à un tap.
+                // Elle reste dans le NOM ACCESSIBLE de l'article ci-dessous : un
+                // joueur non-voyant n'a pas de badge à perdre, et c'est ce texte
+                // qu'il entend à la place.
+                visuel={<PieceIcon categorie={lot.categorie} size={48} />}
+                libelle={libelle}
+                onOuvrir={() =>
+                  setSelection({
+                    detail: {
+                      genre: "pieces",
+                      categorie: lot.categorie,
+                      quantite: lot.quantite,
+                      libelle,
+                      prix: lot.prix,
+                    },
+                    achat: { type: "pieces", index: 0 },
+                  })
+                }
+              />
+            );
+          })()}
+
+        {/* Le classeur de cartes et l'album de timbres, sur les deux cases
+            restantes de la planche du bas. Tant que l'album n'est pas acheté,
+            la case le PROPOSE (visuel + libellé de l'album) ; une fois
+            acheté, elle propose un paquet/une pochette de 3 pièces, en stock
+            illimité — comme le lot de pièces de restauration voisin. Icônes
+            lucide en PLACEHOLDER : `public/bazar/albums/*.webp` n'existe pas
+            encore dans ce chantier. */}
+        {(["classeur", "timbres"] as const).map((album, i) => {
+          const achete = albums[album].achete;
+          const libelle =
+            album === "classeur"
+              ? achete
+                ? d.bazar.paquetCartes
+                : d.bazar.classeur
+              : achete
+                ? d.bazar.pochetteTimbres
+                : d.bazar.albumTimbres;
+          const prix = achete ? PRIX_PAQUET : PRIX_ALBUM;
+          const Icone = album === "classeur" ? (achete ? Package : Album) : achete ? Mail : BookOpen;
           return (
             <ArticleBazar
-              key={lot.categorie}
-              cle={CLES_LOTS[index]}
-              // SANS `count` : l'engrenage nu. Le badge de quantité vivait sous
-            // l'engrenage (`bottom: -3`), c'est-à-dire exactement là où la
-            // plaque de prix est venue mordre sur l'arête basse de la case —
-            // elle le recouvrait. L'auteur a tranché à la recette du
-            // 2026-08-20 : sur l'étagère, un lot montre son engrenage et son
-            // prix, rien d'autre. La quantité se lit dans la fiche, à un tap.
-            // Elle reste dans le NOM ACCESSIBLE de l'article ci-dessous : un
-            // joueur non-voyant n'a pas de badge à perdre, et c'est ce texte
-            // qu'il entend à la place.
-            visuel={<PieceIcon categorie={lot.categorie} size={48} />}
+              key={album}
+              cle={i === 0 ? "case5" : "case6"}
+              visuel={
+                <RondArticle>
+                  <Icone size={28} />
+                </RondArticle>
+              }
               libelle={libelle}
               onOuvrir={() =>
                 setSelection({
-                  detail: {
-                    genre: "pieces",
-                    categorie: lot.categorie,
-                    quantite: lot.quantite,
-                    libelle,
-                    prix: lot.prix,
-                  },
-                  achat: { type: "pieces", index },
+                  detail: achete
+                    ? { genre: "paquet", album, libelle, prix }
+                    : { genre: "album", album, libelle, prix },
+                  achat: achete ? { type: "paquet", album } : { type: "album", album },
                 })
               }
             />

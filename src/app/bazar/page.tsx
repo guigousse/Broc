@@ -11,6 +11,7 @@ import { audioManager } from "@/lib/audio/audioManager";
 import { usePassageIris } from "@/components/mobile/usePassageIris";
 import { bazarEstOuvert } from "@/lib/bazar/ouverture";
 import { jeuxArcade } from "@/lib/bazar/arcade";
+import { albumsDe } from "@/lib/albums";
 import { PorteBazarSheet } from "@/components/bazar/PorteBazarSheet";
 import { EnergieRecharge } from "@/components/mobile/EnergieRecharge";
 import { volumeAmbianceBazarForPos } from "@/components/bazar/bazarAudioCurves";
@@ -139,6 +140,7 @@ export default function BazarPage() {
           horloge={() => tempsConfiance() ?? Date.now()}
           etal={state.bazar}
           jetons={state.jetons}
+          albums={albumsDe(state)}
           jeuxArcade={jeuxArcade(state.collection)}
           onAcheter={handleAcheter}
           onSortir={() => {

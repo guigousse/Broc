@@ -905,6 +905,14 @@ export const es: DictionnaireUI = {
     delaiHeureUne: "{n} hora",
     delaiMinutes: "{n} minutos",
     delaiMinuteUne: "{n} minuto",
+    classeur: "Clasificador de cromos",
+    albumTimbres: "Álbum de sellos",
+    paquetCartes: "Sobre de 3 cromos",
+    pochetteTimbres: "Sobre de 3 sellos",
+    albumDescription:
+      "Abre una nueva colección: las piezas halladas en el mercadillo se guardan solas.",
+    paquetDescription:
+      "3 piezas al azar. Los duplicados se reciclan en piezas de reparación.",
   },
   soutien: {
     titre: "Apoyar a Broc",

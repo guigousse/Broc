@@ -924,6 +924,13 @@ export const el: DictionnaireUI = {
     delaiHeureUne: "{n} ώρα",
     delaiMinutes: "{n} λεπτά",
     delaiMinuteUne: "{n} λεπτό",
+    classeur: "Ντοσιέ καρτών",
+    albumTimbres: "Άλμπουμ γραμματοσήμων",
+    paquetCartes: "Πακέτο 3 καρτών",
+    pochetteTimbres: "Φάκελος 3 γραμματοσήμων",
+    albumDescription:
+      "Ανοίγει μια νέα συλλογή: τα κομμάτια από το παζάρι τακτοποιούνται μόνα τους.",
+    paquetDescription: "3 τυχαία κομμάτια. Τα διπλά ανακυκλώνονται σε ανταλλακτικά.",
   },
   soutien: {
     titre: "Στήριξε το Broc",

@@ -33,6 +33,13 @@ const LOT: ArticleDetail = {
   prix: 3,
 };
 
+const PAQUET: ArticleDetail = {
+  genre: "paquet",
+  album: "classeur",
+  libelle: "Paquet de 3 cartes",
+  prix: 5,
+};
+
 function monter(
   article: ArticleDetail | null = VITRINE,
   jetons = 25,
@@ -86,6 +93,21 @@ describe("ArticleDetailBazar", () => {
     expect(screen.getByRole("dialog").querySelector("img")).toBeNull();
     // Le badge de quantité de l'engrenage.
     expect(screen.getByText("5")).toBeTruthy();
+  });
+
+  // ── Le classeur/album et leurs paquets/pochettes (2026-08-30) ───────────
+  it("une fiche de paquet affiche sa description et son bouton d'achat", () => {
+    monter(PAQUET);
+    expect(screen.getByText("Paquet de 3 cartes")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "3 pièces au hasard. Les doublons se recyclent en pièces de réparation.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Acheter pour 5 Bazarcoins" })).toBeTruthy();
+    // Aucun visuel d'objet ni d'engrenage : l'icône placeholder de l'album.
+    expect(screen.getByRole("dialog").querySelector("img")).toBeNull();
+    expect(screen.queryByTestId("etoiles-fiche")).toBeNull();
   });
 
   // ── LA FICHE FLOTTE (refonte du 2026-08-26) ─────────────────────────────

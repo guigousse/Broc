@@ -898,6 +898,13 @@ export const en: DictionnaireUI = {
     delaiHeureUne: "{n} hour",
     delaiMinutes: "{n} minutes",
     delaiMinuteUne: "{n} minute",
+    classeur: "Card binder",
+    albumTimbres: "Stamp album",
+    paquetCartes: "Pack of 3 cards",
+    pochetteTimbres: "Pouch of 3 stamps",
+    albumDescription:
+      "Opens a new collection: pieces found at flea markets file themselves in it.",
+    paquetDescription: "3 random pieces. Duplicates recycle into repair parts.",
   },
   soutien: {
     titre: "Support Broc",
