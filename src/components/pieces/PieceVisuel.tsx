@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { Gamepad2, Landmark, PawPrint, Plane, Star, type LucideIcon } from "lucide-react";
-import { getPiece, type ThemeTimbre } from "@/data/pieces";
+import { getPiece, type PieceCollection, type ThemeTimbre } from "@/data/pieces";
 import { getItemImageUrl } from "@/lib/itemImages";
 import { pieceImageSrc } from "@/lib/pieceImages";
 import { getRarityColors } from "@/lib/rarityColors";
@@ -34,14 +34,13 @@ export function PieceVisuel({ id, size, grise = false }: Props) {
   }
   return (
     <div data-testid="piece-visuel" data-piece-source="placeholder" style={box}>
-      {piece.album === "classeur" ? <CartePlaceholder id={id} /> : <TimbrePlaceholder id={id} />}
+      {piece.album === "classeur" ? <CartePlaceholder piece={piece} /> : <TimbrePlaceholder piece={piece} />}
     </div>
   );
 }
 
 /** Carte à jouer : l'objet source « toonifié » par un filtre, dans un cadre teinté par la rareté. */
-function CartePlaceholder({ id }: { id: string }) {
-  const piece = getPiece(id)!;
+function CartePlaceholder({ piece }: { piece: PieceCollection }) {
   const couleurs = getRarityColors(piece.rarete);
   const src = piece.source ? getItemImageUrl(piece.source) : null;
   return (
@@ -55,8 +54,7 @@ function CartePlaceholder({ id }: { id: string }) {
 }
 
 /** Timbre : rectangle dentelé (masque SVG), fond du thème, icône, numéro. */
-function TimbrePlaceholder({ id }: { id: string }) {
-  const piece = getPiece(id)!;
+function TimbrePlaceholder({ piece }: { piece: PieceCollection }) {
   const theme = piece.serie as ThemeTimbre;
   const Icone = ICONE_THEME_TIMBRE[theme];
   const fond = COULEUR_THEME_TIMBRE[theme];
@@ -70,7 +68,7 @@ function TimbrePlaceholder({ id }: { id: string }) {
     <div style={{ width: "100%", height: "100%", position: "relative", display: "grid", placeItems: "center" }}>
       <svg viewBox="0 0 100 100" width="100%" height="100%" style={{ position: "absolute", inset: 0 }} aria-hidden>
         <rect x="0" y="0" width="100" height="100" fill="var(--paper-100)" />
-        <g fill="var(--wood-light)" dangerouslySetInnerHTML={{ __html: dents.join("") }} />
+        <g fill="#e8dcc4" dangerouslySetInnerHTML={{ __html: dents.join("") }} />
         <rect x="9" y="9" width="82" height="82" fill={fond} stroke={getRarityColors(piece.rarete).outer} strokeWidth="2" />
         <text x="88" y="88" fontSize="11" textAnchor="end" fill="#fff" fontFamily="var(--font-display)">{piece.ordre + 1}</text>
       </svg>
