@@ -168,30 +168,20 @@ export function OuverturePaquetOverlay({
   const { d, tr, locale } = useLangue();
   const [revele, setRevele] = useState(() => (prefersReducedMotion() ? pieces.length : 0));
 
-  // Auto-avance : à défaut de tap, une carte se retourne toutes les 800 ms.
-  // Un SEUL intervalle posé au montage — pas une chaîne de `setTimeout`
-  // reprogrammée à chaque révélation : sous timers factices (les tests), un
-  // `setTimeout` réarmé depuis un `useEffect` déclenché par la révélation
-  // PRÉCÉDENTE dépend d'un rendu React entre deux avancées d'horloge, ce
-  // qu'un seul `vi.advanceTimersByTime` synchrone ne fournit pas — la chaîne
-  // se bloque dès la 2ᵉ carte. L'intervalle unique n'a besoin d'aucun rendu
-  // intermédiaire : chaque tick avance l'état lui-même et s'éteint une fois
-  // les 3 cartes retournées.
+  // Auto-avance : 800 ms SANS TAP retourne la carte suivante — pas une
+  // cadence fixe depuis le montage. L'effet est keyé sur `revele` : chaque
+  // révélation (manuelle OU automatique) le fait se nettoyer (annule le
+  // minuteur en attente) puis se relancer avec un `setTimeout(800)` tout
+  // neuf. Un tap à 750 ms annule donc le minuteur programmé pour 800 ms et
+  // en repose un pour 750+800 — la carte suivante n'arrive PAS à 800 ms.
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    const id = setInterval(() => {
-      setRevele((r) => {
-        if (r >= pieces.length) {
-          clearInterval(id);
-          return r;
-        }
-        const suivant = r + 1;
-        if (suivant >= pieces.length) clearInterval(id);
-        return suivant;
-      });
+    if (revele >= pieces.length) return;
+    const t = setTimeout(() => {
+      setRevele((r) => Math.min(pieces.length, r + 1));
     }, DELAI_AUTO_MS);
-    return () => clearInterval(id);
-  }, [pieces.length]);
+    return () => clearTimeout(t);
+  }, [revele, pieces.length]);
 
   const avancer = () => setRevele((r) => Math.min(pieces.length, r + 1));
 

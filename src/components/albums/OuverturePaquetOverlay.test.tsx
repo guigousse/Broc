@@ -54,12 +54,60 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
         onClose={() => {}}
       />,
     );
+    // Trois avances SÉPARÉES, chacune dans son propre `act` : le minuteur est
+    // réarmé par un `useEffect` keyé sur `revele`, donc la révélation de la
+    // 2ᵉ et de la 3ᵉ carte dépend d'un rendu React entre deux avancées —
+    // qu'un unique `advanceTimersByTime(2400)` synchrone ne fournit pas.
     act(() => {
-      vi.advanceTimersByTime(2400);
+      vi.advanceTimersByTime(800);
+    });
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    act(() => {
+      vi.advanceTimersByTime(800);
     });
     expect(
       screen.getAllByTestId("carte-paquet").every((c) => c.dataset.retournee === "1"),
     ).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it("un tap à 750 ms repousse l'auto-avance : elle n'arrive PAS à 800 ms", () => {
+    vi.useFakeTimers();
+    render(
+      <OuverturePaquetOverlay
+        albumId="timbres"
+        pieces={["timbre.renard_roux", "timbre.lynx_boreal", "timbre.ours_des_pyrenees"]}
+        quantitesAvant={{}}
+        onVoirAlbum={() => {}}
+        onClose={() => {}}
+      />,
+    );
+    act(() => {
+      vi.advanceTimersByTime(750);
+    });
+    const cartes = screen.getAllByTestId("carte-paquet");
+    expect(cartes[0].dataset.retournee).toBe("0");
+    act(() => {
+      fireEvent.click(cartes[0]);
+    });
+    expect(cartes[0].dataset.retournee).toBe("1");
+
+    // Le minuteur programmé pour 800 ms (donc 50 ms après ce tap) a été
+    // annulé par le tap et un nouveau posé pour 800 ms PLUS TARD : à 850 ms
+    // (soit 100 ms après le tap), la carte 2 ne doit PAS encore être
+    // retournée.
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(cartes[1].dataset.retournee).toBe("0");
+
+    // Encore 700 ms (800 ms écoulées depuis le tap) : la carte 2 se retourne.
+    act(() => {
+      vi.advanceTimersByTime(700);
+    });
+    expect(cartes[1].dataset.retournee).toBe("1");
     vi.useRealTimers();
   });
 
