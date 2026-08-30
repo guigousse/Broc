@@ -45,7 +45,7 @@ import { aConnaisseurChinage, bonusMarchandageCategorie } from "@/lib/competence
 import { energieCourante } from "@/lib/energie";
 import { getCapaciteStockage, placeRestante, stockageEstPlein, totalEnStock } from "@/lib/stockage";
 import { albumDe, estPiece, type AlbumId } from "@/data/pieces";
-import { albumsDe } from "@/lib/albums";
+import { albumsDe, piecePossedee } from "@/lib/albums";
 import {
   insererSlideMystere,
   nbBoitesReclamees,
@@ -153,6 +153,11 @@ export default function SessionChinePage() {
    */
   const noterDecouverte = (it: ObjetEnVente) => {
     if (!state) return;
+    // Une pièce (carte/timbre) ne transite jamais par `collection` : `templateVu`
+    // y répondrait toujours faux et fêterait la même pièce à chaque rencontre.
+    // Sa nouveauté se lit directement sur son album, à l'affichage (voir la
+    // construction de `slides` ci-dessous).
+    if (estPiece(it.objet.templateId)) return;
     if (templatesFetesRef.current.has(it.objet.templateId)) return;
     if (templateVu(state.collection, it.objet.templateId)) return;
     templatesFetesRef.current.add(it.objet.templateId);
@@ -320,8 +325,18 @@ export default function SessionChinePage() {
                 bonusMarchandageCategorie(state, it.objet.categorie),
               )
             : undefined,
-        dejaPossede: state ? templateEnMainOuDonne(state, it.objet.templateId) : false,
-        estNouveau: decouvertesRef.current.has(it.id),
+        // Une pièce (carte/timbre) est possédée/nouvelle au sens de son album
+        // (`albums.<id>.pieces`), pas de `collection` — voir `noterDecouverte`.
+        dejaPossede: state
+          ? estPiece(it.objet.templateId)
+            ? piecePossedee(albumsDe(state), it.objet.templateId)
+            : templateEnMainOuDonne(state, it.objet.templateId)
+          : false,
+        estNouveau: estPiece(it.objet.templateId)
+          ? state
+            ? !piecePossedee(albumsDe(state), it.objet.templateId)
+            : false
+          : decouvertesRef.current.has(it.id),
         albumManquant: verrouPour(it),
       });
     }

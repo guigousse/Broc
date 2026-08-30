@@ -7,6 +7,17 @@ export const NB_PAGES_ALBUM = 2;
 export const TAILLE_PAQUET = 3;
 export const POIDS_RARETE: Record<Rarete, number> = { commun: 70, rare: 25, legendaire: 5 };
 
+/** Largeur d'un timbre, en fraction de la largeur de page. Vit ici (et pas
+ *  dans `albumTimbresLayout`, un module de composant) pour que `poserTimbre`
+ *  puisse s'en servir sans faire dépendre `src/lib` de `src/components`. */
+export const TAILLE_TIMBRE = 1 / 6;
+
+/** Borne x à la demi-largeur du timbre de chaque côté, pour qu'il reste sur la page. */
+export function xBorne(xFraction: number): number {
+  const demi = TAILLE_TIMBRE / 2;
+  return Math.min(1 - demi, Math.max(demi, xFraction));
+}
+
 export function initAlbums(): AlbumsState {
   return {
     classeur: { achete: false, pieces: {}, nouvelles: [] },
@@ -27,7 +38,9 @@ function patchAlbum(albums: AlbumsState, id: AlbumId, patch: Partial<AlbumsState
 
 export function ajouterPiece(albums: AlbumsState, id: string): AlbumsState {
   const a = albumDe(id);
-  if (!a) return albums;
+  // Id inconnu (pièce renommée/retirée du catalogue depuis une save ancienne,
+  // ou id corrompu) : ignoré plutôt qu'empilé — voir M6 revue finale 2026-08-30.
+  if (!a || !getPiece(id)) return albums;
   const album = albums[a];
   const qte = album.pieces[id] ?? 0;
   return patchAlbum(albums, a, {
@@ -42,12 +55,23 @@ export function marquerConsultee(albums: AlbumsState, id: string): AlbumsState {
   return patchAlbum(albums, a, { nouvelles: albums[a].nouvelles.filter((x) => x !== id) });
 }
 
+/** Vrai si au moins un exemplaire de la pièce (carte/timbre) est déjà dans son
+ *  album — contrepartie de `templateEnMainOuDonne`/`templateVu` pour les
+ *  pièces, qui ne transitent jamais par `collection` (voir I3 revue finale
+ *  2026-08-30). */
+export function piecePossedee(albums: AlbumsState, id: string): boolean {
+  const a = albumDe(id);
+  return a !== null && !!albums[a].pieces[id];
+}
+
 export function nbPossedees(album: AlbumState): number {
-  return Object.keys(album.pieces).length;
+  return Object.keys(album.pieces).filter((id) => getPiece(id)).length;
 }
 
 export function doublons(album: AlbumState): number {
-  return Object.values(album.pieces).reduce((s, q) => s + Math.max(0, q - 1), 0);
+  return Object.entries(album.pieces)
+    .filter(([id]) => getPiece(id))
+    .reduce((s, [, q]) => s + Math.max(0, q - 1), 0);
 }
 
 /** 1 pièce de réparation (catégorie de l'album) par exemplaire recyclé. */
@@ -82,7 +106,7 @@ export function ouvrirPaquet(albumId: AlbumId, rng: () => number = Math.random):
 
 export function poserTimbre(albums: AlbumsState, id: string, page: 0 | 1, ligne: PlacementTimbre["ligne"], x: number): AlbumsState {
   if (albumDe(id) !== "timbres" || !albums.timbres.pieces[id] || !getPiece(id)) return albums;
-  const xb = Math.min(1, Math.max(0, x));
+  const xb = xBorne(x);
   return patchAlbum(albums, "timbres", {
     placements: { ...albums.timbres.placements, [id]: { page, ligne, x: xb } },
     ordreZ: [...albums.timbres.ordreZ.filter((z) => z !== id), id],

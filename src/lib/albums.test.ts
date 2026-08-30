@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import {
   acheterPiece, ajouterPiece, albumsDe, doublons, initAlbums, marquerConsultee, nbPossedees,
-  ouvrirPaquet, poserTimbre, premierePlaceLibre, recyclerDoublons, rendreAuBac,
+  ouvrirPaquet, piecePossedee, poserTimbre, premierePlaceLibre, recyclerDoublons, rendreAuBac,
   tirerPiece, TAILLE_PAQUET,
 } from "@/lib/albums";
 import { createMockGameState, createMockObjet } from "@/lib/__test-fixtures__/gameState";
@@ -26,6 +26,31 @@ describe("albums — état", () => {
     expect(nbPossedees(a.timbres)).toBe(1);
     expect(doublons(a.timbres)).toBe(1);
     expect(marquerConsultee(a, "timbre.renard_roux").timbres.nouvelles).toEqual([]);
+  });
+
+  it("piecePossedee : faux tant que la pièce n'a jamais été ajoutée, vrai dès le premier exemplaire", () => {
+    const a0 = initAlbums();
+    expect(piecePossedee(a0, "timbre.renard_roux")).toBe(false);
+    const a1 = ajouterPiece(a0, "timbre.renard_roux");
+    expect(piecePossedee(a1, "timbre.renard_roux")).toBe(true);
+  });
+
+  it("ajouterPiece ignore un id inconnu (piece renommée/retirée depuis une save ancienne)", () => {
+    const a = ajouterPiece(initAlbums(), "timbre.ceci_n_existe_pas");
+    expect(a).toEqual(initAlbums());
+  });
+
+  it("nbPossedees/doublons ne comptent que les ids connus", () => {
+    let a = ajouterPiece(initAlbums(), "timbre.renard_roux");
+    a = ajouterPiece(a, "timbre.renard_roux");
+    // Simule une save ancienne : un id inconnu resté dans `pieces` (avant
+    // qu'`ajouterPiece` ne les refuse). Il ne doit pas fausser les comptes.
+    a = {
+      ...a,
+      timbres: { ...a.timbres, pieces: { ...a.timbres.pieces, "timbre.disparu": 3 } },
+    };
+    expect(nbPossedees(a.timbres)).toBe(1);
+    expect(doublons(a.timbres)).toBe(1);
   });
 
   it("recyclerDoublons ramène chaque quantité à 1 et crédite la catégorie de l'album", () => {
@@ -57,15 +82,17 @@ describe("albums — tirage", () => {
 
 describe("album de timbres — placement", () => {
   const id = "timbre.renard_roux";
-  it("poserTimbre borne x, aimante la ligne et passe le timbre dessus", () => {
+  it("poserTimbre borne x à la demi-largeur du timbre (pas au bord brut), aimante la ligne et passe le timbre dessus", () => {
     let a = ajouterPiece(initAlbums(), id);
     a = ajouterPiece(a, "timbre.lynx_boreal");
     a = poserTimbre(a, "timbre.lynx_boreal", 0, 2, 0.5);
     a = poserTimbre(a, id, 1, 4, 1.7);
-    expect(a.timbres.placements[id]).toEqual({ page: 1, ligne: 4, x: 1 });
+    expect(a.timbres.placements[id].page).toBe(1);
+    expect(a.timbres.placements[id].ligne).toBe(4);
+    expect(a.timbres.placements[id].x).toBeCloseTo(11 / 12);
     expect(a.timbres.ordreZ).toEqual(["timbre.lynx_boreal", id]);
     a = poserTimbre(a, "timbre.lynx_boreal", 0, 0, -3);
-    expect(a.timbres.placements["timbre.lynx_boreal"].x).toBe(0);
+    expect(a.timbres.placements["timbre.lynx_boreal"].x).toBeCloseTo(1 / 12);
     expect(a.timbres.ordreZ).toEqual([id, "timbre.lynx_boreal"]);
   });
 

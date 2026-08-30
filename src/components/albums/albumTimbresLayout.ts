@@ -6,8 +6,10 @@
    `AlbumTimbresOverlay` pour la pose au pointeur ET pour la vérification
    « le point lâché est-il dans le bac ? » (bornes seules, ligne/x ignorés). */
 
-/** Largeur d'un timbre, en fraction de la largeur de page. */
-export const TAILLE_TIMBRE = 1 / 6;
+// TAILLE_TIMBRE et xBorne vivent dans `src/lib/albums` (poserTimbre en a
+// besoin) et sont ré-exportées ici pour ne rien changer côté appelants.
+import { xBorne } from "@/lib/albums";
+export { TAILLE_TIMBRE, xBorne } from "@/lib/albums";
 
 /** Hauteur de page = largeur × ce ratio (page plus haute que large). */
 export const HAUTEUR_PAGE_RATIO = 1.3;
@@ -31,12 +33,6 @@ export function yDeLigne(ligne: Ligne): number {
 export function ligneLaPlusProche(yFraction: number): Ligne {
   const idx = Math.round(yFraction * 5 - 0.5);
   return Math.min(4, Math.max(0, idx)) as Ligne;
-}
-
-/** Borne x à la demi-largeur du timbre de chaque côté, pour qu'il reste sur la page. */
-export function xBorne(xFraction: number): number {
-  const demi = TAILLE_TIMBRE / 2;
-  return Math.min(1 - demi, Math.max(demi, xFraction));
 }
 
 /**
