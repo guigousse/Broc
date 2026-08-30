@@ -139,6 +139,12 @@ interface FicheObjetProps {
   prixAchat: number | null | undefined;
   /** La croix en haut à droite du voile. */
   onClose: () => void;
+  /**
+   * Remplace le sticker par un visuel personnalisé (ex. `PieceVisuel` pour
+   * une pièce du classeur/album — pas un `Objet` du catalogue, `ItemSticker`
+   * ne saurait pas la dessiner). Absent = `ItemSticker` habituel.
+   */
+  visuel?: ReactNode;
   /** Ce que la fiche ajoute sous la ligne valeur/thème. */
   children?: ReactNode;
 }
@@ -154,6 +160,7 @@ export function FicheObjet({
   prixMarche,
   prixAchat,
   onClose,
+  visuel,
   children,
 }: FicheObjetProps) {
   const { d } = useLangue();
@@ -172,15 +179,17 @@ export function FicheObjet({
       <div style={ficheCard}>
         <div style={previewWrap}>
           <div style={stickerBox} data-testid="fiche-visuel">
-            <ItemSticker
-              templateId={templateId}
-              categorie={categorie}
-              etat={etat}
-              fill
-              tilt={false}
-              variant={grise ? "grise" : "normal"}
-              eager
-            />
+            {visuel ?? (
+              <ItemSticker
+                templateId={templateId}
+                categorie={categorie}
+                etat={etat}
+                fill
+                tilt={false}
+                variant={grise ? "grise" : "normal"}
+                eager
+              />
+            )}
           </div>
         </div>
 
