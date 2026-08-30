@@ -38,6 +38,11 @@ import {
 import { LivrablesBadges } from "@/components/mobile/qg/LivrablesBadges";
 import { QgJournalSol } from "@/components/mobile/qg/QgJournalSol";
 import { QgJournalBureau } from "@/components/mobile/qg/QgJournalBureau";
+import { QgCarnet } from "@/components/mobile/qg/QgCarnet";
+import { AlbumsSheet } from "@/components/mobile/qg/sheets/AlbumsSheet";
+import { ClasseurOverlay } from "@/components/albums/ClasseurOverlay";
+import { AlbumTimbresOverlay } from "@/components/albums/AlbumTimbresOverlay";
+import { albumsDe } from "@/lib/albums";
 import { GazetteAchatModale } from "@/components/mobile/qg/GazetteAchatModale";
 import { journalSolMode } from "@/lib/gazette";
 import { QgPorte } from "@/components/mobile/qg/QgPorte";
@@ -102,6 +107,7 @@ import { vinylAudioUrl, vinylHasAudio } from "@/data/vinylesAudio";
 import { missionsLivrables } from "@/lib/quetes/objectifs";
 import { chapitrePret } from "@/lib/quetes/principales";
 import type { CategorieObjet, CollectionSlot, Objet } from "@/types/game";
+import type { AlbumId } from "@/data/pieces";
 import {
   volumeVinylForPos,
   fireplaceVolumeForPos,
@@ -186,6 +192,10 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   );
   const [courrierOuvert, setCourrierOuvert] = useState(false);
   const [calendrierOuvert, setCalendrierOuvert] = useState(false);
+  /** Sheet « Mes albums », ouverte depuis le livre de comptes (QgCarnet). */
+  const [albumsSheet, setAlbumsSheet] = useState(false);
+  /** Album ouvert en plein écran (classeur/timbres), ou aucun. */
+  const [albumOuvert, setAlbumOuvert] = useState<AlbumId | null>(null);
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
@@ -553,6 +563,11 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
 
   const nbCourriersNonLus = state.courriers.filter((c) => !c.lu).length;
 
+  // Livre de comptes : ne réapparaît sur le bureau qu'une fois AU MOINS un
+  // album acheté au Bazar (sinon rien à y ranger, il resterait un bouton mort).
+  const albums = albumsDe(state);
+  const unAlbum = albums.classeur.achete || albums.timbres.achete;
+
   // Tant que le tutoriel guidé est en cours, seuls les objets prescrits par
   // l'étape courante (porte, grand-père) réagissent au tap — tous les
   // autres objets du QG sont verrouillés pour ne pas distraire le joueur.
@@ -618,6 +633,14 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
                       if (tutoActif) return;
                       playNewspaper();
                       setGazetteOuverte(true);
+                    }}
+                  />
+                )}
+                {unAlbum && (
+                  <QgCarnet
+                    onTap={() => {
+                      if (tutoActif) return;
+                      setAlbumsSheet(true);
                     }}
                   />
                 )}
@@ -907,6 +930,21 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
         onSelect={handleSelectVinyle}
         onPlayPause={handlePlayPause}
         onNext={handleNext}
+      />
+
+      <AlbumsSheet
+        open={albumsSheet}
+        onClose={() => setAlbumsSheet(false)}
+        albums={albums}
+        onOuvrir={(album) => {
+          setAlbumsSheet(false);
+          setAlbumOuvert(album);
+        }}
+      />
+      <ClasseurOverlay open={albumOuvert === "classeur"} onClose={() => setAlbumOuvert(null)} />
+      <AlbumTimbresOverlay
+        open={albumOuvert === "timbres"}
+        onClose={() => setAlbumOuvert(null)}
       />
 
       <GazetteSheet

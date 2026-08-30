@@ -965,6 +965,8 @@ export const fr = {
   albums: {
     classeurTitre: "Classeur de cartes",
     albumTitre: "Album de timbres",
+    mesAlbums: "Mes albums",
+    auBazar: "Au Bazar",
     compteur: "{n} / {total}",
     recycler: "Recycler les doublons ({n})",
     recyclerConfirm: "Recycler {n} doublon(s) contre {n} pièce(s) de réparation ?",

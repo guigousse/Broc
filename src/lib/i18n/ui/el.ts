@@ -935,6 +935,8 @@ export const el: DictionnaireUI = {
   albums: {
     classeurTitre: "Ντοσιέ καρτών",
     albumTitre: "Άλμπουμ γραμματοσήμων",
+    mesAlbums: "Τα άλμπουμ μου",
+    auBazar: "Στο Παζάρι",
     compteur: "{n} / {total}",
     recycler: "Ανακύκλωση διπλών ({n})",
     recyclerConfirm: "Ανακύκλωση {n} διπλών για {n} ανταλλακτικά;",

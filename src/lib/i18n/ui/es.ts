@@ -917,6 +917,8 @@ export const es: DictionnaireUI = {
   albums: {
     classeurTitre: "Clasificador de cromos",
     albumTitre: "Álbum de sellos",
+    mesAlbums: "Mis álbumes",
+    auBazar: "En el Bazar",
     compteur: "{n} / {total}",
     recycler: "Reciclar duplicados ({n})",
     recyclerConfirm: "¿Reciclar {n} duplicado(s) por {n} pieza(s) de reparación?",

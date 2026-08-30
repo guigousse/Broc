@@ -909,6 +909,8 @@ export const en: DictionnaireUI = {
   albums: {
     classeurTitre: "Card binder",
     albumTitre: "Stamp album",
+    mesAlbums: "My albums",
+    auBazar: "At the Bazaar",
     compteur: "{n} / {total}",
     recycler: "Recycle duplicates ({n})",
     recyclerConfirm: "Recycle {n} duplicate(s) for {n} repair part(s)?",
