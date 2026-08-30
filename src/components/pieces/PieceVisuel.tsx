@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { Gamepad2, Landmark, PawPrint, Plane, Star, type LucideIcon } from "lucide-react";
 import { getPiece, type PieceCollection, type ThemeTimbre } from "@/data/pieces";
-import { getItemImageUrl } from "@/lib/itemImages";
+import { getItemImageUrl, getItemThumbUrl } from "@/lib/itemImages";
 import { pieceImageSrc } from "@/lib/pieceImages";
 import { getRarityColors } from "@/lib/rarityColors";
 
@@ -14,9 +14,9 @@ export const COULEUR_THEME_TIMBRE: Record<ThemeTimbre, string> = {
   voyage: "#6f9ac2", faune: "#7da36a", monuments: "#c9a86a", celebrites: "#c27a8a", "culture-pop": "#8a7ac2",
 };
 
-interface Props { id: string; size?: number; grise?: boolean }
+interface Props { id: string; size?: number; grise?: boolean; thumb?: boolean }
 
-export function PieceVisuel({ id, size, grise = false }: Props) {
+export function PieceVisuel({ id, size, grise = false, thumb = false }: Props) {
   const piece = getPiece(id);
   const src = pieceImageSrc(id);
   const box: CSSProperties = {
@@ -34,15 +34,15 @@ export function PieceVisuel({ id, size, grise = false }: Props) {
   }
   return (
     <div data-testid="piece-visuel" data-piece-source="placeholder" style={box}>
-      {piece.album === "classeur" ? <CartePlaceholder piece={piece} /> : <TimbrePlaceholder piece={piece} />}
+      {piece.album === "classeur" ? <CartePlaceholder piece={piece} thumb={thumb} /> : <TimbrePlaceholder piece={piece} />}
     </div>
   );
 }
 
 /** Carte à jouer : l'objet source « toonifié » par un filtre, dans un cadre teinté par la rareté. */
-function CartePlaceholder({ piece }: { piece: PieceCollection }) {
+function CartePlaceholder({ piece, thumb }: { piece: PieceCollection; thumb: boolean }) {
   const couleurs = getRarityColors(piece.rarete);
-  const src = piece.source ? getItemImageUrl(piece.source) : null;
+  const src = piece.source ? (thumb ? (getItemThumbUrl(piece.source) ?? getItemImageUrl(piece.source)) : getItemImageUrl(piece.source)) : null;
   return (
     <div style={{ width: "100%", height: "100%", borderRadius: "6%", border: `3px solid ${couleurs.outer}`, background: "var(--paper-100)", boxSizing: "border-box", padding: "8%", display: "grid", placeItems: "center", overflow: "hidden" }}>
       {src && (

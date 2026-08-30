@@ -24,4 +24,10 @@ describe("PieceVisuel", () => {
     const v = container.querySelector('[data-testid="piece-visuel"]') as HTMLElement;
     expect(v.style.filter).toContain("grayscale");
   });
+  it("thumb : une carte sans art charge la vignette de l'objet source, pas le plein format", () => {
+    const { container } = render(<PieceVisuel id="carte.marteau_menuisier" size={96} thumb />);
+    const img = container.querySelector("img") as HTMLImageElement;
+    expect(img.getAttribute("src")).toContain("/thumbs/");
+    expect(img.getAttribute("src")).toContain("br.marteau_menuisier");
+  });
 });
