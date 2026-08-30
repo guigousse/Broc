@@ -212,6 +212,8 @@ class AudioManager {
    * de l'app, contexte laissé « interrupted » au retour.
    */
   private enArrierePlan = false;
+  /** La borne a été tue par la sortie de l'app : on ne la relance pas au retour. */
+  private arcadeCoupeeParSortie = false;
   private derniereReconstruction = 0;
   prefs: AudioPrefs = { ...DEFAULT_AUDIO_PREFS };
 
@@ -352,7 +354,7 @@ class AudioManager {
         /* refusée hors geste : le prochain tap repassera par ici */
       });
     }
-    if (this.arcadeAudio?.paused) {
+    if (this.arcadeAudio?.paused && !this.arcadeCoupeeParSortie) {
       void this.arcadeAudio.play().catch(() => {
         /* idem */
       });
@@ -367,6 +369,9 @@ class AudioManager {
    */
   private reconstruireContexte(): void {
     if (typeof window === "undefined") return;
+    // Un AudioContext créé hors geste et app cachée ne démarrera jamais :
+    // on attend le retour au premier plan (surChangementEtat/unlock).
+    if (this.enArrierePlan) return;
     const maintenant = Date.now();
     if (maintenant - this.derniereReconstruction < DELAI_MIN_RECONSTRUCTION_MS) {
       return;
@@ -500,6 +505,10 @@ class AudioManager {
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
         this.enArrierePlan = false;
+        // Les échecs comptés pendant l'interruption ne disent rien du
+        // contexte : on repart de zéro, sinon trois retours en arrière-plan
+        // suffiraient à déclencher une reconstruction inutile.
+        this.echecsReprise = 0;
         unlock();
       } else {
         this.mettreEnArrierePlan();
@@ -508,22 +517,25 @@ class AudioManager {
   }
 
   /**
-   * Sortie de l'app : on coupe tout nous-mêmes au lieu de s'en remettre à
-   * iOS, qui laisse parfois un `<audio>` tourner en arrière-plan. Le disque
-   * et la borne sont mis en pause SANS poser `vinylePause` (ce drapeau veut
-   * dire « le joueur a mis pause ») ; `suspend()` fait taire d'un coup les
-   * boucles Web Audio (foule, feu, chat). Le retour passe par `unlock` :
-   * `ensureCtx` réveille le contexte et `reprendreLesElements` relance
-   * exactement ce qui jouait — un disque en pause volontaire le reste.
+   * Sortie de l'app : la musique se tait, le contexte est laissé à iOS.
+   *
+   * Le disque est mis en pause VOLONTAIRE (`vinylePause`) : au retour, les
+   * sons du jeu repartent mais pas la musique — c'est le joueur qui la
+   * relance. La borne est mise en pause de même et n'est pas relancée.
+   *
+   * On ne touche PAS au contexte. Une première version le suspendait pour
+   * taire les boucles d'un coup ; or WebKit gère l'arrière-plan lui-même
+   * (« interrupted », puis retour à « running » au premier plan) et, quand la
+   * page a suspendu de sa propre main, il exige un geste pour rouvrir — c'est
+   * le « son coupé au retour » de la 1.4.1. Les boucles d'ambiance suivent le
+   * contexte : iOS les tait en arrière-plan et elles repartent avec lui.
    */
   mettreEnArrierePlan(): void {
     this.enArrierePlan = true;
-    if (this.vinylAudio && !this.vinylAudio.paused) this.vinylAudio.pause();
-    if (this.arcadeAudio && !this.arcadeAudio.paused) this.arcadeAudio.pause();
-    if (this.ctx && this.ctx.state === "running") {
-      void Promise.resolve(this.ctx.suspend()).catch(() => {
-        /* un contexte déjà mort n'a rien à suspendre */
-      });
+    if (this.vinylAudio && !this.vinylAudio.paused) this.pauseVinyl();
+    if (this.arcadeAudio && !this.arcadeAudio.paused) {
+      this.arcadeAudio.pause();
+      this.arcadeCoupeeParSortie = true;
     }
   }
 
@@ -1812,6 +1824,7 @@ class AudioManager {
    * drapeau tenu par l'appelant se serait trompé sur au moins l'un des trois.
    */
   async playArcadeTrack(url: string): Promise<void> {
+    this.arcadeCoupeeParSortie = false;
     if (!this.prefs.musique) return;
     this.ensureCtx();
     if (!this.ctx || !this.master) return;
@@ -1873,6 +1886,7 @@ class AudioManager {
 
   /** Éteint la borne : fondu court, timers annulés, élément relâché. */
   stopArcade(): void {
+    this.arcadeCoupeeParSortie = false;
     this.couperArcade(0.06);
   }
 

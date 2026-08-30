@@ -1502,7 +1502,11 @@ describe("audioManager — sortie de l'app", () => {
     listeners.visibilitychange?.forEach((fn) => fn());
   };
 
-  it("en arrière-plan : le disque et le contexte se taisent, sans pause volontaire", async () => {
+  // Sortie de l'app : la musique se tait comme si le joueur l'avait mise en
+  // pause, et le contexte est laissé à iOS. Un `suspend()` de notre main
+  // empêchait WebKit de rouvrir le contexte au retour sans geste — c'est le
+  // « son coupé au retour » de la build 165/166.
+  it("en arrière-plan : le disque se met en pause volontaire, le contexte n'est pas touché", async () => {
     const { audioManager } = await freshManager();
     await audioManager.playVinyl("/sounds/vinyles/test.mp3");
     const audio = FakeAudio.instances[0];
@@ -1510,42 +1514,50 @@ describe("audioManager — sortie de l'app", () => {
     expect(audio.paused).toBe(false);
 
     cacher();
-    expect(audio.paused).toBe(true);
-    expect(ctx.suspend).toHaveBeenCalled();
-    expect(audioManager.vinylEnLecture()).toBe(false);
-
-    montrer();
     await flushMicrotasks();
-    expect(ctx.resume).toHaveBeenCalled();
-    expect(audio.paused).toBe(false);
+    expect(audio.paused).toBe(true);
+    expect(ctx.suspend).not.toHaveBeenCalled();
+    expect(ctx.resume).not.toHaveBeenCalled();
+    expect(audioManager.vinylEnLecture()).toBe(false);
   });
 
-  // Le bug de la 1.4.1 : suspend() déclenche statechange, le manager y voyait
-  // une interruption iOS et relançait resume() + disque dans la même volée —
-  // sifflement à la sortie, contexte laissé « interrupted » au retour.
-  it("en arrière-plan : le contexte qu'on a suspendu soi-même n'est pas réveillé", async () => {
+  it("au retour : les sons du jeu repartent, la musique reste en pause", async () => {
     const { audioManager } = await freshManager();
+    await audioManager.startCrowd();
     await audioManager.playVinyl("/sounds/vinyles/test.mp3");
     const audio = FakeAudio.instances[0];
     const ctx = FakeAudioContext.instances[0];
     ctx.resume.mockClear();
 
     cacher();
-    await flushMicrotasks();
-    expect(ctx.resume).not.toHaveBeenCalled();
-    expect(ctx.state).toBe("suspended");
-    expect(audio.paused).toBe(true);
-
-    // Une interruption iOS pendant qu'on est caché ne relance rien non plus.
+    // iOS interrompt le contexte en arrière-plan : on ne réagit pas.
     ctx.subirEtat("interrupted" as AudioContextState);
     await flushMicrotasks();
     expect(ctx.resume).not.toHaveBeenCalled();
-    expect(audio.paused).toBe(true);
 
     montrer();
     await flushMicrotasks();
     expect(ctx.resume).toHaveBeenCalled();
-    expect(audio.paused).toBe(false);
+    expect(ctx.state).toBe("running");
+    // La foule (boucle Web Audio) n'a jamais été arrêtée : elle suit le contexte.
+    expect(ctx.bufferSources[0].stop).not.toHaveBeenCalled();
+    expect(audio.paused).toBe(true);
+    expect(FakeAudioContext.instances).toHaveLength(1);
+  });
+
+  it("aucune reconstruction ne part tant que l'app est cachée", async () => {
+    const { audioManager } = await freshManager();
+    audioManager.playClick();
+    const ctx = FakeAudioContext.instances[0];
+
+    cacher();
+    ctx.subirEtat("closed");
+    await flushMicrotasks();
+    expect(FakeAudioContext.instances).toHaveLength(1);
+
+    montrer();
+    await flushMicrotasks();
+    expect(FakeAudioContext.instances).toHaveLength(2);
   });
 
   it("un disque que le joueur avait mis en pause ne repart pas au retour", async () => {
@@ -1560,7 +1572,7 @@ describe("audioManager — sortie de l'app", () => {
     expect(audio.paused).toBe(true);
   });
 
-  it("la borne d'arcade se tait aussi et repart au retour", async () => {
+  it("la borne d'arcade se tait aussi et reste tue au retour", async () => {
     const { audioManager } = await freshManager();
     await audioManager.playArcadeTrack("/sounds/arcade/jx.cartouche_bluebot_8_bit.m4a");
     await flushMicrotasks();
@@ -1571,6 +1583,6 @@ describe("audioManager — sortie de l'app", () => {
     expect(borne.paused).toBe(true);
     montrer();
     await flushMicrotasks();
-    expect(borne.paused).toBe(false);
+    expect(borne.paused).toBe(true);
   });
 });

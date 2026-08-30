@@ -189,6 +189,18 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   const [gramophoneOuvert, setGramophoneOuvert] = useState(false);
   const [vinyleCourantIdx, setVinyleCourantIdx] = useState<number | null>(null);
   const [vinyleEnLecture, setVinyleEnLecture] = useState(false);
+  // Sortie de l'app : le manager audio met le disque en pause volontaire (la
+  // musique ne repart pas au retour, seuls les sons du jeu reprennent). Le
+  // gramophone doit le savoir, sinon il montre un disque qui tourne en
+  // silence et son premier tap « met en pause » un disque déjà arrêté.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") setVinyleEnLecture(false);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
   const [dialogueQg, setDialogueQg] = useState<DialogueSequence | null>(null);
   // Chapitre de la trame prêt à être délivré (pastille du grand-père,
   // Task 9) : `null` si aucun n'est dû. `dialogueChapitreId` mémorise le
