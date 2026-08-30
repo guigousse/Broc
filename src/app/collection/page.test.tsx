@@ -12,6 +12,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import CollectionPage from "./page";
 import { CATEGORIES } from "@/data/categories";
 import { initAlbums } from "@/lib/albums";
+import { piecesDe } from "@/data/pieces";
 import type { AlbumsState } from "@/types/game";
 
 vi.mock("next/navigation", () => ({
@@ -133,8 +134,9 @@ describe("Collection — tuiles d'album", () => {
   });
 
   it("après achat, la tuile porte le compteur et ouvre le classeur", () => {
+    const [c0, c1, c2] = piecesDe("classeur").map((p) => p.id);
     mockAlbums = {
-      classeur: { achete: true, pieces: { "carte.a": 1, "carte.b": 1, "carte.c": 1 }, nouvelles: [] },
+      classeur: { achete: true, pieces: { [c0]: 1, [c1]: 1, [c2]: 1 }, nouvelles: [] },
       timbres: initAlbums().timbres,
     };
     render(<CollectionPage />);

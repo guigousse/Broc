@@ -145,6 +145,49 @@ export default function CollectionPage() {
     return s;
   }, [state]);
 
+  // Tuiles Classeur de cartes / Album de timbres (Tâche 13) : injectées en
+  // tête de leur catégorie (`CATEGORIE_ALBUM`, source unique de vérité —
+  // aussi celle qu'utilisent `acheterPiece`/`ClasseurOverlay`), seulement
+  // visibles sous le filtre courant. Mémoïsé sur `state.albums` (pas tout
+  // `state`, qui bouge à chaque mutation du jeu) : sinon deux nouveaux
+  // éléments React (`CaseSpeciale`) sont recréés à chaque rendu, quoi qu'il
+  // arrive (M3 revue finale 2026-08-30).
+  const casesSpeciales: CaseSpeciale[] = useMemo(() => {
+    if (!state) return [];
+    const albums = albumsDe(state);
+    const iconesAlbum: Record<AlbumId, ReactNode> = {
+      classeur: <Album size={28} strokeWidth={1.75} />,
+      timbres: <BookOpen size={28} strokeWidth={1.75} />,
+    };
+    const titresAlbum: Record<AlbumId, string> = {
+      classeur: d.albums.classeurTitre,
+      timbres: d.albums.albumTitre,
+    };
+    return (["classeur", "timbres"] as const).flatMap((albumId): CaseSpeciale[] => {
+      const categorie = CATEGORIE_ALBUM[albumId];
+      if (filtre !== null && filtre !== categorie) return [];
+      const album = albums[albumId];
+      return [
+        {
+          key: `album-${albumId}`,
+          categorie,
+          element: (
+            <TuileAlbum
+              titre={titresAlbum[albumId]}
+              icon={iconesAlbum[albumId]}
+              achete={album.achete}
+              possedees={nbPossedees(album)}
+              total={piecesDe(albumId).length}
+              nouveau={album.nouvelles.length > 0}
+              onTap={() => setAlbumOuvert(albumId)}
+            />
+          ),
+        },
+      ];
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.albums, filtre, d, locale]);
+
   if (!isHydrated || !state) {
     return <SkeletonScreen label={d.inventaire.consultationCollection} />;
   }
@@ -165,44 +208,6 @@ export default function CollectionPage() {
     ? (valeursParCat[filtre] ?? 0)
     : Object.values(valeursParCat).reduce((s, v) => s + v, 0);
   const plein = stockageEstPlein(state);
-
-  // Tuiles Classeur de cartes / Album de timbres (Tâche 13) : injectées en
-  // tête de leur catégorie (`CATEGORIE_ALBUM`, source unique de vérité —
-  // aussi celle qu'utilisent `acheterPiece`/`ClasseurOverlay`), seulement
-  // visibles sous le filtre courant.
-  const albums = albumsDe(state);
-  const ICONES_ALBUM: Record<AlbumId, ReactNode> = {
-    classeur: <Album size={28} strokeWidth={1.75} />,
-    timbres: <BookOpen size={28} strokeWidth={1.75} />,
-  };
-  const TITRES_ALBUM: Record<AlbumId, string> = {
-    classeur: d.albums.classeurTitre,
-    timbres: d.albums.albumTitre,
-  };
-  const casesSpeciales: CaseSpeciale[] = (["classeur", "timbres"] as const).flatMap(
-    (albumId): CaseSpeciale[] => {
-      const categorie = CATEGORIE_ALBUM[albumId];
-      if (filtre !== null && filtre !== categorie) return [];
-      const album = albums[albumId];
-      return [
-        {
-          key: `album-${albumId}`,
-          categorie,
-          element: (
-            <TuileAlbum
-              titre={TITRES_ALBUM[albumId]}
-              icon={ICONES_ALBUM[albumId]}
-              achete={album.achete}
-              possedees={nbPossedees(album)}
-              total={piecesDe(albumId).length}
-              nouveau={album.nouvelles.length > 0}
-              onTap={() => setAlbumOuvert(albumId)}
-            />
-          ),
-        },
-      ];
-    },
-  );
 
   return (
   <>
