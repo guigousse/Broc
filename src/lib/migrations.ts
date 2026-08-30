@@ -55,6 +55,7 @@ import {
 } from "@/data/brocantes";
 import { chapitreParOrdre } from "@/data/quetesPrincipales";
 import { courrierDeChapitre } from "@/lib/quetes/principales";
+import { initAlbums } from "@/lib/albums";
 
 /**
  * Remappe en profondeur tout ancien templateId (avant l'harmonisation des noms
@@ -107,7 +108,7 @@ void donnerObjetFn;
  * `migrerSauvegarde` ; à incrémenter à chaque changement de schéma nécessitant
  * une migration.
  */
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 
 const ETATS_VALIDES = new Set<EtatObjet>([
   "Mauvais",
@@ -834,6 +835,13 @@ function appliquerMigrations(loaded: GameState): GameState {
     jetons: typeof (loaded as Partial<GameState>).jetons === "number"
       ? (loaded as Partial<GameState>).jetons!
       : 0,
+    // v22 — classeur de cartes et album de timbres (cf. `src/lib/albums.ts`).
+    // Une save antérieure n'a pas le champ : on lui en pose un neuf, vide.
+    albums: (() => {
+      const a = (loaded as Partial<GameState>).albums;
+      // Une save avec le champ le garde tel quel ; sans lui, albums neufs.
+      return a && typeof a === "object" && a.classeur && a.timbres ? a : initAlbums();
+    })(),
     chatSurFauteuil: (loaded as Partial<GameState>).chatSurFauteuil ?? false,
     passagesSansChat: (() => {
       const v = (loaded as Partial<GameState>).passagesSansChat;

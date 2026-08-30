@@ -190,4 +190,11 @@ export const OLD_TO_NEW_TEMPLATE_ID: Record<string, string> = {
   // disponible). L'entrée historique mus.vinyle_beatles_dedicace ci-dessus
   // pointe directement vers le nouvel id (le remap n'est pas chaîné).
   "mus.vinyle_des_scarabees_dedicace_album_solo": "mus.vinyle_collector_de_vagabond_horizon_celeste",
+
+  // 2026-08-30 : les lots de cartes à collectionner sont devenus le classeur.
+  "jx.lot_de_cartes_l_assemblee_des_mages": "jx.puzzle_en_bois_1000_pieces_paysage_alpin",
+  "jx.lot_de_cartes_de_yo_hi_ah": "jx.jeu_de_l_oie_lithographie_1900",
+  "jx.cartes_pocket_monster_set_jungle": "jx.boite_de_construction_metallique_no_3",
+  "jx.cartes_pocket_monster_1ere_edition": "jx.locomotive_a_vapeur_electrique_1950",
+  "jx.cartes_pocket_monster_holographiques_japonaise": "jx.locomotive_a_vapeur_electrique_1950",
 };
