@@ -19,7 +19,6 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
     const onClose = vi.fn();
     render(
       <OuverturePaquetOverlay
-        albumId="classeur"
         pieces={["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"]}
         quantitesAvant={{ "carte.risk_1992": 1 }}
         onVoirAlbum={onVoir}
@@ -47,7 +46,6 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
     vi.useFakeTimers();
     render(
       <OuverturePaquetOverlay
-        albumId="timbres"
         pieces={["timbre.renard_roux", "timbre.lynx_boreal", "timbre.ours_des_pyrenees"]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
@@ -77,7 +75,6 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
     vi.useFakeTimers();
     render(
       <OuverturePaquetOverlay
-        albumId="timbres"
         pieces={["timbre.renard_roux", "timbre.lynx_boreal", "timbre.ours_des_pyrenees"]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
@@ -115,7 +112,6 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
     const onClose = vi.fn();
     render(
       <OuverturePaquetOverlay
-        albumId="classeur"
         pieces={["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
@@ -140,7 +136,6 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
     })) as unknown as typeof window.matchMedia;
     render(
       <OuverturePaquetOverlay
-        albumId="classeur"
         pieces={["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}
@@ -156,7 +151,6 @@ describe("OuverturePaquetOverlay — révélation au tap", () => {
   it("le voile porte le rôle dialog et le libellé d'ouverture", () => {
     render(
       <OuverturePaquetOverlay
-        albumId="classeur"
         pieces={["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"]}
         quantitesAvant={{}}
         onVoirAlbum={() => {}}

@@ -238,7 +238,6 @@ export default function BazarPage() {
           « Ranger » la referme sans rien ouvrir de plus. */}
       {paquetOuvert && (
         <OuverturePaquetOverlay
-          albumId={paquetOuvert.albumId}
           pieces={paquetOuvert.pieces}
           quantitesAvant={paquetOuvert.quantitesAvant}
           onVoirAlbum={() => {

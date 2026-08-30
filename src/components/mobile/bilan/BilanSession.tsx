@@ -431,7 +431,7 @@ export function BilanSession({
                   style={{ display: "inline-flex" }}
                 >
                   {estPiece(it.templateId) ? (
-                    <PieceVisuel id={it.templateId} size={60} />
+                    <PieceVisuel id={it.templateId} size={60} thumb />
                   ) : (
                     <ItemSticker templateId={it.templateId} categorie={it.categorie} thumb />
                   )}

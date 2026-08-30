@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { PieceVisuel } from "@/components/pieces/PieceVisuel";
-import { getPiece, type AlbumId } from "@/data/pieces";
+import { getPiece } from "@/data/pieces";
 import { nomObjet } from "@/lib/i18n/contenu";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { prefersReducedMotion } from "@/lib/transitionIris";
@@ -22,7 +22,6 @@ import { getRarityColors } from "@/lib/rarityColors";
    3 cartes arrivent déjà retournées. */
 
 interface OuverturePaquetOverlayProps {
-  albumId: AlbumId;
   /** Les 3 ids tirés (déjà appliqués à la save par l'appelant). */
   pieces: string[];
   /** Quantités possédées AVANT ce paquet (snapshot pris avant l'achat). */
@@ -220,7 +219,7 @@ export function OuverturePaquetOverlay({
               {retournee && piece && (
                 <div style={face}>
                   <div style={visuelFace}>
-                    <PieceVisuel id={id} />
+                    <PieceVisuel id={id} thumb />
                   </div>
                   <span style={nomFace}>
                     {nomObjet({ templateId: id, nom: piece.nom }, locale)}
