@@ -241,8 +241,16 @@ export default function TitleScreen() {
       arreter = demarrerMusiqueTitre(audioManager);
     };
     window.addEventListener("pointerdown", relance, { once: true });
+    // Retour au premier plan : la sortie de l'app a mis le disque en pause
+    // volontaire (règle générale — la musique ne repart pas toute seule).
+    // Sur le titre, le jazz est l'ambiance de l'écran : il reprend.
+    const auRetour = () => {
+      if (document.visibilityState === "visible") audioManager.resumeVinyl();
+    };
+    document.addEventListener("visibilitychange", auRetour);
     return () => {
       window.removeEventListener("pointerdown", relance);
+      document.removeEventListener("visibilitychange", auRetour);
       arreter();
     };
   }, []);

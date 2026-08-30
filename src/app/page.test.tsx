@@ -207,6 +207,18 @@ describe("TitleScreen — musique jazz du titre", () => {
     expect(demarrerMusiqueTitre).toHaveBeenCalledWith(audioManager);
   });
 
+  // Sortie de l'app : le manager met le disque en pause volontaire (règle
+  // générale : la musique ne repart pas toute seule au retour). Sur le titre
+  // c'est l'inverse qui est voulu : le jazz est l'ambiance de l'écran.
+  it("le jazz reprend quand l'app revient au premier plan", () => {
+    const resume = vi.spyOn(audioManager, "resumeVinyl").mockImplementation(() => {});
+    render(<TitleScreen />);
+    resume.mockClear();
+    Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(resume).toHaveBeenCalledTimes(1);
+  });
+
   it("Continuer : fondu du bus gramophone sur la durée de fermeture de l'iris", () => {
     const fade = vi
       .spyOn(audioManager, "fadeOutVinylBus")
