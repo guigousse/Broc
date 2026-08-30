@@ -80,11 +80,10 @@ export function FichePiece({ id, quantite, onClose, children }: FichePieceProps)
         visuel={<PieceVisuel id={id} />}
         onClose={onClose}
       >
-        {quantite > 1 && (
-          <div style={ligneSerie}>
-            {tr(d.albums.serie, { serie })} · {tr(d.albums.doublon, { n: quantite })}
-          </div>
-        )}
+        <div style={ligneSerie}>
+          {tr(d.albums.serie, { serie })}
+          {quantite > 1 && <> · {tr(d.albums.doublon, { n: quantite })}</>}
+        </div>
         {children}
       </FicheObjet>
     </div>
