@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Album, BookOpen } from "lucide-react";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
@@ -16,7 +16,7 @@ import { SkeletonScreen } from "@/components/ui/SkeletonScreen";
 import { useToast } from "@/components/ui/Toast";
 import { useGame, useGameActions } from "@/context/GameContext";
 import { CATEGORIES } from "@/data/categories";
-import { piecesDe, type AlbumId } from "@/data/pieces";
+import { CATEGORIE_ALBUM, piecesDe, type AlbumId } from "@/data/pieces";
 import { albumsDe, nbPossedees } from "@/lib/albums";
 import { stockageEstPlein } from "@/lib/stockage";
 import { valeurDonation } from "@/lib/collection";
@@ -167,43 +167,42 @@ export default function CollectionPage() {
   const plein = stockageEstPlein(state);
 
   // Tuiles Classeur de cartes / Album de timbres (Tâche 13) : injectées en
-  // tête de leur catégorie, seulement visibles sous le filtre courant.
+  // tête de leur catégorie (`CATEGORIE_ALBUM`, source unique de vérité —
+  // aussi celle qu'utilisent `acheterPiece`/`ClasseurOverlay`), seulement
+  // visibles sous le filtre courant.
   const albums = albumsDe(state);
-  const casesSpeciales: CaseSpeciale[] = [];
-  if (filtre === null || filtre === "Jeux & Loisirs") {
-    casesSpeciales.push({
-      key: "album-classeur",
-      categorie: "Jeux & Loisirs",
-      element: (
-        <TuileAlbum
-          titre={d.albums.classeurTitre}
-          icon={<Album size={28} strokeWidth={1.75} />}
-          achete={albums.classeur.achete}
-          possedees={nbPossedees(albums.classeur)}
-          total={piecesDe("classeur").length}
-          nouveau={albums.classeur.nouvelles.length > 0}
-          onTap={() => setAlbumOuvert("classeur")}
-        />
-      ),
-    });
-  }
-  if (filtre === null || filtre === "Livres & Papeterie") {
-    casesSpeciales.push({
-      key: "album-timbres",
-      categorie: "Livres & Papeterie",
-      element: (
-        <TuileAlbum
-          titre={d.albums.albumTitre}
-          icon={<BookOpen size={28} strokeWidth={1.75} />}
-          achete={albums.timbres.achete}
-          possedees={nbPossedees(albums.timbres)}
-          total={piecesDe("timbres").length}
-          nouveau={albums.timbres.nouvelles.length > 0}
-          onTap={() => setAlbumOuvert("timbres")}
-        />
-      ),
-    });
-  }
+  const ICONES_ALBUM: Record<AlbumId, ReactNode> = {
+    classeur: <Album size={28} strokeWidth={1.75} />,
+    timbres: <BookOpen size={28} strokeWidth={1.75} />,
+  };
+  const TITRES_ALBUM: Record<AlbumId, string> = {
+    classeur: d.albums.classeurTitre,
+    timbres: d.albums.albumTitre,
+  };
+  const casesSpeciales: CaseSpeciale[] = (["classeur", "timbres"] as const).flatMap(
+    (albumId): CaseSpeciale[] => {
+      const categorie = CATEGORIE_ALBUM[albumId];
+      if (filtre !== null && filtre !== categorie) return [];
+      const album = albums[albumId];
+      return [
+        {
+          key: `album-${albumId}`,
+          categorie,
+          element: (
+            <TuileAlbum
+              titre={TITRES_ALBUM[albumId]}
+              icon={ICONES_ALBUM[albumId]}
+              achete={album.achete}
+              possedees={nbPossedees(album)}
+              total={piecesDe(albumId).length}
+              nouveau={album.nouvelles.length > 0}
+              onTap={() => setAlbumOuvert(albumId)}
+            />
+          ),
+        },
+      ];
+    },
+  );
 
   return (
   <>

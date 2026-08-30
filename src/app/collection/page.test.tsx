@@ -139,7 +139,9 @@ describe("Collection — tuiles d'album", () => {
     };
     render(<CollectionPage />);
     const t = screen.getAllByTestId("tuile-album")[0];
-    expect(t.textContent).toContain("3/50");
+    // Même gabarit i18n que le compteur d'AlbumShell ("{n} / {total}").
+    expect(t.textContent).toContain("3 / 50");
+    expect(t.getAttribute("aria-label")).toContain("3 / 50");
     fireEvent.click(t);
     expect(screen.getByRole("dialog", { name: "Classeur de cartes" })).toBeTruthy();
   });

@@ -7,8 +7,9 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 /* ── TUILE ALBUM DANS LA COLLECTION (Tâche 13) ────────────────────────────
    Injectée en tête de sa catégorie par `CollectionGrid` (prop
    `casesSpeciales`). Avant achat au Bazar : cadenassée, un cadenas laiton,
-   inerte. Après achat : icône de l'album + compteur « possédées/total » +
-   pastille « nouveau » tant qu'une pièce reste non consultée. */
+   inerte. Après achat : icône de l'album + compteur `d.albums.compteur`
+   (même gabarit « {n} / {total} » qu'`AlbumShell`) + pastille « nouveau »
+   tant qu'une pièce reste non consultée. */
 
 const tuile: CSSProperties = {
   aspectRatio: "1 / 1",
@@ -73,7 +74,8 @@ export function TuileAlbum({
   nouveau,
   onTap,
 }: TuileAlbumProps) {
-  const { d } = useLangue();
+  const { d, tr } = useLangue();
+  const compteur = tr(d.albums.compteur, { n: possedees, total });
 
   if (!achete) {
     return (
@@ -93,14 +95,12 @@ export function TuileAlbum({
     <button
       type="button"
       data-testid="tuile-album"
-      aria-label={titre}
+      aria-label={`${titre} — ${compteur}`}
       style={tuile}
       onClick={onTap}
     >
       {icon}
-      <span style={compteurStyle}>
-        {possedees}/{total}
-      </span>
+      <span style={compteurStyle}>{compteur}</span>
       {nouveau && (
         <span style={newBadge} aria-label={d.albums.nouveau}>
           *
