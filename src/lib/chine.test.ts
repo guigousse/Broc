@@ -3,6 +3,7 @@ import {
   BONUS_SPECIALISATION,
   BONUS_TIER_NATIF,
   CHANCE_EXCLUSIF_PAR_SESSION,
+  CHANCE_PIECE_PAR_SESSION,
   MIX_RARETE_PAR_TIER,
   SEUIL_COLERE_VENDEUR,
   SURCOTE_BONIMENTEUR,
@@ -27,6 +28,7 @@ import { vinylesCadeauxExclus, VINYLES_CADEAU_PAR_ANNEE } from "@/lib/anniversai
 import type { Brocante, CollectionSlot, Courrier, GameState } from "@/types/game";
 import { SESSION_TUTORIEL } from "@/data/tutorielScenario";
 import { calculerPrixMinAcceptDepuisPersona } from "./personas";
+import { estPiece } from "@/data/pieces";
 
 describe("constantes exportées", () => {
   it("SEUIL_COLERE_VENDEUR est dans (0, 1)", () => {
@@ -114,8 +116,11 @@ describe("genererSession — brocante spécialisée", () => {
       taillePool: 6,
       tier: 2,
     });
+    // rngPiece pinné pour ne jamais tirer de pièce d'album (hors thème par
+    // design, cf. describe("pièces d'album en session")) : ce test-ci vérifie
+    // le filtrage du pool générique, pas la pièce.
     for (let run = 0; run < 5; run++) {
-      const items = genererSession(6, [], broc);
+      const items = genererSession(6, [], broc, null, undefined, () => 0.99);
       expect(items.length).toBeGreaterThan(0);
       expect(items.every((i) => i.objet.categorie === "Musique")).toBe(true);
     }
@@ -130,7 +135,7 @@ describe("genererSession — brocante spécialisée", () => {
     });
     const celeb = { brocanteId: "broc-spe-celeb", nom: "La Comtesse", jourSemaine: 0 };
     for (let run = 0; run < 5; run++) {
-      const items = genererSession(6, [], broc, celeb);
+      const items = genererSession(6, [], broc, celeb, undefined, () => 0.99);
       expect(items.every((i) => i.objet.categorie === "Musique")).toBe(true);
     }
   });
@@ -691,7 +696,10 @@ describe("genererSession — les objets natifs du tier dominent (2026-08-28)", (
     let natifs = 0;
     let total = 0;
     for (let s = 0; s < sessions; s++) {
-      for (const it of genererSession(10, [], broc)) {
+      // rngPiece pinné : la pièce d'album n'est pas un objet du pool par tier,
+      // hors sujet pour cette mesure du poids natif (et son tirage ajoute du
+      // bruit à une tolérance déjà serrée).
+      for (const it of genererSession(10, [], broc, null, undefined, () => 0.99)) {
         if (it.objet.rarete !== "commun") continue;
         total += 1;
         if (tierMinTemplate(it.objet.templateId) === natif) natifs += 1;
@@ -781,5 +789,35 @@ describe("objetsDesTiersPrecedents — ce que la loupe annonce en plus", () => {
     expect(objetsDesTiersPrecedents(t4)).toBe(
       poolPourTier(4).filter((t) => tierMinTemplate(t.templateId) < 3).length,
     );
+  });
+});
+
+describe("pièces d'album en session", () => {
+  const b = createMockBrocante({ tier: 2, taillePool: 8 });
+  it("au plus une pièce, à la place d'un objet, quand le tirage dit oui", () => {
+    const s = genererSession(8, [], b, null, undefined, () => 0.0); // 0 < chance → pièce
+    const pieces = s.filter((it) => estPiece(it.objet.templateId));
+    expect(pieces).toHaveLength(1);
+    expect(s).toHaveLength(8);
+    expect(pieces[0].objet.etat).toBe("Très bon");
+    expect(pieces[0].objet.categorie).toMatch(/Jeux & Loisirs|Livres & Papeterie/);
+  });
+  it("aucune pièce quand le tirage dit non", () => {
+    const s = genererSession(8, [], b, null, undefined, () => 0.99);
+    expect(s.some((it) => estPiece(it.objet.templateId))).toBe(false);
+  });
+  it("chances croissantes par tier", () => {
+    expect(CHANCE_PIECE_PAR_SESSION).toEqual({ 1: 0.35, 2: 0.45, 3: 0.55, 4: 0.65 });
+  });
+  it("la Fouille ne tire jamais de pièce", () => {
+    const s = genererSession(8, [], b, null, undefined, () => 0.0);
+    for (let i = 0; i < 40; i++) {
+      const r = genererRemplacement(s[0], s, [], b);
+      expect(estPiece(r.objet.templateId)).toBe(false);
+    }
+  });
+  it("une bourse à thème propose aussi la pièce", () => {
+    const s = genererSession(8, [], createMockBrocante({ tier: 2, taillePool: 8, specialisation: "Mode" }), null, undefined, () => 0.0);
+    expect(s.filter((it) => estPiece(it.objet.templateId))).toHaveLength(1);
   });
 });

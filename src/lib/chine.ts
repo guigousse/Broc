@@ -23,6 +23,8 @@ import {
   calculerPrixMinAcceptDepuisPersona,
   getAffiniteCategorie,
 } from "@/lib/personas";
+import { CATEGORIE_ALBUM, type PieceCollection } from "@/data/pieces";
+import { tirerPiece } from "@/lib/albums";
 
 /** Braderie : rabais appliqué au prix affiché par tous les vendeurs. */
 export const RABAIS_BRADERIE = 0.7;
@@ -140,6 +142,18 @@ function instancier(
     persona,
     negociation: null,
   };
+}
+
+/** Chance qu'UNE pièce d'album (carte ou timbre, 50/50) prenne un emplacement de la session. */
+export const CHANCE_PIECE_PAR_SESSION: Record<1 | 2 | 3 | 4, number> = { 1: 0.35, 2: 0.45, 3: 0.55, 4: 0.65 };
+
+/** Une pièce d'album sur l'étal : état forcé « Très bon » (pas de restauration), négo et persona comme un objet. */
+export function instancierPiece(piece: PieceCollection, tendances: readonly Tendance[], tier: 1 | 2 | 3 | 4 = 1, brocante?: Brocante): ObjetEnVente {
+  const template: ObjetTemplate = {
+    templateId: piece.id, nom: piece.nom, categorie: CATEGORIE_ALBUM[piece.album],
+    rarete: piece.rarete, prixRefBase: piece.prixRefBase, taille: "XS",
+  };
+  return instancier(template, tendances, tier, brocante, { etat: "Très bon" });
 }
 
 /**
@@ -298,6 +312,7 @@ export function genererSession(
   celebrite?: CelebriteEvenement | null,
   /** Templates à ne jamais proposer (cf. uniquesExclusDuChinage). */
   exclus?: ReadonlySet<string>,
+  rngPiece: () => number = Math.random,
 ): ObjetEnVente[] {
   const celebritePresente =
     !!brocante && !!celebrite && celebrite.brocanteId === brocante.id;
@@ -364,6 +379,17 @@ export function genererSession(
     if (poolEstExclusif) exclusifsRestants -= 1;
     items.push(instancier(t, tendances, brocante?.tier ?? 1, brocante));
   }
+
+  // Pièce d'album : ≤ 1 par session, à la place d'un objet tiré (la taille ne
+  // bouge pas), position uniforme. Indépendante de l'emplacement exclusif et
+  // du thème de la bourse — c'est un petit extra du vendeur.
+  const tier = brocante?.tier ?? 1;
+  if (items.length > 0 && rngPiece() < CHANCE_PIECE_PAR_SESSION[tier]) {
+    const album = rngPiece() < 0.5 ? "classeur" : "timbres";
+    const idx = Math.min(items.length - 1, Math.floor(rngPiece() * items.length));
+    items[idx] = instancierPiece(tirerPiece(album, rngPiece), tendances, tier, brocante);
+  }
+
   return items;
 }
 
