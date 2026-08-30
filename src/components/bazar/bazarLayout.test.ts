@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BAZAR_LAYOUT, CLES_ARTICLES, CLES_LOTS, type BazarObjetKey } from "./bazarLayout";
+import { BAZAR_LAYOUT, CLES_ARTICLES, type BazarObjetKey } from "./bazarLayout";
 import { qgPct, QG_LAYOUT } from "@/components/mobile/qg/layout";
 import { CHAT_BALADEUR_ORDER } from "@/lib/chatBaladeur";
 
@@ -46,7 +46,10 @@ describe("BAZAR_LAYOUT", () => {
   });
 
   it("désigne la planche du bas pour les lots et celle du haut pour les trois objets", () => {
-    expect(CLES_LOTS).toEqual(["case4", "case5", "case6"]);
+    // Les lots (case4-6) sont référencés par clé littérale dans `BazarScene`,
+    // pas via une constante exportée (voir M9 revue finale 2026-08-30) — la
+    // planche du bas reste vérifiée ici, en dur.
+    expect(["case4", "case5", "case6"].every((c) => c in BAZAR_LAYOUT.objets)).toBe(true);
     expect(CLES_ARTICLES).toEqual(["case1", "case2", "case3"]);
   });
 
@@ -217,7 +220,7 @@ describe("BAZAR_LAYOUT", () => {
   });
 
   it("les emplacements que la scène désigne existent bel et bien", () => {
-    for (const cle of [...CLES_LOTS, ...CLES_ARTICLES]) {
+    for (const cle of ["case4", "case5", "case6", ...CLES_ARTICLES] as BazarObjetKey[]) {
       expect(BAZAR_LAYOUT.objets[cle]).toBeDefined();
     }
   });

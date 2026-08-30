@@ -139,11 +139,13 @@ export type BazarObjetKey = keyof typeof BAZAR_LAYOUT.objets;
  */
 export const CLES_BAZAR = Object.keys(BAZAR_LAYOUT.objets) as BazarObjetKey[];
 
-/**
- * Les trois lots de pièces vont sur la planche du BAS — la plus proche de la
- * main, et celle que le regard rencontre en premier en arrivant au comptoir.
- */
-export const CLES_LOTS: BazarObjetKey[] = ["case4", "case5", "case6"];
+// Les trois lots de pièces (case4-6) vont sur la planche du BAS — la plus
+// proche de la main, et celle que le regard rencontre en premier en arrivant
+// au comptoir. `BazarScene` les référence directement par clé littérale
+// ("case4"/"case5"/"case6", pas d'itération sur un tableau ordonné comme pour
+// `CLES_ARTICLES`) : pas de constante `CLES_LOTS` à maintenir ici (retirée,
+// M9 revue finale 2026-08-30 — plus aucun appelant en dehors de son propre
+// test).
 
 /**
  * L'étagère du HAUT porte les trois objets uniques, un par gamme de prix
