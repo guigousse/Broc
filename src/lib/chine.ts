@@ -381,12 +381,21 @@ export function genererSession(
   }
 
   // Pièce d'album : ≤ 1 par session, à la place d'un objet tiré (la taille ne
-  // bouge pas), position uniforme. Indépendante de l'emplacement exclusif et
-  // du thème de la bourse — c'est un petit extra du vendeur.
+  // bouge pas), position uniforme parmi les emplacements NON exclusifs —
+  // jamais à la place de l'objet d'exception de la session (M1 revue finale
+  // 2026-08-30). Indépendante du thème de la bourse — c'est un petit extra
+  // du vendeur.
   const tier = brocante?.tier ?? 1;
-  if (items.length > 0 && rngPiece() < CHANCE_PIECE_PAR_SESSION[tier]) {
+  const idsExclusifs = new Set((brocante?.poolExclusif ?? []) as readonly string[]);
+  const indicesNonExclusifs = items.reduce<number[]>((acc, it, i) => {
+    if (!idsExclusifs.has(it.objet.templateId)) acc.push(i);
+    return acc;
+  }, []);
+  if (indicesNonExclusifs.length > 0 && rngPiece() < CHANCE_PIECE_PAR_SESSION[tier]) {
     const album = rngPiece() < 0.5 ? "classeur" : "timbres";
-    const idx = Math.min(items.length - 1, Math.floor(rngPiece() * items.length));
+    const idx = indicesNonExclusifs[
+      Math.min(indicesNonExclusifs.length - 1, Math.floor(rngPiece() * indicesNonExclusifs.length))
+    ];
     items[idx] = instancierPiece(tirerPiece(album, rngPiece), tendances, tier, brocante);
   }
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   BONUS_SPECIALISATION,
   BONUS_TIER_NATIF,
@@ -819,5 +819,25 @@ describe("pièces d'album en session", () => {
   it("une bourse à thème propose aussi la pièce", () => {
     const s = genererSession(8, [], createMockBrocante({ tier: 2, taillePool: 8, specialisation: "Mode" }), null, undefined, () => 0.0);
     expect(s.filter((it) => estPiece(it.objet.templateId))).toHaveLength(1);
+  });
+
+  // M1 revue finale 2026-08-30 : l'index tiré pour poser la pièce piochait
+  // dans TOUS les items, exclusif compris — la pièce pouvait effacer
+  // l'objet d'exception de la session (Math.random figé à 0 → exclusif
+  // garanti à l'unique emplacement, rngPiece figé à 0 → pièce garantie).
+  it("ne remplace jamais l'objet exclusif de la session, même seul sur l'étal", () => {
+    const exclusifId = UNIQUES[0].templateId;
+    const boss = createMockBrocante({
+      id: "boss-m1", tier: 4, etoiles: 4, taillePool: 1, poolExclusif: [exclusifId],
+    });
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      const s = genererSession(1, [], boss, null, undefined, () => 0);
+      expect(s).toHaveLength(1);
+      expect(s[0].objet.templateId).toBe(exclusifId);
+      expect(estPiece(s[0].objet.templateId)).toBe(false);
+    } finally {
+      randomSpy.mockRestore();
+    }
   });
 });
