@@ -6,11 +6,15 @@ import { NEGO_EN, NEGO_TEMPERAMENT_EN } from "./en/nego";
 import { NEGO_ES, NEGO_TEMPERAMENT_ES } from "./es/nego";
 import { NEGO_EL, NEGO_TEMPERAMENT_EL } from "./el/nego";
 import { getTemplate } from "@/data/objetTemplates";
+import { estPiece, getPiece } from "@/data/pieces";
 import { NOM_ARCHETYPE, NOM_VENDEUR, getNomVendeur } from "@/lib/personas";
 import { EXPEDITEURS } from "@/data/expediteursCourrier";
 import { OBJETS_EN } from "./en/objets";
 import { OBJETS_ES } from "./es/objets";
 import { OBJETS_EL } from "./el/objets";
+import { TIMBRES_EN } from "./en/timbres";
+import { TIMBRES_ES } from "./es/timbres";
+import { TIMBRES_EL } from "./el/timbres";
 import { BROCANTES_EN } from "./en/brocantes";
 import { BROCANTES_ES } from "./es/brocantes";
 import { BROCANTES_EL } from "./el/brocantes";
@@ -58,6 +62,14 @@ const OBJETS: Record<LocaleTraduite, Record<string, string>> = {
   el: OBJETS_EL,
 };
 
+/** Classeur de cartes & album de timbres (2026-08-30) : table dédiée aux timbres
+ * (les cartes empruntent le nom de leur objet source dans `OBJETS`). */
+const TIMBRES_TRAD: Record<LocaleTraduite, Record<string, string>> = {
+  en: TIMBRES_EN,
+  es: TIMBRES_ES,
+  el: TIMBRES_EL,
+};
+
 /** Nom localisé d'un template d'objet. Id inconnu → id brut (marqueur repérable). */
 export function nomTemplate(templateId: string, locale: Locale): string {
   const fr = getTemplate(templateId)?.nom;
@@ -78,8 +90,17 @@ export function nomObjet(
   locale: Locale,
 ): string {
   if (locale !== "fr") {
-    const trad = OBJETS[locale][o.templateId];
-    if (trad) return trad;
+    if (estPiece(o.templateId)) {
+      const piece = getPiece(o.templateId);
+      const trad =
+        piece?.album === "classeur" && piece.source
+          ? OBJETS[locale][piece.source]
+          : TIMBRES_TRAD[locale][o.templateId];
+      if (trad) return trad;
+    } else {
+      const trad = OBJETS[locale][o.templateId];
+      if (trad) return trad;
+    }
   }
   return getTemplate(o.templateId)?.nom ?? o.nom;
 }

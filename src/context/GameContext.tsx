@@ -20,10 +20,12 @@ import {
   type NiveauCamion,
   type Objet,
   type ObjetEnVitrine,
+  type PlacementTimbre,
   type Session,
   type TutorielEtape,
 } from "@/types/game";
 import { getCamion } from "@/data/camion";
+import type { AlbumId } from "@/data/pieces";
 import {
   COLIS_TUTORIEL_TAILLE,
   objetColisTutoriel,
@@ -82,6 +84,13 @@ import {
   type RaisonRefus,
 } from "@/lib/bazar/achat";
 import { acheterAlbum, acheterPaquet, appliquerPaquet } from "@/lib/bazar/albums";
+import {
+  albumsDe,
+  marquerConsultee as marquerConsulteeAlbum,
+  poserTimbre as poserTimbreAlbum,
+  recyclerDoublons,
+  rendreAuBac as rendreAuBacAlbum,
+} from "@/lib/albums";
 import { appliquerFinTutoriel, ETAPES_TUTORIEL } from "@/lib/tutoriel";
 import { logEvenement } from "@/lib/analytics/contexte";
 import { EVENEMENTS } from "@/lib/analytics/analytics";
@@ -326,6 +335,23 @@ interface GameActionsValue {
   rafraichirPeriodiques: () => void;
   /** Achète à l'étal du Bazar (lot de pièces ou objet de vitrine). */
   acheterAuBazar: (achat: AchatBazar) => { ok: boolean; raison?: string; pieces?: string[] };
+  /**
+   * Recycle tous les doublons d'un album contre des pièces de réparation
+   * (catégorie de l'album). Renvoie `n` (doublons recyclés) — le toast est
+   * à la charge de l'appelant.
+   */
+  recyclerDoublonsAlbum: (albumId: AlbumId) => number;
+  /** Marque une pièce (carte/timbre) consultée — éteint sa pastille « nouveau ». */
+  marquerPieceConsultee: (id: string) => void;
+  /** Pose un timbre du bac sur une page/ligne/x de l'album de timbres. */
+  poserTimbre: (
+    id: string,
+    page: 0 | 1,
+    ligne: PlacementTimbre["ligne"],
+    x: number,
+  ) => void;
+  /** Retire un timbre posé, le renvoie au bac « en vrac ». */
+  rendreTimbreAuBac: (id: string) => void;
 }
 
 type GameContextValue = GameStateValue & GameActionsValue;
@@ -2240,6 +2266,40 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  // Classeur de cartes & album de timbres (2026-08-30) : mêmes règles que le
+  // reste du fichier — `n` lu sur `stateRef.current` AVANT le `setState`
+  // (jamais dans l'updater, qui peut rejouer en StrictMode).
+  const recyclerDoublonsAlbum = useCallback((albumId: AlbumId): number => {
+    const current = stateRef.current;
+    if (!current) return 0;
+    const n = recyclerDoublons(current, albumId).n;
+    setState((prev) => (prev ? recyclerDoublons(prev, albumId).state : prev));
+    return n;
+  }, []);
+
+  const marquerPieceConsultee = useCallback((id: string) => {
+    setState((prev) =>
+      prev ? { ...prev, albums: marquerConsulteeAlbum(albumsDe(prev), id) } : prev,
+    );
+  }, []);
+
+  const poserTimbre = useCallback(
+    (id: string, page: 0 | 1, ligne: PlacementTimbre["ligne"], x: number) => {
+      setState((prev) =>
+        prev
+          ? { ...prev, albums: poserTimbreAlbum(albumsDe(prev), id, page, ligne, x) }
+          : prev,
+      );
+    },
+    [],
+  );
+
+  const rendreTimbreAuBac = useCallback((id: string) => {
+    setState((prev) =>
+      prev ? { ...prev, albums: rendreAuBacAlbum(albumsDe(prev), id) } : prev,
+    );
+  }, []);
+
   const stateValue = useMemo<GameStateValue>(
     () => ({ state, isHydrated, etatSauvegarde }),
     [state, isHydrated, etatSauvegarde],
@@ -2310,6 +2370,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       rafraichirEnergie,
       rafraichirPeriodiques,
       acheterAuBazar,
+      recyclerDoublonsAlbum,
+      marquerPieceConsultee,
+      poserTimbre,
+      rendreTimbreAuBac,
     }),
     [
       nouvellePartie,
@@ -2373,6 +2437,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       rafraichirEnergie,
       rafraichirPeriodiques,
       acheterAuBazar,
+      recyclerDoublonsAlbum,
+      marquerPieceConsultee,
+      poserTimbre,
+      rendreTimbreAuBac,
     ],
   );
 
