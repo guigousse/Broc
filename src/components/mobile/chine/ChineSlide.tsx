@@ -19,6 +19,8 @@ import { libelleCategorie, libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
 import type { ObjetEnVente } from "@/types/game";
 import { TamponEncreur } from "@/components/ui/TamponEncreur";
+import { estPiece, type AlbumId } from "@/data/pieces";
+import { PieceVisuel } from "@/components/pieces/PieceVisuel";
 
 // Agrandissement max du sticker au-delà de sa taille naturelle. Les images
 // objets sont en 470 px : la taille de base (≈224 px) × 2 reste sous la
@@ -101,6 +103,11 @@ export type ChineSlide =
        * que la session ne soit marquée vue en bloc.
        */
       estNouveau: boolean;
+      /** Pièce (carte/timbre) dont l'album n'est pas encore acheté — verrou
+       *  individuel à la carte : ni Négocier, ni Acheter, quel que soit le
+       *  budget. Absent/null pour un objet ordinaire ou une pièce déjà
+       *  débloquée. */
+      albumManquant?: AlbumId | null;
     }
   | { kind: "mystere" };
 
@@ -146,6 +153,11 @@ export function ChineSlideVue({ slide, plein = false }: { slide: ChineSlide; ple
   const acquis = statut === "achete";
   const vendeurFache = !acquis && item.negociation?.statut === "fache";
   const rarity = getRarityColors(objet.rarete);
+  const piece = estPiece(objet.templateId);
+  // Une pièce ne tient pas de place dans le stockage (elle va à l'album) :
+  // « Stock plein » ne la concerne jamais.
+  const bloquePlein = plein && !piece;
+  const verrou = slide.albumManquant ?? null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -223,28 +235,36 @@ export function ChineSlideVue({ slide, plein = false }: { slide: ChineSlide; ple
             </div>
           </div>
 
-          {/* Sticker die-cut, comme la collection. */}
+          {/* Sticker die-cut, comme la collection — ou visuel de pièce
+              (carte/timbre) pour un objet destiné à l'album. */}
           <div style={stickerImg}>
-            <ItemSticker
-              templateId={objet.templateId}
-              categorie={objet.categorie}
-              etat={objet.etat}
-              fill
-              tilt={false}
-              variant={acquis || vendeurFache || plein ? "grise" : "normal"}
-              thumb
-              eager
-              outlinePx={3}
-            />
-            {/* Tampon encreur en diagonale : VENDU (vert), VENDEUR FÂCHÉ ou
-                STOCK PLEIN (rouge). Décoratif — le tiroir de négo porte
-                l'annonce pour les lecteurs d'écran.
+            {piece ? (
+              <PieceVisuel
+                id={objet.templateId}
+                grise={acquis || vendeurFache || !!verrou}
+              />
+            ) : (
+              <ItemSticker
+                templateId={objet.templateId}
+                categorie={objet.categorie}
+                etat={objet.etat}
+                fill
+                tilt={false}
+                variant={acquis || vendeurFache || bloquePlein ? "grise" : "normal"}
+                thumb
+                eager
+                outlinePx={3}
+              />
+            )}
+            {/* Tampon encreur en diagonale : VENDU (vert), VENDEUR FÂCHÉ,
+                CLASSEUR/ALBUM MANQUANT ou STOCK PLEIN (rouge). Décoratif — le
+                tiroir de négo porte l'annonce pour les lecteurs d'écran.
 
                 ⚠ Ordre de priorité, pas un simple `||` : acheter REMPLIT le
                 stockage, donc la carte que l'on vient d'acquérir serait
                 aussitôt « Stock plein » — elle annoncerait l'empêchement au
                 lieu de la réussite. `acquis` passe donc en premier. */}
-            {(acquis || vendeurFache || plein) && (
+            {(acquis || vendeurFache || bloquePlein || verrou) && (
               <TamponEncreur
                 encre={acquis ? "var(--forest-600)" : "var(--vermillion-500)"}
               >
@@ -252,6 +272,10 @@ export function ChineSlideVue({ slide, plein = false }: { slide: ChineSlide; ple
                   ? d.chine.tamponVendu
                   : vendeurFache
                   ? d.chine.vendeurFache
+                  : verrou
+                  ? verrou === "classeur"
+                    ? d.chine.tamponClasseurManquant
+                    : d.chine.tamponAlbumManquant
                   : d.chine.tamponStockPlein}
               </TamponEncreur>
             )}

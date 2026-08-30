@@ -13,6 +13,7 @@ import { nomVendeur, texteNego } from "@/lib/i18n/contenu";
 import { genreVendeur } from "@/lib/personas";
 import type { NegociationState, ObjetEnVente } from "@/types/game";
 import { offreDansCible, type CibleOffre, type RoleScenario } from "@/data/tutorielScenario";
+import { estPiece, type AlbumId } from "@/data/pieces";
 
 /**
  * Tiroir de négociation en bas de la carte de chine — reprend l'allure de la
@@ -25,6 +26,7 @@ export function ChineNegoDrawer({
   item,
   budget,
   plein,
+  verrouAlbum = null,
   expanded,
   illustrationSrc,
   illustrationFacheSrc,
@@ -40,6 +42,9 @@ export function ChineNegoDrawer({
   item: ObjetEnVente;
   budget: number;
   plein: boolean;
+  /** Pièce (carte/timbre) dont l'album n'est pas encore acheté : ni Négocier
+   *  ni Acheter, quel que soit le budget — en vente au Bazar. */
+  verrouAlbum?: AlbumId | null;
   expanded: boolean;
   illustrationSrc?: string;
   illustrationFacheSrc?: string;
@@ -61,7 +66,10 @@ export function ChineNegoDrawer({
   const acquis = statut === "achete";
   const facheInitial = item.negociation?.statut === "fache";
   const tropCher = budget < prixVendeur;
-  const acheterDisabled = acquis || tropCher || plein;
+  // Une pièce ne tient pas de place dans le stockage (elle va à l'album) :
+  // « Stock plein » ne la bloque jamais.
+  const pleinEffectif = plein && !estPiece(item.objet.templateId);
+  const acheterDisabled = acquis || tropCher || pleinEffectif;
 
   const roleTuto = scriptTuto?.role ?? null;
   /* Cible pointillée du grand-père : le curseur n'est PLUS bridé (il retrouve
@@ -151,7 +159,20 @@ export function ChineNegoDrawer({
             /* Visuel porté par le tampon « Vendeur fâché » sur le sticker ;
                on ne garde ici que l'annonce pour les lecteurs d'écran. */
             <span style={srOnly}>{d.chine.vendeurFache}</span>
-          ) : plein ? (
+          ) : verrouAlbum ? (
+            /* Pièce (carte/timbre) dont l'album n'est pas acheté : ni
+               Négocier ni Acheter — le tampon de la carte porte l'annonce
+               pour les lecteurs d'écran, l'aide « En vente au Bazar » reste
+               visible pour indiquer la marche à suivre. */
+            <div style={peekBtnRow}>
+              <span style={srOnly}>
+                {verrouAlbum === "classeur"
+                  ? d.chine.tamponClasseurManquant
+                  : d.chine.tamponAlbumManquant}
+              </span>
+              <span style={aideVerrou}>{d.chine.albumManquantAide}</span>
+            </div>
+          ) : pleinEffectif ? (
             /* Idem : le texte rouge passait inaperçu à l'écran, le tampon
                « Stock plein » le remplace sur l'objet lui-même. */
             <span style={srOnly}>{d.chine.tamponStockPlein}</span>
@@ -213,8 +234,8 @@ export function ChineNegoDrawer({
                 </button>
                 <button
                   type="button"
-                  style={btnPrimaryDisablable(plein)}
-                  disabled={plein}
+                  style={btnPrimaryDisablable(pleinEffectif)}
+                  disabled={pleinEffectif}
                   onClick={() => onConclu(localNego.prixAdverseCourant)}
                 >
                   {tr(d.chine.accepterPrix, { prix: localNego.prixAdverseCourant })}
@@ -226,11 +247,13 @@ export function ChineNegoDrawer({
                   {d.chine.laisserTomber}
                 </button>
                 {/* Stockage plein : tout chemin qui peut conclure la négo est
-                    coupé — l'achat échouerait (garde atomique acheterObjet). */}
+                    coupé — l'achat échouerait (garde atomique acheterObjet).
+                    `pleinEffectif` : une pièce, qui ne prend pas de place, n'est
+                    jamais concernée. */}
                 <button
                   type="button"
-                  style={btnPrimaryDisablable(plein || horsCible)}
-                  disabled={plein || horsCible}
+                  style={btnPrimaryDisablable(pleinEffectif || horsCible)}
+                  disabled={pleinEffectif || horsCible}
                   onClick={handleProposer}
                 >
                   {offreJoueur >= localNego.prixAdverseCourant
@@ -347,6 +370,16 @@ const bubbleTailInner: CSSProperties = {
 /** Bandeau nom pleine largeur, coins hauts arrondis (ancienne fiche). */
 const namePlate = namePlateStyle("12px 12px 0 0");
 
+
+/** Aide « En vente au Bazar » remplaçant les boutons quand l'album manque. */
+const aideVerrou: CSSProperties = {
+  fontFamily: "var(--font-display)",
+  fontSize: 12,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--vermillion-600)",
+  alignSelf: "center",
+};
 
 /** Texte présent pour les lecteurs d'écran mais invisible à l'écran. */
 const srOnly: CSSProperties = {

@@ -28,6 +28,7 @@ import {
   poserSupplementBudget,
 } from "@/lib/affichageGele";
 import type { CategorieObjet } from "@/types/game";
+import type { AlbumId } from "@/data/pieces";
 
 export type ModeBilan = "chinage" | "vente";
 
@@ -40,6 +41,9 @@ export interface BilanItem {
   /** Vente : prix d'achat de l'objet. Nul pour le stock initial (cadeau) —
    *  l'objet n'a rien coûté, son bénéfice vaut alors son prix de vente. */
   prixAchat?: number | null;
+  /** Chinage : pièce (carte/timbre) rangée dans cet album plutôt que dans
+   *  l'inventaire. Absent pour un objet ordinaire. */
+  album?: AlbumId;
 }
 
 export type SourceXp =
@@ -428,7 +432,10 @@ export function BilanSession({
                   <ItemSticker templateId={it.templateId} categorie={it.categorie} thumb />
                 </span>
                 {mode === "chinage" ? (
-                  <span style={nomItem}>{nomObjet(it, locale)}</span>
+                  <span style={nomItem}>
+                    {nomObjet(it, locale)}
+                    {it.album && <span> · {d.bilan.rangeeDansAlbum}</span>}
+                  </span>
                 ) : (
                   <span style={blocNomVente}>
                     <span style={nomItem}>{nomObjet(it, locale)}</span>

@@ -330,6 +330,7 @@ export const en: DictionnaireUI = {
     objetsTrouvablesAria: "See the objects to unearth here",
     objetsTrouvablesSousTitre: "{n} objects to unearth here",
     objetsTrouvablesTiersPrecedents: "+ {n} objects from {etoiles} flea markets",
+    objetsTrouvablesPieces: "+ collectible cards and stamps",
     objetsTrouvablesEt: "and",
     actionsBrocanteAria: "Flea market actions",
     navigationParTierAria: "Tier navigation",
@@ -352,6 +353,9 @@ export const en: DictionnaireUI = {
     // Court exprès : le tampon est en diagonale sur la vignette.
     tamponStockPlein: "Storage full",
     tamponVendu: "Sold",
+    tamponClasseurManquant: "Binder missing",
+    tamponAlbumManquant: "Album missing",
+    albumManquantAide: "On sale at the Bazaar",
     negocier: "Haggle",
     acheterPrix: "Buy for {prix} €",
     laisserTomber: "Walk away",
@@ -475,6 +479,7 @@ export const en: DictionnaireUI = {
     xpVentes: "Sales",
     xpJustePrix: "Fair price",
     recetteAria: "Takings: {montant} €",
+    rangeeDansAlbum: "filed in the album",
   },
   inventaire: {
     // — stockage —

@@ -330,6 +330,7 @@ export const es: DictionnaireUI = {
     objetsTrouvablesAria: "Ver los objetos que se pueden encontrar aquí",
     objetsTrouvablesSousTitre: "{n} objetos por encontrar aquí",
     objetsTrouvablesTiersPrecedents: "+ {n} objetos de los mercadillos {etoiles}",
+    objetsTrouvablesPieces: "+ cromos y sellos para coleccionar",
     objetsTrouvablesEt: "y",
     actionsBrocanteAria: "Acciones del mercadillo",
     navigationParTierAria: "Navegación por tier",
@@ -352,6 +353,9 @@ export const es: DictionnaireUI = {
     // Court exprès : le tampon est en diagonale sur la vignette.
     tamponStockPlein: "Almacén lleno",
     tamponVendu: "Vendido",
+    tamponClasseurManquant: "Falta el clasificador",
+    tamponAlbumManquant: "Falta el álbum",
+    albumManquantAide: "A la venta en el Bazar",
     negocier: "Regatear",
     acheterPrix: "Comprar por {prix} €",
     laisserTomber: "Abandonar",
@@ -475,6 +479,7 @@ export const es: DictionnaireUI = {
     xpVentes: "Ventas",
     xpJustePrix: "Precio justo",
     recetteAria: "Ingresos: {montant} €",
+    rangeeDansAlbum: "guardada en el álbum",
   },
   inventaire: {
     // — stockage —

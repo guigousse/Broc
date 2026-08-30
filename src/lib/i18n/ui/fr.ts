@@ -333,6 +333,7 @@ export const fr = {
     objetsTrouvablesAria: "Voir les objets à dénicher ici",
     objetsTrouvablesSousTitre: "{n} objets à dénicher ici",
     objetsTrouvablesTiersPrecedents: "+ {n} objets issus des brocantes {etoiles}",
+    objetsTrouvablesPieces: "+ cartes et timbres à collectionner",
     objetsTrouvablesEt: "et",
     actionsBrocanteAria: "Actions brocante",
     navigationParTierAria: "Navigation par tier",
@@ -355,6 +356,12 @@ export const fr = {
     // Court exprès : le tampon est en diagonale sur la vignette.
     tamponStockPlein: "Stock plein",
     tamponVendu: "Vendu",
+    // Tampons/aide de la pièce (carte/timbre) dont l'album n'est pas encore
+    // acheté — même diagonale que « Stock plein », mais sans bloquer le
+    // reste du deck (verrou individuel à la carte).
+    tamponClasseurManquant: "Classeur manquant",
+    tamponAlbumManquant: "Album manquant",
+    albumManquantAide: "En vente au Bazar",
     negocier: "Négocier",
     acheterPrix: "Acheter {prix} €",
     laisserTomber: "Laisser tomber",
@@ -483,6 +490,9 @@ export const fr = {
     xpVentes: "Ventes",
     xpJustePrix: "Juste prix",
     recetteAria: "Recette : {montant} €",
+    // Pièce (carte/timbre) achetée en chine : rangée dans l'album, pas dans
+    // le stock — la ligne du bilan le rappelle.
+    rangeeDansAlbum: "rangée dans l'album",
   },
   inventaire: {
     // — stockage —

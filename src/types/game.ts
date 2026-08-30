@@ -636,6 +636,9 @@ export interface ObjetSnapshot {
 
 export interface AchatHistorique extends ObjetSnapshot {
   prixPaye: number;
+  /** Pièce (carte/timbre) : album où elle a été rangée (pas l'inventaire).
+   *  Absent pour un objet ordinaire. */
+  album?: "classeur" | "timbres";
 }
 
 export interface VenteHistorique extends ObjetSnapshot {

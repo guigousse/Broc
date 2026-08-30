@@ -149,3 +149,32 @@ describe("ChineSlideVue — tampon de statut", () => {
     expect(screen.queryByText("Vendu")).toBeNull();
   });
 });
+
+describe("ChineSlideVue — pièce (carte/timbre)", () => {
+  function pieceSlide(
+    templateId: string,
+    over: Partial<Extract<ChineSlide, { kind: "item" }>> = {},
+  ): ChineSlide {
+    const base = makeSlide(false) as Extract<ChineSlide, { kind: "item" }>;
+    return {
+      ...base,
+      ...over,
+      item: { ...base.item, objet: { ...base.item.objet, templateId } },
+    };
+  }
+
+  it("rend le visuel de pièce et tamponne « Classeur manquant » quand le classeur manque", () => {
+    const { container } = render(
+      <ChineSlideVue
+        slide={pieceSlide("carte.marteau_menuisier", { albumManquant: "classeur" })}
+      />,
+    );
+    expect(container.querySelector('[data-testid="piece-visuel"]')).not.toBeNull();
+    expect(screen.getByText("Classeur manquant")).toBeTruthy();
+  });
+
+  it("stock plein sans albumManquant : pas de « Stock plein » sur une pièce", () => {
+    render(<ChineSlideVue slide={pieceSlide("carte.marteau_menuisier")} plein />);
+    expect(screen.queryByText("Stock plein")).toBeNull();
+  });
+});

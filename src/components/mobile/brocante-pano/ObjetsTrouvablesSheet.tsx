@@ -143,6 +143,9 @@ function SheetOuverte({
             })}
           </p>
         )}
+        <p style={tiersPrecedents} data-testid="trouvables-pieces">
+          {d.chine.objetsTrouvablesPieces}
+        </p>
       </div>
       <div style={grille} data-testid="trouvables-liste">
         {liste.map((t) => {

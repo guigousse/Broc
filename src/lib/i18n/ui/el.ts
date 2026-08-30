@@ -331,6 +331,7 @@ export const el: DictionnaireUI = {
     objetsTrouvablesAria: "Δείτε τα αντικείμενα που βρίσκονται εδώ",
     objetsTrouvablesSousTitre: "{n} αντικείμενα προς εύρεση εδώ",
     objetsTrouvablesTiersPrecedents: "+ {n} αντικείμενα από παζάρια {etoiles}",
+    objetsTrouvablesPieces: "+ κάρτες και γραμματόσημα για συλλογή",
     objetsTrouvablesEt: "και",
     actionsBrocanteAria: "Ενέργειες παζαριού",
     navigationParTierAria: "Πλοήγηση ανά tier",
@@ -353,6 +354,9 @@ export const el: DictionnaireUI = {
     // Court exprès : le tampon est en diagonale sur la vignette.
     tamponStockPlein: "Αποθήκη γεμάτη",
     tamponVendu: "Πουλήθηκε",
+    tamponClasseurManquant: "Λείπει το ντοσιέ",
+    tamponAlbumManquant: "Λείπει το άλμπουμ",
+    albumManquantAide: "Πωλείται στο Παζάρι",
     negocier: "Παζάρεμα",
     acheterPrix: "Αγορά {prix} €",
     laisserTomber: "Παράτα το",
@@ -476,6 +480,7 @@ export const el: DictionnaireUI = {
     xpVentes: "Πωλήσεις",
     xpJustePrix: "Δίκαιη τιμή",
     recetteAria: "Έσοδα: {montant} €",
+    rangeeDansAlbum: "τοποθετήθηκε στο άλμπουμ",
   },
   inventaire: {
     // — stockage —
