@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   memo,
   useCallback,
   useEffect,
@@ -9,6 +10,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactNode,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -21,10 +23,30 @@ import { prefetchThumbs, thumbUrlsForSlots } from "@/lib/prefetchThumbs";
 import { StarRow } from "@/components/ui/StarRow";
 import { getRarityColors } from "@/lib/rarityColors";
 import { etoileCount } from "@/lib/etat";
+import { CATEGORIES } from "@/data/categories";
 import { useLangue } from "@/lib/i18n/LangueContext";
 import { libelleEtat } from "@/lib/i18n/libelles";
 import { nomObjet } from "@/lib/i18n/contenu";
-import type { CollectionSlot } from "@/types/game";
+import type { CategorieObjet, CollectionSlot } from "@/types/game";
+
+/**
+ * Case injectée en tête d'une catégorie (tuiles Classeur/Album, Tâche 13) :
+ * pas un `CollectionSlot`, rendue telle quelle par `Rangee`.
+ */
+export interface CaseSpeciale {
+  key: string;
+  categorie: CategorieObjet;
+  element: ReactNode;
+}
+
+/** Cellule interne de la grille : un slot de collection ou une case spéciale. */
+type Cellule =
+  | { kind: "slot"; slot: CollectionSlot }
+  | { kind: "special"; key: string; element: ReactNode };
+
+function celluleKey(c: Cellule): string {
+  return c.kind === "slot" ? c.slot.templateId : c.key;
+}
 
 /** Items par ligne. La page Collection s'en tient au défaut (5). */
 export type Colonnes = 1 | 2 | 3 | 4 | 5;
@@ -47,6 +69,12 @@ interface CollectionGridProps {
    * main pointeuse (au-dessus, `tuto-main tuto-main-haut`).
    */
   mainTemplateId?: string | null;
+  /**
+   * Optionnel (Tâche 13) : cases injectées en tête de leur catégorie (tuiles
+   * Classeur de cartes / Album de timbres). Catégorie absente de `slots` ET
+   * de `casesSpeciales` = ignorée ; l'ordre suit `CATEGORIES`.
+   */
+  casesSpeciales?: CaseSpeciale[];
 }
 
 const starsRow: CSSProperties = {
@@ -224,7 +252,7 @@ const CollectionCell = memo(function CollectionCell({
 });
 
 interface RangeeProps {
-  rangee: CollectionSlot[];
+  rangee: Cellule[];
   colonnes: Colonnes;
   planche: CSSProperties;
   onTap: (slot: CollectionSlot) => void;
@@ -252,15 +280,19 @@ function Rangee({
           boxSizing: "border-box",
         }}
       >
-        {rangee.map((s) => (
-          <CollectionCell
-            key={s.templateId}
-            slot={s}
-            onTap={onTap}
-            enStock={enStockIds?.has(s.templateId) ?? false}
-            mainTemplateId={mainTemplateId}
-          />
-        ))}
+        {rangee.map((c) =>
+          c.kind === "slot" ? (
+            <CollectionCell
+              key={c.slot.templateId}
+              slot={c.slot}
+              onTap={onTap}
+              enStock={enStockIds?.has(c.slot.templateId) ?? false}
+              mainTemplateId={mainTemplateId}
+            />
+          ) : (
+            <Fragment key={c.key}>{c.element}</Fragment>
+          ),
+        )}
       </div>
       {/* Planche d'étagère sous la rangée */}
       <div aria-hidden data-testid="planche" style={planche} />
@@ -275,6 +307,7 @@ export function CollectionGrid({
   colonnes = COLONNES_PAR_DEFAUT,
   scrollVersTemplateId,
   mainTemplateId,
+  casesSpeciales,
 }: CollectionGridProps) {
   // Wrapper stable (pattern latest-ref) : même si le parent passe une arrow
   // function inline recréée à chaque render, les cellules mémoïsées gardent
@@ -286,13 +319,37 @@ export function CollectionGrid({
     [],
   );
 
-  const rangees: CollectionSlot[][] = useMemo(() => {
-    const acc: CollectionSlot[][] = [];
-    for (let i = 0; i < slots.length; i += colonnes) {
-      acc.push(slots.slice(i, i + colonnes));
+  // Liste aplatie : chaque case spéciale est insérée en tête de sa catégorie
+  // (ordre `CATEGORIES`), avant les slots de cette même catégorie. Sans case
+  // spéciale, identique à `slots` (référence stable si `slots` ne change pas).
+  const cellules: Cellule[] = useMemo(() => {
+    if (!casesSpeciales || casesSpeciales.length === 0) {
+      return slots.map((slot): Cellule => ({ kind: "slot", slot }));
+    }
+    const categoriesEnJeu = CATEGORIES.filter(
+      (cat) =>
+        slots.some((s) => s.categorie === cat) ||
+        casesSpeciales.some((cs) => cs.categorie === cat),
+    );
+    const acc: Cellule[] = [];
+    for (const cat of categoriesEnJeu) {
+      for (const cs of casesSpeciales.filter((c) => c.categorie === cat)) {
+        acc.push({ kind: "special", key: cs.key, element: cs.element });
+      }
+      for (const s of slots.filter((s) => s.categorie === cat)) {
+        acc.push({ kind: "slot", slot: s });
+      }
     }
     return acc;
-  }, [slots, colonnes]);
+  }, [slots, casesSpeciales]);
+
+  const rangees: Cellule[][] = useMemo(() => {
+    const acc: Cellule[][] = [];
+    for (let i = 0; i < cellules.length; i += colonnes) {
+      acc.push(cellules.slice(i, i + colonnes));
+    }
+    return acc;
+  }, [cellules, colonnes]);
 
   // Warm-up : réchauffe le cache HTTP des vignettes affichées (octets seulement,
   // pas de décodage → iOS-safe). Suit le filtre catégorie via `slots`.
@@ -347,7 +404,7 @@ export function CollectionGrid({
     estimateSize: estimateRow,
     overscan: 8,
     scrollMargin,
-    getItemKey: (i) => rangees[i][0].templateId,
+    getItemKey: (i) => celluleKey(rangees[i][0]),
   });
 
   // Le zoom change la hauteur des rangées → recalcule les positions.
@@ -361,7 +418,11 @@ export function CollectionGrid({
   const indexRangeeCible = useMemo(() => {
     if (!scrollVersTemplateId) return null;
     for (let i = 0; i < rangees.length; i++) {
-      if (rangees[i].some((s) => s.templateId === scrollVersTemplateId)) {
+      if (
+        rangees[i].some(
+          (c) => c.kind === "slot" && c.slot.templateId === scrollVersTemplateId,
+        )
+      ) {
         return i;
       }
     }
@@ -380,7 +441,7 @@ export function CollectionGrid({
       <div ref={parentRef}>
         {rangees.map((rangee) => (
           <Rangee
-            key={rangee[0].templateId}
+            key={celluleKey(rangee[0])}
             rangee={rangee}
             colonnes={colonnes}
             planche={planche}

@@ -282,6 +282,38 @@ describe("CollectionGrid", () => {
     });
   });
 
+  describe("casesSpeciales", () => {
+    it("insère une case spéciale en tête de sa catégorie", () => {
+      const slotsMixtes: CollectionSlot[] = [
+        makeSlot({ templateId: "m1", nom: "Mus 1", categorie: "Musique" }),
+        makeSlot({ templateId: "m2", nom: "Mus 2", categorie: "Musique" }),
+        makeSlot({ templateId: "h1", nom: "Maison 1", categorie: "Maison" }),
+        makeSlot({ templateId: "h2", nom: "Maison 2", categorie: "Maison" }),
+      ];
+      render(
+        <CollectionGrid
+          slots={slotsMixtes}
+          colonnes={1}
+          casesSpeciales={[
+            {
+              key: "spec",
+              categorie: "Maison",
+              element: (
+                <button type="button" data-testid="special">
+                  SPEC
+                </button>
+              ),
+            },
+          ]}
+        />,
+      );
+      const boutons = screen.getAllByRole("button");
+      expect(
+        boutons.map((b) => b.getAttribute("aria-label") ?? b.textContent),
+      ).toEqual(["Mus 1", "Mus 2", "SPEC", "Maison 1", "Maison 2"]);
+    });
+  });
+
   it("étagères : planche et espaces proportionnels au zoom", () => {
     const attendus: Array<[1 | 3 | 5, number, number, number]> = [
       [1, 48, 18, 48],
