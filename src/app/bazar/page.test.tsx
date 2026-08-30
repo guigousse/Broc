@@ -32,6 +32,14 @@ vi.mock("next/navigation", () => ({
 
 const rafraichirPeriodiques = vi.fn();
 const acheterAuBazar = vi.fn();
+// Requis par `ClasseurOverlay`/`AlbumTimbresOverlay` — câblées à la page par
+// la Tâche 12, à l'ouverture d'un album depuis la cérémonie. Non exercées
+// tant que `albumOuvert` reste `null` (la majorité des tests ici), mais
+// `useGame()` les destructure sans condition.
+const recyclerDoublonsAlbum = vi.fn();
+const marquerPieceConsultee = vi.fn();
+const poserTimbre = vi.fn();
+const rendreTimbreAuBac = vi.fn();
 let mockState: Record<string, unknown> | null = null;
 
 vi.mock("@/context/GameContext", () => ({
@@ -40,6 +48,10 @@ vi.mock("@/context/GameContext", () => ({
     isHydrated: true,
     acheterAuBazar,
     rafraichirPeriodiques,
+    recyclerDoublonsAlbum,
+    marquerPieceConsultee,
+    poserTimbre,
+    rendreTimbreAuBac,
   }),
   // MobileHeader lit `tempsConfiance` via useGameActions pour la jauge d'énergie.
   useGameActions: () => ({ tempsConfiance: () => Date.now() }),
@@ -48,6 +60,11 @@ vi.mock("@/context/GameContext", () => ({
 const toast = vi.fn();
 vi.mock("@/components/ui/Toast", () => ({
   useToastSafe: () => ({ toast }),
+  // `ClasseurOverlay`/`AlbumTimbresOverlay` (Tâche 12, câblées ici mais
+  // repliées `open={false}` la plupart du temps) appellent `useToast`
+  // INCONDITIONNELLEMENT, avant leur propre garde `if (!open) return null` —
+  // sans ce second export, tout rendu de la page planterait.
+  useToast: () => ({ toast }),
 }));
 
 const etal = genererEtal("2026-W34");
@@ -71,6 +88,13 @@ beforeEach(() => {
     inventaireJoueur: [],
     niveauStockage: 1,
     vitrine: null,
+    // Le classeur déjà acheté : la case propose un PAQUET (5 jetons), pas
+    // l'album (10 jetons) — c'est le paquet que la cérémonie de la Tâche 12
+    // concerne.
+    albums: {
+      classeur: { achete: true, pieces: {}, nouvelles: [] },
+      timbres: { achete: false, pieces: {}, nouvelles: [], placements: {}, ordreZ: [] },
+    },
   };
 });
 
@@ -389,5 +413,77 @@ describe("BazarPage — l'ambiance de rue", () => {
     expect(stop).not.toHaveBeenCalled();
     unmount();
     expect(stop).toHaveBeenCalled();
+  });
+});
+
+// Tâche 12 : la cérémonie d'ouverture d'un paquet de 3 pièces, câblée à la
+// page. `acheterAuBazar` a déjà rangé les pièces dans la save au moment où
+// il répond `{ ok, pieces }` — cet écran ne fait qu'annoncer ce qui a déjà
+// eu lieu.
+describe("BazarPage — la cérémonie d'ouverture d'un paquet", () => {
+  function acheterLaPochetteDeCartes() {
+    act(() => {
+      screen.getByRole("button", { name: "Paquet de 3 cartes" }).click();
+    });
+    act(() => {
+      screen.getByRole("button", { name: /^Acheter pour/ }).click();
+    });
+  }
+
+  it("un achat de paquet réussi affiche la cérémonie", () => {
+    acheterAuBazar.mockReturnValue({
+      ok: true,
+      pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"],
+    });
+    render(<BazarPage />);
+    acheterLaPochetteDeCartes();
+    const dialogs = screen.getAllByRole("dialog");
+    expect(dialogs.some((el) => el.getAttribute("aria-label") === "Ouverture")).toBe(true);
+    expect(screen.getAllByTestId("carte-paquet")).toHaveLength(3);
+  });
+
+  it("un achat de lot de pièces (pas un paquet) n'ouvre PAS la cérémonie", async () => {
+    acheterAuBazar.mockReturnValue({ ok: true });
+    render(<BazarPage />);
+    await act(async () => {
+      screen.getAllByRole("button", { name: /pièces/i })[0].click();
+    });
+    await act(async () => {
+      screen.getByRole("button", { name: /^Acheter pour/ }).click();
+    });
+    expect(
+      screen.queryAllByRole("dialog").some((el) => el.getAttribute("aria-label") === "Ouverture"),
+    ).toBe(false);
+  });
+
+  it("« Ranger » referme la cérémonie", () => {
+    acheterAuBazar.mockReturnValue({
+      ok: true,
+      pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"],
+    });
+    render(<BazarPage />);
+    acheterLaPochetteDeCartes();
+    act(() => {
+      screen.getByRole("button", { name: "Ranger" }).click();
+    });
+    expect(
+      screen.queryAllByRole("dialog").some((el) => el.getAttribute("aria-label") === "Ouverture"),
+    ).toBe(false);
+  });
+
+  it("« Voir » referme la cérémonie et ouvre le classeur de cartes", () => {
+    acheterAuBazar.mockReturnValue({
+      ok: true,
+      pieces: ["carte.marteau_menuisier", "carte.marteau_menuisier", "carte.risk_1992"],
+    });
+    render(<BazarPage />);
+    acheterLaPochetteDeCartes();
+    act(() => {
+      screen.getByRole("button", { name: "Voir" }).click();
+    });
+    expect(
+      screen.queryAllByRole("dialog").some((el) => el.getAttribute("aria-label") === "Ouverture"),
+    ).toBe(false);
+    expect(screen.getByRole("dialog", { name: "Classeur de cartes" })).toBeTruthy();
   });
 });

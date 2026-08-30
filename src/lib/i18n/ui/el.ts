@@ -950,6 +950,8 @@ export const el: DictionnaireUI = {
     voir: "Προβολή",
     nouveau: "Νέο!",
     doublon: "×{n}",
+    ranger: "Τακτοποίηση",
+    ouverture: "Άνοιγμα",
     serie: "Σειρά: {serie}",
     theme_voyage: "Ταξίδια",
     theme_faune: "Πανίδα",

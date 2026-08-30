@@ -980,6 +980,8 @@ export const fr = {
     voir: "Voir",
     nouveau: "Nouveau !",
     doublon: "×{n}",
+    ranger: "Ranger",
+    ouverture: "Ouverture",
     serie: "Série : {serie}",
     theme_voyage: "Voyage",
     theme_faune: "Faune",

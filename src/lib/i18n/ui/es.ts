@@ -932,6 +932,8 @@ export const es: DictionnaireUI = {
     voir: "Ver",
     nouveau: "¡Nuevo!",
     doublon: "×{n}",
+    ranger: "Guardar",
+    ouverture: "Apertura",
     serie: "Serie: {serie}",
     theme_voyage: "Viajes",
     theme_faune: "Fauna",

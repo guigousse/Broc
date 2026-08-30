@@ -18,6 +18,10 @@ import { volumeAmbianceBazarForPos } from "@/components/bazar/bazarAudioCurves";
 import { destinationChiner, destinationEtaler } from "@/lib/porte";
 import { stockageEstPlein } from "@/lib/stockage";
 import { useLangue } from "@/lib/i18n/LangueContext";
+import { OuverturePaquetOverlay } from "@/components/albums/OuverturePaquetOverlay";
+import { ClasseurOverlay } from "@/components/albums/ClasseurOverlay";
+import { AlbumTimbresOverlay } from "@/components/albums/AlbumTimbresOverlay";
+import type { AlbumId } from "@/data/pieces";
 import type { AchatBazar } from "@/lib/bazar/achat";
 
 export default function BazarPage() {
@@ -29,6 +33,14 @@ export default function BazarPage() {
   // celle du bureau — chiner, étaler, rentrer.
   const [porteOuverte, setPorteOuverte] = useState(false);
   const [alerteEnergie, setAlerteEnergie] = useState(false);
+  // La cérémonie d'ouverture d'un paquet acheté (Tâche 12), et l'album qu'un
+  // « Voir » depuis cette cérémonie peut ouvrir juste après.
+  const [paquetOuvert, setPaquetOuvert] = useState<{
+    albumId: AlbumId;
+    pieces: string[];
+    quantitesAvant: Record<string, number>;
+  } | null>(null);
+  const [albumOuvert, setAlbumOuvert] = useState<AlbumId | null>(null);
   // On ne quitte pas le Bazar comme on change d'onglet : c'est un lieu, et on
   // en sort par la porte, iris compris (cf. `usePassageIris`).
   const { overlay: irisSortie, partirVers } = usePassageIris();
@@ -106,7 +118,22 @@ export default function BazarPage() {
   // quelques secondes — exactement le « ça cache la réponse » qu'on cherche à
   // éviter. Un seul canal, donc, et c'est le durable : la fiche reste ouverte
   // et affiche la raison jusqu'à ce que le joueur la referme.
-  const handleAcheter = (achat: AchatBazar) => acheterAuBazar(achat);
+  //
+  // Un achat de paquet a EN PLUS une cérémonie : `quantitesAvant` est un
+  // instantané des quantités possédées AVANT l'achat, pris ICI — avant
+  // l'appel — parce que `acheterAuBazar` a déjà rangé les 3 pièces dans la
+  // save au moment où il répond. Sans ce cliché, le compteur « Nouveau ! » /
+  // « ×N » de la cérémonie ne pourrait plus distinguer une pièce déjà
+  // possédée d'une pièce qui vient d'arriver.
+  const handleAcheter = (achat: AchatBazar) => {
+    const quantitesAvant =
+      achat.type === "paquet" && state ? { ...albumsDe(state)[achat.album].pieces } : {};
+    const res = acheterAuBazar(achat);
+    if (res.ok && achat.type === "paquet" && res.pieces) {
+      setPaquetOuvert({ albumId: achat.album, pieces: res.pieces, quantitesAvant });
+    }
+    return res;
+  };
 
   if (!state || !state.bazar) return <SkeletonScreen />;
 
@@ -205,6 +232,24 @@ export default function BazarPage() {
         />
       )}
       {irisSortie}
+
+      {/* La cérémonie d'ouverture, au-dessus de la fiche (zIndex 107 contre
+          105) : « Voir » la referme et ouvre directement l'album concerné,
+          « Ranger » la referme sans rien ouvrir de plus. */}
+      {paquetOuvert && (
+        <OuverturePaquetOverlay
+          albumId={paquetOuvert.albumId}
+          pieces={paquetOuvert.pieces}
+          quantitesAvant={paquetOuvert.quantitesAvant}
+          onVoirAlbum={() => {
+            setAlbumOuvert(paquetOuvert.albumId);
+            setPaquetOuvert(null);
+          }}
+          onClose={() => setPaquetOuvert(null)}
+        />
+      )}
+      <ClasseurOverlay open={albumOuvert === "classeur"} onClose={() => setAlbumOuvert(null)} />
+      <AlbumTimbresOverlay open={albumOuvert === "timbres"} onClose={() => setAlbumOuvert(null)} />
     </MobileLayout>
   );
 }
