@@ -63,6 +63,13 @@ import { initAlbums } from "@/lib/albums";
  * (inventaire, vitrine, collection, missions, grand livre…). Indispensable pour
  * ne pas perdre les objets des parties créées avant le renommage. Idempotent :
  * un id déjà à jour n'est pas dans la table et reste inchangé.
+ *
+ * ⚠ Réécrit des templateId EN PLACE — ne fusionne/déduplique jamais des slots.
+ * Deux anciens ids qui pointent vers le MÊME nouvel id (fusion 2→1, voir les
+ * entrées « Pocket Monster » → locomotive dans `OLD_TO_NEW_TEMPLATE_ID`) donnent
+ * donc deux slots séparés partageant le même templateId après migration —
+ * la donation de l'un des deux peut être perdue si un mécanisme aval suppose
+ * au plus un slot donné par templateId.
  */
 function remapTemplateIds<T>(value: T): T {
   if (typeof value === "string") {
