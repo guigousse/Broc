@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -311,6 +312,19 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
     setFiche(id);
   };
 
+  // Clavier/VoiceOver : le chemin pointeur (tap ≤ SEUIL_TAP_PX dans
+  // onPointerUpTimbre) ouvre déjà la fiche au doigt/à la souris. `onKeyDown`
+  // couvre Entrée/Espace SANS passer par `onClick` : sur souris/trackpad, un
+  // `click` natif suit toujours le `mouseup` même après un glisser (la
+  // capture de pointeur garde la cible) et rouvrirait la fiche par-dessus la
+  // pose/le retour au bac qu'on vient de faire.
+  const onKeyDownTimbre = (id: string) => (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      ouvrirFiche(id);
+    }
+  };
+
   const onPointerDownTimbre =
     (id: string, origine: OrigineGeste) => (e: ReactPointerEvent<HTMLButtonElement>) => {
       e.stopPropagation();
@@ -437,7 +451,7 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
               onPointerUp={onPointerUpTimbre}
               onPointerCancel={onPointerAbandonneTimbre}
               onLostPointerCapture={onPointerAbandonneTimbre}
-              onClick={() => ouvrirFiche(id)}
+              onKeyDown={onKeyDownTimbre(id)}
             >
               <PieceVisuel id={id} thumb />
             </button>
@@ -463,7 +477,7 @@ export function AlbumTimbresOverlay({ open, onClose }: { open: boolean; onClose:
               onPointerUp={onPointerUpTimbre}
               onPointerCancel={onPointerAbandonneTimbre}
               onLostPointerCapture={onPointerAbandonneTimbre}
-              onClick={() => ouvrirFiche(id)}
+              onKeyDown={onKeyDownTimbre(id)}
             >
               <PieceVisuel id={id} thumb />
               {quantite > 1 && (

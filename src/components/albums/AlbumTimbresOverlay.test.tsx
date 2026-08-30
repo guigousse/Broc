@@ -174,8 +174,34 @@ describe("AlbumTimbresOverlay", () => {
     const items = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac");
     expect(items[0].tagName).toBe("BUTTON");
     expect(items[0].getAttribute("aria-label")).toBeTruthy();
-    fireEvent.click(items[0]);
+    fireEvent.keyDown(items[0], { key: "Enter" });
     expect(mocks.marquerPieceConsultee).toHaveBeenCalledWith(t0);
+  });
+
+  it("la touche Espace sur un timbre posé ouvre aussi la fiche", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const pose = screen.getByTestId("timbre-pose");
+    fireEvent.keyDown(pose, { key: " " });
+    expect(mocks.marquerPieceConsultee).toHaveBeenCalledWith(t2);
+  });
+
+  // Réserve finale : sur souris/trackpad, un `click` natif suit un `mouseup`
+  // même après un glisser (la capture de pointeur garde la même cible) — ce
+  // `click` ne doit PAS rouvrir la fiche par-dessus le geste de pose/retour.
+  it("un clic natif consécutif à un glisser (pointerUp > seuil) n'ouvre pas la fiche", () => {
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    const page = screen.getByTestId("page-timbres");
+    page.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 300, height: 390, right: 300, bottom: 390, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+    const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
+    fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
+    fireEvent.pointerMove(t, { clientX: 150, clientY: 200, pointerId: 1 });
+    fireEvent.pointerUp(t, { clientX: 150, clientY: 200, pointerId: 1 });
+    mocks.marquerPieceConsultee.mockClear();
+    // Le navigateur envoie ce `click` après le `pointerup`, sur la même cible
+    // (pointer capture) — même si le geste était un glisser.
+    fireEvent.click(t);
+    expect(mocks.marquerPieceConsultee).not.toHaveBeenCalled();
   });
 
   it("un timbre posé est un bouton nommé", () => {
