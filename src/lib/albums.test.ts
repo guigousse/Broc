@@ -1,11 +1,11 @@
 // src/lib/albums.test.ts
 import { describe, expect, it } from "vitest";
 import {
-  ajouterPiece, albumsDe, doublons, initAlbums, marquerConsultee, nbPossedees,
+  acheterPiece, ajouterPiece, albumsDe, doublons, initAlbums, marquerConsultee, nbPossedees,
   ouvrirPaquet, poserTimbre, premierePlaceLibre, recyclerDoublons, rendreAuBac,
   tirerPiece, TAILLE_PAQUET,
 } from "@/lib/albums";
-import { createMockGameState } from "@/lib/__test-fixtures__/gameState";
+import { createMockGameState, createMockObjet } from "@/lib/__test-fixtures__/gameState";
 import { piecesDe } from "@/data/pieces";
 
 const rngFixe = (suite: number[]) => { let i = 0; return () => suite[i++ % suite.length]; };
@@ -88,5 +88,26 @@ describe("album de timbres — placement", () => {
     ids.forEach((pid, k) => { a = ajouterPiece(a, pid); a = poserTimbre(a, pid, 0, 0, 0.1 + 0.2 * k); });
     expect(premierePlaceLibre(a, 0)).toEqual({ page: 0, ligne: 0, x: 0.5 });
     expect(premierePlaceLibre(a, 1)).toEqual({ page: 1, ligne: 0, x: 0.1 });
+  });
+});
+
+describe("acheterPiece", () => {
+  const objet = createMockObjet({ templateId: "timbre.renard_roux", categorie: "Livres & Papeterie", prixReferenceReel: 10 });
+  it("refuse sans album", () => {
+    const r = acheterPiece(createMockGameState({ budget: 100 }), objet, 8);
+    expect(r).toEqual({ ok: false, raison: "albumManquant" });
+  });
+  it("refuse sans budget", () => {
+    const a = { ...initAlbums(), timbres: { ...initAlbums().timbres, achete: true } };
+    expect(acheterPiece(createMockGameState({ budget: 5, albums: a }), objet, 8)).toEqual({ ok: false, raison: "budget" });
+  });
+  it("débite et range dans l'album, sans toucher à la réserve", () => {
+    const a = { ...initAlbums(), timbres: { ...initAlbums().timbres, achete: true } };
+    const r = acheterPiece(createMockGameState({ budget: 100, albums: a }), objet, 8);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.state.budget).toBe(92);
+    expect(r.state.albums!.timbres.pieces["timbre.renard_roux"]).toBe(1);
+    expect(r.state.inventaireJoueur).toHaveLength(0);
   });
 });

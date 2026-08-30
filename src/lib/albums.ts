@@ -1,5 +1,5 @@
 // src/lib/albums.ts
-import type { AlbumsState, AlbumState, GameState, PlacementTimbre, Rarete } from "@/types/game";
+import type { AlbumsState, AlbumState, GameState, Objet, PlacementTimbre, Rarete } from "@/types/game";
 import { CATEGORIE_ALBUM, albumDe, getPiece, piecesDe, type AlbumId, type PieceCollection } from "@/data/pieces";
 
 export const NB_LIGNES_ALBUM = 5;
@@ -94,6 +94,24 @@ export function rendreAuBac(albums: AlbumsState, id: string): AlbumsState {
   const { [id]: _retire, ...placements } = albums.timbres.placements;
   void _retire;
   return patchAlbum(albums, "timbres", { placements, ordreZ: albums.timbres.ordreZ.filter((z) => z !== id) });
+}
+
+export type RefusPiece = "albumManquant" | "budget";
+
+/** Aiguille l'achat d'une pièce (carte/timbre) vers son album : refuse si l'album
+ * n'est pas acheté ou si le budget est insuffisant, sinon débite et range dans
+ * l'album — jamais dans la réserve (`inventaireJoueur`). */
+export function acheterPiece(
+  state: GameState,
+  objet: Objet,
+  prix: number,
+): { ok: true; state: GameState } | { ok: false; raison: RefusPiece } {
+  const album = albumDe(objet.templateId);
+  if (!album) return { ok: false, raison: "albumManquant" };
+  const albums = albumsDe(state);
+  if (!albums[album].achete) return { ok: false, raison: "albumManquant" };
+  if (state.budget < prix) return { ok: false, raison: "budget" };
+  return { ok: true, state: { ...state, budget: state.budget - prix, albums: ajouterPiece(albums, objet.templateId) } };
 }
 
 /** Chemin sans glisser : ligne 0, x = 0,1 + 0,2 k dont aucun timbre posé n'est à moins de 0,15 ; sinon 0,5. */

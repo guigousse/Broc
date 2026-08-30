@@ -755,6 +755,7 @@ export const es: DictionnaireUI = {
     atelierMax: "Taller ya al máximo.",
     stockageMax: "Almacén ya al máximo.",
     ilManqueEuros: "Te faltan {n} €.",
+    albumManquant: "Necesitas primero el clasificador o el álbum — a la venta en el Bazar.",
     competenceIntrouvable: "Habilidad no encontrada.",
     dejaDebloquee: "Ya desbloqueada.",
     prerequisNonRemplis: "Requisitos no cumplidos.",

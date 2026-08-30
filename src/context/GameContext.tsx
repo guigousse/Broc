@@ -145,6 +145,8 @@ import { localeCourante } from "@/lib/i18n/locales";
 import { libelleCategorie } from "@/lib/i18n/libelles";
 import { slotActif, type NumeroSlot } from "@/lib/storage/slots";
 import type { GenreErreur } from "@/lib/storage/pontNatif";
+import { estPiece } from "@/data/pieces";
+import { acheterPiece } from "@/lib/albums";
 
 /**
  * Raison d'échec localisée (SP4 i18n). GameContext exécute ses raisons dans des
@@ -864,6 +866,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (objet: Objet, prix: number): { ok: boolean; raison?: string } => {
       const current = stateRef.current;
       if (!current) return { ok: false, raison: raisonLocalisee("pasDePartie") };
+      if (estPiece(objet.templateId)) {
+        const pre = acheterPiece(current, objet, prix);
+        if (!pre.ok) {
+          return pre.raison === "budget"
+            ? { ok: false, raison: raisonLocalisee("ilManqueEuros", { n: prix - current.budget }) }
+            : { ok: false, raison: raisonLocalisee("albumManquant") };
+        }
+        setState((prev) => {
+          if (!prev) return prev;
+          const r = acheterPiece(prev, objet, prix);
+          return r.ok ? r.state : prev;
+        });
+        return { ok: true };
+      }
       if (current.budget < prix)
         return {
           ok: false,

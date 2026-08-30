@@ -752,6 +752,7 @@ export const en: DictionnaireUI = {
     atelierMax: "Workshop already maxed out.",
     stockageMax: "Storage already maxed out.",
     ilManqueEuros: "You're short {n} €.",
+    albumManquant: "You need the binder or the album first — on sale at the Bazaar.",
     competenceIntrouvable: "Skill not found.",
     dejaDebloquee: "Already unlocked.",
     prerequisNonRemplis: "Prerequisites not met.",

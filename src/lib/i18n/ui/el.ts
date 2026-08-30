@@ -770,6 +770,7 @@ export const el: DictionnaireUI = {
     atelierMax: "Το εργαστήριο είναι ήδη στο μέγιστο.",
     stockageMax: "Η αποθήκη είναι ήδη στο μέγιστο.",
     ilManqueEuros: "Λείπουν {n} €.",
+    albumManquant: "Χρειάζεστε πρώτα το ντοσιέ ή το άλμπουμ — πωλείται στο Παζάρι.",
     competenceIntrouvable: "Η δεξιότητα δεν βρέθηκε.",
     dejaDebloquee: "Ήδη ξεκλειδωμένη.",
     prerequisNonRemplis: "Οι προϋποθέσεις δεν πληρούνται.",

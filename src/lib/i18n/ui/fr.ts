@@ -788,6 +788,7 @@ export const fr = {
     atelierMax: "Atelier déjà au maximum.",
     stockageMax: "Stockage déjà au maximum.",
     ilManqueEuros: "Il manque {n} €.",
+    albumManquant: "Il vous faut d'abord le classeur ou l'album — en vente au Bazar.",
     competenceIntrouvable: "Compétence introuvable.",
     dejaDebloquee: "Déjà débloquée.",
     prerequisNonRemplis: "Prérequis non remplis.",
