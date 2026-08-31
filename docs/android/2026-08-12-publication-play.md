@@ -182,6 +182,25 @@ dernier déposé.
 
 ---
 
+## Deuxième mise à jour de la piste fermée — 2026-08-31 (1.5.0)
+
+Le run n° 4 (2026-08-26) a déposé la **1.4.1** (`versionCode` 1004004). Cette fois le
+report vient de `feat/classeur-album` (104 commits : classeur de cartes, album de timbres,
+1.5.0), qui contient déjà tout `main`. Trois conflits, tous sur les gardes Android :
+
+- `iapProvider.ts` : `classeur-album` a donné `disponible()` aux providers et rendu le stub
+  inactif en production ; `IndisponibleIapProvider` (Android) l'implémente en renvoyant
+  faux. `achatDisponible()` reste, `ReglagesModal` s'en sert.
+- `EnergieRecharge.tsx` : le bouton d'achat suit l'état `iapDisponible` de `classeur-album`,
+  qui vaut faux sur Android puisque le provider y est `IndisponibleIapProvider`.
+- `AtelierContenu.tsx` : le bouton d'accélération vit maintenant dans la projection de
+  restauration ; la garde `pubDisponible()` est reportée en tête de son rendu.
+
+**Base du `versionCode` relevée de `1004000` à `1005000`** pour suivre la 1.5.0. Le
+prochain run vaudra `1005000 + n° de run`, strictement supérieur à 1004004.
+
+---
+
 ## Mettre à jour une piste de test fermé déjà en cours — 2026-08-26
 
 Le premier dépôt portait le contenu de la **1.3.0**. `main` a pris 319 commits d'avance
