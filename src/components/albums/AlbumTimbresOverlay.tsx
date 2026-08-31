@@ -8,6 +8,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AlbumShell } from "@/components/albums/AlbumShell";
 import { FichePiece } from "@/components/albums/FichePiece";
@@ -696,15 +697,21 @@ export function AlbumTimbresOverlay({
         })}
       </div>
       <Pagination page={page} onChange={setPage} d={d} />
-      {drag && (
-        <div
-          ref={calqueRef}
-          data-testid="timbre-fantome"
-          style={calqueStyle(drag.taillePx, drag.x, drag.y)}
-        >
-          <PieceVisuel id={drag.id} />
-        </div>
-      )}
+      {/* Portail sur le body : le panneau porte un `backdrop-filter`, qui
+          ferait de lui le bloc conteneur de ce `position: fixed` — le calque
+          se décalerait de la hauteur de l'en-tête et suivrait le doigt par
+          en dessous (recette 2026-08-31). */}
+      {drag &&
+        createPortal(
+          <div
+            ref={calqueRef}
+            data-testid="timbre-fantome"
+            style={calqueStyle(drag.taillePx, drag.x, drag.y)}
+          >
+            <PieceVisuel id={drag.id} />
+          </div>,
+          document.body,
+        )}
       {fiche && (
         <FichePiece
           id={fiche}

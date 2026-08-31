@@ -445,3 +445,17 @@ describe("AlbumTimbresOverlay — dépôt", () => {
     expect(screen.getByTestId("timbre-pose").style.transition).toBe("");
   });
 });
+
+/* Le panneau porte un `backdrop-filter`, qui fait de lui le bloc conteneur
+   de tout `position: fixed` descendant : un calque rendu DEDANS se décale de
+   la hauteur de l'en-tête et suit le doigt « par en dessous » (recette
+   2026-08-31). Le calque doit donc vivre hors du panneau, sur le body. */
+it("le calque qui suit le doigt est rendu hors du panneau (portail sur le body)", () => {
+  render(<AlbumTimbresOverlay open onClose={() => {}} />);
+  const pose = screen.getByTestId("timbre-pose");
+  fireEvent.pointerDown(pose, { clientX: 150, clientY: 195, pointerId: 1 });
+  fireEvent.pointerMove(pose, { clientX: 160, clientY: 120, pointerId: 1 });
+  const calque = screen.getByTestId("timbre-fantome");
+  expect(screen.getByRole("dialog").contains(calque)).toBe(false);
+  expect(calque.parentElement).toBe(document.body);
+});
