@@ -7,7 +7,11 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { AlbumShell } from "@/components/albums/AlbumShell";
+import {
+  AlbumShell,
+  PANNEAU_BOTTOM,
+  PANNEAU_TOP,
+} from "@/components/albums/AlbumShell";
 import { FichePiece } from "@/components/albums/FichePiece";
 import { PieceVisuel } from "@/components/pieces/PieceVisuel";
 import { CATEGORIE_ALBUM, piecesDe, type PieceCollection } from "@/data/pieces";
@@ -30,11 +34,15 @@ const SWIPE_SEUIL_PX = 40;
 
 const GAP_PX = 10;
 const PADDING_PX = 12;
-/** Hauteur (px) prise autour de la grille dans le panneau : marges de la
- *  coquille, en-tête sur deux lignes et barre de pagination. Sert à borner
- *  la largeur de la grille pour que ses 3 lignes tiennent TOUJOURS dans la
- *  hauteur de l'écran sans défiler (iPhone SE compris). */
-const HORS_GRILLE_PX = 220;
+/** Hauteur (px) prise autour de la grille DANS le panneau : marges de la
+ *  coquille, titre, ligne compteur/Recycler et barre de pagination. S'ajoute
+ *  au chrome de l'app (en-tête, TabBar, safe areas) pour borner la largeur
+ *  de la grille : ses 3 lignes tiennent TOUJOURS dans la hauteur restante
+ *  sans défiler (iPhone SE compris). */
+const HORS_GRILLE_PX = 200;
+/* Parenthèses OBLIGATOIRES : `100dvh - calc(a) + calc(b)` ajouterait la
+   TabBar au lieu de la soustraire. */
+const CHROME_APP = `(${PANNEAU_TOP}) - (${PANNEAU_BOTTOM})`;
 
 /* Pleine largeur, mais plafonnée par la hauteur disponible : une grille de
    largeur W fait (W − 2·padding − 2·gap)·4/3 + 2·gap + 2·padding de haut
@@ -47,7 +55,7 @@ const grille3x3: CSSProperties = {
   gap: GAP_PX,
   padding: PADDING_PX,
   width: "100%",
-  maxWidth: `calc((100dvh - ${HORS_GRILLE_PX + 2 * GAP_PX + 2 * PADDING_PX}px) * 0.75 + ${2 * GAP_PX + 2 * PADDING_PX}px)`,
+  maxWidth: `calc((100dvh - ${CHROME_APP} - ${HORS_GRILLE_PX + 2 * GAP_PX + 2 * PADDING_PX}px) * 0.75 + ${2 * GAP_PX + 2 * PADDING_PX}px)`,
   margin: "0 auto",
   boxSizing: "border-box",
   background: "var(--forest-800)",

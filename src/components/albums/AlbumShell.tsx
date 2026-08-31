@@ -8,13 +8,14 @@ import { useLangue } from "@/lib/i18n/LangueContext";
 
 /* ── LE CHÂSSIS PARTAGÉ DES DEUX ALBUMS ──────────────────────────────────
    Classeur de cartes et album de timbres partagent la même coquille : un
-   PANNEAU FIXE qui couvre tout l'écran (pas une carte bordée qui défile —
-   retour de Guillaume 2026-08-31 : la zone de cartes/timbres doit rester
-   fixe sous le doigt), avec un en-tête (titre gravé au laiton, compteur,
-   bouton Recycler, croix) et le contenu (grille de pochettes ou pages de
-   timbres) en `children`, dans une zone `flex: 1` qui ne défile pas. Le
-   bouton Recycler ouvre une confirmation avant de débiter les doublons —
-   action irréversible. */
+   PANNEAU FIXE calé ENTRE l'en-tête du haut et la TabBar (mêmes bornes que
+   `CarnetOverlay` / `FloatingRoomOverlay`, pour que les deux restent
+   accessibles — retour de Guillaume 2026-08-31), pas une carte bordée qui
+   défile. Dedans : le titre gravé au laiton seul sur sa ligne, centré,
+   juste sous l'en-tête ; puis compteur, bouton Recycler et croix ; puis le
+   contenu (grille de pochettes ou pages de timbres) en `children`, dans une
+   zone `flex: 1` qui ne défile pas. Le bouton Recycler ouvre une
+   confirmation avant de débiter les doublons — action irréversible. */
 
 interface AlbumShellProps {
   open: boolean;
@@ -26,15 +27,24 @@ interface AlbumShellProps {
   children: ReactNode;
 }
 
+export const PANNEAU_TOP =
+  "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px))";
+export const PANNEAU_BOTTOM =
+  "calc(var(--mobile-tabbar-h) + var(--safe-bottom))";
+
 const panneau: CSSProperties = {
   position: "fixed",
-  inset: 0,
-  zIndex: 105,
+  top: PANNEAU_TOP,
+  bottom: PANNEAU_BOTTOM,
+  left: 0,
+  right: 0,
+  // Au-dessus de l'en-tête sticky et de la TabBar (30), sous les fiches
+  // modales (FichePiece 106, ConfirmModal 110).
+  zIndex: 35,
   display: "flex",
   flexDirection: "column",
   background: "var(--forest-900)",
-  padding:
-    "max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom))",
+  padding: "10px 12px 12px",
   overflow: "hidden",
 };
 
@@ -47,13 +57,18 @@ const contenu: CSSProperties = {
   flexDirection: "column",
 };
 
-const enTete: CSSProperties = {
+const ligneTitre: CSSProperties = {
   display: "flex",
-  flexWrap: "wrap",
+  justifyContent: "center",
+  marginBottom: 10,
+};
+
+const ligneActions: CSSProperties = {
+  display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
   gap: 10,
-  marginBottom: 14,
+  marginBottom: 12,
 };
 
 const compteurStyle: CSSProperties = {
@@ -112,8 +127,10 @@ export function AlbumShell({
 
   return (
     <div style={panneau} role="dialog" aria-label={titre}>
-      <div style={enTete}>
+      <div style={ligneTitre}>
         <div style={plaqueLaiton}>{titre}</div>
+      </div>
+      <div style={ligneActions}>
         <span style={compteurStyle}>
           {tr(d.albums.compteur, {
             n: compteur.possedees,
@@ -122,8 +139,8 @@ export function AlbumShell({
         </span>
         <div style={actions}>
           {/* Masqué pendant la confirmation : évite deux boutons « Recycler »
-               concurrents dans l'arbre d'accessibilité (celui de la modale
-               reprend le même libellé). */}
+             concurrents dans l'arbre d'accessibilité (celui de la modale
+             reprend le même libellé). */}
           {!confirmOuvert && (
             <button
               type="button"

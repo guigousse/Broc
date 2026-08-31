@@ -118,13 +118,30 @@ describe("ClasseurOverlay", () => {
    couvre l'écran, et une grille 3×3 dont les 9 cases (pochettes ET « à
    venir ») ont exactement la même boîte, quelle que soit l'image dedans. */
 describe("ClasseurOverlay — plein écran", () => {
-  it("le panneau couvre l'écran en position fixe et ne défile pas lui-même", () => {
+  it("le panneau est fixe ENTRE l'en-tête et la TabBar (qui restent accessibles) et ne défile pas", () => {
     render(<ClasseurOverlay open onClose={() => {}} />);
     const dialog = screen.getByRole("dialog") as HTMLElement;
     expect(dialog.style.position).toBe("fixed");
-    expect(dialog.style.inset).toBe("0px");
+    // Même calage que CarnetOverlay / FloatingRoomOverlay.
+    expect(dialog.style.top).toBe(
+      "calc(var(--safe-top) + var(--mobile-header-h) + var(--tuto-banniere-h, 0px))",
+    );
+    expect(dialog.style.bottom).toBe("calc(var(--mobile-tabbar-h) + var(--safe-bottom))");
+    expect(dialog.style.left).toBe("0px");
+    expect(dialog.style.right).toBe("0px");
     expect(dialog.style.overflowY).not.toBe("auto");
     expect(dialog.style.border).toBe("");
+  });
+
+  it("le titre est seul sur sa ligne, centré, juste sous l'en-tête", () => {
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    const dialog = screen.getByRole("dialog") as HTMLElement;
+    const titre = screen.getByText("Classeur de cartes") as HTMLElement;
+    const ligne = titre.parentElement as HTMLElement;
+    expect(ligne.style.justifyContent).toBe("center");
+    expect(ligne.children).toHaveLength(1);
+    // Première ligne du panneau : rien au-dessus du titre.
+    expect(dialog.firstElementChild).toBe(ligne);
   });
 
   it("les 9 cases partagent une boîte 3/4 que leur contenu ne peut pas agrandir", () => {
@@ -144,4 +161,15 @@ describe("ClasseurOverlay — plein écran", () => {
       ?.parentElement as HTMLElement;
     expect(visuel.style.position).toBe("absolute");
   });
+});
+
+/* Le plafond de largeur de la grille soustrait le chrome de l'app (en-tête ET
+   TabBar). Piège vu le 2026-08-31 : `100dvh - calc(a) + calc(b)` AJOUTAIT la
+   TabBar (priorité des opérateurs) → grille trop large, débordement sous la
+   TabBar sur les écrans courts. */
+it("le plafond de largeur de la grille soustrait l'en-tête ET la TabBar", () => {
+  render(<ClasseurOverlay open onClose={() => {}} />);
+  const grille = screen.getByTestId("page-classeur") as HTMLElement;
+  expect(grille.style.maxWidth).toContain("100dvh - (calc(var(--safe-top)");
+  expect(grille.style.maxWidth).toContain(") - (calc(var(--mobile-tabbar-h)");
 });
