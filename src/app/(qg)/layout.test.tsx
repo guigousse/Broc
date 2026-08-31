@@ -21,9 +21,10 @@ import type { AlbumsState, GameState } from "@/types/game";
 // remettre le scroll résiduel d'un onglet précédent à zéro.
 window.scrollTo = () => {};
 
+let mockPathname = "/bureau";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-  usePathname: () => "/bureau",
+  usePathname: () => mockPathname,
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -232,5 +233,32 @@ describe("(qg)/layout — un album ouvert masque la pastille du grand-père", ()
 
     fireEvent.click(screen.getByRole("button", { name: "Fermer" }));
     expect(badge()).toBe("true");
+  });
+});
+
+describe("(qg)/layout — un album ouvert se ferme quand on quitte le bureau", () => {
+  afterEach(() => {
+    mockPathname = "/bureau";
+  });
+
+  it("taper « Réserve » (→ /stockage) ferme le classeur, comme le gramophone", () => {
+    mockState = etat({
+      ...initAlbums(),
+      classeur: { achete: true, pieces: {}, nouvelles: [] },
+    });
+    const { rerender } = render(<QgLayout>{null}</QgLayout>);
+    fireEvent.click(
+      document.querySelector('img[src="/qg/carnet.webp"]')!.closest("button")!,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Classeur de cartes" }));
+    expect(
+      screen.getByRole("dialog", { name: "Classeur de cartes" }),
+    ).toBeTruthy();
+
+    mockPathname = "/stockage";
+    rerender(<QgLayout>{null}</QgLayout>);
+    expect(
+      screen.queryByRole("dialog", { name: "Classeur de cartes" }),
+    ).toBeNull();
   });
 });

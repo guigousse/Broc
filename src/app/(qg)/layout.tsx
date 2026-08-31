@@ -343,7 +343,14 @@ function QgLayoutInner({ children }: { children: React.ReactNode }) {
   // /stockage, /atelier ou /bibliotheque (même groupe (qg), layout non
   // démonté, TabBar restée cliquable sous la sheet), elle se ferme.
   // La musique, elle, continue (cf. GlobalVinylAmbiance).
-  useFermerSheetHorsBureau(() => setGramophoneOuvert(false));
+  useFermerSheetHorsBureau(() => {
+    setGramophoneOuvert(false);
+    // Les albums laissent la TabBar tapable (calques en 35) : « Réserve »
+    // mène à /stockage sans démonter ce layout, l'album resterait ouvert
+    // par-dessus la fenêtre flottante (recette 2026-08-31).
+    setAlbumsSheet(false);
+    setAlbumOuvert(null);
+  });
 
   // Restauration session gramophone à l'entrée du panorama.
   useEffect(() => {

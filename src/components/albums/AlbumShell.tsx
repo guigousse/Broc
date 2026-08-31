@@ -3,7 +3,6 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { plaqueLaiton } from "@/components/ui/plaqueLaiton";
 import { useLangue } from "@/lib/i18n/LangueContext";
 
 /* ── LE CHÂSSIS PARTAGÉ DES DEUX ALBUMS ──────────────────────────────────
@@ -12,8 +11,8 @@ import { useLangue } from "@/lib/i18n/LangueContext";
    la TabBar (mêmes bornes que
    `CarnetOverlay` / `FloatingRoomOverlay`, pour que les deux restent
    accessibles — retour de Guillaume 2026-08-31), pas une carte bordée qui
-   défile. Dedans : le titre gravé au laiton seul sur sa ligne, centré,
-   juste sous l'en-tête ; puis compteur, bouton Recycler et croix ; puis le
+   défile. Dedans : PAS de titre (retiré à la recette du 2026-08-31 — le nom reste
+   l'aria-label du dialog) ; compteur, bouton Recycler et croix ; puis le
    contenu (grille de pochettes ou pages de timbres) en `children`, dans une
    zone `flex: 1` qui ne défile pas. Le bouton Recycler ouvre une
    confirmation avant de débiter les doublons — action irréversible. */
@@ -60,12 +59,6 @@ const contenu: CSSProperties = {
   minHeight: 0,
   display: "flex",
   flexDirection: "column",
-};
-
-const ligneTitre: CSSProperties = {
-  display: "flex",
-  justifyContent: "center",
-  marginBottom: 10,
 };
 
 const ligneActions: CSSProperties = {
@@ -132,9 +125,6 @@ export function AlbumShell({
 
   return (
     <div style={panneau} role="dialog" aria-label={titre}>
-      <div style={ligneTitre}>
-        <div style={plaqueLaiton}>{titre}</div>
-      </div>
       <div style={ligneActions}>
         <span style={compteurStyle}>
           {tr(d.albums.compteur, {

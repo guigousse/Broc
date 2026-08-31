@@ -151,15 +151,23 @@ describe("ClasseurOverlay — plein écran", () => {
     expect(dialog.style.border).toBe("");
   });
 
-  it("le titre est seul sur sa ligne, centré, juste sous l'en-tête", () => {
+  it("aucun titre visible dans le panneau ; le nom reste porté par l'aria-label du dialog", () => {
     render(<ClasseurOverlay open onClose={() => {}} />);
-    const dialog = screen.getByRole("dialog") as HTMLElement;
-    const titre = screen.getByText("Classeur de cartes") as HTMLElement;
-    const ligne = titre.parentElement as HTMLElement;
-    expect(ligne.style.justifyContent).toBe("center");
-    expect(ligne.children).toHaveLength(1);
-    // Première ligne du panneau : rien au-dessus du titre.
-    expect(dialog.firstElementChild).toBe(ligne);
+    expect(screen.queryByText("Classeur de cartes")).toBeNull();
+    expect(
+      screen.getByRole("dialog", { name: "Classeur de cartes" }),
+    ).toBeTruthy();
+  });
+
+  it("les flèches de pagination n'ont ni cadre ni fond", () => {
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    for (const nom of ["Page précédente", "Page suivante"]) {
+      const btn = screen.getByRole("button", {
+        name: nom,
+      }) as HTMLButtonElement;
+      expect(btn.style.border).not.toContain("solid");
+      expect(btn.style.background).toBe("transparent");
+    }
   });
 
   it("les 9 cases partagent une boîte 3/4 que leur contenu ne peut pas agrandir", () => {

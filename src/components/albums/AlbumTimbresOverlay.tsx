@@ -241,13 +241,12 @@ const paginationBar: CSSProperties = {
 const pageBtn: CSSProperties = {
   minWidth: "var(--tap-min)",
   minHeight: "var(--tap-min)",
-  border: "1px solid var(--brass-500)",
+  border: "none",
   background: "transparent",
   color: "var(--brass-300)",
   display: "grid",
   placeItems: "center",
   cursor: "pointer",
-  borderRadius: "var(--radius-btn)",
 };
 
 const pageTexte: CSSProperties = {

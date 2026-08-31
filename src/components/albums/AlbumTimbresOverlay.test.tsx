@@ -459,3 +459,13 @@ it("le calque qui suit le doigt est rendu hors du panneau (portail sur le body)"
   expect(screen.getByRole("dialog").contains(calque)).toBe(false);
   expect(calque.parentElement).toBe(document.body);
 });
+
+it("album de timbres : aucun titre visible, flèches de pagination sans cadre", () => {
+  render(<AlbumTimbresOverlay open onClose={() => {}} />);
+  expect(screen.queryByText("Album de timbres")).toBeNull();
+  expect(screen.getByRole("dialog", { name: "Album de timbres" })).toBeTruthy();
+  for (const nom of ["Page précédente", "Page suivante"]) {
+    const btn = screen.getByRole("button", { name: nom }) as HTMLButtonElement;
+    expect(btn.style.border).not.toContain("solid");
+  }
+});
