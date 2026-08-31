@@ -10,7 +10,11 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { AlbumShell } from "@/components/albums/AlbumShell";
+import {
+  AlbumShell,
+  PANNEAU_BOTTOM,
+  PANNEAU_TOP,
+} from "@/components/albums/AlbumShell";
 import { FichePiece } from "@/components/albums/FichePiece";
 import { PieceVisuel } from "@/components/pieces/PieceVisuel";
 import {
@@ -73,12 +77,34 @@ const CALQUE_TAILLE_DEFAUT_PX = 60;
  *  l'horizontale) plutôt qu'un défilement natif du bac. */
 const SEUIL_VERTICAL_BAC_PX = 12;
 
+/** Hauteur (px) prise DANS le panneau autour de la page : marges de la
+ *  coquille, ligne compteur/Recycler, libellé + bac « En vrac », pagination.
+ *  S'ajoute au chrome de l'app (en-tête, TabBar, safe areas) pour borner la
+ *  largeur de la colonne : la page garde son ratio 1,3 et tient TOUJOURS dans
+ *  la hauteur restante — sur iPad ou en fenêtre large, le flex l'écrasait en
+ *  hauteur (1416 × 559 px, timbres plus hauts que les lignes — 2026-08-31). */
+const HORS_PAGE_PX = 250;
+
+/** Page + bac + pagination : pleine largeur sur téléphone, bornée par la
+ *  hauteur disponible et centrée sur les grands écrans. Parenthèses
+ *  OBLIGATOIRES autour des `calc()` du chrome (même piège que le classeur). */
+const colonne: CSSProperties = {
+  width: "100%",
+  maxWidth: `calc((100dvh - (${PANNEAU_TOP}) - (${PANNEAU_BOTTOM}) - ${HORS_PAGE_PX}px) / ${HAUTEUR_PAGE_RATIO})`,
+  margin: "0 auto",
+  display: "flex",
+  flexDirection: "column",
+  minHeight: 0,
+};
+
 /** Anthracite → noir, comme les feuilles cartonnées d'un album Lindner. */
 const FOND_ALBUM = "linear-gradient(180deg, #2b2b2f 0%, #1c1c1f 100%)";
 
 const pageWrap: CSSProperties = {
   position: "relative",
   width: "100%",
+  // Jamais écrasée par le flex : c'est `colonne` qui borne la largeur.
+  flexShrink: 0,
   aspectRatio: `1 / ${HAUTEUR_PAGE_RATIO}`,
   backgroundImage: FOND_ALBUM,
   borderRadius: 8,
@@ -628,101 +654,105 @@ export function AlbumTimbresOverlay({
         );
       }}
     >
-      <div
-        ref={pageRef}
-        data-testid="page-timbres"
-        style={pageWrap}
-        onPointerDown={onSwipeDown}
-        onPointerUp={onSwipeUp}
-        onPointerCancel={onSwipeAbandonne}
-        onPointerLeave={onSwipeAbandonne}
-      >
-        {Array.from({ length: NB_LIGNES_ALBUM }, (_, l) => l as Ligne).map(
-          (l) => (
-            <div
-              key={l}
-              data-testid="bandeau"
-              data-vise="false"
-              ref={(el) => {
-                bandesRef.current[l] = el;
-              }}
-              style={bandeauStyle(l)}
-              aria-hidden
-            />
-          ),
-        )}
-        {idsPosesPage.map((id) => {
-          const placement = album.placements[id];
-          const z = album.ordreZ.indexOf(id);
-          return (
-            <button
-              key={id}
-              type="button"
-              data-testid="timbre-pose"
-              data-id={id}
-              aria-label={ariaLabelTimbre(id)}
-              style={timbrePoseStyle(
-                placement.x,
-                placement.ligne,
-                z,
-                drag?.id === id,
-              )}
-              onPointerDown={onPointerDownTimbre(id, "page")}
-              onPointerMove={onPointerMoveTimbre}
-              onPointerUp={onPointerUpTimbre}
-              onPointerCancel={onPointerAbandonneTimbre}
-              onLostPointerCapture={onPointerAbandonneTimbre}
-              onKeyDown={onKeyDownTimbre(id)}
-            >
-              <PieceVisuel id={id} thumb />
-            </button>
-          );
-        })}
+      <div style={colonne}>
+        <div
+          ref={pageRef}
+          data-testid="page-timbres"
+          style={pageWrap}
+          onPointerDown={onSwipeDown}
+          onPointerUp={onSwipeUp}
+          onPointerCancel={onSwipeAbandonne}
+          onPointerLeave={onSwipeAbandonne}
+        >
+          {Array.from({ length: NB_LIGNES_ALBUM }, (_, l) => l as Ligne).map(
+            (l) => (
+              <div
+                key={l}
+                data-testid="bandeau"
+                data-vise="false"
+                ref={(el) => {
+                  bandesRef.current[l] = el;
+                }}
+                style={bandeauStyle(l)}
+                aria-hidden
+              />
+            ),
+          )}
+          {idsPosesPage.map((id) => {
+            const placement = album.placements[id];
+            const z = album.ordreZ.indexOf(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                data-testid="timbre-pose"
+                data-id={id}
+                aria-label={ariaLabelTimbre(id)}
+                style={timbrePoseStyle(
+                  placement.x,
+                  placement.ligne,
+                  z,
+                  drag?.id === id,
+                )}
+                onPointerDown={onPointerDownTimbre(id, "page")}
+                onPointerMove={onPointerMoveTimbre}
+                onPointerUp={onPointerUpTimbre}
+                onPointerCancel={onPointerAbandonneTimbre}
+                onLostPointerCapture={onPointerAbandonneTimbre}
+                onKeyDown={onKeyDownTimbre(id)}
+              >
+                <PieceVisuel id={id} thumb />
+              </button>
+            );
+          })}
+        </div>
+        <div style={bacLabel} aria-hidden>
+          {d.albums.bac}
+        </div>
+        <div
+          ref={bacRef}
+          data-testid="bac"
+          style={bacWrap}
+          aria-label={d.albums.bac}
+        >
+          {idsBac.map((id) => {
+            const quantite = album.pieces[id] ?? 0;
+            return (
+              <button
+                key={id}
+                type="button"
+                data-testid="timbre-bac"
+                data-id={id}
+                aria-label={ariaLabelTimbre(id)}
+                style={
+                  drag?.id === id
+                    ? { ...bacItemStyle, opacity: 0 }
+                    : bacItemStyle
+                }
+                onPointerDown={onPointerDownTimbre(id, "bac")}
+                onPointerMove={onPointerMoveTimbre}
+                onPointerUp={onPointerUpTimbre}
+                onPointerCancel={onPointerAbandonneTimbre}
+                onLostPointerCapture={onPointerAbandonneTimbre}
+                onKeyDown={onKeyDownTimbre(id)}
+              >
+                <PieceVisuel id={id} thumb />
+                {quantite > 1 && (
+                  <span style={badgeQuantite}>
+                    {tr(d.albums.doublon, { n: quantite })}
+                  </span>
+                )}
+                {album.nouvelles.includes(id) && (
+                  <span style={newBadge} aria-hidden>
+                    *
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <Pagination page={page} onChange={setPage} d={d} />
       </div>
-      <div style={bacLabel} aria-hidden>
-        {d.albums.bac}
-      </div>
-      <div
-        ref={bacRef}
-        data-testid="bac"
-        style={bacWrap}
-        aria-label={d.albums.bac}
-      >
-        {idsBac.map((id) => {
-          const quantite = album.pieces[id] ?? 0;
-          return (
-            <button
-              key={id}
-              type="button"
-              data-testid="timbre-bac"
-              data-id={id}
-              aria-label={ariaLabelTimbre(id)}
-              style={
-                drag?.id === id ? { ...bacItemStyle, opacity: 0 } : bacItemStyle
-              }
-              onPointerDown={onPointerDownTimbre(id, "bac")}
-              onPointerMove={onPointerMoveTimbre}
-              onPointerUp={onPointerUpTimbre}
-              onPointerCancel={onPointerAbandonneTimbre}
-              onLostPointerCapture={onPointerAbandonneTimbre}
-              onKeyDown={onKeyDownTimbre(id)}
-            >
-              <PieceVisuel id={id} thumb />
-              {quantite > 1 && (
-                <span style={badgeQuantite}>
-                  {tr(d.albums.doublon, { n: quantite })}
-                </span>
-              )}
-              {album.nouvelles.includes(id) && (
-                <span style={newBadge} aria-hidden>
-                  *
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <Pagination page={page} onChange={setPage} d={d} />
       {/* Portail sur le body : le panneau porte un `backdrop-filter`, qui
           ferait de lui le bloc conteneur de ce `position: fixed` — le calque
           se décalerait de la hauteur de l'en-tête et suivrait le doigt par

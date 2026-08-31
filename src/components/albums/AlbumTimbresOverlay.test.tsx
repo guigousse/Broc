@@ -514,3 +514,19 @@ it("album de timbres : aucun titre visible, flèches de pagination sans cadre", 
     expect(btn.style.border).not.toContain("solid");
   }
 });
+
+/* Responsivité (iPad, fenêtre large — recette 2026-08-31) : la page ne doit
+   jamais être écrasée en hauteur par le flex ; sa largeur est bornée par la
+   hauteur disponible (ratio 1,3 conservé) et la colonne page + bac +
+   pagination est centrée. */
+it("la colonne de l'album est bornée par la hauteur disponible et centrée, la page ne rétrécit pas", () => {
+  render(<AlbumTimbresOverlay open onClose={() => {}} />);
+  const page = screen.getByTestId("page-timbres") as HTMLElement;
+  const colonne = page.parentElement as HTMLElement;
+  expect(colonne.style.maxWidth).toContain("100dvh - (calc(var(--safe-top)");
+  expect(colonne.style.maxWidth).toContain(") - (calc(var(--mobile-tabbar-h)");
+  expect(colonne.style.maxWidth).toContain("/ 1.3");
+  expect(colonne.style.margin).toBe("0px auto");
+  expect(colonne.style.width).toBe("100%");
+  expect(page.style.flexShrink).toBe("0");
+});
