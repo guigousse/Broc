@@ -549,12 +549,7 @@ export function AlbumTimbresOverlay({
     const id = start.id;
     const rectPage = pageRef.current?.getBoundingClientRect();
     const placePage = rectPage
-      ? positionDepuisPointeur(
-          rectPage,
-          e.clientX,
-          e.clientY,
-          tailleCalquePx() / 2,
-        )
+      ? positionDepuisPointeur(rectPage, e.clientX, e.clientY)
       : null;
     if (placePage && rectPage) {
       glisserPuisCommiter(

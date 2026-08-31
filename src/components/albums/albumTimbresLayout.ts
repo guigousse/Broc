@@ -48,30 +48,25 @@ export function ligneLaPlusProche(yFraction: number): Ligne {
 
 /**
  * Position aimantée depuis un point écran (drag), relative au rect de la page —
- * `null` si le point est hors de la page (le composant essaie alors le bac).
- * `tolerancePx` élargit la page de chaque côté : un point dans cette marge
- * est ramené au bord le plus proche puis aimanté (le timbre est centré sous
- * le doigt, qui peut sortir de quelques px quand on vise la 1ʳᵉ bande).
+ * `null` si le point est hors de la page. La frontière est le rectangle de la
+ * page (le gris anthracite), STRICTEMENT : hors de lui, le timbre file dans
+ * « En vrac » (recette 2026-08-31, la tolérance d'une demi-largeur de timbre
+ * essayée avant re-posait sur la page un lâcher tout près du bord).
  */
 export function positionDepuisPointeur(
   rectPage: DOMRectLike,
   clientX: number,
   clientY: number,
-  tolerancePx = 0,
 ): { ligne: Ligne; x: number } | null {
-  const droite = rectPage.left + rectPage.width;
-  const bas = rectPage.top + rectPage.height;
   if (
-    clientX < rectPage.left - tolerancePx ||
-    clientX > droite + tolerancePx ||
-    clientY < rectPage.top - tolerancePx ||
-    clientY > bas + tolerancePx
+    clientX < rectPage.left ||
+    clientX > rectPage.left + rectPage.width ||
+    clientY < rectPage.top ||
+    clientY > rectPage.top + rectPage.height
   ) {
     return null;
   }
-  const x = Math.min(droite, Math.max(rectPage.left, clientX));
-  const y = Math.min(bas, Math.max(rectPage.top, clientY));
-  const xFraction = (x - rectPage.left) / rectPage.width;
-  const yFraction = (y - rectPage.top) / rectPage.height;
+  const xFraction = (clientX - rectPage.left) / rectPage.width;
+  const yFraction = (clientY - rectPage.top) / rectPage.height;
   return { ligne: ligneLaPlusProche(yFraction), x: xBorne(xFraction) };
 }

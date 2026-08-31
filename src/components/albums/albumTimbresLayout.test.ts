@@ -43,18 +43,12 @@ describe("bandeDeLigne — le bandeau translucide d'une ligne", () => {
   });
 });
 
-describe("positionDepuisPointeur — tolérance autour de la page", () => {
+describe("positionDepuisPointeur — la frontière est le rectangle de la page, strictement", () => {
   const rect = { left: 0, top: 0, width: 300, height: 390 };
-  it("un point juste au-dessus de la page, dans la tolérance, est ramené sur la ligne 0", () => {
-    expect(positionDepuisPointeur(rect, 150, -10, 25)).toEqual({
-      ligne: 0,
-      x: 0.5,
-    });
-  });
-  it("un point au-delà de la tolérance reste hors page", () => {
-    expect(positionDepuisPointeur(rect, 150, -40, 25)).toBeNull();
-  });
-  it("sans tolérance, le comportement strict est conservé", () => {
+  it("un point 1 px au-dessus de la page est hors page (direction « En vrac »)", () => {
     expect(positionDepuisPointeur(rect, 150, -1)).toBeNull();
+  });
+  it("un point sur le bord est dans la page", () => {
+    expect(positionDepuisPointeur(rect, 150, 0)).toEqual({ ligne: 0, x: 0.5 });
   });
 });

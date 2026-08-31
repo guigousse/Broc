@@ -468,24 +468,21 @@ describe("AlbumTimbresOverlay — dépôt", () => {
     expect(mocks.poserTimbre).toHaveBeenCalledTimes(1);
   });
 
-  it("un lâcher juste au-dessus de la page (à moins d'une demi-largeur de timbre) pose sur la ligne 0", () => {
+  it("la frontière est le rectangle anthracite : un lâcher 10 px au-dessus ne pose pas, il part en vrac", () => {
     vi.useFakeTimers();
     mocks.poserTimbre.mockClear();
+    mocks.rendreTimbreAuBac.mockClear();
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
-    pageRect300x390(); // demi-timbre = 300 / 6 / 2 = 25 px
-    const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
-    fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
-    fireEvent.pointerMove(t, { clientX: 150, clientY: 100, pointerId: 1 });
-    fireEvent.pointerUp(t, { clientX: 150, clientY: -10, pointerId: 1 });
+    pageRect300x390();
+    const pose = screen.getByTestId("timbre-pose");
+    fireEvent.pointerDown(pose, { clientX: 150, clientY: 195, pointerId: 1 });
+    fireEvent.pointerMove(pose, { clientX: 150, clientY: 100, pointerId: 1 });
+    fireEvent.pointerUp(pose, { clientX: 150, clientY: -10, pointerId: 1 });
     act(() => {
       vi.advanceTimersByTime(160);
     });
-    expect(mocks.poserTimbre).toHaveBeenCalledWith(
-      expect.any(String),
-      0,
-      0,
-      0.5,
-    );
+    expect(mocks.poserTimbre).not.toHaveBeenCalled();
+    expect(mocks.rendreTimbreAuBac).toHaveBeenCalledWith(expect.any(String));
   });
 
   it("les timbres posés n'ont plus de transition de position (le calque porte le mouvement)", () => {
