@@ -55,8 +55,9 @@ import type { DictionnaireUI } from "@/lib/i18n/ui";
    dans le DOM à chaque pointermove (`calqueRef`, aucun re-rendu React par
    frame, comme `CoffreCanvas`) ; le bandeau de la ligne visée s'éclaire de
    la même façon (`bandesRef`). Au lâcher on regarde où le point tombe — sur
-   la page (→ `poserTimbre`), sur le bac (→ `rendreTimbreAuBac`), ailleurs
-   (→ rien, le timbre reste où il était). Un lâcher SANS déplacement
+   la page (→ `poserTimbre`), n'importe où ailleurs (→ direction « En vrac » :
+   `rendreTimbreAuBac` pour un timbre posé, simple retour pour un timbre du
+   bac — recette 2026-08-31, plus de timbre qui « reste où il était »). Un lâcher SANS déplacement
    (< 6 px) est un tap, pas un glisser : il ouvre la fiche, avec un bouton
    « Poser sur la page » quand le timbre est encore dans le bac (place
    trouvée par `premierePlaceLibre`, chemin identique à celui qu'un joueur
@@ -157,12 +158,16 @@ function timbrePoseStyle(
   };
 }
 
+const BAC_ITEM_PX = 56;
+const BAC_GAP_PX = 10;
+const BAC_PADDING_X_PX = 8;
+
 const bacWrap: CSSProperties = {
   marginTop: 12,
   display: "flex",
-  gap: 10,
+  gap: BAC_GAP_PX,
   overflowX: "auto",
-  padding: "10px 8px",
+  padding: `10px ${BAC_PADDING_X_PX}px`,
   backgroundImage: FOND_ALBUM,
   borderRadius: 8,
 };
@@ -171,7 +176,7 @@ const bacItemStyle: CSSProperties = {
   ...resetBouton,
   position: "relative",
   flex: "0 0 auto",
-  width: 56,
+  width: BAC_ITEM_PX,
   aspectRatio: "1",
   cursor: "grab",
   // "pan-x" (pas "none") : le bac défile horizontalement au doigt — voir
@@ -489,6 +494,43 @@ export function AlbumTimbresOverlay({
     suivreDoigt(e.clientX, e.clientY);
   };
 
+  /** Le calque glisse jusqu'à `cible` (150 ms) puis `commit` est appelé :
+   *  l'état change à l'arrivée, le timbre réapparaît exactement dessous. Sans
+   *  calque ou en mouvement réduit, commit immédiat. */
+  const glisserPuisCommiter = (
+    cible: { x: number; y: number },
+    commit: () => void,
+  ) => {
+    const fin = () => {
+      poseEnCoursRef.current = null;
+      commit();
+      setDrag(null);
+    };
+    const calque = calqueRef.current;
+    if (!calque || sansTransition) {
+      fin();
+      return;
+    }
+    calque.style.transition = `transform ${DUREE_POSE_MS}ms ease`;
+    calque.style.transform = transformCalque(cible.x, cible.y);
+    poseEnCoursRef.current = {
+      timer: setTimeout(fin, DUREE_POSE_MS),
+      commit: fin,
+    };
+  };
+
+  /** Où le timbre va atterrir dans le bac : sa case actuelle s'il en vient,
+   *  sinon la case suivante (borné au bord droit visible du bac). */
+  const cibleDansLeBac = (id: string, rectBac: DOMRect) => {
+    const index = idsBac.includes(id) ? idsBac.indexOf(id) : idsBac.length;
+    const pas = BAC_ITEM_PX + BAC_GAP_PX;
+    const x = Math.min(
+      rectBac.right - BAC_ITEM_PX / 2 - BAC_PADDING_X_PX,
+      rectBac.left + BAC_PADDING_X_PX + index * pas + BAC_ITEM_PX / 2,
+    );
+    return { x, y: rectBac.top + rectBac.height / 2 };
+  };
+
   const onPointerUpTimbre = (e: ReactPointerEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     const start = startRef.current;
@@ -504,6 +546,7 @@ export function AlbumTimbresOverlay({
       ouvrirFiche(start.id);
       return;
     }
+    const id = start.id;
     const rectPage = pageRef.current?.getBoundingClientRect();
     const placePage = rectPage
       ? positionDepuisPointeur(
@@ -514,38 +557,27 @@ export function AlbumTimbresOverlay({
         )
       : null;
     if (placePage && rectPage) {
-      const id = start.id;
-      const commit = () => {
-        poseEnCoursRef.current = null;
-        poserTimbre(id, page, placePage.ligne, placePage.x);
-        setDrag(null);
-      };
-      const calque = calqueRef.current;
-      if (!calque || sansTransition) {
-        commit();
-        return;
-      }
-      // Le calque glisse du doigt à sa place aimantée, puis la pose est
-      // commitée : le timbre posé apparaît exactement dessous, sans saut.
-      const cibleX = rectPage.left + placePage.x * rectPage.width;
-      const cibleY = rectPage.top + yDeLigne(placePage.ligne) * rectPage.height;
-      calque.style.transition = `transform ${DUREE_POSE_MS}ms ease`;
-      calque.style.transform = transformCalque(cibleX, cibleY);
-      poseEnCoursRef.current = {
-        timer: setTimeout(commit, DUREE_POSE_MS),
-        commit,
-      };
+      glisserPuisCommiter(
+        {
+          x: rectPage.left + placePage.x * rectPage.width,
+          y: rectPage.top + yDeLigne(placePage.ligne) * rectPage.height,
+        },
+        () => poserTimbre(id, page, placePage.ligne, placePage.x),
+      );
       return;
     }
-    setDrag(null);
+    // Hors de la page (sur le bac ou n'importe où ailleurs) : direction
+    // « En vrac » — un timbre posé y est rendu, un timbre du bac y revient.
     const rectBac = bacRef.current?.getBoundingClientRect();
-    const dansLeBac = rectBac
-      ? positionDepuisPointeur(rectBac, e.clientX, e.clientY)
-      : null;
-    if (dansLeBac) {
-      rendreTimbreAuBac(start.id);
+    const commit = () => {
+      if (album.placements[id]) rendreTimbreAuBac(id);
+    };
+    if (!rectBac) {
+      commit();
+      setDrag(null);
+      return;
     }
-    // Ni page ni bac : le timbre reste où il était (aucun appel).
+    glisserPuisCommiter(cibleDansLeBac(id, rectBac), commit);
   };
 
   // Geste interrompu (appel, notification, geste système) : `pointercancel`

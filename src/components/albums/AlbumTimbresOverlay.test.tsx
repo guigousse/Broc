@@ -168,6 +168,7 @@ describe("AlbumTimbresOverlay", () => {
   });
 
   it("glisser un timbre posé et le lâcher sur le bac appelle rendreTimbreAuBac", () => {
+    vi.useFakeTimers();
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
     const bac = screen.getByTestId("bac");
     bac.getBoundingClientRect = () =>
@@ -186,7 +187,11 @@ describe("AlbumTimbresOverlay", () => {
     fireEvent.pointerDown(posee, { clientX: 150, clientY: 200, pointerId: 1 });
     fireEvent.pointerMove(posee, { clientX: 150, clientY: 440, pointerId: 1 });
     fireEvent.pointerUp(posee, { clientX: 150, clientY: 440, pointerId: 1 });
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
     expect(mocks.rendreTimbreAuBac).toHaveBeenCalledWith(t2);
+    vi.useRealTimers();
   });
 
   // ── I4 revue finale 2026-08-30 ────────────────────────────────────────
@@ -344,15 +349,58 @@ describe("AlbumTimbresOverlay — bandes et glisser fluide", () => {
     expect(bandes.every((b) => b.dataset.vise === "false")).toBe(true);
   });
 
-  it("un lâcher ni sur la page ni sur le bac rend le timbre d'origine visible à sa place", () => {
+  it("un timbre posé lâché hors de l'album (ni page ni bac) glisse vers « En vrac » puis y est rendu", () => {
+    vi.useFakeTimers();
+    mocks.rendreTimbreAuBac.mockClear();
     render(<AlbumTimbresOverlay open onClose={() => {}} />);
     pageRect300x390();
+    const bac = screen.getByTestId("bac");
+    bac.getBoundingClientRect = () =>
+      ({
+        left: 0,
+        top: 400,
+        width: 300,
+        height: 80,
+        right: 300,
+        bottom: 480,
+        x: 0,
+        y: 400,
+        toJSON: () => ({}),
+      }) as DOMRect;
     const pose = screen.getByTestId("timbre-pose");
     fireEvent.pointerDown(pose, { clientX: 150, clientY: 195, pointerId: 1 });
     fireEvent.pointerMove(pose, { clientX: 160, clientY: 900, pointerId: 1 });
     fireEvent.pointerUp(pose, { clientX: 160, clientY: 900, pointerId: 1 });
+    const calque = screen.getByTestId("timbre-fantome");
+    expect(calque.style.transition).toContain("transform");
+    expect(calque.style.transform).toContain(", 440px"); // centre vertical du bac
+    expect(mocks.rendreTimbreAuBac).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
+    expect(mocks.rendreTimbreAuBac).toHaveBeenCalledWith(expect.any(String));
     expect(screen.queryByTestId("timbre-fantome")).toBeNull();
-    expect(pose.style.opacity).not.toBe("0");
+    vi.useRealTimers();
+  });
+
+  it("un timbre du bac lâché hors de l'album revient dans le bac, sans appel d'état", () => {
+    vi.useFakeTimers();
+    mocks.rendreTimbreAuBac.mockClear();
+    mocks.poserTimbre.mockClear();
+    render(<AlbumTimbresOverlay open onClose={() => {}} />);
+    pageRect300x390();
+    const t = within(screen.getByTestId("bac")).getAllByTestId("timbre-bac")[0];
+    fireEvent.pointerDown(t, { clientX: 10, clientY: 500, pointerId: 1 });
+    fireEvent.pointerMove(t, { clientX: 300, clientY: 900, pointerId: 1 });
+    fireEvent.pointerUp(t, { clientX: 300, clientY: 900, pointerId: 1 });
+    act(() => {
+      vi.advanceTimersByTime(160);
+    });
+    expect(mocks.rendreTimbreAuBac).not.toHaveBeenCalled();
+    expect(mocks.poserTimbre).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("timbre-fantome")).toBeNull();
+    expect(t.style.opacity).not.toBe("0");
+    vi.useRealTimers();
   });
 });
 
