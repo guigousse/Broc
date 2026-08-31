@@ -112,3 +112,36 @@ describe("ClasseurOverlay", () => {
     expect(screen.getByTestId("fiche-visuel")).toBeTruthy();
   });
 });
+
+/* ── Mise en page plein écran (retour Guillaume 2026-08-31) ───────────────
+   Le classeur n'est plus une carte bordée qui défile : un panneau fixe qui
+   couvre l'écran, et une grille 3×3 dont les 9 cases (pochettes ET « à
+   venir ») ont exactement la même boîte, quelle que soit l'image dedans. */
+describe("ClasseurOverlay — plein écran", () => {
+  it("le panneau couvre l'écran en position fixe et ne défile pas lui-même", () => {
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    const dialog = screen.getByRole("dialog") as HTMLElement;
+    expect(dialog.style.position).toBe("fixed");
+    expect(dialog.style.inset).toBe("0px");
+    expect(dialog.style.overflowY).not.toBe("auto");
+    expect(dialog.style.border).toBe("");
+  });
+
+  it("les 9 cases partagent une boîte 3/4 que leur contenu ne peut pas agrandir", () => {
+    render(<ClasseurOverlay open onClose={() => {}} />);
+    const grille = screen.getByTestId("page-classeur") as HTMLElement;
+    expect(grille.style.gridTemplateColumns).toBe("repeat(3, minmax(0, 1fr))");
+    const cases = Array.from(grille.children) as HTMLElement[];
+    expect(cases).toHaveLength(9);
+    for (const c of cases) {
+      expect(c.style.aspectRatio).toBe("3 / 4");
+      expect(c.style.minWidth).toBe("0px");
+      expect(c.style.minHeight).toBe("0px");
+      expect(c.style.overflow).toBe("hidden");
+    }
+    // Le visuel est sorti du flux : il ne pèse plus sur la taille de la case.
+    const visuel = document.querySelector('[data-testid="pochette"] [data-testid="piece-visuel"]')
+      ?.parentElement as HTMLElement;
+    expect(visuel.style.position).toBe("absolute");
+  });
+});

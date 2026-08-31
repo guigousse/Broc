@@ -1,6 +1,11 @@
 "use client";
 
-import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AlbumShell } from "@/components/albums/AlbumShell";
 import { FichePiece } from "@/components/albums/FichePiece";
@@ -23,25 +28,55 @@ import type { DictionnaireUI } from "@/lib/i18n/ui";
 const PAR_PAGE = 9;
 const SWIPE_SEUIL_PX = 40;
 
+const GAP_PX = 10;
+const PADDING_PX = 12;
+/** Hauteur (px) prise autour de la grille dans le panneau : marges de la
+ *  coquille, en-tête sur deux lignes et barre de pagination. Sert à borner
+ *  la largeur de la grille pour que ses 3 lignes tiennent TOUJOURS dans la
+ *  hauteur de l'écran sans défiler (iPhone SE compris). */
+const HORS_GRILLE_PX = 220;
+
+/* Pleine largeur, mais plafonnée par la hauteur disponible : une grille de
+   largeur W fait (W − 2·padding − 2·gap)·4/3 + 2·gap + 2·padding de haut
+   (3 lignes de cases 3/4), d'où W = (H − 44)·3/4 + 44 pour H donnée.
+   `minmax(0, 1fr)` : sans le `0`, la taille naturelle des images élargit les
+   colonnes au-delà du conteneur (3ᵉ colonne coupée, vu le 2026-08-31). */
 const grille3x3: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(3, 1fr)",
-  gap: 10,
-  padding: 12,
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: GAP_PX,
+  padding: PADDING_PX,
+  width: "100%",
+  maxWidth: `calc((100dvh - ${HORS_GRILLE_PX + 2 * GAP_PX + 2 * PADDING_PX}px) * 0.75 + ${2 * GAP_PX + 2 * PADDING_PX}px)`,
+  margin: "0 auto",
+  boxSizing: "border-box",
   background: "var(--forest-800)",
   borderRadius: 8,
   touchAction: "pan-y",
 };
 
+/* `minWidth/minHeight: 0` + `overflow: hidden` : la case garde sa boîte 3/4
+   quel que soit le contenu (une image portrait faisait 255 px au lieu de
+   176 avant). */
 const pochette: CSSProperties = {
   position: "relative",
   aspectRatio: "3 / 4",
+  minWidth: 0,
+  minHeight: 0,
+  overflow: "hidden",
   background: "var(--paper-100)",
   border: "1px solid var(--brass-500)",
   borderRadius: 6,
   padding: 6,
   display: "grid",
   placeItems: "center",
+};
+
+/** Le visuel de la carte, sorti du flux : il remplit la pochette sans peser
+ *  sur sa taille. */
+const visuelWrap: CSSProperties = {
+  position: "absolute",
+  inset: 6,
 };
 
 const pochetteBtn: CSSProperties = {
@@ -171,7 +206,13 @@ function Pagination({
   );
 }
 
-export function ClasseurOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ClasseurOverlay({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const { d, tr, locale } = useLangue();
   const { state, recyclerDoublonsAlbum, marquerPieceConsultee } = useGame();
   const { toast } = useToast();
@@ -251,16 +292,24 @@ export function ClasseurOverlay({ open, onClose }: { open: boolean; onClose: () 
               data-testid="pochette"
               style={pochetteBtn}
               disabled={!possedee}
-              aria-label={possedee ? nomObjet({ templateId: p.id, nom: p.nom }, locale) : d.albums.pochetteVide}
+              aria-label={
+                possedee
+                  ? nomObjet({ templateId: p.id, nom: p.nom }, locale)
+                  : d.albums.pochetteVide
+              }
               onClick={() => {
                 marquerPieceConsultee(p.id);
                 setFiche(p.id);
               }}
             >
-              <PieceVisuel id={p.id} grise={!possedee} thumb />
+              <div style={visuelWrap}>
+                <PieceVisuel id={p.id} grise={!possedee} thumb />
+              </div>
               {!possedee && <span style={pointInterrogation}>?</span>}
               {quantite > 1 && (
-                <span style={badgeQuantite}>{tr(d.albums.doublon, { n: quantite })}</span>
+                <span style={badgeQuantite}>
+                  {tr(d.albums.doublon, { n: quantite })}
+                </span>
               )}
               {album.nouvelles.includes(p.id) && (
                 <span style={newBadge} aria-label={d.albums.nouveau}>
@@ -273,7 +322,11 @@ export function ClasseurOverlay({ open, onClose }: { open: boolean; onClose: () 
       </div>
       <Pagination page={page} pages={pages} onChange={setPage} d={d} />
       {fiche && (
-        <FichePiece id={fiche} quantite={album.pieces[fiche] ?? 0} onClose={() => setFiche(null)} />
+        <FichePiece
+          id={fiche}
+          quantite={album.pieces[fiche] ?? 0}
+          onClose={() => setFiche(null)}
+        />
       )}
     </AlbumShell>
   );

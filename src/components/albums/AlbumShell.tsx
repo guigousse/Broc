@@ -3,17 +3,18 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { ficheBackdrop } from "@/components/ui/FicheObjet";
 import { plaqueLaiton } from "@/components/ui/plaqueLaiton";
 import { useLangue } from "@/lib/i18n/LangueContext";
 
 /* ── LE CHÂSSIS PARTAGÉ DES DEUX ALBUMS ──────────────────────────────────
    Classeur de cartes et album de timbres partagent la même coquille : un
-   voile plein écran (`ficheBackdrop`, repris tel quel — même famille visuelle
-   que la fiche d'un objet), une carte pleine largeur avec un en-tête (titre
-   gravé au laiton, compteur, bouton Recycler, croix) et le contenu (grille de
-   pochettes ou pages de timbres) en `children`. Le bouton Recycler ouvre une
-   confirmation avant de débiter les doublons — action irréversible. */
+   PANNEAU FIXE qui couvre tout l'écran (pas une carte bordée qui défile —
+   retour de Guillaume 2026-08-31 : la zone de cartes/timbres doit rester
+   fixe sous le doigt), avec un en-tête (titre gravé au laiton, compteur,
+   bouton Recycler, croix) et le contenu (grille de pochettes ou pages de
+   timbres) en `children`, dans une zone `flex: 1` qui ne défile pas. Le
+   bouton Recycler ouvre une confirmation avant de débiter les doublons —
+   action irréversible. */
 
 interface AlbumShellProps {
   open: boolean;
@@ -25,17 +26,25 @@ interface AlbumShellProps {
   children: ReactNode;
 }
 
-const carte: CSSProperties = {
-  width: "min(420px, 94vw)",
-  maxWidth: "100%",
-  maxHeight: "88vh",
-  overflowY: "auto",
-  position: "relative",
+const panneau: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 105,
+  display: "flex",
+  flexDirection: "column",
   background: "var(--forest-900)",
-  border: "1px solid var(--brass-500)",
-  borderRadius: "var(--radius-card)",
-  padding: "18px",
-  boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+  padding:
+    "max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom))",
+  overflow: "hidden",
+};
+
+/** La zone des `children` : prend tout ce qui reste sous l'en-tête, sans
+ *  défiler — c'est aux albums de tenir dans la hauteur donnée. */
+const contenu: CSSProperties = {
+  flex: 1,
+  minHeight: 0,
+  display: "flex",
+  flexDirection: "column",
 };
 
 const enTete: CSSProperties = {
@@ -102,39 +111,40 @@ export function AlbumShell({
   const libelleRecycler = tr(d.albums.recycler, { n: doublons });
 
   return (
-    <div
-      style={ficheBackdrop}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div style={carte} role="dialog" aria-label={titre}>
-        <div style={enTete}>
-          <div style={plaqueLaiton}>{titre}</div>
-          <span style={compteurStyle}>
-            {tr(d.albums.compteur, { n: compteur.possedees, total: compteur.total })}
-          </span>
-          <div style={actions}>
-            {/* Masqué pendant la confirmation : évite deux boutons « Recycler »
+    <div style={panneau} role="dialog" aria-label={titre}>
+      <div style={enTete}>
+        <div style={plaqueLaiton}>{titre}</div>
+        <span style={compteurStyle}>
+          {tr(d.albums.compteur, {
+            n: compteur.possedees,
+            total: compteur.total,
+          })}
+        </span>
+        <div style={actions}>
+          {/* Masqué pendant la confirmation : évite deux boutons « Recycler »
                concurrents dans l'arbre d'accessibilité (celui de la modale
                reprend le même libellé). */}
-            {!confirmOuvert && (
-              <button
-                type="button"
-                style={recyclerBtn}
-                disabled={doublons === 0}
-                onClick={() => setConfirmOuvert(true)}
-              >
-                {libelleRecycler}
-              </button>
-            )}
-            <button type="button" style={croixBtn} onClick={onClose} aria-label={d.commun.fermer}>
-              <X size={16} strokeWidth={1.5} />
+          {!confirmOuvert && (
+            <button
+              type="button"
+              style={recyclerBtn}
+              disabled={doublons === 0}
+              onClick={() => setConfirmOuvert(true)}
+            >
+              {libelleRecycler}
             </button>
-          </div>
+          )}
+          <button
+            type="button"
+            style={croixBtn}
+            onClick={onClose}
+            aria-label={d.commun.fermer}
+          >
+            <X size={16} strokeWidth={1.5} />
+          </button>
         </div>
-        {children}
       </div>
+      <div style={contenu}>{children}</div>
       <ConfirmModal
         open={confirmOuvert}
         onClose={() => setConfirmOuvert(false)}
